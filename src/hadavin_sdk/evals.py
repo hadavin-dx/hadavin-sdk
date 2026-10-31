@@ -7,7 +7,6 @@ With ``k > 1`` every item runs k times and green needs pass^k (items passing all
 from __future__ import annotations
 
 import json
-import math
 import os
 from decimal import Decimal
 
@@ -16,38 +15,10 @@ from hadavin_sdk.guard import judge
 from hadavin_sdk.llm.protocol import LLM
 from hadavin_sdk.models import GateRun
 from hadavin_sdk.registry import Registry
+from hadavin_sdk.stats import upper_error_bound
 
 _ASK = "Process the attached request document."
 QUALIFIED = "qualified.jsonl"
-
-
-def upper_error_bound(x: int, n: int, confidence: float = 0.95) -> float | None:
-    """Exact one-sided Clopper-Pearson upper bound on a failure rate after x failures in n items.
-
-    The p at which P(X <= x | n, p) = 1 - confidence, found by bisection (the CDF falls as p rises).
-    """
-    if n == 0:
-        return None
-    if not 0 <= x <= n:
-        raise ValueError(f"failures {x} outside 0..{n}")
-    if x == n:
-        return 1.0
-    alpha = 1 - confidence
-
-    # In log space: comb(n, i) overflows a float above n of about 1030. Computed once, not per bisection step.
-    log_combs = [math.log(math.comb(n, i)) for i in range(x + 1)]
-
-    def cdf(p: float) -> float:
-        return sum(
-            math.exp(lc + i * math.log(p) + (n - i) * math.log1p(-p))
-            for i, lc in enumerate(log_combs)
-        )
-
-    lo, hi = 0.0, 1.0
-    for _ in range(60):  # 2**-60: far below any reported precision
-        mid = (lo + hi) / 2
-        lo, hi = (mid, hi) if cdf(mid) > alpha else (lo, mid)
-    return hi
 
 
 def gate(registry: Registry, llm: LLM, agent_id: str, *, k: int = 1) -> GateRun:
