@@ -218,3 +218,32 @@ def test_hook_exceptions_end_in_a_final_state(cfg_dir, which):
     )
     final = rt.execute(run.run_id)
     assert final.state == S.NEEDS_PERSON
+
+
+# contract.py: the supported keyword subset, as it is today (owner K5-core adds `identifier`; not here)
+@pytest.mark.parametrize(
+    "keyword", ["identifier", "format", "minimum", "maximum", "items", "oneOf", "$ref", "default"]
+)
+def test_schema_problems_rejects_keywords_outside_the_subset(keyword):
+    from hadavin_sdk.actions.contract import schema_problems
+
+    assert schema_problems({"type": "string", keyword: 1}) == [
+        f"input_schema: unsupported keyword {keyword}"
+    ]
+    assert schema_problems(
+        {"type": "object", "properties": {"a": {"type": "string", keyword: 1}}}
+    ) == [f"input_schema.a: unsupported keyword {keyword}"]
+
+
+def test_schema_problems_accepts_exactly_the_documented_subset():
+    from hadavin_sdk.actions.contract import schema_problems
+
+    ok = {
+        "type": "object",
+        "required": ["a"],
+        "additionalProperties": False,
+        "properties": {
+            "a": {"type": "string", "maxLength": 5, "minLength": 1, "pattern": "^x", "enum": ["x"]}
+        },
+    }
+    assert schema_problems(ok) == []

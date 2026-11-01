@@ -5,7 +5,7 @@
   hadavin-sdk [--config DIR] limits stop|reset --by WHO  needs a shared store (postgres); memory: exit 2
   hadavin-sdk [--config DIR] tick                       one pass of approvals sweep, reconcile, stuck runs,
                                                          audit checkpoint; exit 0 ok, 1 a step failed,
-                                                         2 config error, 3 store unreachable
+                                                         2 config error, 4 store unreachable
   hadavin-sdk [--config DIR] migrate [--runtime-role R]  apply the postgres schema; the migration role's DSN
                                                          comes from the HADAVIN_MIGRATE_DSN environment variable
   hadavin-sdk [--config DIR] audit verify                exit 0 intact, 1 not, 2 refused, 3 unreadable
@@ -272,7 +272,7 @@ def _tick() -> int:
         app = build(None, agents)
     except StoreUnavailable as exc:
         print(f"tick: {exc}", file=sys.stderr)
-        return 3
+        return 4
     except ConfigError as exc:
         print(f"tick: config error: {exc}", file=sys.stderr)
         return 2

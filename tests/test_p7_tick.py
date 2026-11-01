@@ -83,7 +83,9 @@ def test_steps_order_and_heartbeat_last(app, caplog):
     caplog.set_level("INFO", logger="hadavin_sdk.tick")
     assert run_tick(app) == 0
     assert "tick ok=True failed=-" in caplog.text
-    assert app.store.get_tick_state("heartbeat").last_error is None
+    assert (
+        app.store.get_tick_state("heartbeat") is None
+    )  # the summary line is not a step: no tick_state row
 
 
 def test_one_failing_step_lets_the_others_run_and_exits_1(app, caplog):
@@ -104,14 +106,14 @@ def test_one_failing_step_lets_the_others_run_and_exits_1(app, caplog):
     assert "failed=first" in caplog.text
 
 
-def test_store_unreachable_exits_3_before_any_step(app, monkeypatch):
+def test_store_unreachable_exits_4_before_any_step(app, monkeypatch):
     ran = []
 
     def down(step):
         raise OSError("store down")
 
     monkeypatch.setattr(app.store, "get_tick_state", down)
-    assert run_tick(app, steps=[TickStep("x", 0, lambda ctx: ran.append(1))]) == 3
+    assert run_tick(app, steps=[TickStep("x", 0, lambda ctx: ran.append(1))]) == 4
     assert ran == []
 
 
@@ -382,7 +384,7 @@ def test_cli_tick_store_unreachable_exits_3(cfg_dir, monkeypatch):
         "hadavin_sdk.backends.builtin.fake_secrets",
         lambda settings, deps: FakeSecretProvider({"pg-dsn": closed, "fixture-token": "t"}),
     )
-    assert cli.main(["--config", str(cfg_dir), "tick"]) == 3
+    assert cli.main(["--config", str(cfg_dir), "tick"]) == 4
 
 
 # --- independent review fixes -----------------------------------------------------------------------------
