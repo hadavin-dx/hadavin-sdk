@@ -380,7 +380,7 @@ def cents(x: Decimal) -> Decimal:
 
 
 def dec(c: int) -> Decimal:
-    return cents(Decimal(c) / 100)
+    return Decimal(c).scaleb(-2)  # exactly two decimals
 
 
 def ts_of(seconds: int) -> datetime:
@@ -728,18 +728,17 @@ MANIFEST_FILE = HERE / "lumen_manifest.json"
 SCHEMA_FILE = HERE / "lumen_schema.sql"
 
 
-def main(argv: list[str]) -> int:
+def main(argv: list[str]) -> None:
     if argv[:1] == ["--sql"] and len(argv) == 2 and argv[1] in SEEDS:
         print("\n".join(sql_statements(build(argv[1]))))
-        return 0
+        return
     text = json.dumps(manifest(), indent=2, sort_keys=True) + "\n"
     if argv == ["--write-manifest"]:
         MANIFEST_FILE.write_text(text, encoding="utf-8", newline="\n")
         print(f"wrote {MANIFEST_FILE.name}")
-        return 0
+        return
     print(text, end="")
-    return 0
 
 
 if __name__ == "__main__":
-    sys.exit(main(sys.argv[1:]))
+    main(sys.argv[1:])

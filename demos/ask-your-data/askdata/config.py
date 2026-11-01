@@ -78,7 +78,9 @@ class AskdataConfig(_Strict):
 
 
 def load_config(path: Path) -> AskdataConfig:
-    path = Path(path)
+    path = Path(path).resolve()
+    if path.suffix not in (".yaml", ".yml") or not path.is_file():
+        raise ConfigError("the config must be an existing .yaml or .yml file")
     try:
         raw = yaml.safe_load(path.read_text(encoding="utf-8"))
         cfg = AskdataConfig.model_validate(raw)

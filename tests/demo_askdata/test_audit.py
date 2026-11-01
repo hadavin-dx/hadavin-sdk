@@ -131,7 +131,12 @@ def test_csv_redacted_cells_are_hashes(kit, capsys):
     assert "sha256:" in text and Q not in text
 
 
-def test_export_to_a_file(kit, capsys, tmp_path):
+def test_export_to_a_file_only_inside_the_current_folder(kit, capsys, tmp_path, monkeypatch):
+    outside = tmp_path.parent / "elsewhere.json"
+    assert (
+        run(capsys, kit, "audit", "export", "--out", str(outside))[0] == 1 and not outside.exists()
+    )
+    monkeypatch.chdir(tmp_path)
     dest = tmp_path / "out.json"
     code, text = run(capsys, kit, "audit", "export", "--out", str(dest))
     assert code == 0 and "redacted" in text and len(json.loads(dest.read_text())) == 3

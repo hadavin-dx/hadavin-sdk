@@ -118,6 +118,10 @@ def cmd_export(cfg, fmt: str, include_text: bool, dest: Path | None) -> int:
             )])  # fmt: skip
         text = buf.getvalue()
     if dest:
+        dest = dest.resolve()
+        if Path.cwd().resolve() not in (dest, *dest.parents):
+            out("export: --out must be inside the current folder")
+            return 1
         dest.write_text(text, encoding="utf-8", newline="\n")
         out(
             f"wrote {len(rows)} line(s) to {dest.name}"

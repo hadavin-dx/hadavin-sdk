@@ -33,7 +33,7 @@ CREATE TABLE shop.orders (
     shipping_country text NOT NULL,
     discount_pct     integer NOT NULL,
     notes            text,
-    fl_cd            char(1) NOT NULL
+    fl_cd            varchar(1) NOT NULL
 );
 COMMENT ON COLUMN shop.orders.fl_cd IS 'Fulfilment flag: N normal, R rush, F fraud-review hold';
 
