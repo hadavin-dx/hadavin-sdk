@@ -164,3 +164,10 @@ def test_verify_finds_an_orphan_intent(tmp_path):
 
 def test_the_utc_stamp_shape():
     assert utc_stamp().endswith("Z") and len(utc_stamp()) == 20
+
+
+def test_verify_reports_an_unreadable_event_object_instead_of_crashing(tmp_path):
+    ledger, sink, *_ = _one(tmp_path)
+    next((tmp_path / "audit" / "objects").glob("*.json")).write_bytes(b"{not json")
+    rep = audit_mod.verify(ledger, sink)
+    assert not rep.ok and any("could not be read" in p for p in rep.problems)

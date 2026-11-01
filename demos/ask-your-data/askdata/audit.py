@@ -117,7 +117,15 @@ def verify(ledger: QueryLedger, sink: AuditSink) -> VerifyReport:
     and reconcile: each executed attempt has an intent event, each outcome has a line and each line an outcome."""
     rep = VerifyReport()
     read = ledger.read()
-    events = [e for e in sink.events() if e.domain == DOMAIN]
+    try:
+        events = [e for e in sink.events() if e.domain == DOMAIN]
+    except (
+        OSError,
+        ValueError,
+        KeyError,
+    ):  # a missing or corrupt event object: report it, do not crash
+        events = []
+        rep.problems.append("the audit events could not be read (missing or corrupt object)")
     rep.events_total = len(events)
     for e in events:
         try:
