@@ -636,7 +636,7 @@ def test_core_logic_names_no_vendor():
     assert literal_problems(SRC, VENDOR_MODULES, LITERAL_OK) == []
 
 
-def test_migrations_name_no_vendor():
+def test_no_vendor_literal_in_migrations():
     folder = SRC / PKG / "store" / "migrations"
     assert list(folder.glob("*.sql")), "no migrations found: the scan would check nothing"
     assert sql_problems(folder) == []
