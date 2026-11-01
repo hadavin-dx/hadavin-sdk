@@ -102,7 +102,7 @@
   charged there, and the judge already screens the document and tool output.
 - `hadavin-sdk tick` (slice 2 P7, v5 contract): one pass of isolated steps (`sweep`, `reconcile`, `stuck`,
   `checkpoint`; the summary line is logged after them and is not a step); a failing step is logged and recorded in `tick_state` and the others
-  still run. Exit 0 ok, 1 a step failed, 2 config error, 3 store unreachable. Later steps are appended to
+  still run. Exit 0 ok, 1 a step failed, 2 config error, 4 store unreachable. Later steps are appended to
   `runtime.tick.STEPS`.
 - `slack` approval channel (`backends.channel: {kind: slack, channel_id, signing_secret_name,
   bot_token_secret_name}`) and `approvals/receiver.py`: verified clicks are recorded only; `tick` runs the plan.

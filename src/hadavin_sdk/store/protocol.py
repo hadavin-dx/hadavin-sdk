@@ -26,7 +26,7 @@ class StaleState(RuntimeError):
 
 
 class StoreUnavailable(ConfigError):
-    """The store cannot be reached (`tick` exits 3; nothing was changed)."""
+    """The store cannot be reached (`tick` exits 4; nothing was changed)."""
 
 
 class NotFound(KeyError):

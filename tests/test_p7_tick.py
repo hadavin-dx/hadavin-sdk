@@ -78,7 +78,7 @@ def _record(app, req, approver="user:a", verdict="approve"):
 # --- tick contract ---------------------------------------------------------------------------------------
 
 
-def test_steps_order_and_heartbeat_last(app, caplog):
+def test_steps_order_and_summary_line_is_not_a_step(app, caplog):
     assert [s.name for s in tick.STEPS] == ["sweep", "reconcile", "stuck", "checkpoint"]
     caplog.set_level("INFO", logger="hadavin_sdk.tick")
     assert run_tick(app) == 0
@@ -367,7 +367,7 @@ def test_cli_tick_exit_codes(cfg_dir, monkeypatch, capsys):
     assert "config error" in capsys.readouterr().err
 
 
-def test_cli_tick_store_unreachable_exits_3(cfg_dir, monkeypatch):
+def test_cli_tick_store_unreachable_exits_4(cfg_dir, monkeypatch):
     pytest.importorskip("psycopg")
     import yaml
 
@@ -542,3 +542,25 @@ def test_signing_headers_do_not_cross_channels():
     fake_signed = hmac_v0.sign(body, ts, SIG, FakeChannel.header_prefix)
     assert FakeChannel(SIG).parse_decision(fake_signed, body, ts).approver_id == "fake:U9"
     assert SlackChannel("C0", TOKEN, SIG).parse_decision(fake_signed, body, ts) is None
+
+
+def test_audit_chain_build_reports_a_connection_failure_as_store_unavailable():
+    from hadavin_sdk.audit import chain
+    from hadavin_sdk.backends import Deps
+    from hadavin_sdk.store.protocol import StoreUnavailable
+
+    class Down:
+        _lock = __import__("threading").Lock()
+
+        class _db:
+            @staticmethod
+            def execute(*a, **k):
+                raise OSError("connection refused")
+
+            cursor = execute
+
+    class S:
+        checkpoint_every = 100
+
+    with pytest.raises(StoreUnavailable):
+        chain.build(S(), Deps(resolve=lambda n: "", store=Down(), signer=None, anchor=None))

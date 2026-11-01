@@ -26,6 +26,7 @@ the current folder (and its check modules) is importable.
 from __future__ import annotations
 
 import argparse
+import logging
 import os
 import sys
 import traceback
@@ -258,6 +259,8 @@ def _tick() -> int:
     from hadavin_sdk.runtime.tick import run_tick
     from hadavin_sdk.store.protocol import StoreUnavailable
 
+    # The summary line and step errors go to stderr (the logger is otherwise silent below WARNING).
+    logging.basicConfig(level=logging.INFO, stream=sys.stderr, format="%(message)s")
     try:
         reg = load_registry(load_config())
         agents = []

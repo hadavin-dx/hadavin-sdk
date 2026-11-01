@@ -8,7 +8,7 @@ Contract (design v5 kernel, section 4):
 * The tick summary line (``heartbeat``) is not a step: it is logged after the steps, is never recorded in
   ``tick_state`` and cannot change the exit code. K7 sends the external heartbeat from the CLI entrypoint.
 * Exit codes: 0 all ok; 1 a step failed; 2 config error; 4 store unreachable (both before any step; 3 is the
-  CLI's wrapper code for any uncaught error and for an unavailable audit).
+  CLI wrapper's code for any other uncaught error).
 
 Concurrent ticks are safe: every state change is a compare-and-set, and a loser (``StaleState``) skips.
 """

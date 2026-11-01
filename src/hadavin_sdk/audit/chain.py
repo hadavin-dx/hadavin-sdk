@@ -528,6 +528,13 @@ def build(settings, deps) -> ChainAudit:
         try:
             db.run("SELECT alg, key_label FROM audit_checkpoints LIMIT 1")
         except Exception as exc:  # noqa: BLE001 - any driver error here means "not migrated or unreachable"
+            from hadavin_sdk.store.protocol import StoreUnavailable
+
+            if isinstance(exc, OSError) or type(exc).__name__ == "OperationalError":
+                # A connection-level failure is an outage, not a missing migration: `tick` exits 4, not 2.
+                raise StoreUnavailable(
+                    f"audit chain: the store is unreachable ({type(exc).__name__})"
+                ) from None
             raise ConfigError(
                 f"audit chain: the audit tables are missing; run hadavin-sdk migrate "
                 f"({type(exc).__name__})"
