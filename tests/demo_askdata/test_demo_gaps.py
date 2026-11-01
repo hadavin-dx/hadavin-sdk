@@ -427,7 +427,8 @@ def test_concurrent_lock_writes_use_unique_temp_files(tmp_path):
     for th in threads:
         th.join()
     assert errors == [] and read_lock(tmp_path) == lock
-    assert _write_tmp(tmp_path / "lock.json", lock) != _write_tmp(tmp_path / "lock.json", lock)
+    first, second = (_write_tmp(tmp_path / "lock.json", lock) for _ in range(2))
+    assert first.name != second.name
     for p in tmp_path.glob("*.tmp"):
         p.unlink()
 
