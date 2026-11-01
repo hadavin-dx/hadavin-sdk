@@ -127,6 +127,19 @@
   before starting the runtime; until then start-up raises `Unqualified`. After this one re-gate, adding an optional
   field with a default no longer un-qualifies agents, and swapping the llm backend does.
 
+
+### Added (promoted controls, from a demo's review; vendor-neutral, stdlib only, no call sites in `src` yet)
+- `guard/textnorm.py`: ONE text fold (NFKD, drop combining/format/control/private-use, NFKC, Unicode digits to ASCII,
+  Cyrillic/Greek/Armenian/Latin look-alikes to Latin) for every comparison or scan of text. Tests pin the table and a shared
+  vector file (`tests/fixtures/textnorm_vectors.json`). `approvals/gate.py` adds the folded view to its secret views.
+- `guard/egress_text.py`: output check for text a person reads (digit budget, capped exempt tokens, protected values),
+  typed `Violation`s, `LeakPolicy` validated thresholds. Distinct from `guard/redact.py` (input mask).
+- `runtime/control.py`: deep-frozen policy/directory views (accident-proofing, not a sandbox), one immutable `ConfigView`,
+  and `StopGate` with `effect()` (in-process effect barrier; honours the store-backed `KillSwitch`, written first on engage).
+- `runtime/rowstore.py`: copy-on-read row store with validate, then audit, then insert, and snapshot iteration.
+- `audit/capped.py`: per-tenant capped audit for refused attempts, plus an `AuditSink` adapter.
+- `testing/mutation.py`, `testing/contracts.py`: mutation-kill judge (reason, pin, crash classes) and a row-store contract check.
+
 ### Added
 - **G4 command withholding** (P5/P6 follow-ups). `channel.clean` now withholds every command a person could
   paste to change a system: `[command withheld (G4)]` stands in its place.

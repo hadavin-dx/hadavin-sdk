@@ -71,6 +71,7 @@ import re
 
 from markdown_it import MarkdownIt
 
+from hadavin_sdk.guard import textnorm
 from hadavin_sdk.guard.redact import strip_ansi
 
 # A link label may hold escaped brackets (`[a\]b]`); a destination may be anything but `)`.
@@ -217,6 +218,9 @@ def _views(text: str) -> set[str]:
     views = {text, strip_ansi(text), _ANSI_AS_TEXT.sub(" ", text)}
     views |= {strip_controls(v) for v in views}
     views |= {_INVISIBLE.sub("", v) for v in views}
+    views |= {
+        textnorm.fold(v) for v in views
+    }  # one shared fold: look-alike letters, other scripts' digits, combining marks
     return views
 
 
