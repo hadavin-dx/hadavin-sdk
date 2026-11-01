@@ -90,3 +90,9 @@ def test_the_two_databases_differ_so_agreement_is_not_a_coincidence(dbs):
     gold = [g for g in gc.read_jsonl(gc.DATA / "gold.jsonl") if g["id"] in ("D20", "T11", "T19")]
     out = gc.check_execution(gold, make_runner(dbs[0]), make_runner(dbs[1]))
     assert all(h["a"] != h["b"] for h in out["hashes"].values())
+
+
+def test_the_standin_is_reproducible_for_one_seed():
+    from .lumen_standin import build
+
+    assert build(20261101) == build(20261101)

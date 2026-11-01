@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import copy
 import json
+import re
 import shutil
 from pathlib import Path
 
@@ -82,8 +83,8 @@ def test_data_files_carry_no_real_address_and_no_raw_control_byte():
     for path in DATA.glob("*.json*"):
         text = path.read_text(encoding="utf-8")
         assert not any(ord(c) < 32 and c not in "\n\r\t" for c in text), path.name
-        for chunk in text.split("@")[1:]:
-            assert chunk.startswith("example.com"), (path.name, chunk[:20])
+        for address in re.findall(r"[\w.+-]*@[\w.-]+", text):
+            assert address.endswith("@example.com"), (path.name, address)
 
 
 # ------------------------------------------------------------------------------ the seal and the dev/test wall
