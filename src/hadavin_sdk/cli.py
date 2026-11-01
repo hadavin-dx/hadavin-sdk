@@ -398,7 +398,7 @@ def measure_cmd(app, args) -> int:
         )
         return 2
     # NOSONAR S8707: the operator's own csv; a CLI argument is not attacker input
-    text = Path(args.file).read_text(encoding="utf-8")  # NOSONAR
+    text = Path(args.file).read_text(encoding="utf-8-sig")  # NOSONAR
     print(
         "note: dev only. --by and --approved-by are asserted names; the operating-system user is recorded",
         file=sys.stderr,

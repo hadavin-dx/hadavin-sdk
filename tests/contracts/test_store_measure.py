@@ -348,10 +348,47 @@ def test_k6_property_store_sticky_rule_matches_the_oracle_on_random_sequences(st
         stored = store.list_labels(rid)
         assert [x.label_id for x in stored] == [x.label_id for x in accepted if x.run_id == rid]
         want = latest_labels([x for x in accepted if x.run_id == rid]).get(rid)
-        assert latest_labels(stored).get(rid) == want
+        assert latest_labels(stored).get(rid).label_id == want.label_id
 
 
-def test_k6_commit_order_is_time_order_for_a_run(store):
+def test_k6_add_level_event_says_whether_it_inserted_and_add_labels_returns_the_inserted_demotions(
+    store,
+):
+    ev = LevelEvent(agent_id="a", action_id="x", kind="demote", reason="r1", by="s", at=at(26))
+    assert store.add_level_event(ev) is True
+    assert store.add_level_event(ev) is False  # already there: nothing to audit or announce
+    put(store, label("m", "wrong", at(26, 1)))
+    out = store.add_labels(
+        [
+            (label("n", "wrong", at(26, 2), lid="n1"), ev),  # same demotion again
+            (label("o", "wrong", at(26, 3), lid="o1"), ev.model_copy(update={"reason": "r2"})),
+        ],
+        may_lower_harmful=True,
+    )
+    assert [e.reason for e in out] == ["r2"]
+
+
+def test_k6_nonces_can_be_released_and_old_ones_purged(store):
+    assert store.claim_action("n1", at(26, 1))
+    store.release_action("n1")
+    assert store.claim_action("n1", at(26, 1))  # given back, so it can be claimed again
+    assert store.claim_action("n2", at(26, 9))
+    assert store.purge_actions(at(26, 5)) == 1  # n1 only
+    assert store.claim_action("n1", at(27)) is True and store.claim_action("n2", at(27)) is False
+
+
+def test_k6_two_labels_at_one_instant_are_ordered_by_insertion(store):
+    from hadavin_sdk.models import latest_labels
+
+    same = at(26, 1)
+    put(store, label("t", "agree", same, lid="zzz"))
+    put(store, label("t", "wrong", same, lid="aaa"))  # smaller id, same instant, inserted later
+    stored = store.list_labels("t")
+    assert [x.label_id for x in stored] == ["zzz", "aaa"]
+    assert latest_labels(stored)["t"].label == "wrong"
+
+
+def test_k6_the_last_inserted_label_is_the_latest_whatever_its_timestamp(store):
     """A label whose clock was read before a later commit is moved just after it: a later commit never sorts earlier."""
     from hadavin_sdk.models import latest_labels
 

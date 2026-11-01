@@ -14,8 +14,9 @@ import logging
 import os
 import tempfile
 import threading
+import time
 from collections.abc import Callable
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 from decimal import Decimal
 from enum import Enum
 from typing import Any
@@ -48,6 +49,7 @@ from hadavin_sdk.models import (
 from hadavin_sdk.store.protocol import HarmfulSticky, NotFound, StaleState, StoreUnavailable
 
 _LOG = logging.getLogger("hadavin_sdk.store")
+_DEADLOCK_RETRIES = 3
 
 
 _VERIFIED_TLS = frozenset({"verify-ca", "verify-full"})
@@ -474,39 +476,53 @@ class PostgresStore:
 
     # --- K6 measurement ------------------------------------------------------------------------------------
 
-    _LABEL_COLS = (
-        "l.label_id, l.run_id, l.label, l.principal_id, l.channel, l.approved_by, l.created_at"
-    )
+    _LABEL_COLS = "l.seq, l.label_id, l.run_id, l.label, l.principal_id, l.channel, l.approved_by, l.created_at"
+
+    def _retrying(self, fn):
+        """Run a transactional `fn`; a deadlock the database breaks is retried (bounded), then raised. The advisory
+        locks below are taken in one sorted order, so this is a belt on top of the braces."""
+        for attempt in range(_DEADLOCK_RETRIES + 1):
+            try:
+                return fn()
+            except psycopg.errors.DeadlockDetected:
+                if attempt == _DEADLOCK_RETRIES:
+                    raise
+                time.sleep(0.01 * (attempt + 1))
+        raise AssertionError("unreachable")  # pragma: no cover
+
+    def _lock_keys(self, keys) -> None:
+        # Caller holds self._lock and is inside a transaction. Sorted: every caller takes locks in the same order.
+        for key in sorted(set(keys)):
+            self._exec("SELECT pg_advisory_xact_lock(hashtext(%s))", (key,))
 
     def add_labels(
         self, items: list[tuple[Label, LevelEvent | None]], *, may_lower_harmful: bool
-    ) -> None:
-        """All labels (each with its demotion) in ONE transaction. The sticky-harmful check, the created_at order
-        and the insert happen under a per-run advisory lock (taken in sorted run order, so two batches cannot
-        deadlock): two clicks on one run cannot both pass the check. Any failure stores nothing."""
-        try:
+    ) -> list[LevelEvent]:
+        """All labels (each with its demotion) in ONE transaction. The sticky-harmful check and the insert happen
+        under advisory locks for every run and every (agent, action) in the batch, all taken first in one sorted
+        order (two batches cannot deadlock; a deadlock the database still breaks is retried). Returns the demotions
+        that were really inserted (one that already existed is not). Any failure stores nothing."""
+        keys = [f"run/{label.run_id}" for label, _ in items] + [
+            f"level/{d.agent_id}/{d.action_id}" for _, d in items if d is not None
+        ]
+
+        def attempt() -> list[LevelEvent]:
+            inserted: list[LevelEvent] = []
             with self._lock, self._db.transaction():
-                for run_id in sorted({label.run_id for label, _ in items}):
-                    self._exec("SELECT pg_advisory_xact_lock(hashtext(%s))", (f"run/{run_id}",))
+                self._lock_keys(keys)
                 for label, demote in items:
                     if label.label != "harmful" and not may_lower_harmful:
                         cur = self._exec(
                             "SELECT label FROM labels WHERE run_id = %s "
                             "AND (channel = 'chat' OR approved_by IS NOT NULL) "
-                            "ORDER BY created_at DESC, label_id DESC LIMIT 1",
+                            "ORDER BY seq DESC LIMIT 1",
                             (label.run_id,),
                         ).fetchone()
                         if cur is not None and cur["label"] == "harmful":
                             raise HarmfulSticky(label.run_id)
-                    newest = self._exec(
-                        "SELECT max(created_at) AS m FROM labels WHERE run_id = %s", (label.run_id,)
-                    ).fetchone()["m"]
-                    if newest is not None and label.created_at <= newest:
-                        # commit order is time order: a clock read before the lock must not sort a later commit earlier
-                        label = label.model_copy(
-                            update={"created_at": newest + timedelta(microseconds=1)}
-                        )
-                    lrow = _row(label)
+                    lrow = {
+                        k: v for k, v in _row(label).items() if k != "seq"
+                    }  # seq is the database's
                     self._exec(
                         sql.SQL("INSERT INTO labels ({}) VALUES ({})").format(
                             sql.SQL(", ").join(sql.Identifier(c) for c in lrow),
@@ -514,8 +530,12 @@ class PostgresStore:
                         ),
                         list(lrow.values()),
                     )
-                    if demote is not None:
-                        self._insert_level(demote)
+                    if demote is not None and self._insert_level(demote):
+                        inserted.append(demote)
+            return inserted
+
+        try:
+            return self._retrying(attempt)
         except psycopg.errors.UniqueViolation:
             raise StaleState("label exists") from None
 
@@ -528,18 +548,25 @@ class PostgresStore:
             ).fetchone()
         return row is not None
 
-    def _insert_level(self, ev: LevelEvent) -> None:
-        """Caller holds the lock and is inside a transaction. The (agent, action) lock orders this against a
-        `clear_demotion` compare-and-set; a demotion that already exists is not inserted twice (unique index)."""
-        self._exec(
-            "SELECT pg_advisory_xact_lock(hashtext(%s))", (f"level/{ev.agent_id}/{ev.action_id}",)
-        )
-        self._exec(
+    def release_action(self, nonce: str) -> None:
+        with self._lock:
+            self._exec("DELETE FROM seen_actions WHERE nonce = %s", (nonce,))
+
+    def purge_actions(self, before: datetime) -> int:
+        with self._lock:
+            return self._exec("DELETE FROM seen_actions WHERE seen_at < %s", (before,)).rowcount
+
+    def _insert_level(self, ev: LevelEvent) -> bool:
+        """Caller holds the lock and is inside a transaction that already holds the (agent, action) advisory lock
+        (which orders this against a `clear_demotion` compare-and-set). A demotion that already exists is not
+        inserted twice (unique index). True when a row was inserted."""
+        row = self._exec(
             'INSERT INTO level_events (agent_id, action_id, kind, reason, "by", at) '
             "VALUES (%s, %s, %s, %s, %s, %s) "
-            "ON CONFLICT (agent_id, action_id, reason) WHERE kind = 'demote' DO NOTHING",
+            "ON CONFLICT (agent_id, action_id, reason) WHERE kind = 'demote' DO NOTHING RETURNING seq",
             (ev.agent_id, ev.action_id, ev.kind, ev.reason, ev.by, ev.at),
-        )
+        ).fetchone()
+        return row is not None
 
     def list_labels_between(self, start: datetime, end: datetime) -> list[Label]:
         return self._labels_where("WHERE l.created_at >= %s AND l.created_at < %s", (start, end))
@@ -556,28 +583,32 @@ class PostgresStore:
             ).fetchall()
         return [LevelEvent.model_validate(r) for r in rows]
 
-    def add_level_event(self, event: LevelEvent) -> None:
-        with self._lock, self._db.transaction():
-            self._insert_level(event)
+    def add_level_event(self, event: LevelEvent) -> bool:
+        def attempt() -> bool:
+            with self._lock, self._db.transaction():
+                self._lock_keys([f"level/{event.agent_id}/{event.action_id}"])
+                return self._insert_level(event)
+
+        return self._retrying(attempt)
 
     def clear_demotion(self, event: LevelEvent, expected_seq: int) -> bool:
-        with self._lock, self._db.transaction():
-            self._exec(
-                "SELECT pg_advisory_xact_lock(hashtext(%s))",
-                (f"level/{event.agent_id}/{event.action_id}",),
-            )
-            newest = self._exec(
-                "SELECT max(seq) AS s FROM level_events WHERE agent_id = %s AND action_id = %s",
-                (event.agent_id, event.action_id),
-            ).fetchone()["s"]
-            if (newest or 0) != expected_seq:
-                return False
-            self._insert_level(event)
-        return True
+        def attempt() -> bool:
+            with self._lock, self._db.transaction():
+                self._lock_keys([f"level/{event.agent_id}/{event.action_id}"])
+                newest = self._exec(
+                    "SELECT max(seq) AS s FROM level_events WHERE agent_id = %s AND action_id = %s",
+                    (event.agent_id, event.action_id),
+                ).fetchone()["s"]
+                if (newest or 0) != expected_seq:
+                    return False
+                self._insert_level(event)
+            return True
+
+        return self._retrying(attempt)
 
     def _labels_where(self, where: str, params: tuple) -> list[Label]:
         """`where` is fixed SQL text from this module; values always go through `params`."""
-        query = sql.SQL("SELECT {} FROM labels l {} ORDER BY l.created_at, l.label_id").format(
+        query = sql.SQL("SELECT {} FROM labels l {} ORDER BY l.seq").format(
             sql.SQL(self._LABEL_COLS), sql.SQL(where)
         )
         with self._lock:

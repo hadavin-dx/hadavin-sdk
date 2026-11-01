@@ -227,6 +227,10 @@ class Label(BaseModel):
     channel: Literal["chat", "csv"]
     approved_by: str | None = None  # csv only: the line owner who approved the import
     created_at: datetime = Field(default_factory=now)
+    # Insertion order, assigned by the store (None until stored). "Latest" always means the highest seq: two
+    # labels can share a created_at, and a clock read before a lock can lag the commit; the order of insertion
+    # cannot tie and cannot lag.
+    seq: int | None = None
 
     @property
     def counts(self) -> bool:
@@ -257,11 +261,17 @@ def iso_week(moment: datetime) -> date:
 
 
 def latest_labels(labels: list[Label]) -> dict[str, Label]:
-    """run_id -> its label: the latest eligible one (a chat label, or an approved csv label)."""
+    """run_id -> its label: the latest eligible one (a chat label, or an approved csv label), latest by insertion
+    order (`seq`). A label not stored yet (no seq) is newer than any stored one."""
     out: dict[str, Label] = {}
-    for lab in sorted((x for x in labels if x.counts), key=lambda x: (x.created_at, x.label_id)):
+    for lab in sorted((x for x in labels if x.counts), key=label_order):
         out[lab.run_id] = lab
     return out
+
+
+def label_order(x: Label) -> tuple[float, datetime, str]:
+    """Sort key for "oldest first": insertion order; a label without a seq (not stored yet) sorts last."""
+    return (float("inf") if x.seq is None else x.seq, x.created_at, x.label_id)
 
 
 class PilotWeek(BaseModel):

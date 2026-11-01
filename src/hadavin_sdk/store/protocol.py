@@ -127,18 +127,28 @@ class Store(Protocol):
     # --- K6 measurement: labels, demotions, reports ---------------------------------------------------------
     def add_labels(
         self, items: list[tuple[Label, LevelEvent | None]], *, may_lower_harmful: bool
-    ) -> None:
+    ) -> list[LevelEvent]:
         """Every (label, demotion) in ONE transaction, with the sticky-harmful rule checked inside it and serialised
         per run: unless `may_lower_harmful`, a non-harmful label on a run whose latest eligible label is harmful
         raises HarmfulSticky. A duplicate `label_id` raises StaleState. Either way nothing is stored. This is the
-        ONLY way a label enters the store. A label's `created_at` is moved to just after the run's newest existing
-        label when it is not later than it, so commit order and time order agree (a clock read before the lock
-        cannot put a later commit earlier). A demotion that already exists (same agent, action and reason) is
-        not inserted twice."""
+        ONLY way a label enters the store. Each stored label gets a `seq` (insertion order); "latest" always means the
+        highest seq, never created_at (two labels can share an instant, and a clock read before the lock can lag
+        the commit). A demotion that already exists (same agent, action and reason) is not inserted twice; the
+        demotions that were really inserted are returned, so the caller audits and announces only those."""
         ...
 
     def claim_action(self, nonce: str, at: datetime) -> bool:
-        """Record a signed channel click's nonce; False when it was already seen (a replay)."""
+        """Record a nonce; False when it was already seen (a replay, or a claim someone else holds)."""
+        ...
+
+    def release_action(self, nonce: str) -> None:
+        """Forget a nonce (the click failed before it took effect, so the same signed request may be delivered
+        again; or a claim is given back)."""
+        ...
+
+    def purge_actions(self, before: datetime) -> int:
+        """Delete nonces claimed before `before` (older than the signature window they can never be replayed);
+        returns how many."""
         ...
 
     def list_labels(self, run_id: str) -> list[Label]:
@@ -161,8 +171,9 @@ class Store(Protocol):
         """Every label stored by one csv import (ids `csv-<import_id>-<row>-p|a`), oldest first."""
         ...
 
-    def add_level_event(self, event: LevelEvent) -> None:
-        """Append a demotion (idempotent per agent, action and reason). A `clear` goes through `clear_demotion`."""
+    def add_level_event(self, event: LevelEvent) -> bool:
+        """Append a demotion, idempotent per agent, action and reason. True when a row was inserted, False when
+        that demotion already existed (nothing to audit or announce). A `clear` goes through `clear_demotion`."""
         ...
 
     def clear_demotion(self, event: LevelEvent, expected_seq: int) -> bool:

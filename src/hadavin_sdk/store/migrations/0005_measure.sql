@@ -3,6 +3,7 @@
 -- runtime role (SELECT, INSERT); a demotion is cleared by a later `clear` row, never by a DELETE.
 
 CREATE TABLE labels (
+    seq          BIGSERIAL UNIQUE,   -- insertion order: "latest" means the highest seq, never created_at
     label_id     TEXT PRIMARY KEY,
     run_id       TEXT NOT NULL,
     label        TEXT NOT NULL CHECK (label IN ('agree', 'partial', 'wrong', 'harmful', 'abstain_ok', 'missed')),
@@ -28,7 +29,9 @@ CREATE UNIQUE INDEX level_events_one_demote_per_reason ON level_events (agent_id
     WHERE kind = 'demote';
 
 -- One row per signed channel click the measurement acted on (the request's timestamp and signature): a captured
--- request replayed inside the signature window finds its row and is refused. Append-only.
+-- request replayed inside the signature window finds its row and is refused. A row older than twice the signature
+-- window can never be replayed, so a tick step deletes it (the only DELETE the runtime role has on these tables);
+-- the same table holds the short claim that stops two ticks announcing one weekly report.
 CREATE TABLE seen_actions (
     nonce   TEXT PRIMARY KEY,
     seen_at TIMESTAMPTZ NOT NULL
@@ -52,7 +55,7 @@ WITH r AS (
 p AS (SELECT run_id, created_at AS planned_at FROM plans),
 l AS (SELECT DISTINCT ON (run_id) run_id, label FROM labels
       WHERE channel = 'chat' OR approved_by IS NOT NULL
-      ORDER BY run_id, created_at DESC, label_id DESC)
+      ORDER BY run_id, seq DESC)
 SELECT r.week,
        count(*)                                                          AS runs,
        count(p.run_id)                                                   AS proposals,

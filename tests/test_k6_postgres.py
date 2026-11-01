@@ -235,6 +235,64 @@ def test_k6_two_connections_one_demotion_row_per_reason(two_connections):
     assert len(a.list_level_events()) == 1
 
 
+def test_k6_two_connections_batches_in_opposite_order_do_not_deadlock(two_connections):
+    """Two batches that touch the same two runs and the same two (agent, action) pairs in opposite orders: all the
+    advisory locks are taken first, in one sorted order, so neither waits on the other in a cycle."""
+    import threading
+
+    from hadavin_sdk.models import LevelEvent
+
+    a, b = two_connections
+    errors = []
+    for i in range(30):
+
+        def batch(store, order, i=i):
+            items = []
+            for k in order:
+                demote = LevelEvent(
+                    agent_id=f"ag{i}-{k}",
+                    action_id="x",
+                    kind="demote",
+                    reason=f"r{i}-{k}-{store is a}",
+                    by="s",
+                    at=NOW,
+                )
+                items.append(
+                    (_lab(f"run{i}-{k}", "wrong", "user:1", f"{i}{k}{store is a}"), demote)
+                )
+            try:
+                store.add_labels(items, may_lower_harmful=True)
+            except Exception as exc:  # noqa: BLE001 - the test reports any failure, a deadlock included
+                errors.append(repr(exc))
+
+        start = threading.Barrier(2)
+
+        def run(store, order):
+            start.wait()
+            batch(store, order)
+
+        t1 = threading.Thread(target=run, args=(a, ("a", "b")))
+        t2 = threading.Thread(target=run, args=(b, ("b", "a")))
+        t1.start()
+        t2.start()
+        t1.join()
+        t2.join()
+    assert errors == []
+
+
+def test_k6_runtime_role_can_purge_expired_nonces_but_nothing_else(pg_world):
+    import psycopg
+
+    w = pg_world
+    w.store.claim_action("old", NOW - timedelta(hours=1))
+    assert w.store.purge_actions(NOW) == 1
+    w.label(w.run(), "agree")
+    with pytest.raises(psycopg.errors.InsufficientPrivilege):
+        w.store._db.execute("DELETE FROM labels")
+    with pytest.raises(psycopg.errors.InsufficientPrivilege):
+        w.store._db.execute("DELETE FROM level_events")
+
+
 def test_k6_runtime_role_cannot_rewrite_labels_or_levels(pg_world):
     w = pg_world
     rid = w.run()

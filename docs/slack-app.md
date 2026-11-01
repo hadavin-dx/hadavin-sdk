@@ -20,6 +20,10 @@ kill switch (admin rights `stop` and `reset`); in pilot and prod this is the onl
 `hadavin-sdk limits reset --by NAME` is refused there (a typed name is not a person). `limits stop` still works from
 the CLI as the emergency path.
 
+A line owner's "Clear demotion" does not erase a pattern of recent mistakes: the `wrong` labels still inside the 14-day
+window keep counting, so one new `wrong` demotes the action again at once while two older ones remain. The demotion
+card says "Recent wrongs still count until <date>". This is intended.
+
 **Setup (the client's admin, about 10 minutes):**
 1. In the manifest, set `request_url` to the client's receiver host (HTTPS).
 2. Create the app from the manifest, install it, and invite it to the approvals channel.

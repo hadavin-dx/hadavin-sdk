@@ -1,7 +1,7 @@
 """`hadavin-sdk tick`: one idempotent pass of housekeeping steps, run every 30-60 s by any scheduler.
 
 Contract (design v5 kernel, section 4):
-* ``STEPS`` runs in order: sweep, reconcile, stuck, checkpoint, measure_levels, weekly_report (K6). Later PRs
+* ``STEPS`` runs in order: sweep, reconcile, stuck, checkpoint, measure_levels, purge_seen_actions, weekly_report (K6). Later PRs
   only **append** a ``TickStep``.
 * Each step runs in its own ``try``: a failure is logged as ``step=<name> error_kind=<type>
   message=<redacted, <= 500 chars>`` and written to ``tick_state``; the other steps still run.
@@ -195,6 +195,13 @@ def weekly_report(ctx: TickContext) -> None:
         measure.weekly_report(ctx.now)
 
 
+def purge_seen_actions(ctx: TickContext) -> None:
+    """K6: delete click nonces older than twice the signature window (they can never be replayed)."""
+    measure = getattr(ctx.app, "measure", None)
+    if measure is not None:
+        measure.purge_seen(ctx.now)
+
+
 def heartbeat(ctx: TickContext) -> None:
     """After the steps (not a step): one line with this tick's outcome."""
     failed = sorted(n for n, r in ctx.results.items() if r == FAILED)
@@ -207,9 +214,9 @@ STEPS: list[TickStep] = [
     TickStep("stuck", 0, stuck),
     TickStep("checkpoint", 0, checkpoint),
     TickStep("measure_levels", 300, measure_levels),
-    TickStep(
-        "weekly_report", 0, weekly_report
-    ),  # every tick: a report nobody was told of is retried at once
+    TickStep("purge_seen_actions", 300, purge_seen_actions),
+    # every tick: a report nobody was told of is retried at once
+    TickStep("weekly_report", 0, weekly_report),
 ]
 STORE_UNREACHABLE = 4
 STORE_NOT_READY = (

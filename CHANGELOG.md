@@ -50,6 +50,13 @@
   - **`label import --by/--approved-by` is refused in `pilot` and `prod`**; only signed clicks count there. The import
     id is now the file's full SHA-256. `Channel.parse_action` returns a `nonce` with the click.
   - A replay record counts as green only when its fields agree with each other.
+  - Third review round: migration `0005` also adds `labels.seq` (insertion order: "latest" means highest seq, not
+    `created_at`), lets the runtime role DELETE on `seen_actions` only (expired click nonces are purged by the new tick
+    step `purge_seen_actions`), and `Store` gains `release_action` and `purge_actions`; `add_labels` now returns the
+    demotions it inserted and `add_level_event` returns whether it inserted.
+  - **A clear does not erase recent wrongs (intended):** the wrongs still inside the 14-day window count after a
+    clear, so one new wrong re-demotes at once while two older ones remain; the demotion card says until when.
+    One demotion (one audit entry, one card) per episode; a csv harmful row demotes once across import and approval.
   - **`limits reset --by WHO` is refused in `pilot` and `prod`** (an asserted name cannot lift the kill switch): reset
     there only by the signed channel click (admin right `reset`, once per request). `limits stop` still works from the
     CLI. In `dev` both work and the operating-system user is audited.

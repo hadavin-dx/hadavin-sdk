@@ -5,7 +5,7 @@ from __future__ import annotations
 import statistics
 import threading
 from collections import defaultdict
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 from decimal import Decimal
 
 from hadavin_sdk.models import (
@@ -24,6 +24,7 @@ from hadavin_sdk.models import (
     RunState,
     TickState,
     iso_week,
+    label_order,
     latest_labels,
     now,
 )
@@ -49,7 +50,7 @@ class MemoryStore:
         self._labels: list[Label] = []
         self._levels: list[LevelEvent] = []
         self._reports: dict[date, str] = {}
-        self._seen: set[str] = set()
+        self._seen: dict[str, datetime] = {}
 
     @staticmethod
     def _get(table: dict, key: str):
@@ -244,19 +245,21 @@ class MemoryStore:
 
     # --- K6 measurement ------------------------------------------------------------------------------------
 
-    def _push_level(self, ev: LevelEvent) -> None:
-        """Caller holds the lock. A demotion that already exists (agent, action, reason) is not added twice."""
+    def _push_level(self, ev: LevelEvent) -> bool:
+        """Caller holds the lock. A demotion that already exists (agent, action, reason) is not added twice.
+        True when a row was added."""
         if ev.kind == "demote" and any(
             (e.agent_id, e.action_id, e.reason, e.kind)
             == (ev.agent_id, ev.action_id, ev.reason, "demote")
             for e in self._levels
         ):
-            return
+            return False
         self._levels.append(ev.model_copy(update={"seq": len(self._levels) + 1}))
+        return True
 
     def add_labels(
         self, items: list[tuple[Label, LevelEvent | None]], *, may_lower_harmful: bool
-    ) -> None:
+    ) -> list[LevelEvent]:
         with self._lock:
             staged = list(self._labels)
             ids = {x.label_id for x in staged}
@@ -264,24 +267,17 @@ class MemoryStore:
             for label, demote in items:
                 if label.label_id in ids:
                     raise StaleState(f"label exists: {label.label_id}")
-                mine = [x for x in staged if x.run_id == label.run_id]
                 if label.label != "harmful" and not may_lower_harmful:
+                    mine = [x for x in staged if x.run_id == label.run_id]
                     cur = latest_labels(mine).get(label.run_id)
                     if cur is not None and cur.label == "harmful":
                         raise HarmfulSticky(label.run_id)
-                newest = max((x.created_at for x in mine), default=None)
-                if newest is not None and label.created_at <= newest:
-                    # commit order is time order: a clock read before the lock must not sort a later commit earlier
-                    label = label.model_copy(
-                        update={"created_at": newest + timedelta(microseconds=1)}
-                    )
-                staged.append(label.model_copy(deep=True))
+                staged.append(label.model_copy(update={"seq": len(staged) + 1}, deep=True))
                 ids.add(label.label_id)
                 if demote is not None:
                     levels.append(demote)
             self._labels = staged
-            for demote in levels:
-                self._push_level(demote)
+            return [d for d in levels if self._push_level(d)]
 
     def clear_demotion(self, event: LevelEvent, expected_seq: int) -> bool:
         with self._lock:
@@ -299,13 +295,24 @@ class MemoryStore:
         with self._lock:
             if nonce in self._seen:
                 return False
-            self._seen.add(nonce)
+            self._seen[nonce] = at
             return True
+
+    def release_action(self, nonce: str) -> None:
+        with self._lock:
+            self._seen.pop(nonce, None)
+
+    def purge_actions(self, before: datetime) -> int:
+        with self._lock:
+            old = [n for n, at in self._seen.items() if at < before]
+            for n in old:
+                del self._seen[n]
+            return len(old)
 
     def list_labels(self, run_id: str) -> list[Label]:
         with self._lock:
             found = [x for x in self._labels if x.run_id == run_id]
-        return [x.model_copy(deep=True) for x in sorted(found, key=lambda x: x.created_at)]
+        return [x.model_copy(deep=True) for x in sorted(found, key=label_order)]
 
     def list_labels_for(self, agent_id: str, action_id: str, since: datetime | None) -> list[Label]:
         with self._lock:
@@ -319,7 +326,7 @@ class MemoryStore:
                 for x in self._labels
                 if x.run_id in runs and (since is None or x.created_at >= since)
             ]
-        return [x.model_copy(deep=True) for x in sorted(found, key=lambda x: x.created_at)]
+        return [x.model_copy(deep=True) for x in sorted(found, key=label_order)]
 
     def count_proposals(self, agent_id: str, action_id: str, since: datetime | None) -> int:
         with self._lock:
@@ -334,20 +341,20 @@ class MemoryStore:
     def list_labels_between(self, start: datetime, end: datetime) -> list[Label]:
         with self._lock:
             found = [x for x in self._labels if start <= x.created_at < end]
-        return [x.model_copy(deep=True) for x in sorted(found, key=lambda x: x.created_at)]
+        return [x.model_copy(deep=True) for x in sorted(found, key=label_order)]
 
     def list_csv_import(self, import_id: str) -> list[Label]:
         with self._lock:
             found = [x for x in self._labels if x.label_id.startswith(f"csv-{import_id}-")]
-        return [x.model_copy(deep=True) for x in sorted(found, key=lambda x: x.created_at)]
+        return [x.model_copy(deep=True) for x in sorted(found, key=label_order)]
 
     def list_level_events(self) -> list[LevelEvent]:
         with self._lock:
             return [x.model_copy(deep=True) for x in self._levels]
 
-    def add_level_event(self, event: LevelEvent) -> None:
+    def add_level_event(self, event: LevelEvent) -> bool:
         with self._lock:
-            self._push_level(event)
+            return self._push_level(event)
 
     def current_overrides(self) -> dict[tuple[str, str], str]:
         with self._lock:

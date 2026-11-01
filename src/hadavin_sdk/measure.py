@@ -48,6 +48,7 @@ from hadavin_sdk.models import (
     Plan,
     TickState,
     iso_week,
+    label_order,
     latest_labels,
     now,
 )
@@ -491,36 +492,60 @@ class Measure:
 
     # --- labels --------------------------------------------------------------------------------------------
 
-    def _wrong_episode(self, agent_id: str, action_id: str, extra: Label | None) -> str | None:
-        """The key of a "3 wrong in 14 days" episode for the action (the run of the newest wrong label), or None."""
+    def _recent_wrongs(self, agent_id: str, action_id: str, extra: Label | None) -> list[Label]:
+        """The runs that count as wrong inside the 14-day window, newest last (by insertion order, never by time:
+        two labels can share an instant). A run is wrong when its latest ELIGIBLE label is wrong, or when any
+        unapproved csv row says wrong (that label is not evidence, but an unapproved "agree" must not hide it:
+        the safe direction). After an owner's clear these still count: a pattern of recent wrongs is not erased by
+        a clear, so one new wrong re-demotes at once while two older ones remain in the window."""
         since = self.clock() - WRONG_WINDOW
         labels = self.store.list_labels_for(agent_id, action_id, since)
         if extra is not None:
             labels = [*labels, extra]
-        # A run is wrong when its latest ELIGIBLE label is wrong, or when any unapproved csv row says wrong (that
-        # label is not evidence, but it must not be overridable by an unapproved "agree": the safe direction).
         by_run: dict[str, Label] = {
             r: x for r, x in latest_labels(labels).items() if x.label == "wrong"
         }
         for x in labels:
             seen = by_run.get(x.run_id)
-            newer = seen is None or (x.created_at, x.label_id) > (seen.created_at, seen.label_id)
+            newer = seen is None or label_order(x) > label_order(seen)
             if not x.counts and x.label == "wrong" and newer:
                 by_run[x.run_id] = x
-        wrongs = sorted(
-            (x for x in by_run.values() if x.created_at >= since),
-            key=lambda x: (x.created_at, x.label_id),
-        )
+        return sorted((x for x in by_run.values() if x.created_at >= since), key=label_order)
+
+    def _wrong_episode(self, agent_id: str, action_id: str, extra: Label | None) -> str | None:
+        """The key of a "3 wrong in 14 days" episode (the newest wrong label's id), or None."""
+        wrongs = self._recent_wrongs(agent_id, action_id, extra)
         return wrongs[-1].label_id if len(wrongs) >= WRONG_LIMIT else None
 
+    def _pair_events(self, agent_id: str, action_id: str) -> list[LevelEvent]:
+        return [
+            e
+            for e in self.store.list_level_events()
+            if (e.agent_id, e.action_id) == (agent_id, action_id)
+        ]
+
+    def _uncleared(self, agent_id: str, action_id: str, kind: str) -> bool:
+        """A demotion of this kind (`harmful`, `wrong_x3`, `ceiling`) exists since the action's last clear: a
+        further label of that kind adds no second row, no second audit entry and no second card."""
+        events = self._pair_events(agent_id, action_id)
+        after_clear = events[
+            max((i + 1 for i, e in enumerate(events) if e.kind == "clear"), default=0) :
+        ]
+        return any(e.kind == "demote" and e.reason.startswith(f"{kind}:") for e in after_clear)
+
     def _demotion_for(self, label: Label, agent_id: str, action_id: str) -> LevelEvent | None:
-        # Keyed by the label row, not the run: a harmful label after a clear is a new fact and demotes again.
-        reason = None
+        """The demotion a label causes, or None. Keyed by the label row (a csv row by its import row, so the
+        import and its later approval are ONE verdict): a harmful label after a clear is a new fact and demotes
+        again; a second label of the same kind while a demotion of that kind is uncleared adds nothing."""
         if label.label == "harmful":
-            reason = f"harmful:{label.label_id}"
+            kind, reason = "harmful", f"harmful:{_verdict_key(label.label_id)}"
         elif label.label == "wrong" and (key := self._wrong_episode(agent_id, action_id, label)):
-            reason = f"wrong_x{WRONG_LIMIT}:{key}"
-        if reason is None or self._has_event(agent_id, action_id, reason):
+            kind, reason = f"wrong_x{WRONG_LIMIT}", f"wrong_x{WRONG_LIMIT}:{key}"
+        else:
+            return None
+        if self._has_event(agent_id, action_id, reason) or self._uncleared(
+            agent_id, action_id, kind
+        ):
             return None
         return LevelEvent(
             agent_id=agent_id,
@@ -532,10 +557,7 @@ class Measure:
         )
 
     def _has_event(self, agent_id: str, action_id: str, reason: str) -> bool:
-        return any(
-            e.agent_id == agent_id and e.action_id == action_id and e.reason == reason
-            for e in self.store.list_level_events()
-        )
+        return any(e.reason == reason for e in self._pair_events(agent_id, action_id))
 
     def _check(
         self, principal_id: str, run_id: str, label: str
@@ -608,7 +630,7 @@ class Measure:
             new = self._new_label(principal_id, run_id, label, channel, approved_by, label_id)
             demote = self._demotion_for(new, plan.agent_id, plan.action_id) if plan else None
             # The sticky check runs inside the store's transaction, serialised per run: two clicks cannot both pass.
-            self.store.add_labels([(new, demote)], may_lower_harmful=may)
+            inserted = self.store.add_labels([(new, demote)], may_lower_harmful=may)
         except HarmfulSticky:
             self._audit(
                 run_id, "label", principal_id, decision=label, result="refused",
@@ -620,8 +642,8 @@ class Measure:
         except Exception as exc:  # noqa: BLE001 - the label is refused, nothing was stored
             _LOG.error("label refused: store error %s", type(exc).__name__)
             return LabelResult(False, "store_unavailable", 503)
-        self._after_commit(new, demote, lowers)
-        return LabelResult(True, "recorded", demoted=demote is not None)
+        self._after_commit(new, demote if inserted else None, lowers)
+        return LabelResult(True, "recorded", demoted=bool(inserted))
 
     def _after_commit(self, new: Label, demote: LevelEvent | None, lowers: bool) -> None:
         """Audit and announce what is already committed. Never raises: the label stands whatever the sink or the
@@ -650,18 +672,36 @@ class Measure:
                 _LOG.warning("demotion announcement failed (%s)", type(exc).__name__)
 
     def _announce(self, ev: LevelEvent) -> None:
-        """Audit the demotion and post a card with a Clear button for the line owner."""
+        """Audit the demotion and post a card with a Clear button for the line owner. The card says how long the
+        recent wrongs still count (a clear does not erase them)."""
         from hadavin_sdk.approvals.cards import render_demotion
 
         self._audit(
             "-", "demote", ev.by, object_ref=f"{ev.agent_id}.{ev.action_id}", result=ev.reason
         )
         try:
-            d = self.channel.post_card(render_demotion(ev.agent_id, ev.action_id, ev.reason))
-            if not d.ok:
+            card = render_demotion(
+                ev.agent_id, ev.action_id, ev.reason, self._wrongs_note(ev.agent_id, ev.action_id)
+            )
+            if not self.channel.post_card(card).ok:
                 self._notify(f"{ev.agent_id}.{ev.action_id} was demoted to shadow ({ev.reason}).")
         except Exception as exc:  # noqa: BLE001
             _LOG.warning("demotion card not delivered (%s)", type(exc).__name__)
+
+    def _wrongs_note(self, agent_id: str, action_id: str) -> str | None:
+        """ "Recent wrongs still count until <date>": after a clear, one new wrong re-demotes at once while two older
+        wrongs remain in the 14-day window, which lasts until the second-newest of them ages out."""
+        try:
+            wrongs = self._recent_wrongs(agent_id, action_id, None)
+        except Exception:  # noqa: BLE001 - a note is never worth a failure
+            return None
+        if len(wrongs) < WRONG_LIMIT - 1:
+            return None
+        until = wrongs[-(WRONG_LIMIT - 1)].created_at + WRONG_WINDOW
+        return (
+            f"Recent wrongs still count until {until:%Y-%m-%d} UTC: clearing this does not erase them, so one "
+            "new wrong before then demotes it again."
+        )
 
     # --- signed channel clicks -----------------------------------------------------------------------------
 
@@ -670,24 +710,55 @@ class Measure:
         parsed = parse_action_value(action.value)
         if parsed is None:
             return 200, "malformed"
+        claimed = False
         if action.nonce:
             # A signed request is good for 5 minutes, so a captured copy would replay. Each delivery is acted on once.
             try:
-                fresh = self.store.claim_action(action.nonce, self.clock())
+                claimed = self.store.claim_action(action.nonce, self.clock())
             except Exception as exc:  # noqa: BLE001
                 _LOG.error("click refused: store error %s", type(exc).__name__)
                 return 503, "store_unavailable"
-            if not fresh:
+            if not claimed:
                 self._audit("-", parsed.kind, action.user, result="refused", error_code="replay")
                 return 200, "replay"
+        try:
+            status, reason = self._dispatch(action.user, parsed)
+        except Exception:
+            self._release(action.nonce if claimed else "")
+            raise
+        if status >= 500 and claimed:
+            self._release(
+                action.nonce
+            )  # it did not take effect: the same signed request may be delivered again
+        return status, reason
+
+    def _release(self, nonce: str) -> None:
+        if not nonce:
+            return
+        try:
+            self.store.release_action(nonce)
+        except Exception as exc:  # noqa: BLE001 - the click stays spent; a new click works
+            _LOG.error("nonce not released (%s)", type(exc).__name__)
+
+    def _dispatch(self, user: str, parsed: ParsedAction) -> tuple[int, str]:
         if parsed.kind == "label":
-            res = self.record_label(action.user, *parsed.args)
+            res = self.record_label(user, *parsed.args)
             return res.status, res.reason
         if parsed.kind in ("stop", "reset"):
-            return self.kill_switch(action.user, parsed.kind)
+            return self.kill_switch(user, parsed.kind)
         if parsed.kind == "approve_import":
-            return self.approve_import(action.user, parsed.args[0])
-        return self.clear(action.user, *parsed.args)
+            return self.approve_import(user, parsed.args[0])
+        return self.clear(user, *parsed.args)
+
+    def purge_seen(self, at: datetime | None = None) -> int:
+        """Delete click nonces older than twice the signature window: they can never be replayed (the signature
+        itself would be refused), and the table would otherwise grow forever. Also gives back a stuck claim."""
+        from hadavin_sdk.approvals.hmac_v0 import (
+            MAX_AGE_S,
+        )  # lazy: the approvals package imports the registry
+
+        at = at or self.clock()
+        return self.store.purge_actions(at - timedelta(seconds=2 * MAX_AGE_S))
 
     def approve_import(self, principal_id: str, import_id: str) -> tuple[int, str]:
         """A line owner approves a pending csv import (a signed click). Nobody approves their own import. The rows
@@ -731,7 +802,9 @@ class Measure:
             )  # fmt: skip
             return 200, "refused: " + "; ".join(problems)
         try:
-            self.store.add_labels(items, may_lower_harmful=self._may_lower_harmful(author))
+            inserted = self.store.add_labels(
+                items, may_lower_harmful=self._may_lower_harmful(author)
+            )
         except HarmfulSticky:
             return 200, "refused: harmful_is_sticky"
         except StaleState:
@@ -740,7 +813,7 @@ class Measure:
             _LOG.error("approve_import refused: store error %s", type(exc).__name__)
             return 503, "store_unavailable"
         for new, demote in items:
-            self._after_commit(new, demote, False)
+            self._after_commit(new, demote if demote in inserted else None, False)
         self._audit(
             "-",
             "approve_import",
@@ -791,13 +864,14 @@ class Measure:
             return 503, "store_unavailable"
         return 200, which
 
-    def _clear_blocked(self, agent_id: str, action_id: str, last: LevelEvent) -> str | None:
-        """Why a demotion may not be lifted now, or None. A demotion by the ceiling stays while the ceiling is
-        breached (the breach notice says every action is shadow, and that must stay true). An action whose config
-        level is ``suggest`` also needs the section 6.1 numbers to hold again, derived from the store now."""
+    def _clear_blocked(self, agent_id: str, action_id: str, events: list[LevelEvent]) -> str | None:
+        """Why a demotion may not be lifted now, or None. While the ceiling is breached, an action whose demotion
+        since its last clear includes a `ceiling:` one stays down, whatever demoted it afterwards (the breach notice
+        says every action is shadow, and that must stay true). An action configured at ``suggest`` also needs the
+        section 6.1 numbers to hold again, derived from the store now."""
         status = self.ceiling_status()
         breached = bool(status and status.breached)
-        if breached and last.reason.startswith("ceiling:"):
+        if breached and self._uncleared_in(events, "ceiling"):
             return "ceiling_breached"
         agent = self.registry.agents.get(agent_id)
         if agent is not None and (agent.levels or {}).get(action_id) == "suggest":
@@ -813,6 +887,13 @@ class Measure:
                 return "evidence_below_6_1"
         return None
 
+    @staticmethod
+    def _uncleared_in(events: list[LevelEvent], kind: str) -> bool:
+        after_clear = events[
+            max((i + 1 for i, e in enumerate(events) if e.kind == "clear"), default=0) :
+        ]
+        return any(e.kind == "demote" and e.reason.startswith(f"{kind}:") for e in after_clear)
+
     def clear(self, principal_id: str, agent_id: str, action_id: str) -> tuple[int, str]:
         """A line owner lifts a demotion. Needs the ``clear_override`` admin right."""
         if not self._admin(principal_id, "clear_override", "clear"):
@@ -820,14 +901,10 @@ class Measure:
         try:
             # Look, decide, then write only if nothing changed since we looked (compare-and-set on the newest
             # level event): a demotion that lands between the check and the write must not be cleared unseen.
-            events = [
-                e
-                for e in self.store.list_level_events()
-                if (e.agent_id, e.action_id) == (agent_id, action_id)
-            ]
+            events = self._pair_events(agent_id, action_id)
             if not events or events[-1].kind != "demote":
                 return 200, "not_demoted"
-            why = self._clear_blocked(agent_id, action_id, events[-1])
+            why = self._clear_blocked(agent_id, action_id, events)
             if why:
                 self._audit(
                     "-", "clear", principal_id, object_ref=f"{agent_id}.{action_id}",
@@ -875,6 +952,9 @@ class Measure:
                 return 0, [f"{approved_by} does not hold the approve_label_import admin right"]
             if approved_by.casefold() == by.casefold():
                 return 0, ["an import cannot be approved by the person who made it"]
+        text = text.removeprefix(
+            "\ufeff"
+        )  # a spreadsheet's UTF-8 byte order mark is not part of the header
         reader = csv.DictReader(io.StringIO(text))
         if reader.fieldnames is None or set(reader.fieldnames) != {"run_id", "label"}:
             return 0, ["the csv header must be exactly: run_id,label"]
@@ -897,7 +977,7 @@ class Measure:
         if problems or not rows:
             return 0, problems or ["the csv has no rows"]
         try:
-            self.store.add_labels(items, may_lower_harmful=self._may_lower_harmful(by))
+            inserted = self.store.add_labels(items, may_lower_harmful=self._may_lower_harmful(by))
         except HarmfulSticky:
             return 0, ["harmful_is_sticky"]
         except StaleState:
@@ -906,7 +986,7 @@ class Measure:
             _LOG.error("import refused: store error %s", type(exc).__name__)
             return 0, ["store_unavailable"]
         for new, demote in items:
-            self._after_commit(new, demote, False)
+            self._after_commit(new, demote if demote in inserted else None, False)
         if approved_by is None:
             self._announce_import(sha, len(items))
         self._safe_enforce()
@@ -960,44 +1040,48 @@ class Measure:
         )
 
     def enforce(self, at: datetime | None = None) -> list[LevelEvent]:
-        """Idempotent: re-check the 3-wrong rule (two simultaneous labels can each miss the third) and the
-        ceiling, and insert the demotions that are missing. A cleared episode is not demoted again."""
+        """Idempotent and safe to run twice at once: re-check the 3-wrong rule (two simultaneous labels can each
+        miss the third) and the ceiling, and insert the demotions that are missing. What was really inserted (the
+        store says; a demotion that already exists is a no-op) is what gets audited and announced and returned."""
         at = at or self.clock()
-        added: list[LevelEvent] = []
-        existing = {(e.agent_id, e.action_id, e.reason) for e in self.store.list_level_events()}
+        wanted: list[LevelEvent] = []
         for agent_id, action_id in self._pairs():
             key = self._wrong_episode(agent_id, action_id, None)
-            if key and (agent_id, action_id, f"wrong_x{WRONG_LIMIT}:{key}") not in existing:
-                added.append(self._level(agent_id, action_id, f"wrong_x{WRONG_LIMIT}:{key}", at))
+            reason = f"wrong_x{WRONG_LIMIT}:{key}"
+            if key and not self._uncleared(agent_id, action_id, f"wrong_x{WRONG_LIMIT}"):
+                wanted.append(self._level(agent_id, action_id, reason, at))
         status = self.ceiling_status(at)
-        breach_notice = None
+        ceiling_events: list[LevelEvent] = []
         if status and status.breached and status.latest_harmful_at is not None:
             reason = (
                 f"ceiling:{status.latest_harmful_at.astimezone(UTC).isoformat(timespec='seconds')}"
             )
-            fresh = [
-                self._level(a, x, reason, at)
-                for a, x in self._pairs()
-                if (a, x, reason) not in existing
-            ]
-            added += fresh
-            if fresh:
-                breach_notice = status
-        for ev in added:
-            self.store.add_level_event(ev)
-            self._audit(
-                "-", "demote", ev.by, object_ref=f"{ev.agent_id}.{ev.action_id}", result=ev.reason
-            )
+            ceiling_events = [self._level(a, x, reason, at) for a, x in self._pairs()]
+        added: list[LevelEvent] = []
+        for ev in [*wanted, *ceiling_events]:
+            if self.store.add_level_event(ev):
+                added.append(ev)
+                self._audit(
+                    "-",
+                    "demote",
+                    ev.by,
+                    object_ref=f"{ev.agent_id}.{ev.action_id}",
+                    result=ev.reason,
+                )
         for ev in added:
             if not ev.reason.startswith("ceiling:"):
                 self._announce_card(ev)
-        if breach_notice:
-            c = breach_notice
-            self._notify(
+        breach = next((e for e in added if e.reason.startswith("ceiling:")), None)
+        # Two passes can each insert some of the breach's rows: the notice is claimed per breach so it goes out once.
+        if status and breach is not None and self.store.claim_action(f"breach/{breach.reason}", at):
+            c = status
+            reached = self._notify(
                 f"Ceiling breached: {c.harmful} of {c.labelled} labelled in the last "
                 f"{c.ceiling.window_days} days counts against it ({', '.join(c.ceiling.counts)}; max {c.ceiling.max}). Every action is shadow. "
                 "Promotion is blocked until the window clears or the sponsor changes the ceiling in writing."
             )
+            if reached == 0:
+                self._release(f"breach/{breach.reason}")
         return added
 
     @staticmethod
@@ -1015,7 +1099,14 @@ class Measure:
         from hadavin_sdk.approvals.cards import render_demotion
 
         try:
-            self.channel.post_card(render_demotion(ev.agent_id, ev.action_id, ev.reason))
+            self.channel.post_card(
+                render_demotion(
+                    ev.agent_id,
+                    ev.action_id,
+                    ev.reason,
+                    self._wrongs_note(ev.agent_id, ev.action_id),
+                )
+            )
         except Exception as exc:  # noqa: BLE001
             _LOG.warning("demotion card not delivered (%s)", type(exc).__name__)
 
@@ -1133,21 +1224,27 @@ class Measure:
 
     def weekly_report(self, at: datetime | None = None) -> str | None:
         """Write and announce the report for the last complete ISO week when there is none yet. Returns the body
-        when this call wrote it."""
+        when this call wrote it. Two ticks that overlap announce once: the week is claimed first (a row in the
+        click-nonce table, which expires and is purged), the line owner is told, the report is stored, and the
+        claim is given back; if the owner cannot be told the claim is given back too and the next tick retries."""
         if self.ceiling is None:
             return None  # dev without baseline.yaml: nothing to report against
         at = at or self.clock()
         week = week_start(at) - timedelta(days=7)
         if self.store.get_report(week) is not None:
             return None
-        body = self.render_report(week, at)
-        # Tell the line owner first, store second: a notice that cannot be delivered leaves the week without a
-        # report, so the next tick (the step runs hourly) renders and tries again instead of losing the notice.
-        if self._notify(_summary(week, body)) == 0:
-            raise RuntimeError("weekly report not announced: no line owner could be reached")
-        if not self.store.put_report(week, body):
-            return None  # another tick stored it between our check and now
-        return body
+        claim = f"report/{week.isoformat()}"
+        if not self.store.claim_action(claim, at):
+            return None  # another tick is announcing this week (or crashed: the claim expires and is purged)
+        try:
+            if self.store.get_report(week) is not None:  # finished between our check and our claim
+                return None
+            body = self.render_report(week, at)
+            if self._notify(_summary(week, body)) == 0:
+                raise RuntimeError("weekly report not announced: no line owner could be reached")
+            return body if self.store.put_report(week, body) else None
+        finally:
+            self._release(claim)
 
     def render_report(self, week: date, at: datetime | None = None) -> str:
         at = at or self.clock()
@@ -1220,11 +1317,13 @@ class Measure:
         ]
         out += ["", "## Caught, and by what"]
         events: list[AuditEvent] = []
+        audit_ok = False
         try:
             # Events that could not be written when they happened wait in the audit's outbox; bring them into the
             # log first so the counts below do not miss them.
             self.audit.reconcile()
             events = self.audit.events()
+            audit_ok = True
             counts = caught_week(events, week)
             out += [f"- {k}: {v}" for k, v in sorted(counts.items())] or ["- nothing was caught"]
         except Exception as exc:  # noqa: BLE001
@@ -1235,14 +1334,20 @@ class Measure:
         out += ["", "## Ceiling"]
         status = self.ceiling_status(at)
         lowered = [e for e in events if e.operation == "harmful_lowered"]
-        out.append(
-            f"- harmful verdicts lowered by a line owner: {sum(iso_week(e.ts) == week for e in lowered)} this week, "
-            f"{len(lowered)} in all. A lowered verdict leaves the ceiling count, so each one is listed:"
-        )
-        out += [
-            f"  - {e.run_id}: lowered to {e.decision} by {e.principal} at {e.ts:%Y-%m-%d %H:%M} UTC"
-            for e in lowered
-        ] or ["  - none"]
+        if audit_ok:
+            out.append(
+                f"- harmful verdicts lowered by a line owner: {sum(iso_week(e.ts) == week for e in lowered)} this "
+                f"week, {len(lowered)} in all. A lowered verdict leaves the ceiling count, so each one is listed:"
+            )
+            out += [
+                f"  - {e.run_id}: lowered to {e.decision} by {e.principal} at {e.ts:%Y-%m-%d %H:%M} UTC"
+                for e in lowered
+            ] or ["  - none"]
+        else:  # an unknown is not a zero
+            out.append(
+                "- harmful verdicts lowered by a line owner: COULD NOT BE READ (the audit was unreadable); do not "
+                "assume there were none."
+            )
         if status:
             c = status.ceiling
             out += [
@@ -1317,6 +1422,12 @@ class Measure:
         if late is not None:
             out.append(f"- Events started later than {LATE_START_S // 60} minutes: {late}.")
         return out
+
+
+def _verdict_key(label_id: str) -> str:
+    """A csv row is one verdict whether it is pending (`-p`) or approved (`-a`): the demotion it causes is keyed by
+    the row, so approving an import never demotes (or announces) a second time."""
+    return re.sub(r"^(csv-[0-9a-f]{64}-\d+)-[pa]$", r"\1", label_id)
 
 
 def _rate(k: int, n: int) -> str:
