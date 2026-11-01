@@ -25,6 +25,18 @@ class StaleState(RuntimeError):
     """Compare-and-set failed: the row changed since it was read."""
 
 
+def is_connectivity_error(exc: BaseException) -> bool:
+    """True for "the store cannot be reached" (a refused or dropped connection, a timeout), false for an error
+    from a store that answered: a missing table, a missing grant. No driver import: psycopg's connection
+    errors are recognised by class name along the MRO."""
+    if isinstance(exc, StoreUnavailable | OSError):
+        return True
+    return any(
+        c.__name__ in ("OperationalError", "InterfaceError") and c.__module__.startswith("psycopg")
+        for c in type(exc).__mro__
+    )
+
+
 class StoreUnavailable(ConfigError):
     """The store cannot be reached (`tick` exits 4; nothing was changed)."""
 

@@ -42,7 +42,7 @@ from hadavin_sdk.guard.injection import combine
 from hadavin_sdk.limits import Limits
 from hadavin_sdk.models import new_id
 from hadavin_sdk.registry import load_registry
-from hadavin_sdk.store.protocol import StoreUnavailable
+from hadavin_sdk.store.protocol import StoreUnavailable, is_connectivity_error
 
 
 def _num(x: float | None, places: int = 2) -> str:
@@ -345,13 +345,21 @@ def audit_verify(audit) -> int:
     return 0 if result.ok else 1
 
 
-def _kill_switch_store_down(what: str) -> int:
+def _kill_switch_store_down(what: str, exc: BaseException) -> int:
+    """4 when the store cannot be reached; 2 when it answers but is not ready (missing table or grant)."""
+    if is_connectivity_error(exc):
+        print(
+            f"kill switch NOT {what}: the store is unreachable. Nothing was changed. "
+            "Fix the store, then run the same command again.",
+            file=sys.stderr,
+        )
+        return 4
     print(
-        f"kill switch NOT {what}: the store is unreachable. Nothing was changed. "
-        "Fix the store, then run the same command again.",
+        f"kill switch NOT {what}: the store answered with an error ({type(exc).__name__}); run "
+        "hadavin-sdk migrate and check the runtime role's grants. Nothing was changed.",
         file=sys.stderr,
     )
-    return 4
+    return 2
 
 
 def kill_switch(limits: Limits, action: str, by: str) -> int:
@@ -363,14 +371,14 @@ def kill_switch(limits: Limits, action: str, by: str) -> int:
     if action == "stop":
         try:
             limits.stop(by)
-        except (StoreUnavailable, OSError):
-            return _kill_switch_store_down("set")
+        except AuditUnavailable:
+            raise
+        except Exception as exc:  # noqa: BLE001 - classified below
+            return _kill_switch_store_down("set", exc)
         print(f"kill switch ON (by {by})")
         return 0
     try:
         limits.reset(by)
-    except (StoreUnavailable, OSError):
-        return _kill_switch_store_down("reset")
     except AuditUnavailable:
         print(
             "refused: the audit store is unavailable, so the reset cannot be recorded. "
@@ -378,6 +386,8 @@ def kill_switch(limits: Limits, action: str, by: str) -> int:
             file=sys.stderr,
         )
         return 3
+    except Exception as exc:  # noqa: BLE001 - classified below
+        return _kill_switch_store_down("reset", exc)
     print(f"kill switch OFF (by {by})")
     return 0
 

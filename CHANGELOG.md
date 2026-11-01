@@ -18,7 +18,7 @@
 - **`tick` now matches the v5 contract.** Exit code **4** (was 3) when the store is unreachable, for both
   `run_tick` and the CLI; 3 stays the wrapper code for any other uncaught error. The heartbeat summary line is no
   longer a step: it is logged after the steps, writes no `tick_state` row and cannot change the exit code (K7 sends
-  the external heartbeat from the CLI entrypoint). **A scheduler that treated exit 3 as "store down" must now watch 4.** `tick` also returns 4 when the store stops answering during the steps (it re-probes after a step failed); 1 stays for a failed step with a reachable store. `limits stop` and `limits reset` with the store unreachable now exit 4 (was 2) and print "kill switch NOT set" or "NOT reset" with "Nothing was changed".
+  the external heartbeat is PENDING K7: nothing sends it today). **A scheduler that treated exit 3 as "store down" must now watch 4.** `tick` also returns 4 when the store stops answering during the steps (it re-probes after a step failed); 1 stays for a failed step with a reachable store. Exit 4 is only for connection failures: a store that answers with a missing table or grant exits 2 ("run migrate, check grants") for `tick`, `limits stop` and `limits reset`. `limits stop` and `limits reset` with the store unreachable now exit 4 (was 2) and print "kill switch NOT set" or "NOT reset" with "Nothing was changed".
 - **K1b-lite gap fixes.**
   - SDK version is now `0.1.0` (`pyproject.toml` and `hadavin_sdk.__version__`, pyproject and `__init__` kept equal by a test). Replay and
     score reports print it; `0.0.0` still prints "unreleased build".

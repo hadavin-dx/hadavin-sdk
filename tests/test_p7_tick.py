@@ -594,3 +594,64 @@ def test_all_steps_ok_after_the_probe_exits_0_without_a_second_probe(app):
     app.store.get_tick_state = lambda s: probes.append(s) or real(s)
     assert run_tick(app, steps=[]) == 0
     assert probes.count("heartbeat") == 1
+
+
+def _psycopg_error(name):
+    return type(name, (Exception,), {"__module__": "psycopg.errors"})
+
+
+def test_connectivity_classification():
+    from hadavin_sdk.store.protocol import StoreUnavailable, is_connectivity_error
+
+    assert is_connectivity_error(OSError("x")) and is_connectivity_error(StoreUnavailable("x"))
+    assert is_connectivity_error(_psycopg_error("OperationalError")("x"))
+    assert is_connectivity_error(_psycopg_error("InterfaceError")("x"))
+    assert not is_connectivity_error(_psycopg_error("UndefinedTable")("x"))
+    assert not is_connectivity_error(_psycopg_error("InsufficientPrivilege")("x"))
+    assert not is_connectivity_error(RuntimeError("x"))
+
+
+def test_probe_error_from_an_answering_store_exits_2_not_4(app, monkeypatch):
+    ran = []
+
+    def missing(step):
+        raise _psycopg_error("UndefinedTable")("relation tick_state does not exist")
+
+    monkeypatch.setattr(app.store, "get_tick_state", missing)
+    assert run_tick(app, steps=[TickStep("x", 0, lambda ctx: ran.append(1))]) == 2
+    assert ran == []
+
+
+def test_psycopg_connection_error_at_the_probe_exits_4(app, monkeypatch):
+    def down(step):
+        raise _psycopg_error("OperationalError")("server closed the connection")
+
+    monkeypatch.setattr(app.store, "get_tick_state", down)
+    assert run_tick(app, steps=[]) == 4
+
+
+def test_reprobe_error_from_an_answering_store_keeps_exit_1(app):
+    calls = {"n": 0}
+    real = app.store.get_tick_state
+
+    def flaky(step):
+        calls["n"] += 1
+        if calls["n"] > 1:
+            raise _psycopg_error("InsufficientPrivilege")("denied")
+        return real(step)
+
+    app.store.get_tick_state = flaky
+
+    def boom(ctx):
+        raise RuntimeError("step broke")
+
+    assert run_tick(app, steps=[TickStep("x", 0, boom)]) == 1
+
+
+def test_a_failing_log_handler_cannot_change_the_exit_code(app, monkeypatch):
+    def bad(*a, **k):
+        raise RuntimeError("handler broke")
+
+    monkeypatch.setattr(tick, "heartbeat", bad)
+    monkeypatch.setattr(tick._LOG, "error", bad)
+    assert run_tick(app, steps=[]) == 0
