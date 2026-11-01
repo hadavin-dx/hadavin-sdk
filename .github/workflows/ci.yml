@@ -126,7 +126,12 @@ jobs:
             "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
           echo "${GITLEAKS_SHA256}  $RUNNER_TEMP/gitleaks.tgz" | sha256sum -c -
           tar -xzf "$RUNNER_TEMP/gitleaks.tgz" -C "$RUNNER_TEMP" gitleaks
-          "$RUNNER_TEMP/gitleaks" git --redact --no-banner --exit-code 1 .
+          "$RUNNER_TEMP/gitleaks" git --redact --no-banner --exit-code 1 \
+            --report-format json --report-path "$RUNNER_TEMP/gl.json" . || {
+            # the secret itself is redacted; print only where it is, so a false positive can be fingerprinted
+            python3 -c 'import json,sys; [print(f["RuleID"], f["File"], f["StartLine"], f["Commit"][:10], f["Fingerprint"]) for f in json.load(open(sys.argv[1]))]' "$RUNNER_TEMP/gl.json"
+            exit 1
+          }
       - name: Vulnerabilities, misconfigurations and secrets in the files (Trivy, checksum-verified binary)
         run: |
           curl -sSfL --proto "=https" --tlsv1.2 -o "$RUNNER_TEMP/trivy.tgz" \
