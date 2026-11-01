@@ -4,6 +4,7 @@ import hashlib
 
 import pytest
 import sqlglot
+from askdata import validate as validate_module
 from askdata.validate import RULES, Rejected, prefilter, validate
 
 from .attackrun import outcome
@@ -161,3 +162,13 @@ def test_an_unexpected_exception_inside_the_checks_becomes_a_refusal(monkeypatch
     with pytest.raises(Rejected) as caught:
         validate("SELECT 1")
     assert caught.value.rule == "V10"
+
+
+def test_node_limit_is_2000_and_rejects_with_v10(monkeypatch):
+    assert validate_module.MAX_NODES == 2000
+    sql = "SELECT order_id, customer_id FROM analytics.orders_v WHERE status = 'paid'"
+    assert validate(sql)
+    monkeypatch.setattr(validate_module, "MAX_NODES", 5)
+    with pytest.raises(Rejected) as caught:
+        validate(sql)
+    assert caught.value.rule == "V10" and "nodes" in caught.value.detail

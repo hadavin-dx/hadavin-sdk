@@ -9,6 +9,7 @@ import time
 
 import psycopg
 import pytest
+from askdata import pgsource
 from askdata.pgsource import WATCHDOG_NAME, Limits, PgError, PgSource
 
 STACKED = "COMMIT; BEGIN READ WRITE; INSERT INTO scratch.marker VALUES ({m}); COMMIT"
@@ -138,7 +139,7 @@ def test_caps_watchdog_cancels_a_blocked_statement(db, capsys):
             f"\nT-E8 watchdog: pg_sleep(30) cancelled after {elapsed:.2f}s (limit {timeout}s, server default 15s)"
         )
     assert caught.value.sqlstate == "57014"
-    assert elapsed < timeout + 2.5
+    assert elapsed < timeout + 1  # measured 0.02-0.05 s over locally (docker, Windows)
     assert not [t for t in threading.enumerate() if t.name == WATCHDOG_NAME and t.is_alive()]
 
 
@@ -198,3 +199,23 @@ def test_a_transient_connect_failure_is_retried_once_and_a_second_failure_is_rep
     with pytest.raises(PgError) as caught:
         PgSource(db.ro_dsn).run("SELECT 1")
     assert caught.value.sqlstate is None and len(calls) == 2
+
+
+def test_deadline_is_checked_per_row_not_per_batch(db, monkeypatch):
+    """A fake clock that moves one second per reading: a per-batch check would read it a handful of times and pass;
+    a per-row check reads it for every row of the batch and trips the 20 s deadline."""
+
+    class Clock:
+        n = 0
+
+        @classmethod
+        def monotonic(cls) -> float:
+            cls.n += 1
+            return float(cls.n)
+
+    monkeypatch.setattr(pgsource, "time", Clock)
+    with pytest.raises(PgError) as caught:
+        PgSource(db.ro_dsn, limits=Limits(statement_timeout_s=20.0)).run(
+            "SELECT g FROM generate_series(1, 1000) AS g"
+        )
+    assert caught.value.sqlstate == "57014" and Clock.n < 40

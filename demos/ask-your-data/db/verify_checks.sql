@@ -66,8 +66,8 @@ WITH me AS (
     SELECT 10, 'no email column visible anywhere', count(*) = 0, count(*) || ' visible columns named like email'
     FROM information_schema.columns c WHERE position('email' in lower(c.column_name)) > 0
     UNION ALL
-    SELECT 11, 'default_transaction_read_only is on for this login',
-           current_setting('default_transaction_read_only') = 'on', current_setting('default_transaction_read_only')
+    SELECT 11, 'INFO default_transaction_read_only (a convenience, not a control: the login can override it)', true,
+           'value=' || current_setting('default_transaction_read_only')
     UNION ALL
     SELECT 13, 'no privilege on any sequence', COALESCE(NOT bool_or(has_sequence_privilege(c.oid, 'USAGE,SELECT,UPDATE')), true),
            count(*) || ' sequences checked'
@@ -79,6 +79,18 @@ WITH me AS (
            count(*) FILTER (WHERE has_function_privilege(p.oid, 'EXECUTE')) || ' executable functions'
     FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
     WHERE left(n.nspname, 3) <> 'pg_' AND n.nspname <> 'information_schema'
+    UNION ALL
+    SELECT 15, 'no EXECUTE on file, large-object or dblink functions (pg_read_file, pg_ls_dir, lo_import, dblink*)',
+           count(*) FILTER (WHERE has_function_privilege(p.oid, 'EXECUTE')) = 0,
+           count(*) FILTER (WHERE has_function_privilege(p.oid, 'EXECUTE')) || ' executable of ' || count(*) || ' checked'
+    FROM pg_proc p
+    WHERE p.proname IN ('pg_read_file', 'pg_read_binary_file', 'pg_ls_dir', 'pg_stat_file', 'pg_ls_logdir', 'pg_ls_waldir',
+                        'lo_import', 'lo_export')
+       OR p.proname LIKE 'dblink%'
+    UNION ALL
+    SELECT 16, 'none of the file or network extensions installed (dblink, file_fdw, postgres_fdw, adminpack)',
+           count(*) = 0, count(*) || ' installed'
+    FROM pg_extension e WHERE e.extname IN ('dblink', 'file_fdw', 'postgres_fdw', 'adminpack')
     UNION ALL
     SELECT 12, 'INFO pg_sleep is executable (bounded by the watchdog, not by this role)', true,
            'execute=' || has_function_privilege('pg_sleep(double precision)', 'EXECUTE')
