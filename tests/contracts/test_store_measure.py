@@ -244,3 +244,50 @@ def test_k6_tick_state_detail_round_trips(store):
     assert store.get_tick_state("backlog").detail == {"oldest_received_age_s": 840, "n": [1, 2]}
     store.save_tick_state(TickState(step="backlog", last_run_at=at(27)))
     assert store.get_tick_state("backlog").detail is None
+
+
+def test_k6_add_labels_is_one_transaction_with_the_sticky_rule_inside(store):
+    from hadavin_sdk.store.protocol import HarmfulSticky
+
+    make_run(store, "a", at(26), S.NO_ACTION, "shadow", plan_after=1)
+    make_run(store, "b", at(26), S.NO_ACTION, "shadow", plan_after=1)
+    demote = LevelEvent(
+        agent_id="agent", action_id="fix", kind="demote", reason="h", by="u", at=at(26, 1)
+    )
+    first = [(label("b", "harmful", at(26, 1), lid="b1"), demote)]
+    store.add_labels(first, may_lower_harmful=False)
+    items = [
+        (label("a", "agree", at(26, 2), lid="a1"), None),
+        (label("b", "agree", at(26, 3), lid="b2"), None),  # lowers a harmful verdict
+    ]
+    with pytest.raises(HarmfulSticky):
+        store.add_labels(items, may_lower_harmful=False)
+    assert store.list_labels("a") == []  # nothing of the batch stayed
+    assert [e.reason for e in store.list_level_events()] == ["h"]
+    store.add_labels(items, may_lower_harmful=True)
+    assert [x.label for x in store.list_labels("b")] == ["harmful", "agree"]
+    # The sticky rule reads the LATEST eligible label: b is agree now, so anyone may change it.
+    store.add_labels([(label("b", "wrong", at(26, 4), lid="b3"), None)], may_lower_harmful=False)
+    # A duplicate id stores nothing, not even the other rows of the batch.
+    dup = [
+        (label("a", "partial", at(26, 5), lid="a2"), None),
+        (label("a", "agree", at(26, 6), lid="a1"), None),
+    ]
+    with pytest.raises(StaleState):
+        store.add_labels(dup, may_lower_harmful=True)
+    assert [x.label_id for x in store.list_labels("a")] == ["a1"]
+
+
+def test_k6_claim_action_accepts_a_nonce_once(store):
+    assert store.claim_action("1700000000:v0=abc", at(26)) is True
+    assert store.claim_action("1700000000:v0=abc", at(27)) is False
+    assert store.claim_action("1700000001:v0=abc", at(27)) is True
+
+
+def test_k6_csv_import_lookup_is_exact(store):
+    make_run(store, "a", at(26), S.NO_ACTION, "shadow", plan_after=1)
+    full = "a1" * 32
+    store.add_label(label("a", "agree", at(26, 1), channel="csv", lid=f"csv-{full}-1-p"))
+    assert [x.label_id for x in store.list_csv_import(full)] == [f"csv-{full}-1-p"]
+    assert store.list_csv_import(full[:8]) == []
+    assert store.list_csv_import("b2" * 32) == []

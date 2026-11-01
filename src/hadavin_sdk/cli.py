@@ -15,7 +15,7 @@
   hadavin-sdk [--config DIR] score --outputs OUT --answers F --cause-list D --bundles D
                                                          K1b-lite: count the replay's results into score/score-report.md;
                                                          exit 0 report produced, 2 refused, 3 failure (no verdict)
-  hadavin-sdk [--config DIR] label import FILE --by WHO [--approved-by WHO]
+  hadavin-sdk [--config DIR] label import FILE --by WHO [--approved-by WHO]  (dev only)
                                                          K6: record labels from a csv (columns run_id,label) as
                                                          channel csv; they count as promotion evidence only once a line
                                                          owner approves: the signed approve_import click on the card
@@ -39,6 +39,7 @@ the current folder (and its check modules) is importable.
 from __future__ import annotations
 
 import argparse
+import getpass
 import logging
 import os
 import sys
@@ -352,12 +353,24 @@ def measure_cmd(app, args) -> int:
             print("(no stored report for this week: rendered now, not stored)", file=sys.stderr)
         print(stored if stored is not None else measure.render_report(week))
         return 0
+    from hadavin_sdk.deferred import LIVE
+
+    if getattr(getattr(app, "config", None), "environment", "dev") in LIVE:
+        # --by and --approved-by are asserted names. One operator could type two of them and approve their own
+        # labels, so in pilot and prod only a signed channel click counts as a person.
+        print(
+            "refused: in pilot and prod labels come only from signed channel clicks; "
+            "--by and --approved-by are not accepted here",
+            file=sys.stderr,
+        )
+        return 2
     # NOSONAR S8707: the operator's own csv; a CLI argument is not attacker input
     text = Path(args.file).read_text(encoding="utf-8")  # NOSONAR
     print(
-        "note: --by and --approved-by are asserted names; the CLI cannot verify who ran it",
+        "note: dev only. --by and --approved-by are asserted names; the operating-system user is recorded",
         file=sys.stderr,
     )
+    measure.note_cli_import(args.by, args.approved_by, getpass.getuser(), csv_import_id(text))
     stored_n, problems = measure.import_csv(text, args.by, args.approved_by)
     for problem in problems:
         print(f"REFUSED: {problem}")

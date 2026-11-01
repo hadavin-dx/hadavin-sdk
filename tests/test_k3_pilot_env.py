@@ -140,7 +140,10 @@ def test_k3_levels_must_cover_every_action_in_pilot(tmp_path):
 
 def test_k3_suggest_refused_without_evidence(tmp_path):
     cfg = pilot_cfg(tmp_path, agent={"levels": {"restart_service": "suggest"}})
-    with pytest.raises(ConfigError, match="cannot load before K8"):
+    with pytest.raises(
+        ConfigError,
+        match=r"agent ito-agent: suggest for restart_service cannot load before K8(;|$)",
+    ):
         load_registry(load_config(cfg))
 
 

@@ -112,7 +112,7 @@ def render_demotion(agent_id: str, action_id: str, reason: str) -> Card:
 
 def render_import(import_id: str, n: int) -> Card:
     """Posted when a csv of labels waits for a line owner. The button is their signed approval (K6)."""
-    text = f"{n} labels from csv import {import_id} wait for a line owner. They do not count as evidence until approved."
+    text = f"{n} labels from csv import {import_id[:12]} wait for a line owner. They do not count as evidence until approved."
     button = {
         "id": "approve_import",
         "label": "Approve import",

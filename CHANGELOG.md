@@ -36,7 +36,14 @@
   - The promotion file's SHA-256 is unkeyed: the loader also needs the replay record it names to be green in
     `replay-records.jsonl`, and `build` re-derives the numbers from the store in pilot/prod.
   - The weekly report is announced first and stored second; an unreachable line owner fails the `weekly_report` step
-    and the next tick retries.
+    and the next tick retries (the step now runs every tick).
+  - `Store` also gains `add_labels` (labels + demotions + the sticky rule in one transaction), `claim_action`
+    (replay guard), `list_csv_import`; migration `0005` adds the append-only table `seen_actions`.
+  - Signed clicks are acted on once (a replayed request is refused). `clear` is refused for a `ceiling:` demotion
+    while the ceiling is breached, and for a `suggest` action until the section 6.1 numbers hold again.
+  - **`label import --by/--approved-by` is refused in `pilot` and `prod`**; only signed clicks count there. The import
+    id is now the file's full SHA-256. `Channel.parse_action` returns a `nonce` with the click.
+  - A replay record counts as green only when its fields agree with each other.
 - **K3 pilot build path (levels, shadow cut-off, fail-closed loading).** Action contracts change shape:
   `executor.system` moves to a contract field `target_system`, and `executor` is now a tagged union
   (`kind: none | manual | http`). Edit every contract: move `system:` out of `executor:` to `target_system:` beside

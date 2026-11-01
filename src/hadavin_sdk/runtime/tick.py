@@ -207,7 +207,9 @@ STEPS: list[TickStep] = [
     TickStep("stuck", 0, stuck),
     TickStep("checkpoint", 0, checkpoint),
     TickStep("measure_levels", 300, measure_levels),
-    TickStep("weekly_report", 3600, weekly_report),
+    TickStep(
+        "weekly_report", 0, weekly_report
+    ),  # every tick: a report nobody was told of is retried at once
 ]
 STORE_UNREACHABLE = 4
 STORE_NOT_READY = (

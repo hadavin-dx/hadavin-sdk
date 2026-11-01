@@ -38,7 +38,11 @@ def handle_slack_action(
     if measure is not None:
         action = approvals.channel.parse_action(headers, body, approvals.clock().timestamp())
         if action is not None and is_ours(action.value):
-            status, reason = measure.handle_action(action)
+            try:
+                status, reason = measure.handle_action(action)
+            except Exception as exc:  # noqa: BLE001 - the receiver always answers
+                _LOG.error("measure action failed (%s)", type(exc).__name__)
+                return 503, b""
             _LOG.info("measure action: %s", reason)
             return status, b""
     try:

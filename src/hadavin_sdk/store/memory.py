@@ -27,7 +27,7 @@ from hadavin_sdk.models import (
     latest_labels,
     now,
 )
-from hadavin_sdk.store.protocol import NotFound, StaleState
+from hadavin_sdk.store.protocol import HarmfulSticky, NotFound, StaleState
 
 ABSTAIN_REASONS = ("uncited", "ungrounded", "run_budget", "tool_error", "redaction_error")
 HELD_LABELS = ("wrong", "harmful", "missed")
@@ -49,6 +49,7 @@ class MemoryStore:
         self._labels: list[Label] = []
         self._levels: list[LevelEvent] = []
         self._reports: dict[date, str] = {}
+        self._seen: set[str] = set()
 
     @staticmethod
     def _get(table: dict, key: str):
@@ -250,6 +251,37 @@ class MemoryStore:
             self._labels.append(label.model_copy(deep=True))
             if demote is not None:
                 self._levels.append(demote.model_copy(update={"seq": len(self._levels) + 1}))
+
+    def add_labels(
+        self, items: list[tuple[Label, LevelEvent | None]], *, may_lower_harmful: bool
+    ) -> None:
+        with self._lock:
+            staged = list(self._labels)
+            ids = {x.label_id for x in staged}
+            levels = []
+            for label, demote in items:
+                if label.label_id in ids:
+                    raise StaleState(f"label exists: {label.label_id}")
+                if label.label != "harmful" and not may_lower_harmful:
+                    cur = latest_labels([x for x in staged if x.run_id == label.run_id]).get(
+                        label.run_id
+                    )
+                    if cur is not None and cur.label == "harmful":
+                        raise HarmfulSticky(label.run_id)
+                staged.append(label.model_copy(deep=True))
+                ids.add(label.label_id)
+                if demote is not None:
+                    levels.append(demote)
+            self._labels = staged
+            for demote in levels:
+                self._levels.append(demote.model_copy(update={"seq": len(self._levels) + 1}))
+
+    def claim_action(self, nonce: str, at: datetime) -> bool:
+        with self._lock:
+            if nonce in self._seen:
+                return False
+            self._seen.add(nonce)
+            return True
 
     def list_labels(self, run_id: str) -> list[Label]:
         with self._lock:

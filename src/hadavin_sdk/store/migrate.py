@@ -58,6 +58,7 @@ GRANTS: dict[str, Grant] = {
     "labels": Grant("table", _APPEND),
     "level_events": Grant("table", _APPEND),
     "reports": Grant("table", _APPEND),
+    "seen_actions": Grant("table", _APPEND),
     "level_events_seq_seq": Grant("sequence", "USAGE"),
     "v_pilot_week": Grant("view", "SELECT", portal=True),
     "v_caught_week": Grant("view", "SELECT", portal=True),

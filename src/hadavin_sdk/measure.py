@@ -45,13 +45,14 @@ from hadavin_sdk.models import (
     AuditEvent,
     Label,
     LevelEvent,
+    Plan,
     TickState,
     iso_week,
     latest_labels,
     now,
 )
 from hadavin_sdk.stats import upper_error_bound
-from hadavin_sdk.store.protocol import NotFound, StaleState
+from hadavin_sdk.store.protocol import HarmfulSticky, NotFound, StaleState
 
 if TYPE_CHECKING:
     from hadavin_sdk.approvals.channel import Channel
@@ -75,6 +76,9 @@ HELD_MAPS_MAX_DAYS = (
 )
 LATE_START_S = 600
 IST = timezone(timedelta(hours=5, minutes=30))
+_ALIASES = {
+    "should_have_answered": "missed"
+}  # the abstain button's value before K6 built its parser
 _ID = re.compile(r"[A-Za-z0-9_.-]{1,100}")
 _NAME = re.compile(r"[A-Za-z0-9_-]{1,100}")
 _PLACEHOLDER = re.compile(r"<[^>]*>")
@@ -108,13 +112,17 @@ def parse_action_value(value: str) -> ParsedAction | None:
     first field names the kind: ``label|<run_id>|<label>`` or ``clear|<agent_id>|<action_id>``. A ``:`` payload or
     an unknown label is refused."""
     parts = value.split("|")
-    if parts[0] == "label" and len(parts) == 3 and _ID.fullmatch(parts[1]) and parts[2] in LABELS:
-        return ParsedAction("label", (parts[1], parts[2]))
+    if len(parts) == 3 and parts[0] == "label":
+        name = _ALIASES.get(
+            parts[2], parts[2]
+        )  # cards posted before K6 carried `should_have_answered`
+        if _ID.fullmatch(parts[1]) and name in LABELS:
+            return ParsedAction("label", (parts[1], name))
     if parts[0] == "clear" and len(parts) == 3 and all(_NAME.fullmatch(p) for p in parts[1:]):
         return ParsedAction("clear", (parts[1], parts[2]))
     if parts[0] in ("stop", "reset") and len(parts) == 1:  # the kill switch, by a signed action
         return ParsedAction(parts[0], ())
-    if parts[0] == "approve_import" and len(parts) == 2 and re.fullmatch(r"[0-9a-f]{8}", parts[1]):
+    if parts[0] == "approve_import" and len(parts) == 2 and re.fullmatch(r"[0-9a-f]{64}", parts[1]):
         return ParsedAction("approve_import", (parts[1],))
     return None
 
@@ -261,8 +269,9 @@ def shortfalls(nm: dict[str, Any], th: Thresholds = DEFAULTS) -> list[str]:
 
 
 def csv_import_id(text: str) -> str:
-    """The id of a csv import: the first 8 hex digits of the file's SHA-256 (what the approval click names)."""
-    return hashlib.sha256(text.encode("utf-8")).hexdigest()[:8]
+    """The id of a csv import: the file's full SHA-256 (what the approval click names; a short prefix of text
+    someone else supplies could be made to collide)."""
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
 def week_start(moment: datetime) -> date:
@@ -399,17 +408,22 @@ class Measure:
         ]
 
     def _audit(self, run_id: str, operation: str, principal: str, **kw: Any) -> None:
-        self.audit.write_outcome(
-            AuditEvent(
-                run_id=run_id,
-                ts=self.clock(),
-                domain="measure",
-                operation=operation,
-                principal=principal,
-                source=self.channel.name,
-                **kw,
+        """Write an audit outcome. Never raises: a sink that fails is a log line, so a committed label is never
+        reported as failed and a receiver always answers."""
+        try:
+            self.audit.write_outcome(
+                AuditEvent(
+                    run_id=run_id,
+                    ts=self.clock(),
+                    domain="measure",
+                    operation=operation,
+                    principal=principal,
+                    source=self.channel.name,
+                    **kw,
+                )
             )
-        )
+        except Exception as exc:  # noqa: BLE001
+            _LOG.error("measure audit not written (%s)", type(exc).__name__)
 
     def _notify(self, text: str) -> int:
         """Tell every line owner; returns how many were reached. A failing channel is a log line, never an error
@@ -451,9 +465,18 @@ class Measure:
         labels = self.store.list_labels_for(agent_id, action_id, since)
         if extra is not None:
             labels = [*labels, extra]
-        latest = latest_labels_all(labels)
+        # A run is wrong when its latest ELIGIBLE label is wrong, or when any unapproved csv row says wrong (that
+        # label is not evidence, but it must not be overridable by an unapproved "agree": the safe direction).
+        by_run: dict[str, Label] = {
+            r: x for r, x in latest_labels(labels).items() if x.label == "wrong"
+        }
+        for x in labels:
+            seen = by_run.get(x.run_id)
+            newer = seen is None or (x.created_at, x.label_id) > (seen.created_at, seen.label_id)
+            if not x.counts and x.label == "wrong" and newer:
+                by_run[x.run_id] = x
         wrongs = sorted(
-            (x for x in latest.values() if x.label == "wrong" and x.created_at >= since),
+            (x for x in by_run.values() if x.created_at >= since),
             key=lambda x: (x.created_at, x.label_id),
         )
         return wrongs[-1].label_id if len(wrongs) >= WRONG_LIMIT else None
@@ -482,6 +505,56 @@ class Measure:
             for e in self.store.list_level_events()
         )
 
+    def _check(
+        self, principal_id: str, run_id: str, label: str
+    ) -> tuple[Plan | None, LabelResult | None]:
+        """Who may label what: a known person, a known label, a run that exists, a label that fits the run (the
+        four proposal labels need a plan, the two abstain labels none). Returns (plan, None) or (None, refusal)."""
+        principal = self.registry.principals.get(principal_id)
+        if principal is None or principal.kind != "person":
+            return None, LabelResult(False, "unknown_principal")
+        if label not in LABELS:
+            return None, LabelResult(False, "unknown_label")
+        if not _ID.fullmatch(run_id):
+            return None, LabelResult(False, "unknown_run")
+        try:
+            self.store.get_run(run_id)
+        except NotFound:
+            return None, LabelResult(False, "unknown_run")
+        except Exception:  # noqa: BLE001 - store down: nothing changes
+            return None, LabelResult(False, "store_unavailable", 503)
+        try:
+            plan: Plan | None = self.store.get_plan(run_id)
+        except NotFound:
+            plan = None
+        except Exception:  # noqa: BLE001
+            return None, LabelResult(False, "store_unavailable", 503)
+        if (plan is None) != (label in ABSTAIN_LABELS):
+            return None, LabelResult(False, "label_does_not_fit_run")
+        return plan, None
+
+    def _may_lower_harmful(self, principal_id: str) -> bool:
+        p = self.registry.principals.get(principal_id)
+        return p is not None and p.kind == "person" and "clear_override" in p.admin_rights
+
+    def _latest_is_harmful(self, run_id: str) -> bool:
+        """The run's LATEST eligible label is harmful (a lowered verdict leaves the run free again)."""
+        cur = latest_labels(self.store.list_labels(run_id)).get(run_id)
+        return cur is not None and cur.label == "harmful"
+
+    def _new_label(
+        self, principal_id: str, run_id: str, label: str, channel: str, approved_by, label_id
+    ) -> Label:
+        return Label(
+            run_id=run_id,
+            label=label,  # type: ignore[arg-type]  # checked by _check
+            principal_id=principal_id,
+            channel=channel,  # type: ignore[arg-type]
+            approved_by=approved_by,
+            created_at=self.clock(),
+            **({"label_id": label_id} if label_id else {}),
+        )
+
     def record_label(
         self,
         principal_id: str,
@@ -492,67 +565,57 @@ class Measure:
         approved_by: str | None = None,
         label_id: str | None = None,
     ) -> LabelResult:
-        """Validate, decide the demotion, store both in one transaction, audit. Never raises."""
-        principal = self.registry.principals.get(principal_id)
-        if principal is None or principal.kind != "person":
-            return LabelResult(False, "unknown_principal")
-        if label not in LABELS:
-            return LabelResult(False, "unknown_label")
+        """Validate, decide the demotion, store label and demotion (and the sticky-harmful check) in one
+        transaction, then audit. Never raises."""
+        plan, refusal = self._check(principal_id, run_id, label)
+        if refusal is not None:
+            return refusal
+        may = self._may_lower_harmful(principal_id)
         try:
-            run = self.store.get_run(run_id)
-        except NotFound:
-            return LabelResult(False, "unknown_run")
-        except Exception:  # noqa: BLE001 - store down: nothing changes
-            return LabelResult(False, "store_unavailable", 503)
-        try:
-            try:
-                plan = self.store.get_plan(run_id)
-            except NotFound:
-                plan = None
-            if (plan is None) != (label in ABSTAIN_LABELS):
-                return LabelResult(False, "label_does_not_fit_run")
-            lowers_harmful = label != "harmful" and any(
-                x.label == "harmful" for x in self.store.list_labels(run_id)
-            )
-            if lowers_harmful and "clear_override" not in principal.admin_rights:
-                # A harmful verdict is sticky: only a line owner may lower it, and that is audited.
-                self._audit(
-                    run_id, "label", principal_id, decision=label, result="refused",
-                    error_code="harmful_is_sticky",
-                )  # fmt: skip
-                return LabelResult(False, "harmful_is_sticky")
-            new = Label(
-                run_id=run_id,
-                label=label,  # type: ignore[arg-type]  # checked above
-                principal_id=principal_id,
-                channel=channel,  # type: ignore[arg-type]
-                approved_by=approved_by,
-                created_at=self.clock(),
-                **({"label_id": label_id} if label_id else {}),
-            )
+            lowers = label != "harmful" and may and self._latest_is_harmful(run_id)
+            new = self._new_label(principal_id, run_id, label, channel, approved_by, label_id)
             demote = self._demotion_for(new, plan.agent_id, plan.action_id) if plan else None
-            self.store.add_label(new, demote)
+            # The sticky check runs inside the store's transaction, serialised per run: two clicks cannot both pass.
+            self.store.add_labels([(new, demote)], may_lower_harmful=may)
+        except HarmfulSticky:
+            self._audit(
+                run_id, "label", principal_id, decision=label, result="refused",
+                error_code="harmful_is_sticky",
+            )  # fmt: skip
+            return LabelResult(False, "harmful_is_sticky")
         except StaleState:
             return LabelResult(False, "duplicate")
         except Exception as exc:  # noqa: BLE001 - the label is refused, nothing was stored
             _LOG.error("label refused: store error %s", type(exc).__name__)
             return LabelResult(False, "store_unavailable", 503)
+        self._after_commit(new, demote, lowers)
+        return LabelResult(True, "recorded", demoted=demote is not None)
+
+    def _after_commit(self, new: Label, demote: LevelEvent | None, lowers: bool) -> None:
+        """Audit and announce what is already committed. Never raises: the label stands whatever the sink or the
+        channel does."""
         self._audit(
-            run.run_id,
+            new.run_id,
             "label",
-            principal_id,
+            new.principal_id,
             object_ref=new.label_id,
-            decision=label,
+            decision=new.label,
             result="recorded",
-            caught_by="human_label" if label in ("wrong", "harmful") else None,
+            caught_by="human_label" if new.label in ("wrong", "harmful") else None,
         )
-        if lowers_harmful:
+        if lowers:
             self._audit(
-                run.run_id, "harmful_lowered", principal_id, object_ref=new.label_id, decision=label
+                new.run_id,
+                "harmful_lowered",
+                new.principal_id,
+                object_ref=new.label_id,
+                decision=new.label,
             )
         if demote is not None:
-            self._announce(demote)
-        return LabelResult(True, "recorded", demoted=demote is not None)
+            try:
+                self._announce(demote)
+            except Exception as exc:  # noqa: BLE001
+                _LOG.warning("demotion announcement failed (%s)", type(exc).__name__)
 
     def _announce(self, ev: LevelEvent) -> None:
         """Audit the demotion and post a card with a Clear button for the line owner."""
@@ -575,6 +638,16 @@ class Measure:
         parsed = parse_action_value(action.value)
         if parsed is None:
             return 200, "malformed"
+        if action.nonce:
+            # A signed request is good for 5 minutes, so a captured copy would replay. Each delivery is acted on once.
+            try:
+                fresh = self.store.claim_action(action.nonce, self.clock())
+            except Exception as exc:  # noqa: BLE001
+                _LOG.error("click refused: store error %s", type(exc).__name__)
+                return 503, "store_unavailable"
+            if not fresh:
+                self._audit("-", parsed.kind, action.user, result="refused", error_code="replay")
+                return 200, "replay"
         if parsed.kind == "label":
             res = self.record_label(action.user, *parsed.args)
             return res.status, res.reason
@@ -585,8 +658,9 @@ class Measure:
         return self.clear(action.user, *parsed.args)
 
     def approve_import(self, principal_id: str, import_id: str) -> tuple[int, str]:
-        """A line owner approves a pending csv import (a signed click). Nobody approves their own import. The
-        rows are appended again as approved ones: ``labels`` has no UPDATE."""
+        """A line owner approves a pending csv import (a signed click). Nobody approves their own import. The rows
+        are appended again as approved ones in ONE transaction (``labels`` has no UPDATE): if any row is refused
+        nothing is approved, the import stays pending, and the reason says which row and why."""
         if not self._admin(principal_id, "approve_label_import", "approve_import"):
             return 200, "not_authorised"
         try:
@@ -603,19 +677,62 @@ class Measure:
                 "-", "approve_import", principal_id, result="refused", error_code="own_import"
             )
             return 200, "cannot_approve_own_import"
-        stored = 0
-        for x in pending:
-            res = self.record_label(
-                x.principal_id, x.run_id, x.label, channel="csv",
-                approved_by=principal_id, label_id=x.label_id[:-1] + "a",
+        author = pending[0].principal_id
+        items, problems = [], []
+        for i, x in enumerate(pending, 1):
+            plan, refusal = self._check(x.principal_id, x.run_id, x.label)
+            if refusal is None and self._sticky_blocked(x.principal_id, x.run_id, x.label):
+                refusal = LabelResult(False, "harmful_is_sticky")
+            if refusal is not None:
+                problems.append(f"row {i}: {refusal.reason}")
+                continue
+            new = self._new_label(
+                x.principal_id, x.run_id, x.label, "csv", principal_id, x.label_id[:-1] + "a"
+            )
+            items.append(
+                (new, self._demotion_for(new, plan.agent_id, plan.action_id) if plan else None)
+            )
+        if problems:
+            self._audit(
+                "-", "approve_import", principal_id, object_ref=import_id, result="refused",
+                error_code="; ".join(problems)[:200],
             )  # fmt: skip
-            if res.status >= 500:
-                return res.status, res.reason
-            stored += res.ok
+            return 200, "refused: " + "; ".join(problems)
+        try:
+            self.store.add_labels(items, may_lower_harmful=self._may_lower_harmful(author))
+        except HarmfulSticky:
+            return 200, "refused: harmful_is_sticky"
+        except StaleState:
+            return 200, "already_approved"
+        except Exception as exc:  # noqa: BLE001
+            _LOG.error("approve_import refused: store error %s", type(exc).__name__)
+            return 503, "store_unavailable"
+        for new, demote in items:
+            self._after_commit(new, demote, False)
         self._audit(
-            "-", "approve_import", principal_id, object_ref=import_id, result=f"approved:{stored}"
+            "-",
+            "approve_import",
+            principal_id,
+            object_ref=import_id,
+            result=f"approved:{len(items)}",
         )
-        return 200, f"approved:{stored}"
+        self._safe_enforce()
+        return 200, f"approved:{len(items)}"
+
+    def _sticky_blocked(self, principal_id: str, run_id: str, label: str) -> bool:
+        """Would this label lower a harmful verdict that its author may not lower?"""
+        return (
+            label != "harmful"
+            and not self._may_lower_harmful(principal_id)
+            and self._latest_is_harmful(run_id)
+        )
+
+    def _safe_enforce(self) -> None:
+        """Re-check the demotion rules after a batch (a batch can complete a 3-wrong episode no row saw)."""
+        try:
+            self.enforce()
+        except Exception as exc:  # noqa: BLE001 - the tick step is the backstop
+            _LOG.warning("enforce after a batch failed (%s)", type(exc).__name__)
 
     def _admin(self, principal_id: str, right: str, operation: str) -> bool:
         """True when the person holds the admin right; a refusal is audited."""
@@ -642,6 +759,33 @@ class Measure:
             return 503, "store_unavailable"
         return 200, which
 
+    def _clear_blocked(self, agent_id: str, action_id: str) -> str | None:
+        """Why a demotion may not be lifted now, or None. A demotion by the ceiling stays while the ceiling is
+        breached (the breach notice says every action is shadow, and that must stay true). An action whose config
+        level is ``suggest`` also needs the section 6.1 numbers to hold again, derived from the store now."""
+        status = self.ceiling_status()
+        breached = bool(status and status.breached)
+        last = [
+            e
+            for e in self.store.list_level_events()
+            if (e.agent_id, e.action_id) == (agent_id, action_id) and e.kind == "demote"
+        ][-1]
+        if breached and last.reason.startswith("ceiling:"):
+            return "ceiling_breached"
+        agent = self.registry.agents.get(agent_id)
+        if agent is not None and (agent.levels or {}).get(action_id) == "suggest":
+            if breached:
+                return "ceiling_breached"
+            fresh = numbers_for(
+                self.store.list_labels_for(agent_id, action_id, None),
+                self.store.count_proposals(agent_id, action_id, None),
+                self.clock(),
+                self.th,
+            )
+            if shortfalls(fresh.as_dict(), self.th):
+                return "evidence_below_6_1"
+        return None
+
     def clear(self, principal_id: str, agent_id: str, action_id: str) -> tuple[int, str]:
         """A line owner lifts a demotion. Needs the ``clear_override`` admin right."""
         if not self._admin(principal_id, "clear_override", "clear"):
@@ -649,6 +793,13 @@ class Measure:
         try:
             if (agent_id, action_id) not in self.store.current_overrides():
                 return 200, "not_demoted"
+            why = self._clear_blocked(agent_id, action_id)
+            if why:
+                self._audit(
+                    "-", "clear", principal_id, object_ref=f"{agent_id}.{action_id}",
+                    result="refused", error_code=why,
+                )  # fmt: skip
+                return 200, why
             self.store.add_level_event(
                 LevelEvent(
                     agent_id=agent_id,
@@ -672,9 +823,10 @@ class Measure:
     def import_csv(
         self, text: str, by: str, approved_by: str | None = None
     ) -> tuple[int, list[str]]:
-        """Record labels from a csv with the columns ``run_id,label``. Every row is checked first; one bad row
-        stores nothing. Rows are ``channel = 'csv'`` and count as evidence only with ``approved_by`` (a person holding
-        ``approve_label_import``). Returns (rows stored, problems)."""
+        """Record labels from a csv with the columns ``run_id,label``, ALL or NOTHING: every row is checked first
+        (including the sticky-harmful rule) and the whole import is one transaction. Rows are ``channel = 'csv'``
+        and count as evidence only once approved (``approved_by``, or a signed approval). Returns (rows stored,
+        problems)."""
         if approved_by is not None:
             approver = self.registry.principals.get(approved_by)
             if (
@@ -683,7 +835,7 @@ class Measure:
                 or "approve_label_import" not in approver.admin_rights
             ):
                 return 0, [f"{approved_by} does not hold the approve_label_import admin right"]
-            if approved_by == by:
+            if approved_by.casefold() == by.casefold():
                 return 0, ["an import cannot be approved by the person who made it"]
         reader = csv.DictReader(io.StringIO(text))
         if reader.fieldnames is None or set(reader.fieldnames) != {"run_id", "label"}:
@@ -692,30 +844,48 @@ class Measure:
         rows = [((r["run_id"] or "").strip(), (r["label"] or "").strip()) for r in reader]
         sha = csv_import_id(text)
         tag = "a" if approved_by else "p"
-        problems = []
+        items, problems = [], []
         for i, (run_id, label) in enumerate(rows, 1):
-            bad = self._dry_check(by, run_id, label)
-            if bad:
-                problems.append(f"row {i}: {bad}")
+            plan, refusal = self._check(by, run_id, label)
+            if refusal is None and self._sticky_blocked(by, run_id, label):
+                refusal = LabelResult(False, "harmful_is_sticky")
+            if refusal is not None:
+                problems.append(f"row {i}: {refusal.reason}")
+                continue
+            new = self._new_label(by, run_id, label, "csv", approved_by, f"csv-{sha}-{i}-{tag}")
+            items.append(
+                (new, self._demotion_for(new, plan.agent_id, plan.action_id) if plan else None)
+            )
         if problems or not rows:
             return 0, problems or ["the csv has no rows"]
-        stored = 0
-        for i, (run_id, label) in enumerate(rows, 1):
-            res = self.record_label(
-                by,
-                run_id,
-                label,
-                channel="csv",
-                approved_by=approved_by,
-                label_id=f"csv-{sha}-{i}-{tag}",
-            )
-            if res.ok:
-                stored += 1
-            elif res.reason != "duplicate":
-                problems.append(f"row {i}: {res.reason}")
-        if stored and approved_by is None:
-            self._announce_import(sha, stored)
-        return stored, problems
+        try:
+            self.store.add_labels(items, may_lower_harmful=self._may_lower_harmful(by))
+        except HarmfulSticky:
+            return 0, ["harmful_is_sticky"]
+        except StaleState:
+            return 0, []  # the same file again: already stored
+        except Exception as exc:  # noqa: BLE001
+            _LOG.error("import refused: store error %s", type(exc).__name__)
+            return 0, ["store_unavailable"]
+        for new, demote in items:
+            self._after_commit(new, demote, False)
+        if approved_by is None:
+            self._announce_import(sha, len(items))
+        self._safe_enforce()
+        return len(items), []
+
+    def note_cli_import(
+        self, by: str, approved_by: str | None, os_user: str, import_id: str
+    ) -> None:
+        """Audit a dev-only CLI import with the operating-system user who ran it (the names are asserted)."""
+        self._audit(
+            "-",
+            "cli_import",
+            by,
+            object_ref=import_id,
+            decision=approved_by,
+            result=f"os_user:{os_user}",
+        )
 
     def _announce_import(self, import_id: str, n: int) -> None:
         """Post the card whose button is the line owner's signed approval of this import."""
@@ -725,25 +895,6 @@ class Measure:
             self.channel.post_card(render_import(import_id, n))
         except Exception as exc:  # noqa: BLE001
             _LOG.warning("import card not delivered (%s)", type(exc).__name__)
-
-    def _dry_check(self, by: str, run_id: str, label: str) -> str | None:
-        principal = self.registry.principals.get(by)
-        if principal is None or principal.kind != "person":
-            return "unknown_principal"
-        if label not in LABELS:
-            return "unknown_label"
-        if not _ID.fullmatch(run_id):
-            return "unknown_run"
-        try:
-            self.store.get_run(run_id)
-        except NotFound:
-            return "unknown_run"
-        try:
-            self.store.get_plan(run_id)
-            has_plan = True
-        except NotFound:
-            has_plan = False
-        return None if has_plan != (label in ABSTAIN_LABELS) else "label_does_not_fit_run"
 
     # --- enforcement (tick) --------------------------------------------------------------------------------
 
@@ -905,12 +1056,11 @@ class Measure:
         """Start-up check for every action configured at ``suggest``: its promotion file must load, and the numbers
         derived again from the store must still meet §6.1 (a re-sealed file with invented numbers fails here)."""
         out: list[str] = []
-        demoted = (
-            self.store.current_overrides()
-        )  # a demoted action runs as shadow: nothing to prove for it
+        # A demoted action is checked too: the config still says suggest, and a clear (or a PR that removes the
+        # demotion's cause) would lift it again. The config must not claim a level the evidence no longer supports.
         for agent in self.registry.agents.values():
             for action, level in (agent.levels or {}).items():
-                if level != "suggest" or (agent.id, action) in demoted:
+                if level != "suggest":
                     continue
                 out += promotion_problems(self.registry, agent.id, action)
                 fresh = numbers_for(
@@ -1032,8 +1182,13 @@ class Measure:
             "- none"
         ]
         out += ["", "## Caught, and by what"]
+        events: list[AuditEvent] = []
         try:
-            counts = caught_week(self.audit.events(), week)
+            # Events that could not be written when they happened wait in the audit's outbox; bring them into the
+            # log first so the counts below do not miss them.
+            self.audit.reconcile()
+            events = self.audit.events()
+            counts = caught_week(events, week)
             out += [f"- {k}: {v}" for k, v in sorted(counts.items())] or ["- nothing was caught"]
         except Exception as exc:  # noqa: BLE001
             out.append(f"- the audit could not be read ({type(exc).__name__})")
@@ -1042,6 +1197,15 @@ class Measure:
         )
         out += ["", "## Ceiling"]
         status = self.ceiling_status(at)
+        lowered = [e for e in events if e.operation == "harmful_lowered"]
+        out.append(
+            f"- harmful verdicts lowered by a line owner: {sum(iso_week(e.ts) == week for e in lowered)} this week, "
+            f"{len(lowered)} in all. A lowered verdict leaves the ceiling count, so each one is listed:"
+        )
+        out += [
+            f"  - {e.run_id}: lowered to {e.decision} by {e.principal} at {e.ts:%Y-%m-%d %H:%M} UTC"
+            for e in lowered
+        ] or ["  - none"]
         if status:
             c = status.ceiling
             out += [
@@ -1114,15 +1278,6 @@ class Measure:
         if late is not None:
             out.append(f"- Events started later than {LATE_START_S // 60} minutes: {late}.")
         return out
-
-
-def latest_labels_all(labels: list[Label]) -> dict[str, Label]:
-    """Like ``latest_labels`` but for the demotion rules: an unapproved csv label lowers a level too (the safe
-    direction), it just never counts as promotion evidence."""
-    out: dict[str, Label] = {}
-    for lab in sorted(labels, key=lambda x: (x.created_at, x.label_id)):
-        out[lab.run_id] = lab
-    return out
 
 
 def _rate(k: int, n: int) -> str:

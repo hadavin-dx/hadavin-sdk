@@ -45,7 +45,7 @@ from hadavin_sdk.models import (
     TickState,
     now,
 )
-from hadavin_sdk.store.protocol import NotFound, StaleState, StoreUnavailable
+from hadavin_sdk.store.protocol import HarmfulSticky, NotFound, StaleState, StoreUnavailable
 
 _LOG = logging.getLogger("hadavin_sdk.store")
 
@@ -492,6 +492,46 @@ class PostgresStore:
                     self._insert_level(demote)
         except psycopg.errors.UniqueViolation:
             raise StaleState(f"label exists: {label.label_id}") from None
+
+    def add_labels(
+        self, items: list[tuple[Label, LevelEvent | None]], *, may_lower_harmful: bool
+    ) -> None:
+        """All labels (each with its demotion) in ONE transaction, with the sticky-harmful check inside it, under a
+        per-run advisory lock: two clicks on one run cannot both pass the check. Any failure stores nothing."""
+        try:
+            with self._lock, self._db.transaction():
+                for label, demote in items:
+                    self._exec("SELECT pg_advisory_xact_lock(hashtext(%s))", (label.run_id,))
+                    if label.label != "harmful" and not may_lower_harmful:
+                        cur = self._exec(
+                            "SELECT label FROM labels WHERE run_id = %s "
+                            "AND (channel = 'chat' OR approved_by IS NOT NULL) "
+                            "ORDER BY created_at DESC, label_id DESC LIMIT 1",
+                            (label.run_id,),
+                        ).fetchone()
+                        if cur is not None and cur["label"] == "harmful":
+                            raise HarmfulSticky(label.run_id)
+                    lrow = _row(label)
+                    self._exec(
+                        sql.SQL("INSERT INTO labels ({}) VALUES ({})").format(
+                            sql.SQL(", ").join(sql.Identifier(c) for c in lrow),
+                            sql.SQL(", ").join(sql.Placeholder() * len(lrow)),
+                        ),
+                        list(lrow.values()),
+                    )
+                    if demote is not None:
+                        self._insert_level(demote)
+        except psycopg.errors.UniqueViolation:
+            raise StaleState("label exists") from None
+
+    def claim_action(self, nonce: str, at: datetime) -> bool:
+        with self._lock:
+            row = self._exec(
+                "INSERT INTO seen_actions (nonce, seen_at) VALUES (%s, %s) "
+                "ON CONFLICT (nonce) DO NOTHING RETURNING nonce",
+                (nonce, at),
+            ).fetchone()
+        return row is not None
 
     def _insert_level(self, ev: LevelEvent) -> None:
         # Caller holds the lock. `seq` is assigned by the database.

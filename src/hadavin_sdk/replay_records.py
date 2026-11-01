@@ -85,10 +85,17 @@ def green_records(registry: Registry, agent_id: str) -> list[ReplayRecord]:
         for r in read_records(registry.config.root)
         if (r.agent_id, r.config_hash, r.model_id, r.prompt_sha256) == want
         and r.k >= MIN_K
-        and r.pass_k
-        >= threshold  # recomputed: the record's own green and threshold are not trusted
+        and r.pass_k >= threshold  # judged against the registry's threshold, not the record's own
+        and _consistent(r)
     ]
     return found
+
+
+def _consistent(r: ReplayRecord) -> bool:
+    """The record agrees with itself. The file holds only the summary numbers, not the per-run results, so green
+    cannot be recomputed from them; a record whose own fields disagree is treated as not green instead: its
+    `green` flag must match `pass_k >= threshold`, and pass^k can never exceed pass@1."""
+    return r.green == (r.pass_k >= r.threshold) and 0.0 <= r.pass_k <= r.pass_rate <= 1.0
 
 
 def green_record(registry: Registry, agent_id: str) -> ReplayRecord | None:

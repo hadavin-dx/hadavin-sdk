@@ -58,6 +58,7 @@ class Action:
 
     user: str
     value: str
+    nonce: str = ""  # timestamp:signature of the signed request; empty when built by hand (tests)
 
 
 def parse_action(
@@ -78,7 +79,13 @@ def parse_action(
         user = f"{channel}:{payload['user']['id']}"
     except (KeyError, IndexError, ValueError, TypeError):
         return None
-    return Action(user=user, value=value) if isinstance(value, str) else None
+    if not isinstance(value, str):
+        return None
+    ts_name, sig_name = _names(prefix)
+    h = {k.lower(): v for k, v in headers.items()}
+    # The verified request's own timestamp and signature identify this delivery: a captured copy replayed inside
+    # the signature window carries the same pair, a fresh click never does.
+    return Action(user=user, value=value, nonce=f"{h.get(ts_name, '')}:{h.get(sig_name, '')}")
 
 
 def parse_button(

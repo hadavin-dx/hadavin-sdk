@@ -24,6 +24,13 @@ CREATE TABLE level_events (
 );
 CREATE INDEX level_events_by_action ON level_events (agent_id, action_id, seq);
 
+-- One row per signed channel click the measurement acted on (the request's timestamp and signature): a captured
+-- request replayed inside the signature window finds its row and is refused. Append-only.
+CREATE TABLE seen_actions (
+    nonce   TEXT PRIMARY KEY,
+    seen_at TIMESTAMPTZ NOT NULL
+);
+
 CREATE TABLE reports (
     week_start DATE PRIMARY KEY,     -- ISO week (Monday)
     body_md    TEXT NOT NULL,

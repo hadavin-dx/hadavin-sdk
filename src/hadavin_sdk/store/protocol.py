@@ -49,6 +49,10 @@ class NotFound(KeyError):
     pass
 
 
+class HarmfulSticky(RuntimeError):
+    """A non-harmful label on a run whose latest eligible label is harmful, from someone who may not lower it."""
+
+
 class Store(Protocol):
     def create_run(self, run: Run) -> None: ...
     def get_run(self, run_id: str) -> Run: ...
@@ -124,6 +128,18 @@ class Store(Protocol):
     def add_label(self, label: Label, demote: LevelEvent | None = None) -> None:
         """Append a label and, in the same transaction, the demotion it triggers. A duplicate `label_id` raises
         StaleState; any other failure raises and changes nothing (the caller refuses the label)."""
+        ...
+
+    def add_labels(
+        self, items: list[tuple[Label, LevelEvent | None]], *, may_lower_harmful: bool
+    ) -> None:
+        """Every (label, demotion) in ONE transaction, with the sticky-harmful rule checked inside it and serialised
+        per run: unless `may_lower_harmful`, a non-harmful label on a run whose latest eligible label is harmful
+        raises HarmfulSticky. A duplicate `label_id` raises StaleState. Either way nothing is stored."""
+        ...
+
+    def claim_action(self, nonce: str, at: datetime) -> bool:
+        """Record a signed channel click's nonce; False when it was already seen (a replay)."""
         ...
 
     def list_labels(self, run_id: str) -> list[Label]:

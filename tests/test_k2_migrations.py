@@ -384,16 +384,16 @@ def test_migrate_refuses_roles_that_are_members_of_each_other(roles):
         mig.migrate(dsn, runtime_role=runtime, portal_role=portal)
 
 
-def test_migrate_refuses_when_an_applied_migration_has_no_file(roles, monkeypatch):
+def test_migrate_refuses_when_an_applied_migration_has_no_file(roles):
+    """A database ahead of this release (it applied a migration this package does not ship) is refused. The
+    ledger and the grant map are untouched: the extra version is simply recorded as applied."""
+    import psycopg
+
     dsn, _, _ = roles
-    files = mig._migration_files()
-    monkeypatch.setattr(mig, "_migration_files", lambda: files[:-1])
-    # The map must still agree with the files that remain: drop the newest file's relations from it as well,
-    # so the grant guard stays real and only the missing-file check is what fires.
-    created, _ = mig._scan(files[:-1])
-    monkeypatch.setattr(mig, "GRANTS", {k: v for k, v in mig.GRANTS.items() if k in created})
-    assert mig.check_grants(files[:-1]) == []
-    with pytest.raises(ConfigError, match="no file in this release"):
+    mig.migrate(dsn)
+    with psycopg.connect(dsn, autocommit=True) as db:
+        db.execute("INSERT INTO schema_migrations (version) VALUES ('0099_from_a_newer_release')")
+    with pytest.raises(ConfigError, match="no file in this release: 0099_from_a_newer_release"):
         mig.migrate(dsn)
 
 
