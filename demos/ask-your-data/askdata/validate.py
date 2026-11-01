@@ -35,6 +35,7 @@ MAX_LITERAL = 200
 MAX_JOINS = 8
 MAX_CTES = 4
 MAX_DEPTH = 6
+MAX_NODES = 2000
 
 RULES = {
     "V01": "parse error, empty, unterminated quote or comment, or more than one statement",
@@ -334,6 +335,8 @@ def _select_depth(node: exp.Expression) -> int:
 
 
 def _check_tree(tree: exp.Expression) -> None:
+    if sum(1 for _ in tree.walk()) > MAX_NODES:
+        raise Rejected("V10", f"more than {MAX_NODES} nodes")
     ctes = list(tree.find_all(exp.CTE))
     if len(ctes) > MAX_CTES:
         raise Rejected("V10", f"more than {MAX_CTES} CTEs")

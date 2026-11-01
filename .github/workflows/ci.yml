@@ -1,7 +1,8 @@
 name: CI
 
-# Required checks for main: "check" and "security". Every tool here is free and keeps working when the repository
-# turns private, so making it private later changes nothing in this file.
+# Required checks for main: "check" and "security" (defined here). CodeQL (GitHub default setup) and SonarCloud (an
+# external app) also gate merges but are configured outside this file. The tools in this file are free and keep
+# working when the repository turns private; CodeQL default setup is NOT free on a private repository (paid).
 on:
   push:
     branches: [main]

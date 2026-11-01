@@ -1,8 +1,10 @@
 """Command line: verify-readonly, ask, setup, demo. Every printed value passes `clean()` (A-11).
 
 Operator commands (`audit`, `meter`, `killswitch`, `eval`) are in opscli.py and evalcli.py.
-Exit codes: 0 ok; 2 the model abstained; 3 a check is red or the validator rejected; 4 startup (no DSN, cannot
-connect, bad setup); 5 the database refused or failed the statement.
+Exit codes (spike, provisional; the P3 pipeline table in the design replaces them): 0 ok; 2 the model abstained;
+3 the validator rejected (`ask`) or a check is red (`verify-readonly`); 4 startup: no DSN, cannot connect, bad setup,
+`ask` refused to start because a read-only check is red, or the server refused the login (SQLSTATE 28xxx);
+5 the database refused or failed the statement (any other SQLSTATE).
 """
 
 from __future__ import annotations
@@ -65,6 +67,23 @@ def cmd_verify(source: PgSource, *, banner: bool = True) -> int:
     return 3 if red else 0
 
 
+def gate(source: PgSource) -> int:
+    """G7: `ask` does not start unless every read-only check is green. Prints only on failure; returns 0 or 4."""
+    try:
+        red = [c for c in source.verify_readonly() if not c.ok]
+    except PgError as err:
+        out(f"startup: cannot run the read-only checks: {err}")
+        return 4
+    if red:
+        out(
+            f"startup: refusing to run, {len(red)} read-only check(s) are red (run verify-readonly):"
+        )
+        for c in red:
+            out(f"  RED {c.check}: {c.detail}")
+        return 4
+    return 0
+
+
 def cmd_ask(source: PgSource, sql: str, *, who: str, question: str | None = None) -> int:
     if question:
         out(f"question : {question}")
@@ -80,7 +99,8 @@ def cmd_ask(source: PgSource, sql: str, *, who: str, question: str | None = None
         result: RunResult = source.run(ok.canonical_sql, sql_sha256=ok.sha256)
     except PgError as err:
         out(f"failed   : {err}")
-        return 4 if err.sqlstate is None else 5
+        # No SQLSTATE (connection) and 28xxx (invalid authorization) are startup problems, never retried (A-14).
+        return 4 if err.sqlstate is None or err.sqlstate.startswith("28") else 5
     table(result.columns, result.rows)
     out(
         f"{len(result.rows)} row(s){', TRUNCATED at the row or byte cap' if result.truncated else ''}; "
@@ -239,7 +259,11 @@ def main(argv: list[str] | None = None) -> int:
     if args.cmd == "verify-readonly":
         return cmd_verify(source)
     if args.cmd == "demo":
+        if code := gate(source):
+            return code
         return cmd_demo(source, ScriptedModel())
+    if code := gate(source):
+        return code
     if args.sql:
         return cmd_ask(source, args.sql, who="SQL typed by the presenter; model step not shown")
     if not args.question:
