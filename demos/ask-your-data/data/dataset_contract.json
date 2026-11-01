@@ -186,7 +186,7 @@
       "repeat_customer",
       "open_ticket"
     ],
-    "active_customer_window": "order_ts >= as_of minus 90 days (2026-07-17) and before the day after as_of (2026-10-16); the glossary must state this boundary",
+    "active_customer_window": "order_ts >= the first day of a window of N days that ENDS on and includes as_of (N=90: 2026-07-18; N=30: 2026-09-16) and before the day after as_of (2026-10-16); the glossary must state this boundary",
     "net_revenue_rule": "revenue minus refund amounts of the same orders (paid, shipped or delivered), attributed to the month the ORDER was placed"
   }
 }
