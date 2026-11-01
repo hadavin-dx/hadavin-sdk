@@ -101,6 +101,14 @@ def rules_problems(namespace: str, rules: list[dict[str, Any]]) -> list[str]:
     """Problems in one namespace's ``resourceRules`` from a SelfSubjectRulesReview (empty: read-only)."""
     out: list[str] = []
     for rule in rules:
+        # The API answers lists of strings; anything else (a string `"create"`) proves nothing.
+        if not isinstance(rule, dict) or any(
+            not isinstance(rule.get(k) or [], list)
+            or not all(isinstance(x, str) for x in rule.get(k) or [])
+            for k in ("verbs", "resources", "apiGroups")
+        ):
+            out.append(f"namespace {namespace}: a rule is malformed, so the scope is not proven")
+            continue
         verbs = set(rule.get("verbs") or [])
         resources = set(rule.get("resources") or [])
         any_verb = "*" in verbs

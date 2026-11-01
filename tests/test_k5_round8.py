@@ -172,7 +172,9 @@ def test_the_tick_probes_the_sources_again():
             return self.found
 
     src = Src()
-    app = SimpleNamespace(sources={"c": src}, config=SimpleNamespace(scope_inventory={}))
+    app = SimpleNamespace(
+        sources={"c": src}, disabled_sources=set(), config=SimpleNamespace(scope_inventory={})
+    )
     ctx = tick_mod.TickContext(app, None)
     tick_mod.reprobe_sources(ctx)  # read-only: nothing happens
     src.found = ["namespace prod: write verb patch on ['deployments']"]
@@ -560,7 +562,10 @@ def _module(tmp_path, monkeypatch, name, body):
         ("import importlib\nm = importlib.import_module('.n', __package__)\n", True),
         ("import importlib\nm = importlib.import_module(some)\nsome = 1\n", True),
         ("m = __import__(some)\n", True),
-        ("import importlib\nm = importlib.import_module('json')\n", False),
+        (
+            "import importlib\nm = importlib.import_module('json')\n",
+            True,
+        ),  # best effort: any importlib is out
     ],
 )
 def test_a_pinned_module_may_not_import_dynamically_or_relatively(

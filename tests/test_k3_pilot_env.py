@@ -65,6 +65,7 @@ def pilot_cfg(tmp_path: Path, *, env="pilot", agent=None, contract=None, config=
         },
         "golden_dir": "golden",
         "inputs_dir": "inputs",
+        "evidence": {"restored_hash_key_secret_name": "restored-key"},
         **(config or {}),
     }
     contract = {**NONE_CONTRACT, **(contract or {})}
@@ -150,7 +151,7 @@ def test_k3_request_tracker_key_refused_in_pilot(tmp_path):
 
 def _spy(dsn: str, resolved: list[str]) -> FakeSecretProvider:
     """A secret provider that records every name read."""
-    values = {"slack-token": "t", "slack-sign": "s", "pg-dsn": dsn}
+    values = {"slack-token": "t", "slack-sign": "s", "pg-dsn": dsn, "restored-key": "r" * 16}
 
     class Spy(FakeSecretProvider):
         def get(self, name):
@@ -180,7 +181,7 @@ def test_k3_pilot_app_has_no_executor(tmp_path):
         )
         assert app.executor is None
         assert app.runtime.hooks.execute is None and app.runtime.hooks.verify is None
-        assert sorted(set(resolved)) == ["pg-dsn", "slack-sign", "slack-token"]
+        assert sorted(set(resolved)) == ["pg-dsn", "restored-key", "slack-sign", "slack-token"]
         run = app.runtime.handle("ito-agent", "svc:ito", b"checkout is down")
         assert (run.state, run.reason_code) == (S.NO_ACTION, "shadow")
         assert app.runtime.handle("ito-agent", "svc:ito", b"all quiet").state == S.NO_ACTION

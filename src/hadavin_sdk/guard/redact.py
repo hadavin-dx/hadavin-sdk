@@ -226,7 +226,7 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     (
         "URLCRED",
         re.compile(
-            r"(?i)\b[a-z][a-z0-9+.\-]{0,31}://[^\s:/@]{0,128}:([^\s]{2,256}?)@(?=[a-z0-9.\-]+(?::\d+)?(?:[/?#\s]|$))"
+            r"(?i)\b[a-z][a-z0-9+.\-]{0,31}://[^\s:/@]{0,128}:([^\s]{2,1024}?)@(?=[a-z0-9.\-]+(?::\d+)?(?:[/?#\s]|$))"
         ),
     ),
     # `@` OR its URL-encoding `%40` — a URL-encoded email (normal in HTTP access logs, the exact
@@ -234,7 +234,9 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     # Bounded (RFC 5321: local part 64, domain 255): an unbounded run is quadratic on `a.a.a.` text.
     (
         "EMAIL",
-        re.compile(r"\b[A-Za-z0-9._+\-]{1,64}(?:@|%40)[A-Za-z0-9.\-]{1,255}\.[A-Za-z]{2,}\b"),
+        re.compile(
+            r"(?<![A-Za-z0-9._+\-])[A-Za-z0-9._+\-]{1,254}(?:@|%40)[A-Za-z0-9.\-]{1,255}\.[A-Za-z]{2,}\b"
+        ),
     ),
     # IBAN (ISO 13616): a REAL country code + 2 check digits + 11-30 alnum BBAN. Financial PII in
     # payment/refund incident logs (SEPA charge/transfer). Masked WHOLE and BEFORE ACCOUNTID/PHONE,
@@ -522,7 +524,10 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
         ),
     ),
     ("SECRET", re.compile(r"<Cookie\s+([^\s=<>]+=[^\s<>]{4,})")),
-    ("SECRET", re.compile(r"\b(?:mysql|mariadb)(?:-?dump|-?admin)?\b[^\r\n]*?\s-p([^\s\"']{3,})")),
+    (
+        "SECRET",
+        re.compile(r"\b(?:mysql|mariadb)(?:-?dump|-?admin)?\b[^\r\n]{0,1024}?\s-p([^\s\"']{3,})"),
+    ),
     # A credential passed as a command-line flag. EXACT flag names (independent review 2026-09-28:
     # `--secret-name`, `--token-file`, `--token-ttl` are not credentials, and masking them removed
     # resource names from the evidence). Same line only; a value never starts with `-` or a quote.
@@ -543,25 +548,29 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
         ),
     ),
     # Client tools whose short flag carries the password (same line only).
-    ("SECRET", re.compile(r"\bredis-cli\b[^\r\n]*?[ \t]-a[ \t]+([^\s\"']{3,})")),
+    ("SECRET", re.compile(r"\bredis-cli\b[^\r\n]{0,1024}?[ \t]-a[ \t]+([^\s\"']{3,})")),
     ("SECRET", re.compile(r"\bsshpass[ \t]+-p[ \t]*([^\s\"']{3,})")),
     (
         "SECRET",
         re.compile(
-            r"\b(?:docker[ \t]+login|mongo(?:sh)?|az[ \t]+login)\b[^\r\n]*?[ \t]-p[ \t]+([^\s\"']{3,})"
+            r"\b(?:docker[ \t]+login|mongo(?:sh)?|az[ \t]+login)\b[^\r\n]{0,1024}?[ \t]-p[ \t]+([^\s\"']{3,})"
         ),
     ),
-    ("SECRET", re.compile(r"\bsqlcmd\b[^\r\n]*?[ \t]-P[ \t]*([^\s\"']{3,})")),
-    ("SECRET", re.compile(r"\bldap\w*\b[^\r\n]*?[ \t]-w[ \t]+([^\s\"']{3,})")),
+    ("SECRET", re.compile(r"\bsqlcmd\b[^\r\n]{0,1024}?[ \t]-P[ \t]*([^\s\"']{3,})")),
+    ("SECRET", re.compile(r"\bldap\w*\b[^\r\n]{0,1024}?[ \t]-w[ \t]+([^\s\"']{3,})")),
     # `-[^\Wb]*b`: the flags up to their first b, one way only - `-\w*b\w*` split a long flag word every way it could
     # (Sonar python:S8786, 2026-10-16).
     (
         "SECRET",
-        re.compile(r"\bhtpasswd\b[^\r\n]*?[ \t]-[^\Wb]*b\w*[ \t]+\S+[ \t]+\S+[ \t]+([^\s\"']{3,})"),
+        re.compile(
+            r"\bhtpasswd\b[^\r\n]{0,1024}?[ \t]-[^\Wb]*b\w*[ \t]+\S+[ \t]+\S+[ \t]+([^\s\"']{3,})"
+        ),
     ),
     (
         "SECRET",
-        re.compile(r"\bcurl\b[^\r\n]*?[ \t](?:-u[ \t]*|--user(?:=|[ \t]+))[^:\s]+:([^\s\"']{3,})"),
+        re.compile(
+            r"\bcurl\b[^\r\n]{0,1024}?[ \t](?:-u[ \t]*|--user(?:=|[ \t]+))[^:\s]+:([^\s\"']{3,})"
+        ),
     ),
     ("SECRET", re.compile(r"(?i)\"auth\"\s*:\s*\"([^\"]{8,})\"")),
     # A quoted secret value is masked WHOLE: `password='hunter 2 x'` used to leak "2 x".
@@ -631,6 +640,15 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
         ),
     ),
 ]
+
+# A very long run of base64-ish characters is a blob whatever its mix of cases: the lookaheads above look at
+# the first 128 characters only, so a longer run is masked whole here (nothing escapes at the bound).
+PATTERNS.append(
+    (
+        "HIGHENTROPY",
+        re.compile(r"(?<![A-Za-z0-9+/_\-])[A-Za-z0-9+_\-]{129,}={0,2}(?![A-Za-z0-9+/=_\-])"),
+    )
+)
 
 # The bank-code patterns, for redact_many's batch-wide context (_has_bank_word).
 _BANK_CODES = tuple(p for label, p in PATTERNS if label == "BANKCODE")
@@ -928,7 +946,7 @@ class _Redactor:
                 group_trie = _trie(group)
                 self._finders.append(
                     (
-                        re.compile("(?=(" + _trie_regex(group_trie) + "))"),
+                        _compile_uncached("(?=(" + _trie_regex(group_trie) + "))"),
                         {w: _prefixes(group_trie, w) for w in group},
                     )
                 )
@@ -979,6 +997,20 @@ class _Redactor:
 
 
 _MAX_NESTING = 200
+
+
+def _compile_uncached(pattern: str) -> re.Pattern[str]:
+    """Compile a pattern built from a run's values WITHOUT putting it in `re`'s process-wide cache (R371: one
+    client's identifiers must not sit in memory shared with every other client). `re.purge()` would clear the
+    cache of every other pattern too and make each later `re.sub` recompile."""
+    try:
+        from re import _compiler  # private, present since Python 3.11
+
+        return _compiler.compile(pattern, 0)
+    except (ImportError, AttributeError):  # pragma: no cover - a Python without the private module
+        compiled = re.compile(pattern)
+        re.purge()
+        return compiled
 
 
 def _trie(words) -> dict[str, dict]:

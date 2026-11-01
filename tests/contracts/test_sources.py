@@ -267,8 +267,10 @@ def test_kubernetes_non_object_answers_are_source_errors(answer):
 def test_kubernetes_oddly_shaped_items_are_source_errors():
     with pytest.raises(SourceError, match="malformed"):
         _answering('{"items": [1, 2]}').recent_changes("prod", suite.START, suite.END)
-    with pytest.raises(SourceError, match="malformed"):
-        _answering('{"status": {"resourceRules": [7]}}').probe_scope()
+    # a rule that is not an object proves nothing: a problem, so the source is not used
+    assert any(
+        "malformed" in p for p in _answering('{"status": {"resourceRules": [7]}}').probe_scope()
+    )
 
 
 def test_kubernetes_null_pod_template_spec_is_not_an_error():

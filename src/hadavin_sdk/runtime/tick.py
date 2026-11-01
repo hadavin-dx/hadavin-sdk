@@ -224,10 +224,20 @@ def reprobe_sources(ctx: TickContext) -> None:
     from hadavin_sdk import sources as sources_mod
 
     app = ctx.app
-    if app.sources and (
-        problems := sources_mod.scope_problems(app.sources, app.config.scope_inventory)
-    ):
-        raise RuntimeError("source scope: " + "; ".join(problems))
+    found: list[str] = []
+    for key, source in app.sources.items():
+        token = sources_mod.PROBING.set(True)
+        try:
+            problems = sources_mod.scope_problems({key: source}, app.config.scope_inventory)
+        finally:
+            sources_mod.PROBING.reset(token)
+        if problems:  # fail CLOSED: tools stop reading this source until a probe passes again
+            app.disabled_sources.add(key)
+            found += problems
+        else:
+            app.disabled_sources.discard(key)
+    if found:
+        raise RuntimeError("source scope: " + "; ".join(found))
 
 
 def heartbeat(ctx: TickContext) -> None:

@@ -27,7 +27,7 @@ Call = Callable[..., tuple[int, Any]]
 
 
 # No redirects: one would carry the bearer token to a host egress_check never saw.
-_OPENER = http_guard.OPENER
+_OPENER = http_guard.ENV_PROXY_OPENER
 
 
 def resolve(ref: str, allowed: list[str]) -> Callable[..., Any]:

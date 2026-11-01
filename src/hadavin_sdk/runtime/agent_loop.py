@@ -7,6 +7,7 @@ by the app wiring (``hadavin_sdk.app``). Approvals are injected the same way.
 from __future__ import annotations
 
 import hashlib
+import hmac
 import inspect
 import json
 import logging
@@ -175,6 +176,8 @@ class Hooks:
     toolbox: ToolBox | None = None
     validate_proposal: Validator | None = None
     hold_run_ids: Callable[[], set[str] | frozenset[str]] | None = None
+    # Keys the HMAC of the restored inputs on the gate's audit event (None: a plain hash, dev only).
+    restored_key: bytes | None = None
 
 
 class Runtime:
@@ -239,6 +242,19 @@ class Runtime:
     def _save_map(self, run: Run, mapping: dict[str, str]) -> None:
         """Save the run's map (identifier kinds only) after every redaction, so a crash loses nothing (M14)."""
         self.store.put_redaction_map(run.run_id, runmap.storable(mapping, self._kinds))
+
+    def _restored_digest(self, view: dict[str, Any]) -> str:
+        """What the audit keeps of the restored inputs: an HMAC under the deployment's key, so a reader of the
+        audit cannot confirm a guessed identifier offline (a plain hash of an IP or a short name can be)."""
+        body = json.dumps(
+            view, sort_keys=True, separators=(",", ":"), default=str, ensure_ascii=False
+        ).encode("utf-8")
+        key = self.hooks.restored_key
+        return (
+            hmac.new(key, body, hashlib.sha256).hexdigest()
+            if key
+            else hashlib.sha256(body).hexdigest()
+        )
 
     def inputs_view(self, run: Run, plan: Plan) -> dict[str, Any]:
         """The plan's inputs with the stored map's placeholders restored (R6). A missing or unreadable map
@@ -651,7 +667,7 @@ class Runtime:
                     inputs_hash=decision.plan_hash,
                     decision=decision.outcome,
                     rule_id=decision.rule_id,
-                    restored_hash=_digest(self.inputs_view(run, plan)),
+                    restored_hash=self._restored_digest(self.inputs_view(run, plan)),
                 )
             )
         except AuditUnavailable:
@@ -740,27 +756,6 @@ class Runtime:
         # Resolve the restored inputs BEFORE the side effect: a placeholder that cannot be restored, or a hook that
         # cannot take the restored view, stops the run (fail closed; R6).
         view = self.inputs_view(run, plan)
-        try:  # the approval was given on these restored values: a map that changed since stops the run
-            bound = [
-                e.restored_hash
-                for e in self.audit.events(run.run_id)
-                if e.domain == "gate"
-                and e.operation == "decide"
-                and e.object_ref == plan.plan_id
-                and e.restored_hash
-            ]
-        except Exception:  # noqa: BLE001 - cannot read the audit: cannot show the values are the approved ones
-            return self._to(run, S.NEEDS_PERSON, "audit_unavailable")
-        if bound and bound[-1] != _digest(view):
-            self._note(
-                run,
-                "gate",
-                "recheck",
-                object_ref=plan.plan_id,
-                rule_id="restored_changed",
-                result="stop",
-            )
-            return self._to(run, S.NEEDS_PERSON, "restored_changed")
         needs_view = view != plan.inputs
         if runmap.has_placeholder(view) or (
             needs_view and not _accepts(self.hooks.execute, "inputs_view")
@@ -774,6 +769,39 @@ class Runtime:
                 result="stop",
             )
             return self._to(run, S.NEEDS_PERSON, "input.unresolved")
+        try:  # the approval was given on these restored values: a map that changed since stops the run
+            bound = [
+                e.restored_hash
+                for e in self.audit.events(run.run_id)
+                if e.domain == "gate"
+                and e.operation == "decide"
+                and e.object_ref == plan.plan_id
+                and e.restored_hash
+            ]
+        except Exception:  # noqa: BLE001 - cannot read the audit: cannot show the values are the approved ones
+            return self._to(run, S.NEEDS_PERSON, "audit_unavailable")
+        if (
+            not bound
+        ):  # a plan decided by this release always has one: missing is refused, not skipped
+            self._note(
+                run,
+                "gate",
+                "recheck",
+                object_ref=plan.plan_id,
+                rule_id="restored_unbound",
+                result="stop",
+            )
+            return self._to(run, S.NEEDS_PERSON, "restored_unbound")
+        if bound[-1] != self._restored_digest(view):
+            self._note(
+                run,
+                "gate",
+                "recheck",
+                object_ref=plan.plan_id,
+                rule_id="restored_changed",
+                result="stop",
+            )
+            return self._to(run, S.NEEDS_PERSON, "restored_changed")
         run = self._to(run, S.EXECUTING)
         # verify_check and rollback also receive the restored inputs; the stored plan keeps its placeholders.
         shown = plan if view == plan.inputs else plan.model_copy(update={"inputs": view})

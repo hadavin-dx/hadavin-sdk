@@ -247,7 +247,7 @@ class NetworkLLM:
 
 # No redirects: one would carry the API key to a host nobody configured. A loopback model is reached directly
 # (an HTTP_PROXY would otherwise carry the plain-http prompt off the machine).
-_OPENER = http_guard.OPENER
+_OPENER = http_guard.ENV_PROXY_OPENER
 _LOCAL_OPENER = http_guard.LOCAL_OPENER
 _LOOPBACK = http_guard.LOOPBACK
 

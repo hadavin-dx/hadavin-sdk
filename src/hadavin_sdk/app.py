@@ -54,6 +54,7 @@ class App:
     # The configured read sources (probed at start-up and again by the tick) and the store the purge step
     # runs under (its own database role when `purge_dsn_secret_name` is set; else the store above).
     sources: dict[str, Source] = field(default_factory=dict)
+    disabled_sources: set[str] = field(default_factory=set)
     purge_store: Store | None = None
 
 
@@ -79,6 +80,8 @@ def build(
     b = cfg.backends
     secrets = secrets or make("secrets", b.secrets)
     live = cfg.environment in deferred.LIVE
+    if live and not cfg.evidence.restored_hash_key_secret_name:
+        raise ConfigError("evidence.restored_hash_key_secret_name is required in pilot and prod")
     if sources and live:
         # A source handed in as an object would replace a configured, probed one; live deployments use Config.sources.
         raise ConfigError("sources= is for tests; configure Config.sources in pilot and prod")
@@ -92,8 +95,12 @@ def build(
     executor_names = {
         c.executor.secret_name for c in reg.contracts.values() if c.executor.kind == "http"
     }
+    disabled_sources: set[str] = (
+        set()
+    )  # sources switched off by a failed re-probe (tick `reprobe_sources`)
     built_sources = {
-        name: _build_source(name, sc, cfg, secrets) for name, sc in cfg.sources.items()
+        name: _build_source(name, sc, cfg, secrets, disabled_sources)
+        for name, sc in cfg.sources.items()
     }
     extra_secret_names = (
         {n for specs in reg.tools.values() for t in specs.values() for n in t.secret_names}
@@ -104,6 +111,7 @@ def build(
             if t.ca_secret_name
         }
         | {sc.token_secret_name for sc in cfg.sources.values() if sc.token_secret_name}
+        | ({cfg.evidence.restored_hash_key_secret_name} - {None})
     )
     platform_secrets.check(secrets, [s for _, s in b.entries()], executor_names, extra_secret_names)
     # Design 6.6: every read source has a passing scope probe or a client-signed inventory; else no start. The
@@ -174,6 +182,11 @@ def build(
         req = approvals.request(plan, decision, requested_by)
         return Delivery(ok=True, ref=req.channel_ref)
 
+    restored_key: bytes | None = None
+    if key_name := cfg.evidence.restored_hash_key_secret_name:
+        restored_key = secrets.get(key_name).encode("utf-8")
+    elif live:
+        raise ConfigError("evidence.restored_hash_key_secret_name is required in pilot and prod")
     hooks = Hooks(
         request_approval=request_approval,
         execute=executor.execute if executor else None,
@@ -193,6 +206,7 @@ def build(
             case_insensitive_targets=cfg.evidence.case_insensitive_targets,
         ),
         hold_run_ids=hold_run_ids,
+        restored_key=restored_key,
     )
     runtime = Runtime(
         reg,
@@ -215,6 +229,7 @@ def build(
         approvals,
         runtime,
         sources={**built_sources, **(sources or {})},
+        disabled_sources=disabled_sources,
         purge_store=purge_store,
     )
 
@@ -254,7 +269,9 @@ def _tls_context(
         ) from None
 
 
-def _build_source(name: str, sc, cfg: Config, secrets: SecretProvider) -> Source:
+def _build_source(
+    name: str, sc, cfg: Config, secrets: SecretProvider, disabled: set[str] | None = None
+) -> Source:
     """Build a configured source: its settings validated, its fetch bound to the endpoint's host and port, the
     operation bindings of its kind, its CA, and its credential from the secrets kind."""
     kind = KINDS[sc.kind]
@@ -282,6 +299,8 @@ def _build_source(name: str, sc, cfg: Config, secrets: SecretProvider) -> Source
     ssl_ctx = _tls_context(cfg, secrets, ca, None)
 
     def fetch(method, url, *, operation, body=None, headers=None, max_bytes=None):
+        if disabled and name in disabled and not sources_mod.PROBING.get():
+            raise tools_mod.ToolRefused(f"source {name} is switched off: its scope probe failed")
         ctx = tools_mod.ToolContext(
             spec,
             cfg.tool_timeout_s,

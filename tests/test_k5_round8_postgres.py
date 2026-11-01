@@ -29,7 +29,13 @@ def test_the_app_deletes_evidence_only_through_the_purge_identity(tmp_path):
         path.write_text(yaml.safe_dump(data), encoding="utf-8")
         qualify(load_registry(load_config(cfg)), "ito-agent")
         secrets = FakeSecretProvider(
-            {"slack-token": "t", "slack-sign": "s", "pg-dsn": dsn, "pg-purge": PURGE_DSN[dsn]}
+            {
+                "slack-token": "t",
+                "slack-sign": "s",
+                "pg-dsn": dsn,
+                "pg-purge": PURGE_DSN[dsn],
+                "restored-key": "r" * 16,
+            }
         )
         app = app_mod.build(
             cfg, ["ito-agent"], secrets=secrets, channel=FakeChannel(), llm=ScriptedLLM()

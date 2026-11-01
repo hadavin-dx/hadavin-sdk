@@ -1112,7 +1112,7 @@ def _execute_runtime(tmp_path, execute_hook):
     from hadavin_sdk.audit import LocalDirSink
     from hadavin_sdk.guard import RegexDetector
     from hadavin_sdk.limits import Limits
-    from hadavin_sdk.models import GateDecision, Plan, Run, Target
+    from hadavin_sdk.models import AuditEvent, GateDecision, Plan, Run, Target
     from hadavin_sdk.runtime.agent_loop import Hooks, Runtime
     from tests.conftest import make_cfg, qualify
 
@@ -1148,6 +1148,19 @@ def _execute_runtime(tmp_path, execute_hook):
     store.save_gate_decision(
         GateDecision(
             run_id=run.run_id, plan_hash=plan.hash(), outcome="allow", rule_id="class.read_only"
+        )
+    )
+    # what the gate's decide event records for a plan decided by `handle`: the hash of the restored inputs
+    audit.write_outcome(
+        AuditEvent(
+            run_id=run.run_id,
+            domain="gate",
+            operation="decide",
+            principal="svc:test-agent",
+            source="runtime",
+            object_ref=plan.plan_id,
+            inputs_hash=plan.hash(),
+            restored_hash=rt._restored_digest({"id": "rec-123"}),
         )
     )
     return rt, store, run

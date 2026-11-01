@@ -20,12 +20,31 @@ from hadavin_sdk.guard.egress import EgressRefused, normalise_host
 LOOPBACK = frozenset({"127.0.0.1", "localhost", "::1"})
 
 
+# Addresses that name a cloud's metadata service (they are private or link-local, and a request there hands out
+# credentials). The AWS one over IPv6 is `fd00:ec2::254`.
+_METADATA = frozenset(
+    ipaddress.ip_address(a)
+    for a in ("169.254.169.254", "100.100.100.200", "192.0.0.192", "fd00:ec2::254")
+)
+_BENCHMARK = ipaddress.ip_network("198.18.0.0/15")
+_NAT64 = ipaddress.ip_network("64:ff9b::/96")
+
+
 def _refused(ip: ipaddress.IPv4Address | ipaddress.IPv6Address) -> bool:
-    mapped = getattr(ip, "ipv4_mapped", None)
-    ip = mapped or ip
-    return (
-        ip.is_loopback or ip.is_link_local or ip.is_unspecified or ip.is_multicast or ip.is_reserved
-    )
+    """Loopback, link-local, unspecified, multicast, reserved, a metadata address, or an IPv6 form that carries
+    one (IPv4-mapped, 6to4, Teredo, NAT64)."""
+    if ip in _METADATA or (ip.version == 4 and ip in _BENCHMARK):
+        return True
+    if ip.is_loopback or ip.is_link_local or ip.is_unspecified or ip.is_multicast or ip.is_reserved:
+        return True
+    if ip.version == 6:
+        embedded = [ip.ipv4_mapped, ip.sixtofour]
+        if ip.teredo:
+            embedded += list(ip.teredo)
+        if ip in _NAT64:
+            embedded.append(ipaddress.IPv4Address(int(ip) & 0xFFFFFFFF))
+        return any(e is not None and _refused(e) for e in embedded)
+    return False
 
 
 def checked_connection(address, timeout=socket._GLOBAL_DEFAULT_TIMEOUT, source_address=None):
@@ -83,17 +102,24 @@ class NoRedirect(urllib.request.HTTPRedirectHandler):
         return None
 
 
-OPENER = urllib.request.build_opener(NoRedirect, CheckedHTTPHandler, CheckedHTTPSHandler)
-# A loopback host is reached directly: an HTTP_PROXY would otherwise carry plain-http traffic off the machine.
-LOCAL_OPENER = urllib.request.build_opener(
+# Tools never go through an environment proxy: a proxy resolves the target itself, so the address check and the
+# pinned connection below would not apply. The LLM clients and the executor (`ENV_PROXY_OPENER`) may use one.
+OPENER = urllib.request.build_opener(
     NoRedirect, urllib.request.ProxyHandler({}), CheckedHTTPHandler, CheckedHTTPSHandler
 )
+LOCAL_OPENER = OPENER
+ENV_PROXY_OPENER = urllib.request.build_opener(NoRedirect, CheckedHTTPHandler, CheckedHTTPSHandler)
 
 
 def opener_for(context: ssl.SSLContext, direct: bool = False) -> urllib.request.OpenerDirector:
     """An opener that trusts exactly the CAs in `context` (a per-source or per-tool CA bundle), still without
     redirects and with the same resolve-once address check."""
-    handlers: list = [NoRedirect(), CheckedHTTPSHandler(context=context), CheckedHTTPHandler()]
-    if direct:  # never via an environment proxy
-        handlers.append(urllib.request.ProxyHandler({}))
+    handlers: list = [
+        NoRedirect(),
+        urllib.request.ProxyHandler(
+            {}
+        ),  # never via an environment proxy (it would skip the address check)
+        CheckedHTTPSHandler(context=context),
+        CheckedHTTPHandler(),
+    ]
     return urllib.request.build_opener(*handlers)

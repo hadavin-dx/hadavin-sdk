@@ -12,6 +12,7 @@ card and never graded.
 
 from __future__ import annotations
 
+import functools
 import re
 from collections.abc import Callable, Collection, Mapping
 from dataclasses import dataclass
@@ -57,23 +58,61 @@ def normalise(text: str) -> str:
     return runmap.canonical(text).casefold().strip()
 
 
+# The value being looked for is NEVER put into a regular expression: `re` keeps every pattern it compiles in a
+# process-wide cache, and a client's identifier must not outlive its run in memory shared with other clients (R371).
+# The patterns below are static; the value is found with `str.find` and the context is checked around the hit.
+_BEFORE_RE = re.compile(_BEFORE + r"\Z")
+_AFTER_NAME_RE = re.compile(_AFTER_NAME)
+_AFTER_RE = re.compile(_AFTER)
+_NUM_TOKEN = re.compile(r"(?:(?:v|rev|revision|#)\s?)?(\d+)")
+_LOOKBEHIND = (
+    48  # the longest thing `_BEFORE` looks back over (`deployment.apps/`) with room to spare
+)
+
+
+def _before_ok(hay: str, pos: int) -> bool:
+    return _BEFORE_RE.search(hay[max(0, pos - _LOOKBEHIND) : pos]) is not None
+
+
+@functools.lru_cache(maxsize=64)
+def _suffix_rx(suffix: str) -> re.Pattern[str]:
+    """A tool's declared `generated_suffix` (operator configuration, never client data)."""
+    return re.compile(suffix)
+
+
 def contains(text: str, value: str, *, casefold: bool = False, suffix: str | None = None) -> bool:
     """`value` is in `text` as a WHOLE token, compared exactly (case included) unless `casefold`. A numeric id
     (`17`, `v17`, `REVISION 17`, `#17`) matches as a whole number, so `17` is not found inside `170`, and numbers
-    ignore case. A name followed by `suffix` (a regex the tool's manifest declares for a generated suffix, such as
-    a pod's `-7f9d8c6b4-xk2lp`) also counts; without one a name never matches the front of a longer one."""
+    ignore case. A name followed by `suffix` (a restricted pattern the tool's manifest declares for a generated
+    suffix, such as a pod's `-7f9d8c6b4-xk2lp`) also counts; without one a name never matches the front of a
+    longer one."""
     want = runmap.canonical(value).strip()
     hay = runmap.canonical(text)
     if not want:
         return False
     if m := _NUMERIC.fullmatch(want.casefold()):
-        # `17` also matches `rev 17`, `v17` and `#17` in the text
-        pattern = rf"{_BEFORE}(?:(?:v|rev|revision|#)\s?)?{re.escape(m.group(1))}{_AFTER}"
-        return re.search(pattern, hay.casefold()) is not None
+        digits, low = m.group(1), hay.casefold()
+        return any(
+            t.group(1) == digits and _before_ok(low, t.start()) and _AFTER_RE.match(low, t.end())
+            for t in _NUM_TOKEN.finditer(low)
+        )
     if casefold:
         want, hay = want.casefold(), hay.casefold()
-    tail = f"(?:{suffix})?" if suffix else ""
-    return re.search(rf"{_BEFORE}{re.escape(want)}{tail}{_AFTER_NAME}", hay) is not None
+    tail = _suffix_rx(suffix) if suffix else None
+    i = hay.find(want)
+    while i != -1:
+        j = i + len(want)
+        if _before_ok(hay, i):
+            if _AFTER_NAME_RE.match(hay, j):
+                return True
+            if (
+                tail is not None
+                and (t := tail.match(hay, j))
+                and _AFTER_NAME_RE.match(hay, t.end())
+            ):
+                return True
+        i = hay.find(want, i + 1)
+    return False
 
 
 _EVIDENCE_FIELD = {

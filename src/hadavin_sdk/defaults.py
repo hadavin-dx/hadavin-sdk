@@ -26,7 +26,7 @@ MAX_CONCURRENT_TOOL_CALLS = (
 )
 MAX_TOOL_CALLS_PER_MINUTE = 120  # read-tool calls started per minute in one process
 MAX_DOCUMENT_BYTES = (
-    1_048_576  # the largest incident document a run takes (redaction and grounding scan it)
+    262_144  # the largest incident document a run takes (redaction and grounding scan it)
 )
 SOURCE_REPROBE_S = 3600  # how often the scope of a configured source is probed again while running
 MAX_TOOL_BYTES_PER_RUN = 262_144  # bytes of tool results one run may send to the model

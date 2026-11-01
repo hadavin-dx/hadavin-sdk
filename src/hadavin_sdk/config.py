@@ -223,6 +223,9 @@ class EvidenceSettings(_Strict):
     # Target systems (a contract's `target_system`) whose names are case-insensitive, so grounding folds case
     # for them. Every other target is compared exactly: `Admin` is not `admin`.
     case_insensitive_targets: tuple[str, ...] = ()
+    # The secret (in the secrets kind) that keys the HMAC of the restored inputs on the gate's audit event, so
+    # an audit reader cannot confirm a guessed identifier offline. Required in pilot and prod.
+    restored_hash_key_secret_name: str | None = None
     # How often a configured source's scope is probed again while the process runs (RBAC can widen).
     source_reprobe_s: int = Field(default=defaults.SOURCE_REPROBE_S, gt=0)
 

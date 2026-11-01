@@ -15,6 +15,7 @@ Neutral protocol: plain Python protocols; adapters speak whatever the source spe
 
 from __future__ import annotations
 
+import contextvars
 from collections.abc import Mapping
 from typing import Any, Protocol, runtime_checkable
 
@@ -54,6 +55,11 @@ class LogsSource(Source, Protocol):
 @runtime_checkable
 class ChangeSource(Source, Protocol):
     def recent_changes(self, scope: str, start: str, end: str) -> list[Record]: ...
+
+
+# True while a scope probe runs: a source that was switched off after a failed re-probe still answers the
+# probe itself, so it can switch itself back on once its scope is read-only again.
+PROBING: contextvars.ContextVar[bool] = contextvars.ContextVar("hadavin_probing", default=False)
 
 
 def scope_problems(sources: Mapping[str, Source], inventory: Mapping[str, str]) -> list[str]:

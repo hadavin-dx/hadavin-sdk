@@ -171,6 +171,30 @@ def forbidden_host(host: str) -> str | None:
     return None
 
 
+# `generated_suffix` is a deliberately tiny language, so no suffix can backtrack catastrophically or match any
+# longer name: literal characters, `\\.` and `\\-`, and character classes with a BOUNDED repeat (`{5}` or
+# `{5,10}`). No `*`, `+`, `?`, group, alternation or lookaround.
+_SUFFIX = re.compile(
+    r"(?:[A-Za-z0-9_\-]|\\[.\-]|\[[A-Za-z0-9_\-]{1,40}\](?:\{[0-9]{1,2}(?:,[0-9]{1,2})?\})?)+"
+)
+_SUFFIX_MAX_LEN, _SUFFIX_MAX_REPEAT = 200, 64
+
+
+def suffix_problem(suffix: str) -> str | None:
+    if len(suffix) > _SUFFIX_MAX_LEN:
+        return f"is longer than {_SUFFIX_MAX_LEN} characters"
+    if not _SUFFIX.fullmatch(suffix):
+        return "uses more than literals and bounded character classes (no *, +, ?, groups or alternation)"
+    for lo, hi in re.findall(r"\{([0-9]+)(?:,([0-9]+))?\}", suffix):
+        if int(hi or lo) > _SUFFIX_MAX_REPEAT or int(lo) > int(hi or lo):
+            return f"has a repeat that is not between 0 and {_SUFFIX_MAX_REPEAT} or runs backwards"
+    try:
+        re.compile(suffix)
+    except re.error:
+        return "is not a valid pattern"
+    return None
+
+
 def spec_problems(
     spec: ToolSpec,
     tool_modules: list[str],
@@ -200,16 +224,8 @@ def spec_problems(
         out.append(f"tool {spec.name}: a CA applies to https; cluster_http is plain http")
     if bad := [p for p in spec.ports if not 0 < p < 65536]:
         out.append(f"tool {spec.name}: ports {bad} are not valid")
-    if spec.generated_suffix:
-        try:
-            suffix = re.compile(spec.generated_suffix)
-        except re.error:
-            out.append(f"tool {spec.name}: generated_suffix is not a valid regex")
-        else:
-            if suffix.fullmatch("") or len(spec.generated_suffix) > 200:
-                out.append(
-                    f"tool {spec.name}: generated_suffix must not match nothing and be under 200 characters"
-                )
+    if spec.generated_suffix and (why := suffix_problem(spec.generated_suffix)):
+        out.append(f"tool {spec.name}: generated_suffix {why}")
     return out
 
 
@@ -248,6 +264,25 @@ def _pin_digest(files: list[tuple[str, bytes]]) -> str:
     return h.hexdigest()
 
 
+_LOADERS = frozenset(
+    {
+        "import_module",
+        "__import__",
+        "importlib",
+        "runpy",
+        "exec",
+        "eval",
+        "compile",
+        "builtins",
+        "__builtins__",
+        "spec_from_file_location",
+        "pkgutil",
+        "zipimport",
+        "imp",
+    }
+)
+
+
 def _reach_problems(module: str, files: list[tuple[str, Path, bytes]]) -> list[str]:
     """What the pin cannot cover, refused instead of left open: a parent package whose `__init__.py` holds code
     (the pinned module is executed from its hashed bytes, but a parent package would be imported from disk) and
@@ -262,25 +297,28 @@ def _reach_problems(module: str, files: list[tuple[str, Path, bytes]]) -> list[s
     tree = ast.parse(files[-1][2])
     if any(isinstance(n, ast.ImportFrom) and n.level > 0 for n in ast.walk(tree)):
         out.append(f"tool module {module}: a relative import loads a file the pin does not cover")
-    for n in ast.walk(
-        tree
-    ):  # importlib.import_module(...) and __import__(...) with a relative or computed name
-        if not isinstance(n, ast.Call):
+    # Best effort, by NAME and not only by call: a deny-list cannot be complete, so anything that can load code from
+    # somewhere else is refused wherever it appears (a call, an alias, `getattr(importlib, "import_module")`).
+    for n in ast.walk(tree):
+        if isinstance(n, ast.Name):
+            seen = [n.id]
+        elif isinstance(n, ast.Attribute):
+            seen = [n.attr]
+        elif isinstance(n, ast.alias):
+            seen = [*n.name.split("."), n.asname or ""]
+        elif isinstance(n, ast.ImportFrom):
+            seen = (n.module or "").split(".")
+        elif isinstance(n, ast.Constant) and isinstance(n.value, str):
+            seen = [n.value]
+        else:
             continue
-        fn = n.func
-        name = fn.attr if isinstance(fn, ast.Attribute) else getattr(fn, "id", "")
-        if name not in ("import_module", "__import__"):
-            continue
-        first = n.args[0] if n.args else None
-        constant = isinstance(first, ast.Constant) and isinstance(first.value, str)
-        if (
-            not constant
-            or first.value.startswith(".")
-            or len(n.args) > 1
-            and name == "import_module"
-        ):
+        banned = (
+            _LOADERS if isinstance(n, ast.Name) else _LOADERS - {"compile"}
+        )  # `re.compile` is fine
+        if banned.intersection(seen):
             out.append(
-                f"tool module {module}: a dynamic or relative import loads a file the pin does not cover"
+                f"tool module {module}: a dynamic or relative import loads a file the pin does not cover "
+                "(this check is best effort; a meta-path finder restricted to the pin is the sound fix)"
             )
             break
     return out
@@ -395,6 +433,9 @@ def _request_host(req: urllib.request.Request) -> str:
     return host.lower().rstrip(".")
 
 
+_CREDENTIAL_HEADER = re.compile(r"auth|token|secret|key|cookie|credential|session", re.IGNORECASE)
+
+
 class ToolContext:
     """What a tool may touch. Built per call, so the digest, the deadline and the secrets handed out are per call.
     The secret resolver is held by a closure, not an attribute: a tool can only ask for the manifest's names."""
@@ -411,7 +452,9 @@ class ToolContext:
         cluster_ports: tuple[int, ...] = defaults.CLUSTER_PORTS,
         cluster_suffixes: tuple[str, ...] = defaults.CLUSTER_SUFFIXES,
         ssl_context: ssl.SSLContext | None = None,
+        on_fetch: Callable[[], None] | None = None,
     ) -> None:
+        self._on_fetch = on_fetch
         self._fetch_ceiling = fetch_ceiling
         self._suffixes = tuple(cluster_suffixes)
         self._opener = http_guard.opener_for(ssl_context) if ssl_context is not None else None
@@ -511,7 +554,7 @@ class ToolContext:
         if parts.username or parts.password:
             raise ToolRefused("credentials in the URL are refused")
         if parts.scheme == "http" and (
-            spec.secret_names or any(k.lower() == "authorization" for k in (headers or {}))
+            spec.secret_names or any(_CREDENTIAL_HEADER.search(k) for k in (headers or {}))
         ):
             raise ToolRefused(
                 "a credential never travels over plain http, whatever the host suffix"
@@ -521,6 +564,8 @@ class ToolContext:
         except EgressRefused:
             raise ToolRefused(f"host {host!r} is not in this tool's manifest hosts") from None
         self._port(parts, parts.scheme)
+        if self._on_fetch is not None:
+            self._on_fetch()  # every request to the client's system counts toward the box's rate cap
         cap = min(max_bytes or spec.max_output_bytes, self._fetch_ceiling)
         req = urllib.request.Request(  # noqa: S310 - scheme and host checked above
             url, data=body, headers=headers or {}, method=method.upper()
@@ -617,9 +662,14 @@ def _b64_holds(token: str, secrets: list[str], depth: int) -> bool:
     """Does `token` decode (base64, standard or URL-safe) to text holding a secret, or, `depth` levels down, to
     more base64 that does?"""
     padded = token + "=" * (-len(token) % 4)
-    for decode in (base64.b64decode, base64.urlsafe_b64decode):
+    padded32 = token + "=" * (-len(token) % 8)
+    for decode, data in (
+        (base64.b64decode, padded),
+        (base64.urlsafe_b64decode, padded),
+        (lambda t: base64.b32decode(t, casefold=True), padded32),
+    ):
         try:
-            inner = decode(padded).decode("utf-8", "ignore")
+            inner = decode(data).decode("utf-8", "ignore")
         except ValueError:
             continue
         if any(sec in inner for sec in secrets):
@@ -633,7 +683,7 @@ def _derived(text: str, secrets: list[str]) -> str:
     """Tokens that decode (base64, standard or URL-safe, twice) to something holding a secret: a derived
     Basic-auth header, a token wrapping the secret, a doubly encoded one. Replaced whole."""
     return _B64_TOKEN.sub(
-        lambda m: "<SECRET_REDACTED>" if _b64_holds(m.group(0), secrets, 1) else m.group(0), text
+        lambda m: "<SECRET_REDACTED>" if _b64_holds(m.group(0), secrets, 2) else m.group(0), text
     )
 
 
@@ -641,7 +691,7 @@ def _decoded(text: str) -> str:
     """The text with the encodings an attacker or a log pipeline layers over a value undone: JSON `\\uXXXX`
     escapes, percent-encoding in either case, HTML entities, then NFKC and invisible characters."""
     unescaped = re.sub(r"\\u([0-9a-fA-F]{4})", lambda m: chr(int(m.group(1), 16)), text)
-    return runmap.canonical(html.unescape(unquote(unescaped)))
+    return runmap.canonical(html.unescape(unquote(unquote(unescaped))))
 
 
 def _sanitise(text: str) -> str:
@@ -760,6 +810,7 @@ class ToolBox:
         self._admit_lock = threading.Lock()
         self._active = 0
         self._started: deque[float] = deque()
+        self._fetches: deque[float] = deque()
 
     def names(self) -> set[str]:
         return set(self.specs)
@@ -775,6 +826,7 @@ class ToolBox:
         it. A body that does not return is abandoned (its thread ends at its next fetch or secret read); too many
         abandoned bodies and further calls are refused."""
         if self.abandoned() >= self._max_abandoned:
+            self._release()
             raise ToolRefused("too many earlier tool calls are still running past their deadline")
         box: dict[str, Any] = {}
         done = threading.Event()
@@ -786,11 +838,16 @@ class ToolBox:
                 box["error"] = exc
             finally:
                 done.set()
+                self._release()  # the slot is held until the body ENDS, not until the caller stops waiting
 
         # A daemon thread: a body that never returns (sleep, a lock, a busy loop) must not keep the process alive
         # at exit, which a pool's non-daemon worker would.
         worker = threading.Thread(target=work, daemon=True, name="hadavin-tool")
-        worker.start()
+        try:
+            worker.start()
+        except BaseException:
+            self._release()
+            raise
         if not done.wait(self.timeout_s):
             with self._abandoned_lock:
                 self._abandoned.add(worker)
@@ -822,12 +879,28 @@ class ToolBox:
         with self._admit_lock:
             self._active -= 1
 
+    def _note_fetch(self) -> None:
+        """One request to a client system: counted against the same per-minute cap as a call."""
+        now = time.monotonic()
+        with self._admit_lock:
+            while self._fetches and now - self._fetches[0] > 60:
+                self._fetches.popleft()
+            if len(self._fetches) >= self._max_per_minute:
+                raise ToolRefused("request rate limit reached; try again later")
+            self._fetches.append(now)
+
     def invoke(self, name: str, args: dict[str, Any], mapping: dict[str, str]) -> ToolOutput:
         spec = self.specs[name]
         resolver = self._secrets_for(spec) if self._secrets_for else None
         ssl_ctx = self._ssl_for(spec) if self._ssl_for else None
         ctx = ToolContext(
-            spec, self.timeout_s, resolver, self._bindings, ssl_context=ssl_ctx, **self._limits
+            spec,
+            self.timeout_s,
+            resolver,
+            self._bindings,
+            ssl_context=ssl_ctx,
+            on_fetch=self._note_fetch,
+            **self._limits,
         )
         started = time.monotonic()
         error = False
@@ -839,11 +912,8 @@ class ToolBox:
                 bad := self._arg_errors(spec.input_schema, restored)
             ):
                 raise ToolRefused("arguments invalid: " + ", ".join(bad)[:200])
-            self._admit()
-            try:
-                raw = self._call(name, restored, ctx)
-            finally:
-                self._release()
+            self._admit()  # `_call` frees the slot when the tool's thread ends
+            raw = self._call(name, restored, ctx)
         except Exception as exc:  # noqa: BLE001 - a failing tool becomes a result the model can react to
             error = True
             raw = ERROR_PREFIX + error_reason(exc)
