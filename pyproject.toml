@@ -1,6 +1,6 @@
 [project]
 name = "hadavin-sdk"
-version = "0.0.0"
+version = "0.1.0"
 description = "Shared building blocks for Hadavin's AI builds"
 readme = "README.md"
 requires-python = ">=3.12"
