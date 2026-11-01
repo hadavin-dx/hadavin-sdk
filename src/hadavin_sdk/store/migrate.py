@@ -61,7 +61,8 @@ _CREATE = re.compile(
     r"CREATE\s+(?:OR\s+REPLACE\s+)?(?:MATERIALIZED\s+)?(TABLE|VIEW)\s+(?:IF\s+NOT\s+EXISTS\s+)?(\w+)",
     re.IGNORECASE,
 )
-_SERIAL = re.compile(r"(\w+)\s+(?:(?:BIG|SMALL)?SERIAL|SERIAL[248])\b", re.IGNORECASE)
+# Possessive quantifiers (Python 3.11+) plus a leading \b: no backtracking, linear time on long identifiers.
+_SERIAL = re.compile(r"\b(\w++)\s++(?:(?:BIG|SMALL)?SERIAL|SERIAL[248])\b", re.IGNORECASE)
 # Statements the guard does not read. Any of these in a migration is refused ("extend the guard") rather than
 # skipped, so a relation or sequence it creates cannot go ungranted.
 _SAFE_CREATE = re.compile(
