@@ -144,9 +144,8 @@ def _gate(cfg: AskdataConfig) -> SealedGate:
         if provider is None:
             raise LockError("sealed_key_secret_name is set but the config has no `secrets` entry")
         key = key_from(provider, cfg.sealed_key_secret_name)
-    anchors = [cfg.paths.audit_dir / "sealed-anchor.json"]
-    if cfg.paths.sealed_anchor_file is not None:  # a second anchor meant to be committed to git
-        anchors.append(cfg.paths.sealed_anchor_file)
+    # Two anchors with fixed names: one beside the chain, one in the eval folder that you COMMIT to the repository.
+    anchors = [cfg.paths.audit_dir / "sealed-anchor.json", cfg.paths.eval_dir / "anchor.json"]
     return SealedGate(
         cfg.paths.eval_dir,
         cfg.paths.audit_dir / "sealed-chain.jsonl",
@@ -209,16 +208,7 @@ def cmd_freeze(cfg: AskdataConfig, new_set_reason: str | None = None) -> int:
         f"freeze: lock.json written (green <= {t.green_max_upper}, amber <= {t.amber_max_upper}, test_runs 0"
         f"{', sealed with the configured key' if lock.seal else ', NOT keyed: set sealed_key_secret_name for a client run'})"
     )
-    out(
-        "freeze: commit lock.json"
-        + (f" and {cfg.paths.sealed_anchor_file.name}" if cfg.paths.sealed_anchor_file else "")
-        + " to git"
-        + (
-            ""
-            if cfg.paths.sealed_anchor_file
-            else " (set paths.sealed_anchor_file for a second, committed anchor)"
-        )
-    )
+    out("freeze: commit lock.json and anchor.json (both in the eval folder) to the repository")
     return 0
 
 
