@@ -1,6 +1,6 @@
 """P2 mutation test: for each rule V01..V12, switch only that rule off and require that at least one named corpus
 attack stops being refused with its tagged rule. A rule no corpus test can see would be a rule nobody notices
-breaking. Mutations go through askdata.validate._OFF, the validator's own switch (empty in production)."""
+breaking (per rule id, not per check site). Mutations go through askdata.validate._OFF, the validator's own switch (empty in production)."""
 
 import askdata.validate as v
 import pytest
@@ -54,7 +54,9 @@ def test_switching_off_one_rule_lets_an_attack_through_or_a_second_line_refuses_
     broken = broken_with(rule)
     assert not [n for n, o in broken.items() if o.startswith("CRASH")], broken
     if rule in DEFENCE_IN_DEPTH:
-        assert broken and all(o.startswith("V") for o in broken.values()), broken
+        assert broken and all(
+            o in {"V02", "V03", "V04", "V10"} - {rule} for o in broken.values()
+        ), broken
     else:
         assert "ACCEPTED" in broken.values(), f"{rule} off: nothing was accepted ({broken})"
 

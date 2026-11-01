@@ -12,7 +12,7 @@
 
 # test data generator, not security randomness
 
-# ruff: noqa: S608  # the SQL text is the test data
+# ruff: noqa: S608, S311  # the SQL text is the test data; seeded randomness is test data, not security
 
 from __future__ import annotations
 
@@ -398,11 +398,11 @@ SLOT_POISON = [
     ("select", ", " + BACKSLASH, "V09"), ("select", ", " + chr(0), "V09"), ("select", ", " + chr(0x0456), "V09"),
     ("select", ", ROW(1, 2)", "V06"), ("select", ", ARRAY[1]", "V06"), ("select", ", to_json(1)", "V06"),
     ("into", "INTO scratch_t", "V03"),
-    ("join", "JOIN pg_shadow zz ON zz.usename = zz.usename", "V04"),
-    ("join", "JOIN shop.customers zz ON zz.customer_id = zz.customer_id", "V04"),
-    ("join", "JOIN information_schema.tables zz ON zz.table_name = zz.table_name", "V04"),
-    ("join", "JOIN generate_series(1, 3) zz ON zz = 1", "V04"),
-    ("join", "JOIN analytics.orders_v zz TABLESAMPLE SYSTEM (1) ON zz.order_id = zz.order_id", "V04"),
+    ("join", "JOIN pg_shadow zz ON zz.usename = zz.passwd", "V04"),
+    ("join", "JOIN shop.customers zz ON zz.customer_id = zz.email", "V04"),
+    ("join", "JOIN information_schema.tables zz ON zz.table_name = zz.table_type", "V04"),
+    ("join", "JOIN generate_series(1, 3) zz ON zz.a = zz.b", "V04"),
+    ("join", "JOIN analytics.orders_v zz TABLESAMPLE SYSTEM (1) ON zz.order_id = zz.status", "V04"),
     ("join", "CROSS JOIN analytics.orders_v zz", "V08"), ("join", ", analytics.orders_v zz", "V08"),
     ("join", "NATURAL JOIN analytics.orders_v zz", "V08"), ("join", "JOIN analytics.orders_v zz ON true", "V08"),
     ("tail", "FOR UPDATE", "V03"), ("tail", "FOR SHARE", "V03"), ("tail", "FOR NO KEY UPDATE NOWAIT", "V03"),
@@ -467,5 +467,9 @@ def case(rng: random.Random) -> tuple[str, str, tuple[str, str] | None]:
         slot, text, rule = rng.choice(SLOT_POISON)
         placed = place(tokens, slot, text)
         if placed is not None:
-            return "slot", render(rng, placed), (render(rng, tokens), rule)
+            seed = (
+                rng.random()
+            )  # the same casing and spacing for base and hazard: only the hazard differs
+            base = render(random.Random(seed), tokens)
+            return "slot", render(random.Random(seed), placed), (base, rule)
     return "mutated", render(rng, mutate(rng, tokens)), None

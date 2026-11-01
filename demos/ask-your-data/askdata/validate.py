@@ -294,9 +294,13 @@ def _check_node(node: exp.Expression, cte_names: set[str]) -> None:
     if (
         isinstance(node, exp.Join)
         and node.args.get("on") is not None
-        and next(node.args["on"].find_all(exp.Column), None) is None
+        and len({(c.table.lower(), c.name.lower()) for c in node.args["on"].find_all(exp.Column)})
+        < 2
     ):
-        _fail("V08", "a join condition must compare columns (ON TRUE and ON 1 = 1 are cross joins)")
+        _fail(
+            "V08",
+            "a join condition must compare two different columns (ON TRUE, ON 1 = 1 are cross joins)",
+        )
     if isinstance(node, exp.Dot) and isinstance(node.expression, exp.Func):
         _fail("V06", "schema-qualified function names are not allowed")
     if isinstance(node, exp.Lateral | exp.TableSample | exp.Unnest | exp.Values):
@@ -382,6 +386,8 @@ def _check_detail(node: exp.Expression) -> None:
         _fail("V05", "columns are referenced by view alias and name only")
     if isinstance(node, exp.Literal) and node.is_string and len(node.this) > MAX_LITERAL:
         _fail("V10", f"string literal over {MAX_LITERAL} characters")
+    if isinstance(node, exp.Select) and node.args.get("windows"):
+        _fail("V10", "named windows are not allowed")
     if isinstance(node, exp.Window) and node.args.get("alias") is not None:
         _fail(
             "V10", "named windows are not allowed"
@@ -474,9 +480,18 @@ def _check_tree(tree: exp.Expression) -> None:
     # sqlglot's resolver lets an unknown bare column through in HAVING (it may be a select alias): after
     # resolution every column must belong to a relation, except an output name in ORDER BY (legal in Postgres).
     for col in resolved.find_all(exp.Column) if resolved is not None else ():
-        if not col.table and col.find_ancestor(exp.Order) is None:
+        if not col.table and not _output_name_in_order_by(col):
             _fail("V05", "a column is not in the referenced views")
             break
+
+
+def _output_name_in_order_by(col: exp.Column) -> bool:
+    """True when the nearest enclosing Select/Order of `col` is an ORDER BY (an output name there is legal); a
+    column inside a subquery that merely sits in an ORDER BY belongs to that subquery's Select and is not exempt."""
+    node = col.parent
+    while node is not None and not isinstance(node, exp.Select | exp.Order):
+        node = node.parent
+    return isinstance(node, exp.Order)
 
 
 def _parse_one(text: str) -> exp.Expression:
