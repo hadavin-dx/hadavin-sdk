@@ -61,7 +61,19 @@ _CREATE = re.compile(
     r"CREATE\s+(?:OR\s+REPLACE\s+)?(?:MATERIALIZED\s+)?(TABLE|VIEW)\s+(?:IF\s+NOT\s+EXISTS\s+)?(\w+)",
     re.IGNORECASE,
 )
-_SERIAL = re.compile(r"^\s+(\w+)\s+(?:BIG|SMALL)?SERIAL\b", re.IGNORECASE | re.MULTILINE)
+_SERIAL = re.compile(r"(\w+)\s+(?:BIG|SMALL)?SERIAL\b", re.IGNORECASE)
+# Statements the guard does not read. Any of these in a migration is refused ("extend the guard") rather than
+# skipped, so a relation or sequence it creates cannot go ungranted.
+_SAFE_CREATE = re.compile(
+    r"CREATE\s+(?:UNIQUE\s+)?INDEX\b|CREATE\s+OR\s+REPLACE\s+(?:FUNCTION|TRIGGER|VIEW)\b"
+    r"|CREATE\s+TRIGGER\b|CREATE\s+(?:TABLE|VIEW)\s+(?:IF\s+NOT\s+EXISTS\s+)?[a-z_]\w*\s*(?:\(|AS\b)",
+    re.IGNORECASE,
+)
+_ANY_CREATE = re.compile(r"\bCREATE\b", re.IGNORECASE)
+_UNREAD = re.compile(
+    r"\bADD\s+COLUMN\b[^;]*\b(?:BIG|SMALL)?SERIAL\b|\bAS\s+IDENTITY\b|\bCREATE\s+SEQUENCE\b",
+    re.IGNORECASE,
+)
 
 
 def _migration_files(folder: Path = MIGRATIONS) -> list[Path]:
@@ -81,28 +93,51 @@ def check_ledger(paths: list[Path]) -> list[str]:
     return problems
 
 
-def _created(paths: list[Path]) -> dict[str, str]:
-    """Relation name -> kind, for every table, view and serial-column sequence the migrations create."""
+def _table_body(text: str, start: int) -> str:
+    """The text of the parenthesised column list that opens at or after `start` (parentheses balanced)."""
+    open_at = text.find("(", start)
+    if open_at == -1:
+        return ""
+    depth = 0
+    for i in range(open_at, len(text)):
+        depth += (text[i] == "(") - (text[i] == ")")
+        if depth == 0:
+            return text[open_at : i + 1]
+    return text[open_at:]
+
+
+def _scan(paths: list[Path]) -> tuple[dict[str, str], list[str]]:
+    """(relation name -> kind, unread statements). Kinds: every table, view and serial-column sequence the
+    migrations create. A statement that could create a relation or sequence in a way this scan does not read
+    (quoted or schema-qualified name, UNLOGGED/TEMP/FOREIGN tables, CREATE SEQUENCE, IDENTITY, ADD COLUMN ...
+    SERIAL) is returned as a problem, never skipped: the guard fails closed."""
     found: dict[str, str] = {}
+    unread: list[str] = []
     for path in paths:
         text = re.sub(r"/\*.*?\*/", "", path.read_text(encoding="utf-8"), flags=re.DOTALL)
         text = re.sub(r"--[^\n]*", "", text)
+        for m in _ANY_CREATE.finditer(text):
+            if not _SAFE_CREATE.match(text, m.start()):
+                snippet = " ".join(text[m.start() : m.start() + 40].split())
+                unread.append(f"{path.name}: statement the guard does not read: {snippet!r}")
+        unread += [
+            f"{path.name}: {u.group(0)[:40]!r} is not read by the guard"
+            for u in _UNREAD.finditer(text)
+        ]
         for m in _CREATE.finditer(text):
             kind, name = m.group(1).lower(), m.group(2).lower()
             found[name] = kind
             if kind == "table":
-                end = text.find("\n);", m.end())
-                body = text[m.end() : end if end != -1 else len(text)]
-                for col in _SERIAL.findall(body):
+                for col in _SERIAL.findall(_table_body(text, m.end())):
                     found[f"{name}_{col.lower()}_seq"] = "sequence"
-    return found
+    return found, unread
 
 
 def check_grants(paths: list[Path]) -> list[str]:
     """Problems between the migrations and `GRANTS`: a relation they create with no entry (it would get no grant
     and fail at runtime), an entry for a relation no migration creates, or an entry of the wrong kind."""
-    created = _created(paths)
-    problems = [
+    created, problems = _scan(paths)
+    problems += [
         f"{n} ({k}) is created by a migration but is not in GRANTS"
         for n, k in sorted(created.items())
         if n not in GRANTS
@@ -167,12 +202,23 @@ def migrate(
             "(version TEXT PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT now())"
         )
         done = {r[0] for r in db.execute("SELECT version FROM schema_migrations").fetchall()}
+        if gone := sorted(done - {p.stem for p in files}):
+            raise ConfigError(f"applied migrations have no file in this release: {', '.join(gone)}")
         for path in files:
             if path.stem in done:
                 continue
             db.execute(path.read_text(encoding="utf-8"))  # a file shipped in this package
             db.execute("INSERT INTO schema_migrations (version) VALUES (%s)", (path.stem,))
             applied.append(path.stem)
+        if runtime_role and portal_role:
+            q = "SELECT pg_has_role(%s, %s, 'MEMBER')"  # a member keeps the other's rights, whatever we REVOKE
+            if (
+                db.execute(q, (runtime_role, portal_role)).fetchone()[0]
+                or db.execute(q, (portal_role, runtime_role)).fetchone()[0]
+            ):
+                raise ConfigError(
+                    "the runtime role and the portal role must not be members of each other"
+                )
         if runtime_role:
             _apply_grants(db, runtime_role, lambda g: g.runtime)
         if portal_role:

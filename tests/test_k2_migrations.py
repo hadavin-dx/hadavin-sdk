@@ -299,3 +299,94 @@ def test_the_store_contract_suite_runs_as_a_non_owner_role():
                 "SELECT tableowner FROM pg_tables WHERE tablename = 'runs' AND schemaname = current_schema()"
             ).fetchone()[0]
         assert user.startswith("rt_") and user != owner
+
+
+# --- review round: the guard fails closed ------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "statement",
+    [
+        'CREATE TABLE "Foo" (id INT);',
+        "CREATE TABLE public.foo (id INT);",
+        "CREATE UNLOGGED TABLE foo (id INT);",
+        "CREATE TEMP TABLE foo (id INT);",
+        "CREATE SEQUENCE foo_seq;",
+        "CREATE MATERIALIZED VIEW foo AS SELECT 1;",
+        "ALTER TABLE runs ADD COLUMN n BIGSERIAL;",
+        "ALTER TABLE runs ADD COLUMN n BIGINT GENERATED ALWAYS AS IDENTITY;",
+    ],
+)
+def test_plant_a_statement_the_guard_cannot_read_is_refused(tmp_path, statement):
+    problems = mig.check_grants(_dir(tmp_path, {"0001_a.sql": statement + "\n"}))
+    assert any("not read by the guard" in p or "does not read" in p for p in problems), problems
+
+
+def test_plant_inline_serial_column_is_found(tmp_path):
+    sql_text = "CREATE TABLE events (id TEXT, seq BIGSERIAL PRIMARY KEY) ;\n"
+    problems = mig.check_grants(_dir(tmp_path, {"0001_a.sql": sql_text}))
+    assert "events_seq_seq (sequence) is created by a migration but is not in GRANTS" in problems
+
+
+def test_a_table_ending_in_a_clause_still_closes_its_column_list(tmp_path):
+    sql_text = "CREATE TABLE t (a INT) PARTITION BY RANGE (a);\nCREATE TABLE u (b BIGSERIAL);\n"
+    problems = mig.check_grants(_dir(tmp_path, {"0001_a.sql": sql_text}))
+    assert "t (table) is created by a migration but is not in GRANTS" in problems
+    assert "u_b_seq (sequence) is created by a migration but is not in GRANTS" in problems
+    assert not any(p.startswith("t_") for p in problems)
+
+
+def test_index_function_and_trigger_statements_are_not_flagged(tmp_path):
+    sql_text = (
+        "CREATE INDEX i ON runs (state);\nCREATE UNIQUE INDEX IF NOT EXISTS j ON runs (id);\n"
+        "CREATE OR REPLACE FUNCTION f() RETURNS trigger LANGUAGE sql AS 'select 1';\n"
+        "CREATE OR REPLACE TRIGGER x BEFORE UPDATE ON runs FOR EACH ROW EXECUTE FUNCTION f();\n"
+    )
+    problems = mig.check_grants(_dir(tmp_path, {"0001_a.sql": sql_text}))
+    assert not any("read" in p for p in problems), problems
+
+
+def test_the_plan_hash_pins_the_nested_target_shape():
+    """The omit-if-default set covers Plan's own fields. A field added to Target would change every stored
+    hash, so this fails until the change is made safe on purpose."""
+    from hadavin_sdk.models import Target
+
+    assert set(Target.model_fields) == {"system", "ref"}
+
+
+def test_the_database_holds_exactly_the_relations_in_the_map(roles):
+    """The catalog, not a text scan: every table, view and sequence in the schema is in GRANTS and back."""
+    import psycopg
+
+    dsn, _, _ = roles
+    q = (
+        "SELECT c.relname, c.relkind FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace "
+        "WHERE n.nspname = current_schema() AND c.relkind IN ('r','v','m','S','p','f') "
+        "AND c.relname <> 'schema_migrations'"
+    )
+    kinds = {"r": "table", "p": "table", "v": "view", "m": "view", "S": "sequence", "f": "table"}
+    with psycopg.connect(dsn, autocommit=True) as db:
+        actual = {name: kinds[kind] for name, kind in db.execute(q).fetchall()}
+    # primary-key index sequences do not exist; schema_migrations is the migrator's own table
+    assert actual == {n: g.kind for n, g in mig.GRANTS.items()}
+
+
+def test_migrate_refuses_roles_that_are_members_of_each_other(roles):
+    import psycopg
+    from psycopg import sql
+
+    dsn, runtime, portal = roles
+    with psycopg.connect(dsn, autocommit=True) as db:
+        db.execute(
+            sql.SQL("GRANT {} TO {}").format(sql.Identifier(runtime), sql.Identifier(portal))
+        )
+    with pytest.raises(ConfigError, match="members of each other"):
+        mig.migrate(dsn, runtime_role=runtime, portal_role=portal)
+
+
+def test_migrate_refuses_when_an_applied_migration_has_no_file(roles, monkeypatch):
+    dsn, _, _ = roles
+    files = mig._migration_files()
+    monkeypatch.setattr(mig, "_migration_files", lambda: files[:-1])
+    with pytest.raises(ConfigError, match="no file in this release"):
+        mig.migrate(dsn)

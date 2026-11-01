@@ -126,7 +126,7 @@ class Plan(Shape):
             if getattr(plan, name) == type(self).model_fields[name].get_default(
                 call_default_factory=True
             ):
-                del data[name]
+                data.pop(name, None)
         return sha256_hex(data)
 
 
