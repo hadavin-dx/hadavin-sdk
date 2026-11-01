@@ -24,6 +24,7 @@ from typing import Any
 
 from askdata import compare
 from askdata.evalset import AdversarialItem, GoldItem, Lock, LockError, Thresholds
+from askdata.live import smoke_breach
 from askdata.meter import fmt_usd
 from askdata.pgsource import Limits, PgError, RunResult
 from askdata.pipeline import Answer, Executor, Pipeline
@@ -119,6 +120,10 @@ class Config:
         "over_budget",
         "kill_switch",
     )  # a run that hits these is aborted, not scored
+    live: bool = (
+        False  # the model is the config's `llm` entry (core LLM kind) instead of the recordings
+    )
+    smoke: bool = False  # a live smoke run also aborts on cost per question or schema violations (live.smoke_breach)
 
 
 def human_read_sample(passing_ids: list[str], fraction: float = 0.2) -> list[str]:
@@ -172,6 +177,7 @@ class Harness:
         self._gold: dict[tuple[str, str], tuple[list[tuple], int, bool]] = {}
         self.aborted: str | None = None
         self.spent = Decimal(0)  # every question asked, incl. the aborting one and the clean twin
+        self._asked = self._attempts = self._violations = 0
 
     # ---- gold and candidate results
     def _exec(self, db: str, sql: str, label: str) -> tuple[list[tuple], int, bool]:
@@ -265,8 +271,16 @@ class Harness:
         self.rec[rec_key].label = label
         ans = pipeline.ask(question, asker="claimed:eval")
         self.spent += Decimal(ans.line.cost_usd)
-        if ans.reason in self.cfg.stop_on and self.aborted is None:
-            self.aborted = ans.reason
+        self._asked += 1
+        self._attempts += len({a.n for a in ans.line.attempts})
+        self._violations += sum(1 for a in ans.line.attempts if not a.schema_ok)
+        if self.aborted is None:
+            if ans.reason in self.cfg.stop_on:
+                self.aborted = ans.reason
+            elif self.cfg.smoke:
+                self.aborted = smoke_breach(
+                    self.spent, self._asked, self._attempts, self._violations
+                )
         return ans
 
     def run_gold(self, items: list[GoldItem]) -> list[RunRecord]:
@@ -458,10 +472,11 @@ def sealed_gate(lock: Lock, remaining: Decimal, *, split: str, second_look: str 
     """Refuse a sealed (test) run that is not allowed. Raises `LockError`; the caller prints the reason."""
     if split != "test":
         return
-    if remaining < lock.sealed_min_remaining_usd:
-        raise LockError(
-            f"the sealed run needs at least {lock.sealed_min_remaining_usd} remaining, {remaining} left"
-        )
+    floor = (
+        lock.second_look_min_remaining_usd if lock.test_runs >= 1 else lock.sealed_min_remaining_usd
+    )
+    if remaining < floor:
+        raise LockError(f"the sealed run needs at least {floor} remaining, {remaining} left")
     if lock.test_runs >= 1:
         if second_look is None:
             raise LockError(

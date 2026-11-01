@@ -1,13 +1,16 @@
 """`eval run|report|compare`. Exit codes (also in the README):
 
+  freeze  0 lock.json written, 4 startup (a file is missing, or lock.json already exists: never overwritten)
   run     0 green, 10 amber ("promising, not demonstrated"), 11 not demonstrated, 12 a hard zero breached,
           13 aborted (meter or kill switch; no verdict), 14 a sealed run was refused, 4 startup (config, lock, files,
           database, no model), 1 usage
   report  0 printed, 4 not a run folder
   compare 0 no regression, 11 regression, 4 the runs are not comparable
 
-Only the scripted model is wired here (`paths.recorded_dir` holds recordings built by the fixture builder). A live
-route needs the owner's yes at each step of the budget table and is not connected in this phase.
+The model is the recorded one (`paths.recorded_dir`, built by the fixture builder) unless `--live` is given: then it is
+the config's `llm` entry (the core LLM kind). `--smoke` (with `--live`) also aborts the run when the cost per question
+passes US$0.035 or more than 10 % of the model attempts are schema violations. A live run spends real money: it needs
+the owner's yes at each step of the budget table, and the meter gates every call.
 """
 
 from __future__ import annotations
@@ -20,7 +23,7 @@ import time
 from pathlib import Path
 
 from askdata import audit as audit_mod
-from askdata import evalrun, htmlexport, prompt
+from askdata import evalrun, htmlexport, live, prompt
 from askdata.config import AskdataConfig, ConfigError, config_hash, load_config
 from askdata.evalrun import EXIT, Config, Harness, HarnessError, Incomparable, RecordingExecutor
 from askdata.evalset import (
@@ -28,7 +31,9 @@ from askdata.evalset import (
     GoldItem,
     Lock,
     LockError,
+    freeze,
     load_jsonl,
+    lock_path,
     read_lock,
     verify_files,
     write_lock,
@@ -63,11 +68,12 @@ def build_harness(
     """Pipelines over the planted database A (and the clean twin), recorders on A, B and clean."""
     pr = prompt.load(as_of=cfg.as_of)
     chash = config_hash(cfg, pr.prompt_sha256)
-    if cfg.paths.recorded_dir is None:
-        raise ConfigError(
-            "no model: set paths.recorded_dir (live routes are not connected in this phase)"
-        )
-    llm = FakeLLM(cfg.paths.recorded_dir, cfg.routes())
+    if ecfg.live:
+        llm = live.make_llm(cfg)
+    elif cfg.paths.recorded_dir is None:
+        raise ConfigError("no model: set paths.recorded_dir, or use --live with an `llm` entry")
+    else:
+        llm = FakeLLM(cfg.paths.recorded_dir, cfg.routes())
     sources = sources or {
         k: PgSource(os.environ[v])
         for k, v in (("a", "ASKDATA_DSN"), ("b", "ASKDATA_DSN_B"), ("clean", "ASKDATA_DSN_CLEAN"))
@@ -108,10 +114,43 @@ def build_harness(
     )
 
 
+def cmd_freeze(cfg: AskdataConfig) -> int:
+    """Write lock.json (file hashes, the gate thresholds, test_runs 0). Run it ONCE, after the prompt and the dev work
+    are final and before any sealed run; it never replaces an existing lock (that would reset the sealed counter)."""
+    eval_dir = cfg.paths.eval_dir
+    names = [n for pair in SPLIT_FILES.values() for n in pair]
+    if lock_path(eval_dir).exists():
+        out("freeze: lock.json already exists; not overwritten (it holds the sealed-run counter)")
+        return 4
+    if missing := [n for n in names if not (eval_dir / n).is_file()]:
+        out(f"startup: cannot freeze, missing: {', '.join(missing)}")
+        return 4
+    lock = freeze(eval_dir, names)
+    for n, digest in sorted(lock.files.items()):
+        out(f"{digest}  {n}")
+    t = lock.thresholds
+    out(
+        f"freeze: lock.json written (green <= {t.green_max_upper}, amber <= {t.amber_max_upper}, test_runs 0)"
+    )
+    return 0
+
+
 def cmd_run(
-    cfg: AskdataConfig, split: str, k: int, second_look: str | None, harness_factory=build_harness
+    cfg: AskdataConfig,
+    split: str,
+    k: int,
+    second_look: str | None,
+    harness_factory=build_harness,
+    *,
+    use_live: bool = False,
+    smoke: bool = False,
 ) -> int:
     eval_dir = cfg.paths.eval_dir
+    if (
+        split == "test" and k != 1
+    ):  # one sealed invocation is one pass; repeats (pass^k) belong to --split dev
+        out("refused: the sealed set takes --k 1 only (use --split dev --k 3 for repeated runs)")
+        return 14
     try:
         lock = read_lock(eval_dir)
         changed = verify_files(eval_dir, lock)
@@ -144,7 +183,9 @@ def cmd_run(
     run_dir = cfg.paths.runs_dir / evalrun.run_id(label)
     run_dir.mkdir(parents=True, exist_ok=True)
     try:
-        harness, meter, meta = harness_factory(cfg, lock, run_dir, Config(k=k, label=label))
+        harness, meter, meta = harness_factory(
+            cfg, lock, run_dir, Config(k=k, label=label, live=use_live, smoke=smoke)
+        )
     except (ConfigError, KeyError, OSError) as err:
         out(f"startup: {err}")
         return 4
@@ -235,6 +276,9 @@ def main(argv: list[str]) -> int:
     r.add_argument("--split", choices=["dev", "test"], required=True)
     r.add_argument("--k", type=int, default=1)
     r.add_argument("--second-look", choices=["aborted", "harness_defect"], default=None)
+    r.add_argument("--live", action="store_true", help="use the config's llm entry (spends money)")
+    r.add_argument("--smoke", action="store_true", help="with --live: abort on the smoke limits")
+    sub.add_parser("freeze", help="write lock.json once, after dev work is final")
     rp = sub.add_parser("report")
     rp.add_argument("run_dir", type=Path)
     rp.add_argument("--format", choices=["md", "html"], default="md")
@@ -259,7 +303,9 @@ def main(argv: list[str]) -> int:
     except ConfigError as err:
         out(f"startup: {err}")
         return 4
-    if args.k < 1:
-        out("eval run: --k must be at least 1")
+    if args.cmd == "freeze":
+        return cmd_freeze(cfg)
+    if args.k < 1 or (args.smoke and not args.live):
+        out("eval run: --k must be at least 1, and --smoke needs --live")
         return 1
-    return cmd_run(cfg, args.split, args.k, args.second_look)
+    return cmd_run(cfg, args.split, args.k, args.second_look, use_live=args.live, smoke=args.smoke)

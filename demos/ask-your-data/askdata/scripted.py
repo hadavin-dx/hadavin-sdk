@@ -1,8 +1,8 @@
-"""Offline stand-in for the model (the spike has NO live model call and makes no network access).
+"""Offline stand-in for the model used by the `ask` and `demo` commands (no network access).
 
 `ScriptedModel` answers a few fixed questions with fixed SQL, including two that a real model could be tricked
-into writing (a delete, a read of the restricted column), so the demo shows the validator refusing them. A live
-adapter would implement the same `Model` protocol behind the core LLM kind; it is not built in the spike.
+into writing (a delete, a read of the restricted column), so the demo shows the validator refusing them. The live
+route (core LLM kind) is in `live.py`; the eval harness uses it, not this script.
 """
 
 from __future__ import annotations

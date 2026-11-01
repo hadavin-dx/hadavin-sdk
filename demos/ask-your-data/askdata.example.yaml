@@ -1,0 +1,41 @@
+# Sample askdata config: copy to askdata.yaml (kept out of git) and edit. Nothing here is a secret.
+# Paths are relative to this file. The shared spend meter lives OUTSIDE the repo, because two programs use it.
+as_of: "2026-01-01"            # the date the model is told is "today" (YYYY-MM-DD)
+
+paths:
+  ledger_file: ./work/ledger.jsonl
+  audit_dir: ./work/audit
+  meter_file: /replace/with/a/folder/outside/the/repo/api-meter.json
+  kill_switch_file: ./work/KILL
+  eval_dir: ./data
+  runs_dir: ./work/runs
+  recorded_dir: ./work/recorded   # offline runs: recordings made by the fixture builder (omit for a live-only config)
+
+route:                           # prices are US$ per million tokens: copy today's numbers from the provider's price page
+  name: sql_generate
+  model_id: replace-with-a-pinned-model-id
+  input_usd_per_mtok: "0"
+  output_usd_per_mtok: "0"
+  max_tokens: 1024
+
+limits:
+  max_attempts: 3
+  max_question_chars: 500
+
+store_question: true
+live: true
+
+database:
+  dsn_secret_name: askdata-dsn   # read through the `secrets` kind below; omit to use the ASKDATA_DSN environment variable
+  statement_timeout_s: 5         # client limits (the built-in defaults are 10 s and 1,000,000 bytes)
+  max_rows: 1000
+  max_bytes: 2000000
+
+secrets:                         # the core secrets kind: env reads HADAVIN_SECRET_ASKDATA_DSN (dev only), others read a vault
+  kind: env
+
+# llm: only for a live run (`eval run --live`); this wires the route, a call is made only when you run it
+# llm:
+#   kind: anthropic
+#   platform: api
+#   api_key_secret_name: anthropic-api-key
