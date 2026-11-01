@@ -145,6 +145,11 @@ _KEY_PREFIXES = (
 # An ARN's resource part: letters, digits and the punctuation ARNs use. `;` `,` `=` `(` `)` `?` `&` `#` and quotes
 # end it, so a credential glued to an ARN is never swallowed into the identifier (and so into a stored map).
 ARN_TAIL = r"[A-Za-z0-9_\-./:*+@]"
+# What the redactor FINDS: the same characters, but never through a `key=` that begins a credential. `*`, `+` and `@`
+# are legal ARN characters, so `...:function:billing*token=V` is ambiguous; the identifier stops before the key and
+# the key=value rule masks V. Over-redaction (an ARN segment that looks like `...token=`) is the accepted price.
+_KV_WORD = r"(?:password|passwd|pwd|secret|token|api[_\-]?key|apikey|access[_\-]?key|private[_\-]?key|credential|auth)"
+ARN_CHAR = r"(?:(?![\w.\-*+@]{0,40}?" + _KV_WORD + r"[\w.\-]{0,20}=)" + ARN_TAIL + ")"
 PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     # A whole PEM private key block — the highest-value secret that turns up in a misconfig dump.
     # PEM and PGP. A key cut off by a line-length limit has no END line: mask to the end.
@@ -161,17 +166,17 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
         re.compile(r"Private-Lines:[ \t]*\d+[ \t]*\r?\n([\s\S](?:(?!\r?\nPrivate-MAC)[\s\S])*)"),
     ),
     # Account-less (`arn:aws:s3:::bucket`) and other partitions (`aws-cn`, `aws-us-gov`) too (lock-in audit row 14).
-    ("ARN", re.compile(r"arn:aws[a-z-]*:[a-z0-9\-]*:[a-z0-9\-]*:(?:\d{12})?:" + ARN_TAIL + r"+")),
+    ("ARN", re.compile(r"arn:aws[a-z-]*:[a-z0-9\-]*:[a-z0-9\-]*:(?:\d{12})?:" + ARN_CHAR + r"+")),
     # The other clouds' resource ids name the client's project or subscription the same way (audit row 14).
     (
         "GCPRESOURCE",
-        re.compile(r"\bprojects/(?:[a-z][a-z0-9-]{4,28}[a-z0-9]|\d{6,20})(?:/" + ARN_TAIL + r"+)?"),
+        re.compile(r"\bprojects/(?:[a-z][a-z0-9-]{4,28}[a-z0-9]|\d{6,20})(?:/" + ARN_CHAR + r"+)?"),
     ),
     (
         "AZURERESOURCE",
         re.compile(
             r"/subscriptions/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
-            r"(?:/" + ARN_TAIL + r"+)?"
+            r"(?:/" + ARN_CHAR + r"+)?"
         ),
     ),
     # Three segments (a JWS) to five (a JWE, whose second may be empty): a JWE's last two parts were left in clear

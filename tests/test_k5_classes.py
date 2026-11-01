@@ -50,6 +50,8 @@ RESOURCES = [
     "my_topic",
 ]
 ASCII_SEPS = list(";,=()[]{}|<>\"'`!#$%^&*+? \t\n") + ["\r\n", " ;", ", ", ") ", "='"]
+ARN_LEGAL_SEPS = list("*+@-_./:") + ["*/", ":*", "@@"]
+INVISIBLE_SEPS = ["\u200b", "\u2060", "\ufeff", "\u00ad", "\u200d"]  # the NFKC step removes these
 UNICODE_SEPS = ["；", "，", "＝", "）", " ", " ", "　", "\u200b", "“"]
 KEYS = [
     "token",
@@ -72,7 +74,7 @@ def _arns():
 
 def _glued_cases():
     arns = list(_arns())
-    for i, sep in enumerate(ASCII_SEPS + UNICODE_SEPS):
+    for i, sep in enumerate(ASCII_SEPS + ARN_LEGAL_SEPS + INVISIBLE_SEPS + UNICODE_SEPS):
         for j, key in enumerate(KEYS):
             yield arns[(i * 7 + j * 3) % len(arns)], sep, key
 
@@ -86,14 +88,15 @@ def test_class_a_no_credential_glued_to_an_arn_reaches_the_stored_map(arn, sep, 
     text = runmap.redact_untrusted(f"ran {arn}{sep}{key}={TOKEN} ok", mapping)
     stored = runmap.storable(mapping)
     assert all(TOKEN not in v for v in stored.values()), (arn, sep, key, stored)
-    glued = set(sep) & set(
-        "*+@\u200b"
-    )  # ARN characters, or removed as invisible: `...890token` is one id
-    if not glued:
-        assert TOKEN not in text, (arn, sep, key, text)  # nor does it reach the model
+    assert TOKEN not in text, (
+        arn,
+        sep,
+        key,
+        text,
+    )  # nor does it reach the model, after ANY separator
 
 
-@pytest.mark.parametrize("sep", ASCII_SEPS + UNICODE_SEPS)
+@pytest.mark.parametrize("sep", ASCII_SEPS + ARN_LEGAL_SEPS + INVISIBLE_SEPS + UNICODE_SEPS)
 @pytest.mark.parametrize("key", KEYS)
 def test_class_a_key_value_secrets_are_masked_after_any_separator(sep, key):
     """The redactor's key=value rule starts a key after ANY non-key character, not after a listed few."""
@@ -483,3 +486,61 @@ def test_relative_imports_are_banned_by_ruff():
     ]
     assert "TID" in cfg["extend-select"]
     assert cfg["flake8-tidy-imports"]["ban-relative-imports"] == "all"
+
+
+VALUES = [
+    TOKEN,
+    "Zq9Lm2Xk7Rp4Vb8N",
+    "a1B2c3D4e5F6g7H8",
+    "p@ss/w0rd+x*y",
+    "tok_" + "live" + "12345678",
+]
+
+
+@pytest.mark.parametrize("value", VALUES)
+@pytest.mark.parametrize("sep", ["", "*", "+", "@", "-", "/", ":", "\u200b", "\u2060", ";", ","])
+@pytest.mark.parametrize("key", ["token", "password", "api_key", "secret"])
+@pytest.mark.parametrize("arn", list(_arns())[::23])
+def test_class_a_many_values_x_separators_x_keys_never_reach_the_model_or_the_map(
+    arn, key, sep, value
+):
+    mapping: dict[str, str] = {}
+    text = runmap.redact_untrusted(f"{arn}{sep}{key}={value}", mapping)
+    assert value not in text, (arn, sep, key, text)
+    assert all(value not in v for v in runmap.storable(mapping).values())
+
+
+def test_class_a_an_ambiguous_arn_stops_before_the_key_and_says_so():
+    """`*token=V` is legal inside an ARN, so the identifier is cut before the key (fail closed): the ARN placeholder
+    keeps what precedes it, the key=value rule masks V. Some over-redaction of an ARN segment is the price."""
+    mapping: dict[str, str] = {}
+    arn = "arn:aws:lambda:us-east-1:123456789012:function:billing"
+    text = runmap.redact_untrusted(f"{arn}*token={TOKEN}", mapping)
+    assert TOKEN not in text and "<ARN_1>" in text and "<SECRET_1>" in text
+
+
+def test_class_a_an_ordinary_arn_that_mentions_secret_is_still_one_identifier():
+    arn = "arn:aws:secretsmanager:us-east-1:123456789012:secret:prod/db-AbCdEf"
+    mapping: dict[str, str] = {}
+    assert runmap.redact_untrusted(arn, mapping) == "<ARN_1>" and mapping["<ARN_1>"] == arn
+
+
+# --- NFKC is a deliberate trade-off: ordinary Unicode text stays legible ---------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "Caf\u00e9 r\u00e9sum\u00e9 na\u00efve fa\u00e7ade",
+        "\u3053\u3093\u306b\u3061\u306f\u4e16\u754c \u30c1\u30a7\u30c3\u30af",
+        "\u4f60\u597d\uff0c\u4e16\u754c",
+        "deploy done \U0001f680 \u2705 \U0001f468\u200d\U0001f4bb",
+        "\u0645\u0631\u062d\u0628\u0627 \u05e9\u05dc\u05d5\u05dd \u041f\u0440\u0438\u0432\u0435\u0442",
+    ],
+)
+def test_nfkc_ordinary_unicode_text_round_trips_legibly(text):
+    out = runmap.redact_untrusted(f"log: {text} end", {})
+    # Every letter and symbol survives; only compatibility forms fold (the full-width comma) and the invisible
+    # joiner inside an emoji sequence is dropped (the emoji stay).
+    kept = [c for c in text if c.isalpha() or ord(c) > 0x2000 and c not in "\u200d\uff0c"]
+    assert all(c in out for c in kept), (text, out)
