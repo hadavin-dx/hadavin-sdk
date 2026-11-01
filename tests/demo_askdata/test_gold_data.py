@@ -15,8 +15,8 @@ import pytest
 import sqlglot
 from sqlglot.optimizer.qualify import qualify
 
-from .conftest import DEMO
-from .gold_runner import load_goldcheck
+from tests.demo_askdata.conftest import DEMO
+from tests.demo_askdata.gold_runner import load_goldcheck
 
 DATA = DEMO / "data"
 gc = load_goldcheck()

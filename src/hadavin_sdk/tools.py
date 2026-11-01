@@ -16,12 +16,11 @@ from __future__ import annotations
 import hashlib
 import importlib
 import re
+import threading
 import time
 import urllib.error
 import urllib.request
 from collections.abc import Callable
-from concurrent.futures import ThreadPoolExecutor
-from concurrent.futures import TimeoutError as FutureTimeout
 from dataclasses import dataclass
 from typing import Any, Literal
 from urllib.parse import urlsplit
@@ -66,12 +65,13 @@ class ToolSpec(BaseModel):
     description: str
     input_schema: dict[str, Any]
     side_effect: Literal["none"]
-    operations: list[str] = []
-    hosts: list[str] = []
-    secret_names: list[str] = []
+    # Tuples: a frozen model with list fields can still be mutated in place by a tool body.
+    operations: tuple[str, ...] = ()
+    hosts: tuple[str, ...] = ()
+    secret_names: tuple[str, ...] = ()
     max_output_bytes: int = Field(default=DEFAULT_MAX_OUTPUT_BYTES, gt=0)
     cluster_http: bool = False
-    ports: list[int] = []  # empty: 443 for https, the in-cluster set for plain http
+    ports: tuple[int, ...] = ()  # empty: 443 for https, the in-cluster set for plain http
 
 
 def parse_manifest(raw: Any, where: str) -> list[ToolSpec]:
@@ -162,6 +162,10 @@ def read_operations(tool_modules: list[str]) -> dict[str, Binding]:
                 ) from None
             if method not in _METHODS:
                 raise ConfigError(f"{module}: operation {op!r} uses method {method!r}")
+            if out.get(op, (method, pattern)) != (method, pattern):
+                raise ConfigError(
+                    f"{module}: operation {op!r} is already bound differently by another module"
+                )
             out[op] = (method, pattern)
     return out
 
@@ -177,7 +181,11 @@ class ToolContext:
         secret_resolver: Callable[[str], str] | None = None,
         bindings: dict[str, Binding] | None = None,
     ) -> None:
-        self.spec, self.timeout_s = spec, timeout_s
+        # A deep copy: a tool body that edits `ctx.spec` edits its own copy, never the manifest the next call uses.
+        # NOTE the ceiling: a tool body is trusted code running in this process (it can reach the closure that holds
+        # the secret reader, import anything, open sockets). The manifest limits what the tool is *given*; the
+        # in-process boundary is code review of tool modules and the egress proxy (K7), not Python.
+        self.spec, self.timeout_s = spec.model_copy(deep=True), timeout_s
         self.deadline = time.monotonic() + timeout_s  # the whole call, not one socket operation
         self.bindings = dict(bindings or {})
         self.fetched = False
@@ -273,9 +281,13 @@ class ToolContext:
             if max_bytes:
                 raise ToolRefused(f"the response is larger than {cap} bytes")
             del buf[cap:]
+            cut = True
+        else:
+            cut = False
         self.fetched = True
         self._digest.update(bytes(buf))
-        return bytes(buf).decode("utf-8", "replace")
+        # A cut reply says so: a silent cut reads as a complete answer.
+        return bytes(buf).decode("utf-8", "replace") + (TRUNCATED if cut else "")
 
     def digest(self) -> str | None:
         return self._digest.hexdigest() if self.fetched else None
@@ -289,8 +301,13 @@ class ToolOutput:
     duration_ms: int
 
 
+_MARKER = re.compile(r"<<(?=\s*(?:end\s+)?tool\s+result)", re.IGNORECASE)
+
+
 def escape_markers(text: str) -> str:
-    return text.replace(END_MARKER, "[END TOOL RESULT]").replace(START_MARKER, "[TOOL RESULT")
+    """Neutralise anything shaped like our result markers, in any case and spacing. Callers pass canonical text
+    (`runmap.canonical`), so full-width and zero-width variants are already plain."""
+    return _MARKER.sub("[[", text)
 
 
 def truncate(text: str, limit: int) -> str:
@@ -307,7 +324,9 @@ def prepare_output(
     for secret in secrets or []:
         if secret:
             raw = raw.replace(secret, "<SECRET_REDACTED>")
-    return truncate(runmap.redact_untrusted(escape_markers(raw), mapping), max_bytes)
+    return truncate(
+        runmap.redact_untrusted(escape_markers(runmap.canonical(raw)), mapping), max_bytes
+    )
 
 
 def error_reason(exc: BaseException) -> str:
@@ -343,13 +362,25 @@ class ToolBox:
     def _call(self, name: str, restored: dict[str, Any], ctx: ToolContext) -> str:
         """The tool body under one total deadline (`tool_timeout_s`): it, its secret reads and its fetches share
         it. A body that does not return is abandoned (its thread ends at its next fetch or secret read)."""
-        pool = ThreadPoolExecutor(max_workers=1, thread_name_prefix="hadavin-tool")
-        try:
-            return str(pool.submit(self._fns[name], restored, ctx).result(timeout=self.timeout_s))
-        except FutureTimeout:
-            raise ToolRefused("tool timed out") from None
-        finally:
-            pool.shutdown(wait=False, cancel_futures=True)
+        box: dict[str, Any] = {}
+        done = threading.Event()
+
+        def work() -> None:
+            try:
+                box["value"] = str(self._fns[name](restored, ctx))
+            except BaseException as exc:  # noqa: BLE001 - handed to the caller below
+                box["error"] = exc
+            finally:
+                done.set()
+
+        # A daemon thread: a body that never returns (sleep, a lock, a busy loop) must not keep the process alive
+        # at exit, which a pool's non-daemon worker would.
+        threading.Thread(target=work, daemon=True, name="hadavin-tool").start()
+        if not done.wait(self.timeout_s):
+            raise ToolRefused("tool timed out")
+        if "error" in box:
+            raise box["error"]
+        return box["value"]
 
     def invoke(self, name: str, args: dict[str, Any], mapping: dict[str, str]) -> ToolOutput:
         spec = self.specs[name]

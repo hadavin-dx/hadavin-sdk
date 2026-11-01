@@ -13,7 +13,6 @@ card and never graded.
 from __future__ import annotations
 
 import re
-import unicodedata
 from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
@@ -27,6 +26,7 @@ from hadavin_sdk.store.protocol import Store
 _NUMERIC = re.compile(r"(?:v|rev|revision|#)?\s*(\d+)")
 # A value is found only as a whole token: not inside 10.0.0.17, deploy-17, 1.17, production, a path or an e-mail.
 _BEFORE = r"(?<![\w.\-/:@])"
+_AFTER_NAME = r"(?![\w/:@])"
 _AFTER = r"(?![\w\-/:@])(?!\.\w)"  # a full stop that ends a sentence is fine
 
 
@@ -41,7 +41,7 @@ Validator = Callable[[Run, AgentRecord, ActionContract, ToolCall, str, dict[str,
 
 
 def normalise(text: str) -> str:
-    return unicodedata.normalize("NFC", text).casefold().strip()
+    return runmap.canonical(text).casefold().strip()
 
 
 def contains(text: str, value: str) -> bool:
@@ -55,7 +55,9 @@ def contains(text: str, value: str) -> bool:
         # `17` also matches `rev 17`, `v17` and `#17` in the text
         pattern = rf"{_BEFORE}(?:(?:v|rev|revision|#)\s?)?{re.escape(m.group(1))}{_AFTER}"
     else:
-        pattern = rf"{_BEFORE}{re.escape(want)}{_AFTER}"
+        # A name may be the front of a longer one (`checkout-svc` in `checkout-svc-7f9d`, `api.prod` in
+        # `api.prod.svc.cluster.local`): `-` and `.` end it. A number may not (`17` is not `17.2`, `17-beta`).
+        pattern = rf"{_BEFORE}{re.escape(want)}{_AFTER_NAME}"
     return re.search(pattern, hay) is not None
 
 

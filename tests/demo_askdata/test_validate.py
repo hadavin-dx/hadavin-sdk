@@ -7,8 +7,8 @@ import sqlglot
 from askdata import validate as validate_module
 from askdata.validate import RULES, Rejected, prefilter, validate
 
-from .attackrun import outcome
-from .corpus import ATTACKS, BENIGN, NUL
+from tests.demo_askdata.attackrun import outcome
+from tests.demo_askdata.corpus import ATTACKS, BENIGN, NUL
 
 CATEGORIES = {
     "parser-differential", "dollar-quoting", "nested-comments", "escape-strings", "table-functions",

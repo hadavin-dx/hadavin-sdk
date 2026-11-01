@@ -14,7 +14,7 @@ from functools import partial
 import psycopg
 import pytest
 
-from .gold_runner import dsn_for, load_goldcheck, load_standin, make_runner
+from tests.demo_askdata.gold_runner import dsn_for, load_goldcheck, load_standin, make_runner
 
 gc = load_goldcheck()
 
@@ -93,7 +93,7 @@ def test_the_two_databases_differ_so_agreement_is_not_a_coincidence(dbs):
 
 
 def test_the_standin_is_reproducible_for_one_seed():
-    from .lumen_standin import build
+    from tests.demo_askdata.lumen_standin import build
 
     first, second = build(20261101), build(20261101)
     assert first == second

@@ -110,6 +110,17 @@ def test_review_a_literal_placeholder_in_a_log_is_not_evidence(tmp_path):
     assert store.get_redaction_map(run.run_id) == {"<IPV4_1>": "10.0.0.5"}
 
 
+@pytest.mark.parametrize("literal", ["<ipv4_2>", "<Ipv4_2>", "＜IPV4＿2＞", "<IPV4\u200b_2>"])
+def test_review_round3_a_look_alike_literal_in_a_log_is_not_evidence(tmp_path, literal):
+    """Case, full-width and zero-width spellings of the placeholder are escaped, not left to ground the real one."""
+    k5_tools.RESULTS["app"] = f"ERROR upstream {literal} refused; seen from 10.0.0.5"
+    store = MemoryStore()
+    llm = ScriptLLM([{"tool": "app"}, {"propose": {"host": "<IPV4_2>", "revision": "17"}}])
+    rt, _ = build_runtime(k5_cfg(tmp_path), llm, store=store)
+    run = handle(rt, b"alert after rollout")
+    assert (run.state, run.reason_code) == (S.NEEDS_PERSON, "ungrounded")
+
+
 def test_review_a_real_placeholder_still_grounds(tmp_path):
     k5_tools.RESULTS["app"] = "ERROR upstream 10.0.0.5 refused; revision 17"
     llm = ScriptLLM([{"tool": "app"}, {"propose": {"host": "<IPV4_1>", "revision": "17"}}])
@@ -451,5 +462,5 @@ def test_review_purge_evidence_applies_the_ceiling_to_open_runs(tmp_path):
 def test_review_yaml_manifest_ports_round_trip(tmp_path):
     cfg = k5_cfg(tmp_path, tools=[{**TOOL, "ports": [8443], "hosts": ["api.example.com"]}])
     reg = load_registry(load_config(cfg))
-    assert reg.tools["test-agent"]["read_logs"].ports == [8443]
+    assert reg.tools["test-agent"]["read_logs"].ports == (8443,)
     assert yaml.safe_load((cfg / "tools" / "test-agent.yaml").read_text())[0]["ports"] == [8443]

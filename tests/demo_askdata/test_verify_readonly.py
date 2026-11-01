@@ -10,7 +10,7 @@ from askdata.allowed import VIEWS
 from askdata.pgsource import PgError, PgSource
 from psycopg.conninfo import make_conninfo
 
-from .conftest import DEMO, _need, load_script
+from tests.demo_askdata.conftest import DEMO, _need, load_script
 
 SCRIPT = DEMO / "trust" / "verify_readonly.psql"
 

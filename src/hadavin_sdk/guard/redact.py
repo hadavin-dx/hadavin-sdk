@@ -142,6 +142,9 @@ _KEY_PREFIXES = (
     r"hvb\.",
     r"xapp-",
 )
+# An ARN's resource part: letters, digits and the punctuation ARNs use. `;` `,` `=` `(` `)` `?` `&` `#` and quotes
+# end it, so a credential glued to an ARN is never swallowed into the identifier (and so into a stored map).
+ARN_TAIL = r"[A-Za-z0-9_\-./:*+@]"
 PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     # A whole PEM private key block — the highest-value secret that turns up in a misconfig dump.
     # PEM and PGP. A key cut off by a line-length limit has no END line: mask to the end.
@@ -158,17 +161,17 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
         re.compile(r"Private-Lines:[ \t]*\d+[ \t]*\r?\n([\s\S](?:(?!\r?\nPrivate-MAC)[\s\S])*)"),
     ),
     # Account-less (`arn:aws:s3:::bucket`) and other partitions (`aws-cn`, `aws-us-gov`) too (lock-in audit row 14).
-    ("ARN", re.compile(r"arn:aws[a-z-]*:[a-z0-9\-]*:[a-z0-9\-]*:(?:\d{12})?:[^\s\"'?&#]+")),
+    ("ARN", re.compile(r"arn:aws[a-z-]*:[a-z0-9\-]*:[a-z0-9\-]*:(?:\d{12})?:" + ARN_TAIL + r"+")),
     # The other clouds' resource ids name the client's project or subscription the same way (audit row 14).
     (
         "GCPRESOURCE",
-        re.compile(r"\bprojects/(?:[a-z][a-z0-9-]{4,28}[a-z0-9]|\d{6,20})(?:/[^\s\"']+)?"),
+        re.compile(r"\bprojects/(?:[a-z][a-z0-9-]{4,28}[a-z0-9]|\d{6,20})(?:/" + ARN_TAIL + r"+)?"),
     ),
     (
         "AZURERESOURCE",
         re.compile(
             r"/subscriptions/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
-            r"(?:/[^\s\"']+)?"
+            r"(?:/" + ARN_TAIL + r"+)?"
         ),
     ),
     # Three segments (a JWS) to five (a JWE, whose second may be empty): a JWE's last two parts were left in clear
@@ -197,7 +200,7 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     # otherwise fragment a digit-run inside it and leave the rest exposed. Cloud-neutral: GCP.
     ("GCPTOKEN", re.compile(r"\bya29\.[A-Za-z0-9._\-]{20,}")),
     # Azure Shared Access Signature: the `sig=` query parameter is the credential. Cloud-neutral: Azure.
-    ("AZURESAS", re.compile(r"(?i)(?<=[?&])sig=([^\s&\"']{16,})")),
+    ("AZURESAS", re.compile(r"(?i)(?<![\w.\-])sig=([^\s&\"']{16,})")),
     # Incoming-webhook URLs carry the credential in the PATH (no key=value, no vendor prefix) — the
     # whole URL IS the secret (anyone holding it can post). Slack, Discord, MS Teams. Cloud-neutral.
     (
@@ -572,7 +575,9 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
         re.compile(
             # Leading delimiter includes ? & : so URL QUERY-PARAM credentials (?password=, &token=) and
             # the .npmrc form (//registry/:_authToken=) are caught — ubiquitous in access/CI logs.
-            r"(?i)(?:^|[\s\"',;{(\[=?&:])[\w.\-]{0,40}"
+            # The key starts where the previous character is not a key character (any separator, ASCII or
+            # Unicode): an allowlist of key characters, not a list of delimiters (K5 review rounds 1-3).
+            r"(?i)(?<![\w.\-])[\w.\-]{0,40}"
             r"(?:password|passwd|pwd|secret|access[_\-]?key|account[_\-]?key|shared[_\-]?access[_\-]?key"
             r"|private[_\-]?key|api[_\-]?key|apikey|auth[_\-]?token|access[_\-]?token|sas[_\-]?token"
             # kubeconfig secrets: client-key-data (the private key), certificate-data.

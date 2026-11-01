@@ -295,7 +295,10 @@ def test_kubernetes_a_real_sized_deployment_list_is_read_through_the_cap_and_pag
     ]
     assert len(found) == 150
     list_calls = [c for c in api.calls if c[2] == "k8s.list_deployments"]
-    assert len(list_calls) == 2 and "continue=" in list_calls[1][1]
+    assert len(list_calls) == 8 and "continue=" in list_calls[1][1]  # 150 objects, 20 a page
+    assert not any(
+        c["kind"] == "incomplete" for c in k8s(api).recent_changes("prod", suite.START, suite.END)
+    )
 
 
 def test_kubernetes_a_response_over_the_cap_is_a_source_error_not_a_cut_json():

@@ -5,6 +5,7 @@ import subprocess
 import tomllib
 from pathlib import Path
 
+import pytest
 import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -141,18 +142,25 @@ SECRET_HOLDERS = {
 }
 
 
+def _module_of(path: Path) -> str:
+    parts = list(path.with_suffix("").parts)
+    parts = parts[parts.index("hadavin_sdk") :] if "hadavin_sdk" in parts else parts[-1:]
+    return ".".join(parts).removesuffix(".__init__")
+
+
 def secret_imports(pkg_dirs: list[Path]) -> list[str]:
-    """runtime, approvals and llm must never import the secret provider or the executor."""
+    """runtime, approvals and llm must never import the secret provider or the executor, in any spelling
+    (absolute, relative, `from pkg import module`, lazy inside a function)."""
     hits = []
     for d in pkg_dirs:
         for path in d.rglob("*.py"):
-            for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
-                names = []
-                if isinstance(node, ast.Import):
-                    names = [a.name for a in node.names]
-                elif isinstance(node, ast.ImportFrom) and node.module:
-                    names = [node.module] + [f"{node.module}.{a.name}" for a in node.names]
-                hits += [f"{path.name}: {n}" for n in names if n in SECRET_HOLDERS]
+            tree = ast.parse(path.read_text(encoding="utf-8"))
+            targets, bases = import_targets(tree, _module_of(path), path.name == "__init__.py")
+            hits += [
+                f"{path.name}: {n}"
+                for n in dict.fromkeys([*bases, *targets])
+                if n in SECRET_HOLDERS
+            ]
     return hits
 
 
@@ -214,23 +222,45 @@ def _module_path(src: Path, module: str) -> Path | None:
     return None
 
 
-def _static_imports(tree: ast.AST) -> list[str]:
-    """Every module a file imports, lazy imports inside functions included, `if TYPE_CHECKING:` bodies not."""
-    found: list[str] = []
+def _absolute_base(node: ast.ImportFrom, module: str, is_package: bool) -> str:
+    """The absolute module a `from ... import` names, resolving a relative one (`from . import x`, `from ..a import
+    x`) against the importing module (`module` is its dotted name, `is_package` true for an `__init__.py`)."""
+    if not node.level:
+        return node.module or ""
+    package = module.split(".") if is_package else module.split(".")[:-1]
+    keep = package[: len(package) - (node.level - 1)] if node.level > 1 else package
+    return ".".join([*keep, *([node.module] if node.module else [])])
+
+
+def import_targets(
+    tree: ast.AST, module: str = "", is_package: bool = False
+) -> tuple[list[str], list[str]]:
+    """(targets, bases) of every import in a file, lazy imports inside functions included and `if TYPE_CHECKING:`
+    bodies not. A target is what is imported (`from hadavin_sdk.backends import make` ->
+    `hadavin_sdk.backends.make`, `from hadavin_sdk import backends` -> `hadavin_sdk.backends`, `import a.b` ->
+    `a.b`); a base is the module a `from` names. Relative imports are resolved."""
+    targets: list[str] = []
+    bases: list[str] = []
 
     def walk(node: ast.AST) -> None:
         for child in ast.iter_child_nodes(node):
             if isinstance(child, ast.If) and getattr(child.test, "id", "") == "TYPE_CHECKING":
                 continue
             if isinstance(child, ast.Import):
-                found.extend(a.name for a in child.names)
-            elif isinstance(child, ast.ImportFrom) and child.module:
-                found.append(child.module)
-                found.extend(f"{child.module}.{a.name}" for a in child.names)
+                targets.extend(a.name for a in child.names)
+            elif isinstance(child, ast.ImportFrom):
+                base = _absolute_base(child, module, is_package)
+                bases.append(base)
+                targets.extend(base if a.name == "*" else f"{base}.{a.name}" for a in child.names)
             walk(child)
 
     walk(tree)
-    return found
+    return targets, bases
+
+
+def _static_imports(tree: ast.AST, module: str = "", is_package: bool = False) -> list[str]:
+    targets, bases = import_targets(tree, module, is_package)
+    return [*targets, *bases]
 
 
 def transitive_imports(src: Path, starts: list[str], pkg: str = "hadavin_sdk") -> set[str]:
@@ -246,7 +276,8 @@ def transitive_imports(src: Path, starts: list[str], pkg: str = "hadavin_sdk") -
         path = _module_path(src, module)
         if path is None:
             continue
-        for name in _static_imports(ast.parse(path.read_text(encoding="utf-8"))):
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        for name in _static_imports(tree, module, path.name == "__init__.py"):
             if name.split(".")[0] != pkg or _module_path(src, name) is None:
                 continue
             parts = name.split(".")
@@ -337,14 +368,25 @@ def test_a_type_checking_import_is_not_a_runtime_import(tmp_path):
     assert "hadavin_sdk.app" not in transitive_imports(src, ["hadavin_sdk.tools"])
 
 
-def backends_name_imports(files: list[Path]) -> list[str]:
-    """`from hadavin_sdk.backends import <name>` hides the factory (and so the secret providers) behind a package
-    attribute where a static scan cannot see it. Only the submodule `table` may be imported that way."""
+BACKENDS = "hadavin_sdk.backends"
+
+
+def backends_imports(src: Path, files: list[Path]) -> list[str]:
+    """Any import that resolves under `hadavin_sdk.backends`, however it is written (absolute, relative,
+    `from hadavin_sdk import backends`, `import hadavin_sdk.backends.factory`), except the `table` submodule. The
+    package and its factory sit in front of the secret providers; a static scan cannot see through them."""
     hits = []
     for path in files:
-        for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
-            if isinstance(node, ast.ImportFrom) and node.module == "hadavin_sdk.backends":
-                hits += [f"{path.name}: {a.name}" for a in node.names if a.name != "table"]
+        module = ".".join(path.relative_to(src).with_suffix("").parts).removesuffix(".__init__")
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        targets, _ = import_targets(tree, module, path.name == "__init__.py")
+        hits += [
+            f"{path.name}: {t}"
+            for t in targets
+            if (t == BACKENDS or t.startswith(BACKENDS + "."))
+            and t != f"{BACKENDS}.table"
+            and not t.startswith(f"{BACKENDS}.table.")
+        ]
     return hits
 
 
@@ -358,21 +400,85 @@ def _secret_free_files() -> list[Path]:
 
 def test_k5_secret_free_packages_never_import_a_name_from_backends():
     assert len(_secret_free_files()) > 10
-    assert backends_name_imports(_secret_free_files()) == []
+    assert backends_imports(ROOT / "src", _secret_free_files()) == []
 
 
-def test_plant_a_backends_name_import_is_caught(tmp_path):
-    bad = tmp_path / "bad.py"
-    bad.write_text(
-        "from hadavin_sdk.backends import make"
-        + NL
-        + "from hadavin_sdk.backends import table"
-        + NL,
-        encoding="utf-8",
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        ("from hadavin_sdk.backends import make", ["hadavin_sdk.backends.make"]),
+        ("from hadavin_sdk.backends import table", []),
+        ("from hadavin_sdk.backends.table import TABLE", []),
+        ("from hadavin_sdk.backends.factory import make", ["hadavin_sdk.backends.factory.make"]),
+        ("from hadavin_sdk import backends", ["hadavin_sdk.backends"]),
+        ("from hadavin_sdk import backends as b", ["hadavin_sdk.backends"]),
+        ("import hadavin_sdk.backends.factory", ["hadavin_sdk.backends.factory"]),
+        ("import hadavin_sdk.backends as b", ["hadavin_sdk.backends"]),
+        ("from ..backends import make", ["hadavin_sdk.backends.make"]),
+        ("from .. import backends", ["hadavin_sdk.backends"]),
+        ("from ..backends.factory import *", ["hadavin_sdk.backends.factory"]),
+        ("from hadavin_sdk.backends import table, make", ["hadavin_sdk.backends.make"]),
+        (
+            "def f():" + NL + "    from hadavin_sdk.backends import Deps",
+            ["hadavin_sdk.backends.Deps"],
+        ),
+    ],
+)
+def test_plant_every_spelling_of_a_backends_import_is_caught(tmp_path, text, expected):
+    pkg = tmp_path / "hadavin_sdk" / "runtime"
+    pkg.mkdir(parents=True)
+    bad = pkg / "bad.py"
+    bad.write_text(text + NL, encoding="utf-8")
+    assert backends_imports(tmp_path, [bad]) == [f"bad.py: {t}" for t in expected]
+
+
+def test_plant_a_relative_import_hides_nothing_from_the_transitive_scan(tmp_path):
+    src = _plant_pkg(
+        tmp_path,
+        {
+            "__init__.py": "",
+            "tools.py": "from . import helper" + NL,
+            "helper.py": "from .actions import executor" + NL,
+            "actions/__init__.py": "",
+            "actions/executor.py": "",
+        },
     )
-    assert backends_name_imports([bad]) == ["bad.py: make"]
+    assert "hadavin_sdk.actions.executor" in transitive_imports(src, ["hadavin_sdk.tools"])
+
+
+def test_plant_a_package_relative_import_in_an_init_is_resolved(tmp_path):
+    src = _plant_pkg(
+        tmp_path,
+        {
+            "__init__.py": "",
+            "tools.py": "import hadavin_sdk.guard" + NL,
+            "guard/__init__.py": "from . import leak" + NL,
+            "guard/leak.py": "from hadavin_sdk.actions import secrets" + NL,
+            "actions/__init__.py": "",
+            "actions/secrets.py": "",
+        },
+    )
+    assert "hadavin_sdk.actions.secrets" in transitive_imports(src, ["hadavin_sdk.tools"])
 
 
 def test_k5_the_backends_package_file_imports_nothing():
     tree = ast.parse((ROOT / "src" / "hadavin_sdk" / "backends" / "__init__.py").read_text("utf-8"))
     assert not [n for n in ast.walk(tree) if isinstance(n, ast.Import | ast.ImportFrom)]
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "from hadavin_sdk.actions import executor",
+        "from hadavin_sdk.actions.executor import Executor",
+        "import hadavin_sdk.actions.executor",
+        "from ..actions import executor",
+        "from ..actions.secrets import SecretProvider",
+        "from hadavin_sdk.backends import platform_secrets",
+    ],
+)
+def test_plant_every_spelling_of_a_secret_holder_import_is_caught(tmp_path, text):
+    pkg = tmp_path / "hadavin_sdk" / "runtime"
+    pkg.mkdir(parents=True)
+    (pkg / "bad.py").write_text(text + NL, encoding="utf-8")
+    assert secret_imports([pkg]) != []

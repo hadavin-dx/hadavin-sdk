@@ -18,9 +18,9 @@ import pytest
 from askdata.validate import Rejected, validate
 from psycopg.conninfo import make_conninfo
 
-from .attackrun import outcome
-from .conftest import Db
-from .corpus import ATTACKS, Attack
+from tests.demo_askdata.attackrun import outcome
+from tests.demo_askdata.conftest import Db
+from tests.demo_askdata.corpus import ATTACKS, Attack
 
 HARMFUL = [a for a in ATTACKS if a.harm != "none"]
 EVIL_ROLE = "askdata_p2_evil"

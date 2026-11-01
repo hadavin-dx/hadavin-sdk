@@ -28,8 +28,8 @@ READ_OPERATIONS = {
 }
 JSON_CAP = 1024 * 1024  # a real deployment list is far larger than a tool's 16 KB output cap
 LOG_BYTES = 65536  # asked of the API (limitBytes); the fetch cap leaves room for the framing
-PAGE = 100  # list page size; further pages follow `metadata.continue`
-MAX_PAGES = 5
+PAGE = 20  # list page size (a deployment object can be tens of KB); further pages follow `metadata.continue`
+MAX_PAGES = 25  # 500 objects; past that the answer says it is incomplete
 REVISION = "deployment.kubernetes.io/revision"
 DEFAULT_API = "https://kubernetes.default.svc"
 JSON_HEADERS = {"Content-Type": "application/json", "Accept": "application/json"}
@@ -51,6 +51,19 @@ _SHELL_RESOURCES = frozenset(
 Fetch = Callable[..., str]
 
 
+def covers(entry: str, target: str) -> bool:
+    """Does one RBAC `resources` entry cover `target` (`pods/exec`, `secrets`)? Kubernetes rule matching
+    (`ResourceMatches`): `*` covers everything, `res/*` every subresource of `res`, `*/sub` that subresource of
+    every resource, and `res` alone only the resource itself, never its subresources."""
+    if entry == "*":
+        return True
+    if "/" not in entry:
+        return entry == target
+    res, _, sub = entry.partition("/")
+    t_res, _, t_sub = target.partition("/")
+    return res in ("*", t_res) and sub in ("*", t_sub) and bool(t_sub)
+
+
 def rules_problems(namespace: str, rules: list[dict[str, Any]]) -> list[str]:
     """Problems in one namespace's ``resourceRules`` from a SelfSubjectRulesReview (empty: read-only)."""
     out: list[str] = []
@@ -62,10 +75,10 @@ def rules_problems(namespace: str, rules: list[dict[str, Any]]) -> list[str]:
             out.append(f"namespace {namespace}: write verb {', '.join(bad)} on {sorted(resources)}")
         if any_verb:
             out.append(f"namespace {namespace}: wildcard verb on {sorted(resources)}")
-        hit = sorted(resources & _SHELL_RESOURCES) or (["*"] if "*" in resources else [])
+        hit = sorted(t for t in _SHELL_RESOURCES if any(covers(r, t) for r in resources))
         if hit and verbs:
             out.append(f"namespace {namespace}: access to {', '.join(hit)} ({sorted(verbs)})")
-        if ("secrets" in resources or "*" in resources) and (any_verb or verbs & _READ_VERBS):
+        if any(covers(r, "secrets") for r in resources) and (any_verb or verbs & _READ_VERBS):
             out.append(f"namespace {namespace}: read access to secrets")
     return out
 
@@ -112,18 +125,27 @@ class KubernetesSource:
             raise SourceError("kubernetes: malformed answer")
         return decoded
 
-    def _items(self, path: str, operation: str) -> list[Any]:
-        """All items of a list call: `PAGE` at a time, following `metadata.continue` for at most MAX_PAGES."""
+    def _items(self, path: str, operation: str) -> tuple[list[Any], bool]:
+        """All items of a list call, `PAGE` at a time following `metadata.continue`. A page that fails (too large
+        for the fetch cap, say) is asked again with half the limit, down to one. Returns (items, incomplete):
+        incomplete is true when MAX_PAGES ran out with more still to read."""
         items: list[Any] = []
-        token = ""
+        token, limit = "", PAGE
         for _ in range(MAX_PAGES):
-            query = f"?limit={PAGE}" + (f"&continue={quote(token, safe='')}" if token else "")
-            page = self._get(path + query, operation)
+            while True:
+                query = f"?limit={limit}" + (f"&continue={quote(token, safe='')}" if token else "")
+                try:
+                    page = self._get(path + query, operation)
+                    break
+                except SourceError:
+                    if limit == 1:
+                        raise
+                    limit = max(1, limit // 2)
             items += page.get("items") or []
             token = (page.get("metadata") or {}).get("continue") or ""
             if not token:
-                break
-        return items
+                return items, False
+        return items, True
 
     # --- ChangeSource ---------------------------------------------------------------------------------------
     def recent_changes(self, scope: str, start: str, end: str) -> list[Record]:
@@ -140,9 +162,10 @@ class KubernetesSource:
             return []
         ns = quote(scope, safe="")
         out: list[Record] = []
-        for item in self._items(
+        deployments, more_d = self._items(
             f"/apis/apps/v1/namespaces/{ns}/deployments", "k8s.list_deployments"
-        ):
+        )
+        for item in deployments:
             meta = item.get("metadata") or {}
             containers = (((item.get("spec") or {}).get("template") or {}).get("spec")) or {}
             out.append(
@@ -154,7 +177,8 @@ class KubernetesSource:
                     "images": [c.get("image") for c in containers.get("containers") or []],
                 }
             )
-        for item in self._items(f"/api/v1/namespaces/{ns}/events", "k8s.list_events"):
+        events, more_e = self._items(f"/api/v1/namespaces/{ns}/events", "k8s.list_events")
+        for item in events:
             ts = item.get("lastTimestamp") or item.get("eventTime") or ""
             if not ts or not (start <= ts <= end):
                 continue
@@ -169,6 +193,15 @@ class KubernetesSource:
                     "object": (item.get("involvedObject") or {}).get("name"),
                 }
             )
+        for kind, more in (("deployments", more_d), ("events", more_e)):
+            if more:  # never present a cut list as the whole answer
+                out.append(
+                    {
+                        "id": f"incomplete/{scope}/{kind}",
+                        "kind": "incomplete",
+                        "note": f"more than {PAGE * MAX_PAGES} {kind}; the list is cut",
+                    }
+                )
         return out
 
     # --- LogsSource -----------------------------------------------------------------------------------------
@@ -191,6 +224,15 @@ class KubernetesSource:
             out.append({"id": f"log/{scope}/{pod}#{i}", "ts": ts, "line": rest})
             if len(out) >= limit:
                 break
+        else:
+            if len(text.encode("utf-8")) >= LOG_BYTES:  # the API cut the log at limitBytes
+                out.append(
+                    {
+                        "id": f"log/{scope}/{pod}#cut",
+                        "kind": "incomplete",
+                        "note": f"the log was cut at {LOG_BYTES} bytes; later lines are missing",
+                    }
+                )
         return out
 
     # --- scope probe (design 6.6, K5b M20) ------------------------------------------------------------------

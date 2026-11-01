@@ -11,8 +11,8 @@ import sys
 import psycopg
 from psycopg.conninfo import conninfo_to_dict, make_conninfo
 
-from .conftest import DEMO
-from .lumen_standin import SCHEMA_SQL, build
+from tests.demo_askdata.conftest import DEMO
+from tests.demo_askdata.lumen_standin import SCHEMA_SQL, build
 
 TABLE_ORDER = [
     "customers",

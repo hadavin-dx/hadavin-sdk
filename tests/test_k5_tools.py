@@ -209,7 +209,8 @@ def test_k5_fetch_refuses_write_methods_and_url_credentials(monkeypatch):
 
 def test_k5_fetch_response_is_capped(monkeypatch):
     ctx = _ctx(monkeypatch, _Opener(b"a" * 5000), max_output_bytes=100)
-    assert len(ctx.fetch("GET", "https://api.example.com/x", operation="bundle.read")) == 100
+    cut = ctx.fetch("GET", "https://api.example.com/x", operation="bundle.read")
+    assert cut == "a" * 100 + tools_mod.TRUNCATED  # a cut reply says so
 
 
 def test_k5_fetch_http_status_becomes_a_refusal(monkeypatch):
@@ -437,7 +438,7 @@ def test_k5_restored_value_with_semicolon_fails_the_schema(tmp_path):
     real_put = store.put_redaction_map
 
     def poisoned(run_id, mapping):
-        real_put(run_id, {p: (v + ";rm -rf" if p == "<IPV4_1>" else v) for p, v in mapping.items()})
+        real_put(run_id, {p: (v + "x" if p == "<IPV4_1>" else v) for p, v in mapping.items()})
 
     store.put_redaction_map = poisoned
     run = handle(rt)

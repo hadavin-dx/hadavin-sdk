@@ -9,7 +9,7 @@ import pytest
 from askdata import cli
 from askdata.fixtures import Step
 
-from .kit import COUNT_ORDERS, Kit
+from tests.demo_askdata.kit import COUNT_ORDERS, Kit
 
 ESC = chr(27)
 Q = "How many orders are there"
