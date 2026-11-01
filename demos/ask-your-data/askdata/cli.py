@@ -48,8 +48,9 @@ def _source() -> PgSource | None:
     return PgSource(dsn)
 
 
-def cmd_verify(source: PgSource) -> int:
-    out(BANNER)
+def cmd_verify(source: PgSource, *, banner: bool = True) -> int:
+    if banner:
+        out(BANNER)
     try:
         checks = source.verify_readonly()
     except PgError as err:
@@ -156,7 +157,7 @@ def cmd_setup(accept_loss: bool) -> int:
 def cmd_demo(source: PgSource, model: Model) -> int:
     out(BANNER)
     out("== 1. The promise: this login cannot write ==")
-    worst = cmd_verify(source)
+    worst = cmd_verify(source, banner=False)
     out("\n== 2. A normal question (answered by the offline scripted model; no API call) ==")
     worst = max(
         worst,

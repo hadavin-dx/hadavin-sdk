@@ -77,6 +77,17 @@ def _send(cur: Any, sql: str, *, prepare: bool) -> None:
     cur.execute(sql, **({"prepare": True} if prepare else {}))
 
 
+def _close(conn: psycopg.Connection) -> None:
+    """Roll back and close. A late cancel from the watchdog can still reach the server and make the ROLLBACK fail;
+    closing the connection ends the transaction anyway, so that failure is ignored."""
+    try:
+        conn.rollback()
+    except psycopg.Error:
+        pass
+    finally:
+        conn.close()
+
+
 def _fail(err: psycopg.Error) -> PgError:
     return PgError(getattr(err, "sqlstate", None), type(err).__name__)
 
@@ -124,8 +135,7 @@ class PgSource:
         except psycopg.Error as err:
             raise _fail(err) from None
         finally:
-            conn.rollback()
-            conn.close()
+            _close(conn)
 
     def run(
         self, canonical_sql: str, *, sql_sha256: str | None = None, limits: Limits | None = None
@@ -152,8 +162,7 @@ class PgSource:
             timer.cancel()
             if timer.is_alive():
                 timer.join()
-            conn.rollback()
-            conn.close()
+            _close(conn)
 
     def _fetch(
         self,

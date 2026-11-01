@@ -91,6 +91,10 @@ def prefilter(text: str) -> tuple[str, bool]:
     while i < n:
         ch, nxt = text[i], text[i + 1] if i + 1 < n else ""
         if state == "CODE":
+            if semi >= 0 and not ch.isspace() and not text.startswith(("--", "/*"), i):
+                raise Rejected(
+                    "V01", "more than one statement"
+                )  # anything after the first ; but a comment
             if ch == "'":
                 state = "STRING"
             elif ch == '"':
@@ -108,8 +112,6 @@ def prefilter(text: str) -> tuple[str, bool]:
                     raise Rejected("V01", "more than one statement")
                 semi = i
                 out[i] = " "
-            elif not ch.isspace() and semi >= 0:
-                raise Rejected("V01", "more than one statement")
             elif ch in _PREFIX_CHARS and nxt == "'" and (i == 0 or text[i - 1] not in _IDENT_CHARS):
                 raise Rejected("V09", "string prefix (E, B, X, N) is not allowed")
             elif ch in "uU" and nxt == "&" and (i == 0 or text[i - 1] not in _IDENT_CHARS):

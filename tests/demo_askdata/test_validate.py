@@ -84,3 +84,15 @@ def test_rejection_names_a_rule_from_the_registry():
 
     assert {a[2] for a in ATTACKS} <= set(RULES)
     assert len(ATTACKS) >= 20 and len(BENIGN) >= 10
+
+
+@pytest.mark.parametrize(
+    "tail",
+    ["'x'", '"x"', "SELECT 2", ";", "(", "1"],
+    ids=["string", "qident", "select", "semicolon", "paren", "digit"],
+)
+def test_nothing_but_whitespace_or_comments_may_follow_the_first_semicolon(tail):
+    with pytest.raises(Rejected) as caught:
+        validate("SELECT 1; " + tail)
+    assert caught.value.rule == "V01"
+    assert validate("SELECT 1; -- done\n /* ok */ ").canonical_sql == "SELECT 1"
