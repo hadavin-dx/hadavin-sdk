@@ -1,403 +1,637 @@
-"""Reverts one guard at a time in a temp copy of the package and runs the promoted-controls tests; every mutant must be KILLED
-by the intended test (`hadavin_sdk.testing.mutation.judge`). Not collected by pytest. Run from the repo root:
+"""Reverts one guard at a time (``hadavin_sdk.testing.mutation_runner``) and requires the intended test to fail for the intended reason.
+Not collected by pytest. Run from the repo root:
 
-    uv run python tests/promote_mutants.py            # all mutants
+    uv run python tests/promote_mutants.py            # all mutants; exit 1 if any is not killed by its test
     uv run python tests/promote_mutants.py textnorm   # only mutants whose name contains the text
 """
 
-import os
-import shutil
-import subprocess
 import sys
-import tempfile
 from pathlib import Path
 
-from hadavin_sdk.testing.mutation import Verdict, first_failure, judge
+from hadavin_sdk.testing.mutation_runner import Mutant, run_mutants
 
 ROOT = Path(__file__).resolve().parents[1]
-SRC = "src/hadavin_sdk/"
 TEST = "tests/test_promote_apexc_review8.py"
-C, R, A = SRC + "runtime/control.py", SRC + "runtime/rowstore.py", SRC + "audit/capped.py"
-N, E, M, G = (
-    SRC + "guard/textnorm.py",
-    SRC + "guard/egress_text.py",
-    SRC + "testing/mutation.py",
-    SRC + "approvals/gate.py",
+S = "src/hadavin_sdk/"
+CV, SG, RS, CA = (
+    S + "runtime/config_view.py",
+    S + "runtime/stop_gate.py",
+    S + "runtime/rowstore.py",
+    S + "audit/capped.py",
 )
+TN, EG, MU = S + "guard/textnorm.py", S + "guard/egress_text.py", S + "testing/mutation.py"
+MR, CT, GT = S + "testing/mutation_runner.py", S + "testing/contracts.py", S + "approvals/gate.py"
 
-# name, file, old, new, expected fragment of the failing test id
-MUTANTS = [
-    (
-        "control: frozen dict accepts edits",
-        C,
+M = [
+    # config view
+    Mutant(
+        "view: frozen dict accepts edits",
+        CV,
         "__setitem__ = __delitem__ = update = pop = popitem = clear = setdefault = __ior__ = _refuse",
         "__ior__ = _refuse",
         "test_frozen_views_refuse",
     ),
-    (
-        "control: frozen dict allows __init__ re-entry",
-        C,
-        'class FrozenDict(dict):\n    __slots__ = ("_sealed",)\n\n    def __init__(self, data: Any = ()) -> None:\n        if getattr(self, "_sealed", False):',
-        'class FrozenDict(dict):\n    __slots__ = ("_sealed",)\n\n    def __init__(self, data: Any = ()) -> None:\n        if False:',
+    Mutant(
+        "view: __init__ re-entry",
+        CV,
+        'if getattr(self, "_sealed", False):',
+        "if False:",
         "test_frozen_views_refuse",
     ),
-    (
-        "control: frozen list accepts edits",
-        C,
+    Mutant(
+        "view: frozen list operators",
+        CV,
         "sort = reverse = __iadd__ = __imul__ = _refuse",
         "pass",
         "test_frozen_views_refuse",
     ),
-    (
-        "control: sets stay mutable",
-        C,
-        "return frozenset(freeze(v) for v in o)",
-        "return set(freeze(v) for v in o)",
+    Mutant(
+        "view: sets stay mutable",
+        CV,
+        "return frozenset(_freeze(v, depth + 1) for v in o)",
+        "return set(_freeze(v, depth + 1) for v in o)",
         "test_frozen_views_refuse",
     ),
-    (
-        "control: unknown mutable types are accepted",
-        C,
-        'raise TypeError(f"cannot freeze a {type(o).__name__}: only JSON-shaped values and sets")',
+    Mutant(
+        "view: unknown types accepted",
+        CV,
+        'raise TypeError(\n        f"cannot freeze a {type(o).__name__}: only JSON-shaped values, sets and immutable scalars"\n    )',
         "return o",
         "test_freeze_copies_deeply",
     ),
-    (
-        "control: freeze shares the caller's objects",
-        C,
-        "d = FrozenDict.__new__(FrozenDict)\n        dict.__init__(d, {k: freeze(v) for k, v in o.items()})",
-        "d = FrozenDict.__new__(FrozenDict)\n        dict.__init__(d, o)",
-        "test_freeze_copies_deeply",
+    Mutant(
+        "view: depth guard removed",
+        CV,
+        "if depth > MAX_DEPTH:",
+        "if False:",
+        "test_freeze_holds_real_configs",
+        allow_crash=True,
     ),
-    (
-        "control: swap does not count versions",
-        C,
-        "self._view.version + 1",
-        "self._view.version",
-        "test_the_holder_gives_one_consistent_pair",
+    Mutant(
+        "view: tuples become lists",
+        CV,
+        "return tuple(_freeze(v, depth + 1) for v in o)",
+        "return FrozenList(_freeze(v, depth + 1) for v in o)",
+        "test_freeze_holds_real_configs",
     ),
-    (
-        "control: effect ignores an engaged gate",
-        C,
-        'if self._on:\n                raise EffectBlocked("stop gate engaged")',
-        'if False:\n                raise EffectBlocked("stop gate engaged")',
+    Mutant(
+        "view: Decimal is not a scalar",
+        CV,
+        "decimal.Decimal, ",
+        "",
+        "test_freeze_holds_real_configs",
+        allow_crash=True,
+    ),
+    Mutant(
+        "view: freeze shares objects",
+        CV,
+        "dict.__init__(d, {k: _freeze(v, depth + 1) for k, v in o.items()})",
+        "dict.__init__(d, o)",
+        "test_frozen_views_refuse",
+    ),
+    Mutant(
+        "view: view() builds a new pair",
+        CV,
+        "return self._view  # one attribute read: the pair is consistent",
+        "return ConfigView(self._view.pol, self._view.directory, self._view.version)",
+        "test_the_holder_view_is_one_immutable_pair",
+    ),
+    Mutant(
+        "view: swap ignores expect",
+        CV,
+        "if expect is not None and self._view.version != expect:",
+        "if False:",
+        "test_the_holder_view_is_one_immutable_pair",
+        allow_crash=True,
+    ),
+    Mutant(
+        "view: swap does not count versions",
+        CV,
+        "self._view.version + 1)",
+        "self._view.version)",
+        "test_the_holder_view_is_one_immutable_pair",
+    ),
+    # stop gate
+    Mutant(
+        "gate: effect ignores an engaged gate",
+        SG,
+        'raise EffectBlocked("stop gate engaged")',
+        "pass",
         "test_a_port_that_checks_outside",
     ),
-    (
-        "control: engage does not wait for effects in flight",
-        C,
-        "drained = self._cond.wait_for(lambda: self._inflight == 0, timeout=timeout)",
+    Mutant(
+        "gate: effect ignores the durable switch",
+        SG,
+        'raise EffectBlocked("durable kill switch is on or unreadable")\n        self._enter()',
+        "pass\n        self._enter()",
+        "test_engage_goes_through_limits",
+    ),
+    Mutant(
+        "gate: an unreadable store reads as off",
+        SG,
+        "on = True\n        self._cached",
+        "on = False\n        self._cached",
+        "test_engage_fails_closed",
+    ),
+    Mutant(
+        "gate: engage does not wait",
+        SG,
+        "drained = self._cond.wait_for(lambda: self._inflight - own <= 0, timeout=timeout)",
         "drained = True",
         "test_engage_waits_for_effects_in_flight",
     ),
-    (
-        "control: blocked ignores the durable switch",
-        C,
-        "return bool(self._store is not None and self._store.get_kill_switch().on)",
-        "return False",
-        "test_the_gate_is_not_the_stored_kill_switch",
+    Mutant(
+        "gate: engage waits for its own effect",
+        SG,
+        'own = getattr(\n                self._tls, "depth", 0\n            )',
+        "own = (\n                0\n            )",
+        "test_engage_inside_an_effect",
     ),
-    (
-        "control: engage does not write the durable switch",
-        C,
-        "self._store.set_kill_switch(KillSwitch(on=True, by=_label(by)))",
+    Mutant(
+        "gate: store errors propagate from engage",
+        SG,
+        "except Exception as e:  # noqa: BLE001 - the process is already stopped; report that the durable write failed",
+        "except KeyboardInterrupt as e:",
+        "test_engage_fails_closed",
+        allow_crash=True,
+    ),
+    Mutant(
+        "gate: release skips the audit path",
+        SG,
+        "self._limits.reset(_label(by))",
         "pass",
-        "test_the_gate_is_not_the_stored_kill_switch",
+        "test_engage_goes_through",
     ),
-    (
-        "control: one failing undo stops the sweep",
-        C,
+    Mutant(
+        "gate: a second engage sweeps again",
+        SG,
+        "            if self._sweeping:\n                return EngageResult(already_sweeping=True)",
+        "            if False:\n                return EngageResult(already_sweeping=True)",
+        "test_a_second_engage_runs_no_undo",
+    ),
+    Mutant(
+        "gate: release during a sweep is allowed",
+        SG,
+        "            if self._sweeping:\n                raise StopGateBusy",
+        "            if False:\n                raise StopGateBusy",
+        "test_a_second_engage_runs_no_undo",
+    ),
+    Mutant(
+        "gate: one failing undo stops the sweep",
+        SG,
         "except Exception as e:  # noqa: BLE001 - per-item choke point",
         "except ZeroDivisionError as e:",
         "test_one_failing_undo",
+        allow_crash=True,
     ),
-    (
-        "control: an interrupt loses the partial result",
-        C,
+    Mutant(
+        "gate: an interrupt loses the item",
+        SG,
         'res.results.append((item, "interrupted"))',
         "pass",
         "test_one_failing_undo",
     ),
-    (
-        "control: the free-text label is stored raw",
-        C,
+    Mutant(
+        "gate: label stored raw",
+        SG,
         'return who if isinstance(who, str) and _LABEL.fullmatch(who) else "?"',
         "return who",
         "test_one_failing_undo",
     ),
-    (
-        "rowstore: audit after the insert",
-        R,
-        "            append(kind, key=key)  # audit before the write; raises -> nothing is inserted\n            with self._lock:\n                self._rows[key] = clean",
-        "            with self._lock:\n                self._rows[key] = clean\n            append(kind, key=key)",
+    Mutant(
+        "gate: label loses attribution",
+        SG,
+        "[A-Za-z0-9_.:@ -]{1,60}",
+        "[A-Za-z0-9_.:@-]{1,60}",
+        "test_one_failing_undo",
+    ),
+    Mutant(
+        "gate: restore does nothing",
+        SG,
+        "self._on = bool(on)",
+        "pass",
+        "test_restore_sets_the_flag",
+    ),
+    Mutant(
+        "gate: the ttl cache is ignored",
+        SG,
+        "if self._cache_ttl and c is not None and now - c[0] < self._cache_ttl:",
+        "if False:",
+        "test_restore_sets_the_flag",
+    ),
+    # row store
+    Mutant(
+        "rowstore: a row is not validated first",
+        RS,
+        'clean = copy_row(row) if op != "delete" else None  # validate and copy first',
+        "clean = row",
+        "test_the_row_store_meets_the_contract",
+        allow_crash=True,
+    ),
+    Mutant(
+        "rowstore: int keys accepted",
+        RS,
+        "type(k) is str and json_keys_ok(v, _depth + 1)",
+        "json_keys_ok(v, _depth + 1)",
         "test_the_row_store_meets_the_contract",
     ),
-    (
-        "rowstore: a row is not validated before the audit",
-        R,
-        "clean = copy_row(row)  # validate and copy first",
-        "clean = row",
-        "test_a_bad_row_fails_before_the_audit",
-    ),
-    (
-        "rowstore: int keys are accepted",
-        R,
-        "type(k) is str and json_keys_ok(v)",
-        "json_keys_ok(v)",
-        "test_a_bad_row_fails_before_the_audit",
-    ),
-    (
-        "rowstore: NaN is accepted",
-        R,
+    Mutant(
+        "rowstore: NaN accepted",
+        RS,
         "allow_nan=False",
         "allow_nan=True",
-        "test_a_bad_row_fails_before_the_audit",
+        "test_the_row_store_meets_the_contract",
     ),
-    (
-        "rowstore: a key is not reserved during its audit",
-        R,
-        "if key in self._rows or key in self._pending:",
-        "if key in self._rows:",
-        "test_an_audit_callback_can_read_the_store",
+    Mutant(
+        "rowstore: a pending key is a duplicate",
+        RS,
+        "raise KeyPending(key)",
+        "raise DuplicateKey(key)",
+        "test_a_key_behind_a_failing_audit",
+        allow_crash=True,
     ),
-    (
+    Mutant(
         "rowstore: get returns the live row",
-        R,
+        RS,
         "return copy_row(self._rows[key])",
         "return self._rows[key]",
         "test_the_row_store_meets_the_contract",
     ),
-    (
+    Mutant(
         "rowstore: snapshot returns the live rows",
-        R,
+        RS,
         "return {k: copy_row(v) for k, v in self._rows.items()}",
         "return dict(self._rows)",
         "test_the_row_store_meets_the_contract",
     ),
-    (
-        "capped: the cap is not enforced",
-        A,
-        "over, need_marker = n > self._cap, n > self._cap and not marked",
-        "over, need_marker = False, False",
+    Mutant(
+        "rowstore: no row limit",
+        RS,
+        "raise StoreFull(key)",
+        "pass",
+        "test_update_delete_and_the_row_limit",
+    ),
+    # capped audit
+    Mutant(
+        "capped: cap not enforced",
+        CA,
+        "over = slot[1] > self._cap",
+        "over = False",
         "test_capped_audit_is_per_tenant",
     ),
-    (
-        "capped: tenants share one counter",
-        A,
-        "self._n.get((tenant, kind), (bucket, 0, False))",
-        'self._n.get(("*", kind), (bucket, 0, False))',
+    Mutant(
+        "capped: tenants share a counter",
+        CA,
+        "key = (tenant[:_TENANT_MAX], kind)",
+        'key = ("*", kind)',
         "test_capped_audit_is_per_tenant",
     ),
-    (
+    Mutant(
         "capped: a new bucket does not reset",
-        A,
-        "if b != bucket:\n                b, n, marked = bucket, 0, False",
-        "if False:\n                b, n, marked = bucket, 0, False",
+        CA,
+        "if slot is None or slot[0] != bucket:",
+        "if slot is None:",
         "test_capped_audit_is_per_tenant",
     ),
-    (
-        "capped: a failed marker is never retried",
-        A,
-        'self._append("audit_suppressed", tenant=tenant, suppressed_kind=kind, bucket=bucket)',
-        'self._n[(tenant, kind)] = (bucket, self._n[(tenant, kind)][1], True)\n                self._append("audit_suppressed", tenant=tenant, suppressed_kind=kind, bucket=bucket)',
-        "test_capped_audit_retries",
+    Mutant(
+        "capped: marker not reserved under the lock",
+        CA,
+        "slot[2], need_marker = True, True  # reserved under the lock: no second writer",
+        "need_marker = True",
+        "test_capped_audit_is_per_tenant",
     ),
-    (
-        "textnorm: combining marks are kept",
-        N,
-        '{"Cc", "Cf", "Mn", "Me", "Zl", "Zp", "Co", "Cs"}',
-        '{"Cc", "Cf", "Me", "Zl", "Zp", "Co", "Cs"}',
+    Mutant(
+        "capped: marker retried every time",
+        CA,
+        "slot[4] = min(2 ** slot[3], 1024)",
+        "slot[4] = 0",
+        "test_the_marker_is_written_once",
+    ),
+    Mutant(
+        "capped: unbounded keys",
+        CA,
+        "if key not in self._n and len(self._n) >= self._max_keys:",
+        "if False:",
+        "test_capped_audit_memory_is_bounded",
+    ),
+    Mutant(
+        "capped: tenant not clipped",
+        CA,
+        "key = (tenant[:_TENANT_MAX], kind)",
+        "key = (tenant, kind)",
+        "test_capped_audit_memory_is_bounded",
+    ),
+    Mutant(
+        "capped: bool cap accepted",
+        CA,
+        "if type(cap) is not int or cap < 1:",
+        "if cap < 1:",
+        "test_capped_audit_is_per_tenant",
+    ),
+    Mutant(
+        "sink: tenant dropped",
+        CA,
+        'object_ref=f"{tenant}|{ref}"',
+        "object_ref=ref",
+        "test_sink_append_keeps_tenant",
+    ),
+    Mutant(
+        "sink: decision hard-coded",
+        CA,
+        "decision=decision,",
+        'decision="deny",',
+        "test_sink_append_keeps_tenant",
+    ),
+    Mutant(
+        "sink: intent mode ignored",
+        CA,
+        "return sink.write_intent(event) if intent else sink.write_outcome(event)",
+        "return sink.write_outcome(event)",
+        "test_intent_mode_uses_write_intent",
+    ),
+    # fold
+    Mutant(
+        "fold: combining marks kept",
+        TN,
+        '{"Cc", "Cf", "Mn", "Me", "Zl", "Zp", "Co", "Cs", "Cn"}',
+        '{"Cc", "Cf", "Me", "Zl", "Zp", "Co", "Cs", "Cn"}',
         "test_fold_is_stable",
     ),
-    (
-        "textnorm: look-alikes are not folded",
-        N,
-        ".translate(_digit_table()).translate(_TABLE)",
-        ".translate(_digit_table())",
+    Mutant(
+        "fold: unassigned characters kept",
+        TN,
+        '"Co", "Cs", "Cn"}',
+        '"Co", "Cs"}',
+        "test_fold_is_stable",
+    ),
+    Mutant(
+        "fold: look-alikes not folded",
+        TN,
+        ".translate(_DIGITS).translate(_TABLE)",
+        ".translate(_DIGITS)",
         "test_fold_covers_the_listed",
     ),
-    (
-        "textnorm: other scripts' digits are not folded",
-        N,
-        ".translate(_digit_table())",
+    Mutant(
+        "fold: other digits not folded",
+        TN,
+        ".translate(_DIGITS).translate(_TABLE)",
+        ".translate(_TABLE)",
+        "test_fold_covers_the_listed",
+    ),
+    Mutant(
+        "fold: the digit table is empty",
+        TN,
+        "_DIGITS = (\n    _build_digit_table()\n)",
+        "_DIGITS = {}",
+        "test_fold_covers_the_listed",
+    ),
+    Mutant("fold: fillers kept", TN, "ch not in FILLERS", "True", "test_fold_is_stable"),
+    Mutant(
+        "fold: Greek eta missing",
+        TN,
+        '((0x3B7, 0x3B3, 0x3BC, 0x3C9), "nyuw"),',
         "",
         "test_fold_covers_the_listed",
     ),
-    (
-        "textnorm: Armenian and dotless i are missing",
-        N,
-        '((0x131, 0x130), "iI"),  # dotless i, dotted capital I',
+    Mutant(
+        "fold: Armenian missing",
+        TN,
+        '((0x585, 0x57D, 0x578, 0x570, 0x555, 0x54D, 0x581), "ounhOUg"),',
         "",
         "test_fold_covers_the_listed",
     ),
-    (
-        "egress_text: the length is not bounded first",
-        E,
-        "if len(text) > policy.max_len:",
-        "if False:",
-        "test_short_protected_values_raise",
+    Mutant(
+        "fold: dotless i missing", TN, '((0x131, 0x130), "iI"),', "", "test_fold_covers_the_listed"
     ),
-    (
-        "egress_text: a short protected value is accepted",
-        E,
-        "if len(k) < policy.min_protected_len:",
-        "if False:",
-        "test_short_protected_values_raise",
-    ),
-    (
-        "egress_text: side-by-side exempt tokens pass",
-        E,
-        "or _MARK_RUN.search(t)",
-        "",
-        "test_exempt_tokens_are_not_a_free_pass",
-    ),
-    (
-        "egress_text: exempt tokens are uncapped",
-        E,
-        "t.count(_MARK) > policy.max_exempt_tokens",
-        "False",
-        "test_exempt_tokens_are_not_a_free_pass",
-    ),
-    (
-        "egress_text: amounts need no currency",
-        E,
-        "(_AMOUNT_ANCHORED if policy.amounts_need_currency else _AMOUNT_ANY)",
-        "_AMOUNT_ANY",
-        "test_exempt_tokens_are_not_a_free_pass",
-    ),
-    (
-        "egress_text: digit-like letters are not counted",
-        E,
-        "elif ch in _DIGITISH and chained:",
-        "elif False:",
-        "test_digit_like_letters_count",
-    ),
-    (
-        "egress_text: the digit budget is off by one",
-        E,
-        "if _digitish_count(t) >= policy.max_digits:",
-        "if _digitish_count(t) > policy.max_digits:",
-        "test_digit_budget_beats",
-    ),
-    (
-        "egress_text: an allowed reference needs no boundary",
-        E,
-        'r"(?<![A-Za-z0-9])" + re.escape(fa) + r"(?![A-Za-z0-9])"',
-        "re.escape(fa)",
-        "test_allowed_references_need_a_boundary",
-    ),
-    (
-        "egress_text: an allowed reference is case-sensitive",
-        E,
-        "flags=re.IGNORECASE",
-        "flags=0",
-        "test_allowed_references_need_a_boundary",
-    ),
-    (
-        "textnorm: digit-like letters S B Z G Q are not mapped",
-        N,
-        '"OILSBZGQ", "01158269"',
-        '"OIL", "011"',
+    Mutant(
+        "fold: loose map short",
+        TN,
+        '_LOOSE = str.maketrans("OILSBZGQ", "01158269")',
+        '_LOOSE = str.maketrans("OIL", "011")',
         "test_a_protected_number_is_found",
     ),
-    (
-        "egress_text: a protected number is not found through junk",
-        E,
+    Mutant(
+        "fold: allow compare folds",
+        TN,
+        "return _canon(a) == _canon(b)",
+        "return fold(a, casefold=True, collapse_ws=True) == fold(b, casefold=True, collapse_ws=True)",
+        "test_allow_decisions_refuse",
+    ),
+    Mutant(
+        "fold: confusable pair not detected",
+        TN,
+        "and not safe_equal(a, b)",
+        "and False",
+        "test_allow_decisions_refuse",
+    ),
+    Mutant(
+        "fold: mixed script never true",
+        TN,
+        "if latin and other:\n                return True",
+        "if False:\n                return True",
+        "test_mixed_script_is_a_fail_closed",
+    ),
+    # output check
+    Mutant(
+        "egress: length not bounded first",
+        EG,
+        "if len(text) > policy.max_len:",
+        "if False:",
+        "test_the_length_is_bounded_first",
+    ),
+    Mutant(
+        "egress: empty protected value skipped",
+        EG,
+        "if not isinstance(p, str) or not p:",
+        "if False:",
+        "test_non_latin_and_short_protected",
+        allow_crash=True,
+    ),
+    Mutant(
+        "egress: folds-to-nothing value skipped",
+        EG,
+        "if not fv:",
+        "if False:",
+        "test_non_latin_and_short_protected",
+    ),
+    Mutant(
+        "egress: short protected value skips the check",
+        EG,
+        'elif policy.on_short == "raise":',
+        "elif False:",
+        "test_non_latin_and_short_protected",
+    ),
+    Mutant(
+        "egress: protected words not matched",
+        EG,
+        "        for w in words:",
+        "        for w in ():",
+        "test_non_latin_and_short_protected",
+    ),
+    Mutant(
+        "egress: protected digits not matched through junk",
+        EG,
         "any(kd in s for s in sq_digits)",
         "False",
         "test_a_protected_number_is_found",
     ),
-    (
-        "egress_text: an allowed value that folds to nothing hides everything",
-        E,
-        "if fa:",
-        "if True:",
+    Mutant(
+        "egress: side-by-side tokens pass",
+        EG,
+        "or _MARK_RUN.search(t)",
+        "",
+        "test_exempt_tokens_are_not_a_free_pass",
+    ),
+    Mutant(
+        "egress: token count uncapped",
+        EG,
+        "t.count(_MARK) > policy.max_exempt_tokens",
+        "False",
+        "test_exempt_tokens_are_not_a_free_pass",
+    ),
+    Mutant(
+        "egress: dates uncapped",
+        EG,
+        "or n_dates > policy.max_dates",
+        "",
+        "test_exempt_tokens_are_not_a_free_pass",
+    ),
+    Mutant(
+        "egress: exempt digits uncapped",
+        EG,
+        "or exempt_digits > policy.max_exempt_digits",
+        "",
+        "test_exempt_tokens_are_not_a_free_pass",
+    ),
+    Mutant(
+        "egress: amounts need no currency",
+        EG,
+        "(anchored if policy.amounts_need_currency else any_amount)",
+        "any_amount",
+        "test_digit_budget_beats",
+    ),
+    Mutant(
+        "egress: any three capitals are a currency",
+        EG,
+        'codes = "|".join(sorted(policy.currencies)) or "(?!)"',
+        'codes = "[A-Z]{3}"',
+        "test_exempt_tokens_are_not_a_free_pass",
+    ),
+    Mutant(
+        "egress: digit-like letters not counted",
+        EG,
+        "        elif ch in _DIGITISH:\n            letters += 1",
+        "        elif False:\n            letters += 1",
+        "test_digit_like_letters_count",
+    ),
+    Mutant(
+        "egress: letter-only runs free",
+        EG,
+        "elif letters >= letter_run_min:",
+        "elif False:",
+        "test_digit_like_letters_count",
+    ),
+    Mutant(
+        "egress: budget off by one",
+        EG,
+        "if _digitish_count(t, policy.letter_run_min) >= policy.max_digits:",
+        "if _digitish_count(t, policy.letter_run_min) > policy.max_digits:",
+        "test_digit_budget_beats",
+    ),
+    Mutant(
+        "egress: account shapes ignored",
+        EG,
+        "if _IBAN_GROUPS.search(t) or account_like.search(t):",
+        "if False:",
+        "test_account_shapes",
+    ),
+    Mutant(
+        "egress: allowed ref needs no boundary",
+        EG,
+        'r"(?<![A-Za-z0-9])" + re.escape(fa) + r"(?![A-Za-z0-9])"',
+        "re.escape(fa)",
         "test_allowed_references_need_a_boundary",
     ),
-    (
-        "egress_text: protected values are not checked",
-        E,
-        "for k in keys:  # the most specific finding first",
-        "for k in []:",
-        "test_what_passes_and_the_full_homoglyph_fold",
+    Mutant(
+        "egress: allowed ref case sensitive",
+        EG,
+        "flags=re.IGNORECASE",
+        "flags=0",
+        "test_allowed_references_need_a_boundary",
     ),
-    (
-        "egress_text: thresholds are not validated",
-        E,
-        'raise ValueError("max_digits must be an int in 1..64")',
-        "pass",
+    Mutant(
+        "egress: mixed script allowed",
+        EG,
+        "if policy.deny_mixed_script and mixed_script(text):",
+        "if False:",
+        "test_mixed_script_words",
+    ),
+    Mutant(
+        "egress: unknown policy keys accepted",
+        EG,
+        "if unknown:\n            raise ValueError",
+        "if False:\n            raise ValueError",
         "test_thresholds_come_from_a_validated_policy",
+        allow_crash=True,
     ),
-    (
-        "mutation: an exception line counts as a kill",
-        M,
+    # judge, runner, contracts, gate
+    Mutant(
+        "judge: an exception line counts as a kill",
+        MU,
         "return Verdict.KILLED if _ASSERTION.search(first_line.strip()) else Verdict.CRASH",
         "return Verdict.KILLED",
         "test_mutation_judge_verdicts",
     ),
-    (
-        "mutation: crash markers are ignored",
-        M,
+    Mutant(
+        "judge: crash markers ignored",
+        MU,
         "for m in crash_markers:",
         "for m in ():",
         "test_mutation_judge_verdicts",
     ),
-    (
+    Mutant(
+        "judge: short expect accepted",
+        MU,
+        "if expect is not None and len(expect) < 4:",
+        "if False:",
+        "test_mutation_judge_verdicts",
+        allow_crash=True,
+    ),
+    Mutant(
+        "runner: crash counts as good",
+        MR,
+        "v is Verdict.KILLED or (v is Verdict.CRASH and m.allow_crash)",
+        "v in (Verdict.KILLED, Verdict.CRASH)",
+        "test_the_runner_kills",
+    ),
+    Mutant(
+        "contracts: a broken store passes",
+        CT,
+        "        raise AssertionError(msg)  # not `assert`: it must survive python -O",
+        "        pass",
+        "test_the_contract_check_raises",
+    ),
+    Mutant(
         "gate: views skip the shared fold",
-        G,
-        "textnorm.fold(v) for v in views",
-        "v for v in views",
-        "test_gate_views_use_the_shared_fold",
+        GT,
+        'textnorm.fold(text),\n            textnorm.fold(_INVISIBLE.sub("", strip_controls(strip_ansi(text)))),',
+        'text,\n            _INVISIBLE.sub("", strip_controls(strip_ansi(text))),',
+        "test_the_gate_views_use_the_shared_fold",
+    ),
+    Mutant(
+        "gate: fold bound removed",
+        GT,
+        "if len(text) <= _FOLD_MAX:",
+        "if True:",
+        "test_the_gate_views_use_the_shared_fold",
     ),
 ]
 
-
-def run(cwd: Path) -> tuple[int, str]:
-    env = dict(os.environ, PYTHONPATH=str(cwd / "src"))
-    r = subprocess.run(  # noqa: S603
-        [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", "--noconftest", TEST],
-        cwd=cwd, env=env, capture_output=True, text=True, check=False,
-    )  # fmt: skip
-    return r.returncode, r.stdout
-
-
-def main(only: list[str]) -> int:
-    tmp = Path(tempfile.mkdtemp(prefix="promote_mutants_"))
-    bad = []
-    try:
-        for name, f, old, new, expect in MUTANTS:
-            if only and not any(o in name for o in only):
-                continue
-            shutil.rmtree(tmp, ignore_errors=True)
-            (tmp / "tests").mkdir(parents=True)
-            shutil.copytree(ROOT / "src", tmp / "src", ignore=shutil.ignore_patterns("__pycache__"))
-            shutil.copy(ROOT / TEST, tmp / TEST)
-            shutil.copytree(
-                ROOT / "tests" / "fixtures", tmp / "tests" / "fixtures", dirs_exist_ok=True
-            )
-            p = tmp / f
-            t = p.read_text(encoding="utf-8")
-            if old not in t:
-                print(f"SNIPPET NOT FOUND  {name}")
-                bad.append(name)
-                continue
-            p.write_text(t.replace(old, new), encoding="utf-8", newline="\n")
-            rc, out = run(tmp)
-            _, first = first_failure(out)
-            test_id = ", ".join(
-                ln.removeprefix("FAILED ").split(" - ")[0]
-                for ln in out.splitlines()
-                if ln.startswith("FAILED ")
-            )
-            v = judge(rc, test_id, first, expect=expect)
-            print(f"{v:12} {name}  [{test_id.split('::')[-1][:60]}] {first[:70]}")
-            if v not in (Verdict.KILLED, Verdict.CRASH):
-                bad.append(name)
-    finally:
-        shutil.rmtree(tmp, ignore_errors=True)
-    print(f"{len(MUTANTS) - len(bad) if not only else 'partial'} not-bad; problems: {bad}")
-    return 1 if bad else 0
-
-
 if __name__ == "__main__":
-    sys.exit(main(sys.argv[1:]))
+    only = sys.argv[1:]
+    res = run_mutants(ROOT, M, [TEST], extra_dirs=("tests/fixtures", "docs"), only=only)
+    for name, v, test_id, good in res:
+        print(f"{'ok ' if good else 'BAD'} {v:12} {name}  [{test_id.split('::')[-1][:60]}]")
+    bad = [n for n, _, _, g in res if not g]
+    print(f"{len(res) - len(bad)} of {len(res)} good; problems: {bad}")
+    sys.exit(1 if bad else 0)

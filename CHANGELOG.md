@@ -128,17 +128,30 @@
   field with a default no longer un-qualifies agents, and swapping the llm backend does.
 
 
-### Added (promoted controls, from a demo's review; vendor-neutral, stdlib only, no call sites in `src` yet)
-- `guard/textnorm.py`: ONE text fold (NFKD, drop combining/format/control/private-use, NFKC, Unicode digits to ASCII,
-  Cyrillic/Greek/Armenian/Latin look-alikes to Latin) for every comparison or scan of text. Tests pin the table and a shared
-  vector file (`tests/fixtures/textnorm_vectors.json`). `approvals/gate.py` adds the folded view to its secret views.
-- `guard/egress_text.py`: output check for text a person reads (digit budget, capped exempt tokens, protected values),
-  typed `Violation`s, `LeakPolicy` validated thresholds. Distinct from `guard/redact.py` (input mask).
-- `runtime/control.py`: deep-frozen policy/directory views (accident-proofing, not a sandbox), one immutable `ConfigView`,
-  and `StopGate` with `effect()` (in-process effect barrier; honours the store-backed `KillSwitch`, written first on engage).
-- `runtime/rowstore.py`: copy-on-read row store with validate, then audit, then insert, and snapshot iteration.
-- `audit/capped.py`: per-tenant capped audit for refused attempts, plus an `AuditSink` adapter.
-- `testing/mutation.py`, `testing/contracts.py`: mutation-kill judge (reason, pin, crash classes) and a row-store contract check.
+### Changed (promoted controls, from a demo's reviews; PR #50)
+- **Behaviour change in `approvals/gate.py`:** the secret views of the G5 gate now also include `textnorm.fold` of the text (look-alike
+  letters, other scripts' digits, combining marks), so a key hidden behind such characters is now caught. Text over 1,000,000
+  characters is not folded (the other views still run).
+- **Merge order:** PR #49 (refunds) and this PR both edit this Unreleased section and share `guard/textnorm.py`; merge #50 first, then
+  re-copy `textnorm.py` into #49 and apply `patch-adopt-textnorm.diff`. #48 touches kill-switch tests and `limits.py`: rebase it after #50.
+
+### Added (promoted controls; vendor-neutral; the modules have no call sites in `src` except the gate edit above)
+- `guard/textnorm.py`: ONE text fold. Use it to make look-alike text EQUAL for DENY decisions (separation of duties, blocklists, leak
+  scans). NEVER use it for an ALLOW decision ("equals the verified address"): use `safe_equal` and refuse when `confusable_not_equal`
+  is True. `mixed_script` is the fail-closed backstop for look-alikes the curated table does not list. Unassigned code points (Cn) are
+  dropped (depends on the Python Unicode version). Tests pin the table and a shared vector file (`tests/fixtures/textnorm_vectors.json`).
+- `guard/egress_text.py`: output check for text a person reads: digit budget, capped set-aside tokens, protected values (also short and
+  non-Latin ones), typed `Violation`s, validated `LeakPolicy`. Defaults table: `docs/promoted-controls.md`. Distinct from `guard/redact.py`
+  (the input mask).
+- `runtime/config_view.py`: deep-frozen views (accident-proofing, not a sandbox), one immutable `ConfigView`, `ConfigHolder.swap(expect=)`.
+- `runtime/stop_gate.py`: `StopGate`, the in-process effect barrier in front of the audited durable stop (`Limits.stop` / `Limits.reset`,
+  one write path); `engage` flips the process flag first and fails closed when the store is down; `release` is audit-first; `aengage` /
+  `aeffect` for asyncio. `runtime/control.py` re-exports both for one release; the old `KillSwitch` name is now `StopGate`.
+- `runtime/rowstore.py`: copy-on-read row store, validate then audit then write (put, update, delete), `KeyPending` vs `DuplicateKey`.
+- `audit/capped.py`: per-tenant capped audit for refused attempts (bounded keys, marker reserved under the lock, back-off) and an
+  `AuditSink` adapter (`intent=True` for audit-before-write).
+- `testing/mutation.py`, `testing/mutation_runner.py`, `testing/contracts.py`: mutation-kill judge (reason, crash class, JUnit parsing),
+  a small runner, and a row-store contract check.
 
 ### Added
 - **G4 command withholding** (P5/P6 follow-ups). `channel.clean` now withholds every command a person could
