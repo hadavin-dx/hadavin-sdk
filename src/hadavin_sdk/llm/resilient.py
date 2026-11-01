@@ -148,6 +148,21 @@ class ResilientLLM:
     ) -> Reply:
         def refuse(reason: str) -> BaseException:
             _LOG.warning("llm fallback refused: %s (primary: %s)", reason, why)
+            if (
+                self.on_fallback is not None
+            ):  # R372: a refusal is evidence too (no content, no documents)
+                try:
+                    self.on_fallback(
+                        {
+                            "event": "llm_fallback_refused",
+                            "why": why,
+                            "reason": reason,
+                            "route": kwargs.get("route"),
+                            "documents_sent": False,
+                        }
+                    )
+                except Exception:  # noqa: BLE001 - the refusal still stands
+                    _LOG.warning("llm fallback refusal could not be reported")
             if cause is not None:
                 return cause
             if self._spend_tripped:

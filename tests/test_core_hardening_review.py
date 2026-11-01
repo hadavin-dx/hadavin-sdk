@@ -714,3 +714,65 @@ def test_each_kind_with_a_quota_429_stops_after_one_request(monkeypatch):
     with pytest.raises(SpendLimitReached):
         an.chat([{"role": "user", "content": "q"}], system="", route="r")
     assert len(calls) == 3  # one request per kind, none retried
+
+
+# --- R371 / R372: tenants never share counters; documents never reach a second vendor by default ---------------------
+
+
+def _tenant_limits(store, tenant, daily="1.00"):
+    from hadavin_sdk.limits import Limits
+
+    agent = SimpleNamespace(
+        budget_usd=SimpleNamespace(daily=D(daily), monthly=D("100")), max_run_usd=D("0.50")
+    )
+    return Limits(store, None, SimpleNamespace(agents={"a": agent}), tenant=tenant)  # type: ignore[arg-type]
+
+
+def test_two_clients_on_one_store_share_no_budget_and_no_run_share():
+    from hadavin_sdk.limits import OverBudget
+    from hadavin_sdk.store.memory import MemoryStore
+
+    store = MemoryStore()
+    a, b = _tenant_limits(store, "client-a"), _tenant_limits(store, "client-b")
+    a.reserve("a", D("0.50"), run_id="r1")  # A uses its whole run share and half its day
+    a.reserve("a", D("0.50"), run_id="r2")
+    with pytest.raises(OverBudget):
+        a.reserve("a", D("0.10"))  # A's day is spent
+    b.reserve("a", D("0.50"), run_id="r1")  # same agent id, same run id: B is untouched
+    assert b.blocked("a") == [] and a.blocked("a") == ["daily_budget"]
+    b.charge("a", D("0.40"))
+    assert a.store.spend_totals("client-a/a", MID)[0] == D("1.00")
+    assert store.spend_totals("client-b/a", MID)[0] == D("0.90")
+    assert store.spend_totals("a", MID) == (0, 0)  # nothing under the bare key
+
+
+MID = __import__("datetime").datetime.now(__import__("datetime").UTC).date()
+
+
+def test_canary_document_never_reaches_a_second_vendor_its_events_or_logs(caplog):
+    canary = "canary-" + "client-a-" + "7QX"
+    events, backup = [], Stub(OK)
+    llm = ResilientLLM(Stub(DOWN), backup, on_fallback=events.append)
+    with caplog.at_level("DEBUG"), pytest.raises(ProviderExhausted):
+        llm.chat(
+            [{"role": "user", "content": "x"}], system="s", route="r", documents=[canary.encode()]
+        )
+    assert backup.n == 0 and backup.seen == []
+    assert canary not in json.dumps(events) and canary not in caplog.text
+    assert (
+        events
+        and events[0]["event"] == "llm_fallback_refused"
+        and events[0]["documents_sent"] is False
+    )
+
+
+def test_each_fallback_control_has_a_negative_case():
+    # documents off, spend-limit unmetered, hook failure: all three deny, each leaving the fallback uncalled
+    for primary_err, kw in (
+        (DOWN, {"documents": [b"d"]}),
+        (SpendLimitReached("cap"), {}),
+    ):
+        backup = Stub(OK)
+        with pytest.raises(ProviderError):
+            ResilientLLM(Stub(primary_err), backup).chat([], system="", route="r", **kw)
+        assert backup.n == 0

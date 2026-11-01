@@ -98,7 +98,9 @@ class Reservation:
 
 
 class Limits:
-    def __init__(self, store: Store, audit: AuditSink, registry: Registry) -> None:
+    def __init__(
+        self, store: Store, audit: AuditSink, registry: Registry, tenant: str = ""
+    ) -> None:
         missing = [
             m for m in ("reserve_spend", "settle_spend", "prune_spend") if not hasattr(store, m)
         ]
@@ -109,6 +111,11 @@ class Limits:
             )
         self.store, self.audit, self.registry = store, audit, registry
         self._settle_lock = threading.Lock()
+        # R371: every counter key carries the tenant, so two clients on one store never share a budget or a run share.
+        self.tenant = tenant
+
+    def _key(self, name: str) -> str:
+        return f"{self.tenant}/{name}" if self.tenant else name
 
     def reserve(
         self, agent_id: str, usd: Decimal, run_id: str | None = None, run_day: date | None = None
@@ -119,11 +126,13 @@ class Limits:
         _money(usd, "reservation")
         agent = self.registry.agents[agent_id]
         day = now().date()
-        run_key = _RUN_PREFIX + run_id if run_id and agent.max_run_usd is not None else None
+        run_key = (
+            self._key(_RUN_PREFIX + run_id) if run_id and agent.max_run_usd is not None else None
+        )
         run_day = (run_day or day) if run_key else None
         budget = agent.budget_usd
         reasons = self.store.reserve_spend(
-            agent_id,
+            self._key(agent_id),
             day,
             usd,
             budget.daily,
@@ -149,9 +158,11 @@ class Limits:
         delta = actual - res.usd
         try:
             if delta != 0:
-                items = [(res.agent_id, res.day, delta)]
+                items = [(self._key(res.agent_id), res.day, delta)]
                 if res.run_id:
-                    items.append((_RUN_PREFIX + res.run_id, res.run_day or res.day, delta))
+                    items.append(
+                        (self._key(_RUN_PREFIX + res.run_id), res.run_day or res.day, delta)
+                    )
                 self.store.settle_spend(items)
         except BaseException:
             with self._settle_lock:
@@ -166,17 +177,19 @@ class Limits:
     def prune_runs(self, keep_days: int = _RUN_RETENTION_DAYS) -> int:
         """Delete the per-run counters of runs that started more than ``keep_days`` ago (a crashed run leaves
         its row). Call it at start-up or from the tick."""
-        return self.store.prune_spend(_RUN_PREFIX, now().date() - timedelta(days=keep_days))
+        return self.store.prune_spend(
+            self._key(_RUN_PREFIX), now().date() - timedelta(days=keep_days)
+        )
 
     def charge(self, agent_id: str, usd: Decimal) -> tuple[Decimal, Decimal]:
         _money(usd, "charge")
-        return self.store.add_spend(agent_id, now().date(), usd)
+        return self.store.add_spend(self._key(agent_id), now().date(), usd)
 
     def blocked(self, agent_id: str) -> list[str]:
         reasons = []
         if self.store.get_kill_switch().on:
             reasons.append("kill_switch")
-        day, month = self.store.spend_totals(agent_id, now().date())  # a read, no write
+        day, month = self.store.spend_totals(self._key(agent_id), now().date())  # a read, no write
         budget = self.registry.agents[agent_id].budget_usd
         if day >= budget.daily:
             reasons.append("daily_budget")

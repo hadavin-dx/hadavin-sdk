@@ -61,7 +61,7 @@
   `reserve_spend`, `settle_spend` and `prune_spend` (signatures in `store/protocol.py`); `Limits(...)` now raises
   `StoreLacksReserve` naming the missing methods instead of failing at the first call. (3) `blocked()` + `charge()` still
   work but keep the check-then-charge race; the runtime no longer uses `charge` except for a custom paid detector.
-  (4) `Reply` gains `fallback_used` and `served_by`.
+  (4) `Reply` gains `fallback_used` and `served_by`. (5) `Limits(..., tenant="client-x")` (new, optional) prefixes every counter key, so two clients on one store never share a budget or run share (R371); one deployment per client with its own store stays the default. A refused fallback is also reported to `on_fallback` as `llm_fallback_refused` (R372).
 
 ### Upgrade steps
 - **K3 pilot build path (levels, shadow cut-off, fail-closed loading).** Action contracts change shape:
