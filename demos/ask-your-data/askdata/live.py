@@ -83,6 +83,11 @@ def make_llm(cfg: AskdataConfig, provider: SecretProvider | None = None) -> LLM:
     """The live model route: the core LLM kind named in `cfg.llm`, over the config's routes. Sends nothing."""
     if cfg.llm is None:
         raise ConfigError("no live model: the config has no `llm` entry")
+    r = cfg.route
+    if not all(p.is_finite() and p > 0 for p in (r.input_usd_per_mtok, r.output_usd_per_mtok)):
+        raise ConfigError(
+            "route: a live model needs positive input and output prices (the meter prices every call from them)"
+        )
     provider = provider or make_provider(cfg)
     try:
         return make("llm", _kind("llm", cfg.llm), provider, routes=cfg.routes())
