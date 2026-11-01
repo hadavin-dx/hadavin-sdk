@@ -234,7 +234,32 @@ running the script by hand passes them with `-v` (it refuses without them).
        idempotent: a second run stops at `CREATE ROLE` (exit 3, rolled back).
      * **Single-tenant by design.** One config owns one meter, ledger and audit folder; two configs never share spend (tested).
        Billing is two-phase (`reserve`, then `settle`); a second settle of the same reservation is a no-op, so a retried
-       settle cannot double-bill, and an unsettled reservation stays visible as `open`.
+       settle cannot double-bill, and an unsettled reservation stays visible as `open`. `settle` releases the amount
+       STORED at `reserve` (the caller's number is ignored), refuses Infinity and NaN, and a settle that arrives after
+       `meter --clear-open` forgot its reservation still books an overage once.
+     * **"Loses nothing" holds under these verified conditions only:** many threads of ONE process, writers and
+       readers together, on Windows and Linux (a `PermissionError` on the meter file is retried up to
+       `lock_replace_attempts` times; readers take the same lock). Several PROCESSES and a real second terminal were
+       not run. If the retries run out the question ends `over_budget` and the reservation stays booked and visible
+       (over-booked, never under-booked).
+     * **A partly lost run.** `report-lost` after only `report.md` vanished is accepted; the gate then ignores the
+       missing file and still refuses a surviving file whose hash differs from the recorded one, or a file that appears
+       and was not recorded.
+     * **The identical-set refusal compares bytes.** One added space or newline gives a "different" set and a fresh
+       count; the real control is the key holder writing `--reason` and `--discard-count`, which are in the chain. When
+       an anchor exists but the chain is gone, there are no earlier hashes to compare, so the refusal cannot apply.
+     * **Key rotation limit.** A holder of an OLD key can fork the chain at the `rekey` entry and sign a rekey naming a
+       key of their own: the real new key then fails to verify (denial of service, not a bypass). Rotate keys only
+       with every older key still listed in `sealed_previous_key_secret_names`, oldest first.
+     * **roles.sql and large objects.** The three functions that create a large object (`lo_creat`, `lo_create`,
+       `lo_from_bytea`) are revoked from PUBLIC in the database, because a session that overrides
+       `default_transaction_read_only` could otherwise create persistent large objects. That is a database-wide change
+       (it affects every login there). Advisory locks and the other `pg_catalog` functions stay callable by PUBLIC.
+     * **What the literal scan covers.** Every file git would commit (a NUL byte, a binary header, a suffix or the
+       `.venv` folder does not exempt it; only an untracked `work/` is skipped), with patterns for keys, tokens, private
+       key blocks, URLs that carry a password, quoted password or secret assignments, JWTs, bearer headers, Slack
+       webhooks, Stripe keys, regions (AWS, Azure, GCP; any case; availability-zone letters) and model ids. A secret
+       that is built from pieces at run time, or encoded, is not caught by pattern matching.
    * Anchors: at the first freeze a `set_id` is written to `<audit_dir>/sealed-anchor.json` and to
      `<eval_dir>/anchor.json`, which you COMMIT TO GIT. `eval
      freeze` refuses while a chain or any anchor exists, so deleting the chain and `lock.json` and freezing again does not

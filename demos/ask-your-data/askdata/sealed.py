@@ -136,6 +136,10 @@ class Chain:
             return [], False, False
         except OSError:
             raise LockError("the sealed-run chain cannot be read") from None
+        except ValueError:  # UnicodeDecodeError: bytes that are not UTF-8 text
+            raise LockError(
+                "the sealed-run chain is damaged (it is not valid UTF-8 text)"
+            ) from None
         parts = text.split("\n")
         tail = parts.pop()  # "" when the file ends with a newline
         if tail:
@@ -179,7 +183,7 @@ class Chain:
                 ok = False
             if not ok:
                 raise LockError(
-                    f"the sealed-run chain is broken at line {n + 1} (edited, reordered, damaged or the wrong key)"
+                    f"the sealed-run chain is broken at line {n + 1} (edited, reordered, damaged, the wrong key, or an older key missing from sealed_previous_key_secret_names)"
                 )
             prev = e["sha"]
             out.append(e)
@@ -225,10 +229,22 @@ class Chain:
             "sha": _mac(signing_key or self.key, seq, kind, body, prev),
         }
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        with open(self.path, "a", encoding="utf-8", newline="\n") as f:
-            f.write(json.dumps(entry, sort_keys=True, separators=(",", ":")) + "\n")
-            f.flush()
-            os.fsync(f.fileno())
+        existed = self.path.exists()
+        size = self.path.stat().st_size if existed else 0
+        try:
+            with open(self.path, "a", encoding="utf-8", newline="\n") as f:
+                f.write(json.dumps(entry, sort_keys=True, separators=(",", ":")) + "\n")
+                f.flush()
+                os.fsync(f.fileno())
+        except BaseException:
+            # the write or its fsync failed: put the file back exactly as it was (a chain file this call created goes)
+            with contextlib.suppress(OSError):
+                if existed:
+                    with open(self.path, "r+b") as f:
+                        f.truncate(size)
+                else:
+                    self.path.unlink(missing_ok=True)
+            raise
         return entry
 
     def truncate_to(self, n: int) -> None:
@@ -253,6 +269,25 @@ def file_sha256(path: Path) -> str | None:
 
 
 RESULT_FILES = ("report.json", "report.md", "results.jsonl")
+
+
+def _wanted(rec: dict) -> dict[str, str | None]:
+    return {
+        "report.json": rec["data"]["sha256"],
+        "report.md": rec["data"].get("report_md_sha256"),
+        "results.jsonl": rec["data"].get("results_sha256"),
+    }
+
+
+def _mismatched(rec: dict, folder: Path) -> list[str]:
+    """Files that EXIST in the folder but do not match what was recorded (a file recorded as absent that now exists
+    counts). A missing file is not here: it is simply gone."""
+    out = []
+    for name, digest in _wanted(rec).items():
+        now = file_sha256(folder / name)
+        if now is not None and now != digest:
+            out.append(name)
+    return out
 
 
 def _problem(entries: list[dict], runs_dir: Path, run_id: str) -> tuple[dict | None, str | None]:
@@ -299,9 +334,11 @@ def report_state(entries: list[dict], runs_dir: Path, run_id: str) -> str | None
             for e in entries
         )
         if lost:
-            if problem is not None and any((folder / n).exists() for n in RESULT_FILES):
+            if bad := _mismatched(
+                rec, folder
+            ):  # a survivor that still matches its recorded hash is fine
                 raise LockError(
-                    f"files appeared in the folder of run {run_id}, which is marked lost, and they do not match what "
+                    f"{', '.join(bad)} in the folder of run {run_id}, which is marked lost, do not match what "
                     "the chain recorded: they are not shown or trusted"
                 )
             return "lost"

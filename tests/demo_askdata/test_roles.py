@@ -25,6 +25,11 @@ DENIED = [
     "INSERT INTO analytics.orders_v VALUES (9999, 1, DATE '2026-01-01', 'paid', 1)",
     "UPDATE analytics.orders_v SET status = 'x'",
     "DROP VIEW analytics.orders_v",
+    # the large-object creators are executable by PUBLIC unless roles.sql revokes them (they persist when the
+    # read-only default is overridden, as this connection does)
+    "SELECT lo_creat(-1)",
+    "SELECT lo_create(0)",
+    "SELECT lo_from_bytea(0, 'abc'::bytea)",
 ]
 VIEWS = ["customers_v", "products_v", "orders_v", "order_items_v"]
 

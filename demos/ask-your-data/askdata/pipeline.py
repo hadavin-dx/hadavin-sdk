@@ -203,6 +203,7 @@ class Pipeline:
             except (
                 BaseException
             ):  # Ctrl-C and the like: close the reservation (as spent) before leaving
+                run.cost += worst  # the ledger line must show what the meter now says
                 self._settle(run, worst, worst, rid)
                 raise
             actual = call_cost(
