@@ -37,6 +37,7 @@ import hashlib
 import hmac
 import json
 import os
+import shutil
 import uuid
 from datetime import UTC, datetime
 from pathlib import Path
@@ -390,7 +391,11 @@ class SealedGate:
                 "discarded_runs": counted,
             }
         old = None
-        saved_anchors = {a: (a.read_bytes() if a.exists() else None) for a in self.anchors}
+        backups = {a: a.with_name(a.name + ".bak") for a in self.anchors if a.exists()}
+        for a, b in backups.items():
+            shutil.copyfile(
+                a, b
+            )  # path to path: the old anchors can be put back if this freeze fails
         entry = self.chain.append("new_set" if reason else "genesis", data)
 
         def seal(lock: Lock) -> Lock:
@@ -419,13 +424,15 @@ class SealedGate:
                 {"set_id": set_id, "created": entry["data"]["ts"], "reason": reason or None}
             )
             self._write_anchors(history, bool(self.key))
+            for b in backups.values():
+                b.unlink(missing_ok=True)
         except BaseException:
             # undo in reverse: the new anchors, the new lock, the move of the old lock, our chain entry
-            for a, content in saved_anchors.items():
-                if content is None:
-                    a.unlink(missing_ok=True)
+            for a in self.anchors:
+                if a in backups:
+                    os.replace(backups[a], a)
                 else:
-                    a.write_bytes(content)
+                    a.unlink(missing_ok=True)
             if old is not None:
                 lock_path(self.eval_dir).unlink(missing_ok=True)
                 os.replace(old, lock_path(self.eval_dir))
