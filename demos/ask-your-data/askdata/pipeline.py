@@ -27,6 +27,7 @@ from askdata.pgsource import Limits, PgError, RunResult
 from askdata.policy import REASONS, Outcome, decide, exit_code, pick_reason, rule_hint
 from askdata.prompt import Prompt
 from askdata.safe_text import clean
+from askdata.settings import RUNTIME
 from askdata.validate import RULES, Rejected, Validated, validate
 from hadavin_sdk.audit.protocol import AuditUnavailable
 from hadavin_sdk.config import Route
@@ -46,20 +47,20 @@ class Executor(Protocol):
 @dataclass(frozen=True)
 class Settings:
     route: str = "sql_generate"
-    max_attempts: int = 3
-    max_question_chars: int = 500
+    max_attempts: int = RUNTIME.max_attempts
+    max_question_chars: int = RUNTIME.max_question_chars
     restricted_terms: tuple[str, ...] = (
         "email", "e-mail", "mail address", "password", "passwd", "ssn", "social security",
         "card number", "credit card", "iban",
     )  # fmt: skip
     store_question: bool = True
     live: bool = True  # a live (paid) route also needs a fresh external_usd in the meter
-    transient_backoff_s: float = 1.0
+    transient_backoff_s: float = RUNTIME.transient_backoff_s
     # requests ONE chat() may send (the LLM kind retries inside it); the meter reserves for all of them
     llm_max_attempts: int = 1
     injection_threshold: float = (
-        0.05  # the sweep in tests/demo_askdata/test_demo_gaps.py (A-19 F-27)
-    )
+        RUNTIME.injection_threshold
+    )  # sweep: tests/demo_askdata/test_demo_gaps.py (A-19 F-27)
 
 
 @dataclass
@@ -388,9 +389,9 @@ class Pipeline:
         route = self.routes[self.s.route]
         fields: dict[str, Any] = dict(  # noqa: C408
             query_id=run.query_id, ts=run.ts, asker=run.asker,
-            question=clean(run.question)[:500] if self.s.store_question else None, question_sha256=run.q_sha,
+            question=clean(run.question)[: RUNTIME.stored_question_chars] if self.s.store_question else None, question_sha256=run.q_sha,
             outcome=outcome, reason_code=reason, rule_id=run.rule_id,
-            attempts=run.attempts[: 6], final=final, assumptions=run.assumptions[:20], intent_event_ids=run.intents,
+            attempts=run.attempts[: RUNTIME.ledger_attempts_kept], final=final, assumptions=run.assumptions[: RUNTIME.ledger_assumptions_kept], intent_event_ids=run.intents,
             prompt_sha256=self.prompt.prompt_sha256, config_hash=self.config_hash, catalog_sha256=self.prompt.catalog_sha256,
             model_id=run.model_id or route.model_id, route=self.s.route, tokens_in=run.tokens_in, tokens_out=run.tokens_out,
             cost_usd=fmt_usd(run.cost), latency_ms=latency_ms, budget=budget, alarm=sorted(run.alarm),

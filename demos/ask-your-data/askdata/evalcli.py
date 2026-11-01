@@ -26,6 +26,7 @@ import contextlib
 import hashlib
 import json
 import os
+import re
 import time
 from dataclasses import replace
 from pathlib import Path
@@ -54,6 +55,9 @@ from askdata.policy import EXIT_AUDIT
 from askdata.safe_text import clean
 from askdata.sealed import SealedGate, key_from
 from hadavin_sdk.llm.fake import FakeLLM
+
+# what `evalrun.run_id` produces: UTC time to the microsecond plus the label. Nothing else names a run folder.
+RUN_ID = re.compile(r"\d{8}T\d{12}Z-(dev|sealed|second-look)")
 
 SPLIT_FILES = {
     "dev": ("gold.dev.jsonl", "adversarial.dev.jsonl"),
@@ -160,7 +164,9 @@ def _smoke_key(cfg: AskdataConfig) -> str:
     return f"{config_hash(cfg, prompt.load(as_of=cfg.as_of).prompt_sha256)}:{cfg.route.model_id}"
 
 
-def cmd_freeze(cfg: AskdataConfig, new_set_reason: str | None = None) -> int:
+def cmd_freeze(
+    cfg: AskdataConfig, new_set_reason: str | None = None, discard_count: int | None = None
+) -> int:
     """Write lock.json (file hashes, the gate thresholds, test_runs 0), the chain's genesis entry and the anchors. Run it
     ONCE, after the prompt and the dev work are final and before any sealed run. It refuses while a lock, a chain or
     an anchor exists (that would reset the sealed counter); a genuinely NEW test set needs `--new-set --reason`,
@@ -179,6 +185,7 @@ def cmd_freeze(cfg: AskdataConfig, new_set_reason: str | None = None) -> int:
                     amber_max_upper=cfg.sealed.amber_max_upper,
                 ),
                 new_set_reason,
+                discard_count=discard_count,
                 lock_fields={
                     "sealed_min_remaining_usd": cfg.sealed.first_run_min_remaining_usd,
                     "second_look_min_remaining_usd": cfg.sealed.second_look_min_remaining_usd,
@@ -294,7 +301,7 @@ def _prepare(cfg, split, k, second_look, harness_factory, use_live, smoke):
         ids = {g.id for g in gold} | {a.id for a in adv_all}
         run = lock.harness_defect_run or ""
         if (
-            Path(run).name != run
+            not RUN_ID.fullmatch(run)
             or not (cfg.paths.runs_dir / run / "report.json").is_file()
             or lock.harness_defect_item not in ids
         ):
@@ -305,6 +312,7 @@ def _prepare(cfg, split, k, second_look, harness_factory, use_live, smoke):
             return 14
     run_dir = cfg.paths.runs_dir / evalrun.run_id(label)
     run_dir.mkdir(parents=True, exist_ok=True)
+    run_handle = None
     try:
         harness, meter, meta = harness_factory(
             cfg,
@@ -320,13 +328,16 @@ def _prepare(cfg, split, k, second_look, harness_factory, use_live, smoke):
     ):  # write-ahead: the chain first, then lock.json; a crash between is replayed by the next load
         try:
             lock = gate.begin(lock, run_dir.name)
+            run_handle = (
+                gate.acquire_run()
+            )  # held for the whole run: a second look sees "still running"
         except (OSError, LockError) as err:
             out(
                 f"cannot record the sealed run ({type(err).__name__}); nothing was run. "
                 "If lock.json and the chain now differ, `eval reconcile` rolls lock.json forward"
             )
             return EXIT_AUDIT
-    return lock, harness, meter, meta, gold, adv, label, run_dir, gate
+    return lock, harness, meter, meta, gold, adv, label, run_dir, gate, run_handle
 
 
 def cmd_run(
@@ -357,7 +368,7 @@ def cmd_run(
         return 4
     if isinstance(prep, int):
         return prep
-    lock, harness, meter, meta, gold, adv, label, run_dir, gate = prep
+    lock, harness, meter, meta, gold, adv, label, run_dir, gate, run_handle = prep
     st = {
         "status": "aborted",
         "smoke_ok": True,
@@ -393,6 +404,10 @@ def cmd_run(
         except MeterError:
             snap = {}
         evalrun.write_run(run_dir, results + adv_results, report, snap)
+        if (
+            split == "test"
+        ):  # the report's hash goes into the chain now; a later change to report.json is noticed
+            st["smoke_ok"] = _record(lambda: gate.record_report(run_dir.name), eval_dir)
         st["status"] = (
             "aborted" if report["aborted"] else "complete"
         )  # the results exist now: nothing may call this 'aborted'
@@ -409,6 +424,8 @@ def cmd_run(
     try:
         code = body()
     finally:  # also on KeyboardInterrupt and on any crash after the results were written
+        if run_handle is not None:
+            gate.release_run(run_handle)  # the run is over: it is no longer "running"
         if split == "test":
             finished = _record(lambda: gate.finish(run_dir.name, st["status"]), eval_dir)
     if not (
@@ -487,7 +504,13 @@ def main(argv: list[str]) -> int:
         action="store_true",
         help="a NEW test set: restart the sealed count (needs --reason)",
     )
-    fz.add_argument("--reason", default=None)
+    fz.add_argument("--reason", default=None, help="20+ characters; written into the chain")
+    fz.add_argument(
+        "--discard-count",
+        type=int,
+        default=None,
+        help="with --new-set: the number of counted sealed runs you discard",
+    )
     sub.add_parser(
         "reseal",
         help="key holder: re-seal lock.json after a hand edit of the harness-defect fields",
@@ -526,7 +549,7 @@ def main(argv: list[str]) -> int:
         out(f"startup: {err}")
         return 4
     if args.cmd == "freeze":
-        return cmd_freeze(cfg, args.reason if args.new_set else None)
+        return cmd_freeze(cfg, args.reason if args.new_set else None, args.discard_count)
     if args.cmd == "reseal":
         return cmd_reseal(cfg)
     if args.cmd == "reconcile":

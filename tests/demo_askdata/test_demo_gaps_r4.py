@@ -110,7 +110,9 @@ def test_a_new_freeze_is_refused_while_any_anchor_exists_and_new_set_is_visible(
 def test_new_set_restarts_the_count_and_leaves_a_visible_entry(tmp_path):
     g = gate_for(tmp_path, KEY)
     _run(g, "r1")
-    lock = g.create(["a.jsonl"], new_set_reason="a different test set from the client")
+    lock = g.create(
+        ["a.jsonl"], new_set_reason="a different test set from the client", discard_count=1
+    )
     assert lock.test_runs == 0 and g.load().test_runs == 0
     kinds = [e["kind"] for e in g.chain.entries()]
     assert (
@@ -125,7 +127,7 @@ def test_new_set_restarts_the_count_and_leaves_a_visible_entry(tmp_path):
     with pytest.raises(LockError, match="no earlier set"):
         gate_for(tmp_path / "fresh", None).__class__(
             g.eval_dir, tmp_path / "x" / "c.jsonl", g.runs_dir, None, []
-        ).create(["a.jsonl"], new_set_reason="nothing to replace")
+        ).create(["a.jsonl"], new_set_reason="nothing to replace at all here")
 
 
 def test_the_chain_and_an_anchor_must_name_the_same_set(tmp_path):
@@ -143,7 +145,7 @@ def test_a_keyless_gate_is_refused_once_the_set_was_keyed(tmp_path):
     with pytest.raises(LockError, match="keyed"):
         keyless.load()
     with pytest.raises(LockError, match="keyed"):
-        keyless.create(["a.jsonl"], new_set_reason="downgrade attempt")
+        keyless.create(["a.jsonl"], new_set_reason="downgrade attempt on a keyed set")
     # and rewriting the chain without a key and clearing the lock's flag does not help while an anchor says keyed
     _edit_lock(g, lambda l: l.update(keyed=False, seal=None))
     with pytest.raises(LockError, match="keyed"):
@@ -158,7 +160,15 @@ def test_freeze_new_set_through_the_cli(cli_env, capsys):  # noqa: F811
     capsys.readouterr()
     assert (
         cli.main(
-            ["eval", "--config", path, "freeze", "--new-set", "--reason", "new client data set"]
+            [
+                "eval",
+                "--config",
+                path,
+                "freeze",
+                "--new-set",
+                "--reason",
+                "the client replaced the questions",
+            ]
         )
         == 0
     )

@@ -108,11 +108,11 @@ def _tool(pt=1000, ct=1000):
     }
 
 
-def _oc_chat(seq, max_attempts=3):
+def _oc_chat(seq, max_attempts=3, route=PRICED):
     llm = oc.OpenAICompatLLM(
         "https://api.example.com/v1",
         lambda: "k",
-        {"sql_generate": PRICED},
+        {"sql_generate": route},
         30,
         max_attempts,
         sleep=lambda _s: None,
@@ -167,11 +167,21 @@ def test_an_unusable_200_body_is_a_billed_error_but_an_http_refusal_is_not():
 
     x = X({"r": ROUTE}, 3, sleep=lambda _s: None)
 
-    def bad():
+    def _parse():  # the kinds name their response parser `_parse`: a failure in it means a request WAS answered
         raise ValueError("malformed body")
+
+    def bad():
+        return _parse()
 
     with pytest.raises(UnusableAnswer):
         x._retry(bad)
+
+    def before_any_request():  # e.g. a secret read or building the body: nothing was sent, nothing is billed
+        raise ValueError("no key")
+
+    with pytest.raises(ProviderError) as unsent:
+        x._retry(before_any_request)
+    assert not isinstance(unsent.value, UnusableAnswer)
 
     def refused():
         raise _http(400)
@@ -179,3 +189,16 @@ def test_an_unusable_200_body_is_a_billed_error_but_an_http_refusal_is_not():
     with pytest.raises(ProviderError) as err:
         x._retry(refused)
     assert not isinstance(err.value, UnusableAnswer)
+
+
+def test_a_round_that_reports_no_usage_is_estimated_not_counted_as_zero():
+    no_usage = {"choices": [{"message": {"content": "plain words"}, "finish_reason": "stop"}]}
+    input_only = Route(
+        model_id="gpt-x-1", input_usd_per_mtok="1000", output_usd_per_mtok="0", max_tokens=1000
+    )
+    with pytest.raises(ProviderError) as err:
+        _oc_chat([no_usage, _http(400)], route=input_only)
+    # priced on INPUT only: above 0 only if the answered round's input tokens were estimated, not counted as 0
+    assert err.value.answered == 1 and err.value.billed_usd > 0
+    _, r = _oc_chat([no_usage, no_usage], max_attempts=1)
+    assert r.answered == 2 and r.cost_usd > 0

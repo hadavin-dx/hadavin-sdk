@@ -26,7 +26,7 @@ from pydantic import (
     model_validator,
 )
 
-from askdata.settings import Sealed
+from askdata.settings import RUNTIME, Sealed
 
 Hex64 = Annotated[str, StringConstraints(pattern=r"^[0-9a-f]{64}$")]
 Tier = Literal["easy", "medium", "hard", "glossary", "ambiguous", "out_of_scope", "refuse"]
@@ -140,7 +140,7 @@ class Lock(_Strict):
     second_look_min_remaining_usd: Decimal = (
         _SEALED.second_look_min_remaining_usd
     )  # a --second-look run (A-03)
-    last_test_status: Literal["none", "complete", "aborted"] = "none"
+    last_test_status: Literal["none", "complete", "aborted", "running", "unverified"] = "none"
     # "<config_hash>:<model_id>" of the last finished `eval run --split dev --live --smoke`; a sealed --live run needs
     # the SAME key (a changed prompt, config or model needs a new smoke run).
     smoke_key: str | None = None
@@ -152,6 +152,9 @@ class Lock(_Strict):
     # Mirrors of the sealed-run chain (sealed.py): the chain's last `sha`, and an HMAC over test_runs, smoke_key and
     # chain_head when a key is configured. `load()` replays the chain over them after a crash.
     chain_head: str | None = None
+    core_hash: str | None = (
+        None  # hash of everything but the seal and the hand-written fields, at the last commit
+    )
     keyed: bool = (
         False  # the set was frozen with an HMAC key: a keyless gate is refused from then on
     )
@@ -205,7 +208,7 @@ def _write_tmp(path: Path, lock: Lock) -> Path:
 
 
 @contextlib.contextmanager
-def lock_guard(eval_dir: Path, wait_s: float = 5.0) -> Iterator[None]:
+def lock_guard(eval_dir: Path, wait_s: float = RUNTIME.lock_wait_s) -> Iterator[None]:
     """Exclusive OS lock across read lock.json -> decide -> write lock.json (the sealed counter's critical section)."""
     from askdata.meter import _try_lock, _unlock  # the same primitive the meter file uses
 

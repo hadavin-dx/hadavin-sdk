@@ -29,13 +29,14 @@ from askdata.meter import fmt_usd
 from askdata.pgsource import Limits, PgError, RunResult
 from askdata.pipeline import Answer, Executor, Pipeline
 from askdata.safe_text import clean
+from askdata.settings import RUNTIME
 from askdata.validate import Rejected, validate
 from hadavin_sdk.stats import upper_error_bound
 
 AGENT_ID = "askdata"
 SAMPLING_NOTE = "provider default: the model call has no temperature or seed parameter"
-EMAIL = re.compile(r"cust\d{5}@example\.com")
-HUMAN_READ_SALT = "human-read-v1"
+EMAIL = re.compile(RUNTIME.email_pattern)
+HUMAN_READ_SALT = RUNTIME.human_read_salt
 
 # Exit codes of `eval run` (documented in the README): 0 green, 10 amber, 11 not demonstrated, 12 a hard zero
 # breached, 13 aborted (no verdict), 14 a sealed run refused, 4 startup (lock, files, config), 1 usage.
@@ -115,7 +116,7 @@ class RunRecord:
 class Config:
     k: int = 1
     label: str = "dev"  # "dev", "sealed", "second look"
-    max_duration_ms: int = 15_000
+    max_duration_ms: int = RUNTIME.max_duration_ms
     stop_on: tuple[str, ...] = (
         "over_budget",
         "kill_switch",
@@ -127,7 +128,9 @@ class Config:
     smoke: bool = False  # a live smoke run also aborts on cost per question or schema violations (live.smoke_breach)
 
 
-def human_read_sample(passing_ids: list[str], fraction: float = 0.2) -> list[str]:
+def human_read_sample(
+    passing_ids: list[str], fraction: float = RUNTIME.human_read_fraction
+) -> list[str]:
     """Deterministic 20 % sample of passing items for the human read: sorted by sha256(id + salt)."""
     ranked = sorted(
         passing_ids, key=lambda i: hashlib.sha256((i + HUMAN_READ_SALT).encode()).hexdigest()
@@ -497,6 +500,8 @@ def sealed_gate(
     if remaining < floor:
         raise LockError(f"the sealed run needs at least {floor} remaining, {remaining} left")
     if lock.test_runs >= 1:
+        if lock.last_test_status == "running":
+            raise LockError("a sealed run is still running; wait for it, or for its process to end")
         if second_look is None:
             raise LockError(
                 "the sealed set tolerates one invocation; a second needs --second-look aborted|harness_defect"
