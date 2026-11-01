@@ -48,6 +48,7 @@ GRANTS: dict[str, Grant] = {
     "spend_month": Grant("table", _RW),
     "kill_switch": Grant("table", _RW),
     "tick_state": Grant("table", _RW),
+    "reservations": Grant("table", "SELECT, INSERT, DELETE"),
     "audit_entries": Grant("table", _APPEND, portal=True),
     "audit_checkpoints": Grant("table", _APPEND, portal=True),
     "audit_outbox": Grant("table", "SELECT, INSERT, DELETE"),

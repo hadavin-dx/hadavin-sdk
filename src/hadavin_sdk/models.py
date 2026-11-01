@@ -193,6 +193,27 @@ class AuditEvent(Shape):
     caught_by: str | None = None
 
 
+class Reservation(Shape):
+    """A hold on a share of a limit while something waits for a person (see `store.reservations`)."""
+
+    tenant: str
+    key: str
+    scopes: list[str]  # the subject ids the hold counts against (the first is the subject)
+    actor: str
+    unit: str
+    amount: int
+    created_at: datetime = Field(default_factory=now)
+
+
+class ReservationLimits(Shape):
+    max_per_scope: int
+    max_per_actor: int
+    unit_caps: dict[
+        str, int
+    ]  # the most that may be held at once per unit; a unit not listed is refused
+    lock_timeout_s: int = 30
+
+
 class DeadLetter(Shape):
     run_id: str
     reason: str

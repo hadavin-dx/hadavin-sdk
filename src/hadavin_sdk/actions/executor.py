@@ -42,6 +42,23 @@ def resolve(ref: str, allowed: list[str]) -> Callable[..., Any]:
     return getattr(importlib.import_module(module), name)
 
 
+MAX_RESPONSE_BYTES = (
+    1 << 20
+)  # a client system's reply is read with a byte counter and never buffered past this
+
+
+def _read_capped(resp: Any, limit: int = MAX_RESPONSE_BYTES) -> bytes:
+    """At most `limit` bytes; a longer body reads as empty (like an unparseable one). Never read(): a Content-Length
+    pre-check can be absent or wrong, so the bytes are counted as they arrive."""
+    chunks, n = [], 0
+    while chunk := resp.read(min(65536, limit + 1 - n)):
+        n += len(chunk)
+        if n > limit:
+            return b""
+        chunks.append(chunk)
+    return b"".join(chunks)
+
+
 def _json(raw: bytes) -> Any:
     try:
         return json.loads(raw) if raw else None
@@ -83,7 +100,7 @@ class Executor:
             try:
                 # Scheme limited to http/https above, host allow-listed, redirects refused.
                 with _OPENER.open(req, timeout=self.timeout_s) as resp:  # nosec B310
-                    return resp.status, _json(resp.read())
+                    return resp.status, _json(_read_capped(resp))
             except urllib.error.HTTPError as exc:
                 return exc.code, None
 

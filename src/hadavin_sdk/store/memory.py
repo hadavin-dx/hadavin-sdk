@@ -15,11 +15,14 @@ from hadavin_sdk.models import (
     GateDecision,
     KillSwitch,
     Plan,
+    Reservation,
+    ReservationLimits,
     Run,
     RunState,
     TickState,
     now,
 )
+from hadavin_sdk.store import reservations as rsv
 from hadavin_sdk.store.protocol import NotFound, StaleState
 
 
@@ -36,6 +39,7 @@ class MemoryStore:
         self._spend: dict[tuple[str, date], Decimal] = defaultdict(Decimal)
         self._kill = KillSwitch()
         self._ticks: dict[str, TickState] = {}
+        self._res: dict[tuple[str, str], Reservation] = {}
 
     @staticmethod
     def _get(table: dict, key: str):
@@ -210,6 +214,51 @@ class MemoryStore:
                 Decimal(0),
             )
             return self._spend.get((agent_id, day), Decimal(0)), month
+
+    def reserve(
+        self,
+        res: Reservation,
+        limits: ReservationLimits,
+        since: datetime,
+        request: ApprovalRequest | None = None,
+    ) -> str | None:
+        rsv.validate(res, since)
+        with self._lock:
+            held = self._res.get((res.tenant, res.key))
+            if held is not None:
+                return None if rsv.same_content(held, res) else rsv.KEY_CONFLICT
+            open_ = [
+                r for r in self._res.values() if r.tenant == res.tenant and r.created_at >= since
+            ]
+            n_scope = sum(1 for r in open_ if r.scopes[0] in res.scopes)
+            n_actor = sum(1 for r in open_ if r.actor == res.actor)
+            total = sum(r.amount for r in open_ if r.unit == res.unit)
+            code = rsv.decide(n_scope, n_actor, total, res, limits)
+            if code is not None:
+                return code
+            self._res[(res.tenant, res.key)] = res.model_copy(deep=True)
+            if request is not None:
+                self._approvals[request.approval_id] = request.model_copy(deep=True)
+        return None
+
+    def release_reservation(self, tenant: str, key: str) -> int:
+        with self._lock:
+            return 1 if self._res.pop((tenant, key), None) is not None else 0
+
+    def list_reservations(self, tenant: str, since: datetime) -> list[Reservation]:
+        with self._lock:
+            return [
+                r.model_copy(deep=True)
+                for r in self._res.values()
+                if r.tenant == tenant and r.created_at >= since
+            ]
+
+    def prune_reservations(self, older_than: datetime) -> int:
+        with self._lock:
+            old = [k for k, r in self._res.items() if r.created_at < older_than]
+            for k in old:
+                del self._res[k]
+            return len(old)
 
     def get_kill_switch(self) -> KillSwitch:
         with self._lock:

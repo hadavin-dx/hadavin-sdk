@@ -668,7 +668,7 @@ _WRITE_SHAPES = re.compile(
     + r"|\bMERGE\s+INTO\s+"
     + _ID
     + r"|\b(?:GRANT|REVOKE)\s+[A-Z][A-Z, ]{0,80}\bON\b"
-    r"|\b(?i:(?!get-)[a-z]+-(?:az|azurerm|azuread|ec2|s3|iam|rds|lm|cfn|ecs|eks)[a-z]\w*)\b"
+    r"|\b(?i:(?!get-)(?!(?:run|pln|apr|evt)-[0-9a-f]{32}\b)[a-z]+-(?:az|azurerm|azuread|ec2|s3|iam|rds|lm|cfn|ecs|eks)[a-z]\w*)\b"
     r"|\b(?i:remove-item|stop-service|stop-process|restart-service|restart-computer|stop-computer)\b"
     r"|\b(?i:invoke-(?:restmethod|webrequest|expression)|irm|iwr|iex)\b[^\n]{0,500}\|\s*(?i:iex|invoke-expression)\b"
     r"|\brm\s+(?:-[a-zA-Z]*[rRf][a-zA-Z]*|--recursive|--force)(?=\s+\S)"

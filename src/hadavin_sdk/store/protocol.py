@@ -15,6 +15,8 @@ from hadavin_sdk.models import (
     GateDecision,
     KillSwitch,
     Plan,
+    Reservation,
+    ReservationLimits,
     Run,
     RunState,
     TickState,
@@ -39,6 +41,10 @@ def is_connectivity_error(exc: BaseException) -> bool:
 
 class StoreUnavailable(ConfigError):
     """The store cannot be reached (`tick` exits 4; nothing was changed)."""
+
+
+class StoreBusy(StoreUnavailable):
+    """The store's write lock was not free within the timeout (nothing was changed; retry later with the same key)."""
 
 
 class NotFound(KeyError):
@@ -106,6 +112,30 @@ class Store(Protocol):
     def add_spend(self, agent_id: str, day: date, usd: Decimal) -> tuple[Decimal, Decimal]: ...
     def spend_totals(self, agent_id: str, day: date) -> tuple[Decimal, Decimal]:
         """(day, month) totals; a read with no write."""
+        ...
+
+    def reserve(
+        self,
+        res: Reservation,
+        limits: ReservationLimits,
+        since: datetime,
+        request: ApprovalRequest | None = None,
+    ) -> str | None:
+        """Hold `res` against the limits, counting THIS store's own open rows (younger than `since`) in the same
+        transaction that inserts, serialised per tenant: two racing callers cannot both slip under a limit. With
+        `request`, the approval request is saved in that same transaction and only if the reservation is held. Returns
+        None when held (a repeat of the same key with the same content is held and unchanged), else a code:
+        OPEN_LIMIT, UNIT_UNKNOWN or KEY_CONFLICT (the key is held with other content). Raises ReservationError for
+        malformed input and StoreBusy when the write lock is not free in time."""
+        ...
+
+    def release_reservation(self, tenant: str, key: str) -> int:
+        """Delete one reservation (it was executed, rejected or withdrawn); returns the rows removed (0 or 1)."""
+        ...
+
+    def list_reservations(self, tenant: str, since: datetime) -> list[Reservation]: ...
+    def prune_reservations(self, older_than: datetime) -> int:
+        """Delete reservations created before `older_than` (any tenant); returns how many."""
         ...
 
     def get_kill_switch(self) -> KillSwitch:

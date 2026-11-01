@@ -127,6 +127,27 @@
   before starting the runtime; until then start-up raises `Unqualified`. After this one re-gate, adding an optional
   field with a default no longer un-qualifies agents, and swapping the llm backend does.
 
+### Added (promoted from the refunds demo, review 8; PR #49)
+- **Store-enforced reservations.** `Store.reserve`, `release_reservation`, `list_reservations`, `prune_reservations`
+  (memory and postgres; migration `0005_reservations.sql`, grants SELECT, INSERT, DELETE for the runtime role). The
+  per-scope, per-actor and per-unit limits are counted from the store's own rows in the transaction that inserts,
+  serialised per tenant; an optional approval request is saved in the same transaction only when the hold is taken.
+  Typed codes `OPEN_LIMIT`, `UNIT_UNKNOWN`, `KEY_CONFLICT`; malformed input is `ReservationError`; a busy lock is
+  `StoreBusy` (a `StoreUnavailable`). Pure logic and `check_ordered_limits` are in `store/reservations.py`.
+- **Intent -> call -> settle** (`actions/outbox.py`): attempts are `Run` rows (atomic create, compare-and-set settle),
+  intents and outcomes go through `AuditSink.write_intent` / `write_outcome`; a definite non-application frees the key for a
+  new attempt, an unknown outcome is never retried blindly, stale attempts escalate.
+- **Guard.** `guard/identity_text.py` (`text_ok`, `identity_key` for must-differ checks, `exact_key` for must-match checks,
+  `unique_ids`), `guard/reply_check.py` (reply-text check: typed, bounded, linear, homoglyph hosts and punycode, exact
+  recipient match, folded allow-lists, `allowed_patterns`), `audit/refusal.py` (refusal fields allow-listed or hashed),
+  `approvals/signed.py` (signed approvals on the `audit.signer` kinds: tenant, args hash, age, single use, key_id rotation).
+  They use the single fold in `guard/textnorm.py` (same file as PR #50).
+### Changed
+- `Limits.stop` / `reset`: text in `by` that is not bounded printable text is stored as a short hash, never refused (an
+  emergency stop must work) and never written raw into the chain.
+- G4 command withholding no longer takes a Hadavin id such as `pln-ec2...` for a cloud cmdlet (it withheld about one random id
+  in 2,000, which made `test_ids_and_plan_hashes_survive_redaction` fail now and then).
+
 ### Added
 - **G4 command withholding** (P5/P6 follow-ups). `channel.clean` now withholds every command a person could
   paste to change a system: `[command withheld (G4)]` stands in its place.
