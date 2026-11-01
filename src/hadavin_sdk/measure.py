@@ -374,6 +374,7 @@ class Measure:
         self.audit.write_outcome(
             AuditEvent(
                 run_id=run_id,
+                ts=self.clock(),
                 domain="measure",
                 operation=operation,
                 principal=principal,
@@ -596,7 +597,8 @@ class Measure:
         reader = csv.DictReader(io.StringIO(text))
         if reader.fieldnames is None or set(reader.fieldnames) != {"run_id", "label"}:
             return 0, ["the csv header must be exactly: run_id,label"]
-        rows = [(r["run_id"].strip(), r["label"].strip()) for r in reader]
+        # A short row leaves the missing field None: it becomes a refused row, not a crash.
+        rows = [((r["run_id"] or "").strip(), (r["label"] or "").strip()) for r in reader]
         sha = hashlib.sha256(text.encode("utf-8")).hexdigest()[:8]
         tag = "a" if approved_by else "p"
         problems = []

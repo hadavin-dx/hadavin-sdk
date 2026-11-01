@@ -510,6 +510,39 @@ def test_k6_csv_import_rules(w):
     assert w.measure.import_csv(text, "fake:u1") == (0, [])
 
 
+def test_k6_a_short_csv_row_is_a_refused_row_not_a_crash(w):
+    ok = w.run()
+    stored, problems = w.measure.import_csv(f"run_id,label\n{ok}\n,agree\n{ok},agree\n", "fake:u1")
+    assert stored == 0 and [p.split(":")[0] for p in problems] == ["row 1", "row 2"]
+    assert w.store.list_labels(ok) == []
+
+
+def test_k6_audit_events_carry_the_measure_clock(w):
+    rid = w.run()
+    w.label(rid, "wrong", when=day(7))
+    (ev,) = [e for e in w.audit.events() if e.operation == "label"]
+    assert ev.ts == day(7)  # the report's week of a caught_by count follows the injected clock
+
+
+def test_k6_a_receiver_on_the_approvals_takes_label_clicks_without_being_told(w):
+    rid = w.run()
+    approvals = Approvals(w.store, w.audit, w.reg, w.channel, lambda *a: None, lambda: w.box[0])
+    body = urlencode(
+        {
+            "payload": json.dumps(
+                {"user": {"id": "u1"}, "actions": [{"value": f"label|{rid}|agree"}]}
+            )
+        }
+    ).encode()
+    headers = hmac_v0.sign(body, int(NOW.timestamp()), SECRET, "X-Hadavin")
+    assert (
+        handle_slack_action(approvals, headers, body)[0] == 401
+    )  # no measure wired: not ours to take
+    approvals.measure = w.measure  # what app.build does
+    assert handle_slack_action(approvals, headers, body)[0] == 200
+    assert [x.label for x in w.store.list_labels(rid)] == ["agree"]
+
+
 def test_k6_csv_labels_can_still_demote(w):
     """A harmful csv label lowers the level at once, approved or not (the safe direction)."""
     rid = w.run()

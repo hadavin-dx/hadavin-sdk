@@ -350,7 +350,8 @@ def measure_cmd(app, args) -> int:
             print("(no stored report for this week: rendered now, not stored)", file=sys.stderr)
         print(stored if stored is not None else measure.render_report(week))
         return 0
-    text = Path(args.file).read_text(encoding="utf-8")
+    # NOSONAR S8707: the operator's own csv; a CLI argument is not attacker input
+    text = Path(args.file).read_text(encoding="utf-8")  # NOSONAR
     print(
         "note: --by and --approved-by are asserted names; the CLI cannot verify who ran it",
         file=sys.stderr,

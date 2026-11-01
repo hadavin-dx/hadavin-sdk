@@ -32,6 +32,9 @@ def handle_slack_action(
     could not take it (Slack then tells the person)."""
     if len(body) > MAX_BODY:
         return 413, b""
+    measure = (
+        measure or approvals.measure
+    )  # app.build sets it: a receiver on app.approvals is K6-enabled
     if measure is not None:
         action = approvals.channel.parse_action(headers, body, approvals.clock().timestamp())
         if action is not None and is_ours(action.value):

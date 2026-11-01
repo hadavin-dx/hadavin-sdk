@@ -113,6 +113,7 @@ def build(
     # used when baseline.yaml exists and the report is simply off when it does not.
     ceiling = load_baseline(cfg.root) if live or (cfg.root / BASELINE_FILE).is_file() else None
     measure = Measure(store, audit, reg, channel, ceiling=ceiling, clock=clock, limits=limits)
+    approvals.measure = measure  # the receiver on these approvals also takes label and clear clicks
 
     hooks = Hooks(
         request_approval=request_approval,

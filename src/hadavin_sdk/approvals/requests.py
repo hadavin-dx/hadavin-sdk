@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 from collections.abc import Callable, Mapping
 from datetime import datetime, timedelta
+from typing import TYPE_CHECKING
 
 from hadavin_sdk.approvals.channel import Channel, clean
 from hadavin_sdk.audit.protocol import AuditSink
@@ -20,6 +21,9 @@ from hadavin_sdk.models import (
 )
 from hadavin_sdk.registry import Registry
 from hadavin_sdk.store.protocol import StaleState, Store
+
+if TYPE_CHECKING:
+    from hadavin_sdk.measure import Measure
 
 OnDecided = Callable[[str, str, ApprovalDecision | None], object]
 _LOG = logging.getLogger("hadavin_sdk.approvals")
@@ -57,6 +61,8 @@ class Approvals:
     ) -> None:
         self.store, self.audit, self.registry, self.channel = store, audit, registry, channel
         self.on_decided, self.clock, self.detector = on_decided, clock, detector
+        # K6: set by app.build, so every receiver built on these approvals also takes label and clear clicks.
+        self.measure: Measure | None = None
 
     def receive(
         self, headers: Mapping[str, str], body: bytes, *, record_only: bool = False
