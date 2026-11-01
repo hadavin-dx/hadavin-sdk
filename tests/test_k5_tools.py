@@ -4,6 +4,7 @@ frozen red-team set. No network, no model, no spend: a scripted model and record
 from __future__ import annotations
 
 import json
+import sys
 import urllib.error
 from datetime import timedelta
 from decimal import Decimal
@@ -1190,7 +1191,7 @@ def test_k5_execute_stops_when_the_map_is_gone(tmp_path):
 # --- acceptance: a pilot config, a recorded bundle, manifest tools ---------------------------------------------------
 
 
-def test_k5_acceptance_pilot_agent_investigates_a_recorded_bundle(tmp_path):
+def test_k5_acceptance_pilot_agent_investigates_a_recorded_bundle(tmp_path, monkeypatch):
     """No ITO adapter needed: a synthetic agent in a `pilot` config reads recorded logs through manifest tools
     served by a test tool module; every call is in `tool_calls` and the audit, and the shadow card cites them."""
     from hadavin_sdk.audit import LocalDirSink
@@ -1201,6 +1202,9 @@ def test_k5_acceptance_pilot_agent_investigates_a_recorded_bundle(tmp_path):
     from tests.k5_support import ScriptLLM
     from tests.test_k3_pilot_env import pilot_cfg
 
+    monkeypatch.delitem(
+        sys.modules, "tests.fixtures.k5_tools", raising=False
+    )  # a pin loads its own bytes
     root = pilot_cfg(
         tmp_path,
         agent={"tools_allowed": ["read_logs"]},
@@ -1217,7 +1221,9 @@ def test_k5_acceptance_pilot_agent_investigates_a_recorded_bundle(tmp_path):
     reg = load_registry(cfg)
     assert cfg.environment == "pilot" and set(reg.tools["ito-agent"]) == {"read_logs"}
     qualify(reg, "ito-agent")
-    k5_tools.RESULTS["app"] = "2026-11-01T10:00:00Z ERROR checkout health check failing"
+    sys.modules["tests.fixtures.k5_tools"].RESULTS["app"] = (
+        "2026-11-01T10:00:00Z ERROR checkout health check failing"
+    )
     store = MemoryStore()
     audit = LocalDirSink(tmp_path / "audit")
     cards = []

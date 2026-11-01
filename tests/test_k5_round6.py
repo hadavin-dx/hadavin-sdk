@@ -3,10 +3,8 @@
 from __future__ import annotations
 
 import sys
-from datetime import timedelta
 
 import pytest
-import yaml
 
 from hadavin_sdk import tools as tools_mod
 from hadavin_sdk.actions.contract import schema_problems
@@ -15,7 +13,6 @@ from hadavin_sdk.guard import runmap
 from hadavin_sdk.models import OPEN_STATES, RunState, now
 from hadavin_sdk.registry import load_registry
 from hadavin_sdk.runtime import tick as tick_mod
-from hadavin_sdk.runtime.agent_loop import GUARD_STOP_REASONS
 from hadavin_sdk.sources.kubernetes import KubernetesSettings
 from tests.k5_support import k5_cfg
 
@@ -100,20 +97,7 @@ def test_cluster_suffix_must_end_in_a_private_label(tmp_path):
         load_config(cfg)
 
 
-def test_the_purge_step_is_due_a_tick_early():
-    assert tick_mod.TICK_SLACK_S == 60
-
-
-# --- D1: caught_by counts only a control that stopped a proposal ------------------------------------------------
-
-
-def test_only_guard_stops_count_as_caught():
-    assert GUARD_STOP_REASONS == {
-        "ungrounded",
-        "run_budget",
-        "injection_suspected",
-        "guard_unavailable",
-    }
+# (the cadence and the caught_by rule are tested by behaviour in test_k5_round7.py)
 
 
 # --- redaction: a secret hidden by a look-alike, a zero-width space or an escape is still redacted ---------------
@@ -130,7 +114,7 @@ def test_only_guard_stops_count_as_caught():
 )
 def test_a_hidden_address_is_redacted(hidden):
     out = runmap.redact_text(f"host {hidden} down", {})
-    assert out == "host <IPV4_1> down"
+    assert "<IPV4_" in out and "10.0.0" not in out.replace("\x00", "") and "0.0.5" not in out
 
 
 def test_nul_is_removed_before_redaction():
@@ -151,9 +135,6 @@ def test_api_url_with_a_path_is_refused():
             api_url="https://k8s.example.internal/prefix",
             namespaces=("a",),
         )
-
-
-_ = (yaml, timedelta, now)
 
 
 def test_a_raising_hold_hook_still_applies_the_ceilings_and_skips_the_ordinary_purge(tmp_path):

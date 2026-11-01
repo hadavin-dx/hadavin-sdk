@@ -243,6 +243,13 @@ def _load_tools(config: Config, agents: dict, contracts: dict) -> dict[str, dict
         if specs and read_ops is None:
             read_ops = read_operations(config.tool_modules, config.tool_module_hashes)
         found[agent_id] = {}
+        problems += [  # grounding checks declared inputs only, so a tooled agent's contracts must be closed
+            f"{where}: action {action} must set `additionalProperties: false` on its input_schema "
+            "(an agent with tools cannot have undeclared inputs)"
+            for action in agent.scope_allowed
+            if action in contracts
+            and (contracts[action].input_schema or {}).get("additionalProperties") is not False
+        ]
         for spec in specs:
             found[agent_id][spec.name] = spec
             problems += [

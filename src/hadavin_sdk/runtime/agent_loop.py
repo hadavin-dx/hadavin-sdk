@@ -80,7 +80,7 @@ _RANK = {"shadow": 0, "suggest": 1}
 # unavailable evidence store, a provider error or a step limit is a failure to produce a proposal, not a catch,
 # so it carries no caught_by (see "Limits and trust" in the README).
 GUARD_STOP_REASONS = frozenset(
-    {"ungrounded", "run_budget", "injection_suspected", "guard_unavailable"}
+    {"ungrounded", "uncited", "invalid_proposal", "run_budget", "injection_suspected"}
 )
 # What a person reads for a reason code that needs a sentence.
 _REASON_TEXT = {"ungrounded": "ungrounded (inputs not found in cited evidence)"}
@@ -335,13 +335,15 @@ class Runtime:
             return self._evidence_unavailable(run, cited, "map")
         try:
             safe_text = runmap.redact_untrusted(document.decode("utf-8", "replace"), rmap)
+            safe_doc = safe_text.encode(
+                "utf-8"
+            )  # inside the try: text that cannot encode is an abstention
         except Exception:  # noqa: BLE001 - whatever the redactor did, nothing goes to the model
             return self._redaction_failed(run, cited)
         try:
             self._save_map(run, rmap)  # before anything is sent: a crash now loses no placeholder
         except Exception:  # noqa: BLE001
             return self._evidence_unavailable(run, cited, "map")
-        safe_doc = safe_text.encode("utf-8")
         verdict = self._screen(run, safe_text, "document")
         if verdict.flagged:
             self._note(run, "guard", "injection", result="flagged", error_code=verdict.reason_code)

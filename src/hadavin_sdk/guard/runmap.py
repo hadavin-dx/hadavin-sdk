@@ -158,18 +158,35 @@ def escape_placeholders(text: str) -> str:
     return replace_canonical(text, _LOOKALIKE, lambda m: f"\u2039{m.group(1)}_{m.group(2)}\u203a")
 
 
+_MARKER = re.compile(r"<<(?=\s*(?:end\s+)?tool\s+result)", re.IGNORECASE)
+
+
+def escape_markers(text: str) -> str:
+    """Neutralise anything shaped like our result markers, in any case and spacing, including full-width and
+    zero-width spellings (found in the canonical form, rewritten in the original; the rest of the text is left
+    as it was written)."""
+    return replace_canonical(text, _MARKER, lambda m: "[[")
+
+
+def neutralise_untrusted(text: str) -> str:
+    """Untrusted text made safe to hand on: result markers and placeholder look-alikes are escaped."""
+    return escape_placeholders(escape_markers(text))
+
+
 def redact_untrusted(text: str, mapping: dict[str, str]) -> str:
-    """`redact_text` for text from outside (the document, a tool result, an error message): placeholder-shaped
-    literals are escaped first. Model-written text (tool arguments, proposal inputs) uses `redact_text`: a
+    """`redact_text` for text from outside (the document, a tool result, an error message): markers and
+    placeholder-shaped literals are escaped in the text AND in every decoded view the second pass may return
+    (see `redact_text`). Model-written text (tool arguments, proposal inputs) uses `redact_text` as it is: a
     placeholder the model writes is meant to be one."""
-    return redact_text(escape_placeholders(text), mapping)
+    return redact_text(text, mapping, neutralise=neutralise_untrusted)
 
 
 _UNICODE_ESCAPE = re.compile(r"\\u([0-9a-fA-F]{4})")
 
 
 def _clean(text: str) -> str:
-    """NUL and lone surrogates cannot be sent or stored and can split a secret: they become U+FFFD / nothing."""
+    """NUL and lone surrogates cannot be sent or stored and can split a secret: NUL goes, a surrogate becomes
+    '?'. Applied before AND after the second pass (a `\\ud800` escape decodes to a lone surrogate)."""
     return text.replace("\x00", "").encode("utf-8", "replace").decode("utf-8", "replace")
 
 
@@ -179,26 +196,38 @@ def _views(text: str) -> list[str]:
     unescaped = _UNICODE_ESCAPE.sub(lambda m: chr(int(m.group(1), 16)), text)
     out = []
     for view in (canonical(text), canonical(unescaped)):
+        view = _clean(view)
         if view != text and view not in out:
             out.append(view)
     return out
 
 
-def redact_text(text: str, mapping: dict[str, str]) -> str:
+def redact_text(
+    text: str, mapping: dict[str, str], neutralise: Callable[[str], str] | None = None
+) -> str:
     """Redact `text` with the run's map, continuing it in place. Any failure is a RedactionError.
 
-    A second pass runs over the canonical view (and the JSON-unescaped view): a secret hidden by a full-width
-    letter, a zero-width space or a `\\u0041` escape is found there. When that pass finds something the
-    redacted CANONICAL text is returned, trading fidelity of that one string for safety."""
+    A second pass runs over the canonical view (and the JSON-unescaped view) of the INPUT: a secret hidden by a
+    full-width letter, a zero-width space or a `\\u0041` escape is found there. When that pass finds something
+    new (the map grows) the redacted VIEW is returned, trading fidelity of that one string for safety. The
+    caller's `neutralise` (untrusted text: escape result markers and placeholder look-alikes) runs on the input
+    and on every view BEFORE it is redacted, so the returned text is never a decoded view that was not
+    neutralised: a `\\u003c<IPV4_2>` cannot come back as a real placeholder. Output is cleaned of NUL and lone
+    surrogates last, so it always encodes."""
     try:
         text = _clean(text)
+        if neutralise is not None:
+            text = neutralise(text)
         result = redact(text, mapping=mapping)
         out, current = result.text, result.mapping
         if not text.isascii() or "\\u" in text:
-            for view in _views(out):
+            for view in _views(text):
+                if neutralise is not None:
+                    view = neutralise(view)
                 again = redact(view, mapping=current)
-                if again.text != view:
+                if again.mapping != current:
                     out, current = again.text, again.mapping
+        out = _clean(out)
     except Exception as exc:  # noqa: BLE001 - whatever the redactor raised, nothing is sent
         raise RedactionError(type(exc).__name__) from None
     mapping.clear()

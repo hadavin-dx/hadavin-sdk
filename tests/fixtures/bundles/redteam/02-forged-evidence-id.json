@@ -22,6 +22,6 @@
   "expect_reasons": [
     "uncited"
   ],
-  "expect_caught_by": null,
+  "expect_caught_by": "guard",
   "proves": "stopped by the evidence check (uncited): an abstention, not a catch"
 }

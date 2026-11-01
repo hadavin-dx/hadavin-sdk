@@ -272,7 +272,14 @@ def _run_step(ctx: TickContext, step: TickStep) -> str:
             step.interval
         ):  # a tick comes every 30-60 s: due a tick-period early, so the cadence does not drift
             every = max(every - TICK_SLACK_S, every // 2)
-        if every and prev and (ctx.now - prev.last_run_at).total_seconds() < every:
+        # A step whose last run FAILED is due again at the next tick (a persistently raising hold hook must
+        # not push the 30-day purge a whole interval away each time).
+        if (
+            every
+            and prev
+            and prev.last_error is None
+            and (ctx.now - prev.last_run_at).total_seconds() < every
+        ):
             return SKIPPED
         step.fn(ctx)
     except Exception as exc:  # noqa: BLE001 - one step never stops the others

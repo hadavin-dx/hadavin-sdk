@@ -125,6 +125,10 @@ def make_validator(store: Store) -> Validator:
     ) -> Checked:
         inputs = dict(call.input)
         evidence = inputs.pop("evidence", None)
+        declared = (contract.input_schema or {}).get("properties") or {}
+        if agent.tools_allowed and any(k not in declared for k in inputs):
+            # grounding looks only at declared inputs: an undeclared key would ride into the plan unchecked
+            return Checked(ToolCall(name=call.name, input={}), [], "invalid_proposal")
         # A raw value the model typed (an address, a name) is redacted before it can reach a plan, a card or an
         # executor; a placeholder it wrote is left as it is.
         inputs = runmap.redact_value(inputs, mapping)

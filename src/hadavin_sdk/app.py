@@ -227,6 +227,10 @@ def _build_source(name: str, sc, cfg: Config, secrets: SecretProvider) -> Source
     settings = kind.settings(**sc.settings)
     parts = urlsplit(kind.endpoint(settings))
     plain = parts.scheme == "http"
+    if why := tools_mod.forbidden_host((parts.hostname or "").lower()):
+        raise ConfigError(
+            f"source {name}: host {parts.hostname!r} is {why}"
+        )  # as a tool manifest host
     spec = tools_mod.ToolSpec(
         name="source_" + re.sub(r"[^a-z0-9]", "_", name.lower())[:30],
         function="source:read",
@@ -262,13 +266,19 @@ def _build_source(name: str, sc, cfg: Config, secrets: SecretProvider) -> Source
     return kind.build(settings, fetch)
 
 
+def _source_host(sc) -> str:
+    kind = KINDS[sc.kind]
+    return (urlsplit(kind.endpoint(kind.settings(**sc.settings))).hostname or "").lower()
+
+
 def _unprobed_tools(cfg: Config, reg: Registry) -> list[str]:
     """Design 6.6 for tools: a tool that holds a credential, or reads a configured kind of source (an operation
     with that kind's prefix), needs a probe or an operator-attested inventory entry. It is covered by
 
     * a scope_inventory entry `tool:<name>` (operator-attested, format-checked, not verified), or
     * a probed source it is explicitly mapped to (`options.source`) AND whose credential it uses: the tool's own
-      `secret_names` must be nothing but that source's token secret, because a probe vouches for one credential.
+      `secret_names` must be nothing but that source's token secret (a probe vouches for one credential), and
+      the source's host must be one of the tool's `hosts` (a probe vouches for one endpoint).
 
     A tool that merely shares a host with a probed source is NOT covered: it may hold a different credential."""
     out = []
@@ -284,6 +294,7 @@ def _unprobed_tools(cfg: Config, reg: Registry) -> list[str]:
                 source is not None
                 and source.token_secret_name
                 and set(t.secret_names) <= {source.token_secret_name}
+                and _source_host(source) in t.hosts
             ):
                 continue
             out.append(

@@ -13,6 +13,7 @@ Neutral protocol: HTTP/1.1 over the standard library.
 
 from __future__ import annotations
 
+import ast
 import base64
 import hashlib
 import importlib
@@ -186,7 +187,8 @@ def _module_files(module: str) -> list[tuple[str, Path]]:
     for entry in sys.path:
         root = Path(entry or ".")
         leaf = root.joinpath(*parts)
-        own = leaf.with_suffix(".py") if leaf.with_suffix(".py").is_file() else leaf / "__init__.py"
+        # Python prefers a package directory to a module file of the same name
+        own = leaf / "__init__.py" if (leaf / "__init__.py").is_file() else leaf.with_suffix(".py")
         if not own.is_file():
             continue
         files = []
@@ -205,6 +207,24 @@ def _pin_digest(files: list[tuple[str, bytes]]) -> str:
     return h.hexdigest()
 
 
+def _reach_problems(module: str, files: list[tuple[str, Path, bytes]]) -> list[str]:
+    """What the pin cannot cover, refused instead of left open: a parent package whose `__init__.py` holds code
+    (the pinned module is executed from its hashed bytes, but a parent package would be imported from disk) and
+    a relative import in the module (it would load a sibling from disk, unhashed)."""
+    out = []
+    for name, _, data in files[:-1]:
+        body = ast.parse(data).body
+        if any(not (isinstance(n, ast.Expr) and isinstance(n.value, ast.Constant)) for n in body):
+            out.append(
+                f"tool module {module}: package {name} has code in __init__.py, outside the pin"
+            )
+    if any(
+        isinstance(n, ast.ImportFrom) and n.level > 0 for n in ast.walk(ast.parse(files[-1][2]))
+    ):
+        out.append(f"tool module {module}: a relative import loads a file the pin does not cover")
+    return out
+
+
 def module_sha256(module: str) -> str:
     """The pin of a tool module: SHA-256 over its own file and its parent packages' `__init__.py` files (line
     endings folded to LF), computed WITHOUT importing any of them. It does not cover what the module imports,
@@ -215,8 +235,11 @@ def module_sha256(module: str) -> str:
 def load_tool_module(module: str, pins: Mapping[str, str] | None = None) -> types.ModuleType:
     """Import a tool module. With a pin the module is NOT imported by name: its files are read once, hashed, and
     the very bytes that were hashed are what runs, so a file swapped between the check and the import cannot run.
-    A module already loaded must still hash to its pin. Without a pin (dev only; pilot and prod require one) it is
-    an ordinary import."""
+    The digest is stored on the module (`__hadavin_pin__`); a module already in `sys.modules` is reused only if it
+    carries the same digest, otherwise (imported by name, or from older bytes) it is refused. What the pin does
+    NOT cover is refused where it can be seen (parent `__init__.py` with code, relative imports) and stated where
+    it cannot: absolute imports of other project modules, data files and the standard library are outside it.
+    Without a pin (dev only; pilot and prod require one) it is an ordinary import."""
     pin = (pins or {}).get(module)
     try:
         if pin is None:
@@ -227,13 +250,21 @@ def load_tool_module(module: str, pins: Mapping[str, str] | None = None) -> type
             raise ConfigError(
                 f"tool module {module}: its source hash is {digest[:12]}..., the pin says {pin[:12]}..."
             )
-        if (
-            module in sys.modules
-        ):  # the loaded code is the file that was just hashed or it is refused
-            return sys.modules[module]
+        if problems := _reach_problems(module, files):
+            raise ConfigError("; ".join(problems))
+        if module in sys.modules:
+            if getattr(sys.modules[module], "__hadavin_pin__", None) == digest:
+                return sys.modules[module]
+            raise ConfigError(
+                f"tool module {module} is already loaded from other bytes than the pinned ones; "
+                "restart the process"
+            )
         _, path, source = files[-1]
         mod = types.ModuleType(module)
         mod.__file__, mod.__package__ = str(path), module.rpartition(".")[0]
+        mod.__hadavin_pin__ = digest
+        if path.name == "__init__.py":  # a pinned package
+            mod.__package__, mod.__path__ = module, [str(path.parent)]
         sys.modules[module] = mod
         try:
             exec(compile(source, str(path), "exec"), mod.__dict__)  # noqa: S102  # nosec B102 - the pinned bytes
@@ -475,14 +506,9 @@ class ToolOutput:
     duration_ms: int
 
 
-_MARKER = re.compile(r"<<(?=\s*(?:end\s+)?tool\s+result)", re.IGNORECASE)
-
-
-def escape_markers(text: str) -> str:
-    """Neutralise anything shaped like our result markers, in any case and spacing, including full-width and
-    zero-width spellings (found in the canonical form, rewritten in the original; the rest of the text is left
-    as it was written)."""
-    return runmap.replace_canonical(text, _MARKER, lambda m: "[[")
+escape_markers = (
+    runmap.escape_markers
+)  # one definition, in guard/runmap.py, shared with the second pass
 
 
 def truncate(text: str, limit: int) -> str:
@@ -568,7 +594,7 @@ def prepare_output(
                 elif not raw.isascii() and form in (canon := runmap.canonical(raw)):
                     # the secret hides behind invisible or compatibility characters: use the folded text
                     raw = canon.replace(form, "<SECRET_REDACTED>")
-    return truncate(runmap.redact_untrusted(escape_markers(raw), mapping), max_bytes)
+    return truncate(runmap.redact_untrusted(raw, mapping), max_bytes)
 
 
 def error_reason(exc: BaseException) -> str:

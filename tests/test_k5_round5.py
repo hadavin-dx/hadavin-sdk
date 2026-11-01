@@ -108,7 +108,10 @@ def test_b1_purge_evidence_is_due_again_through_the_real_tick(tmp_path):
 # --- M1 / readiness 1: configured sources are probed in production wiring, through the CLI too -------------------------
 
 
-def test_m1_a_configured_source_is_probed_by_build(tmp_path, kube):
+def test_m1_a_configured_source_is_probed_by_build(tmp_path, kube, monkeypatch):
+    monkeypatch.setattr(
+        tools_mod, "forbidden_host", lambda h: None
+    )  # the fake cluster is on localhost
     cfg = _source_cfg(tmp_path, kube)
     qualify(load_registry(load_config(cfg)))
     app = app_mod.build(cfg, ["test-agent"], secrets=SECRETS_PLUS, llm=ScriptLLM([]))
@@ -120,7 +123,10 @@ def test_m1_a_configured_source_is_probed_by_build(tmp_path, kube):
     )  # from the secrets kind
 
 
-def test_m1_a_write_capable_service_account_stops_start_up(tmp_path):
+def test_m1_a_write_capable_service_account_stops_start_up(tmp_path, monkeypatch):
+    monkeypatch.setattr(
+        tools_mod, "forbidden_host", lambda h: None
+    )  # the fake cluster is on localhost
     server = FakeKube(tmp_path, rules=[{"verbs": ["get", "patch"], "resources": ["deployments"]}])
     try:
         cfg = _source_cfg(tmp_path, server)
@@ -132,6 +138,9 @@ def test_m1_a_write_capable_service_account_stops_start_up(tmp_path):
 
 
 def test_m1_the_cli_tick_path_refuses_a_write_capable_source(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(
+        tools_mod, "forbidden_host", lambda h: None
+    )  # the fake cluster is on localhost
     """`hadavin-sdk tick` calls build(None, agents) with no sources argument: the configured source is still
     probed, and a failing probe means exit 2 (config error), not a running process."""
     server = FakeKube(tmp_path, rules=[{"verbs": ["create"], "resources": ["pods/exec"]}])
@@ -151,6 +160,9 @@ def test_m1_the_cli_tick_path_refuses_a_write_capable_source(tmp_path, monkeypat
 
 
 def test_m1_the_cli_tick_path_runs_with_a_read_only_source(tmp_path, monkeypatch):
+    monkeypatch.setattr(
+        tools_mod, "forbidden_host", lambda h: None
+    )  # the fake cluster is on localhost
     server = FakeKube(tmp_path)
     try:
         cfg = _source_cfg(tmp_path, server)
@@ -249,13 +261,18 @@ def test_m3_nul_bytes_are_replaced_so_the_store_can_keep_the_row():
 # --- M4 / M5: abstention, and a store fault is not a redaction fault ---------------------------------------------------------
 
 
-def test_m4_redaction_error_is_an_abstention_not_a_catch():
-    from hadavin_sdk.runtime import agent_loop
+def test_m4_redaction_error_is_an_abstention_not_a_catch(tmp_path, monkeypatch):
+    """Driven end to end: a failing redactor abstains with a card and the audit event carries no caught_by."""
 
-    # Round 6 (D1): K6 counts every non-null caught_by, so only a control that stopped a proposal sets one.
-    for reason in ("redaction_error", "tool_error", "evidence_unavailable"):
-        assert reason not in agent_loop.GUARD_STOP_REASONS
-    assert {"ungrounded", "injection_suspected"} <= agent_loop.GUARD_STOP_REASONS
+    def broken(text, mapping=None, **kw):
+        raise RuntimeError("redactor down")
+
+    rt, _cards = build_runtime(k5_cfg(tmp_path), ScriptLLM([{"noaction": True}]))
+    monkeypatch.setattr(runmap, "redact", broken)
+    run = handle(rt)
+    assert (run.state, run.reason_code) == (RunState.NEEDS_PERSON, "redaction_error")
+    events = [e for e in rt.audit.events(run.run_id) if e.domain == "card"]
+    assert events and all(e.caught_by is None for e in events)
 
 
 def test_m5_a_store_fault_on_the_map_is_evidence_unavailable_not_redaction_error(tmp_path):
@@ -873,7 +890,10 @@ def test_m1_design_tool_modules_must_be_pinned_in_pilot_and_prod(tmp_path):
         load_registry(load_config(root))
 
 
-def test_m1_design_a_pin_that_does_not_match_the_source_is_refused(tmp_path):
+def test_m1_design_a_pin_that_does_not_match_the_source_is_refused(tmp_path, monkeypatch):
+    monkeypatch.delitem(
+        sys.modules, "tests.fixtures.k5_tools", raising=False
+    )  # a pin loads its own bytes
     cfg = k5_cfg(tmp_path, config={"tool_module_hashes": {"tests.fixtures.k5_tools": "0" * 64}})
     with pytest.raises(ConfigError, match="the pin says"):
         load_registry(load_config(cfg))
