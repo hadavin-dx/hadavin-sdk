@@ -46,7 +46,9 @@ def _sql_columns() -> dict[str, set[str]]:
     out: dict[str, set[str]] = {}
     for path in sorted(MIGRATIONS.glob("*.sql")):
         text = path.read_text(encoding="utf-8")
-        for table, body in re.findall(r"CREATE TABLE (\w+) \((.*?)\n\);", text, re.DOTALL):
+        for table, body in re.findall(
+            r"CREATE TABLE (?:IF NOT EXISTS )?(\w+) \((.*?)\n\);", text, re.DOTALL
+        ):
             cols = re.findall(r'^\s+"?(\w+)"?\s+[A-Z]', body, re.MULTILINE)
             out[table] = {c for c in cols if c != "PRIMARY"}
         for table, col in re.findall(
@@ -60,6 +62,10 @@ def test_schema_has_one_column_per_model_field():
     cols = _sql_columns()
     for table, model in TABLES.items():
         assert cols[table] == set(model.model_fields) | EXTRA_COLUMNS.get(table, set()), table
+
+
+def test_audit_checkpoints_columns_after_every_migration():
+    assert _sql_columns()["audit_checkpoints"] == {"seq", "hash", "signature", "alg", "key_label"}
 
 
 def test_iam_auth_needs_region():

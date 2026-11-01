@@ -31,14 +31,14 @@
   - Anchors and checkpoint rows carry a non-secret `key_label` (new optional `key_label` setting on every
     signer kind; default `pk:` plus a fingerprint of the public key), never the configured `key_id`. An alias and
     an ARN of one key give one label and no account id reaches the anchor bucket. **Anchor bodies written by
-    the previous build hold `key_id`; the offline verifier reads it as the label.** A custom anchor kind must
+    the previous build hold `key_id`; the offline verifier accepts them but never compares or prints it (it can be an ARN).** A custom anchor kind must
     now accept `alg` and `key_label` keywords (one taking `alg`/`key_id` is treated as a legacy 3-argument anchor
     and warns).
   - `verify_anchor_bodies(bodies, public_key, names=None, assume_alg=None)`: `names` binds each object name to
     the seq inside it; `assume_alg` verifies pre-`alg` anchors by signature (a wrong guess fails every
     signature). The immutable objects are not rewritten.
   - **Upgrade step: run `hadavin-sdk migrate`** (0004 adds `alg` and `key_label` to `audit_checkpoints`; old rows
-    get `ed25519` and an empty label). A runtime started before migrating refuses with the "run migrate" hint.
+    are NULL, meaning "not recorded": verify then uses the configured signer's scheme). A runtime started before migrating refuses with the "run migrate" hint.
   - Lock-in guard: the literal scan now also covers bytes constants, constant `+` joins and f-strings (it found
     `".meta" + ".json"` written to dodge it; that suffix is now a plain literal and the model-id pattern
     matches `meta.llama` only); every `neutral` kind must show no vendor SDK import (S3 anchor excepted, with

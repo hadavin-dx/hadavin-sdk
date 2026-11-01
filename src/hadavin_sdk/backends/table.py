@@ -7,13 +7,14 @@ imports no other Hadavin module (``config`` imports it).
 
 from __future__ import annotations
 
+import re
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal
 from urllib.parse import urlsplit
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 class KindSettings(BaseModel):
@@ -195,6 +196,13 @@ class _SignerSettings(KindSettings):
     or anything holding an account id, because the anchor bucket is readable by auditors."""
 
     key_label: str | None = Field(default=None, pattern=r"^[A-Za-z0-9._:-]{1,64}$")
+
+    @field_validator("key_label")
+    @classmethod
+    def _no_account_id(cls, value: str | None) -> str | None:
+        if value is not None and re.search(r"\d{12}", value):
+            raise ValueError("key_label may not hold a 12-digit number (an account id)")
+        return value
 
 
 class Ed25519LocalSettings(_SignerSettings):

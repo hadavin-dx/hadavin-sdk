@@ -51,7 +51,7 @@ CREATE TABLE audit_entries (seq INTEGER PRIMARY KEY, at TEXT NOT NULL, run_id TE
     kind TEXT NOT NULL, body TEXT NOT NULL, prev TEXT NOT NULL, hash TEXT NOT NULL,
     event_id TEXT NOT NULL UNIQUE);
 CREATE TABLE audit_checkpoints (seq INTEGER PRIMARY KEY, hash TEXT NOT NULL, signature TEXT NOT NULL,
-    alg TEXT NOT NULL DEFAULT 'ed25519', key_label TEXT NOT NULL DEFAULT '');
+    alg TEXT, key_label TEXT);
 CREATE TABLE audit_outbox (event_id TEXT PRIMARY KEY, body TEXT NOT NULL);
 CREATE INDEX audit_entries_by_run ON audit_entries (run_id, seq);
 """ + "".join(
@@ -344,9 +344,11 @@ class ChainAudit:
         raises: damage or an unreachable store is a finding."""
         try:
             rows = self._db.run(_ALL_ROWS)
-            checkpoints = self._db.run(
-                "SELECT seq, hash, signature FROM audit_checkpoints ORDER BY seq"
+            stored = self._db.run(
+                "SELECT seq, hash, signature, alg FROM audit_checkpoints ORDER BY seq"
             )
+            checkpoints = [row[:3] for row in stored]
+            row_algs = {row[0]: row[3] for row in stored if row[3]}
             public = self.signer.public_key() if self.signer is not None else None
             anchors = self.anchor.all() if self.anchor is not None else None
         except Exception as exc:  # noqa: BLE001
@@ -355,7 +357,7 @@ class ChainAudit:
                 problems=[f"the audit cannot be read ({type(exc).__name__})"], unreadable=True
             )
         alg = self.signer.alg if self.signer is not None else "ed25519"
-        return verify_rows(rows, checkpoints, public, anchors, alg)
+        return verify_rows(rows, checkpoints, public, anchors, alg, row_algs)
 
 
 def verify_rows(
@@ -364,16 +366,18 @@ def verify_rows(
     public_key: bytes | None,
     anchors: dict[int, tuple[str, str]] | None = None,
     alg: Alg = "ed25519",
+    row_algs: dict[int, str] | None = None,
 ) -> Verification:
     """Rows and checkpoints as read from the tables, in seq order. With `anchors`, every checkpoint must also
-    match the copy written out of reach when it was made."""
+    match the copy written out of reach when it was made. `row_algs` is the scheme each checkpoint row recorded
+    (seq -> alg); a row without one (written before 0004, or by an older runtime) is checked with `alg`."""
     result = Verification(rows=len(rows))
     hashes = _check_chain(rows, result.problems)
     if public_key is None:
         if checkpoints:
             result.problems.append("checkpoints exist but no signer is configured to check them")
     else:
-        _check_checkpoints(checkpoints, hashes, public_key, result, alg)
+        _check_checkpoints(checkpoints, hashes, public_key, result, alg, row_algs or {})
     if anchors is not None:
         _check_anchors(checkpoints, anchors, result.problems)
     return result
@@ -412,13 +416,19 @@ def _check_checkpoints(
     public_key: bytes,
     result: Verification,
     alg: Alg = "ed25519",
+    row_algs: dict[int, str] | None = None,
 ) -> None:
     for seq, head, signature in checkpoints:
         try:
             raw = bytes.fromhex(signature)
         except ValueError:
             raw = b""
-        if not verify_signature(public_key, raw, _signed_message(seq, head), alg):
+        if not verify_signature(
+            public_key,
+            raw,
+            _signed_message(seq, head),
+            (row_algs or {}).get(seq, alg),  # type: ignore[arg-type]
+        ):
             result.problems.append(f"checkpoint {seq} has an invalid signature")
             continue
         if hashes.get(seq) != head:
@@ -447,10 +457,12 @@ def verify_anchor_bodies(
     assume_alg: Alg | None = None,
 ) -> list[str]:
     """Offline: check the anchor objects alone against a public key. The scheme and key label come from each
-    body (`alg`, `key_label`; an older body names the label `key_id`), so nothing else has to be known.
+    body (`alg`, `key_label`), so nothing else has to be known. A body from the previous build holds `key_id`
+    (possibly an ARN): it is accepted but never compared or printed, so an upgraded chain with old and new
+    anchors is not a finding and no account id reaches the report.
 
-    `names` (the object names, same order as `bodies`): each must be `anchors.key(seq)` for the body's own
-    seq, so an object copied under another name is a finding.
+    `names` (the object names exactly as listed, e.g. `anchors/000000000002.json`, same order as `bodies`): each
+    must be `anchors.key(seq)` for the body's own seq, so an object copied under another name is a finding.
 
     Legacy anchors (written before `alg` existed) cannot say how they were signed. Upgrade path, no rewrite of
     the immutable objects: pass `assume_alg` (the scheme of the key that was configured then). The signature
@@ -468,14 +480,16 @@ def verify_anchor_bodies(
             a = json.loads(raw)
             seq, head = a["seq"], a["hash"]
             alg = a.get("alg") or assume_alg
-            label = a.get("key_label", a.get("key_id"))
+            label = a.get("key_label")
             if type(seq) is not int or seq < 1 or alg is None:
                 raise TypeError("seq or alg")
             if label is not None:
                 if not isinstance(label, str) or not label:
                     raise TypeError("label")
                 labels.add(label)
-            elif "alg" in a:  # a current body always names its key
+            elif (
+                "alg" in a and "key_id" not in a
+            ):  # a current body names its key; a legacy one has `key_id`
                 raise TypeError("label")
             signature = bytes.fromhex(a["signature"])
         except (ValueError, KeyError, TypeError, AttributeError):
@@ -484,7 +498,7 @@ def verify_anchor_bodies(
                 "(a pre-alg anchor: pass assume_alg)"
             )
             continue
-        if names is not None and names[i].rsplit("/", 1)[-1] != anchors.key(seq).rsplit("/", 1)[-1]:
+        if names is not None and names[i] != anchors.key(seq):
             problems.append(f"anchor object {names[i]!r} holds seq {seq}: the name does not match")
         if seq in seqs:
             problems.append(f"anchor {seq} appears twice")
@@ -492,7 +506,9 @@ def verify_anchor_bodies(
         if not verify_signature(public_key, signature, _signed_message(seq, head), alg):
             problems.append(f"anchor {seq} has an invalid signature")
     if len(labels) > 1:
-        problems.append(f"anchors report {len(labels)} different key labels: {sorted(labels)}")
+        problems.append(
+            f"anchors report {len(labels)} different key labels: {sorted(labels)} (a relabelled or rotated key)"
+        )
     return problems
 
 

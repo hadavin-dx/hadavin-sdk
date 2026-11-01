@@ -545,6 +545,9 @@ def test_offline_verify_binds_seq_to_the_object_name():
 
     signer, anchor, _ = _anchored_chain()
     names = [anchors.key(json.loads(b)["seq"]) for b in anchor.bodies]
+    elsewhere = ["evil/" + n.rsplit("/", 1)[-1] for n in names]
+    moved = chain.verify_anchor_bodies(anchor.bodies, signer.public_key(), names=elsewhere)
+    assert len(moved) == 2 and all("does not match" in p for p in moved)
     assert chain.verify_anchor_bodies(anchor.bodies, signer.public_key(), names=names) == []
     swapped = chain.verify_anchor_bodies(anchor.bodies, signer.public_key(), names=names[::-1])
     assert len(swapped) == 2 and all("does not match" in p for p in swapped)
@@ -583,3 +586,71 @@ def test_checkpoint_rows_carry_alg_and_key_label_and_old_rows_still_verify():
     rows = db.run("SELECT seq, alg, key_label FROM audit_checkpoints")
     assert rows == [(2, "ed25519", chain.signer_label(signer))]
     assert log.verify().problems == []
+
+
+def test_old_and_new_anchors_for_one_key_are_not_a_finding_and_no_arn_is_printed():
+    from hadavin_sdk.audit import anchors
+
+    signer, anchor, _ = _anchored_chain()
+    new = [json.loads(b) for b in anchor.bodies]
+    arn = "arn:aws:kms:eu-west-1:123456789012:key/abc"
+    old = [
+        json.dumps({**d, "seq": d["seq"] + 100, "key_id": arn} | {"key_label": None}).encode()
+        for d in new
+    ]
+    old = [
+        json.dumps({k: v for k, v in json.loads(o).items() if k != "key_label"}).encode()
+        for o in old
+    ]
+    problems = chain.verify_anchor_bodies(anchor.bodies + old, signer.public_key())
+    # the re-numbered old bodies fail their signature, but never over labels, and the ARN is never printed
+    assert not any("key labels" in p for p in problems)
+    assert not any("123456789012" in p for p in problems)
+    assert chain.verify_anchor_bodies(anchor.bodies, signer.public_key()) == []
+    assert anchors.key(1)
+
+
+def test_verify_checks_each_checkpoint_with_the_alg_it_recorded():
+    from hadavin_sdk.audit.signer import verify_signature  # noqa: F401
+
+    signer = LocalSigner(Ed25519PrivateKey.generate())
+    db = chain._Db.memory()
+    log = chain.ChainAudit(db, signer, None, 2)
+    for i in range(2):
+        log.write_intent(
+            AuditEvent(run_id="r", domain="step", operation=f"n{i}", principal="p", source="s")
+        )
+    rows = db.run(
+        "SELECT seq, at, run_id, kind, body, prev, hash, event_id FROM audit_entries ORDER BY seq"
+    )
+    cps = [tuple(r) for r in db.run("SELECT seq, hash, signature FROM audit_checkpoints")]
+    # the configured scheme is now ecdsa-p256, but the row says ed25519: it still verifies
+    ok = chain.verify_rows(rows, cps, signer.public_key(), None, "ecdsa-p256", {2: "ed25519"})
+    assert ok.problems == []
+    bad = chain.verify_rows(rows, cps, signer.public_key(), None, "ecdsa-p256")
+    assert any("invalid signature" in p for p in bad.problems)
+
+
+def test_a_key_label_holding_an_account_id_is_refused():
+    from pydantic import ValidationError
+
+    from hadavin_sdk.backends.table import AwsKmsSettings
+
+    for bad in ("aws-123456789012", "123456789012"):
+        with pytest.raises(ValidationError):
+            AwsKmsSettings(kind="aws_kms", key_id="alias/x", region="r", key_label=bad)
+    AwsKmsSettings(kind="aws_kms", key_id="alias/x", region="r", key_label="audit-2026")
+
+
+def test_a_real_kms_signer_with_an_arn_key_id_still_gets_a_label_without_it():
+    from hadavin_sdk.audit.signer_aws import KmsSigner
+
+    class Stub:
+        def get_public_key(self, KeyId):
+            return {"PublicKey": b""}
+
+    s = KmsSigner("arn:aws:kms:eu-west-1:123456789012:key/abc", Stub())
+    s.public_key = lambda: b"" * 32  # type: ignore[method-assign]
+    s.alg = "ed25519"
+    label = chain.signer_label(s)
+    assert label.startswith("pk:") and "123456789012" not in label

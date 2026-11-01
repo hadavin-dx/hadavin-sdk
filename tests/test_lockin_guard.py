@@ -561,8 +561,9 @@ def _fold(node: ast.AST) -> str | None:
             return node.value.decode("latin-1")
         return None
     if isinstance(node, ast.BinOp) and isinstance(node.op, ast.Add):
+        # A non-constant side becomes `{}`, like an f-string, so `'arn:aws:s3:::' + bucket` is still scanned.
         left, right = _fold(node.left), _fold(node.right)
-        return None if left is None or right is None else left + right
+        return (left if left is not None else "{}") + (right if right is not None else "{}")
     if isinstance(node, ast.JoinedStr):
         return "".join(
             v.value if isinstance(v, ast.Constant) and isinstance(v.value, str) else "{}"
