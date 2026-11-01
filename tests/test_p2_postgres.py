@@ -252,7 +252,7 @@ def test_cas_race_across_two_connections_has_one_winner(migrated_dsn):
 
 
 def test_audit_checkpoints_migration_adds_alg_and_label_and_old_rows_get_defaults(fresh_dsn):
-    """Apply 0001-0003 only, insert a pre-upgrade checkpoint row, then migrate: the row loads with defaults."""
+    """Apply 0001-0003 only, insert a pre-upgrade checkpoint row, then migrate: the row loads with NULL (not recorded)."""
     import psycopg
 
     old = [p for p in sorted(MIGRATIONS.glob("*.sql")) if p.stem < "0004"]
@@ -268,7 +268,7 @@ def test_audit_checkpoints_migration_adds_alg_and_label_and_old_rows_get_default
     assert migrate(fresh_dsn) == ["0004_audit_checkpoint_meta"]
     with psycopg.connect(fresh_dsn, autocommit=True) as db:
         assert db.execute("SELECT seq, alg, key_label FROM audit_checkpoints").fetchall() == [
-            (1, "ed25519", "")
+            (1, None, None)
         ]
         db.execute(
             "INSERT INTO audit_checkpoints (seq, hash, signature) VALUES (2, 'h', 's')"
