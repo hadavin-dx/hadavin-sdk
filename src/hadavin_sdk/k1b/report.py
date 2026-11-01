@@ -33,6 +33,16 @@ def usd(value: Decimal) -> str:
     return format(value, "f")
 
 
+def _issue_lines(per_run: Any) -> list[str]:
+    """ "Which cases" lines (ids only, never answers) so an operator can open the case files."""
+    out: list[str] = []
+    for index, issues in per_run:
+        parts = [f"{k} {', '.join(v)}" for k, v in issues.items() if v]
+        if parts:
+            out.append(f"- Run {index}: " + "; ".join(parts))
+    return ["", "Cases to inspect (case ids):", "", *out] if out else []
+
+
 def render_replay_report(runs: list[dict[str, Any]], result: str) -> str:
     capped = sum(r["counts"]["capped"] for r in runs)
     lines = ["# Replay report", "", DISCLAIMER, "", f"Replay ended: {result}.", ""]
@@ -50,6 +60,7 @@ def render_replay_report(runs: list[dict[str, Any]], result: str) -> str:
             f"| {r['run_index']} | {c['ok']} | {c['unreadable']} | {c['error']} | {c['timeout']} | "
             f"{c['capped']} | {c['uncited_conversions']} | {c['hard_check_a']} |"
         )
+    lines += _issue_lines((r["run_index"], r.get("issue_cases") or {}) for r in runs)
     first = runs[0]
     lines += [
         "",
@@ -118,6 +129,9 @@ def render_score_report(r: ScoreResult) -> str:
             f"{s.unreadable}/{s.error}/{s.timeout}/{s.capped} | {s.uncited} | {s.hard_check_a} |"
         )
     out += ["", "Unreadable, error, timeout and capped incidents are counted inside Misses.", ""]
+    inspect = _issue_lines((s.run_index, s.issues) for s in r.runs)
+    if inspect:
+        out += [*inspect[1:], ""]
     out += ["## Worst per row", "", *_worst(r.runs), ""]
     out += [
         "## Same incidents right in every run (pass^k)",

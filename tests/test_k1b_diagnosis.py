@@ -14,6 +14,7 @@ GOOD = [
     {"causes": [C], "not_sure": False},
     {"causes": [C], "reason": "why"},
     {"causes": [], "not_sure": True},
+    {"not_sure": True},  # causes omitted: a valid abstain
     {"causes": [C, C, C, C, C]},  # more than 3 is valid
 ]
 BAD = [
@@ -27,7 +28,11 @@ BAD = [
     {"causes": [{**C, "evidence_ids": []}]},  # empty ids
     {"causes": [{**C, "evidence_ids": [3]}]},
     {"causes": [{"service": "x", "fault_type": "y"}]},  # no ids
-    {"not_sure": True},  # causes missing
+    {"not_sure": False},  # causes missing without not_sure true
+    {"reason": "no cause"},  # neither form
+    {"not_sure": "true"},  # causes missing, wrong type
+    {"not_sure": True, "extra": 1},  # omitted causes keep every other strictness
+    {"not_sure": True, "causes": None},
     {"causes": "none", "not_sure": True},
     {"causes": [C], "reason": 5},
 ]
@@ -145,3 +150,42 @@ def test_cause_list_deep_nesting_and_surrogate(tmp_path):
     (tmp_path / "services.json").write_text('["' + chr(92) + 'ud800"]', encoding="utf-8")
     with pytest.raises(ConfigError):
         load_cause_list(tmp_path)
+
+
+# The real Sonnet 5.5 smoke run (2026-11-01): a no_evidence incident got this reply text (synthetic wording, same
+# shape): a bare JSON object with not_sure and a reason, no `causes` key. It was a correct abstain.
+REAL_SHAPE = (
+    '{"not_sure": true, "reason": "The snapshot does not show a cause. The gateway looks healthy and the '
+    'logs name no dependency. A downstream service may be the cause, but the snapshot has nothing on it."}'
+)
+
+
+def test_real_omitted_causes_abstain_parses_as_not_sure_from_text_and_tool_input():
+    d = parse_diagnosis_text(REAL_SHAPE)
+    assert d is not None and d.not_sure and d.causes == [] and d.reason.startswith("The snapshot")
+    assert parse_diagnosis(json.loads(REAL_SHAPE)) == d
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "```json\n" + REAL_SHAPE + "\n```",  # fenced
+        "Here is my answer: " + REAL_SHAPE,  # surrounded text
+        '{"not_sure": true, "not_sure": true}',  # duplicate key
+        '{"not_sure": true, "reason": NaN}',
+        '{"not_sure": true, "reason": 5}',
+        '{"not_sure": 1}',
+    ],
+)
+def test_omitted_causes_keeps_every_other_strictness(text):
+    assert parse_diagnosis_text(text) is None
+
+
+def test_schema_and_prompt_tell_the_model_causes_may_be_left_out():
+    from hadavin_sdk.k1b import loop
+    from hadavin_sdk.k1b.diagnosis import DIAGNOSIS_SCHEMA
+    from hadavin_sdk.k1b.tools import SUBMIT, TOOL_SPECS
+
+    assert "required" not in DIAGNOSIS_SCHEMA
+    spec = next(t for t in TOOL_SPECS if t["name"] == SUBMIT)
+    assert "no causes" in spec["description"] and "causes may be left out" in loop.SYSTEM_PROMPT

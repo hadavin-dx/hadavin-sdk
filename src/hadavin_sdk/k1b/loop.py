@@ -30,7 +30,7 @@ SYSTEM_PROMPT = (
     "You are diagnosing one past incident from a frozen snapshot. Use only what the tools return; cite evidence "
     "ids exactly as the tools return them. If the evidence does not support a cause, say you are not sure "
     "instead of guessing. When done, call submit_diagnosis once: either causes (service, fault_type, "
-    "evidence_ids, best first) or not_sure true with no causes."
+    "evidence_ids, best first) or not_sure true (with a short reason; causes may be left out)."
 )
 RAW_LIMIT = 2000
 
@@ -60,6 +60,9 @@ class CaseOutcome:
     hard_check_a: list[str] = field(default_factory=list)
     injection_flagged: int = 0
     tool_calls: int = 0
+    via: str | None = (
+        None  # how the answer arrived: "tool" (submit_diagnosis) or "text" (reply text)
+    )
     halt: str | None = (
         None  # "capped" (USD cap reached) or "aborted" (non-transient provider error): stop the run
     )
@@ -176,12 +179,14 @@ def run_case(
             out.status, out.stop_reason = "error", reply.stop_reason
             return out
         if not reply.tool_calls:
+            out.via = "text"
             out.diagnosis = parse_diagnosis_text(reply.text)
             if out.diagnosis is None:
                 out.raw = reply.text[:RAW_LIMIT]
             return out
         for call in reply.tool_calls:
             if call.name == SUBMIT:
+                out.via = "tool"
                 out.diagnosis = parse_diagnosis(call.input)
                 if out.diagnosis is None:
                     out.raw = _dumps(call.input)[:RAW_LIMIT]
