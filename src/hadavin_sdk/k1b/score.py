@@ -289,6 +289,10 @@ def score(out: Path, answers_path: Path, cause_dir: Path, bundles_dir: Path) -> 
         }
         if any(counts[k] != v for k, v in recomputed.items()):
             raise ConfigError(f"run{i}/run.json counts disagree with the incident files")
+        if (
+            "issue_cases" in meta and meta["issue_cases"] != issues
+        ):  # absent in runs made before it existed
+            raise ConfigError(f"run{i}/run.json issue_cases disagree with the incident files")
         scores.append(_run_score(i, classes, answers, tally, counts["hard_check_a"], issues))
 
     for key in (

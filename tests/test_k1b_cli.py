@@ -268,4 +268,13 @@ def test_score_and_replay_reports_name_the_cases_to_inspect(cfg_dir, export):
     for text in (replay_report, score_report):
         assert "Cases to inspect (case ids):" in text
         assert "unreadable case-002" in text and "uncited case-003" in text
-        assert "ghost" not in text
+        assert "bad_deploy" not in text and "oom" not in text
+
+
+def test_score_refuses_a_run_json_whose_issue_cases_disagree_with_the_files(cfg_dir, export):
+    assert _replay(cfg_dir, export) == 0
+    path = export["out"] / "run1" / "run.json"
+    meta = json.loads(path.read_text(encoding="utf-8"))
+    meta["issue_cases"]["unreadable"] = []
+    path.write_text(json.dumps(meta), encoding="utf-8")
+    assert _score(cfg_dir, export) == 2
