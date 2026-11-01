@@ -94,7 +94,7 @@ def pilot_cfg(
     )
     # K6: the pilot tooling refuses to start without a filled ceiling.
     (root / "baseline.yaml").write_text(
-        "ceiling:\n  metric: harmful labels per quarter\n  max: 0\n  window_days: 90\n"
+        "ceiling:\n  metric: harmful labels per quarter\n  counts: [harmful]\n  max: 0\n  window_days: 90\n"
         "  source: sponsor email, 2026-11-01\n",
         encoding="utf-8",
     )

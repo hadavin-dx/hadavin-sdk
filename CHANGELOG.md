@@ -30,7 +30,13 @@
     (no UPDATE exists on `labels`).
   - A `harmful` label is sticky: only a person holding `clear_override` can lower it (audited). Demotions are keyed by
     the label row, so a harmful label after a clear demotes again.
-  - The ceiling counts `harmful` labels in a rolling window over all labels (retired agents too); `max` is a whole number.
+  - **`baseline.yaml` `ceiling` now has five required fields and no defaults: `metric`, `counts`, `max`,
+    `window_days`, `source`.** `counts` lists the label classes that count against the ceiling (for example
+    `[harmful]` or `[harmful, wrong]`) and must include `harmful`; `pilot` and `prod` refuse to start without them,
+    pointing at `scoping.md` `## Success metric and ceiling`. The K0 templates carry the same fields. The ceiling
+    count runs over all labels in the rolling window (retired agents too); `max` is a whole number.
+  - Removed `Store.add_label` (it skipped the sticky rule): `add_labels` is the only way in. `Store` gains
+    `clear_demotion` (compare-and-set) and a unique index keeps one demotion row per reason.
   - **`pilot` and `prod` need at least one person principal with `admin_rights: [clear_override]`**; `build` refuses
     without one. Admin rights only apply to `kind: person` principals.
   - The promotion file's SHA-256 is unkeyed: the loader also needs the replay record it names to be green in

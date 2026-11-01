@@ -125,17 +125,16 @@ class Store(Protocol):
     def save_tick_state(self, state: TickState) -> None: ...
 
     # --- K6 measurement: labels, demotions, reports ---------------------------------------------------------
-    def add_label(self, label: Label, demote: LevelEvent | None = None) -> None:
-        """Append a label and, in the same transaction, the demotion it triggers. A duplicate `label_id` raises
-        StaleState; any other failure raises and changes nothing (the caller refuses the label)."""
-        ...
-
     def add_labels(
         self, items: list[tuple[Label, LevelEvent | None]], *, may_lower_harmful: bool
     ) -> None:
         """Every (label, demotion) in ONE transaction, with the sticky-harmful rule checked inside it and serialised
         per run: unless `may_lower_harmful`, a non-harmful label on a run whose latest eligible label is harmful
-        raises HarmfulSticky. A duplicate `label_id` raises StaleState. Either way nothing is stored."""
+        raises HarmfulSticky. A duplicate `label_id` raises StaleState. Either way nothing is stored. This is the
+        ONLY way a label enters the store. A label's `created_at` is moved to just after the run's newest existing
+        label when it is not later than it, so commit order and time order agree (a clock read before the lock
+        cannot put a later commit earlier). A demotion that already exists (same agent, action and reason) is
+        not inserted twice."""
         ...
 
     def claim_action(self, nonce: str, at: datetime) -> bool:
@@ -162,7 +161,15 @@ class Store(Protocol):
         """Every label stored by one csv import (ids `csv-<import_id>-<row>-p|a`), oldest first."""
         ...
 
-    def add_level_event(self, event: LevelEvent) -> None: ...
+    def add_level_event(self, event: LevelEvent) -> None:
+        """Append a demotion (idempotent per agent, action and reason). A `clear` goes through `clear_demotion`."""
+        ...
+
+    def clear_demotion(self, event: LevelEvent, expected_seq: int) -> bool:
+        """Append a `clear` only if the newest level event of that (agent, action) still has seq `expected_seq`:
+        a compare-and-set. False when something (a new demotion) landed since the caller looked, and nothing is
+        written; the caller must look again."""
+        ...
 
     def list_level_events(self) -> list[LevelEvent]:
         """Every demotion and clear, in seq order."""

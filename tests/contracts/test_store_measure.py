@@ -1,3 +1,4 @@
+# ruff: noqa: S311, B023  - seeded test randomness; threads are joined inside the loop that defines them
 """K6 store suite: the same fixture through every store kind must give the same weekly numbers (the memory store
 counts in Python, postgres reads the views), plus labels, level events, reports and the tick detail column."""
 
@@ -61,6 +62,11 @@ def make_run(store, rid, created, state, reason=None, *, plan_after=None, cost="
         )
 
 
+def put(store, lab, demote=None):
+    """Store one label (a line owner's rights: the sticky rule is the Measure tests' business)."""
+    store.add_labels([(lab, demote)], may_lower_harmful=True)
+
+
 def label(rid, name, when, *, channel="chat", approved_by=None, principal="user:a", lid=None):
     kw = {"label_id": lid} if lid else {}
     return Label(
@@ -89,14 +95,14 @@ def load_fixture(store):
     make_run(store, "r6", at(27, 2), S.NEEDS_PERSON, "redaction_error")
     make_run(store, "r7", at(27, 3), S.NEEDS_PERSON, "uncited")
     make_run(store, "r8", at(28), S.SUCCEEDED, plan_after=30, cost="0.40")
-    store.add_label(label("r1", "agree", at(26, 1)))
-    store.add_label(label("r1", "wrong", at(26, 2)))  # the latest label of a run is its label
-    store.add_label(label("r2", "harmful", at(28)))
-    store.add_label(label("r3", "agree", at(2, 1, month=11)))
-    store.add_label(label("r4", "abstain_ok", at(28)))
-    store.add_label(label("r5", "missed", at(28)))
-    store.add_label(label("r8", "agree", at(28), channel="csv"))  # csv, never approved: not counted
-    store.add_label(label("r7", "missed", at(28), channel="csv", approved_by="user:owner"))
+    put(store, label("r1", "agree", at(26, 1)))
+    put(store, label("r1", "wrong", at(26, 2)))  # the latest label of a run is its label
+    put(store, label("r2", "harmful", at(28)))
+    put(store, label("r3", "agree", at(2, 1, month=11)))
+    put(store, label("r4", "abstain_ok", at(28)))
+    put(store, label("r5", "missed", at(28)))
+    put(store, label("r8", "agree", at(28), channel="csv"))  # csv, never approved: not counted
+    put(store, label("r7", "missed", at(28), channel="csv", approved_by="user:owner"))
 
 
 def approval(store, aid, created, decided, decision):
@@ -175,10 +181,10 @@ def test_k6_approval_week(store):
 def test_k6_labels_are_appended_once_and_listed(store):
     make_run(store, "r1", at(26), S.NO_ACTION, "shadow", plan_after=1)
     make_run(store, "r9", at(26), S.NO_ACTION, "shadow", plan_after=1, action="other")
-    store.add_label(label("r1", "agree", at(26, 1), lid="l1"))
+    put(store, label("r1", "agree", at(26, 1), lid="l1"))
     with pytest.raises(StaleState):
-        store.add_label(label("r1", "wrong", at(26, 2), lid="l1"))
-    store.add_label(label("r9", "wrong", at(26, 3)))
+        put(store, label("r1", "wrong", at(26, 2), lid="l1"))
+    put(store, label("r9", "wrong", at(26, 3)))
     assert [x.label for x in store.list_labels("r1")] == ["agree"]
     assert [x.run_id for x in store.list_labels_for("agent", "fix", None)] == ["r1"]
     assert store.list_labels_for("agent", "fix", at(26, 2)) == []  # since filters on the label time
@@ -194,11 +200,13 @@ def test_k6_label_and_demotion_are_one_transaction(store):
     demote = LevelEvent(
         agent_id="agent", action_id="fix", kind="demote", reason="harmful:r1", by="u", at=at(26, 1)
     )
-    store.add_label(label("r1", "harmful", at(26, 1), lid="l1"), demote)
+    put(store, label("r1", "harmful", at(26, 1), lid="l1"), demote)
     assert store.current_overrides() == {("agent", "fix"): "shadow"}
     with pytest.raises(StaleState):
-        store.add_label(
-            label("r1", "harmful", at(26, 2), lid="l1"), demote.model_copy(update={"reason": "dup"})
+        put(
+            store,
+            label("r1", "harmful", at(26, 2), lid="l1"),
+            demote.model_copy(update={"reason": "dup"}),
         )
     assert [e.reason for e in store.list_level_events()] == ["harmful:r1"]
 
@@ -223,8 +231,8 @@ def test_k6_held_run_ids(store):
     for rid in ("a", "b", "c", "d"):
         make_run(store, rid, at(26), S.NO_ACTION, "shadow", plan_after=1)
     for rid, name in (("a", "wrong"), ("b", "harmful"), ("c", "agree"), ("d", "partial")):
-        store.add_label(label(rid, name, at(26, 1)))
-    store.add_label(label("e", "missed", at(26, 1)))  # a missed run has no plan
+        put(store, label(rid, name, at(26, 1)))
+    put(store, label("e", "missed", at(26, 1)))  # a missed run has no plan
     assert store.held_run_ids() == {"a", "b", "e"}
 
 
@@ -287,7 +295,174 @@ def test_k6_claim_action_accepts_a_nonce_once(store):
 def test_k6_csv_import_lookup_is_exact(store):
     make_run(store, "a", at(26), S.NO_ACTION, "shadow", plan_after=1)
     full = "a1" * 32
-    store.add_label(label("a", "agree", at(26, 1), channel="csv", lid=f"csv-{full}-1-p"))
+    put(store, label("a", "agree", at(26, 1), channel="csv", lid=f"csv-{full}-1-p"))
     assert [x.label_id for x in store.list_csv_import(full)] == [f"csv-{full}-1-p"]
     assert store.list_csv_import(full[:8]) == []
     assert store.list_csv_import("b2" * 32) == []
+
+
+# --- class sweeps: the same rule must hold for every sequence and every interleaving ----------------------------
+
+
+def _oracle_refuses(accepted, lab, may):
+    """The rule, written once and plainly: a non-harmful label is refused when the run's latest ELIGIBLE label is
+    harmful and the author may not lower it."""
+    from hadavin_sdk.models import latest_labels
+
+    cur = latest_labels([x for x in accepted if x.run_id == lab.run_id]).get(lab.run_id)
+    return lab.label != "harmful" and not may and cur is not None and cur.label == "harmful"
+
+
+@pytest.mark.parametrize("seed", [1, 2, 3, 4, 5])
+def test_k6_property_store_sticky_rule_matches_the_oracle_on_random_sequences(store, seed):
+    """Random label sequences (any class, chat or csv, approved or not, owner or not): the store accepts and refuses
+    exactly what the oracle says, in both store kinds. The stored rows come back in time order, one latest each."""
+    import random
+
+    from hadavin_sdk.models import latest_labels
+    from hadavin_sdk.store.protocol import HarmfulSticky
+
+    rnd = random.Random(seed)
+    names = ["agree", "partial", "wrong", "harmful"]
+    accepted = []
+    for i in range(120):
+        rid = f"p{rnd.randrange(3)}"
+        channel = rnd.choice(["chat", "chat", "csv"])
+        lab = label(
+            rid,
+            rnd.choice(names),
+            at(1, month=11) + timedelta(seconds=i),
+            channel=channel,
+            approved_by="user:o" if channel == "csv" and rnd.random() < 0.5 else None,
+            lid=f"s{seed}-{i}",
+        )
+        may = rnd.random() < 0.2
+        want_refused = _oracle_refuses(accepted, lab, may)
+        try:
+            store.add_labels([(lab, None)], may_lower_harmful=may)
+            assert not want_refused, (i, lab.label, rid)
+            accepted.append(lab)
+        except HarmfulSticky:
+            assert want_refused, (i, lab.label, rid)
+    for rid in {x.run_id for x in accepted}:
+        stored = store.list_labels(rid)
+        assert [x.label_id for x in stored] == [x.label_id for x in accepted if x.run_id == rid]
+        want = latest_labels([x for x in accepted if x.run_id == rid]).get(rid)
+        assert latest_labels(stored).get(rid) == want
+
+
+def test_k6_commit_order_is_time_order_for_a_run(store):
+    """A label whose clock was read before a later commit is moved just after it: a later commit never sorts earlier."""
+    from hadavin_sdk.models import latest_labels
+
+    put(store, label("r", "agree", at(1, 12), lid="first"))
+    put(
+        store, label("r", "harmful", at(1, 11), lid="second")
+    )  # read its clock earlier, committed later
+    stored = store.list_labels("r")
+    assert [x.label_id for x in stored] == ["first", "second"]
+    assert latest_labels(stored)["r"].label == "harmful"  # a non-owner cannot now lower it
+    from hadavin_sdk.store.protocol import HarmfulSticky
+
+    with pytest.raises(HarmfulSticky):
+        store.add_labels(
+            [(label("r", "agree", at(1, 10), lid="third"), None)], may_lower_harmful=False
+        )
+
+
+def test_k6_threads_claim_one_nonce_exactly_once(store):
+    import threading
+
+    results = []
+    start = threading.Barrier(16)
+
+    def go():
+        start.wait()
+        results.append(store.claim_action("1:v0=race", at(26)))
+
+    threads = [threading.Thread(target=go) for _ in range(16)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    assert sorted(results) == [False] * 15 + [True]
+
+
+def test_k6_a_demotion_is_recorded_once_per_reason_even_from_many_threads(store):
+    import threading
+
+    ev = LevelEvent(
+        agent_id="a", action_id="x", kind="demote", reason="ceiling:t1", by="s", at=at(26)
+    )
+    start = threading.Barrier(8)
+
+    def go():
+        start.wait()
+        store.add_level_event(ev)
+
+    threads = [threading.Thread(target=go) for _ in range(8)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    assert [e.reason for e in store.list_level_events()] == ["ceiling:t1"]
+    # a different reason is a different fact; a clear then the same reason again is still refused (cleared episode)
+    store.add_level_event(ev.model_copy(update={"reason": "ceiling:t2"}))
+    assert len(store.list_level_events()) == 2
+
+
+def test_k6_clear_demotion_is_a_compare_and_set(store):
+    def demote(reason):
+        return LevelEvent(
+            agent_id="a", action_id="x", kind="demote", reason=reason, by="s", at=at(26)
+        )
+
+    clear = LevelEvent(agent_id="a", action_id="x", kind="clear", reason="owner", by="o", at=at(26))
+    store.add_level_event(demote("one"))
+    (seen,) = store.list_level_events()
+    store.add_level_event(demote("two"))  # lands after the caller looked
+    assert store.clear_demotion(clear, seen.seq) is False
+    assert store.current_overrides() == {
+        ("a", "x"): "shadow"
+    }  # the new demotion was not cleared unseen
+    newest = store.list_level_events()[-1].seq
+    assert store.clear_demotion(clear, newest) is True
+    assert store.current_overrides() == {}
+    assert store.clear_demotion(clear, newest) is False  # the log moved on (our own clear)
+
+
+def test_k6_a_clear_racing_new_demotions_never_loses_one(store):
+    """Whatever the interleaving, a demotion added while a clear is being decided is still in force after both."""
+    import threading
+
+    for i in range(25):
+        agent = f"agent{i}"
+        base = LevelEvent(
+            agent_id=agent, action_id="x", kind="demote", reason="old", by="s", at=at(26)
+        )
+        store.add_level_event(base)
+        seen = store.list_level_events()[-1]
+        new = base.model_copy(update={"reason": "new"})
+        clear = LevelEvent(
+            agent_id=agent, action_id="x", kind="clear", reason="o", by="o", at=at(26)
+        )
+        start = threading.Barrier(2)
+
+        def do_clear():
+            start.wait()
+            store.clear_demotion(clear, seen.seq)
+
+        def do_demote():
+            start.wait()
+            store.add_level_event(new)
+
+        a, b = threading.Thread(target=do_clear), threading.Thread(target=do_demote)
+        a.start()
+        b.start()
+        a.join()
+        b.join()
+        events = [e for e in store.list_level_events() if e.agent_id == agent]
+        newest_demote = max(e.seq for e in events if e.reason == "new")
+        cleared_after = [e for e in events if e.kind == "clear" and e.seq > newest_demote]
+        assert not cleared_after, i  # no clear may sit after the new demotion it never saw
+        assert (agent, "x") in store.current_overrides(), i

@@ -23,6 +23,9 @@ CREATE TABLE level_events (
     at        TIMESTAMPTZ NOT NULL
 );
 CREATE INDEX level_events_by_action ON level_events (agent_id, action_id, seq);
+-- A demotion is recorded once per reason: two ticks (or a tick and a click) that both decide to demote insert one row.
+CREATE UNIQUE INDEX level_events_one_demote_per_reason ON level_events (agent_id, action_id, reason)
+    WHERE kind = 'demote';
 
 -- One row per signed channel click the measurement acted on (the request's timestamp and signature): a captured
 -- request replayed inside the signature window finds its row and is refused. Append-only.

@@ -148,17 +148,27 @@ class Ceiling:
     max: int
     window_days: int
     source: str
+    # The label classes that count against the ceiling. `load_baseline` requires it in baseline.yaml (no default:
+    # what counts as the costliest failure is the sponsor's written choice) and always includes `harmful`. The
+    # default here is only for code that builds a Ceiling by hand.
+    counts: tuple[str, ...] = ("harmful",)
 
 
 @dataclass(frozen=True)
 class CeilingStatus:
     ceiling: Ceiling
-    harmful: int  # X: runs whose label is harmful, labelled inside the window
-    labelled: int  # Y: runs labelled inside the window (proposal labels)
+    harmful: int  # X: runs whose latest label is in `ceiling.counts`, labelled inside the window
+    labelled: int  # Y: runs labelled inside the window
     breached: bool
     latest_harmful_at: (
         datetime | None
     )  # the newest harmful label while breached: one breach episode per label
+
+
+_CEILING_HELP = (
+    "Copy metric, counts, max, window_days and source from scoping.md `## Success metric and ceiling` "
+    "(the sponsor sets them in writing; nothing here has a default)."
+)
 
 
 def load_baseline(root: Path) -> Ceiling:
@@ -174,23 +184,45 @@ def load_baseline(root: Path) -> Ceiling:
         raise ConfigError(f"{BASELINE_FILE}: cannot be read ({type(exc).__name__})") from None
     raw = data.get("ceiling") if isinstance(data, dict) else None
     if not isinstance(raw, dict):
-        raise ConfigError(
-            f"{BASELINE_FILE}: `ceiling` is required (metric, max, window_days, source)"
-        )
-    for key in ("metric", "max", "source"):
+        raise ConfigError(f"{BASELINE_FILE}: `ceiling` is required. {_CEILING_HELP}")
+    for key in ("metric", "max", "window_days", "source"):
         value = "" if raw.get(key) is None else str(raw[key]).strip()
         if not value or _PLACEHOLDER.search(value):
-            raise ConfigError(f"{BASELINE_FILE}: ceiling.{key} is empty or still a <placeholder>")
+            raise ConfigError(
+                f"{BASELINE_FILE}: ceiling.{key} is missing, empty or still a <placeholder>. {_CEILING_HELP}"
+            )
+    counts = raw.get("counts")
+    if not isinstance(counts, list) or not counts or not all(isinstance(c, str) for c in counts):
+        raise ConfigError(
+            f"{BASELINE_FILE}: ceiling.counts is required (a list of label classes, for example "
+            f"[harmful]); there is no default. {_CEILING_HELP}"
+        )
+    unknown = sorted(set(counts) - set(LABELS))
+    if unknown:
+        raise ConfigError(
+            f"{BASELINE_FILE}: ceiling.counts names unknown labels: {', '.join(unknown)}"
+        )
+    if "harmful" not in counts:
+        raise ConfigError(
+            f"{BASELINE_FILE}: ceiling.counts must include harmful: a harmful verdict always counts "
+            "against the ceiling and config cannot take it out"
+        )
     try:
         ceil_max = int(str(raw["max"]).strip())
-        window = int(str(raw.get("window_days", 90)).strip())
+        window = int(str(raw["window_days"]).strip())
     except ValueError:
         raise ConfigError(
             f"{BASELINE_FILE}: ceiling.max and ceiling.window_days must be whole numbers"
         ) from None
     if ceil_max < 0 or window < 1:
         raise ConfigError(f"{BASELINE_FILE}: ceiling.max must be >= 0 and window_days >= 1")
-    return Ceiling(str(raw["metric"]).strip(), ceil_max, window, str(raw["source"]).strip())
+    return Ceiling(
+        str(raw["metric"]).strip(),
+        ceil_max,
+        window,
+        str(raw["source"]).strip(),
+        tuple(dict.fromkeys(counts)),
+    )
 
 
 # --- numbers -----------------------------------------------------------------------------------------------
@@ -759,17 +791,12 @@ class Measure:
             return 503, "store_unavailable"
         return 200, which
 
-    def _clear_blocked(self, agent_id: str, action_id: str) -> str | None:
+    def _clear_blocked(self, agent_id: str, action_id: str, last: LevelEvent) -> str | None:
         """Why a demotion may not be lifted now, or None. A demotion by the ceiling stays while the ceiling is
         breached (the breach notice says every action is shadow, and that must stay true). An action whose config
         level is ``suggest`` also needs the section 6.1 numbers to hold again, derived from the store now."""
         status = self.ceiling_status()
         breached = bool(status and status.breached)
-        last = [
-            e
-            for e in self.store.list_level_events()
-            if (e.agent_id, e.action_id) == (agent_id, action_id) and e.kind == "demote"
-        ][-1]
         if breached and last.reason.startswith("ceiling:"):
             return "ceiling_breached"
         agent = self.registry.agents.get(agent_id)
@@ -791,25 +818,36 @@ class Measure:
         if not self._admin(principal_id, "clear_override", "clear"):
             return 200, "not_authorised"
         try:
-            if (agent_id, action_id) not in self.store.current_overrides():
+            # Look, decide, then write only if nothing changed since we looked (compare-and-set on the newest
+            # level event): a demotion that lands between the check and the write must not be cleared unseen.
+            events = [
+                e
+                for e in self.store.list_level_events()
+                if (e.agent_id, e.action_id) == (agent_id, action_id)
+            ]
+            if not events or events[-1].kind != "demote":
                 return 200, "not_demoted"
-            why = self._clear_blocked(agent_id, action_id)
+            why = self._clear_blocked(agent_id, action_id, events[-1])
             if why:
                 self._audit(
                     "-", "clear", principal_id, object_ref=f"{agent_id}.{action_id}",
                     result="refused", error_code=why,
                 )  # fmt: skip
                 return 200, why
-            self.store.add_level_event(
-                LevelEvent(
-                    agent_id=agent_id,
-                    action_id=action_id,
-                    kind="clear",
-                    reason="line_owner_clear",
-                    by=principal_id,
-                    at=self.clock(),
-                )
+            lifted = LevelEvent(
+                agent_id=agent_id,
+                action_id=action_id,
+                kind="clear",
+                reason="line_owner_clear",
+                by=principal_id,
+                at=self.clock(),
             )
+            if not self.store.clear_demotion(lifted, events[-1].seq or 0):
+                self._audit(
+                    "-", "clear", principal_id, object_ref=f"{agent_id}.{action_id}",
+                    result="refused", error_code="changed_meanwhile",
+                )  # fmt: skip
+                return 200, "changed_meanwhile"
         except Exception as exc:  # noqa: BLE001
             _LOG.error("clear refused: store error %s", type(exc).__name__)
             return 503, "store_unavailable"
@@ -907,12 +945,11 @@ class Measure:
         # Every label in the window, whatever agent or action it was for: a retired agent or a dropped action
         # does not make its harmful labels disappear from the ceiling.
         labels = self.store.list_labels_between(since, at + timedelta(seconds=1))
-        mine = [
-            x
-            for x in latest_labels(labels).values()
-            if x.label in PROPOSAL_LABELS and x.created_at >= since
-        ]
-        harmful = sorted((x for x in mine if x.label == "harmful"), key=lambda x: x.created_at)
+        # The latest eligible label of each run; the classes in `ceiling.counts` count against the ceiling.
+        mine = [x for x in latest_labels(labels).values() if x.created_at >= since]
+        harmful = sorted(
+            (x for x in mine if x.label in self.ceiling.counts), key=lambda x: x.created_at
+        )
         breached = len(harmful) > self.ceiling.max
         return CeilingStatus(
             self.ceiling,
@@ -958,7 +995,7 @@ class Measure:
             c = breach_notice
             self._notify(
                 f"Ceiling breached: {c.harmful} of {c.labelled} labelled in the last "
-                f"{c.ceiling.window_days} days is harmful (max {c.ceiling.max}). Every action is shadow. "
+                f"{c.ceiling.window_days} days counts against it ({', '.join(c.ceiling.counts)}; max {c.ceiling.max}). Every action is shadow. "
                 "Promotion is blocked until the window clears or the sponsor changes the ceiling in writing."
             )
         return added
@@ -1211,8 +1248,10 @@ class Measure:
             out += [
                 (
                     f"- ceiling: {status.harmful} of {status.labelled} in the last {c.window_days} days, "
-                    f"breached {'yes' if status.breached else 'no'} (max {c.max}; metric: {c.metric})."
+                    f"breached {'yes' if status.breached else 'no'} (max {c.max}; counting: "
+                    f"{', '.join(c.counts)}; metric: {c.metric})."
                 ),
+                f"- counted by the ceiling this week: {pw.count_of(c.counts)} ({', '.join(c.counts)}).",
                 *(
                     [
                         "- Promotion is blocked until the window clears or the sponsor changes max in writing."

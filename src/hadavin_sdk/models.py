@@ -247,6 +247,9 @@ class LevelEvent(BaseModel):
     at: datetime = Field(default_factory=now)
 
 
+_LABEL_COLUMNS = ("agree", "partial", "wrong", "harmful", "abstain_ok", "missed")
+
+
 def iso_week(moment: datetime) -> date:
     """The Monday (UTC) of the ISO week the instant falls in: what `date_trunc('week', ... AT TIME ZONE 'UTC')` gives."""
     day = moment.astimezone(UTC).date()
@@ -281,6 +284,10 @@ class PilotWeek(BaseModel):
     fixes_verified: int = 0
     median_s_to_proposal: float | None = None
     avg_cost_usd: Decimal | None = None
+
+    def count_of(self, classes: tuple[str, ...] | list[str]) -> int:
+        """Runs of the week whose label is one of `classes` (the view has one column per label class)."""
+        return sum(getattr(self, c) for c in classes if c in _LABEL_COLUMNS)
 
 
 class ApprovalWeek(BaseModel):

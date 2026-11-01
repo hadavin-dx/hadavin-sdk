@@ -5,7 +5,7 @@ from __future__ import annotations
 import statistics
 import threading
 from collections import defaultdict
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 
 from hadavin_sdk.models import (
@@ -244,13 +244,15 @@ class MemoryStore:
 
     # --- K6 measurement ------------------------------------------------------------------------------------
 
-    def add_label(self, label: Label, demote: LevelEvent | None = None) -> None:
-        with self._lock:
-            if any(x.label_id == label.label_id for x in self._labels):
-                raise StaleState(f"label exists: {label.label_id}")
-            self._labels.append(label.model_copy(deep=True))
-            if demote is not None:
-                self._levels.append(demote.model_copy(update={"seq": len(self._levels) + 1}))
+    def _push_level(self, ev: LevelEvent) -> None:
+        """Caller holds the lock. A demotion that already exists (agent, action, reason) is not added twice."""
+        if ev.kind == "demote" and any(
+            (e.agent_id, e.action_id, e.reason, e.kind)
+            == (ev.agent_id, ev.action_id, ev.reason, "demote")
+            for e in self._levels
+        ):
+            return
+        self._levels.append(ev.model_copy(update={"seq": len(self._levels) + 1}))
 
     def add_labels(
         self, items: list[tuple[Label, LevelEvent | None]], *, may_lower_harmful: bool
@@ -262,19 +264,36 @@ class MemoryStore:
             for label, demote in items:
                 if label.label_id in ids:
                     raise StaleState(f"label exists: {label.label_id}")
+                mine = [x for x in staged if x.run_id == label.run_id]
                 if label.label != "harmful" and not may_lower_harmful:
-                    cur = latest_labels([x for x in staged if x.run_id == label.run_id]).get(
-                        label.run_id
-                    )
+                    cur = latest_labels(mine).get(label.run_id)
                     if cur is not None and cur.label == "harmful":
                         raise HarmfulSticky(label.run_id)
+                newest = max((x.created_at for x in mine), default=None)
+                if newest is not None and label.created_at <= newest:
+                    # commit order is time order: a clock read before the lock must not sort a later commit earlier
+                    label = label.model_copy(
+                        update={"created_at": newest + timedelta(microseconds=1)}
+                    )
                 staged.append(label.model_copy(deep=True))
                 ids.add(label.label_id)
                 if demote is not None:
                     levels.append(demote)
             self._labels = staged
             for demote in levels:
-                self._levels.append(demote.model_copy(update={"seq": len(self._levels) + 1}))
+                self._push_level(demote)
+
+    def clear_demotion(self, event: LevelEvent, expected_seq: int) -> bool:
+        with self._lock:
+            mine = [
+                e.seq or 0
+                for e in self._levels
+                if (e.agent_id, e.action_id) == (event.agent_id, event.action_id)
+            ]
+            if max(mine, default=0) != expected_seq:
+                return False
+            self._push_level(event)
+            return True
 
     def claim_action(self, nonce: str, at: datetime) -> bool:
         with self._lock:
@@ -328,7 +347,7 @@ class MemoryStore:
 
     def add_level_event(self, event: LevelEvent) -> None:
         with self._lock:
-            self._levels.append(event.model_copy(update={"seq": len(self._levels) + 1}))
+            self._push_level(event)
 
     def current_overrides(self) -> dict[tuple[str, str], str]:
         with self._lock:

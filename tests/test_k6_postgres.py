@@ -1,3 +1,4 @@
+# ruff: noqa: S311, B023  - seeded test randomness; threads are joined inside the loop that defines them
 """K6 on a real postgres: the caught_by view equals the python count, and the label -> demotion -> report path
 works through the runtime role's grants only. Skipped without HADAVIN_TEST_PG_DSN (CI runs the postgres service)."""
 
@@ -90,6 +91,148 @@ def test_k6_label_demotion_and_report_on_postgres(pg_world):
     assert "- human_label: 1" in body and "- Runs: 4" in body
     # The ceiling breach demotes every action once, and a second pass adds nothing.
     assert w.measure.enforce(NOW) and w.measure.enforce(NOW) == []
+
+
+@pytest.fixture
+def two_connections():
+    """Two stores on two database connections: the in-process lock does not order them, only the database does."""
+    for dsn in pg_schema(runtime=True):
+        settings = PostgresSettings(kind="postgres", dsn_secret_name="pg-dsn")  # noqa: S106 - a name
+        a = make("store", settings, FakeSecretProvider({"pg-dsn": dsn}))
+        b = make("store", settings, FakeSecretProvider({"pg-dsn": dsn}))
+        yield a, b
+        a._db.close()
+        b._db.close()
+
+
+def _lab(rid, name, who, i):
+    from hadavin_sdk.models import Label, now
+
+    return Label(
+        run_id=rid,
+        label=name,
+        principal_id=who,
+        channel="chat",
+        created_at=now(),
+        label_id=f"t{i}-{who}",
+    )
+
+
+def test_k6_two_connections_never_let_a_non_owner_lower_a_harmful_verdict(two_connections):
+    """Threads on two connections race labels on three runs, each clock read before the database lock; the stored
+    order must never show a non-owner lowering a harmful verdict (advisory lock + created_at order)."""
+    import random
+    import threading
+
+    from hadavin_sdk.models import latest_labels
+    from hadavin_sdk.store.protocol import HarmfulSticky
+
+    a, b = two_connections
+    runs = ["q0", "q1", "q2"]
+    counter = iter(range(10**6))
+
+    def work(store, seed):
+        rnd = random.Random(seed)
+        for _ in range(30):
+            who = rnd.choice(["user:1", "user:2", "owner"])
+            lab = _lab(
+                rnd.choice(runs),
+                rnd.choice(["agree", "harmful", "wrong", "partial"]),
+                who,
+                next(counter),
+            )
+            try:
+                store.add_labels([(lab, None)], may_lower_harmful=who == "owner")
+            except HarmfulSticky:
+                pass
+
+    threads = [threading.Thread(target=work, args=(s, i)) for i, s in enumerate([a, b, a, b])]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    for rid in runs:
+        seen = []
+        for lab in a.list_labels(rid):
+            cur = latest_labels(seen).get(rid)
+            lowered = cur is not None and cur.label == "harmful" and lab.label != "harmful"
+            assert not lowered or lab.principal_id == "owner", (rid, lab.label_id)
+            seen.append(lab)
+
+
+def test_k6_two_connections_one_nonce_one_winner(two_connections):
+    import threading
+
+    a, b = two_connections
+    results = []
+    start = threading.Barrier(8)
+
+    def go(store):
+        start.wait()
+        results.append(store.claim_action("9:v0=zz", NOW))
+
+    threads = [threading.Thread(target=go, args=(s,)) for s in [a, b] * 4]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    assert sorted(results) == [False] * 7 + [True]
+
+
+def test_k6_two_connections_a_clear_never_buries_a_demotion_it_did_not_see(two_connections):
+    import threading
+
+    from hadavin_sdk.models import LevelEvent
+
+    a, b = two_connections
+    for i in range(25):
+        agent = f"agent{i}"
+        base = LevelEvent(
+            agent_id=agent, action_id="x", kind="demote", reason="old", by="s", at=NOW
+        )
+        a.add_level_event(base)
+        seen = a.list_level_events()[-1]
+        clear = LevelEvent(agent_id=agent, action_id="x", kind="clear", reason="o", by="o", at=NOW)
+        start = threading.Barrier(2)
+
+        def do_clear():
+            start.wait()
+            a.clear_demotion(clear, seen.seq)
+
+        def do_demote():
+            start.wait()
+            b.add_level_event(base.model_copy(update={"reason": "new"}))
+
+        t1, t2 = threading.Thread(target=do_clear), threading.Thread(target=do_demote)
+        t1.start()
+        t2.start()
+        t1.join()
+        t2.join()
+        events = [e for e in a.list_level_events() if e.agent_id == agent]
+        newest = max(e.seq for e in events if e.reason == "new")
+        assert not [e for e in events if e.kind == "clear" and e.seq > newest], i
+        assert (agent, "x") in a.current_overrides(), i
+
+
+def test_k6_two_connections_one_demotion_row_per_reason(two_connections):
+    import threading
+
+    from hadavin_sdk.models import LevelEvent
+
+    a, b = two_connections
+    ev = LevelEvent(agent_id="a", action_id="x", kind="demote", reason="ceiling:t", by="s", at=NOW)
+    start = threading.Barrier(8)
+
+    def go(store):
+        start.wait()
+        store.add_level_event(ev)
+
+    threads = [threading.Thread(target=go, args=(s,)) for s in [a, b] * 4]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    assert len(a.list_level_events()) == 1
 
 
 def test_k6_runtime_role_cannot_rewrite_labels_or_levels(pg_world):

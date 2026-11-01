@@ -492,7 +492,7 @@ def kill_switch(limits: Limits, action: str, by: str) -> int:
             raise
         except Exception as exc:  # noqa: BLE001 - classified below
             return _kill_switch_store_down("set", exc)
-        print(f"kill switch ON (by {by})")
+        print(f"kill switch ON (by {by}, an asserted name: the CLI cannot verify who ran it)")
         return 0
     try:
         limits.reset(by)
@@ -505,7 +505,7 @@ def kill_switch(limits: Limits, action: str, by: str) -> int:
         return 3
     except Exception as exc:  # noqa: BLE001 - classified below
         return _kill_switch_store_down("reset", exc)
-    print(f"kill switch OFF (by {by})")
+    print(f"kill switch OFF (by {by}, an asserted name: the CLI cannot verify who ran it)")
     return 0
 
 

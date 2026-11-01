@@ -427,7 +427,7 @@ def test_k6_signed_reset_that_cannot_be_audited_does_not_happen(w):
 
 def test_k6_clear_store_failure_is_a_non_2xx(w):
     w.label(w.run(), "harmful")
-    w.store.add_level_event = lambda ev: (_ for _ in ()).throw(OSError("down"))
+    w.store.clear_demotion = lambda ev, seq: (_ for _ in ()).throw(OSError("down"))
     assert w.click("owner", f"clear|test-agent|{ACTION}")[0] == 503
 
 
@@ -865,7 +865,7 @@ def test_k6_enforce_catches_three_wrong_that_raced(w):
     """Two labels that each saw two wrongs stored a third unseen: the tick re-check demotes."""
     ids = [w.run() for _ in range(3)]
     for rid in ids:  # bypass the label-time check, as a race would
-        w.store.add_label(measure_label(rid, "wrong", NOW))
+        w.store.add_labels([(measure_label(rid, "wrong", NOW), None)], may_lower_harmful=True)
     assert w.store.current_overrides() == {}
     assert len(w.measure.enforce(NOW)) == 1
     assert w.store.current_overrides() == {("test-agent", ACTION): "shadow"}
@@ -885,11 +885,23 @@ def _baseline(tmp_path, text):
     return tmp_path
 
 
+def _ceiling(**over):
+    fields = {
+        "metric": "m",
+        "counts": "[harmful]",
+        "max": "2",
+        "window_days": "30",
+        "source": "s",
+        **over,
+    }
+    return "ceiling:\n" + "".join(f"  {k}: {v}\n" for k, v in fields.items() if v is not None)
+
+
 def test_k6_baseline_loads_a_filled_ceiling(tmp_path):
-    root = _baseline(tmp_path, "ceiling:\n  metric: m\n  max: 2\n  window_days: 30\n  source: s\n")
-    assert measure.load_baseline(root) == Ceiling("m", 2, 30, "s")
-    root = _baseline(tmp_path, "ceiling:\n  metric: m\n  max: 0\n  source: s\n")
-    assert measure.load_baseline(root).window_days == 90  # the default
+    root = _baseline(tmp_path, _ceiling())
+    assert measure.load_baseline(root) == Ceiling("m", 2, 30, "s", ("harmful",))
+    root = _baseline(tmp_path, _ceiling(counts="[harmful, wrong, harmful]"))
+    assert measure.load_baseline(root).counts == ("harmful", "wrong")
 
 
 @pytest.mark.parametrize(
@@ -898,15 +910,20 @@ def test_k6_baseline_loads_a_filled_ceiling(tmp_path):
         (None, "does not exist"),
         ("project: x\n", "`ceiling` is required"),
         ("ceiling: yes\n", "`ceiling` is required"),
-        ("ceiling:\n  metric: <ceiling metric>\n  max: 0\n  source: s\n", "ceiling.metric"),
-        ("ceiling:\n  metric: m\n  max: <ceiling max>\n  source: s\n", "ceiling.max"),
-        ("ceiling:\n  metric: m\n  max: 0\n  source: \n", "ceiling.source"),
-        ("ceiling:\n  metric: m\n  max: lots\n  source: s\n", "whole numbers"),
-        ("ceiling:\n  metric: m\n  max: -1\n  source: s\n", ">= 0"),
-        (
-            "ceiling:\n  metric: m\n  max: 0\n  window_days: 0\n  source: s\n",
-            ">= 0 and window_days >= 1",
-        ),
+        (_ceiling(metric="<ceiling metric>"), "ceiling.metric"),
+        (_ceiling(max="<ceiling max>"), "ceiling.max"),
+        (_ceiling(source=""), "ceiling.source"),
+        (_ceiling(window_days=None), "ceiling.window_days is missing"),  # no default window
+        (_ceiling(window_days="<ceiling window days>"), "ceiling.window_days"),
+        (_ceiling(counts=None), "ceiling.counts is required"),  # no default counts
+        (_ceiling(counts="[]"), "ceiling.counts is required"),
+        (_ceiling(counts="harmful"), "ceiling.counts is required"),  # a list, not a bare word
+        (_ceiling(counts="<ceiling counts>"), "ceiling.counts is required"),
+        (_ceiling(counts="[wrong]"), "must include harmful"),
+        (_ceiling(counts="[harmful, nonsense]"), "unknown labels: nonsense"),
+        (_ceiling(max="lots"), "whole numbers"),
+        (_ceiling(max="-1"), ">= 0"),
+        (_ceiling(window_days="0"), ">= 0 and window_days >= 1"),
         (": : :\n  - [", "cannot be read"),
     ],
 )
@@ -915,6 +932,57 @@ def test_k6_baseline_refusals(tmp_path, text, error):
         _baseline(tmp_path, text)
     with pytest.raises(BaseConfigError, match=re.escape(error)):
         measure.load_baseline(tmp_path)
+
+
+def test_k6_the_refusal_points_at_scoping_md(tmp_path):
+    _baseline(tmp_path, _ceiling(counts=None))
+    with pytest.raises(BaseConfigError, match=r"scoping\.md `## Success metric and ceiling`"):
+        measure.load_baseline(tmp_path)
+
+
+def _subsets(items):
+    for mask in range(1 << len(items)):
+        yield [x for i, x in enumerate(items) if mask >> i & 1]
+
+
+@pytest.mark.parametrize("counts", [c for c in _subsets(list(measure.LABELS)) if c])
+def test_k6_any_counts_containing_harmful_loads_and_any_without_it_is_refused(tmp_path, counts):
+    _baseline(tmp_path, _ceiling(counts="[" + ", ".join(counts) + "]"))
+    if "harmful" in counts:
+        assert set(measure.load_baseline(tmp_path).counts) == set(counts)
+    else:
+        with pytest.raises(BaseConfigError, match="must include harmful"):
+            measure.load_baseline(tmp_path)
+
+
+def test_k6_the_ceiling_counts_exactly_the_configured_classes(w):
+    w.labelled("harmful", 1, when=day(5))
+    w.labelled("wrong", 2, when=day(5))
+    w.labelled("partial", 1, when=day(5))
+    silent = w.run(plan=False, state=S.NO_ACTION, reason=None, created=day(5))
+    w.label(silent, "missed", when=day(5))
+    expected = {
+        ("harmful",): 1,
+        ("harmful", "wrong"): 3,
+        ("harmful", "missed"): 2,
+        ("harmful", "wrong", "partial", "missed"): 5,
+    }
+    for counts, n in expected.items():
+        w.measure.ceiling = Ceiling("m", 0, 90, "s", counts)
+        status = w.measure.ceiling_status(NOW)
+        assert (status.harmful, status.labelled) == (n, 5), counts
+        pw = w.store.pilot_week(NOW.date() - timedelta(days=NOW.weekday() + 7))
+        assert pw.count_of(counts) == n, counts  # the weekly numbers use the same classes
+    text = w.measure.render_report(WEEK, NOW)
+    assert "counting: harmful, wrong, partial, missed" in text
+    assert "counted by the ceiling this week: 5 (harmful, wrong, partial, missed)" in text
+
+
+def test_k6_a_wrong_label_breaches_a_ceiling_that_counts_wrong(w):
+    w.labelled("wrong", 1, when=day(5))
+    assert not w.measure.ceiling_status(NOW).breached  # [harmful] only
+    w.measure.ceiling = Ceiling("m", 0, 90, "s", ("harmful", "wrong"))
+    assert w.measure.ceiling_status(NOW).breached
 
 
 def _pilot_build(tmp_path, dsn, *, no_owner=False, drop_baseline=False):
@@ -1132,7 +1200,8 @@ def test_k6_without_a_ceiling_there_is_no_report(tmp_path):
 def test_k6_tick_runs_the_report_once_per_week(tmp_path):
     cfg = dev_cfg(tmp_path, {ACTION: "shadow"})
     (cfg / "baseline.yaml").write_text(
-        "ceiling:\n  metric: m\n  max: 0\n  window_days: 90\n  source: s\n", encoding="utf-8"
+        "ceiling:\n  metric: m\n  counts: [harmful]\n  max: 0\n  window_days: 90\n  source: s\n",
+        encoding="utf-8",
     )
     path = cfg / "principals.yaml"
     people = yaml.safe_load(path.read_text(encoding="utf-8"))
@@ -1687,7 +1756,8 @@ def test_k6_the_report_shows_who_lowered_a_harmful_verdict(w):
 def test_k6_an_unreachable_owner_is_retried_on_the_next_tick(tmp_path):
     cfg = dev_cfg(tmp_path, {ACTION: "shadow"})
     (cfg / "baseline.yaml").write_text(
-        "ceiling:\n  metric: m\n  max: 0\n  window_days: 90\n  source: s\n", encoding="utf-8"
+        "ceiling:\n  metric: m\n  counts: [harmful]\n  max: 0\n  window_days: 90\n  source: s\n",
+        encoding="utf-8",
     )
     path = cfg / "principals.yaml"
     people = yaml.safe_load(path.read_text(encoding="utf-8"))
