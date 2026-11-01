@@ -14,6 +14,7 @@ import yaml
 from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, ValidationError, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from hadavin_sdk import deferred
 from hadavin_sdk.backends.table import DEFAULTS, DEV_ONLY, NOT_PROD, TABLE, KindSettings
 from hadavin_sdk.errors import ConfigError
 
@@ -25,6 +26,7 @@ __all__ = [
     "Route",
     "confined",
     "load_config",
+    "load_yaml",
     "url_allowed",
 ]
 
@@ -232,10 +234,28 @@ def _anchor_refusals(environment: str, b: Backends) -> list[str]:
     return refused
 
 
+class _UniqueKeyLoader(yaml.SafeLoader):
+    """A duplicate mapping key is an error: safe_load would keep the last value, silently changing a level."""
+
+    def construct_mapping(self, node, deep=False):
+        seen = set()
+        for key_node, _ in node.value:
+            key = self.construct_object(key_node, deep=True)
+            if key in seen:
+                raise ConfigError(f"duplicate key {key!r} (line {key_node.start_mark.line + 1})")
+            seen.add(key)
+        return super().construct_mapping(node, deep)
+
+
+def load_yaml(text: str) -> Any:
+    """``yaml.safe_load`` that refuses duplicate mapping keys."""
+    return yaml.load(text, Loader=_UniqueKeyLoader)  # noqa: S506  # nosec B506 - SafeLoader subclass
+
+
 def _read_yaml(path: Path) -> dict:
     if not path.exists():
         return {}
-    data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    data = load_yaml(path.read_text(encoding="utf-8")) or {}
     if not isinstance(data, dict):
         raise ConfigError(f"{path.name}: expected a mapping at the top level")
     return data
@@ -256,6 +276,8 @@ def load_config(config_dir: Path | None = None) -> Config:
         root = Path(config_dir) if config_dir else Settings().config_dir  # type: ignore[call-arg]
         raw = _read_yaml(root / "config.yaml")
         egress = _read_yaml(root / "egress.yaml").get("hosts") or []
+        if early := deferred.key_problems("config.yaml", raw):
+            raise ConfigError("; ".join(early))
         if moved := [k for k in MOVED if k in raw]:
             raise ConfigError("; ".join(f"{k} moved to {MOVED[k]}" for k in moved))
         for key in ("golden_dir", "inputs_dir"):

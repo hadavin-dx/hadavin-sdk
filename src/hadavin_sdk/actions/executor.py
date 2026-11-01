@@ -15,7 +15,7 @@ from collections.abc import Callable
 from typing import Any
 from urllib.parse import quote
 
-from hadavin_sdk.actions.contract import ActionContract
+from hadavin_sdk.actions.contract import ActionContract, HttpExecutor
 from hadavin_sdk.actions.secrets import SecretProvider
 from hadavin_sdk.config import url_allowed
 from hadavin_sdk.guard.egress import EgressRefused, egress_check
@@ -59,8 +59,13 @@ class Executor:
         self, contract: ActionContract, heartbeat: Callable[[], None] | None = None
     ) -> Call:
         cfg = self.registry.config
-        base = cfg.systems[contract.executor.system].base_url.rstrip("/")
-        token = self._secrets.get(contract.executor.secret_name)
+        spec = contract.executor
+        if not isinstance(
+            spec, HttpExecutor
+        ):  # none and manual hold no secret and run nothing here
+            raise TypeError(f"executor kind {spec.kind} is not run by Hadavin")
+        base = cfg.systems[contract.target_system].base_url.rstrip("/")
+        token = self._secrets.get(spec.secret_name)
 
         def call(method: str, path: str, body: Any = None, headers: dict | None = None):
             if heartbeat is not None:
@@ -112,6 +117,8 @@ class Executor:
         if decision.outcome == "deny":
             return RunResult(outcome="failed", error_code="denied")
         contract = self.registry.contracts[plan.action_id]
+        if not isinstance(contract.executor, HttpExecutor):
+            return RunResult(outcome="failed", error_code="not_http_executor")
         call = self._caller(contract, heartbeat)
         method, path = self._path(contract.executor.operation, plan.inputs, plan.idempotency_key)
         body = plan.inputs if method in {"POST", "PUT", "PATCH"} else None

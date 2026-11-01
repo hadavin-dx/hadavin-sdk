@@ -44,9 +44,13 @@ def make_cfg(tmp_path: Path, port: int = 0) -> Path:
     return tmp_path / "config"
 
 
-def qualify(registry, agent_id: str = "test-agent", green: bool = True) -> None:
-    """Write a gate run for the agent's current model, prompt and config (tests before S8's evals gate)."""
+def qualify(
+    registry, agent_id: str = "test-agent", green: bool = True, k: int | None = None
+) -> None:
+    """Write a gate run for the agent's current model, prompt and config (tests before S8's evals gate).
+    A tooled agent needs a k >= 3 record that passed pass^k (K3, B1), so it gets k = 3 by default."""
     agent = registry.agents[agent_id]
+    k = k or (3 if agent.tools_allowed else 1)
     run = GateRun(
         agent_id=agent_id,
         model_id=registry.config.routes[agent.model_route].model_id,
@@ -58,6 +62,8 @@ def qualify(registry, agent_id: str = "test-agent", green: bool = True) -> None:
         pass_rate=1.0 if green else 0.0,
         threshold=1.0,
         green=green,
+        k=k,
+        pass_k=(1.0 if green else 0.0) if k > 1 else None,
     )
     (registry.config.root / "qualified.jsonl").write_text(
         run.model_dump_json() + "\n", encoding="utf-8"

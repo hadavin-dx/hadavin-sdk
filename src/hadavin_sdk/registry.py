@@ -14,8 +14,9 @@ from typing import Literal
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
+from hadavin_sdk import deferred
 from hadavin_sdk.actions.contract import ActionContract, schema_problems
-from hadavin_sdk.config import Config, ConfigError, Money, confined
+from hadavin_sdk.config import Config, ConfigError, Money, confined, load_yaml
 from hadavin_sdk.guard.judge import PROMPT_SHA256 as JUDGE_PROMPT_SHA256
 from hadavin_sdk.identity import Principal
 from hadavin_sdk.models import ChainStep, sha256_hex
@@ -38,6 +39,12 @@ class AgentRecord(BaseModel):
     tools_allowed: list[str] = []
     max_steps: int = Field(gt=0)
     budget_usd: Budget
+    # Per-action autonomy. None only in dev (the slice-1 gate path). Not part of config_hash: promotion changes
+    # only this, so a flip never un-qualifies the agent. `act` parses so the load check can name its phase.
+    levels: dict[str, Literal["shadow", "suggest", "act"]] | None = None
+    max_run_usd: Money | None = (
+        None  # per-run cost cap; required in pilot and prod (enforced in K5)
+    )
 
 
 class Chain(BaseModel):
@@ -95,7 +102,9 @@ class Registry:
         llm = self.config.backends.llm
 
         def dump(model) -> dict:
-            return model.model_dump(mode="json", exclude_defaults=True)
+            return model.model_dump(
+                mode="json", exclude_defaults=True, exclude={"levels"} if model is agent else None
+            )
 
         # An llm_judge screens this agent's input: its prompt, route and threshold are qualified too.
         judges = [
@@ -144,7 +153,7 @@ class Registry:
 
 
 def _yaml(path) -> object:
-    return yaml.safe_load(path.read_text(encoding="utf-8")) if path.exists() else None
+    return load_yaml(path.read_text(encoding="utf-8")) if path.exists() else None
 
 
 def _by_id(items: list, model: type, where: str) -> dict:
@@ -160,15 +169,18 @@ def _by_id(items: list, model: type, where: str) -> dict:
 
 def load_registry(config: Config) -> Registry:
     root = config.root
+    raw_agents = _yaml(root / "agents.yaml")
+    raw_actions = [_yaml(p) for p in sorted((root / "actions").glob("*.yaml"))]
+    if early := [
+        *(p for a in raw_agents or [] for p in deferred.key_problems("agents.yaml", a)),
+        *(p for a in raw_actions for p in deferred.key_problems("actions/", a)),
+    ]:
+        raise ConfigError("; ".join(early))
     try:
-        agents = _by_id(_yaml(root / "agents.yaml"), AgentRecord, "agents.yaml")
+        agents = _by_id(raw_agents, AgentRecord, "agents.yaml")
         principals = _by_id(_yaml(root / "principals.yaml"), Principal, "principals.yaml")
         chains = _by_id(_yaml(root / "chains.yaml"), Chain, "chains.yaml")
-        contracts = _by_id(
-            [_yaml(p) for p in sorted((root / "actions").glob("*.yaml"))],
-            ActionContract,
-            "actions/",
-        )
+        contracts = _by_id(raw_actions, ActionContract, "actions/")
     except ConfigError:
         raise
     except (ValidationError, TypeError, yaml.YAMLError) as exc:
@@ -176,7 +188,10 @@ def load_registry(config: Config) -> Registry:
     problems = _cross_check(config, agents, chains, contracts)
     if problems:
         raise ConfigError("; ".join(problems))
-    return Registry(config, agents, principals, chains, contracts)
+    reg = Registry(config, agents, principals, chains, contracts)
+    if problems := deferred.check(reg):
+        raise ConfigError("; ".join(problems))
+    return reg
 
 
 def _cross_check(config, agents, chains, contracts) -> list[str]:
@@ -201,16 +216,17 @@ def _cross_check(config, agents, chains, contracts) -> list[str]:
         props = (c.input_schema or {}).get("properties") or {}
         if "key" in props:
             out.append(f"action {c.id}: input 'key' is reserved for the idempotency key")
-        for op in filter(None, [c.executor.operation, c.executor.lookup_operation]):
+        http = c.executor if c.executor.kind == "http" else None
+        for op in filter(None, [http and http.operation, http and http.lookup_operation]):
             for field in re.findall(r"{(\w+)}", op):
                 if field != "key" and "pattern" not in props.get(field, {}):
                     out.append(f"action {c.id}: path field {field} needs a pattern in input_schema")
-        if c.chain_id not in chains:
+        if c.chain_id is not None and c.chain_id not in chains:
             out.append(f"action {c.id}: unknown chain {c.chain_id}")
         for ref in filter(None, [c.verify_check, c.rollback]):
             module = ref.split(":", 1)[0]
             if ":" not in ref or module not in config.check_modules:
                 out.append(f"action {c.id}: {ref} is outside check_modules")
-        if c.executor.system not in config.systems:
-            out.append(f"action {c.id}: unknown system {c.executor.system}")
+        if http is not None and c.target_system not in config.systems:
+            out.append(f"action {c.id}: unknown system {c.target_system}")
     return out

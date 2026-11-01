@@ -10,9 +10,9 @@ input_schema:
 risk_class: sign_off
 targets_production: false
 changes_spend: false
+target_system: fixture-records
 executor:
   kind: http
-  system: fixture-records
   operation: DELETE /records/{id}
   lookup_operation: null
   secret_name: fixture-token

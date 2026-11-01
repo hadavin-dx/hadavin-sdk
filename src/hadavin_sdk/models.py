@@ -188,6 +188,9 @@ class AuditEvent(Shape):
     rule_id: str | None = None
     result: str | None = None
     error_code: str | None = None
+    # Which control caught a mistake: gate, recheck, abstain, guard, verify, human_label, human_reject (K6 sets
+    # the human values). Rows written before this field existed hash unchanged (the chain hashes stored text).
+    caught_by: str | None = None
 
 
 class DeadLetter(Shape):

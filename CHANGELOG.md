@@ -3,6 +3,25 @@
 ## Unreleased
 
 ### Upgrade steps
+- **K3 pilot build path (levels, shadow cut-off, fail-closed loading).** Action contracts change shape:
+  `executor.system` moves to a contract field `target_system`, and `executor` is now a tagged union
+  (`kind: none | manual | http`). Edit every contract: move `system:` out of `executor:` to `target_system:` beside
+  it. `chain_id` and `verify_check` may be omitted for `none`.
+  - **`config_hash` changes once** (the contract dump changed): every agent needs ONE new gate run
+    (`hadavin-sdk gate <agent>`). A level flip (`levels`) never changes the hash.
+  - **A tooled agent (`tools_allowed` not empty) now needs a gate run with `--k 3` that passed pass^3**; a k = 1
+    green record no longer qualifies it. Non-tooled agents are unchanged.
+  - New optional agent fields `levels` (per action: `shadow` or `suggest`; `act` is refused until Phase 4) and
+    `max_run_usd`. In `pilot` and `prod` both are required and `levels` must list every `scope_allowed` action;
+    `suggest` is refused there until K6 and K8, an `http` contract and a `read_only` contract are refused, and so are
+    `confidential` and `restricted` agents. See `deferred.py` for every refusal and the phase it arrives in.
+  - In `pilot` and `prod`, `build` makes no `Executor` and reads no client-system secret. `build` takes a new
+    `llm=` override.
+  - Shadow and abstain cards are posted through the new `Channel.post_card` (and `Channel.max_card_chars`); a
+    custom channel kind must implement both. `AuditEvent` gains `caught_by`.
+  - New file `replay-records.jsonl` (reader only for now; the writer arrives with K1b-full). A tooled agent at
+    `suggest` is refused at load without a green record in it for the current config hash, model and prompt.
+    **Shadow qualification through the gate is a start-up gate, not accuracy evidence.**
 - **K1b-lite replay check (report only).** New commands `hadavin-sdk replay AGENT --bundles D --cause-list D
   --max-usd X --out OUT [--k K]` and `hadavin-sdk score --outputs OUT --answers F --cause-list D --bundles D`.
   Neither gives a met / not met verdict; a replay pass is not evidence of live accuracy.

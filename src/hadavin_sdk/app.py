@@ -10,14 +10,18 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 
+from hadavin_sdk import deferred
 from hadavin_sdk.actions.executor import Executor
 from hadavin_sdk.actions.secrets import SecretProvider
 from hadavin_sdk.approvals import Approvals, Channel
+from hadavin_sdk.approvals.cards import Card, Delivery
+from hadavin_sdk.approvals.requests import summary
 from hadavin_sdk.audit import AuditSink
 from hadavin_sdk.backends import make, platform_secrets
 from hadavin_sdk.config import Config, load_config
 from hadavin_sdk.guard.injection import Detector, combine
 from hadavin_sdk.limits import Limits
+from hadavin_sdk.llm.protocol import LLM
 from hadavin_sdk.models import now
 from hadavin_sdk.registry import Registry, load_registry
 from hadavin_sdk.runtime.agent_loop import Hooks, Runtime
@@ -31,7 +35,7 @@ class App:
     store: Store
     audit: AuditSink
     limits: Limits
-    executor: Executor
+    executor: Executor | None  # None in pilot and prod: Hadavin executes nothing there
     approvals: Approvals
     runtime: Runtime
 
@@ -43,6 +47,8 @@ def build(
     secrets: SecretProvider | None = None,
     channel: Channel | None = None,
     detector: Detector | None = None,
+    llm: LLM | None = None,
+    tools: dict[str, Callable[[dict], str]] | None = None,
     clock: Callable[[], datetime] = now,
     timeout_s: float = 10.0,
 ) -> App:
@@ -53,13 +59,17 @@ def build(
     reg = load_registry(cfg)
     b = cfg.backends
     secrets = secrets or make("secrets", b.secrets)
-    executor_names = {c.executor.secret_name for c in reg.contracts.values()}
+    live = cfg.environment in deferred.LIVE
+    # Only http contracts hold a client-system secret; pilot and prod have none (http is refused there).
+    executor_names = {
+        c.executor.secret_name for c in reg.contracts.values() if c.executor.kind == "http"
+    }
     platform_secrets.check(secrets, [s for _, s in b.entries()], executor_names)
     signer = make("signer", b.signer, secrets)
     anchor = make("anchor", b.anchor, secrets)
     store = make("store", b.store, secrets)
     audit = make("audit", b.audit, secrets, store=store, signer=signer, anchor=anchor)
-    llm = make("llm", b.llm, secrets, routes=cfg.routes)
+    llm = llm or make("llm", b.llm, secrets, routes=cfg.routes)
     summary_detector = detector
     if detector is None:
         members = [make("detector", d, secrets, llm=llm) for d in b.detector]
@@ -69,7 +79,7 @@ def build(
         summary_detector = combine([m for m in members if m.backend != "llm_judge"])
     channel = channel or make("channel", b.channel, secrets, store=store)
     limits = Limits(store, audit, reg)
-    executor = Executor(reg, secrets, timeout_s=timeout_s)
+    executor = None if live else Executor(reg, secrets, timeout_s=timeout_s)
     holder: dict[str, Runtime] = {}
     approvals = Approvals(
         store,
@@ -80,11 +90,30 @@ def build(
         clock,
         summary_detector,
     )
+
+    def post_card(card: Card) -> Delivery:
+        if len(card.text) > channel.max_card_chars:
+            return Delivery(ok=False, reason="card_too_long")
+        try:
+            return channel.post_card(card)
+        except Exception as exc:  # noqa: BLE001 - a broken channel is an undelivered card, never a crash
+            return Delivery(ok=False, reason=type(exc).__name__)
+
+    def request_approval(plan, decision, requested_by) -> Delivery:
+        if len(summary(plan, summary_detector)) > channel.max_card_chars:
+            return Delivery(ok=False, reason="card_too_long")
+        # A failed send is NOT terminal: the request stays PENDING and tick resends it
+        # (tests/test_p7_tick.py::test_failed_send_is_resent_by_tick), so a saved request is delivered-or-retrying.
+        req = approvals.request(plan, decision, requested_by)
+        return Delivery(ok=True, ref=req.channel_ref)
+
     hooks = Hooks(
-        request_approval=approvals.request,
-        execute=executor.execute,
-        verify=executor.verify,
-        rollback=executor.rollback,
+        request_approval=request_approval,
+        execute=executor.execute if executor else None,
+        verify=executor.verify if executor else None,
+        rollback=executor.rollback if executor else None,
+        post_card=post_card,
+        tools=dict(tools or {}),
     )
     runtime = Runtime(
         reg,

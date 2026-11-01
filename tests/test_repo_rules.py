@@ -77,8 +77,40 @@ def missing_rollback_tests(root: Path, action_dirs: list[Path]) -> list[str]:
     return problems
 
 
+def missing_undo_tests(root: Path, action_dirs: list[Path]) -> list[str]:
+    """Every manual contract must name an undo_test that exists (file + test function): K3."""
+    problems = []
+    for folder in action_dirs:
+        for path in sorted(folder.glob("*.yaml")):
+            data = yaml.safe_load(path.read_text(encoding="utf-8"))
+            if (data.get("executor") or {}).get("kind") != "manual":
+                continue
+            node = data.get("undo_test") or ""
+            file, _, func = node.partition("::")
+            target = root / file
+            if not func or not target.is_file() or f"def {func}(" not in target.read_text("utf-8"):
+                problems.append(f"{path.name}: undo_test {node!r} not found")
+    return problems
+
+
 def action_dirs(root: Path) -> list[Path]:
     return [root / "tests/fixtures/config/actions", *root.glob("demos/*/config/actions")]
+
+
+def test_every_manual_contract_names_an_existing_undo_test():
+    assert missing_undo_tests(ROOT, action_dirs(ROOT)) == []
+
+
+def test_plant_missing_undo_test_is_caught(tmp_path):
+    actions = tmp_path / "actions"
+    actions.mkdir()
+    (actions / "m.yaml").write_text(
+        "executor: {kind: manual}\nundo_test: tests/t.py::test_gone\n", encoding="utf-8"
+    )
+    (actions / "h.yaml").write_text("executor: {kind: http}\n", encoding="utf-8")
+    assert missing_undo_tests(tmp_path, [actions]) == [
+        "m.yaml: undo_test 'tests/t.py::test_gone' not found"
+    ]
 
 
 def test_licences_are_proprietary():
