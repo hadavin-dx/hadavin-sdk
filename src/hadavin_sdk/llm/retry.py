@@ -92,15 +92,20 @@ def with_retry[T](
     for attempt in range(1, max_attempts + 1):
         try:
             return call()
-        except ProviderError:
+        except ProviderError as err:
+            err.attempts = attempt
             raise
         except Exception as exc:  # every failure is classified below, never swallowed
             if not transient(exc, retryable):
-                raise ProviderError(f"{label}: {describe(exc, detail)}") from exc
+                refused = ProviderError(f"{label}: {describe(exc, detail)}")
+                refused.attempts = attempt
+                raise refused from exc
             if attempt == max_attempts:
-                raise ProviderExhausted(
+                spent = ProviderExhausted(
                     f"{label}: {describe(exc, detail)} after {max_attempts} attempts"
-                ) from exc
+                )
+                spent.attempts = attempt
+                raise spent from exc
             # Full jitter spreads retries from many runs hitting one throttled account (not crypto); never
             # sooner than the server asked.
             jitter = random.uniform(0, min(MAX_DELAY_S, BASE_DELAY_S * 2 ** (attempt - 1)))  # noqa: S311

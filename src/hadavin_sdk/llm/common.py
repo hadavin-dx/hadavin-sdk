@@ -157,6 +157,7 @@ def reply(
     stop: str | None,
     started: float,
     sent: str,
+    attempts: int = 1,
 ) -> Reply:
     """The Reply, priced from the route. Missing usage is estimated from what was sent and received. A cut-off
     answer keeps its cost but loses its tool calls: their input may be incomplete."""
@@ -176,6 +177,7 @@ def reply(
         model_id=route.model_id,
         stop_reason=stop,
         latency_ms=int((time.monotonic() - started) * 1000),
+        attempts=attempts,
     )
 
 
@@ -187,6 +189,7 @@ class Answer:
     calls: list[ToolCall]
     tokens: tuple[int | None, int | None]
     stop: str | None
+    attempts: int = 1  # set by `_retry`: requests sent for this answer
 
 
 class NetworkLLM:
@@ -230,14 +233,23 @@ class NetworkLLM:
         raise NotImplementedError
 
     def _retry(self, call: Callable[[], Answer]) -> Answer:
-        return with_retry(
-            call,
+        sent = 0
+
+        def counted() -> Answer:
+            nonlocal sent
+            sent += 1
+            return call()
+
+        got = with_retry(
+            counted,
             label=self.label,
             max_attempts=self.max_attempts,
             sleep=self._sleep,
             retryable=self.retryable,
             detail=self.detail,
         )
+        got.attempts = sent
+        return got
 
     # The kind's own SDK errors (llm/retry.py stays vendor-neutral): None means no opinion / no code.
     retryable: Callable[[BaseException], bool | None] | None = None

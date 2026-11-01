@@ -144,7 +144,7 @@ def _flat(v: object) -> str:
     return "" if v is None else str(v)
 
 
-def cmd_meter(cfg, set_external: str | None, init: bool = False) -> int:
+def cmd_meter(cfg, set_external: str | None, init: bool = False, clear_open: bool = False) -> int:
     m = Meter(cfg.paths.meter_file)
     if init:  # the shared file is created once; an existing one (with the other program's spend) is never overwritten
         if m.path.exists():
@@ -153,6 +153,10 @@ def cmd_meter(cfg, set_external: str | None, init: bool = False) -> int:
         Meter.create(m.path, total_cap="10.00", reserve="1.00", demo_cap="8.00")
         out("meter: created with total cap 10.00, reserve 1.00, demo cap 8.00")
     try:
+        if clear_open:
+            out(
+                f"meter: forgot {m.clear_open()} open reservation(s); the money stays booked as spent"
+            )
         if set_external is not None:
             m.set_external(Decimal(set_external))
         s = m.snapshot()
@@ -164,6 +168,10 @@ def cmd_meter(cfg, set_external: str | None, init: bool = False) -> int:
     out(
         f"remaining          : {fmt_usd(s['remaining'])}  (demo room {fmt_usd(s['demo_room'])}, shared room {fmt_usd(s['shared_room'])})"
     )  # type: ignore[arg-type]
+    if s["open"]:
+        out(
+            f"open reservations : {s['open']} (a call in flight, or a process that died before it settled)"
+        )
     return 0
 
 
@@ -215,6 +223,11 @@ def main(argv: list[str]) -> int:
         help="create the meter file (10.00 total, 1.00 reserve, 8.00 demo)",
     )
     me.add_argument(
+        "--clear-open",
+        action="store_true",
+        help="forget unsettled reservations (after checking the provider console)",
+    )
+    me.add_argument(
         "--set-external", metavar="USD", help="type in what other programs spent (provider console)"
     )
     ks = sub.add_parser("killswitch")
@@ -244,5 +257,5 @@ def main(argv: list[str]) -> int:
             return 0 if rep.ok else 3
         return cmd_export(cfg, args.format, args.include_text, args.out)
     if args.cmd == "meter":
-        return cmd_meter(cfg, args.set_external, args.init)
+        return cmd_meter(cfg, args.set_external, args.init, args.clear_open)
     return cmd_killswitch(cfg, args.action, sink)

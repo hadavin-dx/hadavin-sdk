@@ -14,7 +14,6 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
-from askdata import audit as audit_mod
 from askdata import cli, evalcli, evalrun, live
 from askdata.config import ConfigError, load_config
 from askdata.evalcli import cmd_run
@@ -41,6 +40,7 @@ from askdata.policy import (
     EXIT_USAGE,
     REASONS,
 )
+from askdata.sealed import Chain
 
 from hadavin_sdk.actions.secrets import FakeSecretProvider
 from hadavin_sdk.guard.injection import RegexDetector
@@ -50,6 +50,11 @@ from .kit import Kit
 from .test_eval_harness import cli_env  # noqa: F401 - a fixture reused here
 
 DATA = DEMO / "data"
+DEFECT = {
+    "harness_defect_reason": "gold query G1 is wrong",
+    "harness_defect_run": "r",
+    "harness_defect_item": "g1",
+}
 CONFIG_YAML = """
 as_of: "2026-01-01"
 paths: {{ledger_file: l.jsonl, audit_dir: audit, meter_file: meter.json, kill_switch_file: kill,
@@ -182,13 +187,13 @@ EVADES = (  # phrasings the regex tripwire does NOT catch: the validator and the
 )
 
 
-def test_injection_recall_at_the_shipped_threshold_is_measured_not_assumed():
+def test_the_regex_catches_its_listed_phrasings_and_misses_known_evasions():
     det = RegexDetector(Settings().injection_threshold)
     caught = [q for q in CAUGHT if det.check(q, "question").flagged]
     evaded = [q for q in EVADES if not det.check(q, "question").flagged]
     assert caught == list(CAUGHT), set(CAUGHT) - set(caught)
     assert evaded == list(EVADES), set(EVADES) - set(evaded)
-    # recall on this 15-phrase set: 10 of 15; and the threshold does not move it (scores are 0.0 or 1.0)
+    # the threshold does not move this (scores are 0.0 or 1.0): it is inert, which is why no recall figure is claimed
     for thr in (0.05, 0.5, 1.0):
         assert sum(RegexDetector(thr).check(q, "question").flagged for q in CAUGHT + EVADES) == 10
 
@@ -198,9 +203,7 @@ def test_second_look_needs_1_80_remaining_and_the_first_run_3_00():
     first = Lock(files={})
     with pytest.raises(LockError, match="at least 3.00"):
         evalrun.sealed_gate(first, Decimal("2.99"), split="test", second_look=None)
-    used = first.model_copy(
-        update={"test_runs": 1, "harness_defect_reason": "gold G12 wrong on seed B"}
-    )
+    used = first.model_copy(update={"test_runs": 1, **DEFECT})
     with pytest.raises(LockError, match="at least 1.80"):
         evalrun.sealed_gate(used, Decimal("1.79"), split="test", second_look="harness_defect")
     evalrun.sealed_gate(used, Decimal("1.80"), split="test", second_look="harness_defect")
@@ -371,11 +374,11 @@ def test_a_live_run_always_uses_the_live_meter_gate(tmp_path, monkeypatch):
 # ====================================================================== independent-review fixes (2026-11-01)
 def test_harness_defect_second_look_needs_a_written_defect_after_a_completed_run():
     done = Lock(files={}, test_runs=1, last_test_status="complete")
-    with pytest.raises(LockError, match="harness_defect_reason"):
+    with pytest.raises(LockError, match="harness_defect"):
         evalrun.sealed_gate(done, Decimal(5), split="test", second_look="harness_defect")
-    with pytest.raises(LockError, match="harness_defect_reason"):  # blank is not a reason
+    with pytest.raises(LockError, match="harness_defect"):  # blank is not a reason
         evalrun.sealed_gate(
-            done.model_copy(update={"harness_defect_reason": "  "}),
+            done.model_copy(update={**DEFECT, "harness_defect_reason": "  "}),
             Decimal(5),
             split="test",
             second_look="harness_defect",
@@ -406,7 +409,8 @@ def test_concurrent_sealed_runs_cannot_both_pass_the_gate(cli_env):  # noqa: F81
         th.join(timeout=60)
     assert sorted(codes).count(14) == 1, codes  # exactly one was refused
     assert read_lock(cfg.paths.eval_dir).test_runs == 1
-    assert audit_mod.sealed_run_count(audit_mod.local_dir_sink(cfg.paths.audit_dir)) == 1
+    chain = Chain(cfg.paths.audit_dir / "sealed-chain.jsonl")
+    assert [e["kind"] for e in chain.entries()].count("sealed_run") == 1
 
 
 def test_concurrent_lock_writes_use_unique_temp_files(tmp_path):
@@ -440,13 +444,28 @@ def test_editing_or_refreezing_the_lock_cannot_reset_the_sealed_counter(cli_env,
     capsys.readouterr()
     write_lock(ev, read_lock(ev).model_copy(update={"test_runs": 0}))  # hand edit
     assert cmd_run(cfg, "test", 1, None, harness_factory=factory) == 14
-    assert "audit ledger records 1" in capsys.readouterr().out
+    assert "chain records 1" in capsys.readouterr().out
     names = list(read_lock(ev).files)
-    lock_path(ev).unlink()  # delete and re-freeze
-    freeze(ev, names)
+    lock_path(
+        ev
+    ).unlink()  # delete and re-freeze: refused at the freeze, and a hand-made lock still counts the chain
+    assert evalcli.cmd_freeze(cfg) == 4
+    assert not lock_path(ev).exists()
+    write_lock(
+        ev, Lock(files={n: read_lock_files(cfg)[n] for n in names})
+    )  # a hand-made fresh lock
     assert cmd_run(cfg, "test", 1, None, harness_factory=factory) == 14
-    assert "audit ledger records 1" in capsys.readouterr().out
-    assert read_lock(ev).test_runs == 0  # nothing was started
+    assert "one invocation" in capsys.readouterr().out
+    assert read_lock(ev).test_runs == 1  # replayed from the chain, not reset
+
+
+def read_lock_files(cfg):
+    from askdata.evalset import sha256_file
+
+    return {
+        n: sha256_file(cfg.paths.eval_dir / n)
+        for n in ("gold.dev.jsonl", "adversarial.dev.jsonl", "gold.test.jsonl", "adversarial.jsonl")
+    }
 
 
 def test_a_sealed_live_run_needs_a_recorded_smoke_run(cli_env, capsys):  # noqa: F811
@@ -456,7 +475,11 @@ def test_a_sealed_live_run_needs_a_recorded_smoke_run(cli_env, capsys):  # noqa:
     assert "smoke" in capsys.readouterr().out and read_lock(ev).test_runs == 0
     notlive = lambda c, lk, rd, ecfg: factory(c, lk, rd, replace(ecfg, live=False))
     cmd_run(cfg, "dev", 1, None, harness_factory=notlive, use_live=True, smoke=True)
-    assert read_lock(ev).smoke_passed is True  # a finished live smoke run is recorded
+    chain = Chain(cfg.paths.audit_dir / "sealed-chain.jsonl")
+    assert [e["kind"] for e in chain.entries()] == [
+        "smoke_pass"
+    ]  # the smoke pass is audited in the chain
+    assert read_lock(ev).chain_head == chain.entries()[-1]["sha"]
     cmd_run(cfg, "test", 1, None, harness_factory=notlive, use_live=True)
     assert read_lock(ev).test_runs == 1  # now the sealed live run was allowed
 

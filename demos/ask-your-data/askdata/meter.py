@@ -12,8 +12,11 @@ A call may start only if `askdata_spent + worst_case <= demo_cap` AND
 
 Atomic across processes: `reserve(worst_case)` does the check AND books the worst case in one step under an OS file
 lock (`msvcrt` on Windows, `fcntl` elsewhere; the OS drops the lock if the holder dies, so there is no stale lock).
-After the call, `settle(reserved, actual)` replaces the reservation with the real cost. A process that crashes
-between the two leaves its worst case booked (fails safe). Writes are write-fsync-replace.
+After the call, `settle(reserved, actual, rid)` replaces the reservation with the real cost. This is a two-phase
+reserve/settle: `reserve` returns an id and records it under `open` BEFORE the call, `settle` removes it. A process
+that dies between the two leaves its worst case booked (fails safe) AND an `open` record, so the crash is visible:
+`snapshot()["open"]` lists it, a live run refuses to start while one is older than `STALE_OPEN` (see `stale_open`),
+and the owner clears it with `meter --clear-open` after reading the provider console. Writes are write-fsync-replace.
 """
 
 from __future__ import annotations
@@ -22,6 +25,7 @@ import contextlib
 import json
 import os
 import time
+import uuid
 from collections.abc import Callable, Iterator
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal, InvalidOperation
@@ -31,6 +35,7 @@ from hadavin_sdk.config import Route
 from hadavin_sdk.llm.common import estimate_tokens
 
 PROJECT = "askdata"
+STALE_OPEN = timedelta(minutes=10)  # an unsettled reservation older than this is a crashed call
 STAMP = "%Y-%m-%dT%H:%M:%SZ"
 M = Decimal(1_000_000)
 
@@ -53,6 +58,25 @@ def worst_case_usd(route: Route, prompt_chars: int) -> Decimal:
         Decimal(tokens_in) * route.input_usd_per_mtok
         + Decimal(route.max_tokens) * route.output_usd_per_mtok
     ) / M
+
+
+def call_cost(
+    per_attempt: Decimal,
+    reserved: Decimal,
+    *,
+    sent: int,
+    reply_cost: Decimal | None,
+    refused: bool = False,
+) -> Decimal:
+    """What ONE `chat()` cost, the single place that decides it. The kind may send several requests inside one call
+    and only the answered one reports usage. So: every request that was sent but not answered is charged `per_attempt`
+    (a timed-out request may still be billed); the answered one is charged its real cost; a request the provider
+    REFUSED (a non-transient 4xx) is free. Without a reply the charge never exceeds the reservation."""
+    sent = max(1, sent)
+    earlier = per_attempt * (sent - 1)
+    if reply_cost is not None:
+        return earlier + reply_cost
+    return min(reserved, earlier + (Decimal(0) if refused else per_attempt))
 
 
 def _dec(value: object, name: str) -> Decimal:
@@ -179,7 +203,7 @@ class Meter:
         return {
             "askdata_spent": mine, "demo_cap": demo, "demo_room": demo - mine, "shared_room": shared_room,
             "remaining": min(demo - mine, shared_room), "external_usd": ext,
-            "external_updated_at": d["external_updated_at"],
+            "external_updated_at": d["external_updated_at"], "open": len(d.get("open", {})),
         }  # fmt: skip
 
     def remaining(self) -> Decimal:
@@ -208,25 +232,57 @@ class Meter:
         """Raise `OverBudget` unless this call fits in both caps (a look only; use `reserve` before a real call)."""
         self._verify(self._read(), worst_case, live)
 
-    def reserve(self, worst_case: Decimal, *, live: bool = True) -> None:
-        """Check AND book `worst_case` as spent, atomically across processes. Raises `OverBudget`."""
+    def reserve(self, worst_case: Decimal, *, live: bool = True) -> str:
+        """Check AND book `worst_case` as spent, atomically across processes, and record it as open under a new id
+        (returned; pass it to `settle`). Raises `OverBudget`."""
         if worst_case < 0:
             raise MeterError("negative reservation")
         with self._locked():
             d = self._read()
             self._verify(d, worst_case, live)
             d["spent"][PROJECT] = fmt_usd(_dec(d["spent"][PROJECT], PROJECT) + worst_case)
+            rid = uuid.uuid4().hex
+            d.setdefault("open", {})[rid] = {
+                "amount": fmt_usd(worst_case),
+                "ts": self.clock().strftime(STAMP),
+            }
             self._write(d)
+        return rid
 
-    def settle(self, reserved: Decimal, actual: Decimal) -> None:
-        """Replace a reservation with what the call really cost (never below zero; above is recorded, not refused)."""
+    def settle(self, reserved: Decimal, actual: Decimal, rid: str | None = None) -> None:
+        """Replace a reservation with what the call really cost (never below zero; above is recorded, not refused)
+        and close its `open` record."""
         if actual < 0 or reserved < 0:
             raise MeterError("negative settlement")
         with self._locked():
             d = self._read()
+            d.get("open", {}).pop(rid, None)
             now = _dec(d["spent"][PROJECT], PROJECT) - reserved + actual
             d["spent"][PROJECT] = fmt_usd(max(now, Decimal(0)))
             self._write(d)
+
+    def open_reservations(self) -> dict[str, dict[str, str]]:
+        """Reservations not yet settled (id -> amount, ts): a call in flight, or a process that died."""
+        return dict(self._read().get("open", {}))
+
+    def stale_open(self) -> list[str]:
+        """Ids of open reservations older than STALE_OPEN: calls whose process died before `settle`."""
+        now = self.clock()
+        return [
+            rid
+            for rid, o in self.open_reservations().items()
+            if now - datetime.strptime(o["ts"], STAMP).replace(tzinfo=UTC) > STALE_OPEN
+        ]
+
+    def clear_open(self) -> int:
+        """Forget every open record (the money stays booked as spent). The owner does this after checking the provider
+        console for what the dead calls really cost."""
+        with self._locked():
+            d = self._read()
+            n = len(d.get("open", {}))
+            d["open"] = {}
+            self._write(d)
+        return n
 
     def charge(self, amount: Decimal) -> Decimal:
         """Add `amount` to this project's spend; returns the new total."""

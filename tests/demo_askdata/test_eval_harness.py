@@ -446,10 +446,16 @@ def test_sealed_gate_rules():
         split="test",
         second_look="aborted",
     )
-    with pytest.raises(LockError, match="harness_defect_reason"):
+    with pytest.raises(LockError, match="harness_defect"):
         evalrun.sealed_gate(used, Decimal(5), split="test", second_look="harness_defect")
     evalrun.sealed_gate(
-        used.model_copy(update={"harness_defect_reason": "x"}),
+        used.model_copy(
+            update={
+                "harness_defect_reason": "x" * 12,
+                "harness_defect_run": "r",
+                "harness_defect_item": "g",
+            }
+        ),
         Decimal(5),
         split="test",
         second_look="harness_defect",
@@ -609,8 +615,17 @@ def test_the_sealed_run_counts_at_start_and_a_second_needs_a_reason(cli_env, cap
         "one invocation" in capsys.readouterr().out and read_lock(cfg.paths.eval_dir).test_runs == 1
     )
     lk = read_lock(cfg.paths.eval_dir)  # the owner writes the proved defect into lock.json by hand
+    first_run = next(cfg.paths.runs_dir.iterdir()).name
+    item = json.loads((cfg.paths.eval_dir / "gold.test.jsonl").read_text().splitlines()[0])["id"]
     write_lock(
-        cfg.paths.eval_dir, lk.model_copy(update={"harness_defect_reason": "gold query wrong"})
+        cfg.paths.eval_dir,
+        lk.model_copy(
+            update={
+                "harness_defect_reason": "gold query wrong",
+                "harness_defect_run": first_run,
+                "harness_defect_item": item,
+            }
+        ),
     )
     cmd_run(cfg, "test", 1, "harness_defect", harness_factory=factory)
     assert (

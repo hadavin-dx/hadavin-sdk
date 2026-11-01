@@ -1,9 +1,14 @@
 """`eval run|report|compare`. Exit codes (also in the README):
 
-  freeze  0 lock.json written, 4 startup (a file is missing, or lock.json already exists: never overwritten)
+  freeze  0 lock.json written, 4 startup (a file is missing, lock.json already exists: never overwritten, or the
+          file system cannot hard-link)
+  reconcile  0 lock.json and the sealed-run chain agree (rolled forward if a crash left them apart), 14 they cannot
+          be reconciled (the chain is shorter than lock.json or fails its check)
   run     0 green, 10 amber ("promising, not demonstrated"), 11 not demonstrated, 12 a hard zero breached,
-          13 aborted (meter or kill switch; no verdict), 14 a sealed run was refused, 4 startup (config, lock, files,
-          database, no model), 1 usage
+          13 aborted (meter, kill switch or a smoke limit; no verdict), 14 a sealed run was refused (budget, k, smoke,
+          counter or chain mismatch, stale open reservation, second-look rules), 5 the sealed run could not be recorded
+          (chain or lock write failed; run `eval reconcile`), 4 startup (config, lock, files, database, no model) or a
+          harness defect found mid-run (a gold query that does not run: not a model result), 1 usage
   report  0 printed, 4 not a run folder
   compare 0 no regression, 11 regression, 4 the runs are not comparable
 
@@ -38,7 +43,6 @@ from askdata.evalset import (
     lock_guard,
     read_lock,
     verify_files,
-    write_lock,
 )
 from askdata.ledger import QueryLedger
 from askdata.meter import KillSwitch, Meter, MeterError
@@ -47,7 +51,7 @@ from askdata.pgsource import PgSource
 from askdata.pipeline import Pipeline
 from askdata.policy import EXIT_AUDIT
 from askdata.safe_text import clean
-from hadavin_sdk.audit.protocol import AuditUnavailable
+from askdata.sealed import SealedGate, key_from
 from hadavin_sdk.llm.fake import FakeLLM
 
 SPLIT_FILES = {
@@ -82,18 +86,16 @@ def build_harness(
         limits = (
             cfg.database.limits()
         )  # the client's statement timeout and caps apply to every database
-        dsns = {
-            "a": live.resolve_dsn(
-                cfg
-            ),  # dsn_secret_name through the secrets kind, else ASKDATA_DSN
-            "b": os.environ.get("ASKDATA_DSN_B"),
-            "clean": os.environ.get("ASKDATA_DSN_CLEAN"),
-        }
+        dsns = {w: live.resolve_dsn(cfg, which=w) for w in ("a", "b", "clean")}
         sources = {k: PgSource(d, limits=limits) for k, d in dsns.items() if d}
-    missing = {"a", "b"} - set(sources)
-    if missing:
+    need = {"a": ("ASKDATA_DSN", "dsn_secret_name"), "b": ("ASKDATA_DSN_B", "dsn_secret_name_b")}
+    if absent := [w for w in need if w not in sources]:
         raise ConfigError(
-            "set ASKDATA_DSN and ASKDATA_DSN_B (and ASKDATA_DSN_CLEAN for the injection pairs)"
+            "no DSN for database "
+            + " and ".join(
+                f"{w.upper()}: set {need[w][0]} or database.{need[w][1]}" for w in absent
+            )
+            + " (the clean twin, ASKDATA_DSN_CLEAN or database.dsn_secret_name_clean, is optional)"
         )
     rec = {k: RecordingExecutor(v, k, run_dir / "statements.jsonl") for k, v in sources.items()}  # type: ignore[arg-type]
     meter, kill = Meter(cfg.paths.meter_file), KillSwitch(cfg.paths.kill_switch_file)
@@ -133,6 +135,24 @@ def build_harness(
     )
 
 
+def _gate(cfg: AskdataConfig) -> SealedGate:
+    """The sealed-run gate (sealed.py) with the HMAC key from the secrets kind when the config names one."""
+    key = None
+    if cfg.sealed_key_secret_name:
+        provider = live.make_provider(cfg)
+        if provider is None:
+            raise LockError("sealed_key_secret_name is set but the config has no `secrets` entry")
+        key = key_from(provider, cfg.sealed_key_secret_name)
+    return SealedGate(
+        cfg.paths.eval_dir, cfg.paths.audit_dir / "sealed-chain.jsonl", cfg.paths.runs_dir, key
+    )
+
+
+def _smoke_key(cfg: AskdataConfig) -> str:
+    """What a smoke run vouches for: this prompt, this config and this model. Any change needs a new smoke run."""
+    return f"{config_hash(cfg, prompt.load(as_of=cfg.as_of).prompt_sha256)}:{cfg.route.model_id}"
+
+
 def cmd_freeze(cfg: AskdataConfig) -> int:
     """Write lock.json (file hashes, the gate thresholds, test_runs 0). Run it ONCE, after the prompt and the dev work
     are final and before any sealed run; it never replaces an existing lock (that would reset the sealed counter)."""
@@ -142,16 +162,45 @@ def cmd_freeze(cfg: AskdataConfig) -> int:
         out(f"startup: cannot freeze, missing: {', '.join(missing)}")
         return 4
     try:  # temp file, then os.link: no-clobber, and a crash never leaves an empty lock.json
-        lock = freeze(eval_dir, names, no_clobber=True)
-    except LockError:
-        out("freeze: lock.json already exists; not overwritten (it holds the sealed-run counter)")
+        lock = freeze(eval_dir, names, no_clobber=True, seal=_gate(cfg).freeze_seal)
+    except LockError as err:
+        if "already exists" in str(err):
+            out(
+                "freeze: lock.json already exists; not overwritten (it holds the sealed-run counter)"
+            )
+        else:
+            out(f"freeze: {err}")
+        return 4
+    except OSError as err:  # e.g. a file system without hard links
+        out(
+            f"startup: cannot create lock.json without overwriting ({type(err).__name__}); nothing was written"
+        )
+        return 4
+    except ConfigError as err:
+        out(f"startup: {err}")
         return 4
     for n, digest in sorted(lock.files.items()):
         out(f"{digest}  {n}")
     t = lock.thresholds
     out(
-        f"freeze: lock.json written (green <= {t.green_max_upper}, amber <= {t.amber_max_upper}, test_runs 0)"
+        f"freeze: lock.json written (green <= {t.green_max_upper}, amber <= {t.amber_max_upper}, test_runs 0"
+        f"{', sealed with the configured key' if lock.seal else ', NOT keyed: set sealed_key_secret_name for a client run'})"
     )
+    return 0
+
+
+def cmd_reconcile(cfg: AskdataConfig) -> int:
+    """Audited recovery: replay the sealed-run chain over lock.json (what a crash between the two left unmirrored)."""
+    try:
+        with lock_guard(cfg.paths.eval_dir):
+            before, after = _gate(cfg).reconcile()
+    except LockError as err:
+        out(f"refused: {err}")
+        return 14
+    except ConfigError as err:
+        out(f"startup: {err}")
+        return 4
+    out(f"reconcile: sealed runs in lock.json {before} -> {after} (the chain is the record)")
     return 0
 
 
@@ -159,8 +208,9 @@ def _prepare(cfg, split, k, second_look, harness_factory, use_live, smoke):
     """Everything up to and including the sealed counter. Returns an exit code (refused or startup), or the pieces
     `cmd_run` needs. For a sealed run the caller holds the lock.json OS lock around this whole function."""
     eval_dir = cfg.paths.eval_dir
+    gate = _gate(cfg)
     try:
-        lock = read_lock(eval_dir)
+        lock = gate.load() if split == "test" else read_lock(eval_dir)
         changed = verify_files(eval_dir, lock)
         if changed:
             out(
@@ -174,38 +224,45 @@ def _prepare(cfg, split, k, second_look, harness_factory, use_live, smoke):
         gold = [g for g in load_jsonl(eval_dir / gold_name, GoldItem) if g.split == split]
         adv_all = load_jsonl(eval_dir / adv_name, AdversarialItem)
     except (LockError, OSError, ValueError) as err:
-        out(f"startup: {err}")
-        return 4
+        out(f"refused: {err}" if split == "test" else f"startup: {err}")
+        return 14 if split == "test" and isinstance(err, LockError) else 4
     adv = [a for a in adv_all if a.needs_llm] if split == "test" else adv_all
     label = (
         "sealed"
         if split == "test" and lock.test_runs == 0
         else ("second look" if split == "test" else "dev")
     )
-    sink = audit_mod.local_dir_sink(cfg.paths.audit_dir)
-    if split == "test":  # the counter is also in the hash-chained audit ledger; they must agree
-        try:
-            recorded = audit_mod.sealed_run_count(sink)
-        except (OSError, ValueError, KeyError):
-            out("refused: the audit ledger cannot be read, so the sealed counter cannot be checked")
-            return 14
-        if recorded != lock.test_runs:
-            out(
-                f"refused: lock.json says {lock.test_runs} sealed run(s) but the audit ledger records {recorded}; "
-                "reconcile by hand (an edited, deleted or re-frozen lock.json must not reset the counter)"
-            )
-            return 14
+    meter = Meter(cfg.paths.meter_file)
     try:
         evalrun.sealed_gate(
             lock,
-            Meter(cfg.paths.meter_file).remaining(),
+            meter.remaining(),
             split=split,
             second_look=second_look,
             live=use_live,
+            smoke_key=_smoke_key(cfg) if use_live else None,
         )
+        if use_live and (stale := meter.stale_open()):
+            raise LockError(
+                f"{len(stale)} model call(s) from an earlier run never settled (see `meter`); check the provider "
+                "console for what they cost, then `meter --clear-open`"
+            )
     except (LockError, MeterError) as err:
         out(f"refused: {err}")
         return 14
+    if split == "test" and second_look == "harness_defect":
+        ids = {g.id for g in gold} | {a.id for a in adv_all}
+        run = lock.harness_defect_run or ""
+        if (
+            Path(run).name != run
+            or not (cfg.paths.runs_dir / run / "report.json").is_file()
+            or lock.harness_defect_item not in ids
+        ):
+            out(
+                "refused: harness_defect_run must be an existing run folder and harness_defect_item an id "
+                "in the frozen test files"
+            )
+            return 14
     run_dir = cfg.paths.runs_dir / evalrun.run_id(label)
     run_dir.mkdir(parents=True, exist_ok=True)
     try:
@@ -217,21 +274,16 @@ def _prepare(cfg, split, k, second_look, harness_factory, use_live, smoke):
         return 4
     if (
         split == "test"
-    ):  # the counter moves when the sealed set is first touched, after a successful startup
+    ):  # write-ahead: the chain first, then lock.json; a crash between is replayed by the next load
         try:
-            audit_mod.AskAudit(sink, principal="claimed:eval").sealed_run(lock.test_runs + 1)
-        except AuditUnavailable:
-            out("audit unavailable: the sealed run was not started")
+            lock = gate.begin(lock, run_dir.name)
+        except (OSError, LockError) as err:
+            out(
+                f"cannot record the sealed run ({type(err).__name__}); nothing was run. "
+                "If lock.json and the chain now differ, `eval reconcile` rolls lock.json forward"
+            )
             return EXIT_AUDIT
-        lock = lock.model_copy(
-            update={
-                "test_runs": lock.test_runs + 1,
-                "last_test_status": "aborted",
-                "harness_defect_reason": None,  # a proved defect buys one second look
-            }
-        )
-        write_lock(eval_dir, lock)
-    return lock, harness, meter, meta, gold, adv, label, run_dir
+    return lock, harness, meter, meta, gold, adv, label, run_dir, gate
 
 
 def cmd_run(
@@ -252,54 +304,70 @@ def cmd_run(
         return 14
     guard = lock_guard(eval_dir) if split == "test" else contextlib.nullcontext()
     try:
-        with guard:  # sealed: read lock -> gate -> audit record -> counter, all under one OS lock
+        with guard:  # sealed: load -> gate -> write-ahead record -> counter, all under one OS lock
             prep = _prepare(cfg, split, k, second_look, harness_factory, use_live, smoke)
     except LockError as err:
         out(f"refused: {err}")
         return 14
+    except ConfigError as err:
+        out(f"startup: {err}")
+        return 4
     if isinstance(prep, int):
         return prep
-    lock, harness, meter, meta, gold, adv, label, run_dir = prep
-    started = time.monotonic()
+    lock, harness, meter, meta, gold, adv, label, run_dir, gate = prep
+    status = "aborted"  # until a report is written; the chain/run folder decide it if this process dies first
     try:
-        results = harness.run_gold(gold)
-        adv_results = harness.run_adversarial(adv) if not harness.aborted else []
-    except HarnessError as err:
-        out(f"harness defect (not a model result): {err}")
-        return 4
-    meta = {**meta, "second_look": label == "second look", "second_look_reason": second_look}
-    report = harness.report(
-        results, adv_results, split=split, meta=meta, elapsed_s=time.monotonic() - started
-    )
-    if split == "test" and verify_files(
-        eval_dir, lock
-    ):  # a changed frozen file mid-run invalidates the run
-        report = {
-            **report,
-            "verdict": "aborted",
-            "verdict_text": "invalid: a frozen file changed during the run",
-            "aborted": "frozen_file_changed",
-        }
+        started = time.monotonic()
+        try:
+            results = harness.run_gold(gold)
+            adv_results = harness.run_adversarial(adv) if not harness.aborted else []
+        except HarnessError as err:
+            out(f"harness defect (not a model result): {err}")
+            return 4
+        meta = {**meta, "second_look": label == "second look", "second_look_reason": second_look}
+        report = harness.report(
+            results, adv_results, split=split, meta=meta, elapsed_s=time.monotonic() - started
+        )
+        if split == "test" and verify_files(
+            eval_dir, lock
+        ):  # a changed frozen file mid-run invalidates the run
+            report = {
+                **report,
+                "verdict": "aborted",
+                "verdict_text": "invalid: a frozen file changed during the run",
+                "aborted": "frozen_file_changed",
+            }
+        try:
+            snap = meter.snapshot()
+        except MeterError:
+            snap = {}
+        evalrun.write_run(run_dir, results + adv_results, report, snap)
+        status = (
+            "aborted" if report["aborted"] else "complete"
+        )  # the results exist now: nothing may call this 'aborted'
+        if smoke and use_live and split == "dev" and not report["aborted"]:
+            _record(lambda: gate.record_smoke(_smoke_key(cfg)), eval_dir)
+        out(evalrun.render_md(report))
+        out(f"run folder: {run_dir}")
+        hz = sum(v for key, v in report["hard_zeros"].items() if key != "model_followed_injection")
+        if report["aborted"]:
+            return EXIT["aborted"]
+        return EXIT["hard_zero"] if hz else EXIT[report["verdict"]]
+    finally:  # also on KeyboardInterrupt and on any crash after the results were written
+        if split == "test":
+            _record(lambda: gate.finish(run_dir.name, status), eval_dir)
+
+
+def _record(step, eval_dir: Path) -> None:
+    """Run one chain/lock bookkeeping step under the lock. A failure is reported, never allowed to hide a result:
+    the next `load()` derives the same facts from the chain and the run folder."""
     try:
-        snap = meter.snapshot()
-    except MeterError:
-        snap = {}
-    evalrun.write_run(run_dir, results + adv_results, report, snap)
-    if split == "test" or (smoke and use_live):
-        with lock_guard(eval_dir):  # re-read: another process may have changed other fields
-            cur = read_lock(eval_dir)
-            if split == "test":
-                status = "aborted" if report["aborted"] else "complete"
-                cur = cur.model_copy(update={"last_test_status": status})
-            else:
-                cur = cur.model_copy(update={"smoke_passed": not report["aborted"]})
-            write_lock(eval_dir, cur)
-    out(evalrun.render_md(report))
-    out(f"run folder: {run_dir}")
-    hz = sum(v for key, v in report["hard_zeros"].items() if key != "model_followed_injection")
-    if report["aborted"]:
-        return EXIT["aborted"]
-    return EXIT["hard_zero"] if hz else EXIT[report["verdict"]]
+        with lock_guard(eval_dir):
+            step()
+    except (OSError, LockError) as err:
+        out(
+            f"warning: could not record a sealed-run step ({type(err).__name__}); `eval reconcile` will recover it"
+        )
 
 
 def cmd_report(run_dir: Path, fmt: str = "md", dest: Path | None = None) -> int:
@@ -349,6 +417,9 @@ def main(argv: list[str]) -> int:
     r.add_argument("--live", action="store_true", help="use the config's llm entry (spends money)")
     r.add_argument("--smoke", action="store_true", help="with --live: abort on the smoke limits")
     sub.add_parser("freeze", help="write lock.json once, after dev work is final")
+    sub.add_parser(
+        "reconcile", help="roll lock.json forward over the sealed-run chain after a crash"
+    )
     rp = sub.add_parser("report")
     rp.add_argument("run_dir", type=Path)
     rp.add_argument("--format", choices=["md", "html"], default="md")
@@ -375,6 +446,8 @@ def main(argv: list[str]) -> int:
         return 4
     if args.cmd == "freeze":
         return cmd_freeze(cfg)
+    if args.cmd == "reconcile":
+        return cmd_reconcile(cfg)
     if args.k < 1 or (args.smoke and not args.live):
         out("eval run: --k must be at least 1, and --smoke needs --live")
         return 1

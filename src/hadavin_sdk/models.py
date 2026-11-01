@@ -257,6 +257,9 @@ class Reply(Shape):
     model_id: str
     stop_reason: str = "end_turn"
     latency_ms: int = 0
+    # Requests the kind sent for this one reply (1 + its retries). Only the last one produced `cost_usd`; a caller that
+    # meters spend must treat the earlier ones as possibly billed.
+    attempts: int = Field(default=1, ge=1)
 
 
 class Verdict(Shape):
