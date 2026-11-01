@@ -122,7 +122,18 @@ _NON_ASCII_HOST = re.compile(
 _FENCE = re.compile(r"^ {0,3}(`{3,}|~{3,})")
 # Terminal and text-direction control characters: an ESC sequence can rewrite what a terminal shows
 # (or make a hyperlink); bidi overrides reorder what a reader sees.
-_CONTROL = re.compile("[\x00-\x08\x0b-\x1f\x7f-\x9f\u200e\u200f\u202a-\u202e\u2066-\u2069]")
+_CONTROL_CHARS = frozenset(
+    chr(c)
+    for c in (
+        *range(0x00, 0x09),
+        *range(0x0B, 0x20),
+        *range(0x7F, 0xA0),
+        0x200E,
+        0x200F,
+        *range(0x202A, 0x202F),
+        *range(0x2066, 0x206A),
+    )
+)
 # A reference CommonMark would decode. `&amp;` itself is left: it decodes to a plain `&`.
 # ASCII: `\d` is 0-9 only, as CommonMark reads a decimal reference.
 _ENTITY = re.compile(
@@ -149,7 +160,7 @@ _INLINE_CODE = re.compile(r"(?<![`\\])(`[^`\n]+`)(?!`)")
 
 
 def strip_controls(text: str) -> str:
-    return _CONTROL.sub("", text)
+    return "".join(ch for ch in text if ch not in _CONTROL_CHARS)
 
 
 def _defang(m: re.Match[str]) -> str:

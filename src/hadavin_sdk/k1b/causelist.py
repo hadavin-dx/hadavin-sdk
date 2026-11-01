@@ -36,7 +36,7 @@ class CauseList:
 
 def _load(path: Path, name: str, limit: int) -> tuple[frozenset[str], str]:
     try:
-        raw = path.read_bytes()
+        raw = path.resolve(strict=True).read_bytes()
         data = json.loads(raw.decode("utf-8-sig"))
     except (OSError, ValueError, RecursionError) as exc:  # missing file, bad UTF-8, bad JSON
         raise ConfigError(f"cause list: {name} is missing or not valid JSON") from exc
@@ -58,7 +58,16 @@ def _load(path: Path, name: str, limit: int) -> tuple[frozenset[str], str]:
 
 
 def load_cause_list(directory: Path) -> CauseList:
-    directory = Path(directory)
+    directory = Path(directory).resolve()
+    if not directory.is_dir():
+        raise ConfigError("cause list: directory not found")
+    for fname in (
+        "services.json",
+        "fault_types.json",
+    ):  # a symlink must not lead outside the directory
+        target = (directory / fname).resolve()
+        if target.parent != directory:
+            raise ConfigError(f"cause list: {fname} must be a plain file inside the directory")
     services, s_hash = _load(directory / "services.json", "services.json", MAX_SERVICES)
     faults, f_hash = _load(directory / "fault_types.json", "fault_types.json", MAX_FAULT_TYPES)
     return CauseList(services, faults, s_hash, f_hash)
