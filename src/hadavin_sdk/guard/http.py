@@ -13,6 +13,7 @@ import http.client
 import ipaddress
 import socket
 import ssl
+import threading
 import urllib.request
 
 from hadavin_sdk.guard.egress import EgressRefused, normalise_host
@@ -24,10 +25,22 @@ LOOPBACK = frozenset({"127.0.0.1", "localhost", "::1"})
 # credentials). The AWS one over IPv6 is `fd00:ec2::254`.
 _METADATA = frozenset(
     ipaddress.ip_address(a)
-    for a in ("169.254.169.254", "100.100.100.200", "192.0.0.192", "fd00:ec2::254")
+    for a in (
+        "169.254.169.254",
+        "100.100.100.200",
+        "192.0.0.192",
+        "fd00:ec2::254",
+        "168.63.129.16",
+        "fd20:ce::254",
+    )
 )
 _BENCHMARK = ipaddress.ip_network("198.18.0.0/15")
+# NAT64 (the well-known prefix) is refused whole: an IPv6-only cluster behind DNS64/NAT64 cannot use the
+# in-process fetch and needs the egress proxy (K7) instead.
 _NAT64 = ipaddress.ip_network("64:ff9b::/96")
+RESOLVE_TIMEOUT_S = (
+    5.0  # a name lookup that takes longer is refused (getaddrinfo has no timeout of its own)
+)
 
 
 def _refused(ip: ipaddress.IPv4Address | ipaddress.IPv6Address) -> bool:
@@ -47,17 +60,39 @@ def _refused(ip: ipaddress.IPv4Address | ipaddress.IPv6Address) -> bool:
     return False
 
 
+def _resolve(host: str, port: int):
+    box: dict = {}
+
+    def lookup() -> None:
+        try:
+            box["answers"] = socket.getaddrinfo(host, port, type=socket.SOCK_STREAM)
+        except BaseException as exc:  # noqa: BLE001 - handed to the caller
+            box["error"] = exc
+
+    worker = threading.Thread(target=lookup, daemon=True, name="hadavin-resolve")
+    worker.start()
+    worker.join(RESOLVE_TIMEOUT_S)
+    if worker.is_alive():
+        raise OSError(f"{host}: the name lookup took more than {RESOLVE_TIMEOUT_S} s")
+    if "error" in box:
+        raise box["error"]
+    return box["answers"]
+
+
 def checked_connection(address, timeout=socket._GLOBAL_DEFAULT_TIMEOUT, source_address=None):
     """Resolve the host ONCE, refuse it if any answer is loopback, link-local (the cloud metadata address),
     unspecified, multicast or reserved, and connect to a checked address. The name is looked up exactly once, so
     a DNS answer that changes between the check and the connect (rebinding) cannot reach the socket; TLS still
     verifies the certificate against the NAME (the connection keeps `host` for SNI). Private ranges are allowed:
-    in-cluster services live there. An explicit loopback name (tests) is connected as it is."""
+    in-cluster services live there. An explicit loopback NAME (127.0.0.1, localhost, ::1) is connected as it is,
+    without the address check: that is for tests and local development, and tools cannot name one (a manifest host
+    may not be loopback). The LLM clients and the executor use this connection too, so a pilot or prod deployment
+    must not point their endpoints at a loopback name."""
     host, port = address
     if normalise_host(host) in LOOPBACK:
         return socket.create_connection(address, timeout, source_address)
     ips: list[str] = []
-    for _, _, _, _, sockaddr in socket.getaddrinfo(host, port, type=socket.SOCK_STREAM):
+    for _, _, _, _, sockaddr in _resolve(host, port):
         ip = ipaddress.ip_address(sockaddr[0].split("%")[0])
         if _refused(ip):
             raise EgressRefused(f"{host} resolves to a refused address")

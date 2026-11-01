@@ -338,7 +338,7 @@ class Runtime:
         self._note(run, "run", "received", inputs_hash=sha256_hex(document.hex()))
         run = self._to(run, S.WORKING)
         cited: list[str] = []  # call ids of the read-tool calls made so far
-        rmap: dict[str, str] = dict(mapping or {})
+        rmap: dict[str, str] = runmap.RunMap(mapping or {})
         calls = errors = sent_bytes = 0
         if len(document) > self._evidence.max_document_bytes:  # redaction and grounding scan it all
             self._note(run, "guard", "document", result="stopped", error_code="document_too_large")
@@ -363,6 +363,11 @@ class Runtime:
             self._save_map(run, rmap)  # before anything is sent: a crash now loses no placeholder
         except Exception:  # noqa: BLE001
             return self._evidence_unavailable(run, cited, "map")
+        if len(rmap) > self._evidence.max_map_entries:  # too many distinct values to redact cheaply
+            self._note(
+                run, "guard", "document", result="stopped", error_code="document_too_complex"
+            )
+            return self._abstain(run, S.NEEDS_PERSON, "document_too_complex", cited)
         verdict = self._screen(run, safe_text, "document")
         if verdict.flagged:
             self._note(run, "guard", "injection", result="flagged", error_code=verdict.reason_code)
@@ -478,6 +483,11 @@ class Runtime:
                     self.store.add_tool_call(record)
                 except Exception:  # noqa: BLE001 - evidence that cannot be kept cannot be cited
                     return self._evidence_unavailable(run, cited, call.name)
+                if len(rmap) > self._evidence.max_map_entries:
+                    self._note(
+                        run, "tool", call.name, result="stopped", error_code="document_too_complex"
+                    )
+                    return self._abstain(run, S.NEEDS_PERSON, "document_too_complex", cited)
                 if not out.error:  # an ERROR result is not evidence and is not listed as cited
                     cited.append(call_id)
                 self._note(
@@ -792,7 +802,7 @@ class Runtime:
                 result="stop",
             )
             return self._to(run, S.NEEDS_PERSON, "restored_unbound")
-        if bound[-1] != self._restored_digest(view):
+        if not hmac.compare_digest(bound[-1], self._restored_digest(view)):
             self._note(
                 run,
                 "gate",

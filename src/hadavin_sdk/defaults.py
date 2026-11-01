@@ -21,6 +21,9 @@ FETCH_CEILING_BYTES = (
     2 * 1024 * 1024
 )  # the most one fetch may be asked to read, whatever a source requests
 MAX_TOOL_CALLS_PER_RUN = 40  # read-tool calls one run may make
+MAX_MAP_ENTRIES = (
+    2000  # distinct values in one run's redaction map (the finders are rebuilt when it grows)
+)
 MAX_CONCURRENT_TOOL_CALLS = (
     4  # read-tool calls running at once in one process (client-side load cap, R372)
 )

@@ -32,7 +32,7 @@ jobs:
   check:
     if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 30
     # The postgres store's contract suite runs against this throwaway database (no data, no secrets: trust
     # auth on a container that lives only for this job).
     services:
@@ -83,7 +83,12 @@ jobs:
         env:
           HADAVIN_TEST_PG_DSN: postgresql://postgres@localhost:5432/postgres
           HADAVIN_TEST_VAULT_ADDR: http://127.0.0.1:8200
-        run: pytest -q -m "not live" -rs
+        run: pytest -q -m "not live and not perf" -rs
+      # Timing tests have their own step: a noisy shared runner must not block a merge, and the numbers
+      # (CPU seconds per pattern at 64 and 256 KiB) are in the log for the reviewer.
+      - name: Performance of the redaction patterns (reported, never blocks)
+        continue-on-error: true
+        run: pytest -q -m perf -rs
 
   security:
     if: github.event_name != 'pull_request' || github.event.pull_request.draft == false

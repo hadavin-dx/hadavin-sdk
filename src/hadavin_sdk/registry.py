@@ -284,6 +284,15 @@ def _load_tools(config: Config, agents: dict, contracts: dict) -> dict[str, dict
                 for op in spec.operations
                 if op not in (read_ops or set())
             ]
+            problems += [  # a POST read (a review, a query body) is named in the config, not only in tool code
+                f"{where}: tool {spec.name}: operation {op!r} is bound to {read_ops[op][0]}; "
+                "list it in evidence.post_read_operations to allow it"
+                for op in spec.operations
+                if read_ops
+                and op in read_ops
+                and read_ops[op][0] != "GET"
+                and op not in config.evidence.post_read_operations
+            ]
     if problems:
         raise ConfigError("; ".join(problems))
     return found

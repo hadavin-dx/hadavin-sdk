@@ -17,7 +17,7 @@ CREATE TABLE tool_calls (
 CREATE INDEX tool_calls_by_run ON tool_calls (run_id, created_at);
 
 -- The run's placeholder -> original map, identifier kinds only (never a secret or regulated kind). Never
--- portal-readable; the runtime role may delete it (purge only).
+-- portal-readable; the runtime role cannot delete it, only the purge role can (column-level SELECT + DELETE).
 CREATE TABLE redaction_maps (
     run_id     TEXT PRIMARY KEY,
     mapping    JSONB NOT NULL,

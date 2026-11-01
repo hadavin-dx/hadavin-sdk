@@ -1,5 +1,4 @@
-"""K5-core review round 8 (fresh independent review of head e699481, plus R371 and R372). Every test names the
-finding it closes and fails on that head."""
+"""K5-core review round 8 (fresh review of head e699481, plus R371 and R372). Each test names the finding it closes; most fail on that head."""
 
 from __future__ import annotations
 
@@ -439,7 +438,11 @@ def test_the_runtime_grant_map_has_no_delete_on_evidence():
     for table in ("tool_calls", "redaction_maps"):
         assert "DELETE" not in GRANTS[table].runtime
         assert "DELETE" in GRANTS[table].purge and "INSERT" not in GRANTS[table].purge
-    assert GRANTS["runs"].purge == "SELECT"
+    assert GRANTS["runs"].purge == "" and GRANTS["runs"].purge_cols == (
+        "run_id",
+        "state",
+        "updated_at",
+    )
     assert not any(g.portal for n, g in GRANTS.items() if n in ("tool_calls", "redaction_maps"))
 
 
@@ -574,7 +577,7 @@ def test_a_pinned_module_may_not_import_dynamically_or_relatively(
     name = _module(tmp_path, monkeypatch, "r8_dyn", body)
     pin = {name: tools_mod.module_sha256(name)}
     if refused:
-        with pytest.raises(ConfigError, match="dynamic or relative import"):
+        with pytest.raises(ConfigError, match="refused loader name"):
             tools_mod.load_tool_module(name, pin)
     else:
         tools_mod.load_tool_module(name, pin)

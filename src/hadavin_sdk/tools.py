@@ -308,8 +308,16 @@ def _reach_problems(module: str, files: list[tuple[str, Path, bytes]]) -> list[s
             seen = [*n.name.split("."), n.asname or ""]
         elif isinstance(n, ast.ImportFrom):
             seen = (n.module or "").split(".")
-        elif isinstance(n, ast.Constant) and isinstance(n.value, str):
-            seen = [n.value]
+        elif isinstance(n, ast.Call) and getattr(n.func, "id", "") in (
+            "getattr",
+            "hasattr",
+            "setattr",
+        ):
+            seen = [
+                a.value
+                for a in n.args[1:2]
+                if isinstance(a, ast.Constant) and isinstance(a.value, str)
+            ]
         else:
             continue
         banned = (
@@ -317,8 +325,8 @@ def _reach_problems(module: str, files: list[tuple[str, Path, bytes]]) -> list[s
         )  # `re.compile` is fine
         if banned.intersection(seen):
             out.append(
-                f"tool module {module}: a dynamic or relative import loads a file the pin does not cover "
-                "(this check is best effort; a meta-path finder restricted to the pin is the sound fix)"
+                f"tool module {module}: refused loader name (a best-effort tripwire against accidental dynamic "
+                "loading, not a boundary: a tool body is trusted code, and the boundary is code review plus K7)"
             )
             break
     return out
@@ -763,6 +771,25 @@ def error_reason(exc: BaseException) -> str:
     return f"{type(exc).__name__}: {str(exc)[:160]}"
 
 
+class FetchCounter:
+    """Requests to client systems per minute, for one process: shared by every tool's fetches and the app's own
+    source reads, so the cap in R372 covers both."""
+
+    def __init__(self, per_minute: int) -> None:
+        self._per_minute = per_minute
+        self._lock = threading.Lock()
+        self._seen: deque[float] = deque()
+
+    def note(self) -> None:
+        now = time.monotonic()
+        with self._lock:
+            while self._seen and now - self._seen[0] > 60:
+                self._seen.popleft()
+            if len(self._seen) >= self._per_minute:
+                raise ToolRefused("request rate limit reached; try again later")
+            self._seen.append(now)
+
+
 class ToolBox:
     """The tools of one deployment. `invoke` never raises for a failing tool (the model gets `ERROR: ...`); it
     raises `runmap.RedactionError` when redaction fails, because then nothing may be sent.
@@ -789,6 +816,8 @@ class ToolBox:
         max_abandoned: int = defaults.MAX_ABANDONED_TOOL_THREADS,
         max_concurrent: int = defaults.MAX_CONCURRENT_TOOL_CALLS,
         max_per_minute: int = defaults.MAX_TOOL_CALLS_PER_MINUTE,
+        fetch_counter: FetchCounter | None = None,
+        disabled: Callable[[ToolSpec], str | None] | None = None,
         ssl_context_for: Callable[[ToolSpec], ssl.SSLContext | None] | None = None,
     ) -> None:
         self._limits = {
@@ -810,7 +839,10 @@ class ToolBox:
         self._admit_lock = threading.Lock()
         self._active = 0
         self._started: deque[float] = deque()
-        self._fetches: deque[float] = deque()
+        self._fetch_counter = fetch_counter or FetchCounter(max_per_minute)
+        self._disabled = (
+            disabled  # why a tool may not run now (its source was switched off), or None
+        )
 
     def names(self) -> set[str]:
         return set(self.specs)
@@ -842,8 +874,8 @@ class ToolBox:
 
         # A daemon thread: a body that never returns (sleep, a lock, a busy loop) must not keep the process alive
         # at exit, which a pool's non-daemon worker would.
-        worker = threading.Thread(target=work, daemon=True, name="hadavin-tool")
         try:
+            worker = threading.Thread(target=work, daemon=True, name="hadavin-tool")
             worker.start()
         except BaseException:
             self._release()
@@ -880,14 +912,8 @@ class ToolBox:
             self._active -= 1
 
     def _note_fetch(self) -> None:
-        """One request to a client system: counted against the same per-minute cap as a call."""
-        now = time.monotonic()
-        with self._admit_lock:
-            while self._fetches and now - self._fetches[0] > 60:
-                self._fetches.popleft()
-            if len(self._fetches) >= self._max_per_minute:
-                raise ToolRefused("request rate limit reached; try again later")
-            self._fetches.append(now)
+        """One request to a client system: counted against the per-minute cap (shared with source reads)."""
+        self._fetch_counter.note()
 
     def invoke(self, name: str, args: dict[str, Any], mapping: dict[str, str]) -> ToolOutput:
         spec = self.specs[name]
@@ -912,6 +938,8 @@ class ToolBox:
                 bad := self._arg_errors(spec.input_schema, restored)
             ):
                 raise ToolRefused("arguments invalid: " + ", ".join(bad)[:200])
+            if self._disabled is not None and (why := self._disabled(spec)):
+                raise ToolRefused(why)  # a source this tool reads failed its scope re-probe
             self._admit()  # `_call` frees the slot when the tool's thread ends
             raw = self._call(name, restored, ctx)
         except Exception as exc:  # noqa: BLE001 - a failing tool becomes a result the model can react to

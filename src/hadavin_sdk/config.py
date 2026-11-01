@@ -210,6 +210,9 @@ class EvidenceSettings(_Strict):
     # Per-run ceilings (a model can loop on a cheap tool): calls, bytes sent back to the model, and how many
     # tool bodies may still be running past their deadline before further calls are refused.
     max_tool_calls_per_run: int = Field(default=defaults.MAX_TOOL_CALLS_PER_RUN, gt=0)
+    # A run whose document or tool results plant more distinct values than this ends `document_too_complex`:
+    # building the redactor over a bigger map is CPU the client's text should not be able to spend.
+    max_map_entries: int = Field(default=defaults.MAX_MAP_ENTRIES, gt=0)
     max_tool_bytes_per_run: int = Field(default=defaults.MAX_TOOL_BYTES_PER_RUN, gt=0)
     max_abandoned_tool_threads: int = Field(default=defaults.MAX_ABANDONED_TOOL_THREADS, gt=0)
     # What the agent can do to the client's systems: at most this many reads at once and per minute, whatever
@@ -226,6 +229,9 @@ class EvidenceSettings(_Strict):
     # The secret (in the secrets kind) that keys the HMAC of the restored inputs on the gate's audit event, so
     # an audit reader cannot confirm a guessed identifier offline. Required in pilot and prod.
     restored_hash_key_secret_name: str | None = None
+    # Operation ids a tool module may bind to a method other than GET (a review or a query is a POST that
+    # reads). A tool's READ_OPERATIONS declares the binding; this list is the deployment's permission for it.
+    post_read_operations: tuple[str, ...] = ()
     # How often a configured source's scope is probed again while the process runs (RBAC can widen).
     source_reprobe_s: int = Field(default=defaults.SOURCE_REPROBE_S, gt=0)
 

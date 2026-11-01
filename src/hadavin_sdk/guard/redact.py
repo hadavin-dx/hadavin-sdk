@@ -641,6 +641,48 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     ),
 ]
 
+# Every scanning bound above has a fallback that MASKS instead of letting the text through. A bound is a cost
+# ceiling, not a place for a secret to hide: past it the rest of the line (or token) is masked whole.
+#   command-line credential gap 1024  -> from the command word, the rest of the line
+#   quoted credential value 255       -> the whole quoted value
+#   URL password 1024                 -> the rest of the token
+#   e-mail local part 254             -> the whole address
+# (JWT segments of 4096 and tokens whose mix of cases comes after 128 characters are masked by the long-run
+# pattern below.) Each fallback consumes what it matches, so it stays linear on repeated text.
+PATTERNS.append(
+    (
+        "SECRET",
+        re.compile(
+            r"\b(?:(?:mysql|mariadb)(?:-?dump|-?admin)?|redis-cli|docker[ \t]+login|mongo(?:sh)?"
+            r"|az[ \t]+login|sqlcmd|ldap\w*|htpasswd|curl)\b[^\r\n]{1024}[^\r\n]*"
+        ),
+    )
+)
+for _quote in ('"', "'"):
+    PATTERNS.append(
+        (
+            "SECRET",
+            re.compile(
+                _CRED_FLAG
+                + rf"(?:{_SP}*={_SP}*|{_SP}+){_quote}[^{_quote}\n]{{256}}[^{_quote}\n]*{_quote}?"
+            ),
+        )
+    )
+PATTERNS.append(
+    (
+        "SECRET",
+        re.compile(r"(?i)\b[a-z][a-z0-9+.\-]{0,31}://[^\s:/@]{0,128}:(?=[^\s]{1025,4096}@)[^\s]*"),
+    )
+)
+PATTERNS.append(
+    (
+        "EMAIL",
+        re.compile(
+            r"(?<![A-Za-z0-9._+\-])[A-Za-z0-9._+\-]{255,}(?:@|%40)[A-Za-z0-9.\-]{1,255}\.[A-Za-z]{2,}\b"
+        ),
+    )
+)
+
 # A very long run of base64-ish characters is a blob whatever its mix of cases: the lookaheads above look at
 # the first 128 characters only, so a longer run is masked whole here (nothing escapes at the bound).
 PATTERNS.append(
@@ -821,6 +863,7 @@ def redact(
     mapping: dict[str, str] | None = None,
     near: tuple[str, ...] = (),
     _sweep_copies: bool = True,
+    _cache: dict | None = None,
 ) -> RedactionResult:
     """Scrub `text`, then prove the scrub worked.
 
@@ -828,7 +871,7 @@ def redact(
     model still sees that two log lines refer to the same host. `near`: related texts redacted apart
     (a record's other fields) whose bank words still count as bank context here, as in redact_many.
     """
-    r = _Redactor(mapping)
+    r = _Redactor(mapping, _cache)
     r.bank_near = any(_has_bank_word(strip_ansi(t)) for t in near)
     out = r.find(text)
     if _sweep_copies:  # redact_many's first pass only FINDS values; its second pass masks
@@ -845,7 +888,10 @@ def _countable(suffix: str) -> bool:
 class _Redactor:
     """One placeholder namespace (map, reverse map, counters) shared by every text of one call."""
 
-    def __init__(self, mapping: dict[str, str] | None) -> None:
+    def __init__(self, mapping: dict[str, str] | None, cache: dict | None = None) -> None:
+        self._cache = (
+            cache  # a run's built finders, reused while its map is unchanged (see runmap.RunMap)
+        )
         self.mapping = dict(mapping or {})
         self.reverse = {v: k for k, v in self.mapping.items()}
         self.counters: dict[str, int] = dict.fromkeys(_LABELS, 0)
@@ -864,6 +910,9 @@ class _Redactor:
         self._slow: list[str] = []  # values checked one by one: nested too deep for the finder
         self._ordered: list[tuple[str, str]] = []
         self.bank_near = False  # redact_many: a bank word in some string of the batch
+        if cache and cache.get("map") == self.mapping:  # nothing new since the last build: skip it
+            self._ordered, self._rules, self._finders, self._slow = cache["state"]
+            self._built_for = len(self.mapping)
 
     def find(self, text: str) -> str:
         out = strip_ansi(text)
@@ -953,6 +1002,9 @@ class _Redactor:
         except (RecursionError, re.error, OverflowError):
             self._finders, self._slow = [], list(self._rules)  # the exact per-value loop
         self._built_for = len(self.mapping)
+        if self._cache is not None:
+            self._cache["map"] = dict(self.mapping)
+            self._cache["state"] = (self._ordered, self._rules, self._finders, self._slow)
 
     def sweep(self, out: str) -> str:
         # Final literal sweep. The patterns FIND values; this masks the copies a regex boundary missed,

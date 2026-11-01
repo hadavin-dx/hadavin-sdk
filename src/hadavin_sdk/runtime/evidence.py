@@ -148,9 +148,11 @@ def grounded(
     suffixes: list[str | None] | None = None,
 ) -> bool:
     for name in identifier_inputs(contract):
-        value = inputs.get(name)
+        if name not in inputs:
+            continue  # an optional input the model left out
+        value = inputs[name]
         if not isinstance(value, str):
-            continue
+            return False  # an identifier that is not a string cannot be grounded
         if (
             runmap.canonical(value) != value
         ):  # the value the executor gets is the one that is compared

@@ -1,9 +1,7 @@
-"""K5-core review round 9 (fresh review of head bdb1f6f). Every test names the finding it closes and fails on
-that head."""
+"""K5-core review round 9 (fresh review of head bdb1f6f). Each test names the finding it closes; most fail on that head."""
 
 from __future__ import annotations
 
-import re
 import sys
 import time
 
@@ -16,40 +14,7 @@ def _redact_module():
     return sys.modules["hadavin_sdk.guard.redact"]
 
 
-# --- B1: no redaction pattern is super-linear on its own keywords repeated ----------------------------------------------------
-
-
-def _keywords(source: str) -> list[str]:
-    """The literal lower-case words a pattern is written around (`curl`, `mysql`, `password`), longest first."""
-    words = re.findall(r"(?<![\\\[\w\-])[a-z][a-z]{2,}(?:-[a-z]+)?(?![\w\]\[])", source)
-    return sorted(set(words), key=len, reverse=True)[:8]
-
-
-def _units(pattern: re.Pattern[str]) -> list[str]:
-    out = ["a.", "a-", "a.a.", "eyJa.", "a=", "http://a:"]
-    for word in _keywords(pattern.pattern):
-        out += [word + " ", word + " -", word + "="]
-    return out
-
-
-def test_every_redaction_pattern_is_linear_on_its_own_keywords_repeated():
-    slow = []
-    for name, pat in _redact_module().PATTERNS:
-        for unit in _units(pat):
-            times = []
-            for n in (8_000, 32_000):
-                text = (unit * (n // len(unit) + 1))[:n]
-                best = 1e9
-                for _ in range(
-                    2
-                ):  # the best of two: a busy machine must not look like a slow pattern
-                    t0 = time.process_time()
-                    list(pat.finditer(text))
-                    best = min(best, time.process_time() - t0)
-                times.append(best)
-            if times[1] > 0.12 and times[1] > 8 * max(times[0], 0.003):  # 4x the text, 16x the time
-                slow.append((name, unit, [round(t, 3) for t in times]))
-    assert not slow, slow
+# --- B1: command-word documents are redacted in bounded time (the pattern sweep is in test_k5_perf.py) ----------------------------------------------------
 
 
 @pytest.mark.parametrize(

@@ -184,6 +184,17 @@ def redact_untrusted(text: str, mapping: dict[str, str]) -> str:
 _UNICODE_ESCAPE = re.compile(r"\\u([0-9a-fA-F]{4})")
 
 
+class RunMap(dict):
+    """A run's redaction map. It carries the redactor's built state between calls: without it every redacted
+    string rebuilt the finders over the whole map (cost = strings x map size; a document can plant thousands of
+    distinct values). The state is per run and dies with it (R371), and it is reused only while the map is
+    unchanged."""
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.redact_cache: dict[str, Any] = {}
+
+
 def _clean(text: str) -> str:
     """NUL and lone surrogates cannot be sent or stored and can split a secret: NUL goes, a surrogate becomes
     '?'. Applied before AND after the second pass (a `\\ud800` escape decodes to a lone surrogate)."""
@@ -202,6 +213,10 @@ def _views(text: str) -> list[str]:
     return out
 
 
+def _held(text: str) -> int:
+    return len(PLACEHOLDER.findall(text))
+
+
 def redact_text(
     text: str, mapping: dict[str, str], neutralise: Callable[[str], str] | None = None
 ) -> str:
@@ -218,14 +233,16 @@ def redact_text(
         text = _clean(text)
         if neutralise is not None:
             text = neutralise(text)
-        result = redact(text, mapping=mapping)
+        cache = getattr(mapping, "redact_cache", None)
+        result = redact(text, mapping=mapping, _cache=cache)
         out, current = result.text, result.mapping
         if not text.isascii() or "\\u" in text:
             for view in _views(text):
                 if neutralise is not None:
                     view = neutralise(view)
-                again = redact(view, mapping=current)
-                if again.mapping != current:
+                again = redact(view, mapping=current, _cache=cache)
+                # a new value, or a known one only the view spells in a way pass one could not read
+                if again.mapping != current or _held(again.text) > _held(out):
                     out, current = again.text, again.mapping
         out = _clean(out)
     except Exception as exc:  # noqa: BLE001 - whatever the redactor raised, nothing is sent

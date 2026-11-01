@@ -82,6 +82,10 @@ def build(
     live = cfg.environment in deferred.LIVE
     if live and not cfg.evidence.restored_hash_key_secret_name:
         raise ConfigError("evidence.restored_hash_key_secret_name is required in pilot and prod")
+    if live and getattr(b.store, "kind", "") == "postgres" and not b.store.purge_dsn_secret_name:
+        # Only the purge role may DELETE evidence; without its DSN the purge fails every tick and the
+        # redaction maps (plaintext originals) are kept for ever.
+        raise ConfigError("backends.store.purge_dsn_secret_name is required in pilot and prod")
     if sources and live:
         # A source handed in as an object would replace a configured, probed one; live deployments use Config.sources.
         raise ConfigError("sources= is for tests; configure Config.sources in pilot and prod")
@@ -95,11 +99,12 @@ def build(
     executor_names = {
         c.executor.secret_name for c in reg.contracts.values() if c.executor.kind == "http"
     }
+    fetch_counter = tools_mod.FetchCounter(cfg.evidence.max_tool_calls_per_minute)
     disabled_sources: set[str] = (
         set()
     )  # sources switched off by a failed re-probe (tick `reprobe_sources`)
     built_sources = {
-        name: _build_source(name, sc, cfg, secrets, disabled_sources)
+        name: _build_source(name, sc, cfg, secrets, disabled_sources, fetch_counter)
         for name, sc in cfg.sources.items()
     }
     extra_secret_names = (
@@ -127,7 +132,14 @@ def build(
             "scope_inventory %s: operator-attested, format-checked only; its hash is not compared with the page",
             name,
         )
-    toolbox = _toolbox(cfg, reg, secrets)
+    toolbox = _toolbox(
+        cfg,
+        reg,
+        secrets,
+        disabled_sources=disabled_sources,
+        source_hosts={n: _source_host(sc) for n, sc in cfg.sources.items()},
+        fetch_counter=fetch_counter,
+    )
     signer = make("signer", b.signer, secrets)
     anchor = make("anchor", b.anchor, secrets)
     store = make("store", b.store, secrets)
@@ -184,7 +196,7 @@ def build(
 
     restored_key: bytes | None = None
     if key_name := cfg.evidence.restored_hash_key_secret_name:
-        restored_key = secrets.get(key_name).encode("utf-8")
+        restored_key = _restored_key(secrets, key_name)
     elif live:
         raise ConfigError("evidence.restored_hash_key_secret_name is required in pilot and prod")
     hooks = Hooks(
@@ -270,7 +282,12 @@ def _tls_context(
 
 
 def _build_source(
-    name: str, sc, cfg: Config, secrets: SecretProvider, disabled: set[str] | None = None
+    name: str,
+    sc,
+    cfg: Config,
+    secrets: SecretProvider,
+    disabled: set[str] | None = None,
+    fetch_counter: tools_mod.FetchCounter | None = None,
 ) -> Source:
     """Build a configured source: its settings validated, its fetch bound to the endpoint's host and port, the
     operation bindings of its kind, its CA, and its credential from the secrets kind."""
@@ -310,6 +327,7 @@ def _build_source(
             cluster_ports=cfg.evidence.cluster_ports,
             cluster_suffixes=cfg.evidence.cluster_suffixes,
             ssl_context=ssl_ctx,
+            on_fetch=fetch_counter.note if fetch_counter else None,
         )
         sent = dict(headers or {})
         if sc.token_secret_name:
@@ -360,7 +378,43 @@ def _unprobed_tools(cfg: Config, reg: Registry) -> list[str]:
     return sorted(set(out))
 
 
-def _toolbox(cfg: Config, reg: Registry, secrets: SecretProvider) -> tools_mod.ToolBox | None:
+MIN_RESTORED_KEY_BYTES = 16
+
+
+def _restored_key(secrets: SecretProvider, name: str) -> bytes:
+    """The key that makes the audit's hash of the restored inputs unguessable. An empty or short one would put
+    brute-forceable plain hashes of IP addresses and short names back into the audit."""
+    key = secrets.get(name).encode("utf-8")
+    if len(key) < MIN_RESTORED_KEY_BYTES:
+        raise ConfigError(f"the restored-hash key must be at least {MIN_RESTORED_KEY_BYTES} bytes")
+    return key
+
+
+def _switched_off(disabled: set[str] | None, source_hosts: dict[str, str]):
+    """Why a tool may not run: a source it reads (named in `options.source`, or on one of its hosts) failed its
+    scope re-probe and was switched off. The set is the app's own and the tick edits it."""
+
+    def why(spec: tools_mod.ToolSpec) -> str | None:
+        if not disabled:
+            return None
+        named = str(spec.options.get("source", ""))
+        if named in disabled:
+            return f"source {named} is switched off: its scope probe failed"
+        if {source_hosts[n] for n in disabled if n in source_hosts} & set(spec.hosts):
+            return "a source this tool reads is switched off: its scope probe failed"
+        return None
+
+    return why
+
+
+def _toolbox(
+    cfg: Config,
+    reg: Registry,
+    secrets: SecretProvider,
+    disabled_sources: set[str] | None = None,
+    source_hosts: dict[str, str] | None = None,
+    fetch_counter: tools_mod.FetchCounter | None = None,
+) -> tools_mod.ToolBox | None:
     """Resolve every manifest tool's function (from `tool_modules` only) and give each tool a secret reader
     limited to its own names and, if its manifest names a CA, a TLS context that trusts only that CA."""
     specs: dict[str, tools_mod.ToolSpec] = {}
@@ -404,5 +458,7 @@ def _toolbox(cfg: Config, reg: Registry, secrets: SecretProvider) -> tools_mod.T
         max_abandoned=ev.max_abandoned_tool_threads,
         max_concurrent=ev.max_concurrent_tool_calls,
         max_per_minute=ev.max_tool_calls_per_minute,
+        fetch_counter=fetch_counter,
+        disabled=_switched_off(disabled_sources, source_hosts or {}),
         ssl_context_for=lambda spec: contexts.get(spec.name),
     )
