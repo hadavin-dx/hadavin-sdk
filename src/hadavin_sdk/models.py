@@ -105,6 +105,12 @@ class Plan(Shape):
     idempotency_key: str
     expected_outcome: str
     created_at: datetime = Field(default_factory=now)
+    # What produced this proposal (K6): the agent's config hash (levels excluded), the model and the prompt.
+    # Promotion evidence counts only proposals made under the CURRENT config hash: labels on an older prompt
+    # say nothing about the new one. None on plans stored before this field existed (they never count).
+    config_hash: str | None = None
+    model_id: str | None = None
+    prompt_sha256: str | None = None
 
     @field_validator("created_at")
     @classmethod
@@ -116,7 +122,9 @@ class Plan(Shape):
 
     # A field added after v1 goes in this set: the hash leaves it out while it equals its default, so a plan stored
     # before the field existed re-hashes to the hash stored with it (tests/fixtures/plan_v1.json).
-    _HASH_OMIT_IF_DEFAULT: ClassVar[frozenset[str]] = frozenset()
+    _HASH_OMIT_IF_DEFAULT: ClassVar[frozenset[str]] = frozenset(
+        {"config_hash", "model_id", "prompt_sha256"}
+    )
 
     def hash(self) -> str:
         # Normalised here too: model_copy(update=...) and attribute assignment skip the validator.

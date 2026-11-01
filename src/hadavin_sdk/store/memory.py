@@ -51,6 +51,7 @@ class MemoryStore:
         self._levels: list[LevelEvent] = []
         self._reports: dict[date, str] = {}
         self._seen: dict[str, datetime] = {}
+        self._announced: dict[str, datetime] = {}
 
     @staticmethod
     def _get(table: dict, key: str):
@@ -298,6 +299,14 @@ class MemoryStore:
             self._seen[nonce] = at
             return True
 
+    def is_announced(self, key: str) -> bool:
+        with self._lock:
+            return key in self._announced
+
+    def mark_announced(self, key: str, at: datetime) -> None:
+        with self._lock:
+            self._announced.setdefault(key, at)
+
     def release_action(self, nonce: str) -> None:
         with self._lock:
             self._seen.pop(nonce, None)
@@ -314,12 +323,16 @@ class MemoryStore:
             found = [x for x in self._labels if x.run_id == run_id]
         return [x.model_copy(deep=True) for x in sorted(found, key=label_order)]
 
-    def list_labels_for(self, agent_id: str, action_id: str, since: datetime | None) -> list[Label]:
+    def list_labels_for(
+        self, agent_id: str, action_id: str, since: datetime | None, config_hash: str | None = None
+    ) -> list[Label]:
         with self._lock:
             runs = {
                 p.run_id
                 for p in self._plans.values()
-                if p.agent_id == agent_id and p.action_id == action_id
+                if p.agent_id == agent_id
+                and p.action_id == action_id
+                and (config_hash is None or p.config_hash == config_hash)
             }
             found = [
                 x
@@ -328,7 +341,9 @@ class MemoryStore:
             ]
         return [x.model_copy(deep=True) for x in sorted(found, key=label_order)]
 
-    def count_proposals(self, agent_id: str, action_id: str, since: datetime | None) -> int:
+    def count_proposals(
+        self, agent_id: str, action_id: str, since: datetime | None, config_hash: str | None = None
+    ) -> int:
         with self._lock:
             return sum(
                 1
@@ -336,6 +351,7 @@ class MemoryStore:
                 if p.agent_id == agent_id
                 and p.action_id == action_id
                 and (since is None or p.created_at >= since)
+                and (config_hash is None or p.config_hash == config_hash)
             )
 
     def list_labels_between(self, start: datetime, end: datetime) -> list[Label]:

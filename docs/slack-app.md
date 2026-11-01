@@ -20,6 +20,12 @@ kill switch (admin rights `stop` and `reset`); in pilot and prod this is the onl
 `hadavin-sdk limits reset --by NAME` is refused there (a typed name is not a person). `limits stop` still works from
 the CLI as the emergency path.
 
+**Rotating the signing secret:** put the new secret in the secrets backend under the configured name and restart the
+receiver; requests signed with the old one are refused. Click nonces older than the signature window need no handling.
+Pin the workspace with `policy.allowed_team_id` in `baseline.yaml` so a click from another workspace that shares the
+secret is refused; the Slack payload shape is parsed in `approvals/hmac_v0.py` only (another channel kind brings its
+own `parse_action`).
+
 A line owner's "Clear demotion" does not erase a pattern of recent mistakes: the `wrong` labels still inside the 14-day
 window keep counting, so one new `wrong` demotes the action again at once while two older ones remain. The demotion
 card says "Recent wrongs still count until <date>". This is intended.

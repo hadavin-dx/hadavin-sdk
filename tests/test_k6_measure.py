@@ -109,6 +109,7 @@ class World:
         reason="shadow",
         plan=True,
         rid=None,
+        config_hash=None,
     ):
         self.n += 1
         rid = rid or f"run-{self.n:03d}"
@@ -138,6 +139,7 @@ class World:
                     idempotency_key=rid,
                     expected_outcome="healthy",
                     created_at=created + timedelta(seconds=30),
+                    config_hash=config_hash or self.reg.config_hash("test-agent"),
                 )
             )
         return rid
@@ -149,18 +151,30 @@ class World:
         self.box[0] = NOW
         return res
 
-    def labelled(self, name, count, *, when=None, action=ACTION):
+    def labelled(self, name, count, *, when=None, action=ACTION, who=None, config_hash=None):
         ids = []
-        for _ in range(count):
-            rid = self.run(action=action, created=(when or NOW) - timedelta(hours=1))
-            assert self.label(rid, name, when=when).ok
+        for i in range(count):
+            rid = self.run(
+                action=action, created=(when or NOW) - timedelta(hours=1), config_hash=config_hash
+            )
+            assert self.label(rid, name, who=who[i % len(who)] if who else "u1", when=when).ok
             ids.append(rid)
         return ids
 
-    def click(self, user, value, *, secret=SECRET, ts=None):
-        body = urlencode(
-            {"payload": json.dumps({"user": {"id": user}, "actions": [{"value": value}]})}
-        ).encode()
+    def clear_value(self, agent="test-agent", action=ACTION):
+        """The clear button's value: bound to the newest level event (the demotion it was posted for)."""
+        events = [
+            e
+            for e in self.store.list_level_events()
+            if (e.agent_id, e.action_id) == (agent, action)
+        ]
+        return f"clear|{agent}|{action}|{events[-1].seq}"
+
+    def click(self, user, value, *, secret=SECRET, ts=None, team=None):
+        payload = {"user": {"id": user}, "actions": [{"value": value}]}
+        if team is not None:
+            payload["team"] = {"id": team}
+        body = urlencode({"payload": json.dumps(payload)}).encode()
         ts = int((ts or NOW).timestamp())
         headers = hmac_v0.sign(body, ts, secret, "X-Hadavin")
         approvals = Approvals(
@@ -181,7 +195,12 @@ def test_k6_label_payload_with_pipe_parses_and_colon_is_refused():
     assert measure.parse_action_value("label|run-1|wrong") == measure.ParsedAction(
         "label", ("run-1", "wrong")
     )
-    assert measure.parse_action_value("clear|test-agent|restart_service")
+    assert measure.parse_action_value("clear|test-agent|restart_service|7") == measure.ParsedAction(
+        "clear", ("test-agent", "restart_service", "7")
+    )
+    assert (
+        measure.parse_action_value("clear|test-agent|restart_service") is None
+    )  # not bound to a demotion
     assert measure.parse_action_value("label:run-1:wrong") is None  # the colon form is not ours
     for bad in (
         "label|run-1",
@@ -189,8 +208,9 @@ def test_k6_label_payload_with_pipe_parses_and_colon_is_refused():
         "label|run-1|WRONG",
         "label|run 1|wrong",
         "label||wrong",
-        "clear|a|b|c",
+        "clear|a|b|c|d",
         "clear|a",
+        "clear|a|b|x",
         "",
     ):
         assert measure.parse_action_value(bad) is None, bad
@@ -216,7 +236,7 @@ def test_k6_harmful_demotes(w):
     # The line owner gets a card with the signed Clear button; the demotion is audited.
     (card,) = w.channel.cards
     values = [b["value"] for blk in card.blocks if blk["kind"] == "buttons" for b in blk["buttons"]]
-    assert values == [f"clear|test-agent|{ACTION}"]
+    assert values == [w.clear_value()]  # the button names the demotion it was posted for
     assert any(e.operation == "demote" for e in w.audit.events())
 
 
@@ -385,7 +405,7 @@ def test_k6_reject_is_caught_by_human_reject(w):
 
 def test_k6_only_a_line_owner_can_clear_a_demotion(w):
     w.label(w.run(), "harmful")
-    value = f"clear|test-agent|{ACTION}"
+    value = w.clear_value()
     assert w.click("u1", value)[0] == 200  # a labeller has no admin right
     assert w.store.current_overrides()
     assert [e.result for e in w.audit.events() if e.operation == "clear"] == ["refused"]
@@ -428,7 +448,7 @@ def test_k6_signed_reset_that_cannot_be_audited_does_not_happen(w):
 def test_k6_clear_store_failure_is_a_non_2xx(w):
     w.label(w.run(), "harmful")
     w.store.clear_demotion = lambda ev, seq: (_ for _ in ()).throw(OSError("down"))
-    assert w.click("owner", f"clear|test-agent|{ACTION}")[0] == 503
+    assert w.click("owner", w.clear_value())[0] == 503
 
 
 # --- abstain labels and the two error rates --------------------------------------------------------------
@@ -578,7 +598,9 @@ def _replay_record(w, **kw) -> ReplayRecord:
 def _ready(w, action="create_draft_record", agree=26, partial=3, wrong=1):
     """30 labelled proposals: 26 agree, 3 partial, 1 wrong (the minimum that passes)."""
     for name, n in (("agree", agree), ("partial", partial), ("wrong", wrong)):
-        w.labelled(name, n, when=day(9), action=action)
+        w.labelled(
+            name, n, when=day(9), action=action, who=("u1", "u2")
+        )  # two people, as 6.1 now requires
 
 
 def test_k6_promote_check_refuses_below_the_numbers(w):
@@ -635,7 +657,6 @@ def test_k6_promote_check_refuses_without_replay_record(w):
     assert [p for p in res.problems if "no green replay record" in p]
     assert not (w.reg.config.root / "promotions").exists()
     # A record for another prompt does not count either.
-    _replay_record(w).model_copy(update={"prompt_sha256": "0" * 64})
     stale = _replay_record(w)
     path = w.reg.config.root / "replay-records.jsonl"
     lines = path.read_text(encoding="utf-8").splitlines()
@@ -766,15 +787,18 @@ def test_k6_report_says_no_breach_when_inside(w):
     assert "ceiling: 0 of 4 in the last 90 days, breached no" in w.measure.render_report(WEEK, NOW)
 
 
-def test_k6_ceiling_breach_demotes_all(w):
-    w.labelled("agree", 2, when=day(7))
-    w.labelled("harmful", 1, when=day(5))
-    w.store._levels.clear()  # keep only what the ceiling itself writes
-    added = w.measure.enforce(NOW)
-    pairs = {(a, x) for a, x in w.measure._pairs()}
-    assert {(e.agent_id, e.action_id) for e in added} == pairs and len(pairs) >= 4
-    assert all(e.reason.startswith("ceiling:") and e.kind == "demote" for e in added)
-    assert set(w.store.current_overrides()) == pairs
+def test_k6_ceiling_breach_demotes_what_can_be_demoted_and_tells_the_owner(w):
+    _suggest_world(
+        w
+    )  # only create_draft_record is at suggest: the only thing a breach has to demote
+    w.labelled("agree", 2, when=day(7), action="create_draft_record")
+    w.labelled("harmful", 1, when=day(5), action="create_draft_record")
+    # the harmful label itself triggered the check (no waiting for the tick): the rows are already there
+    assert w.measure.enforce(NOW) == []
+    rows = [e for e in w.store.list_level_events() if e.reason.startswith("ceiling:")]
+    assert {(e.agent_id, e.action_id) for e in rows} == {
+        ("test-agent", "create_draft_record")
+    }  # not the shadow ones
     assert any(
         who == "fake:owner" and "Ceiling breached: 1 of 3" in text
         for who, text in w.channel.notices
@@ -784,22 +808,33 @@ def test_k6_ceiling_breach_demotes_all(w):
     assert w.measure.enforce(NOW) == [] and len(w.channel.notices) == n
 
 
-def test_k6_a_ceiling_demotion_cannot_be_cleared_while_the_ceiling_is_breached(w):
-    w.labelled("harmful", 1, when=day(5))
+def test_k6_a_shadow_only_pilot_breaches_without_writing_a_demotion_row(w):
+    w.labelled("harmful", 1, when=day(5))  # every action is at shadow: nothing to demote
+    assert w.measure.ceiling_status(NOW).breached
     w.measure.enforce(NOW)
-    # "Every action is shadow" is what the breach notice said, so it must stay true until the breach is over.
-    assert w.measure.clear("fake:owner", "test-agent", ACTION) == (200, "ceiling_breached")
-    assert ("test-agent", ACTION) in w.store.current_overrides()
+    assert [e for e in w.store.list_level_events() if e.reason.startswith("ceiling:")] == []
+    assert any(
+        "Ceiling breached" in text for _, text in w.channel.notices
+    )  # but the owner is told, once
+    n = len(w.channel.notices)
+    w.measure.enforce(NOW)
+    assert len(w.channel.notices) == n
+
+
+def test_k6_a_ceiling_demotion_cannot_be_cleared_while_the_ceiling_is_breached(w):
+    _suggest_world(w)
+    w.labelled("harmful", 1, when=day(5), action="create_draft_record")
+    w.measure.enforce(NOW)
+    pair = ("test-agent", "create_draft_record")
+    # "Every action at suggest is shadow" is what the breach notice said, so it must stay true until it is over.
+    assert w.measure.clear("fake:owner", *pair) == (200, "ceiling_breached")
+    assert pair in w.store.current_overrides()
     assert [
         e.error_code for e in w.audit.events() if e.operation == "clear" and e.result == "refused"
     ] == ["ceiling_breached"]
-    # The sponsor raises max in writing: the breach is over, and now the owner's clear holds.
+    # The sponsor raises max in writing: the breach is over; clearing then meets the next guard (the evidence).
     w.measure.ceiling = Ceiling(CEIL.metric, 1, CEIL.window_days, CEIL.source)
-    assert w.measure.clear("fake:owner", "test-agent", ACTION) == (200, "cleared")
-    assert w.measure.enforce(NOW) == []
-    assert ("test-agent", ACTION) not in w.store.current_overrides()
-    w.labelled("harmful", 1, when=day(1))  # 2 > 1: a new breach episode
-    assert any(e.reason.startswith("ceiling:") for e in w.measure.enforce(NOW))
+    assert w.measure.clear("fake:owner", *pair) == (200, "evidence_below_6_1")
 
 
 def _suggest_world(w):
@@ -1033,17 +1068,26 @@ def test_k6_pilot_build_with_both_starts_and_wires_measure(tmp_path):
 def test_k6_report_prints_backlog(w):
     text = w.measure.render_report(WEEK, NOW)
     assert "## Backlog" not in text  # without K4 nothing is printed
-    w.store.save_tick_state(
-        TickState(
-            step="backlog",
-            last_run_at=NOW,
-            detail={"oldest_received_age_s": 840, "events_received_count": 3, "late_starts": 2},
-        )
-    )
+    detail = {
+        "week": WEEK.isoformat(),
+        "max_oldest_received_age_s": 840,
+        "late_starts": 2,
+        "late_threshold_s": 600,
+        "events_received_count": 3,
+    }
+    w.store.save_tick_state(TickState(step="backlog", last_run_at=NOW, detail=detail))
     text = w.measure.render_report(WEEK, NOW)
     assert "## Backlog" in text
-    assert "oldest_received_age_s: 840" in text
-    assert "later than 10 minutes: 2" in text
+    assert (
+        "Maximum oldest_received_age_s: 840" in text
+    )  # the weekly maximum K4 recorded, verbatim key
+    assert "later than 10 minutes (K4's threshold): 2" in text  # counted against K4's own threshold
+    # A row for another week is not this week's: the report says so instead of printing it.
+    w.store.save_tick_state(
+        TickState(step="backlog", last_run_at=NOW, detail={**detail, "week": "2026-10-19"})
+    )
+    other = w.measure.render_report(WEEK, NOW)
+    assert "were not recorded" in other and "840" not in other
     # A backlog row with no detail prints nothing.
     w.store.save_tick_state(TickState(step="backlog", last_run_at=NOW))
     assert "## Backlog" not in w.measure.render_report(WEEK, NOW)
@@ -1111,7 +1155,7 @@ def test_k6_report_lists_wrong_harmful_holds_and_flags(w):
     text = w.measure.render_report(WEEK, NOW)
     assert "FLAG: label coverage 75% is below 80%" in text
     assert "FLAG: wrong labels rose from 0 to 2" in text  # the week before had none
-    assert re.search(r"redaction map purged by 20\d\d-\d\d-\d\d \(400 days from the run\)", text)
+    assert "## Held runs" in text and "purged at the retention maximum" in text  # K5 owns the dates
     assert "test-agent.restart_service: labelled n=6" in text
     assert "UTC /" in text and "IST" in text
     assert "not recorded yet" in text  # K4 failed events and K7 commit SHAs are stated as absent
@@ -1668,7 +1712,7 @@ def test_k6_a_replayed_reset_does_not_lift_a_newer_stop(w):
 def test_k6_a_replayed_clear_does_not_undo_a_new_demotion(w):
     rid = w.run()
     w.label(rid, "harmful")
-    value = f"clear|test-agent|{ACTION}"
+    value = w.clear_value()
     w.measure.ceiling = Ceiling(CEIL.metric, 5, CEIL.window_days, CEIL.source)
     assert w.click("owner", value, ts=NOW)[0] == 200
     assert not w.store.current_overrides()

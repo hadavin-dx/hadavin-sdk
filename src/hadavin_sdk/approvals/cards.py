@@ -95,7 +95,9 @@ def render_shadow(
     return _card("\n".join(lines), buttons)
 
 
-def render_demotion(agent_id: str, action_id: str, reason: str, note: str | None = None) -> Card:
+def render_demotion(
+    agent_id: str, action_id: str, reason: str, note: str | None = None, seq: int | None = None
+) -> Card:
     """Posted when an action drops back to shadow. The button is the line owner's signed clear (K6)."""
     lines = [
         f"Level lowered: {agent_id} / {action_id} is shadow again.",
@@ -106,7 +108,7 @@ def render_demotion(agent_id: str, action_id: str, reason: str, note: str | None
     button = {
         "id": "clear_override",
         "label": "Clear demotion",
-        "value": f"clear|{agent_id}|{action_id}",
+        "value": f"clear|{agent_id}|{action_id}|{seq if seq is not None else 0}",  # bound to this demotion
     }
     return _card("\n".join(lines), [button])
 

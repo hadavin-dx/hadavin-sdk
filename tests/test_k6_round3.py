@@ -12,7 +12,7 @@ import pytest
 from hadavin_sdk import measure
 from hadavin_sdk.measure import Ceiling
 from hadavin_sdk.models import RunState
-from tests.test_k6_measure import ACTION, CEIL, NOW, WEEK, World, day
+from tests.test_k6_measure import ACTION, CEIL, NOW, WEEK, World, _suggest_world, day
 
 S = RunState
 
@@ -25,19 +25,24 @@ def demotions(w):
 
 
 def test_r3_clear_is_refused_while_breached_even_when_a_later_wrong_episode_demoted_last(tmp_path):
-    w = World(tmp_path, ceiling=Ceiling(CEIL.metric, 0, 90, CEIL.source))
-    w.labelled("harmful", 1, when=day(5))
+    w = World(tmp_path, ceiling=None)
+    _suggest_world(w)
+    act, pair = "create_draft_record", ("test-agent", "create_draft_record")
+    w.labelled("harmful", 1, when=day(5), action=act)
+    w.measure.ceiling = Ceiling(
+        CEIL.metric, 0, 90, CEIL.source
+    )  # the sponsor's ceiling comes into force
     assert any(e.reason.startswith("ceiling:") for e in w.measure.enforce(NOW))
     w.labelled(
-        "wrong", 3, when=day(2)
+        "wrong", 3, when=day(2), action=act
     )  # a wrong-episode demotion is now the LAST event of the action
     assert demotions(w)[-1].reason.startswith("wrongs:")
     assert w.measure.ceiling_status().breached
-    assert w.measure.clear("fake:owner", "test-agent", ACTION) == (200, "ceiling_breached")
-    assert ("test-agent", ACTION) in w.store.current_overrides()
-    # once the sponsor raises max in writing the breach is over and the owner may clear
+    assert w.measure.clear("fake:owner", *pair) == (200, "ceiling_breached")
+    assert pair in w.store.current_overrides()
+    # once the sponsor raises max in writing the breach is over; the owner then meets the evidence guard
     w.measure.ceiling = Ceiling(CEIL.metric, 5, 90, CEIL.source)
-    assert w.measure.clear("fake:owner", "test-agent", ACTION) == (200, "cleared")
+    assert w.measure.clear("fake:owner", *pair) == (200, "evidence_below_6_1")
 
 
 # --- 2: a click that did not take effect gives its nonce back ------------------------------------------------------
@@ -236,8 +241,12 @@ def test_r3_an_unreadable_audit_never_shows_zero_lowered_verdicts(tmp_path):
 
 
 def test_r3_two_enforce_passes_at_once_audit_and_announce_once(tmp_path):
-    w = World(tmp_path, ceiling=Ceiling(CEIL.metric, 0, 90, CEIL.source))
-    w.labelled("harmful", 1, when=day(5))
+    w = World(tmp_path, ceiling=None)
+    _suggest_world(w)
+    w.labelled("harmful", 1, when=day(5), action="create_draft_record")
+    w.measure.ceiling = Ceiling(
+        CEIL.metric, 0, 90, CEIL.source
+    )  # in force now: two passes race to demote
     base = len([e for e in w.audit.events() if e.operation == "demote"])
     cards = len(w.channel.cards)
     results = []
@@ -255,7 +264,7 @@ def test_r3_two_enforce_passes_at_once_audit_and_announce_once(tmp_path):
     inserted = sum(len(r) for r in results)
     ceiling_rows = [e for e in demotions(w) if e.reason.startswith("ceiling:")]
     assert (
-        inserted == len(ceiling_rows) == len(w.measure._pairs())
+        inserted == len(ceiling_rows) == len(w.measure._at_suggest()) == 1
     )  # each row once, however many passes ran
     assert len([e for e in w.audit.events() if e.operation == "demote"]) == base + len(ceiling_rows)
     assert len(w.channel.cards) == cards  # ceiling demotions send a breach notice, not a card each
@@ -269,7 +278,7 @@ def test_r3_two_enforce_passes_at_once_audit_and_announce_once(tmp_path):
 
 def test_r3_old_click_nonces_are_purged_and_recent_ones_kept(tmp_path):
     w = World(tmp_path)
-    w.store.claim_action("old", NOW - timedelta(minutes=11))
+    w.store.claim_action("old", NOW - timedelta(minutes=16))
     w.store.claim_action("recent", NOW - timedelta(minutes=2))
     assert w.measure.purge_seen(NOW) == 1  # older than twice the five-minute signature window
     assert w.store.claim_action("old", NOW) is True  # gone

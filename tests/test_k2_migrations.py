@@ -162,7 +162,7 @@ def test_every_plan_field_after_v1_is_in_the_omit_set():
 
 def test_a_new_field_at_its_default_leaves_the_v1_hash_and_a_set_value_changes_it():
     class PlanV2(Plan):
-        _HASH_OMIT_IF_DEFAULT: ClassVar[frozenset[str]] = frozenset({"note"})
+        _HASH_OMIT_IF_DEFAULT: ClassVar[frozenset[str]] = Plan._HASH_OMIT_IF_DEFAULT | {"note"}
         note: str = ""
 
     stored = json.loads(FIXTURE.read_text(encoding="utf-8"))
@@ -418,7 +418,7 @@ def test_plan_hash_works_with_a_data_dependent_default_factory():
     from pydantic import Field
 
     class PlanV2(Plan):
-        _HASH_OMIT_IF_DEFAULT: ClassVar[frozenset[str]] = frozenset({"label"})
+        _HASH_OMIT_IF_DEFAULT: ClassVar[frozenset[str]] = Plan._HASH_OMIT_IF_DEFAULT | {"label"}
         label: str = Field(default_factory=lambda data: data["action_id"])
 
     stored = json.loads(FIXTURE.read_text(encoding="utf-8"))

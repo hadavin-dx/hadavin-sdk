@@ -363,6 +363,9 @@ def measure_cmd(app, args) -> int:
     measure = app.measure
     if args.cmd == "promote-check":
         res = measure.promote_check(args.agent, args.action)
+        if res.refused:
+            print(f"refused: {res.problems[0]}", file=sys.stderr)
+            return 2
         if res.ok:
             print(f"promotion evidence written: {res.path}")
             return 0

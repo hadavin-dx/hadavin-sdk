@@ -134,15 +134,15 @@ def test_class_every_signed_measure_action_kind_is_replay_guarded(tmp_path):
     silent = w.run(plan=False, state=RunState.NO_ACTION, reason=None)
     text = f"run_id,label\n{rid},agree\n"
     w.measure.import_csv(text, "fake:u1")
+    w.label(w.run(), "harmful")  # something for the clear to act on
     clicks = [
         ("u1", f"label|{rid}|partial"),
         ("u2", f"label|{silent}|missed"),
         ("ops", "stop"),
         ("ops", "reset"),
-        ("owner", f"clear|test-agent|{ACTION}"),
+        ("owner", w.clear_value()),
         ("owner", f"approve_import|{measure.csv_import_id(text)}"),
     ]
-    w.label(w.run(), "harmful")  # something for the clear to act on
     for i, (user, value) in enumerate(clicks):
         ts = NOW + timedelta(seconds=i)
         w.click(user, value, ts=ts)

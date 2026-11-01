@@ -141,6 +141,14 @@ class Store(Protocol):
         """Record a nonce; False when it was already seen (a replay, or a claim someone else holds)."""
         ...
 
+    def is_announced(self, key: str) -> bool:
+        """Was this announcement really delivered (see `mark_announced`)?"""
+        ...
+
+    def mark_announced(self, key: str, at: datetime) -> None:
+        """Record that an announcement was delivered; permanent, idempotent."""
+        ...
+
     def release_action(self, nonce: str) -> None:
         """Forget a nonce (the click failed before it took effect, so the same signed request may be delivered
         again; or a claim is given back)."""
@@ -155,12 +163,18 @@ class Store(Protocol):
         """Every label of the run, oldest first."""
         ...
 
-    def list_labels_for(self, agent_id: str, action_id: str, since: datetime | None) -> list[Label]:
-        """Labels of runs whose plan is for (agent, action), created at or after `since` (None: all), oldest first."""
+    def list_labels_for(
+        self, agent_id: str, action_id: str, since: datetime | None, config_hash: str | None = None
+    ) -> list[Label]:
+        """Labels of runs whose plan is for (agent, action), created at or after `since` (None: all), oldest first.
+        With `config_hash`, only runs whose plan was made under that config hash."""
         ...
 
-    def count_proposals(self, agent_id: str, action_id: str, since: datetime | None) -> int:
-        """Plans for (agent, action) created at or after `since` (None: all)."""
+    def count_proposals(
+        self, agent_id: str, action_id: str, since: datetime | None, config_hash: str | None = None
+    ) -> int:
+        """Plans for (agent, action) created at or after `since` (None: all); with `config_hash`, only those made
+        under that config hash."""
         ...
 
     def list_labels_between(self, start: datetime, end: datetime) -> list[Label]:

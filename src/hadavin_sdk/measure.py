@@ -34,7 +34,7 @@ import logging
 import re
 from collections import Counter
 from collections.abc import Callable
-from dataclasses import dataclass, field, replace
+from dataclasses import asdict, dataclass, field, replace
 from datetime import UTC, date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -90,6 +90,7 @@ class Thresholds:
     max_wrong_harmful: int
     harmful_window_days: int
     min_coverage: float
+    min_labellers: int
 
 
 @dataclass(frozen=True)
@@ -105,22 +106,28 @@ class Policy:
     promotion_max_wrong_harmful: int = 1
     promotion_harmful_window_days: int = 28
     promotion_min_coverage: float = 0.80
+    # distinct people whose labels the evidence rests on (one person cannot supply all of it)
+    promotion_min_labellers: int = 2
     # automatic demotion: this many `wrong` runs inside this many days (a harmful label always demotes at once)
     wrong_limit: int = 3
     wrong_window_days: int = 14
-    # redaction maps of held runs are purged at this age whatever the hold (kernel 6.3; the ceiling is 400)
-    held_maps_max_days: int = 400
-    # an event started later than this after it was received counts as late in the backlog lines of the report
-    late_start_s: int = 600
+    # the weekly report flags a rise in wrong labels of at least this many over the week before
+    wrong_rise_flag_min: int = 1
+    # the one team (workspace) id whose signed clicks are acted on; "" = not checked. Set per client in baseline.yaml
+    allowed_team_id: str = ""
+    # The numbers above may not be weaker than the spec's (the defaults here) unless this is true, which is then
+    # printed in every report and written into every promotion file.
+    allow_weaker_than_spec: bool = False
     # how the report shows local time beside UTC (studio convention: UTC and IST)
     report_local_offset_minutes: int = 330
     report_local_label: str = "IST"
-    # tick cadence: the demotion/ceiling re-check and the click-nonce purge
+    # tick cadence: the demotion/ceiling re-check (also retries unannounced cards and notices; at most 300) and the
+    # click-nonce purge
     enforce_every_s: int = 300
     purge_every_s: int = 300
-    # how long a click nonce is kept; at least twice the signature window (the window itself is the channel
+    # how long a click nonce is kept; at least three times the signature window (the window itself is the channel
     # protocol's, `approvals.hmac_v0.MAX_AGE_S`, not policy)
-    seen_actions_keep_s: int = 600
+    seen_actions_keep_s: int = 900
 
     def thresholds(self) -> Thresholds:
         return Thresholds(
@@ -129,6 +136,7 @@ class Policy:
             self.promotion_max_wrong_harmful,
             self.promotion_harmful_window_days,
             self.promotion_min_coverage,
+            self.promotion_min_labellers,
         )
 
     @property
@@ -160,7 +168,7 @@ def _policy_from(raw: Any) -> Policy:
     out: dict[str, Any] = {}
     for key, value in raw.items():
         want = type(getattr(default, key))
-        ok = isinstance(value, want) and not isinstance(value, bool)
+        ok = isinstance(value, want) and (want is bool or not isinstance(value, bool))
         if want is float:
             ok = isinstance(value, int | float) and not isinstance(value, bool)
         if not ok:
@@ -173,12 +181,12 @@ def _policy_from(raw: Any) -> Policy:
         "promotion_harmful_window_days": (1, 3650),
         "wrong_limit": (1, 1000),
         "wrong_window_days": (1, 3650),
-        "held_maps_max_days": (1, 400),
-        "late_start_s": (1, 10**6),
+        "promotion_min_labellers": (1, 1000),
+        "wrong_rise_flag_min": (1, 10**6),
         "report_local_offset_minutes": (-720, 840),
-        "enforce_every_s": (0, 86400),
+        "enforce_every_s": (1, 300),
         "purge_every_s": (0, 86400),
-        "seen_actions_keep_s": (2 * MAX_AGE_S, 10**7),
+        "seen_actions_keep_s": (3 * MAX_AGE_S, 10**7),
     }
     for key, (low, high) in bounds.items():
         if not low <= getattr(p, key) <= high:
@@ -186,6 +194,31 @@ def _policy_from(raw: Any) -> Policy:
     for key in ("promotion_min_agree", "promotion_min_coverage"):
         if not 0 < getattr(p, key) <= 1:
             raise ConfigError(f"{BASELINE_FILE}: policy.{key} must be above 0 and at most 1")
+    if not p.allow_weaker_than_spec:
+        spec = DEFAULT_POLICY
+        weaker = [
+            k
+            for k, bad in {
+                "promotion_min_labelled": p.promotion_min_labelled < spec.promotion_min_labelled,
+                "promotion_min_agree": p.promotion_min_agree < spec.promotion_min_agree,
+                "promotion_max_wrong_harmful": p.promotion_max_wrong_harmful
+                > spec.promotion_max_wrong_harmful,
+                "promotion_harmful_window_days": p.promotion_harmful_window_days
+                < spec.promotion_harmful_window_days,
+                "promotion_min_coverage": p.promotion_min_coverage < spec.promotion_min_coverage,
+                "promotion_min_labellers": p.promotion_min_labellers < spec.promotion_min_labellers,
+                "wrong_limit": p.wrong_limit > spec.wrong_limit,
+                "wrong_window_days": p.wrong_window_days < spec.wrong_window_days,
+            }.items()
+            if bad
+        ]
+        if weaker:
+            raise ConfigError(
+                f"{BASELINE_FILE}: policy.{', '.join(weaker)} is weaker than the spec's number; "
+                "set policy.allow_weaker_than_spec: true to say so on purpose (it is printed in every report)"
+            )
+    if p.allowed_team_id and not re.fullmatch(r"[A-Za-z0-9_-]{1,40}", p.allowed_team_id):
+        raise ConfigError(f"{BASELINE_FILE}: policy.allowed_team_id must be a plain id")
     if not re.fullmatch(r"[A-Za-z0-9+:_-]{1,12}", p.report_local_label):
         raise ConfigError(f"{BASELINE_FILE}: policy.report_local_label must be a short plain label")
     return p
@@ -202,7 +235,7 @@ class ParsedAction:
 
 def parse_action_value(value: str) -> ParsedAction | None:
     """A button value the measurement owns, or None (an approval value is not ours). The separator is ``|`` and the
-    first field names the kind: ``label|<run_id>|<label>`` or ``clear|<agent_id>|<action_id>``. A ``:`` payload or
+    first field names the kind: ``label|<run_id>|<label>`` or ``clear|<agent_id>|<action_id>|<seq>``. A ``:`` payload or
     an unknown label is refused."""
     parts = value.split("|")
     if len(parts) == 3 and parts[0] == "label":
@@ -211,8 +244,15 @@ def parse_action_value(value: str) -> ParsedAction | None:
         )  # cards posted before K6 carried `should_have_answered`
         if _ID.fullmatch(parts[1]) and name in LABELS:
             return ParsedAction("label", (parts[1], name))
-    if parts[0] == "clear" and len(parts) == 3 and all(_NAME.fullmatch(p) for p in parts[1:]):
-        return ParsedAction("clear", (parts[1], parts[2]))
+    if (
+        parts[0] == "clear"
+        and len(parts) == 4
+        and all(_NAME.fullmatch(p) for p in parts[1:3])
+        and parts[3].isdigit()
+    ):
+        return ParsedAction(
+            "clear", (parts[1], parts[2], parts[3])
+        )  # the demotion's seq binds the button
     if parts[0] in ("stop", "reset") and len(parts) == 1:  # the kill switch, by a signed action
         return ParsedAction(parts[0], ())
     if parts[0] == "approve_import" and len(parts) == 2 and re.fullmatch(r"[0-9a-f]{64}", parts[1]):
@@ -346,6 +386,8 @@ class Numbers:
     coverage: float
     agree_rate: float
     upper_bound: float | None  # 95 % upper bound on the wrong-or-harmful rate
+    labellers: int = 0  # distinct people behind the labels
+    top_labeller_share: float = 0.0  # the busiest labeller's share of the labels
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -359,6 +401,8 @@ class Numbers:
             "coverage": round(self.coverage, 4),
             "agree_rate": round(self.agree_rate, 4),
             "upper_bound": None if self.upper_bound is None else round(self.upper_bound, 4),
+            "labellers": self.labellers,
+            "top_labeller_share": round(self.top_labeller_share, 4),
         }
 
 
@@ -373,6 +417,7 @@ def numbers_for(
     cutoff = at - timedelta(days=th.harmful_window_days)
     recent = sum(1 for x in mine.values() if x.label == "harmful" and x.created_at >= cutoff)
     bad = count["wrong"] + count["harmful"]
+    people = Counter(x.principal_id for x in mine.values())
     return Numbers(
         proposals=proposals,
         labelled=n,
@@ -384,6 +429,8 @@ def numbers_for(
         coverage=(n / proposals) if proposals else 0.0,
         agree_rate=(count["agree"] / n) if n else 0.0,
         upper_bound=upper_error_bound(bad, n),
+        labellers=len(people),
+        top_labeller_share=(max(people.values()) / n) if n else 0.0,
     )
 
 
@@ -401,6 +448,8 @@ def shortfalls(nm: dict[str, Any], th: Thresholds = DEFAULTS) -> list[str]:
             out.append(f"{nm['harmful_recent']} harmful in the last {th.harmful_window_days} days")
         if nm["coverage"] < th.min_coverage:
             out.append(f"label coverage {nm['coverage']:.0%} < {th.min_coverage:.0%}")
+        if nm["labellers"] < th.min_labellers:
+            out.append(f"labelled by {nm['labellers']} distinct people < {th.min_labellers}")
     except (KeyError, TypeError):
         out.append("numbers are missing or malformed")
     return out
@@ -472,7 +521,15 @@ def promotion_problems(reg: Registry, agent_id: str, action_id: str) -> list[str
         for k, v in want.items()
         if body.get(k) != v
     ]
-    problems += [f"{where}: {path.name} {s}" for s in shortfalls(body.get("numbers") or {})]
+    file_th, why = _file_thresholds(body)
+    if file_th is None:
+        problems.append(f"{where}: {path.name} {why}")
+    else:
+        # judged by the thresholds the file was written under, which may not be weaker than the spec's unless the file
+        # says (and the report printed) that the client signed weaker ones on purpose
+        problems += [
+            f"{where}: {path.name} {s}" for s in shortfalls(body.get("numbers") or {}, file_th)
+        ]
     if (body.get("ceiling") or {}).get("breached") is not False:
         problems.append(f"{where}: {path.name} was written with the ceiling breached")
     # The SHA-256 is unkeyed: anyone who can write the file can re-seal it. So the replay record the file names
@@ -487,12 +544,40 @@ def promotion_problems(reg: Registry, agent_id: str, action_id: str) -> list[str
     return problems
 
 
+def _file_thresholds(body: dict[str, Any]) -> tuple[Thresholds | None, str]:
+    """The thresholds a promotion file was written under, and whether they are allowed: never weaker than the spec's
+    unless the file records `weaker_allowed`."""
+    raw = body.get("thresholds")
+    keys = set(Thresholds.__dataclass_fields__)
+    if not isinstance(raw, dict) or set(raw) != keys:
+        return None, "does not record the thresholds it was written under"
+    try:
+        th = Thresholds(**raw)
+    except TypeError:
+        return None, "records malformed thresholds"
+    spec = DEFAULTS
+    weaker = (
+        th.min_labelled < spec.min_labelled
+        or th.min_agree < spec.min_agree
+        or th.max_wrong_harmful > spec.max_wrong_harmful
+        or th.harmful_window_days < spec.harmful_window_days
+        or th.min_coverage < spec.min_coverage
+        or th.min_labellers < spec.min_labellers
+    )
+    if weaker and body.get("weaker_allowed") is not True:
+        return None, "was written under thresholds weaker than the spec's without saying so"
+    return th, ""
+
+
 @dataclass
 class PromoteResult:
     ok: bool
     problems: list[str] = field(default_factory=list)
     path: Path | None = None
     numbers: Numbers | None = None
+    refused: bool = (
+        False  # not a shortfall: the question itself was invalid (unknown agent or action)
+    )
 
 
 # --- the measurement service -------------------------------------------------------------------------------
@@ -594,6 +679,11 @@ class Measure:
     def hold_run_ids(self) -> set[str]:
         """``Hooks.hold_run_ids`` (K5): runs labelled wrong, harmful or missed. A demotion is always caused by such
         labels, so its runs are in this set too."""
+        retention = getattr(
+            self.registry.config, "retention", None
+        )  # K5-core's retention config, when it exists
+        if retention is not None and getattr(retention, "hold_labelled", True) is False:
+            return set()
         return self.store.held_run_ids()
 
     # --- labels --------------------------------------------------------------------------------------------
@@ -665,11 +755,22 @@ class Measure:
     def _has_event(self, agent_id: str, action_id: str, reason: str) -> bool:
         return any(e.reason == reason for e in self._pair_events(agent_id, action_id))
 
+    def _may_label(self, principal: Any, agent_id: str) -> bool:
+        """A labeller is named per agent (`Principal.label_agents`, an agent id or "*"). Not stated: allowed in dev,
+        refused in pilot and prod, where who may label is a decision someone wrote down."""
+        allowed = principal.label_agents
+        if allowed is None:
+            from hadavin_sdk.deferred import LIVE
+
+            return self.registry.config.environment not in LIVE
+        return "*" in allowed or agent_id in allowed
+
     def _check(
         self, principal_id: str, run_id: str, label: str
     ) -> tuple[Plan | None, LabelResult | None]:
-        """Who may label what: a known person, a known label, a run that exists, a label that fits the run (the
-        four proposal labels need a plan, the two abstain labels none). Returns (plan, None) or (None, refusal)."""
+        """Who may label what: a known person allowed to label this agent, a known label, a run that exists, a
+        label that fits the run (the four proposal labels need a plan, the two abstain labels none), and a proposal
+        whose card was delivered. Returns (plan, None) or (None, refusal)."""
         principal = self.registry.principals.get(principal_id)
         if principal is None or principal.kind != "person":
             return None, LabelResult(False, "unknown_principal")
@@ -678,7 +779,7 @@ class Measure:
         if not _ID.fullmatch(run_id):
             return None, LabelResult(False, "unknown_run")
         try:
-            self.store.get_run(run_id)
+            run = self.store.get_run(run_id)
         except NotFound:
             return None, LabelResult(False, "unknown_run")
         except Exception:  # noqa: BLE001 - store down: nothing changes
@@ -691,6 +792,10 @@ class Measure:
             return None, LabelResult(False, "store_unavailable", 503)
         if (plan is None) != (label in ABSTAIN_LABELS):
             return None, LabelResult(False, "label_does_not_fit_run")
+        if not self._may_label(principal, run.agent_id):
+            return None, LabelResult(False, "not_a_labeller_for_this_agent")
+        if plan is not None and run.reason_code == "shadow_undelivered":
+            return None, LabelResult(False, "card_not_delivered")  # nobody was shown this proposal
         return plan, None
 
     def _may_lower_harmful(self, principal_id: str) -> bool:
@@ -726,13 +831,17 @@ class Measure:
         label_id: str | None = None,
     ) -> LabelResult:
         """Validate, decide the demotion, store label and demotion (and the sticky-harmful check) in one
-        transaction, then audit. Never raises."""
+        transaction, then audit. Never raises.
+
+        TRUST: ``principal_id`` is taken as given. This is an in-process method with no caller authentication; the
+        only production caller passes the user of a signature-verified channel click (``handle_action``), and a repo
+        test confines every other caller (the dev-only CLI import). A new caller must pass a verified identity."""
         plan, refusal = self._check(principal_id, run_id, label)
         if refusal is not None:
             return refusal
         may = self._may_lower_harmful(principal_id)
         try:
-            lowers = label != "harmful" and may and self._latest_is_harmful(run_id)
+            prev = latest_labels(self.store.list_labels(run_id)).get(run_id)
             new = self._new_label(principal_id, run_id, label, channel, approved_by, label_id)
             demote = self._demotion_for(new, plan.agent_id, plan.action_id) if plan else None
             # The sticky check runs inside the store's transaction, serialised per run: two clicks cannot both pass.
@@ -748,12 +857,17 @@ class Measure:
         except Exception as exc:  # noqa: BLE001 - the label is refused, nothing was stored
             _LOG.error("label refused: store error %s", type(exc).__name__)
             return LabelResult(False, "store_unavailable", 503)
-        self._after_commit(new, demote if inserted else None, lowers)
+        self._after_commit(new, demote if inserted else None, prev)
+        if new.label in ("wrong", "harmful"):
+            self._safe_enforce()  # the ceiling and the wrong rule are checked now, not at the next tick
         return LabelResult(True, "recorded", demoted=bool(inserted))
 
-    def _after_commit(self, new: Label, demote: LevelEvent | None, lowers: bool) -> None:
-        """Audit and announce what is already committed. Never raises: the label stands whatever the sink or the
-        channel does."""
+    def _after_commit(
+        self, new: Label, demote: LevelEvent | None, prev: Label | None = None
+    ) -> None:
+        """Audit and tell about what is already committed. Never raises: the label stands whatever the sink or the
+        channel does. A verdict of wrong or harmful that is replaced by something milder is audited with who and when,
+        and the line owners are told at once (the weekly report lists them too)."""
         self._audit(
             new.run_id,
             "label",
@@ -763,36 +877,99 @@ class Measure:
             result="recorded",
             caught_by="human_label" if new.label in ("wrong", "harmful") else None,
         )
-        if lowers:
+        if (
+            prev is not None
+            and prev.label in ("wrong", "harmful")
+            and new.label not in ("wrong", "harmful")
+        ):
             self._audit(
                 new.run_id,
-                "harmful_lowered",
+                "label_downgraded",
                 new.principal_id,
                 object_ref=new.label_id,
                 decision=new.label,
+                result=prev.label,
+            )
+            if prev.label == "harmful":
+                self._audit(
+                    new.run_id,
+                    "harmful_lowered",
+                    new.principal_id,
+                    object_ref=new.label_id,
+                    decision=new.label,
+                )
+            self._notify(
+                f"{new.principal_id} changed run {new.run_id} from {prev.label} to {new.label}"
+                + (
+                    " (a harmful verdict leaves the ceiling count)."
+                    if prev.label == "harmful"
+                    else "."
+                )
             )
         if demote is not None:
-            try:
-                self._announce(demote)
-            except Exception as exc:  # noqa: BLE001
-                _LOG.warning("demotion announcement failed (%s)", type(exc).__name__)
+            self._audit_demotion(demote)
+            self._announce_pending()
 
-    def _announce(self, ev: LevelEvent) -> None:
-        """Audit the demotion and post a card with a Clear button for the line owner. The card says how long the
-        recent wrongs still count (a clear does not erase them)."""
-        from hadavin_sdk.approvals.cards import render_demotion
-
+    def _audit_demotion(self, ev: LevelEvent) -> None:
         self._audit(
             "-", "demote", ev.by, object_ref=f"{ev.agent_id}.{ev.action_id}", result=ev.reason
         )
+
+    def _announce_pending(self) -> None:
+        """Tell the line owner about every demotion row and every ceiling breach not yet delivered, and record each
+        delivery. Inserting a row and announcing it are separate facts: an undelivered card or notice is tried again
+        on the next pass (every `enforce_every_s`), not lost. Never raises."""
+        from hadavin_sdk.approvals.cards import render_demotion
+
         try:
-            card = render_demotion(
-                ev.agent_id, ev.action_id, ev.reason, self._wrongs_note(ev.agent_id, ev.action_id)
-            )
-            if not self.channel.post_card(card).ok:
-                self._notify(f"{ev.agent_id}.{ev.action_id} was demoted to shadow ({ev.reason}).")
+            events = self.store.list_level_events()
+            status = self.ceiling_status()
         except Exception as exc:  # noqa: BLE001
-            _LOG.warning("demotion card not delivered (%s)", type(exc).__name__)
+            _LOG.warning("announcements skipped (%s)", type(exc).__name__)
+            return
+        for ev in events:
+            if ev.kind != "demote" or ev.reason.startswith("ceiling:"):
+                continue
+            key = f"demote/{ev.agent_id}/{ev.action_id}/{ev.reason}"
+            try:
+                if self.store.is_announced(key):
+                    continue
+                card = render_demotion(
+                    ev.agent_id,
+                    ev.action_id,
+                    ev.reason,
+                    self._wrongs_note(ev.agent_id, ev.action_id),
+                    ev.seq,
+                )
+                ok = self.channel.post_card(card).ok or (
+                    self._notify(
+                        f"{ev.agent_id}.{ev.action_id} was demoted to shadow ({ev.reason})."
+                    )
+                    > 0
+                )
+                if ok:
+                    self.store.mark_announced(key, self.clock())
+            except Exception as exc:  # noqa: BLE001
+                _LOG.warning("demotion card not delivered (%s)", type(exc).__name__)
+        # One notice per breach (its reason is the newest counted label's time), however many rows it demoted.
+        if status and status.breached and status.latest_harmful_at is not None:
+            reason = _ceiling_reason(status.latest_harmful_at)
+            key = f"breach/{reason}"
+            try:
+                if not self.store.is_announced(key):
+                    c = status
+                    rows = any(e.reason == reason for e in events)
+                    reached = self._notify(
+                        f"Ceiling breached: {c.harmful} of {c.labelled} labelled in the last "
+                        f"{c.ceiling.window_days} days counts against it ({', '.join(c.ceiling.counts)}; max "
+                        f"{c.ceiling.max}). "
+                        + ("Every action at suggest is shadow. " if rows else "")
+                        + "Promotion is blocked until the window clears or the sponsor changes the ceiling in writing."
+                    )
+                    if reached:
+                        self.store.mark_announced(key, self.clock())
+            except Exception as exc:  # noqa: BLE001
+                _LOG.warning("breach notice not delivered (%s)", type(exc).__name__)
 
     def _wrongs_note(self, agent_id: str, action_id: str) -> str | None:
         """ "Recent wrongs still count until <date>": after a clear, one new wrong re-demotes at once while two older
@@ -817,6 +994,10 @@ class Measure:
         parsed = parse_action_value(action.value)
         if parsed is None:
             return 200, "malformed"
+        team = self.policy.allowed_team_id
+        if team and action.team != team:
+            self._audit("-", parsed.kind, action.user, result="refused", error_code="wrong_team")
+            return 200, "wrong_team"
         claimed = False
         if action.nonce:
             # A signed request is good for 5 minutes, so a captured copy would replay. Each delivery is acted on once.
@@ -855,7 +1036,8 @@ class Measure:
             return self.kill_switch(user, parsed.kind)
         if parsed.kind == "approve_import":
             return self.approve_import(user, parsed.args[0])
-        return self.clear(user, *parsed.args)
+        agent_id, action_id, seq = parsed.args
+        return self.clear(user, agent_id, action_id, int(seq))
 
     def purge_seen(self, at: datetime | None = None) -> int:
         """Delete click nonces older than twice the signature window: they can never be replayed (the signature
@@ -916,7 +1098,7 @@ class Measure:
             _LOG.error("approve_import refused: store error %s", type(exc).__name__)
             return 503, "store_unavailable"
         for new, demote in items:
-            self._after_commit(new, demote if demote in inserted else None, False)
+            self._after_commit(new, demote if demote in inserted else None)
         self._audit(
             "-",
             "approve_import",
@@ -980,12 +1162,7 @@ class Measure:
         if agent is not None and (agent.levels or {}).get(action_id) == "suggest":
             if breached:
                 return "ceiling_breached"
-            fresh = numbers_for(
-                self.store.list_labels_for(agent_id, action_id, None),
-                self.store.count_proposals(agent_id, action_id, None),
-                self.clock(),
-                self.th,
-            )
+            fresh = self._evidence_numbers(agent_id, action_id, self.clock())
             if shortfalls(fresh.as_dict(), self.th):
                 return "evidence_below_6_1"
         return None
@@ -997,8 +1174,12 @@ class Measure:
         ]
         return any(e.kind == "demote" and e.reason.startswith(f"{kind}:") for e in after_clear)
 
-    def clear(self, principal_id: str, agent_id: str, action_id: str) -> tuple[int, str]:
-        """A line owner lifts a demotion. Needs the ``clear_override`` admin right."""
+    def clear(
+        self, principal_id: str, agent_id: str, action_id: str, expect_seq: int | None = None
+    ) -> tuple[int, str]:
+        """A line owner lifts a demotion. Needs the ``clear_override`` admin right. The button names the demotion it
+        was posted for (`expect_seq`): a click on an older card is stale. A harmful demotion is cleared by someone
+        other than the person whose label caused it. Every clear is told to the line owners."""
         if not self._admin(principal_id, "clear_override", "clear"):
             return 200, "not_authorised"
         try:
@@ -1007,13 +1188,13 @@ class Measure:
             events = self._pair_events(agent_id, action_id)
             if not events or events[-1].kind != "demote":
                 return 200, "not_demoted"
-            why = self._clear_blocked(agent_id, action_id, events)
+            if expect_seq is not None and events[-1].seq != expect_seq:
+                return self._refuse_clear(principal_id, agent_id, action_id, "stale_button")
+            why = self._clear_blocked(agent_id, action_id, events) or self._same_person(
+                principal_id, events[-1]
+            )
             if why:
-                self._audit(
-                    "-", "clear", principal_id, object_ref=f"{agent_id}.{action_id}",
-                    result="refused", error_code=why,
-                )  # fmt: skip
-                return 200, why
+                return self._refuse_clear(principal_id, agent_id, action_id, why)
             lifted = LevelEvent(
                 agent_id=agent_id,
                 action_id=action_id,
@@ -1023,18 +1204,35 @@ class Measure:
                 at=self.clock(),
             )
             if not self.store.clear_demotion(lifted, events[-1].seq or 0):
-                self._audit(
-                    "-", "clear", principal_id, object_ref=f"{agent_id}.{action_id}",
-                    result="refused", error_code="changed_meanwhile",
-                )  # fmt: skip
-                return 200, "changed_meanwhile"
+                return self._refuse_clear(principal_id, agent_id, action_id, "changed_meanwhile")
         except Exception as exc:  # noqa: BLE001
             _LOG.error("clear refused: store error %s", type(exc).__name__)
             return 503, "store_unavailable"
         self._audit(
             "-", "clear", principal_id, object_ref=f"{agent_id}.{action_id}", result="cleared"
         )
+        self._notify(f"{principal_id} cleared the demotion of {agent_id}.{action_id}.")
         return 200, "cleared"
+
+    def _refuse_clear(
+        self, principal_id: str, agent_id: str, action_id: str, why: str
+    ) -> tuple[int, str]:
+        self._audit(
+            "-",
+            "clear",
+            principal_id,
+            object_ref=f"{agent_id}.{action_id}",
+            result="refused",
+            error_code=why,
+        )
+        return 200, why
+
+    @staticmethod
+    def _same_person(principal_id: str, last: LevelEvent) -> str | None:
+        """A demotion caused by a harmful label is not cleared by the person who gave that label."""
+        if last.reason.startswith("harmful:") and last.by == f"system:measure({principal_id})":
+            return "second_person_needed"
+        return None
 
     # --- csv import ----------------------------------------------------------------------------------------
 
@@ -1089,7 +1287,7 @@ class Measure:
             _LOG.error("import refused: store error %s", type(exc).__name__)
             return 0, ["store_unavailable"]
         for new, demote in items:
-            self._after_commit(new, demote if demote in inserted else None, False)
+            self._after_commit(new, demote if demote in inserted else None)
         if approved_by is None:
             self._announce_import(sha, len(items))
         self._safe_enforce()
@@ -1142,10 +1340,22 @@ class Measure:
             harmful[-1].created_at if breached else None,
         )
 
+    def _at_suggest(self) -> list[tuple[str, str]]:
+        """The (agent, action) pairs configured at suggest: the only ones a ceiling breach has anything to demote.
+        A shadow-only pilot breaches the ceiling without writing a single demotion row."""
+        return [
+            (a.id, x)
+            for a in self.registry.agents.values()
+            if a.status != "retired"
+            for x, level in (a.levels or {}).items()
+            if level == "suggest"
+        ]
+
     def enforce(self, at: datetime | None = None) -> list[LevelEvent]:
-        """Idempotent and safe to run twice at once: re-check the 3-wrong rule (two simultaneous labels can each
-        miss the third) and the ceiling, and insert the demotions that are missing. What was really inserted (the
-        store says; a demotion that already exists is a no-op) is what gets audited and announced and returned."""
+        """Idempotent and safe to run twice at once: re-check the wrong rule (two simultaneous labels can each miss
+        the limit) and the ceiling, insert the demotions that are missing, then (re)try every announcement not yet
+        delivered. What was really inserted (the store says; a demotion that already exists is a no-op) is what gets
+        audited and returned."""
         at = at or self.clock()
         wanted: list[LevelEvent] = []
         for agent_id, action_id in self._pairs():
@@ -1156,35 +1366,14 @@ class Measure:
         status = self.ceiling_status(at)
         ceiling_events: list[LevelEvent] = []
         if status and status.breached and status.latest_harmful_at is not None:
-            reason = (
-                f"ceiling:{status.latest_harmful_at.astimezone(UTC).isoformat(timespec='seconds')}"
-            )
-            ceiling_events = [self._level(a, x, reason, at) for a, x in self._pairs()]
+            reason = _ceiling_reason(status.latest_harmful_at)
+            ceiling_events = [self._level(a, x, reason, at) for a, x in self._at_suggest()]
         added: list[LevelEvent] = []
         for ev in [*wanted, *ceiling_events]:
             if self.store.add_level_event(ev):
                 added.append(ev)
-                self._audit(
-                    "-",
-                    "demote",
-                    ev.by,
-                    object_ref=f"{ev.agent_id}.{ev.action_id}",
-                    result=ev.reason,
-                )
-        for ev in added:
-            if not ev.reason.startswith("ceiling:"):
-                self._announce_card(ev)
-        breach = next((e for e in added if e.reason.startswith("ceiling:")), None)
-        # Two passes can each insert some of the breach's rows: the notice is claimed per breach so it goes out once.
-        if status and breach is not None and self.store.claim_action(f"breach/{breach.reason}", at):
-            c = status
-            reached = self._notify(
-                f"Ceiling breached: {c.harmful} of {c.labelled} labelled in the last "
-                f"{c.ceiling.window_days} days counts against it ({', '.join(c.ceiling.counts)}; max {c.ceiling.max}). Every action is shadow. "
-                "Promotion is blocked until the window clears or the sponsor changes the ceiling in writing."
-            )
-            if reached == 0:
-                self._release(f"breach/{breach.reason}")
+                self._audit_demotion(ev)
+        self._announce_pending()
         return added
 
     @staticmethod
@@ -1198,21 +1387,6 @@ class Measure:
             at=at,
         )
 
-    def _announce_card(self, ev: LevelEvent) -> None:
-        from hadavin_sdk.approvals.cards import render_demotion
-
-        try:
-            self.channel.post_card(
-                render_demotion(
-                    ev.agent_id,
-                    ev.action_id,
-                    ev.reason,
-                    self._wrongs_note(ev.agent_id, ev.action_id),
-                )
-            )
-        except Exception as exc:  # noqa: BLE001
-            _LOG.warning("demotion card not delivered (%s)", type(exc).__name__)
-
     # --- promotion -----------------------------------------------------------------------------------------
 
     def promote_check(
@@ -1225,7 +1399,7 @@ class Measure:
         reg, at = self.registry, at or self.clock()
         if agent_id not in reg.agents or action_id not in reg.agents[agent_id].scope_allowed:
             return PromoteResult(
-                False, [f"{agent_id}.{action_id} is not an action of a known agent"]
+                False, [f"{agent_id}.{action_id} is not an action of a known agent"], refused=True
             )
         if self.ceiling is None:
             raise ConfigError(
@@ -1237,17 +1411,12 @@ class Measure:
             problems.append("the action is a none contract and can never be suggest (R1)")
         if (agent_id, action_id) in self.store.current_overrides():
             problems.append("the action is demoted: a line owner's clear is needed first")
-        nm = numbers_for(
-            self.store.list_labels_for(agent_id, action_id, None),
-            self.store.count_proposals(agent_id, action_id, None),
-            at,
-            self.th,
-        )
+        nm = self._evidence_numbers(agent_id, action_id, at)
         problems += shortfalls(nm.as_dict(), self.th)
         record = replay_records.green_record(reg, agent_id)
         if record is None:
             problems.append(
-                f"no green replay record (k >= 3) in {replay_records.FILE} for the current config hash, "
+                f"no green replay record (k >= {replay_records.MIN_K}) in {replay_records.FILE} for the current config hash, "
                 "model and prompt"
             )
         status = self.ceiling_status(at)
@@ -1269,6 +1438,8 @@ class Measure:
             "generated_at": at.astimezone(UTC).isoformat(timespec="seconds"),
             "numbers": nm.as_dict(),
             "thresholds": {k: getattr(self.th, k) for k in self.th.__dataclass_fields__},
+            "weaker_allowed": self.policy.allow_weaker_than_spec,
+            "policy": asdict(self.policy),
             "replay_record": {
                 "bundle_sha256": record.bundle_sha256,
                 "k": record.k,
@@ -1283,6 +1454,17 @@ class Measure:
         atomic_write(path, _json(body) + "\n")
         return PromoteResult(True, [], path, nm)
 
+    def _evidence_numbers(self, agent_id: str, action_id: str, at: datetime) -> Numbers:
+        """The §6.1 numbers for one action, from proposals made under the agent's CURRENT config hash only: labels
+        on an older prompt or model say nothing about this one."""
+        h = self.registry.config_hash(agent_id)
+        return numbers_for(
+            self.store.list_labels_for(agent_id, action_id, None, h),
+            self.store.count_proposals(agent_id, action_id, None, h),
+            at,
+            self.th,
+        )
+
     def promotion_store_problems(self) -> list[str]:
         """Start-up check for every action configured at ``suggest``: its promotion file must load, and the numbers
         derived again from the store must still meet §6.1 (a re-sealed file with invented numbers fails here)."""
@@ -1294,12 +1476,21 @@ class Measure:
                 if level != "suggest":
                     continue
                 out += promotion_problems(self.registry, agent.id, action)
-                fresh = numbers_for(
-                    self.store.list_labels_for(agent.id, action, None),
-                    self.store.count_proposals(agent.id, action, None),
-                    self.clock(),
-                    self.th,
-                )
+                where = f"agent {agent.id}: suggest for {action}"
+                # The store leg re-checks what the file only claims: the replay leg, the ceiling, and that the file
+                # was not written under looser thresholds than the policy now in force.
+                if replay_records.green_record(self.registry, agent.id) is None:
+                    out.append(f"{where}: no green replay record for the current config")
+                status = self.ceiling_status()
+                if status and status.breached:
+                    out.append(f"{where}: the ceiling is breached now")
+                body = _read_promotion(self.registry, agent.id, action)
+                file_th, _why = _file_thresholds(body) if body else (None, "")
+                if file_th is not None and _weaker_than(file_th, self.th):
+                    out.append(
+                        f"{where}: the file was written under looser thresholds than the policy in force"
+                    )
+                fresh = self._evidence_numbers(agent.id, action, self.clock())
                 out += [
                     f"agent {agent.id}: suggest for {action}: the store now says {s}"
                     for s in shortfalls(fresh.as_dict(), self.th)
@@ -1393,7 +1584,7 @@ class Measure:
             out.append(
                 f"- FLAG: label coverage {labelled / pw.proposals:.0%} is below {self.th.min_coverage:.0%}."
             )
-        if pw.wrong + pw.harmful > prev.wrong + prev.harmful and pw.wrong > prev.wrong:
+        if pw.wrong - prev.wrong >= self.policy.wrong_rise_flag_min:
             out.append(f"- FLAG: wrong labels rose from {prev.wrong} to {pw.wrong}.")
         out += ["", "## Per action (all time): n and the 95 % upper bound"]
         for agent_id, action_id in self._pairs():
@@ -1407,7 +1598,8 @@ class Measure:
             out.append(
                 f"- {agent_id}.{action_id}: labelled n={nm.labelled}, wrong + harmful "
                 f"{nm.wrong + nm.harmful}, upper bound on the wrong rate {bound}; "
-                f"coverage {nm.coverage:.0%}, agree {nm.agree_rate:.0%}."
+                f"coverage {nm.coverage:.0%}, agree {nm.agree_rate:.0%}; labelled by {nm.labellers} "
+                f"people, the busiest gave {nm.top_labeller_share:.0%} of the labels."
             )
         out += ["", "## Every wrong and harmful label this week"]
         labels = [
@@ -1435,7 +1627,9 @@ class Measure:
             f'- Approvals decided: {aw.decisions}, "won\'t run": {aw.wont_run}, median {_secs(aw.median_s)}.'
         )
         out += ["", "## Ceiling"]
-        status = self.ceiling_status(at)
+        status = self.ceiling_status(
+            min(at, end)
+        )  # as it stood when the week ended, not when this was run
         lowered = [e for e in events if e.operation == "harmful_lowered"]
         if audit_ok:
             out.append(
@@ -1451,6 +1645,18 @@ class Measure:
                 "- harmful verdicts lowered by a line owner: COULD NOT BE READ (the audit was unreadable); do not "
                 "assume there were none."
             )
+        downgraded = [e for e in events if e.operation == "label_downgraded"]
+        if audit_ok:
+            out.append(
+                f"- wrong or harmful verdicts replaced by something milder: "
+                f"{sum(iso_week(e.ts) == week for e in downgraded)} this week, {len(downgraded)} in all:"
+            )
+            out += [
+                f"  - {e.run_id}: {e.result} -> {e.decision} by {e.principal} at {e.ts:%Y-%m-%d %H:%M} UTC"
+                for e in downgraded
+            ] or ["  - none"]
+        else:
+            out.append("- downgraded verdicts: COULD NOT BE READ (the audit was unreadable).")
         if status:
             c = status.ceiling
             out += [
@@ -1478,20 +1684,54 @@ class Measure:
                 f"- {agent_id}: golden set: {n} items, version {version}, candidates this week: {len(cands)}"
             )
         out += [f"  - {r}" for r in cands]
-        out += ["", "## Held runs"]
-        held = sorted(self.store.held_run_ids())
-        for run_id in held:
-            try:
-                made = self.store.get_run(run_id).created_at
+        out += ["", "## Held runs (as of when this report was generated)"]
+        held = sorted(self.hold_run_ids())
+        out += [f"- {run_id}" for run_id in held] or ["- none"]
+        out.append(
+            "  (The evidence of a held run is kept until the client's retention rule or a request; its redaction map is "
+            "purged at the retention maximum by the evidence purge, which owns those dates.)"
+        )
+        out += ["", "## Current overrides (as of when this report was generated)"]
+        try:
+            down = self.store.current_overrides()
+            events = self.store.list_level_events()
+            for agent_id, action_id in sorted(down):
+                last = [
+                    e
+                    for e in events
+                    if (e.agent_id, e.action_id) == (agent_id, action_id) and e.kind == "demote"
+                ][-1]
                 out.append(
-                    f"- {run_id}: redaction map purged by "
-                    f"{(made + timedelta(days=self.policy.held_maps_max_days)):%Y-%m-%d} ({self.policy.held_maps_max_days} days from the run)"
+                    f"- {agent_id}.{action_id}: shadow since {last.at:%Y-%m-%d %H:%M} UTC ({last.reason.split(':')[0]})"
                 )
-            except Exception:  # noqa: BLE001
-                out.append(f"- {run_id}")
-        if not held:
-            out.append("- none")
-        out += self._backlog_lines()
+            if not down:
+                out.append("- none: every action is at its configured level")
+        except Exception as exc:  # noqa: BLE001
+            out.append(f"- COULD NOT BE READ ({type(exc).__name__})")
+        out += ["", "## Policy in force"]
+        pol, spec = self.policy, DEFAULT_POLICY
+        out.append(
+            f"- promotion: {pol.promotion_min_labelled} labelled, {pol.promotion_min_agree:.0%} agree, at most "
+            f"{pol.promotion_max_wrong_harmful} wrong + harmful, no harmful in {pol.promotion_harmful_window_days} days, "
+            f"{pol.promotion_min_coverage:.0%} coverage, {pol.promotion_min_labellers} distinct labellers."
+        )
+        out.append(
+            f"- demotion: {pol.wrong_limit} wrong runs inside {pol.wrong_window_days} days, or one harmful; "
+            f"re-check every {pol.enforce_every_s} s."
+        )
+        if pol.allow_weaker_than_spec:
+            out.append(
+                "- WEAKER THAN THE SPEC'S NUMBERS ARE ALLOWED here (policy.allow_weaker_than_spec), signed by the client."
+            )
+        elif pol != spec:
+            out.append(
+                "- some policy numbers differ from the defaults, none weaker than the spec's."
+            )
+        out += [
+            "",
+            "> Held runs, golden counts and current overrides are the state when this report was generated; the counts and the ceiling are the week's own.",
+        ]
+        out += self._backlog_lines(week)
         out += [
             "",
             "## Not in this release",
@@ -1508,8 +1748,11 @@ class Measure:
         except Exception:  # noqa: BLE001 - no golden file: say so
             return 0, "none"
 
-    def _backlog_lines(self) -> list[str]:
-        """Only when the `backlog` step (K4) has written `tick_state.detail`; without K4 nothing is printed."""
+    def _backlog_lines(self, week: date) -> list[str]:
+        """Only when the `backlog` step (K4) has written `tick_state.detail`; without K4 nothing is printed. K4 writes
+        these keys verbatim, for the ISO week named in `week` (the Monday, YYYY-MM-DD): `week`,
+        `max_oldest_received_age_s`, `late_starts`, `late_threshold_s` (the threshold K4 counted `late_starts`
+        against), and also `events_received_count` for the heartbeat. A row for another week is not this week's."""
         try:
             state: TickState | None = self.store.get_tick_state("backlog")
         except Exception:  # noqa: BLE001
@@ -1517,16 +1760,48 @@ class Measure:
         detail = state.detail if state else None
         if not detail:
             return []
-        age = detail.get("max_oldest_received_age_s", detail.get("oldest_received_age_s"))
-        late = detail.get("late_starts")
         out = ["", "## Backlog"]
-        if age is not None:
-            out.append(f"- Maximum oldest_received_age_s: {age}.")
-        if late is not None:
+        if detail.get("week") != week.isoformat():
             out.append(
-                f"- Events started later than {self.policy.late_start_s // 60} minutes: {late}."
+                f"- Backlog numbers for the week of {week.isoformat()} were not recorded (the latest row is for "
+                f"{detail.get('week', 'no week')})."
             )
+            return out
+        out.append(
+            f"- Maximum oldest_received_age_s: {detail.get('max_oldest_received_age_s', 'not recorded')}."
+        )
+        threshold = detail.get("late_threshold_s")
+        out.append(
+            f"- Events started later than {threshold // 60 if isinstance(threshold, int) else '?'} minutes "
+            f"(K4's threshold): {detail.get('late_starts', 'not recorded')}."
+        )
         return out
+
+
+def _ceiling_reason(latest: datetime) -> str:
+    return f"ceiling:{latest.astimezone(UTC).isoformat(timespec='seconds')}"
+
+
+def _read_promotion(reg: Registry, agent_id: str, action_id: str) -> dict[str, Any] | None:
+    try:
+        body = json.loads(
+            promotion_path(reg.config.root, agent_id, action_id).read_text(encoding="utf-8")
+        )
+    except (ValueError, OSError):
+        return None
+    return body if isinstance(body, dict) else None
+
+
+def _weaker_than(a: Thresholds, b: Thresholds) -> bool:
+    """`a` asks for less than `b` on any number."""
+    return (
+        a.min_labelled < b.min_labelled
+        or a.min_agree < b.min_agree
+        or a.max_wrong_harmful > b.max_wrong_harmful
+        or a.harmful_window_days < b.harmful_window_days
+        or a.min_coverage < b.min_coverage
+        or a.min_labellers < b.min_labellers
+    )
 
 
 def _verdict_key(label_id: str) -> str:

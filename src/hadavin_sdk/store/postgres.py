@@ -548,6 +548,18 @@ class PostgresStore:
             ).fetchone()
         return row is not None
 
+    def is_announced(self, key: str) -> bool:
+        with self._lock:
+            row = self._exec("SELECT 1 FROM announcements WHERE key = %s", (key,)).fetchone()
+        return row is not None
+
+    def mark_announced(self, key: str, at: datetime) -> None:
+        with self._lock:
+            self._exec(
+                "INSERT INTO announcements (key, at) VALUES (%s, %s) ON CONFLICT (key) DO NOTHING",
+                (key, at),
+            )
+
     def release_action(self, nonce: str) -> None:
         with self._lock:
             self._exec("DELETE FROM seen_actions WHERE nonce = %s", (nonce,))
@@ -618,15 +630,24 @@ class PostgresStore:
     def list_labels(self, run_id: str) -> list[Label]:
         return self._labels_where("WHERE l.run_id = %s", (run_id,))
 
-    def list_labels_for(self, agent_id: str, action_id: str, since: datetime | None) -> list[Label]:
+    def list_labels_for(
+        self, agent_id: str, action_id: str, since: datetime | None, config_hash: str | None = None
+    ) -> list[Label]:
         join = "JOIN plans p ON p.run_id = l.run_id WHERE p.agent_id = %s AND p.action_id = %s"
-        if since is None:
-            return self._labels_where(join, (agent_id, action_id))
-        return self._labels_where(join + " AND l.created_at >= %s", (agent_id, action_id, since))
+        params: tuple = (agent_id, action_id)
+        if config_hash is not None:
+            join, params = join + " AND p.config_hash = %s", (*params, config_hash)
+        if since is not None:
+            join, params = join + " AND l.created_at >= %s", (*params, since)
+        return self._labels_where(join, params)
 
-    def count_proposals(self, agent_id: str, action_id: str, since: datetime | None) -> int:
+    def count_proposals(
+        self, agent_id: str, action_id: str, since: datetime | None, config_hash: str | None = None
+    ) -> int:
         query = "SELECT count(*) AS n FROM plans WHERE agent_id = %s AND action_id = %s"
         params: tuple = (agent_id, action_id)
+        if config_hash is not None:
+            query, params = query + " AND config_hash = %s", (*params, config_hash)
         if since is not None:
             query, params = query + " AND created_at >= %s", (*params, since)
         with self._lock:

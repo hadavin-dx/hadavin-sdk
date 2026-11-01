@@ -28,6 +28,19 @@ CREATE INDEX level_events_by_action ON level_events (agent_id, action_id, seq);
 CREATE UNIQUE INDEX level_events_one_demote_per_reason ON level_events (agent_id, action_id, reason)
     WHERE kind = 'demote';
 
+-- Promotion evidence is per config: a proposal records the config hash, model and prompt that made it.
+ALTER TABLE plans ADD COLUMN config_hash TEXT;
+ALTER TABLE plans ADD COLUMN model_id TEXT;
+ALTER TABLE plans ADD COLUMN prompt_sha256 TEXT;
+CREATE INDEX plans_by_action_hash ON plans (agent_id, action_id, config_hash);
+
+-- A demotion card or a breach notice is recorded here once it was really delivered (a permanent record, unlike
+-- the expiring click nonces): until it is, every tick tries again.
+CREATE TABLE announcements (
+    key TEXT PRIMARY KEY,
+    at  TIMESTAMPTZ NOT NULL
+);
+
 -- One row per signed channel click the measurement acted on (the request's timestamp and signature): a captured
 -- request replayed inside the signature window finds its row and is refused. A row older than twice the signature
 -- window can never be replayed, so a tick step deletes it (the only DELETE the runtime role has on these tables);

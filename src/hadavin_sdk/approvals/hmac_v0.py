@@ -59,6 +59,8 @@ class Action:
     user: str
     value: str
     nonce: str = ""  # timestamp:signature of the signed request; empty when built by hand (tests)
+    team: str = ""  # the workspace id in the signed payload ("" when it carries none)
+    action_ts: str = ""  # the click's own timestamp in the signed payload
 
 
 def parse_action(
@@ -77,6 +79,8 @@ def parse_action(
         payload = json.loads(parse_qs(body.decode("utf-8"))["payload"][0])
         value = payload["actions"][0]["value"]
         user = f"{channel}:{payload['user']['id']}"
+        team = str((payload.get("team") or {}).get("id") or "")
+        action_ts = str(payload["actions"][0].get("action_ts") or "")
     except (KeyError, IndexError, ValueError, TypeError):
         return None
     if not isinstance(value, str):
@@ -85,7 +89,13 @@ def parse_action(
     h = {k.lower(): v for k, v in headers.items()}
     # The verified request's own timestamp and signature identify this delivery: a captured copy replayed inside
     # the signature window carries the same pair, a fresh click never does.
-    return Action(user=user, value=value, nonce=f"{h.get(ts_name, '')}:{h.get(sig_name, '')}")
+    return Action(
+        user=user,
+        value=value,
+        nonce=f"{h.get(ts_name, '')}:{h.get(sig_name, '')}",
+        team=team,
+        action_ts=action_ts,
+    )
 
 
 def parse_button(

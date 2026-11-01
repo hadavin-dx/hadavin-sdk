@@ -83,14 +83,15 @@ def test_k6_label_demotion_and_report_on_postgres(pg_world):
     assert w.store.current_overrides() == {("test-agent", ACTION): "shadow"}
     assert w.measure.level_override("test-agent", ACTION) == "shadow"
     assert w.store.held_run_ids() == {bad}
-    assert w.click("owner", f"clear|test-agent|{ACTION}")[0] == 200
+    assert w.click("owner", w.clear_value())[0] == 200
     assert w.store.current_overrides() == {}
     body = w.measure.weekly_report(NOW)
     assert body and "ceiling: 1 of 4 in the last 90 days, breached yes" in body
     assert w.store.get_report(WEEK) == body
     assert "- human_label: 1" in body and "- Runs: 4" in body
-    # The ceiling breach demotes every action once, and a second pass adds nothing.
-    assert w.measure.enforce(NOW) and w.measure.enforce(NOW) == []
+    # A shadow-only pilot breaches without a demotion row; the owner was told once, and a pass adds nothing.
+    assert w.measure.enforce(NOW) == []
+    assert len([t for _, t in w.channel.notices if "Ceiling breached" in t]) == 1
 
 
 @pytest.fixture

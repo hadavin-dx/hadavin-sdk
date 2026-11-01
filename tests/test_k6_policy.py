@@ -39,22 +39,30 @@ def test_policy_defaults_are_the_documented_ones():
         0.70,
         1,
     )
-    assert (p.promotion_harmful_window_days, p.promotion_min_coverage) == (28, 0.80)
-    assert (p.wrong_limit, p.wrong_window_days, p.held_maps_max_days, p.late_start_s) == (
-        3,
-        14,
-        400,
-        600,
-    )
+    assert (
+        p.promotion_harmful_window_days,
+        p.promotion_min_coverage,
+        p.promotion_min_labellers,
+    ) == (28, 0.80, 2)
+    assert (p.wrong_limit, p.wrong_window_days, p.wrong_rise_flag_min) == (3, 14, 1)
+    assert (p.allowed_team_id, p.allow_weaker_than_spec) == ("", False)
     assert (p.report_local_offset_minutes, p.report_local_label) == (330, "IST")
-    assert (p.enforce_every_s, p.purge_every_s, p.seen_actions_keep_s) == (300, 300, 600)
+    assert (p.enforce_every_s, p.purge_every_s, p.seen_actions_keep_s) == (300, 300, 900)
     assert p.thresholds() == measure.DEFAULTS
 
 
 def test_policy_numbers_appear_nowhere_else_in_the_measurement():
     """The old module constants are gone: a policy number has one home."""
     text = (SRC / "measure.py").read_text(encoding="utf-8")
-    for name in ("WRONG_WINDOW", "WRONG_LIMIT", "HELD_MAPS_MAX_DAYS", "LATE_START_S", "IST ="):
+    for name in (
+        "WRONG_WINDOW",
+        "WRONG_LIMIT",
+        "HELD_MAPS_MAX_DAYS",
+        "LATE_START_S",
+        "IST =",
+        "late_start_s",
+        "held_maps_max_days",
+    ):
         assert name not in text, name
 
 
@@ -88,17 +96,24 @@ def test_a_policy_in_baseline_yaml_overrides_exactly_what_it_names(tmp_path):
         ("policy:\n  wrong_limit: true\n", "wrong_limit must be a int"),
         ("policy:\n  wrong_limit: 0\n", "wrong_limit must be between"),
         ("policy:\n  wrong_window_days: 0\n", "wrong_window_days must be between"),
-        ("policy:\n  held_maps_max_days: 401\n", "held_maps_max_days must be between 1 and 400"),
+        (
+            "policy:\n  held_maps_max_days: 30\n",
+            "unknown keys: held_maps_max_days",
+        ),  # retention is K5's
+        ("policy:\n  late_start_s: 60\n", "unknown keys: late_start_s"),  # that threshold is K4's
         ("policy:\n  promotion_min_labelled: 0\n", "promotion_min_labelled must be between"),
+        ("policy:\n  promotion_min_labelled: 10\n", "weaker than the spec's number"),
+        ("policy:\n  wrong_limit: 5\n", "wrong_limit is weaker"),
+        ("policy:\n  promotion_min_labellers: 1\n", "promotion_min_labellers is weaker"),
+        ("policy:\n  enforce_every_s: 301\n", "enforce_every_s must be between 1 and 300"),
         ("policy:\n  promotion_min_agree: 0\n", "promotion_min_agree must be above 0"),
         ("policy:\n  promotion_min_coverage: 1.5\n", "promotion_min_coverage must be above 0"),
-        ("policy:\n  seen_actions_keep_s: 599\n", "seen_actions_keep_s must be between 600"),
+        ("policy:\n  seen_actions_keep_s: 899\n", "seen_actions_keep_s must be between 900"),
         (
             "policy:\n  report_local_offset_minutes: 900\n",
             "report_local_offset_minutes must be between",
         ),
         ("policy:\n  report_local_label: 'a b c'\n", "report_local_label"),
-        ("policy:\n  enforce_every_s: -1\n", "enforce_every_s must be between"),
     ],
 )
 def test_a_bad_policy_refuses_to_start_naming_the_key(tmp_path, policy, error):
@@ -133,29 +148,30 @@ def test_the_promotion_numbers_follow_the_policy(tmp_path):
     w = _world(
         tmp_path, promotion_min_labelled=2, promotion_min_agree=0.5, promotion_min_coverage=0.5
     )
-    w.labelled("agree", 2, when=day(9), action="create_draft_record")
+    w.labelled("agree", 2, when=day(9), action="create_draft_record", who=("u1", "u2"))
     res = w.measure.promote_check("test-agent", "create_draft_record")
     assert not any("labelled" in p for p in res.problems)  # 2 labelled is enough here
     assert w.measure.th.min_labelled == 2
 
 
-def test_the_report_uses_the_policys_local_time_and_late_start_and_retention(tmp_path):
-    from hadavin_sdk.models import TickState
-
+def test_the_report_uses_the_policys_local_time_and_flag_margin_and_prints_the_policy(tmp_path):
     w = _world(
-        tmp_path,
-        report_local_offset_minutes=60,
-        report_local_label="CET",
-        late_start_s=120,
-        held_maps_max_days=30,
+        tmp_path, report_local_offset_minutes=60, report_local_label="CET", wrong_rise_flag_min=2
     )
-    w.store.save_tick_state(TickState(step="backlog", last_run_at=NOW, detail={"late_starts": 4}))
     rid = w.run(created=day(7))
     w.label(rid, "wrong", when=day(7))
     text = w.measure.render_report(NOW.date() - timedelta(days=7), NOW)
     assert "13:00 CET" in text and " IST" not in text  # 12:00 UTC + 60 minutes
-    assert "started later than 2 minutes: 4" in text
-    assert "(30 days from the run)" in text
+    assert (
+        "FLAG: wrong labels rose" not in text
+    )  # one more wrong is below this client's margin of two
+    assert "## Policy in force" in text and "2 distinct labellers" in text
+
+
+def test_a_policy_weaker_than_the_spec_is_printed_in_the_report(tmp_path):
+    w = _world(tmp_path, promotion_min_labelled=5, allow_weaker_than_spec=True)
+    text = w.measure.render_report(NOW.date() - timedelta(days=7), NOW)
+    assert "WEAKER THAN THE SPEC'S NUMBERS ARE ALLOWED" in text and "5 labelled" in text
 
 
 def test_the_nonce_keep_time_follows_the_policy(tmp_path):
@@ -185,7 +201,7 @@ def test_app_build_reads_the_policy_from_baseline_yaml(tmp_path):
     from tests.test_k3_pilot import SECRETS, ScriptedLLM, dev_cfg
 
     cfg = dev_cfg(tmp_path, {ACTION: "shadow"})
-    _baseline(cfg, "policy:\n  wrong_limit: 5\n")
+    _baseline(cfg, "policy:\n  wrong_limit: 2\n")
     qualify(load_registry(load_config(cfg)))
     app = app_mod.build(
         cfg,
@@ -194,7 +210,7 @@ def test_app_build_reads_the_policy_from_baseline_yaml(tmp_path):
         llm=ScriptedLLM(),
         secrets=SECRETS,
     )
-    assert app.measure.policy.wrong_limit == 5 and CEIL.max == 0
+    assert app.measure.policy.wrong_limit == 2 and CEIL.max == 0
     bad = dev_cfg(tmp_path / "bad", {ACTION: "shadow"})
     _baseline(bad, "policy:\n  nonsense: 1\n")
     with pytest.raises(ConfigError, match="unknown keys"):

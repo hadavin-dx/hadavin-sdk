@@ -4,68 +4,51 @@
 
 ### Upgrade steps
 - **K6 measurement, demotion and the weekly report.** Run `hadavin-sdk migrate --runtime-role R` (migration
-  `0005_measure.sql`): new tables `labels`, `level_events`, `reports`, the column `tick_state.detail` and the views
-  `v_pilot_week`, `v_caught_week`, `v_approval_week`. **Merge order:** migration numbers must run without a gap; if
-  another migration lands first, renumber this file at rebase (the ledger test says so).
-  - `Store` gains `add_label` (label and demotion in one transaction), `list_labels`, `list_labels_for`,
-    `list_labels_between`, `count_proposals`, `add_level_event`, `list_level_events`, `current_overrides`,
-    `held_run_ids`, `put_report`, `get_report`, `pilot_week`, `approval_week`. A custom store kind must implement
-    them. `TickState` gains `detail` (JSON, counts and codes only); a tick step sets `ctx.detail[step.name]`.
-  - `Principal.admin_rights` (`stop`, `reset`, `clear_override`, `approve_label_import`) is separate from `rights`.
-    A line owner holds `clear_override`; nobody holds it by default.
-  - **`pilot` and `prod` need `baseline.yaml` in the config folder** with a filled `ceiling` (metric, max,
-    window_days, source); `build` refuses without it. In `dev` it is used when present.
-  - `Channel` gains `parse_action` (the verified user and the button value); a custom channel kind must implement it.
-    The abstain card's second button now records `missed` (was `should_have_answered`). The receiver routes
-    `label|...` and `clear|...` clicks to `Measure` (`handle_slack_action(..., measure)`).
-  - New tick steps `measure_levels` (every 300 s: re-checks the 3-wrong rule and the ceiling) and `weekly_report`
-    (writes the report for the last complete ISO week once). New commands `hadavin-sdk label import FILE --by P
-    [--approved-by P]`, `promote-check AGENT ACTION` and `report [--week YYYY-MM-DD]`. The CLI names are
-    **asserted**, not verified: the authoritative paths are signed channel actions and reviewed config PRs.
-  - `suggest` in `pilot`/`prod` additionally needs `promotions/<agent>.<action>.json` (from `promote-check`). It
-    is still refused until K8 builds posted fixes; `dev` does not read the file.
-  - A csv label counts as evidence, in reports and in `promote-check`, only once a line owner approves the import:
-    the signed `approve_import|<id>` click on the card the import posts, or `--approved-by` (asserted; a different
-    person holding `approve_label_import`). The author of an import cannot approve it. Approval appends the rows again
-    (no UPDATE exists on `labels`).
-  - A `harmful` label is sticky: only a person holding `clear_override` can lower it (audited). Demotions are keyed by
-    the label row, so a harmful label after a clear demotes again.
-  - **`baseline.yaml` `ceiling` now has five required fields and no defaults: `metric`, `counts`, `max`,
-    `window_days`, `source`.** `counts` lists the label classes that count against the ceiling (for example
-    `[harmful]` or `[harmful, wrong]`) and must include `harmful`; `pilot` and `prod` refuse to start without them,
-    pointing at `scoping.md` `## Success metric and ceiling`. The K0 templates carry the same fields. The ceiling
-    count runs over all labels in the rolling window (retired agents too); `max` is a whole number.
-  - Removed `Store.add_label` (it skipped the sticky rule): `add_labels` is the only way in. `Store` gains
-    `clear_demotion` (compare-and-set) and a unique index keeps one demotion row per reason.
-  - **`pilot` and `prod` need at least one person principal with `admin_rights: [clear_override]`**; `build` refuses
-    without one. Admin rights only apply to `kind: person` principals.
-  - The promotion file's SHA-256 is unkeyed: the loader also needs the replay record it names to be green in
-    `replay-records.jsonl`, and `build` re-derives the numbers from the store in pilot/prod.
-  - The weekly report is announced first and stored second; an unreachable line owner fails the `weekly_report` step
-    and the next tick retries (the step now runs every tick).
-  - `Store` also gains `add_labels` (labels + demotions + the sticky rule in one transaction), `claim_action`
-    (replay guard), `list_csv_import`; migration `0005` adds the append-only table `seen_actions`.
-  - Signed clicks are acted on once (a replayed request is refused). `clear` is refused for a `ceiling:` demotion
-    while the ceiling is breached, and for a `suggest` action until the section 6.1 numbers hold again.
-  - **`label import --by/--approved-by` is refused in `pilot` and `prod`**; only signed clicks count there. The import
-    id is now the file's full SHA-256. `Channel.parse_action` returns a `nonce` with the click.
-  - A replay record counts as green only when its fields agree with each other.
-  - **Policy numbers moved out of code into `measure.Policy` (documented defaults, one place) and an optional
-    `policy:` mapping in `baseline.yaml`** that the client signs: promotion numbers, the wrong rule (`wrong_limit`,
-    `wrong_window_days`), `held_maps_max_days` (max 400), `late_start_s`, report local time, `enforce_every_s`,
-    `purge_every_s`, `seen_actions_keep_s`. Strictly validated; omit it for the defaults. A tick step's `every_s`
-    may now be a callable that reads it from the app's config. The recent-wrongs demotion reason prefix is `wrongs:`.
-    A repo test fails on key-shaped and Slack-id literals; K6 modules name no environment, host or env read.
-  - Third review round: migration `0005` also adds `labels.seq` (insertion order: "latest" means highest seq, not
-    `created_at`), lets the runtime role DELETE on `seen_actions` only (expired click nonces are purged by the new tick
-    step `purge_seen_actions`), and `Store` gains `release_action` and `purge_actions`; `add_labels` now returns the
-    demotions it inserted and `add_level_event` returns whether it inserted.
-  - **A clear does not erase recent wrongs (intended):** the wrongs still inside the 14-day window count after a
-    clear, so one new wrong re-demotes at once while two older ones remain; the demotion card says until when.
-    One demotion (one audit entry, one card) per episode; a csv harmful row demotes once across import and approval.
-  - **`limits reset --by WHO` is refused in `pilot` and `prod`** (an asserted name cannot lift the kill switch): reset
-    there only by the signed channel click (admin right `reset`, once per request). `limits stop` still works from the
-    CLI. In `dev` both work and the operating-system user is audited.
+  `0005_measure.sql`; it is renumbered to the next free number at rebase, only before any database has applied it):
+  tables `labels` (with `seq`), `level_events`, `reports`, `seen_actions`, `announcements`, columns `tick_state.detail`
+  and `plans.config_hash/model_id/prompt_sha256`, and the views `v_pilot_week`, `v_caught_week`, `v_approval_week`.
+  - **Who and what.** `Principal.admin_rights` (`stop`, `reset`, `clear_override`, `approve_label_import`) and
+    `Principal.label_agents` (agent ids or `*`; not stated is allowed in dev and refused in pilot/prod) are separate
+    from action `rights`. Admin rights apply to `kind: person` only. `pilot`/`prod` need at least one person with
+    `clear_override`.
+  - **`baseline.yaml` (required in pilot/prod).** `ceiling` has five required fields and no defaults: `metric`,
+    `counts` (label classes that count; must include `harmful`), `max`, `window_days`, `source`. The ceiling is
+    breached when the count is **strictly more than** `max`. An optional `policy:` mapping holds the other numbers
+    (promotion numbers, the wrong rule, report local time, tick cadence, nonce keep time, `allowed_team_id`); defaults
+    live in `measure.Policy`; numbers weaker than the spec's are refused unless `allow_weaker_than_spec: true`, which
+    every report and promotion file then prints. The K0 templates carry all of it.
+  - **Labels and demotion.** Labels come from signed channel clicks (`label|run|label`); `label import` (csv) is
+    **dev only** until a signed upload path exists (pilot/prod refuse `--by/--approved-by`, so csv labels cannot
+    reach a pilot today). One harmful label, or `wrong_limit` wrong runs inside `wrong_window_days`, demotes the action
+    at once; a harmful verdict is sticky (only a `clear_override` holder lowers one) and every downgrade of wrong or
+    harmful is audited, told to the line owners and listed in the report. Only delivered shadow cards can be labelled.
+    "Latest label" means insertion order (`labels.seq`).
+  - **Clearing.** A clear needs `clear_override`, is refused while the ceiling is breached for an action with a
+    ceiling demotion, needs the section 6.1 numbers for an action at suggest, is bound to the demotion its card was
+    posted for, and a harmful demotion is cleared by someone other than the labeller. A clear does not erase recent
+    wrongs: they still count inside the window, so one new wrong re-demotes at once (the card says until when).
+  - **Promotion.** `promote-check AGENT ACTION` (exit 2 for an unknown agent/action) writes
+    `promotions/<agent>.<action>.json` from labels on proposals made under the CURRENT config hash, needing a green
+    replay record, two distinct labellers and the ceiling clear; the file records its own thresholds and the policy.
+    The loader checks the file's thresholds against the spec's floors and the replay record it names; `app.build` in
+    pilot/prod re-derives numbers, replay and ceiling from the store. **Residual limit:** the SHA-256 and the replay
+    summary are unkeyed, so someone who can write both files in one PR can forge them; the control is the reviewed PR
+    and CODEOWNERS, signed records are future work. `suggest` stays refused in pilot/prod until K8.
+  - **Signed clicks** are acted on once (`seen_actions`, purged by tick step `purge_seen_actions`; the runtime role may
+    DELETE on that table only), a click that did not take effect gives its nonce back, `policy.allowed_team_id` pins
+    the workspace, and `limits reset --by` is refused in pilot/prod (signed `reset` only; `stop` still works).
+  - **Announcements** are recorded when delivered (`announcements`) and retried every tick until they are.
+  - **Store/Channel API.** `Store` gains `add_labels` (the only way a label enters), `list_labels`, `list_labels_for`,
+    `list_labels_between`, `count_proposals`, `add_level_event`, `clear_demotion`, `list_level_events`,
+    `current_overrides`, `held_run_ids`, `put_report`, `get_report`, `pilot_week`, `approval_week`, `claim_action`,
+    `release_action`, `purge_actions`, `is_announced`, `mark_announced`, `list_csv_import`; `Channel` gains
+    `parse_action` (user, value, nonce, team). A custom kind must implement them. `TickState` gains `detail`.
+  - **Reports.** Tick step `weekly_report` writes the report of the last complete ISO week at the first tick after
+    Monday 00:00 UTC (labels given later are in the next report; `report --week` prints the stored one). It shows
+    current overrides, downgrades, labeller concentration and the policy in force. K4's `backlog` step must write
+    `tick_state.detail` keys `week`, `max_oldest_received_age_s`, `late_starts`, `late_threshold_s`.
+  - Policy numbers, secrets: none are read from the environment; Slack's signing secret still comes through the
+    secrets kind by configured name; a repo test fails on key-shaped and Slack-id literals.
 - **K3 pilot build path (levels, shadow cut-off, fail-closed loading).** Action contracts change shape:
   `executor.system` moves to a contract field `target_system`, and `executor` is now a tagged union
   (`kind: none | manual | http`). Edit every contract: move `system:` out of `executor:` to `target_system:` beside
