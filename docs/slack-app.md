@@ -15,7 +15,10 @@ callbacks (`POST /slack/actions`, verified with the signing secret). The same en
 on shadow and abstain cards (`agree`, `partial`, `wrong`, `harmful`, `abstain_ok`, `missed`) and the line owner's
 "Clear demotion" button; the person is the Slack user in the signed request, matched to `principals.yaml`
 (`slack:<user id>`). A user who is not a listed person, or a clear from a person without the `clear_override`
-admin right, is refused and nothing changes.
+admin right, is refused and nothing changes. The same endpoint takes the signed `stop` and `reset` actions of the
+kill switch (admin rights `stop` and `reset`); in pilot and prod this is the only way to reset it, because
+`hadavin-sdk limits reset --by NAME` is refused there (a typed name is not a person). `limits stop` still works from
+the CLI as the emergency path.
 
 **Setup (the client's admin, about 10 minutes):**
 1. In the manifest, set `request_url` to the client's receiver host (HTTPS).

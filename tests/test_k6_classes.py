@@ -54,6 +54,42 @@ def test_class_identity_entry_points_are_called_only_from_where_the_identity_is_
     assert found == []
 
 
+def test_class_cli_limits_reset_is_refused_in_pilot_and_prod_but_stop_and_the_signed_reset_work(
+    tmp_path,
+):
+    import getpass
+
+    from hadavin_sdk import cli
+    from hadavin_sdk.models import KillSwitch
+
+    w = World(tmp_path)
+    limits = w.measure.limits
+    for env in ("pilot", "prod"):
+        w.store.set_kill_switch(KillSwitch(on=True, by="someone"))
+        assert (
+            cli.limits_cmd(limits, "reset", "user:a", env) == 2
+        )  # an asserted name cannot lift the kill switch
+        assert w.store.get_kill_switch().on
+        w.store.set_kill_switch(KillSwitch(on=False))
+        assert cli.limits_cmd(limits, "stop", "user:a", env) == 0  # the safe direction stays
+        assert w.store.get_kill_switch().on
+    # the signed path resets it, with the admin right and once per request
+    assert w.click("ops", "reset", ts=NOW)[0] == 200
+    assert not w.store.get_kill_switch().on
+    assert (
+        w.click("owner", "stop", ts=NOW + timedelta(seconds=1))[0] == 200
+    )  # a line owner has no stop right
+    assert not w.store.get_kill_switch().on
+    # dev keeps the CLI for both and audits the operating-system user
+    assert cli.limits_cmd(limits, "stop", "user:a", "dev") == 0
+    assert cli.limits_cmd(limits, "reset", "user:a", "dev") == 0
+    notes = [e for e in w.audit.events() if e.operation.startswith("cli_")]
+    assert [(e.operation, e.result) for e in notes] == [
+        ("cli_stop", f"os_user:{getpass.getuser()}"),
+        ("cli_reset", f"os_user:{getpass.getuser()}"),
+    ]
+
+
 def test_class_cli_dev_import_is_refused_before_it_reads_anything_in_pilot_and_prod():
     cli = (SRC / "cli.py").read_text(encoding="utf-8")
     body = cli[cli.index("def measure_cmd") :]

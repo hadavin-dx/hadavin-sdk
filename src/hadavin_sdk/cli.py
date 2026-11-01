@@ -2,7 +2,9 @@
 
   hadavin-sdk [--config DIR] gate <agent> [--k K]        exit 0 when green, 1 when below the threshold;
                                                          --k K runs each item K times (pass^k), default 1
-  hadavin-sdk [--config DIR] limits stop|reset --by WHO  needs a shared store (postgres); memory: exit 2
+  hadavin-sdk [--config DIR] limits stop|reset --by WHO  needs a shared store (postgres); memory: exit 2. --by is an
+                                                         asserted name; in pilot and prod `reset` is refused here
+                                                         (use the signed channel reset), `stop` still works
   hadavin-sdk [--config DIR] tick                       one pass of approvals sweep, reconcile, stuck runs,
                                                          audit checkpoint; exit 0 ok, 1 a step failed,
                                                          2 config error, 4 store unreachable
@@ -227,7 +229,38 @@ def _main(argv: list[str] | None = None) -> int:
         return 3
     if args.cmd == "audit":
         return audit_verify(audit)
-    return kill_switch(Limits(store, audit, reg), args.action, args.by)
+    return limits_cmd(Limits(store, audit, reg), args.action, args.by, cfg.environment)
+
+
+def limits_cmd(limits: Limits, action: str, by: str, environment: str) -> int:
+    """`limits stop|reset` from the CLI. `--by` is an asserted name, so in pilot and prod the risky direction is
+    refused: a reset (it lifts the kill switch) goes only through the signed channel click, which checks the
+    `reset` admin right and acts once per request. `stop` stays (the safe emergency path). In dev the operating-system
+    user is audited beside the asserted name."""
+    from hadavin_sdk.deferred import LIVE
+    from hadavin_sdk.models import AuditEvent
+
+    live = environment in LIVE
+    if action == "reset" and live:
+        print(
+            "refused: in pilot and prod the kill switch is reset only by the signed channel action "
+            "(a person holding the reset admin right); --by is an asserted name, not a person",
+            file=sys.stderr,
+        )
+        return 2
+    code = kill_switch(limits, action, by)
+    if code == 0 and not live:
+        limits.audit.write_outcome(
+            AuditEvent(
+                run_id="-",
+                domain="limits",
+                operation=f"cli_{action}",
+                principal=by,
+                source="cli",
+                result=f"os_user:{getpass.getuser()}",
+            )
+        )
+    return code
 
 
 def _k1b(cfg, reg, args) -> int:

@@ -50,6 +50,9 @@
   - **`label import --by/--approved-by` is refused in `pilot` and `prod`**; only signed clicks count there. The import
     id is now the file's full SHA-256. `Channel.parse_action` returns a `nonce` with the click.
   - A replay record counts as green only when its fields agree with each other.
+  - **`limits reset --by WHO` is refused in `pilot` and `prod`** (an asserted name cannot lift the kill switch): reset
+    there only by the signed channel click (admin right `reset`, once per request). `limits stop` still works from the
+    CLI. In `dev` both work and the operating-system user is audited.
 - **K3 pilot build path (levels, shadow cut-off, fail-closed loading).** Action contracts change shape:
   `executor.system` moves to a contract field `target_system`, and `executor` is now a tagged union
   (`kind: none | manual | http`). Edit every contract: move `system:` out of `executor:` to `target_system:` beside
