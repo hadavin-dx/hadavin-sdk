@@ -30,21 +30,6 @@ BANNED = (
 )
 # Screenshot-style file names (browser capture, phone export) never belong in the repo.
 BAD_NAMES = re.compile(r"^(Screenshot[ _]\d{4}-\d{2}-\d{2}|WhatsApp Image)", re.IGNORECASE)
-TEXT_SUFFIXES = {
-    ".py",
-    ".md",
-    ".txt",
-    ".yaml",
-    ".yml",
-    ".json",
-    ".toml",
-    ".sql",
-    ".html",
-    ".css",
-    ".js",
-    ".ts",
-    ".cfg",
-}
 SELF = {"tests/test_no_reference_material.py", "tests/fixtures/reference_material_sha256.txt"}
 
 
@@ -66,33 +51,40 @@ def _tracked():
     return found
 
 
-def test_no_reference_image_or_pdf_is_tracked():
+def test_no_reference_file_is_tracked():
+    """Hash every file whatever its suffix (a renamed copy or a .webp/.gif/no-extension copy must not slip by)."""
     bad = []
     for rel in _tracked():
         path = ROOT / rel
-        if not path.is_file():
+        if not path.is_file() or rel in SELF:
             continue
         if BAD_NAMES.match(path.name):
             bad.append(f"{rel}: screenshot-style file name")
-        elif (
-            path.suffix.lower() in {".png", ".jpg", ".jpeg", ".pdf"}
-            and hashlib.sha256(path.read_bytes()).hexdigest() in HASHES
-        ):
+        elif hashlib.sha256(path.read_bytes()).hexdigest() in HASHES:
             bad.append(f"{rel}: identical to a reference image/PDF from the course source folder")
     assert not bad, "reference material in the repo: " + "; ".join(bad)
 
 
 def test_no_vendor_brand_string_is_tracked():
+    """Scan every text file (any suffix, e.g. .tsx/.svg); binary files are skipped; undecodable text FAILS."""
     bad = []
     for rel in _tracked():
-        if rel in SELF or Path(rel).suffix.lower() not in TEXT_SUFFIXES:
+        if rel in SELF:
             continue
         try:
-            text = (ROOT / rel).read_text(encoding="utf-8")
-        except (OSError, UnicodeDecodeError):
+            raw = (ROOT / rel).read_bytes()
+        except OSError as exc:
+            bad.append(f"{rel}: unreadable ({exc.__class__.__name__})")
+            continue
+        if b"\0" in raw:  # binary: covered by the hash test
+            continue
+        try:
+            text = raw.decode("utf-8")
+        except UnicodeDecodeError:
+            bad.append(f"{rel}: not UTF-8 text, cannot be scanned for vendor strings")
             continue
         bad += [f"{rel}: {s!r}" for s in BANNED if s in text]
-    assert not bad, "vendor brand strings in the repo: " + "; ".join(bad)
+    assert not bad, "vendor brand strings or unscannable files in the repo: " + "; ".join(bad)
 
 
 def test_the_guard_catches_a_planted_copy(tmp_path):
