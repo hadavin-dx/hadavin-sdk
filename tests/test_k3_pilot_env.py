@@ -118,7 +118,7 @@ def test_k3_levels_must_cover_every_action_in_pilot(tmp_path):
         load_registry(load_config(cfg))
 
 
-def test_k3_suggest_refused_in_pilot_until_k6_k8(tmp_path):
+def test_k3_suggest_refused_without_evidence(tmp_path):
     cfg = pilot_cfg(tmp_path, agent={"levels": {"restart_service": "suggest"}})
     with pytest.raises(ConfigError, match="cannot load before K6 and K8"):
         load_registry(load_config(cfg))

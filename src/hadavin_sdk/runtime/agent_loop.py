@@ -218,6 +218,7 @@ class Runtime:
         self.store.create_run(run)
         self._note(run, "run", "received", inputs_hash=sha256_hex(document.hex()))
         run = self._to(run, S.WORKING)
+        cited: list[str] = []  # ids of the read-tool calls made so far
 
         # Limits first: a paid screen (llm_judge) never runs once the kill switch or a budget stopped the agent.
         if (stopped := self._limits_stop(run)) is not None:
@@ -225,7 +226,7 @@ class Runtime:
         verdict = self._screen(run, document.decode("utf-8", "replace"), "document")
         if verdict.flagged:
             self._note(run, "guard", "injection", result="flagged", error_code=verdict.reason_code)
-            return self._to(run, S.NEEDS_PERSON, verdict.reason_code)
+            return self._abstain(run, S.NEEDS_PERSON, verdict.reason_code, cited)
 
         contracts = {a: self.registry.contracts[a] for a in agent.scope_allowed}
         tools = [
@@ -233,7 +234,6 @@ class Runtime:
             for c in contracts.values()
         ] + [{"name": t} for t in self.registry.tools_for(agent_id, set(self.hooks.tools))]
         messages: list[dict[str, Any]] = [{"role": "user", "content": _ASK}]
-        cited: list[str] = []  # ids of the read-tool calls made so far
         system = self.registry.prompt(agent_id)
 
         for _step in range(agent.max_steps):
@@ -255,7 +255,7 @@ class Runtime:
                     "provider_exhausted" if isinstance(exc, ProviderExhausted) else "provider_error"
                 )
                 self._note(run, "llm", "chat", result="failed", error_code=code)
-                return self._to(run, S.NEEDS_PERSON, code)
+                return self._abstain(run, S.NEEDS_PERSON, code, cited)
             self.limits.charge(agent_id, reply.cost_usd)
             self.store.add_cost(run.run_id, reply.cost_usd)
             if reply.stop_reason in (
@@ -265,7 +265,7 @@ class Runtime:
                 self._note(
                     run, "llm", "chat", result="stopped", error_code=f"llm_{reply.stop_reason}"
                 )
-                return self._to(run, S.NEEDS_PERSON, f"llm_{reply.stop_reason}")
+                return self._abstain(run, S.NEEDS_PERSON, f"llm_{reply.stop_reason}", cited)
             if not reply.tool_calls:
                 return self._abstain(run, S.NO_ACTION, None, cited)
             call = reply.tool_calls[0]
@@ -286,15 +286,15 @@ class Runtime:
                     self._note(
                         run, "guard", "injection", result="flagged", error_code=verdict.reason_code
                     )
-                    return self._to(run, S.NEEDS_PERSON, verdict.reason_code)
+                    return self._abstain(run, S.NEEDS_PERSON, verdict.reason_code, cited)
                 cited.append(f"call-{len(cited) + 1}: {call.name}")
                 messages += [
                     {"role": "assistant", "content": f"tool {call.name}"},
                     {"role": "user", "content": f"tool result: {result}"},
                 ]
                 continue
-            return self._to(run, S.NEEDS_PERSON, "unknown_action")
-        return self._to(run, S.NEEDS_PERSON, "max_steps")
+            return self._abstain(run, S.NEEDS_PERSON, "unknown_action", cited)
+        return self._abstain(run, S.NEEDS_PERSON, "max_steps", cited)
 
     # --- plan, gate, approvals, execution ----------------------------------------------------------
     def _level(self, agent: Any, action_id: str) -> Level | None:
@@ -386,7 +386,7 @@ class Runtime:
             plan = build_plan(run, agent, contract, call)
             plan.hash()
         except ValueError:  # includes pydantic ValidationError and the float refusal
-            return self._to(run, S.NEEDS_PERSON, "invalid_proposal")
+            return self._abstain(run, S.NEEDS_PERSON, "invalid_proposal", cited or [])
         self.store.save_plan(plan)
         run = self._to(run, S.PLAN_READY)
         try:
