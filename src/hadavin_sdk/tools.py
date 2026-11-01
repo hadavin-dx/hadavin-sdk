@@ -185,7 +185,9 @@ class ToolContext:
         req = urllib.request.Request(  # noqa: S310 - scheme and host checked above
             url, data=body, headers=headers or {}, method=method.upper()
         )
-        opener = http_guard.LOCAL_OPENER if host in http_guard.LOOPBACK else http_guard.OPENER
+        # Plain http (loopback or in-cluster) is never handed to an environment proxy.
+        direct = host in http_guard.LOOPBACK or parts.scheme == "http"
+        opener = http_guard.LOCAL_OPENER if direct else http_guard.OPENER
         try:
             with opener.open(req, timeout=self.timeout_s) as resp:  # nosec B310
                 raw = resp.read(spec.max_output_bytes + 1)

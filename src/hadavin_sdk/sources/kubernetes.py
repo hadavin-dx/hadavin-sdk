@@ -70,7 +70,10 @@ class KubernetesSource:
         data = None if body is None else json.dumps(body).encode("utf-8")
         try:
             text = self._fetch(method, self._api + path, operation=operation, body=data)
-            return json.loads(text)
+            decoded = json.loads(text)
+            if not isinstance(decoded, dict):
+                raise ValueError("not an object")  # noqa: TRY004 - same malformed-answer path
+            return decoded
         except (ValueError, TypeError) as exc:
             raise SourceError("kubernetes: malformed answer") from exc
         except SourceError:
@@ -80,6 +83,12 @@ class KubernetesSource:
 
     # --- ChangeSource ---------------------------------------------------------------------------------------
     def recent_changes(self, scope: str, start: str, end: str) -> list[Record]:
+        try:
+            return self._recent_changes(scope, start, end)
+        except (AttributeError, TypeError) as exc:  # a JSON value of an unexpected shape
+            raise SourceError("kubernetes: malformed answer") from exc
+
+    def _recent_changes(self, scope: str, start: str, end: str) -> list[Record]:
         """Deployments (with their rollout revision and images) and events of one namespace. `scope` is the
         namespace; one that is not configured has no data. Events are filtered to [start, end] (UTC ISO strings
         compare in order)."""
@@ -92,7 +101,7 @@ class KubernetesSource:
         )
         for item in deployments.get("items") or []:
             meta = item.get("metadata") or {}
-            containers = ((item.get("spec") or {}).get("template") or {}).get("spec", {})
+            containers = (((item.get("spec") or {}).get("template") or {}).get("spec")) or {}
             out.append(
                 {
                     "id": f"deployment/{scope}/{meta.get('name', '?')}",
@@ -150,6 +159,12 @@ class KubernetesSource:
 
     # --- scope probe (design 6.6, K5b M20) ------------------------------------------------------------------
     def probe_scope(self) -> list[str]:
+        try:
+            return self._probe_scope()
+        except (AttributeError, TypeError) as exc:
+            raise SourceError("kubernetes: malformed answer") from exc
+
+    def _probe_scope(self) -> list[str]:
         problems: list[str] = []
         for ns in self.namespaces:
             review = self._get(

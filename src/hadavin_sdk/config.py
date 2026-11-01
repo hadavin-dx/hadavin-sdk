@@ -183,7 +183,16 @@ class Retention(_Strict):
     held_maps_max_days: int = Field(default=HELD_MAPS_CEILING, gt=0, le=HELD_MAPS_CEILING)
 
 
-_INVENTORY_REF = re.compile(r"\S+#\S+ sha256:[0-9a-f]{64}")
+_DIGEST = re.compile(r"[0-9a-f]{64}")
+
+
+def _inventory_ref_ok(ref: str) -> bool:
+    """ "<page>#<anchor> sha256:<64 hex>", checked by splitting (no backtracking-prone pattern)."""
+    where, sep, digest = ref.rpartition(" sha256:")
+    page, hash_sign, anchor = where.partition("#")
+    return bool(
+        sep and hash_sign and page and anchor and " " not in where and _DIGEST.fullmatch(digest)
+    )
 
 
 class Settings(BaseSettings):
@@ -218,7 +227,7 @@ class Config(_Strict):
     @model_validator(mode="after")
     def _cross_checks(self) -> Config:
         for source, ref in self.scope_inventory.items():
-            if not _INVENTORY_REF.fullmatch(ref):
+            if not _inventory_ref_ok(ref):
                 raise ValueError(
                     f"scope_inventory {source}: expected '<page>#<anchor> sha256:<64 hex digits>'"
                 )

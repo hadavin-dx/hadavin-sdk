@@ -206,3 +206,38 @@ def test_the_probe_reviews_every_configured_namespace():
     api = FakeApi()
     KubernetesSource(api, ["prod", "staging"]).probe_scope()
     assert [c[1].rsplit("/", 1)[-1] for c in api.calls] == ["selfsubjectrulesreviews"] * 2
+
+
+def _answering(text):
+    def fetch(method, url, *, operation, body=None, headers=None):
+        return text
+
+    return KubernetesSource(fetch, ["prod"])
+
+
+@pytest.mark.parametrize("answer", ["[]", "null", '"text"', "7"])
+def test_kubernetes_non_object_answers_are_source_errors(answer):
+    for call in (
+        lambda s: s.recent_changes("prod", suite.START, suite.END),
+        lambda s: s.probe_scope(),
+    ):
+        with pytest.raises(SourceError, match="malformed"):
+            call(_answering(answer))
+
+
+def test_kubernetes_oddly_shaped_items_are_source_errors():
+    with pytest.raises(SourceError, match="malformed"):
+        _answering('{"items": [1, 2]}').recent_changes("prod", suite.START, suite.END)
+    with pytest.raises(SourceError, match="malformed"):
+        _answering('{"status": {"resourceRules": [7]}}').probe_scope()
+
+
+def test_kubernetes_null_pod_template_spec_is_not_an_error():
+    def api(method, url, *, operation, body=None, headers=None):
+        if url.endswith("/deployments"):
+            item = {"metadata": {"name": "d"}, "spec": {"template": {"spec": None}}}
+            return json.dumps({"items": [item]})
+        return json.dumps({"items": None})
+
+    (found,) = KubernetesSource(api, ["prod"]).recent_changes("prod", suite.START, suite.END)
+    assert found["images"] == [] and found["id"] == "deployment/prod/d"

@@ -952,6 +952,126 @@ def test_k5_recorded_answers_are_keyed_by_the_redacted_document(live_cfg_dir):
     assert reply.tool_calls[0].name == "create_draft_record"
 
 
+# --- review fixes (CodeRabbit and SonarCloud on the first push) --------------------------------------------------
+
+
+def test_k5_in_cluster_http_is_never_handed_to_an_environment_proxy(monkeypatch):
+    direct, proxied = _Opener(b"direct"), _Opener(b"proxied")
+    monkeypatch.setattr(tools_mod.http_guard, "LOCAL_OPENER", direct)
+    monkeypatch.setattr(tools_mod.http_guard, "OPENER", proxied)
+    spec = tools_mod.ToolSpec(
+        **{**TOOL, "hosts": ["prom.mon.svc", "api.example.com"], "cluster_http": True}
+    )
+    ctx = tools_mod.ToolContext(spec, 3.0)
+    assert ctx.fetch("GET", "http://prom.mon.svc/q", operation="bundle.read") == "direct"
+    assert ctx.fetch("GET", "https://api.example.com/q", operation="bundle.read") == "proxied"
+
+
+def test_k5_a_float_in_a_tool_argument_does_not_strand_the_run(tmp_path):
+    class FloatLLM(ScriptLLM):
+        def chat(self, messages, **kw):
+            if not self.sent:
+                self.sent.append({})
+                return Reply(
+                    tool_calls=[ToolCall(name="read_logs", input={"name": "app", "limit": 1.5})],
+                    model_id="fake-model",
+                )
+            return super().chat(messages, **kw)
+
+    store = MemoryStore()
+    rt, _ = build_runtime(k5_cfg(tmp_path), FloatLLM([{"noaction": True}]), store=store)
+    run = handle(rt)
+    assert run.state == S.NO_ACTION
+    (row,) = store.list_tool_calls(run.run_id)
+    assert row.inputs["limit"] == 1.5 and row.output.startswith("ERROR: arguments invalid")
+    (event,) = [e for e in _events(rt, run) if e.domain == "tool"]
+    assert len(event.inputs_hash) == 64
+
+
+def _execute_runtime(tmp_path, execute_hook):
+    """A dev runtime holding a stored plan whose id input is a placeholder, ready for `execute`."""
+    from hadavin_sdk.audit import LocalDirSink
+    from hadavin_sdk.guard import RegexDetector
+    from hadavin_sdk.limits import Limits
+    from hadavin_sdk.models import GateDecision, Plan, Run, Target
+    from hadavin_sdk.runtime.agent_loop import Hooks, Runtime
+    from tests.conftest import make_cfg, qualify
+
+    cfg = load_config(make_cfg(tmp_path))
+    reg = load_registry(cfg)
+    qualify(reg)
+    store, audit = MemoryStore(), LocalDirSink(cfg.backends.audit.dir)
+    hooks = Hooks(execute=execute_hook, verify=lambda plan, result: True)
+    rt = Runtime(
+        reg, store, audit, ScriptLLM([]), RegexDetector(0.5), Limits(store, audit, reg),
+        ["test-agent"], hooks,
+    )  # fmt: skip
+    run = Run(
+        agent_id="test-agent",
+        principal_id="svc:test-agent",
+        trigger_kind="event",
+        trigger_ref="t",
+        state=S.PLAN_READY,
+    )
+    store.create_run(run)
+    plan = Plan(
+        run_id=run.run_id,
+        agent_id="test-agent",
+        action_id="lookup_record",
+        action_version=1,
+        risk_class="read_only",
+        inputs={"id": "<NAME_1>"},
+        target=Target(system="fixture-records"),
+        idempotency_key=f"{run.run_id}:lookup_record",
+        expected_outcome="x",
+    )
+    store.save_plan(plan)
+    store.save_gate_decision(
+        GateDecision(
+            run_id=run.run_id, plan_hash=plan.hash(), outcome="allow", rule_id="class.read_only"
+        )
+    )
+    return rt, store, run
+
+
+def test_k5_execute_passes_the_restored_inputs_to_hooks_that_take_them(tmp_path):
+    from hadavin_sdk.models import RunResult
+
+    seen = {}
+
+    def execute(plan, decision, approval, inputs_view=None):
+        seen["view"], seen["plan"] = inputs_view, plan.inputs
+        return RunResult(outcome="succeeded", external_ref="rec-123")
+
+    rt, store, run = _execute_runtime(tmp_path, execute)
+    store.put_redaction_map(run.run_id, {"<NAME_1>": "rec-123"})
+    verified = []
+    rt.hooks.verify = lambda plan, result: verified.append(plan.inputs) or True
+    done = rt.execute(run.run_id)
+    assert done.state == S.SUCCEEDED
+    assert seen == {"view": {"id": "rec-123"}, "plan": {"id": "<NAME_1>"}}
+    assert verified == [{"id": "rec-123"}]  # verify_check gets the restored inputs too
+
+
+def test_k5_execute_refuses_a_hook_that_cannot_take_the_restored_inputs(tmp_path):
+    called = []
+    rt, store, run = _execute_runtime(tmp_path, lambda plan, decision, approval: called.append(1))
+    store.put_redaction_map(run.run_id, {"<NAME_1>": "rec-123"})
+    done = rt.execute(run.run_id)
+    assert (done.state, done.reason_code) == (S.NEEDS_PERSON, "input.unresolved")
+    assert called == []  # the side effect never ran against placeholder text
+
+
+def test_k5_execute_stops_when_the_map_is_gone(tmp_path):
+    called = []
+    rt, _store, run = _execute_runtime(
+        tmp_path, lambda plan, decision, approval, inputs_view=None: called.append(1)
+    )
+    done = rt.execute(run.run_id)  # no map was ever saved
+    assert (done.state, done.reason_code) == (S.NEEDS_PERSON, "recheck.input.unresolved")
+    assert called == []
+
+
 # --- acceptance: a pilot config, a recorded bundle, manifest tools ---------------------------------------------------
 
 

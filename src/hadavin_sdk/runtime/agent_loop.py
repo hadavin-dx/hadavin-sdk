@@ -97,6 +97,13 @@ _CAUGHT_BY_ABSTAIN_REASON = {
 _REASON_TEXT = {"ungrounded": "ungrounded (inputs not found in cited evidence)"}
 
 
+def _digest(value: Any) -> str:
+    """A hash of model-written JSON. Unlike `sha256_hex` it accepts a float: a tool argument is not money, and
+    a float must never strand a run after its evidence is stored."""
+    text = json.dumps(value, sort_keys=True, separators=(",", ":"), default=str, ensure_ascii=False)
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
 def _with_evidence(schema: dict[str, Any]) -> dict[str, Any]:
     """The schema the model sees for an action tool of a tooled agent: `evidence` is required (K5). The stored
     contract is untouched: `evidence` is stripped from the proposal before the plan is built."""
@@ -428,7 +435,7 @@ class Runtime:
                     "tool",
                     call.name,
                     object_ref=call_id,
-                    inputs_hash=sha256_hex(record.inputs),
+                    inputs_hash=_digest(record.inputs),
                     result="error" if out.error else "ok",
                     error_code="tool_error" if out.error else None,
                 )
@@ -683,15 +690,30 @@ class Runtime:
             )
         except AuditUnavailable:
             return self._to(run, S.NEEDS_PERSON, "audit_unavailable")
-        run = self._to(run, S.EXECUTING)
+        # Resolve the restored inputs BEFORE the side effect: a placeholder that cannot be restored, or a hook that
+        # cannot take the restored view, stops the run (fail closed; R6).
         view = self._inputs_view(run, plan)
+        needs_view = view != plan.inputs
+        if runmap.has_placeholder(view) or (
+            needs_view and not _accepts(self.hooks.execute, "inputs_view")
+        ):
+            self._note(
+                run,
+                "gate",
+                "recheck",
+                object_ref=plan.plan_id,
+                rule_id="input.unresolved",
+                result="stop",
+            )
+            return self._to(run, S.NEEDS_PERSON, "input.unresolved")
+        run = self._to(run, S.EXECUTING)
         # verify_check and rollback also receive the restored inputs; the stored plan keeps its placeholders.
         shown = plan if view == plan.inputs else plan.model_copy(update={"inputs": view})
         try:
             extra = {}
             if _accepts(self.hooks.execute, "heartbeat"):  # older three-argument hooks still work
                 extra["heartbeat"] = lambda: self.store.touch(run.run_id)
-            if view != plan.inputs and _accepts(self.hooks.execute, "inputs_view"):
+            if needs_view:
                 extra["inputs_view"] = view  # the request is built from the restored values (R6)
             result = self.hooks.execute(plan, decision, approval, **extra)
         except Exception:  # noqa: BLE001 - the side effect may have happened: never leave EXECUTING
