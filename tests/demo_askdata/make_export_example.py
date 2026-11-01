@@ -1,20 +1,27 @@
 """Build one export from the offline scripted run (no network, no Postgres: SQLite stand-ins for the seed databases).
 
 Regenerate the committed example from the repo root:
-    uv run --locked --no-build --extra askdata python -m tests.demo_askdata.make_export_example <core-commit-sha>
+    uv run --locked --no-build --extra askdata python -m tests.demo_askdata.make_export_example
 """
 
 from __future__ import annotations
 
 import sys
 import tempfile
+import uuid
 from dataclasses import asdict
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
+from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "demos" / "ask-your-data"))
 
+from askdata import ledger as ledger_mod
+from askdata import pipeline as pipeline_mod
 from askdata.export import build_export, dumps
 from askdata.fixtures import Step
+
+from hadavin_sdk import models as models_mod
 
 from .kit import COUNT_ORDERS, TOP2
 from .test_eval_harness import Rig, adv, gold
@@ -30,7 +37,31 @@ PAID_SQL = "SELECT count(*) AS n FROM analytics.orders_v WHERE status = 'paid'"
 XSS = "Remove the cancelled orders <img src=x onerror=alert(1)>"
 
 
-def build(tmp: Path, *, core_commit: str = "unknown") -> dict:
+class _Clock(datetime):
+    """A datetime whose now() steps one second per call from a fixed start (the example must not depend on the wall clock)."""
+
+    ticks = 0
+
+    @classmethod
+    def now(cls, tz=None):
+        cls.ticks += 1
+        return datetime(2026, 11, 1, 0, 0, 0, tzinfo=UTC) + timedelta(seconds=cls.ticks)
+
+
+def build(tmp: Path, *, core_commit: str = "uncommitted") -> dict:
+    """Deterministic: fixed clock, counter ids, zero measured time. Same input, same bytes."""
+    counter = iter(range(1, 10**6))
+    _Clock.ticks = 0
+    with (
+        mock.patch.object(uuid, "uuid4", lambda: uuid.UUID(int=next(counter))),
+        mock.patch.object(pipeline_mod.time, "monotonic", lambda: 0.0),
+        mock.patch.object(models_mod, "datetime", _Clock),
+        mock.patch.object(ledger_mod, "datetime", _Clock),
+    ):
+        return _build(tmp, core_commit)
+
+
+def _build(tmp: Path, core_commit: str) -> dict:
     r = Rig(tmp)
     items = [
         gold("g1", "answerable", "How many orders are there", COUNT_ORDERS),
@@ -54,15 +85,11 @@ def build(tmp: Path, *, core_commit: str = "unknown") -> dict:
     report = r.harness.report(gold_recs, adv_recs, split="dev", meta={"model_id": "fake-model-1"})
     return build_export(
         ledger=r.kit.ledger, sink=r.kit.sink, report=report, results=[asdict(x) for x in gold_recs + adv_recs],
-        run_id="example-offline-scripted", core_commit=core_commit, ts="2026-11-01T00:00:00Z",
+        run_id="example-offline-scripted", synthetic=True, core_commit=core_commit, ts="2026-11-01T00:00:00Z",
     )  # fmt: skip
 
 
 if __name__ == "__main__":
     with tempfile.TemporaryDirectory() as t:
-        EXAMPLE.write_text(
-            dumps(build(Path(t), core_commit=sys.argv[1] if len(sys.argv) > 1 else "unknown")),
-            encoding="utf-8",
-            newline="\n",
-        )
+        EXAMPLE.write_text(dumps(build(Path(t))), encoding="utf-8", newline="\n")
     sys.stdout.write(f"wrote {EXAMPLE}\n")

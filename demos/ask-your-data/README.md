@@ -84,26 +84,34 @@ other logins would lose access (`--accept-loss` to override).
 
 `askdata/export.py` maps one eval run into `hadavin.demo-export/1`, the single file the demo console reads. It is
 read-only and adds no model call: ledger lines (`askdata.ledger/1`), audit events and the run's `report.json` and
-`results.jsonl` in, `export.json` out.
+`results.jsonl` in, the export JSON out on standard output (errors go to standard error, exit 4).
 
 ```
-uv run --locked --no-build --extra askdata python -m askdata.export --config askdata.yaml --run <run name> > export.json
+uv run --locked --no-build --extra askdata python -m askdata.export --config askdata.yaml --run <run name> --synthetic > export.json
 ```
 
-Mapping: `sql_sha256` goes to a step's `args_summary`; validator rules V01 to V12 to `rule_id` (`deny`); refusals and
-abstentions keep their reason code and fixed sentence; `verify.text` is the audit folder's own local integrity check;
-the scorecard carries the confident-wrong count with its one-sided 95 % upper bound, false-abstain, wrong-and-allowed,
-coverage, the hard zeros with their definitions and the verdict wording. `<run name>` is a folder under `paths.runs_dir` (a name, never a path); the JSON is printed to standard output. Only that run's questions and audit events are listed (the integrity check covers the whole audit folder). Exit codes: 0 printed, 4 a missing or bad input.
+`<run name>` is a folder under `paths.runs_dir` (a name, never a path). `--synthetic` is required: it is the caller's
+statement that the run used synthetic data (the export cannot check it). The export is refused unless every ledger
+line of the run names the scripted model.
+
+Mapping: `sql_sha256` goes to a step's `args_summary`; validator rules V01 to V12 become `R-ASK-001` to `R-ASK-012`
+in `rule_id` (the contract's id shape; the reason text keeps "validator rule V03"); refusals and abstentions keep their
+reason code and fixed sentence. The scorecard carries the confident-wrong count with its one-sided 95 % upper bound,
+false-abstain, wrong-and-allowed (unsafe actions let through, 0 when the gate held), coverage, the hard zeros with
+their definitions and the verdict wording. Counts are per gold item when k is above 1 (an item is wrong, missed or
+correct if any of its runs is); `cases` lists every run.
 
 What it does not claim: the model is `scripted`, the data is synthetic, the result is a smoke result and no accuracy
 number is given. Money is not applicable (a read-only tool moves none) and there are no approvals or adapter calls.
-The audit chain (`hash-chain/1`) is computed at export time over the audit folder's events so the console can
-recompute it; the recipe is in the export's `honesty.notes`.
+The audit chain (`hash-chain/1`) is rebuilt at export time with the kit's recipe, with no signature and no external
+anchor: anyone who edits the file can recompute it, so it shows internal consistency, not that the source is untouched.
+`audit.events` and `verify` cover this run; the audit folder's own check covers the whole folder and is quoted in the
+readiness row.
 
-`examples/export.example.json` comes from the offline scripted run (no Postgres: SQLite stand-ins, see
-`tests/demo_askdata/make_export_example.py`; regenerate from the repo root with
-`python -m tests.demo_askdata.make_export_example <core-commit>`). `tests/fixtures/demo_export_v1.schema.json` is a
-working copy of the contract's schema; the kit repo will publish the canonical one and this copy is then replaced.
+`examples/export.example.json` comes from the offline scripted run (SQLite stand-ins, no Postgres; fixed clock and ids,
+so regeneration is byte-identical and a test checks it): `python -m tests.demo_askdata.make_export_example` from the
+repo root. `tests/fixtures/demo_export_v1.schema.json` is a verbatim copy of the kit's `portal-kit/schema/demo-export.v1.json`
+(kit commit fdbc34c); re-copy it when the kit schema changes and re-validate the example.
 
 ## 90-second recording script (owner records; async-first)
 
