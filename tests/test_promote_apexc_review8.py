@@ -389,7 +389,7 @@ def test_fold_covers_the_listed_look_alikes_in_every_script_and_all_map_to_ascii
     for cp, latin in listed.items():
         assert fold(chr(cp)) == latin, hex(cp)
     assert all(re.fullmatch("[A-Za-z]", v) for v in LOOKALIKES.values())
-    assert fold("١٢３") == "123" and fold("a\nb\tc") == "a b c"
+    assert fold(chr(0x661) + chr(0x662) + chr(0xFF13)) == "123" and fold("a\nb\tc") == "a b c"
     for sp in (
         0x85,
         0x1C,

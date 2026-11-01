@@ -22,7 +22,9 @@ import re
 import unicodedata
 
 _DROP_CATEGORIES = frozenset({"Cc", "Cf", "Mn", "Me", "Zl", "Zp", "Co", "Cs"})
-FILLERS = frozenset("ㅤᅟᅠ⠀ﾠ")  # invisible letters/symbols used to glue or split words
+FILLERS = frozenset(
+    map(chr, (0x3164, 0x115F, 0x1160, 0x2800, 0xFFA0))
+)  # invisible letters/symbols used to glue or split words
 _PAIRS = (  # (code points, Latin letters); code points so this file stays ASCII
     ((0x430, 0x435, 0x43E, 0x440, 0x441, 0x445, 0x443, 0x456, 0x455, 0x458, 0x43A, 0x43C, 0x442, 0x43D, 0x432), "aeopcxyisjkmthb"),
     ((0x410, 0x412, 0x415, 0x41A, 0x41C, 0x41D, 0x41E, 0x420, 0x421, 0x422, 0x425), "ABEKMHOPCTX"),

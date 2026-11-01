@@ -28,11 +28,13 @@ from typing import Any
 
 from hadavin_sdk.guard.textnorm import fold, squeeze
 
-_MARK = ""  # private use: textnorm.fold removes it from input, so a sentinel can only be ours
+_MARK = chr(
+    0xE000
+)  # private use: textnorm.fold removes it from input, so a sentinel can only be ours
 _ISO = re.compile(r"(?<!\d)(\d{4})([-/.])(\d{2})\2(\d{2})(?!\d)")
 _DMY = re.compile(r"(?<!\d)(\d{2})([-/.])(\d{2})\2(\d{4})(?!\d)")
 _AMOUNT = r"(?:(?<![\d,.])\d{1,2}(?:,\d{3}){1,2}(?:\.\d{1,2})?(?![\d,])|(?<![\d.])\d{1,7}\.\d{1,2}(?![\d.]))"
-_CURRENCY_BEFORE = "(?:(?<=[$€£¥₹])|(?<=[$€£¥₹] ))"
+_CURRENCY_BEFORE = r"(?:(?<=[$\u20ac\u00a3\u00a5\u20b9])|(?<=[$\u20ac\u00a3\u00a5\u20b9] ))"
 _AMOUNT_ANCHORED = re.compile(
     _CURRENCY_BEFORE + _AMOUNT + "|" + _AMOUNT + r"(?= ?[A-Z]{3}(?![A-Za-z]))"
 )
