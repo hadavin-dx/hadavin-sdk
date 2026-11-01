@@ -209,12 +209,20 @@ def test_a_neutral_kind_has_no_vendor_only_path():
                 assert (cap, kind) == ("anchor", "s3_object_lock"), (cap, kind)
 
 
+def _source_docstring(mod: str) -> str:
+    """The module docstring read from the source file: no import, so a kind that needs an optional extra
+    (signer, aws, pg) is checked on a default dev install too."""
+    rel = Path(*mod.split("."))
+    path = SRC / rel.with_suffix(".py")
+    if not path.is_file():
+        path = SRC / rel / "__init__.py"
+    return ast.get_docstring(ast.parse(path.read_text(encoding="utf-8"))) or ""
+
+
 def neutral_problems(table: dict, vendor: set[str]) -> list[str]:
     """`neutral` is hand-set, so each neutral kind must show it: its module imports no vendor SDK (the S3
     anchor is the one exception and must offer `endpoint_url`) and its module docstring states the neutral
     protocol it speaks on a `Neutral protocol:` line."""
-    import importlib
-
     out = []
     for cap, kinds in table.items():
         for kind, entry in kinds.items():
@@ -226,7 +234,7 @@ def neutral_problems(table: dict, vendor: set[str]) -> list[str]:
                 and "endpoint_url" in entry.settings.model_fields
             ):
                 out.append(f"{cap} {kind}: neutral but module {mod} imports a vendor SDK")
-            if "Neutral protocol:" not in (importlib.import_module(mod).__doc__ or ""):
+            if "Neutral protocol:" not in (_source_docstring(mod)):
                 out.append(f"{cap} {kind}: module {mod} states no neutral protocol")
     return out
 
@@ -565,8 +573,14 @@ def _fold(node: ast.AST) -> str | None:
         left, right = _fold(node.left), _fold(node.right)
         return (left if left is not None else "{}") + (right if right is not None else "{}")
     if isinstance(node, ast.JoinedStr):
+        # A constant `{"east"}` inside an f-string is folded, so f'us-{"east"}-1' reads as us-east-1.
         return "".join(
-            v.value if isinstance(v, ast.Constant) and isinstance(v.value, str) else "{}"
+            (_fold(v.value) or "{}")
+            if isinstance(v, ast.FormattedValue)
+            and v.conversion == -1
+            and v.format_spec is None
+            and isinstance(v.value, ast.Constant)
+            else (v.value if isinstance(v, ast.Constant) and isinstance(v.value, str) else "{}")
             for v in node.values
         )
     return None
@@ -684,6 +698,15 @@ def test_plant_split_fstring_is_caught(tmp_path):
 def test_plant_bytes_plus_bytes_is_caught(tmp_path):
     found = _lit(tmp_path, "runtime/x.py", "H = b'x-amz-' + b'date'\n")
     assert any("vendor header" in f for f in found)
+
+
+def test_plant_constant_inside_fstring_is_folded_and_caught(tmp_path):
+    text = "R = f'us-{" + chr(34) + "east" + chr(34) + "}-1'" + chr(10)
+    assert "AWS region" in _lit(tmp_path, "runtime/x.py", text)[0]
+    assert (
+        _lit(tmp_path, "runtime/x.py", "def f(x):" + chr(10) + "    return f'a-{x}-b'" + chr(10))
+        == []
+    )
 
 
 def test_non_constant_concatenation_is_not_a_false_alarm(tmp_path):

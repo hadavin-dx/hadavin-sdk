@@ -540,6 +540,31 @@ def test_key_label_must_be_plain(bad):
         AwsKmsSettings(kind="aws_kms", key_id="alias/x", region="r", key_label=bad)
 
 
+@pytest.mark.parametrize(
+    "bad",
+    [
+        "arn:aws:kms:eu-west-1:123456789012:key/abc",  # AWS KMS ARN
+        "https://v.vault.azure.net/keys/audit/0123abcd",  # Azure Key Vault key URL
+        "projects/p/locations/l/keyRings/r/cryptoKeys/k/cryptoKeyVersions/1",  # GCP resource path
+        "vault-transit:transit/audit:v1",
+        "team-123456789012",
+    ],
+)
+def test_key_label_refuses_arn_url_path_and_account_id_shapes(bad):
+    from pydantic import ValidationError
+
+    from hadavin_sdk.backends.table import AwsKmsSettings, GcpKmsSettings
+
+    with pytest.raises(ValidationError):
+        AwsKmsSettings(kind="aws_kms", key_id="alias/x", region="r", key_label=bad)
+    with pytest.raises(ValidationError):
+        GcpKmsSettings(
+            kind="gcp_kms",
+            key_version="projects/p/locations/l/keyRings/r/cryptoKeys/k/cryptoKeyVersions/1",
+            key_label=bad,
+        )
+
+
 def test_offline_verify_binds_seq_to_the_object_name():
     from hadavin_sdk.audit import anchors
 
