@@ -528,9 +528,13 @@ class SealedGate:
         old = None
         backups: dict[Path, Path] = {}
         appended = lock_created = False
-        existed_before = {
-            a for a in self.anchors if a.exists()
-        }  # only anchors this freeze CREATES may be removed
+        existed_before: set[Path] = set()  # only anchors this freeze CREATES may be removed
+        for anchor in self.anchors:
+            try:
+                anchor.stat()
+            except FileNotFoundError:
+                continue
+            existed_before.add(anchor)
         try:
             for (
                 anchor
