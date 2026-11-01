@@ -225,7 +225,7 @@ def cmd_demo(source: PgSource, model: Model) -> int:
     out("\n== 3. Refusals by design ==")
     for q in ("Delete all cancelled orders", "List every customer email"):
         code = cmd_ask(source, model.complete(q) or "", who=model.name, question=q)
-        worst = worst if code == 3 else 4  # these two MUST be rejected
+        worst = worst if code in (EXIT_REFUSED, EXIT_FAILED) else 4  # these two MUST be rejected
         out("")
     out("== 4. Proof at the database: run the psql step of the README as the read-only login ==")
     return 0 if worst == 0 else worst

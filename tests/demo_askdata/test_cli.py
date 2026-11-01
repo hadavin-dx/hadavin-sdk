@@ -40,11 +40,18 @@ def test_ask_sql_shows_canonical_sql_hash_and_table(cli):
 
 @pytest.mark.parametrize(
     ("sql", "rule"),
-    [("DELETE FROM shop.orders", "V03"), ("SELECT email FROM analytics.customers_v", "V05")],
+    [
+        (
+            "DELETE FROM shop.orders",
+            "V03",
+            2,
+        ),  # a write attempt is a refusal (exit 2), as in the pipeline
+        ("SELECT email FROM analytics.customers_v", "V05", 3),
+    ],
 )
-def test_ask_rejects_before_the_database(cli, sql, rule):
+def test_ask_rejects_before_the_database(cli, sql, rule, expected):
     code, out = cli("ask", "--sql", sql)
-    assert code == 3 and f"rejected {rule}" in out and "nothing was sent" in out
+    assert code == expected and f"rejected {rule}" in out and "nothing was sent" in out
 
 
 def test_ask_question_uses_the_scripted_model_and_unknown_questions_abstain(cli):
