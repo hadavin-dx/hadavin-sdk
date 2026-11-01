@@ -92,6 +92,8 @@ def spend_limit(exc: BaseException) -> bool:
         if isinstance(details, dict) and "error_code" in details:
             return details["error_code"] == "enforced_spend_limit_reached"
         message = err.get("message")  # never str(): a hostile object's __str__ could raise
+        # The message prefix is a fallback only: it was NOT verified against a live response (no spend authorised);
+        # the error code in `details` above is the documented signal and is tried first.
         return isinstance(message, str) and message.startswith(
             "You have reached your API usage limits"
         )

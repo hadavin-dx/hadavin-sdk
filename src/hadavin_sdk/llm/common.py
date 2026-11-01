@@ -115,6 +115,8 @@ def schema_hint(system: str, output_schema: dict[str, Any]) -> str:
 # not a ValueError) and a huge reply costs time and memory, so both are bounded BEFORE parsing.
 MAX_JSON_CHARS = 1_000_000
 MAX_JSON_DEPTH = 64
+_SCAN_BUDGET = 2_000_000  # characters all candidates of one json_in_text call may scan in total
+_MAX_RESPONSE_BYTES = 16_000_000
 _MAX_RESPONSE_CHARS = 16_000_000  # a vendor response (not a model's JSON answer)
 _MAX_CANDIDATES = (
     50  # `{` positions tried in one text, so a reply full of braces cannot go quadratic
@@ -125,11 +127,18 @@ class ReplyUnparseable(ValueError):
     """A model reply too large or too deeply nested to parse safely (treated as an invalid reply)."""
 
 
-def nesting_ok(text: str, start: int = 0, limit: int = MAX_JSON_DEPTH) -> bool:
+def nesting_ok(
+    text: str, start: int = 0, limit: int = MAX_JSON_DEPTH, budget: list[int] | None = None
+) -> bool:
     """True if the JSON value starting at ``start`` nests no deeper than ``limit`` (string-aware, linear, stops
-    as soon as the value closes or the limit is passed)."""
+    as soon as the value closes or the limit is passed). ``budget`` ([characters left]) is shared across calls and
+    spent as the scan reads; an empty budget answers False, so many candidates cannot add up to a CPU burn."""
     depth, in_str, esc = 0, False, False
     for ch in islice(text, start, None):
+        if budget is not None:
+            budget[0] -= 1
+            if budget[0] < 0:
+                return False
         if in_str:
             if esc:
                 esc = False
@@ -163,7 +172,7 @@ def loads_bounded(text: str, max_chars: int = MAX_JSON_CHARS) -> Any:
 
 def error_body(exc: BaseException) -> dict[str, Any] | None:
     """The JSON object an HTTP error carried: an SDK error's parsed ``body``, or a urllib ``HTTPError``'s body
-    (read once, at most 64 KiB, size and nesting bounded). Never raises: a classifier must not fail inside the
+    (read once, at most 4 KiB, size and nesting bounded). Never raises: a classifier must not fail inside the
     handler of the error it classifies."""
     try:
         body = getattr(exc, "body", None)
@@ -171,7 +180,7 @@ def error_body(exc: BaseException) -> dict[str, Any] | None:
             return body
         read = getattr(exc, "read", None)
         if callable(read):
-            parsed = loads_bounded(read(65536).decode("utf-8", "replace"), 65536)
+            parsed = loads_bounded(read(4096).decode("utf-8", "replace"), 4096)
             return parsed if isinstance(parsed, dict) else None
     except Exception:  # noqa: BLE001 - unreadable body means "not a spend limit"
         return None
@@ -184,10 +193,11 @@ def json_in_text(text: str) -> dict[str, Any] | None:
     if len(text) > MAX_JSON_CHARS:
         return None
     start = text.find("{")
+    budget = [_SCAN_BUDGET]
     for _ in range(_MAX_CANDIDATES):
-        if start == -1:
+        if start == -1 or budget[0] < 0:
             return None
-        if nesting_ok(text, start):
+        if nesting_ok(text, start, budget=budget):
             try:
                 found, _ = json.JSONDecoder().raw_decode(text, start)
             except (ValueError, RecursionError):
@@ -353,4 +363,10 @@ def post_json(url: str, body: dict[str, Any], headers: dict[str, str], timeout_s
     )
     opener = _LOCAL_OPENER if urlsplit(url).hostname in _LOOPBACK else _OPENER
     with opener.open(req, timeout=timeout_s) as resp:  # nosec B310
-        return loads_bounded(resp.read().decode("utf-8"), _MAX_RESPONSE_CHARS)
+        raw = resp.read(_MAX_RESPONSE_BYTES + 1)  # never the whole of an endless body
+        if len(raw) > _MAX_RESPONSE_BYTES:
+            raise ReplyUnparseable("response too large")
+        try:
+            return loads_bounded(raw.decode("utf-8"), _MAX_RESPONSE_CHARS)
+        except UnicodeDecodeError as exc:
+            raise ReplyUnparseable("response is not UTF-8") from exc

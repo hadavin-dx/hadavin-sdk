@@ -12,10 +12,12 @@ from __future__ import annotations
 import ipaddress
 import logging
 import os
+import queue
 import tempfile
 import threading
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
+from contextlib import contextmanager
 from datetime import date, datetime
 from decimal import Decimal
 from enum import Enum
@@ -179,6 +181,9 @@ def build(settings, deps) -> PostgresStore:
     return PostgresStore(conn, connector)
 
 
+RUN_KEY_SQL = r"^([0-9]+:[^/]*/)?run:"  # a per-run counter key (see Limits._key)
+
+
 def _row(model: BaseModel) -> dict[str, Any]:
     """Model -> column values: dicts/lists as JSONB, enums as their text, everything else as is."""
     py, js = model.model_dump(), model.model_dump(mode="json")
@@ -200,6 +205,10 @@ class PostgresStore:
     # the process lock while waiting; without a connector (a test wrapping one connection) they share ``conn``.
     LOCK_TIMEOUT_MS = 5000
     RESERVE_ATTEMPTS = 3
+    POOL_SIZE = (
+        8  # connections for spend work, per process: bounded, well below a server's max_connections
+    )
+    POOL_WAIT_S = 10.0
 
     def __init__(
         self, conn: psycopg.Connection, connector: Callable[[], psycopg.Connection] | None = None
@@ -207,6 +216,8 @@ class PostgresStore:
         self._db = conn
         self._connector = connector
         self._lock = threading.Lock()
+        self._idle: queue.LifoQueue[psycopg.Connection] = queue.LifoQueue()
+        self._slots = threading.BoundedSemaphore(self.POOL_SIZE)
 
     # --- generic helpers ---------------------------------------------------------------------------------
 
@@ -453,40 +464,91 @@ class PostgresStore:
             ).fetchone()
         return (Decimal(d["usd"]) if d else Decimal(0)), (Decimal(m["usd"]) if m else Decimal(0))
 
+    def close(self) -> None:
+        """Close the spend pool and the main connection."""
+        while True:
+            try:
+                self._idle.get_nowait().close()
+            except queue.Empty:
+                break
+        self._db.close()
+
+    @contextmanager
+    def _borrow(self) -> Iterator[psycopg.Connection]:
+        """A pooled connection for spend work (at most POOL_SIZE at once; callers wait, then fail closed).
+        A connection that raised is closed, never reused. Connect errors become StoreUnavailable carrying the
+        class name only (driver text can hold the host and user)."""
+        if not self._slots.acquire(timeout=self.POOL_WAIT_S):
+            raise StoreUnavailable("store postgres: no spend connection free (pool exhausted)")
+        conn = None
+        try:
+            try:
+                conn = self._idle.get_nowait()
+                if conn.closed or conn.broken:
+                    conn = None
+            except queue.Empty:
+                pass
+            if conn is None:
+                if self._connector is None:
+                    raise StoreUnavailable("store postgres: no connector for pooled spend work")
+                for attempt in (1, 2):  # one retry of a connect failure
+                    try:
+                        conn = self._connector()
+                        break
+                    except psycopg.Error as exc:
+                        if attempt == 2:
+                            raise StoreUnavailable(
+                                f"store postgres: cannot connect ({type(exc).__name__})"
+                            ) from None
+                        time.sleep(0.05)
+            yield conn
+        except BaseException:
+            if conn is not None:
+                conn.close()
+            conn = None
+            raise
+        finally:
+            if conn is not None:
+                self._idle.put(conn)
+            self._slots.release()
+
     def _spend_tx(self, work: Callable[[psycopg.Connection], Any]) -> Any:
         """Run ``work`` in one transaction with a bounded lock wait, retrying a serialization failure, a deadlock
-        or a lock timeout a few times; then fail closed with StoreUnavailable (the caller does not proceed)."""
+        or a lock timeout a few times; then fail closed with StoreUnavailable (the caller does not proceed).
+        Any other database error is StoreUnavailable too, by class name only."""
         last: Exception | None = None
         for attempt in range(self.RESERVE_ATTEMPTS):
-            own = self._connector() if self._connector else None
-            conn = own or self._db
             try:
-                if own is None:
-                    self._lock.acquire()
-                try:
-                    with conn.transaction():
-                        conn.execute(
-                            "SELECT set_config('lock_timeout', %s, true)",
-                            (f"{int(self.LOCK_TIMEOUT_MS)}ms",),
-                        )
-                        return work(conn)
-                finally:
-                    if own is None:
-                        self._lock.release()
+                if (
+                    self._connector is None
+                ):  # a test wrapping one connection: share it under the lock
+                    with self._lock:
+                        return self._run_tx(self._db, work)
+                with self._borrow() as conn:
+                    return self._run_tx(conn, work)
             except (
                 psycopg.errors.SerializationFailure,
                 psycopg.errors.DeadlockDetected,
                 psycopg.errors.LockNotAvailable,
             ) as exc:
                 last = exc
-                time.sleep(0.02 * (attempt + 1))
-            finally:
-                if own is not None:
-                    own.close()
+                if attempt + 1 < self.RESERVE_ATTEMPTS:
+                    time.sleep(0.02 * (attempt + 1))
+            except psycopg.OperationalError as exc:
+                raise StoreUnavailable(
+                    f"store postgres: spend operation failed ({type(exc).__name__})"
+                ) from None
         raise StoreUnavailable(
             f"store postgres: spend counters busy ({type(last).__name__}) after "
             f"{self.RESERVE_ATTEMPTS} attempts"
         ) from None
+
+    def _run_tx(self, conn: psycopg.Connection, work: Callable[[psycopg.Connection], Any]) -> Any:
+        with conn.transaction():
+            conn.execute(
+                "SELECT set_config('lock_timeout', %s, true)", (f"{int(self.LOCK_TIMEOUT_MS)}ms",)
+            )
+            return work(conn)
 
     @staticmethod
     def _locked_total(
@@ -565,6 +627,18 @@ class PostgresStore:
 
     @staticmethod
     def _add(conn: psycopg.Connection, agent_id: str, day: date, usd: Decimal) -> None:
+        if (
+            usd < 0
+        ):  # taking back: only from a counter that exists (a pruned one is not recreated negative)
+            conn.execute(
+                "UPDATE spend SET usd = usd + %s WHERE agent_id = %s AND day = %s",
+                (usd, agent_id, day),
+            )
+            conn.execute(
+                "UPDATE spend_month SET usd = usd + %s WHERE agent_id = %s AND month = %s",
+                (usd, agent_id, day.replace(day=1)),
+            )
+            return
         conn.execute(
             "INSERT INTO spend (agent_id, day, usd) VALUES (%s, %s, %s) "
             "ON CONFLICT (agent_id, day) DO UPDATE SET usd = spend.usd + EXCLUDED.usd",
@@ -578,19 +652,23 @@ class PostgresStore:
 
     def settle_spend(self, deltas: list[tuple[str, date, Decimal]]) -> None:
         def work(conn: psycopg.Connection) -> None:
-            for agent_id, day, delta in sorted(deltas, key=lambda t: (t[0], t[1])):
+            for (
+                agent_id,
+                day,
+                delta,
+            ) in deltas:  # in the caller's order: run counter first (as reserve)
                 self._add(conn, agent_id, day, delta)
 
         self._spend_tx(work)
 
-    def prune_spend(self, prefix: str, before: date) -> int:
+    def prune_spend(self, before: date) -> int:
         def work(conn: psycopg.Connection) -> int:
             n = conn.execute(
-                "DELETE FROM spend WHERE starts_with(agent_id, %s) AND day < %s", (prefix, before)
+                "DELETE FROM spend WHERE agent_id ~ %s AND day < %s", (RUN_KEY_SQL, before)
             ).rowcount
             conn.execute(
-                "DELETE FROM spend_month WHERE starts_with(agent_id, %s) AND month < %s",
-                (prefix, before.replace(day=1)),
+                "DELETE FROM spend_month WHERE agent_id ~ %s AND month < %s",
+                (RUN_KEY_SQL, before.replace(day=1)),
             )
             return n
 

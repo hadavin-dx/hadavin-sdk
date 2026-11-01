@@ -132,9 +132,9 @@ class Store(Protocol):
         """Apply every ``(agent_id, day, delta)`` (delta may be negative) in ONE atomic step: all or none."""
         ...
 
-    def prune_spend(self, prefix: str, before: date) -> int:
-        """Delete the counters whose agent id starts with ``prefix`` and whose day is before ``before``;
-        returns the number of day rows removed."""
+    def prune_spend(self, before: date) -> int:
+        """Delete the per-run counters (agent ids ``run:...`` or ``<n>:<tenant>/run:...``) whose day is before
+        ``before``; returns the number of day rows removed. Needs DELETE: not the runtime role's."""
         ...
 
     def get_kill_switch(self) -> KillSwitch:

@@ -189,6 +189,9 @@ class Config(_Strict):
     egress_hosts: frozenset[str] = frozenset()
     allow_insecure_loopback: bool = False  # true only in the local test fixture config
     k1b: K1bSettings = K1bSettings()
+    # This deployment's client (R371): prefixes every spend counter key, so two clients on one store never share
+    # a budget. Empty = one client per store (the default).
+    tenant: str = Field(default="", pattern=r"^[A-Za-z0-9._-]{0,64}$")
     root: Path
 
     @model_validator(mode="after")

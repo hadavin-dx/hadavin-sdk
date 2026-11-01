@@ -30,7 +30,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
-from hadavin_sdk.llm.protocol import LLM, ProviderExhausted, SpendLimitReached
+from hadavin_sdk.llm.protocol import LLM, DeadlineExceeded, ProviderExhausted, SpendLimitReached
 from hadavin_sdk.models import Reply
 
 _LOG = logging.getLogger("hadavin_sdk.llm.resilient")
@@ -62,7 +62,15 @@ class CircuitBreaker:
         self._epoch = (
             0  # bumped when the circuit opens or a probe is abandoned: older tickets are stale
         )
+        self._open_spend = (
+            False  # why the circuit is open: a spend cap (per epoch), cleared only on close
+        )
         self._lock = threading.Lock()
+
+    @property
+    def open_for_spend(self) -> bool:
+        with self._lock:
+            return self._opened_at is not None and self._open_spend
 
     def allow(self) -> Ticket | None:
         """A ticket to call the primary with, or None (circuit open). One probe at a time; a probe that has not
@@ -83,17 +91,19 @@ class CircuitBreaker:
             if self._opened_at is None:
                 self._n = 0
             elif ticket.probe and ticket.epoch == self._epoch:
-                self._n, self._opened_at, self._probing = 0, None, False
+                self._n, self._opened_at, self._probing, self._open_spend = 0, None, False, False
 
-    def failure(self, ticket: Ticket) -> None:
+    def failure(self, ticket: Ticket, spend: bool = False) -> None:
         with self._lock:
             if self._opened_at is None:
                 self._n += 1
                 if self._n >= self.failures:
                     self._opened_at, self._epoch = self._clock(), self._epoch + 1
+                    self._open_spend = spend
             elif ticket.probe and ticket.epoch == self._epoch:
                 self._opened_at, self._probing = self._clock(), False  # a failed probe re-opens
                 self._epoch += 1
+                self._open_spend = spend
             # a stale non-probe failure while open: ignored (no new window, no touch of _probing)
 
     def release(self, ticket: Ticket) -> None:
@@ -118,7 +128,6 @@ class ResilientLLM:
         self.send_documents_to_fallback = send_documents_to_fallback
         self.fallback_metered = fallback_metered
         self.on_fallback = on_fallback
-        self._spend_tripped = False
 
     def __getattr__(self, name: str) -> Any:  # call_timeout_s, max_attempts: tick.py reads them
         primary = self.__dict__.get("primary")
@@ -132,16 +141,35 @@ class ResilientLLM:
             return self._fallback("circuit open", None, args, kwargs)
         try:
             out = self.primary.chat(*args, **kwargs)
-        except _TRIPS as exc:
+        except DeadlineExceeded:
+            # The abandoned primary request may still be billed. Falling back would return a reply whose cost
+            # hides that bill and send the same prompt to two vendors: raise, so a metered caller keeps the
+            # primary's worst case booked.
             self.breaker.failure(ticket)
-            self._spend_tripped = isinstance(exc, SpendLimitReached)
+            raise
+        except _TRIPS as exc:
+            self.breaker.failure(ticket, spend=isinstance(exc, SpendLimitReached))
             return self._fallback(type(exc).__name__, exc, args, kwargs)
         except BaseException:
             self.breaker.release(ticket)
             raise
-        self.breaker.success(ticket)
-        self._spend_tripped = False
+        self.breaker.success(
+            ticket
+        )  # a stale success is ignored by the breaker, and so is its trip reason
         return out
+
+    def __copy__(self) -> ResilientLLM:
+        new = ResilientLLM.__new__(ResilientLLM)
+        new.__dict__.update(
+            self.__dict__
+        )  # shares the breaker on purpose: one circuit per provider
+        return new
+
+    def __deepcopy__(self, memo: dict[int, Any]) -> ResilientLLM:
+        raise TypeError("ResilientLLM holds a circuit breaker and live clients: build a new one")
+
+    def __reduce__(self) -> Any:
+        raise TypeError("ResilientLLM cannot be pickled: build a new one in the other process")
 
     def _fallback(
         self, why: str, cause: BaseException | None, args: tuple[Any, ...], kwargs: dict[str, Any]
@@ -165,15 +193,15 @@ class ResilientLLM:
                     _LOG.warning("llm fallback refusal could not be reported")
             if cause is not None:
                 return cause
-            if self._spend_tripped:
+            if cause is None and self.breaker.open_for_spend:
                 return SpendLimitReached(f"llm: {why}, primary spend limit, fallback not metered")
             return ProviderExhausted(f"llm: {why}, {reason}")
 
         if self.fallback is None:
             raise refuse("no fallback configured")
-        if (cause is None and self._spend_tripped or isinstance(cause, SpendLimitReached)) and (
-            not self.fallback_metered
-        ):
+        if (
+            (cause is None and self.breaker.open_for_spend) or isinstance(cause, SpendLimitReached)
+        ) and (not self.fallback_metered):
             raise refuse("spend limit and the fallback is not metered")
         documents = kwargs.get("documents")
         if documents and not self.send_documents_to_fallback:

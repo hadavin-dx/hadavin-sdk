@@ -177,7 +177,6 @@ class Runtime:
         self.llm, self.detector, self.limits = llm, detector, limits
         self.agents = set(agents)
         self.hooks = hooks or Hooks()
-        self.limits.prune_runs()  # per-run counters of crashed old runs
 
     # --- audit helpers ---------------------------------------------------------------------------
     def _event(self, run: Run, domain: str, operation: str, **kw: Any) -> AuditEvent:

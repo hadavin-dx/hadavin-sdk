@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import threading
 from collections import defaultdict
 from datetime import date, datetime
@@ -21,6 +22,9 @@ from hadavin_sdk.models import (
     now,
 )
 from hadavin_sdk.store.protocol import NotFound, StaleState
+
+# A per-run counter's key: bare (``run:<id>``) or under a tenant (``<n>:<tenant>/run:<id>``).
+RUN_KEY = re.compile(r"^(?:[0-9]+:[^/]*/)?run:")
 
 
 class MemoryStore:
@@ -255,11 +259,13 @@ class MemoryStore:
     def settle_spend(self, deltas: list[tuple[str, date, Decimal]]) -> None:
         with self._lock:
             for agent_id, day, delta in deltas:
+                if delta < 0 and (agent_id, day) not in self._spend:
+                    continue  # a counter already pruned: nothing to take back (no negative rows)
                 self._spend[(agent_id, day)] += delta
 
-    def prune_spend(self, prefix: str, before: date) -> int:
+    def prune_spend(self, before: date) -> int:
         with self._lock:
-            gone = [k for k in self._spend if k[0].startswith(prefix) and k[1] < before]
+            gone = [k for k in self._spend if RUN_KEY.match(k[0]) and k[1] < before]
             for k in gone:
                 del self._spend[k]
             return len(gone)

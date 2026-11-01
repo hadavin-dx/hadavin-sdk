@@ -421,7 +421,7 @@ def test_postgres_separate_connections_hold_every_cap():
             assert stores[0].spend_totals("b", MID_MONTH.date())[0] == D("0.50") - D("0.05")
         finally:
             for s in stores:
-                s._db.close()
+                s.close()
 
 
 def _hammer_agent(agent, limitses, n, cost, run_id):
@@ -486,7 +486,7 @@ def test_postgres_kill_switch_flip_is_seen_by_every_later_reserve():
             assert [1 for _, ok in log if not ok]  # and some were refused after the flip
         finally:
             for s in stores:
-                s._db.close()
+                s.close()
 
 
 def test_postgres_lock_wait_is_bounded_retried_and_does_not_hold_the_process_lock():
@@ -529,7 +529,7 @@ def test_postgres_lock_wait_is_bounded_retried_and_does_not_hold_the_process_loc
         finally:
             holder.rollback()
             holder.close()
-            store._db.close()
+            store.close()
 
 
 def test_postgres_serialization_failures_are_retried_a_bounded_number_of_times():
@@ -559,4 +559,4 @@ def test_postgres_serialization_failures_are_retried_a_bounded_number_of_times()
                 store._spend_tx(lambda c: flaky(c, 99))
             assert len(calls) == store.RESERVE_ATTEMPTS
         finally:
-            store._db.close()
+            store.close()

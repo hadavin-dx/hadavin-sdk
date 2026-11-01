@@ -38,7 +38,7 @@
   `fallback_metered=True` (its cost is booked against the same `Limits`). Every fallback call is logged, passed to
   `on_fallback` (wire it to the audit sink; a raising hook stops the call) and marked on the reply (`Reply.fallback_used`,
   `Reply.served_by`). The breaker ignores outcomes of calls that started before it opened, abandons a probe that has not
-  reported within `probe_timeout_s`, and the wrapper is safe to copy. Not yet reachable from config (factory change after PR #42).
+  reported within `probe_timeout_s`, and the wrapper supports `copy.copy` (shares the breaker); `deepcopy` and `pickle` raise `TypeError`. Not yet reachable from config (factory change after PR #42).
 - **Reserve-then-settle budget (G-04, R214), now used by the runtime.** `Limits.reserve(agent_id, worst_case_usd, run_id,
   run_day)` -> `Reservation`, then `Limits.settle(reservation, actual_usd)` (or `release`). ONE atomic store step
   (`Store.reserve_spend`) reads the kill switch and books the run (`max_run_usd`), daily and monthly caps all-or-nothing:
@@ -46,7 +46,9 @@
   retry on serialization failure / deadlock / lock timeout, then fail closed (`StoreUnavailable`). `settle` is one atomic
   store step (`Store.settle_spend`), counts as settled only after the store accepted it (a failed settle can be retried),
   and a second settle or a release after a settle is refused. `Limits.prune_runs()` deletes per-run counters older than 7
-  days (run at `Runtime` start-up). Money inputs must be finite, non-negative `Decimal`s (`ValueError` otherwise; `charge`
+  days, but the RUNTIME database role cannot DELETE (least privilege) and `Runtime` no longer prunes: use
+  `hadavin-sdk migrate --maintenance-role <role>` (that role gets SELECT, DELETE on `spend` and `spend_month` and nothing
+  else) and run `hadavin-sdk prune-runs [--keep-days 7]` with `HADAVIN_MAINTENANCE_DSN` from a scheduled job. Money inputs must be finite, non-negative `Decimal`s (`ValueError` otherwise; `charge`
   too).
 - **The agent loop reserves before every model call (M1).** `Runtime` books `worst_case_usd(route, prompt_bytes(...))`
   (prompt = messages, system, documents, tool schemas; `max_tokens` at the output rate) before `llm.chat`, and settles to
@@ -62,6 +64,30 @@
   `StoreLacksReserve` naming the missing methods instead of failing at the first call. (3) `blocked()` + `charge()` still
   work but keep the check-then-charge race; the runtime no longer uses `charge` except for a custom paid detector.
   (4) `Reply` gains `fallback_used` and `served_by`. (5) `Limits(..., tenant="client-x")` (new, optional) prefixes every counter key, so two clients on one store never share a budget or run share (R371); one deployment per client with its own store stays the default. A refused fallback is also reported to `on_fallback` as `llm_fallback_refused` (R372).
+
+### Round-2 review fixes (PR #48)
+- **Spend reason lives in the breaker (per epoch):** a late success of a call that started before the circuit opened can
+  no longer clear "opened by a spend cap" and send the next call to the unmetered fallback. `DeadlineExceeded` on the
+  primary is never served by the fallback (the abandoned request's bill would vanish from the meter); it is raised.
+- **Postgres spend work uses a bounded pool** (`PostgresStore.POOL_SIZE`, default 8) and every driver error becomes
+  `StoreUnavailable` with the class name only. `settle_spend` no longer sorts: callers pass the run counter first, the
+  order `reserve` takes. A take-back (negative delta) never creates a missing counter (no negative rows after a prune).
+- **Counter keys are injective and validated (R371):** with a tenant the key is `<len>:<tenant>/<name>`; agent ids and
+  tenants must match `[A-Za-z0-9._-]{1,64}` (`AgentRecord.id`, `Limits(tenant=)`), and `config.yaml` has an optional
+  `tenant`, passed to `Limits` by `app.build`. Setting a tenant starts new counters (keys change); the default (empty) is
+  unchanged. **An agent id with `/` or `:` is now refused at load.**
+- **Hostile bodies:** the spend-limit check of a 429 runs inside the deadline-bounded attempt and reads at most 4 KiB;
+  `post_json` reads at most 16 MB (a bounded read, not read-all) and refuses non-UTF-8; `json_in_text` has a total scan
+  budget (2,000,000 characters); hung attempts hold a slot, at most 64 at once (`MAX_INFLIGHT_ATTEMPTS`).
+- **Metered calls outside the loop:** `llm.metered.MeteredLLM(inner, limits, agent_id, routes)` reserves and settles each
+  call; `evals.gate(..., limits=)` uses it, and `extract()` takes a `MeteredLLM` like any `LLM`. The K1b replay keeps its
+  own sequential USD cap.
+- `prune_spend` is now `prune_spend(before)` (all run counters, any tenant) in the `Store` protocol.
+- **For the rebasers (#48 merges first).** #42 (`runtime/agent_loop.py`, 5 hunks): keep `_gate`/`_settle`/`_screen` and the
+  reserve/settle around `llm.chat`; `Runtime.__init__` has NO `prune_runs()` call any more. #43 (`llm/retry.py`,
+  `common.py`, `anthropic.py`, `openai_compat.py`, `gemini.py`, `protocol.py`, `models.py`): keep #48's size and nesting
+  bound in `post_json` (`loads_bounded`, the 16 MB read cap) when `UnusableAnswer` lands, and run #43's `answered_hook`
+  INSIDE the deadline-bounded attempt (`attempt_once` in `with_retry`), so it cannot outlive `deadline_s`.
 
 ### Upgrade steps
 - **K3 pilot build path (levels, shadow cut-off, fail-closed loading).** Action contracts change shape:

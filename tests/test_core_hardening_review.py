@@ -741,8 +741,8 @@ def test_two_clients_on_one_store_share_no_budget_and_no_run_share():
     b.reserve("a", D("0.50"), run_id="r1")  # same agent id, same run id: B is untouched
     assert b.blocked("a") == [] and a.blocked("a") == ["daily_budget"]
     b.charge("a", D("0.40"))
-    assert a.store.spend_totals("client-a/a", MID)[0] == D("1.00")
-    assert store.spend_totals("client-b/a", MID)[0] == D("0.90")
+    assert a.store.spend_totals("8:client-a/a", MID)[0] == D("1.00")
+    assert store.spend_totals("8:client-b/a", MID)[0] == D("0.90")
     assert store.spend_totals("a", MID) == (0, 0)  # nothing under the bare key
 
 

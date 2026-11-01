@@ -40,6 +40,8 @@ from hadavin_sdk.llm.protocol import (
 
 BASE_DELAY_S = 0.5
 MAX_DELAY_S = 8.0  # ceiling of the jittered backoff
+MAX_INFLIGHT_ATTEMPTS = 64  # threads allowed to run (or hang) at once under a deadline
+_SLOTS = threading.BoundedSemaphore(MAX_INFLIGHT_ATTEMPTS)
 RETRY_AFTER_CEILING_S = 60.0  # longest server-requested wait we honour
 
 Retryable = Callable[[BaseException], "bool | None"]
@@ -96,6 +98,13 @@ def retry_after(exc: BaseException) -> float:
     return asked if 0.0 < asked < float("inf") else 0.0
 
 
+class _Failed:
+    """An attempt's error, already classified inside the attempt (so reading an error body is under the deadline)."""
+
+    def __init__(self, exc: Exception, spend: bool) -> None:
+        self.exc, self.spend = exc, spend
+
+
 def _bounded[T](call: Callable[[], T], seconds: float, label: str) -> T:
     """Run ``call`` for at most ``seconds`` of wall clock. On timeout the worker thread is abandoned (it ends at
     the kind's socket timeout) and its result is discarded."""
@@ -107,7 +116,18 @@ def _bounded[T](call: Callable[[], T], seconds: float, label: str) -> T:
         except BaseException as exc:  # noqa: BLE001 - re-raised in the caller's thread
             box["error"] = exc
 
-    worker = threading.Thread(target=run, daemon=True, name=f"{label}-attempt")
+    # A slot is held until the attempt really ends (abandoned or not), so a flood of hung calls cannot pile up
+    # more than MAX_INFLIGHT_ATTEMPTS threads: past that, new attempts are refused until some end.
+    if not _SLOTS.acquire(blocking=False):
+        raise ProviderExhausted(f"{label}: too many attempts still running at the provider")
+
+    def guarded() -> None:
+        try:
+            run()
+        finally:
+            _SLOTS.release()
+
+    worker = threading.Thread(target=guarded, daemon=True, name=f"{label}-attempt")
     worker.start()
     worker.join(max(0.0, seconds))
     if worker.is_alive():
@@ -115,6 +135,10 @@ def _bounded[T](call: Callable[[], T], seconds: float, label: str) -> T:
     if "error" in box:
         raise box["error"]  # type: ignore[misc]
     return box["value"]  # type: ignore[return-value]
+
+
+def got_spend(got: object, exc: Exception) -> bool:
+    return isinstance(got, _Failed) and got.exc is exc and got.spend
 
 
 def describe(exc: BaseException, detail: Callable[[BaseException], str] | None = None) -> str:
@@ -136,18 +160,36 @@ def with_retry[T](
     clock: Callable[[], float] = time.monotonic,
 ) -> T:
     started = clock()
+
+    def attempt_once() -> object:
+        try:
+            return call()
+        except ProviderError:
+            raise
+        except Exception as exc:  # noqa: BLE001 - classified here, inside the attempt and its deadline
+            try:
+                spend = bool(spend_limit is not None and spend_limit(exc))
+            except Exception:  # noqa: BLE001 - a classifier must not raise
+                spend = False
+            return _Failed(exc, spend)
+
     for attempt in range(1, max_attempts + 1):
+        got: object = None
         try:
             if deadline_s is None:
-                return call()
-            left = deadline_s - (clock() - started)
-            if left <= 0:
-                raise DeadlineExceeded(f"{label}: deadline {deadline_s}s reached")
-            return _bounded(call, left, label)
+                got = attempt_once()
+            else:
+                left = deadline_s - (clock() - started)
+                if left <= 0:
+                    raise DeadlineExceeded(f"{label}: deadline {deadline_s}s reached")
+                got = _bounded(attempt_once, left, label)
+            if not isinstance(got, _Failed):
+                return got  # type: ignore[return-value]
+            raise got.exc
         except ProviderError:
             raise
         except Exception as exc:  # every failure is classified below, never swallowed
-            if spend_limit is not None and spend_limit(exc):
+            if got_spend(got, exc):
                 raise SpendLimitReached(f"{label}: {describe(exc, detail)} spend limit") from exc
             if not transient(exc, retryable):
                 raise ProviderError(f"{label}: {describe(exc, detail)}") from exc

@@ -96,8 +96,17 @@ def _main(argv: list[str] | None = None) -> int:
     mig = sub.add_parser("migrate", help="apply the postgres store schema (migration role)")
     mig.add_argument("--runtime-role", help="grant this database role what the runtime needs")
     mig.add_argument(
+        "--maintenance-role",
+        help="grant this database role DELETE on the spend counters only (for prune-runs)",
+    )
+    mig.add_argument(
         "--portal-role", help="grant this database role SELECT on the portal's relations only"
     )
+    prn = sub.add_parser(
+        "prune-runs",
+        help="delete old per-run spend counters (maintenance role; HADAVIN_MAINTENANCE_DSN)",
+    )
+    prn.add_argument("--keep-days", type=_positive, default=7)
     aud = sub.add_parser("audit", help="check the chain audit")
     aud.add_argument("action", choices=["verify"])
     rep = sub.add_parser(
@@ -130,7 +139,9 @@ def _main(argv: list[str] | None = None) -> int:
         return _tick()
     cfg = load_config()
     if args.cmd == "migrate":
-        return _migrate(cfg, args.runtime_role, args.portal_role)
+        return _migrate(cfg, args.runtime_role, args.portal_role, args.maintenance_role)
+    if args.cmd == "prune-runs":
+        return _prune_runs(cfg, args.keep_days)
     reg = load_registry(cfg)
     if args.cmd in (
         "replay",
@@ -304,7 +315,38 @@ def _tick() -> int:
     return run_tick(app)
 
 
-def _migrate(cfg, runtime_role: str | None, portal_role: str | None = None) -> int:
+def _prune_runs(cfg, keep_days: int) -> int:
+    store = cfg.backends.store
+    dsn = os.environ.get("HADAVIN_MAINTENANCE_DSN")
+    if store.kind != "postgres" or not dsn:
+        print(
+            "refused: prune-runs needs the postgres store and HADAVIN_MAINTENANCE_DSN "
+            "(the maintenance role's DSN, never the runtime's)",
+            file=sys.stderr,
+        )
+        return 2
+    from hadavin_sdk.store.migrate import prune_run_counters
+    from hadavin_sdk.store.postgres import ca_file
+
+    ca = ca_file(store, make("secrets", cfg.backends.secrets).get)
+    n = prune_run_counters(
+        dsn,
+        keep_days,
+        iam_auth=store.iam_auth,
+        region=store.region,
+        sslmode=store.sslmode,
+        sslrootcert=ca,
+    )
+    print(f"pruned: {n} run counter rows")
+    return 0
+
+
+def _migrate(
+    cfg,
+    runtime_role: str | None,
+    portal_role: str | None = None,
+    maintenance_role: str | None = None,
+) -> int:
     store = cfg.backends.store
     if store.kind != "postgres":
         print(
@@ -324,6 +366,7 @@ def _migrate(cfg, runtime_role: str | None, portal_role: str | None = None) -> i
         dsn,
         runtime_role=runtime_role,
         portal_role=portal_role,
+        maintenance_role=maintenance_role,
         iam_auth=store.iam_auth,
         region=store.region,
         sslmode=store.sslmode,

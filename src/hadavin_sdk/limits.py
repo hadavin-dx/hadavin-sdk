@@ -14,6 +14,7 @@ Two ways to spend, both kept:
 from __future__ import annotations
 
 import json
+import re
 import threading
 from dataclasses import dataclass
 from datetime import date, timedelta
@@ -31,6 +32,7 @@ from hadavin_sdk.store.protocol import Store
 _RUN_PREFIX = "run:"
 _M = Decimal(1_000_000)
 _RUN_RETENTION_DAYS = 7
+_ID = re.compile(r"[A-Za-z0-9._-]{1,64}")  # agent ids and tenants: no '/' or ':' in a counter key
 
 
 def _money(usd: object, what: str) -> Decimal:
@@ -112,10 +114,14 @@ class Limits:
         self.store, self.audit, self.registry = store, audit, registry
         self._settle_lock = threading.Lock()
         # R371: every counter key carries the tenant, so two clients on one store never share a budget or a run share.
+        if tenant and not _ID.fullmatch(tenant):
+            raise ValueError("tenant must match [A-Za-z0-9._-]{1,64}")
         self.tenant = tenant
 
     def _key(self, name: str) -> str:
-        return f"{self.tenant}/{name}" if self.tenant else name
+        """Injective: a tenant is length-prefixed (``3:abc/name``) and a bare key never starts with digits and a
+        colon (agent ids may not hold ':' or '/'), so no two (tenant, name) pairs share a counter."""
+        return f"{len(self.tenant)}:{self.tenant}/{name}" if self.tenant else name
 
     def reserve(
         self, agent_id: str, usd: Decimal, run_id: str | None = None, run_day: date | None = None
@@ -158,11 +164,13 @@ class Limits:
         delta = actual - res.usd
         try:
             if delta != 0:
-                items = [(self._key(res.agent_id), res.day, delta)]
+                # One global lock order, the order reserve takes: the run counter first, then the agent.
+                items = []
                 if res.run_id:
                     items.append(
                         (self._key(_RUN_PREFIX + res.run_id), res.run_day or res.day, delta)
                     )
+                items.append((self._key(res.agent_id), res.day, delta))
                 self.store.settle_spend(items)
         except BaseException:
             with self._settle_lock:
@@ -175,11 +183,11 @@ class Limits:
         self.settle(res, Decimal(0))
 
     def prune_runs(self, keep_days: int = _RUN_RETENTION_DAYS) -> int:
-        """Delete the per-run counters of runs that started more than ``keep_days`` ago (a crashed run leaves
-        its row). Call it at start-up or from the tick."""
-        return self.store.prune_spend(
-            self._key(_RUN_PREFIX), now().date() - timedelta(days=keep_days)
-        )
+        """Delete the per-run counters (every tenant) of runs that started more than ``keep_days`` ago (a crashed
+        run leaves its row). It needs DELETE on the spend tables, which the runtime database role does NOT have
+        (least privilege): run it from the maintenance job (``hadavin-sdk prune-runs``, its own database identity
+        from ``migrate --maintenance-role``), never from the runtime."""
+        return self.store.prune_spend(now().date() - timedelta(days=keep_days))
 
     def charge(self, agent_id: str, usd: Decimal) -> tuple[Decimal, Decimal]:
         _money(usd, "charge")

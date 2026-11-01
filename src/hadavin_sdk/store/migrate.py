@@ -29,6 +29,9 @@ class Grant:
     kind: Literal["table", "view", "sequence"]
     runtime: str
     portal: bool = False
+    maintenance: str = (
+        ""  # the prune job's own role: DELETE on the per-run spend counters, nothing else
+    )
 
 
 _RW = "SELECT, INSERT, UPDATE"
@@ -44,8 +47,8 @@ GRANTS: dict[str, Grant] = {
     "approval_requests": Grant("table", _RW, portal=True),
     "approval_decisions": Grant("table", _APPEND, portal=True),
     "dead_letters": Grant("table", _APPEND),
-    "spend": Grant("table", _RW),
-    "spend_month": Grant("table", _RW),
+    "spend": Grant("table", _RW, maintenance="SELECT, DELETE"),
+    "spend_month": Grant("table", _RW, maintenance="SELECT, DELETE"),
     "kill_switch": Grant("table", _RW),
     "tick_state": Grant("table", _RW),
     "audit_entries": Grant("table", _APPEND, portal=True),
@@ -192,6 +195,7 @@ def migrate(
     *,
     runtime_role: str | None = None,
     portal_role: str | None = None,
+    maintenance_role: str | None = None,
     iam_auth: bool = False,
     region: str | None = None,
     sslmode: str | None = None,
@@ -201,11 +205,12 @@ def migrate(
     privileges `GRANTS` lists (never TRUNCATE; DELETE only on the outbox). With `portal_role`, SELECT on the
     relations marked `portal` and nothing else. The ledger and the grant map are checked first: a bad file name,
     a gap, or a relation with no `GRANTS` entry stops the run before it touches the database."""
-    for role in (runtime_role, portal_role):
+    for role in (runtime_role, portal_role, maintenance_role):
         if role is not None and not _ROLE.fullmatch(role):
             raise ConfigError(f"not a plain database role name: {role!r}")
-    if runtime_role is not None and runtime_role == portal_role:
-        raise ConfigError("the runtime role and the portal role must be different roles")
+    named = [r for r in (runtime_role, portal_role, maintenance_role) if r is not None]
+    if len(named) != len(set(named)):
+        raise ConfigError("the runtime, portal and maintenance roles must be different roles")
     files = _migration_files()
     if problems := check_ledger(files) + check_grants(files):
         raise ConfigError("migrations are inconsistent: " + "; ".join(problems))
@@ -241,6 +246,20 @@ def migrate(
                 )
         if runtime_role:
             _apply_grants(db, runtime_role, lambda g: g.runtime)
+        if maintenance_role:
+            for other in (runtime_role, portal_role):  # a member would keep the other's rights
+                if other and (
+                    db.execute(
+                        "SELECT pg_has_role(%s, %s, 'MEMBER')", (maintenance_role, other)
+                    ).fetchone()[0]
+                    or db.execute(
+                        "SELECT pg_has_role(%s, %s, 'MEMBER')", (other, maintenance_role)
+                    ).fetchone()[0]
+                ):
+                    raise ConfigError(
+                        "the maintenance role must not be a member of the runtime or portal role"
+                    )
+            _apply_grants(db, maintenance_role, lambda g: g.maintenance)
         if portal_role:
             _apply_grants(db, portal_role, lambda g: "SELECT" if g.portal else "")
             if extra := _excess_privileges(db, portal_role):
@@ -248,3 +267,36 @@ def migrate(
                     f"the portal role holds privileges outside the portal grant map: {', '.join(extra)}"
                 )
     return applied
+
+
+def prune_run_counters(
+    dsn: str,
+    keep_days: int = 7,
+    *,
+    iam_auth: bool = False,
+    region: str | None = None,
+    sslmode: str | None = None,
+    sslrootcert: str | None = None,
+) -> int:
+    """Delete per-run spend counters older than ``keep_days`` (a crashed run leaves its row). Runs under the
+    MAINTENANCE role (``migrate --maintenance-role``: SELECT and DELETE on ``spend`` and ``spend_month``, nothing
+    else), never the runtime role, which cannot delete money rows. Returns the day rows removed."""
+    from datetime import timedelta
+
+    from hadavin_sdk.models import now
+    from hadavin_sdk.store.postgres import PostgresStore
+
+    if keep_days < 1:
+        raise ConfigError("keep_days must be at least 1")
+    conn = connect(dsn, iam_auth=iam_auth, region=region, sslmode=sslmode, sslrootcert=sslrootcert)
+
+    def connector():
+        return connect(
+            dsn, iam_auth=iam_auth, region=region, sslmode=sslmode, sslrootcert=sslrootcert
+        )
+
+    store = PostgresStore(conn, connector)
+    try:
+        return store.prune_spend(now().date() - timedelta(days=keep_days))
+    finally:
+        store.close()
