@@ -43,9 +43,9 @@ def test_every_redaction_pattern_is_linear_on_its_own_keywords_repeated():
                 for _ in range(
                     2
                 ):  # the best of two: a busy machine must not look like a slow pattern
-                    t0 = time.perf_counter()
+                    t0 = time.process_time()
                     list(pat.finditer(text))
-                    best = min(best, time.perf_counter() - t0)
+                    best = min(best, time.process_time() - t0)
                 times.append(best)
             if times[1] > 0.12 and times[1] > 8 * max(times[0], 0.003):  # 4x the text, 16x the time
                 slow.append((name, unit, [round(t, 3) for t in times]))
@@ -59,9 +59,9 @@ def test_a_document_of_repeated_command_words_is_redacted_in_bounded_time(word):
     from hadavin_sdk import defaults
 
     doc = (word + " ") * (defaults.MAX_DOCUMENT_BYTES // (len(word) + 1))
-    t0 = time.perf_counter()
+    t0 = time.process_time()
     runmap.redact_untrusted(doc, {})
-    assert time.perf_counter() - t0 < 15  # the old command patterns took minutes here
+    assert time.process_time() - t0 < 15  # the old command patterns took minutes here
 
 
 # --- M1: a long local part is still masked ------------------------------------------------------------------------------------

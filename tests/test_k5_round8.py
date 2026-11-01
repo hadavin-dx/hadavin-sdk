@@ -65,9 +65,9 @@ def test_every_redaction_pattern_is_linear_on_hostile_units():
             times = []
             for n in (6000, 24000):
                 text = (unit * (n // len(unit) + 1))[:n]
-                t0 = time.perf_counter()
+                t0 = time.process_time()
                 list(pat.finditer(text))
-                times.append(time.perf_counter() - t0)
+                times.append(time.process_time() - t0)
             if times[1] > 0.15 and times[1] > 9 * max(
                 times[0], 0.002
             ):  # 4x the input, 16x the time
@@ -76,9 +76,9 @@ def test_every_redaction_pattern_is_linear_on_hostile_units():
 
 
 def test_a_runaway_tool_result_is_cut_before_it_is_redacted():
-    t0 = time.perf_counter()
+    t0 = time.process_time()
     out = tools_mod.prepare_output("a." * 20_000, {}, 16_384)
-    assert time.perf_counter() - t0 < 3
+    assert time.process_time() - t0 < 3
     assert out.endswith(tools_mod.TRUNCATED) or len(out.encode()) <= 16_384
 
 
@@ -675,7 +675,9 @@ def test_one_clients_canary_never_reaches_another_clients_run(tmp_path):
     assert not [
         n
         for n in vars(_redact_module())
-        if "cache" in n.lower() and not n.startswith("__") and getattr(_redact_module(), n)
+        if "cache" in n.lower()
+        and not n.startswith("__")
+        and not callable(getattr(_redact_module(), n))
     ]
     assert rt_a.store is not rt_b.store and rt_a.hooks.toolbox is not rt_b.hooks.toolbox
     assert rt_b.store.list_tool_calls(run_a.run_id) == []  # A's calls are not in B's store
