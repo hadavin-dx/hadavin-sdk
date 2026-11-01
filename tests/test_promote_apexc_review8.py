@@ -604,3 +604,27 @@ def test_vectors_domains_with_cyrillic_and_greek_letters_fold_to_the_ascii_domai
                 case["domain"],
                 variant,
             )
+
+
+def test_a_restart_restores_the_flag_without_touching_the_store():
+    store = FakeStore()
+    g = StopGate(store)
+    g.restore(True)
+    assert g.engaged and store.writes == []
+    with pytest.raises(EffectBlocked), g.effect():
+        raise AssertionError("an effect must not start")
+    g.restore(False)
+    assert not g.engaged
+
+
+def test_promoted_files_match_the_pinned_hashes_the_demo_repo_copies():
+    """The same list is pinned in the demo repo (`core_copies.json`): a change here without a new pin there fails one side."""
+    import hashlib
+
+    pins = json.loads(
+        (Path(__file__).parent / "fixtures" / "core_copies.json").read_text(encoding="utf-8")
+    )
+    root = Path(__file__).resolve().parents[1]
+    for rel, sha in pins["files"].items():
+        text = (root / rel).read_text(encoding="utf-8").replace(chr(13) + chr(10), chr(10))
+        assert hashlib.sha256(text.encode()).hexdigest() == sha, rel

@@ -1,0 +1,10 @@
+{
+ "note": "sha256 of each promoted core file (LF). The demo repo pins the same values in core_copies.json for its temporary copies.",
+ "files": {
+  "src/hadavin_sdk/guard/textnorm.py": "3db7684b0dc5468263d52b3099334b712c405fb6712d20f39b83b26ba0060306",
+  "src/hadavin_sdk/guard/egress_text.py": "ea3fc0bc2523b3171d21c0d621e1bb4457cdba4d0a69dbbdeddb34dbe7a95283",
+  "src/hadavin_sdk/runtime/control.py": "e41e39540361f4514617a2d7d5367afb9419d0f2f5859e9cbcae91f6738cde1c",
+  "src/hadavin_sdk/runtime/rowstore.py": "8ec2d6be068ce29919ba2ef15cd744988da7b037e2d120710790e9ec03c55306",
+  "src/hadavin_sdk/testing/mutation.py": "289fe1199c614af9e5023347470c34911584d5e6cf8d2565a6ce41775ebf058e"
+ }
+}

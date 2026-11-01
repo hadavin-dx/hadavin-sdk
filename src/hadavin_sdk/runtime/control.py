@@ -235,6 +235,11 @@ class StopGate:
                 raise
         return res
 
+    def restore(self, on: bool) -> None:
+        """Set the in-process flag from persisted state (a restart). No store write, no sweep."""
+        with self._cond:
+            self._on = bool(on)
+
     def release(self, by: str) -> None:
         if self._store is not None:
             from hadavin_sdk.models import KillSwitch
