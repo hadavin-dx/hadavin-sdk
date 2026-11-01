@@ -432,3 +432,14 @@ def test_pgerror_import_kept_for_cmd_ask_hash_mismatch():
     assert (
         PgError and Lock and write_lock and verify_files and Chain
     )  # imports used by the scenarios above
+
+
+def test_an_anchor_path_cannot_point_outside_the_eval_or_audit_folder(tmp_path):
+    g = gate_for(tmp_path, KEY)
+    for bad in (
+        tmp_path / "elsewhere" / "anchor.json",
+        g.eval_dir / "anchor.txt",
+        g.eval_dir / ".." / "x.json",
+    ):
+        with pytest.raises(LockError, match="inside the eval or the audit folder"):
+            SealedGate(g.eval_dir, g.chain.path, g.runs_dir, KEY, [bad])

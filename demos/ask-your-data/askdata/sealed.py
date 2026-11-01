@@ -201,7 +201,17 @@ class SealedGate:
     ) -> None:
         self.eval_dir, self.runs_dir, self.key = Path(eval_dir), Path(runs_dir), key
         self.chain = Chain(chain_path, key)
-        self.anchors = [Path(a) for a in anchors]
+        # An anchor is a small .json file next to the data it protects: inside the eval folder or the audit folder,
+        # so a config entry cannot make this code write anywhere else.
+        roots = [self.eval_dir.resolve(), Path(chain_path).resolve().parent]
+        self.anchors = []
+        for a in anchors:
+            resolved = Path(a).resolve()
+            if resolved.suffix != ".json" or not any(resolved.is_relative_to(r) for r in roots):
+                raise LockError(
+                    "an anchor must be a .json file inside the eval or the audit folder"
+                )
+            self.anchors.append(resolved)
 
     # ---- every write: chain first, then the lock mirror (crash between the two is replayed by load)
     def _sealed(self, lock: Lock) -> Lock:
