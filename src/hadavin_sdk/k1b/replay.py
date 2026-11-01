@@ -11,6 +11,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+from collections import Counter
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from decimal import Decimal
@@ -27,6 +28,7 @@ from hadavin_sdk.k1b.audit_sink import K1bAudit
 from hadavin_sdk.k1b.bundle import Bundle, bad_citations, bundle_set_sha256, load_bundles
 from hadavin_sdk.k1b.causelist import load_cause_list
 from hadavin_sdk.k1b.diagnosis import Diagnosis
+from hadavin_sdk.k1b.redaction import SCHEME, redact_bundle
 from hadavin_sdk.k1b.report import DISCLAIMER, render_replay_report
 from hadavin_sdk.llm.protocol import LLM
 from hadavin_sdk.models import new_id
@@ -101,6 +103,7 @@ def _replay(
     max_usd: Decimal,
     out: Path,
     llm_kind: str | None = None,
+    acknowledge_masked: bool = False,
     clock: Callable[[], float] | None = None,
 ) -> ReplayResult:
     """Raises ``ConfigError`` for any refusal (nothing written), ``AuditUnavailable`` when an event cannot be
@@ -113,6 +116,11 @@ def _replay(
     if agent_id not in registry.agents:
         raise ConfigError(f"unknown agent {agent_id!r}")
     _refuse_zero_price(registry, agent_id, llm_kind or cfg.backends.llm.kind)
+    if not cfg.k1b.redact and not acknowledge_masked:
+        raise ConfigError(
+            "k1b.redact is false: client data would go to the model unmasked. Pass "
+            "--i-know-data-is-already-masked only if the bundles are already masked"
+        )
     out = Path(out)
     if out.exists() and (not out.is_dir() or any(out.iterdir())):
         raise ConfigError("replay output folder exists and is not empty")
@@ -135,16 +143,23 @@ def _replay(
         counts = dict.fromkeys(_COUNT_KEYS, 0)
         run_usd = Decimal(0)
         issue_cases: dict[str, list[str]] = {k: [] for k in _ISSUES}
+        masked: Counter[str] = Counter()
+        masked_cases = 0
         for b in bundles:
             before = budget.spent
             record: dict[str, Any]
             if stop is None:
+                shown = b
+                if cfg.k1b.redact:  # the map is dropped inside; only the per-class counts come back
+                    shown, counts_by_kind = redact_bundle(b)
+                    masked += counts_by_kind
+                    masked_cases += bool(counts_by_kind)
                 o = loop.run_case(
                     llm,
                     system=system,
                     route=agent.model_route,
                     route_prices=cfg.routes[agent.model_route],
-                    bundle=b,
+                    bundle=shown,
                     detector=detector,
                     budget=budget,
                     max_steps=max_steps,
@@ -220,6 +235,14 @@ def _replay(
             "cause_fault_types_sha256": cause.fault_types_sha256,
             "cases": len(bundles),
             "counts": counts,
+            "redaction": {
+                "mode": "on" if cfg.k1b.redact else "off_acknowledged",
+                "scheme": SCHEME
+                if cfg.k1b.redact
+                else "none: the operator stated the bundles are already masked",
+                "distinct_values_masked": dict(sorted(masked.items())),
+                "cases_with_masking": masked_cases,
+            },
             "issue_cases": issue_cases,  # ids only, never answers
             "usd": format(run_usd, "f"),
             "sdk_version": __version__,

@@ -3,6 +3,7 @@
 Own loop (not ``Runtime.handle``): it calls ``llm.chat`` directly, as ``evals.gate`` does. It does not run the
 production approval and limits path, so a replay pass is not proof of live behaviour. The case ends when a reply
 holds a ``submit_diagnosis`` call, or when a reply has no tool call (its text is then parsed as the diagnosis).
+The bundle given here is already masked (``k1b.redaction``) unless the operator acknowledged otherwise.
 Messages are plain ``{"role", "content": str}`` pairs: a tool call is the assistant text ``tool <name> <input
 json>`` and its result the user text ``tool result <name>: <json>``.
 """
