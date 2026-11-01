@@ -1,1 +1,6 @@
 # gitleaks false positives, by fingerprint (commit:file:rule:line). Each line says why it is not a secret.
+# Planted fake values in the literal-scan test (they prove the scan catches a private-key header, a password and an API key).
+# Fixed in the next commit by building them from parts; the earlier commit stays in history.
+7d03d0f07600289db43b4ae70cfa260c2bf78c31:tests/demo_askdata/test_demo_literals.py:private-key:350
+7d03d0f07600289db43b4ae70cfa260c2bf78c31:tests/demo_askdata/test_demo_literals.py:generic-api-key:360
+7d03d0f07600289db43b4ae70cfa260c2bf78c31:tests/demo_askdata/test_demo_literals.py:generic-api-key:361
