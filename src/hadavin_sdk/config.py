@@ -249,7 +249,7 @@ class _UniqueKeyLoader(yaml.SafeLoader):
 
 def load_yaml(text: str) -> Any:
     """``yaml.safe_load`` that refuses duplicate mapping keys."""
-    return yaml.load(text, Loader=_UniqueKeyLoader)  # noqa: S506 - SafeLoader subclass
+    return yaml.load(text, Loader=_UniqueKeyLoader)  # noqa: S506  # nosec B506 - SafeLoader subclass
 
 
 def _read_yaml(path: Path) -> dict:
