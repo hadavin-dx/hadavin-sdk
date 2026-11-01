@@ -388,8 +388,8 @@ def test_class_truncation_a_cut_log_says_so():
 @pytest.mark.parametrize(
     ("text", "value", "found"),
     [
-        ("pod checkout-svc-7f9d crashed", "checkout-svc", True),
-        ("host api.prod.svc.cluster.local down", "api.prod", True),
+        ("pod checkout-svc-7f9d crashed", "checkout-svc", False),
+        ("host api.prod.svc.cluster.local down", "api.prod", False),
         ("host api.prod. down", "api.prod", True),
         ("deploy checkout-svc2 crashed", "checkout-svc", False),
         ("see /var/checkout-svc/x", "checkout-svc", False),
@@ -398,7 +398,7 @@ def test_class_truncation_a_cut_log_says_so():
         ("rollout 17-beta done", "17", False),
         ("rollout 17 done", "17", True),
         # the shapes real logs and kubectl print
-        ("upstream <ipv4_1>:8080 refused", "<IPV4_1>", True),
+        ("upstream <ipv4_1>:8080 refused", "<IPV4_1>", False),
         ("checkout: connection refused", "checkout", True),
         ("GET http://10.0.0.5/health 503", "10.0.0.5", True),
         ("addr:10.0.0.5 down", "10.0.0.5", True),

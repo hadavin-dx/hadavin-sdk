@@ -9,7 +9,7 @@ import logging
 import re
 import ssl
 from collections.abc import Callable, Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -51,6 +51,10 @@ class App:
     executor: Executor | None  # None in pilot and prod: Hadavin executes nothing there
     approvals: Approvals
     runtime: Runtime
+    # The configured read sources (probed at start-up and again by the tick) and the store the purge step
+    # runs under (its own database role when `purge_dsn_secret_name` is set; else the store above).
+    sources: dict[str, Source] = field(default_factory=dict)
+    purge_store: Store | None = None
 
 
 def build(
@@ -119,6 +123,16 @@ def build(
     signer = make("signer", b.signer, secrets)
     anchor = make("anchor", b.anchor, secrets)
     store = make("store", b.store, secrets)
+    purge_store = store
+    if purge_name := getattr(b.store, "purge_dsn_secret_name", None):
+        # The purge step deletes evidence; the runtime identity cannot. A second connection, a second role.
+        purge_store = make(
+            "store",
+            b.store.model_copy(
+                update={"dsn_secret_name": purge_name, "purge_dsn_secret_name": None}
+            ),
+            secrets,
+        )
     audit = make("audit", b.audit, secrets, store=store, signer=signer, anchor=anchor)
     llm = llm or make("llm", b.llm, secrets, routes=cfg.routes)
     summary_detector = detector
@@ -168,7 +182,16 @@ def build(
         post_card=post_card,
         tools=dict(tools or {}),
         toolbox=toolbox,
-        validate_proposal=evidence.make_validator(store),
+        validate_proposal=evidence.make_validator(
+            store,
+            suffixes={
+                t.name: t.generated_suffix
+                for per in reg.tools.values()
+                for t in per.values()
+                if t.generated_suffix
+            },
+            case_insensitive_targets=cfg.evidence.case_insensitive_targets,
+        ),
         hold_run_ids=hold_run_ids,
     )
     runtime = Runtime(
@@ -182,7 +205,18 @@ def build(
         hooks,
     )
     holder["rt"] = runtime
-    return App(cfg, reg, store, audit, limits, executor, approvals, runtime)
+    return App(
+        cfg,
+        reg,
+        store,
+        audit,
+        limits,
+        executor,
+        approvals,
+        runtime,
+        sources={**built_sources, **(sources or {})},
+        purge_store=purge_store,
+    )
 
 
 def _own_secrets(secrets: SecretProvider, spec: tools_mod.ToolSpec) -> Callable[[str], str]:
@@ -227,6 +261,8 @@ def _build_source(name: str, sc, cfg: Config, secrets: SecretProvider) -> Source
     settings = kind.settings(**sc.settings)
     parts = urlsplit(kind.endpoint(settings))
     plain = parts.scheme == "http"
+    if plain and sc.token_secret_name:
+        raise ConfigError(f"source {name}: a bearer token never travels over plain http; use https")
     if why := tools_mod.forbidden_host((parts.hostname or "").lower()):
         raise ConfigError(
             f"source {name}: host {parts.hostname!r} is {why}"
@@ -347,5 +383,7 @@ def _toolbox(cfg: Config, reg: Registry, secrets: SecretProvider) -> tools_mod.T
         cluster_suffixes=ev.cluster_suffixes,
         stored_kinds=frozenset(ev.stored_kinds),
         max_abandoned=ev.max_abandoned_tool_threads,
+        max_concurrent=ev.max_concurrent_tool_calls,
+        max_per_minute=ev.max_tool_calls_per_minute,
         ssl_context_for=lambda spec: contexts.get(spec.name),
     )

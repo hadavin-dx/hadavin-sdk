@@ -13,7 +13,7 @@ card and never graded.
 from __future__ import annotations
 
 import re
-from collections.abc import Callable
+from collections.abc import Callable, Collection, Mapping
 from dataclasses import dataclass
 from typing import Any
 
@@ -36,9 +36,10 @@ _BEFORE = (
     + "".join(rf"|(?<=\b{k}/)" for k in _KUBECTL_KINDS)
     + ")"
 )
-# What may follow a NAME: `-` and `.` (the front of a longer name), `:` and `/` (a port, a path), a space or
-# punctuation; not a word character or `@`. A NUMBER may not be followed by `-`, `.`+word either.
-_AFTER_NAME = r"(?![\w@])"
+# What may follow a NAME: a WHOLE token ends at `:` or `/` (a port, a path), a space or punctuation; not at a
+# word character, `-`, `.`+word or `@`. `payments` is not found in `payments-canary`, `prod` not in `prod-db`: the
+# front of a longer name counts only when the tool's manifest declares its generated suffix (`generated_suffix`).
+_AFTER_NAME = r"(?![\w\-@])(?!\.\w)"
 _AFTER = r"(?![\w\-@])(?!\.\w)"  # a full stop that ends a sentence is fine
 
 
@@ -56,21 +57,23 @@ def normalise(text: str) -> str:
     return runmap.canonical(text).casefold().strip()
 
 
-def contains(text: str, value: str) -> bool:
-    """`value` is in `text` after normalising both. A numeric id (`17`, `v17`, `REVISION 17`, `#17`) matches as a
-    whole number, so `17` is not found inside `170`."""
-    want = normalise(value)
+def contains(text: str, value: str, *, casefold: bool = False, suffix: str | None = None) -> bool:
+    """`value` is in `text` as a WHOLE token, compared exactly (case included) unless `casefold`. A numeric id
+    (`17`, `v17`, `REVISION 17`, `#17`) matches as a whole number, so `17` is not found inside `170`, and numbers
+    ignore case. A name followed by `suffix` (a regex the tool's manifest declares for a generated suffix, such as
+    a pod's `-7f9d8c6b4-xk2lp`) also counts; without one a name never matches the front of a longer one."""
+    want = runmap.canonical(value).strip()
+    hay = runmap.canonical(text)
     if not want:
         return False
-    hay = normalise(text)
-    if m := _NUMERIC.fullmatch(want):
+    if m := _NUMERIC.fullmatch(want.casefold()):
         # `17` also matches `rev 17`, `v17` and `#17` in the text
         pattern = rf"{_BEFORE}(?:(?:v|rev|revision|#)\s?)?{re.escape(m.group(1))}{_AFTER}"
-    else:
-        # A name may be the front of a longer one (`checkout-svc` in `checkout-svc-7f9d`, `api.prod` in
-        # `api.prod.svc.cluster.local`): `-` and `.` end it. A number may not (`17` is not `17.2`, `17-beta`).
-        pattern = rf"{_BEFORE}{re.escape(want)}{_AFTER_NAME}"
-    return re.search(pattern, hay) is not None
+        return re.search(pattern, hay.casefold()) is not None
+    if casefold:
+        want, hay = want.casefold(), hay.casefold()
+    tail = f"(?:{suffix})?" if suffix else ""
+    return re.search(rf"{_BEFORE}{re.escape(want)}{tail}{_AFTER_NAME}", hay) is not None
 
 
 _EVIDENCE_FIELD = {
@@ -101,20 +104,39 @@ def grounded(
     inputs: dict[str, Any],
     texts: list[str],
     mapping: dict[str, str],
+    *,
+    casefold: bool = False,
+    suffixes: list[str | None] | None = None,
 ) -> bool:
     for name in identifier_inputs(contract):
         value = inputs.get(name)
         if not isinstance(value, str):
             continue
+        if (
+            runmap.canonical(value) != value
+        ):  # the value the executor gets is the one that is compared
+            return False
         redacted = runmap.redact_text(
             value, mapping
         )  # a raw value the model typed is compared as placeholder
-        if not any(contains(t, redacted) for t in texts):
+        if not any(
+            contains(t, redacted, casefold=casefold, suffix=(suffixes[i] if suffixes else None))
+            for i, t in enumerate(texts)
+        ):
             return False
     return True
 
 
-def make_validator(store: Store) -> Validator:
+def make_validator(
+    store: Store,
+    *,
+    suffixes: Mapping[str, str] | None = None,
+    case_insensitive_targets: Collection[str] = (),
+) -> Validator:
+    """`suffixes`: tool name -> the `generated_suffix` its manifest declares. `case_insensitive_targets`: the
+    `target_system` labels whose names are compared without case."""
+    suffix_of = dict(suffixes or {})
+
     def validate(
         run: Run,
         agent: AgentRecord,
@@ -136,7 +158,13 @@ def make_validator(store: Store) -> Validator:
         if (
             not agent.tools_allowed
         ):  # nothing was investigated: identifiers must come from the document
-            ok = grounded(contract, inputs, [document], mapping)
+            ok = grounded(
+                contract,
+                inputs,
+                [document],
+                mapping,
+                casefold=contract.target_system in case_insensitive_targets,
+            )
             return Checked(stripped, [], None if ok else "ungrounded")
         # An ERROR result is not evidence: it cannot be cited, and it grounds nothing.
         rows = {c.call_id: c for c in store.list_tool_calls(run.run_id) if not c.error}
@@ -148,7 +176,15 @@ def make_validator(store: Store) -> Validator:
             return Checked(stripped, [], "uncited")
         cited = list(dict.fromkeys(evidence))
         texts = [rows[c].output for c in cited] + [document]
-        ok = grounded(contract, inputs, texts, mapping)
+        tails: list[str | None] = [suffix_of.get(rows[c].tool) or None for c in cited] + [None]
+        ok = grounded(
+            contract,
+            inputs,
+            texts,
+            mapping,
+            casefold=contract.target_system in case_insensitive_targets,
+            suffixes=tails,
+        )
         return Checked(stripped, cited, None if ok else "ungrounded")
 
     return validate

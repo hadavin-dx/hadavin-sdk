@@ -11,6 +11,9 @@ from hadavin_sdk.backends.factory import make
 from hadavin_sdk.backends.table import PostgresSettings
 from tests.contracts.kinds import kind
 
+# runtime DSN -> the DSN of the purge role of the same schema (only for `pg_schema(runtime=True)`)
+PURGE_DSN: dict[str, str] = {}
+
 
 def pg_schema(migrated=True, runtime=False):
     """Yield a DSN whose search_path is a fresh (migrated) schema; drop the schema afterwards. With `runtime`,
@@ -31,22 +34,43 @@ def pg_schema(migrated=True, runtime=False):
     scoped = make_conninfo(dsn, options=f"-c search_path={schema}")
     if migrated:
         migrate(scoped)
-    role = None
+    role = purge = None
     try:
         if runtime:
-            role = "rt_" + uuid.uuid4().hex[:12]
+            role, purge = "rt_" + uuid.uuid4().hex[:12], "pu_" + uuid.uuid4().hex[:12]
             with psycopg.connect(dsn, autocommit=True) as db:
-                db.execute(sql.SQL("CREATE ROLE {} LOGIN").format(sql.Identifier(role)))
-            migrate(scoped, runtime_role=role)
-            yield make_conninfo(scoped, user=role)
+                for r in (role, purge):
+                    db.execute(sql.SQL("CREATE ROLE {} LOGIN").format(sql.Identifier(r)))
+            migrate(scoped, runtime_role=role, purge_role=purge)
+            runtime_dsn = make_conninfo(scoped, user=role)
+            PURGE_DSN[runtime_dsn] = make_conninfo(scoped, user=purge)
+            yield runtime_dsn
         else:
             yield scoped
     finally:
         with psycopg.connect(dsn, autocommit=True) as db:
-            if role:
-                db.execute(sql.SQL("DROP OWNED BY {}").format(sql.Identifier(role)))
-                db.execute(sql.SQL("DROP ROLE {}").format(sql.Identifier(role)))
+            for r in (role, purge):
+                if r:
+                    db.execute(sql.SQL("DROP OWNED BY {}").format(sql.Identifier(r)))
+                    db.execute(sql.SQL("DROP ROLE {}").format(sql.Identifier(r)))
             db.execute(sql.SQL("DROP SCHEMA {} CASCADE").format(sql.Identifier(schema)))
+
+
+class _SplitStore:
+    """The runtime role for everything, the purge role for the two purges: as `app.build` wires them
+    (`purge_dsn_secret_name`), so the suite runs with each identity holding only its own rights."""
+
+    def __init__(self, main, purge):
+        self._main, self._purge = main, purge
+
+    def __getattr__(self, name):
+        return getattr(self._main, name)
+
+    def purge_tool_calls(self, *a, **k):
+        return self._purge.purge_tool_calls(*a, **k)
+
+    def purge_redaction_maps(self, *a, **k):
+        return self._purge.purge_redaction_maps(*a, **k)
 
 
 @kind("store", "postgres")
@@ -54,5 +78,7 @@ def postgres(tmp_path):
     for dsn in pg_schema(runtime=True):
         settings = PostgresSettings(kind="postgres", dsn_secret_name="pg-dsn")  # noqa: S106 - a name
         store = make("store", settings, FakeSecretProvider({"pg-dsn": dsn}))
-        yield store
+        purge_store = make("store", settings, FakeSecretProvider({"pg-dsn": PURGE_DSN[dsn]}))
+        yield _SplitStore(store, purge_store)
         store._db.close()
+        purge_store._db.close()

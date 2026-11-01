@@ -264,6 +264,8 @@ def _load_tools(config: Config, agents: dict, contracts: dict) -> dict[str, dict
             for (
                 action
             ) in agent.scope_allowed:  # every string input says whether it must be grounded
+                if action not in contracts:
+                    continue  # reported where the agent's scope is checked
                 props = (contracts[action].input_schema or {}).get("properties") or {}
                 # Grounding is a string match. A string input says true or false; any other kind of input
                 # (integer, array, object) cannot be grounded, so it must say `identifier: false` outright

@@ -97,6 +97,10 @@ def _main(argv: list[str] | None = None) -> int:
     mig = sub.add_parser("migrate", help="apply the postgres store schema (migration role)")
     mig.add_argument("--runtime-role", help="grant this database role what the runtime needs")
     mig.add_argument(
+        "--purge-role",
+        help="grant this database role the evidence purge (DELETE on tool_calls and redaction_maps) and nothing else",
+    )
+    mig.add_argument(
         "--portal-role", help="grant this database role SELECT on the portal's relations only"
     )
     aud = sub.add_parser("audit", help="check the chain audit")
@@ -131,7 +135,7 @@ def _main(argv: list[str] | None = None) -> int:
         return _tick()
     cfg = load_config()
     if args.cmd == "migrate":
-        return _migrate(cfg, args.runtime_role, args.portal_role)
+        return _migrate(cfg, args.runtime_role, args.portal_role, args.purge_role)
     reg = load_registry(cfg)
     if args.cmd in (
         "replay",
@@ -305,7 +309,9 @@ def _tick() -> int:
     return run_tick(app)
 
 
-def _migrate(cfg, runtime_role: str | None, portal_role: str | None = None) -> int:
+def _migrate(
+    cfg, runtime_role: str | None, portal_role: str | None = None, purge_role: str | None = None
+) -> int:
     store = cfg.backends.store
     if store.kind != "postgres":
         print(
@@ -325,6 +331,7 @@ def _migrate(cfg, runtime_role: str | None, portal_role: str | None = None) -> i
         dsn,
         runtime_role=runtime_role,
         portal_role=portal_role,
+        purge_role=purge_role,
         iam_auth=store.iam_auth,
         region=store.region,
         sslmode=store.sslmode,

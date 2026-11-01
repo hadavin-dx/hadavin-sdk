@@ -324,6 +324,9 @@ class Runtime:
         cited: list[str] = []  # call ids of the read-tool calls made so far
         rmap: dict[str, str] = dict(mapping or {})
         calls = errors = sent_bytes = 0
+        if len(document) > self._evidence.max_document_bytes:  # redaction and grounding scan it all
+            self._note(run, "guard", "document", result="stopped", error_code="document_too_large")
+            return self._abstain(run, S.NEEDS_PERSON, "document_too_large", cited)
 
         # Limits first: a paid screen (llm_judge) never runs once the kill switch or a budget stopped the agent.
         if (stopped := self._limits_stop(run, cited)) is not None:
@@ -467,6 +470,8 @@ class Runtime:
                     call.name,
                     object_ref=call_id,
                     inputs_hash=_digest(record.inputs),
+                    output_hash=hashlib.sha256(out.text.encode("utf-8")).hexdigest(),
+                    rows=out.text.count("\n") + 1 if out.text else 0,
                     result="error" if out.error else "ok",
                     error_code="tool_error" if out.error else None,
                 )
@@ -601,8 +606,11 @@ class Runtime:
                 self._save_map(run, rmap)  # the check may have redacted a raw value the model typed
             except runmap.RedactionError:
                 return self._redaction_failed(run, cited)
-            except Exception:  # noqa: BLE001 - a check that fails stops the proposal
-                return self._abstain(run, S.NEEDS_PERSON, "invalid_proposal", cited)
+            except Exception:  # noqa: BLE001 - a check that CRASHED (or whose store failed) is a fault, not a verdict
+                self._note(
+                    run, "guard", "validate", result="error", error_code="evidence_unavailable"
+                )
+                return self._abstain(run, S.NEEDS_PERSON, "evidence_unavailable", cited)
             call = checked.call
             if checked.cited:
                 cited = checked.cited  # the cards list the evidence the proposal rests on
@@ -643,6 +651,7 @@ class Runtime:
                     inputs_hash=decision.plan_hash,
                     decision=decision.outcome,
                     rule_id=decision.rule_id,
+                    restored_hash=_digest(self.inputs_view(run, plan)),
                 )
             )
         except AuditUnavailable:
@@ -731,6 +740,27 @@ class Runtime:
         # Resolve the restored inputs BEFORE the side effect: a placeholder that cannot be restored, or a hook that
         # cannot take the restored view, stops the run (fail closed; R6).
         view = self.inputs_view(run, plan)
+        try:  # the approval was given on these restored values: a map that changed since stops the run
+            bound = [
+                e.restored_hash
+                for e in self.audit.events(run.run_id)
+                if e.domain == "gate"
+                and e.operation == "decide"
+                and e.object_ref == plan.plan_id
+                and e.restored_hash
+            ]
+        except Exception:  # noqa: BLE001 - cannot read the audit: cannot show the values are the approved ones
+            return self._to(run, S.NEEDS_PERSON, "audit_unavailable")
+        if bound and bound[-1] != _digest(view):
+            self._note(
+                run,
+                "gate",
+                "recheck",
+                object_ref=plan.plan_id,
+                rule_id="restored_changed",
+                result="stop",
+            )
+            return self._to(run, S.NEEDS_PERSON, "restored_changed")
         needs_view = view != plan.inputs
         if runmap.has_placeholder(view) or (
             needs_view and not _accepts(self.hooks.execute, "inputs_view")

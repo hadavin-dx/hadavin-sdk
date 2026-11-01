@@ -77,6 +77,26 @@ def covers(entry: str, target: str) -> bool:
     return res in ("*", t_res) and sub in ("*", t_sub) and bool(t_sub)
 
 
+# Every authenticated subject may ask the API what it may do (`system:basic-user`): `create` on exactly these
+# review resources, in their own API groups, writes nothing. Any other `create` is a write.
+_SELF_REVIEWS = {
+    "authorization.k8s.io": {"selfsubjectaccessreviews", "selfsubjectrulesreviews"},
+    "authentication.k8s.io": {"selfsubjectreviews"},
+}
+
+
+def _only_self_reviews(rule: dict[str, Any]) -> bool:
+    """Is this rule's `create` the harmless review kind: every group and every resource named, none a wildcard?"""
+    groups, resources = rule.get("apiGroups") or [], rule.get("resources") or []
+    return (
+        bool(groups)
+        and bool(resources)
+        and all(
+            g in _SELF_REVIEWS and all(r in _SELF_REVIEWS[g] for r in resources) for g in groups
+        )
+    )
+
+
 def rules_problems(namespace: str, rules: list[dict[str, Any]]) -> list[str]:
     """Problems in one namespace's ``resourceRules`` from a SelfSubjectRulesReview (empty: read-only)."""
     out: list[str] = []
@@ -84,7 +104,8 @@ def rules_problems(namespace: str, rules: list[dict[str, Any]]) -> list[str]:
         verbs = set(rule.get("verbs") or [])
         resources = set(rule.get("resources") or [])
         any_verb = "*" in verbs
-        if bad := sorted(verbs & _WRITE_VERBS):
+        harmless = verbs == {"create"} and _only_self_reviews(rule)
+        if (bad := sorted(verbs & _WRITE_VERBS)) and not harmless:
             out.append(f"namespace {namespace}: write verb {', '.join(bad)} on {sorted(resources)}")
         if any_verb:
             out.append(f"namespace {namespace}: wildcard verb on {sorted(resources)}")
@@ -306,12 +327,17 @@ class KubernetesSource:
                     "spec": {"namespace": ns},
                 },
             )
-            status = review.get("status") or {}
+            status = review.get("status")
+            if not isinstance(status, dict) or not isinstance(status.get("resourceRules"), list):
+                problems.append(
+                    f"namespace {ns}: the rules review answered without status.resourceRules (not proven)"
+                )
+                continue
             if status.get(
                 "evaluationError"
             ):  # the review could not evaluate every rule: not proven
                 problems.append(f"namespace {ns}: the rules review reported an evaluation error")
             if status.get("incomplete"):
                 problems.append(f"namespace {ns}: the rules review is incomplete, scope not proven")
-            problems += rules_problems(ns, status.get("resourceRules") or [])
+            problems += rules_problems(ns, status["resourceRules"])
         return problems

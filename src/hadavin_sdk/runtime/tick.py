@@ -193,10 +193,11 @@ def purge_evidence(ctx: TickContext) -> None:
     `tick_state.last_error` shows it."""
     app = ctx.app
     keep = app.config.retention
-    maps = app.store.purge_redaction_maps(
+    store = app.purge_store or app.store  # the deleting identity, when one is configured
+    maps = store.purge_redaction_maps(
         ctx.now - timedelta(days=keep.held_maps_max_days), keep_run_ids=frozenset(), keep_open=False
     )
-    calls = app.store.purge_tool_calls(
+    calls = store.purge_tool_calls(
         ctx.now - timedelta(days=keep.held_tool_calls_max_days), keep_run_ids=frozenset()
     )
     hook = app.runtime.hooks.hold_run_ids
@@ -208,13 +209,25 @@ def purge_evidence(ctx: TickContext) -> None:
             type(exc).__name__,
         )
         raise
-    calls += app.store.purge_tool_calls(
+    calls += store.purge_tool_calls(
         ctx.now - timedelta(days=keep.tool_calls_days), keep_run_ids=held
     )
-    maps += app.store.purge_redaction_maps(
+    maps += store.purge_redaction_maps(
         ctx.now - timedelta(days=keep.redaction_maps_days), keep_run_ids=held
     )
     _LOG.info("purge_evidence tool_calls=%d redaction_maps=%d held_runs=%d", calls, maps, len(held))
+
+
+def reprobe_sources(ctx: TickContext) -> None:
+    """Probe every configured source's scope again (design 6.6): RBAC can widen after start-up. A problem fails
+    the step loudly (`tick_state.last_error`, exit 1) until the scope is read-only again."""
+    from hadavin_sdk import sources as sources_mod
+
+    app = ctx.app
+    if app.sources and (
+        problems := sources_mod.scope_problems(app.sources, app.config.scope_inventory)
+    ):
+        raise RuntimeError("source scope: " + "; ".join(problems))
 
 
 def heartbeat(ctx: TickContext) -> None:
@@ -234,6 +247,12 @@ STEPS: list[TickStep] = [
         purge_evidence,
         interval=lambda ctx: ctx.app.config.retention.purge_every_s,
     ),  # its own interval: Config.retention.purge_every_s
+    TickStep(
+        "reprobe_sources",
+        0,
+        reprobe_sources,
+        interval=lambda ctx: ctx.app.config.evidence.source_reprobe_s,
+    ),
 ]
 STORE_UNREACHABLE = 4
 STORE_NOT_READY = (

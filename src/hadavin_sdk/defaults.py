@@ -21,6 +21,14 @@ FETCH_CEILING_BYTES = (
     2 * 1024 * 1024
 )  # the most one fetch may be asked to read, whatever a source requests
 MAX_TOOL_CALLS_PER_RUN = 40  # read-tool calls one run may make
+MAX_CONCURRENT_TOOL_CALLS = (
+    4  # read-tool calls running at once in one process (client-side load cap, R372)
+)
+MAX_TOOL_CALLS_PER_MINUTE = 120  # read-tool calls started per minute in one process
+MAX_DOCUMENT_BYTES = (
+    1_048_576  # the largest incident document a run takes (redaction and grounding scan it)
+)
+SOURCE_REPROBE_S = 3600  # how often the scope of a configured source is probed again while running
 MAX_TOOL_BYTES_PER_RUN = 262_144  # bytes of tool results one run may send to the model
 MAX_ABANDONED_TOOL_THREADS = (
     8  # tool bodies still running after their deadline before calls are refused

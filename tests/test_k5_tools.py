@@ -546,7 +546,10 @@ def test_k5_grounding_normalised_value(tmp_path):
         "see revision 17.", "Revision 17"
     )
     assert not evidence.contains("latency 170ms", "17")
-    assert evidence.contains("CAFÉ", "café")  # NFC and case folding
+    assert not evidence.contains("CAFÉ", "café")  # names are compared exactly
+    assert evidence.contains(
+        "CAFÉ", "café", casefold=True
+    )  # unless the target system is case-insensitive
 
 
 def test_k5_grounding_normalised_value_reaches_the_gate_with_the_cited_number(tmp_path):

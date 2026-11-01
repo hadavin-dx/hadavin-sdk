@@ -20,8 +20,8 @@ it was removed - second review, 2026-09-30.)
 
 from __future__ import annotations
 
-import functools
 import re
+import string
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -184,7 +184,7 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     (
         "JWT",
         re.compile(
-            r"eyJ[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]*\.[A-Za-z0-9_\-]+(?:\.[A-Za-z0-9_\-]*){0,2}"
+            r"eyJ[A-Za-z0-9_\-]{1,4096}\.[A-Za-z0-9_\-]{0,4096}\.[A-Za-z0-9_\-]{1,4096}(?:\.[A-Za-z0-9_\-]{0,4096}){0,2}"
         ),
     ),
     # Vendor key prefixes: OpenAI/Anthropic (sk-), GitHub classic (ghp_/gho_/ghu_/ghs_/ghr_) and
@@ -226,12 +226,16 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     (
         "URLCRED",
         re.compile(
-            r"(?i)\b[a-z][a-z0-9+.\-]*://[^\s:/@]*:([^\s]{2,256}?)@(?=[a-z0-9.\-]+(?::\d+)?(?:[/?#\s]|$))"
+            r"(?i)\b[a-z][a-z0-9+.\-]{0,31}://[^\s:/@]{0,128}:([^\s]{2,256}?)@(?=[a-z0-9.\-]+(?::\d+)?(?:[/?#\s]|$))"
         ),
     ),
     # `@` OR its URL-encoding `%40` — a URL-encoded email (normal in HTTP access logs, the exact
     # evidence source) reads as the email to both the model and an operator, so it must be masked too.
-    ("EMAIL", re.compile(r"\b[A-Za-z0-9._+\-]+(?:@|%40)[A-Za-z0-9.\-]+\.[A-Za-z]{2,}\b")),
+    # Bounded (RFC 5321: local part 64, domain 255): an unbounded run is quadratic on `a.a.a.` text.
+    (
+        "EMAIL",
+        re.compile(r"\b[A-Za-z0-9._+\-]{1,64}(?:@|%40)[A-Za-z0-9.\-]{1,255}\.[A-Za-z]{2,}\b"),
+    ),
     # IBAN (ISO 13616): a REAL country code + 2 check digits + 11-30 alnum BBAN. Financial PII in
     # payment/refund incident logs (SEPA charge/transfer). Masked WHOLE and BEFORE ACCOUNTID/PHONE,
     # which would otherwise fragment its digit runs and leak the country+bank prefix. The prefix is
@@ -622,8 +626,8 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     (
         "HIGHENTROPY",
         re.compile(
-            r"(?<![A-Za-z0-9+/_\-])(?=[A-Za-z0-9+/=_\-]*[A-Z])(?=[A-Za-z0-9+/=_\-]*[a-z])"
-            r"(?=[A-Za-z0-9+/=_\-]*\d)[A-Za-z0-9+/_\-]{40,}={0,2}(?![A-Za-z0-9+/=_\-])"
+            r"(?<![A-Za-z0-9+/_\-])(?=[A-Za-z0-9+/=_\-]{0,128}[A-Z])(?=[A-Za-z0-9+/=_\-]{0,128}[a-z])"
+            r"(?=[A-Za-z0-9+/=_\-]{0,128}\d)[A-Za-z0-9+/_\-]{40,}={0,2}(?![A-Za-z0-9+/=_\-])"
         ),
     ),
 ]
@@ -969,7 +973,7 @@ class _Redactor:
                 if rule is _EVERY_COPY:
                     segment = segment.replace(original, placeholder)
                 else:
-                    segment = _standalone(original).sub(placeholder, segment)
+                    segment = _replace_standalone(segment, original, placeholder)
             parts[i] = segment
         return "".join(parts)
 
@@ -1127,9 +1131,28 @@ def _sweep(placeholder: str, original: str):
     return _STANDALONE
 
 
-@functools.lru_cache(maxsize=8192)
-def _standalone(original: str) -> re.Pattern[str]:
-    return re.compile(rf"(?<![A-Za-z0-9]){re.escape(original)}(?![A-Za-z0-9])")
+_ALNUM = frozenset(string.ascii_letters + string.digits)
+
+
+def _replace_standalone(segment: str, original: str, placeholder: str) -> str:
+    """Replace `original` where no ASCII letter or digit touches it. A plain scan: a compiled pattern (or an
+    lru_cache of one) keyed by the identifier would keep one client's values in process memory, shared with every
+    other client (R371), and `re` caches compiled patterns itself."""
+    out: list[str] = []
+    i, n = 0, len(original)
+    while n:
+        j = segment.find(original, i)
+        if j < 0:
+            break
+        before, after = segment[j - 1 : j], segment[j + n : j + n + 1]
+        if before in _ALNUM or after in _ALNUM:
+            out.append(segment[i : j + 1])
+            i = j + 1
+            continue
+        out += [segment[i:j], placeholder]
+        i = j + n
+    out.append(segment[i:])
+    return "".join(out)
 
 
 def redact_many(

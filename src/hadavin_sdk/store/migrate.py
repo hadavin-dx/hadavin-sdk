@@ -29,6 +29,7 @@ class Grant:
     kind: Literal["table", "view", "sequence"]
     runtime: str
     portal: bool = False
+    purge: str = ""  # what the purge role (the evidence deleter) gets on this relation
 
 
 _RW = "SELECT, INSERT, UPDATE"
@@ -38,7 +39,7 @@ _APPEND = "SELECT, INSERT"  # written once, never changed
 # relations here (K5-core `redaction_maps`, K6 labels and reports, ...); the portal list never holds
 # `redaction_maps`, `events`, `tick_state.detail` or secrets.
 GRANTS: dict[str, Grant] = {
-    "runs": Grant("table", _RW, portal=True),
+    "runs": Grant("table", _RW, portal=True, purge="SELECT"),  # the purge reads a run's state
     "plans": Grant("table", _RW, portal=True),
     "gate_decisions": Grant("table", _APPEND, portal=True),
     "approval_requests": Grant("table", _RW, portal=True),
@@ -52,8 +53,9 @@ GRANTS: dict[str, Grant] = {
     "audit_checkpoints": Grant("table", _APPEND, portal=True),
     "audit_outbox": Grant("table", "SELECT, INSERT, DELETE"),
     # K5-core: append and purge only (no UPDATE); `redaction_maps` is never portal-readable.
-    "tool_calls": Grant("table", "SELECT, INSERT, DELETE"),
-    "redaction_maps": Grant("table", "SELECT, INSERT, UPDATE, DELETE"),
+    # The runtime role appends and reads evidence; only the purge role (its own identity) deletes it.
+    "tool_calls": Grant("table", _APPEND, purge="SELECT, DELETE"),
+    "redaction_maps": Grant("table", _RW, purge="SELECT, DELETE"),
     "approval_decisions_seq_seq": Grant("sequence", "USAGE"),
     "dead_letters_seq_seq": Grant("sequence", "USAGE"),
 }
@@ -195,6 +197,7 @@ def migrate(
     *,
     runtime_role: str | None = None,
     portal_role: str | None = None,
+    purge_role: str | None = None,
     iam_auth: bool = False,
     region: str | None = None,
     sslmode: str | None = None,
@@ -204,11 +207,12 @@ def migrate(
     privileges `GRANTS` lists (never TRUNCATE; DELETE only on the outbox and the purged evidence tables). With `portal_role`, SELECT on the
     relations marked `portal` and nothing else. The ledger and the grant map are checked first: a bad file name,
     a gap, or a relation with no `GRANTS` entry stops the run before it touches the database."""
-    for role in (runtime_role, portal_role):
+    for role in (runtime_role, portal_role, purge_role):
         if role is not None and not _ROLE.fullmatch(role):
             raise ConfigError(f"not a plain database role name: {role!r}")
-    if runtime_role is not None and runtime_role == portal_role:
-        raise ConfigError("the runtime role and the portal role must be different roles")
+    named = [r for r in (runtime_role, portal_role, purge_role) if r is not None]
+    if len(set(named)) != len(named):
+        raise ConfigError("the runtime, portal and purge roles must be different roles")
     files = _migration_files()
     if problems := check_ledger(files) + check_grants(files):
         raise ConfigError("migrations are inconsistent: " + "; ".join(problems))
@@ -233,17 +237,17 @@ def migrate(
             db.execute(path.read_text(encoding="utf-8"))  # a file shipped in this package
             db.execute("INSERT INTO schema_migrations (version) VALUES (%s)", (path.stem,))
             applied.append(path.stem)
-        if runtime_role and portal_role:
-            q = "SELECT pg_has_role(%s, %s, 'MEMBER')"  # a member keeps the other's rights, whatever we REVOKE
-            if (
-                db.execute(q, (runtime_role, portal_role)).fetchone()[0]
-                or db.execute(q, (portal_role, runtime_role)).fetchone()[0]
-            ):
-                raise ConfigError(
-                    "the runtime role and the portal role must not be members of each other"
-                )
+        q = "SELECT pg_has_role(%s, %s, 'MEMBER')"  # a member keeps the other's rights, whatever we REVOKE
+        for a in named:
+            for b in named:
+                if a != b and db.execute(q, (a, b)).fetchone()[0]:
+                    raise ConfigError(
+                        "the runtime, portal and purge roles must not be members of each other"
+                    )
         if runtime_role:
             _apply_grants(db, runtime_role, lambda g: g.runtime)
+        if purge_role:
+            _apply_grants(db, purge_role, lambda g: g.purge)
         if portal_role:
             _apply_grants(db, portal_role, lambda g: "SELECT" if g.portal else "")
             if extra := _excess_privileges(db, portal_role):

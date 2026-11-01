@@ -16,6 +16,7 @@ from __future__ import annotations
 import ast
 import base64
 import hashlib
+import html
 import importlib
 import ipaddress
 import json
@@ -27,11 +28,12 @@ import time
 import types
 import urllib.error
 import urllib.request
+from collections import deque
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal
-from urllib.parse import quote, quote_plus, urlsplit
+from urllib.parse import quote, quote_plus, unquote, urlsplit
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
@@ -47,7 +49,10 @@ END_MARKER = "<<END TOOL RESULT>>"
 START_MARKER = "<<TOOL RESULT"
 TRUNCATED = "\n[truncated]"
 ERROR_PREFIX = "ERROR: "
-MIN_SCRUBBED_SECRET = 6  # a shorter secret would shred ordinary text if scrubbed
+MIN_SCRUBBED_SECRET = (
+    6  # a shorter secret would shred ordinary text if scrubbed: a tool is refused one
+)
+MIN_REDACTION_WINDOW = 4096  # redaction always sees at least this much, whatever the tool's cap
 # Features the manifest names but that arrive in a later phase (design 6.4): refused with the phase.
 _DEFERRED_KEYS = {"egress": "Phase 5", "reads_hadavin_store": "Phase 5"}
 _METHODS = frozenset(
@@ -82,6 +87,9 @@ class ToolSpec(BaseModel):
     # the name of a secret holding the PEM. https only; the system CAs are not used when either is set.
     ca_file: str | None = None
     ca_secret_name: str | None = None
+    # A regex for the generated suffix of a name this tool's results show (a pod's `-7f9d8c6b4-xk2lp`): the
+    # ONLY way a proposal may name the front of a longer name (grounding is a whole-token match otherwise).
+    generated_suffix: str = ""
 
 
 def parse_manifest(raw: Any, where: str) -> list[ToolSpec]:
@@ -116,7 +124,19 @@ def host_allowed_over_http(
 
 
 # Names that reach this machine or the cloud's instance metadata service, whatever they resolve to.
-_FORBIDDEN_NAMES = frozenset({"localhost", "metadata", "metadata.google.internal", "instance-data"})
+_FORBIDDEN_NAMES = frozenset(
+    {
+        "localhost",
+        "localhost.localdomain",
+        "ip6-localhost",
+        "ip6-loopback",
+        "metadata",
+        "metadata.goog",
+        "metadata.google.internal",
+        "instance-data",
+        "instance-data.ec2.internal",
+    }
+)
 
 
 _NUMERIC_HOST = re.compile(r"(?:0x[0-9a-f]+|[0-9]+)(?:\.(?:0x[0-9a-f]+|[0-9]+))*", re.IGNORECASE)
@@ -125,17 +145,28 @@ _NUMERIC_HOST = re.compile(r"(?:0x[0-9a-f]+|[0-9]+)(?:\.(?:0x[0-9a-f]+|[0-9]+))*
 def forbidden_host(host: str) -> str | None:
     """Why a manifest host is refused, or None. An IP literal is refused (it names no service and skips the
     allowlist's meaning), and so are loopback and metadata names and anything under `.localhost`."""
+    host = host.rstrip(".")  # `localhost.` is `localhost`
     try:
         ipaddress.ip_address(host.strip("[]"))
     except ValueError:
         pass
     else:
         return "an IP literal (use the service's DNS name)"
+    if not re.fullmatch(r"[a-z0-9.\-]+", host):
+        return "not a plain lowercase ASCII hostname"
     if _NUMERIC_HOST.fullmatch(
         host
     ):  # 2130706433, 0x7f.1, 127.1: inet_aton reads these as addresses
         return "a numeric host (an IP address written another way)"
-    if host in _FORBIDDEN_NAMES or host.endswith((".localhost", ".internal.metadata")):
+    if (
+        host in _FORBIDDEN_NAMES
+        or host.endswith((".localhost", ".metadata.google.internal"))
+        or host.split(".")[0]
+        in (
+            "metadata",
+            "instance-data",
+        )
+    ):
         return "a loopback or metadata name"
     return None
 
@@ -169,6 +200,16 @@ def spec_problems(
         out.append(f"tool {spec.name}: a CA applies to https; cluster_http is plain http")
     if bad := [p for p in spec.ports if not 0 < p < 65536]:
         out.append(f"tool {spec.name}: ports {bad} are not valid")
+    if spec.generated_suffix:
+        try:
+            suffix = re.compile(spec.generated_suffix)
+        except re.error:
+            out.append(f"tool {spec.name}: generated_suffix is not a valid regex")
+        else:
+            if suffix.fullmatch("") or len(spec.generated_suffix) > 200:
+                out.append(
+                    f"tool {spec.name}: generated_suffix must not match nothing and be under 200 characters"
+                )
     return out
 
 
@@ -218,10 +259,30 @@ def _reach_problems(module: str, files: list[tuple[str, Path, bytes]]) -> list[s
             out.append(
                 f"tool module {module}: package {name} has code in __init__.py, outside the pin"
             )
-    if any(
-        isinstance(n, ast.ImportFrom) and n.level > 0 for n in ast.walk(ast.parse(files[-1][2]))
-    ):
+    tree = ast.parse(files[-1][2])
+    if any(isinstance(n, ast.ImportFrom) and n.level > 0 for n in ast.walk(tree)):
         out.append(f"tool module {module}: a relative import loads a file the pin does not cover")
+    for n in ast.walk(
+        tree
+    ):  # importlib.import_module(...) and __import__(...) with a relative or computed name
+        if not isinstance(n, ast.Call):
+            continue
+        fn = n.func
+        name = fn.attr if isinstance(fn, ast.Attribute) else getattr(fn, "id", "")
+        if name not in ("import_module", "__import__"):
+            continue
+        first = n.args[0] if n.args else None
+        constant = isinstance(first, ast.Constant) and isinstance(first.value, str)
+        if (
+            not constant
+            or first.value.startswith(".")
+            or len(n.args) > 1
+            and name == "import_module"
+        ):
+            out.append(
+                f"tool module {module}: a dynamic or relative import loads a file the pin does not cover"
+            )
+            break
     return out
 
 
@@ -379,6 +440,10 @@ class ToolContext:
                 raise ToolRefused("no secret resolver wired")
             self._remaining()
             value = secret_resolver(name)
+            if len(value) < MIN_SCRUBBED_SECRET:
+                raise ToolRefused(
+                    f"secret {name!r} is shorter than {MIN_SCRUBBED_SECRET} characters and could not be scrubbed"
+                )
             with self._lock:
                 self.handed_out.append(value)
             return value
@@ -427,8 +492,10 @@ class ToolContext:
             raise ToolRefused(f"method {method!r} is not the one bound to {operation!r}")
         # One parser, one answer: a URL the checks read differently from the HTTP client (backslashes, a `#` before
         # an `@`, percent-encoded hosts, control characters) is refused.
-        if re.search(r"[\\\s\x00-\x1f\x7f]", url):
-            raise ToolRefused("the URL holds a backslash, whitespace or a control character")
+        if re.search(r"[\\\s\x00-\x1f\x7f]", url) or not url.isascii():
+            raise ToolRefused(
+                "the URL holds a backslash, whitespace, a control or a non-ASCII character"
+            )
         parts = urlsplit(url)
         if "%" in parts.netloc or "%" in parts.path or "." + "." in parts.path:
             raise ToolRefused("percent-encoding in the host or path, and '..', are refused")
@@ -443,6 +510,12 @@ class ToolContext:
             raise ToolRefused("https only (plain http only to in-cluster hosts when cluster_http)")
         if parts.username or parts.password:
             raise ToolRefused("credentials in the URL are refused")
+        if parts.scheme == "http" and (
+            spec.secret_names or any(k.lower() == "authorization" for k in (headers or {}))
+        ):
+            raise ToolRefused(
+                "a credential never travels over plain http, whatever the host suffix"
+            )
         try:
             egress_check(url, frozenset(spec.hosts))
         except EgressRefused:
@@ -473,6 +546,10 @@ class ToolContext:
             code = exc.code
             exc.close()
             raise ToolRefused(f"HTTP {code}") from None
+        except urllib.error.URLError as exc:
+            if isinstance(exc.reason, EgressRefused):
+                raise ToolRefused("the host resolves to an address that is refused") from None
+            raise
         if len(buf) > cap:
             if max_bytes:
                 err = ToolRefused(f"the response is larger than {cap} bytes")
@@ -533,23 +610,52 @@ def _boundary(data: bytes) -> int:
     return last + 1 if last >= 0 else window_start
 
 
+_B64_TOKEN = re.compile(r"[A-Za-z0-9+/_=-]{12,}")
+
+
+def _b64_holds(token: str, secrets: list[str], depth: int) -> bool:
+    """Does `token` decode (base64, standard or URL-safe) to text holding a secret, or, `depth` levels down, to
+    more base64 that does?"""
+    padded = token + "=" * (-len(token) % 4)
+    for decode in (base64.b64decode, base64.urlsafe_b64decode):
+        try:
+            inner = decode(padded).decode("utf-8", "ignore")
+        except ValueError:
+            continue
+        if any(sec in inner for sec in secrets):
+            return True
+        if depth > 0 and any(_b64_holds(t, secrets, depth - 1) for t in _B64_TOKEN.findall(inner)):
+            return True
+    return False
+
+
 def _derived(text: str, secrets: list[str]) -> str:
-    """Tokens that decode (base64, standard or URL-safe) to something holding a secret: a derived Basic-auth
-    header, a token wrapping the secret. Replaced whole."""
+    """Tokens that decode (base64, standard or URL-safe, twice) to something holding a secret: a derived
+    Basic-auth header, a token wrapping the secret, a doubly encoded one. Replaced whole."""
+    return _B64_TOKEN.sub(
+        lambda m: "<SECRET_REDACTED>" if _b64_holds(m.group(0), secrets, 1) else m.group(0), text
+    )
 
-    def swap(m: re.Match[str]) -> str:
-        token = m.group(0)
-        padded = token + "=" * (-len(token) % 4)
-        for decode in (base64.b64decode, base64.urlsafe_b64decode):
-            try:
-                inner = decode(padded).decode("utf-8", "ignore")
-            except ValueError:
-                continue
-            if any(sec in inner for sec in secrets):
-                return "<SECRET_REDACTED>"
-        return token
 
-    return re.sub(r"[A-Za-z0-9+/_=-]{12,}", swap, text)
+def _decoded(text: str) -> str:
+    """The text with the encodings an attacker or a log pipeline layers over a value undone: JSON `\\uXXXX`
+    escapes, percent-encoding in either case, HTML entities, then NFKC and invisible characters."""
+    unescaped = re.sub(r"\\u([0-9a-fA-F]{4})", lambda m: chr(int(m.group(1), 16)), text)
+    return runmap.canonical(html.unescape(unquote(unescaped)))
+
+
+def _sanitise(text: str) -> str:
+    """NUL and lone surrogates (a JSON `\\ud800` a tool parsed) cannot be encoded, sent or stored."""
+    return text.replace("\x00", "\ufffd").encode("utf-8", "replace").decode("utf-8")
+
+
+def _cut(text: str, limit: int) -> str:
+    """At most `limit` bytes, cut where no token is split, with the cut said."""
+    data = text.encode("utf-8")
+    if len(data) <= limit:
+        return text
+    cut = data[:limit]
+    return cut[: _boundary(cut)].decode("utf-8", "ignore") + TRUNCATED
 
 
 def _secret_forms(secret: str) -> set[str]:
@@ -577,23 +683,24 @@ def prepare_output(
     secrets: list[str] | None = None,
     raw_cap: int = defaults.FETCH_CEILING_BYTES,
 ) -> str:
-    """Cut a runaway return value, scrub handed-out secrets (as they are, URL-quoted and base64), drop NULs,
-    escape the result markers, redact with the run's map, then truncate to `max_bytes`."""
-    raw = raw.replace("\x00", "\ufffd")
-    if len(raw.encode("utf-8")) > raw_cap:
-        cut = raw.encode("utf-8")[:raw_cap]
-        raw = cut[: _boundary(cut)].decode("utf-8", "ignore") + TRUNCATED
+    """Sanitise (NUL, lone surrogates), cut a runaway return value to `raw_cap` and then to twice `max_bytes`
+    (redaction is bounded work: it never sees more than the model could be shown), scrub handed-out secrets (as
+    they are, URL-quoted, base64 even twice, and behind \\u, percent, HTML-entity and invisible-character
+    layers), escape the result markers and placeholder look-alikes, redact with the run's map, then truncate to
+    `max_bytes`."""
+    raw = _cut(_sanitise(raw), raw_cap)
+    raw = _cut(raw, max(2 * max_bytes, MIN_REDACTION_WINDOW))
     long_enough = [x for x in secrets or [] if len(x) >= MIN_SCRUBBED_SECRET]
     if long_enough:
         raw = _derived(raw, long_enough)
-    for secret in secrets or []:
-        if len(secret) >= MIN_SCRUBBED_SECRET:
+        for secret in long_enough:
             for form in _secret_forms(secret):
                 if form in raw:
                     raw = raw.replace(form, "<SECRET_REDACTED>")
-                elif not raw.isascii() and form in (canon := runmap.canonical(raw)):
-                    # the secret hides behind invisible or compatibility characters: use the folded text
-                    raw = canon.replace(form, "<SECRET_REDACTED>")
+                elif (view := _decoded(raw)) != raw and form in view:
+                    # the secret hides behind an encoding layer: use the decoded text (that one reply loses its
+                    # original spelling, which is the price of not showing the secret)
+                    raw = view.replace(form, "<SECRET_REDACTED>")
     return truncate(runmap.redact_untrusted(raw, mapping), max_bytes)
 
 
@@ -630,6 +737,8 @@ class ToolBox:
         cluster_suffixes: tuple[str, ...] = defaults.CLUSTER_SUFFIXES,
         stored_kinds: frozenset[str] | None = None,
         max_abandoned: int = defaults.MAX_ABANDONED_TOOL_THREADS,
+        max_concurrent: int = defaults.MAX_CONCURRENT_TOOL_CALLS,
+        max_per_minute: int = defaults.MAX_TOOL_CALLS_PER_MINUTE,
         ssl_context_for: Callable[[ToolSpec], ssl.SSLContext | None] | None = None,
     ) -> None:
         self._limits = {
@@ -647,6 +756,10 @@ class ToolBox:
         self._max_abandoned = max_abandoned
         self._abandoned: set[threading.Thread] = set()
         self._abandoned_lock = threading.Lock()
+        self._max_concurrent, self._max_per_minute = max_concurrent, max_per_minute
+        self._admit_lock = threading.Lock()
+        self._active = 0
+        self._started: deque[float] = deque()
 
     def names(self) -> set[str]:
         return set(self.specs)
@@ -691,6 +804,24 @@ class ToolBox:
             raise ToolRefused(f"the tool raised {type(err).__name__}")
         return box["value"]
 
+    def _admit(self) -> None:
+        """A cap on the load the agent can put on the client's systems, whatever the model asks: reads at once and
+        reads per minute, for the whole process. A refused call is an `ERROR:` result the model sees."""
+        now = time.monotonic()
+        with self._admit_lock:
+            while self._started and now - self._started[0] > 60:
+                self._started.popleft()
+            if self._active >= self._max_concurrent:
+                raise ToolRefused("too many tool calls at once; try again")
+            if len(self._started) >= self._max_per_minute:
+                raise ToolRefused("tool call rate limit reached; try again later")
+            self._active += 1
+            self._started.append(now)
+
+    def _release(self) -> None:
+        with self._admit_lock:
+            self._active -= 1
+
     def invoke(self, name: str, args: dict[str, Any], mapping: dict[str, str]) -> ToolOutput:
         spec = self.specs[name]
         resolver = self._secrets_for(spec) if self._secrets_for else None
@@ -708,10 +839,17 @@ class ToolBox:
                 bad := self._arg_errors(spec.input_schema, restored)
             ):
                 raise ToolRefused("arguments invalid: " + ", ".join(bad)[:200])
-            raw = self._call(name, restored, ctx)
+            self._admit()
+            try:
+                raw = self._call(name, restored, ctx)
+            finally:
+                self._release()
         except Exception as exc:  # noqa: BLE001 - a failing tool becomes a result the model can react to
             error = True
             raw = ERROR_PREFIX + error_reason(exc)
+        raw = _sanitise(
+            raw if isinstance(raw, str) else str(raw)
+        )  # a lone surrogate must not abort the call
         digest = ctx.digest() or hashlib.sha256(raw.encode("utf-8")).hexdigest()
         text = prepare_output(
             raw, mapping, spec.max_output_bytes, ctx.secrets_handed_out(), self._fetch_ceiling

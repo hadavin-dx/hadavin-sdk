@@ -182,7 +182,20 @@ def build_runtime(
     hooks = Hooks(
         post_card=post,
         toolbox=app_mod._toolbox(cfg, reg, secrets),
-        validate_proposal=evidence.make_validator(store) if validate else None,
+        validate_proposal=(
+            evidence.make_validator(
+                store,
+                suffixes={
+                    t.name: t.generated_suffix
+                    for per in reg.tools.values()
+                    for t in per.values()
+                    if t.generated_suffix
+                },
+                case_insensitive_targets=cfg.evidence.case_insensitive_targets,
+            )
+            if validate
+            else None
+        ),
     )
     rt = Runtime(
         reg,

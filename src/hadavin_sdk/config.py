@@ -212,11 +212,28 @@ class EvidenceSettings(_Strict):
     max_tool_calls_per_run: int = Field(default=defaults.MAX_TOOL_CALLS_PER_RUN, gt=0)
     max_tool_bytes_per_run: int = Field(default=defaults.MAX_TOOL_BYTES_PER_RUN, gt=0)
     max_abandoned_tool_threads: int = Field(default=defaults.MAX_ABANDONED_TOOL_THREADS, gt=0)
+    # What the agent can do to the client's systems: at most this many reads at once and per minute, whatever
+    # the model asks (it cannot raise the production-side load, R372).
+    max_concurrent_tool_calls: int = Field(default=defaults.MAX_CONCURRENT_TOOL_CALLS, gt=0)
+    max_tool_calls_per_minute: int = Field(default=defaults.MAX_TOOL_CALLS_PER_MINUTE, gt=0)
     # Host suffixes that count as in-cluster, where `cluster_http` tools may use plain http.
     cluster_suffixes: tuple[str, ...] = defaults.CLUSTER_SUFFIXES
+    # The largest document a run takes; a bigger one is refused (`document_too_large`), never half-read.
+    max_document_bytes: int = Field(default=defaults.MAX_DOCUMENT_BYTES, gt=0)
+    # Target systems (a contract's `target_system`) whose names are case-insensitive, so grounding folds case
+    # for them. Every other target is compared exactly: `Admin` is not `admin`.
+    case_insensitive_targets: tuple[str, ...] = ()
+    # How often a configured source's scope is probed again while the process runs (RBAC can widen).
+    source_reprobe_s: int = Field(default=defaults.SOURCE_REPROBE_S, gt=0)
 
     @model_validator(mode="after")
     def _checks(self) -> EvidenceSettings:
+        if bad := [
+            t for t in self.case_insensitive_targets if not re.fullmatch(r"[a-z0-9_-]{1,40}", t)
+        ]:
+            raise ValueError(
+                f"evidence.case_insensitive_targets: {bad} are not target_system labels"
+            )
         if unknown := sorted(set(self.stored_kinds) - set(defaults.STORED_KINDS)):
             raise ValueError(
                 f"evidence.stored_kinds: {unknown} cannot be stored (secret, regulated or unknown)"

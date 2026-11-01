@@ -207,6 +207,12 @@ class AuditEvent(Shape):
     # A tool call's audit event carries the SHA-256 of the output text as STORED (redacted, truncated), so a
     # later edit of the `tool_calls` row is detectable against the chain. None for every other event.
     output_hash: str | None = None
+    # The gate's decide event carries the hash of the plan's inputs with their placeholders restored, so an
+    # approval is bound to the real values and execution refuses a map that changed since (R6, before K8).
+    restored_hash: str | None = None
+    # A tool call's audit event also says how many lines it returned (who: `principal`; what: the tool and
+    # `inputs_hash`; why: the run's trigger; how much: `rows`), so a client can review every read.
+    rows: int | None = None
 
 
 class DeadLetter(Shape):
