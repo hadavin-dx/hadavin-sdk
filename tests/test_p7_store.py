@@ -13,7 +13,7 @@ pytest.importorskip("psycopg", reason="needs hadavin-sdk[pg]")
 from psycopg import sql
 
 from hadavin_sdk.actions.secrets import FakeSecretProvider
-from hadavin_sdk.backends import make
+from hadavin_sdk.backends.factory import make
 from hadavin_sdk.backends.table import PostgresSettings
 from hadavin_sdk.config import ConfigError
 from hadavin_sdk.store.migrate import migrate

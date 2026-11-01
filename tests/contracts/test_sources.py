@@ -4,6 +4,8 @@ KubernetesSource beside the recorded reference adapter."""
 from __future__ import annotations
 
 import json
+import re
+from urllib.parse import parse_qs, urlsplit
 
 import pytest
 
@@ -46,26 +48,51 @@ LOG = "\n".join(f"2026-11-01T10:0{i}:00Z line {i}" for i in range(5))
 
 
 class FakeApi:
-    """The Kubernetes REST API as recorded answers; keeps every call for the assertions."""
+    """The Kubernetes REST API as recorded answers, held to what the real fetch enforces: the operation's bound
+    method and path, the response cap, and (for a POST) a JSON Content-Type, which a real API server needs. It
+    pages lists by `limit` and `continue`. Keeps every call for the assertions."""
 
-    def __init__(self, rules=None, fail=False) -> None:
-        self.calls, self.fail = [], fail
+    def __init__(self, rules=None, fail=False, deployments=None) -> None:
+        self.calls, self.fail, self.headers = [], fail, []
+        self.deployments = deployments if deployments is not None else DEPLOYMENTS["items"]
         self.rules = rules or [{"verbs": ["get", "list", "watch"], "resources": ["pods", "events"]}]
 
-    def __call__(self, method, url, *, operation, body=None, headers=None):
+    def _page(self, items, query):
+        limit = int(query.get("limit", [len(items) or 1])[0])
+        start = int(query.get("continue", ["0"])[0])
+        page = {"items": items[start : start + limit]}
+        if start + limit < len(items):
+            page["metadata"] = {"continue": str(start + limit)}
+        return json.dumps(page)
+
+    def __call__(self, method, url, *, operation, body=None, headers=None, max_bytes=None):
         self.calls.append((method, url, operation))
+        self.headers.append(headers or {})
         if self.fail:
             raise OSError("connection refused")
-        assert operation in READ_OPERATIONS
-        if url.endswith("/deployments"):
-            return json.dumps(DEPLOYMENTS)
-        if url.endswith("/events"):
-            return json.dumps(EVENTS)
-        if "/pods/" in url and "/log" in url:
-            return LOG
-        if url.endswith("/selfsubjectrulesreviews"):
-            return json.dumps({"status": {"resourceRules": self.rules}})
-        return json.dumps({"items": []})
+        bound_method, pattern = READ_OPERATIONS[operation]
+        parts = urlsplit(url)
+        assert method == bound_method and re.fullmatch(pattern, parts.path), (method, parts.path)
+        if method == "POST":
+            assert (headers or {}).get("Content-Type") == "application/json"
+            assert json.loads(body)["kind"] == "SelfSubjectRulesReview"
+        query = parse_qs(parts.query)
+        if parts.path.endswith("/deployments"):
+            text = self._page(self.deployments, query)
+        elif parts.path.endswith("/events"):
+            text = self._page(EVENTS["items"], query)
+        elif parts.path.endswith("/log"):
+            text = LOG
+        elif parts.path.endswith("/selfsubjectrulesreviews"):
+            text = json.dumps({"status": {"resourceRules": self.rules}})
+        else:
+            text = json.dumps({"items": []})
+        cap = max_bytes or 16384  # what `ToolContext.fetch` allows when the caller names no cap
+        if len(text.encode()) > cap:
+            raise OSError(
+                "the response is larger than the cap"
+            )  # an explicit cap refuses, never cuts
+        return text
 
 
 def k8s(api=None) -> KubernetesSource:
@@ -160,7 +187,7 @@ def test_kubernetes_backend_failure_is_a_source_error(call):
 
 
 def test_kubernetes_malformed_answer_is_a_source_error():
-    def junk(method, url, *, operation, body=None, headers=None):
+    def junk(method, url, *, operation, body=None, headers=None, max_bytes=None):
         return "<html>not json</html>"
 
     with pytest.raises(SourceError, match="malformed"):
@@ -178,6 +205,7 @@ def test_kubernetes_needs_a_namespace():
         ([{"verbs": ["patch"], "resources": ["deployments"]}], "write verb patch"),
         ([{"verbs": ["create", "delete"], "resources": ["pods"]}], "write verb create, delete"),
         ([{"verbs": ["get"], "resources": ["pods/exec"]}], "access to pods/exec"),
+        ([{"verbs": ["get"], "resources": ["pods/proxy"]}], "access to pods/proxy"),
         ([{"verbs": ["get"], "resources": ["nodes/proxy"]}], "access to nodes/proxy"),
         ([{"verbs": ["list", "watch"], "resources": ["secrets"]}], "read access to secrets"),
         ([{"verbs": ["get"], "resources": ["*"]}], "read access to secrets"),
@@ -196,7 +224,7 @@ def test_a_read_only_rule_set_passes_the_probe():
 
 
 def test_an_incomplete_review_is_not_a_pass():
-    def incomplete(method, url, *, operation, body=None, headers=None):
+    def incomplete(method, url, *, operation, body=None, headers=None, max_bytes=None):
         return json.dumps({"status": {"incomplete": True, "resourceRules": []}})
 
     assert any("incomplete" in p for p in KubernetesSource(incomplete, ["prod"]).probe_scope())
@@ -209,7 +237,7 @@ def test_the_probe_reviews_every_configured_namespace():
 
 
 def _answering(text):
-    def fetch(method, url, *, operation, body=None, headers=None):
+    def fetch(method, url, *, operation, body=None, headers=None, max_bytes=None):
         return text
 
     return KubernetesSource(fetch, ["prod"])
@@ -233,11 +261,51 @@ def test_kubernetes_oddly_shaped_items_are_source_errors():
 
 
 def test_kubernetes_null_pod_template_spec_is_not_an_error():
-    def api(method, url, *, operation, body=None, headers=None):
-        if url.endswith("/deployments"):
+    def api(method, url, *, operation, body=None, headers=None, max_bytes=None):
+        if "/deployments" in url:
             item = {"metadata": {"name": "d"}, "spec": {"template": {"spec": None}}}
             return json.dumps({"items": [item]})
         return json.dumps({"items": None})
 
     (found,) = KubernetesSource(api, ["prod"]).recent_changes("prod", suite.START, suite.END)
     assert found["images"] == [] and found["id"] == "deployment/prod/d"
+
+
+def test_kubernetes_post_carries_a_json_content_type():
+    api = FakeApi()
+    k8s(api).probe_scope()
+    assert api.headers == [{"Content-Type": "application/json", "Accept": "application/json"}]
+
+
+def test_kubernetes_a_real_sized_deployment_list_is_read_through_the_cap_and_pages():
+    """150 deployments of about 3 KB each (450 KB) are far past a tool's 16 KB output cap: the source asks for a
+    larger fetch cap and pages by 100, and still returns every deployment as a small record."""
+    big = [
+        {
+            "metadata": {"name": f"d{i}", "annotations": {"note": "x" * 3000}},
+            "spec": {"template": {"spec": {"containers": [{"image": f"img:{i}"}]}}},
+        }
+        for i in range(150)
+    ]
+    api = FakeApi(deployments=big)
+    found = [
+        c
+        for c in k8s(api).recent_changes("prod", suite.START, suite.END)
+        if c["kind"] == "deployment"
+    ]
+    assert len(found) == 150
+    list_calls = [c for c in api.calls if c[2] == "k8s.list_deployments"]
+    assert len(list_calls) == 2 and "continue=" in list_calls[1][1]
+
+
+def test_kubernetes_a_response_over_the_cap_is_a_source_error_not_a_cut_json():
+    big = [{"metadata": {"name": "d", "annotations": {"n": "x" * 2_000_000}}}]
+    with pytest.raises(SourceError, match="OSError"):
+        k8s(FakeApi(deployments=big)).recent_changes("prod", suite.START, suite.END)
+
+
+def test_every_declared_operation_is_bound_to_a_method_and_a_path():
+    for op, (method, pattern) in READ_OPERATIONS.items():
+        assert method in {"GET", "POST"} and re.compile(pattern), op
+    assert READ_OPERATIONS["k8s.rules_review"][0] == "POST"
+    assert {m for m, _ in READ_OPERATIONS.values()} == {"GET", "POST"}

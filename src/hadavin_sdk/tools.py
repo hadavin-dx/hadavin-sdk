@@ -15,11 +15,14 @@ from __future__ import annotations
 
 import hashlib
 import importlib
+import re
 import time
 import urllib.error
 import urllib.request
 from collections.abc import Callable
-from dataclasses import dataclass, field
+from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import TimeoutError as FutureTimeout
+from dataclasses import dataclass
 from typing import Any, Literal
 from urllib.parse import urlsplit
 
@@ -31,6 +34,13 @@ from hadavin_sdk.guard import runmap
 from hadavin_sdk.guard.egress import EgressRefused, egress_check
 
 DEFAULT_MAX_OUTPUT_BYTES = 16384
+# The most a source may ask `fetch` to read for one response (a JSON list it parses into small records).
+FETCH_CEILING = 2 * 1024 * 1024
+DEFAULT_HTTPS_PORTS = frozenset({443})
+DEFAULT_CLUSTER_PORTS = frozenset(
+    {80, 8080, 9090, 9093, 3100}
+)  # Prometheus, Alertmanager, Loki and plain web
+Binding = tuple[str, str]  # (METHOD, regex the URL path must fully match)
 # Hooks.tools callables given directly (replay, tests) have no manifest: they get the K1b replay cap.
 LEGACY_MAX_OUTPUT_BYTES = 20_000
 END_MARKER = "<<END TOOL RESULT>>"
@@ -61,6 +71,7 @@ class ToolSpec(BaseModel):
     secret_names: list[str] = []
     max_output_bytes: int = Field(default=DEFAULT_MAX_OUTPUT_BYTES, gt=0)
     cluster_http: bool = False
+    ports: list[int] = []  # empty: 443 for https, the in-cluster set for plain http
 
 
 def parse_manifest(raw: Any, where: str) -> list[ToolSpec]:
@@ -93,7 +104,7 @@ def host_allowed_over_http(host: str) -> bool:
 
 
 def spec_problems(spec: ToolSpec, tool_modules: list[str]) -> list[str]:
-    """Checks that need nothing from `actions/`: the function reference, hosts and the cluster rule. The
+    """Checks that need nothing from `actions/`: the function reference, hosts, ports and the cluster rule. The
     operation list, the input schema and the agent's `tools_allowed` are checked by the registry."""
     out = []
     module, _, fn = spec.function.partition(":")
@@ -102,10 +113,15 @@ def spec_problems(spec: ToolSpec, tool_modules: list[str]) -> list[str]:
     for host in spec.hosts:
         if not host or host != host.lower() or "/" in host or ":" in host or "@" in host:
             out.append(f"tool {spec.name}: host {host!r} must be a bare lowercase hostname")
-    if spec.cluster_http and not any(host_allowed_over_http(h) for h in spec.hosts):
+    if spec.cluster_http and not all(host_allowed_over_http(h) for h in spec.hosts):
+        # One tool is either in-cluster (plain http allowed) or outside it (https only); never a mix (design 6.4).
         out.append(
-            f"tool {spec.name}: cluster_http needs a host ending in .svc.cluster.local or .svc"
+            f"tool {spec.name}: cluster_http needs every host to end in .svc.cluster.local or .svc"
         )
+    if spec.cluster_http and not spec.hosts:
+        out.append(f"tool {spec.name}: cluster_http needs hosts")
+    if bad := [p for p in spec.ports if not 0 < p < 65536]:
+        out.append(f"tool {spec.name}: ports {bad} are not valid")
     return out
 
 
@@ -122,37 +138,81 @@ def resolve_function(spec: ToolSpec, tool_modules: list[str]) -> Callable[..., s
     return fn
 
 
-def read_operations(tool_modules: list[str]) -> set[str]:
-    """The union of `READ_OPERATIONS` the tool modules declare: the read list a manifest's `operations` must
-    stay inside. A module without one allows no operation."""
-    out: set[str] = set()
+def read_operations(tool_modules: list[str]) -> dict[str, Binding]:
+    """The union of `READ_OPERATIONS` the tool modules declare: operation id -> (METHOD, path regex). The read
+    list a manifest's `operations` must stay inside, and the shape each call must fit: an operation id is not a
+    label, it is bound in code to one method and one path pattern. A module without one allows no operation."""
+    out: dict[str, Binding] = {}
     for module in tool_modules:
         try:
-            out |= set(getattr(importlib.import_module(module), "READ_OPERATIONS", ()))
+            declared = getattr(importlib.import_module(module), "READ_OPERATIONS", {})
         except ImportError as exc:
             raise ConfigError(f"tool_modules: {module} cannot be imported") from exc
+        if not isinstance(declared, dict):
+            raise ConfigError(
+                f"tool_modules: {module}.READ_OPERATIONS must map each operation id to (METHOD, path regex)"
+            )
+        for op, binding in declared.items():
+            try:
+                method, pattern = binding
+                re.compile(pattern)
+            except (TypeError, ValueError, re.error):
+                raise ConfigError(
+                    f"{module}: operation {op!r} has no valid (METHOD, regex)"
+                ) from None
+            if method not in _METHODS:
+                raise ConfigError(f"{module}: operation {op!r} uses method {method!r}")
+            out[op] = (method, pattern)
     return out
 
 
-@dataclass
 class ToolContext:
-    """What a tool may touch. Built per call, so the digest and the secrets handed out are per call."""
+    """What a tool may touch. Built per call, so the digest, the deadline and the secrets handed out are per call.
+    The secret resolver is held by a closure, not an attribute: a tool can only ask for the manifest's names."""
 
-    spec: ToolSpec
-    timeout_s: float
-    secret_resolver: Callable[[str], str] | None = None
-    _digest: Any = field(default_factory=hashlib.sha256, repr=False)
-    fetched: bool = False
-    handed_out: list[str] = field(default_factory=list, repr=False)
+    def __init__(
+        self,
+        spec: ToolSpec,
+        timeout_s: float,
+        secret_resolver: Callable[[str], str] | None = None,
+        bindings: dict[str, Binding] | None = None,
+    ) -> None:
+        self.spec, self.timeout_s = spec, timeout_s
+        self.deadline = time.monotonic() + timeout_s  # the whole call, not one socket operation
+        self.bindings = dict(bindings or {})
+        self.fetched = False
+        self.handed_out: list[str] = []
+        self._digest = hashlib.sha256()
 
-    def secret(self, name: str) -> str:
-        if name not in self.spec.secret_names:
-            raise ToolRefused(f"secret {name!r} is not named in the manifest")
-        if self.secret_resolver is None:
-            raise ToolRefused("no secret resolver wired")
-        value = self.secret_resolver(name)
-        self.handed_out.append(value)
-        return value
+        def secret(name: str) -> str:
+            if name not in spec.secret_names:
+                raise ToolRefused(f"secret {name!r} is not named in the manifest")
+            if secret_resolver is None:
+                raise ToolRefused("no secret resolver wired")
+            self._remaining()
+            value = secret_resolver(name)
+            self.handed_out.append(value)
+            return value
+
+        self.secret = secret
+
+    def _remaining(self) -> float:
+        left = self.deadline - time.monotonic()
+        if left <= 0:
+            raise ToolRefused("tool timed out")
+        return left
+
+    def _port(self, parts, scheme: str) -> int:
+        try:
+            port = parts.port or (443 if scheme == "https" else 80)
+        except ValueError:
+            raise ToolRefused("the URL's port is not valid") from None
+        allowed = set(self.spec.ports) or (
+            DEFAULT_CLUSTER_PORTS if scheme == "http" else DEFAULT_HTTPS_PORTS
+        )
+        if port not in allowed:
+            raise ToolRefused(f"port {port} is not allowed for this tool")
+        return port
 
     def fetch(
         self,
@@ -162,15 +222,23 @@ class ToolContext:
         operation: str,
         headers: dict[str, str] | None = None,
         body: bytes | None = None,
+        max_bytes: int | None = None,
     ) -> str:
-        """One read. Refused unless the operation, host and scheme are on the manifest; never follows a
-        redirect; the body is cut at `max_output_bytes` and the digest covers the bytes received."""
+        """One read. Refused unless the operation, its bound method and path, the host, the port and the scheme
+        are on the manifest; never follows a redirect; the whole call shares one deadline; the body is cut at
+        `max_bytes` (default the manifest's `max_output_bytes`; an explicit larger cap is refused past
+        FETCH_CEILING, and a response over an explicit cap is refused, never silently cut)."""
         spec = self.spec
         if operation not in spec.operations:
             raise ToolRefused(f"operation {operation!r} is not on the manifest's read list")
-        if method.upper() not in _METHODS:
-            raise ToolRefused(f"method {method!r} is not allowed")
+        binding = self.bindings.get(operation)
+        if binding is None:
+            raise ToolRefused(f"operation {operation!r} has no bound method and path")
+        if method.upper() not in _METHODS or method.upper() != binding[0]:
+            raise ToolRefused(f"method {method!r} is not the one bound to {operation!r}")
         parts = urlsplit(url)
+        if not re.fullmatch(binding[1], parts.path or "/"):
+            raise ToolRefused(f"path is not the one bound to {operation!r}")
         host = (parts.hostname or "").lower().rstrip(".")
         if parts.scheme != "https" and not (
             parts.scheme == "http" and spec.cluster_http and host_allowed_over_http(host)
@@ -182,21 +250,32 @@ class ToolContext:
             egress_check(url, frozenset(spec.hosts))
         except EgressRefused as exc:
             raise ToolRefused(str(exc)) from None
+        self._port(parts, parts.scheme)
+        cap = min(max_bytes or spec.max_output_bytes, FETCH_CEILING)
         req = urllib.request.Request(  # noqa: S310 - scheme and host checked above
             url, data=body, headers=headers or {}, method=method.upper()
         )
         # Plain http (loopback or in-cluster) is never handed to an environment proxy.
         direct = host in http_guard.LOOPBACK or parts.scheme == "http"
         opener = http_guard.LOCAL_OPENER if direct else http_guard.OPENER
+        buf = bytearray()
         try:
-            with opener.open(req, timeout=self.timeout_s) as resp:  # nosec B310
-                raw = resp.read(spec.max_output_bytes + 1)
+            with opener.open(req, timeout=min(self.timeout_s, self._remaining())) as resp:  # nosec B310
+                while len(buf) <= cap:
+                    self._remaining()
+                    chunk = resp.read(min(8192, cap + 1 - len(buf)))
+                    if not chunk:
+                        break
+                    buf += chunk
         except urllib.error.HTTPError as exc:
             raise ToolRefused(f"HTTP {exc.code}") from None
+        if len(buf) > cap:
+            if max_bytes:
+                raise ToolRefused(f"the response is larger than {cap} bytes")
+            del buf[cap:]
         self.fetched = True
-        raw = raw[: spec.max_output_bytes]
-        self._digest.update(raw)
-        return raw.decode("utf-8", "replace")
+        self._digest.update(bytes(buf))
+        return bytes(buf).decode("utf-8", "replace")
 
     def digest(self) -> str | None:
         return self._digest.hexdigest() if self.fetched else None
@@ -228,7 +307,7 @@ def prepare_output(
     for secret in secrets or []:
         if secret:
             raw = raw.replace(secret, "<SECRET_REDACTED>")
-    return truncate(runmap.redact_text(escape_markers(raw), mapping), max_bytes)
+    return truncate(runmap.redact_untrusted(escape_markers(raw), mapping), max_bytes)
 
 
 def error_reason(exc: BaseException) -> str:
@@ -252,16 +331,29 @@ class ToolBox:
         timeout_s: float,
         secret_resolver: Callable[[str], str] | None = None,
         arg_errors: Callable[[dict[str, Any], dict[str, Any]], list[str]] | None = None,
+        bindings: dict[str, Binding] | None = None,
     ) -> None:
         self.specs, self._fns, self.timeout_s = specs, fns, timeout_s
         self._secrets, self._arg_errors = secret_resolver, arg_errors
+        self._bindings = dict(bindings or {})
 
     def names(self) -> set[str]:
         return set(self.specs)
 
+    def _call(self, name: str, restored: dict[str, Any], ctx: ToolContext) -> str:
+        """The tool body under one total deadline (`tool_timeout_s`): it, its secret reads and its fetches share
+        it. A body that does not return is abandoned (its thread ends at its next fetch or secret read)."""
+        pool = ThreadPoolExecutor(max_workers=1, thread_name_prefix="hadavin-tool")
+        try:
+            return str(pool.submit(self._fns[name], restored, ctx).result(timeout=self.timeout_s))
+        except FutureTimeout:
+            raise ToolRefused("tool timed out") from None
+        finally:
+            pool.shutdown(wait=False, cancel_futures=True)
+
     def invoke(self, name: str, args: dict[str, Any], mapping: dict[str, str]) -> ToolOutput:
         spec = self.specs[name]
-        ctx = ToolContext(spec, self.timeout_s, self._secrets)
+        ctx = ToolContext(spec, self.timeout_s, self._secrets, self._bindings)
         started = time.monotonic()
         error = False
         try:
@@ -272,7 +364,7 @@ class ToolBox:
                 bad := self._arg_errors(spec.input_schema, restored)
             ):
                 raise ToolRefused("arguments invalid: " + ", ".join(bad)[:200])
-            raw = str(self._fns[name](restored, ctx))
+            raw = self._call(name, restored, ctx)
         except Exception as exc:  # noqa: BLE001 - a failing tool becomes a result the model can react to
             error = True
             raw = ERROR_PREFIX + error_reason(exc)

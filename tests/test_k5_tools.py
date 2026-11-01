@@ -66,7 +66,7 @@ def test_k5_manifest_loads_and_changes_the_config_hash(tmp_path):
         ({"function": "os:system"}, "outside tool_modules"),
         ({"egress": True}, "not available until Phase 5"),
         ({"reads_hadavin_store": True}, "not available until Phase 5"),
-        ({"cluster_http": True, "hosts": ["example.com"]}, "cluster_http needs a host"),
+        ({"cluster_http": True, "hosts": ["example.com"]}, "cluster_http needs every host"),
         ({"hosts": ["Example.com"]}, "bare lowercase hostname"),
         ({"hosts": ["https://example.com"]}, "bare lowercase hostname"),
         ({"input_schema": {"type": "object", "format": "x"}}, "unsupported keyword format"),
@@ -124,10 +124,12 @@ def test_k5_config_keys_default_and_ceiling(tmp_path):
 
 class _Resp:
     def __init__(self, body: bytes) -> None:
-        self.body = body
+        self.body, self.at = body, 0
 
     def read(self, n: int = -1) -> bytes:
-        return self.body if n < 0 else self.body[:n]
+        chunk = self.body[self.at :] if n < 0 else self.body[self.at : self.at + n]
+        self.at += len(chunk)
+        return chunk
 
     def __enter__(self):
         return self
@@ -151,14 +153,16 @@ def _ctx(monkeypatch, opener, **spec) -> tools_mod.ToolContext:
     monkeypatch.setattr(tools_mod.http_guard, "OPENER", opener)
     monkeypatch.setattr(tools_mod.http_guard, "LOCAL_OPENER", opener)
     base = {**TOOL, "hosts": ["api.example.com"], "operations": ["bundle.read"], **spec}
-    return tools_mod.ToolContext(tools_mod.ToolSpec(**base), 3.0, SECRETS.get)
+    return tools_mod.ToolContext(
+        tools_mod.ToolSpec(**base), 3.0, SECRETS.get, k5_tools.READ_OPERATIONS
+    )
 
 
 def test_k5_fetch_reads_an_allowed_https_host(monkeypatch):
     opener = _Opener(b"hello")
     ctx = _ctx(monkeypatch, opener)
     assert ctx.fetch("GET", "https://api.example.com/x", operation="bundle.read") == "hello"
-    assert opener.requests == [("https://api.example.com/x", "GET", 3.0)]
+    assert [r[:2] for r in opener.requests] == [("https://api.example.com/x", "GET")]
     assert ctx.digest() is not None
 
 
@@ -197,7 +201,7 @@ def test_k5_fetch_operation_outside_the_list_refused(monkeypatch):
 def test_k5_fetch_refuses_write_methods_and_url_credentials(monkeypatch):
     ctx = _ctx(monkeypatch, _Opener())
     for method in ("PUT", "PATCH", "DELETE"):
-        with pytest.raises(tools_mod.ToolRefused, match="not allowed"):
+        with pytest.raises(tools_mod.ToolRefused, match="not the one bound"):
             ctx.fetch(method, "https://api.example.com/x", operation="bundle.read")
     with pytest.raises(tools_mod.ToolRefused, match="credentials in the URL"):
         ctx.fetch("GET", "https://u:p@api.example.com/x", operation="bundle.read")
@@ -230,12 +234,18 @@ def test_k5_redirects_refused(monkeypatch):
     )
     monkeypatch.setattr(tools_mod, "host_allowed_over_http", lambda host: True)
     spec = tools_mod.ToolSpec(
-        **{**TOOL, "hosts": ["127.0.0.1"], "operations": ["bundle.read"], "cluster_http": True}
+        **{
+            **TOOL,
+            "hosts": ["127.0.0.1"],
+            "operations": ["bundle.post"],
+            "cluster_http": True,
+            "ports": [int(server.url.rsplit(":", 1)[1])],
+        }
     )
-    ctx = tools_mod.ToolContext(spec, 3.0)
+    ctx = tools_mod.ToolContext(spec, 3.0, bindings=k5_tools.READ_OPERATIONS)
     try:
         with pytest.raises(tools_mod.ToolRefused, match="HTTP 302"):
-            ctx.fetch("POST", server.url + "/a", operation="bundle.read")
+            ctx.fetch("POST", server.url + "/a", operation="bundle.post")
     finally:
         server.close()
     assert len(server.requests) == 1
@@ -497,7 +507,9 @@ def test_k5_grounding_normalised_value(tmp_path):
         run = handle(rt)
         # "v17" and "rev 17" do not satisfy the contract's digit pattern: the point is that they ground.
         assert run.reason_code != "ungrounded", given
-    assert evidence.contains("REVISION 17", "17") and evidence.contains("rev-17.", "Revision 17")
+    assert evidence.contains("REVISION 17", "17") and evidence.contains(
+        "see revision 17.", "Revision 17"
+    )
     assert not evidence.contains("latency 170ms", "17")
     assert evidence.contains("CAFÉ", "café")  # NFC and case folding
 
@@ -661,6 +673,10 @@ def _age(app, run_id, days):
             rows[call_id] = row.model_copy(update={"created_at": now() - timedelta(days=days)})
     if run_id in store._maps:
         store._maps[run_id] = (store._maps[run_id][0], now() - timedelta(days=days))
+    if run_id in store._runs:  # a map ages from its run's last state change
+        store._runs[run_id] = store._runs[run_id].model_copy(
+            update={"updated_at": now() - timedelta(days=days)}
+        )
 
 
 def test_k5_purge_keeps_labelled_runs(tmp_path):
@@ -876,7 +892,7 @@ def test_k5_scope_probe_refuses_write(tmp_path):
     from hadavin_sdk.sources.kubernetes import KubernetesSource
 
     def fetch_for(rules):
-        def fetch(method, url, *, operation, body=None, headers=None):
+        def fetch(method, url, *, operation, body=None, headers=None, max_bytes=None):
             assert operation == "k8s.rules_review" and method == "POST"
             return json.dumps({"status": {"resourceRules": rules}})
 
@@ -962,7 +978,7 @@ def test_k5_in_cluster_http_is_never_handed_to_an_environment_proxy(monkeypatch)
     spec = tools_mod.ToolSpec(
         **{**TOOL, "hosts": ["prom.mon.svc", "api.example.com"], "cluster_http": True}
     )
-    ctx = tools_mod.ToolContext(spec, 3.0)
+    ctx = tools_mod.ToolContext(spec, 3.0, bindings=k5_tools.READ_OPERATIONS)
     assert ctx.fetch("GET", "http://prom.mon.svc/q", operation="bundle.read") == "direct"
     assert ctx.fetch("GET", "https://api.example.com/q", operation="bundle.read") == "proxied"
 

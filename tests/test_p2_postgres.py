@@ -204,7 +204,7 @@ def test_cli_kill_switch_reaches_every_process(cfg_dir, monkeypatch, capsys):
             lambda settings, deps, dsn=dsn: FakeSecretProvider({"pg-dsn": dsn}),
         )
         assert cli.main(["--config", str(cfg_dir), "limits", "stop", "--by", "user:a"]) == 0
-        from hadavin_sdk.backends import make
+        from hadavin_sdk.backends.factory import make
 
         other = make(
             "store", load_config(cfg_dir).backends.store, FakeSecretProvider({"pg-dsn": dsn})
@@ -244,7 +244,7 @@ def test_plan_hash_survives_a_non_utc_timestamp():
 
 
 def test_cas_race_across_two_connections_has_one_winner(migrated_dsn):
-    from hadavin_sdk.backends import make
+    from hadavin_sdk.backends.factory import make
     from hadavin_sdk.models import RunState
     from hadavin_sdk.store.protocol import StaleState
 

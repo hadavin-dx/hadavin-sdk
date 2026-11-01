@@ -10,7 +10,7 @@ gemini and openai_compat use stdlib HTTP, so no SDK reads the environment.
 import pytest
 
 from hadavin_sdk.actions.secrets import FakeSecretProvider
-from hadavin_sdk.backends import make
+from hadavin_sdk.backends.factory import make
 from hadavin_sdk.backends.table import (
     AnthropicSettings,
     GeminiSettings,

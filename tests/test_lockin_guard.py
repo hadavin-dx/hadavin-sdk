@@ -78,7 +78,6 @@ LIBRARY_IMPORTS: dict[str, set[str]] = {  # open-source libraries kept in their 
 # (top-level import, module) -> scheduled fix. Empty on main: P3b moved every vendor import into its kind.
 PENDING: dict[tuple[str, str], Pending] = {}
 DYNAMIC_IMPORT_OK = {
-    f"{PKG}.backends",
     f"{PKG}.backends.factory",
     f"{PKG}.actions.executor",
     f"{PKG}.tools",

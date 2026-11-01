@@ -326,7 +326,7 @@ class Runtime:
         # Redaction before the injection check and before the model; a failure sends nothing.
         try:
             self._save_map(run, rmap)
-            safe_text = runmap.redact_text(document.decode("utf-8", "replace"), rmap)
+            safe_text = runmap.redact_untrusted(document.decode("utf-8", "replace"), rmap)
             self._save_map(run, rmap)
         except Exception:  # noqa: BLE001 - whatever failed, nothing goes to the model
             return self._redaction_failed(run, cited)
@@ -418,6 +418,7 @@ class Runtime:
                         output=out.text,
                         output_sha256=out.sha256,
                         duration_ms=out.duration_ms,
+                        error=out.error,
                     )
                     self._save_map(run, rmap)
                 except Exception:  # noqa: BLE001 - redaction or the map's save failed: nothing is sent

@@ -320,3 +320,30 @@ def test_purge_redaction_maps_keeps_held_runs(store):
     assert store.get_redaction_map("run-f") is None and store.get_redaction_map("run-h")
     assert store.purge_redaction_maps(now() - timedelta(days=1), keep_run_ids=frozenset()) == 0
     assert store.purge_redaction_maps(future, keep_run_ids=frozenset()) == 1
+
+
+def test_tool_call_error_flag_round_trips(store):
+    store.add_tool_call(_call("run-e", 1, error=True, output="ERROR: boom"))
+    store.add_tool_call(_call("run-e", 2))
+    assert [c.error for c in store.list_tool_calls("run-e")] == [True, False]
+
+
+def test_purge_redaction_maps_keeps_the_map_of_an_open_run_until_the_ceiling(store):
+    parked = _run(store, S.NEEDS_PERSON)
+    done = _run(store, S.NO_ACTION)
+    for run in (parked, done):
+        store.put_redaction_map(run.run_id, {"<IPV4_1>": "10.0.0.5"})
+    future = now() + timedelta(days=1)  # both runs last changed before this
+    assert store.purge_redaction_maps(future, keep_run_ids=frozenset()) == 1
+    assert store.get_redaction_map(done.run_id) is None
+    assert store.get_redaction_map(parked.run_id) is not None
+    assert store.purge_redaction_maps(future, keep_run_ids=frozenset(), keep_open=False) == 1
+    assert store.get_redaction_map(parked.run_id) is None
+
+
+def test_purge_redaction_maps_ages_a_finished_run_from_when_it_finished(store):
+    done = _run(store, S.NO_ACTION)
+    store.put_redaction_map(done.run_id, {"<IPV4_1>": "10.0.0.5"})  # written after the run ended
+    before_run_ended = done.updated_at - timedelta(seconds=1)
+    assert store.purge_redaction_maps(before_run_ended, keep_run_ids=frozenset()) == 0
+    assert store.purge_redaction_maps(now() + timedelta(days=1), keep_run_ids=frozenset()) == 1

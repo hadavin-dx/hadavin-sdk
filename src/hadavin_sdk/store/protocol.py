@@ -138,6 +138,11 @@ class Store(Protocol):
         """The saved map, or None when the run has none (a missing map is never an empty one)."""
         ...
 
-    def purge_redaction_maps(self, before: datetime, *, keep_run_ids: frozenset[str]) -> int:
-        """Delete maps last updated before `before`, except those of `keep_run_ids`; returns the count."""
+    def purge_redaction_maps(
+        self, before: datetime, *, keep_run_ids: frozenset[str], keep_open: bool = True
+    ) -> int:
+        """Delete maps whose run ended before `before` (the run's last state change; the map's own time when
+        the run is unknown), except those of `keep_run_ids`. With `keep_open` (default) the map of a run that is
+        not in a terminal state (parked NEEDS_PERSON, awaiting approval, executing) is kept, because restoring
+        its inputs needs it; the 400-day ceiling passes `keep_open=False`. Returns the count."""
         ...

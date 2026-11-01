@@ -335,3 +335,44 @@ def test_a_type_checking_import_is_not_a_runtime_import(tmp_path):
         },
     )
     assert "hadavin_sdk.app" not in transitive_imports(src, ["hadavin_sdk.tools"])
+
+
+def backends_name_imports(files: list[Path]) -> list[str]:
+    """`from hadavin_sdk.backends import <name>` hides the factory (and so the secret providers) behind a package
+    attribute where a static scan cannot see it. Only the submodule `table` may be imported that way."""
+    hits = []
+    for path in files:
+        for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
+            if isinstance(node, ast.ImportFrom) and node.module == "hadavin_sdk.backends":
+                hits += [f"{path.name}: {a.name}" for a in node.names if a.name != "table"]
+    return hits
+
+
+def _secret_free_files() -> list[Path]:
+    root = ROOT / "src" / "hadavin_sdk"
+    files = [root / "tools.py", root / "guard" / "http.py", root / "guard" / "runmap.py"]
+    for folder in SECRET_FREE:
+        files += sorted((root / folder).rglob("*.py"))
+    return files
+
+
+def test_k5_secret_free_packages_never_import_a_name_from_backends():
+    assert len(_secret_free_files()) > 10
+    assert backends_name_imports(_secret_free_files()) == []
+
+
+def test_plant_a_backends_name_import_is_caught(tmp_path):
+    bad = tmp_path / "bad.py"
+    bad.write_text(
+        "from hadavin_sdk.backends import make"
+        + NL
+        + "from hadavin_sdk.backends import table"
+        + NL,
+        encoding="utf-8",
+    )
+    assert backends_name_imports([bad]) == ["bad.py: make"]
+
+
+def test_k5_the_backends_package_file_imports_nothing():
+    tree = ast.parse((ROOT / "src" / "hadavin_sdk" / "backends" / "__init__.py").read_text("utf-8"))
+    assert not [n for n in ast.walk(tree) if isinstance(n, ast.Import | ast.ImportFrom)]

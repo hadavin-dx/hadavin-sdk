@@ -21,7 +21,8 @@ from hadavin_sdk.approvals import Approvals, Channel
 from hadavin_sdk.approvals.cards import Card, Delivery
 from hadavin_sdk.approvals.requests import summary
 from hadavin_sdk.audit import AuditSink
-from hadavin_sdk.backends import make, platform_secrets
+from hadavin_sdk.backends import platform_secrets
+from hadavin_sdk.backends.factory import make
 from hadavin_sdk.config import Config, ConfigError, load_config
 from hadavin_sdk.guard.injection import Detector, combine
 from hadavin_sdk.limits import Limits
@@ -80,6 +81,16 @@ def build(
     # Design 6.6: every read source has a passing scope probe or a client-signed inventory; else no start.
     if problems := sources_mod.scope_problems(sources or {}, cfg.scope_inventory):
         raise ConfigError("; ".join(problems))
+    # A tool's own credential is a read credential like a source's: no probe exists for it, so the client signs an
+    # inventory entry named `tool:<tool name>` (design 6.6).
+    signed = [
+        f"tool {t.name}: its secret has no scope_inventory reference 'tool:{t.name}' (design 6.6)"
+        for per_agent in reg.tools.values()
+        for t in per_agent.values()
+        if t.secret_names and f"tool:{t.name}" not in cfg.scope_inventory
+    ]
+    if signed:
+        raise ConfigError("; ".join(sorted(set(signed))))
     toolbox = _toolbox(cfg, reg, secrets)
     signer = make("signer", b.signer, secrets)
     anchor = make("anchor", b.anchor, secrets)
@@ -174,4 +185,5 @@ def _toolbox(cfg: Config, reg: Registry, secrets: SecretProvider) -> tools_mod.T
         timeout_s=cfg.tool_timeout_s,
         secret_resolver=secrets.get,
         arg_errors=schema_errors,
+        bindings=tools_mod.read_operations(cfg.tool_modules),
     )

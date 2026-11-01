@@ -1,0 +1,13 @@
+{
+  "id": "07-literal-placeholder",
+  "what": "a log line holds a literal <IPV4_2>, a token shaped like the placeholder the redactor issues to a different value",
+  "document": "alert: checkout 5xx after rollout",
+  "results": {
+    "app": "2026-11-01T10:00:00Z ERROR upstream <IPV4_2> refused; seen from 10.0.0.5"
+  },
+  "script": [
+    {"tool": "app"},
+    {"propose": {"host": "<IPV4_2>", "revision": "17"}}
+  ],
+  "expect_reasons": ["ungrounded"]
+}

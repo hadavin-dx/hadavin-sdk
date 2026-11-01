@@ -17,7 +17,7 @@ from hadavin_sdk.app import build
 from hadavin_sdk.approvals import FakeChannel
 from hadavin_sdk.approvals.receiver import MAX_BODY, handle_slack_action, serve
 from hadavin_sdk.approvals.slack_channel import SlackChannel, SlackError
-from hadavin_sdk.backends import make
+from hadavin_sdk.backends.factory import make
 from hadavin_sdk.backends.table import SlackSettings
 from hadavin_sdk.config import ConfigError
 from hadavin_sdk.models import ApprovalDecision, RunState
@@ -552,7 +552,7 @@ def test_signing_headers_do_not_cross_channels():
 
 def test_audit_chain_build_reports_a_connection_failure_as_store_unavailable():
     from hadavin_sdk.audit import chain
-    from hadavin_sdk.backends import Deps
+    from hadavin_sdk.backends.factory import Deps
     from hadavin_sdk.store.protocol import StoreUnavailable
 
     class Down:

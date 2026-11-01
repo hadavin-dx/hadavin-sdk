@@ -158,7 +158,7 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
         re.compile(r"Private-Lines:[ \t]*\d+[ \t]*\r?\n([\s\S](?:(?!\r?\nPrivate-MAC)[\s\S])*)"),
     ),
     # Account-less (`arn:aws:s3:::bucket`) and other partitions (`aws-cn`, `aws-us-gov`) too (lock-in audit row 14).
-    ("ARN", re.compile(r"arn:aws[a-z-]*:[a-z0-9\-]*:[a-z0-9\-]*:(?:\d{12})?:[^\s\"']+")),
+    ("ARN", re.compile(r"arn:aws[a-z-]*:[a-z0-9\-]*:[a-z0-9\-]*:(?:\d{12})?:[^\s\"'?&#]+")),
     # The other clouds' resource ids name the client's project or subscription the same way (audit row 14).
     (
         "GCPRESOURCE",

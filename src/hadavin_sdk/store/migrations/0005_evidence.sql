@@ -11,7 +11,8 @@ CREATE TABLE tool_calls (
     output_sha256 TEXT NOT NULL,
     created_at    TIMESTAMPTZ NOT NULL,
     duration_ms   INTEGER,
-    attempt       INTEGER
+    attempt       INTEGER,
+    error         BOOLEAN NOT NULL DEFAULT FALSE  -- the call failed: kept for the audit, never citable
 );
 CREATE INDEX tool_calls_by_run ON tool_calls (run_id, created_at);
 

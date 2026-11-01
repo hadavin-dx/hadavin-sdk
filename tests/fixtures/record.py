@@ -56,7 +56,7 @@ GOLDEN = [
 
 def digest_of(name: str) -> str:
     """Of the bytes the model is sent: the input redacted with a fresh run map (K5)."""
-    text = runmap.redact_text((INPUTS / name).read_bytes().decode("utf-8", "replace"), {})
+    text = runmap.redact_untrusted((INPUTS / name).read_bytes().decode("utf-8", "replace"), {})
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 

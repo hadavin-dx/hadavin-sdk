@@ -39,7 +39,7 @@ from hadavin_sdk.audit.signer import (
     verify_signature,
 )
 from hadavin_sdk.audit.signer_aws import KmsSigner
-from hadavin_sdk.backends import make
+from hadavin_sdk.backends.factory import make
 from hadavin_sdk.backends.table import (
     AwsKmsSettings,
     ChainSettings,

@@ -17,7 +17,7 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from hadavin_sdk.actions.secrets import FakeSecretProvider
 from hadavin_sdk.audit import signer as signer_mod
 from hadavin_sdk.audit.signer_aws import KmsSigner
-from hadavin_sdk.backends import make
+from hadavin_sdk.backends.factory import make
 from hadavin_sdk.backends.table import ChainSettings, Ed25519LocalSettings, KindSettings
 from tests.contracts.kinds import kind
 

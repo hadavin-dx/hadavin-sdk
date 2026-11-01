@@ -11,7 +11,7 @@ import pytest
 
 from hadavin_sdk.actions.secrets_file import MountedFileProvider
 from hadavin_sdk.actions.secrets_vault import VaultError, VaultProvider
-from hadavin_sdk.backends import make
+from hadavin_sdk.backends.factory import make
 from hadavin_sdk.backends.table import (
     AwsSecretsManagerSettings,
     AzureKeyVaultSettings,

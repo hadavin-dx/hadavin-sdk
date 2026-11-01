@@ -193,7 +193,7 @@ def purge_evidence(ctx: TickContext) -> None:
         ctx.now - timedelta(days=keep.redaction_maps_days), keep_run_ids=held
     )
     maps += app.store.purge_redaction_maps(
-        ctx.now - timedelta(days=keep.held_maps_max_days), keep_run_ids=frozenset()
+        ctx.now - timedelta(days=keep.held_maps_max_days), keep_run_ids=frozenset(), keep_open=False
     )
     _LOG.info("purge_evidence tool_calls=%d redaction_maps=%d held_runs=%d", calls, maps, len(held))
 

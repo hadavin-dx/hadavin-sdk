@@ -35,7 +35,8 @@ from pathlib import Path
 
 from hadavin_sdk import evals
 from hadavin_sdk.audit import AuditUnavailable
-from hadavin_sdk.backends import make, platform_secrets
+from hadavin_sdk.backends import platform_secrets
+from hadavin_sdk.backends.factory import make
 from hadavin_sdk.config import load_config
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.guard.injection import combine

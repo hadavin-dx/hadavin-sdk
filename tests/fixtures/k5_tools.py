@@ -6,9 +6,15 @@ test (or by a red-team bundle) with the text each ``read_logs`` name returns.
 
 from __future__ import annotations
 
+import time
 from typing import Any
 
-READ_OPERATIONS = frozenset({"bundle.read", "bundle.other"})
+# operation id -> (METHOD, regex the URL path must fully match)
+READ_OPERATIONS = {
+    "bundle.read": ("GET", r"/.*"),
+    "bundle.post": ("POST", r"/.*"),
+    "bundle.other": ("GET", r"/other/.*"),
+}
 RESULTS: dict[str, str] = {}
 
 
@@ -26,3 +32,8 @@ def fetch_url(args: dict[str, Any], ctx) -> str:
 
 def with_secret(args: dict[str, Any], ctx) -> str:
     return "token=" + ctx.secret(args["secret"])
+
+
+def slow(args: dict[str, Any], ctx) -> str:
+    time.sleep(2)
+    return "late"

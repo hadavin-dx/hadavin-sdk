@@ -11,7 +11,7 @@ import json
 
 import pytest
 
-from hadavin_sdk.backends import make
+from hadavin_sdk.backends.factory import make
 from hadavin_sdk.backends.table import BedrockSettings
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.llm import ProviderError, ProviderExhausted

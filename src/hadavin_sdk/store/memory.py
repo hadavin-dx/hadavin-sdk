@@ -8,6 +8,7 @@ from datetime import date, datetime
 from decimal import Decimal
 
 from hadavin_sdk.models import (
+    TERMINAL_STATES,
     ApprovalDecision,
     ApprovalRequest,
     ApprovalStatus,
@@ -262,9 +263,17 @@ class MemoryStore:
             found = self._maps.get(run_id)
             return dict(found[0]) if found else None
 
-    def purge_redaction_maps(self, before: datetime, *, keep_run_ids: frozenset[str]) -> int:
+    def purge_redaction_maps(
+        self, before: datetime, *, keep_run_ids: frozenset[str], keep_open: bool = True
+    ) -> int:
         with self._lock:
-            gone = [k for k, (_, at) in self._maps.items() if at < before and k not in keep_run_ids]
+            gone = []
+            for k, (_, at) in self._maps.items():
+                run = self._runs.get(k)
+                if keep_open and run is not None and run.state not in TERMINAL_STATES:
+                    continue
+                if (run.updated_at if run is not None else at) < before and k not in keep_run_ids:
+                    gone.append(k)
             for k in gone:
                 del self._maps[k]
             return len(gone)

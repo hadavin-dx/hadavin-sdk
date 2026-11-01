@@ -28,9 +28,17 @@
   - New tick step `purge_evidence` (daily). New `hadavin_sdk.sources` (four read-source interfaces, the neutral
     `KubernetesSource`, the start-up scope probe) and `app.build(sources=)`: a source that fails its probe, or
     cannot be probed and has no `scope_inventory` reference, stops the process starting.
-  - The no-redirect HTTP opener moved to `guard/http.py`; `hadavin_sdk.backends` now loads `make`, `hosts` and
-    `Deps` on first use (import them from `hadavin_sdk.backends` as before) so the config never imports a secret
-    provider.
+  - The no-redirect HTTP opener moved to `guard/http.py`. **`make`, `hosts` and `Deps` now live in
+    `hadavin_sdk.backends.factory`** (`hadavin_sdk.backends` itself imports nothing): change
+    `from hadavin_sdk.backends import make` to `from hadavin_sdk.backends.factory import make`.
+  - Review round: a tool module's `READ_OPERATIONS` is now a mapping operation id -> `(METHOD, path regex)`, and
+    `ToolContext.fetch` refuses a call that fits neither; the manifest gains `ports` (default 443, in-cluster
+    set for plain http), `cluster_http` needs every host in-cluster, and a tool with `secret_names` needs a
+    `scope_inventory` entry `tool:<name>`. `tool_timeout_s` is one deadline for the whole tool call. Tool results
+    that failed are stored with `error = true` (in `0005_evidence.sql`) and cannot be cited. Literal
+    placeholder-shaped text in a document or tool result is escaped (`‹IPV4_2›`) before redaction. The ARN pattern
+    stops at `?`, `&` and `#`; the stored map drops any original that holds secret-shaped text. Redaction maps of
+    runs that have not ended are kept until the 400-day ceiling (`purge_redaction_maps(..., keep_open=)`).
 - **K3 pilot build path (levels, shadow cut-off, fail-closed loading).** Action contracts change shape:
   `executor.system` moves to a contract field `target_system`, and `executor` is now a tagged union
   (`kind: none | manual | http`). Edit every contract: move `system:` out of `executor:` to `target_system:` beside

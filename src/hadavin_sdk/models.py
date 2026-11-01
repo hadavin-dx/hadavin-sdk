@@ -69,6 +69,18 @@ class RunState(StrEnum):
     STOPPED = "STOPPED"
 
 
+# States a run never leaves. NEEDS_PERSON is not one: a parked run is waiting for a person and may be resumed.
+TERMINAL_STATES = frozenset(
+    {
+        RunState.NO_ACTION,
+        RunState.DENIED,
+        RunState.REJECTED,
+        RunState.EXPIRED,
+        RunState.SUCCEEDED,
+        RunState.ROLLED_BACK,
+        RunState.STOPPED,
+    }
+)
 RiskClass = Literal["read_only", "reversible", "sign_off"]
 Outcome = Literal["allow", "needs_approval", "deny"]
 ApprovalStatus = Literal["PENDING", "APPROVED", "REJECTED", "EXPIRED"]
@@ -223,6 +235,7 @@ class ToolCallRecord(BaseModel):
     created_at: datetime = Field(default_factory=now)
     duration_ms: int | None = None
     attempt: int | None = None
+    error: bool = False  # the tool failed: the row is kept but is never evidence
 
 
 class KillSwitch(Shape):

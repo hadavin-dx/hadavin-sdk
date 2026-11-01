@@ -404,7 +404,7 @@ def test_k3_old_chain_verifies(tmp_path, monkeypatch):
 
 
 def _chain(tmp_path: Path):
-    from hadavin_sdk.backends import make
+    from hadavin_sdk.backends.factory import make
     from hadavin_sdk.backends.table import ChainSettings, Ed25519LocalSettings, KindSettings
 
     priv = tmp_path / "k.pem"

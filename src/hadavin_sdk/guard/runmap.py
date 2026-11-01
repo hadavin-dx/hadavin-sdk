@@ -11,9 +11,10 @@ Pure functions over a plain ``dict[str, str]`` (placeholder -> original). Stdlib
 from __future__ import annotations
 
 import re
+from functools import lru_cache
 from typing import Any
 
-from hadavin_sdk.guard.redact import redact
+from hadavin_sdk.guard.redact import SECRET_KINDS, redact
 
 # Identifier kinds a fix or a read may need back (M14): the spec list plus the other identifier kinds the
 # redactor emits (IPV6 beside IPV4, hostnames, UUIDs, GCP and Azure resource ids). Anything not listed (every
@@ -47,9 +48,40 @@ def kind_of(placeholder: str) -> str:
     return placeholder.strip("<>").rsplit("_", 1)[0]
 
 
+@lru_cache(maxsize=4096)
+def _secret_shaped(original: str) -> bool:
+    """True if the redactor finds a secret kind inside this identifier's original (an ARN or URL that swallowed
+    `?token=...`). Anything that cannot be checked counts as secret-shaped: it is not stored."""
+    try:
+        found = redact(original, mapping={}).mapping
+    except Exception:  # noqa: BLE001 - fail closed
+        return True
+    return any(kind_of(p) in SECRET_KINDS for p in found)
+
+
 def storable(mapping: dict[str, str]) -> dict[str, str]:
-    """The part of a run's map that may be stored and restored: identifier kinds only."""
-    return {p: v for p, v in mapping.items() if kind_of(p) in STORED_KINDS}
+    """The part of a run's map that may be stored and restored: identifier kinds only, and only originals that
+    hold no secret-shaped text (the ARN, URL and host patterns can swallow a credential beside the identifier)."""
+    return {
+        p: v for p, v in mapping.items() if kind_of(p) in STORED_KINDS and not _secret_shaped(v)
+    }
+
+
+_ESCAPED = "‹{}_{}›"  # single angle quotation marks: not a placeholder
+
+
+def escape_placeholders(text: str) -> str:
+    """Untrusted text may contain a literal `<IPV4_2>`. Left as typed it would look like the placeholder the
+    redactor later issues to a different value, and restore would swap that value in. Turn every
+    placeholder-shaped literal into a non-placeholder before redaction."""
+    return PLACEHOLDER.sub(lambda m: _ESCAPED.format(m.group(1), m.group(2)), text)
+
+
+def redact_untrusted(text: str, mapping: dict[str, str]) -> str:
+    """`redact_text` for text from outside (the document, a tool result, an error message): placeholder-shaped
+    literals are escaped first. Model-written text (tool arguments, proposal inputs) uses `redact_text`: a
+    placeholder the model writes is meant to be one."""
+    return redact_text(escape_placeholders(text), mapping)
 
 
 def redact_text(text: str, mapping: dict[str, str]) -> str:

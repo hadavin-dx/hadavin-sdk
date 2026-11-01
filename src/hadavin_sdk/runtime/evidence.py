@@ -25,6 +25,9 @@ from hadavin_sdk.registry import AgentRecord
 from hadavin_sdk.store.protocol import Store
 
 _NUMERIC = re.compile(r"(?:v|rev|revision|#)?\s*(\d+)")
+# A value is found only as a whole token: not inside 10.0.0.17, deploy-17, 1.17, production, a path or an e-mail.
+_BEFORE = r"(?<![\w.\-/:@])"
+_AFTER = r"(?![\w\-/:@])(?!\.\w)"  # a full stop that ends a sentence is fine
 
 
 @dataclass(frozen=True)
@@ -49,8 +52,11 @@ def contains(text: str, value: str) -> bool:
         return False
     hay = normalise(text)
     if m := _NUMERIC.fullmatch(want):
-        return re.search(rf"(?<!\w){re.escape(m.group(1))}(?!\w)", hay) is not None
-    return want in hay
+        # `17` also matches `rev 17`, `v17` and `#17` in the text
+        pattern = rf"{_BEFORE}(?:(?:v|rev|revision|#)\s?)?{re.escape(m.group(1))}{_AFTER}"
+    else:
+        pattern = rf"{_BEFORE}{re.escape(want)}{_AFTER}"
+    return re.search(pattern, hay) is not None
 
 
 def identifier_inputs(contract: ActionContract) -> list[str]:
@@ -87,12 +93,19 @@ def make_validator(store: Store) -> Validator:
         document: str,
         mapping: dict[str, str],
     ) -> Checked:
-        if not agent.tools_allowed:  # nothing was investigated: no evidence to cite
-            return Checked(call, [], None)
         inputs = dict(call.input)
         evidence = inputs.pop("evidence", None)
+        # A raw value the model typed (an address, a name) is redacted before it can reach a plan, a card or an
+        # executor; a placeholder it wrote is left as it is.
+        inputs = runmap.redact_value(inputs, mapping)
         stripped = ToolCall(name=call.name, input=inputs)
-        rows = {c.call_id: c for c in store.list_tool_calls(run.run_id)}
+        if (
+            not agent.tools_allowed
+        ):  # nothing was investigated: identifiers must come from the document
+            ok = grounded(contract, inputs, [document], mapping)
+            return Checked(stripped, [], None if ok else "ungrounded")
+        # An ERROR result is not evidence: it cannot be cited, and it grounds nothing.
+        rows = {c.call_id: c for c in store.list_tool_calls(run.run_id) if not c.error}
         if (
             not isinstance(evidence, list)
             or not evidence

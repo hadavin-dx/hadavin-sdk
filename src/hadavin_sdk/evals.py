@@ -42,7 +42,7 @@ def gate(registry: Registry, llm: LLM, agent_id: str, *, k: int = 1) -> GateRun:
         # input_ref comes from a file: confined to inputs_dir (no "../" or absolute escapes).
         doc = confined(cfg.inputs_dir, case["input_ref"]).read_bytes()
         # The model sees what the runtime sends it: the document redacted with a fresh per-run map (K5).
-        doc = runmap.redact_text(doc.decode("utf-8", "replace"), {}).encode("utf-8")
+        doc = runmap.redact_untrusted(doc.decode("utf-8", "replace"), {}).encode("utf-8")
         case_passes = 0
         for _ in range(k):
             reply = llm.chat(
