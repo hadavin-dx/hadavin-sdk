@@ -115,8 +115,18 @@ class PgSource:
         mode = tls_mode(self._dsn)
         if mode:
             kwargs["sslmode"] = mode
+        # A transient failure to ESTABLISH the connection (nothing was sent yet) is retried once. The one-off
+        # OperationalError seen in the full suite was never reproduced; this bounds its effect without hiding refusals.
         try:
             conn = psycopg.connect(self._dsn, **kwargs)
+        except psycopg.OperationalError as err:
+            if getattr(err, "sqlstate", None) is not None:
+                raise _fail(err) from None
+            time.sleep(0.25)
+            try:
+                conn = psycopg.connect(self._dsn, **kwargs)
+            except psycopg.Error as again:
+                raise _fail(again) from None
         except psycopg.Error as err:
             raise _fail(err) from None
         conn.read_only = True  # the first statement psycopg sends is BEGIN READ ONLY

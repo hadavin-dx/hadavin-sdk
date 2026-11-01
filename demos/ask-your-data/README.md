@@ -14,6 +14,20 @@ calls **no model over the network**: the model is a scripted stand-in (`askdata/
 - **C4, a watchdog and caps.** A timer cancels a blocked statement; row and byte caps stop big results.
 - Every printed value passes `askdata/safe_text.py`, so a database value cannot drive your terminal.
 
+## How the validator (C1) is tested (phase P2)
+
+Everything below runs in CI with no model call. `tests/demo_askdata/`:
+
+- `corpus.py`: 230+ attacks (each tagged with the one rule that must refuse it, a category and the harm it would
+  do) and 60+ benign statements that must be accepted. `test_validate.py` runs them all.
+- `test_validate_fuzz.py` (+ `fuzzgen.py`, `oracle.py`): 2,000 seeded grammar cases (clean, hazard dropped at a random
+  place, hazard dropped at a grammar slot, token mutations). Every accepted statement must be a fixed point of the
+  validator and must pass an independent oracle (the PostgreSQL grammar via pglast, a node-class whitelist).
+- `test_validate_mutation.py`: switches each rule V01 to V12 off in turn and requires a named attack to notice.
+- `test_validate_harm.py`: runs every attack unvalidated as the administrator of a scratch PostgreSQL and proves
+  the harm it would do (rows or relations changed, row lock taken, hidden data returned, statement still running at a
+  timeout); attacks PostgreSQL refuses on its own are tagged `pg-refuses` and shown to be refused, not claimed as harm.
+
 Not in the spike: the language-model pipeline, retries, audit ledger, budget meter, gold set, evaluation, accuracy
 numbers, export pages. Those are phases P1 to P5 of the design and start only on a pull signal from a prospect.
 
