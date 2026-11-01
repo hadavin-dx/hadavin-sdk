@@ -11,7 +11,7 @@ import os
 from decimal import Decimal
 
 from hadavin_sdk.config import ConfigError, confined
-from hadavin_sdk.guard import judge
+from hadavin_sdk.guard import judge, runmap
 from hadavin_sdk.llm.protocol import LLM
 from hadavin_sdk.models import GateRun
 from hadavin_sdk.registry import Registry
@@ -41,6 +41,8 @@ def gate(registry: Registry, llm: LLM, agent_id: str, *, k: int = 1) -> GateRun:
     for case in cases:
         # input_ref comes from a file: confined to inputs_dir (no "../" or absolute escapes).
         doc = confined(cfg.inputs_dir, case["input_ref"]).read_bytes()
+        # The model sees what the runtime sends it: the document redacted with a fresh per-run map (K5).
+        doc = runmap.redact_text(doc.decode("utf-8", "replace"), {}).encode("utf-8")
         case_passes = 0
         for _ in range(k):
             reply = llm.chat(
@@ -52,8 +54,14 @@ def gate(registry: Registry, llm: LLM, agent_id: str, *, k: int = 1) -> GateRun:
             )
             cost += reply.cost_usd
             abstains += not reply.tool_calls
+            # `evidence` (K5) is a citation the runtime strips before the plan exists: never graded.
             got = (
-                {"action": reply.tool_calls[0].name, "inputs": reply.tool_calls[0].input}
+                {
+                    "action": reply.tool_calls[0].name,
+                    "inputs": {
+                        k: v for k, v in reply.tool_calls[0].input.items() if k != "evidence"
+                    },
+                }
                 if reply.tool_calls
                 else {"action": None, "inputs": {}}
             )

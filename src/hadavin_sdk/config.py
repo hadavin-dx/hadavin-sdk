@@ -5,6 +5,7 @@ Bad config fails at start-up. Cross-file checks (agents, actions, chains) live i
 
 from __future__ import annotations
 
+import re
 from decimal import Decimal
 from pathlib import Path
 from typing import Annotated, Any, Literal, get_args
@@ -23,6 +24,7 @@ __all__ = [
     "Config",
     "ConfigError",
     "K1bSettings",
+    "Retention",
     "Route",
     "confined",
     "load_config",
@@ -167,6 +169,23 @@ class K1bSettings(_Strict):
     redact: bool = True
 
 
+HELD_MAPS_CEILING = 400  # days: the audit retention; a config cannot extend it (design 6.3)
+
+
+class Retention(_Strict):
+    """How long evidence is kept (design 6.1, 6.3). Not part of ``config_hash``."""
+
+    tool_calls_days: int = Field(default=30, gt=0)
+    redaction_maps_days: int = Field(default=30, gt=0)
+    # Runs labelled wrong, harmful or missed (or demoted) keep their tool calls past `tool_calls_days`.
+    hold_labelled: bool = True
+    # A held run's redaction map (original identifiers) is purged at this age whatever the hold says.
+    held_maps_max_days: int = Field(default=HELD_MAPS_CEILING, gt=0, le=HELD_MAPS_CEILING)
+
+
+_INVENTORY_REF = re.compile(r"\S+#\S+ sha256:[0-9a-f]{64}")
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="HADAVIN_")
     config_dir: Path
@@ -186,10 +205,23 @@ class Config(_Strict):
     egress_hosts: frozenset[str] = frozenset()
     allow_insecure_loopback: bool = False  # true only in the local test fixture config
     k1b: K1bSettings = K1bSettings()
+    # K5: modules a tool manifest's `function` may resolve from (like `check_modules`), the per-call timeout, and
+    # retention of evidence.
+    tool_modules: list[str] = []
+    tool_timeout_s: float = Field(default=10.0, gt=0)
+    retention: Retention = Retention()
+    # design 6.6: a read source that cannot be probed names the client-signed inventory instead,
+    # "<page>#<anchor> sha256:<64 hex>".
+    scope_inventory: dict[str, str] = {}
     root: Path
 
     @model_validator(mode="after")
     def _cross_checks(self) -> Config:
+        for source, ref in self.scope_inventory.items():
+            if not _INVENTORY_REF.fullmatch(ref):
+                raise ValueError(
+                    f"scope_inventory {source}: expected '<page>#<anchor> sha256:<64 hex digits>'"
+                )
         for d in self.backends.detector:  # llm_judge names a route
             if getattr(d, "route", None) is not None and d.route not in self.routes:
                 raise ValueError(f"backends.detector {d.kind}: unknown route {d.route!r}")

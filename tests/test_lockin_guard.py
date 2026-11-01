@@ -61,7 +61,9 @@ VENDOR_IMPORTS: dict[str, set[str]] = {
     "anthropic": {f"{PKG}.llm.anthropic"},
     "google": _GCP,
     "azure": _AZURE,
-    # added with their kinds: hvac, slack_sdk, kubernetes, opentelemetry
+    # K5: the Kubernetes source speaks the REST API over the stdlib; no client library is allowed anywhere.
+    "kubernetes": set(),
+    # added with their kinds: hvac, slack_sdk, opentelemetry
 }
 LIBRARY_IMPORTS: dict[str, set[str]] = {  # open-source libraries kept in their layer
     "psycopg": {f"{PKG}.store.postgres", f"{PKG}.store.migrate"},
@@ -77,8 +79,10 @@ LIBRARY_IMPORTS: dict[str, set[str]] = {  # open-source libraries kept in their 
 PENDING: dict[tuple[str, str], Pending] = {}
 DYNAMIC_IMPORT_OK = {
     f"{PKG}.backends",
+    f"{PKG}.backends.factory",
     f"{PKG}.actions.executor",
-}  # table factories; contract hooks
+    f"{PKG}.tools",
+}  # table factories; contract hooks; the tool manifest's `function` (resolved from tool_modules only)
 # Vendor modules that are helpers of a kind, not TABLE factories themselves.
 VENDOR_HELPERS = {f"{PKG}.store.auth_aws"}
 
@@ -760,3 +764,33 @@ def test_the_test_environment_holds_no_cloud_credential_variables():
 def test_a_file_suffix_is_not_a_model_id_but_a_bedrock_llama_id_is(tmp_path):
     assert _lit(tmp_path, "runtime/x.py", "S = '.meta.json'\n") == []
     assert "model id" in _lit(tmp_path, "runtime/x.py", "M = 'meta.llama3-70b'\n")[0]
+
+
+def test_plant_vendor_sdk_in_the_tools_module_is_caught(tmp_path):
+    root = _plant(tmp_path, "tools.py", "import boto3" + chr(10))
+    assert _imports(root) == [
+        f"{PKG}.tools: imports boto3 (vendor SDK) outside its allowed modules"
+    ]
+
+
+def test_plant_kubernetes_client_library_is_caught(tmp_path):
+    root = _plant(tmp_path, "sources/kubernetes.py", "from kubernetes import client" + chr(10))
+    assert _imports(root) == [
+        f"{PKG}.sources.kubernetes: imports kubernetes (vendor SDK) outside its allowed modules"
+    ]
+
+
+def test_k5_tools_and_sources_use_the_standard_library_and_pydantic_only():
+    """The read path (tools, sources) holds no vendor SDK and no library: a source is a protocol, an adapter
+    speaks its source's own protocol over the standard library."""
+    allowed = set(sys.stdlib_module_names) | BASE_OK | {PKG}
+    mods = [SRC / PKG / "tools.py", *sorted((SRC / PKG / "sources").rglob("*.py"))]
+    assert len(mods) >= 3
+    for path in mods:
+        tops = set()
+        for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
+            if isinstance(node, ast.Import):
+                tops |= {a.name.split(".")[0] for a in node.names}
+            elif isinstance(node, ast.ImportFrom) and node.module:
+                tops.add(node.module.split(".")[0])
+        assert tops <= allowed, (path.name, sorted(tops - allowed))

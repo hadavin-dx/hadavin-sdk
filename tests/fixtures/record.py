@@ -1,12 +1,14 @@
 """Writes the fake model's recorded answers for the fixture inputs.
 
 Run from the repo root after changing an input: ``uv run python -m tests.fixtures.record``.
-Keys are ``<sha256 of the input bytes>-<attempt>.json``; the fake replays them in attempt order.
+Keys are ``<sha256 of the redacted input bytes>-<attempt>.json``; the fake replays them in attempt order.
 """
 
 import hashlib
 import json
 from pathlib import Path
+
+from hadavin_sdk.guard import runmap
 
 HERE = Path(__file__).parent
 INPUTS, RECORDED = HERE / "inputs", HERE / "recorded"
@@ -53,7 +55,9 @@ GOLDEN = [
 
 
 def digest_of(name: str) -> str:
-    return hashlib.sha256((INPUTS / name).read_bytes()).hexdigest()
+    """Of the bytes the model is sent: the input redacted with a fresh run map (K5)."""
+    text = runmap.redact_text((INPUTS / name).read_bytes().decode("utf-8", "replace"), {})
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
 def write_all() -> None:

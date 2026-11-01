@@ -466,8 +466,8 @@ def test_k3_abstain_card_lists_call_ids_not_content(tmp_path):
     hooks.tools["echo"] = lambda inp: "SECRET-TOOL-OUTPUT"
     echo = reply(ToolCall(name="echo", input={"text": "hi"}))
     rt = runtime(cfg, ScriptedLLM(echo, reply()), hooks)
-    handle(rt)
-    assert "call-1: echo" in cards[0].text and "SECRET-TOOL-OUTPUT" not in cards[0].text
+    run = handle(rt)
+    assert f"- {run.run_id}:1" in cards[0].text and "SECRET-TOOL-OUTPUT" not in cards[0].text
 
 
 def test_k3_tool_error_posts_abstain_card(tmp_path):
@@ -478,7 +478,9 @@ def test_k3_tool_error_posts_abstain_card(tmp_path):
         raise RuntimeError("down")
 
     hooks.tools["echo"] = broken
-    rt = runtime(cfg, ScriptedLLM(reply(ToolCall(name="echo", input={}))), hooks)
+    # K5 (M16): a failing tool is a result the model can react to; the third error ends the run.
+    again = reply(ToolCall(name="echo", input={}))
+    rt = runtime(cfg, ScriptedLLM(again, again, again), hooks)
     run = handle(rt)
     assert (run.state, run.reason_code) == (S.NEEDS_PERSON, "tool_error")
     assert cards[0].text.startswith("Agent abstained") and "tool_error" in cards[0].text

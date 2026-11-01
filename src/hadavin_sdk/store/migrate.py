@@ -51,6 +51,9 @@ GRANTS: dict[str, Grant] = {
     "audit_entries": Grant("table", _APPEND, portal=True),
     "audit_checkpoints": Grant("table", _APPEND, portal=True),
     "audit_outbox": Grant("table", "SELECT, INSERT, DELETE"),
+    # K5-core: append and purge only (no UPDATE); `redaction_maps` is never portal-readable.
+    "tool_calls": Grant("table", "SELECT, INSERT, DELETE"),
+    "redaction_maps": Grant("table", "SELECT, INSERT, UPDATE, DELETE"),
     "approval_decisions_seq_seq": Grant("sequence", "USAGE"),
     "dead_letters_seq_seq": Grant("sequence", "USAGE"),
 }
@@ -197,7 +200,7 @@ def migrate(
     sslrootcert: str | None = None,
 ) -> list[str]:
     """Apply pending migrations; return the versions applied by this call. With `runtime_role`, give it the
-    privileges `GRANTS` lists (never TRUNCATE; DELETE only on the outbox). With `portal_role`, SELECT on the
+    privileges `GRANTS` lists (never TRUNCATE; DELETE only on the outbox and the purged evidence tables). With `portal_role`, SELECT on the
     relations marked `portal` and nothing else. The ledger and the grant map are checked first: a bad file name,
     a gap, or a relation with no `GRANTS` entry stops the run before it touches the database."""
     for role in (runtime_role, portal_role):

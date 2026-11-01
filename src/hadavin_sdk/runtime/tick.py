@@ -1,7 +1,8 @@
 """`hadavin-sdk tick`: one idempotent pass of housekeeping steps, run every 30-60 s by any scheduler.
 
 Contract (design v5 kernel, section 4):
-* ``STEPS`` runs in order: sweep, reconcile, stuck, checkpoint. Later PRs only **append** a ``TickStep``.
+* ``STEPS`` runs in order: sweep, reconcile, stuck, checkpoint, purge_evidence (daily). Later PRs only
+  **append** a ``TickStep``.
 * Each step runs in its own ``try``: a failure is logged as ``step=<name> error_kind=<type>
   message=<redacted, <= 500 chars>`` and written to ``tick_state``; the other steps still run.
 * A step with ``every_s > 0`` runs only if ``now - tick_state.last_run_at >= every_s``.
@@ -177,6 +178,26 @@ def checkpoint(ctx: TickContext) -> None:
         fn()
 
 
+def purge_evidence(ctx: TickContext) -> None:
+    """Daily (K5): delete tool calls and redaction maps past their retention. Runs `hooks.hold_run_ids()` names
+    (labelled wrong, harmful or missed, or demoted; none before K6) keep their tool calls, and their maps only
+    up to `held_maps_max_days` (400): the maps hold original identifiers, so no hold is open-ended."""
+    app = ctx.app
+    keep = app.config.retention
+    hook = app.runtime.hooks.hold_run_ids
+    held = frozenset(hook() or ()) if keep.hold_labelled and hook is not None else frozenset()
+    calls = app.store.purge_tool_calls(
+        ctx.now - timedelta(days=keep.tool_calls_days), keep_run_ids=held
+    )
+    maps = app.store.purge_redaction_maps(
+        ctx.now - timedelta(days=keep.redaction_maps_days), keep_run_ids=held
+    )
+    maps += app.store.purge_redaction_maps(
+        ctx.now - timedelta(days=keep.held_maps_max_days), keep_run_ids=frozenset()
+    )
+    _LOG.info("purge_evidence tool_calls=%d redaction_maps=%d held_runs=%d", calls, maps, len(held))
+
+
 def heartbeat(ctx: TickContext) -> None:
     """After the steps (not a step): one line with this tick's outcome."""
     failed = sorted(n for n, r in ctx.results.items() if r == FAILED)
@@ -188,6 +209,7 @@ STEPS: list[TickStep] = [
     TickStep("reconcile", 0, reconcile),
     TickStep("stuck", 0, stuck),
     TickStep("checkpoint", 0, checkpoint),
+    TickStep("purge_evidence", 86400, purge_evidence),
 ]
 STORE_UNREACHABLE = 4
 STORE_NOT_READY = (

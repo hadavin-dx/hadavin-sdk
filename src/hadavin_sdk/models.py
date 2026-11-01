@@ -210,6 +210,21 @@ class TickState(BaseModel):
     last_error: str | None = None
 
 
+class ToolCallRecord(BaseModel):
+    """One read-tool call of a run (table tool_calls). Inputs and output are stored redacted (design 6.3)."""
+
+    model_config = ConfigDict(extra="forbid")
+    call_id: str  # "<run_id>:<n>"
+    run_id: str
+    tool: str
+    inputs: dict[str, Any]
+    output: str  # redacted, then truncated
+    output_sha256: str  # of the raw bytes the tool received, up to the fetch cap
+    created_at: datetime = Field(default_factory=now)
+    duration_ms: int | None = None
+    attempt: int | None = None
+
+
 class KillSwitch(Shape):
     on: bool = False
     by: str | None = None

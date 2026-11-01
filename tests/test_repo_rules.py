@@ -203,3 +203,135 @@ def test_plant_open_pyproject_is_caught(tmp_path):
 def test_plant_core_importing_a_demo_is_caught(tmp_path):
     (tmp_path / "bad.py").write_text("from demos.invoice_po import app\n", encoding="utf-8")
     assert core_imports_demos(tmp_path) == ["bad.py: demos.invoice_po"]
+
+
+# --- K5 (M21): no secret holder is reachable from runtime, approvals, llm or the tools, even transitively -------
+def _module_path(src: Path, module: str) -> Path | None:
+    rel = Path(*module.split("."))
+    for candidate in (src / rel.with_suffix(".py"), src / rel / "__init__.py"):
+        if candidate.is_file():
+            return candidate
+    return None
+
+
+def _static_imports(tree: ast.AST) -> list[str]:
+    """Every module a file imports, lazy imports inside functions included, `if TYPE_CHECKING:` bodies not."""
+    found: list[str] = []
+
+    def walk(node: ast.AST) -> None:
+        for child in ast.iter_child_nodes(node):
+            if isinstance(child, ast.If) and getattr(child.test, "id", "") == "TYPE_CHECKING":
+                continue
+            if isinstance(child, ast.Import):
+                found.extend(a.name for a in child.names)
+            elif isinstance(child, ast.ImportFrom) and child.module:
+                found.append(child.module)
+                found.extend(f"{child.module}.{a.name}" for a in child.names)
+            walk(child)
+
+    walk(tree)
+    return found
+
+
+def transitive_imports(src: Path, starts: list[str], pkg: str = "hadavin_sdk") -> set[str]:
+    """The modules of `pkg` reachable from `starts` by imports, each module's parent packages included (importing
+    `a.b.c` runs `a/__init__` and `a/b/__init__`)."""
+    seen: set[str] = set()
+    todo = list(starts)
+    while todo:
+        module = todo.pop()
+        if module in seen:
+            continue
+        seen.add(module)
+        path = _module_path(src, module)
+        if path is None:
+            continue
+        for name in _static_imports(ast.parse(path.read_text(encoding="utf-8"))):
+            if name.split(".")[0] != pkg or _module_path(src, name) is None:
+                continue
+            parts = name.split(".")
+            todo.extend(".".join(parts[:i]) for i in range(1, len(parts) + 1))
+    return seen
+
+
+def _modules_in(src: Path, folder: str) -> list[str]:
+    root = src / "hadavin_sdk"
+    return [
+        ".".join(p.relative_to(src).with_suffix("").parts).removesuffix(".__init__")
+        for p in sorted((root / folder).rglob("*.py"))
+    ]
+
+
+SECRET_FREE = ["runtime", "approvals", "llm", "sources"]
+SECRET_FREE_MODULES = [
+    "hadavin_sdk.tools",
+    "hadavin_sdk.guard.http",
+    "hadavin_sdk.guard.runmap",
+    "hadavin_sdk.guard.egress",
+]
+
+
+def test_k5_no_secret_holder_is_reachable_from_runtime_approvals_llm_or_tools():
+    src = ROOT / "src"
+    starts = SECRET_FREE_MODULES + [m for f in SECRET_FREE for m in _modules_in(src, f)]
+    reached = transitive_imports(src, starts)
+    assert sorted(reached & SECRET_HOLDERS) == []
+
+
+def test_k5_no_transitive_import_of_actions_from_tools():
+    reached = transitive_imports(ROOT / "src", ["hadavin_sdk.tools"])
+    assert sorted(m for m in reached if m.startswith("hadavin_sdk.actions")) == []
+
+
+NL = chr(10)
+
+
+def _plant_pkg(tmp_path: Path, files: dict[str, str]) -> Path:
+    for rel, text in files.items():
+        path = tmp_path / "hadavin_sdk" / rel
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
+    return tmp_path
+
+
+def test_plant_transitive_secret_import_is_caught(tmp_path):
+    src = _plant_pkg(
+        tmp_path,
+        {
+            "__init__.py": "",
+            "tools.py": "from hadavin_sdk import helper" + NL,
+            "helper.py": "def f():" + NL + "    from hadavin_sdk.actions import executor" + NL,
+            "actions/__init__.py": "",
+            "actions/executor.py": "",
+        },
+    )
+    reached = transitive_imports(src, ["hadavin_sdk.tools"])
+    assert "hadavin_sdk.actions.executor" in reached and reached & SECRET_HOLDERS
+
+
+def test_plant_parent_package_import_is_followed(tmp_path):
+    src = _plant_pkg(
+        tmp_path,
+        {
+            "__init__.py": "",
+            "tools.py": "import hadavin_sdk.guard.http" + NL,
+            "guard/__init__.py": "from hadavin_sdk.actions import secrets" + NL,
+            "guard/http.py": "",
+            "actions/__init__.py": "",
+            "actions/secrets.py": "",
+        },
+    )
+    assert "hadavin_sdk.actions.secrets" in transitive_imports(src, ["hadavin_sdk.tools"])
+
+
+def test_a_type_checking_import_is_not_a_runtime_import(tmp_path):
+    guarded = "from typing import TYPE_CHECKING" + NL + "if TYPE_CHECKING:" + NL
+    src = _plant_pkg(
+        tmp_path,
+        {
+            "__init__.py": "",
+            "tools.py": guarded + "    from hadavin_sdk import app" + NL,
+            "app.py": "",
+        },
+    )
+    assert "hadavin_sdk.app" not in transitive_imports(src, ["hadavin_sdk.tools"])

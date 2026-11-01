@@ -1,0 +1,13 @@
+{
+  "id": "02-forged-evidence-id",
+  "what": "the proposal cites a call id that this run never made",
+  "document": "alert: checkout 5xx from 10.0.0.5 after rollout",
+  "results": {
+    "app": "2026-11-01T10:00:00Z ERROR upstream 10.0.0.5 refused; rollout revision 17 failed readiness"
+  },
+  "script": [
+    {"tool": "app"},
+    {"propose": {"host": "10.0.0.5", "revision": "17"}, "evidence": ["run-forged:1"]}
+  ],
+  "expect_reasons": ["uncited"]
+}

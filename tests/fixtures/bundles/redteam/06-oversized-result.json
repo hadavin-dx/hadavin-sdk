@@ -1,0 +1,14 @@
+{
+  "id": "06-oversized-result",
+  "what": "an oversized tool result; the identifier the worst-case reply wants lies beyond the cut",
+  "document": "alert: checkout 5xx after rollout",
+  "results": {
+    "app": {"repeat": "ERROR retry against 10.0.0.5\n", "times": 3000, "tail": "ROOT CAUSE 10.9.9.9 revision 99"}
+  },
+  "script": [
+    {"tool": "app"},
+    {"propose": {"host": "10.9.9.9", "revision": "99"}}
+  ],
+  "expect_reasons": ["ungrounded"],
+  "max_result_bytes": 16384
+}

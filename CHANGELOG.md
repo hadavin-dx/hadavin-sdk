@@ -3,6 +3,34 @@
 ## Unreleased
 
 ### Upgrade steps
+- **K5-core: read-only evidence, redaction before the model, tool wiring.** Needs `hadavin-sdk migrate` (new
+  `0005_evidence.sql`: tables `tool_calls` and `redaction_maps`; the runtime role gets SELECT, INSERT, DELETE on
+  `tool_calls` and SELECT, INSERT, UPDATE, DELETE on `redaction_maps`; the portal role reads neither). Run it
+  before starting the new image; a custom `Store` must implement the six new methods.
+  - **The document and every tool result are now redacted with the run's one map before the injection check and
+    before the model** (`guard/runmap.py`). Placeholders (`<EMAIL_1>`) appear in plans; real values are restored
+    only for tool arguments, for the gate's schema check (`authorize(..., inputs_view=)`, new denial
+    `input.unresolved`) and for the dev executor (`Executor.execute(..., inputs_view=)`). Only identifier kinds are
+    stored; secret and regulated kinds are never stored or restored.
+  - **Recorded model answers (`FakeLLM`) and `evals.gate` are keyed by the redacted document.** Re-record any
+    fixture whose document holds an email, a phone number or another redactable value (the two repo fixtures were
+    re-recorded: `pii.txt`, `injected.txt`). `config_hash` is unchanged for agents without a tool manifest.
+  - New `tools/<agent>.yaml` manifests (read tools only; `side_effect: none`), `Config` keys `tool_modules`,
+    `tool_timeout_s`, `retention` (`tool_calls_days` 30, `redaction_maps_days` 30, `hold_labelled` true,
+    `held_maps_max_days` 400, at most 400) and `scope_inventory`. A manifest is part of `config_hash` (a changed tool
+    needs a new gate run); a tooled agent with a manifest must not share a tool secret with a backend or an
+    executor.
+  - A tooled agent's action tools now require an `evidence` list of call ids (`call_id = "<run_id>:<n>"`); an
+    empty or foreign list ends the run `NEEDS_PERSON uncited`, and an input the contract flags `identifier: true`
+    (new schema keyword, string properties only) that is not found in the cited results or the incident ends it
+    `ungrounded`. `evals.gate` ignores `evidence`. A tool's exception is now a result (`ERROR: ...`) and the third
+    one in a run ends it `tool_error`; a run whose cost reaches `max_run_usd` ends `run_budget`.
+  - New tick step `purge_evidence` (daily). New `hadavin_sdk.sources` (four read-source interfaces, the neutral
+    `KubernetesSource`, the start-up scope probe) and `app.build(sources=)`: a source that fails its probe, or
+    cannot be probed and has no `scope_inventory` reference, stops the process starting.
+  - The no-redirect HTTP opener moved to `guard/http.py`; `hadavin_sdk.backends` now loads `make`, `hosts` and
+    `Deps` on first use (import them from `hadavin_sdk.backends` as before) so the config never imports a secret
+    provider.
 - **K3 pilot build path (levels, shadow cut-off, fail-closed loading).** Action contracts change shape:
   `executor.system` moves to a contract field `target_system`, and `executor` is now a tagged union
   (`kind: none | manual | http`). Edit every contract: move `system:` out of `executor:` to `target_system:` beside

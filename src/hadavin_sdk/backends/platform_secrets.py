@@ -34,10 +34,22 @@ def bound(provider: SecretProvider, settings: BaseModel, label: str) -> Callable
 
 
 def check(
-    provider: SecretProvider, settings: Iterable[BaseModel], executor_names: set[str]
+    provider: SecretProvider,
+    settings: Iterable[BaseModel],
+    executor_names: set[str],
+    tool_names: set[str] | None = None,
 ) -> None:
-    """Start-up: platform and executor names never overlap, and every one of them resolves once."""
-    platform: set[str] = set().union(*(secret_names(s) for s in settings))
+    """Start-up: platform and executor names never overlap, and every one of them resolves once. A read tool's
+    secret (K5) is a platform secret: it must not be an action executor's either."""
+    settings = list(settings)
+    backend: set[str] = set().union(*(secret_names(s) for s in settings))
+    tools = tool_names or set()
+    if shared := backend & tools:
+        raise ConfigError(
+            f"secret names used by both a backend and a read tool: {sorted(shared)}; "
+            "give the tool its own secret"
+        )
+    platform = backend | tools
     if overlap := platform & executor_names:
         raise ConfigError(
             f"secret names used by both a backend and an action executor: {sorted(overlap)}; "

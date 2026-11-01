@@ -9,6 +9,7 @@ import hashlib
 import json
 import re
 from dataclasses import dataclass
+from dataclasses import field as dc_field
 from typing import Literal
 
 import yaml
@@ -20,6 +21,7 @@ from hadavin_sdk.config import Config, ConfigError, Money, confined, load_yaml
 from hadavin_sdk.guard.judge import PROMPT_SHA256 as JUDGE_PROMPT_SHA256
 from hadavin_sdk.identity import Principal
 from hadavin_sdk.models import ChainStep, sha256_hex
+from hadavin_sdk.tools import ToolSpec, parse_manifest, read_operations, spec_problems
 
 
 class Budget(BaseModel):
@@ -60,6 +62,9 @@ class Registry:
     principals: dict[str, Principal]
     chains: dict[str, Chain]
     contracts: dict[str, ActionContract]
+    # agent id -> tool name -> manifest entry (`tools/<agent>.yaml`, K5). An agent with tools_allowed and no
+    # manifest uses the callables handed to `app.build(tools=...)` (replay and tests).
+    tools: dict[str, dict[str, ToolSpec]] = dc_field(default_factory=dict)
 
     def _prompt_path(self, agent_id: str):
         return confined(self.config.root, self.agents[agent_id].prompt_file)
@@ -137,6 +142,13 @@ class Registry:
                     if getattr(llm, k, None)
                 },
                 **({"judges": judges} if judges else {}),
+                # The read tools the agent investigates with (K5): a changed tool needs a new qualification.
+                # Only when a manifest exists, so agents without one keep their hash.
+                **(
+                    {"tools": [dump(t) for _, t in sorted(self.tools[agent_id].items())]}
+                    if self.tools.get(agent_id)
+                    else {}
+                ),
                 # The bar the gate run passed: raising it must not leave an old green run standing. Only when not
                 # the default 1.0, so agents gated at the default keep their hash.
                 **(
@@ -188,10 +200,52 @@ def load_registry(config: Config) -> Registry:
     problems = _cross_check(config, agents, chains, contracts)
     if problems:
         raise ConfigError("; ".join(problems))
-    reg = Registry(config, agents, principals, chains, contracts)
+    tools = _load_tools(config, agents, contracts)
+    reg = Registry(config, agents, principals, chains, contracts, tools)
     if problems := deferred.check(reg):
         raise ConfigError("; ".join(problems))
     return reg
+
+
+def _load_tools(config: Config, agents: dict, contracts: dict) -> dict[str, dict[str, ToolSpec]]:
+    """Read `tools/<agent>.yaml` for every agent and check each entry (K5). Every problem fails at start-up."""
+    folder = config.root / "tools"
+    problems: list[str] = []
+    found: dict[str, dict[str, ToolSpec]] = {}
+    if folder.is_dir():
+        problems += [
+            f"tools/{p.name}: no agent {p.stem}"
+            for p in sorted(folder.glob("*.yaml"))
+            if p.stem not in agents
+        ]
+    read_ops: set[str] | None = None
+    for agent_id, agent in agents.items():
+        path = folder / f"{agent_id}.yaml"
+        if not path.is_file():
+            continue
+        where = f"tools/{path.name}"
+        specs = parse_manifest(_yaml(path), where)
+        if specs and read_ops is None:
+            read_ops = read_operations(config.tool_modules)
+        found[agent_id] = {}
+        for spec in specs:
+            found[agent_id][spec.name] = spec
+            problems += [f"{where}: {p}" for p in spec_problems(spec, config.tool_modules)]
+            problems += [
+                f"{where}: tool {spec.name}: {p}" for p in schema_problems(spec.input_schema)
+            ]
+            if spec.name not in agent.tools_allowed:
+                problems.append(f"{where}: tool {spec.name} is not in the agent's tools_allowed")
+            if spec.name in contracts:
+                problems.append(f"{where}: tool {spec.name} has the id of an action contract")
+            problems += [
+                f"{where}: tool {spec.name}: operation {op!r} is not on the read list of tool_modules"
+                for op in spec.operations
+                if op not in (read_ops or set())
+            ]
+    if problems:
+        raise ConfigError("; ".join(problems))
+    return found
 
 
 def _cross_check(config, agents, chains, contracts) -> list[str]:
