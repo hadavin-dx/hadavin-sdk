@@ -184,7 +184,10 @@ def _status_of(entries: list[dict], runs_dir: Path) -> str:
 def _write_json(path: Path, obj: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_name(f"{path.name}.{os.getpid()}.{uuid.uuid4().hex[:8]}.tmp")
-    tmp.write_text(json.dumps(obj, indent=2, sort_keys=True) + "\n", encoding="utf-8", newline="\n")
+    with open(tmp, "w", encoding="utf-8", newline="\n") as f:
+        f.write(json.dumps(obj, indent=2, sort_keys=True) + "\n")
+        f.flush()
+        os.fsync(f.fileno())
     os.replace(tmp, path)
 
 
