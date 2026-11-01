@@ -248,9 +248,12 @@ def test_an_email_with_a_local_part_over_254_characters_is_masked():
 
 def test_a_known_value_spelled_in_full_width_is_masked_by_the_second_pass():
     rmap = runmap.RunMap()
-    runmap.redact_untrusted("first 10.0.0.5 seen", rmap)
-    out = runmap.redact_untrusted("again １０.0.0.5 seen", rmap)
-    assert "0.0.0.5" not in out and "１" not in out
+    runmap.redact_untrusted("first AKIAIOSFODNN7EXAMPLE seen", rmap)
+    before = dict(rmap)
+    # pass one cannot read this spelling, so the map does not grow; only the held count tells the second pass it won
+    out = runmap.redact_untrusted("again ＡＫＩＡIOSFODNN7EXAMPLE seen", rmap)
+    assert dict(rmap) == before
+    assert "IOSFODNN7EXAMPLE" not in out and "ＡＫＩＡ" not in out
 
 
 def test_originals_over_256_characters_are_masked_but_never_stored():
