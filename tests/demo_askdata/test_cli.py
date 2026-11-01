@@ -39,7 +39,7 @@ def test_ask_sql_shows_canonical_sql_hash_and_table(cli):
 
 
 @pytest.mark.parametrize(
-    ("sql", "rule"),
+    ("sql", "rule", "expected"),
     [
         (
             "DELETE FROM shop.orders",
