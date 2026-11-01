@@ -496,3 +496,37 @@ def test_local_dir_audit_builds_without_signer_or_store(tmp_path, cfg_dir):
     cfg = load_config(cfg_dir)
     audit, warnings = build_audit(cfg, make("secrets", cfg.backends.secrets))
     assert warnings == [] and type(audit.sink).__name__ == "LocalDirSink"
+
+
+def test_hung_provider_call_ends_the_case_as_timeout_not_a_hang(env, monkeypatch):
+    import threading
+
+    monkeypatch.setattr(loop, "MIN_WAIT_S", 0.05)
+    release = threading.Event()
+
+    class Hung(ScriptedLLM):
+        def chat(self, *a, **kw):
+            release.wait(10)  # a provider that never answers within the case deadline
+            return super().chat(*a, **kw)
+
+    ticks = iter(
+        [0, 0, 299.99] + [1000] * 50
+    )  # the deadline has passed by the time the call starts
+    try:
+        res = env.run(
+            Hung([submit_not_sure()] * 4),
+            reg=_with_k1b(env.reg, case_timeout_s=300),
+            clock=lambda: next(ticks),
+        )
+    finally:
+        release.set()
+    assert env.case()["status"] == "timeout" and env.case()["stop_reason"] == "call_timeout"
+    assert res.exit_code == 0
+
+
+def test_provider_error_in_the_worker_thread_still_aborts(env):
+    class Boom(ScriptedLLM):
+        def chat(self, *a, **kw):
+            raise ProviderError("down")
+
+    assert env.run(Boom([])).result == "aborted"

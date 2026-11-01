@@ -27,33 +27,24 @@ class K1bAudit:
         self.sink = sink
         self.principal = principal or _os_user()
 
-    def emit(
-        self,
-        operation: str,
-        run_id: str,
-        *,
-        object_ref: str | None = None,
-        inputs_hash: str | None = None,
-        decision: str | None = None,
-        rule_id: str | None = None,
-        result: str | None = None,
-        error_code: str | None = None,
-    ) -> None:
-        """Write one event (fresh ``event_id`` each time). Raises ``AuditUnavailable``."""
-        self.sink.write_intent(
-            AuditEvent(
-                run_id=run_id,
-                domain=DOMAIN,
-                operation=operation,
-                principal=self.principal,
-                source="cli",
-                object_ref=object_ref,
-                inputs_hash=inputs_hash,
-                decision=decision,
-                rule_id=rule_id,
-                result=result,
-                error_code=error_code,
-            )
+    def emit(self, operation: str, run_id: str, **fields: str | None) -> None:
+        """Write one event BEFORE its side effect (fresh ``event_id`` each time). Raises ``AuditUnavailable``.
+
+        ``fields`` are ``object_ref, inputs_hash, decision, rule_id, result, error_code``."""
+        self.sink.write_intent(self._event(operation, run_id, fields))
+
+    def emit_outcome(self, operation: str, run_id: str, **fields: str | None) -> None:
+        """Write one event AFTER its side effect. Never raises: on failure the sink keeps it for ``reconcile``."""
+        self.sink.write_outcome(self._event(operation, run_id, fields))
+
+    def _event(self, operation: str, run_id: str, fields: dict[str, str | None]) -> AuditEvent:
+        return AuditEvent(
+            run_id=run_id,
+            domain=DOMAIN,
+            operation=operation,
+            principal=self.principal,
+            source="cli",
+            **fields,
         )
 
 

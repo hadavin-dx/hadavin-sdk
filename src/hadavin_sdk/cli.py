@@ -220,7 +220,9 @@ def replay_cmd(reg, llm, detector, audit, args) -> int:
 
 
 def score_cmd(audit, args) -> int:
-    """Body of ``score``: audit events first (a failed append prints nothing), then the report file."""
+    """Body of ``score``. Order: intent event (a failed append writes nothing), the report file, then one
+    outcome event per run. A report that cannot be written leaves ``score_report`` ``started`` followed by
+    ``score_report`` ``failed``; a crash leaves ``started`` alone."""
     from hadavin_sdk.k1b.atomic import atomic_write
     from hadavin_sdk.k1b.report import render_score_report
     from hadavin_sdk.k1b.score import REPORT_DIR, audit_result, score
@@ -230,18 +232,20 @@ def score_cmd(audit, args) -> int:
         raise ConfigError("score report folder exists and is not empty")
     res = score(args.outputs, args.answers, args.cause_list, args.bundles)
     run_id = new_id("k1b")
-    for run in res.runs:
-        audit.emit(
-            "score_run",
-            run_id,
-            object_ref=res.answers_sha256,
-            inputs_hash=res.outputs_digest,
-            decision="-",
-            result=audit_result(run),
+    ref = {"object_ref": res.answers_sha256, "inputs_hash": res.outputs_digest}
+    audit.emit("score_report", run_id, **ref, result="started")
+    try:
+        # NOSONAR S8707: the operator's own --outputs folder; a CLI argument is not attacker input
+        report_dir.mkdir(exist_ok=True)  # NOSONAR
+        atomic_write(report_dir / "score-report.md", render_score_report(res))
+    except Exception as exc:
+        audit.emit_outcome(
+            "score_report", run_id, **ref, result="failed", error_code=type(exc).__name__
         )
-    # NOSONAR S8707: the operator's own --outputs folder; a CLI argument is not attacker input
-    report_dir.mkdir(exist_ok=True)  # NOSONAR
-    atomic_write(report_dir / "score-report.md", render_score_report(res))
+        raise
+    audit.emit_outcome("score_report", run_id, **ref, result="written")
+    for run in res.runs:
+        audit.emit_outcome("score_run", run_id, **ref, decision="-", result=audit_result(run))
     print(f"score report written: {report_dir / 'score-report.md'}")
     return 0
 

@@ -50,7 +50,7 @@ def test_end_to_end_replay_then_score(cfg_dir, export, capsys):
     assert (
         "| 1 | 1 | 1 | 2 | 2 | 1/0/0/0 | 1 | 0 |" in text
     )  # Hit, no-evidence Hit, 2 Misses, 2 Not sure
-    assert "SDK version: unreleased build" in text
+    assert "SDK version: 0.1.0" in text
     ops = [e.operation for e in LocalDirSink(cfg_dir / "audit").events()]
     assert (
         ops.count("replay_run") == 1
@@ -84,7 +84,7 @@ def test_replay_into_a_non_empty_folder_is_refused(cfg_dir, export):
 def test_usd_cap_exits_1_and_report_shows_capped_cases(cfg_dir, export):
     assert _replay(cfg_dir, export, usd="0.01") == 1
     text = (export["out"] / "replay-report.md").read_text(encoding="utf-8")
-    assert "**Capped cases: 5.**" in text and "unreleased build" in text
+    assert "**Capped cases: 5.**" in text and "0.1.0" in text
     assert _score(cfg_dir, export) == 0  # capped incidents are Misses; the report still comes out
 
 
@@ -193,3 +193,42 @@ def test_debug_env_prints_the_traceback(monkeypatch, capsys):
     monkeypatch.setenv("HADAVIN_DEBUG", "1")
     assert cli.main(["x"]) == 3
     assert "Traceback" in capsys.readouterr().err
+
+
+def test_report_write_failure_leaves_started_then_failed_and_no_score_run(
+    cfg_dir, export, monkeypatch
+):
+    assert _replay(cfg_dir, export) == 0
+    from hadavin_sdk.k1b import atomic
+
+    def boom(path, text):
+        raise OSError("disk full")
+
+    monkeypatch.setattr(atomic, "atomic_write", boom)
+    assert _score(cfg_dir, export) == 3
+    evs = [
+        (e.operation, e.result)
+        for e in LocalDirSink(cfg_dir / "audit").events()
+        if e.operation.startswith("score")
+    ]
+    assert evs == [("score_report", "started"), ("score_report", "failed")]
+    failed = next(e for e in LocalDirSink(cfg_dir / "audit").events() if e.result == "failed")
+    assert failed.error_code == "OSError"
+
+
+def test_score_run_events_come_after_the_report_exists(cfg_dir, export):
+    assert _replay(cfg_dir, export) == 0 and _score(cfg_dir, export) == 0
+    ops = [(e.operation, e.result) for e in LocalDirSink(cfg_dir / "audit").events()]
+    tail = [o for o in ops if o[0].startswith("score")]
+    assert [t[0] for t in tail] == ["score_report", "score_report", "score_run"]
+    assert tail[1][1] == "written"
+
+
+def test_version_is_real_and_matches_pyproject():
+    import tomllib
+    from pathlib import Path
+
+    import hadavin_sdk
+
+    proj = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))["project"]["version"]
+    assert hadavin_sdk.__version__ == proj != "0.0.0"

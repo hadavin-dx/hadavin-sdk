@@ -10,6 +10,7 @@ json>`` and its result the user text ``tool result <name>: <json>``.
 from __future__ import annotations
 
 import json
+import threading
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -20,6 +21,7 @@ from hadavin_sdk.k1b.bundle import Bundle
 from hadavin_sdk.k1b.diagnosis import Diagnosis, parse_diagnosis, parse_diagnosis_text
 from hadavin_sdk.k1b.tools import ALLOWED_TOOLS, NO_DATA, SUBMIT, TOOL_SPECS, Snapshot, render
 from hadavin_sdk.llm.protocol import LLM, ProviderError, ProviderExhausted
+from hadavin_sdk.models import Reply
 
 SYSTEM_PROMPT = (
     "You are diagnosing one past incident from a frozen snapshot. Use only what the tools return; cite evidence "
@@ -64,6 +66,36 @@ def _dumps(obj: object) -> str:
     return json.dumps(obj, sort_keys=True, ensure_ascii=False)
 
 
+class CallTimeout(Exception):
+    """The provider call did not return before the case deadline."""
+
+
+MIN_WAIT_S = 1.0  # floor on the wait for one call, so a case at its deadline still gives a fast call a moment
+
+
+def _chat_bounded(llm: LLM, wait_s: float, /, *args: object, **kwargs: object) -> Reply:
+    """``llm.chat`` with a wall-clock bound that holds for every llm kind (a socket timeout is per socket
+    operation and cannot stop a slow trickle). The call runs in a daemon thread; on expiry the thread is
+    abandoned (its late reply is dropped and its cost is unknown), so the run never hangs. Raises
+    ``CallTimeout``; any exception from the call is re-raised here."""
+    box: dict[str, object] = {}
+
+    def work() -> None:
+        try:
+            box["reply"] = llm.chat(*args, **kwargs)  # type: ignore[arg-type]
+        except BaseException as exc:  # noqa: BLE001 - handed to the caller thread below
+            box["exc"] = exc
+
+    t = threading.Thread(target=work, daemon=True, name="k1b-llm-call")
+    t.start()
+    t.join(max(wait_s, MIN_WAIT_S))
+    if t.is_alive():
+        raise CallTimeout
+    if "exc" in box:
+        raise box["exc"]  # type: ignore[misc]
+    return box["reply"]  # type: ignore[return-value]
+
+
 def run_case(
     llm: LLM,
     *,
@@ -96,7 +128,17 @@ def run_case(
             out.status, out.stop_reason, out.halt = "capped", "usd_cap", "capped"
             return out
         try:
-            reply = llm.chat(messages, system=system, route=route, tools=TOOL_SPECS)
+            reply = _chat_bounded(
+                llm,
+                timeout_s - (clock() - started),
+                messages,
+                system=system,
+                route=route,
+                tools=TOOL_SPECS,
+            )
+        except CallTimeout:
+            out.status, out.stop_reason = "timeout", "call_timeout"
+            return out
         except ProviderExhausted:
             out.status, out.stop_reason = "error", "provider_exhausted"
             return out
