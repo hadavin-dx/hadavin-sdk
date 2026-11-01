@@ -50,7 +50,7 @@ class MemoryStore:
         self._labels: list[Label] = []
         self._levels: list[LevelEvent] = []
         self._reports: dict[date, str] = {}
-        self._seen: dict[str, datetime] = {}
+        self._seen: dict[str, tuple[datetime, str, str]] = {}
         self._announced: dict[str, datetime] = {}
 
     @staticmethod
@@ -292,12 +292,19 @@ class MemoryStore:
             self._push_level(event)
             return True
 
-    def claim_action(self, nonce: str, at: datetime) -> bool:
+    def claim_action(
+        self, nonce: str, at: datetime, team_id: str = "", action_ts: str = ""
+    ) -> bool:
         with self._lock:
             if nonce in self._seen:
                 return False
-            self._seen[nonce] = at
+            self._seen[nonce] = (at, team_id, action_ts)
             return True
+
+    def get_action(self, nonce: str) -> tuple[str, str] | None:
+        with self._lock:
+            row = self._seen.get(nonce)
+        return None if row is None else (row[1], row[2])
 
     def is_announced(self, key: str) -> bool:
         with self._lock:
@@ -313,7 +320,7 @@ class MemoryStore:
 
     def purge_actions(self, before: datetime) -> int:
         with self._lock:
-            old = [n for n, at in self._seen.items() if at < before]
+            old = [n for n, row in self._seen.items() if row[0] < before]
             for n in old:
                 del self._seen[n]
             return len(old)

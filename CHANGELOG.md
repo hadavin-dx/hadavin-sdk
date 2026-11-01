@@ -25,7 +25,11 @@
     "Latest label" means insertion order (`labels.seq`).
   - **Clearing.** A clear needs `clear_override`, is refused while the ceiling is breached for an action with a
     ceiling demotion, needs the section 6.1 numbers for an action at suggest, is bound to the demotion its card was
-    posted for, and a harmful demotion is cleared by someone other than the labeller. A clear does not erase recent
+    posted for, and a harmful demotion is cleared by someone other than the labeller and not sooner than
+    `policy.harmful_clear_min_age_h` (default 24 h, floor 24 unless `allow_weaker_than_spec`; refusal `too_soon`).
+    **Label time, not run time:** the wrong rule (`wrong_limit` inside `wrong_window_days`), the recent-harmful
+    check for promotion and the ceiling window are measured from when the label was given (`labels.created_at`,
+    commit order), never from when the run happened; an old run labelled today counts today. A clear does not erase recent
     wrongs: they still count inside the window, so one new wrong re-demotes at once (the card says until when).
   - **Promotion.** `promote-check AGENT ACTION` (exit 2 for an unknown agent/action) writes
     `promotions/<agent>.<action>.json` from labels on proposals made under the CURRENT config hash, needing a green
@@ -36,7 +40,8 @@
     and CODEOWNERS, signed records are future work. `suggest` stays refused in pilot/prod until K8.
   - **Signed clicks** are acted on once (`seen_actions`, purged by tick step `purge_seen_actions`; the runtime role may
     DELETE on that table only), a click that did not take effect gives its nonce back, `policy.allowed_team_id` pins
-    the workspace, and `limits reset --by` is refused in pilot/prod (signed `reset` only; `stop` still works).
+    the workspace (a click's workspace id and own `action_ts` are stored with its nonce in `seen_actions` and on every
+    audit row the click causes: `team_id`, `action_ts`), and `limits reset --by` is refused in pilot/prod (signed `reset` only; `stop` still works).
   - **Announcements** are recorded when delivered (`announcements`) and retried every tick until they are.
   - **Store/Channel API.** `Store` gains `add_labels` (the only way a label enters), `list_labels`, `list_labels_for`,
     `list_labels_between`, `count_proposals`, `add_level_event`, `clear_demotion`, `list_level_events`,

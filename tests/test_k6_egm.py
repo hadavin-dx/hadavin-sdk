@@ -409,3 +409,91 @@ def test_egm_promote_check_exit_code_2_for_an_unknown_agent_or_action(tmp_path, 
         assert "refused:" in capsys.readouterr().err
     ns = SimpleNamespace(cmd="promote-check", agent="test-agent", action=CD)
     assert cli.measure_cmd(app, ns) == 1  # a real question with unmet numbers stays 1
+
+
+# --- D5: a harmful demotion has a minimum age -------------------------------------------------------------------------------
+
+
+def _two_owners(w):
+    w.edit_principals(
+        lambda d: d.append(
+            {"id": "fake:owner2", "kind": "person", "admin_rights": ["clear_override"]}
+        )
+    )
+    w.reg.principals["fake:owner2"] = load_registry(load_config(w.cfg)).principals["fake:owner2"]
+
+
+def test_egm_even_a_second_person_cannot_clear_a_harmful_demotion_sooner_than_the_minimum_age(
+    tmp_path,
+):
+    w = World(tmp_path, policy=DEFAULT_POLICY)  # the default: 24 h
+    w.measure.ceiling = Ceiling(CEIL.metric, 9, 90, CEIL.source)
+    _two_owners(w)
+    assert w.measure.record_label("fake:u1", w.run(), "harmful").demoted
+    for hours, want in ((0, "too_soon"), (23, "too_soon"), (24, "cleared")):
+        w.box[0] = NOW + timedelta(hours=hours)
+        assert w.measure.clear("fake:owner2", "test-agent", ACTION) == (200, want)
+    refused = [
+        e.error_code for e in w.audit.events() if e.operation == "clear" and e.result == "refused"
+    ]
+    assert refused == ["too_soon", "too_soon"]
+
+
+def test_egm_the_minimum_age_does_not_apply_to_a_wrongs_demotion(tmp_path):
+    w = World(tmp_path, policy=DEFAULT_POLICY)
+    w.measure.ceiling = Ceiling(CEIL.metric, 9, 90, CEIL.source)
+    for i in range(3):
+        w.label(w.run(), "wrong", when=NOW - timedelta(minutes=3 - i))
+    assert ("test-agent", ACTION) in w.store.current_overrides()
+    assert w.measure.clear("fake:owner", "test-agent", ACTION) == (200, "cleared")
+
+
+def test_egm_the_minimum_age_has_a_floor_and_is_printed(tmp_path):
+    import pytest
+
+    from hadavin_sdk.config import ConfigError
+
+    assert DEFAULT_POLICY.harmful_clear_min_age_h == 24
+    with pytest.raises(ConfigError, match="harmful_clear_min_age_h is weaker"):
+        measure._policy_from({"harmful_clear_min_age_h": 23})
+    assert measure._policy_from({"harmful_clear_min_age_h": 48}).harmful_clear_min_age_h == 48
+    weak = measure._policy_from({"harmful_clear_min_age_h": 0, "allow_weaker_than_spec": True})
+    assert weak.harmful_clear_min_age_h == 0
+    text = World(tmp_path, policy=DEFAULT_POLICY).measure.render_report(WEEK, NOW)
+    assert "at least 24 h after it" in text
+
+
+# --- D7: the click's workspace id and own timestamp are stored and audited ----------------------------------------------
+
+
+def test_egm_the_click_team_and_timestamp_are_stored_with_the_nonce_and_on_the_audit_event(
+    tmp_path,
+):
+    from hadavin_sdk.approvals.hmac_v0 import Action
+
+    team, other = "T" + "0ABCDEF12", "T" + "0OTHER999"
+    w = _world(tmp_path, allowed_team_id=team)
+    rid = w.run()
+    ok = Action("fake:u1", f"label|{rid}|agree", nonce="n-ok", team=team, action_ts="1700000000.1")
+    assert w.measure.handle_action(ok) == (200, "recorded")
+    assert w.store.get_action("n-ok") == (team, "1700000000.1")
+    bad = Action(
+        "fake:u1", f"label|{rid}|agree", nonce="n-no", team=other, action_ts="1700000001.2"
+    )
+    assert w.measure.handle_action(bad) == (200, "wrong_team")
+    assert w.store.get_action("n-no") is None  # refused before the nonce is spent
+    refused = [e for e in w.audit.events() if e.error_code == "wrong_team"]
+    assert [(e.team_id, e.action_ts) for e in refused] == [(other, "1700000001.2")]
+    labelled = [e for e in w.audit.events() if e.action_ts == "1700000000.1"]
+    assert labelled and all(e.team_id == team for e in labelled)
+    w.measure.record_label("fake:u2", w.run(), "agree")  # not a click: no team on its audit rows
+    assert [e for e in w.audit.events() if e.principal == "fake:u2" and e.team_id] == []
+
+
+def test_egm_a_signed_click_through_the_receiver_is_audited_with_its_team_and_action_ts(tmp_path):
+    team = "T" + "0ABCDEF12"
+    w = _world(tmp_path, allowed_team_id=team)
+    rid = w.run()
+    assert w.click("u1", f"label|{rid}|agree", team=team, action_ts="1700000000.2")[0] == 200
+    assert [x.label for x in w.store.list_labels(rid)] == ["agree"]
+    assert any(e.team_id == team and e.action_ts == "1700000000.2" for e in w.audit.events())

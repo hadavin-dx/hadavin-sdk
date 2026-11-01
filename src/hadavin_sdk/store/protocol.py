@@ -137,8 +137,15 @@ class Store(Protocol):
         demotions that were really inserted are returned, so the caller audits and announces only those."""
         ...
 
-    def claim_action(self, nonce: str, at: datetime) -> bool:
-        """Record a nonce; False when it was already seen (a replay, or a claim someone else holds)."""
+    def claim_action(
+        self, nonce: str, at: datetime, team_id: str = "", action_ts: str = ""
+    ) -> bool:
+        """Record a nonce with the click's workspace id and its own timestamp; False when it was already seen (a
+        replay, or a claim someone else holds)."""
+        ...
+
+    def get_action(self, nonce: str) -> tuple[str, str] | None:
+        """(team_id, action_ts) stored with a claimed nonce, or None when it is not held."""
         ...
 
     def is_announced(self, key: str) -> bool:

@@ -26,6 +26,10 @@ Pin the workspace with `policy.allowed_team_id` in `baseline.yaml` so a click fr
 secret is refused; the Slack payload shape is parsed in `approvals/hmac_v0.py` only (another channel kind brings its
 own `parse_action`).
 
+A demotion caused by a harmful label can be cleared only by a second line owner and not sooner than
+`policy.harmful_clear_min_age_h` (default 24 hours) after it. Each signed click's workspace id and `action_ts` are
+stored with its nonce and on the audit rows it causes.
+
 A line owner's "Clear demotion" does not erase a pattern of recent mistakes: the `wrong` labels still inside the 14-day
 window keep counting, so one new `wrong` demotes the action again at once while two older ones remain. The demotion
 card says "Recent wrongs still count until <date>". This is intended.

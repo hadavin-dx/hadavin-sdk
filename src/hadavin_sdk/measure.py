@@ -26,6 +26,7 @@ Rules that matter (kernel design K6, section 6.1):
 
 from __future__ import annotations
 
+import contextvars
 import csv
 import hashlib
 import io
@@ -64,6 +65,10 @@ if TYPE_CHECKING:
     from hadavin_sdk.store.protocol import Store
 
 _LOG = logging.getLogger("hadavin_sdk.measure")
+# (team id, action_ts) of the signed click being handled: every audit row written while it runs carries both
+_CLICK: contextvars.ContextVar[tuple[str, str]] = contextvars.ContextVar(
+    "measure_click", default=("", "")
+)
 
 PROPOSAL_LABELS = ("agree", "partial", "wrong", "harmful")
 ABSTAIN_LABELS = ("abstain_ok", "missed")
@@ -113,6 +118,8 @@ class Policy:
     wrong_window_days: int = 14
     # the weekly report flags a rise in wrong labels of at least this many over the week before
     wrong_rise_flag_min: int = 1
+    # a harmful demotion cannot be cleared sooner than this many hours after it, even by a second person
+    harmful_clear_min_age_h: int = 24
     # the one team (workspace) id whose signed clicks are acted on; "" = not checked. Set per client in baseline.yaml
     allowed_team_id: str = ""
     # The numbers above may not be weaker than the spec's (the defaults here) unless this is true, which is then
@@ -183,6 +190,7 @@ def _policy_from(raw: Any) -> Policy:
         "wrong_window_days": (1, 3650),
         "promotion_min_labellers": (1, 1000),
         "wrong_rise_flag_min": (1, 10**6),
+        "harmful_clear_min_age_h": (0, 8760),
         "report_local_offset_minutes": (-720, 840),
         "enforce_every_s": (1, 300),
         "purge_every_s": (0, 86400),
@@ -209,6 +217,7 @@ def _policy_from(raw: Any) -> Policy:
                 "promotion_min_labellers": p.promotion_min_labellers < spec.promotion_min_labellers,
                 "wrong_limit": p.wrong_limit > spec.wrong_limit,
                 "wrong_window_days": p.wrong_window_days < spec.wrong_window_days,
+                "harmful_clear_min_age_h": p.harmful_clear_min_age_h < spec.harmful_clear_min_age_h,
             }.items()
             if bad
         ]
@@ -634,6 +643,7 @@ class Measure:
     def _audit(self, run_id: str, operation: str, principal: str, **kw: Any) -> None:
         """Write an audit outcome. Never raises: a sink that fails is a log line, so a committed label is never
         reported as failed and a receiver always answers."""
+        team, action_ts = _CLICK.get()
         try:
             self.audit.write_outcome(
                 AuditEvent(
@@ -643,6 +653,8 @@ class Measure:
                     operation=operation,
                     principal=principal,
                     source=self.channel.name,
+                    team_id=team or None,
+                    action_ts=action_ts or None,
                     **kw,
                 )
             )
@@ -994,6 +1006,13 @@ class Measure:
         parsed = parse_action_value(action.value)
         if parsed is None:
             return 200, "malformed"
+        token = _CLICK.set((action.team, action.action_ts))
+        try:
+            return self._handle(action, parsed)
+        finally:
+            _CLICK.reset(token)
+
+    def _handle(self, action: Action, parsed: ParsedAction) -> tuple[int, str]:
         team = self.policy.allowed_team_id
         if team and action.team != team:
             self._audit("-", parsed.kind, action.user, result="refused", error_code="wrong_team")
@@ -1001,8 +1020,11 @@ class Measure:
         claimed = False
         if action.nonce:
             # A signed request is good for 5 minutes, so a captured copy would replay. Each delivery is acted on once.
+            # The workspace id and the click's own timestamp are stored with the nonce.
             try:
-                claimed = self.store.claim_action(action.nonce, self.clock())
+                claimed = self.store.claim_action(
+                    action.nonce, self.clock(), action.team, action.action_ts
+                )
             except Exception as exc:  # noqa: BLE001
                 _LOG.error("click refused: store error %s", type(exc).__name__)
                 return 503, "store_unavailable"
@@ -1190,8 +1212,10 @@ class Measure:
                 return 200, "not_demoted"
             if expect_seq is not None and events[-1].seq != expect_seq:
                 return self._refuse_clear(principal_id, agent_id, action_id, "stale_button")
-            why = self._clear_blocked(agent_id, action_id, events) or self._same_person(
-                principal_id, events[-1]
+            why = (
+                self._clear_blocked(agent_id, action_id, events)
+                or self._same_person(principal_id, events[-1])
+                or self._too_soon(events[-1])
             )
             if why:
                 return self._refuse_clear(principal_id, agent_id, action_id, why)
@@ -1232,6 +1256,17 @@ class Measure:
         """A demotion caused by a harmful label is not cleared by the person who gave that label."""
         if last.reason.startswith("harmful:") and last.by == f"system:measure({principal_id})":
             return "second_person_needed"
+        return None
+
+    def _too_soon(self, last: LevelEvent) -> str | None:
+        """A harmful demotion stays at least ``policy.harmful_clear_min_age_h`` hours, whoever clicks."""
+        hours = self.policy.harmful_clear_min_age_h
+        if (
+            hours
+            and last.reason.startswith("harmful:")
+            and self.clock() - last.at < timedelta(hours=hours)
+        ):
+            return "too_soon"
         return None
 
     # --- csv import ----------------------------------------------------------------------------------------
@@ -1717,7 +1752,8 @@ class Measure:
         )
         out.append(
             f"- demotion: {pol.wrong_limit} wrong runs inside {pol.wrong_window_days} days, or one harmful; "
-            f"re-check every {pol.enforce_every_s} s."
+            f"re-check every {pol.enforce_every_s} s; a harmful demotion is cleared by a second person, "
+            f"at least {pol.harmful_clear_min_age_h} h after it."
         )
         if pol.allow_weaker_than_spec:
             out.append(

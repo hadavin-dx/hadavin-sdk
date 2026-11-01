@@ -46,8 +46,10 @@ CREATE TABLE announcements (
 -- window can never be replayed, so a tick step deletes it (the only DELETE the runtime role has on these tables);
 -- the same table holds the short claim that stops two ticks announcing one weekly report.
 CREATE TABLE seen_actions (
-    nonce   TEXT PRIMARY KEY,
-    seen_at TIMESTAMPTZ NOT NULL
+    nonce     TEXT PRIMARY KEY,
+    seen_at   TIMESTAMPTZ NOT NULL,
+    team_id   TEXT NOT NULL DEFAULT '',   -- the workspace the signed request came from
+    action_ts TEXT NOT NULL DEFAULT ''    -- the click's own timestamp inside the signed payload
 );
 
 CREATE TABLE reports (

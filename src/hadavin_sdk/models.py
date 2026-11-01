@@ -199,6 +199,10 @@ class AuditEvent(Shape):
     # Which control caught a mistake: gate, recheck, abstain, guard, verify, human_label, human_reject (K6 sets
     # the human values). Rows written before this field existed hash unchanged (the chain hashes stored text).
     caught_by: str | None = None
+    # A signed channel click (K6): the workspace it came from and its own timestamp, so a refused or accepted
+    # click can be traced to both. Rows written before these fields existed hash unchanged.
+    team_id: str | None = None
+    action_ts: str | None = None
 
 
 class DeadLetter(Shape):

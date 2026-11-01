@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import re
+from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from types import SimpleNamespace
@@ -82,6 +83,8 @@ class World:
         self.audit = audit or LocalDirSink(self.reg.config.backends.audit.dir)
         self.channel = FakeChannel(SECRET)
         self.box = [NOW]
+        # most tests clear at once; the 24 h minimum age has its own tests (policy=DEFAULT_POLICY)
+        kw.setdefault("policy", replace(DEFAULT_POLICY, harmful_clear_min_age_h=0))
         self.measure = Measure(
             self.store,
             self.audit,
@@ -170,8 +173,10 @@ class World:
         ]
         return f"clear|{agent}|{action}|{events[-1].seq}"
 
-    def click(self, user, value, *, secret=SECRET, ts=None, team=None):
+    def click(self, user, value, *, secret=SECRET, ts=None, team=None, action_ts=None):
         payload = {"user": {"id": user}, "actions": [{"value": value}]}
+        if action_ts is not None:
+            payload["actions"][0]["action_ts"] = action_ts
         if team is not None:
             payload["team"] = {"id": team}
         body = urlencode({"payload": json.dumps(payload)}).encode()

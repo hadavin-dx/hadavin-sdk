@@ -503,3 +503,13 @@ def test_k6_a_clear_racing_new_demotions_never_loses_one(store):
         cleared_after = [e for e in events if e.kind == "clear" and e.seq > newest_demote]
         assert not cleared_after, i  # no clear may sit after the new demotion it never saw
         assert (agent, "x") in store.current_overrides(), i
+
+
+def test_k6_claim_action_keeps_the_team_and_the_click_timestamp(store):
+    assert store.claim_action("1:v0=t", at(26), "T0TEAM", "1700000000.5") is True
+    assert store.get_action("1:v0=t") == ("T0TEAM", "1700000000.5")
+    assert store.claim_action("2:v0=t", at(26)) is True
+    assert store.get_action("2:v0=t") == ("", "")  # the old two-argument form still works
+    assert store.get_action("3:v0=t") is None
+    store.release_action("1:v0=t")
+    assert store.get_action("1:v0=t") is None

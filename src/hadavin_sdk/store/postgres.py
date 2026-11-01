@@ -539,14 +539,23 @@ class PostgresStore:
         except psycopg.errors.UniqueViolation:
             raise StaleState("label exists") from None
 
-    def claim_action(self, nonce: str, at: datetime) -> bool:
+    def claim_action(
+        self, nonce: str, at: datetime, team_id: str = "", action_ts: str = ""
+    ) -> bool:
         with self._lock:
             row = self._exec(
-                "INSERT INTO seen_actions (nonce, seen_at) VALUES (%s, %s) "
+                "INSERT INTO seen_actions (nonce, seen_at, team_id, action_ts) VALUES (%s, %s, %s, %s) "
                 "ON CONFLICT (nonce) DO NOTHING RETURNING nonce",
-                (nonce, at),
+                (nonce, at, team_id, action_ts),
             ).fetchone()
         return row is not None
+
+    def get_action(self, nonce: str) -> tuple[str, str] | None:
+        with self._lock:
+            row = self._exec(
+                "SELECT team_id, action_ts FROM seen_actions WHERE nonce = %s", (nonce,)
+            ).fetchone()
+        return None if row is None else (row["team_id"], row["action_ts"])
 
     def is_announced(self, key: str) -> bool:
         with self._lock:
