@@ -74,3 +74,8 @@ def test_eval_report_html(tmp_path, capsys):
     assert evalcli.main(["report", str(tmp_path), "--format", "html"]) == 0
     assert "<table>" in capsys.readouterr().out
     assert evalcli.main(["report", str(tmp_path / "nope"), "--format", "html"]) == 4
+
+
+def test_newlines_in_text_are_kept_and_shown():
+    page = render_ledger([row(question="a" + chr(10) + "b")], redacted=False)
+    assert "a" + chr(10) + "b" in page and "white-space:pre-wrap" in page

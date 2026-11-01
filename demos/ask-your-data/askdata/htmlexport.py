@@ -20,12 +20,13 @@ body{background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,sans-serif;mar
 h1{font-size:1.4rem}p.note{color:var(--mut)}
 table{border-collapse:collapse;width:100%;margin:1rem 0}
 th,td{border:1px solid var(--line);padding:.35rem .6rem;text-align:left;vertical-align:top;overflow-wrap:anywhere}
+td{white-space:pre-wrap}
 th{background:var(--head)}code,pre{font-family:ui-monospace,monospace;white-space:pre-wrap}
 """
 
 
 def esc(value: object) -> str:
-    return html.escape(clean(value, cell=True), quote=True)
+    return html.escape(clean(value), quote=True)
 
 
 def _page(title: str, note: str, body: str) -> str:
