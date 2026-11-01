@@ -2,6 +2,10 @@
 
 import time
 
+import pytest
+
+pytest.importorskip("psycopg", reason="store.migrate imports psycopg (the pg extra)")
+
 from hadavin_sdk.store import migrate
 
 
