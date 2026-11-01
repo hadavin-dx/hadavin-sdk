@@ -16,6 +16,7 @@ from typing import Any
 
 from askdata.config import AskdataConfig, ConfigError, load_config
 from askdata.pgsource import Limits
+from askdata.settings import Smoke
 from hadavin_sdk.actions.secrets import SecretProvider
 from hadavin_sdk.backends import make
 from hadavin_sdk.backends.table import TABLE, KindSettings
@@ -25,10 +26,6 @@ from hadavin_sdk.llm.protocol import LLM
 DSN_ENV = "ASKDATA_DSN"
 
 # Smoke abort rule (amendments A-03, step 1): checked after every question of a live smoke run.
-SMOKE_MAX_COST_PER_QUESTION = Decimal("0.035")
-SMOKE_MAX_SCHEMA_VIOLATION_RATE = Decimal("0.10")
-SMOKE_HARD_CAP_PER_QUESTION = Decimal("0.35")  # one question above this aborts from the first call
-SMOKE_MIN_QUESTIONS = 5  # neither rule fires on fewer questions: one early outlier is not a trend
 
 
 def _kind(capability: str, raw: Mapping[str, Any]) -> KindSettings:
@@ -114,18 +111,20 @@ def smoke_breach(
     attempts: int,
     schema_violations: int,
     last_cost: Decimal = Decimal(0),
+    limits: Smoke | None = None,
 ) -> str | None:
-    """The abort reason once the smoke run is over the line, else None.
+    """The abort reason once the smoke run is over the line, else None. Numbers: `settings.Smoke` (config `smoke:`).
 
-    From question 1: a single question that cost more than SMOKE_HARD_CAP_PER_QUESTION (10x the line) aborts at once.
-    From SMOKE_MIN_QUESTIONS (5) questions on: cost per question above US$0.035 (strictly more), or more than 10 % of the
-    model attempts returning an unusable (schema-violating) answer."""
-    if last_cost > SMOKE_HARD_CAP_PER_QUESTION:
+    From question 1: one question costing more than `hard_cap_per_question_usd` aborts at once. From `min_questions`
+    on: cost per question above `max_cost_per_question_usd` (strictly more), or more than `max_schema_violation_rate`
+    of the model attempts returning an unusable (schema-violating) answer."""
+    lim = limits or Smoke()
+    if last_cost > lim.hard_cap_per_question_usd:
         return "smoke_cost"
-    if questions < SMOKE_MIN_QUESTIONS:
+    if questions < lim.min_questions:
         return None
-    if spent / questions > SMOKE_MAX_COST_PER_QUESTION:
+    if spent / questions > lim.max_cost_per_question_usd:
         return "smoke_cost"
-    if attempts and Decimal(schema_violations) / attempts > SMOKE_MAX_SCHEMA_VIOLATION_RATE:
+    if attempts and Decimal(schema_violations) / attempts > lim.max_schema_violation_rate:
         return "smoke_schema"
     return None

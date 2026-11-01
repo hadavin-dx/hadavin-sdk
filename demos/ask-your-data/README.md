@@ -67,7 +67,8 @@ two refusals. Without `--setup` it only runs the story. Other commands: `verify-
 `eval run` exits: 0 green, 10 amber, 11 not demonstrated, 12 a hard zero breached, 13 aborted (meter, kill switch or a
 smoke limit), 14 refused (budget, `--k`, smoke, counter or chain mismatch, a stale open reservation, second-look rules),
 5 the sealed run could not be recorded, 4 startup or a harness defect found mid-run (a gold query that does not run),
-1 usage. `eval freeze`: 0 or 4 (a file missing, a lock already there, or a file system without hard links).
+1 usage. `eval freeze`: 0 or 4 (a file missing, a lock, chain or anchor already there, or a file system without hard links); `--new-set
+--reason` is a usage error (1) unless both are given. `eval reseal`: 0, 14 (counter, chain and anchors disagree) or 4.
 `eval reconcile`: 0 or 14.
 
 `roles.sql` runs `REVOKE ... FROM PUBLIC`, which changes access for every login in that database: use a dedicated
@@ -119,6 +120,41 @@ other logins would lose access (`--accept-loss` to override).
 | Kill switch | a flag file | the pipeline, within one question | deleting the file: it is an operations flag, not a security control. Switching it is audited, a manual file edit is not |
 | Query ledger and audit events | files under `work/` | accidental damage and edits that touch one file (`audit verify` says exactly this) | someone who can write both; there is no signature here. For a client, use the core `chain` audit kind (append-only table, signed checkpoints, anchors) |
 
+## What each layer does NOT stop (C1 to C5)
+
+| Layer | Does | Does NOT stop |
+|---|---|---|
+| C1 validator (`validate.py`, V01 to V12) | one canonical SELECT over exposed views, columns and allowed functions | a read-only query that is legal but WRONG (a wrong join, a wrong filter): that is what the eval measures; any SQL the parser mis-parses the way the server does not (the oracle test narrows this, it cannot prove it) |
+| C2 read-only login (`db/roles.sql`) | the database refuses every write and every table outside the four views | a heavy read inside the views (that is C4); anything the DBA grants to this login later (`verify-readonly` and `preflight_roles.sql` list drift, they do not prevent it) |
+| C3 extended-protocol cursor (`pgsource.py`) | a stacked statement cannot run as part of the query | a statement the server runs for a different reason (it is one statement only); a bug in the driver |
+| C4 watchdog and caps | rows, bytes and time of ONE statement; the server cancel as a backstop | the sum of many cheap questions (the meter and the kill switch bound those); one huge cell is read whole before the byte cap sees it |
+| C5 audit intent before execute | an execution with no intent record cannot start | a ledger or audit folder rewritten by someone who can write both (see "Which guards live in plain files") |
+
+## Known limits, in plain words
+
+* **The injection result is structural, not measured.** In this version no database VALUE ever reaches the model (only
+  the question, the catalog and fixed hints do), so a planted instruction in a row cannot steer the model; the
+  data-injection items pass by construction. They become a real test only when a value path exists (a profile or a
+  sample row in the prompt). Until a test exists where a value does reach the prompt, do not quote this as robustness.
+* **The input detector is a binary tripwire.** It scores 0.0 or 1.0, so its threshold is inert. Measured on the shipped
+  question sets (70 gold, 30 + 12 adversarial = 112): 0 questions flagged, i.e. a false-positive rate of 0 of 112; with
+  112 samples the 95 % upper bound is about 2.7 % (rule of three). No recall is claimed (see the injection note above).
+* **The model is scripted in `ask` and `demo`** ("Scripted model, no network" is in the banner). `ask` and `demo` call the
+  validator and the database directly: they do NOT go through the pipeline, so they bypass the kill switch, the meter,
+  the audit and the ledger. They are a presenter's tool, not the product path; the product path is `Pipeline` (used by
+  `eval run`).
+* **The gold answers were written by one author (an LLM) with two formulations each**: that is a self-consistency check,
+  not independent verification. Only items marked `second_author_checked` have a second reader.
+* **Dependencies** (each lives behind one module; pinned in `pyproject.toml`):
+
+| Dependency | Pin | Used in | Cost to replace |
+|---|---|---|---|
+| sqlglot (MIT) | 30.24.0 | `validate.py` only | high: the validator is built on its tree; another parser means rewriting V01 to V12 and re-running the corpus, fuzz, mutation and oracle suites |
+| psycopg[binary] | 3.3.6 | `pgsource.py` only | medium: one send call and the watchdog; another PostgreSQL driver is a few days with the layer tests |
+| pydantic, PyYAML | 2.14.1, 6.0.3 | config and item schemas | low |
+| pglast (GPL) | 8.7 | tests only, never shipped | none: it is an independent oracle in CI (PostgreSQL grammar of its own version; the server in CI is 17.10, so the oracle's grammar can differ from the server's: the harm test against the real server covers that delta) |
+| model SDKs | extras of the core kinds | core `llm` kinds only; the demo imports none (`test_imports.py`) | low: the LLM kind is a config entry |
+
 ## Operator runbook (in this order)
 
 1. Copy `askdata.example.yaml` to `askdata.yaml` (it is not committed), set `as_of`, the paths (put `meter_file` OUTSIDE
@@ -138,24 +174,34 @@ other logins would lose access (`--accept-loss` to override).
    place, so a crash leaves no empty lock; a file system without hard links gives exit 4). Nothing in the frozen files or
    the thresholds changes after this, and no sealed run happens before it.
 
-   **How the sealed counter is protected, and what it does not stop** (`askdata/sealed.py`). The counter is not trusted
-   from `lock.json` alone. Every sealed run, smoke pass and recovery is first appended to a hash chain,
-   `<audit_dir>/sealed-chain.jsonl`, and only then mirrored into `lock.json` (write-ahead). If the process dies between the
-   two, the next command replays the chain over `lock.json` and logs a `reconcile` entry (`eval reconcile` does the same on
-   demand). The status of the last sealed run is derived from the chain and from the run folder (`report.json`), never from
-   a flag written before the work, so a killed process cannot leave "aborted" standing over results that exist.
-   A sealed run is refused when `lock.json` and the chain disagree (a hand edit, or a lock deleted and re-made, does not
-   reset the counter). Concurrent runs are serialised by an OS lock on `lock.json.lock`.
-
-   * **With a key** (`sealed_key_secret_name` in the config, read from the `secrets` kind: HMAC-SHA256 chain and an HMAC
-     `seal` over `test_runs`, the smoke key and the chain head): someone without the key cannot forge or re-hash a chain
-     line, and cannot make `lock.json` pass its seal after editing it. Set the key BEFORE the first sealed run.
-   * **Without a key** (the default; `freeze` says "NOT keyed"): the chain is plain SHA-256, anyone who can write the
-     audit folder can recompute it, and a writer of BOTH files can reset the counter. The counter is then
-     tamper-resistant only by git history: **commit `lock.json` after every sealed run** (it is not ignored) and compare.
-   * **Even with a key**, putting back an older, consistent pair of `lock.json` and chain (a restore from backup) shows an
-     older state. Only git history of `lock.json` and an off-machine copy of the chain's last `sha` can tell.
-   * The chain lives on the same disk as the code that checks it; it is a tamper-EVIDENCE record, not a safe.
+   **How the sealed counter is protected, and what it does not stop** (`askdata/sealed.py`, probes in
+   `tests/demo_askdata/test_demo_gaps_r3.py` and `_r4.py`). Nothing is trusted from `lock.json` alone.
+   * Write-ahead: every sealed run, smoke pass and recovery is first appended to a hash chain,
+     `<audit_dir>/sealed-chain.jsonl` (first entry `genesis`), and only then mirrored into `lock.json` with the chain head.
+     If the process dies in between, the next command replays the chain over `lock.json` (also consuming a hand-written
+     harness defect, exactly as the run would have) and logs a `reconcile` entry; `eval reconcile` does the same on demand.
+     A torn final line (power loss mid-write) is cut off and logged the same way. The status of the last sealed run is
+     derived from the chain and `report.json`, never from a flag written before the work.
+   * The WHOLE of `lock.json` except `seal` is covered by the key's HMAC: files and their hashes, thresholds, the money
+     minimums, `max_second_looks`, the counter, the smoke key, the chain head and the hand-written defect fields. The one
+     sanctioned hand edit (the defect fields) is blessed by the key holder with `eval reseal`, which logs a `reseal`
+     entry; run it after reading `git diff lock.json`.
+   * Anchors: at the first freeze a `set_id` is written to `<audit_dir>/sealed-anchor.json` and, when
+     `paths.sealed_anchor_file` is set, to a second file that you COMMIT TO GIT (for example `eval/anchor.json`). `eval
+     freeze` refuses while a chain or any anchor exists, so deleting the chain and `lock.json` and freezing again does not
+     reset the counter. A genuinely new test set needs `eval freeze --new-set --reason "..."`, which writes a visible
+     `new_set` entry, keeps the old lock as `lock.json.prev-<time>` and restarts the count; the old runs stay in the chain.
+   * Keyed or not (decide before the first sealed run; the default for a client is KEYED): `sealed_key_secret_name` names a
+     secret in the `secrets` kind (16+ characters). With it the chain is HMAC-SHA256 and `lock.json` carries a `seal`, so
+     someone without the key cannot forge a line or re-hash the chain. Once a set was keyed, a gate with no key is refused
+     (lock, anchors and genesis all say so). Without a key (`freeze` prints "NOT keyed"): the chain is plain SHA-256,
+     anyone who can write the audit folder can recompute it, and a writer of every file can reset the counter. The
+     counter is then tamper-resistant only by git history: **commit `lock.json` (and the anchor) after every sealed run**.
+   * Still not stopped, with or without a key: putting back an older, internally consistent copy of ALL the files (a
+     restore from backup) shows an older state; deleting the chain, the lock and every anchor when no anchor is committed
+     to git also resets it. Only git history and an off-machine copy of the chain's last `sha` can tell. The chain lives on
+     the same disk as the code that checks it: it is tamper-EVIDENCE, not a safe.
+   * Concurrent runs are serialised by an OS lock on `lock.json.lock`.
 
    A `--second-look harness_defect` needs the proved defect written BY HAND into `lock.json`: `harness_defect_reason`
    (10+ characters), `harness_defect_run` (an existing run folder) and `harness_defect_item` (an id in the frozen test
@@ -182,7 +228,7 @@ sequences removed (a talking point, optional).
 
 | Time | Scene | Type this (from `demos\ask-your-data`) | Say |
 |---|---|---|---|
-| 0:00-0:20 | Promise | `uv run --locked --no-build --extra askdata python -m askdata verify-readonly` | "Staged on synthetic data. This login cannot write: fourteen checks, all ok, plus two info rows, exit code 0." |
+| 0:00-0:20 | Promise | `uv run --locked --no-build --extra askdata python -m askdata verify-readonly` | "Staged on synthetic data. This login cannot write: [read the check count from the last line on screen], all ok, exit code 0." |
 | 0:20-0:50 | Normal question | `... python -m askdata ask "How many orders per country?"` | "The exact SQL that ran, its SHA-256, and the result. The model here is a scripted stand-in, no network." |
 | 0:50-1:10 | Refusals | `... ask --sql "DELETE FROM shop.orders"` then `... ask --sql "SELECT email FROM analytics.customers_v"` | "Rejected before it reaches the database: rule V03, rule V05." |
 | 1:10-1:30 | Proof | `docker exec -it askdata-pg psql -U askdata_ro -d askdata_demo -c "DELETE FROM shop.orders"` then `uv run ... pytest -q tests/demo_askdata/test_pgsource_layers.py -k c3b` from the repo root | "This is the actual login the tool uses. The database says permission denied even if the tool were wrong. And a stacked-statement attack is refused by the execution path." |

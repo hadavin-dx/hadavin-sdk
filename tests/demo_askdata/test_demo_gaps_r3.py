@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import random
+from datetime import timedelta
 from decimal import Decimal
 from pathlib import Path
 from types import SimpleNamespace
@@ -19,13 +20,14 @@ import pytest
 from askdata import cli, evalcli, evalrun, live, sealed
 from askdata.config import ConfigError
 from askdata.evalcli import cmd_run
-from askdata.evalset import Lock, LockError, freeze, lock_guard, read_lock, write_lock
+from askdata.evalset import Lock, LockError, lock_guard, lock_path, read_lock, write_lock
 from askdata.fixtures import Step
-from askdata.meter import STALE_OPEN, Meter, call_cost
+from askdata.meter import Meter, call_cost
 from askdata.pgsource import PgError
 from askdata.pipeline import Settings
 from askdata.policy import EXIT_AUDIT, EXIT_FAILED, EXIT_OK, EXIT_REFUSED, EXIT_STARTUP, EXIT_USAGE
 from askdata.sealed import Chain, SealedGate, key_from
+from askdata.settings import MeterLimits
 
 from hadavin_sdk.actions.secrets import FakeSecretProvider
 from hadavin_sdk.llm.protocol import ProviderError, ProviderExhausted
@@ -35,6 +37,7 @@ from .kit import COUNT_ORDERS, Kit
 from .test_demo_gaps import make_cfg
 from .test_eval_harness import cli_env  # noqa: F401 - a fixture reused here
 
+STALE_OPEN_AFTER = timedelta(minutes=MeterLimits().stale_open_minutes)
 KEY = ("k3y-" * 6).encode()
 Q = "How many orders are there"
 
@@ -43,9 +46,10 @@ Q = "How many orders are there"
 def gate_for(tmp_path: Path, key: bytes | None = None) -> SealedGate:
     ev = tmp_path / "ev"
     ev.mkdir(parents=True, exist_ok=True)
-    (ev / "a.jsonl").write_text("x\n", encoding="utf-8")
-    g = SealedGate(ev, tmp_path / "audit" / "chain.jsonl", tmp_path / "runs", key)
-    freeze(ev, ["a.jsonl"], no_clobber=True, seal=g.freeze_seal)
+    (ev / "a.jsonl").write_text("x" + chr(10), encoding="utf-8")
+    anchors = [tmp_path / "audit" / "sealed-anchor.json", tmp_path / "committed-anchor.json"]
+    g = SealedGate(ev, tmp_path / "audit" / "chain.jsonl", tmp_path / "runs", key, anchors)
+    g.create(["a.jsonl"])
     return g
 
 
@@ -99,13 +103,19 @@ def test_with_a_key_even_a_consistent_rewrite_of_both_files_is_refused(tmp_path)
         Chain(forged.chain.path, KEY).entries()
 
 
-def test_without_a_key_a_writer_of_both_files_can_reset_the_counter_and_the_docs_say_so(tmp_path):
-    """The limit, pinned: an UNKEYED chain is only a check against accidents and single-file edits."""
+def test_without_a_key_deleting_everything_resets_the_counter_and_the_docs_say_so(tmp_path):
+    """The limit, pinned: with no key and no committed anchor, a writer of every file can start over."""
     g = gate_for(tmp_path)
     g.begin(g.load(), "r1")
     g.chain.path.unlink()
-    write_lock(g.eval_dir, Lock(files=read_lock(g.eval_dir).files, test_runs=0))
-    assert g.load().test_runs == 0  # reset succeeds: only git history of lock.json would show it
+    lock_path(g.eval_dir).unlink()
+    with pytest.raises(
+        LockError, match="already exists"
+    ):  # the committed anchor still blocks a plain re-freeze
+        g.create(["a.jsonl"])
+    for a in g.anchors:
+        a.unlink(missing_ok=True)
+    assert g.create(["a.jsonl"]).test_runs == 0 and g.load().test_runs == 0  # reset succeeded
     assert "NOT keyed" in (Path(evalcli.__file__).read_text(encoding="utf-8"))
     assert "tamper-resistant only by git history" in (
         Path(evalcli.__file__).parents[1] / "README.md"
@@ -146,7 +156,7 @@ def test_crash_between_the_chain_and_the_lock_is_replayed_not_stuck(cli_env, mon
         read_lock(cfg.paths.eval_dir).test_runs == 1
     )  # ...and rolled forward, audited by a chain entry
     kinds = [e["kind"] for e in Chain(cfg.paths.audit_dir / "sealed-chain.jsonl").entries()]
-    assert kinds == ["sealed_run", "reconcile"]
+    assert kinds == ["genesis", "sealed_run", "reconcile"]
     assert (
         cmd_run(cfg, "test", 1, None, harness_factory=factory) == 14
     )  # the run was counted: no free second pass
@@ -199,7 +209,7 @@ def test_a_keyboard_interrupt_mid_run_is_recorded_as_aborted_by_the_finally(cli_
     with pytest.raises(KeyboardInterrupt):
         cmd_run(cfg, "test", 1, None, harness_factory=interrupted)
     chain = Chain(cfg.paths.audit_dir / "sealed-chain.jsonl").entries()
-    assert [e["kind"] for e in chain] == ["sealed_run", "sealed_done"]
+    assert [e["kind"] for e in chain] == ["genesis", "sealed_run", "sealed_done"]
     assert (
         chain[-1]["data"]["status"] == "aborted"
     )  # no results were written: a second look 'aborted' is honest
@@ -459,7 +469,7 @@ def test_a_process_that_dies_between_reserve_and_settle_leaves_a_visible_open_re
         "0.5"
     )  # booked: fails safe
     assert m.stale_open() == []
-    later = Meter(m.path, clock=lambda: m.clock() + STALE_OPEN * 2)
+    later = Meter(m.path, clock=lambda: m.clock() + STALE_OPEN_AFTER * 2)
     assert len(later.stale_open()) == 1  # a live run would now refuse to start
     assert later.clear_open() == 1 and later.snapshot()["askdata_spent"] == Decimal("0.5")
 

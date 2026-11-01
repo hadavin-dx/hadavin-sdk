@@ -123,6 +123,7 @@ class Config:
     live: bool = (
         False  # the model is the config's `llm` entry (core LLM kind) instead of the recordings
     )
+    smoke_limits: Any = None  # settings.Smoke from the config; None: the documented defaults
     smoke: bool = False  # a live smoke run also aborts on cost per question or schema violations (live.smoke_breach)
 
 
@@ -284,6 +285,7 @@ class Harness:
                     self._attempts,
                     self._violations,
                     Decimal(ans.line.cost_usd),
+                    self.cfg.smoke_limits,
                 )
         return ans
 

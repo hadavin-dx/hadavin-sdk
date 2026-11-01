@@ -26,8 +26,13 @@ from pydantic import (
     model_validator,
 )
 
+from askdata.settings import Sealed
+
 Hex64 = Annotated[str, StringConstraints(pattern=r"^[0-9a-f]{64}$")]
 Tier = Literal["easy", "medium", "hard", "glossary", "ambiguous", "out_of_scope", "refuse"]
+
+
+_SEALED = Sealed()  # the documented defaults live in settings.py
 
 
 class _Strict(BaseModel):
@@ -121,18 +126,20 @@ def sha256_file(path: Path) -> str:
 
 
 class Thresholds(_Strict):
-    green_max_upper: Decimal = Decimal(
-        "0.10"
+    green_max_upper: Decimal = (
+        _SEALED.green_max_upper
     )  # one-sided 95 % upper bound of the confident-wrong rate
-    amber_max_upper: Decimal = Decimal("0.15")
+    amber_max_upper: Decimal = _SEALED.amber_max_upper
 
 
 class Lock(_Strict):
     files: dict[str, Hex64]
     thresholds: Thresholds = Thresholds()
     test_runs: int = 0
-    sealed_min_remaining_usd: Decimal = Decimal("3.00")  # the FIRST sealed run
-    second_look_min_remaining_usd: Decimal = Decimal("1.80")  # a --second-look run (A-03)
+    sealed_min_remaining_usd: Decimal = _SEALED.first_run_min_remaining_usd  # the FIRST sealed run
+    second_look_min_remaining_usd: Decimal = (
+        _SEALED.second_look_min_remaining_usd
+    )  # a --second-look run (A-03)
     last_test_status: Literal["none", "complete", "aborted"] = "none"
     # "<config_hash>:<model_id>" of the last finished `eval run --split dev --live --smoke`; a sealed --live run needs
     # the SAME key (a changed prompt, config or model needs a new smoke run).
@@ -145,8 +152,13 @@ class Lock(_Strict):
     # Mirrors of the sealed-run chain (sealed.py): the chain's last `sha`, and an HMAC over test_runs, smoke_key and
     # chain_head when a key is configured. `load()` replays the chain over them after a crash.
     chain_head: str | None = None
+    keyed: bool = (
+        False  # the set was frozen with an HMAC key: a keyless gate is refused from then on
+    )
     seal: str | None = None
-    max_second_looks: int = 2  # sealed runs allowed beyond the first, however they are justified
+    max_second_looks: int = (
+        _SEALED.max_second_looks
+    )  # sealed runs allowed beyond the first, however they are justified
     second_look_allowed_for: list[Literal["aborted", "harness_defect"]] = [
         "aborted",
         "harness_defect",
@@ -217,6 +229,7 @@ def freeze(
     *,
     no_clobber: bool = False,
     seal: Callable[[Lock], Lock] | None = None,
+    lock_fields: dict | None = None,
 ) -> Lock:
     """Create lock.json from the current files (the freeze step; run once, before the dev set is frozen for use).
     `no_clobber`: write a temp file, then `os.link` it to lock.json, which fails if lock.json exists, so a crash never
@@ -224,6 +237,7 @@ def freeze(
     lock = Lock(
         files={n: sha256_file(Path(eval_dir) / n) for n in names},
         thresholds=thresholds or Thresholds(),
+        **(lock_fields or {}),
     )
     if seal:
         lock = seal(lock)

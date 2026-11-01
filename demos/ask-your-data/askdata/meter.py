@@ -15,7 +15,7 @@ lock (`msvcrt` on Windows, `fcntl` elsewhere; the OS drops the lock if the holde
 After the call, `settle(reserved, actual, rid)` replaces the reservation with the real cost. This is a two-phase
 reserve/settle: `reserve` returns an id and records it under `open` BEFORE the call, `settle` removes it. A process
 that dies between the two leaves its worst case booked (fails safe) AND an `open` record, so the crash is visible:
-`snapshot()["open"]` lists it, a live run refuses to start while one is older than `STALE_OPEN` (see `stale_open`),
+`snapshot()["open"]` lists it, a live run refuses to start while one is older than `stale_open_after` (see `stale_open`),
 and the owner clears it with `meter --clear-open` after reading the provider console. Writes are write-fsync-replace.
 """
 
@@ -31,11 +31,12 @@ from datetime import UTC, datetime, timedelta
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
+from askdata.settings import MeterLimits
 from hadavin_sdk.config import Route
 from hadavin_sdk.llm.common import estimate_tokens
 
 PROJECT = "askdata"
-STALE_OPEN = timedelta(minutes=10)  # an unsettled reservation older than this is a crashed call
+_DEFAULT = MeterLimits()  # the documented defaults live in settings.py
 STAMP = "%Y-%m-%dT%H:%M:%SZ"
 M = Decimal(1_000_000)
 
@@ -67,16 +68,22 @@ def call_cost(
     sent: int,
     reply_cost: Decimal | None,
     refused: bool = False,
+    answered: int = 1,
+    billed: Decimal = Decimal(0),
 ) -> Decimal:
-    """What ONE `chat()` cost, the single place that decides it. The kind may send several requests inside one call
-    and only the answered one reports usage. So: every request that was sent but not answered is charged `per_attempt`
-    (a timed-out request may still be billed); the answered one is charged its real cost; a request the provider
-    REFUSED (a non-transient 4xx) is free. Without a reply the charge never exceeds the reservation."""
+    """What ONE `chat()` cost, the single place that decides it. A kind may send several requests inside one call
+    (retries; some also ask again after an unusable answer). Only an answered request reports usage. So:
+
+    * with a reply: `reply_cost` (the kind sums every answered request) plus `per_attempt` for each request that was
+      sent but not answered (a timed-out request may still be billed);
+    * without a reply: `billed` (what earlier answered requests already cost, carried by the error), plus
+      `per_attempt` for each other request sent, EXCEPT that the last one is free when the provider REFUSED it (a
+      non-transient 4xx); an unusable 200 body is not a refusal, it was billed. Never above the reservation."""
     sent = max(1, sent)
-    earlier = per_attempt * (sent - 1)
     if reply_cost is not None:
-        return earlier + reply_cost
-    return min(reserved, earlier + (Decimal(0) if refused else per_attempt))
+        return reply_cost + per_attempt * max(0, sent - max(answered, 1))
+    others = max(0, sent - answered - 1)
+    return min(reserved, billed + per_attempt * others + (Decimal(0) if refused else per_attempt))
 
 
 def _dec(value: object, name: str) -> Decimal:
@@ -128,9 +135,11 @@ class Meter:
         path: Path,
         *,
         clock: Callable[[], datetime] | None = None,
-        max_external_age: timedelta = timedelta(hours=24),
+        max_external_age: timedelta = timedelta(hours=_DEFAULT.max_external_age_hours),
+        stale_open_after: timedelta = timedelta(minutes=_DEFAULT.stale_open_minutes),
         lock_wait_s: float = 5.0,
     ) -> None:
+        self.stale_open_after = stale_open_after
         self.path = Path(path)
         self.clock = clock or (lambda: datetime.now(UTC))
         self.max_external_age = max_external_age
@@ -166,11 +175,18 @@ class Meter:
     def _write(self, data: dict) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         tmp = self.path.with_name(self.path.name + f".tmp{os.getpid()}")
-        with open(tmp, "w", encoding="utf-8", newline="\n") as f:
-            f.write(json.dumps(data, sort_keys=True, indent=2) + "\n")
-            f.flush()
-            os.fsync(f.fileno())
-        os.replace(tmp, self.path)
+        try:
+            with open(tmp, "w", encoding="utf-8", newline="\n") as f:
+                f.write(json.dumps(data, sort_keys=True, indent=2) + "\n")
+                f.flush()
+                os.fsync(f.fileno())
+            os.replace(tmp, self.path)
+        except (
+            OSError
+        ) as err:  # e.g. PermissionError from os.replace on Windows: callers handle MeterError
+            with contextlib.suppress(OSError):
+                tmp.unlink(missing_ok=True)
+            raise MeterError(f"meter file cannot be written: {type(err).__name__}") from None
 
     @contextlib.contextmanager
     def _locked(self) -> Iterator[None]:
@@ -266,12 +282,12 @@ class Meter:
         return dict(self._read().get("open", {}))
 
     def stale_open(self) -> list[str]:
-        """Ids of open reservations older than STALE_OPEN: calls whose process died before `settle`."""
+        """Ids of open reservations older than `stale_open_after` (config meter.stale_open_minutes): calls whose process died before `settle`."""
         now = self.clock()
         return [
             rid
             for rid, o in self.open_reservations().items()
-            if now - datetime.strptime(o["ts"], STAMP).replace(tzinfo=UTC) > STALE_OPEN
+            if now - datetime.strptime(o["ts"], STAMP).replace(tzinfo=UTC) > self.stale_open_after
         ]
 
     def clear_open(self) -> int:

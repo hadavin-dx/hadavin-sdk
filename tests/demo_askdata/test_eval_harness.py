@@ -10,6 +10,7 @@ from pathlib import Path
 import pytest
 from askdata import cli, evalrun, prompt
 from askdata.config import load_config
+from askdata.evalcli import _gate as evalcli_gate
 from askdata.evalcli import build_harness, cmd_run
 from askdata.evalrun import Config, Harness, HarnessError, Incomparable, RecordingExecutor
 from askdata.evalset import (
@@ -555,7 +556,9 @@ def cli_env(tmp_path):
         ).model_dump_json()
         + "\n"
     )
-    freeze(ev, ["gold.dev.jsonl", "adversarial.dev.jsonl", "gold.test.jsonl", "adversarial.jsonl"])
+    evalcli_gate(cfg).create(
+        ["gold.dev.jsonl", "adversarial.dev.jsonl", "gold.test.jsonl", "adversarial.jsonl"]
+    )
     for g in rows + trows:
         write_script(cfg.paths.recorded_dir, pr.text, g.question, [Step(sql=g.gold_sql)])
     write_script(

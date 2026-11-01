@@ -145,13 +145,21 @@ def _flat(v: object) -> str:
 
 
 def cmd_meter(cfg, set_external: str | None, init: bool = False, clear_open: bool = False) -> int:
-    m = Meter(cfg.paths.meter_file)
+    m = cfg.meter_obj()
     if init:  # the shared file is created once; an existing one (with the other program's spend) is never overwritten
         if m.path.exists():
             out("meter: the file already exists; not overwritten")
             return 4
-        Meter.create(m.path, total_cap="10.00", reserve="1.00", demo_cap="8.00")
-        out("meter: created with total cap 10.00, reserve 1.00, demo cap 8.00")
+        L = cfg.meter
+        Meter.create(
+            m.path,
+            total_cap=str(L.total_cap_usd),
+            reserve=str(L.reserve_usd),
+            demo_cap=str(L.demo_cap_usd),
+        )
+        out(
+            f"meter: created with total cap {L.total_cap_usd}, reserve {L.reserve_usd}, demo cap {L.demo_cap_usd}"
+        )
     try:
         if clear_open:
             out(

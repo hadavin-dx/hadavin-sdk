@@ -29,10 +29,10 @@ from askdata.policy import (
 )
 from askdata.safe_text import clean
 from askdata.scripted import Model, ScriptedModel, questions
-from askdata.validate import Rejected, validate
+from askdata.validate import Rejected, assert_all_rules_on, validate
 
 ROOT = Path(__file__).resolve().parent.parent
-BANNER = "Staged on synthetic data. No accuracy claim is made."
+BANNER = "Staged on synthetic data. Scripted model, no network. No accuracy claim is made."
 
 
 def out(text: str = "") -> None:
@@ -248,6 +248,11 @@ def _operator(argv: list[str]) -> int | None:
 
 def main(argv: list[str] | None = None) -> int:
     argv = sys.argv[1:] if argv is None else argv
+    try:
+        assert_all_rules_on()  # every validator rule is on, always, outside the mutation test
+    except RuntimeError as err:
+        out(f"startup: {err}")
+        return EXIT_STARTUP
     code = _operator(argv)
     if code is not None:
         return code
@@ -273,6 +278,13 @@ def main(argv: list[str] | None = None) -> int:
     except SystemExit as exc:  # argparse exits 2 (= refused in the table) on a usage error
         return EXIT_OK if exc.code in (0, None) else EXIT_USAGE
 
+    if (
+        args.cmd == "ask" and not args.sql and not args.question
+    ):  # a usage error, whatever the environment lacks
+        out("ask: give a question or --sql. Questions the offline model knows:")
+        for q in questions():
+            out(f"  {q}")
+        return EXIT_USAGE
     if args.cmd == "setup" or (args.cmd == "demo" and args.setup):
         code = cmd_setup(getattr(args, "accept_loss", False))
         if code or args.cmd == "setup":

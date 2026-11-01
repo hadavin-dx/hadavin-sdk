@@ -39,3 +39,12 @@ secrets:                         # the core secrets kind: env reads HADAVIN_SECR
 #   kind: anthropic
 #   platform: api
 #   api_key_secret_name: anthropic-api-key
+
+# Tunable numbers (defaults shown; they live in askdata/settings.py and are validated at load). Uncomment to change.
+# smoke: {max_cost_per_question_usd: "0.035", hard_cap_per_question_usd: "0.35", max_schema_violation_rate: "0.10", min_questions: 5}
+# sealed: {first_run_min_remaining_usd: "3.00", second_look_min_remaining_usd: "1.80", max_second_looks: 2, green_max_upper: "0.10", amber_max_upper: "0.15"}
+# meter: {total_cap_usd: "10.00", reserve_usd: "1.00", demo_cap_usd: "8.00", stale_open_minutes: 10, max_external_age_hours: 24}
+
+# Sealed-run key (HMAC) from the secrets kind above: set it BEFORE the first sealed run. For a client run it is required.
+# sealed_key_secret_name: sealed-run-key
+# A second anchor of the sealed-run chain, to COMMIT to the repository (set under paths:, e.g. sealed_anchor_file: ./data/anchor.json)

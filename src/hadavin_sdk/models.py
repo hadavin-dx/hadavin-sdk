@@ -260,6 +260,9 @@ class Reply(Shape):
     # Requests the kind sent for this one reply (1 + its retries). Only the last one produced `cost_usd`; a caller that
     # meters spend must treat the earlier ones as possibly billed.
     attempts: int = Field(default=1, ge=1)
+    # How many of those requests came back with an answer (and so with usage). A kind that asks again after an
+    # unusable answer bills several; `cost_usd` is the sum of the answered ones.
+    answered: int = Field(default=1, ge=0)
 
 
 class Verdict(Shape):

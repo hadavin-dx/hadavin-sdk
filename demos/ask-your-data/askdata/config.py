@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from datetime import timedelta
 from decimal import Decimal
 from pathlib import Path
 from typing import Any
@@ -15,8 +16,10 @@ from typing import Any
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
+from askdata.meter import Meter
 from askdata.pgsource import Limits as DbLimits
 from askdata.pipeline import Settings
+from askdata.settings import MeterLimits, Sealed, Smoke
 from hadavin_sdk.config import Route
 
 
@@ -35,6 +38,8 @@ class Paths(_Strict):
     kill_switch_file: Path
     eval_dir: Path
     runs_dir: Path
+    # A second anchor of the sealed-run chain, meant to be COMMITTED TO GIT (e.g. eval/anchor.json); see sealed.py
+    sealed_anchor_file: Path | None = None
     recorded_dir: Path | None = None  # the scripted model's recordings (offline runs)
 
 
@@ -49,6 +54,8 @@ class RouteCfg(_Strict):
 class Limits(_Strict):
     max_attempts: int = Field(3, ge=1, le=3)
     max_question_chars: int = Field(500, gt=0)
+    # the input gate's score cut-off; the regex detector scores only 0.0 or 1.0, so any value in (0, 1] acts alike
+    injection_threshold: float = Field(Settings().injection_threshold, gt=0, le=1)
 
 
 class Database(_Strict):
@@ -81,6 +88,9 @@ class AskdataConfig(_Strict):
     store_question: bool = True
     live: bool = True  # a paid route needs a fresh external_usd; the fake route never spends
     database: Database = Database()
+    smoke: Smoke = Smoke()  # the live smoke run's abort rule (settings.py holds the defaults)
+    sealed: Sealed = Sealed()  # sealed-set budget and count rules, written into lock.json at freeze
+    meter: MeterLimits = MeterLimits()  # caps and timing of the shared spend meter
     # HMAC key (from the `secrets` kind) for the sealed-run chain and lock.json's seal; None: unkeyed, see sealed.py
     sealed_key_secret_name: str | None = Field(None, min_length=1)
     # Core backend entries (`{kind: ..., ...}`), validated by `live.py` against the core table; never a secret value.
@@ -102,6 +112,14 @@ class AskdataConfig(_Strict):
             )
         }
 
+    def meter_obj(self) -> Meter:
+        m = self.meter
+        return Meter(
+            self.paths.meter_file,
+            max_external_age=timedelta(hours=m.max_external_age_hours),
+            stale_open_after=timedelta(minutes=m.stale_open_minutes),
+        )
+
     def _llm_attempts(self) -> int:
         """Requests one live `chat()` may send: the LLM kind's `max_attempts` (3 unless set); 1 for the recorded model."""
         return int(self.llm.get("max_attempts", 3)) if self.llm else 1
@@ -110,6 +128,7 @@ class AskdataConfig(_Strict):
         extra = {"restricted_terms": tuple(self.restricted_terms)} if self.restricted_terms else {}
         return Settings(
             route=self.route.name, max_attempts=self.limits.max_attempts, max_question_chars=self.limits.max_question_chars,
+            injection_threshold=self.limits.injection_threshold,
             store_question=self.store_question, live=self.live, llm_max_attempts=self._llm_attempts(), **extra,
         )  # fmt: skip
 

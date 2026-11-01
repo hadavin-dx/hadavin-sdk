@@ -158,6 +158,7 @@ def reply(
     started: float,
     sent: str,
     attempts: int = 1,
+    answered: int = 1,
 ) -> Reply:
     """The Reply, priced from the route. Missing usage is estimated from what was sent and received. A cut-off
     answer keeps its cost but loses its tool calls: their input may be incomplete."""
@@ -178,6 +179,7 @@ def reply(
         stop_reason=stop,
         latency_ms=int((time.monotonic() - started) * 1000),
         attempts=attempts,
+        answered=answered,
     )
 
 
@@ -190,6 +192,13 @@ class Answer:
     tokens: tuple[int | None, int | None]
     stop: str | None
     attempts: int = 1  # set by `_retry`: requests sent for this answer
+
+
+def price(route: Any, tokens_in: int, tokens_out: int) -> Decimal:
+    return (
+        Decimal(tokens_in) * route.input_usd_per_mtok
+        + Decimal(tokens_out) * route.output_usd_per_mtok
+    ) / Decimal(1_000_000)
 
 
 class NetworkLLM:
@@ -206,6 +215,12 @@ class NetworkLLM:
         sleep: Callable[[float], None] = time.sleep,
     ) -> None:
         self.routes, self.max_attempts, self._sleep = routes, max_attempts, sleep
+
+    @property
+    def max_requests(self) -> int:
+        """The most requests ONE `chat()` can send; a meter reserves for all of them. A kind that asks again
+        inside `chat()` multiplies this."""
+        return self.max_attempts
 
     def chat(
         self,
