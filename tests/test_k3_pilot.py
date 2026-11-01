@@ -278,12 +278,11 @@ def test_k3_gate_exception_denies(tmp_path, monkeypatch):
     ]  # the intent audit still records the deny
 
 
-def test_k3_override_stub_returns_none_and_can_only_lower(tmp_path, monkeypatch):
-    assert agent_loop.override_level("a", "b") is None
+def test_k3_override_can_only_lower(tmp_path):
     rt = runtime(dev_cfg(tmp_path, {"lookup_record": "suggest"}), ScriptedLLM())
     agent = rt.registry.agents["test-agent"]
     assert rt._level(agent, "lookup_record") == "suggest"
-    monkeypatch.setattr(agent_loop, "override_level", lambda a, b: "shadow")
+    rt.hooks.level_override = lambda a, b: "shadow"
     assert rt._level(agent, "lookup_record") == "shadow"
     assert rt._level(agent, "unlisted_action") == "shadow"
 

@@ -61,11 +61,6 @@ _RANK = {"shadow": 0, "suggest": 1}
 _GUARD_ABSTAINS = frozenset({"ungrounded", "run_budget", "redaction_error"})
 
 
-def override_level(agent_id: str, action_id: str) -> Level | None:
-    """A line owner can only lower a level, never raise it. K3 ships the reader as a stub; K6 wires the store."""
-    return None
-
-
 class Unqualified(RuntimeError):
     """The agent has no green gate run for its current model, prompt and config."""
 
@@ -140,6 +135,8 @@ class Hooks:
     tools: dict[str, Callable[[dict], str]] = field(default_factory=dict)
     # Posts a shadow or abstain card. None: nothing is posted (a shadow proposal is then `shadow_undelivered`).
     post_card: Callable[[Card], Delivery] | None = None
+    # A line owner's override reader (K6 wires the store): it can only lower a level, never raise it.
+    level_override: Callable[[str, str], Level | None] | None = None
 
 
 class Runtime:
@@ -302,7 +299,7 @@ class Runtime:
         if agent.levels is None:
             return None
         cfg: Level = "suggest" if agent.levels.get(action_id) == "suggest" else "shadow"
-        ov = override_level(agent.id, action_id)
+        ov = self.hooks.level_override(agent.id, action_id) if self.hooks.level_override else None
         return ov if ov is not None and _RANK[ov] < _RANK[cfg] else cfg
 
     def _deliver(self, card: Card | None) -> Delivery:
