@@ -218,7 +218,12 @@ MUTANTS = [
         '_LABEL = re.compile(r"[A-Za-z0-9_.-]{1,64}")',
         '_LABEL = re.compile(r"[a-z0-9_.-]{1,64}")',
     ),
-    ("old: stop `by` written raw", LM, "            if text_ok(by, 128)", "            if True"),
+    (
+        "old: stop `by` written raw",
+        LM,
+        "            if identity_key(by, max_len=128, ascii_only=True) is not None",
+        "            if True",
+    ),
     ("old: cmdlet filter takes Hadavin ids", GT, "(?!(?:run|pln|apr|evt)-[0-9a-f]{32}\\b)", ""),
 ]
 
