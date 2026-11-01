@@ -87,13 +87,13 @@ read-only and adds no model call: ledger lines (`askdata.ledger/1`), audit event
 `results.jsonl` in, `export.json` out.
 
 ```
-uv run --locked --no-build --extra askdata python -m askdata.export --config askdata.yaml --run <run name>
+uv run --locked --no-build --extra askdata python -m askdata.export --config askdata.yaml --run <run name> > export.json
 ```
 
 Mapping: `sql_sha256` goes to a step's `args_summary`; validator rules V01 to V12 to `rule_id` (`deny`); refusals and
 abstentions keep their reason code and fixed sentence; `verify.text` is the audit folder's own local integrity check;
 the scorecard carries the confident-wrong count with its one-sided 95 % upper bound, false-abstain, wrong-and-allowed,
-coverage, the hard zeros with their definitions and the verdict wording. `<run name>` is a folder under `paths.runs_dir` (a name, never a path); `export.json` is written inside it. Only that run's questions and audit events are listed (the integrity check covers the whole audit folder). Exit codes: 0 written, 4 a missing or bad input.
+coverage, the hard zeros with their definitions and the verdict wording. `<run name>` is a folder under `paths.runs_dir` (a name, never a path); the JSON is printed to standard output. Only that run's questions and audit events are listed (the integrity check covers the whole audit folder). Exit codes: 0 printed, 4 a missing or bad input.
 
 What it does not claim: the model is `scripted`, the data is synthetic, the result is a smoke result and no accuracy
 number is given. Money is not applicable (a read-only tool moves none) and there are no approvals or adapter calls.

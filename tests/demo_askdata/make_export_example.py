@@ -13,7 +13,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "demos" / "ask-your-data"))
 
-from askdata.export import build_export, write_export
+from askdata.export import build_export, dumps
 from askdata.fixtures import Step
 
 from .kit import COUNT_ORDERS, TOP2
@@ -60,7 +60,9 @@ def build(tmp: Path, *, core_commit: str = "unknown") -> dict:
 
 if __name__ == "__main__":
     with tempfile.TemporaryDirectory() as t:
-        write_export(
-            EXAMPLE, build(Path(t), core_commit=sys.argv[1] if len(sys.argv) > 1 else "unknown")
+        EXAMPLE.write_text(
+            dumps(build(Path(t), core_commit=sys.argv[1] if len(sys.argv) > 1 else "unknown")),
+            encoding="utf-8",
+            newline="\n",
         )
     sys.stdout.write(f"wrote {EXAMPLE}\n")

@@ -192,7 +192,7 @@ def test_cli_writes_export_json_from_a_run_folder(tmp_path, capsys):
     (run / "results.jsonl").write_text("\n".join(json.dumps(asdict(x)) for x in recs), "utf-8")
     cfg = write_config(r.kit)
     assert export.main(["--config", cfg, "--run", "r1"]) == 0
-    out = json.loads((run / "export.json").read_text("utf-8"))
+    out = json.loads(capsys.readouterr().out)
     assert check(out, SCHEMA) == [] and out["run"]["run_id"] == "r1"
     assert export.main(["--config", cfg, "--run", "missing"]) == 4
     assert export.main(["--config", cfg, "--run", "../r1"]) == 4  # a name, never a path

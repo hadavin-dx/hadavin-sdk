@@ -10,8 +10,8 @@ The audit chain in the export is built HERE, at export time, over the events the
 The console can recompute it. It is tamper-evident for the export file only; the audit folder's own check is
 `verify.text` (which is what `askdata audit verify` prints).
 
-Usage: `python -m askdata.export --config askdata.yaml --run <run name>` (a folder under `paths.runs_dir`; writes
-`export.json` inside it).
+Usage: `python -m askdata.export --config askdata.yaml --run <run name>` (a folder under `paths.runs_dir`); the JSON goes to
+stdout, redirect it to `export.json`.
 """
 
 from __future__ import annotations
@@ -272,11 +272,8 @@ def build_export(
     }  # fmt: skip
 
 
-def write_export(path: Path, export: dict[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
-        json.dumps(export, indent=2, ensure_ascii=True) + "\n", encoding="utf-8", newline="\n"
-    )
+def dumps(export: dict[str, Any]) -> str:
+    return json.dumps(export, indent=2, ensure_ascii=True) + chr(10)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -307,11 +304,10 @@ def main(argv: list[str] | None = None) -> int:
             ledger=QueryLedger(cfg.paths.ledger_file), sink=audit_mod.local_dir_sink(cfg.paths.audit_dir), report=report, results=results,
             run_id=args.run, core_commit=args.core_commit, kit_commit=args.kit_commit, ts=utc_stamp(datetime.now(UTC)),
         )  # fmt: skip
-        write_export(run_dir / "export.json", exp)
     except (ConfigError, OSError, ValueError, KeyError) as err:
         sys.stdout.write(f"export: {clean(str(err))}\n")
         return 4
-    sys.stdout.write("wrote export.json\n")
+    sys.stdout.write(dumps(exp))
     return 0
 
 
