@@ -18,7 +18,7 @@ from pathlib import Path
 
 from askdata import audit as audit_mod
 from askdata.config import ConfigError, load_config
-from askdata.htmlexport import render_ledger
+from askdata.htmlexport import render_ledger, write_stdout
 from askdata.ledger import QueryLedger
 from askdata.meter import KillSwitch, Meter, MeterError, fmt_usd
 from askdata.safe_text import clean
@@ -131,7 +131,10 @@ def cmd_export(cfg, fmt: str, include_text: bool, dest: Path | None) -> int:
             + ("" if include_text else " (question and SQL text redacted to sha256 and length)")
         )
     else:
-        sys.stdout.write(clean(text))
+        if fmt == "html":
+            write_stdout(clean(text))
+        else:
+            sys.stdout.write(clean(text))
     return 0
 
 

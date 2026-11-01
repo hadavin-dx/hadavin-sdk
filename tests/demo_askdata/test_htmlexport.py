@@ -79,3 +79,47 @@ def test_eval_report_html(tmp_path, capsys):
 def test_newlines_in_text_are_kept_and_shown():
     page = render_ledger([row(question="a" + chr(10) + "b")], redacted=False)
     assert "a" + chr(10) + "b" in page and "white-space:pre-wrap" in page
+
+
+RUPEE = chr(0x20B9) + chr(0x4E2D)  # not encodable in cp1252
+
+
+def _rep(**kw):
+    rep = {
+        "split": "dev", "label": "x", "verdict_text": "green", "aborted": None,
+        "confident_wrong": {"x": 0, "n_answered": 1}, "upper_error_bound": None,
+        "hard_zeros": {}, "pass_rate": 1.0, "k": 1, "pass_k": 1.0,
+        "adversarial": {"passed": 0, "n": 0, "failed_ids": []}, "cost_usd": "0",
+        "threshold": 0.1, "amber_threshold": 0.2, "coverage": {"answered_correct": 0, "definite_runs": 0},
+        "abstention": {"precision": None, "recall": None}, "mechanics": {},
+        "cost_per_question_usd": "0", "latency_ms": {"p50": 0, "p95": 0}, "sampling": "x",
+    }  # fmt: skip
+    return rep | kw
+
+
+def test_html_to_stdout_is_utf8_even_with_non_cp1252_text(tmp_path, capfdbinary):
+    (tmp_path / "report.json").write_text(json.dumps(_rep(label=RUPEE)), encoding="utf-8")
+    assert evalcli.main(["report", str(tmp_path), "--format", "html"]) == 0
+    assert RUPEE in capfdbinary.readouterr().out.decode("utf-8")
+
+
+def test_report_out_file_is_utf8_and_must_be_inside_cwd(tmp_path, monkeypatch, capsys):
+    (tmp_path / "report.json").write_text(json.dumps(_rep(label=RUPEE)), encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+    for fmt in ("html", "md"):
+        dest = tmp_path / f"r.{fmt}"
+        assert evalcli.main(["report", str(tmp_path), "--format", fmt, "--out", str(dest)]) == 0
+        assert RUPEE in dest.read_bytes().decode("utf-8")
+    outside = tmp_path.parent / "elsewhere.html"
+    assert evalcli.main(["report", str(tmp_path), "--format", "html", "--out", str(outside)]) == 1
+    assert not outside.exists()
+    capsys.readouterr()
+
+
+def test_render_errors_are_not_reported_as_not_a_run_folder(tmp_path, capsys):
+    rep = _rep()
+    del rep["adversarial"]
+    (tmp_path / "report.json").write_text(json.dumps(rep), encoding="utf-8")
+    assert evalcli.main(["report", str(tmp_path), "--format", "html"]) == 4
+    text = capsys.readouterr().out
+    assert "KeyError" in text and "not a run folder" not in text

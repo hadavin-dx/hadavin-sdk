@@ -18,7 +18,7 @@ DISCLAIMER = (
 )
 CONFIDENT_WRONG = (
     "A definite answer with the wrong cause is counted as a Miss, never as Not sure. An answer whose "
-    "citations fail the checks is not re-scored: it keeps its class and is counted separately below."
+    "citations fail the checks is converted to Not sure at replay and counted as an uncited conversion."
 )
 
 

@@ -106,3 +106,12 @@ def render_eval(rep: dict[str, Any]) -> str:
         "transfer to a client database."
     )
     return _page(f"askdata eval: {rep['split']}", note, _table(["Item", "Value"], rows))
+
+
+def write_stdout(text: str) -> None:
+    """The page says utf-8, so write utf-8 bytes whatever the console codec is (cp1252 on Windows)."""
+    import sys
+
+    sys.stdout.flush()
+    sys.stdout.buffer.write(text.encode("utf-8"))
+    sys.stdout.buffer.flush()
