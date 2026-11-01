@@ -49,12 +49,16 @@ def read_records(root: Path) -> list[ReplayRecord]:
     if not path.exists():
         return []
     out = []
-    for i, line in enumerate(path.read_bytes().splitlines(), 1):
+    lines = path.read_bytes().splitlines()
+    last = max((i for i, ln in enumerate(lines, 1) if ln.strip()), default=0)
+    for i, line in enumerate(lines, 1):
         if not line.strip():
             continue
         try:
             data = json.loads(line)
-        except ValueError:
+        except ValueError as exc:
+            if i != last:  # only the final line can be a torn append
+                raise ConfigError(f"{FILE} line {i}: not valid JSON") from exc
             _LOG.warning("%s line %d is not valid JSON (torn append): skipped", FILE, i)
             continue
         try:

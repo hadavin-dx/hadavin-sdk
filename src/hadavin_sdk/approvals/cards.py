@@ -39,7 +39,7 @@ class Delivery:
 
 
 _WOULD_BE = {
-    "class.read_only": "If suggested: would run without approval (read-only)",
+    "class.read_only": "If suggested: would be refused in this release (read-only actions are tools)",
     "class.reversible": "If suggested: needs one approval",
     "scope.agent": "Would be refused: action not allowed for this agent or requester",
     "scope.principal": "Would be refused: action not allowed for this agent or requester",

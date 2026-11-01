@@ -48,6 +48,7 @@ def build(
     channel: Channel | None = None,
     detector: Detector | None = None,
     llm: LLM | None = None,
+    tools: dict[str, Callable[[dict], str]] | None = None,
     clock: Callable[[], datetime] = now,
     timeout_s: float = 10.0,
 ) -> App:
@@ -110,6 +111,7 @@ def build(
         verify=executor.verify if executor else None,
         rollback=executor.rollback if executor else None,
         post_card=post_card,
+        tools=dict(tools or {}),
     )
     runtime = Runtime(
         reg,

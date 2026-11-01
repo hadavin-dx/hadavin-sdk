@@ -16,7 +16,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from hadavin_sdk import deferred
 from hadavin_sdk.actions.contract import ActionContract, schema_problems
-from hadavin_sdk.config import Config, ConfigError, Money, confined
+from hadavin_sdk.config import Config, ConfigError, Money, confined, load_yaml
 from hadavin_sdk.guard.judge import PROMPT_SHA256 as JUDGE_PROMPT_SHA256
 from hadavin_sdk.identity import Principal
 from hadavin_sdk.models import ChainStep, sha256_hex
@@ -153,7 +153,7 @@ class Registry:
 
 
 def _yaml(path) -> object:
-    return yaml.safe_load(path.read_text(encoding="utf-8")) if path.exists() else None
+    return load_yaml(path.read_text(encoding="utf-8")) if path.exists() else None
 
 
 def _by_id(items: list, model: type, where: str) -> dict:
