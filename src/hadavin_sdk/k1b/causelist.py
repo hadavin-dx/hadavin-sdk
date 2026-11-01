@@ -38,7 +38,12 @@ def _load(path: Path, name: str, limit: int) -> tuple[frozenset[str], str]:
     try:
         raw = path.read_bytes()
         data = json.loads(raw.decode("utf-8-sig"))
-    except (OSError, ValueError, RecursionError) as exc:  # missing file, bad UTF-8, bad JSON
+    except (
+        OSError,
+        ValueError,
+        RecursionError,
+        RuntimeError,
+    ) as exc:  # missing file, bad UTF-8, bad JSON
         raise ConfigError(f"cause list: {name} is missing or not valid JSON") from exc
     if not isinstance(data, list) or not all(isinstance(v, str) for v in data):
         raise ConfigError(f"cause list: {name} must be a list of strings")
@@ -57,8 +62,26 @@ def _load(path: Path, name: str, limit: int) -> tuple[frozenset[str], str]:
     return frozenset(values), hashlib.sha256(raw).hexdigest()
 
 
+def _inside(directory: Path, fname: str) -> Path:
+    """Resolve once; the file read later is this resolved path, so a swap after the check cannot redirect it."""
+    try:
+        target = (directory / fname).resolve(strict=True)
+    except (OSError, RuntimeError) as exc:  # missing file, symlink loop, permission
+        raise ConfigError(f"cause list: {fname} is missing or not readable") from exc
+    if not target.is_relative_to(directory) or not target.is_file():
+        raise ConfigError(f"cause list: {fname} must be a file inside the directory")
+    return target
+
+
 def load_cause_list(directory: Path) -> CauseList:
-    directory = Path(directory)
-    services, s_hash = _load(directory / "services.json", "services.json", MAX_SERVICES)
-    faults, f_hash = _load(directory / "fault_types.json", "fault_types.json", MAX_FAULT_TYPES)
+    try:
+        directory = Path(directory).resolve(strict=True)
+    except (OSError, RuntimeError) as exc:
+        raise ConfigError("cause list: directory not found") from exc
+    if not directory.is_dir():
+        raise ConfigError("cause list: directory not found")
+    services, s_hash = _load(_inside(directory, "services.json"), "services.json", MAX_SERVICES)
+    faults, f_hash = _load(
+        _inside(directory, "fault_types.json"), "fault_types.json", MAX_FAULT_TYPES
+    )
     return CauseList(services, faults, s_hash, f_hash)
