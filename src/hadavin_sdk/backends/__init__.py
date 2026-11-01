@@ -51,7 +51,10 @@ def make(
         resolve=bound(provider or FakeSecretProvider({}), settings, label),
         **{k: v for k, v in available.items() if k in ALLOWED[capability]},
     )
-    return getattr(module, func)(settings, deps)
+    built = getattr(module, func)(settings, deps)
+    if capability == "signer" and built is not None:
+        built.key_label = getattr(settings, "key_label", None)
+    return built
 
 
 def hosts(entries: list[tuple[str, KindSettings]]) -> list[str]:

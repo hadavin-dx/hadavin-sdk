@@ -3,6 +3,8 @@ holds across processes. The schema comes from `hadavin-sdk migrate` (`store/migr
 
 Connect pattern ported from WARDEN `audit.py:_pg_connect` (main a1e76cbf): with `iam_auth` and no password in
 the DSN, the login is a 15-minute RDS IAM token and TLS is required.
+
+Neutral protocol: the PostgreSQL wire protocol and SQL (any Postgres: RDS, Cloud SQL, Azure, self-hosted).
 """
 
 from __future__ import annotations

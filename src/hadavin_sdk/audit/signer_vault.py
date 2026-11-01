@@ -6,6 +6,10 @@ it. The signature is plain Ed25519 over the raw message, so it verifies locally 
 
 `key_version` pins one version: `sign` asks for it explicitly, and `public_key()` reads that version's key, so
 checkpoints signed before a `rotate` still verify with the key that signed them.
+
+Neutral protocol: the Vault-compatible Transit HTTP API (HashiCorp Vault, BSL 1.1 from 1.15; OpenBao, MPL-2.0, API-compatible
+with Vault 1.14; both checked live 2026-11-01). OpenBao's Transit also has extras newer than 1.14; this kind uses
+only `sign` and `keys/<name>` for an `ed25519` key. Not run against OpenBao by us yet (kind `unverified`).
 """
 
 from __future__ import annotations

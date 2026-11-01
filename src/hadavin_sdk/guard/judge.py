@@ -7,6 +7,8 @@ prompt (``judge_prompt.md``, its hash is in ``config_hash``), a forced JSON verd
 Verdict and the caller charges it), qualified by its own golden set (``golden_dir/judge.jsonl``, run by the evals
 gate). A tripwire OR-ed with at least one other detector (config refuses a judge alone), never the default: the
 judge reads attacker text, so it can itself be steered, and a "clean" from it never clears anything.
+
+Neutral protocol: none of its own: it runs on whatever llm kind is configured (the `llm` capability).
 """
 
 from __future__ import annotations

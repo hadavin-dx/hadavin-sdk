@@ -248,3 +248,14 @@ def test_version_is_real_and_matches_pyproject():
         "version"
     ]
     assert hadavin_sdk.__version__ == proj != "0.0.0"
+
+
+def test_uv_lock_version_matches_the_package():
+    import re
+    from pathlib import Path
+
+    import hadavin_sdk
+
+    lock = (Path(__file__).resolve().parent.parent / "uv.lock").read_text(encoding="utf-8")
+    m = re.search(r'name = "hadavin-sdk"\s+version = "([^"]+)"', lock)
+    assert m and m.group(1) == hadavin_sdk.__version__

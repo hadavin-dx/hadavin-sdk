@@ -34,10 +34,10 @@ class GcsAnchor:
         signature: str,
         *,
         alg: str | None = None,
-        key_id: str | None = None,
+        key_label: str | None = None,
     ) -> None:
         name = anchors.key(seq)
-        data = anchors.body(seq, head, signature, alg, key_id)
+        data = anchors.body(seq, head, signature, alg, key_label)
         blob = self._bucket.blob(name)
         try:
             blob.upload_from_string(

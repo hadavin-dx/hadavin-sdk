@@ -7,6 +7,10 @@
 The Vault token stays in memory; a 403 (expired token) signs in again once. TLS is always verified (`ca_cert`
 adds a private CA); plain http only to this machine (a dev server). `namespace` sets `X-Vault-Namespace`
 (Vault Enterprise / HCP / OpenBao namespaces). Cache, single-flight and logging rules: `CachedSecrets`.
+
+Neutral protocol: the Vault-compatible KV v2 HTTP API, served by HashiCorp Vault (BSL 1.1 from 1.15; checked 2026-11-01) and by
+OpenBao (MPL-2.0, Linux Foundation; API-compatible with Vault 1.14 by its own statement). Not run against
+OpenBao by us yet: that is why the kind stays `unverified`.
 """
 
 from __future__ import annotations

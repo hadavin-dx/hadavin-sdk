@@ -22,11 +22,32 @@
     for every llm kind: the call runs in a worker thread and, on expiry, the case ends as `timeout` with stop
     reason `call_timeout`, the worst-case cost of that call is charged to `--max-usd`, and the whole run stops
     as `aborted` (exit 1), so at most one abandoned call exists per invocation. The abandoned call is not killed;
-    it can outlive the run (a slow trickle defeats a socket timeout). The per-socket timeout is already
+    it can outlive the run (a slow trickle defeats a socket timeout). Next step, only if a client run ever shows a hung call: run each case in a child process that can be killed. The per-socket timeout is already
     `call_timeout_s` on each llm kind's settings (`backends.llm`). Ctrl-C during a replay now also leaves `FAILED.txt`.
   - `score` audit order changed: `score_report` `started` (intent, before anything is written), the report file,
     then `score_report` `written` and one `score_run` per run (these append like any K1b event: a failed append exits 3 with the report on disk). A report that cannot be written
     leaves `started` then `failed` (with the error class) and no `score_run`; the command exits 3.
+- **Audit and lock-in guard gaps.**
+  - Anchors and checkpoint rows carry a non-secret `key_label` (new optional `key_label` setting on every
+    signer kind; default `pk:` plus a fingerprint of the public key), never the configured `key_id`. An alias and
+    an ARN of one key give one label and no account id reaches the anchor bucket. **Anchor bodies written by
+    the previous build hold `key_id`; the offline verifier accepts them but never compares or prints it (it can be an ARN).** A custom anchor kind must
+    now accept `alg` and `key_label` keywords (one taking `alg`/`key_id` is treated as a legacy 3-argument anchor
+    and warns).
+  - `verify_anchor_bodies(bodies, public_key, names=None, assume_alg=None)`: `names` binds each object name to
+    the seq inside it; `assume_alg` verifies pre-`alg` anchors by signature (a wrong guess fails every
+    signature). The immutable objects are not rewritten.
+  - **Upgrade step: run `hadavin-sdk migrate`** (0004 adds `alg` and `key_label` to `audit_checkpoints`; old rows
+    are NULL, meaning "not recorded": verify then uses the configured signer's scheme). A runtime started before migrating refuses with the "run migrate" hint.
+  - Lock-in guard: the literal scan now also covers bytes constants, constant `+` joins and f-strings (it found
+    `".meta" + ".json"` written to dodge it; that suffix is now a plain literal and the model-id pattern
+    matches `meta.llama` only); every `neutral` kind must show no vendor SDK import (S3 anchor excepted, with
+    `endpoint_url`) and a `Neutral protocol:` line in its module docstring.
+  - Vault licence check, live 2026-11-01: HashiCorp Vault 1.15 and later is BSL 1.1 (change date four years after
+    each release, then MPL-2.0); OpenBao is MPL-2.0 under the Linux Foundation and states API compatibility with
+    Vault 1.14 (Transit has extras of its own). The `vault` and `vault_transit` kinds stay `neutral` because they
+    speak the Vault-compatible HTTP API that OpenBao also serves, but neither has been run against OpenBao by us
+    (they stay `unverified`); the docstrings say so.
 - **Lock-in guard.** `tests/test_lockin_guard.py` fails CI when a vendor SDK is imported outside its kind
   module, a capability lacks a neutral prod kind (`Entry.neutral`) and two prod kinds without a dated
   exception, or core logic names a vendor.

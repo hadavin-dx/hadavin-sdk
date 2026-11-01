@@ -6,6 +6,8 @@ rotated mount is picked up), and one trailing newline is dropped. The path must 
 (symlinks are resolved first, so Kubernetes' `..data` links work). On POSIX a file readable by every user is
 refused, and so is one writable by its group or others: mount with `defaultMode: 0400` (or 0440 with an `fsGroup`),
 not Kubernetes' default 0644. The checks run on the opened file (fstat), so nothing changes between check and read.
+
+Neutral protocol: files in a mounted folder (the Kubernetes, Docker and systemd secret-mount convention).
 """
 
 from __future__ import annotations

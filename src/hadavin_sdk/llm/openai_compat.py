@@ -4,6 +4,8 @@ Ports WARDEN ``OpenAICompatProvider`` (design 4.3). The key goes only to the con
 keyless loopback model; checked in the settings), never through a redirect, and is read on every call (a rotated
 key is picked up). ``output_schema`` is forced through ``tool_choice``; a server that ignores it answers in text,
 read as JSON, with one more request if it is not.
+
+Neutral protocol: the OpenAI-shaped chat completions HTTP API, which OpenAI, Groq, OpenRouter and local servers (Ollama, vLLM) all speak.
 """
 
 from __future__ import annotations

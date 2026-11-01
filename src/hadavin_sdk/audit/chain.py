@@ -17,6 +17,8 @@ Three layers, because each one alone is beatable:
 
 Honest limits: rows after the last checkpoint are chained but not yet signed (`verify` reports the tail). On
 the `memory` store the chain is an in-memory SQLite database and is lost on restart, like the store.
+
+Neutral protocol: SQL in the configured store (Postgres or the in-memory SQLite), signed with whichever signer is set.
 """
 
 from __future__ import annotations
@@ -33,6 +35,7 @@ from dataclasses import dataclass, field
 from datetime import UTC
 from typing import Any
 
+from hadavin_sdk.audit import anchors
 from hadavin_sdk.audit.protocol import AuditUnavailable, DuplicateEvent
 from hadavin_sdk.audit.signer import Alg, Signer, verify_signature
 from hadavin_sdk.errors import ConfigError
@@ -47,7 +50,8 @@ _SQLITE_SCHEMA = """
 CREATE TABLE audit_entries (seq INTEGER PRIMARY KEY, at TEXT NOT NULL, run_id TEXT NOT NULL,
     kind TEXT NOT NULL, body TEXT NOT NULL, prev TEXT NOT NULL, hash TEXT NOT NULL,
     event_id TEXT NOT NULL UNIQUE);
-CREATE TABLE audit_checkpoints (seq INTEGER PRIMARY KEY, hash TEXT NOT NULL, signature TEXT NOT NULL);
+CREATE TABLE audit_checkpoints (seq INTEGER PRIMARY KEY, hash TEXT NOT NULL, signature TEXT NOT NULL,
+    alg TEXT, key_label TEXT);
 CREATE TABLE audit_outbox (event_id TEXT PRIMARY KEY, body TEXT NOT NULL);
 CREATE INDEX audit_entries_by_run ON audit_entries (run_id, seq);
 """ + "".join(
@@ -71,7 +75,15 @@ def _hash(prev: str, seq: int, at: str, run_id: str, kind: str, body: str) -> st
 def _takes_meta(put: Callable) -> bool:
     params = inspect.signature(put).parameters.values()
     names = {p.name for p in params}
-    return any(p.kind is p.VAR_KEYWORD for p in params) or {"alg", "key_id"} <= names
+    return any(p.kind is p.VAR_KEYWORD for p in params) or {"alg", "key_label"} <= names
+
+
+def signer_label(signer: Signer) -> str:
+    """The non-secret name written beside each checkpoint and anchor. The operator's `key_label` setting when
+    set, else a fingerprint of the PUBLIC key: the same key gets the same label whether it was configured by
+    alias, ARN or URL, and the label never holds an account id."""
+    label = getattr(signer, "key_label", None)
+    return label or "pk:" + hashlib.sha256(signer.public_key()).hexdigest()[:16]
 
 
 def _signed_message(seq: int, head: str) -> bytes:
@@ -149,12 +161,12 @@ class ChainAudit:
         checkpoint_every: int = 100,
     ) -> None:
         self._db, self.signer, self.anchor = db, signer, anchor
-        # A custom anchor kind written before alg and key_id existed takes three arguments: it still works (its
+        # A custom anchor kind written before alg and key_label existed takes three arguments: it still works (its
         # objects just lack the two fields) and is logged once, instead of failing every put with a TypeError.
         self._anchor_takes_meta = not hasattr(anchor, "put") or _takes_meta(anchor.put)
         if not self._anchor_takes_meta:
             _LOG.warning(
-                "audit anchor put() takes no alg/key_id: its objects will not verify offline"
+                "audit anchor put() takes no alg/key_label: its objects will not verify offline"
             )
         self.checkpoint_every = checkpoint_every
         # Last resort when even the outbox table cannot be written (the database is down): drained by reconcile.
@@ -296,9 +308,9 @@ class ChainAudit:
                 return seq
             signature = self.signer.sign(_signed_message(seq, head)).hex()
             new = self._db.run(
-                "INSERT INTO audit_checkpoints (seq, hash, signature) VALUES (?, ?, ?) "
-                "ON CONFLICT (seq) DO NOTHING RETURNING seq",
-                (seq, head, signature),
+                "INSERT INTO audit_checkpoints (seq, hash, signature, alg, key_label) "
+                "VALUES (?, ?, ?, ?, ?) ON CONFLICT (seq) DO NOTHING RETURNING seq",
+                (seq, head, signature, self.signer.alg, signer_label(self.signer)),
             )
         except Exception as exc:  # noqa: BLE001 - evidence, not a gate (design 4.8)
             _LOG.error("audit checkpoint not signed (%s); retried next time", type(exc).__name__)
@@ -311,7 +323,7 @@ class ChainAudit:
         try:
             if self._anchor_takes_meta:
                 self.anchor.put(
-                    seq, head, signature, alg=self.signer.alg, key_id=self.signer.key_id
+                    seq, head, signature, alg=self.signer.alg, key_label=signer_label(self.signer)
                 )
             else:
                 self.anchor.put(seq, head, signature)
@@ -332,9 +344,11 @@ class ChainAudit:
         raises: damage or an unreachable store is a finding."""
         try:
             rows = self._db.run(_ALL_ROWS)
-            checkpoints = self._db.run(
-                "SELECT seq, hash, signature FROM audit_checkpoints ORDER BY seq"
+            stored = self._db.run(
+                "SELECT seq, hash, signature, alg FROM audit_checkpoints ORDER BY seq"
             )
+            checkpoints = [row[:3] for row in stored]
+            row_algs = {row[0]: row[3] for row in stored if row[3]}
             public = self.signer.public_key() if self.signer is not None else None
             anchors = self.anchor.all() if self.anchor is not None else None
         except Exception as exc:  # noqa: BLE001
@@ -343,7 +357,7 @@ class ChainAudit:
                 problems=[f"the audit cannot be read ({type(exc).__name__})"], unreadable=True
             )
         alg = self.signer.alg if self.signer is not None else "ed25519"
-        return verify_rows(rows, checkpoints, public, anchors, alg)
+        return verify_rows(rows, checkpoints, public, anchors, alg, row_algs)
 
 
 def verify_rows(
@@ -352,16 +366,18 @@ def verify_rows(
     public_key: bytes | None,
     anchors: dict[int, tuple[str, str]] | None = None,
     alg: Alg = "ed25519",
+    row_algs: dict[int, str] | None = None,
 ) -> Verification:
     """Rows and checkpoints as read from the tables, in seq order. With `anchors`, every checkpoint must also
-    match the copy written out of reach when it was made."""
+    match the copy written out of reach when it was made. `row_algs` is the scheme each checkpoint row recorded
+    (seq -> alg); a row without one (written before 0004, or by an older runtime) is checked with `alg`."""
     result = Verification(rows=len(rows))
     hashes = _check_chain(rows, result.problems)
     if public_key is None:
         if checkpoints:
             result.problems.append("checkpoints exist but no signer is configured to check them")
     else:
-        _check_checkpoints(checkpoints, hashes, public_key, result, alg)
+        _check_checkpoints(checkpoints, hashes, public_key, result, alg, row_algs or {})
     if anchors is not None:
         _check_anchors(checkpoints, anchors, result.problems)
     return result
@@ -400,13 +416,19 @@ def _check_checkpoints(
     public_key: bytes,
     result: Verification,
     alg: Alg = "ed25519",
+    row_algs: dict[int, str] | None = None,
 ) -> None:
     for seq, head, signature in checkpoints:
         try:
             raw = bytes.fromhex(signature)
         except ValueError:
             raw = b""
-        if not verify_signature(public_key, raw, _signed_message(seq, head), alg):
+        if not verify_signature(
+            public_key,
+            raw,
+            _signed_message(seq, head),
+            (row_algs or {}).get(seq, alg),  # type: ignore[arg-type]
+        ):
             result.problems.append(f"checkpoint {seq} has an invalid signature")
             continue
         if hashes.get(seq) != head:
@@ -428,33 +450,65 @@ def _check_anchors(
         problems.append(f"anchor {seq} has no checkpoint here: the database lost history")
 
 
-def verify_anchor_bodies(bodies: list[bytes], public_key: bytes) -> list[str]:
-    """Offline: check the anchor objects alone against a public key. The scheme and key name come from each
-    body (`alg`, `key_id`), so nothing else has to be known; a body without them is a finding."""
+def verify_anchor_bodies(
+    bodies: list[bytes],
+    public_key: bytes,
+    names: list[str] | None = None,
+    assume_alg: Alg | None = None,
+) -> list[str]:
+    """Offline: check the anchor objects alone against a public key. The scheme and key label come from each
+    body (`alg`, `key_label`), so nothing else has to be known. A body from the previous build holds `key_id`
+    (possibly an ARN): it is accepted but never compared or printed, so an upgraded chain with old and new
+    anchors is not a finding and no account id reaches the report.
+
+    `names` (the object names exactly as listed, e.g. `anchors/000000000002.json`, same order as `bodies`): each
+    must be `anchors.key(seq)` for the body's own seq, so an object copied under another name is a finding.
+
+    Legacy anchors (written before `alg` existed) cannot say how they were signed. Upgrade path, no rewrite of
+    the immutable objects: pass `assume_alg` (the scheme of the key that was configured then). The signature
+    check against the public key is then the proof: a wrong guess fails every signature, never passes. Such a
+    body has no label, so the different-keys check skips it."""
     if not bodies:
         return ["no anchor objects given: nothing was verified"]
+    if names is not None and len(names) != len(bodies):
+        return ["names and bodies differ in length: nothing was verified"]
     problems = []
-    key_ids = set()
+    labels = set()
     seqs: set[int] = set()
-    for raw in bodies:
+    for i, raw in enumerate(bodies):
         try:
             a = json.loads(raw)
-            seq, head, alg = a["seq"], a["hash"], a["alg"]
-            key_id = a["key_id"]
-            if type(seq) is not int or seq < 1 or not isinstance(key_id, str) or not key_id:
-                raise TypeError("seq or key_id")
-            key_ids.add(key_id)
+            seq, head = a["seq"], a["hash"]
+            alg = a.get("alg") or assume_alg
+            label = a.get("key_label")
+            if type(seq) is not int or seq < 1 or alg is None:
+                raise TypeError("seq or alg")
+            if label is not None:
+                if not isinstance(label, str) or not label:
+                    raise TypeError("label")
+                labels.add(label)
+            elif (
+                "alg" in a and "key_id" not in a
+            ):  # a current body names its key; a legacy one has `key_id`
+                raise TypeError("label")
             signature = bytes.fromhex(a["signature"])
-        except (ValueError, KeyError, TypeError):
-            problems.append("an anchor body is unreadable or has no alg and key_id")
+        except (ValueError, KeyError, TypeError, AttributeError):
+            problems.append(
+                "an anchor body is unreadable or has no alg and key label "
+                "(a pre-alg anchor: pass assume_alg)"
+            )
             continue
+        if names is not None and names[i] != anchors.key(seq):
+            problems.append(f"anchor object {names[i]!r} holds seq {seq}: the name does not match")
         if seq in seqs:
             problems.append(f"anchor {seq} appears twice")
         seqs.add(seq)
         if not verify_signature(public_key, signature, _signed_message(seq, head), alg):
             problems.append(f"anchor {seq} has an invalid signature")
-    if len(key_ids) > 1:
-        problems.append(f"anchors report {len(key_ids)} different key IDs: {sorted(key_ids)}")
+    if len(labels) > 1:
+        problems.append(
+            f"anchors report {len(labels)} different key labels: {sorted(labels)} (a relabelled or rotated key)"
+        )
     return problems
 
 
@@ -472,7 +526,7 @@ def build(settings, deps) -> ChainAudit:
         # The postgres store's connection and lock (one connection per process; schema from `migrate`).
         db = _Db(store._db, store._lock, pg=True)
         try:
-            db.run("SELECT 1 FROM audit_checkpoints LIMIT 1")
+            db.run("SELECT alg, key_label FROM audit_checkpoints LIMIT 1")
         except Exception as exc:  # noqa: BLE001 - any driver error here means "not migrated or unreachable"
             raise ConfigError(
                 f"audit chain: the audit tables are missing; run hadavin-sdk migrate "
