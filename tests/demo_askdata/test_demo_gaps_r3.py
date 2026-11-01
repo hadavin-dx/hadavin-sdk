@@ -47,7 +47,7 @@ def gate_for(tmp_path: Path, key: bytes | None = None) -> SealedGate:
     ev = tmp_path / "ev"
     ev.mkdir(parents=True, exist_ok=True)
     (ev / "a.jsonl").write_text("x" + chr(10), encoding="utf-8")
-    anchors = [tmp_path / "audit" / "sealed-anchor.json", tmp_path / "committed-anchor.json"]
+    anchors = [tmp_path / "audit" / "sealed-anchor.json", ev / "anchor.json"]
     g = SealedGate(ev, tmp_path / "audit" / "chain.jsonl", tmp_path / "runs", key, anchors)
     g.create(["a.jsonl"])
     return g
