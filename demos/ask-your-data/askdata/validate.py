@@ -205,6 +205,29 @@ def _check_cast(node: exp.Cast) -> None:
         raise Rejected("V07", "cast target is not in the allowed list")
 
 
+def _visible_ctes(node: exp.Expression) -> set[str]:
+    """CTE names a relation reference can see, by position: inside a WITH, only the CTEs defined BEFORE the one
+    containing the reference (itself too if RECURSIVE, which is rejected elsewhere); in the body of a query, every
+    CTE of its own WITH and of the enclosing queries. Anything else resolves to the catalog in Postgres."""
+    names: set[str] = set()
+    child, parent = node, node.parent
+    while parent is not None:
+        if isinstance(parent, exp.With):
+            idx = (
+                parent.expressions.index(child)
+                if child in parent.expressions
+                else len(parent.expressions)
+            )
+            upto = idx + 1 if parent.args.get("recursive") else idx
+            names |= {c.alias.lower() for c in parent.expressions[:upto]}
+        else:
+            with_ = parent.args.get("with_")
+            if with_ is not None and child is not with_:
+                names |= {c.alias.lower() for c in with_.expressions}
+        child, parent = parent, parent.parent
+    return names
+
+
 def _check_table(node: exp.Table, cte_names: set[str]) -> None:
     ident = node.this
     if not isinstance(ident, exp.Identifier):
@@ -213,7 +236,7 @@ def _check_table(node: exp.Table, cte_names: set[str]) -> None:
         raise Rejected("V04", "three-part relation names are not allowed")
     db = node.args.get("db")
     if db is None:
-        if ident.name.lower() not in cte_names:
+        if ident.name.lower() not in _visible_ctes(node):
             raise Rejected("V04", f"relation {ident.name.lower()} is not an exposed view")
     elif db.name.lower() != SCHEMA or ident.name.lower() not in VIEWS:
         raise Rejected(

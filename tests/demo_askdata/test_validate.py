@@ -96,3 +96,17 @@ def test_nothing_but_whitespace_or_comments_may_follow_the_first_semicolon(tail)
         validate("SELECT 1; " + tail)
     assert caught.value.rule == "V01"
     assert validate("SELECT 1; -- done\n /* ok */ ").canonical_sql == "SELECT 1"
+
+
+def test_mutation_cte_visibility_check_is_what_rejects_forward_references(monkeypatch):
+    """Remove the position-aware visibility (every CTE visible everywhere) and the forward reference is accepted."""
+    import askdata.validate as v
+
+    sql = "WITH a AS (SELECT * FROM b), b AS (SELECT 1 AS x) SELECT * FROM a"
+    with pytest.raises(Rejected) as caught:
+        validate(sql)
+    assert caught.value.rule == "V04"
+    monkeypatch.setattr(v, "_visible_ctes", lambda node: {"a", "b"})
+    assert validate(
+        sql
+    ).canonical_sql  # accepted without the visibility logic: the test sees the rule

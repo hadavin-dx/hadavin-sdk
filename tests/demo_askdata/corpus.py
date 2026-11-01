@@ -67,6 +67,22 @@ ATTACKS: list[tuple[str, str, str]] = [
         "WITH pg_roles AS (SELECT * FROM pg_roles) SELECT * FROM pg_roles",
         "V04",
     ),
+    (
+        "cte-forward-ref-catalog",
+        "WITH a AS (SELECT count(*) AS n FROM pg_class), pg_class AS (SELECT 1 AS z) SELECT n FROM a",
+        "V04",
+    ),
+    ("cte-forward-ref", "WITH a AS (SELECT * FROM b), b AS (SELECT 1 AS x) SELECT * FROM a", "V04"),
+    (
+        "cte-sibling-in-subquery",
+        "SELECT * FROM (WITH t AS (SELECT 1 AS x) SELECT x FROM t) s JOIN t ON s.x = t.x",
+        "V04",
+    ),
+    (
+        "cte-nested-shadow-leak",
+        "WITH a AS (WITH pg_class AS (SELECT 1 AS x) SELECT x FROM pg_class) SELECT count(*) FROM pg_class",
+        "V04",
+    ),
     ("cte-self-read", "WITH x AS (SELECT * FROM x) SELECT * FROM x", "V04"),
     ("regex-operator-on-call", "SELECT 1 FROM analytics.orders_v WHERE LOWER(status) ~ 'a'", "V10"),
     (
@@ -80,6 +96,11 @@ ATTACKS: list[tuple[str, str, str]] = [
 
 BENIGN: list[tuple[str, str]] = [
     ("count", "SELECT count(*) FROM analytics.orders_v"),
+    (
+        "cte-later-uses-earlier",
+        "WITH a AS (SELECT customer_id FROM analytics.orders_v), b AS (SELECT customer_id FROM a) SELECT count(*) FROM b",
+    ),
+    ("cte-nested-own-scope", "SELECT * FROM (WITH t AS (SELECT 1 AS x) SELECT x FROM t) s"),
     (
         "group-by",
         "SELECT category, count(*) AS n FROM analytics.products_v GROUP BY 1 ORDER BY n DESC LIMIT 5",
