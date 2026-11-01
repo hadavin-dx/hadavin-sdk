@@ -137,6 +137,9 @@ def _replay(
     stop: str | None = None  # None | "capped" | "aborted"
     runs: list[dict[str, Any]] = []
     extra = {"clock": clock} if clock else {}
+    masked_cache: dict[
+        str, tuple[Bundle, Counter[str]]
+    ] = {}  # masked once per case, reused for every run
     for run_index in range(1, k + 1):
         rdir = out / f"run{run_index}"
         rdir.mkdir()
@@ -148,10 +151,12 @@ def _replay(
         for b in bundles:
             before = budget.spent
             record: dict[str, Any]
+            shown = b
             if stop is None:
-                shown = b
                 if cfg.k1b.redact:  # the map is dropped inside; only the per-class counts come back
-                    shown, counts_by_kind = redact_bundle(b)
+                    if b.case_id not in masked_cache:
+                        masked_cache[b.case_id] = redact_bundle(b)
+                    shown, counts_by_kind = masked_cache[b.case_id]
                     masked += counts_by_kind
                     masked_cases += bool(counts_by_kind)
                 o = loop.run_case(
@@ -188,7 +193,7 @@ def _replay(
                     error_code=name if _NAME_RE.fullmatch(name) else "invalid_name",
                 )
             if diag is not None and not diag.not_sure:
-                bad = bad_citations(diag, b, o.returned_ids)
+                bad = bad_citations(diag, shown, o.returned_ids)
                 if bad:
                     audit.emit(
                         "hard_check_b",

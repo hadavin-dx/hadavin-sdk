@@ -8,8 +8,8 @@ count of distinct values masked per class leaves this module, never a value.
 
 Left unchanged on purpose, so citations and queries still resolve:
 * evidence IDs (``logs/001.jsonl#2``) are built from file names and positions, not from content;
-* file names, and the values of the structural keys in ``STRUCTURAL_KEYS`` (service, kind, name, query,
-  severity, fault type: the vocabulary the Cause List and the model's queries use);
+* file names, and the values of the structural keys in ``STRUCTURAL_KEYS`` (service, kind, fault type,
+  timestamps: the vocabulary the Cause List uses);
 * any string that is exactly a UTC timestamp (``parse_ts``), and every number.
 
 What this does NOT catch (``LIMITS``): the redactor is pattern-based. A name in free text ("Acme asked ..."), an
@@ -28,30 +28,19 @@ from typing import Any
 from hadavin_sdk.guard.redact import redact_many
 from hadavin_sdk.k1b.bundle import Bundle, parse_ts
 
-STRUCTURAL_KEYS = frozenset(
-    {
-        "service",
-        "service_label",
-        "kind",
-        "name",
-        "query",
-        "severity",
-        "fault_type",
-        "ts",
-        "as_of",
-        "id",
-        "file",
-    }
-)
+# Only the Cause List vocabulary and timestamps: everything else (names, queries, labels, severity, ids inside
+# records) is masked. The snapshot and the model both work on the masked copy, so masked names still match.
+STRUCTURAL_KEYS = frozenset({"service", "fault_type", "kind", "ts", "as_of"})
 SCHEME = (
-    "every text value of the alert, metrics, logs, deploys, Kubernetes records and runbooks is masked with the "
-    "studio redactor (pattern based; one placeholder per distinct value, per case) before the model or the "
-    "injection screen sees it"
+    "every text value and every key of the alert, metrics, logs, deploys, Kubernetes records and runbooks is "
+    "masked with the studio redactor (pattern based; one placeholder per distinct value, per case) before the "
+    "model or the injection screen sees it; file names, evidence IDs, timestamps, numbers and the values of the "
+    "service, kind and fault_type keys are kept"
 )
 LIMITS = (
     "The redactor is pattern based. It does not catch names in free text, customer or project names, ticket "
     "numbers, values in unusual formats, or anything no pattern matches, and it does not mask the values of the "
-    "structural keys (service, kind, name, query, severity). Masking is a first filter, not proof that no client "
+    "structural keys (service, kind, fault type). Masking is a first filter, not proof that no client "
     "data reached the model."
 )
 KINDS_NOTE = "Counts are distinct values masked per class (EMAIL, IPV4, ARN, ...), summed over the cases; no values."
@@ -61,11 +50,43 @@ def _kind(placeholder: str) -> str:
     return placeholder.strip("<>").rsplit("_", 1)[0]
 
 
+def _key(k: Any, f: Callable[[str], str]) -> Any:
+    """Dict keys can hold data too ({"bob@example.com": ...}); plain schema words pass the redactor unchanged."""
+    return f(k) if isinstance(k, str) and k not in SCHEMA_WORDS else k
+
+
+# The record and alert field names the tools read; they are never data, so they are not run through the redactor.
+SCHEMA_WORDS = frozenset(
+    {
+        "title",
+        "summary",
+        "severity",
+        "service_label",
+        "fired_by",
+        "labels",
+        "ts",
+        "level",
+        "message",
+        "service",
+        "version",
+        "kind",
+        "name",
+        "as_of",
+        "spec",
+        "events",
+        "reason",
+        "query",
+        "points",
+        "value",
+    }
+)
+
+
 def _walk(obj: Any, f: Callable[[str], str], key: str | None = None) -> Any:
     if isinstance(obj, str):
         return obj if key in STRUCTURAL_KEYS or parse_ts(obj) is not None else f(obj)
     if isinstance(obj, dict):
-        return {k: _walk(v, f, k) for k, v in obj.items()}
+        return {_key(k, f): _walk(v, f, k) for k, v in obj.items()}
     if isinstance(obj, list):
         return [_walk(v, f, key) for v in obj]
     if isinstance(obj, tuple):

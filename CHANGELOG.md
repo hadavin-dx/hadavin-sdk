@@ -20,13 +20,14 @@
   the studio redactor (`guard.redact.redact_many`, one placeholder namespace per case, so one value is one
   placeholder everywhere) before the model or the injection screen sees it. The placeholder map lives in memory
   only: it is never written to the outputs or the audit sink, and never logged. Evidence IDs, file names, the
-  structural keys (service, kind, name, query, severity), timestamps and numbers are left alone, so citations and
-  queries still resolve. New `k1b.redact` (default `true`); `false` is refused unless `replay` gets
+  the values of the `service`, `kind` and `fault_type` keys (the Cause List vocabulary), exact timestamps and numbers
+  are left alone; dict keys are masked too. Names, queries and labels are masked in the snapshot and in what the model
+  sees alike, so citations and queries still resolve. New `k1b.redact` (default `true`); `false` is refused unless `replay` gets
   `--i-know-data-is-already-masked`, and the run records `redaction.mode: off_acknowledged`. `run.json` records the
   scheme and the number of distinct values masked per class (no values); both reports print them. **What the
   redactor does NOT catch:** names in free text, customer or project names, ticket numbers, unusual formats,
   most company or cloud host names (it masks `.local`-style hosts, not `api.client-bank.com` or `*.rds.amazonaws.com`),
-  and the values of the structural keys. It is a strong first filter, not proof that no client data leaves; the
+  and the values of the `service`, `kind` and `fault_type` keys. It is a strong first filter, not proof that no client data leaves; the
   reports say so under "What the numbers cannot say". Re-run `replay` for earlier runs: they sent data unmasked.
 - **K1b-lite: a `not_sure` answer may omit `causes`.** A real Sonnet 5.5 smoke run abstained correctly on a
   no_evidence incident with `{"not_sure": true, "reason": "..."}` and the strict parser called it unreadable (a Miss).

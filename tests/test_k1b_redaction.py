@@ -20,15 +20,29 @@ APIKEY = "sk-ant-api03-" + "abcdefghijklmnopqrstuvwxyz0123456789"
 AWSKEY = "AKIA" + "IOSFODNN7EXAMPLE"
 UUID = "123e4567-e89b-12d3-a456-426614174000"
 PERSON = "Rakesh Sharma"
-SECRETS = [EMAIL, IP, ACCT, ARN, HOST, APIKEY, AWSKEY, UUID, PERSON, "Priya Nair"]
+KEYMAIL = "key.holder@example.com"  # in a dict KEY
+LABELMAIL = "label.owner@example.com"  # in alert.service_label
+NAMEMAIL = "name.holder@example.com"  # in a k8s spec metadata name
+QUERYMAIL = "query.tenant@example.com"  # inside a metric query
+SECRETS = [
+    EMAIL, IP, ACCT, ARN, HOST, APIKEY, AWSKEY, UUID, PERSON, "Priya Nair",
+    KEYMAIL, LABELMAIL, NAMEMAIL, QUERYMAIL,
+]  # fmt: skip
 
 LOG_MSG = f"conn from {IP} to {HOST} by {EMAIL} role {ARN} token {APIKEY} {AWSKEY} req {UUID}"
 PARTS = {
     "alert": {
         "title": f"High latency for Mr. {PERSON}",
         "severity": "page",
+        "service_label": f"payments {LABELMAIL}",
         "summary": f"account {ACCT} reported by {EMAIL}",
-        "labels": {"team": "pay", "owner": f"Dear Priya Nair at {IP}"},
+        "labels": {"team": "pay", "owner": f"Dear Priya Nair at {IP}", KEYMAIL: "x"},
+    },
+    "metrics": {
+        "001": {
+            "query": f"rate(requests{{tenant='{QUERYMAIL}'}}[5m])",
+            "points": [{"ts": "2026-01-01T09:00:00Z", "value": 1}],
+        }
     },
     "logs": {
         "001": [
@@ -46,7 +60,7 @@ PARTS = {
             "kind": "Deployment",
             "name": "api",
             "as_of": "2026-01-01T09:00:00Z",
-            "spec": {"replicas": 3, "env": [{"owner": EMAIL}]},
+            "spec": {"replicas": 3, "env": [{"owner": EMAIL}], "metadata": {"name": NAMEMAIL}},
             "events": [{"ts": "2026-01-01T09:01:00Z", "reason": "Scaled", "message": f"on {HOST}"}],
         }
     },
@@ -63,7 +77,6 @@ SAW_ALL = [
     ("get_deploys", {}),
     ("get_k8s", {}),
     ("get_runbook", {}),
-    ("query_metrics", {"query": "cpu"}),
 ]
 
 
@@ -86,7 +99,7 @@ def test_no_synthetic_secret_reaches_the_model(env):
         assert secret not in sent, secret
     assert "<EMAIL_1>" in sent and "<IPV4_1>" in sent  # the model sees stable placeholders
     # the same value is the same placeholder in the alert, a log, a k8s record and the runbook
-    assert sent.count("<EMAIL_1>") >= 4
+    assert sent.count("<IPV4_1>") >= 3  # one value, one placeholder, in alert and logs
 
 
 def test_evidence_ids_and_structure_are_unchanged_and_citations_verify(env):
@@ -116,11 +129,11 @@ def test_run_json_and_report_state_scheme_counts_and_limits(env):
     assert red["mode"] == "on" and red["cases_with_masking"] == 1
     counts = red["distinct_values_masked"]
     assert (
-        counts["EMAIL"] == 1 and counts["IPV4"] >= 1 and counts["ARN"] == 1 and counts["UUID"] == 1
+        counts["EMAIL"] == 5 and counts["IPV4"] >= 1 and counts["ARN"] == 1 and counts["UUID"] == 1
     )
     assert all(isinstance(v, int) for v in counts.values())
     report = (env.out / "replay-report.md").read_text(encoding="utf-8")
-    assert "## Redaction" in report and "EMAIL 1" in report and LIMITS in report
+    assert "## Redaction" in report and "EMAIL 5" in report and LIMITS in report
     assert "What the numbers cannot say" in report and "free text" in report
 
 
@@ -134,7 +147,7 @@ def test_timestamps_and_structural_values_survive(env):
     assert {r["service"] for _, rs in masked.logs for r in rs} == {"api", "db"}
     assert masked.k8s[0][1]["name"] == "api" and masked.ids == bundle.ids
     assert masked.logs[0][0] == bundle.logs[0][0]  # file names stay
-    assert {"service", "kind", "name", "query"} <= STRUCTURAL_KEYS
+    assert STRUCTURAL_KEYS == {"service", "fault_type", "kind", "ts", "as_of"}
 
 
 def test_redaction_off_needs_the_acknowledgement_and_is_recorded(env):
@@ -160,9 +173,57 @@ def test_tool_reply_for_a_masked_value_matches_nothing_in_the_original(env):
     """Queries run against the masked copy, so a query using a placeholder finds the masked line."""
     llm = ScriptedLLM(
         [
-            tool_reply("query_logs", contains="<EMAIL_1>"),
+            tool_reply("query_logs", contains="<IPV4_1>"),
             submit("api", "bad_deploy", "logs/001.jsonl#0"),
         ]
     )
     env.run(llm)
     assert "logs/001.jsonl#0" in env.case()["returned_ids"]
+
+
+def test_a_masked_metric_query_still_resolves_through_list_data(env):
+    def query_from_list(msgs):
+        listed = json.loads(msgs[-1]["content"].split(": ", 1)[1])
+        return tool_reply("query_metrics", query=listed["metrics"][0]["query"])
+
+    llm = ScriptedLLM(
+        [
+            tool_reply("list_data"),
+            query_from_list,
+            submit("api", "bad_deploy", "metrics/001.json#0"),
+        ]
+    )
+    env.run(llm)
+    assert "metrics/001.json#0" in env.case()["returned_ids"] and "converted" not in env.case()
+    assert QUERYMAIL not in _everything_sent(llm)
+
+
+NLJOIN = chr(10)
+
+
+def test_score_report_states_redaction_on_and_off(env, tmp_path):
+    from hadavin_sdk.k1b.report import redaction_lines
+
+    env.run(ScriptedLLM([submit("api", "bad_deploy", "logs/001.jsonl#0")]))
+    meta = json.loads((env.out / "run1" / "run.json").read_text(encoding="utf-8"))
+    on = NLJOIN.join(redaction_lines(meta))
+    assert "Scheme:" in on and "What the numbers cannot say" in on
+    off = NLJOIN.join(redaction_lines({"redaction": {"mode": "off_acknowledged"}}))
+    assert "Redaction was OFF" in off and "predates" not in off
+    assert "predates" in NLJOIN.join(redaction_lines({}))
+
+
+def test_score_carries_redaction_into_its_meta_and_refuses_mixed_modes(tmp_path, cfg_dir):
+    from hadavin_sdk.k1b.score import score
+    from tests.k1b_support import dry_run_export
+
+    ex = dry_run_export(tmp_path, cfg_dir)
+    from hadavin_sdk import cli
+
+    argv = ["--config", str(cfg_dir), "replay", "test-agent", "--bundles", str(ex["bundles"]),
+            "--cause-list", str(ex["cause"]), "--max-usd", "5", "--out", str(ex["out"]), "--k", "1"]  # fmt: skip
+    assert cli.main(argv) == 0
+    res = score(ex["out"], ex["answers"], ex["cause"], ex["bundles"])
+    assert res.meta["redaction"]["mode"] == "on"
+    report = __import__("hadavin_sdk.k1b.report", fromlist=["x"]).render_score_report(res)
+    assert "## Redaction" in report and "predates" not in report
