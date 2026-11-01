@@ -57,6 +57,9 @@ class Database(_Strict):
 
     # read through the secrets kind; None: the ASKDATA_DSN environment variable; an empty string is refused
     dsn_secret_name: str | None = Field(None, min_length=1)
+    # the second scoring database and the clean twin (eval only), through the same secrets kind
+    dsn_secret_name_b: str | None = Field(None, min_length=1)
+    dsn_secret_name_clean: str | None = Field(None, min_length=1)
     statement_timeout_s: float = Field(10.0, gt=0, le=300)
     max_rows: int = Field(1000, gt=0)
     max_bytes: int = Field(1_000_000, gt=0)
@@ -78,6 +81,8 @@ class AskdataConfig(_Strict):
     store_question: bool = True
     live: bool = True  # a paid route needs a fresh external_usd; the fake route never spends
     database: Database = Database()
+    # HMAC key (from the `secrets` kind) for the sealed-run chain and lock.json's seal; None: unkeyed, see sealed.py
+    sealed_key_secret_name: str | None = Field(None, min_length=1)
     # Core backend entries (`{kind: ..., ...}`), validated by `live.py` against the core table; never a secret value.
     secrets: dict[str, Any] | None = (
         None  # None: no provider; the DSN then comes from the environment only

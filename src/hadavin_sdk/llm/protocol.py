@@ -10,6 +10,8 @@ from hadavin_sdk.models import Reply
 class ProviderError(RuntimeError):
     """The provider refused the request (a bad key, a malformed request): retrying would fail the same way."""
 
+    attempts = 1  # requests sent before this was raised (`llm/retry.py` sets it); a meter must not assume 0
+
 
 class ProviderExhausted(ProviderError):
     """The provider throttled or failed after its retries."""

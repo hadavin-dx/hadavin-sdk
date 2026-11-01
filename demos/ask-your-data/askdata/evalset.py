@@ -13,7 +13,7 @@ import json
 import os
 import time
 import uuid
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from decimal import Decimal
 from pathlib import Path
 from typing import Annotated, Literal
@@ -134,11 +134,19 @@ class Lock(_Strict):
     sealed_min_remaining_usd: Decimal = Decimal("3.00")  # the FIRST sealed run
     second_look_min_remaining_usd: Decimal = Decimal("1.80")  # a --second-look run (A-03)
     last_test_status: Literal["none", "complete", "aborted"] = "none"
-    # Set by a finished `eval run --split dev --live --smoke`; a sealed --live run needs it.
-    smoke_passed: bool = False
-    # Written BY HAND into lock.json by the owner after a defect in OUR harness or data is proved; one second look
-    # with --second-look harness_defect consumes it.
+    # "<config_hash>:<model_id>" of the last finished `eval run --split dev --live --smoke`; a sealed --live run needs
+    # the SAME key (a changed prompt, config or model needs a new smoke run).
+    smoke_key: str | None = None
+    # Written BY HAND into lock.json after a defect in OUR harness or data is proved. It names the run folder the defect
+    # was seen in and the gold/adversarial item id, and it is consumed by one `--second-look harness_defect`.
     harness_defect_reason: str | None = None
+    harness_defect_run: str | None = None
+    harness_defect_item: str | None = None
+    # Mirrors of the sealed-run chain (sealed.py): the chain's last `sha`, and an HMAC over test_runs, smoke_key and
+    # chain_head when a key is configured. `load()` replays the chain over them after a crash.
+    chain_head: str | None = None
+    seal: str | None = None
+    max_second_looks: int = 2  # sealed runs allowed beyond the first, however they are justified
     second_look_allowed_for: list[Literal["aborted", "harness_defect"]] = [
         "aborted",
         "harness_defect",
@@ -163,7 +171,15 @@ def read_lock(eval_dir: Path) -> Lock:
 def write_lock(eval_dir: Path, lock: Lock) -> None:
     path = lock_path(eval_dir)
     tmp = _write_tmp(path, lock)
-    os.replace(tmp, path)
+    for attempt in range(5):  # Windows refuses a replace while a reader holds the file open
+        try:
+            os.replace(tmp, path)
+            return
+        except PermissionError:
+            if attempt == 4:
+                tmp.unlink(missing_ok=True)
+                raise
+            time.sleep(0.05)
 
 
 def _write_tmp(path: Path, lock: Lock) -> Path:
@@ -200,6 +216,7 @@ def freeze(
     thresholds: Thresholds | None = None,
     *,
     no_clobber: bool = False,
+    seal: Callable[[Lock], Lock] | None = None,
 ) -> Lock:
     """Create lock.json from the current files (the freeze step; run once, before the dev set is frozen for use).
     `no_clobber`: write a temp file, then `os.link` it to lock.json, which fails if lock.json exists, so a crash never
@@ -208,6 +225,8 @@ def freeze(
         files={n: sha256_file(Path(eval_dir) / n) for n in names},
         thresholds=thresholds or Thresholds(),
     )
+    if seal:
+        lock = seal(lock)
     if not no_clobber:
         write_lock(eval_dir, lock)
         return lock

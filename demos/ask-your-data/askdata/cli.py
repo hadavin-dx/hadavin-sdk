@@ -23,6 +23,7 @@ from askdata.policy import (
     EXIT_ABSTAINED,
     EXIT_FAILED,
     EXIT_OK,
+    EXIT_REFUSED,
     EXIT_STARTUP,
     EXIT_USAGE,
 )
@@ -106,7 +107,8 @@ def cmd_ask(source: PgSource, sql: str, *, who: str, question: str | None = None
         ok = validate(sql)
     except Rejected as err:
         out(f"rejected {err.rule}: {err.detail}  (nothing was sent to the database)")
-        return 3
+        # a write attempt is a refusal, exactly as the pipeline reports it (reason write_request, exit 2)
+        return EXIT_REFUSED if err.rule == "V03" else EXIT_FAILED
     out(f"canonical: {ok.canonical_sql}")
     out(f"sha256   : {ok.sha256}")
     try:

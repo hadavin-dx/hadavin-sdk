@@ -50,14 +50,25 @@ two refusals. Without `--setup` it only runs the story. Other commands: `verify-
 `ask "<question>"` (the scripted model knows five questions; `ask` alone lists them), `setup`.
 `ask` first runs the read-only checks and refuses to start (exit 4) when one is red.
 
-**Exit codes: one table for every command (`askdata/policy.py` is the source; `eval run` has its own 10 to 14 band below).**
-0 ok / answered; 1 usage (a bad command line or `ask` with no question; argparse's own exit 2 is mapped to 1); 2 refused (the tool will not do that); 3 failed (the validator rejected the SQL, the database
-failed the statement, the SQL hash did not match, the model gave no usable answer, a read-only check is red (in
-`verify-readonly`, in `ask`, in `demo` and in the DBA script alike), or `audit verify` found a problem; `setup` passes the
-exit 3 of `roles.sql` through);
-4 startup (no DSN or config, cannot connect, cannot run the checks, or the server refused the login, SQLSTATE 28xxx);
-5 audit unavailable; 6 spending limit or kill switch; 7 abstained (the data does not answer the question, or the
-scripted model has no answer). Exit 5 used to mean "database failed" in `ask`; that is now 3.
+**Exit codes: one table for every command (`askdata/policy.py` is the source; `eval run` adds the 10 to 14 band below).**
+`test_every_documented_exit_code_is_produced_by_cli_main` drives each of these through `cli.main`.
+
+| Code | Meaning |
+|---|---|
+| 0 | ok / answered |
+| 1 | usage: a bad command line, or `ask` with no question (argparse's own exit 2 is mapped to 1) |
+| 2 | refused: the tool will not do that. A write the validator rejects (rule V03) is 2 in `ask` AND in the pipeline (reason `write_request`), exactly as a model that declines a write |
+| 3 | failed: any other validator rejection, the database failed the statement, the SQL hash did not match, no usable model answer, a read-only check is red (`verify-readonly`, `ask`, `demo` and the DBA script alike), `audit verify` found a problem; `setup` passes the exit 3 of `roles.sql` through |
+| 4 | startup: no DSN or config, cannot connect, cannot run the checks, or the server refused the login (SQLSTATE 28xxx) |
+| 5 | audit unavailable (also `eval run --split test`: the sealed run could not be recorded) |
+| 6 | spending limit or kill switch: the pipeline's per-question code (`Answer.exit_code`, tested in `test_exit_6_...`); no CLI command returns it today because `ask` uses the offline scripted model |
+| 7 | abstained: the data does not answer the question, or the scripted model has no answer |
+
+`eval run` exits: 0 green, 10 amber, 11 not demonstrated, 12 a hard zero breached, 13 aborted (meter, kill switch or a
+smoke limit), 14 refused (budget, `--k`, smoke, counter or chain mismatch, a stale open reservation, second-look rules),
+5 the sealed run could not be recorded, 4 startup or a harness defect found mid-run (a gold query that does not run),
+1 usage. `eval freeze`: 0 or 4 (a file missing, a lock already there, or a file system without hard links).
+`eval reconcile`: 0 or 14.
 
 `roles.sql` runs `REVOKE ... FROM PUBLIC`, which changes access for every login in that database: use a dedicated
 database or a replica, never a shared production database. It runs `db/preflight_roles.sql` first and stops if
@@ -72,7 +83,7 @@ other logins would lose access (`--accept-loss` to override).
   `db/lumen_manifest.json` holds row counts and per-table SHA-256 for all three; `python db/lumen.py --write-manifest` rewrites it.
 - **Pipeline** (`askdata/pipeline.py`): gates, generate, validate, audit intent, execute, ledger. Prompt layout, retry policy by
   validator rule and SQLSTATE, and reason codes are in `llm_io.py` and `policy.py`. The agreement check is not built.
-- **Ledger** (`askdata/ledger.py`): one JSON line per question, append-only, fsync. **Audit** (`askdata/audit.py`): one intent event per
+- **Ledger** (`askdata/ledger.py`): one JSON line per question, append-only by convention (the file system does not enforce it), fsync. **Audit** (`askdata/audit.py`): one intent event per
   execution, one outcome event per question; `audit verify` prints "local integrity check: N of N events and M of M ledger lines
   match" and never claims more. Commands (give `--config askdata.yaml` or set `ASKDATA_CONFIG`; the config shape is
   `askdata/config.py`): `audit list|show <id>|verify|export --format json|csv [--include-text]`, `meter [--set-external USD]`,
@@ -91,11 +102,22 @@ other logins would lose access (`--accept-loss` to override).
   detector scores only 0.0 or 1.0, so **the threshold is inert**: every value from above 0 to 1.0 flags exactly the same
   questions (0.00 would flag everything). The sweep
   (`test_demo_gaps.py::test_injection_threshold_sweep_picks_the_lowest_with_no_false_positive`) shows 0 false positives
-  over the 70 gold, 30 adversarial and 12 dev-adversarial questions (112), none of which is injection phrasing, so it
-  proves nothing about recall. Recall is measured separately
-  (`test_injection_recall_at_the_shipped_threshold_is_measured_not_assumed`): 10 of 10 listed injection phrasings are caught and
-  0 of 5 evasions (a misspelling, a paraphrase, a German sentence) are, so 10 of 15 on that small set. The detector is a
-  tripwire only; the validator and the read-only login are what stop a bad query.
+  over the 70 gold, 30 adversarial and 12 dev-adversarial questions (112), none of which is injection phrasing. **No recall
+  number is claimed.** `test_the_regex_catches_its_listed_phrasings_and_misses_known_evasions` pins ten phrasings the
+  regex catches ("Ignore all previous instructions ...", "Please disregard the rules above ...", "Forget everything ...",
+  "Print your system prompt", "You are now ...", "New instructions: ...", "Act as ...", "Pretend as ...", "Override the
+  safety rules ...", "i g n o r e previous instructions") and five it is known to miss (a paraphrase, a misspelling with
+  digits, a German sentence); those five were chosen because they evade it, so they are a list of limits, not a measurement
+  of recall on real traffic. The detector is a tripwire only; the validator and the read-only login are what stop a bad query.
+
+## Which guards live in plain files, and what each really stops
+
+| Guard | Where | Stops | Does not stop |
+|---|---|---|---|
+| Sealed-run counter | `lock.json` + `sealed-chain.jsonl` (see runbook step 5) | accidents, single-file edits, crashes (replayed); with the HMAC key also a forged or re-hashed chain | a restore of an older consistent pair; with no key, a writer of both files (git history only) |
+| Spend meter | one JSON file outside the repo | an overrun by this program, a crash (open records) | an operator editing the file. The real cap is the spending limit set at the model provider's console; this file is the early warning |
+| Kill switch | a flag file | the pipeline, within one question | deleting the file: it is an operations flag, not a security control. Switching it is audited, a manual file edit is not |
+| Query ledger and audit events | files under `work/` | accidental damage and edits that touch one file (`audit verify` says exactly this) | someone who can write both; there is no signature here. For a client, use the core `chain` audit kind (append-only table, signed checkpoints, anchors) |
 
 ## Operator runbook (in this order)
 
@@ -111,22 +133,46 @@ other logins would lose access (`--accept-loss` to override).
    `Meter.create(path, total_cap="10.00", reserve="1.00", demo_cap="8.00")` and refuses to overwrite an existing file).
 4. Type in what the other program spent, from the provider console: `... meter --set-external <USD>` (this writes
    `external_usd` and its timestamp; a live step is refused while the entry is older than 24 hours).
-5. Finish the prompt and the dev work. Then `... eval freeze` ONCE: it hashes the four set files, writes `eval/lock.json`
-   with the thresholds (10 % / 15 %) and `test_runs` 0, and never overwrites an existing lock (it writes a temp file and
-   links it into place, so a crash leaves no empty lock). **Commit `lock.json` to git** (it is not ignored): git history is
-   the first guard on the sealed counter and the frozen hashes. The second guard is the hash-chained audit folder: every
-   sealed run writes a `sealed_run` event BEFORE the counter moves, and a sealed run is refused when the audit folder and
-   `test_runs` disagree, so editing the counter, or deleting and re-freezing the lock, does not reset it silently. Nothing
-   in the frozen files or the thresholds changes after this, and no sealed run happens before it. A `--second-look
-   harness_defect` needs the proved defect written BY HAND into `lock.json` (`harness_defect_reason`), and consumes it;
-   `--second-look aborted` needs the last sealed run to have aborted. Concurrent `eval run --split test` processes are
-   serialised by an OS lock on `lock.json.lock`; the second is refused.
+5. Finish the prompt and the dev work. Then `... eval freeze` ONCE: it hashes the four set files and writes `eval/lock.json`
+   with the thresholds (10 % / 15 %) and `test_runs` 0. It never overwrites an existing lock (a temp file is linked into
+   place, so a crash leaves no empty lock; a file system without hard links gives exit 4). Nothing in the frozen files or
+   the thresholds changes after this, and no sealed run happens before it.
+
+   **How the sealed counter is protected, and what it does not stop** (`askdata/sealed.py`). The counter is not trusted
+   from `lock.json` alone. Every sealed run, smoke pass and recovery is first appended to a hash chain,
+   `<audit_dir>/sealed-chain.jsonl`, and only then mirrored into `lock.json` (write-ahead). If the process dies between the
+   two, the next command replays the chain over `lock.json` and logs a `reconcile` entry (`eval reconcile` does the same on
+   demand). The status of the last sealed run is derived from the chain and from the run folder (`report.json`), never from
+   a flag written before the work, so a killed process cannot leave "aborted" standing over results that exist.
+   A sealed run is refused when `lock.json` and the chain disagree (a hand edit, or a lock deleted and re-made, does not
+   reset the counter). Concurrent runs are serialised by an OS lock on `lock.json.lock`.
+
+   * **With a key** (`sealed_key_secret_name` in the config, read from the `secrets` kind: HMAC-SHA256 chain and an HMAC
+     `seal` over `test_runs`, the smoke key and the chain head): someone without the key cannot forge or re-hash a chain
+     line, and cannot make `lock.json` pass its seal after editing it. Set the key BEFORE the first sealed run.
+   * **Without a key** (the default; `freeze` says "NOT keyed"): the chain is plain SHA-256, anyone who can write the
+     audit folder can recompute it, and a writer of BOTH files can reset the counter. The counter is then
+     tamper-resistant only by git history: **commit `lock.json` after every sealed run** (it is not ignored) and compare.
+   * **Even with a key**, putting back an older, consistent pair of `lock.json` and chain (a restore from backup) shows an
+     older state. Only git history of `lock.json` and an off-machine copy of the chain's last `sha` can tell.
+   * The chain lives on the same disk as the code that checks it; it is a tamper-EVIDENCE record, not a safe.
+
+   A `--second-look harness_defect` needs the proved defect written BY HAND into `lock.json`: `harness_defect_reason`
+   (10+ characters), `harness_defect_run` (an existing run folder) and `harness_defect_item` (an id in the frozen test
+   files); one defect buys one second look. `--second-look aborted` needs the last sealed run to have aborted with no
+   results written. At most `max_second_looks` (2) second looks exist in total.
 6. Dev runs: `... eval run --split dev [--k 3]`. A live smoke (needs the owner's yes and a fresh `external_usd`):
-   `... eval run --split dev --live --smoke`; once at least 5 questions are done it aborts (exit 13) when the cost per
-   question is more than US$0.035 or more than 10 % of the model attempts are schema violations. A finished smoke run sets
-   `smoke_passed` in `lock.json`; `eval run --split test --live` is refused without it. Then one sealed run:
-   `... eval run --split test`. The meter reserves the worst case of EVERY request one model call may send (the llm
-   kind's `max_attempts`, 3 by default) and settles the real cost of the reply.
+   `... eval run --split dev --live --smoke`. One question costing more than US$0.35 aborts it at once; from 5 questions on
+   it aborts (exit 13) when the cost per question is more than US$0.035 or more than 10 % of the model attempts are
+   schema violations. A finished smoke run is recorded (chain entry `smoke_pass`, key = config hash plus model id);
+   `eval run --split test --live` is refused unless the CURRENT config and model match the last smoke pass. Then one
+   sealed run: `... eval run --split test`.
+7. Spend. The meter is a two-phase reserve/settle: `reserve` books the worst case of EVERY request one model call may send
+   (the llm kind's `max_attempts`, 3 by default; the prompt AND the forced tool schema are counted) and records an `open`
+   reservation; `settle` charges what was really spent (the reply's cost plus one worst case for each earlier request that
+   was sent, `meter.call_cost`) and closes it. A process that dies in between leaves the worst case booked and an open
+   record: `meter` shows it, a live run refuses to start while one is older than 10 minutes, and after reading the provider
+   console you clear it with `... meter --clear-open`.
 
 ## 90-second recording script (owner records; async-first)
 

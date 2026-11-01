@@ -27,6 +27,7 @@ DSN_ENV = "ASKDATA_DSN"
 # Smoke abort rule (amendments A-03, step 1): checked after every question of a live smoke run.
 SMOKE_MAX_COST_PER_QUESTION = Decimal("0.035")
 SMOKE_MAX_SCHEMA_VIOLATION_RATE = Decimal("0.10")
+SMOKE_HARD_CAP_PER_QUESTION = Decimal("0.35")  # one question above this aborts from the first call
 SMOKE_MIN_QUESTIONS = 5  # neither rule fires on fewer questions: one early outlier is not a trend
 
 
@@ -51,23 +52,34 @@ def make_provider(cfg: AskdataConfig) -> SecretProvider | None:
         raise ConfigError(f"secrets: {err}") from None
 
 
+DSN_VARS = {"a": "ASKDATA_DSN", "b": "ASKDATA_DSN_B", "clean": "ASKDATA_DSN_CLEAN"}
+_SECRET_FIELDS = {
+    "a": "dsn_secret_name",
+    "b": "dsn_secret_name_b",
+    "clean": "dsn_secret_name_clean",
+}
+
+
 def resolve_dsn(
     cfg: AskdataConfig | None,
     provider: SecretProvider | None = None,
     environ: Mapping[str, str] = os.environ,
+    which: str = "a",
 ) -> str | None:
-    """`provider.get(dsn_secret_name)` when the config names a secret; otherwise (documented fallback) the
-    ASKDATA_DSN environment variable. A named secret that cannot be read is an error, never a silent fallback."""
-    name = cfg.database.dsn_secret_name if cfg else None
+    """`provider.get(<secret name>)` when the config names a secret for database `which` ("a", "b" or "clean");
+    otherwise (documented fallback) that database's environment variable (ASKDATA_DSN, ASKDATA_DSN_B,
+    ASKDATA_DSN_CLEAN). A named secret that cannot be read is an error, never a silent fallback."""
+    field = _SECRET_FIELDS[which]
+    name = getattr(cfg.database, field) if cfg else None
     if not name:
-        return environ.get(DSN_ENV) or None
+        return environ.get(DSN_VARS[which]) or None
     provider = provider or (make_provider(cfg) if cfg else None)
     if provider is None:
-        raise ConfigError("database.dsn_secret_name is set but the config has no `secrets` entry")
+        raise ConfigError(f"database.{field} is set but the config has no `secrets` entry")
     try:
         return provider.get(name)
     except Exception:  # noqa: BLE001 - any provider failure is a startup failure; the message may name the secret path
-        raise ConfigError("the database DSN secret cannot be read") from None
+        raise ConfigError(f"the DSN secret database.{field} cannot be read") from None
 
 
 def source_args(
@@ -97,11 +109,19 @@ def make_llm(cfg: AskdataConfig, provider: SecretProvider | None = None) -> LLM:
 
 
 def smoke_breach(
-    spent: Decimal, questions: int, attempts: int, schema_violations: int
+    spent: Decimal,
+    questions: int,
+    attempts: int,
+    schema_violations: int,
+    last_cost: Decimal = Decimal(0),
 ) -> str | None:
-    """The abort reason once the smoke run is over the line, else None. Both rules wait for SMOKE_MIN_QUESTIONS (5)
-    questions; then: cost per question above US$0.035 (strictly more), or more than 10 % of the model attempts
-    returning an unusable (schema-violating) answer."""
+    """The abort reason once the smoke run is over the line, else None.
+
+    From question 1: a single question that cost more than SMOKE_HARD_CAP_PER_QUESTION (10x the line) aborts at once.
+    From SMOKE_MIN_QUESTIONS (5) questions on: cost per question above US$0.035 (strictly more), or more than 10 % of the
+    model attempts returning an unusable (schema-violating) answer."""
+    if last_cost > SMOKE_HARD_CAP_PER_QUESTION:
+        return "smoke_cost"
     if questions < SMOKE_MIN_QUESTIONS:
         return None
     if spent / questions > SMOKE_MAX_COST_PER_QUESTION:

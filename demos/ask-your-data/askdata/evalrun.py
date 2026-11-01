@@ -279,7 +279,11 @@ class Harness:
                 self.aborted = ans.reason
             elif self.cfg.smoke:
                 self.aborted = smoke_breach(
-                    self.spent, self._asked, self._attempts, self._violations
+                    self.spent,
+                    self._asked,
+                    self._attempts,
+                    self._violations,
+                    Decimal(ans.line.cost_usd),
                 )
         return ans
 
@@ -475,13 +479,15 @@ def sealed_gate(
     split: str,
     second_look: str | None,
     live: bool = False,
+    smoke_key: str | None = None,
 ) -> None:
     """Refuse a sealed (test) run that is not allowed. Raises `LockError`; the caller prints the reason."""
     if split != "test":
         return
-    if live and not lock.smoke_passed:
+    if live and (lock.smoke_key is None or lock.smoke_key != smoke_key):
         raise LockError(
-            "a sealed --live run needs a finished smoke run first (eval run --split dev --live --smoke)"
+            "a sealed --live run needs a finished smoke run of THIS config and model first "
+            "(eval run --split dev --live --smoke)"
         )
     floor = (
         lock.second_look_min_remaining_usd if lock.test_runs >= 1 else lock.sealed_min_remaining_usd
@@ -493,13 +499,22 @@ def sealed_gate(
             raise LockError(
                 "the sealed set tolerates one invocation; a second needs --second-look aborted|harness_defect"
             )
+        if lock.test_runs - 1 >= lock.max_second_looks:
+            raise LockError(
+                f"the sealed set allows {lock.max_second_looks} second looks and they are used"
+            )
         if second_look not in lock.second_look_allowed_for:
             raise LockError(f"--second-look must be one of {lock.second_look_allowed_for}")
         if second_look == "aborted" and lock.last_test_status != "aborted":
             raise LockError("--second-look aborted: the last sealed run did not abort")
-        if second_look == "harness_defect" and not (lock.harness_defect_reason or "").strip():
+        if second_look == "harness_defect" and not (
+            len((lock.harness_defect_reason or "").strip()) >= 10
+            and lock.harness_defect_run
+            and lock.harness_defect_item
+        ):
             raise LockError(
-                "--second-look harness_defect: write the proved defect into lock.json (harness_defect_reason) first"
+                "--second-look harness_defect: write the proved defect into lock.json first: "
+                "harness_defect_reason (10+ characters), harness_defect_run (the run folder) and harness_defect_item"
             )
 
 
