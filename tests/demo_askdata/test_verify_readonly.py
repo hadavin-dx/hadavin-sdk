@@ -10,7 +10,7 @@ from askdata.allowed import VIEWS
 from askdata.pgsource import PgError, PgSource
 from psycopg.conninfo import make_conninfo
 
-from .conftest import DEMO, load_script
+from .conftest import DEMO, _need, load_script
 
 SCRIPT = DEMO / "trust" / "verify_readonly.psql"
 
@@ -96,6 +96,8 @@ GRANTS = [
     "EXECUTE ON FUNCTION scratch.fn()",
     "EXECUTE ON FUNCTION pg_read_file(text)",
     "EXECUTE ON FUNCTION pg_ls_dir(text)",
+    "EXECUTE ON FUNCTION lo_import(text)",
+    "EXECUTE ON FUNCTION lo_export(oid, text)",
 ]
 
 
@@ -121,7 +123,7 @@ def test_file_and_network_extension_turns_the_script_red(make_db):
     env = make_db()  # its own database: the extension must not leak into the shared one
     with env.admin() as c:
         if not c.execute("SELECT 1 FROM pg_available_extensions WHERE name = 'dblink'").fetchone():
-            pytest.skip("the dblink extension is not available on this server")
+            _need("the dblink extension is not available on this server")
         c.execute("CREATE EXTENSION dblink")
     red = [r.check for r in PgSource(env.ro_dsn).verify_readonly() if not r.ok]
     assert any("extensions installed" in r for r in red), red

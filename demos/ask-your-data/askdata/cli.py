@@ -239,6 +239,8 @@ def main(argv: list[str] | None = None) -> int:
     if args.cmd == "verify-readonly":
         return cmd_verify(source)
     if args.cmd == "demo":
+        if code := gate(source):
+            return code
         return cmd_demo(source, ScriptedModel())
     if code := gate(source):
         return code
