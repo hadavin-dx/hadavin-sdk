@@ -27,14 +27,11 @@ from hadavin_sdk.k1b.audit_sink import K1bAudit
 from hadavin_sdk.k1b.bundle import Bundle, bad_citations, bundle_set_sha256, load_bundles
 from hadavin_sdk.k1b.causelist import load_cause_list
 from hadavin_sdk.k1b.diagnosis import Diagnosis
+from hadavin_sdk.k1b.report import DISCLAIMER, render_replay_report
 from hadavin_sdk.llm.protocol import LLM
 from hadavin_sdk.models import new_id
 from hadavin_sdk.registry import Registry
 
-DISCLAIMER = (
-    "Report only; not a warranty; not evidence of live accuracy; replay does not run the production "
-    "approval and limits path."
-)
 _COUNT_KEYS = (
     "ok",
     "unreadable",
@@ -46,6 +43,9 @@ _COUNT_KEYS = (
     "injection_flagged",
 )
 _NAME_RE = re.compile(r"[a-z_]{1,64}")
+
+
+__all__ = ["DISCLAIMER", "ReplayResult", "outputs_files", "replay"]
 
 
 @dataclass
@@ -219,7 +219,7 @@ def _replay(
     result = stop or "complete"
     audit.emit("replay_run", run_id, object_ref=agent_id, inputs_hash=set_sha, result=result)
     atomic_write(out / "outputs.sha256", hash_files(out, outputs_files(out)) + "\n")
-    atomic_write(out / "replay-report.md", _report(runs, result))
+    atomic_write(out / "replay-report.md", render_replay_report(runs, result))
     return ReplayResult(0 if result == "complete" else 1, result, run_id, out, runs)
 
 
@@ -235,29 +235,3 @@ def replay(*args: Any, **kwargs: Any) -> ReplayResult:
         if out.is_dir() and any(out.iterdir()):
             atomic_write(out / "FAILED.txt", f"replay did not finish: {type(exc).__name__}\n")
         raise
-
-
-def _report(runs: list[dict[str, Any]], result: str) -> str:
-    lines = ["# Replay report", "", DISCLAIMER, "", f"Replay ended: {result}.", ""]
-    lines += [
-        "| Run | OK | Unreadable | Error | Timeout | Capped | Uncited conversions | Hard-check (a) |"
-    ]
-    lines += ["|---|---|---|---|---|---|---|---|"]
-    for r in runs:
-        c = r["counts"]
-        lines.append(
-            f"| {r['run_index']} | {c['ok']} | {c['unreadable']} | {c['error']} | {c['timeout']} | "
-            f"{c['capped']} | {c['uncited_conversions']} | {c['hard_check_a']} |"
-        )
-    first = runs[0]
-    lines += [
-        "",
-        (
-            f"Model: {first['model_id']}. Cost: USD {format(sum(Decimal(r['usd']) for r in runs), 'f')}. "
-            f"Config hash: {first['config_hash']}. Bundle set: {first['bundle_set_sha256']}."
-        ),
-        "",
-        "This replay only collects the agent's answers; scoring is a separate step.",
-        "",
-    ]
-    return "\n".join(lines)

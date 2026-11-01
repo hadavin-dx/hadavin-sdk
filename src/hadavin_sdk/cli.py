@@ -9,6 +9,15 @@
   hadavin-sdk [--config DIR] migrate [--runtime-role R]  apply the postgres schema; the migration role's DSN
                                                          comes from the HADAVIN_MIGRATE_DSN environment variable
   hadavin-sdk [--config DIR] audit verify                exit 0 intact, 1 not, 2 refused, 3 unreadable
+  hadavin-sdk [--config DIR] replay AGENT --bundles D --cause-list D --max-usd X --out OUT [--k K]
+                                                         K1b-lite: run recorded incidents through the agent;
+                                                         exit 0 complete, 1 aborted or USD cap, 2 refused, 3 failure
+  hadavin-sdk [--config DIR] score --outputs OUT --answers F --cause-list D --bundles D
+                                                         K1b-lite: count the replay's results into score/score-report.md;
+                                                         exit 0 report produced, 2 refused, 3 failure (no verdict)
+
+Every command is wrapped by ``main``: a ``ConfigError`` exits 2, any other uncaught error exits 3, so a crash never
+looks like a red gate (exit 1).
 
 ``--config`` goes before the subcommand and overrides ``HADAVIN_CONFIG_DIR``. From a source checkout use ``uv run python -m hadavin_sdk.cli`` so
 the current folder (and its check modules) is importable.
@@ -19,13 +28,18 @@ from __future__ import annotations
 import argparse
 import os
 import sys
+import traceback
+from decimal import Decimal, InvalidOperation
+from pathlib import Path
 
 from hadavin_sdk import evals
 from hadavin_sdk.audit import AuditUnavailable
 from hadavin_sdk.backends import make, platform_secrets
 from hadavin_sdk.config import load_config
 from hadavin_sdk.errors import ConfigError
+from hadavin_sdk.guard.injection import combine
 from hadavin_sdk.limits import Limits
+from hadavin_sdk.models import new_id
 from hadavin_sdk.registry import load_registry
 
 
@@ -40,7 +54,33 @@ def _positive(text: str) -> int:
     return k
 
 
+def _money(text: str) -> Decimal:
+    try:
+        d = Decimal(text)
+    except InvalidOperation:
+        raise argparse.ArgumentTypeError("must be a decimal number") from None
+    if not d.is_finite() or d <= 0:
+        raise argparse.ArgumentTypeError("must be a finite number above zero")
+    return d
+
+
 def main(argv: list[str] | None = None) -> int:
+    """Run the CLI. ConfigError exits 2 and any other uncaught exception exits 3 (never Python's crash code 1)."""
+    try:
+        return _main(argv)
+    except ConfigError as exc:
+        print(f"refused: {exc}", file=sys.stderr)
+        return 2
+    except Exception as exc:  # noqa: BLE001 - the class name only: a message could carry a secret
+        print(
+            f"failed: {type(exc).__name__} (set HADAVIN_DEBUG=1 for the traceback)", file=sys.stderr
+        )
+        if os.environ.get("HADAVIN_DEBUG") == "1":
+            traceback.print_exc()
+        return 3
+
+
+def _main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(prog="hadavin-sdk")
     p.add_argument("--config", help="client config folder (overrides HADAVIN_CONFIG_DIR)")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -55,6 +95,24 @@ def main(argv: list[str] | None = None) -> int:
     mig.add_argument("--runtime-role", help="grant this database role SELECT, INSERT, UPDATE")
     aud = sub.add_parser("audit", help="check the chain audit")
     aud.add_argument("action", choices=["verify"])
+    rep = sub.add_parser(
+        "replay", help="K1b-lite: run recorded incidents through an agent (report only)"
+    )
+    rep.add_argument("agent")
+    rep.add_argument("--bundles", required=True, type=Path)
+    rep.add_argument("--cause-list", required=True, type=Path)
+    rep.add_argument("--k", type=_positive, default=1, help="runs of the whole set")
+    rep.add_argument(
+        "--max-usd", required=True, type=_money, help="total cost cap for this invocation"
+    )
+    rep.add_argument("--out", required=True, type=Path)
+    sc = sub.add_parser(
+        "score", help="K1b-lite: count a replay's results (report only, no verdict)"
+    )
+    sc.add_argument("--outputs", required=True, type=Path)
+    sc.add_argument("--answers", required=True, type=Path)
+    sc.add_argument("--cause-list", required=True, type=Path)
+    sc.add_argument("--bundles", required=True, type=Path)
     args = p.parse_args(argv)
     if args.config:
         os.environ["HADAVIN_CONFIG_DIR"] = args.config
@@ -64,6 +122,11 @@ def main(argv: list[str] | None = None) -> int:
     if args.cmd == "migrate":
         return _migrate(cfg, args.runtime_role)
     reg = load_registry(cfg)
+    if args.cmd in (
+        "replay",
+        "score",
+    ):  # before the memory-store refusal below: K1b needs no shared store
+        return _k1b(cfg, reg, args)
 
     if args.cmd == "gate":
         b = cfg.backends
@@ -119,6 +182,68 @@ def main(argv: list[str] | None = None) -> int:
     if args.cmd == "audit":
         return audit_verify(audit)
     return kill_switch(Limits(store, audit, reg), args.action, args.by)
+
+
+def _k1b(cfg, reg, args) -> int:
+    from hadavin_sdk.k1b.audit_sink import build_audit
+
+    secrets = make("secrets", cfg.backends.secrets)
+    audit, warnings = build_audit(cfg, secrets)
+    for w in warnings:
+        print(f"warning: {w}", file=sys.stderr)
+    if args.cmd == "score":
+        return score_cmd(audit, args)
+    llm = make("llm", cfg.backends.llm, secrets, routes=cfg.routes)
+    detector = combine([make("detector", d, secrets, llm=llm) for d in cfg.backends.detector])
+    return replay_cmd(reg, llm, detector, audit, args)
+
+
+def replay_cmd(reg, llm, detector, audit, args) -> int:
+    """Body of ``replay`` (takes the audit so tests can pass their own). Returns the exit code."""
+    from hadavin_sdk.k1b.replay import replay
+
+    res = replay(
+        reg,
+        llm,
+        detector,
+        audit,
+        agent_id=args.agent,
+        bundles_dir=args.bundles,
+        cause_list_dir=args.cause_list,
+        k=args.k,
+        max_usd=args.max_usd,
+        out=args.out,
+        llm_kind=reg.config.backends.llm.kind,
+    )
+    print(f"replay {res.result}: outputs in {res.out} (see replay-report.md)")
+    return res.exit_code
+
+
+def score_cmd(audit, args) -> int:
+    """Body of ``score``: audit events first (a failed append prints nothing), then the report file."""
+    from hadavin_sdk.k1b.atomic import atomic_write
+    from hadavin_sdk.k1b.report import render_score_report
+    from hadavin_sdk.k1b.score import REPORT_DIR, audit_result, score
+
+    report_dir = Path(args.outputs) / REPORT_DIR
+    if report_dir.exists() and (not report_dir.is_dir() or any(report_dir.iterdir())):
+        raise ConfigError("score report folder exists and is not empty")
+    res = score(args.outputs, args.answers, args.cause_list, args.bundles)
+    run_id = new_id("k1b")
+    for run in res.runs:
+        audit.emit(
+            "score_run",
+            run_id,
+            object_ref=res.answers_sha256,
+            inputs_hash=res.outputs_digest,
+            decision="-",
+            result=audit_result(run),
+        )
+    # NOSONAR S8707: the operator's own --outputs folder; a CLI argument is not attacker input
+    report_dir.mkdir(exist_ok=True)  # NOSONAR
+    atomic_write(report_dir / "score-report.md", render_score_report(res))
+    print(f"score report written: {report_dir / 'score-report.md'}")
+    return 0
 
 
 def _tick() -> int:
