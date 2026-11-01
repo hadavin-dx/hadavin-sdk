@@ -16,6 +16,7 @@ the owner's yes at each step of the budget table, and the meter gates every call
 from __future__ import annotations
 
 import argparse
+import contextlib
 import hashlib
 import json
 import os
@@ -34,7 +35,7 @@ from askdata.evalset import (
     LockError,
     freeze,
     load_jsonl,
-    lock_path,
+    lock_guard,
     read_lock,
     verify_files,
     write_lock,
@@ -44,7 +45,9 @@ from askdata.meter import KillSwitch, Meter, MeterError
 from askdata.opscli import out
 from askdata.pgsource import PgSource
 from askdata.pipeline import Pipeline
+from askdata.policy import EXIT_AUDIT
 from askdata.safe_text import clean
+from hadavin_sdk.audit.protocol import AuditUnavailable
 from hadavin_sdk.llm.fake import FakeLLM
 
 SPLIT_FILES = {
@@ -75,11 +78,18 @@ def build_harness(
         raise ConfigError("no model: set paths.recorded_dir, or use --live with an `llm` entry")
     else:
         llm = FakeLLM(cfg.paths.recorded_dir, cfg.routes())
-    sources = sources or {
-        k: PgSource(os.environ[v])
-        for k, v in (("a", "ASKDATA_DSN"), ("b", "ASKDATA_DSN_B"), ("clean", "ASKDATA_DSN_CLEAN"))
-        if v in os.environ
-    }
+    if sources is None:
+        limits = (
+            cfg.database.limits()
+        )  # the client's statement timeout and caps apply to every database
+        dsns = {
+            "a": live.resolve_dsn(
+                cfg
+            ),  # dsn_secret_name through the secrets kind, else ASKDATA_DSN
+            "b": os.environ.get("ASKDATA_DSN_B"),
+            "clean": os.environ.get("ASKDATA_DSN_CLEAN"),
+        }
+        sources = {k: PgSource(d, limits=limits) for k, d in dsns.items() if d}
     missing = {"a", "b"} - set(sources)
     if missing:
         raise ConfigError(
@@ -91,7 +101,12 @@ def build_harness(
     ledger = QueryLedger(cfg.paths.ledger_file)
 
     # A live model always goes through the live meter gate (fresh external_usd), whatever the YAML `live` says.
-    settings = replace(cfg.settings(), live=True) if ecfg.live else cfg.settings()
+    # The recorded model never retries inside a call, so it reserves once; a live one reserves for every retry.
+    settings = (
+        replace(cfg.settings(), live=True)
+        if ecfg.live
+        else replace(cfg.settings(), llm_max_attempts=1)
+    )
 
     def pipeline(key: str) -> Pipeline:
         return Pipeline(
@@ -123,22 +138,14 @@ def cmd_freeze(cfg: AskdataConfig) -> int:
     are final and before any sealed run; it never replaces an existing lock (that would reset the sealed counter)."""
     eval_dir = cfg.paths.eval_dir
     names = [n for pair in SPLIT_FILES.values() for n in pair]
-    if lock_path(eval_dir).exists():
-        out("freeze: lock.json already exists; not overwritten (it holds the sealed-run counter)")
-        return 4
     if missing := [n for n in names if not (eval_dir / n).is_file()]:
         out(f"startup: cannot freeze, missing: {', '.join(missing)}")
         return 4
-    try:  # exclusive create: a second `eval freeze` running at the same time fails here and cannot reset the counter
-        os.close(os.open(lock_path(eval_dir), os.O_CREAT | os.O_EXCL | os.O_WRONLY))
-    except FileExistsError:
+    try:  # temp file, then os.link: no-clobber, and a crash never leaves an empty lock.json
+        lock = freeze(eval_dir, names, no_clobber=True)
+    except LockError:
         out("freeze: lock.json already exists; not overwritten (it holds the sealed-run counter)")
         return 4
-    try:
-        lock = freeze(eval_dir, names)
-    except BaseException:
-        lock_path(eval_dir).unlink(missing_ok=True)  # never leave an empty placeholder behind
-        raise
     for n, digest in sorted(lock.files.items()):
         out(f"{digest}  {n}")
     t = lock.thresholds
@@ -148,22 +155,10 @@ def cmd_freeze(cfg: AskdataConfig) -> int:
     return 0
 
 
-def cmd_run(
-    cfg: AskdataConfig,
-    split: str,
-    k: int,
-    second_look: str | None,
-    harness_factory=build_harness,
-    *,
-    use_live: bool = False,
-    smoke: bool = False,
-) -> int:
+def _prepare(cfg, split, k, second_look, harness_factory, use_live, smoke):
+    """Everything up to and including the sealed counter. Returns an exit code (refused or startup), or the pieces
+    `cmd_run` needs. For a sealed run the caller holds the lock.json OS lock around this whole function."""
     eval_dir = cfg.paths.eval_dir
-    if (
-        split == "test" and k != 1
-    ):  # one sealed invocation is one pass; repeats (pass^k) belong to --split dev
-        out("refused: the sealed set takes --k 1 only (use --split dev --k 3 for repeated runs)")
-        return 14
     try:
         lock = read_lock(eval_dir)
         changed = verify_files(eval_dir, lock)
@@ -187,9 +182,27 @@ def cmd_run(
         if split == "test" and lock.test_runs == 0
         else ("second look" if split == "test" else "dev")
     )
-    meter = Meter(cfg.paths.meter_file)
+    sink = audit_mod.local_dir_sink(cfg.paths.audit_dir)
+    if split == "test":  # the counter is also in the hash-chained audit ledger; they must agree
+        try:
+            recorded = audit_mod.sealed_run_count(sink)
+        except (OSError, ValueError, KeyError):
+            out("refused: the audit ledger cannot be read, so the sealed counter cannot be checked")
+            return 14
+        if recorded != lock.test_runs:
+            out(
+                f"refused: lock.json says {lock.test_runs} sealed run(s) but the audit ledger records {recorded}; "
+                "reconcile by hand (an edited, deleted or re-frozen lock.json must not reset the counter)"
+            )
+            return 14
     try:
-        evalrun.sealed_gate(lock, meter.remaining(), split=split, second_look=second_look)
+        evalrun.sealed_gate(
+            lock,
+            Meter(cfg.paths.meter_file).remaining(),
+            split=split,
+            second_look=second_look,
+            live=use_live,
+        )
     except (LockError, MeterError) as err:
         out(f"refused: {err}")
         return 14
@@ -205,10 +218,48 @@ def cmd_run(
     if (
         split == "test"
     ):  # the counter moves when the sealed set is first touched, after a successful startup
+        try:
+            audit_mod.AskAudit(sink, principal="claimed:eval").sealed_run(lock.test_runs + 1)
+        except AuditUnavailable:
+            out("audit unavailable: the sealed run was not started")
+            return EXIT_AUDIT
         lock = lock.model_copy(
-            update={"test_runs": lock.test_runs + 1, "last_test_status": "aborted"}
+            update={
+                "test_runs": lock.test_runs + 1,
+                "last_test_status": "aborted",
+                "harness_defect_reason": None,  # a proved defect buys one second look
+            }
         )
         write_lock(eval_dir, lock)
+    return lock, harness, meter, meta, gold, adv, label, run_dir
+
+
+def cmd_run(
+    cfg: AskdataConfig,
+    split: str,
+    k: int,
+    second_look: str | None,
+    harness_factory=build_harness,
+    *,
+    use_live: bool = False,
+    smoke: bool = False,
+) -> int:
+    eval_dir = cfg.paths.eval_dir
+    if (
+        split == "test" and k != 1
+    ):  # one sealed invocation is one pass; repeats (pass^k) belong to --split dev
+        out("refused: the sealed set takes --k 1 only (use --split dev --k 3 for repeated runs)")
+        return 14
+    guard = lock_guard(eval_dir) if split == "test" else contextlib.nullcontext()
+    try:
+        with guard:  # sealed: read lock -> gate -> audit record -> counter, all under one OS lock
+            prep = _prepare(cfg, split, k, second_look, harness_factory, use_live, smoke)
+    except LockError as err:
+        out(f"refused: {err}")
+        return 14
+    if isinstance(prep, int):
+        return prep
+    lock, harness, meter, meta, gold, adv, label, run_dir = prep
     started = time.monotonic()
     try:
         results = harness.run_gold(gold)
@@ -234,9 +285,15 @@ def cmd_run(
     except MeterError:
         snap = {}
     evalrun.write_run(run_dir, results + adv_results, report, snap)
-    if split == "test":
-        status = "aborted" if report["aborted"] else "complete"
-        write_lock(eval_dir, lock.model_copy(update={"last_test_status": status}))
+    if split == "test" or (smoke and use_live):
+        with lock_guard(eval_dir):  # re-read: another process may have changed other fields
+            cur = read_lock(eval_dir)
+            if split == "test":
+                status = "aborted" if report["aborted"] else "complete"
+                cur = cur.model_copy(update={"last_test_status": status})
+            else:
+                cur = cur.model_copy(update={"smoke_passed": not report["aborted"]})
+            write_lock(eval_dir, cur)
     out(evalrun.render_md(report))
     out(f"run folder: {run_dir}")
     hz = sum(v for key, v in report["hard_zeros"].items() if key != "model_followed_injection")

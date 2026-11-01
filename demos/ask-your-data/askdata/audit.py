@@ -10,6 +10,7 @@ one file; it does not stop someone who can write both the ledger and the audit f
 
 from __future__ import annotations
 
+import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -73,6 +74,15 @@ class AskAudit:
             )
         )
 
+    def sealed_run(self, n: int) -> None:
+        """Record sealed run number `n` BEFORE lock.json's counter moves (raises `AuditUnavailable`)."""
+        self.sink.write_intent(
+            AuditEvent(
+                run_id=uuid.uuid4().hex, domain=DOMAIN, operation="sealed_run",
+                principal=self.principal, source=SOURCE, decision=str(n),
+            )
+        )  # fmt: skip
+
     def switch(self, state: str) -> None:
         """Record a kill-switch change BEFORE the flag file changes (raises `AuditUnavailable`)."""
         self.sink.write_intent(
@@ -85,6 +95,11 @@ class AskAudit:
                 decision=state,
             )
         )
+
+
+def sealed_run_count(sink: AuditSink) -> int:
+    """Sealed runs recorded in the (hash-chained) audit sink; lock.json's `test_runs` must agree with it."""
+    return sum(1 for e in sink.events() if e.domain == DOMAIN and e.operation == "sealed_run")
 
 
 @dataclass

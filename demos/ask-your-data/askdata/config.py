@@ -97,11 +97,15 @@ class AskdataConfig(_Strict):
             )
         }
 
+    def _llm_attempts(self) -> int:
+        """Requests one live `chat()` may send: the LLM kind's `max_attempts` (3 unless set); 1 for the recorded model."""
+        return int(self.llm.get("max_attempts", 3)) if self.llm else 1
+
     def settings(self) -> Settings:
         extra = {"restricted_terms": tuple(self.restricted_terms)} if self.restricted_terms else {}
         return Settings(
             route=self.route.name, max_attempts=self.limits.max_attempts, max_question_chars=self.limits.max_question_chars,
-            store_question=self.store_question, live=self.live, **extra,
+            store_question=self.store_question, live=self.live, llm_max_attempts=self._llm_attempts(), **extra,
         )  # fmt: skip
 
 

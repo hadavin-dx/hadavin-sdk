@@ -27,6 +27,7 @@ DSN_ENV = "ASKDATA_DSN"
 # Smoke abort rule (amendments A-03, step 1): checked after every question of a live smoke run.
 SMOKE_MAX_COST_PER_QUESTION = Decimal("0.035")
 SMOKE_MAX_SCHEMA_VIOLATION_RATE = Decimal("0.10")
+SMOKE_MIN_QUESTIONS = 5  # neither rule fires on fewer questions: one early outlier is not a trend
 
 
 def _kind(capability: str, raw: Mapping[str, Any]) -> KindSettings:
@@ -98,9 +99,12 @@ def make_llm(cfg: AskdataConfig, provider: SecretProvider | None = None) -> LLM:
 def smoke_breach(
     spent: Decimal, questions: int, attempts: int, schema_violations: int
 ) -> str | None:
-    """The abort reason once the smoke run is over the line, else None: cost per question above US$0.035, or more
-    than 10 % of the model attempts returning an unusable (schema-violating) answer."""
-    if questions and spent / questions > SMOKE_MAX_COST_PER_QUESTION:
+    """The abort reason once the smoke run is over the line, else None. Both rules wait for SMOKE_MIN_QUESTIONS (5)
+    questions; then: cost per question above US$0.035 (strictly more), or more than 10 % of the model attempts
+    returning an unusable (schema-violating) answer."""
+    if questions < SMOKE_MIN_QUESTIONS:
+        return None
+    if spent / questions > SMOKE_MAX_COST_PER_QUESTION:
         return "smoke_cost"
     if attempts and Decimal(schema_violations) / attempts > SMOKE_MAX_SCHEMA_VIOLATION_RATE:
         return "smoke_schema"

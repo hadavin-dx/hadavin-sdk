@@ -7,9 +7,13 @@ they differ from the file), the sealed-run counter and the minimum remaining bud
 
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import json
 import os
+import time
+import uuid
+from collections.abc import Iterator
 from decimal import Decimal
 from pathlib import Path
 from typing import Annotated, Literal
@@ -130,6 +134,11 @@ class Lock(_Strict):
     sealed_min_remaining_usd: Decimal = Decimal("3.00")  # the FIRST sealed run
     second_look_min_remaining_usd: Decimal = Decimal("1.80")  # a --second-look run (A-03)
     last_test_status: Literal["none", "complete", "aborted"] = "none"
+    # Set by a finished `eval run --split dev --live --smoke`; a sealed --live run needs it.
+    smoke_passed: bool = False
+    # Written BY HAND into lock.json by the owner after a defect in OUR harness or data is proved; one second look
+    # with --second-look harness_defect consumes it.
+    harness_defect_reason: str | None = None
     second_look_allowed_for: list[Literal["aborted", "harness_defect"]] = [
         "aborted",
         "harness_defect",
@@ -153,21 +162,63 @@ def read_lock(eval_dir: Path) -> Lock:
 
 def write_lock(eval_dir: Path, lock: Lock) -> None:
     path = lock_path(eval_dir)
-    tmp = path.with_name(path.name + ".tmp")
+    tmp = _write_tmp(path, lock)
+    os.replace(tmp, path)
+
+
+def _write_tmp(path: Path, lock: Lock) -> Path:
+    """The lock text in a uniquely named temp file next to `path` (two writers never share one)."""
+    tmp = path.with_name(f"{path.name}.{os.getpid()}.{uuid.uuid4().hex[:8]}.tmp")
     with open(tmp, "w", encoding="utf-8", newline="\n") as f:
         f.write(json.dumps(json.loads(lock.model_dump_json()), indent=2, sort_keys=True) + "\n")
         f.flush()
         os.fsync(f.fileno())
-    os.replace(tmp, path)
+    return tmp
 
 
-def freeze(eval_dir: Path, names: list[str], thresholds: Thresholds | None = None) -> Lock:
-    """Create lock.json from the current files (the freeze step; run once, before the dev set is frozen for use)."""
+@contextlib.contextmanager
+def lock_guard(eval_dir: Path, wait_s: float = 5.0) -> Iterator[None]:
+    """Exclusive OS lock across read lock.json -> decide -> write lock.json (the sealed counter's critical section)."""
+    from askdata.meter import _try_lock, _unlock  # the same primitive the meter file uses
+
+    Path(eval_dir).mkdir(parents=True, exist_ok=True)
+    with open(lock_path(eval_dir).with_name("lock.json.lock"), "a+b") as f:
+        deadline = time.monotonic() + wait_s
+        while not _try_lock(f):
+            if time.monotonic() > deadline:
+                raise LockError("lock.json is busy (another eval run holds it)")
+            time.sleep(0.01)
+        try:
+            yield
+        finally:
+            _unlock(f)
+
+
+def freeze(
+    eval_dir: Path,
+    names: list[str],
+    thresholds: Thresholds | None = None,
+    *,
+    no_clobber: bool = False,
+) -> Lock:
+    """Create lock.json from the current files (the freeze step; run once, before the dev set is frozen for use).
+    `no_clobber`: write a temp file, then `os.link` it to lock.json, which fails if lock.json exists, so a crash never
+    leaves an empty lock.json and an existing lock (with its sealed counter) is never replaced."""
     lock = Lock(
         files={n: sha256_file(Path(eval_dir) / n) for n in names},
         thresholds=thresholds or Thresholds(),
     )
-    write_lock(eval_dir, lock)
+    if not no_clobber:
+        write_lock(eval_dir, lock)
+        return lock
+    path = lock_path(eval_dir)
+    tmp = _write_tmp(path, lock)
+    try:
+        os.link(tmp, path)
+    except FileExistsError:
+        raise LockError("lock.json already exists") from None
+    finally:
+        tmp.unlink(missing_ok=True)
     return lock
 
 

@@ -19,8 +19,9 @@ Alarm = Literal["validator_gap", "role_gap", "readonly_violation", "hash_mismatc
 
 # THE exit-code table of every `askdata` command except `eval run` (its own 10-14 band is in evalcli.py). One meaning per
 # number, in the CLI, the README and the tests: 0 answered / ok; 1 usage; 2 refused (the tool will not do that);
-# 3 failed (validator rejected, database failed, model unusable, a check is red, `audit verify` found a problem);
-# 4 startup (no DSN or config, cannot connect, invalid authorization, a read-only check is red); 5 audit unavailable;
+# 3 failed (validator rejected, database failed, SQL hash mismatch, model unusable, a read-only check is red
+# wherever it is found, `audit verify` found a problem); 4 startup (no DSN or config, cannot connect, cannot run the
+# checks, invalid authorization); 5 audit unavailable;
 # 6 spending limit or kill switch; 7 abstained (the data does not answer the question).
 EXIT_OK, EXIT_USAGE, EXIT_REFUSED, EXIT_FAILED, EXIT_STARTUP = 0, 1, 2, 3, 4
 EXIT_AUDIT, EXIT_BUDGET, EXIT_ABSTAINED = 5, 6, 7

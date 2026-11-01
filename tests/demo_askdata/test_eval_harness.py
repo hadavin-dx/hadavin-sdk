@@ -22,6 +22,7 @@ from askdata.evalset import (
     load_jsonl,
     read_lock,
     verify_files,
+    write_lock,
 )
 from askdata.fixtures import Step, write_script
 
@@ -445,7 +446,14 @@ def test_sealed_gate_rules():
         split="test",
         second_look="aborted",
     )
-    evalrun.sealed_gate(used, Decimal(5), split="test", second_look="harness_defect")
+    with pytest.raises(LockError, match="harness_defect_reason"):
+        evalrun.sealed_gate(used, Decimal(5), split="test", second_look="harness_defect")
+    evalrun.sealed_gate(
+        used.model_copy(update={"harness_defect_reason": "x"}),
+        Decimal(5),
+        split="test",
+        second_look="harness_defect",
+    )
 
 
 def test_item_schemas_are_strict(tmp_path):
@@ -600,7 +608,14 @@ def test_the_sealed_run_counts_at_start_and_a_second_needs_a_reason(cli_env, cap
     assert (
         "one invocation" in capsys.readouterr().out and read_lock(cfg.paths.eval_dir).test_runs == 1
     )
+    lk = read_lock(cfg.paths.eval_dir)  # the owner writes the proved defect into lock.json by hand
+    write_lock(
+        cfg.paths.eval_dir, lk.model_copy(update={"harness_defect_reason": "gold query wrong"})
+    )
     cmd_run(cfg, "test", 1, "harness_defect", harness_factory=factory)
+    assert (
+        read_lock(cfg.paths.eval_dir).harness_defect_reason is None
+    )  # one defect buys one second look
     labels = sorted(
         json.loads(p.joinpath("report.json").read_text())["label"]
         for p in cfg.paths.runs_dir.iterdir()
