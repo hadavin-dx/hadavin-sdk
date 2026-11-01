@@ -35,6 +35,7 @@ if TYPE_CHECKING:
     from hadavin_sdk.app import App
 
 S = RunState
+TICK_SLACK_S = 60  # the longest gap between ticks (design: every 30-60 s)
 _LOG = logging.getLogger("hadavin_sdk.tick")
 OK, FAILED, SKIPPED = "ok", "failed", "skipped"
 
@@ -181,25 +182,37 @@ def checkpoint(ctx: TickContext) -> None:
 
 
 def purge_evidence(ctx: TickContext) -> None:
-    """Delete tool calls and redaction maps past their retention, at most every `retention.purge_every_s`.
+    """Delete tool calls and redaction maps past their retention, at most about every `retention.purge_every_s`.
 
-    Runs that `hooks.hold_run_ids()` names (labelled wrong, harmful or missed, or demoted; none before K6) keep
-    their tool calls, and their maps only up to `held_maps_max_days` (400): the maps hold original identifiers, so
-    no hold is open-ended. A hold is NOT retroactive: a run already purged before it was named is gone. If the
-    hook raises, the step fails and NOTHING is purged that tick (visible as `purge_evidence` `last_error` in
-    `tick_state`): retaining too much for a while is the safe direction, and the failure is loud, not silent."""
+    The two CEILINGS always run first and need no hook: a redaction map older than `held_maps_max_days` (400) and
+    a tool call older than `held_tool_calls_max_days` (400) go whatever any hold says. Then the ordinary purge
+    (30 days by default): runs that `hooks.hold_run_ids()` names (labelled wrong, harmful or missed, or demoted;
+    none before K6) keep their tool calls and maps until the ceilings. A hold is NOT retroactive: a run already
+    purged before it was named is gone. If the hook raises, the ordinary purge is skipped (keeping too much for a
+    while is the safe direction), the ceilings have already run, the error is logged, and the step then FAILS so
+    `tick_state.last_error` shows it."""
     app = ctx.app
     keep = app.config.retention
-    hook = app.runtime.hooks.hold_run_ids
-    held = frozenset(hook() or ()) if keep.hold_labelled and hook is not None else frozenset()
+    maps = app.store.purge_redaction_maps(
+        ctx.now - timedelta(days=keep.held_maps_max_days), keep_run_ids=frozenset(), keep_open=False
+    )
     calls = app.store.purge_tool_calls(
+        ctx.now - timedelta(days=keep.held_tool_calls_max_days), keep_run_ids=frozenset()
+    )
+    hook = app.runtime.hooks.hold_run_ids
+    try:
+        held = frozenset(hook() or ()) if keep.hold_labelled and hook is not None else frozenset()
+    except Exception as exc:
+        _LOG.error(
+            "purge_evidence: hold_run_ids raised %s: ordinary purge skipped this tick, ceilings applied",
+            type(exc).__name__,
+        )
+        raise
+    calls += app.store.purge_tool_calls(
         ctx.now - timedelta(days=keep.tool_calls_days), keep_run_ids=held
     )
-    maps = app.store.purge_redaction_maps(
-        ctx.now - timedelta(days=keep.redaction_maps_days), keep_run_ids=held
-    )
     maps += app.store.purge_redaction_maps(
-        ctx.now - timedelta(days=keep.held_maps_max_days), keep_run_ids=frozenset(), keep_open=False
+        ctx.now - timedelta(days=keep.redaction_maps_days), keep_run_ids=held
     )
     _LOG.info("purge_evidence tool_calls=%d redaction_maps=%d held_runs=%d", calls, maps, len(held))
 
@@ -255,6 +268,10 @@ def _run_step(ctx: TickContext, step: TickStep) -> str:
     try:
         prev = store.get_tick_state(step.name)
         every = step.interval(ctx) if step.interval else step.every_s
+        if (
+            step.interval
+        ):  # a tick comes every 30-60 s: due a tick-period early, so the cadence does not drift
+            every = max(every - TICK_SLACK_S, every // 2)
         if every and prev and (ctx.now - prev.last_run_at).total_seconds() < every:
             return SKIPPED
         step.fn(ctx)

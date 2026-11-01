@@ -10,10 +10,10 @@ Pure functions over a plain ``dict[str, str]`` (placeholder -> original). Stdlib
 
 from __future__ import annotations
 
+import hashlib
 import re
 import unicodedata
 from collections.abc import Callable
-from functools import lru_cache
 from typing import Any
 
 from hadavin_sdk import defaults
@@ -68,17 +68,29 @@ _SECRET_PATTERNS = tuple(
 )
 
 
-@lru_cache(maxsize=1 << 16)
+_STORABLE_CACHE: dict[str, bool] = {}
+_STORABLE_CACHE_MAX = 1 << 16
+
+
 def storable_original(kind: str, original: str) -> bool:
     """True if `original` is a whole identifier of `kind` by the allowlist grammar and holds no secret-shaped
-    text. Anything that cannot be checked is not stored. Cached: a map is re-filtered after every redaction."""
+    text. Anything that cannot be checked is not stored. Cached by a SHA-256 digest, so the cache holds no
+    original value (a map is re-filtered after every redaction)."""
+    key = hashlib.sha256(f"{kind}\0{original}".encode("utf-8", "surrogatepass")).hexdigest()
+    hit = _STORABLE_CACHE.get(key)
+    if hit is not None:
+        return hit
     grammar = _GRAMMAR.get(kind)
-    if grammar is None or grammar.fullmatch(original) is None:
-        return False
-    try:
-        return not any(p.search(original) for p in _SECRET_PATTERNS)
-    except Exception:  # noqa: BLE001 - fail closed
-        return False
+    ok = False
+    if grammar is not None and grammar.fullmatch(original) is not None:
+        try:
+            ok = not any(p.search(original) for p in _SECRET_PATTERNS)
+        except Exception:  # noqa: BLE001 - fail closed
+            ok = False
+    if len(_STORABLE_CACHE) >= _STORABLE_CACHE_MAX:
+        _STORABLE_CACHE.clear()
+    _STORABLE_CACHE[key] = ok
+    return ok
 
 
 def storable(mapping: dict[str, str], kinds: frozenset[str] | None = None) -> dict[str, str]:
@@ -153,15 +165,45 @@ def redact_untrusted(text: str, mapping: dict[str, str]) -> str:
     return redact_text(escape_placeholders(text), mapping)
 
 
+_UNICODE_ESCAPE = re.compile(r"\\u([0-9a-fA-F]{4})")
+
+
+def _clean(text: str) -> str:
+    """NUL and lone surrogates cannot be sent or stored and can split a secret: they become U+FFFD / nothing."""
+    return text.replace("\x00", "").encode("utf-8", "replace").decode("utf-8", "replace")
+
+
+def _views(text: str) -> list[str]:
+    """Other forms a secret can hide in: the canonical view (NFKC, invisible characters removed) and the same
+    with JSON `\\uXXXX` escapes decoded. Only forms that differ from `text` are returned."""
+    unescaped = _UNICODE_ESCAPE.sub(lambda m: chr(int(m.group(1), 16)), text)
+    out = []
+    for view in (canonical(text), canonical(unescaped)):
+        if view != text and view not in out:
+            out.append(view)
+    return out
+
+
 def redact_text(text: str, mapping: dict[str, str]) -> str:
-    """Redact `text` with the run's map, continuing it in place. Any failure is a RedactionError."""
+    """Redact `text` with the run's map, continuing it in place. Any failure is a RedactionError.
+
+    A second pass runs over the canonical view (and the JSON-unescaped view): a secret hidden by a full-width
+    letter, a zero-width space or a `\\u0041` escape is found there. When that pass finds something the
+    redacted CANONICAL text is returned, trading fidelity of that one string for safety."""
     try:
+        text = _clean(text)
         result = redact(text, mapping=mapping)
+        out, current = result.text, result.mapping
+        if not text.isascii() or "\\u" in text:
+            for view in _views(out):
+                again = redact(view, mapping=current)
+                if again.text != view:
+                    out, current = again.text, again.mapping
     except Exception as exc:  # noqa: BLE001 - whatever the redactor raised, nothing is sent
         raise RedactionError(type(exc).__name__) from None
     mapping.clear()
-    mapping.update(result.mapping)
-    return result.text
+    mapping.update(current)
+    return out
 
 
 def redact_value(value: Any, mapping: dict[str, str]) -> Any:

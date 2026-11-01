@@ -8,7 +8,7 @@ from datetime import date, datetime
 from decimal import Decimal
 
 from hadavin_sdk.models import (
-    TERMINAL_STATES,
+    OPEN_STATES,
     ApprovalDecision,
     ApprovalRequest,
     ApprovalStatus,
@@ -273,7 +273,7 @@ class MemoryStore:
             gone = []
             for k, (_, at) in self._maps.items():
                 run = self._runs.get(k)
-                if keep_open and run is not None and run.state not in TERMINAL_STATES:
+                if keep_open and run is not None and run.state in OPEN_STATES:
                     continue
                 if (run.updated_at if run is not None else at) < before and k not in keep_run_ids:
                     gone.append(k)

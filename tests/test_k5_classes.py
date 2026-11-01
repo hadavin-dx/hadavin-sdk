@@ -153,19 +153,26 @@ def test_class_a_an_unknown_kind_is_never_stored():
     assert runmap.storable({"<NEWKIND_1>": "10.0.0.5", "<SECRET_1>": "x"}) == {}
 
 
-def test_class_a_storable_does_bounded_work():
+def test_class_a_storable_does_bounded_work(monkeypatch):
     mapping = {
         f"<IPV4_{i}>": f"10.{i // 65536}.{(i // 256) % 256}.{i % 256}" for i in range(1, 20001)
     }
-    runmap.storable_original.cache_clear()
+    runmap._STORABLE_CACHE.clear()
+    calls = []
+    real = runmap._GRAMMAR["IPV4"]
+
+    class Counting:
+        def fullmatch(self, text):
+            calls.append(text)
+            return real.fullmatch(text)
+
+    monkeypatch.setitem(runmap._GRAMMAR, "IPV4", Counting())
     first = runmap.storable(mapping)
-    after_first = runmap.storable_original.cache_info()
+    after_first = len(calls)
     again = runmap.storable(mapping)
-    after_again = runmap.storable_original.cache_info()
     assert len(first) == len(again) == 20000
     # Work is counted, not timed: the first pass checks each original once, the second re-checks none.
-    assert after_first.misses == 20000
-    assert after_again.misses == after_first.misses and after_again.hits >= 20000
+    assert after_first == 20000 and len(calls) == after_first
 
 
 # --- class: placeholder look-alikes in untrusted text ---------------------------------------------------------------

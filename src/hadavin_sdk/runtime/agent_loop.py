@@ -75,18 +75,13 @@ def _accepts(fn: Callable[..., Any], name: str) -> bool:
 MIN_TOOLED_K = 3
 Level = Literal["shadow", "suggest"]
 _RANK = {"shadow": 0, "suggest": 1}
-# Abstentions the guard stopped (K5) count as guard catches; every other abstention as `abstain`.
-# What K6 counts as a caught mistake (it counts every non-null caught_by): only the controls that stopped a
-# proposal. A plain abstention, a provider error or a step limit is not a catch.
-_CAUGHT_BY_ABSTAIN_REASON = {
-    "tool_error": "abstain",
-    "ungrounded": "guard",
-    "run_budget": "guard",
-    "redaction_error": "abstain",
-    "evidence_unavailable": "abstain",
-    "injection_suspected": "guard",
-    "guard_unavailable": "guard",
-}
+# What K6 counts as a caught mistake (it counts every non-null caught_by): only a control that STOPPED a
+# proposal. These abstain reasons are the guard stopping one. A tool failure, a redaction failure, an
+# unavailable evidence store, a provider error or a step limit is a failure to produce a proposal, not a catch,
+# so it carries no caught_by (see "Limits and trust" in the README).
+GUARD_STOP_REASONS = frozenset(
+    {"ungrounded", "run_budget", "injection_suspected", "guard_unavailable"}
+)
 # What a person reads for a reason code that needs a sentence.
 _REASON_TEXT = {"ungrounded": "ungrounded (inputs not found in cited evidence)"}
 
@@ -175,7 +170,8 @@ class Hooks:
     # A line owner's override reader (K6 wires the store): it can only lower a level, never raise it.
     level_override: Callable[[str, str], Level | None] | None = None
     # K5: the manifest tools (tools/<agent>.yaml), the proposal check (cited and grounded), and the runs whose
-    # tool calls the purge must keep (K6 supplies labelled and demoted runs; before K6 there are none).
+    # tool calls the purge must keep (K6 supplies labelled and demoted runs; before K6 there are none). A raising
+    # hold_run_ids skips the ordinary purge for that tick; the 400-day ceilings still run (runtime/tick.py).
     toolbox: ToolBox | None = None
     validate_proposal: Validator | None = None
     hold_run_ids: Callable[[], set[str] | frozenset[str]] | None = None
@@ -250,7 +246,11 @@ class Runtime:
 
         Public on purpose: it is the seam for the K8 card command and for the `precondition` check, which do not
         exist yet. A K8 hook takes `(run, plan)` and calls this to get the real values; it must treat a
-        placeholder left in the result as `input.unresolved` and never render a command."""
+        placeholder left in the result as `input.unresolved` and never render a command.
+
+        WARNING: the result holds the REAL values (restored identifiers). It is for the executor and the card
+        command only: never log it, never send it to the model, never put it in an audit row or a card body that
+        is not the approver's own command."""
         try:
             stored = self.store.get_redaction_map(run.run_id) or {}
         except Exception:  # noqa: BLE001 - fail closed: nothing restored
@@ -411,7 +411,7 @@ class Runtime:
             if call.name in self.registry.contracts:
                 return self._submit(run, call, reply.text, cited, safe_text, rmap)
             if call.name in agent.tools_allowed and (
-                call.name in self.hooks.tools or call.name in box_names
+                call.name in self.hooks.tools or (call.name in box_names and call.name in manifest)
             ):
                 # The reply just charged may have used the budget: neither the tool nor a paid screen of its
                 # output (llm_judge) runs past it (fail closed).
@@ -523,7 +523,7 @@ class Runtime:
         if self.hooks.post_card is None:  # no channel wired (dev slice-1): nothing to post or audit
             return run
         label = _REASON_TEXT.get(reason or "", reason or "no proposal")
-        caught = _CAUGHT_BY_ABSTAIN_REASON.get(reason or "")
+        caught = "guard" if reason in GUARD_STOP_REASONS else None
         try:
             card: Card | None = cards.render_abstain(run.run_id, label, cited)
         except Exception:  # noqa: BLE001 - an unrenderable card is an undelivered one

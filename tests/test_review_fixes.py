@@ -254,8 +254,8 @@ def test_schema_problems_accepts_identifier_on_a_string_only():
 
     assert schema_problems({"type": "string", "identifier": True}) == []
     assert schema_problems({"type": "integer", "identifier": True}) == [
-        "input_schema: identifier must be a boolean on a string property"
+        "input_schema: identifier must be a boolean (true only on a string property)"
     ]
     assert schema_problems({"type": "string", "identifier": "yes"}) == [
-        "input_schema: identifier must be a boolean on a string property"
+        "input_schema: identifier must be a boolean (true only on a string property)"
     ]

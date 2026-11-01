@@ -8,7 +8,7 @@ carry a string ``id``; "no data" is an empty list, never an error, and an adapte
 
 ``probe_scope`` is the design 6.6 start-up probe: a list of problems found in the read credential (an empty list
 means the probe passed), or ``None`` when the source cannot be probed, in which case the config must carry a
-``scope_inventory`` reference signed by the client. ``scope_problems`` combines the two.
+``scope_inventory`` reference: an operator attestation that is format-checked and logged, not verified. ``scope_problems`` combines the two.
 
 Neutral protocol: plain Python protocols; adapters speak whatever the source speaks.
 """
@@ -57,7 +57,7 @@ class ChangeSource(Source, Protocol):
 
 
 def scope_problems(sources: Mapping[str, Source], inventory: Mapping[str, str]) -> list[str]:
-    """Design 6.6: every source has a passing probe or a client-signed inventory reference; otherwise the
+    """Design 6.6: every source has a passing probe or an operator-attested inventory reference (format-checked, not verified); otherwise the
     process does not start. A probe that finds a problem is never overridden by an inventory."""
     out: list[str] = []
     for key, source in sorted(sources.items()):

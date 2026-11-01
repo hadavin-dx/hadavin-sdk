@@ -436,11 +436,11 @@ def test_k3_abstain_card_all_levels(tmp_path, level):
     hooks, cards = captured()
     rt = runtime(dev_cfg(tmp_path, {"lookup_record": level}), ScriptedLLM(reply()), hooks)
     assert handle(rt).state == S.NO_ACTION and len(cards) == 1
-    # Every abstention reason posts the card, redaction_error included (an abstention, not a catch, v5.4 F12).
+    # Every abstention reason posts the card, redaction_error included (an abstention, not a catch, v5.4 F12; round 6: no caught_by unless a control stopped a proposal).
     for reason, caught in [
-        ("redaction_error", "abstain"),
+        ("redaction_error", None),
         ("run_budget", "guard"),
-        ("tool_error", "abstain"),
+        ("tool_error", None),
     ]:
         run = Run(
             agent_id="test-agent",

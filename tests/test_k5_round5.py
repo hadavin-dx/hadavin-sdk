@@ -191,7 +191,7 @@ def test_m1_a_tool_that_reads_a_cluster_needs_a_probe_or_an_inventory_entry(tmp_
     }
     cfg = k5_cfg(tmp_path, tools=[tool], config={"tool_modules": ["k8s_ops"]})
     qualify(load_registry(load_config(cfg)))
-    with pytest.raises(ConfigError, match="no passing probe and no scope_inventory reference"):
+    with pytest.raises(ConfigError, match="no probe vouches for"):
         app_mod.build(cfg, ["test-agent"], secrets=SECRETS_PLUS, llm=ScriptLLM([]))
     ref = "data-readiness.md#kube sha256:" + "c" * 64
     ok = k5_cfg(
@@ -252,7 +252,10 @@ def test_m3_nul_bytes_are_replaced_so_the_store_can_keep_the_row():
 def test_m4_redaction_error_is_an_abstention_not_a_catch():
     from hadavin_sdk.runtime import agent_loop
 
-    assert agent_loop._CAUGHT_BY_ABSTAIN_REASON["redaction_error"] == "abstain"
+    # Round 6 (D1): K6 counts every non-null caught_by, so only a control that stopped a proposal sets one.
+    for reason in ("redaction_error", "tool_error", "evidence_unavailable"):
+        assert reason not in agent_loop.GUARD_STOP_REASONS
+    assert {"ungrounded", "injection_suspected"} <= agent_loop.GUARD_STOP_REASONS
 
 
 def test_m5_a_store_fault_on_the_map_is_evidence_unavailable_not_redaction_error(tmp_path):

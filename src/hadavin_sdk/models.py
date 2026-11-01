@@ -69,16 +69,17 @@ class RunState(StrEnum):
     STOPPED = "STOPPED"
 
 
-# States a run never leaves. NEEDS_PERSON is not one: a parked run is waiting for a person and may be resumed.
-TERMINAL_STATES = frozenset(
+# States a run can still move out of (runtime/runs.py ALLOWED has a transition from each). Only these keep
+# their redaction map past the ordinary retention: NEEDS_PERSON has no outgoing transition, so a run parked
+# there will never restore an input again and its map ages like any finished run's.
+OPEN_STATES = frozenset(
     {
-        RunState.NO_ACTION,
-        RunState.DENIED,
-        RunState.REJECTED,
-        RunState.EXPIRED,
-        RunState.SUCCEEDED,
-        RunState.ROLLED_BACK,
-        RunState.STOPPED,
+        RunState.RECEIVED,
+        RunState.WORKING,
+        RunState.PLAN_READY,
+        RunState.WAITING_FOR_APPROVAL,
+        RunState.EXECUTING,
+        RunState.VERIFYING,
     }
 )
 RiskClass = Literal["read_only", "reversible", "sign_off"]
@@ -203,6 +204,9 @@ class AuditEvent(Shape):
     # Which control caught a mistake: gate, recheck, abstain, guard, verify, human_label, human_reject (K6 sets
     # the human values). Rows written before this field existed hash unchanged (the chain hashes stored text).
     caught_by: str | None = None
+    # A tool call's audit event carries the SHA-256 of the output text as STORED (redacted, truncated), so a
+    # later edit of the `tool_calls` row is detectable against the chain. None for every other event.
+    output_hash: str | None = None
 
 
 class DeadLetter(Shape):

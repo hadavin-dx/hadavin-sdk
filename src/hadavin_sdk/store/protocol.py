@@ -142,7 +142,7 @@ class Store(Protocol):
         self, before: datetime, *, keep_run_ids: frozenset[str], keep_open: bool = True
     ) -> int:
         """Delete maps whose run ended before `before` (the run's last state change; the map's own time when
-        the run is unknown), except those of `keep_run_ids`. With `keep_open` (default) the map of a run that is
-        not in a terminal state (parked NEEDS_PERSON, awaiting approval, executing) is kept, because restoring
-        its inputs needs it; the 400-day ceiling passes `keep_open=False`. Returns the count."""
+        the run is unknown), except those of `keep_run_ids`. With `keep_open` (default) the map of a run that can
+        still move (OPEN_STATES: received, working, plan ready, awaiting approval, executing, verifying) is kept,
+        because restoring its inputs needs it (NEEDS_PERSON cannot move, so its map ages normally); the 400-day ceiling passes `keep_open=False`. Returns the count."""
         ...

@@ -2,7 +2,9 @@
 
 A kind brings its settings model, a factory that wraps a bound fetch into a `Source`, the operation bindings its
 calls fit (operation id -> (METHOD, path regex)), and the operation-id prefix that marks a tool as reading it. A
-second kind (Prometheus, CloudWatch, PagerDuty) is one entry here and one adapter module; nothing else changes.
+second kind (Prometheus, CloudWatch, PagerDuty) is one entry here and one adapter module. That is an SDK edit
+(the registry is a module-level dict, not a plugin point); a client needing a second source before then asks
+for it under trigger K5-ITO, and the Kubernetes adapter stays the only built one until a client does.
 
 Neutral protocol: plain Python registry.
 """

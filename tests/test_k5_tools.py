@@ -210,9 +210,9 @@ def test_k5_fetch_refuses_write_methods_and_url_credentials(monkeypatch):
 
 
 def test_k5_fetch_response_is_capped(monkeypatch):
-    ctx = _ctx(monkeypatch, _Opener(b"a" * 5000), max_output_bytes=100)
+    ctx = _ctx(monkeypatch, _Opener(b"a " * 2500), max_output_bytes=100)
     cut = ctx.fetch("GET", "https://api.example.com/x", operation="bundle.read")
-    assert cut == "a" * 100 + tools_mod.TRUNCATED  # a cut reply says so
+    assert cut == "a " * 50 + tools_mod.TRUNCATED  # a cut reply says so
 
 
 def test_k5_fetch_http_status_becomes_a_refusal(monkeypatch):
@@ -311,7 +311,7 @@ def test_k5_redaction_error_abstains(tmp_path, monkeypatch):
     assert llm.sent == [] and cards[0].text.startswith("Agent abstained")
     assert "redaction_error" in cards[0].text
     card_events = [e for e in _events(rt, run) if e.domain == "card"]
-    assert card_events[0].caught_by == "abstain"
+    assert card_events[0].caught_by is None  # a failure to produce a proposal is not a catch
 
 
 def test_k5_redaction_error_on_a_tool_result_sends_nothing_more(tmp_path, monkeypatch):
@@ -795,7 +795,8 @@ def test_k5_held_map_purged_at_400_days(tmp_path):
     assert (
         app.store.get_redaction_map(run_id) is None
     )  # the hold does not extend a map past 400 days
-    assert len(app.store.list_tool_calls(run_id)) == 1  # the held tool calls stay
+    # round 6: the held tool calls have their own 400-day ceiling too
+    assert app.store.list_tool_calls(run_id) == []
 
 
 def test_k5_purge_evidence_runs_through_the_real_tick_and_again_after_its_interval(tmp_path):
@@ -810,12 +811,14 @@ def test_k5_purge_evidence_runs_through_the_real_tick_and_again_after_its_interv
     _age(app, run.run_id, 40)
     for minutes in (0, 1, 2, 30):  # a tick every minute or so: only the first is due
         tick_mod.run_tick(app, now=t0 + timedelta(minutes=minutes))
-    assert calls == [1]
+    assert (
+        len(calls) == 2
+    )  # one due step = the ceiling purge and the ordinary purge; the later ticks skip
     assert app.store.list_tool_calls(run.run_id) == []  # purged by the first tick
     again = app.runtime.handle("test-agent", "svc:test-agent", b"b 10.0.0.6")
     _age(app, again.run_id, 40)
     tick_mod.run_tick(app, now=t0 + timedelta(minutes=61))  # past the interval: due again
-    assert calls == [1, 1]
+    assert len(calls) == 4
     assert app.store.list_tool_calls(again.run_id) == []
     assert app.store.get_tick_state("purge_evidence").last_ok_at is not None
 

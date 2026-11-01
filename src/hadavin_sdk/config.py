@@ -183,6 +183,8 @@ class Retention(_Strict):
     hold_labelled: bool = True
     # A held run's redaction map (original identifiers) is purged at this age whatever the hold says.
     held_maps_max_days: int = Field(default=HELD_MAPS_CEILING, gt=0, le=HELD_MAPS_CEILING)
+    # Tool calls of held runs are kept past `tool_calls_days`, but not forever.
+    held_tool_calls_max_days: int = Field(default=HELD_MAPS_CEILING, gt=0, le=HELD_MAPS_CEILING)
     purge_every_s: int = Field(
         default=defaults.PURGE_EVERY_S, gt=0
     )  # the purge_evidence tick step's interval
@@ -220,9 +222,15 @@ class EvidenceSettings(_Strict):
                 f"evidence.stored_kinds: {unknown} cannot be stored (secret, regulated or unknown)"
             )
         if bad_suffix := [
-            s for s in self.cluster_suffixes if not s.startswith(".") or s.count(".") < 1
+            s
+            for s in self.cluster_suffixes
+            if not s.startswith(".") or s.rsplit(".", 1)[-1] not in defaults.PRIVATE_SUFFIX_LABELS
         ]:
-            raise ValueError(f"evidence.cluster_suffixes: {bad_suffix} must start with a dot")
+            raise ValueError(
+                f"evidence.cluster_suffixes: {bad_suffix} must start with a dot and end in a private label "
+                f"({', '.join(sorted(defaults.PRIVATE_SUFFIX_LABELS))}); a public suffix such as .com would "
+                "allow plain http to the internet"
+            )
         for name in ("https_ports", "cluster_ports"):
             if bad := [p for p in getattr(self, name) if not 0 < p < 65536]:
                 raise ValueError(f"evidence.{name}: {bad} are not ports")
@@ -289,7 +297,8 @@ class Config(_Strict):
     tool_timeout_s: float = Field(default=10.0, gt=0)
     retention: Retention = Retention()
     evidence: EvidenceSettings = EvidenceSettings()
-    # design 6.6: a read source that cannot be probed names the client-signed inventory instead,
+    # design 6.6: a read source that cannot be probed names an operator-attested inventory instead (the reference
+    # is format-checked and logged; its hash is NOT compared with the page and nobody is verified to have signed),
     # "<page>#<anchor> sha256:<64 hex>".
     scope_inventory: dict[str, str] = {}
     # K5: configured read sources (kind + settings), built and probed at start-up (design 6.6).

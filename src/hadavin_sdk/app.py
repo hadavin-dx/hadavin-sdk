@@ -75,6 +75,9 @@ def build(
     b = cfg.backends
     secrets = secrets or make("secrets", b.secrets)
     live = cfg.environment in deferred.LIVE
+    if sources and live:
+        # A source handed in as an object would replace a configured, probed one; live deployments use Config.sources.
+        raise ConfigError("sources= is for tests; configure Config.sources in pilot and prod")
     if tools and live:
         # Plain callables run with no egress allowlist, operation binding, deadline or schema: they are for replay
         # and tests. A pilot or prod deployment declares its tools in tools/<agent>.yaml.
@@ -108,8 +111,8 @@ def build(
     if problems := _unprobed_tools(cfg, reg):
         raise ConfigError("; ".join(problems))
     for name in cfg.scope_inventory:
-        _LOG.info(
-            "scope_inventory %s: reference format-checked only; its hash is not compared with the page",
+        _LOG.warning(
+            "scope_inventory %s: operator-attested, format-checked only; its hash is not compared with the page",
             name,
         )
     toolbox = _toolbox(cfg, reg, secrets)
@@ -199,12 +202,22 @@ def _tls_context(
 ) -> ssl.SSLContext | None:
     """The CA bundle that signs a private endpoint (a cluster API server): from a file under the config folder, or
     from a named secret. None: the system CAs. Either way verification stays on."""
-    pem: str | None = None
-    if ca_file:
-        pem = confined(cfg.root, ca_file).read_text(encoding="utf-8")
-    elif ca_secret_name:
-        pem = secrets.get(ca_secret_name)
-    return ssl.create_default_context(cadata=pem) if pem else None
+    if not (ca_file or ca_secret_name):
+        return None
+    pem = (
+        confined(cfg.root, ca_file).read_text(encoding="utf-8")
+        if ca_file
+        else secrets.get(ca_secret_name or "")
+    )
+    if not pem or not pem.strip():
+        # A CA that was asked for and is empty must not fall back to the system CAs.
+        raise ConfigError(f"the CA {ca_file or ca_secret_name!r} is empty")
+    try:
+        return ssl.create_default_context(cadata=pem)
+    except ssl.SSLError:
+        raise ConfigError(
+            f"the CA {ca_file or ca_secret_name!r} holds no valid PEM certificate"
+        ) from None
 
 
 def _build_source(name: str, sc, cfg: Config, secrets: SecretProvider) -> Source:
@@ -251,15 +264,13 @@ def _build_source(name: str, sc, cfg: Config, secrets: SecretProvider) -> Source
 
 def _unprobed_tools(cfg: Config, reg: Registry) -> list[str]:
     """Design 6.6 for tools: a tool that holds a credential, or reads a configured kind of source (an operation
-    with that kind's prefix), needs a probe or a signed inventory. It is covered by a configured source of that
-    kind whose endpoint host is one of the tool's `hosts` (that source is probed above) or by a scope_inventory
-    entry `tool:<name>`."""
-    probed_hosts = {
-        (
-            urlsplit(KINDS[sc.kind].endpoint(KINDS[sc.kind].settings(**sc.settings))).hostname or ""
-        ).lower()
-        for sc in cfg.sources.values()
-    }
+    with that kind's prefix), needs a probe or an operator-attested inventory entry. It is covered by
+
+    * a scope_inventory entry `tool:<name>` (operator-attested, format-checked, not verified), or
+    * a probed source it is explicitly mapped to (`options.source`) AND whose credential it uses: the tool's own
+      `secret_names` must be nothing but that source's token secret, because a probe vouches for one credential.
+
+    A tool that merely shares a host with a probed source is NOT covered: it may hold a different credential."""
     out = []
     for per_agent in reg.tools.values():
         for t in per_agent.values():
@@ -268,11 +279,17 @@ def _unprobed_tools(cfg: Config, reg: Registry) -> list[str]:
             )
             if not (t.secret_names or reads_source) or f"tool:{t.name}" in cfg.scope_inventory:
                 continue
-            if reads_source and not t.secret_names and set(t.hosts) & probed_hosts:
+            source = cfg.sources.get(str(t.options.get("source", "")))
+            if (
+                source is not None
+                and source.token_secret_name
+                and set(t.secret_names) <= {source.token_secret_name}
+            ):
                 continue
             out.append(
-                f"tool {t.name}: reads a source or holds a credential with no passing probe and no "
-                f"scope_inventory reference 'tool:{t.name}' (design 6.6)"
+                f"tool {t.name}: reads a source or holds a credential that no probe vouches for: map it to a "
+                f"configured source with options.source (using that source's token secret) or attest it with "
+                f"scope_inventory 'tool:{t.name}' (design 6.6)"
             )
     return sorted(set(out))
 
@@ -287,7 +304,10 @@ def _toolbox(cfg: Config, reg: Registry, secrets: SecretProvider) -> tools_mod.T
                 raise ConfigError(f"tool {name} is defined differently for two agents")
     if not specs:
         return None
-    fns = {n: tools_mod.resolve_function(spec, cfg.tool_modules) for n, spec in specs.items()}
+    fns = {
+        n: tools_mod.resolve_function(spec, cfg.tool_modules, cfg.tool_module_hashes)
+        for n, spec in specs.items()
+    }
     for agent_id, agent in reg.agents.items():
         if not agent.tools_allowed:
             continue
@@ -309,7 +329,7 @@ def _toolbox(cfg: Config, reg: Registry, secrets: SecretProvider) -> tools_mod.T
         timeout_s=cfg.tool_timeout_s,
         secret_resolver_for=lambda spec: _own_secrets(secrets, spec),
         arg_errors=schema_errors,
-        bindings=tools_mod.read_operations(cfg.tool_modules),
+        bindings=tools_mod.read_operations(cfg.tool_modules, cfg.tool_module_hashes),
         fetch_ceiling=ev.fetch_ceiling_bytes,
         https_ports=ev.https_ports,
         cluster_ports=ev.cluster_ports,

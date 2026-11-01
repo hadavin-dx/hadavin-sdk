@@ -52,10 +52,11 @@ Fetch = Callable[..., str]
 
 class KubernetesSettings(BaseModel):
     """Where the cluster is and how much to read. Normally a tool manifest's `options`; defaults in
-    `hadavin_sdk/defaults.py`. `api_url` has no default: the endpoint is the deployment's, never the code's."""
+    `hadavin_sdk/defaults.py`. `api_url` has no default: the endpoint is the deployment's, never the code's. It is scheme and host only, no
+    path: the operation paths are absolute (`/api/v1/...`), so a base path would silently shift every call."""
 
     model_config = ConfigDict(extra="forbid", frozen=True)
-    api_url: str = Field(pattern=r"^https?://[^\s/?#]+(?:/[^\s?#]*)?$")
+    api_url: str = Field(pattern=r"^https?://[^\s/?#]+/?$")
     namespaces: tuple[str, ...] = Field(min_length=1)
     page_size: int = Field(default=defaults.K8S_PAGE_SIZE, gt=0)
     max_pages: int = Field(default=defaults.K8S_MAX_PAGES, gt=0)

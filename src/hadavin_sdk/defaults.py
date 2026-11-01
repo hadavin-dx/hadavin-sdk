@@ -29,6 +29,22 @@ CLUSTER_SUFFIXES = (
     ".svc.cluster.local",
     ".svc",
 )  # host suffixes that count as in-cluster (plain http)
+# The last label a cluster suffix may end in: a private namespace, never a public TLD such as .com.
+PRIVATE_SUFFIX_LABELS = frozenset(
+    {
+        "svc",
+        "local",
+        "internal",
+        "lan",
+        "corp",
+        "home",
+        "intranet",
+        "localdomain",
+        "cluster",
+        "test",
+        "invalid",
+    }
+)
 EXECUTOR_TIMEOUT_S = 10.0  # the dev executor's per-call timeout (Config.executor_timeout_s)
 HTTPS_PORTS = (443,)  # ports a tool may reach over https unless its manifest lists `ports`
 CLUSTER_PORTS = (80, 8080, 9090, 9093, 3100)  # the same for plain http to in-cluster hosts

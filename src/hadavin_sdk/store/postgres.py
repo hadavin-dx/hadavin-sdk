@@ -29,7 +29,7 @@ from pydantic import BaseModel
 
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.models import (
-    TERMINAL_STATES,
+    OPEN_STATES,
     ApprovalDecision,
     ApprovalRequest,
     ApprovalStatus,
@@ -513,16 +513,17 @@ class PostgresStore:
         self, before: datetime, *, keep_run_ids: frozenset[str], keep_open: bool = True
     ) -> int:
         """Aged from the run's last state change (the map's own time when the run is unknown); the maps of runs
-        not in a terminal state are kept unless `keep_open` is false."""
+        that can still move (OPEN_STATES) are kept unless `keep_open` is false. A run parked in NEEDS_PERSON cannot
+        move, so its map ages like a finished run's."""
         with self._lock:
             if keep_open:
-                terminal = sorted(s.value for s in TERMINAL_STATES)
+                open_states = sorted(s.value for s in OPEN_STATES)
                 return self._exec(
                     "DELETE FROM redaction_maps m WHERE NOT (m.run_id = ANY(%s)) AND "
                     "COALESCE((SELECT r.updated_at FROM runs r WHERE r.run_id = m.run_id), "
                     "m.updated_at) < %s AND NOT EXISTS (SELECT 1 FROM runs r "
-                    "WHERE r.run_id = m.run_id AND r.state <> ALL(%s))",
-                    (sorted(keep_run_ids), before, terminal),
+                    "WHERE r.run_id = m.run_id AND r.state = ANY(%s))",
+                    (sorted(keep_run_ids), before, open_states),
                 ).rowcount
             return self._exec(
                 "DELETE FROM redaction_maps m WHERE NOT (m.run_id = ANY(%s)) AND "

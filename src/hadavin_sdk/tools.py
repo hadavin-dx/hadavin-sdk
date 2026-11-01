@@ -17,13 +17,16 @@ import base64
 import hashlib
 import importlib
 import ipaddress
+import json
 import re
 import ssl
+import sys
 import threading
 import time
+import types
 import urllib.error
 import urllib.request
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal
@@ -168,42 +171,106 @@ def spec_problems(
     return out
 
 
-def resolve_function(spec: ToolSpec, tool_modules: list[str]) -> Callable[..., str]:
+def _normalised(data: bytes) -> bytes:
+    """Line endings folded to LF, so a checkout with CRLF (Windows) and one with LF carry the same pin."""
+    return data.replace(b"\r\n", b"\n")
+
+
+def _module_files(module: str) -> list[tuple[str, Path]]:
+    """The files that run when `module` is imported, found WITHOUT importing anything: each parent package's
+    `__init__.py` (a dotted import runs them first) and the module's own file, in import order. The first
+    `sys.path` entry that holds the module wins, as it would for an import."""
+    parts = module.split(".")
+    if not all(p.isidentifier() for p in parts):
+        raise ConfigError(f"tool module {module!r} is not a dotted module name")
+    for entry in sys.path:
+        root = Path(entry or ".")
+        leaf = root.joinpath(*parts)
+        own = leaf.with_suffix(".py") if leaf.with_suffix(".py").is_file() else leaf / "__init__.py"
+        if not own.is_file():
+            continue
+        files = []
+        for i in range(1, len(parts)):
+            init = root.joinpath(*parts[:i]) / "__init__.py"
+            if init.is_file():
+                files.append((".".join(parts[:i]), init))
+        return [*files, (module, own)]
+    raise ConfigError(f"tool module {module} cannot be found on the module path")
+
+
+def _pin_digest(files: list[tuple[str, bytes]]) -> str:
+    h = hashlib.sha256()
+    for name, data in files:
+        h.update(name.encode() + b"\0" + _normalised(data) + b"\0")
+    return h.hexdigest()
+
+
+def module_sha256(module: str) -> str:
+    """The pin of a tool module: SHA-256 over its own file and its parent packages' `__init__.py` files (line
+    endings folded to LF), computed WITHOUT importing any of them. It does not cover what the module imports,
+    helper modules or data files: a pin is review of one file's text, not of a dependency tree."""
+    return _pin_digest([(n, p.read_bytes()) for n, p in _module_files(module)])
+
+
+def load_tool_module(module: str, pins: Mapping[str, str] | None = None) -> types.ModuleType:
+    """Import a tool module. With a pin the module is NOT imported by name: its files are read once, hashed, and
+    the very bytes that were hashed are what runs, so a file swapped between the check and the import cannot run.
+    A module already loaded must still hash to its pin. Without a pin (dev only; pilot and prod require one) it is
+    an ordinary import."""
+    pin = (pins or {}).get(module)
+    try:
+        if pin is None:
+            return importlib.import_module(module)
+        files = [(n, p, p.read_bytes()) for n, p in _module_files(module)]
+        digest = _pin_digest([(n, data) for n, _, data in files])
+        if digest != pin:
+            raise ConfigError(
+                f"tool module {module}: its source hash is {digest[:12]}..., the pin says {pin[:12]}..."
+            )
+        if (
+            module in sys.modules
+        ):  # the loaded code is the file that was just hashed or it is refused
+            return sys.modules[module]
+        _, path, source = files[-1]
+        mod = types.ModuleType(module)
+        mod.__file__, mod.__package__ = str(path), module.rpartition(".")[0]
+        sys.modules[module] = mod
+        try:
+            exec(compile(source, str(path), "exec"), mod.__dict__)  # noqa: S102  # nosec B102 - the pinned bytes
+        except BaseException:
+            sys.modules.pop(module, None)
+            raise
+        return mod
+    except ConfigError:
+        raise
+    except Exception as exc:  # noqa: BLE001 - whatever the module did on load, start-up refuses
+        raise ConfigError(f"tool module {module} cannot be loaded ({type(exc).__name__})") from None
+
+
+def resolve_function(
+    spec: ToolSpec, tool_modules: list[str], pins: Mapping[str, str] | None = None
+) -> Callable[..., str]:
     module, _, name = spec.function.partition(":")
     if not name or module not in tool_modules:
         raise ConfigError(f"tool {spec.name}: {spec.function} is outside tool_modules")
     try:
-        fn = getattr(importlib.import_module(module), name)
-    except (ImportError, AttributeError) as exc:
+        fn = getattr(load_tool_module(module, pins), name)
+    except AttributeError as exc:
         raise ConfigError(f"tool {spec.name}: {spec.function} cannot be loaded") from exc
     if not callable(fn):
         raise ConfigError(f"tool {spec.name}: {spec.function} is not callable")
     return fn
 
 
-def module_sha256(module: str) -> str:
-    """SHA-256 of a module's source file, found without importing it (a pin is checked before the code runs)."""
-    import importlib.util
-
-    try:
-        found = importlib.util.find_spec(module)
-    except (ImportError, ValueError):
-        found = None
-    if found is None or not found.origin or not Path(found.origin).is_file():
-        raise ConfigError(f"tool module {module} cannot be found")
-    return hashlib.sha256(Path(found.origin).read_bytes()).hexdigest()
-
-
-def read_operations(tool_modules: list[str]) -> dict[str, Binding]:
+def read_operations(
+    tool_modules: list[str], pins: Mapping[str, str] | None = None
+) -> dict[str, Binding]:
     """The union of `READ_OPERATIONS` the tool modules declare: operation id -> (METHOD, path regex). The read
     list a manifest's `operations` must stay inside, and the shape each call must fit: an operation id is not a
     label, it is bound in code to one method and one path pattern. A module without one allows no operation."""
     out: dict[str, Binding] = {}
     for module in tool_modules:
-        try:
-            declared = getattr(importlib.import_module(module), "READ_OPERATIONS", {})
-        except ImportError as exc:
-            raise ConfigError(f"tool_modules: {module} cannot be imported") from exc
+        declared = getattr(load_tool_module(module, pins), "READ_OPERATIONS", {})
         if not isinstance(declared, dict):
             raise ConfigError(
                 f"tool_modules: {module}.READ_OPERATIONS must map each operation id to (METHOD, path regex)"
@@ -381,6 +448,7 @@ class ToolContext:
                 err.too_large = True
                 raise err
             del buf[cap:]
+            del buf[_boundary(bytes(buf)) :]  # never end on half a token (half a key)
             cut = True
         else:
             cut = False
@@ -424,11 +492,49 @@ def truncate(text: str, limit: int) -> str:
     return data[:limit].decode("utf-8", "ignore") + TRUNCATED
 
 
+TAIL_WINDOW = 256  # bytes looked back over for a place to cut that is not inside a token
+
+
+def _boundary(data: bytes) -> int:
+    """Where to cut `data` (already at its byte cap): after the last whitespace in the final TAIL_WINDOW bytes, so
+    a secret or key is never cut to a prefix that no pattern recognises; with none, TAIL_WINDOW bytes earlier."""
+    window_start = max(len(data) - TAIL_WINDOW, 0)
+    last = max(
+        data.rfind(b"\n", window_start),
+        data.rfind(b" ", window_start),
+        data.rfind(b"\t", window_start),
+    )
+    return last + 1 if last >= 0 else window_start
+
+
+def _derived(text: str, secrets: list[str]) -> str:
+    """Tokens that decode (base64, standard or URL-safe) to something holding a secret: a derived Basic-auth
+    header, a token wrapping the secret. Replaced whole."""
+
+    def swap(m: re.Match[str]) -> str:
+        token = m.group(0)
+        padded = token + "=" * (-len(token) % 4)
+        for decode in (base64.b64decode, base64.urlsafe_b64decode):
+            try:
+                inner = decode(padded).decode("utf-8", "ignore")
+            except ValueError:
+                continue
+            if any(sec in inner for sec in secrets):
+                return "<SECRET_REDACTED>"
+        return token
+
+    return re.sub(r"[A-Za-z0-9+/_=-]{12,}", swap, text)
+
+
 def _secret_forms(secret: str) -> set[str]:
     raw = secret.encode("utf-8")
     b64 = base64.b64encode(raw).decode()
     return {
         secret,
+        raw.hex(),
+        raw.hex().upper(),
+        json.dumps(secret)[1:-1],  # as it appears inside a JSON string
+        json.dumps(secret, ensure_ascii=False)[1:-1],
         quote(secret, safe=""),
         quote_plus(secret),
         b64,
@@ -449,7 +555,11 @@ def prepare_output(
     escape the result markers, redact with the run's map, then truncate to `max_bytes`."""
     raw = raw.replace("\x00", "\ufffd")
     if len(raw.encode("utf-8")) > raw_cap:
-        raw = raw.encode("utf-8")[:raw_cap].decode("utf-8", "ignore") + TRUNCATED
+        cut = raw.encode("utf-8")[:raw_cap]
+        raw = cut[: _boundary(cut)].decode("utf-8", "ignore") + TRUNCATED
+    long_enough = [x for x in secrets or [] if len(x) >= MIN_SCRUBBED_SECRET]
+    if long_enough:
+        raw = _derived(raw, long_enough)
     for secret in secrets or []:
         if len(secret) >= MIN_SCRUBBED_SECRET:
             for form in _secret_forms(secret):

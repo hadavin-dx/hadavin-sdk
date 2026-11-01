@@ -337,15 +337,23 @@ def test_tool_call_error_flag_round_trips(store):
 
 
 def test_purge_redaction_maps_keeps_the_map_of_an_open_run_until_the_ceiling(store):
-    parked = _run(store, S.NEEDS_PERSON)
+    awaiting = _run(store, S.WAITING_FOR_APPROVAL)
     done = _run(store, S.NO_ACTION)
-    for run in (parked, done):
+    for run in (awaiting, done):
         store.put_redaction_map(run.run_id, {"<IPV4_1>": "10.0.0.5"})
     future = now() + timedelta(days=1)  # both runs last changed before this
     assert store.purge_redaction_maps(future, keep_run_ids=frozenset()) == 1
     assert store.get_redaction_map(done.run_id) is None
-    assert store.get_redaction_map(parked.run_id) is not None
+    assert store.get_redaction_map(awaiting.run_id) is not None
     assert store.purge_redaction_maps(future, keep_run_ids=frozenset(), keep_open=False) == 1
+    assert store.get_redaction_map(awaiting.run_id) is None
+
+
+def test_purge_redaction_maps_ages_a_run_parked_in_needs_person_like_a_finished_one(store):
+    """Round 6: NEEDS_PERSON has no outgoing transition, so its map can never be restored again."""
+    parked = _run(store, S.NEEDS_PERSON)
+    store.put_redaction_map(parked.run_id, {"<IPV4_1>": "10.0.0.5"})
+    assert store.purge_redaction_maps(now() + timedelta(days=1), keep_run_ids=frozenset()) == 1
     assert store.get_redaction_map(parked.run_id) is None
 
 

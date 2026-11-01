@@ -148,6 +148,12 @@ class Registry:
                     if getattr(llm, k, None)
                 },
                 **({"judges": judges} if judges else {}),
+                # A re-pinned tool module is different code: the agent needs a new qualification.
+                **(
+                    {"tool_pins": dict(sorted(pins.items()))}
+                    if (pins := self.config.tool_module_hashes)
+                    else {}
+                ),
                 # The read tools the agent investigates with (K5): a changed tool needs a new qualification.
                 # Only when a manifest exists, so agents without one keep their hash.
                 **(
@@ -215,6 +221,9 @@ def load_registry(config: Config) -> Registry:
 
 def _load_tools(config: Config, agents: dict, contracts: dict) -> dict[str, dict[str, ToolSpec]]:
     """Read `tools/<agent>.yaml` for every agent and check each entry (K5). Every problem fails at start-up."""
+    # Pins first, and fatal at once: nothing below may import a tool module that is unpinned or does not match.
+    if pin_problems := _module_pin_problems(config):
+        raise ConfigError("; ".join(pin_problems))
     folder = config.root / "tools"
     problems: list[str] = []
     found: dict[str, dict[str, ToolSpec]] = {}
@@ -225,7 +234,6 @@ def _load_tools(config: Config, agents: dict, contracts: dict) -> dict[str, dict
             if p.stem not in agents
         ]
     read_ops: set[str] | None = None
-    problems += _module_pin_problems(config)
     for agent_id, agent in agents.items():
         path = folder / f"{agent_id}.yaml"
         if not path.is_file():
@@ -233,7 +241,7 @@ def _load_tools(config: Config, agents: dict, contracts: dict) -> dict[str, dict
         where = f"tools/{path.name}"
         specs = parse_manifest(_yaml(path), where)
         if specs and read_ops is None:
-            read_ops = read_operations(config.tool_modules)
+            read_ops = read_operations(config.tool_modules, config.tool_module_hashes)
         found[agent_id] = {}
         for spec in specs:
             found[agent_id][spec.name] = spec
@@ -250,11 +258,14 @@ def _load_tools(config: Config, agents: dict, contracts: dict) -> dict[str, dict
                 action
             ) in agent.scope_allowed:  # every string input says whether it must be grounded
                 props = (contracts[action].input_schema or {}).get("properties") or {}
+                # Grounding is a string match. A string input says true or false; any other kind of input
+                # (integer, array, object) cannot be grounded, so it must say `identifier: false` outright
+                # instead of silently skipping the check; a boolean carries no name to ground.
                 problems += [
                     f"{where}: action {action} input {pname!r} must say `identifier: true` or `identifier: false`"
                     for pname, sub in props.items()
                     if isinstance(sub, dict)
-                    and sub.get("type") == "string"
+                    and sub.get("type") != "boolean"
                     and "identifier" not in sub
                 ]
             if spec.name in contracts:
@@ -282,7 +293,7 @@ def _module_pin_problems(config: Config) -> list[str]:
                 )
             continue
         try:
-            actual = module_sha256(module)
+            actual = module_sha256(module)  # reads files, imports nothing
         except ConfigError as exc:
             out.append(str(exc))
             continue

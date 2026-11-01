@@ -175,7 +175,7 @@ def test_config_fetch_limits_reach_the_tool_context(monkeypatch):
 
         def read(self, n=-1):
             self.n += 1
-            return b"x" * n if self.n < 3 else b""
+            return (b"x " * n)[:n] if self.n < 3 else b""
 
         def __enter__(self):
             return self
@@ -191,7 +191,7 @@ def test_config_fetch_limits_reach_the_tool_context(monkeypatch):
     with pytest.raises(tools_mod.ToolRefused, match="port 443 is not allowed"):
         ctx.fetch("GET", "https://api.example.com/x", operation="bundle.read")
     out = ctx.fetch("GET", "https://api.example.com:8443/x", operation="bundle.read")
-    assert out == "x" * 10 + tools_mod.TRUNCATED  # the configured ceiling, not the manifest's 100
+    assert out == "x " * 5 + tools_mod.TRUNCATED  # the configured ceiling, not the manifest's 100
 
 
 def test_review_a_real_placeholder_still_grounds(tmp_path):
@@ -459,7 +459,7 @@ def test_review_a_tool_secret_needs_a_scope_inventory_reference(tmp_path):
     from tests.conftest import qualify
 
     qualify(load_registry(load_config(cfg)))
-    with pytest.raises(ConfigError, match="no scope_inventory reference 'tool:read_logs'"):
+    with pytest.raises(ConfigError, match="no probe vouches for"):
         app_mod.build(cfg, ["test-agent"], secrets=SECRETS, llm=ScriptLLM([]))
     ref = "data-readiness.md#read-logs sha256:" + "b" * 64
     signed = k5_cfg(
@@ -489,7 +489,7 @@ def _store_with_run(state, age_days):
     return store, run.run_id
 
 
-@pytest.mark.parametrize("state", [S.NEEDS_PERSON, S.WAITING_FOR_APPROVAL, S.WORKING, S.EXECUTING])
+@pytest.mark.parametrize("state", [S.WAITING_FOR_APPROVAL, S.WORKING, S.EXECUTING])
 def test_review_the_map_of_an_open_run_is_kept(state):
     store, run_id = _store_with_run(state, 40)
     cutoff = now() - timedelta(days=30)
@@ -504,7 +504,7 @@ def test_review_the_map_of_a_finished_run_ages_from_when_it_finished():
 
 
 def test_review_the_400_day_ceiling_removes_even_an_open_run_map():
-    store, _run_id = _store_with_run(S.NEEDS_PERSON, 401)
+    store, _run_id = _store_with_run(S.WAITING_FOR_APPROVAL, 401)
     cutoff = now() - timedelta(days=400)
     assert store.purge_redaction_maps(cutoff, keep_run_ids=frozenset()) == 0
     assert store.purge_redaction_maps(cutoff, keep_run_ids=frozenset(), keep_open=False) == 1
@@ -523,12 +523,7 @@ def test_review_purge_evidence_applies_the_ceiling_to_open_runs(tmp_path):
     app.store._runs[run.run_id] = app.store._runs[run.run_id].model_copy(update={"updated_at": old})
     app.store._maps[run.run_id] = (app.store._maps[run.run_id][0], old)
     tick_mod.purge_evidence(tick_mod.TickContext(app, now()))
-    assert app.store.get_redaction_map(run.run_id) is not None  # parked at 45 days: kept
-    long_ago = now() - timedelta(days=401)
-    app.store._runs[run.run_id] = app.store._runs[run.run_id].model_copy(
-        update={"updated_at": long_ago}
-    )
-    tick_mod.purge_evidence(tick_mod.TickContext(app, now()))
+    # Round 6: NEEDS_PERSON has no way out, so the map of a run parked there ages like a finished run's.
     assert app.store.get_redaction_map(run.run_id) is None
 
 
