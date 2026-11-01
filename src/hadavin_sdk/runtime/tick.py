@@ -7,7 +7,7 @@ Contract (design v5 kernel, section 4):
 * A step with ``every_s > 0`` runs only if ``now - tick_state.last_run_at >= every_s``.
 * The tick summary line (``heartbeat``) is not a step: it is logged after the steps, is never recorded in
   ``tick_state`` and cannot change the exit code. K7 sends the external heartbeat from the CLI entrypoint.
-* Exit codes: 0 all ok; 1 a step failed; 2 config error; 4 store unreachable (both before any step; 3 is the
+* Exit codes: 0 all ok; 1 a step failed (store still reachable);  2 config error; 4 store unreachable (before any step, or when it stops answering during the steps; 3 is the
   CLI wrapper's code for any other uncaught error).
 
 Concurrent ticks are safe: every state change is a compare-and-set, and a loser (``StaleState``) skips.
@@ -242,4 +242,13 @@ def run_tick(app: App, now: datetime | None = None, steps: list[TickStep] | None
         heartbeat(ctx)
     except Exception as exc:  # noqa: BLE001 - a log line never changes the exit code
         _LOG.error("step=- error_kind=%s message=heartbeat line not written", type(exc).__name__)
+    if FAILED in ctx.results.values():
+        # A scheduler must tell "the store went away" (4) from "a step failed with the store up" (1).
+        try:
+            app.store.get_tick_state(_PROBE)
+        except Exception as exc:  # noqa: BLE001 - any store failure
+            _LOG.error(
+                "step=- error_kind=%s message=store unreachable after the steps", type(exc).__name__
+            )
+            return STORE_UNREACHABLE
     return 1 if FAILED in ctx.results.values() else 0

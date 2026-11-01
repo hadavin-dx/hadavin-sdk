@@ -278,3 +278,18 @@ def test_prompt_file_cannot_escape_config_dir(cfg_dir):
     path.write_text(yaml.safe_dump(data), encoding="utf-8")
     with pytest.raises(ConfigError, match="escapes"):
         load_registry(load_config(cfg_dir))
+
+
+@pytest.mark.parametrize("action", ["stop", "reset"])
+def test_kill_switch_with_the_store_down_exits_4_and_says_it_was_not_changed(action, capsys):
+    from hadavin_sdk.store.protocol import StoreUnavailable
+
+    class Down:
+        def stop(self, by):
+            raise StoreUnavailable("down")
+
+        reset = stop
+
+    assert cli.kill_switch(Down(), action, "user:a") == 4
+    err = capsys.readouterr().err
+    assert "NOT" in err and "unreachable" in err and "Nothing was changed" in err

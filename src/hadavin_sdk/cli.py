@@ -42,6 +42,7 @@ from hadavin_sdk.guard.injection import combine
 from hadavin_sdk.limits import Limits
 from hadavin_sdk.models import new_id
 from hadavin_sdk.registry import load_registry
+from hadavin_sdk.store.protocol import StoreUnavailable
 
 
 def _num(x: float | None, places: int = 2) -> str:
@@ -174,6 +175,16 @@ def _main(argv: list[str] | None = None) -> int:
         anchor = make("anchor", b.anchor, secrets)
         store = make("store", b.store, secrets)
         audit = make("audit", b.audit, secrets, store=store, signer=signer, anchor=anchor)
+    except StoreUnavailable:
+        if args.cmd == "audit":
+            print("could not verify: the store is unreachable", file=sys.stderr)
+            return 3
+        print(
+            f"kill switch NOT {'set' if args.action == 'stop' else 'reset'}: the store is unreachable. "
+            "Nothing was changed. Fix the store, then run the same command again.",
+            file=sys.stderr,
+        )
+        return 4
     except ConfigError as exc:
         if args.cmd != "audit":
             raise
@@ -257,7 +268,6 @@ def _tick() -> int:
     from hadavin_sdk.app import build
     from hadavin_sdk.runtime.agent_loop import Unqualified, assert_qualified
     from hadavin_sdk.runtime.tick import run_tick
-    from hadavin_sdk.store.protocol import StoreUnavailable
 
     # The summary line and step errors go to stderr (the logger is otherwise silent below WARNING).
     logging.basicConfig(level=logging.INFO, stream=sys.stderr, format="%(message)s")
@@ -335,17 +345,32 @@ def audit_verify(audit) -> int:
     return 0 if result.ok else 1
 
 
+def _kill_switch_store_down(what: str) -> int:
+    print(
+        f"kill switch NOT {what}: the store is unreachable. Nothing was changed. "
+        "Fix the store, then run the same command again.",
+        file=sys.stderr,
+    )
+    return 4
+
+
 def kill_switch(limits: Limits, action: str, by: str) -> int:
     """Run stop/reset for a caller (the CLI once a shared store exists, or an in-process admin hook).
 
-    Exit codes: 0 done; 3 reset refused because the audit store is unavailable (the switch stays ON).
+    Exit codes: 0 done; 3 reset refused because the audit store is unavailable (the switch stays ON); 4 the
+    store is unreachable (the switch was NOT changed).
     """
     if action == "stop":
-        limits.stop(by)
+        try:
+            limits.stop(by)
+        except (StoreUnavailable, OSError):
+            return _kill_switch_store_down("set")
         print(f"kill switch ON (by {by})")
         return 0
     try:
         limits.reset(by)
+    except (StoreUnavailable, OSError):
+        return _kill_switch_store_down("reset")
     except AuditUnavailable:
         print(
             "refused: the audit store is unavailable, so the reset cannot be recorded. "

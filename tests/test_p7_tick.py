@@ -564,3 +564,33 @@ def test_audit_chain_build_reports_a_connection_failure_as_store_unavailable():
 
     with pytest.raises(StoreUnavailable):
         chain.build(S(), Deps(resolve=lambda n: "", store=Down(), signer=None, anchor=None))
+
+
+def test_store_dropping_mid_tick_exits_4_not_1(app):
+    """A step failed because the store went away: a scheduler must see 4 (store down), not 1."""
+    calls = {"n": 0}
+    real = app.store.get_tick_state
+
+    def flaky(step):
+        calls["n"] += 1
+        if calls["n"] > 1:  # the first call is the start-up probe; the store dies right after it
+            raise OSError("store gone")
+        return real(step)
+
+    app.store.get_tick_state = flaky
+    assert run_tick(app, steps=[TickStep("x", 0, lambda ctx: None)]) == 4
+
+
+def test_a_failing_step_with_a_reachable_store_still_exits_1(app):
+    def boom(ctx):
+        raise RuntimeError("step broke")
+
+    assert run_tick(app, steps=[TickStep("x", 0, boom)]) == 1
+
+
+def test_all_steps_ok_after_the_probe_exits_0_without_a_second_probe(app):
+    probes = []
+    real = app.store.get_tick_state
+    app.store.get_tick_state = lambda s: probes.append(s) or real(s)
+    assert run_tick(app, steps=[]) == 0
+    assert probes.count("heartbeat") == 1
