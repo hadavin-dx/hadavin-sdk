@@ -251,6 +251,13 @@ def score(out: Path, answers_path: Path, cause_dir: Path, bundles_dir: Path) -> 
             and isinstance(meta.get("counts"), dict)
             and all(_count(meta["counts"].get(k)) for k in _COUNT_KEYS)
             and all(_plain(meta.get(k)) for k in _TEXT_KEYS)
+            and (
+                "redaction" not in meta
+                or (
+                    isinstance(meta["redaction"], dict)
+                    and meta["redaction"].get("mode") in ("on", "off_acknowledged")
+                )
+            )
         )
         if not ok_meta:
             raise ConfigError(
@@ -305,6 +312,8 @@ def score(out: Path, answers_path: Path, cause_dir: Path, bundles_dir: Path) -> 
     ):
         if len({m.get(key) for m in metas}) != 1:
             raise ConfigError(f"runs disagree on {key}")
+    if len({(m.get("redaction") or {}).get("mode") for m in metas}) != 1:
+        raise ConfigError("runs disagree on redaction")
     pass_k = sum(all(s.classes[c] in ("hit", "hne") for s in scores) for c in case_ids)
     first = metas[0]
     info = {
@@ -320,6 +329,8 @@ def score(out: Path, answers_path: Path, cause_dir: Path, bundles_dir: Path) -> 
             "bundle_set_sha256",
         )
     }
+    if "redaction" in first:
+        info["redaction"] = first["redaction"]
     info["usd"] = format(sum(_dec(m.get("usd")) for m in metas), "f")
     info["k"] = len(runs)
     return ScoreResult(
@@ -353,7 +364,9 @@ def _run_score(
     hard_a: int,
     issues: dict[str, list[str]] | None = None,
 ) -> RunScore:
-    count = lambda cls: sum(v == cls for v in classes.values())
+    def count(cls: str) -> int:
+        return sum(v == cls for v in classes.values())
+
     scored = [c for c in classes if not answers[c].no_evidence]
     h = sum(classes[c] == "hit" for c in scored)
     misses_scored = sum(classes[c] == "miss" for c in scored)

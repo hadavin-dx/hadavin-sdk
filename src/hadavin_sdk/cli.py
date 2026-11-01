@@ -6,7 +6,7 @@
   hadavin-sdk [--config DIR] tick                       one pass of approvals sweep, reconcile, stuck runs,
                                                          audit checkpoint; exit 0 ok, 1 a step failed,
                                                          2 config error, 4 store unreachable
-  hadavin-sdk [--config DIR] migrate [--runtime-role R]  apply the postgres schema; the migration role's DSN
+  hadavin-sdk [--config DIR] migrate [--runtime-role R] [--portal-role P]  apply the postgres schema; the migration role's DSN
                                                          comes from the HADAVIN_MIGRATE_DSN environment variable
   hadavin-sdk [--config DIR] audit verify                exit 0 intact, 1 not, 2 refused, 3 unreadable
   hadavin-sdk [--config DIR] replay AGENT --bundles D --cause-list D --max-usd X --out OUT [--k K]
@@ -94,7 +94,10 @@ def _main(argv: list[str] | None = None) -> int:
     lim.add_argument("--by", required=True)
     sub.add_parser("tick", help="one pass of the housekeeping steps (run every 30-60 s)")
     mig = sub.add_parser("migrate", help="apply the postgres store schema (migration role)")
-    mig.add_argument("--runtime-role", help="grant this database role SELECT, INSERT, UPDATE")
+    mig.add_argument("--runtime-role", help="grant this database role what the runtime needs")
+    mig.add_argument(
+        "--portal-role", help="grant this database role SELECT on the portal's relations only"
+    )
     aud = sub.add_parser("audit", help="check the chain audit")
     aud.add_argument("action", choices=["verify"])
     rep = sub.add_parser(
@@ -108,6 +111,11 @@ def _main(argv: list[str] | None = None) -> int:
         "--max-usd", required=True, type=_money, help="total cost cap for this invocation"
     )
     rep.add_argument("--out", required=True, type=Path)
+    rep.add_argument(
+        "--i-know-data-is-already-masked",
+        action="store_true",
+        help="needed only when config k1b.redact is false (the run records that you said so)",
+    )
     sc = sub.add_parser(
         "score", help="K1b-lite: count a replay's results (report only, no verdict)"
     )
@@ -122,7 +130,7 @@ def _main(argv: list[str] | None = None) -> int:
         return _tick()
     cfg = load_config()
     if args.cmd == "migrate":
-        return _migrate(cfg, args.runtime_role)
+        return _migrate(cfg, args.runtime_role, args.portal_role)
     reg = load_registry(cfg)
     if args.cmd in (
         "replay",
@@ -226,6 +234,7 @@ def replay_cmd(reg, llm, detector, audit, args) -> int:
         max_usd=args.max_usd,
         out=args.out,
         llm_kind=reg.config.backends.llm.kind,
+        acknowledge_masked=getattr(args, "i_know_data_is_already_masked", False),
     )
     print(f"replay {res.result}: outputs in {res.out} (see replay-report.md)")
     return res.exit_code
@@ -295,7 +304,7 @@ def _tick() -> int:
     return run_tick(app)
 
 
-def _migrate(cfg, runtime_role: str | None) -> int:
+def _migrate(cfg, runtime_role: str | None, portal_role: str | None = None) -> int:
     store = cfg.backends.store
     if store.kind != "postgres":
         print(
@@ -314,6 +323,7 @@ def _migrate(cfg, runtime_role: str | None) -> int:
     applied = migrate(
         dsn,
         runtime_role=runtime_role,
+        portal_role=portal_role,
         iam_auth=store.iam_auth,
         region=store.region,
         sslmode=store.sslmode,
