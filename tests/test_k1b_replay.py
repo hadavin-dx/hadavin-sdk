@@ -75,12 +75,13 @@ def _with_k1b(reg, **kw):
     return dataclasses.replace(reg, config=reg.config.model_copy(update={"k1b": K1bSettings(**kw)}))
 
 
-HAPPY = lambda: [
-    tool_reply("list_data"),
-    tool_reply("query_logs"),
-    submit("api", "bad_deploy", LOG0),
-    submit_not_sure(),
-]
+def HAPPY():
+    return [
+        tool_reply("list_data"),
+        tool_reply("query_logs"),
+        submit("api", "bad_deploy", LOG0),
+        submit_not_sure(),
+    ]
 
 
 def test_happy_path_outputs_and_audit(env):

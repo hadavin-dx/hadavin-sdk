@@ -14,8 +14,8 @@ from hadavin_sdk.guard.redact import redact
 
 S = "5ecret"
 LEAKS = [
-    ("wh" + "sec_C2FVsBQIhrscChlQIMV+b5sSYspob7oD", "b5sSYspob7oD"),
-    ("Webhook-Secret: wh" + "sec_Zm9vYmFyYmF6cXV4Zm9vYmFy/Zm9vYmFy+YmF6", "YmF6"),
+    ("wh" + "sec_" + "Fake" + "Token" + "A1b2C3d4E5f6", "A1b2C3d4E5f6"),
+    ("Webhook-Secret: wh" + "sec_" + "Fake" + "Token" + "Zm9vYmFy/Zm9v+YmF6", "YmF6"),
     ('["--db-password", "Dbpw' + S + '"]', "Dbpw" + S),
     ('["--client-secret","Cl' + S + 'V"]', "Cl" + S + "V"),
     (
@@ -110,8 +110,12 @@ def _values(n):
 
 
 def _lines(n, k):
-    ip = lambda i, j: f"10.{(i * 7 + j) % 250}.{(i + j * 13) % 250}.{i * j % 250}"
-    uid = lambda i, j: f"{i:08x}-{j:04x}-4{i % 4096:03x}-a{j % 4096:03x}-{i * 1000 + j:012x}"
+    def ip(i, j):
+        return f"10.{(i * 7 + j) % 250}.{(i + j * 13) % 250}.{i * j % 250}"
+
+    def uid(i, j):
+        return f"{i:08x}-{j:04x}-4{i % 4096:03x}-a{j % 4096:03x}-{i * 1000 + j:012x}"
+
     return [
         " ".join(f"from {ip(i, j)} req={uid(i, j)} pass" + f"word=s3cr{i}x{j}Q" for j in range(k))
         for i in range(n)
