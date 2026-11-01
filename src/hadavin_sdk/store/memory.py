@@ -211,6 +211,24 @@ class MemoryStore:
             )
             return self._spend.get((agent_id, day), Decimal(0)), month
 
+    def reserve_spend(
+        self, agent_id: str, day: date, usd: Decimal, daily_cap: Decimal, monthly_cap: Decimal
+    ) -> bool:
+        with self._lock:  # one lock for the check and the add
+            d = self._spend.get((agent_id, day), Decimal(0))
+            m = sum(
+                (
+                    v
+                    for (a, dd), v in self._spend.items()
+                    if a == agent_id and (dd.year, dd.month) == (day.year, day.month)
+                ),
+                Decimal(0),
+            )
+            if d + usd > daily_cap or m + usd > monthly_cap:
+                return False
+            self._spend[(agent_id, day)] = d + usd
+            return True
+
     def get_kill_switch(self) -> KillSwitch:
         with self._lock:
             return self._kill.model_copy(deep=True)

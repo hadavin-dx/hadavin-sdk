@@ -15,6 +15,11 @@ class ProviderExhausted(ProviderError):
     """The provider throttled or failed after its retries."""
 
 
+class SpendLimitReached(ProviderError):
+    """The provider's spend or quota cap is reached (for the Claude API: the monthly cap, a 429 with no
+    ``retry-after``). Retrying fails until the cap resets, so it is never retried; callers map it to ``over_budget``."""
+
+
 class LLM(Protocol):
     def chat(
         self,

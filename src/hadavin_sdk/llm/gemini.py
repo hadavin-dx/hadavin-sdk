@@ -29,12 +29,14 @@ def floating(model_id: str) -> bool:
 
 
 def make(settings: Any, deps: Any) -> GeminiLLM:
-    return GeminiLLM(
+    llm = GeminiLLM(
         lambda: deps.resolve(settings.api_key_secret_name),
         pinned(dict(deps.routes), floating),
         settings.call_timeout_s,
         settings.max_attempts,
     )
+    llm.deadline_s = settings.deadline_s
+    return llm
 
 
 class GeminiLLM(NetworkLLM):

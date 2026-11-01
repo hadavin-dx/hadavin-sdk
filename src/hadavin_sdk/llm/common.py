@@ -237,11 +237,19 @@ class NetworkLLM:
             sleep=self._sleep,
             retryable=self.retryable,
             detail=self.detail,
+            spend_limit=self.spend_limit,
+            deadline_s=self.deadline_s,
         )
 
     # The kind's own SDK errors (llm/retry.py stays vendor-neutral): None means no opinion / no code.
     retryable: Callable[[BaseException], bool | None] | None = None
     detail: Callable[[BaseException], str] | None = None
+    spend_limit: Callable[[BaseException], bool] | None = (
+        None  # the kind's own "spend cap reached" test
+    )
+    deadline_s: float | None = (
+        None  # overall wall clock for one call's attempts and sleeps (config)
+    )
 
 
 class _NoRedirect(urllib.request.HTTPRedirectHandler):

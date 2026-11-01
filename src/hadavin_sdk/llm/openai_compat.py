@@ -51,7 +51,7 @@ def floating(model_id: str, base_url: str) -> bool:
 
 def make(settings: Any, deps: Any) -> OpenAICompatLLM:
     name = settings.api_key_secret_name
-    return OpenAICompatLLM(
+    llm = OpenAICompatLLM(
         settings.base_url,
         (lambda: deps.resolve(name)) if name else None,
         pinned(dict(deps.routes), lambda m: floating(m, settings.base_url)),
@@ -59,6 +59,8 @@ def make(settings: Any, deps: Any) -> OpenAICompatLLM:
         settings.max_attempts,
         cap_field="max_completion_tokens" if settings.max_completion_tokens else "max_tokens",
     )
+    llm.deadline_s = settings.deadline_s
+    return llm
 
 
 def _call(tool_call: dict[str, Any]) -> ToolCall | None:

@@ -108,6 +108,14 @@ class Store(Protocol):
         """(day, month) totals; a read with no write."""
         ...
 
+    def reserve_spend(
+        self, agent_id: str, day: date, usd: Decimal, daily_cap: Decimal, monthly_cap: Decimal
+    ) -> bool:
+        """Atomically (one step, any number of threads or processes): if the day total plus ``usd`` stays within
+        ``daily_cap`` and the month total plus ``usd`` within ``monthly_cap``, add ``usd`` to both and return
+        True; otherwise add nothing and return False. A later ``add_spend`` of a negative delta settles it."""
+        ...
+
     def get_kill_switch(self) -> KillSwitch:
         """A missing or unreadable switch row reads as ON (fail closed)."""
         ...

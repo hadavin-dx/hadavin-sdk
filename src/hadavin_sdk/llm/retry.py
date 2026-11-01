@@ -5,6 +5,14 @@ backoff and full jitter, up to ``max_attempts`` requests in all; still failing, 
 Anything else (401 bad key, 400 malformed request) fails the same way every time, so it is a ``ProviderError``
 at once.
 
+A provider's spend or quota cap (Claude API: the monthly cap is HTTP 429, error type ``rate_limit_error``,
+``error.details.error_code == "enforced_spend_limit_reached"``, and no ``retry-after`` header; see
+platform.claude.com/docs/en/api/rate-limits, read 2026-11-01) fails until it resets: the kind's
+``spend_limit(exc)`` recognises it and it is raised as ``SpendLimitReached`` after ONE attempt. Other 429s are
+throttles and are retried; a ``retry-after`` is honoured as a floor. ``deadline_s`` bounds all attempts and sleeps
+together (an attempt already running is bounded by the kind's socket timeout, so the worst case is ``deadline_s``
+plus one call timeout).
+
 Vendor-neutral (lock-in audit 2026-10-31, row 2): this module knows HTTP statuses, the standard library's network
 errors and TLS, nothing else. Each kind knows its own SDK's errors and passes ``retryable(exc) -> bool | None``
 (None: no opinion, the generic rule decides) and ``detail(exc) -> str`` (an error code safe to log).
@@ -17,7 +25,7 @@ import ssl
 import time
 from collections.abc import Callable
 
-from hadavin_sdk.llm.protocol import ProviderError, ProviderExhausted
+from hadavin_sdk.llm.protocol import ProviderError, ProviderExhausted, SpendLimitReached
 
 BASE_DELAY_S = 0.5
 MAX_DELAY_S = 8.0
@@ -88,13 +96,19 @@ def with_retry[T](
     sleep: Callable[[float], None] = time.sleep,
     retryable: Retryable | None = None,
     detail: Callable[[BaseException], str] | None = None,
+    spend_limit: Callable[[BaseException], bool] | None = None,
+    deadline_s: float | None = None,
+    clock: Callable[[], float] = time.monotonic,
 ) -> T:
+    started = clock()
     for attempt in range(1, max_attempts + 1):
         try:
             return call()
         except ProviderError:
             raise
         except Exception as exc:  # every failure is classified below, never swallowed
+            if spend_limit is not None and spend_limit(exc):
+                raise SpendLimitReached(f"{label}: {describe(exc, detail)} spend limit") from exc
             if not transient(exc, retryable):
                 raise ProviderError(f"{label}: {describe(exc, detail)}") from exc
             if attempt == max_attempts:
@@ -104,5 +118,10 @@ def with_retry[T](
             # Full jitter spreads retries from many runs hitting one throttled account (not crypto); never
             # sooner than the server asked.
             jitter = random.uniform(0, min(MAX_DELAY_S, BASE_DELAY_S * 2 ** (attempt - 1)))  # noqa: S311
-            sleep(max(jitter, retry_after(exc)))
+            delay = max(jitter, retry_after(exc))
+            if deadline_s is not None and clock() - started + delay > deadline_s:
+                raise ProviderExhausted(
+                    f"{label}: {describe(exc, detail)} deadline {deadline_s}s reached"
+                ) from exc
+            sleep(delay)
     raise AssertionError("unreachable")  # max_attempts >= 1 (settings)

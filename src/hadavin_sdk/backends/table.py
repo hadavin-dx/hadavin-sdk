@@ -38,6 +38,8 @@ class _LLMSettings(KindSettings):
         default=60.0, gt=0
     )  # socket timeout, per operation (not a wall clock)
     max_attempts: int = Field(default=3, ge=1, le=10)
+    # Overall wall clock for one call across all attempts and sleeps; None = bounded by max_attempts only.
+    deadline_s: float | None = Field(default=None, gt=0)
 
 
 class AnthropicSettings(_LLMSettings):

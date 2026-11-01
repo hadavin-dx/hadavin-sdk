@@ -18,6 +18,7 @@ import anthropic  # the extra: a missing install fails at start-up with the hint
 
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.llm.common import Answer, NetworkLLM, pinned, reply
+from hadavin_sdk.llm.retry import status
 from hadavin_sdk.models import Reply, ToolCall
 
 API_BASE_URL = "https://api.anthropic.com"
@@ -77,20 +78,38 @@ def retryable(exc: BaseException) -> bool | None:
     return True if isinstance(exc, google_auth.TransportError) else None
 
 
+def spend_limit(exc: BaseException) -> bool:
+    """The monthly spend-cap 429: no retry-after, retrying fails until the next month. Classified by the error
+    code in the body (the message prefix only when the body has no details), never by status alone."""
+    if status(exc) != 429:
+        return False
+    body = getattr(exc, "body", None)
+    err = body.get("error", body) if isinstance(body, dict) else None
+    if not isinstance(err, dict):
+        return False
+    details = err.get("details")
+    if isinstance(details, dict) and "error_code" in details:
+        return details["error_code"] == "enforced_spend_limit_reached"
+    return str(err.get("message", "")).startswith("You have reached your API usage limits")
+
+
 def make(settings: Any, deps: Any) -> AnthropicLLM:
     name = settings.api_key_secret_name if settings.platform != "vertex" else None
     key = (lambda: deps.resolve(name)) if name else None
-    return AnthropicLLM(
+    llm = AnthropicLLM(
         client(settings, key() if key else None),
         pinned(dict(deps.routes), floating),
         settings.max_attempts,
         key=key,
     )
+    llm.deadline_s = settings.deadline_s
+    return llm
 
 
 class AnthropicLLM(NetworkLLM):
     label = "anthropic"
     retryable = staticmethod(retryable)
+    spend_limit = staticmethod(spend_limit)
 
     def __init__(
         self,

@@ -439,6 +439,42 @@ class PostgresStore:
             ).fetchone()
         return (Decimal(d["usd"]) if d else Decimal(0)), (Decimal(m["usd"]) if m else Decimal(0))
 
+    def reserve_spend(
+        self, agent_id: str, day: date, usd: Decimal, daily_cap: Decimal, monthly_cap: Decimal
+    ) -> bool:
+        """Check and add in one transaction. Both counter rows are created at zero, then locked (FOR UPDATE, day
+        before month, the order ``add_spend`` takes them), so a second connection waits for the first and then
+        sees its total: the caps hold across processes."""
+        month = day.replace(day=1)
+        with self._lock, self._db.transaction():
+            self._exec(
+                "INSERT INTO spend (agent_id, day, usd) VALUES (%s, %s, 0) ON CONFLICT DO NOTHING",
+                (agent_id, day),
+            )
+            self._exec(
+                "INSERT INTO spend_month (agent_id, month, usd) VALUES (%s, %s, 0) "
+                "ON CONFLICT DO NOTHING",
+                (agent_id, month),
+            )
+            d = self._exec(
+                "SELECT usd FROM spend WHERE agent_id = %s AND day = %s FOR UPDATE", (agent_id, day)
+            ).fetchone()["usd"]
+            m = self._exec(
+                "SELECT usd FROM spend_month WHERE agent_id = %s AND month = %s FOR UPDATE",
+                (agent_id, month),
+            ).fetchone()["usd"]
+            if Decimal(d) + usd > daily_cap or Decimal(m) + usd > monthly_cap:
+                return False
+            self._exec(
+                "UPDATE spend SET usd = usd + %s WHERE agent_id = %s AND day = %s",
+                (usd, agent_id, day),
+            )
+            self._exec(
+                "UPDATE spend_month SET usd = usd + %s WHERE agent_id = %s AND month = %s",
+                (usd, agent_id, month),
+            )
+        return True
+
     def get_kill_switch(self) -> KillSwitch:
         found = self._select(KillSwitch, "kill_switch", "id = 1", ())
         if not found:  # migrate seeds the row: its absence means a broken schema, so fail closed

@@ -2,6 +2,35 @@
 
 ## Unreleased
 
+### Core hardening 1 (G-01, G-04, G-05, G-08)
+- **`extract()` no longer leaks document content (R85, R14).** The retry prompt and `DeadLetter.errors` carry the
+  failing field path and the error type only (`inner.n: int_parsing`); never pydantic's message or input. A path
+  element that is not a schema property name (a dict key, an extra key) shows as `*`. The model's invalid reply is
+  no longer echoed back in the retry turn, and the retry wording is now R85's ("Your previous reply was invalid: ...
+  Reply again with only the corrected JSON object."). Fenced or prose-wrapped JSON now parses (R82); a list, string
+  or null reply is a validation error, not an exception. Anything that matched the old text `That failed validation`
+  must change.
+- **Spend-cap 429 is never retried (G-05).** The Claude API monthly cap (HTTP 429, `rate_limit_error`,
+  `error.details.error_code == "enforced_spend_limit_reached"`, no `retry-after`; platform.claude.com/docs/en/api/rate-limits,
+  read 2026-11-01) is raised after ONE attempt as the new `SpendLimitReached` (a `ProviderError`; map it to
+  `over_budget`). Other 429s (throttles, acceleration limits; the docs say not every 429 has `retry-after`) are
+  still retried with backoff and jitter, `retry-after` as the floor. Each kind supplies its own test through
+  `NetworkLLM.spend_limit`; only `anthropic` has one yet (`openai_compat` `insufficient_quota` and Gemini quota errors
+  are still retried up to `max_attempts`).
+- **New setting `deadline_s`** on every network `backends.llm` kind (optional, > 0): wall clock for one call across all
+  attempts and sleeps. Worst case is `deadline_s` plus one `call_timeout_s`. Default unset = unchanged.
+- **New `llm/resilient.py`**: `ResilientLLM(primary, fallback, CircuitBreaker(failures, reset_after_s))` wraps any `LLM`.
+  Not yet reachable from config (that is a factory change, after PR #42); construct it in code.
+- **Reserve-then-settle budget (G-04, R214).** New `Limits.reserve(agent_id, worst_case_usd, run_id=None)` ->
+  `Reservation`, then `Limits.settle(reservation, actual_usd)` (or `release`). The check and the booking are one
+  atomic step in the store (new `Store.reserve_spend`; in memory under the lock, on Postgres two row-locked counters in
+  one transaction), so parallel callers never book past the daily, monthly or per-run (`max_run_usd`) cap. Helper
+  `worst_case_usd(route, prompt_chars)`. `OverBudget.reasons` uses the `blocked` names plus `run_budget`.
+  **Upgrade step:** `Limits.blocked()` + `Limits.charge()` still work and keep the old check-then-charge race. The
+  runtime (`agent_loop.py`) still uses them; moving it to `reserve`/`settle` waits for PRs #41/#42 to merge. A custom
+  `Store` implementation must add `reserve_spend`. No schema migration (a per-run total is kept as a `run:<run_id>`
+  row at a fixed day).
+
 ### Upgrade steps
 - **K3 pilot build path (levels, shadow cut-off, fail-closed loading).** Action contracts change shape:
   `executor.system` moves to a contract field `target_system`, and `executor` is now a tagged union

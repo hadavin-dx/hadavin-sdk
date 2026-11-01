@@ -56,7 +56,7 @@ def test_bad_output_one_retry_then_dead_letter(cfg, llm):
     assert isinstance(out, DeadLetter)
     assert out.reason == "extract_invalid" and len(out.errors) == 2
     assert len(llm.calls) == 2
-    assert "failed validation" in llm.calls[1]["messages"][-1]["content"]
+    assert "previous reply was invalid" in llm.calls[1]["messages"][-1]["content"]
 
 
 def test_detector_flags_seeded_injection(cfg):
