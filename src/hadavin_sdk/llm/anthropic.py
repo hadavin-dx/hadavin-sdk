@@ -17,7 +17,7 @@ from typing import Any
 import anthropic  # the extra: a missing install fails at start-up with the hint (backends.make)
 
 from hadavin_sdk.errors import ConfigError
-from hadavin_sdk.llm.common import Answer, NetworkLLM, pinned, reply
+from hadavin_sdk.llm.common import Answer, NetworkLLM, parse_stage, pinned, reply
 from hadavin_sdk.models import Reply, ToolCall
 
 API_BASE_URL = "https://api.anthropic.com"
@@ -136,7 +136,9 @@ class AnthropicLLM(NetworkLLM):
         if forced:
             request["tool_choice"] = {"type": "tool", "name": forced}
         started = time.monotonic()
-        got = self._retry(lambda: self._parse(self._current().messages.create(**request)))
+        got = self._retry(
+            lambda: parse_stage(self._parse, self._current().messages.create(**request))
+        )
         return reply(
             route,
             **vars(got),

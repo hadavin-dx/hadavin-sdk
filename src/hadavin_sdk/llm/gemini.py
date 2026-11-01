@@ -14,7 +14,7 @@ from collections.abc import Callable
 from typing import Any
 from urllib.parse import quote
 
-from hadavin_sdk.llm.common import Answer, NetworkLLM, pinned, post_json, reply
+from hadavin_sdk.llm.common import Answer, NetworkLLM, parse_stage, pinned, post_json, reply
 from hadavin_sdk.models import Reply, ToolCall
 
 BASE_URL = "https://generativelanguage.googleapis.com/v1beta"
@@ -84,8 +84,8 @@ class GeminiLLM(NetworkLLM):
         url = f"{self.base_url}/models/{quote(route.model_id, safe='')}:generateContent"
         started = time.monotonic()
         got = self._retry(
-            lambda: self._parse(
-                post_json(url, body, {"x-goog-api-key": self._key()}, self.timeout_s)
+            lambda: parse_stage(
+                self._parse, post_json(url, body, {"x-goog-api-key": self._key()}, self.timeout_s)
             )
         )
         return reply(

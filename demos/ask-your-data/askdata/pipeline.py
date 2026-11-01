@@ -34,7 +34,9 @@ from hadavin_sdk.config import Route
 from hadavin_sdk.guard.injection import RegexDetector, injection_check
 from hadavin_sdk.llm.protocol import LLM, ProviderError, ProviderExhausted, UnusableAnswer
 
-_SCHEMA_CHARS = len(json.dumps(llm_io.GENERATE_SCHEMA))  # the forced tool schema is sent too
+_SCHEMA_BYTES = len(
+    json.dumps(llm_io.GENERATE_SCHEMA).encode()
+)  # the forced tool schema is sent too
 NO_ROWS_NOTE = "0 rows: check the filters"
 
 
@@ -57,7 +59,7 @@ class Settings:
     live: bool = True  # a live (paid) route also needs a fresh external_usd in the meter
     transient_backoff_s: float = RUNTIME.transient_backoff_s
     # requests ONE chat() may send (the LLM kind retries inside it); the meter reserves for all of them
-    llm_max_attempts: int = 1
+    llm_max_attempts: int = RUNTIME.recorded_llm_requests
     injection_threshold: float = (
         RUNTIME.injection_threshold
     )  # sweep: tests/demo_askdata/test_demo_gaps.py (A-19 F-27)
@@ -162,7 +164,8 @@ class Pipeline:
             messages = llm_io.build_messages(self.prompt.text, run.question, prev_sql, hint)
             # ONE request's worst case: the prompt AND the forced tool schema that travels with it.
             per_try = worst_case_usd(
-                route, len(llm_io.SYSTEM) + len(messages[0]["content"]) + _SCHEMA_CHARS
+                route,
+                len(llm_io.SYSTEM.encode()) + len(messages[0]["content"].encode()) + _SCHEMA_BYTES,
             )
             # the kind may send this many requests inside one chat(): its own bound when it knows it
             worst = per_try * getattr(self.llm, "max_requests", self.s.llm_max_attempts)

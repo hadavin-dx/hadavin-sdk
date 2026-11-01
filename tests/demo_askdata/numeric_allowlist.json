@@ -27,6 +27,10 @@
    "quoted = \"'\" + password.replace(bs, bs * 2).replace(\"'\", \"''\") + \"'\"",
    "return 3 if red else 0",
    "return 4",
+   "return 4",
+   "return 4",
+   "return 4",
+   "return 4",
    "return EXIT_FAILED if name == \"roles\" and done.returncode == 3 else EXIT_STARTUP",
    "worst = worst if code in (EXIT_REFUSED, EXIT_FAILED) else 4  # these two MUST be rejected"
   ],
@@ -42,7 +46,7 @@
  },
  "askdata/config.py": {
   "lines": [
-   "return int(self.llm.get(\"max_attempts\", 3)) if self.llm else 1"
+   "return int(self.llm.get(\"max_attempts\", 3)) if self.llm else RUNTIME.recorded_llm_requests"
   ],
   "reason": "the 3 is the prompt's three-attempt design bound (RUNTIME.max_attempts)"
  },
@@ -57,7 +61,35 @@
    "out(json.dumps(diff, indent=2, sort_keys=True, default=str))",
    "return 11 if diff[\"regression\"] else 0",
    "return 14",
+   "return 14",
+   "return 14",
+   "return 14",
+   "return 14",
+   "return 14",
+   "return 14",
+   "return 14",
    "return 14 if split == \"test\" and isinstance(err, LockError) else 4",
+   "return 4",
+   "return 4",
+   "return 4",
+   "return 4",
+   "return 4",
+   "return 4",
+   "return 4",
+   "return 4",
+   "return 4",
+   "return 4",
+   "return 4",
+   "return 4",
+   "return 4",
+   "return 4",
+   "return 4",
+   "return 4",
+   "return 4",
+   "return 4",
+   "return 4",
+   "return 4",
+   "return 4",
    "return 4"
   ],
   "reason": "exit codes of the documented eval band"
@@ -73,7 +105,8 @@
    "json.dumps(report, indent=2, sort_keys=True, ensure_ascii=True) + \"\\n\",",
    "json.dumps({k: str(v) for k, v in meter_snapshot.items()}, indent=2, sort_keys=True) + \"\\n\",",
    "len((lock.harness_defect_reason or \"\").strip()) >= 10",
-   "order = {\"not_demonstrated\": 0, \"amber\": 1, \"green\": 2}"
+   "order = {\"not_demonstrated\": 0, \"amber\": 1, \"green\": 2}",
+   "self._asked = self._attempts = self._violations = 0"
   ],
   "reason": "the documented exit-code band of eval run, percentiles and hash prefix widths"
  },
@@ -130,6 +163,10 @@
    "out(json.dumps(json.loads(item.line.model_dump_json(by_alias=True)), indent=2, sort_keys=True))",
    "return 0 if rep.ok else 3",
    "return 4",
+   "return 4",
+   "return 4",
+   "return 4",
+   "return 5",
    "return 5",
    "text = json.dumps(rows, indent=2, sort_keys=True, ensure_ascii=True) + \"\\n\""
   ],
@@ -153,6 +190,7 @@
    "return self._finish(run, int((time.monotonic() - t0) * 1000))",
    "run.assumptions = [clean(a)[:300] for a in out.assumptions[:20]]",
    "self._finish(run, int((time.monotonic() - t0) * 1000))",
+   "sql_text=clean(sql_text)[:4000],",
    "sql_text=clean(sql_text)[:4000],",
    "sqlstate=state, sqlstate_class=state[:2] if state else None, **common, **timing"
   ],

@@ -12,7 +12,7 @@ from askdata.sealed import HAND_FIELDS, SealedGate, report_state
 from askdata.settings import RUNTIME
 
 from .conftest import DEMO
-from .test_demo_gaps_r3 import KEY, gate_for
+from .test_demo_gaps_r3 import KEY, gate_for, renew
 from .test_demo_gaps_r4 import _edit_lock, _run
 from .test_eval_harness import cli_env  # noqa: F401 - a fixture reused here
 
@@ -122,6 +122,7 @@ def test_deleting_any_configured_anchor_is_refused(tmp_path, which):
 # ====================================================== (5) the counter reset is deliberate and logged
 def test_a_new_set_needs_a_real_reason_and_the_count_to_discard(tmp_path):
     g = gate_for(tmp_path, KEY)
+    renew(g)
     _run(g, "r1")
     _run(g, "r2")
     with pytest.raises(LockError, match="at least 20 characters"):
@@ -172,6 +173,7 @@ def test_a_failed_first_freeze_rolls_everything_back_including_the_anchors(tmp_p
 
 def test_a_failed_new_set_restores_the_old_lock_and_the_chain(tmp_path, monkeypatch):
     g = gate_for(tmp_path, KEY)
+    renew(g)
     _run(g, "r1")
     before_chain, before_lock = g.chain.path.read_bytes(), lock_path(g.eval_dir).read_bytes()
     reason = "the client replaced the test questions"

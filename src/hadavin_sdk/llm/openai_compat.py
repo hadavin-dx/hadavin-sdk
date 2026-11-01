@@ -23,6 +23,7 @@ from hadavin_sdk.llm.common import (
     estimate_tokens,
     json_in_text,
     model_name,
+    parse_stage,
     pinned,
     post_json,
     price,
@@ -130,7 +131,9 @@ class OpenAICompatLLM(NetworkLLM):
         for _ in range(self.ROUNDS):  # the forced answer missing: one more request (design 4.3)
             try:
                 got = self._retry(
-                    lambda: self._parse(post_json(self.url, body, self._headers(), self.timeout_s))
+                    lambda: parse_stage(
+                        self._parse, post_json(self.url, body, self._headers(), self.timeout_s)
+                    )
                 )
             except ProviderError as err:
                 # What the earlier rounds already cost must not be lost with the error (a meter charges it).

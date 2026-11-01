@@ -5,7 +5,6 @@ Rewritten from WARDEN ``providers.py`` (single-turn ``complete`` → multi-turn 
 
 from __future__ import annotations
 
-import http.client
 import json
 import re
 import time
@@ -17,7 +16,7 @@ from typing import Any
 from urllib.parse import urlsplit
 
 from hadavin_sdk.errors import ConfigError
-from hadavin_sdk.llm.protocol import UnusableAnswer
+from hadavin_sdk.llm.protocol import ProviderError, UnusableAnswer
 from hadavin_sdk.llm.retry import with_retry
 from hadavin_sdk.models import Reply, ToolCall
 
@@ -291,6 +290,19 @@ _LOCAL_OPENER = urllib.request.build_opener(_NoRedirect, urllib.request.ProxyHan
 _LOOPBACK = frozenset({"127.0.0.1", "localhost", "::1"})
 
 
+def parse_stage[T](parse: Callable[..., T], *args: Any) -> T:
+    """The ANSWERED stage of a call: the provider replied and `parse` reads the reply. Any failure in `parse` means the
+    request was answered and billed but unusable, so it is an `UnusableAnswer`. Call it as
+    `parse_stage(self._parse, <the call that sends the request>)`: the argument is evaluated BEFORE the stage starts,
+    so a failure while building or sending the request is not an answer."""
+    try:
+        return parse(*args)
+    except ProviderError:
+        raise
+    except Exception as exc:  # noqa: BLE001
+        raise UnusableAnswer(f"unusable answer ({type(exc).__name__})") from None
+
+
 def post_json(url: str, body: dict[str, Any], headers: dict[str, str], timeout_s: float) -> Any:
     """One POST; an HTTP error status raises ``urllib.error.HTTPError`` (its ``code`` drives the retry)."""
     req = urllib.request.Request(  # noqa: S310 - https or keyless loopback, checked in the settings
@@ -305,8 +317,7 @@ def post_json(url: str, body: dict[str, Any], headers: dict[str, str], timeout_s
         # billed, not a refusal: it is classified here, where the request is known to have been sent.
         try:
             return json.loads(resp.read())
-        except (
-            ValueError,
-            http.client.HTTPException,
-        ) as exc:  # JSONDecodeError, UnicodeDecodeError, IncompleteRead
+        except OSError:
+            raise  # a reset or a read timeout is the NETWORK's failure: retried, not an answer
+        except Exception as exc:  # noqa: BLE001 - JSONDecodeError, UnicodeDecodeError, IncompleteRead, RecursionError, MemoryError...
             raise UnusableAnswer(f"unusable response body ({type(exc).__name__})") from None

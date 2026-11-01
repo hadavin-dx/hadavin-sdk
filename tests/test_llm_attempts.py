@@ -167,11 +167,13 @@ def test_an_unusable_200_body_is_a_billed_error_but_an_http_refusal_is_not():
 
     x = X({"r": ROUTE}, 3, sleep=lambda _s: None)
 
-    def _parse():  # the kinds name their response parser `_parse`: a failure in it means a request WAS answered
+    def unparseable(
+        resp,
+    ):  # the ANSWERED stage: the request was sent and replied to, the reply cannot be read
         raise ValueError("malformed body")
 
     def bad():
-        return _parse()
+        return common.parse_stage(unparseable, {"choices": []})
 
     with pytest.raises(UnusableAnswer):
         x._retry(bad)
@@ -378,3 +380,79 @@ def test_bedrock_a_body_botocore_cannot_read_is_billed(make_exc):
 def test_the_token_estimate_counts_bytes_so_cjk_is_not_undercounted():
     assert estimate_tokens("日本語" * 10) >= 30  # 90 bytes; characters // 3 would say 10
     assert estimate_tokens("abc" * 10) == 10  # ASCII is unchanged
+
+
+# ---- the stage decides the billing, never a function name (round 8)
+def test_a_failure_before_the_request_is_not_billed_even_if_it_passes_through_a_parser_named_parse():
+    import re
+
+    class X(NetworkLLM):
+        label = "x"
+
+    x = X({"r": ROUTE}, 3, sleep=lambda _s: None)
+
+    def pre_send():
+        return common.parse_stage(
+            lambda r: r, re.compile("(")
+        )  # the ARGUMENT fails before the stage starts
+
+    with pytest.raises(ProviderError) as err:
+        x._retry(pre_send)
+    assert not isinstance(
+        err.value, UnusableAnswer
+    )  # re._parser._parse is on the traceback; it must not matter
+
+
+def test_parse_stage_makes_a_failure_inside_the_parser_an_unusable_answer():
+    with pytest.raises(UnusableAnswer):
+        common.parse_stage(lambda d: d["missing"], {})
+    assert common.parse_stage(lambda d: d["x"], {"x": 5}) == 5
+
+
+@pytest.mark.parametrize(
+    "reader",
+    [
+        lambda: b"[" * 100_000,  # RecursionError out of the JSON parser
+        lambda: (_ for _ in ()).throw(MemoryError()),
+        lambda: (_ for _ in ()).throw(RuntimeError("anything else while reading the body")),
+    ],
+)
+def test_any_failure_reading_the_body_of_an_answered_request_is_billed(reader, monkeypatch):
+    monkeypatch.setattr(common, "_OPENER", _opener_returning(reader))
+    llm = oc.OpenAICompatLLM(
+        "https://api.example.com/v1",
+        lambda: "k",
+        {"sql_generate": PRICED},
+        30,
+        1,
+        sleep=lambda _s: None,
+    )
+    with pytest.raises(UnusableAnswer):
+        llm.chat(
+            [{"role": "user", "content": "hi"}],
+            system="s",
+            route="sql_generate",
+            output_schema=SCHEMA,
+        )
+
+
+def test_a_network_failure_while_reading_the_body_is_retried_not_billed_as_an_answer(monkeypatch):
+    def reader():
+        raise ConnectionResetError("reset by peer")
+
+    monkeypatch.setattr(common, "_OPENER", _opener_returning(reader))
+    llm = oc.OpenAICompatLLM(
+        "https://api.example.com/v1",
+        lambda: "k",
+        {"sql_generate": PRICED},
+        30,
+        2,
+        sleep=lambda _s: None,
+    )
+    with pytest.raises(ProviderExhausted):
+        llm.chat(
+            [{"role": "user", "content": "hi"}],
+            system="s",
+            route="sql_generate",
+            output_schema=SCHEMA,
+        )

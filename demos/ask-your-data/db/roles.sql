@@ -7,8 +7,11 @@
 -- WARNING: REVOKE ... FROM PUBLIC changes access for EVERY login role in this database. Run it on a dedicated
 -- database or a read replica, never on a shared production database. It first runs preflight_roles.sql and stops
 -- (exit 3) when other logins would lose access, unless you also pass -v accept_loss=yes.
--- Optional: -v ro_role=<name> (default askdata_ro). Without ro_password the login has no password: set one with
--- \password. (A password given with -v can end up in server logs when log_statement=all; prefer \password.)
+-- Optional: -v ro_role=<name> (default askdata_ro; lower-case letters, digits, underscore, at most 63). Without
+-- ro_password the login has no password: set one with \password. A password that IS passed must be at least 12
+-- characters (an empty one would silently leave the login with none). (A password given with -v can end up in
+-- server logs when log_statement=all; prefer \password.)
+-- NOT idempotent: a second run stops at CREATE ROLE (exit 3, the transaction is rolled back, nothing half-made).
 \set ON_ERROR_STOP on
 \if :{?confirm_dedicated}
 \else
@@ -21,6 +24,19 @@
 \if :{?ro_role}
 \else
   \set ro_role askdata_ro
+\endif
+
+SELECT (:'ro_role' ~ '^[a-z_][a-z0-9_]{0,62}$') AS ok_role \gset
+\if :ok_role
+\else
+  SELECT 'refusing: ro_role must match ^[a-z_][a-z0-9_]{0,62}$'::int;
+\endif
+\if :{?ro_password}
+  SELECT (length(:'ro_password') >= 12) AS ok_pw \gset
+  \if :ok_pw
+  \else
+    SELECT 'refusing: ro_password must be at least 12 characters (or leave it out and use \password)'::int;
+  \endif
 \endif
 
 SELECT (:'confirm_dedicated' = 'yes') AS dedicated \gset
@@ -61,12 +77,12 @@ SELECT (:cl BETWEEN 1 AND 999) AS ok_cl_range \gset
 \else
   SELECT 'refusing: ro_connection_limit must be from 1 to 999'::int;
 \endif
-SELECT (:'ro_statement_timeout' ~ '^[1-9][0-9]{0,4}s$'
-        AND :'ro_lock_timeout' ~ '^[1-9][0-9]{0,4}s$'
-        AND :'ro_idle_timeout' ~ '^[1-9][0-9]{0,4}s$') AS ok_timeouts \gset
+SELECT (:'ro_statement_timeout' ~ '^[1-9][0-9]{0,2}s$'
+        AND :'ro_lock_timeout' ~ '^[1-9][0-9]{0,2}s$'
+        AND :'ro_idle_timeout' ~ '^[1-9][0-9]{0,2}s$') AS ok_timeouts \gset
 \if :ok_timeouts
 \else
-  SELECT 'refusing: each timeout must be a positive whole number of seconds like 15s (0s would disable it)'::int;
+  SELECT 'refusing: each timeout must be a whole number of seconds from 1s to 999s like 15s (0s would disable it)'::int;
 \endif
 SELECT (:'accept_loss' = 'yes') AS accepted \gset
 \if :has_loss

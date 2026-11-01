@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import random
+import uuid
 from datetime import timedelta
 from decimal import Decimal
 from pathlib import Path
@@ -51,6 +52,11 @@ def gate_for(tmp_path: Path, key: bytes | None = None) -> SealedGate:
     g = SealedGate(ev, tmp_path / "audit" / "chain.jsonl", tmp_path / "runs", key, anchors)
     g.create(["a.jsonl"])
     return g
+
+
+def renew(g: SealedGate) -> None:
+    """Give the frozen set DIFFERENT contents, so that a `--new-set` freeze is a real new set."""
+    (g.eval_dir / "a.jsonl").write_text("renewed " + uuid.uuid4().hex + "\n", encoding="utf-8")
 
 
 def sealed_runs(g: SealedGate) -> int:
@@ -454,9 +460,12 @@ def test_the_reservation_covers_the_forced_tool_schema(tmp_path):
     _, per, _, _, _ = spend(tmp_path, "w")
     k = Kit(tmp_path / "w")
     content = llm_io.build_messages(k.pipeline.prompt.text, Q, None, None)[0]["content"]
-    without = worst_case_usd(ROUTE, len(llm_io.SYSTEM) + len(content))
+    without = worst_case_usd(ROUTE, len(llm_io.SYSTEM.encode()) + len(content.encode()))
     assert per == worst_case_usd(
-        ROUTE, len(llm_io.SYSTEM) + len(content) + len(json.dumps(llm_io.GENERATE_SCHEMA))
+        ROUTE,
+        len(llm_io.SYSTEM.encode())
+        + len(content.encode())
+        + len(json.dumps(llm_io.GENERATE_SCHEMA).encode()),
     )
     assert per > without
 
