@@ -480,7 +480,7 @@ class PostgresStore:
 
     def list_tool_calls(self, run_id: str) -> list[ToolCallRecord]:
         return self._select(
-            ToolCallRecord, "tool_calls", "run_id = %s", (run_id,), " ORDER BY created_at"
+            ToolCallRecord, "tool_calls", "run_id = %s", (run_id,), " ORDER BY created_at, call_id"
         )
 
     def _purge(self, table: str, column: str, before: datetime, keep: frozenset[str]) -> int:

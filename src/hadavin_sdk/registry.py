@@ -21,7 +21,13 @@ from hadavin_sdk.config import Config, ConfigError, Money, confined, load_yaml
 from hadavin_sdk.guard.judge import PROMPT_SHA256 as JUDGE_PROMPT_SHA256
 from hadavin_sdk.identity import Principal
 from hadavin_sdk.models import ChainStep, sha256_hex
-from hadavin_sdk.tools import ToolSpec, parse_manifest, read_operations, spec_problems
+from hadavin_sdk.tools import (
+    ToolSpec,
+    module_sha256,
+    parse_manifest,
+    read_operations,
+    spec_problems,
+)
 
 
 class Budget(BaseModel):
@@ -219,6 +225,7 @@ def _load_tools(config: Config, agents: dict, contracts: dict) -> dict[str, dict
             if p.stem not in agents
         ]
     read_ops: set[str] | None = None
+    problems += _module_pin_problems(config)
     for agent_id, agent in agents.items():
         path = folder / f"{agent_id}.yaml"
         if not path.is_file():
@@ -230,12 +237,26 @@ def _load_tools(config: Config, agents: dict, contracts: dict) -> dict[str, dict
         found[agent_id] = {}
         for spec in specs:
             found[agent_id][spec.name] = spec
-            problems += [f"{where}: {p}" for p in spec_problems(spec, config.tool_modules)]
+            problems += [
+                f"{where}: {p}"
+                for p in spec_problems(spec, config.tool_modules, config.evidence.cluster_suffixes)
+            ]
             problems += [
                 f"{where}: tool {spec.name}: {p}" for p in schema_problems(spec.input_schema)
             ]
             if spec.name not in agent.tools_allowed:
                 problems.append(f"{where}: tool {spec.name} is not in the agent's tools_allowed")
+            for (
+                action
+            ) in agent.scope_allowed:  # every string input says whether it must be grounded
+                props = (contracts[action].input_schema or {}).get("properties") or {}
+                problems += [
+                    f"{where}: action {action} input {pname!r} must say `identifier: true` or `identifier: false`"
+                    for pname, sub in props.items()
+                    if isinstance(sub, dict)
+                    and sub.get("type") == "string"
+                    and "identifier" not in sub
+                ]
             if spec.name in contracts:
                 problems.append(f"{where}: tool {spec.name} has the id of an action contract")
             problems += [
@@ -246,6 +267,30 @@ def _load_tools(config: Config, agents: dict, contracts: dict) -> dict[str, dict
     if problems:
         raise ConfigError("; ".join(problems))
     return found
+
+
+def _module_pin_problems(config: Config) -> list[str]:
+    """Tool modules are code with the process's rights: in pilot and prod each one is pinned by the SHA-256 of
+    its source file (`tool_module_hashes`), and a pin that is listed must match."""
+    out = []
+    for module in config.tool_modules:
+        pin = config.tool_module_hashes.get(module)
+        if pin is None:
+            if config.environment in deferred.LIVE:
+                out.append(
+                    f"tool module {module} has no tool_module_hashes pin (required in pilot and prod)"
+                )
+            continue
+        try:
+            actual = module_sha256(module)
+        except ConfigError as exc:
+            out.append(str(exc))
+            continue
+        if actual != pin:
+            out.append(
+                f"tool module {module}: its source hash is {actual[:12]}..., the pin says {pin[:12]}..."
+            )
+    return out
 
 
 def _cross_check(config, agents, chains, contracts) -> list[str]:

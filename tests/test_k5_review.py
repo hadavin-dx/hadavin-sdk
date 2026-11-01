@@ -19,6 +19,7 @@ from hadavin_sdk.registry import load_registry
 from hadavin_sdk.runtime import evidence
 from hadavin_sdk.runtime import tick as tick_mod
 from hadavin_sdk.store import MemoryStore
+from hadavin_sdk.store.protocol import NotFound
 from tests.fixtures import k5_tools
 from tests.k5_support import (
     BUNDLES,
@@ -101,7 +102,7 @@ def test_review_a_literal_placeholder_in_a_log_is_not_evidence(tmp_path):
     rt, cards = build_runtime(k5_cfg(tmp_path), llm, store=store)
     run = handle(rt, bundle["document"].encode())
     assert (run.state, run.reason_code) == (S.NEEDS_PERSON, "ungrounded")
-    with pytest.raises(Exception):  # noqa: B017 - no plan row of any kind
+    with pytest.raises(NotFound):  # no plan row of any kind
         store.get_plan(run.run_id)
     assert cards and "upstream ‹IPV4_2› refused" in json.dumps(
         llm.sent[1]["messages"], ensure_ascii=False

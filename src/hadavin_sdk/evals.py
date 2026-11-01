@@ -15,10 +15,20 @@ from hadavin_sdk.guard import judge, runmap
 from hadavin_sdk.llm.protocol import LLM
 from hadavin_sdk.models import GateRun
 from hadavin_sdk.registry import Registry
+from hadavin_sdk.runtime.evidence import with_evidence
 from hadavin_sdk.stats import upper_error_bound
 
 _ASK = "Process the attached request document."
 QUALIFIED = "qualified.jsonl"
+
+
+def matches(got: dict, expected: dict) -> bool:
+    """Subset match (K5): the action is the expected one and every expected input has the expected value; extra
+    optional inputs the model added are allowed. An abstention (action None) must be an abstention."""
+    if got["action"] != expected["action"]:
+        return False
+    want = expected.get("inputs") or {}
+    return all(k in got["inputs"] and got["inputs"][k] == v for k, v in want.items())
 
 
 def gate(registry: Registry, llm: LLM, agent_id: str, *, k: int = 1) -> GateRun:
@@ -32,8 +42,14 @@ def gate(registry: Registry, llm: LLM, agent_id: str, *, k: int = 1) -> GateRun:
     golden_path = confined(cfg.golden_dir, f"{agent_id}.jsonl")
     golden_bytes = golden_path.read_bytes()
     cases = [json.loads(line) for line in golden_bytes.decode("utf-8").splitlines() if line.strip()]
+    # What the runtime offers: a tooled agent's action tools carry the required `evidence` field.
+    tooled = bool(agent.tools_allowed)
     tools = [
-        {"name": c.id, "description": c.description, "input_schema": c.input_schema}
+        {
+            "name": c.id,
+            "description": c.description,
+            "input_schema": with_evidence(c.input_schema) if tooled else c.input_schema,
+        }
         for c in (registry.contracts[a] for a in agent.scope_allowed)
     ]
     passed = run_passes = abstains = 0
@@ -65,7 +81,7 @@ def gate(registry: Registry, llm: LLM, agent_id: str, *, k: int = 1) -> GateRun:
                 if reply.tool_calls
                 else {"action": None, "inputs": {}}
             )
-            case_passes += got == case["expected"]
+            case_passes += matches(got, case["expected"])
         run_passes += case_passes
         passed += case_passes == k  # k == 1: passed; k > 1: passed all k runs
     n = len(cases)

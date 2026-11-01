@@ -51,6 +51,8 @@ class TickStep:
     name: str  # unique, [a-z_]+ (the tick_state CHECK)
     every_s: int  # 0 = every tick
     fn: Callable[[TickContext], None]
+    # Interval read from the config at run time (so it is not frozen at import); wins over `every_s`.
+    interval: Callable[[TickContext], int] | None = None
 
     def __post_init__(self) -> None:
         if not re.fullmatch(r"[a-z_]+", self.name) or self.every_s < 0:
@@ -179,18 +181,15 @@ def checkpoint(ctx: TickContext) -> None:
 
 
 def purge_evidence(ctx: TickContext) -> None:
-    """Daily (K5): delete tool calls and redaction maps past their retention. Runs `hooks.hold_run_ids()` names
-    (labelled wrong, harmful or missed, or demoted; none before K6) keep their tool calls, and their maps only
-    up to `held_maps_max_days` (400): the maps hold original identifiers, so no hold is open-ended."""
+    """Delete tool calls and redaction maps past their retention, at most every `retention.purge_every_s`.
+
+    Runs that `hooks.hold_run_ids()` names (labelled wrong, harmful or missed, or demoted; none before K6) keep
+    their tool calls, and their maps only up to `held_maps_max_days` (400): the maps hold original identifiers, so
+    no hold is open-ended. A hold is NOT retroactive: a run already purged before it was named is gone. If the
+    hook raises, the step fails and NOTHING is purged that tick (visible as `purge_evidence` `last_error` in
+    `tick_state`): retaining too much for a while is the safe direction, and the failure is loud, not silent."""
     app = ctx.app
     keep = app.config.retention
-    last = app.store.get_tick_state("purge_evidence")
-    if (
-        last
-        and last.last_ok_at
-        and (ctx.now - last.last_ok_at).total_seconds() < keep.purge_every_s
-    ):
-        return
     hook = app.runtime.hooks.hold_run_ids
     held = frozenset(hook() or ()) if keep.hold_labelled and hook is not None else frozenset()
     calls = app.store.purge_tool_calls(
@@ -217,7 +216,10 @@ STEPS: list[TickStep] = [
     TickStep("stuck", 0, stuck),
     TickStep("checkpoint", 0, checkpoint),
     TickStep(
-        "purge_evidence", 0, purge_evidence
+        "purge_evidence",
+        0,
+        purge_evidence,
+        interval=lambda ctx: ctx.app.config.retention.purge_every_s,
     ),  # its own interval: Config.retention.purge_every_s
 ]
 STORE_UNREACHABLE = 4
@@ -252,7 +254,8 @@ def _run_step(ctx: TickContext, step: TickStep) -> str:
     prev, error = None, None
     try:
         prev = store.get_tick_state(step.name)
-        if step.every_s and prev and (ctx.now - prev.last_run_at).total_seconds() < step.every_s:
+        every = step.interval(ctx) if step.interval else step.every_s
+        if every and prev and (ctx.now - prev.last_run_at).total_seconds() < every:
             return SKIPPED
         step.fn(ctx)
     except Exception as exc:  # noqa: BLE001 - one step never stops the others

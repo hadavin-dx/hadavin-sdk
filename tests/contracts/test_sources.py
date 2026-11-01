@@ -48,6 +48,10 @@ EVENTS = {
 LOG = "\n".join(f"2026-11-01T10:0{i}:00Z line {i}" for i in range(5))
 
 
+class TooLarge(OSError):
+    too_large = True  # what ToolContext.fetch's refusal of an over-cap reply carries
+
+
 class FakeApi:
     """The Kubernetes REST API as recorded answers, held to what the real fetch enforces: the operation's bound
     method and path, the response cap, and (for a POST) a JSON Content-Type, which a real API server needs. It
@@ -90,7 +94,7 @@ class FakeApi:
             text = json.dumps({"items": []})
         cap = max_bytes or 16384  # what `ToolContext.fetch` allows when the caller names no cap
         if len(text.encode()) > cap:
-            raise OSError(
+            raise TooLarge(
                 "the response is larger than the cap"
             )  # an explicit cap refuses, never cuts
         return text
@@ -310,7 +314,7 @@ def test_kubernetes_a_real_sized_deployment_list_is_read_through_the_cap_and_pag
 
 def test_kubernetes_a_response_over_the_cap_is_a_source_error_not_a_cut_json():
     big = [{"metadata": {"name": "d", "annotations": {"n": "x" * 2_000_000}}}]
-    with pytest.raises(SourceError, match="OSError"):
+    with pytest.raises(SourceError, match="TooLarge"):
         k8s(FakeApi(deployments=big)).recent_changes("prod", suite.START, suite.END)
 
 

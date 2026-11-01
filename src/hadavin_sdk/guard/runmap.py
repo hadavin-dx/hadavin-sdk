@@ -12,11 +12,12 @@ from __future__ import annotations
 
 import re
 import unicodedata
+from collections.abc import Callable
 from functools import lru_cache
 from typing import Any
 
 from hadavin_sdk import defaults
-from hadavin_sdk.guard.redact import ARN_TAIL, PATTERNS, SECRET_KINDS, redact
+from hadavin_sdk.guard.redact import ARN_TAIL, PATTERNS, SECRET_KINDS, kind_of, redact
 
 # Identifier kinds a fix or a read may need back (M14): the spec list plus the other identifier kinds the
 # redactor emits (IPV6 beside IPV4, hostnames, UUIDs, GCP and Azure resource ids). Anything not listed (every
@@ -33,10 +34,6 @@ class RedactionError(RuntimeError):
     """The redactor failed: nothing may be sent to the model."""
 
 
-def kind_of(placeholder: str) -> str:
-    return placeholder.strip("<>").rsplit("_", 1)[0]
-
-
 # --- what may be stored: an allowlist grammar per kind --------------------------------------------------------
 # A redactor pattern is a regex for FINDING an identifier; a stored original must be exactly one. Each stored
 # kind has the characters its grammar allows (RFC 5322 local part and RFC 1123 host names, dotted quads, AWS ARN
@@ -50,10 +47,10 @@ _GRAMMAR: dict[str, re.Pattern[str]] = {
         "ACCOUNTID": r"[0-9]{12}",
         "EMAIL": r"[A-Za-z0-9._+\-]+(?:@|%40)[A-Za-z0-9.\-]+\.[A-Za-z]{2,}",
         "MAC": r"[0-9A-Fa-f:.\-]{12,17}",
-        "IPV4": r"[A-Za-z0-9.\-]{7,64}",
+        # a dotted quad, the dashed form (ec2 / pod DNS names), with the redactor's own prefix and suffix
+        "IPV4": r"(?:(?:ip|ec2)-)?[0-9]{1,3}(?:[.\-][0-9]{1,3}){3}(?:\.[A-Za-z0-9\-]+\.pod)?",
         "IPV6": r"[0-9A-Fa-f:.]{2,45}",
         "HOSTNAME": r"[A-Za-z0-9.\-]{3,253}",
-        "UUID": r"[0-9A-Fa-f\-]{32,36}",
         "GCPRESOURCE": r"projects/[A-Za-z0-9_\-]+(?:/" + ARN_TAIL + r"+)?",
         "AZURERESOURCE": r"/subscriptions/[0-9A-Fa-f\-]{36}(?:/" + ARN_TAIL + r"+)?",
         "TENANT": _HUMAN,
@@ -104,19 +101,56 @@ def canonical(text: str) -> str:
     )
 
 
+def _canonical_view(text: str) -> tuple[str, list[int]]:
+    """The canonical form of `text` (NFKC, invisible format characters removed) and, for each canonical
+    character, the index of the original character it came from."""
+    chars: list[str] = []
+    index: list[int] = []
+    for i, c in enumerate(text):
+        for d in unicodedata.normalize("NFKC", c):
+            if unicodedata.category(d) != "Cf":
+                chars.append(d)
+                index.append(i)
+    return "".join(chars), index
+
+
+def replace_canonical(
+    text: str, pattern: re.Pattern[str], repl: Callable[[re.Match[str]], str]
+) -> str:
+    """Find `pattern` in the canonical view of `text` and replace only the matched stretches IN THE ORIGINAL.
+    The model keeps seeing the text as it was written (accents, CJK, emoji, joiners untouched); only a stretch
+    that, once folded, is the thing being guarded (a placeholder, a result marker) is rewritten. All-ASCII text
+    is its own canonical form."""
+    if text.isascii():
+        return pattern.sub(repl, text)
+    canon, index = _canonical_view(text)
+    out: list[str] = []
+    last = 0
+    for m in pattern.finditer(canon):
+        if m.end() == m.start():
+            continue
+        start, end = index[m.start()], index[m.end() - 1] + 1
+        if start < last:
+            continue
+        out += [text[last:start], repl(m)]
+        last = end
+    out.append(text[last:])
+    return "".join(out)
+
+
 def escape_placeholders(text: str) -> str:
     """Untrusted text may contain a literal `<IPV4_2>` in any case (`<ipv4_2>`, `<Ipv4_2>`). Left as typed it
     would look like the placeholder the redactor later issues to a different value, and restore or the grounding
     check would treat it as that value. Every placeholder-shaped literal becomes a non-placeholder. Call it on
     `canonical(text)`, so Unicode look-alikes are already ASCII."""
-    return _LOOKALIKE.sub(lambda m: f"‹{m.group(1)}_{m.group(2)}›", text)
+    return replace_canonical(text, _LOOKALIKE, lambda m: f"\u2039{m.group(1)}_{m.group(2)}\u203a")
 
 
 def redact_untrusted(text: str, mapping: dict[str, str]) -> str:
     """`redact_text` for text from outside (the document, a tool result, an error message): placeholder-shaped
     literals are escaped first. Model-written text (tool arguments, proposal inputs) uses `redact_text`: a
     placeholder the model writes is meant to be one."""
-    return redact_text(escape_placeholders(canonical(text)), mapping)
+    return redact_text(escape_placeholders(text), mapping)
 
 
 def redact_text(text: str, mapping: dict[str, str]) -> str:

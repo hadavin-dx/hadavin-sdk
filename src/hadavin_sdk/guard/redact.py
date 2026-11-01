@@ -1,4 +1,4 @@
-"""Pattern-based redaction for logs, audit and channel text (documents go to the model unredacted).
+"""Pattern-based redaction for logs, audit and channel text (the runtime redacts the document and every tool result with it before the model sees them).
 
 Copied from WARDEN `src/warden/redaction.py` at PR #206 head 14fc549 (branch `redaction-bank-patterns`,
 veerarakesh56/warden): the full pattern table, including the bank codes (BANKCODE: BSB, sort code, ABA,
@@ -1098,6 +1098,9 @@ _COMMON = frozenset(
 
 def _kind(placeholder: str) -> str:
     return placeholder.strip("<>").rsplit("_", 1)[0]
+
+
+kind_of = _kind  # the public name (guard/runmap.py uses it)
 
 
 # Every copy, anywhere: plain str.replace, which is what the escaped regex did.

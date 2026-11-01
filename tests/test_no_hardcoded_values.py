@@ -47,6 +47,10 @@ ALLOWED: dict[str, tuple[set[str], str]] = {
     "approvals/slack_channel.py": ({"url"}, "the Slack kind's own API base"),
     "llm/anthropic.py": ({"url"}, "the Anthropic and Vertex kind's endpoints"),
     "llm/gemini.py": ({"url"}, "the Gemini kind's endpoint"),
+    "tools.py": (
+        {"host"},
+        "the deny-list of loopback and metadata names a manifest host may not be",
+    ),
     "sources/kubernetes.py": (
         {"host"},
         (

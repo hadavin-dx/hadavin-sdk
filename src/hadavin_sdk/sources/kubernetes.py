@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Callable
+from datetime import UTC, datetime
 from typing import Any
 from urllib.parse import quote
 
@@ -54,7 +55,7 @@ class KubernetesSettings(BaseModel):
     `hadavin_sdk/defaults.py`. `api_url` has no default: the endpoint is the deployment's, never the code's."""
 
     model_config = ConfigDict(extra="forbid", frozen=True)
-    api_url: str = Field(pattern=r"https?://[^\s/]+")
+    api_url: str = Field(pattern=r"^https?://[^\s/?#]+(?:/[^\s?#]*)?$")
     namespaces: tuple[str, ...] = Field(min_length=1)
     page_size: int = Field(default=defaults.K8S_PAGE_SIZE, gt=0)
     max_pages: int = Field(default=defaults.K8S_MAX_PAGES, gt=0)
@@ -94,6 +95,28 @@ def rules_problems(namespace: str, rules: list[dict[str, Any]]) -> list[str]:
     return out
 
 
+def _when(text: str) -> datetime | None:
+    try:
+        parsed = datetime.fromisoformat(text)
+    except ValueError:
+        return None
+    return parsed if parsed.tzinfo else parsed.replace(tzinfo=UTC)
+
+
+def _within(ts: str, start: str, end: str) -> bool:
+    """Is `ts` in [start, end]? Compared as instants, so `Z` and `+00:00` spellings order correctly; text that
+    is not a time falls back to string order."""
+    t, a, b = _when(ts), _when(start), _when(end)
+    if t is None or a is None or b is None:
+        return start <= ts <= end
+    return a <= t <= b
+
+
+def _after(ts: str, end: str) -> bool:
+    t, b = _when(ts), _when(end)
+    return ts > end if t is None or b is None else t > b
+
+
 class KubernetesSource:
     name = "kubernetes"
 
@@ -123,7 +146,9 @@ class KubernetesSource:
         except SourceError:
             raise
         except Exception as exc:  # noqa: BLE001 - whatever the fetch raised, the source cannot answer
-            raise SourceError(f"kubernetes: {type(exc).__name__}") from None
+            err = SourceError(f"kubernetes: {type(exc).__name__}")
+            err.too_large = bool(getattr(exc, "too_large", False))
+            raise err from None
 
     def _get(self, path: str, operation: str, method: str = "GET", body: dict | None = None) -> Any:
         text = self._call(path, operation, method, body)
@@ -147,8 +172,10 @@ class KubernetesSource:
                 try:
                     page = self._get(path + query, operation)
                     break
-                except SourceError:
-                    if limit == 1:
+                except SourceError as exc:
+                    if (
+                        limit == 1 or not exc.too_large
+                    ):  # only a too-big page is worth asking smaller
                         raise
                     limit = max(1, limit // 2)
             items += page.get("items") or []
@@ -190,7 +217,7 @@ class KubernetesSource:
         events, more_e = self._items(f"/api/v1/namespaces/{ns}/events", "k8s.list_events")
         for item in events:
             ts = item.get("lastTimestamp") or item.get("eventTime") or ""
-            if not ts or not (start <= ts <= end):
+            if not ts or not _within(ts, start, end):
                 continue
             meta = item.get("metadata") or {}
             out.append(
@@ -229,12 +256,21 @@ class KubernetesSource:
             path, "k8s.pod_log", max_bytes=self._cfg.log_bytes + defaults.K8S_LOG_SLACK_BYTES
         )
         out: list[Record] = []
-        for i, line in enumerate(text.splitlines()):
+        lines = text.splitlines()
+        for i, line in enumerate(lines):
             ts, _, rest = line.partition(" ")
-            if ts > end:
+            if _after(ts, end):
                 break
             out.append({"id": f"log/{scope}/{pod}#{i}", "ts": ts, "line": rest})
             if len(out) >= limit:
+                if i + 1 < len(lines):  # stopped at the caller's limit with lines left
+                    out.append(
+                        {
+                            "id": f"log/{scope}/{pod}#limit",
+                            "kind": "incomplete",
+                            "note": f"stopped at the limit of {limit} lines; later lines exist",
+                        }
+                    )
                 break
         else:
             if (
@@ -270,6 +306,10 @@ class KubernetesSource:
                 },
             )
             status = review.get("status") or {}
+            if status.get(
+                "evaluationError"
+            ):  # the review could not evaluate every rule: not proven
+                problems.append(f"namespace {ns}: the rules review reported an evaluation error")
             if status.get("incomplete"):
                 problems.append(f"namespace {ns}: the rules review is incomplete, scope not proven")
             problems += rules_problems(ns, status.get("resourceRules") or [])

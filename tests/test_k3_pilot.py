@@ -36,7 +36,7 @@ NONE_CONTRACT = {
         "type": "object",
         "required": ["service"],
         "additionalProperties": False,
-        "properties": {"service": {"type": "string", "maxLength": 40}},
+        "properties": {"service": {"type": "string", "maxLength": 40, "identifier": False}},
     },
     "risk_class": "reversible",
     "targets_production": True,
@@ -436,9 +436,9 @@ def test_k3_abstain_card_all_levels(tmp_path, level):
     hooks, cards = captured()
     rt = runtime(dev_cfg(tmp_path, {"lookup_record": level}), ScriptedLLM(reply()), hooks)
     assert handle(rt).state == S.NO_ACTION and len(cards) == 1
-    # Every abstention reason posts the card, redaction_error included; guard reasons are `guard` catches.
+    # Every abstention reason posts the card, redaction_error included (an abstention, not a catch, v5.4 F12).
     for reason, caught in [
-        ("redaction_error", "guard"),
+        ("redaction_error", "abstain"),
         ("run_budget", "guard"),
         ("tool_error", "abstain"),
     ]:

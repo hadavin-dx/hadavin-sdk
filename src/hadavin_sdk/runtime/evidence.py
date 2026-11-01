@@ -25,9 +25,21 @@ from hadavin_sdk.store.protocol import Store
 
 _NUMERIC = re.compile(r"(?:v|rev|revision|#)?\s*(\d+)")
 # A value is found only as a whole token: not inside 10.0.0.17, deploy-17, 1.17, production, a path or an e-mail.
-_BEFORE = r"(?<![\w.\-/:@])"
-_AFTER_NAME = r"(?![\w/:@])"
-_AFTER = r"(?![\w\-/:@])(?!\.\w)"  # a full stop that ends a sentence is fine
+# What may stand before it: nothing word-like; or the kind prefix kubectl prints (`deployment/checkout`,
+# `pod/x`); or `key:` / `key=` (`addr:10.0.0.5`, `host=db`); or a URL scheme (`http://10.0.0.5/health`).
+_KUBECTL_KINDS = (
+    "deployment.apps", "deployment", "statefulset", "daemonset", "replicaset", "cronjob", "configmap",
+    "ingress", "service", "svc", "namespace", "pods", "pod", "node", "job", "ns", "sts", "ds", "rs", "cm", "hpa",
+)  # fmt: skip
+_BEFORE = (
+    r"(?:(?<![\w.\-/:@])|(?<=://)|(?<=[A-Za-z]:)|(?<=[A-Za-z]=)"
+    + "".join(rf"|(?<=\b{k}/)" for k in _KUBECTL_KINDS)
+    + ")"
+)
+# What may follow a NAME: `-` and `.` (the front of a longer name), `:` and `/` (a port, a path), a space or
+# punctuation; not a word character or `@`. A NUMBER may not be followed by `-`, `.`+word either.
+_AFTER_NAME = r"(?![\w@])"
+_AFTER = r"(?![\w\-@])(?!\.\w)"  # a full stop that ends a sentence is fine
 
 
 @dataclass(frozen=True)
@@ -59,6 +71,22 @@ def contains(text: str, value: str) -> bool:
         # `api.prod.svc.cluster.local`): `-` and `.` end it. A number may not (`17` is not `17.2`, `17-beta`).
         pattern = rf"{_BEFORE}{re.escape(want)}{_AFTER_NAME}"
     return re.search(pattern, hay) is not None
+
+
+_EVIDENCE_FIELD = {
+    "type": "array",
+    "items": {"type": "string"},
+    "description": "The call_id of every tool result your proposal rests on.",
+}
+
+
+def with_evidence(schema: dict[str, Any]) -> dict[str, Any]:
+    """The schema the model sees for an action tool of a tooled agent: `evidence` is required (K5). The stored
+    contract is untouched: `evidence` is stripped from the proposal before the plan is built. The runtime and
+    `evals.gate` both offer exactly this."""
+    props = {**(schema.get("properties") or {}), "evidence": _EVIDENCE_FIELD}
+    required = [*schema.get("required", []), "evidence"]
+    return {**schema, "properties": props, "required": list(dict.fromkeys(required))}
 
 
 def identifier_inputs(contract: ActionContract) -> list[str]:

@@ -153,17 +153,19 @@ def test_class_a_an_unknown_kind_is_never_stored():
     assert runmap.storable({"<NEWKIND_1>": "10.0.0.5", "<SECRET_1>": "x"}) == {}
 
 
-def test_class_a_storable_scales(benchmark_free=True):
+def test_class_a_storable_does_bounded_work():
     mapping = {
         f"<IPV4_{i}>": f"10.{i // 65536}.{(i // 256) % 256}.{i % 256}" for i in range(1, 20001)
     }
-    started = time.monotonic()
+    runmap.storable_original.cache_clear()
     first = runmap.storable(mapping)
+    after_first = runmap.storable_original.cache_info()
     again = runmap.storable(mapping)
+    after_again = runmap.storable_original.cache_info()
     assert len(first) == len(again) == 20000
-    assert time.monotonic() - started < 5, (
-        "re-filtering a map after every redaction must stay cheap"
-    )
+    # Work is counted, not timed: the first pass checks each original once, the second re-checks none.
+    assert after_first.misses == 20000
+    assert after_again.misses == after_first.misses and after_again.hits >= 20000
 
 
 # --- class: placeholder look-alikes in untrusted text ---------------------------------------------------------------
@@ -302,6 +304,10 @@ def test_class_c_secrets_are_refused_for_every_read_verb(entry):
 # cut list as complete).
 
 
+class TooLarge(OSError):
+    too_large = True
+
+
 class Api:
     def __init__(self, n, max_limit=None, big=0):
         self.n, self.max_limit, self.big, self.limits = n, max_limit, big, []
@@ -316,7 +322,7 @@ class Api:
             limit, start = int(q["limit"][0]), int(q.get("continue", ["0"])[0])
             self.limits.append(limit)
             if self.max_limit and limit > self.max_limit:
-                raise OSError("too large")  # a page past the fetch cap
+                raise TooLarge("too large")  # a page past the fetch cap
             items = [
                 {"metadata": {"name": f"d{i}", "annotations": {"n": "x" * self.big}}}
                 for i in range(start, min(start + limit, self.n))
@@ -384,6 +390,23 @@ def test_class_truncation_a_cut_log_says_so():
         ("rollout 17.2 done", "17", False),
         ("rollout 17-beta done", "17", False),
         ("rollout 17 done", "17", True),
+        # the shapes real logs and kubectl print
+        ("upstream <ipv4_1>:8080 refused", "<IPV4_1>", True),
+        ("checkout: connection refused", "checkout", True),
+        ("GET http://10.0.0.5/health 503", "10.0.0.5", True),
+        ("addr:10.0.0.5 down", "10.0.0.5", True),
+        ("host=10.0.0.5 down", "10.0.0.5", True),
+        ("deployment/checkout rolled out", "checkout", True),
+        ("deployment.apps/checkout-svc rolled out", "checkout-svc", True),
+        ("pod/checkout-7f9d crashed", "checkout-7f9d", True),
+        ("ns:payments is down", "payments", True),
+        ("event for service/checkout", "checkout", True),
+        ("revision 17: failed", "17", True),
+        ("revision 17/18", "17", True),
+        # and the ones that must stay out
+        ("see /var/deployment/x", "deployment", False),
+        ("port 10.0.0.5:8080 open", "8080", False),
+        ("path /usr/prod/bin", "prod", False),
     ],
 )
 def test_class_grounding_names_may_be_the_front_of_a_longer_name_numbers_may_not(
@@ -392,8 +415,8 @@ def test_class_grounding_names_may_be_the_front_of_a_longer_name_numbers_may_not
     assert evidence.contains(text, value) is found
 
 
-@pytest.mark.parametrize("left", list("abcXYZ019_/:@.-"))
-@pytest.mark.parametrize("right", list("abcXYZ019_/:@"))
+@pytest.mark.parametrize("left", list("abcXYZ019_/@.-"))
+@pytest.mark.parametrize("right", list("abcXYZ019_@"))
 def test_class_grounding_fuzz_a_name_glued_to_a_word_or_path_character_is_not_found(left, right):
     assert not evidence.contains(f"x{left}checkout{right}y", "checkout")
 

@@ -22,6 +22,7 @@ from hadavin_sdk.registry import load_registry
 from hadavin_sdk.runtime import evidence
 from hadavin_sdk.runtime import tick as tick_mod
 from hadavin_sdk.store import MemoryStore
+from hadavin_sdk.store.protocol import NotFound
 from tests.contracts.sources import ks
 from tests.fixtures import k5_tools
 from tests.k5_support import (
@@ -169,7 +170,7 @@ def test_k5_fetch_reads_an_allowed_https_host(monkeypatch):
 
 def test_k5_fetch_host_outside_hosts_refused(monkeypatch):
     ctx = _ctx(monkeypatch, _Opener())
-    with pytest.raises(tools_mod.ToolRefused, match="not in egress"):
+    with pytest.raises(tools_mod.ToolRefused, match="not in this tool's manifest hosts"):
         ctx.fetch("GET", "https://evil.example.org/x", operation="bundle.read")
 
 
@@ -234,7 +235,7 @@ def test_k5_redirects_refused(monkeypatch):
             "body": {},
         }
     )
-    monkeypatch.setattr(tools_mod, "host_allowed_over_http", lambda host: True)
+    monkeypatch.setattr(tools_mod, "host_allowed_over_http", lambda host, suffixes=(): True)
     spec = tools_mod.ToolSpec(
         **{
             **TOOL,
@@ -310,7 +311,7 @@ def test_k5_redaction_error_abstains(tmp_path, monkeypatch):
     assert llm.sent == [] and cards[0].text.startswith("Agent abstained")
     assert "redaction_error" in cards[0].text
     card_events = [e for e in _events(rt, run) if e.domain == "card"]
-    assert card_events[0].caught_by == "guard"
+    assert card_events[0].caught_by == "abstain"
 
 
 def test_k5_redaction_error_on_a_tool_result_sends_nothing_more(tmp_path, monkeypatch):
@@ -430,19 +431,50 @@ def test_k5_placeholder_input_passes_the_schema_after_restore(tmp_path):
     assert "would be refused" not in cards[-1].text.lower()
 
 
-def test_k5_restored_value_with_semicolon_fails_the_schema(tmp_path):
-    k5_tools.RESULTS["app"] = "ERROR upstream 10.0.0.5 refused; rollout revision 17 failed"
-    llm = ScriptLLM([{"tool": "app"}, {"propose": {"host": "<IPV4_1>", "revision": "17"}}])
+def test_k5_a_semicolon_original_is_never_stored_or_restored(tmp_path):
+    """A `;` value cannot be stored (it fits no identifier grammar), so a placeholder standing for it does not
+    restore: the result is `input.unresolved`, not `input.schema`. Nothing is patched here: the intake map is
+    seeded the way K4 will seed it."""
+    k5_tools.RESULTS["app"] = "ERROR upstream 10.0.0.5, revision 17"
+    llm = ScriptLLM(
+        [
+            {"tool": "app"},
+            {"propose": {"host": "<IPV4_1>", "revision": "17"}, "reason": "<TENANT_1>"},
+        ]
+    )
     store = MemoryStore()
     rt, cards = build_runtime(k5_cfg(tmp_path), llm, store=store)
-    # The run's stored map restores <IPV4_1> to a value the pattern refuses.
-    real_put = store.put_redaction_map
+    run = handle(rt, b"alert after rollout", mapping={"<TENANT_1>": "acme;rm -rf"})
+    assert store.get_redaction_map(run.run_id) == {
+        "<IPV4_1>": "10.0.0.5"
+    }  # the `;` original is not stored
+    assert store.get_gate_decision(run.run_id).rule_id == "input.unresolved"
+    assert "input could not be resolved" in cards[-1].text
 
-    def poisoned(run_id, mapping):
-        real_put(run_id, {p: (v + "x" if p == "<IPV4_1>" else v) for p, v in mapping.items()})
 
-    store.put_redaction_map = poisoned
-    run = handle(rt)
+def test_k5_the_gate_schema_check_bites_on_a_restored_value(tmp_path):
+    """A stored, restorable value that breaks the contract (too long for `reason`) is denied `input.schema`:
+    the gate sees the REAL value, not the placeholder."""
+    action = {
+        "input_schema": {
+            **ACTION["input_schema"],
+            "properties": {
+                **ACTION["input_schema"]["properties"],
+                "reason": {"type": "string", "maxLength": 5, "identifier": False},
+            },
+        }
+    }
+    k5_tools.RESULTS["app"] = "ERROR upstream 10.0.0.5; revision 17"
+    llm = ScriptLLM(
+        [
+            {"tool": "app"},
+            {"propose": {"host": "<IPV4_1>", "revision": "17"}, "reason": "<NAME_1>"},
+        ]
+    )
+    store = MemoryStore()
+    rt, cards = build_runtime(k5_cfg(tmp_path, action=action), llm, store=store)
+    run = handle(rt, b"Dear Jo Bloggs, checkout is down at 10.0.0.5, revision 17")
+    assert store.get_redaction_map(run.run_id)["<NAME_1>"] == "Jo Bloggs"
     assert store.get_gate_decision(run.run_id).rule_id == "input.schema"
     assert "inputs fail the contract's schema" in cards[-1].text
 
@@ -516,6 +548,43 @@ def test_k5_grounding_normalised_value(tmp_path):
     assert evidence.contains("CAFÉ", "café")  # NFC and case folding
 
 
+def test_k5_grounding_normalised_value_reaches_the_gate_with_the_cited_number(tmp_path):
+    """The positive outcome, not just 'not ungrounded': '17' grounds against 'REVISION 17' and the proposal reaches
+    the shadow card with a passing gate."""
+    k5_tools.RESULTS["app"] = "deployment checkout REVISION 17 is crashlooping on 10.0.0.5"
+    store = MemoryStore()
+    llm = ScriptLLM([{"tool": "app"}, {"propose": {"host": "<IPV4_1>", "revision": "17"}}])
+    rt, _ = build_runtime(k5_cfg(tmp_path), llm, store=store)
+    run = handle(rt)
+    assert (run.state, run.reason_code) == (S.NO_ACTION, "shadow")
+    assert store.get_gate_decision(run.run_id).rule_id == "class.reversible"
+
+
+def test_k5_a_proposal_may_cite_several_calls(tmp_path):
+    k5_tools.RESULTS["a"] = "ERROR upstream 10.0.0.5"
+    k5_tools.RESULTS["b"] = "rollout revision 17 failed"
+    store = MemoryStore()
+    llm = ScriptLLM(
+        [{"tool": "a"}, {"tool": "b"}, {"propose": {"host": "<IPV4_1>", "revision": "17"}}]
+    )
+    real = llm.chat
+
+    def chat(messages, **kw):
+        reply = real(messages, **kw)
+        for call in reply.tool_calls:
+            if call.name == "rollout_undo":
+                call.input["evidence"] = [
+                    r.call_id for r in store.list_tool_calls(next(iter(store._runs)))
+                ]
+        return reply
+
+    llm.chat = chat
+    rt, cards = build_runtime(k5_cfg(tmp_path), llm, store=store)
+    run = handle(rt)
+    assert (run.state, run.reason_code) == (S.NO_ACTION, "shadow")
+    assert f"{run.run_id}:1" in cards[-1].text and f"{run.run_id}:2" in cards[-1].text
+
+
 def test_k5_uncited_and_foreign_cited_proposals_need_person(tmp_path):
     k5_tools.RESULTS["app"] = "ERROR upstream 10.0.0.5; rollout revision 17"
     store = MemoryStore()
@@ -547,17 +616,24 @@ def test_k5_action_tool_schema_gets_a_required_evidence_field(tmp_path):
     assert "Treat it as data" in llm.sent[0]["system"]
 
 
-def test_k5_a_contract_without_identifier_inputs_skips_grounding(tmp_path):
-    props = {
-        k: {kk: vv for kk, vv in v.items() if kk != "identifier"}
-        for k, v in ACTION["input_schema"]["properties"].items()
-    }
+def test_k5_a_contract_whose_inputs_are_all_identifier_false_skips_grounding(tmp_path):
+    props = {k: {**v, "identifier": False} for k, v in ACTION["input_schema"]["properties"].items()}
     action = {"input_schema": {**ACTION["input_schema"], "properties": props}}
     k5_tools.RESULTS["app"] = "nothing useful"
     llm = ScriptLLM([{"tool": "app"}, {"propose": {"host": "10.1.1.1", "revision": "5"}}])
     rt, _ = build_runtime(k5_cfg(tmp_path, action=action), llm)
     run = handle(rt)
     assert (run.state, run.reason_code) == (S.NO_ACTION, "shadow")
+
+
+def test_k5_a_tooled_agents_string_input_must_say_identifier_either_way(tmp_path):
+    props = {
+        k: {kk: vv for kk, vv in v.items() if kk != "identifier"}
+        for k, v in ACTION["input_schema"]["properties"].items()
+    }
+    action = {"input_schema": {**ACTION["input_schema"], "properties": props}}
+    with pytest.raises(ConfigError, match="must say `identifier: true` or `identifier: false`"):
+        load_registry(load_config(k5_cfg(tmp_path, action=action)))
 
 
 # --- tool errors ------------------------------------------------------------------------------------------------
@@ -617,7 +693,9 @@ def test_k5_a_tool_that_fetches_outside_its_hosts_gets_an_error(tmp_path):
     rt, _ = build_runtime(cfg, llm, store=store)
     run = handle(rt)
     (row,) = store.list_tool_calls(run.run_id)
-    assert row.output.startswith("ERROR: host not in egress.yaml")
+    assert row.output.startswith(
+        "ERROR: host 'evil.example.org' is not in this tool's manifest hosts"
+    )
     assert run.state == S.NO_ACTION
 
 
@@ -720,20 +798,26 @@ def test_k5_held_map_purged_at_400_days(tmp_path):
     assert len(app.store.list_tool_calls(run_id)) == 1  # the held tool calls stay
 
 
-def test_k5_purge_evidence_runs_at_the_configured_interval(tmp_path):
-    from hadavin_sdk.models import TickState
-
-    assert any(s.name == "purge_evidence" for s in tick_mod.STEPS)
+def test_k5_purge_evidence_runs_through_the_real_tick_and_again_after_its_interval(tmp_path):
+    """The scheduling bug class: the step must come back after its interval when the tick runs far more often.
+    Drives `run_tick` (the STEPS list), not the function."""
     app = _purge_app(tmp_path, config={"retention": {"purge_every_s": 3600}})
     calls = []
-    app.store.purge_tool_calls = lambda *a, **k: calls.append(1) or 0
-    ctx = tick_mod.TickContext(app, now())
-    app.store.save_tick_state(TickState(step="purge_evidence", last_run_at=now(), last_ok_at=now()))
-    tick_mod.purge_evidence(ctx)  # ran a moment ago: skipped
-    assert calls == []
-    later = tick_mod.TickContext(app, now() + timedelta(seconds=3601))
-    tick_mod.purge_evidence(later)
+    real = app.store.purge_tool_calls
+    app.store.purge_tool_calls = lambda *a, **k: calls.append(1) or real(*a, **k)
+    t0 = now()
+    run = app.runtime.handle("test-agent", "svc:test-agent", b"a 10.0.0.5")
+    _age(app, run.run_id, 40)
+    for minutes in (0, 1, 2, 30):  # a tick every minute or so: only the first is due
+        tick_mod.run_tick(app, now=t0 + timedelta(minutes=minutes))
     assert calls == [1]
+    assert app.store.list_tool_calls(run.run_id) == []  # purged by the first tick
+    again = app.runtime.handle("test-agent", "svc:test-agent", b"b 10.0.0.6")
+    _age(app, again.run_id, 40)
+    tick_mod.run_tick(app, now=t0 + timedelta(minutes=61))  # past the interval: due again
+    assert calls == [1, 1]
+    assert app.store.list_tool_calls(again.run_id) == []
+    assert app.store.get_tick_state("purge_evidence").last_ok_at is not None
 
 
 # --- app wiring ---------------------------------------------------------------------------------------------------
@@ -885,8 +969,10 @@ def test_k5_redteam_bundles_abstain_or_flag(tmp_path, bundle):
     run = handle(rt, bundle["document"].encode())
     assert run.reason_code in bundle["expect_reasons"], (run.state, run.reason_code)
     assert run.state in (S.NEEDS_PERSON, S.NO_ACTION)
-    with pytest.raises(Exception):  # noqa: B017 - no plan row of any kind
+    with pytest.raises(NotFound):  # no plan row of any kind
         store.get_plan(run.run_id)
+    abstain = [e for e in rt.audit.events(run.run_id) if e.operation == "abstain"]
+    assert [e.caught_by for e in abstain] == [bundle["expect_caught_by"]], bundle["proves"]
     sent = llm.everything_sent()
     for banned in bundle.get("model_must_not_see", []):
         assert banned not in sent, banned
@@ -1115,7 +1201,12 @@ def test_k5_acceptance_pilot_agent_investigates_a_recorded_bundle(tmp_path):
     root = pilot_cfg(
         tmp_path,
         agent={"tools_allowed": ["read_logs"]},
-        config={"tool_modules": ["tests.fixtures.k5_tools"]},
+        config={
+            "tool_modules": ["tests.fixtures.k5_tools"],
+            "tool_module_hashes": {
+                "tests.fixtures.k5_tools": tools_mod.module_sha256("tests.fixtures.k5_tools")
+            },
+        },
     )
     (root / "tools").mkdir()
     (root / "tools" / "ito-agent.yaml").write_text(yaml.safe_dump([TOOL]), encoding="utf-8")

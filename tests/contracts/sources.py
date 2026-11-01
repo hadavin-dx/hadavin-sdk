@@ -61,8 +61,12 @@ def check_change_source(source: ChangeSource, case: Case) -> None:
 def check_logs_source(source: LogsSource, case: Case) -> None:
     check_probe(source)
     two = assert_records(source.query_logs(case.logs, START, END, 2))
-    assert 0 < len(two) <= 2
-    assert len(source.query_logs(case.logs, START, END, 1)) == 1
+    data = [
+        r for r in two if r.get("kind") != "incomplete"
+    ]  # an `incomplete` marker is not a log line
+    assert 0 < len(data) <= 2
+    one = [r for r in source.query_logs(case.logs, START, END, 1) if r.get("kind") != "incomplete"]
+    assert len(one) == 1
     assert source.query_logs("no-such/query", START, END, 5) == []
     assert source.query_logs(case.logs, START, END, 0) == []
     assert_records(source.query_logs(case.logs, EMPTY_START, EMPTY_END, 5))

@@ -20,6 +20,16 @@ LEGACY_MAX_OUTPUT_BYTES = (
 FETCH_CEILING_BYTES = (
     2 * 1024 * 1024
 )  # the most one fetch may be asked to read, whatever a source requests
+MAX_TOOL_CALLS_PER_RUN = 40  # read-tool calls one run may make
+MAX_TOOL_BYTES_PER_RUN = 262_144  # bytes of tool results one run may send to the model
+MAX_ABANDONED_TOOL_THREADS = (
+    8  # tool bodies still running after their deadline before calls are refused
+)
+CLUSTER_SUFFIXES = (
+    ".svc.cluster.local",
+    ".svc",
+)  # host suffixes that count as in-cluster (plain http)
+EXECUTOR_TIMEOUT_S = 10.0  # the dev executor's per-call timeout (Config.executor_timeout_s)
 HTTPS_PORTS = (443,)  # ports a tool may reach over https unless its manifest lists `ports`
 CLUSTER_PORTS = (80, 8080, 9090, 9093, 3100)  # the same for plain http to in-cluster hosts
 
@@ -41,8 +51,7 @@ STORED_KINDS = (
     "NAME",
     "PHONE",
     "TENANT",
-    "UUID",
-)
+)  # not UUID: a UUID is often a session or API token, so it is placeholdered but never stored
 
 # --- the Kubernetes source (KubernetesSettings) -----------------------------------------------------------------------
 K8S_PAGE_SIZE = 20  # list page size: a deployment object can be tens of KB

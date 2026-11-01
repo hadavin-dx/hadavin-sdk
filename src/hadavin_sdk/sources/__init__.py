@@ -24,6 +24,8 @@ Record = dict[str, Any]
 class SourceError(RuntimeError):
     """The source could not answer (unreachable, refused, malformed). Never raised for "no data"."""
 
+    too_large = False  # the reply was over the fetch cap: asking for less may work
+
 
 class Source(Protocol):
     name: str

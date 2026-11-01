@@ -27,6 +27,7 @@ __all__ = [
     "K1bSettings",
     "Retention",
     "Route",
+    "SourceConfig",
     "confined",
     "load_config",
     "load_yaml",
@@ -186,6 +187,12 @@ class Retention(_Strict):
         default=defaults.PURGE_EVERY_S, gt=0
     )  # the purge_evidence tick step's interval
 
+    @model_validator(mode="after")
+    def _held_not_shorter(self) -> Retention:
+        if self.held_maps_max_days < self.redaction_maps_days:
+            raise ValueError("retention.held_maps_max_days must be at least redaction_maps_days")
+        return self
+
 
 class EvidenceSettings(_Strict):
     """The read path's limits (K5). Defaults live in `hadavin_sdk/defaults.py`. Not part of `config_hash`."""
@@ -198,6 +205,13 @@ class EvidenceSettings(_Strict):
     # Which identifier kinds the run's redaction map may store. May narrow the default, never widen it: a kind
     # with no grammar in `guard/runmap.py` cannot be stored.
     stored_kinds: tuple[str, ...] = defaults.STORED_KINDS
+    # Per-run ceilings (a model can loop on a cheap tool): calls, bytes sent back to the model, and how many
+    # tool bodies may still be running past their deadline before further calls are refused.
+    max_tool_calls_per_run: int = Field(default=defaults.MAX_TOOL_CALLS_PER_RUN, gt=0)
+    max_tool_bytes_per_run: int = Field(default=defaults.MAX_TOOL_BYTES_PER_RUN, gt=0)
+    max_abandoned_tool_threads: int = Field(default=defaults.MAX_ABANDONED_TOOL_THREADS, gt=0)
+    # Host suffixes that count as in-cluster, where `cluster_http` tools may use plain http.
+    cluster_suffixes: tuple[str, ...] = defaults.CLUSTER_SUFFIXES
 
     @model_validator(mode="after")
     def _checks(self) -> EvidenceSettings:
@@ -205,9 +219,36 @@ class EvidenceSettings(_Strict):
             raise ValueError(
                 f"evidence.stored_kinds: {unknown} cannot be stored (secret, regulated or unknown)"
             )
+        if bad_suffix := [
+            s for s in self.cluster_suffixes if not s.startswith(".") or s.count(".") < 1
+        ]:
+            raise ValueError(f"evidence.cluster_suffixes: {bad_suffix} must start with a dot")
         for name in ("https_ports", "cluster_ports"):
             if bad := [p for p in getattr(self, name) if not 0 < p < 65536]:
                 raise ValueError(f"evidence.{name}: {bad} are not ports")
+        return self
+
+
+class SourceConfig(_Strict):
+    """A read source built at start-up: `kind` names a registered kind, `settings` is that kind's validated
+    settings, `token_secret_name` the secret (from the configured secrets kind) it authenticates with, and
+    `ca_file` the CA bundle that signs its endpoint (a path relative to the config folder). Not part of
+    `config_hash`; `scope_inventory` can stand in for a probe only for a source that cannot be probed."""
+
+    kind: str
+    settings: dict[str, Any]
+    token_secret_name: str | None = None
+    ca_file: Path | None = None
+
+    @model_validator(mode="after")
+    def _kind_checks(self) -> SourceConfig:
+        from hadavin_sdk.sources.kinds import KINDS
+
+        if self.kind not in KINDS:
+            raise ValueError(
+                f"source kind {self.kind!r} is unknown; known: {', '.join(sorted(KINDS))}"
+            )
+        KINDS[self.kind].settings(**self.settings)
         return self
 
 
@@ -251,6 +292,13 @@ class Config(_Strict):
     # design 6.6: a read source that cannot be probed names the client-signed inventory instead,
     # "<page>#<anchor> sha256:<64 hex>".
     scope_inventory: dict[str, str] = {}
+    # K5: configured read sources (kind + settings), built and probed at start-up (design 6.6).
+    sources: dict[str, SourceConfig] = {}
+    # SHA-256 of each tool module's source file; required in pilot and prod, checked when listed.
+    tool_module_hashes: dict[str, str] = {}
+    executor_timeout_s: float = Field(
+        default=defaults.EXECUTOR_TIMEOUT_S, gt=0
+    )  # dev executor only
     root: Path
 
     @model_validator(mode="after")

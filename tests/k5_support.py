@@ -38,8 +38,8 @@ ACTION = {
                 "pattern": r"[0-9]{1,3}(\.[0-9]{1,3}){3}",
             },
             "revision": {"type": "string", "identifier": True, "pattern": "[0-9]{1,6}"},
-            "mode": {"type": "string", "enum": ["fast", "safe"]},
-            "reason": {"type": "string", "maxLength": 80},
+            "mode": {"type": "string", "enum": ["fast", "safe"], "identifier": False},
+            "reason": {"type": "string", "maxLength": 80, "identifier": False},
         },
     },
     "risk_class": "reversible",
@@ -87,6 +87,14 @@ def k5_cfg(
 ) -> Path:
     """The fixture config plus a tooled test-agent: manifest tool `read_logs`, action `rollout_undo`."""
     cfg = make_cfg(tmp_path)
+    for path in (cfg / "actions").glob(
+        "*.yaml"
+    ):  # a tooled agent's string inputs must each say identifier
+        data = yaml.safe_load(path.read_text(encoding="utf-8"))
+        for sub in ((data.get("input_schema") or {}).get("properties") or {}).values():
+            if sub.get("type") == "string":
+                sub.setdefault("identifier", False)
+        path.write_text(yaml.safe_dump(data), encoding="utf-8")
     (cfg / "actions" / "rollout_undo.yaml").write_text(
         yaml.safe_dump({**ACTION, **(action or {})}), encoding="utf-8"
     )
@@ -126,7 +134,7 @@ class ScriptLLM:
             {"messages": messages, "system": system, "tools": tools, "documents": documents}
         )
         step = self.script.pop(0)
-        ids = re.findall(r"call_id=(\S+?)>>", json.dumps(messages))
+        ids = re.findall(r"call_id=(\S+?)[ >]", json.dumps(messages))
         if "tool" in step:
             return Reply(
                 text="reading",

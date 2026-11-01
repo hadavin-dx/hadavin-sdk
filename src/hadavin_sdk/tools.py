@@ -13,17 +13,21 @@ Neutral protocol: HTTP/1.1 over the standard library.
 
 from __future__ import annotations
 
+import base64
 import hashlib
 import importlib
+import ipaddress
 import re
+import ssl
 import threading
 import time
 import urllib.error
 import urllib.request
 from collections.abc import Callable
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, Literal
-from urllib.parse import urlsplit
+from urllib.parse import quote, quote_plus, urlsplit
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
@@ -39,7 +43,7 @@ END_MARKER = "<<END TOOL RESULT>>"
 START_MARKER = "<<TOOL RESULT"
 TRUNCATED = "\n[truncated]"
 ERROR_PREFIX = "ERROR: "
-CLUSTER_SUFFIXES = (".svc.cluster.local", ".svc")
+MIN_SCRUBBED_SECRET = 6  # a shorter secret would shred ordinary text if scrubbed
 # Features the manifest names but that arrive in a later phase (design 6.4): refused with the phase.
 _DEFERRED_KEYS = {"egress": "Phase 5", "reads_hadavin_store": "Phase 5"}
 _METHODS = frozenset(
@@ -50,10 +54,12 @@ _METHODS = frozenset(
 class ToolRefused(Exception):
     """A tool broke its own manifest (host, operation, secret, scheme). Becomes `ERROR: ...` for the model."""
 
+    too_large = False  # the reply was over an explicit cap: asking for less may work
+
 
 class ToolSpec(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
-    name: str = Field(pattern=r"[a-z][a-z0-9_]{0,39}")
+    name: str = Field(pattern=r"^[a-z][a-z0-9_]{0,39}$")
     function: str  # "module:function", the module must be in config.tool_modules
     description: str
     input_schema: dict[str, Any]
@@ -68,6 +74,10 @@ class ToolSpec(BaseModel):
     # limits belong here, never in the tool module.
     options: dict[str, Any] = {}
     ports: tuple[int, ...] = ()  # empty: 443 for https, the in-cluster set for plain http
+    # The CA that signs the endpoint (a private cluster's API server): a path relative to the config folder, or
+    # the name of a secret holding the PEM. https only; the system CAs are not used when either is set.
+    ca_file: str | None = None
+    ca_secret_name: str | None = None
 
 
 def parse_manifest(raw: Any, where: str) -> list[ToolSpec]:
@@ -95,11 +105,42 @@ def parse_manifest(raw: Any, where: str) -> list[ToolSpec]:
     return out
 
 
-def host_allowed_over_http(host: str) -> bool:
-    return host.endswith(CLUSTER_SUFFIXES)
+def host_allowed_over_http(
+    host: str, suffixes: tuple[str, ...] = defaults.CLUSTER_SUFFIXES
+) -> bool:
+    return host.endswith(tuple(suffixes))
 
 
-def spec_problems(spec: ToolSpec, tool_modules: list[str]) -> list[str]:
+# Names that reach this machine or the cloud's instance metadata service, whatever they resolve to.
+_FORBIDDEN_NAMES = frozenset({"localhost", "metadata", "metadata.google.internal", "instance-data"})
+
+
+_NUMERIC_HOST = re.compile(r"(?:0x[0-9a-f]+|[0-9]+)(?:\.(?:0x[0-9a-f]+|[0-9]+))*", re.IGNORECASE)
+
+
+def forbidden_host(host: str) -> str | None:
+    """Why a manifest host is refused, or None. An IP literal is refused (it names no service and skips the
+    allowlist's meaning), and so are loopback and metadata names and anything under `.localhost`."""
+    try:
+        ipaddress.ip_address(host.strip("[]"))
+    except ValueError:
+        pass
+    else:
+        return "an IP literal (use the service's DNS name)"
+    if _NUMERIC_HOST.fullmatch(
+        host
+    ):  # 2130706433, 0x7f.1, 127.1: inet_aton reads these as addresses
+        return "a numeric host (an IP address written another way)"
+    if host in _FORBIDDEN_NAMES or host.endswith((".localhost", ".internal.metadata")):
+        return "a loopback or metadata name"
+    return None
+
+
+def spec_problems(
+    spec: ToolSpec,
+    tool_modules: list[str],
+    suffixes: tuple[str, ...] = defaults.CLUSTER_SUFFIXES,
+) -> list[str]:
     """Checks that need nothing from `actions/`: the function reference, hosts, ports and the cluster rule. The
     operation list, the input schema and the agent's `tools_allowed` are checked by the registry."""
     out = []
@@ -109,13 +150,19 @@ def spec_problems(spec: ToolSpec, tool_modules: list[str]) -> list[str]:
     for host in spec.hosts:
         if not host or host != host.lower() or "/" in host or ":" in host or "@" in host:
             out.append(f"tool {spec.name}: host {host!r} must be a bare lowercase hostname")
-    if spec.cluster_http and not all(host_allowed_over_http(h) for h in spec.hosts):
+        elif why := forbidden_host(host):
+            out.append(f"tool {spec.name}: host {host!r} is {why}")
+    if spec.cluster_http and not all(host_allowed_over_http(h, suffixes) for h in spec.hosts):
         # One tool is either in-cluster (plain http allowed) or outside it (https only); never a mix (design 6.4).
         out.append(
-            f"tool {spec.name}: cluster_http needs every host to end in .svc.cluster.local or .svc"
+            f"tool {spec.name}: cluster_http needs every host to end in one of {list(suffixes)}"
         )
     if spec.cluster_http and not spec.hosts:
         out.append(f"tool {spec.name}: cluster_http needs hosts")
+    if spec.ca_file and spec.ca_secret_name:
+        out.append(f"tool {spec.name}: set ca_file or ca_secret_name, not both")
+    if (spec.ca_file or spec.ca_secret_name) and spec.cluster_http:
+        out.append(f"tool {spec.name}: a CA applies to https; cluster_http is plain http")
     if bad := [p for p in spec.ports if not 0 < p < 65536]:
         out.append(f"tool {spec.name}: ports {bad} are not valid")
     return out
@@ -132,6 +179,19 @@ def resolve_function(spec: ToolSpec, tool_modules: list[str]) -> Callable[..., s
     if not callable(fn):
         raise ConfigError(f"tool {spec.name}: {spec.function} is not callable")
     return fn
+
+
+def module_sha256(module: str) -> str:
+    """SHA-256 of a module's source file, found without importing it (a pin is checked before the code runs)."""
+    import importlib.util
+
+    try:
+        found = importlib.util.find_spec(module)
+    except (ImportError, ValueError):
+        found = None
+    if found is None or not found.origin or not Path(found.origin).is_file():
+        raise ConfigError(f"tool module {module} cannot be found")
+    return hashlib.sha256(Path(found.origin).read_bytes()).hexdigest()
 
 
 def read_operations(tool_modules: list[str]) -> dict[str, Binding]:
@@ -166,6 +226,16 @@ def read_operations(tool_modules: list[str]) -> dict[str, Binding]:
     return out
 
 
+def _request_host(req: urllib.request.Request) -> str:
+    """The host urllib's own request parser takes from the URL (what it will connect to)."""
+    host = (req.host or "").rsplit("@", 1)[-1]
+    if host.startswith("["):
+        host = host[1:].split("]", 1)[0]
+    elif ":" in host:
+        host = host.rsplit(":", 1)[0]
+    return host.lower().rstrip(".")
+
+
 class ToolContext:
     """What a tool may touch. Built per call, so the digest, the deadline and the secrets handed out are per call.
     The secret resolver is held by a closure, not an attribute: a tool can only ask for the manifest's names."""
@@ -180,8 +250,18 @@ class ToolContext:
         fetch_ceiling: int = defaults.FETCH_CEILING_BYTES,
         https_ports: tuple[int, ...] = defaults.HTTPS_PORTS,
         cluster_ports: tuple[int, ...] = defaults.CLUSTER_PORTS,
+        cluster_suffixes: tuple[str, ...] = defaults.CLUSTER_SUFFIXES,
+        ssl_context: ssl.SSLContext | None = None,
     ) -> None:
         self._fetch_ceiling = fetch_ceiling
+        self._suffixes = tuple(cluster_suffixes)
+        self._opener = http_guard.opener_for(ssl_context) if ssl_context is not None else None
+        self._opener_direct = (
+            http_guard.opener_for(ssl_context, direct=True) if ssl_context is not None else None
+        )
+        self._lock = (
+            threading.Lock()
+        )  # the body may outlive its deadline: reads below take a snapshot
         self._https_ports, self._cluster_ports = frozenset(https_ports), frozenset(cluster_ports)
         # A deep copy: a tool body that edits `ctx.spec` edits its own copy, never the manifest the next call uses.
         # NOTE the ceiling: a tool body is trusted code running in this process (it can reach the closure that holds
@@ -201,7 +281,8 @@ class ToolContext:
                 raise ToolRefused("no secret resolver wired")
             self._remaining()
             value = secret_resolver(name)
-            self.handed_out.append(value)
+            with self._lock:
+                self.handed_out.append(value)
             return value
 
         self.secret = secret
@@ -246,28 +327,41 @@ class ToolContext:
             raise ToolRefused(f"operation {operation!r} has no bound method and path")
         if method.upper() not in _METHODS or method.upper() != binding[0]:
             raise ToolRefused(f"method {method!r} is not the one bound to {operation!r}")
+        # One parser, one answer: a URL the checks read differently from the HTTP client (backslashes, a `#` before
+        # an `@`, percent-encoded hosts, control characters) is refused.
+        if re.search(r"[\\\s\x00-\x1f\x7f]", url):
+            raise ToolRefused("the URL holds a backslash, whitespace or a control character")
         parts = urlsplit(url)
+        if "%" in parts.netloc or "%" in parts.path or "." + "." in parts.path:
+            raise ToolRefused("percent-encoding in the host or path, and '..', are refused")
         if not re.fullmatch(binding[1], parts.path or "/"):
             raise ToolRefused(f"path is not the one bound to {operation!r}")
         host = (parts.hostname or "").lower().rstrip(".")
         if parts.scheme != "https" and not (
-            parts.scheme == "http" and spec.cluster_http and host_allowed_over_http(host)
+            parts.scheme == "http"
+            and spec.cluster_http
+            and host_allowed_over_http(host, self._suffixes)
         ):
             raise ToolRefused("https only (plain http only to in-cluster hosts when cluster_http)")
         if parts.username or parts.password:
             raise ToolRefused("credentials in the URL are refused")
         try:
             egress_check(url, frozenset(spec.hosts))
-        except EgressRefused as exc:
-            raise ToolRefused(str(exc)) from None
+        except EgressRefused:
+            raise ToolRefused(f"host {host!r} is not in this tool's manifest hosts") from None
         self._port(parts, parts.scheme)
         cap = min(max_bytes or spec.max_output_bytes, self._fetch_ceiling)
         req = urllib.request.Request(  # noqa: S310 - scheme and host checked above
             url, data=body, headers=headers or {}, method=method.upper()
         )
+        if _request_host(req) != host:
+            raise ToolRefused("the HTTP client would read a different host from the one checked")
         # Plain http (loopback or in-cluster) is never handed to an environment proxy.
         direct = host in http_guard.LOOPBACK or parts.scheme == "http"
-        opener = http_guard.LOCAL_OPENER if direct else http_guard.OPENER
+        if self._opener is not None:  # a pinned CA: its own openers
+            opener = self._opener_direct if direct else self._opener
+        else:
+            opener = http_guard.LOCAL_OPENER if direct else http_guard.OPENER
         buf = bytearray()
         try:
             with opener.open(req, timeout=min(self.timeout_s, self._remaining())) as resp:  # nosec B310
@@ -278,21 +372,31 @@ class ToolContext:
                         break
                     buf += chunk
         except urllib.error.HTTPError as exc:
-            raise ToolRefused(f"HTTP {exc.code}") from None
+            code = exc.code
+            exc.close()
+            raise ToolRefused(f"HTTP {code}") from None
         if len(buf) > cap:
             if max_bytes:
-                raise ToolRefused(f"the response is larger than {cap} bytes")
+                err = ToolRefused(f"the response is larger than {cap} bytes")
+                err.too_large = True
+                raise err
             del buf[cap:]
             cut = True
         else:
             cut = False
-        self.fetched = True
-        self._digest.update(bytes(buf))
+        with self._lock:
+            self.fetched = True
+            self._digest.update(bytes(buf))
         # A cut reply says so: a silent cut reads as a complete answer.
         return bytes(buf).decode("utf-8", "replace") + (TRUNCATED if cut else "")
 
     def digest(self) -> str | None:
-        return self._digest.hexdigest() if self.fetched else None
+        with self._lock:
+            return self._digest.hexdigest() if self.fetched else None
+
+    def secrets_handed_out(self) -> list[str]:
+        with self._lock:
+            return list(self.handed_out)
 
 
 @dataclass(frozen=True)
@@ -307,9 +411,10 @@ _MARKER = re.compile(r"<<(?=\s*(?:end\s+)?tool\s+result)", re.IGNORECASE)
 
 
 def escape_markers(text: str) -> str:
-    """Neutralise anything shaped like our result markers, in any case and spacing. Callers pass canonical text
-    (`runmap.canonical`), so full-width and zero-width variants are already plain."""
-    return _MARKER.sub("[[", text)
+    """Neutralise anything shaped like our result markers, in any case and spacing, including full-width and
+    zero-width spellings (found in the canonical form, rewritten in the original; the rest of the text is left
+    as it was written)."""
+    return runmap.replace_canonical(text, _MARKER, lambda m: "[[")
 
 
 def truncate(text: str, limit: int) -> str:
@@ -319,16 +424,41 @@ def truncate(text: str, limit: int) -> str:
     return data[:limit].decode("utf-8", "ignore") + TRUNCATED
 
 
+def _secret_forms(secret: str) -> set[str]:
+    raw = secret.encode("utf-8")
+    b64 = base64.b64encode(raw).decode()
+    return {
+        secret,
+        quote(secret, safe=""),
+        quote_plus(secret),
+        b64,
+        b64.rstrip("="),
+        base64.urlsafe_b64encode(raw).decode(),
+        base64.urlsafe_b64encode(raw).decode().rstrip("="),
+    }
+
+
 def prepare_output(
-    raw: str, mapping: dict[str, str], max_bytes: int, secrets: list[str] | None = None
+    raw: str,
+    mapping: dict[str, str],
+    max_bytes: int,
+    secrets: list[str] | None = None,
+    raw_cap: int = defaults.FETCH_CEILING_BYTES,
 ) -> str:
-    """Scrub handed-out secrets, escape the end marker, redact with the run's map, then truncate."""
+    """Cut a runaway return value, scrub handed-out secrets (as they are, URL-quoted and base64), drop NULs,
+    escape the result markers, redact with the run's map, then truncate to `max_bytes`."""
+    raw = raw.replace("\x00", "\ufffd")
+    if len(raw.encode("utf-8")) > raw_cap:
+        raw = raw.encode("utf-8")[:raw_cap].decode("utf-8", "ignore") + TRUNCATED
     for secret in secrets or []:
-        if secret:
-            raw = raw.replace(secret, "<SECRET_REDACTED>")
-    return truncate(
-        runmap.redact_untrusted(escape_markers(runmap.canonical(raw)), mapping), max_bytes
-    )
+        if len(secret) >= MIN_SCRUBBED_SECRET:
+            for form in _secret_forms(secret):
+                if form in raw:
+                    raw = raw.replace(form, "<SECRET_REDACTED>")
+                elif not raw.isascii() and form in (canon := runmap.canonical(raw)):
+                    # the secret hides behind invisible or compatibility characters: use the folded text
+                    raw = canon.replace(form, "<SECRET_REDACTED>")
+    return truncate(runmap.redact_untrusted(escape_markers(raw), mapping), max_bytes)
 
 
 def error_reason(exc: BaseException) -> str:
@@ -342,7 +472,12 @@ def error_reason(exc: BaseException) -> str:
 
 class ToolBox:
     """The tools of one deployment. `invoke` never raises for a failing tool (the model gets `ERROR: ...`); it
-    raises `runmap.RedactionError` when redaction fails, because then nothing may be sent."""
+    raises `runmap.RedactionError` when redaction fails, because then nothing may be sent.
+
+    What the box defends against: a MODEL that misuses a tool (wrong host, wrong operation, a secret it was not
+    given, a runaway reply). It does not defend against a hostile tool AUTHOR: a tool body is code running in this
+    process, so "read-only" means "as safe as the reviewed tool module". Pin the modules with
+    `Config.tool_module_hashes` (required in pilot and prod) and review them like the rest of the release."""
 
     def __init__(
         self,
@@ -350,30 +485,48 @@ class ToolBox:
         fns: dict[str, Callable[..., str]],
         *,
         timeout_s: float,
-        secret_resolver: Callable[[str], str] | None = None,
+        secret_resolver_for: Callable[[ToolSpec], Callable[[str], str]] | None = None,
         arg_errors: Callable[[dict[str, Any], dict[str, Any]], list[str]] | None = None,
         bindings: dict[str, Binding] | None = None,
         fetch_ceiling: int = defaults.FETCH_CEILING_BYTES,
         https_ports: tuple[int, ...] = defaults.HTTPS_PORTS,
         cluster_ports: tuple[int, ...] = defaults.CLUSTER_PORTS,
+        cluster_suffixes: tuple[str, ...] = defaults.CLUSTER_SUFFIXES,
         stored_kinds: frozenset[str] | None = None,
+        max_abandoned: int = defaults.MAX_ABANDONED_TOOL_THREADS,
+        ssl_context_for: Callable[[ToolSpec], ssl.SSLContext | None] | None = None,
     ) -> None:
         self._limits = {
             "fetch_ceiling": fetch_ceiling,
             "https_ports": https_ports,
             "cluster_ports": cluster_ports,
+            "cluster_suffixes": cluster_suffixes,
         }
+        self._fetch_ceiling = fetch_ceiling
         self._kinds = stored_kinds
         self.specs, self._fns, self.timeout_s = specs, fns, timeout_s
-        self._secrets, self._arg_errors = secret_resolver, arg_errors
+        self._secrets_for, self._arg_errors = secret_resolver_for, arg_errors
+        self._ssl_for = ssl_context_for
         self._bindings = dict(bindings or {})
+        self._max_abandoned = max_abandoned
+        self._abandoned: set[threading.Thread] = set()
+        self._abandoned_lock = threading.Lock()
 
     def names(self) -> set[str]:
         return set(self.specs)
 
+    def abandoned(self) -> int:
+        """Tool bodies still running after their deadline."""
+        with self._abandoned_lock:
+            self._abandoned = {t for t in self._abandoned if t.is_alive()}
+            return len(self._abandoned)
+
     def _call(self, name: str, restored: dict[str, Any], ctx: ToolContext) -> str:
         """The tool body under one total deadline (`tool_timeout_s`): it, its secret reads and its fetches share
-        it. A body that does not return is abandoned (its thread ends at its next fetch or secret read)."""
+        it. A body that does not return is abandoned (its thread ends at its next fetch or secret read); too many
+        abandoned bodies and further calls are refused."""
+        if self.abandoned() >= self._max_abandoned:
+            raise ToolRefused("too many earlier tool calls are still running past their deadline")
         box: dict[str, Any] = {}
         done = threading.Event()
 
@@ -387,16 +540,28 @@ class ToolBox:
 
         # A daemon thread: a body that never returns (sleep, a lock, a busy loop) must not keep the process alive
         # at exit, which a pool's non-daemon worker would.
-        threading.Thread(target=work, daemon=True, name="hadavin-tool").start()
+        worker = threading.Thread(target=work, daemon=True, name="hadavin-tool")
+        worker.start()
         if not done.wait(self.timeout_s):
+            with self._abandoned_lock:
+                self._abandoned.add(worker)
             raise ToolRefused("tool timed out")
         if "error" in box:
-            raise box["error"]
+            err = box["error"]
+            if isinstance(err, Exception):
+                raise err
+            # SystemExit, KeyboardInterrupt, GeneratorExit raised INSIDE the tool body's thread: not this
+            # process's exit or interrupt, just a failed tool.
+            raise ToolRefused(f"the tool raised {type(err).__name__}")
         return box["value"]
 
     def invoke(self, name: str, args: dict[str, Any], mapping: dict[str, str]) -> ToolOutput:
         spec = self.specs[name]
-        ctx = ToolContext(spec, self.timeout_s, self._secrets, self._bindings, **self._limits)
+        resolver = self._secrets_for(spec) if self._secrets_for else None
+        ssl_ctx = self._ssl_for(spec) if self._ssl_for else None
+        ctx = ToolContext(
+            spec, self.timeout_s, resolver, self._bindings, ssl_context=ssl_ctx, **self._limits
+        )
         started = time.monotonic()
         error = False
         try:
@@ -412,5 +577,7 @@ class ToolBox:
             error = True
             raw = ERROR_PREFIX + error_reason(exc)
         digest = ctx.digest() or hashlib.sha256(raw.encode("utf-8")).hexdigest()
-        text = prepare_output(raw, mapping, spec.max_output_bytes, ctx.handed_out)
+        text = prepare_output(
+            raw, mapping, spec.max_output_bytes, ctx.secrets_handed_out(), self._fetch_ceiling
+        )
         return ToolOutput(text, digest, error, int((time.monotonic() - started) * 1000))

@@ -241,7 +241,10 @@ class MemoryStore:
     def list_tool_calls(self, run_id: str) -> list[ToolCallRecord]:
         with self._lock:
             rows = [c for c in self._tool_calls.values() if c.run_id == run_id]
-            return [c.model_copy(deep=True) for c in sorted(rows, key=lambda c: c.created_at)]
+            return [
+                c.model_copy(deep=True)
+                for c in sorted(rows, key=lambda c: (c.created_at, c.call_id))
+            ]
 
     def purge_tool_calls(self, before: datetime, *, keep_run_ids: frozenset[str]) -> int:
         with self._lock:

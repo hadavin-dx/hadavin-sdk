@@ -322,6 +322,14 @@ def test_purge_redaction_maps_keeps_held_runs(store):
     assert store.purge_redaction_maps(future, keep_run_ids=frozenset()) == 1
 
 
+def test_tool_calls_with_the_same_time_list_in_a_fixed_order(store):
+    stamp = now()
+    for n in (3, 1, 2):
+        store.add_tool_call(_call("run-t", n).model_copy(update={"created_at": stamp}))
+    ids = [c.call_id for c in store.list_tool_calls("run-t")]
+    assert ids == ["run-t:1", "run-t:2", "run-t:3"]
+
+
 def test_tool_call_error_flag_round_trips(store):
     store.add_tool_call(_call("run-e", 1, error=True, output="ERROR: boom"))
     store.add_tool_call(_call("run-e", 2))
