@@ -223,10 +223,14 @@ def write_lock(eval_dir: Path, lock: Lock) -> None:
 def _write_tmp(path: Path, lock: Lock) -> Path:
     """The lock text in a uniquely named temp file next to `path` (two writers never share one)."""
     tmp = path.with_name(f"{path.name}.{os.getpid()}.{uuid.uuid4().hex[:8]}.tmp")
-    with open(tmp, "w", encoding="utf-8", newline="\n") as f:
-        f.write(json.dumps(json.loads(lock.model_dump_json()), indent=2, sort_keys=True) + "\n")
-        f.flush()
-        os.fsync(f.fileno())
+    try:
+        with open(tmp, "w", encoding="utf-8", newline="\n") as f:
+            f.write(json.dumps(json.loads(lock.model_dump_json()), indent=2, sort_keys=True) + "\n")
+            f.flush()
+            os.fsync(f.fileno())
+    except BaseException:
+        tmp.unlink(missing_ok=True)  # a failed write (disk full) leaves no temp file behind
+        raise
     return tmp
 
 

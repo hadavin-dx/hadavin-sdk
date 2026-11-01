@@ -290,13 +290,33 @@ _LOCAL_OPENER = urllib.request.build_opener(_NoRedirect, urllib.request.ProxyHan
 _LOOPBACK = frozenset({"127.0.0.1", "localhost", "::1"})
 
 
+# A provider that reports more tokens than this in one answer is wrong or hostile: no model answers 10 million.
+MAX_REPORTED_TOKENS = 10_000_000
+
+
+def _check_usage(tokens: tuple[Any, Any] | None) -> None:
+    """Reported usage must be missing (it is estimated) or a non-negative whole number within bounds: a negative or
+    absurd number would otherwise be priced as is."""
+    for value in tokens or ():
+        if value is None:
+            continue
+        if (
+            isinstance(value, bool)
+            or not isinstance(value, int)
+            or not 0 <= value <= MAX_REPORTED_TOKENS
+        ):
+            raise ValueError("provider usage is not a plausible token count")
+
+
 def parse_stage[T](parse: Callable[..., T], *args: Any) -> T:
     """The ANSWERED stage of a call: the provider replied and `parse` reads the reply. Any failure in `parse` means the
     request was answered and billed but unusable, so it is an `UnusableAnswer`. Call it as
     `parse_stage(self._parse, <the call that sends the request>)`: the argument is evaluated BEFORE the stage starts,
     so a failure while building or sending the request is not an answer."""
     try:
-        return parse(*args)
+        out = parse(*args)
+        _check_usage(getattr(out, "tokens", None))
+        return out
     except ProviderError:
         raise
     except Exception as exc:  # noqa: BLE001

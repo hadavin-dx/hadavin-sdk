@@ -3,6 +3,8 @@ because only the answered request reports usage (the class: spend recorded from 
 
 from __future__ import annotations
 
+import json
+
 import pytest
 
 from hadavin_sdk.config import Route
@@ -456,3 +458,44 @@ def test_a_network_failure_while_reading_the_body_is_retried_not_billed_as_an_an
             route="sql_generate",
             output_schema=SCHEMA,
         )
+
+
+# ---- round 9: a provider's usage numbers are checked before they are priced
+@pytest.mark.parametrize(
+    "usage",
+    [
+        {"prompt_tokens": -1_000_000, "completion_tokens": 5},
+        {"prompt_tokens": 10**15, "completion_tokens": 5},
+        {"prompt_tokens": "abc", "completion_tokens": 5},
+        {"prompt_tokens": 12, "completion_tokens": -1},
+        {"prompt_tokens": 12.5, "completion_tokens": 5},
+        {"prompt_tokens": True, "completion_tokens": 5},
+    ],
+)
+def test_implausible_usage_numbers_make_an_unusable_answer_not_a_priced_one(usage, monkeypatch):
+    body = {"choices": [{"message": {"content": "hi"}, "finish_reason": "stop"}], "usage": usage}
+    monkeypatch.setattr(
+        common, "_OPENER", _opener_returning(lambda: json.dumps(body).encode("utf-8"))
+    )
+    llm = oc.OpenAICompatLLM(
+        "https://api.example.com/v1",
+        lambda: "k",
+        {"sql_generate": PRICED},
+        30,
+        1,
+        sleep=lambda _s: None,
+    )
+    with pytest.raises(UnusableAnswer, match=r"unusable answer \(ValueError\)"):
+        llm.chat(
+            [{"role": "user", "content": "hi"}],
+            system="s",
+            route="sql_generate",
+            output_schema=SCHEMA,
+        )
+
+
+def test_plausible_or_missing_usage_is_accepted():
+    ok = common.Answer(text="x", calls=[], tokens=(12, 5), stop=None)
+    assert common.parse_stage(lambda a: a, ok) is ok
+    none = common.Answer(text="x", calls=[], tokens=(None, None), stop=None)
+    assert common.parse_stage(lambda a: a, none) is none

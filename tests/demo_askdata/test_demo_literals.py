@@ -39,14 +39,21 @@ SKIP_DIRS = {
     ".pytest_cache",
     ".git",
 }  # caches only: .venv and the rest ARE scanned (git decides)
-SKIP_TOP = {
-    "work"
-}  # only the TOP-level working folder (runtime output), not a folder named work deeper down
+SKIP_TOP = {"work"}  # only the UNTRACKED top-level working folder (runtime output)
+BINARY_MAGIC = (
+    b"\x89PNG",
+    b"PK\x03\x04",
+    b"%PDF",
+    b"\xff\xd8\xff",
+    b"GIF8",
+    b"\x1f\x8b",
+    b"SQLite format",
+)
 B64 = "[A-Za-z0-9/+=]"
 REGION_WORDS = "east|west|north|south|central|southeast|northeast|northwest|southwest"
 AZURE_COUNTRIES = (
     "japan|canada|australia|brazil|korea|france|germany|sweden|norway|switzerland|italy|poland|spain|qatar|"
-    "israel|mexico|chile|newzealand|uae|southafrica|uk|us"
+    "israel|mexico|chile|newzealand|uae|southafrica|uk|us|austria|belgium|indonesia|malaysia|taiwan|greece"
 )
 AZURE_DIRS = (
     "east|west|north|south|central|southeast|northeast|northcentral|southcentral|westcentral"
@@ -64,15 +71,19 @@ PATTERNS = {
     ),
     "12-digit account id": re.compile(r"(?<![\d.])\d{12}(?!\d)"),
     "region literal": re.compile(
-        rf"\b(us|eu|ap|sa|ca|me|af|il|mx|cn)(-gov)?-({REGION_WORDS})-\d\b"
+        # case-insensitive; AWS names with - or _, gov/iso partitions and availability-zone letters; Azure names with and
+        # without a country prefix (including gov and Jio); GCP names
+        rf"(?i:\b(us|eu|ap|sa|ca|me|af|il|mx|cn)([-_](gov|iso|isob|isoe|isof))?[-_]({REGION_WORDS})[-_]\d[a-z]?\b"
         r"|\b(eastus|westus|centralus|northeurope|westeurope|uksouth|southeastasia)\d?\b"
-        rf"|\b(us|europe|asia|australia|northamerica|southamerica|me|africa)-({REGION_WORDS})\d\b"
+        rf"|\b(us|europe|asia|australia|northamerica|southamerica|me|africa)-({REGION_WORDS})\d[a-z]?\b"
         rf"|\b({AZURE_COUNTRIES})({AZURE_DIRS})\d?\b"
-        r"|\b(north|south|west)centralus\d?\b|\b(south|central|west)india\b|\beastasia\b|\b(north|west)europe\b|\b(east|southeast)asia\b"
+        r"|\b(north|south|west)centralus\d?\b|\b(south|central|west)india\b|\beastasia\b|\b(north|west)europe\b"
+        r"|\b(east|southeast)asia\b|\bjioindia(west|central)\b|\busgov(virginia|arizona|texas|iowa)\b"
+        r"|\busdod(east|central)\b)"
     ),
     "model id literal": re.compile(
-        r"\b(claude-[a-z0-9]|gpt-[0-9o]|gemini-[0-9]|mistral-|mixtral-|deepseek-|qwen[0-9-]|grok-[0-9]|o[134]-(mini|preview|pro)"
-        r"|(us|eu|apac)\.anthropic|anthropic\.claude|meta\.llama|amazon\.(nova|titan))"
+        r"(?i:\b(claude[-_ ][a-z0-9]|gpt-[0-9o]|gemini[-_][0-9a-z]|mistral-|mixtral-|deepseek-|qwen[0-9-]|grok-[0-9]"
+        r"|o[134]-(mini|preview|pro)|(us|eu|apac)\.anthropic|anthropic\.claude|meta\.llama|amazon\.(nova|titan)))"
     ),
     "windows path": re.compile(
         r"(?<![A-Za-z])[A-Za-z]:\\[A-Za-z$_]|[\"'`][A-Za-z]:[\\/]|\\\\[A-Za-z0-9_.-]+\\[A-Za-z0-9$_]"
@@ -82,6 +93,19 @@ PATTERNS = {
         r"[A-Za-z0-9._%+-]+@(?!(example\.(com|org|net)|example|invalid|localhost)(?![A-Za-z0-9-]|\.[A-Za-z0-9]))"
         r"[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*\.(?!example\b)[A-Za-z]{2,}"
     ),
+    "private key block": re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----"),
+    "password in a URL (DSN)": re.compile(
+        r"\b[A-Za-z][A-Za-z0-9+.-]*://[^\s/:@'\"]+:[^\s/@'\"]{3,}@"
+    ),
+    "password or secret assignment": re.compile(
+        r"(?i)\b(password|passwd|pwd|secret|api[_-]?key|token)\b[\"']?(?:\s*=\s*|:\s*)[\"'][^\"'\s]{8,}[\"']"
+    ),
+    "JWT": re.compile(r"\beyJ[A-Za-z0-9_-]{8,}\.eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}"),
+    "bearer token": re.compile(
+        r"(?i)\bauthorization\b[\"']?\s*[:=]\s*[\"']?bearer\s+[A-Za-z0-9._~+/-]{12,}"
+    ),
+    "Slack webhook": re.compile(r"hooks\.slack\.com/services/T[A-Z0-9]+/B[A-Z0-9]+/[A-Za-z0-9]+"),
+    "Stripe key": re.compile(r"\b[sr]k_(live|test)_[A-Za-z0-9]{16,}"),
     "quoted Decimal number outside settings": re.compile(r"Decimal\(\s*[\"'](?!0[\"']|1[\"'])\d"),
 }
 # (file relative to the demo, pattern name) -> {exact stripped source lines that are fine}: line-specific, so a NEW
@@ -93,46 +117,55 @@ ALLOWED: dict[tuple[str, str], set[str]] = {
 }
 
 
-def _candidates(root: Path) -> list[Path]:
-    """What git would commit under `root` (tracked, or untracked and not ignored); every file when git cannot say."""
+def _git_list(root: Path, *flags: str) -> list[Path] | None:
     try:
         done = subprocess.run(  # noqa: S603 - fixed argument list, no shell
-            [GIT, "ls-files", "--cached", "--others", "--exclude-standard", "-z"],
-            cwd=root,
-            capture_output=True,
-            check=True,
-            timeout=30,
+            [GIT, "ls-files", *flags, "-z"], cwd=root, capture_output=True, check=True, timeout=30
         )
-        listed = [root / n for n in done.stdout.decode("utf-8").split("\0") if n]
-        if listed:
-            return sorted(p for p in listed if p.is_file())
     except (OSError, subprocess.SubprocessError):
-        pass
-    return sorted(p for p in root.rglob("*") if p.is_file())
+        return None
+    return [root / n for n in done.stdout.decode("utf-8").split("\0") if n]
 
 
-def _is_binary(raw: bytes) -> bool:
-    return b"\0" in raw and raw[:2] not in (b"\xff\xfe", b"\xfe\xff")
+def _candidates(root: Path) -> tuple[list[Path], set[Path]]:
+    """(what git would commit under `root`: tracked, or untracked and not ignored; the tracked ones). Every file when
+    git cannot say."""
+    listed = _git_list(root, "--cached", "--others", "--exclude-standard")
+    if listed:
+        return sorted(p for p in listed if p.is_file()), set(_git_list(root, "--cached") or [])
+    everything = sorted(p for p in root.rglob("*") if p.is_file())
+    return everything, set(everything)
 
 
 def _scan_files(root: Path = DEMO) -> list[Path]:
+    """EVERY candidate file, whatever its content: a NUL byte or a binary header does not exempt it. Only caches are
+    skipped, and the untracked top-level working folder `work/` (a tracked file there IS scanned)."""
+    files, tracked = _candidates(root)
     out = []
-    for p in _candidates(root):
+    for p in files:
         rel = p.relative_to(root)
-        if (set(rel.parts) & SKIP_DIRS) or rel.parts[0] in SKIP_TOP:
+        if set(rel.parts) & SKIP_DIRS:
             continue
-        if not _is_binary(p.read_bytes()):
-            out.append(p)
+        if rel.parts[0] in SKIP_TOP and p not in tracked:
+            continue
+        out.append(p)
     return out
 
 
 def _read(p: Path) -> str:
-    """Strict decoding: UTF-8, or UTF-16 when it starts with a BOM. A file that cannot be decoded FAILS the scan
-    instead of being read with replacement characters (which would hide a literal)."""
+    """Decoding that hides nothing. UTF-16 when it starts with a BOM. Otherwise NUL bytes are removed (a planted NUL
+    must not split a literal) and the rest must be UTF-8; a file with a known binary header that is not UTF-8 is read
+    as Latin-1 so printable runs inside it are still matched. Anything else that cannot be decoded FAILS the scan."""
     raw = p.read_bytes()
     if raw[:2] in (b"\xff\xfe", b"\xfe\xff"):
         return raw.decode("utf-16")
-    return raw.decode("utf-8-sig")
+    raw = raw.replace(b"\0", b"")
+    try:
+        return raw.decode("utf-8-sig")
+    except UnicodeDecodeError:
+        if raw.startswith(BINARY_MAGIC):
+            return raw.decode("latin-1")
+        raise
 
 
 def _line_of(text: str, pos: int) -> str:
@@ -178,34 +211,60 @@ def test_the_whole_demo_tree_holds_no_secret_account_path_region_model_or_email_
     assert unused == [], f"allowlist entries nothing matches: {unused}"
 
 
-def test_every_file_that_can_hold_text_is_scanned_whatever_its_name(tmp_path):
-    """Planted in a folder with no git: a `.pem`, a `.bak`, a name with no suffix and a `.venv` folder are all read."""
+def test_every_file_is_scanned_whatever_its_name_or_content(tmp_path):
+    """Planted in a folder with no git: a `.pem`, a `.bak`, a name with no suffix, a `.venv` folder, a text file with a
+    NUL byte in it, a NUL inside the literal itself, a UTF-16 file and a PNG-headed file are all read."""
     secret = "sk-ant-" + "api03-" + "Z" * 40
-    for name in (
+    names = (
         "deploy.pem",
         "README.md.bak",
         "notes",
         "id_rsa",
         ".venv/leak.txt",
         "sub/dir/x.weird",
-    ):
+        "work/leak.txt",
+    )
+    for name in names:
         f = tmp_path / name
         f.parent.mkdir(parents=True, exist_ok=True)
         f.write_text(f"token = {secret}\n", encoding="utf-8")
-    (tmp_path / "image.bin").write_bytes(
-        b"\x89PNG\0\0\0 " + secret.encode()
-    )  # a binary is not text
+    (tmp_path / "zero.txt").write_bytes(f"token = {secret}\n".encode() + b"\0")
+    (tmp_path / "split.txt").write_bytes(
+        b"token = " + secret.encode()[:12] + b"\0" + secret.encode()[12:]
+    )
+    (tmp_path / "wide.txt").write_bytes(f"token = {secret}\n".encode("utf-16"))
+    (tmp_path / "image.bin").write_bytes(b"\x89PNG\0\0\xff " + secret.encode())
     found = {p.relative_to(tmp_path).as_posix() for p in _scan_files(tmp_path)}
     assert found == {
-        "deploy.pem",
-        "README.md.bak",
-        "notes",
-        "id_rsa",
-        ".venv/leak.txt",
-        "sub/dir/x.weird",
-    }
+        *names,
+        "zero.txt",
+        "split.txt",
+        "wide.txt",
+        "image.bin",
+    }  # no git here: work/ is scanned too
     flagged = {k[0] for k in _hits(_scan_files(tmp_path), tmp_path)}
     assert found == flagged  # and every one of them is reported
+
+
+def test_a_tracked_file_under_work_is_scanned_and_an_untracked_one_is_not(tmp_path):
+    if shutil.which("git") is None:
+        pytest.skip("git is not installed")
+    subprocess.run([GIT, "init", "-q"], cwd=tmp_path, check=True, timeout=30)  # noqa: S603
+    (tmp_path / "work").mkdir()
+    (tmp_path / "work" / "tracked.txt").write_text("x\n", encoding="utf-8")
+    (tmp_path / "work" / "scratch.txt").write_text("x\n", encoding="utf-8")
+    (tmp_path / "plain.txt").write_text("x\n", encoding="utf-8")
+    subprocess.run([GIT, "add", "work/tracked.txt"], cwd=tmp_path, check=True, timeout=30)  # noqa: S603
+    found = {p.relative_to(tmp_path).as_posix() for p in _scan_files(tmp_path)}
+    assert found == {"work/tracked.txt", "plain.txt"}
+
+
+def test_an_undecodable_file_without_a_known_binary_header_fails_the_scan(tmp_path):
+    f = tmp_path / "mystery"
+    f.write_bytes(b"\xff\xfe\xfd text")
+    f.write_bytes(b"abc \xfd\xfd")
+    with pytest.raises(UnicodeDecodeError):
+        _read(f)
 
 
 def test_the_real_tree_is_scanned_by_what_git_would_commit():
@@ -287,7 +346,46 @@ PLANTED = {
     "posix home path": ["/Users/" + "someone/x", "/home/" + "someone/x"],
     "e-mail address": ["owner@" + "company.io", "user@example.com" + ".evil.io"],
     "quoted Decimal number outside settings": ["Decimal('0.035')", 'Decimal("3.00")'],
+    "private key block": [
+        "-----BEGIN PRIVATE KEY-----",
+        "-----BEGIN RSA PRIVATE KEY-----",
+        "-----BEGIN OPENSSH PRIVATE KEY-----",
+    ],
+    "password in a URL (DSN)": [
+        "postgresql://ro:hunter2hunter2@localhost:5432/db",
+        "postgres://ro:hunter2hunter2@10.1.2.3/db",
+    ][:2],
+    "password or secret assignment": [
+        "password = 'Tr0ub4dor&3xyz'",
+        'api_key: "abcdefgh12345678"',
+        '{"token": "abcdefgh12345678"}',
+    ],
+    "JWT": ["eyJhbGciOiJIUzI1NiJ9." + "eyJzdWIiOiIxMjM0NTY3ODkwIn0." + "dozjgNryP4J3jVmNHl0w5N"],
+    "bearer token": [
+        "Authorization: Bearer abcdefghijklmnop",
+        "'authorization': 'bearer abcdefghijklmnop12'",
+    ],
+    "Slack webhook": [
+        "https://hooks.slack.com/services/T0" + "0000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX"
+    ],
+    "Stripe key": ["sk_live_" + "a" * 24, "rk_test_" + "b" * 20],
 }
+PLANTED["region literal"] += [
+    "us" + "-east-1a",
+    "US" + "-EAST-1",
+    "eu" + "_west_1",
+    "us" + "-iso-east-1",
+    "jioindia" + "west",
+    "usgov" + "virginia",
+    "austria" + "east",
+    "Japan" + "East",
+]
+PLANTED["model id literal"] += [
+    "gemini" + "-pro",
+    "Claude" + "-Opus",
+    "claude" + "_3_opus",
+    "GPT" + "-4o",
+]
 
 
 @pytest.mark.parametrize(("name", "text"), [(n, t) for n, ts in PLANTED.items() for t in ts])
@@ -330,7 +428,9 @@ TUNABLE = re.compile(
 )
 WAIT_CALLS = {"sleep", "join", "wait", "wait_for", "settimeout", "communicate", "result"}
 ENV_GETTERS = {"os.environ.get", "environ.get", "os.getenv", "getenv"}
-NUMERIC_TEXT = re.compile(r"\s*-?\d+(\.\d+)?\s*")
+NUMERIC_TEXT = re.compile(r"\s*-?\d+([./]\d+)?\s*")
+DURATION_TEXT = re.compile(r"\s*\d+(\.\d+)?\s*(ms|s|sec|m|min|h|hr|d)\s*")
+NUMBER_CALLS = {"int", "float", "Decimal", "Fraction"}
 
 
 def _is_number(c: ast.AST) -> bool:
@@ -371,40 +471,101 @@ def _small_in(node: ast.AST | None) -> list[int]:
     return [c.lineno for c in ast.walk(node) if _is_number(c) and c.value in OK_SMALL]  # type: ignore[attr-defined]
 
 
+def _small_operands(node: ast.AST) -> list[int]:
+    """0 / 1 / -1 / True anywhere in an argument of a waiting call (`sleep(x + 1)`, `join(timeout=1)`), but not inside a
+    subscript (`names[0]` is an index)."""
+    out: list[int] = []
+    stack = [node]
+    while stack:
+        cur = stack.pop()
+        if (
+            not isinstance(
+                cur,
+                ast.BinOp
+                | ast.UnaryOp
+                | ast.BoolOp
+                | ast.IfExp
+                | ast.Constant
+                | ast.operator
+                | ast.unaryop
+                | ast.boolop,
+            )
+            and cur is not node
+        ):
+            continue  # only the arithmetic of the argument: not calls, subscripts or comprehensions inside it
+        if (
+            isinstance(cur, ast.Constant)
+            and isinstance(cur.value, int | float)
+            and cur.value in OK_SMALL
+        ):
+            out.append(cur.lineno)
+        stack.extend(ast.iter_child_nodes(cur))
+    return out
+
+
+def _import_aliases(tree: ast.AST) -> dict[str, str]:
+    """`from decimal import Decimal as D` -> {"D": "Decimal"}; `import decimal as d` -> {"d": "decimal"}."""
+    out: dict[str, str] = {}
+    for n in ast.walk(tree):
+        if isinstance(n, ast.ImportFrom | ast.Import):
+            for a in n.names:
+                if a.asname:
+                    out[a.asname] = a.name
+    return out
+
+
 def numeric_lines(path: Path) -> list[str]:
     """The stripped source line of EVERY numeric constant in the module (defaults, assignments in function bodies,
     returns, slices, expressions, arguments of any call, keyword arguments, comparisons: all of it) except 0, 1, -1;
-    plus numeric strings given to int/float/Decimal or as an environment default; plus 0, 1, -1 in a tunable context.
+    plus numeric strings given to int/float/Decimal/Fraction (under any import alias) or as an environment default;
+    plus numeric or duration strings assigned to a tunable-named target; plus 0, 1, -1 in a tunable context.
     One entry per source LINE that holds one, so two identical lines count twice."""
     src = path.read_text(encoding="utf-8")
     lines = src.splitlines()
+    tree = ast.parse(src)
+    aliases = _import_aliases(tree)
     hit: set[int] = set()
-    for n in ast.walk(ast.parse(src)):
+    for n in ast.walk(tree):
         if _is_number(n) and n.value not in OK_SMALL:  # type: ignore[attr-defined]
             hit.add(n.lineno)  # type: ignore[attr-defined]
         if isinstance(n, ast.Call):
             full = ast.unparse(n.func)
-            last = full.rsplit(".", 1)[-1]
-            if (
-                full in {"int", "float", "Decimal"}
-                and n.args
-                and _is_numeric_text(n.args[0])
-                and n.args[0].value.strip() not in {"0", "1", "-1"}  # type: ignore[attr-defined]
-            ):
-                hit.add(n.args[0].lineno)
-            if full in ENV_GETTERS and len(n.args) > 1 and _is_numeric_text(n.args[1]):
-                hit.add(n.args[1].lineno)
+            last = aliases.get(full.rsplit(".", 1)[-1], full.rsplit(".", 1)[-1])
+            if last in NUMBER_CALLS:
+                for arg in n.args[:1]:
+                    for sub_node in ast.walk(arg):  # also `int(os.environ["N"] or "77")`
+                        if _is_numeric_text(sub_node) and sub_node.value.strip() not in {
+                            "0",
+                            "1",
+                            "-1",
+                        }:  # type: ignore[attr-defined]
+                            hit.add(sub_node.lineno)
+            if full in ENV_GETTERS:
+                defaults = [*n.args[1:2], *(k.value for k in n.keywords if k.arg == "default")]
+                hit.update(d.lineno for d in defaults if _is_numeric_text(d))
             if last in WAIT_CALLS:
                 for arg in n.args:
-                    if _direct_small(arg):
-                        hit.add(arg.lineno)
+                    hit.update(_small_operands(arg))
+            if last == "timedelta":
+                for kw in n.keywords:
+                    hit.update(_small_in(kw.value))
             for kw in n.keywords:
                 if kw.arg and kw.arg not in SCHEMA_BOUNDS and TUNABLE.search(kw.arg):
                     hit.update(_small_in(kw.value))
         elif isinstance(n, ast.Assign | ast.AnnAssign | ast.AugAssign):
             targets = n.targets if isinstance(n, ast.Assign) else [n.target]
-            if any(TUNABLE.search(ast.unparse(tg)) for tg in targets) and _direct_small(n.value):
-                hit.add(n.value.lineno)  # type: ignore[union-attr]
+            if any(TUNABLE.search(ast.unparse(tg)) for tg in targets):
+                if _direct_small(n.value):
+                    hit.add(n.value.lineno)  # type: ignore[union-attr]
+                elif (
+                    isinstance(n.value, ast.Constant)
+                    and isinstance(n.value.value, str)
+                    and (
+                        NUMERIC_TEXT.fullmatch(n.value.value)
+                        or DURATION_TEXT.fullmatch(n.value.value)
+                    )
+                ):
+                    hit.add(n.value.lineno)
         elif isinstance(n, ast.arguments):
             pos = [*n.posonlyargs, *n.args]
             pairs = list(zip(pos[len(pos) - len(n.defaults) :], n.defaults, strict=True))
@@ -503,6 +664,16 @@ PLANTED_NUMBERS = [
     "queue.get(timeout=1)",
     "call(a, backoff=-1)",
     "return 4",
+    "from decimal import Decimal as D\nx = D('0.05')",
+    "import decimal as dd\nx = dd.Decimal('0.05')",
+    "from fractions import Fraction\nx = Fraction('1/3')",
+    'TIMEOUT = "45"',
+    'x_delay = "30s"',
+    'x = int(os.environ["N"] or "77")',
+    'x = os.environ.get("N", default="77")',
+    "time.sleep(a_var + 1)",
+    "time.sleep(True)",
+    "from datetime import timedelta\nx = timedelta(seconds=1)",
 ]
 
 

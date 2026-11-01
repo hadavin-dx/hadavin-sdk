@@ -99,6 +99,8 @@ class Runtime(_Strict):
         5, ge=1
     )  # os.replace of lock.json is retried (Windows readers)
     lock_replace_wait_s: float = Field(0.05, ge=0)
+    # reservations `meter --clear-open` forgot that are remembered, so a late settle still books an overage
+    cleared_kept: int = Field(1000, gt=0)
     connect_retry_wait_s: float = Field(
         0.25, ge=0
     )  # pause before the one reconnect of a dropped connection

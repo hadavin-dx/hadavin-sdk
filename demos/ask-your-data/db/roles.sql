@@ -113,8 +113,16 @@ GRANT SELECT ON analytics.customers_v, analytics.products_v, analytics.orders_v,
 -- Functions created later by this admin are not PUBLIC-executable. (Existing pg_catalog functions such as
 -- pg_sleep stay executable by PUBLIC: the watchdog and the validator bound them, not this script.)
 ALTER DEFAULT PRIVILEGES REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC;
+-- The three functions that CREATE a large object are executable by PUBLIC out of the box. A session that flips
+-- default_transaction_read_only to off could create persistent large objects with them. Revoked for THIS DATABASE
+-- (it affects every login here, like the REVOKEs above). Advisory locks and the other pg_catalog functions stay
+-- callable by PUBLIC: the validator and the watchdog bound those, not this script.
+REVOKE EXECUTE ON FUNCTION pg_catalog.lo_creat(integer) FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION pg_catalog.lo_create(oid) FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION pg_catalog.lo_from_bytea(oid, bytea) FROM PUBLIC;
 
--- Defaults only: a session can change them. The revoked privileges above are what hold.
+-- The three settings below are DEFAULTS: a session can change them. What holds the line even then are the privileges
+-- granted and revoked above (no table, schema, file or program write), plus the three large-object revokes.
 ALTER ROLE :"ro_role" IN DATABASE :"dbname" SET default_transaction_read_only = on;
 ALTER ROLE :"ro_role" IN DATABASE :"dbname" SET statement_timeout = :'ro_statement_timeout';
 ALTER ROLE :"ro_role" IN DATABASE :"dbname" SET lock_timeout = :'ro_lock_timeout';

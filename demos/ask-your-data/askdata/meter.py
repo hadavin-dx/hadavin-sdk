@@ -159,9 +159,20 @@ class Meter:
         }  # fmt: skip
         Meter(path)._write(data)
 
+    def _read_text(self) -> str:
+        """The file text; a PermissionError (Windows refuses a read while the file is being replaced) is retried."""
+        for attempt in range(RUNTIME.lock_replace_attempts):
+            try:
+                return self.path.read_text(encoding="utf-8")
+            except PermissionError:
+                if attempt == RUNTIME.lock_replace_attempts - 1:
+                    raise
+                time.sleep(RUNTIME.lock_replace_wait_s)
+        raise AssertionError("unreachable")  # pragma: no cover
+
     def _read(self) -> dict:
         try:
-            data = json.loads(self.path.read_text(encoding="utf-8"))
+            data = json.loads(self._read_text())
             for key in ("total_cap", "reserve", "demo_cap", "external_usd"):
                 _dec(data[key], key)
             for key, val in data["spent"].items():
@@ -180,10 +191,12 @@ class Meter:
                 f.write(json.dumps(data, sort_keys=True, indent=2) + "\n")
                 f.flush()
                 os.fsync(f.fileno())
-            os.replace(tmp, self.path)
+            from askdata.evalset import replace_with_retry  # the same retry the sealed files use
+
+            replace_with_retry(tmp, self.path)
         except (
             OSError
-        ) as err:  # e.g. PermissionError from os.replace on Windows: callers handle MeterError
+        ) as err:  # a PermissionError that survived the retries: callers handle MeterError
             with contextlib.suppress(OSError):
                 tmp.unlink(missing_ok=True)
             raise MeterError(f"meter file cannot be written: {type(err).__name__}") from None
@@ -206,7 +219,8 @@ class Meter:
 
     # ---------------------------------------------------------------------------------------- numbers
     def snapshot(self) -> dict[str, Decimal | str]:
-        d = self._read()
+        with self._locked():  # a reader never sees (or collides with) a half-finished replace
+            d = self._read()
         spent = {k: _dec(v, k) for k, v in d["spent"].items()}
         total, reserve, demo = (
             _dec(d["total_cap"], "total_cap"),
@@ -246,7 +260,8 @@ class Meter:
 
     def check(self, worst_case: Decimal, *, live: bool = True) -> None:
         """Raise `OverBudget` unless this call fits in both caps (a look only; use `reserve` before a real call)."""
-        self._verify(self._read(), worst_case, live)
+        with self._locked():
+            self._verify(self._read(), worst_case, live)
 
     def reserve(self, worst_case: Decimal, *, live: bool = True) -> str:
         """Check AND book `worst_case` as spent, atomically across processes, and record it as open under a new id
@@ -267,21 +282,35 @@ class Meter:
 
     def settle(self, reserved: Decimal, actual: Decimal, rid: str | None = None) -> None:
         """Replace a reservation with what the call really cost (never below zero; above is recorded, not refused)
-        and close its `open` record."""
-        if actual < 0 or reserved < 0:
-            raise MeterError("negative settlement")
+        and close its `open` record. With a `rid` the amount released is the one STORED at `reserve` (the caller's
+        `reserved` is not trusted). A reservation that `meter --clear-open` forgot mid-flight still books an overage;
+        an unknown or already settled `rid` changes nothing."""
+        for name, v in (("actual", actual), ("reserved", reserved)):
+            if not v.is_finite() or v < 0:
+                raise MeterError(f"settlement {name} must be a finite, non-negative number")
         with self._locked():
             d = self._read()
-            if rid is not None and rid not in d.get("open", {}):
-                return  # already settled (or never reserved): a second settle must not move the total again
-            d.get("open", {}).pop(rid, None)
+            if rid is not None:
+                opened = d.get("open", {})
+                if rid in opened:
+                    reserved = _dec(opened.pop(rid)["amount"], "open.amount")
+                elif rid in d.get(
+                    "cleared", {}
+                ):  # forgotten by clear_open: its amount is already booked as spent
+                    reserved = _dec(d["cleared"].pop(rid), "cleared.amount")
+                    actual = max(
+                        actual, reserved
+                    )  # only the overage is new; never release a booked amount
+                else:
+                    return  # already settled (or never reserved): a second settle must not move the total again
             now = _dec(d["spent"][PROJECT], PROJECT) - reserved + actual
             d["spent"][PROJECT] = fmt_usd(max(now, Decimal(0)))
             self._write(d)
 
     def open_reservations(self) -> dict[str, dict[str, str]]:
         """Reservations not yet settled (id -> amount, ts): a call in flight, or a process that died."""
-        return dict(self._read().get("open", {}))
+        with self._locked():
+            return dict(self._read().get("open", {}))
 
     def stale_open(self) -> list[str]:
         """Ids of open reservations older than `stale_open_after` (config meter.stale_open_minutes): calls whose process died before `settle`."""
@@ -298,14 +327,18 @@ class Meter:
         with self._locked():
             d = self._read()
             n = len(d.get("open", {}))
+            forgotten = {rid: o["amount"] for rid, o in d.get("open", {}).items()}
+            d["cleared"] = dict(
+                list({**d.get("cleared", {}), **forgotten}.items())[-RUNTIME.cleared_kept :]
+            )
             d["open"] = {}
             self._write(d)
         return n
 
     def charge(self, amount: Decimal) -> Decimal:
         """Add `amount` to this project's spend; returns the new total."""
-        if amount < 0:
-            raise MeterError("negative charge")
+        if not amount.is_finite() or amount < 0:
+            raise MeterError("a charge must be a finite, non-negative number")
         with self._locked():
             d = self._read()
             total = _dec(d["spent"][PROJECT], PROJECT) + amount
