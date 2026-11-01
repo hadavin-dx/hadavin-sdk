@@ -359,6 +359,11 @@ def test_every_anchor_body_is_the_same_json_shape():
 # --- the anchor body names its scheme and key: offline verification needs nothing else
 
 
+BAD_BODY = (
+    "an anchor body is unreadable or has no alg and key label (a pre-alg anchor: pass assume_alg)"
+)
+
+
 class _Recording:
     """An anchor that keeps the exact bytes the chain asks every kind to write."""
 
@@ -387,11 +392,12 @@ def _anchored_chain():
     return signer, anchor, log
 
 
-def test_anchor_body_carries_alg_and_key_id_and_verifies_offline():
+def test_anchor_body_carries_alg_and_key_label_and_verifies_offline():
     signer, anchor, _ = _anchored_chain()
     docs = [json.loads(b) for b in anchor.bodies]
     assert len(docs) == 2
-    assert all(d["alg"] == "ed25519" and d["key_id"] == signer.key_id for d in docs)
+    assert all(d["alg"] == "ed25519" and d["key_label"] == chain.signer_label(signer) for d in docs)
+    assert all("key_id" not in d and d["key_label"].startswith("pk:") for d in docs)
     assert chain.verify_anchor_bodies(anchor.bodies, signer.public_key()) == []
 
 
@@ -407,16 +413,14 @@ def test_offline_verify_catches_a_forged_a_foreign_key_and_a_bare_anchor():
     other = LocalSigner(Ed25519PrivateKey.generate())
     assert len(chain.verify_anchor_bodies(anchor.bodies, other.public_key())) == 2
     bare = anchors.body(2, "h" * 64, "ab" * 64)  # a body from before alg and key_id were written
-    assert chain.verify_anchor_bodies([bare], signer.public_key()) == [
-        "an anchor body is unreadable or has no alg and key_id"
-    ]
+    assert chain.verify_anchor_bodies([bare], signer.public_key()) == [BAD_BODY]
 
 
 def test_offline_verify_reports_anchors_from_two_keys():
     signer, anchor, _ = _anchored_chain()
     _, other, _ = _anchored_chain()
     problems = chain.verify_anchor_bodies(anchor.bodies + other.bodies, signer.public_key())
-    assert any("different key IDs" in p for p in problems)
+    assert any("different key labels" in p for p in problems)
 
 
 def test_a_body_without_meta_keeps_the_old_shape():
@@ -427,7 +431,7 @@ def test_a_body_without_meta_keeps_the_old_shape():
         "hash": "h",
         "signature": "s",
         "alg": "ed25519",
-        "key_id": "k",
+        "key_label": "k",
     }
 
 
@@ -440,9 +444,7 @@ def test_offline_verify_refuses_nothing_and_duplicates_and_odd_seqs():
     assert any("appears twice" in p for p in twice)
     doc = json.loads(anchor.bodies[0])
     doc["seq"] = float(doc["seq"])
-    assert chain.verify_anchor_bodies([json.dumps(doc).encode()], signer.public_key()) == [
-        "an anchor body is unreadable or has no alg and key_id"
-    ]
+    assert chain.verify_anchor_bodies([json.dumps(doc).encode()], signer.public_key()) == [BAD_BODY]
 
 
 def test_a_legacy_three_argument_anchor_still_anchors_and_warns_once(caplog):
@@ -466,16 +468,118 @@ def test_a_legacy_three_argument_anchor_still_anchors_and_warns_once(caplog):
             AuditEvent(run_id="r", domain="step", operation=f"n{i}", principal="p", source="s")
         )
     assert set(anchor.puts) == {2}
-    assert sum("takes no alg/key_id" in r.message for r in caplog.records) == 1
+    assert sum("takes no alg/key_label" in r.message for r in caplog.records) == 1
 
 
 def test_offline_verify_rejects_seq_zero_and_a_non_string_key_id_without_raising():
     signer, anchor, _ = _anchored_chain()
     a, b = (json.loads(x) for x in anchor.bodies)
     zero = {**a, "seq": 0}
-    mixed = {**b, "key_id": 7}
+    mixed = {**b, "key_label": 7}
     out = chain.verify_anchor_bodies(
         [json.dumps(zero).encode(), json.dumps(mixed).encode(), anchor.bodies[0]],
         signer.public_key(),
     )
-    assert out == ["an anchor body is unreadable or has no alg and key_id"] * 2
+    assert out == [BAD_BODY] * 2
+
+
+# ---- PR 2 (e, f, g): key labels, name binding, legacy anchors
+
+
+def test_alias_and_arn_spelling_of_one_key_give_one_label_and_no_account_id():
+    from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey as K
+
+    key = K.generate()
+    a, b = LocalSigner(key), LocalSigner(key)
+    a.key_id, b.key_id = (
+        "alias/audit",
+        "arn:aws:kms:eu-west-1:123456789012:key/abc",
+    )  # same key, two spellings
+    assert chain.signer_label(a) == chain.signer_label(b)
+    log_a = _anchored_with(a)
+    log_b = _anchored_with(b)
+    out = chain.verify_anchor_bodies(log_a.bodies, a.public_key())
+    assert out == []
+    assert not any(b"123456789012" in x or b"arn:" in x for x in log_a.bodies + log_b.bodies)
+
+
+def _anchored_with(signer):
+    anchor = _Recording()
+    log = chain.ChainAudit(chain._Db.memory(), signer, anchor, 2)
+    for i in range(2):
+        log.write_intent(
+            AuditEvent(run_id="r", domain="step", operation=f"n{i}", principal="p", source="s")
+        )
+    return anchor
+
+
+def test_configured_key_label_wins_and_make_sets_it(tmp_path, monkeypatch):
+    monkeypatch.setenv("HADAVIN_KEY_DIR", str(tmp_path))
+    from hadavin_sdk.audit.signer import generate_key
+    from hadavin_sdk.backends import make
+    from hadavin_sdk.backends.table import Ed25519LocalSettings
+
+    pem = tmp_path / "k.pem"
+    generate_key(pem, tmp_path / "k.pub")
+    signer = make(
+        "signer",
+        Ed25519LocalSettings(kind="ed25519_local", private_key_path=pem, key_label="audit-2026"),
+    )
+    assert chain.signer_label(signer) == "audit-2026"
+    anchor = _anchored_with(signer)
+    assert json.loads(anchor.bodies[0])["key_label"] == "audit-2026"
+
+
+@pytest.mark.parametrize("bad", ["arn:aws:kms:x y", "a" * 65, "", "k/ey"])
+def test_key_label_must_be_plain(bad):
+    from pydantic import ValidationError
+
+    from hadavin_sdk.backends.table import AwsKmsSettings
+
+    with pytest.raises(ValidationError):
+        AwsKmsSettings(kind="aws_kms", key_id="alias/x", region="r", key_label=bad)
+
+
+def test_offline_verify_binds_seq_to_the_object_name():
+    from hadavin_sdk.audit import anchors
+
+    signer, anchor, _ = _anchored_chain()
+    names = [anchors.key(json.loads(b)["seq"]) for b in anchor.bodies]
+    assert chain.verify_anchor_bodies(anchor.bodies, signer.public_key(), names=names) == []
+    swapped = chain.verify_anchor_bodies(anchor.bodies, signer.public_key(), names=names[::-1])
+    assert len(swapped) == 2 and all("does not match" in p for p in swapped)
+    short = chain.verify_anchor_bodies(anchor.bodies, signer.public_key(), names=names[:1])
+    assert "differ in length" in short[0]
+
+
+def test_legacy_anchor_without_alg_verifies_with_assume_alg_and_a_wrong_guess_fails():
+    from hadavin_sdk.audit import anchors
+
+    signer, anchor, _ = _anchored_chain()
+    legacy = []
+    for b in anchor.bodies:
+        d = json.loads(b)
+        legacy.append(anchors.body(d["seq"], d["hash"], d["signature"]))  # no alg, no label
+    assert chain.verify_anchor_bodies(legacy, signer.public_key()) == [BAD_BODY] * 2
+    assert chain.verify_anchor_bodies(legacy, signer.public_key(), assume_alg="ed25519") == []
+    wrong = chain.verify_anchor_bodies(legacy, signer.public_key(), assume_alg="ecdsa-p256")
+    assert wrong and all("invalid signature" in p for p in wrong)
+    forged = json.loads(legacy[0])
+    forged["hash"] = "f" * 64
+    out = chain.verify_anchor_bodies(
+        [json.dumps(forged).encode()], signer.public_key(), assume_alg="ed25519"
+    )
+    assert out == [f"anchor {forged['seq']} has an invalid signature"]
+
+
+def test_checkpoint_rows_carry_alg_and_key_label_and_old_rows_still_verify():
+    signer = LocalSigner(Ed25519PrivateKey.generate())
+    db = chain._Db.memory()
+    log = chain.ChainAudit(db, signer, None, 2)
+    for i in range(2):
+        log.write_intent(
+            AuditEvent(run_id="r", domain="step", operation=f"n{i}", principal="p", source="s")
+        )
+    rows = db.run("SELECT seq, alg, key_label FROM audit_checkpoints")
+    assert rows == [(2, "ed25519", chain.signer_label(signer))]
+    assert log.verify().problems == []

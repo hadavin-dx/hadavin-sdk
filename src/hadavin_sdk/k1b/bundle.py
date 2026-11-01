@@ -40,8 +40,7 @@ _ID_RE = re.compile(
     r"|k8s/[0-9]{3,}\.json#(?:spec|events\.(?:0|[1-9][0-9]*))"
     r"|runbooks/[0-9]{3,}\.md#(?:0|[1-9][0-9]*))"
 )
-# Built from parts: the lock-in guard scans string literals for vendor names, and "meta" followed by a dot is one.
-META_SUFFIX = "." + "meta" + ".json"
+META_SUFFIX = ".meta.json"
 ALERT_KEYS = {"title", "summary", "severity", "service_label", "fired_by", "labels"}
 MAX_SHORT = 200
 # Keys whose name hints at the outcome of the incident (lowercase substring match, any depth).

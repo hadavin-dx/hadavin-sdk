@@ -1,4 +1,7 @@
-"""Factories for the kinds that ship in the base package (no extra needed). Each is ``(settings, deps)``."""
+"""Factories for the kinds that ship in the base package (no extra needed). Each is ``(settings, deps)``.
+
+Neutral protocol: none needed; the regex detector is plain Python and this module imports no vendor SDK.
+"""
 
 from __future__ import annotations
 

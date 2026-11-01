@@ -189,7 +189,15 @@ class ChainSettings(KindSettings):
     checkpoint_every: int = Field(default=100, ge=1)
 
 
-class Ed25519LocalSettings(KindSettings):
+class _SignerSettings(KindSettings):
+    """Every signer. `key_label` is the NON-SECRET name written beside each checkpoint and anchor (default: a
+    fingerprint of the public key). Set it to something stable such as `audit-2026`; never an ARN, key URL
+    or anything holding an account id, because the anchor bucket is readable by auditors."""
+
+    key_label: str | None = Field(default=None, pattern=r"^[A-Za-z0-9._:-]{1,64}$")
+
+
+class Ed25519LocalSettings(_SignerSettings):
     """The PEM key from a file (dev, pilot) or from the secrets kind (`private_key_secret_name`; prod allows
     only this, and only with a WORM anchor: config.py, environment table)."""
 
@@ -204,17 +212,17 @@ class Ed25519LocalSettings(KindSettings):
         return self
 
 
-class AwsKmsSettings(KindSettings):
+class AwsKmsSettings(_SignerSettings):
     key_id: str
     region: str
 
 
-class AzureKeyVaultKeySettings(KindSettings):
+class AzureKeyVaultKeySettings(_SignerSettings):
     # One key version: https://<vault>.vault.azure.net/keys/<name>/<version> (or a managedhsm.azure.net URL).
     key_id: str = Field(pattern=r"^https://[^/]+/keys/[A-Za-z0-9-]+/[A-Za-z0-9]+$")
 
 
-class GcpKmsSettings(KindSettings):
+class GcpKmsSettings(_SignerSettings):
     key_version: str = Field(
         pattern=r"^projects/[^/]+/locations/[^/]+/keyRings/[^/]+/cryptoKeys/[^/]+/cryptoKeyVersions/[0-9]+$"
     )
@@ -269,7 +277,7 @@ class VaultSettings(_VaultConnection):
         return [self.auth_mount or "", self.mount, self.path_prefix]
 
 
-class VaultTransitSettings(_VaultConnection):
+class VaultTransitSettings(_VaultConnection, _SignerSettings):
     """An `ed25519` Transit key, pinned to one version: checkpoints signed before a rotation must still
     verify with the key that signed them."""
 

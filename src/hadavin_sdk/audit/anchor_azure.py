@@ -46,10 +46,10 @@ class AzureBlobAnchor:
         signature: str,
         *,
         alg: str | None = None,
-        key_id: str | None = None,
+        key_label: str | None = None,
     ) -> None:
         name = anchors.key(seq)
-        data = anchors.body(seq, head, signature, alg, key_id)
+        data = anchors.body(seq, head, signature, alg, key_label)
         policy = ImmutabilityPolicy(
             expiry_time=self.clock() + self.retain, policy_mode=_MODES[self.mode]
         )

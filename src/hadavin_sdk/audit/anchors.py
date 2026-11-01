@@ -18,15 +18,17 @@ def key(seq: int) -> str:
 
 
 def body(
-    seq: int, head: str, signature: str, alg: str | None = None, key_id: str | None = None
+    seq: int, head: str, signature: str, alg: str | None = None, key_label: str | None = None
 ) -> bytes:
-    """`alg` and `key_id` name the signature scheme and the key that made it, so an auditor holding only the
-    anchor objects and a public key needs nothing else to verify them (`chain.verify_anchor_bodies`)."""
+    """`alg` and `key_label` name the signature scheme and the key that made it, so an auditor holding only
+    the anchor objects and a public key needs nothing else to verify them (`chain.verify_anchor_bodies`).
+    The label is non-secret and never a cloud key identifier: an ARN or key URL would put an account id in
+    the anchor bucket (see `signer_label`)."""
     doc = {"seq": seq, "hash": head, "signature": signature}
     if alg is not None:
         doc["alg"] = alg
-    if key_id is not None:
-        doc["key_id"] = key_id
+    if key_label is not None:
+        doc["key_label"] = key_label
     return json.dumps(doc, sort_keys=True).encode()
 
 

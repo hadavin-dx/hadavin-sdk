@@ -49,8 +49,10 @@ def _sql_columns() -> dict[str, set[str]]:
         for table, body in re.findall(r"CREATE TABLE (\w+) \((.*?)\n\);", text, re.DOTALL):
             cols = re.findall(r'^\s+"?(\w+)"?\s+[A-Z]', body, re.MULTILINE)
             out[table] = {c for c in cols if c != "PRIMARY"}
-        for table, col in re.findall(r"ALTER TABLE (\w+) ADD COLUMN (\w+)", text):
-            out[table].add(col)
+        for table, col in re.findall(
+            r"ALTER TABLE (\w+) ADD COLUMN (?:IF NOT EXISTS )?(\w+)", text
+        ):
+            out.setdefault(table, set()).add(col)
     return out
 
 
@@ -241,3 +243,30 @@ def test_cas_race_across_two_connections_has_one_winner(migrated_dsn):
     assert sorted(results) == ["stale", "won"]
     a._db.close()
     b._db.close()
+
+
+def test_audit_checkpoints_migration_adds_alg_and_label_and_old_rows_get_defaults(fresh_dsn):
+    """Apply 0001-0003 only, insert a pre-upgrade checkpoint row, then migrate: the row loads with defaults."""
+    import psycopg
+
+    old = [p for p in sorted(MIGRATIONS.glob("*.sql")) if p.stem < "0004"]
+    with psycopg.connect(fresh_dsn, autocommit=True) as db:
+        for path in old:
+            db.execute(path.read_text(encoding="utf-8"))
+        db.execute(
+            "CREATE TABLE schema_migrations (version TEXT PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT now())"
+        )
+        for path in old:
+            db.execute("INSERT INTO schema_migrations (version) VALUES (%s)", (path.stem,))
+        db.execute("INSERT INTO audit_checkpoints (seq, hash, signature) VALUES (1, 'h', 's')")
+    assert migrate(fresh_dsn) == ["0004_audit_checkpoint_meta"]
+    with psycopg.connect(fresh_dsn, autocommit=True) as db:
+        assert db.execute("SELECT seq, alg, key_label FROM audit_checkpoints").fetchall() == [
+            (1, "ed25519", "")
+        ]
+        db.execute(
+            "INSERT INTO audit_checkpoints (seq, hash, signature) VALUES (2, 'h', 's')"
+        )  # an old runtime
+        db.execute(
+            "INSERT INTO audit_checkpoints (seq, hash, signature, alg, key_label) VALUES (3, 'h', 's', 'ecdsa-p256', 'k')"
+        )

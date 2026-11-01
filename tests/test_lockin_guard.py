@@ -209,6 +209,46 @@ def test_a_neutral_kind_has_no_vendor_only_path():
                 assert (cap, kind) == ("anchor", "s3_object_lock"), (cap, kind)
 
 
+def neutral_problems(table: dict, vendor: set[str]) -> list[str]:
+    """`neutral` is hand-set, so each neutral kind must show it: its module imports no vendor SDK (the S3
+    anchor is the one exception and must offer `endpoint_url`) and its module docstring states the neutral
+    protocol it speaks on a `Neutral protocol:` line."""
+    import importlib
+
+    out = []
+    for cap, kinds in table.items():
+        for kind, entry in kinds.items():
+            if not entry.neutral:
+                continue
+            mod = entry.factory.split(":")[0]
+            if mod in vendor and not (
+                (cap, kind) == ("anchor", "s3_object_lock")
+                and "endpoint_url" in entry.settings.model_fields
+            ):
+                out.append(f"{cap} {kind}: neutral but module {mod} imports a vendor SDK")
+            if "Neutral protocol:" not in (importlib.import_module(mod).__doc__ or ""):
+                out.append(f"{cap} {kind}: module {mod} states no neutral protocol")
+    return out
+
+
+def test_every_neutral_kind_has_evidence():
+    assert neutral_problems(TABLE, set().union(*VENDOR_IMPORTS.values())) == []
+
+
+def test_plant_neutral_kinds_without_evidence_are_caught():
+    from hadavin_sdk.backends.table import Entry, KindSettings
+
+    table = {
+        "x": {
+            "bare": Entry(KindSettings, "hadavin_sdk.config:Config", neutral=True),
+            "sdk": Entry(KindSettings, "hadavin_sdk.audit.signer_aws:build", neutral=True),
+        }
+    }
+    found = neutral_problems(table, set().union(*VENDOR_IMPORTS.values()))
+    assert any("bare: module hadavin_sdk.config states no neutral" in f for f in found)
+    assert any("sdk: neutral but module" in f for f in found)
+
+
 def test_every_vendor_module_is_a_kind():
     assert vendor_module_problems(SRC, VENDOR_IMPORTS, factory_modules(), VENDOR_HELPERS) == []
 
@@ -478,7 +518,7 @@ PATTERNS = {
     r"|australiaeast|canadacentral|canadaeast|brazilsouth|germanywestcentral|swedencentral"
     r"|koreacentral|francecentral|uaenorth|norwayeast|switzerlandnorth|southafricanorth)\d?\b",
     "model id": r"\b(claude|gpt-|gemini-|llama|mistral|qwen|deepseek|anthropic\.|us\.anthropic\."
-    r"|amazon\.(nova|titan)|cohere\.|meta\.)|\bo[134](-mini|-pro)?\b",
+    r"|amazon\.(nova|titan)|cohere\.|meta\.llama)|\bo[134](-mini|-pro)?\b",
     "account id": r"\b\d{12}\b",
     "host": r"(amazonaws\.com(\.cn)?|aws\.amazon\.com|azure\.com|(azure|windows)\.net|googleapis\.com"
     r"|cloud\.google\.com|slack\.com|github\.com|anthropic\.com|openai\.com)\b",
@@ -511,9 +551,31 @@ def _skipped_table_nodes(tree: ast.Module) -> set[int]:
     return skipped
 
 
+def _fold(node: ast.AST) -> str | None:
+    """The text a node builds when it is only constants: a str or bytes constant, `a + b` of such, or an
+    f-string (the non-constant parts become `{}`). Anything else: None."""
+    if isinstance(node, ast.Constant):
+        if isinstance(node.value, str):
+            return node.value
+        if isinstance(node.value, bytes):
+            return node.value.decode("latin-1")
+        return None
+    if isinstance(node, ast.BinOp) and isinstance(node.op, ast.Add):
+        left, right = _fold(node.left), _fold(node.right)
+        return None if left is None or right is None else left + right
+    if isinstance(node, ast.JoinedStr):
+        return "".join(
+            v.value if isinstance(v, ast.Constant) and isinstance(v.value, str) else "{}"
+            for v in node.values
+        )
+    return None
+
+
 def literal_problems(
     src: Path, vendor_modules: set[str], literal_ok: dict[tuple[str, str], str]
 ) -> list[str]:
+    """Every str or bytes constant, every constant `+` join and every f-string is checked against PATTERNS
+    (so `b'x-amz-date'`, `'us-east' + '-1'` and `f'slack:{x}'` are caught as well as plain strings)."""
     out: list[str] = []
     used: set[tuple[str, str]] = set()
     for path in sorted(src.rglob("*.py")):
@@ -523,14 +585,17 @@ def literal_problems(
         tree = ast.parse(path.read_text(encoding="utf-8"))
         skip = _docstrings(tree) | (_skipped_table_nodes(tree) if mod == _TABLE_MODULE else set())
         for n in ast.walk(tree):
-            if not (isinstance(n, ast.Constant) and isinstance(n.value, str)) or id(n) in skip:
+            if id(n) in skip or not isinstance(n, ast.Constant | ast.BinOp | ast.JoinedStr):
+                continue
+            text = _fold(n)
+            if text is None:
                 continue
             for label, pattern in PATTERNS.items():
-                if re.search(pattern, n.value, re.IGNORECASE):
-                    if (mod, n.value) in literal_ok:
-                        used.add((mod, n.value))
+                if re.search(pattern, text, re.IGNORECASE):
+                    if (mod, text) in literal_ok:
+                        used.add((mod, text))
                     else:
-                        out.append(f"{mod}:{n.lineno}: {label} in {n.value[:50]!r}")
+                        out.append(f"{mod}:{n.lineno}: {label} in {text[:50]!r}")
     out += [
         f"LITERAL_OK {k[0]} {k[1][:30]!r} is gone: delete the entry"
         for k in literal_ok
@@ -600,6 +665,30 @@ def test_plant_model_id_host_and_account_are_caught(tmp_path):
     assert len(_lit(tmp_path, "runtime/x.py", text)) == 4
 
 
+def test_plant_bytes_constant_is_caught(tmp_path):
+    assert "vendor header" in _lit(tmp_path, "runtime/x.py", "H = b'x-amz-date'\n")[0]
+
+
+def test_plant_constant_concatenation_is_caught(tmp_path):
+    text = "R = 'us-east' + '-1'\nA = 'arn:' + 'aws:s3:::b'\n"
+    found = _lit(tmp_path, "runtime/x.py", text)
+    assert any("AWS region" in f for f in found) and any("ARN" in f for f in found)
+
+
+def test_plant_split_fstring_is_caught(tmp_path):
+    text = "def f(n):\n    return f'arn:aws:s3:::{n}'\n"
+    assert any("ARN" in f for f in _lit(tmp_path, "runtime/x.py", text))
+
+
+def test_plant_bytes_plus_bytes_is_caught(tmp_path):
+    found = _lit(tmp_path, "runtime/x.py", "H = b'x-amz-' + b'date'\n")
+    assert any("vendor header" in f for f in found)
+
+
+def test_non_constant_concatenation_is_not_a_false_alarm(tmp_path):
+    assert _lit(tmp_path, "runtime/x.py", "def f(a):\n    return a + '-x'\n") == []
+
+
 def test_a_docstring_and_a_vendor_module_are_not_flagged(tmp_path):
     _plant(tmp_path, "llm/gemini.py", "H = 'x-goog-api-key'\n")
     assert _lit(tmp_path, "runtime/x.py", '"""Talks to slack.com."""\nX = 1\n') == []
@@ -642,3 +731,8 @@ def test_the_test_environment_holds_no_cloud_credential_variables():
     )
     leaked = [n for n in os.environ if n in _ISOLATED or n.startswith(_ISOLATED_PREFIXES)]
     assert leaked == []
+
+
+def test_a_file_suffix_is_not_a_model_id_but_a_bedrock_llama_id_is(tmp_path):
+    assert _lit(tmp_path, "runtime/x.py", "S = '.meta.json'\n") == []
+    assert "model id" in _lit(tmp_path, "runtime/x.py", "M = 'meta.llama3-70b'\n")[0]

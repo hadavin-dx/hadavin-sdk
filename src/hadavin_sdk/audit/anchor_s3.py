@@ -5,6 +5,10 @@ default, COMPLIANCE only in prod with `retention_ack`), and every put carries `I
 never overwritten even before Object Lock applies (a 412 with the same bytes is an earlier put whose answer was
 lost). The bucket must be written by a principal the runtime cannot delete with (S11): until the retention
 ends, a history rewritten afterwards no longer matches its anchors.
+
+Neutral protocol: the S3 object API with Object Lock, served by AWS S3 and by S3-compatible stores through `endpoint_url`
+(MinIO, Ceph RGW). This module imports a vendor SDK (boto3), so it is the one allowed exception in
+`test_every_neutral_kind_has_evidence`, which requires the `endpoint_url` setting instead.
 """
 
 from __future__ import annotations
@@ -43,10 +47,10 @@ class S3Anchor:
         signature: str,
         *,
         alg: str | None = None,
-        key_id: str | None = None,
+        key_label: str | None = None,
     ) -> None:
         name = anchors.key(seq)
-        data = anchors.body(seq, head, signature, alg, key_id)
+        data = anchors.body(seq, head, signature, alg, key_label)
         try:
             self._s3.put_object(
                 Bucket=self.bucket,

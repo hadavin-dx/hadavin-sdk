@@ -5,6 +5,8 @@ This module holds the Protocol, the local check, the `ed25519_local` kind and th
 WARDEN `audit.py` (main c78d7709: `key_path`, `generate_key`, `load_private_key`, `load_public_key`); every
 cloud or Vault signer lives in its own kind module (`signer_aws`, `signer_azure`, `signer_gcp`, `signer_vault`)
 and imports its SDK there. Needs only `cryptography` (`pip install hadavin-sdk[signer]`).
+
+Neutral protocol: a local PEM Ed25519 key, verified with the public key alone (RFC 8032).
 """
 
 from __future__ import annotations
