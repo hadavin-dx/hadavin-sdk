@@ -324,6 +324,10 @@ def test_report_text(tmp_path):
     )
     assert "| 1 | 1 | 1 | 1 | 0 | 0/0/0/0 | 0 | 0 |" in text
     assert "includes no-evidence Hits" in text and CONFIDENT_WRONG in text
+    # the wording must match the scorer: a bad citation is reported, not reclassified (see
+    # test_bad_citation_is_reported_not_reclassified)
+    assert "never as Not sure" in CONFIDENT_WRONG and "counted as Misses" not in CONFIDENT_WRONG
+    assert "not re-scored" in CONFIDENT_WRONG
     assert (
         "Hit rate at least 2.5% (95%, one-sided), computed over 2 scored incidents excluding 1 no-evidence incidents"
         in text

@@ -17,7 +17,8 @@ DISCLAIMER = (
     "approval and limits path."
 )
 CONFIDENT_WRONG = (
-    "Confidently wrong answers are not hidden: they are counted as Misses, never as Not sure."
+    "A definite answer with the wrong cause is counted as a Miss, never as Not sure. An answer whose "
+    "citations fail the checks is not re-scored: it keeps its class and is counted separately below."
 )
 
 

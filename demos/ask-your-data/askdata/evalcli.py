@@ -16,11 +16,12 @@ import argparse
 import hashlib
 import json
 import os
+import sys
 import time
 from pathlib import Path
 
 from askdata import audit as audit_mod
-from askdata import evalrun, prompt
+from askdata import evalrun, htmlexport, prompt
 from askdata.config import AskdataConfig, ConfigError, config_hash, load_config
 from askdata.evalrun import EXIT, Config, Harness, HarnessError, Incomparable, RecordingExecutor
 from askdata.evalset import (
@@ -190,10 +191,13 @@ def cmd_run(
     return EXIT["hard_zero"] if hz else EXIT[report["verdict"]]
 
 
-def cmd_report(run_dir: Path) -> int:
+def cmd_report(run_dir: Path, fmt: str = "md") -> int:
     try:
         rep = json.loads((run_dir / "report.json").read_text(encoding="utf-8"))
-        out(evalrun.render_md(rep))
+        if fmt == "html":
+            sys.stdout.write(htmlexport.render_eval(rep))
+        else:
+            out(evalrun.render_md(rep))
     except (OSError, ValueError, KeyError):
         out(f"report: {run_dir} is not a run folder")
         return 4
@@ -219,7 +223,9 @@ def main(argv: list[str]) -> int:
     r.add_argument("--split", choices=["dev", "test"], required=True)
     r.add_argument("--k", type=int, default=1)
     r.add_argument("--second-look", choices=["aborted", "harness_defect"], default=None)
-    sub.add_parser("report").add_argument("run_dir", type=Path)
+    rp = sub.add_parser("report")
+    rp.add_argument("run_dir", type=Path)
+    rp.add_argument("--format", choices=["md", "html"], default="md")
     c = sub.add_parser("compare")
     c.add_argument("baseline", type=Path)
     c.add_argument("candidate", type=Path)
@@ -228,7 +234,7 @@ def main(argv: list[str]) -> int:
     except SystemExit as e:
         return 0 if e.code in (0, None) else 1
     if args.cmd == "report":
-        return cmd_report(args.run_dir)
+        return cmd_report(args.run_dir, args.format)
     if args.cmd == "compare":
         return cmd_compare(args.baseline, args.candidate)
     path = args.config or os.environ.get("ASKDATA_CONFIG")
