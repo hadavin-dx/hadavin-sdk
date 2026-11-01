@@ -73,7 +73,10 @@ smoke limit), 14 refused (budget, `--k`, smoke, counter or chain mismatch, a sta
 
 `roles.sql` runs `REVOKE ... FROM PUBLIC`, which changes access for every login in that database: use a dedicated
 database or a replica, never a shared production database. It runs `db/preflight_roles.sql` first and stops if
-other logins would lose access (`--accept-loss` to override).
+other logins would lose access (`--accept-loss` to override). The script has no numbers of its own: the connection
+limit and the three timeouts are required psql variables (`ro_connection_limit`, `ro_statement_timeout`,
+`ro_lock_timeout`, `ro_idle_timeout`); `askdata setup` passes them from `askdata/settings.py` (class `Runtime`), a DBA
+running the script by hand passes them with `-v` (it refuses without them).
 
 ## Dataset, ledger, meter and evaluation harness (phase P3)
 
@@ -185,12 +188,17 @@ other logins would lose access (`--accept-loss` to override).
    * The WHOLE of `lock.json` except `seal` is covered by the key's HMAC: files and their hashes, thresholds, the money
      minimums, `max_second_looks`, the counter, the smoke key, the chain head and the hand-written defect fields. The one
      sanctioned hand edit (the defect fields) is blessed by the key holder with `eval reseal`, which logs a `reseal`
-     entry. `reseal` blesses ONLY those fields: it stores a hash of everything else at every commit and refuses when
-     anything else (files, thresholds, caps, counter) differs, and when no hand field is set. Read `git diff lock.json`
-     first anyway.
+     entry. `reseal` blesses ONLY those fields. Every chain entry records the hash of everything else (the "core") and of the
+     frozen file hashes, and `reseal` compares `lock.json` with the value the CHAIN recorded at the lock's own position,
+     not with a value stored in `lock.json` (which a rewriter could recompute). It refuses when anything else differs
+     (files, thresholds, caps, counter) and when no hand field is set. Every ordinary load makes the same comparison,
+     keyed or not. Read `git diff lock.json` first anyway.
    * A crashed run's status is not read from a plain file: right after the results are written their `report.json`
-     SHA-256 goes into the chain. A report no entry vouches for is "unverified" (a second look `aborted` is refused), and a
-     report that differs from the recorded hash is refused. While a sealed run is alive it holds an OS run lock
+     SHA-256 goes into the chain. Results evidence (`report.json`, `report.md` or `results.jsonl` in the run folder) that no
+     chain entry vouches for is "unverified" (a second look `aborted` is refused). A recorded report that was DELETED or
+     that differs from its recorded hash is refused on every load, for every recorded run, and by `eval report` and
+     `eval compare` when a config is given. Residual: the hash is taken of whatever is on disk at the moment the run records
+     it, so a report swapped between `write_run` and that record is not detected. While a sealed run is alive it holds an OS run lock
      (`sealed-run.lock`): a second look is refused with "a sealed run is still running" and the status is "aborted" only
      once that process is gone.
    * Anchors: at the first freeze a `set_id` is written to `<audit_dir>/sealed-anchor.json` and to
@@ -217,12 +225,16 @@ other logins would lose access (`--accept-loss` to override).
      this works (`test_a_full_rewrite_of_every_file_as_a_keyless_set_succeeds...`). The real control for a client is the
      core `chain` audit kind (an append-only table with signed checkpoints and anchors held elsewhere), or a committed,
      reviewed key-id witness; neither is wired into this demo.
+   * A set frozen WITHOUT a key cannot be upgraded to keyed in place: the chain and the lock were written with plain
+     SHA-256 and a key would make them "broken". The only path is `eval freeze --new-set --reason ... --discard-count N`,
+     which resets the count; decide on the key before the first sealed run.
    * Concurrent runs are serialised by an OS lock on `lock.json.lock`.
 
    A `--second-look harness_defect` needs the proved defect written BY HAND into `lock.json`: `harness_defect_reason`
    (10+ characters), `harness_defect_run` (an existing run folder) and `harness_defect_item` (an id in the frozen test
-   files); one defect buys one second look. `--second-look aborted` needs the last sealed run to have aborted with no
-   results written. At most `max_second_looks` (2) second looks exist in total.
+   files); one defect buys one second look. `harness_defect_run` must be a SEALED run that is in the chain (a dev run or an unrecorded folder is refused).
+   `--second-look aborted` needs the last sealed run to be aborted: its process gone (run lock free) and NO results
+   evidence in its folder (no `report.json`, `report.md` or `results.jsonl`), or a recorded report that itself says aborted. At most `max_second_looks` (2) second looks exist in total.
 6. Dev runs: `... eval run --split dev [--k 3]`. A live smoke (needs the owner's yes and a fresh `external_usd`):
    `... eval run --split dev --live --smoke`. One question costing more than US$0.35 aborts it at once; from 5 questions on
    it aborts (exit 13) when the cost per question is more than US$0.035 or more than 10 % of the model attempts are

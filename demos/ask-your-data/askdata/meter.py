@@ -198,7 +198,7 @@ class Meter:
             while not _try_lock(f):
                 if time.monotonic() > deadline:
                     raise MeterError("meter lock busy")
-                time.sleep(0.01)
+                time.sleep(RUNTIME.lock_poll_s)
             try:
                 yield
             finally:

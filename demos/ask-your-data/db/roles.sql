@@ -1,6 +1,8 @@
 -- Ask-your-data demo: the read-only login. Applied by an ADMIN (never by the app), once per database.
 --
---   psql -d <db> -f roles.sql -v confirm_dedicated=yes -v ro_password=<password>
+--   psql -d <db> -f roles.sql -v confirm_dedicated=yes -v ro_password=<password> \
+--        -v ro_connection_limit=N -v ro_statement_timeout=Ns -v ro_lock_timeout=Ns -v ro_idle_timeout=Ns
+--   (the numbers are required; the documented values are in askdata/settings.py, class Runtime)
 --
 -- WARNING: REVOKE ... FROM PUBLIC changes access for EVERY login role in this database. Run it on a dedicated
 -- database or a read replica, never on a shared production database. It first runs preflight_roles.sql and stops
@@ -28,6 +30,24 @@ SELECT (:'confirm_dedicated' = 'yes') AS dedicated \gset
 \endif
 
 \ir preflight_roles.sql
+
+-- The numbers come from the caller (the CLI passes them from askdata/settings.py Runtime); this script has none.
+\if :{?ro_connection_limit}
+\else
+  SELECT 'refusing: pass -v ro_connection_limit=N -v ro_statement_timeout=Ns -v ro_lock_timeout=Ns -v ro_idle_timeout=Ns'::int;
+\endif
+\if :{?ro_statement_timeout}
+\else
+  SELECT 'refusing: pass -v ro_statement_timeout=Ns'::int;
+\endif
+\if :{?ro_lock_timeout}
+\else
+  SELECT 'refusing: pass -v ro_lock_timeout=Ns'::int;
+\endif
+\if :{?ro_idle_timeout}
+\else
+  SELECT 'refusing: pass -v ro_idle_timeout=Ns'::int;
+\endif
 SELECT (:'accept_loss' = 'yes') AS accepted \gset
 \if :has_loss
   \if :accepted
@@ -40,7 +60,7 @@ SELECT current_database() AS dbname \gset
 
 BEGIN;  -- all or nothing: a failure leaves no half-made login behind
 
-CREATE ROLE :"ro_role" LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS CONNECTION LIMIT 5;
+CREATE ROLE :"ro_role" LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS CONNECTION LIMIT :ro_connection_limit;
 \if :{?ro_password}
   ALTER ROLE :"ro_role" PASSWORD :'ro_password';
 \endif
@@ -60,9 +80,9 @@ ALTER DEFAULT PRIVILEGES REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC;
 
 -- Defaults only: a session can change them. The revoked privileges above are what hold.
 ALTER ROLE :"ro_role" IN DATABASE :"dbname" SET default_transaction_read_only = on;
-ALTER ROLE :"ro_role" IN DATABASE :"dbname" SET statement_timeout = '15s';
-ALTER ROLE :"ro_role" IN DATABASE :"dbname" SET lock_timeout = '1s';
-ALTER ROLE :"ro_role" IN DATABASE :"dbname" SET idle_in_transaction_session_timeout = '15s';
+ALTER ROLE :"ro_role" IN DATABASE :"dbname" SET statement_timeout = :'ro_statement_timeout';
+ALTER ROLE :"ro_role" IN DATABASE :"dbname" SET lock_timeout = :'ro_lock_timeout';
+ALTER ROLE :"ro_role" IN DATABASE :"dbname" SET idle_in_transaction_session_timeout = :'ro_idle_timeout';
 ALTER ROLE :"ro_role" IN DATABASE :"dbname" SET search_path = analytics;
 COMMIT;
 \echo roles.sql: done

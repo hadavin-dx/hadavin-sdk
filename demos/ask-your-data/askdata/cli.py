@@ -29,6 +29,7 @@ from askdata.policy import (
 )
 from askdata.safe_text import clean
 from askdata.scripted import Model, ScriptedModel, questions
+from askdata.settings import role_psql_vars
 from askdata.validate import Rejected, assert_all_rules_on, validate
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -141,7 +142,8 @@ def _roles_input(password: str) -> str:
     db = (
         ROOT / "db"
     )  # \ir inside roles.sql resolves against the current directory when read from stdin
-    return f"{bs}cd '{db.as_posix()}'{nl}{bs}set ro_password {quoted}{nl}{bs}i roles.sql{nl}"
+    sets = "".join(f"{bs}set {k} '{v}'{nl}" for k, v in role_psql_vars().items())
+    return f"{bs}cd '{db.as_posix()}'{nl}{bs}set ro_password {quoted}{nl}{sets}{bs}i roles.sql{nl}"
 
 
 def cmd_setup(accept_loss: bool) -> int:

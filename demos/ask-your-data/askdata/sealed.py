@@ -42,7 +42,16 @@ import uuid
 from datetime import UTC, datetime
 from pathlib import Path
 
-from askdata.evalset import Lock, LockError, Thresholds, freeze, lock_path, read_lock, write_lock
+from askdata.evalset import (
+    Lock,
+    LockError,
+    Thresholds,
+    freeze,
+    lock_path,
+    make_lock,
+    read_lock,
+    write_lock,
+)
 
 GENESIS = "0" * 64
 KINDS = (
@@ -73,12 +82,20 @@ def _mac(key: bytes | None, seq: int, kind: str, data: dict, prev: str) -> str:
 
 
 def core_hash_of(lock: Lock) -> str:
-    """SHA-256 of everything in lock.json EXCEPT the seal, this hash and the hand-written defect fields. `eval reseal`
-    refuses to bless a lock whose core no longer matches the hash stored at the last commit."""
-    skip = {"seal", "core_hash", *HAND_FIELDS}
+    """SHA-256 of everything in lock.json EXCEPT the seal, this hash, the chain head and the hand-written defect
+    fields. It is written into the CHAIN ENTRY of every commit (not only into lock.json): `eval reseal` and every load
+    compare lock.json against the value the chain recorded, so a lock rewritten together with its own core_hash is
+    still caught."""
+    skip = {"seal", "core_hash", "chain_head", *HAND_FIELDS}
     body = json.dumps(
         json.loads(lock.model_dump_json(exclude=skip)), sort_keys=True, separators=(",", ":")
     )
+    return hashlib.sha256(body.encode("utf-8")).hexdigest()
+
+
+def files_sha_of(lock: Lock) -> str:
+    """SHA-256 of the frozen file names and hashes (also written into every chain entry)."""
+    body = json.dumps(lock.files, sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(body.encode("utf-8")).hexdigest()
 
 
@@ -197,14 +214,15 @@ def file_sha256(path: Path) -> str | None:
         return None
 
 
+RESULT_FILES = ("report.json", "report.md", "results.jsonl")
+
+
 def report_state(entries: list[dict], runs_dir: Path, run_id: str) -> str | None:
-    """Verdict of a run folder's report.json: None (no report), "unverified" (a report no chain entry vouches for),
-    or "complete"/"aborted" from a report whose SHA-256 matches the one recorded when it was written.
-    A report that differs from the recorded hash raises `LockError`."""
-    path = Path(runs_dir) / run_id / "report.json"
-    digest = file_sha256(path)
-    if digest is None:
-        return None
+    """Verdict of a run folder: None (no results evidence at all), "unverified" (results exist that no chain entry
+    vouches for), or "complete"/"aborted" from a report.json whose SHA-256 matches the one recorded when it was written.
+    A recorded report that was deleted or changed raises `LockError`."""
+    folder = Path(runs_dir) / run_id
+    digest = file_sha256(folder / "report.json")
     rec = next(
         (
             e
@@ -213,13 +231,31 @@ def report_state(entries: list[dict], runs_dir: Path, run_id: str) -> str | None
         ),
         None,
     )
-    if rec is None:
-        return "unverified"
-    if rec["data"]["sha256"] != digest:
-        raise LockError(
-            f"report.json of run {run_id} differs from the hash recorded when it was written"
-        )
-    return report_status(runs_dir, run_id)
+    if rec is not None:
+        if digest is None:
+            raise LockError(f"report.json of run {run_id} was deleted after its hash was recorded")
+        if rec["data"]["sha256"] != digest:
+            raise LockError(
+                f"report.json of run {run_id} differs from the hash recorded when it was written"
+            )
+        return report_status(runs_dir, run_id)
+    return "unverified" if any((folder / n).exists() for n in RESULT_FILES) else None
+
+
+def verify_reports(entries: list[dict], runs_dir: Path) -> None:
+    """Every run whose report hash is in the chain must still have exactly that report (raises `LockError`)."""
+    for run_id in {e["data"]["run_id"] for e in entries if e["kind"] == "report"}:
+        report_state(entries, runs_dir, run_id)
+
+
+def verify_run_report(entries: list[dict], run_dir: Path) -> bool:
+    """For `eval report` and `eval compare`: True if the chain vouches for run_dir's report and it matches; False if the
+    chain has no record of it; raises `LockError` if it was deleted or changed."""
+    run_id = Path(run_dir).name
+    if not any(e["kind"] == "report" and e["data"].get("run_id") == run_id for e in entries):
+        return False
+    report_state(entries, Path(run_dir).parent, run_id)
+    return True
 
 
 def _status_of(entries: list[dict], runs_dir: Path, running: bool = False) -> str:
@@ -314,8 +350,11 @@ class SealedGate:
         return False
 
     def _commit(self, lock: Lock, kind: str, data: dict, **fields) -> Lock:
-        entry = self.chain.append(kind, data)
-        new = self._sealed(lock.model_copy(update={**fields, "chain_head": entry["sha"]}))
+        nohead = lock.model_copy(update=fields)
+        entry = self.chain.append(
+            kind, {**data, "core_hash": core_hash_of(nohead), "files_sha": files_sha_of(nohead)}
+        )
+        new = self._sealed(nohead.model_copy(update={"chain_head": entry["sha"]}))
         write_lock(self.eval_dir, new)
         return new
 
@@ -382,33 +421,47 @@ class SealedGate:
                 f"--new-set RESETS the sealed counter and {counted} sealed run(s) are counted; "
                 f"to discard that count on purpose, also pass --discard-count {counted}"
             )
+        if reason and not chain_existed and discard_count is None:
+            raise LockError(
+                "--new-set with an anchor but NO chain: the count to discard cannot be verified. If you are sure, "
+                "pass --discard-count N with the number of sealed runs you believe were counted (it is logged)"
+            )
         set_id = uuid.uuid4().hex
-        data = {"set_id": set_id, "keyed": bool(self.key), "key_id": self._key_id()}
+        prebuilt = make_lock(self.eval_dir, names, thresholds, lock_fields).model_copy(
+            update={"keyed": bool(self.key)}
+        )
+        data = {
+            "set_id": set_id,
+            "keyed": bool(self.key),
+            "key_id": self._key_id(),
+            "core_hash": core_hash_of(prebuilt),
+            "files_sha": files_sha_of(prebuilt),
+        }
         if reason:
             data |= {
                 "reason": reason,
                 "previous_head": prev[-1]["sha"] if prev else None,
-                "discarded_runs": counted,
+                "discarded_runs": counted if chain_existed else discard_count,
             }
         old = None
         backups: dict[Path, Path] = {}
-        for (
-            anchor
-        ) in self.anchors:  # path to path: the old anchors can be put back if this freeze fails
-            backup = anchor.with_name(anchor.name + ".bak")
-            try:
-                shutil.copyfile(anchor, backup)
-            except FileNotFoundError:
-                continue
-            backups[anchor] = backup
-        entry = self.chain.append("new_set" if reason else "genesis", data)
-
-        def seal(lock: Lock) -> Lock:
-            return self._sealed(
-                lock.model_copy(update={"chain_head": entry["sha"], "keyed": bool(self.key)})
-            )
-
+        appended = lock_created = False
         try:
+            for (
+                anchor
+            ) in self.anchors:  # path to path: the old anchors are put back if this freeze fails
+                backup = anchor.with_name(anchor.name + ".bak")
+                try:
+                    shutil.copyfile(anchor, backup)
+                except FileNotFoundError:
+                    continue
+                backups[anchor] = backup
+            entry = self.chain.append("new_set" if reason else "genesis", data)
+            appended = True
+
+            def seal(lock: Lock) -> Lock:
+                return self._sealed(lock.model_copy(update={"chain_head": entry["sha"]}))
+
             if (
                 reason and lock_path(self.eval_dir).exists()
             ):  # moved aside only AFTER the append succeeded
@@ -417,13 +470,9 @@ class SealedGate:
                 )
                 os.replace(lock_path(self.eval_dir), old)
             lock = freeze(
-                self.eval_dir,
-                names,
-                thresholds,
-                no_clobber=True,
-                seal=seal,
-                lock_fields=lock_fields,
+                self.eval_dir, names, thresholds, no_clobber=True, seal=seal, prebuilt=prebuilt
             )
+            lock_created = True
             history = _dedupe([s for a in anchors for s in a.get("sets", [])])
             history.append(
                 {"set_id": set_id, "created": entry["data"]["ts"], "reason": reason or None}
@@ -432,21 +481,23 @@ class SealedGate:
             for b in backups.values():
                 b.unlink(missing_ok=True)
         except BaseException:
-            # undo in reverse: the new anchors, the new lock, the move of the old lock, our chain entry
+            # undo in reverse: the new anchors, the new lock, the move of the old lock, our chain entry, the backups
             for a in self.anchors:
                 if a in backups:
                     os.replace(backups[a], a)
                 else:
                     a.unlink(missing_ok=True)
+            if lock_created:
+                lock_path(self.eval_dir).unlink(missing_ok=True)
             if old is not None:
-                lock_path(self.eval_dir).unlink(missing_ok=True)
                 os.replace(old, lock_path(self.eval_dir))
-            elif lock_path(self.eval_dir).exists() and not reason:
-                lock_path(self.eval_dir).unlink(missing_ok=True)
-            if chain_existed:
-                self.chain.truncate_to(len(prev))
-            else:
-                self.chain.path.unlink(missing_ok=True)
+            if appended:
+                if chain_existed:
+                    self.chain.truncate_to(len(prev))
+                else:
+                    self.chain.path.unlink(missing_ok=True)
+            for b in backups.values():
+                b.unlink(missing_ok=True)
             raise
         return lock
 
@@ -504,6 +555,12 @@ class SealedGate:
             raise LockError("lock.json names no chain position")
         if lock.chain_head not in shas:
             raise LockError("lock.json names a chain position that is not in the sealed-run chain")
+        recorded = entries[shas.index(lock.chain_head)]["data"].get("core_hash")
+        if recorded is not None and core_hash_of(lock) != recorded and check_seal:
+            raise LockError(
+                "lock.json differs from what the sealed-run chain recorded at its position (something other than "
+                "the hand-written defect fields was edited)"
+            )
         return lock, entries, torn
 
     def load(self) -> Lock:
@@ -542,6 +599,7 @@ class SealedGate:
             )
             entries = self.chain.entries()
             live = entries[base - 1 :]
+        verify_reports(entries, self.runs_dir)
         status = _status_of(live, self.runs_dir, self.running())
         return lock.model_copy(update={"smoke_key": smoke, "last_test_status": status})
 
@@ -586,10 +644,17 @@ class SealedGate:
         if not self.key:
             raise LockError("`eval reseal` needs the sealed-run key (sealed_key_secret_name)")
         disk = read_lock(self.eval_dir)
-        if disk.core_hash is None or core_hash_of(disk) != disk.core_hash:
+        entries = self.chain.entries()
+        head = next((e for e in entries if e["sha"] == disk.chain_head), None)
+        if (
+            head is None
+            or head["data"].get("core_hash") is None
+            or core_hash_of(disk) != head["data"]["core_hash"]
+            or files_sha_of(disk) != head["data"].get("files_sha")
+        ):
             raise LockError(
-                "reseal refused: something other than the hand-written defect fields changed in lock.json "
-                "(files, thresholds, caps, counter ...); restore it from the repository first"
+                "reseal refused: something other than the hand-written defect fields differs from what the "
+                "chain recorded (files, thresholds, caps, counter ...); restore lock.json from the repository first"
             )
         fields = [f for f in HAND_FIELDS if getattr(disk, f)]
         if not fields:

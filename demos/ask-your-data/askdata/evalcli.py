@@ -53,11 +53,11 @@ from askdata.pgsource import PgSource
 from askdata.pipeline import Pipeline
 from askdata.policy import EXIT_AUDIT
 from askdata.safe_text import clean
-from askdata.sealed import SealedGate, key_from
+from askdata.sealed import SealedGate, key_from, verify_run_report
 from hadavin_sdk.llm.fake import FakeLLM
 
 # what `evalrun.run_id` produces: UTC time to the microsecond plus the label. Nothing else names a run folder.
-RUN_ID = re.compile(r"\d{8}T\d{12}Z-(dev|sealed|second-look)")
+RUN_ID = re.compile(r"[0-9]{8}T[0-9]{12}Z-(dev|sealed|second-look)", re.ASCII)
 
 SPLIT_FILES = {
     "dev": ("gold.dev.jsonl", "adversarial.dev.jsonl"),
@@ -302,11 +302,13 @@ def _prepare(cfg, split, k, second_look, harness_factory, use_live, smoke):
         run = lock.harness_defect_run or ""
         if (
             not RUN_ID.fullmatch(run)
+            or run
+            not in {e["data"]["run_id"] for e in gate.chain.entries() if e["kind"] == "sealed_run"}
             or not (cfg.paths.runs_dir / run / "report.json").is_file()
             or lock.harness_defect_item not in ids
         ):
             out(
-                "refused: harness_defect_run must be an existing run folder and harness_defect_item an id "
+                "refused: harness_defect_run must name a sealed run in the chain and harness_defect_item an id "
                 "in the frozen test files"
             )
             return 14
@@ -452,7 +454,30 @@ def _record(step, eval_dir: Path) -> bool:
     return True
 
 
-def cmd_report(run_dir: Path, fmt: str = "md", dest: Path | None = None) -> int:
+def _vouch(cfg: AskdataConfig | None, *run_dirs: Path) -> int | None:
+    """With a config: check each run folder's report.json against the hash the sealed-run chain recorded. Returns an
+    exit code (4) when a recorded report was deleted or changed, else None (a note is printed for an unrecorded one)."""
+    if cfg is None:
+        out("note: no config given, so the report is NOT checked against the sealed-run chain")
+        return None
+    try:
+        entries = _gate(cfg).chain.entries()
+        for run_dir in run_dirs:
+            if not verify_run_report(entries, run_dir) and run_dir.name.endswith(
+                ("-sealed", "-second-look")
+            ):
+                out(f"note: the chain has no record of {run_dir.name}'s report")
+    except (LockError, ConfigError) as err:
+        out(f"report: {err}")
+        return 4
+    return None
+
+
+def cmd_report(
+    run_dir: Path, fmt: str = "md", dest: Path | None = None, cfg: AskdataConfig | None = None
+) -> int:
+    if (bad := _vouch(cfg, run_dir)) is not None:
+        return bad
     try:
         rep = json.loads((run_dir / "report.json").read_text(encoding="utf-8"))
     except (OSError, ValueError):
@@ -477,7 +502,9 @@ def cmd_report(run_dir: Path, fmt: str = "md", dest: Path | None = None) -> int:
     return 0
 
 
-def cmd_compare(a: Path, b: Path) -> int:
+def cmd_compare(a: Path, b: Path, cfg: AskdataConfig | None = None) -> int:
+    if (bad := _vouch(cfg, a, b)) is not None:
+        return bad
     try:
         ra, rb = (json.loads((p / "report.json").read_text(encoding="utf-8")) for p in (a, b))
         diff = evalrun.compare_reports(ra, rb)
@@ -529,10 +556,15 @@ def main(argv: list[str]) -> int:
         args = ap.parse_args(argv)
     except SystemExit as e:
         return 0 if e.code in (0, None) else 1
-    if args.cmd == "report":
-        return cmd_report(args.run_dir, args.format, args.out)
-    if args.cmd == "compare":
-        return cmd_compare(args.baseline, args.candidate)
+    if args.cmd in ("report", "compare"):
+        cfg_path = args.config or os.environ.get("ASKDATA_CONFIG")
+        try:
+            vouch_cfg = load_config(Path(cfg_path)) if cfg_path else None
+        except ConfigError:
+            vouch_cfg = None
+        if args.cmd == "report":
+            return cmd_report(args.run_dir, args.format, args.out, vouch_cfg)
+        return cmd_compare(args.baseline, args.candidate, vouch_cfg)
     if args.cmd == "freeze" and args.new_set != bool((args.reason or "").strip()):
         out('eval freeze: --new-set and --reason "..." go together')
         return 1

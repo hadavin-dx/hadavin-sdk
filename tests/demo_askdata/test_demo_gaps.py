@@ -5,6 +5,7 @@ made), the smoke abort rule, the DSN secret and the client limits. No database a
 from __future__ import annotations
 
 import json
+import re
 import socket
 import threading
 import time
@@ -445,7 +446,9 @@ def test_editing_or_refreezing_the_lock_cannot_reset_the_sealed_counter(cli_env,
     capsys.readouterr()
     write_lock(ev, read_lock(ev).model_copy(update={"test_runs": 0}))  # hand edit
     assert cmd_run(cfg, "test", 1, None, harness_factory=factory) == 14
-    assert "chain records 1" in capsys.readouterr().out
+    assert re.search(
+        "chain records 1|differs from what the sealed-run chain", capsys.readouterr().out
+    )
     names = list(read_lock(ev).files)
     lock_path(
         ev

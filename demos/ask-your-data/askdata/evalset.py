@@ -186,15 +186,17 @@ def read_lock(eval_dir: Path) -> Lock:
 def write_lock(eval_dir: Path, lock: Lock) -> None:
     path = lock_path(eval_dir)
     tmp = _write_tmp(path, lock)
-    for attempt in range(5):  # Windows refuses a replace while a reader holds the file open
+    for attempt in range(
+        RUNTIME.lock_replace_attempts
+    ):  # Windows refuses a replace while a reader holds the file open
         try:
             os.replace(tmp, path)
             return
         except PermissionError:
-            if attempt == 4:
+            if attempt == RUNTIME.lock_replace_attempts - 1:
                 tmp.unlink(missing_ok=True)
                 raise
-            time.sleep(0.05)
+            time.sleep(RUNTIME.lock_replace_wait_s)
 
 
 def _write_tmp(path: Path, lock: Lock) -> Path:
@@ -218,11 +220,25 @@ def lock_guard(eval_dir: Path, wait_s: float = RUNTIME.lock_wait_s) -> Iterator[
         while not _try_lock(f):
             if time.monotonic() > deadline:
                 raise LockError("lock.json is busy (another eval run holds it)")
-            time.sleep(0.01)
+            time.sleep(RUNTIME.lock_poll_s)
         try:
             yield
         finally:
             _unlock(f)
+
+
+def make_lock(
+    eval_dir: Path,
+    names: list[str],
+    thresholds: Thresholds | None = None,
+    lock_fields: dict | None = None,
+) -> Lock:
+    """The Lock a freeze would write for the files as they are now (nothing is written)."""
+    return Lock(
+        files={n: sha256_file(Path(eval_dir) / n) for n in names},
+        thresholds=thresholds or Thresholds(),
+        **(lock_fields or {}),
+    )
 
 
 def freeze(
@@ -233,15 +249,12 @@ def freeze(
     no_clobber: bool = False,
     seal: Callable[[Lock], Lock] | None = None,
     lock_fields: dict | None = None,
+    prebuilt: Lock | None = None,
 ) -> Lock:
     """Create lock.json from the current files (the freeze step; run once, before the dev set is frozen for use).
     `no_clobber`: write a temp file, then `os.link` it to lock.json, which fails if lock.json exists, so a crash never
     leaves an empty lock.json and an existing lock (with its sealed counter) is never replaced."""
-    lock = Lock(
-        files={n: sha256_file(Path(eval_dir) / n) for n in names},
-        thresholds=thresholds or Thresholds(),
-        **(lock_fields or {}),
-    )
+    lock = prebuilt or make_lock(eval_dir, names, thresholds, lock_fields)
     if seal:
         lock = seal(lock)
     if not no_clobber:
