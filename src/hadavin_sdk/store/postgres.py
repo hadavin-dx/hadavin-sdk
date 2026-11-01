@@ -32,9 +32,13 @@ from hadavin_sdk.models import (
     ApprovalDecision,
     ApprovalRequest,
     ApprovalStatus,
+    ApprovalWeek,
     DeadLetter,
     GateDecision,
     KillSwitch,
+    Label,
+    LevelEvent,
+    PilotWeek,
     Plan,
     Run,
     RunState,
@@ -467,3 +471,113 @@ class PostgresStore:
 
     def save_tick_state(self, state: TickState) -> None:
         self._insert("tick_state", state, upsert_on="step")
+
+    # --- K6 measurement ------------------------------------------------------------------------------------
+
+    _LABEL_COLS = (
+        "l.label_id, l.run_id, l.label, l.principal_id, l.channel, l.approved_by, l.created_at"
+    )
+
+    def add_label(self, label: Label, demote: LevelEvent | None = None) -> None:
+        """The label and its demotion in one transaction: both happen or neither."""
+        lrow = _row(label)
+        insert = sql.SQL("INSERT INTO labels ({}) VALUES ({})").format(
+            sql.SQL(", ").join(sql.Identifier(c) for c in lrow),
+            sql.SQL(", ").join(sql.Placeholder() * len(lrow)),
+        )
+        try:
+            with self._lock, self._db.transaction():
+                self._exec(insert, list(lrow.values()))
+                if demote is not None:
+                    self._insert_level(demote)
+        except psycopg.errors.UniqueViolation:
+            raise StaleState(f"label exists: {label.label_id}") from None
+
+    def _insert_level(self, ev: LevelEvent) -> None:
+        # Caller holds the lock. `seq` is assigned by the database.
+        self._exec(
+            'INSERT INTO level_events (agent_id, action_id, kind, reason, "by", at) '
+            "VALUES (%s, %s, %s, %s, %s, %s)",
+            (ev.agent_id, ev.action_id, ev.kind, ev.reason, ev.by, ev.at),
+        )
+
+    def list_labels_between(self, start: datetime, end: datetime) -> list[Label]:
+        return self._labels_where("WHERE l.created_at >= %s AND l.created_at < %s", (start, end))
+
+    def list_level_events(self) -> list[LevelEvent]:
+        with self._lock:
+            rows = self._exec(
+                'SELECT seq, agent_id, action_id, kind, reason, "by", at FROM level_events ORDER BY seq'
+            ).fetchall()
+        return [LevelEvent.model_validate(r) for r in rows]
+
+    def add_level_event(self, event: LevelEvent) -> None:
+        with self._lock:
+            self._insert_level(event)
+
+    def _labels_where(self, where: str, params: tuple) -> list[Label]:
+        """`where` is fixed SQL text from this module; values always go through `params`."""
+        query = sql.SQL("SELECT {} FROM labels l {} ORDER BY l.created_at, l.label_id").format(
+            sql.SQL(self._LABEL_COLS), sql.SQL(where)
+        )
+        with self._lock:
+            rows = self._exec(query, params).fetchall()
+        return [Label.model_validate(r) for r in rows]
+
+    def list_labels(self, run_id: str) -> list[Label]:
+        return self._labels_where("WHERE l.run_id = %s", (run_id,))
+
+    def list_labels_for(self, agent_id: str, action_id: str, since: datetime | None) -> list[Label]:
+        join = "JOIN plans p ON p.run_id = l.run_id WHERE p.agent_id = %s AND p.action_id = %s"
+        if since is None:
+            return self._labels_where(join, (agent_id, action_id))
+        return self._labels_where(join + " AND l.created_at >= %s", (agent_id, action_id, since))
+
+    def count_proposals(self, agent_id: str, action_id: str, since: datetime | None) -> int:
+        query = "SELECT count(*) AS n FROM plans WHERE agent_id = %s AND action_id = %s"
+        params: tuple = (agent_id, action_id)
+        if since is not None:
+            query, params = query + " AND created_at >= %s", (*params, since)
+        with self._lock:
+            return int(self._exec(query, params).fetchone()["n"])
+
+    def current_overrides(self) -> dict[tuple[str, str], str]:
+        with self._lock:
+            rows = self._exec(
+                "SELECT DISTINCT ON (agent_id, action_id) agent_id, action_id, kind "
+                "FROM level_events ORDER BY agent_id, action_id, seq DESC"
+            ).fetchall()
+        return {(r["agent_id"], r["action_id"]): "shadow" for r in rows if r["kind"] == "demote"}
+
+    def held_run_ids(self) -> set[str]:
+        with self._lock:
+            rows = self._exec(
+                "SELECT DISTINCT run_id FROM labels WHERE label IN ('wrong', 'harmful', 'missed')"
+            ).fetchall()
+        return {r["run_id"] for r in rows}
+
+    def put_report(self, week: date, body: str) -> bool:
+        with self._lock:
+            row = self._exec(
+                "INSERT INTO reports (week_start, body_md, created_at) VALUES (%s, %s, %s) "
+                "ON CONFLICT (week_start) DO NOTHING RETURNING week_start",
+                (week, body, now()),
+            ).fetchone()
+        return row is not None
+
+    def get_report(self, week: date) -> str | None:
+        with self._lock:
+            row = self._exec(
+                "SELECT body_md FROM reports WHERE week_start = %s", (week,)
+            ).fetchone()
+        return row["body_md"] if row else None
+
+    def pilot_week(self, week: date) -> PilotWeek:
+        with self._lock:
+            row = self._exec("SELECT * FROM v_pilot_week WHERE week = %s", (week,)).fetchone()
+        return PilotWeek.model_validate(row) if row else PilotWeek(week=week)
+
+    def approval_week(self, week: date) -> ApprovalWeek:
+        with self._lock:
+            row = self._exec("SELECT * FROM v_approval_week WHERE week = %s", (week,)).fetchone()
+        return ApprovalWeek.model_validate(row) if row else ApprovalWeek(week=week)

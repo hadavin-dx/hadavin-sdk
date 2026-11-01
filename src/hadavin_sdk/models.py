@@ -8,7 +8,7 @@ from __future__ import annotations
 import hashlib
 import json
 import uuid
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 from enum import StrEnum
 from typing import Any, ClassVar, Literal
@@ -208,6 +208,89 @@ class TickState(BaseModel):
     last_run_at: datetime
     last_ok_at: datetime | None = None
     last_error: str | None = None
+    # A step's own numbers (K6; K4's backlog step writes `oldest_received_age_s` and `late_starts`). Codes and
+    # counts only, never run content. Round-trips through the store as JSONB.
+    detail: dict[str, Any] | None = None
+
+
+LabelName = Literal["agree", "partial", "wrong", "harmful", "abstain_ok", "missed"]
+
+
+class Label(BaseModel):
+    """A person's verdict on one run (table labels). Append-only: the latest eligible label of a run is its label."""
+
+    model_config = ConfigDict(extra="forbid")
+    label_id: str = Field(default_factory=lambda: new_id("lbl"))
+    run_id: str
+    label: LabelName
+    principal_id: str
+    channel: Literal["chat", "csv"]
+    approved_by: str | None = None  # csv only: the line owner who approved the import
+    created_at: datetime = Field(default_factory=now)
+
+    @property
+    def counts(self) -> bool:
+        """Evidence: a chat label, or a csv label the line owner approved."""
+        return self.channel == "chat" or self.approved_by is not None
+
+
+class LevelEvent(BaseModel):
+    """A demotion or the line owner's clear (table level_events). The latest event per (agent, action) wins."""
+
+    model_config = ConfigDict(extra="forbid")
+    seq: int | None = None  # assigned by the store
+    agent_id: str
+    action_id: str
+    kind: Literal["demote", "clear"]
+    reason: str
+    by: str
+    at: datetime = Field(default_factory=now)
+
+
+def iso_week(moment: datetime) -> date:
+    """The Monday (UTC) of the ISO week the instant falls in: what `date_trunc('week', ... AT TIME ZONE 'UTC')` gives."""
+    day = moment.astimezone(UTC).date()
+    return day - timedelta(days=day.weekday())
+
+
+def latest_labels(labels: list[Label]) -> dict[str, Label]:
+    """run_id -> its label: the latest eligible one (a chat label, or an approved csv label)."""
+    out: dict[str, Label] = {}
+    for lab in sorted((x for x in labels if x.counts), key=lambda x: (x.created_at, x.label_id)):
+        out[lab.run_id] = lab
+    return out
+
+
+class PilotWeek(BaseModel):
+    """One ISO week of the pilot (view v_pilot_week; the memory store computes the same numbers in Python)."""
+
+    model_config = ConfigDict(extra="forbid")
+    week: date
+    runs: int = 0
+    proposals: int = 0
+    shadow_cards: int = 0
+    cards_not_delivered: int = 0
+    labelled: int = 0
+    agree: int = 0
+    partial: int = 0
+    wrong: int = 0
+    harmful: int = 0
+    abstain_ok: int = 0
+    missed: int = 0
+    abstained: int = 0
+    fixes_verified: int = 0
+    median_s_to_proposal: float | None = None
+    avg_cost_usd: Decimal | None = None
+
+
+class ApprovalWeek(BaseModel):
+    """One ISO week of approval decisions (view v_approval_week)."""
+
+    model_config = ConfigDict(extra="forbid")
+    week: date
+    decisions: int = 0
+    wont_run: int = 0
+    median_s: float | None = None
 
 
 class KillSwitch(Shape):

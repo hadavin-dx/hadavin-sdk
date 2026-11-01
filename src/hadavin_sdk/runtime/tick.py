@@ -1,7 +1,8 @@
 """`hadavin-sdk tick`: one idempotent pass of housekeeping steps, run every 30-60 s by any scheduler.
 
 Contract (design v5 kernel, section 4):
-* ``STEPS`` runs in order: sweep, reconcile, stuck, checkpoint. Later PRs only **append** a ``TickStep``.
+* ``STEPS`` runs in order: sweep, reconcile, stuck, checkpoint, measure_levels, weekly_report (K6). Later PRs
+  only **append** a ``TickStep``.
 * Each step runs in its own ``try``: a failure is logged as ``step=<name> error_kind=<type>
   message=<redacted, <= 500 chars>`` and written to ``tick_state``; the other steps still run.
 * A step with ``every_s > 0`` runs only if ``now - tick_state.last_run_at >= every_s``.
@@ -43,6 +44,9 @@ class TickContext:
     app: App
     now: datetime
     results: dict[str, str] = field(default_factory=dict)  # step name -> ok / failed / skipped
+    # A step's own numbers, set as `ctx.detail[step.name] = {...}` (counts and codes only, never run content);
+    # saved with its tick_state row. A step that sets nothing keeps the detail of its last run.
+    detail: dict[str, dict[str, Any]] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -177,6 +181,20 @@ def checkpoint(ctx: TickContext) -> None:
         fn()
 
 
+def measure_levels(ctx: TickContext) -> None:
+    """K6: re-check the demotion rules and the ceiling (idempotent). Nothing to do when the app has no measure."""
+    measure = getattr(ctx.app, "measure", None)
+    if measure is not None:
+        measure.enforce(ctx.now)
+
+
+def weekly_report(ctx: TickContext) -> None:
+    """K6: write and announce the report for the last complete ISO week when it has none yet."""
+    measure = getattr(ctx.app, "measure", None)
+    if measure is not None:
+        measure.weekly_report(ctx.now)
+
+
 def heartbeat(ctx: TickContext) -> None:
     """After the steps (not a step): one line with this tick's outcome."""
     failed = sorted(n for n, r in ctx.results.items() if r == FAILED)
@@ -188,6 +206,8 @@ STEPS: list[TickStep] = [
     TickStep("reconcile", 0, reconcile),
     TickStep("stuck", 0, stuck),
     TickStep("checkpoint", 0, checkpoint),
+    TickStep("measure_levels", 300, measure_levels),
+    TickStep("weekly_report", 3600, weekly_report),
 ]
 STORE_UNREACHABLE = 4
 STORE_NOT_READY = (
@@ -234,6 +254,7 @@ def _run_step(ctx: TickContext, step: TickStep) -> str:
                 last_run_at=ctx.now,
                 last_ok_at=ctx.now if error is None else (prev.last_ok_at if prev else None),
                 last_error=error,
+                detail=ctx.detail.get(step.name, prev.detail if prev else None),
             )
         )
     except Exception as exc:  # noqa: BLE001 - an unrecorded step counts as failed

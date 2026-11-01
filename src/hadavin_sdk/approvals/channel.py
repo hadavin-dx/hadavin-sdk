@@ -40,6 +40,13 @@ class Channel(Protocol):
         """Verify the callback and return the decision with the approver taken from the verified request."""
         ...
 
+    def parse_action(
+        self, headers: Mapping[str, str], body: bytes, now_ts: float
+    ) -> hmac_v0.Action | None:
+        """Verify the callback and return the click as it is (user from the signed request, button value);
+        the label and clear buttons (K6) are read from this."""
+        ...
+
 
 class FakeChannel:
     """Records what would be sent. Callbacks are verified with the shared ``hmac_v0`` scheme under its own
@@ -81,5 +88,12 @@ class FakeChannel:
         self, headers: Mapping[str, str], body: bytes, now_ts: float
     ) -> ApprovalDecision | None:
         return hmac_v0.parse_button(
+            headers, body, now_ts, self._secret, prefix=self.header_prefix, channel=self.name
+        )
+
+    def parse_action(
+        self, headers: Mapping[str, str], body: bytes, now_ts: float
+    ) -> hmac_v0.Action | None:
+        return hmac_v0.parse_action(
             headers, body, now_ts, self._secret, prefix=self.header_prefix, channel=self.name
         )

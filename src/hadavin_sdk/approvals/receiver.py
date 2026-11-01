@@ -12,6 +12,7 @@ from collections.abc import Mapping
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from hadavin_sdk.approvals.requests import Approvals
+from hadavin_sdk.measure import Measure, is_ours
 from hadavin_sdk.store.protocol import NotFound
 
 MAX_BODY = 64 * 1024  # Slack interactive payloads are a few KB
@@ -20,12 +21,23 @@ _LOG = logging.getLogger("hadavin_sdk.receiver")
 
 
 def handle_slack_action(
-    approvals: Approvals, headers: Mapping[str, str], body: bytes
+    approvals: Approvals,
+    headers: Mapping[str, str],
+    body: bytes,
+    measure: Measure | None = None,
 ) -> tuple[int, bytes]:
     """401 for a bad or stale signature, 413 for an oversize body, else 200 (the outcome is audited and the
-    Slack message updated; a refused click is not an HTTP error)."""
+    Slack message updated; a refused click is not an HTTP error). With ``measure`` (K6), a label or clear click is
+    routed to it by the first field of its value: 200 when recorded or refused by policy, 503 when the store
+    could not take it (Slack then tells the person)."""
     if len(body) > MAX_BODY:
         return 413, b""
+    if measure is not None:
+        action = approvals.channel.parse_action(headers, body, approvals.clock().timestamp())
+        if action is not None and is_ours(action.value):
+            status, reason = measure.handle_action(action)
+            _LOG.info("measure action: %s", reason)
+            return status, b""
     try:
         _, reason = approvals.receive(headers, body, record_only=True)
     except NotFound:  # signed, but for an approval this deployment does not have
@@ -37,7 +49,12 @@ def handle_slack_action(
     return 200, b""
 
 
-def serve(approvals: Approvals, host: str = "127.0.0.1", port: int = 8080) -> ThreadingHTTPServer:
+def serve(
+    approvals: Approvals,
+    host: str = "127.0.0.1",
+    port: int = 8080,
+    measure: Measure | None = None,
+) -> ThreadingHTTPServer:
     """A development server for ``POST /slack/actions``; call ``serve_forever()`` on the result."""
 
     class Handler(BaseHTTPRequestHandler):
@@ -52,7 +69,7 @@ def serve(approvals: Approvals, host: str = "127.0.0.1", port: int = 8080) -> Th
                 status, out = 413, b""
             else:
                 status, out = handle_slack_action(
-                    approvals, dict(self.headers), self.rfile.read(length)
+                    approvals, dict(self.headers), self.rfile.read(length), measure
                 )
             self.send_response(status)
             self.send_header("Content-Length", str(len(out)))

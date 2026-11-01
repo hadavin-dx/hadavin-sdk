@@ -3,6 +3,30 @@
 ## Unreleased
 
 ### Upgrade steps
+- **K6 measurement, demotion and the weekly report.** Run `hadavin-sdk migrate --runtime-role R` (migration
+  `0005_measure.sql`): new tables `labels`, `level_events`, `reports`, the column `tick_state.detail` and the views
+  `v_pilot_week`, `v_caught_week`, `v_approval_week`. **Merge order:** migration numbers must run without a gap; if
+  another migration lands first, renumber this file at rebase (the ledger test says so).
+  - `Store` gains `add_label` (label and demotion in one transaction), `list_labels`, `list_labels_for`,
+    `list_labels_between`, `count_proposals`, `add_level_event`, `list_level_events`, `current_overrides`,
+    `held_run_ids`, `put_report`, `get_report`, `pilot_week`, `approval_week`. A custom store kind must implement
+    them. `TickState` gains `detail` (JSON, counts and codes only); a tick step sets `ctx.detail[step.name]`.
+  - `Principal.admin_rights` (`stop`, `reset`, `clear_override`, `approve_label_import`) is separate from `rights`.
+    A line owner holds `clear_override`; nobody holds it by default.
+  - **`pilot` and `prod` need `baseline.yaml` in the config folder** with a filled `ceiling` (metric, max,
+    window_days, source); `build` refuses without it. In `dev` it is used when present.
+  - `Channel` gains `parse_action` (the verified user and the button value); a custom channel kind must implement it.
+    The abstain card's second button now records `missed` (was `should_have_answered`). The receiver routes
+    `label|...` and `clear|...` clicks to `Measure` (`handle_slack_action(..., measure)`).
+  - New tick steps `measure_levels` (every 300 s: re-checks the 3-wrong rule and the ceiling) and `weekly_report`
+    (writes the report for the last complete ISO week once). New commands `hadavin-sdk label import FILE --by P
+    [--approved-by P]`, `promote-check AGENT ACTION` and `report [--week YYYY-MM-DD]`. The CLI names are
+    **asserted**, not verified: the authoritative paths are signed channel actions and reviewed config PRs.
+  - `suggest` in `pilot`/`prod` additionally needs `promotions/<agent>.<action>.json` (from `promote-check`). It
+    is still refused until K8 builds posted fixes; `dev` does not read the file.
+  - A csv label counts as evidence, in reports and in `promote-check`, only when imported with `--approved-by`.
+    Approving later means importing the same file again with `--approved-by` (no UPDATE exists on `labels`).
+  - The ceiling counts `harmful` labels in a rolling window (the costliest failure); `max` is a whole number.
 - **K3 pilot build path (levels, shadow cut-off, fail-closed loading).** Action contracts change shape:
   `executor.system` moves to a contract field `target_system`, and `executor` is now a tagged union
   (`kind: none | manual | http`). Edit every contract: move `system:` out of `executor:` to `target_system:` beside

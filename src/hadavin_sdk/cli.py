@@ -15,6 +15,17 @@
   hadavin-sdk [--config DIR] score --outputs OUT --answers F --cause-list D --bundles D
                                                          K1b-lite: count the replay's results into score/score-report.md;
                                                          exit 0 report produced, 2 refused, 3 failure (no verdict)
+  hadavin-sdk [--config DIR] label import FILE --by WHO [--approved-by WHO]
+                                                         K6: record labels from a csv (columns run_id,label) as
+                                                         channel csv; they count as promotion evidence only with
+                                                         --approved-by (a line owner). Names are ASSERTED here: the
+                                                         authoritative paths are signed channel actions and reviewed
+                                                         config PRs. Exit 0 stored, 1 rows refused (nothing stored)
+  hadavin-sdk [--config DIR] promote-check AGENT ACTION  K6: compute the promotion numbers from the store and write
+                                                         promotions/AGENT.ACTION.json; exit 0 written, 1 a number is
+                                                         not met (nothing written), 2 refused
+  hadavin-sdk [--config DIR] report [--week YYYY-MM-DD]  K6: print the stored weekly report (default: the last complete
+                                                         ISO week), or render it without storing if there is none
 
 Every command is wrapped by ``main``: a ``ConfigError`` exits 2, any other uncaught error exits 3, so a crash never
 looks like a red gate (exit 1).
@@ -123,11 +134,23 @@ def _main(argv: list[str] | None = None) -> int:
     sc.add_argument("--answers", required=True, type=Path)
     sc.add_argument("--cause-list", required=True, type=Path)
     sc.add_argument("--bundles", required=True, type=Path)
+    lab = sub.add_parser("label", help="K6: labels from a csv")
+    lab.add_argument("action", choices=["import"])
+    lab.add_argument("file", type=Path)
+    lab.add_argument("--by", required=True, help="the person whose labels these are (asserted)")
+    lab.add_argument("--approved-by", help="a line owner approving the import (asserted)")
+    pc = sub.add_parser("promote-check", help="K6: write the promotion evidence for one action")
+    pc.add_argument("agent")
+    pc.add_argument("action")
+    rpt = sub.add_parser("report", help="K6: the weekly report")
+    rpt.add_argument("--week", help="the Monday of the ISO week, YYYY-MM-DD")
     args = p.parse_args(argv)
     if args.config:
         os.environ["HADAVIN_CONFIG_DIR"] = args.config
     if args.cmd == "tick":
         return _tick()
+    if args.cmd in ("label", "promote-check", "report"):
+        return _measure(args)
     cfg = load_config()
     if args.cmd == "migrate":
         return _migrate(cfg, args.runtime_role, args.portal_role)
@@ -270,6 +293,74 @@ def score_cmd(audit, args) -> int:
         audit.emit("score_run", run_id, **ref, decision="-", result=audit_result(run))
     print(f"score report written: {report_dir / 'score-report.md'}")
     return 0
+
+
+def _measure(args) -> int:
+    """K6 commands. They build the whole app (the store, the audit and the channel are all needed), as ``tick`` does."""
+    from hadavin_sdk.app import build
+    from hadavin_sdk.runtime.agent_loop import Unqualified, assert_qualified
+
+    reg = load_registry(load_config())
+    if reg.config.backends.store.kind == "memory":
+        print(
+            "refused: this needs a shared store (Postgres); the memory store lives inside one process",
+            file=sys.stderr,
+        )
+        return 2
+    agents = []
+    for agent_id in reg.agents:
+        try:
+            assert_qualified(reg, agent_id)
+            agents.append(agent_id)
+        except Unqualified:
+            print(f"note: {agent_id} is not qualified; it is not started", file=sys.stderr)
+    return measure_cmd(build(None, agents), args)
+
+
+def measure_cmd(app, args) -> int:
+    """Body of ``label import``, ``promote-check`` and ``report`` (takes the app so tests can pass their own)."""
+    from datetime import date, timedelta
+
+    from hadavin_sdk.measure import week_start
+    from hadavin_sdk.models import now
+
+    measure = app.measure
+    if args.cmd == "promote-check":
+        res = measure.promote_check(args.agent, args.action)
+        if res.ok:
+            print(f"promotion evidence written: {res.path}")
+            return 0
+        for problem in res.problems:
+            print(f"NOT MET: {problem}")
+        print("nothing was written")
+        return 1
+    if args.cmd == "report":
+        try:
+            week = (
+                date.fromisoformat(args.week)
+                if args.week
+                else week_start(now()) - timedelta(days=7)
+            )
+        except ValueError:
+            raise ConfigError("--week must be a date, YYYY-MM-DD") from None
+        if week.weekday() != 0:
+            raise ConfigError("--week must be a Monday (the start of an ISO week)")
+        stored = app.store.get_report(week)
+        if stored is None:
+            print("(no stored report for this week: rendered now, not stored)", file=sys.stderr)
+        print(stored if stored is not None else measure.render_report(week))
+        return 0
+    text = Path(args.file).read_text(encoding="utf-8")
+    print(
+        "note: --by and --approved-by are asserted names; the CLI cannot verify who ran it",
+        file=sys.stderr,
+    )
+    stored_n, problems = measure.import_csv(text, args.by, args.approved_by)
+    for problem in problems:
+        print(f"REFUSED: {problem}")
+    state = "counting as evidence" if args.approved_by else "waiting for a line owner's approval"
+    print(f"{stored_n} labels stored ({state})")
+    return 1 if problems else 0
 
 
 def _tick() -> int:

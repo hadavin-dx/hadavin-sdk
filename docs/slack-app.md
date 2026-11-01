@@ -11,7 +11,11 @@ its own workspace from [`slack-app-manifest.yaml`](slack-app-manifest.yaml).
 
 **Least privilege:** the bot scope is `chat:write` only. The channel posts the approval message, updates it
 when decided, and posts expiry notices. It reads nothing from Slack: decisions arrive as signed interactive
-callbacks (`POST /slack/actions`, verified with the signing secret).
+callbacks (`POST /slack/actions`, verified with the signing secret). The same endpoint takes the label buttons
+on shadow and abstain cards (`agree`, `partial`, `wrong`, `harmful`, `abstain_ok`, `missed`) and the line owner's
+"Clear demotion" button; the person is the Slack user in the signed request, matched to `principals.yaml`
+(`slack:<user id>`). A user who is not a listed person, or a clear from a person without the `clear_override`
+admin right, is refused and nothing changes.
 
 **Setup (the client's admin, about 10 minutes):**
 1. In the manifest, set `request_url` to the client's receiver host (HTTPS).

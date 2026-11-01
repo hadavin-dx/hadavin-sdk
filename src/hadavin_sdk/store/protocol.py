@@ -11,9 +11,13 @@ from hadavin_sdk.models import (
     ApprovalDecision,
     ApprovalRequest,
     ApprovalStatus,
+    ApprovalWeek,
     DeadLetter,
     GateDecision,
     KillSwitch,
+    Label,
+    LevelEvent,
+    PilotWeek,
     Plan,
     Run,
     RunState,
@@ -115,3 +119,51 @@ class Store(Protocol):
     def set_kill_switch(self, ks: KillSwitch) -> None: ...
     def get_tick_state(self, step: str) -> TickState | None: ...
     def save_tick_state(self, state: TickState) -> None: ...
+
+    # --- K6 measurement: labels, demotions, reports ---------------------------------------------------------
+    def add_label(self, label: Label, demote: LevelEvent | None = None) -> None:
+        """Append a label and, in the same transaction, the demotion it triggers. A duplicate `label_id` raises
+        StaleState; any other failure raises and changes nothing (the caller refuses the label)."""
+        ...
+
+    def list_labels(self, run_id: str) -> list[Label]:
+        """Every label of the run, oldest first."""
+        ...
+
+    def list_labels_for(self, agent_id: str, action_id: str, since: datetime | None) -> list[Label]:
+        """Labels of runs whose plan is for (agent, action), created at or after `since` (None: all), oldest first."""
+        ...
+
+    def count_proposals(self, agent_id: str, action_id: str, since: datetime | None) -> int:
+        """Plans for (agent, action) created at or after `since` (None: all)."""
+        ...
+
+    def list_labels_between(self, start: datetime, end: datetime) -> list[Label]:
+        """Every label created in [start, end), runs with or without a plan, oldest first."""
+        ...
+
+    def add_level_event(self, event: LevelEvent) -> None: ...
+
+    def list_level_events(self) -> list[LevelEvent]:
+        """Every demotion and clear, in seq order."""
+        ...
+
+    def current_overrides(self) -> dict[tuple[str, str], str]:
+        """(agent, action) -> "shadow" for every pair whose latest level event is a `demote`."""
+        ...
+
+    def held_run_ids(self) -> set[str]:
+        """Runs ever labelled wrong, harmful or missed (their evidence is held, K5)."""
+        ...
+
+    def put_report(self, week: date, body: str) -> bool:
+        """Store the week's report once; False when that week already has one (the first stays)."""
+        ...
+
+    def get_report(self, week: date) -> str | None: ...
+
+    def pilot_week(self, week: date) -> PilotWeek:
+        """`week` is the Monday of an ISO week (UTC). A week with no runs is all zeros."""
+        ...
+
+    def approval_week(self, week: date) -> ApprovalWeek: ...

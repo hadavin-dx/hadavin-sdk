@@ -12,6 +12,7 @@ import hashlib
 import hmac
 import json
 from collections.abc import Mapping
+from dataclasses import dataclass
 from urllib.parse import parse_qs
 
 from hadavin_sdk.models import ApprovalDecision
@@ -49,6 +50,35 @@ def verify(
     if not (sig.isascii() and sig.startswith("v0=")):
         return False
     return hmac.compare_digest(_sig(body, ts, secret), sig)
+
+
+@dataclass(frozen=True)
+class Action:
+    """A verified button click: who (``<channel>:<user id>``, taken from the signed request) and the button's value."""
+
+    user: str
+    value: str
+
+
+def parse_action(
+    headers: Mapping[str, str],
+    body: bytes,
+    now_ts: float,
+    secret: str,
+    *,
+    prefix: str,
+    channel: str,
+) -> Action | None:
+    """The first action of a signed interactive payload, whatever its value; None unless the signature verifies."""
+    if not verify(headers, body, now_ts, secret, prefix):
+        return None
+    try:
+        payload = json.loads(parse_qs(body.decode("utf-8"))["payload"][0])
+        value = payload["actions"][0]["value"]
+        user = f"{channel}:{payload['user']['id']}"
+    except (KeyError, IndexError, ValueError, TypeError):
+        return None
+    return Action(user=user, value=value) if isinstance(value, str) else None
 
 
 def parse_button(

@@ -68,9 +68,10 @@ def read_records(root: Path) -> list[ReplayRecord]:
     return out
 
 
-def has_green_record(registry: Registry, agent_id: str) -> bool:
-    """A green record with pass^k at k >= 3 exists for the agent's current config hash, model and prompt.
-    A later gate run never hides it (the gate writes ``qualified.jsonl``, not this file)."""
+def green_record(registry: Registry, agent_id: str) -> ReplayRecord | None:
+    """The latest record with pass^k at k >= 3 at or above the threshold for the agent's current config hash,
+    model and prompt, or None. A later gate run never hides it (the gate writes ``qualified.jsonl``, not this
+    file)."""
     agent = registry.agents[agent_id]
     want = (
         agent_id,
@@ -79,10 +80,17 @@ def has_green_record(registry: Registry, agent_id: str) -> bool:
         registry.prompt_sha256(agent_id),
     )
     threshold = registry.config.eval_threshold
-    return any(
-        (r.agent_id, r.config_hash, r.model_id, r.prompt_sha256) == want
+    found = [
+        r
+        for r in read_records(registry.config.root)
+        if (r.agent_id, r.config_hash, r.model_id, r.prompt_sha256) == want
         and r.k >= MIN_K
         and r.pass_k
         >= threshold  # recomputed: the record's own green and threshold are not trusted
-        for r in read_records(registry.config.root)
-    )
+    ]
+    return max(found, key=lambda r: r.ts) if found else None
+
+
+def has_green_record(registry: Registry, agent_id: str) -> bool:
+    """True when ``green_record`` finds one."""
+    return green_record(registry, agent_id) is not None

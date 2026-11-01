@@ -160,7 +160,14 @@ class Approvals:
             self.store.record_decision(d, new, "PENDING", req.current_step)
         except StaleState:
             return False, "stale"
-        self._audit(req, "decide", d.approver_id, decision=d.decision, result=status)
+        self._audit(
+            req,
+            "decide",
+            d.approver_id,
+            decision=d.decision,
+            result=status,
+            caught_by="human_reject" if d.decision == "reject" else None,  # "won't run" (K6)
+        )
         if (
             record_only
         ):  # the receiver must answer fast: tick reconcile updates the message and runs it
