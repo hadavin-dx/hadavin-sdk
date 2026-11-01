@@ -114,13 +114,21 @@ def parse_action_value(value: str) -> ParsedAction | None:
         return ParsedAction("clear", (parts[1], parts[2]))
     if parts[0] in ("stop", "reset") and len(parts) == 1:  # the kill switch, by a signed action
         return ParsedAction(parts[0], ())
+    if parts[0] == "approve_import" and len(parts) == 2 and re.fullmatch(r"[0-9a-f]{8}", parts[1]):
+        return ParsedAction("approve_import", (parts[1],))
     return None
 
 
 def is_ours(value: str) -> bool:
     """First field decides whether this click is a measurement click (even a malformed one: it is refused here,
     never read as an approval)."""
-    return re.split(r"[|:]", value, maxsplit=1)[0] in ("label", "clear", "stop", "reset")
+    return re.split(r"[|:]", value, maxsplit=1)[0] in (
+        "label",
+        "clear",
+        "stop",
+        "reset",
+        "approve_import",
+    )
 
 
 # --- baseline and ceiling ----------------------------------------------------------------------------------
@@ -252,13 +260,21 @@ def shortfalls(nm: dict[str, Any], th: Thresholds = DEFAULTS) -> list[str]:
     return out
 
 
+def csv_import_id(text: str) -> str:
+    """The id of a csv import: the first 8 hex digits of the file's SHA-256 (what the approval click names)."""
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()[:8]
+
+
 def week_start(moment: datetime) -> date:
     return iso_week(moment)
 
 
 def caught_week(events: list[AuditEvent], week: date) -> dict[str, int]:
     """Audit events carrying ``caught_by``, counted by value for one ISO week (the python twin of v_caught_week)."""
-    return dict(Counter(e.caught_by for e in events if e.caught_by and iso_week(e.ts) == week))
+    seen = {(e.caught_by, e.run_id) for e in events if e.caught_by and iso_week(e.ts) == week}
+    return dict(
+        Counter(by for by, _ in seen)
+    )  # one per run: relabelling a run does not count it twice
 
 
 # --- promotion files ---------------------------------------------------------------------------------------
@@ -312,6 +328,15 @@ def promotion_problems(reg: Registry, agent_id: str, action_id: str) -> list[str
     problems += [f"{where}: {path.name} {s}" for s in shortfalls(body.get("numbers") or {})]
     if (body.get("ceiling") or {}).get("breached") is not False:
         problems.append(f"{where}: {path.name} was written with the ceiling breached")
+    # The SHA-256 is unkeyed: anyone who can write the file can re-seal it. So the replay record the file names
+    # must exist in replay-records.jsonl for the current config, and (at start-up, `Measure.promotion_store_problems`)
+    # the numbers are derived again from the store.
+    named = (body.get("replay_record") or {}).get("bundle_sha256")
+    if named not in {r.bundle_sha256 for r in replay_records.green_records(reg, agent_id)}:
+        problems.append(
+            f"{where}: {path.name} names a replay record that {replay_records.FILE} does not hold "
+            "as green for the current config"
+        )
     return problems
 
 
@@ -365,9 +390,12 @@ class Measure:
             for x in a.scope_allowed
         ]
 
-    def _line_owners(self) -> list[str]:
+    def line_owners(self) -> list[str]:
+        """The people who hold ``clear_override``: they get the notices and the demotion cards."""
         return [
-            p.id for p in self.registry.principals.values() if "clear_override" in p.admin_rights
+            p.id
+            for p in self.registry.principals.values()
+            if p.kind == "person" and "clear_override" in p.admin_rights
         ]
 
     def _audit(self, run_id: str, operation: str, principal: str, **kw: Any) -> None:
@@ -383,14 +411,21 @@ class Measure:
             )
         )
 
-    def _notify(self, text: str) -> None:
-        """Best effort to every line owner (or to "line owner" when none is configured): a failing channel is a
-        log line, never an error in the rule that was just applied."""
-        for who in self._line_owners() or ["line owner"]:
+    def _notify(self, text: str) -> int:
+        """Tell every line owner; returns how many were reached. A failing channel is a log line, never an error
+        in the rule that was just applied. Nobody to tell (no person holds ``clear_override``; ``build`` refuses
+        that in pilot and prod) is logged loudly and returns 0."""
+        owners = self.line_owners()
+        if not owners:
+            _LOG.error("measure notice has no recipient: no person holds clear_override")
+        reached = 0
+        for who in owners:
             try:
                 self.channel.notify(who, text)
+                reached += 1
             except Exception as exc:  # noqa: BLE001
                 _LOG.warning("measure notice not delivered (%s)", type(exc).__name__)
+        return reached
 
     # --- the level override the runtime reads --------------------------------------------------------------
 
@@ -421,12 +456,13 @@ class Measure:
             (x for x in latest.values() if x.label == "wrong" and x.created_at >= since),
             key=lambda x: (x.created_at, x.label_id),
         )
-        return wrongs[-1].run_id if len(wrongs) >= WRONG_LIMIT else None
+        return wrongs[-1].label_id if len(wrongs) >= WRONG_LIMIT else None
 
     def _demotion_for(self, label: Label, agent_id: str, action_id: str) -> LevelEvent | None:
+        # Keyed by the label row, not the run: a harmful label after a clear is a new fact and demotes again.
         reason = None
         if label.label == "harmful":
-            reason = f"harmful:{label.run_id}"
+            reason = f"harmful:{label.label_id}"
         elif label.label == "wrong" and (key := self._wrong_episode(agent_id, action_id, label)):
             reason = f"wrong_x{WRONG_LIMIT}:{key}"
         if reason is None or self._has_event(agent_id, action_id, reason):
@@ -475,6 +511,16 @@ class Measure:
                 plan = None
             if (plan is None) != (label in ABSTAIN_LABELS):
                 return LabelResult(False, "label_does_not_fit_run")
+            lowers_harmful = label != "harmful" and any(
+                x.label == "harmful" for x in self.store.list_labels(run_id)
+            )
+            if lowers_harmful and "clear_override" not in principal.admin_rights:
+                # A harmful verdict is sticky: only a line owner may lower it, and that is audited.
+                self._audit(
+                    run_id, "label", principal_id, decision=label, result="refused",
+                    error_code="harmful_is_sticky",
+                )  # fmt: skip
+                return LabelResult(False, "harmful_is_sticky")
             new = Label(
                 run_id=run_id,
                 label=label,  # type: ignore[arg-type]  # checked above
@@ -500,6 +546,10 @@ class Measure:
             result="recorded",
             caught_by="human_label" if label in ("wrong", "harmful") else None,
         )
+        if lowers_harmful:
+            self._audit(
+                run.run_id, "harmful_lowered", principal_id, object_ref=new.label_id, decision=label
+            )
         if demote is not None:
             self._announce(demote)
         return LabelResult(True, "recorded", demoted=demote is not None)
@@ -530,12 +580,47 @@ class Measure:
             return res.status, res.reason
         if parsed.kind in ("stop", "reset"):
             return self.kill_switch(action.user, parsed.kind)
+        if parsed.kind == "approve_import":
+            return self.approve_import(action.user, parsed.args[0])
         return self.clear(action.user, *parsed.args)
+
+    def approve_import(self, principal_id: str, import_id: str) -> tuple[int, str]:
+        """A line owner approves a pending csv import (a signed click). Nobody approves their own import. The
+        rows are appended again as approved ones: ``labels`` has no UPDATE."""
+        if not self._admin(principal_id, "approve_label_import", "approve_import"):
+            return 200, "not_authorised"
+        try:
+            pending = [
+                x for x in self.store.list_csv_import(import_id) if x.label_id.endswith("-p")
+            ]
+        except Exception as exc:  # noqa: BLE001
+            _LOG.error("approve_import refused: store error %s", type(exc).__name__)
+            return 503, "store_unavailable"
+        if not pending:
+            return 200, "unknown_import"
+        if any(x.principal_id == principal_id for x in pending):
+            self._audit(
+                "-", "approve_import", principal_id, result="refused", error_code="own_import"
+            )
+            return 200, "cannot_approve_own_import"
+        stored = 0
+        for x in pending:
+            res = self.record_label(
+                x.principal_id, x.run_id, x.label, channel="csv",
+                approved_by=principal_id, label_id=x.label_id[:-1] + "a",
+            )  # fmt: skip
+            if res.status >= 500:
+                return res.status, res.reason
+            stored += res.ok
+        self._audit(
+            "-", "approve_import", principal_id, object_ref=import_id, result=f"approved:{stored}"
+        )
+        return 200, f"approved:{stored}"
 
     def _admin(self, principal_id: str, right: str, operation: str) -> bool:
         """True when the person holds the admin right; a refusal is audited."""
         principal = self.registry.principals.get(principal_id)
-        if principal is not None and right in principal.admin_rights:
+        if principal is not None and principal.kind == "person" and right in principal.admin_rights:
             return True
         self._audit("-", operation, principal_id, result="refused", error_code="not_authorised")
         return False
@@ -592,14 +677,20 @@ class Measure:
         ``approve_label_import``). Returns (rows stored, problems)."""
         if approved_by is not None:
             approver = self.registry.principals.get(approved_by)
-            if approver is None or "approve_label_import" not in approver.admin_rights:
+            if (
+                approver is None
+                or approver.kind != "person"
+                or "approve_label_import" not in approver.admin_rights
+            ):
                 return 0, [f"{approved_by} does not hold the approve_label_import admin right"]
+            if approved_by == by:
+                return 0, ["an import cannot be approved by the person who made it"]
         reader = csv.DictReader(io.StringIO(text))
         if reader.fieldnames is None or set(reader.fieldnames) != {"run_id", "label"}:
             return 0, ["the csv header must be exactly: run_id,label"]
         # A short row leaves the missing field None: it becomes a refused row, not a crash.
         rows = [((r["run_id"] or "").strip(), (r["label"] or "").strip()) for r in reader]
-        sha = hashlib.sha256(text.encode("utf-8")).hexdigest()[:8]
+        sha = csv_import_id(text)
         tag = "a" if approved_by else "p"
         problems = []
         for i, (run_id, label) in enumerate(rows, 1):
@@ -622,7 +713,18 @@ class Measure:
                 stored += 1
             elif res.reason != "duplicate":
                 problems.append(f"row {i}: {res.reason}")
+        if stored and approved_by is None:
+            self._announce_import(sha, stored)
         return stored, problems
+
+    def _announce_import(self, import_id: str, n: int) -> None:
+        """Post the card whose button is the line owner's signed approval of this import."""
+        from hadavin_sdk.approvals.cards import render_import
+
+        try:
+            self.channel.post_card(render_import(import_id, n))
+        except Exception as exc:  # noqa: BLE001
+            _LOG.warning("import card not delivered (%s)", type(exc).__name__)
 
     def _dry_check(self, by: str, run_id: str, label: str) -> str | None:
         principal = self.registry.principals.get(by)
@@ -651,9 +753,9 @@ class Measure:
             return None
         at = at or self.clock()
         since = at - timedelta(days=self.ceiling.window_days)
-        labels: list[Label] = []
-        for agent_id, action_id in self._pairs():
-            labels += self.store.list_labels_for(agent_id, action_id, since)
+        # Every label in the window, whatever agent or action it was for: a retired agent or a dropped action
+        # does not make its harmful labels disappear from the ceiling.
+        labels = self.store.list_labels_between(since, at + timedelta(seconds=1))
         mine = [
             x
             for x in latest_labels(labels).values()
@@ -799,6 +901,30 @@ class Measure:
         atomic_write(path, _json(body) + "\n")
         return PromoteResult(True, [], path, nm)
 
+    def promotion_store_problems(self) -> list[str]:
+        """Start-up check for every action configured at ``suggest``: its promotion file must load, and the numbers
+        derived again from the store must still meet §6.1 (a re-sealed file with invented numbers fails here)."""
+        out: list[str] = []
+        demoted = (
+            self.store.current_overrides()
+        )  # a demoted action runs as shadow: nothing to prove for it
+        for agent in self.registry.agents.values():
+            for action, level in (agent.levels or {}).items():
+                if level != "suggest" or (agent.id, action) in demoted:
+                    continue
+                out += promotion_problems(self.registry, agent.id, action)
+                fresh = numbers_for(
+                    self.store.list_labels_for(agent.id, action, None),
+                    self.store.count_proposals(agent.id, action, None),
+                    self.clock(),
+                    self.th,
+                )
+                out += [
+                    f"agent {agent.id}: suggest for {action}: the store now says {s}"
+                    for s in shortfalls(fresh.as_dict(), self.th)
+                ]
+        return out
+
     # --- golden candidates and holds -----------------------------------------------------------------------
 
     def _evidence(self, run_id: str) -> bool:
@@ -828,9 +954,12 @@ class Measure:
         if self.store.get_report(week) is not None:
             return None
         body = self.render_report(week, at)
+        # Tell the line owner first, store second: a notice that cannot be delivered leaves the week without a
+        # report, so the next tick (the step runs hourly) renders and tries again instead of losing the notice.
+        if self._notify(_summary(week, body)) == 0:
+            raise RuntimeError("weekly report not announced: no line owner could be reached")
         if not self.store.put_report(week, body):
-            return None
-        self._notify(_summary(week, body))
+            return None  # another tick stored it between our check and now
         return body
 
     def render_report(self, week: date, at: datetime | None = None) -> str:
@@ -895,8 +1024,10 @@ class Measure:
             )
         out += ["", "## Every wrong and harmful label this week"]
         labels = [
-            x for x in self.store.list_labels_between(start, end) if x.label in ("wrong", "harmful")
-        ]
+            x
+            for x in latest_labels(self.store.list_labels_between(start, end)).values()
+            if x.label in ("wrong", "harmful")
+        ]  # eligible and latest per run, like every other number here
         out += [f"- {x.run_id}: {x.label} (by {x.principal_id}, {x.channel})" for x in labels] or [
             "- none"
         ]

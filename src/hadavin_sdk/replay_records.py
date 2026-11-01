@@ -68,9 +68,9 @@ def read_records(root: Path) -> list[ReplayRecord]:
     return out
 
 
-def green_record(registry: Registry, agent_id: str) -> ReplayRecord | None:
-    """The latest record with pass^k at k >= 3 at or above the threshold for the agent's current config hash,
-    model and prompt, or None. A later gate run never hides it (the gate writes ``qualified.jsonl``, not this
+def green_records(registry: Registry, agent_id: str) -> list[ReplayRecord]:
+    """Every record with pass^k at k >= 3 at or above the threshold for the agent's current config hash,
+    model and prompt. A later gate run never hides one (the gate writes ``qualified.jsonl``, not this
     file)."""
     agent = registry.agents[agent_id]
     want = (
@@ -88,6 +88,12 @@ def green_record(registry: Registry, agent_id: str) -> ReplayRecord | None:
         and r.pass_k
         >= threshold  # recomputed: the record's own green and threshold are not trusted
     ]
+    return found
+
+
+def green_record(registry: Registry, agent_id: str) -> ReplayRecord | None:
+    """The latest of ``green_records``, or None."""
+    found = green_records(registry, agent_id)
     return max(found, key=lambda r: r.ts) if found else None
 
 

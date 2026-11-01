@@ -504,6 +504,11 @@ class PostgresStore:
     def list_labels_between(self, start: datetime, end: datetime) -> list[Label]:
         return self._labels_where("WHERE l.created_at >= %s AND l.created_at < %s", (start, end))
 
+    def list_csv_import(self, import_id: str) -> list[Label]:
+        # import_id is hex from the parser; escape LIKE wildcards anyway
+        safe = import_id.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        return self._labels_where("WHERE l.label_id LIKE %s", (f"csv-{safe}-%",))
+
     def list_level_events(self) -> list[LevelEvent]:
         with self._lock:
             rows = self._exec(

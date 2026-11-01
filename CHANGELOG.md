@@ -24,9 +24,19 @@
     **asserted**, not verified: the authoritative paths are signed channel actions and reviewed config PRs.
   - `suggest` in `pilot`/`prod` additionally needs `promotions/<agent>.<action>.json` (from `promote-check`). It
     is still refused until K8 builds posted fixes; `dev` does not read the file.
-  - A csv label counts as evidence, in reports and in `promote-check`, only when imported with `--approved-by`.
-    Approving later means importing the same file again with `--approved-by` (no UPDATE exists on `labels`).
-  - The ceiling counts `harmful` labels in a rolling window (the costliest failure); `max` is a whole number.
+  - A csv label counts as evidence, in reports and in `promote-check`, only once a line owner approves the import:
+    the signed `approve_import|<id>` click on the card the import posts, or `--approved-by` (asserted; a different
+    person holding `approve_label_import`). The author of an import cannot approve it. Approval appends the rows again
+    (no UPDATE exists on `labels`).
+  - A `harmful` label is sticky: only a person holding `clear_override` can lower it (audited). Demotions are keyed by
+    the label row, so a harmful label after a clear demotes again.
+  - The ceiling counts `harmful` labels in a rolling window over all labels (retired agents too); `max` is a whole number.
+  - **`pilot` and `prod` need at least one person principal with `admin_rights: [clear_override]`**; `build` refuses
+    without one. Admin rights only apply to `kind: person` principals.
+  - The promotion file's SHA-256 is unkeyed: the loader also needs the replay record it names to be green in
+    `replay-records.jsonl`, and `build` re-derives the numbers from the store in pilot/prod.
+  - The weekly report is announced first and stored second; an unreachable line owner fails the `weekly_report` step
+    and the next tick retries.
 - **K3 pilot build path (levels, shadow cut-off, fail-closed loading).** Action contracts change shape:
   `executor.system` moves to a contract field `target_system`, and `executor` is now a tagged union
   (`kind: none | manual | http`). Edit every contract: move `system:` out of `executor:` to `target_system:` beside

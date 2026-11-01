@@ -39,6 +39,7 @@ from hadavin_sdk.models import (
     RunState,
     Target,
     TickState,
+    ToolCall,
 )
 from hadavin_sdk.registry import load_registry
 from hadavin_sdk.replay_records import ReplayRecord
@@ -46,7 +47,7 @@ from hadavin_sdk.runtime.agent_loop import Hooks
 from hadavin_sdk.runtime.tick import run_tick
 from hadavin_sdk.store import MemoryStore
 from tests.conftest import qualify
-from tests.test_k3_pilot import SECRETS, ScriptedLLM, dev_cfg
+from tests.test_k3_pilot import SECRETS, ScriptedLLM, dev_cfg, reply
 
 S = RunState
 SECRET = "k6" + "-signing-secret"  # built from parts
@@ -211,7 +212,8 @@ def test_k6_harmful_demotes(w):
     assert w.measure.level_override("test-agent", ACTION) == "shadow"
     assert w.measure.level_override("test-agent", "other") is None
     (ev,) = w.store.list_level_events()
-    assert (ev.kind, ev.reason) == ("demote", f"harmful:{rid}")
+    (lab,) = w.store.list_labels(rid)
+    assert (ev.kind, ev.reason) == ("demote", f"harmful:{lab.label_id}")  # keyed by the label row
     # The line owner gets a card with the signed Clear button; the demotion is audited.
     (card,) = w.channel.cards
     values = [b["value"] for blk in card.blocks if blk["kind"] == "buttons" for b in blk["buttons"]]
@@ -798,9 +800,7 @@ def test_k6_ceiling_window_rolling(w):
     w.labelled("harmful", 1, when=day(91))
     old = w.measure.ceiling_status(NOW)
     assert (old.harmful, old.breached) == (0, False)
-    assert w.measure.enforce(NOW) == [] or all(
-        not e.reason.startswith("ceiling:") for e in w.measure.enforce(NOW)
-    )
+    assert w.measure.enforce(NOW) == []
     w.labelled("harmful", 1, when=day(89))
     now_in = w.measure.ceiling_status(NOW)
     assert (now_in.harmful, now_in.breached) == (1, True)
@@ -880,13 +880,46 @@ def test_k6_baseline_refusals(tmp_path, text, error):
         measure.load_baseline(tmp_path)
 
 
-def test_k6_pilot_build_refuses_without_a_ceiling(tmp_path):
-    from tests.test_k3_pilot_env import pilot_cfg
+def _pilot_build(tmp_path, dsn, *, no_owner=False, drop_baseline=False):
+    from tests.test_k3_pilot_env import _spy, pilot_cfg
 
-    cfg = pilot_cfg(tmp_path)
-    (cfg / "baseline.yaml").unlink()
-    with pytest.raises(BaseConfigError, match="baseline.yaml is required in pilot and prod"):
-        measure.load_baseline(cfg)
+    cfg = pilot_cfg(tmp_path, no_owner=no_owner)
+    if drop_baseline:
+        (cfg / "baseline.yaml").unlink()
+    qualify(load_registry(load_config(cfg)), "ito-agent")
+    return app_mod.build(
+        cfg,
+        ["ito-agent"],
+        secrets=_spy(dsn, []),
+        channel=FakeChannel(SECRET),
+        llm=ScriptedLLM(),
+    )
+
+
+def test_k6_pilot_build_refuses_without_a_ceiling(tmp_path):
+    from tests.contracts.kinds.store_postgres import pg_schema
+
+    for dsn in pg_schema():
+        with pytest.raises(BaseConfigError, match="baseline.yaml is required in pilot and prod"):
+            _pilot_build(tmp_path, dsn, drop_baseline=True)
+
+
+def test_k6_pilot_build_refuses_without_a_line_owner(tmp_path):
+    from tests.contracts.kinds.store_postgres import pg_schema
+
+    for dsn in pg_schema():
+        with pytest.raises(BaseConfigError, match="at least one person must hold .*clear_override"):
+            _pilot_build(tmp_path, dsn, no_owner=True)
+
+
+def test_k6_pilot_build_with_both_starts_and_wires_measure(tmp_path):
+    from tests.contracts.kinds.store_postgres import pg_schema
+
+    for dsn in pg_schema():
+        app = _pilot_build(tmp_path, dsn)
+        assert app.measure.line_owners() == ["slack:UOWNER"]
+        assert app.measure.ceiling is not None and app.approvals.measure is app.measure
+        app.store._db.close()
 
 
 # --- the weekly report -----------------------------------------------------------------------------------
@@ -986,11 +1019,10 @@ def test_k6_report_counts_caught_by(w):
     assert "- human_label: 1" in text and "- guard: 1" in text
 
 
-def measure_event(when, caught):
-
+def measure_event(when, caught, run="r"):
     return AuditEvent(
         ts=when,
-        run_id="r",
+        run_id=run,
         domain="runtime",
         operation="x",
         principal="p",
@@ -1001,12 +1033,21 @@ def measure_event(when, caught):
 
 def test_k6_caught_week_twin(w):
     events = [
-        measure_event(day(7), "gate"),
-        measure_event(day(7), "gate"),
+        measure_event(day(7), "gate", "r1"),
+        measure_event(day(7), "gate", "r2"),
+        measure_event(day(7), "gate", "r2"),  # the same run caught twice counts once
         measure_event(day(14), "guard"),
     ]
     events.append(measure_event(day(7), None))
     assert measure.caught_week(events, WEEK) == {"gate": 2}
+
+
+def test_k6_relabelling_a_run_does_not_count_it_caught_twice(w):
+    rid = w.run(created=day(7))
+    w.label(rid, "wrong", when=day(7))
+    w.label(rid, "wrong", who="u2", when=day(7))
+    w.label(rid, "harmful", who="u3", when=day(7))
+    assert "- human_label: 1" in w.measure.render_report(WEEK, NOW)
 
 
 def test_k6_weekly_report_writes_once_and_tells_the_line_owner(w):
@@ -1023,10 +1064,26 @@ def test_k6_weekly_report_writes_once_and_tells_the_line_owner(w):
     )  # the next week gets its own
 
 
-def test_k6_a_failing_channel_does_not_lose_the_report(w):
+def test_k6_a_report_nobody_was_told_about_is_not_stored_and_is_retried(w):
+    real = w.channel.notify
     w.channel.notify = lambda who, text: (_ for _ in ()).throw(OSError("channel down"))
-    assert w.measure.weekly_report(NOW)
-    assert w.store.get_report(WEEK)
+    with pytest.raises(RuntimeError, match="not announced"):
+        w.measure.weekly_report(NOW)
+    assert (
+        w.store.get_report(WEEK) is None
+    )  # the week still has no report, so the next tick tries again
+    w.channel.notify = real
+    assert w.measure.weekly_report(NOW + timedelta(hours=1))
+    assert w.store.get_report(WEEK) and len(w.channel.notices) == 1
+
+
+def test_k6_a_report_with_no_line_owner_is_an_error_not_a_silent_store(tmp_path):
+    w = World(tmp_path)
+    w.reg.principals["fake:owner"] = Principal(id="fake:owner", kind="person")
+    assert w.measure.line_owners() == []
+    with pytest.raises(RuntimeError, match="not announced"):
+        w.measure.weekly_report(NOW)
+    assert w.store.get_report(WEEK) is None
 
 
 def test_k6_without_a_ceiling_there_is_no_report(tmp_path):
@@ -1040,6 +1097,10 @@ def test_k6_tick_runs_the_report_once_per_week(tmp_path):
     (cfg / "baseline.yaml").write_text(
         "ceiling:\n  metric: m\n  max: 0\n  window_days: 90\n  source: s\n", encoding="utf-8"
     )
+    path = cfg / "principals.yaml"
+    people = yaml.safe_load(path.read_text(encoding="utf-8"))
+    people.append({"id": "fake:owner", "kind": "person", "admin_rights": ["clear_override"]})
+    path.write_text(yaml.safe_dump(people), encoding="utf-8")
     reg = load_registry(load_config(cfg))
     qualify(reg)
     channel = FakeChannel(SECRET)
@@ -1105,11 +1166,18 @@ def test_k6_demoted_action_shadows_a_run_end_to_end(tmp_path):
     """The loop reads the override: a suggest-level action that was demoted ends as a shadow card."""
     cfg = dev_cfg(tmp_path, {"create_draft_record": "suggest"})
     qualify(load_registry(load_config(cfg)))
+    propose = ToolCall(name="create_draft_record", input={"title": "Desk", "amount": "9.50"})
+    channel = FakeChannel(SECRET)
     app = app_mod.build(
-        cfg, ["test-agent"], channel=FakeChannel(SECRET), llm=ScriptedLLM(), secrets=SECRETS
+        cfg,
+        ["test-agent"],
+        channel=channel,
+        llm=ScriptedLLM(reply(propose), reply(propose)),
+        secrets=SECRETS,
     )
-    agent = app.registry.agents["test-agent"]
-    assert app.runtime._level(agent, "create_draft_record") == "suggest"
+    first = app.runtime.handle("test-agent", "svc:test-agent", b"a")
+    assert first.state == S.WAITING_FOR_APPROVAL  # suggest: a person is asked
+    assert channel.cards == []
     app.store.add_level_event(
         LevelEvent(
             agent_id="test-agent",
@@ -1119,7 +1187,10 @@ def test_k6_demoted_action_shadows_a_run_end_to_end(tmp_path):
             by="u",
         )
     )
-    assert app.runtime._level(agent, "create_draft_record") == "shadow"
+    second = app.runtime.handle("test-agent", "svc:test-agent", b"b")
+    assert (second.state, second.reason_code) == (S.NO_ACTION, "shadow")  # demoted: only a card
+    (card,) = channel.cards
+    assert card.text.startswith("Agent's view: not checked, do not run")
 
 
 def test_k6_load_refuses_suggest_in_pilot_without_the_file(tmp_path):
@@ -1131,6 +1202,180 @@ def test_k6_load_refuses_suggest_in_pilot_without_the_file(tmp_path):
     assert "cannot load before K8" in str(err.value)
     assert "needs promotions/ito-agent.restart_service.json" in str(err.value)
     assert deferred.LIVE == ("pilot", "prod")
+
+
+# --- independent review: demotion keys, sticky harmful, forged evidence, approvals, report ------------------
+
+
+def test_k6_harmful_after_a_clear_demotes_again(w):
+    rid = w.run()
+    assert w.label(rid, "harmful").demoted
+    assert w.measure.clear("fake:owner", "test-agent", ACTION) == (200, "cleared")
+    assert w.label(rid, "agree", who="owner").ok  # only a line owner can lower a harmful label
+    assert w.store.current_overrides() == {}
+    assert w.label(rid, "harmful").demoted  # a new harmful label is a new fact
+    assert ("test-agent", ACTION) in w.store.current_overrides()
+    assert [e.kind for e in w.store.list_level_events()] == ["demote", "clear", "demote"]
+
+
+def test_k6_a_wrong_episode_after_a_clear_demotes_again(w):
+    w.labelled("wrong", 3, when=day(2))
+    assert ("test-agent", ACTION) in w.store.current_overrides()
+    w.measure.clear("fake:owner", "test-agent", ACTION)
+    assert w.measure.enforce(NOW) == []  # the same three wrongs do not demote twice
+    assert w.label(w.run(), "wrong").demoted  # a newer wrong makes a new episode
+    assert [e.kind for e in w.store.list_level_events()] == ["demote", "clear", "demote"]
+
+
+def test_k6_harmful_is_sticky_and_only_a_line_owner_lowers_it(w):
+    rid = w.run()
+    w.label(rid, "harmful")
+    res = w.label(rid, "agree", who="u2")
+    assert (res.ok, res.reason) == (False, "harmful_is_sticky")
+    assert [x.label for x in w.store.list_labels(rid)] == ["harmful"]
+    assert w.measure.ceiling_status(NOW).harmful == 1  # the refused label changed nothing
+    refused = [e for e in w.audit.events() if e.result == "refused" and e.operation == "label"]
+    assert [e.error_code for e in refused] == ["harmful_is_sticky"]
+    assert w.label(rid, "agree", who="owner").ok
+    assert w.measure.ceiling_status(NOW).harmful == 0
+    assert any(e.operation == "harmful_lowered" for e in w.audit.events())
+    other = w.run()  # a wrong label is not sticky: people may correct themselves
+    w.label(other, "wrong")
+    assert w.label(other, "agree", who="u2").ok
+
+
+def test_k6_a_csv_import_cannot_be_approved_by_its_author(w):
+    ids = [w.run() for _ in range(3)]
+    text = "run_id,label\n" + "".join(f"{r},agree\n" for r in ids)
+    assert w.measure.import_csv(text, "fake:owner", "fake:owner")[1] == [
+        "an import cannot be approved by the person who made it"
+    ]
+    assert all(w.store.list_labels(r) == [] for r in ids)
+
+
+def test_k6_csv_import_is_approved_by_a_signed_click(w):
+    ids = [w.run() for _ in range(3)]
+    text = "run_id,label\n" + "".join(f"{r},agree\n" for r in ids)
+    assert w.measure.import_csv(text, "fake:u1")[0] == 3
+    iid = measure.csv_import_id(text)
+    (card,) = w.channel.cards
+    values = [b["value"] for blk in card.blocks if blk["kind"] == "buttons" for b in blk["buttons"]]
+    assert values == [f"approve_import|{iid}"]
+    assert _numbers(w).labelled == 0
+    assert w.measure.approve_import("fake:u2", iid) == (200, "not_authorised")  # no admin right
+    assert (
+        w.click("owner", f"approve_import|{iid}")[0] == 200
+    )  # signed, and the owner is not the author
+    assert _numbers(w).labelled == 3
+    assert w.measure.approve_import("fake:owner", "0" * 8) == (200, "unknown_import")
+    assert measure.parse_action_value("approve_import|XYZ") is None
+
+
+def test_k6_nobody_approves_their_own_signed_import(w):
+    rid = w.run()
+    text = f"run_id,label\n{rid},agree\n"
+    w.measure.import_csv(text, "fake:owner")
+    assert w.measure.approve_import("fake:owner", measure.csv_import_id(text)) == (
+        200,
+        "cannot_approve_own_import",
+    )
+    assert _numbers(w).labelled == 0
+
+
+def test_k6_admin_rights_need_a_person(w):
+    w.reg.principals["svc:bot"] = Principal(
+        id="svc:bot",
+        kind="service",
+        admin_rights=["clear_override", "stop", "approve_label_import"],
+    )
+    w.label(w.run(), "harmful")
+    assert w.measure.clear("svc:bot", "test-agent", ACTION) == (200, "not_authorised")
+    assert w.measure.kill_switch("svc:bot", "stop") == (200, "not_authorised")
+    assert w.measure.approve_import("svc:bot", "0" * 8) == (200, "not_authorised")
+    assert "svc:bot" not in w.measure.line_owners()
+
+
+def test_k6_the_ceiling_counts_harmful_labels_of_retired_agents(w):
+    w.label(w.run(), "harmful", when=day(5))
+    agent = w.reg.agents["test-agent"]
+    w.reg.agents["test-agent"] = agent.model_copy(update={"status": "retired"})
+    assert w.measure._pairs() == []
+    status = w.measure.ceiling_status(NOW)
+    assert (status.harmful, status.breached) == (1, True)
+
+
+def test_k6_the_report_lists_only_eligible_latest_wrong_labels(w):
+    kept, corrected, unapproved = (w.run(created=day(7)) for _ in range(3))
+    w.label(kept, "wrong", when=day(7))
+    w.label(corrected, "wrong", when=day(7))
+    w.label(corrected, "agree", who="u2", when=day(7, 13))
+    w.box[0] = day(7)
+    assert w.measure.import_csv(f"run_id,label\n{unapproved},wrong\n", "fake:u1")[0] == 1
+    w.box[0] = NOW
+    listed = w.measure.render_report(WEEK, NOW).split("## Every wrong and harmful label")[1]
+    listed = listed.split("##")[0]
+    assert f"- {kept}: wrong" in listed
+    assert corrected not in listed and unapproved not in listed
+
+
+# --- promotion evidence cannot be forged by re-sealing the file ---------------------------------------------
+
+
+def test_k6_a_promotion_file_with_a_valid_seal_but_no_replay_record_is_refused(w):
+    _replay_record(w)
+    _ready(w)
+    assert w.measure.promote_check("test-agent", "create_draft_record").ok
+    records = w.reg.config.root / "replay-records.jsonl"
+    saved = records.read_text(encoding="utf-8")
+    records.unlink()
+    problems = measure.promotion_problems(w.reg, "test-agent", "create_draft_record")
+    assert any("names a replay record" in p for p in problems)
+    records.write_text(saved, encoding="utf-8")
+    assert measure.promotion_problems(w.reg, "test-agent", "create_draft_record") == []
+    # A record for the same agent but a different bundle is not the one the file names.
+    other = saved.replace("b" * 64, "c" * 64)
+    records.write_text(other, encoding="utf-8")
+    assert any(
+        "names a replay record" in p
+        for p in measure.promotion_problems(w.reg, "test-agent", "create_draft_record")
+    )
+
+
+def test_k6_a_resealed_file_with_invented_numbers_is_caught_by_the_store(w):
+    _replay_record(w)
+    _ready(w)
+    path = w.measure.promote_check("test-agent", "create_draft_record").path
+    forged = json.loads(path.read_text(encoding="utf-8"))
+    forged["action_id"] = "lookup_record"  # an action nobody has labelled
+    forged["numbers"] = {**forged["numbers"], "labelled": 90, "proposals": 90}
+    forged["sha256"] = measure._file_sha(forged)
+    (path.parent / "test-agent.lookup_record.json").write_text(json.dumps(forged), encoding="utf-8")
+    agents = w.cfg / "agents.yaml"
+    data = yaml.safe_load(agents.read_text(encoding="utf-8"))
+    data[0]["levels"] = {"lookup_record": "suggest"}
+    agents.write_text(yaml.safe_dump(data), encoding="utf-8")
+    w.measure.registry = load_registry(load_config(w.cfg))
+    # The file itself passes the loader (seal and replay record are fine)...
+    assert measure.promotion_problems(w.measure.registry, "test-agent", "lookup_record") == []
+    # ...and the store, asked again at start-up, says the numbers are not there.
+    problems = w.measure.promotion_store_problems()
+    assert any("the store now says labelled 0 < 30" in p for p in problems), problems
+
+
+def test_k6_promotion_store_check_passes_for_earned_evidence_and_skips_demoted(w):
+    _replay_record(w)
+    _ready(w)
+    assert w.measure.promote_check("test-agent", "create_draft_record").ok
+    agents = w.cfg / "agents.yaml"
+    data = yaml.safe_load(agents.read_text(encoding="utf-8"))
+    data[0]["levels"] = {"create_draft_record": "suggest"}
+    agents.write_text(yaml.safe_dump(data), encoding="utf-8")
+    w.measure.registry = load_registry(load_config(w.cfg))
+    assert w.measure.promotion_store_problems() == []
+    w.label(
+        w.run(action="create_draft_record"), "harmful"
+    )  # demoted: the check has nothing to prove
+    assert w.measure.promotion_store_problems() == []
 
 
 # --- identity and the cli --------------------------------------------------------------------------------

@@ -17,10 +17,12 @@
                                                          exit 0 report produced, 2 refused, 3 failure (no verdict)
   hadavin-sdk [--config DIR] label import FILE --by WHO [--approved-by WHO]
                                                          K6: record labels from a csv (columns run_id,label) as
-                                                         channel csv; they count as promotion evidence only with
-                                                         --approved-by (a line owner). Names are ASSERTED here: the
-                                                         authoritative paths are signed channel actions and reviewed
-                                                         config PRs. Exit 0 stored, 1 rows refused (nothing stored)
+                                                         channel csv; they count as promotion evidence only once a line
+                                                         owner approves: the signed approve_import click on the card
+                                                         this posts (the authoritative path), or --approved-by WHO (a
+                                                         different person holding approve_label_import). Names given
+                                                         here are ASSERTED: the CLI cannot verify who ran it.
+                                                         Exit 0 stored, 1 rows refused (nothing stored)
   hadavin-sdk [--config DIR] promote-check AGENT ACTION  K6: compute the promotion numbers from the store and write
                                                          promotions/AGENT.ACTION.json; exit 0 written, 1 a number is
                                                          not met (nothing written), 2 refused
@@ -321,7 +323,7 @@ def measure_cmd(app, args) -> int:
     """Body of ``label import``, ``promote-check`` and ``report`` (takes the app so tests can pass their own)."""
     from datetime import date, timedelta
 
-    from hadavin_sdk.measure import week_start
+    from hadavin_sdk.measure import csv_import_id, week_start
     from hadavin_sdk.models import now
 
     measure = app.measure
@@ -360,7 +362,7 @@ def measure_cmd(app, args) -> int:
     for problem in problems:
         print(f"REFUSED: {problem}")
     state = "counting as evidence" if args.approved_by else "waiting for a line owner's approval"
-    print(f"{stored_n} labels stored ({state})")
+    print(f"{stored_n} labels stored ({state}); import id {csv_import_id(text)}")
     return 1 if problems else 0
 
 

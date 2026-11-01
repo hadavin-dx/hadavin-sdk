@@ -285,6 +285,11 @@ class MemoryStore:
             found = [x for x in self._labels if start <= x.created_at < end]
         return [x.model_copy(deep=True) for x in sorted(found, key=lambda x: x.created_at)]
 
+    def list_csv_import(self, import_id: str) -> list[Label]:
+        with self._lock:
+            found = [x for x in self._labels if x.label_id.startswith(f"csv-{import_id}-")]
+        return [x.model_copy(deep=True) for x in sorted(found, key=lambda x: x.created_at)]
+
     def list_level_events(self) -> list[LevelEvent]:
         with self._lock:
             return [x.model_copy(deep=True) for x in self._levels]

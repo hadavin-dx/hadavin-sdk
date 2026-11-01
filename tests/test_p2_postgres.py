@@ -287,7 +287,8 @@ def test_audit_checkpoints_migration_adds_alg_and_label_and_old_rows_get_default
         for path in old:
             db.execute("INSERT INTO schema_migrations (version) VALUES (%s)", (path.stem,))
         db.execute("INSERT INTO audit_checkpoints (seq, hash, signature) VALUES (1, 'h', 's')")
-    assert migrate(fresh_dsn)[0] == "0004_audit_checkpoint_meta"  # later migrations follow it
+    expected = [p.stem for p in sorted(MIGRATIONS.glob("*.sql")) if p.stem >= "0004"]
+    assert migrate(fresh_dsn) == expected  # 0004 and every later migration, nothing else
     with psycopg.connect(fresh_dsn, autocommit=True) as db:
         assert db.execute("SELECT seq, alg, key_label FROM audit_checkpoints").fetchall() == [
             (1, None, None)

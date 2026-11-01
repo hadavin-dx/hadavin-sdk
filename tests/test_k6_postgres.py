@@ -36,10 +36,10 @@ def pg_world(tmp_path):
         store._db.close()
 
 
-def _event(when, caught):
+def _event(when, caught, run="r"):
     return AuditEvent(
         ts=when,
-        run_id="r",
+        run_id=run,
         domain="runtime",
         operation="x",
         principal="p",
@@ -50,15 +50,16 @@ def _event(when, caught):
 
 def test_k6_caught_view_matches_python(pg_world):
     w = pg_world
-    for when, caught in [
-        (day(7), "gate"),
-        (day(7), "gate"),
-        (day(7), "guard"),
-        (day(7), None),  # no caught_by: not counted
-        (day(14), "gate"),  # another week
-        (NOW, "human_reject"),
+    for when, caught, run in [
+        (day(7), "gate", "r1"),
+        (day(7), "gate", "r1"),  # the same run caught twice counts once
+        (day(7), "gate", "r2"),
+        (day(7), "guard", "r3"),
+        (day(7), None, "r4"),  # no caught_by: not counted
+        (day(14), "gate", "r5"),  # another week
+        (NOW, "human_reject", "r6"),
     ]:
-        w.audit.write_outcome(_event(when, caught))
+        w.audit.write_outcome(_event(when, caught, run))
     events = w.audit.events()
     for week in (WEEK, WEEK - timedelta(days=7), NOW.date()):
         rows = w.store._db.execute(

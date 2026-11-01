@@ -32,7 +32,9 @@ AGENT = {
 }
 
 
-def pilot_cfg(tmp_path: Path, *, env="pilot", agent=None, contract=None, config=None) -> Path:
+def pilot_cfg(
+    tmp_path: Path, *, env="pilot", agent=None, contract=None, config=None, no_owner=False
+) -> Path:
     """A pilot config with real kinds only (nothing is contacted until `build`)."""
     root = tmp_path / "pilot"
     for sub in ("actions", "prompts", "golden", "inputs"):
@@ -72,7 +74,19 @@ def pilot_cfg(tmp_path: Path, *, env="pilot", agent=None, contract=None, config=
     (root / "config.yaml").write_text(yaml.safe_dump(cfg), encoding="utf-8")
     (root / "agents.yaml").write_text(yaml.safe_dump([agent]), encoding="utf-8")
     (root / "principals.yaml").write_text(
-        yaml.safe_dump([{"id": "svc:ito", "kind": "service", "rights": ["restart_service"]}]),
+        yaml.safe_dump(
+            [
+                {"id": "svc:ito", "kind": "service", "rights": ["restart_service"]},
+                # K6: pilot and prod need a person who can clear a demotion and is told of a breach.
+                *(
+                    []
+                    if no_owner
+                    else [
+                        {"id": "slack:UOWNER", "kind": "person", "admin_rights": ["clear_override"]}
+                    ]
+                ),
+            ]
+        ),
         encoding="utf-8",
     )
     (root / "actions" / "restart_service.yaml").write_text(

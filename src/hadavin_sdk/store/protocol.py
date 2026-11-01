@@ -142,6 +142,10 @@ class Store(Protocol):
         """Every label created in [start, end), runs with or without a plan, oldest first."""
         ...
 
+    def list_csv_import(self, import_id: str) -> list[Label]:
+        """Every label stored by one csv import (ids `csv-<import_id>-<row>-p|a`), oldest first."""
+        ...
+
     def add_level_event(self, event: LevelEvent) -> None: ...
 
     def list_level_events(self) -> list[LevelEvent]:

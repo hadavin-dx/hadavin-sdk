@@ -110,6 +110,17 @@ def render_demotion(agent_id: str, action_id: str, reason: str) -> Card:
     return _card("\n".join(lines), [button])
 
 
+def render_import(import_id: str, n: int) -> Card:
+    """Posted when a csv of labels waits for a line owner. The button is their signed approval (K6)."""
+    text = f"{n} labels from csv import {import_id} wait for a line owner. They do not count as evidence until approved."
+    button = {
+        "id": "approve_import",
+        "label": "Approve import",
+        "value": f"approve_import|{import_id}",
+    }
+    return _card(text, [button])
+
+
 def render_abstain(run_id: str, reason: str, cited: list[str]) -> Card:
     """Posted for every run that ends without a plan, so a missed incident can be labelled."""
     lines = [

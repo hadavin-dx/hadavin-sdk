@@ -18,7 +18,7 @@ from hadavin_sdk.approvals.cards import Card, Delivery
 from hadavin_sdk.approvals.requests import summary
 from hadavin_sdk.audit import AuditSink
 from hadavin_sdk.backends import make, platform_secrets
-from hadavin_sdk.config import Config, load_config
+from hadavin_sdk.config import Config, ConfigError, load_config
 from hadavin_sdk.guard.injection import Detector, combine
 from hadavin_sdk.limits import Limits
 from hadavin_sdk.llm.protocol import LLM
@@ -114,6 +114,13 @@ def build(
     ceiling = load_baseline(cfg.root) if live or (cfg.root / BASELINE_FILE).is_file() else None
     measure = Measure(store, audit, reg, channel, ceiling=ceiling, clock=clock, limits=limits)
     approvals.measure = measure  # the receiver on these approvals also takes label and clear clicks
+    if live:
+        if not measure.line_owners():  # nobody could clear a demotion or be told about a breach
+            raise ConfigError(
+                "principals.yaml: in pilot and prod at least one person must hold the admin right clear_override"
+            )
+        if problems := measure.promotion_store_problems():
+            raise ConfigError("promotion evidence: " + "; ".join(problems))
 
     hooks = Hooks(
         request_approval=request_approval,

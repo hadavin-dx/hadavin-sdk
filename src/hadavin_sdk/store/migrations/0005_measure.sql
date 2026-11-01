@@ -68,7 +68,7 @@ GROUP BY r.week;
 CREATE VIEW v_caught_week AS
 SELECT date_trunc('week', at::timestamptz AT TIME ZONE 'UTC')::date AS week,
        body::jsonb ->> 'caught_by'               AS caught_by,
-       count(*)                                  AS n
+       count(DISTINCT run_id)                     AS n
 FROM audit_entries
 WHERE body::jsonb ->> 'caught_by' IS NOT NULL
 GROUP BY 1, 2;

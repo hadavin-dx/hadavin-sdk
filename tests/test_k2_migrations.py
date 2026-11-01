@@ -388,8 +388,11 @@ def test_migrate_refuses_when_an_applied_migration_has_no_file(roles, monkeypatc
     dsn, _, _ = roles
     files = mig._migration_files()
     monkeypatch.setattr(mig, "_migration_files", lambda: files[:-1])
-    # The grant map names the newest file's relations; only the missing-file check is under test here.
-    monkeypatch.setattr(mig, "check_grants", lambda paths: [])
+    # The map must still agree with the files that remain: drop the newest file's relations from it as well,
+    # so the grant guard stays real and only the missing-file check is what fires.
+    created, _ = mig._scan(files[:-1])
+    monkeypatch.setattr(mig, "GRANTS", {k: v for k, v in mig.GRANTS.items() if k in created})
+    assert mig.check_grants(files[:-1]) == []
     with pytest.raises(ConfigError, match="no file in this release"):
         mig.migrate(dsn)
 
