@@ -31,7 +31,7 @@ def test_r3_clear_is_refused_while_breached_even_when_a_later_wrong_episode_demo
     w.labelled(
         "wrong", 3, when=day(2)
     )  # a wrong-episode demotion is now the LAST event of the action
-    assert demotions(w)[-1].reason.startswith("wrong_x3:")
+    assert demotions(w)[-1].reason.startswith("wrongs:")
     assert w.measure.ceiling_status().breached
     assert w.measure.clear("fake:owner", "test-agent", ACTION) == (200, "ceiling_breached")
     assert ("test-agent", ACTION) in w.store.current_overrides()
@@ -80,7 +80,7 @@ def test_r3_four_wrongs_a_minute_apart_make_one_demotion_one_audit_entry_one_car
     w = World(tmp_path)
     for i in range(4):
         w.label(w.run(), "wrong", when=NOW - timedelta(days=2) + timedelta(minutes=i))
-    assert [e.reason.split(":")[0] for e in demotions(w)] == ["wrong_x3"]
+    assert [e.reason.split(":")[0] for e in demotions(w)] == ["wrongs"]
     assert len([e for e in w.audit.events() if e.operation == "demote"]) == 1
     assert len(w.channel.cards) == 1
     w.measure.enforce(NOW)  # the tick re-check adds nothing either

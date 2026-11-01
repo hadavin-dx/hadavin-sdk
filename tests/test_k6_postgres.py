@@ -236,7 +236,7 @@ def test_k6_two_connections_one_demotion_row_per_reason(two_connections):
 
 
 def test_k6_two_connections_batches_in_opposite_order_do_not_deadlock(two_connections):
-    """Two batches that touch the same two runs and the same two (agent, action) pairs in opposite orders: all the
+    """Two batches on DIFFERENT runs that touch the same two (agent, action) pairs in opposite orders: all the
     advisory locks are taken first, in one sorted order, so neither waits on the other in a cycle."""
     import threading
 
@@ -258,7 +258,10 @@ def test_k6_two_connections_batches_in_opposite_order_do_not_deadlock(two_connec
                     at=NOW,
                 )
                 items.append(
-                    (_lab(f"run{i}-{k}", "wrong", "user:1", f"{i}{k}{store is a}"), demote)
+                    (
+                        _lab(f"run{i}-{k}-{store is a}", "wrong", "user:1", f"{i}{k}{store is a}"),
+                        demote,
+                    )
                 )
             try:
                 store.add_labels(items, may_lower_harmful=True)

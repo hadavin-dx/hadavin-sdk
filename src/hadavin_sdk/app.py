@@ -22,7 +22,7 @@ from hadavin_sdk.config import Config, ConfigError, load_config
 from hadavin_sdk.guard.injection import Detector, combine
 from hadavin_sdk.limits import Limits
 from hadavin_sdk.llm.protocol import LLM
-from hadavin_sdk.measure import BASELINE_FILE, Measure, load_baseline
+from hadavin_sdk.measure import BASELINE_FILE, Measure, load_baseline, load_policy
 from hadavin_sdk.models import now
 from hadavin_sdk.registry import Registry, load_registry
 from hadavin_sdk.runtime.agent_loop import Hooks, Runtime
@@ -112,7 +112,16 @@ def build(
     # K6. The ceiling is required in pilot and prod ("the pilot tooling refuses to start without it"); in dev it is
     # used when baseline.yaml exists and the report is simply off when it does not.
     ceiling = load_baseline(cfg.root) if live or (cfg.root / BASELINE_FILE).is_file() else None
-    measure = Measure(store, audit, reg, channel, ceiling=ceiling, clock=clock, limits=limits)
+    measure = Measure(
+        store,
+        audit,
+        reg,
+        channel,
+        ceiling=ceiling,
+        clock=clock,
+        limits=limits,
+        policy=load_policy(cfg.root),
+    )
     approvals.measure = measure  # the receiver on these approvals also takes label and clear clicks
     if live:
         if not measure.line_owners():  # nobody could clear a demotion or be told about a breach

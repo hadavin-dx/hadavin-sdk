@@ -27,7 +27,7 @@ from hadavin_sdk.config import ConfigError, load_config
 from hadavin_sdk.errors import ConfigError as BaseConfigError
 from hadavin_sdk.identity import Principal
 from hadavin_sdk.limits import Limits
-from hadavin_sdk.measure import Ceiling, Measure, Thresholds
+from hadavin_sdk.measure import DEFAULT_POLICY, Ceiling, Measure
 from hadavin_sdk.models import (
     ApprovalRequest,
     AuditEvent,
@@ -734,7 +734,7 @@ def test_k6_promote_check_other_refusals(w):
 
 
 def test_k6_low_volume_thresholds_are_one_object():
-    t = Thresholds()
+    t = DEFAULT_POLICY.thresholds()
     assert (
         t.min_labelled,
         t.min_agree,

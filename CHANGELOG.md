@@ -50,6 +50,12 @@
   - **`label import --by/--approved-by` is refused in `pilot` and `prod`**; only signed clicks count there. The import
     id is now the file's full SHA-256. `Channel.parse_action` returns a `nonce` with the click.
   - A replay record counts as green only when its fields agree with each other.
+  - **Policy numbers moved out of code into `measure.Policy` (documented defaults, one place) and an optional
+    `policy:` mapping in `baseline.yaml`** that the client signs: promotion numbers, the wrong rule (`wrong_limit`,
+    `wrong_window_days`), `held_maps_max_days` (max 400), `late_start_s`, report local time, `enforce_every_s`,
+    `purge_every_s`, `seen_actions_keep_s`. Strictly validated; omit it for the defaults. A tick step's `every_s`
+    may now be a callable that reads it from the app's config. The recent-wrongs demotion reason prefix is `wrongs:`.
+    A repo test fails on key-shaped and Slack-id literals; K6 modules name no environment, host or env read.
   - Third review round: migration `0005` also adds `labels.seq` (insertion order: "latest" means highest seq, not
     `created_at`), lets the runtime role DELETE on `seen_actions` only (expired click nonces are purged by the new tick
     step `purge_seen_actions`), and `Store` gains `release_action` and `purge_actions`; `add_labels` now returns the

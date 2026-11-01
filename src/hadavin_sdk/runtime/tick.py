@@ -52,11 +52,13 @@ class TickContext:
 @dataclass(frozen=True)
 class TickStep:
     name: str  # unique, [a-z_]+ (the tick_state CHECK)
-    every_s: int  # 0 = every tick
+    every_s: int | Callable[[App], int]  # 0 = every tick; a callable reads it from the app's config
     fn: Callable[[TickContext], None]
 
     def __post_init__(self) -> None:
-        if not re.fullmatch(r"[a-z_]+", self.name) or self.every_s < 0:
+        if not re.fullmatch(r"[a-z_]+", self.name) or (
+            not callable(self.every_s) and self.every_s < 0
+        ):
             raise ValueError(f"tick step name must be [a-z_]+ and every_s >= 0: {self.name!r}")
 
 
@@ -181,6 +183,14 @@ def checkpoint(ctx: TickContext) -> None:
         fn()
 
 
+def _policy(app: App):
+    """The measurement policy of this deployment (documented defaults when there is no measure)."""
+    from hadavin_sdk.measure import DEFAULT_POLICY
+
+    measure = getattr(app, "measure", None)
+    return measure.policy if measure is not None else DEFAULT_POLICY
+
+
 def measure_levels(ctx: TickContext) -> None:
     """K6: re-check the demotion rules and the ceiling (idempotent). Nothing to do when the app has no measure."""
     measure = getattr(ctx.app, "measure", None)
@@ -213,8 +223,8 @@ STEPS: list[TickStep] = [
     TickStep("reconcile", 0, reconcile),
     TickStep("stuck", 0, stuck),
     TickStep("checkpoint", 0, checkpoint),
-    TickStep("measure_levels", 300, measure_levels),
-    TickStep("purge_seen_actions", 300, purge_seen_actions),
+    TickStep("measure_levels", lambda app: _policy(app).enforce_every_s, measure_levels),
+    TickStep("purge_seen_actions", lambda app: _policy(app).purge_every_s, purge_seen_actions),
     # every tick: a report nobody was told of is retried at once
     TickStep("weekly_report", 0, weekly_report),
 ]
@@ -250,7 +260,8 @@ def _run_step(ctx: TickContext, step: TickStep) -> str:
     prev, error = None, None
     try:
         prev = store.get_tick_state(step.name)
-        if step.every_s and prev and (ctx.now - prev.last_run_at).total_seconds() < step.every_s:
+        every = step.every_s(ctx.app) if callable(step.every_s) else step.every_s
+        if every and prev and (ctx.now - prev.last_run_at).total_seconds() < every:
             return SKIPPED
         step.fn(ctx)
     except Exception as exc:  # noqa: BLE001 - one step never stops the others

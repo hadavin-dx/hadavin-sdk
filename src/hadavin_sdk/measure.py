@@ -34,7 +34,7 @@ import logging
 import re
 from collections import Counter
 from collections.abc import Callable
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import UTC, date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -70,13 +70,9 @@ ABSTAIN_LABELS = ("abstain_ok", "missed")
 LABELS = PROPOSAL_LABELS + ABSTAIN_LABELS
 BASELINE_FILE = "baseline.yaml"
 PROMOTIONS_DIR = "promotions"
-WRONG_WINDOW = timedelta(days=14)
-WRONG_LIMIT = 3
-HELD_MAPS_MAX_DAYS = (
-    400  # redaction maps of held runs are purged at this age whatever the hold (kernel 6.3)
+WRONGS_KIND = (
+    "wrongs"  # the reason prefix of a recent-wrongs demotion; the numbers behind it are in `Policy`
 )
-LATE_START_S = 600
-IST = timezone(timedelta(hours=5, minutes=30))
 _ALIASES = {
     "should_have_answered": "missed"
 }  # the abstain button's value before K6 built its parser
@@ -87,16 +83,112 @@ _PLACEHOLDER = re.compile(r"<[^>]*>")
 
 @dataclass(frozen=True)
 class Thresholds:
-    """Promotion shadow -> suggest, per (agent, action) (kernel 6.1; the owner confirms the numbers)."""
+    """Promotion shadow -> suggest, per (agent, action) (kernel 6.1). Built from the `Policy`."""
 
-    min_labelled: int = 30
-    min_agree: float = 0.70
-    max_wrong_harmful: int = 1
-    harmful_window_days: int = 28
-    min_coverage: float = 0.80
+    min_labelled: int
+    min_agree: float
+    max_wrong_harmful: int
+    harmful_window_days: int
+    min_coverage: float
 
 
-DEFAULTS = Thresholds()
+@dataclass(frozen=True)
+class Policy:
+    """Every number of the measurement that is policy, in ONE place, with its documented default. A client signs
+    these with the rest of ``baseline.yaml`` (an optional ``policy:`` mapping; omit a key to take the default; an
+    unknown key or an out-of-range value refuses to start). The code reads nothing else: no number below appears
+    anywhere else in the measurement."""
+
+    # promotion shadow -> suggest (kernel 6.1; the owner confirms the numbers per engagement)
+    promotion_min_labelled: int = 30
+    promotion_min_agree: float = 0.70
+    promotion_max_wrong_harmful: int = 1
+    promotion_harmful_window_days: int = 28
+    promotion_min_coverage: float = 0.80
+    # automatic demotion: this many `wrong` runs inside this many days (a harmful label always demotes at once)
+    wrong_limit: int = 3
+    wrong_window_days: int = 14
+    # redaction maps of held runs are purged at this age whatever the hold (kernel 6.3; the ceiling is 400)
+    held_maps_max_days: int = 400
+    # an event started later than this after it was received counts as late in the backlog lines of the report
+    late_start_s: int = 600
+    # how the report shows local time beside UTC (studio convention: UTC and IST)
+    report_local_offset_minutes: int = 330
+    report_local_label: str = "IST"
+    # tick cadence: the demotion/ceiling re-check and the click-nonce purge
+    enforce_every_s: int = 300
+    purge_every_s: int = 300
+    # how long a click nonce is kept; at least twice the signature window (the window itself is the channel
+    # protocol's, `approvals.hmac_v0.MAX_AGE_S`, not policy)
+    seen_actions_keep_s: int = 600
+
+    def thresholds(self) -> Thresholds:
+        return Thresholds(
+            self.promotion_min_labelled,
+            self.promotion_min_agree,
+            self.promotion_max_wrong_harmful,
+            self.promotion_harmful_window_days,
+            self.promotion_min_coverage,
+        )
+
+    @property
+    def wrong_window(self) -> timedelta:
+        return timedelta(days=self.wrong_window_days)
+
+    @property
+    def local_tz(self) -> timezone:
+        return timezone(timedelta(minutes=self.report_local_offset_minutes))
+
+
+DEFAULT_POLICY = Policy()
+DEFAULTS = DEFAULT_POLICY.thresholds()
+
+
+def _policy_from(raw: Any) -> Policy:
+    """Validate a ``policy:`` mapping from baseline.yaml. Strict: unknown keys, wrong types and out-of-range
+    numbers are all refused, naming the key."""
+    from hadavin_sdk.approvals.hmac_v0 import MAX_AGE_S
+
+    if raw is None:
+        return DEFAULT_POLICY
+    if not isinstance(raw, dict):
+        raise ConfigError(f"{BASELINE_FILE}: `policy` must be a mapping")
+    fields = Policy.__dataclass_fields__
+    if unknown := sorted(set(raw) - set(fields)):
+        raise ConfigError(f"{BASELINE_FILE}: policy has unknown keys: {', '.join(unknown)}")
+    default = DEFAULT_POLICY
+    out: dict[str, Any] = {}
+    for key, value in raw.items():
+        want = type(getattr(default, key))
+        ok = isinstance(value, want) and not isinstance(value, bool)
+        if want is float:
+            ok = isinstance(value, int | float) and not isinstance(value, bool)
+        if not ok:
+            raise ConfigError(f"{BASELINE_FILE}: policy.{key} must be a {want.__name__}")
+        out[key] = float(value) if want is float else value
+    p = replace(default, **out)
+    bounds = {
+        "promotion_min_labelled": (1, 10**6),
+        "promotion_max_wrong_harmful": (0, 10**6),
+        "promotion_harmful_window_days": (1, 3650),
+        "wrong_limit": (1, 1000),
+        "wrong_window_days": (1, 3650),
+        "held_maps_max_days": (1, 400),
+        "late_start_s": (1, 10**6),
+        "report_local_offset_minutes": (-720, 840),
+        "enforce_every_s": (0, 86400),
+        "purge_every_s": (0, 86400),
+        "seen_actions_keep_s": (2 * MAX_AGE_S, 10**7),
+    }
+    for key, (low, high) in bounds.items():
+        if not low <= getattr(p, key) <= high:
+            raise ConfigError(f"{BASELINE_FILE}: policy.{key} must be between {low} and {high}")
+    for key in ("promotion_min_agree", "promotion_min_coverage"):
+        if not 0 < getattr(p, key) <= 1:
+            raise ConfigError(f"{BASELINE_FILE}: policy.{key} must be above 0 and at most 1")
+    if not re.fullmatch(r"[A-Za-z0-9+:_-]{1,12}", p.report_local_label):
+        raise ConfigError(f"{BASELINE_FILE}: policy.report_local_label must be a short plain label")
+    return p
 
 
 # --- parsing -----------------------------------------------------------------------------------------------
@@ -172,8 +264,7 @@ _CEILING_HELP = (
 )
 
 
-def load_baseline(root: Path) -> Ceiling:
-    """``baseline.yaml`` ``ceiling`` (K0). Required: the pilot tooling refuses to start without a filled one."""
+def _read_baseline(root: Path) -> dict:
     path = Path(root) / BASELINE_FILE
     if not path.is_file():
         raise ConfigError(f"{BASELINE_FILE} is required in pilot and prod: {path} does not exist")
@@ -183,7 +274,21 @@ def load_baseline(root: Path) -> Ceiling:
         data = load_yaml(path.read_text(encoding="utf-8")) or {}
     except Exception as exc:  # noqa: BLE001 - any parse failure is a refusal, naming the class only
         raise ConfigError(f"{BASELINE_FILE}: cannot be read ({type(exc).__name__})") from None
-    raw = data.get("ceiling") if isinstance(data, dict) else None
+    return data if isinstance(data, dict) else {}
+
+
+def load_policy(root: Path) -> Policy:
+    """The optional ``policy:`` mapping of baseline.yaml; the documented defaults when there is none (or no file:
+    dev without a baseline)."""
+    if not (Path(root) / BASELINE_FILE).is_file():
+        return DEFAULT_POLICY
+    return _policy_from(_read_baseline(root).get("policy"))
+
+
+def load_baseline(root: Path) -> Ceiling:
+    """``baseline.yaml`` ``ceiling`` (K0). Required: the pilot tooling refuses to start without a filled one."""
+    data = _read_baseline(root)
+    raw = data.get("ceiling")
     if not isinstance(raw, dict):
         raise ConfigError(f"{BASELINE_FILE}: `ceiling` is required. {_CEILING_HELP}")
     for key in ("metric", "max", "window_days", "source"):
@@ -414,12 +519,13 @@ class Measure:
         ceiling: Ceiling | None = None,
         clock: Callable[[], datetime] = now,
         has_evidence: Callable[[str], bool] | None = None,
-        thresholds: Thresholds = DEFAULTS,
+        policy: Policy = DEFAULT_POLICY,
         limits: Limits | None = None,
     ) -> None:
         self.limits = limits  # for the signed stop / reset; None: those clicks are ignored
         self.store, self.audit, self.registry, self.channel = store, audit, registry, channel
-        self.ceiling, self.clock, self.th = ceiling, clock, thresholds
+        self.ceiling, self.clock, self.policy = ceiling, clock, policy
+        self.th = policy.thresholds()
         self._has_evidence = has_evidence
 
     # --- who and what --------------------------------------------------------------------------------------
@@ -498,7 +604,7 @@ class Measure:
         unapproved csv row says wrong (that label is not evidence, but an unapproved "agree" must not hide it:
         the safe direction). After an owner's clear these still count: a pattern of recent wrongs is not erased by
         a clear, so one new wrong re-demotes at once while two older ones remain in the window."""
-        since = self.clock() - WRONG_WINDOW
+        since = self.clock() - self.policy.wrong_window
         labels = self.store.list_labels_for(agent_id, action_id, since)
         if extra is not None:
             labels = [*labels, extra]
@@ -515,7 +621,7 @@ class Measure:
     def _wrong_episode(self, agent_id: str, action_id: str, extra: Label | None) -> str | None:
         """The key of a "3 wrong in 14 days" episode (the newest wrong label's id), or None."""
         wrongs = self._recent_wrongs(agent_id, action_id, extra)
-        return wrongs[-1].label_id if len(wrongs) >= WRONG_LIMIT else None
+        return wrongs[-1].label_id if len(wrongs) >= self.policy.wrong_limit else None
 
     def _pair_events(self, agent_id: str, action_id: str) -> list[LevelEvent]:
         return [
@@ -540,7 +646,7 @@ class Measure:
         if label.label == "harmful":
             kind, reason = "harmful", f"harmful:{_verdict_key(label.label_id)}"
         elif label.label == "wrong" and (key := self._wrong_episode(agent_id, action_id, label)):
-            kind, reason = f"wrong_x{WRONG_LIMIT}", f"wrong_x{WRONG_LIMIT}:{key}"
+            kind, reason = WRONGS_KIND, f"{WRONGS_KIND}:{key}"
         else:
             return None
         if self._has_event(agent_id, action_id, reason) or self._uncleared(
@@ -695,9 +801,10 @@ class Measure:
             wrongs = self._recent_wrongs(agent_id, action_id, None)
         except Exception:  # noqa: BLE001 - a note is never worth a failure
             return None
-        if len(wrongs) < WRONG_LIMIT - 1:
+        need = self.policy.wrong_limit - 1  # older wrongs that, with one new one, re-demote
+        if need < 1 or len(wrongs) < need:
             return None
-        until = wrongs[-(WRONG_LIMIT - 1)].created_at + WRONG_WINDOW
+        until = wrongs[-need].created_at + self.policy.wrong_window
         return (
             f"Recent wrongs still count until {until:%Y-%m-%d} UTC: clearing this does not erase them, so one "
             "new wrong before then demotes it again."
@@ -753,12 +860,8 @@ class Measure:
     def purge_seen(self, at: datetime | None = None) -> int:
         """Delete click nonces older than twice the signature window: they can never be replayed (the signature
         itself would be refused), and the table would otherwise grow forever. Also gives back a stuck claim."""
-        from hadavin_sdk.approvals.hmac_v0 import (
-            MAX_AGE_S,
-        )  # lazy: the approvals package imports the registry
-
         at = at or self.clock()
-        return self.store.purge_actions(at - timedelta(seconds=2 * MAX_AGE_S))
+        return self.store.purge_actions(at - timedelta(seconds=self.policy.seen_actions_keep_s))
 
     def approve_import(self, principal_id: str, import_id: str) -> tuple[int, str]:
         """A line owner approves a pending csv import (a signed click). Nobody approves their own import. The rows
@@ -1047,8 +1150,8 @@ class Measure:
         wanted: list[LevelEvent] = []
         for agent_id, action_id in self._pairs():
             key = self._wrong_episode(agent_id, action_id, None)
-            reason = f"wrong_x{WRONG_LIMIT}:{key}"
-            if key and not self._uncleared(agent_id, action_id, f"wrong_x{WRONG_LIMIT}"):
+            reason = f"{WRONGS_KIND}:{key}"
+            if key and not self._uncleared(agent_id, action_id, WRONGS_KIND):
                 wanted.append(self._level(agent_id, action_id, reason, at))
         status = self.ceiling_status(at)
         ceiling_events: list[LevelEvent] = []
@@ -1252,12 +1355,12 @@ class Measure:
         end = start + timedelta(days=7)
         pw, prev = self.store.pilot_week(week), self.store.pilot_week(week - timedelta(days=7))
         aw = self.store.approval_week(week)
-        ist = at.astimezone(IST)
+        local = at.astimezone(self.policy.local_tz)
         out = [
             f"# Pilot report: week of {week.isoformat()} (Monday, UTC)",
             "",
             (
-                f"Generated {at.astimezone(UTC):%Y-%m-%d %H:%M} UTC / {ist:%Y-%m-%d %H:%M} IST. Every number is counted "
+                f"Generated {at.astimezone(UTC):%Y-%m-%d %H:%M} UTC / {local:%Y-%m-%d %H:%M} {self.policy.report_local_label}. Every number is counted "
                 "from the client's own runs and labels; a week with no labels says so."
             ),
             "",
@@ -1382,7 +1485,7 @@ class Measure:
                 made = self.store.get_run(run_id).created_at
                 out.append(
                     f"- {run_id}: redaction map purged by "
-                    f"{(made + timedelta(days=HELD_MAPS_MAX_DAYS)):%Y-%m-%d} (400 days from the run)"
+                    f"{(made + timedelta(days=self.policy.held_maps_max_days)):%Y-%m-%d} ({self.policy.held_maps_max_days} days from the run)"
                 )
             except Exception:  # noqa: BLE001
                 out.append(f"- {run_id}")
@@ -1420,7 +1523,9 @@ class Measure:
         if age is not None:
             out.append(f"- Maximum oldest_received_age_s: {age}.")
         if late is not None:
-            out.append(f"- Events started later than {LATE_START_S // 60} minutes: {late}.")
+            out.append(
+                f"- Events started later than {self.policy.late_start_s // 60} minutes: {late}."
+            )
         return out
 
 

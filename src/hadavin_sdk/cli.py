@@ -388,7 +388,7 @@ def measure_cmd(app, args) -> int:
         return 0
     from hadavin_sdk.deferred import LIVE
 
-    if getattr(getattr(app, "config", None), "environment", "dev") in LIVE:
+    if getattr(getattr(app, "config", None), "environment", None) in LIVE:
         # --by and --approved-by are asserted names. One operator could type two of them and approve their own
         # labels, so in pilot and prod only a signed channel click counts as a person.
         print(
