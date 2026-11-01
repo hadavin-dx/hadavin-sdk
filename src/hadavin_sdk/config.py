@@ -161,6 +161,8 @@ class K1bSettings(_Strict):
     max_steps: int = Field(default=12, gt=0)  # effective: min with the agent's own max_steps
     max_tool_calls: int = Field(default=20, gt=0)
     case_timeout_s: int = Field(default=300, gt=0)
+    # Mask client data before the model sees it. Turning it off needs `replay --i-know-data-is-already-masked`.
+    redact: bool = True
 
 
 class Settings(BaseSettings):

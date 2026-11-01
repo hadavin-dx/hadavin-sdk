@@ -278,3 +278,13 @@ def test_score_refuses_a_run_json_whose_issue_cases_disagree_with_the_files(cfg_
     meta["issue_cases"]["unreadable"] = []
     path.write_text(json.dumps(meta), encoding="utf-8")
     assert _score(cfg_dir, export) == 2
+
+
+def test_cli_refuses_redact_false_without_the_flag_and_records_it_with(cfg_dir, export, capsys):
+    p = cfg_dir / "config.yaml"
+    p.write_text(p.read_text(encoding="utf-8") + "\nk1b:\n  redact: false\n", encoding="utf-8")
+    assert _replay(cfg_dir, export) == 2
+    assert "already masked" in capsys.readouterr().err and not export["out"].exists()
+    assert _replay(cfg_dir, export, "--i-know-data-is-already-masked") == 0
+    run = json.loads((export["out"] / "run1" / "run.json").read_text(encoding="utf-8"))
+    assert run["redaction"]["mode"] == "off_acknowledged"
