@@ -211,23 +211,58 @@ class MemoryStore:
             )
             return self._spend.get((agent_id, day), Decimal(0)), month
 
+    def _month_total(self, agent_id: str, day: date) -> Decimal:
+        return sum(
+            (
+                v
+                for (a, d), v in self._spend.items()
+                if a == agent_id and (d.year, d.month) == (day.year, day.month)
+            ),
+            Decimal(0),
+        )
+
     def reserve_spend(
-        self, agent_id: str, day: date, usd: Decimal, daily_cap: Decimal, monthly_cap: Decimal
-    ) -> bool:
-        with self._lock:  # one lock for the check and the add
-            d = self._spend.get((agent_id, day), Decimal(0))
-            m = sum(
-                (
-                    v
-                    for (a, dd), v in self._spend.items()
-                    if a == agent_id and (dd.year, dd.month) == (day.year, day.month)
-                ),
-                Decimal(0),
-            )
-            if d + usd > daily_cap or m + usd > monthly_cap:
-                return False
-            self._spend[(agent_id, day)] = d + usd
-            return True
+        self,
+        agent_id: str,
+        day: date,
+        usd: Decimal,
+        daily_cap: Decimal,
+        monthly_cap: Decimal,
+        *,
+        run_key: str | None = None,
+        run_day: date | None = None,
+        run_cap: Decimal | None = None,
+    ) -> list[str]:
+        with self._lock:  # the switch, every check and every booking under one lock
+            if self._kill.on:
+                return ["kill_switch"]
+            reasons = []
+            if run_key is not None and run_cap is not None:
+                r = self._spend.get((run_key, run_day or day), Decimal(0))
+                if r + usd > run_cap:
+                    reasons.append("run_budget")
+            if self._spend.get((agent_id, day), Decimal(0)) + usd > daily_cap:
+                reasons.append("daily_budget")
+            if self._month_total(agent_id, day) + usd > monthly_cap:
+                reasons.append("monthly_budget")
+            if reasons:
+                return reasons
+            self._spend[(agent_id, day)] += usd
+            if run_key is not None and run_cap is not None:
+                self._spend[(run_key, run_day or day)] += usd
+            return []
+
+    def settle_spend(self, deltas: list[tuple[str, date, Decimal]]) -> None:
+        with self._lock:
+            for agent_id, day, delta in deltas:
+                self._spend[(agent_id, day)] += delta
+
+    def prune_spend(self, prefix: str, before: date) -> int:
+        with self._lock:
+            gone = [k for k in self._spend if k[0].startswith(prefix) and k[1] < before]
+            for k in gone:
+                del self._spend[k]
+            return len(gone)
 
     def get_kill_switch(self) -> KillSwitch:
         with self._lock:

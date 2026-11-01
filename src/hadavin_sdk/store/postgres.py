@@ -14,6 +14,7 @@ import logging
 import os
 import tempfile
 import threading
+import time
 from collections.abc import Callable
 from datetime import date, datetime
 from decimal import Decimal
@@ -157,20 +158,25 @@ def build(settings, deps) -> PostgresStore:
         raise ConfigError(
             "store postgres: with iam_auth the DSN must not carry a password (the login is an IAM token)"
         )
-    try:
-        conn = connect(
+    root_cert = ca_file(settings, deps.resolve)
+
+    def connector() -> psycopg.Connection:
+        return connect(
             dsn,
             iam_auth=settings.iam_auth,
             region=settings.region,
             sslmode=settings.sslmode,
-            sslrootcert=ca_file(settings, deps.resolve),
+            sslrootcert=root_cert,
         )
+
+    try:
+        conn = connector()
     except psycopg.OperationalError as exc:
         # The class only: driver messages can carry the host and user.
         raise StoreUnavailable(
             f"store postgres: cannot connect ({exc.__class__.__name__})"
         ) from None
-    return PostgresStore(conn)
+    return PostgresStore(conn, connector)
 
 
 def _row(model: BaseModel) -> dict[str, Any]:
@@ -190,8 +196,16 @@ def _row(model: BaseModel) -> dict[str, Any]:
 class PostgresStore:
     # ponytail: one connection behind one lock per process; a pool (psycopg_pool) when throughput matters.
     # A dropped connection fails the call (the run ends safely); reconnect-on-error arrives with S11 hosting.
-    def __init__(self, conn: psycopg.Connection) -> None:
+    # Spend reservations wait on row locks, so they use a connection of their own (``connector``) and never hold
+    # the process lock while waiting; without a connector (a test wrapping one connection) they share ``conn``.
+    LOCK_TIMEOUT_MS = 5000
+    RESERVE_ATTEMPTS = 3
+
+    def __init__(
+        self, conn: psycopg.Connection, connector: Callable[[], psycopg.Connection] | None = None
+    ) -> None:
         self._db = conn
+        self._connector = connector
         self._lock = threading.Lock()
 
     # --- generic helpers ---------------------------------------------------------------------------------
@@ -439,41 +453,148 @@ class PostgresStore:
             ).fetchone()
         return (Decimal(d["usd"]) if d else Decimal(0)), (Decimal(m["usd"]) if m else Decimal(0))
 
+    def _spend_tx(self, work: Callable[[psycopg.Connection], Any]) -> Any:
+        """Run ``work`` in one transaction with a bounded lock wait, retrying a serialization failure, a deadlock
+        or a lock timeout a few times; then fail closed with StoreUnavailable (the caller does not proceed)."""
+        last: Exception | None = None
+        for attempt in range(self.RESERVE_ATTEMPTS):
+            own = self._connector() if self._connector else None
+            conn = own or self._db
+            try:
+                if own is None:
+                    self._lock.acquire()
+                try:
+                    with conn.transaction():
+                        conn.execute(
+                            "SELECT set_config('lock_timeout', %s, true)",
+                            (f"{int(self.LOCK_TIMEOUT_MS)}ms",),
+                        )
+                        return work(conn)
+                finally:
+                    if own is None:
+                        self._lock.release()
+            except (
+                psycopg.errors.SerializationFailure,
+                psycopg.errors.DeadlockDetected,
+                psycopg.errors.LockNotAvailable,
+            ) as exc:
+                last = exc
+                time.sleep(0.02 * (attempt + 1))
+            finally:
+                if own is not None:
+                    own.close()
+        raise StoreUnavailable(
+            f"store postgres: spend counters busy ({type(last).__name__}) after "
+            f"{self.RESERVE_ATTEMPTS} attempts"
+        ) from None
+
+    @staticmethod
+    def _locked_total(
+        conn: psycopg.Connection, table: str, col: str, agent_id: str, key
+    ) -> Decimal:
+        """Create the counter row at zero if absent, lock it (FOR UPDATE) and return its total. ``table`` and
+        ``col`` are fixed names from this module."""
+        conn.execute(
+            sql.SQL(
+                "INSERT INTO {t} (agent_id, {c}, usd) VALUES (%s, %s, 0) ON CONFLICT DO NOTHING"
+            ).format(t=sql.Identifier(table), c=sql.Identifier(col)),
+            (agent_id, key),
+        )
+        row = (
+            conn.cursor(row_factory=dict_row)
+            .execute(
+                sql.SQL("SELECT usd FROM {t} WHERE agent_id = %s AND {c} = %s FOR UPDATE").format(
+                    t=sql.Identifier(table), c=sql.Identifier(col)
+                ),
+                (agent_id, key),
+            )
+            .fetchone()
+        )
+        return Decimal(row["usd"])
+
     def reserve_spend(
-        self, agent_id: str, day: date, usd: Decimal, daily_cap: Decimal, monthly_cap: Decimal
-    ) -> bool:
-        """Check and add in one transaction. Both counter rows are created at zero, then locked (FOR UPDATE, day
-        before month, the order ``add_spend`` takes them), so a second connection waits for the first and then
-        sees its total: the caps hold across processes."""
+        self,
+        agent_id: str,
+        day: date,
+        usd: Decimal,
+        daily_cap: Decimal,
+        monthly_cap: Decimal,
+        *,
+        run_key: str | None = None,
+        run_day: date | None = None,
+        run_cap: Decimal | None = None,
+    ) -> list[str]:
+        """One transaction: lock the run, day and month counters (run first, then day before month, the order
+        every writer takes them), then read the kill switch, decide, and book all or nothing. A concurrent
+        reserver waits on the row lock and then sees this total, so the caps hold across processes."""
         month = day.replace(day=1)
-        with self._lock, self._db.transaction():
-            self._exec(
-                "INSERT INTO spend (agent_id, day, usd) VALUES (%s, %s, 0) ON CONFLICT DO NOTHING",
-                (agent_id, day),
+        use_run = run_key is not None and run_cap is not None
+        rday = run_day or day
+
+        def work(conn: psycopg.Connection) -> list[str]:
+            r = Decimal(0)
+            if use_run:
+                r = self._locked_total(conn, "spend", "day", run_key, rday)
+                self._locked_total(conn, "spend_month", "month", run_key, rday.replace(day=1))
+            d = self._locked_total(conn, "spend", "day", agent_id, day)
+            m = self._locked_total(conn, "spend_month", "month", agent_id, month)
+            ks = (
+                conn.cursor(row_factory=dict_row)
+                .execute('SELECT "on" FROM kill_switch WHERE id = 1')
+                .fetchone()
             )
-            self._exec(
-                "INSERT INTO spend_month (agent_id, month, usd) VALUES (%s, %s, 0) "
-                "ON CONFLICT DO NOTHING",
-                (agent_id, month),
+            if (
+                ks is None or ks["on"]
+            ):  # a missing row is ON (fail closed), as get_kill_switch reads it
+                return ["kill_switch"]
+            reasons = []
+            if use_run and r + usd > run_cap:
+                reasons.append("run_budget")
+            if d + usd > daily_cap:
+                reasons.append("daily_budget")
+            if m + usd > monthly_cap:
+                reasons.append("monthly_budget")
+            if reasons:
+                return reasons
+            self._add(conn, agent_id, day, usd)
+            if use_run:
+                self._add(conn, run_key, rday, usd)
+            return []
+
+        return self._spend_tx(work)
+
+    @staticmethod
+    def _add(conn: psycopg.Connection, agent_id: str, day: date, usd: Decimal) -> None:
+        conn.execute(
+            "INSERT INTO spend (agent_id, day, usd) VALUES (%s, %s, %s) "
+            "ON CONFLICT (agent_id, day) DO UPDATE SET usd = spend.usd + EXCLUDED.usd",
+            (agent_id, day, usd),
+        )
+        conn.execute(
+            "INSERT INTO spend_month (agent_id, month, usd) VALUES (%s, %s, %s) "
+            "ON CONFLICT (agent_id, month) DO UPDATE SET usd = spend_month.usd + EXCLUDED.usd",
+            (agent_id, day.replace(day=1), usd),
+        )
+
+    def settle_spend(self, deltas: list[tuple[str, date, Decimal]]) -> None:
+        def work(conn: psycopg.Connection) -> None:
+            for agent_id, day, delta in sorted(deltas, key=lambda t: (t[0], t[1])):
+                self._add(conn, agent_id, day, delta)
+
+        self._spend_tx(work)
+
+    def prune_spend(self, prefix: str, before: date) -> int:
+        def work(conn: psycopg.Connection) -> int:
+            n = conn.execute(
+                "DELETE FROM spend WHERE starts_with(agent_id, %s) AND day < %s", (prefix, before)
+            ).rowcount
+            conn.execute(
+                "DELETE FROM spend_month WHERE starts_with(agent_id, %s) AND month < %s",
+                (prefix, before.replace(day=1)),
             )
-            d = self._exec(
-                "SELECT usd FROM spend WHERE agent_id = %s AND day = %s FOR UPDATE", (agent_id, day)
-            ).fetchone()["usd"]
-            m = self._exec(
-                "SELECT usd FROM spend_month WHERE agent_id = %s AND month = %s FOR UPDATE",
-                (agent_id, month),
-            ).fetchone()["usd"]
-            if Decimal(d) + usd > daily_cap or Decimal(m) + usd > monthly_cap:
-                return False
-            self._exec(
-                "UPDATE spend SET usd = usd + %s WHERE agent_id = %s AND day = %s",
-                (usd, agent_id, day),
-            )
-            self._exec(
-                "UPDATE spend_month SET usd = usd + %s WHERE agent_id = %s AND month = %s",
-                (usd, agent_id, month),
-            )
-        return True
+            return n
+
+        return self._spend_tx(work)
 
     def get_kill_switch(self) -> KillSwitch:
         found = self._select(KillSwitch, "kill_switch", "id = 1", ())

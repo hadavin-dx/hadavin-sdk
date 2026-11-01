@@ -51,6 +51,9 @@ class Route(_Strict):
     input_usd_per_mtok: Money
     output_usd_per_mtok: Money
     max_tokens: int = Field(gt=0)
+    # Bytes of prompt per token assumed when a call's worst-case cost is reserved (limits.worst_case_usd). 1 is a
+    # true upper bound for byte-level tokenizers; raise it only after measuring the model's tokenizer.
+    prompt_bytes_per_token: Decimal = Field(default=Decimal(1), gt=0, allow_inf_nan=False)
 
 
 class Backends(_Strict):

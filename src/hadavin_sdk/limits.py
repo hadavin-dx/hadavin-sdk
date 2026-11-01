@@ -13,31 +13,64 @@ Two ways to spend, both kept:
 
 from __future__ import annotations
 
+import json
 import threading
 from dataclasses import dataclass
-from datetime import date
-from decimal import Decimal
+from datetime import date, timedelta
+from decimal import ROUND_CEILING, Decimal
+from typing import Any
 
 from hadavin_sdk.audit.protocol import AuditSink
 from hadavin_sdk.config import Route
-from hadavin_sdk.llm.common import estimate_tokens
 from hadavin_sdk.models import AuditEvent, KillSwitch, now
 from hadavin_sdk.registry import Registry
 from hadavin_sdk.store.protocol import Store
 
-# A run's total lives under a pseudo agent id at one fixed day, so a run that crosses midnight or a month end
-# keeps one counter. ponytail: one small row pair per run; prune old `run:` rows if the table ever matters.
-_RUN_DAY = date(1970, 1, 1)
+# A run's total lives under a pseudo agent id, on the day the run started, so a run that crosses midnight or a
+# month end keeps one counter and an expired one can be pruned by age (``Limits.prune_runs``).
 _RUN_PREFIX = "run:"
 _M = Decimal(1_000_000)
+_RUN_RETENTION_DAYS = 7
 
 
-def worst_case_usd(route: Route, prompt_chars: int) -> Decimal:
-    """What one call can cost at most: the input estimate (pessimistic 3 characters a token) at the input rate
-    plus ``max_tokens`` at the output rate."""
+def _money(usd: object, what: str) -> Decimal:
+    """A finite, non-negative Decimal, or ValueError (NaN, Infinity and negatives would corrupt a counter)."""
+    if not isinstance(usd, Decimal) or not usd.is_finite() or usd < 0:
+        raise ValueError(f"{what} must be a finite, non-negative Decimal")
+    return usd
+
+
+def prompt_bytes(
+    messages: list[dict[str, Any]],
+    system: str = "",
+    documents: list[bytes] | None = None,
+    tools: list[dict[str, Any]] | None = None,
+    output_schema: dict[str, Any] | None = None,
+) -> int:
+    """UTF-8 bytes of everything a call sends: messages, system text, tool schemas, the output schema and the
+    documents. A document counts 3 bytes per byte, because the kinds decode it with replacement and each bad byte
+    becomes U+FFFD (3 bytes). Sizes are summed part by part: no giant joined string is built."""
+    size = len(system.encode("utf-8"))
+    size += sum(len(str(m.get("content", "")).encode("utf-8")) + 16 for m in messages)
+    size += sum(3 * len(d) for d in documents or [])
+    for extra in (tools, output_schema):
+        if extra:
+            size += len(json.dumps(extra, default=str).encode("utf-8"))
+    return size
+
+
+def worst_case_usd(route: Route, prompt_size_bytes: int) -> Decimal:
+    """An upper bound of what one call costs: ``max_tokens`` at the output rate, plus the prompt at the input rate
+    assuming at most ``route.prompt_bytes_per_token`` bytes per token. The default of 1 is a true bound for
+    byte-level tokenizers (a token is at least one byte); raise it per route only after measuring that model's
+    tokenizer, as a looser bound lets concurrent calls overshoot. Size the prompt with ``prompt_bytes``."""
+    if prompt_size_bytes < 0:
+        raise ValueError("prompt size must not be negative")
+    tokens = (Decimal(prompt_size_bytes) / route.prompt_bytes_per_token).to_integral_value(
+        ROUND_CEILING
+    )
     return (
-        Decimal(estimate_tokens("x" * prompt_chars)) * route.input_usd_per_mtok
-        + Decimal(route.max_tokens) * route.output_usd_per_mtok
+        tokens * route.input_usd_per_mtok + Decimal(route.max_tokens) * route.output_usd_per_mtok
     ) / _M
 
 
@@ -49,70 +82,94 @@ class OverBudget(RuntimeError):
         self.reasons = reasons
 
 
+class StoreLacksReserve(TypeError):
+    """The store has no ``reserve_spend``/``settle_spend``/``prune_spend`` (a custom store written before R214)."""
+
+
 @dataclass
 class Reservation:
     agent_id: str
     run_id: str | None
     day: date
     usd: Decimal
+    run_day: date | None = None
     settled: bool = False
+    settling: bool = False
 
 
 class Limits:
     def __init__(self, store: Store, audit: AuditSink, registry: Registry) -> None:
+        missing = [
+            m for m in ("reserve_spend", "settle_spend", "prune_spend") if not hasattr(store, m)
+        ]
+        if missing:
+            raise StoreLacksReserve(
+                f"store {type(store).__name__} lacks {', '.join(missing)}: add them (store/protocol.py) "
+                "to use Limits; blocked()+charge() alone cannot hold a cap under concurrency"
+            )
         self.store, self.audit, self.registry = store, audit, registry
         self._settle_lock = threading.Lock()
 
-    def reserve(self, agent_id: str, usd: Decimal, run_id: str | None = None) -> Reservation:
-        """Book ``usd`` (the call's worst case) against the run, daily and monthly caps in one atomic step each
-        and return the reservation, or raise ``OverBudget`` having booked nothing. Needs the kill switch off."""
-        if usd < 0:
-            raise ValueError("negative reservation")
-        if self.store.get_kill_switch().on:
-            raise OverBudget(["kill_switch"])
+    def reserve(
+        self, agent_id: str, usd: Decimal, run_id: str | None = None, run_day: date | None = None
+    ) -> Reservation:
+        """Book ``usd`` (the call's worst case) against the kill switch, run, daily and monthly caps in ONE atomic
+        store step and return the reservation, or raise ``OverBudget`` having booked nothing. ``run_day`` is the
+        day the run started (default today)."""
+        _money(usd, "reservation")
         agent = self.registry.agents[agent_id]
         day = now().date()
         run_key = _RUN_PREFIX + run_id if run_id and agent.max_run_usd is not None else None
-        if run_key and not self.store.reserve_spend(
-            run_key, _RUN_DAY, usd, agent.max_run_usd, agent.max_run_usd
-        ):
-            raise OverBudget(["run_budget"])
+        run_day = (run_day or day) if run_key else None
         budget = agent.budget_usd
-        if not self.store.reserve_spend(agent_id, day, usd, budget.daily, budget.monthly):
-            if run_key:  # give the run's share back
-                self.store.add_spend(run_key, _RUN_DAY, -usd)
-            d, m = self.store.spend_totals(agent_id, day)
-            reasons = [
-                r
-                for r, over in (
-                    ("daily_budget", d + usd > budget.daily),
-                    ("monthly_budget", m + usd > budget.monthly),
-                )
-                if over
-            ]
-            raise OverBudget(reasons or ["daily_budget"])
-        return Reservation(agent_id, run_id if run_key else None, day, usd)
+        reasons = self.store.reserve_spend(
+            agent_id,
+            day,
+            usd,
+            budget.daily,
+            budget.monthly,
+            run_key=run_key,
+            run_day=run_day,
+            run_cap=agent.max_run_usd,
+        )
+        if reasons:
+            raise OverBudget(reasons)
+        return Reservation(agent_id, run_id if run_key else None, day, usd, run_day)
 
     def settle(self, res: Reservation, actual: Decimal) -> None:
-        """Replace the reservation with what the call really cost (a cost above the reservation is recorded, not
-        refused; ``actual=0`` releases it after a call that was never billed). Once per reservation."""
-        if actual < 0:
-            raise ValueError("negative cost")
+        """Replace the reservation with what the call really cost, in one atomic store step (a cost above the
+        reservation is recorded, not refused; ``actual=0`` releases it after a call that was never billed). Once
+        per reservation: it counts as settled only after the store accepted it, so a failed settle can be retried
+        and the real cost is never lost."""
+        _money(actual, "cost")
         with self._settle_lock:
-            if res.settled:
+            if res.settled or res.settling:
                 raise ValueError("reservation already settled")
-            res.settled = True
+            res.settling = True
         delta = actual - res.usd
-        if delta == 0:
-            return
-        self.store.add_spend(res.agent_id, res.day, delta)
-        if res.run_id:
-            self.store.add_spend(_RUN_PREFIX + res.run_id, _RUN_DAY, delta)
+        try:
+            if delta != 0:
+                items = [(res.agent_id, res.day, delta)]
+                if res.run_id:
+                    items.append((_RUN_PREFIX + res.run_id, res.run_day or res.day, delta))
+                self.store.settle_spend(items)
+        except BaseException:
+            with self._settle_lock:
+                res.settling = False
+            raise
+        with self._settle_lock:
+            res.settled, res.settling = True, False
 
     def release(self, res: Reservation) -> None:
         self.settle(res, Decimal(0))
 
+    def prune_runs(self, keep_days: int = _RUN_RETENTION_DAYS) -> int:
+        """Delete the per-run counters of runs that started more than ``keep_days`` ago (a crashed run leaves
+        its row). Call it at start-up or from the tick."""
+        return self.store.prune_spend(_RUN_PREFIX, now().date() - timedelta(days=keep_days))
+
     def charge(self, agent_id: str, usd: Decimal) -> tuple[Decimal, Decimal]:
+        _money(usd, "charge")
         return self.store.add_spend(agent_id, now().date(), usd)
 
     def blocked(self, agent_id: str) -> list[str]:

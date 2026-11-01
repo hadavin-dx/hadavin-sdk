@@ -257,6 +257,8 @@ class Reply(Shape):
     model_id: str
     stop_reason: str = "end_turn"
     latency_ms: int = 0
+    fallback_used: bool = False  # True: a fallback vendor served this call (llm/resilient.py)
+    served_by: str | None = None  # the fallback backend's label when fallback_used
 
 
 class Verdict(Shape):

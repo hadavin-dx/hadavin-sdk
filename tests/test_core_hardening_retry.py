@@ -156,7 +156,9 @@ def test_spend_limit_trips_and_without_fallback_raises_the_original():
     llm = ResilientLLM(Stub(SpendLimitReached("cap")), None, CircuitBreaker(1, 30.0))
     with pytest.raises(SpendLimitReached):
         llm.chat()
-    with pytest.raises(ProviderExhausted, match="circuit open"):
+    with pytest.raises(
+        SpendLimitReached
+    ):  # open because of the cap: still the cap, not a generic outage
         llm.chat()
 
 

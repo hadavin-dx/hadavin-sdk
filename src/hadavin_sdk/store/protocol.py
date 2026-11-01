@@ -109,11 +109,32 @@ class Store(Protocol):
         ...
 
     def reserve_spend(
-        self, agent_id: str, day: date, usd: Decimal, daily_cap: Decimal, monthly_cap: Decimal
-    ) -> bool:
-        """Atomically (one step, any number of threads or processes): if the day total plus ``usd`` stays within
-        ``daily_cap`` and the month total plus ``usd`` within ``monthly_cap``, add ``usd`` to both and return
-        True; otherwise add nothing and return False. A later ``add_spend`` of a negative delta settles it."""
+        self,
+        agent_id: str,
+        day: date,
+        usd: Decimal,
+        daily_cap: Decimal,
+        monthly_cap: Decimal,
+        *,
+        run_key: str | None = None,
+        run_day: date | None = None,
+        run_cap: Decimal | None = None,
+    ) -> list[str]:
+        """ONE atomic step (any number of threads or processes): if the kill switch is off (a missing row counts
+        as on), the day total plus ``usd`` stays within ``daily_cap``, the month total within ``monthly_cap`` and,
+        when ``run_key`` is given, the run's total (kept under ``run_key`` on ``run_day``) within ``run_cap``, add
+        ``usd`` to all of them and return ``[]``. Otherwise add nothing and return the reasons
+        (``kill_switch``, ``run_budget``, ``daily_budget``, ``monthly_budget``). The check and the booking
+        share one lock or transaction, so a switch flipped before the step always wins."""
+        ...
+
+    def settle_spend(self, deltas: list[tuple[str, date, Decimal]]) -> None:
+        """Apply every ``(agent_id, day, delta)`` (delta may be negative) in ONE atomic step: all or none."""
+        ...
+
+    def prune_spend(self, prefix: str, before: date) -> int:
+        """Delete the counters whose agent id starts with ``prefix`` and whose day is before ``before``;
+        returns the number of day rows removed."""
         ...
 
     def get_kill_switch(self) -> KillSwitch:

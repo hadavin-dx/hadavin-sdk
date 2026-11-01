@@ -12,6 +12,7 @@ import urllib.request
 from collections.abc import Callable
 from dataclasses import dataclass
 from decimal import Decimal
+from itertools import islice
 from typing import Any
 from urllib.parse import urlsplit
 
@@ -95,7 +96,10 @@ def turns(
         texts = [str(m["content"])]
         if docs and m["role"] == "user":
             texts, docs = docs + texts, []
-        out.append((m["role"], texts))
+        if out and out[-1][0] == m["role"]:  # providers want alternating roles: one turn holds both
+            out[-1][1].extend(texts)
+        else:
+            out.append((m["role"], texts))
     return out
 
 
@@ -107,16 +111,90 @@ def schema_hint(system: str, output_schema: dict[str, Any]) -> str:
     )
 
 
+# Model output is untrusted. The stdlib parser recurses on nesting (a deep reply raises RecursionError, which is
+# not a ValueError) and a huge reply costs time and memory, so both are bounded BEFORE parsing.
+MAX_JSON_CHARS = 1_000_000
+MAX_JSON_DEPTH = 64
+_MAX_RESPONSE_CHARS = 16_000_000  # a vendor response (not a model's JSON answer)
+_MAX_CANDIDATES = (
+    50  # `{` positions tried in one text, so a reply full of braces cannot go quadratic
+)
+
+
+class ReplyUnparseable(ValueError):
+    """A model reply too large or too deeply nested to parse safely (treated as an invalid reply)."""
+
+
+def nesting_ok(text: str, start: int = 0, limit: int = MAX_JSON_DEPTH) -> bool:
+    """True if the JSON value starting at ``start`` nests no deeper than ``limit`` (string-aware, linear, stops
+    as soon as the value closes or the limit is passed)."""
+    depth, in_str, esc = 0, False, False
+    for ch in islice(text, start, None):
+        if in_str:
+            if esc:
+                esc = False
+            elif ch == "\\":
+                esc = True
+            elif ch == '"':
+                in_str = False
+        elif ch == '"':
+            in_str = True
+        elif ch in "[{":
+            depth += 1
+            if depth > limit:
+                return False
+        elif ch in "]}":
+            depth -= 1
+            if depth <= 0:
+                return True
+    return True
+
+
+def loads_bounded(text: str, max_chars: int = MAX_JSON_CHARS) -> Any:
+    """``json.loads`` for model output: size and nesting bounded first; ReplyUnparseable (a ValueError) or
+    JSONDecodeError for anything else, never RecursionError."""
+    if len(text) > max_chars or not nesting_ok(text.lstrip()):
+        raise ReplyUnparseable("reply too large or too deeply nested")
+    try:
+        return json.loads(text)
+    except RecursionError as exc:  # belt and braces: the scan above should have refused it
+        raise ReplyUnparseable("reply too deeply nested") from exc
+
+
+def error_body(exc: BaseException) -> dict[str, Any] | None:
+    """The JSON object an HTTP error carried: an SDK error's parsed ``body``, or a urllib ``HTTPError``'s body
+    (read once, at most 64 KiB, size and nesting bounded). Never raises: a classifier must not fail inside the
+    handler of the error it classifies."""
+    try:
+        body = getattr(exc, "body", None)
+        if isinstance(body, dict):
+            return body
+        read = getattr(exc, "read", None)
+        if callable(read):
+            parsed = loads_bounded(read(65536).decode("utf-8", "replace"), 65536)
+            return parsed if isinstance(parsed, dict) else None
+    except Exception:  # noqa: BLE001 - unreadable body means "not a spend limit"
+        return None
+    return None
+
+
 def json_in_text(text: str) -> dict[str, Any] | None:
-    """The first JSON object in a text answer (bare, fenced or after a sentence), or None."""
+    """The first JSON object in a text answer (bare, fenced or after a sentence), or None. Oversized or too
+    deeply nested text yields None, never an exception."""
+    if len(text) > MAX_JSON_CHARS:
+        return None
     start = text.find("{")
-    while start != -1:
-        try:
-            found, _ = json.JSONDecoder().raw_decode(text, start)
-        except ValueError:
-            start = text.find("{", start + 1)
-            continue
-        return found if isinstance(found, dict) else None
+    for _ in range(_MAX_CANDIDATES):
+        if start == -1:
+            return None
+        if nesting_ok(text, start):
+            try:
+                found, _ = json.JSONDecoder().raw_decode(text, start)
+            except (ValueError, RecursionError):
+                pass
+            else:
+                return found if isinstance(found, dict) else None
+        start = text.find("{", start + 1)
     return None
 
 
@@ -275,4 +353,4 @@ def post_json(url: str, body: dict[str, Any], headers: dict[str, str], timeout_s
     )
     opener = _LOCAL_OPENER if urlsplit(url).hostname in _LOOPBACK else _OPENER
     with opener.open(req, timeout=timeout_s) as resp:  # nosec B310
-        return json.loads(resp.read())
+        return loads_bounded(resp.read().decode("utf-8"), _MAX_RESPONSE_CHARS)

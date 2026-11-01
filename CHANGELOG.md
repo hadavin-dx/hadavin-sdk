@@ -12,24 +12,56 @@
   must change.
 - **Spend-cap 429 is never retried (G-05).** The Claude API monthly cap (HTTP 429, `rate_limit_error`,
   `error.details.error_code == "enforced_spend_limit_reached"`, no `retry-after`; platform.claude.com/docs/en/api/rate-limits,
-  read 2026-11-01) is raised after ONE attempt as the new `SpendLimitReached` (a `ProviderError`; map it to
-  `over_budget`). Other 429s (throttles, acceleration limits; the docs say not every 429 has `retry-after`) are
-  still retried with backoff and jitter, `retry-after` as the floor. Each kind supplies its own test through
-  `NetworkLLM.spend_limit`; only `anthropic` has one yet (`openai_compat` `insufficient_quota` and Gemini quota errors
-  are still retried up to `max_attempts`).
-- **New setting `deadline_s`** on every network `backends.llm` kind (optional, > 0): wall clock for one call across all
-  attempts and sleeps. Worst case is `deadline_s` plus one `call_timeout_s`. Default unset = unchanged.
-- **New `llm/resilient.py`**: `ResilientLLM(primary, fallback, CircuitBreaker(failures, reset_after_s))` wraps any `LLM`.
-  Not yet reachable from config (that is a factory change, after PR #42); construct it in code.
-- **Reserve-then-settle budget (G-04, R214).** New `Limits.reserve(agent_id, worst_case_usd, run_id=None)` ->
-  `Reservation`, then `Limits.settle(reservation, actual_usd)` (or `release`). The check and the booking are one
-  atomic step in the store (new `Store.reserve_spend`; in memory under the lock, on Postgres two row-locked counters in
-  one transaction), so parallel callers never book past the daily, monthly or per-run (`max_run_usd`) cap. Helper
-  `worst_case_usd(route, prompt_chars)`. `OverBudget.reasons` uses the `blocked` names plus `run_budget`.
-  **Upgrade step:** `Limits.blocked()` + `Limits.charge()` still work and keep the old check-then-charge race. The
-  runtime (`agent_loop.py`) still uses them; moving it to `reserve`/`settle` waits for PRs #41/#42 to merge. A custom
-  `Store` implementation must add `reserve_spend`. No schema migration (a per-run total is kept as a `run:<run_id>`
-  row at a fixed day).
+  read 2026-11-01) is raised after ONE attempt as the new `SpendLimitReached` (a `ProviderError`; the agent loop ends the
+  run `NEEDS_PERSON` / `over_budget`). Other 429s (throttles; the docs say not every 429 has `retry-after`) are retried
+  with backoff and jitter. Each kind supplies its own test through `NetworkLLM.spend_limit`: `anthropic` (above),
+  `openai_compat` (`error.code`/`error.type == "insufficient_quota"`) and `gemini` (a 429 whose violated quota id contains
+  `PerDay`; written from Google's documented error shape, not run against a live key). `bedrock` has no spend-cap 429
+  (its throttles are rate limits) and `fake` none. Classifiers never raise.
+- **`retry-after` is honoured, with a ceiling (m6).** The wait is the larger of the jitter and the server's ask, up to
+  `RETRY_AFTER_CEILING_S` (60 s); a server asking for more is not retried (`ProviderExhausted`), because retrying sooner
+  than asked is throttled again. Before, the ask was silently cut to 8 s.
+- **`deadline_s` is a real wall-clock bound, on by default (m5).** New default 120 s on every network `backends.llm` kind
+  (set `deadline_s: null` for none). Every attempt runs under the time left; an attempt still running at the end is
+  abandoned (`DeadlineExceeded`, a `ProviderExhausted`). The abandoned request may still finish and be billed, so the agent
+  loop keeps that call's reserved worst case booked. Upgrade: a call that legitimately takes longer than 120 s needs a
+  larger `deadline_s`.
+- **Model JSON is bounded before it is parsed (M3).** Replies over 1,000,000 characters or nested deeper than 64 are
+  an invalid reply (retry, then dead letter), never a `RecursionError` out of `extract()`. Same for the judge, the OpenAI
+  tool-argument parser, `json_in_text` and vendor response bodies (`loads_bounded`, `json_in_text`).
+- **Consecutive same-role messages are merged into one turn on every kind (m12)**, and the `extract()` retry is one user
+  turn: the ask plus the sanitized failure summary (field path and error type, never the reply).
+- **New `llm/resilient.py`**: `ResilientLLM(primary, fallback, CircuitBreaker(...), send_documents_to_fallback=False,
+  fallback_metered=False, on_fallback=hook)`. **Customer data leaves for the fallback vendor**: messages and the system
+  prompt always, documents only with `send_documents_to_fallback=True` (default: a call with documents fails closed with
+  the primary's typed error). A `SpendLimitReached` on the primary is NOT routed to the fallback unless
+  `fallback_metered=True` (its cost is booked against the same `Limits`). Every fallback call is logged, passed to
+  `on_fallback` (wire it to the audit sink; a raising hook stops the call) and marked on the reply (`Reply.fallback_used`,
+  `Reply.served_by`). The breaker ignores outcomes of calls that started before it opened, abandons a probe that has not
+  reported within `probe_timeout_s`, and the wrapper is safe to copy. Not yet reachable from config (factory change after PR #42).
+- **Reserve-then-settle budget (G-04, R214), now used by the runtime.** `Limits.reserve(agent_id, worst_case_usd, run_id,
+  run_day)` -> `Reservation`, then `Limits.settle(reservation, actual_usd)` (or `release`). ONE atomic store step
+  (`Store.reserve_spend`) reads the kill switch and books the run (`max_run_usd`), daily and monthly caps all-or-nothing:
+  in memory under one lock, on Postgres in one transaction on a connection of its own with `lock_timeout` (5 s), a bounded
+  retry on serialization failure / deadlock / lock timeout, then fail closed (`StoreUnavailable`). `settle` is one atomic
+  store step (`Store.settle_spend`), counts as settled only after the store accepted it (a failed settle can be retried),
+  and a second settle or a release after a settle is refused. `Limits.prune_runs()` deletes per-run counters older than 7
+  days (run at `Runtime` start-up). Money inputs must be finite, non-negative `Decimal`s (`ValueError` otherwise; `charge`
+  too).
+- **The agent loop reserves before every model call (M1).** `Runtime` books `worst_case_usd(route, prompt_bytes(...))`
+  (prompt = messages, system, documents, tool schemas; `max_tokens` at the output rate) before `llm.chat`, and settles to
+  the real cost after: concurrent runs cannot overshoot the daily, monthly or per-run cap, and `max_run_usd` is enforced
+  (`NEEDS_PERSON`, `run_budget`). An `llm_judge` screen is reserved and settled the same way. A call is now refused when its
+  WORST case does not fit, so a budget is reached earlier than before (a run that used to be `DENIED limits.daily_budget` at
+  the gate now ends `NEEDS_PERSON limits.daily_budget` before the model). A limits store that cannot answer ends the run
+  `limits.unavailable`.
+  **Upgrade steps:** (1) `worst_case_usd` now takes a prompt size in BYTES (`prompt_bytes(messages, system, documents,
+  tools, output_schema)`), at most `Route.prompt_bytes_per_token` bytes per token (new optional route field, default 1, a
+  true bound for byte-level tokenizers); raise it per route only after measuring the tokenizer. (2) A custom `Store` must add
+  `reserve_spend`, `settle_spend` and `prune_spend` (signatures in `store/protocol.py`); `Limits(...)` now raises
+  `StoreLacksReserve` naming the missing methods instead of failing at the first call. (3) `blocked()` + `charge()` still
+  work but keep the check-then-charge race; the runtime no longer uses `charge` except for a custom paid detector.
+  (4) `Reply` gains `fallback_used` and `served_by`.
 
 ### Upgrade steps
 - **K3 pilot build path (levels, shadow cut-off, fail-closed loading).** Action contracts change shape:

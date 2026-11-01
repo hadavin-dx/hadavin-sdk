@@ -19,7 +19,7 @@ from pathlib import Path
 from typing import Any
 
 from hadavin_sdk.guard.injection import injection_check
-from hadavin_sdk.llm.common import ANSWER_TOOL
+from hadavin_sdk.llm.common import ANSWER_TOOL, loads_bounded
 from hadavin_sdk.models import Verdict
 
 PROMPT = (Path(__file__).parent / "judge_prompt.md").read_text(encoding="utf-8")
@@ -46,8 +46,8 @@ def _answer(reply: Any) -> tuple[bool, float] | None:
         answer = call.input if call.name == ANSWER_TOOL else None
     else:
         try:
-            answer = json.loads(reply.text)
-        except ValueError:
+            answer = loads_bounded(reply.text)
+        except ValueError:  # includes ReplyUnparseable
             return None
     if not isinstance(answer, dict):
         return None

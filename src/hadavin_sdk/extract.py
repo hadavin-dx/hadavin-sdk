@@ -12,7 +12,7 @@ from decimal import Decimal
 
 from pydantic import BaseModel, ValidationError
 
-from hadavin_sdk.llm.common import json_in_text
+from hadavin_sdk.llm.common import json_in_text, loads_bounded
 from hadavin_sdk.llm.protocol import LLM
 from hadavin_sdk.models import DeadLetter, Reply
 
@@ -37,7 +37,7 @@ def _parse(reply: Reply) -> object:
     if reply.tool_calls:
         return reply.tool_calls[0].input
     try:
-        return json.loads(reply.text)
+        return loads_bounded(reply.text)
     except json.JSONDecodeError:
         found = json_in_text(reply.text)  # fenced, or after a sentence (R82)
         if found is None:
@@ -96,12 +96,16 @@ def extract(
         replies.append(reply)
         try:
             return Valid(schema.model_validate(_parse(reply)), replies)
-        except (ValidationError, ValueError) as exc:  # JSONDecodeError is a ValueError
+        except (
+            ValidationError,
+            ValueError,
+            RecursionError,
+        ) as exc:  # JSONDecodeError is a ValueError
             errors.append(f"{exc.__class__.__name__}: {safe_errors(exc, names)}")
             # The model's own invalid reply is not echoed back (it may quote the document, which is attached
             # again on every call): R85's corrective turn carries the error only.
+            # One user turn (some providers reject two in a row): the ask, then the sanitized failure summary.
             messages = [
-                {"role": "user", "content": _ASK},
-                {"role": "user", "content": _RETRY.format(errors=errors[-1])},
+                {"role": "user", "content": f"{_ASK}\n\n{_RETRY.format(errors=errors[-1])}"}
             ]
     return DeadLetter(run_id=run_id, reason="extract_invalid", errors=errors)

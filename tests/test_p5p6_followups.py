@@ -96,6 +96,12 @@ def test_no_judge_runs_on_tool_output_once_the_reply_spent_the_budget(cfg_dir):
     agents = yaml.safe_load(path.read_text(encoding="utf-8"))
     agents[0]["tools_allowed"] = ["echo"]
     path.write_text(yaml.safe_dump(agents), encoding="utf-8")
+    _edit_cfg = (
+        cfg_dir / "config.yaml"
+    )  # the judge's route must exist in the config, as it does in a real one
+    _cfg = yaml.safe_load(_edit_cfg.read_text(encoding="utf-8"))
+    _cfg["routes"]["screen"] = dict(_cfg["routes"]["default"], max_tokens=64)
+    _edit_cfg.write_text(yaml.safe_dump(_cfg), encoding="utf-8")
     rt, cfg = build(cfg_dir, hooks=Hooks(tools={"echo": lambda inp: "tool says hi"}))
     model = JudgeModel()
     rt.detector = AnyOf([RegexDetector(0.5), judge(model)])
