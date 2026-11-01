@@ -267,3 +267,57 @@ def test_result_hash_ignores_row_order_unless_ordered():
     assert gc.result_hash(rows, None, ordered=True) != gc.result_hash(
         rows[::-1], None, ordered=True
     )
+
+
+@pytest.mark.parametrize(
+    "mutate",
+    [
+        lambda rows: next(r for r in rows if r["id"] == "T07").update(
+            gold_sql="SELECT 1 FROM analytics.orders_v"
+        ),
+        lambda rows: next(r for r in rows if r["id"] == "T07").update(tier="dev"),
+        lambda rows: rows.append({**rows[-1], "id": "T41"}),
+    ],
+)
+def test_other_sealed_mutations_are_caught(tmp_path, mutate):
+    root = _copy_data(tmp_path)
+    _rewrite(root / "gold.jsonl", mutate)
+    assert gc.validate_all(root)
+
+
+def test_changing_the_dataset_contract_after_freeze_is_caught(tmp_path):
+    root = _copy_data(tmp_path)
+    path = root / "dataset_contract.json"
+    contract = json.loads(path.read_text(encoding="utf-8"))
+    contract["plants"]["ORD-NOTE-1"]["pk"] = 999
+    path.write_text(json.dumps(contract), encoding="utf-8")
+    assert any("contract_sha256" in p for p in gc.validate_all(root))
+
+
+def test_no_sealed_sql_equals_a_dev_or_exemplar_sql(data):
+    def sqls(tier):
+        return {gc._norm_sql(s) for g in data["gold"] if g["tier"] == tier for _, s in gc._sqls(g)}
+
+    assert not sqls("dev") & sqls("test")
+    assert not {gc._norm_sql(e["sql"]) for e in data["exemplars"]} & sqls("test")
+
+
+def test_dev_and_sealed_adversarial_items_share_no_question_and_few_plants(data):
+    sealed, dev = data["adversarial"], data["adversarial_dev"]
+    for d in dev:
+        for s in sealed:
+            assert gc.jaccard(d["question"], s["question"]) < 0.8, (d["id"], s["id"])
+    pairs = {
+        (tuple(d["plant_ids"]), tuple(s["plant_ids"]))
+        for d in dev
+        for s in sealed
+        if d["plant_ids"]
+    }
+    assert all(
+        dp != sp for dp, sp in pairs
+    )  # no dev item uses exactly the plant set of a sealed item
+
+
+def test_most_injection_items_expose_the_planted_text(data):
+    inj = [a for a in data["adversarial"] if a["group"] == "data_injection"]
+    assert sum(a["exposure"] != "none" for a in inj) >= 5
