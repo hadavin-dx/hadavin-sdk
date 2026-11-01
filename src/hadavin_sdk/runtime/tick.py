@@ -245,7 +245,8 @@ def _run_step(ctx: TickContext, step: TickStep) -> str:
 
 
 def run_tick(app: App, now: datetime | None = None, steps: list[TickStep] | None = None) -> int:
-    """One tick. Returns the exit code (0, 1 or 4; 2 is the caller's, for a config that does not load)."""
+    """One tick. Returns the exit code: 0 ok, 1 a step failed, 4 the store is unreachable, 2 the store answers but
+    is not ready (STORE_NOT_READY). A config that does not load is the caller's, before this runs."""
     ctx = TickContext(app, now or app.approvals.clock())
     try:
         app.store.get_tick_state(_PROBE)  # the store answers, or nothing runs

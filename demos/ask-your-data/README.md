@@ -23,7 +23,7 @@ Needs Docker (or any Postgres you may treat as throwaway), `psql` on PATH or in 
 (`uv sync --locked --no-build --extra askdata`). From `demos\ask-your-data` in PowerShell:
 
 ```
-docker run --rm -d --name askdata-pg -e POSTGRES_HOST_AUTH_METHOD=trust -p 127.0.0.1:55432:5432 postgres:17.10
+docker run --rm -d --name askdata-pg -e POSTGRES_HOST_AUTH_METHOD=trust -p 127.0.0.1:55432:5432 postgres:17.10   # the same tag CI uses (CI pins it by digest)
 docker exec askdata-pg psql -U postgres -c "CREATE DATABASE askdata_demo"
 $env:ASKDATA_ADMIN_DSN = "postgresql://postgres@127.0.0.1:55432/askdata_demo"   # a DEDICATED throwaway database
 $env:ASKDATA_RO_PASSWORD = "choose-a-demo-password"; $env:PGPASSWORD = $env:ASKDATA_RO_PASSWORD
@@ -34,12 +34,37 @@ uv run --locked --no-build --extra askdata python -m askdata demo --setup   # ad
 `demo --setup` applies schema, seed, views and roles (`psql`), then runs the whole story: the checks, one question,
 two refusals. Without `--setup` it only runs the story. Other commands: `verify-readonly`, `ask --sql "<SQL>"`,
 `ask "<question>"` (the scripted model knows five questions; `ask` alone lists them), `setup`.
-Exit codes: 0 ok, 2 the model abstained, 3 a check is red or the validator rejected, 4 startup problem, 5 the
-database refused the statement.
+`ask` first runs the read-only checks and refuses to start (exit 4) when one is red. Exit codes (spike, provisional):
+0 ok, 2 the model abstained, 3 the validator rejected (`ask`) or a check is red (`verify-readonly`, and the DBA
+script), 4 startup problem (no DSN, cannot connect, a red check, or the server refused the login, SQLSTATE 28xxx),
+5 the database refused or failed the statement. The design's P3 table replaces these.
 
 `roles.sql` runs `REVOKE ... FROM PUBLIC`, which changes access for every login in that database: use a dedicated
 database or a replica, never a shared production database. It runs `db/preflight_roles.sql` first and stops if
 other logins would lose access (`--accept-loss` to override).
+
+## Dataset, ledger, meter and evaluation harness (phase P3)
+
+- **Dataset "Lumen Goods"** (`db/lumen.py`, schema `db/lumen_schema.sql`): 1,200 customers, 120 products, 6,000 orders, 13,800 order
+  lines, 6,480 payments, 1,040 refunds, 1,500 tickets, all synthetic, all e-mails on the reserved domain `example.com`. Its own
+  SplitMix64 generator (no stdlib `random`) makes it bit-identical on every machine. Three builds: seed A, seed B (a second
+  database for the "must agree on both" scoring rule) and `clean` (A without the planted rows, for the injection differential).
+  `db/lumen_manifest.json` holds row counts and per-table SHA-256 for all three; `python db/lumen.py --write-manifest` rewrites it.
+- **Pipeline** (`askdata/pipeline.py`): gates, generate, validate, audit intent, execute, ledger. Prompt layout, retry policy by
+  validator rule and SQLSTATE, and reason codes are in `llm_io.py` and `policy.py`. The agreement check is not built.
+- **Ledger** (`askdata/ledger.py`): one JSON line per question, append-only, fsync. **Audit** (`askdata/audit.py`): one intent event per
+  execution, one outcome event per question; `audit verify` prints "local integrity check: N of N events and M of M ledger lines
+  match" and never claims more. Commands (give `--config askdata.yaml` or set `ASKDATA_CONFIG`; the config shape is
+  `askdata/config.py`): `audit list|show <id>|verify|export --format json|csv [--include-text]`, `meter [--set-external USD]`,
+  `killswitch on|off|status`. Exit codes: 0 ok, 1 usage, 3 `audit verify` found a problem, 4 startup, 5 audit unavailable.
+- **Meter** (`askdata/meter.py`): one JSON file shared with the Replay Check; a call needs its worst case to fit under the demo cap
+  (US$8) and under the shared cap minus the reserve; a call that fails after sending is charged its worst case.
+- **Eval** (`askdata/evalrun.py`, `compare.py`, `evalset.py`, `evalcli.py`): `eval run --split dev|test [--k N] [--second-look
+  aborted|harness_defect]`, `eval report <run folder>`, `eval compare <baseline> <candidate>`. `eval/lock.json` freezes the file
+  hashes and the gate thresholds (green: upper bound of the confident-wrong rate <= 10 %, amber <= 15 %); the sealed test set
+  tolerates one invocation. Run exit codes: 0 green, 10 amber ("promising, not demonstrated"), 11 not demonstrated, 12 a hard
+  zero breached, 13 aborted (meter or kill switch), 14 a sealed run refused, 4 startup. Compare: 0 no regression, 11 regression,
+  4 not comparable. Only the scripted model is connected; a live route needs the owner's yes at each budget step.
 
 ## 90-second recording script (owner records; async-first)
 
@@ -49,7 +74,7 @@ sequences removed (a talking point, optional).
 
 | Time | Scene | Type this (from `demos\ask-your-data`) | Say |
 |---|---|---|---|
-| 0:00-0:20 | Promise | `uv run --locked --no-build --extra askdata python -m askdata verify-readonly` | "Staged on synthetic data. This login cannot write: fourteen checks, all ok, exit code 0." |
+| 0:00-0:20 | Promise | `uv run --locked --no-build --extra askdata python -m askdata verify-readonly` | "Staged on synthetic data. This login cannot write: fourteen checks, all ok, plus two info rows, exit code 0." |
 | 0:20-0:50 | Normal question | `... python -m askdata ask "How many orders per country?"` | "The exact SQL that ran, its SHA-256, and the result. The model here is a scripted stand-in, no network." |
 | 0:50-1:10 | Refusals | `... ask --sql "DELETE FROM shop.orders"` then `... ask --sql "SELECT email FROM analytics.customers_v"` | "Rejected before it reaches the database: rule V03, rule V05." |
 | 1:10-1:30 | Proof | `docker exec -it askdata-pg psql -U askdata_ro -d askdata_demo -c "DELETE FROM shop.orders"` then `uv run ... pytest -q tests/demo_askdata/test_pgsource_layers.py -k c3b` from the repo root | "This is the actual login the tool uses. The database says permission denied even if the tool were wrong. And a stacked-statement attack is refused by the execution path." |

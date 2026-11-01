@@ -10,7 +10,7 @@ from askdata.allowed import VIEWS
 from askdata.pgsource import PgError, PgSource
 from psycopg.conninfo import make_conninfo
 
-from .conftest import DEMO, load_script
+from .conftest import DEMO, _need, load_script
 
 SCRIPT = DEMO / "trust" / "verify_readonly.psql"
 
@@ -42,7 +42,7 @@ def test_green_for_the_real_login(db):
     done = _psql_verify(db, db.ro_role, db.ro_password)
     assert done.returncode == 0, done.stdout + done.stderr
     rows = _rows(done.stdout)
-    assert len(rows) == 14 and all(r[1] == "t" for r in rows), rows
+    assert len(rows) == 16 and all(r[1] == "t" for r in rows), rows
 
 
 def test_psql_rows_equal_pgsource_rows(db):
@@ -94,6 +94,10 @@ GRANTS = [
     "SELECT (customer_id) ON shop.customers",
     "UPDATE ON SEQUENCE scratch.sq",
     "EXECUTE ON FUNCTION scratch.fn()",
+    "EXECUTE ON FUNCTION pg_read_file(text)",
+    "EXECUTE ON FUNCTION pg_ls_dir(text)",
+    "EXECUTE ON FUNCTION lo_import(text)",
+    "EXECUTE ON FUNCTION lo_export(oid, text)",
 ]
 
 
@@ -113,3 +117,19 @@ def test_column_sequence_and_function_grants_turn_the_script_red(db, grant):
     assert red, grant
     done = _psql_verify(db, role, pw)
     assert done.returncode == 3, grant
+
+
+def test_file_and_network_extension_turns_the_script_red(make_db):
+    env = make_db()  # its own database: the extension must not leak into the shared one
+    with env.admin() as c:
+        if not c.execute("SELECT 1 FROM pg_available_extensions WHERE name = 'dblink'").fetchone():
+            _need("the dblink extension is not available on this server")
+        c.execute("CREATE EXTENSION dblink")
+    red = [r.check for r in PgSource(env.ro_dsn).verify_readonly() if not r.ok]
+    assert any("extensions installed" in r for r in red), red
+
+
+def test_default_transaction_read_only_is_informational_only(db):
+    rows = {c.check: c for c in PgSource(db.ro_dsn).verify_readonly()}
+    info = [c for k, c in rows.items() if "default_transaction_read_only" in k]
+    assert len(info) == 1 and info[0].ok and info[0].check.startswith("INFO")
