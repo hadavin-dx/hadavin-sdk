@@ -1,0 +1,72 @@
+WITH me AS (
+    SELECT r.oid, r.rolsuper, r.rolcreatedb, r.rolcreaterole, r.rolreplication, r.rolbypassrls
+    FROM pg_roles r WHERE r.rolname = current_user
+), rels AS (
+    SELECT c.oid, n.nspname || '.' || c.relname AS name, n.nspname
+    FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+    WHERE c.relkind IN ('r', 'p', 'v', 'm', 'f') AND left(n.nspname, 3) <> 'pg_' AND n.nspname <> 'information_schema'
+), checks (ord, check_name, ok, detail) AS (
+    SELECT 1, 'role flags all false (super, createdb, createrole, replication, bypassrls)',
+           NOT (rolsuper OR rolcreatedb OR rolcreaterole OR rolreplication OR rolbypassrls),
+           concat_ws(' ', 'super=' || rolsuper, 'createdb=' || rolcreatedb, 'createrole=' || rolcreaterole,
+                     'replication=' || rolreplication, 'bypassrls=' || rolbypassrls)
+    FROM me
+    UNION ALL
+    SELECT 2, 'member of no role', count(*) = 0, count(*) || ' memberships'
+    FROM pg_auth_members m, me WHERE m.member = me.oid
+    UNION ALL
+    SELECT 3, 'owns no object (relations, functions, schemas, types)', count(*) = 0, count(*) || ' owned objects'
+    FROM (
+        SELECT 1 FROM pg_class c, me WHERE c.relowner = me.oid
+        UNION ALL SELECT 1 FROM pg_proc p, me WHERE p.proowner = me.oid
+        UNION ALL SELECT 1 FROM pg_namespace s, me WHERE s.nspowner = me.oid
+        UNION ALL SELECT 1 FROM pg_type t, me WHERE t.typowner = me.oid
+    ) o
+    UNION ALL
+    SELECT 4, 'no CREATE or TEMP on the database',
+           NOT (has_database_privilege(current_database(), 'CREATE') OR has_database_privilege(current_database(), 'TEMP')),
+           'create=' || has_database_privilege(current_database(), 'CREATE')
+               || ' temp=' || has_database_privilege(current_database(), 'TEMP')
+    UNION ALL
+    SELECT 5, 'no CREATE on any non-system schema', NOT COALESCE(bool_or(has_schema_privilege(n.oid, 'CREATE')), false),
+           count(*) || ' schemas checked'
+    FROM pg_namespace n WHERE left(n.nspname, 3) <> 'pg_' AND n.nspname <> 'information_schema'
+    UNION ALL
+    SELECT 6, 'no access at all to schema shop (base tables)',
+           NOT (COALESCE(bool_or(has_schema_privilege(r.nspname, 'USAGE')), false)
+                OR COALESCE(bool_or(has_table_privilege(r.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER')), false)
+                OR COALESCE(bool_or(has_any_column_privilege(r.oid, 'SELECT,INSERT,UPDATE,REFERENCES')), false)),
+           count(*) || ' base tables checked'
+    FROM rels r WHERE r.nspname = 'shop'
+    UNION ALL
+    SELECT 7, 'no write-type privilege on any relation',
+           NOT COALESCE(bool_or(has_table_privilege(r.oid, 'INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER')), false),
+           count(*) || ' relations checked'
+    FROM rels r
+    UNION ALL
+    SELECT 8, 'SELECT on exactly the 4 exposed views',
+           COALESCE(string_agg(r.name, ',' ORDER BY r.name) FILTER (WHERE has_table_privilege(r.oid, 'SELECT')), '')
+               = 'analytics.customers_v,analytics.order_items_v,analytics.orders_v,analytics.products_v',
+           COALESCE(string_agg(r.name, ',' ORDER BY r.name) FILTER (WHERE has_table_privilege(r.oid, 'SELECT')), '(none)')
+    FROM rels r
+    UNION ALL
+    SELECT 9, 'visible view columns equal the expected list',
+           COALESCE(string_agg(c.table_name || '.' || c.column_name, ',' ORDER BY c.table_name, c.column_name), '')
+               = 'customers_v.country,customers_v.customer_id,customers_v.full_name,customers_v.signup_date,'
+                 || 'order_items_v.line_amount,order_items_v.order_id,order_items_v.order_item_id,order_items_v.product_id,'
+                 || 'order_items_v.quantity,order_items_v.unit_price,'
+                 || 'orders_v.customer_id,orders_v.order_date,orders_v.order_id,orders_v.status,orders_v.total_amount,'
+                 || 'products_v.category,products_v.product_id,products_v.product_name,products_v.unit_price',
+           count(*) || ' visible columns'
+    FROM information_schema.columns c WHERE c.table_schema = 'analytics'
+    UNION ALL
+    SELECT 10, 'no email column visible anywhere', count(*) = 0, count(*) || ' visible columns named like email'
+    FROM information_schema.columns c WHERE position('email' in lower(c.column_name)) > 0
+    UNION ALL
+    SELECT 11, 'default_transaction_read_only is on for this login',
+           current_setting('default_transaction_read_only') = 'on', current_setting('default_transaction_read_only')
+    UNION ALL
+    SELECT 12, 'INFO pg_sleep is executable (bounded by the watchdog, not by this role)', true,
+           'execute=' || has_function_privilege('pg_sleep(double precision)', 'EXECUTE')
+)
+SELECT check_name AS "check", ok, detail FROM checks ORDER BY ord
