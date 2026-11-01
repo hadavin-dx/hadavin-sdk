@@ -390,3 +390,50 @@ def test_migrate_refuses_when_an_applied_migration_has_no_file(roles, monkeypatc
     monkeypatch.setattr(mig, "_migration_files", lambda: files[:-1])
     with pytest.raises(ConfigError, match="no file in this release"):
         mig.migrate(dsn)
+
+
+# --- CodeRabbit round 1 ------------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "statement",
+    ["ALTER TABLE runs ADD n BIGSERIAL;", 'CREATE OR REPLACE VIEW "Foo" AS SELECT 1;'],
+)
+def test_plant_more_unreadable_forms_are_refused(tmp_path, statement):
+    problems = mig.check_grants(_dir(tmp_path, {"0001_a.sql": statement + "\n"}))
+    assert any("not read by the guard" in p or "does not read" in p for p in problems), problems
+
+
+def test_serial_aliases_are_found(tmp_path):
+    problems = mig.check_grants(_dir(tmp_path, {"0001_a.sql": "CREATE TABLE t (id serial8);\n"}))
+    assert "t_id_seq (sequence) is created by a migration but is not in GRANTS" in problems
+
+
+def test_plan_hash_works_with_a_data_dependent_default_factory():
+    from pydantic import Field
+
+    class PlanV2(Plan):
+        _HASH_OMIT_IF_DEFAULT: ClassVar[frozenset[str]] = frozenset({"label"})
+        label: str = Field(default_factory=lambda data: data["action_id"])
+
+    stored = json.loads(FIXTURE.read_text(encoding="utf-8"))
+    kw = stored["plan"]
+    assert (
+        PlanV2(**kw, label=kw["action_id"]).hash() == stored["hash"]
+    )  # equals its default: omitted
+    assert PlanV2(**kw, label="other").hash() != stored["hash"]
+    assert PlanV2(**kw).hash() == stored["hash"]
+
+
+def test_migrate_refuses_a_portal_role_that_inherits_write_rights(roles):
+    import psycopg
+    from psycopg import sql
+
+    dsn, other, portal = (
+        roles  # `other` stands for any role with write rights, not passed to migrate
+    )
+    with psycopg.connect(dsn, autocommit=True) as db:
+        db.execute(sql.SQL("GRANT UPDATE, DELETE ON runs TO {}").format(sql.Identifier(other)))
+        db.execute(sql.SQL("GRANT {} TO {}").format(sql.Identifier(other), sql.Identifier(portal)))
+    with pytest.raises(ConfigError, match="runs:UPDATE"):
+        mig.migrate(dsn, portal_role=portal)

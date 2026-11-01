@@ -61,17 +61,18 @@ _CREATE = re.compile(
     r"CREATE\s+(?:OR\s+REPLACE\s+)?(?:MATERIALIZED\s+)?(TABLE|VIEW)\s+(?:IF\s+NOT\s+EXISTS\s+)?(\w+)",
     re.IGNORECASE,
 )
-_SERIAL = re.compile(r"(\w+)\s+(?:BIG|SMALL)?SERIAL\b", re.IGNORECASE)
+_SERIAL = re.compile(r"(\w+)\s+(?:(?:BIG|SMALL)?SERIAL|SERIAL[248])\b", re.IGNORECASE)
 # Statements the guard does not read. Any of these in a migration is refused ("extend the guard") rather than
 # skipped, so a relation or sequence it creates cannot go ungranted.
 _SAFE_CREATE = re.compile(
-    r"CREATE\s+(?:UNIQUE\s+)?INDEX\b|CREATE\s+OR\s+REPLACE\s+(?:FUNCTION|TRIGGER|VIEW)\b"
-    r"|CREATE\s+TRIGGER\b|CREATE\s+(?:TABLE|VIEW)\s+(?:IF\s+NOT\s+EXISTS\s+)?[a-z_]\w*\s*(?:\(|AS\b)",
+    r"CREATE\s+(?:UNIQUE\s+)?INDEX\b|CREATE\s+OR\s+REPLACE\s+(?:FUNCTION|TRIGGER)\b"
+    r"|CREATE\s+TRIGGER\b|CREATE\s+(?:TABLE|VIEW)\s+(?:IF\s+NOT\s+EXISTS\s+)?[a-z_]\w*\s*(?:\(|AS\b)"
+    r"|CREATE\s+OR\s+REPLACE\s+VIEW\s+[a-z_]\w*\s*(?:\(|AS\b)",
     re.IGNORECASE,
 )
 _ANY_CREATE = re.compile(r"\bCREATE\b", re.IGNORECASE)
 _UNREAD = re.compile(
-    r"\bADD\s+COLUMN\b[^;]*\b(?:BIG|SMALL)?SERIAL\b|\bAS\s+IDENTITY\b|\bCREATE\s+SEQUENCE\b",
+    r"\bALTER\s+TABLE\b[^;]*\b(?:(?:BIG|SMALL)?SERIAL|SERIAL[248])\b|\bAS\s+IDENTITY\b|\bCREATE\s+SEQUENCE\b",
     re.IGNORECASE,
 )
 
@@ -167,6 +168,24 @@ def _apply_grants(db, role_name: str, privileges) -> None:
             db.execute(sql.SQL("GRANT {} ON {} {} TO {}").format(sql.SQL(wanted), what, rel, role))
 
 
+def _excess_privileges(db, role: str) -> list[str]:
+    """Effective privileges (inherited ones too) the role holds beyond SELECT on the `portal` relations."""
+    extra = []
+    for name, grant in GRANTS.items():
+        if grant.kind == "sequence":
+            privs, q = ("USAGE", "SELECT", "UPDATE"), "SELECT has_sequence_privilege(%s, %s, %s)"
+        else:
+            privs = ("SELECT", "INSERT", "UPDATE", "DELETE", "TRUNCATE")
+            q = "SELECT has_table_privilege(%s, %s, %s)"
+        allowed = {"SELECT"} if grant.portal else set()
+        extra += [
+            f"{name}:{p}"
+            for p in privs
+            if p not in allowed and db.execute(q, (role, name, p)).fetchone()[0]
+        ]
+    return extra
+
+
 def migrate(
     dsn: str,
     *,
@@ -223,4 +242,8 @@ def migrate(
             _apply_grants(db, runtime_role, lambda g: g.runtime)
         if portal_role:
             _apply_grants(db, portal_role, lambda g: "SELECT" if g.portal else "")
+            if extra := _excess_privileges(db, portal_role):
+                raise ConfigError(  # e.g. inherited from another role: REVOKE cannot take those away
+                    f"the portal role holds privileges outside the portal grant map: {', '.join(extra)}"
+                )
     return applied

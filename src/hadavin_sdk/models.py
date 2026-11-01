@@ -124,7 +124,7 @@ class Plan(Shape):
         data = plan.model_dump(mode="json")
         for name in self._HASH_OMIT_IF_DEFAULT:
             if getattr(plan, name) == type(self).model_fields[name].get_default(
-                call_default_factory=True
+                call_default_factory=True, validated_data=dict(plan)
             ):
                 data.pop(name, None)
         return sha256_hex(data)
