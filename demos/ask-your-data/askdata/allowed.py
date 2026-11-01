@@ -31,11 +31,11 @@ FUNCTIONS: frozenset[str] = frozenset(
         "count", "sum", "avg", "min", "max", "bool_and", "bool_or", "stddev", "variance", "stddev_samp", "var_samp",
         "percentile_cont",
         # date
-        "date_trunc", "date_part", "age", "extract",
+        "date_trunc", "date_part", "age", "extract", "make_date", "to_char",
         # math
         "abs", "round", "ceil", "floor", "greatest", "least", "nullif", "power", "sqrt", "coalesce",
         # string
-        "lower", "upper", "length", "concat", "strpos", "replace", "substring", "trim", "ltrim", "rtrim",
+        "lower", "upper", "length", "concat", "strpos", "position", "replace", "substring", "trim", "ltrim", "rtrim", "left", "right",
         # window
         "row_number", "rank", "dense_rank", "lag", "lead", "first_value", "last_value", "ntile",
     }
@@ -53,4 +53,40 @@ CAST_TARGETS: frozenset[str] = frozenset(
 # Units allowed in INTERVAL '<n> <unit>'.
 INTERVAL_UNITS: frozenset[str] = frozenset(
     {"day", "days", "week", "weeks", "month", "months", "year", "years"}
+)
+
+# Fields EXTRACT(<field> FROM x) may name.
+EXTRACT_FIELDS: frozenset[str] = frozenset(
+    {
+        "year",
+        "quarter",
+        "month",
+        "week",
+        "day",
+        "dow",
+        "doy",
+        "isodow",
+        "isoyear",
+        "hour",
+        "minute",
+        "second",
+        "epoch",
+    }
+)
+
+# Units date_trunc(<unit>, x) may name.
+TRUNC_UNITS: frozenset[str] = frozenset(
+    {
+        "second",
+        "minute",
+        "hour",
+        "day",
+        "week",
+        "month",
+        "quarter",
+        "year",
+        "decade",
+        "century",
+        "millennium",
+    }
 )
