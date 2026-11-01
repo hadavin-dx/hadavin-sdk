@@ -10,10 +10,12 @@ import hashlib
 import json
 from decimal import Decimal
 from pathlib import Path
+from typing import Any
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
+from askdata.pgsource import Limits as DbLimits
 from askdata.pipeline import Settings
 from hadavin_sdk.config import Route
 
@@ -49,6 +51,25 @@ class Limits(_Strict):
     max_question_chars: int = Field(500, gt=0)
 
 
+class Database(_Strict):
+    """Where the read-only login's DSN comes from, and the client's limits. The defaults are the spike's (10 s watchdog,
+    1,000,000 bytes); a client config overrides them (the design's client values are 5 s and 2,000,000 bytes)."""
+
+    dsn_secret_name: str | None = (
+        None  # read through the secrets kind; None: the ASKDATA_DSN environment variable
+    )
+    statement_timeout_s: float = Field(10.0, gt=0, le=300)
+    max_rows: int = Field(1000, gt=0)
+    max_bytes: int = Field(1_000_000, gt=0)
+
+    def limits(self) -> DbLimits:
+        return DbLimits(
+            statement_timeout_s=self.statement_timeout_s,
+            max_rows=self.max_rows,
+            max_bytes=self.max_bytes,
+        )
+
+
 class AskdataConfig(_Strict):
     as_of: str = Field(pattern=r"^\d{4}-\d{2}-\d{2}$")
     paths: Paths
@@ -57,6 +78,14 @@ class AskdataConfig(_Strict):
     restricted_terms: list[str] | None = None
     store_question: bool = True
     live: bool = True  # a paid route needs a fresh external_usd; the fake route never spends
+    database: Database = Database()
+    # Core backend entries (`{kind: ..., ...}`), validated by `live.py` against the core table; never a secret value.
+    secrets: dict[str, Any] | None = (
+        None  # None: no provider; the DSN then comes from the environment only
+    )
+    llm: dict[str, Any] | None = (
+        None  # None: the recorded (fake) route; e.g. {kind: anthropic, platform: api, ...}
+    )
 
     def routes(self) -> dict[str, Route]:
         r = self.route

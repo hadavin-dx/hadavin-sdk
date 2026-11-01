@@ -127,7 +127,8 @@ class Lock(_Strict):
     files: dict[str, Hex64]
     thresholds: Thresholds = Thresholds()
     test_runs: int = 0
-    sealed_min_remaining_usd: Decimal = Decimal("3.00")
+    sealed_min_remaining_usd: Decimal = Decimal("3.00")  # the FIRST sealed run
+    second_look_min_remaining_usd: Decimal = Decimal("1.80")  # a --second-look run (A-03)
     last_test_status: Literal["none", "complete", "aborted"] = "none"
     second_look_allowed_for: list[Literal["aborted", "harness_defect"]] = [
         "aborted",

@@ -1,10 +1,9 @@
 """Command line: verify-readonly, ask, setup, demo. Every printed value passes `clean()` (A-11).
 
 Operator commands (`audit`, `meter`, `killswitch`, `eval`) are in opscli.py and evalcli.py.
-Exit codes (spike, provisional; the P3 pipeline table in the design replaces them): 0 ok; 2 the model abstained;
-3 the validator rejected (`ask`) or a check is red (`verify-readonly`); 4 startup: no DSN, cannot connect, bad setup,
-`ask` refused to start because a read-only check is red, or the server refused the login (SQLSTATE 28xxx);
-5 the database refused or failed the statement (any other SQLSTATE).
+Exit codes: the single table in `policy.py` (0 ok; 3 the validator rejected, the database failed the statement or a
+check is red; 4 startup: no DSN, cannot connect, bad setup, a red read-only check or the server refused the login
+(SQLSTATE 28xxx); 7 the model abstained).
 """
 
 from __future__ import annotations
@@ -17,9 +16,12 @@ import subprocess  # runs psql with a fixed argument list, never a shell
 import sys
 from pathlib import Path
 
+from askdata import live
+from askdata.config import ConfigError
 from askdata.pgsource import PgError, PgSource, RunResult
+from askdata.policy import EXIT_ABSTAINED, EXIT_FAILED, EXIT_STARTUP
 from askdata.safe_text import clean
-from askdata.spike_llm import Model, ScriptedModel, questions
+from askdata.scripted import Model, ScriptedModel, questions
 from askdata.validate import Rejected, validate
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -42,13 +44,19 @@ def table(columns: list[str], rows: list[tuple]) -> None:
 
 
 def _source() -> PgSource | None:
-    dsn = os.environ.get("ASKDATA_DSN")
+    """The read-only login. With ASKDATA_CONFIG set: the DSN secret and the client limits come from the config;
+    otherwise (and as the documented fallback when the config names no secret) the DSN is ASKDATA_DSN."""
+    try:
+        dsn, limits = live.source_args(os.environ.get("ASKDATA_CONFIG"))
+    except ConfigError as err:
+        out(f"startup: {err}")
+        return None
     if not dsn:
         out(
             "startup: set ASKDATA_DSN to the connection string of the read-only login (password via PGPASSWORD)"
         )
         return None
-    return PgSource(dsn)
+    return PgSource(dsn, limits=limits)
 
 
 def cmd_verify(source: PgSource, *, banner: bool = True) -> int:
@@ -100,7 +108,9 @@ def cmd_ask(source: PgSource, sql: str, *, who: str, question: str | None = None
     except PgError as err:
         out(f"failed   : {err}")
         # No SQLSTATE (connection) and 28xxx (invalid authorization) are startup problems, never retried (A-14).
-        return 4 if err.sqlstate is None or err.sqlstate.startswith("28") else 5
+        return (
+            EXIT_STARTUP if err.sqlstate is None or err.sqlstate.startswith("28") else EXIT_FAILED
+        )
     table(result.columns, result.rows)
     out(
         f"{len(result.rows)} row(s){', TRUNCATED at the row or byte cap' if result.truncated else ''}; "
@@ -274,7 +284,7 @@ def main(argv: list[str] | None = None) -> int:
     sql = ScriptedModel().complete(args.question)
     if sql is None:
         out("the scripted model has no answer for that question (it abstains)")
-        return 2
+        return EXIT_ABSTAINED
     return cmd_ask(source, sql, who=ScriptedModel.name, question=args.question)
 
 

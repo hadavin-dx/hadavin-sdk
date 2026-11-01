@@ -52,7 +52,9 @@ class Settings:
     store_question: bool = True
     live: bool = True  # a live (paid) route also needs a fresh external_usd in the meter
     transient_backoff_s: float = 1.0
-    injection_threshold: float = 0.5
+    injection_threshold: float = (
+        0.05  # the sweep in tests/demo_askdata/test_demo_gaps.py (A-19 F-27)
+    )
 
 
 @dataclass

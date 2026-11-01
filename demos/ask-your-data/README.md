@@ -1,7 +1,7 @@
 # Ask your data (spike)
 
 A staged demo of the safety shape of a text-to-SQL tool, on **synthetic data**. It makes **no accuracy claim** and
-calls **no model over the network**: the model is a scripted stand-in (`askdata/spike_llm.py`). What it shows:
+calls **no model over the network**: the model is a scripted stand-in (`askdata/scripted.py`). What it shows:
 
 - **C2, the login cannot write.** `db/roles.sql` creates a read-only login that sees four views and nothing else
   (no base tables, no `email` column). `trust/verify_readonly.psql` is a script a DBA can read and run as that login;
@@ -48,10 +48,14 @@ uv run --locked --no-build --extra askdata python -m askdata demo --setup   # ad
 `demo --setup` applies schema, seed, views and roles (`psql`), then runs the whole story: the checks, one question,
 two refusals. Without `--setup` it only runs the story. Other commands: `verify-readonly`, `ask --sql "<SQL>"`,
 `ask "<question>"` (the scripted model knows five questions; `ask` alone lists them), `setup`.
-`ask` first runs the read-only checks and refuses to start (exit 4) when one is red. Exit codes (spike, provisional):
-0 ok, 2 the model abstained, 3 the validator rejected (`ask`) or a check is red (`verify-readonly`, and the DBA
-script), 4 startup problem (no DSN, cannot connect, a red check, or the server refused the login, SQLSTATE 28xxx),
-5 the database refused or failed the statement. The design's P3 table replaces these.
+`ask` first runs the read-only checks and refuses to start (exit 4) when one is red.
+
+**Exit codes: one table for every command (`askdata/policy.py` is the source; `eval run` has its own 10 to 14 band below).**
+0 ok / answered; 1 usage; 2 refused (the tool will not do that); 3 failed (the validator rejected the SQL, the database
+failed the statement, the model gave no usable answer, a read-only check is red, or `audit verify` found a problem);
+4 startup (no DSN or config, cannot connect, a red check, or the server refused the login, SQLSTATE 28xxx);
+5 audit unavailable; 6 spending limit or kill switch; 7 abstained (the data does not answer the question, or the
+scripted model has no answer). Exit 5 used to mean "database failed" in `ask`; that is now 3.
 
 `roles.sql` runs `REVOKE ... FROM PUBLIC`, which changes access for every login in that database: use a dedicated
 database or a replica, never a shared production database. It runs `db/preflight_roles.sql` first and stops if
@@ -70,15 +74,43 @@ other logins would lose access (`--accept-loss` to override).
   execution, one outcome event per question; `audit verify` prints "local integrity check: N of N events and M of M ledger lines
   match" and never claims more. Commands (give `--config askdata.yaml` or set `ASKDATA_CONFIG`; the config shape is
   `askdata/config.py`): `audit list|show <id>|verify|export --format json|csv [--include-text]`, `meter [--set-external USD]`,
-  `killswitch on|off|status`. Exit codes: 0 ok, 1 usage, 3 `audit verify` found a problem, 4 startup, 5 audit unavailable.
+  `killswitch on|off|status`. Exit codes: the table above.
 - **Meter** (`askdata/meter.py`): one JSON file shared with the Replay Check; a call needs its worst case to fit under the demo cap
   (US$8) and under the shared cap minus the reserve; a call that fails after sending is charged its worst case.
-- **Eval** (`askdata/evalrun.py`, `compare.py`, `evalset.py`, `evalcli.py`): `eval run --split dev|test [--k N] [--second-look
-  aborted|harness_defect]`, `eval report <run folder>`, `eval compare <baseline> <candidate>`. `eval/lock.json` freezes the file
-  hashes and the gate thresholds (green: upper bound of the confident-wrong rate <= 10 %, amber <= 15 %); the sealed test set
-  tolerates one invocation. Run exit codes: 0 green, 10 amber ("promising, not demonstrated"), 11 not demonstrated, 12 a hard
-  zero breached, 13 aborted (meter or kill switch), 14 a sealed run refused, 4 startup. Compare: 0 no regression, 11 regression,
-  4 not comparable. Only the scripted model is connected; a live route needs the owner's yes at each budget step.
+- **Eval** (`askdata/evalrun.py`, `compare.py`, `evalset.py`, `evalcli.py`): `eval freeze`, `eval run --split dev|test [--k N]
+  [--second-look aborted|harness_defect] [--live [--smoke]]`, `eval report <run folder>`, `eval compare <baseline> <candidate>`.
+  `eval/lock.json` freezes the file hashes and the gate thresholds (green: upper bound of the confident-wrong rate <= 10 %,
+  amber <= 15 %). The sealed test set tolerates one invocation, always with `--k 1` (`--split test --k 3` is refused with
+  exit 14; repeats, pass^k, are `--split dev --k 3`). A sealed first run needs US$3.00 remaining in the meter; a
+  `--second-look` run needs US$1.80. Run exit codes: 0 green, 10 amber ("promising, not demonstrated"), 11 not
+  demonstrated, 12 a hard zero breached, 13 aborted (meter, kill switch or a smoke limit), 14 a sealed run refused,
+  4 startup. Compare: 0 no regression, 11 regression, 4 not comparable. Without `--live` the model is the recorded one.
+- **Injection gate threshold** (`pipeline.py`, `Settings.injection_threshold` = 0.05). The regex detector scores 0.0 or
+  1.0. The sweep is `tests/demo_askdata/test_demo_gaps.py::test_injection_threshold_sweep_picks_the_lowest_with_no_false_positive`: over the 70
+  gold, 30 adversarial and 12 dev-adversarial questions (112), threshold 0.00 flags all 112 and every threshold from
+  0.05 to 1.00 flags none (0 false positives); the lowest on the 0.05 grid is the default, and two attack phrasings
+  are still caught. Re-run the test whenever the question sets or the detector change.
+
+## Operator runbook (in this order)
+
+1. Copy `askdata.example.yaml` to `askdata.yaml` (it is not committed), set `as_of`, the paths (put `meter_file` OUTSIDE
+   the repo, because the Replay Check shares it), the route's model id and today's prices, and optionally the
+   `secrets` and `llm` entries. Give `--config askdata.yaml` or set `ASKDATA_CONFIG`.
+2. Database login. With `database.dsn_secret_name` set, the DSN is read with `provider.get(name)` from the configured
+   core secrets kind (`env`: variable `HADAVIN_SECRET_<NAME>`, dev only; `aws_secrets_manager`, `vault`, ... for a
+   client); an unreadable named secret is a startup error, never a silent fallback. With no name set, the DSN is the
+   environment variable `ASKDATA_DSN` (the fallback). `database.statement_timeout_s` and `max_bytes` override the
+   defaults (10 s, 1,000,000 bytes); the client values are 5 and 2,000,000 (as in the example file).
+3. Create the shared meter file once: `python -m askdata --config askdata.yaml meter --init` (this calls
+   `Meter.create(path, total_cap="10.00", reserve="1.00", demo_cap="8.00")` and refuses to overwrite an existing file).
+4. Type in what the other program spent, from the provider console: `... meter --set-external <USD>` (this writes
+   `external_usd` and its timestamp; a live step is refused while the entry is older than 24 hours).
+5. Finish the prompt and the dev work. Then `... eval freeze` ONCE: it hashes the four set files, writes `eval/lock.json`
+   with the thresholds (10 % / 15 %) and `test_runs` 0, and never overwrites an existing lock. Nothing in the frozen
+   files or the thresholds changes after this, and no sealed run happens before it.
+6. Dev runs: `... eval run --split dev [--k 3]`. A live smoke (needs the owner's yes and a fresh `external_usd`):
+   `... eval run --split dev --live --smoke`; it aborts (exit 13) when the cost per question passes US$0.035 or more
+   than 10 % of the model attempts are schema violations. Only after that, one sealed run: `... eval run --split test`.
 
 ## 90-second recording script (owner records; async-first)
 

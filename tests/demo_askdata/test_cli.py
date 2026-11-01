@@ -51,7 +51,7 @@ def test_ask_question_uses_the_scripted_model_and_unknown_questions_abstain(cli)
     code, out = cli("ask", "How many orders per country?")
     assert code == 0 and "scripted (offline, no API call)" in out and "orders" in out
     code, out = cli("ask", "What is the meaning of life?")
-    assert code == 2 and "abstains" in out
+    assert code == 7 and "abstains" in out
 
 
 def test_terminal_control_plant_never_reaches_the_output(cli):
@@ -66,7 +66,7 @@ def test_database_refusal_is_reported_as_a_sqlstate_only(cli):
     # the validator accepts this (a CTE named like nothing exposed would not), so use a view the login lacks nothing on:
     # force a runtime failure instead: division by zero in an allowed expression
     code, out = cli("ask", "--sql", "SELECT 1 / 0 FROM analytics.orders_v")
-    assert code == 5 and "SQLSTATE 22012" in out
+    assert code == 3 and "SQLSTATE 22012" in out
 
 
 def test_demo_runs_end_to_end_offline(cli):
@@ -98,7 +98,7 @@ class _Refuses:
 
 
 @pytest.mark.parametrize(
-    ("sqlstate", "code"), [("28P01", 4), ("28000", 4), (None, 4), ("42501", 5)]
+    ("sqlstate", "code"), [("28P01", 4), ("28000", 4), (None, 4), ("42501", 3)]
 )
 def test_exit_code_by_sqlstate(sqlstate, code):
     assert cmd_ask(_Refuses(sqlstate), "SELECT 1", who="t") == code
