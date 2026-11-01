@@ -12,8 +12,10 @@ from hadavin_sdk.backends.table import PostgresSettings
 from tests.contracts.kinds import kind
 
 
-def pg_schema(migrated=True):
-    """Yield a DSN whose search_path is a fresh (migrated) schema; drop the schema afterwards."""
+def pg_schema(migrated=True, runtime=False):
+    """Yield a DSN whose search_path is a fresh (migrated) schema; drop the schema afterwards. With `runtime`,
+    yield instead the DSN of a new non-owner login role that `migrate` granted its runtime rights (K2: the store
+    suite must pass with only those rights); the role is dropped afterwards."""
     dsn = os.environ.get("HADAVIN_TEST_PG_DSN")
     if not dsn:
         pytest.skip("HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)")
@@ -29,16 +31,27 @@ def pg_schema(migrated=True):
     scoped = make_conninfo(dsn, options=f"-c search_path={schema}")
     if migrated:
         migrate(scoped)
+    role = None
     try:
-        yield scoped
+        if runtime:
+            role = "rt_" + uuid.uuid4().hex[:12]
+            with psycopg.connect(dsn, autocommit=True) as db:
+                db.execute(sql.SQL("CREATE ROLE {} LOGIN").format(sql.Identifier(role)))
+            migrate(scoped, runtime_role=role)
+            yield make_conninfo(scoped, user=role)
+        else:
+            yield scoped
     finally:
         with psycopg.connect(dsn, autocommit=True) as db:
+            if role:
+                db.execute(sql.SQL("DROP OWNED BY {}").format(sql.Identifier(role)))
+                db.execute(sql.SQL("DROP ROLE {}").format(sql.Identifier(role)))
             db.execute(sql.SQL("DROP SCHEMA {} CASCADE").format(sql.Identifier(schema)))
 
 
 @kind("store", "postgres")
 def postgres(tmp_path):
-    for dsn in pg_schema():
+    for dsn in pg_schema(runtime=True):
         settings = PostgresSettings(kind="postgres", dsn_secret_name="pg-dsn")  # noqa: S106 - a name
         store = make("store", settings, FakeSecretProvider({"pg-dsn": dsn}))
         yield store

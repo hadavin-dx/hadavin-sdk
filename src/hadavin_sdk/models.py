@@ -11,7 +11,7 @@ import uuid
 from datetime import UTC, datetime
 from decimal import Decimal
 from enum import StrEnum
-from typing import Any, Literal
+from typing import Any, ClassVar, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -114,9 +114,20 @@ class Plan(Shape):
             raise ValueError("created_at must be timezone-aware")
         return value.astimezone(UTC)
 
+    # A field added after v1 goes in this set: the hash leaves it out while it equals its default, so a plan stored
+    # before the field existed re-hashes to the hash stored with it (tests/fixtures/plan_v1.json).
+    _HASH_OMIT_IF_DEFAULT: ClassVar[frozenset[str]] = frozenset()
+
     def hash(self) -> str:
         # Normalised here too: model_copy(update=...) and attribute assignment skip the validator.
-        return sha256_hex(self.model_copy(update={"created_at": self._utc(self.created_at)}))
+        plan = self.model_copy(update={"created_at": self._utc(self.created_at)})
+        data = plan.model_dump(mode="json")
+        for name in self._HASH_OMIT_IF_DEFAULT:
+            if getattr(plan, name) == type(self).model_fields[name].get_default(
+                call_default_factory=True
+            ):
+                del data[name]
+        return sha256_hex(data)
 
 
 class GateDecision(Shape):
