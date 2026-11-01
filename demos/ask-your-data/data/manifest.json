@@ -1,0 +1,14 @@
+{
+  "sealed_test_sha256": "cd7ea521098688cb48247789531a700fa7739fba2f9916dc47abc8ddd8e18dd5",
+  "dev_sha256": "767ecb40b05a47e40e89db7c2d9372d93a69e424809ca75e25563951a0035d76",
+  "adversarial_sha256": "7c9b2599eb08f77c712382b9d897b62359c50183981481257b39a1f4eeb0e68e",
+  "adversarial_dev_sha256": "2e4863354ca2006d5da30763b1308767d22e43f5d6ceaf32fa9f5974aa374cad",
+  "exemplars_sha256": "d3f5556eb1db1451020c8722e6553ca440460b7ab59e532dd9770003ecf66f68",
+  "counts": {
+    "gold_dev": 30,
+    "gold_test": 40,
+    "adversarial": 30,
+    "adversarial_dev": 12
+  },
+  "rule": "Sealed items are frozen. A change to any `test` gold item or to adversarial.jsonl needs `python goldcheck.py --freeze` AND a recorded reason in the PR; derived result hashes live outside this file so filling them in never touches the seal."
+}
