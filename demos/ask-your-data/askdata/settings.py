@@ -65,6 +65,8 @@ class Runtime(_Strict):
         3, ge=1, le=3
     )  # model attempts per question (the prompt describes at most three)
     max_question_chars: int = Field(500, gt=0)
+    # requests ONE call of the recorded (offline) model may send: it never retries inside a call
+    recorded_llm_requests: int = Field(1, ge=1)
     injection_threshold: float = Field(
         0.05, gt=0, le=1
     )  # inert for the 0.0/1.0 regex detector (see README)
@@ -85,9 +87,9 @@ class Runtime(_Strict):
     watchdog_join_s: float = Field(5.0, gt=0)  # how long to wait for the cancel thread
     # the read-only login (db/roles.sql gets these as psql variables; the script has no numbers of its own)
     role_connection_limit: int = Field(5, gt=0)
-    role_statement_timeout_s: int = Field(15, gt=0)
-    role_lock_timeout_s: int = Field(1, gt=0)
-    role_idle_in_transaction_timeout_s: int = Field(15, gt=0)
+    role_statement_timeout_s: int = Field(15, gt=0, le=999)
+    role_lock_timeout_s: int = Field(1, gt=0, le=999)
+    role_idle_in_transaction_timeout_s: int = Field(15, gt=0, le=999)
     # evaluation and locks
     max_duration_ms: int = Field(15_000, gt=0)  # a question slower than this is not "bounded"
     human_read_fraction: float = Field(0.2, gt=0, le=1)

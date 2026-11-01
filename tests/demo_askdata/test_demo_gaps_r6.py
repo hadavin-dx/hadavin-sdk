@@ -17,7 +17,7 @@ from askdata.sealed import Chain, SealedGate, core_hash_of, files_sha_of
 from askdata.settings import RUNTIME
 
 from .conftest import DEMO
-from .test_demo_gaps_r3 import KEY, gate_for
+from .test_demo_gaps_r3 import KEY, gate_for, renew
 from .test_demo_gaps_r4 import _run
 from .test_demo_gaps_r5 import DEFECT
 from .test_eval_harness import cli_env  # noqa: F401 - a fixture reused here
@@ -188,6 +188,7 @@ def test_report_and_compare_check_the_report_against_the_chain(cli_env, capsys):
 # ====================================================== m2 / m3: reset and rollback edge cases
 def test_new_set_with_an_anchor_but_no_chain_needs_an_explicit_discard_count(tmp_path):
     g = gate_for(tmp_path, KEY)
+    renew(g)
     _run(g, "r1")
     g.chain.path.unlink()
     lock_path(g.eval_dir).unlink()
@@ -203,6 +204,7 @@ def test_a_failed_anchor_write_removes_the_new_lock_even_when_there_was_no_old_o
     tmp_path, monkeypatch
 ):
     g = gate_for(tmp_path, KEY)
+    renew(g)
     g.chain.path.unlink()
     lock_path(g.eval_dir).unlink()  # anchors remain: only --new-set can freeze again
     monkeypatch.setattr(
@@ -215,6 +217,7 @@ def test_a_failed_anchor_write_removes_the_new_lock_even_when_there_was_no_old_o
 
 def test_no_backup_files_leak_when_the_chain_append_itself_fails(tmp_path, monkeypatch):
     g = gate_for(tmp_path, KEY)
+    renew(g)
     _run(g, "r1")
     monkeypatch.setattr(
         Chain, "append", lambda *a, **k: (_ for _ in ()).throw(OSError("fsync failed"))

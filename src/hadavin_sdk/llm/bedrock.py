@@ -22,6 +22,7 @@ from hadavin_sdk.llm.common import (
     Answer,
     NetworkLLM,
     json_in_text,
+    parse_stage,
     pinned,
     reply,
     schema_hint,
@@ -168,7 +169,9 @@ class BedrockLLM(NetworkLLM):
                 "toolChoice": {"tool": {"name": forced}} if forced else {"auto": {}},
             }
         started = time.monotonic()
-        got = self._retry(lambda: self._parse(self._client.converse(**request), in_text))
+        got = self._retry(
+            lambda: parse_stage(self._parse, self._client.converse(**request), in_text)
+        )
         return reply(
             route, **vars(got), started=started, sent=system + json.dumps(request["messages"])
         )

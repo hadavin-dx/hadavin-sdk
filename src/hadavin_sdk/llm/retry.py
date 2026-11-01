@@ -80,25 +80,15 @@ def describe(exc: BaseException, detail: Callable[[BaseException], str] | None =
     return " ".join(p for p in parts if p)
 
 
-def _raised_in_parse(exc: BaseException) -> bool:
-    tb = exc.__traceback__
-    while tb is not None:
-        if tb.tb_frame.f_code.co_name == "_parse":
-            return True
-        tb = tb.tb_next
-    return False
-
-
 def _answered(exc: BaseException, hook: Callable[[BaseException], bool | None] | None) -> bool:
-    """Did the provider ANSWER (so the request was billed) and the answer was unusable? In order: the kind's own hook
-    (it knows its SDK's decode errors: a non-JSON 200 fails inside the SDK call, before any `_parse`); a 2xx status on
-    the error; otherwise no HTTP status, not a network error, and a `_parse` frame in the traceback."""
+    """Was the failed request ANSWERED (so billed)? Decided by the STAGE the kind marked, never by a function name:
+    `UnusableAnswer` is raised by the kind itself at the "answered" stage (`post_json` for a body it could not read,
+    `parse_stage` for an answer it could not parse); an SDK error is judged by the kind's own hook; a 2xx status on the
+    error is an answer. Everything else (a failure before the request, an HTTP error status, a network error) is not."""
     if hook is not None and (said := hook(exc)) is not None:
         return said
     code = status(exc)
-    if code is not None and 200 <= code < 300:
-        return True
-    return code is None and not isinstance(exc, OSError) and _raised_in_parse(exc)
+    return code is not None and 200 <= code < 300
 
 
 def with_retry[T](

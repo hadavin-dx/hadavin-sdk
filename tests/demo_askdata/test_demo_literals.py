@@ -1,14 +1,19 @@
 """Two scans over the whole ask-your-data demo tree.
 
 1. Literals that must never be in the repository: keys, account ids, machine paths, regions, model ids, real e-mail
-   addresses, quoted Decimal numbers outside settings.py. Every file type that can hold text is read; an allowlist entry
-   names the file, the pattern AND the exact source line, and an entry nothing matches fails the test.
+   addresses, quoted Decimal numbers outside settings.py. EVERY file git would commit (tracked, or untracked and not
+   ignored) that is not binary is read, whatever its suffix (a `.pem` or `.bak` included); without git, every file
+   except caches. An allowlist entry names the file, the pattern AND the exact source line, and an entry nothing
+   matches fails the test.
 2. Numbers: tunable numbers live in `askdata/settings.py`. The scan reads every Python module of the demo
    (`askdata`, `db`, `data`) for numeric defaults of functions and lambdas, class and module attributes, augmented
    assignments, keyword arguments named like a timeout/limit/delay, positional arguments of sleep/join/wait/range,
-   and comparisons against a number. The structural constants that remain are listed with a reason and must match exactly.
-   Said plainly about the region pattern: it covers the AWS-style names (including gov, cn, il, mx), the common Azure
-names and the GCP continent-direction names; a region spelled some other way is not caught.
+   and comparisons against a number; numeric STRINGS given to int/float/Decimal or as an environment default; and
+   0, 1 and -1 where they are tunables (an argument of sleep/join/wait/..., a keyword or an assignment named like
+   a timeout/retry/limit/delay/attempt). The structural constants that remain are listed with a reason, counted per
+   line, and must match exactly.
+   Said plainly about the region pattern: it covers the AWS-style names (including gov, cn, il, mx), the Azure names
+(continent-direction and country-direction) and the GCP names; a region spelled some other way is not caught.
 Out of scope, said plainly: the dataset generators `db/lumen.py` and `db/seed.py` (the numbers ARE the dataset) and the
    core SDK's own constants (for example the retry delays in `hadavin_sdk/llm/retry.py`).
 """
@@ -18,29 +23,34 @@ from __future__ import annotations
 import ast
 import json
 import re
+import shutil
+import subprocess
+from collections import Counter
 from pathlib import Path
 
 import pytest
 
 from .conftest import DEMO
 
-SKIP_DIRS = {"__pycache__", ".pytest_cache", ".venv"}  # anywhere in the path
+GIT = shutil.which("git") or "git"
+
+SKIP_DIRS = {
+    "__pycache__",
+    ".pytest_cache",
+    ".git",
+}  # caches only: .venv and the rest ARE scanned (git decides)
 SKIP_TOP = {
     "work"
 }  # only the TOP-level working folder (runtime output), not a folder named work deeper down
-SCAN_SUFFIXES = {
-    ".py", ".sql", ".yaml", ".yml", ".md", ".toml", ".psql", ".json", ".jsonl", ".env", ".sh", ".ps1", ".txt", ".cfg", ".ini",
-    ".csv", ".bat", ".cmd", ".example", ".conf", ".properties",
-}  # fmt: skip
-SCAN_NAMES = {
-    "Dockerfile",
-    "Makefile",
-    ".env",
-    ".dockerignore",
-    ".gitignore",
-}  # files without a telling suffix
 B64 = "[A-Za-z0-9/+=]"
 REGION_WORDS = "east|west|north|south|central|southeast|northeast|northwest|southwest"
+AZURE_COUNTRIES = (
+    "japan|canada|australia|brazil|korea|france|germany|sweden|norway|switzerland|italy|poland|spain|qatar|"
+    "israel|mexico|chile|newzealand|uae|southafrica|uk|us"
+)
+AZURE_DIRS = (
+    "east|west|north|south|central|southeast|northeast|northcentral|southcentral|westcentral"
+)
 PATTERNS = {
     "anthropic key": re.compile(r"sk-ant-[A-Za-z0-9_-]{20,}"),
     "openai-style key": re.compile(r"\bsk-(proj-|svcacct-|admin-)?[A-Za-z0-9_-]{20,}"),
@@ -56,7 +66,9 @@ PATTERNS = {
     "region literal": re.compile(
         rf"\b(us|eu|ap|sa|ca|me|af|il|mx|cn)(-gov)?-({REGION_WORDS})-\d\b"
         r"|\b(eastus|westus|centralus|northeurope|westeurope|uksouth|southeastasia)\d?\b"
-        rf"|\b(us|europe|asia|australia|northamerica|southamerica)-({REGION_WORDS})\d\b"
+        rf"|\b(us|europe|asia|australia|northamerica|southamerica|me|africa)-({REGION_WORDS})\d\b"
+        rf"|\b({AZURE_COUNTRIES})({AZURE_DIRS})\d?\b"
+        r"|\b(north|south|west)centralus\d?\b|\b(south|central|west)india\b|\beastasia\b|\b(north|west)europe\b|\b(east|southeast)asia\b"
     ),
     "model id literal": re.compile(
         r"\b(claude-[a-z0-9]|gpt-[0-9o]|gemini-[0-9]|mistral-|mixtral-|deepseek-|qwen[0-9-]|grok-[0-9]|o[134]-(mini|preview|pro)"
@@ -81,13 +93,35 @@ ALLOWED: dict[tuple[str, str], set[str]] = {
 }
 
 
-def _scan_files() -> list[Path]:
+def _candidates(root: Path) -> list[Path]:
+    """What git would commit under `root` (tracked, or untracked and not ignored); every file when git cannot say."""
+    try:
+        done = subprocess.run(  # noqa: S603 - fixed argument list, no shell
+            [GIT, "ls-files", "--cached", "--others", "--exclude-standard", "-z"],
+            cwd=root,
+            capture_output=True,
+            check=True,
+            timeout=30,
+        )
+        listed = [root / n for n in done.stdout.decode("utf-8").split("\0") if n]
+        if listed:
+            return sorted(p for p in listed if p.is_file())
+    except (OSError, subprocess.SubprocessError):
+        pass
+    return sorted(p for p in root.rglob("*") if p.is_file())
+
+
+def _is_binary(raw: bytes) -> bool:
+    return b"\0" in raw and raw[:2] not in (b"\xff\xfe", b"\xfe\xff")
+
+
+def _scan_files(root: Path = DEMO) -> list[Path]:
     out = []
-    for p in sorted(DEMO.rglob("*")):
-        rel = p.relative_to(DEMO)
-        if not p.is_file() or (set(rel.parts) & SKIP_DIRS) or rel.parts[0] in SKIP_TOP:
+    for p in _candidates(root):
+        rel = p.relative_to(root)
+        if (set(rel.parts) & SKIP_DIRS) or rel.parts[0] in SKIP_TOP:
             continue
-        if p.suffix in SCAN_SUFFIXES or p.name in SCAN_NAMES:
+        if not _is_binary(p.read_bytes()):
             out.append(p)
     return out
 
@@ -107,10 +141,12 @@ def _line_of(text: str, pos: int) -> str:
     return text[start : end if end != -1 else len(text)].strip()
 
 
-def _hits(files: list[Path] | None = None) -> dict[tuple[str, str], list[tuple[str, str]]]:
+def _hits(
+    files: list[Path] | None = None, root: Path = DEMO
+) -> dict[tuple[str, str], list[tuple[str, str]]]:
     found: dict[tuple[str, str], list[tuple[str, str]]] = {}
     for p in files if files is not None else _scan_files():
-        rel = p.relative_to(DEMO).as_posix() if DEMO in p.parents else p.name
+        rel = p.relative_to(root).as_posix() if root in p.parents else p.name
         text = _read(p)
         for name, rx in PATTERNS.items():
             if name == "quoted Decimal number outside settings" and (
@@ -142,20 +178,66 @@ def test_the_whole_demo_tree_holds_no_secret_account_path_region_model_or_email_
     assert unused == [], f"allowlist entries nothing matches: {unused}"
 
 
-def test_every_file_type_that_can_hold_text_is_scanned():
-    suffixes = {p.suffix for p in _scan_files()}
-    assert {".py", ".sql", ".yaml", ".md"} <= suffixes
-    assert {
-        ".json",
-        ".jsonl",
-        ".env",
-        ".sh",
-        ".ps1",
-        ".txt",
-        ".cfg",
-        ".ini",
-        ".csv",
-    } <= SCAN_SUFFIXES
+def test_every_file_that_can_hold_text_is_scanned_whatever_its_name(tmp_path):
+    """Planted in a folder with no git: a `.pem`, a `.bak`, a name with no suffix and a `.venv` folder are all read."""
+    secret = "sk-ant-" + "api03-" + "Z" * 40
+    for name in (
+        "deploy.pem",
+        "README.md.bak",
+        "notes",
+        "id_rsa",
+        ".venv/leak.txt",
+        "sub/dir/x.weird",
+    ):
+        f = tmp_path / name
+        f.parent.mkdir(parents=True, exist_ok=True)
+        f.write_text(f"token = {secret}\n", encoding="utf-8")
+    (tmp_path / "image.bin").write_bytes(
+        b"\x89PNG\0\0\0 " + secret.encode()
+    )  # a binary is not text
+    found = {p.relative_to(tmp_path).as_posix() for p in _scan_files(tmp_path)}
+    assert found == {
+        "deploy.pem",
+        "README.md.bak",
+        "notes",
+        "id_rsa",
+        ".venv/leak.txt",
+        "sub/dir/x.weird",
+    }
+    flagged = {k[0] for k in _hits(_scan_files(tmp_path), tmp_path)}
+    assert found == flagged  # and every one of them is reported
+
+
+def test_the_real_tree_is_scanned_by_what_git_would_commit():
+    names = {p.relative_to(DEMO).as_posix() for p in _scan_files()}
+    assert {"README.md", "askdata/sealed.py", "db/roles.sql", "askdata.example.yaml"} <= names
+    assert not any(n.startswith(("work/", ".git/")) or "__pycache__" in n for n in names)
+
+
+@pytest.mark.parametrize(
+    "region",
+    [
+        "japan" + "east",
+        "canada" + "central",
+        "australia" + "southeast",
+        "brazil" + "south",
+        "korea" + "central",
+        "france" + "central",
+        "germany" + "westcentral",
+        "sweden" + "central",
+        "south" + "india",
+        "central" + "india",
+        "east" + "asia",
+        "north" + "europe",
+        "uk" + "west",
+        "me" + "-west1",
+        "africa" + "-south1",
+        "west" + "us3",
+        "south" + "central" + "us",
+    ],
+)
+def test_the_region_scan_catches_azure_country_style_and_other_gcp_names(region):
+    assert PATTERNS["region literal"].search(f"location = '{region}'"), region
 
 
 PLANTED = {
@@ -241,23 +323,101 @@ DATASET_GENERATORS = {"db/lumen.py", "db/seed.py"}  # the numbers ARE the synthe
 ALLOWLIST = json.loads(
     (Path(__file__).with_name("numeric_allowlist.json")).read_text(encoding="utf-8")
 )
+# 0, 1 and -1 are fine as indexes and flags but NOT where a number is a tunable: named like one, or given to a
+# call that waits.
+TUNABLE = re.compile(
+    r"(?i)(timeout|retr(y|ies)|limit|delay|wait|attempt|interval|backoff|ttl|max_|min_|budget|poll|deadline|sleep|period|window|threshold)"
+)
+WAIT_CALLS = {"sleep", "join", "wait", "wait_for", "settimeout", "communicate", "result"}
+ENV_GETTERS = {"os.environ.get", "environ.get", "os.getenv", "getenv"}
+NUMERIC_TEXT = re.compile(r"\s*-?\d+(\.\d+)?\s*")
 
 
-def numeric_lines(path: Path) -> set[str]:
+def _is_number(c: ast.AST) -> bool:
+    return (
+        isinstance(c, ast.Constant)
+        and isinstance(c.value, int | float)
+        and not isinstance(c.value, bool)
+    )
+
+
+def _is_numeric_text(c: ast.AST) -> bool:
+    return (
+        isinstance(c, ast.Constant)
+        and isinstance(c.value, str)
+        and bool(NUMERIC_TEXT.fullmatch(c.value))
+    )
+
+
+SCHEMA_BOUNDS = {
+    "min_length",
+    "max_length",
+    "min_items",
+    "max_items",
+}  # pydantic validators, not tunables
+
+
+def _direct_small(node: ast.AST | None) -> bool:
+    """`x = 0`, `x = -1`, `x: int = 1`: the value IS the small number (a Field(gt=0) bound is not)."""
+    if isinstance(node, ast.UnaryOp):
+        node = node.operand
+    return _is_number(node) and node.value in OK_SMALL  # type: ignore[union-attr]
+
+
+def _small_in(node: ast.AST | None) -> list[int]:
+    """Line numbers of the 0 / 1 / -1 constants inside `node`."""
+    if node is None:
+        return []
+    return [c.lineno for c in ast.walk(node) if _is_number(c) and c.value in OK_SMALL]  # type: ignore[attr-defined]
+
+
+def numeric_lines(path: Path) -> list[str]:
     """The stripped source line of EVERY numeric constant in the module (defaults, assignments in function bodies,
-    returns, slices, expressions, arguments of any call, keyword arguments, comparisons: all of it) except 0, 1, -1."""
+    returns, slices, expressions, arguments of any call, keyword arguments, comparisons: all of it) except 0, 1, -1;
+    plus numeric strings given to int/float/Decimal or as an environment default; plus 0, 1, -1 in a tunable context.
+    One entry per source LINE that holds one, so two identical lines count twice."""
     src = path.read_text(encoding="utf-8")
     lines = src.splitlines()
-    found = set()
+    hit: set[int] = set()
     for n in ast.walk(ast.parse(src)):
-        if (
-            isinstance(n, ast.Constant)
-            and isinstance(n.value, int | float)
-            and not isinstance(n.value, bool)
-            and n.value not in OK_SMALL
-        ):
-            found.add(lines[n.lineno - 1].strip())
-    return found
+        if _is_number(n) and n.value not in OK_SMALL:  # type: ignore[attr-defined]
+            hit.add(n.lineno)  # type: ignore[attr-defined]
+        if isinstance(n, ast.Call):
+            full = ast.unparse(n.func)
+            last = full.rsplit(".", 1)[-1]
+            if (
+                full in {"int", "float", "Decimal"}
+                and n.args
+                and _is_numeric_text(n.args[0])
+                and n.args[0].value.strip() not in {"0", "1", "-1"}  # type: ignore[attr-defined]
+            ):
+                hit.add(n.args[0].lineno)
+            if full in ENV_GETTERS and len(n.args) > 1 and _is_numeric_text(n.args[1]):
+                hit.add(n.args[1].lineno)
+            if last in WAIT_CALLS:
+                for arg in n.args:
+                    if _direct_small(arg):
+                        hit.add(arg.lineno)
+            for kw in n.keywords:
+                if kw.arg and kw.arg not in SCHEMA_BOUNDS and TUNABLE.search(kw.arg):
+                    hit.update(_small_in(kw.value))
+        elif isinstance(n, ast.Assign | ast.AnnAssign | ast.AugAssign):
+            targets = n.targets if isinstance(n, ast.Assign) else [n.target]
+            if any(TUNABLE.search(ast.unparse(tg)) for tg in targets) and _direct_small(n.value):
+                hit.add(n.value.lineno)  # type: ignore[union-attr]
+        elif isinstance(n, ast.arguments):
+            pos = [*n.posonlyargs, *n.args]
+            pairs = list(zip(pos[len(pos) - len(n.defaults) :], n.defaults, strict=True))
+            pairs += [(a, d) for a, d in zip(n.kwonlyargs, n.kw_defaults, strict=True) if d]
+            for arg, default in pairs:
+                if TUNABLE.search(arg.arg):
+                    hit.update(_small_in(default))
+    return [lines[i - 1].strip() for i in sorted(hit)]
+
+
+def excess(found: list[str], allowed: list[str]) -> list[str]:
+    """Lines found more often than they are allowlisted (a second identical line is NEW)."""
+    return sorted((Counter(found) - Counter(allowed)).elements())
 
 
 def _modules() -> dict[str, Path]:
@@ -274,13 +434,13 @@ def _modules() -> dict[str, Path]:
 def test_every_numeric_constant_of_the_demo_is_on_a_listed_line_or_in_settings_py():
     found = {rel: numeric_lines(p) for rel, p in _modules().items()}
     found = {k: v for k, v in found.items() if v}
-    new = {k: sorted(v - set(ALLOWLIST.get(k, {}).get("lines", []))) for k, v in found.items()}
+    new = {k: excess(v, ALLOWLIST.get(k, {}).get("lines", [])) for k, v in found.items()}
     new = {k: v for k, v in new.items() if v}
     assert new == {}, f"numbers outside settings.py on lines not in numeric_allowlist.json: {new}"
     unused = {
-        k: sorted(set(v["lines"]) - found.get(k, set()))
+        k: excess(v["lines"], found.get(k, []))
         for k, v in ALLOWLIST.items()
-        if set(v["lines"]) - found.get(k, set())
+        if excess(v["lines"], found.get(k, []))
     }
     assert unused == {}, f"allowlisted lines that no longer hold a number: {unused}"
     assert all(v["reason"] != "STRUCTURAL" and len(v["reason"]) > 10 for v in ALLOWLIST.values())
@@ -312,15 +472,71 @@ def test_the_numeric_scan_sees_every_context_and_is_line_specific(tmp_path):
 
 
 def test_a_new_number_on_a_new_line_fails_even_when_its_value_is_already_allowlisted(tmp_path):
-    allowed = set(ALLOWLIST["askdata/pipeline.py"]["lines"])
+    allowed = ALLOWLIST["askdata/pipeline.py"]["lines"]
     p = tmp_path / "pipeline.py"
     p.write_text("time.sleep(2)\n", encoding="utf-8")
-    assert numeric_lines(p) - allowed == {
+    assert excess(numeric_lines(p), allowed) == [
         "time.sleep(2)"
-    }  # the old value-set allowlist let this pass
+    ]  # the old value-set allowlist let this pass
 
 
 def test_the_scan_reads_subpackages_and_top_level_files():
     names = set(_modules())
     assert {"askdata/sealed.py", "data/goldcheck.py", "db/build_verify.py"} <= names
     assert not any(n.startswith("work/") for n in names)
+
+
+PLANTED_NUMBERS = [
+    'x = int("300")',
+    'x = float("1.5")',
+    'x = os.environ.get("X", "900")',
+    'x = os.getenv("X", "900")',
+    "time.sleep(1)",
+    "time.sleep(0)",
+    "thread.join(1)",
+    "event.wait(0)",
+    "retries = 1",
+    "self.max_attempts = 0",
+    "poll_interval: float = 1",
+    "def f(timeout=1): ...",
+    "def f(*, retry_limit=0): ...",
+    "queue.get(timeout=1)",
+    "call(a, backoff=-1)",
+    "return 4",
+]
+
+
+@pytest.mark.parametrize("line", PLANTED_NUMBERS)
+def test_the_numeric_scan_catches_each_planted_number(line, tmp_path):
+    p = tmp_path / "x.py"
+    p.write_text(line.replace(": ...", ": pass") + "\n", encoding="utf-8")
+    assert numeric_lines(p), line
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "x = 0",
+        "i = 1",
+        "n = -1",
+        "a = items[0]",
+        "y = int('0')",
+        "z = os.environ.get('X', 'a')",
+        "time.sleep(delay)",
+        "first = rows[1]",
+    ],
+)
+def test_the_numeric_scan_leaves_alone_what_is_not_a_tunable(line, tmp_path):
+    p = tmp_path / "x.py"
+    p.write_text(line + "\n", encoding="utf-8")
+    assert numeric_lines(p) == [], line
+
+
+def test_a_second_identical_line_is_counted_as_new_not_swallowed_by_the_first(tmp_path):
+    p = tmp_path / "cli.py"
+    p.write_text("def a():\n    return 4\ndef b():\n    return 4\n", encoding="utf-8")
+    assert numeric_lines(p) == ["return 4", "return 4"]
+    assert excess(numeric_lines(p), ["return 4"]) == ["return 4"]  # one allowlisted, two present
+    assert (
+        excess(["return 4"], ["return 4", "return 4"]) == []
+    )  # extra allowlisted lines are caught by `unused`

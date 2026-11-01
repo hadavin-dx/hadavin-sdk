@@ -14,7 +14,7 @@ from askdata.evalset import Lock, LockError, lock_path, read_lock, write_lock
 from askdata.sealed import RECOVERY_MARKER, Chain, SealedGate, report_state
 
 from .conftest import DEMO
-from .test_demo_gaps_r3 import KEY, gate_for
+from .test_demo_gaps_r3 import KEY, gate_for, renew
 from .test_eval_harness import cli_env  # noqa: F401 - a fixture reused here
 
 RUN1 = "20261101T000000000001Z-sealed"
@@ -39,6 +39,7 @@ def test_a_failed_backup_copy_never_deletes_an_anchor_that_already_existed(
     tmp_path, monkeypatch, fail_at
 ):
     g = gate_for(tmp_path, KEY)
+    renew(g)
     before = {a: a.read_bytes() for a in g.anchors}
     chain_before = g.chain.path.read_bytes()
     real, calls = shutil.copyfile, {"n": 0}
@@ -64,6 +65,7 @@ def test_a_rollback_that_itself_fails_is_surfaced_and_leaves_a_recovery_marker(
     tmp_path, monkeypatch
 ):
     g = gate_for(tmp_path, KEY)
+    renew(g)
     _recorded_run(g, RUN1)
     real_replace = sealed.os.replace
 
@@ -272,6 +274,7 @@ def test_the_recorded_hash_covers_results_jsonl_and_report_md(tmp_path):
 # ====================================================== 8: --new-set also accounts for lock.json's own counter
 def test_new_set_with_a_lock_but_no_chain_must_discard_exactly_the_locks_count(tmp_path):
     g = gate_for(tmp_path, KEY)
+    renew(g)
     _recorded_run(g, RUN1)
     g.chain.path.unlink()
     with pytest.raises(LockError, match="--discard-count 1"):
@@ -283,6 +286,7 @@ def test_new_set_with_a_lock_but_no_chain_must_discard_exactly_the_locks_count(t
 # ====================================================== 9: a defect must cite a recorded, verified, current-set run
 def test_defect_run_ok_needs_a_recorded_verified_run_of_the_current_set(tmp_path):
     g = gate_for(tmp_path, KEY)
+    renew(g)
     _recorded_run(g, RUN1)
     assert g.defect_run_ok(RUN1)
     assert not g.defect_run_ok(RUN2)  # never recorded
@@ -350,7 +354,7 @@ def test_roles_sql_validates_what_it_is_given_and_grants_exactly_the_documented_
     assert "CONNECTION LIMIT :cl;" in text and ":ro_connection_limit;" not in text
     assert "'^[0-9]{1,3}$'" in text and "BETWEEN 1 AND 999" in text
     assert (
-        text.count("'^[1-9][0-9]{0,4}s$'") == 3
+        text.count("'^[1-9][0-9]{0,2}s$'") == 3
     )  # statement, lock and idle timeouts: positive, so never '0s'
     grants = re.findall(r"^GRANT .*?;", text, flags=re.MULTILINE | re.DOTALL)
     assert len(grants) == 3

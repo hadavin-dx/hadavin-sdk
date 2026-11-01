@@ -51,10 +51,10 @@ class OverBudget(MeterError):
         self.which = which  # "demo_cap", "shared_cap", "external_stale"
 
 
-def worst_case_usd(route: Route, prompt_chars: int) -> Decimal:
-    """Input estimate (the core's pessimistic 3 characters a token) at the input rate plus `max_tokens` at the
-    output rate."""
-    tokens_in = estimate_tokens("x" * prompt_chars)
+def worst_case_usd(route: Route, prompt_bytes: int) -> Decimal:
+    """Input estimate (the core's pessimistic 3 UTF-8 BYTES a token: pass bytes, never characters, or CJK and emoji
+    are undercounted) at the input rate plus `max_tokens` at the output rate."""
+    tokens_in = estimate_tokens("x" * prompt_bytes)
     return (
         Decimal(tokens_in) * route.input_usd_per_mtok
         + Decimal(route.max_tokens) * route.output_usd_per_mtok
@@ -272,6 +272,8 @@ class Meter:
             raise MeterError("negative settlement")
         with self._locked():
             d = self._read()
+            if rid is not None and rid not in d.get("open", {}):
+                return  # already settled (or never reserved): a second settle must not move the total again
             d.get("open", {}).pop(rid, None)
             now = _dec(d["spent"][PROJECT], PROJECT) - reserved + actual
             d["spent"][PROJECT] = fmt_usd(max(now, Decimal(0)))

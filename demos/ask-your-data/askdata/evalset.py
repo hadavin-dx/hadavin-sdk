@@ -183,20 +183,41 @@ def read_lock(eval_dir: Path) -> Lock:
         raise LockError(f"lock.json missing or invalid: {type(err).__name__}") from None
 
 
-def write_lock(eval_dir: Path, lock: Lock) -> None:
-    path = lock_path(eval_dir)
-    tmp = _write_tmp(path, lock)
-    for attempt in range(
-        RUNTIME.lock_replace_attempts
-    ):  # Windows refuses a replace while a reader holds the file open
+def fsync_dir(path: Path) -> None:
+    """Make a rename durable: fsync the parent directory where the platform allows it (POSIX). Best effort."""
+    if os.name == "nt":
+        return
+    try:
+        fd = os.open(Path(path).parent, os.O_RDONLY)
+    except OSError:
+        return
+    try:
+        os.fsync(fd)
+    except OSError:
+        pass
+    finally:
+        os.close(fd)
+
+
+def replace_with_retry(src: Path, dst: Path) -> None:
+    """os.replace that retries a PermissionError (Windows refuses while a reader holds the file open), unlinks `src`
+    when it finally gives up, and fsyncs the directory after a success."""
+    for attempt in range(RUNTIME.lock_replace_attempts):
         try:
-            os.replace(tmp, path)
+            os.replace(src, dst)
+            fsync_dir(dst)
             return
         except PermissionError:
             if attempt == RUNTIME.lock_replace_attempts - 1:
-                tmp.unlink(missing_ok=True)
+                Path(src).unlink(missing_ok=True)
                 raise
             time.sleep(RUNTIME.lock_replace_wait_s)
+
+
+def write_lock(eval_dir: Path, lock: Lock) -> None:
+    path = lock_path(eval_dir)
+    tmp = _write_tmp(path, lock)
+    replace_with_retry(tmp, path)
 
 
 def _write_tmp(path: Path, lock: Lock) -> Path:

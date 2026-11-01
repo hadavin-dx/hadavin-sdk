@@ -208,6 +208,33 @@ running the script by hand passes them with `-v` (it refuses without them).
      check; a config that was asked for and cannot be read is an error. While a sealed run is alive it holds an OS run lock
      (`sealed-run.lock`): a second look is refused with "a sealed run is still running" and the status is "aborted" only
      once that process is gone.
+   * Round 8, said exactly:
+     * `report-lost` is refused on a run whose recorded files are intact, and on a keyed set it needs the key. A run
+       recorded `aborted` whose files are later lost still permits `--second-look aborted` (it did abort); a lost run with
+       no `sealed_done` is "unverified". A lost run folder that is later re-created with other files is never shown.
+     * **Rollback evasion, stated exactly.** An attacker who restores BOTH `lock.json` and the chain from an older backup AND
+       removes or renames the run folders of the newer runs is not detected by this demo: no file it holds carries the
+       counter or the chain head outside the two files. The witness that would catch it is publishing the chain head to
+       something the attacker cannot rewrite; the core ships immutable anchor kinds (`audit/anchor_s3`, `anchor_gcs`,
+       `anchor_azure`) for that, and wiring one in as a pluggable `sealed_head_witness` (git file by default, a core anchor
+       as the alternative) is the trigger to adopt when a client's threat model includes a writer of the whole audit folder.
+     * `eval freeze --new-set` is refused when the frozen files are byte-identical to ANY earlier set of the chain (its
+       hashes would give the same questions a fresh count).
+     * **Vouching limits.** `eval report` flags a report whose folder is named like a sealed run, or whose own fields say
+       sealed (a byte-for-byte copy of a recorded report says so too). A report that was edited AND relabelled AND put in an
+       arbitrary folder name cannot be recognised as sealed by anything on disk; the chain, not the file, is the evidence.
+     * **Peek and abort.** Reading `statements.jsonl` while a sealed run is alive, then touching a frozen file to make it
+       `aborted`, yields results and consumes one of `max_second_looks` (default 2). It is bounded and logged, not
+       prevented.
+     * **Key rotation.** Put the NEW secret name in `sealed_key_secret_name` and the old one(s), oldest first, in
+       `sealed_previous_key_secret_names`, then run `eval rotate-key` once: a `rekey` entry signed with the old key, later
+       entries and the lock seal under the new one, the counter untouched. Until then nothing else is accepted.
+     * `ro_role`, `ro_password` and the role timeouts are validated by `db/roles.sql` (a role name of lower-case letters,
+       digits and underscore; a password of 12+ characters when one is passed; timeouts 1s to 999s). The script is not
+       idempotent: a second run stops at `CREATE ROLE` (exit 3, rolled back).
+     * **Single-tenant by design.** One config owns one meter, ledger and audit folder; two configs never share spend (tested).
+       Billing is two-phase (`reserve`, then `settle`); a second settle of the same reservation is a no-op, so a retried
+       settle cannot double-bill, and an unsettled reservation stays visible as `open`.
    * Anchors: at the first freeze a `set_id` is written to `<audit_dir>/sealed-anchor.json` and to
      `<eval_dir>/anchor.json`, which you COMMIT TO GIT. `eval
      freeze` refuses while a chain or any anchor exists, so deleting the chain and `lock.json` and freezing again does not

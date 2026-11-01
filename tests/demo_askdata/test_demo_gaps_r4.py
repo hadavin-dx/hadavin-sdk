@@ -20,7 +20,7 @@ from hadavin_sdk.llm.protocol import UnusableAnswer
 
 from .conftest import DEMO
 from .kit import COUNT_ORDERS, Kit
-from .test_demo_gaps_r3 import KEY, Q, Wrap, gate_for, sealed_runs, spend
+from .test_demo_gaps_r3 import KEY, Q, Wrap, gate_for, renew, sealed_runs, spend
 from .test_eval_harness import cli_env  # noqa: F401 - a fixture reused here
 
 
@@ -109,6 +109,7 @@ def test_a_new_freeze_is_refused_while_any_anchor_exists_and_new_set_is_visible(
 
 def test_new_set_restarts_the_count_and_leaves_a_visible_entry(tmp_path):
     g = gate_for(tmp_path, KEY)
+    renew(g)
     _run(g, "r1")
     lock = g.create(
         ["a.jsonl"], new_set_reason="a different test set from the client", discard_count=1
@@ -158,6 +159,12 @@ def test_freeze_new_set_through_the_cli(cli_env, capsys):  # noqa: F811
     assert cli.main(["eval", "--config", path, "freeze"]) == 4  # a set is already frozen
     assert cli.main(["eval", "--config", path, "freeze", "--new-set"]) == 1  # needs a reason
     capsys.readouterr()
+    assert (
+        cli.main(["eval", "--config", path, "freeze", "--new-set", "--reason", "x" * 25]) == 4
+    )  # same files: refused
+    assert "IDENTICAL" in capsys.readouterr().out
+    with open(cfg.paths.eval_dir / "gold.dev.jsonl", "a", encoding="utf-8") as f:
+        f.write("\n")  # the client replaced the questions: different bytes, different set
     assert (
         cli.main(
             [

@@ -93,6 +93,8 @@ class AskdataConfig(_Strict):
     meter: MeterLimits = MeterLimits()  # caps and timing of the shared spend meter
     # HMAC key (from the `secrets` kind) for the sealed-run chain and lock.json's seal; None: unkeyed, see sealed.py
     sealed_key_secret_name: str | None = Field(None, min_length=1)
+    # Secret names of the keys the chain was under BEFORE sealed_key_secret_name, oldest first (key rotation)
+    sealed_previous_key_secret_names: list[str] = Field(default_factory=list)
     # Core backend entries (`{kind: ..., ...}`), validated by `live.py` against the core table; never a secret value.
     secrets: dict[str, Any] | None = (
         None  # None: no provider; the DSN then comes from the environment only
@@ -122,7 +124,7 @@ class AskdataConfig(_Strict):
 
     def _llm_attempts(self) -> int:
         """Requests one live `chat()` may send: the LLM kind's `max_attempts` (3 unless set); 1 for the recorded model."""
-        return int(self.llm.get("max_attempts", 3)) if self.llm else 1
+        return int(self.llm.get("max_attempts", 3)) if self.llm else RUNTIME.recorded_llm_requests
 
     def settings(self) -> Settings:
         extra = {"restricted_terms": tuple(self.restricted_terms)} if self.restricted_terms else {}

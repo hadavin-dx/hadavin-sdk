@@ -53,6 +53,7 @@ from askdata.pipeline import Pipeline
 from askdata.policy import EXIT_AUDIT
 from askdata.safe_text import clean
 from askdata.sealed import RUN_NAME, SealedGate, key_from, verify_run_report
+from askdata.settings import RUNTIME
 from hadavin_sdk.llm.fake import FakeLLM
 
 # what `evalrun.run_id` produces: UTC time to the microsecond plus the label. Nothing else names a run folder.
@@ -111,7 +112,7 @@ def build_harness(
     settings = (
         replace(cfg.settings(), live=True)
         if ecfg.live
-        else replace(cfg.settings(), llm_max_attempts=1)
+        else replace(cfg.settings(), llm_max_attempts=RUNTIME.recorded_llm_requests)
     )
 
     def pipeline(key: str) -> Pipeline:
@@ -147,6 +148,13 @@ def _gate(cfg: AskdataConfig) -> SealedGate:
         if provider is None:
             raise LockError("sealed_key_secret_name is set but the config has no `secrets` entry")
         key = key_from(provider, cfg.sealed_key_secret_name)
+    old_keys = tuple(
+        k
+        for k in (
+            key_from(live.make_provider(cfg), n) for n in cfg.sealed_previous_key_secret_names
+        )
+        if k
+    )
     # Two anchors with fixed names: one beside the chain, one in the eval folder that you COMMIT to the repository.
     anchors = [cfg.paths.audit_dir / "sealed-anchor.json", cfg.paths.eval_dir / "anchor.json"]
     return SealedGate(
@@ -155,6 +163,7 @@ def _gate(cfg: AskdataConfig) -> SealedGate:
         cfg.paths.runs_dir,
         key,
         anchors,
+        old_keys,
     )
 
 
@@ -233,6 +242,24 @@ def cmd_report_lost(cfg: AskdataConfig, run_id: str, reason: str) -> int:
         out(f"startup: {err}")
         return 4
     out(f"report-lost: {run_id} is recorded as LOST in the chain; its status is now unverified")
+    return 0
+
+
+def cmd_rotate_key(cfg: AskdataConfig) -> int:
+    """Re-key the chain: put the NEW secret in sealed_key_secret_name and the old one(s) in
+    sealed_previous_key_secret_names, then run this once."""
+    try:
+        with lock_guard(cfg.paths.eval_dir):
+            _gate(cfg).rotate_key()
+    except LockError as err:
+        out(f"refused: {err}")
+        return 14
+    except (ConfigError, OSError) as err:
+        out(f"startup: {err}")
+        return 4
+    out(
+        "rotate-key: the chain is re-keyed (a `rekey` entry); later entries and the lock seal use the new key"
+    )
     return 0
 
 
@@ -471,7 +498,11 @@ def _record(step, eval_dir: Path) -> bool:
 
 
 def _looks_sealed(run_dir: Path) -> bool:
-    """By the report's OWN fields (split test, or label sealed / second look), not by the folder name."""
+    """Sealed-looking by ANY signal: the folder is named like a sealed or second-look run (what `evalrun.run_id` gives
+    them), or the report's own split is test / label is sealed or second look. Relabelling the report is not enough."""
+    m = RUN_ID.fullmatch(run_dir.name)
+    if m and m.group(1) != "dev":
+        return True
     try:
         rep = json.loads((run_dir / "report.json").read_text(encoding="utf-8"))
     except (OSError, ValueError):
@@ -506,8 +537,10 @@ def _vouch(cfg: AskdataConfig | None, *run_dirs: Path) -> int | None:
                     "",
                 )
                 out(
-                    f"WARNING: the recorded files of {run_dir.name} are marked LOST by the key holder: {clean(why)}"
+                    f"LOST: the recorded files of {run_dir.name} are marked lost by the key holder: {clean(why)}; "
+                    "no results are shown for a lost run"
                 )
+                return 4
             elif verdict == "unrecorded" and run_dir in sealed_like:
                 out(
                     f"NOT VOUCHED: {run_dir.name} looks like a sealed report but the sealed-run chain has no record of it"
@@ -586,6 +619,10 @@ def main(argv: list[str]) -> int:
         help="with --new-set: the number of counted sealed runs you discard",
     )
     sub.add_parser(
+        "rotate-key",
+        help="re-key the sealed-run chain (needs sealed_previous_key_secret_names): audited, counter untouched",
+    )
+    sub.add_parser(
         "reseal",
         help="key holder: re-seal lock.json after a hand edit of the harness-defect fields",
     )
@@ -639,6 +676,8 @@ def main(argv: list[str]) -> int:
         return cmd_freeze(cfg, args.reason if args.new_set else None, args.discard_count)
     if args.cmd == "reseal":
         return cmd_reseal(cfg)
+    if args.cmd == "rotate-key":
+        return cmd_rotate_key(cfg)
     if args.cmd == "reconcile":
         return cmd_reconcile(cfg)
     if args.cmd == "report-lost":

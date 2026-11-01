@@ -53,6 +53,7 @@ from askdata.evalset import (
     lock_path,
     make_lock,
     read_lock,
+    replace_with_retry,
     write_lock,
 )
 
@@ -67,6 +68,7 @@ KINDS = (
     "reseal",
     "new_set",
     "report_lost",
+    "rekey",
 )
 RUN_LOCK = "sealed-run.lock"
 RECOVERY_MARKER = "FREEZE-RECOVERY.txt"
@@ -117,8 +119,13 @@ def seal_of(key: bytes | None, lock: Lock) -> str | None:
 
 
 class Chain:
-    def __init__(self, path: Path, key: bytes | None = None) -> None:
-        self.path, self.key = Path(path), key
+    def __init__(
+        self, path: Path, key: bytes | None = None, old_keys: tuple[bytes, ...] = ()
+    ) -> None:
+        """`old_keys`: the keys the chain was under BEFORE `key`, oldest first. Entries up to and including a `rekey`
+        entry are verified with the key that was current then (the rekey entry itself with the OLD key)."""
+        self.path, self.key, self.old_keys = Path(path), key, tuple(old_keys)
+        self.active_idx = 0
 
     def _split(self) -> tuple[list[str], bool, bool]:
         """(complete lines, torn, unterminated). torn: the last line has no newline AND is not valid JSON (a write cut
@@ -149,6 +156,8 @@ class Chain:
         lines, _, _ = self._split()
         out: list[dict] = []
         prev = GENESIS
+        keys = [*self.old_keys, self.key] if self.old_keys else [self.key]
+        idx = 0
         for n, raw in enumerate(lines):
             try:
                 e = json.loads(raw)
@@ -156,8 +165,16 @@ class Chain:
                     e["seq"] == n
                     and e["kind"] in KINDS
                     and e["prev"] == prev
-                    and hmac.compare_digest(e["sha"], _mac(self.key, n, e["kind"], e["data"], prev))
+                    and hmac.compare_digest(
+                        e["sha"], _mac(keys[idx], n, e["kind"], e["data"], prev)
+                    )
                 )
+                if ok and e["kind"] == "rekey":
+                    idx += 1  # everything after a rekey entry is under the next key
+                    if idx >= len(keys):
+                        raise LockError(
+                            "the chain was re-keyed but the new key is not configured (sealed_key_secret_name)"
+                        )
             except (ValueError, KeyError, TypeError):
                 ok = False
             if not ok:
@@ -166,6 +183,7 @@ class Chain:
                 )
             prev = e["sha"]
             out.append(e)
+        self.active_idx = idx
         return out
 
     def _rewrite(self, lines: list[str]) -> None:
@@ -177,7 +195,7 @@ class Chain:
                 f.write("".join(line + "\n" for line in lines))
                 f.flush()
                 os.fsync(f.fileno())
-            os.replace(tmp, self.path)
+            replace_with_retry(tmp, self.path)
         except BaseException:
             tmp.unlink(missing_ok=True)
             raise
@@ -189,10 +207,14 @@ class Chain:
             self._rewrite(lines)
         return torn
 
-    def append(self, kind: str, data: dict | None = None) -> dict:
+    def append(self, kind: str, data: dict | None = None, signing_key: bytes | None = None) -> dict:
         """Verify, then add one entry (fsync). The caller holds the lock.json OS lock."""
         self.repair()
         entries = self.entries()
+        if kind != "rekey" and self.old_keys and self.active_idx != len(self.old_keys):
+            raise LockError(
+                "the chain is still under the previous key: run `eval rotate-key` once to re-key it"
+            )
         seq, prev = len(entries), (entries[-1]["sha"] if entries else GENESIS)
         body = {**(data or {}), "ts": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")}
         entry = {
@@ -200,7 +222,7 @@ class Chain:
             "kind": kind,
             "data": body,
             "prev": prev,
-            "sha": _mac(self.key, seq, kind, body, prev),
+            "sha": _mac(signing_key or self.key, seq, kind, body, prev),
         }
         self.path.parent.mkdir(parents=True, exist_ok=True)
         with open(self.path, "a", encoding="utf-8", newline="\n") as f:
@@ -277,6 +299,11 @@ def report_state(entries: list[dict], runs_dir: Path, run_id: str) -> str | None
             for e in entries
         )
         if lost:
+            if problem is not None and any((folder / n).exists() for n in RESULT_FILES):
+                raise LockError(
+                    f"files appeared in the folder of run {run_id}, which is marked lost, and they do not match what "
+                    "the chain recorded: they are not shown or trusted"
+                )
             return "lost"
         if problem == "deleted":
             raise LockError(
@@ -349,11 +376,15 @@ def _status_of(entries: list[dict], runs_dir: Path, running: bool = False) -> st
 def _write_json(path: Path, obj: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_name(f"{path.name}.{os.getpid()}.{uuid.uuid4().hex[:8]}.tmp")
-    with open(tmp, "w", encoding="utf-8", newline="\n") as f:
-        f.write(json.dumps(obj, indent=2, sort_keys=True) + "\n")
-        f.flush()
-        os.fsync(f.fileno())
-    os.replace(tmp, path)
+    try:
+        with open(tmp, "w", encoding="utf-8", newline="\n") as f:
+            f.write(json.dumps(obj, indent=2, sort_keys=True) + "\n")
+            f.flush()
+            os.fsync(f.fileno())
+        replace_with_retry(tmp, path)
+    except BaseException:
+        tmp.unlink(missing_ok=True)  # never leave a temp file behind
+        raise
 
 
 class SealedGate:
@@ -366,9 +397,10 @@ class SealedGate:
         runs_dir: Path,
         key: bytes | None,
         anchors: tuple[Path, ...] | list[Path] = (),
+        old_keys: tuple[bytes, ...] = (),
     ) -> None:
         self.eval_dir, self.runs_dir, self.key = Path(eval_dir), Path(runs_dir), key
-        self.chain = Chain(chain_path, key)
+        self.chain = Chain(chain_path, key, old_keys)
         # An anchor is a small .json file next to the data it protects: inside the eval folder or the audit folder,
         # so a config entry cannot make this code write anywhere else.
         roots = [self.eval_dir.resolve(), Path(chain_path).resolve().parent]
@@ -525,6 +557,16 @@ class SealedGate:
                 "discarded_runs": counted if chain_existed else discard_count,
                 "lock_test_runs": lock_runs,
             }
+        if reason:
+            seen_sets = {
+                e["data"].get("files_sha") for e in prev if e["kind"] in ("genesis", "new_set")
+            }
+            if data["files_sha"] in seen_sets:
+                raise LockError(
+                    "--new-set refused: these frozen files are IDENTICAL to a set that was already frozen and run "
+                    "against; a new set must have different test files (its hashes would give the same set a fresh "
+                    "count)"
+                )
         old = None
         backups: dict[Path, Path] = {}
         appended = lock_created = False
@@ -554,10 +596,11 @@ class SealedGate:
             if (
                 reason and lock_path(self.eval_dir).exists()
             ):  # moved aside only AFTER the append succeeded
-                old = lock_path(self.eval_dir).with_name(
+                moved = lock_path(self.eval_dir).with_name(
                     f"lock.json.prev-{datetime.now(UTC).strftime('%Y%m%dT%H%M%S%fZ')}"
                 )
-                os.replace(lock_path(self.eval_dir), old)
+                os.replace(lock_path(self.eval_dir), moved)
+                old = moved  # only now: a failed move leaves nothing to move back
             lock = freeze(
                 self.eval_dir, names, thresholds, no_clobber=True, seal=seal, prebuilt=prebuilt
             )
@@ -703,7 +746,9 @@ class SealedGate:
             if stray := unchained_runs(entries, self.runs_dir):
                 raise LockError(
                     f"run folder(s) {stray[:3]} hold results that the chain has no sealed run for: lock.json and the "
-                    "chain look rolled back while the run folders stayed"
+                    "chain look rolled back while the run folders stayed. Recovery: if the folder is not yours, move "
+                    "it out of the runs folder; if lock.json and the chain were restored from a backup, restore BOTH "
+                    "from the newer backup (or from git for lock.json plus the audit folder copy)"
                 )
         seen = [e["sha"] for e in entries].index(lock.chain_head) + 1
         recovered = entries[seen:]
@@ -823,6 +868,8 @@ class SealedGate:
         # the report on disk outranks the caller's idea of the status: results that exist are never 'aborted'
         state = report_state(self.chain.entries(), self.runs_dir, run_id)
         status = state if state in ("complete", "aborted", "unverified") else status
+        if state is None and status == "complete":
+            status = "unverified"  # the caller wrote results that are not there (deleted before they were recorded)
         self._commit(lock, "sealed_done", {"run_id": run_id, "status": status})
 
     def record_smoke(self, key: str) -> None:
@@ -833,6 +880,39 @@ class SealedGate:
         """The explicit, audited form of the recovery `load()` does: returns (lock test_runs before, after)."""
         before = read_lock(self.eval_dir).test_runs
         return before, self.load().test_runs
+
+    def rotate_key(self) -> None:
+        """Re-key the chain: a `rekey` entry signed with the OLD key (it names the new key id), then every later entry
+        and the lock's seal under the NEW key, and the anchors' key id updated. Needs `old_keys` (the previous key)
+        and `key` (the new one). Audited; the counter and the history are untouched."""
+        if not (self.key and self.chain.old_keys):
+            raise LockError("rotate-key needs the new key and the previous key configured")
+        old = SealedGate(
+            self.eval_dir,
+            self.chain.path,
+            self.runs_dir,
+            self.chain.old_keys[-1],
+            self.anchors,
+            self.chain.old_keys[:-1],
+        )
+        lock = old.load()  # the lock and chain must verify under the previous key first
+        nohead = lock.model_copy()
+        entry = self.chain.append(
+            "rekey",
+            {
+                "new_key_id": self._key_id(),
+                "core_hash": core_hash_of(nohead),
+                "files_sha": files_sha_of(nohead),
+            },
+            signing_key=self.chain.old_keys[-1],
+        )
+        write_lock(
+            self.eval_dir, self._sealed(nohead.model_copy(update={"chain_head": entry["sha"]}))
+        )
+        for a in self.anchors:
+            body = json.loads(a.read_text(encoding="utf-8"))
+            body["key_id"] = self._key_id()
+            _write_json(a, body)
 
     def reseal(self) -> list[str]:
         """Key holder only: bless the hand-written harness-defect fields in lock.json and NOTHING else. The rest of the
@@ -881,6 +961,7 @@ def key_from(provider, name: str | None) -> bytes | None:
         value = provider.get(name)
     except Exception:  # noqa: BLE001 - the provider's message may name a path
         raise LockError("the sealed-run key secret cannot be read") from None
+    value = value.strip()
     if len(value) < MIN_KEY_CHARS:
         raise LockError(f"the sealed-run key must be at least {MIN_KEY_CHARS} characters")
-    return value.encode("utf-8")
+    return value.strip().encode("utf-8")  # a trailing newline in a secret must not change the key
