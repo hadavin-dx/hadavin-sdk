@@ -108,6 +108,11 @@ def _main(argv: list[str] | None = None) -> int:
         "--max-usd", required=True, type=_money, help="total cost cap for this invocation"
     )
     rep.add_argument("--out", required=True, type=Path)
+    rep.add_argument(
+        "--i-know-data-is-already-masked",
+        action="store_true",
+        help="needed only when config k1b.redact is false (the run records that you said so)",
+    )
     sc = sub.add_parser(
         "score", help="K1b-lite: count a replay's results (report only, no verdict)"
     )
@@ -226,6 +231,7 @@ def replay_cmd(reg, llm, detector, audit, args) -> int:
         max_usd=args.max_usd,
         out=args.out,
         llm_kind=reg.config.backends.llm.kind,
+        acknowledge_masked=getattr(args, "i_know_data_is_already_masked", False),
     )
     print(f"replay {res.result}: outputs in {res.out} (see replay-report.md)")
     return res.exit_code
