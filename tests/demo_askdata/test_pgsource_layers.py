@@ -172,3 +172,29 @@ def test_result_hash_is_over_raw_values_and_cells_are_cleaned(db):
     result = PgSource(db.ro_dsn).run(sql.replace(esc, "' || chr(27) || '"))
     assert result.rows == [("ab",)]  # the complete ANSI sequence is removed from the display value
     assert esc not in "".join(str(c) for r in result.rows for c in r)
+
+
+def test_a_transient_connect_failure_is_retried_once_and_a_second_failure_is_reported(
+    db, monkeypatch
+):
+    real, calls = psycopg.connect, []
+
+    def flaky(*args, **kwargs):
+        calls.append(1)
+        if len(calls) == 1:
+            raise psycopg.OperationalError("connection reset")
+        return real(*args, **kwargs)
+
+    monkeypatch.setattr(psycopg, "connect", flaky)
+    assert PgSource(db.ro_dsn).run("SELECT 1").rows == [(1,)]
+    assert len(calls) == 2
+
+    def dead(*args, **kwargs):
+        calls.append(1)
+        raise psycopg.OperationalError("connection refused")
+
+    calls.clear()
+    monkeypatch.setattr(psycopg, "connect", dead)
+    with pytest.raises(PgError) as caught:
+        PgSource(db.ro_dsn).run("SELECT 1")
+    assert caught.value.sqlstate is None and len(calls) == 2

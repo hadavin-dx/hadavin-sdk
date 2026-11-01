@@ -172,6 +172,18 @@ ATTACKS: list[Attack] = [
     A("unknown-column-in-subquery-in-order-by", f"SELECT order_id FROM {O} ORDER BY (SELECT 1 FROM {C} HAVING email IS NULL)", "V05", "columns", "pg-refuses"),
     A("join-on-one-column-only", f"SELECT 1 FROM {O} a JOIN {O} b ON a.order_id > 0", "V08", "joins", "exec"),
     A("join-on-same-column", f"SELECT 1 FROM {O} a JOIN {O} b ON a.order_id = a.order_id", "V08", "joins", "exec"),
+    A("join-on-joined-relation-only", f"SELECT 1 FROM {O} a JOIN {P} b ON b.product_id = b.unit_price", "V08", "joins", "exec"),
+    A("join-on-earlier-relation-only", f"SELECT 1 FROM {O} a JOIN {C} b ON a.order_id = a.customer_id", "V08", "joins", "exec"),
+    A("join-on-third-relation-skips-the-joined-one", f"SELECT 1 FROM {O} a JOIN {C} b ON a.order_id = b.customer_id JOIN {P} c ON a.order_id = b.customer_id", "V08", "joins", "exec"),
+    A("arity-count-two-args", f"SELECT count(1, 2) FROM {O}", "V06", "function-arity", "pg-refuses"),
+    A("arity-age-no-args", f"SELECT age() FROM {O}", "V06", "function-arity", "pg-refuses"),
+    A("arity-length-two-args", f"SELECT length(status, 3) FROM {O}", "V06", "function-arity", "pg-refuses"),
+    A("arity-ceil-two-args", f"SELECT ceil(1, 2) FROM {O}", "V06", "function-arity", "pg-refuses"),
+    A("arity-row-number-with-arg", f"SELECT row_number(5) OVER () FROM {O}", "V06", "function-arity", "pg-refuses"),
+    A("arity-ntile-no-args", f"SELECT ntile() OVER () FROM {O}", "V06", "function-arity", "pg-refuses"),
+    A("arity-make-date-two-args", f"SELECT make_date(1, 2) FROM {O}", "V06", "function-arity", "pg-refuses"),
+    A("arity-replace-two-args", f"SELECT replace(status, 'a') FROM {O}", "V06", "function-arity", "pg-refuses"),
+    A("arity-percentile-two-args", f"SELECT percentile_cont(0.5, 0.6) WITHIN GROUP (ORDER BY total_amount) FROM {O}", "V06", "function-arity", "pg-refuses"),
     A("named-window-clause", f"SELECT order_id FROM {O} WINDOW w AS (ORDER BY order_id)", "V10", "window-frames", "exec"),
     A("wrong-view-column", f"SELECT o.email FROM {O} o", "V05", "columns", "pg-refuses"),
     A("whole-row-alias", f"SELECT o FROM {O} o", "V05", "star-whole-row", "exec"),
@@ -326,6 +338,9 @@ ATTACKS: list[Attack] = [
 # (name, sql)
 BENIGN: list[tuple[str, str]] = [
     ("count", f"SELECT count(*) FROM {O}"),
+    ("join-on-subquery", f"SELECT s.n FROM {C} c JOIN (SELECT customer_id, count(*) AS n FROM {O} GROUP BY customer_id) s ON s.customer_id = c.customer_id"),
+    ("join-on-cte", f"WITH t AS (SELECT customer_id FROM {O}) SELECT count(*) FROM {C} c JOIN t ON t.customer_id = c.customer_id"),
+    ("join-on-compound", f"SELECT count(*) FROM {O} o JOIN {C} c ON c.customer_id = o.customer_id AND o.status = 'paid'"),
     ("count-distinct", f"SELECT count(DISTINCT customer_id) FROM {O}"),
     (
         "cte-later-uses-earlier",

@@ -18,6 +18,8 @@ from __future__ import annotations
 import hashlib
 import logging
 import re
+from collections.abc import Mapping
+from contextvars import ContextVar
 from dataclasses import dataclass
 
 import sqlglot
@@ -25,6 +27,7 @@ from sqlglot import exp
 from sqlglot.errors import OptimizeError, SqlglotError
 
 from askdata.allowed import (
+    ARITY,
     CAST_TARGETS,
     EXTRACT_FIELDS,
     FUNCTIONS,
@@ -202,7 +205,17 @@ _ZONE = re.compile(r"[A-Za-z0-9_/+-]{1,40}")
 _FUNC_NAME = re.compile(r"([A-Za-z_][A-Za-z0-9_]*)\(")
 _PLAIN_IDENT = re.compile(r"[a-z_][a-z0-9_]*")
 _BARE_IDENT = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
-_SCHEMA_DICT = {SCHEMA: {v: dict.fromkeys(cols, "TEXT") for v, cols in VIEWS.items()}}
+# The exposed views the statement is judged against. Default: the spike catalog; the Lumen catalog (the gold set's
+# seven views) is passed as `validate(raw, views=...)`. A ContextVar keeps the rule code free of plumbing.
+_CATALOG: ContextVar[Mapping[str, tuple[str, ...]]] = ContextVar("askdata_catalog", default=VIEWS)
+
+
+def _views() -> Mapping[str, tuple[str, ...]]:
+    return _CATALOG.get()
+
+
+def _schema_dict() -> dict:
+    return {SCHEMA: {v: dict.fromkeys(cols, "TEXT") for v, cols in _views().items()}}
 
 
 def _gen(node: exp.Expression) -> str:
@@ -222,13 +235,49 @@ def _check_function(node: exp.Func) -> None:
         # sqlglot has no typed node for a few allowed functions (age, make_date): judged by name like the rest.
         if node.name.lower() not in FUNCTIONS:
             _fail("V06", f"function {node.name.lower()} is not allowed")
+        _check_arity(node, node.name.lower())
         return
     if type(node).__name__ in SYNTAX_FUNCTIONS:
         return
-    match = _FUNC_NAME.match(_gen(node))
-    name = match.group(1).lower() if match else type(node).__name__.lower()
+    name = _function_name(node)
     if name not in FUNCTIONS:
         _fail("V06", f"function {name} is not allowed")
+    _check_arity(node, name)
+
+
+def _function_name(node: exp.Func) -> str:
+    match = _FUNC_NAME.match(_gen(node))
+    return match.group(1).lower() if match else type(node).__name__.lower()
+
+
+def _arg_count(call: str) -> int:
+    """Top-level arguments in the text `NAME(a, b, ...)` (string and parenthesis aware); 0 for `NAME()`."""
+    inner, depth, quote, count, seen = call[call.index("(") + 1 :], 0, False, 1, False
+    for ch in inner:
+        if quote:
+            quote = ch != "'"
+        elif ch == "'":
+            quote, seen = True, True
+        elif ch == "(":
+            depth, seen = depth + 1, True
+        elif ch == ")":
+            if depth == 0:
+                break
+            depth -= 1
+        elif ch == "," and depth == 0:
+            count += 1
+        elif not ch.isspace():
+            seen = True
+    return count if seen else 0
+
+
+def _check_arity(node: exp.Func, name: str) -> None:
+    """sqlglot accepts any number of arguments; PostgreSQL would answer 42883. Refuse here, with a clear rule."""
+    if name in ARITY and "(" in _gen(node):
+        low, high = ARITY[name]
+        n = _arg_count(_gen(node))
+        if n < low or (high is not None and n > high):
+            _fail("V06", f"function {name} does not take {n} arguments")
 
 
 def _check_cast(node: exp.Cast) -> None:
@@ -271,8 +320,54 @@ def _check_table(node: exp.Table, cte_names: set[str]) -> None:
     if db is None:
         if ident.name.lower() not in _visible_ctes(node):
             _fail("V04", f"relation {ident.name.lower()} is not an exposed view")
-    elif db.name.lower() != SCHEMA or ident.name.lower() not in VIEWS:
+    elif db.name.lower() != SCHEMA or ident.name.lower() not in _views():
         _fail("V04", f"relation {db.name.lower()}.{ident.name.lower()} is not an exposed view")
+
+
+def _relation_columns(rel: exp.Expression) -> set[str] | None:
+    """Lower-case output column names of a FROM item, or None when they cannot be known (then any column may match)."""
+    if isinstance(rel, exp.Table):
+        if rel.args.get("db") is not None:
+            return {c.lower() for c in _views().get(rel.name.lower(), ())}
+        for cte in rel.root().find_all(exp.CTE):
+            if cte.alias.lower() == rel.name.lower():
+                listed = cte.args["alias"].columns if cte.args.get("alias") else []
+                return {c.name.lower() for c in listed} or _select_names(cte.this)
+        return None
+    if isinstance(rel, exp.Subquery):
+        return _select_names(rel.this)
+    return None
+
+
+def _select_names(query: exp.Expression) -> set[str] | None:
+    selects = getattr(query, "selects", None)
+    if not selects or any(isinstance(s, exp.Star) or s.is_star for s in selects):
+        return None
+    return {s.alias_or_name.lower() for s in selects}
+
+
+def _on_links(join: exp.Join) -> bool:
+    """The ON condition names a column of the joined relation AND a column of a relation that comes before it."""
+    select = join.parent
+    if not isinstance(select, exp.Select):
+        return False
+    first = select.args.get("from_") or select.args.get("from")
+    earlier = [first.this] if first is not None else []
+    for other in select.args.get("joins") or []:
+        if other is join:
+            break
+        earlier.append(other.this)
+    columns = {r.alias_or_name.lower(): _relation_columns(r) for r in [*earlier, join.this]}
+    joined = join.this.alias_or_name.lower()
+    before = {r.alias_or_name.lower() for r in earlier}
+
+    def touches(aliases: set[str], col: exp.Column) -> bool:
+        if col.table:
+            return col.table.lower() in aliases
+        return any(columns[a] is None or col.name.lower() in columns[a] for a in aliases)
+
+    cols = list(join.args["on"].find_all(exp.Column))
+    return any(touches({joined}, c) for c in cols) and any(touches(before, c) for c in cols)
 
 
 def _check_node(node: exp.Expression, cte_names: set[str]) -> None:
@@ -300,6 +395,10 @@ def _check_node(node: exp.Expression, cte_names: set[str]) -> None:
         _fail(
             "V08",
             "a join condition must compare two different columns (ON TRUE, ON 1 = 1 are cross joins)",
+        )
+    if isinstance(node, exp.Join) and node.args.get("on") is not None and not _on_links(node):
+        _fail(
+            "V08", "a join condition must use a column of the joined relation and of an earlier one"
         )
     if isinstance(node, exp.Dot) and isinstance(node.expression, exp.Func):
         _fail("V06", "schema-qualified function names are not allowed")
@@ -396,6 +495,10 @@ def _check_detail(node: exp.Expression) -> None:
         _fail("V10", "window frames are not allowed")
     if isinstance(node, exp.WithinGroup) and not isinstance(node.this, exp.PercentileCont):
         _fail("V10", "WITHIN GROUP is allowed only after percentile_cont")
+    if isinstance(node, exp.PercentileCont) and node.args.get("expression") is not None:
+        _fail(
+            "V06", "function percentile_cont does not take 2 arguments"
+        )  # sqlglot swaps them silently
     if isinstance(node, exp.Filter) and not isinstance(node.this, exp.AggFunc):
         _fail("V10", "FILTER is allowed only on aggregates")
     if isinstance(node, exp.AtTimeZone):
@@ -420,7 +523,7 @@ def _check_whole_row(tree: exp.Expression, cte_names: set[str]) -> None:
         | {q.alias.lower() for q in tree.find_all(exp.Subquery) if q.alias}
         | cte_names
     )
-    known = {c for cols in VIEWS.values() for c in cols} | {
+    known = {c for cols in _views().values() for c in cols} | {
         a.alias.lower() for a in tree.find_all(exp.Alias)
     }
     for col in tree.find_all(exp.Column):
@@ -452,7 +555,12 @@ def _check_tree(tree: exp.Expression) -> None:
     for cte in ctes:
         name = cte.alias.lower()
         inner = {t.name.lower() for t in cte.this.find_all(exp.Table) if not t.args.get("db")}
-        if name.startswith("pg_") or name == "information_schema" or name in VIEWS or name in inner:
+        if (
+            name.startswith("pg_")
+            or name == "information_schema"
+            or name in _views()
+            or name in inner
+        ):
             _fail("V04", f"CTE name {name} shadows a relation")
     if (
         max(
@@ -471,7 +579,7 @@ def _check_tree(tree: exp.Expression) -> None:
         from sqlglot.optimizer.qualify import qualify
 
         resolved = qualify(
-            tree.copy(), schema=_SCHEMA_DICT, dialect="postgres", validate_qualify_columns=True
+            tree.copy(), schema=_schema_dict(), dialect="postgres", validate_qualify_columns=True
         )
     except OptimizeError:
         _fail("V05", "a column is not in the referenced views")
@@ -506,8 +614,40 @@ def _parse_one(text: str) -> exp.Expression:
     return stmts[0]
 
 
-def validate(raw: str) -> Validated:
-    """Return the canonical, hashed SELECT or raise `Rejected` with a rule id."""
+def validate(raw: str, *, views: Mapping[str, tuple[str, ...]] | None = None) -> Validated:
+    """Return the canonical, hashed SELECT or raise `Rejected` with a rule id. `views` overrides the exposed catalog."""
+    token = _CATALOG.set(views if views is not None else VIEWS)
+    try:
+        return _validate(raw)
+    finally:
+        _CATALOG.reset(token)
+
+
+def describe(
+    raw: str, *, views: Mapping[str, tuple[str, ...]] | None = None
+) -> dict[str, list[str]]:
+    """What an ACCEPTED statement is made of: node classes, function names and cast targets (the allowlist
+    derivation tool and its test use this; it raises `Rejected` for a statement that does not validate)."""
+    canonical = validate(raw, views=views).canonical_sql
+    nodes: set[str] = set()
+    funcs: set[str] = set()
+    casts: set[str] = set()
+    for node in sqlglot.parse_one(canonical, read="postgres").walk():
+        nodes.add(type(node).__name__)
+        if isinstance(node, exp.Anonymous):
+            funcs.add(node.name.lower())
+        elif (
+            isinstance(node, exp.Func)
+            and not isinstance(node, (*_ALLOWED_NODES, exp.Binary, exp.Unary))
+            and type(node).__name__ not in SYNTAX_FUNCTIONS
+        ):
+            funcs.add(_function_name(node))
+        if isinstance(node, exp.Cast):
+            casts.add(node.args["to"].this.name)
+    return {"nodes": sorted(nodes), "functions": sorted(funcs), "casts": sorted(casts)}
+
+
+def _validate(raw: str) -> Validated:
     text, _ = prefilter(raw)
     tree = _parse_one(text)
     _check_root(tree)
