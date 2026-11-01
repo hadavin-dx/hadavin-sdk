@@ -180,7 +180,7 @@ def test_a_damaged_ledger_makes_verify_not_ok(tmp_path):
     assert not audit.verify(QueryLedger(r.kit.ledger.path), r.kit.sink).ok
 
 
-def test_cli_writes_export_json_from_a_run_folder(tmp_path, capsys):
+def test_cli_writes_export_json_from_a_run_folder(tmp_path, capsys, monkeypatch):
     r = Rig(tmp_path)
     it = gold("g1", "answerable", "How many orders are there", COUNT_ORDERS)
     r.script(it.question, Step(sql=COUNT_ORDERS))
@@ -191,8 +191,13 @@ def test_cli_writes_export_json_from_a_run_folder(tmp_path, capsys):
     (run / "report.json").write_text(json.dumps(rep), "utf-8")
     (run / "results.jsonl").write_text("\n".join(json.dumps(asdict(x)) for x in recs), "utf-8")
     cfg = write_config(r.kit)
+    monkeypatch.chdir(tmp_path)
     assert export.main(["--config", cfg, "--run", str(run)]) == 0
     out = json.loads((run / "export.json").read_text("utf-8"))
     assert check(out, SCHEMA) == [] and out["run"]["run_id"] == "r1"
     assert export.main(["--config", cfg, "--run", str(tmp_path / "nope")]) == 4
+    assert (
+        export.main(["--config", cfg, "--run", str(run), "--out", str(tmp_path.parent / "x.json")])
+        == 1
+    )
     capsys.readouterr()

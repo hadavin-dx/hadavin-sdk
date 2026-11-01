@@ -302,7 +302,11 @@ def main(argv: list[str] | None = None) -> int:
     except (ConfigError, OSError, ValueError, KeyError) as err:
         sys.stdout.write(f"export: {clean(str(err))}\n")
         return 4
-    out = args.out or args.run / "export.json"
+    out = (args.out or args.run / "export.json").resolve()
+    if Path.cwd().resolve() not in out.parents:
+        sys.stdout.write("export: the output file must be inside the current folder
+")
+        return 1
     write_export(out, exp)
     sys.stdout.write(f"wrote {out.name}\n")
     return 0
