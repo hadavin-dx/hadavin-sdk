@@ -347,18 +347,18 @@ PLANTED = {
     "e-mail address": ["owner@" + "company.io", "user@example.com" + ".evil.io"],
     "quoted Decimal number outside settings": ["Decimal('0.035')", 'Decimal("3.00")'],
     "private key block": [
-        "-----BEGIN PRIVATE KEY-----",
-        "-----BEGIN RSA PRIVATE KEY-----",
-        "-----BEGIN OPENSSH PRIVATE KEY-----",
+        "-----BEGIN " + "PRIVATE KEY-----",
+        "-----BEGIN " + "RSA PRIVATE KEY-----",
+        "-----BEGIN " + "OPENSSH PRIVATE KEY-----",
     ],
     "password in a URL (DSN)": [
-        "postgresql://ro:hunter2hunter2@localhost:5432/db",
-        "postgres://ro:hunter2hunter2@10.1.2.3/db",
-    ][:2],
+        "postgresql://ro:" + "hunter2hunter2" + "@localhost:5432/db",
+        "postgres://ro:" + "hunter2hunter2" + "@10.1.2.3/db",
+    ],
     "password or secret assignment": [
-        "password = 'Tr0ub4dor&3xyz'",
-        'api_key: "abcdefgh12345678"',
-        '{"token": "abcdefgh12345678"}',
+        "pass" + "word = '" + "Tr0ub4dor&3xyz" + "'",
+        "api_" + 'key: "' + "abcdefgh12345678" + '"',
+        '{"tok' + 'en": "' + "abcdefgh12345678" + '"}',
     ],
     "JWT": ["eyJhbGciOiJIUzI1NiJ9." + "eyJzdWIiOiIxMjM0NTY3ODkwIn0." + "dozjgNryP4J3jVmNHl0w5N"],
     "bearer token": [
