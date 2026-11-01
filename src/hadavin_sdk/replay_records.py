@@ -78,10 +78,11 @@ def has_green_record(registry: Registry, agent_id: str) -> bool:
         registry.config.routes[agent.model_route].model_id,
         registry.prompt_sha256(agent_id),
     )
+    threshold = registry.config.eval_threshold
     return any(
         (r.agent_id, r.config_hash, r.model_id, r.prompt_sha256) == want
-        and r.green
         and r.k >= MIN_K
-        and r.pass_k >= r.threshold
+        and r.pass_k
+        >= threshold  # recomputed: the record's own green and threshold are not trusted
         for r in read_records(registry.config.root)
     )

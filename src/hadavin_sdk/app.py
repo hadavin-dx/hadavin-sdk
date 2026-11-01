@@ -102,8 +102,10 @@ def build(
     def request_approval(plan, decision, requested_by) -> Delivery:
         if len(summary(plan, summary_detector)) > channel.max_card_chars:
             return Delivery(ok=False, reason="card_too_long")
-        # A failed send stays PENDING and tick resends it, so a saved request is accepted here.
-        return Delivery(ok=True, ref=approvals.request(plan, decision, requested_by).channel_ref)
+        # A failed send is NOT terminal: the request stays PENDING and tick resends it
+        # (tests/test_p7_tick.py::test_failed_send_is_resent_by_tick), so a saved request is delivered-or-retrying.
+        req = approvals.request(plan, decision, requested_by)
+        return Delivery(ok=True, ref=req.channel_ref)
 
     hooks = Hooks(
         request_approval=request_approval,

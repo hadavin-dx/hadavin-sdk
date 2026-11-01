@@ -58,7 +58,16 @@ MIN_TOOLED_K = 3
 Level = Literal["shadow", "suggest"]
 _RANK = {"shadow": 0, "suggest": 1}
 # Abstentions the guard stopped (K5) count as guard catches; every other abstention as `abstain`.
-_GUARD_ABSTAINS = frozenset({"ungrounded", "run_budget", "redaction_error"})
+# What K6 counts as a caught mistake (it counts every non-null caught_by): only the controls that stopped a
+# proposal. A plain abstention, a provider error or a step limit is not a catch.
+_CAUGHT_BY_ABSTAIN_REASON = {
+    "tool_error": "abstain",
+    "ungrounded": "guard",
+    "run_budget": "guard",
+    "redaction_error": "guard",
+    "injection_suspected": "guard",
+    "guard_unavailable": "guard",
+}
 
 
 class Unqualified(RuntimeError):
@@ -171,6 +180,13 @@ class Runtime:
 
     def _note(self, run: Run, domain: str, operation: str, **kw: Any) -> None:
         self.audit.write_outcome(self._event(run, domain, operation, **kw))
+
+    def _note_card(self, run: Run, operation: str, **kw: Any) -> None:
+        """Audit a card post. The card is already out, so a failing audit write is logged and never raised."""
+        try:
+            self._note(run, "card", operation, **kw)
+        except Exception:  # noqa: BLE001 - fail-safe: the run end state is unchanged
+            _LOG.warning("run %s: audit write for card %s failed", run.run_id, operation)
 
     def _limits_stop(self, run: Run) -> Run | None:
         blocked = self.limits.blocked(run.agent_id)
@@ -317,25 +333,23 @@ class Runtime:
         if self.hooks.post_card is None:  # no channel wired (dev slice-1): nothing to post or audit
             return run
         label = reason or "no proposal"
-        caught = "guard" if reason in _GUARD_ABSTAINS else "abstain"
+        caught = _CAUGHT_BY_ABSTAIN_REASON.get(reason or "")
         try:
             card: Card | None = cards.render_abstain(run.run_id, label, cited)
         except Exception:  # noqa: BLE001 - an unrenderable card is an undelivered one
             card = None
         d = self._deliver(card)
         if d.ok and card is not None:
-            self._note(
+            self._note_card(
                 run,
-                "card",
                 "abstain",
                 inputs_hash=card.display_hash,
                 result="posted",
                 caught_by=caught,
             )
         else:
-            self._note(
+            self._note_card(
                 run,
-                "card",
                 "abstain_undelivered",
                 result="failed",
                 error_code=d.reason,
@@ -360,9 +374,8 @@ class Runtime:
             if decision.outcome == "deny" and not decision.rule_id.startswith("class.sign_off.")
             else None
         )
-        self._note(
+        self._note_card(
             run,
-            "card",
             "shadow",
             object_ref=plan.plan_id,
             inputs_hash=card.display_hash if card is not None else None,
@@ -386,10 +399,12 @@ class Runtime:
             return self._abstain(run, S.NEEDS_PERSON, "invalid_proposal", cited or [])
         self.store.save_plan(plan)
         run = self._to(run, S.PLAN_READY)
+        try:  # limits unreadable: stop means stop, so no card is posted
+            blocked = self.limits.blocked(agent.id)
+        except Exception:  # noqa: BLE001
+            return self._to(run, S.NEEDS_PERSON, "limits_unavailable")
         try:
-            decision = authorize(
-                self._principal(run), agent, contract, plan, self.limits.blocked(agent.id)
-            )
+            decision = authorize(self._principal(run), agent, contract, plan, blocked)
         except Exception:  # noqa: BLE001 - a gate that fails denies; the intent below still audits it
             decision = GateDecision(
                 run_id=plan.run_id, plan_hash=plan.hash(), outcome="deny", rule_id="gateway.error"

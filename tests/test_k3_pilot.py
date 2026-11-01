@@ -427,7 +427,7 @@ def test_k3_abstain_posts_card(tmp_path):
     values = [b["value"] for blk in card.blocks if blk["kind"] == "buttons" for b in blk["buttons"]]
     assert values == [f"label|{run.run_id}|abstain_ok", f"label|{run.run_id}|should_have_answered"]
     assert any(
-        e.operation == "abstain" and e.caught_by == "abstain" for e in rt.audit.events(run.run_id)
+        e.operation == "abstain" and e.caught_by is None for e in rt.audit.events(run.run_id)
     )
 
 
@@ -576,7 +576,7 @@ def test_k3_tooled_suggest_needs_replay_record(tmp_path):
         _record(reg, config_hash="0" * 64),
         _record(reg, model_id="other-model"),
         _record(reg, prompt_sha256="0" * 64),
-        _record(reg, green=False),
+        _record(reg, pass_k=0.5),
         _record(reg, k=1),
     ):
         rec_file.write_text(json.dumps(bad) + "\n", encoding="utf-8")
