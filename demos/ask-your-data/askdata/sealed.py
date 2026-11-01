@@ -391,11 +391,16 @@ class SealedGate:
                 "discarded_runs": counted,
             }
         old = None
-        backups = {a: a.with_name(a.name + ".bak") for a in self.anchors if a.exists()}
-        for a, b in backups.items():
-            shutil.copyfile(
-                a, b
-            )  # path to path: the old anchors can be put back if this freeze fails
+        backups: dict[Path, Path] = {}
+        for (
+            anchor
+        ) in self.anchors:  # path to path: the old anchors can be put back if this freeze fails
+            backup = anchor.with_name(anchor.name + ".bak")
+            try:
+                shutil.copyfile(anchor, backup)
+            except FileNotFoundError:
+                continue
+            backups[anchor] = backup
         entry = self.chain.append("new_set" if reason else "genesis", data)
 
         def seal(lock: Lock) -> Lock:
