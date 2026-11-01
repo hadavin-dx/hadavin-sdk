@@ -48,6 +48,26 @@ SELECT (:'confirm_dedicated' = 'yes') AS dedicated \gset
 \else
   SELECT 'refusing: pass -v ro_idle_timeout=Ns'::int;
 \endif
+-- A value from the command line is checked before it is used: a whole number, in range; a timeout is a positive
+-- number of seconds (a '0s' timeout would DISABLE the limit, so it is refused).
+SELECT (:'ro_connection_limit' ~ '^[0-9]{1,3}$') AS ok_cl_shape \gset
+\if :ok_cl_shape
+\else
+  SELECT 'refusing: ro_connection_limit must be a whole number from 1 to 999'::int;
+\endif
+SELECT (:'ro_connection_limit')::int AS cl \gset
+SELECT (:cl BETWEEN 1 AND 999) AS ok_cl_range \gset
+\if :ok_cl_range
+\else
+  SELECT 'refusing: ro_connection_limit must be from 1 to 999'::int;
+\endif
+SELECT (:'ro_statement_timeout' ~ '^[1-9][0-9]{0,4}s$'
+        AND :'ro_lock_timeout' ~ '^[1-9][0-9]{0,4}s$'
+        AND :'ro_idle_timeout' ~ '^[1-9][0-9]{0,4}s$') AS ok_timeouts \gset
+\if :ok_timeouts
+\else
+  SELECT 'refusing: each timeout must be a positive whole number of seconds like 15s (0s would disable it)'::int;
+\endif
 SELECT (:'accept_loss' = 'yes') AS accepted \gset
 \if :has_loss
   \if :accepted
@@ -60,7 +80,7 @@ SELECT current_database() AS dbname \gset
 
 BEGIN;  -- all or nothing: a failure leaves no half-made login behind
 
-CREATE ROLE :"ro_role" LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS CONNECTION LIMIT :ro_connection_limit;
+CREATE ROLE :"ro_role" LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS CONNECTION LIMIT :cl;
 \if :{?ro_password}
   ALTER ROLE :"ro_role" PASSWORD :'ro_password';
 \endif

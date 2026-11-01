@@ -26,7 +26,6 @@ import contextlib
 import hashlib
 import json
 import os
-import re
 import time
 from dataclasses import replace
 from pathlib import Path
@@ -53,11 +52,11 @@ from askdata.pgsource import PgSource
 from askdata.pipeline import Pipeline
 from askdata.policy import EXIT_AUDIT
 from askdata.safe_text import clean
-from askdata.sealed import SealedGate, key_from, verify_run_report
+from askdata.sealed import RUN_NAME, SealedGate, key_from, verify_run_report
 from hadavin_sdk.llm.fake import FakeLLM
 
 # what `evalrun.run_id` produces: UTC time to the microsecond plus the label. Nothing else names a run folder.
-RUN_ID = re.compile(r"[0-9]{8}T[0-9]{12}Z-(dev|sealed|second-look)", re.ASCII)
+RUN_ID = RUN_NAME  # what `evalrun.run_id` produces (defined beside the chain that checks it)
 
 SPLIT_FILES = {
     "dev": ("gold.dev.jsonl", "adversarial.dev.jsonl"),
@@ -219,6 +218,24 @@ def cmd_freeze(
     return 0
 
 
+def cmd_report_lost(cfg: AskdataConfig, run_id: str, reason: str) -> int:
+    """Audited way out when a recorded run folder was pruned, moved or lost (otherwise every load is refused)."""
+    if not RUN_ID.fullmatch(run_id):
+        out("report-lost: that is not a run id")
+        return 1
+    try:
+        with lock_guard(cfg.paths.eval_dir):
+            _gate(cfg).mark_report_lost(run_id, reason)
+    except LockError as err:
+        out(f"refused: {err}")
+        return 14
+    except (ConfigError, OSError) as err:
+        out(f"startup: {err}")
+        return 4
+    out(f"report-lost: {run_id} is recorded as LOST in the chain; its status is now unverified")
+    return 0
+
+
 def cmd_reseal(cfg: AskdataConfig) -> int:
     """Key holder: bless the current lock.json after a hand edit of the harness-defect fields (logged in the chain)."""
     try:
@@ -302,13 +319,12 @@ def _prepare(cfg, split, k, second_look, harness_factory, use_live, smoke):
         run = lock.harness_defect_run or ""
         if (
             not RUN_ID.fullmatch(run)
-            or run
-            not in {e["data"]["run_id"] for e in gate.chain.entries() if e["kind"] == "sealed_run"}
-            or not (cfg.paths.runs_dir / run / "report.json").is_file()
+            or not gate.defect_run_ok(run)
             or lock.harness_defect_item not in ids
         ):
             out(
-                "refused: harness_defect_run must name a sealed run in the chain and harness_defect_item an id "
+                "refused: harness_defect_run must name a sealed run of the current set with a recorded, verified report "
+                "and harness_defect_item an id "
                 "in the frozen test files"
             )
             return 14
@@ -454,19 +470,50 @@ def _record(step, eval_dir: Path) -> bool:
     return True
 
 
+def _looks_sealed(run_dir: Path) -> bool:
+    """By the report's OWN fields (split test, or label sealed / second look), not by the folder name."""
+    try:
+        rep = json.loads((run_dir / "report.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return False
+    return isinstance(rep, dict) and (
+        rep.get("split") == "test" or rep.get("label") in ("sealed", "second look")
+    )
+
+
 def _vouch(cfg: AskdataConfig | None, *run_dirs: Path) -> int | None:
-    """With a config: check each run folder's report.json against the hash the sealed-run chain recorded. Returns an
-    exit code (4) when a recorded report was deleted or changed, else None (a note is printed for an unrecorded one)."""
+    """Check each run folder against the sealed-run chain. A report that LOOKS sealed (its own split/label) and that the
+    chain does not vouch for gets a clear banner and exit 4. Without a config nothing can be checked: a banner says so
+    (exit unchanged). A recorded file that was deleted or changed is exit 4."""
+    sealed_like = [d for d in run_dirs if _looks_sealed(d)]
     if cfg is None:
-        out("note: no config given, so the report is NOT checked against the sealed-run chain")
+        if sealed_like:
+            out(
+                "WARNING: this looks like a SEALED report and no config was given: it is NOT checked against the chain"
+            )
         return None
     try:
         entries = _gate(cfg).chain.entries()
         for run_dir in run_dirs:
-            if not verify_run_report(entries, run_dir) and run_dir.name.endswith(
-                ("-sealed", "-second-look")
-            ):
-                out(f"note: the chain has no record of {run_dir.name}'s report")
+            verdict = verify_run_report(entries, run_dir)
+            if verdict == "lost":
+                why = next(
+                    (
+                        e["data"]["reason"]
+                        for e in reversed(entries)
+                        if e["kind"] == "report_lost" and e["data"]["run_id"] == run_dir.name
+                    ),
+                    "",
+                )
+                out(
+                    f"WARNING: the recorded files of {run_dir.name} are marked LOST by the key holder: {clean(why)}"
+                )
+            elif verdict == "unrecorded" and run_dir in sealed_like:
+                out(
+                    f"NOT VOUCHED: {run_dir.name} looks like a sealed report but the sealed-run chain has no record of it"
+                    + (" (the chain is missing or empty)" if not entries else "")
+                )
+                return 4
     except (LockError, ConfigError) as err:
         out(f"report: {err}")
         return 4
@@ -545,6 +592,11 @@ def main(argv: list[str]) -> int:
     sub.add_parser(
         "reconcile", help="roll lock.json forward over the sealed-run chain after a crash"
     )
+    rl = sub.add_parser(
+        "report-lost", help="record (audited) that a recorded run folder was pruned or moved"
+    )
+    rl.add_argument("run_id")
+    rl.add_argument("--reason", required=True, help="20+ characters; written into the chain")
     rp = sub.add_parser("report")
     rp.add_argument("run_dir", type=Path)
     rp.add_argument("--format", choices=["md", "html"], default="md")
@@ -560,8 +612,11 @@ def main(argv: list[str]) -> int:
         cfg_path = args.config or os.environ.get("ASKDATA_CONFIG")
         try:
             vouch_cfg = load_config(Path(cfg_path)) if cfg_path else None
-        except ConfigError:
-            vouch_cfg = None
+        except (
+            ConfigError
+        ) as err:  # a config that was asked for and cannot be read is an error, not "no config"
+            out(f"startup: {err}")
+            return 4
         if args.cmd == "report":
             return cmd_report(args.run_dir, args.format, args.out, vouch_cfg)
         return cmd_compare(args.baseline, args.candidate, vouch_cfg)
@@ -586,4 +641,6 @@ def main(argv: list[str]) -> int:
         return cmd_reseal(cfg)
     if args.cmd == "reconcile":
         return cmd_reconcile(cfg)
+    if args.cmd == "report-lost":
+        return cmd_report_lost(cfg, args.run_id, args.reason)
     return cmd_run(cfg, args.split, args.k, args.second_look, use_live=args.live, smoke=args.smoke)

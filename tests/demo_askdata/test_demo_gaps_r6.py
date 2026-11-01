@@ -180,7 +180,9 @@ def test_report_and_compare_check_the_report_against_the_chain(cli_env, capsys):
     assert cli.main(["eval", "--config", path, "compare", str(run_dir), str(run_dir)]) == 4
     rep.unlink()
     assert cli.main(["eval", "--config", path, "report", str(run_dir)]) == 4
-    assert evalcli.verify_run_report([], run_dir) is False  # an empty chain vouches for nothing
+    assert (
+        evalcli.verify_run_report([], run_dir) == "unrecorded"
+    )  # an empty chain vouches for nothing
 
 
 # ====================================================== m2 / m3: reset and rollback edge cases
@@ -250,7 +252,12 @@ def test_run_ids_are_ascii_only_and_a_defect_must_name_a_chained_sealed_run(cli_
         )
         capsys.readouterr()
         assert cmd_run(cfg, "test", 1, "harness_defect", harness_factory=factory) == 14
-        assert "sealed run in the chain" in capsys.readouterr().out
+        out_text = capsys.readouterr().out
+        # a dev run is refused as a defect run; a results folder the chain never recorded is refused at load
+        assert (
+            "sealed run of the current set" in out_text
+            or "hold results that the chain has no sealed run" in out_text
+        )
 
 
 # ====================================================== roles.sql has no numbers of its own
@@ -258,7 +265,8 @@ def test_roles_sql_takes_its_numbers_from_variables_set_from_runtime():
     text = (DEMO / "db" / "roles.sql").read_text(encoding="utf-8")
     import re
 
-    assert not re.search(r"CONNECTION LIMIT\s+\d|'\d+s'", text)
+    code = "\n".join(ln for ln in text.splitlines() if not ln.lstrip().startswith("--"))
+    assert not re.search(r"CONNECTION LIMIT\s+\d|'\d+s'", code)
     for var in (
         "ro_connection_limit",
         "ro_statement_timeout",

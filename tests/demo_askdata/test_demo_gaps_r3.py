@@ -291,7 +291,7 @@ def test_a_harness_defect_must_name_a_real_run_and_a_frozen_item(cli_env, capsys
         write_lock(ev, read_lock(ev).model_copy(update=bad))
         capsys.readouterr()
         assert cmd_run(cfg, "test", 1, "harness_defect", harness_factory=factory) == 14
-        assert "sealed run in the chain" in capsys.readouterr().out
+        assert "sealed run of the current set" in capsys.readouterr().out
     assert read_lock(ev).test_runs == 1
 
 

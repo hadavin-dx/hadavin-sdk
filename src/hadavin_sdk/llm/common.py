@@ -60,7 +60,9 @@ def pinned(
 def estimate_tokens(text: str) -> int:
     """For a provider that reports no usage. Deliberately pessimistic (3 chars a token, never 0): a budget fed
     zeros never fires."""
-    return max(1, len(text) // 3)
+    return max(
+        1, len(text.encode("utf-8")) // 3
+    )  # BYTES, so CJK and emoji (3-4 bytes a character) are not undercounted
 
 
 def tools_for(
@@ -264,6 +266,7 @@ class NetworkLLM:
             sleep=self._sleep,
             retryable=self.retryable,
             detail=self.detail,
+            answered_hook=self.answered_hook,
         )
         got.attempts = sent
         return got
@@ -271,6 +274,8 @@ class NetworkLLM:
     # The kind's own SDK errors (llm/retry.py stays vendor-neutral): None means no opinion / no code.
     retryable: Callable[[BaseException], bool | None] | None = None
     detail: Callable[[BaseException], str] | None = None
+    # True/False when the kind knows an SDK error means "the provider answered, the answer was unusable" (billed)
+    answered_hook: Callable[[BaseException], bool | None] | None = None
 
 
 class _NoRedirect(urllib.request.HTTPRedirectHandler):
