@@ -20,6 +20,7 @@ import hashlib
 import json
 import os
 import time
+from dataclasses import replace
 from pathlib import Path
 
 from askdata import audit as audit_mod
@@ -89,10 +90,13 @@ def build_harness(
     sink = audit_mod.local_dir_sink(cfg.paths.audit_dir)
     ledger = QueryLedger(cfg.paths.ledger_file)
 
+    # A live model always goes through the live meter gate (fresh external_usd), whatever the YAML `live` says.
+    settings = replace(cfg.settings(), live=True) if ecfg.live else cfg.settings()
+
     def pipeline(key: str) -> Pipeline:
         return Pipeline(
             llm=llm, routes=cfg.routes(), executor=rec[key], audit=audit_mod.AskAudit(sink, principal="claimed:eval"), ledger=ledger,
-            meter=meter, kill=kill, prompt=pr, config_hash=chash, settings=cfg.settings(),
+            meter=meter, kill=kill, prompt=pr, config_hash=chash, settings=settings,
         )  # fmt: skip
 
     harness = Harness(
@@ -125,7 +129,16 @@ def cmd_freeze(cfg: AskdataConfig) -> int:
     if missing := [n for n in names if not (eval_dir / n).is_file()]:
         out(f"startup: cannot freeze, missing: {', '.join(missing)}")
         return 4
-    lock = freeze(eval_dir, names)
+    try:  # exclusive create: a second `eval freeze` running at the same time fails here and cannot reset the counter
+        os.close(os.open(lock_path(eval_dir), os.O_CREAT | os.O_EXCL | os.O_WRONLY))
+    except FileExistsError:
+        out("freeze: lock.json already exists; not overwritten (it holds the sealed-run counter)")
+        return 4
+    try:
+        lock = freeze(eval_dir, names)
+    except BaseException:
+        lock_path(eval_dir).unlink(missing_ok=True)  # never leave an empty placeholder behind
+        raise
     for n, digest in sorted(lock.files.items()):
         out(f"{digest}  {n}")
     t = lock.thresholds

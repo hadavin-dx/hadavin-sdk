@@ -55,9 +55,8 @@ class Database(_Strict):
     """Where the read-only login's DSN comes from, and the client's limits. The defaults are the spike's (10 s watchdog,
     1,000,000 bytes); a client config overrides them (the design's client values are 5 s and 2,000,000 bytes)."""
 
-    dsn_secret_name: str | None = (
-        None  # read through the secrets kind; None: the ASKDATA_DSN environment variable
-    )
+    # read through the secrets kind; None: the ASKDATA_DSN environment variable; an empty string is refused
+    dsn_secret_name: str | None = Field(None, min_length=1)
     statement_timeout_s: float = Field(10.0, gt=0, le=300)
     max_rows: int = Field(1000, gt=0)
     max_bytes: int = Field(1_000_000, gt=0)

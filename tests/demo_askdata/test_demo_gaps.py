@@ -282,3 +282,41 @@ def test_source_args_apply_the_client_limits_from_the_config(tmp_path, monkeypat
         "x",
         None,
     )  # no config: the spike defaults stay
+
+
+def test_an_empty_dsn_secret_name_is_invalid_config(tmp_path):
+    (tmp_path / "ev").mkdir()
+    cfg = tmp_path / "askdata.yaml"
+    cfg.write_text(CONFIG_YAML.format(extra='database: {dsn_secret_name: ""}'), encoding="utf-8")
+    with pytest.raises(ConfigError):
+        load_config(cfg)
+
+
+def test_a_live_route_with_zero_prices_is_refused_before_a_model_is_built(tmp_path):
+    _, cfg = make_cfg(
+        tmp_path,
+        "secrets: {kind: env}\nllm: {kind: anthropic, platform: vertex, project_id: p, region: r}",
+    )
+    bad = cfg.model_copy(
+        update={"route": cfg.route.model_copy(update={"input_usd_per_mtok": Decimal(0)})}
+    )
+    with pytest.raises(ConfigError, match="positive"):
+        live.make_llm(bad)
+
+
+def test_a_live_run_always_uses_the_live_meter_gate(tmp_path, monkeypatch):
+    from askdata import evalcli
+    from askdata.evalrun import Config
+
+    seen = []
+    monkeypatch.setattr(
+        evalcli, "Pipeline", lambda **kw: seen.append(kw["settings"].live) or SimpleNamespace()
+    )
+    monkeypatch.setattr(evalcli.live, "make_llm", lambda cfg: object())
+    monkeypatch.setattr(evalcli, "RecordingExecutor", lambda *a, **k: SimpleNamespace())
+    monkeypatch.setattr(evalcli, "Harness", lambda **kw: SimpleNamespace())
+    _, cfg = make_cfg(tmp_path, "live: false")
+    evalcli.build_harness(
+        cfg, Lock(files={}), tmp_path, Config(live=True), sources={"a": 1, "b": 2}
+    )
+    assert seen and all(seen)
