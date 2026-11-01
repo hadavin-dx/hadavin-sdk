@@ -148,7 +148,7 @@ def cmd_setup(accept_loss: bool) -> int:
         )
         if done.returncode != 0:
             out(f"setup: step {name} failed (exit {done.returncode}):")
-            out(done.stderr.strip()[-1500:])
+            out(done.stderr.strip()[-1500:].replace(password, "***"))
             return 4
         out(f"setup: {name} done")
     return 0

@@ -31,7 +31,7 @@ FOOTER = "\n".join(
 
 def build() -> str:
     checks = CHECKS.read_text(encoding="utf-8").strip().rstrip(";").strip() + "\n"
-    gset = f"SELECT bool_and(ok) AS all_ok FROM (\n{checks}) c {BS}gset\n"  # noqa: S608  # nosec
+    gset = f"SELECT bool_and(COALESCE(ok, false)) AS all_ok FROM (\n{checks}) c {BS}gset\n"  # noqa: S608  # nosec
     return f"{HEADER}{checks};\n{gset}{FOOTER}"
 
 

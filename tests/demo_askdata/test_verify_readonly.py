@@ -42,7 +42,7 @@ def test_green_for_the_real_login(db):
     done = _psql_verify(db, db.ro_role, db.ro_password)
     assert done.returncode == 0, done.stdout + done.stderr
     rows = _rows(done.stdout)
-    assert len(rows) == 12 and all(r[1] == "t" for r in rows), rows
+    assert len(rows) == 14 and all(r[1] == "t" for r in rows), rows
 
 
 def test_psql_rows_equal_pgsource_rows(db):
@@ -86,3 +86,30 @@ def test_script_files_are_ascii_and_lf():
     for path in Path(DEMO / "db").glob("*.sql"):
         data = path.read_bytes()
         assert data.isascii(), path.name
+
+
+GRANTS = [
+    "UPDATE (total_amount) ON analytics.orders_v",
+    "INSERT (status) ON analytics.orders_v",
+    "SELECT (customer_id) ON shop.customers",
+    "UPDATE ON SEQUENCE scratch.sq",
+    "EXECUTE ON FUNCTION scratch.fn()",
+]
+
+
+@pytest.mark.parametrize("grant", GRANTS)
+def test_column_sequence_and_function_grants_turn_the_script_red(db, grant):
+    role, pw = db.name + "_g" + secrets.token_hex(3), secrets.token_urlsafe(18)
+    with db.admin() as c:
+        c.execute("CREATE SEQUENCE IF NOT EXISTS scratch.sq")
+        c.execute("CREATE OR REPLACE FUNCTION scratch.fn() RETURNS int LANGUAGE sql AS 'SELECT 1'")
+    dsn = db.create_login(
+        role, pw, "USAGE ON SCHEMA scratch", "USAGE ON SCHEMA analytics", "USAGE ON SCHEMA shop"
+    )
+    with db.admin() as c:
+        c.execute("REVOKE EXECUTE ON FUNCTION scratch.fn() FROM PUBLIC")
+        c.execute(f'GRANT {grant} TO "{role}"')
+    red = [r.check for r in PgSource(dsn).verify_readonly() if not r.ok]
+    assert red, grant
+    done = _psql_verify(db, role, pw)
+    assert done.returncode == 3, grant

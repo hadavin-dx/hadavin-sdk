@@ -39,9 +39,7 @@ def _ro(db):
 def test_denied_for_the_login(db, sql):
     with _ro(db) as conn, pytest.raises(psycopg.Error) as caught:
         conn.execute(sql)
-    assert caught.value.sqlstate == "42501" or caught.value.sqlstate.startswith("42"), (
-        caught.value.sqlstate
-    )
+    assert caught.value.sqlstate == "42501", caught.value.sqlstate
 
 
 @pytest.mark.parametrize("view", VIEWS)

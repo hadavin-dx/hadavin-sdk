@@ -26,3 +26,11 @@ def test_oracle_sees_what_the_validator_rejects():
     for text in ("DELETE FROM shop.orders", "SELECT 1; SELECT 2"):
         stmts = pglast.parse_sql(text)
         assert len(stmts) != 1 or not isinstance(stmts[0].stmt, ast.SelectStmt)
+
+
+def test_validator_rejects_what_the_oracle_calls_not_a_single_select():
+    from askdata.validate import Rejected
+
+    for text in ("DELETE FROM shop.orders", "SELECT 1; SELECT 2"):
+        with pytest.raises(Rejected):
+            validate(text)

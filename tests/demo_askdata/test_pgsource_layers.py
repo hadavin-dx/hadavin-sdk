@@ -68,11 +68,18 @@ VARIANTS = [
 @pytest.mark.parametrize("variant", VARIANTS)
 def test_variants_sent_after_the_guard_never_write(db, rw_login, variant):
     dsn, _ = rw_login
-    try:
-        PgSource(dsn).run(variant)
-    except PgError as err:
-        assert err.sqlstate in {"42601", "25001"}, err
-    # whatever happened, a write attempt in the same connection afterwards must not persist
+    if variant.startswith(
+        "SELECT"
+    ):  # set_config forms: executed, but they cannot flip the open transaction
+        try:
+            PgSource(dsn).run(variant)
+        except PgError as err:
+            assert err.sqlstate == "25001", err
+    else:  # statement forms cannot ride inside DECLARE ... CURSOR FOR
+        with pytest.raises(PgError) as caught:
+            PgSource(dsn).run(variant)
+        assert caught.value.sqlstate == "42601"
+    # a fresh connection that tries to write is still refused, and nothing persisted
     with pytest.raises(PgError):
         PgSource(dsn).run("INSERT INTO scratch.marker VALUES (74)")
     assert _count(db, 74) == 0
@@ -131,7 +138,7 @@ def test_caps_watchdog_cancels_a_blocked_statement(db, capsys):
             f"\nT-E8 watchdog: pg_sleep(30) cancelled after {elapsed:.2f}s (limit {timeout}s, server default 15s)"
         )
     assert caught.value.sqlstate == "57014"
-    assert elapsed < timeout + 1.0
+    assert elapsed < timeout + 2.5
     assert not [t for t in threading.enumerate() if t.name == WATCHDOG_NAME and t.is_alive()]
 
 

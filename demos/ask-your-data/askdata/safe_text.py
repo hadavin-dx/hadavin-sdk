@@ -14,7 +14,10 @@ import re
 _ANSI = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]|\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)")
 
 # Bidi and format characters (same set as the validator pre-filter).
-_FORMAT_RANGES = ((0x200B, 0x200F), (0x202A, 0x202E), (0x2066, 0x2069), (0xFEFF, 0xFEFF))
+_FORMAT_RANGES = (
+    (0x00AD, 0x00AD), (0x061C, 0x061C), (0x180E, 0x180E), (0x200B, 0x200F), (0x2028, 0x202E),
+    (0x2060, 0x2064), (0x2066, 0x2069), (0xFEFF, 0xFEFF), (0xE0000, 0xE007F),
+)  # fmt: skip
 
 
 def is_forbidden(ch: str, *, keep_whitespace: bool = True) -> bool:

@@ -47,14 +47,17 @@ WITH me AS (
     FROM rels r WHERE r.nspname = 'shop'
     UNION ALL
     SELECT 7, 'no write-type privilege on any relation',
-           NOT COALESCE(bool_or(has_table_privilege(r.oid, 'INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER')), false),
+           NOT COALESCE(bool_or(has_table_privilege(r.oid, 'INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER')
+                                OR has_any_column_privilege(r.oid, 'INSERT,UPDATE,REFERENCES')), false),
            count(*) || ' relations checked'
     FROM rels r
     UNION ALL
-    SELECT 8, 'SELECT on exactly the 4 exposed views',
-           COALESCE(string_agg(r.name, ',' ORDER BY r.name) FILTER (WHERE has_table_privilege(r.oid, 'SELECT')), '')
+    SELECT 8, 'SELECT on exactly the 4 exposed views (table or column level)',
+           COALESCE(string_agg(r.name, ',' ORDER BY r.name)
+                    FILTER (WHERE has_table_privilege(r.oid, 'SELECT') OR has_any_column_privilege(r.oid, 'SELECT')), '')
                = 'analytics.customers_v,analytics.order_items_v,analytics.orders_v,analytics.products_v',
-           COALESCE(string_agg(r.name, ',' ORDER BY r.name) FILTER (WHERE has_table_privilege(r.oid, 'SELECT')), '(none)')
+           COALESCE(string_agg(r.name, ',' ORDER BY r.name)
+                    FILTER (WHERE has_table_privilege(r.oid, 'SELECT') OR has_any_column_privilege(r.oid, 'SELECT')), '(none)')
     FROM rels r
     UNION ALL
     SELECT 9, 'visible view columns equal the expected list',
@@ -73,12 +76,23 @@ WITH me AS (
     SELECT 11, 'default_transaction_read_only is on for this login',
            current_setting('default_transaction_read_only') = 'on', current_setting('default_transaction_read_only')
     UNION ALL
+    SELECT 13, 'no privilege on any sequence', COALESCE(NOT bool_or(has_sequence_privilege(c.oid, 'USAGE,SELECT,UPDATE')), true),
+           count(*) || ' sequences checked'
+    FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+    WHERE c.relkind = 'S' AND left(n.nspname, 3) <> 'pg_' AND n.nspname <> 'information_schema'
+    UNION ALL
+    SELECT 14, 'no EXECUTE on any function outside the system schemas',
+           count(*) FILTER (WHERE has_function_privilege(p.oid, 'EXECUTE')) = 0,
+           count(*) FILTER (WHERE has_function_privilege(p.oid, 'EXECUTE')) || ' executable functions'
+    FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+    WHERE left(n.nspname, 3) <> 'pg_' AND n.nspname <> 'information_schema'
+    UNION ALL
     SELECT 12, 'INFO pg_sleep is executable (bounded by the watchdog, not by this role)', true,
            'execute=' || has_function_privilege('pg_sleep(double precision)', 'EXECUTE')
 )
 SELECT check_name AS "check", ok, detail FROM checks ORDER BY ord
 ;
-SELECT bool_and(ok) AS all_ok FROM (
+SELECT bool_and(COALESCE(ok, false)) AS all_ok FROM (
 WITH me AS (
     SELECT r.oid, r.rolsuper, r.rolcreatedb, r.rolcreaterole, r.rolreplication, r.rolbypassrls
     FROM pg_roles r WHERE r.rolname = current_user
@@ -121,14 +135,17 @@ WITH me AS (
     FROM rels r WHERE r.nspname = 'shop'
     UNION ALL
     SELECT 7, 'no write-type privilege on any relation',
-           NOT COALESCE(bool_or(has_table_privilege(r.oid, 'INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER')), false),
+           NOT COALESCE(bool_or(has_table_privilege(r.oid, 'INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER')
+                                OR has_any_column_privilege(r.oid, 'INSERT,UPDATE,REFERENCES')), false),
            count(*) || ' relations checked'
     FROM rels r
     UNION ALL
-    SELECT 8, 'SELECT on exactly the 4 exposed views',
-           COALESCE(string_agg(r.name, ',' ORDER BY r.name) FILTER (WHERE has_table_privilege(r.oid, 'SELECT')), '')
+    SELECT 8, 'SELECT on exactly the 4 exposed views (table or column level)',
+           COALESCE(string_agg(r.name, ',' ORDER BY r.name)
+                    FILTER (WHERE has_table_privilege(r.oid, 'SELECT') OR has_any_column_privilege(r.oid, 'SELECT')), '')
                = 'analytics.customers_v,analytics.order_items_v,analytics.orders_v,analytics.products_v',
-           COALESCE(string_agg(r.name, ',' ORDER BY r.name) FILTER (WHERE has_table_privilege(r.oid, 'SELECT')), '(none)')
+           COALESCE(string_agg(r.name, ',' ORDER BY r.name)
+                    FILTER (WHERE has_table_privilege(r.oid, 'SELECT') OR has_any_column_privilege(r.oid, 'SELECT')), '(none)')
     FROM rels r
     UNION ALL
     SELECT 9, 'visible view columns equal the expected list',
@@ -146,6 +163,17 @@ WITH me AS (
     UNION ALL
     SELECT 11, 'default_transaction_read_only is on for this login',
            current_setting('default_transaction_read_only') = 'on', current_setting('default_transaction_read_only')
+    UNION ALL
+    SELECT 13, 'no privilege on any sequence', COALESCE(NOT bool_or(has_sequence_privilege(c.oid, 'USAGE,SELECT,UPDATE')), true),
+           count(*) || ' sequences checked'
+    FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+    WHERE c.relkind = 'S' AND left(n.nspname, 3) <> 'pg_' AND n.nspname <> 'information_schema'
+    UNION ALL
+    SELECT 14, 'no EXECUTE on any function outside the system schemas',
+           count(*) FILTER (WHERE has_function_privilege(p.oid, 'EXECUTE')) = 0,
+           count(*) FILTER (WHERE has_function_privilege(p.oid, 'EXECUTE')) || ' executable functions'
+    FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+    WHERE left(n.nspname, 3) <> 'pg_' AND n.nspname <> 'information_schema'
     UNION ALL
     SELECT 12, 'INFO pg_sleep is executable (bounded by the watchdog, not by this role)', true,
            'execute=' || has_function_privilege('pg_sleep(double precision)', 'EXECUTE')

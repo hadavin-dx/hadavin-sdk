@@ -161,7 +161,7 @@ class PgSource:
         finally:
             timer.cancel()
             if timer.is_alive():
-                timer.join()
+                timer.join(5)  # cancel() can block on the network; do not hang the caller
             _close(conn)
 
     def _fetch(

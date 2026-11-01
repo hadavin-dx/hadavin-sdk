@@ -6,6 +6,14 @@ NUL = chr(0)
 BACKSLASH = chr(92)
 ESC = chr(27)
 
+
+def _nested(depth: int) -> str:
+    sql = "SELECT order_id FROM analytics.orders_v"
+    for i in range(depth):
+        sql = f"SELECT order_id FROM ({sql}) t{i}"
+    return sql
+
+
 # (name, sql, rule id)
 ATTACKS: list[tuple[str, str, str]] = [
     ("stacked-delete", "SELECT 1; DELETE FROM shop.orders", "V01"),
@@ -54,6 +62,19 @@ ATTACKS: list[tuple[str, str, str]] = [
         " FROM analytics.orders_v",
         "V10",
     ),
+    (
+        "cte-shadows-catalog",
+        "WITH pg_roles AS (SELECT * FROM pg_roles) SELECT * FROM pg_roles",
+        "V04",
+    ),
+    ("cte-self-read", "WITH x AS (SELECT * FROM x) SELECT * FROM x", "V04"),
+    ("regex-operator-on-call", "SELECT 1 FROM analytics.orders_v WHERE LOWER(status) ~ 'a'", "V10"),
+    (
+        "containment-operator-on-call",
+        "SELECT 1 FROM analytics.orders_v WHERE LOWER(status) @> 'a'",
+        "V10",
+    ),
+    ("deep-nesting", _nested(12), "V10"),
     ("upper-quoted-view", 'SELECT * FROM analytics."Orders_V"', "V12"),
 ]
 

@@ -34,6 +34,7 @@ MAX_CHARS = 4000
 MAX_LITERAL = 200
 MAX_JOINS = 8
 MAX_CTES = 4
+MAX_DEPTH = 6
 
 RULES = {
     "V01": "parse error, empty, unterminated quote or comment, or more than one statement",
@@ -246,6 +247,10 @@ def _check_node(node: exp.Expression, cte_names: set[str]) -> None:
         _check_cast(node)
     if isinstance(node, _ALLOWED_NODES):
         pass  # operators such as AND are also Func subclasses in sqlglot: the class list wins
+    elif isinstance(node, exp.Binary | exp.Unary):
+        raise Rejected(
+            "V10", f"operator {type(node).__name__} is not allowed"
+        )  # operators that are also Func
     elif isinstance(node, exp.Func):
         _check_function(node)
     else:
@@ -297,6 +302,14 @@ def _check_whole_row(tree: exp.Expression, cte_names: set[str]) -> None:
             raise Rejected("V05", "a relation alias cannot be used as a value")
 
 
+def _select_depth(node: exp.Expression) -> int:
+    depth, parent = 0, node.parent
+    while parent is not None:
+        depth += isinstance(parent, exp.Select)
+        parent = parent.parent
+    return depth
+
+
 def _check_tree(tree: exp.Expression) -> None:
     ctes = list(tree.find_all(exp.CTE))
     if len(ctes) > MAX_CTES:
@@ -304,6 +317,22 @@ def _check_tree(tree: exp.Expression) -> None:
     if len(list(tree.find_all(exp.Join))) > MAX_JOINS:
         raise Rejected("V10", f"more than {MAX_JOINS} joins")
     cte_names = {c.alias.lower() for c in ctes}
+    if any(w.args.get("recursive") for w in tree.find_all(exp.With)):
+        raise Rejected("V08", "WITH RECURSIVE is not allowed")
+    # A CTE must not shadow a catalog or exposed name, nor read itself (non-recursive WITH).
+    for cte in ctes:
+        name = cte.alias.lower()
+        inner = {t.name.lower() for t in cte.this.find_all(exp.Table) if not t.args.get("db")}
+        if name.startswith("pg_") or name == "information_schema" or name in VIEWS or name in inner:
+            raise Rejected("V04", f"CTE name {name} shadows a relation")
+    if (
+        max(
+            (_select_depth(n) for n in tree.find_all(exp.Select)),
+            default=0,
+        )
+        > MAX_DEPTH
+    ):
+        raise Rejected("V10", f"subqueries nested deeper than {MAX_DEPTH}")
     for node in tree.walk():
         _check_node(node, cte_names)
     _check_whole_row(tree, cte_names)
@@ -331,11 +360,14 @@ def validate(raw: str) -> Validated:
     text, _ = prefilter(raw)
     tree = _parse_one(text)
     _check_root(tree)
-    _check_tree(tree)
-    canonical = _gen(tree)
-    again, saw_comment = prefilter(canonical)
-    if saw_comment or again.strip() != canonical:
-        raise Rejected("V11", "the regenerated SQL contains a comment or a hazard")
-    if _parse_one(canonical) != tree:
-        raise Rejected("V11", "the regenerated SQL parses to a different tree")
+    try:
+        _check_tree(tree)
+        canonical = _gen(tree)
+        again, saw_comment = prefilter(canonical)
+        if saw_comment or again.strip() != canonical:
+            raise Rejected("V11", "the regenerated SQL contains a comment or a hazard")
+        if _parse_one(canonical) != tree:
+            raise Rejected("V11", "the regenerated SQL parses to a different tree")
+    except RecursionError as err:
+        raise Rejected("V10", "nesting too deep") from err
     return Validated(canonical, hashlib.sha256(canonical.encode("utf-8")).hexdigest())

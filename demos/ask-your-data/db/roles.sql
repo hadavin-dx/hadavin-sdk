@@ -38,6 +38,8 @@ SELECT (:'accept_loss' = 'yes') AS accepted \gset
 
 SELECT current_database() AS dbname \gset
 
+BEGIN;  -- all or nothing: a failure leaves no half-made login behind
+
 CREATE ROLE :"ro_role" LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS CONNECTION LIMIT 5;
 \if :{?ro_password}
   ALTER ROLE :"ro_role" PASSWORD :'ro_password';
@@ -62,4 +64,5 @@ ALTER ROLE :"ro_role" IN DATABASE :"dbname" SET statement_timeout = '15s';
 ALTER ROLE :"ro_role" IN DATABASE :"dbname" SET lock_timeout = '1s';
 ALTER ROLE :"ro_role" IN DATABASE :"dbname" SET idle_in_transaction_session_timeout = '15s';
 ALTER ROLE :"ro_role" IN DATABASE :"dbname" SET search_path = analytics;
+COMMIT;
 \echo roles.sql: done
