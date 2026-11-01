@@ -8,8 +8,12 @@ File shape (money as decimal strings):
 A call may start only if `askdata_spent + worst_case <= demo_cap` AND
 `sum(spent) + external_usd + worst_case <= total_cap - reserve` (so the reserve stays unspent inside the owner's cap).
 `external_usd` is typed in from the provider console; a live step refuses to run while it is older than
-`max_external_age`. Writes are write-fsync-replace under a small lock file. The pre-check reads the file fresh each
-call; two processes can still overshoot by one call's worst case between check and charge (stated, not hidden).
+`max_external_age`.
+
+Atomic across processes: `reserve(worst_case)` does the check AND books the worst case in one step under an OS file
+lock (`msvcrt` on Windows, `fcntl` elsewhere; the OS drops the lock if the holder dies, so there is no stale lock).
+After the call, `settle(reserved, actual)` replaces the reservation with the real cost. A process that crashes
+between the two leaves its worst case booked (fails safe). Writes are write-fsync-replace.
 """
 
 from __future__ import annotations
@@ -65,6 +69,35 @@ def fmt_usd(d: Decimal) -> str:
     return format(d.normalize(), "f") if d != 0 else "0"
 
 
+def _try_lock(f) -> bool:
+    """Try to take the exclusive lock on the first byte of an open file; False if another process holds it."""
+    f.seek(0)
+    try:
+        if os.name == "nt":
+            import msvcrt
+
+            msvcrt.locking(f.fileno(), msvcrt.LK_NBLCK, 1)
+        else:
+            import fcntl
+
+            fcntl.flock(f.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError:
+        return False
+    return True
+
+
+def _unlock(f) -> None:
+    f.seek(0)
+    if os.name == "nt":
+        import msvcrt
+
+        msvcrt.locking(f.fileno(), msvcrt.LK_UNLCK, 1)
+    else:
+        import fcntl
+
+        fcntl.flock(f.fileno(), fcntl.LOCK_UN)
+
+
 class Meter:
     def __init__(
         self,
@@ -117,26 +150,19 @@ class Meter:
 
     @contextlib.contextmanager
     def _locked(self) -> Iterator[None]:
+        """Exclusive OS lock on `<file>.lock`, waiting up to `lock_wait_s`."""
         lock = self.path.with_name(self.path.name + ".lock")
         lock.parent.mkdir(parents=True, exist_ok=True)
-        deadline = time.monotonic() + self.lock_wait_s
-        while True:
-            try:
-                os.close(os.open(lock, os.O_CREAT | os.O_EXCL | os.O_WRONLY))
-                break
-            except FileExistsError:
-                with contextlib.suppress(OSError):  # a crashed holder: break a lock older than 30 s
-                    if time.time() - lock.stat().st_mtime > 30:
-                        lock.unlink()
-                        continue
+        with open(lock, "a+b") as f:
+            deadline = time.monotonic() + self.lock_wait_s
+            while not _try_lock(f):
                 if time.monotonic() > deadline:
-                    raise MeterError("meter lock busy") from None
-                time.sleep(0.02)
-        try:
-            yield
-        finally:
-            with contextlib.suppress(OSError):
-                lock.unlink()
+                    raise MeterError("meter lock busy")
+                time.sleep(0.01)
+            try:
+                yield
+            finally:
+                _unlock(f)
 
     # ---------------------------------------------------------------------------------------- numbers
     def snapshot(self) -> dict[str, Decimal | str]:
@@ -159,26 +185,48 @@ class Meter:
     def remaining(self) -> Decimal:
         return self.snapshot()["remaining"]  # type: ignore[return-value]
 
-    def check(self, worst_case: Decimal, *, live: bool = True) -> None:
-        """Raise `OverBudget` unless this call fits in both caps. A live call also needs a fresh `external_usd`."""
-        s = self.snapshot()
-        if worst_case > s["demo_room"]:
-            raise OverBudget(
-                "demo_cap",
-                f"spent {s['askdata_spent']} of {s['demo_cap']}, worst case {worst_case}",
-            )
-        if worst_case > s["shared_room"]:
-            raise OverBudget(
-                "shared_cap", f"shared room {s['shared_room']}, worst case {worst_case}"
-            )
+    def _verify(self, d: dict, worst_case: Decimal, live: bool) -> None:
+        spent = {k: _dec(v, k) for k, v in d["spent"].items()}
+        total, reserve = _dec(d["total_cap"], "total_cap"), _dec(d["reserve"], "reserve")
+        demo, ext = _dec(d["demo_cap"], "demo_cap"), _dec(d["external_usd"], "external_usd")
+        mine = spent[PROJECT]
+        shared_room = total - reserve - sum(spent.values(), Decimal(0)) - ext
+        if worst_case > demo - mine:
+            raise OverBudget("demo_cap", f"spent {mine} of {demo}, worst case {worst_case}")
+        if worst_case > shared_room:
+            raise OverBudget("shared_cap", f"shared room {shared_room}, worst case {worst_case}")
         if live:
-            age = self.clock() - datetime.strptime(str(s["external_updated_at"]), STAMP).replace(
+            age = self.clock() - datetime.strptime(d["external_updated_at"], STAMP).replace(
                 tzinfo=UTC
             )
             if age > self.max_external_age:
                 raise OverBudget(
-                    "external_stale", f"external_usd was set {s['external_updated_at']}"
+                    "external_stale", f"external_usd was set {d['external_updated_at']}"
                 )
+
+    def check(self, worst_case: Decimal, *, live: bool = True) -> None:
+        """Raise `OverBudget` unless this call fits in both caps (a look only; use `reserve` before a real call)."""
+        self._verify(self._read(), worst_case, live)
+
+    def reserve(self, worst_case: Decimal, *, live: bool = True) -> None:
+        """Check AND book `worst_case` as spent, atomically across processes. Raises `OverBudget`."""
+        if worst_case < 0:
+            raise MeterError("negative reservation")
+        with self._locked():
+            d = self._read()
+            self._verify(d, worst_case, live)
+            d["spent"][PROJECT] = fmt_usd(_dec(d["spent"][PROJECT], PROJECT) + worst_case)
+            self._write(d)
+
+    def settle(self, reserved: Decimal, actual: Decimal) -> None:
+        """Replace a reservation with what the call really cost (never below zero; above is recorded, not refused)."""
+        if actual < 0 or reserved < 0:
+            raise MeterError("negative settlement")
+        with self._locked():
+            d = self._read()
+            now = _dec(d["spent"][PROJECT], PROJECT) - reserved + actual
+            d["spent"][PROJECT] = fmt_usd(max(now, Decimal(0)))
+            self._write(d)
 
     def charge(self, amount: Decimal) -> Decimal:
         """Add `amount` to this project's spend; returns the new total."""

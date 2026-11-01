@@ -144,7 +144,7 @@ class Pipeline:
             messages = llm_io.build_messages(self.prompt.text, run.question, prev_sql, hint)
             worst = worst_case_usd(route, len(llm_io.SYSTEM) + len(messages[0]["content"]))
             try:
-                self.meter.check(worst, live=self.s.live)
+                self.meter.reserve(worst, live=self.s.live)
             except MeterError:  # OverBudget or an unreadable meter file: do not spend
                 run.terminal.append("over_budget")
                 return
@@ -161,9 +161,10 @@ class Pipeline:
             except (ProviderError, OSError, TimeoutError) as err:
                 # A call that failed AFTER the request was sent is charged its worst case; a refusal is free.
                 billed = isinstance(err, ProviderExhausted | OSError | TimeoutError)
-                if billed:
+                if billed:  # the reservation stands as the charge
                     run.cost += worst
-                    self._charge(run, worst)
+                else:
+                    self._settle(run, worst, Decimal(0))
                 run.attempts.append(
                     Attempt(
                         n=n,
@@ -178,7 +179,7 @@ class Pipeline:
             run.tokens_in += reply.input_tokens
             run.tokens_out += reply.output_tokens
             run.model_id = reply.model_id
-            charged = self._charge(run, reply.cost_usd)
+            charged = self._settle(run, worst, reply.cost_usd)
             base = {
                 "n": n,
                 "duration_ms": _ms(t),
@@ -227,10 +228,11 @@ class Pipeline:
                 return
             prev_sql, hint = sql_text, retry_hint
 
-    def _charge(self, run: _Run, amount: Decimal) -> bool:
-        """Record spend. False (and the question ends over budget) if the meter cannot be written."""
+    def _settle(self, run: _Run, reserved: Decimal, actual: Decimal) -> bool:
+        """Replace the reservation with the real cost. False (and the question ends over budget) if the meter
+        cannot be written."""
         try:
-            self.meter.charge(amount)
+            self.meter.settle(reserved, actual)
         except MeterError:
             run.terminal.append("over_budget")
             return False

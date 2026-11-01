@@ -8,7 +8,15 @@ from decimal import Decimal
 
 import pytest
 from askdata.fixtures import ROUTE
-from askdata.meter import KillSwitch, Meter, MeterError, OverBudget, worst_case_usd
+from askdata.meter import (
+    KillSwitch,
+    Meter,
+    MeterError,
+    OverBudget,
+    _try_lock,
+    _unlock,
+    worst_case_usd,
+)
 
 T0 = datetime(2026, 11, 1, 12, 0, tzinfo=UTC)
 
@@ -94,17 +102,69 @@ def test_negative_amounts_are_refused(tmp_path):
         make(tmp_path).charge(Decimal(-1))
 
 
-def test_a_stale_lock_file_is_broken_and_a_live_one_times_out(tmp_path):
-    import os
-
+def test_a_held_lock_times_out_and_a_leftover_lock_file_blocks_nobody(tmp_path):
     m = make(tmp_path, lock_wait_s=0.2)
     lock = m.path.with_name(m.path.name + ".lock")
-    lock.write_text("x")
-    with pytest.raises(MeterError, match="busy"):
-        m.charge(Decimal("0.01"))
-    os.utime(lock, (1, 1))  # a crashed holder, long ago
+    lock.write_text(
+        "left behind by a crashed process"
+    )  # an OS lock dies with its holder; a file proves nothing
     m.charge(Decimal("0.01"))
-    assert not lock.exists()
+    with open(lock, "a+b") as f:
+        assert _try_lock(f)  # this handle now holds the lock, as another process would
+        with pytest.raises(MeterError, match="busy"):
+            m.charge(Decimal("0.01"))
+        _unlock(f)
+    m.charge(Decimal("0.01"))
+    assert m.snapshot()["askdata_spent"] == Decimal("0.02")
+
+
+def test_reserve_books_the_worst_case_and_settle_replaces_it_with_the_real_cost(tmp_path):
+    m = make(tmp_path)
+    m.reserve(Decimal("0.50"))
+    assert m.snapshot()["askdata_spent"] == Decimal("0.50")
+    m.settle(Decimal("0.50"), Decimal("0.0132"))
+    assert m.snapshot()["askdata_spent"] == Decimal("0.0132")
+    m.reserve(Decimal("0.10"), live=False)
+    m.settle(Decimal("0.10"), Decimal("0.30"))  # the real cost above the reservation is recorded
+    assert m.snapshot()["askdata_spent"] == Decimal("0.3132")
+    with pytest.raises(OverBudget):
+        m.reserve(Decimal("7.70"))  # 0.3132 + 7.70 > 8.00
+    assert m.snapshot()["askdata_spent"] == Decimal("0.3132")  # a refused reservation books nothing
+
+
+CHILD = """
+import sys
+from decimal import Decimal
+from pathlib import Path
+sys.path.insert(0, sys.argv[1])
+from askdata.meter import Meter, OverBudget
+m = Meter(Path(sys.argv[2]), lock_wait_s=30)
+ok = 0
+for _ in range(15):
+    try:
+        m.reserve(Decimal("0.10"), live=False)
+        ok += 1
+    except OverBudget:
+        pass
+print(ok)
+"""
+
+
+def test_two_processes_cannot_overshoot_the_cap_together(tmp_path):
+    import subprocess
+    import sys
+
+    from .conftest import DEMO
+
+    path = tmp_path / "meter.json"
+    Meter.create(path, total_cap="10.00", reserve="1.00", demo_cap="1.00")
+    cmd = [sys.executable, "-c", CHILD, str(DEMO), str(path)]
+    procs = [subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True) for _ in range(4)]  # noqa: S603
+    won = sum(int(p.communicate(timeout=120)[0].strip()) for p in procs)
+    assert (
+        won == 10
+    )  # 1.00 / 0.10: exactly ten reservations succeed across all four processes, never eleven
+    assert Meter(path).snapshot()["askdata_spent"] == Decimal("1.00")
 
 
 def test_remaining_is_the_smaller_of_the_two_rooms(tmp_path):
