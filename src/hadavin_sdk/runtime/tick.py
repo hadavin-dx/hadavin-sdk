@@ -1,7 +1,7 @@
 """`hadavin-sdk tick`: one idempotent pass of housekeeping steps, run every 30-60 s by any scheduler.
 
 Contract (design v5 kernel, section 4):
-* ``STEPS`` runs in order: sweep, reconcile, stuck, checkpoint, purge_evidence (daily). Later PRs only
+* ``STEPS`` runs in order: sweep, reconcile, stuck, checkpoint, purge_evidence (by default daily). Later PRs only
   **append** a ``TickStep``.
 * Each step runs in its own ``try``: a failure is logged as ``step=<name> error_kind=<type>
   message=<redacted, <= 500 chars>`` and written to ``tick_state``; the other steps still run.
@@ -184,6 +184,13 @@ def purge_evidence(ctx: TickContext) -> None:
     up to `held_maps_max_days` (400): the maps hold original identifiers, so no hold is open-ended."""
     app = ctx.app
     keep = app.config.retention
+    last = app.store.get_tick_state("purge_evidence")
+    if (
+        last
+        and last.last_ok_at
+        and (ctx.now - last.last_ok_at).total_seconds() < keep.purge_every_s
+    ):
+        return
     hook = app.runtime.hooks.hold_run_ids
     held = frozenset(hook() or ()) if keep.hold_labelled and hook is not None else frozenset()
     calls = app.store.purge_tool_calls(
@@ -209,7 +216,9 @@ STEPS: list[TickStep] = [
     TickStep("reconcile", 0, reconcile),
     TickStep("stuck", 0, stuck),
     TickStep("checkpoint", 0, checkpoint),
-    TickStep("purge_evidence", 86400, purge_evidence),
+    TickStep(
+        "purge_evidence", 0, purge_evidence
+    ),  # its own interval: Config.retention.purge_every_s
 ]
 STORE_UNREACHABLE = 4
 STORE_NOT_READY = (

@@ -18,6 +18,7 @@ from hadavin_sdk.sources import (
 )
 from hadavin_sdk.sources.kubernetes import READ_OPERATIONS, KubernetesSource, rules_problems
 from tests.contracts import sources as suite
+from tests.contracts.sources import ks
 
 DEPLOYMENTS = {
     "items": [
@@ -96,7 +97,7 @@ class FakeApi:
 
 
 def k8s(api=None) -> KubernetesSource:
-    return KubernetesSource(api or FakeApi(), ["prod"])
+    return ks(api or FakeApi(), ["prod"])
 
 
 CASES = {
@@ -191,12 +192,18 @@ def test_kubernetes_malformed_answer_is_a_source_error():
         return "<html>not json</html>"
 
     with pytest.raises(SourceError, match="malformed"):
-        KubernetesSource(junk, ["prod"]).recent_changes("prod", suite.START, suite.END)
+        ks(junk, ["prod"]).recent_changes("prod", suite.START, suite.END)
 
 
-def test_kubernetes_needs_a_namespace():
-    with pytest.raises(ValueError, match="at least one namespace"):
-        KubernetesSource(FakeApi(), [])
+def test_kubernetes_needs_a_namespace_and_an_endpoint():
+    from hadavin_sdk.sources.kubernetes import KubernetesSettings
+
+    with pytest.raises(ValueError, match="namespaces"):
+        ks(FakeApi(), [])
+    with pytest.raises(ValueError, match="api_url"):
+        KubernetesSettings(namespaces=("prod",))  # type: ignore[call-arg]  # no default endpoint in code
+    with pytest.raises(ValueError, match="page_size"):
+        ks(FakeApi(), page_size=0)
 
 
 @pytest.mark.parametrize(
@@ -227,12 +234,12 @@ def test_an_incomplete_review_is_not_a_pass():
     def incomplete(method, url, *, operation, body=None, headers=None, max_bytes=None):
         return json.dumps({"status": {"incomplete": True, "resourceRules": []}})
 
-    assert any("incomplete" in p for p in KubernetesSource(incomplete, ["prod"]).probe_scope())
+    assert any("incomplete" in p for p in ks(incomplete, ["prod"]).probe_scope())
 
 
 def test_the_probe_reviews_every_configured_namespace():
     api = FakeApi()
-    KubernetesSource(api, ["prod", "staging"]).probe_scope()
+    ks(api, ["prod", "staging"]).probe_scope()
     assert [c[1].rsplit("/", 1)[-1] for c in api.calls] == ["selfsubjectrulesreviews"] * 2
 
 
@@ -240,7 +247,7 @@ def _answering(text):
     def fetch(method, url, *, operation, body=None, headers=None, max_bytes=None):
         return text
 
-    return KubernetesSource(fetch, ["prod"])
+    return ks(fetch, ["prod"])
 
 
 @pytest.mark.parametrize("answer", ["[]", "null", '"text"', "7"])
@@ -267,7 +274,7 @@ def test_kubernetes_null_pod_template_spec_is_not_an_error():
             return json.dumps({"items": [item]})
         return json.dumps({"items": None})
 
-    (found,) = KubernetesSource(api, ["prod"]).recent_changes("prod", suite.START, suite.END)
+    (found,) = ks(api, ["prod"]).recent_changes("prod", suite.START, suite.END)
     assert found["images"] == [] and found["id"] == "deployment/prod/d"
 
 

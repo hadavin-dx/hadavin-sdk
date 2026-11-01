@@ -23,10 +23,10 @@ from hadavin_sdk.runtime import evidence
 from hadavin_sdk.sources import SourceError
 from hadavin_sdk.sources.kubernetes import (
     _SHELL_RESOURCES,
-    KubernetesSource,
     covers,
     rules_problems,
 )
+from tests.contracts.sources import ks
 from tests.fixtures import k5_tools
 from tests.k5_support import TOOL
 
@@ -338,7 +338,7 @@ def _deployments(records):
 
 def test_class_truncation_a_page_that_is_too_big_is_retried_smaller():
     api = Api(60, max_limit=5)
-    records = KubernetesSource(api, ["prod"]).recent_changes("prod", START, END)
+    records = ks(api, ["prod"]).recent_changes("prod", START, END)
     assert len(_deployments(records)) == 60 and not [
         r for r in records if r["kind"] == "incomplete"
     ]
@@ -347,11 +347,11 @@ def test_class_truncation_a_page_that_is_too_big_is_retried_smaller():
 
 def test_class_truncation_an_unreadable_page_is_an_error_not_a_short_list():
     with pytest.raises(SourceError):
-        KubernetesSource(Api(60, max_limit=0.5), ["prod"]).recent_changes("prod", START, END)
+        ks(Api(60, max_limit=0.5), ["prod"]).recent_changes("prod", START, END)
 
 
 def test_class_truncation_a_list_past_the_page_budget_says_it_is_incomplete():
-    records = KubernetesSource(Api(600), ["prod"]).recent_changes("prod", START, END)
+    records = ks(Api(600), ["prod"]).recent_changes("prod", START, END)
     assert len(_deployments(records)) == 500
     (marker,) = [r for r in records if r["kind"] == "incomplete"]
     assert marker["id"] == "incomplete/prod/deployments" and "500" in marker["note"]
@@ -360,9 +360,12 @@ def test_class_truncation_a_list_past_the_page_budget_says_it_is_incomplete():
 def test_class_truncation_a_cut_log_says_so():
     from hadavin_sdk.sources import kubernetes as k
 
-    rows = KubernetesSource(Api(4000), ["prod"]).query_logs("prod/p", START, END, 10000)
-    assert rows[-1]["kind"] == "incomplete" and str(k.LOG_BYTES) in rows[-1]["note"]
-    short = KubernetesSource(Api(5), ["prod"]).query_logs("prod/p", START, END, 10000)
+    rows = ks(Api(4000), ["prod"]).query_logs("prod/p", START, END, 10000)
+    assert (
+        rows[-1]["kind"] == "incomplete"
+        and str(k.KubernetesSettings.model_fields["log_bytes"].default) in rows[-1]["note"]
+    )
+    short = ks(Api(5), ["prod"]).query_logs("prod/p", START, END, 10000)
     assert all("kind" not in r or r["kind"] != "incomplete" for r in short)
 
 

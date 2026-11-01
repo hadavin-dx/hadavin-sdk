@@ -132,3 +132,15 @@ class RecordedSource:
 
     def list_open(self, limit: int) -> list[Record]:
         return list(self.incidents.values())[: max(limit, 0)]
+
+
+def ks(fetch, namespaces=("prod",), **settings):
+    """A KubernetesSource for tests: the endpoint is a reserved, non-routable test name, never a default."""
+    from hadavin_sdk.sources.kubernetes import KubernetesSettings, KubernetesSource
+
+    return KubernetesSource(
+        fetch,
+        KubernetesSettings(
+            api_url="https://kube.test.invalid", namespaces=tuple(namespaces), **settings
+        ),
+    )

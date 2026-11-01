@@ -27,21 +27,14 @@ from urllib.parse import urlsplit
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
+from hadavin_sdk import defaults
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.guard import http as http_guard
 from hadavin_sdk.guard import runmap
 from hadavin_sdk.guard.egress import EgressRefused, egress_check
 
-DEFAULT_MAX_OUTPUT_BYTES = 16384
-# The most a source may ask `fetch` to read for one response (a JSON list it parses into small records).
-FETCH_CEILING = 2 * 1024 * 1024
-DEFAULT_HTTPS_PORTS = frozenset({443})
-DEFAULT_CLUSTER_PORTS = frozenset(
-    {80, 8080, 9090, 9093, 3100}
-)  # Prometheus, Alertmanager, Loki and plain web
+DEFAULT_MAX_OUTPUT_BYTES = defaults.MAX_OUTPUT_BYTES  # the manifest field's default
 Binding = tuple[str, str]  # (METHOD, regex the URL path must fully match)
-# Hooks.tools callables given directly (replay, tests) have no manifest: they get the K1b replay cap.
-LEGACY_MAX_OUTPUT_BYTES = 20_000
 END_MARKER = "<<END TOOL RESULT>>"
 START_MARKER = "<<TOOL RESULT"
 TRUNCATED = "\n[truncated]"
@@ -71,6 +64,9 @@ class ToolSpec(BaseModel):
     secret_names: tuple[str, ...] = ()
     max_output_bytes: int = Field(default=DEFAULT_MAX_OUTPUT_BYTES, gt=0)
     cluster_http: bool = False
+    # Settings the tool's own code reads (validated there, e.g. a source's `KubernetesSettings`): endpoints and
+    # limits belong here, never in the tool module.
+    options: dict[str, Any] = {}
     ports: tuple[int, ...] = ()  # empty: 443 for https, the in-cluster set for plain http
 
 
@@ -180,7 +176,13 @@ class ToolContext:
         timeout_s: float,
         secret_resolver: Callable[[str], str] | None = None,
         bindings: dict[str, Binding] | None = None,
+        *,
+        fetch_ceiling: int = defaults.FETCH_CEILING_BYTES,
+        https_ports: tuple[int, ...] = defaults.HTTPS_PORTS,
+        cluster_ports: tuple[int, ...] = defaults.CLUSTER_PORTS,
     ) -> None:
+        self._fetch_ceiling = fetch_ceiling
+        self._https_ports, self._cluster_ports = frozenset(https_ports), frozenset(cluster_ports)
         # A deep copy: a tool body that edits `ctx.spec` edits its own copy, never the manifest the next call uses.
         # NOTE the ceiling: a tool body is trusted code running in this process (it can reach the closure that holds
         # the secret reader, import anything, open sockets). The manifest limits what the tool is *given*; the
@@ -216,7 +218,7 @@ class ToolContext:
         except ValueError:
             raise ToolRefused("the URL's port is not valid") from None
         allowed = set(self.spec.ports) or (
-            DEFAULT_CLUSTER_PORTS if scheme == "http" else DEFAULT_HTTPS_PORTS
+            self._cluster_ports if scheme == "http" else self._https_ports
         )
         if port not in allowed:
             raise ToolRefused(f"port {port} is not allowed for this tool")
@@ -235,7 +237,7 @@ class ToolContext:
         """One read. Refused unless the operation, its bound method and path, the host, the port and the scheme
         are on the manifest; never follows a redirect; the whole call shares one deadline; the body is cut at
         `max_bytes` (default the manifest's `max_output_bytes`; an explicit larger cap is refused past
-        FETCH_CEILING, and a response over an explicit cap is refused, never silently cut)."""
+        the configured ceiling, and a response over an explicit cap is refused, never silently cut)."""
         spec = self.spec
         if operation not in spec.operations:
             raise ToolRefused(f"operation {operation!r} is not on the manifest's read list")
@@ -259,7 +261,7 @@ class ToolContext:
         except EgressRefused as exc:
             raise ToolRefused(str(exc)) from None
         self._port(parts, parts.scheme)
-        cap = min(max_bytes or spec.max_output_bytes, FETCH_CEILING)
+        cap = min(max_bytes or spec.max_output_bytes, self._fetch_ceiling)
         req = urllib.request.Request(  # noqa: S310 - scheme and host checked above
             url, data=body, headers=headers or {}, method=method.upper()
         )
@@ -351,7 +353,17 @@ class ToolBox:
         secret_resolver: Callable[[str], str] | None = None,
         arg_errors: Callable[[dict[str, Any], dict[str, Any]], list[str]] | None = None,
         bindings: dict[str, Binding] | None = None,
+        fetch_ceiling: int = defaults.FETCH_CEILING_BYTES,
+        https_ports: tuple[int, ...] = defaults.HTTPS_PORTS,
+        cluster_ports: tuple[int, ...] = defaults.CLUSTER_PORTS,
+        stored_kinds: frozenset[str] | None = None,
     ) -> None:
+        self._limits = {
+            "fetch_ceiling": fetch_ceiling,
+            "https_ports": https_ports,
+            "cluster_ports": cluster_ports,
+        }
+        self._kinds = stored_kinds
         self.specs, self._fns, self.timeout_s = specs, fns, timeout_s
         self._secrets, self._arg_errors = secret_resolver, arg_errors
         self._bindings = dict(bindings or {})
@@ -384,11 +396,11 @@ class ToolBox:
 
     def invoke(self, name: str, args: dict[str, Any], mapping: dict[str, str]) -> ToolOutput:
         spec = self.specs[name]
-        ctx = ToolContext(spec, self.timeout_s, self._secrets, self._bindings)
+        ctx = ToolContext(spec, self.timeout_s, self._secrets, self._bindings, **self._limits)
         started = time.monotonic()
         error = False
         try:
-            restored = runmap.restore_value(args, mapping)
+            restored = runmap.restore_value(args, mapping, self._kinds)
             if runmap.has_placeholder(restored):
                 raise ToolRefused("an argument could not be resolved")
             if self._arg_errors is not None and (

@@ -22,6 +22,7 @@ from hadavin_sdk.registry import load_registry
 from hadavin_sdk.runtime import evidence
 from hadavin_sdk.runtime import tick as tick_mod
 from hadavin_sdk.store import MemoryStore
+from tests.contracts.sources import ks
 from tests.fixtures import k5_tools
 from tests.k5_support import (
     ACTION,
@@ -719,9 +720,20 @@ def test_k5_held_map_purged_at_400_days(tmp_path):
     assert len(app.store.list_tool_calls(run_id)) == 1  # the held tool calls stay
 
 
-def test_k5_purge_evidence_is_a_daily_tick_step():
-    step = next(s for s in tick_mod.STEPS if s.name == "purge_evidence")
-    assert step.every_s == 86400
+def test_k5_purge_evidence_runs_at_the_configured_interval(tmp_path):
+    from hadavin_sdk.models import TickState
+
+    assert any(s.name == "purge_evidence" for s in tick_mod.STEPS)
+    app = _purge_app(tmp_path, config={"retention": {"purge_every_s": 3600}})
+    calls = []
+    app.store.purge_tool_calls = lambda *a, **k: calls.append(1) or 0
+    ctx = tick_mod.TickContext(app, now())
+    app.store.save_tick_state(TickState(step="purge_evidence", last_run_at=now(), last_ok_at=now()))
+    tick_mod.purge_evidence(ctx)  # ran a moment ago: skipped
+    assert calls == []
+    later = tick_mod.TickContext(app, now() + timedelta(seconds=3601))
+    tick_mod.purge_evidence(later)
+    assert calls == [1]
 
 
 # --- app wiring ---------------------------------------------------------------------------------------------------
@@ -890,7 +902,6 @@ def test_k5_redteam_bundles_abstain_or_flag(tmp_path, bundle):
 def test_k5_scope_probe_refuses_write(tmp_path):
     """A source whose read credential can `patch` deployments, list secrets or attach to a pod does not start."""
     from hadavin_sdk.sources import scope_problems
-    from hadavin_sdk.sources.kubernetes import KubernetesSource
 
     def fetch_for(rules):
         def fetch(method, url, *, operation, body=None, headers=None, max_bytes=None):
@@ -900,7 +911,7 @@ def test_k5_scope_probe_refuses_write(tmp_path):
         return fetch
 
     readonly = [{"verbs": ["get", "list", "watch"], "resources": ["pods", "deployments", "events"]}]
-    assert scope_problems({"k8s": KubernetesSource(fetch_for(readonly), ["prod"])}, {}) == []
+    assert scope_problems({"k8s": ks(fetch_for(readonly), ["prod"])}, {}) == []
     for rules, needle in (
         ([{"verbs": ["get", "patch"], "resources": ["deployments"]}], "write verb patch"),
         ([{"verbs": ["list"], "resources": ["secrets"]}], "read access to secrets"),
@@ -908,18 +919,16 @@ def test_k5_scope_probe_refuses_write(tmp_path):
         ([{"verbs": ["*"], "resources": ["pods"]}], "wildcard verb"),
         ([{"verbs": ["get"], "resources": ["*"]}], "secrets"),
     ):
-        problems = scope_problems({"k8s": KubernetesSource(fetch_for(rules), ["prod"])}, {})
+        problems = scope_problems({"k8s": ks(fetch_for(rules), ["prod"])}, {})
         assert any(needle in p for p in problems), (rules, problems)
     cfg = k5_cfg(tmp_path)
     from tests.conftest import qualify
 
     qualify(load_registry(load_config(cfg)))
-    bad = KubernetesSource(
-        fetch_for([{"verbs": ["patch"], "resources": ["deployments"]}]), ["prod"]
-    )
+    bad = ks(fetch_for([{"verbs": ["patch"], "resources": ["deployments"]}]), ["prod"])
     with pytest.raises(ConfigError, match="write verb patch"):
         app_mod.build(cfg, ["test-agent"], secrets=SECRETS, llm=ScriptLLM([]), sources={"k8s": bad})
-    good = KubernetesSource(fetch_for(readonly), ["prod"])
+    good = ks(fetch_for(readonly), ["prod"])
     app_mod.build(cfg, ["test-agent"], secrets=SECRETS, llm=ScriptLLM([]), sources={"k8s": good})
 
 

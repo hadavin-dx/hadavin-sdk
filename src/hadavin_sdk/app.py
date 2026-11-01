@@ -186,4 +186,8 @@ def _toolbox(cfg: Config, reg: Registry, secrets: SecretProvider) -> tools_mod.T
         secret_resolver=secrets.get,
         arg_errors=schema_errors,
         bindings=tools_mod.read_operations(cfg.tool_modules),
+        fetch_ceiling=cfg.evidence.fetch_ceiling_bytes,
+        https_ports=cfg.evidence.https_ports,
+        cluster_ports=cfg.evidence.cluster_ports,
+        stored_kinds=frozenset(cfg.evidence.stored_kinds),
     )

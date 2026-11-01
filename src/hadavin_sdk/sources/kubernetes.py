@@ -15,6 +15,9 @@ from collections.abc import Callable
 from typing import Any
 from urllib.parse import quote
 
+from pydantic import BaseModel, ConfigDict, Field
+
+from hadavin_sdk import defaults
 from hadavin_sdk.sources import Record, SourceError
 
 # The operation ids a manifest may list for this source, each bound to one method and one path (design 6.4): a
@@ -26,12 +29,7 @@ READ_OPERATIONS = {
     "k8s.pod_log": ("GET", rf"/api/v1/namespaces/{_NS}/pods/{_NS}/log"),
     "k8s.rules_review": ("POST", r"/apis/authorization\.k8s\.io/v1/selfsubjectrulesreviews"),
 }
-JSON_CAP = 1024 * 1024  # a real deployment list is far larger than a tool's 16 KB output cap
-LOG_BYTES = 65536  # asked of the API (limitBytes); the fetch cap leaves room for the framing
-PAGE = 20  # list page size (a deployment object can be tens of KB); further pages follow `metadata.continue`
-MAX_PAGES = 25  # 500 objects; past that the answer says it is incomplete
 REVISION = "deployment.kubernetes.io/revision"
-DEFAULT_API = "https://kubernetes.default.svc"
 JSON_HEADERS = {"Content-Type": "application/json", "Accept": "application/json"}
 # Design 6.6 / K5b M20: verbs that change state, and subresources that open a shell or a tunnel.
 _WRITE_VERBS = frozenset(
@@ -49,6 +47,19 @@ _SHELL_RESOURCES = frozenset(
     }
 )
 Fetch = Callable[..., str]
+
+
+class KubernetesSettings(BaseModel):
+    """Where the cluster is and how much to read. Normally a tool manifest's `options`; defaults in
+    `hadavin_sdk/defaults.py`. `api_url` has no default: the endpoint is the deployment's, never the code's."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+    api_url: str = Field(pattern=r"https?://[^\s/]+")
+    namespaces: tuple[str, ...] = Field(min_length=1)
+    page_size: int = Field(default=defaults.K8S_PAGE_SIZE, gt=0)
+    max_pages: int = Field(default=defaults.K8S_MAX_PAGES, gt=0)
+    json_cap_bytes: int = Field(default=defaults.K8S_JSON_CAP_BYTES, gt=0)
+    log_bytes: int = Field(default=defaults.K8S_LOG_BYTES, gt=0)
 
 
 def covers(entry: str, target: str) -> bool:
@@ -86,10 +97,9 @@ def rules_problems(namespace: str, rules: list[dict[str, Any]]) -> list[str]:
 class KubernetesSource:
     name = "kubernetes"
 
-    def __init__(self, fetch: Fetch, namespaces: list[str], api: str = DEFAULT_API) -> None:
-        if not namespaces:
-            raise ValueError("KubernetesSource needs at least one namespace")
-        self._fetch, self.namespaces, self._api = fetch, list(namespaces), api.rstrip("/")
+    def __init__(self, fetch: Fetch, settings: KubernetesSettings) -> None:
+        self._fetch, self._cfg = fetch, settings
+        self.namespaces, self._api = list(settings.namespaces), settings.api_url.rstrip("/")
 
     def _call(
         self,
@@ -97,7 +107,7 @@ class KubernetesSource:
         operation: str,
         method: str = "GET",
         body: dict | None = None,
-        max_bytes: int = JSON_CAP,
+        max_bytes: int | None = None,
     ) -> str:
         data = None if body is None else json.dumps(body).encode("utf-8")
         headers = JSON_HEADERS if method == "POST" else {"Accept": "application/json"}
@@ -108,7 +118,7 @@ class KubernetesSource:
                 operation=operation,
                 body=data,
                 headers=headers,
-                max_bytes=max_bytes,
+                max_bytes=max_bytes or self._cfg.json_cap_bytes,
             )
         except SourceError:
             raise
@@ -126,12 +136,12 @@ class KubernetesSource:
         return decoded
 
     def _items(self, path: str, operation: str) -> tuple[list[Any], bool]:
-        """All items of a list call, `PAGE` at a time following `metadata.continue`. A page that fails (too large
+        """All items of a list call, `page_size` at a time following `metadata.continue`. A page that fails (too large
         for the fetch cap, say) is asked again with half the limit, down to one. Returns (items, incomplete):
-        incomplete is true when MAX_PAGES ran out with more still to read."""
+        incomplete is true when max_pages ran out with more still to read."""
         items: list[Any] = []
-        token, limit = "", PAGE
-        for _ in range(MAX_PAGES):
+        token, limit = "", self._cfg.page_size
+        for _ in range(self._cfg.max_pages):
             while True:
                 query = f"?limit={limit}" + (f"&continue={quote(token, safe='')}" if token else "")
                 try:
@@ -199,7 +209,7 @@ class KubernetesSource:
                     {
                         "id": f"incomplete/{scope}/{kind}",
                         "kind": "incomplete",
-                        "note": f"more than {PAGE * MAX_PAGES} {kind}; the list is cut",
+                        "note": f"more than {self._cfg.page_size * self._cfg.max_pages} {kind}; the list is cut",
                     }
                 )
         return out
@@ -213,9 +223,11 @@ class KubernetesSource:
             return []
         path = (
             f"/api/v1/namespaces/{quote(scope, safe='')}/pods/{quote(pod, safe='')}/log"
-            f"?timestamps=true&sinceTime={quote(start, safe='')}&limitBytes={LOG_BYTES}"
+            f"?timestamps=true&sinceTime={quote(start, safe='')}&limitBytes={self._cfg.log_bytes}"
         )
-        text = self._call(path, "k8s.pod_log", max_bytes=LOG_BYTES + 8192)
+        text = self._call(
+            path, "k8s.pod_log", max_bytes=self._cfg.log_bytes + defaults.K8S_LOG_SLACK_BYTES
+        )
         out: list[Record] = []
         for i, line in enumerate(text.splitlines()):
             ts, _, rest = line.partition(" ")
@@ -225,12 +237,14 @@ class KubernetesSource:
             if len(out) >= limit:
                 break
         else:
-            if len(text.encode("utf-8")) >= LOG_BYTES:  # the API cut the log at limitBytes
+            if (
+                len(text.encode("utf-8")) >= self._cfg.log_bytes
+            ):  # the API cut the log at limitBytes
                 out.append(
                     {
                         "id": f"log/{scope}/{pod}#cut",
                         "kind": "incomplete",
-                        "note": f"the log was cut at {LOG_BYTES} bytes; later lines are missing",
+                        "note": f"the log was cut at {self._cfg.log_bytes} bytes; later lines are missing",
                     }
                 )
         return out

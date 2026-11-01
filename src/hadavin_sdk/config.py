@@ -15,7 +15,7 @@ import yaml
 from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, ValidationError, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from hadavin_sdk import deferred
+from hadavin_sdk import defaults, deferred
 from hadavin_sdk.backends.table import DEFAULTS, DEV_ONLY, NOT_PROD, TABLE, KindSettings
 from hadavin_sdk.errors import ConfigError
 
@@ -23,6 +23,7 @@ __all__ = [
     "Backends",
     "Config",
     "ConfigError",
+    "EvidenceSettings",
     "K1bSettings",
     "Retention",
     "Route",
@@ -181,6 +182,33 @@ class Retention(_Strict):
     hold_labelled: bool = True
     # A held run's redaction map (original identifiers) is purged at this age whatever the hold says.
     held_maps_max_days: int = Field(default=HELD_MAPS_CEILING, gt=0, le=HELD_MAPS_CEILING)
+    purge_every_s: int = Field(
+        default=defaults.PURGE_EVERY_S, gt=0
+    )  # the purge_evidence tick step's interval
+
+
+class EvidenceSettings(_Strict):
+    """The read path's limits (K5). Defaults live in `hadavin_sdk/defaults.py`. Not part of `config_hash`."""
+
+    max_tool_errors: int = Field(default=defaults.MAX_TOOL_ERRORS, gt=0)
+    legacy_max_output_bytes: int = Field(default=defaults.LEGACY_MAX_OUTPUT_BYTES, gt=0)
+    fetch_ceiling_bytes: int = Field(default=defaults.FETCH_CEILING_BYTES, gt=0)
+    https_ports: tuple[int, ...] = defaults.HTTPS_PORTS
+    cluster_ports: tuple[int, ...] = defaults.CLUSTER_PORTS
+    # Which identifier kinds the run's redaction map may store. May narrow the default, never widen it: a kind
+    # with no grammar in `guard/runmap.py` cannot be stored.
+    stored_kinds: tuple[str, ...] = defaults.STORED_KINDS
+
+    @model_validator(mode="after")
+    def _checks(self) -> EvidenceSettings:
+        if unknown := sorted(set(self.stored_kinds) - set(defaults.STORED_KINDS)):
+            raise ValueError(
+                f"evidence.stored_kinds: {unknown} cannot be stored (secret, regulated or unknown)"
+            )
+        for name in ("https_ports", "cluster_ports"):
+            if bad := [p for p in getattr(self, name) if not 0 < p < 65536]:
+                raise ValueError(f"evidence.{name}: {bad} are not ports")
+        return self
 
 
 _DIGEST = re.compile(r"[0-9a-f]{64}")
@@ -219,6 +247,7 @@ class Config(_Strict):
     tool_modules: list[str] = []
     tool_timeout_s: float = Field(default=10.0, gt=0)
     retention: Retention = Retention()
+    evidence: EvidenceSettings = EvidenceSettings()
     # design 6.6: a read source that cannot be probed names the client-signed inventory instead,
     # "<page>#<anchor> sha256:<64 hex>".
     scope_inventory: dict[str, str] = {}

@@ -121,6 +121,78 @@ def test_review_round3_a_look_alike_literal_in_a_log_is_not_evidence(tmp_path, l
     assert (run.state, run.reason_code) == (S.NEEDS_PERSON, "ungrounded")
 
 
+def test_config_evidence_limits_have_documented_defaults_and_validate(tmp_path):
+    from hadavin_sdk import defaults
+
+    cfg = load_config(k5_cfg(tmp_path))
+    ev = cfg.evidence
+    assert (
+        ev.max_tool_errors == defaults.MAX_TOOL_ERRORS
+        and ev.fetch_ceiling_bytes == defaults.FETCH_CEILING_BYTES
+    )
+    assert (
+        set(ev.stored_kinds) == set(defaults.STORED_KINDS) and cfg.retention.purge_every_s == 86400
+    )
+    for bad in (
+        {"stored_kinds": ["APIKEY"]},  # a secret kind can never be stored
+        {"stored_kinds": ["NOPE"]},
+        {"max_tool_errors": 0},
+        {"cluster_ports": [70000]},
+    ):
+        with pytest.raises(ConfigError):
+            load_config(k5_cfg(tmp_path / "bad", config={"evidence": bad}))
+
+
+def test_config_max_tool_errors_is_applied(tmp_path):
+    llm = ScriptLLM([{"tool": "boom"}, {"tool": "boom"}, {"noaction": True}])
+    cfg = k5_cfg(tmp_path, config={"evidence": {"max_tool_errors": 2}})
+    rt, _ = build_runtime(cfg, llm)
+    run = handle(rt)
+    assert (run.state, run.reason_code) == (S.NEEDS_PERSON, "tool_error") and len(llm.sent) == 2
+
+
+def test_config_stored_kinds_can_narrow_what_is_stored_and_restored(tmp_path):
+    k5_tools.RESULTS["app"] = "ERROR upstream 10.0.0.5; mail ops@example.test; revision 17"
+    store = MemoryStore()
+    cfg = k5_cfg(tmp_path, config={"evidence": {"stored_kinds": ["IPV4"]}})
+    rt, _ = build_runtime(cfg, ScriptLLM([{"tool": "app"}, {"noaction": True}]), store=store)
+    run = handle(rt)
+    assert store.get_redaction_map(run.run_id) == {
+        "<IPV4_1>": "10.0.0.5"
+    }  # the e-mail is not stored
+
+
+def test_config_fetch_limits_reach_the_tool_context(monkeypatch):
+    spec = tools_mod.ToolSpec(**{**TOOL, "hosts": ["api.example.com"], "max_output_bytes": 100})
+    ctx = tools_mod.ToolContext(
+        spec, 3.0, bindings=k5_tools.READ_OPERATIONS, fetch_ceiling=10, https_ports=(8443,)
+    )
+
+    class Resp:
+        def __init__(self):
+            self.n = 0
+
+        def read(self, n=-1):
+            self.n += 1
+            return b"x" * n if self.n < 3 else b""
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *e):
+            return False
+
+    class Opener:
+        def open(self, req, timeout=None):
+            return Resp()
+
+    monkeypatch.setattr(tools_mod.http_guard, "OPENER", Opener())
+    with pytest.raises(tools_mod.ToolRefused, match="port 443 is not allowed"):
+        ctx.fetch("GET", "https://api.example.com/x", operation="bundle.read")
+    out = ctx.fetch("GET", "https://api.example.com:8443/x", operation="bundle.read")
+    assert out == "x" * 10 + tools_mod.TRUNCATED  # the configured ceiling, not the manifest's 100
+
+
 def test_review_a_real_placeholder_still_grounds(tmp_path):
     k5_tools.RESULTS["app"] = "ERROR upstream 10.0.0.5 refused; revision 17"
     llm = ScriptLLM([{"tool": "app"}, {"propose": {"host": "<IPV4_1>", "revision": "17"}}])

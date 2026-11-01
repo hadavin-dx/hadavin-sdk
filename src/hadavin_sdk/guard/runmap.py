@@ -15,29 +15,13 @@ import unicodedata
 from functools import lru_cache
 from typing import Any
 
+from hadavin_sdk import defaults
 from hadavin_sdk.guard.redact import ARN_TAIL, PATTERNS, SECRET_KINDS, redact
 
 # Identifier kinds a fix or a read may need back (M14): the spec list plus the other identifier kinds the
 # redactor emits (IPV6 beside IPV4, hostnames, UUIDs, GCP and Azure resource ids). Anything not listed (every
 # secret kind, every regulated kind, and any kind added later) is NOT stored: an allowlist fails safe.
-STORED_KINDS = frozenset(
-    {
-        "ARN",
-        "ACCOUNTID",
-        "TENANT",
-        "EMAIL",
-        "MAC",
-        "IPV4",
-        "IPV6",
-        "NAME",
-        "ADDRESS",
-        "PHONE",
-        "HOSTNAME",
-        "UUID",
-        "GCPRESOURCE",
-        "AZURERESOURCE",
-    }
-)
+STORED_KINDS = frozenset(defaults.STORED_KINDS)
 PLACEHOLDER = re.compile(
     r"<([A-Z][A-Z0-9]*)_([0-9]+)>"
 )  # a genuine placeholder: exactly this, ASCII, upper case
@@ -100,10 +84,15 @@ def storable_original(kind: str, original: str) -> bool:
         return False
 
 
-def storable(mapping: dict[str, str]) -> dict[str, str]:
+def storable(mapping: dict[str, str], kinds: frozenset[str] | None = None) -> dict[str, str]:
     """The part of a run's map that may be stored and restored: identifier kinds whose originals fit their
     allowlist grammar and hold no secret-shaped text."""
-    return {p: v for p, v in mapping.items() if storable_original(kind_of(p), v)}
+    allowed = STORED_KINDS if kinds is None else kinds
+    return {
+        p: v
+        for p, v in mapping.items()
+        if kind_of(p) in allowed and storable_original(kind_of(p), v)
+    }
 
 
 def canonical(text: str) -> str:
@@ -155,19 +144,19 @@ def redact_value(value: Any, mapping: dict[str, str]) -> Any:
     return value
 
 
-def restore_text(text: str, mapping: dict[str, str]) -> str:
+def restore_text(text: str, mapping: dict[str, str], kinds: frozenset[str] | None = None) -> str:
     """One pass, only stored kinds: a restored value is never expanded again, a secret kind never restored."""
-    allowed = storable(mapping)
+    allowed = storable(mapping, kinds)
     return PLACEHOLDER.sub(lambda m: allowed.get(m.group(0), m.group(0)), text)
 
 
-def restore_value(value: Any, mapping: dict[str, str]) -> Any:
+def restore_value(value: Any, mapping: dict[str, str], kinds: frozenset[str] | None = None) -> Any:
     if isinstance(value, str):
-        return restore_text(value, mapping)
+        return restore_text(value, mapping, kinds)
     if isinstance(value, dict):
-        return {k: restore_value(v, mapping) for k, v in value.items()}
+        return {k: restore_value(v, mapping, kinds) for k, v in value.items()}
     if isinstance(value, list):
-        return [restore_value(v, mapping) for v in value]
+        return [restore_value(v, mapping, kinds) for v in value]
     return value
 
 
