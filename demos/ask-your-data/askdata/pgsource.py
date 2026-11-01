@@ -12,8 +12,9 @@ Rules, each with a test in tests/demo_askdata/test_pgsource_layers.py:
 * Watchdog: a monotonic deadline checked before every fetch and every row plus a timer thread calling `cancel()` for a
   statement blocked in the server; the timer is cancelled and joined BEFORE rollback and close.
 * Caps: rows and bytes. One cell is read whole before the byte cap sees it (the driver gives no per-cell limit and
-  the SQL must stay the validated canonical text), so a single huge cell can overshoot the cap by its own size; the
-  deadline and the server `statement_timeout` still bound the time.
+  the SQL must stay the validated canonical text), so a single huge cell, or one whole fetch batch (up to `batch` rows), is held in memory before the
+  cap applies. The deadline is checked between rows: decoding or `clean()` of one row can run past it; the timer
+  cancels the server side and the server `statement_timeout` bounds it.
 * Errors reach callers as SQLSTATE codes only, never the server's message (it can echo data).
 * The SHA-256 and the shown SQL are of the canonical SELECT; the wire text is `DECLARE "<name>" CURSOR FOR `
   plus that canonical text.
