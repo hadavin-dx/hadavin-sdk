@@ -14,6 +14,7 @@ from typing import Any
 
 import boto3  # the extra: a missing install fails at start-up with the hint (backends.make)
 import botocore.exceptions
+import botocore.parsers
 from botocore.config import Config
 
 from hadavin_sdk.llm.common import (
@@ -101,6 +102,19 @@ def detail(exc: BaseException) -> str:
     return " ".join(str(p) for p in (status, _code(exc)) if p)
 
 
+_DECODE = (
+    botocore.parsers.ResponseParserError,
+    botocore.exceptions.ResponseStreamingError,
+    botocore.exceptions.IncompleteReadError,
+    json.JSONDecodeError,
+)
+
+
+def answered(exc: BaseException) -> bool | None:
+    """The service answered and the body could not be read or parsed: the request was billed."""
+    return True if isinstance(exc, _DECODE) else None
+
+
 def retryable(exc: BaseException) -> bool | None:
     if isinstance(exc, _NETWORK):
         return True
@@ -113,6 +127,7 @@ def retryable(exc: BaseException) -> bool | None:
 class BedrockLLM(NetworkLLM):
     label = "bedrock"
     retryable = staticmethod(retryable)
+    answered_hook = staticmethod(answered)
     detail = staticmethod(detail)
 
     def __init__(

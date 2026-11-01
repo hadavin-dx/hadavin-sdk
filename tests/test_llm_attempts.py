@@ -284,3 +284,97 @@ def test_the_estimate_of_a_round_without_usage_counts_the_tool_definitions_too()
         return reply.cost_usd
 
     assert cost("x" * 3000) > cost("x")  # the long tool definition is billed input
+
+
+# ---- the SDK-based kinds: a 2xx whose body the SDK cannot decode is BILLED too (it used to be a free refusal)
+import importlib.util
+import json as _json
+import sys
+import types
+from pathlib import Path
+
+from hadavin_sdk.llm.common import estimate_tokens
+
+
+def _load_anthropic_kind(monkeypatch):
+    """The anthropic kind imported against a stub `anthropic` module (the SDK is an extra that may be absent)."""
+    stub = types.ModuleType("anthropic")
+    stub.APIConnectionError = type("APIConnectionError", (Exception,), {})
+    monkeypatch.setitem(sys.modules, "anthropic", stub)
+    path = Path(common.__file__).with_name("anthropic.py")
+    spec = importlib.util.spec_from_file_location("hadavin_sdk_llm_anthropic_under_test", path)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def _sdk_error(name: str, module: str, **attrs) -> Exception:
+    return type(name, (Exception,), {"__module__": module, **attrs})("decode failed")
+
+
+@pytest.mark.parametrize(
+    "make_exc",
+    [
+        lambda: _json.JSONDecodeError("Expecting value", "<html>", 0),
+        lambda: _sdk_error("DecodingError", "httpx"),
+        lambda: _sdk_error("APIResponseValidationError", "anthropic", status_code=200),
+        lambda: _sdk_error(
+            "SomeNewSdkError", "anthropic", status_code=200
+        ),  # any 2xx that failed is an answer
+    ],
+)
+def test_anthropic_a_200_the_sdk_cannot_decode_is_billed(make_exc, monkeypatch):
+    mod = _load_anthropic_kind(monkeypatch)
+
+    def create(**kw):
+        raise make_exc()
+
+    client = types.SimpleNamespace(messages=types.SimpleNamespace(create=create))
+    llm = mod.AnthropicLLM(client, {"r": ROUTE}, 1, sleep=lambda _s: None)
+    with pytest.raises(UnusableAnswer) as err:
+        llm.chat([{"role": "user", "content": "hi"}], system="s", route="r")
+    assert err.value.attempts == 1
+
+
+def test_anthropic_a_400_and_a_failure_before_any_request_stay_free(monkeypatch):
+    mod = _load_anthropic_kind(monkeypatch)
+    for exc in (_sdk_error("BadRequestError", "anthropic", status_code=400), ValueError("no key")):
+
+        def create(exc=exc, **kw):
+            raise exc
+
+        client = types.SimpleNamespace(messages=types.SimpleNamespace(create=create))
+        llm = mod.AnthropicLLM(client, {"r": ROUTE}, 1, sleep=lambda _s: None)
+        with pytest.raises(ProviderError) as err:
+            llm.chat([{"role": "user", "content": "hi"}], system="s", route="r")
+        assert not isinstance(err.value, UnusableAnswer | ProviderExhausted)
+
+
+@pytest.mark.parametrize(
+    "make_exc",
+    [
+        lambda bc, parsers: parsers.ResponseParserError("cannot parse the response"),
+        lambda bc, parsers: bc.ResponseStreamingError(error="stream cut"),
+        lambda bc, parsers: bc.IncompleteReadError(actual_bytes=1, expected_bytes=9),
+    ],
+)
+def test_bedrock_a_body_botocore_cannot_read_is_billed(make_exc):
+    pytest.importorskip("boto3", reason="needs extra aws")
+    import botocore.exceptions as bc
+    from botocore import parsers
+
+    from hadavin_sdk.llm import bedrock
+
+    def converse(**kw):
+        raise make_exc(bc, parsers)
+
+    llm = bedrock.BedrockLLM(
+        types.SimpleNamespace(converse=converse), {"r": ROUTE}, 1, sleep=lambda _s: None
+    )
+    with pytest.raises(UnusableAnswer):
+        llm.chat([{"role": "user", "content": "hi"}], system="s", route="r")
+
+
+def test_the_token_estimate_counts_bytes_so_cjk_is_not_undercounted():
+    assert estimate_tokens("日本語" * 10) >= 30  # 90 bytes; characters // 3 would say 10
+    assert estimate_tokens("abc" * 10) == 10  # ASCII is unchanged

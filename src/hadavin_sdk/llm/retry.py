@@ -89,6 +89,18 @@ def _raised_in_parse(exc: BaseException) -> bool:
     return False
 
 
+def _answered(exc: BaseException, hook: Callable[[BaseException], bool | None] | None) -> bool:
+    """Did the provider ANSWER (so the request was billed) and the answer was unusable? In order: the kind's own hook
+    (it knows its SDK's decode errors: a non-JSON 200 fails inside the SDK call, before any `_parse`); a 2xx status on
+    the error; otherwise no HTTP status, not a network error, and a `_parse` frame in the traceback."""
+    if hook is not None and (said := hook(exc)) is not None:
+        return said
+    code = status(exc)
+    if code is not None and 200 <= code < 300:
+        return True
+    return code is None and not isinstance(exc, OSError) and _raised_in_parse(exc)
+
+
 def with_retry[T](
     call: Callable[[], T],
     *,
@@ -97,6 +109,7 @@ def with_retry[T](
     sleep: Callable[[float], None] = time.sleep,
     retryable: Retryable | None = None,
     detail: Callable[[BaseException], str] | None = None,
+    answered_hook: Callable[[BaseException], bool | None] | None = None,
 ) -> T:
     for attempt in range(1, max_attempts + 1):
         try:
@@ -110,9 +123,7 @@ def with_retry[T](
                 # kind's `_parse` (every kind names its response parser that): no HTTP status, not a network
                 # error, and a `_parse` frame in the traceback. A failure before any request was sent (a secret
                 # read, building the body) is a plain ProviderError and is not billed.
-                answered = (
-                    status(exc) is None and not isinstance(exc, OSError) and _raised_in_parse(exc)
-                )
+                answered = _answered(exc, answered_hook)
                 cls = UnusableAnswer if answered else ProviderError
                 refused = cls(f"{label}: {describe(exc, detail)}")
                 refused.attempts = attempt

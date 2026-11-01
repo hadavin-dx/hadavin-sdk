@@ -69,7 +69,7 @@ smoke limit), 14 refused (budget, `--k`, smoke, counter or chain mismatch, a sta
 5 the sealed run could not be recorded, 4 startup or a harness defect found mid-run (a gold query that does not run),
 1 usage. `eval freeze`: 0 or 4 (a file missing, a lock, chain or anchor already there, or a file system without hard links); `--new-set
 --reason` is a usage error (1) unless both are given. `eval reseal`: 0, 14 (counter, chain and anchors disagree) or 4.
-`eval reconcile`: 0 or 14.
+`eval reconcile`: 0 or 14. `eval report-lost RUN_ID --reason "..."`: 0, 14 (refused: reason too short, nothing recorded, or nothing to mark), 1 (not a run id) or 4.
 
 `roles.sql` runs `REVOKE ... FROM PUBLIC`, which changes access for every login in that database: use a dedicated
 database or a replica, never a shared production database. It runs `db/preflight_roles.sql` first and stops if
@@ -128,7 +128,7 @@ running the script by hand passes them with `-v` (it refuses without them).
 | Layer | Does | Does NOT stop |
 |---|---|---|
 | C1 validator (`validate.py`, V01 to V12) | one canonical SELECT over exposed views, columns and allowed functions | a read-only query that is legal but WRONG (a wrong join, a wrong filter): that is what the eval measures; any SQL the parser mis-parses the way the server does not (the oracle test narrows this, it cannot prove it) |
-| C2 read-only login (`db/roles.sql`) | the database refuses every write and every table outside the four views | a heavy read inside the views (that is C4); anything the DBA grants to this login later (`verify-readonly` and `preflight_roles.sql` list drift, they do not prevent it) |
+| C2 read-only login (`db/roles.sql`) | the database refuses every write and every table outside the four views. **Exact rights of the login (least privilege):** CONNECT on the database, USAGE on schema `analytics`, SELECT on the four views `customers_v`, `products_v`, `orders_v`, `order_items_v` (whole views: the columns visible are the views' own column lists, so the exposure is exactly what the view definitions select), plus role settings (default read-only transaction, statement / lock / idle timeouts, `search_path`). Nothing else: no table, no CREATE, no EXECUTE grant. `ALTER DEFAULT PRIVILEGES REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC` in the script has no `FOR ROLE`, so it covers only functions created LATER by the admin that ran the script, not other roles' and not functions that already exist (the validator's function allowlist, not the grant, bounds those). The numbers are validated before use: the connection limit is 1 to 999, a timeout is a positive number of seconds (`0s` would disable it and is refused) | a heavy read inside the views (that is C4); anything the DBA grants to this login later (`verify-readonly` and `preflight_roles.sql` list drift, they do not prevent it) |
 | C3 extended-protocol cursor (`pgsource.py`) | a stacked statement cannot run as part of the query | a statement the server runs for a different reason (it is one statement only); a bug in the driver |
 | C4 watchdog and caps | rows, bytes and time of ONE statement; the server cancel as a backstop | the sum of many cheap questions (the meter and the kill switch bound those); one huge cell is read whole before the byte cap sees it |
 | C5 audit intent before execute | an execution with no intent record cannot start | a ledger or audit folder rewritten by someone who can write both (see "Which guards live in plain files") |
@@ -197,8 +197,15 @@ running the script by hand passes them with `-v` (it refuses without them).
      SHA-256 goes into the chain. Results evidence (`report.json`, `report.md` or `results.jsonl` in the run folder) that no
      chain entry vouches for is "unverified" (a second look `aborted` is refused). A recorded report that was DELETED or
      that differs from its recorded hash is refused on every load, for every recorded run, and by `eval report` and
-     `eval compare` when a config is given. Residual: the hash is taken of whatever is on disk at the moment the run records
-     it, so a report swapped between `write_run` and that record is not detected. While a sealed run is alive it holds an OS run lock
+     `eval compare` when a config is given. `report.md` and `results.jsonl` are hashed too. **Run folders are part of the evidence set**: do not prune, move or
+     rename `runs/` for a recorded run. If that happened on purpose (a tidy-up, a new machine), the audited way out is
+     `eval report-lost RUN_ID --reason "..."` (20+ characters): a `report_lost` chain entry, the run's status becomes
+     "unverified" (never an `aborted` second look), the counter is untouched and `eval report` prints the run as LOST with
+     the reason. Residual: the hash is taken of whatever is on disk at the moment the run records it, so a report swapped
+     between `write_run` and that record is not detected. `eval report` and `eval compare` also check a given report:
+     one that LOOKS sealed (its own `split` is test, or its label is sealed / second look, whatever the folder is called)
+     and that the chain does not vouch for prints `NOT VOUCHED` and exits 4; without a config they print that they could not
+     check; a config that was asked for and cannot be read is an error. While a sealed run is alive it holds an OS run lock
      (`sealed-run.lock`): a second look is refused with "a sealed run is still running" and the status is "aborted" only
      once that process is gone.
    * Anchors: at the first freeze a `set_id` is written to `<audit_dir>/sealed-anchor.json` and to
@@ -208,7 +215,9 @@ running the script by hand passes them with `-v` (it refuses without them).
      A genuinely new test set needs `eval freeze --new-set --reason "..." [--discard-count N]`. **That command RESETS the
      sealed counter**: the reason must be 20+ characters, and while N runs are counted you must pass `--discard-count N`;
      both are written into a visible `new_set` entry, the old lock is kept as `lock.json.prev-<time>`, the old runs stay in
-     the chain, and a failed freeze undoes everything (chain, anchors, lock).
+     the chain, and a failed freeze undoes what IT created (chain entry, new lock, new anchors, backups) without touching
+     anything that existed before it. If an undo step itself fails, the freeze reports every problem, writes
+     `FREEZE-RECOVERY.txt` and nothing loads until that is resolved by hand.
    * Keyed or not (decide before the first sealed run; the default for a client is KEYED): `sealed_key_secret_name` names a
      secret in the `secrets` kind (16+ characters). With it the chain is HMAC-SHA256 and `lock.json` carries a `seal`, so
      someone without the key cannot forge a line or re-hash the chain. Once a set was keyed, a gate with no key is refused
@@ -216,10 +225,16 @@ running the script by hand passes them with `-v` (it refuses without them).
      genesis entry and the anchors). Without a key (`freeze` prints "NOT keyed"): the chain is plain SHA-256,
      anyone who can write the audit folder can recompute it, and a writer of every file can reset the counter. The
      counter is then tamper-resistant only by git history: **commit `lock.json` (and the anchor) after every sealed run**.
-   * Still not stopped, with or without a key: putting back an older, internally consistent copy of ALL the files (a
-     restore from backup) shows an older state; deleting the chain, the lock and every anchor when no anchor is committed
-     to git also resets it. Only git history and an off-machine copy of the chain's last `sha` can tell. The chain lives on
-     the same disk as the code that checks it: it is tamper-EVIDENCE, not a safe.
+   * Still not stopped, with or without a key. **Rolling back is EASY, even with a key**: the old `lock.json` from git
+     (its seal is still valid) plus the current chain cut back to that lock's `chain_head` (a prefix of an HMAC chain
+     verifies) is a consistent older state, and the anchors hold only the set id, the keyed flag and the key id, so they do
+     not object. The counter goes back to what it was. One cheap detection exists: a sealed or second-look run FOLDER that
+     holds results but whose run the chain does not record is refused ("look rolled back"); it works only while `runs/` is
+     intact. A harder guard (the head and count written into the committed anchor after every run) was left out on
+     purpose: it forces a git commit after every sealed run, which an operator forgets, and a missing commit then blocks
+     the next run. Deleting the chain, the lock and every anchor when no anchor is committed to git also resets it.
+     Only git history and an off-machine copy of the chain's last `sha` can tell. The chain lives on the same disk as the
+     code that checks it: it is tamper-EVIDENCE, not a safe.
    * **"Keyed" is only as strong as where it is anchored.** Every guard here is a plain file. Someone who can write ALL
      of them (lock, chain, both anchors) can re-create the set as an unkeyed one and start from zero; the tests pin that
      this works (`test_a_full_rewrite_of_every_file_as_a_keyless_set_succeeds...`). The real control for a client is the

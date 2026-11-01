@@ -24,9 +24,11 @@ only on the happy path. The standard remedies, as used here:
 What this still does NOT stop, stated plainly:
 * With NO key configured the chain is a plain SHA-256 chain: anyone who can write the audit folder can recompute it. It
   then only catches accidents and single-file edits; the counter is tamper-resistant only by git history.
-* Rollback: putting back an older, internally consistent set of ALL the files (lock.json, chain, anchors) shows an older
-  state. Only git history of lock.json and the committed anchor, and an off-machine copy of the chain's last `sha`,
-  can tell. Deleting every anchor AND the chain AND the lock, when no anchor file is committed to git, also resets it.
+* Rollback is EASY, even with a key: the old lock.json (its seal is valid) plus the current chain cut back to that
+  lock's chain_head is a consistent older state (an HMAC chain prefix verifies; the anchors hold only the set id, keyed
+  flag and key id). One cheap detection: a sealed run FOLDER with results that the chain does not record is refused (it
+  needs runs/ to be intact). Otherwise only git history of lock.json and the committed anchor, and an off-machine copy of
+  the chain's last `sha`, can tell. Deleting every anchor AND the chain AND the lock, when no anchor file is committed to git, also resets it.
 * The chain lives on the same disk as the code that checks it; it is tamper-EVIDENCE, not a safe.
 """
 
@@ -37,6 +39,7 @@ import hashlib
 import hmac
 import json
 import os
+import re
 import shutil
 import uuid
 from datetime import UTC, datetime
@@ -63,8 +66,12 @@ KINDS = (
     "reconcile",
     "reseal",
     "new_set",
+    "report_lost",
 )
 RUN_LOCK = "sealed-run.lock"
+RECOVERY_MARKER = "FREEZE-RECOVERY.txt"
+# what `evalrun.run_id` produces: UTC time to the microsecond plus the label. Nothing else names a run folder.
+RUN_NAME = re.compile(r"[0-9]{8}T[0-9]{12}Z-(dev|sealed|second-look)", re.ASCII)
 MIN_REASON_CHARS = 20
 MIN_KEY_CHARS = 16
 HAND_FIELDS = ("harness_defect_reason", "harness_defect_run", "harness_defect_item")
@@ -113,12 +120,13 @@ class Chain:
     def __init__(self, path: Path, key: bytes | None = None) -> None:
         self.path, self.key = Path(path), key
 
-    def _split(self) -> tuple[list[str], bool]:
-        """(complete lines, torn) - torn: the last line has no newline AND is not valid JSON (a write cut short)."""
+    def _split(self) -> tuple[list[str], bool, bool]:
+        """(complete lines, torn, unterminated). torn: the last line has no newline AND is not valid JSON (a write cut
+        short). unterminated: the last line is complete JSON but lacks its newline (the next append would glue to it)."""
         try:
             text = self.path.read_text(encoding="utf-8")
         except FileNotFoundError:
-            return [], False
+            return [], False, False
         except OSError:
             raise LockError("the sealed-run chain cannot be read") from None
         parts = text.split("\n")
@@ -128,8 +136,9 @@ class Chain:
                 json.loads(tail)
                 parts.append(tail)  # complete but unterminated: judged like any other line
             except ValueError:
-                return parts, True
-        return parts, False
+                return parts, True, False
+            return parts, False, True
+        return parts, False, False
 
     @property
     def torn(self) -> bool:
@@ -137,7 +146,7 @@ class Chain:
 
     def entries(self) -> list[dict]:
         """Every complete entry, after checking the whole chain. Raises `LockError` if anything does not verify."""
-        lines, _ = self._split()
+        lines, _, _ = self._split()
         out: list[dict] = []
         prev = GENESIS
         for n, raw in enumerate(lines):
@@ -159,16 +168,26 @@ class Chain:
             out.append(e)
         return out
 
+    def _rewrite(self, lines: list[str]) -> None:
+        """Replace the whole file atomically (temp file, fsync, os.replace): a crash leaves the old file or the new one,
+        never an empty or half-written chain."""
+        tmp = self.path.with_name(f"{self.path.name}.{os.getpid()}.{uuid.uuid4().hex[:8]}.tmp")
+        try:
+            with open(tmp, "w", encoding="utf-8", newline="\n") as f:
+                f.write("".join(line + "\n" for line in lines))
+                f.flush()
+                os.fsync(f.fileno())
+            os.replace(tmp, self.path)
+        except BaseException:
+            tmp.unlink(missing_ok=True)
+            raise
+
     def repair(self) -> bool:
-        """Cut a torn final line off. True if something was cut."""
-        lines, torn = self._split()
-        if not torn:
-            return False
-        with open(self.path, "w", encoding="utf-8", newline="\n") as f:
-            f.write("".join(line + "\n" for line in lines))
-            f.flush()
-            os.fsync(f.fileno())
-        return True
+        """Cut a torn final line off, and add the newline a complete last line lacks. True if a line was cut."""
+        lines, torn, unterminated = self._split()
+        if torn or unterminated:
+            self._rewrite(lines)
+        return torn
 
     def append(self, kind: str, data: dict | None = None) -> dict:
         """Verify, then add one entry (fsync). The caller holds the lock.json OS lock."""
@@ -191,11 +210,8 @@ class Chain:
         return entry
 
     def truncate_to(self, n: int) -> None:
-        lines, _ = self._split()
-        with open(self.path, "w", encoding="utf-8", newline="\n") as f:
-            f.write("".join(line + "\n" for line in lines[:n]))
-            f.flush()
-            os.fsync(f.fileno())
+        lines, _, _ = self._split()
+        self._rewrite(lines[:n])
 
 
 def report_status(runs_dir: Path, run_id: str) -> str | None:
@@ -217,12 +233,9 @@ def file_sha256(path: Path) -> str | None:
 RESULT_FILES = ("report.json", "report.md", "results.jsonl")
 
 
-def report_state(entries: list[dict], runs_dir: Path, run_id: str) -> str | None:
-    """Verdict of a run folder: None (no results evidence at all), "unverified" (results exist that no chain entry
-    vouches for), or "complete"/"aborted" from a report.json whose SHA-256 matches the one recorded when it was written.
-    A recorded report that was deleted or changed raises `LockError`."""
+def _problem(entries: list[dict], runs_dir: Path, run_id: str) -> tuple[dict | None, str | None]:
+    """(the last `report` entry of the run, what is wrong with its files: None, "deleted" or "changed")."""
     folder = Path(runs_dir) / run_id
-    digest = file_sha256(folder / "report.json")
     rec = next(
         (
             e
@@ -231,10 +244,46 @@ def report_state(entries: list[dict], runs_dir: Path, run_id: str) -> str | None
         ),
         None,
     )
-    if rec is not None:
+    if rec is None:
+        return None, None
+    wanted = {
+        "report.json": rec["data"]["sha256"],
+        "report.md": rec["data"].get("report_md_sha256"),
+        "results.jsonl": rec["data"].get("results_sha256"),
+    }
+    for name, digest in wanted.items():
         if digest is None:
-            raise LockError(f"report.json of run {run_id} was deleted after its hash was recorded")
-        if rec["data"]["sha256"] != digest:
+            continue
+        now = file_sha256(folder / name)
+        if now is None:
+            return rec, "deleted"
+        if now != digest:
+            return rec, "changed"
+    return rec, None
+
+
+def report_state(entries: list[dict], runs_dir: Path, run_id: str) -> str | None:
+    """Verdict of a run folder: None (no results evidence at all), "unverified" (results exist that no chain entry
+    vouches for), "lost" (the key holder recorded that the recorded files are gone: `eval report-lost`), or
+    "complete"/"aborted" from a report.json whose SHA-256 (and that of report.md and results.jsonl) matches what was
+    recorded when it was written. A recorded file that was deleted or changed, and not marked lost, raises `LockError`."""
+    folder = Path(runs_dir) / run_id
+    rec, problem = _problem(entries, runs_dir, run_id)
+    if rec is not None:
+        lost = any(
+            e["kind"] == "report_lost"
+            and e["data"].get("run_id") == run_id
+            and e["seq"] > rec["seq"]
+            for e in entries
+        )
+        if lost:
+            return "lost"
+        if problem == "deleted":
+            raise LockError(
+                f"a recorded file of run {run_id} was deleted after its hash was recorded "
+                "(if the run folder was pruned or moved on purpose, the key holder runs `eval report-lost`)"
+            )
+        if problem == "changed":
             raise LockError(
                 f"report.json of run {run_id} differs from the hash recorded when it was written"
             )
@@ -248,14 +297,35 @@ def verify_reports(entries: list[dict], runs_dir: Path) -> None:
         report_state(entries, runs_dir, run_id)
 
 
-def verify_run_report(entries: list[dict], run_dir: Path) -> bool:
-    """For `eval report` and `eval compare`: True if the chain vouches for run_dir's report and it matches; False if the
-    chain has no record of it; raises `LockError` if it was deleted or changed."""
+def unchained_runs(entries: list[dict], runs_dir: Path) -> list[str]:
+    """Sealed-looking run folders that hold results but whose run the chain never recorded: the sign of a lock/chain
+    that was rolled back while the run folders stayed (a cheap check; it needs the run folders to be intact)."""
+    chained = {e["data"]["run_id"] for e in entries if e["kind"] == "sealed_run"}
+    out = []
+    try:
+        names = sorted(p.name for p in Path(runs_dir).iterdir() if p.is_dir())
+    except OSError:
+        return []
+    for name in names:
+        m = RUN_NAME.fullmatch(name)
+        if (
+            m
+            and m.group(1) != "dev"
+            and name not in chained
+            and any((Path(runs_dir) / name / n).exists() for n in RESULT_FILES)
+        ):
+            out.append(name)
+    return out
+
+
+def verify_run_report(entries: list[dict], run_dir: Path) -> str:
+    """For `eval report` and `eval compare`: "vouched" (the chain recorded this report and it matches), "lost" (the key
+    holder marked it lost), or "unrecorded" (the chain has no record of it). Raises `LockError` if it was deleted or
+    changed."""
     run_id = Path(run_dir).name
     if not any(e["kind"] == "report" and e["data"].get("run_id") == run_id for e in entries):
-        return False
-    report_state(entries, Path(run_dir).parent, run_id)
-    return True
+        return "unrecorded"
+    return "lost" if report_state(entries, Path(run_dir).parent, run_id) == "lost" else "vouched"
 
 
 def _status_of(entries: list[dict], runs_dir: Path, running: bool = False) -> str:
@@ -269,6 +339,8 @@ def _status_of(entries: list[dict], runs_dir: Path, running: bool = False) -> st
         if e["kind"] == "sealed_done" and e["data"].get("run_id") == run_id:
             return e["data"]["status"]
     state = report_state(entries, runs_dir, run_id)
+    if state == "lost":
+        return "unverified"  # results existed and are gone: never an `aborted` second look
     if state is not None:
         return state
     return "running" if running else "aborted"
@@ -421,11 +493,20 @@ class SealedGate:
                 f"--new-set RESETS the sealed counter and {counted} sealed run(s) are counted; "
                 f"to discard that count on purpose, also pass --discard-count {counted}"
             )
-        if reason and not chain_existed and discard_count is None:
-            raise LockError(
-                "--new-set with an anchor but NO chain: the count to discard cannot be verified. If you are sure, "
-                "pass --discard-count N with the number of sealed runs you believe were counted (it is logged)"
-            )
+        lock_runs = (
+            read_lock(self.eval_dir).test_runs if lock_path(self.eval_dir).exists() else None
+        )
+        if reason and not chain_existed:
+            if discard_count is None:
+                raise LockError(
+                    "--new-set with an anchor but NO chain: the count to discard cannot be verified. If you are sure, "
+                    "pass --discard-count N with the number of sealed runs you believe were counted (it is logged)"
+                )
+            if lock_runs is not None and discard_count != lock_runs:
+                raise LockError(
+                    f"--new-set with no chain: lock.json still says {lock_runs} sealed run(s); "
+                    f"pass --discard-count {lock_runs} to discard them on purpose"
+                )
         set_id = uuid.uuid4().hex
         prebuilt = make_lock(self.eval_dir, names, thresholds, lock_fields).model_copy(
             update={"keyed": bool(self.key)}
@@ -442,10 +523,14 @@ class SealedGate:
                 "reason": reason,
                 "previous_head": prev[-1]["sha"] if prev else None,
                 "discarded_runs": counted if chain_existed else discard_count,
+                "lock_test_runs": lock_runs,
             }
         old = None
         backups: dict[Path, Path] = {}
         appended = lock_created = False
+        existed_before = {
+            a for a in self.anchors if a.exists()
+        }  # only anchors this freeze CREATES may be removed
         try:
             for (
                 anchor
@@ -480,24 +565,52 @@ class SealedGate:
             self._write_anchors(history, bool(self.key))
             for b in backups.values():
                 b.unlink(missing_ok=True)
-        except BaseException:
-            # undo in reverse: the new anchors, the new lock, the move of the old lock, our chain entry, the backups
+        except BaseException as original:
+            # undo in reverse: the new anchors, the new lock, the move of the old lock, our chain entry, the backups.
+            # Every step is tried even when an earlier one fails; failures are surfaced and a marker is written.
+            problems: list[str] = []
+
+            def step(name: str, fn) -> None:
+                try:
+                    fn()
+                except Exception as err:  # noqa: BLE001 - keep undoing; report all
+                    problems.append(f"{name}: {type(err).__name__}")
+
             for a in self.anchors:
                 if a in backups:
-                    os.replace(backups[a], a)
-                else:
-                    a.unlink(missing_ok=True)
+                    step(f"restore {a.name}", lambda a=a: os.replace(backups[a], a))
+                elif a not in existed_before:
+                    step(f"remove {a.name}", lambda a=a: a.unlink(missing_ok=True))
             if lock_created:
-                lock_path(self.eval_dir).unlink(missing_ok=True)
+                step(
+                    "remove the new lock.json",
+                    lambda: lock_path(self.eval_dir).unlink(missing_ok=True),
+                )
             if old is not None:
-                os.replace(old, lock_path(self.eval_dir))
+                step(
+                    "put the old lock.json back", lambda: os.replace(old, lock_path(self.eval_dir))
+                )
             if appended:
                 if chain_existed:
-                    self.chain.truncate_to(len(prev))
+                    step("take the chain entry back", lambda: self.chain.truncate_to(len(prev)))
                 else:
-                    self.chain.path.unlink(missing_ok=True)
+                    step("remove the new chain", lambda: self.chain.path.unlink(missing_ok=True))
             for b in backups.values():
-                b.unlink(missing_ok=True)
+                step("remove a backup", lambda b=b: b.unlink(missing_ok=True))
+            if problems:
+                marker = self.eval_dir / RECOVERY_MARKER
+                with contextlib.suppress(OSError):
+                    marker.write_text(
+                        "A freeze failed and its rollback was incomplete.\n"
+                        f"Original error: {type(original).__name__}\nRollback problems: {'; '.join(problems)}\n"
+                        f"The previous lock.json (if any) is at: {old}\n"
+                        "Restore it by hand, delete this file, then run `eval reconcile`.\n",
+                        encoding="utf-8",
+                    )
+                raise LockError(
+                    f"freeze failed ({type(original).__name__}) AND the rollback is incomplete: "
+                    f"{'; '.join(problems)}; see {RECOVERY_MARKER}"
+                ) from original
             raise
         return lock
 
@@ -530,6 +643,10 @@ class SealedGate:
         return set_id
 
     def _load(self, check_seal: bool = True) -> tuple[Lock, list[dict], bool]:
+        if (self.eval_dir / RECOVERY_MARKER).exists():
+            raise LockError(
+                f"a failed freeze left {RECOVERY_MARKER}: finish its recovery by hand first"
+            )
         lock = read_lock(self.eval_dir)
         if not self.chain.path.exists():
             raise LockError("the sealed-run chain is missing")
@@ -556,6 +673,10 @@ class SealedGate:
         if lock.chain_head not in shas:
             raise LockError("lock.json names a chain position that is not in the sealed-run chain")
         recorded = entries[shas.index(lock.chain_head)]["data"].get("core_hash")
+        if recorded is None and self.key and check_seal:
+            raise LockError(
+                "the chain entry at the lock's position has no core_hash (a keyed chain must)"
+            )
         if recorded is not None and core_hash_of(lock) != recorded and check_seal:
             raise LockError(
                 "lock.json differs from what the sealed-run chain recorded at its position (something other than "
@@ -568,7 +689,18 @@ class SealedGate:
         lock, entries, torn = self._load()
         return self._finish_load(lock, entries, torn)
 
-    def _finish_load(self, lock: Lock, entries: list[dict], torn: bool) -> Lock:
+    def _finish_load(
+        self, lock: Lock, entries: list[dict], torn: bool, verify: bool = True
+    ) -> Lock:
+        if (
+            verify
+        ):  # BEFORE anything is written: a lock must not be re-sealed over a broken evidence set
+            verify_reports(entries, self.runs_dir)
+            if stray := unchained_runs(entries, self.runs_dir):
+                raise LockError(
+                    f"run folder(s) {stray[:3]} hold results that the chain has no sealed run for: lock.json and the "
+                    "chain look rolled back while the run folders stayed"
+                )
         seen = [e["sha"] for e in entries].index(lock.chain_head) + 1
         recovered = entries[seen:]
         base = max(i for i, e in enumerate(entries) if e["kind"] in ("genesis", "new_set")) + 1
@@ -599,8 +731,12 @@ class SealedGate:
             )
             entries = self.chain.entries()
             live = entries[base - 1 :]
-        verify_reports(entries, self.runs_dir)
-        status = _status_of(live, self.runs_dir, self.running())
+        try:
+            status = _status_of(live, self.runs_dir, self.running())
+        except LockError:
+            if verify:
+                raise
+            status = "unverified"  # `eval report-lost` loads without verifying; it is about to mark exactly this
         return lock.model_copy(update={"smoke_key": smoke, "last_test_status": status})
 
     def begin(self, lock: Lock, run_id: str) -> Lock:
@@ -614,12 +750,69 @@ class SealedGate:
         )
 
     def record_report(self, run_id: str) -> None:
-        """Right after `write_run`: put the SHA-256 of report.json into the chain, so a later change is noticed."""
+        """Right after `write_run`: put the SHA-256 of report.json, report.md and results.jsonl into the chain, so a
+        later change or deletion is noticed. (Residual: it hashes what is on disk at this moment.)"""
         lock = self.load()
-        digest = file_sha256(self.runs_dir / run_id / "report.json")
+        folder = self.runs_dir / run_id
+        digest = file_sha256(folder / "report.json")
         if digest is None:
             raise LockError("there is no report.json to record")
-        self._commit(lock, "report", {"run_id": run_id, "sha256": digest})
+        self._commit(
+            lock,
+            "report",
+            {
+                "run_id": run_id,
+                "sha256": digest,
+                "report_md_sha256": file_sha256(folder / "report.md"),
+                "results_sha256": file_sha256(folder / "results.jsonl"),
+            },
+        )
+
+    def mark_report_lost(self, run_id: str, reason: str) -> None:
+        """The audited way out when a recorded run folder was pruned, moved or lost: a `report_lost` chain entry with a
+        reason (20+ characters). The run's status becomes "unverified" (no `aborted` second look). It never touches the
+        counter; `eval report` shows the run as LOST with this reason."""
+        if len((reason or "").strip()) < MIN_REASON_CHARS:
+            raise LockError(f"--reason must be at least {MIN_REASON_CHARS} characters")
+        lock, entries, torn = self._load()
+        rec, problem = _problem(entries, self.runs_dir, run_id)
+        if rec is None:
+            raise LockError(f"the chain has no recorded report for run {run_id}")
+        if problem is None:
+            raise LockError(
+                f"the recorded files of run {run_id} are intact: there is nothing to mark lost"
+            )
+        if any(
+            e["kind"] == "report_lost"
+            and e["data"].get("run_id") == run_id
+            and e["seq"] > rec["seq"]
+            for e in entries
+        ):
+            raise LockError(f"run {run_id} is already marked lost")
+        lock = self._finish_load(lock, entries, torn, verify=False)
+        self._commit(
+            lock, "report_lost", {"run_id": run_id, "reason": reason.strip(), "found": problem}
+        )
+
+    def defect_run_ok(self, run_id: str) -> bool:
+        """A harness defect may cite only a run of the CURRENT set that finished with a recorded, verified report."""
+        entries = self.chain.entries()
+        base = (
+            max(
+                (i for i, e in enumerate(entries) if e["kind"] in ("genesis", "new_set")),
+                default=-1,
+            )
+            + 1
+        )
+        live = entries[base:]
+        if not any(e["kind"] == "sealed_run" and e["data"]["run_id"] == run_id for e in live):
+            return False
+        rec, problem = _problem(entries, self.runs_dir, run_id)
+        return (
+            rec is not None
+            and problem is None
+            and report_state(entries, self.runs_dir, run_id) in ("complete", "aborted")
+        )
 
     def finish(self, run_id: str, status: str) -> None:
         lock = self.load()
