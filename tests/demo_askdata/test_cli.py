@@ -82,9 +82,9 @@ def test_missing_dsn_is_a_startup_error(monkeypatch, capsys):
 
 
 def test_ask_refuses_to_start_when_a_read_only_check_is_red(db, monkeypatch, capsys):
-    """G7: a red check means exit 4 and nothing is sent. The shared admin DSN is a superuser: every check is red."""
+    """G7: a red check means exit 3 (as in verify-readonly) and nothing is sent. The shared admin DSN is a superuser: every check is red."""
     monkeypatch.setenv("ASKDATA_DSN", db.admin_dsn)
-    assert main(["ask", "--sql", "SELECT count(*) FROM analytics.orders_v"]) == 4
+    assert main(["ask", "--sql", "SELECT count(*) FROM analytics.orders_v"]) == 3
     out = capsys.readouterr().out
     assert "refusing to run" in out and "RED" in out and "canonical" not in out
 

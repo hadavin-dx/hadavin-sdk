@@ -1,9 +1,9 @@
 """Command line: verify-readonly, ask, setup, demo. Every printed value passes `clean()` (A-11).
 
 Operator commands (`audit`, `meter`, `killswitch`, `eval`) are in opscli.py and evalcli.py.
-Exit codes: the single table in `policy.py` (0 ok; 3 the validator rejected, the database failed the statement or a
-check is red; 4 startup: no DSN, cannot connect, bad setup, a red read-only check or the server refused the login
-(SQLSTATE 28xxx); 7 the model abstained).
+Exit codes: the single table in `policy.py` (0 ok; 1 usage; 3 the validator rejected, the database failed the statement,
+the SQL hash did not match or a read-only check is red, here as in `verify-readonly`; 4 startup: no DSN, cannot connect,
+cannot run the checks, or the server refused the login (SQLSTATE 28xxx); 7 the model abstained).
 """
 
 from __future__ import annotations
@@ -18,8 +18,14 @@ from pathlib import Path
 
 from askdata import live
 from askdata.config import ConfigError
-from askdata.pgsource import PgError, PgSource, RunResult
-from askdata.policy import EXIT_ABSTAINED, EXIT_FAILED, EXIT_STARTUP
+from askdata.pgsource import HashMismatch, PgError, PgSource, RunResult
+from askdata.policy import (
+    EXIT_ABSTAINED,
+    EXIT_FAILED,
+    EXIT_OK,
+    EXIT_STARTUP,
+    EXIT_USAGE,
+)
 from askdata.safe_text import clean
 from askdata.scripted import Model, ScriptedModel, questions
 from askdata.validate import Rejected, validate
@@ -76,7 +82,7 @@ def cmd_verify(source: PgSource, *, banner: bool = True) -> int:
 
 
 def gate(source: PgSource) -> int:
-    """G7: `ask` does not start unless every read-only check is green. Prints only on failure; returns 0 or 4."""
+    """G7: `ask` does not start unless every read-only check is green. Prints only on failure; returns 0, 3 (a check is red) or 4 (cannot run them)."""
     try:
         red = [c for c in source.verify_readonly() if not c.ok]
     except PgError as err:
@@ -88,7 +94,7 @@ def gate(source: PgSource) -> int:
         )
         for c in red:
             out(f"  RED {c.check}: {c.detail}")
-        return 4
+        return EXIT_FAILED  # a red check is 3 here exactly as in verify-readonly
     return 0
 
 
@@ -107,6 +113,8 @@ def cmd_ask(source: PgSource, sql: str, *, who: str, question: str | None = None
         result: RunResult = source.run(ok.canonical_sql, sql_sha256=ok.sha256)
     except PgError as err:
         out(f"failed   : {err}")
+        if isinstance(err, HashMismatch):  # an alarm about the SQL itself, not a startup problem
+            return EXIT_FAILED
         # No SQLSTATE (connection) and 28xxx (invalid authorization) are startup problems, never retried (A-14).
         return (
             EXIT_STARTUP if err.sqlstate is None or err.sqlstate.startswith("28") else EXIT_FAILED
@@ -192,7 +200,8 @@ def cmd_setup(accept_loss: bool) -> int:
         if done.returncode != 0:
             out(f"setup: step {name} failed (exit {done.returncode}):")
             out((done.stdout + done.stderr).strip()[-1500:].replace(password, "***"))
-            return 4
+            # roles.sql refuses with psql exit 3 (not dedicated / others would lose access): pass it through
+            return EXIT_FAILED if name == "roles" and done.returncode == 3 else EXIT_STARTUP
         out(f"setup: {name} done")
     return 0
 
@@ -257,7 +266,10 @@ def main(argv: list[str] | None = None) -> int:
     dm = sub.add_parser("demo", help="the offline demo: verify, one question, two refusals")
     dm.add_argument("--setup", action="store_true", help="run setup first")
     dm.add_argument("--accept-loss", action="store_true", help="with --setup: pass accept_loss=yes")
-    args = ap.parse_args(argv)
+    try:
+        args = ap.parse_args(argv)
+    except SystemExit as exc:  # argparse exits 2 (= refused in the table) on a usage error
+        return EXIT_OK if exc.code in (0, None) else EXIT_USAGE
 
     if args.cmd == "setup" or (args.cmd == "demo" and args.setup):
         code = cmd_setup(getattr(args, "accept_loss", False))
@@ -280,7 +292,7 @@ def main(argv: list[str] | None = None) -> int:
         out("ask: give a question or --sql. Questions the offline model knows:")
         for q in questions():
             out(f"  {q}")
-        return 4
+        return EXIT_USAGE
     sql = ScriptedModel().complete(args.question)
     if sql is None:
         out("the scripted model has no answer for that question (it abstains)")

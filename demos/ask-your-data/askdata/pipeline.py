@@ -52,6 +52,8 @@ class Settings:
     store_question: bool = True
     live: bool = True  # a live (paid) route also needs a fresh external_usd in the meter
     transient_backoff_s: float = 1.0
+    # requests ONE chat() may send (the LLM kind retries inside it); the meter reserves for all of them
+    llm_max_attempts: int = 1
     injection_threshold: float = (
         0.05  # the sweep in tests/demo_askdata/test_demo_gaps.py (A-19 F-27)
     )
@@ -144,7 +146,10 @@ class Pipeline:
                 run.terminal.append("kill_switch")
                 return
             messages = llm_io.build_messages(self.prompt.text, run.question, prev_sql, hint)
-            worst = worst_case_usd(route, len(llm_io.SYSTEM) + len(messages[0]["content"]))
+            worst = (
+                worst_case_usd(route, len(llm_io.SYSTEM) + len(messages[0]["content"]))
+                * self.s.llm_max_attempts
+            )
             try:
                 self.meter.reserve(worst, live=self.s.live)
             except MeterError:  # OverBudget or an unreadable meter file: do not spend

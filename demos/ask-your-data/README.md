@@ -51,9 +51,11 @@ two refusals. Without `--setup` it only runs the story. Other commands: `verify-
 `ask` first runs the read-only checks and refuses to start (exit 4) when one is red.
 
 **Exit codes: one table for every command (`askdata/policy.py` is the source; `eval run` has its own 10 to 14 band below).**
-0 ok / answered; 1 usage; 2 refused (the tool will not do that); 3 failed (the validator rejected the SQL, the database
-failed the statement, the model gave no usable answer, a read-only check is red, or `audit verify` found a problem);
-4 startup (no DSN or config, cannot connect, a red check, or the server refused the login, SQLSTATE 28xxx);
+0 ok / answered; 1 usage (a bad command line or `ask` with no question; argparse's own exit 2 is mapped to 1); 2 refused (the tool will not do that); 3 failed (the validator rejected the SQL, the database
+failed the statement, the SQL hash did not match, the model gave no usable answer, a read-only check is red (in
+`verify-readonly`, in `ask`, in `demo` and in the DBA script alike), or `audit verify` found a problem; `setup` passes the
+exit 3 of `roles.sql` through);
+4 startup (no DSN or config, cannot connect, cannot run the checks, or the server refused the login, SQLSTATE 28xxx);
 5 audit unavailable; 6 spending limit or kill switch; 7 abstained (the data does not answer the question, or the
 scripted model has no answer). Exit 5 used to mean "database failed" in `ask`; that is now 3.
 
@@ -85,11 +87,15 @@ other logins would lose access (`--accept-loss` to override).
   `--second-look` run needs US$1.80. Run exit codes: 0 green, 10 amber ("promising, not demonstrated"), 11 not
   demonstrated, 12 a hard zero breached, 13 aborted (meter, kill switch or a smoke limit), 14 a sealed run refused,
   4 startup. Compare: 0 no regression, 11 regression, 4 not comparable. Without `--live` the model is the recorded one.
-- **Injection gate threshold** (`pipeline.py`, `Settings.injection_threshold` = 0.05). The regex detector scores 0.0 or
-  1.0. The sweep is `tests/demo_askdata/test_demo_gaps.py::test_injection_threshold_sweep_picks_the_lowest_with_no_false_positive`: over the 70
-  gold, 30 adversarial and 12 dev-adversarial questions (112), threshold 0.00 flags all 112 and every threshold from
-  0.05 to 1.00 flags none (0 false positives); the lowest on the 0.05 grid is the default, and two attack phrasings
-  are still caught. Re-run the test whenever the question sets or the detector change.
+- **Injection gate threshold** (`pipeline.py`, `Settings.injection_threshold` = 0.05). Read this plainly: the regex
+  detector scores only 0.0 or 1.0, so **the threshold is inert**: every value from above 0 to 1.0 flags exactly the same
+  questions (0.00 would flag everything). The sweep
+  (`test_demo_gaps.py::test_injection_threshold_sweep_picks_the_lowest_with_no_false_positive`) shows 0 false positives
+  over the 70 gold, 30 adversarial and 12 dev-adversarial questions (112), none of which is injection phrasing, so it
+  proves nothing about recall. Recall is measured separately
+  (`test_injection_recall_at_the_shipped_threshold_is_measured_not_assumed`): 10 of 10 listed injection phrasings are caught and
+  0 of 5 evasions (a misspelling, a paraphrase, a German sentence) are, so 10 of 15 on that small set. The detector is a
+  tripwire only; the validator and the read-only login are what stop a bad query.
 
 ## Operator runbook (in this order)
 
@@ -106,11 +112,21 @@ other logins would lose access (`--accept-loss` to override).
 4. Type in what the other program spent, from the provider console: `... meter --set-external <USD>` (this writes
    `external_usd` and its timestamp; a live step is refused while the entry is older than 24 hours).
 5. Finish the prompt and the dev work. Then `... eval freeze` ONCE: it hashes the four set files, writes `eval/lock.json`
-   with the thresholds (10 % / 15 %) and `test_runs` 0, and never overwrites an existing lock. Nothing in the frozen
-   files or the thresholds changes after this, and no sealed run happens before it.
+   with the thresholds (10 % / 15 %) and `test_runs` 0, and never overwrites an existing lock (it writes a temp file and
+   links it into place, so a crash leaves no empty lock). **Commit `lock.json` to git** (it is not ignored): git history is
+   the first guard on the sealed counter and the frozen hashes. The second guard is the hash-chained audit folder: every
+   sealed run writes a `sealed_run` event BEFORE the counter moves, and a sealed run is refused when the audit folder and
+   `test_runs` disagree, so editing the counter, or deleting and re-freezing the lock, does not reset it silently. Nothing
+   in the frozen files or the thresholds changes after this, and no sealed run happens before it. A `--second-look
+   harness_defect` needs the proved defect written BY HAND into `lock.json` (`harness_defect_reason`), and consumes it;
+   `--second-look aborted` needs the last sealed run to have aborted. Concurrent `eval run --split test` processes are
+   serialised by an OS lock on `lock.json.lock`; the second is refused.
 6. Dev runs: `... eval run --split dev [--k 3]`. A live smoke (needs the owner's yes and a fresh `external_usd`):
-   `... eval run --split dev --live --smoke`; it aborts (exit 13) when the cost per question passes US$0.035 or more
-   than 10 % of the model attempts are schema violations. Only after that, one sealed run: `... eval run --split test`.
+   `... eval run --split dev --live --smoke`; once at least 5 questions are done it aborts (exit 13) when the cost per
+   question is more than US$0.035 or more than 10 % of the model attempts are schema violations. A finished smoke run sets
+   `smoke_passed` in `lock.json`; `eval run --split test --live` is refused without it. Then one sealed run:
+   `... eval run --split test`. The meter reserves the worst case of EVERY request one model call may send (the llm
+   kind's `max_attempts`, 3 by default) and settles the real cost of the reply.
 
 ## 90-second recording script (owner records; async-first)
 

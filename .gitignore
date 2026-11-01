@@ -23,3 +23,7 @@ build/
 # Written by a shell run of the CLI against the fixture config; tests use tmp copies.
 tests/fixtures/config/qualified.jsonl
 tests/fixtures/config/audit/
+
+# Ask-your-data operator files: the real config and the working folder. lock.json is NOT ignored (commit it).
+demos/ask-your-data/askdata.yaml
+demos/ask-your-data/work/

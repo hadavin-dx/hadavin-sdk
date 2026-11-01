@@ -48,6 +48,10 @@ class PgError(Exception):
         self.what = what
 
 
+class HashMismatch(PgError):
+    """The SQL about to run is not the SQL that was validated: an alarm, never a startup problem."""
+
+
 @dataclass(frozen=True)
 class Limits:
     statement_timeout_s: float = 10.0
@@ -160,7 +164,7 @@ class PgSource:
         lim = limits or self.limits
         digest = hashlib.sha256(canonical_sql.encode("utf-8")).hexdigest()
         if sql_sha256 is not None and sql_sha256 != digest:
-            raise PgError(None, "hash mismatch between validated and executed SQL")
+            raise HashMismatch(None, "hash mismatch between validated and executed SQL")
         start = time.monotonic()
         deadline = start + lim.statement_timeout_s
         conn = self._connect()
