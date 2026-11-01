@@ -17,7 +17,16 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from hadavin_sdk.backends.table import DEFAULTS, DEV_ONLY, NOT_PROD, TABLE, KindSettings
 from hadavin_sdk.errors import ConfigError
 
-__all__ = ["Backends", "Config", "ConfigError", "Route", "confined", "load_config", "url_allowed"]
+__all__ = [
+    "Backends",
+    "Config",
+    "ConfigError",
+    "K1bSettings",
+    "Route",
+    "confined",
+    "load_config",
+    "url_allowed",
+]
 
 
 def _money(v: object) -> object:
@@ -146,6 +155,14 @@ class System(_Strict):
     base_url: str
 
 
+class K1bSettings(_Strict):
+    """K1b replay limits. Not part of ``config_hash``: they bound a replay run, not an agent's qualification."""
+
+    max_steps: int = Field(default=12, gt=0)  # effective: min with the agent's own max_steps
+    max_tool_calls: int = Field(default=20, gt=0)
+    case_timeout_s: int = Field(default=300, gt=0)
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="HADAVIN_")
     config_dir: Path
@@ -164,6 +181,7 @@ class Config(_Strict):
     systems: dict[str, System] = {}
     egress_hosts: frozenset[str] = frozenset()
     allow_insecure_loopback: bool = False  # true only in the local test fixture config
+    k1b: K1bSettings = K1bSettings()
     root: Path
 
     @model_validator(mode="after")

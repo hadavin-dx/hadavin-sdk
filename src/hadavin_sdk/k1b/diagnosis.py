@@ -104,13 +104,16 @@ def _reject_constant(name: str) -> Any:
     raise ValueError(f"non-finite number {name}")
 
 
+def strict_json_loads(text: str) -> Any:
+    """``json.loads`` that refuses duplicate keys and NaN/Infinity. Raises ``ValueError`` (or ``RecursionError``)."""
+    return json.loads(text, object_pairs_hook=_no_duplicate_keys, parse_constant=_reject_constant)
+
+
 def parse_diagnosis_text(text: str) -> Diagnosis | None:
     """Reply text to a Diagnosis. The text must be exactly one JSON object: a code fence, extra prose,
     duplicate keys or NaN make it unreadable (``None``). Deliberately stricter than ``llm.common.json_in_text``."""
     try:
-        obj = json.loads(
-            text, object_pairs_hook=_no_duplicate_keys, parse_constant=_reject_constant
-        )
+        obj = strict_json_loads(text)
     except (ValueError, RecursionError):
         return None
     return parse_diagnosis(obj)
