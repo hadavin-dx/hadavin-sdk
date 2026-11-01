@@ -530,7 +530,7 @@ def test_memory_prune_removes_tenant_prefixed_run_counters_too(clock):
     lim = _limits(store, tenant="clientx", max_run="5")
     lim.reserve("a", D("0.1"), run_id="r", run_day=date(2026, 2, 1))
     assert lim.prune_runs() == 1
-    assert store.spend_totals("8:clientx/a", DAY)[0] == D("0.1")  # the agent counter stays
+    assert store.spend_totals("7:clientx/a", DAY)[0] == D("0.1")  # the agent counter stays
 
 
 def test_a_settle_after_a_prune_recreates_no_negative_counter_memory(clock):
