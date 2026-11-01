@@ -254,7 +254,7 @@ def _source(url):
 )
 def test_a_source_endpoint_obeys_the_manifest_host_rules(tmp_path, url):
     cfg = k5_cfg(tmp_path, config={"sources": _source(url)})
-    with pytest.raises(ConfigError, match="source cluster"):
+    with pytest.raises(ConfigError, match="source cluster: host .* is (an IP literal|a loopback)"):
         app_mod.build(cfg, ["test-agent"], secrets=SECRETS, llm=ScriptLLM([]))
 
 
