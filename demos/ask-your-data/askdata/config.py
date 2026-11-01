@@ -38,8 +38,6 @@ class Paths(_Strict):
     kill_switch_file: Path
     eval_dir: Path
     runs_dir: Path
-    # A second anchor of the sealed-run chain, meant to be COMMITTED TO GIT (e.g. eval/anchor.json); see sealed.py
-    sealed_anchor_file: Path | None = None
     recorded_dir: Path | None = None  # the scripted model's recordings (offline runs)
 
 

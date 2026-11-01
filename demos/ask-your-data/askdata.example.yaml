@@ -47,4 +47,4 @@ secrets:                         # the core secrets kind: env reads HADAVIN_SECR
 
 # Sealed-run key (HMAC) from the secrets kind above: set it BEFORE the first sealed run. For a client run it is required.
 # sealed_key_secret_name: sealed-run-key
-# A second anchor of the sealed-run chain, to COMMIT to the repository (set under paths:, e.g. sealed_anchor_file: ./data/anchor.json)
+# The sealed-run anchors are fixed: <audit_dir>/sealed-anchor.json and <eval_dir>/anchor.json (commit the second).

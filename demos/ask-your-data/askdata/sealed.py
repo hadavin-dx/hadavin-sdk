@@ -16,7 +16,7 @@ only on the happy path. The standard remedies, as used here:
   secrets kind, never from a file in the repo. The one sanctioned hand edit (a proved harness defect) is blessed by the
   key holder with `eval reseal`, which logs a `reseal` entry.
 * An ANCHOR outside the two files: at the first freeze a `set_id` is written to `<audit_dir>/sealed-anchor.json` and,
-  when `paths.sealed_anchor_file` is set, to a second file meant to be COMMITTED TO GIT (e.g. eval/anchor.json). `freeze`
+  to a second file `<eval_dir>/anchor.json` that you COMMIT TO GIT. `freeze`
   refuses while any anchor exists unless `--new-set --reason ...` is given, which writes a visible `new_set` entry
   and restarts the count. `load()` refuses a chain whose latest `set_id` differs from an anchor's, and a keyless gate
   once the set has been keyed (anchor, lock and genesis all say so).

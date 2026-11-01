@@ -186,8 +186,8 @@ other logins would lose access (`--accept-loss` to override).
      minimums, `max_second_looks`, the counter, the smoke key, the chain head and the hand-written defect fields. The one
      sanctioned hand edit (the defect fields) is blessed by the key holder with `eval reseal`, which logs a `reseal`
      entry; run it after reading `git diff lock.json`.
-   * Anchors: at the first freeze a `set_id` is written to `<audit_dir>/sealed-anchor.json` and, when
-     `paths.sealed_anchor_file` is set, to a second file that you COMMIT TO GIT (for example `eval/anchor.json`). `eval
+   * Anchors: at the first freeze a `set_id` is written to `<audit_dir>/sealed-anchor.json` and to
+     `<eval_dir>/anchor.json`, which you COMMIT TO GIT. `eval
      freeze` refuses while a chain or any anchor exists, so deleting the chain and `lock.json` and freezing again does not
      reset the counter. A genuinely new test set needs `eval freeze --new-set --reason "..."`, which writes a visible
      `new_set` entry, keeps the old lock as `lock.json.prev-<time>` and restarts the count; the old runs stay in the chain.
