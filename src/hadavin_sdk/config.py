@@ -14,6 +14,7 @@ import yaml
 from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, ValidationError, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from hadavin_sdk import deferred
 from hadavin_sdk.backends.table import DEFAULTS, DEV_ONLY, NOT_PROD, TABLE, KindSettings
 from hadavin_sdk.errors import ConfigError
 
@@ -256,6 +257,8 @@ def load_config(config_dir: Path | None = None) -> Config:
         root = Path(config_dir) if config_dir else Settings().config_dir  # type: ignore[call-arg]
         raw = _read_yaml(root / "config.yaml")
         egress = _read_yaml(root / "egress.yaml").get("hosts") or []
+        if early := deferred.key_problems("config.yaml", raw):
+            raise ConfigError("; ".join(early))
         if moved := [k for k in MOVED if k in raw]:
             raise ConfigError("; ".join(f"{k} moved to {MOVED[k]}" for k in moved))
         for key in ("golden_dir", "inputs_dir"):

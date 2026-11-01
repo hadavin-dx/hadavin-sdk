@@ -11,11 +11,13 @@ import json
 import logging
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import ValidationError
 
 from hadavin_sdk.actions.authorizer import authorize
+from hadavin_sdk.approvals import cards
+from hadavin_sdk.approvals.cards import Card, Delivery
 from hadavin_sdk.audit.protocol import AuditSink, AuditUnavailable
 from hadavin_sdk.config import ConfigError, confined
 from hadavin_sdk.guard.injection import Detector, injection_check
@@ -50,6 +52,18 @@ def _accepts(fn: Callable[..., Any], name: str) -> bool:
     except (TypeError, ValueError):
         return False
     return any(p.name == name or p.kind is inspect.Parameter.VAR_KEYWORD for p in params)
+
+
+MIN_TOOLED_K = 3
+Level = Literal["shadow", "suggest"]
+_RANK = {"shadow": 0, "suggest": 1}
+# Abstentions the guard stopped (K5) count as guard catches; every other abstention as `abstain`.
+_GUARD_ABSTAINS = frozenset({"ungrounded", "run_budget", "redaction_error"})
+
+
+def override_level(agent_id: str, action_id: str) -> Level | None:
+    """A line owner can only lower a level, never raise it. K3 ships the reader as a stub; K6 wires the store."""
+    return None
 
 
 class Unqualified(RuntimeError):
@@ -105,8 +119,11 @@ def assert_qualified(registry: Registry, agent_id: str) -> None:
         registry.config_hash(agent_id),
         registry.golden_sha256(agent_id),  # a weakened golden set also invalidates the run
     )
+    tooled = bool(agent.tools_allowed)
     for g in qualified_runs(registry):
         got = (g.model_id, g.prompt_sha256, g.config_hash, g.golden_sha256)
+        if tooled and not (g.k >= MIN_TOOLED_K and (g.pass_k or 0.0) >= g.threshold):
+            continue  # a k = 1 green record never qualifies a tooled agent
         if g.agent_id == agent_id and g.green and got == want:
             return
     raise Unqualified(agent_id)
@@ -121,6 +138,8 @@ class Hooks:
     verify: Callable[[Plan, RunResult], bool] | None = None
     rollback: Callable[[Plan, RunResult], RunResult] | None = None
     tools: dict[str, Callable[[dict], str]] = field(default_factory=dict)
+    # Posts a shadow or abstain card. None: nothing is posted (a shadow proposal is then `shadow_undelivered`).
+    post_card: Callable[[Card], Delivery] | None = None
 
 
 class Runtime:
@@ -214,6 +233,7 @@ class Runtime:
             for c in contracts.values()
         ] + [{"name": t} for t in self.registry.tools_for(agent_id, set(self.hooks.tools))]
         messages: list[dict[str, Any]] = [{"role": "user", "content": _ASK}]
+        cited: list[str] = []  # ids of the read-tool calls made so far
         system = self.registry.prompt(agent_id)
 
         for _step in range(agent.max_steps):
@@ -247,10 +267,10 @@ class Runtime:
                 )
                 return self._to(run, S.NEEDS_PERSON, f"llm_{reply.stop_reason}")
             if not reply.tool_calls:
-                return self._to(run, S.NO_ACTION)
+                return self._abstain(run, S.NO_ACTION, None, cited)
             call = reply.tool_calls[0]
             if call.name in self.registry.contracts:
-                return self._submit(run, call)
+                return self._submit(run, call, reply.text, cited)
             if call.name in self.hooks.tools and call.name in agent.tools_allowed:
                 # The reply just charged may have used the budget: neither the tool nor a paid screen of its
                 # output (llm_judge) runs past it (fail closed).
@@ -260,13 +280,14 @@ class Runtime:
                     result = str(self.hooks.tools[call.name](call.input))
                 except Exception:  # noqa: BLE001 - a broken tool must not strand the run in WORKING
                     self._note(run, "tool", call.name, result="error", error_code="tool_error")
-                    return self._to(run, S.NEEDS_PERSON, "tool_error")
+                    return self._abstain(run, S.NEEDS_PERSON, "tool_error", cited)
                 verdict = self._screen(run, result, f"tool:{call.name}")
                 if verdict.flagged:  # tool output is untrusted text too
                     self._note(
                         run, "guard", "injection", result="flagged", error_code=verdict.reason_code
                     )
                     return self._to(run, S.NEEDS_PERSON, verdict.reason_code)
+                cited.append(f"call-{len(cited) + 1}: {call.name}")
                 messages += [
                     {"role": "assistant", "content": f"tool {call.name}"},
                     {"role": "user", "content": f"tool result: {result}"},
@@ -276,7 +297,89 @@ class Runtime:
         return self._to(run, S.NEEDS_PERSON, "max_steps")
 
     # --- plan, gate, approvals, execution ----------------------------------------------------------
-    def _submit(self, run: Run, call: ToolCall) -> Run:
+    def _level(self, agent: Any, action_id: str) -> Level | None:
+        """The effective level: the lower of the config level and the override. None: slice-1 gate path (dev)."""
+        if agent.levels is None:
+            return None
+        cfg: Level = "suggest" if agent.levels.get(action_id) == "suggest" else "shadow"
+        ov = override_level(agent.id, action_id)
+        return ov if ov is not None and _RANK[ov] < _RANK[cfg] else cfg
+
+    def _deliver(self, card: Card | None) -> Delivery:
+        """Post a card through the hook. Never raises: any failure is an undelivered card."""
+        if card is None or self.hooks.post_card is None:
+            return Delivery(ok=False, reason="no_card_hook")
+        try:
+            return self.hooks.post_card(card)
+        except Exception as exc:  # noqa: BLE001 - a broken channel must not strand the run
+            return Delivery(ok=False, reason=type(exc).__name__)
+
+    def _abstain(self, run: Run, new: RunState, reason: str | None, cited: list[str]) -> Run:
+        """End a run that proposed nothing and post the abstain card (every level), so a miss can be labelled."""
+        run = self._to(run, new, reason)
+        if self.hooks.post_card is None:  # no channel wired (dev slice-1): nothing to post or audit
+            return run
+        label = reason or "no proposal"
+        caught = "guard" if reason in _GUARD_ABSTAINS else "abstain"
+        try:
+            card: Card | None = cards.render_abstain(run.run_id, label, cited)
+        except Exception:  # noqa: BLE001 - an unrenderable card is an undelivered one
+            card = None
+        d = self._deliver(card)
+        if d.ok and card is not None:
+            self._note(
+                run,
+                "card",
+                "abstain",
+                inputs_hash=card.display_hash,
+                result="posted",
+                caught_by=caught,
+            )
+        else:
+            self._note(
+                run,
+                "card",
+                "abstain_undelivered",
+                result="failed",
+                error_code=d.reason,
+                caught_by=caught,
+            )
+        return run
+
+    def _shadow(
+        self, run: Run, plan: Plan, decision: GateDecision, diagnosis: str, cited: list[str]
+    ) -> Run:
+        """Shadow: the would-be outcome is shown and never acted on."""
+        try:
+            card: Card | None = cards.render_shadow(
+                plan, decision, cited, diagnosis=diagnosis, detector=self.detector
+            )
+        except Exception:  # noqa: BLE001 - an unrenderable card is an undelivered one
+            card = None
+        d = self._deliver(card)
+        # A fix that would only need sign-off is not a caught mistake; a would-be refusal is.
+        caught = (
+            "gate"
+            if decision.outcome == "deny" and not decision.rule_id.startswith("class.sign_off.")
+            else None
+        )
+        self._note(
+            run,
+            "card",
+            "shadow",
+            object_ref=plan.plan_id,
+            inputs_hash=card.display_hash if card is not None else None,
+            decision=decision.outcome,
+            rule_id=decision.rule_id,
+            result="posted" if d.ok else "undelivered",
+            error_code=None if d.ok else d.reason,
+            caught_by=caught,
+        )
+        return self._to(run, S.NO_ACTION, "shadow" if d.ok else "shadow_undelivered")
+
+    def _submit(
+        self, run: Run, call: ToolCall, diagnosis: str = "", cited: list[str] | None = None
+    ) -> Run:
         agent = self.registry.agents[run.agent_id]
         contract = self.registry.contracts[call.name]
         try:  # model output: a float or a non-string id must not strand the run
@@ -286,9 +389,14 @@ class Runtime:
             return self._to(run, S.NEEDS_PERSON, "invalid_proposal")
         self.store.save_plan(plan)
         run = self._to(run, S.PLAN_READY)
-        decision = authorize(
-            self._principal(run), agent, contract, plan, self.limits.blocked(agent.id)
-        )
+        try:
+            decision = authorize(
+                self._principal(run), agent, contract, plan, self.limits.blocked(agent.id)
+            )
+        except Exception:  # noqa: BLE001 - a gate that fails denies; the intent below still audits it
+            decision = GateDecision(
+                run_id=plan.run_id, plan_hash=plan.hash(), outcome="deny", rule_id="gateway.error"
+            )
         try:
             self.audit.write_intent(
                 self._event(
@@ -304,13 +412,25 @@ class Runtime:
         except AuditUnavailable:
             return self._to(run, S.NEEDS_PERSON, "audit_unavailable")
         self.store.save_gate_decision(decision)
+        if decision.rule_id.startswith("limits."):  # stop means stop: no card, at any level
+            return self._to(run, S.DENIED, decision.rule_id)
+        level = self._level(agent, contract.id)
+        if level == "shadow":
+            return self._shadow(run, plan, decision, diagnosis, cited or [])
         if decision.outcome == "deny":
             return self._to(run, S.DENIED, decision.rule_id)
+        if level == "suggest" and decision.outcome != "needs_approval":
+            return self._to(
+                run, S.DENIED, "suggest.unexpected_outcome"
+            )  # execute() is never reached
         if decision.outcome == "needs_approval":
             if self.hooks.request_approval is None:
                 return self._to(run, S.NEEDS_PERSON, "approvals_not_configured")
             run = self._to(run, S.WAITING_FOR_APPROVAL)
-            self.hooks.request_approval(plan, decision, run.principal_id)
+            sent = self.hooks.request_approval(plan, decision, run.principal_id)
+            if isinstance(sent, Delivery) and not sent.ok:
+                reason = "card_too_long" if sent.reason == "card_too_long" else "card_not_delivered"
+                return self._to(run, S.NEEDS_PERSON, reason)
             return run
         return self.execute(run.run_id)
 

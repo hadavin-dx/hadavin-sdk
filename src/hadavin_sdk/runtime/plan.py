@@ -15,7 +15,7 @@ def build_plan(run: Run, agent: AgentRecord, contract: ActionContract, call: Too
         action_version=contract.version,
         risk_class=effective_class(contract, agent.data_class),
         inputs=dict(call.input),
-        target=Target(system=contract.executor.system, ref=call.input.get("id")),
+        target=Target(system=contract.target_system, ref=call.input.get("id")),
         idempotency_key=f"{run.run_id}:{contract.id}",
         expected_outcome=contract.expected_outcome,
     )

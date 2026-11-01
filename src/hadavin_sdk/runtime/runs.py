@@ -10,7 +10,10 @@ S = RunState
 ALLOWED: dict[RunState, frozenset[RunState]] = {
     S.RECEIVED: frozenset({S.WORKING, S.NEEDS_PERSON}),  # NEEDS_PERSON: tick found it stuck
     S.WORKING: frozenset({S.NO_ACTION, S.PLAN_READY, S.NEEDS_PERSON}),
-    S.PLAN_READY: frozenset({S.DENIED, S.WAITING_FOR_APPROVAL, S.EXECUTING, S.NEEDS_PERSON}),
+    # NO_ACTION: a shadow proposal is posted and never acted on (K3).
+    S.PLAN_READY: frozenset(
+        {S.DENIED, S.WAITING_FOR_APPROVAL, S.EXECUTING, S.NEEDS_PERSON, S.NO_ACTION}
+    ),
     # NEEDS_PERSON: the execute intent cannot be audited after approval (CUJ 5), so nothing runs.
     S.WAITING_FOR_APPROVAL: frozenset({S.EXECUTING, S.REJECTED, S.EXPIRED, S.NEEDS_PERSON}),
     S.EXECUTING: frozenset({S.VERIFYING, S.NEEDS_PERSON}),

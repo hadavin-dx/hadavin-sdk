@@ -3,22 +3,45 @@
 from __future__ import annotations
 
 import re
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from hadavin_sdk.models import RiskClass
 
 _ORDER: list[RiskClass] = ["read_only", "reversible", "sign_off"]
 
 
-class ExecutorSpec(BaseModel):
+class NoneExecutor(BaseModel):
+    """Shadow-only contract: nothing can run it."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+    kind: Literal["none"]
+
+
+class ManualExecutor(BaseModel):
+    """A posted fix a person runs themselves (built in K8; refused at load until then)."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+    kind: Literal["manual"]
+    command_template: str
+    undo_command_template: str
+    go_window_s: int = 600
+    client_wait_s: int = 3600
+
+
+class HttpExecutor(BaseModel):
+    """Hadavin-run execution (Phase 2): refused in pilot and prod, kept in dev for the slice-1 tests."""
+
     model_config = ConfigDict(extra="forbid", frozen=True)
     kind: Literal["http"]
-    system: str
     operation: str  # "METHOD /path/{field}"
     lookup_operation: str | None = None
     secret_name: str
+
+
+ExecutorSpec = Annotated[NoneExecutor | ManualExecutor | HttpExecutor, Field(discriminator="kind")]
+_LABEL = re.compile(r"[a-z0-9_-]{1,40}")
 
 
 class ActionContract(BaseModel):
@@ -30,22 +53,49 @@ class ActionContract(BaseModel):
     risk_class: RiskClass
     targets_production: bool
     changes_spend: bool
+    # http: a key of config.systems. none and manual: a plain label, never looked up.
+    target_system: str
     executor: ExecutorSpec
     idempotency_header: str = "Idempotency-Key"
-    verify_check: str
+    verify_check: str | None = None
     rollback: str | None = None
     rollback_test: str | None = None
-    chain_id: str
+    undo_test: str | None = None  # manual: a pytest id that renders the undo command
+    chain_id: str | None = None
     expected_outcome: str
+
+    @model_validator(mode="after")
+    def _fields_per_kind(self) -> ActionContract:
+        kind = self.executor.kind
+        if kind != "http" and not _LABEL.fullmatch(self.target_system):
+            raise ValueError("target_system must be a label [a-z0-9_-]{1,40} for none and manual")
+        if kind == "none":
+            return self
+        if self.chain_id is None:
+            raise ValueError(f"executor {kind} needs chain_id")
+        if kind == "http" and self.verify_check is None:
+            raise ValueError("executor http needs verify_check")
+        if kind == "manual":
+            if self.verify_check is None or self.undo_test is None:
+                raise ValueError("executor manual needs verify_check and undo_test")
+            if self.rollback is not None or self.rollback_test is not None:
+                raise ValueError("executor manual must not set rollback or rollback_test")
+        return self
 
 
 def effective_class(contract: ActionContract, data_class: str) -> RiskClass:
     """Raise one level per risk flag; a reversible action with no rollback is sign_off. Never lowers."""
     level = _ORDER.index(contract.risk_class)
-    level += contract.targets_production + contract.changes_spend
+    # Hadavin executes nothing for none and manual, so those two raises wait for Phase 2 (K3, V5-B2).
+    if contract.executor.kind == "http":
+        level += contract.targets_production + contract.changes_spend
     level += data_class in {"confidential", "restricted"}
     cls = _ORDER[min(level, 2)]
-    if cls == "reversible" and contract.rollback is None:
+    spec = contract.executor
+    # An undo is what makes a reversible action reversible: the rollback (http) or the undo command (manual).
+    # A none contract executes nothing, so its declared class is shown as is.
+    undo = spec.undo_command_template if spec.kind == "manual" else contract.rollback
+    if cls == "reversible" and spec.kind != "none" and undo is None:
         cls = "sign_off"
     return cls
 

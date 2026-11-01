@@ -11,9 +11,9 @@ input_schema:
 risk_class: reversible
 targets_production: false
 changes_spend: false
+target_system: fixture-records
 executor:
   kind: http
-  system: fixture-records
   operation: POST /records
   lookup_operation: GET /records?idempotency_key={key}
   secret_name: fixture-token

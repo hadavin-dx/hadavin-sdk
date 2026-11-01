@@ -15,6 +15,7 @@ from collections.abc import Mapping
 from typing import Any
 
 from hadavin_sdk.approvals import slack
+from hadavin_sdk.approvals.cards import Card, Delivery
 from hadavin_sdk.approvals.channel import clean
 from hadavin_sdk.approvals.gate import withhold_commands
 from hadavin_sdk.errors import ConfigError
@@ -31,6 +32,7 @@ class SlackError(RuntimeError):
 class SlackChannel:
     name = "slack"
     header_prefix = slack.HEADER_PREFIX
+    max_card_chars = 2900  # a Slack section block holds 3000; the rest is margin
 
     def __init__(
         self,
@@ -68,7 +70,7 @@ class SlackChannel:
                 "type": "section",
                 "text": {
                     "type": "plain_text",
-                    "text": withhold_commands(clean(req.summary)[:2900]),
+                    "text": withhold_commands(clean(req.summary)[: self.max_card_chars]),
                 },
             },
         ]
@@ -121,6 +123,49 @@ class SlackChannel:
         )
         # chat.update needs the channel *id*; the configured value may be a name, so keep Slack's answer.
         return f"{reply.get('channel') or self.channel_id}|{reply['ts']}"
+
+    @staticmethod
+    def _card_blocks(card: Card) -> list[dict[str, Any]]:
+        """The neutral card blocks as Slack blocks (plain_text only: no markdown, link or mention)."""
+        out: list[dict[str, Any]] = []
+        for b in card.blocks:
+            if b["kind"] == "text":
+                out.append({"type": "section", "text": {"type": "plain_text", "text": b["text"]}})
+            elif b["kind"] == "buttons":
+                out.append(
+                    {
+                        "type": "actions",
+                        "elements": [
+                            {
+                                "type": "button",
+                                "text": {"type": "plain_text", "text": x["label"]},
+                                "action_id": x["id"],
+                                "value": x["value"],
+                            }
+                            for x in b["buttons"]
+                        ],
+                    }
+                )
+        return out
+
+    def post_card(self, card: Card) -> Delivery:
+        """Post a shadow or abstain card. Never raises: a failure is a ``Delivery`` with ``ok=False``."""
+        if len(card.text) > self.max_card_chars:
+            return Delivery(ok=False, reason="card_too_long")
+        try:
+            reply = self._call(
+                "chat.postMessage",
+                {
+                    "channel": self.channel_id,
+                    "text": "Agent card",  # notification fallback; the content is in the blocks
+                    "blocks": self._card_blocks(card),
+                    "unfurl_links": False,
+                    "unfurl_media": False,
+                },
+            )
+        except Exception as exc:  # noqa: BLE001 - any failure is "not delivered", never raised
+            return Delivery(ok=False, reason=type(exc).__name__)
+        return Delivery(ok=True, ref=f"{reply.get('channel') or self.channel_id}|{reply['ts']}")
 
     def update(self, req: ApprovalRequest) -> None:
         if not req.channel_ref:  # never sent: nothing to update

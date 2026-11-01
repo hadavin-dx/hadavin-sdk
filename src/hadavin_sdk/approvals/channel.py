@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Protocol
+from typing import TYPE_CHECKING, Protocol
 
 from hadavin_sdk.approvals import hmac_v0
 from hadavin_sdk.approvals.gate import sanitise_text, withhold_commands
 from hadavin_sdk.guard.redact import redact
 from hadavin_sdk.models import ApprovalDecision, ApprovalRequest
+
+if TYPE_CHECKING:
+    from hadavin_sdk.approvals.cards import Card, Delivery
 
 
 def clean(text: str) -> str:
@@ -24,10 +27,12 @@ def clean(text: str) -> str:
 
 class Channel(Protocol):
     name: str
+    max_card_chars: int  # the longest card text this channel posts; longer is `card_too_long`
 
     def send(self, req: ApprovalRequest, approver_ids: list[str]) -> str: ...
     def update(self, req: ApprovalRequest) -> None: ...
     def notify(self, principal_id: str, text: str) -> None: ...
+    def post_card(self, card: Card) -> Delivery: ...
 
     def parse_decision(
         self, headers: Mapping[str, str], body: bytes, now_ts: float
@@ -44,8 +49,12 @@ class FakeChannel:
     name = "fake"
     header_prefix = "X-Hadavin"  # the shared hmac_v0 scheme under neutral header names
 
-    def __init__(self, signing_secret: str = "") -> None:
+    max_card_chars = 3000
+
+    def __init__(self, signing_secret: str = "", *, fail_cards: bool = False) -> None:
         self._secret = signing_secret
+        self.fail_cards = fail_cards  # tests: make post_card report a failed delivery
+        self.cards: list[Card] = []
         self.sent: list[tuple[str, str, list[str]]] = []
         self.updates: list[tuple[str, str]] = []
         self.notices: list[tuple[str, str]] = []
@@ -59,6 +68,14 @@ class FakeChannel:
 
     def notify(self, principal_id: str, text: str) -> None:
         self.notices.append((principal_id, clean(text)))
+
+    def post_card(self, card: Card) -> Delivery:
+        from hadavin_sdk.approvals.cards import Delivery
+
+        if self.fail_cards:
+            return Delivery(ok=False, reason="channel_error")
+        self.cards.append(card)
+        return Delivery(ok=True, ref=f"fake-card-{len(self.cards)}")
 
     def parse_decision(
         self, headers: Mapping[str, str], body: bytes, now_ts: float
