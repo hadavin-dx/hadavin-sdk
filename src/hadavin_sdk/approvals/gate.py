@@ -125,7 +125,7 @@ _FENCE = re.compile(r"^ {0,3}(`{3,}|~{3,})")
 _CONTROL_CHARS = frozenset(
     chr(c)
     for c in (
-        *range(0x00, 0x09),
+        *range(0x09),
         *range(0x0B, 0x20),
         *range(0x7F, 0xA0),
         0x200E,
