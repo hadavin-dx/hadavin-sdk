@@ -31,7 +31,7 @@ from datetime import UTC, datetime, timedelta
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
-from askdata.settings import MeterLimits
+from askdata.settings import RUNTIME, MeterLimits
 from hadavin_sdk.config import Route
 from hadavin_sdk.llm.common import estimate_tokens
 
@@ -137,7 +137,7 @@ class Meter:
         clock: Callable[[], datetime] | None = None,
         max_external_age: timedelta = timedelta(hours=_DEFAULT.max_external_age_hours),
         stale_open_after: timedelta = timedelta(minutes=_DEFAULT.stale_open_minutes),
-        lock_wait_s: float = 5.0,
+        lock_wait_s: float = RUNTIME.lock_wait_s,
     ) -> None:
         self.stale_open_after = stale_open_after
         self.path = Path(path)

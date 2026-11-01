@@ -33,6 +33,7 @@ from typing import Any
 import psycopg
 
 from askdata.safe_text import clean
+from askdata.settings import RUNTIME
 from hadavin_sdk.store.postgres import tls_mode
 
 VERIFY_SQL = Path(__file__).resolve().parent.parent / "db" / "verify_checks.sql"
@@ -54,10 +55,10 @@ class HashMismatch(PgError):
 
 @dataclass(frozen=True)
 class Limits:
-    statement_timeout_s: float = 10.0
-    max_rows: int = 1000
-    max_bytes: int = 1_000_000
-    batch: int = 200
+    statement_timeout_s: float = RUNTIME.statement_timeout_s
+    max_rows: int = RUNTIME.max_rows
+    max_bytes: int = RUNTIME.max_bytes
+    batch: int = RUNTIME.fetch_batch
 
 
 @dataclass
@@ -109,12 +110,12 @@ class PgSource:
     def _connect(self) -> psycopg.Connection:
         kwargs: dict[str, Any] = {
             "autocommit": False,
-            "connect_timeout": 5,
+            "connect_timeout": RUNTIME.connect_timeout_s,
             "application_name": "askdata",
             "keepalives": 1,
-            "keepalives_idle": 10,
-            "keepalives_interval": 5,
-            "keepalives_count": 3,
+            "keepalives_idle": RUNTIME.keepalives_idle_s,
+            "keepalives_interval": RUNTIME.keepalives_interval_s,
+            "keepalives_count": RUNTIME.keepalives_count,
         }
         mode = tls_mode(self._dsn)
         if mode:
@@ -180,7 +181,9 @@ class PgSource:
         finally:
             timer.cancel()
             if timer.is_alive():
-                timer.join(5)  # cancel() can block on the network; do not hang the caller
+                timer.join(
+                    RUNTIME.watchdog_join_s
+                )  # cancel() can block on the network; do not hang the caller
             _close(conn)
 
     def _fetch(

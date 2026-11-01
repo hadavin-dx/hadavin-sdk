@@ -20,6 +20,7 @@ from urllib.parse import urlsplit
 from hadavin_sdk.llm.common import (
     Answer,
     NetworkLLM,
+    estimate_tokens,
     json_in_text,
     model_name,
     pinned,
@@ -134,7 +135,16 @@ class OpenAICompatLLM(NetworkLLM):
                 err.billed_usd = price(route, used[0], used[1]) + (err.billed_usd or 0)
                 raise
             sent, answered = sent + got.attempts, answered + 1
-            used = [used[0] + (got.tokens[0] or 0), used[1] + (got.tokens[1] or 0)]
+            # A round that reports no usage is still billed: estimate it exactly as `reply()` does, per round
+            # (it used to be added as 0, so a server that omits usage undercounted every answered round).
+            used = [
+                used[0] + (got.tokens[0] or estimate_tokens(json.dumps(body["messages"]))),
+                used[1]
+                + (
+                    got.tokens[1]
+                    or estimate_tokens(got.text + json.dumps([c.input for c in got.calls]))
+                ),
+            ]
             # Done when answered, or when asking again would end the same way (cut off, refused).
             done = stop_reason(got.stop, got.calls) in ("max_tokens", "refusal")
             if done or not forced or any(c.name == forced for c in got.calls):

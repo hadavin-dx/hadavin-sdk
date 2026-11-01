@@ -19,7 +19,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from askdata.meter import Meter
 from askdata.pgsource import Limits as DbLimits
 from askdata.pipeline import Settings
-from askdata.settings import MeterLimits, Sealed, Smoke
+from askdata.settings import RUNTIME, MeterLimits, Sealed, Smoke
 from hadavin_sdk.config import Route
 
 
@@ -50,10 +50,10 @@ class RouteCfg(_Strict):
 
 
 class Limits(_Strict):
-    max_attempts: int = Field(3, ge=1, le=3)
-    max_question_chars: int = Field(500, gt=0)
+    max_attempts: int = Field(RUNTIME.max_attempts, ge=1, le=RUNTIME.max_attempts)
+    max_question_chars: int = Field(RUNTIME.max_question_chars, gt=0)
     # the input gate's score cut-off; the regex detector scores only 0.0 or 1.0, so any value in (0, 1] acts alike
-    injection_threshold: float = Field(Settings().injection_threshold, gt=0, le=1)
+    injection_threshold: float = Field(RUNTIME.injection_threshold, gt=0, le=1)
 
 
 class Database(_Strict):
@@ -65,9 +65,11 @@ class Database(_Strict):
     # the second scoring database and the clean twin (eval only), through the same secrets kind
     dsn_secret_name_b: str | None = Field(None, min_length=1)
     dsn_secret_name_clean: str | None = Field(None, min_length=1)
-    statement_timeout_s: float = Field(10.0, gt=0, le=300)
-    max_rows: int = Field(1000, gt=0)
-    max_bytes: int = Field(1_000_000, gt=0)
+    statement_timeout_s: float = Field(
+        RUNTIME.statement_timeout_s, gt=0, le=RUNTIME.max_statement_timeout_s
+    )
+    max_rows: int = Field(RUNTIME.max_rows, gt=0)
+    max_bytes: int = Field(RUNTIME.max_bytes, gt=0)
 
     def limits(self) -> DbLimits:
         return DbLimits(

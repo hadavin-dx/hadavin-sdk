@@ -80,6 +80,15 @@ def describe(exc: BaseException, detail: Callable[[BaseException], str] | None =
     return " ".join(p for p in parts if p)
 
 
+def _raised_in_parse(exc: BaseException) -> bool:
+    tb = exc.__traceback__
+    while tb is not None:
+        if tb.tb_frame.f_code.co_name == "_parse":
+            return True
+        tb = tb.tb_next
+    return False
+
+
 def with_retry[T](
     call: Callable[[], T],
     *,
@@ -97,8 +106,13 @@ def with_retry[T](
             raise
         except Exception as exc:  # every failure is classified below, never swallowed
             if not transient(exc, retryable):
-                # No HTTP status and not a network error: the provider ANSWERED and the body was unusable (billed).
-                answered = status(exc) is None and not isinstance(exc, OSError)
+                # The provider ANSWERED and the body was unusable (billed) only when the failure came out of the
+                # kind's `_parse` (every kind names its response parser that): no HTTP status, not a network
+                # error, and a `_parse` frame in the traceback. A failure before any request was sent (a secret
+                # read, building the body) is a plain ProviderError and is not billed.
+                answered = (
+                    status(exc) is None and not isinstance(exc, OSError) and _raised_in_parse(exc)
+                )
                 cls = UnusableAnswer if answered else ProviderError
                 refused = cls(f"{label}: {describe(exc, detail)}")
                 refused.attempts = attempt

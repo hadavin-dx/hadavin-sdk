@@ -53,3 +53,42 @@ class MeterLimits(_Strict):
     max_external_age_hours: int = Field(
         24, gt=0
     )  # external_usd typed in longer ago than this blocks a live step
+
+
+class Runtime(_Strict):
+    """Operational numbers that were literals in the modules: every default lives here and nowhere else."""
+
+    # questions and the pipeline
+    max_attempts: int = Field(
+        3, ge=1, le=3
+    )  # model attempts per question (the prompt describes at most three)
+    max_question_chars: int = Field(500, gt=0)
+    injection_threshold: float = Field(
+        0.05, gt=0, le=1
+    )  # inert for the 0.0/1.0 regex detector (see README)
+    transient_backoff_s: float = Field(1.0, ge=0)
+    stored_question_chars: int = Field(500, gt=0)  # what a ledger line keeps of the question
+    ledger_attempts_kept: int = Field(6, ge=1)
+    ledger_assumptions_kept: int = Field(20, ge=1)
+    # the database connection and its watchdog
+    statement_timeout_s: float = Field(10.0, gt=0)
+    max_statement_timeout_s: float = Field(300.0, gt=0)  # upper bound the config may set
+    max_rows: int = Field(1000, gt=0)
+    max_bytes: int = Field(1_000_000, gt=0)
+    fetch_batch: int = Field(200, gt=0)
+    connect_timeout_s: int = Field(5, gt=0)
+    keepalives_idle_s: int = Field(10, gt=0)
+    keepalives_interval_s: int = Field(5, gt=0)
+    keepalives_count: int = Field(3, gt=0)
+    watchdog_join_s: float = Field(5.0, gt=0)  # how long to wait for the cancel thread
+    # evaluation and locks
+    max_duration_ms: int = Field(15_000, gt=0)  # a question slower than this is not "bounded"
+    human_read_fraction: float = Field(0.2, gt=0, le=1)
+    human_read_salt: str = "human-read-v1"  # makes the human-read sample deterministic
+    lock_wait_s: float = Field(5.0, gt=0)  # how long to wait for an OS lock (meter file, lock.json)
+    email_pattern: str = (
+        r"cust\d{5}@example\.com"  # the synthetic e-mail shape a leak check looks for
+    )
+
+
+RUNTIME = Runtime()

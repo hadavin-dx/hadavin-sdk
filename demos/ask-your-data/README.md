@@ -185,22 +185,38 @@ other logins would lose access (`--accept-loss` to override).
    * The WHOLE of `lock.json` except `seal` is covered by the key's HMAC: files and their hashes, thresholds, the money
      minimums, `max_second_looks`, the counter, the smoke key, the chain head and the hand-written defect fields. The one
      sanctioned hand edit (the defect fields) is blessed by the key holder with `eval reseal`, which logs a `reseal`
-     entry; run it after reading `git diff lock.json`.
+     entry. `reseal` blesses ONLY those fields: it stores a hash of everything else at every commit and refuses when
+     anything else (files, thresholds, caps, counter) differs, and when no hand field is set. Read `git diff lock.json`
+     first anyway.
+   * A crashed run's status is not read from a plain file: right after the results are written their `report.json`
+     SHA-256 goes into the chain. A report no entry vouches for is "unverified" (a second look `aborted` is refused), and a
+     report that differs from the recorded hash is refused. While a sealed run is alive it holds an OS run lock
+     (`sealed-run.lock`): a second look is refused with "a sealed run is still running" and the status is "aborted" only
+     once that process is gone.
    * Anchors: at the first freeze a `set_id` is written to `<audit_dir>/sealed-anchor.json` and to
      `<eval_dir>/anchor.json`, which you COMMIT TO GIT. `eval
      freeze` refuses while a chain or any anchor exists, so deleting the chain and `lock.json` and freezing again does not
-     reset the counter. A genuinely new test set needs `eval freeze --new-set --reason "..."`, which writes a visible
-     `new_set` entry, keeps the old lock as `lock.json.prev-<time>` and restarts the count; the old runs stay in the chain.
+     reset the counter. Deleting just ONE anchor is refused too.
+     A genuinely new test set needs `eval freeze --new-set --reason "..." [--discard-count N]`. **That command RESETS the
+     sealed counter**: the reason must be 20+ characters, and while N runs are counted you must pass `--discard-count N`;
+     both are written into a visible `new_set` entry, the old lock is kept as `lock.json.prev-<time>`, the old runs stay in
+     the chain, and a failed freeze undoes everything (chain, anchors, lock).
    * Keyed or not (decide before the first sealed run; the default for a client is KEYED): `sealed_key_secret_name` names a
      secret in the `secrets` kind (16+ characters). With it the chain is HMAC-SHA256 and `lock.json` carries a `seal`, so
      someone without the key cannot forge a line or re-hash the chain. Once a set was keyed, a gate with no key is refused
-     (lock, anchors and genesis all say so). Without a key (`freeze` prints "NOT keyed"): the chain is plain SHA-256,
+     (lock, anchors and genesis all say so), and a DIFFERENT key is refused (the key id, not the key, is recorded in the
+     genesis entry and the anchors). Without a key (`freeze` prints "NOT keyed"): the chain is plain SHA-256,
      anyone who can write the audit folder can recompute it, and a writer of every file can reset the counter. The
      counter is then tamper-resistant only by git history: **commit `lock.json` (and the anchor) after every sealed run**.
    * Still not stopped, with or without a key: putting back an older, internally consistent copy of ALL the files (a
      restore from backup) shows an older state; deleting the chain, the lock and every anchor when no anchor is committed
      to git also resets it. Only git history and an off-machine copy of the chain's last `sha` can tell. The chain lives on
      the same disk as the code that checks it: it is tamper-EVIDENCE, not a safe.
+   * **"Keyed" is only as strong as where it is anchored.** Every guard here is a plain file. Someone who can write ALL
+     of them (lock, chain, both anchors) can re-create the set as an unkeyed one and start from zero; the tests pin that
+     this works (`test_a_full_rewrite_of_every_file_as_a_keyless_set_succeeds...`). The real control for a client is the
+     core `chain` audit kind (an append-only table with signed checkpoints and anchors held elsewhere), or a committed,
+     reviewed key-id witness; neither is wired into this demo.
    * Concurrent runs are serialised by an OS lock on `lock.json.lock`.
 
    A `--second-look harness_defect` needs the proved defect written BY HAND into `lock.json`: `harness_defect_reason`
