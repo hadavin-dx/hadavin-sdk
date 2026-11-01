@@ -1,7 +1,8 @@
 """T-E9: the command line, in-process, against the test database (scripted model, no network)."""
 
 import pytest
-from askdata.cli import main
+from askdata.cli import cmd_ask, main
+from askdata.pgsource import PgError
 
 ESC = chr(27)
 
@@ -78,3 +79,26 @@ def test_missing_dsn_is_a_startup_error(monkeypatch, capsys):
     monkeypatch.delenv("ASKDATA_DSN", raising=False)
     assert main(["verify-readonly"]) == 4
     assert "ASKDATA_DSN" in capsys.readouterr().out
+
+
+def test_ask_refuses_to_start_when_a_read_only_check_is_red(db, monkeypatch, capsys):
+    """G7: a red check means exit 4 and nothing is sent. The shared admin DSN is a superuser: every check is red."""
+    monkeypatch.setenv("ASKDATA_DSN", db.admin_dsn)
+    assert main(["ask", "--sql", "SELECT count(*) FROM analytics.orders_v"]) == 4
+    out = capsys.readouterr().out
+    assert "refusing to run" in out and "RED" in out and "canonical" not in out
+
+
+class _Refuses:
+    def run(self, *args, **kwargs):
+        raise PgError(self.sqlstate, "OperationalError")
+
+    def __init__(self, sqlstate):
+        self.sqlstate = sqlstate
+
+
+@pytest.mark.parametrize(
+    ("sqlstate", "code"), [("28P01", 4), ("28000", 4), (None, 4), ("42501", 5)]
+)
+def test_exit_code_by_sqlstate(sqlstate, code):
+    assert cmd_ask(_Refuses(sqlstate), "SELECT 1", who="t") == code

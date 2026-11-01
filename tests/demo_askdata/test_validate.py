@@ -4,6 +4,7 @@ import hashlib
 
 import pytest
 import sqlglot
+from askdata import validate as validate_module
 from askdata.validate import Rejected, prefilter, validate
 
 from .corpus import ATTACKS, BENIGN, NUL
@@ -110,3 +111,13 @@ def test_mutation_cte_visibility_check_is_what_rejects_forward_references(monkey
     assert validate(
         sql
     ).canonical_sql  # accepted without the visibility logic: the test sees the rule
+
+
+def test_node_limit_is_2000_and_rejects_with_v10(monkeypatch):
+    assert validate_module.MAX_NODES == 2000
+    sql = "SELECT order_id, customer_id FROM analytics.orders_v WHERE status = 'paid'"
+    assert validate(sql)
+    monkeypatch.setattr(validate_module, "MAX_NODES", 5)
+    with pytest.raises(Rejected) as caught:
+        validate(sql)
+    assert caught.value.rule == "V10" and "nodes" in caught.value.detail

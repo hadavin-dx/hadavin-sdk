@@ -23,7 +23,7 @@ Needs Docker (or any Postgres you may treat as throwaway), `psql` on PATH or in 
 (`uv sync --locked --no-build --extra askdata`). From `demos\ask-your-data` in PowerShell:
 
 ```
-docker run --rm -d --name askdata-pg -e POSTGRES_HOST_AUTH_METHOD=trust -p 127.0.0.1:55432:5432 postgres:17.10
+docker run --rm -d --name askdata-pg -e POSTGRES_HOST_AUTH_METHOD=trust -p 127.0.0.1:55432:5432 postgres:17.10   # the same tag CI uses (CI pins it by digest)
 docker exec askdata-pg psql -U postgres -c "CREATE DATABASE askdata_demo"
 $env:ASKDATA_ADMIN_DSN = "postgresql://postgres@127.0.0.1:55432/askdata_demo"   # a DEDICATED throwaway database
 $env:ASKDATA_RO_PASSWORD = "choose-a-demo-password"; $env:PGPASSWORD = $env:ASKDATA_RO_PASSWORD
@@ -34,8 +34,10 @@ uv run --locked --no-build --extra askdata python -m askdata demo --setup   # ad
 `demo --setup` applies schema, seed, views and roles (`psql`), then runs the whole story: the checks, one question,
 two refusals. Without `--setup` it only runs the story. Other commands: `verify-readonly`, `ask --sql "<SQL>"`,
 `ask "<question>"` (the scripted model knows five questions; `ask` alone lists them), `setup`.
-Exit codes: 0 ok, 2 the model abstained, 3 a check is red or the validator rejected, 4 startup problem, 5 the
-database refused the statement.
+`ask` first runs the read-only checks and refuses to start (exit 4) when one is red. Exit codes (spike, provisional):
+0 ok, 2 the model abstained, 3 the validator rejected (`ask`) or a check is red (`verify-readonly`, and the DBA
+script), 4 startup problem (no DSN, cannot connect, a red check, or the server refused the login, SQLSTATE 28xxx),
+5 the database refused or failed the statement. The design's P3 table replaces these.
 
 `roles.sql` runs `REVOKE ... FROM PUBLIC`, which changes access for every login in that database: use a dedicated
 database or a replica, never a shared production database. It runs `db/preflight_roles.sql` first and stops if
@@ -49,7 +51,7 @@ sequences removed (a talking point, optional).
 
 | Time | Scene | Type this (from `demos\ask-your-data`) | Say |
 |---|---|---|---|
-| 0:00-0:20 | Promise | `uv run --locked --no-build --extra askdata python -m askdata verify-readonly` | "Staged on synthetic data. This login cannot write: fourteen checks, all ok, exit code 0." |
+| 0:00-0:20 | Promise | `uv run --locked --no-build --extra askdata python -m askdata verify-readonly` | "Staged on synthetic data. This login cannot write: fourteen checks, all ok, plus two info rows, exit code 0." |
 | 0:20-0:50 | Normal question | `... python -m askdata ask "How many orders per country?"` | "The exact SQL that ran, its SHA-256, and the result. The model here is a scripted stand-in, no network." |
 | 0:50-1:10 | Refusals | `... ask --sql "DELETE FROM shop.orders"` then `... ask --sql "SELECT email FROM analytics.customers_v"` | "Rejected before it reaches the database: rule V03, rule V05." |
 | 1:10-1:30 | Proof | `docker exec -it askdata-pg psql -U askdata_ro -d askdata_demo -c "DELETE FROM shop.orders"` then `uv run ... pytest -q tests/demo_askdata/test_pgsource_layers.py -k c3b` from the repo root | "This is the actual login the tool uses. The database says permission denied even if the tool were wrong. And a stacked-statement attack is refused by the execution path." |

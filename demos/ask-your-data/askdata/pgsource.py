@@ -9,9 +9,12 @@ Rules, each with a test in tests/demo_askdata/test_pgsource_layers.py:
   `_send` holds the ONLY `execute` call in this file; an `ast` test fails if a second one appears.
 * Order inside `run`: connect (read-only transaction), then `current_setting('transaction_read_only')` must be
   `on` (else raise and send nothing), then DECLARE and FETCH.
-* Watchdog: a monotonic deadline checked before every fetch plus a timer thread calling `cancel()` for a
+* Watchdog: a monotonic deadline checked before every fetch and every row plus a timer thread calling `cancel()` for a
   statement blocked in the server; the timer is cancelled and joined BEFORE rollback and close.
-* Caps: rows and bytes. Errors reach callers as SQLSTATE codes only, never the server's message (it can echo data).
+* Caps: rows and bytes. One cell is read whole before the byte cap sees it (the driver gives no per-cell limit and
+  the SQL must stay the validated canonical text), so a single huge cell can overshoot the cap by its own size; the
+  deadline and the server `statement_timeout` still bound the time.
+* Errors reach callers as SQLSTATE codes only, never the server's message (it can echo data).
 * The SHA-256 and the shown SQL are of the canonical SELECT; the wire text is `DECLARE "<name>" CURSOR FOR `
   plus that canonical text.
 """
@@ -188,6 +191,8 @@ class PgSource:
                 if not batch:
                     break
                 for raw in batch:
+                    if time.monotonic() >= deadline:  # per row, not per batch (A-04 item 5)
+                        raise PgError("57014", "statement timeout (watchdog)")
                     size = sum(len(str(c)) for c in raw)
                     if len(rows) >= lim.max_rows or total_bytes + size > lim.max_bytes:
                         truncated = True
