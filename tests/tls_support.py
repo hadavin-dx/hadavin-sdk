@@ -87,7 +87,8 @@ class FakeKube:
                 self._reply({"status": {"resourceRules": outer.rules}})
 
         self.server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
-        context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+        context.minimum_version = ssl.TLSVersion.TLSv1_2
         context.load_cert_chain(self.ca, key)
         self.server.socket = context.wrap_socket(self.server.socket, server_side=True)
         self.port = self.server.server_address[1]
