@@ -63,6 +63,7 @@ class RunResult:
     truncated: bool
     result_sha256: str
     sql_sha256: str
+    wire_sha256: str = ""  # of the text actually sent (DECLARE ... CURSOR FOR <canonical>)
     elapsed_s: float = 0.0
     byte_count: int = 0
     notes: list[str] = field(default_factory=list)
@@ -207,6 +208,7 @@ class PgSource:
             truncated,
             raw_hash.hexdigest(),
             digest,
+            wire_sha256=hashlib.sha256(f'DECLARE "{name}" CURSOR FOR {sql}'.encode()).hexdigest(),
             elapsed_s=time.monotonic() - start,
             byte_count=total_bytes,
         )

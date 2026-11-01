@@ -43,6 +43,29 @@ script), 4 startup problem (no DSN, cannot connect, a red check, or the server r
 database or a replica, never a shared production database. It runs `db/preflight_roles.sql` first and stops if
 other logins would lose access (`--accept-loss` to override).
 
+## Dataset, ledger, meter and evaluation harness (phase P3)
+
+- **Dataset "Lumen Goods"** (`db/lumen.py`, schema `db/lumen_schema.sql`): 1,200 customers, 120 products, 6,000 orders, 13,800 order
+  lines, 6,480 payments, 1,040 refunds, 1,500 tickets, all synthetic, all e-mails on the reserved domain `example.com`. Its own
+  SplitMix64 generator (no stdlib `random`) makes it bit-identical on every machine. Three builds: seed A, seed B (a second
+  database for the "must agree on both" scoring rule) and `clean` (A without the planted rows, for the injection differential).
+  `db/lumen_manifest.json` holds row counts and per-table SHA-256 for all three; `python db/lumen.py --write-manifest` rewrites it.
+- **Pipeline** (`askdata/pipeline.py`): gates, generate, validate, audit intent, execute, ledger. Prompt layout, retry policy by
+  validator rule and SQLSTATE, and reason codes are in `llm_io.py` and `policy.py`. The agreement check is not built.
+- **Ledger** (`askdata/ledger.py`): one JSON line per question, append-only, fsync. **Audit** (`askdata/audit.py`): one intent event per
+  execution, one outcome event per question; `audit verify` prints "local integrity check: N of N events and M of M ledger lines
+  match" and never claims more. Commands (give `--config askdata.yaml` or set `ASKDATA_CONFIG`; the config shape is
+  `askdata/config.py`): `audit list|show <id>|verify|export --format json|csv [--include-text]`, `meter [--set-external USD]`,
+  `killswitch on|off|status`. Exit codes: 0 ok, 1 usage, 3 `audit verify` found a problem, 4 startup, 5 audit unavailable.
+- **Meter** (`askdata/meter.py`): one JSON file shared with the Replay Check; a call needs its worst case to fit under the demo cap
+  (US$8) and under the shared cap minus the reserve; a call that fails after sending is charged its worst case.
+- **Eval** (`askdata/evalrun.py`, `compare.py`, `evalset.py`, `evalcli.py`): `eval run --split dev|test [--k N] [--second-look
+  aborted|harness_defect]`, `eval report <run folder>`, `eval compare <baseline> <candidate>`. `eval/lock.json` freezes the file
+  hashes and the gate thresholds (green: upper bound of the confident-wrong rate <= 10 %, amber <= 15 %); the sealed test set
+  tolerates one invocation. Run exit codes: 0 green, 10 amber ("promising, not demonstrated"), 11 not demonstrated, 12 a hard
+  zero breached, 13 aborted (meter or kill switch), 14 a sealed run refused, 4 startup. Compare: 0 no regression, 11 regression,
+  4 not comparable. Only the scripted model is connected; a live route needs the owner's yes at each budget step.
+
 ## 90-second recording script (owner records; async-first)
 
 Put the caption "Staged on synthetic data" on the first screen. Say no accuracy number. Before publishing, check the

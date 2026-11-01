@@ -1,5 +1,6 @@
 """Command line: verify-readonly, ask, setup, demo. Every printed value passes `clean()` (A-11).
 
+Operator commands (`audit`, `meter`, `killswitch`, `eval`) are in opscli.py and evalcli.py.
 Exit codes (spike, provisional; the P3 pipeline table in the design replaces them): 0 ok; 2 the model abstained;
 3 the validator rejected (`ask`) or a check is red (`verify-readonly`); 4 startup: no DSN, cannot connect, bad setup,
 `ask` refused to start because a read-only check is red, or the server refused the login (SQLSTATE 28xxx);
@@ -209,7 +210,26 @@ def cmd_demo(source: PgSource, model: Model) -> int:
     return 0 if worst == 0 else worst
 
 
+def _operator(argv: list[str]) -> int | None:
+    """`[--config PATH] audit|meter|killswitch|eval ...` live in their own modules (no database login needed)."""
+    pre = argv[:2] if argv[:1] == ["--config"] and len(argv) >= 2 else []
+    rest = argv[len(pre) :]
+    if rest[:1] in (["audit"], ["meter"], ["killswitch"]):
+        from askdata import opscli
+
+        return opscli.main(argv)
+    if rest[:1] == ["eval"]:
+        from askdata import evalcli
+
+        return evalcli.main([*pre, *rest[1:]])
+    return None
+
+
 def main(argv: list[str] | None = None) -> int:
+    argv = sys.argv[1:] if argv is None else argv
+    code = _operator(argv)
+    if code is not None:
+        return code
     ap = argparse.ArgumentParser(
         prog="askdata", description="Ask your data: staged synthetic-data demo"
     )
