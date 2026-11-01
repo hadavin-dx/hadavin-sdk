@@ -16,7 +16,7 @@ import json
 from collections import Counter
 from dataclasses import dataclass
 from datetime import UTC, date, datetime
-from decimal import ROUND_HALF_EVEN, Decimal
+from decimal import ROUND_HALF_EVEN, Decimal, InvalidOperation
 
 DEFAULT_SCALE = 2
 NULL = "\x00null"
@@ -30,7 +30,10 @@ def norm(value: object, scale: int = DEFAULT_SCALE) -> object:
         return value
     if isinstance(value, int | float | Decimal):
         d = Decimal(str(value)) if not isinstance(value, Decimal) else value
-        return ("n", str(d.quantize(Decimal(1).scaleb(-scale), rounding=ROUND_HALF_EVEN)))
+        try:
+            return ("n", str(d.quantize(Decimal(1).scaleb(-scale), rounding=ROUND_HALF_EVEN)))
+        except InvalidOperation:  # inf, nan or a value too large to round
+            return ("n", str(d))
     if isinstance(value, datetime):
         v = value if value.tzinfo else value.replace(tzinfo=UTC)
         return ("t", v.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"))
@@ -80,7 +83,7 @@ def match(
         for i in range(gw)
     ]
     saw_perm = False
-    for perm in itertools.product(*options):
+    for perm in itertools.islice(itertools.product(*options), 5000):  # bounded: many equal columns
         if len(set(perm)) != gw:
             continue
         saw_perm = True

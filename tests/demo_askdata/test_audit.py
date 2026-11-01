@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from decimal import Decimal
 
 import pytest
 from askdata import cli
@@ -151,12 +152,17 @@ def test_killswitch_writes_the_audit_event_first_then_the_flag(kit, capsys):
     ] == ["on", "off"]
 
 
-def test_killswitch_does_nothing_when_the_audit_is_unavailable(tmp_path, capsys):
+def test_switching_off_the_tool_never_depends_on_the_audit(tmp_path, capsys):
     k = Kit(tmp_path)
     (tmp_path / "audit").mkdir(exist_ok=True)
     (tmp_path / "audit" / "objects").write_text("a file where a folder must be")
     code, text = run(capsys, k, "killswitch", "on")
-    assert code == 5 and "nothing changed" in text and not k.kill.is_on()
+    assert code == 5 and "could not be written" in text and k.kill.is_on()  # stopped, then warned
+    k.kill.on()
+    code, text = run(capsys, k, "killswitch", "off")
+    assert (
+        code == 5 and "nothing changed" in text and k.kill.is_on()
+    )  # going back on-line needs the audit
 
 
 def test_meter_shows_the_figures_and_accepts_the_external_spend(kit, capsys):
@@ -177,3 +183,13 @@ def test_startup_errors_exit_4(kit, capsys, tmp_path):
 
 def test_a_usage_error_is_exit_1(kit, capsys):
     assert cli.main(["--config", write_config(kit), "audit", "nope"]) == 1
+
+
+def test_meter_init_creates_the_file_once_and_never_overwrites(tmp_path, capsys):
+    k = Kit(tmp_path)
+    k.meter.path.unlink()
+    code, text = run(capsys, k, "meter", "--init")
+    assert code == 0 and "created" in text and "remaining" in text and "8" in text
+    k.meter.charge(Decimal(1))
+    code, text = run(capsys, k, "meter", "--init")
+    assert code == 4 and "not overwritten" in text and k.meter.snapshot()["askdata_spent"] == 1

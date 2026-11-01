@@ -2,8 +2,7 @@
 
 Scoring needs two seed databases (A and B) and, for data-injection items, a clean twin. Every statement that reaches
 a database goes through a `RecordingExecutor` (the statement recorder: hash and text of what was sent, per label).
-Thresholds come from `lock.json` and are compared with the config the run was started with; they are frozen BEFORE
-the dev set is used and are never read from anywhere else.
+Thresholds come from `lock.json` only (frozen BEFORE the dev set is used) and are never read from anywhere else.
 
 Gate (the one-sided 95 % upper bound of the confident-wrong rate, `hadavin_sdk.stats.upper_error_bound`):
 green <= green_max_upper, amber <= amber_max_upper, otherwise "not demonstrated". Any hard zero breached means
@@ -172,6 +171,7 @@ class Harness:
         self.validator = validator
         self._gold: dict[tuple[str, str], tuple[list[tuple], int, bool]] = {}
         self.aborted: str | None = None
+        self.spent = Decimal(0)  # every question asked, incl. the aborting one and the clean twin
 
     # ---- gold and candidate results
     def _exec(self, db: str, sql: str, label: str) -> tuple[list[tuple], int, bool]:
@@ -195,7 +195,8 @@ class Harness:
         return self._gold[key]
 
     def _matches(self, sql_gold: str, cand_sql: str, cand_a: RunResult, item: GoldItem) -> bool:
-        """Candidate equals gold on BOTH seed databases."""
+        """Candidate equals gold on BOTH seed databases. Database B is a separate scoring database: the candidate
+        runs there without an intent event, so B must be its own read-only database."""
         verdicts = []
         for db in ("a", "b"):
             grows, gw, gtr = self._gold_result(sql_gold, db, item.id)
@@ -263,6 +264,7 @@ class Harness:
     def _ask(self, pipeline: Pipeline, rec_key: str, label: str, question: str) -> Answer:
         self.rec[rec_key].label = label
         ans = pipeline.ask(question, asker="claimed:eval")
+        self.spent += Decimal(ans.line.cost_usd)
         if ans.reason in self.cfg.stop_on and self.aborted is None:
             self.aborted = ans.reason
         return ans
@@ -421,7 +423,7 @@ class Harness:
                 "alarms": dict(Counter(a for r in gold + adv for a in r.alarm)),
             },
             "adversarial": {"n": len(adv), "passed": sum(1 for r in adv if r.correct), "failed_ids": [r.item for r in adv if not r.correct]},
-            "cost_usd": fmt_usd(sum(costs, Decimal(0))), "cost_per_question_usd": fmt_usd(sum(costs, Decimal(0)) / (len(costs) or 1)),
+            "cost_usd": fmt_usd(self.spent), "cost_per_question_usd": fmt_usd(self.spent / (len(costs) or 1)),
             "latency_ms": {"p50": percentile([r.latency_ms for r in gold + adv], 0.5), "p95": percentile([r.latency_ms for r in gold + adv], 0.95)},
             "sampling": SAMPLING_NOTE, "elapsed_s": round(elapsed_s, 1),
             "items": {i: {"correct_all": i in correct_all, "wrong_confident": i in wrong_items} for i in by_item},
@@ -467,6 +469,8 @@ def sealed_gate(lock: Lock, remaining: Decimal, *, split: str, second_look: str 
             )
         if second_look not in lock.second_look_allowed_for:
             raise LockError(f"--second-look must be one of {lock.second_look_allowed_for}")
+        if second_look == "aborted" and lock.last_test_status != "aborted":
+            raise LockError("--second-look aborted: the last sealed run did not abort")
 
 
 def run_id(label: str, now: datetime | None = None) -> str:

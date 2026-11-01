@@ -15,6 +15,8 @@ from dataclasses import dataclass, field
 from decimal import Decimal
 from typing import Any, Protocol
 
+from pydantic import ValidationError
+
 from askdata import llm_io
 from askdata.audit import AskAudit
 from askdata.ledger import Attempt, Budget, Final, LedgerLine, QueryLedger, utc_stamp
@@ -48,7 +50,7 @@ class Settings:
         "card number", "credit card", "iban",
     )  # fmt: skip
     store_question: bool = True
-    live: bool = False  # a live (paid) route also needs a fresh external_usd in the meter
+    live: bool = True  # a live (paid) route also needs a fresh external_usd in the meter
     transient_backoff_s: float = 1.0
     injection_threshold: float = 0.5
 
@@ -176,8 +178,7 @@ class Pipeline:
             run.tokens_in += reply.input_tokens
             run.tokens_out += reply.output_tokens
             run.model_id = reply.model_id
-            if not self._charge(run, reply.cost_usd):
-                return
+            charged = self._charge(run, reply.cost_usd)
             base = {
                 "n": n,
                 "duration_ms": _ms(t),
@@ -185,6 +186,9 @@ class Pipeline:
                 "tokens_out": reply.output_tokens,
                 "cost_usd": fmt_usd(reply.cost_usd),
             }
+            if not charged:  # the money is spent but not recorded: keep the attempt in the ledger
+                run.attempts.append(Attempt(schema_ok=False, **base))
+                return
             try:
                 out = llm_io.parse_reply(reply)
             except llm_io.SchemaViolation:
@@ -201,7 +205,7 @@ class Pipeline:
                 run.attempts.append(Attempt(schema_ok=True, **base))
                 run.abstain = out
                 return
-            run.assumptions = [clean(a) for a in out.assumptions]
+            run.assumptions = [clean(a)[:300] for a in out.assumptions[:20]]
             run.rule_id = None
             sql_text = out.sql or ""
             try:
@@ -209,7 +213,10 @@ class Pipeline:
             except Rejected as rej:
                 run.attempts.append(
                     Attempt(
-                        schema_ok=True, sql_text=sql_text[:4000], validator_rule=rej.rule, **base
+                        schema_ok=True,
+                        sql_text=clean(sql_text)[:4000],
+                        validator_rule=rej.rule,
+                        **base,
                     )
                 )
                 run.rule_id, run.last_reason = rej.rule, "unsafe_query"
@@ -244,8 +251,8 @@ class Pipeline:
                 run.attempts.append(
                     Attempt(
                         schema_ok=True,
-                        sql_text=sql_text[:4000],
-                        canonical_sql=ok.canonical_sql,
+                        sql_text=clean(sql_text)[:4000],
+                        canonical_sql=clean(ok.canonical_sql)[:4000],
                         sql_sha256=ok.sha256,
                         **base,
                     )
@@ -255,7 +262,7 @@ class Pipeline:
             run.intents.append(eid)
             t = time.monotonic()
             common = {
-                "schema_ok": True, "sql_text": sql_text[:4000], "canonical_sql": ok.canonical_sql,
+                "schema_ok": True, "sql_text": clean(sql_text)[:4000], "canonical_sql": clean(ok.canonical_sql)[:4000],
                 "sql_sha256": ok.sha256, "intent_event_id": eid, "executed": True,
             }  # fmt: skip
             try:
@@ -330,7 +337,7 @@ class Pipeline:
         except MeterError:
             budget = Budget(spent_usd="0", cap_usd="0")
         route = self.routes[self.s.route]
-        line = LedgerLine(
+        fields: dict[str, Any] = dict(  # noqa: C408
             query_id=run.query_id, ts=run.ts, asker=run.asker,
             question=clean(run.question)[:500] if self.s.store_question else None, question_sha256=run.q_sha,
             outcome=outcome, reason_code=reason, rule_id=run.rule_id,
@@ -339,6 +346,20 @@ class Pipeline:
             model_id=run.model_id or route.model_id, route=self.s.route, tokens_in=run.tokens_in, tokens_out=run.tokens_out,
             cost_usd=fmt_usd(run.cost), latency_ms=latency_ms, budget=budget, alarm=sorted(run.alarm),
         )  # fmt: skip
+        try:
+            line = LedgerLine(**fields)
+        except ValidationError:  # never lose the question: a minimal failed line is still written
+            outcome, reason, final = "failed", "execution_failed", None
+            line = LedgerLine(
+                **{
+                    **fields,
+                    "outcome": outcome,
+                    "reason_code": reason,
+                    "attempts": [],
+                    "final": None,
+                    "assumptions": [],
+                }
+            )
         sha = self.ledger.append(line)
         self.audit.outcome(
             run.query_id, question_sha256=run.q_sha, decision=outcome, ledger_sha256=sha,

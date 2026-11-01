@@ -84,6 +84,8 @@ class Meter:
     def create(
         path: Path, *, total_cap: str, reserve: str, demo_cap: str, now: datetime | None = None
     ) -> None:
+        if _dec(demo_cap, "demo_cap") > _dec(total_cap, "total_cap") - _dec(reserve, "reserve"):
+            raise MeterError("demo_cap must fit under total_cap minus reserve")
         stamp = (now or datetime.now(UTC)).strftime(STAMP)
         data = {
             "total_cap": total_cap, "reserve": reserve, "demo_cap": demo_cap,
@@ -191,6 +193,8 @@ class Meter:
 
     def set_external(self, usd: Decimal) -> None:
         """Type in the spend of other programs (provider console). Stamps the time."""
+        if not usd.is_finite() or usd < 0:
+            raise MeterError("external spend must be a finite, non-negative number")
         with self._locked():
             d = self._read()
             d["external_usd"] = fmt_usd(usd)

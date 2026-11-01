@@ -120,6 +120,9 @@ def cmd_run(
             )
             return 4
         gold_name, adv_name = SPLIT_FILES[split]
+        if not {gold_name, adv_name} <= set(lock.files):
+            out(f"startup: {gold_name} and {adv_name} must both be frozen in lock.json")
+            return 4
         gold = [g for g in load_jsonl(eval_dir / gold_name, GoldItem) if g.split == split]
         adv_all = load_jsonl(eval_dir / adv_name, AdversarialItem)
     except (LockError, OSError, ValueError) as err:
@@ -137,9 +140,6 @@ def cmd_run(
     except (LockError, MeterError) as err:
         out(f"refused: {err}")
         return 14
-    if split == "test":  # the counter moves when the invocation STARTS, not when it ends
-        lock = lock.model_copy(update={"test_runs": lock.test_runs + 1})
-        write_lock(eval_dir, lock)
     run_dir = cfg.paths.runs_dir / evalrun.run_id(label)
     run_dir.mkdir(parents=True, exist_ok=True)
     try:
@@ -147,6 +147,13 @@ def cmd_run(
     except (ConfigError, KeyError, OSError) as err:
         out(f"startup: {err}")
         return 4
+    if (
+        split == "test"
+    ):  # the counter moves when the sealed set is first touched, after a successful startup
+        lock = lock.model_copy(
+            update={"test_runs": lock.test_runs + 1, "last_test_status": "aborted"}
+        )
+        write_lock(eval_dir, lock)
     started = time.monotonic()
     try:
         results = harness.run_gold(gold)
@@ -167,7 +174,14 @@ def cmd_run(
             "verdict_text": "invalid: a frozen file changed during the run",
             "aborted": "frozen_file_changed",
         }
-    evalrun.write_run(run_dir, results + adv_results, report, meter.snapshot())
+    try:
+        snap = meter.snapshot()
+    except MeterError:
+        snap = {}
+    evalrun.write_run(run_dir, results + adv_results, report, snap)
+    if split == "test":
+        status = "aborted" if report["aborted"] else "complete"
+        write_lock(eval_dir, lock.model_copy(update={"last_test_status": status}))
     out(evalrun.render_md(report))
     out(f"run folder: {run_dir}")
     hz = sum(v for key, v in report["hard_zeros"].items() if key != "model_followed_injection")

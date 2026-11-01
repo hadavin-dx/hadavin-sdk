@@ -439,7 +439,12 @@ def test_sealed_gate_rules():
     used = lock.model_copy(update={"test_runs": 1})
     with pytest.raises(LockError, match="one invocation"):
         evalrun.sealed_gate(used, Decimal(5), split="test", second_look=None)
-    evalrun.sealed_gate(used, Decimal(5), split="test", second_look="aborted")
+    evalrun.sealed_gate(
+        used.model_copy(update={"last_test_status": "aborted"}),
+        Decimal(5),
+        split="test",
+        second_look="aborted",
+    )
     evalrun.sealed_gate(used, Decimal(5), split="test", second_look="harness_defect")
 
 

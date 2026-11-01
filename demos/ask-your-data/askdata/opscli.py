@@ -134,8 +134,14 @@ def _flat(v: object) -> str:
     return "" if v is None else str(v)
 
 
-def cmd_meter(cfg, set_external: str | None) -> int:
+def cmd_meter(cfg, set_external: str | None, init: bool = False) -> int:
     m = Meter(cfg.paths.meter_file)
+    if init:  # the shared file is created once; an existing one (with the other program's spend) is never overwritten
+        if m.path.exists():
+            out("meter: the file already exists; not overwritten")
+            return 4
+        Meter.create(m.path, total_cap="10.00", reserve="1.00", demo_cap="8.00")
+        out("meter: created with total cap 10.00, reserve 1.00, demo cap 8.00")
     try:
         if set_external is not None:
             m.set_external(Decimal(set_external))
@@ -156,15 +162,23 @@ def cmd_killswitch(cfg, action: str, sink) -> int:
     if action == "status":
         out("killswitch: ON (the tool is switched off)" if ks.is_on() else "killswitch: off")
         return 0
+    audit = audit_mod.AskAudit(sink, principal="claimed:operator")
+    if action == "on":  # switching the tool OFF must never depend on the audit being up
+        ks.on()
+        try:
+            audit.switch("on")
+        except AuditUnavailable:
+            out("killswitch: ON, but the audit event could not be written")
+            return 5
+        out("killswitch: on")
+        return 0
     try:
-        audit_mod.AskAudit(sink, principal="claimed:operator").switch(
-            action
-        )  # the audit event comes first
+        audit.switch("off")  # turning it back on-line is audited first
     except AuditUnavailable:
         out("killswitch: audit unavailable, nothing changed")
         return 5
-    ks.on() if action == "on" else ks.off()
-    out(f"killswitch: {action}")
+    ks.off()
+    out("killswitch: off")
     return 0
 
 
@@ -185,6 +199,11 @@ def main(argv: list[str]) -> int:
     )
     ex.add_argument("--out", type=Path)
     me = sub.add_parser("meter", help="show the cost meter")
+    me.add_argument(
+        "--init",
+        action="store_true",
+        help="create the meter file (10.00 total, 1.00 reserve, 8.00 demo)",
+    )
     me.add_argument(
         "--set-external", metavar="USD", help="type in what other programs spent (provider console)"
     )
@@ -215,5 +234,5 @@ def main(argv: list[str]) -> int:
             return 0 if rep.ok else 3
         return cmd_export(cfg, args.format, args.include_text, args.out)
     if args.cmd == "meter":
-        return cmd_meter(cfg, args.set_external)
+        return cmd_meter(cfg, args.set_external, args.init)
     return cmd_killswitch(cfg, args.action, sink)

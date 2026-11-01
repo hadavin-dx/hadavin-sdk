@@ -56,7 +56,7 @@ class AskdataConfig(_Strict):
     limits: Limits = Limits()
     restricted_terms: list[str] | None = None
     store_question: bool = True
-    live: bool = False
+    live: bool = True  # a paid route needs a fresh external_usd; the fake route never spends
 
     def routes(self) -> dict[str, Route]:
         r = self.route

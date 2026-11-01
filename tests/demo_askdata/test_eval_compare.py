@@ -116,3 +116,76 @@ def test_result_hash_is_stable_and_order_rules_hold():
     assert len(result_hash(a, ordered=True)) == 64 and compare.NULL not in str(
         result_hash(a, ordered=True)
     )
+
+
+# ------------------------------------------------------------------ regression tests for the independent review
+
+
+def test_oversized_model_text_never_loses_the_question(tmp_path):
+    from askdata.fixtures import Step
+
+    from tests.demo_askdata.kit import COUNT_ORDERS, Kit
+
+    k = Kit(tmp_path)
+    q = "How many orders are there"
+    k.script(q, Step(sql=COUNT_ORDERS, assumptions=("x" * 301, "y" * 5) + ("z",) * 30))
+    a = k.pipeline.ask(q)
+    assert (
+        a.outcome == "answered"
+        and len(a.line.assumptions) == 20
+        and max(map(len, a.line.assumptions)) <= 300
+    )
+    assert len(k.ledger.read().items) == 1
+    ctl = chr(1) * 1500  # under 4000 raw, far over after being made visible
+    k2 = Kit(tmp_path / "2")
+    k2.script(q, Step(sql=f"SELECT 1 /* {ctl} */"), Step(sql=COUNT_ORDERS), Step(sql=COUNT_ORDERS))
+    b = k2.pipeline.ask(q)
+    assert len(k2.ledger.read().items) == 1 and b.query_id
+    from askdata import audit
+
+    assert audit.verify(k2.ledger, k2.sink).ok
+
+
+def test_set_external_refuses_values_that_would_brick_the_meter(tmp_path):
+    from decimal import Decimal
+
+    import pytest
+    from askdata.meter import Meter, MeterError
+
+    m = Meter(tmp_path / "m.json")
+    Meter.create(m.path, total_cap="10.00", reserve="1.00", demo_cap="8.00")
+    for bad in (Decimal(-1), Decimal("NaN"), Decimal("Infinity")):
+        with pytest.raises(MeterError):
+            m.set_external(bad)
+    assert m.snapshot()["external_usd"] == 0
+    with pytest.raises(MeterError):
+        Meter.create(tmp_path / "n.json", total_cap="10.00", reserve="1.00", demo_cap="9.50")
+
+
+def test_compare_survives_huge_and_non_finite_numbers():
+    from decimal import Decimal
+
+    from askdata.compare import match
+
+    assert match([(1e30,)], [(1e30,)]).ok
+    assert match([(Decimal("Infinity"),)], [(Decimal("Infinity"),)]).ok
+    assert not match([(1e30,)], [(1.0,)]).ok
+
+
+def test_second_look_aborted_needs_an_aborted_first_run():
+    from decimal import Decimal
+
+    import pytest
+    from askdata import evalrun
+    from askdata.evalset import Lock, LockError
+
+    done = Lock(files={}, test_runs=1, last_test_status="complete")
+    with pytest.raises(LockError, match="did not abort"):
+        evalrun.sealed_gate(done, Decimal(5), split="test", second_look="aborted")
+    evalrun.sealed_gate(done, Decimal(5), split="test", second_look="harness_defect")
+    evalrun.sealed_gate(
+        done.model_copy(update={"last_test_status": "aborted"}),
+        Decimal(5),
+        split="test",
+        second_look="aborted",
+    )

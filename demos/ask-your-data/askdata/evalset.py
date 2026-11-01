@@ -128,6 +128,7 @@ class Lock(_Strict):
     thresholds: Thresholds = Thresholds()
     test_runs: int = 0
     sealed_min_remaining_usd: Decimal = Decimal("3.00")
+    last_test_status: Literal["none", "complete", "aborted"] = "none"
     second_look_allowed_for: list[Literal["aborted", "harness_defect"]] = [
         "aborted",
         "harness_defect",
