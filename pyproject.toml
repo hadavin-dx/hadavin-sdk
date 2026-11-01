@@ -25,6 +25,8 @@ anthropic = ["anthropic[vertex]==2.1.0"]
 aws = ["boto3==1.43.118", "cryptography==50.0.2"]
 signer = ["cryptography==50.0.2"]
 pg = ["psycopg[binary]==3.3.6"]
+# The Ask-your-data demo (demos/ask-your-data): its own parser and driver pins.
+askdata = ["sqlglot==30.24.0", "psycopg[binary]==3.3.6"]
 # Cloud-neutral backends: secret stores (P4b; `vault` and `mounted_file` need no extra), audit signers and
 # anchors (P3b).
 azure = [
@@ -47,7 +49,7 @@ hadavin-sdk = "hadavin_sdk.cli:main"
 [dependency-groups]
 dev = ["pytest==9.1.1", "ruff==0.17.1"]
 # Contract-suite stand-ins for cloud services (CI installs it with every extra).
-test = ["moto[s3,kms,secretsmanager]==5.2.4"]
+test = ["moto[s3,kms,secretsmanager]==5.2.4", "pglast==8.7"]
 # Free scanners that keep working when the repository turns private.
 scan = ["pip-audit==2.10.1", "bandit==1.9.4", "zizmor==1.31.1"]
 
