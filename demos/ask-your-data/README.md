@@ -80,6 +80,31 @@ other logins would lose access (`--accept-loss` to override).
   zero breached, 13 aborted (meter or kill switch), 14 a sealed run refused, 4 startup. Compare: 0 no regression, 11 regression,
   4 not comparable. Only the scripted model is connected; a live route needs the owner's yes at each budget step.
 
+## Export for the console
+
+`askdata/export.py` maps one eval run into `hadavin.demo-export/1`, the single file the demo console reads. It is
+read-only and adds no model call: ledger lines (`askdata.ledger/1`), audit events and the run's `report.json` and
+`results.jsonl` in, `export.json` out.
+
+```
+uv run --locked --no-build --extra askdata python -m askdata.export --config askdata.yaml --run <run folder> [--out export.json]
+```
+
+Mapping: `sql_sha256` goes to a step's `args_summary`; validator rules V01 to V12 to `rule_id` (`deny`); refusals and
+abstentions keep their reason code and fixed sentence; `verify.text` is the audit folder's own local integrity check;
+the scorecard carries the confident-wrong count with its one-sided 95 % upper bound, false-abstain, wrong-and-allowed,
+coverage, the hard zeros with their definitions and the verdict wording. Exit codes: 0 written, 4 a missing or bad input.
+
+What it does not claim: the model is `scripted`, the data is synthetic, the result is a smoke result and no accuracy
+number is given. Money is not applicable (a read-only tool moves none) and there are no approvals or adapter calls.
+The audit chain (`hash-chain/1`) is computed at export time over the audit folder's events so the console can
+recompute it; the recipe is in the export's `honesty.notes`.
+
+`examples/export.example.json` comes from the offline scripted run (no Postgres: SQLite stand-ins, see
+`tests/demo_askdata/make_export_example.py`; regenerate from the repo root with
+`python -m tests.demo_askdata.make_export_example <core-commit>`). `tests/fixtures/demo_export_v1.schema.json` is a
+working copy of the contract's schema; the kit repo will publish the canonical one and this copy is then replaced.
+
 ## 90-second recording script (owner records; async-first)
 
 Put the caption "Staged on synthetic data" on the first screen. Say no accuracy number. Before publishing, check the
