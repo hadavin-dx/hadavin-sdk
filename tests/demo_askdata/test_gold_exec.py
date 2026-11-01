@@ -95,4 +95,5 @@ def test_the_two_databases_differ_so_agreement_is_not_a_coincidence(dbs):
 def test_the_standin_is_reproducible_for_one_seed():
     from .lumen_standin import build
 
-    assert build(20261101) == build(20261101)
+    first, second = build(20261101), build(20261101)
+    assert first == second
