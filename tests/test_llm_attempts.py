@@ -70,3 +70,112 @@ def test_with_retry_marks_a_refusal_on_a_later_attempt():
             retryable=lambda e: isinstance(e, ConnectionError),
         )
     assert err.value.attempts == 3
+
+
+# ---- openai_compat asks again after an unusable round: one counter and the billed usage across both rounds
+import io
+import urllib.error
+from decimal import Decimal
+from unittest import mock
+
+from hadavin_sdk.llm import openai_compat as oc
+from hadavin_sdk.llm.protocol import UnusableAnswer
+
+SCHEMA = {"type": "object", "properties": {"a": {"type": "integer"}}}
+PRICED = Route(
+    model_id="gpt-x-1", input_usd_per_mtok="1", output_usd_per_mtok="10", max_tokens=1000
+)
+
+
+def _http(code):
+    return urllib.error.HTTPError("https://x", code, "err", {}, io.BytesIO(b"{}"))
+
+
+def _text(txt="plain words", pt=1000, ct=1000):
+    return {
+        "choices": [{"message": {"content": txt}, "finish_reason": "stop"}],
+        "usage": {"prompt_tokens": pt, "completion_tokens": ct},
+    }
+
+
+def _tool(pt=1000, ct=1000):
+    call = {"function": {"name": "submit_answer", "arguments": '{"a":1}'}}
+    return {
+        "choices": [
+            {"message": {"content": "", "tool_calls": [call]}, "finish_reason": "tool_calls"}
+        ],
+        "usage": {"prompt_tokens": pt, "completion_tokens": ct},
+    }
+
+
+def _oc_chat(seq, max_attempts=3):
+    llm = oc.OpenAICompatLLM(
+        "https://api.example.com/v1",
+        lambda: "k",
+        {"sql_generate": PRICED},
+        30,
+        max_attempts,
+        sleep=lambda _s: None,
+    )
+    it = iter(seq)
+
+    def post(url, body, headers, timeout):
+        v = next(it)
+        if isinstance(v, BaseException):
+            raise v
+        return v
+
+    with mock.patch.object(oc, "post_json", side_effect=post):
+        return llm, llm.chat(
+            [{"role": "user", "content": "hi"}],
+            system="s",
+            route="sql_generate",
+            output_schema=SCHEMA,
+        )
+
+
+BILLED_ONE_ROUND = Decimal(1000) * 1 / 1_000_000 + Decimal(1000) * 10 / 1_000_000
+
+
+def test_a_billed_round_is_not_lost_when_the_next_round_is_refused():
+    with pytest.raises(ProviderError) as err:
+        _oc_chat([_text(), _http(400)])
+    e = err.value
+    assert (e.attempts, e.answered) == (2, 1) and e.billed_usd == BILLED_ONE_ROUND
+    assert not isinstance(e, ProviderExhausted | UnusableAnswer)
+
+
+def test_a_billed_round_is_not_lost_when_the_next_round_is_exhausted():
+    with pytest.raises(ProviderExhausted) as err:
+        _oc_chat([_text(), _http(500), _http(500), _http(500)])
+    e = err.value
+    assert (e.attempts, e.answered) == (4, 1) and e.billed_usd == BILLED_ONE_ROUND
+
+
+def test_one_counter_covers_every_round_and_the_bound_is_twice_the_attempts():
+    llm, r = _oc_chat([_text("a words"), _text("b words")], max_attempts=1)
+    assert (r.attempts, r.answered) == (2, 2)  # two requests were sent, both billed
+    assert r.cost_usd == 2 * BILLED_ONE_ROUND
+    assert llm.max_requests == 2 and Flaky(failures=0, max_attempts=3).max_requests == 3
+    _, r2 = _oc_chat([_text(), _http(503), _http(503), _tool()])
+    assert r2.attempts == 4 and r2.answered == 2
+
+
+def test_an_unusable_200_body_is_a_billed_error_but_an_http_refusal_is_not():
+    class X(NetworkLLM):
+        label = "x"
+
+    x = X({"r": ROUTE}, 3, sleep=lambda _s: None)
+
+    def bad():
+        raise ValueError("malformed body")
+
+    with pytest.raises(UnusableAnswer):
+        x._retry(bad)
+
+    def refused():
+        raise _http(400)
+
+    with pytest.raises(ProviderError) as err:
+        x._retry(refused)
+    assert not isinstance(err.value, UnusableAnswer)

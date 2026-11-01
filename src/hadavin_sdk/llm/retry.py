@@ -17,7 +17,7 @@ import ssl
 import time
 from collections.abc import Callable
 
-from hadavin_sdk.llm.protocol import ProviderError, ProviderExhausted
+from hadavin_sdk.llm.protocol import ProviderError, ProviderExhausted, UnusableAnswer
 
 BASE_DELAY_S = 0.5
 MAX_DELAY_S = 8.0
@@ -97,7 +97,10 @@ def with_retry[T](
             raise
         except Exception as exc:  # every failure is classified below, never swallowed
             if not transient(exc, retryable):
-                refused = ProviderError(f"{label}: {describe(exc, detail)}")
+                # No HTTP status and not a network error: the provider ANSWERED and the body was unusable (billed).
+                answered = status(exc) is None and not isinstance(exc, OSError)
+                cls = UnusableAnswer if answered else ProviderError
+                refused = cls(f"{label}: {describe(exc, detail)}")
                 refused.attempts = attempt
                 raise refused from exc
             if attempt == max_attempts:

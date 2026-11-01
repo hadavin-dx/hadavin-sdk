@@ -1,5 +1,6 @@
 """`eval run|report|compare`. Exit codes (also in the README):
 
+  reseal  0 lock.json sealed again after a hand edit (needs the key), 14 refused (counter/chain/anchor disagree)
   freeze  0 lock.json written, 4 startup (a file is missing, lock.json already exists: never overwritten, or the
           file system cannot hard-link)
   reconcile  0 lock.json and the sealed-run chain agree (rolled forward if a crash left them apart), 14 they cannot
@@ -38,14 +39,14 @@ from askdata.evalset import (
     GoldItem,
     Lock,
     LockError,
-    freeze,
+    Thresholds,
     load_jsonl,
     lock_guard,
     read_lock,
     verify_files,
 )
 from askdata.ledger import QueryLedger
-from askdata.meter import KillSwitch, Meter, MeterError
+from askdata.meter import KillSwitch, MeterError
 from askdata.opscli import out
 from askdata.pgsource import PgSource
 from askdata.pipeline import Pipeline
@@ -98,7 +99,7 @@ def build_harness(
             + " (the clean twin, ASKDATA_DSN_CLEAN or database.dsn_secret_name_clean, is optional)"
         )
     rec = {k: RecordingExecutor(v, k, run_dir / "statements.jsonl") for k, v in sources.items()}  # type: ignore[arg-type]
-    meter, kill = Meter(cfg.paths.meter_file), KillSwitch(cfg.paths.kill_switch_file)
+    meter, kill = cfg.meter_obj(), KillSwitch(cfg.paths.kill_switch_file)
     sink = audit_mod.local_dir_sink(cfg.paths.audit_dir)
     ledger = QueryLedger(cfg.paths.ledger_file)
 
@@ -143,8 +144,15 @@ def _gate(cfg: AskdataConfig) -> SealedGate:
         if provider is None:
             raise LockError("sealed_key_secret_name is set but the config has no `secrets` entry")
         key = key_from(provider, cfg.sealed_key_secret_name)
+    anchors = [cfg.paths.audit_dir / "sealed-anchor.json"]
+    if cfg.paths.sealed_anchor_file is not None:  # a second anchor meant to be committed to git
+        anchors.append(cfg.paths.sealed_anchor_file)
     return SealedGate(
-        cfg.paths.eval_dir, cfg.paths.audit_dir / "sealed-chain.jsonl", cfg.paths.runs_dir, key
+        cfg.paths.eval_dir,
+        cfg.paths.audit_dir / "sealed-chain.jsonl",
+        cfg.paths.runs_dir,
+        key,
+        anchors,
     )
 
 
@@ -153,18 +161,33 @@ def _smoke_key(cfg: AskdataConfig) -> str:
     return f"{config_hash(cfg, prompt.load(as_of=cfg.as_of).prompt_sha256)}:{cfg.route.model_id}"
 
 
-def cmd_freeze(cfg: AskdataConfig) -> int:
-    """Write lock.json (file hashes, the gate thresholds, test_runs 0). Run it ONCE, after the prompt and the dev work
-    are final and before any sealed run; it never replaces an existing lock (that would reset the sealed counter)."""
+def cmd_freeze(cfg: AskdataConfig, new_set_reason: str | None = None) -> int:
+    """Write lock.json (file hashes, the gate thresholds, test_runs 0), the chain's genesis entry and the anchors. Run it
+    ONCE, after the prompt and the dev work are final and before any sealed run. It refuses while a lock, a chain or
+    an anchor exists (that would reset the sealed counter); a genuinely NEW test set needs `--new-set --reason`,
+    which leaves a visible `new_set` entry in the chain."""
     eval_dir = cfg.paths.eval_dir
     names = [n for pair in SPLIT_FILES.values() for n in pair]
     if missing := [n for n in names if not (eval_dir / n).is_file()]:
         out(f"startup: cannot freeze, missing: {', '.join(missing)}")
         return 4
     try:  # temp file, then os.link: no-clobber, and a crash never leaves an empty lock.json
-        lock = freeze(eval_dir, names, no_clobber=True, seal=_gate(cfg).freeze_seal)
+        with lock_guard(eval_dir):
+            lock = _gate(cfg).create(
+                names,
+                Thresholds(
+                    green_max_upper=cfg.sealed.green_max_upper,
+                    amber_max_upper=cfg.sealed.amber_max_upper,
+                ),
+                new_set_reason,
+                lock_fields={
+                    "sealed_min_remaining_usd": cfg.sealed.first_run_min_remaining_usd,
+                    "second_look_min_remaining_usd": cfg.sealed.second_look_min_remaining_usd,
+                    "max_second_looks": cfg.sealed.max_second_looks,
+                },
+            )
     except LockError as err:
-        if "already exists" in str(err):
+        if "lock.json already exists" in str(err):
             out(
                 "freeze: lock.json already exists; not overwritten (it holds the sealed-run counter)"
             )
@@ -185,6 +208,33 @@ def cmd_freeze(cfg: AskdataConfig) -> int:
     out(
         f"freeze: lock.json written (green <= {t.green_max_upper}, amber <= {t.amber_max_upper}, test_runs 0"
         f"{', sealed with the configured key' if lock.seal else ', NOT keyed: set sealed_key_secret_name for a client run'})"
+    )
+    out(
+        "freeze: commit lock.json"
+        + (f" and {cfg.paths.sealed_anchor_file.name}" if cfg.paths.sealed_anchor_file else "")
+        + " to git"
+        + (
+            ""
+            if cfg.paths.sealed_anchor_file
+            else " (set paths.sealed_anchor_file for a second, committed anchor)"
+        )
+    )
+    return 0
+
+
+def cmd_reseal(cfg: AskdataConfig) -> int:
+    """Key holder: bless the current lock.json after a hand edit of the harness-defect fields (logged in the chain)."""
+    try:
+        with lock_guard(cfg.paths.eval_dir):
+            fields = _gate(cfg).reseal()
+    except LockError as err:
+        out(f"refused: {err}")
+        return 14
+    except (ConfigError, OSError) as err:
+        out(f"startup: {err}")
+        return 4
+    out(
+        f"reseal: lock.json sealed again (hand-written fields present: {', '.join(fields) or 'none'})"
     )
     return 0
 
@@ -232,7 +282,7 @@ def _prepare(cfg, split, k, second_look, harness_factory, use_live, smoke):
         if split == "test" and lock.test_runs == 0
         else ("second look" if split == "test" else "dev")
     )
-    meter = Meter(cfg.paths.meter_file)
+    meter = cfg.meter_obj()
     try:
         evalrun.sealed_gate(
             lock,
@@ -267,7 +317,10 @@ def _prepare(cfg, split, k, second_look, harness_factory, use_live, smoke):
     run_dir.mkdir(parents=True, exist_ok=True)
     try:
         harness, meter, meta = harness_factory(
-            cfg, lock, run_dir, Config(k=k, label=label, live=use_live, smoke=smoke)
+            cfg,
+            lock,
+            run_dir,
+            Config(k=k, label=label, live=use_live, smoke=smoke, smoke_limits=cfg.smoke),
         )
     except (ConfigError, KeyError, OSError) as err:
         out(f"startup: {err}")
@@ -315,8 +368,12 @@ def cmd_run(
     if isinstance(prep, int):
         return prep
     lock, harness, meter, meta, gold, adv, label, run_dir, gate = prep
-    status = "aborted"  # until a report is written; the chain/run folder decide it if this process dies first
-    try:
+    st = {
+        "status": "aborted",
+        "smoke_ok": True,
+    }  # 'aborted' until a report exists; the chain/run folder decide it
+
+    def body() -> int:
         started = time.monotonic()
         try:
             results = harness.run_gold(gold)
@@ -324,9 +381,13 @@ def cmd_run(
         except HarnessError as err:
             out(f"harness defect (not a model result): {err}")
             return 4
-        meta = {**meta, "second_look": label == "second look", "second_look_reason": second_look}
+        run_meta = {
+            **meta,
+            "second_look": label == "second look",
+            "second_look_reason": second_look,
+        }
         report = harness.report(
-            results, adv_results, split=split, meta=meta, elapsed_s=time.monotonic() - started
+            results, adv_results, split=split, meta=run_meta, elapsed_s=time.monotonic() - started
         )
         if split == "test" and verify_files(
             eval_dir, lock
@@ -342,25 +403,37 @@ def cmd_run(
         except MeterError:
             snap = {}
         evalrun.write_run(run_dir, results + adv_results, report, snap)
-        status = (
+        st["status"] = (
             "aborted" if report["aborted"] else "complete"
         )  # the results exist now: nothing may call this 'aborted'
         if smoke and use_live and split == "dev" and not report["aborted"]:
-            _record(lambda: gate.record_smoke(_smoke_key(cfg)), eval_dir)
+            st["smoke_ok"] = _record(lambda: gate.record_smoke(_smoke_key(cfg)), eval_dir)
         out(evalrun.render_md(report))
         out(f"run folder: {run_dir}")
         hz = sum(v for key, v in report["hard_zeros"].items() if key != "model_followed_injection")
         if report["aborted"]:
             return EXIT["aborted"]
         return EXIT["hard_zero"] if hz else EXIT[report["verdict"]]
+
+    finished = True
+    try:
+        code = body()
     finally:  # also on KeyboardInterrupt and on any crash after the results were written
         if split == "test":
-            _record(lambda: gate.finish(run_dir.name, status), eval_dir)
+            finished = _record(lambda: gate.finish(run_dir.name, st["status"]), eval_dir)
+    if not (
+        finished and st["smoke_ok"]
+    ):  # a green verdict must not hide that the record was not written
+        out(
+            "the sealed-run record could not be written; the verdict above stands but run `eval reconcile`"
+        )
+        return EXIT_AUDIT
+    return code
 
 
-def _record(step, eval_dir: Path) -> None:
-    """Run one chain/lock bookkeeping step under the lock. A failure is reported, never allowed to hide a result:
-    the next `load()` derives the same facts from the chain and the run folder."""
+def _record(step, eval_dir: Path) -> bool:
+    """Run one chain/lock bookkeeping step under the lock. False (and a warning) if it failed: the next `load()`
+    derives the same facts from the chain and the run folder, but the caller must not report plain success."""
     try:
         with lock_guard(eval_dir):
             step()
@@ -368,6 +441,8 @@ def _record(step, eval_dir: Path) -> None:
         out(
             f"warning: could not record a sealed-run step ({type(err).__name__}); `eval reconcile` will recover it"
         )
+        return False
+    return True
 
 
 def cmd_report(run_dir: Path, fmt: str = "md", dest: Path | None = None) -> int:
@@ -416,7 +491,17 @@ def main(argv: list[str]) -> int:
     r.add_argument("--second-look", choices=["aborted", "harness_defect"], default=None)
     r.add_argument("--live", action="store_true", help="use the config's llm entry (spends money)")
     r.add_argument("--smoke", action="store_true", help="with --live: abort on the smoke limits")
-    sub.add_parser("freeze", help="write lock.json once, after dev work is final")
+    fz = sub.add_parser("freeze", help="write lock.json once, after dev work is final")
+    fz.add_argument(
+        "--new-set",
+        action="store_true",
+        help="a NEW test set: restart the sealed count (needs --reason)",
+    )
+    fz.add_argument("--reason", default=None)
+    sub.add_parser(
+        "reseal",
+        help="key holder: re-seal lock.json after a hand edit of the harness-defect fields",
+    )
     sub.add_parser(
         "reconcile", help="roll lock.json forward over the sealed-run chain after a crash"
     )
@@ -435,6 +520,12 @@ def main(argv: list[str]) -> int:
         return cmd_report(args.run_dir, args.format, args.out)
     if args.cmd == "compare":
         return cmd_compare(args.baseline, args.candidate)
+    if args.cmd == "freeze" and args.new_set != bool((args.reason or "").strip()):
+        out('eval freeze: --new-set and --reason "..." go together')
+        return 1
+    if args.cmd == "run" and (args.k < 1 or (args.smoke and not args.live)):
+        out("eval run: --k must be at least 1, and --smoke needs --live")
+        return 1
     path = args.config or os.environ.get("ASKDATA_CONFIG")
     if not path:
         out("startup: give --config or set ASKDATA_CONFIG")
@@ -445,10 +536,9 @@ def main(argv: list[str]) -> int:
         out(f"startup: {err}")
         return 4
     if args.cmd == "freeze":
-        return cmd_freeze(cfg)
+        return cmd_freeze(cfg, args.reason if args.new_set else None)
+    if args.cmd == "reseal":
+        return cmd_reseal(cfg)
     if args.cmd == "reconcile":
         return cmd_reconcile(cfg)
-    if args.k < 1 or (args.smoke and not args.live):
-        out("eval run: --k must be at least 1, and --smoke needs --live")
-        return 1
     return cmd_run(cfg, args.split, args.k, args.second_look, use_live=args.live, smoke=args.smoke)

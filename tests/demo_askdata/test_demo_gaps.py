@@ -41,6 +41,7 @@ from askdata.policy import (
     REASONS,
 )
 from askdata.sealed import Chain
+from askdata.settings import Smoke
 
 from hadavin_sdk.actions.secrets import FakeSecretProvider
 from hadavin_sdk.guard.injection import RegexDetector
@@ -133,7 +134,7 @@ def test_eval_freeze_writes_lock_once(tmp_path, capsys):
     ]
     assert lock.test_runs == 0 and lock.thresholds.green_max_upper == Decimal("0.10")
     capsys.readouterr()
-    assert cli.main(argv) == 4 and "not overwritten" in capsys.readouterr().out
+    assert cli.main(argv) == 4 and "already exists" in capsys.readouterr().out
     assert read_lock(ev) == lock
 
 
@@ -277,7 +278,7 @@ def test_the_harness_aborts_a_smoke_run_on_cost(smoke, cost, expected):
         lock=Lock(files={}),
         config=evalrun.Config(smoke=smoke),
     )
-    for n in range(live.SMOKE_MIN_QUESTIONS):
+    for n in range(Smoke().min_questions):
         h._ask(pipe, "a", f"ask:x:{n}", "q")
     assert h.aborted == expected
 
@@ -291,7 +292,7 @@ def test_the_harness_aborts_a_smoke_run_on_schema_violations():
         lock=Lock(files={}),
         config=evalrun.Config(smoke=True),
     )
-    for n in range(live.SMOKE_MIN_QUESTIONS):
+    for n in range(Smoke().min_questions):
         h._ask(pipe, "a", f"ask:x:{n}", "q")
     assert h.aborted == "smoke_schema"
 
@@ -455,8 +456,13 @@ def test_editing_or_refreezing_the_lock_cannot_reset_the_sealed_counter(cli_env,
         ev, Lock(files={n: read_lock_files(cfg)[n] for n in names})
     )  # a hand-made fresh lock
     assert cmd_run(cfg, "test", 1, None, harness_factory=factory) == 14
-    assert "one invocation" in capsys.readouterr().out
-    assert read_lock(ev).test_runs == 1  # replayed from the chain, not reset
+    assert (
+        "chain position" in capsys.readouterr().out
+    )  # a hand-made lock names no place in the chain
+    chain = Chain(cfg.paths.audit_dir / "sealed-chain.jsonl")
+    assert [e["kind"] for e in chain.entries()].count(
+        "sealed_run"
+    ) == 1  # the chain still holds the run
 
 
 def read_lock_files(cfg):
@@ -477,7 +483,8 @@ def test_a_sealed_live_run_needs_a_recorded_smoke_run(cli_env, capsys):  # noqa:
     cmd_run(cfg, "dev", 1, None, harness_factory=notlive, use_live=True, smoke=True)
     chain = Chain(cfg.paths.audit_dir / "sealed-chain.jsonl")
     assert [e["kind"] for e in chain.entries()] == [
-        "smoke_pass"
+        "genesis",
+        "smoke_pass",
     ]  # the smoke pass is audited in the chain
     assert read_lock(ev).chain_head == chain.entries()[-1]["sha"]
     cmd_run(cfg, "test", 1, None, harness_factory=notlive, use_live=True)
@@ -505,7 +512,7 @@ def test_freeze_never_leaves_an_empty_lock_and_never_clobbers(tmp_path, monkeypa
 
 
 def test_smoke_rule_waits_for_a_minimum_sample():
-    assert live.SMOKE_MIN_QUESTIONS == 5
+    assert Smoke().min_questions == 5
     assert live.smoke_breach(Decimal(1), 4, 4, 4) is None  # an early outlier is not yet a trend
     assert live.smoke_breach(Decimal("0.18"), 5, 5, 0) == "smoke_cost"  # 0.036 per question
     assert live.smoke_breach(Decimal("0.175"), 5, 5, 0) is None  # exactly 0.035 is not "more than"

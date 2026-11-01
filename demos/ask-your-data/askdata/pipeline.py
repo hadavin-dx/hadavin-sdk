@@ -7,6 +7,7 @@ SQLSTATE hint from `policy`. The agreement check is NOT built (the amendments re
 
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import json
 import re
@@ -30,7 +31,7 @@ from askdata.validate import RULES, Rejected, Validated, validate
 from hadavin_sdk.audit.protocol import AuditUnavailable
 from hadavin_sdk.config import Route
 from hadavin_sdk.guard.injection import RegexDetector, injection_check
-from hadavin_sdk.llm.protocol import LLM, ProviderError, ProviderExhausted
+from hadavin_sdk.llm.protocol import LLM, ProviderError, ProviderExhausted, UnusableAnswer
 
 _SCHEMA_CHARS = len(json.dumps(llm_io.GENERATE_SCHEMA))  # the forced tool schema is sent too
 NO_ROWS_NOTE = "0 rows: check the filters"
@@ -131,10 +132,20 @@ class Pipeline:
             hashlib.sha256(question.encode("utf-8")).hexdigest(),
         )
         gate = self._gate(question)
-        if gate:
-            run.reason = gate
-        else:
-            self._generate_and_execute(run)
+        try:
+            if gate:
+                run.reason = gate
+            else:
+                self._generate_and_execute(run)
+        except (
+            BaseException
+        ):  # Ctrl-C and the like: the question still ends in exactly one ledger line
+            run.terminal.append("model_unavailable")
+            with contextlib.suppress(
+                Exception
+            ):  # the interrupt, not a ledger problem, is what propagates
+                self._finish(run, int((time.monotonic() - t0) * 1000))
+            raise
         return self._finish(run, int((time.monotonic() - t0) * 1000))
 
     def _generate_and_execute(self, run: _Run) -> None:
@@ -152,9 +163,8 @@ class Pipeline:
             per_try = worst_case_usd(
                 route, len(llm_io.SYSTEM) + len(messages[0]["content"]) + _SCHEMA_CHARS
             )
-            worst = (
-                per_try * self.s.llm_max_attempts
-            )  # the kind may send this many requests inside one chat()
+            # the kind may send this many requests inside one chat(): its own bound when it knows it
+            worst = per_try * getattr(self.llm, "max_requests", self.s.llm_max_attempts)
             try:
                 rid = self.meter.reserve(worst, live=self.s.live)
             except MeterError:  # OverBudget or an unreadable meter file: do not spend
@@ -177,7 +187,9 @@ class Pipeline:
                     worst,
                     sent=getattr(err, "attempts", 1) if known else self.s.llm_max_attempts,
                     reply_cost=None,
-                    refused=known and not isinstance(err, ProviderExhausted),
+                    refused=known and not isinstance(err, ProviderExhausted | UnusableAnswer),
+                    answered=getattr(err, "answered", 0),
+                    billed=Decimal(getattr(err, "billed_usd", 0)),
                 )
                 self._model_failed(run, rid, worst, cost, n, t)
                 return
@@ -189,7 +201,13 @@ class Pipeline:
             ):  # Ctrl-C and the like: close the reservation (as spent) before leaving
                 self._settle(run, worst, worst, rid)
                 raise
-            actual = call_cost(per_try, worst, sent=reply.attempts, reply_cost=reply.cost_usd)
+            actual = call_cost(
+                per_try,
+                worst,
+                sent=reply.attempts,
+                reply_cost=reply.cost_usd,
+                answered=reply.answered,
+            )
             run.cost += actual
             run.tokens_in += reply.input_tokens
             run.tokens_out += reply.output_tokens

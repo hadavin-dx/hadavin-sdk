@@ -70,6 +70,12 @@ _OFF: set[str] = (
 )  # rule ids switched off; ONLY the mutation test fills it, production never does
 
 
+def assert_all_rules_on() -> None:
+    """Startup guard: no rule may be switched off outside the mutation test. Raises RuntimeError."""
+    if _OFF:
+        raise RuntimeError(f"validator rules switched off: {sorted(_OFF)}")
+
+
 def _fail(rule: str, detail: str) -> None:
     """Reject with `rule`, unless the mutation test switched that rule off (then checking simply continues)."""
     if rule not in _OFF:

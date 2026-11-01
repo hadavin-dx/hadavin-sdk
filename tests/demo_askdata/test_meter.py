@@ -136,7 +136,8 @@ CHILD = """
 import sys
 from decimal import Decimal
 from pathlib import Path
-sys.path.insert(0, sys.argv[1])
+import json
+sys.path[:] = json.loads(sys.argv[1])  # the parent's path: hermetic, also under python -I
 from askdata.meter import Meter, OverBudget
 m = Meter(Path(sys.argv[2]), lock_wait_s=30)
 ok = 0
@@ -154,11 +155,9 @@ def test_two_processes_cannot_overshoot_the_cap_together(tmp_path):
     import subprocess
     import sys
 
-    from .conftest import DEMO
-
     path = tmp_path / "meter.json"
     Meter.create(path, total_cap="10.00", reserve="1.00", demo_cap="1.00")
-    cmd = [sys.executable, "-c", CHILD, str(DEMO), str(path)]
+    cmd = [sys.executable, "-c", CHILD, json.dumps(sys.path), str(path)]
     procs = [subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True) for _ in range(4)]  # noqa: S603
     won = sum(int(p.communicate(timeout=120)[0].strip()) for p in procs)
     assert (
