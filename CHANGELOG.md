@@ -15,6 +15,28 @@
   - **Exit codes of every command changed for crashes.** `main` now returns 2 for a `ConfigError` (message on
     stderr) and 3 for any other uncaught error, instead of a Python traceback with exit 1. Exit 1 keeps its meaning
     (gate red, audit not intact, replay aborted or cost cap reached).
+- **K1b-lite masks client data before the model.** Until now `replay` ran only the injection screen: the alert,
+  every tool result and the runbooks went to the model raw. Every text value of a case bundle is now masked with
+  the studio redactor (`guard.redact.redact_many`, one placeholder namespace per case, so one value is one
+  placeholder everywhere) before the model or the injection screen sees it. The placeholder map lives in memory
+  only: it is never written to the outputs or the audit sink, and never logged. Evidence IDs, file names, the
+  the values of the `service`, `kind` and `fault_type` keys (the Cause List vocabulary), exact timestamps and numbers
+  are left alone; dict keys are masked too. Names, queries and labels are masked in the snapshot and in what the model
+  sees alike, so citations and queries still resolve. New `k1b.redact` (default `true`); `false` is refused unless `replay` gets
+  `--i-know-data-is-already-masked`, and the run records `redaction.mode: off_acknowledged`. `run.json` records the
+  scheme and the number of distinct values masked per class (no values); both reports print them. **What the
+  redactor does NOT catch:** names in free text, customer or project names, ticket numbers, unusual formats,
+  most company or cloud host names (it masks `.local`-style hosts, not `api.client-bank.com` or `*.rds.amazonaws.com`),
+  and the values of the `service`, `kind` and `fault_type` keys. It is a strong first filter, not proof that no client data leaves; the
+  reports say so under "What the numbers cannot say". Re-run `replay` for earlier runs: they sent data unmasked.
+- **K1b-lite: a `not_sure` answer may omit `causes`.** A real Sonnet 5.5 smoke run abstained correctly on a
+  no_evidence incident with `{"not_sure": true, "reason": "..."}` and the strict parser called it unreadable (a Miss).
+  `causes` may now be omitted (or empty) only when `not_sure` is true; every other strictness is unchanged (both
+  forms, no form, wrong types, extra keys, fenced or surrounded text, duplicate keys, NaN). The `submit_diagnosis`
+  schema no longer lists `causes` as required and its description, and the system prompt, say so. Case files now
+  record `answered_via` (`tool` or `text`), and `run.json`, `replay-report.md` and `score-report.md` list the case
+  ids that were unreadable, errored, timed out, capped or converted for uncited evidence (ids only, never answers).
+  Re-run `replay` for runs made before this change: their saved unreadable answers are not re-parsed.
 - **`tick` now matches the v5 contract.** Exit code **4** (was 3) when the store is unreachable, for both
   `run_tick` and the CLI; 3 stays the wrapper code for any other uncaught error. The heartbeat summary line is no
   longer a step: it is logged after the steps, writes no `tick_state` row and cannot change the exit code (K7 sends

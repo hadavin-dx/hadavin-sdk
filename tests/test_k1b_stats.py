@@ -24,7 +24,10 @@ def test_hash_files_known_value_and_order_independence(tmp_path):
     (tmp_path / "b.txt").write_bytes(b"two")
     (tmp_path / "sub").mkdir()
     (tmp_path / "sub" / "a.txt").write_bytes(b"one")
-    inner = lambda data: hashlib.sha256(data).hexdigest()
+
+    def inner(data):
+        return hashlib.sha256(data).hexdigest()
+
     expect = hashlib.sha256(
         b"b.txt\0"
         + inner(b"two").encode()

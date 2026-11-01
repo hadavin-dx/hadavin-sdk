@@ -64,7 +64,10 @@ TOOL_SPECS: list[dict[str, Any]] = [
     ),
     {
         "name": SUBMIT,
-        "description": "Give the final diagnosis. Call this once, when done.",
+        "description": (
+            "Give the final diagnosis. Call this once, when done. Either causes (best first, each with "
+            "evidence ids), or not_sure true with a short reason and no causes."
+        ),
         "input_schema": DIAGNOSIS_SCHEMA,
     },
 ]

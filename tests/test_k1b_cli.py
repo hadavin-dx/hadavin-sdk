@@ -259,3 +259,32 @@ def test_uv_lock_version_matches_the_package():
     lock = (Path(__file__).resolve().parent.parent / "uv.lock").read_text(encoding="utf-8")
     m = re.search(r'name = "hadavin-sdk"\s+version = "([^"]+)"', lock)
     assert m and m.group(1) == hadavin_sdk.__version__
+
+
+def test_score_and_replay_reports_name_the_cases_to_inspect(cfg_dir, export):
+    assert _replay(cfg_dir, export) == 0 and _score(cfg_dir, export) == 0
+    replay_report = (export["out"] / "replay-report.md").read_text(encoding="utf-8")
+    score_report = (export["out"] / "score" / "score-report.md").read_text(encoding="utf-8")
+    for text in (replay_report, score_report):
+        assert "Cases to inspect (case ids):" in text
+        assert "unreadable case-002" in text and "uncited case-003" in text
+        assert "bad_deploy" not in text and "oom" not in text
+
+
+def test_score_refuses_a_run_json_whose_issue_cases_disagree_with_the_files(cfg_dir, export):
+    assert _replay(cfg_dir, export) == 0
+    path = export["out"] / "run1" / "run.json"
+    meta = json.loads(path.read_text(encoding="utf-8"))
+    meta["issue_cases"]["unreadable"] = []
+    path.write_text(json.dumps(meta), encoding="utf-8")
+    assert _score(cfg_dir, export) == 2
+
+
+def test_cli_refuses_redact_false_without_the_flag_and_records_it_with(cfg_dir, export, capsys):
+    p = cfg_dir / "config.yaml"
+    p.write_text(p.read_text(encoding="utf-8") + "\nk1b:\n  redact: false\n", encoding="utf-8")
+    assert _replay(cfg_dir, export) == 2
+    assert "already masked" in capsys.readouterr().err and not export["out"].exists()
+    assert _replay(cfg_dir, export, "--i-know-data-is-already-masked") == 0
+    run = json.loads((export["out"] / "run1" / "run.json").read_text(encoding="utf-8"))
+    assert run["redaction"]["mode"] == "off_acknowledged"
