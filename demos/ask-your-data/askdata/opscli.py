@@ -18,6 +18,7 @@ from pathlib import Path
 
 from askdata import audit as audit_mod
 from askdata.config import ConfigError, load_config
+from askdata.htmlexport import render_ledger, write_stdout
 from askdata.ledger import QueryLedger
 from askdata.meter import KillSwitch, Meter, MeterError, fmt_usd
 from askdata.safe_text import clean
@@ -91,6 +92,8 @@ def cmd_export(cfg, fmt: str, include_text: bool, dest: Path | None) -> int:
         rows = [_redact(r) for r in rows]  # type: ignore[misc]
     if fmt == "json":
         text = json.dumps(rows, indent=2, sort_keys=True, ensure_ascii=True) + "\n"
+    elif fmt == "html":
+        text = render_ledger(rows, redacted=not include_text)  # type: ignore[arg-type]
     else:
         buf = io.StringIO()
         w = csv.writer(buf, lineterminator="\n")
@@ -128,7 +131,10 @@ def cmd_export(cfg, fmt: str, include_text: bool, dest: Path | None) -> int:
             + ("" if include_text else " (question and SQL text redacted to sha256 and length)")
         )
     else:
-        sys.stdout.write(clean(text))
+        if fmt == "html":
+            write_stdout(clean(text))
+        else:
+            sys.stdout.write(clean(text))
     return 0
 
 
@@ -197,7 +203,7 @@ def main(argv: list[str]) -> int:
     asub.add_parser("show").add_argument("query_id")
     asub.add_parser("verify")
     ex = asub.add_parser("export")
-    ex.add_argument("--format", choices=["json", "csv"], default="json")
+    ex.add_argument("--format", choices=["json", "csv", "html"], default="json")
     ex.add_argument(
         "--include-text", action="store_true", help="keep question and SQL text (default: redacted)"
     )

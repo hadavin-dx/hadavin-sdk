@@ -131,7 +131,22 @@ def test_counts_unreadable_error_timeout_capped_and_uncited(tmp_path):
     assert audit_result(s) == "H=1;Hne=0;M=4;S=1;ic=1;ha=3"
 
 
-def test_bad_citation_is_reported_not_reclassified(tmp_path):
+def test_wrong_cause_is_a_miss_never_not_sure(tmp_path):
+    # behaviour behind the CONFIDENT_WRONG sentence, asserted on the scorer, not on the constant
+    off_list = diag(cause("api", "not_in_the_list"))
+    assert one(tmp_path, rec1(diagnosis=off_list)).classes["case-001"] == "miss"
+    wrong = diag(cause("db", "bad_deploy"))
+    assert one(tmp_path / "x", rec1(diagnosis=wrong)).classes["case-001"] == "miss"
+
+
+def test_failed_citation_replay_path_is_not_sure_uncited(tmp_path):
+    # what replay writes for an answer whose citations fail: Not sure, converted="uncited"
+    s = one(tmp_path, rec1(diagnosis=NS, converted=True))
+    assert s.classes["case-001"] == "not_sure" and s.uncited == 1 and s.bad_citations == 0
+
+
+def test_bad_citation_in_a_hand_made_file_is_reported_not_reclassified(tmp_path):
+    # replay never writes this (it converts first); the scorer only counts it
     bad = record("case-001", diag(cause("api", "bad_deploy", "logs/001.jsonl#0")), returned=[])
     s = one(tmp_path, bad)
     assert s.classes["case-001"] == "hit" and s.bad_citations == 1

@@ -20,7 +20,7 @@ import time
 from pathlib import Path
 
 from askdata import audit as audit_mod
-from askdata import evalrun, prompt
+from askdata import evalrun, htmlexport, prompt
 from askdata.config import AskdataConfig, ConfigError, config_hash, load_config
 from askdata.evalrun import EXIT, Config, Harness, HarnessError, Incomparable, RecordingExecutor
 from askdata.evalset import (
@@ -38,6 +38,7 @@ from askdata.meter import KillSwitch, Meter, MeterError
 from askdata.opscli import out
 from askdata.pgsource import PgSource
 from askdata.pipeline import Pipeline
+from askdata.safe_text import clean
 from hadavin_sdk.llm.fake import FakeLLM
 
 SPLIT_FILES = {
@@ -190,13 +191,28 @@ def cmd_run(
     return EXIT["hard_zero"] if hz else EXIT[report["verdict"]]
 
 
-def cmd_report(run_dir: Path) -> int:
+def cmd_report(run_dir: Path, fmt: str = "md", dest: Path | None = None) -> int:
     try:
         rep = json.loads((run_dir / "report.json").read_text(encoding="utf-8"))
-        out(evalrun.render_md(rep))
-    except (OSError, ValueError, KeyError):
+    except (OSError, ValueError):
         out(f"report: {run_dir} is not a run folder")
         return 4
+    try:
+        text = htmlexport.render_eval(rep) if fmt == "html" else evalrun.render_md(rep)
+    except (KeyError, TypeError, AttributeError) as err:
+        out(f"report: report.json is missing or has a bad field ({type(err).__name__}: {err})")
+        return 4
+    if dest is not None:
+        dest = dest.resolve()
+        if Path.cwd().resolve() not in dest.parents:
+            out("report: --out must be inside the current folder")
+            return 1
+        dest.write_text(clean(text) if fmt != "html" else text, encoding="utf-8", newline="\n")
+        out(f"wrote {dest.name}")
+    elif fmt == "html":
+        htmlexport.write_stdout(text)
+    else:
+        out(text)
     return 0
 
 
@@ -219,7 +235,10 @@ def main(argv: list[str]) -> int:
     r.add_argument("--split", choices=["dev", "test"], required=True)
     r.add_argument("--k", type=int, default=1)
     r.add_argument("--second-look", choices=["aborted", "harness_defect"], default=None)
-    sub.add_parser("report").add_argument("run_dir", type=Path)
+    rp = sub.add_parser("report")
+    rp.add_argument("run_dir", type=Path)
+    rp.add_argument("--format", choices=["md", "html"], default="md")
+    rp.add_argument("--out", type=Path)
     c = sub.add_parser("compare")
     c.add_argument("baseline", type=Path)
     c.add_argument("candidate", type=Path)
@@ -228,7 +247,7 @@ def main(argv: list[str]) -> int:
     except SystemExit as e:
         return 0 if e.code in (0, None) else 1
     if args.cmd == "report":
-        return cmd_report(args.run_dir)
+        return cmd_report(args.run_dir, args.format, args.out)
     if args.cmd == "compare":
         return cmd_compare(args.baseline, args.candidate)
     path = args.config or os.environ.get("ASKDATA_CONFIG")
