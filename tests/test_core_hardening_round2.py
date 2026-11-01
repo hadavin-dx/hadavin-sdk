@@ -462,7 +462,18 @@ def test_counter_keys_cannot_collide_across_tenants_and_agent_ids():
             Limits(MemoryStore(), None, SimpleNamespace(agents={}), tenant=bad) if bad else (
                 _ for _ in ()
             ).throw(ValueError())  # type: ignore[arg-type]
-    fields = {f: "x" for f in AgentRecord.model_fields if f != "id"}
+    fields = {
+        "status": "draft",
+        "data_class": "internal",
+        "model_route": "default",
+        "prompt_file": "p.md",
+        "scope_allowed": [],
+        "max_steps": 3,
+        "budget_usd": {"daily": "1", "monthly": "10"},
+    }
+    AgentRecord.model_validate(
+        {**fields, "id": "ok-agent_1.x"}
+    )  # the same fields with a good id pass
     for bad_id in ("a/b", "b:c", "x" * 65, ""):
         with pytest.raises(ValueError):
             AgentRecord.model_validate({**fields, "id": bad_id})
@@ -512,6 +523,14 @@ def test_settle_hands_the_store_the_run_counter_first_the_order_reserve_takes(cl
     lim = _limits(Spy(), max_run="5")
     lim.settle(lim.reserve("a", D("0.1"), run_id="r"), D("0.05"))
     assert seen == [["run:r", "a"]]
+
+
+def test_memory_prune_removes_tenant_prefixed_run_counters_too(clock):
+    store = MemoryStore()
+    lim = _limits(store, tenant="clientx", max_run="5")
+    lim.reserve("a", D("0.1"), run_id="r", run_day=date(2026, 2, 1))
+    assert lim.prune_runs() == 1
+    assert store.spend_totals("8:clientx/a", DAY)[0] == D("0.1")  # the agent counter stays
 
 
 def test_a_settle_after_a_prune_recreates_no_negative_counter_memory(clock):
