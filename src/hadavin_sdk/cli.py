@@ -239,7 +239,8 @@ def score_cmd(audit, args) -> int:
             decision="-",
             result=audit_result(run),
         )
-    report_dir.mkdir(exist_ok=True)
+    # NOSONAR S8707: the operator's own --outputs folder; a CLI argument is not attacker input
+    report_dir.mkdir(exist_ok=True)  # NOSONAR
     atomic_write(report_dir / "score-report.md", render_score_report(res))
     print(f"score report written: {report_dir / 'score-report.md'}")
     return 0

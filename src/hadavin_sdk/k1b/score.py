@@ -97,7 +97,7 @@ class ScoreResult:
 def load_answers(path: Path, cause: CauseList) -> tuple[dict[str, Answer], str]:
     """``answers.json`` (``sealed`` is ignored in lite). Returns the answers and the SHA-256 of the file."""
     try:
-        raw = Path(path).read_bytes()
+        raw = Path(path).read_bytes()  # NOSONAR S8707: the operator's own --answers file
         data = strict_json_loads(raw.decode("utf-8-sig"))
     except (OSError, ValueError, RecursionError) as exc:
         raise ConfigError("answers file is missing or not valid JSON") from exc
@@ -149,6 +149,16 @@ def classify(
     if any(not cause.contains(s, f) for s, f in first):
         return "miss"
     return "hit" if any(pair in answer.accepted for pair in first) else "miss"
+
+
+def _recorded_digest(sha_file: Path) -> str | None:
+    """The digest the replay wrote, ``None`` when absent, ``""`` when unreadable (counts as changed)."""
+    try:
+        if not sha_file.is_file():  # NOSONAR S8707: inside the operator's own --outputs folder
+            return None
+        return sha_file.read_text(encoding="utf-8").strip()  # NOSONAR S8707
+    except (OSError, ValueError):
+        return ""
 
 
 def _read_json(path: Path, what: str) -> Any:
@@ -214,10 +224,7 @@ def score(out: Path, answers_path: Path, cause_dir: Path, bundles_dir: Path) -> 
     runs = _check_layout(out, case_ids)
     digest = hash_files(out, outputs_files(out))
     sha_file = out / "outputs.sha256"
-    try:
-        recorded = sha_file.read_text(encoding="utf-8").strip() if sha_file.is_file() else None
-    except (OSError, ValueError):
-        recorded = ""
+    recorded = _recorded_digest(sha_file)
     changed = recorded is not None and recorded != digest
     warnings = (
         [
