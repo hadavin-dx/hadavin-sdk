@@ -15,6 +15,14 @@
   - **Exit codes of every command changed for crashes.** `main` now returns 2 for a `ConfigError` (message on
     stderr) and 3 for any other uncaught error, instead of a Python traceback with exit 1. Exit 1 keeps its meaning
     (gate red, audit not intact, replay aborted or cost cap reached).
+- **K1b-lite: a `not_sure` answer may omit `causes`.** A real Sonnet 5.5 smoke run abstained correctly on a
+  no_evidence incident with `{"not_sure": true, "reason": "..."}` and the strict parser called it unreadable (a Miss).
+  `causes` may now be omitted (or empty) only when `not_sure` is true; every other strictness is unchanged (both
+  forms, no form, wrong types, extra keys, fenced or surrounded text, duplicate keys, NaN). The `submit_diagnosis`
+  schema no longer lists `causes` as required and its description, and the system prompt, say so. Case files now
+  record `answered_via` (`tool` or `text`), and `run.json`, `replay-report.md` and `score-report.md` list the case
+  ids that were unreadable, errored, timed out, capped or converted for uncited evidence (ids only, never answers).
+  Re-run `replay` for runs made before this change: their saved unreadable answers are not re-parsed.
 - **`tick` now matches the v5 contract.** Exit code **4** (was 3) when the store is unreachable, for both
   `run_tick` and the CLI; 3 stays the wrapper code for any other uncaught error. The heartbeat summary line is no
   longer a step: it is logged after the steps, writes no `tick_state` row and cannot change the exit code (K7 sends

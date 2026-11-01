@@ -42,6 +42,7 @@ _COUNT_KEYS = (
     "hard_check_a",
     "injection_flagged",
 )
+_ISSUES = ("unreadable", "error", "timeout", "capped", "uncited")
 _NAME_RE = re.compile(r"[a-z_]{1,64}")
 
 
@@ -133,6 +134,7 @@ def _replay(
         rdir.mkdir()
         counts = dict.fromkeys(_COUNT_KEYS, 0)
         run_usd = Decimal(0)
+        issue_cases: dict[str, list[str]] = {k: [] for k in _ISSUES}
         for b in bundles:
             before = budget.spent
             record: dict[str, Any]
@@ -189,6 +191,14 @@ def _replay(
             if o.raw is not None:
                 record["raw"] = o.raw
             record["returned_ids"] = sorted(o.returned_ids)
+            if o.via:
+                record["answered_via"] = o.via
+            if o.status != "ok":
+                issue_cases[o.status].append(b.case_id)
+            elif diag is None:
+                issue_cases["unreadable"].append(b.case_id)
+            if record.get("converted") == "uncited":
+                issue_cases["uncited"].append(b.case_id)
             _write_json(rdir / f"{b.case_id}.json", record)
             counts[o.status] += 1
             counts["unreadable"] += o.status == "ok" and diag is None
@@ -210,6 +220,7 @@ def _replay(
             "cause_fault_types_sha256": cause.fault_types_sha256,
             "cases": len(bundles),
             "counts": counts,
+            "issue_cases": issue_cases,  # ids only, never answers
             "usd": format(run_usd, "f"),
             "sdk_version": __version__,
             "temperature": "provider default",

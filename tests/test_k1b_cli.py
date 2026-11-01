@@ -259,3 +259,13 @@ def test_uv_lock_version_matches_the_package():
     lock = (Path(__file__).resolve().parent.parent / "uv.lock").read_text(encoding="utf-8")
     m = re.search(r'name = "hadavin-sdk"\s+version = "([^"]+)"', lock)
     assert m and m.group(1) == hadavin_sdk.__version__
+
+
+def test_score_and_replay_reports_name_the_cases_to_inspect(cfg_dir, export):
+    assert _replay(cfg_dir, export) == 0 and _score(cfg_dir, export) == 0
+    replay_report = (export["out"] / "replay-report.md").read_text(encoding="utf-8")
+    score_report = (export["out"] / "score" / "score-report.md").read_text(encoding="utf-8")
+    for text in (replay_report, score_report):
+        assert "Cases to inspect (case ids):" in text
+        assert "unreadable case-002" in text and "uncited case-003" in text
+        assert "ghost" not in text

@@ -533,3 +533,32 @@ def test_provider_error_in_the_worker_thread_still_aborts(env):
             raise ProviderError("down")
 
     assert env.run(Boom([])).result == "aborted"
+
+
+NOT_SURE_NO_CAUSES = '{"not_sure": true, "reason": "The snapshot does not show a cause."}'
+
+
+def test_not_sure_without_causes_is_a_valid_abstain_by_text_and_by_tool(env):
+    env.run(
+        ScriptedLLM([text_reply(NOT_SURE_NO_CAUSES), tool_reply("submit_diagnosis", not_sure=True)])
+    )
+    c1, c2 = env.case(), env.case("case-002")
+    assert c1["diagnosis"] == {
+        "causes": [],
+        "not_sure": True,
+        "reason": "The snapshot does not show a cause.",
+    }
+    assert c1["answered_via"] == "text" and "raw" not in c1
+    assert c2["diagnosis"]["not_sure"] is True and c2["answered_via"] == "tool"
+    run = json.loads((env.out / "run1" / "run.json").read_text(encoding="utf-8"))
+    assert run["counts"]["unreadable"] == 0 and run["issue_cases"]["unreadable"] == []
+
+
+def test_replay_report_lists_case_ids_to_inspect_but_no_answers(env):
+    fenced = "```json\n" + NOT_SURE_NO_CAUSES + "\n```"
+    env.run(ScriptedLLM([text_reply(fenced), submit_not_sure()]))
+    run = json.loads((env.out / "run1" / "run.json").read_text(encoding="utf-8"))
+    assert run["issue_cases"]["unreadable"] == ["case-001"]
+    report = (env.out / "replay-report.md").read_text(encoding="utf-8")
+    assert "Cases to inspect (case ids):" in report and "- Run 1: unreadable case-001" in report
+    assert "does not show a cause" not in report

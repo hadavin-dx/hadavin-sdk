@@ -1,8 +1,8 @@
 """The agent's answer: one strict JSON object, parsed without any leniency.
 
-Valid shapes: (a) ``not_sure`` true and ``causes`` empty; (b) ``not_sure`` false or absent and one or more
-causes, each with at least one evidence id. Anything else (both, neither, wrong types, extra keys, fenced or
-surrounded text, empty ``evidence_ids``) is unreadable and returns ``None``; the scorer counts it as a Miss.
+Valid shapes: (a) ``not_sure`` true and ``causes`` empty or omitted; (b) ``not_sure`` false or absent and one
+or more causes, each with at least one evidence id. Anything else (both, neither, wrong types, extra keys,
+fenced or surrounded text, empty ``evidence_ids``, no ``causes`` without ``not_sure`` true) is unreadable and returns ``None``; the scorer counts it as a Miss.
 More than 3 causes parse fine; only the first 3 are scored.
 """
 
@@ -28,6 +28,7 @@ DIAGNOSIS_SCHEMA: dict[str, Any] = {
     "properties": {
         "causes": {
             "type": "array",
+            "description": "Likely causes, best first. Leave out (or empty) only when not_sure is true.",
             "items": {
                 "type": "object",
                 "properties": {
@@ -39,11 +40,13 @@ DIAGNOSIS_SCHEMA: dict[str, Any] = {
                 "additionalProperties": False,
             },
         },
-        "not_sure": {"type": "boolean"},
+        "not_sure": {
+            "type": "boolean",
+            "description": "true when the evidence does not support a cause; then give no causes.",
+        },
         "reason": {"type": "string"},
     },
-    "required": ["causes"],
-    "additionalProperties": False,
+    "additionalProperties": False,  # no `required`: a not_sure answer may omit causes; parse_diagnosis checks
 }
 
 
@@ -65,7 +68,7 @@ class Cause(BaseModel):
 
 class Diagnosis(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True, frozen=True)
-    causes: list[Cause]
+    causes: list[Cause] = []  # may be omitted only with not_sure true (checked below)
     not_sure: StrictBool = False
     reason: StrictStr = ""
 

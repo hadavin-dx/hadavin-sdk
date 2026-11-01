@@ -79,6 +79,7 @@ class RunScore:
     misses_scored: int  # misses among them
     bound: float | None  # Hit-rate lower bound, None when n == 0
     precision: float | None  # hits / (hits + misses) over those incidents, None when 0
+    issues: dict[str, list[str]] = field(default_factory=dict)  # kind -> case ids (never answers)
 
 
 @dataclass(frozen=True)
@@ -258,14 +259,21 @@ def score(out: Path, answers_path: Path, cause_dir: Path, bundles_dir: Path) -> 
         metas.append(meta)
         classes: dict[str, str] = {}
         tally = {"unreadable": 0, "error": 0, "timeout": 0, "capped": 0, "uncited": 0, "bad": 0}
+        issues: dict[str, list[str]] = {
+            k: [] for k in ("unreadable", "error", "timeout", "capped", "uncited")
+        }
         for ordinal, cid in enumerate(case_ids, 1):
             rec = _record(rdir / f"{cid}.json", cid, ordinal)
             diag = parse_diagnosis(rec["diagnosis"]) if rec["diagnosis"] is not None else None
             if rec["status"] != "ok":
                 tally[rec["status"]] += 1
+                issues[rec["status"]].append(cid)
             elif diag is None:
                 tally["unreadable"] += 1
+                issues["unreadable"].append(cid)
             tally["uncited"] += rec.get("converted") == "uncited"
+            if rec.get("converted") == "uncited":
+                issues["uncited"].append(cid)
             if diag is not None and not diag.not_sure:
                 bad = bad_citations(diag, bundles[cid], set(rec["returned_ids"]))
                 tally["bad"] += bool(bad)
@@ -281,7 +289,7 @@ def score(out: Path, answers_path: Path, cause_dir: Path, bundles_dir: Path) -> 
         }
         if any(counts[k] != v for k, v in recomputed.items()):
             raise ConfigError(f"run{i}/run.json counts disagree with the incident files")
-        scores.append(_run_score(i, classes, answers, tally, counts["hard_check_a"]))
+        scores.append(_run_score(i, classes, answers, tally, counts["hard_check_a"], issues))
 
     for key in (
         "agent",
@@ -339,6 +347,7 @@ def _run_score(
     answers: dict[str, Answer],
     tally: dict[str, int],
     hard_a: int,
+    issues: dict[str, list[str]] | None = None,
 ) -> RunScore:
     count = lambda cls: sum(v == cls for v in classes.values())
     scored = [c for c in classes if not answers[c].no_evidence]
@@ -365,6 +374,7 @@ def _run_score(
         misses_scored=misses_scored,
         bound=None if ub is None else 1 - ub,
         precision=(h / (h + misses_scored)) if h + misses_scored else None,
+        issues=issues or {},
     )
 
 
