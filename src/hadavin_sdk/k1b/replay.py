@@ -141,6 +141,7 @@ def _replay(
                     llm,
                     system=system,
                     route=agent.model_route,
+                    route_prices=cfg.routes[agent.model_route],
                     bundle=b,
                     detector=detector,
                     budget=budget,
@@ -230,7 +231,7 @@ def replay(*args: Any, **kwargs: Any) -> ReplayResult:
         return _replay(*args, **kwargs)
     except ConfigError:  # every refusal happens before anything is written
         raise
-    except Exception as exc:
+    except BaseException as exc:  # includes Ctrl-C: the folder must not look finished
         out = Path(kwargs["out"])
         if out.is_dir() and any(out.iterdir()):
             atomic_write(out / "FAILED.txt", f"replay did not finish: {type(exc).__name__}\n")

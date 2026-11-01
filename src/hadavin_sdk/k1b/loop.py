@@ -10,16 +10,19 @@ json>`` and its result the user text ``tool result <name>: <json>``.
 from __future__ import annotations
 
 import json
+import logging
 import threading
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from decimal import Decimal
 
+from hadavin_sdk.config import Route
 from hadavin_sdk.guard.injection import Detector, injection_check
 from hadavin_sdk.k1b.bundle import Bundle
 from hadavin_sdk.k1b.diagnosis import Diagnosis, parse_diagnosis, parse_diagnosis_text
 from hadavin_sdk.k1b.tools import ALLOWED_TOOLS, NO_DATA, SUBMIT, TOOL_SPECS, Snapshot, render
+from hadavin_sdk.llm.common import estimate_tokens
 from hadavin_sdk.llm.protocol import LLM, ProviderError, ProviderExhausted
 from hadavin_sdk.models import Reply
 
@@ -79,21 +82,39 @@ def _chat_bounded(llm: LLM, wait_s: float, /, *args: object, **kwargs: object) -
     abandoned (its late reply is dropped and its cost is unknown), so the run never hangs. Raises
     ``CallTimeout``; any exception from the call is re-raised here."""
     box: dict[str, object] = {}
+    abandoned = threading.Event()
 
     def work() -> None:
         try:
             box["reply"] = llm.chat(*args, **kwargs)  # type: ignore[arg-type]
         except BaseException as exc:  # noqa: BLE001 - handed to the caller thread below
             box["exc"] = exc
+            if (
+                abandoned.is_set()
+            ):  # nobody will read it: leave the class name (never the message) in the log
+                logging.getLogger(__name__).warning(
+                    "abandoned llm call ended with %s", type(exc).__name__
+                )
 
     t = threading.Thread(target=work, daemon=True, name="k1b-llm-call")
     t.start()
     t.join(max(wait_s, MIN_WAIT_S))
     if t.is_alive():
+        abandoned.set()
         raise CallTimeout
     if "exc" in box:
         raise box["exc"]  # type: ignore[misc]
     return box["reply"]  # type: ignore[return-value]
+
+
+def worst_case_usd(route: Route, system: str, messages: list[dict[str, str]]) -> Decimal:
+    """Upper estimate for one abandoned call (one attempt, a full reply): the pessimistic input estimate plus
+    ``max_tokens`` of output. Charged when a call times out, because its real cost is unknown."""
+    tokens_in = estimate_tokens(system + _dumps(messages))
+    return (
+        Decimal(tokens_in) * route.input_usd_per_mtok
+        + Decimal(route.max_tokens) * route.output_usd_per_mtok
+    ) / Decimal(1_000_000)
 
 
 def run_case(
@@ -101,6 +122,7 @@ def run_case(
     *,
     system: str,
     route: str,
+    route_prices: Route | None = None,
     bundle: Bundle,
     detector: Detector,
     budget: Budget,
@@ -137,7 +159,11 @@ def run_case(
                 tools=TOOL_SPECS,
             )
         except CallTimeout:
-            out.status, out.stop_reason = "timeout", "call_timeout"
+            # The abandoned call may still be running and billed (a retry layer can re-send), so charge the
+            # worst case and stop the run: at most one such call per invocation, and the cap still holds.
+            if route_prices is not None:
+                budget.charge(worst_case_usd(route_prices, system, messages))
+            out.status, out.stop_reason, out.halt = "timeout", "call_timeout", "aborted"
             return out
         except ProviderExhausted:
             out.status, out.stop_reason = "error", "provider_exhausted"

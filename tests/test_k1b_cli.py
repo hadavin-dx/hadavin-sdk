@@ -216,8 +216,21 @@ def test_report_write_failure_leaves_started_then_failed_and_no_score_run(
     assert failed.error_code == "OSError"
 
 
-def test_score_run_events_come_after_the_report_exists(cfg_dir, export):
-    assert _replay(cfg_dir, export) == 0 and _score(cfg_dir, export) == 0
+def test_score_run_events_come_after_the_report_exists(cfg_dir, export, monkeypatch):
+    assert _replay(cfg_dir, export) == 0
+    report = export["out"] / "score" / "score-report.md"
+    seen = {}
+    real = K1bAudit.emit
+
+    def spy(self, op, run_id, **kw):
+        seen[(op, kw.get("result"))] = report.is_file()
+        return real(self, op, run_id, **kw)
+
+    monkeypatch.setattr(K1bAudit, "emit", spy)
+    assert _score(cfg_dir, export) == 0
+    assert seen[("score_report", "started")] is False
+    assert seen[("score_report", "written")] is True
+    assert [v for k, v in seen.items() if k[0] == "score_run"] == [True]
     ops = [(e.operation, e.result) for e in LocalDirSink(cfg_dir / "audit").events()]
     tail = [o for o in ops if o[0].startswith("score")]
     assert [t[0] for t in tail] == ["score_report", "score_report", "score_run"]
@@ -230,5 +243,8 @@ def test_version_is_real_and_matches_pyproject():
 
     import hadavin_sdk
 
-    proj = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))["project"]["version"]
+    root = Path(__file__).resolve().parent.parent
+    proj = tomllib.loads((root / "pyproject.toml").read_text(encoding="utf-8"))["project"][
+        "version"
+    ]
     assert hadavin_sdk.__version__ == proj != "0.0.0"

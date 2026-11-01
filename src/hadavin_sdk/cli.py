@@ -220,8 +220,8 @@ def replay_cmd(reg, llm, detector, audit, args) -> int:
 
 
 def score_cmd(audit, args) -> int:
-    """Body of ``score``. Order: intent event (a failed append writes nothing), the report file, then one
-    outcome event per run. A report that cannot be written leaves ``score_report`` ``started`` followed by
+    """Body of ``score``. Order: intent event (a failed append writes nothing), the report file, then
+    ``written`` and one ``score_run`` per run. A report that cannot be written leaves ``score_report`` ``started`` followed by
     ``score_report`` ``failed``; a crash leaves ``started`` alone."""
     from hadavin_sdk.k1b.atomic import atomic_write
     from hadavin_sdk.k1b.report import render_score_report
@@ -243,9 +243,10 @@ def score_cmd(audit, args) -> int:
             "score_report", run_id, **ref, result="failed", error_code=type(exc).__name__
         )
         raise
-    audit.emit_outcome("score_report", run_id, **ref, result="written")
+    # Raising appends: a lost event is a failed command (exit 3), with the report already on disk.
+    audit.emit("score_report", run_id, **ref, result="written")
     for run in res.runs:
-        audit.emit_outcome("score_run", run_id, **ref, decision="-", result=audit_result(run))
+        audit.emit("score_run", run_id, **ref, decision="-", result=audit_result(run))
     print(f"score report written: {report_dir / 'score-report.md'}")
     return 0
 

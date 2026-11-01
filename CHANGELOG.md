@@ -16,15 +16,16 @@
     stderr) and 3 for any other uncaught error, instead of a Python traceback with exit 1. Exit 1 keeps its meaning
     (gate red, audit not intact, replay aborted or cost cap reached).
 - **K1b-lite gap fixes.**
-  - SDK version is now `0.1.0` (`pyproject.toml` and `hadavin_sdk.__version__`, kept equal by a test). Replay and
+  - SDK version is now `0.1.0` (`pyproject.toml` and `hadavin_sdk.__version__`, pyproject and `__init__` kept equal by a test). Replay and
     score reports print it; `0.0.0` still prints "unreleased build".
   - `replay`: every provider call has a wall-clock bound (the time left in `k1b.case_timeout_s`, at least 1 s),
     for every llm kind: the call runs in a worker thread and, on expiry, the case ends as `timeout` with stop
-    reason `call_timeout`. The abandoned call is not killed and its cost is unknown (not charged to `--max-usd`).
-    The per-socket timeout is already `call_timeout_s` on each llm kind's settings (`backends.llm`); set it
-    low (for example 30) so abandoned calls end by themselves.
+    reason `call_timeout`, the worst-case cost of that call is charged to `--max-usd`, and the whole run stops
+    as `aborted` (exit 1), so at most one abandoned call exists per invocation. The abandoned call is not killed;
+    it can outlive the run (a slow trickle defeats a socket timeout). The per-socket timeout is already
+    `call_timeout_s` on each llm kind's settings (`backends.llm`). Ctrl-C during a replay now also leaves `FAILED.txt`.
   - `score` audit order changed: `score_report` `started` (intent, before anything is written), the report file,
-    then `score_report` `written` and one `score_run` per run (outcome events). A report that cannot be written
+    then `score_report` `written` and one `score_run` per run (these append like any K1b event: a failed append exits 3 with the report on disk). A report that cannot be written
     leaves `started` then `failed` (with the error class) and no `score_run`; the command exits 3.
 - **Lock-in guard.** `tests/test_lockin_guard.py` fails CI when a vendor SDK is imported outside its kind
   module, a capability lacks a neutral prod kind (`Entry.neutral`) and two prod kinds without a dated

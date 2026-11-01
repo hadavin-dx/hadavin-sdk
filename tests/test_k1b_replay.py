@@ -521,7 +521,10 @@ def test_hung_provider_call_ends_the_case_as_timeout_not_a_hang(env, monkeypatch
     finally:
         release.set()
     assert env.case()["status"] == "timeout" and env.case()["stop_reason"] == "call_timeout"
-    assert res.exit_code == 0
+    # the abandoned call may still be billed: the run stops, the second case never starts, cost is charged
+    assert (res.exit_code, res.result) == (1, "aborted")
+    assert env.case("case-002")["stop_reason"] == "aborted"
+    assert Decimal(res.runs[0]["usd"]) > 0
 
 
 def test_provider_error_in_the_worker_thread_still_aborts(env):
