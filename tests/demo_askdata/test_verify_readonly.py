@@ -12,7 +12,7 @@ from psycopg.conninfo import make_conninfo
 
 from .conftest import DEMO, load_script
 
-SCRIPT = DEMO / "trust" / "verify_readonly.sql"
+SCRIPT = DEMO / "trust" / "verify_readonly.psql"
 
 
 def _rows(stdout: str) -> list[tuple[str, str, str]]:

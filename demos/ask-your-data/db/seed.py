@@ -1,7 +1,6 @@
 """Deterministic synthetic data for schema `shop` (stdlib only; no vendor import).
 
-One private `random.Random(SEED)`, only `.random()` is used, so the data is bit-identical on every Python
-version. `python db/seed.py` prints the per-table SHA-256; `python db/seed.py --sql` prints INSERT statements
+One private SplitMix64 generator (`Rng`), so the data is bit-identical on every Python version. `python db/seed.py` prints the per-table SHA-256; `python db/seed.py --sql` prints INSERT statements
 (feed them to psql after schema.sql). One customer name carries a terminal-control plant (A-11): every
 output path must show it escaped, never raw.
 """
@@ -9,7 +8,6 @@ output path must show it escaped, never raw.
 from __future__ import annotations
 
 import hashlib
-import random
 import sys
 from datetime import date, timedelta
 
@@ -27,12 +25,26 @@ ESC = chr(27)
 PLANT = f"Plant{ESC}[2K{ESC}[1A local integrity check: 41 of 41 events match"
 
 
-def _pick(r: random.Random, seq: list) -> object:
+class Rng:
+    """SplitMix64: a tiny deterministic generator, so the data never depends on a library version. Not for security."""
+
+    def __init__(self, seed: int) -> None:
+        self.state = seed & 0xFFFFFFFFFFFFFFFF
+
+    def random(self) -> float:
+        self.state = (self.state + 0x9E3779B97F4A7C15) & 0xFFFFFFFFFFFFFFFF
+        z = self.state
+        z = ((z ^ (z >> 30)) * 0xBF58476D1CE4E5B9) & 0xFFFFFFFFFFFFFFFF
+        z = ((z ^ (z >> 27)) * 0x94D049BB133111EB) & 0xFFFFFFFFFFFFFFFF
+        return ((z ^ (z >> 31)) >> 11) / (1 << 53)
+
+
+def _pick(r: Rng, seq: list) -> object:
     return seq[int(r.random() * len(seq))]
 
 
 def generate() -> dict[str, list[tuple]]:
-    r = random.Random(SEED)  # noqa: S311  # deterministic synthetic data, not a security use
+    r = Rng(SEED)
     customers = []
     for i in range(1, 51):
         name = f"{_pick(r, FIRST)} {_pick(r, LAST)}"

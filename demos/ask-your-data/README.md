@@ -4,7 +4,7 @@ A staged demo of the safety shape of a text-to-SQL tool, on **synthetic data**. 
 calls **no model over the network**: the model is a scripted stand-in (`askdata/spike_llm.py`). What it shows:
 
 - **C2, the login cannot write.** `db/roles.sql` creates a read-only login that sees four views and nothing else
-  (no base tables, no `email` column). `trust/verify_readonly.sql` is a script a DBA can read and run as that login;
+  (no base tables, no `email` column). `trust/verify_readonly.psql` is a script a DBA can read and run as that login;
   it exits 0 when every check is green and 3 when one is red.
 - **C1, one canonical SELECT.** `askdata/validate.py` turns model-style SQL into one canonical, hashed SELECT or
   rejects it with a rule id (V01 to V12). Only the canonical text is shown, hashed and sent.
@@ -28,7 +28,7 @@ docker exec askdata-pg psql -U postgres -c "CREATE DATABASE askdata_demo"
 $env:ASKDATA_ADMIN_DSN = "postgresql://postgres@127.0.0.1:55432/askdata_demo"   # a DEDICATED throwaway database
 $env:ASKDATA_RO_PASSWORD = "choose-a-demo-password"; $env:PGPASSWORD = $env:ASKDATA_RO_PASSWORD
 $env:ASKDATA_DSN = "postgresql://askdata_ro@127.0.0.1:55432/askdata_demo"
-uv run --locked --no-build --extra askdata python -m askdata demo --setup
+uv run --locked --no-build --extra askdata python -m askdata demo --setup   # add --accept-loss only after reading the preflight list
 ```
 
 `demo --setup` applies schema, seed, views and roles (`psql`), then runs the whole story: the checks, one question,

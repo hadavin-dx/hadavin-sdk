@@ -92,6 +92,17 @@ def _psql() -> str | None:
     return os.environ.get("PSQL") or shutil.which("psql")
 
 
+def _roles_input(password: str) -> str:
+    """psql input that sets the password variable and then runs roles.sql, so it never appears in argv."""
+    bs = chr(92)
+    quoted = "'" + password.replace(bs, bs * 2).replace("'", "''") + "'"
+    nl = chr(10)
+    db = (
+        ROOT / "db"
+    )  # \ir inside roles.sql resolves against the current directory when read from stdin
+    return f"{bs}cd '{db.as_posix()}'{nl}{bs}set ro_password {quoted}{nl}{bs}i roles.sql{nl}"
+
+
 def cmd_setup(accept_loss: bool) -> int:
     """Apply schema, seed, views and roles to the dedicated database named by ASKDATA_ADMIN_DSN (psql)."""
     admin, password, psql = (
@@ -99,6 +110,9 @@ def cmd_setup(accept_loss: bool) -> int:
         os.environ.get("ASKDATA_RO_PASSWORD"),
         _psql(),
     )
+    if password and any(c in password for c in (chr(13), chr(10))):
+        out("startup: ASKDATA_RO_PASSWORD must be a single line")
+        return 4
     if not (admin and password and psql):
         out(
             "startup: set ASKDATA_ADMIN_DSN (a DEDICATED throwaway database), ASKDATA_RO_PASSWORD, and have psql on PATH or in PSQL"
@@ -127,12 +141,10 @@ def cmd_setup(accept_loss: bool) -> int:
                 "confirm_dedicated=yes",
                 "-v",
                 f"accept_loss={'yes' if accept_loss else 'no'}",
-                "-v",
-                f"ro_password={password}",
                 "-f",
-                str(ROOT / "db" / "roles.sql"),
+                "-",
             ],
-            None,
+            _roles_input(password),
         ),
     ]
     for name, args, stdin in steps:
@@ -148,7 +160,7 @@ def cmd_setup(accept_loss: bool) -> int:
         )
         if done.returncode != 0:
             out(f"setup: step {name} failed (exit {done.returncode}):")
-            out(done.stderr.strip()[-1500:].replace(password, "***"))
+            out((done.stdout + done.stderr).strip()[-1500:].replace(password, "***"))
             return 4
         out(f"setup: {name} done")
     return 0
@@ -194,6 +206,7 @@ def main(argv: list[str] | None = None) -> int:
     st.add_argument("--accept-loss", action="store_true", help="pass accept_loss=yes to roles.sql")
     dm = sub.add_parser("demo", help="the offline demo: verify, one question, two refusals")
     dm.add_argument("--setup", action="store_true", help="run setup first")
+    dm.add_argument("--accept-loss", action="store_true", help="with --setup: pass accept_loss=yes")
     args = ap.parse_args(argv)
 
     if args.cmd == "setup" or (args.cmd == "demo" and args.setup):
