@@ -202,3 +202,85 @@ def test_a_round_that_reports_no_usage_is_estimated_not_counted_as_zero():
     assert err.value.answered == 1 and err.value.billed_usd > 0
     _, r = _oc_chat([no_usage, no_usage], max_attempts=1)
     assert r.answered == 2 and r.cost_usd > 0
+
+
+# ---- a 2xx whose body is cut short or is not JSON is an unusable answer and is BILLED (it used to be a free refusal)
+import http.client
+
+from hadavin_sdk.llm import common
+
+
+class _Resp:
+    def __init__(self, reader):
+        self._reader = reader
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
+
+    def read(self):
+        return self._reader()
+
+
+def _opener_returning(reader):
+    return type("Op", (), {"open": lambda self, req, timeout=None: _Resp(reader)})()
+
+
+@pytest.mark.parametrize(
+    "reader",
+    [
+        lambda: b'{"choices": [{"message": {"content": "cut sh',  # truncated JSON
+        lambda: (_ for _ in ()).throw(
+            http.client.IncompleteRead(b"abc", 100)
+        ),  # connection dropped mid-body
+        lambda: b"\xff\xfe not utf-8",  # undecodable bytes
+        lambda: b"<html>gateway page</html>",  # not JSON at all
+    ],
+)
+def test_a_200_with_an_unusable_body_is_a_billed_unusable_answer(reader, monkeypatch):
+    monkeypatch.setattr(common, "_OPENER", _opener_returning(reader))
+    llm = oc.OpenAICompatLLM(
+        "https://api.example.com/v1",
+        lambda: "k",
+        {"sql_generate": PRICED},
+        30,
+        1,
+        sleep=lambda _s: None,
+    )
+    with pytest.raises(UnusableAnswer) as err:
+        llm.chat(
+            [{"role": "user", "content": "hi"}],
+            system="s",
+            route="sql_generate",
+            output_schema=SCHEMA,
+        )
+    e = err.value
+    assert e.attempts == 1 and not isinstance(e, ProviderExhausted)
+    # UnusableAnswer is the class the meter bills (a plain ProviderError is the free refusal)
+
+
+def test_the_estimate_of_a_round_without_usage_counts_the_tool_definitions_too():
+    no_usage = {"choices": [{"message": {"content": "plain words"}, "finish_reason": "stop"}]}
+    input_only = Route(
+        model_id="gpt-x-1", input_usd_per_mtok="1000", output_usd_per_mtok="0", max_tokens=1000
+    )
+    llm = oc.OpenAICompatLLM(
+        "https://api.example.com/v1",
+        lambda: "k",
+        {"sql_generate": input_only},
+        30,
+        1,
+        sleep=lambda _s: None,
+    )
+
+    def cost(description: str) -> Decimal:
+        tool = {"name": "lookup", "description": description, "input_schema": SCHEMA}
+        with mock.patch.object(oc, "post_json", side_effect=[no_usage]):
+            reply = llm.chat(
+                [{"role": "user", "content": "hi"}], system="s", route="sql_generate", tools=[tool]
+            )
+        return reply.cost_usd
+
+    assert cost("x" * 3000) > cost("x")  # the long tool definition is billed input

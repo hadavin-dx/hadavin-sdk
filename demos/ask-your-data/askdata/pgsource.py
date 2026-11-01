@@ -127,7 +127,7 @@ class PgSource:
         except psycopg.OperationalError as err:
             if getattr(err, "sqlstate", None) is not None:
                 raise _fail(err) from None
-            time.sleep(0.25)
+            time.sleep(RUNTIME.connect_retry_wait_s)
             try:
                 conn = psycopg.connect(self._dsn, **kwargs)
             except psycopg.Error as again:

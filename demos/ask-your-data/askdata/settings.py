@@ -1,7 +1,9 @@
 """The ONE place for the tunable numbers of the demo, with their documented defaults.
 
 Anything a client or an operator may reasonably change lives here as a validated model and is set in the askdata config
-(`smoke:`, `sealed:`, `meter:` blocks). Code reads these models; it holds no copy of the numbers. Secrets are not here
+(`smoke:`, `sealed:`, `meter:` blocks). Code reads these models. The scan in tests/demo_askdata/test_demo_literals.py
+lists what is NOT here and why: structural constants (exit codes, unicode ranges, validator rule limits, schema
+bounds), the dataset generators db/lumen.py and db/seed.py, and the core SDK's own constants. Secrets are not here
 (they come from the core secrets kind by configured name), and neither are environment names, regions, model ids or
 machine paths (those are config entries without defaults, or the `route:` block).
 """
@@ -56,7 +58,7 @@ class MeterLimits(_Strict):
 
 
 class Runtime(_Strict):
-    """Operational numbers that were literals in the modules: every default lives here and nowhere else."""
+    """Operational numbers that were literals in the demo modules. The demo's tunable defaults live here."""
 
     # questions and the pipeline
     max_attempts: int = Field(
@@ -81,10 +83,23 @@ class Runtime(_Strict):
     keepalives_interval_s: int = Field(5, gt=0)
     keepalives_count: int = Field(3, gt=0)
     watchdog_join_s: float = Field(5.0, gt=0)  # how long to wait for the cancel thread
+    # the read-only login (db/roles.sql gets these as psql variables; the script has no numbers of its own)
+    role_connection_limit: int = Field(5, gt=0)
+    role_statement_timeout_s: int = Field(15, gt=0)
+    role_lock_timeout_s: int = Field(1, gt=0)
+    role_idle_in_transaction_timeout_s: int = Field(15, gt=0)
     # evaluation and locks
     max_duration_ms: int = Field(15_000, gt=0)  # a question slower than this is not "bounded"
     human_read_fraction: float = Field(0.2, gt=0, le=1)
     human_read_salt: str = "human-read-v1"  # makes the human-read sample deterministic
+    lock_poll_s: float = Field(0.01, gt=0)  # how often a waiting process re-tries an OS lock
+    lock_replace_attempts: int = Field(
+        5, ge=1
+    )  # os.replace of lock.json is retried (Windows readers)
+    lock_replace_wait_s: float = Field(0.05, ge=0)
+    connect_retry_wait_s: float = Field(
+        0.25, ge=0
+    )  # pause before the one reconnect of a dropped connection
     lock_wait_s: float = Field(5.0, gt=0)  # how long to wait for an OS lock (meter file, lock.json)
     email_pattern: str = (
         r"cust\d{5}@example\.com"  # the synthetic e-mail shape a leak check looks for
@@ -92,3 +107,13 @@ class Runtime(_Strict):
 
 
 RUNTIME = Runtime()
+
+
+def role_psql_vars() -> dict[str, str]:
+    """The psql variables db/roles.sql requires, from RUNTIME (the one home of the numbers)."""
+    return {
+        "ro_connection_limit": str(RUNTIME.role_connection_limit),
+        "ro_statement_timeout": f"{RUNTIME.role_statement_timeout_s}s",
+        "ro_lock_timeout": f"{RUNTIME.role_lock_timeout_s}s",
+        "ro_idle_timeout": f"{RUNTIME.role_idle_in_transaction_timeout_s}s",
+    }

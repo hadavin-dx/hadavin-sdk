@@ -123,6 +123,10 @@ class OpenAICompatLLM(NetworkLLM):
         if forced:
             body["tool_choice"] = {"type": "function", "function": {"name": forced}}
         started, used, sent, answered = time.monotonic(), [0, 0], 0, 0
+        # what travels: the messages AND the tool definitions and tool_choice (they are billed input too)
+        sent_text = json.dumps(
+            {k: body[k] for k in ("messages", "tools", "tool_choice") if k in body}
+        )
         for _ in range(self.ROUNDS):  # the forced answer missing: one more request (design 4.3)
             try:
                 got = self._retry(
@@ -138,7 +142,7 @@ class OpenAICompatLLM(NetworkLLM):
             # A round that reports no usage is still billed: estimate it exactly as `reply()` does, per round
             # (it used to be added as 0, so a server that omits usage undercounted every answered round).
             used = [
-                used[0] + (got.tokens[0] or estimate_tokens(json.dumps(body["messages"]))),
+                used[0] + (got.tokens[0] or estimate_tokens(sent_text)),
                 used[1]
                 + (
                     got.tokens[1]
@@ -159,7 +163,7 @@ class OpenAICompatLLM(NetworkLLM):
             **{**vars(got), "attempts": sent},
             answered=answered,
             started=started,
-            sent=json.dumps(body["messages"]),
+            sent=sent_text,
         )
 
     @staticmethod

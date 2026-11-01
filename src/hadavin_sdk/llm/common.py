@@ -5,6 +5,7 @@ Rewritten from WARDEN ``providers.py`` (single-turn ``complete`` → multi-turn 
 
 from __future__ import annotations
 
+import http.client
 import json
 import re
 import time
@@ -16,6 +17,7 @@ from typing import Any
 from urllib.parse import urlsplit
 
 from hadavin_sdk.errors import ConfigError
+from hadavin_sdk.llm.protocol import UnusableAnswer
 from hadavin_sdk.llm.retry import with_retry
 from hadavin_sdk.models import Reply, ToolCall
 
@@ -294,4 +296,12 @@ def post_json(url: str, body: dict[str, Any], headers: dict[str, str], timeout_s
     )
     opener = _LOCAL_OPENER if urlsplit(url).hostname in _LOOPBACK else _OPENER
     with opener.open(req, timeout=timeout_s) as resp:  # nosec B310
-        return json.loads(resp.read())
+        # The server ANSWERED (a 2xx). A body that is cut short or is not JSON is an unusable answer and is
+        # billed, not a refusal: it is classified here, where the request is known to have been sent.
+        try:
+            return json.loads(resp.read())
+        except (
+            ValueError,
+            http.client.HTTPException,
+        ) as exc:  # JSONDecodeError, UnicodeDecodeError, IncompleteRead
+            raise UnusableAnswer(f"unusable response body ({type(exc).__name__})") from None
