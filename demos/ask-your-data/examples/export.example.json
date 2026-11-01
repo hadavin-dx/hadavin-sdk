@@ -81,7 +81,7 @@
           "decision": "allow",
           "reason": "executed",
           "confidence": {},
-          "ms": 13,
+          "ms": 11,
           "cost_usd": "0",
           "source_value": null,
           "model_value": null
@@ -89,8 +89,8 @@
       ],
       "approval_id": null,
       "audit_event_ids": [
-        "evt-e4a1cedc51694f1b93b07aad7dd0ab6d",
-        "evt-47d21c43466a4443b763abaf7dbda536"
+        "evt-96a610cb5bbc43fb99690c72593a2b77",
+        "evt-0eff1d9354e0476a8517ecd6c7130ac2"
       ]
     },
     {
@@ -154,7 +154,7 @@
           "decision": "allow",
           "reason": "executed",
           "confidence": {},
-          "ms": 12,
+          "ms": 10,
           "cost_usd": "0",
           "source_value": null,
           "model_value": null
@@ -162,8 +162,8 @@
       ],
       "approval_id": null,
       "audit_event_ids": [
-        "evt-ed4eebb543b84b13bca0e38fea78fd6d",
-        "evt-a32c31e01d0740c18c6697adab94a6c4"
+        "evt-fcfd9b7286ec45fbba4e559073a21de0",
+        "evt-1659d9bfcfd6419584891bb7e1be58d1"
       ]
     },
     {
@@ -227,7 +227,7 @@
           "decision": "allow",
           "reason": "executed",
           "confidence": {},
-          "ms": 12,
+          "ms": 14,
           "cost_usd": "0",
           "source_value": null,
           "model_value": null
@@ -235,8 +235,8 @@
       ],
       "approval_id": null,
       "audit_event_ids": [
-        "evt-6e1f01fbc631449788d30cb6f2f77c19",
-        "evt-3affe9ac7f854fbdb3d0b9c0ca5833d7"
+        "evt-533a3aa164924fd3b95e84c7e3b5f4db",
+        "evt-36346f53916c47d8b7e3ca906ac1a9b6"
       ]
     },
     {
@@ -288,7 +288,7 @@
       ],
       "approval_id": null,
       "audit_event_ids": [
-        "evt-a481eab20ff349599cfaaea6e1128f43"
+        "evt-6256e263b35a4d379402a574f02ccb47"
       ]
     },
     {
@@ -340,7 +340,7 @@
       ],
       "approval_id": null,
       "audit_event_ids": [
-        "evt-6d07dcd7f9734b698c84179a9bf6c2c3"
+        "evt-6335479b7d1a4b7f9aedd8bbe993febd"
       ]
     },
     {
@@ -392,7 +392,7 @@
       ],
       "approval_id": null,
       "audit_event_ids": [
-        "evt-2263ce994cb8430fa1e5c55e4101578d"
+        "evt-0d2c45fbcb19420181b2882b56fda10a"
       ]
     },
     {
@@ -514,7 +514,7 @@
       ],
       "approval_id": null,
       "audit_event_ids": [
-        "evt-2cab28471a534429a5be4daacf89540d"
+        "evt-52aff385226e4f8f88ee2ad6680f48e7"
       ]
     }
   ],
@@ -524,113 +524,113 @@
     "events": [
       {
         "seq": 1,
-        "event_id": "evt-e4a1cedc51694f1b93b07aad7dd0ab6d",
-        "ts": "2026-11-01T11:12:19Z",
+        "event_id": "evt-96a610cb5bbc43fb99690c72593a2b77",
+        "ts": "2026-11-01T11:20:35Z",
         "type": "intent",
         "actor": "system",
         "case_id": "askdata-e-001",
         "summary": "execute: intent",
         "prev_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
-        "sha256": "76f651e742a0942265914ceccef69d655d5b791f24057e7ad17a10efdb321384"
+        "sha256": "b81f0e92e3c413afe5a50326f1bd83f090a30e1e232c2d8440c773fa05cd6c6c"
       },
       {
         "seq": 2,
-        "event_id": "evt-47d21c43466a4443b763abaf7dbda536",
-        "ts": "2026-11-01T11:12:19Z",
+        "event_id": "evt-0eff1d9354e0476a8517ecd6c7130ac2",
+        "ts": "2026-11-01T11:20:35Z",
         "type": "outcome",
         "actor": "system",
         "case_id": "askdata-e-001",
         "summary": "ask: answered",
-        "prev_sha256": "76f651e742a0942265914ceccef69d655d5b791f24057e7ad17a10efdb321384",
-        "sha256": "a56a652e6401eec13c06854c4810b0b63560247e08a1848cbb1f4e12cd629986"
+        "prev_sha256": "b81f0e92e3c413afe5a50326f1bd83f090a30e1e232c2d8440c773fa05cd6c6c",
+        "sha256": "f2565cefb54c5f129ee0b901ec8396fe9169946ffd8041a63f79b2d85cb0489d"
       },
       {
         "seq": 3,
-        "event_id": "evt-ed4eebb543b84b13bca0e38fea78fd6d",
-        "ts": "2026-11-01T11:12:19Z",
+        "event_id": "evt-fcfd9b7286ec45fbba4e559073a21de0",
+        "ts": "2026-11-01T11:20:35Z",
         "type": "intent",
         "actor": "system",
         "case_id": "askdata-h-001",
         "summary": "execute: intent",
-        "prev_sha256": "a56a652e6401eec13c06854c4810b0b63560247e08a1848cbb1f4e12cd629986",
-        "sha256": "9f2aa3e3a59d6a3fd9c35f5d908bcc1921bfaf5d28ea17069f26c7a9fa3a7540"
+        "prev_sha256": "f2565cefb54c5f129ee0b901ec8396fe9169946ffd8041a63f79b2d85cb0489d",
+        "sha256": "d3001dabd7837fbf7aa91a612c872784e35a5670f431a7735d0f333f442812d4"
       },
       {
         "seq": 4,
-        "event_id": "evt-a32c31e01d0740c18c6697adab94a6c4",
-        "ts": "2026-11-01T11:12:19Z",
+        "event_id": "evt-1659d9bfcfd6419584891bb7e1be58d1",
+        "ts": "2026-11-01T11:20:35Z",
         "type": "outcome",
         "actor": "system",
         "case_id": "askdata-h-001",
         "summary": "ask: answered",
-        "prev_sha256": "9f2aa3e3a59d6a3fd9c35f5d908bcc1921bfaf5d28ea17069f26c7a9fa3a7540",
-        "sha256": "018ec33615db30eeb55b26640309dc650908e0bbb806b6aba52afde9f19ee942"
+        "prev_sha256": "d3001dabd7837fbf7aa91a612c872784e35a5670f431a7735d0f333f442812d4",
+        "sha256": "36eee3614b619801b2f4ddc38db5a2db5b2ee910cdaec148a05542e94da6dcb6"
       },
       {
         "seq": 5,
-        "event_id": "evt-6e1f01fbc631449788d30cb6f2f77c19",
-        "ts": "2026-11-01T11:12:19Z",
+        "event_id": "evt-533a3aa164924fd3b95e84c7e3b5f4db",
+        "ts": "2026-11-01T11:20:35Z",
         "type": "intent",
         "actor": "system",
         "case_id": "askdata-e-002",
         "summary": "execute: intent",
-        "prev_sha256": "018ec33615db30eeb55b26640309dc650908e0bbb806b6aba52afde9f19ee942",
-        "sha256": "ef12c5048f2f1d9912e396bbe57f0cd02457f1eaa8b6b4ee6302291d050aa56a"
+        "prev_sha256": "36eee3614b619801b2f4ddc38db5a2db5b2ee910cdaec148a05542e94da6dcb6",
+        "sha256": "d92c0b0e2faceccca201c13d7615a144e6cef51cc874bf32e096fcd74e6587cd"
       },
       {
         "seq": 6,
-        "event_id": "evt-3affe9ac7f854fbdb3d0b9c0ca5833d7",
-        "ts": "2026-11-01T11:12:19Z",
+        "event_id": "evt-36346f53916c47d8b7e3ca906ac1a9b6",
+        "ts": "2026-11-01T11:20:35Z",
         "type": "outcome",
         "actor": "system",
         "case_id": "askdata-e-002",
         "summary": "ask: answered",
-        "prev_sha256": "ef12c5048f2f1d9912e396bbe57f0cd02457f1eaa8b6b4ee6302291d050aa56a",
-        "sha256": "59d3758624534fa2bfa14637fb41f96d0dd9eee8c6a1079cd18d2ffd28498c1d"
+        "prev_sha256": "d92c0b0e2faceccca201c13d7615a144e6cef51cc874bf32e096fcd74e6587cd",
+        "sha256": "8fae81a8cd1efd7f6ca1ca1b7b680a1ef9674dbe87e5824be39b0df94aa4f185"
       },
       {
         "seq": 7,
-        "event_id": "evt-a481eab20ff349599cfaaea6e1128f43",
-        "ts": "2026-11-01T11:12:19Z",
+        "event_id": "evt-6256e263b35a4d379402a574f02ccb47",
+        "ts": "2026-11-01T11:20:36Z",
         "type": "outcome",
         "actor": "system",
         "case_id": "askdata-a-001",
         "summary": "ask: abstained: reason out_of_scope",
-        "prev_sha256": "59d3758624534fa2bfa14637fb41f96d0dd9eee8c6a1079cd18d2ffd28498c1d",
-        "sha256": "ac8f72056b55000739815a7a4ada22d4f1044fb853696d284dfe9b4f0ea9ac1b"
+        "prev_sha256": "8fae81a8cd1efd7f6ca1ca1b7b680a1ef9674dbe87e5824be39b0df94aa4f185",
+        "sha256": "6432f1237bb6a020919f9337c0a855c40d07993506eea7ce1a643c56ea8b1685"
       },
       {
         "seq": 8,
-        "event_id": "evt-6d07dcd7f9734b698c84179a9bf6c2c3",
-        "ts": "2026-11-01T11:12:19Z",
+        "event_id": "evt-6335479b7d1a4b7f9aedd8bbe993febd",
+        "ts": "2026-11-01T11:20:36Z",
         "type": "deny",
         "actor": "system",
         "case_id": "askdata-t-001",
         "summary": "ask: refused: reason write_request",
-        "prev_sha256": "ac8f72056b55000739815a7a4ada22d4f1044fb853696d284dfe9b4f0ea9ac1b",
-        "sha256": "777ba3e3e9c4807c11acb2ecfc1c80555b37a4e4134b085b2cd8e83975bd7ed1"
+        "prev_sha256": "6432f1237bb6a020919f9337c0a855c40d07993506eea7ce1a643c56ea8b1685",
+        "sha256": "2abc36accff3d26094ead6ff84d5815ccc6ed5cf3ef1bc5ef530814ef2686de4"
       },
       {
         "seq": 9,
-        "event_id": "evt-2263ce994cb8430fa1e5c55e4101578d",
-        "ts": "2026-11-01T11:12:19Z",
+        "event_id": "evt-0d2c45fbcb19420181b2882b56fda10a",
+        "ts": "2026-11-01T11:20:36Z",
         "type": "outcome",
         "actor": "system",
         "case_id": "askdata-e-003",
         "summary": "ask: abstained: reason insufficient_schema",
-        "prev_sha256": "777ba3e3e9c4807c11acb2ecfc1c80555b37a4e4134b085b2cd8e83975bd7ed1",
-        "sha256": "7147ca685d575ceaeba2bc7433254ca9fc08b557d6be924a0bbba15f96d4ff18"
+        "prev_sha256": "2abc36accff3d26094ead6ff84d5815ccc6ed5cf3ef1bc5ef530814ef2686de4",
+        "sha256": "cf5449eb7976f1b66dfb2cd78fd14ebc80849e8272fd77bfe84dd33b3e78f317"
       },
       {
         "seq": 10,
-        "event_id": "evt-2cab28471a534429a5be4daacf89540d",
-        "ts": "2026-11-01T11:12:19Z",
+        "event_id": "evt-52aff385226e4f8f88ee2ad6680f48e7",
+        "ts": "2026-11-01T11:20:36Z",
         "type": "outcome",
         "actor": "system",
         "case_id": "askdata-t-002",
         "summary": "ask: failed: rule V03: reason unsafe_query",
-        "prev_sha256": "7147ca685d575ceaeba2bc7433254ca9fc08b557d6be924a0bbba15f96d4ff18",
-        "sha256": "924e180602209f69b487f6e2c83becd218d6ac573a26acc6d0f3048f4ee53d46"
+        "prev_sha256": "cf5449eb7976f1b66dfb2cd78fd14ebc80849e8272fd77bfe84dd33b3e78f317",
+        "sha256": "ae688cdcb93c7f5c1202caaefe08b8826d7a50b85867d4a4e695cd8830f2753c"
       }
     ],
     "verify": {
@@ -712,8 +712,8 @@
     },
     "cost_usd": "0.027",
     "latency_ms": {
-      "p50": 29,
-      "p95": 78
+      "p50": 30,
+      "p95": 81
     },
     "disclaimer": "smoke, synthetic data, scripted model: not live accuracy.",
     "lock_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
@@ -788,7 +788,7 @@
       "Smoke result on a small set of synthetic data; no accuracy claim and it does not transfer to a client database.",
       "wrong_and_allowed counts answered items whose result was wrong (the read-only SELECT was allowed through).",
       "The audit chain is computed at export time: sha256 = SHA-256(prev_sha256 + newline + canonical JSON of seq, event_id, ts, type, actor, case_id, summary), first prev all zeros.",
-      "verify.text is the audit folder's own local integrity check; it finds accidental damage, not a determined rewrite.",
+      "audit.events lists only this run's events; verify.text is the audit folder's own local integrity check over the whole folder; it finds accidental damage, not a determined rewrite.",
       "Read-only tool: no money moves, no approvals, no adapter writes."
     ]
   }

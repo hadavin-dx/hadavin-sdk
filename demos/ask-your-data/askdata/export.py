@@ -10,7 +10,8 @@ The audit chain in the export is built HERE, at export time, over the events the
 The console can recompute it. It is tamper-evident for the export file only; the audit folder's own check is
 `verify.text` (which is what `askdata audit verify` prints).
 
-Usage: `python -m askdata.export --config askdata.yaml --run <run folder> [--out export.json]`.
+Usage: `python -m askdata.export --config askdata.yaml --run <run name>` (a folder under `paths.runs_dir`; writes
+`export.json` inside it).
 """
 
 from __future__ import annotations
@@ -19,6 +20,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import sys
 from datetime import UTC, datetime
 from pathlib import Path
@@ -34,6 +36,7 @@ SCHEMA = "hadavin.demo-export/1"
 BANNER = "prototype, sample data"
 DISCLAIMER = "smoke, synthetic data, scripted model: not live accuracy."
 ZERO = "0" * 64
+RUN_NAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,79}")
 RULES = [f"V{n:02d}" for n in range(1, 13)]
 
 HARD_ZERO_DEFS = {
@@ -134,9 +137,11 @@ def _steps(line: LedgerLine) -> list[dict[str, Any]]:
 
 
 def _events(sink: AuditSink, qmap: dict[str, str]) -> list[dict[str, Any]]:
+    """Only the events of this run's questions (the audit folder is shared by every run)."""
     out: list[dict[str, Any]] = []
     prev = ZERO
-    for seq, e in enumerate((e for e in sink.events() if e.domain == audit_mod.DOMAIN), start=1):
+    mine = (e for e in sink.events() if e.domain == audit_mod.DOMAIN and e.run_id in qmap)
+    for seq, e in enumerate(mine, start=1):
         etype = {"execute": "intent", "ask": "deny" if e.decision == "refused" else "outcome"}.get(
             e.operation, "gate"
         )
@@ -174,9 +179,12 @@ def build_export(
     if not stored:
         raise ValueError("the ledger is empty: nothing to export")
     lines = {s.line.query_id: s.line for s in stored}
-    first = stored[0].line
-    scripted = str(report.get("model_id", first.model_id)).startswith("fake")
-    mode = "scripted" if scripted else "live"
+    run_lines = [lines[r["query_id"]] for r in results if r["query_id"] in lines]
+    if not run_lines:
+        raise ValueError("no result of this run is in the ledger: nothing to export")
+    first = run_lines[0]
+    if not str(report.get("model_id", first.model_id)).startswith("fake"):
+        raise ValueError("only the scripted model is connected: a live export needs a live route")
     counters: dict[str, int] = {}
     cases, qmap = [], {}
     for rec in results:
@@ -227,7 +235,7 @@ def build_export(
         "banner": BANNER,
         "demo": {"slug": "askdata", "title": "Ask your data", "version": version, "core_commit": core_commit, "kit_commit": kit_commit},
         "run": {
-            "run_id": _t(run_id, 80), "ts": ts or utc_stamp(), "model": "scripted" if scripted else _t(report.get("model_id", first.model_id), 80), "mode": mode,
+            "run_id": _t(run_id, 80), "ts": ts or utc_stamp(), "model": "scripted", "mode": "scripted",
             "prompt_sha256": first.prompt_sha256, "config_hash": first.config_hash, "dataset_sha256": report.get("golden_sha256") or ZERO, "seed": 0, "level": "suggest",
         },
         "cases": cases,
@@ -257,7 +265,7 @@ def build_export(
                 "Smoke result on a small set of synthetic data; no accuracy claim and it does not transfer to a client database.",
                 "wrong_and_allowed counts answered items whose result was wrong (the read-only SELECT was allowed through).",
                 "The audit chain is computed at export time: sha256 = SHA-256(prev_sha256 + newline + canonical JSON of seq, event_id, ts, type, actor, case_id, summary), first prev all zeros.",
-                "verify.text is the audit folder's own local integrity check; it finds accidental damage, not a determined rewrite.",
+                "audit.events lists only this run's events; verify.text is the audit folder's own local integrity check over the whole folder; it finds accidental damage, not a determined rewrite.",
                 "Read-only tool: no money moves, no approvals, no adapter writes.",
             ],
         },
@@ -278,36 +286,32 @@ def main(argv: list[str] | None = None) -> int:
         prog="askdata.export", description="Write export.json for the demo console"
     )
     ap.add_argument("--config", default=os.environ.get("ASKDATA_CONFIG"))
-    ap.add_argument(
-        "--run", type=Path, required=True, help="an eval run folder (report.json, results.jsonl)"
-    )
-    ap.add_argument("--out", type=Path, default=None, help="default: <run folder>/export.json")
+    ap.add_argument("--run", required=True, help="name of an eval run folder under paths.runs_dir")
     ap.add_argument("--core-commit", default="unknown")
     ap.add_argument("--kit-commit", default="unknown")
     args = ap.parse_args(argv)
     try:
+        if not RUN_NAME.fullmatch(args.run):
+            raise ValueError("--run is a folder name (letters, digits, dot, dash, underscore)")
         if not args.config:
             raise ConfigError("give --config or set ASKDATA_CONFIG")
         cfg = load_config(Path(args.config))
-        report = json.loads((args.run / "report.json").read_text(encoding="utf-8"))
+        run_dir = cfg.paths.runs_dir / args.run
+        report = json.loads((run_dir / "report.json").read_text(encoding="utf-8"))
         results = [
             json.loads(x)
-            for x in (args.run / "results.jsonl").read_text(encoding="utf-8").splitlines()
+            for x in (run_dir / "results.jsonl").read_text(encoding="utf-8").splitlines()
             if x.strip()
         ]
         exp = build_export(
             ledger=QueryLedger(cfg.paths.ledger_file), sink=audit_mod.local_dir_sink(cfg.paths.audit_dir), report=report, results=results,
-            run_id=args.run.name, core_commit=args.core_commit, kit_commit=args.kit_commit, ts=utc_stamp(datetime.now(UTC)),
+            run_id=args.run, core_commit=args.core_commit, kit_commit=args.kit_commit, ts=utc_stamp(datetime.now(UTC)),
         )  # fmt: skip
+        write_export(run_dir / "export.json", exp)
     except (ConfigError, OSError, ValueError, KeyError) as err:
         sys.stdout.write(f"export: {clean(str(err))}\n")
         return 4
-    out = (args.out or args.run / "export.json").resolve()
-    if Path.cwd().resolve() not in out.parents:
-        sys.stdout.write("export: the output file must be inside the current folder" + chr(10))
-        return 1
-    write_export(out, exp)
-    sys.stdout.write(f"wrote {out.name}\n")
+    sys.stdout.write("wrote export.json\n")
     return 0
 
 

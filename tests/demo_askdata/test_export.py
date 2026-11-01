@@ -180,24 +180,41 @@ def test_a_damaged_ledger_makes_verify_not_ok(tmp_path):
     assert not audit.verify(QueryLedger(r.kit.ledger.path), r.kit.sink).ok
 
 
-def test_cli_writes_export_json_from_a_run_folder(tmp_path, capsys, monkeypatch):
+def test_cli_writes_export_json_from_a_run_folder(tmp_path, capsys):
     r = Rig(tmp_path)
     it = gold("g1", "answerable", "How many orders are there", COUNT_ORDERS)
     r.script(it.question, Step(sql=COUNT_ORDERS))
     recs = r.harness.run_gold([it])
     rep = r.harness.report(recs, [], split="dev", meta={"model_id": "fake-model-1"})
-    run = tmp_path / "runs" / "r1"
+    run = r.kit.tmp / "runs" / "r1"  # paths.runs_dir of write_config
     run.mkdir(parents=True)
     (run / "report.json").write_text(json.dumps(rep), "utf-8")
     (run / "results.jsonl").write_text("\n".join(json.dumps(asdict(x)) for x in recs), "utf-8")
     cfg = write_config(r.kit)
-    monkeypatch.chdir(tmp_path)
-    assert export.main(["--config", cfg, "--run", str(run)]) == 0
+    assert export.main(["--config", cfg, "--run", "r1"]) == 0
     out = json.loads((run / "export.json").read_text("utf-8"))
     assert check(out, SCHEMA) == [] and out["run"]["run_id"] == "r1"
-    assert export.main(["--config", cfg, "--run", str(tmp_path / "nope")]) == 4
-    assert (
-        export.main(["--config", cfg, "--run", str(run), "--out", str(tmp_path.parent / "x.json")])
-        == 1
-    )
+    assert export.main(["--config", cfg, "--run", "missing"]) == 4
+    assert export.main(["--config", cfg, "--run", "../r1"]) == 4  # a name, never a path
     capsys.readouterr()
+
+
+def test_only_this_runs_events_and_lines_are_exported_and_a_live_model_is_refused(tmp_path):
+    r = Rig(tmp_path)
+    r.script("An older question", Step(sql=COUNT_ORDERS))
+    r.kit.pipeline.ask("An older question")  # another run in the same ledger and audit folder
+    it = gold("g1", "answerable", "How many orders are there", COUNT_ORDERS)
+    r.script(it.question, Step(sql=COUNT_ORDERS))
+    recs = r.harness.run_gold([it])
+    rep = r.harness.report(recs, [], split="dev", meta={"model_id": "fake-model-1"})
+    kw = {
+        "ledger": r.kit.ledger,
+        "sink": r.kit.sink,
+        "results": [asdict(x) for x in recs],
+        "run_id": "r",
+    }
+    out = export.build_export(report=rep, **kw)
+    assert len(out["audit"]["events"]) == 2 and out["audit"]["verify"]["events"] == 4
+    assert all(e["case_id"] == "askdata-e-001" for e in out["audit"]["events"])
+    with pytest.raises(ValueError, match="scripted"):
+        export.build_export(report={**rep, "model_id": "some-live-model"}, **kw)
