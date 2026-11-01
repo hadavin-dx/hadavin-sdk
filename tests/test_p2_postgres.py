@@ -119,6 +119,28 @@ def test_cli_limits_without_a_readable_dsn_is_a_config_error(cfg_dir, capsys):
     assert "'pg-dsn' cannot be read" in capsys.readouterr().err
 
 
+@pytest.mark.parametrize("action", ["stop", "reset"])
+def test_cli_limits_with_an_unreachable_store_exits_4(cfg_dir, monkeypatch, capsys, action):
+    from hadavin_sdk.store.protocol import StoreUnavailable
+
+    _use_postgres(cfg_dir)
+    real_make = cli.make
+
+    def make_down(capability, settings, *a, **k):
+        if capability == "store":
+            raise StoreUnavailable("down")
+        return real_make(capability, settings, *a, **k)
+
+    monkeypatch.setattr(cli, "make", make_down)
+    monkeypatch.setattr(
+        "hadavin_sdk.backends.builtin.fake_secrets",
+        lambda settings, deps: FakeSecretProvider({"pg-dsn": "postgresql://x@127.0.0.1:1/n"}),
+    )
+    assert cli.main(["--config", str(cfg_dir), "limits", action, "--by", "user:a"]) == 4
+    err = capsys.readouterr().err
+    assert "kill switch NOT" in err and "Nothing was changed" in err
+
+
 # --- with a database ---------------------------------------------------------------------------------
 
 

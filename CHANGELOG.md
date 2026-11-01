@@ -15,6 +15,10 @@
   - **Exit codes of every command changed for crashes.** `main` now returns 2 for a `ConfigError` (message on
     stderr) and 3 for any other uncaught error, instead of a Python traceback with exit 1. Exit 1 keeps its meaning
     (gate red, audit not intact, replay aborted or cost cap reached).
+- **`tick` now matches the v5 contract.** Exit code **4** (was 3) when the store is unreachable, for both
+  `run_tick` and the CLI; 3 stays the wrapper code for any other uncaught error. The heartbeat summary line is no
+  longer a step: it is logged after the steps, writes no `tick_state` row and cannot change the exit code (K7 sends
+  the external heartbeat is PENDING K7: nothing sends it today). **A scheduler that treated exit 3 as "store down" must now watch 4.** `tick` also returns 4 when the store stops answering during the steps (it re-probes after a step failed); 1 stays for a failed step with a reachable store. Exit 4 is only for connection failures: a store that answers with a missing table or grant exits 2 ("run migrate, check grants") for `tick`, `limits stop` and `limits reset`. `limits stop` and `limits reset` with the store unreachable now exit 4 (was 2) and print "kill switch NOT set" or "NOT reset" with "Nothing was changed".
 - **K1b-lite gap fixes.**
   - SDK version is now `0.1.0` (`pyproject.toml` and `hadavin_sdk.__version__`, pyproject and `__init__` kept equal by a test). Replay and
     score reports print it; `0.0.0` still prints "unreleased build".
@@ -97,8 +101,8 @@
   `bedrock_guardrail` is AWS-only. The approval-summary screen runs without the judge: no agent can be
   charged there, and the judge already screens the document and tool output.
 - `hadavin-sdk tick` (slice 2 P7, v5 contract): one pass of isolated steps (`sweep`, `reconcile`, `stuck`,
-  `checkpoint`, then `heartbeat` last); a failing step is logged and recorded in `tick_state` and the others
-  still run. Exit 0 ok, 1 a step failed, 2 config error, 3 store unreachable. Later steps are appended to
+  `checkpoint`; the summary line is logged after them and is not a step); a failing step is logged and recorded in `tick_state` and the others
+  still run. Exit 0 ok, 1 a step failed, 2 config error, 4 store unreachable. Later steps are appended to
   `runtime.tick.STEPS`.
 - `slack` approval channel (`backends.channel: {kind: slack, channel_id, signing_secret_name,
   bot_token_secret_name}`) and `approvals/receiver.py`: verified clicks are recorded only; `tick` runs the plan.

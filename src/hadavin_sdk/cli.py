@@ -5,7 +5,7 @@
   hadavin-sdk [--config DIR] limits stop|reset --by WHO  needs a shared store (postgres); memory: exit 2
   hadavin-sdk [--config DIR] tick                       one pass of approvals sweep, reconcile, stuck runs,
                                                          audit checkpoint; exit 0 ok, 1 a step failed,
-                                                         2 config error, 3 store unreachable
+                                                         2 config error, 4 store unreachable
   hadavin-sdk [--config DIR] migrate [--runtime-role R]  apply the postgres schema; the migration role's DSN
                                                          comes from the HADAVIN_MIGRATE_DSN environment variable
   hadavin-sdk [--config DIR] audit verify                exit 0 intact, 1 not, 2 refused, 3 unreadable
@@ -26,6 +26,7 @@ the current folder (and its check modules) is importable.
 from __future__ import annotations
 
 import argparse
+import logging
 import os
 import sys
 import traceback
@@ -41,6 +42,7 @@ from hadavin_sdk.guard.injection import combine
 from hadavin_sdk.limits import Limits
 from hadavin_sdk.models import new_id
 from hadavin_sdk.registry import load_registry
+from hadavin_sdk.store.protocol import StoreUnavailable, is_connectivity_error
 
 
 def _num(x: float | None, places: int = 2) -> str:
@@ -173,6 +175,16 @@ def _main(argv: list[str] | None = None) -> int:
         anchor = make("anchor", b.anchor, secrets)
         store = make("store", b.store, secrets)
         audit = make("audit", b.audit, secrets, store=store, signer=signer, anchor=anchor)
+    except StoreUnavailable:
+        if args.cmd == "audit":
+            print("could not verify: the store is unreachable", file=sys.stderr)
+            return 3
+        print(
+            f"kill switch NOT {'set' if args.action == 'stop' else 'reset'}: the store is unreachable. "
+            "Nothing was changed. Fix the store, then run the same command again.",
+            file=sys.stderr,
+        )
+        return 4
     except ConfigError as exc:
         if args.cmd != "audit":
             raise
@@ -256,8 +268,9 @@ def _tick() -> int:
     from hadavin_sdk.app import build
     from hadavin_sdk.runtime.agent_loop import Unqualified, assert_qualified
     from hadavin_sdk.runtime.tick import run_tick
-    from hadavin_sdk.store.protocol import StoreUnavailable
 
+    # The summary line and step errors go to stderr (the logger is otherwise silent below WARNING).
+    logging.basicConfig(level=logging.INFO, stream=sys.stderr, format="%(message)s")
     try:
         reg = load_registry(load_config())
         agents = []
@@ -272,7 +285,7 @@ def _tick() -> int:
         app = build(None, agents)
     except StoreUnavailable as exc:
         print(f"tick: {exc}", file=sys.stderr)
-        return 3
+        return 4
     except ConfigError as exc:
         print(f"tick: config error: {exc}", file=sys.stderr)
         return 2
@@ -332,13 +345,36 @@ def audit_verify(audit) -> int:
     return 0 if result.ok else 1
 
 
+def _kill_switch_store_down(what: str, exc: BaseException) -> int:
+    """4 when the store cannot be reached; 2 when it answers but is not ready (missing table or grant)."""
+    if is_connectivity_error(exc):
+        print(
+            f"kill switch NOT {what}: the store is unreachable. Nothing was changed. "
+            "Fix the store, then run the same command again.",
+            file=sys.stderr,
+        )
+        return 4
+    print(
+        f"kill switch NOT {what}: the store answered with an error ({type(exc).__name__}); run "
+        "hadavin-sdk migrate and check the runtime role's grants. Nothing was changed.",
+        file=sys.stderr,
+    )
+    return 2
+
+
 def kill_switch(limits: Limits, action: str, by: str) -> int:
     """Run stop/reset for a caller (the CLI once a shared store exists, or an in-process admin hook).
 
-    Exit codes: 0 done; 3 reset refused because the audit store is unavailable (the switch stays ON).
+    Exit codes: 0 done; 3 reset refused because the audit store is unavailable (the switch stays ON); 4 the
+    store is unreachable (the switch was NOT changed).
     """
     if action == "stop":
-        limits.stop(by)
+        try:
+            limits.stop(by)
+        except AuditUnavailable:
+            raise
+        except Exception as exc:  # noqa: BLE001 - classified below
+            return _kill_switch_store_down("set", exc)
         print(f"kill switch ON (by {by})")
         return 0
     try:
@@ -350,6 +386,8 @@ def kill_switch(limits: Limits, action: str, by: str) -> int:
             file=sys.stderr,
         )
         return 3
+    except Exception as exc:  # noqa: BLE001 - classified below
+        return _kill_switch_store_down("reset", exc)
     print(f"kill switch OFF (by {by})")
     return 0
 

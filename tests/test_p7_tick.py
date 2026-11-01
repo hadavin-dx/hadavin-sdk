@@ -78,12 +78,14 @@ def _record(app, req, approver="user:a", verdict="approve"):
 # --- tick contract ---------------------------------------------------------------------------------------
 
 
-def test_steps_order_and_heartbeat_last(app, caplog):
+def test_steps_order_and_summary_line_is_not_a_step(app, caplog):
     assert [s.name for s in tick.STEPS] == ["sweep", "reconcile", "stuck", "checkpoint"]
     caplog.set_level("INFO", logger="hadavin_sdk.tick")
     assert run_tick(app) == 0
     assert "tick ok=True failed=-" in caplog.text
-    assert app.store.get_tick_state("heartbeat").last_error is None
+    assert (
+        app.store.get_tick_state("heartbeat") is None
+    )  # the summary line is not a step: no tick_state row
 
 
 def test_one_failing_step_lets_the_others_run_and_exits_1(app, caplog):
@@ -104,14 +106,14 @@ def test_one_failing_step_lets_the_others_run_and_exits_1(app, caplog):
     assert "failed=first" in caplog.text
 
 
-def test_store_unreachable_exits_3_before_any_step(app, monkeypatch):
+def test_store_unreachable_exits_4_before_any_step(app, monkeypatch):
     ran = []
 
     def down(step):
         raise OSError("store down")
 
     monkeypatch.setattr(app.store, "get_tick_state", down)
-    assert run_tick(app, steps=[TickStep("x", 0, lambda ctx: ran.append(1))]) == 3
+    assert run_tick(app, steps=[TickStep("x", 0, lambda ctx: ran.append(1))]) == 4
     assert ran == []
 
 
@@ -365,7 +367,7 @@ def test_cli_tick_exit_codes(cfg_dir, monkeypatch, capsys):
     assert "config error" in capsys.readouterr().err
 
 
-def test_cli_tick_store_unreachable_exits_3(cfg_dir, monkeypatch):
+def test_cli_tick_store_unreachable_exits_4(cfg_dir, monkeypatch):
     pytest.importorskip("psycopg")
     import yaml
 
@@ -382,7 +384,7 @@ def test_cli_tick_store_unreachable_exits_3(cfg_dir, monkeypatch):
         "hadavin_sdk.backends.builtin.fake_secrets",
         lambda settings, deps: FakeSecretProvider({"pg-dsn": closed, "fixture-token": "t"}),
     )
-    assert cli.main(["--config", str(cfg_dir), "tick"]) == 3
+    assert cli.main(["--config", str(cfg_dir), "tick"]) == 4
 
 
 # --- independent review fixes -----------------------------------------------------------------------------
@@ -540,3 +542,116 @@ def test_signing_headers_do_not_cross_channels():
     fake_signed = hmac_v0.sign(body, ts, SIG, FakeChannel.header_prefix)
     assert FakeChannel(SIG).parse_decision(fake_signed, body, ts).approver_id == "fake:U9"
     assert SlackChannel("C0", TOKEN, SIG).parse_decision(fake_signed, body, ts) is None
+
+
+def test_audit_chain_build_reports_a_connection_failure_as_store_unavailable():
+    from hadavin_sdk.audit import chain
+    from hadavin_sdk.backends import Deps
+    from hadavin_sdk.store.protocol import StoreUnavailable
+
+    class Down:
+        _lock = __import__("threading").Lock()
+
+        class _db:
+            @staticmethod
+            def execute(*a, **k):
+                raise OSError("connection refused")
+
+            cursor = execute
+
+    class S:
+        checkpoint_every = 100
+
+    with pytest.raises(StoreUnavailable):
+        chain.build(S(), Deps(resolve=lambda n: "", store=Down(), signer=None, anchor=None))
+
+
+def test_store_dropping_mid_tick_exits_4_not_1(app):
+    """A step failed because the store went away: a scheduler must see 4 (store down), not 1."""
+    calls = {"n": 0}
+    real = app.store.get_tick_state
+
+    def flaky(step):
+        calls["n"] += 1
+        if calls["n"] > 1:  # the first call is the start-up probe; the store dies right after it
+            raise OSError("store gone")
+        return real(step)
+
+    app.store.get_tick_state = flaky
+    assert run_tick(app, steps=[TickStep("x", 0, lambda ctx: None)]) == 4
+
+
+def test_a_failing_step_with_a_reachable_store_still_exits_1(app):
+    def boom(ctx):
+        raise RuntimeError("step broke")
+
+    assert run_tick(app, steps=[TickStep("x", 0, boom)]) == 1
+
+
+def test_all_steps_ok_after_the_probe_exits_0_without_a_second_probe(app):
+    probes = []
+    real = app.store.get_tick_state
+    app.store.get_tick_state = lambda s: probes.append(s) or real(s)
+    assert run_tick(app, steps=[]) == 0
+    assert probes.count("heartbeat") == 1
+
+
+def _psycopg_error(name):
+    return type(name, (Exception,), {"__module__": "psycopg.errors"})
+
+
+def test_connectivity_classification():
+    from hadavin_sdk.store.protocol import StoreUnavailable, is_connectivity_error
+
+    assert is_connectivity_error(OSError("x")) and is_connectivity_error(StoreUnavailable("x"))
+    assert is_connectivity_error(_psycopg_error("OperationalError")("x"))
+    assert is_connectivity_error(_psycopg_error("InterfaceError")("x"))
+    assert not is_connectivity_error(_psycopg_error("UndefinedTable")("x"))
+    assert not is_connectivity_error(_psycopg_error("InsufficientPrivilege")("x"))
+    assert not is_connectivity_error(RuntimeError("x"))
+
+
+def test_probe_error_from_an_answering_store_exits_2_not_4(app, monkeypatch):
+    ran = []
+
+    def missing(step):
+        raise _psycopg_error("UndefinedTable")("relation tick_state does not exist")
+
+    monkeypatch.setattr(app.store, "get_tick_state", missing)
+    assert run_tick(app, steps=[TickStep("x", 0, lambda ctx: ran.append(1))]) == 2
+    assert ran == []
+
+
+def test_psycopg_connection_error_at_the_probe_exits_4(app, monkeypatch):
+    def down(step):
+        raise _psycopg_error("OperationalError")("server closed the connection")
+
+    monkeypatch.setattr(app.store, "get_tick_state", down)
+    assert run_tick(app, steps=[]) == 4
+
+
+def test_reprobe_error_from_an_answering_store_keeps_exit_1(app):
+    calls = {"n": 0}
+    real = app.store.get_tick_state
+
+    def flaky(step):
+        calls["n"] += 1
+        if calls["n"] > 1:
+            raise _psycopg_error("InsufficientPrivilege")("denied")
+        return real(step)
+
+    app.store.get_tick_state = flaky
+
+    def boom(ctx):
+        raise RuntimeError("step broke")
+
+    assert run_tick(app, steps=[TickStep("x", 0, boom)]) == 1
+
+
+def test_a_failing_log_handler_cannot_change_the_exit_code(app, monkeypatch):
+    def bad(*a, **k):
+        raise RuntimeError("handler broke")
+
+    monkeypatch.setattr(tick, "heartbeat", bad)
+    monkeypatch.setattr(tick._LOG, "error", bad)
+    assert run_tick(app, steps=[]) == 0

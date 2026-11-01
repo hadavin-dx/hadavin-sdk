@@ -5,8 +5,13 @@ Contract (design v5 kernel, section 4):
 * Each step runs in its own ``try``: a failure is logged as ``step=<name> error_kind=<type>
   message=<redacted, <= 500 chars>`` and written to ``tick_state``; the other steps still run.
 * A step with ``every_s > 0`` runs only if ``now - tick_state.last_run_at >= every_s``.
-* ``heartbeat`` always runs last and reports this tick's outcome.
-* Exit codes: 0 all ok; 1 a step failed; 2 config error; 3 store unreachable (both before any step).
+* The tick summary line (``heartbeat``) is not a step: it is logged after the steps, is never recorded in
+  ``tick_state`` and cannot change the exit code. The external heartbeat
+  (a ping sent by the CLI entrypoint for every exit code) is PENDING (K7): nothing sends it today.
+* Exit codes: 0 all ok; 1 a step failed (store still reachable); 2 config error, or the store answers but is
+  not ready (missing table or grant: run ``migrate``); 4 store unreachable (connection refused, dropped or
+  timed out), before any step or when it stops answering during the steps; 3 is the CLI wrapper's code for any
+  other uncaught error.
 
 Concurrent ticks are safe: every state change is a compare-and-set, and a loser (``StaleState``) skips.
 """
@@ -23,7 +28,7 @@ from typing import TYPE_CHECKING, Any
 from hadavin_sdk.guard.redact import redact
 from hadavin_sdk.models import AuditEvent, RunState, TickState
 from hadavin_sdk.runtime.runs import IllegalTransition, advance
-from hadavin_sdk.store.protocol import StaleState
+from hadavin_sdk.store.protocol import StaleState, is_connectivity_error
 
 if TYPE_CHECKING:
     from hadavin_sdk.app import App
@@ -173,7 +178,7 @@ def checkpoint(ctx: TickContext) -> None:
 
 
 def heartbeat(ctx: TickContext) -> None:
-    """Always last: one line with this tick's outcome (K7 adds the metric the dead-man alarm watches)."""
+    """After the steps (not a step): one line with this tick's outcome."""
     failed = sorted(n for n, r in ctx.results.items() if r == FAILED)
     _LOG.info("tick ok=%s failed=%s", not failed, ",".join(failed) or "-")
 
@@ -184,7 +189,21 @@ STEPS: list[TickStep] = [
     TickStep("stuck", 0, stuck),
     TickStep("checkpoint", 0, checkpoint),
 ]
-HEARTBEAT = TickStep("heartbeat", 0, heartbeat)
+STORE_UNREACHABLE = 4
+STORE_NOT_READY = (
+    2  # the store answers but a table or grant is missing: same code as a config error
+)
+
+
+def _safe_log(msg: str, *args: object) -> None:
+    """Log an error line; a failing log handler must never change the exit code."""
+    try:
+        _LOG.error(msg, *args)
+    except Exception:  # noqa: BLE001, S110 - nothing left to report to
+        pass
+
+
+_PROBE = "heartbeat"  # the tick_state key read once, to find out whether the store answers
 
 
 _DRIVERS = ("psycopg", "urllib", "http", "botocore", "boto3", "socket", "ssl")
@@ -226,13 +245,36 @@ def _run_step(ctx: TickContext, step: TickStep) -> str:
 
 
 def run_tick(app: App, now: datetime | None = None, steps: list[TickStep] | None = None) -> int:
-    """One tick. Returns the exit code (0, 1 or 3; 2 is the caller's, for a config that does not load)."""
+    """One tick. Returns the exit code (0, 1 or 4; 2 is the caller's, for a config that does not load)."""
     ctx = TickContext(app, now or app.approvals.clock())
     try:
-        app.store.get_tick_state(HEARTBEAT.name)  # the store answers, or nothing runs
+        app.store.get_tick_state(_PROBE)  # the store answers, or nothing runs
     except Exception as exc:  # noqa: BLE001 - any store failure: change nothing
-        _LOG.error("step=- error_kind=%s message=store unreachable", type(exc).__name__)
-        return 3
-    for step in [*(STEPS if steps is None else steps), HEARTBEAT]:
+        if is_connectivity_error(exc):
+            _safe_log("step=- error_kind=%s message=store unreachable", type(exc).__name__)
+            return STORE_UNREACHABLE
+        _safe_log(
+            "step=- error_kind=%s message=store answers but is not ready: run hadavin-sdk migrate "
+            "and check the runtime role's grants",
+            type(exc).__name__,
+        )
+        return STORE_NOT_READY
+    for step in STEPS if steps is None else steps:
         ctx.results[step.name] = _run_step(ctx, step)
+    try:
+        heartbeat(ctx)
+    except Exception as exc:  # noqa: BLE001 - a log line never changes the exit code
+        _safe_log("step=- error_kind=%s message=heartbeat line not written", type(exc).__name__)
+    if FAILED in ctx.results.values():
+        # A scheduler must tell "the store went away" (4) from "a step failed with the store up" (1).
+        try:
+            app.store.get_tick_state(_PROBE)
+        except Exception as exc:  # noqa: BLE001 - any store failure
+            if is_connectivity_error(exc):
+                _safe_log(
+                    "step=- error_kind=%s message=store unreachable after the steps",
+                    type(exc).__name__,
+                )
+                return STORE_UNREACHABLE
+            # answers but not ready: the step failures stand, exit 1
     return 1 if FAILED in ctx.results.values() else 0
