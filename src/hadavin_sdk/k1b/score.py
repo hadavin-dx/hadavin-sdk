@@ -364,7 +364,9 @@ def _run_score(
     hard_a: int,
     issues: dict[str, list[str]] | None = None,
 ) -> RunScore:
-    count = lambda cls: sum(v == cls for v in classes.values())
+    def count(cls: str) -> int:
+        return sum(v == cls for v in classes.values())
+
     scored = [c for c in classes if not answers[c].no_evidence]
     h = sum(classes[c] == "hit" for c in scored)
     misses_scored = sum(classes[c] == "miss" for c in scored)
