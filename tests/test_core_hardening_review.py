@@ -672,3 +672,45 @@ def test_the_extract_retry_is_one_user_turn_with_the_sanitized_summary_and_not_t
     retry = llm.calls[1]
     assert len(retry) == 1 and retry[0]["role"] == "user"
     assert "title: string_type" in retry[0]["content"] and canary not in json.dumps(retry)
+
+
+def test_nesting_ok_boundary_and_strings():
+    from hadavin_sdk.llm.common import nesting_ok
+
+    assert nesting_ok("[" * 64 + "]" * 64) and not nesting_ok("[" * 65 + "]" * 65)
+    assert nesting_ok('{"a": "[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[["}')
+    assert nesting_ok("[" * 100 + "]" * 100, limit=100)
+
+
+def test_each_kind_with_a_quota_429_stops_after_one_request(monkeypatch):
+    quota = {"error": {"type": "insufficient_quota", "code": "insufficient_quota"}}
+    per_day = {"error": {"details": [{"violations": [{"quotaId": "RequestsPerDayPerProject"}]}]}}
+    cap = {"type": "rate_limit_error", "details": {"error_code": "enforced_spend_limit_reached"}}
+    calls = []
+
+    def boom(body):
+        def post(url, payload, headers, timeout):
+            calls.append(1)
+            raise _http_error(429, body)
+
+        return post
+
+    monkeypatch.setattr(openai_compat, "post_json", boom(quota))
+    oa = openai_compat.OpenAICompatLLM("https://x.example/v1", None, ROUTES, 5.0, 4, lambda s: None)
+    with pytest.raises(SpendLimitReached):
+        oa.chat([{"role": "user", "content": "q"}], system="", route="r")
+    monkeypatch.setattr(gemini, "post_json", boom(per_day))
+    gm = gemini.GeminiLLM(lambda: "k", ROUTES, 5.0, 4, lambda s: None)
+    with pytest.raises(SpendLimitReached):
+        gm.chat([{"role": "user", "content": "q"}], system="", route="r")
+
+    def create(**req):
+        calls.append(1)
+        raise _Err(429, cap)
+
+    an = AnthropicLLM(
+        SimpleNamespace(messages=SimpleNamespace(create=create)), ROUTES, 4, lambda s: None
+    )
+    with pytest.raises(SpendLimitReached):
+        an.chat([{"role": "user", "content": "q"}], system="", route="r")
+    assert len(calls) == 3  # one request per kind, none retried
