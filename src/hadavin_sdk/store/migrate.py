@@ -64,23 +64,8 @@ _CREATE = re.compile(
     r"CREATE\s+(?:OR\s+REPLACE\s+)?(?:MATERIALIZED\s+)?(TABLE|VIEW)\s+(?:IF\s+NOT\s+EXISTS\s+)?(\w+)",
     re.IGNORECASE,
 )
-_TOKENS = re.compile(r"\w+|\s+|[^\w\s]+")
-_SERIAL_TYPES = frozenset({"SERIAL", "BIGSERIAL", "SMALLSERIAL", "SERIAL2", "SERIAL4", "SERIAL8"})
-
-
-def _serial_columns(body: str) -> list[str]:
-    """Column names declared with a serial type: a word, whitespace, then a serial type word. Tokenised rather
-    than matched with a backtracking pattern."""
-    tokens = _TOKENS.findall(body)
-    return [
-        tokens[i]
-        for i in range(len(tokens) - 2)
-        if tokens[i + 1].isspace()
-        and tokens[i + 2].upper() in _SERIAL_TYPES
-        and (tokens[i][0].isalnum() or tokens[i][0] == "_")
-    ]
-
-
+# Possessive quantifiers (Python 3.11+) plus a leading \b: no backtracking, linear time on long identifiers.
+_SERIAL = re.compile(r"\b(\w++)\s++(?:(?:BIG|SMALL)?SERIAL|SERIAL[248])\b", re.IGNORECASE)
 # Statements the guard does not read. Any of these in a migration is refused ("extend the guard") rather than
 # skipped, so a relation or sequence it creates cannot go ungranted.
 _SAFE_CREATE = re.compile(
@@ -148,7 +133,7 @@ def _scan(paths: list[Path]) -> tuple[dict[str, str], list[str]]:
             kind, name = m.group(1).lower(), m.group(2).lower()
             found[name] = kind
             if kind == "table":
-                for col in _serial_columns(_table_body(text, m.end())):
+                for col in _SERIAL.findall(_table_body(text, m.end())):
                     found[f"{name}_{col.lower()}_seq"] = "sequence"
     return found, unread
 
