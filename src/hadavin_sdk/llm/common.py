@@ -197,15 +197,32 @@ def json_in_text(text: str) -> dict[str, Any] | None:
     for _ in range(_MAX_CANDIDATES):
         if start == -1 or budget[0] < 0:
             return None
-        if nesting_ok(text, start, budget=budget):
+        # A `{` inside a JSON array is a list item, not the answer object.
+        if not _inside_array(text, start) and nesting_ok(text, start, budget=budget):
             try:
                 found, _ = json.JSONDecoder().raw_decode(text, start)
             except (ValueError, RecursionError):
                 pass
             else:
                 return found if isinstance(found, dict) else None
+        # An object that opens like JSON but never closes is a cut-off answer: the objects nested in it are
+        # fragments of it, so none of them is returned.
+        if _JSON_OPEN.match(text, start):
+            return None
         start = text.find("{", start + 1)
     return None
+
+
+_JSON_OPEN = re.compile(r'\{\s*["}]')
+
+
+def _inside_array(text: str, start: int) -> bool:
+    """True when the `{` at `start` directly follows `[` or a `,` after a JSON value (`}`, `]` or a string):
+    an item of an array. A comma after prose (`Sure, {...}`) does not count."""
+    before = text[:start].rstrip()
+    if before.endswith("["):
+        return True
+    return before.endswith(",") and before[:-1].rstrip()[-1:] in ("}", "]", '"')
 
 
 # Why an answer ended, in each provider's words, folded into Reply.stop_reason (WARDEN providers.py B11, M7):

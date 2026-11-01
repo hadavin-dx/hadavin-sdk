@@ -109,3 +109,43 @@ def test_fenced_and_prose_json_parse(text):
 def test_non_object_is_a_validation_error_not_an_exception(text):
     out = extract(Scripted([text, text]), b"d", Rec, run_id="r", route="x")
     assert isinstance(out, DeadLetter) and len(out.errors) == 2
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        '```json\n[{"title": "t", "amount": "2"}]\n```',  # an array: its items are not the answer
+        '[{"title": "t", "amount": "2"}, {"title": "u", "amount": "3"}]',
+        '{"wrapper": {"title": "t", "amount": "2"}',  # cut off: the nested object is a fragment
+    ],
+)
+def test_json_in_text_rejects_objects_nested_in_arrays_or_cut_off_objects(text):
+    from hadavin_sdk.llm.common import json_in_text
+
+    assert json_in_text(text) is None
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        'Sure, {"a": 1}',
+        'Here is the JSON: {"a": 1} done',
+        'x {not json} then {"a": 1}',
+        '```json\n{"a": 1}\n```',
+    ],
+)
+def test_json_in_text_still_reads_prose_wrapped_and_fenced_objects(text):
+    from hadavin_sdk.llm.common import json_in_text
+
+    assert json_in_text(text) == {"a": 1}
+
+
+def test_a_default_that_looks_like_a_schema_does_not_break_extract():
+    class WithDefault(BaseModel):
+        title: str
+        metadata: dict = {"properties": None}
+
+    llm = type(
+        "L", (), {"chat": lambda self, *a, **k: Reply(text='{"title": "t"}', model_id="m")}
+    )()
+    assert isinstance(extract(llm, b"doc", WithDefault, run_id="r", route="x"), Valid)

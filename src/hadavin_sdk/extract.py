@@ -45,16 +45,42 @@ def _parse(reply: Reply) -> object:
         return found
 
 
+# JSON-schema keywords whose value is a schema, a list of schemas or a map of schemas. Anything else (`default`,
+# `examples`, `const`, `enum`) is data and is never walked: a default of {"properties": None} is not a schema.
+_SCHEMA = (
+    "items",
+    "additionalProperties",
+    "not",
+    "if",
+    "then",
+    "else",
+    "contains",
+    "propertyNames",
+)
+_SCHEMAS = ("prefixItems", "anyOf", "oneOf", "allOf")
+_SCHEMA_MAPS = ("$defs", "definitions", "patternProperties")
+
+
 def _field_names(node: object, out: set[str]) -> set[str]:
     """Every property name in a JSON schema: the only strings an error path may show (a dict key in a path
     would be document content)."""
-    if isinstance(node, dict):
-        out.update(k for k in node.get("properties", {}) if isinstance(k, str))
-        for v in node.values():
+    if not isinstance(node, dict):
+        return out
+    props = node.get("properties")
+    if isinstance(props, dict):
+        out.update(k for k in props if isinstance(k, str))
+        for v in props.values():
             _field_names(v, out)
-    elif isinstance(node, list):
-        for v in node:
-            _field_names(v, out)
+    for k in _SCHEMA:
+        _field_names(node.get(k), out)
+    for k in _SCHEMAS:
+        if isinstance(node.get(k), list):
+            for v in node[k]:
+                _field_names(v, out)
+    for k in _SCHEMA_MAPS:
+        if isinstance(node.get(k), dict):
+            for v in node[k].values():
+                _field_names(v, out)
     return out
 
 
