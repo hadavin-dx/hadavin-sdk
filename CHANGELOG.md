@@ -3,6 +3,18 @@
 ## Unreleased
 
 ### Upgrade steps
+- **K1b-lite replay check (report only).** New commands `hadavin-sdk replay AGENT --bundles D --cause-list D
+  --max-usd X --out OUT [--k K]` and `hadavin-sdk score --outputs OUT --answers F --cause-list D --bundles D`.
+  Neither gives a met / not met verdict; a replay pass is not evidence of live accuracy.
+  - New optional `k1b:` section in `config.yaml` (`max_steps` 12, `max_tool_calls` 20, `case_timeout_s` 300).
+    It does not change `config_hash`, so no agent needs a new gate run.
+  - `replay` and `score` write `k1b` audit events (`replay_run`, `hard_check_a`, `hard_check_b`, `score_run`) to the
+    configured `local_dir` or `chain` audit. A `chain` over the memory store warns that events are lost at exit.
+  - `replay` refuses a non-empty `OUT`, a route with a zero price (unless the llm kind is `fake`) and a bundle with
+    any timestamp after the alert time. A run that dies half-way leaves `FAILED.txt`; delete the folder to re-run.
+  - **Exit codes of every command changed for crashes.** `main` now returns 2 for a `ConfigError` (message on
+    stderr) and 3 for any other uncaught error, instead of a Python traceback with exit 1. Exit 1 keeps its meaning
+    (gate red, audit not intact, replay aborted or cost cap reached).
 - **Lock-in guard.** `tests/test_lockin_guard.py` fails CI when a vendor SDK is imported outside its kind
   module, a capability lacks a neutral prod kind (`Entry.neutral`) and two prod kinds without a dated
   exception, or core logic names a vendor.
