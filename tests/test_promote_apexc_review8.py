@@ -495,7 +495,30 @@ def test_what_passes_and_the_full_homoglyph_fold_for_protected_values():
     )
 
 
+def test_a_protected_number_is_found_through_junk_look_alikes_and_exempt_tokens():
+    acct = "123456789"
+    for text in (
+        "Remit 12345.67 and 89.00",  # exempt-looking tokens carrying the digits
+        "pay 123 abc 456 xyz 789",  # letters between the digit groups
+        "pay 12 3S 4 5B 6 7Z 89" + chr(0x200B),  # digit-like letters
+        "pay I23 4S6 789",
+    ):
+        assert check_text(text, [acct]) is not None, text
+    assert (
+        check_text("PO-1234 and 56 nearby", ["987654321"]) is None
+    )  # unrelated digits do not match
+    seven = "1234567"
+    assert check_text("pay 123 abc 4567", [seven]) == Violation.PROTECTED_VALUE
+    assert squeeze("SBZGQ", loose=True) == "58269" and squeeze("O I L", loose=True) == "011"
+
+
 def test_allowed_references_need_a_boundary_and_ignore_case():
+    assert (
+        check_text("acct 1 2 3 4 5 6 7 8 9", allowed=["1"]) is not None
+    )  # a one-character 'invoice number' hides nothing
+    assert (
+        check_text("!" * 10, allowed=[chr(0x200B)]) is None
+    )  # an allowed value that folds to nothing is ignored
     assert check_text("ref ABC-2026-0482 ok", allowed=["ABC-2026-0482"]) is None
     assert check_text("ref abc-2026-0482 ok", allowed=["ABC-2026-0482"]) is None
     assert check_text("ABC-2026-0482 ok") is not None

@@ -40,6 +40,7 @@ LOOKALIKES: dict[str, str] = {
 }
 _TABLE = {ord(k): v for k, v in LOOKALIKES.items()}
 _NON_ALNUM = re.compile(r"[^A-Z0-9]")
+_LOOSE = str.maketrans("OILSBZGQ", "01158269")  # letters an attacker writes for digits
 _DIGITS = {}  # filled lazily: decimal digit -> ASCII (str.translate speeds the common case)
 
 
@@ -68,8 +69,8 @@ def fold(raw: str, *, casefold: bool = False, collapse_ws: bool = False) -> str:
 
 
 def squeeze(raw: str, *, loose: bool = False) -> str:
-    """Comparison key: folded, upper-case letters and digits only; ``loose`` also treats O/0 and I/L/1 as one character."""
+    """Comparison key: folded, upper-case letters and digits only; ``loose`` also treats the digit-like letters O I L S B Z G Q as the digits 0 1 1 5 8 2 6 9."""
     s = fold(raw).upper()
     if loose:
-        s = s.translate(str.maketrans("OIL", "011"))
+        s = s.translate(_LOOSE)
     return _NON_ALNUM.sub("", s)

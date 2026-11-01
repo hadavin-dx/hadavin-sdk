@@ -294,10 +294,31 @@ MUTANTS = [
         "test_allowed_references_need_a_boundary",
     ),
     (
+        "textnorm: digit-like letters S B Z G Q are not mapped",
+        N,
+        '"OILSBZGQ", "01158269"',
+        '"OIL", "011"',
+        "test_a_protected_number_is_found",
+    ),
+    (
+        "egress_text: a protected number is not found through junk",
+        E,
+        "any(kd in s for s in sq_digits)",
+        "False",
+        "test_a_protected_number_is_found",
+    ),
+    (
+        "egress_text: an allowed value that folds to nothing hides everything",
+        E,
+        "if fa:",
+        "if True:",
+        "test_allowed_references_need_a_boundary",
+    ),
+    (
         "egress_text: protected values are not checked",
         E,
-        "if any(k in sq for k in keys):",
-        "if False:",
+        "for k in keys:  # the most specific finding first",
+        "for k in []:",
         "test_what_passes_and_the_full_homoglyph_fold",
     ),
     (

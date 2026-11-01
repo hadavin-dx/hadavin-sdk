@@ -62,6 +62,7 @@ class LeakPolicy:
     max_exempt_digits: int = 24
     amounts_need_currency: bool = True
     min_protected_len: int = 4
+    min_protected_digits: int = 6
 
     def __post_init__(self) -> None:
         if not (isinstance(self.max_digits, int) and 1 <= self.max_digits <= 64):
@@ -75,6 +76,10 @@ class LeakPolicy:
             raise ValueError("max_exempt_tokens must be an int in 0..100")
         if not (isinstance(self.max_exempt_digits, int) and 0 <= self.max_exempt_digits <= 200):
             raise ValueError("max_exempt_digits must be an int in 0..200")
+        if not (
+            isinstance(self.min_protected_digits, int) and 2 <= self.min_protected_digits <= 64
+        ):
+            raise ValueError("min_protected_digits must be an int in 2..64")
         if not isinstance(self.amounts_need_currency, bool):
             raise TypeError("amounts_need_currency must be a bool")
         if not (isinstance(self.min_protected_len, int) and 1 <= self.min_protected_len <= 64):
@@ -159,8 +164,15 @@ def check_text(
     for p in allowed_patterns:
         t = p.sub(_MARK, t)
     sq = squeeze(text, loose=True)
-    if any(k in sq for k in keys):  # the most specific finding first
-        return Violation.PROTECTED_VALUE
+    sq_digits = (
+        "".join(ch for ch in sq if ch.isdigit()),
+        "".join(ch for ch in squeeze(text) if ch.isdigit()),
+    )
+    for k in keys:  # the most specific finding first
+        kd = "".join(ch for ch in k if ch.isdigit())
+        # a protected value is found as one run of the text, or (when it holds 6+ digits) as its digits in order with anything between them
+        if k in sq or (len(kd) >= policy.min_protected_digits and any(kd in s for s in sq_digits)):
+            return Violation.PROTECTED_VALUE
     exempt_digits = total_digits - sum(ch.isdigit() for ch in t)
     if (
         t.count(_MARK) > policy.max_exempt_tokens
