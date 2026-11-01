@@ -1,0 +1,388 @@
+"""The pipeline: GATES, GENERATE, VALIDATE (C1), AUDIT INTENT (C5), EXECUTE (C2, C3, C4), LEDGER (design 3, 9).
+
+Fixed order, one bounded retry loop, no model-chosen tools, no memory. Every question ends in exactly one ledger
+line and one outcome event. Nothing a server says reaches the model: a retry carries only a validator rule id or a
+SQLSTATE hint from `policy`. The agreement check is NOT built (the amendments recommend against it for v1).
+"""
+
+from __future__ import annotations
+
+import hashlib
+import re
+import time
+import uuid
+from dataclasses import dataclass, field
+from decimal import Decimal
+from typing import Any, Protocol
+
+from askdata import llm_io
+from askdata.audit import AskAudit
+from askdata.ledger import Attempt, Budget, Final, LedgerLine, QueryLedger, utc_stamp
+from askdata.meter import KillSwitch, Meter, MeterError, fmt_usd, worst_case_usd
+from askdata.pgsource import Limits, PgError, RunResult
+from askdata.policy import REASONS, Outcome, decide, exit_code, pick_reason, rule_hint
+from askdata.prompt import Prompt
+from askdata.safe_text import clean
+from askdata.validate import RULES, Rejected, Validated, validate
+from hadavin_sdk.audit.protocol import AuditUnavailable
+from hadavin_sdk.config import Route
+from hadavin_sdk.guard.injection import RegexDetector, injection_check
+from hadavin_sdk.llm.protocol import LLM, ProviderError, ProviderExhausted
+
+NO_ROWS_NOTE = "0 rows: check the filters"
+
+
+class Executor(Protocol):
+    def run(
+        self, canonical_sql: str, *, sql_sha256: str | None = None, limits: Limits | None = None
+    ) -> RunResult: ...
+
+
+@dataclass(frozen=True)
+class Settings:
+    route: str = "sql_generate"
+    max_attempts: int = 3
+    max_question_chars: int = 500
+    restricted_terms: tuple[str, ...] = (
+        "email", "e-mail", "mail address", "password", "passwd", "ssn", "social security",
+        "card number", "credit card", "iban",
+    )  # fmt: skip
+    store_question: bool = True
+    live: bool = False  # a live (paid) route also needs a fresh external_usd in the meter
+    transient_backoff_s: float = 1.0
+    injection_threshold: float = 0.5
+
+
+@dataclass
+class Answer:
+    query_id: str
+    outcome: Outcome
+    reason: str | None
+    exit_code: int
+    sentence: str
+    line: LedgerLine
+    ledger_sha256: str
+    result: RunResult | None = None
+    canonical_sql: str | None = None
+    sql_sha256: str | None = None
+    assumptions: list[str] = field(default_factory=list)
+    clarifying_question: str | None = None
+    abort: bool = False  # SQLSTATE 28xxx: the caller must stop the process (exit 4)
+
+
+class Pipeline:
+    def __init__(
+        self,
+        *,
+        llm: LLM,
+        routes: dict[str, Route],
+        executor: Executor,
+        audit: AskAudit,
+        ledger: QueryLedger,
+        meter: Meter,
+        kill: KillSwitch,
+        prompt: Prompt,
+        config_hash: str,
+        settings: Settings | None = None,
+        validator: Any = validate,
+        sleep: Any = time.sleep,
+    ) -> None:
+        self.llm, self.routes, self.executor, self.audit = llm, routes, executor, audit
+        self.ledger, self.meter, self.kill = ledger, meter, kill
+        self.prompt, self.config_hash = prompt, config_hash
+        self.s = settings or Settings()
+        self.validator, self.sleep = validator, sleep
+        self._detector = RegexDetector(self.s.injection_threshold)
+        self._terms = [
+            re.compile(rf"(?<!\w){re.escape(t)}(?!\w)", re.IGNORECASE)
+            for t in self.s.restricted_terms
+        ]
+
+    # ------------------------------------------------------------------------------------------------ gates
+    def _gate(self, question: str) -> str | None:
+        """A reason code if the question is refused before any model call, else None. No LLM involved."""
+        if self.kill.is_on():
+            return "kill_switch"
+        if len(question) > self.s.max_question_chars or not question.strip():
+            return "out_of_scope"
+        if any(t.search(question) for t in self._terms):
+            return "restricted_data"
+        if injection_check(self._detector, question, "question").flagged:
+            return "injection_suspected"
+        return None
+
+    # ------------------------------------------------------------------------------------------------- ask
+    def ask(self, question: str, *, asker: str = "claimed:anonymous") -> Answer:
+        qid = uuid.uuid4().hex
+        t0 = time.monotonic()
+        run = _Run(
+            qid,
+            utc_stamp(),
+            clean(asker)[:64],
+            question,
+            hashlib.sha256(question.encode("utf-8")).hexdigest(),
+        )
+        gate = self._gate(question)
+        if gate:
+            run.reason = gate
+        else:
+            self._generate_and_execute(run)
+        return self._finish(run, int((time.monotonic() - t0) * 1000))
+
+    def _generate_and_execute(self, run: _Run) -> None:
+        route = self.routes[self.s.route]
+        prev_sql: str | None = None
+        hint: str | None = None
+        streak = 0
+        once: set[str] = set()
+        while run.calls < self.s.max_attempts:
+            if self.kill.is_on():
+                run.terminal.append("kill_switch")
+                return
+            messages = llm_io.build_messages(self.prompt.text, run.question, prev_sql, hint)
+            worst = worst_case_usd(route, len(llm_io.SYSTEM) + len(messages[0]["content"]))
+            try:
+                self.meter.check(worst, live=self.s.live)
+            except MeterError:  # OverBudget or an unreadable meter file: do not spend
+                run.terminal.append("over_budget")
+                return
+            run.calls += 1
+            n = run.calls
+            t = time.monotonic()
+            try:
+                reply = self.llm.chat(
+                    messages,
+                    system=llm_io.SYSTEM,
+                    route=self.s.route,
+                    output_schema=llm_io.GENERATE_SCHEMA,
+                )
+            except (ProviderError, OSError, TimeoutError) as err:
+                # A call that failed AFTER the request was sent is charged its worst case; a refusal is free.
+                billed = isinstance(err, ProviderExhausted | OSError | TimeoutError)
+                if billed:
+                    run.cost += worst
+                    self._charge(run, worst)
+                run.attempts.append(
+                    Attempt(
+                        n=n,
+                        schema_ok=False,
+                        duration_ms=_ms(t),
+                        cost_usd=fmt_usd(worst) if billed else "0",
+                    )
+                )
+                run.terminal.append("model_unavailable")
+                return
+            run.cost += reply.cost_usd
+            run.tokens_in += reply.input_tokens
+            run.tokens_out += reply.output_tokens
+            run.model_id = reply.model_id
+            if not self._charge(run, reply.cost_usd):
+                return
+            base = {
+                "n": n,
+                "duration_ms": _ms(t),
+                "tokens_in": reply.input_tokens,
+                "tokens_out": reply.output_tokens,
+                "cost_usd": fmt_usd(reply.cost_usd),
+            }
+            try:
+                out = llm_io.parse_reply(reply)
+            except llm_io.SchemaViolation:
+                run.attempts.append(Attempt(schema_ok=False, **base))
+                streak += 1
+                if streak >= 2:
+                    run.terminal.append("schema_violation")
+                    return
+                run.last_reason = "schema_violation"
+                prev_sql, hint = None, llm_io.SCHEMA_HINT
+                continue
+            streak = 0
+            if out.decision == "abstain":
+                run.attempts.append(Attempt(schema_ok=True, **base))
+                run.abstain = out
+                return
+            run.assumptions = [clean(a) for a in out.assumptions]
+            run.rule_id = None
+            sql_text = out.sql or ""
+            try:
+                ok: Validated = self.validator(sql_text)
+            except Rejected as rej:
+                run.attempts.append(
+                    Attempt(
+                        schema_ok=True, sql_text=sql_text[:4000], validator_rule=rej.rule, **base
+                    )
+                )
+                run.rule_id, run.last_reason = rej.rule, "unsafe_query"
+                prev_sql, hint = sql_text, rule_hint(rej.rule, RULES)
+                continue
+            status, retry_hint = self._execute(run, ok, sql_text, base, once)
+            if status != "retry":
+                return
+            prev_sql, hint = sql_text, retry_hint
+
+    def _charge(self, run: _Run, amount: Decimal) -> bool:
+        """Record spend. False (and the question ends over budget) if the meter cannot be written."""
+        try:
+            self.meter.charge(amount)
+        except MeterError:
+            run.terminal.append("over_budget")
+            return False
+        return True
+
+    def _execute(
+        self, run: _Run, ok: Validated, sql_text: str, base: dict, once: set[str]
+    ) -> tuple[str, str | None]:
+        """Run one accepted statement. Returns ("done", None) when answered, ("stop", None) when the question
+        ends, ("retry", hint) for another model attempt. A transient failure is resent ONCE without using a model
+        attempt (and with its own intent event)."""
+        for resend in range(2):
+            try:
+                eid = self.audit.intent(
+                    run.query_id, question_sha256=run.q_sha, sql_sha256=ok.sha256
+                )
+            except AuditUnavailable:
+                run.attempts.append(
+                    Attempt(
+                        schema_ok=True,
+                        sql_text=sql_text[:4000],
+                        canonical_sql=ok.canonical_sql,
+                        sql_sha256=ok.sha256,
+                        **base,
+                    )
+                )
+                run.terminal.append("audit_unavailable")
+                return "stop", None
+            run.intents.append(eid)
+            t = time.monotonic()
+            common = {
+                "schema_ok": True, "sql_text": sql_text[:4000], "canonical_sql": ok.canonical_sql,
+                "sql_sha256": ok.sha256, "intent_event_id": eid, "executed": True,
+            }  # fmt: skip
+            try:
+                res = self.executor.run(ok.canonical_sql, sql_sha256=ok.sha256)
+            except PgError as err:
+                state = err.sqlstate
+                timing = {**base, "duration_ms": base["duration_ms"] + _ms(t)}
+                attempt = Attempt(
+                    sqlstate=state, sqlstate_class=state[:2] if state else None, **common, **timing
+                )
+                if "hash mismatch" in err.what:
+                    run.attempts.append(attempt)
+                    run.alarm.add("hash_mismatch")
+                    run.last_reason = "execution_failed"
+                    return "stop", None
+                dec = decide(state)
+                run.last_reason = dec.reason
+                if dec.alarm:
+                    run.alarm.add(dec.alarm)
+                if dec.action == "reconnect" and resend == 0:
+                    run.attempts.append(
+                        attempt
+                    )  # kept for the record; the resend is not a model attempt
+                    self.sleep(self.s.transient_backoff_s)
+                    continue
+                run.attempts.append(attempt)
+                if dec.action == "abort":
+                    run.abort, run.last_reason = True, "execution_failed"
+                    return "stop", None
+                if dec.action in ("stop", "reconnect"):
+                    return "stop", None
+                if dec.action == "retry_once":
+                    key = state or "none"
+                    if key in once:
+                        return "stop", None
+                    once.add(key)
+                return "retry", dec.hint
+            timing = {**base, "duration_ms": base["duration_ms"] + _ms(t)}
+            run.attempts.append(
+                Attempt(rows=len(res.rows), truncated=res.truncated, **common, **timing)
+            )
+            run.result, run.ok = res, ok
+            return "done", None
+        return "stop", None
+
+    # ---------------------------------------------------------------------------------------------- finish
+    def _finish(self, run: _Run, latency_ms: int) -> Answer:
+        clarifying: str | None = None
+        if run.result is not None:
+            outcome, reason = "answered", None
+        elif run.abstain is not None:
+            reason = run.abstain.abstain_reason
+            outcome = REASONS[reason].outcome
+            clarifying = run.abstain.clarifying_question
+        elif run.reason:  # a gate
+            reason = run.reason
+            outcome = REASONS[reason].outcome
+        else:
+            reason = pick_reason([*run.terminal, *([run.last_reason] if run.last_reason else [])])
+            outcome = REASONS[reason].outcome
+        final = None
+        if run.result is not None and run.ok is not None:
+            final = Final(
+                sql_sha256=run.ok.sha256, canonical_sql=run.ok.canonical_sql, wire_sha256=run.result.wire_sha256 or run.ok.sha256,
+                result_sha256=run.result.result_sha256, row_count=len(run.result.rows), truncated=run.result.truncated,
+            )  # fmt: skip
+        try:
+            snap = self.meter.snapshot()
+            budget = Budget(
+                spent_usd=fmt_usd(snap["askdata_spent"]), cap_usd=fmt_usd(snap["demo_cap"])
+            )  # type: ignore[arg-type]
+        except MeterError:
+            budget = Budget(spent_usd="0", cap_usd="0")
+        route = self.routes[self.s.route]
+        line = LedgerLine(
+            query_id=run.query_id, ts=run.ts, asker=run.asker,
+            question=clean(run.question)[:500] if self.s.store_question else None, question_sha256=run.q_sha,
+            outcome=outcome, reason_code=reason, rule_id=run.rule_id,
+            attempts=run.attempts[: 6], final=final, assumptions=run.assumptions[:20], intent_event_ids=run.intents,
+            prompt_sha256=self.prompt.prompt_sha256, config_hash=self.config_hash, catalog_sha256=self.prompt.catalog_sha256,
+            model_id=run.model_id or route.model_id, route=self.s.route, tokens_in=run.tokens_in, tokens_out=run.tokens_out,
+            cost_usd=fmt_usd(run.cost), latency_ms=latency_ms, budget=budget, alarm=sorted(run.alarm),
+        )  # fmt: skip
+        sha = self.ledger.append(line)
+        self.audit.outcome(
+            run.query_id, question_sha256=run.q_sha, decision=outcome, ledger_sha256=sha,
+            sql_sha256=final.sql_sha256 if final else None, rule_id=line.rule_id, error_code=reason,
+        )  # fmt: skip
+        sentence = "" if outcome == "answered" else REASONS[reason].sentence  # type: ignore[index]
+        if outcome == "answered" and run.result is not None and not run.result.rows:
+            sentence = NO_ROWS_NOTE
+        return Answer(
+            query_id=run.query_id, outcome=outcome, reason=reason, exit_code=exit_code(outcome, reason), sentence=sentence,
+            line=line, ledger_sha256=sha, result=run.result, canonical_sql=final.canonical_sql if final else None,
+            sql_sha256=final.sql_sha256 if final else None, assumptions=run.assumptions, clarifying_question=clarifying,
+            abort=run.abort,
+        )  # fmt: skip
+
+
+@dataclass
+class _Run:
+    query_id: str
+    ts: str
+    asker: str
+    question: str
+    q_sha: str
+    attempts: list[Attempt] = field(default_factory=list)
+    intents: list[str] = field(default_factory=list)
+    terminal: list[str] = field(default_factory=list)
+    alarm: set[str] = field(default_factory=set)
+    assumptions: list[str] = field(default_factory=list)
+    reason: str | None = None  # a gate's reason
+    last_reason: str | None = None
+    rule_id: str | None = None
+    cost: Decimal = Decimal(0)
+    tokens_in: int = 0
+    tokens_out: int = 0
+    model_id: str = ""
+    abstain: Any = None
+    result: RunResult | None = None
+    ok: Validated | None = None
+    abort: bool = False
+    calls: int = 0
+
+
+def _ms(t: float) -> int:
+    return int((time.monotonic() - t) * 1000)
+
+
+__all__ = ["Answer", "Executor", "Pipeline", "Settings"]
