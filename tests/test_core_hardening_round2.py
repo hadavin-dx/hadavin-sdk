@@ -173,7 +173,9 @@ def test_the_maintenance_role_prunes_run_counters_only_and_has_no_other_rights(
         )
         for stmt in (
             "INSERT INTO spend (agent_id, day, usd) VALUES ('x', current_date, 1)",
-            "UPDATE spend SET usd = 0",
+            "UPDATE spend SET agent_id = 'y'",  # only the usd column is writable (release-reservation)
+            "UPDATE spend SET day = current_date",
+            "UPDATE spend_month SET month = current_date",
             "SELECT * FROM runs",
             "DELETE FROM runs",
             'UPDATE kill_switch SET "on" = true',

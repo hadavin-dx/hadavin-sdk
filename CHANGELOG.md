@@ -47,7 +47,7 @@
   store step (`Store.settle_spend`), counts as settled only after the store accepted it (a failed settle can be retried),
   and a second settle or a release after a settle is refused. `Limits.prune_runs()` deletes per-run counters older than 7
   days, but the RUNTIME database role cannot DELETE (least privilege) and `Runtime` no longer prunes: use
-  `hadavin-sdk migrate --maintenance-role <role>` (that role gets SELECT, DELETE on `spend` and `spend_month` and nothing
+  `hadavin-sdk migrate --maintenance-role <role>` (that role gets SELECT, DELETE and (round 4) UPDATE (usd) on `spend` and `spend_month` and nothing
   else) and run `hadavin-sdk prune-runs [--keep-days 7]` with `HADAVIN_MAINTENANCE_DSN` from a scheduled job. Money inputs must be finite, non-negative `Decimal`s (`ValueError` otherwise; `charge`
   too).
 - **The agent loop reserves before every model call (M1).** `Runtime` books `worst_case_usd(route, prompt_bytes(...))`
@@ -71,7 +71,7 @@
   primary is never served by the fallback (the abandoned request's bill would vanish from the meter); it is raised.
 - **Postgres spend work uses a bounded pool** (`PostgresStore.POOL_SIZE`, default 8) and every driver error becomes
   `StoreUnavailable` with the class name only. `settle_spend` no longer sorts: callers pass the run counter first, the
-  order `reserve` takes. A take-back (negative delta) never creates a missing counter (no negative rows after a prune).
+  order `reserve` takes. A take-back (negative delta) never creates a missing counter, and (round 4) never takes an existing one below zero: `GREATEST(usd + delta, 0)` in the same SQL statement, `max(0, ...)` in the memory store.
 - **Counter keys are injective and validated (R371):** with a tenant the key is `<len>:<tenant>/<name>`; agent ids and
   tenants must match `[A-Za-z0-9._-]{1,64}` (`AgentRecord.id`, `Limits(tenant=)`), and `config.yaml` has an optional
   `tenant`, passed to `Limits` by `app.build`. Setting a tenant starts new counters (keys change); the default (empty) is
@@ -92,10 +92,7 @@
 ### Round-3 review fixes (PR #48)
 - **Every Postgres driver error is `StoreUnavailable`, class name only** (`psycopg.Error`, not only `OperationalError`):
   `InsufficientPrivilege`, `DataError` and the rest no longer escape raw with text that can quote a parameter value.
-- **An exhausted provider may have billed.** `ProviderExhausted` (timeouts, resets, 5xx after retries, the deadline)
-  keeps the reserved worst case booked, in the agent loop and in `MeteredLLM`. Only a refused request (`ProviderError`
-  itself, `SpendLimitReached`, `QuotaReached`) is released as never billed. Effect: a throttling storm books worst cases
-  until the day and month roll over (fail safe: it can stop work early, never overshoot the cap).
+- **An exhausted provider may have billed (superseded by round 4: see the billing contract below).**
 - **The spend reason is sticky for the whole failure streak** in `CircuitBreaker`: four `SpendLimitReached` then one
   `ProviderExhausted` still opens the circuit "for spend", so an unmetered fallback is not used to route around the cap.
 - **`QuotaReached`** (new, a subclass of `SpendLimitReached`): a Gemini per-day quota is a request quota, not a money cap;
@@ -108,10 +105,40 @@
   `evals.gate` meter only when given a `MeteredLLM` / `limits=`; the K1b replay uses its own sequential USD cap. The
   Anthropic message-prefix test for a spend limit is a fallback behind the documented `error_code` and was not checked
   against a live response (no spend authorised); it can only add a refusal, never allow a call.
-- **Stuck reservations (maintenance).** A process that crashes between `reserve` and `settle` leaves its worst case
-  booked. Per-run counters are removed by `hadavin-sdk prune-runs`; agent day and month counters age out when the day or
-  month rolls over. To release one earlier, take it back from the maintenance identity with
-  `store.settle_spend([(agent_key, day, -amount)])` (a negative delta never creates a missing counter).
+
+### Round-4 review fixes (PR #48)
+- **One billing contract for every provider error (M-B, M-D; shared with PR #43).** `ProviderError` carries `attempts`
+  (requests actually sent; 0 = provably nothing left the process), `answered` (answered AND billed, HTTP 2xx), `refused`
+  (explicitly refused, HTTP 4xx incl. 429: not processed) and `billed_usd`. `attempts - answered - refused` is the number
+  of requests with UNKNOWN billing (a timeout or reset after sending, a 5xx). `cost_to_settle(exc, reserved)` is the one
+  rule every meter uses: nothing unknown and nothing answered = release; anything unknown = keep the whole reservation;
+  answered = book `billed_usd`, and never zero (a billed answer with no price keeps the reservation). Class defaults mean
+  "one request, refused" for `ProviderError`, `SpendLimitReached`, `QuotaReached`, and "one request, unknown" for
+  `ProviderExhausted` and `DeadlineExceeded`. `with_retry` stamps the real counts; `ResilientLLM` stamps `attempts = 0`
+  on its own local refusals (circuit open, fallback refused). So a provider outage, a 429 streak or an open circuit no
+  longer books worst cases it never spent, while a timeout, a 5xx or a billed unusable answer still does.
+  **For PR #43 (rebase note):** `ProviderError.attempts/answered/billed_usd` and `UnusableAnswer` keep their names and
+  meaning; #43 adds only `refused` (default 1 on `ProviderError`, 0 on `ProviderExhausted`), keeps its stamping inside
+  `with_retry`, and its `UnusableAnswer` needs `answered = 1` and `refused = 0` as class values (the fake in
+  `tests/test_pr48_review4.py` shows the shape). The agent loop, `MeteredLLM` and the K1b replay settle through
+  `cost_to_settle` and need no change.
+- **K1b** charges an exhausted call of unknown outcome against its own USD cap (it charged nothing before).
+- **A take-back never goes below zero (M-A):** clamped in the same statement in Postgres and in the memory store, so a
+  repeated command or a race with a late settle cannot hand out cap headroom.
+- **`hadavin-sdk release-reservation --agent A --day D --amount USD [--dry-run]` (M-A, M-C):** takes a stranded
+  reservation back from one agent's DAY and MONTH counters. It runs as the maintenance role, which now holds
+  `UPDATE (usd)` on `spend` and `spend_month` (the usd column only; no key can change) besides SELECT and DELETE. Policy
+  and over-breadth review: comment above `release_reservation` in `store/migrate.py`. Re-run `migrate --maintenance-role`
+  to apply the grant. A stranded reservation otherwise stays booked until its day AND its month roll over: it counts
+  against the MONTHLY cap for up to about 31 days (the earlier text "ages out with the day or month" was wrong for the
+  month). Agent rows are never pruned.
+- **Follow-up needing the lead (not done here on purpose):** `CHECK (usd >= 0)` on `spend` and `spend_month` is a
+  migration; the numbering plan has #49 = 0005, #42 = 0006, #41 = 0007 and PRs #49/#41 rewrite the same store code, so it
+  is not added here. The clamp above already holds in the statement; add the CHECK in the migration that follows the
+  merge order.
+- **Memory store** month totals read a per-agent day index instead of scanning every counter under the global lock.
+- A failed probe no longer clears "opened for spend" (`_open_spend = spend or _open_spend`). The `ci.yml` checkout comment
+  now says what the scan covers.
 
 ### Upgrade steps
 - **K3 pilot build path (levels, shadow cut-off, fail-closed loading).** Action contracts change shape:

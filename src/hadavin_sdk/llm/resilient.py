@@ -106,7 +106,8 @@ class CircuitBreaker:
             elif ticket.probe and ticket.epoch == self._epoch:
                 self._opened_at, self._probing = self._clock(), False  # a failed probe re-opens
                 self._epoch += 1
-                self._open_spend = spend
+                # Sticky: a cap that was confirmed is not unconfirmed by a probe that failed for another reason.
+                self._open_spend = spend or self._open_spend
             # a stale non-probe failure while open: ignored (no new window, no touch of _probing)
 
     def release(self, ticket: Ticket) -> None:
@@ -196,9 +197,14 @@ class ResilientLLM:
                     _LOG.warning("llm fallback refusal could not be reported")
             if cause is not None:
                 return cause
-            if cause is None and self.breaker.open_for_spend:
-                return SpendLimitReached(f"llm: {why}, primary spend limit, fallback not metered")
-            return ProviderExhausted(f"llm: {why}, {reason}")
+            # Raised here, so nothing was sent in this call: attempts = 0 lets a meter release the reservation.
+            err: ProviderExhausted | SpendLimitReached
+            if self.breaker.open_for_spend:
+                err = SpendLimitReached(f"llm: {why}, primary spend limit, fallback not metered")
+            else:
+                err = ProviderExhausted(f"llm: {why}, {reason}")
+            err.attempts, err.refused = 0, 0
+            return err
 
         if self.fallback is None:
             raise refuse("no fallback configured")

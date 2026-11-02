@@ -29,9 +29,7 @@ class Grant:
     kind: Literal["table", "view", "sequence"]
     runtime: str
     portal: bool = False
-    maintenance: str = (
-        ""  # the prune job's own role: DELETE on the per-run spend counters, nothing else
-    )
+    maintenance: str = ""  # the maintenance role: DELETE and UPDATE (usd) on the spend counters (prune-runs, release-reservation), nothing else
 
 
 _RW = "SELECT, INSERT, UPDATE"
@@ -47,8 +45,10 @@ GRANTS: dict[str, Grant] = {
     "approval_requests": Grant("table", _RW, portal=True),
     "approval_decisions": Grant("table", _APPEND, portal=True),
     "dead_letters": Grant("table", _APPEND),
-    "spend": Grant("table", _RW, maintenance="SELECT, DELETE"),
-    "spend_month": Grant("table", _RW, maintenance="SELECT, DELETE"),
+    # Maintenance: DELETE (prune old run counters) and UPDATE of the usd column ONLY (release-reservation). The column
+    # grant cannot change a counter's key; the command and the store both clamp at zero. See the policy text below.
+    "spend": Grant("table", _RW, maintenance="SELECT, DELETE, UPDATE (usd)"),
+    "spend_month": Grant("table", _RW, maintenance="SELECT, DELETE, UPDATE (usd)"),
     "kill_switch": Grant("table", _RW),
     "tick_state": Grant("table", _RW),
     "audit_entries": Grant("table", _APPEND, portal=True),
@@ -269,6 +269,72 @@ def migrate(
     return applied
 
 
+# POLICY (least privilege, owner rule 2026-11-01) for the maintenance identity on the spend counters.
+#   Rights:       SELECT, DELETE, UPDATE (usd) on `spend` and `spend_month`; nothing else on any relation.
+#   Actions:      prune-runs needs DELETE (and SELECT for its WHERE); release-reservation needs UPDATE of `usd` (to take a
+#                 stranded reservation back) and SELECT (to show the totals before and after).
+#   Why not the runtime role: it must never be able to lower a counter outside a reserve/settle pair; a stuck reservation is
+#                 an operator act, with its own identity and a bounded command.
+#   Bounds:       the command only SUBTRACTS (amount > 0), for one named agent and day, at most the amount named, clamped
+#                 at zero in the same SQL statement; `usd` is the only writable column, so no key can be changed.
+#   Over-breadth: UPDATE (usd) would let a leaked maintenance credential also RAISE a counter (a denial of service until
+#                 the day or month rolls over). That role could already DELETE any counter row (which resets it to zero
+#                 and hands out cap headroom, the worse direction), so the grant adds no new class of harm. Mitigation:
+#                 the DSN is held by the operator only, never by the runtime, and every use is a CLI call in the shell log.
+#   Negative test: tests/test_pr48_review4.py (the maintenance role cannot INSERT, cannot UPDATE agent_id, day or month,
+#                 cannot touch any other relation; the runtime role still cannot DELETE or release).
+
+
+def release_reservation(
+    dsn: str,
+    agent_id: str,
+    day,
+    usd,
+    *,
+    tenant: str = "",
+    dry_run: bool = False,
+    iam_auth: bool = False,
+    region: str | None = None,
+    sslmode: str | None = None,
+    sslrootcert: str | None = None,
+) -> tuple:
+    """Take ``usd`` back from one agent's DAY and MONTH counters (a reservation stranded by a crash, or by an
+    exhausted provider that proved unbilled), as the MAINTENANCE role. Returns ``(before, after)``, each a
+    ``(day_total, month_total)``. Bounded: one agent, one day (not in the future), a positive finite amount; the store
+    clamps both counters at zero, so a repeated command cannot push them below it. ``dry_run`` only reads."""
+    from decimal import Decimal
+
+    from hadavin_sdk.limits import _ID, counter_key
+    from hadavin_sdk.models import now
+    from hadavin_sdk.store.postgres import PostgresStore
+
+    if not _ID.fullmatch(agent_id):
+        raise ConfigError("agent id must match [A-Za-z0-9._-]{1,64}")
+    if tenant and not _ID.fullmatch(tenant):
+        raise ConfigError("tenant must match [A-Za-z0-9._-]{1,64}")
+    usd = Decimal(usd)
+    if not usd.is_finite() or usd <= 0:
+        raise ConfigError("amount must be a finite number above zero")
+    if day > now().date():
+        raise ConfigError("day must not be in the future")
+    key = counter_key(tenant, agent_id)
+    conn = connect(dsn, iam_auth=iam_auth, region=region, sslmode=sslmode, sslrootcert=sslrootcert)
+
+    def connector():
+        return connect(
+            dsn, iam_auth=iam_auth, region=region, sslmode=sslmode, sslrootcert=sslrootcert
+        )
+
+    store = PostgresStore(conn, connector)
+    try:
+        before = store.spend_totals(key, day)
+        if not dry_run:
+            store.settle_spend([(key, day, -usd)])
+        return before, store.spend_totals(key, day)
+    finally:
+        store.close()
+
+
 def prune_run_counters(
     dsn: str,
     keep_days: int = 7,
@@ -279,7 +345,7 @@ def prune_run_counters(
     sslrootcert: str | None = None,
 ) -> int:
     """Delete per-run spend counters older than ``keep_days`` (a crashed run leaves its row). Runs under the
-    MAINTENANCE role (``migrate --maintenance-role``: SELECT and DELETE on ``spend`` and ``spend_month``, nothing
+    MAINTENANCE role (``migrate --maintenance-role``: SELECT, DELETE and UPDATE (usd) on ``spend`` and ``spend_month``, nothing
     else), never the runtime role, which cannot delete money rows. Returns the day rows removed."""
     from datetime import timedelta
 

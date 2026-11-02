@@ -646,12 +646,14 @@ class PostgresStore:
         if (
             usd < 0
         ):  # taking back: only from a counter that exists (a pruned one is not recreated negative)
+            # GREATEST(.., 0) in the same statement: a repeated or racing take-back can never push a counter below
+            # zero (that would hand out cap headroom nobody paid for).
             conn.execute(
-                "UPDATE spend SET usd = usd + %s WHERE agent_id = %s AND day = %s",
+                "UPDATE spend SET usd = GREATEST(usd + %s, 0) WHERE agent_id = %s AND day = %s",
                 (usd, agent_id, day),
             )
             conn.execute(
-                "UPDATE spend_month SET usd = usd + %s WHERE agent_id = %s AND month = %s",
+                "UPDATE spend_month SET usd = GREATEST(usd + %s, 0) WHERE agent_id = %s AND month = %s",
                 (usd, agent_id, day.replace(day=1)),
             )
             return

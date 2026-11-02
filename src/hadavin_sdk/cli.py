@@ -56,6 +56,15 @@ def _positive(text: str) -> int:
     return k
 
 
+def _day(text: str):
+    from datetime import date
+
+    try:
+        return date.fromisoformat(text)
+    except ValueError:
+        raise argparse.ArgumentTypeError("must be a date, YYYY-MM-DD") from None
+
+
 def _money(text: str) -> Decimal:
     try:
         d = Decimal(text)
@@ -97,7 +106,7 @@ def _main(argv: list[str] | None = None) -> int:
     mig.add_argument("--runtime-role", help="grant this database role what the runtime needs")
     mig.add_argument(
         "--maintenance-role",
-        help="grant this database role DELETE on the spend counters only (for prune-runs)",
+        help="grant this database role DELETE and UPDATE (usd) on the spend counters only (prune-runs, release-reservation)",
     )
     mig.add_argument(
         "--portal-role", help="grant this database role SELECT on the portal's relations only"
@@ -107,6 +116,16 @@ def _main(argv: list[str] | None = None) -> int:
         help="delete old per-run spend counters (maintenance role; HADAVIN_MAINTENANCE_DSN)",
     )
     prn.add_argument("--keep-days", type=_positive, default=7)
+    rel = sub.add_parser(
+        "release-reservation",
+        help="take a stranded reservation back from one agent's day and month counters (maintenance role)",
+    )
+    rel.add_argument("--agent", required=True, help="the agent id")
+    rel.add_argument(
+        "--day", required=True, type=_day, help="the day it was booked, YYYY-MM-DD (UTC)"
+    )
+    rel.add_argument("--amount", required=True, type=_money, help="USD to take back")
+    rel.add_argument("--dry-run", action="store_true", help="only show the totals")
     aud = sub.add_parser("audit", help="check the chain audit")
     aud.add_argument("action", choices=["verify"])
     rep = sub.add_parser(
@@ -142,6 +161,8 @@ def _main(argv: list[str] | None = None) -> int:
         return _migrate(cfg, args.runtime_role, args.portal_role, args.maintenance_role)
     if args.cmd == "prune-runs":
         return _prune_runs(cfg, args.keep_days)
+    if args.cmd == "release-reservation":
+        return _release_reservation(cfg, args)
     reg = load_registry(cfg)
     if args.cmd in (
         "replay",
@@ -313,6 +334,40 @@ def _tick() -> int:
         print(f"tick: config error: {type(exc).__name__}", file=sys.stderr)
         return 2
     return run_tick(app)
+
+
+def _release_reservation(cfg, args) -> int:
+    store = cfg.backends.store
+    dsn = os.environ.get("HADAVIN_MAINTENANCE_DSN")
+    if store.kind != "postgres" or not dsn:
+        print(
+            "refused: release-reservation needs the postgres store and HADAVIN_MAINTENANCE_DSN "
+            "(the maintenance role's DSN, never the runtime's)",
+            file=sys.stderr,
+        )
+        return 2
+    from hadavin_sdk.store.migrate import release_reservation
+    from hadavin_sdk.store.postgres import ca_file
+
+    ca = ca_file(store, make("secrets", cfg.backends.secrets).get)
+    before, after = release_reservation(
+        dsn,
+        args.agent,
+        args.day,
+        args.amount,
+        tenant=cfg.tenant,
+        dry_run=args.dry_run,
+        iam_auth=store.iam_auth,
+        region=store.region,
+        sslmode=store.sslmode,
+        sslrootcert=ca,
+    )
+    verb = "would release" if args.dry_run else "released"
+    print(
+        f"{verb} up to {args.amount} USD for {args.agent} on {args.day}: "
+        f"day {before[0]} -> {after[0]}, month {before[1]} -> {after[1]}"
+    )
+    return 0
 
 
 def _prune_runs(cfg, keep_days: int) -> int:

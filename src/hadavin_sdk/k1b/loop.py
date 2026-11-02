@@ -24,7 +24,7 @@ from hadavin_sdk.k1b.bundle import Bundle
 from hadavin_sdk.k1b.diagnosis import Diagnosis, parse_diagnosis, parse_diagnosis_text
 from hadavin_sdk.k1b.tools import ALLOWED_TOOLS, NO_DATA, SUBMIT, TOOL_SPECS, Snapshot, render
 from hadavin_sdk.llm.common import estimate_tokens
-from hadavin_sdk.llm.protocol import LLM, ProviderError, ProviderExhausted
+from hadavin_sdk.llm.protocol import LLM, ProviderError, ProviderExhausted, cost_to_settle
 from hadavin_sdk.models import Reply
 
 SYSTEM_PROMPT = (
@@ -169,11 +169,15 @@ def run_case(
                 budget.charge(worst_case_usd(route_prices, system, messages))
             out.status, out.stop_reason, out.halt = "timeout", "call_timeout", "aborted"
             return out
-        except ProviderExhausted:
-            out.status, out.stop_reason = "error", "provider_exhausted"
-            return out
-        except ProviderError:
-            out.status, out.stop_reason, out.halt = "error", "aborted", "aborted"
+        except ProviderError as exc:
+            # An exhausted call may have been processed and billed: charge by the billing contract (llm/protocol.py)
+            # so the K1b cap holds; a provably unbilled one charges nothing.
+            if route_prices is not None:
+                budget.charge(cost_to_settle(exc, worst_case_usd(route_prices, system, messages)))
+            if isinstance(exc, ProviderExhausted):
+                out.status, out.stop_reason = "error", "provider_exhausted"
+            else:
+                out.status, out.stop_reason, out.halt = "error", "aborted", "aborted"
             return out
         budget.charge(reply.cost_usd)
         if reply.stop_reason in ("max_tokens", "refusal"):

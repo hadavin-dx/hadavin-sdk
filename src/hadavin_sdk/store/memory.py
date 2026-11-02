@@ -27,6 +27,33 @@ from hadavin_sdk.store.protocol import NotFound, StaleState
 RUN_KEY = re.compile(r"^(?:[0-9]+:[^/]*/)?run:")
 
 
+class _Counters(defaultdict):
+    """The spend counters plus an index of the days each key has, so a month total reads one agent's days, not
+    every counter of every agent under the global lock."""
+
+    def __init__(self) -> None:
+        super().__init__(Decimal)
+        self.days: dict[str, set[date]] = defaultdict(set)
+
+    def __setitem__(self, key: tuple[str, date], value: Decimal) -> None:
+        super().__setitem__(key, value)
+        self.days[key[0]].add(key[1])
+
+    def __delitem__(self, key: tuple[str, date]) -> None:
+        super().__delitem__(key)
+        self.days[key[0]].discard(key[1])
+
+    def month(self, agent_id: str, day: date) -> Decimal:
+        return sum(
+            (
+                self.get((agent_id, d), Decimal(0))
+                for d in self.days.get(agent_id, ())
+                if (d.year, d.month) == (day.year, day.month)
+            ),
+            Decimal(0),
+        )
+
+
 class MemoryStore:
     def __init__(self) -> None:
         # ponytail: one global lock; per-row locks only if a real backend ever needs throughput here.
@@ -37,7 +64,7 @@ class MemoryStore:
         self._approvals: dict[str, ApprovalRequest] = {}
         self._decisions: list[ApprovalDecision] = []
         self._dead: dict[str, list[DeadLetter]] = defaultdict(list)
-        self._spend: dict[tuple[str, date], Decimal] = defaultdict(Decimal)
+        self._spend = _Counters()
         self._kill = KillSwitch()
         self._ticks: dict[str, TickState] = {}
 
@@ -196,34 +223,16 @@ class MemoryStore:
     def add_spend(self, agent_id: str, day: date, usd: Decimal) -> tuple[Decimal, Decimal]:
         with self._lock:
             self._spend[(agent_id, day)] += usd
-            month = sum(
-                v
-                for (a, d), v in self._spend.items()
-                if a == agent_id and (d.year, d.month) == (day.year, day.month)
-            )
+            month = self._spend.month(agent_id, day)
             return self._spend[(agent_id, day)], Decimal(month)
 
     def spend_totals(self, agent_id: str, day: date) -> tuple[Decimal, Decimal]:
         with self._lock:
-            month = sum(
-                (
-                    v
-                    for (a, d), v in self._spend.items()
-                    if a == agent_id and (d.year, d.month) == (day.year, day.month)
-                ),
-                Decimal(0),
-            )
+            month = self._spend.month(agent_id, day)
             return self._spend.get((agent_id, day), Decimal(0)), month
 
     def _month_total(self, agent_id: str, day: date) -> Decimal:
-        return sum(
-            (
-                v
-                for (a, d), v in self._spend.items()
-                if a == agent_id and (d.year, d.month) == (day.year, day.month)
-            ),
-            Decimal(0),
-        )
+        return self._spend.month(agent_id, day)
 
     def reserve_spend(
         self,
@@ -261,7 +270,10 @@ class MemoryStore:
             for agent_id, day, delta in deltas:
                 if delta < 0 and (agent_id, day) not in self._spend:
                     continue  # a counter already pruned: nothing to take back (no negative rows)
-                self._spend[(agent_id, day)] += delta
+                new = self._spend[(agent_id, day)] + delta
+                self._spend[(agent_id, day)] = (
+                    max(Decimal(0), new) if delta < 0 else new
+                )  # never below zero
 
     def prune_spend(self, before: date) -> int:
         with self._lock:

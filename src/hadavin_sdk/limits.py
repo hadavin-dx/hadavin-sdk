@@ -99,6 +99,11 @@ class Reservation:
     settling: bool = False
 
 
+def counter_key(tenant: str, name: str) -> str:
+    """The store key of a counter: a bare agent id, or ``<len>:<tenant>/<name>`` with a tenant (injective)."""
+    return f"{len(tenant)}:{tenant}/{name}" if tenant else name
+
+
 class Limits:
     def __init__(
         self, store: Store, audit: AuditSink, registry: Registry, tenant: str = ""
@@ -121,7 +126,7 @@ class Limits:
     def _key(self, name: str) -> str:
         """Injective: a tenant is length-prefixed (``3:abc/name``) and a bare key never starts with digits and a
         colon (agent ids may not hold ':' or '/'), so no two (tenant, name) pairs share a counter."""
-        return f"{len(self.tenant)}:{self.tenant}/{name}" if self.tenant else name
+        return counter_key(self.tenant, name)
 
     def reserve(
         self, agent_id: str, usd: Decimal, run_id: str | None = None, run_day: date | None = None
@@ -187,7 +192,9 @@ class Limits:
         run leaves its row). It needs DELETE on the spend tables, which the runtime database role does NOT have
         (least privilege): run it from the maintenance job (``hadavin-sdk prune-runs``, its own database identity
         from ``migrate --maintenance-role``), never from the runtime. A reservation stranded by a crash on an AGENT
-        counter ages out with its day and month; to release it sooner use ``store.settle_spend([(key, day, -usd)])``."""
+        counter stays booked until its day and its MONTH roll over (up to ~31 days against the monthly cap); release it
+        sooner with ``hadavin-sdk release-reservation --agent A --day D --amount USD`` (maintenance identity, clamped at
+        zero)."""
         return self.store.prune_spend(now().date() - timedelta(days=keep_days))
 
     def charge(self, agent_id: str, usd: Decimal) -> tuple[Decimal, Decimal]:

@@ -162,7 +162,13 @@ def with_retry[T](
 ) -> T:
     started = clock()
 
+    sent = [0]  # attempts that really started (a slot refusal or an expired deadline sends nothing)
+    refused = [
+        0
+    ]  # attempts the provider answered with a 4xx (429 included): not processed, not billed
+
     def attempt_once() -> object:
+        sent[0] += 1
         try:
             return call()
         except ProviderError:
@@ -174,43 +180,51 @@ def with_retry[T](
                 spend = False
             return _Failed(exc, spend)
 
-    for attempt in range(1, max_attempts + 1):
-        got: object = None
-        try:
-            if deadline_s is None:
-                got = attempt_once()
-            else:
-                left = deadline_s - (clock() - started)
-                if left <= 0:
-                    raise DeadlineExceeded(f"{label}: deadline {deadline_s}s reached")
-                got = _bounded(attempt_once, left, label)
-            if not isinstance(got, _Failed):
-                return got  # type: ignore[return-value]
-            raise got.exc
-        except ProviderError:
-            raise
-        except Exception as exc:  # every failure is classified below, never swallowed
-            if got_spend(got, exc):
-                raise spend_error(f"{label}: {describe(exc, detail)} spend limit") from exc
-            if not transient(exc, retryable):
-                raise ProviderError(f"{label}: {describe(exc, detail)}") from exc
-            if attempt == max_attempts:
-                raise ProviderExhausted(
-                    f"{label}: {describe(exc, detail)} after {max_attempts} attempts"
-                ) from exc
-            # Full jitter spreads retries from many runs hitting one throttled account (not crypto); never
-            # sooner than the server asked.
-            jitter = random.uniform(0, min(MAX_DELAY_S, BASE_DELAY_S * 2 ** (attempt - 1)))  # noqa: S311
-            asked = retry_after(exc)
-            if asked > RETRY_AFTER_CEILING_S:
-                raise ProviderExhausted(
-                    f"{label}: {describe(exc, detail)} server asked {asked:g}s, over the "
-                    f"{RETRY_AFTER_CEILING_S:g}s ceiling"
-                ) from exc
-            delay = max(jitter, asked)
-            if deadline_s is not None and clock() - started + delay > deadline_s:
-                raise ProviderExhausted(
-                    f"{label}: {describe(exc, detail)} deadline {deadline_s}s reached"
-                ) from exc
-            sleep(delay)
+    try:
+        for attempt in range(1, max_attempts + 1):
+            got: object = None
+            try:
+                if deadline_s is None:
+                    got = attempt_once()
+                else:
+                    left = deadline_s - (clock() - started)
+                    if left <= 0:
+                        raise DeadlineExceeded(f"{label}: deadline {deadline_s}s reached")
+                    got = _bounded(attempt_once, left, label)
+                if not isinstance(got, _Failed):
+                    return got  # type: ignore[return-value]
+                raise got.exc
+            except ProviderError:
+                raise
+            except Exception as exc:  # every failure is classified below, never swallowed
+                code = status(exc)
+                if code is not None and 400 <= code < 500:
+                    refused[0] += 1
+                if got_spend(got, exc):
+                    raise spend_error(f"{label}: {describe(exc, detail)} spend limit") from exc
+                if not transient(exc, retryable):
+                    raise ProviderError(f"{label}: {describe(exc, detail)}") from exc
+                if attempt == max_attempts:
+                    raise ProviderExhausted(
+                        f"{label}: {describe(exc, detail)} after {max_attempts} attempts"
+                    ) from exc
+                # Full jitter spreads retries from many runs hitting one throttled account (not crypto); never
+                # sooner than the server asked.
+                jitter = random.uniform(0, min(MAX_DELAY_S, BASE_DELAY_S * 2 ** (attempt - 1)))  # noqa: S311
+                asked = retry_after(exc)
+                if asked > RETRY_AFTER_CEILING_S:
+                    raise ProviderExhausted(
+                        f"{label}: {describe(exc, detail)} server asked {asked:g}s, over the "
+                        f"{RETRY_AFTER_CEILING_S:g}s ceiling"
+                    ) from exc
+                delay = max(jitter, asked)
+                if deadline_s is not None and clock() - started + delay > deadline_s:
+                    raise ProviderExhausted(
+                        f"{label}: {describe(exc, detail)} deadline {deadline_s}s reached"
+                    ) from exc
+                sleep(delay)
+    except ProviderError as err:
+        if "attempts" not in err.__dict__:  # an inner layer that stamped it knows better
+            err.attempts, err.refused = sent[0], min(refused[0], sent[0])
+        raise
     raise AssertionError("unreachable")  # max_attempts >= 1 (settings)
