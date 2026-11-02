@@ -259,6 +259,9 @@ class Reply(Shape):
     latency_ms: int = 0
     fallback_used: bool = False  # True: a fallback vendor served this call (llm/resilient.py)
     served_by: str | None = None  # the fallback backend's label when fallback_used
+    # Requests of a FAILED primary whose billing is unknown, when a fallback then served this call. A meter books
+    # the reservation (one primary worst case) on top of this reply's cost: see llm.protocol.reply_cost_to_settle.
+    prior_unknown_requests: int = 0
 
 
 class Verdict(Shape):

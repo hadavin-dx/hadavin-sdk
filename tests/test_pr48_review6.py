@@ -1,4 +1,10 @@
-"""PR #48 review 5 (round 6): privilege matrix, bounded billed_usd, UnusableAnswer contract, fallback carry, small fixes."""
+"""PR #48 review 5/6: privilege matrix, bounded billed_usd, UnusableAnswer contract, fallback carry, small fixes.
+
+HONEST LABELS (review 6, m6). Most of this file cannot even import on the pre-fix code (no UnusableAnswer, counts_valid,
+reply_cost_to_settle, ``agent=`` kwarg), so "fails on old code" is trivially true and proves nothing. The tests that
+pin UNCHANGED behaviour are REGRESSION GUARDS, not proof of a fix: the privilege matrix (grants unchanged since round 4),
+the class-value check of UnusableAnswer, the CLI hint and the non-numeric amount tests. Proof of the fixes is the mutant
+list (each guarded line is mutated and a named test must fail): evidence-12.md, per mutant, with failing test ids."""
 
 from __future__ import annotations
 
@@ -11,6 +17,7 @@ import pytest
 
 from hadavin_sdk.llm.metered import MeteredLLM
 from hadavin_sdk.llm.protocol import (
+    DeadlineExceeded,
     ProviderError,
     ProviderExhausted,
     UnusableAnswer,
@@ -21,6 +28,7 @@ from hadavin_sdk.llm.resilient import CircuitBreaker, ResilientLLM
 from hadavin_sdk.llm.retry import with_retry
 from hadavin_sdk.store.memory import MemoryStore
 from tests.contracts.kinds.store_postgres import pg_schema
+from tests.test_core_hardening_review import _doc, build
 from tests.test_core_hardening_round2 import (  # noqa: F401 - fixtures are used by name
     DAY,
     MID,
@@ -31,6 +39,7 @@ from tests.test_core_hardening_round2 import (  # noqa: F401 - fixtures are used
     clock,
     roles,
 )
+from tests.test_k1b_replay import env  # noqa: F401 - fixture
 
 D = Decimal
 
@@ -287,13 +296,31 @@ def test_mf_a_non_numeric_amount_is_a_config_error_before_any_connection(monkeyp
             migrate.release_reservation("dsn", "a", datetime.date(2020, 1, 1), junk)
 
 
+class FreshRaises:
+    """A test double that raises a NEW exception on every call (a shared instance would accumulate the carry)."""
+
+    label = "fresh"
+
+    def __init__(self, cls, msg="x", **attrs):
+        self.cls, self.msg, self.attrs, self.made = cls, msg, attrs, []
+
+    def chat(self, *a, **k):
+        e = self.cls(self.msg)
+        for n, v in self.attrs.items():
+            setattr(e, n, v)
+        self.made.append(e)
+        raise e
+
+
+@pytest.mark.parametrize("cls", [ProviderError, ProviderExhausted, DeadlineExceeded])
 @pytest.mark.parametrize("junk", [None, "x", float("nan"), object(), -5, -1, True, 1.5, 10**400])
-def test_m1_a_garbage_attempts_on_the_fallback_error_neither_raises_nor_releases(junk, clock):  # noqa: F811
-    fb_err = ProviderError("fallback refused")
-    fb_err.attempts = junk
+def test_m1_a_garbage_attempts_on_the_fallback_error_neither_raises_nor_releases(junk, cls, clock):  # noqa: F811
+    # ProviderExhausted/DeadlineExceeded have refused = 0: without the counts_valid guard, attempts=-1 became 0 and
+    # was released at zero. The bare ProviderError (refused = 1) hid that.
+    fb = FreshRaises(cls, "fallback failed", attempts=junk)
     llm = ResilientLLM(
-        Stub(ProviderExhausted("read timeout")),
-        Stub(fb_err),
+        FreshRaises(ProviderExhausted, "read timeout"),
+        fb,
         CircuitBreaker(failures=1, reset_after_s=60.0),
         fallback_metered=True,
     )
@@ -301,7 +328,7 @@ def test_m1_a_garbage_attempts_on_the_fallback_error_neither_raises_nor_releases
         ProviderError
     ) as e:  # the ProviderError itself, not a TypeError from the handler
         llm.chat([], system="", route="r")
-    assert e.value is fb_err
+    assert e.value is fb.made[0]
     assert cost_to_settle(e.value, D("1")) == D("1")
 
 
@@ -354,3 +381,108 @@ def test_mb_an_inconsistent_set_of_counts_keeps_the_reservation():
         e = ProviderExhausted("x")
         e.attempts, e.answered, e.refused = attempts, answered, refused
         assert unknown_requests(e) == 1 and cost_to_settle(e, D("0.5")) == D("0.5")
+
+
+# --- MAJOR 1 (review 6): a SUCCESSFUL fallback after a primary of unknown billing keeps that bill booked -------------------
+
+
+def _fallback_reply(cost="0.0007"):
+    from hadavin_sdk.models import Reply
+
+    return Reply(text="ok", model_id="fb", cost_usd=D(cost))
+
+
+def test_major1_the_reply_of_a_fallback_after_an_unknown_primary_carries_the_count():
+    llm = ResilientLLM(
+        FreshRaises(ProviderExhausted, "read timeout"),
+        Stub(_fallback_reply()),
+        CircuitBreaker(failures=1, reset_after_s=60.0),
+        fallback_metered=True,
+    )
+    r = llm.chat([], system="", route="r")
+    assert r.fallback_used and r.prior_unknown_requests == 1
+    # a primary that provably sent nothing (open circuit, attempts 0) or was refused (4xx) adds nothing
+    for exc_attrs in ({"attempts": 0, "refused": 0}, {"attempts": 2, "refused": 2}):
+        llm = ResilientLLM(
+            FreshRaises(ProviderExhausted, "x", **exc_attrs),
+            Stub(_fallback_reply()),
+            CircuitBreaker(failures=1, reset_after_s=60.0),
+            fallback_metered=True,
+        )
+        assert llm.chat([], system="", route="r").prior_unknown_requests == 0
+
+
+def test_major1_reply_cost_to_settle_adds_one_reservation_only_after_an_unknown_primary():
+    from hadavin_sdk.llm.protocol import reply_cost_to_settle
+
+    plain = _fallback_reply()
+    assert reply_cost_to_settle(plain, D("0.40")) == D("0.0007")
+    carried = plain.model_copy(update={"prior_unknown_requests": 1})
+    assert reply_cost_to_settle(carried, D("0.40")) == D("0.4007")
+
+
+def test_major1_metered_llm_books_the_primarys_worst_case_on_top_of_the_fallbacks_cost(clock):  # noqa: F811
+    store = MemoryStore()
+    lim = _limits(store, daily="1")
+    llm = ResilientLLM(
+        FreshRaises(ProviderExhausted, "read timeout"),
+        Stub(_fallback_reply("0.0007")),
+        CircuitBreaker(failures=1, reset_after_s=60.0),
+        fallback_metered=True,
+    )
+    MeteredLLM(llm, lim, "a", ROUTES).chat([], system="", route="r")
+    worst = _unknown_total(MemoryStore())[0]  # one reservation (the worst case of this call)
+    assert store.spend_totals("a", DAY)[0] == worst + D("0.0007")
+    # without a failed primary the booking is the fallback's cost alone
+    clean = MemoryStore()
+    MeteredLLM(Stub(_fallback_reply("0.0007")), _limits(clean, daily="1"), "a", ROUTES).chat(
+        [], system="", route="r"
+    )
+    assert clean.spend_totals("a", DAY)[0] == D("0.0007")
+
+
+def test_major1_the_agent_loop_books_it_too(cfg_dir):
+    rt, cfg = build(cfg_dir)
+    reply = _fallback_reply("0.0007").model_copy(update={"prior_unknown_requests": 1})
+    rt.llm = Stub(reply)
+    run = rt.handle("test-agent", "svc:test-agent", _doc(cfg, "chat.txt"))
+    booked = rt.store.spend_totals("test-agent", run.created_at.date())[0]
+    assert booked > D("0.0007")  # the reply's cost plus one reservation
+
+
+def test_major1_k1b_charges_it_against_its_cap(env):  # noqa: F811
+    from tests.test_k1b_replay import ScriptedLLM, submit_not_sure
+
+    llm = ScriptedLLM([submit_not_sure()])
+    inner = llm.chat
+
+    def chat(*a, **k):
+        r = inner(*a, **k)
+        return r.model_copy(update={"prior_unknown_requests": 1})
+
+    llm.chat = chat
+    env.run(llm, max_usd="0.0001")
+    assert env.case("case-002")["status"] == "capped"  # one reservation on top exceeds the tiny cap
+
+
+# --- m3: a property that raises is garbage like any other count ---------------------------------------------------------------
+
+
+def test_m3_an_attribute_that_raises_keeps_the_reservation_and_never_raises():
+    from hadavin_sdk.llm.protocol import counts_valid
+
+    class Hostile(ProviderExhausted):
+        @property
+        def attempts(self):
+            raise RuntimeError("boom")
+
+    e = Hostile("x")
+    assert counts_valid(e) is False and unknown_requests(e) == 1
+    assert cost_to_settle(e, D("0.5")) == D("0.5")
+
+    class HostilePrice(UnusableAnswer):
+        @property
+        def billed_usd(self):
+            raise RuntimeError("boom")
+
+    assert cost_to_settle(HostilePrice("x"), D("0.5")) == D("0.5")

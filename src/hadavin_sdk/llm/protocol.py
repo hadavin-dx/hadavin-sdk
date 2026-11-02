@@ -25,7 +25,9 @@ class ProviderError(RuntimeError):
     ``attempts - answered - refused`` is the number of requests whose billing is UNKNOWN (a timeout or reset after the
     request was sent, a 5xx). A meter settles with ``cost_to_settle(exc, reserved)``: nothing unknown and nothing
     answered = release; something unknown = keep the whole reservation; something answered = book what it cost, and
-    never zero."""
+    never zero. The counts must be plain ints (0..10**6, ``answered + refused <= attempts``); anything else, or an
+    attribute that raises, is UNKNOWN. A SUCCESSFUL call after a failed primary of unknown billing carries
+    ``Reply.prior_unknown_requests``; a meter settles it with ``reply_cost_to_settle`` (reply cost + one reservation)."""
 
     attempts = 1
     answered = 0
@@ -54,6 +56,7 @@ class SpendLimitReached(ProviderError):
 def _counts(exc: BaseException) -> tuple[int, int, int]:
     """(attempts, answered, refused) as non-negative ints. Raises ValueError/TypeError/OverflowError on a garbage,
     negative or inconsistent set (answered + refused above attempts): callers keep the reservation."""
+    # a property that raises propagates: every caller below catches Exception and treats it as unknown
     vals = [getattr(exc, n, d) for n, d in (("attempts", 1), ("answered", 0), ("refused", 0))]
     for v in vals:
         # a real count is a plain int: a bool, a float (1.5), a string, None or nan is garbage, never coerced
@@ -72,7 +75,7 @@ def counts_valid(exc: BaseException) -> bool:
     """True if ``attempts``/``answered``/``refused`` are a sane, consistent set (garbage counts as unknown)."""
     try:
         _counts(exc)
-    except (TypeError, ValueError, OverflowError):
+    except Exception:  # noqa: BLE001 - anything unreadable is unknown
         return False
     return True
 
@@ -81,7 +84,7 @@ def unknown_requests(exc: BaseException) -> int:
     """Requests whose billing is unknown (``attempts - answered - refused``); a garbage attribute counts as 1."""
     try:
         attempts, answered, refused = _counts(exc)
-    except (TypeError, ValueError, OverflowError):
+    except Exception:  # noqa: BLE001 - anything unreadable is unknown
         return 1
     return attempts - answered - refused
 
@@ -109,8 +112,16 @@ def cost_to_settle(
                 return reserved
             return billed
         return Decimal(0)
-    except (ArithmeticError, TypeError, ValueError):
+    except Exception:  # noqa: BLE001 - never raises: the reservation is kept
         return reserved
+
+
+def reply_cost_to_settle(reply: Any, reserved: Decimal) -> Decimal:
+    """What a meter settles after a SUCCESSFUL call. Normally the reply's own cost. If a fallback served the call after
+    a primary whose billing is unknown (``reply.prior_unknown_requests``), the primary may have been billed too: book
+    one primary worst case (the reservation) on top of the fallback's cost, so that bill is not lost."""
+    cost = reply.cost_usd
+    return cost + reserved if getattr(reply, "prior_unknown_requests", 0) > 0 else cost
 
 
 class UnusableAnswer(ProviderError):

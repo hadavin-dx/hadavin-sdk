@@ -128,6 +128,10 @@ class PostgresSettings(KindSettings):
     # The server's CA bundle, cloud-neutral: a file path, or a PEM held in any secrets kind.
     sslrootcert: str | None = None
     sslrootcert_secret_name: str | None = None
+    # Spend-counter connections per process and how long a caller waits for one before failing closed (see
+    # store/postgres.py: the measured ceiling is per hot agent key, not per connection).
+    spend_pool_size: int = Field(default=8, ge=1, le=64)
+    spend_pool_wait_s: float = Field(default=10.0, gt=0, le=300)
 
     @model_validator(mode="after")
     def _checks(self) -> PostgresSettings:

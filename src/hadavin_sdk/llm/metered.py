@@ -3,7 +3,8 @@ loop (``extract()``, the evals gate, scripts). The worst case of each call is bo
 the real cost after; a refused booking raises ``OverBudget`` and the model is never called. A call that raised a provider
 error is settled with ``cost_to_settle`` (the billing contract on ``ProviderError``): released when nothing was sent
 or every request was refused (4xx, 429); booked at its cost when the provider answered and billed (never at zero); the
-worst case stays booked when a request may have been processed (timeout, reset, 5xx, ``DeadlineExceeded``). If the
+worst case stays booked when a request may have been processed (timeout, reset, 5xx, ``DeadlineExceeded``). A fallback that
+SUCCEEDS after a primary of unknown billing is booked at its own cost PLUS one reservation (``reply_cost_to_settle``). If the
 store cannot take the settlement of a good reply, the worst case stays booked (it fails safe), the failure is logged
 and the reply is still returned.
 
@@ -16,7 +17,7 @@ import logging
 from typing import Any
 
 from hadavin_sdk.limits import Limits, prompt_bytes, worst_case_usd
-from hadavin_sdk.llm.protocol import LLM, ProviderError, cost_to_settle
+from hadavin_sdk.llm.protocol import LLM, ProviderError, cost_to_settle, reply_cost_to_settle
 from hadavin_sdk.models import Reply
 
 _LOG = logging.getLogger("hadavin_sdk.llm.metered")
@@ -75,7 +76,7 @@ class MeteredLLM:
             # refused; book a billed answer at its cost; keep the worst case when the outcome is unknown.
             self._settle(res, cost_to_settle(exc, res.usd, agent=self.agent_id, route=route))
             raise
-        self._settle(res, reply.cost_usd)
+        self._settle(res, reply_cost_to_settle(reply, res.usd))
         return reply
 
     def _settle(self, res: Any, actual: Any) -> None:

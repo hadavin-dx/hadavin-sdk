@@ -34,6 +34,7 @@ from hadavin_sdk.llm.protocol import (
     QuotaReached,
     SpendLimitReached,
     cost_to_settle,
+    reply_cost_to_settle,
 )
 from hadavin_sdk.models import (
     AuditEvent,
@@ -359,8 +360,11 @@ class Runtime:
                 self._note(run, "llm", "chat", result="failed", error_code=code)
                 return self._abstain(run, S.NEEDS_PERSON, code, cited)
             # Any other exception leaves the worst case booked (the call may have been billed): fail safe.
-            self._settle(run, res, reply.cost_usd)
-            self.store.add_cost(run.run_id, reply.cost_usd)
+            spent = reply_cost_to_settle(
+                reply, res.usd
+            )  # + one primary worst case after a failed primary
+            self._settle(run, res, spent)
+            self.store.add_cost(run.run_id, spent)
             if reply.stop_reason in (
                 "max_tokens",
                 "refusal",

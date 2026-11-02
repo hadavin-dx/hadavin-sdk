@@ -155,8 +155,25 @@
   stamping from this PR (`err.attempts` only if not already stamped, plus `refused`); #43's `err.attempts = attempt` on
   every `ProviderError` must not replace it. Contract tests: `tests/test_pr48_review6.py::test_m3_*`.
 - **A fallback that also fails keeps the primary's unknown request (m-a):** its error carries the primary's unknown count, so
-  a meter keeps the reservation. Bound: at most one primary worst case per fallback event. Stated limit: a fallback that
-  SUCCEEDS settles at its own reply cost; the primary's unknown billing cannot be priced.
+  a meter keeps the reservation. A fallback that SUCCEEDS carries the same count on `Reply.prior_unknown_requests`, and the
+  agent loop, `MeteredLLM` and the K1b replay settle it at the reply's cost PLUS one reservation
+  (`reply_cost_to_settle`), so the primary's possible bill is not dropped. Bound: at most one primary worst case per
+  fallback event (a cap can be exceeded by that amount, as with any bill above its reservation).
+- **Billing counts are validated strictly:** `attempts`, `answered`, `refused` must be plain `int` (no bool, float, string,
+  None, nan), 0 to 10**6, with `answered + refused <= attempts`. Anything else, or an attribute that raises, is treated as
+  UNKNOWN and the reservation is kept (`cost_to_settle` never raises).
+- **Spend-connection gate is FIFO and configurable; the hot-key ceiling is measured (pool exhaustion report):** on postgres:17,
+  2,000 simultaneous reservations on one agent counter through 8 spend connections failed 734 to 1,858 callers with
+  `StoreUnavailable: no spend connection free (pool exhausted)` (the cap held: fail closed), and a 16-worker run lost 8
+  because `BoundedSemaphore` wakes waiters in no order, so a few starved past their wait. The gate is now first-in-first-out
+  (`_FairSlots`), and `spend_pool_size` (1 to 64, default 8) and `spend_pool_wait_s` (default 10) are `PostgresSettings`.
+  MEASURED (docker postgres:17 on a Windows laptop, loopback): one hot agent key serves about 100 to 125 reservations per
+  second per process because every reservation takes the same row locks and commits one after another; a bigger pool did not
+  help (16 connections: 88 per second) and 8 keys gave 235 per second. 2,000 callers at once on ONE key need about 20 seconds:
+  with the default 10 s wait about half fail closed, with `spend_pool_wait_s: 30` all 2,000 succeed; 16 workers: all 2,000.
+  No setting weakens the cap: a caller that gives up never books anything (`tests/test_pr48_pool.py` checks booked ==
+  admitted on a 300-caller burst, with a long and a 50 ms wait). Real clients with many agents spread the load; a single agent
+  needing more than about 100 reservations per second per process is outside this design.
 - **Memory store** month totals read a per-agent day index instead of scanning every counter under the global lock.
 - A failed probe no longer clears "opened for spend" (`_open_spend = spend or _open_spend`). The `ci.yml` checkout comment
   now says what the scan covers.

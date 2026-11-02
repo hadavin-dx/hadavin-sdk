@@ -9,6 +9,7 @@ Neutral protocol: the PostgreSQL wire protocol and SQL (any Postgres: RDS, Cloud
 
 from __future__ import annotations
 
+import collections
 import ipaddress
 import logging
 import os
@@ -178,7 +179,12 @@ def build(settings, deps) -> PostgresStore:
         raise StoreUnavailable(
             f"store postgres: cannot connect ({exc.__class__.__name__})"
         ) from None
-    return PostgresStore(conn, connector)
+    return PostgresStore(
+        conn,
+        connector,
+        pool_size=settings.spend_pool_size,
+        pool_wait_s=settings.spend_pool_wait_s,
+    )
 
 
 RUN_KEY_SQL = r"^([0-9]+:[^/]*/)?run:"  # a per-run counter key (see Limits._key)
@@ -206,26 +212,76 @@ class _RolledBack(Exception):
         self.result = result
 
 
+class _FairSlots:
+    """A counting gate that admits waiters in arrival order (FIFO) and wakes only the next one.
+
+    ``threading.BoundedSemaphore`` wakes waiters in no order, so under a burst a few threads starve past their wait and
+    fail while newer ones succeed; with 2,000 callers on one hot counter that showed up as spurious "pool exhausted"
+    errors even though the database was serving requests the whole time. FIFO means a caller fails closed only when
+    the queue ahead of it really takes longer than its wait."""
+
+    def __init__(self, n: int) -> None:
+        self._free, self._cap = n, n
+        self._lock = threading.Lock()
+        self._q: collections.deque[threading.Event] = collections.deque()
+
+    def acquire(self, timeout: float) -> bool:
+        with self._lock:
+            if self._free > 0 and not self._q:
+                self._free -= 1
+                return True
+            ev = threading.Event()
+            self._q.append(ev)
+        if ev.wait(timeout):
+            return True  # release() handed the slot over
+        with self._lock:
+            if ev.is_set():  # handed over just as the wait ended: take it
+                return True
+            self._q.remove(ev)
+            return False
+
+    def release(self) -> None:
+        with self._lock:
+            if self._q:
+                self._q.popleft().set()  # the slot goes straight to the longest waiter
+            elif self._free < self._cap:
+                self._free += 1
+            else:
+                raise ValueError("released too many times")
+
+
 class PostgresStore:
     # ponytail: one connection behind one lock per process; a pool (psycopg_pool) when throughput matters.
     # A dropped connection fails the call (the run ends safely); reconnect-on-error arrives with S11 hosting.
     # Spend reservations wait on row locks, so they use a connection of their own (``connector``) and never hold
     # the process lock while waiting; without a connector (a test wrapping one connection) they share ``conn``.
+    # Spend work uses POOL_SIZE connections per process (settings ``spend_pool_size``), FIFO. A caller waits at most
+    # POOL_WAIT_S (settings ``spend_pool_wait_s``) for one, then fails closed with StoreUnavailable. MEASURED CEILING
+    # (postgres:17 in docker on a Windows laptop, one hot agent, 8 connections): about 100 to 125 reservations per second
+    # per hot agent key, because every reservation takes the same row locks and commits one after another; a bigger pool
+    # does not raise that (the extra connections only wait on the row lock), spreading load over several agent keys does.
+    # So a burst of B simultaneous callers on ONE hot key needs B / rate seconds: B above about 100 x POOL_WAIT_S fails
+    # closed for the tail (the cap is never exceeded). See tests/test_pr48_pool.py and CHANGELOG.
     LOCK_TIMEOUT_MS = 5000
     RESERVE_ATTEMPTS = 3
-    POOL_SIZE = (
-        8  # connections for spend work, per process: bounded, well below a server's max_connections
-    )
+    POOL_SIZE = 8
     POOL_WAIT_S = 10.0
 
     def __init__(
-        self, conn: psycopg.Connection, connector: Callable[[], psycopg.Connection] | None = None
+        self,
+        conn: psycopg.Connection,
+        connector: Callable[[], psycopg.Connection] | None = None,
+        *,
+        pool_size: int | None = None,
+        pool_wait_s: float | None = None,
     ) -> None:
         self._db = conn
         self._connector = connector
         self._lock = threading.Lock()
         self._idle: queue.LifoQueue[psycopg.Connection] = queue.LifoQueue()
-        self._slots = threading.BoundedSemaphore(self.POOL_SIZE)
+        self.POOL_SIZE = pool_size if pool_size is not None else type(self).POOL_SIZE
+        self.POOL_WAIT_S = pool_wait_s if pool_wait_s is not None else type(self).POOL_WAIT_S
+        self._slots = _FairSlots(self.POOL_SIZE)
 
     # --- generic helpers ---------------------------------------------------------------------------------
 
