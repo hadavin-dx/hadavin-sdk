@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import logging
 from decimal import Decimal
 from typing import Any, Protocol
 
 from hadavin_sdk.models import Reply
+
+_LOG = logging.getLogger("hadavin_sdk.llm.protocol")
 
 
 class ProviderError(RuntimeError):
@@ -48,22 +51,55 @@ class SpendLimitReached(ProviderError):
     ``retry-after``). Retrying fails until the cap resets, so it is never retried; callers map it to ``over_budget``."""
 
 
+def _counts(exc: BaseException) -> tuple[int, int, int]:
+    """(attempts, answered, refused) as non-negative ints. Raises ValueError/TypeError/OverflowError on a garbage,
+    negative or inconsistent set (answered + refused above attempts): callers keep the reservation."""
+    attempts, answered, refused = (
+        int(getattr(exc, n, d)) for n, d in (("attempts", 1), ("answered", 0), ("refused", 0))
+    )
+    if min(attempts, answered, refused) < 0 or answered + refused > attempts:
+        raise ValueError("inconsistent billing counts")
+    return attempts, answered, refused
+
+
+def unknown_requests(exc: BaseException) -> int:
+    """Requests whose billing is unknown (``attempts - answered - refused``); a garbage attribute counts as 1."""
+    try:
+        attempts, answered, refused = _counts(exc)
+    except (TypeError, ValueError, OverflowError):
+        return 1
+    return attempts - answered - refused
+
+
 def cost_to_settle(exc: BaseException, reserved: Decimal) -> Decimal:
-    """What a meter should settle a reservation to after ``exc`` (see the billing contract on ``ProviderError``)."""
-    attempts = int(getattr(exc, "attempts", 1))
-    answered = int(getattr(exc, "answered", 0))
-    refused = int(getattr(exc, "refused", 0))
-    if attempts - answered - refused > 0:
-        return reserved  # unknown: the call may have been billed, keep the worst case booked
-    if answered > 0:
-        try:
+    """What a meter should settle a reservation to after ``exc`` (see the billing contract on ``ProviderError``).
+    Never more than ``reserved`` (a provider-reported ``billed_usd`` above the worst case is a bad number, not a bill) and
+    never raises: anything it cannot read keeps the whole reservation (the fail-safe direction)."""
+    try:
+        attempts, answered, refused = _counts(exc)
+        if attempts - answered - refused > 0:
+            return reserved  # unknown: the call may have been billed, keep the worst case booked
+        if answered > 0:
             billed = Decimal(getattr(exc, "billed_usd", 0))
-        except (ArithmeticError, TypeError, ValueError):
-            return reserved
-        return (
-            billed if billed.is_finite() and billed > 0 else reserved
-        )  # never settle a billed answer at zero
-    return Decimal(0)
+            if not billed.is_finite() or billed <= 0:
+                return reserved  # never settle a billed answer at zero
+            if billed > reserved:
+                _LOG.warning("billed_usd above the reservation: settling at the reservation")
+                return reserved
+            return billed
+        return Decimal(0)
+    except (ArithmeticError, TypeError, ValueError):
+        return reserved
+
+
+class UnusableAnswer(ProviderError):
+    """The provider answered (HTTP 2xx, billed) but the body was unusable (empty, cut off, not the asked shape). It was
+    BILLED: ``answered = 1``, ``refused = 0``. ``billed_usd`` stays 0 (unpriced) unless the kind that raises it sets the real
+    cost; an unpriced billed answer keeps the whole reservation (``cost_to_settle``). Defined here, not in a kind, so no
+    layer can default it to "refused" and have a meter release a call that was paid for."""
+
+    answered = 1
+    refused = 0
 
 
 class QuotaReached(SpendLimitReached):

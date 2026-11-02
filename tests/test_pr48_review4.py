@@ -17,6 +17,7 @@ from hadavin_sdk.llm.protocol import (
     ProviderError,
     ProviderExhausted,
     SpendLimitReached,
+    UnusableAnswer,
     cost_to_settle,
 )
 from hadavin_sdk.llm.resilient import CircuitBreaker, ResilientLLM
@@ -45,11 +46,7 @@ class Http(Exception):
         self.status_code = code
 
 
-class Billed(ProviderError):
-    """Stands for PR #43's UnusableAnswer: the provider answered (2xx, billed) but the body was unusable."""
-
-    answered = 1
-    refused = 0
+Billed = UnusableAnswer  # defined in llm/protocol.py (round 6): answered, billed, body unusable
 
 
 def _fail(*errors):
@@ -184,13 +181,15 @@ def test_md_metered_llm_books_a_billed_answer_at_its_cost_and_the_worst_case_whe
     store = MemoryStore()
     lim = _limits(store, daily="1")
     err = Billed("unusable")
-    err.billed_usd = D("0.004")
+    err.billed_usd = D("0.0004")
     with pytest.raises(Billed):
         MeteredLLM(Stub(err), lim, "a", ROUTES).chat([], system="", route="r")
-    assert store.spend_totals("a", DAY)[0] == D("0.004")
+    assert store.spend_totals("a", DAY)[0] == D("0.0004")
     with pytest.raises(Billed):
         MeteredLLM(Stub(Billed("unpriced")), lim, "a", ROUTES).chat([], system="", route="r")
-    assert store.spend_totals("a", DAY)[0] > D("0.004")  # the worst case of the second stays booked
+    assert store.spend_totals("a", DAY)[0] > D(
+        "0.0004"
+    )  # the worst case of the second stays booked
 
 
 def test_md_the_loop_releases_a_call_proved_unsent(cfg_dir):
@@ -297,7 +296,7 @@ def test_ma_the_maintenance_role_releases_a_stranded_reservation_day_and_month(
         ):
             with pytest.raises(psycopg.errors.InsufficientPrivilege):
                 db.execute(stmt)
-    # the runtime role still cannot release or delete as an operator would
+    # the runtime role cannot DELETE (it CAN run UPDATE and INSERT: see test_privilege_matrix_on_the_spend_tables in tests/test_pr48_review6.py)
     with psycopg.connect(roles.runtime, autocommit=True) as db:  # noqa: SIM117
         with pytest.raises(psycopg.errors.InsufficientPrivilege):
             db.execute("DELETE FROM spend")
@@ -343,6 +342,8 @@ def test_k1b_an_exhausted_call_of_unknown_outcome_is_charged_against_the_cap(env
 
 
 def test_k1b_a_call_proved_unsent_charges_nothing(env):  # noqa: F811
+    # REGRESSION GUARD against over-charging: it also passed before this PR (old K1b charged nothing for every
+    # ProviderError), so it is not proof of the fix; the proof is the test above and the mutant 'K1b charges always'.
     from tests.test_k1b_replay import ScriptedLLM, submit_not_sure
 
     def boom(_):

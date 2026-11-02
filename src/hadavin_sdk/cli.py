@@ -350,18 +350,29 @@ def _release_reservation(cfg, args) -> int:
     from hadavin_sdk.store.postgres import ca_file
 
     ca = ca_file(store, make("secrets", cfg.backends.secrets).get)
-    before, after = release_reservation(
-        dsn,
-        args.agent,
-        args.day,
-        args.amount,
-        tenant=cfg.tenant,
-        dry_run=args.dry_run,
-        iam_auth=store.iam_auth,
-        region=store.region,
-        sslmode=store.sslmode,
-        sslrootcert=ca,
-    )
+    try:
+        before, after = release_reservation(
+            dsn,
+            args.agent,
+            args.day,
+            args.amount,
+            tenant=cfg.tenant,
+            dry_run=args.dry_run,
+            iam_auth=store.iam_auth,
+            region=store.region,
+            sslmode=store.sslmode,
+            sslrootcert=ca,
+        )
+    except StoreUnavailable:
+        print(
+            "failed: StoreUnavailable. If the maintenance role was created before this release it lacks "
+            "UPDATE (usd) on the spend tables: re-run `hadavin-sdk migrate --maintenance-role <role>` "
+            "(set HADAVIN_DEBUG=1 for the traceback)",
+            file=sys.stderr,
+        )
+        if os.environ.get("HADAVIN_DEBUG") == "1":
+            traceback.print_exc()
+        return 3
     verb = "would release" if args.dry_run else "released"
     print(
         f"{verb} up to {args.amount} USD for {args.agent} on {args.day}: "

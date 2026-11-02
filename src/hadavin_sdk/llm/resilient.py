@@ -30,7 +30,14 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
-from hadavin_sdk.llm.protocol import LLM, DeadlineExceeded, ProviderExhausted, SpendLimitReached
+from hadavin_sdk.llm.protocol import (
+    LLM,
+    DeadlineExceeded,
+    ProviderError,
+    ProviderExhausted,
+    SpendLimitReached,
+    unknown_requests,
+)
 from hadavin_sdk.models import Reply
 
 _LOG = logging.getLogger("hadavin_sdk.llm.resilient")
@@ -228,5 +235,14 @@ class ResilientLLM:
             self.on_fallback(
                 event
             )  # an audit hook that raises stops the call: nothing leaves unrecorded
-        out = self.fallback.chat(*args, **kwargs)
+        try:
+            out = self.fallback.chat(*args, **kwargs)
+        except ProviderError as fe:
+            # The primary's unknown requests are not forgotten because the fallback failed too: a meter must keep
+            # the reservation. (A SUCCESSFUL fallback settles at its own reply cost; the primary's unknown billing is
+            # not priceable: stated limit, CHANGELOG.)
+            lost = unknown_requests(cause) if cause is not None else 0
+            if lost:
+                fe.attempts = max(0, int(getattr(fe, "attempts", 1))) + lost
+            raise
         return out.model_copy(update={"fallback_used": True, "served_by": served_by})

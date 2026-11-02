@@ -119,8 +119,7 @@
   longer books worst cases it never spent, while a timeout, a 5xx or a billed unusable answer still does.
   **For PR #43 (rebase note):** `ProviderError.attempts/answered/billed_usd` and `UnusableAnswer` keep their names and
   meaning; #43 adds only `refused` (default 1 on `ProviderError`, 0 on `ProviderExhausted`), keeps its stamping inside
-  `with_retry`, and its `UnusableAnswer` needs `answered = 1` and `refused = 0` as class values (the fake in
-  `tests/test_pr48_review4.py` shows the shape). The agent loop, `MeteredLLM` and the K1b replay settle through
+  `with_retry`, and uses this PR's `UnusableAnswer` (below) instead of its own class. The agent loop, `MeteredLLM` and the K1b replay settle through
   `cost_to_settle` and need no change.
 - **K1b** charges an exhausted call of unknown outcome against its own USD cap (it charged nothing before).
 - **A take-back never goes below zero (M-A):** clamped in the same statement in Postgres and in the memory store, so a
@@ -129,13 +128,31 @@
   reservation back from one agent's DAY and MONTH counters. It runs as the maintenance role, which now holds
   `UPDATE (usd)` on `spend` and `spend_month` (the usd column only; no key can change) besides SELECT and DELETE. Policy
   and over-breadth review: comment above `release_reservation` in `store/migrate.py`. Re-run `migrate --maintenance-role`
-  to apply the grant. A stranded reservation otherwise stays booked until its day AND its month roll over: it counts
+  to apply the grant (without it the command fails with a hint to do so). **This is an operator procedure under a
+  separate identity, NOT a privilege boundary against the runtime role:** the runtime role holds SELECT, INSERT and
+  UPDATE on both spend tables, so raw SQL under it (or under the maintenance login) can write any `usd`. The real controls
+  are DSN separation (`HADAVIN_MAINTENANCE_DSN` is held by the operator, never in the runtime's environment; the CLI only
+  checks that it is set), the in-statement clamp at zero (it covers writes through the store, not raw SQL) and the
+  server's own audit (pgaudit or `log_statement`). The actual matrix is asserted by
+  `test_privilege_matrix_on_the_spend_tables` against real Postgres. A stranded reservation otherwise stays booked until its day AND its month roll over: it counts
   against the MONTHLY cap for up to about 31 days (the earlier text "ages out with the day or month" was wrong for the
   month). Agent rows are never pruned.
-- **Follow-up needing the lead (not done here on purpose):** `CHECK (usd >= 0)` on `spend` and `spend_month` is a
-  migration; the numbering plan has #49 = 0005, #42 = 0006, #41 = 0007 and PRs #49/#41 rewrite the same store code, so it
-  is not added here. The clamp above already holds in the statement; add the CHECK in the migration that follows the
-  merge order.
+- **Tracked follow-up (not done here on purpose):** `CHECK (usd >= 0)` on `spend` and `spend_month` is a migration.
+  Number plan: #49 = 0005, #42 = 0006, #41 = 0007, so the CHECK is **0008**, added after #49 and #41 merge (they rewrite the
+  same store code). Until then the clamp holds in the statement only: **it does not cover raw SQL**, and the maintenance
+  role holds UPDATE (usd), so raw SQL can still write a negative value. After #49/#41 the clamps in postgres `_add` and
+  memory `settle_spend` must be redone; `test_ma_*` fails if one is lost.
+- **A provider-reported `billed_usd` is bounded by the reservation (M2):** `cost_to_settle` never settles above the
+  reserved worst case (logged), so an absurd or hostile number (`1e999999`, `1e9`) cannot lock an agent or a shared cap.
+  Not bounded: `reply.cost_usd` on the SUCCESS path, which is priced from provider-reported token counts (existing,
+  ticketed). `cost_to_settle` also never raises: an unreadable count or price keeps the whole reservation.
+- **`UnusableAnswer` now lives in `llm/protocol.py` (M3):** `answered = 1`, `refused = 0`, `billed_usd` 0 (unpriced keeps the
+  reservation). **Merge instruction for #43:** import it from `llm.protocol` and delete #43's own class; keep `with_retry`'s
+  stamping from this PR (`err.attempts` only if not already stamped, plus `refused`); #43's `err.attempts = attempt` on
+  every `ProviderError` must not replace it. Contract tests: `tests/test_pr48_review6.py::test_m3_*`.
+- **A fallback that also fails keeps the primary's unknown request (m-a):** its error carries the primary's unknown count, so
+  a meter keeps the reservation. Stated limit: a fallback that SUCCEEDS settles at its own reply cost; the primary's unknown
+  billing cannot be priced.
 - **Memory store** month totals read a per-agent day index instead of scanning every counter under the global lock.
 - A failed probe no longer clears "opened for spend" (`_open_spend = spend or _open_spend`). The `ci.yml` checkout comment
   now says what the scan covers.

@@ -273,16 +273,23 @@ def migrate(
 #   Rights:       SELECT, DELETE, UPDATE (usd) on `spend` and `spend_month`; nothing else on any relation.
 #   Actions:      prune-runs needs DELETE (and SELECT for its WHERE); release-reservation needs UPDATE of `usd` (to take a
 #                 stranded reservation back) and SELECT (to show the totals before and after).
-#   Why not the runtime role: it must never be able to lower a counter outside a reserve/settle pair; a stuck reservation is
-#                 an operator act, with its own identity and a bounded command.
-#   Bounds:       the command only SUBTRACTS (amount > 0), for one named agent and day, at most the amount named, clamped
-#                 at zero in the same SQL statement; `usd` is the only writable column, so no key can be changed.
-#   Over-breadth: UPDATE (usd) would let a leaked maintenance credential also RAISE a counter (a denial of service until
-#                 the day or month rolls over). That role could already DELETE any counter row (which resets it to zero
-#                 and hands out cap headroom, the worse direction), so the grant adds no new class of harm. Mitigation:
-#                 the DSN is held by the operator only, never by the runtime, and every use is a CLI call in the shell log.
-#   Negative test: tests/test_pr48_review4.py (the maintenance role cannot INSERT, cannot UPDATE agent_id, day or month,
-#                 cannot touch any other relation; the runtime role still cannot DELETE or release).
+#   Why a separate identity: a stuck reservation is an OPERATOR act, so it runs under its own login, not the runtime's.
+#                 This is NOT a privilege boundary against the runtime role: the runtime holds SELECT, INSERT and UPDATE
+#                 on both spend tables (reserve and settle need them), so raw SQL under the runtime login can already write
+#                 any `usd`, release or not. The runtime role cannot DELETE, which is the only difference.
+#   Real controls: (1) DSN separation: HADAVIN_MAINTENANCE_DSN is held by the operator and is never in the runtime's
+#                 environment (the CLI only checks that it is set; it cannot tell which role the DSN names); (2) the
+#                 command is one named agent and day, a positive finite amount, and the store clamps at zero in the same
+#                 statement, so a repeat or a race cannot go below zero THROUGH THE STORE; (3) every use is a CLI call in the
+#                 operator's shell history; the database audit is the server's own (pgaudit or log_statement), not ours.
+#   Not controlled: raw SQL by the runtime or the maintenance login can set `usd` to ANY value (also negative, until the
+#                 CHECK (usd >= 0) follow-up lands: see CHANGELOG). The clamp does not cover raw SQL.
+#   Over-breadth: UPDATE (usd) lets a leaked maintenance credential RAISE or lower a counter (a denial of service or cap
+#                 headroom until the day or month rolls over). That role could already DELETE any counter row (which resets
+#                 it to zero and hands out cap headroom, the worse direction), so the grant adds no new class of harm.
+#                 `usd` is the only writable column, so no key (agent_id, day, month) can be changed.
+#   Negative test: tests/test_pr48_review4.py::test_privilege_matrix_on_the_spend_tables (real Postgres: the actual
+#                 matrix for the runtime, maintenance and portal logins) and the maintenance role's other denials.
 
 
 def release_reservation(
@@ -312,7 +319,10 @@ def release_reservation(
         raise ConfigError("agent id must match [A-Za-z0-9._-]{1,64}")
     if tenant and not _ID.fullmatch(tenant):
         raise ConfigError("tenant must match [A-Za-z0-9._-]{1,64}")
-    usd = Decimal(usd)
+    try:
+        usd = Decimal(usd)
+    except ArithmeticError:  # decimal.InvalidOperation for a non-numeric string
+        raise ConfigError("amount must be a finite number above zero") from None
     if not usd.is_finite() or usd <= 0:
         raise ConfigError("amount must be a finite number above zero")
     if day > now().date():
