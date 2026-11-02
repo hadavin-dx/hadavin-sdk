@@ -15,6 +15,7 @@ from typing import Any
 from urllib.parse import quote
 
 from hadavin_sdk.llm.common import Answer, NetworkLLM, error_body, pinned, post_json, reply
+from hadavin_sdk.llm.protocol import QuotaReached
 from hadavin_sdk.llm.retry import status
 from hadavin_sdk.models import Reply, ToolCall
 
@@ -63,6 +64,7 @@ def spend_limit(exc: BaseException) -> bool:
 
 class GeminiLLM(NetworkLLM):
     spend_limit = staticmethod(spend_limit)
+    spend_error = QuotaReached  # a per-day request quota is not a money cap
 
     label = "gemini"
 

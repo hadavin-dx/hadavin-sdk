@@ -65,6 +65,7 @@ class CircuitBreaker:
         self._open_spend = (
             False  # why the circuit is open: a spend cap (per epoch), cleared only on close
         )
+        self._spend_seen = False  # any spend-limit failure in the current closed streak
         self._lock = threading.Lock()
 
     @property
@@ -89,17 +90,19 @@ class CircuitBreaker:
     def success(self, ticket: Ticket) -> None:
         with self._lock:
             if self._opened_at is None:
-                self._n = 0
+                self._n, self._spend_seen = 0, False
             elif ticket.probe and ticket.epoch == self._epoch:
                 self._n, self._opened_at, self._probing, self._open_spend = 0, None, False, False
+                self._spend_seen = False
 
     def failure(self, ticket: Ticket, spend: bool = False) -> None:
         with self._lock:
             if self._opened_at is None:
                 self._n += 1
+                self._spend_seen = self._spend_seen or spend  # sticky for the whole streak
                 if self._n >= self.failures:
                     self._opened_at, self._epoch = self._clock(), self._epoch + 1
-                    self._open_spend = spend
+                    self._open_spend = self._spend_seen
             elif ticket.probe and ticket.epoch == self._epoch:
                 self._opened_at, self._probing = self._clock(), False  # a failed probe re-opens
                 self._epoch += 1

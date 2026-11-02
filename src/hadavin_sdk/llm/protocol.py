@@ -12,7 +12,9 @@ class ProviderError(RuntimeError):
 
 
 class ProviderExhausted(ProviderError):
-    """The provider throttled or failed after its retries."""
+    """The provider throttled or failed after its retries. The last attempt may have been processed (a read timeout
+    after the request was sent, a 5xx after work), so the cost is UNKNOWN: a metered caller keeps the reserved worst
+    case booked. Only ``ProviderError`` itself (a refused request: 4xx) and ``SpendLimitReached`` are known unbilled."""
 
 
 class DeadlineExceeded(ProviderExhausted):
@@ -23,6 +25,11 @@ class DeadlineExceeded(ProviderExhausted):
 class SpendLimitReached(ProviderError):
     """The provider's spend or quota cap is reached (for the Claude API: the monthly cap, a 429 with no
     ``retry-after``). Retrying fails until the cap resets, so it is never retried; callers map it to ``over_budget``."""
+
+
+class QuotaReached(SpendLimitReached):
+    """A per-period request or token QUOTA is used up (for example a Gemini per-day quota). It is not a money cap: the
+    provider refused the request, nothing is billed, and the quota returns at its reset time."""
 
 
 class LLM(Protocol):

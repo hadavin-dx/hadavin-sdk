@@ -17,6 +17,7 @@ from typing import Any
 from urllib.parse import urlsplit
 
 from hadavin_sdk.errors import ConfigError
+from hadavin_sdk.llm.protocol import SpendLimitReached
 from hadavin_sdk.llm.retry import with_retry
 from hadavin_sdk.models import Reply, ToolCall
 
@@ -343,6 +344,7 @@ class NetworkLLM:
             retryable=self.retryable,
             detail=self.detail,
             spend_limit=self.spend_limit,
+            spend_error=self.spend_error,
             deadline_s=self.deadline_s,
         )
 
@@ -352,6 +354,7 @@ class NetworkLLM:
     spend_limit: Callable[[BaseException], bool] | None = (
         None  # the kind's own "spend cap reached" test
     )
+    spend_error: type[SpendLimitReached] = SpendLimitReached  # what a positive spend_limit raises
     deadline_s: float | None = (
         None  # overall wall clock for one call's attempts and sleeps (config)
     )

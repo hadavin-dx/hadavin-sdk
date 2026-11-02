@@ -186,7 +186,8 @@ class Limits:
         """Delete the per-run counters (every tenant) of runs that started more than ``keep_days`` ago (a crashed
         run leaves its row). It needs DELETE on the spend tables, which the runtime database role does NOT have
         (least privilege): run it from the maintenance job (``hadavin-sdk prune-runs``, its own database identity
-        from ``migrate --maintenance-role``), never from the runtime."""
+        from ``migrate --maintenance-role``), never from the runtime. A reservation stranded by a crash on an AGENT
+        counter ages out with its day and month; to release it sooner use ``store.settle_spend([(key, day, -usd)])``."""
         return self.store.prune_spend(now().date() - timedelta(days=keep_days))
 
     def charge(self, agent_id: str, usd: Decimal) -> tuple[Decimal, Decimal]:

@@ -198,6 +198,14 @@ def _row(model: BaseModel) -> dict[str, Any]:
     return out
 
 
+class _RolledBack(Exception):
+    """Raised inside a spend transaction to undo it and hand ``result`` back to the caller."""
+
+    def __init__(self, result: Any) -> None:
+        super().__init__("rolled back")
+        self.result = result
+
+
 class PostgresStore:
     # ponytail: one connection behind one lock per process; a pool (psycopg_pool) when throughput matters.
     # A dropped connection fails the call (the run ends safely); reconnect-on-error arrives with S11 hosting.
@@ -534,7 +542,7 @@ class PostgresStore:
                 last = exc
                 if attempt + 1 < self.RESERVE_ATTEMPTS:
                     time.sleep(0.02 * (attempt + 1))
-            except psycopg.OperationalError as exc:
+            except psycopg.Error as exc:  # every driver error: its text can quote a parameter value
                 raise StoreUnavailable(
                     f"store postgres: spend operation failed ({type(exc).__name__})"
                 ) from None
@@ -544,11 +552,17 @@ class PostgresStore:
         ) from None
 
     def _run_tx(self, conn: psycopg.Connection, work: Callable[[psycopg.Connection], Any]) -> Any:
-        with conn.transaction():
-            conn.execute(
-                "SELECT set_config('lock_timeout', %s, true)", (f"{int(self.LOCK_TIMEOUT_MS)}ms",)
-            )
-            return work(conn)
+        try:
+            with conn.transaction():
+                conn.execute(
+                    "SELECT set_config('lock_timeout', %s, true)",
+                    (f"{int(self.LOCK_TIMEOUT_MS)}ms",),
+                )
+                return work(conn)
+        except (
+            _RolledBack
+        ) as done:  # the work decided nothing is to be written: the rollback is the answer
+            return done.result
 
     @staticmethod
     def _locked_total(
@@ -608,7 +622,7 @@ class PostgresStore:
             if (
                 ks is None or ks["on"]
             ):  # a missing row is ON (fail closed), as get_kill_switch reads it
-                return ["kill_switch"]
+                raise _RolledBack(["kill_switch"])
             reasons = []
             if use_run and r + usd > run_cap:
                 reasons.append("run_budget")
@@ -617,7 +631,9 @@ class PostgresStore:
             if m + usd > monthly_cap:
                 reasons.append("monthly_budget")
             if reasons:
-                return reasons
+                # Roll back: the zero rows inserted above only to lock the counters must not stay (agent rows are
+                # never pruned, so a refused day would leave one forever).
+                raise _RolledBack(reasons)
             self._add(conn, agent_id, day, usd)
             if use_run:
                 self._add(conn, run_key, rday, usd)

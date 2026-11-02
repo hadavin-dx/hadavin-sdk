@@ -131,8 +131,8 @@ def test_the_runtime_role_reserves_and_settles_but_cannot_delete_money_rows(role
         res = lim.reserve("a", D("0.10"), run_id="r1")
         lim.settle(res, D("0.04"))
         assert store.spend_totals("a", DAY)[0] == D("0.04")
-        with pytest.raises(psycopg.errors.InsufficientPrivilege):
-            lim.prune_runs()  # the negative test: DELETE is not the runtime's
+        with pytest.raises(StoreUnavailable, match="InsufficientPrivilege"):
+            lim.prune_runs()  # the negative test: DELETE is not the runtime's (the driver text is not passed on)
         with psycopg.connect(roles.runtime, autocommit=True) as db:
             for stmt in ("DELETE FROM spend", "DELETE FROM spend_month", "TRUNCATE spend"):
                 with pytest.raises(psycopg.errors.InsufficientPrivilege):

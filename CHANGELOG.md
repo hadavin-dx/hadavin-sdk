@@ -7,8 +7,8 @@
   failing field path and the error type only (`inner.n: int_parsing`); never pydantic's message or input. A path
   element that is not a schema property name (a dict key, an extra key) shows as `*`. The model's invalid reply is
   no longer echoed back in the retry turn, and the retry wording is now R85's ("Your previous reply was invalid: ...
-  Reply again with only the corrected JSON object."). Fenced or prose-wrapped JSON now parses (R82); a list, string
-  or null reply is a validation error, not an exception. Anything that matched the old text `That failed validation`
+  Reply again with only the corrected JSON object."). Fenced or prose-wrapped JSON now parses (R82). (A list, string or null
+  reply was already a validation error and still is; tests pin it as a regression guard, it is not a change.) Anything that matched the old text `That failed validation`
   must change.
 - **Spend-cap 429 is never retried (G-05).** The Claude API monthly cap (HTTP 429, `rate_limit_error`,
   `error.details.error_code == "enforced_spend_limit_reached"`, no `retry-after`; platform.claude.com/docs/en/api/rate-limits,
@@ -88,6 +88,30 @@
   `common.py`, `anthropic.py`, `openai_compat.py`, `gemini.py`, `protocol.py`, `models.py`): keep #48's size and nesting
   bound in `post_json` (`loads_bounded`, the 16 MB read cap) when `UnusableAnswer` lands, and run #43's `answered_hook`
   INSIDE the deadline-bounded attempt (`attempt_once` in `with_retry`), so it cannot outlive `deadline_s`.
+
+### Round-3 review fixes (PR #48)
+- **Every Postgres driver error is `StoreUnavailable`, class name only** (`psycopg.Error`, not only `OperationalError`):
+  `InsufficientPrivilege`, `DataError` and the rest no longer escape raw with text that can quote a parameter value.
+- **An exhausted provider may have billed.** `ProviderExhausted` (timeouts, resets, 5xx after retries, the deadline)
+  keeps the reserved worst case booked, in the agent loop and in `MeteredLLM`. Only a refused request (`ProviderError`
+  itself, `SpendLimitReached`, `QuotaReached`) is released as never billed. Effect: a throttling storm books worst cases
+  until the day and month roll over (fail safe: it can stop work early, never overshoot the cap).
+- **The spend reason is sticky for the whole failure streak** in `CircuitBreaker`: four `SpendLimitReached` then one
+  `ProviderExhausted` still opens the circuit "for spend", so an unmetered fallback is not used to route around the cap.
+- **`QuotaReached`** (new, a subclass of `SpendLimitReached`): a Gemini per-day quota is a request quota, not a money cap;
+  the loop reports `provider_quota`. `with_retry(spend_error=)` and `NetworkLLM.spend_error` choose the class.
+- **A refused reservation rolls back** its transaction, so no zero-value counter rows are committed (agent rows are never
+  pruned, so a refused day would otherwise leave rows forever).
+- **`MeteredLLM`**: a settle that fails after a good reply is logged and the reply is returned (the worst case stays
+  booked), as in the loop. `Valid.replies` (raw model text) is excluded from `repr`.
+- **Scope of "every call is reserved" (R214), stated plainly:** the agent loop reserves every `llm.chat`; `extract()` and
+  `evals.gate` meter only when given a `MeteredLLM` / `limits=`; the K1b replay uses its own sequential USD cap. The
+  Anthropic message-prefix test for a spend limit is a fallback behind the documented `error_code` and was not checked
+  against a live response (no spend authorised); it can only add a refusal, never allow a call.
+- **Stuck reservations (maintenance).** A process that crashes between `reserve` and `settle` leaves its worst case
+  booked. Per-run counters are removed by `hadavin-sdk prune-runs`; agent day and month counters age out when the day or
+  month rolls over. To release one earlier, take it back from the maintenance identity with
+  `store.settle_spend([(agent_key, day, -amount)])` (a negative delta never creates a missing counter).
 
 ### Upgrade steps
 - **K3 pilot build path (levels, shadow cut-off, fail-closed loading).** Action contracts change shape:

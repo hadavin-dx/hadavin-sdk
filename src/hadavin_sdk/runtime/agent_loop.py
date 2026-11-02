@@ -29,9 +29,9 @@ from hadavin_sdk.identity import Principal
 from hadavin_sdk.limits import Limits, OverBudget, Reservation, prompt_bytes, worst_case_usd
 from hadavin_sdk.llm.protocol import (
     LLM,
-    DeadlineExceeded,
     ProviderError,
     ProviderExhausted,
+    QuotaReached,
     SpendLimitReached,
 )
 from hadavin_sdk.models import (
@@ -337,22 +337,22 @@ class Runtime:
                     tools=tools,
                     documents=[document],
                 )
-            except (
-                DeadlineExceeded
-            ):  # the request may still finish and be billed: cost unknown, keep booked
+            except ProviderExhausted:  # timed out, reset or a 5xx after retries (or past the deadline): it may have been billed, keep booked
                 self._settle(run, res, res.usd)
                 self._note(run, "llm", "chat", result="failed", error_code="provider_exhausted")
                 return self._abstain(run, S.NEEDS_PERSON, "provider_exhausted", cited)
             except (
                 ProviderError
             ) as exc:  # a refused key or request must not strand the run in WORKING
-                self._settle(run, res, Decimal(0))  # never billed
-                if isinstance(exc, SpendLimitReached):
+                self._settle(
+                    run, res, Decimal(0)
+                )  # a refused request (4xx, spend cap): never billed
+                if isinstance(exc, QuotaReached):
+                    code = "provider_quota"  # a per-period quota, not money: waiting for its reset
+                elif isinstance(exc, SpendLimitReached):
                     code = (
                         "over_budget"  # the provider's own cap: waiting for the reset, not retrying
                     )
-                elif isinstance(exc, ProviderExhausted):
-                    code = "provider_exhausted"
                 else:
                     code = "provider_error"
                 self._note(run, "llm", "chat", result="failed", error_code=code)

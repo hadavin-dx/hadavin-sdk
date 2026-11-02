@@ -26,7 +26,8 @@ _MAX_ERRORS = 10  # per attempt, so a hostile reply cannot grow the retry prompt
 @dataclass
 class Valid:
     data: BaseModel
-    replies: list[Reply] = field(default_factory=list)
+    # Raw model replies (they can quote the document): kept for cost and audit, never shown in repr or logs.
+    replies: list[Reply] = field(default_factory=list, repr=False)
 
     @property
     def cost_usd(self) -> Decimal:

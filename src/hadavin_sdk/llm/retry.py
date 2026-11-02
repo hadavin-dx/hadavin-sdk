@@ -156,6 +156,7 @@ def with_retry[T](
     retryable: Retryable | None = None,
     detail: Callable[[BaseException], str] | None = None,
     spend_limit: Callable[[BaseException], bool] | None = None,
+    spend_error: type[SpendLimitReached] = SpendLimitReached,
     deadline_s: float | None = None,
     clock: Callable[[], float] = time.monotonic,
 ) -> T:
@@ -190,7 +191,7 @@ def with_retry[T](
             raise
         except Exception as exc:  # every failure is classified below, never swallowed
             if got_spend(got, exc):
-                raise SpendLimitReached(f"{label}: {describe(exc, detail)} spend limit") from exc
+                raise spend_error(f"{label}: {describe(exc, detail)} spend limit") from exc
             if not transient(exc, retryable):
                 raise ProviderError(f"{label}: {describe(exc, detail)}") from exc
             if attempt == max_attempts:
