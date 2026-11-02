@@ -355,16 +355,25 @@ def report_state(entries: list[dict], runs_dir: Path, run_id: str) -> str | None
     return "unverified" if any((folder / n).exists() for n in RESULT_FILES) else None
 
 
+def _run_ids(entries: list[dict], kind: str) -> set[str]:
+    """The run ids of the chain entries of one kind. A signed entry with a missing or malformed `data` is a broken
+    chain (`LockError`), never a KeyError or TypeError out of a verifier."""
+    try:
+        return {e["data"]["run_id"] for e in entries if e["kind"] == kind}
+    except (KeyError, TypeError) as err:
+        raise LockError(f"a chain entry of kind {kind!r} has no readable run_id") from err
+
+
 def verify_reports(entries: list[dict], runs_dir: Path) -> None:
     """Every run whose report hash is in the chain must still have exactly that report (raises `LockError`)."""
-    for run_id in {e["data"]["run_id"] for e in entries if e["kind"] == "report"}:
+    for run_id in _run_ids(entries, "report"):
         report_state(entries, runs_dir, run_id)
 
 
 def unchained_runs(entries: list[dict], runs_dir: Path) -> list[str]:
     """Sealed-looking run folders that hold results but whose run the chain never recorded: the sign of a lock/chain
     that was rolled back while the run folders stayed (a cheap check; it needs the run folders to be intact)."""
-    chained = {e["data"]["run_id"] for e in entries if e["kind"] == "sealed_run"}
+    chained = _run_ids(entries, "sealed_run")
     out = []
     try:
         names = sorted(p.name for p in Path(runs_dir).iterdir() if p.is_dir())

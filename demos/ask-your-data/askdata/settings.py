@@ -37,7 +37,7 @@ class Sealed(_Strict):
 
     first_run_min_remaining_usd: Decimal = Field(Decimal("3.00"), ge=0)
     second_look_min_remaining_usd: Decimal = Field(Decimal("1.80"), ge=0)
-    max_second_looks: int = Field(2, ge=0)
+    max_second_looks: int = Field(2, ge=0, strict=True)  # True is not 1
     # the pass/fail gate on the confident-wrong rate (one-sided 95 % upper bound), fixed at freeze
     green_max_upper: Decimal = Field(Decimal("0.10"), gt=0, le=1)
     amber_max_upper: Decimal = Field(Decimal("0.15"), gt=0, le=1)
@@ -55,6 +55,7 @@ class MeterLimits(_Strict):
     max_external_age_hours: int = Field(
         24, gt=0
     )  # external_usd typed in longer ago than this blocks a live step
+    max_amount_exponent: int = Field(12, gt=0)  # a meter amount of 1e13 dollars or more is refused
 
 
 class Runtime(_Strict):

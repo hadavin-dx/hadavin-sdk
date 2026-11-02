@@ -8,6 +8,11 @@ at once.
 Vendor-neutral (lock-in audit 2026-10-31, row 2): this module knows HTTP statuses, the standard library's network
 errors and TLS, nothing else. Each kind knows its own SDK's errors and passes ``retryable(exc) -> bool | None``
 (None: no opinion, the generic rule decides) and ``detail(exc) -> str`` (an error code safe to log).
+
+Billing contract (a meter reads it): every ``ProviderError`` leaving ``with_retry`` carries ``attempts`` (requests
+actually sent). A non-transient failure is an ``UnusableAnswer`` (the provider ANSWERED, so it was billed) when
+``_answered`` says so: the kind's ``answered_hook`` decides, else a 2xx status on the error; otherwise it is a plain
+``ProviderError`` (nothing billed). ``answered`` and ``billed_usd`` are set by the kind for rounds that answered.
 """
 
 from __future__ import annotations
@@ -109,10 +114,9 @@ def with_retry[T](
             raise
         except Exception as exc:  # every failure is classified below, never swallowed
             if not transient(exc, retryable):
-                # The provider ANSWERED and the body was unusable (billed) only when the failure came out of the
-                # kind's `_parse` (every kind names its response parser that): no HTTP status, not a network
-                # error, and a `_parse` frame in the traceback. A failure before any request was sent (a secret
-                # read, building the body) is a plain ProviderError and is not billed.
+                # `_answered` decides: the kind's answered_hook, else a 2xx status on the error (never the
+                # traceback). Answered = billed = UnusableAnswer; a failure before any request was sent (a secret
+                # read, building the body) or an HTTP error status is a plain ProviderError and is not billed.
                 answered = _answered(exc, answered_hook)
                 cls = UnusableAnswer if answered else ProviderError
                 refused = cls(f"{label}: {describe(exc, detail)}")
