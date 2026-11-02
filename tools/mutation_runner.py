@@ -9,14 +9,14 @@ This is a developer tool, not a runtime module: it lives in ``tools/`` (NOT in t
 copies ``tools/mutation_runner.py`` from core like any other core file (a ``core_copies.json`` row, ``import_rewrite`` of nothing: it
 imports only ``hadavin_sdk.testing.mutation``). It runs a subprocess on caller-chosen trees, so the mutant file is found by LISTING the
 tree (``_locate``: the caller's string is compared with the listed names and never joined to a path), every other path is checked to
-stay inside its tree (``_inside``: a ``..`` part or an absolute path is a ``ValueError``), and every pytest run has a timeout.
+stay inside its tree (``_inside``: a ``..`` part or an absolute path is a ``ValueError``), and every pytest run has a timeout, and a timeout kills the whole process tree of the run.
 """
 
 from __future__ import annotations
 
 import os
 import shutil
-import subprocess
+import subprocess  # nosec B404 - a developer tool that runs pytest on trees it copied itself
 import sys
 import tempfile
 from collections.abc import Iterable, Sequence
@@ -85,14 +85,40 @@ def _pytest(cwd: Path, tests: Sequence[str], junit: Path, timeout: float) -> int
     env = dict(
         os.environ, PYTHONPATH=os.pathsep.join([str(cwd / "src"), str(cwd)])
     )  # the tree root too: tests may import tools.*
-    try:
-        r = subprocess.run(  # noqa: S603
-            [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", "--noconftest", "-x", f"--junitxml={junit}", "--", *tests],
-            cwd=cwd, env=env, capture_output=True, text=True, check=False, timeout=timeout,
+    cmd = [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", "--noconftest", "-x", f"--junitxml={junit}", "--", *tests]  # fmt: skip
+    # own process group (POSIX session / Windows group): on a timeout the whole tree dies, not only pytest (a test may have started psql or a server)
+    own = (
+        {"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP}
+        if os.name == "nt"
+        else {"start_new_session": True}
+    )
+    with subprocess.Popen(  # noqa: S603  # nosec B603 - fixed argv (our own interpreter), caller strings only as pytest operands after --
+        cmd, cwd=cwd, env=env, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, **own  # type: ignore[call-overload]
+    ) as proc:  # fmt: skip
+        try:
+            return proc.wait(timeout=timeout)
+        except subprocess.TimeoutExpired:
+            _kill_tree(proc)
+            # a mutant that loops forever is reported, never allowed to hang the run
+            return TIMED_OUT
+
+
+def _kill_tree(proc: subprocess.Popen[bytes]) -> None:
+    """Kill ``proc`` and everything it started (POSIX: its process group; Windows: ``taskkill /T``)."""
+    if os.name == "nt":
+        subprocess.run(  # noqa: S603  # nosec B603 B607 - fixed argv, the pid is our own child
+            ["taskkill", "/F", "/T", "/PID", str(proc.pid)],  # noqa: S607
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False, timeout=60,
         )  # fmt: skip
-    except subprocess.TimeoutExpired:
-        return TIMED_OUT  # a mutant that loops forever is reported, never allowed to hang the run
-    return r.returncode
+    else:
+        import signal
+
+        try:
+            os.killpg(proc.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+    proc.kill()  # the child itself, if the tree kill missed it
+    proc.wait()
 
 
 def run_mutants(

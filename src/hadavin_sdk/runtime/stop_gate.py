@@ -87,7 +87,7 @@ class EngageResult:
     # the switch write (the audit step), so read ``durable_on()``. None: another engage owns the sweep and this call wrote nothing.
     durable: bool | None = True
     store_error: str | None = None
-    already_sweeping: bool = False  # another engage owns the sweep; nothing was undone here
+    already_sweeping: bool = False  # another engage owns the sweep; nothing was undone here (so ``complete`` is False for this call)
 
 
 _LABEL = re.compile(r"[A-Za-z0-9_.:@ -]{1,60}")
@@ -218,7 +218,7 @@ class StopGate:
             self._gen += 1
             self._cached = None
             if self._sweeping:
-                return EngageResult(already_sweeping=True, durable=None)
+                return EngageResult(complete=False, already_sweeping=True, durable=None)
             self._sweeping = True
         res = EngageResult()
         with self._cond:

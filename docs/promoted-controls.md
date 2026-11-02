@@ -53,6 +53,13 @@ There is no default policy: `check_text(..., policy=)` is required, and a config
 | Outbox, signer, Verifier protocol, reservations | they belong to the signed-approvals work (PR #49) and stage 2; nothing here claims them (only `check_rowstore_contract` exists in `testing/contracts.py`) | PR #49 merge, then contract checks for them | CHANGELOG |
 | `guard/redact.py` does not fold | the input mask matches raw text, and its offsets change after NFKD drops marks; a fold-aware mask needs an offset map | design review of "scan folded text, mask by span map"; until then redact detects on folded text and, on a hit, masks the whole token or line (fail closed), and the output check `egress_text` is the backstop | CHANGELOG, `guard/redact.py` |
 
+## Behaviours worth knowing
+
+- `StopGate.release` can write the durable stop twice when an `engage` interleaves with it (the engage writes it, then the release sees the changed generation and writes it again); both writes are audited and `StopGateBusy.durable` says whether the second one succeeded.
+- `EngageResult` for a call that found a sweep already running has `already_sweeping=True`, `durable=None`, `complete=False` (nothing was undone by that call).
+- `has_mixed_script` flags Greek letters beside Latin ones (a delta or theta symbol glued to Latin letters is a false positive) and uses a curated script list, not the UTS #39 script-extension data; see its docstring.
+- The look-alike table is generated and checked on Unicode 15.1.0 (Python 3.13, the version CI runs: `python-version: "3.13"`). On Python 3.12 (Unicode 15.0) or 3.14+ the table is the same, but the regeneration test is skipped and the fold drops code points the interpreter calls unassigned (Cn), so a letter assigned only in a later Unicode version is dropped instead of mapped.
+
 ## Copying a core file into a demo (rows for `core_copies.json`)
 
 A demo that keeps a byte copy lists one row per file; `core_pr` is 50 until it merges, then the copy is dropped for the pin.

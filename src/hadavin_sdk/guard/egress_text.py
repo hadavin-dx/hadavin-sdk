@@ -7,9 +7,12 @@ The rule is a digit budget, not a shape match. After the text is folded (``guard
 caller allows are set aside; what is left may hold fewer than ``max_digits`` digit-like characters IN TOTAL, wherever they sit and
 whatever lies between them (separators, letters, look-alikes, other scripts' digits). Digit-like LETTERS (O o I l L S s B Z z, capital
 G and Q) count when they sit in a run with a real digit (``8 O 1 l 5 S``) or form a letter-only run of ``letter_run_min`` or more
-(``OlISBZGQ``). The lowercase i, b, g, q ("big issue", "is") are WEAK letters: they never start a run and never qualify one, but once a letters-only
-run has ``letter_run_min`` strong letters they count too, so ``OlISBZGq`` is
-counted as 8. Residual: weak letters beside real digits (``1b5i7g3q``) and runs with fewer strong letters are not counted; they ARE folded in the protected-value key.
+(``OlISBZGQ``). A single digit-like letter inside an ordinary word that holds no digit (the ``o`` of ``ok``, the ``s`` of ``shipped``)
+is NOT counted: ``id 12345678901 ok`` has 11 digit-like characters, not 12. The lowercase i, b, g, q ("big issue", "is") are WEAK letters:
+they never start a run and never qualify one. They count when they sit in the same separator-free token as at least 2 digits or strong
+letters, so ``OlISBZGq`` and ``1b5i7g3q`` both count as 8 (``payments()`` refuses them, ``general()`` allows them like plain 12345678, as
+fewer than 12). Residual: runs with fewer than ``letter_run_min`` strong letters and no digit are not counted; they ARE folded in the
+protected-value key.
 
 Set-aside tokens are not free, and the budgets ADD UP: a card number split into a plain part and an "amount" must not slip through.
 The set-aside amounts and references have their own budget (``max_exempt_tokens``, ``max_exempt_digits``, always below
@@ -189,7 +192,7 @@ class LeakPolicy:
 
     @classmethod
     def general(cls) -> LeakPolicy:
-        """For replies that carry order ids and phone numbers (up to 11 plain digits, 11 in total). Still refuses a
+        """For replies that carry order ids and phone numbers (up to 11 plain digits and 11 in total). Still refuses a
         13-digit card number split into pieces."""
         return cls(
             max_digits=12, max_total_digits=12, max_exempt_digits=8, max_dates=2, account_min_len=14
@@ -242,21 +245,23 @@ def _valid_date(y: int, m: int, d: int, years: tuple[int, int]) -> bool:
 def _digitish_count(t: str, letter_run_min: int) -> int:
     """Digits plus digit-like letters. Characters are grouped into runs of digits and digit-like letters (separators are skipped, any
     other letter ends the run). In a run that holds a real digit every strong letter counts; a run of letters only counts once it holds at
-    least ``letter_run_min`` strong letters (a fully letter-encoded account), so ordinary words made of such letters stay free. Weak
+    least ``letter_run_min`` strong letters (a fully letter-encoded account), so ordinary words made of such letters stay free. A
+    single digit-like letter in a separator-free token that has no digit and ends in another letter (the ``o`` of ``ok``, the ``s`` of
+    ``shipped``) is a word, not an encoded digit, and is not counted. Weak
     letters (lowercase i b g q) count when they sit in the same separator-free token as at least 2 digits or strong letters (``OlISBZGq``,
     ``1b5i7g3q``); a weak letter in a token of its own ("is big 12345") extends a letters-only run that already qualifies and never counts
     beside real digits."""
     total, digits, strong, glued, loose = 0, 0, 0, 0, 0
-    tok_cnt, tok_weak = 0, 0
+    tok_cnt, tok_weak, tok_digits, tok_strong = 0, 0, 0, 0
 
     def flush() -> None:
-        nonlocal glued, loose, tok_cnt, tok_weak
+        nonlocal glued, loose, tok_cnt, tok_weak, tok_digits, tok_strong
         # a token with 2 or more digits or strong letters is not a word like "is" or "this"
         if tok_cnt >= 2:
             glued += tok_weak
         else:
             loose += tok_weak
-        tok_cnt, tok_weak = 0, 0
+        tok_cnt, tok_weak, tok_digits, tok_strong = 0, 0, 0, 0
 
     def close() -> None:
         nonlocal total, digits, strong, glued, loose
@@ -271,14 +276,21 @@ def _digitish_count(t: str, letter_run_min: int) -> int:
         if ch.isdigit():
             digits += 1
             tok_cnt += 1
+            tok_digits += 1
         elif ch in _DIGITISH:
             strong += 1
             tok_cnt += 1
+            tok_strong += 1
         elif ch in _WEAK_DIGITISH:
             tok_weak += 1
         elif _SEPARATORS.fullmatch(ch):
             flush()
         else:
+            if (
+                not tok_digits and tok_strong == 1
+            ):  # one such letter in an ordinary word ("ok", "shipped"), not an encoded digit
+                strong -= 1
+                tok_cnt = 0
             close()
     close()
     return total
@@ -296,7 +308,7 @@ def _luhn_ok(digits: str) -> bool:
 
 def _card_run(stream: str) -> bool:
     """True if the digits of ``stream`` (in order, separators ignored, split at set-aside dates) hold a Luhn-valid run of 13 to 19 digits:
-    a card number spread over plain text and amounts. Defence in depth: the presets already refuse 12 or more digits in total."""
+    a card number spread over plain text and amounts. The digit budget (``max_total_digits`` <= 12) refuses first, so through ``check_text`` this scan cannot fire while the budgets hold: it is an independent card test that stays correct on its own (tested directly) if a budget is ever loosened."""
     for seg in stream.split(_MARK):
         digits = "".join(ch for ch in seg if ch.isdigit() and ch.isascii())
         for n in range(13, 20):
@@ -425,7 +437,7 @@ def check_text(
         or plain + exempt_digits + DATE_DIGITS * n_dates >= policy.max_total_digits
     ):
         return Violation.DIGIT_BUDGET
-    # defence in depth: the budgets above already keep the digits below 12
+    # unreachable while the budgets above hold (max_total_digits <= 12); kept as an independent card test, pinned by a mutant
     if _card_run(card_stream):
         return Violation.CARD_NUMBER
     return None

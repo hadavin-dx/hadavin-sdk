@@ -1,7 +1,7 @@
 {
   "note": "sha256 of the files a demo copies byte for byte from core; update with the CHANGELOG when one changes",
   "files": {
-    "src/hadavin_sdk/guard/textnorm.py": "954ae52c5521d569eb9f8de0bf0258268885d76dd486d1d64f8c95c69ec77ee4",
+    "src/hadavin_sdk/guard/textnorm.py": "576b4cba43c70666db9020f6d3cc3d309ca7fda34e52ff3fd687d42a9d9d1200",
     "src/hadavin_sdk/guard/_confusables.py": "41740c11734e2ec1e5a63f9325dffa04226c84f3b81b43c1b5c7e766f8a0ccfd",
     "tests/fixtures/textnorm_vectors.json": "1a1944708f7d1737588d7b02666620ceb308b0fe4a71ce2a312c4dc29113d349"
   }

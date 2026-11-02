@@ -1913,6 +1913,118 @@ def test_redact_leaves_an_existing_placeholder_on_a_non_ascii_line_alone():
     assert r.text == "mail <EMAIL_1> and caf" + chr(0xE9) and list(r.mapping) == ["<EMAIL_1>"]
 
 
+# ---- review round 5 (code-4): documented guarantees, newline in the script check, honest docs, process-tree kill -------------------------
+def test_general_delivers_ids_up_to_eleven_digits_and_payments_keeps_order_numbers_free():
+    general, payments = LeakPolicy.general(), LeakPolicy.payments()
+    for text in (
+        "id 12345678901 ok",
+        "order 1234567890 of 5 orders",
+    ):
+        assert egress_text.check_text(text, policy=general) is None, text
+    assert egress_text.check_text("Order 1234567 shipped", policy=payments) is None
+    assert egress_text._digitish_count("id 12345678901 ok", 6) == 11
+    assert egress_text._digitish_count("Order 1234567 shipped", 6) == 7
+    # a real digit-like run is still counted, in both presets' fail-closed direction
+    assert egress_text.check_text("1b5i7g3q", policy=payments) == Violation.DIGIT_BUDGET
+    assert egress_text.check_text("OlISBZGq", policy=payments) == Violation.DIGIT_BUDGET
+    assert egress_text.check_text("id 12345678901 O l", policy=general) == Violation.DIGIT_BUDGET
+    assert egress_text.check_text("12345678901 OS", policy=general) == Violation.DIGIT_BUDGET
+    assert egress_text.check_text("8 O 1 l 5 S 7 b 3 i", policy=payments) == Violation.DIGIT_BUDGET
+
+
+def test_a_newline_or_tab_separates_words_in_the_mixed_script_check():
+    ru = "".join(map(chr, (0x43F, 0x440, 0x438, 0x432, 0x435, 0x442)))
+    ru_name = chr(0x418) + chr(0x43C) + chr(0x44F)
+    for sep in ("\n", "\t", "\r\n", chr(0x2028), "\x0b"):
+        assert not has_mixed_script("ab" + sep + ru), repr(sep)
+    assert not has_mixed_script("Name\t" + ru_name)
+    assert egress_text.check_text("Hello\n" + ru, policy=LeakPolicy.payments()) is None
+    # a zero-width space INSIDE a word still does not split it
+    assert has_mixed_script("ab" + chr(0x200B) + ru)
+    assert has_mixed_script("b" + chr(0x200B) + chr(0x13AA) + "nk")
+
+
+def test_the_egress_docstring_states_what_the_code_counts():
+    doc = egress_text.__doc__
+    assert "Residual: weak letters beside real digits" not in doc  # the code counts them
+    assert "``1b5i7g3q`` both count as 8" in doc and "``id 12345678901 ok``" in doc
+    log = Path(__file__).resolve().parents[1] / "CHANGELOG.md"
+    if log.exists():
+        text = log.read_text(encoding="utf-8")
+        assert "refused by `payments()`" in text and "allowed by `general()`" in text
+
+
+def test_a_second_engage_is_not_complete():
+    gate = StopGate()
+    started, hold = threading.Event(), threading.Event()
+
+    def items():
+        started.set()
+        hold.wait(10)
+        return []
+
+    t = threading.Thread(target=lambda: gate.engage(items, lambda k: "x", by="u"))
+    t.start()
+    assert started.wait(10)
+    try:
+        second = gate.engage(list, lambda k: "x", by="u")
+        assert second.already_sweeping and second.complete is False
+    finally:
+        hold.set()
+        t.join(10)
+
+
+def _pid_alive(pid):
+    import os
+    import subprocess
+
+    if os.name == "nt":
+        out = subprocess.run(  # noqa: S603
+            ["tasklist", "/FI", f"PID eq {pid}", "/NH"],  # noqa: S607
+            capture_output=True,
+            text=True,
+            check=False,
+        ).stdout
+        return str(pid) in out
+    try:
+        os.kill(pid, 0)
+    except OSError:
+        return False
+    return True
+
+
+def test_a_timeout_kills_the_whole_process_tree_not_only_pytest(tmp_path):
+    import time
+
+    root = tmp_path / "pkg"
+    (root / "src" / "pk").mkdir(parents=True)
+    (root / "tests").mkdir()
+    (root / "src" / "pk" / "__init__.py").write_text("", encoding="utf-8")
+    (root / "src" / "pk" / "core.py").write_text(
+        "def go(flag):\n    return flag\n", encoding="utf-8"
+    )
+    (root / "tests" / "test_core.py").write_text(
+        "from pk.core import go\n\ndef test_go_is_true():\n    assert go(True) is True\n",
+        encoding="utf-8",
+    )
+    pidfile = tmp_path / "pid.txt"
+    body = (
+        "import subprocess, sys, time\n"
+        "    c = subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(600)'])\n"
+        f"    open({str(pidfile)!r}, 'w').write(str(c.pid))\n"
+        "    time.sleep(600)"
+    )
+    spawn = Mutant("spawn", "src/pk/core.py", "return flag", body, "test_go_is_true")
+    out = run_mutants(root, [spawn], ["tests/test_core.py"], extra_dirs=(), timeout=20)
+    assert out == [("spawn", Verdict.ERROR, "TIMEOUT", False)]
+    pid = int(pidfile.read_text(encoding="utf-8"))
+    for _ in range(50):
+        if not _pid_alive(pid):
+            break
+        time.sleep(0.2)
+    assert not _pid_alive(pid), "the grandchild survived the timeout"
+
+
 def test_the_manifest_pins_the_files_a_demo_copies():
     import hashlib
 

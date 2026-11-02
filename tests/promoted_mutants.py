@@ -170,8 +170,8 @@ M = [
     Mutant(
         "gate: a second engage sweeps again",
         SG,
-        "            if self._sweeping:\n                return EngageResult(already_sweeping=True, durable=None)",
-        "            if False:\n                return EngageResult(already_sweeping=True, durable=None)",
+        "            if self._sweeping:\n                return EngageResult(complete=False, already_sweeping=True, durable=None)",
+        "            if False:\n                return EngageResult(complete=False, already_sweeping=True, durable=None)",
         "test_a_second_engage_runs_no_undo",
     ),
     Mutant(
@@ -640,15 +640,15 @@ M = [
     Mutant(
         "mixed: invisible characters not removed first",
         TN,
-        "        if ch not in _UNIT_SYMBOLS\n        and ch not in FILLERS\n        and unicodedata.category(ch) not in _DROP_CATEGORIES\n",
-        "        if ch not in _UNIT_SYMBOLS\n",
+        "            ch not in _UNIT_SYMBOLS\n            and ch not in FILLERS\n            and unicodedata.category(ch) not in _DROP_CATEGORIES\n",
+        "            ch not in _UNIT_SYMBOLS\n",
         "test_one_invisible_character",
     ),
     Mutant(
         "mixed: the micro sign is flagged",
         TN,
-        "        if ch not in _UNIT_SYMBOLS\n",
-        "        if True\n",
+        "            ch not in _UNIT_SYMBOLS\n",
+        "            True\n",
         "test_the_micro_and_ohm_signs",
     ),
     Mutant(
@@ -824,9 +824,16 @@ M = [
     Mutant(
         "gate: a second engage claims a durable write",
         SG,
-        "return EngageResult(already_sweeping=True, durable=None)",
-        "return EngageResult(already_sweeping=True)",
+        "return EngageResult(complete=False, already_sweeping=True, durable=None)",
+        "return EngageResult(complete=False, already_sweeping=True)",
         "test_engaged_is_the_flag",
+    ),
+    Mutant(
+        "gate: a second engage says complete",
+        SG,
+        "return EngageResult(complete=False, already_sweeping=True, durable=None)",
+        "return EngageResult(already_sweeping=True, durable=None)",
+        "test_a_second_engage_is_not_complete",
     ),
     # config view, row store, capped
     Mutant(
@@ -931,8 +938,8 @@ M = [
     Mutant(
         "runner: a timeout is reported as an exit code",
         MR,
-        "        return TIMED_OUT  # a mutant that loops forever is reported, never allowed to hang the run",
-        "        return 1",
+        "            # a mutant that loops forever is reported, never allowed to hang the run\n            return TIMED_OUT",
+        "            return 1",
         "test_a_mutant_that_loops_forever",
     ),
     Mutant(
@@ -1056,12 +1063,11 @@ M = [
         "test_a_luhn_valid_card",
     ),
     Mutant(
-        "egress: the card scan ignores the separators",
+        "egress: the card scan reads only a contiguous digit run",
         EG,
         '        digits = "".join(ch for ch in seg if ch.isdigit() and ch.isascii())',
-        "        digits = seg",
-        "test_the_micro_and_ohm_signs",
-        allow_crash=True,
+        '        digits = max(re.findall(r"[0-9]+", seg), key=len, default="")',
+        "test_a_luhn_valid_card_across_pieces",
     ),
     Mutant(
         "egress: the card scan reads across dates",
@@ -1099,12 +1105,39 @@ M = [
         "test_the_runner_refuses_paths",
     ),
     Mutant(
-        "table: the vendored file is not the pinned one",
-        GEN,
-        'DEFAULT_INPUT = Path(__file__).resolve().parent / "data" / "confusables.txt"',
-        'DEFAULT_INPUT = Path(__file__).resolve().parent / "data" / "missing.txt"',
+        "egress: one letter of an ordinary word counts",
+        EG,
+        "                not tok_digits and tok_strong == 1\n",
+        "                False\n",
+        "test_general_delivers_ids_up_to_eleven_digits",
+    ),
+    Mutant(
+        "egress: the docstring denies what the code counts",
+        EG,
+        "``1b5i7g3q`` both count as 8",
+        "``1b5i7g3q`` are not counted",
+        "test_the_egress_docstring_states",
+    ),
+    Mutant(
+        "textnorm: a newline joins the words of the script check",
+        TN,
+        '        " " if ch.isspace() else ch  # a newline or tab separates words, as in fold',
+        '        "" if ch.isspace() else ch  # a newline or tab separates words, as in fold',
+        "test_a_newline_or_tab_separates_words",
+    ),
+    Mutant(
+        "runner: a timeout leaves the grandchildren running",
+        MR,
+        "            _kill_tree(proc)\n",
+        "            proc.kill()\n",
+        "test_a_timeout_kills_the_whole_process_tree",
+    ),
+    Mutant(
+        "table: the vendored data file differs from the pin",
+        "tools/data/confusables.txt",
+        "# Date: 2026-08-06, 01:05:35 GMT",
+        "# Date: 2026-08-07, 01:05:35 GMT",
         "test_the_generator_reproduces",
-        allow_crash=True,
     ),
 ]
 

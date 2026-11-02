@@ -149,13 +149,22 @@ def has_mixed_script(text: str) -> bool:
     not split it). The micro sign and the ohm sign are exempt (unit symbols); a Greek mu or omega typed as a Greek letter next to Latin
     letters is flagged. The micro and ohm signs are removed BEFORE the analysis, so a word that holds only such a sign plus a
     look-alike letter (micro sign + Cyrillic a) is not flagged by this function; the fold and the table still see the Cyrillic letter. A
-    fail-closed deny signal that does not depend on the look-alike table. Digits and punctuation are script-neutral."""
+    fail-closed deny signal that does not depend on the look-alike table. Digits and punctuation are script-neutral.
+
+    Honest limits: the script list is a curated prefix list of Unicode character names, NOT the UTS #39 script-extension data (Runic, Tamil,
+    Bopomofo and others are not on it; each added script is a new false-positive source, and the fold table is the first line for
+    those). Greek letters next to Latin ones are flagged, so a technical word with a Greek delta or theta glued to Latin letters is a
+    false positive; only the micro and ohm signs are exempt. The deny is fail-closed by design: use
+    ``deny_mixed_script=False`` where such words are legitimate."""
     kept = "".join(
-        ch
+        " " if ch.isspace() else ch  # a newline or tab separates words, as in fold
         for ch in text
-        if ch not in _UNIT_SYMBOLS
-        and ch not in FILLERS
-        and unicodedata.category(ch) not in _DROP_CATEGORIES
+        if ch.isspace()
+        or (
+            ch not in _UNIT_SYMBOLS
+            and ch not in FILLERS
+            and unicodedata.category(ch) not in _DROP_CATEGORIES
+        )
     )
     for word in _WORD.findall(unicodedata.normalize("NFKC", kept)):
         latin = other = False

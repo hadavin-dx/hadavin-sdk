@@ -27,4 +27,4 @@ does not grant any licence to use it.
 
 ## Security
 
-See [SECURITY.md](SECURITY.md). Developer tools in `tools/` (a mutation runner that starts `pytest` subprocesses, a Unicode table generator) are not shipped in the wheel and nothing imports them.
+See [SECURITY.md](SECURITY.md). Developer tools in `tools/` (a mutation runner that starts `pytest` subprocesses, a Unicode table generator) are not shipped in the wheel and nothing imports them. The look-alike table (`guard/_confusables.py`) is generated and checked on Unicode 15.1.0 (Python 3.13, the version CI pins); other Python versions run the same table but skip the regeneration test (details: `docs/promoted-controls.md`).
