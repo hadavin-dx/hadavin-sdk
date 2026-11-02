@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import ast
 import base64
+import bisect
 import hashlib
 import html
 import importlib
@@ -77,7 +78,11 @@ class ToolSpec(BaseModel):
     operations: tuple[str, ...] = ()
     hosts: tuple[str, ...] = ()
     secret_names: tuple[str, ...] = ()
-    max_output_bytes: int = Field(default=DEFAULT_MAX_OUTPUT_BYTES, gt=0)
+    # Never above the redactor's cap: `prepare_output` cuts to its window before the scrub, and a larger value
+    # would make `_fit` cut text the model was allowed to see.
+    max_output_bytes: int = Field(
+        default=DEFAULT_MAX_OUTPUT_BYTES, gt=0, le=defaults.MAX_REDACT_CHARS
+    )
     cluster_http: bool = False
     # Settings the tool's own code reads (validated there, e.g. a source's `KubernetesSettings`): endpoints and
     # limits belong here, never in the tool module.
@@ -751,11 +756,63 @@ def _fit(text: str) -> str:
     """Scrubbing swaps a short secret (6 characters) for a 17-character marker, so a text far below the
     redactor's cap can pass it (15,421 copies of a 6-character secret are 92,526 characters before and 262,157
     after). Cut such a text back to the cap, with the cut said: refusing it would drop a tool result that fits
-    the documented limit. Nothing is lost that the model could have seen: the final output is cut to
-    `max_bytes` anyway."""
+    the documented limit. Nothing is lost that the model could have seen: `max_bytes` is bounded to the cap
+    (`ToolSpec.max_output_bytes`, `legacy_max_output_bytes`), and the final output is cut to it anyway."""
     if len(text) <= defaults.MAX_REDACT_CHARS:
         return text
     return _cut(text, defaults.MAX_REDACT_CHARS - len(TRUNCATED))
+
+
+FRAGMENT_SCAN = (
+    4096  # how far back from a cut `_strip_fragment` looks for the start of a partial secret
+)
+FRAGMENT_MIN = (
+    3  # a partial secret shorter than this is not worth stripping (and would match anything)
+)
+_PARTIAL_END = 10  # the longest incomplete escape a cut can leave (an HTML entity, a JSON u-escape, a percent triple)
+
+
+def _strip_fragment(text: str, forms: list[str]) -> str:
+    """A cut (the window, or `_fit`) can split a secret, and then no whole form is left for the scrub to find: the
+    front of it stays next to the `[truncated]` marker (a 32-character token minus one character is not
+    masked). If `text` ends with the marker, remove the longest stretch before it that reads, once the encoding
+    layers are undone (`_decoded`), as the start of a form of a handed-out secret (at least `FRAGMENT_MIN`
+    characters). A stretch ending inside an escape ("&#10") is tried with up to `_PARTIAL_END` characters
+    dropped. `forms` is sorted: `t` starts a form exactly when the form that sorts at or after `t` starts with it."""
+    if not text.endswith(TRUNCATED):
+        return text
+    body = text[: -len(TRUNCATED)]
+    starts = {f[0] for f in forms} | {
+        "&",
+        chr(92),
+        "%",
+    }  # a stretch starts with a form's first character or an escape
+    n = len(body)
+
+    def starts_a_form(t: str) -> bool:
+        if len(t) < FRAGMENT_MIN:
+            return False
+        k = bisect.bisect_left(forms, t)
+        return k < len(forms) and forms[k].startswith(t)
+
+    # a fragment is shorter than its form and an escape spells one character in at most six: look back that far
+    reach = min(FRAGMENT_SCAN, 6 * max(len(f) for f in forms) + _PARTIAL_END)
+    escapes = {"&", chr(92), "%"}
+    # a cut before an incomplete escape ("&#10") leaves it at the end: also try the text without it
+    ends = [n] + [j for j in range(max(n - _PARTIAL_END + 1, 0), n) if body[j] in escapes]
+    for i in range(max(n - reach, 0), n - FRAGMENT_MIN + 1):
+        if body[i] not in starts:
+            continue
+        for j in ends:
+            if j - i < FRAGMENT_MIN:
+                continue
+            try:
+                t = _decoded(body[i:j])
+            except runmap.InputTooLarge:
+                continue
+            if starts_a_form(t):
+                return body[:i] + TRUNCATED
+    return text
 
 
 def prepare_output(
@@ -769,7 +826,8 @@ def prepare_output(
     (redaction is bounded work: it never sees more than the model could be shown), scrub handed-out secrets (as
     they are, URL-quoted, base64 even twice, and behind \\u, percent, HTML-entity and invisible-character
     layers), escape the result markers and placeholder look-alikes, redact with the run's map, then truncate to
-    `max_bytes`."""
+    `max_bytes`. A cut that split a secret leaves no whole form to find, so the partial front of it before the
+    `[truncated]` marker is removed too (`_strip_fragment`)."""
     raw = _cut(_sanitise(raw), raw_cap)
     # The window leaves room for the marker `_cut` appends, so a cut text is still within the redactor's cap.
     raw = _cut(
@@ -793,6 +851,8 @@ def prepare_output(
                     # the secret hides behind an encoding layer: use the decoded text (that one reply loses its
                     # original spelling, which is the price of not showing the secret)
                     raw = _fit(seen[1].replace(form, "<SECRET_REDACTED>"))
+        # a cut may have split a secret, leaving its front next to the marker: remove it (see `_strip_fragment`)
+        raw = _strip_fragment(raw, sorted({f for x in long_enough for f in _secret_forms(x)}))
     return truncate(runmap.redact_untrusted(raw, mapping), max_bytes)
 
 

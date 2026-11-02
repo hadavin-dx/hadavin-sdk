@@ -200,7 +200,9 @@ class EvidenceSettings(_Strict):
     """The read path's limits (K5). Defaults live in `hadavin_sdk/defaults.py`. Not part of `config_hash`."""
 
     max_tool_errors: int = Field(default=defaults.MAX_TOOL_ERRORS, gt=0)
-    legacy_max_output_bytes: int = Field(default=defaults.LEGACY_MAX_OUTPUT_BYTES, gt=0)
+    legacy_max_output_bytes: int = Field(
+        default=defaults.LEGACY_MAX_OUTPUT_BYTES, gt=0, le=defaults.MAX_REDACT_CHARS
+    )
     fetch_ceiling_bytes: int = Field(default=defaults.FETCH_CEILING_BYTES, gt=0)
     https_ports: tuple[int, ...] = defaults.HTTPS_PORTS
     cluster_ports: tuple[int, ...] = defaults.CLUSTER_PORTS
