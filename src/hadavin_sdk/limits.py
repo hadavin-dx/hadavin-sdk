@@ -159,8 +159,11 @@ class Limits:
     def settle(self, res: Reservation, actual: Decimal) -> None:
         """Replace the reservation with what the call really cost, in one atomic store step (a cost above the
         reservation is recorded, not refused; ``actual=0`` releases it after a call that was never billed). Once
-        per reservation: it counts as settled only after the store accepted it, so a failed settle can be retried
-        and the real cost is never lost."""
+        per reservation: it counts as settled only after the store accepted it, so a failed settle that RAISED before
+        reaching the store can be retried. After an ambiguous failure (a lost COMMIT acknowledgement surfaces as
+        ``StoreUnavailable`` although the delta may have been applied) retry ONLY if you know the first try did not commit:
+        a second application double-counts a positive delta or releases another reservation's money on a negative one. No
+        caller in this repo retries; they keep the worst case booked."""
         _money(actual, "cost")
         with self._settle_lock:
             if res.settled or res.settling:
@@ -193,8 +196,8 @@ class Limits:
         (least privilege): run it from the maintenance job (``hadavin-sdk prune-runs``, its own database identity
         from ``migrate --maintenance-role``), never from the runtime. A reservation stranded by a crash on an AGENT
         counter stays booked until its day and its MONTH roll over (up to ~31 days against the monthly cap); release it
-        sooner with ``hadavin-sdk release-reservation --agent A --day D --amount USD`` (maintenance identity, clamped at
-        zero)."""
+        sooner with ``hadavin-sdk release-reservation --agent A --day D --amount USD`` (maintenance identity; takes back at most the
+        day's total from both counters)."""
         return self.store.prune_spend(now().date() - timedelta(days=keep_days))
 
     def charge(self, agent_id: str, usd: Decimal) -> tuple[Decimal, Decimal]:

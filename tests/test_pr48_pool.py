@@ -28,19 +28,25 @@ def test_fair_slots_are_first_in_first_out_and_hand_the_slot_straight_over():
         assert g.acquire(5)
         order.append(i)
 
+    def until(cond, what):  # a handshake on state, never a sleep that must be long enough
+        deadline = time.monotonic() + 60
+        while not cond():
+            assert time.monotonic() < deadline, what
+            time.sleep(0.001)
+
     threads = []
     for i in range(5):
         t = threading.Thread(target=waiter, args=(i,))
         t.start()
         threads.append(t)
-        while len(started) <= i:  # arrival order is fixed: one starts, queues, then the next
-            time.sleep(0.001)
-        time.sleep(0.02)
-    for _ in range(5):
+        until(
+            lambda i=i: len(g._q) > i, f"waiter {i} never queued"
+        )  # arrival order is fixed: queued, then the next
+    for n in range(5):
         g.release()
-        time.sleep(0.02)
+        until(lambda n=n: len(order) > n, f"waiter {n} was not handed the slot")
     for t in threads:
-        t.join(5)
+        t.join(60)
     assert order == [0, 1, 2, 3, 4]
     g.release()  # the last holder
     with pytest.raises(ValueError):

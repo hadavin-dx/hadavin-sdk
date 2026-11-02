@@ -373,6 +373,12 @@ def _release_reservation(cfg, args) -> int:
         if os.environ.get("HADAVIN_DEBUG") == "1":
             traceback.print_exc()
         return 3
+    if before == after and not args.dry_run:
+        print(
+            f"nothing released for {args.agent} on {args.day}: no counter row or it was already zero "
+            f"(day {before[0]}, month {before[1]})"
+        )
+        return 0
     verb = "would release" if args.dry_run else "released"
     print(
         f"{verb} up to {args.amount} USD for {args.agent} on {args.day}: "

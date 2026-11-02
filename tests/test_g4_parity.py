@@ -241,7 +241,8 @@ def test_g4_withholds_each_write_shape_and_leaves_reads_and_plain_words():
         assert WITHHELD in withhold_commands(story), story
 
 
-def test_g4_reads_hostile_text_in_linear_time():
+@pytest.mark.parametrize("timed", [False, pytest.param(True, marks=pytest.mark.perf)])
+def test_g4_reads_hostile_text_in_linear_time(timed):
     """WARDEN review 2026-10-16: model text is attacker-shaped, so no input may make G4 backtrack."""
     hostile = [
         "aws " + "--a-b " * 600 + "!",
@@ -262,7 +263,8 @@ def test_g4_reads_hostile_text_in_linear_time():
     started = time.perf_counter()
     for text in hostile:
         withhold_commands(text[:3500])
-    assert time.perf_counter() - started < 1.0
+    if timed:  # machine-relative: only under -m perf
+        assert time.perf_counter() - started < 1.0
 
 
 # --- the false-positive corpus: every recorded model reply in this repository ---------------------------

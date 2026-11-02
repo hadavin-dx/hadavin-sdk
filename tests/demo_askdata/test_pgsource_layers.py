@@ -128,7 +128,8 @@ def test_errors_carry_only_the_sqlstate(db):
 # --------------------------------------------------------------------------------------------- T-E8 caps
 
 
-def test_caps_watchdog_cancels_a_blocked_statement(db, capsys):
+@pytest.mark.parametrize("timed", [False, pytest.param(True, marks=pytest.mark.perf)])
+def test_caps_watchdog_cancels_a_blocked_statement(db, capsys, timed):
     timeout = 2.0
     start = time.monotonic()
     with pytest.raises(PgError) as caught:
@@ -139,7 +140,8 @@ def test_caps_watchdog_cancels_a_blocked_statement(db, capsys):
             f"\nT-E8 watchdog: pg_sleep(30) cancelled after {elapsed:.2f}s (limit {timeout}s, server default 15s)"
         )
     assert caught.value.sqlstate == "57014"
-    assert elapsed < timeout + 1  # measured 0.02-0.05 s over locally (docker, Windows)
+    if timed:  # wall clock only under -m perf; SQLSTATE 57014 is the default-run proof
+        assert elapsed < timeout + 1  # measured 0.02-0.05 s over locally (docker, Windows)
     assert not [t for t in threading.enumerate() if t.name == WATCHDOG_NAME and t.is_alive()]
 
 

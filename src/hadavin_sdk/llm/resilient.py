@@ -256,6 +256,8 @@ class ResilientLLM:
             update={
                 "fallback_used": True,
                 "served_by": served_by,
-                "prior_unknown_requests": lost,  # the meter books one primary worst case on top
+                "prior_unknown_requests": max(
+                    lost, getattr(out, "prior_unknown_requests", 0)
+                ),  # the meter books one primary worst case on top; a nested fallback keeps its inner carry
             }
         )

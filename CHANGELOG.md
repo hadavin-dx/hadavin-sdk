@@ -163,19 +163,26 @@
 - **Billing counts are validated strictly:** `attempts`, `answered`, `refused` must be plain `int` (no bool, float, string,
   None, nan), 0 to 10**6, with `answered + refused <= attempts`. Anything else, or an attribute that raises, is treated as
   UNKNOWN and the reservation is kept (`cost_to_settle` never raises).
+- **Release-reservation takes the same amount from day and month (review 8, major 1):** `PostgresStore._add` used to clamp
+  the day and the month counter independently, so a take-back larger than the day's total removed the full amount from the
+  month and handed out cap headroom with no booking behind it (month < sum of days; the memory store, which derives month
+  from its days, could not diverge). It now locks the day row, takes `min(amount, day total)` from both, and takes back nothing
+  for a day with no row. The CLI says "nothing released" instead of "released" when nothing changed. A nested
+  `ResilientLLM` fallback keeps the inner carried bill (`max`). New settings `spend_lock_timeout_ms`, `spend_reserve_attempts`,
+  `spend_backoff_s` replace hardcoded constants. `release-reservation` has no app-level audit event: pgaudit/log_statement is a
+  documented deploy precondition (see `store/migrate.py`).
 - **Spend-connection gate is FIFO and configurable; the hot-key ceiling is measured (pool exhaustion report):** on postgres:17,
   2,000 simultaneous reservations on one agent counter through 8 spend connections failed 734 to 1,858 callers with
   `StoreUnavailable: no spend connection free (pool exhausted)` (the cap held: fail closed), and a 16-worker run lost 8
   because `BoundedSemaphore` wakes waiters in no order, so a few starved past their wait. The gate is now first-in-first-out
   (`_FairSlots`), and `spend_pool_size` (1 to 64, default 8) and `spend_pool_wait_s` (default 10) are `PostgresSettings`.
   CEILING, machine and network dependent: every reservation on one hot agent key takes the same row locks and runs in one
-  transaction of about 10 to 16 round trips, one after another, whatever the pool size; several agent keys run in parallel. So
-  that key serves about `rate = 1 / (round trips per reservation x latency per round trip)`, roughly 1 / (12 x latency).
-  Measured data points (not a promise): latency ~0.7 ms on an idle laptop (docker loopback) gave about 100 to 125
-  reservations/s once; ~7-8 ms (pgbench 127-138 tps on a loaded machine) gave 5 to 11/s; ~42 ms gave 2 to 4/s. The earlier
-  "100 to 125/s" claim is therefore only the idle-laptop point, not a capacity. Runs such as "2,000 callers, 10 s wait, about
+  transaction of about 10 to 16 round trips, one after another, whatever the pool size; several agent keys run in parallel.
+  There is no simple formula (COMMIT's fsync is paid once per reservation, not per round trip).
+  Measured data points (not a promise): keyed by the latency of one pgbench update transaction: ~7-8 ms (pgbench 127-138 tps on a loaded machine)
+  gave 5 to 11/s; ~42 ms gave 2 to 4/s. The earlier "100 to 125/s" claim had no recorded run and is dropped. Runs such as "2,000 callers, 10 s wait, about
   200 admitted" show the LOAD SHAPE (a queue longer than the patience fails closed), not a capacity. Operators: run pgbench
-  (a custom script that updates one row per transaction) against your database, apply the formula, and size
+  (a custom script that updates one row per transaction) and a burst test against your database, and size
   `spend_pool_wait_s` for the burst you expect (B simultaneous callers on one key need about B / rate seconds).
   No setting weakens the cap: a caller that gives up never books anything (`tests/test_pr48_pool.py` checks booked ==
   admitted on a 300-caller burst with a long and a 50 ms wait). A gate waiter that is interrupted during its wait now passes its

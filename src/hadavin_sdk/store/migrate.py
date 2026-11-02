@@ -282,9 +282,13 @@ def migrate(
 #                 NARROWER than the runtime on INSERT (denied) and on key columns (UPDATE of `usd` only, never agent_id).
 #   Real controls: (1) DSN separation: HADAVIN_MAINTENANCE_DSN is held by the operator and is never in the runtime's
 #                 environment (the CLI only checks that it is set; it cannot tell which role the DSN names); (2) the
-#                 command is one named agent and day, a positive finite amount, and the store clamps at zero in the same
-#                 statement, so a repeat or a race cannot go below zero THROUGH THE STORE; (3) every use is a CLI call in the
+#                 command is one named agent and day, a positive finite amount, and the store takes back at most the day's
+#                 total from BOTH counters in one transaction, so a repeat or a race cannot go below zero or leave month
+#                 below the sum of its days THROUGH THE STORE; (3) every use is a CLI call in the
 #                 operator's shell history; the database audit is the server's own (pgaudit or log_statement), not ours.
+#                 DEPLOY PRECONDITION (audit writer, rule 11): this command writes no app-level audit event, because the
+#                 maintenance identity deliberately holds no audit-writer right. The operator MUST enable pgaudit or
+#                 log_statement on the database and keep the CLI line it prints (agent, day, amount, before, after).
 #   Not controlled: raw SQL by the runtime or the maintenance login can set `usd` to ANY value (also negative, until the
 #                 CHECK (usd >= 0) follow-up lands: see CHANGELOG). The clamp does not cover raw SQL.
 #   Over-breadth: UPDATE (usd) lets a leaked maintenance credential RAISE or lower a counter (a denial of service or cap
@@ -311,7 +315,8 @@ def release_reservation(
     """Take ``usd`` back from one agent's DAY and MONTH counters (a reservation stranded by a crash, or by an
     exhausted provider that proved unbilled), as the MAINTENANCE role. Returns ``(before, after)``, each a
     ``(day_total, month_total)``. Bounded: one agent, one day (not in the future), a positive finite amount; the store
-    clamps both counters at zero, so a repeated command cannot push them below it. ``dry_run`` only reads."""
+    takes back min(amount, the day's total) from BOTH counters (so month stays >= the sum of its days and a repeated
+    command cannot push either below zero; a day with no row releases nothing). ``dry_run`` only reads."""
     from decimal import Decimal
 
     from hadavin_sdk.limits import _ID, counter_key

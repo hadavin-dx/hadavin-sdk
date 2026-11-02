@@ -132,6 +132,11 @@ class PostgresSettings(KindSettings):
     # store/postgres.py: the measured ceiling is per hot agent key, not per connection).
     spend_pool_size: int = Field(default=8, ge=1, le=64)
     spend_pool_wait_s: float = Field(default=10.0, gt=0, le=300)
+    # How long one reservation waits for a row lock, how many times it is retried after a serialization failure or
+    # deadlock, and the first back-off between tries (it grows linearly).
+    spend_lock_timeout_ms: int = Field(default=5000, ge=100, le=60000)
+    spend_reserve_attempts: int = Field(default=3, ge=1, le=10)
+    spend_backoff_s: float = Field(default=0.02, gt=0, le=5)
 
     @model_validator(mode="after")
     def _checks(self) -> PostgresSettings:

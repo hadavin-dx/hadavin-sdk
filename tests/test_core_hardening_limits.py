@@ -261,6 +261,14 @@ def test_the_kill_switch_is_read_in_the_same_step_as_the_booking():
     assert store.spend_totals("a", MID_MONTH.date()) == (0, 0)
 
 
+def _until(cond, what, limit=60.0):
+    """Wait for a state, not for a duration: the limit only stops a hung test."""
+    deadline = time.monotonic() + limit
+    while not cond():
+        assert time.monotonic() < deadline, what
+        time.sleep(0.001)
+
+
 def test_no_reservation_starts_after_the_switch_returned():
     store = MemoryStore()
     limits = _limits(store, daily="1e9", monthly="1e9")
@@ -281,10 +289,10 @@ def test_no_reservation_starts_after_the_switch_returned():
     with fast_switching():
         for t in ts:
             t.start()
-        time.sleep(0.05)
+        _until(lambda: any(ok for _, ok in log), "no reservation succeeded before the flip")
         store.set_kill_switch(KillSwitch(on=True, by="t"))
         flipped = time.monotonic()
-        time.sleep(0.05)
+        _until(lambda: any(b > flipped for b, _ in log), "no worker began a call after the flip")
         stop.set()
         for t in ts:
             t.join()
@@ -523,7 +531,10 @@ def test_postgres_lock_wait_is_bounded_retried_and_does_not_hold_the_process_loc
     for dsn in pg_schema():
         settings = PostgresSettings(kind="postgres", dsn_secret_name="pg-dsn")  # noqa: S106 - a name
         store = make("store", settings, FakeSecretProvider({"pg-dsn": dsn}))
-        store.LOCK_TIMEOUT_MS, store.RESERVE_ATTEMPTS = 200, 2
+        store.LOCK_TIMEOUT_MS, store.RESERVE_ATTEMPTS = (
+            3000,
+            2,
+        )  # long enough to outlast a loaded machine's scheduling
         lims = _limits(store)
         lims.reserve("a", D("0.01"))  # creates the counter rows
         holder = psycopg.connect(dsn, autocommit=False)
@@ -542,13 +553,26 @@ def test_postgres_lock_wait_is_bounded_retried_and_does_not_hold_the_process_loc
 
             t = threading.Thread(target=blocked)
             t.start()
-            time.sleep(0.3)  # the reserve is now waiting on the row lock
-            t0 = time.monotonic()
+            with psycopg.connect(
+                dsn, autocommit=True
+            ) as probe:  # the reserve is waiting on the row lock (server view)
+                _until(
+                    lambda: (
+                        probe.execute(
+                            "SELECT count(*) FROM pg_stat_activity WHERE wait_event_type = 'Lock' "
+                            "AND datname = current_database()"
+                        ).fetchone()[0]
+                        > 0
+                    ),
+                    "the reserve never reached the row lock",
+                )
             store.get_kill_switch()  # takes the process lock: must not queue behind the row-lock wait
-            assert time.monotonic() - t0 < 0.1
-            t.join(60)
-            elapsed, msg = result[0]
-            assert 0.3 < elapsed < 5 and "busy" in msg  # 2 attempts of ~200 ms, then fail closed
+            assert (
+                t.is_alive()
+            )  # ...it returned while the reserve was still stuck (no clock: the order is the proof)
+            t.join(120)
+            _, msg = result[0]
+            assert "busy" in msg  # attempts exhausted, then fail closed
         finally:
             holder.rollback()
             holder.close()

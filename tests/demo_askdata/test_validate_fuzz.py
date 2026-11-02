@@ -10,6 +10,7 @@ import collections
 import random
 import time
 
+import pytest
 import sqlglot
 from askdata.validate import Rejected, validate
 
@@ -84,7 +85,8 @@ def run_fuzz(seed: int = SEED, cases: int = CASES):
     return stats, failures, accepted
 
 
-def test_fuzz_2000_cases_hold_the_invariant():
+@pytest.mark.parametrize("timed", [False, pytest.param(True, marks=pytest.mark.perf)])
+def test_fuzz_2000_cases_hold_the_invariant(timed):
     started = time.monotonic()
     stats, failures, _ = run_fuzz()
     elapsed = time.monotonic() - started
@@ -99,6 +101,5 @@ def test_fuzz_2000_cases_hold_the_invariant():
         dict(stats)
     )
     assert len([k for k in stats if k.startswith("rejected V")]) >= 8, dict(stats)
-    assert elapsed < 120, (
-        f"fuzz took {elapsed:.1f}s"
-    )  # about 20 s on a laptop; the design budget is 60 s
+    if timed:  # about 20 s on a laptop; the design budget is 60 s; only under -m perf
+        assert elapsed < 120, f"fuzz took {elapsed:.1f}s"

@@ -184,6 +184,9 @@ def build(settings, deps) -> PostgresStore:
         connector,
         pool_size=settings.spend_pool_size,
         pool_wait_s=settings.spend_pool_wait_s,
+        lock_timeout_ms=settings.spend_lock_timeout_ms,
+        reserve_attempts=settings.spend_reserve_attempts,
+        backoff_s=settings.spend_backoff_s,
     )
 
 
@@ -271,20 +274,20 @@ class PostgresStore:
     # exceeded). CEILING, machine and network dependent: every reservation on ONE hot agent key takes the same row locks
     # and runs in one transaction of about 10 to 16 round trips (BEGIN, lock timeout, lock and read each counter, kill
     # switch, update day and month, COMMIT), one after another, whatever the pool size (extra connections only wait on
-    # the row lock); several agent keys run in parallel. So that key serves about
-    #     rate  =  1 / (round trips per reservation x latency per round trip)      (about 1 / (12 x latency))
-    # Measured data points (NOT a promise; load shape differs from capacity, a "2,000 callers, 10 s wait, 200 admitted"
-    # run only shows what a queue that long does to a 10 s patience):
-    #     latency ~0.7 ms (idle laptop, docker loopback)           ->  about 100 to 125 reservations/s, once
-    #     latency ~7-8 ms (pgbench 127-138 tps, loaded machine)    ->  about 5 to 11 reservations/s
-    #     latency ~42 ms                                            ->  about 2 to 4 reservations/s
-    # Run pgbench against YOUR database (a custom script that updates one row per transaction) to get the latency, apply
-    # the formula, and size ``spend_pool_wait_s`` for the burst you expect: B simultaneous callers on one key need about
-    # B / rate seconds. The cap is never exceeded whatever the rate. See tests/test_pr48_pool.py.
+    # the row lock); several agent keys run in parallel. There is no formula here: the rate also depends on the fsync of
+    # COMMIT, which is paid once per reservation, not once per round trip. Measured data points (NOT a promise; load
+    # shape differs from capacity, a "2,000 callers, 10 s wait, 200 admitted" run only shows what a queue that long does
+    # to a 10 s patience), keyed by the latency of one pgbench update transaction on that machine:
+    #     pgbench 127-138 tps (~7-8 ms, loaded machine)    ->  about 5 to 11 reservations/s
+    #     ~42 ms                                            ->  about 2 to 4 reservations/s
+    # MEASURE with pgbench against YOUR database (a custom script that updates one row per transaction) and with a burst
+    # test, then size ``spend_pool_wait_s``: B simultaneous callers on one key need about B / rate seconds. The cap is
+    # never exceeded whatever the rate. See tests/test_pr48_pool.py.
     LOCK_TIMEOUT_MS = 5000
     RESERVE_ATTEMPTS = 3
     POOL_SIZE = 8
     POOL_WAIT_S = 10.0
+    BACKOFF_S = 0.02
 
     def __init__(
         self,
@@ -293,6 +296,9 @@ class PostgresStore:
         *,
         pool_size: int | None = None,
         pool_wait_s: float | None = None,
+        lock_timeout_ms: int | None = None,
+        reserve_attempts: int | None = None,
+        backoff_s: float | None = None,
     ) -> None:
         self._db = conn
         self._connector = connector
@@ -301,6 +307,14 @@ class PostgresStore:
         self.POOL_SIZE = pool_size if pool_size is not None else type(self).POOL_SIZE
         self.POOL_WAIT_S = pool_wait_s if pool_wait_s is not None else type(self).POOL_WAIT_S
         self._slots = _FairSlots(self.POOL_SIZE)
+        # Defaults live on the class (documented); settings (spend_lock_timeout_ms, spend_reserve_attempts,
+        # spend_backoff_s) override them per instance.
+        if lock_timeout_ms is not None:
+            self.LOCK_TIMEOUT_MS = lock_timeout_ms
+        if reserve_attempts is not None:
+            self.RESERVE_ATTEMPTS = reserve_attempts
+        if backoff_s is not None:
+            self.BACKOFF_S = backoff_s
 
     # --- generic helpers ---------------------------------------------------------------------------------
 
@@ -616,7 +630,7 @@ class PostgresStore:
             ) as exc:
                 last = exc
                 if attempt + 1 < self.RESERVE_ATTEMPTS:
-                    time.sleep(0.02 * (attempt + 1))
+                    time.sleep(self.BACKOFF_S * (attempt + 1))
             except psycopg.Error as exc:  # every driver error: its text can quote a parameter value
                 raise StoreUnavailable(
                     f"store postgres: spend operation failed ({type(exc).__name__})"
@@ -718,18 +732,32 @@ class PostgresStore:
 
     @staticmethod
     def _add(conn: psycopg.Connection, agent_id: str, day: date, usd: Decimal) -> None:
-        if (
-            usd < 0
-        ):  # taking back: only from a counter that exists (a pruned one is not recreated negative)
-            # GREATEST(.., 0) in the same statement: a repeated or racing take-back can never push a counter below
-            # zero (that would hand out cap headroom nobody paid for).
+        if usd < 0:
+            # Taking back (a stranded reservation). The DAY row is locked and read first; what is taken from the
+            # MONTH counter is exactly what was taken from the day (min(amount, day total)), so month stays
+            # >= sum(days) like the memory store, which derives month from its days. Clamping the two counters
+            # independently would hand out month headroom nobody paid for. A day row that does not exist (pruned or
+            # never booked) takes back nothing and is not recreated negative. Lock order day then month, as reserve.
+            row = (
+                conn.cursor(row_factory=dict_row)
+                .execute(
+                    "SELECT usd FROM spend WHERE agent_id = %s AND day = %s FOR UPDATE",
+                    (agent_id, day),
+                )
+                .fetchone()
+            )
+            if row is None:
+                return
+            take = min(-usd, Decimal(row["usd"]))
+            if take <= 0:
+                return
             conn.execute(
-                "UPDATE spend SET usd = GREATEST(usd + %s, 0) WHERE agent_id = %s AND day = %s",
-                (usd, agent_id, day),
+                "UPDATE spend SET usd = usd - %s WHERE agent_id = %s AND day = %s",
+                (take, agent_id, day),
             )
             conn.execute(
-                "UPDATE spend_month SET usd = GREATEST(usd + %s, 0) WHERE agent_id = %s AND month = %s",
-                (usd, agent_id, day.replace(day=1)),
+                "UPDATE spend_month SET usd = GREATEST(usd - %s, 0) WHERE agent_id = %s AND month = %s",
+                (take, agent_id, day.replace(day=1)),
             )
             return
         conn.execute(
