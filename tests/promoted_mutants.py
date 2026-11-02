@@ -1,8 +1,8 @@
 """Reverts one guard at a time (``hadavin_sdk.testing.mutation_runner``) and requires the intended test to fail for the intended reason.
 Not collected by pytest. Run from the repo root:
 
-    uv run python tests/promote_mutants.py            # all mutants; exit 1 if any is not killed by its test
-    uv run python tests/promote_mutants.py textnorm   # only mutants whose name contains the text
+    uv run python tests/promoted_mutants.py            # all mutants; exit 1 if any is not killed by its test
+    uv run python tests/promoted_mutants.py textnorm   # only mutants whose name contains the text
 """
 
 import sys
@@ -11,7 +11,7 @@ from pathlib import Path
 from hadavin_sdk.testing.mutation_runner import Mutant, run_mutants
 
 ROOT = Path(__file__).resolve().parents[1]
-TEST = "tests/test_promote_apexc_review8.py"
+TEST = "tests/test_promoted_controls.py"
 S = "src/hadavin_sdk/"
 CV, SG, RS, CA = (
     S + "runtime/config_view.py",
@@ -21,6 +21,7 @@ CV, SG, RS, CA = (
 )
 TN, EG, MU = S + "guard/textnorm.py", S + "guard/egress_text.py", S + "testing/mutation.py"
 MR, CT, GT = S + "testing/mutation_runner.py", S + "testing/contracts.py", S + "approvals/gate.py"
+CF, RD, GEN = S + "guard/_confusables.py", S + "guard/redact.py", "tools/gen_confusables.py"
 
 M = [
     # config view
@@ -48,8 +49,8 @@ M = [
     Mutant(
         "view: sets stay mutable",
         CV,
-        "return frozenset(_freeze(v, depth + 1) for v in o)",
-        "return set(_freeze(v, depth + 1) for v in o)",
+        "return frozenset(_freeze(v, depth + 1, budget) for v in o)",
+        "return set(_freeze(v, depth + 1, budget) for v in o)",
         "test_frozen_views_refuse",
     ),
     Mutant(
@@ -70,8 +71,8 @@ M = [
     Mutant(
         "view: tuples become lists",
         CV,
-        "return tuple(_freeze(v, depth + 1) for v in o)",
-        "return FrozenList(_freeze(v, depth + 1) for v in o)",
+        "return tuple(_freeze(v, depth + 1, budget) for v in o)",
+        "return FrozenList(_freeze(v, depth + 1, budget) for v in o)",
         "test_freeze_holds_real_configs",
     ),
     Mutant(
@@ -85,7 +86,7 @@ M = [
     Mutant(
         "view: freeze shares objects",
         CV,
-        "dict.__init__(d, {k: _freeze(v, depth + 1) for k, v in o.items()})",
+        "dict.__init__(d, {k: _freeze(v, depth + 1, budget) for k, v in o.items()})",
         "dict.__init__(d, o)",
         "test_frozen_views_refuse",
     ),
@@ -143,8 +144,8 @@ M = [
     Mutant(
         "gate: engage waits for its own effect",
         SG,
-        'own = getattr(\n                self._tls, "depth", 0\n            )',
-        "own = (\n                0\n            )",
+        "own = self._own()",
+        "own = 0",
         "test_engage_inside_an_effect",
     ),
     Mutant(
@@ -158,15 +159,15 @@ M = [
     Mutant(
         "gate: release skips the audit path",
         SG,
-        "self._limits.reset(_label(by))",
+        'self._limits.reset(_label(by), source="gate")',
         "pass",
         "test_engage_goes_through",
     ),
     Mutant(
         "gate: a second engage sweeps again",
         SG,
-        "            if self._sweeping:\n                return EngageResult(already_sweeping=True)",
-        "            if False:\n                return EngageResult(already_sweeping=True)",
+        "            if self._sweeping:\n                return EngageResult(already_sweeping=True, durable=None)",
+        "            if False:\n                return EngageResult(already_sweeping=True, durable=None)",
         "test_a_second_engage_runs_no_undo",
     ),
     Mutant(
@@ -282,15 +283,15 @@ M = [
     Mutant(
         "capped: tenants share a counter",
         CA,
-        "key = (tenant[:_TENANT_MAX], kind)",
-        'key = ("*", kind)',
+        "key: tuple[str | None, str] = (tenant[:_TENANT_MAX], kind)",
+        'key: tuple[str | None, str] = ("*", kind)',
         "test_capped_audit_is_per_tenant",
     ),
     Mutant(
         "capped: a new bucket does not reset",
         CA,
-        "if slot is None or slot[0] != bucket:",
-        "if slot is None:",
+        "self._n = {k: v for k, v in self._n.items() if v[0] == bucket}",
+        "pass",
         "test_capped_audit_is_per_tenant",
     ),
     Mutant(
@@ -317,8 +318,8 @@ M = [
     Mutant(
         "capped: tenant not clipped",
         CA,
-        "key = (tenant[:_TENANT_MAX], kind)",
-        "key = (tenant, kind)",
+        "key: tuple[str | None, str] = (tenant[:_TENANT_MAX], kind)",
+        "key: tuple[str | None, str] = (tenant, kind)",
         "test_capped_audit_memory_is_bounded",
     ),
     Mutant(
@@ -388,21 +389,19 @@ M = [
     Mutant("fold: fillers kept", TN, "ch not in FILLERS", "True", "test_fold_is_stable"),
     Mutant(
         "fold: Greek eta missing",
-        TN,
-        '((0x3B7, 0x3B3, 0x3BC, 0x3C9), "nyuw"),',
+        CF,
+        '    0x03B7: "n",\n',
         "",
         "test_fold_covers_the_listed",
     ),
     Mutant(
         "fold: Armenian missing",
-        TN,
-        '((0x585, 0x57D, 0x578, 0x570, 0x555, 0x54D, 0x581), "ounhOUg"),',
+        CF,
+        '    0x0585: "o",\n',
         "",
         "test_fold_covers_the_listed",
     ),
-    Mutant(
-        "fold: dotless i missing", TN, '((0x131, 0x130), "iI"),', "", "test_fold_covers_the_listed"
-    ),
+    Mutant("fold: dotless i missing", CF, '    0x0131: "i",\n', "", "test_fold_covers_the_listed"),
     Mutant(
         "fold: loose map short",
         TN,
@@ -411,18 +410,11 @@ M = [
         "test_a_protected_number_is_found",
     ),
     Mutant(
-        "fold: allow compare folds",
-        TN,
-        "return _canon(a) == _canon(b)",
-        "return fold(a, casefold=True, collapse_ws=True) == fold(b, casefold=True, collapse_ws=True)",
-        "test_allow_decisions_refuse",
-    ),
-    Mutant(
         "fold: confusable pair not detected",
         TN,
-        "and not safe_equal(a, b)",
-        "and False",
-        "test_allow_decisions_refuse",
+        "        return AllowVerdict.LOOKALIKE",
+        "        return AllowVerdict.DIFFERENT",
+        "test_allow_decisions_are_exact",
     ),
     Mutant(
         "fold: mixed script never true",
@@ -453,6 +445,7 @@ M = [
         "if not fv:",
         "if False:",
         "test_non_latin_and_short_protected",
+        allow_crash=True,  # the empty word then crashes _word_hit (IndexError): still a refusal to run
     ),
     Mutant(
         "egress: short protected value skips the check",
@@ -520,22 +513,22 @@ M = [
     Mutant(
         "egress: digit-like letters not counted",
         EG,
-        "        elif ch in _DIGITISH:\n            letters += 1",
-        "        elif False:\n            letters += 1",
+        "        elif ch in _DIGITISH:\n            strong += 1",
+        "        elif False:\n            strong += 1",
         "test_digit_like_letters_count",
     ),
     Mutant(
         "egress: letter-only runs free",
         EG,
-        "elif letters >= letter_run_min:",
+        "elif strong >= letter_run_min:",
         "elif False:",
         "test_digit_like_letters_count",
     ),
     Mutant(
         "egress: budget off by one",
         EG,
-        "if _digitish_count(t, policy.letter_run_min) >= policy.max_digits:",
-        "if _digitish_count(t, policy.letter_run_min) > policy.max_digits:",
+        "plain >= policy.max_digits",
+        "plain > policy.max_digits",
         "test_digit_budget_beats",
     ),
     Mutant(
@@ -562,9 +555,9 @@ M = [
     Mutant(
         "egress: mixed script allowed",
         EG,
-        "if policy.deny_mixed_script and mixed_script(text):",
+        "if policy.deny_mixed_script and has_mixed_script(text):",
         "if False:",
-        "test_mixed_script_words",
+        "test_mixed_script_words_and_look_alike_pairs",
     ),
     Mutant(
         "egress: unknown policy keys accepted",
@@ -625,11 +618,367 @@ M = [
         "if True:",
         "test_the_gate_views_use_the_shared_fold",
     ),
+    # review round 3: allow_equal, mixed script, generated table, generator
+    Mutant(
+        "allow: equality is normalised",
+        TN,
+        "    if a == b:\n        return AllowVerdict.EQUAL",
+        "    if _canon(a) == _canon(b):\n        return AllowVerdict.EQUAL",
+        "test_allow_decisions_are_exact",
+    ),
+    Mutant(
+        "allow: a mismatch is always a look-alike",
+        TN,
+        "    return AllowVerdict.DIFFERENT",
+        "    return AllowVerdict.LOOKALIKE",
+        "test_allow_decisions_are_exact",
+    ),
+    Mutant(
+        "mixed: invisible characters not removed first",
+        TN,
+        "        if ch not in _UNIT_SYMBOLS\n        and ch not in FILLERS\n        and unicodedata.category(ch) not in _DROP_CATEGORIES\n",
+        "        if ch not in _UNIT_SYMBOLS\n",
+        "test_one_invisible_character",
+    ),
+    Mutant(
+        "mixed: the micro sign is flagged",
+        TN,
+        "        if ch not in _UNIT_SYMBOLS\n",
+        "        if True\n",
+        "test_the_micro_and_ohm_signs",
+    ),
+    Mutant(
+        "mixed: Cherokee not a look-alike script",
+        TN,
+        '"CYRILLIC", "GREEK", "ARMENIAN", "CHEROKEE", "COPTIC",',
+        '"CYRILLIC", "GREEK", "ARMENIAN", "COPTIC",',
+        "test_one_invisible_character",
+    ),
+    Mutant(
+        "table: Cherokee A missing",
+        CF,
+        '    0x13AA: "A",\n',
+        "",
+        "test_the_table_is_generated",
+    ),
+    Mutant(
+        "table: small capital rule missing",
+        GEN,
+        "            out.setdefault(cp, m[1])",
+        "            pass",
+        "test_the_generator_refuses",
+    ),
+    Mutant(
+        "table: ASCII sources accepted",
+        GEN,
+        "        if src < 0x80 or not re.fullmatch",
+        "        if not re.fullmatch",
+        "test_the_generator_refuses",
+    ),
+    Mutant(
+        "table: capital I prototype stays l",
+        GEN,
+        '            dst = "I"',
+        '            dst = "l"',
+        "test_the_generator_refuses",
+    ),
+    Mutant(
+        "table: the generator accepts any file",
+        GEN,
+        "    if sha != PINNED_SHA256:",
+        "    if False:",
+        "test_the_generator_refuses",
+    ),
+    Mutant(
+        "table: the pin in the generator differs",
+        GEN,
+        'PINNED_SHA256 = "6ed3ee96',
+        'PINNED_SHA256 = "7ed3ee96',
+        "test_the_table_is_generated",
+    ),
+    # egress: budgets add up, presets, CJK, no default
+    Mutant(
+        "egress: plain and set-aside digits do not add up",
+        EG,
+        "        or plain + exempt_digits + DATE_DIGITS * n_dates >= policy.max_total_digits\n",
+        "",
+        "test_the_plain_and_the_set_aside_digits_add_up",
+    ),
+    Mutant(
+        "egress: dates are free in the total",
+        EG,
+        "DATE_DIGITS * n_dates",
+        "0 * n_dates",
+        "test_the_plain_and_the_set_aside_digits_add_up",
+    ),
+    Mutant(
+        "egress: exempt budget may reach max_digits",
+        EG,
+        "self.max_exempt_digits < self.max_digits,",
+        "True,",
+        "test_thresholds_come_from_a_validated_policy",
+    ),
+    Mutant(
+        "egress: total budget unbounded",
+        EG,
+        " and self.max_total_digits <= 2 * self.max_digits - 2",
+        "",
+        "test_the_plain_and_the_set_aside_digits_add_up",
+    ),
+    Mutant(
+        "egress: general preset is as strict as payments",
+        EG,
+        "account_min_len=14",
+        "account_min_len=9",
+        "test_there_is_no_default_policy",
+    ),
+    Mutant(
+        "egress: a default policy exists",
+        EG,
+        "    policy: LeakPolicy,\n    allowed_patterns",
+        "    policy: LeakPolicy = LeakPolicy(),\n    allowed_patterns",
+        "test_there_is_no_default_policy",
+    ),
+    Mutant(
+        "egress: CJK value needs word boundaries",
+        EG,
+        "        return w in tf\n",
+        '        return re.search(r"(?<!\\w)" + re.escape(w) + r"(?!\\w)", tf) is not None\n',
+        "test_a_protected_value_in_unspaced_text",
+    ),
+    Mutant(
+        "egress: a short Latin name glued to digits is missed",
+        EG,
+        '    lead = "A-Za-z" if w[0].isalpha() else "A-Za-z0-9"\n    trail = "A-Za-z" if w[-1].isalpha() else "A-Za-z0-9"\n',
+        '    lead = trail = "A-Za-z0-9_"\n',
+        "test_a_protected_value_in_unspaced_text",
+    ),
+    # stop gate: generation, audit, source, contextvar
+    Mutant(
+        "gate: engage does not bump the generation",
+        SG,
+        "            self._gen += 1\n",
+        "            pass\n",
+        "test_a_late_release_cannot_undo",
+    ),
+    Mutant(
+        "gate: release clears the flag after a newer engage",
+        SG,
+        "            again = self._gen != gen\n",
+        "            again = False\n",
+        "test_a_late_release_cannot_undo",
+    ),
+    Mutant(
+        "gate: release does not write the stop again",
+        SG,
+        "        if again:\n            if self._limits is not None:",
+        "        if again:\n            if False:",
+        "test_a_late_release_cannot_undo",
+    ),
+    Mutant(
+        "gate: release after a newer engage does not raise",
+        SG,
+        '            raise StopGateBusy("an engage ran during the release: the stop stays on")',
+        "            return",
+        "test_a_late_release_cannot_undo",
+    ),
+    Mutant(
+        "gate: no audit row when the stop raises",
+        SG,
+        "                    self._audit_stop_failed(by, type(e).__name__)\n            own = self._own()",
+        "                    pass\n            own = self._own()",
+        "test_engage_over_real_limits_with_the_store_down",
+    ),
+    Mutant(
+        "gate: audited as a CLI action",
+        SG,
+        'source="gate"',
+        'source="cli"',
+        "test_stopgate_over_real_limits",
+    ),
+    Mutant(
+        "gate: the durable read fails open",
+        SG,
+        "on = bool(self._limits.is_stopped())",
+        "on = False",
+        "test_engage_goes_through_limits",
+    ),
+    Mutant(
+        "gate: an async effect is not counted as the caller's own",
+        SG,
+        "        self._own(+1)\n        try:\n            yield",
+        "        try:\n            yield",
+        "test_aengage_inside_an_aeffect",
+    ),
+    Mutant(
+        "gate: engage keeps a stale cached off",
+        SG,
+        "            self._gen += 1\n            self._cached = None\n",
+        "            self._gen += 1\n",
+        "test_engaged_is_the_flag",
+    ),
+    Mutant(
+        "gate: a second engage claims a durable write",
+        SG,
+        "return EngageResult(already_sweeping=True, durable=None)",
+        "return EngageResult(already_sweeping=True)",
+        "test_engaged_is_the_flag",
+    ),
+    # config view, row store, capped
+    Mutant(
+        "view: no node budget",
+        CV,
+        "    if budget[0] < 0:",
+        "    if False:",
+        "test_freeze_has_a_node_budget",
+    ),
+    Mutant(
+        "view: thaw has no depth guard",
+        CV,
+        "def _thaw(o: Any, depth: int, budget: list[int]) -> Any:\n    _tick(budget, depth)",
+        "def _thaw(o: Any, depth: int, budget: list[int]) -> Any:\n    pass",
+        "test_freeze_has_a_node_budget",
+    ),
+    Mutant(
+        "rows: no default row limit",
+        RS,
+        "max_rows: int | None = DEFAULT_MAX_ROWS",
+        "max_rows: int | None = None",
+        "test_the_row_store_has_a_default_row_limit",
+    ),
+    Mutant(
+        "capped: kind not clipped",
+        CA,
+        "        kind = str(kind)[:_KIND_MAX]\n        with self._lock:\n            key, slot",
+        "        with self._lock:\n            key, slot",
+        "test_capped_audit_clips_the_kind",
+    ),
+    Mutant(
+        "capped: distinct kinds unbounded",
+        CA,
+        "            if len(self._kinds) >= self._max_kinds:",
+        "            if False:",
+        "test_capped_audit_clips_the_kind",
+    ),
+    Mutant(
+        "capped: stale scan on every call",
+        CA,
+        "        if bucket != self._bucket:",
+        "        if True:",
+        "test_capped_audit_clips_the_kind",
+    ),
+    Mutant(
+        "capped: overflow key collides with a tenant called star",
+        CA,
+        "key = (_OVERFLOW, kind)  # one shared counter per kind",
+        'key = ("*", kind)  # one shared counter per kind',
+        "test_capped_audit_memory_is_bounded",
+    ),
+    Mutant(
+        "capped: the marker names the first overflowing tenant",
+        CA,
+        '                        tenant="*" if key[0] is _OVERFLOW else tenant[:_TENANT_MAX],',
+        "                        tenant=tenant[:_TENANT_MAX],",
+        "test_a_tenant_called_star",
+    ),
+    Mutant(
+        "capped: pipe in the tenant is not escaped",
+        CA,
+        '.replace("%", "%25").replace("|", "%7C")',
+        "",
+        "test_a_tenant_called_star",
+    ),
+    # mutation runner
+    Mutant(
+        "runner: an absolute path is accepted",
+        MR,
+        '        if pure.is_absolute() or pure.anchor or pure.drive or ".." in pure.parts:',
+        '        if ".." in pure.parts:',
+        "test_the_runner_refuses_paths",
+    ),
+    Mutant(
+        "runner: a dotdot part is accepted",
+        MR,
+        '        if pure.is_absolute() or pure.anchor or pure.drive or ".." in pure.parts:',
+        "        if pure.is_absolute() or pure.anchor or pure.drive:",
+        "test_the_runner_refuses_paths",
+    ),
+    Mutant(
+        "runner: a link out of the tree is accepted",
+        MR,
+        "    if path == root or not path.is_relative_to(root):",
+        "    if False:",
+        "test_the_runner_refuses_paths",
+    ),
+    Mutant(
+        "runner: the mutant file is not checked again",
+        MR,
+        "            p = _inside(tmp, m.file)",
+        "            p = tmp / m.file",
+        "test_the_runner_refuses_paths",
+    ),
+    Mutant(
+        "runner: a short expect is accepted",
+        MR,
+        "        if len(self.expect) < 4:",
+        "        if False:",
+        "test_the_runner_refuses_paths",
+    ),
+    Mutant(
+        "runner: a timeout is reported as an exit code",
+        MR,
+        "        return TIMED_OUT  # a mutant that loops forever is reported, never allowed to hang the run",
+        "        return 1",
+        "test_a_mutant_that_loops_forever",
+    ),
+    Mutant(
+        "runner: a dash path is an option",
+        MR,
+        '"--", *tests',
+        "*tests",
+        "test_a_test_path_that_starts_with_a_dash",
+    ),
+    # redact (interim fold)
+    Mutant(
+        "redact: the folded pass never runs",
+        RD,
+        "            if out.isascii()\n",
+        "            if True\n",
+        "test_redact_masks_a_value_hidden",
+    ),
+    Mutant(
+        "redact: a folded hit is dropped",
+        RD,
+        "return masked + eol if masked != folded else line",
+        "return line",
+        "test_redact_masks_a_value_hidden",
+    ),
+    Mutant(
+        "egress: weak letters not counted in a letters-only run",
+        EG,
+        "            total += strong + weak",
+        "            total += strong",
+        "test_weak_digit_look_alikes",
+    ),
+    Mutant(
+        "egress: weak letters counted beside digits",
+        EG,
+        "            total += digits + strong\n",
+        "            total += digits + strong + weak\n",
+        "test_weak_digit_look_alikes",
+    ),
+    Mutant(
+        "egress: weak letters qualify a letters-only run",
+        EG,
+        "        elif ch in _WEAK_DIGITISH:\n            weak += 1",
+        "        elif ch in _WEAK_DIGITISH:\n            strong += 1",
+        "test_weak_digit_look_alikes",
+    ),
 ]
 
 if __name__ == "__main__":
     only = sys.argv[1:]
-    res = run_mutants(ROOT, M, [TEST], extra_dirs=("tests/fixtures", "docs"), only=only)
+    res = run_mutants(ROOT, M, [TEST], extra_dirs=("tests/fixtures", "docs", "tools"), only=only)
     for name, v, test_id, good in res:
         print(f"{'ok ' if good else 'BAD'} {v:12} {name}  [{test_id.split('::')[-1][:60]}]")
     bad = [n for n, _, _, g in res if not g]

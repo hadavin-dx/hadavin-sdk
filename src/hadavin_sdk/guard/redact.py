@@ -25,6 +25,8 @@ import re
 from dataclasses import dataclass, field
 from typing import Any
 
+from hadavin_sdk.guard.textnorm import fold
+
 # Ordered deliberately: the greedy/most-specific patterns run before the narrow ones, otherwise a
 # narrow pattern eats part of a broader secret (a UUID inside an ARN, an EMAIL inside a connection
 # string) and the broader pattern then fails to match.
@@ -837,7 +839,27 @@ class _Redactor:
         out = strip_ansi(text)
         for label, pattern in PATTERNS:
             out = pattern.sub(lambda m, label=label: self._mask(m, label), out)
-        return out
+        return (
+            out
+            if out.isascii()
+            else "".join(self._folded_line(ln) for ln in out.splitlines(keepends=True))
+        )
+
+    def _folded_line(self, line: str) -> str:
+        """Interim fail-closed fold (PR #50 review): a value hidden behind look-alike letters, another script's digits or invisible
+        characters does not match the patterns above. For a line with non-ASCII text, run the patterns again on its FOLDED form
+        (``textnorm.fold``); on a hit the whole line is replaced by the folded line with the hits masked (offsets are not mapped back,
+        so ``restore`` gives the folded value). A line with no hit is returned unchanged. A full fold-aware mask (scan folded text,
+        mask by span map) is a tracked item in ``docs/promoted-controls.md``."""
+        if line.isascii():
+            return line
+        body = line.rstrip("\r\n")
+        eol = line[len(body) :]
+        folded = fold(body)
+        masked = folded
+        for label, pattern in PATTERNS:
+            masked = pattern.sub(lambda m, label=label: self._mask(m, label), masked)
+        return masked + eol if masked != folded else line
 
     def _mask(self, m: re.Match[str], label: str) -> str:
         """One match of `label`'s pattern, its value replaced by its placeholder (a new one when it is new)."""

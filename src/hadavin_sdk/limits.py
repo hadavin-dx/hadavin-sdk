@@ -17,6 +17,10 @@ class Limits:
     def charge(self, agent_id: str, usd: Decimal) -> tuple[Decimal, Decimal]:
         return self.store.add_spend(agent_id, now().date(), usd)
 
+    def is_stopped(self) -> bool:
+        """The kill switch alone (``blocked`` also reads budgets). An unreadable store raises."""
+        return bool(self.store.get_kill_switch().on)
+
     def blocked(self, agent_id: str) -> list[str]:
         reasons = []
         if self.store.get_kill_switch().on:
@@ -30,22 +34,22 @@ class Limits:
         return reasons
 
     @staticmethod
-    def _event(on: bool, by: str, operation: str) -> AuditEvent:
+    def _event(on: bool, by: str, operation: str, source: str) -> AuditEvent:
         return AuditEvent(
             run_id="-",
             domain="limits",
             operation=operation,
             principal=by,
-            source="cli",
+            source=source,
             result="on" if on else "off",
         )
 
-    def stop(self, by: str) -> None:
+    def stop(self, by: str, source: str = "cli") -> None:
         """An emergency stop must work when the audit store is down: switch first, then audit (outbox)."""
         self.store.set_kill_switch(KillSwitch(on=True, by=by))
-        self.audit.write_outcome(self._event(True, by, "stop"))
+        self.audit.write_outcome(self._event(True, by, "stop", source))
 
-    def reset(self, by: str) -> None:
+    def reset(self, by: str, source: str = "cli") -> None:
         """Removing a safety control is audited first; if that fails, the switch stays on."""
-        self.audit.write_intent(self._event(False, by, "reset"))
+        self.audit.write_intent(self._event(False, by, "reset", source))
         self.store.set_kill_switch(KillSwitch(on=False, by=by))

@@ -64,8 +64,13 @@ class RowStoreLike(Protocol):
     def snapshot(self) -> dict[str, Any]: ...
 
 
+DEFAULT_MAX_ROWS = (
+    100_000  # one collection of one tenant; ``max_rows=None`` is the explicit opt-out
+)
+
+
 class RowStore:
-    def __init__(self, max_rows: int | None = None) -> None:
+    def __init__(self, max_rows: int | None = DEFAULT_MAX_ROWS) -> None:
         self._rows: dict[str, Any] = {}
         self._pending: set[str] = set()
         self._lock = threading.Lock()
