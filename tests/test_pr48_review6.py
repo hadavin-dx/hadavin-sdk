@@ -239,17 +239,17 @@ def test_ma_a_failed_fallback_carries_the_primarys_unknown_billing(clock):  # no
 # --- m-b: a garbage attribute never raises inside the handler ------------------------------------------------------------
 
 
-@pytest.mark.parametrize("junk", ["x", None, object(), float("nan"), 10**400, -5])
+@pytest.mark.parametrize("junk", ["x", None, object(), float("nan"), 10**400, -5, -1, True, 1.5])
 def test_mb_garbage_counts_keep_the_reservation_and_never_raise(junk):
     for attr in ("attempts", "answered", "refused"):
         e = ProviderExhausted("x")
         setattr(e, attr, junk)
         out = cost_to_settle(e, D("0.5"))  # must not raise
         assert out == D("0.5")
-    e = ProviderError("x")
-    e.attempts = "x"
-    assert cost_to_settle(e, D("0.5")) == D("0.5")
-    assert unknown_requests(e) == 1
+    for attr in ("attempts", "answered", "refused"):
+        e = ProviderError("x")
+        setattr(e, attr, junk)
+        assert unknown_requests(e) == 1 and cost_to_settle(e, D("0.5")) == D("0.5")
 
 
 # --- m-e, m-f ------------------------------------------------------------------------------------------------------------
@@ -287,7 +287,7 @@ def test_mf_a_non_numeric_amount_is_a_config_error_before_any_connection(monkeyp
             migrate.release_reservation("dsn", "a", datetime.date(2020, 1, 1), junk)
 
 
-@pytest.mark.parametrize("junk", [None, "x", float("nan"), object()])
+@pytest.mark.parametrize("junk", [None, "x", float("nan"), object(), -5, -1, True, 1.5, 10**400])
 def test_m1_a_garbage_attempts_on_the_fallback_error_neither_raises_nor_releases(junk, clock):  # noqa: F811
     fb_err = ProviderError("fallback refused")
     fb_err.attempts = junk
@@ -347,3 +347,10 @@ def test_m1_metered_llm_passes_the_agent_and_route_to_the_warning(caplog, clock)
     with caplog.at_level("WARNING"), pytest.raises(UnusableAnswer):
         MeteredLLM(Stub(err), lim, "a", ROUTES).chat([], system="", route="r")
     assert "agent=a" in caplog.text and "route=r" in caplog.text
+
+
+def test_mb_an_inconsistent_set_of_counts_keeps_the_reservation():
+    for attempts, answered, refused in ((1, 1, 1), (0, 1, 0), (0, 0, 1), (2, 2, 1)):
+        e = ProviderExhausted("x")
+        e.attempts, e.answered, e.refused = attempts, answered, refused
+        assert unknown_requests(e) == 1 and cost_to_settle(e, D("0.5")) == D("0.5")

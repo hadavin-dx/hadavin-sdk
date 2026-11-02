@@ -36,6 +36,7 @@ from hadavin_sdk.llm.protocol import (
     ProviderError,
     ProviderExhausted,
     SpendLimitReached,
+    counts_valid,
     unknown_requests,
 )
 from hadavin_sdk.models import Reply
@@ -244,10 +245,9 @@ class ResilientLLM:
             # priceable: stated limit, CHANGELOG). A garbage ``attempts`` on the fallback's error is left alone:
             # ``unknown_requests`` counts it as 1, so ``cost_to_settle`` keeps the reservation anyway.
             lost = unknown_requests(cause) if cause is not None else 0
-            if lost:
-                try:
-                    fe.attempts = max(0, int(getattr(fe, "attempts", 1))) + lost
-                except (TypeError, ValueError, OverflowError):
-                    pass
+            if lost and counts_valid(
+                fe
+            ):  # garbage (-5, True, 1.5, nan, ...) stays garbage: unknown, reservation kept
+                fe.attempts = fe.attempts + lost
             raise
         return out.model_copy(update={"fallback_used": True, "served_by": served_by})

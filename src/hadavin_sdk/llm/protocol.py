@@ -54,12 +54,27 @@ class SpendLimitReached(ProviderError):
 def _counts(exc: BaseException) -> tuple[int, int, int]:
     """(attempts, answered, refused) as non-negative ints. Raises ValueError/TypeError/OverflowError on a garbage,
     negative or inconsistent set (answered + refused above attempts): callers keep the reservation."""
-    attempts, answered, refused = (
-        int(getattr(exc, n, d)) for n, d in (("attempts", 1), ("answered", 0), ("refused", 0))
-    )
-    if min(attempts, answered, refused) < 0 or answered + refused > attempts:
+    vals = [getattr(exc, n, d) for n, d in (("attempts", 1), ("answered", 0), ("refused", 0))]
+    for v in vals:
+        # a real count is a plain int: a bool, a float (1.5), a string, None or nan is garbage, never coerced
+        if type(v) is not int or v < 0 or v > _MAX_COUNT:
+            raise ValueError("garbage billing count")
+    attempts, answered, refused = vals
+    if answered + refused > attempts:
         raise ValueError("inconsistent billing counts")
     return attempts, answered, refused
+
+
+_MAX_COUNT = 10**6
+
+
+def counts_valid(exc: BaseException) -> bool:
+    """True if ``attempts``/``answered``/``refused`` are a sane, consistent set (garbage counts as unknown)."""
+    try:
+        _counts(exc)
+    except (TypeError, ValueError, OverflowError):
+        return False
+    return True
 
 
 def unknown_requests(exc: BaseException) -> int:
