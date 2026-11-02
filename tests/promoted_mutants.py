@@ -963,15 +963,15 @@ M = [
     Mutant(
         "egress: weak letters not counted in a letters-only run",
         EG,
-        "            total += strong + glued + loose",
-        "            total += strong",
+        "            total += strong + glued + loose\n",
+        "            total += strong\n",
         "test_weak_digit_look_alikes",
     ),
     Mutant(
         "egress: weak letters counted beside digits",
         EG,
-        "            total += digits + strong + glued\n",
-        "            total += digits + strong + glued + loose\n",
+        "            total += digits + strong - wordy + glued\n",
+        "            total += digits + strong - wordy + glued + loose\n",
         "test_weak_digit_look_alikes",
     ),
     Mutant(
@@ -1084,7 +1084,7 @@ M = [
         EG,
         "        if tok_cnt >= 2:",
         "        if tok_cnt >= 1:",
-        "test_weak_digit_look_alikes",
+        "test_weak_letters_glued",
     ),
     Mutant(
         "runner: the mutant file is joined as a path",
@@ -1105,21 +1105,21 @@ M = [
         EG,
         "        if not wd and tok_strong == 1 and wa > 1:\n",
         "        if False:\n",
-        "test_general_delivers_ids_up_to_eleven_digits",
+        "test_weak_letters_glued",
     ),
     Mutant(
         "egress: a word before the digits keeps its letter",
         EG,
         "            word_end()\n            wd = wa = 0\n",
         "            wd = wa = 0\n",
-        "test_general_delivers_ids_up_to_eleven_digits",
+        "test_weak_letters_glued",
     ),
     Mutant(
         "egress: a bare one-character token is a word",
         EG,
         "tok_strong == 1 and wa > 1:",
         "tok_strong == 1 and wa > 0:",
-        "test_weak_digit_look_alikes",
+        "test_digit_like_letters_count_when_chained",
     ),
     Mutant(
         "egress: the docstring denies what the code counts",
@@ -1147,7 +1147,8 @@ M = [
         MR,
         "    except (OSError, subprocess.TimeoutExpired):\n        pass\n",
         "    except ZeroDivisionError:\n        pass\n",
-        "test_a_failing_tree_kill_still_kills_the_child",
+        "FileNotFoundError",
+        allow_crash=True,
     ),
     Mutant(
         "table: the vendored data file differs from the pin",

@@ -272,13 +272,11 @@ def _digitish_count(t: str, letter_run_min: int) -> int:
         nonlocal total, digits, strong, glued, loose, wordy
         flush()
         if digits:
-            total += (
-                digits + strong - wordy + glued
-            )  # a strong letter of a word is not an encoded digit
+            # a strong letter of a word is not an encoded digit
+            total += digits + strong - wordy + glued
         elif strong >= letter_run_min:
-            total += (
-                strong + glued + loose
-            )  # a fully letter-encoded run: words inside it are not spared
+            # a fully letter-encoded run: words inside it are not spared
+            total += strong + glued + loose
         digits = strong = glued = loose = wordy = 0
 
     def word_end() -> None:

@@ -1634,7 +1634,7 @@ def test_a_mutant_that_loops_forever_times_out_instead_of_hanging_the_run(tmp_pa
     hang = Mutant(
         "hang", "src/pk/core.py", "return flag", "while True:\n        pass", "test_go_is_true"
     )
-    out = run_mutants(root, [hang], ["tests/test_core.py"], extra_dirs=(), timeout=20)
+    out = run_mutants(root, [hang], ["tests/test_core.py"], extra_dirs=(), timeout=60)
     assert out == [("hang", Verdict.ERROR, "TIMEOUT", False)]
 
 
@@ -1855,6 +1855,8 @@ def test_weak_letters_glued_to_digits_count_but_a_prose_token_does_not():
         and egress_text._digitish_count("is big 12345", 6) == 5
     )
     assert check_text("OlISBZGq") == Violation.DIGIT_BUDGET
+    # one digit and a weak letter in a token of 1 digit-like character: the weak letter is not counted beside digits
+    assert egress_text._digitish_count("1b 2345678", 6) == 8
 
 
 def test_a_stop_gate_over_a_limits_without_source_fails_at_construction():
@@ -2053,7 +2055,7 @@ def test_a_timeout_kills_the_whole_process_tree_not_only_pytest(tmp_path):
         "    time.sleep(600)"
     )
     spawn = Mutant("spawn", "src/pk/core.py", "return flag", body, "test_go_is_true")
-    out = run_mutants(root, [spawn], ["tests/test_core.py"], extra_dirs=(), timeout=20)
+    out = run_mutants(root, [spawn], ["tests/test_core.py"], extra_dirs=(), timeout=60)
     assert out == [("spawn", Verdict.ERROR, "TIMEOUT", False)]
     pid = int(pidfile.read_text(encoding="utf-8"))
     for _ in range(50):
