@@ -69,7 +69,11 @@ line-length = 100
 src = ["src", "tests", "demos"]
 
 [tool.ruff.lint]
-extend-select = ["B", "DTZ", "I", "S", "UP"]
+extend-select = ["B", "DTZ", "I", "S", "TID", "UP"]
+
+[tool.ruff.lint.flake8-tidy-imports]
+# Absolute imports only: the import rules in tests/ read module names, and a relative import hides one.
+ban-relative-imports = "all"
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S101"]
@@ -78,4 +82,7 @@ extend-select = ["B", "DTZ", "I", "S", "UP"]
 testpaths = ["tests"]
 # Repo root on sys.path so fixture check modules (tests.fixtures.checks) resolve by name.
 pythonpath = ["."]
-markers = ["live: calls a real paid or cloud service; CI deselects it, run only on the owner's yes"]
+markers = [
+    "live: calls a real paid or cloud service; CI deselects it, run only on the owner's yes",
+    "perf: measures CPU time (redaction patterns on 64 and 256 KiB); CI runs it in its own step that never blocks a merge",
+]

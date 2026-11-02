@@ -132,7 +132,7 @@ class LocalDirSink:
                 self._write(event)
             except DuplicateEvent:
                 pass
-            except Exception:  # noqa: BLE001, S112 - stays pending, retried next time
+            except Exception:  # noqa: BLE001, S112 - safe to swallow: the event is still in memory, so nothing is lost; the next flush retries it and the audit chain only advances on a successful write
                 continue
             self._pending.remove(event)
             done += 1
@@ -149,7 +149,7 @@ class LocalDirSink:
                 self._write(event)
             except DuplicateEvent:
                 pass
-            except Exception:  # noqa: BLE001, S112 - stays in the outbox, retried next time
+            except Exception:  # noqa: BLE001, S112 - safe to swallow: the file is not unlinked, so nothing is lost; the next flush retries it and a duplicate is absorbed by DuplicateEvent
                 continue
             path.unlink()
             done += 1

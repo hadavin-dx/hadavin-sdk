@@ -8,7 +8,7 @@ from decimal import Decimal
 import pytest
 
 from hadavin_sdk.audit import AuditUnavailable, LocalDirSink
-from hadavin_sdk.backends import make
+from hadavin_sdk.backends.factory import make
 from hadavin_sdk.config import K1bSettings, load_config
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.guard.injection import RegexDetector

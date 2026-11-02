@@ -1,7 +1,8 @@
 """`hadavin-sdk tick`: one idempotent pass of housekeeping steps, run every 30-60 s by any scheduler.
 
 Contract (design v5 kernel, section 4):
-* ``STEPS`` runs in order: sweep, reconcile, stuck, checkpoint. Later PRs only **append** a ``TickStep``.
+* ``STEPS`` runs in order: sweep, reconcile, stuck, checkpoint, purge_evidence (by default daily). Later PRs only
+  **append** a ``TickStep``.
 * Each step runs in its own ``try``: a failure is logged as ``step=<name> error_kind=<type>
   message=<redacted, <= 500 chars>`` and written to ``tick_state``; the other steps still run.
 * A step with ``every_s > 0`` runs only if ``now - tick_state.last_run_at >= every_s``.
@@ -34,6 +35,7 @@ if TYPE_CHECKING:
     from hadavin_sdk.app import App
 
 S = RunState
+TICK_SLACK_S = 60  # the longest gap between ticks (design: every 30-60 s)
 _LOG = logging.getLogger("hadavin_sdk.tick")
 OK, FAILED, SKIPPED = "ok", "failed", "skipped"
 
@@ -50,6 +52,8 @@ class TickStep:
     name: str  # unique, [a-z_]+ (the tick_state CHECK)
     every_s: int  # 0 = every tick
     fn: Callable[[TickContext], None]
+    # Interval read from the config at run time (so it is not frozen at import); wins over `every_s`.
+    interval: Callable[[TickContext], int] | None = None
 
     def __post_init__(self) -> None:
         if not re.fullmatch(r"[a-z_]+", self.name) or self.every_s < 0:
@@ -177,6 +181,65 @@ def checkpoint(ctx: TickContext) -> None:
         fn()
 
 
+def purge_evidence(ctx: TickContext) -> None:
+    """Delete tool calls and redaction maps past their retention, at most about every `retention.purge_every_s`.
+
+    The two CEILINGS always run first and need no hook: a redaction map older than `held_maps_max_days` (400) and
+    a tool call older than `held_tool_calls_max_days` (400) go whatever any hold says. Then the ordinary purge
+    (30 days by default): runs that `hooks.hold_run_ids()` names (labelled wrong, harmful or missed, or demoted;
+    none before K6) keep their tool calls and maps until the ceilings. A hold is NOT retroactive: a run already
+    purged before it was named is gone. If the hook raises, the ordinary purge is skipped (keeping too much for a
+    while is the safe direction), the ceilings have already run, the error is logged, and the step then FAILS so
+    `tick_state.last_error` shows it."""
+    app = ctx.app
+    keep = app.config.retention
+    store = app.purge_store or app.store  # the deleting identity, when one is configured
+    maps = store.purge_redaction_maps(
+        ctx.now - timedelta(days=keep.held_maps_max_days), keep_run_ids=frozenset(), keep_open=False
+    )
+    calls = store.purge_tool_calls(
+        ctx.now - timedelta(days=keep.held_tool_calls_max_days), keep_run_ids=frozenset()
+    )
+    hook = app.runtime.hooks.hold_run_ids
+    try:
+        held = frozenset(hook() or ()) if keep.hold_labelled and hook is not None else frozenset()
+    except Exception as exc:
+        _LOG.error(
+            "purge_evidence: hold_run_ids raised %s: ordinary purge skipped this tick, ceilings applied",
+            type(exc).__name__,
+        )
+        raise
+    calls += store.purge_tool_calls(
+        ctx.now - timedelta(days=keep.tool_calls_days), keep_run_ids=held
+    )
+    maps += store.purge_redaction_maps(
+        ctx.now - timedelta(days=keep.redaction_maps_days), keep_run_ids=held
+    )
+    _LOG.info("purge_evidence tool_calls=%d redaction_maps=%d held_runs=%d", calls, maps, len(held))
+
+
+def reprobe_sources(ctx: TickContext) -> None:
+    """Probe every configured source's scope again (design 6.6): RBAC can widen after start-up. A problem fails
+    the step loudly (`tick_state.last_error`, exit 1) until the scope is read-only again."""
+    from hadavin_sdk import sources as sources_mod
+
+    app = ctx.app
+    found: list[str] = []
+    for key, source in app.sources.items():
+        token = sources_mod.PROBING.set(True)
+        try:
+            problems = sources_mod.scope_problems({key: source}, app.config.scope_inventory)
+        finally:
+            sources_mod.PROBING.reset(token)
+        if problems:  # fail CLOSED: tools stop reading this source until a probe passes again
+            app.disabled_sources.add(key)
+            found += problems
+        else:
+            app.disabled_sources.discard(key)
+    if found:
+        raise RuntimeError("source scope: " + "; ".join(found))
+
+
 def heartbeat(ctx: TickContext) -> None:
     """After the steps (not a step): one line with this tick's outcome."""
     failed = sorted(n for n, r in ctx.results.items() if r == FAILED)
@@ -188,6 +251,18 @@ STEPS: list[TickStep] = [
     TickStep("reconcile", 0, reconcile),
     TickStep("stuck", 0, stuck),
     TickStep("checkpoint", 0, checkpoint),
+    TickStep(
+        "purge_evidence",
+        0,
+        purge_evidence,
+        interval=lambda ctx: ctx.app.config.retention.purge_every_s,
+    ),  # its own interval: Config.retention.purge_every_s
+    TickStep(
+        "reprobe_sources",
+        0,
+        reprobe_sources,
+        interval=lambda ctx: ctx.app.config.evidence.source_reprobe_s,
+    ),
 ]
 STORE_UNREACHABLE = 4
 STORE_NOT_READY = (
@@ -199,7 +274,7 @@ def _safe_log(msg: str, *args: object) -> None:
     """Log an error line; a failing log handler must never change the exit code."""
     try:
         _LOG.error(msg, *args)
-    except Exception:  # noqa: BLE001, S110 - nothing left to report to
+    except Exception:  # noqa: BLE001, S110 - safe to swallow: this IS the error report, so there is nowhere left to report to; the caller still returns its exit code
         pass
 
 
@@ -209,11 +284,15 @@ _PROBE = "heartbeat"  # the tick_state key read once, to find out whether the st
 _DRIVERS = ("psycopg", "urllib", "http", "botocore", "boto3", "socket", "ssl")
 
 
+_MESSAGE_SCAN_CHARS = 4096
+
+
 def _message(exc: Exception) -> str:
     """Redacted and one line. Driver and network errors carry hosts and users: their type says enough."""
     if type(exc).__module__.split(".")[0] in _DRIVERS or isinstance(exc, OSError):
         return "(driver error; details withheld)"
-    return redact(str(exc)).text.replace("\n", " ")[:500]
+    # cut before redacting (a bare redact() has no cap of its own); only the first 500 characters are kept anyway
+    return redact(str(exc)[:_MESSAGE_SCAN_CHARS]).text.replace("\n", " ")[:500]
 
 
 def _run_step(ctx: TickContext, step: TickStep) -> str:
@@ -221,7 +300,19 @@ def _run_step(ctx: TickContext, step: TickStep) -> str:
     prev, error = None, None
     try:
         prev = store.get_tick_state(step.name)
-        if step.every_s and prev and (ctx.now - prev.last_run_at).total_seconds() < step.every_s:
+        every = step.interval(ctx) if step.interval else step.every_s
+        if (
+            step.interval
+        ):  # a tick comes every 30-60 s: due a tick-period early, so the cadence does not drift
+            every = max(every - TICK_SLACK_S, every // 2)
+        # A step whose last run FAILED is due again at the next tick (a persistently raising hold hook must
+        # not push the 30-day purge a whole interval away each time).
+        if (
+            every
+            and prev
+            and prev.last_error is None
+            and (ctx.now - prev.last_run_at).total_seconds() < every
+        ):
             return SKIPPED
         step.fn(ctx)
     except Exception as exc:  # noqa: BLE001 - one step never stops the others

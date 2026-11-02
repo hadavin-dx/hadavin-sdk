@@ -29,17 +29,13 @@ from typing import Any
 
 from hadavin_sdk.actions.secrets_cache import CachedSecrets
 from hadavin_sdk.errors import ConfigError
+from hadavin_sdk.guard.http import NoRedirect
 
 _NAME = re.compile(r"[A-Za-z0-9_.-]{1,255}")
 
 
 class VaultError(RuntimeError):
     """Vault answered with an unexpected status (the response body is never included)."""
-
-
-class _NoRedirect(urllib.request.HTTPRedirectHandler):
-    def redirect_request(self, req, fp, code, msg, headers, newurl):
-        return None
 
 
 class VaultProvider(CachedSecrets):
@@ -67,7 +63,7 @@ class VaultProvider(CachedSecrets):
         self._token: str | None = None
         # Never follow a redirect (a standby node's 307 would carry the token to an address nobody configured,
         # maybe over plain http); a loopback dev server is reached directly, never through HTTP(S)_PROXY.
-        handlers: list = [_NoRedirect(), urllib.request.HTTPSHandler(context=self._context)]
+        handlers: list = [NoRedirect(), urllib.request.HTTPSHandler(context=self._context)]
         if urllib.parse.urlsplit(self.address).hostname in {"127.0.0.1", "localhost", "::1"}:
             handlers.append(urllib.request.ProxyHandler({}))
         self._opener = urllib.request.build_opener(*handlers)

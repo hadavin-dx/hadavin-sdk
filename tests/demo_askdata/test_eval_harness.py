@@ -26,9 +26,8 @@ from askdata.evalset import (
 from askdata.fixtures import Step, write_script
 
 from hadavin_sdk.stats import upper_error_bound
-
-from .kit import COUNT_ORDERS, TOP2, Kit, SqliteExecutor, sqlite_db
-from .test_audit import write_config
+from tests.demo_askdata.kit import COUNT_ORDERS, TOP2, Kit, SqliteExecutor, sqlite_db
+from tests.demo_askdata.test_audit import write_config
 
 CANCELLED = "SELECT count(*) AS n FROM analytics.orders_v WHERE status = 'cancelled'"
 PAID = "SELECT count(*) AS n FROM analytics.orders_v WHERE status = 'paid'"

@@ -8,7 +8,7 @@ from unittest import mock
 import askdata.validate as validate_module
 from askdata.validate import Rejected, validate
 
-from .corpus import Attack
+from tests.demo_askdata.corpus import Attack
 
 
 def _drifting_generator():

@@ -32,7 +32,7 @@ jobs:
   check:
     if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 30
     # The postgres store's contract suite runs against this throwaway database (no data, no secrets: trust
     # auth on a container that lives only for this job).
     services:
@@ -79,11 +79,17 @@ jobs:
         run: ruff check src tests demos
       - name: Format
         run: ruff format --check src tests demos
+      - name: The postgres client the database tests shell out to is present (else they would skip silently)
+        run: psql --version
       - name: Tests (no live calls)
         env:
           HADAVIN_TEST_PG_DSN: postgresql://postgres@localhost:5432/postgres
           HADAVIN_TEST_VAULT_ADDR: http://127.0.0.1:8200
-        run: pytest -q -m "not live" -rs
+        run: pytest -q -m "not live and not perf" -rs
+      # Timing tests have their own step and it blocks: the check is a ratio (4x text, limit 12x time) with wall
+      # clock, so a noisy runner moves both runs alike; a real super-linear pattern is a merge blocker.
+      - name: Performance of the redaction patterns (blocks)
+        run: pytest -q -m perf -rs
 
   security:
     if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
@@ -121,7 +127,12 @@ jobs:
             "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
           echo "${GITLEAKS_SHA256}  $RUNNER_TEMP/gitleaks.tgz" | sha256sum -c -
           tar -xzf "$RUNNER_TEMP/gitleaks.tgz" -C "$RUNNER_TEMP" gitleaks
-          "$RUNNER_TEMP/gitleaks" git --redact --no-banner --exit-code 1 .
+          "$RUNNER_TEMP/gitleaks" git --redact --no-banner --exit-code 1 \
+            --report-format json --report-path "$RUNNER_TEMP/gl.json" . || {
+            # the secret itself is redacted; print only where it is, so a false positive can be fingerprinted
+            python3 -c 'import json,sys; [print(f["RuleID"], f["File"], f["StartLine"], f["Commit"][:10], f["Fingerprint"]) for f in json.load(open(sys.argv[1]))]' "$RUNNER_TEMP/gl.json"
+            exit 1
+          }
       - name: Vulnerabilities, misconfigurations and secrets in the files (Trivy, checksum-verified binary)
         run: |
           curl -sSfL --proto "=https" --tlsv1.2 -o "$RUNNER_TEMP/trivy.tgz" \

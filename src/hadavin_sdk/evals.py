@@ -10,15 +10,26 @@ import json
 import os
 from decimal import Decimal
 
+from hadavin_sdk import defaults
 from hadavin_sdk.config import ConfigError, confined
-from hadavin_sdk.guard import judge
+from hadavin_sdk.guard import judge, runmap
 from hadavin_sdk.llm.protocol import LLM
 from hadavin_sdk.models import GateRun
 from hadavin_sdk.registry import Registry
+from hadavin_sdk.runtime.evidence import with_evidence
 from hadavin_sdk.stats import upper_error_bound
 
 _ASK = "Process the attached request document."
 QUALIFIED = "qualified.jsonl"
+
+
+def matches(got: dict, expected: dict) -> bool:
+    """Subset match (K5): the action is the expected one and every expected input has the expected value; extra
+    optional inputs the model added are allowed. An abstention (action None) must be an abstention."""
+    if got["action"] != expected["action"]:
+        return False
+    want = expected.get("inputs") or {}
+    return all(k in got["inputs"] and got["inputs"][k] == v for k, v in want.items())
 
 
 def gate(registry: Registry, llm: LLM, agent_id: str, *, k: int = 1) -> GateRun:
@@ -32,8 +43,14 @@ def gate(registry: Registry, llm: LLM, agent_id: str, *, k: int = 1) -> GateRun:
     golden_path = confined(cfg.golden_dir, f"{agent_id}.jsonl")
     golden_bytes = golden_path.read_bytes()
     cases = [json.loads(line) for line in golden_bytes.decode("utf-8").splitlines() if line.strip()]
+    # What the runtime offers: a tooled agent's action tools carry the required `evidence` field.
+    tooled = bool(agent.tools_allowed)
     tools = [
-        {"name": c.id, "description": c.description, "input_schema": c.input_schema}
+        {
+            "name": c.id,
+            "description": c.description,
+            "input_schema": with_evidence(c.input_schema) if tooled else c.input_schema,
+        }
         for c in (registry.contracts[a] for a in agent.scope_allowed)
     ]
     passed = run_passes = abstains = 0
@@ -41,6 +58,16 @@ def gate(registry: Registry, llm: LLM, agent_id: str, *, k: int = 1) -> GateRun:
     for case in cases:
         # input_ref comes from a file: confined to inputs_dir (no "../" or absolute escapes).
         doc = confined(cfg.inputs_dir, case["input_ref"]).read_bytes()
+        # The model sees what the runtime sends it: the document redacted with a fresh per-run map (K5).
+        try:
+            doc = runmap.redact_untrusted(doc.decode("utf-8", "replace"), {}).encode("utf-8")
+        except (
+            runmap.RedactionError
+        ) as exc:  # too large for the redactor (or it failed): say which case, exit 2
+            raise ConfigError(
+                f"golden case {case.get('id', case['input_ref'])!r}: input {case['input_ref']!r} cannot be "
+                f"redacted ({exc}); inputs are limited to {defaults.MAX_REDACT_CHARS} characters, views included"
+            ) from None
         case_passes = 0
         for _ in range(k):
             reply = llm.chat(
@@ -52,12 +79,18 @@ def gate(registry: Registry, llm: LLM, agent_id: str, *, k: int = 1) -> GateRun:
             )
             cost += reply.cost_usd
             abstains += not reply.tool_calls
+            # `evidence` (K5) is a citation the runtime strips before the plan exists: never graded.
             got = (
-                {"action": reply.tool_calls[0].name, "inputs": reply.tool_calls[0].input}
+                {
+                    "action": reply.tool_calls[0].name,
+                    "inputs": {
+                        k: v for k, v in reply.tool_calls[0].input.items() if k != "evidence"
+                    },
+                }
                 if reply.tool_calls
                 else {"action": None, "inputs": {}}
             )
-            case_passes += got == case["expected"]
+            case_passes += matches(got, case["expected"])
         run_passes += case_passes
         passed += case_passes == k  # k == 1: passed; k > 1: passed all k runs
     n = len(cases)

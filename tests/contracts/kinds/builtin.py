@@ -5,7 +5,7 @@ import json
 from decimal import Decimal
 
 from hadavin_sdk.actions.secrets import FakeSecretProvider
-from hadavin_sdk.backends import make
+from hadavin_sdk.backends.factory import make
 from hadavin_sdk.backends.table import (
     FakeChannelSettings,
     FakeLLMSettings,

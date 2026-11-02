@@ -14,7 +14,7 @@ from decimal import Decimal
 
 import pytest
 
-from hadavin_sdk.backends import make
+from hadavin_sdk.backends.factory import make
 from hadavin_sdk.backends.table import GuardrailSettings, JudgeSettings
 from hadavin_sdk.guard.injection import RegexDetector
 from hadavin_sdk.llm import ProviderExhausted

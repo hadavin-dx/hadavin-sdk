@@ -9,7 +9,7 @@ import yaml
 from hadavin_sdk import evals, registry
 from hadavin_sdk.actions.secrets import FakeSecretProvider
 from hadavin_sdk.app import build as build_app
-from hadavin_sdk.backends import make
+from hadavin_sdk.backends.factory import make
 from hadavin_sdk.config import ConfigError, load_config
 from hadavin_sdk.guard.injection import AnyOf, RegexDetector, injection_check
 from hadavin_sdk.guard.judge import PROMPT, SCHEMA, JudgeDetector

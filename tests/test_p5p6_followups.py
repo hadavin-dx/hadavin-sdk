@@ -10,7 +10,7 @@ import yaml
 from pydantic import ValidationError
 
 from hadavin_sdk.actions.secrets import FakeSecretProvider
-from hadavin_sdk.backends import hosts, make
+from hadavin_sdk.backends.factory import hosts, make
 from hadavin_sdk.backends.table import (
     AnthropicSettings,
     BedrockSettings,

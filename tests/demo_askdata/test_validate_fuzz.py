@@ -13,8 +13,8 @@ import time
 import sqlglot
 from askdata.validate import Rejected, validate
 
-from . import fuzzgen
-from .oracle import judge
+from tests.demo_askdata import fuzzgen
+from tests.demo_askdata.oracle import judge
 
 SEED = 20261101
 CASES = 2000

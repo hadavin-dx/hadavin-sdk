@@ -18,6 +18,7 @@ from hadavin_sdk.models import (
     Run,
     RunState,
     TickState,
+    ToolCallRecord,
 )
 
 
@@ -115,3 +116,33 @@ class Store(Protocol):
     def set_kill_switch(self, ks: KillSwitch) -> None: ...
     def get_tick_state(self, step: str) -> TickState | None: ...
     def save_tick_state(self, state: TickState) -> None: ...
+
+    # --- evidence (K5): read-tool calls and the run's redaction map ---------------------------------------------
+    def add_tool_call(self, call: ToolCallRecord) -> None:
+        """Append-only: a second row with the same call_id raises StaleState."""
+        ...
+
+    def list_tool_calls(self, run_id: str) -> list[ToolCallRecord]:
+        """Oldest first."""
+        ...
+
+    def purge_tool_calls(self, before: datetime, *, keep_run_ids: frozenset[str]) -> int:
+        """Delete calls created before `before`, except those of `keep_run_ids`; returns the count."""
+        ...
+
+    def put_redaction_map(self, run_id: str, mapping: dict[str, str]) -> None:
+        """Upsert the run's map (placeholder -> original, identifier kinds only; the caller filters)."""
+        ...
+
+    def get_redaction_map(self, run_id: str) -> dict[str, str] | None:
+        """The saved map, or None when the run has none (a missing map is never an empty one)."""
+        ...
+
+    def purge_redaction_maps(
+        self, before: datetime, *, keep_run_ids: frozenset[str], keep_open: bool = True
+    ) -> int:
+        """Delete maps whose run ended before `before` (the run's last state change; the map's own time when
+        the run is unknown), except those of `keep_run_ids`. With `keep_open` (default) the map of a run that can
+        still move (OPEN_STATES: received, working, plan ready, awaiting approval, executing, verifying) is kept,
+        because restoring its inputs needs it (NEEDS_PERSON cannot move, so its map ages normally); the 400-day ceiling passes `keep_open=False`. Returns the count."""
+        ...

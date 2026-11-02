@@ -17,6 +17,7 @@ from hadavin_sdk.models import (
     Run,
     RunState,
     TickState,
+    ToolCallRecord,
     now,
 )
 from hadavin_sdk.store.protocol import NotFound, StaleState
@@ -242,3 +243,123 @@ def test_record_decision_is_atomic(store):
     assert store.get_approval_decision(req.approval_id).decision == "reject"
     with pytest.raises(StaleState):  # a second click on the same step
         store.record_decision(d, approved, "PENDING", 0)
+
+
+# --- evidence (K5): tool calls and redaction maps --------------------------------------------------------------------
+
+
+def _call(run_id, n, age=timedelta(0), **kw):
+    return ToolCallRecord(
+        call_id=f"{run_id}:{n}",
+        run_id=run_id,
+        tool="read_logs",
+        inputs=kw.pop("inputs", {"name": "app", "n": n}),
+        output=kw.pop("output", f"line {n}"),
+        output_sha256="a" * 64,
+        created_at=now() - age,
+        **kw,
+    )
+
+
+def test_tool_calls_round_trip_in_order_and_refuse_a_duplicate(store):
+    first, second = (
+        _call("run-a", 1, timedelta(seconds=5), duration_ms=7, attempt=1),
+        _call("run-a", 2),
+    )
+    store.add_tool_call(second)
+    store.add_tool_call(first)
+    got = store.list_tool_calls("run-a")
+    assert [c.call_id for c in got] == ["run-a:1", "run-a:2"]
+    assert (
+        got[0].inputs == {"name": "app", "n": 1} and got[0].duration_ms == 7 and got[0].attempt == 1
+    )
+    assert got[1].duration_ms is None
+    assert store.list_tool_calls("run-none") == []
+    with pytest.raises(StaleState):
+        store.add_tool_call(first)
+
+
+def test_purge_tool_calls_keeps_held_runs_and_recent_rows(store):
+    old_held, old_free, fresh = (
+        _call("run-h", 1, timedelta(days=40)),
+        _call("run-f", 1, timedelta(days=40)),
+        _call("run-n", 1),
+    )
+    for c in (old_held, old_free, fresh):
+        store.add_tool_call(c)
+    cutoff = now() - timedelta(days=30)
+    assert store.purge_tool_calls(cutoff, keep_run_ids=frozenset({"run-h"})) == 1
+    assert [c.run_id for r in ("run-h", "run-f", "run-n") for c in store.list_tool_calls(r)] == [
+        "run-h",
+        "run-n",
+    ]
+    assert store.purge_tool_calls(cutoff, keep_run_ids=frozenset()) == 1
+    assert store.list_tool_calls("run-h") == []
+
+
+def test_redaction_map_upserts_and_a_missing_map_is_none(store):
+    assert store.get_redaction_map("run-a") is None
+    store.put_redaction_map("run-a", {"<IPV4_1>": "10.0.0.5"})
+    store.put_redaction_map("run-a", {"<IPV4_1>": "10.0.0.5", "<EMAIL_1>": "a@example.test"})
+    assert store.get_redaction_map("run-a") == {
+        "<IPV4_1>": "10.0.0.5",
+        "<EMAIL_1>": "a@example.test",
+    }
+    store.put_redaction_map("run-b", {})
+    assert store.get_redaction_map("run-b") == {}  # an empty map is not a missing one
+    got = store.get_redaction_map("run-a")
+    got["<X_1>"] = "changed"
+    assert "<X_1>" not in store.get_redaction_map("run-a")  # a copy
+
+
+def test_purge_redaction_maps_keeps_held_runs(store):
+    for run_id in ("run-h", "run-f"):
+        store.put_redaction_map(run_id, {"<IPV4_1>": "10.0.0.5"})
+    future = now() + timedelta(days=1)  # every row is older than this
+    assert store.purge_redaction_maps(future, keep_run_ids=frozenset({"run-h"})) == 1
+    assert store.get_redaction_map("run-f") is None and store.get_redaction_map("run-h")
+    assert store.purge_redaction_maps(now() - timedelta(days=1), keep_run_ids=frozenset()) == 0
+    assert store.purge_redaction_maps(future, keep_run_ids=frozenset()) == 1
+
+
+def test_tool_calls_with_the_same_time_list_in_a_fixed_order(store):
+    stamp = now()
+    for n in (3, 1, 2):
+        store.add_tool_call(_call("run-t", n).model_copy(update={"created_at": stamp}))
+    ids = [c.call_id for c in store.list_tool_calls("run-t")]
+    assert ids == ["run-t:1", "run-t:2", "run-t:3"]
+
+
+def test_tool_call_error_flag_round_trips(store):
+    store.add_tool_call(_call("run-e", 1, error=True, output="ERROR: boom"))
+    store.add_tool_call(_call("run-e", 2))
+    assert [c.error for c in store.list_tool_calls("run-e")] == [True, False]
+
+
+def test_purge_redaction_maps_keeps_the_map_of_an_open_run_until_the_ceiling(store):
+    awaiting = _run(store, S.WAITING_FOR_APPROVAL)
+    done = _run(store, S.NO_ACTION)
+    for run in (awaiting, done):
+        store.put_redaction_map(run.run_id, {"<IPV4_1>": "10.0.0.5"})
+    future = now() + timedelta(days=1)  # both runs last changed before this
+    assert store.purge_redaction_maps(future, keep_run_ids=frozenset()) == 1
+    assert store.get_redaction_map(done.run_id) is None
+    assert store.get_redaction_map(awaiting.run_id) is not None
+    assert store.purge_redaction_maps(future, keep_run_ids=frozenset(), keep_open=False) == 1
+    assert store.get_redaction_map(awaiting.run_id) is None
+
+
+def test_purge_redaction_maps_ages_a_run_parked_in_needs_person_like_a_finished_one(store):
+    """Round 6: NEEDS_PERSON has no outgoing transition, so its map can never be restored again."""
+    parked = _run(store, S.NEEDS_PERSON)
+    store.put_redaction_map(parked.run_id, {"<IPV4_1>": "10.0.0.5"})
+    assert store.purge_redaction_maps(now() + timedelta(days=1), keep_run_ids=frozenset()) == 1
+    assert store.get_redaction_map(parked.run_id) is None
+
+
+def test_purge_redaction_maps_ages_a_finished_run_from_when_it_finished(store):
+    done = _run(store, S.NO_ACTION)
+    store.put_redaction_map(done.run_id, {"<IPV4_1>": "10.0.0.5"})  # written after the run ended
+    before_run_ended = done.updated_at - timedelta(seconds=1)
+    assert store.purge_redaction_maps(before_run_ended, keep_run_ids=frozenset()) == 0
+    assert store.purge_redaction_maps(now() + timedelta(days=1), keep_run_ids=frozenset()) == 1

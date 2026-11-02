@@ -69,6 +69,19 @@ class RunState(StrEnum):
     STOPPED = "STOPPED"
 
 
+# States a run can still move out of (runtime/runs.py ALLOWED has a transition from each). Only these keep
+# their redaction map past the ordinary retention: NEEDS_PERSON has no outgoing transition, so a run parked
+# there will never restore an input again and its map ages like any finished run's.
+OPEN_STATES = frozenset(
+    {
+        RunState.RECEIVED,
+        RunState.WORKING,
+        RunState.PLAN_READY,
+        RunState.WAITING_FOR_APPROVAL,
+        RunState.EXECUTING,
+        RunState.VERIFYING,
+    }
+)
 RiskClass = Literal["read_only", "reversible", "sign_off"]
 Outcome = Literal["allow", "needs_approval", "deny"]
 ApprovalStatus = Literal["PENDING", "APPROVED", "REJECTED", "EXPIRED"]
@@ -191,6 +204,15 @@ class AuditEvent(Shape):
     # Which control caught a mistake: gate, recheck, abstain, guard, verify, human_label, human_reject (K6 sets
     # the human values). Rows written before this field existed hash unchanged (the chain hashes stored text).
     caught_by: str | None = None
+    # A tool call's audit event carries the SHA-256 of the output text as STORED (redacted, truncated), so a
+    # later edit of the `tool_calls` row is detectable against the chain. None for every other event.
+    output_hash: str | None = None
+    # The gate's decide event carries the hash of the plan's inputs with their placeholders restored, so an
+    # approval is bound to the real values and execution refuses a map that changed since (R6, before K8).
+    restored_hash: str | None = None
+    # A tool call's audit event also says how many lines it returned (who: `principal`; what: the tool and
+    # `inputs_hash`; why: the run's trigger; how much: `rows`), so a client can review every read.
+    rows: int | None = None
 
 
 class DeadLetter(Shape):
@@ -208,6 +230,22 @@ class TickState(BaseModel):
     last_run_at: datetime
     last_ok_at: datetime | None = None
     last_error: str | None = None
+
+
+class ToolCallRecord(BaseModel):
+    """One read-tool call of a run (table tool_calls). Inputs and output are stored redacted (design 6.3)."""
+
+    model_config = ConfigDict(extra="forbid")
+    call_id: str  # "<run_id>:<n>"
+    run_id: str
+    tool: str
+    inputs: dict[str, Any]
+    output: str  # redacted, then truncated
+    output_sha256: str  # of the raw bytes the tool received, up to the fetch cap
+    created_at: datetime = Field(default_factory=now)
+    duration_ms: int | None = None
+    attempt: int | None = None
+    error: bool = False  # the tool failed: the row is kept but is never evidence
 
 
 class KillSwitch(Shape):

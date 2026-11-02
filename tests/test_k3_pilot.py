@@ -36,7 +36,7 @@ NONE_CONTRACT = {
         "type": "object",
         "required": ["service"],
         "additionalProperties": False,
-        "properties": {"service": {"type": "string", "maxLength": 40}},
+        "properties": {"service": {"type": "string", "maxLength": 40, "identifier": False}},
     },
     "risk_class": "reversible",
     "targets_production": True,
@@ -404,7 +404,7 @@ def test_k3_old_chain_verifies(tmp_path, monkeypatch):
 
 
 def _chain(tmp_path: Path):
-    from hadavin_sdk.backends import make
+    from hadavin_sdk.backends.factory import make
     from hadavin_sdk.backends.table import ChainSettings, Ed25519LocalSettings, KindSettings
 
     priv = tmp_path / "k.pem"
@@ -436,11 +436,11 @@ def test_k3_abstain_card_all_levels(tmp_path, level):
     hooks, cards = captured()
     rt = runtime(dev_cfg(tmp_path, {"lookup_record": level}), ScriptedLLM(reply()), hooks)
     assert handle(rt).state == S.NO_ACTION and len(cards) == 1
-    # Every abstention reason posts the card, redaction_error included; guard reasons are `guard` catches.
+    # Every abstention reason posts the card, redaction_error included (an abstention, not a catch, v5.4 F12; round 6: no caught_by unless a control stopped a proposal).
     for reason, caught in [
-        ("redaction_error", "guard"),
+        ("redaction_error", None),
         ("run_budget", "guard"),
-        ("tool_error", "abstain"),
+        ("tool_error", None),
     ]:
         run = Run(
             agent_id="test-agent",
@@ -466,8 +466,8 @@ def test_k3_abstain_card_lists_call_ids_not_content(tmp_path):
     hooks.tools["echo"] = lambda inp: "SECRET-TOOL-OUTPUT"
     echo = reply(ToolCall(name="echo", input={"text": "hi"}))
     rt = runtime(cfg, ScriptedLLM(echo, reply()), hooks)
-    handle(rt)
-    assert "call-1: echo" in cards[0].text and "SECRET-TOOL-OUTPUT" not in cards[0].text
+    run = handle(rt)
+    assert f"- {run.run_id}:1" in cards[0].text and "SECRET-TOOL-OUTPUT" not in cards[0].text
 
 
 def test_k3_tool_error_posts_abstain_card(tmp_path):
@@ -478,7 +478,9 @@ def test_k3_tool_error_posts_abstain_card(tmp_path):
         raise RuntimeError("down")
 
     hooks.tools["echo"] = broken
-    rt = runtime(cfg, ScriptedLLM(reply(ToolCall(name="echo", input={}))), hooks)
+    # K5 (M16): a failing tool is a result the model can react to; the third error ends the run.
+    again = reply(ToolCall(name="echo", input={}))
+    rt = runtime(cfg, ScriptedLLM(again, again, again), hooks)
     run = handle(rt)
     assert (run.state, run.reason_code) == (S.NEEDS_PERSON, "tool_error")
     assert cards[0].text.startswith("Agent abstained") and "tool_error" in cards[0].text

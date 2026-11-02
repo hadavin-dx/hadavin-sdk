@@ -18,6 +18,7 @@ from urllib.parse import quote
 from hadavin_sdk.actions.contract import ActionContract, HttpExecutor
 from hadavin_sdk.actions.secrets import SecretProvider
 from hadavin_sdk.config import url_allowed
+from hadavin_sdk.guard import http as http_guard
 from hadavin_sdk.guard.egress import EgressRefused, egress_check
 from hadavin_sdk.models import ApprovalDecision, GateDecision, Plan, RunResult
 from hadavin_sdk.registry import Registry
@@ -25,14 +26,8 @@ from hadavin_sdk.registry import Registry
 Call = Callable[..., tuple[int, Any]]
 
 
-class _NoRedirect(urllib.request.HTTPRedirectHandler):
-    """A redirect would carry the bearer token to a host egress_check never saw: refuse every redirect."""
-
-    def redirect_request(self, req, fp, code, msg, headers, newurl):
-        return None
-
-
-_OPENER = urllib.request.build_opener(_NoRedirect)
+# No redirects: one would carry the bearer token to a host egress_check never saw.
+_OPENER = http_guard.ENV_PROXY_OPENER
 
 
 def resolve(ref: str, allowed: list[str]) -> Callable[..., Any]:
@@ -102,9 +97,12 @@ class Executor:
         decision: GateDecision,
         approval: ApprovalDecision | None = None,
         heartbeat: Callable[[], None] | None = None,
+        inputs_view: dict | None = None,
     ) -> RunResult:
         """`heartbeat` is called before every HTTP attempt. The runtime passes `store.touch` for the run, so the
-        executor never holds the store (trust boundary) and long retries never look stuck."""
+        executor never holds the store (trust boundary) and long retries never look stuck. `inputs_view` is the
+        plan's inputs with the redaction placeholders restored (K5, R6): the hash check is on the stored plan, the
+        request is built from the restored values."""
         h = plan.hash()
         if decision.run_id != plan.run_id:
             return RunResult(outcome="failed", error_code="run_mismatch")
@@ -120,8 +118,9 @@ class Executor:
         if not isinstance(contract.executor, HttpExecutor):
             return RunResult(outcome="failed", error_code="not_http_executor")
         call = self._caller(contract, heartbeat)
-        method, path = self._path(contract.executor.operation, plan.inputs, plan.idempotency_key)
-        body = plan.inputs if method in {"POST", "PUT", "PATCH"} else None
+        inputs = plan.inputs if inputs_view is None else inputs_view
+        method, path = self._path(contract.executor.operation, inputs, plan.idempotency_key)
+        body = inputs if method in {"POST", "PUT", "PATCH"} else None
         try:
             status, data = call(
                 method, path, body, {contract.idempotency_header: plan.idempotency_key}
@@ -132,28 +131,32 @@ class Executor:
             if not isinstance(exc.reason, TimeoutError):
                 # Could not connect: nothing provably happened, so the outcome is unknown, not failed.
                 return RunResult(outcome="unknown", error_code="system_unreachable")
-            return self._lookup(contract, plan, call)
+            return self._lookup(contract, plan, call, inputs)
         except (TimeoutError, ConnectionError, http.client.HTTPException):
             # The request may have been applied (timeout, reset, cut-off reply): look it up.
-            return self._lookup(contract, plan, call)
+            return self._lookup(contract, plan, call, inputs)
         if 200 <= status < 300:
             ref = data.get("id") if isinstance(data, dict) else None
             if ref is None and contract.executor.lookup_operation:
-                return self._lookup(contract, plan, call)
+                return self._lookup(contract, plan, call, inputs)
             return RunResult(outcome="succeeded", external_ref=ref or plan.target.ref)
         if method != "GET" and (status >= 500 or status == 408):
             # A mutating call may have been applied before the server failed: look it up, never retry.
             if contract.executor.lookup_operation:
-                return self._lookup(contract, plan, call)
+                return self._lookup(contract, plan, call, inputs)
             return RunResult(outcome="unknown", error_code=f"http_{status}")
         return RunResult(outcome="failed", error_code=f"http_{status}")
 
-    def _lookup(self, contract: ActionContract, plan: Plan, call: Call) -> RunResult:
+    def _lookup(
+        self, contract: ActionContract, plan: Plan, call: Call, inputs: dict | None = None
+    ) -> RunResult:
         """Find the result by idempotency key. Never retry blindly."""
         if not contract.executor.lookup_operation:
             return RunResult(outcome="unknown", error_code="timeout_no_lookup")
         method, path = self._path(
-            contract.executor.lookup_operation, plan.inputs, plan.idempotency_key
+            contract.executor.lookup_operation,
+            plan.inputs if inputs is None else inputs,
+            plan.idempotency_key,
         )
         try:
             status, data = call(method, path)

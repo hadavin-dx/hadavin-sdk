@@ -1,4 +1,4 @@
-"""Pattern-based redaction for logs, audit and channel text (documents go to the model unredacted).
+"""Pattern-based redaction for logs, audit and channel text (the runtime redacts the document and every tool result with it before the model sees them).
 
 Copied from WARDEN `src/warden/redaction.py` at PR #206 head 14fc549 (branch `redaction-bank-patterns`,
 veerarakesh56/warden): the full pattern table, including the bank codes (BANKCODE: BSB, sort code, ABA,
@@ -20,8 +20,8 @@ it was removed - second review, 2026-09-30.)
 
 from __future__ import annotations
 
-import functools
 import re
+import string
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -142,6 +142,14 @@ _KEY_PREFIXES = (
     r"hvb\.",
     r"xapp-",
 )
+# An ARN's resource part: letters, digits and the punctuation ARNs use. `;` `,` `=` `(` `)` `?` `&` `#` and quotes
+# end it, so a credential glued to an ARN is never swallowed into the identifier (and so into a stored map).
+ARN_TAIL = r"[A-Za-z0-9_\-./:*+@]"
+# What the redactor FINDS: the same characters, but never through a `key=` that begins a credential. `*`, `+` and `@`
+# are legal ARN characters, so `...:function:billing*token=V` is ambiguous; the identifier stops before the key and
+# the key=value rule masks V. Over-redaction (an ARN segment that looks like `...token=`) is the accepted price.
+_KV_WORD = r"(?:password|passwd|pwd|secret|token|api[_\-]?key|apikey|access[_\-]?key|private[_\-]?key|credential|auth)"
+ARN_CHAR = r"(?:(?![\w.\-*+@]{0,40}?" + _KV_WORD + r"[\w.\-]{0,20}=)" + ARN_TAIL + ")"
 PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     # A whole PEM private key block — the highest-value secret that turns up in a misconfig dump.
     # PEM and PGP. A key cut off by a line-length limit has no END line: mask to the end.
@@ -158,17 +166,17 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
         re.compile(r"Private-Lines:[ \t]*\d+[ \t]*\r?\n([\s\S](?:(?!\r?\nPrivate-MAC)[\s\S])*)"),
     ),
     # Account-less (`arn:aws:s3:::bucket`) and other partitions (`aws-cn`, `aws-us-gov`) too (lock-in audit row 14).
-    ("ARN", re.compile(r"arn:aws[a-z-]*:[a-z0-9\-]*:[a-z0-9\-]*:(?:\d{12})?:[^\s\"']+")),
+    ("ARN", re.compile(r"arn:aws[a-z-]*:[a-z0-9\-]*:[a-z0-9\-]*:(?:\d{12})?:" + ARN_CHAR + r"+")),
     # The other clouds' resource ids name the client's project or subscription the same way (audit row 14).
     (
         "GCPRESOURCE",
-        re.compile(r"\bprojects/(?:[a-z][a-z0-9-]{4,28}[a-z0-9]|\d{6,20})(?:/[^\s\"']+)?"),
+        re.compile(r"\bprojects/(?:[a-z][a-z0-9-]{4,28}[a-z0-9]|\d{6,20})(?:/" + ARN_CHAR + r"+)?"),
     ),
     (
         "AZURERESOURCE",
         re.compile(
             r"/subscriptions/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
-            r"(?:/[^\s\"']+)?"
+            r"(?:/" + ARN_CHAR + r"+)?"
         ),
     ),
     # Three segments (a JWS) to five (a JWE, whose second may be empty): a JWE's last two parts were left in clear
@@ -176,7 +184,7 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     (
         "JWT",
         re.compile(
-            r"eyJ[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]*\.[A-Za-z0-9_\-]+(?:\.[A-Za-z0-9_\-]*){0,2}"
+            r"eyJ[A-Za-z0-9_\-]{1,4096}\.[A-Za-z0-9_\-]{0,4096}\.[A-Za-z0-9_\-]{1,4096}(?:\.[A-Za-z0-9_\-]{0,4096}){0,2}"
         ),
     ),
     # Vendor key prefixes: OpenAI/Anthropic (sk-), GitHub classic (ghp_/gho_/ghu_/ghs_/ghr_) and
@@ -197,7 +205,7 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     # otherwise fragment a digit-run inside it and leave the rest exposed. Cloud-neutral: GCP.
     ("GCPTOKEN", re.compile(r"\bya29\.[A-Za-z0-9._\-]{20,}")),
     # Azure Shared Access Signature: the `sig=` query parameter is the credential. Cloud-neutral: Azure.
-    ("AZURESAS", re.compile(r"(?i)(?<=[?&])sig=([^\s&\"']{16,})")),
+    ("AZURESAS", re.compile(r"(?i)(?<![\w.\-])sig=([^\s&\"']{16,})")),
     # Incoming-webhook URLs carry the credential in the PATH (no key=value, no vendor prefix) — the
     # whole URL IS the secret (anyone holding it can post). Slack, Discord, MS Teams. Cloud-neutral.
     (
@@ -218,12 +226,18 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     (
         "URLCRED",
         re.compile(
-            r"(?i)\b[a-z][a-z0-9+.\-]*://[^\s:/@]*:([^\s]{2,256}?)@(?=[a-z0-9.\-]+(?::\d+)?(?:[/?#\s]|$))"
+            r"(?i)\b[a-z][a-z0-9+.\-]{0,31}://[^\s:/@]{0,128}:([^\s]{2,1024}?)@(?=[a-z0-9.\-]+(?::\d+)?(?:[/?#\s]|$))"
         ),
     ),
     # `@` OR its URL-encoding `%40` — a URL-encoded email (normal in HTTP access logs, the exact
     # evidence source) reads as the email to both the model and an operator, so it must be masked too.
-    ("EMAIL", re.compile(r"\b[A-Za-z0-9._+\-]+(?:@|%40)[A-Za-z0-9.\-]+\.[A-Za-z]{2,}\b")),
+    # Bounded (RFC 5321: local part 64, domain 255): an unbounded run is quadratic on `a.a.a.` text.
+    (
+        "EMAIL",
+        re.compile(
+            r"(?<![A-Za-z0-9._+\-])[A-Za-z0-9._+\-]{1,254}(?:@|%40)[A-Za-z0-9.\-]{1,255}\.[A-Za-z]{2,}\b"
+        ),
+    ),
     # IBAN (ISO 13616): a REAL country code + 2 check digits + 11-30 alnum BBAN. Financial PII in
     # payment/refund incident logs (SEPA charge/transfer). Masked WHOLE and BEFORE ACCOUNTID/PHONE,
     # which would otherwise fragment its digit runs and leak the country+bank prefix. The prefix is
@@ -510,7 +524,10 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
         ),
     ),
     ("SECRET", re.compile(r"<Cookie\s+([^\s=<>]+=[^\s<>]{4,})")),
-    ("SECRET", re.compile(r"\b(?:mysql|mariadb)(?:-?dump|-?admin)?\b[^\r\n]*?\s-p([^\s\"']{3,})")),
+    (
+        "SECRET",
+        re.compile(r"\b(?:mysql|mariadb)(?:-?dump|-?admin)?\b[^\r\n]{0,1024}?\s-p([^\s\"']{3,})"),
+    ),
     # A credential passed as a command-line flag. EXACT flag names (independent review 2026-09-28:
     # `--secret-name`, `--token-file`, `--token-ttl` are not credentials, and masking them removed
     # resource names from the evidence). Same line only; a value never starts with `-` or a quote.
@@ -531,25 +548,29 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
         ),
     ),
     # Client tools whose short flag carries the password (same line only).
-    ("SECRET", re.compile(r"\bredis-cli\b[^\r\n]*?[ \t]-a[ \t]+([^\s\"']{3,})")),
+    ("SECRET", re.compile(r"\bredis-cli\b[^\r\n]{0,1024}?[ \t]-a[ \t]+([^\s\"']{3,})")),
     ("SECRET", re.compile(r"\bsshpass[ \t]+-p[ \t]*([^\s\"']{3,})")),
     (
         "SECRET",
         re.compile(
-            r"\b(?:docker[ \t]+login|mongo(?:sh)?|az[ \t]+login)\b[^\r\n]*?[ \t]-p[ \t]+([^\s\"']{3,})"
+            r"\b(?:docker[ \t]+login|mongo(?:sh)?|az[ \t]+login)\b[^\r\n]{0,1024}?[ \t]-p[ \t]+([^\s\"']{3,})"
         ),
     ),
-    ("SECRET", re.compile(r"\bsqlcmd\b[^\r\n]*?[ \t]-P[ \t]*([^\s\"']{3,})")),
-    ("SECRET", re.compile(r"\bldap\w*\b[^\r\n]*?[ \t]-w[ \t]+([^\s\"']{3,})")),
+    ("SECRET", re.compile(r"\bsqlcmd\b[^\r\n]{0,1024}?[ \t]-P[ \t]*([^\s\"']{3,})")),
+    ("SECRET", re.compile(r"\bldap\w*\b[^\r\n]{0,1024}?[ \t]-w[ \t]+([^\s\"']{3,})")),
     # `-[^\Wb]*b`: the flags up to their first b, one way only - `-\w*b\w*` split a long flag word every way it could
     # (Sonar python:S8786, 2026-10-16).
     (
         "SECRET",
-        re.compile(r"\bhtpasswd\b[^\r\n]*?[ \t]-[^\Wb]*b\w*[ \t]+\S+[ \t]+\S+[ \t]+([^\s\"']{3,})"),
+        re.compile(
+            r"\bhtpasswd\b[^\r\n]{0,1024}?[ \t]-[^\Wb]*b\w*[ \t]+\S+[ \t]+\S+[ \t]+([^\s\"']{3,})"
+        ),
     ),
     (
         "SECRET",
-        re.compile(r"\bcurl\b[^\r\n]*?[ \t](?:-u[ \t]*|--user(?:=|[ \t]+))[^:\s]+:([^\s\"']{3,})"),
+        re.compile(
+            r"\bcurl\b[^\r\n]{0,1024}?[ \t](?:-u[ \t]*|--user(?:=|[ \t]+))[^:\s]+:([^\s\"']{3,})"
+        ),
     ),
     ("SECRET", re.compile(r"(?i)\"auth\"\s*:\s*\"([^\"]{8,})\"")),
     # A quoted secret value is masked WHOLE: `password='hunter 2 x'` used to leak "2 x".
@@ -572,7 +593,9 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
         re.compile(
             # Leading delimiter includes ? & : so URL QUERY-PARAM credentials (?password=, &token=) and
             # the .npmrc form (//registry/:_authToken=) are caught — ubiquitous in access/CI logs.
-            r"(?i)(?:^|[\s\"',;{(\[=?&:])[\w.\-]{0,40}"
+            # The key starts where the previous character is not a key character (any separator, ASCII or
+            # Unicode): an allowlist of key characters, not a list of delimiters (K5 review rounds 1-3).
+            r"(?i)(?<![\w.\-])[\w.\-]{0,40}"
             r"(?:password|passwd|pwd|secret|access[_\-]?key|account[_\-]?key|shared[_\-]?access[_\-]?key"
             r"|private[_\-]?key|api[_\-]?key|apikey|auth[_\-]?token|access[_\-]?token|sas[_\-]?token"
             # kubeconfig secrets: client-key-data (the private key), certificate-data.
@@ -612,11 +635,62 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     (
         "HIGHENTROPY",
         re.compile(
-            r"(?<![A-Za-z0-9+/_\-])(?=[A-Za-z0-9+/=_\-]*[A-Z])(?=[A-Za-z0-9+/=_\-]*[a-z])"
-            r"(?=[A-Za-z0-9+/=_\-]*\d)[A-Za-z0-9+/_\-]{40,}={0,2}(?![A-Za-z0-9+/=_\-])"
+            r"(?<![A-Za-z0-9+/_\-])(?=[A-Za-z0-9+/=_\-]{0,128}[A-Z])(?=[A-Za-z0-9+/=_\-]{0,128}[a-z])"
+            r"(?=[A-Za-z0-9+/=_\-]{0,128}\d)[A-Za-z0-9+/_\-]{40,}={0,2}(?![A-Za-z0-9+/=_\-])"
         ),
     ),
 ]
+
+# Every scanning bound above has a fallback that MASKS instead of letting the text through. A bound is a cost
+# ceiling, not a place for a secret to hide: past it the rest of the line (or token) is masked whole.
+#   command-line credential gap 1024  -> from the command word, the rest of the line
+#   quoted credential value 255       -> the whole quoted value
+#   URL password 1024                 -> the rest of the token
+#   e-mail local part 254             -> the whole address
+# (JWT segments of 4096 and tokens whose mix of cases comes after 128 characters are masked by the long-run
+# pattern below.) Each fallback consumes what it matches, so it stays linear on repeated text.
+PATTERNS.append(
+    (
+        "SECRET",
+        re.compile(
+            r"\b(?:(?:mysql|mariadb)(?:-?dump|-?admin)?|redis-cli|docker[ \t]+login|mongo(?:sh)?"
+            r"|az[ \t]+login|sqlcmd|ldap\w*|htpasswd|curl)\b[^\r\n]{1024}[^\r\n]*"
+        ),
+    )
+)
+for _quote in ('"', "'"):
+    PATTERNS.append(
+        (
+            "SECRET",
+            re.compile(
+                _CRED_FLAG
+                + rf"(?:{_SP}*={_SP}*|{_SP}+){_quote}[^{_quote}\n]{{256}}[^{_quote}\n]*{_quote}?"
+            ),
+        )
+    )
+PATTERNS.append(
+    (
+        "SECRET",
+        re.compile(r"(?i)\b[a-z][a-z0-9+.\-]{0,31}://[^\s:/@]{0,128}:(?=[^\s]{1025,4096}@)[^\s]*"),
+    )
+)
+PATTERNS.append(
+    (
+        "EMAIL",
+        re.compile(
+            r"(?<![A-Za-z0-9._+\-])[A-Za-z0-9._+\-]{255,}(?:@|%40)[A-Za-z0-9.\-]{1,255}\.[A-Za-z]{2,}\b"
+        ),
+    )
+)
+
+# A very long run of base64-ish characters is a blob whatever its mix of cases: the lookaheads above look at
+# the first 128 characters only, so a longer run is masked whole here (nothing escapes at the bound).
+PATTERNS.append(
+    (
+        "HIGHENTROPY",
+        re.compile(r"(?<![A-Za-z0-9+/_\-])[A-Za-z0-9+_\-]{129,}={0,2}(?![A-Za-z0-9+/=_\-])"),
+    )
+)
 
 # The bank-code patterns, for redact_many's batch-wide context (_has_bank_word).
 _BANK_CODES = tuple(p for label, p in PATTERNS if label == "BANKCODE")
@@ -789,6 +863,7 @@ def redact(
     mapping: dict[str, str] | None = None,
     near: tuple[str, ...] = (),
     _sweep_copies: bool = True,
+    _cache: dict | None = None,
 ) -> RedactionResult:
     """Scrub `text`, then prove the scrub worked.
 
@@ -796,7 +871,7 @@ def redact(
     model still sees that two log lines refer to the same host. `near`: related texts redacted apart
     (a record's other fields) whose bank words still count as bank context here, as in redact_many.
     """
-    r = _Redactor(mapping)
+    r = _Redactor(mapping, _cache)
     r.bank_near = any(_has_bank_word(strip_ansi(t)) for t in near)
     out = r.find(text)
     if _sweep_copies:  # redact_many's first pass only FINDS values; its second pass masks
@@ -813,7 +888,10 @@ def _countable(suffix: str) -> bool:
 class _Redactor:
     """One placeholder namespace (map, reverse map, counters) shared by every text of one call."""
 
-    def __init__(self, mapping: dict[str, str] | None) -> None:
+    def __init__(self, mapping: dict[str, str] | None, cache: dict | None = None) -> None:
+        self._cache = (
+            cache  # a run's built finders, reused while its map is unchanged (see runmap.RunMap)
+        )
         self.mapping = dict(mapping or {})
         self.reverse = {v: k for k, v in self.mapping.items()}
         self.counters: dict[str, int] = dict.fromkeys(_LABELS, 0)
@@ -832,6 +910,9 @@ class _Redactor:
         self._slow: list[str] = []  # values checked one by one: nested too deep for the finder
         self._ordered: list[tuple[str, str]] = []
         self.bank_near = False  # redact_many: a bank word in some string of the batch
+        if cache and cache.get("map") == self.mapping:  # nothing new since the last build: skip it
+            self._ordered, self._rules, self._finders, self._slow = cache["state"]
+            self._built_for = len(self.mapping)
 
     def find(self, text: str) -> str:
         out = strip_ansi(text)
@@ -914,13 +995,16 @@ class _Redactor:
                 group_trie = _trie(group)
                 self._finders.append(
                     (
-                        re.compile("(?=(" + _trie_regex(group_trie) + "))"),
+                        _compile_uncached("(?=(" + _trie_regex(group_trie) + "))"),
                         {w: _prefixes(group_trie, w) for w in group},
                     )
                 )
         except (RecursionError, re.error, OverflowError):
             self._finders, self._slow = [], list(self._rules)  # the exact per-value loop
         self._built_for = len(self.mapping)
+        if self._cache is not None:
+            self._cache["map"] = dict(self.mapping)
+            self._cache["state"] = (self._ordered, self._rules, self._finders, self._slow)
 
     def sweep(self, out: str) -> str:
         # Final literal sweep. The patterns FIND values; this masks the copies a regex boundary missed,
@@ -959,12 +1043,26 @@ class _Redactor:
                 if rule is _EVERY_COPY:
                     segment = segment.replace(original, placeholder)
                 else:
-                    segment = _standalone(original).sub(placeholder, segment)
+                    segment = _replace_standalone(segment, original, placeholder)
             parts[i] = segment
         return "".join(parts)
 
 
 _MAX_NESTING = 200
+
+
+def _compile_uncached(pattern: str) -> re.Pattern[str]:
+    """Compile a pattern built from a run's values WITHOUT putting it in `re`'s process-wide cache (R371: one
+    client's identifiers must not sit in memory shared with every other client). `re.purge()` would clear the
+    cache of every other pattern too and make each later `re.sub` recompile."""
+    try:
+        from re import _compiler  # private, present since Python 3.11
+
+        return _compiler.compile(pattern, 0)
+    except (ImportError, AttributeError):  # pragma: no cover - a Python without the private module
+        compiled = re.compile(pattern)
+        re.purge()
+        return compiled
 
 
 def _trie(words) -> dict[str, dict]:
@@ -1090,6 +1188,9 @@ def _kind(placeholder: str) -> str:
     return placeholder.strip("<>").rsplit("_", 1)[0]
 
 
+kind_of = _kind  # the public name (guard/runmap.py uses it)
+
+
 # Every copy, anywhere: plain str.replace, which is what the escaped regex did.
 _EVERY_COPY = object()
 # Every standalone copy: the pattern is compiled when the value is found in a segment, not for every value.
@@ -1114,9 +1215,28 @@ def _sweep(placeholder: str, original: str):
     return _STANDALONE
 
 
-@functools.lru_cache(maxsize=8192)
-def _standalone(original: str) -> re.Pattern[str]:
-    return re.compile(rf"(?<![A-Za-z0-9]){re.escape(original)}(?![A-Za-z0-9])")
+_ALNUM = frozenset(string.ascii_letters + string.digits)
+
+
+def _replace_standalone(segment: str, original: str, placeholder: str) -> str:
+    """Replace `original` where no ASCII letter or digit touches it. A plain scan: a compiled pattern (or an
+    lru_cache of one) keyed by the identifier would keep one client's values in process memory, shared with every
+    other client (R371), and `re` caches compiled patterns itself."""
+    out: list[str] = []
+    i, n = 0, len(original)
+    while n:
+        j = segment.find(original, i)
+        if j < 0:
+            break
+        before, after = segment[j - 1 : j], segment[j + n : j + n + 1]
+        if before in _ALNUM or after in _ALNUM:
+            out.append(segment[i : j + 1])
+            i = j + 1
+            continue
+        out += [segment[i:j], placeholder]
+        i = j + n
+    out.append(segment[i:])
+    return "".join(out)
 
 
 def redact_many(

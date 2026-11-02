@@ -15,8 +15,7 @@ from askdata.policy import REASONS
 
 from hadavin_sdk.audit.protocol import AuditUnavailable
 from hadavin_sdk.llm.protocol import ProviderError, ProviderExhausted
-
-from .kit import COUNT_ORDERS, PROMPT, Kit
+from tests.demo_askdata.kit import COUNT_ORDERS, PROMPT, Kit
 
 Q = "How many orders are there"
 

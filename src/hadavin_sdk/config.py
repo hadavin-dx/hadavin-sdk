@@ -5,6 +5,7 @@ Bad config fails at start-up. Cross-file checks (agents, actions, chains) live i
 
 from __future__ import annotations
 
+import re
 from decimal import Decimal
 from pathlib import Path
 from typing import Annotated, Any, Literal, get_args
@@ -14,7 +15,7 @@ import yaml
 from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, ValidationError, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from hadavin_sdk import deferred
+from hadavin_sdk import defaults, deferred
 from hadavin_sdk.backends.table import DEFAULTS, DEV_ONLY, NOT_PROD, TABLE, KindSettings
 from hadavin_sdk.errors import ConfigError
 
@@ -22,8 +23,11 @@ __all__ = [
     "Backends",
     "Config",
     "ConfigError",
+    "EvidenceSettings",
     "K1bSettings",
+    "Retention",
     "Route",
+    "SourceConfig",
     "confined",
     "load_config",
     "load_yaml",
@@ -167,6 +171,137 @@ class K1bSettings(_Strict):
     redact: bool = True
 
 
+HELD_MAPS_CEILING = 400  # days: the audit retention; a config cannot extend it (design 6.3)
+
+
+class Retention(_Strict):
+    """How long evidence is kept (design 6.1, 6.3). Not part of ``config_hash``."""
+
+    tool_calls_days: int = Field(default=30, gt=0)
+    redaction_maps_days: int = Field(default=30, gt=0)
+    # Runs labelled wrong, harmful or missed (or demoted) keep their tool calls past `tool_calls_days`.
+    hold_labelled: bool = True
+    # A held run's redaction map (original identifiers) is purged at this age whatever the hold says.
+    held_maps_max_days: int = Field(default=HELD_MAPS_CEILING, gt=0, le=HELD_MAPS_CEILING)
+    # Tool calls of held runs are kept past `tool_calls_days`, but not forever.
+    held_tool_calls_max_days: int = Field(default=HELD_MAPS_CEILING, gt=0, le=HELD_MAPS_CEILING)
+    purge_every_s: int = Field(
+        default=defaults.PURGE_EVERY_S, gt=0
+    )  # the purge_evidence tick step's interval
+
+    @model_validator(mode="after")
+    def _held_not_shorter(self) -> Retention:
+        if self.held_maps_max_days < self.redaction_maps_days:
+            raise ValueError("retention.held_maps_max_days must be at least redaction_maps_days")
+        return self
+
+
+class EvidenceSettings(_Strict):
+    """The read path's limits (K5). Defaults live in `hadavin_sdk/defaults.py`. Not part of `config_hash`."""
+
+    max_tool_errors: int = Field(default=defaults.MAX_TOOL_ERRORS, gt=0)
+    legacy_max_output_bytes: int = Field(default=defaults.LEGACY_MAX_OUTPUT_BYTES, gt=0)
+    fetch_ceiling_bytes: int = Field(default=defaults.FETCH_CEILING_BYTES, gt=0)
+    https_ports: tuple[int, ...] = defaults.HTTPS_PORTS
+    cluster_ports: tuple[int, ...] = defaults.CLUSTER_PORTS
+    # Which identifier kinds the run's redaction map may store. May narrow the default, never widen it: a kind
+    # with no grammar in `guard/runmap.py` cannot be stored.
+    stored_kinds: tuple[str, ...] = defaults.STORED_KINDS
+    # Per-run ceilings (a model can loop on a cheap tool): calls, bytes sent back to the model, and how many
+    # tool bodies may still be running past their deadline before further calls are refused.
+    max_tool_calls_per_run: int = Field(default=defaults.MAX_TOOL_CALLS_PER_RUN, gt=0)
+    # A run whose document or tool results plant more distinct values than this ends `document_too_complex`:
+    # building the redactor over a bigger map is CPU the client's text should not be able to spend.
+    max_map_entries: int = Field(default=defaults.MAX_MAP_ENTRIES, gt=0)
+    max_tool_bytes_per_run: int = Field(default=defaults.MAX_TOOL_BYTES_PER_RUN, gt=0)
+    max_abandoned_tool_threads: int = Field(default=defaults.MAX_ABANDONED_TOOL_THREADS, gt=0)
+    # What the agent can do to the client's systems: at most this many reads at once and per minute, whatever
+    # the model asks (it cannot raise the production-side load, R372).
+    max_concurrent_tool_calls: int = Field(default=defaults.MAX_CONCURRENT_TOOL_CALLS, gt=0)
+    max_tool_calls_per_minute: int = Field(default=defaults.MAX_TOOL_CALLS_PER_MINUTE, gt=0)
+    # Host suffixes that count as in-cluster, where `cluster_http` tools may use plain http.
+    cluster_suffixes: tuple[str, ...] = defaults.CLUSTER_SUFFIXES
+    # The largest document a run takes; a bigger one is refused (`document_too_large`), never half-read.
+    # Never above the redactor's own cap (`defaults.MAX_REDACT_CHARS`): a larger value would pass the size check
+    # and then be refused by the redactor.
+    max_document_bytes: int = Field(
+        default=defaults.MAX_DOCUMENT_BYTES, gt=0, le=defaults.MAX_REDACT_CHARS
+    )
+    # Target systems (a contract's `target_system`) whose names are case-insensitive, so grounding folds case
+    # for them. Every other target is compared exactly: `Admin` is not `admin`.
+    case_insensitive_targets: tuple[str, ...] = ()
+    # The secret (in the secrets kind) that keys the HMAC of the restored inputs on the gate's audit event, so
+    # an audit reader cannot confirm a guessed identifier offline. Required in pilot and prod.
+    restored_hash_key_secret_name: str | None = None
+    # Operation ids a tool module may bind to a method other than GET (a review or a query is a POST that
+    # reads). A tool's READ_OPERATIONS declares the binding; this list is the deployment's permission for it.
+    post_read_operations: tuple[str, ...] = ()
+    # How often a configured source's scope is probed again while the process runs (RBAC can widen).
+    source_reprobe_s: int = Field(default=defaults.SOURCE_REPROBE_S, gt=0)
+
+    @model_validator(mode="after")
+    def _checks(self) -> EvidenceSettings:
+        if bad := [
+            t for t in self.case_insensitive_targets if not re.fullmatch(r"[a-z0-9_-]{1,40}", t)
+        ]:
+            raise ValueError(
+                f"evidence.case_insensitive_targets: {bad} are not target_system labels"
+            )
+        if unknown := sorted(set(self.stored_kinds) - set(defaults.STORED_KINDS)):
+            raise ValueError(
+                f"evidence.stored_kinds: {unknown} cannot be stored (secret, regulated or unknown)"
+            )
+        if bad_suffix := [
+            s
+            for s in self.cluster_suffixes
+            if not s.startswith(".") or s.rsplit(".", 1)[-1] not in defaults.PRIVATE_SUFFIX_LABELS
+        ]:
+            raise ValueError(
+                f"evidence.cluster_suffixes: {bad_suffix} must start with a dot and end in a private label "
+                f"({', '.join(sorted(defaults.PRIVATE_SUFFIX_LABELS))}); a public suffix such as .com would "
+                "allow plain http to the internet"
+            )
+        for name in ("https_ports", "cluster_ports"):
+            if bad := [p for p in getattr(self, name) if not 0 < p < 65536]:
+                raise ValueError(f"evidence.{name}: {bad} are not ports")
+        return self
+
+
+class SourceConfig(_Strict):
+    """A read source built at start-up: `kind` names a registered kind, `settings` is that kind's validated
+    settings, `token_secret_name` the secret (from the configured secrets kind) it authenticates with, and
+    `ca_file` the CA bundle that signs its endpoint (a path relative to the config folder). Not part of
+    `config_hash`; `scope_inventory` can stand in for a probe only for a source that cannot be probed."""
+
+    kind: str
+    settings: dict[str, Any]
+    token_secret_name: str | None = None
+    ca_file: Path | None = None
+
+    @model_validator(mode="after")
+    def _kind_checks(self) -> SourceConfig:
+        from hadavin_sdk.sources.kinds import KINDS
+
+        if self.kind not in KINDS:
+            raise ValueError(
+                f"source kind {self.kind!r} is unknown; known: {', '.join(sorted(KINDS))}"
+            )
+        KINDS[self.kind].settings(**self.settings)
+        return self
+
+
+_DIGEST = re.compile(r"[0-9a-f]{64}")
+
+
+def _inventory_ref_ok(ref: str) -> bool:
+    """ "<page>#<anchor> sha256:<64 hex>", checked by splitting (no backtracking-prone pattern)."""
+    where, sep, digest = ref.rpartition(" sha256:")
+    page, hash_sign, anchor = where.partition("#")
+    return bool(
+        sep and hash_sign and page and anchor and " " not in where and _DIGEST.fullmatch(digest)
+    )
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="HADAVIN_")
     config_dir: Path
@@ -186,10 +321,32 @@ class Config(_Strict):
     egress_hosts: frozenset[str] = frozenset()
     allow_insecure_loopback: bool = False  # true only in the local test fixture config
     k1b: K1bSettings = K1bSettings()
+    # K5: modules a tool manifest's `function` may resolve from (like `check_modules`), the per-call timeout, and
+    # retention of evidence.
+    tool_modules: list[str] = []
+    tool_timeout_s: float = Field(default=10.0, gt=0)
+    retention: Retention = Retention()
+    evidence: EvidenceSettings = EvidenceSettings()
+    # design 6.6: a read source that cannot be probed names an operator-attested inventory instead (the reference
+    # is format-checked and logged; its hash is NOT compared with the page and nobody is verified to have signed),
+    # "<page>#<anchor> sha256:<64 hex>".
+    scope_inventory: dict[str, str] = {}
+    # K5: configured read sources (kind + settings), built and probed at start-up (design 6.6).
+    sources: dict[str, SourceConfig] = {}
+    # SHA-256 of each tool module's source file; required in pilot and prod, checked when listed.
+    tool_module_hashes: dict[str, str] = {}
+    executor_timeout_s: float = Field(
+        default=defaults.EXECUTOR_TIMEOUT_S, gt=0
+    )  # dev executor only
     root: Path
 
     @model_validator(mode="after")
     def _cross_checks(self) -> Config:
+        for source, ref in self.scope_inventory.items():
+            if not _inventory_ref_ok(ref):
+                raise ValueError(
+                    f"scope_inventory {source}: expected '<page>#<anchor> sha256:<64 hex digits>'"
+                )
         for d in self.backends.detector:  # llm_judge names a route
             if getattr(d, "route", None) is not None and d.route not in self.routes:
                 raise ValueError(f"backends.detector {d.kind}: unknown route {d.route!r}")

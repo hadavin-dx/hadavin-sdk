@@ -17,7 +17,7 @@ from hadavin_sdk.app import build
 from hadavin_sdk.approvals import FakeChannel
 from hadavin_sdk.approvals.receiver import MAX_BODY, handle_slack_action, serve
 from hadavin_sdk.approvals.slack_channel import SlackChannel, SlackError
-from hadavin_sdk.backends import make
+from hadavin_sdk.backends.factory import make
 from hadavin_sdk.backends.table import SlackSettings
 from hadavin_sdk.config import ConfigError
 from hadavin_sdk.models import ApprovalDecision, RunState
@@ -79,7 +79,14 @@ def _record(app, req, approver="user:a", verdict="approve"):
 
 
 def test_steps_order_and_summary_line_is_not_a_step(app, caplog):
-    assert [s.name for s in tick.STEPS] == ["sweep", "reconcile", "stuck", "checkpoint"]
+    assert [s.name for s in tick.STEPS] == [
+        "sweep",
+        "reconcile",
+        "stuck",
+        "checkpoint",
+        "purge_evidence",
+        "reprobe_sources",
+    ]
     caplog.set_level("INFO", logger="hadavin_sdk.tick")
     assert run_tick(app) == 0
     assert "tick ok=True failed=-" in caplog.text
@@ -546,7 +553,7 @@ def test_signing_headers_do_not_cross_channels():
 
 def test_audit_chain_build_reports_a_connection_failure_as_store_unavailable():
     from hadavin_sdk.audit import chain
-    from hadavin_sdk.backends import Deps
+    from hadavin_sdk.backends.factory import Deps
     from hadavin_sdk.store.protocol import StoreUnavailable
 
     class Down:

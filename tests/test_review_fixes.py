@@ -220,9 +220,9 @@ def test_hook_exceptions_end_in_a_final_state(cfg_dir, which):
     assert final.state == S.NEEDS_PERSON
 
 
-# contract.py: the supported keyword subset, as it is today (owner K5-core adds `identifier`; not here)
+# contract.py: the supported keyword subset (K5 added `identifier`, a boolean on string properties)
 @pytest.mark.parametrize(
-    "keyword", ["identifier", "format", "minimum", "maximum", "items", "oneOf", "$ref", "default"]
+    "keyword", ["format", "minimum", "maximum", "items", "oneOf", "$ref", "default"]
 )
 def test_schema_problems_rejects_keywords_outside_the_subset(keyword):
     from hadavin_sdk.actions.contract import schema_problems
@@ -247,3 +247,15 @@ def test_schema_problems_accepts_exactly_the_documented_subset():
         },
     }
     assert schema_problems(ok) == []
+
+
+def test_schema_problems_accepts_identifier_on_a_string_only():
+    from hadavin_sdk.actions.contract import schema_problems
+
+    assert schema_problems({"type": "string", "identifier": True}) == []
+    assert schema_problems({"type": "integer", "identifier": True}) == [
+        "input_schema: identifier must be a boolean (true only on a string property)"
+    ]
+    assert schema_problems({"type": "string", "identifier": "yes"}) == [
+        "input_schema: identifier must be a boolean (true only on a string property)"
+    ]
