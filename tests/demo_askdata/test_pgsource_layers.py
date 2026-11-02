@@ -157,7 +157,10 @@ def test_caps_row_cap_returns_exactly_max_rows(db):
 def test_caps_byte_cap_stops_wide_rows(db):
     result = PgSource(db.ro_dsn).run(
         "SELECT repeat('x', 100000) AS w FROM generate_series(1, 1000)",
-        limits=Limits(max_bytes=450_000),
+        # The default batch (200 rows of 100 KB = 20 MB per fetch) and the 10 s watchdog made this test depend on the
+        # machine's speed (9 of 10 solo runs failed on a loaded laptop, on main too). A small batch bounds the work
+        # per fetch, and the watchdog is not what is under test here (the test above covers it).
+        limits=Limits(max_bytes=450_000, batch=5, statement_timeout_s=120.0),
     )
     assert result.truncated and len(result.rows) == 4 and result.byte_count <= 450_000
 

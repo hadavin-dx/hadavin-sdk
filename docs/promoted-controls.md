@@ -4,7 +4,7 @@ These modules were promoted from a demo's reviews (core PR #50). All are vendor-
 
 ## `LeakPolicy` (`guard/egress_text.py`): one validated place for every threshold
 
-There is no default policy: `check_text(..., policy=)` is required, and a config section needs `profile: payments` or `profile: general` (`LeakPolicy.from_mapping`). `LeakPolicy()` (the table below) equals `LeakPolicy.payments()`, the strict profile. `LeakPolicy.general()` is for replies that carry order ids and phone numbers: `max_digits` 12, `max_total_digits` 12, `max_exempt_digits` 8, `max_dates` 2, `account_min_len` 14. **Guarantee, both presets:** fewer than 12 digits in total leave in one reply (plain digit-like characters + digits of set-aside amounts and references + 5 per date), so a card number (13 or more digits) cannot leave split across text, amounts and dates; `max_total_digits` can never exceed 12 (validated); a Luhn scan over the digit stream is a second line. The price: `general()` refuses any phone number with 12 or more digits (E.164 for India or the UK) unless the caller passes `allowed_patterns`; `payments()` refuses an order id of 8 digits or more. The defaults for `date_years` (2000-2099) and `currencies` (30 ISO codes) are payments-flavoured and `general()` inherits them: set them from config for another domain.
+There is no default policy: `check_text(..., policy=)` is required, and a config section needs `profile: payments` or `profile: general` (`LeakPolicy.from_mapping`). `LeakPolicy()` (the table below) equals `LeakPolicy.payments()`, the strict profile. `LeakPolicy.general()` is for replies that carry order ids and phone numbers: `max_digits` 12, `max_total_digits` 12, `max_exempt_digits` 8, `max_dates` 2, `account_min_len` 14. **Guarantee, both presets:** fewer than 12 digits in total leave in one reply (plain digit-like characters + digits of set-aside amounts and references + 5 per date), so a card number (13 or more digits) cannot leave split across text, amounts and dates; `max_total_digits` can never exceed 12 (validated); a Luhn scan over the digit stream is kept as an independent card test (it cannot fire through `check_text` while the budgets hold). The price: `general()` refuses any phone number with 12 or more digits (E.164 for India or the UK) unless the caller passes `allowed_patterns`; `payments()` refuses an order id of 8 digits or more. The defaults for `date_years` (2000-2099) and `currencies` (30 ISO codes) are payments-flavoured and `general()` inherits them: set them from config for another domain.
 
 | Field | Default (`payments()`) | Meaning |
 |---|---|---|
@@ -68,8 +68,10 @@ A demo that keeps a byte copy lists one row per file; `core_pr` is 50 until it m
 {"core_path": "src/hadavin_sdk/guard/textnorm.py",   "core_sha256": "<tests/fixtures/textnorm_manifest.json>", "core_pr": 50,
  "import_rewrite": [["hadavin_sdk.guard._confusables", "<demo package>.guard._confusables"]]}
 {"core_path": "src/hadavin_sdk/guard/_confusables.py", "core_sha256": "<manifest>", "core_pr": 50, "import_rewrite": []}
-{"core_path": "src/hadavin_sdk/guard/egress_text.py", "core_sha256": "<sha256>", "core_pr": 50,
+{"core_path": "src/hadavin_sdk/guard/egress_text.py", "core_sha256": "<manifest>", "core_pr": 50,
  "import_rewrite": [["hadavin_sdk.guard.textnorm", "<demo package>.guard.textnorm"]]}
+{"core_path": "src/hadavin_sdk/runtime/stop_gate.py", "core_sha256": "<manifest>", "core_pr": 50,
+ "import_rewrite": [["hadavin_sdk.models", "<demo package>.models"]]}
 {"core_path": "tests/fixtures/textnorm_vectors.json", "core_sha256": "<manifest>", "core_pr": 50, "import_rewrite": []}
 ```
 

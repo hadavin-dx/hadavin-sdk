@@ -70,7 +70,6 @@ M = [
         "if depth > MAX_DEPTH:",
         "if False:",
         "test_freeze_holds_real_configs",
-        allow_crash=True,
     ),
     Mutant(
         "view: tuples become lists",
@@ -84,7 +83,7 @@ M = [
         CV,
         "decimal.Decimal, ",
         "",
-        "test_freeze_holds_real_configs",
+        "cannot freeze a Decimal",
         allow_crash=True,
     ),
     Mutant(
@@ -107,7 +106,6 @@ M = [
         "if expect is not None and self._view.version != expect:",
         "if False:",
         "test_the_holder_view_is_one_immutable_pair",
-        allow_crash=True,
     ),
     Mutant(
         "view: swap does not count versions",
@@ -157,7 +155,7 @@ M = [
         SG,
         "except Exception as e:  # noqa: BLE001 - the process is already stopped; report that the durable write failed",
         "except KeyboardInterrupt as e:",
-        "test_engage_fails_closed",
+        "OSError: store down",
         allow_crash=True,
     ),
     Mutant(
@@ -186,7 +184,7 @@ M = [
         SG,
         "except Exception as e:  # noqa: BLE001 - per-item choke point",
         "except ZeroDivisionError as e:",
-        "test_one_failing_undo",
+        "RuntimeError: x",
         allow_crash=True,
     ),
     Mutant(
@@ -231,7 +229,6 @@ M = [
         'clean = copy_row(row) if op != "delete" else None  # validate and copy first',
         "clean = row",
         "test_the_row_store_meets_the_contract",
-        allow_crash=True,
     ),
     Mutant(
         "rowstore: int keys accepted",
@@ -252,7 +249,7 @@ M = [
         RS,
         "raise KeyPending(key)",
         "raise DuplicateKey(key)",
-        "test_a_key_behind_a_failing_audit",
+        "DuplicateKey",
         allow_crash=True,
     ),
     Mutant(
@@ -436,11 +433,11 @@ M = [
         "test_the_length_is_bounded_first",
     ),
     Mutant(
-        "egress: empty protected value skipped",
+        "egress: a non-text protected value skipped",
         EG,
         "if not isinstance(p, str) or not p:",
         "if False:",
-        "test_non_latin_and_short_protected",
+        "normalize() argument",
         allow_crash=True,
     ),
     Mutant(
@@ -448,7 +445,7 @@ M = [
         EG,
         "if not fv:",
         "if False:",
-        "test_non_latin_and_short_protected",
+        "IndexError",
         allow_crash=True,  # the empty word then crashes _word_hit (IndexError): still a refusal to run
     ),
     Mutant(
@@ -564,11 +561,11 @@ M = [
         "test_mixed_script_words_and_look_alike_pairs",
     ),
     Mutant(
-        "egress: unknown policy keys accepted",
+        "egress: unknown policy keys accepted (TypeError instead of ValueError: exception-type pin)",
         EG,
         "if unknown:\n            raise ValueError",
         "if False:\n            raise ValueError",
-        "test_thresholds_come_from_a_validated_policy",
+        "unexpected keyword argument",
         allow_crash=True,
     ),
     # judge, runner, contracts, gate
@@ -592,7 +589,6 @@ M = [
         "if expect is not None and len(expect) < 4:",
         "if False:",
         "test_mutation_judge_verdicts",
-        allow_crash=True,
     ),
     Mutant(
         "runner: crash counts as good",
@@ -1105,11 +1101,25 @@ M = [
         "test_the_runner_refuses_paths",
     ),
     Mutant(
-        "egress: one letter of an ordinary word counts",
+        "egress: the lone digit-like letter of a word counts",
         EG,
-        "                not tok_digits and tok_strong == 1\n",
-        "                False\n",
+        "        if not wd and tok_strong == 1 and wa > 1:\n",
+        "        if False:\n",
         "test_general_delivers_ids_up_to_eleven_digits",
+    ),
+    Mutant(
+        "egress: a word before the digits keeps its letter",
+        EG,
+        "            word_end()\n            wd = wa = 0\n",
+        "            wd = wa = 0\n",
+        "test_general_delivers_ids_up_to_eleven_digits",
+    ),
+    Mutant(
+        "egress: a bare one-character token is a word",
+        EG,
+        "tok_strong == 1 and wa > 1:",
+        "tok_strong == 1 and wa > 0:",
+        "test_weak_digit_look_alikes",
     ),
     Mutant(
         "egress: the docstring denies what the code counts",
@@ -1131,6 +1141,13 @@ M = [
         "            _kill_tree(proc)\n",
         "            proc.kill()\n",
         "test_a_timeout_kills_the_whole_process_tree",
+    ),
+    Mutant(
+        "runner: a failing tree kill is not caught",
+        MR,
+        "    except (OSError, subprocess.TimeoutExpired):\n        pass\n",
+        "    except ZeroDivisionError:\n        pass\n",
+        "test_a_failing_tree_kill_still_kills_the_child",
     ),
     Mutant(
         "table: the vendored data file differs from the pin",

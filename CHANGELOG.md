@@ -146,8 +146,8 @@
   (or pin core at PR #50 or later).
 - **Merge order and re-sync of the copies:** PR #49 (refunds) and this PR both edit this Unreleased section and share
   `guard/textnorm.py`. Merge #50 first. Every repository that keeps a byte copy (the demos, #49) re-copies, in one commit:
-  `guard/textnorm.py` (sha256 `576b4cba43c70666db9020f6d3cc3d309ca7fda34e52ff3fd687d42a9d9d1200`), the generated `guard/_confusables.py` (sha256 `41740c11734e2ec1e5a63f9325dffa04226c84f3b81b43c1b5c7e766f8a0ccfd`; `textnorm.py` imports it) and
-  `tests/fixtures/textnorm_vectors.json` (sha256 `1a1944708f7d1737588d7b02666620ceb308b0fe4a71ce2a312c4dc29113d349`); the same three hashes are pinned in `tests/fixtures/textnorm_manifest.json`.
+  `guard/textnorm.py` (sha256 `576b4cba43c70666db9020f6d3cc3d309ca7fda34e52ff3fd687d42a9d9d1200`), `guard/egress_text.py` (sha256 `1b537761d5dad60492ae2e930a9e26cd8daa1e343b7515b4f9cd32cab13a000e`; the digit counting changed in review rounds 4 to 6, a stale copy silently keeps the old counting), `runtime/stop_gate.py` (sha256 `4cac30f1fa22cf7158d87b6376fb865026c5d181e1cb399d9947a978cccb1f6d`; copy it with core's `limits.py` from the same core commit), the generated `guard/_confusables.py` (sha256 `41740c11734e2ec1e5a63f9325dffa04226c84f3b81b43c1b5c7e766f8a0ccfd`; `textnorm.py` imports it) and
+  `tests/fixtures/textnorm_vectors.json` (sha256 `1a1944708f7d1737588d7b02666620ceb308b0fe4a71ce2a312c4dc29113d349`); the same hashes (all but `limits.py`, which other PRs also edit) are pinned in `tests/fixtures/textnorm_manifest.json`. The consumers are every repository with a `core_copies.json` (dealdesk, refunds, apexc, intake).
   Then update the repository's `core_copies.json` rows (`core_path`, `core_sha256`, `import_rewrite`: `textnorm.py` imports
   `hadavin_sdk.guard._confusables`, `egress_text.py` imports `hadavin_sdk.guard.textnorm`) and adopt the new names: `safe_equal(a, b)` ->
   `allow_equal(a, b) is AllowVerdict.EQUAL` (`VARIANT` and `LOOKALIKE` refuse; `LOOKALIKE` is the audit alarm), `confusable_not_equal` is
@@ -174,7 +174,7 @@ modules below have no call site in this repository yet.
   (depends on the Python Unicode version). Tests pin the table, the manifest, a shared vector file and a property that every value is ASCII.
 - `guard/egress_text.py`: output check for text a person reads. Digit budget: plain digit-like characters, the digits of set-aside amounts
   and references, and 5 per date ADD UP and must stay below 12 in every preset (the shortest card number has 13); a Luhn scan over the digit
-  stream is the second line. Capped set-aside tokens, protected values (also short and non-Latin ones; CJK and Thai match as substrings),
+  stream is kept as an independent card test (it cannot fire through `check_text` while the budgets hold). Capped set-aside tokens, protected values (also short and non-Latin ones; CJK and Thai match as substrings),
   typed `Violation`s, validated `LeakPolicy`. **No default policy**: `check_text(..., policy=LeakPolicy.payments())` (strict) or
   `LeakPolicy.general()` (ids and phone numbers up to 11 digits; a phone with 12 or more digits needs `allowed_patterns`). Defaults
   table: `docs/promoted-controls.md`. Distinct from `guard/redact.py` (the input mask). Digit-like letters: O o I l L S s B Z z G Q count;

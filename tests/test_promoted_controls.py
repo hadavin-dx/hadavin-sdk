@@ -1852,7 +1852,7 @@ def test_weak_letters_glued_to_digits_count_but_a_prose_token_does_not():
     )
     assert (
         check_text("this is big 12345") is None
-        and egress_text._digitish_count("is big 12345", 6) == 6
+        and egress_text._digitish_count("is big 12345", 6) == 5
     )
     assert check_text("OlISBZGq") == Violation.DIGIT_BUDGET
 
@@ -1919,8 +1919,20 @@ def test_general_delivers_ids_up_to_eleven_digits_and_payments_keeps_order_numbe
     for text in (
         "id 12345678901 ok",
         "order 1234567890 of 5 orders",
+        "id is 12345678901",  # a word BEFORE the digits ends in a lone digit-like letter
+        "Total 12345678901",
+        "Tel 12345678901",
+        "was 12345678901",
+        "status 12345678901",
+        "Total: 12345678901 shipped",
     ):
         assert egress_text.check_text(text, policy=general) is None, text
+        assert egress_text._digitish_count(text, 6) == 11, text
+    # two or more digit-like letters in a word still count ("call", "soldiers"); a bare letter still counts
+    assert egress_text.check_text("call 12345678901", policy=general) == Violation.DIGIT_BUDGET
+    assert egress_text.check_text("12345678901ok", policy=general) == Violation.DIGIT_BUDGET
+    assert egress_text.check_text("12345678901 O", policy=general) == Violation.DIGIT_BUDGET
+    assert egress_text.check_text("Oats Ibex Sand Zeal", policy=payments) is None  # words are free
     assert egress_text.check_text("Order 1234567 shipped", policy=payments) is None
     assert egress_text._digitish_count("id 12345678901 ok", 6) == 11
     assert egress_text._digitish_count("Order 1234567 shipped", 6) == 7
@@ -1946,8 +1958,11 @@ def test_a_newline_or_tab_separates_words_in_the_mixed_script_check():
 
 def test_the_egress_docstring_states_what_the_code_counts():
     doc = egress_text.__doc__
-    assert "Residual: weak letters beside real digits" not in doc  # the code counts them
     assert "``1b5i7g3q`` both count as 8" in doc and "``id 12345678901 ok``" in doc
+    counted = egress_text._digitish_count
+    assert counted("1b5i7g3q", 6) == 8 and counted("OlISBZGq", 6) == 8  # what the sentence claims
+    assert "exactly ONE strong letter" in egress_text._digitish_count.__doc__
+    assert "acrostic" in egress_text._digitish_count.__doc__  # the human-decode residual is stated
     log = Path(__file__).resolve().parents[1] / "CHANGELOG.md"
     if log.exists():
         text = log.read_text(encoding="utf-8")
@@ -1993,6 +2008,29 @@ def _pid_alive(pid):
     return True
 
 
+def test_a_failing_tree_kill_still_kills_the_child(monkeypatch):
+    import subprocess
+    import sys
+
+    from tools import mutation_runner as mr
+
+    def boom(*a, **k):
+        raise FileNotFoundError("taskkill")
+
+    def denied(*a, **k):
+        raise PermissionError("killpg")
+
+    monkeypatch.setattr(mr.subprocess, "run", boom)
+    monkeypatch.setattr(mr.os, "killpg", denied, raising=False)
+    proc = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(600)"])
+    try:
+        mr._kill_tree(proc)
+        assert proc.poll() is not None
+    finally:
+        proc.kill()
+        proc.wait()
+
+
 def test_a_timeout_kills_the_whole_process_tree_not_only_pytest(tmp_path):
     import time
 
@@ -2023,29 +2061,6 @@ def test_a_timeout_kills_the_whole_process_tree_not_only_pytest(tmp_path):
             break
         time.sleep(0.2)
     assert not _pid_alive(pid), "the grandchild survived the timeout"
-
-
-def test_the_manifest_pins_the_files_a_demo_copies():
-    import hashlib
-
-    root = Path(__file__).resolve().parents[1]
-    manifest = json.loads((FIX / "textnorm_manifest.json").read_text(encoding="utf-8"))
-    for rel, sha in manifest["files"].items():
-        data = (root / rel).read_bytes().replace(b"\r\n", b"\n")
-        assert hashlib.sha256(data).hexdigest() == sha, (
-            rel,
-            "changed: re-sync the demos and update the manifest and the CHANGELOG",
-        )
-    assert set(manifest["files"]) == {
-        "src/hadavin_sdk/guard/textnorm.py",
-        "src/hadavin_sdk/guard/_confusables.py",
-        "tests/fixtures/textnorm_vectors.json",
-    }
-    log = root / "CHANGELOG.md"
-    if log.exists():  # the mutation copies do not carry it
-        assert manifest["files"]["src/hadavin_sdk/guard/_confusables.py"] in log.read_text(
-            encoding="utf-8"
-        )
 
 
 def test_the_generator_reproduces_the_checked_in_table_offline(tmp_path):
@@ -2082,3 +2097,29 @@ def test_check_text_runs_the_card_scan_last(monkeypatch):
     assert check_text("hello there") == Violation.CARD_NUMBER
     monkeypatch.setattr(egress_text, "_card_run", lambda stream: False)
     assert check_text("hello there") is None
+
+
+# last on purpose: a mutation of a pinned file must be judged by the test aimed at it, not by this hash pin
+def test_the_manifest_pins_the_files_a_demo_copies():
+    import hashlib
+
+    root = Path(__file__).resolve().parents[1]
+    manifest = json.loads((FIX / "textnorm_manifest.json").read_text(encoding="utf-8"))
+    for rel, sha in manifest["files"].items():
+        data = (root / rel).read_bytes().replace(b"\r\n", b"\n")
+        assert hashlib.sha256(data).hexdigest() == sha, (
+            rel,
+            "changed: re-sync the demos and update the manifest and the CHANGELOG",
+        )
+    assert set(manifest["files"]) == {
+        "src/hadavin_sdk/guard/textnorm.py",
+        "src/hadavin_sdk/guard/_confusables.py",
+        "src/hadavin_sdk/guard/egress_text.py",
+        "src/hadavin_sdk/runtime/stop_gate.py",
+        "tests/fixtures/textnorm_vectors.json",
+    }
+    log = root / "CHANGELOG.md"
+    if log.exists():  # the mutation copies do not carry it
+        text = log.read_text(encoding="utf-8")
+        for rel, sha in manifest["files"].items():
+            assert sha in text, rel  # the CHANGELOG re-copy list names every pinned hash

@@ -104,21 +104,24 @@ def _pytest(cwd: Path, tests: Sequence[str], junit: Path, timeout: float) -> int
 
 
 def _kill_tree(proc: subprocess.Popen[bytes]) -> None:
-    """Kill ``proc`` and everything it started (POSIX: its process group; Windows: ``taskkill /T``)."""
-    if os.name == "nt":
-        subprocess.run(  # noqa: S603  # nosec B603 B607 - fixed argv, the pid is our own child
-            ["taskkill", "/F", "/T", "/PID", str(proc.pid)],  # noqa: S607
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False, timeout=60,
-        )  # fmt: skip
-    else:
-        import signal
+    """Kill ``proc`` and everything it started (POSIX: its process group; Windows: ``taskkill /T``). A failing tree kill (no ``taskkill``
+    on the PATH, its own timeout, ``PermissionError`` from ``killpg``) never skips the kill of the child itself."""
+    try:
+        if os.name == "nt":
+            subprocess.run(  # noqa: S603  # nosec B603 B607 - fixed argv, the pid is our own child
+                ["taskkill", "/F", "/T", "/PID", str(proc.pid)],  # noqa: S607
+                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False, timeout=60,
+            )  # fmt: skip
+        else:
+            import signal
 
-        try:
             os.killpg(proc.pid, signal.SIGKILL)
-        except ProcessLookupError:
-            pass
-    proc.kill()  # the child itself, if the tree kill missed it
-    proc.wait()
+    # ProcessLookupError and PermissionError are OSErrors
+    except (OSError, subprocess.TimeoutExpired):
+        pass
+    finally:
+        proc.kill()  # the child itself, always
+        proc.wait()
 
 
 def run_mutants(

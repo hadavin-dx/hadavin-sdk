@@ -17,7 +17,7 @@ protected-value key.
 Set-aside tokens are not free, and the budgets ADD UP: a card number split into a plain part and an "amount" must not slip through.
 The set-aside amounts and references have their own budget (``max_exempt_tokens``, ``max_exempt_digits``, always below
 ``max_digits``), two of them side by side are refused, an amount counts only with a currency from ``LeakPolicy.currencies`` next to
-it, and ``max_total_digits`` (at most 12, below the shortest card number, and below ``2 * max_digits - 1``) caps the SUM of the plain digit-like characters, the digits of the
+it, and ``max_total_digits`` (at most 12, below the shortest card number, and at most ``2 x max_digits - 2``) caps the SUM of the plain digit-like characters, the digits of the
 set-aside amounts and references, and ``DATE_DIGITS`` (5) per date. A date is not free either: a valid date from the allowed years
 carries about 15 bits (4.6 decimal digits), so ``max_dates`` dates can still carry a few digits of an id; ``max_total_digits`` counts
 them. Residual: digits spelled as words, or written as numerals of a script the fold does not map (Chinese numerals, for example),
@@ -40,7 +40,7 @@ a ``LeakPolicy`` field (validated; ``LeakPolicy.from_mapping`` rejects unknown k
 
 There is NO default policy: ``check_text`` needs ``policy=``. ``LeakPolicy.payments()`` is the strict profile (fewer than 8 plain digits,
 fewer than 12 in total, 2000-2099 dates; it refuses an order id or a phone number of 8 digits or more); ``LeakPolicy.general()`` is for replies that
-legitimately carry ids and phone numbers (12-digit budget, 12 in total, 8 set-aside digits): a card number (13 or more digits) is refused in every preset, also when split across text, amounts and dates; the price is that a reply with a long id AND an amount AND a date is refused. Defaults table: ``docs/promoted-controls.md``.
+legitimately carry ids and phone numbers (fewer than 12 plain digit-like characters, fewer than 12 in total, at most 8 set-aside digits): a card number (13 or more digits) is refused in every preset, also when split across text, amounts and dates; the price is that a reply with a long id AND an amount AND a date is refused. Defaults table: ``docs/promoted-controls.md``.
 """
 
 from __future__ import annotations
@@ -192,7 +192,7 @@ class LeakPolicy:
 
     @classmethod
     def general(cls) -> LeakPolicy:
-        """For replies that carry order ids and phone numbers (up to 11 plain digits and 11 in total). Still refuses a
+        """For replies that carry order ids and phone numbers (fewer than 12 plain digit-like characters and fewer than 12 in total: ids up to 11 digits). Still refuses a
         13-digit card number split into pieces."""
         return cls(
             max_digits=12, max_total_digits=12, max_exempt_digits=8, max_dates=2, account_min_len=14
@@ -246,13 +246,18 @@ def _digitish_count(t: str, letter_run_min: int) -> int:
     """Digits plus digit-like letters. Characters are grouped into runs of digits and digit-like letters (separators are skipped, any
     other letter ends the run). In a run that holds a real digit every strong letter counts; a run of letters only counts once it holds at
     least ``letter_run_min`` strong letters (a fully letter-encoded account), so ordinary words made of such letters stay free. A
-    single digit-like letter in a separator-free token that has no digit and ends in another letter (the ``o`` of ``ok``, the ``s`` of
-    ``shipped``) is a word, not an encoded digit, and is not counted. Weak
+    separator-free token that has no digit, exactly ONE strong letter and any other ASCII letter (including a weak i b g q) is a word: its
+    strong letter is not counted, wherever it sits in the word (the ``o`` of ``ok``, the ``s`` of ``is``, the final ``l`` of ``Total``).
+    A bare one-character token (``O``, ``l``, ``S`` in ``8 O 1 l 5 S``) and any token with two or more strong letters (``soldiers``,
+    ``call``) still count. Words that merely begin with, or contain, one digit-like letter are therefore free (an acrostic of such words
+    carries about one character per word and a human can decode it: that residual is stated, the digit budget does not claim it).
+    Weak
     letters (lowercase i b g q) count when they sit in the same separator-free token as at least 2 digits or strong letters (``OlISBZGq``,
     ``1b5i7g3q``); a weak letter in a token of its own ("is big 12345") extends a letters-only run that already qualifies and never counts
     beside real digits."""
-    total, digits, strong, glued, loose = 0, 0, 0, 0, 0
+    total, digits, strong, glued, loose, wordy = 0, 0, 0, 0, 0, 0
     tok_cnt, tok_weak, tok_digits, tok_strong = 0, 0, 0, 0
+    wd, wa = 0, 0  # digits and ASCII letters of the whole separator-free token
 
     def flush() -> None:
         nonlocal glued, loose, tok_cnt, tok_weak, tok_digits, tok_strong
@@ -264,34 +269,48 @@ def _digitish_count(t: str, letter_run_min: int) -> int:
         tok_cnt, tok_weak, tok_digits, tok_strong = 0, 0, 0, 0
 
     def close() -> None:
-        nonlocal total, digits, strong, glued, loose
+        nonlocal total, digits, strong, glued, loose, wordy
         flush()
         if digits:
-            total += digits + strong + glued
+            total += (
+                digits + strong - wordy + glued
+            )  # a strong letter of a word is not an encoded digit
         elif strong >= letter_run_min:
-            total += strong + glued + loose
-        digits = strong = glued = loose = 0
+            total += (
+                strong + glued + loose
+            )  # a fully letter-encoded run: words inside it are not spared
+        digits = strong = glued = loose = wordy = 0
+
+    def word_end() -> None:
+        # the end of a token: no digit, exactly one strong letter and another ASCII letter: a word ("is", "Total", "Tel")
+        nonlocal wordy, tok_cnt
+        if not wd and tok_strong == 1 and wa > 1:
+            wordy += 1
+            tok_cnt = 0
 
     for ch in t:
         if ch.isdigit():
             digits += 1
             tok_cnt += 1
             tok_digits += 1
+            wd += 1
         elif ch in _DIGITISH:
             strong += 1
             tok_cnt += 1
             tok_strong += 1
+            wa += 1
         elif ch in _WEAK_DIGITISH:
             tok_weak += 1
+            wa += 1
         elif _SEPARATORS.fullmatch(ch):
+            word_end()
+            wd = wa = 0
             flush()
         else:
-            if (
-                not tok_digits and tok_strong == 1
-            ):  # one such letter in an ordinary word ("ok", "shipped"), not an encoded digit
-                strong -= 1
-                tok_cnt = 0
+            wa += 1
+            word_end()  # one strong letter then another letter ends the piece: a word ("ok", "shipped")
             close()
+    word_end()
     close()
     return total
 
