@@ -1634,7 +1634,9 @@ def test_a_mutant_that_loops_forever_times_out_instead_of_hanging_the_run(tmp_pa
     hang = Mutant(
         "hang", "src/pk/core.py", "return flag", "while True:\n        pass", "test_go_is_true"
     )
-    out = run_mutants(root, [hang], ["tests/test_core.py"], extra_dirs=(), timeout=60)
+    out = run_mutants(
+        root, [hang], ["tests/test_core.py"], extra_dirs=(), timeout=6, baseline_timeout=180
+    )
     assert out == [("hang", Verdict.ERROR, "TIMEOUT", False)]
 
 
@@ -1777,6 +1779,338 @@ def test_redact_masks_a_value_hidden_behind_look_alikes_on_the_line_and_leaves_o
     )  # only the hit line changes
 
 
+# ---- review round 5 (code-4): documented guarantees, newline in the script check, honest docs, process-tree kill -------------------------
+def test_general_delivers_ids_up_to_eleven_digits_and_payments_keeps_order_numbers_free():
+    general, payments = LeakPolicy.general(), LeakPolicy.payments()
+    for text in (
+        "id 12345678901 ok",
+        "order 1234567890 of 5 orders",
+        "id is 12345678901",  # a word BEFORE the digits ends in a lone digit-like letter
+        "Total 12345678901",
+        "Tel 12345678901",
+        "was 12345678901",
+        "status 12345678901",
+        "Total: 12345678901 shipped",
+    ):
+        assert egress_text.check_text(text, policy=general) is None, text
+        assert egress_text._digitish_count(text, 6) == 11, text
+    # two or more digit-like letters in a word still count ("call", "soldiers"); a bare letter still counts
+    assert (
+        egress_text.check_text("call 12345678901", policy=general) is None
+    )  # a word before the id is free
+    assert egress_text.check_text("12345678901s", policy=general) == Violation.DIGIT_BUDGET
+    assert egress_text.check_text("12345678901ok", policy=general) == Violation.DIGIT_BUDGET
+    assert egress_text.check_text("12345678901 O", policy=general) == Violation.DIGIT_BUDGET
+    assert egress_text.check_text("Oats Ibex Sand Zeal", policy=payments) is None  # words are free
+    assert egress_text.check_text("Order 1234567 shipped", policy=payments) is None
+    assert egress_text._digitish_count("id 12345678901 ok", 6) == 11
+    assert egress_text._digitish_count("Order 1234567 shipped", 6) == 7
+    # a real digit-like run is still counted, in both presets' fail-closed direction
+    assert egress_text.check_text("1b5i7g3q", policy=payments) == Violation.DIGIT_BUDGET
+    assert egress_text.check_text("OlISBZGq", policy=payments) == Violation.DIGIT_BUDGET
+    assert egress_text.check_text("id 12345678901 O l", policy=general) == Violation.DIGIT_BUDGET
+    assert egress_text.check_text("12345678901 OS", policy=general) == Violation.DIGIT_BUDGET
+    assert egress_text.check_text("8 O 1 l 5 S 7 b 3 i", policy=payments) == Violation.DIGIT_BUDGET
+
+
+def test_a_newline_or_tab_separates_words_in_the_mixed_script_check():
+    ru = "".join(map(chr, (0x43F, 0x440, 0x438, 0x432, 0x435, 0x442)))
+    ru_name = chr(0x418) + chr(0x43C) + chr(0x44F)
+    for sep in ("\n", "\t", "\r\n", chr(0x2028), "\x0b"):
+        assert not has_mixed_script("ab" + sep + ru), repr(sep)
+    assert not has_mixed_script("Name\t" + ru_name)
+    assert egress_text.check_text("Hello\n" + ru, policy=LeakPolicy.payments()) is None
+    # a zero-width space INSIDE a word still does not split it
+    assert has_mixed_script("ab" + chr(0x200B) + ru)
+    assert has_mixed_script("b" + chr(0x200B) + chr(0x13AA) + "nk")
+
+
+def test_the_egress_docstring_states_what_the_code_counts():
+    doc = egress_text.__doc__
+    counted = egress_text._digitish_count
+    assert counted("1b5i7g3q", 6) == 8 and counted("OlISBZGq", 6) == 8  # what the sentence claims
+    assert "``1b5i7g3q`` is 8" in doc and "MONOTONIC" in doc and "WHAT THIS DOES NOT STOP" in doc
+    assert "xl xl xl" in doc and "free text" in doc  # the rule-aware writer is named, not hidden
+    fn = counted.__doc__
+    for phrase in (
+        "MONOTONIC",
+        "FREE WORDS",
+        "WHOLE TEXT",
+        "WHAT THIS DOES NOT STOP",
+        "letter-only",
+    ):
+        assert phrase in fn, phrase
+    log = Path(__file__).resolve().parents[1] / "CHANGELOG.md"
+    if log.exists():
+        text = log.read_text(encoding="utf-8")
+        assert "refused by `payments()`" in text and "allowed by `general()`" in text
+        assert "What this does NOT" in text and "MONOTONIC" in text
+    docs = Path(__file__).resolve().parents[1] / "docs" / "promoted-controls.md"
+    if docs.exists():
+        dtext = docs.read_text(encoding="utf-8")
+        assert "what the check does and does NOT stop" in dtext and "`12345678901s`" in dtext
+        assert "five pinned files" in dtext and "three text-fold" not in dtext
+
+
+def test_a_second_engage_is_not_complete():
+    gate = StopGate()
+    started, hold = threading.Event(), threading.Event()
+
+    def items():
+        started.set()
+        hold.wait(10)
+        return []
+
+    t = threading.Thread(target=lambda: gate.engage(items, lambda k: "x", by="u"))
+    t.start()
+    assert started.wait(10)
+    try:
+        second = gate.engage(list, lambda k: "x", by="u")
+        assert second.already_sweeping and second.complete is False
+    finally:
+        hold.set()
+        t.join(10)
+
+
+def _pid_alive(pid):
+    import os
+    import subprocess
+
+    if os.name == "nt":
+        out = subprocess.run(  # noqa: S603
+            ["tasklist", "/FI", f"PID eq {pid}", "/NH"],  # noqa: S607
+            capture_output=True,
+            text=True,
+            check=False,
+        ).stdout
+        return str(pid) in out
+    try:
+        os.kill(pid, 0)
+    except OSError:
+        return False
+    return True
+
+
+def test_a_failing_tree_kill_still_kills_the_child(monkeypatch):
+    import subprocess
+    import sys
+
+    from tools import mutation_runner as mr
+
+    def boom(*a, **k):
+        raise FileNotFoundError("taskkill")
+
+    def denied(*a, **k):
+        raise PermissionError("killpg")
+
+    monkeypatch.setattr(mr.subprocess, "run", boom)
+    monkeypatch.setattr(mr.os, "killpg", denied, raising=False)
+    proc = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(600)"])
+    try:
+        mr._kill_tree(proc)
+        assert proc.poll() is not None
+    finally:
+        proc.kill()
+        proc.wait()
+
+
+def test_the_baseline_run_gets_its_own_timeout(tmp_path, monkeypatch):
+    from tools import mutation_runner as mr
+
+    root = tmp_path / "pkg"
+    (root / "src" / "pk").mkdir(parents=True)
+    (root / "tests").mkdir()
+    (root / "src" / "pk" / "core.py").write_text(
+        "def go(flag):\n    return flag\n", encoding="utf-8"
+    )
+    (root / "tests" / "test_core.py").write_text(
+        "def test_a():\n    assert True\n", encoding="utf-8"
+    )
+    seen = []
+
+    def fake(cwd, tests, junit, timeout):
+        seen.append(timeout)
+        return 0 if len(seen) == 1 else mr.TIMED_OUT
+
+    monkeypatch.setattr(mr, "_pytest", fake)
+    mut = Mutant("m", "src/pk/core.py", "return flag", "return not flag", "test_a_x")
+    out = run_mutants(
+        root, [mut], ["tests/test_core.py"], extra_dirs=(), timeout=7, baseline_timeout=111
+    )
+    assert seen == [111, 7] and out == [("m", Verdict.ERROR, "TIMEOUT", False)]
+    seen.clear()
+    run_mutants(root, [mut], ["tests/test_core.py"], extra_dirs=(), timeout=9)
+    assert seen == [9, 9]  # the baseline falls back to the mutant timeout
+
+
+def test_a_timeout_kills_the_whole_process_tree_not_only_pytest(tmp_path):
+    import time
+
+    root = tmp_path / "pkg"
+    (root / "src" / "pk").mkdir(parents=True)
+    (root / "tests").mkdir()
+    (root / "src" / "pk" / "__init__.py").write_text("", encoding="utf-8")
+    (root / "src" / "pk" / "core.py").write_text(
+        "def go(flag):\n    return flag\n", encoding="utf-8"
+    )
+    (root / "tests" / "test_core.py").write_text(
+        "from pk.core import go\n\ndef test_go_is_true():\n    assert go(True) is True\n",
+        encoding="utf-8",
+    )
+    pidfile = tmp_path / "pid.txt"
+    body = (
+        "import subprocess, sys, time\n"
+        "    c = subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(600)'])\n"
+        f"    open({str(pidfile)!r}, 'w').write(str(c.pid))\n"
+        "    time.sleep(600)"
+    )
+    spawn = Mutant("spawn", "src/pk/core.py", "return flag", body, "test_go_is_true")
+    out = run_mutants(
+        root, [spawn], ["tests/test_core.py"], extra_dirs=(), timeout=30, baseline_timeout=180
+    )
+    assert out == [("spawn", Verdict.ERROR, "TIMEOUT", False)]
+    pid = int(pidfile.read_text(encoding="utf-8"))
+    for _ in range(50):
+        if not _pid_alive(pid):
+            break
+        time.sleep(0.2)
+    assert not _pid_alive(pid), "the grandchild survived the timeout"
+
+
+def test_the_generator_reproduces_the_checked_in_table_offline(tmp_path):
+    import importlib.util
+    import unicodedata
+
+    from hadavin_sdk.guard import _confusables
+
+    root = Path(__file__).resolve().parents[1]
+    spec = importlib.util.spec_from_file_location(
+        "gen_confusables2", root / "tools" / "gen_confusables.py"
+    )
+    gen = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(gen)
+    data = (root / "tools" / "data" / "confusables.txt").read_bytes()
+    assert (
+        gen.DEFAULT_INPUT.read_bytes() == data
+    )  # the generator reads the vendored file by default
+    import hashlib
+
+    assert (
+        hashlib.sha256(data).hexdigest() == gen.PINNED_SHA256 == _confusables.DATA_SHA256
+    )  # the vendored file is the pinned one
+    if unicodedata.unidata_version != _confusables.DATA_UNICODEDATA:
+        pytest.skip(
+            "the small-capital rule reads this interpreter's character names: regenerate only on Unicode "
+            + _confusables.DATA_UNICODEDATA
+        )
+    assert gen.build(data.decode("utf-8")) == _confusables.TABLE
+
+
+def test_check_text_runs_the_card_scan_last(monkeypatch):
+    monkeypatch.setattr(egress_text, "_card_run", lambda stream: True)
+    assert check_text("hello there") == Violation.CARD_NUMBER
+    monkeypatch.setattr(egress_text, "_card_run", lambda stream: False)
+    assert check_text("hello there") is None
+
+
+# ---- review round 6 (code-6): a monotonic count, caps on free words, a whole-text reading ---------------------------------------------
+_MONO_TOKENS = [
+    "4", "12", "5551234567", "O", "l", "S", "I", "b", "q", "Ib", "Ob", "Sb", "is", "Gq", "Ol", "IS", "BZ", "call", "Hello", "Total", "xl",
+    "x", "lllll", "lllllx", "boss", "big", "12345678901s", "1b5i7g3q", "Zeal", "id", "a", "to", "SOS", "oil", "OlISBZGq", "9",
+]  # fmt: skip
+
+
+def test_the_digit_like_count_is_monotonic_under_appended_tokens():
+    import random
+
+    rng = random.Random(20261102)  # noqa: S311 - a seeded test generator, not a secret
+    for _ in range(3000):
+        run_min = rng.choice((3, 6, 6, 6))
+        free_run, free_text = rng.choice(((2, 2), (2, 4), (0, 0), (1, 3), (5, 9)))
+        text, prev = "", 0
+        for _ in range(rng.randint(1, 16)):
+            text = (text + rng.choice(" -,.:;/") + rng.choice(_MONO_TOKENS)).strip(" -,.:;/")
+            n = egress_text._digitish_count(text, run_min, free_run, free_text)
+            assert n >= prev, (text, run_min, free_run, free_text, prev, n)
+            prev = n
+
+
+def test_padding_and_splitting_cannot_hide_a_letter_encoded_number():
+    payments, general = LeakPolicy.payments(), LeakPolicy.general()
+    refused = (
+        "4 " + " ".join(["Ib"] * 15),
+        "Ob Ib Sb Zb Bb Lb 5",
+        "4 x lllll x lllll x lllll",
+        "4 lllllx lllllx lllllx",
+        "4 " + " ".join(["Ol"] * 8),
+    )
+    for text in refused:
+        assert egress_text.check_text(text, policy=payments) == Violation.DIGIT_BUDGET, text
+        assert egress_text.check_text(text, policy=general) == Violation.DIGIT_BUDGET, text
+    assert egress_text.check_text("Ol IS BZ Gq 5", policy=payments) == Violation.DIGIT_BUDGET
+    count = egress_text._digitish_count
+    assert count("Ol IS BZ Gq 5", 6) >= count("Ol IS BZ Gq", 6) == 8  # a digit never lowers a count
+    assert count("Ob Ib Sb Zb Bb Lb 5", 6) >= count("Ob Ib Sb Zb Bb Lb", 6) == 12
+    assert count("4 " + " ".join(["Ib"] * 15), 6) > count(" ".join(["Ib"] * 15), 6) - 1
+    # prose stays free: no digit, no whole-text reading
+    assert egress_text.check_text("BLISS and a GLOSS finish on the SOIL", policy=payments) is None
+    assert egress_text.check_text("Oats Ibex Sand Zeal", policy=payments) is None
+
+
+def test_ordinary_words_before_a_phone_or_an_id_are_free_up_to_the_caps():
+    general, payments = LeakPolicy.general(), LeakPolicy.payments()
+    for text in (
+        "call 5551234567",
+        "Hello 5551234567",
+        "will 5551234567",
+        "tell 5551234567",
+        "CALL 5551234567",
+        "all 5551234567",
+        "still 5551234567",
+        "Tel: 5551234567 was",
+    ):
+        assert egress_text.check_text(text, policy=general) is None, text
+    # the documented price: a letter glued to the digits counts, so an 11-digit id with a suffix is refused
+    for text in ("12345678901s", "12345678901st"):
+        assert egress_text.check_text(text, policy=general) == Violation.DIGIT_BUDGET, text
+    # caps: the third and later words in one run count, and a policy can switch the rule off
+    many = "is is is 5551234567"
+    assert egress_text._digitish_count(many, 6, 2, 9) == 11  # two free, the third counts
+    assert egress_text._digitish_count(many, 6, 0, 0) == 13
+    two_runs = "is 5551234 x is 5551234"  # the cap over the whole text: the second run gets none
+    assert egress_text._digitish_count(two_runs, 6, 2, 1) == 15
+    assert egress_text._digitish_count(two_runs, 6, 2, 2) == 14
+    off = LeakPolicy.from_mapping({"profile": "general", "max_free_words": 0})
+    assert egress_text.check_text("id is 12345678901", policy=off) == Violation.DIGIT_BUDGET
+    assert (
+        payments.max_free_words_run == 2
+        and payments.max_free_words == 2
+        and general.max_free_words == 4
+    )
+    for bad in ({"max_free_words_run": -1}, {"max_free_words": True}, {"max_free_words": 51}):
+        with pytest.raises(ValueError):
+            LeakPolicy(**bad)
+
+
+def test_a_store_error_reports_the_class_name_only_and_no_store_reports_nothing_written():
+    class Boom:
+        audit = None
+
+        def stop(self, by, source="cli"):
+            raise OSError("host=db.internal user=svc password=hunter2")
+
+        def reset(self, by, source="cli"):
+            pass
+
+        def is_stopped(self):
+            return False
+
+    res = StopGate(Boom()).engage(list, lambda k: "x", by="u")
+    assert res.durable is False and res.store_error == "OSError"
+    assert "hunter2" not in repr(res)
+    assert StopGate().engage(list, lambda k: "x", by="u").durable is None
+
+
 def test_weak_digit_look_alikes_count_inside_a_qualified_run_but_prose_stays_free():
     for text in (
         "OlISBZGq",
@@ -1913,192 +2247,6 @@ def test_redact_leaves_an_existing_placeholder_on_a_non_ascii_line_alone():
 
     r = redact("mail alice@example.com and caf" + chr(0xE9))
     assert r.text == "mail <EMAIL_1> and caf" + chr(0xE9) and list(r.mapping) == ["<EMAIL_1>"]
-
-
-# ---- review round 5 (code-4): documented guarantees, newline in the script check, honest docs, process-tree kill -------------------------
-def test_general_delivers_ids_up_to_eleven_digits_and_payments_keeps_order_numbers_free():
-    general, payments = LeakPolicy.general(), LeakPolicy.payments()
-    for text in (
-        "id 12345678901 ok",
-        "order 1234567890 of 5 orders",
-        "id is 12345678901",  # a word BEFORE the digits ends in a lone digit-like letter
-        "Total 12345678901",
-        "Tel 12345678901",
-        "was 12345678901",
-        "status 12345678901",
-        "Total: 12345678901 shipped",
-    ):
-        assert egress_text.check_text(text, policy=general) is None, text
-        assert egress_text._digitish_count(text, 6) == 11, text
-    # two or more digit-like letters in a word still count ("call", "soldiers"); a bare letter still counts
-    assert egress_text.check_text("call 12345678901", policy=general) == Violation.DIGIT_BUDGET
-    assert egress_text.check_text("12345678901ok", policy=general) == Violation.DIGIT_BUDGET
-    assert egress_text.check_text("12345678901 O", policy=general) == Violation.DIGIT_BUDGET
-    assert egress_text.check_text("Oats Ibex Sand Zeal", policy=payments) is None  # words are free
-    assert egress_text.check_text("Order 1234567 shipped", policy=payments) is None
-    assert egress_text._digitish_count("id 12345678901 ok", 6) == 11
-    assert egress_text._digitish_count("Order 1234567 shipped", 6) == 7
-    # a real digit-like run is still counted, in both presets' fail-closed direction
-    assert egress_text.check_text("1b5i7g3q", policy=payments) == Violation.DIGIT_BUDGET
-    assert egress_text.check_text("OlISBZGq", policy=payments) == Violation.DIGIT_BUDGET
-    assert egress_text.check_text("id 12345678901 O l", policy=general) == Violation.DIGIT_BUDGET
-    assert egress_text.check_text("12345678901 OS", policy=general) == Violation.DIGIT_BUDGET
-    assert egress_text.check_text("8 O 1 l 5 S 7 b 3 i", policy=payments) == Violation.DIGIT_BUDGET
-
-
-def test_a_newline_or_tab_separates_words_in_the_mixed_script_check():
-    ru = "".join(map(chr, (0x43F, 0x440, 0x438, 0x432, 0x435, 0x442)))
-    ru_name = chr(0x418) + chr(0x43C) + chr(0x44F)
-    for sep in ("\n", "\t", "\r\n", chr(0x2028), "\x0b"):
-        assert not has_mixed_script("ab" + sep + ru), repr(sep)
-    assert not has_mixed_script("Name\t" + ru_name)
-    assert egress_text.check_text("Hello\n" + ru, policy=LeakPolicy.payments()) is None
-    # a zero-width space INSIDE a word still does not split it
-    assert has_mixed_script("ab" + chr(0x200B) + ru)
-    assert has_mixed_script("b" + chr(0x200B) + chr(0x13AA) + "nk")
-
-
-def test_the_egress_docstring_states_what_the_code_counts():
-    doc = egress_text.__doc__
-    assert "``1b5i7g3q`` both count as 8" in doc and "``id 12345678901 ok``" in doc
-    counted = egress_text._digitish_count
-    assert counted("1b5i7g3q", 6) == 8 and counted("OlISBZGq", 6) == 8  # what the sentence claims
-    assert "exactly ONE strong letter" in egress_text._digitish_count.__doc__
-    assert "acrostic" in egress_text._digitish_count.__doc__  # the human-decode residual is stated
-    log = Path(__file__).resolve().parents[1] / "CHANGELOG.md"
-    if log.exists():
-        text = log.read_text(encoding="utf-8")
-        assert "refused by `payments()`" in text and "allowed by `general()`" in text
-
-
-def test_a_second_engage_is_not_complete():
-    gate = StopGate()
-    started, hold = threading.Event(), threading.Event()
-
-    def items():
-        started.set()
-        hold.wait(10)
-        return []
-
-    t = threading.Thread(target=lambda: gate.engage(items, lambda k: "x", by="u"))
-    t.start()
-    assert started.wait(10)
-    try:
-        second = gate.engage(list, lambda k: "x", by="u")
-        assert second.already_sweeping and second.complete is False
-    finally:
-        hold.set()
-        t.join(10)
-
-
-def _pid_alive(pid):
-    import os
-    import subprocess
-
-    if os.name == "nt":
-        out = subprocess.run(  # noqa: S603
-            ["tasklist", "/FI", f"PID eq {pid}", "/NH"],  # noqa: S607
-            capture_output=True,
-            text=True,
-            check=False,
-        ).stdout
-        return str(pid) in out
-    try:
-        os.kill(pid, 0)
-    except OSError:
-        return False
-    return True
-
-
-def test_a_failing_tree_kill_still_kills_the_child(monkeypatch):
-    import subprocess
-    import sys
-
-    from tools import mutation_runner as mr
-
-    def boom(*a, **k):
-        raise FileNotFoundError("taskkill")
-
-    def denied(*a, **k):
-        raise PermissionError("killpg")
-
-    monkeypatch.setattr(mr.subprocess, "run", boom)
-    monkeypatch.setattr(mr.os, "killpg", denied, raising=False)
-    proc = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(600)"])
-    try:
-        mr._kill_tree(proc)
-        assert proc.poll() is not None
-    finally:
-        proc.kill()
-        proc.wait()
-
-
-def test_a_timeout_kills_the_whole_process_tree_not_only_pytest(tmp_path):
-    import time
-
-    root = tmp_path / "pkg"
-    (root / "src" / "pk").mkdir(parents=True)
-    (root / "tests").mkdir()
-    (root / "src" / "pk" / "__init__.py").write_text("", encoding="utf-8")
-    (root / "src" / "pk" / "core.py").write_text(
-        "def go(flag):\n    return flag\n", encoding="utf-8"
-    )
-    (root / "tests" / "test_core.py").write_text(
-        "from pk.core import go\n\ndef test_go_is_true():\n    assert go(True) is True\n",
-        encoding="utf-8",
-    )
-    pidfile = tmp_path / "pid.txt"
-    body = (
-        "import subprocess, sys, time\n"
-        "    c = subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(600)'])\n"
-        f"    open({str(pidfile)!r}, 'w').write(str(c.pid))\n"
-        "    time.sleep(600)"
-    )
-    spawn = Mutant("spawn", "src/pk/core.py", "return flag", body, "test_go_is_true")
-    out = run_mutants(root, [spawn], ["tests/test_core.py"], extra_dirs=(), timeout=60)
-    assert out == [("spawn", Verdict.ERROR, "TIMEOUT", False)]
-    pid = int(pidfile.read_text(encoding="utf-8"))
-    for _ in range(50):
-        if not _pid_alive(pid):
-            break
-        time.sleep(0.2)
-    assert not _pid_alive(pid), "the grandchild survived the timeout"
-
-
-def test_the_generator_reproduces_the_checked_in_table_offline(tmp_path):
-    import importlib.util
-    import unicodedata
-
-    from hadavin_sdk.guard import _confusables
-
-    root = Path(__file__).resolve().parents[1]
-    spec = importlib.util.spec_from_file_location(
-        "gen_confusables2", root / "tools" / "gen_confusables.py"
-    )
-    gen = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(gen)
-    data = (root / "tools" / "data" / "confusables.txt").read_bytes()
-    assert (
-        gen.DEFAULT_INPUT.read_bytes() == data
-    )  # the generator reads the vendored file by default
-    import hashlib
-
-    assert (
-        hashlib.sha256(data).hexdigest() == gen.PINNED_SHA256 == _confusables.DATA_SHA256
-    )  # the vendored file is the pinned one
-    if unicodedata.unidata_version != _confusables.DATA_UNICODEDATA:
-        pytest.skip(
-            "the small-capital rule reads this interpreter's character names: regenerate only on Unicode "
-            + _confusables.DATA_UNICODEDATA
-        )
-    assert gen.build(data.decode("utf-8")) == _confusables.TABLE
-
-
-def test_check_text_runs_the_card_scan_last(monkeypatch):
-    monkeypatch.setattr(egress_text, "_card_run", lambda stream: True)
-    assert check_text("hello there") == Violation.CARD_NUMBER
-    monkeypatch.setattr(egress_text, "_card_run", lambda stream: False)
-    assert check_text("hello there") is None
 
 
 # last on purpose: a mutation of a pinned file must be judged by the test aimed at it, not by this hash pin

@@ -84,8 +84,9 @@ class EngageResult:
     )
     in_flight_at_timeout: int = 0
     # True: ``Limits.stop`` returned. False: it raised (the gate is engaged anyway); the switch may still be on if the failure came after
-    # the switch write (the audit step), so read ``durable_on()``. None: another engage owns the sweep and this call wrote nothing.
-    durable: bool | None = True
+    # the switch write (the audit step), so read ``durable_on()``. None: nothing was written by this call (the gate has no ``Limits`` store,
+    # or another engage owns the sweep).
+    durable: bool | None = None
     store_error: str | None = None
     already_sweeping: bool = False  # another engage owns the sweep; nothing was undone here (so ``complete`` is False for this call)
 
@@ -227,8 +228,10 @@ class StopGate:
             if self._limits is not None:
                 try:
                     self._limits.stop(_label(by), source="gate")
+                    res.durable = True
                 except Exception as e:  # noqa: BLE001 - the process is already stopped; report that the durable write failed
-                    res.durable, res.store_error = False, f"{type(e).__name__}: {e}"[:200]
+                    # the class name only: a driver message can carry a host, a user or a DSN piece
+                    res.durable, res.store_error = False, type(e).__name__
                     self._audit_stop_failed(by, type(e).__name__)
             own = self._own()  # effects THIS thread or task has open do not block its own engage
             with self._cond:

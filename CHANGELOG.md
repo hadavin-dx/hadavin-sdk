@@ -146,7 +146,7 @@
   (or pin core at PR #50 or later).
 - **Merge order and re-sync of the copies:** PR #49 (refunds) and this PR both edit this Unreleased section and share
   `guard/textnorm.py`. Merge #50 first. Every repository that keeps a byte copy (the demos, #49) re-copies, in one commit:
-  `guard/textnorm.py` (sha256 `576b4cba43c70666db9020f6d3cc3d309ca7fda34e52ff3fd687d42a9d9d1200`), `guard/egress_text.py` (sha256 `e4dd674fb9c390169a54cb1197c3c4dcee0c67dfd39ae78a5ca1fc1f5a27d5d8`; the digit counting changed in review rounds 4 to 6, a stale copy silently keeps the old counting), `runtime/stop_gate.py` (sha256 `4cac30f1fa22cf7158d87b6376fb865026c5d181e1cb399d9947a978cccb1f6d`; copy it with core's `limits.py` from the same core commit), the generated `guard/_confusables.py` (sha256 `41740c11734e2ec1e5a63f9325dffa04226c84f3b81b43c1b5c7e766f8a0ccfd`; `textnorm.py` imports it) and
+  `guard/textnorm.py` (sha256 `576b4cba43c70666db9020f6d3cc3d309ca7fda34e52ff3fd687d42a9d9d1200`), `guard/egress_text.py` (sha256 `d02095035008577f55fdee57071c269de1940d3b1c53cb615a11b979ca1fcabc`; the digit counting changed in review rounds 4 to 6, a stale copy silently keeps the old counting), `runtime/stop_gate.py` (sha256 `1582ff760560dcbdf769b444381b3038fcf67f3d7fece6e88ea07d147f2958e4`; copy it with core's `limits.py` from the same core commit), the generated `guard/_confusables.py` (sha256 `41740c11734e2ec1e5a63f9325dffa04226c84f3b81b43c1b5c7e766f8a0ccfd`; `textnorm.py` imports it) and
   `tests/fixtures/textnorm_vectors.json` (sha256 `1a1944708f7d1737588d7b02666620ceb308b0fe4a71ce2a312c4dc29113d349`); the same hashes (all but `limits.py`, which other PRs also edit) are pinned in `tests/fixtures/textnorm_manifest.json`. The consumers are every repository with a `core_copies.json` (dealdesk, refunds, apexc, intake).
   Then update the repository's `core_copies.json` rows (`core_path`, `core_sha256`, `import_rewrite`: `textnorm.py` imports
   `hadavin_sdk.guard._confusables`, `egress_text.py` imports `hadavin_sdk.guard.textnorm`) and adopt the new names: `safe_equal(a, b)` ->
@@ -180,9 +180,16 @@ modules below have no call site in this repository yet.
   table: `docs/promoted-controls.md`. Distinct from `guard/redact.py` (the input mask). Digit-like letters: O o I l L S s B Z z G Q count;
   the lowercase i b g q are WEAK (prose such as "big issue") and count only in a token with 2 or more digits or strong letters, or inside a
   letters-only run with 6 strong letters, so `OlISBZGq` and `1b5i7g3q` (8 digit-like characters each) are refused by `payments()` (limit 8)
-  and allowed by `general()` (8 is below 12, the same as plain 12345678); a weak letter in a token of its own ("is big 12345") never
-  counts beside digits, and a single digit-like letter inside an ordinary word without a digit (the `o` of `ok`, the `s` of `shipped`) is
-  not counted, so `general()` lets `id 12345678901 ok` through. The Luhn scan over the digit stream cannot fire through `check_text` while the
+  and allowed by `general()` (8 is below 12, the same as plain 12345678). The count is MONOTONIC (appending a token never lowers it; a
+  fuzz test pins it) and is the larger of a per-run reading and a whole-text reading. Ordinary words are free in a run that holds a digit:
+  the strong letters of the first `max_free_words_run` (2) words, and at most `max_free_words` (2; `general()` 4) words in the whole text
+  (new `LeakPolicy` fields), so `general()` lets `id is 12345678901`, `Total 12345678901` and `call 5551234567` through, while
+  `4 Ib Ib Ib ...` and `Ob Ib Sb Zb Bb Lb 5` are refused (the review-6 blocker: the earlier deferred word rule let a letter-encoded card
+  through once one digit was appended). A letter glued to a digit (`12345678901s`) counts. In a text with a real digit, strong letters of
+  digit-like tokens (`lllll`, `lllllx`) are counted over the whole text, so `4 x lllll x lllll x lllll` is refused. **What this does NOT
+  stop:** a writer who knows the rules can hide digits as single letters inside ordinary-looking words (`xl xl xl`), spell digits as words,
+  use unmapped numerals, or split a digit-free letter number with filler letters; it is a heuristic against copied, formatted or leaked
+  numbers, not a proof; use structured fields for anything that must not leave. The Luhn scan over the digit stream cannot fire through `check_text` while the
   budgets hold (it is an independent card test, tested directly). `has_mixed_script` treats a newline or tab as a word break; its script
   list is curated (see its docstring), not the full UTS #39 script-extension data.
 - `runtime/config_view.py`: deep-frozen views (accident-proofing, not a sandbox), one immutable `ConfigView`, `ConfigHolder.swap(expect=)`,

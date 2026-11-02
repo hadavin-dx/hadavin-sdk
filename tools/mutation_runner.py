@@ -63,6 +63,7 @@ def _inside(base: Path, rel: str) -> Path:
 
 
 TIMED_OUT = -9  # returned instead of an exit code when the run exceeded its timeout
+TREE_KILL_TIMEOUT = 60.0  # seconds ``taskkill`` may take before the child itself is killed anyway
 
 
 def _locate(base: Path, rel: str) -> Path:
@@ -110,7 +111,7 @@ def _kill_tree(proc: subprocess.Popen[bytes]) -> None:
         if os.name == "nt":
             subprocess.run(  # noqa: S603  # nosec B603 B607 - fixed argv, the pid is our own child
                 ["taskkill", "/F", "/T", "/PID", str(proc.pid)],  # noqa: S607
-                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False, timeout=60,
+                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False, timeout=TREE_KILL_TIMEOUT,
             )  # fmt: skip
         else:
             import signal
@@ -132,9 +133,11 @@ def run_mutants(
     extra_dirs: Sequence[str] = ("tests/fixtures",),
     only: Sequence[str] = (),
     timeout: float = 900.0,
+    baseline_timeout: float | None = None,
 ) -> list[tuple[str, Verdict, str, bool]]:
     """(name, verdict, failing test id, good). Raises ``RuntimeError`` if the unmutated copy fails or times out; a mutant run that exceeds
-    ``timeout`` seconds is ``(name, Verdict.ERROR, "TIMEOUT", False)``. Every ``tests`` and ``extra_dirs`` entry and every mutant file
+    ``timeout`` seconds is ``(name, Verdict.ERROR, "TIMEOUT", False)``. The unmutated baseline run gets ``baseline_timeout`` (default: ``timeout``),
+    so a test can use a short mutant timeout without failing a slow baseline. Every ``tests`` and ``extra_dirs`` entry and every mutant file
     must name a file inside its tree (``ValueError``)."""
     root = Path(root)
     for t in (*tests, *extra_dirs):
@@ -157,7 +160,7 @@ def run_mutants(
     out: list[tuple[str, Verdict, str, bool]] = []
     try:
         fresh()
-        if _pytest(tmp, tests, tmp / "base.xml", timeout) != 0:
+        if _pytest(tmp, tests, tmp / "base.xml", baseline_timeout or timeout) != 0:
             raise RuntimeError("the unmutated copy does not pass its tests")
         for m in mutants:
             if only and not any(o in m.name for o in only):

@@ -6,13 +6,19 @@ question: may this text carry an account, an id or a protected value?
 The rule is a digit budget, not a shape match. After the text is folded (``guard.textnorm``), dates, amounts and the references the
 caller allows are set aside; what is left may hold fewer than ``max_digits`` digit-like characters IN TOTAL, wherever they sit and
 whatever lies between them (separators, letters, look-alikes, other scripts' digits). Digit-like LETTERS (O o I l L S s B Z z, capital
-G and Q) count when they sit in a run with a real digit (``8 O 1 l 5 S``) or form a letter-only run of ``letter_run_min`` or more
-(``OlISBZGQ``). A single digit-like letter inside an ordinary word that holds no digit (the ``o`` of ``ok``, the ``s`` of ``shipped``)
-is NOT counted: ``id 12345678901 ok`` has 11 digit-like characters, not 12. The lowercase i, b, g, q ("big issue", "is") are WEAK letters:
-they never start a run and never qualify one. They count when they sit in the same separator-free token as at least 2 digits or strong
-letters, so ``OlISBZGq`` and ``1b5i7g3q`` both count as 8 (``payments()`` refuses them, ``general()`` allows them like plain 12345678, as
-fewer than 12). Residual: runs with fewer than ``letter_run_min`` strong letters and no digit are not counted; they ARE folded in the
-protected-value key.
+G and Q: "strong") count when they sit in a run with a real digit (``8 O 1 l 5 S``), or form a letter-only run of ``letter_run_min`` or
+more (``OlISBZGQ``: then the weak letters i b g q of the run count too). The lowercase i, b, g, q ("big issue", "is") are WEAK: they
+never start a run and never qualify one; they count when they sit in a token with at least 2 digits or strong letters (``1b5i7g3q`` is 8).
+A run's count is the larger of its digit reading and its letter-only reading, and the whole count is MONOTONIC (appending a token never
+lowers it). Ordinary words are mostly free: in a run that holds a digit, the strong letters of the first ``max_free_words_run`` (2) words
+(a token with no digit and 1 to 3 strong letters plus another letter: ``call``, ``Hello``, ``Total``, ``is``) are not counted, and at
+most ``max_free_words`` (2; 4 in ``general()``) words are free in the whole text, so ``id is 12345678901`` and ``call 5551234567`` pass
+``general()`` while ``4 Ib Ib Ib ...`` does not. A letter glued to a digit (``12345678901s``) counts. A second reading counts, over the
+whole text, the real digits plus the strong letters of tokens made only of strong letters (``lllll``) or dense in them (``lllllx``), so
+``4 x lllll x lllll x lllll`` is refused. WHAT THIS DOES NOT STOP: someone who knows these rules can hide digits as letters inside
+ordinary-looking words (``xl xl xl``), as the same digits written as words, or as numerals of a script the fold does not map; it is a
+heuristic against copied, formatted or leaked numbers, not a proof. Anything that must not leave belongs in a structured field, not in
+free text.
 
 Set-aside tokens are not free, and the budgets ADD UP: a card number split into a plain part and an "amount" must not slip through.
 The set-aside amounts and references have their own budget (``max_exempt_tokens``, ``max_exempt_digits``, always below
@@ -140,6 +146,8 @@ class LeakPolicy:
     min_protected_len: int = 4
     min_protected_digits: int = 4
     letter_run_min: int = 6
+    max_free_words_run: int = 2
+    max_free_words: int = 2
     on_short: str = "token"
     account_min_len: int = 9
     deny_mixed_script: bool = True
@@ -181,6 +189,9 @@ class LeakPolicy:
         need(
             is_int(self.min_protected_digits, 2, 64), "min_protected_digits must be an int in 2..64"
         )
+        need(is_int(self.letter_run_min, 1, 64), "letter_run_min must be an int in 1..64")
+        need(is_int(self.max_free_words_run, 0, 20), "max_free_words_run must be an int in 0..20")
+        need(is_int(self.max_free_words, 0, 50), "max_free_words must be an int in 0..50")
         need(self.on_short in ("token", "raise"), 'on_short must be "token" or "raise"')
         need(is_int(self.account_min_len, 4, 64), "account_min_len must be an int in 4..64")
         need(type(self.deny_mixed_script) is bool, "deny_mixed_script must be a bool")
@@ -195,7 +206,12 @@ class LeakPolicy:
         """For replies that carry order ids and phone numbers (fewer than 12 plain digit-like characters and fewer than 12 in total: ids up to 11 digits). Still refuses a
         13-digit card number split into pieces."""
         return cls(
-            max_digits=12, max_total_digits=12, max_exempt_digits=8, max_dates=2, account_min_len=14
+            max_digits=12,
+            max_total_digits=12,
+            max_exempt_digits=8,
+            max_dates=2,
+            account_min_len=14,
+            max_free_words=4,
         )
 
     @classmethod
@@ -242,75 +258,116 @@ def _valid_date(y: int, m: int, d: int, years: tuple[int, int]) -> bool:
         return False
 
 
-def _digitish_count(t: str, letter_run_min: int) -> int:
-    """Digits plus digit-like letters. Characters are grouped into runs of digits and digit-like letters (separators are skipped, any
-    other letter ends the run). In a run that holds a real digit every strong letter counts; a run of letters only counts once it holds at
-    least ``letter_run_min`` strong letters (a fully letter-encoded account), so ordinary words made of such letters stay free. A
-    separator-free token that has no digit, exactly ONE strong letter and any other ASCII letter (including a weak i b g q) is a word: its
-    strong letter is not counted, wherever it sits in the word (the ``o`` of ``ok``, the ``s`` of ``is``, the final ``l`` of ``Total``).
-    A bare one-character token (``O``, ``l``, ``S`` in ``8 O 1 l 5 S``) and any token with two or more strong letters (``soldiers``,
-    ``call``) still count. Words that merely begin with, or contain, one digit-like letter are therefore free (an acrostic of such words
-    carries about one character per word and a human can decode it: that residual is stated, the digit budget does not claim it).
-    Weak
-    letters (lowercase i b g q) count when they sit in the same separator-free token as at least 2 digits or strong letters (``OlISBZGq``,
-    ``1b5i7g3q``); a weak letter in a token of its own ("is big 12345") extends a letters-only run that already qualifies and never counts
-    beside real digits."""
-    total, digits, strong, glued, loose, wordy = 0, 0, 0, 0, 0, 0
-    tok_cnt, tok_weak, tok_digits, tok_strong = 0, 0, 0, 0
-    wd, wa = 0, 0  # digits and ASCII letters of the whole separator-free token
+def _digitish_count(
+    t: str, letter_run_min: int, max_free_run: int = 2, max_free_text: int = 2
+) -> int:
+    """How many digit-like characters ``t`` carries: ``max(runs, whole text)``. MONOTONIC: appending a separator and any token never lowers
+    the result (a property test pins it), so padding, splitting or adding a digit cannot lower the count.
 
-    def flush() -> None:
-        nonlocal glued, loose, tok_cnt, tok_weak, tok_digits, tok_strong
-        # a token with 2 or more digits or strong letters is not a word like "is" or "this"
-        if tok_cnt >= 2:
-            glued += tok_weak
-        else:
-            loose += tok_weak
-        tok_cnt, tok_weak, tok_digits, tok_strong = 0, 0, 0, 0
+    RUNS. Characters are grouped into runs of digits and digit-like letters; separators are skipped, any other ASCII letter ends the run. A
+    run that holds a real digit counts its digits, its strong letters (O o I l L S s B Z z G Q) and the weak letters (i b g q) that sit in a
+    token with 2 or more digits or strong letters, MINUS the strong letters of at most ``max_free_run`` "words" (see below). A run WITHOUT a
+    digit counts only once it holds ``letter_run_min`` strong letters (a fully letter-encoded number): then it counts all of its letters,
+    weak ones included, and the free words do not apply. A run's count is the larger of the two readings, which is what keeps the count
+    monotonic (adding one digit to a letter-only run cannot lower it).
 
-    def close() -> None:
-        nonlocal total, digits, strong, glued, loose, wordy
-        flush()
-        if digits:
-            # a strong letter of a word is not an encoded digit
-            total += digits + strong - wordy + glued
-        elif strong >= letter_run_min:
-            # a fully letter-encoded run: words inside it are not spared
-            total += strong + glued + loose
-        digits = strong = glued = loose = wordy = 0
+    FREE WORDS. A token with no digit is a candidate word when it holds 1 to 3 strong letters and another ASCII letter (``call``,
+    ``Hello``, ``Total``, ``status``, ``shipped``), or exactly one strong letter and a weak one (``is``). In a run that holds a digit, the
+    strong letters of the first ``max_free_run`` candidate words of the run are not counted, and at most ``max_free_text`` words are free
+    in the WHOLE text (an order is fixed: the first words next to digits). So ``id is 12345678901`` and ``Total 12345678901`` stay under the
+    budget, and the leak is bounded: ``4 Ib Ib Ib ...`` counts everything past the cap. A letter glued to a digit (``12345678901s``) is part
+    of the number and counts.
 
-    def word_end() -> None:
-        # the end of a token: no digit, exactly one strong letter and another ASCII letter: a word ("is", "Total", "Tel")
-        nonlocal wordy, tok_cnt
-        if not wd and tok_strong == 1 and wa > 1:
-            wordy += 1
-            tok_cnt = 0
+    WHOLE TEXT. In a text that holds a real digit, the sum of the real digits and the strong letters of every token made only of strong
+    letters (``lllll``, ``Ol``, at least 2 characters) and of "dense" tokens (4 or more strong letters, a majority of the token:
+    ``lllllx``) is a second reading, so ``4 x lllll x lllll x lllll`` cannot be split into runs below the budget. A lone strong letter and
+    tokens with weak letters do not count here (``boss``, ``I``), and a text without any real digit has no whole-text reading (prose such
+    as ``BLISS and a GLOSS finish on the SOIL`` stays free; a digit-free letter number split by filler letters is NOT stopped).
 
+    WHAT THIS DOES NOT STOP. A writer who knows these rules can hide digits as letters inside ordinary-looking words (``xl xl xl``): this is
+    a heuristic against copied, formatted and accidentally leaked numbers, not a proof against an adversary. Use structured fields, not
+    free text, for anything that must not leave."""
+    total = 0
+    text_plain = text_letters = 0
+    free_left = max_free_text
+    r_digits = r_strong = r_glued = r_loose = 0
+    cands: list[int] = []  # strong letters of each candidate word piece in this run
+    tok_cnt = tok_weak = 0
+    tokens: list[str] = []
+    cur: list[str] = []
     for ch in t:
-        if ch.isdigit():
-            digits += 1
-            tok_cnt += 1
-            tok_digits += 1
-            wd += 1
-        elif ch in _DIGITISH:
-            strong += 1
-            tok_cnt += 1
-            tok_strong += 1
-            wa += 1
-        elif ch in _WEAK_DIGITISH:
-            tok_weak += 1
-            wa += 1
-        elif _SEPARATORS.fullmatch(ch):
-            word_end()
-            wd = wa = 0
-            flush()
+        if ch.isdigit() or (ch.isascii() and ch.isalpha()):
+            cur.append(ch)
+        elif cur:
+            tokens.append("".join(cur))
+            cur = []
+    if cur:
+        tokens.append("".join(cur))
+
+    def flush_piece() -> None:
+        nonlocal r_glued, r_loose, tok_cnt, tok_weak
+        # a piece with 2 or more digits or strong letters is not a word like "is" or "this"
+        if tok_cnt >= 2:
+            r_glued += tok_weak
         else:
-            wa += 1
-            word_end()  # one strong letter then another letter ends the piece: a word ("ok", "shipped")
-            close()
-    word_end()
-    close()
-    return total
+            r_loose += tok_weak
+        tok_cnt = tok_weak = 0
+
+    def close_run() -> None:
+        nonlocal total, r_digits, r_strong, r_glued, r_loose, free_left
+        flush_piece()
+        a = 0
+        if r_digits:
+            k = min(len(cands), max_free_run, free_left)
+            free_left -= k
+            a = r_digits + r_strong + r_glued - sum(cands[:k])
+        b = r_strong + r_glued + r_loose if r_strong >= letter_run_min else 0
+        total += max(a, b)
+        r_digits = r_strong = r_glued = r_loose = 0
+        cands.clear()
+
+    for tok in tokens:
+        d = sg = wk = ot = 0
+        for ch in tok:
+            if ch.isdigit():
+                d += 1
+            elif ch in _DIGITISH:
+                sg += 1
+            elif ch in _WEAK_DIGITISH:
+                wk += 1
+            else:
+                ot += 1
+        n = len(tok)
+        word = d == 0 and sg >= 1 and ((ot >= 1 and sg <= 3) or (ot == 0 and wk >= 1 and sg == 1))
+        if d:
+            text_plain += d + sg + (wk if d + sg >= 2 else 0)
+        elif (ot == 0 and wk == 0 and n >= 2) or (ot >= 1 and sg >= 4 and 2 * sg > n):
+            text_letters += sg
+        piece = 0
+        for ch in tok:
+            if ch.isdigit():
+                r_digits += 1
+                tok_cnt += 1
+            elif ch in _DIGITISH:
+                r_strong += 1
+                tok_cnt += 1
+                piece += 1
+            elif ch in _WEAK_DIGITISH:
+                if word:
+                    r_loose += 1  # a weak letter of a word never counts beside digits
+                else:
+                    tok_weak += 1
+            else:
+                if word and piece:
+                    cands.append(piece)
+                piece = 0
+                close_run()
+        if word and piece:
+            cands.append(piece)
+        flush_piece()
+    close_run()
+    # the letters of such tokens are counted over the whole text only once the text holds a real digit: prose such as "BLISS and a GLOSS" stays free
+    return max(total, text_plain + (text_letters if text_plain else 0))
 
 
 def _luhn_ok(digits: str) -> bool:
@@ -448,7 +505,9 @@ def check_text(
     t = t.replace(_MARK, " ")
     if _IBAN_GROUPS.search(t) or account_like.search(t):
         return Violation.ACCOUNT_SHAPED
-    plain = _digitish_count(t, policy.letter_run_min)
+    plain = _digitish_count(
+        t, policy.letter_run_min, policy.max_free_words_run, policy.max_free_words
+    )
     if (
         plain >= policy.max_digits
         or plain + exempt_digits + DATE_DIGITS * n_dates >= policy.max_total_digits
