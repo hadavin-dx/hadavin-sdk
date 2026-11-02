@@ -310,6 +310,7 @@ def test_review_a_raw_value_the_model_typed_never_reaches_the_plan_or_the_card(t
 # --- risk: the tool body and the fetch share one deadline ---------------------------------------------------------
 
 
+@pytest.mark.perf  # a wall-clock or CPU-time bound: it runs in the perf step, not the default suite
 def test_review_a_tool_body_that_hangs_is_abandoned_at_the_total_deadline(tmp_path):
     cfg = k5_cfg(
         tmp_path,

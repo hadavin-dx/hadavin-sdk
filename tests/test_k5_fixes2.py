@@ -19,19 +19,20 @@ from hadavin_sdk.guard import runmap
 from hadavin_sdk.models import RunState as S
 from hadavin_sdk.registry import load_registry
 from hadavin_sdk.store import migrate as mig
-from tests.k5_support import ScriptLLM, build_runtime, handle, k5_cfg
+from tests.k5_support import BigNormalises, ScriptLLM, build_runtime, handle, k5_cfg
 
 BS = chr(92)
 
 # --- M-A: the cap is on the work, not only on the input -------------------------------------------------------------------------------
 
 
-def test_the_reviewers_input_is_refused_fast():
-    """87,000 U+FDFA is under the input cap but its NFKC view is 1.5 million characters: it took 23.9 s before."""
-    t0 = time.perf_counter()
+def test_the_reviewers_input_is_refused_before_the_work(monkeypatch):
+    """87,000 U+FDFA is under the input cap but its NFKC view is 1.5 million characters: it took 23.9 s before. No
+    clock: the count of big normalisations is zero, so the refusal came first."""
+    big = BigNormalises(monkeypatch)
     with pytest.raises(runmap.InputTooLarge):
         runmap.redact_untrusted("ﷺ" * 87000, {})
-    assert time.perf_counter() - t0 < 3.0
+    assert big.calls == []
 
 
 def test_nothing_is_normalised_or_neutralised_before_the_size_check():
@@ -42,15 +43,15 @@ def test_nothing_is_normalised_or_neutralised_before_the_size_check():
         runmap.redact_text("ﷺ" * 87000, {}, neutralise=work_done)
 
 
-def test_an_escape_that_decodes_to_an_expanding_character_is_refused_fast():
+def test_an_escape_that_decodes_to_an_expanding_character_is_refused_before_the_work(monkeypatch):
     text = (
         BS + "ufdfa"
     ) * 40000  # 240,000 characters of escape; the unescaped view is 720,000 after NFKC
     assert len(text) < defaults.MAX_REDACT_CHARS
-    t0 = time.perf_counter()
+    big = BigNormalises(monkeypatch)
     with pytest.raises(runmap.InputTooLarge):
         runmap.redact_text(text, {})
-    assert time.perf_counter() - t0 < 3.0
+    assert big.calls == []
 
 
 def test_a_view_over_the_cap_is_refused_whatever_the_cap_is(monkeypatch):
@@ -181,6 +182,7 @@ def test_adjacent_variable_repeats_are_refused():
     )  # fixed repeats are free
 
 
+@pytest.mark.perf  # a wall-clock or CPU-time bound: it runs in the perf step, not the default suite
 def test_the_worst_allowed_suffix_is_fast_on_a_hostile_name():
     """Two overlapping variable repeats of 64 on a name that never matches: polynomial, and measured."""
     from hadavin_sdk.runtime import evidence

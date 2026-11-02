@@ -36,6 +36,19 @@ MAX_DOCUMENT_BYTES = (
 # "password=" 4.0 s, full-width 3.7 s, IP addresses 2.6 s, "password=" 1.4 s, 14,563 U+FDFA (a 262,000-character
 # view) 3.0 s. Size any timeout around ~8 s per call at the cap, not the 7 us per character a plain text costs.
 MAX_REDACT_CHARS = MAX_DOCUMENT_BYTES
+# The scrub of handed-out secrets in a tool result (`tools.prepare_output`); validated in `config.ScrubSettings`.
+SCRUB_TAIL_WINDOW = 256  # bytes looked back over for a place to cut that is not inside a token
+SCRUB_MIN_REDACTION_WINDOW = (
+    4096  # redaction always sees at least this much, whatever the tool's cap
+)
+SCRUB_MIN_SECRET = (
+    6  # a shorter secret would shred ordinary text if scrubbed: a tool is refused one
+)
+SCRUB_FRAGMENT_SCAN = (
+    4096  # how far back from a cut the strip looks for the front of a partial secret
+)
+SCRUB_FRAGMENT_MIN = 1  # characters of a secret's front that are removed next to a cut
+SCRUB_PARTIAL_END = 10  # the longest half-written escape a cut can leave; added to the look-back
 SOURCE_REPROBE_S = 3600  # how often the scope of a configured source is probed again while running
 MAX_TOOL_BYTES_PER_RUN = 262_144  # bytes of tool results one run may send to the model
 MAX_ABANDONED_TOOL_THREADS = (

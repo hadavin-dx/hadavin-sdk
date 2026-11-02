@@ -52,7 +52,7 @@ RESOURCES = [
 ASCII_SEPS = list(";,=()[]{}|<>\"'`!#$%^&*+? \t\n") + ["\r\n", " ;", ", ", ") ", "='"]
 ARN_LEGAL_SEPS = list("*+@-_./:") + ["*/", ":*", "@@"]
 INVISIBLE_SEPS = ["\u200b", "\u2060", "\ufeff", "\u00ad", "\u200d"]  # the NFKC step removes these
-UNICODE_SEPS = ["；", "，", "＝", "）", " ", " ", "　", "\u200b", "“"]
+UNICODE_SEPS = ["；", "，", "＝", "）", "\u2028", "\xa0", "\u3000", "\u200b", "“"]
 KEYS = [
     "token",
     "password",
@@ -145,7 +145,7 @@ def test_class_a_every_stored_kind_has_a_grammar_that_refuses_a_glued_secret(kin
         "PHONE": "+61 412 345 678",
     }[kind]
     assert runmap.storable_original(kind, ok), kind
-    for bad in (ok + HOSTILE, ok + "\n", ok + '"', ok + " x", f"{ok};{ok}", ""):
+    for bad in (ok + HOSTILE, ok + "\n", ok + '"', ok + "\u2028x", f"{ok};{ok}", ""):
         assert not runmap.storable_original(kind, bad), (kind, bad)
 
 
@@ -461,6 +461,7 @@ def test_class_mutability_tool_bodies_are_trusted_code_this_is_the_ceiling():
 # --- class: an abandoned worker must not keep the process alive -------------------------------------------------------
 
 
+@pytest.mark.perf  # a wall-clock or CPU-time bound: it runs in the perf step, not the default suite
 @pytest.mark.parametrize(
     "body", ["time.sleep(3600)", "threading.Event().wait()", "while True: pass"]
 )

@@ -10,6 +10,7 @@ import collections
 import random
 import time
 
+import pytest
 import sqlglot
 from askdata.validate import Rejected, validate
 
@@ -84,6 +85,7 @@ def run_fuzz(seed: int = SEED, cases: int = CASES):
     return stats, failures, accepted
 
 
+@pytest.mark.perf  # a wall-clock or CPU-time bound: it runs in the perf step, not the default suite
 def test_fuzz_2000_cases_hold_the_invariant():
     started = time.monotonic()
     stats, failures, _ = run_fuzz()

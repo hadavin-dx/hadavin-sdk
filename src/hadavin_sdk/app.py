@@ -326,6 +326,7 @@ def _build_source(
             https_ports=cfg.evidence.https_ports,
             cluster_ports=cfg.evidence.cluster_ports,
             cluster_suffixes=cfg.evidence.cluster_suffixes,
+            scrub=cfg.evidence.scrub,
             ssl_context=ssl_ctx,
             on_fetch=fetch_counter.note if fetch_counter else None,
         )
@@ -454,6 +455,7 @@ def _toolbox(
         https_ports=ev.https_ports,
         cluster_ports=ev.cluster_ports,
         cluster_suffixes=ev.cluster_suffixes,
+        scrub=ev.scrub,
         stored_kinds=frozenset(ev.stored_kinds),
         max_abandoned=ev.max_abandoned_tool_threads,
         max_concurrent=ev.max_concurrent_tool_calls,

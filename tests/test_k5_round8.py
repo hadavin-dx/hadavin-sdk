@@ -78,6 +78,7 @@ def test_every_redaction_pattern_is_linear_on_hostile_units():
     assert not slow, slow
 
 
+@pytest.mark.perf  # a wall-clock or CPU-time bound: it runs in the perf step, not the default suite
 def test_a_runaway_tool_result_is_cut_before_it_is_redacted():
     t0 = time.process_time()
     out = tools_mod.prepare_output("a." * 20_000, {}, 16_384)

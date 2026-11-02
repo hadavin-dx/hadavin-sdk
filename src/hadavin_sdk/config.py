@@ -27,6 +27,7 @@ __all__ = [
     "K1bSettings",
     "Retention",
     "Route",
+    "ScrubSettings",
     "SourceConfig",
     "confined",
     "load_config",
@@ -196,8 +197,24 @@ class Retention(_Strict):
         return self
 
 
+class ScrubSettings(_Strict):
+    """How a tool result is scrubbed of the secrets the tool was handed (`tools.prepare_output`). Defaults in
+    `hadavin_sdk/defaults.py`. Ranges keep a typo from switching the scrub off or making it quadratic."""
+
+    tail_window: int = Field(default=defaults.SCRUB_TAIL_WINDOW, ge=16, le=4096)
+    min_redaction_window: int = Field(
+        default=defaults.SCRUB_MIN_REDACTION_WINDOW, ge=1024, le=defaults.MAX_REDACT_CHARS
+    )
+    min_secret: int = Field(default=defaults.SCRUB_MIN_SECRET, ge=4, le=64)
+    fragment_scan: int = Field(default=defaults.SCRUB_FRAGMENT_SCAN, ge=64, le=16384)
+    fragment_min: int = Field(default=defaults.SCRUB_FRAGMENT_MIN, ge=1, le=8)
+    partial_end: int = Field(default=defaults.SCRUB_PARTIAL_END, ge=10, le=64)
+
+
 class EvidenceSettings(_Strict):
     """The read path's limits (K5). Defaults live in `hadavin_sdk/defaults.py`. Not part of `config_hash`."""
+
+    scrub: ScrubSettings = ScrubSettings()
 
     max_tool_errors: int = Field(default=defaults.MAX_TOOL_ERRORS, gt=0)
     legacy_max_output_bytes: int = Field(

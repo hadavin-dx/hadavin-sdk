@@ -17,6 +17,7 @@ def _redact_module():
 # --- B1: command-word documents are redacted in bounded time (the pattern sweep is in test_k5_perf.py) ----------------------------------------------------
 
 
+@pytest.mark.perf  # a wall-clock or CPU-time bound: it runs in the perf step, not the default suite
 @pytest.mark.parametrize(
     "word", ["curl", "mysql", "redis-cli", "sqlcmd", "ldapsearch", "htpasswd", "mongo"]
 )

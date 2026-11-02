@@ -116,15 +116,3 @@ def test_a_secret_with_an_astral_character_written_as_escapes_is_scrubbed_whole(
 def test_a_cut_at_every_offset_of_the_all_escapes_spelling_leaves_no_front(off):
     body = _cut_body(_json(ASTRAL), off, [ASTRAL, OTHER], _json(OTHER))
     assert body.endswith("." * 10), (off, repr(body[-14:]))
-
-
-# --- a documented limit, pinned (not a claim of protection) -----------------------------------------------------------------
-
-
-def test_a_cut_inside_a_base64_token_that_wraps_a_secret_leaves_the_token_front():
-    """The CHANGELOG lists this: only whole tokens are decoded and replaced."""
-    import base64
-
-    token = base64.b64encode(f"user:{ASCII}:x".encode()).decode()
-    body = _cut_body(token, 14, [ASCII], "")
-    assert body.endswith(token[:14])

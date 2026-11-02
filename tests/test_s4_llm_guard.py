@@ -206,6 +206,7 @@ def test_invalid_compact_timestamp_shape_is_still_masked():
 
 
 # P0 review (3): clean() terminates on adversarial nested input (the gate's fixed-point loop is bounded)
+@pytest.mark.perf  # a wall-clock or CPU-time bound: it runs in the perf step, not the default suite
 def test_clean_terminates_on_adversarial_nesting():
     import time
 

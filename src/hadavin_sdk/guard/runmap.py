@@ -218,7 +218,35 @@ def redact_untrusted(text: str, mapping: dict[str, str]) -> str:
     return redact_text(text, mapping, neutralise=neutralise_untrusted)
 
 
-_UNICODE_ESCAPE = re.compile(r"\\u([0-9a-fA-F]{4})")
+_JSON_ESCAPE = re.compile(r'\\(u[0-9a-fA-F]{4}|["\\/bfnrt])')
+_JSON_SIMPLE = {
+    '"': '"',
+    "\\": "\\",
+    "/": "/",
+    "b": "\b",
+    "f": "\f",
+    "n": "\n",
+    "r": "\r",
+    "t": "\t",
+}
+
+
+def json_unescape(text: str, simple: str = '"\\/bfnrt') -> str:
+    """The text with JSON string escapes undone: `\\uXXXX` (a valid surrogate pair becomes the one astral
+    character it spells; a lone half becomes U+FFFD) and the one-character escapes named in `simple`
+    (`\\/` is how PHP's json_encode writes every slash). One left-to-right pass, as JSON is read: `\\\\u0041`
+    is a backslash and `u0041`."""
+
+    def one(m: re.Match[str]) -> str:
+        g = m.group(1)
+        if g[0] == "u":
+            return chr(int(g[1:], 16))
+        return _JSON_SIMPLE[g] if g in simple else m.group(0)
+
+    out = _JSON_ESCAPE.sub(one, text)
+    if out.isascii():
+        return out
+    return out.encode("utf-16", "surrogatepass").decode("utf-16", "replace")
 
 
 class RunMap(dict):
@@ -241,7 +269,9 @@ def _clean(text: str) -> str:
 def _views(text: str) -> list[str]:
     """Other forms a secret can hide in: the canonical view (NFKC, invisible characters removed) and the same
     with JSON `\\uXXXX` escapes decoded. Only forms that differ from `text` are returned."""
-    unescaped = fits_after_nfkc(_UNICODE_ESCAPE.sub(lambda m: chr(int(m.group(1), 16)), text))
+    # `\\/` too (PHP writes every slash that way); `\\n` and the like are left alone here: a log line full of them
+    # would come back with real newlines whenever the second pass finds anything.
+    unescaped = fits_after_nfkc(json_unescape(text, simple="/"))
     out = []
     for view in (canonical(text), canonical(unescaped)):
         view = _clean(view)
@@ -280,7 +310,7 @@ def redact_text(
         text = fits_after_nfkc(_clean(text))
         if neutralise is not None:
             text = fits_after_nfkc(neutralise(text))
-        scan = not text.isascii() or "\\u" in text
+        scan = not text.isascii() or "\\u" in text or "\\/" in text
         views = _views(text) if scan else []  # _views refuses a view that would pass the cap
         cache = getattr(mapping, "redact_cache", None)
         result = redact(text, mapping=mapping, _cache=cache)

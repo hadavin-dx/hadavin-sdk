@@ -212,3 +212,21 @@ def build_runtime(
 
 def handle(rt: Runtime, document: bytes = b"checkout 5xx from 10.0.0.5, revision 17", **kw):
     return rt.handle("test-agent", "svc:test-agent", document, **kw)
+
+
+class BigNormalises:
+    """Counts NFKC/NFKD calls over a text longer than `floor` characters: the expensive step the size check must
+    come before. A count of zero proves the refusal happened BEFORE the work, with no clock involved."""
+
+    def __init__(self, monkeypatch, floor: int = 5000):
+        import unicodedata
+
+        self.calls: list[int] = []
+        real = unicodedata.normalize
+
+        def counting(form, text):
+            if len(text) > floor:
+                self.calls.append(len(text))
+            return real(form, text)
+
+        monkeypatch.setattr(unicodedata, "normalize", counting)

@@ -303,6 +303,7 @@ class Runtime:
             self._evidence.legacy_max_output_bytes,
             None,
             self._evidence.fetch_ceiling_bytes,
+            self._evidence.scrub,
         )
         return ToolOutput(text, digest, error, int((time.monotonic() - started) * 1000))
 

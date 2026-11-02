@@ -121,6 +121,7 @@ def test_a_non_ascii_text_does_not_rebuild_for_each_of_its_passes(monkeypatch):
     )  # one per pass at most (pass one, the canonical view, the unescaped view)
 
 
+@pytest.mark.perf  # a wall-clock or CPU-time bound: it runs in the perf step, not the default suite
 def test_the_cpu_of_a_full_size_run_stays_in_budget():
     rmap = runmap.RunMap()
     doc = " ".join(f"10.{i // 60000}.{(i // 250) % 240}.{i % 250 + 1}" for i in range(1500))

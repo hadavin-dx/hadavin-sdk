@@ -11,7 +11,6 @@ not a claim of protection; the CHANGELOG lists them."""
 from __future__ import annotations
 
 import codecs
-import html
 from urllib.parse import quote
 
 import pytest
@@ -133,11 +132,10 @@ HIDDEN = "Vh5$" + "Tn2@Wd8%Re1&Yb4^"  # a fake, built from parts
 
 @pytest.mark.parametrize(
     "name",
-    ["double_entity", "hex_of_percent", "rot13", "reversed", "dash_split"],
+    ["hex_of_percent", "rot13", "reversed", "dash_split"],
 )
 def test_layers_the_scrub_does_not_undo_stay_in_the_output(name):
     spelled = {
-        "double_entity": html.escape(_entity(HIDDEN)),
         "hex_of_percent": quote(HIDDEN, safe="").encode().hex(),
         "rot13": codecs.encode(HIDDEN, "rot13"),
         "reversed": HIDDEN[::-1],

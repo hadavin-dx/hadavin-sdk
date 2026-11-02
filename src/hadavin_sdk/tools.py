@@ -16,6 +16,7 @@ from __future__ import annotations
 import ast
 import base64
 import bisect
+import functools
 import hashlib
 import html
 import importlib
@@ -39,6 +40,7 @@ from urllib.parse import quote, quote_plus, unquote, urlsplit, urlunsplit
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from hadavin_sdk import defaults
+from hadavin_sdk.config import ScrubSettings
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.guard import http as http_guard
 from hadavin_sdk.guard import runmap
@@ -51,9 +53,9 @@ START_MARKER = "<<TOOL RESULT"
 TRUNCATED = "\n[truncated]"
 ERROR_PREFIX = "ERROR: "
 MIN_SCRUBBED_SECRET = (
-    6  # a shorter secret would shred ordinary text if scrubbed: a tool is refused one
-)
-MIN_REDACTION_WINDOW = 4096  # redaction always sees at least this much, whatever the tool's cap
+    defaults.SCRUB_MIN_SECRET
+)  # the default; the live value is `ScrubSettings.min_secret`
+MIN_REDACTION_WINDOW = defaults.SCRUB_MIN_REDACTION_WINDOW  # likewise `min_redaction_window`
 # Features the manifest names but that arrive in a later phase (design 6.4): refused with the phase.
 _DEFERRED_KEYS = {"egress": "Phase 5", "reads_hadavin_store": "Phase 5"}
 _METHODS = frozenset(
@@ -471,7 +473,9 @@ class ToolContext:
         cluster_suffixes: tuple[str, ...] = defaults.CLUSTER_SUFFIXES,
         ssl_context: ssl.SSLContext | None = None,
         on_fetch: Callable[[], None] | None = None,
+        scrub: ScrubSettings | None = None,
     ) -> None:
+        min_secret = (scrub or ScrubSettings()).min_secret
         self._on_fetch = on_fetch
         self._fetch_ceiling = fetch_ceiling
         self._suffixes = tuple(cluster_suffixes)
@@ -501,9 +505,9 @@ class ToolContext:
                 raise ToolRefused("no secret resolver wired")
             self._remaining()
             value = secret_resolver(name)
-            if len(value) < MIN_SCRUBBED_SECRET:
+            if len(value) < min_secret:
                 raise ToolRefused(
-                    f"secret {name!r} is shorter than {MIN_SCRUBBED_SECRET} characters and could not be scrubbed"
+                    f"secret {name!r} is shorter than {min_secret} characters and could not be scrubbed"
                 )
             with self._lock:
                 self.handed_out.append(value)
@@ -663,13 +667,15 @@ def truncate(text: str, limit: int) -> str:
     return data[:limit].decode("utf-8", "ignore") + TRUNCATED
 
 
-TAIL_WINDOW = 256  # bytes looked back over for a place to cut that is not inside a token
+TAIL_WINDOW = (
+    defaults.SCRUB_TAIL_WINDOW
+)  # the default; the live value is `ScrubSettings.tail_window`
 
 
-def _boundary(data: bytes) -> int:
-    """Where to cut `data` (already at its byte cap): after the last whitespace in the final TAIL_WINDOW bytes, so
-    a secret or key is never cut to a prefix that no pattern recognises; with none, TAIL_WINDOW bytes earlier."""
-    window_start = max(len(data) - TAIL_WINDOW, 0)
+def _boundary(data: bytes, tail: int = TAIL_WINDOW) -> int:
+    """Where to cut `data` (already at its byte cap): after the last whitespace in the final `tail` bytes, so
+    a secret or key is never cut to a prefix that no pattern recognises; with none, `tail` bytes earlier."""
+    window_start = max(len(data) - tail, 0)
     last = max(
         data.rfind(b"\n", window_start),
         data.rfind(b" ", window_start),
@@ -711,16 +717,20 @@ def _derived(text: str, secrets: list[str]) -> str:
 
 
 def _decoded(text: str) -> str:
-    """The text with the encodings an attacker or a log pipeline layers over a value undone: JSON `\\uXXXX`
-    escapes, percent-encoding in either case, HTML entities, then NFKC and invisible characters."""
-    unescaped = re.sub(r"\\u([0-9a-fA-F]{4})", lambda m: chr(int(m.group(1), 16)), text)
-    # JSON spells an astral character as two escapes (a surrogate pair): join a valid pair into the one character.
-    # A lone surrogate becomes U+FFFD, as it does in the output (`_clean`).
-    unescaped = unescaped.encode("utf-16", "surrogatepass").decode("utf-16", "replace")
-    decoded = html.unescape(unquote(unquote(unescaped)))
+    """The text with the encodings an attacker or a log pipeline layers over a value undone: JSON string escapes
+    (`\\uXXXX` with surrogate pairs joined, and `\\/`, `\\"`, `\\\\`, `\\n`, `\\t`: PHP writes every slash as `\\/`),
+    percent-encoding, HTML entities, then NFKC and invisible characters. One round undoes one layer of each kind, and
+    the layers can nest in any order (`&#37;41` is a percent escape written as an entity, `%2541` is one
+    percent-encoded twice), so the round repeats until the text stops changing (four rounds at most)."""
+    cur = text
+    for _ in range(4):
+        step = html.unescape(unquote(runmap.json_unescape(cur)))
+        if step == cur:
+            break
+        cur = step
     # NFKC expands some characters (U+FDFA becomes 18): refuse BEFORE normalising a text whose canonical form would
     # pass the redactor's cap (InputTooLarge, a RedactionError), as redact_text does for its own views.
-    return runmap.canonical(runmap.fits_after_nfkc(decoded))
+    return runmap.canonical(runmap.fits_after_nfkc(cur))
 
 
 def _sanitise(text: str) -> str:
@@ -728,13 +738,13 @@ def _sanitise(text: str) -> str:
     return text.replace("\x00", "\ufffd").encode("utf-8", "replace").decode("utf-8")
 
 
-def _cut(text: str, limit: int) -> str:
+def _cut(text: str, limit: int, tail: int = TAIL_WINDOW) -> str:
     """At most `limit` bytes, cut where no token is split, with the cut said."""
     data = text.encode("utf-8")
     if len(data) <= limit:
         return text
     cut = data[:limit]
-    return cut[: _boundary(cut)].decode("utf-8", "ignore") + TRUNCATED
+    return cut[: _boundary(cut, tail)].decode("utf-8", "ignore") + TRUNCATED
 
 
 def _secret_forms(secret: str) -> set[str]:
@@ -755,24 +765,20 @@ def _secret_forms(secret: str) -> set[str]:
     }
 
 
-def _fit(text: str) -> str:
+_DEFAULT_SCRUB = ScrubSettings()
+MARKER = "<SECRET_REDACTED>"
+
+
+def _fit(text: str, scrub: ScrubSettings = _DEFAULT_SCRUB) -> str:
     """Scrubbing swaps a short secret (6 characters) for a 17-character marker, so a text far below the
     redactor's cap can pass it (15,421 copies of a 6-character secret are 92,526 characters before and 262,157
     after). Cut such a text back to the cap, with the cut said: refusing it would drop a tool result that fits
     the documented limit. Nothing is lost that the model could have seen: `max_bytes` is bounded to the cap
-    (`ToolSpec.max_output_bytes`, `legacy_max_output_bytes`), and the final output is cut to it anyway."""
+    (`ToolSpec.max_output_bytes`, `legacy_max_output_bytes`), and the final output is cut to it anyway. The caller
+    strips the front of a secret the cut may have split (`_strip_fragment`)."""
     if len(text) <= defaults.MAX_REDACT_CHARS:
         return text
-    return _cut(text, defaults.MAX_REDACT_CHARS - len(TRUNCATED))
-
-
-FRAGMENT_SCAN = (
-    4096  # how far back from a cut `_strip_fragment` looks for the start of a partial secret
-)
-FRAGMENT_MIN = (
-    1  # even one character of a secret is removed: the cost is at most the last few characters
-)
-_PARTIAL_END = 10  # the longest half-written escape a cut can leave; added to the look-back
+    return _cut(text, defaults.MAX_REDACT_CHARS - len(TRUNCATED), scrub.tail_window)
 
 
 # The end of a text cut inside an escape: a spelling the decoder cannot read yet, so no form matches it and the
@@ -780,48 +786,157 @@ _PARTIAL_END = 10  # the longest half-written escape a cut can leave; added to t
 _PARTIAL_ESCAPE = re.compile(
     r"(?:&#(?:[xX][0-9a-fA-F]*|[0-9]*)|&[A-Za-z]*|\\u[dD][89abAB][0-9a-fA-F]{2}(?:\\u?[0-9a-fA-F]{0,3}|\\)?|\\u[0-9a-fA-F]{0,3}|\\|(?:%[89a-fA-F][0-9a-fA-F])+%?[0-9a-fA-F]?|%[0-9a-fA-F]?)$"
 )
+_B64_CHARS = frozenset("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/_=-")
+_HEXLIKE = re.compile(r"[0-9a-fA-F]{12,}")
 
 
-def _strip_fragment(text: str, forms: list[str]) -> str:
+@functools.lru_cache(maxsize=4096)
+def _first_decoded(char: str) -> str:
+    """What one character reads as once the layers and NFKC are undone (a full-width Z reads Z)."""
+    try:
+        return _decoded(char)[:1]
+    except runmap.InputTooLarge:
+        return char
+
+
+def _decoded_clean(text: str, window: int = 4 * defaults.SCRUB_PARTIAL_END) -> str:
+    """`_decoded` for the tail a cut left: before EVERY round a half-written escape at the end of the current layer
+    is dropped. `abZq%25C3%25` reads `abZq%C3%` after the first round, whose end is half a UTF-8 percent escape; the
+    next round would turn it into U+FFFD and hide the front `abZq` from the prefix test."""
+    cur = text
+    for _ in range(4):
+        m = _PARTIAL_ESCAPE.search(cur, max(len(cur) - window, 0))
+        if m:
+            cur = cur[: m.start()]
+        step = html.unescape(unquote(runmap.json_unescape(cur)))
+        if step == cur:
+            break
+        cur = step
+    return runmap.canonical(runmap.fits_after_nfkc(cur))
+
+
+def _strip_b64_tail(body: str, bforms: list[bytes], scrub: ScrubSettings) -> str:
+    """A cut inside a base64 token that wraps a secret (`user:SECRET`, a Basic-auth blob, a k8s `data:` value) leaves
+    a token front that decodes to text ending in the front of the secret, at an offset that is not 0 of any form.
+    Decode the trailing token (standard or URL-safe alphabet, the half group padded) and cut it back to the group
+    that holds the first such byte."""
+    n = len(body)
+    low = max(n - scrub.fragment_scan, 0)
+    i = n
+    while i > low and body[i - 1] in _B64_CHARS:
+        i -= 1
+    tok = body[i:]
+    if len(tok) < 8:  # a wrapped credential is longer; a short run of letters is just a word
+        return body
+    t = tok.replace("-", "+").replace("_", "/").rstrip("=")
+    if len(t) % 4 == 1:
+        t = t[:-1]  # one character is no byte
+    try:
+        dec = base64.b64decode(t + "=" * (-len(t) % 4))
+    except ValueError:
+        return body
+    for p in range(len(dec)):
+        suffix = dec[p:]
+        k = bisect.bisect_left(bforms, suffix)
+        if k < len(bforms) and bforms[k].startswith(suffix):
+            return body[: i + (p // 3) * 4]
+    return body
+
+
+def _strip_fragment(text: str, forms: list[str], scrub: ScrubSettings = _DEFAULT_SCRUB) -> str:
     """A cut (the window, or `_fit`) can split a secret, and then no whole form is left for the scrub to find: the
     front of it stays next to the `[truncated]` marker (a 32-character token minus one character is not
     masked). If `text` ends with the marker, remove the longest stretch before it that reads, once the encoding
-    layers are undone (`_decoded`), as the start of a form of a handed-out secret (at least `FRAGMENT_MIN`
-    character). First a half-written escape at the very end (`_PARTIAL_ESCAPE`: the decoder cannot read it, so no
-    form matches it) is removed. `forms` is sorted: `t` starts a form exactly when the form that sorts at or after
-    `t` starts with it."""
+    layers and NFKC are undone (`_decoded`), as the start of a form of a handed-out secret (at least
+    `fragment_min` characters; hex also in any case). First a half-written escape at the very end
+    (`_PARTIAL_ESCAPE`: the decoder cannot read it, so no form matches it) and the front of a base64 token that
+    wraps a secret (`_strip_b64_tail`) are removed. `forms` is sorted: `t` starts a form exactly when the form
+    that sorts at or after `t` starts with it. At most `fragment_scan` start positions are tried, each with one
+    `_decoded` call, and only where the character reads as the first character of a form."""
     if not text.endswith(TRUNCATED):
         return text
     body = text[: -len(TRUNCATED)]
     while m := _PARTIAL_ESCAPE.search(
-        body, max(len(body) - 40, 0)
+        body, max(len(body) - 4 * scrub.partial_end, 0)
     ):  # an escape the cut left half written
         body = body[: m.start()]
-    starts = {f[0] for f in forms} | {
-        "&",
-        chr(92),
-        "%",
-    }  # a stretch starts with a form's first character or an escape
+    hexes = sorted(f.lower() for f in forms if _HEXLIKE.fullmatch(f))
+    firsts = {f[0] for f in forms}  # the hex forms are in `forms` in both cases
     n = len(body)
 
     def starts_a_form(t: str) -> bool:
-        if len(t) < FRAGMENT_MIN:
+        if len(t) < scrub.fragment_min:
             return False
         k = bisect.bisect_left(forms, t)
-        return k < len(forms) and forms[k].startswith(t)
+        if k < len(forms) and forms[k].startswith(t):
+            return True
+        if hexes and t.isalnum() and t.isascii():
+            tl = t.lower()
+            k = bisect.bisect_left(hexes, tl)
+            return k < len(hexes) and hexes[k].startswith(tl)
+        return False
 
-    # a fragment is shorter than its form and an escape spells one character in at most six: look back that far
-    reach = min(FRAGMENT_SCAN, 6 * max(len(f) for f in forms) + _PARTIAL_END)
-    for i in range(max(n - reach, 0), n - FRAGMENT_MIN + 1):
-        if body[i] not in starts:
+    # layers multiply: one character is up to 3 characters per percent layer, so the look-back is the configured scan
+    reach = scrub.fragment_scan
+    for i in range(max(n - reach, 0), n - scrub.fragment_min + 1):
+        c = body[i]
+        if c not in "&\\%" and _first_decoded(c) not in firsts:
             continue
         try:
-            t = _decoded(body[i:])
+            t = _decoded_clean(body[i:], 4 * scrub.partial_end)
         except runmap.InputTooLarge:
             continue
-        if starts_a_form(t):
+        # a tail that dissolves into nothing but half-written escapes at some layer (`%25%32` is `%2`) still tells
+        # the reader which half-byte comes next: it goes with the front
+        if starts_a_form(t) or (not t and c in "&\\%"):
             return body[:i] + TRUNCATED
-    return body + TRUNCATED
+    bforms = sorted(f.encode("utf-8") for f in forms)
+    return _strip_b64_tail(body, bforms, scrub) + TRUNCATED
+
+
+_HEXFORM = re.compile(r"(?:[0-9a-f]{2}){6,}")
+
+
+def _has_form(text: str, form: str) -> bool:
+    if _HEXFORM.fullmatch(form):  # hex is read in any case: `5a6B..` is the same bytes
+        return re.search(re.escape(form), text, re.IGNORECASE) is not None
+    return form in text
+
+
+def _sub_form(text: str, form: str) -> str:
+    if _HEXFORM.fullmatch(form):
+        return re.sub(re.escape(form), MARKER, text, flags=re.IGNORECASE)
+    return text.replace(form, MARKER)
+
+
+def _scrub(raw: str, long_enough: list[str], scrub: ScrubSettings = _DEFAULT_SCRUB) -> str:
+    """Replace every spelling of the handed-out secrets in `raw` (already cut to the redactor's window). Every cut
+    that happens here, and the cut the caller made before, is followed by `_strip_fragment` on the text as it is
+    BEFORE any later swap to a decoded view (which would turn a half-written `&#10` into a newline and `%C3` into
+    U+FFFD, and the front of the secret would no longer read as one)."""
+    forms = sorted({f for x in long_enough for f in _secret_forms(x)})
+
+    def fit(text: str) -> str:
+        cut = _fit(text, scrub)
+        return _strip_fragment(cut, forms, scrub) if cut is not text else text
+
+    raw = _strip_fragment(raw, forms, scrub)
+    raw = fit(_derived(raw, long_enough))
+    seen: tuple[str, str] | None = (
+        None  # (raw, its decoded view): decoded once per distinct raw, not per form
+    )
+    for secret in long_enough:
+        for form in _secret_forms(secret):
+            if _has_form(raw, form):
+                raw = fit(_sub_form(raw, form))
+                continue
+            if seen is None or seen[0] != raw:
+                seen = (raw, _decoded(raw))
+            if seen[1] != raw and _has_form(seen[1], form):
+                # the secret hides behind an encoding layer: use the decoded text (that one reply loses its
+                # original spelling, which is the price of not showing the secret)
+                raw = fit(_sub_form(seen[1], form))
+    return raw
 
 
 def prepare_output(
@@ -830,53 +945,50 @@ def prepare_output(
     max_bytes: int,
     secrets: list[str] | None = None,
     raw_cap: int = defaults.FETCH_CEILING_BYTES,
+    scrub: ScrubSettings = _DEFAULT_SCRUB,
 ) -> str:
     """Sanitise (NUL, lone surrogates), cut a runaway return value to `raw_cap` and then to twice `max_bytes`
     (redaction is bounded work: it never sees more than the model could be shown), scrub handed-out secrets (as
-    they are, URL-quoted, base64 even twice, and behind \\u, percent, HTML-entity and invisible-character
-    layers), escape the result markers and placeholder look-alikes, redact with the run's map, then truncate to
-    `max_bytes`. A cut that split a secret leaves no whole form to find, so the partial front of it before the
-    `[truncated]` marker is removed too (`_strip_fragment`)."""
-    raw = _cut(_sanitise(raw), raw_cap)
+    they are, URL-quoted, base64 even twice, and behind JSON-escape, percent, HTML-entity, NFKC and
+    invisible-character layers), escape the result markers and placeholder look-alikes, redact with the run's map,
+    then truncate to `max_bytes`. A cut that split a secret leaves no whole form to find, so the partial front of
+    it before the `[truncated]` marker is removed too (`_strip_fragment`)."""
+    tail = scrub.tail_window
+    raw = _cut(_sanitise(raw), raw_cap, tail)
     # The window leaves room for the marker `_cut` appends, so a cut text is still within the redactor's cap.
     raw = _cut(
         raw,
-        min(max(2 * max_bytes, MIN_REDACTION_WINDOW), defaults.MAX_REDACT_CHARS - len(TRUNCATED)),
+        min(
+            max(2 * max_bytes, scrub.min_redaction_window),
+            defaults.MAX_REDACT_CHARS - len(TRUNCATED),
+        ),
+        tail,
     )
-    long_enough = [x for x in secrets or [] if len(x) >= MIN_SCRUBBED_SECRET]
+    long_enough = [x for x in secrets or [] if len(x) >= scrub.min_secret]
     if long_enough:
-        forms = sorted({f for x in long_enough for f in _secret_forms(x)})
-        # The cut above may have split a secret. Strip its front NOW: the scrub below can swap the text for its
-        # decoded view (when another secret is whole), and that turns a half-written `&#10` into a newline and `%C3`
-        # into U+FFFD, which no longer read as the start of a form.
-        raw = _strip_fragment(raw, forms)
-        raw = _fit(_derived(raw, long_enough))
-        seen: tuple[str, str] | None = (
-            None  # (raw, its decoded view): decoded once per distinct raw, not per form
-        )
-        for secret in long_enough:
-            for form in _secret_forms(secret):
-                if form in raw:
-                    raw = _fit(raw.replace(form, "<SECRET_REDACTED>"))
-                    continue
-                if seen is None or seen[0] != raw:
-                    seen = (raw, _decoded(raw))
-                if seen[1] != raw and form in seen[1]:
-                    # the secret hides behind an encoding layer: use the decoded text (that one reply loses its
-                    # original spelling, which is the price of not showing the secret)
-                    raw = _fit(seen[1].replace(form, "<SECRET_REDACTED>"))
-        # `_fit` cuts too: remove the front of a secret it split (see `_strip_fragment`)
-        raw = _strip_fragment(raw, forms)
+        raw = _scrub(raw, long_enough, scrub)
     return truncate(runmap.redact_untrusted(raw, mapping), max_bytes)
 
 
-def error_reason(exc: BaseException) -> str:
-    """A short reason for the model. Network and driver errors carry hosts and users: their type says enough."""
-    if isinstance(exc, ToolRefused):
-        return str(exc)[:200]
-    if isinstance(exc, OSError | urllib.error.URLError):
+def error_reason(
+    exc: BaseException, secrets: list[str] | None = None, scrub: ScrubSettings = _DEFAULT_SCRUB
+) -> str:
+    """A short reason for the model. Network and driver errors carry hosts and users: their type says enough. The
+    message of any other exception is scrubbed of the handed-out secrets BEFORE it is cut to its length: a cut first
+    splits a secret and leaves its front (`prepare_output` later sees no whole spelling)."""
+    if isinstance(exc, OSError | urllib.error.URLError) and not isinstance(exc, ToolRefused):
         return f"{type(exc).__name__} (network error)"
-    return f"{type(exc).__name__}: {str(exc)[:160]}"
+    refused = isinstance(exc, ToolRefused)
+    message = str(exc)
+    long_enough = [x for x in secrets or [] if len(x) >= scrub.min_secret]
+    if long_enough:
+        message = _cut(
+            message, defaults.MAX_REDACT_CHARS - len(TRUNCATED), scrub.tail_window
+        )  # bounded work
+        message = _scrub(message, long_enough, scrub)
+    if refused:
+        return message[:200]
+    return f"{type(exc).__name__}: {message[:160]}"
 
 
 class FetchCounter:
@@ -927,12 +1039,15 @@ class ToolBox:
         fetch_counter: FetchCounter | None = None,
         disabled: Callable[[ToolSpec], str | None] | None = None,
         ssl_context_for: Callable[[ToolSpec], ssl.SSLContext | None] | None = None,
+        scrub: ScrubSettings | None = None,
     ) -> None:
+        self._scrub = scrub or ScrubSettings()
         self._limits = {
             "fetch_ceiling": fetch_ceiling,
             "https_ports": https_ports,
             "cluster_ports": cluster_ports,
             "cluster_suffixes": cluster_suffixes,
+            "scrub": self._scrub,
         }
         self._fetch_ceiling = fetch_ceiling
         self._kinds = stored_kinds
@@ -1045,19 +1160,26 @@ class ToolBox:
             if self._arg_errors is not None and (
                 bad := self._arg_errors(spec.input_schema, restored)
             ):
-                raise ToolRefused("arguments invalid: " + ", ".join(bad)[:200])
+                raise ToolRefused(
+                    "arguments invalid: " + ", ".join(bad)
+                )  # `error_reason` scrubs, then cuts
             if self._disabled is not None and (why := self._disabled(spec)):
                 raise ToolRefused(why)  # a source this tool reads failed its scope re-probe
             self._admit()  # `_call` frees the slot when the tool's thread ends
             raw = self._call(name, restored, ctx)
         except Exception as exc:  # noqa: BLE001 - a failing tool becomes a result the model can react to
             error = True
-            raw = ERROR_PREFIX + error_reason(exc)
+            raw = ERROR_PREFIX + error_reason(exc, ctx.secrets_handed_out(), self._scrub)
         raw = _sanitise(
             raw if isinstance(raw, str) else str(raw)
         )  # a lone surrogate must not abort the call
         digest = ctx.digest() or hashlib.sha256(raw.encode("utf-8")).hexdigest()
         text = prepare_output(
-            raw, mapping, spec.max_output_bytes, ctx.secrets_handed_out(), self._fetch_ceiling
+            raw,
+            mapping,
+            spec.max_output_bytes,
+            ctx.secrets_handed_out(),
+            self._fetch_ceiling,
+            self._scrub,
         )
         return ToolOutput(text, digest, error, int((time.monotonic() - started) * 1000))

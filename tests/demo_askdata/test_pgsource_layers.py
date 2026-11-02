@@ -128,6 +128,7 @@ def test_errors_carry_only_the_sqlstate(db):
 # --------------------------------------------------------------------------------------------- T-E8 caps
 
 
+@pytest.mark.perf  # a wall-clock or CPU-time bound: it runs in the perf step, not the default suite
 def test_caps_watchdog_cancels_a_blocked_statement(db, capsys):
     timeout = 2.0
     start = time.monotonic()
@@ -136,10 +137,13 @@ def test_caps_watchdog_cancels_a_blocked_statement(db, capsys):
     elapsed = time.monotonic() - start
     with capsys.disabled():
         print(
-            f"\nT-E8 watchdog: pg_sleep(30) cancelled after {elapsed:.2f}s (limit {timeout}s, server default 15s)"
+            f"\nT-E8 watchdog: pg_sleep(30) cancelled after {elapsed:.2f}s (watchdog {timeout}s; the assertion allows {timeout + 1}s: the timer, the cancel round trip to the server and the connection close)"
         )
     assert caught.value.sqlstate == "57014"
-    assert elapsed < timeout + 1  # measured 0.02-0.05 s over locally (docker, Windows)
+    # The bound is timeout + 1 s, not timeout: the timer fires at `timeout`, then the cancel is sent over the network and
+    # the driver unwinds (0.02-0.05 s idle; 0.47 s on a loaded laptop, which printed 2.47 s against 2.0 s). A
+    # wall-clock check, so it runs in the perf step.
+    assert elapsed < timeout + 1
     assert not [t for t in threading.enumerate() if t.name == WATCHDOG_NAME and t.is_alive()]
 
 

@@ -4,8 +4,6 @@ redact() callers cut their input."""
 
 from __future__ import annotations
 
-import time
-
 import pytest
 import yaml
 
@@ -16,29 +14,29 @@ from hadavin_sdk.config import ConfigError, load_config
 from hadavin_sdk.guard import runmap
 from hadavin_sdk.registry import load_registry
 from hadavin_sdk.runtime import tick as tick_mod
-from tests.k5_support import ACTION, k5_cfg
+from tests.k5_support import ACTION, BigNormalises, k5_cfg
 
 SECRET = "Zx9Qw+" + "ab12=Pq-secret"  # a fake, built from parts
 
 # --- M-B: the secret scrub decodes, then normalises: that is work too ---------------------------------------------------------------
 
 
-def test_a_tool_result_with_a_secret_and_an_expanding_text_is_refused_fast():
+def test_a_tool_result_with_a_secret_and_an_expanding_text_is_refused_before_the_work(monkeypatch):
     """87,000 U+FDFA with a secret handed out took 13.6 s (the decode view was normalised per secret form)."""
-    t0 = time.perf_counter()
+    big = BigNormalises(monkeypatch)
     with pytest.raises(runmap.InputTooLarge):
         tools_mod.prepare_output("ﷺ" * 87000, {}, defaults.MAX_REDACT_CHARS, [SECRET])
-    assert time.perf_counter() - t0 < 3.0
+    assert big.calls == []
 
 
-def test_percent_encoded_expanding_text_is_refused_after_the_decode():
+def test_percent_encoded_expanding_text_is_refused_after_the_decode(monkeypatch):
     """`%EF%B7%BA` is 9 characters; decoded it is U+FDFA, which NFKC makes 18: the check runs on the DECODED text."""
     raw = "%EF%B7%BA" * 29000  # 261,000 characters, 29,000 after decoding, 522,000 after NFKC
     assert len(raw) < defaults.MAX_REDACT_CHARS
-    t0 = time.perf_counter()
+    big = BigNormalises(monkeypatch)
     with pytest.raises(runmap.InputTooLarge):
         tools_mod.prepare_output(raw, {}, defaults.MAX_REDACT_CHARS, [SECRET])
-    assert time.perf_counter() - t0 < 3.0
+    assert big.calls == []
 
 
 def test_the_decoded_view_is_computed_once_not_once_per_secret_form(monkeypatch):
@@ -92,14 +90,14 @@ def test_a_nested_identifier_flag_on_an_action_no_agent_uses_is_refused(tmp_path
 # --- m-B: many short expanding strings add up ----------------------------------------------------------------------------------------------
 
 
-def test_redact_value_counts_the_expansion_of_all_strings_together():
+def test_redact_value_counts_the_expansion_of_all_strings_together(monkeypatch):
     each = "ﷺ" * 5  # 5 characters, 90 after NFKC
     value = [each] * 4000  # 20,000 characters, 360,000 after NFKC: over the cap
     assert sum(len(s) for s in value) < defaults.MAX_REDACT_CHARS
-    t0 = time.perf_counter()
+    big = BigNormalises(monkeypatch)
     with pytest.raises(runmap.InputTooLarge):
         runmap.redact_value(value, {})
-    assert time.perf_counter() - t0 < 3.0
+    assert big.calls == []
     assert runmap.redact_value([each] * 100, {})  # 9,000 after NFKC: fine
 
 
