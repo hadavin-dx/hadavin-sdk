@@ -24,12 +24,21 @@ import unicodedata
 from collections.abc import Iterable
 from typing import Literal
 
-from hadavin_sdk.guard.textnorm import FILLERS, LOOKALIKES, fold
+from hadavin_sdk.guard.textnorm import (
+    FILLERS,
+    LOOKALIKES,
+    confusable_not_equal,
+    fold,
+    mixed_script,
+    safe_equal,
+)
 
 DEFAULT_MAX_LEN = (
     254  # an e-mail address is at most 254 characters (RFC 5321); callers pass their own limit
 )
-_REFUSE = frozenset({"Cc", "Cf", "Zl", "Zp", "Co", "Cs", "Mn", "Me"})
+_REFUSE = frozenset(
+    {"Cc", "Cf", "Zl", "Zp", "Co", "Cs", "Cn", "Mn", "Me"}
+)  # Cn: unassigned (tag characters) are refused like the fold drops them
 
 
 def text_ok(s: object, max_len: int = DEFAULT_MAX_LEN) -> bool:
@@ -61,10 +70,11 @@ def identity_key(
         ascii_only and not raw.isascii()
     ):  # the strictest rule: a safe charset beats any confusables table
         return None
-    if lookalikes == "refuse" and any(
-        c in LOOKALIKES or (c.isdecimal() and not c.isascii()) for c in raw
+    if lookalikes == "refuse" and (
+        any(c in LOOKALIKES or (c.isdecimal() and not c.isascii()) for c in raw)
+        or mixed_script(raw)
     ):
-        return None
+        return None  # mixed_script: a fail-closed backstop for look-alikes the table does not know (eta, Armenian co, ...)
     return fold(raw, casefold=True, collapse_ws=True)
 
 
@@ -72,6 +82,10 @@ def exact_key(raw: object, *, max_len: int = DEFAULT_MAX_LEN) -> str | None:
     if not text_ok(raw, max_len):
         return None
     assert isinstance(raw, str)  # noqa: S101
+    if mixed_script(
+        raw
+    ):  # an ALLOW target never mixes Latin with another script inside a word (a look-alike the table may not list)
+        return None
     return " ".join(unicodedata.normalize("NFC", raw).casefold().split())
 
 
@@ -82,8 +96,16 @@ def same_person(a: object, b: object, **kw) -> bool:
 
 
 def same_recipient(a: object, b: object, *, max_len: int = DEFAULT_MAX_LEN) -> bool:
+    """An ALLOW decision ("is this the verified address / owner?"): both are `text_ok`, neither mixes scripts, the exact keys are equal AND the shared
+    `safe_equal` agrees. A look-alike that merely FOLDS equal is not equal here (see `lookalike_of`)."""
     ka, kb = exact_key(a, max_len=max_len), exact_key(b, max_len=max_len)
-    return ka is not None and ka == kb
+    return ka is not None and ka == kb and safe_equal(a, b)  # type: ignore[arg-type]
+
+
+def lookalike_of(a: object, b: object) -> bool:
+    """True when `a` is a look-alike spelling of `b`: they fold to the same text but are not `safe_equal`. An ALLOW check must refuse on True (and may
+    report it), a DENY check treats the pair as the same."""
+    return isinstance(a, str) and isinstance(b, str) and confusable_not_equal(a, b)
 
 
 def unique_ids(ids: object, *, max_n: int, pattern: str = r"[a-z0-9-]{1,40}") -> bool:

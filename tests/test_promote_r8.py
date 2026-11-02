@@ -14,12 +14,14 @@ from hadavin_sdk.audit.refusal import refusal_event, refusal_fields
 from hadavin_sdk.guard.identity_text import (
     exact_key,
     identity_key,
+    lookalike_of,
     same_person,
     same_recipient,
     text_ok,
     unique_ids,
 )
 from hadavin_sdk.guard.reply_check import ReplyPolicy, reply_violations
+from hadavin_sdk.guard.textnorm import fold
 from hadavin_sdk.models import RunState
 from hadavin_sdk.store.memory import MemoryStore
 from hadavin_sdk.store.reservations import check_ordered_limits
@@ -107,16 +109,25 @@ def test_homoglyph_hosts_and_addresses_are_violations_whatever_they_fold_to():
     )
 
 
+def _not_verified(out):
+    """RECIPIENT_NOT_VERIFIED, with at most the look-alike signal beside it (a hidden-character variant folds equal but is not safe_equal)."""
+    return "RECIPIENT_NOT_VERIFIED" in out and set(out) <= {
+        "RECIPIENT_NOT_VERIFIED",
+        "RECIPIENT_LOOKALIKE",
+    }
+
+
 def test_recipient_is_compared_exactly_not_through_the_accent_dropping_fold():
     assert reply_violations("hi", "jose@x.example", "jos\u00e9@x.example") == [
-        "RECIPIENT_NOT_VERIFIED"
+        "RECIPIENT_LOOKALIKE",
+        "RECIPIENT_NOT_VERIFIED",
     ]
     assert reply_violations("hi", "Jos\u00e9@X.example", "jos\u00e9@x.example") == []
     assert reply_violations(
         "write jose@x.example", "jos\u00e9@x.example", "jos\u00e9@x.example"
     ) == ["UNLISTED_ADDRESS"]
     assert reply_violations("hi", ME, None) == ["RECIPIENT_NOT_VERIFIED"]
-    assert reply_violations("hi", ME + "\u200b", ME) == ["RECIPIENT_NOT_VERIFIED"]
+    assert _not_verified(reply_violations("hi", ME + "\u200b", ME))
 
 
 def test_allow_lists_match_on_the_same_folded_form_as_the_text():
@@ -639,7 +650,7 @@ def test_every_space_line_and_paragraph_separator_is_refused_as_text_and_never_g
         assert (
             identity_key(real + sep, lookalikes="fold") is None and exact_key(real + sep) is None
         ), hex(ord(sep))
-        assert reply_violations("hi", real + sep, real) == ["RECIPIENT_NOT_VERIFIED"], hex(ord(sep))
+        assert _not_verified(reply_violations("hi", real + sep, real)), hex(ord(sep))
 
 
 def test_a_space_after_the_dot_before_a_lowercase_word_is_read_as_a_host_but_prose_is_not():
@@ -681,3 +692,113 @@ def test_a_response_body_is_read_with_a_byte_counter_and_never_past_the_cap():
     assert _read_capped(_Body(b"x" * 100), 100) == b"x" * 100
     big = _Body(b"x" * 10_000_000)
     assert _read_capped(big, 1000) == b"" and big.pos <= 1001 + 65536, "stopped early, not buffered"
+
+
+# ---------------------------------------------------------------- adopting the final shared fold (PR 50 round 2) and the ALLOW path
+def test_the_modules_use_the_one_shared_fold_and_the_allow_helpers_of_textnorm():
+    from hadavin_sdk.guard import identity_text, reply_check, textnorm
+
+    assert identity_text.fold is textnorm.fold and reply_check.fold is textnorm.fold
+    assert (
+        identity_text.mixed_script is textnorm.mixed_script
+        and identity_text.safe_equal is textnorm.safe_equal
+    )
+    assert identity_text.confusable_not_equal is textnorm.confusable_not_equal
+    assert (
+        identity_text.LOOKALIKES is textnorm.LOOKALIKES
+        and identity_text.FILLERS is textnorm.FILLERS
+    )
+
+
+def test_a_word_that_mixes_scripts_is_refused_even_when_the_table_has_no_entry_for_the_letter():
+    eta = "\u03b7"  # Greek eta: the table maps it, but the refusal must not depend on that
+    assert identity_key("alice.ng") == "alice.ng"
+    assert identity_key("alice.n" + eta) is None and identity_key("al" + eta + "ce") is None
+    assert identity_key("al\u0585ce") is None, "Armenian oh inside a Latin word"
+    assert exact_key("al" + eta + "ce@x.example") is None, "an ALLOW target never mixes scripts"
+    assert not same_recipient("al" + eta + "ce@x.example", "al" + eta + "ce@x.example")
+    assert identity_key(eta + eta, lookalikes="fold") is not None, (
+        "a word wholly in one other script is not mixed"
+    )
+
+
+def test_unassigned_code_points_are_refused_and_cannot_make_a_different_name():
+    import unicodedata
+
+    for cp in (0x0378, 0xE0080, 0x2FE0):
+        cn = chr(cp)
+        assert unicodedata.category(cn) == "Cn", hex(cp)  # a probe that really is unassigned
+        assert (
+            not text_ok("alice" + cn)
+            and identity_key("alice" + cn) is None
+            and exact_key("alice@x.example" + cn) is None
+        )
+        assert _not_verified(reply_violations("hi", "a@b.example" + cn, ME))
+        assert fold("alice" + cn) == "alice"
+    assert unicodedata.category(chr(0xE0041)) == "Cf" and not text_ok("alice" + chr(0xE0041)), (
+        "tag characters are Cf, refused too"
+    )
+
+
+def test_a_letter_the_table_does_not_list_still_cannot_hide_inside_a_latin_word():
+    from hadavin_sdk.guard.textnorm import LOOKALIKES
+
+    zhe = chr(
+        0x0436
+    )  # Cyrillic zhe: no Latin look-alike, so only the mixed-script backstop sees it
+    assert zhe not in LOOKALIKES, "the probe must not be in the table or it proves nothing"
+    assert (
+        identity_key("ali" + zhe + "e") is None and exact_key("ali" + zhe + "e@x.example") is None
+    )
+    assert identity_key(zhe + zhe) is not None, "a word wholly in Cyrillic is not mixed"
+
+
+def test_lookalike_of_is_the_allow_side_signal_and_same_recipient_is_an_allow_decision():
+    assert lookalike_of("jose@x.example", "jos\u00e9@x.example") and lookalike_of(
+        "p\u0430t@x.example", "pat@x.example"
+    )
+    assert not lookalike_of("pat@x.example", "pat@x.example") and not lookalike_of(
+        "pat@x.example", "PAT@X.EXAMPLE"
+    )
+    assert not lookalike_of(None, "a") and not lookalike_of("a", 5)
+    assert same_recipient("Pat@X.example", "pat@x.example") and not same_recipient(
+        "p\u0430t@x.example", "pat@x.example"
+    )
+    assert not same_recipient("\uff50at@x.example", "pat@x.example"), (
+        "fullwidth p folds equal under NFKC but the exact keys differ: refused"
+    )
+
+
+def test_a_look_alike_recipient_is_reported_as_such_and_never_verified():
+    out = reply_violations("hi", "p\u0430t@example.com", "pat@example.com")
+    assert "RECIPIENT_NOT_VERIFIED" in out and "RECIPIENT_LOOKALIKE" in out
+    assert reply_violations("hi", "pat@example.com", "pat@example.com") == []
+    assert reply_violations("hi", "other@example.com", "pat@example.com") == [
+        "RECIPIENT_NOT_VERIFIED"
+    ], "a plain mismatch is not a look-alike"
+
+
+def test_an_allow_listed_link_or_host_needs_its_literal_spelling_in_the_text():
+    p = ReplyPolicy(
+        allowed_links=frozenset({"https://help.example.com/returns"}),
+        allowed_hosts=frozenset({"example.com"}),
+    )
+    assert reply_violations("see https://help.example.com/returns", ME, ME, policy=p) == []
+    assert reply_violations("see example.com", ME, ME, policy=p) == []
+    cyr = reply_violations("see https://h\u0435lp.example.com/returns", ME, ME, policy=p)
+    assert "UNLISTED_LINK" in cyr and "NON_ASCII_HOST" in cyr, (
+        "the folded spelling equals the listed one; the literal one does not"
+    )
+    zw = reply_violations("see https://hel\u200bp.example.com/returns", ME, ME, policy=p)
+    assert "UNLISTED_LINK" in zw, "a hidden character inside a listed link is not that link"
+    host = reply_violations("see ex\u0430mple.com", ME, ME, policy=p)
+    assert "UNLISTED_LINK" in host and "NON_ASCII_HOST" in host
+
+
+def test_the_final_shared_vectors_hold_for_the_identity_and_domain_paths():
+    for item in _vectors()["identities"]:
+        for v in map(_vec, item["variants"]):
+            assert identity_key(v) is None or same_person(v, item["id"]), v
+    for item in _vectors()["domains"]:
+        for v in map(_vec, item["variants"]):
+            assert reply_violations(f"visit {v}", ME, ME), v

@@ -27,6 +27,31 @@ EX = "src/hadavin_sdk/actions/executor.py"
 
 MUTANTS = [
     (
+        "adopt: mixed script allowed in the identity key",
+        IT,
+        "        or mixed_script(raw)\n",
+        "        or False\n",
+    ),
+    ("adopt: unassigned code points not refused", IT, '"Cs", "Cn", "Mn"', '"Cs", "Mn"'),
+    (
+        "adopt: an ALLOW target may mix scripts",
+        IT,
+        "    if mixed_script(\n",
+        "    if False and mixed_script(\n",
+    ),
+    (
+        "adopt: the look-alike recipient is not reported",
+        RC,
+        "        if lookalike_of(recipient, verified_recipient):",
+        "        if False:",
+    ),
+    (
+        "adopt: an allow-listed link is matched on the folded spelling",
+        RC,
+        "return any(s in safe for s in listing.get(candidate, ()))",
+        "return candidate in listing",
+    ),
+    (
         "old: spaced dot not joined",
         RC,
         '_SPACED_DOT.sub(".", text) if p.join_spaced_dots else text',

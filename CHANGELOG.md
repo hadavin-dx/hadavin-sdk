@@ -142,6 +142,9 @@
   recipient match, folded allow-lists, `allowed_patterns`), `audit/refusal.py` (refusal fields allow-listed or hashed),
   `approvals/signed.py` (signed approvals on the `audit.signer` kinds: tenant, args hash, age, single use, key_id rotation).
   They use the single fold in `guard/textnorm.py` (same file as PR #50).
+  `guard/textnorm.py` is now the FINAL file of PR #50 (sha256 c1f9a177...): identity keys also refuse a word that mixes Latin with another script
+  (`mixed_script`) and unassigned code points; ALLOW decisions (recipient match, listed links and hosts) use the literal spelling (`safe_equal`) and report
+  `RECIPIENT_LOOKALIKE` when a spelling only folds equal (`lookalike_of`).
 ### Changed
 - `Limits.stop` / `reset`: text in `by` that is not bounded printable text is stored as a short hash, never refused (an
   emergency stop must work) and never written raw into the chain.

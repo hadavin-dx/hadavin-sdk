@@ -24,7 +24,7 @@ import unicodedata
 from dataclasses import dataclass
 from enum import StrEnum
 
-from hadavin_sdk.guard.identity_text import exact_key
+from hadavin_sdk.guard.identity_text import exact_key, lookalike_of, same_recipient
 from hadavin_sdk.guard.textnorm import FILLERS, fold
 
 # RFC 1035 label length 63, at most 10 labels, TLD 2-24 letters or an A-label (punycode); RFC 5321 local part 64.
@@ -44,13 +44,14 @@ _DEFANG = re.compile(
     re.IGNORECASE,
 )
 _SPACED_DOT = re.compile(r"(?<=[a-z0-9])\. (?=[a-z]{2,})")  # dot, one space, a LOWERCASE word
-_HIDDEN = frozenset({"Cc", "Cf", "Zl", "Zp", "Co", "Cs"})
+_HIDDEN = frozenset({"Cc", "Cf", "Zl", "Zp", "Co", "Cs", "Cn"})
 
 
 class Violation(StrEnum):
     TEXT_NOT_STRING = "TEXT_NOT_STRING"
     TEXT_TOO_LONG = "TEXT_TOO_LONG"
     RECIPIENT_NOT_VERIFIED = "RECIPIENT_NOT_VERIFIED"
+    RECIPIENT_LOOKALIKE = "RECIPIENT_LOOKALIKE"
     UNLISTED_LINK = "UNLISTED_LINK"
     UNLISTED_ADDRESS = "UNLISTED_ADDRESS"
     UNLISTED_ATTACHMENT = "UNLISTED_ATTACHMENT"
@@ -84,12 +85,25 @@ class ReplyPolicy:
             except re.error as exc:
                 raise ValueError(f"allowed pattern does not compile: {exc}") from None
 
-    def folded(self, items: frozenset[str]) -> frozenset[str]:
-        return frozenset(_view(i).rstrip(".") for i in items)
+    def folded(self, items: frozenset[str]) -> dict[str, frozenset[str]]:
+        """folded form -> the literal (safe) spellings of the listed entries that fold to it. A candidate found in the folded text is allowed only if one of
+        its listed spellings is also in the text as written."""
+        out: dict[str, set[str]] = {}
+        for i in items:
+            out.setdefault(_view(i).rstrip("."), set()).add(_safe_view(i).rstrip("."))
+        return {k: frozenset(v) for k, v in out.items()}
 
 
 def _view(text: str) -> str:
     return _DEFANG.sub(".", fold(text, casefold=True, collapse_ws=True).translate(_DOTS))
+
+
+def _safe_view(text: str) -> str:
+    """The text as written (NFKC, case, whitespace; NO look-alike mapping and NO hidden-character removal), defanged. An ALLOW-listed link or host counts
+    only if it appears in THIS view too: the folded view equates look-alikes and hidden-character variants with the real thing, which is right for DENY
+    scanning and wrong for ALLOW."""
+    t = " ".join(unicodedata.normalize("NFKC", text).casefold().split()).translate(_DOTS)
+    return _DEFANG.sub(".", t)
 
 
 def _visible(text: str) -> str:
@@ -117,21 +131,30 @@ def reply_violations(
         return [Violation.TEXT_TOO_LONG]
     v: set[str] = set()
     want = exact_key(verified_recipient)
-    if want is None or exact_key(recipient) != want:
+    if want is None or not same_recipient(recipient, verified_recipient):
         v.add(Violation.RECIPIENT_NOT_VERIFIED)
+        if lookalike_of(recipient, verified_recipient):
+            v.add(Violation.RECIPIENT_LOOKALIKE)
     links, hosts = p.folded(p.allowed_links), p.folded(p.allowed_hosts)
-    clean = _view(_SPACED_DOT.sub(".", text) if p.join_spaced_dots else text)
+    joined = _SPACED_DOT.sub(".", text) if p.join_spaced_dots else text
+    clean, safe = _view(joined), _safe_view(joined)
+
+    def allowed(candidate: str, listing: dict[str, frozenset[str]]) -> bool:
+        # ALLOW needs the literal spelling of a listed entry in the text as written, not only the folded form
+        return any(s in safe for s in listing.get(candidate, ()))
+
     for u in URL.findall(clean):
-        if u.rstrip(".,;)") not in links:
+        if not allowed(u.rstrip(".,;)"), links):
             v.add(Violation.UNLISTED_LINK)
     no_urls = EMAIL.sub(" ", URL.sub(" ", clean))
     for pat in p.allowed_patterns:
         no_urls = re.sub(pat, " ", no_urls, flags=re.IGNORECASE)
     for ip in IPV4.findall(no_urls):
-        if ip.split("/")[0] not in hosts and ip.rstrip(".,;)") not in links:
+        if not (allowed(ip.split("/")[0], hosts) or allowed(ip.rstrip(".,;)"), links)):
             v.add(Violation.UNLISTED_LINK)
     for d in DOMAIN.findall(no_urls):
-        if d.split("/")[0].rstrip(".") not in hosts and d.rstrip(".,;)") not in links:
+        host = d.split("/")[0].rstrip(".")
+        if not (allowed(host, hosts) or allowed(d.rstrip(".,;)"), links)):
             v.add(Violation.UNLISTED_LINK)
     seen = _visible(text)
     for e in EMAIL.findall(seen):
