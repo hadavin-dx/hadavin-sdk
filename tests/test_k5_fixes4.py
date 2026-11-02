@@ -4,6 +4,7 @@ marker, the CHANGELOG merge order names the four PRs, and a replacement between 
 from __future__ import annotations
 
 import ast
+import re
 from pathlib import Path
 
 import pytest
@@ -58,14 +59,21 @@ def test_the_changelog_merge_order_names_the_four_prs():
     ):  # the block is deleted in the rename commit, by design
         return
     line = next(ln for ln in text.splitlines() if ln.strip().startswith("1. **Order:"))
-    assert all(pr in line for pr in ("#49", "#48", "#42", "#41")), line
+    # the ORDER itself, not just the mentions (a later sentence of the line also says "#49 keeps ..."): the bold
+    # heading names the three merges in sequence, and #48 is said to go in first as well
+    order = re.match(r"\d+\. \*\*Order: (.*?)\*\*", line.strip())
+    assert order, line
+    assert re.findall(r"#\d+", order.group(1)) == ["#49", "#42", "#41"], order.group(1)
+    assert "**#48 goes in first as well" in line, line
 
 
 # --- Nit 1: a replacement between two secrets must not leave a stale decoded view -----------------------------------------------------------
 
 
 def test_a_replacement_between_two_secrets_forces_a_fresh_decoded_view():
-    absent = "Mn7Bv+" + "ef56=Hj-none"  # never in the text: its forms make the first decoded view, before any replacement
+    absent = (
+        "Mn7Bv+" + "ef56=Hj-none"
+    )  # never in the text: its forms make the first decoded view, before any replacement
     s1 = "Zx9Qw+" + "ab12=Pq-one"  # fakes, built from parts
     s2 = "Rt5Yu+" + "cd34=Lm-two"
     hidden2 = "".join(f"%{b:02X}" for b in s2.encode())

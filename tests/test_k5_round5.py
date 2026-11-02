@@ -672,9 +672,9 @@ def test_n4_an_http_error_body_is_closed(monkeypatch):
 
 
 def test_n5_text_is_kept_as_received_and_only_guarded_literals_change():
-    text = "café 你好 \U0001f468‍\U0001f4bb Ａ <IPV4_9> ＜IPV4_8＞"
+    text = "café 你好 \U0001f468\u200d\U0001f4bb Ａ <IPV4_9> ＜IPV4_8＞"
     out = runmap.escape_placeholders(text)
-    assert out.startswith("café 你好 \U0001f468‍\U0001f4bb Ａ ")  # untouched, ZWJ kept
+    assert out.startswith("café 你好 \U0001f468\u200d\U0001f4bb Ａ ")  # untouched, ZWJ kept
     assert "<IPV4_9>" not in out and "＜IPV4_8＞" not in out  # both look-alikes escaped
 
 

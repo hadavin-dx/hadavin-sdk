@@ -187,7 +187,7 @@ def _case_variants(word: str):
 
 
 FULLWIDTH = "＜IPV4＿2＞".replace("IPV4", "ＩＰＶ４")
-ZW = ["\u200b", "‌", "‍", "⁠", "﻿", "­"]
+ZW = ["\u200b", "\u200c", "\u200d", "\u2060", "\ufeff", "\u00ad"]
 
 
 def _variants():
