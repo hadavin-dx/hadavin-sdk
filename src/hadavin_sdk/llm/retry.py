@@ -5,6 +5,19 @@ backoff and full jitter, up to ``max_attempts`` requests in all; still failing, 
 Anything else (401 bad key, 400 malformed request) fails the same way every time, so it is a ``ProviderError``
 at once.
 
+A provider's spend or quota cap (Claude API: the monthly cap is HTTP 429, error type ``rate_limit_error``,
+``error.details.error_code == "enforced_spend_limit_reached"``, and no ``retry-after`` header; see
+platform.claude.com/docs/en/api/rate-limits, read 2026-11-01) fails until it resets: the kind's
+``spend_limit(exc)`` recognises it and it is raised as ``SpendLimitReached`` after ONE attempt. Other 429s are
+throttles and are retried. A numeric ``retry-after`` is honoured as the wait, up to ``RETRY_AFTER_CEILING_S``;
+a server asking for longer than that is not retried (``ProviderExhausted``): sleeping less than asked would only be
+throttled again. The ceiling is a ceiling, not a floor: the wait is the larger of the jitter and the server's ask.
+
+``deadline_s`` is a real wall-clock bound on one call, attempts and sleeps together: every attempt runs under the
+time that is left, and an attempt still running when it runs out is abandoned (``DeadlineExceeded``). An abandoned
+request can still finish and be billed at the vendor, so the caller must treat its cost as unknown (the agent loop
+keeps the reserved worst case booked). ``deadline_s=None`` turns the bound off; the config default is not None.
+
 Vendor-neutral (lock-in audit 2026-10-31, row 2): this module knows HTTP statuses, the standard library's network
 errors and TLS, nothing else. Each kind knows its own SDK's errors and passes ``retryable(exc) -> bool | None``
 (None: no opinion, the generic rule decides) and ``detail(exc) -> str`` (an error code safe to log).
@@ -14,13 +27,22 @@ from __future__ import annotations
 
 import random
 import ssl
+import threading
 import time
 from collections.abc import Callable
 
-from hadavin_sdk.llm.protocol import ProviderError, ProviderExhausted
+from hadavin_sdk.llm.protocol import (
+    DeadlineExceeded,
+    ProviderError,
+    ProviderExhausted,
+    SpendLimitReached,
+)
 
 BASE_DELAY_S = 0.5
-MAX_DELAY_S = 8.0
+MAX_DELAY_S = 8.0  # ceiling of the jittered backoff
+MAX_INFLIGHT_ATTEMPTS = 64  # threads allowed to run (or hang) at once under a deadline
+_SLOTS = threading.BoundedSemaphore(MAX_INFLIGHT_ATTEMPTS)
+RETRY_AFTER_CEILING_S = 60.0  # longest server-requested wait we honour
 
 Retryable = Callable[[BaseException], "bool | None"]
 
@@ -64,14 +86,59 @@ def transient(exc: BaseException, retryable: Retryable | None = None) -> bool:
 
 
 def retry_after(exc: BaseException) -> float:
-    """Seconds the server asked for (``Retry-After``, numeric form only), capped at MAX_DELAY_S; else 0."""
+    """Seconds the server asked for (``Retry-After``, numeric form only), not capped; else 0. Not finite or
+    negative counts as no ask."""
     headers = getattr(exc, "headers", None) or getattr(
         getattr(exc, "response", None), "headers", None
     )
     try:
-        return min(MAX_DELAY_S, max(0.0, float(headers.get("retry-after"))))
+        asked = float(headers.get("retry-after"))
     except (AttributeError, TypeError, ValueError):
         return 0.0
+    return asked if 0.0 < asked < float("inf") else 0.0
+
+
+class _Failed:
+    """An attempt's error, already classified inside the attempt (so reading an error body is under the deadline)."""
+
+    def __init__(self, exc: Exception, spend: bool) -> None:
+        self.exc, self.spend = exc, spend
+
+
+def _bounded[T](call: Callable[[], T], seconds: float, label: str) -> T:
+    """Run ``call`` for at most ``seconds`` of wall clock. On timeout the worker thread is abandoned (it ends at
+    the kind's socket timeout) and its result is discarded."""
+    box: dict[str, object] = {}
+
+    def run() -> None:
+        try:
+            box["value"] = call()
+        except BaseException as exc:  # noqa: BLE001 - re-raised in the caller's thread
+            box["error"] = exc
+
+    # A slot is held until the attempt really ends (abandoned or not), so a flood of hung calls cannot pile up
+    # more than MAX_INFLIGHT_ATTEMPTS threads: past that, new attempts are refused until some end.
+    if not _SLOTS.acquire(blocking=False):
+        raise ProviderExhausted(f"{label}: too many attempts still running at the provider")
+
+    def guarded() -> None:
+        try:
+            run()
+        finally:
+            _SLOTS.release()
+
+    worker = threading.Thread(target=guarded, daemon=True, name=f"{label}-attempt")
+    worker.start()
+    worker.join(max(0.0, seconds))
+    if worker.is_alive():
+        raise DeadlineExceeded(f"{label}: attempt still running at the deadline")
+    if "error" in box:
+        raise box["error"]  # type: ignore[misc]
+    return box["value"]  # type: ignore[return-value]
+
+
+def got_spend(got: object, exc: Exception) -> bool:
+    return isinstance(got, _Failed) and got.exc is exc and got.spend
 
 
 def describe(exc: BaseException, detail: Callable[[BaseException], str] | None = None) -> str:
@@ -88,21 +155,76 @@ def with_retry[T](
     sleep: Callable[[float], None] = time.sleep,
     retryable: Retryable | None = None,
     detail: Callable[[BaseException], str] | None = None,
+    spend_limit: Callable[[BaseException], bool] | None = None,
+    spend_error: type[SpendLimitReached] = SpendLimitReached,
+    deadline_s: float | None = None,
+    clock: Callable[[], float] = time.monotonic,
 ) -> T:
-    for attempt in range(1, max_attempts + 1):
+    started = clock()
+
+    sent = [0]  # attempts that really started (a slot refusal or an expired deadline sends nothing)
+    refused = [
+        0
+    ]  # attempts the provider answered with a 4xx (429 included): not processed, not billed
+
+    def attempt_once() -> object:
+        sent[0] += 1
         try:
             return call()
         except ProviderError:
             raise
-        except Exception as exc:  # every failure is classified below, never swallowed
-            if not transient(exc, retryable):
-                raise ProviderError(f"{label}: {describe(exc, detail)}") from exc
-            if attempt == max_attempts:
-                raise ProviderExhausted(
-                    f"{label}: {describe(exc, detail)} after {max_attempts} attempts"
-                ) from exc
-            # Full jitter spreads retries from many runs hitting one throttled account (not crypto); never
-            # sooner than the server asked.
-            jitter = random.uniform(0, min(MAX_DELAY_S, BASE_DELAY_S * 2 ** (attempt - 1)))  # noqa: S311
-            sleep(max(jitter, retry_after(exc)))
+        except Exception as exc:  # noqa: BLE001 - classified here, inside the attempt and its deadline
+            try:
+                spend = bool(spend_limit is not None and spend_limit(exc))
+            except Exception:  # noqa: BLE001 - a classifier must not raise
+                spend = False
+            return _Failed(exc, spend)
+
+    try:
+        for attempt in range(1, max_attempts + 1):
+            got: object = None
+            try:
+                if deadline_s is None:
+                    got = attempt_once()
+                else:
+                    left = deadline_s - (clock() - started)
+                    if left <= 0:
+                        raise DeadlineExceeded(f"{label}: deadline {deadline_s}s reached")
+                    got = _bounded(attempt_once, left, label)
+                if not isinstance(got, _Failed):
+                    return got  # type: ignore[return-value]
+                raise got.exc
+            except ProviderError:
+                raise
+            except Exception as exc:  # every failure is classified below, never swallowed
+                code = status(exc)
+                if code is not None and 400 <= code < 500:
+                    refused[0] += 1
+                if got_spend(got, exc):
+                    raise spend_error(f"{label}: {describe(exc, detail)} spend limit") from exc
+                if not transient(exc, retryable):
+                    raise ProviderError(f"{label}: {describe(exc, detail)}") from exc
+                if attempt == max_attempts:
+                    raise ProviderExhausted(
+                        f"{label}: {describe(exc, detail)} after {max_attempts} attempts"
+                    ) from exc
+                # Full jitter spreads retries from many runs hitting one throttled account (not crypto); never
+                # sooner than the server asked.
+                jitter = random.uniform(0, min(MAX_DELAY_S, BASE_DELAY_S * 2 ** (attempt - 1)))  # noqa: S311
+                asked = retry_after(exc)
+                if asked > RETRY_AFTER_CEILING_S:
+                    raise ProviderExhausted(
+                        f"{label}: {describe(exc, detail)} server asked {asked:g}s, over the "
+                        f"{RETRY_AFTER_CEILING_S:g}s ceiling"
+                    ) from exc
+                delay = max(jitter, asked)
+                if deadline_s is not None and clock() - started + delay > deadline_s:
+                    raise ProviderExhausted(
+                        f"{label}: {describe(exc, detail)} deadline {deadline_s}s reached"
+                    ) from exc
+                sleep(delay)
+    except ProviderError as err:
+        if "attempts" not in err.__dict__:  # an inner layer that stamped it knows better
+            err.attempts, err.refused = sent[0], min(refused[0], sent[0])
+        raise
     raise AssertionError("unreachable")  # max_attempts >= 1 (settings)

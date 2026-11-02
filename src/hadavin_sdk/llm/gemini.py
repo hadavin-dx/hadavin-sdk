@@ -14,7 +14,9 @@ from collections.abc import Callable
 from typing import Any
 from urllib.parse import quote
 
-from hadavin_sdk.llm.common import Answer, NetworkLLM, pinned, post_json, reply
+from hadavin_sdk.llm.common import Answer, NetworkLLM, error_body, pinned, post_json, reply
+from hadavin_sdk.llm.protocol import QuotaReached
+from hadavin_sdk.llm.retry import status
 from hadavin_sdk.models import Reply, ToolCall
 
 BASE_URL = "https://generativelanguage.googleapis.com/v1beta"
@@ -29,15 +31,41 @@ def floating(model_id: str) -> bool:
 
 
 def make(settings: Any, deps: Any) -> GeminiLLM:
-    return GeminiLLM(
+    llm = GeminiLLM(
         lambda: deps.resolve(settings.api_key_secret_name),
         pinned(dict(deps.routes), floating),
         settings.call_timeout_s,
         settings.max_attempts,
     )
+    llm.deadline_s = settings.deadline_s
+    return llm
+
+
+def spend_limit(exc: BaseException) -> bool:
+    """A 429 ``RESOURCE_EXHAUSTED`` whose violated quota is a per-day one (``QuotaFailure.violations[].quotaId``
+    contains ``PerDay``): it resets at a fixed time, not in seconds, so retrying is wasted. Per-minute 429s are
+    throttles and are retried. Not verified against a live key (no spend authorised); the rule follows Google's
+    documented error shape."""
+    try:
+        if status(exc) != 429:
+            return False
+        body = error_body(exc)
+        err = body.get("error") if body is not None else None
+        details = err.get("details") if isinstance(err, dict) else None
+        return any(
+            isinstance(v, dict) and "PerDay" in str(v.get("quotaId", ""))
+            for d in details or []
+            if isinstance(d, dict)
+            for v in d.get("violations") or []
+        )
+    except Exception:  # noqa: BLE001 - must not raise inside the caller's except block
+        return False
 
 
 class GeminiLLM(NetworkLLM):
+    spend_limit = staticmethod(spend_limit)
+    spend_error = QuotaReached  # a per-day request quota is not a money cap
+
     label = "gemini"
 
     def __init__(

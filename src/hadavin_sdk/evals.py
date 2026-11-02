@@ -12,6 +12,8 @@ from decimal import Decimal
 
 from hadavin_sdk.config import ConfigError, confined
 from hadavin_sdk.guard import judge
+from hadavin_sdk.limits import Limits
+from hadavin_sdk.llm.metered import MeteredLLM
 from hadavin_sdk.llm.protocol import LLM
 from hadavin_sdk.models import GateRun
 from hadavin_sdk.registry import Registry
@@ -21,11 +23,16 @@ _ASK = "Process the attached request document."
 QUALIFIED = "qualified.jsonl"
 
 
-def gate(registry: Registry, llm: LLM, agent_id: str, *, k: int = 1) -> GateRun:
+def gate(
+    registry: Registry, llm: LLM, agent_id: str, *, k: int = 1, limits: Limits | None = None
+) -> GateRun:
+    """``limits``: meter every model call through reserve and settle (R214) against this agent's budget."""
     if k < 1:
         raise ConfigError(f"gate k must be at least 1, got {k}")
     cfg = registry.config
     agent = registry.agents[agent_id]
+    if limits is not None:
+        llm = MeteredLLM(llm, limits, agent_id, cfg.routes)
     # The golden set, its documents and judge.jsonl, hashed before the run and again after it: a file that
     # changed while the run read it was not the set it qualifies on, so the run is never green.
     golden_before = registry.golden_sha256(agent_id)

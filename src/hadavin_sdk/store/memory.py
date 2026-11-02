@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import threading
 from collections import defaultdict
 from datetime import date, datetime
@@ -22,6 +23,36 @@ from hadavin_sdk.models import (
 )
 from hadavin_sdk.store.protocol import NotFound, StaleState
 
+# A per-run counter's key: bare (``run:<id>``) or under a tenant (``<n>:<tenant>/run:<id>``).
+RUN_KEY = re.compile(r"^(?:[0-9]+:[^/]*/)?run:")
+
+
+class _Counters(defaultdict):
+    """The spend counters plus an index of the days each key has, so a month total reads one agent's days, not
+    every counter of every agent under the global lock."""
+
+    def __init__(self) -> None:
+        super().__init__(Decimal)
+        self.days: dict[str, set[date]] = defaultdict(set)
+
+    def __setitem__(self, key: tuple[str, date], value: Decimal) -> None:
+        super().__setitem__(key, value)
+        self.days[key[0]].add(key[1])
+
+    def __delitem__(self, key: tuple[str, date]) -> None:
+        super().__delitem__(key)
+        self.days[key[0]].discard(key[1])
+
+    def month(self, agent_id: str, day: date) -> Decimal:
+        return sum(
+            (
+                self.get((agent_id, d), Decimal(0))
+                for d in self.days.get(agent_id, ())
+                if (d.year, d.month) == (day.year, day.month)
+            ),
+            Decimal(0),
+        )
+
 
 class MemoryStore:
     def __init__(self) -> None:
@@ -33,7 +64,7 @@ class MemoryStore:
         self._approvals: dict[str, ApprovalRequest] = {}
         self._decisions: list[ApprovalDecision] = []
         self._dead: dict[str, list[DeadLetter]] = defaultdict(list)
-        self._spend: dict[tuple[str, date], Decimal] = defaultdict(Decimal)
+        self._spend = _Counters()
         self._kill = KillSwitch()
         self._ticks: dict[str, TickState] = {}
 
@@ -192,24 +223,64 @@ class MemoryStore:
     def add_spend(self, agent_id: str, day: date, usd: Decimal) -> tuple[Decimal, Decimal]:
         with self._lock:
             self._spend[(agent_id, day)] += usd
-            month = sum(
-                v
-                for (a, d), v in self._spend.items()
-                if a == agent_id and (d.year, d.month) == (day.year, day.month)
-            )
+            month = self._spend.month(agent_id, day)
             return self._spend[(agent_id, day)], Decimal(month)
 
     def spend_totals(self, agent_id: str, day: date) -> tuple[Decimal, Decimal]:
         with self._lock:
-            month = sum(
-                (
-                    v
-                    for (a, d), v in self._spend.items()
-                    if a == agent_id and (d.year, d.month) == (day.year, day.month)
-                ),
-                Decimal(0),
-            )
+            month = self._spend.month(agent_id, day)
             return self._spend.get((agent_id, day), Decimal(0)), month
+
+    def _month_total(self, agent_id: str, day: date) -> Decimal:
+        return self._spend.month(agent_id, day)
+
+    def reserve_spend(
+        self,
+        agent_id: str,
+        day: date,
+        usd: Decimal,
+        daily_cap: Decimal,
+        monthly_cap: Decimal,
+        *,
+        run_key: str | None = None,
+        run_day: date | None = None,
+        run_cap: Decimal | None = None,
+    ) -> list[str]:
+        with self._lock:  # the switch, every check and every booking under one lock
+            if self._kill.on:
+                return ["kill_switch"]
+            reasons = []
+            if run_key is not None and run_cap is not None:
+                r = self._spend.get((run_key, run_day or day), Decimal(0))
+                if r + usd > run_cap:
+                    reasons.append("run_budget")
+            if self._spend.get((agent_id, day), Decimal(0)) + usd > daily_cap:
+                reasons.append("daily_budget")
+            if self._month_total(agent_id, day) + usd > monthly_cap:
+                reasons.append("monthly_budget")
+            if reasons:
+                return reasons
+            self._spend[(agent_id, day)] += usd
+            if run_key is not None and run_cap is not None:
+                self._spend[(run_key, run_day or day)] += usd
+            return []
+
+    def settle_spend(self, deltas: list[tuple[str, date, Decimal]]) -> None:
+        with self._lock:
+            for agent_id, day, delta in deltas:
+                if delta < 0 and (agent_id, day) not in self._spend:
+                    continue  # a counter already pruned: nothing to take back (no negative rows)
+                new = self._spend[(agent_id, day)] + delta
+                self._spend[(agent_id, day)] = (
+                    max(Decimal(0), new) if delta < 0 else new
+                )  # never below zero
+
+    def prune_spend(self, before: date) -> int:
+        with self._lock:
+            gone = [k for k in self._spend if RUN_KEY.match(k[0]) and k[1] < before]
+            for k in gone:
+                del self._spend[k]
+            return len(gone)
 
     def get_kill_switch(self) -> KillSwitch:
         with self._lock:

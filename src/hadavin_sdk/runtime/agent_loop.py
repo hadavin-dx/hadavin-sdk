@@ -11,6 +11,7 @@ import json
 import logging
 from collections.abc import Callable
 from dataclasses import dataclass, field
+from decimal import Decimal
 from typing import Any, Literal
 
 from pydantic import ValidationError
@@ -21,9 +22,19 @@ from hadavin_sdk.approvals.cards import Card, Delivery
 from hadavin_sdk.audit.protocol import AuditSink, AuditUnavailable
 from hadavin_sdk.config import ConfigError, confined
 from hadavin_sdk.guard.injection import Detector, injection_check
+from hadavin_sdk.guard.judge import PROMPT as _JUDGE_PROMPT
+from hadavin_sdk.guard.judge import SCHEMA as _JUDGE_SCHEMA
+from hadavin_sdk.guard.judge import JudgeDetector
 from hadavin_sdk.identity import Principal
-from hadavin_sdk.limits import Limits
-from hadavin_sdk.llm.protocol import LLM, ProviderError, ProviderExhausted
+from hadavin_sdk.limits import Limits, OverBudget, Reservation, prompt_bytes, worst_case_usd
+from hadavin_sdk.llm.protocol import (
+    LLM,
+    ProviderError,
+    ProviderExhausted,
+    QuotaReached,
+    SpendLimitReached,
+    cost_to_settle,
+)
 from hadavin_sdk.models import (
     AuditEvent,
     GateDecision,
@@ -33,6 +44,7 @@ from hadavin_sdk.models import (
     RunResult,
     RunState,
     ToolCall,
+    Verdict,
     sha256_hex,
 )
 from hadavin_sdk.registry import Registry
@@ -196,11 +208,61 @@ class Runtime:
             return self._to(run, S.NEEDS_PERSON, f"limits.{blocked[0]}")
         return None
 
-    def _screen(self, run: Run, text: str, source: str):
-        """The injection check; a model-backed detector's call (llm_judge) is charged like any model call."""
+    def _gate(self, run: Run, usd: Decimal, cited: list[str]) -> Reservation | Run:
+        """Book a call's worst case against every cap in one atomic step (R214), or return the ended run: the
+        kill switch stops it, a spent budget needs a person. A store that cannot answer fails closed."""
+        try:
+            return self.limits.reserve(run.agent_id, usd, run.run_id, run.created_at.date())
+        except OverBudget as exc:
+            if "kill_switch" in exc.reasons:
+                return self._to(run, S.STOPPED, "kill_switch")
+            if "run_budget" in exc.reasons:
+                return self._abstain(run, S.NEEDS_PERSON, "run_budget", cited)
+            return self._to(run, S.NEEDS_PERSON, f"limits.{exc.reasons[0]}")
+        except Exception as exc:  # noqa: BLE001 - fail closed: no booking, no call
+            _LOG.warning("run %s: limits unavailable: %s", run.run_id, type(exc).__name__)
+            return self._to(run, S.NEEDS_PERSON, "limits.unavailable")
+
+    def _settle(self, run: Run, res: Reservation, actual: Decimal) -> None:
+        """Swap the reservation for the real cost. If the store cannot take it the worst case stays booked (it
+        fails safe), and the run goes on."""
+        try:
+            self.limits.settle(res, actual)
+        except Exception as exc:  # noqa: BLE001
+            _LOG.warning(
+                "run %s: settle failed, worst case stays booked: %s", run.run_id, type(exc).__name__
+            )
+
+    def _screen(self, run: Run, text: str, source: str, cited: list[str]) -> Verdict | Run:
+        """The injection check. A model-backed detector (llm_judge) is a model call: its worst case is reserved
+        first and settled to the real cost, like the agent's own calls. Returns the verdict, or the ended run."""
+        judges = [
+            d
+            for d in getattr(self.detector, "detectors", [self.detector])
+            if isinstance(d, JudgeDetector)
+        ]
+        res = None
+        if judges:
+            ask = [{"role": "user", "content": f"Screen the attached text (source: {source})."}]
+            size = prompt_bytes(ask, _JUDGE_PROMPT, [text.encode("utf-8")], None, _JUDGE_SCHEMA)
+            worst = sum(
+                (worst_case_usd(self.registry.config.routes[j.route], size) for j in judges),
+                Decimal(0),
+            )
+            gate = self._gate(run, worst, cited)
+            if isinstance(gate, Run):
+                return gate
+            res = gate
         verdict = injection_check(self.detector, text, source)
+        if res is not None:
+            # A judge that failed may still have been billed: keep the worst case booked then.
+            unknown = verdict.reason_code == "guard_unavailable"
+            self._settle(run, res, res.usd if unknown else verdict.cost_usd)
+        elif verdict.cost_usd:
+            self.limits.charge(
+                run.agent_id, verdict.cost_usd
+            )  # a custom paid detector: metered, not gated
         if verdict.cost_usd:
-            self.limits.charge(run.agent_id, verdict.cost_usd)
             self.store.add_cost(run.run_id, verdict.cost_usd)
         return verdict
 
@@ -236,7 +298,9 @@ class Runtime:
         # Limits first: a paid screen (llm_judge) never runs once the kill switch or a budget stopped the agent.
         if (stopped := self._limits_stop(run)) is not None:
             return stopped
-        verdict = self._screen(run, document.decode("utf-8", "replace"), "document")
+        verdict = self._screen(run, document.decode("utf-8", "replace"), "document", cited)
+        if isinstance(verdict, Run):
+            return verdict
         if verdict.flagged:
             self._note(run, "guard", "injection", result="flagged", error_code=verdict.reason_code)
             return self._abstain(run, S.NEEDS_PERSON, verdict.reason_code, cited)
@@ -253,6 +317,19 @@ class Runtime:
             if (stopped := self._limits_stop(run)) is not None:
                 return stopped
             self.store.touch(run.run_id)  # heartbeat for tick's stuck-run rule
+            # Reserve the call's worst case (prompt + max_tokens) before it starts: concurrent runs cannot book
+            # past the daily, monthly or per-run cap, and max_run_usd binds here.
+            gate = self._gate(
+                run,
+                worst_case_usd(
+                    self.registry.config.routes[agent.model_route],
+                    prompt_bytes(messages, system, [document], tools),
+                ),
+                cited,
+            )
+            if isinstance(gate, Run):
+                return gate
+            res = gate
             try:
                 reply = self.llm.chat(
                     messages,
@@ -264,12 +341,23 @@ class Runtime:
             except (
                 ProviderError
             ) as exc:  # a refused key or request must not strand the run in WORKING
-                code = (
-                    "provider_exhausted" if isinstance(exc, ProviderExhausted) else "provider_error"
-                )
+                # Settle by the billing contract: released only if nothing was sent or every request was refused;
+                # an answered (billed) call is booked at its cost, never at zero; anything unknown stays booked.
+                self._settle(run, res, cost_to_settle(exc, res.usd))
+                if isinstance(exc, QuotaReached):
+                    code = "provider_quota"  # a per-period quota, not money: waiting for its reset
+                elif isinstance(exc, SpendLimitReached):
+                    code = (
+                        "over_budget"  # the provider's own cap: waiting for the reset, not retrying
+                    )
+                elif isinstance(exc, ProviderExhausted):
+                    code = "provider_exhausted"
+                else:
+                    code = "provider_error"
                 self._note(run, "llm", "chat", result="failed", error_code=code)
                 return self._abstain(run, S.NEEDS_PERSON, code, cited)
-            self.limits.charge(agent_id, reply.cost_usd)
+            # Any other exception leaves the worst case booked (the call may have been billed): fail safe.
+            self._settle(run, res, reply.cost_usd)
             self.store.add_cost(run.run_id, reply.cost_usd)
             if reply.stop_reason in (
                 "max_tokens",
@@ -294,7 +382,9 @@ class Runtime:
                 except Exception:  # noqa: BLE001 - a broken tool must not strand the run in WORKING
                     self._note(run, "tool", call.name, result="error", error_code="tool_error")
                     return self._abstain(run, S.NEEDS_PERSON, "tool_error", cited)
-                verdict = self._screen(run, result, f"tool:{call.name}")
+                verdict = self._screen(run, result, f"tool:{call.name}", cited)
+                if isinstance(verdict, Run):
+                    return verdict
                 if verdict.flagged:  # tool output is untrusted text too
                     self._note(
                         run, "guard", "injection", result="flagged", error_code=verdict.reason_code

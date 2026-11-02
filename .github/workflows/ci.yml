@@ -93,7 +93,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           persist-credentials: false
-          fetch-depth: 0  # gitleaks scans the whole history
+          fetch-depth: 0  # a push to main and the weekly run scan main's whole history; a PR scans only base..head
       - uses: astral-sh/setup-uv@18d369b23da25a81e9458561248e1aafff6a70fa  # v10.3.1
         with:
           version: "0.13.6"
@@ -115,13 +115,25 @@ jobs:
         run: uvx --no-build --exclude-newer 2026-10-21T00:00:00Z --from "semgrep==1.181.0" semgrep scan --config p/python --config p/secrets --metrics=off --error --quiet src tests demos
       - name: Workflow audit
         run: zizmor --offline --format plain .github
-      - name: Secrets in the whole history (gitleaks, checksum-verified binary)
+      # A pull request scans only ITS commits (base..head): branches of other pull requests are fetched too, and their
+      # findings are theirs to fix, not a reason to block this one. A push to main and the weekly run scan the whole
+      # history that main reaches.
+      - name: Secrets (gitleaks, checksum-verified binary; PR commits only, full history on main and weekly)
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           curl -sSfL --proto "=https" --tlsv1.2 -o "$RUNNER_TEMP/gitleaks.tgz" \
             "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
           echo "${GITLEAKS_SHA256}  $RUNNER_TEMP/gitleaks.tgz" | sha256sum -c -
           tar -xzf "$RUNNER_TEMP/gitleaks.tgz" -C "$RUNNER_TEMP" gitleaks
-          "$RUNNER_TEMP/gitleaks" git --redact --no-banner --exit-code 1 .
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            LOG_OPTS="${PR_BASE_SHA}..${PR_HEAD_SHA}"
+          else
+            LOG_OPTS="--full-history HEAD"
+          fi
+          "$RUNNER_TEMP/gitleaks" git --redact --no-banner --exit-code 1 --log-opts="$LOG_OPTS" .
       - name: Vulnerabilities, misconfigurations and secrets in the files (Trivy, checksum-verified binary)
         run: |
           curl -sSfL --proto "=https" --tlsv1.2 -o "$RUNNER_TEMP/trivy.tgz" \

@@ -108,6 +108,35 @@ class Store(Protocol):
         """(day, month) totals; a read with no write."""
         ...
 
+    def reserve_spend(
+        self,
+        agent_id: str,
+        day: date,
+        usd: Decimal,
+        daily_cap: Decimal,
+        monthly_cap: Decimal,
+        *,
+        run_key: str | None = None,
+        run_day: date | None = None,
+        run_cap: Decimal | None = None,
+    ) -> list[str]:
+        """ONE atomic step (any number of threads or processes): if the kill switch is off (a missing row counts
+        as on), the day total plus ``usd`` stays within ``daily_cap``, the month total within ``monthly_cap`` and,
+        when ``run_key`` is given, the run's total (kept under ``run_key`` on ``run_day``) within ``run_cap``, add
+        ``usd`` to all of them and return ``[]``. Otherwise add nothing and return the reasons
+        (``kill_switch``, ``run_budget``, ``daily_budget``, ``monthly_budget``). The check and the booking
+        share one lock or transaction, so a switch flipped before the step always wins."""
+        ...
+
+    def settle_spend(self, deltas: list[tuple[str, date, Decimal]]) -> None:
+        """Apply every ``(agent_id, day, delta)`` (delta may be negative) in ONE atomic step: all or none."""
+        ...
+
+    def prune_spend(self, before: date) -> int:
+        """Delete the per-run counters (agent ids ``run:...`` or ``<n>:<tenant>/run:...``) whose day is before
+        ``before``; returns the number of day rows removed. Needs DELETE: not the runtime role's."""
+        ...
+
     def get_kill_switch(self) -> KillSwitch:
         """A missing or unreadable switch row reads as ON (fail closed)."""
         ...

@@ -78,7 +78,7 @@ def build(
         # screens the document and tool output, where untrusted text enters (config refuses a judge alone).
         summary_detector = combine([m for m in members if m.backend != "llm_judge"])
     channel = channel or make("channel", b.channel, secrets, store=store)
-    limits = Limits(store, audit, reg)
+    limits = Limits(store, audit, reg, tenant=cfg.tenant)
     executor = None if live else Executor(reg, secrets, timeout_s=timeout_s)
     holder: dict[str, Runtime] = {}
     approvals = Approvals(

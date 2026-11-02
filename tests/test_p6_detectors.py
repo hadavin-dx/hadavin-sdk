@@ -181,6 +181,7 @@ def test_the_judge_runs_on_a_real_kind():
 
 
 def test_the_judge_charge_is_visible_in_limits(cfg_dir):
+    _edit(cfg_dir, lambda d: d["routes"].update(screen=dict(d["routes"]["default"], max_tokens=64)))
     plain, cfg = build(cfg_dir)
     with_judge, _ = build(cfg_dir)
     with_judge.detector = AnyOf([RegexDetector(0.5), judge()])

@@ -38,6 +38,9 @@ class _LLMSettings(KindSettings):
         default=60.0, gt=0
     )  # socket timeout, per operation (not a wall clock)
     max_attempts: int = Field(default=3, ge=1, le=10)
+    # Real wall clock for one call across all attempts and sleeps (an attempt still running at the end is
+    # abandoned, see llm/retry.py); None turns the bound off.
+    deadline_s: float | None = Field(default=120.0, gt=0)
 
 
 class AnthropicSettings(_LLMSettings):
