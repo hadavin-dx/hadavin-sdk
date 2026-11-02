@@ -222,7 +222,11 @@ class EvidenceSettings(_Strict):
     # Host suffixes that count as in-cluster, where `cluster_http` tools may use plain http.
     cluster_suffixes: tuple[str, ...] = defaults.CLUSTER_SUFFIXES
     # The largest document a run takes; a bigger one is refused (`document_too_large`), never half-read.
-    max_document_bytes: int = Field(default=defaults.MAX_DOCUMENT_BYTES, gt=0)
+    # Never above the redactor's own cap (`defaults.MAX_REDACT_CHARS`): a larger value would pass the size check
+    # and then be refused by the redactor.
+    max_document_bytes: int = Field(
+        default=defaults.MAX_DOCUMENT_BYTES, gt=0, le=defaults.MAX_REDACT_CHARS
+    )
     # Target systems (a contract's `target_system`) whose names are case-insensitive, so grounding folds case
     # for them. Every other target is compared exactly: `Admin` is not `admin`.
     case_insensitive_targets: tuple[str, ...] = ()

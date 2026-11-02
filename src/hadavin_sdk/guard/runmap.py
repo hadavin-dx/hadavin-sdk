@@ -10,6 +10,8 @@ Pure functions over a plain ``dict[str, str]`` (placeholder -> original). Stdlib
 
 from __future__ import annotations
 
+import collections
+import functools
 import hashlib
 import re
 import unicodedata
@@ -32,6 +34,35 @@ _LOOKALIKE = re.compile(r"<([A-Za-z][A-Za-z0-9]*)_(\d+)>")
 
 class RedactionError(RuntimeError):
     """The redactor failed: nothing may be sent to the model."""
+
+
+class InputTooLarge(RedactionError):
+    """The text, or a view of it that the second pass would scan, is longer than `defaults.MAX_REDACT_CHARS`."""
+
+
+def _within_cap(text: str) -> str:
+    if len(text) > defaults.MAX_REDACT_CHARS:
+        raise InputTooLarge("InputTooLarge")
+    return text
+
+
+@functools.lru_cache(maxsize=4096)
+def _nfkd_len(char: str) -> int:
+    return len(unicodedata.normalize("NFKD", char))
+
+
+def _fits_after_nfkc(text: str) -> str:
+    """Refuse BEFORE the work if the canonical view of `text` could pass the cap. NFKC of a string is never longer
+    than the NFKD of its characters, which is looked up once per distinct character (the normalisation itself
+    takes seconds on a million characters, so it must not run first)."""
+    if text.isascii():
+        return _within_cap(text)
+    if (
+        sum(n * _nfkd_len(c) for c, n in collections.Counter(text).items())
+        > defaults.MAX_REDACT_CHARS
+    ):
+        raise InputTooLarge("InputTooLarge")
+    return text
 
 
 # --- what may be stored: an allowlist grammar per kind --------------------------------------------------------
@@ -204,7 +235,7 @@ def _clean(text: str) -> str:
 def _views(text: str) -> list[str]:
     """Other forms a secret can hide in: the canonical view (NFKC, invisible characters removed) and the same
     with JSON `\\uXXXX` escapes decoded. Only forms that differ from `text` are returned."""
-    unescaped = _UNICODE_ESCAPE.sub(lambda m: chr(int(m.group(1), 16)), text)
+    unescaped = _fits_after_nfkc(_UNICODE_ESCAPE.sub(lambda m: chr(int(m.group(1), 16)), text))
     out = []
     for view in (canonical(text), canonical(unescaped)):
         view = _clean(view)
@@ -230,27 +261,31 @@ def redact_text(
     neutralised: a `\\u003c<IPV4_2>` cannot come back as a real placeholder. Output is cleaned of NUL and lone
     surrogates last, so it always encodes.
 
-    The one choke point for input size: a text longer than `defaults.MAX_REDACT_CHARS` is refused (RedactionError),
-    never redacted, so no caller (document, tool result, model-written argument, eval case, a future log or
-    transcript path) can drive the redactor to seconds per call."""
-    if len(text) > defaults.MAX_REDACT_CHARS:
-        raise RedactionError("InputTooLarge")
+    The one choke point for input size. The cap is on the WORK, not only on the input: the text, the text after
+    `neutralise`, and every view the second pass will scan must each be within `defaults.MAX_REDACT_CHARS`, else
+    `InputTooLarge` (a RedactionError) is raised and nothing is redacted. NFKC expands some characters (U+FDFA
+    becomes 18), so 87,000 of them are under the input cap and a 1.5-million-character view (24 s measured).
+    That covers every caller: document, tool result, model-written argument, eval case, a future log path."""
+    _within_cap(text)
     try:
-        text = _clean(text)
+        text = _fits_after_nfkc(_clean(text))
         if neutralise is not None:
-            text = neutralise(text)
+            text = _fits_after_nfkc(neutralise(text))
+        scan = not text.isascii() or "\\u" in text
+        views = _views(text) if scan else []  # _views refuses a view that would pass the cap
         cache = getattr(mapping, "redact_cache", None)
         result = redact(text, mapping=mapping, _cache=cache)
         out, current = result.text, result.mapping
-        if not text.isascii() or "\\u" in text:
-            for view in _views(text):
-                if neutralise is not None:
-                    view = neutralise(view)
-                again = redact(view, mapping=current, _cache=cache)
-                # a new value, or a known one only the view spells in a way pass one could not read
-                if again.mapping != current or _held(again.text) > _held(out):
-                    out, current = again.text, again.mapping
+        for view in views:
+            if neutralise is not None:
+                view = _fits_after_nfkc(neutralise(view))
+            again = redact(view, mapping=current, _cache=cache)
+            # a new value, or a known one only the view spells in a way pass one could not read
+            if again.mapping != current or _held(again.text) > _held(out):
+                out, current = again.text, again.mapping
         out = _clean(out)
+    except InputTooLarge:
+        raise
     except Exception as exc:  # noqa: BLE001 - whatever the redactor raised, nothing is sent
         raise RedactionError(type(exc).__name__) from None
     mapping.clear()
@@ -262,7 +297,7 @@ def redact_value(value: Any, mapping: dict[str, str]) -> Any:
     """`redact_text` over every string (and dict key) inside a JSON-shaped value. The total text is capped too (a
     value of many small strings is as costly as one big one)."""
     if _chars(value) > defaults.MAX_REDACT_CHARS:
-        raise RedactionError("InputTooLarge")
+        raise InputTooLarge("InputTooLarge")
     return _redact_value(value, mapping)
 
 

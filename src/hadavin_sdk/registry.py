@@ -10,7 +10,7 @@ import json
 import re
 from dataclasses import dataclass
 from dataclasses import field as dc_field
-from typing import Literal
+from typing import Any, Literal
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
@@ -191,6 +191,19 @@ def _by_id(items: list, model: type, where: str) -> dict:
     return out
 
 
+def _nested_identifier(sub: dict[str, Any]) -> bool:
+    """True if `identifier` appears anywhere inside this input's schema other than as its own top-level flag."""
+
+    def walk(node: Any) -> bool:
+        if isinstance(node, dict):
+            return isinstance(node.get("identifier"), bool) or any(walk(v) for v in node.values())
+        if isinstance(node, list):
+            return any(walk(v) for v in node)
+        return False
+
+    return any(walk(v) for k, v in sub.items() if k != "identifier")
+
+
 def load_registry(config: Config) -> Registry:
     root = config.root
     raw_agents = _yaml(root / "agents.yaml")
@@ -276,6 +289,14 @@ def _load_tools(config: Config, agents: dict, contracts: dict) -> dict[str, dict
                     if isinstance(sub, dict)
                     and sub.get("type") != "boolean"
                     and "identifier" not in sub
+                ]
+                # Grounding reads the TOP-LEVEL inputs only: an `identifier` flag deeper in an object or array would be
+                # silently ignored, so it is refused (flag the top-level input, or `identifier: false` on it).
+                problems += [
+                    f"{where}: action {action} input {pname!r} has an `identifier` flag below the top level, "
+                    "which grounding does not read"
+                    for pname, sub in props.items()
+                    if isinstance(sub, dict) and _nested_identifier(sub)
                 ]
             if spec.name in contracts:
                 problems.append(f"{where}: tool {spec.name} has the id of an action contract")

@@ -10,6 +10,7 @@ import json
 import os
 from decimal import Decimal
 
+from hadavin_sdk import defaults
 from hadavin_sdk.config import ConfigError, confined
 from hadavin_sdk.guard import judge, runmap
 from hadavin_sdk.llm.protocol import LLM
@@ -58,7 +59,15 @@ def gate(registry: Registry, llm: LLM, agent_id: str, *, k: int = 1) -> GateRun:
         # input_ref comes from a file: confined to inputs_dir (no "../" or absolute escapes).
         doc = confined(cfg.inputs_dir, case["input_ref"]).read_bytes()
         # The model sees what the runtime sends it: the document redacted with a fresh per-run map (K5).
-        doc = runmap.redact_untrusted(doc.decode("utf-8", "replace"), {}).encode("utf-8")
+        try:
+            doc = runmap.redact_untrusted(doc.decode("utf-8", "replace"), {}).encode("utf-8")
+        except (
+            runmap.RedactionError
+        ) as exc:  # too large for the redactor (or it failed): say which case, exit 2
+            raise ConfigError(
+                f"golden case {case.get('id', case['input_ref'])!r}: input {case['input_ref']!r} cannot be "
+                f"redacted ({exc}); inputs are limited to {defaults.MAX_REDACT_CHARS} characters, views included"
+            ) from None
         case_passes = 0
         for _ in range(k):
             reply = llm.chat(

@@ -31,7 +31,11 @@ MAX_TOOL_CALLS_PER_MINUTE = 120  # read-tool calls started per minute in one pro
 MAX_DOCUMENT_BYTES = (
     262_144  # the largest incident document a run takes (redaction and grounding scan it)
 )
-MAX_REDACT_CHARS = MAX_DOCUMENT_BYTES  # the most one redact_text call takes (about 7 us per character: 1.8 s at the cap)
+# The most one redact_text call takes, counting the text and every view the second pass scans. Measured end to end
+# (redact_untrusted at the cap, Windows laptop, 2026-11-02): "curl -u " repeated 7.2 s, a zero-width-split
+# "password=" 4.0 s, full-width 3.7 s, IP addresses 2.6 s, "password=" 1.4 s, 14,563 U+FDFA (a 262,000-character
+# view) 3.0 s. Size any timeout around ~8 s per call at the cap, not the 7 us per character a plain text costs.
+MAX_REDACT_CHARS = MAX_DOCUMENT_BYTES
 SOURCE_REPROBE_S = 3600  # how often the scope of a configured source is probed again while running
 MAX_TOOL_BYTES_PER_RUN = 262_144  # bytes of tool results one run may send to the model
 MAX_ABANDONED_TOOL_THREADS = (

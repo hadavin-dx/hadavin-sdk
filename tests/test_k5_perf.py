@@ -37,10 +37,14 @@ def _cpu(pattern: re.Pattern[str], text: str) -> float:
     return statistics.median(runs)
 
 
-def is_superlinear(pattern: re.Pattern[str], unit: str, small: int = SMALL, big: int = BIG) -> bool:
+def _is_superlinear(measure, unit: str, small: int, big: int) -> bool:
     texts = [(unit * (n // len(unit) + 1))[:n] for n in (small, big)]
-    t_small, t_big = (_cpu(pattern, t) for t in texts)
+    t_small, t_big = (measure(t) for t in texts)
     return t_big > max(FLOOR_S, RATIO * max(t_small, MIN_SMALL_S))
+
+
+def is_superlinear(pattern: re.Pattern[str], unit: str, small: int = SMALL, big: int = BIG) -> bool:
+    return _is_superlinear(lambda t: _cpu(pattern, t), unit, small, big)
 
 
 def _keywords(source: str) -> list[str]:
@@ -69,3 +73,50 @@ def test_no_redaction_pattern_is_super_linear_on_its_own_keywords_repeated():
         if is_superlinear(pat, unit)
     ]
     assert not slow, slow
+
+
+# --- end to end: redact_untrusted with its views, not one pattern -------------------------------------------------------------------
+# A pattern sweep cannot see the cost of the second pass (NFKC views, neutralising, unescaping): this runs the real entry
+# point on text that forces a view. RE-RUN POLICY: wall clock on a shared runner is noisy; a red run is repeated once by hand
+# (`pytest -m perf -k end_to_end`); two reds in a row on the same shape are a real regression, one red is noise.
+
+BS = chr(92)
+E2E_UNITS = [
+    "curl -u ",
+    "password= ",
+    "".join(chr(ord(c) + 0xFEE0) for c in "password=") + " ",  # full-width: a view is scanned
+    BS + "u0070assword= ",  # a JSON escape: the unescaped view is scanned
+    "pass" + chr(0x200B) + "word= ",  # zero-width space inside the keyword
+]
+
+
+def _e2e(text: str) -> float:
+    from hadavin_sdk.guard import runmap
+
+    runs = []
+    for _ in range(3):
+        t0 = time.perf_counter()
+        runmap.redact_untrusted(text, {})
+        runs.append(time.perf_counter() - t0)
+    return statistics.median(runs)
+
+
+@pytest.mark.perf
+@pytest.mark.parametrize(
+    "unit", E2E_UNITS, ids=["curl-u", "password", "fullwidth", "json-escape", "zero-width"]
+)
+def test_redact_untrusted_end_to_end_is_not_super_linear_with_views(unit):
+    assert not _is_superlinear(_e2e, unit, 16 * 1024, 64 * 1024)
+
+
+@pytest.mark.perf
+def test_the_slowest_measured_shape_at_the_cap_stays_under_a_ceiling():
+    """Measured 7.2 s for "curl -u " at 262,144 characters on a Windows laptop (2026-11-02); the ceiling is 3x that,
+    so only a real regression crosses it. Size timeouts around the measured number (see defaults.MAX_REDACT_CHARS)."""
+    from hadavin_sdk import defaults
+    from hadavin_sdk.guard import runmap
+
+    text = ("curl -u " * (defaults.MAX_REDACT_CHARS // 8 + 1))[: defaults.MAX_REDACT_CHARS]
+    t0 = time.perf_counter()
+    runmap.redact_untrusted(text, {})
+    assert time.perf_counter() - t0 < 22.0

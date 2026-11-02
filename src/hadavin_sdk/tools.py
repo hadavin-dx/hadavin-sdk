@@ -171,13 +171,16 @@ def forbidden_host(host: str) -> str | None:
     return None
 
 
-# `generated_suffix` is a deliberately tiny language, so no suffix can backtrack catastrophically or match any
+# `generated_suffix` is a deliberately tiny language, so no suffix can backtrack exponentially or match any
 # longer name: literal characters, `\\.` and `\\-`, and character classes with a BOUNDED repeat (`{5}` or
-# `{5,10}`). No `*`, `+`, `?`, group, alternation or lookaround.
+# `{5,10}`). No `*`, `+`, `?`, group, alternation or lookaround. Time is polynomial, not linear: each VARIABLE
+# repeat (`{lo,hi}` with lo != hi) can multiply the worst case by up to 64, so at most `_SUFFIX_MAX_VARIABLE` are
+# allowed (a fixed `{5}` adds nothing).
 _SUFFIX = re.compile(
     r"(?:[A-Za-z0-9_\-]|\\[.\-]|\[[A-Za-z0-9_\-]{1,40}\](?:\{[0-9]{1,2}(?:,[0-9]{1,2})?\})?)+"
 )
-_SUFFIX_MAX_LEN, _SUFFIX_MAX_REPEAT = 200, 64
+_SUFFIX_MAX_LEN, _SUFFIX_MAX_REPEAT, _SUFFIX_MAX_VARIABLE = 200, 64, 2
+_VARIABLE_REPEAT = re.compile(r"\{([0-9]+),([0-9]+)\}")
 
 
 def suffix_problem(suffix: str) -> str | None:
@@ -188,6 +191,8 @@ def suffix_problem(suffix: str) -> str | None:
     for lo, hi in re.findall(r"\{([0-9]+)(?:,([0-9]+))?\}", suffix):
         if int(hi or lo) > _SUFFIX_MAX_REPEAT or int(lo) > int(hi or lo):
             return f"has a repeat that is not between 0 and {_SUFFIX_MAX_REPEAT} or runs backwards"
+    if sum(1 for lo, hi in _VARIABLE_REPEAT.findall(suffix) if lo != hi) > _SUFFIX_MAX_VARIABLE:
+        return f"has more than {_SUFFIX_MAX_VARIABLE} variable-length repeats (the match would take polynomial time)"
     try:
         re.compile(suffix)
     except re.error:

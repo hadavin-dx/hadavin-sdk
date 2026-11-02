@@ -40,13 +40,17 @@ _THIS_NETWORK = ipaddress.ip_network(
 )  # "this host on this network": Linux connects it to the local host
 # 100.64.0.0/10 (carrier-grade NAT, where some clouds and VPNs put in-cluster services) is allowed on purpose,
 # like the other private ranges; the manifest host allowlist bounds what a tool may name.
-# NAT64 (the well-known prefix) is refused whole: an IPv6-only cluster behind DNS64/NAT64 cannot use the
-# in-process fetch and needs the egress proxy (K7) instead.
+# NAT64 (the well-known prefix) is refused whole, by this rule and not by the standard library's flags (which differ
+# between Python versions): an IPv6-only cluster behind DNS64/NAT64 cannot use the in-process fetch and needs the
+# egress proxy (K7) instead.
 _NAT64 = ipaddress.ip_network("64:ff9b::/96")
 _NAT64_LOCAL = ipaddress.ip_network(
     "64:ff9b:1::/48"
-)  # the local-use NAT64 prefix (RFC 8215): refused whole as well
-MAX_STUCK_LOOKUPS = 8  # name lookups still running past their timeout before new ones are refused
+)  # the local-use NAT64 prefix (RFC 8215): refused whole
+# One budget for the whole process: the read tools, the LLM clients and the executor share it. During a real DNS
+# outage 8 stuck lookups refuse every new outbound name lookup until the resolver gives up (fail closed, and
+# self-healing: a permit comes back when its thread ends).
+MAX_STUCK_LOOKUPS = 8
 _STUCK = threading.BoundedSemaphore(MAX_STUCK_LOOKUPS)
 RESOLVE_TIMEOUT_S = (
     5.0  # a name lookup that takes longer is refused (getaddrinfo has no timeout of its own)
@@ -64,10 +68,8 @@ def _refused(ip: ipaddress.IPv4Address | ipaddress.IPv6Address) -> bool:
         embedded = [ip.ipv4_mapped, ip.sixtofour]
         if ip.teredo:
             embedded += list(ip.teredo)
-        if ip in _NAT64_LOCAL:
+        if ip in _NAT64 or ip in _NAT64_LOCAL:
             return True
-        if ip in _NAT64:
-            embedded.append(ipaddress.IPv4Address(int(ip) & 0xFFFFFFFF))
         return any(e is not None and _refused(e) for e in embedded)
     return False
 
@@ -89,7 +91,11 @@ def _resolve(host: str, port: int):
             _STUCK.release()  # the thread is over, whether or not anybody still waits for it
 
     worker = threading.Thread(target=lookup, daemon=True, name="hadavin-resolve")
-    worker.start()
+    try:
+        worker.start()
+    except BaseException:
+        _STUCK.release()  # the thread never ran, so nothing else will give the permit back
+        raise
     worker.join(RESOLVE_TIMEOUT_S)
     if worker.is_alive():
         raise OSError(f"{host}: the name lookup took more than {RESOLVE_TIMEOUT_S} s")

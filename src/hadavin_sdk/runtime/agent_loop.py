@@ -367,6 +367,11 @@ class Runtime:
             safe_doc = safe_text.encode(
                 "utf-8"
             )  # inside the try: text that cannot encode is an abstention
+        except (
+            runmap.InputTooLarge
+        ):  # a document whose redaction work is over the cap: the same refusal as the size cap
+            self._note(run, "guard", "document", result="stopped", error_code="document_too_large")
+            return self._abstain(run, S.NEEDS_PERSON, "document_too_large", cited)
         except Exception:  # noqa: BLE001 - whatever the redactor did, nothing goes to the model
             return self._redaction_failed(run, cited)
         try:
