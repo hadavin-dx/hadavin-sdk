@@ -1,1 +1,4 @@
 * text=auto eol=lf
+
+# Vendored kit: hashes are over exact bytes, git must not rewrite them (KIT-FORMAT.md).
+demos/ask-your-data/vendor/portal-kit/** -text

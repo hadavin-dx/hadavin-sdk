@@ -6,6 +6,7 @@ Regenerate the committed example from the repo root:
 
 from __future__ import annotations
 
+import json
 import sys
 import tempfile
 import uuid
@@ -33,6 +34,7 @@ EXAMPLE = (
     / "examples"
     / "export.example.json"
 )
+KIT_LOCK = EXAMPLE.parents[1] / "vendor" / "KIT.lock"
 PAID_SQL = "SELECT count(*) AS n FROM analytics.orders_v WHERE status = 'paid'"
 XSS = "Remove the cancelled orders <img src=x onerror=alert(1)>"
 
@@ -86,6 +88,7 @@ def _build(tmp: Path, core_commit: str) -> dict:
     return build_export(
         ledger=r.kit.ledger, sink=r.kit.sink, report=report, results=[asdict(x) for x in gold_recs + adv_recs],
         run_id="example-offline-scripted", synthetic=True, core_commit=core_commit, ts="2026-11-01T00:00:00Z",
+        kit_commit=json.loads(KIT_LOCK.read_text("utf-8"))["kit_commit"],
     )  # fmt: skip
 
 

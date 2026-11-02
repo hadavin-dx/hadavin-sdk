@@ -49,7 +49,8 @@ hadavin-sdk = "hadavin_sdk.cli:main"
 [dependency-groups]
 dev = ["pytest==9.1.1", "ruff==0.17.1"]
 # Contract-suite stand-ins for cloud services (CI installs it with every extra).
-test = ["moto[s3,kms,secretsmanager]==5.2.4", "pglast==8.7"]
+# jsonschema: the vendored portal kit (demos/ask-your-data/vendor, tests only) validates exports with it.
+test = ["moto[s3,kms,secretsmanager]==5.2.4", "pglast==8.7", "jsonschema==4.26.0"]
 # Free scanners that keep working when the repository turns private.
 scan = ["pip-audit==2.10.1", "bandit==1.9.4", "zizmor==1.31.1"]
 
@@ -67,6 +68,8 @@ exclude-newer-package = { google-api-core = "2026-10-24T00:00:00Z", grpcio = "20
 [tool.ruff]
 line-length = 100
 src = ["src", "tests", "demos"]
+# Vendored copies of other repos are checked by their own repo, not reformatted here (hashes cover exact bytes).
+extend-exclude = ["demos/*/vendor"]
 
 [tool.ruff.lint]
 extend-select = ["B", "DTZ", "I", "S", "UP"]
