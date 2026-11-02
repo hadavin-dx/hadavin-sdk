@@ -268,13 +268,19 @@ class PostgresStore:
     # the process lock while waiting; without a connector (a test wrapping one connection) they share ``conn``.
     # Spend work uses POOL_SIZE connections per process (settings ``spend_pool_size``), FIFO. A caller waits at most
     # POOL_WAIT_S (settings ``spend_pool_wait_s``) for one, then fails closed with StoreUnavailable (the cap is never
-    # exceeded). CEILING, machine dependent: every reservation on ONE hot agent key takes the same row locks and commits
-    # one after another, so that key serves about 1 / (commits per reservation x commit latency) reservations per
-    # second, whatever the pool size (extra connections only wait on the row lock); several agent keys run in parallel.
-    # Two measured data points, not a promise: about 100 to 125 per second (postgres:17 in docker, Windows laptop,
-    # loopback, fast commits) and about 3 per second (the same code with ~42 ms commits). Measure YOUR database with
-    # pgbench (a custom script updating one row per transaction) and size ``spend_pool_wait_s`` against the burst
-    # you expect: a burst of B simultaneous callers on one key needs about B / rate seconds. See tests/test_pr48_pool.py.
+    # exceeded). CEILING, machine and network dependent: every reservation on ONE hot agent key takes the same row locks
+    # and runs in one transaction of about 10 to 16 round trips (BEGIN, lock timeout, lock and read each counter, kill
+    # switch, update day and month, COMMIT), one after another, whatever the pool size (extra connections only wait on
+    # the row lock); several agent keys run in parallel. So that key serves about
+    #     rate  =  1 / (round trips per reservation x latency per round trip)      (about 1 / (12 x latency))
+    # Measured data points (NOT a promise; load shape differs from capacity, a "2,000 callers, 10 s wait, 200 admitted"
+    # run only shows what a queue that long does to a 10 s patience):
+    #     latency ~0.7 ms (idle laptop, docker loopback)           ->  about 100 to 125 reservations/s, once
+    #     latency ~7-8 ms (pgbench 127-138 tps, loaded machine)    ->  about 5 to 11 reservations/s
+    #     latency ~42 ms                                            ->  about 2 to 4 reservations/s
+    # Run pgbench against YOUR database (a custom script that updates one row per transaction) to get the latency, apply
+    # the formula, and size ``spend_pool_wait_s`` for the burst you expect: B simultaneous callers on one key need about
+    # B / rate seconds. The cap is never exceeded whatever the rate. See tests/test_pr48_pool.py.
     LOCK_TIMEOUT_MS = 5000
     RESERVE_ATTEMPTS = 3
     POOL_SIZE = 8

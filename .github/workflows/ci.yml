@@ -83,7 +83,7 @@ jobs:
         env:
           HADAVIN_TEST_PG_DSN: postgresql://postgres@localhost:5432/postgres
           HADAVIN_TEST_VAULT_ADDR: http://127.0.0.1:8200
-        run: pytest -q -m "not live" -rs
+        run: pytest -q -m "not live and not perf" -rs
 
   security:
     if: github.event_name != 'pull_request' || github.event.pull_request.draft == false

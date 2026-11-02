@@ -456,7 +456,13 @@ def test_postgres_kill_switch_flip_is_seen_by_every_later_reserve():
     for dsn in pg_schema():
         settings = PostgresSettings(kind="postgres", dsn_secret_name="pg-dsn")  # noqa: S106 - a name
         stores = [make("store", settings, FakeSecretProvider({"pg-dsn": dsn})) for _ in range(4)]
+        stop, ts = (
+            threading.Event(),
+            [],
+        )  # so the finally can stop workers even if the test fails midway
         try:
+            from hadavin_sdk.store.protocol import StoreUnavailable
+
             lims = [_limits(s, daily="1e6", monthly="1e6") for s in stores]
             log, stop, lock = [], threading.Event(), threading.Lock()
 
@@ -468,16 +474,30 @@ def test_postgres_kill_switch_flip_is_seen_by_every_later_reserve():
                         ok = True
                     except OverBudget:
                         ok = False
+                    except StoreUnavailable:  # a typed fail-closed answer on a loaded machine: neither admitted nor refused
+                        continue
                     with lock:
                         log.append((began, ok))
+
+            def wait_until(
+                pred, what
+            ):  # events, not wall-clock windows: a loaded machine only makes this longer
+                deadline = time.monotonic() + 120
+                while not pred():
+                    assert time.monotonic() < deadline, what
+                    time.sleep(0.01)
 
             ts = [threading.Thread(target=worker, args=(i,)) for i in range(8)]
             for t in ts:
                 t.start()
-            time.sleep(0.5)
+            wait_until(
+                lambda: any(ok for _, ok in log), "no reservation was admitted before the flip"
+            )
             stores[0].set_kill_switch(KillSwitch(on=True, by="t"))
             flipped = time.monotonic()
-            time.sleep(0.5)
+            wait_until(
+                lambda: any(not ok and b > flipped for b, ok in log), "no refusal after the flip"
+            )
             stop.set()
             for t in ts:
                 t.join()
@@ -485,6 +505,9 @@ def test_postgres_kill_switch_flip_is_seen_by_every_later_reserve():
             assert not [b for b, ok in log if ok and b > flipped]
             assert [1 for _, ok in log if not ok]  # and some were refused after the flip
         finally:
+            stop.set()  # a failing assertion must not leave spinning worker threads behind
+            for t in ts:
+                t.join(30)
             for s in stores:
                 s.close()
 

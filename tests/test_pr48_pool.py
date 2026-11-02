@@ -93,10 +93,11 @@ def _burst(lim, n):
 
 
 def test_a_hot_key_burst_on_postgres_books_exactly_what_it_admitted(clock):  # noqa: F811
-    # 300 simultaneous callers on ONE agent counter with a short wait: some may fail closed (StoreUnavailable), none may
-    # be double-booked, and the cap is never exceeded. With a generous wait every one of them succeeds.
+    # SAFETY only (no wall-clock admission count, which depends on the machine): 300 simultaneous callers on ONE agent
+    # counter, with a long and a 50 ms wait. Every caller gets a booking or a typed fail-closed StoreUnavailable (any
+    # other exception fails the test), booked == admitted x amount exactly, the cap still binds, and no permit leaks.
     for dsn in pg_schema():
-        for wait, expect_all in ((60.0, True), (0.05, False)):
+        for wait in (60.0, 0.05):
             store = _pg_store(dsn, POOL_WAIT_S=wait)
             try:
                 ok, err = _burst(_limits(store, daily="1000"), 300)
@@ -104,15 +105,53 @@ def test_a_hot_key_burst_on_postgres_books_exactly_what_it_admitted(clock):  # n
                 assert (
                     store.spend_totals("a", DAY)[0] == D("0.001") * ok
                 )  # booked == admitted, exactly
-                if expect_all:
-                    assert err == 0
                 with pytest.raises(OverBudget):  # the cap still binds afterwards
                     _limits(store, daily="0.0000001").reserve("a", D("1"))
+                assert (
+                    store._slots._free == store.POOL_SIZE and not store._slots._q
+                )  # no permit leaked
             finally:
                 store.close()
                 with __import__("psycopg").connect(dsn, autocommit=True) as db:
                     db.execute("DELETE FROM spend")
                     db.execute("DELETE FROM spend_month")
+
+
+def test_a_driver_error_on_the_spend_path_is_a_typed_refusal_never_a_raw_error(clock):  # noqa: F811
+    import psycopg
+
+    from hadavin_sdk.store.postgres import PostgresStore
+
+    for dsn in pg_schema():
+        store = _pg_store(dsn)
+        try:
+
+            def broken():
+                raise psycopg.OperationalError("connection refused: host=db.internal user=svc")
+
+            store._connector = broken
+            store._idle = type(store._idle)()  # no pooled connection: the next borrow must connect
+            with pytest.raises(StoreUnavailable) as e:
+                _limits(store, daily="1").reserve("a", D("0.001"))
+            assert "db.internal" not in str(e.value) and "svc" not in str(
+                e.value
+            )  # class name only
+            assert store._slots._free == store.POOL_SIZE  # the failed borrow returned its permit
+        finally:
+            PostgresStore.close(store)
+
+
+@pytest.mark.perf
+def test_perf_a_generous_wait_admits_every_caller_of_a_150_burst(clock):  # noqa: F811
+    # THROUGHPUT floor, machine-relative: with a wait far longer than the burst needs, no caller may be dropped. Run with
+    # -m perf on a quiet machine; the bound is generous (120 s) and says nothing about capacity.
+    for dsn in pg_schema():
+        store = _pg_store(dsn, POOL_WAIT_S=120.0)
+        try:
+            ok, err = _burst(_limits(store, daily="1000"), 150)
+            assert (ok, err) == (150, 0)
+        finally:
+            store.close()
 
 
 def test_the_pool_settings_are_validated_and_reach_the_store():

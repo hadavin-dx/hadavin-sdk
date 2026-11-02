@@ -78,4 +78,7 @@ extend-select = ["B", "DTZ", "I", "S", "UP"]
 testpaths = ["tests"]
 # Repo root on sys.path so fixture check modules (tests.fixtures.checks) resolve by name.
 pythonpath = ["."]
-markers = ["live: calls a real paid or cloud service; CI deselects it, run only on the owner's yes"]
+markers = [
+  "live: calls a real paid or cloud service; CI deselects it, run only on the owner's yes",
+  "perf: a machine-relative throughput floor; CI deselects it, run with -m perf on a quiet machine",
+]

@@ -168,17 +168,20 @@
   `StoreUnavailable: no spend connection free (pool exhausted)` (the cap held: fail closed), and a 16-worker run lost 8
   because `BoundedSemaphore` wakes waiters in no order, so a few starved past their wait. The gate is now first-in-first-out
   (`_FairSlots`), and `spend_pool_size` (1 to 64, default 8) and `spend_pool_wait_s` (default 10) are `PostgresSettings`.
-  CEILING, machine dependent: every reservation on one hot agent key takes the same row locks and commits one after another,
-  so that key serves about 1 / (commits per reservation x commit latency) reservations per second per process, whatever the
-  pool size; several agent keys run in parallel. Two measured data points, not a promise: about 100 to 125 per second
-  (docker postgres:17 on a Windows laptop, loopback; 16 connections gave 88, 8 keys gave 235) and about 3 per second (the
-  same code against a database with ~42 ms commits, where 200 simultaneous callers already lost 143 at the 10 s wait). Measure your
-  own database with pgbench (a custom script that updates one row per transaction) and size `spend_pool_wait_s` for the
-  burst you expect: B simultaneous callers on one key need about B / rate seconds. On the fast machine 2,000 callers at once
-  took about 20 s (with a 30 s wait 1,999 to 2,000 succeeded, never fewer than all but a few; with 10 s about half failed
-  closed). No setting weakens the cap: a caller that gives up never books anything (`tests/test_pr48_pool.py` checks booked ==
+  CEILING, machine and network dependent: every reservation on one hot agent key takes the same row locks and runs in one
+  transaction of about 10 to 16 round trips, one after another, whatever the pool size; several agent keys run in parallel. So
+  that key serves about `rate = 1 / (round trips per reservation x latency per round trip)`, roughly 1 / (12 x latency).
+  Measured data points (not a promise): latency ~0.7 ms on an idle laptop (docker loopback) gave about 100 to 125
+  reservations/s once; ~7-8 ms (pgbench 127-138 tps on a loaded machine) gave 5 to 11/s; ~42 ms gave 2 to 4/s. The earlier
+  "100 to 125/s" claim is therefore only the idle-laptop point, not a capacity. Runs such as "2,000 callers, 10 s wait, about
+  200 admitted" show the LOAD SHAPE (a queue longer than the patience fails closed), not a capacity. Operators: run pgbench
+  (a custom script that updates one row per transaction) against your database, apply the formula, and size
+  `spend_pool_wait_s` for the burst you expect (B simultaneous callers on one key need about B / rate seconds).
+  No setting weakens the cap: a caller that gives up never books anything (`tests/test_pr48_pool.py` checks booked ==
   admitted on a 300-caller burst with a long and a 50 ms wait). A gate waiter that is interrupted during its wait now passes its
   slot on instead of losing the permit (`_FairSlots`).
+  The pool tests assert safety (booked == admitted, typed refusals only, no permit leak), not an admission count; the throughput floors
+  are `@pytest.mark.perf` tests, which CI deselects (`-m "not live and not perf"`); run `pytest -m perf` on a quiet machine.
 - **Memory store** month totals read a per-agent day index instead of scanning every counter under the global lock.
 - A failed probe no longer clears "opened for spend" (`_open_spend = spend or _open_spend`). The `ci.yml` checkout comment
   now says what the scan covers.
