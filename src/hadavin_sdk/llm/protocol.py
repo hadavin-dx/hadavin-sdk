@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from decimal import Decimal
 from typing import Any, Protocol
 
 from hadavin_sdk.models import Reply
@@ -12,7 +13,7 @@ class ProviderError(RuntimeError):
 
     attempts = 1  # requests sent before this was raised (`llm/retry.py` sets it); a meter must not assume 0
     answered = 0  # of those, requests that came back with an answer and so were billed
-    billed_usd = 0  # what those answers cost (a Decimal when set; the kind prices them)
+    billed_usd: Decimal = Decimal(0)  # what those answers cost (the kind prices them)
 
 
 class UnusableAnswer(ProviderError):

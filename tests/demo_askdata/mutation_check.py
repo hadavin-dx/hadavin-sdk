@@ -19,6 +19,8 @@ R8 = "tests/demo_askdata/test_demo_gaps_r8.py"
 R9 = "tests/demo_askdata/test_demo_gaps_r9.py"
 LIT = "tests/demo_askdata/test_demo_literals.py"
 LLM = "tests/test_llm_attempts.py"
+R10 = "tests/demo_askdata/test_demo_gaps_r10.py"
+PIPE = "tests/demo_askdata/test_pipeline.py"
 # (name, file, old text, new text, test file that must fail)
 MUTATIONS = [
     (
@@ -238,6 +240,118 @@ MUTATIONS = [
         'last = aliases.get(full.rsplit(".", 1)[-1], full.rsplit(".", 1)[-1])',
         'last = full.rsplit(".", 1)[-1]',
         LIT,
+    ),
+    (
+        "r10 M4a first-request refusal loses attempts",
+        "src/hadavin_sdk/llm/retry.py",
+        "        except ProviderError as err:\n            err.attempts = attempt\n            raise",
+        "        except ProviderError as err:\n            raise",
+        R10,
+    ),
+    (
+        "r10 M4b refusal attempts reset to 1",
+        "src/hadavin_sdk/llm/retry.py",
+        "refused.attempts = attempt",
+        "refused.attempts = 1",
+        R10,
+    ),
+    (
+        "r10 M4c exhaustion attempts reset to 1",
+        "src/hadavin_sdk/llm/retry.py",
+        "spent.attempts = attempt",
+        "spent.attempts = 1",
+        R10,
+    ),
+    (
+        "r10 M4d unusable answer billed as refusal",
+        "demos/ask-your-data/askdata/meter.py",
+        "refused=known and not isinstance(err, ProviderExhausted | UnusableAnswer),",
+        "refused=known,",
+        R10,
+    ),
+    (
+        "r10 M4e attempts ignored when charging",
+        "demos/ask-your-data/askdata/meter.py",
+        'sent=getattr(err, "attempts", 1) if known else default_attempts,',
+        "sent=1,",
+        R10,
+    ),
+    (
+        "r10 M4f billed_usd ignored when charging",
+        "demos/ask-your-data/askdata/meter.py",
+        'billed=Decimal(getattr(err, "billed_usd", 0)),',
+        "billed=Decimal(0),",
+        R10,
+    ),
+    (
+        "r10 M4g non-provider error charged one request",
+        "demos/ask-your-data/askdata/meter.py",
+        "else default_attempts,",
+        "else 1,",
+        R10,
+    ),
+    (
+        "r10 M4h pipeline stops using error_cost",
+        "demos/ask-your-data/askdata/pipeline.py",
+        "cost = error_cost(err, per_try, worst, self.s.llm_max_attempts)",
+        "cost = Decimal(0)",
+        PIPE,
+    ),
+    (
+        "r10 m1a negative reply cost not clamped",
+        "demos/ask-your-data/askdata/meter.py",
+        "return max(Decimal(0), reply_cost) + per_attempt",
+        "return reply_cost + per_attempt",
+        R10,
+    ),
+    (
+        "r10 m1b non-finite reply cost accepted",
+        "demos/ask-your-data/askdata/meter.py",
+        "if not reply_cost.is_finite():",
+        "if False:",
+        R10,
+    ),
+    (
+        "r10 m1c Money accepts NaN and negatives",
+        "src/hadavin_sdk/config.py",
+        "if not v.is_finite() or v < 0:  # NaN",
+        "if False:  # NaN",
+        R10,
+    ),
+    (
+        "r10 m3 malformed chain entry not a LockError",
+        "demos/ask-your-data/askdata/sealed.py",
+        "except (KeyError, TypeError) as err:",
+        "except ZeroDivisionError as err:",
+        R10,
+    ),
+    (
+        "r10 m6a unicode digits accepted",
+        "demos/ask-your-data/askdata/meter.py",
+        "if not text.isascii():",
+        "if False:",
+        R10,
+    ),
+    (
+        "r10 m6b huge exponent accepted",
+        "demos/ask-your-data/askdata/meter.py",
+        "out.adjusted() > _DEFAULT.max_amount_exponent",
+        "False",
+        R10,
+    ),
+    (
+        "r10 m7a bool accepted as a count",
+        "demos/ask-your-data/askdata/settings.py",
+        "Field(2, ge=0, strict=True)",
+        "Field(2, ge=0)",
+        R10,
+    ),
+    (
+        "r10 m7b billed_usd untyped int",
+        "src/hadavin_sdk/llm/protocol.py",
+        "billed_usd: Decimal = Decimal(0)",
+        "billed_usd = 0",
+        R10,
     ),
 ]
 

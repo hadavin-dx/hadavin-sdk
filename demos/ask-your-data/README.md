@@ -133,6 +133,13 @@ running the script by hand passes them with `-v` (it refuses without them).
 | C4 watchdog and caps | rows, bytes and time of ONE statement; the server cancel as a backstop | the sum of many cheap questions (the meter and the kill switch bound those); one huge cell is read whole before the byte cap sees it |
 | C5 audit intent before execute | an execution with no intent record cannot start | a ledger or audit folder rewritten by someone who can write both (see "Which guards live in plain files") |
 
+## Promotion to the core (one source of truth)
+
+| Demo module | Status | Core home | Switch when |
+|---|---|---|---|
+| `askdata/meter.py` (`reserve` / `settle` / `open` / `cleared`, `call_cost`, `error_cost`) | **temporary demo copy** | core `reserve_spend` / `settle_spend` / `prune_spend`, `MeteredLLM`, `StoreLacksReserve` (PR #48) | PR #48 merges and the demo's core pin moves; `call_cost` / `error_cost` are promoted to core `llm/metered` in the #48 rebase, because they read the `attempts` / `answered` / `billed_usd` contract this PR adds |
+| `llm/retry.py`, `llm/common.py` changes | core (this PR) | core | already core |
+
 ## Known limits, in plain words
 
 * **The injection result is structural, not measured.** In this version no database VALUE ever reaches the model (only

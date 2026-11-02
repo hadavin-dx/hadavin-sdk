@@ -34,6 +34,7 @@ from pathlib import Path
 from askdata.settings import RUNTIME, MeterLimits
 from hadavin_sdk.config import Route
 from hadavin_sdk.llm.common import estimate_tokens
+from hadavin_sdk.llm.protocol import ProviderError, ProviderExhausted, UnusableAnswer
 
 PROJECT = "askdata"
 _DEFAULT = MeterLimits()  # the documented defaults live in settings.py
@@ -75,22 +76,53 @@ def call_cost(
     (retries; some also ask again after an unusable answer). Only an answered request reports usage. So:
 
     * with a reply: `reply_cost` (the kind sums every answered request) plus `per_attempt` for each request that was
-      sent but not answered (a timed-out request may still be billed);
+      sent but not answered (a timed-out request may still be billed). A reply cost that is negative is taken as 0
+      and one that is not finite as the whole reservation (fail safe); the reply branch may exceed the reservation
+      (the overage is recorded, not refused);
     * without a reply: `billed` (what earlier answered requests already cost, carried by the error), plus
       `per_attempt` for each other request sent, EXCEPT that the last one is free when the provider REFUSED it (a
-      non-transient 4xx); an unusable 200 body is not a refusal, it was billed. Never above the reservation."""
+      non-transient 4xx); an unusable 200 body is not a refusal, it was billed. Never above the reservation. When
+      every request was answered (`answered == sent`) the unrefused branch still adds one `per_attempt`: it
+      over-counts by one request and fails safe."""
     sent = max(1, sent)
     if reply_cost is not None:
-        return reply_cost + per_attempt * max(0, sent - max(answered, 1))
+        if not reply_cost.is_finite():
+            return reserved
+        return max(Decimal(0), reply_cost) + per_attempt * max(0, sent - max(answered, 1))
     others = max(0, sent - answered - 1)
     return min(reserved, billed + per_attempt * others + (Decimal(0) if refused else per_attempt))
 
 
+def error_cost(
+    err: BaseException, per_attempt: Decimal, reserved: Decimal, default_attempts: int
+) -> Decimal:
+    """What a `chat()` that RAISED cost. A `ProviderError` carries `attempts`, `answered` and `billed_usd` (the core
+    sets them in `llm/retry.py`); a free refusal is a ProviderError that is neither `ProviderExhausted` nor
+    `UnusableAnswer`. Any other error (OSError, timeout) is unknown: `default_attempts` requests may have been sent."""
+    known = isinstance(err, ProviderError)
+    return call_cost(
+        per_attempt,
+        reserved,
+        sent=getattr(err, "attempts", 1) if known else default_attempts,
+        reply_cost=None,
+        refused=known and not isinstance(err, ProviderExhausted | UnusableAnswer),
+        answered=getattr(err, "answered", 0),
+        billed=Decimal(getattr(err, "billed_usd", 0)),
+    )
+
+
 def _dec(value: object, name: str) -> Decimal:
+    text = str(value)
     try:
-        out = Decimal(str(value))
+        out = Decimal(text)
     except InvalidOperation:
         raise MeterError(f"meter field {name} is not a number") from None
+    if not text.isascii():  # Decimal reads Arabic-Indic and other Unicode digits
+        raise MeterError(f"meter field {name} is not a number")
+    if (
+        out.is_finite() and out.adjusted() > _DEFAULT.max_amount_exponent
+    ):  # 1e999999 is finite and ruins every sum after it
+        raise MeterError(f"meter field {name} is implausibly large")
     if not out.is_finite() or out < 0:
         raise MeterError(f"meter field {name} is not a non-negative number")
     return out

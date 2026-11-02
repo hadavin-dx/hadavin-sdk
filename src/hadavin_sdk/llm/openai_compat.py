@@ -139,7 +139,7 @@ class OpenAICompatLLM(NetworkLLM):
                 # What the earlier rounds already cost must not be lost with the error (a meter charges it).
                 err.attempts += sent
                 err.answered += answered
-                err.billed_usd = price(route, used[0], used[1]) + (err.billed_usd or 0)
+                err.billed_usd = price(route, used[0], used[1]) + err.billed_usd
                 raise
             sent, answered = sent + got.attempts, answered + 1
             # A round that reports no usage is still billed: estimate it exactly as `reply()` does, per round

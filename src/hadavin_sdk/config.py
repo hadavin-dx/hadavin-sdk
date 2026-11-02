@@ -11,7 +11,15 @@ from typing import Annotated, Any, Literal, get_args
 from urllib.parse import urlsplit
 
 import yaml
-from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, ValidationError, model_validator
+from pydantic import (
+    AfterValidator,
+    BaseModel,
+    BeforeValidator,
+    ConfigDict,
+    Field,
+    ValidationError,
+    model_validator,
+)
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from hadavin_sdk import deferred
@@ -38,7 +46,13 @@ def _money(v: object) -> object:
     return v
 
 
-Money = Annotated[Decimal, BeforeValidator(_money)]
+def _money_amount(v: Decimal) -> Decimal:
+    if not v.is_finite() or v < 0:  # NaN and Infinity would poison every comparison a budget makes
+        raise ValueError("money must be a finite amount, zero or more")
+    return v
+
+
+Money = Annotated[Decimal, BeforeValidator(_money), AfterValidator(_money_amount)]
 
 
 class _Strict(BaseModel):

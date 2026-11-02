@@ -3,6 +3,24 @@
 ## Unreleased
 
 ### Upgrade steps
+- **Model-call cost contract (ask-your-data PR; a meter in a downstream demo re-pins from this).** Every
+  `ProviderError` leaving `with_retry` now carries `attempts` (requests actually sent), `answered` (of those, answered
+  and so billed) and `billed_usd` (a `Decimal`, what those answers cost); `Reply` carries `attempts` and `answered`.
+  A meter must charge a failed call from them: a bare `raise ProviderError` falls back to `attempts = 1`, which
+  under-bills a retried-then-failed call. A change to `llm/retry.py` (for example the spend-limit and deadline work in
+  PR #48) must keep setting them on EVERY raised subclass; `tests/demo_askdata/test_demo_gaps_r10.py` fails if it does not.
+  - New `UnusableAnswer(ProviderError)`: the provider answered (2xx) but the body could not be used. It is billed.
+    `post_json` now raises it for a 2xx whose body is cut short, not JSON or not decodable (it used to be a plain,
+    free-looking `ProviderError`). `parse_stage(parse, *args)` marks the answered stage of a kind; `with_retry` takes
+    `answered_hook`.
+  - `NetworkLLM.max_requests`: the most requests ONE `chat()` can send (a kind that asks again inside `chat()`
+    multiplies it); a meter reserves for all of them. `openai_compat` asks again after a forced answer is missing.
+  - `MAX_REPORTED_TOKENS` and `_check_usage`: usage numbers that are negative, non-integer, boolean or implausibly
+    large make the answer an `UnusableAnswer` instead of being priced.
+  - `pinned` / `floating_anywhere` now also refuse `x-latest` style ids and bare aliases (`sonnet`, `opus`, `auto`,
+    ...): name an exact model id in every route.
+  - `Money` (routes, budgets) must be finite and zero or more: `NaN`, `Infinity` and negative amounts are a config
+    error.
 - **K3 pilot build path (levels, shadow cut-off, fail-closed loading).** Action contracts change shape:
   `executor.system` moves to a contract field `target_system`, and `executor` is now a tagged union
   (`kind: none | manual | http`). Edit every contract: move `system:` out of `executor:` to `target_system:` beside
@@ -172,6 +190,10 @@
   (`guardrail_id`, `guardrail_version`, `region`; the PROMPT_ATTACK filter, extra `aws`).
 
 ### Changed
+- Ask-your-data cost meter fixes (result review 1 of PR 43): the reply branch of `call_cost` clamps a negative reply
+  cost to 0 and charges the whole reservation for a non-finite one; `error_cost` is the one place that charges a
+  failed call; meter amounts must be ASCII digits with no huge exponent; a signed but malformed chain entry is a
+  `LockError`; `max_second_looks` must be a real integer.
 - P5/P6 follow-ups:
   - limits are checked again before a tool output is screened, so a reply that spent the budget never pays
     for a judge call;

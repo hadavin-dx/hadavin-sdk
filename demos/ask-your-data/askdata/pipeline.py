@@ -22,7 +22,15 @@ from pydantic import ValidationError
 from askdata import llm_io
 from askdata.audit import AskAudit
 from askdata.ledger import Attempt, Budget, Final, LedgerLine, QueryLedger, utc_stamp
-from askdata.meter import KillSwitch, Meter, MeterError, call_cost, fmt_usd, worst_case_usd
+from askdata.meter import (
+    KillSwitch,
+    Meter,
+    MeterError,
+    call_cost,
+    error_cost,
+    fmt_usd,
+    worst_case_usd,
+)
 from askdata.pgsource import Limits, PgError, RunResult
 from askdata.policy import REASONS, Outcome, decide, exit_code, pick_reason, rule_hint
 from askdata.prompt import Prompt
@@ -32,7 +40,7 @@ from askdata.validate import RULES, Rejected, Validated, validate
 from hadavin_sdk.audit.protocol import AuditUnavailable
 from hadavin_sdk.config import Route
 from hadavin_sdk.guard.injection import RegexDetector, injection_check
-from hadavin_sdk.llm.protocol import LLM, ProviderError, ProviderExhausted, UnusableAnswer
+from hadavin_sdk.llm.protocol import LLM, ProviderError
 
 _SCHEMA_BYTES = len(
     json.dumps(llm_io.GENERATE_SCHEMA).encode()
@@ -185,16 +193,7 @@ class Pipeline:
                     output_schema=llm_io.GENERATE_SCHEMA,
                 )
             except (ProviderError, OSError, TimeoutError) as err:
-                known = isinstance(err, ProviderError)
-                cost = call_cost(
-                    per_try,
-                    worst,
-                    sent=getattr(err, "attempts", 1) if known else self.s.llm_max_attempts,
-                    reply_cost=None,
-                    refused=known and not isinstance(err, ProviderExhausted | UnusableAnswer),
-                    answered=getattr(err, "answered", 0),
-                    billed=Decimal(getattr(err, "billed_usd", 0)),
-                )
+                cost = error_cost(err, per_try, worst, self.s.llm_max_attempts)
                 self._model_failed(run, rid, worst, cost, n, t)
                 return
             except Exception:  # noqa: BLE001 - unknown failure inside the kind: it may have sent a request
