@@ -57,6 +57,7 @@ _HOSTILE = [
 ]
 
 
+@pytest.mark.perf  # timing-based: it runs in the perf step with the other timing tests
 def test_every_redaction_pattern_is_linear_on_hostile_units():
     slow = []
     for name, pat in _redact_module().PATTERNS:
@@ -64,9 +65,12 @@ def test_every_redaction_pattern_is_linear_on_hostile_units():
             times = []
             for n in (6000, 24000):
                 text = (unit * (n // len(unit) + 1))[:n]
-                t0 = time.process_time()
-                list(pat.finditer(text))
-                times.append(time.process_time() - t0)
+                best = float("inf")
+                for _ in range(3):  # the fastest of three: a loaded machine only ever adds time
+                    t0 = time.process_time()
+                    list(pat.finditer(text))
+                    best = min(best, time.process_time() - t0)
+                times.append(best)
             if times[1] > 0.15 and times[1] > 9 * max(
                 times[0], 0.002
             ):  # 4x the input, 16x the time
