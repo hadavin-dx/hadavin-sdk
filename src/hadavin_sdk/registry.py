@@ -290,14 +290,6 @@ def _load_tools(config: Config, agents: dict, contracts: dict) -> dict[str, dict
                     and sub.get("type") != "boolean"
                     and "identifier" not in sub
                 ]
-                # Grounding reads the TOP-LEVEL inputs only: an `identifier` flag deeper in an object or array would be
-                # silently ignored, so it is refused (flag the top-level input, or `identifier: false` on it).
-                problems += [
-                    f"{where}: action {action} input {pname!r} has an `identifier` flag below the top level, "
-                    "which grounding does not read"
-                    for pname, sub in props.items()
-                    if isinstance(sub, dict) and _nested_identifier(sub)
-                ]
             if spec.name in contracts:
                 problems.append(f"{where}: tool {spec.name} has the id of an action contract")
             problems += [
@@ -365,6 +357,14 @@ def _cross_check(config, agents, chains, contracts) -> list[str]:
         props = (c.input_schema or {}).get("properties") or {}
         if "key" in props:
             out.append(f"action {c.id}: input 'key' is reserved for the idempotency key")
+        # Grounding reads the TOP-LEVEL inputs only (evidence.identifier_inputs): an `identifier` flag deeper in an
+        # object or array would be silently ignored, for every agent, tooled or not. Refused (flag the top-level
+        # input, or say `identifier: false` on it). Fail closed: any boolean `identifier` below the top level counts.
+        out += [
+            f"action {c.id}: input {n!r} has an `identifier` flag below the top level, which grounding does not read"
+            for n, sub in props.items()
+            if isinstance(sub, dict) and _nested_identifier(sub)
+        ]
         http = c.executor if c.executor.kind == "http" else None
         for op in filter(None, [http and http.operation, http and http.lookup_operation]):
             for field in re.findall(r"{(\w+)}", op):

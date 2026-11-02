@@ -284,11 +284,15 @@ _PROBE = "heartbeat"  # the tick_state key read once, to find out whether the st
 _DRIVERS = ("psycopg", "urllib", "http", "botocore", "boto3", "socket", "ssl")
 
 
+_MESSAGE_SCAN_CHARS = 4096
+
+
 def _message(exc: Exception) -> str:
     """Redacted and one line. Driver and network errors carry hosts and users: their type says enough."""
     if type(exc).__module__.split(".")[0] in _DRIVERS or isinstance(exc, OSError):
         return "(driver error; details withheld)"
-    return redact(str(exc)).text.replace("\n", " ")[:500]
+    # cut before redacting (a bare redact() has no cap of its own); only the first 500 characters are kept anyway
+    return redact(str(exc)[:_MESSAGE_SCAN_CHARS]).text.replace("\n", " ")[:500]
 
 
 def _run_step(ctx: TickContext, step: TickStep) -> str:

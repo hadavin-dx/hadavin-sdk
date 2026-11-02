@@ -709,7 +709,10 @@ def _decoded(text: str) -> str:
     """The text with the encodings an attacker or a log pipeline layers over a value undone: JSON `\\uXXXX`
     escapes, percent-encoding in either case, HTML entities, then NFKC and invisible characters."""
     unescaped = re.sub(r"\\u([0-9a-fA-F]{4})", lambda m: chr(int(m.group(1), 16)), text)
-    return runmap.canonical(html.unescape(unquote(unquote(unescaped))))
+    decoded = html.unescape(unquote(unquote(unescaped)))
+    # NFKC expands some characters (U+FDFA becomes 18): refuse BEFORE normalising a text whose canonical form would
+    # pass the redactor's cap (InputTooLarge, a RedactionError), as redact_text does for its own views.
+    return runmap.canonical(runmap.fits_after_nfkc(decoded))
 
 
 def _sanitise(text: str) -> str:
@@ -761,14 +764,20 @@ def prepare_output(
     long_enough = [x for x in secrets or [] if len(x) >= MIN_SCRUBBED_SECRET]
     if long_enough:
         raw = _derived(raw, long_enough)
+        seen: tuple[str, str] | None = (
+            None  # (raw, its decoded view): decoded once per distinct raw, not per form
+        )
         for secret in long_enough:
             for form in _secret_forms(secret):
                 if form in raw:
                     raw = raw.replace(form, "<SECRET_REDACTED>")
-                elif (view := _decoded(raw)) != raw and form in view:
+                    continue
+                if seen is None or seen[0] != raw:
+                    seen = (raw, _decoded(raw))
+                if seen[1] != raw and form in seen[1]:
                     # the secret hides behind an encoding layer: use the decoded text (that one reply loses its
                     # original spelling, which is the price of not showing the secret)
-                    raw = view.replace(form, "<SECRET_REDACTED>")
+                    raw = seen[1].replace(form, "<SECRET_REDACTED>")
     return truncate(runmap.redact_untrusted(raw, mapping), max_bytes)
 
 

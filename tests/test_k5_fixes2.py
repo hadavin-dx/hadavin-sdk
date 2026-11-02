@@ -299,6 +299,7 @@ def test_a_database_that_applied_the_old_name_is_refused_and_nothing_is_applied(
         with pytest.raises(ConfigError, match="0005_evidence") as err:
             mig.migrate(dsn)
         assert "by hand" in str(err.value)  # the repair path is in the message
+        assert "0006_evidence" not in str(err.value)  # generic: no file name of ours is hard-coded
         with psycopg.connect(dsn) as db:
             rows = [r[0] for r in db.execute("SELECT version FROM schema_migrations").fetchall()]
         assert rows == ["0005_evidence"]  # the refusal applied nothing

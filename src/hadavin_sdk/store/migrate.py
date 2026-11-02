@@ -319,10 +319,10 @@ def migrate(
         done = {r[0] for r in db.execute("SELECT version FROM schema_migrations").fetchall()}
         if gone := sorted(done - {p.stem for p in files}):
             raise ConfigError(
-                f"applied migrations have no file in this release: {', '.join(gone)}. If a file was renamed "
-                "(0005_evidence became 0006_evidence), rename the ledger row by hand once the tables exist: "
-                "(change the version of that row in the schema_migrations table to the new file name); "
-                "otherwise drop what the migration made and run migrate again"
+                f"applied migrations have no file in this release: {', '.join(gone)}. If a migration file was renamed "
+                "and its tables already exist, rename the ledger row by hand (change the version of that row in the "
+                "schema_migrations table to the new file name); if its content changed too, drop what it made and "
+                "run migrate again"
             )
         for path in files:
             if path.stem in done:

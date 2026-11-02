@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import TYPE_CHECKING, Protocol
 
+from hadavin_sdk import defaults
 from hadavin_sdk.approvals import hmac_v0
 from hadavin_sdk.approvals.gate import sanitise_text, withhold_commands
 from hadavin_sdk.guard.redact import redact
@@ -18,7 +19,9 @@ def clean(text: str) -> str:
     """Redact, then WARDEN's G3 cleaning (`gate.sanitise_text`): no link, image, HTML, mention, control
     character or forged markdown structure survives in text a person acts on. Then G4
     (`gate.withhold_commands`): no command a person could paste to change a system, on any platform."""
-    first = redact(text)
+    # redact() is called bare here (no run map, no views), so its input is cut to the redactor's cap first: a card is
+    # template-built and short, and a text over the cap is cut, never scanned at seconds per call.
+    first = redact(text[: defaults.MAX_REDACT_CHARS])
     # Sanitising removes invisible and control characters and tags, which can join a split secret
     # (`AKIA` + zero-width space + `IOSF...`) or a split command: G4 reads the cleaned text, and the result is
     # redacted again (WARDEN's G5 re-scan), in the same placeholder namespace.

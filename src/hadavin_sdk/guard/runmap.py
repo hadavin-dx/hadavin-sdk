@@ -51,16 +51,18 @@ def _nfkd_len(char: str) -> int:
     return len(unicodedata.normalize("NFKD", char))
 
 
-def _fits_after_nfkc(text: str) -> str:
+def _expanded_len(text: str) -> int:
+    """An upper bound of the NFKC length of `text` (the NFKD length of each distinct character, cached)."""
+    if text.isascii():
+        return len(text)
+    return sum(n * _nfkd_len(c) for c, n in collections.Counter(text).items())
+
+
+def fits_after_nfkc(text: str) -> str:
     """Refuse BEFORE the work if the canonical view of `text` could pass the cap. NFKC of a string is never longer
     than the NFKD of its characters, which is looked up once per distinct character (the normalisation itself
     takes seconds on a million characters, so it must not run first)."""
-    if text.isascii():
-        return _within_cap(text)
-    if (
-        sum(n * _nfkd_len(c) for c, n in collections.Counter(text).items())
-        > defaults.MAX_REDACT_CHARS
-    ):
+    if _expanded_len(text) > defaults.MAX_REDACT_CHARS:
         raise InputTooLarge("InputTooLarge")
     return text
 
@@ -235,7 +237,7 @@ def _clean(text: str) -> str:
 def _views(text: str) -> list[str]:
     """Other forms a secret can hide in: the canonical view (NFKC, invisible characters removed) and the same
     with JSON `\\uXXXX` escapes decoded. Only forms that differ from `text` are returned."""
-    unescaped = _fits_after_nfkc(_UNICODE_ESCAPE.sub(lambda m: chr(int(m.group(1), 16)), text))
+    unescaped = fits_after_nfkc(_UNICODE_ESCAPE.sub(lambda m: chr(int(m.group(1), 16)), text))
     out = []
     for view in (canonical(text), canonical(unescaped)):
         view = _clean(view)
@@ -265,12 +267,15 @@ def redact_text(
     `neutralise`, and every view the second pass will scan must each be within `defaults.MAX_REDACT_CHARS`, else
     `InputTooLarge` (a RedactionError) is raised and nothing is redacted. NFKC expands some characters (U+FDFA
     becomes 18), so 87,000 of them are under the input cap and a 1.5-million-character view (24 s measured).
-    That covers every caller: document, tool result, model-written argument, eval case, a future log path."""
+    That covers every caller that goes through `redact_text` / `redact_untrusted` / `redact_value` (document, tool
+    result, model-written argument, eval case); `tools._decoded` calls `fits_after_nfkc` itself, and the two bare
+    `redact()` callers outside this module (approvals/channel.py `clean`, runtime/tick.py `_message`) cut their input
+    first."""
     _within_cap(text)
     try:
-        text = _fits_after_nfkc(_clean(text))
+        text = fits_after_nfkc(_clean(text))
         if neutralise is not None:
-            text = _fits_after_nfkc(neutralise(text))
+            text = fits_after_nfkc(neutralise(text))
         scan = not text.isascii() or "\\u" in text
         views = _views(text) if scan else []  # _views refuses a view that would pass the cap
         cache = getattr(mapping, "redact_cache", None)
@@ -278,7 +283,7 @@ def redact_text(
         out, current = result.text, result.mapping
         for view in views:
             if neutralise is not None:
-                view = _fits_after_nfkc(neutralise(view))
+                view = fits_after_nfkc(neutralise(view))
             again = redact(view, mapping=current, _cache=cache)
             # a new value, or a known one only the view spells in a way pass one could not read
             if again.mapping != current or _held(again.text) > _held(out):
@@ -303,7 +308,7 @@ def redact_value(value: Any, mapping: dict[str, str]) -> Any:
 
 def _chars(value: Any) -> int:
     if isinstance(value, str):
-        return len(value)
+        return _expanded_len(value)
     if isinstance(value, dict):
         return sum(_chars(k) + _chars(v) for k, v in value.items())
     if isinstance(value, list):
