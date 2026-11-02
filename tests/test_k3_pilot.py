@@ -425,7 +425,7 @@ def test_k3_abstain_posts_card(tmp_path):
     (card,) = cards
     assert card.text.startswith("Agent abstained: here is what it looked at")
     values = [b["value"] for blk in card.blocks if blk["kind"] == "buttons" for b in blk["buttons"]]
-    assert values == [f"label|{run.run_id}|abstain_ok", f"label|{run.run_id}|should_have_answered"]
+    assert values == [f"label|{run.run_id}|abstain_ok", f"label|{run.run_id}|missed"]
     assert any(
         e.operation == "abstain" and e.caught_by is None for e in rt.audit.events(run.run_id)
     )

@@ -68,9 +68,10 @@ def read_records(root: Path) -> list[ReplayRecord]:
     return out
 
 
-def has_green_record(registry: Registry, agent_id: str) -> bool:
-    """A green record with pass^k at k >= 3 exists for the agent's current config hash, model and prompt.
-    A later gate run never hides it (the gate writes ``qualified.jsonl``, not this file)."""
+def green_records(registry: Registry, agent_id: str) -> list[ReplayRecord]:
+    """Every record with pass^k at k >= 3 at or above the threshold for the agent's current config hash,
+    model and prompt. A later gate run never hides one (the gate writes ``qualified.jsonl``, not this
+    file)."""
     agent = registry.agents[agent_id]
     want = (
         agent_id,
@@ -79,10 +80,30 @@ def has_green_record(registry: Registry, agent_id: str) -> bool:
         registry.prompt_sha256(agent_id),
     )
     threshold = registry.config.eval_threshold
-    return any(
-        (r.agent_id, r.config_hash, r.model_id, r.prompt_sha256) == want
-        and r.k >= MIN_K
-        and r.pass_k
-        >= threshold  # recomputed: the record's own green and threshold are not trusted
+    found = [
+        r
         for r in read_records(registry.config.root)
-    )
+        if (r.agent_id, r.config_hash, r.model_id, r.prompt_sha256) == want
+        and r.k >= MIN_K
+        and r.pass_k >= threshold  # judged against the registry's threshold, not the record's own
+        and _consistent(r)
+    ]
+    return found
+
+
+def _consistent(r: ReplayRecord) -> bool:
+    """The record agrees with itself. The file holds only the summary numbers, not the per-run results, so green
+    cannot be recomputed from them; a record whose own fields disagree is treated as not green instead: its
+    `green` flag must match `pass_k >= threshold`, and pass^k can never exceed pass@1."""
+    return r.green == (r.pass_k >= r.threshold) and 0.0 <= r.pass_k <= r.pass_rate <= 1.0
+
+
+def green_record(registry: Registry, agent_id: str) -> ReplayRecord | None:
+    """The latest of ``green_records``, or None."""
+    found = green_records(registry, agent_id)
+    return max(found, key=lambda r: r.ts) if found else None
+
+
+def has_green_record(registry: Registry, agent_id: str) -> bool:
+    """True when ``green_record`` finds one."""
+    return green_record(registry, agent_id) is not None

@@ -2,7 +2,9 @@
 
   hadavin-sdk [--config DIR] gate <agent> [--k K]        exit 0 when green, 1 when below the threshold;
                                                          --k K runs each item K times (pass^k), default 1
-  hadavin-sdk [--config DIR] limits stop|reset --by WHO  needs a shared store (postgres); memory: exit 2
+  hadavin-sdk [--config DIR] limits stop|reset --by WHO  needs a shared store (postgres); memory: exit 2. --by is an
+                                                         asserted name; in pilot and prod `reset` is refused here
+                                                         (use the signed channel reset), `stop` still works
   hadavin-sdk [--config DIR] tick                       one pass of approvals sweep, reconcile, stuck runs,
                                                          audit checkpoint; exit 0 ok, 1 a step failed,
                                                          2 config error, 4 store unreachable
@@ -15,6 +17,19 @@
   hadavin-sdk [--config DIR] score --outputs OUT --answers F --cause-list D --bundles D
                                                          K1b-lite: count the replay's results into score/score-report.md;
                                                          exit 0 report produced, 2 refused, 3 failure (no verdict)
+  hadavin-sdk [--config DIR] label import FILE --by WHO [--approved-by WHO]  (dev only)
+                                                         K6: record labels from a csv (columns run_id,label) as
+                                                         channel csv; they count as promotion evidence only once a line
+                                                         owner approves: the signed approve_import click on the card
+                                                         this posts (the authoritative path), or --approved-by WHO (a
+                                                         different person holding approve_label_import). Names given
+                                                         here are ASSERTED: the CLI cannot verify who ran it.
+                                                         Exit 0 stored, 1 rows refused (nothing stored)
+  hadavin-sdk [--config DIR] promote-check AGENT ACTION  K6: compute the promotion numbers from the store and write
+                                                         promotions/AGENT.ACTION.json; exit 0 written, 1 a number is
+                                                         not met (nothing written), 2 refused
+  hadavin-sdk [--config DIR] report [--week YYYY-MM-DD]  K6: print the stored weekly report (default: the last complete
+                                                         ISO week), or render it without storing if there is none
 
 Every command is wrapped by ``main``: a ``ConfigError`` exits 2, any other uncaught error exits 3, so a crash never
 looks like a red gate (exit 1).
@@ -26,6 +41,7 @@ the current folder (and its check modules) is importable.
 from __future__ import annotations
 
 import argparse
+import getpass
 import logging
 import os
 import sys
@@ -123,11 +139,23 @@ def _main(argv: list[str] | None = None) -> int:
     sc.add_argument("--answers", required=True, type=Path)
     sc.add_argument("--cause-list", required=True, type=Path)
     sc.add_argument("--bundles", required=True, type=Path)
+    lab = sub.add_parser("label", help="K6: labels from a csv")
+    lab.add_argument("action", choices=["import"])
+    lab.add_argument("file", type=Path)
+    lab.add_argument("--by", required=True, help="the person whose labels these are (asserted)")
+    lab.add_argument("--approved-by", help="a line owner approving the import (asserted)")
+    pc = sub.add_parser("promote-check", help="K6: write the promotion evidence for one action")
+    pc.add_argument("agent")
+    pc.add_argument("action")
+    rpt = sub.add_parser("report", help="K6: the weekly report")
+    rpt.add_argument("--week", help="the Monday of the ISO week, YYYY-MM-DD")
     args = p.parse_args(argv)
     if args.config:
         os.environ["HADAVIN_CONFIG_DIR"] = args.config
     if args.cmd == "tick":
         return _tick()
+    if args.cmd in ("label", "promote-check", "report"):
+        return _measure(args)
     cfg = load_config()
     if args.cmd == "migrate":
         return _migrate(cfg, args.runtime_role, args.portal_role)
@@ -201,7 +229,38 @@ def _main(argv: list[str] | None = None) -> int:
         return 3
     if args.cmd == "audit":
         return audit_verify(audit)
-    return kill_switch(Limits(store, audit, reg), args.action, args.by)
+    return limits_cmd(Limits(store, audit, reg), args.action, args.by, cfg.environment)
+
+
+def limits_cmd(limits: Limits, action: str, by: str, environment: str) -> int:
+    """`limits stop|reset` from the CLI. `--by` is an asserted name, so in pilot and prod the risky direction is
+    refused: a reset (it lifts the kill switch) goes only through the signed channel click, which checks the
+    `reset` admin right and acts once per request. `stop` stays (the safe emergency path). In dev the operating-system
+    user is audited beside the asserted name."""
+    from hadavin_sdk.deferred import LIVE
+    from hadavin_sdk.models import AuditEvent
+
+    live = environment in LIVE
+    if action == "reset" and live:
+        print(
+            "refused: in pilot and prod the kill switch is reset only by the signed channel action "
+            "(a person holding the reset admin right); --by is an asserted name, not a person",
+            file=sys.stderr,
+        )
+        return 2
+    code = kill_switch(limits, action, by)
+    if code == 0 and not live:
+        limits.audit.write_outcome(
+            AuditEvent(
+                run_id="-",
+                domain="limits",
+                operation=f"cli_{action}",
+                principal=by,
+                source="cli",
+                result=f"os_user:{getpass.getuser()}",
+            )
+        )
+    return code
 
 
 def _k1b(cfg, reg, args) -> int:
@@ -270,6 +329,90 @@ def score_cmd(audit, args) -> int:
         audit.emit("score_run", run_id, **ref, decision="-", result=audit_result(run))
     print(f"score report written: {report_dir / 'score-report.md'}")
     return 0
+
+
+def _measure(args) -> int:
+    """K6 commands. They build the whole app (the store, the audit and the channel are all needed), as ``tick`` does."""
+    from hadavin_sdk.app import build
+    from hadavin_sdk.runtime.agent_loop import Unqualified, assert_qualified
+
+    reg = load_registry(load_config())
+    if reg.config.backends.store.kind == "memory":
+        print(
+            "refused: this needs a shared store (Postgres); the memory store lives inside one process",
+            file=sys.stderr,
+        )
+        return 2
+    agents = []
+    for agent_id in reg.agents:
+        try:
+            assert_qualified(reg, agent_id)
+            agents.append(agent_id)
+        except Unqualified:
+            print(f"note: {agent_id} is not qualified; it is not started", file=sys.stderr)
+    return measure_cmd(build(None, agents), args)
+
+
+def measure_cmd(app, args) -> int:
+    """Body of ``label import``, ``promote-check`` and ``report`` (takes the app so tests can pass their own)."""
+    from datetime import date, timedelta
+
+    from hadavin_sdk.measure import csv_import_id, week_start
+    from hadavin_sdk.models import now
+
+    measure = app.measure
+    if args.cmd == "promote-check":
+        res = measure.promote_check(args.agent, args.action)
+        if res.refused:
+            print(f"refused: {res.problems[0]}", file=sys.stderr)
+            return 2
+        if res.ok:
+            print(f"promotion evidence written: {res.path}")
+            return 0
+        for problem in res.problems:
+            print(f"NOT MET: {problem}")
+        print("nothing was written")
+        return 1
+    if args.cmd == "report":
+        try:
+            week = (
+                date.fromisoformat(args.week)
+                if args.week
+                else week_start(now()) - timedelta(days=7)
+            )
+        except ValueError:
+            raise ConfigError("--week must be a date, YYYY-MM-DD") from None
+        if week.weekday() != 0:
+            raise ConfigError("--week must be a Monday (the start of an ISO week)")
+        stored = app.store.get_report(week)
+        if stored is None:
+            print("(no stored report for this week: rendered now, not stored)", file=sys.stderr)
+        print(stored if stored is not None else measure.render_report(week))
+        return 0
+    from hadavin_sdk.deferred import LIVE
+
+    if getattr(getattr(app, "config", None), "environment", None) in LIVE:
+        # --by and --approved-by are asserted names. One operator could type two of them and approve their own
+        # labels, so in pilot and prod only a signed channel click counts as a person.
+        print(
+            "refused: in pilot and prod labels come only from signed channel clicks; "
+            "--by and --approved-by are not accepted here",
+            file=sys.stderr,
+        )
+        return 2
+    # NOSONAR S8707: the operator's own csv; a CLI argument is not attacker input
+    text = Path(args.file).read_text(encoding="utf-8-sig")  # NOSONAR
+    print(
+        "note: dev only. --by and --approved-by are asserted names; the operating-system user is recorded",
+        file=sys.stderr,
+    )
+    measure.note_cli_import(args.by, args.approved_by, getpass.getuser(), csv_import_id(text))
+    stored_n, problems = measure.import_csv(text, args.by, args.approved_by)
+    for problem in problems:
+        print(f"REFUSED: {problem}")
+    state = "counting as evidence" if args.approved_by else "waiting for a line owner's approval"
+    print(f"{stored_n} labels stored ({state}); import id {csv_import_id(text)}")
+    return 1 if problems else 0
 
 
 def _tick() -> int:
@@ -385,7 +528,7 @@ def kill_switch(limits: Limits, action: str, by: str) -> int:
             raise
         except Exception as exc:  # noqa: BLE001 - classified below
             return _kill_switch_store_down("set", exc)
-        print(f"kill switch ON (by {by})")
+        print(f"kill switch ON (by {by}, an asserted name: the CLI cannot verify who ran it)")
         return 0
     try:
         limits.reset(by)
@@ -398,7 +541,7 @@ def kill_switch(limits: Limits, action: str, by: str) -> int:
         return 3
     except Exception as exc:  # noqa: BLE001 - classified below
         return _kill_switch_store_down("reset", exc)
-    print(f"kill switch OFF (by {by})")
+    print(f"kill switch OFF (by {by}, an asserted name: the CLI cannot verify who ran it)")
     return 0
 
 

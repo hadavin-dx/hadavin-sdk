@@ -318,6 +318,15 @@ class Runtime:
         ov = self.hooks.level_override(agent.id, action_id) if self.hooks.level_override else None
         return ov if ov is not None and _RANK[ov] < _RANK[cfg] else cfg
 
+    def _stamp(self, agent: Any) -> dict[str, str]:
+        """What produced a proposal: config hash, model, prompt (promotion evidence is per config hash)."""
+        reg = self.registry
+        return {
+            "config_hash": reg.config_hash(agent.id),
+            "model_id": reg.config.routes[agent.model_route].model_id,
+            "prompt_sha256": reg.prompt_sha256(agent.id),
+        }
+
     def _deliver(self, card: Card | None) -> Delivery:
         """Post a card through the hook. Never raises: any failure is an undelivered card."""
         if card is None or self.hooks.post_card is None:
@@ -393,7 +402,7 @@ class Runtime:
         agent = self.registry.agents[run.agent_id]
         contract = self.registry.contracts[call.name]
         try:  # model output: a float or a non-string id must not strand the run
-            plan = build_plan(run, agent, contract, call)
+            plan = build_plan(run, agent, contract, call, stamp=self._stamp(agent))
             plan.hash()
         except ValueError:  # includes pydantic ValidationError and the float refusal
             return self._abstain(run, S.NEEDS_PERSON, "invalid_proposal", cited or [])

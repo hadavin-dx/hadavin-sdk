@@ -11,9 +11,13 @@ from hadavin_sdk.models import (
     ApprovalDecision,
     ApprovalRequest,
     ApprovalStatus,
+    ApprovalWeek,
     DeadLetter,
     GateDecision,
     KillSwitch,
+    Label,
+    LevelEvent,
+    PilotWeek,
     Plan,
     Run,
     RunState,
@@ -43,6 +47,10 @@ class StoreUnavailable(ConfigError):
 
 class NotFound(KeyError):
     pass
+
+
+class HarmfulSticky(RuntimeError):
+    """A non-harmful label on a run whose latest eligible label is harmful, from someone who may not lower it."""
 
 
 class Store(Protocol):
@@ -115,3 +123,106 @@ class Store(Protocol):
     def set_kill_switch(self, ks: KillSwitch) -> None: ...
     def get_tick_state(self, step: str) -> TickState | None: ...
     def save_tick_state(self, state: TickState) -> None: ...
+
+    # --- K6 measurement: labels, demotions, reports ---------------------------------------------------------
+    def add_labels(
+        self, items: list[tuple[Label, LevelEvent | None]], *, may_lower_harmful: bool
+    ) -> list[LevelEvent]:
+        """Every (label, demotion) in ONE transaction, with the sticky-harmful rule checked inside it and serialised
+        per run: unless `may_lower_harmful`, a non-harmful label on a run whose latest eligible label is harmful
+        raises HarmfulSticky. A duplicate `label_id` raises StaleState. Either way nothing is stored. This is the
+        ONLY way a label enters the store. Each stored label gets a `seq` (insertion order); "latest" always means the
+        highest seq, never created_at (two labels can share an instant, and a clock read before the lock can lag
+        the commit). A demotion that already exists (same agent, action and reason) is not inserted twice; the
+        demotions that were really inserted are returned, so the caller audits and announces only those."""
+        ...
+
+    def claim_action(
+        self, nonce: str, at: datetime, team_id: str = "", action_ts: str = ""
+    ) -> bool:
+        """Record a nonce with the click's workspace id and its own timestamp; False when it was already seen (a
+        replay, or a claim someone else holds)."""
+        ...
+
+    def get_action(self, nonce: str) -> tuple[str, str] | None:
+        """(team_id, action_ts) stored with a claimed nonce, or None when it is not held."""
+        ...
+
+    def is_announced(self, key: str) -> bool:
+        """Was this announcement really delivered (see `mark_announced`)?"""
+        ...
+
+    def mark_announced(self, key: str, at: datetime) -> None:
+        """Record that an announcement was delivered; permanent, idempotent."""
+        ...
+
+    def release_action(self, nonce: str) -> None:
+        """Forget a nonce (the click failed before it took effect, so the same signed request may be delivered
+        again; or a claim is given back)."""
+        ...
+
+    def purge_actions(self, before: datetime) -> int:
+        """Delete nonces claimed before `before` (older than the signature window they can never be replayed);
+        returns how many."""
+        ...
+
+    def list_labels(self, run_id: str) -> list[Label]:
+        """Every label of the run, oldest first."""
+        ...
+
+    def list_labels_for(
+        self, agent_id: str, action_id: str, since: datetime | None, config_hash: str | None = None
+    ) -> list[Label]:
+        """Labels of runs whose plan is for (agent, action), created at or after `since` (None: all), oldest first.
+        With `config_hash`, only runs whose plan was made under that config hash."""
+        ...
+
+    def count_proposals(
+        self, agent_id: str, action_id: str, since: datetime | None, config_hash: str | None = None
+    ) -> int:
+        """Plans for (agent, action) created at or after `since` (None: all); with `config_hash`, only those made
+        under that config hash."""
+        ...
+
+    def list_labels_between(self, start: datetime, end: datetime) -> list[Label]:
+        """Every label created in [start, end), runs with or without a plan, oldest first."""
+        ...
+
+    def list_csv_import(self, import_id: str) -> list[Label]:
+        """Every label stored by one csv import (ids `csv-<import_id>-<row>-p|a`), oldest first."""
+        ...
+
+    def add_level_event(self, event: LevelEvent) -> bool:
+        """Append a demotion, idempotent per agent, action and reason. True when a row was inserted, False when
+        that demotion already existed (nothing to audit or announce). A `clear` goes through `clear_demotion`."""
+        ...
+
+    def clear_demotion(self, event: LevelEvent, expected_seq: int) -> bool:
+        """Append a `clear` only if the newest level event of that (agent, action) still has seq `expected_seq`:
+        a compare-and-set. False when something (a new demotion) landed since the caller looked, and nothing is
+        written; the caller must look again."""
+        ...
+
+    def list_level_events(self) -> list[LevelEvent]:
+        """Every demotion and clear, in seq order."""
+        ...
+
+    def current_overrides(self) -> dict[tuple[str, str], str]:
+        """(agent, action) -> "shadow" for every pair whose latest level event is a `demote`."""
+        ...
+
+    def held_run_ids(self) -> set[str]:
+        """Runs ever labelled wrong, harmful or missed (their evidence is held, K5)."""
+        ...
+
+    def put_report(self, week: date, body: str) -> bool:
+        """Store the week's report once; False when that week already has one (the first stays)."""
+        ...
+
+    def get_report(self, week: date) -> str | None: ...
+
+    def pilot_week(self, week: date) -> PilotWeek:
+        """`week` is the Monday of an ISO week (UTC). A week with no runs is all zeros."""
+        ...
+
+    def approval_week(self, week: date) -> ApprovalWeek: ...

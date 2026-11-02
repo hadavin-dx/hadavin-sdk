@@ -31,3 +31,16 @@ def parse_decision(
     return hmac_v0.parse_button(
         headers, body, now_ts, signing_secret, prefix=HEADER_PREFIX, channel=channel
     )
+
+
+def parse_action(
+    headers: Mapping[str, str],
+    body: bytes,
+    now_ts: float,
+    signing_secret: str,
+    channel: str = "slack",
+) -> hmac_v0.Action | None:
+    """Any signed Slack button click (a label, a clear, an approval): the verified user and the button value."""
+    return hmac_v0.parse_action(
+        headers, body, now_ts, signing_secret, prefix=HEADER_PREFIX, channel=channel
+    )

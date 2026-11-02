@@ -32,7 +32,9 @@ AGENT = {
 }
 
 
-def pilot_cfg(tmp_path: Path, *, env="pilot", agent=None, contract=None, config=None) -> Path:
+def pilot_cfg(
+    tmp_path: Path, *, env="pilot", agent=None, contract=None, config=None, no_owner=False
+) -> Path:
     """A pilot config with real kinds only (nothing is contacted until `build`)."""
     root = tmp_path / "pilot"
     for sub in ("actions", "prompts", "golden", "inputs"):
@@ -72,11 +74,29 @@ def pilot_cfg(tmp_path: Path, *, env="pilot", agent=None, contract=None, config=
     (root / "config.yaml").write_text(yaml.safe_dump(cfg), encoding="utf-8")
     (root / "agents.yaml").write_text(yaml.safe_dump([agent]), encoding="utf-8")
     (root / "principals.yaml").write_text(
-        yaml.safe_dump([{"id": "svc:ito", "kind": "service", "rights": ["restart_service"]}]),
+        yaml.safe_dump(
+            [
+                {"id": "svc:ito", "kind": "service", "rights": ["restart_service"]},
+                # K6: pilot and prod need a person who can clear a demotion and is told of a breach.
+                *(
+                    []
+                    if no_owner
+                    else [
+                        {"id": "slack:UOWNER", "kind": "person", "admin_rights": ["clear_override"]}
+                    ]
+                ),
+            ]
+        ),
         encoding="utf-8",
     )
     (root / "actions" / "restart_service.yaml").write_text(
         yaml.safe_dump(contract), encoding="utf-8"
+    )
+    # K6: the pilot tooling refuses to start without a filled ceiling.
+    (root / "baseline.yaml").write_text(
+        "ceiling:\n  metric: harmful labels per quarter\n  counts: [harmful]\n  max: 0\n  window_days: 90\n"
+        "  source: sponsor email, 2026-11-01\n",
+        encoding="utf-8",
     )
     return root
 
@@ -120,7 +140,10 @@ def test_k3_levels_must_cover_every_action_in_pilot(tmp_path):
 
 def test_k3_suggest_refused_without_evidence(tmp_path):
     cfg = pilot_cfg(tmp_path, agent={"levels": {"restart_service": "suggest"}})
-    with pytest.raises(ConfigError, match="cannot load before K6 and K8"):
+    with pytest.raises(
+        ConfigError,
+        match=r"agent ito-agent: suggest for restart_service cannot load before K8(;|$)",
+    ):
         load_registry(load_config(cfg))
 
 

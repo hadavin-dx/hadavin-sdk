@@ -8,7 +8,7 @@ from __future__ import annotations
 import hashlib
 import json
 import uuid
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 from enum import StrEnum
 from typing import Any, ClassVar, Literal
@@ -105,6 +105,12 @@ class Plan(Shape):
     idempotency_key: str
     expected_outcome: str
     created_at: datetime = Field(default_factory=now)
+    # What produced this proposal (K6): the agent's config hash (levels excluded), the model and the prompt.
+    # Promotion evidence counts only proposals made under the CURRENT config hash: labels on an older prompt
+    # say nothing about the new one. None on plans stored before this field existed (they never count).
+    config_hash: str | None = None
+    model_id: str | None = None
+    prompt_sha256: str | None = None
 
     @field_validator("created_at")
     @classmethod
@@ -116,7 +122,9 @@ class Plan(Shape):
 
     # A field added after v1 goes in this set: the hash leaves it out while it equals its default, so a plan stored
     # before the field existed re-hashes to the hash stored with it (tests/fixtures/plan_v1.json).
-    _HASH_OMIT_IF_DEFAULT: ClassVar[frozenset[str]] = frozenset()
+    _HASH_OMIT_IF_DEFAULT: ClassVar[frozenset[str]] = frozenset(
+        {"config_hash", "model_id", "prompt_sha256"}
+    )
 
     def hash(self) -> str:
         # Normalised here too: model_copy(update=...) and attribute assignment skip the validator.
@@ -191,6 +199,10 @@ class AuditEvent(Shape):
     # Which control caught a mistake: gate, recheck, abstain, guard, verify, human_label, human_reject (K6 sets
     # the human values). Rows written before this field existed hash unchanged (the chain hashes stored text).
     caught_by: str | None = None
+    # A signed channel click (K6): the workspace it came from and its own timestamp, so a refused or accepted
+    # click can be traced to both. Rows written before these fields existed hash unchanged.
+    team_id: str | None = None
+    action_ts: str | None = None
 
 
 class DeadLetter(Shape):
@@ -208,6 +220,106 @@ class TickState(BaseModel):
     last_run_at: datetime
     last_ok_at: datetime | None = None
     last_error: str | None = None
+    # A step's own numbers (K6; K4's backlog step writes `oldest_received_age_s` and `late_starts`). Codes and
+    # counts only, never run content. Round-trips through the store as JSONB.
+    detail: dict[str, Any] | None = None
+
+
+LabelName = Literal["agree", "partial", "wrong", "harmful", "abstain_ok", "missed"]
+
+
+class Label(BaseModel):
+    """A person's verdict on one run (table labels). Append-only: the latest eligible label of a run is its label."""
+
+    model_config = ConfigDict(extra="forbid")
+    label_id: str = Field(default_factory=lambda: new_id("lbl"))
+    run_id: str
+    label: LabelName
+    principal_id: str
+    channel: Literal["chat", "csv"]
+    approved_by: str | None = None  # csv only: the line owner who approved the import
+    created_at: datetime = Field(default_factory=now)
+    # Insertion order, assigned by the store (None until stored). "Latest" always means the highest seq: two
+    # labels can share a created_at, and a clock read before a lock can lag the commit; the order of insertion
+    # cannot tie and cannot lag.
+    seq: int | None = None
+
+    @property
+    def counts(self) -> bool:
+        """Evidence: a chat label, or a csv label the line owner approved."""
+        return self.channel == "chat" or self.approved_by is not None
+
+
+class LevelEvent(BaseModel):
+    """A demotion or the line owner's clear (table level_events). The latest event per (agent, action) wins."""
+
+    model_config = ConfigDict(extra="forbid")
+    seq: int | None = None  # assigned by the store
+    agent_id: str
+    action_id: str
+    kind: Literal["demote", "clear"]
+    reason: str
+    by: str
+    at: datetime = Field(default_factory=now)
+
+
+_LABEL_COLUMNS = ("agree", "partial", "wrong", "harmful", "abstain_ok", "missed")
+
+
+def iso_week(moment: datetime) -> date:
+    """The Monday (UTC) of the ISO week the instant falls in: what `date_trunc('week', ... AT TIME ZONE 'UTC')` gives."""
+    day = moment.astimezone(UTC).date()
+    return day - timedelta(days=day.weekday())
+
+
+def latest_labels(labels: list[Label]) -> dict[str, Label]:
+    """run_id -> its label: the latest eligible one (a chat label, or an approved csv label), latest by insertion
+    order (`seq`). A label not stored yet (no seq) is newer than any stored one."""
+    out: dict[str, Label] = {}
+    for lab in sorted((x for x in labels if x.counts), key=label_order):
+        out[lab.run_id] = lab
+    return out
+
+
+def label_order(x: Label) -> tuple[float, datetime, str]:
+    """Sort key for "oldest first": insertion order; a label without a seq (not stored yet) sorts last."""
+    return (float("inf") if x.seq is None else x.seq, x.created_at, x.label_id)
+
+
+class PilotWeek(BaseModel):
+    """One ISO week of the pilot (view v_pilot_week; the memory store computes the same numbers in Python)."""
+
+    model_config = ConfigDict(extra="forbid")
+    week: date
+    runs: int = 0
+    proposals: int = 0
+    shadow_cards: int = 0
+    cards_not_delivered: int = 0
+    labelled: int = 0
+    agree: int = 0
+    partial: int = 0
+    wrong: int = 0
+    harmful: int = 0
+    abstain_ok: int = 0
+    missed: int = 0
+    abstained: int = 0
+    fixes_verified: int = 0
+    median_s_to_proposal: float | None = None
+    avg_cost_usd: Decimal | None = None
+
+    def count_of(self, classes: tuple[str, ...] | list[str]) -> int:
+        """Runs of the week whose label is one of `classes` (the view has one column per label class)."""
+        return sum(getattr(self, c) for c in classes if c in _LABEL_COLUMNS)
+
+
+class ApprovalWeek(BaseModel):
+    """One ISO week of approval decisions (view v_approval_week)."""
+
+    model_config = ConfigDict(extra="forbid")
+    week: date
+    decisions: int = 0
+    wont_run: int = 0
+    median_s: float | None = None
 
 
 class KillSwitch(Shape):

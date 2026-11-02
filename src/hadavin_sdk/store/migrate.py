@@ -53,6 +53,20 @@ GRANTS: dict[str, Grant] = {
     "audit_outbox": Grant("table", "SELECT, INSERT, DELETE"),
     "approval_decisions_seq_seq": Grant("sequence", "USAGE"),
     "dead_letters_seq_seq": Grant("sequence", "USAGE"),
+    # K6: labels, demotions and reports are appended, never changed. The portal reads the three views only (a view
+    # runs with its owner's rights, so it needs no grant on the tables behind them).
+    "labels": Grant("table", _APPEND),
+    "level_events": Grant("table", _APPEND),
+    "reports": Grant("table", _APPEND),
+    "seen_actions": Grant(
+        "table", "SELECT, INSERT, DELETE"
+    ),  # expired rows are purged by a tick step
+    "labels_seq_seq": Grant("sequence", "USAGE"),
+    "announcements": Grant("table", _APPEND),
+    "level_events_seq_seq": Grant("sequence", "USAGE"),
+    "v_pilot_week": Grant("view", "SELECT", portal=True),
+    "v_caught_week": Grant("view", "SELECT", portal=True),
+    "v_approval_week": Grant("view", "SELECT", portal=True),
 }
 _LOCK = int.from_bytes(b"hadvnmig", "big") >> 1  # one fixed key for every migrate run
 _ROLE = re.compile(r"[a-z_][a-z0-9_]{0,62}")

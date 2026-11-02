@@ -3,6 +3,82 @@
 ## Unreleased
 
 ### Upgrade steps
+- **K6 measurement, demotion and the weekly report.** Run `hadavin-sdk migrate --runtime-role R` (migration
+  `0005_measure.sql`):
+  tables `labels` (with `seq`), `level_events`, `reports`, `seen_actions`, `announcements`, columns `tick_state.detail`
+  and `plans.config_hash/model_id/prompt_sha256`, and the views `v_pilot_week`, `v_caught_week`, `v_approval_week`.
+  - **Migration number (rebase step, not done yet on purpose).** #49 takes `0005_reservations`, #42 `0006_evidence`
+    and this PR `0007_measure`. `migrate` refuses a gap, so this branch keeps `0005_measure.sql` until the other two
+    are merged. When rebasing onto them run `git mv src/hadavin_sdk/store/migrations/0005_measure.sql
+    src/hadavin_sdk/store/migrations/0007_measure.sql` (`tests/test_p2_postgres.py` derives its expected applied list from the
+    folder, so it needs no edit; check `tests/test_k2_migrations.py` and the grant map in `store/migrate.py`, which the other branches also touch) and update the file name in this paragraph;
+    `check_ledger` fails the suite on a duplicate or a gap, and
+    `test_k6_migration_number_documented` fails when this paragraph names a file that is not on disk.
+    Renumbering is safe only before any database applied `0005_measure`: no pilot database has (owner to confirm in
+    writing before the rename; a database that did would need its `schema_migrations` row renamed by hand).
+  - **What "append-only" means here.** (The csv-import refusal `newer_label_exists` is checked just before the insert, not inside the store transaction: a chat label landing in that gap can still be replaced; only harmful is atomic.) `labels`, `level_events` and `reports` are append-only **for the runtime
+    role** (SELECT, INSERT grants) and an UPDATE/DELETE/TRUNCATE-refusing trigger. They are **not tamper-evident**
+    (no hash chain; the table owner or a superuser can drop the trigger). A cross-check against the hash-chained
+    audit is possible but **manual; no tool ships yet**: each label is audited after it commits (`label`,
+    `object_ref = label_id`). `_audit` never raises (a failed write is only logged), and a crash between the commit and
+    the audit leaves a label with no audit entry, so a missing entry is a discrepancy to investigate, not proof of
+    tampering. Numbers drawn from these tables are
+    counts of recorded labels, not tamper-evident evidence.
+  - **Bounds.** `ceiling.window_days` 1..3650 and `ceiling.max` 0..1,000,000 (same as the policy fields); whole
+    numbers in a button value or in `baseline.yaml` are ASCII digits only (`[0-9]{1,18}`).
+  - **Signing secret rotation and the nonce table.** The channel has ONE signing secret: rotating it makes every
+    button already posted unusable (a click signed with the old secret is refused 401) until the card is reposted, and
+    in-flight clicks inside the 5-minute window are lost. `seen_actions` gives the runtime role DELETE (the purge step
+    needs it), so a compromised runtime could delete a nonce and replay a captured signed request inside its 5-minute
+    window; the signed workspace pin (`allowed_team_id`) and the per-action audit rows are the compensating controls.
+  - **Who and what.** `Principal.admin_rights` (`stop`, `reset`, `clear_override`, `approve_label_import`) and
+    `Principal.label_agents` (agent ids or `*`; not stated is allowed in dev and refused in pilot/prod) are separate
+    from action `rights`. Admin rights apply to `kind: person` only. `pilot`/`prod` need at least one person with
+    `clear_override`.
+  - **`baseline.yaml` (required in pilot/prod).** `ceiling` has five required fields and no defaults: `metric`,
+    `counts` (label classes that count; must include `harmful`), `max`, `window_days`, `source`. The ceiling is
+    breached when the count is **strictly more than** `max`. An optional `policy:` mapping holds the other numbers
+    (promotion numbers, the wrong rule, report local time, tick cadence, nonce keep time, `allowed_team_id`); defaults
+    live in `measure.Policy`; numbers weaker than the spec's are refused unless `allow_weaker_than_spec: true`, which
+    every report and promotion file then prints. The K0 templates carry all of it.
+  - **Labels and demotion.** Labels come from signed channel clicks (`label|run|label`); `label import` (csv) is
+    **dev only** until a signed upload path exists (pilot/prod refuse `--by/--approved-by`, so csv labels cannot
+    reach a pilot today). One harmful label, or `wrong_limit` wrong runs inside `wrong_window_days`, demotes the action
+    at once; a harmful verdict is sticky (only a `clear_override` holder lowers one) and every downgrade of wrong or
+    harmful is audited, told to the line owners and listed in the report. Only delivered shadow cards can be labelled.
+    "Latest label" means insertion order (`labels.seq`).
+  - **Clearing.** A clear needs `clear_override`, is refused while the ceiling is breached for an action with a
+    ceiling demotion, needs the section 6.1 numbers for an action at suggest, is bound to the demotion its card was
+    posted for, and a harmful demotion is cleared by someone other than the labeller and not sooner than
+    `policy.harmful_clear_min_age_h` (default 24 h, floor 24 unless `allow_weaker_than_spec`; refusal `too_soon`).
+    **Label time, not run time (for the rules only):** the wrong rule (`wrong_limit` inside `wrong_window_days`), the recent-harmful
+    check for promotion and the ceiling window are measured from when the label was given (`labels.created_at`,
+    commit order), never from when the run happened; an old run labelled today counts today. The weekly report's counts and its wrong/harmful list use ONE other rule: a run belongs to the week it
+    was created in and its latest label counts there, whenever it was given (`v_pilot_week` and the list agree). A clear does not erase recent
+    wrongs: they still count inside the window, so one new wrong re-demotes at once (the card says until when).
+  - **Promotion.** `promote-check AGENT ACTION` (exit 2 for an unknown agent/action) writes
+    `promotions/<agent>.<action>.json` from labels on proposals made under the CURRENT config hash, needing a green
+    replay record, two distinct labellers and the ceiling clear; the file records its own thresholds and the policy.
+    The loader checks the file's thresholds against the spec's floors and the replay record it names; `app.build` in
+    pilot/prod re-derives numbers, replay and ceiling from the store. **Residual limit:** the SHA-256 and the replay
+    summary are unkeyed, so someone who can write both files in one PR can forge them; the control is the reviewed PR
+    and CODEOWNERS, signed records are future work. `suggest` stays refused in pilot/prod until K8.
+  - **Signed clicks** are acted on once (`seen_actions`, purged by tick step `purge_seen_actions`; the runtime role may
+    DELETE on that table only), a click that did not take effect gives its nonce back, `policy.allowed_team_id` pins
+    the workspace (a click's workspace id and own `action_ts` are stored with its nonce in `seen_actions` and on every
+    audit row the click causes: `team_id`, `action_ts`), and `limits reset --by` is refused in pilot/prod (signed `reset` only; `stop` still works).
+  - **Announcements** are recorded when delivered (`announcements`) and retried every tick until they are.
+  - **Store/Channel API.** `Store` gains `add_labels` (the only way a label enters), `list_labels`, `list_labels_for`,
+    `list_labels_between`, `count_proposals`, `add_level_event`, `clear_demotion`, `list_level_events`,
+    `current_overrides`, `held_run_ids`, `put_report`, `get_report`, `pilot_week`, `approval_week`, `claim_action`,
+    `release_action`, `purge_actions`, `is_announced`, `mark_announced`, `list_csv_import`; `Channel` gains
+    `parse_action` (user, value, nonce, team). A custom kind must implement them. `TickState` gains `detail`.
+  - **Reports.** Tick step `weekly_report` writes the report of the last complete ISO week at the first tick after
+    Monday 00:00 UTC (labels given later are in the next report; `report --week` prints the stored one). It shows
+    current overrides, downgrades, labeller concentration and the policy in force. K4's `backlog` step must write
+    `tick_state.detail` keys `week`, `max_oldest_received_age_s`, `late_starts`, `late_threshold_s`.
+  - Policy numbers, secrets: none are read from the environment; Slack's signing secret still comes through the
+    secrets kind by configured name; a repo test fails on key-shaped and Slack-id literals.
 - **K3 pilot build path (levels, shadow cut-off, fail-closed loading).** Action contracts change shape:
   `executor.system` moves to a contract field `target_system`, and `executor` is now a tagged union
   (`kind: none | manual | http`). Edit every contract: move `system:` out of `executor:` to `target_system:` beside

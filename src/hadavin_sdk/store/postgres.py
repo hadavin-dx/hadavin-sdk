@@ -14,6 +14,7 @@ import logging
 import os
 import tempfile
 import threading
+import time
 from collections.abc import Callable
 from datetime import date, datetime
 from decimal import Decimal
@@ -32,18 +33,23 @@ from hadavin_sdk.models import (
     ApprovalDecision,
     ApprovalRequest,
     ApprovalStatus,
+    ApprovalWeek,
     DeadLetter,
     GateDecision,
     KillSwitch,
+    Label,
+    LevelEvent,
+    PilotWeek,
     Plan,
     Run,
     RunState,
     TickState,
     now,
 )
-from hadavin_sdk.store.protocol import NotFound, StaleState, StoreUnavailable
+from hadavin_sdk.store.protocol import HarmfulSticky, NotFound, StaleState, StoreUnavailable
 
 _LOG = logging.getLogger("hadavin_sdk.store")
+_DEADLOCK_RETRIES = 3
 
 
 _VERIFIED_TLS = frozenset({"verify-ca", "verify-full"})
@@ -467,3 +473,232 @@ class PostgresStore:
 
     def save_tick_state(self, state: TickState) -> None:
         self._insert("tick_state", state, upsert_on="step")
+
+    # --- K6 measurement ------------------------------------------------------------------------------------
+
+    _LABEL_COLS = "l.seq, l.label_id, l.run_id, l.label, l.principal_id, l.channel, l.approved_by, l.created_at"
+
+    def _retrying(self, fn):
+        """Run a transactional `fn`; a deadlock the database breaks is retried (bounded), then raised. The advisory
+        locks below are taken in one sorted order, so this is a belt on top of the braces."""
+        for attempt in range(_DEADLOCK_RETRIES + 1):
+            try:
+                return fn()
+            except psycopg.errors.DeadlockDetected:
+                if attempt == _DEADLOCK_RETRIES:
+                    raise
+                time.sleep(0.01 * (attempt + 1))
+        raise AssertionError("unreachable")  # pragma: no cover
+
+    def _lock_keys(self, keys) -> None:
+        # Caller holds self._lock and is inside a transaction. Sorted: every caller takes locks in the same order.
+        for key in sorted(set(keys)):
+            self._exec("SELECT pg_advisory_xact_lock(hashtext(%s))", (key,))
+
+    def add_labels(
+        self, items: list[tuple[Label, LevelEvent | None]], *, may_lower_harmful: bool
+    ) -> list[LevelEvent]:
+        """All labels (each with its demotion) in ONE transaction. The sticky-harmful check and the insert happen
+        under advisory locks for every run and every (agent, action) in the batch, all taken first in one sorted
+        order (two batches cannot deadlock; a deadlock the database still breaks is retried). Returns the demotions
+        that were really inserted (one that already existed is not). Any failure stores nothing."""
+        keys = [f"run/{label.run_id}" for label, _ in items] + [
+            f"level/{d.agent_id}/{d.action_id}" for _, d in items if d is not None
+        ]
+
+        def attempt() -> list[LevelEvent]:
+            inserted: list[LevelEvent] = []
+            with self._lock, self._db.transaction():
+                self._lock_keys(keys)
+                for label, demote in items:
+                    if label.label != "harmful" and not may_lower_harmful:
+                        cur = self._exec(
+                            "SELECT label FROM labels WHERE run_id = %s "
+                            "AND (channel = 'chat' OR approved_by IS NOT NULL) "
+                            "ORDER BY seq DESC LIMIT 1",
+                            (label.run_id,),
+                        ).fetchone()
+                        if cur is not None and cur["label"] == "harmful":
+                            raise HarmfulSticky(label.run_id)
+                    lrow = {
+                        k: v for k, v in _row(label).items() if k != "seq"
+                    }  # seq is the database's
+                    self._exec(
+                        sql.SQL("INSERT INTO labels ({}) VALUES ({})").format(
+                            sql.SQL(", ").join(sql.Identifier(c) for c in lrow),
+                            sql.SQL(", ").join(sql.Placeholder() * len(lrow)),
+                        ),
+                        list(lrow.values()),
+                    )
+                    if demote is not None and self._insert_level(demote):
+                        inserted.append(demote)
+            return inserted
+
+        try:
+            return self._retrying(attempt)
+        except psycopg.errors.UniqueViolation:
+            raise StaleState("label exists") from None
+
+    def claim_action(
+        self, nonce: str, at: datetime, team_id: str = "", action_ts: str = ""
+    ) -> bool:
+        with self._lock:
+            row = self._exec(
+                "INSERT INTO seen_actions (nonce, seen_at, team_id, action_ts) VALUES (%s, %s, %s, %s) "
+                "ON CONFLICT (nonce) DO NOTHING RETURNING nonce",
+                (nonce, at, team_id, action_ts),
+            ).fetchone()
+        return row is not None
+
+    def get_action(self, nonce: str) -> tuple[str, str] | None:
+        with self._lock:
+            row = self._exec(
+                "SELECT team_id, action_ts FROM seen_actions WHERE nonce = %s", (nonce,)
+            ).fetchone()
+        return None if row is None else (row["team_id"], row["action_ts"])
+
+    def is_announced(self, key: str) -> bool:
+        with self._lock:
+            row = self._exec("SELECT 1 FROM announcements WHERE key = %s", (key,)).fetchone()
+        return row is not None
+
+    def mark_announced(self, key: str, at: datetime) -> None:
+        with self._lock:
+            self._exec(
+                "INSERT INTO announcements (key, at) VALUES (%s, %s) ON CONFLICT (key) DO NOTHING",
+                (key, at),
+            )
+
+    def release_action(self, nonce: str) -> None:
+        with self._lock:
+            self._exec("DELETE FROM seen_actions WHERE nonce = %s", (nonce,))
+
+    def purge_actions(self, before: datetime) -> int:
+        with self._lock:
+            return self._exec("DELETE FROM seen_actions WHERE seen_at < %s", (before,)).rowcount
+
+    def _insert_level(self, ev: LevelEvent) -> bool:
+        """Caller holds the lock and is inside a transaction that already holds the (agent, action) advisory lock
+        (which orders this against a `clear_demotion` compare-and-set). A demotion that already exists is not
+        inserted twice (unique index). True when a row was inserted."""
+        row = self._exec(
+            'INSERT INTO level_events (agent_id, action_id, kind, reason, "by", at) '
+            "VALUES (%s, %s, %s, %s, %s, %s) "
+            "ON CONFLICT (agent_id, action_id, reason) WHERE kind = 'demote' DO NOTHING RETURNING seq",
+            (ev.agent_id, ev.action_id, ev.kind, ev.reason, ev.by, ev.at),
+        ).fetchone()
+        return row is not None
+
+    def list_labels_between(self, start: datetime, end: datetime) -> list[Label]:
+        return self._labels_where("WHERE l.created_at >= %s AND l.created_at < %s", (start, end))
+
+    def list_csv_import(self, import_id: str) -> list[Label]:
+        # import_id is hex from the parser; escape LIKE wildcards anyway
+        safe = import_id.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        return self._labels_where("WHERE l.label_id LIKE %s", (f"csv-{safe}-%",))
+
+    def list_level_events(self) -> list[LevelEvent]:
+        with self._lock:
+            rows = self._exec(
+                'SELECT seq, agent_id, action_id, kind, reason, "by", at FROM level_events ORDER BY seq'
+            ).fetchall()
+        return [LevelEvent.model_validate(r) for r in rows]
+
+    def add_level_event(self, event: LevelEvent) -> bool:
+        def attempt() -> bool:
+            with self._lock, self._db.transaction():
+                self._lock_keys([f"level/{event.agent_id}/{event.action_id}"])
+                return self._insert_level(event)
+
+        return self._retrying(attempt)
+
+    def clear_demotion(self, event: LevelEvent, expected_seq: int) -> bool:
+        def attempt() -> bool:
+            with self._lock, self._db.transaction():
+                self._lock_keys([f"level/{event.agent_id}/{event.action_id}"])
+                newest = self._exec(
+                    "SELECT max(seq) AS s FROM level_events WHERE agent_id = %s AND action_id = %s",
+                    (event.agent_id, event.action_id),
+                ).fetchone()["s"]
+                if (newest or 0) != expected_seq:
+                    return False
+                self._insert_level(event)
+            return True
+
+        return self._retrying(attempt)
+
+    def _labels_where(self, where: str, params: tuple) -> list[Label]:
+        """`where` is fixed SQL text from this module; values always go through `params`."""
+        query = sql.SQL("SELECT {} FROM labels l {} ORDER BY l.seq").format(
+            sql.SQL(self._LABEL_COLS), sql.SQL(where)
+        )
+        with self._lock:
+            rows = self._exec(query, params).fetchall()
+        return [Label.model_validate(r) for r in rows]
+
+    def list_labels(self, run_id: str) -> list[Label]:
+        return self._labels_where("WHERE l.run_id = %s", (run_id,))
+
+    def list_labels_for(
+        self, agent_id: str, action_id: str, since: datetime | None, config_hash: str | None = None
+    ) -> list[Label]:
+        join = "JOIN plans p ON p.run_id = l.run_id WHERE p.agent_id = %s AND p.action_id = %s"
+        params: tuple = (agent_id, action_id)
+        if config_hash is not None:
+            join, params = join + " AND p.config_hash = %s", (*params, config_hash)
+        if since is not None:
+            join, params = join + " AND l.created_at >= %s", (*params, since)
+        return self._labels_where(join, params)
+
+    def count_proposals(
+        self, agent_id: str, action_id: str, since: datetime | None, config_hash: str | None = None
+    ) -> int:
+        query = "SELECT count(*) AS n FROM plans WHERE agent_id = %s AND action_id = %s"
+        params: tuple = (agent_id, action_id)
+        if config_hash is not None:
+            query, params = query + " AND config_hash = %s", (*params, config_hash)
+        if since is not None:
+            query, params = query + " AND created_at >= %s", (*params, since)
+        with self._lock:
+            return int(self._exec(query, params).fetchone()["n"])
+
+    def current_overrides(self) -> dict[tuple[str, str], str]:
+        with self._lock:
+            rows = self._exec(
+                "SELECT DISTINCT ON (agent_id, action_id) agent_id, action_id, kind "
+                "FROM level_events ORDER BY agent_id, action_id, seq DESC"
+            ).fetchall()
+        return {(r["agent_id"], r["action_id"]): "shadow" for r in rows if r["kind"] == "demote"}
+
+    def held_run_ids(self) -> set[str]:
+        with self._lock:
+            rows = self._exec(
+                "SELECT DISTINCT run_id FROM labels WHERE label IN ('wrong', 'harmful', 'missed')"
+            ).fetchall()
+        return {r["run_id"] for r in rows}
+
+    def put_report(self, week: date, body: str) -> bool:
+        with self._lock:
+            row = self._exec(
+                "INSERT INTO reports (week_start, body_md, created_at) VALUES (%s, %s, %s) "
+                "ON CONFLICT (week_start) DO NOTHING RETURNING week_start",
+                (week, body, now()),
+            ).fetchone()
+        return row is not None
+
+    def get_report(self, week: date) -> str | None:
+        with self._lock:
+            row = self._exec(
+                "SELECT body_md FROM reports WHERE week_start = %s", (week,)
+            ).fetchone()
+        return row["body_md"] if row else None
+
+    def pilot_week(self, week: date) -> PilotWeek:
+        with self._lock:
+            row = self._exec("SELECT * FROM v_pilot_week WHERE week = %s", (week,)).fetchone()
+        return PilotWeek.model_validate(row) if row else PilotWeek(week=week)
+
+    def approval_week(self, week: date) -> ApprovalWeek:
+        with self._lock:
+            row = self._exec("SELECT * FROM v_approval_week WHERE week = %s", (week,)).fetchone()
+        return ApprovalWeek.model_validate(row) if row else ApprovalWeek(week=week)

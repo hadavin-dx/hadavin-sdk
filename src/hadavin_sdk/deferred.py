@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from hadavin_sdk import replay_records
+from hadavin_sdk import measure, replay_records
 from hadavin_sdk.actions.contract import effective_class
 
 if TYPE_CHECKING:
@@ -84,7 +84,9 @@ def check(reg: Registry) -> list[str]:
             if level != "suggest" or contract is None:
                 continue
             if live:
-                out.append(f"agent {a.id}: suggest for {action} cannot load before K6 and K8")
+                # K6 is built: the evidence file is checked. Suggest still needs K8's posted fixes.
+                out.append(f"agent {a.id}: suggest for {action} cannot load before K8")
+                out += measure.promotion_problems(reg, a.id, action)
             if contract.executor.kind == "none":
                 out.append(f"agent {a.id}: {action} is a none contract and can never be suggest")
             if effective_class(contract, a.data_class) == "sign_off":

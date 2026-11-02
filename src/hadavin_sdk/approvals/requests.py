@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 from collections.abc import Callable, Mapping
 from datetime import datetime, timedelta
+from typing import TYPE_CHECKING
 
 from hadavin_sdk.approvals.channel import Channel, clean
 from hadavin_sdk.audit.protocol import AuditSink
@@ -20,6 +21,9 @@ from hadavin_sdk.models import (
 )
 from hadavin_sdk.registry import Registry
 from hadavin_sdk.store.protocol import StaleState, Store
+
+if TYPE_CHECKING:
+    from hadavin_sdk.measure import Measure
 
 OnDecided = Callable[[str, str, ApprovalDecision | None], object]
 _LOG = logging.getLogger("hadavin_sdk.approvals")
@@ -57,6 +61,8 @@ class Approvals:
     ) -> None:
         self.store, self.audit, self.registry, self.channel = store, audit, registry, channel
         self.on_decided, self.clock, self.detector = on_decided, clock, detector
+        # K6: set by app.build, so every receiver built on these approvals also takes label and clear clicks.
+        self.measure: Measure | None = None
 
     def receive(
         self, headers: Mapping[str, str], body: bytes, *, record_only: bool = False
@@ -160,7 +166,14 @@ class Approvals:
             self.store.record_decision(d, new, "PENDING", req.current_step)
         except StaleState:
             return False, "stale"
-        self._audit(req, "decide", d.approver_id, decision=d.decision, result=status)
+        self._audit(
+            req,
+            "decide",
+            d.approver_id,
+            decision=d.decision,
+            result=status,
+            caught_by="human_reject" if d.decision == "reject" else None,  # "won't run" (K6)
+        )
         if (
             record_only
         ):  # the receiver must answer fast: tick reconcile updates the message and runs it

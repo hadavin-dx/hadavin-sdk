@@ -17,10 +17,10 @@ from hadavin_sdk.models import GateDecision, Plan, canonical_json, sha256_hex
 
 SHADOW_HEADER = "Agent's view: not checked, do not run"
 ABSTAIN_HEADER = "Agent abstained: here is what it looked at"
-LABELS = ("agree", "partial", "wrong", "harmful")  # parsed by K6
+LABELS = ("agree", "partial", "wrong", "harmful")  # parsed by K6 (`measure.parse_action_value`)
 ABSTAIN_LABELS = (
     ("abstain_ok", "Fine to abstain"),
-    ("should_have_answered", "Should have answered"),
+    ("missed", "Should have answered"),
 )
 
 
@@ -93,6 +93,35 @@ def render_shadow(
         for x in LABELS
     ]
     return _card("\n".join(lines), buttons)
+
+
+def render_demotion(
+    agent_id: str, action_id: str, reason: str, note: str | None = None, seq: int | None = None
+) -> Card:
+    """Posted when an action drops back to shadow. The button is the line owner's signed clear (K6)."""
+    lines = [
+        f"Level lowered: {agent_id} / {action_id} is shadow again.",
+        f"Reason: {reason}",
+        "Only a line owner can clear this.",
+        *([note] if note else []),
+    ]
+    button = {
+        "id": "clear_override",
+        "label": "Clear demotion",
+        "value": f"clear|{agent_id}|{action_id}|{seq if seq is not None else 0}",  # bound to this demotion
+    }
+    return _card("\n".join(lines), [button])
+
+
+def render_import(import_id: str, n: int) -> Card:
+    """Posted when a csv of labels waits for a line owner. The button is their signed approval (K6)."""
+    text = f"{n} labels from csv import {import_id[:12]} wait for a line owner. They do not count as evidence until approved."
+    button = {
+        "id": "approve_import",
+        "label": "Approve import",
+        "value": f"approve_import|{import_id}",
+    }
+    return _card(text, [button])
 
 
 def render_abstain(run_id: str, reason: str, cited: list[str]) -> Card:

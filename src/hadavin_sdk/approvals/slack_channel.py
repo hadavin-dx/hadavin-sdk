@@ -14,7 +14,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
-from hadavin_sdk.approvals import slack
+from hadavin_sdk.approvals import hmac_v0, slack
 from hadavin_sdk.approvals.cards import Card, Delivery
 from hadavin_sdk.approvals.channel import clean
 from hadavin_sdk.approvals.gate import withhold_commands
@@ -191,6 +191,11 @@ class SlackChannel:
         self, headers: Mapping[str, str], body: bytes, now_ts: float
     ) -> ApprovalDecision | None:
         return slack.parse_decision(headers, body, now_ts, self._secret, self.name)
+
+    def parse_action(
+        self, headers: Mapping[str, str], body: bytes, now_ts: float
+    ) -> hmac_v0.Action | None:
+        return slack.parse_action(headers, body, now_ts, self._secret, self.name)
 
 
 def build(settings, deps) -> SlackChannel:

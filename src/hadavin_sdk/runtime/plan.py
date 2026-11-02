@@ -7,7 +7,14 @@ from hadavin_sdk.models import Plan, Run, Target, ToolCall
 from hadavin_sdk.registry import AgentRecord
 
 
-def build_plan(run: Run, agent: AgentRecord, contract: ActionContract, call: ToolCall) -> Plan:
+def build_plan(
+    run: Run,
+    agent: AgentRecord,
+    contract: ActionContract,
+    call: ToolCall,
+    *,
+    stamp: dict[str, str] | None = None,
+) -> Plan:
     return Plan(
         run_id=run.run_id,
         agent_id=agent.id,
@@ -18,4 +25,5 @@ def build_plan(run: Run, agent: AgentRecord, contract: ActionContract, call: Too
         target=Target(system=contract.target_system, ref=call.input.get("id")),
         idempotency_key=f"{run.run_id}:{contract.id}",
         expected_outcome=contract.expected_outcome,
+        **(stamp or {}),
     )

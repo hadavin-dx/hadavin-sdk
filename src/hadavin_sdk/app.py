@@ -18,10 +18,11 @@ from hadavin_sdk.approvals.cards import Card, Delivery
 from hadavin_sdk.approvals.requests import summary
 from hadavin_sdk.audit import AuditSink
 from hadavin_sdk.backends import make, platform_secrets
-from hadavin_sdk.config import Config, load_config
+from hadavin_sdk.config import Config, ConfigError, load_config
 from hadavin_sdk.guard.injection import Detector, combine
 from hadavin_sdk.limits import Limits
 from hadavin_sdk.llm.protocol import LLM
+from hadavin_sdk.measure import BASELINE_FILE, Measure, load_baseline, load_policy
 from hadavin_sdk.models import now
 from hadavin_sdk.registry import Registry, load_registry
 from hadavin_sdk.runtime.agent_loop import Hooks, Runtime
@@ -38,6 +39,7 @@ class App:
     executor: Executor | None  # None in pilot and prod: Hadavin executes nothing there
     approvals: Approvals
     runtime: Runtime
+    measure: Measure | None = None  # K6: labels, demotion, promotion evidence, the weekly report
 
 
 def build(
@@ -107,6 +109,28 @@ def build(
         req = approvals.request(plan, decision, requested_by)
         return Delivery(ok=True, ref=req.channel_ref)
 
+    # K6. The ceiling is required in pilot and prod ("the pilot tooling refuses to start without it"); in dev it is
+    # used when baseline.yaml exists and the report is simply off when it does not.
+    ceiling = load_baseline(cfg.root) if live or (cfg.root / BASELINE_FILE).is_file() else None
+    measure = Measure(
+        store,
+        audit,
+        reg,
+        channel,
+        ceiling=ceiling,
+        clock=clock,
+        limits=limits,
+        policy=load_policy(cfg.root),
+    )
+    approvals.measure = measure  # the receiver on these approvals also takes label and clear clicks
+    if live:
+        if not measure.line_owners():  # nobody could clear a demotion or be told about a breach
+            raise ConfigError(
+                "principals.yaml: in pilot and prod at least one person must hold the admin right clear_override"
+            )
+        if problems := measure.promotion_store_problems():
+            raise ConfigError("promotion evidence: " + "; ".join(problems))
+
     hooks = Hooks(
         request_approval=request_approval,
         execute=executor.execute if executor else None,
@@ -114,7 +138,12 @@ def build(
         rollback=executor.rollback if executor else None,
         post_card=post_card,
         tools=dict(tools or {}),
+        level_override=measure.level_override,
     )
+    # K5-core adds `Hooks.hold_run_ids` (its purge skips the runs this returns). Wired when the field exists, so
+    # K6 works before and after K5 without either having to edit the other's Hooks line.
+    if hasattr(hooks, "hold_run_ids"):
+        hooks.hold_run_ids = measure.hold_run_ids
     runtime = Runtime(
         reg,
         store,
@@ -126,4 +155,4 @@ def build(
         hooks,
     )
     holder["rt"] = runtime
-    return App(cfg, reg, store, audit, limits, executor, approvals, runtime)
+    return App(cfg, reg, store, audit, limits, executor, approvals, runtime, measure)

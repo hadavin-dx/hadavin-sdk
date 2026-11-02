@@ -162,7 +162,7 @@ def test_every_plan_field_after_v1_is_in_the_omit_set():
 
 def test_a_new_field_at_its_default_leaves_the_v1_hash_and_a_set_value_changes_it():
     class PlanV2(Plan):
-        _HASH_OMIT_IF_DEFAULT: ClassVar[frozenset[str]] = frozenset({"note"})
+        _HASH_OMIT_IF_DEFAULT: ClassVar[frozenset[str]] = Plan._HASH_OMIT_IF_DEFAULT | {"note"}
         note: str = ""
 
     stored = json.loads(FIXTURE.read_text(encoding="utf-8"))
@@ -384,11 +384,16 @@ def test_migrate_refuses_roles_that_are_members_of_each_other(roles):
         mig.migrate(dsn, runtime_role=runtime, portal_role=portal)
 
 
-def test_migrate_refuses_when_an_applied_migration_has_no_file(roles, monkeypatch):
+def test_migrate_refuses_when_an_applied_migration_has_no_file(roles):
+    """A database ahead of this release (it applied a migration this package does not ship) is refused. The
+    ledger and the grant map are untouched: the extra version is simply recorded as applied."""
+    import psycopg
+
     dsn, _, _ = roles
-    files = mig._migration_files()
-    monkeypatch.setattr(mig, "_migration_files", lambda: files[:-1])
-    with pytest.raises(ConfigError, match="no file in this release"):
+    mig.migrate(dsn)
+    with psycopg.connect(dsn, autocommit=True) as db:
+        db.execute("INSERT INTO schema_migrations (version) VALUES ('0099_from_a_newer_release')")
+    with pytest.raises(ConfigError, match="no file in this release: 0099_from_a_newer_release"):
         mig.migrate(dsn)
 
 
@@ -413,7 +418,7 @@ def test_plan_hash_works_with_a_data_dependent_default_factory():
     from pydantic import Field
 
     class PlanV2(Plan):
-        _HASH_OMIT_IF_DEFAULT: ClassVar[frozenset[str]] = frozenset({"label"})
+        _HASH_OMIT_IF_DEFAULT: ClassVar[frozenset[str]] = Plan._HASH_OMIT_IF_DEFAULT | {"label"}
         label: str = Field(default_factory=lambda data: data["action_id"])
 
     stored = json.loads(FIXTURE.read_text(encoding="utf-8"))

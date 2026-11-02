@@ -12,6 +12,7 @@ import hashlib
 import hmac
 import json
 from collections.abc import Mapping
+from dataclasses import dataclass
 from urllib.parse import parse_qs
 
 from hadavin_sdk.models import ApprovalDecision
@@ -49,6 +50,52 @@ def verify(
     if not (sig.isascii() and sig.startswith("v0=")):
         return False
     return hmac.compare_digest(_sig(body, ts, secret), sig)
+
+
+@dataclass(frozen=True)
+class Action:
+    """A verified button click: who (``<channel>:<user id>``, taken from the signed request) and the button's value."""
+
+    user: str
+    value: str
+    nonce: str = ""  # timestamp:signature of the signed request; empty when built by hand (tests)
+    team: str = ""  # the workspace id in the signed payload ("" when it carries none)
+    action_ts: str = ""  # the click's own timestamp in the signed payload
+
+
+def parse_action(
+    headers: Mapping[str, str],
+    body: bytes,
+    now_ts: float,
+    secret: str,
+    *,
+    prefix: str,
+    channel: str,
+) -> Action | None:
+    """The first action of a signed interactive payload, whatever its value; None unless the signature verifies."""
+    if not verify(headers, body, now_ts, secret, prefix):
+        return None
+    try:
+        payload = json.loads(parse_qs(body.decode("utf-8"))["payload"][0])
+        value = payload["actions"][0]["value"]
+        user = f"{channel}:{payload['user']['id']}"
+        team = str((payload.get("team") or {}).get("id") or "")
+        action_ts = str(payload["actions"][0].get("action_ts") or "")
+    except (KeyError, IndexError, ValueError, TypeError):
+        return None
+    if not isinstance(value, str):
+        return None
+    ts_name, sig_name = _names(prefix)
+    h = {k.lower(): v for k, v in headers.items()}
+    # The verified request's own timestamp and signature identify this delivery: a captured copy replayed inside
+    # the signature window carries the same pair, a fresh click never does.
+    return Action(
+        user=user,
+        value=value,
+        nonce=f"{h.get(ts_name, '')}:{h.get(sig_name, '')}",
+        team=team,
+        action_ts=action_ts,
+    )
 
 
 def parse_button(
