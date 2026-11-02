@@ -96,11 +96,24 @@ def test_the_ordinary_cut_is_not_shortened_without_a_secret_in_it():
     assert len(out) > WINDOW - 300  # nothing but the cut itself was taken off
 
 
-def test_a_fragment_of_fewer_than_three_characters_is_left_alone():
-    out = tools_mod._strip_fragment(
-        "abcZk" + tools_mod.TRUNCATED, sorted(tools_mod._secret_forms(SECRET))
+def test_even_one_or_two_characters_of_a_secret_before_the_marker_are_removed():
+    forms = sorted(tools_mod._secret_forms(SECRET))
+    assert (
+        tools_mod._strip_fragment("abc Zk" + tools_mod.TRUNCATED, forms)
+        == "abc " + tools_mod.TRUNCATED
     )
-    assert out == "abcZk" + tools_mod.TRUNCATED
+    assert (
+        tools_mod._strip_fragment("abc Z" + tools_mod.TRUNCATED, forms)
+        == "abc " + tools_mod.TRUNCATED
+    )
+
+
+def test_a_trailing_stretch_that_starts_no_form_is_kept():
+    forms = sorted(tools_mod._secret_forms(SECRET))
+    assert (
+        tools_mod._strip_fragment("abc ok" + tools_mod.TRUNCATED, forms)
+        == "abc ok" + tools_mod.TRUNCATED
+    )
 
 
 def test_text_without_a_cut_is_never_touched():

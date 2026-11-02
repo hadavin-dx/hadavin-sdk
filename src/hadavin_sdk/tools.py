@@ -767,9 +767,16 @@ FRAGMENT_SCAN = (
     4096  # how far back from a cut `_strip_fragment` looks for the start of a partial secret
 )
 FRAGMENT_MIN = (
-    3  # a partial secret shorter than this is not worth stripping (and would match anything)
+    1  # even one character of a secret is removed: the cost is at most the last few characters
 )
 _PARTIAL_END = 10  # the longest incomplete escape a cut can leave (an HTML entity, a JSON u-escape, a percent triple)
+
+
+# The end of a text cut inside an escape: a spelling the decoder cannot read yet, so no form matches it and the
+# front of a character stays visible (`\u005`, `&#9`, `%C3`, half of a surrogate pair).
+_PARTIAL_ESCAPE = re.compile(
+    r"(?:&#(?:[xX][0-9a-fA-F]*|[0-9]*)|&[A-Za-z]*|\\u[dD][89abAB][0-9a-fA-F]{2}(?:\\u?[0-9a-fA-F]{0,3}|\\)?|\\u[0-9a-fA-F]{0,3}|\\|(?:%[89a-fA-F][0-9a-fA-F])+%?[0-9a-fA-F]?|%[0-9a-fA-F]?)$"
+)
 
 
 def _strip_fragment(text: str, forms: list[str]) -> str:
@@ -777,11 +784,15 @@ def _strip_fragment(text: str, forms: list[str]) -> str:
     front of it stays next to the `[truncated]` marker (a 32-character token minus one character is not
     masked). If `text` ends with the marker, remove the longest stretch before it that reads, once the encoding
     layers are undone (`_decoded`), as the start of a form of a handed-out secret (at least `FRAGMENT_MIN`
-    characters). A stretch ending inside an escape ("&#10") is tried with up to `_PARTIAL_END` characters
+    character). A stretch ending inside an escape ("&#10") is tried with up to `_PARTIAL_END` characters
     dropped. `forms` is sorted: `t` starts a form exactly when the form that sorts at or after `t` starts with it."""
     if not text.endswith(TRUNCATED):
         return text
     body = text[: -len(TRUNCATED)]
+    while m := _PARTIAL_ESCAPE.search(
+        body, max(len(body) - 40, 0)
+    ):  # an escape the cut left half written
+        body = body[: m.start()]
     starts = {f[0] for f in forms} | {
         "&",
         chr(92),
@@ -812,7 +823,7 @@ def _strip_fragment(text: str, forms: list[str]) -> str:
                 continue
             if starts_a_form(t):
                 return body[:i] + TRUNCATED
-    return text
+    return body + TRUNCATED
 
 
 def prepare_output(
