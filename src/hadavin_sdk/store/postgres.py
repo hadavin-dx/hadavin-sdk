@@ -36,12 +36,15 @@ from hadavin_sdk.models import (
     GateDecision,
     KillSwitch,
     Plan,
+    Reservation,
+    ReservationLimits,
     Run,
     RunState,
     TickState,
     now,
 )
-from hadavin_sdk.store.protocol import NotFound, StaleState, StoreUnavailable
+from hadavin_sdk.store import reservations as rsv
+from hadavin_sdk.store.protocol import NotFound, StaleState, StoreBusy, StoreUnavailable
 
 _LOG = logging.getLogger("hadavin_sdk.store")
 
@@ -438,6 +441,89 @@ class PostgresStore:
                 (agent_id, day.replace(day=1)),
             ).fetchone()
         return (Decimal(d["usd"]) if d else Decimal(0)), (Decimal(m["usd"]) if m else Decimal(0))
+
+    def reserve(
+        self,
+        res: Reservation,
+        limits: ReservationLimits,
+        since: datetime,
+        request: ApprovalRequest | None = None,
+    ) -> str | None:
+        rsv.validate(res, since)
+        rrow = {**_row(res), "subject": res.scopes[0]}
+        insert = sql.SQL("INSERT INTO reservations ({}) VALUES ({})").format(
+            sql.SQL(", ").join(sql.Identifier(c) for c in rrow),
+            sql.SQL(", ").join(sql.Placeholder() * len(rrow)),
+        )
+        try:
+            with self._lock, self._db.transaction():
+                # One writer per tenant at a time; a writer that cannot get in within the timeout is StoreBusy.
+                self._exec(
+                    "SELECT set_config('lock_timeout', %s, true)",
+                    (f"{limits.lock_timeout_s * 1000}ms",),
+                )
+                self._exec("SELECT pg_advisory_xact_lock(hashtextextended(%s, 0))", (res.tenant,))
+                found = self._exec(
+                    "SELECT scopes, actor, unit, amount FROM reservations WHERE tenant = %s AND key = %s",
+                    (res.tenant, res.key),
+                ).fetchone()
+                if found is not None:
+                    same = (
+                        sorted(found["scopes"]),
+                        found["actor"],
+                        found["unit"],
+                        found["amount"],
+                    ) == (sorted(res.scopes), res.actor, res.unit, res.amount)
+                    return None if same else rsv.KEY_CONFLICT
+                n_scope = self._exec(
+                    "SELECT COUNT(*) AS n FROM reservations WHERE tenant = %s AND created_at >= %s AND subject = ANY(%s)",
+                    (res.tenant, since, res.scopes),
+                ).fetchone()["n"]
+                n_actor = self._exec(
+                    "SELECT COUNT(*) AS n FROM reservations WHERE tenant = %s AND created_at >= %s AND actor = %s",
+                    (res.tenant, since, res.actor),
+                ).fetchone()["n"]
+                total = self._exec(
+                    "SELECT COALESCE(SUM(amount), 0) AS s FROM reservations WHERE tenant = %s AND created_at >= %s AND unit = %s",
+                    (res.tenant, since, res.unit),
+                ).fetchone()["s"]
+                code = rsv.decide(n_scope, n_actor, int(total), res, limits)
+                if code is not None:
+                    return code
+                self._exec(insert, list(rrow.values()))
+                if request is not None:
+                    qrow = _row(request)
+                    self._exec(
+                        sql.SQL("INSERT INTO approval_requests ({}) VALUES ({})").format(
+                            sql.SQL(", ").join(sql.Identifier(c) for c in qrow),
+                            sql.SQL(", ").join(sql.Placeholder() * len(qrow)),
+                        ),
+                        list(qrow.values()),
+                    )
+        except psycopg.errors.LockNotAvailable:
+            raise StoreBusy("store postgres: the reservation lock was not free in time") from None
+        return None
+
+    def release_reservation(self, tenant: str, key: str) -> int:
+        with self._lock:
+            return self._exec(
+                "DELETE FROM reservations WHERE tenant = %s AND key = %s", (tenant, key)
+            ).rowcount
+
+    def list_reservations(self, tenant: str, since: datetime) -> list[Reservation]:
+        return self._select(
+            Reservation,
+            "reservations",
+            "tenant = %s AND created_at >= %s",
+            (tenant, since),
+            " ORDER BY created_at, key",
+        )
+
+    def prune_reservations(self, older_than: datetime) -> int:
+        with self._lock:
+            return self._exec(
+                "DELETE FROM reservations WHERE created_at < %s", (older_than,)
+            ).rowcount
 
     def get_kill_switch(self) -> KillSwitch:
         found = self._select(KillSwitch, "kill_switch", "id = 1", ())

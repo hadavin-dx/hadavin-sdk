@@ -388,6 +388,8 @@ def test_migrate_refuses_when_an_applied_migration_has_no_file(roles, monkeypatc
     dsn, _, _ = roles
     files = mig._migration_files()
     monkeypatch.setattr(mig, "_migration_files", lambda: files[:-1])
+    # the newest migration (0005) creates `reservations`; without its file the GRANTS entry would be flagged first
+    monkeypatch.setattr(mig, "GRANTS", {k: v for k, v in mig.GRANTS.items() if k != "reservations"})
     with pytest.raises(ConfigError, match="no file in this release"):
         mig.migrate(dsn)
 

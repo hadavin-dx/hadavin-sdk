@@ -2,7 +2,7 @@
 
 import threading
 import time
-from datetime import date, timedelta
+from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 
 import pytest
@@ -14,12 +14,15 @@ from hadavin_sdk.models import (
     DeadLetter,
     GateDecision,
     KillSwitch,
+    Reservation,
+    ReservationLimits,
     Run,
     RunState,
     TickState,
     now,
 )
 from hadavin_sdk.store.protocol import NotFound, StaleState
+from hadavin_sdk.store.reservations import ReservationError
 
 S = RunState
 
@@ -242,3 +245,112 @@ def test_record_decision_is_atomic(store):
     assert store.get_approval_decision(req.approval_id).decision == "reject"
     with pytest.raises(StaleState):  # a second click on the same step
         store.record_decision(d, approved, "PENDING", 0)
+
+
+# ---------------------------------------------------------------- reservations (store-enforced limits)
+def _res(key, *, tenant="t", scopes=None, actor="a", unit="USD", amount=100, at=None):
+    return Reservation(
+        tenant=tenant, key=key, scopes=scopes if scopes is not None else [f"s-{key}"], actor=actor, unit=unit, amount=amount,
+        created_at=at or now(),
+    )  # fmt: skip
+
+
+LIM = ReservationLimits(max_per_scope=3, max_per_actor=3, unit_caps={"USD": 2500})
+WAY_BACK = datetime(2000, 1, 1, tzinfo=UTC)
+
+
+def test_reserve_caps_scope_actor_and_unit_total_from_the_stores_own_rows(store):
+    for i in range(3):  # one subject, three actors: the scope limit bites
+        assert store.reserve(_res(f"a{i}", scopes=["c1"], actor=f"x{i}"), LIM, WAY_BACK) is None
+    assert store.reserve(_res("a9", scopes=["c1"], actor="x9"), LIM, WAY_BACK) == "OPEN_LIMIT"
+    for i in range(3):  # one actor, three subjects: the actor limit bites
+        assert store.reserve(_res(f"d{i}", actor="same"), LIM, WAY_BACK) is None
+    assert store.reserve(_res("d9", actor="same"), LIM, WAY_BACK) == "OPEN_LIMIT"
+    flood = [
+        store.reserve(_res(f"f{i}", actor=f"f{i}", amount=100), LIM, WAY_BACK) for i in range(100)
+    ]
+    held = sum(r.amount for r in store.list_reservations("t", WAY_BACK))
+    assert held <= 2500 and flood.count(None) > 0 and "OPEN_LIMIT" in flood
+
+
+def test_reserve_is_idempotent_conflicting_and_typed(store):
+    assert store.reserve(_res("k"), LIM, WAY_BACK) is None
+    assert store.reserve(_res("k"), LIM, WAY_BACK) is None
+    assert store.reserve(_res("k", amount=999), LIM, WAY_BACK) == "KEY_CONFLICT"
+    assert [r.amount for r in store.list_reservations("t", WAY_BACK)] == [100]
+    assert store.reserve(_res("u", unit="EUR"), LIM, WAY_BACK) == "UNIT_UNKNOWN", (
+        "an unconfigured unit is not an OPEN_LIMIT"
+    )
+
+
+@pytest.mark.parametrize(
+    ("mutate", "code"),
+    [
+        (lambda: _res("k", amount=0), "BAD_AMOUNT"),
+        (lambda: _res("k", amount=-5), "BAD_AMOUNT"),
+        (lambda: _res("k", scopes=[]), "BAD_SCOPES"),
+        (lambda: _res("k", scopes=["a", "a"]), "BAD_SCOPES"),
+        (lambda: _res("k", actor=""), "BAD_ACTOR"),
+        (lambda: _res("\x00k"), "BAD_KEY"),
+        (lambda: _res("k", tenant="t" * 300), "BAD_TENANT"),
+        (lambda: _res("k", at=datetime(2026, 1, 1)), "NAIVE_TIME"),  # noqa: DTZ001 - the point
+    ],
+)
+def test_reserve_refuses_malformed_input_with_a_typed_error(store, mutate, code):
+    with pytest.raises(ReservationError) as e:
+        store.reserve(mutate(), LIM, WAY_BACK)
+    assert e.value.code == code and store.list_reservations("t", WAY_BACK) == []
+
+
+def test_reserve_since_after_created_is_refused(store):
+    with pytest.raises(ReservationError):
+        store.reserve(_res("k", at=WAY_BACK), LIM, now())
+
+
+def test_reserve_window_scoping_release_and_prune(store):
+    old = now() - timedelta(days=2)
+    assert store.reserve(_res("old", scopes=["c1"], actor="x", at=old), LIM, WAY_BACK) is None
+    cut = now() - timedelta(days=1)
+    for i in range(3):
+        assert store.reserve(_res(f"n{i}", scopes=["c1"], actor=f"y{i}"), LIM, cut) is None, (
+            "the 2-day-old hold does not count"
+        )
+    assert store.reserve(_res("n9", scopes=["c1"], actor="y9"), LIM, cut) == "OPEN_LIMIT"
+    assert store.reserve(_res("n9", scopes=["c1"], actor="y9", tenant="other"), LIM, cut) is None, (
+        "another tenant, same key"
+    )
+    assert store.reserve(_res("n0", scopes=["c1"], actor="y0", tenant="other"), LIM, cut) is None, (
+        "and same content, still its own row"
+    )
+    assert {r.key for r in store.list_reservations("other", WAY_BACK)} == {"n9", "n0"}
+    assert store.release_reservation("t", "n0") == 1 and store.release_reservation("t", "n0") == 0
+    assert store.release_reservation("zzz", "n1") == 0, "release is tenant scoped"
+    assert store.prune_reservations(cut) == 1, "only the 2-day-old row"
+    assert "old" not in {r.key for r in store.list_reservations("t", WAY_BACK)}
+
+
+def test_reserve_saves_the_approval_request_in_the_same_transaction_only_when_held(store):
+    req = _request(store)  # saved once by itself
+    other = req.model_copy(update={"approval_id": "apr-new"})
+    full = ReservationLimits(max_per_scope=1, max_per_actor=9, unit_caps={"USD": 99999})
+    assert store.reserve(_res("k1", scopes=["c1"]), full, WAY_BACK, request=other) is None
+    assert store.get_approval_request("apr-new").approval_id == "apr-new"
+    refused = req.model_copy(update={"approval_id": "apr-refused"})
+    assert store.reserve(_res("k2", scopes=["c1"]), full, WAY_BACK, request=refused) == "OPEN_LIMIT"
+    with pytest.raises(NotFound):
+        store.get_approval_request("apr-refused")
+
+
+def test_concurrent_reservations_cannot_both_slip_under_a_limit(store):
+    out, lim = [], ReservationLimits(max_per_scope=3, max_per_actor=99, unit_caps={"USD": 10**9})
+    ts = [
+        threading.Thread(
+            target=lambda i=i: out.append(
+                store.reserve(_res(f"c{i}", scopes=["one"], actor=f"z{i}"), lim, WAY_BACK)
+            )
+        )
+        for i in range(12)
+    ]
+    [t.start() for t in ts]
+    [t.join() for t in ts]
+    assert out.count(None) == 3 and out.count("OPEN_LIMIT") == 9
