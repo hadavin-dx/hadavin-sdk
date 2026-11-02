@@ -24,6 +24,7 @@ import ipaddress
 import json
 import re
 import ssl
+import string
 import sys
 import threading
 import time
@@ -40,11 +41,11 @@ from urllib.parse import quote, quote_plus, unquote, urlsplit, urlunsplit
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from hadavin_sdk import defaults
-from hadavin_sdk.config import ScrubSettings
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.guard import http as http_guard
 from hadavin_sdk.guard import runmap
 from hadavin_sdk.guard.egress import EgressRefused, egress_check
+from hadavin_sdk.scrub_settings import ScrubSettings
 
 DEFAULT_MAX_OUTPUT_BYTES = defaults.MAX_OUTPUT_BYTES  # the manifest field's default
 Binding = tuple[str, str]  # (METHOD, regex the URL path must fully match)
@@ -786,7 +787,7 @@ def _fit(text: str, scrub: ScrubSettings = _DEFAULT_SCRUB) -> str:
 _PARTIAL_ESCAPE = re.compile(
     r"(?:&#(?:[xX][0-9a-fA-F]*|[0-9]*)|&[A-Za-z]*|\\u[dD][89abAB][0-9a-fA-F]{2}(?:\\u?[0-9a-fA-F]{0,3}|\\)?|\\u[0-9a-fA-F]{0,3}|\\|(?:%[89a-fA-F][0-9a-fA-F])+%?[0-9a-fA-F]?|%[0-9a-fA-F]?)$"
 )
-_B64_CHARS = frozenset("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/_=-")
+_B64_CHARS = frozenset(string.ascii_letters + string.digits + "+/_=-")
 _HEXLIKE = re.compile(r"[0-9a-fA-F]{12,}")
 
 
