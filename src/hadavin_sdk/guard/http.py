@@ -35,9 +35,19 @@ _METADATA = frozenset(
     )
 )
 _BENCHMARK = ipaddress.ip_network("198.18.0.0/15")
+_THIS_NETWORK = ipaddress.ip_network(
+    "0.0.0.0/8"
+)  # "this host on this network": Linux connects it to the local host
+# 100.64.0.0/10 (carrier-grade NAT, where some clouds and VPNs put in-cluster services) is allowed on purpose,
+# like the other private ranges; the manifest host allowlist bounds what a tool may name.
 # NAT64 (the well-known prefix) is refused whole: an IPv6-only cluster behind DNS64/NAT64 cannot use the
 # in-process fetch and needs the egress proxy (K7) instead.
 _NAT64 = ipaddress.ip_network("64:ff9b::/96")
+_NAT64_LOCAL = ipaddress.ip_network(
+    "64:ff9b:1::/48"
+)  # the local-use NAT64 prefix (RFC 8215): refused whole as well
+MAX_STUCK_LOOKUPS = 8  # name lookups still running past their timeout before new ones are refused
+_STUCK = threading.BoundedSemaphore(MAX_STUCK_LOOKUPS)
 RESOLVE_TIMEOUT_S = (
     5.0  # a name lookup that takes longer is refused (getaddrinfo has no timeout of its own)
 )
@@ -46,7 +56,7 @@ RESOLVE_TIMEOUT_S = (
 def _refused(ip: ipaddress.IPv4Address | ipaddress.IPv6Address) -> bool:
     """Loopback, link-local, unspecified, multicast, reserved, a metadata address, or an IPv6 form that carries
     one (IPv4-mapped, 6to4, Teredo, NAT64)."""
-    if ip in _METADATA or (ip.version == 4 and ip in _BENCHMARK):
+    if ip in _METADATA or (ip.version == 4 and (ip in _BENCHMARK or ip in _THIS_NETWORK)):
         return True
     if ip.is_loopback or ip.is_link_local or ip.is_unspecified or ip.is_multicast or ip.is_reserved:
         return True
@@ -54,6 +64,8 @@ def _refused(ip: ipaddress.IPv4Address | ipaddress.IPv6Address) -> bool:
         embedded = [ip.ipv4_mapped, ip.sixtofour]
         if ip.teredo:
             embedded += list(ip.teredo)
+        if ip in _NAT64_LOCAL:
+            return True
         if ip in _NAT64:
             embedded.append(ipaddress.IPv4Address(int(ip) & 0xFFFFFFFF))
         return any(e is not None and _refused(e) for e in embedded)
@@ -61,13 +73,20 @@ def _refused(ip: ipaddress.IPv4Address | ipaddress.IPv6Address) -> bool:
 
 
 def _resolve(host: str, port: int):
+    """getaddrinfo with a timeout. getaddrinfo cannot be cancelled, so a lookup that times out leaves its thread
+    running until the resolver gives up: at most MAX_STUCK_LOOKUPS such threads exist, then lookups are refused
+    (a flood of hostile names that never answer cannot pile up threads)."""
     box: dict = {}
+    if not _STUCK.acquire(blocking=False):
+        raise OSError(f"{host}: too many name lookups are stuck")
 
     def lookup() -> None:
         try:
             box["answers"] = socket.getaddrinfo(host, port, type=socket.SOCK_STREAM)
         except BaseException as exc:  # noqa: BLE001 - handed to the caller
             box["error"] = exc
+        finally:
+            _STUCK.release()  # the thread is over, whether or not anybody still waits for it
 
     worker = threading.Thread(target=lookup, daemon=True, name="hadavin-resolve")
     worker.start()

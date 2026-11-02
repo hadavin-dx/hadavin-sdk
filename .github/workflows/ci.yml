@@ -79,15 +79,16 @@ jobs:
         run: ruff check src tests demos
       - name: Format
         run: ruff format --check src tests demos
+      - name: The postgres client the database tests shell out to is present (else they would skip silently)
+        run: psql --version
       - name: Tests (no live calls)
         env:
           HADAVIN_TEST_PG_DSN: postgresql://postgres@localhost:5432/postgres
           HADAVIN_TEST_VAULT_ADDR: http://127.0.0.1:8200
         run: pytest -q -m "not live and not perf" -rs
-      # Timing tests have their own step: a noisy shared runner must not block a merge, and the numbers
-      # (CPU seconds per pattern at 64 and 256 KiB) are in the log for the reviewer.
-      - name: Performance of the redaction patterns (reported, never blocks)
-        continue-on-error: true
+      # Timing tests have their own step and it blocks: the check is a ratio (4x text, limit 12x time) with wall
+      # clock, so a noisy runner moves both runs alike; a real super-linear pattern is a merge blocker.
+      - name: Performance of the redaction patterns (blocks)
         run: pytest -q -m perf -rs
 
   security:

@@ -41,7 +41,7 @@ from hadavin_sdk.models import (
     sha256_hex,
 )
 from hadavin_sdk.registry import Registry
-from hadavin_sdk.runtime.evidence import Validator, with_evidence
+from hadavin_sdk.runtime.evidence import Validator, identifier_inputs, with_evidence
 from hadavin_sdk.runtime.plan import build_plan
 from hadavin_sdk.runtime.runs import advance
 from hadavin_sdk.store.protocol import Store
@@ -204,6 +204,16 @@ class Runtime:
             raise ValueError(
                 "hooks.toolbox needs hooks.validate_proposal: tools without a cited, grounded proposal"
             )
+        if self.hooks.validate_proposal is None:
+            # Grounding is opt-in in Hooks, so a bare Hooks() must not quietly drop it: an agent that can propose an
+            # action with an identifier input (a resource name, an id) needs the check, tooled or not.
+            for agent_id in agents:
+                for action in registry.agents[agent_id].scope_allowed:
+                    if identifier_inputs(registry.contracts[action]):
+                        raise ValueError(
+                            f"agent {agent_id}: action {action} has identifier inputs but hooks.validate_proposal "
+                            "is not set: its proposals would not be cited or grounded"
+                        )
 
     # --- audit helpers ---------------------------------------------------------------------------
     def _event(self, run: Run, domain: str, operation: str, **kw: Any) -> AuditEvent:

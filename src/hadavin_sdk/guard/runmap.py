@@ -228,7 +228,13 @@ def redact_text(
     caller's `neutralise` (untrusted text: escape result markers and placeholder look-alikes) runs on the input
     and on every view BEFORE it is redacted, so the returned text is never a decoded view that was not
     neutralised: a `\\u003c<IPV4_2>` cannot come back as a real placeholder. Output is cleaned of NUL and lone
-    surrogates last, so it always encodes."""
+    surrogates last, so it always encodes.
+
+    The one choke point for input size: a text longer than `defaults.MAX_REDACT_CHARS` is refused (RedactionError),
+    never redacted, so no caller (document, tool result, model-written argument, eval case, a future log or
+    transcript path) can drive the redactor to seconds per call."""
+    if len(text) > defaults.MAX_REDACT_CHARS:
+        raise RedactionError("InputTooLarge")
     try:
         text = _clean(text)
         if neutralise is not None:
@@ -253,16 +259,33 @@ def redact_text(
 
 
 def redact_value(value: Any, mapping: dict[str, str]) -> Any:
-    """`redact_text` over every string (and dict key) inside a JSON-shaped value."""
+    """`redact_text` over every string (and dict key) inside a JSON-shaped value. The total text is capped too (a
+    value of many small strings is as costly as one big one)."""
+    if _chars(value) > defaults.MAX_REDACT_CHARS:
+        raise RedactionError("InputTooLarge")
+    return _redact_value(value, mapping)
+
+
+def _chars(value: Any) -> int:
+    if isinstance(value, str):
+        return len(value)
+    if isinstance(value, dict):
+        return sum(_chars(k) + _chars(v) for k, v in value.items())
+    if isinstance(value, list):
+        return sum(_chars(v) for v in value)
+    return 0
+
+
+def _redact_value(value: Any, mapping: dict[str, str]) -> Any:
     if isinstance(value, str):
         return redact_text(value, mapping)
     if isinstance(value, dict):
         return {
-            (redact_text(k, mapping) if isinstance(k, str) else k): redact_value(v, mapping)
+            (redact_text(k, mapping) if isinstance(k, str) else k): _redact_value(v, mapping)
             for k, v in value.items()
         }
     if isinstance(value, list):
-        return [redact_value(v, mapping) for v in value]
+        return [_redact_value(v, mapping) for v in value]
     return value
 
 

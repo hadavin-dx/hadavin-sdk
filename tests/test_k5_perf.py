@@ -1,13 +1,15 @@
 """Redaction cost (R370-style numbers, K5-core). The sweep over every pattern is marked `perf`: CI runs it in its own
-step that never blocks a merge (a shared runner is noisy), and the harness itself is tested with a deliberately
-quadratic pattern so a pass means something.
+blocking step, and the harness itself is tested with a deliberately quadratic pattern so a pass means something.
 
-What is measured: CPU seconds (process time), the median of three runs, on 64 KiB and 256 KiB of one pattern's own
-keyword repeated. A linear pattern takes about 4x as long on 4x the text; a quadratic one 16x; the limit is 12x, with
-a floor that keeps the 15.6 ms Windows clock tick from deciding anything."""
+What is measured: wall seconds (perf_counter: process_time ticks at 15.6 ms on Windows and read 0 for the small run,
+which made a linear pattern look like a jump), the median of three runs, on 64 KiB and 256 KiB of one pattern's own
+keyword repeated. A linear pattern takes about 4x as long on 4x the text; a quadratic one 16x; the limit is 12x of
+the small run (never less than 4 ms), with an absolute floor of 60 ms on the big run. The BANKCODE transit pattern
+measured alone: 16 KiB 3 ms, 64 KiB 19 ms, 256 KiB 75 ms, 1 MiB 333 ms: linear (4x per 4x), about 0.3 us per char."""
 
 from __future__ import annotations
 
+import importlib
 import re
 import statistics
 import sys
@@ -16,27 +18,29 @@ import time
 import pytest
 
 SMALL, BIG = 64 * 1024, 256 * 1024
-RATIO, FLOOR_S = 12.0, 0.06
+RATIO, FLOOR_S, MIN_SMALL_S = 12.0, 0.06, 0.004
 
 
 def _redact_module():
+    # the package re-exports a function named `redact`, so `import ... as` would give the function, not the module
+    importlib.import_module("hadavin_sdk.guard.redact")
     return sys.modules["hadavin_sdk.guard.redact"]
 
 
 def _cpu(pattern: re.Pattern[str], text: str) -> float:
     runs = []
     for _ in range(3):
-        t0 = time.process_time()
+        t0 = time.perf_counter()
         for _match in pattern.finditer(text):
             pass
-        runs.append(time.process_time() - t0)
+        runs.append(time.perf_counter() - t0)
     return statistics.median(runs)
 
 
 def is_superlinear(pattern: re.Pattern[str], unit: str, small: int = SMALL, big: int = BIG) -> bool:
     texts = [(unit * (n // len(unit) + 1))[:n] for n in (small, big)]
     t_small, t_big = (_cpu(pattern, t) for t in texts)
-    return t_big > max(FLOOR_S, RATIO * t_small)
+    return t_big > max(FLOOR_S, RATIO * max(t_small, MIN_SMALL_S))
 
 
 def _keywords(source: str) -> list[str]:

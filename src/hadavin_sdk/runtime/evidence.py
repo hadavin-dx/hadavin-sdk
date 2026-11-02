@@ -40,8 +40,7 @@ _BEFORE = (
 # What may follow a NAME: a WHOLE token ends at `:` or `/` (a port, a path), a space or punctuation; not at a
 # word character, `-`, `.`+word or `@`. `payments` is not found in `payments-canary`, `prod` not in `prod-db`: the
 # front of a longer name counts only when the tool's manifest declares its generated suffix (`generated_suffix`).
-_AFTER_NAME = r"(?![\w\-@])(?!\.\w)"
-_AFTER = r"(?![\w\-@])(?!\.\w)"  # a full stop that ends a sentence is fine
+_AFTER = r"(?![\w\-@])(?!\.\w)"  # a full stop that ends a sentence is fine; one rule for names and numbers
 
 
 @dataclass(frozen=True)
@@ -62,7 +61,6 @@ def normalise(text: str) -> str:
 # process-wide cache, and a client's identifier must not outlive its run in memory shared with other clients (R371).
 # The patterns below are static; the value is found with `str.find` and the context is checked around the hit.
 _BEFORE_RE = re.compile(_BEFORE + r"\Z")
-_AFTER_NAME_RE = re.compile(_AFTER_NAME)
 _AFTER_RE = re.compile(_AFTER)
 _NUM_TOKEN = re.compile(r"(?:(?:v|rev|revision|#)\s?)?(\d+)")
 _LOOKBEHIND = (
@@ -103,13 +101,9 @@ def contains(text: str, value: str, *, casefold: bool = False, suffix: str | Non
     while i != -1:
         j = i + len(want)
         if _before_ok(hay, i):
-            if _AFTER_NAME_RE.match(hay, j):
+            if _AFTER_RE.match(hay, j):
                 return True
-            if (
-                tail is not None
-                and (t := tail.match(hay, j))
-                and _AFTER_NAME_RE.match(hay, t.end())
-            ):
+            if tail is not None and (t := tail.match(hay, j)) and _AFTER_RE.match(hay, t.end()):
                 return True
         i = hay.find(want, i + 1)
     return False

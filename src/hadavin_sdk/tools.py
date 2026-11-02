@@ -33,7 +33,7 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal
-from urllib.parse import quote, quote_plus, unquote, urlsplit
+from urllib.parse import quote, quote_plus, unquote, urlsplit, urlunsplit
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
@@ -575,6 +575,11 @@ class ToolContext:
         if self._on_fetch is not None:
             self._on_fetch()  # every request to the client's system counts toward the box's rate cap
         cap = min(max_bytes or spec.max_output_bytes, self._fetch_ceiling)
+        # The request carries the host the checks read (lower case, no trailing dot), never the spelling that was
+        # sent in: the Host header, SNI and the certificate name are the checked name.
+        shown = f"[{host}]" if ":" in host else host
+        netloc = shown + (f":{parts.port}" if parts.port is not None else "")
+        url = urlunsplit((parts.scheme, netloc, parts.path, parts.query, ""))
         req = urllib.request.Request(  # noqa: S310 - scheme and host checked above
             url, data=body, headers=headers or {}, method=method.upper()
         )
@@ -747,7 +752,7 @@ def prepare_output(
     layers), escape the result markers and placeholder look-alikes, redact with the run's map, then truncate to
     `max_bytes`."""
     raw = _cut(_sanitise(raw), raw_cap)
-    raw = _cut(raw, max(2 * max_bytes, MIN_REDACTION_WINDOW))
+    raw = _cut(raw, min(max(2 * max_bytes, MIN_REDACTION_WINDOW), defaults.MAX_REDACT_CHARS))
     long_enough = [x for x in secrets or [] if len(x) >= MIN_SCRUBBED_SECRET]
     if long_enough:
         raw = _derived(raw, long_enough)

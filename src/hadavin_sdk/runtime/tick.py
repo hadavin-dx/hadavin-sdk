@@ -274,7 +274,7 @@ def _safe_log(msg: str, *args: object) -> None:
     """Log an error line; a failing log handler must never change the exit code."""
     try:
         _LOG.error(msg, *args)
-    except Exception:  # noqa: BLE001, S110 - nothing left to report to
+    except Exception:  # noqa: BLE001, S110 - safe to swallow: this IS the error report, so there is nowhere left to report to; the caller still returns its exit code
         pass
 
 
