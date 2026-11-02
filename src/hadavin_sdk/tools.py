@@ -769,7 +769,7 @@ FRAGMENT_SCAN = (
 FRAGMENT_MIN = (
     1  # even one character of a secret is removed: the cost is at most the last few characters
 )
-_PARTIAL_END = 10  # the longest incomplete escape a cut can leave (an HTML entity, a JSON u-escape, a percent triple)
+_PARTIAL_END = 10  # the longest half-written escape a cut can leave; added to the look-back
 
 
 # The end of a text cut inside an escape: a spelling the decoder cannot read yet, so no form matches it and the
@@ -784,8 +784,9 @@ def _strip_fragment(text: str, forms: list[str]) -> str:
     front of it stays next to the `[truncated]` marker (a 32-character token minus one character is not
     masked). If `text` ends with the marker, remove the longest stretch before it that reads, once the encoding
     layers are undone (`_decoded`), as the start of a form of a handed-out secret (at least `FRAGMENT_MIN`
-    character). A stretch ending inside an escape ("&#10") is tried with up to `_PARTIAL_END` characters
-    dropped. `forms` is sorted: `t` starts a form exactly when the form that sorts at or after `t` starts with it."""
+    character). First a half-written escape at the very end (`_PARTIAL_ESCAPE`: the decoder cannot read it, so no
+    form matches it) is removed. `forms` is sorted: `t` starts a form exactly when the form that sorts at or after
+    `t` starts with it."""
     if not text.endswith(TRUNCATED):
         return text
     body = text[: -len(TRUNCATED)]
@@ -808,21 +809,15 @@ def _strip_fragment(text: str, forms: list[str]) -> str:
 
     # a fragment is shorter than its form and an escape spells one character in at most six: look back that far
     reach = min(FRAGMENT_SCAN, 6 * max(len(f) for f in forms) + _PARTIAL_END)
-    escapes = {"&", chr(92), "%"}
-    # a cut before an incomplete escape ("&#10") leaves it at the end: also try the text without it
-    ends = [n] + [j for j in range(max(n - _PARTIAL_END + 1, 0), n) if body[j] in escapes]
     for i in range(max(n - reach, 0), n - FRAGMENT_MIN + 1):
         if body[i] not in starts:
             continue
-        for j in ends:
-            if j - i < FRAGMENT_MIN:
-                continue
-            try:
-                t = _decoded(body[i:j])
-            except runmap.InputTooLarge:
-                continue
-            if starts_a_form(t):
-                return body[:i] + TRUNCATED
+        try:
+            t = _decoded(body[i:])
+        except runmap.InputTooLarge:
+            continue
+        if starts_a_form(t):
+            return body[:i] + TRUNCATED
     return body + TRUNCATED
 
 

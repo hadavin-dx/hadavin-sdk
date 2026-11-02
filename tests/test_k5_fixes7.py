@@ -27,8 +27,9 @@ CUT_AT = (
 BS = chr(92)
 S_ASCII = "Zk3#" + "9qWd"  # fakes, built from parts
 S_ASTRAL = (
-    "Vh5" + "\U0001f600" + "Tn2" + "é"
-)  # an astral character (a surrogate pair) and an accented one
+    chr(0x1F600) + "Vh5" + chr(0xE9) + "Tn2"
+)  # starts with an astral character (a surrogate pair)
+S_ACCENT = chr(0xE9) + "Tn2Kq8x"  # starts with a two-byte UTF-8 character (%C3%A9)
 
 
 def _plain(s: str) -> str:
@@ -85,7 +86,7 @@ def _longest_prefix_in(tail: str, spelled: str) -> int:
 
 
 def _cases():
-    for secret_name, secret in (("ascii", S_ASCII), ("astral", S_ASTRAL)):
+    for secret_name, secret in (("ascii", S_ASCII), ("astral", S_ASTRAL), ("accent", S_ACCENT)):
         for shape, spell in SHAPES.items():
             n = len(spell(secret))
             for off in range(1, n):
@@ -106,7 +107,7 @@ def test_a_cut_at_every_offset_inside_the_spelling_leaves_no_prefix_of_it(secret
 
 
 def test_a_cut_inside_a_surrogate_pair_does_not_leave_the_first_half():
-    secret = "Qa7" + "\U0001f600" + "Lm4"
+    secret = chr(0x1F600) + "Lm4Qa7"
     spelled = _json(secret)
     pair_at = spelled.index(BS + "ud83d")
     for off in range(pair_at, pair_at + 12):  # through both halves
