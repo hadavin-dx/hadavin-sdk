@@ -3,7 +3,7 @@
 -- runtime role (SELECT, INSERT); a demotion is cleared by a later `clear` row, never by a DELETE. They are NOT
 -- tamper-evident: there is no hash chain. The triggers below refuse UPDATE, DELETE and TRUNCATE to every role, the
 -- table owner included, but a superuser or the owner can drop a trigger; the control for that is the audit cross-check
--- (each label is audited after commit as a `label` entry with object_ref = label_id; the audit is hash-chained).
+-- (each label is audited after commit as a `label` entry with object_ref = label_id; the audit is hash-chained; the comparison is manual, no tool ships yet, and a failed audit write or a crash after the commit leaves a label without an entry).
 
 CREATE TABLE labels (
     seq          BIGSERIAL UNIQUE,   -- insertion order: "latest" means the highest seq, never created_at
@@ -113,6 +113,9 @@ GROUP BY r.week;
 
 CREATE OR REPLACE FUNCTION hadavin_try_jsonb(t TEXT) RETURNS jsonb LANGUAGE plpgsql IMMUTABLE AS
 $f$ BEGIN RETURN t::jsonb; EXCEPTION WHEN others THEN RETURN NULL; END $f$;
+
+-- EXECUTE stays with PUBLIC on purpose: the runtime and portal roles read this view and Postgres checks the function
+-- for the reader here (revoking it was tried: 'permission denied for function'). It is a pure cast, it reads nothing.
 
 -- audit_entries.body is TEXT: a row whose body is not a JSON object must not break the portal view, so it is read
 -- through a guard (a non-JSON body, or JSON that is not an object, is skipped).

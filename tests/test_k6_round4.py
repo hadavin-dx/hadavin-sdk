@@ -56,18 +56,34 @@ def test_k6_a_signed_click_with_a_loose_seq_is_200_malformed_never_503(w, seq):
     assert status == 200
 
 
-def test_k6_a_client_side_value_error_is_a_4xx_and_the_claim_stays_spent(w):
+def test_k6_a_bad_request_is_a_4xx_and_the_claim_stays_spent(w):
     """A request that cannot be acted on must not be retryable for the whole signature window."""
     rid = w.run()
 
     def boom(*a, **k):
-        raise ValueError("bad value")
+        raise measure.BadRequest("seq")
 
     w.measure.record_label = boom
     body = f"label|{rid}|agree"
     assert w.click("u1", body)[0] == 400
     assert w.click("u1", body)[0] == 200  # the same signed request: replay, refused, not re-run
     assert w.store.list_labels(rid) == []
+
+
+@pytest.mark.parametrize("exc", [ValueError("decode"), OverflowError("x"), UnicodeError("u")])
+def test_k6_a_store_or_decode_value_error_is_a_503_and_gives_the_claim_back(w, exc):
+    """ValueError subclasses (pydantic validation, unicode, json) from the store are server faults: 503, claim back."""
+    rid = w.run()
+
+    def boom(*a, **k):
+        raise exc
+
+    real = w.measure.record_label
+    w.measure.record_label = boom
+    assert w.click("u1", f"label|{rid}|agree")[0] == 503
+    w.measure.record_label = real
+    assert w.click("u1", f"label|{rid}|agree")[0] == 200
+    assert len(w.store.list_labels(rid)) == 1
 
 
 def test_k6_a_server_side_error_still_releases_the_claim(w):
@@ -153,6 +169,23 @@ def test_k6_report_false_abstain_uses_the_answerable_denominator_and_states_cove
     assert "Miss rate" not in text
 
 
+def test_k6_low_abstention_label_coverage_is_flagged(w):
+    for name in ("abstain_ok", None, None, None):
+        rid = w.run(plan=False, state=S.NEEDS_PERSON, reason="tool_error", created=day(7))
+        if name:
+            assert w.label(rid, name, when=day(7)).ok
+    text = w.measure.render_report(WEEK, NOW)
+    assert "FLAG: abstention label coverage 25%" in text
+    assert "Correct abstentions (labelled abstain_ok" in text
+
+
+def test_k6_full_abstention_label_coverage_is_not_flagged(w):
+    for name in ("abstain_ok", "missed"):
+        rid = w.run(plan=False, state=S.NEEDS_PERSON, reason="tool_error", created=day(7))
+        assert w.label(rid, name, when=day(7)).ok
+    assert "FLAG: abstention label coverage" not in w.measure.render_report(WEEK, NOW)
+
+
 def test_k6_report_false_abstain_with_nothing_answerable_says_so(w):
     text = w.measure.render_report(WEEK, NOW)
     assert "False-abstain rate" in text and "n/a (nothing labelled)" in text
@@ -227,7 +260,7 @@ def test_k6_migration_number_documented():
     """The changelog names the measure migration; a rename at rebase must update both."""
     names = [p.name for p in MIGRATIONS.glob("*_measure.sql")]
     assert len(names) == 1
-    changelog = (Path(measure.__file__).parents[2] / "CHANGELOG.md").read_text(encoding="utf-8")
+    changelog = (Path(__file__).resolve().parents[1] / "CHANGELOG.md").read_text(encoding="utf-8")
     assert f"`{names[0]}`" in changelog
     assert check_ledger(sorted(MIGRATIONS.glob("*.sql"))) == []
 

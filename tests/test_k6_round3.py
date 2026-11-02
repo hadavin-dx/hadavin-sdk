@@ -292,7 +292,7 @@ def test_r3_a_utf8_bom_csv_imports_and_has_the_same_id(tmp_path):
     w = World(tmp_path)
     rid = w.run()
     text = f"run_id,label\n{rid},agree\n"
-    assert w.measure.import_csv("﻿" + text, "fake:u1") == (1, [])
+    assert w.measure.import_csv("\ufeff" + text, "fake:u1") == (1, [])
     assert w.store.list_csv_import(
         measure.csv_import_id(text)
     )  # the id is of the file without the mark

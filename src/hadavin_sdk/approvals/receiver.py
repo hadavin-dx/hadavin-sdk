@@ -28,8 +28,9 @@ def handle_slack_action(
 ) -> tuple[int, bytes]:
     """401 for a bad or stale signature, 413 for an oversize body, else 200 (the outcome is audited and the
     Slack message updated; a refused click is not an HTTP error). With ``measure`` (K6), a label or clear click is
-    routed to it by the first field of its value: 200 when recorded or refused by policy, 503 when the store
-    could not take it (Slack then tells the person)."""
+    routed to it by the first field of its value: 200 when recorded or refused by policy, 400 when the request
+    itself is bad (``BadRequest``: the nonce stays spent), 503 when the store could not take it or anything else
+    failed (the nonce is given back; Slack then tells the person)."""
     if len(body) > MAX_BODY:
         return 413, b""
     measure = (

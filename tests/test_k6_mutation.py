@@ -83,13 +83,21 @@ MUTATIONS = [
         False,
     ),
     (
+        "any-value-error-is-a-client-fault",
+        "measure.py",
+        "        except BadRequest:",
+        "        except (BadRequest, ValueError, OverflowError):",
+        [
+            "tests/test_k6_round4.py::test_k6_a_store_or_decode_value_error_is_a_503_and_gives_the_claim_back"
+        ],
+        False,
+    ),
+    (
         "value-error-releases-claim",
         "measure.py",
-        "        except (ValueError, OverflowError):",
+        "        except BadRequest:",
         "        except ZeroDivisionError:",
-        [
-            "tests/test_k6_round4.py::test_k6_a_client_side_value_error_is_a_4xx_and_the_claim_stays_spent"
-        ],
+        ["tests/test_k6_round4.py::test_k6_a_bad_request_is_a_4xx_and_the_claim_stays_spent"],
         False,
     ),
     (

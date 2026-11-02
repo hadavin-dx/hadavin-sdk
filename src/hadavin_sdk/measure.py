@@ -82,6 +82,12 @@ WRONGS_KIND = (
 _ALIASES = {
     "should_have_answered": "missed"
 }  # the abstain button's value before K6 built its parser
+
+
+class BadRequest(Exception):
+    """The click itself cannot be acted on (client fault). Nothing else maps to a 4xx."""
+
+
 # Whole numbers that arrive as text (a button's seq, a baseline.yaml number): ASCII digits only, so one number has
 # one spelling (Python's own digit test also accepts Arabic-Indic digits and superscripts), and short enough for int().
 _DIGITS = re.compile(r"[0-9]{1,18}")
@@ -1048,9 +1054,10 @@ class Measure:
                 return 200, "replay"
         try:
             status, reason = self._dispatch(action.user, parsed)
-        except (ValueError, OverflowError):
-            # The request itself cannot be acted on (client side): the claim stays spent, so the same signed
-            # request cannot be re-sent; a 4xx, not a 503 that invites a retry.
+        except BadRequest:
+            # Only a fault of the request itself (a number that does not parse): the claim stays spent, so the same
+            # signed request cannot be re-sent; a 4xx, not a 503 that invites a retry. A store, decode or validation
+            # fault (also ValueError subclasses) is NOT this: it falls through to 503 and gives the claim back.
             _LOG.warning("click refused: not a valid request")
             self._audit("-", parsed.kind, action.user, result="refused", error_code="malformed")
             return 400, "malformed"
@@ -1080,7 +1087,13 @@ class Measure:
         if parsed.kind == "approve_import":
             return self.approve_import(user, parsed.args[0])
         agent_id, action_id, seq = parsed.args
-        return self.clear(user, agent_id, action_id, int(seq))
+        try:
+            number = int(
+                seq
+            )  # `parse_action_value` allows [0-9]{1,18} only; this is the one place it is read
+        except ValueError:
+            raise BadRequest("seq") from None
+        return self.clear(user, agent_id, action_id, number)
 
     def purge_seen(self, at: datetime | None = None) -> int:
         """Delete click nonces older than twice the signature window: they can never be replayed (the signature
@@ -1155,9 +1168,13 @@ class Measure:
         return 200, f"approved:{len(items)}"
 
     def _would_overwrite(self, run_id: str, label: str) -> bool:
-        """Would storing this csv row make it the run's latest label over a different eligible one? "Latest by seq"
-        would let an older csv verdict silently replace a newer chat verdict (only harmful is sticky), so such a row
-        is refused: the labeller re-labels in chat if the csv verdict is the right one."""
+        """NOT atomic with the insert: the check runs before the store transaction and its per-run lock, so a chat
+                label that lands between the check and the insert can still be replaced by "latest by seq" (a harmful verdict
+                is the exception: that check is inside the lock). Making it atomic needs a `Store.add_labels` parameter
+                every custom store kind must implement; until then the window is one csv approval against one live click.
+        Would storing this csv row make it the run's latest label over a different eligible one? "Latest by seq"
+                would let an older csv verdict silently replace a newer chat verdict (only harmful is sticky), so such a row
+                is refused: the labeller re-labels in chat if the csv verdict is the right one."""
         cur = latest_labels(self.store.list_labels(run_id)).get(run_id)
         return cur is not None and cur.label != label
 
@@ -1667,7 +1684,7 @@ class Measure:
                 f"labelled should-have-answered {pw.missed}; n = {answerable}]."
             ),
             (
-                f"- Correct abstentions (traps the agent rightly refused): {pw.abstain_ok} of {labelled_abst} "
+                f"- Correct abstentions (labelled abstain_ok: the agent rightly held back): {pw.abstain_ok} of {labelled_abst} "
                 f"labelled abstentions; abstention label coverage {labelled_abst} of {pw.abstained} "
                 "abstained runs (an unlabelled abstention is not counted either way)."
             ),
@@ -1675,6 +1692,11 @@ class Measure:
         if pw.proposals and labelled / pw.proposals < self.th.min_coverage:
             out.append(
                 f"- FLAG: label coverage {labelled / pw.proposals:.0%} is below {self.th.min_coverage:.0%}."
+            )
+        if pw.abstained and labelled_abst / pw.abstained < self.th.min_coverage:
+            out.append(
+                f"- FLAG: abstention label coverage {labelled_abst / pw.abstained:.0%} is below "
+                f"{self.th.min_coverage:.0%}: the false-abstain rate above rests on few labels and may be too low."
             )
         if pw.wrong - prev.wrong >= self.policy.wrong_rise_flag_min:
             out.append(f"- FLAG: wrong labels rose from {prev.wrong} to {pw.wrong}.")

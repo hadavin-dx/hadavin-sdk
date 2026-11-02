@@ -10,16 +10,19 @@
   - **Migration number (rebase step, not done yet on purpose).** #49 takes `0005_reservations`, #42 `0006_evidence`
     and this PR `0007_measure`. `migrate` refuses a gap, so this branch keeps `0005_measure.sql` until the other two
     are merged. When rebasing onto them run `git mv src/hadavin_sdk/store/migrations/0005_measure.sql
-    src/hadavin_sdk/store/migrations/0007_measure.sql` (the name inside `tests/test_p2_postgres.py` is looked up by
-    the `*_measure.sql` glob, so nothing else changes) and update the file name in this paragraph;
+    src/hadavin_sdk/store/migrations/0007_measure.sql` (`tests/test_p2_postgres.py` derives its expected applied list from the
+    folder, so it needs no edit; check `tests/test_k2_migrations.py` and the grant map in `store/migrate.py`, which the other branches also touch) and update the file name in this paragraph;
     `check_ledger` fails the suite on a duplicate or a gap, and
     `test_k6_migration_number_documented` fails when this paragraph names a file that is not on disk.
     Renumbering is safe only before any database applied `0005_measure`: no pilot database has (owner to confirm in
     writing before the rename; a database that did would need its `schema_migrations` row renamed by hand).
-  - **What "append-only" means here.** `labels`, `level_events` and `reports` are append-only **for the runtime
+  - **What "append-only" means here.** (The csv-import refusal `newer_label_exists` is checked just before the insert, not inside the store transaction: a chat label landing in that gap can still be replaced; only harmful is atomic.) `labels`, `level_events` and `reports` are append-only **for the runtime
     role** (SELECT, INSERT grants) and an UPDATE/DELETE/TRUNCATE-refusing trigger. They are **not tamper-evident**
-    (no hash chain; the table owner or a superuser can drop the trigger). The cross-check is the hash-chained audit:
-    each label is audited after it commits (`label`, `object_ref = label_id`; through the audit outbox if the sink is down), so a label row with no audit entry, or an audit entry with no row, is a discrepancy to investigate. Numbers drawn from these tables are
+    (no hash chain; the table owner or a superuser can drop the trigger). A cross-check against the hash-chained
+    audit is possible but **manual; no tool ships yet**: each label is audited after it commits (`label`,
+    `object_ref = label_id`). `_audit` never raises (a failed write is only logged), and a crash between the commit and
+    the audit leaves a label with no audit entry, so a missing entry is a discrepancy to investigate, not proof of
+    tampering. Numbers drawn from these tables are
     counts of recorded labels, not tamper-evident evidence.
   - **Bounds.** `ceiling.window_days` 1..3650 and `ceiling.max` 0..1,000,000 (same as the policy fields); whole
     numbers in a button value or in `baseline.yaml` are ASCII digits only (`[0-9]{1,18}`).
