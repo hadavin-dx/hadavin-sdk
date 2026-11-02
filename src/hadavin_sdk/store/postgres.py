@@ -232,8 +232,19 @@ class _FairSlots:
                 return True
             ev = threading.Event()
             self._q.append(ev)
-        if ev.wait(timeout):
-            return True  # release() handed the slot over
+        try:
+            if ev.wait(timeout):
+                return True  # release() handed the slot over
+        except (
+            BaseException
+        ):  # an interrupt or cancellation during the wait: leave no dead event in the queue
+            with self._lock:
+                handed = ev.is_set()
+                if not handed:
+                    self._q.remove(ev)
+            if handed:  # the slot was already handed to this waiter: pass it on, or the permit is lost for good
+                self.release()
+            raise
         with self._lock:
             if ev.is_set():  # handed over just as the wait ended: take it
                 return True
@@ -256,12 +267,14 @@ class PostgresStore:
     # Spend reservations wait on row locks, so they use a connection of their own (``connector``) and never hold
     # the process lock while waiting; without a connector (a test wrapping one connection) they share ``conn``.
     # Spend work uses POOL_SIZE connections per process (settings ``spend_pool_size``), FIFO. A caller waits at most
-    # POOL_WAIT_S (settings ``spend_pool_wait_s``) for one, then fails closed with StoreUnavailable. MEASURED CEILING
-    # (postgres:17 in docker on a Windows laptop, one hot agent, 8 connections): about 100 to 125 reservations per second
-    # per hot agent key, because every reservation takes the same row locks and commits one after another; a bigger pool
-    # does not raise that (the extra connections only wait on the row lock), spreading load over several agent keys does.
-    # So a burst of B simultaneous callers on ONE hot key needs B / rate seconds: B above about 100 x POOL_WAIT_S fails
-    # closed for the tail (the cap is never exceeded). See tests/test_pr48_pool.py and CHANGELOG.
+    # POOL_WAIT_S (settings ``spend_pool_wait_s``) for one, then fails closed with StoreUnavailable (the cap is never
+    # exceeded). CEILING, machine dependent: every reservation on ONE hot agent key takes the same row locks and commits
+    # one after another, so that key serves about 1 / (commits per reservation x commit latency) reservations per
+    # second, whatever the pool size (extra connections only wait on the row lock); several agent keys run in parallel.
+    # Two measured data points, not a promise: about 100 to 125 per second (postgres:17 in docker, Windows laptop,
+    # loopback, fast commits) and about 3 per second (the same code with ~42 ms commits). Measure YOUR database with
+    # pgbench (a custom script updating one row per transaction) and size ``spend_pool_wait_s`` against the burst
+    # you expect: a burst of B simultaneous callers on one key needs about B / rate seconds. See tests/test_pr48_pool.py.
     LOCK_TIMEOUT_MS = 5000
     RESERVE_ATTEMPTS = 3
     POOL_SIZE = 8

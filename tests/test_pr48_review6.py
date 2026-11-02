@@ -486,3 +486,52 @@ def test_m3_an_attribute_that_raises_keeps_the_reservation_and_never_raises():
             raise RuntimeError("boom")
 
     assert cost_to_settle(HostilePrice("x"), D("0.5")) == D("0.5")
+
+
+def test_minor1_a_primary_that_answered_and_was_billed_is_not_dropped_by_a_fallback(clock):  # noqa: F811
+    # attempts 1, answered 1, refused 0: nothing UNKNOWN, but the primary billed. A successful fallback must still
+    # carry one unknown-request mark so the meter books a reservation on top of the fallback's cost.
+    def billed_primary():
+        return FreshRaises(
+            ProviderExhausted, "429 after a billed answer", attempts=1, answered=1, refused=0
+        )
+
+    llm = ResilientLLM(
+        billed_primary(),
+        Stub(_fallback_reply("0.0007")),
+        CircuitBreaker(failures=1, reset_after_s=60.0),
+        fallback_metered=True,
+    )
+    r = llm.chat([], system="", route="r")
+    assert r.fallback_used and r.prior_unknown_requests == 1
+    store = MemoryStore()
+    llm = ResilientLLM(
+        billed_primary(),
+        Stub(_fallback_reply("0.0007")),
+        CircuitBreaker(failures=1, reset_after_s=60.0),
+        fallback_metered=True,
+    )
+    MeteredLLM(llm, _limits(store, daily="1"), "a", ROUTES).chat([], system="", route="r")
+    assert store.spend_totals("a", DAY)[0] == _unknown_total(MemoryStore())[0] + D("0.0007")
+    # a garbage or provably-unsent primary adds nothing extra: attempts 0 -> nothing sent, nothing billed
+    for attrs in (
+        {"attempts": 0, "answered": 0, "refused": 0},
+        {"attempts": 1, "answered": 0, "refused": 1},
+    ):
+        llm = ResilientLLM(
+            FreshRaises(ProviderExhausted, "x", **attrs),
+            Stub(_fallback_reply()),
+            CircuitBreaker(failures=1, reset_after_s=60.0),
+            fallback_metered=True,
+        )
+        assert llm.chat([], system="", route="r").prior_unknown_requests == 0
+    # and a FAILED fallback after a billed primary keeps the reservation
+    llm = ResilientLLM(
+        billed_primary(),
+        FreshRaises(ProviderError, "fallback refused"),
+        CircuitBreaker(failures=1, reset_after_s=60.0),
+        fallback_metered=True,
+    )
+    with pytest.raises(ProviderError) as e:
+        llm.chat([], system="", route="r")
+    assert cost_to_settle(e.value, D("1")) == D("1")

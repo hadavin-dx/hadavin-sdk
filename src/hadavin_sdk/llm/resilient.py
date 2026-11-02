@@ -237,12 +237,14 @@ class ResilientLLM:
                 event
             )  # an audit hook that raises stops the call: nothing leaves unrecorded
         lost = unknown_requests(cause) if cause is not None else 0
+        if cause is not None and not lost and counts_valid(cause) and cause.answered > 0:
+            lost = 1  # the primary ANSWERED and billed before it was given up on: one reservation, never dropped
         try:
             out = self.fallback.chat(*args, **kwargs)
         except ProviderError as fe:
             # The primary's unknown requests are not forgotten because the fallback failed too: a meter must keep
             # the reservation. Bound: at most ONE primary worst case per fallback event (the primary's own count is
-            # added once). A SUCCESSFUL fallback carries the same count on the Reply (``prior_unknown_requests``) and a
+            # added once; a primary that ANSWERED and was billed, with nothing else unknown, counts as one too). A SUCCESSFUL fallback carries the same count on the Reply (``prior_unknown_requests``) and a
             # meter books one reservation on top of the fallback's cost (``reply_cost_to_settle``). A garbage ``attempts`` on the fallback's error is left alone:
             # ``unknown_requests`` counts it as 1, so ``cost_to_settle`` keeps the reservation anyway.
             if lost and counts_valid(

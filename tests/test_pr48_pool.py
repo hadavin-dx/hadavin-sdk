@@ -140,3 +140,37 @@ def test_build_passes_the_pool_settings_to_the_store():
             assert (store.POOL_SIZE, store.POOL_WAIT_S) == (3, 1.5)
         finally:
             store.close()
+
+
+def _interrupting_event(before_raise):
+    class Boom(BaseException):
+        pass
+
+    class Ev(threading.Event):
+        def wait(self, timeout=None):
+            before_raise()  # e.g. the holder releases: the slot is handed to this very waiter, then the interrupt lands
+            raise Boom()
+
+    return Boom, Ev
+
+
+@pytest.mark.parametrize("handed_over", [False, True])
+def test_an_interrupt_during_the_wait_loses_no_slot(monkeypatch, handed_over):
+    from types import SimpleNamespace
+
+    from hadavin_sdk.store import postgres as pg
+
+    g = _FairSlots(1)
+    boom, ev_cls = _interrupting_event(g.release if handed_over else (lambda: None))
+    assert g.acquire(0.1)  # the only slot is taken
+    monkeypatch.setattr(pg, "threading", SimpleNamespace(Lock=threading.Lock, Event=ev_cls))
+    with pytest.raises(boom):
+        g.acquire(5)  # queued, then interrupted while waiting
+    monkeypatch.undo()
+    assert not g._q  # no dead event is left in the queue
+    if not handed_over:
+        g.release()  # the holder gives the slot back: it must be usable, not handed to a dead waiter
+    assert g.acquire(0.1)  # the permit is not lost
+    g.release()
+    with pytest.raises(ValueError):
+        g.release()  # exactly one permit exists
