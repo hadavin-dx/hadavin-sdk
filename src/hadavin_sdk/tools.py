@@ -714,6 +714,9 @@ def _decoded(text: str) -> str:
     """The text with the encodings an attacker or a log pipeline layers over a value undone: JSON `\\uXXXX`
     escapes, percent-encoding in either case, HTML entities, then NFKC and invisible characters."""
     unescaped = re.sub(r"\\u([0-9a-fA-F]{4})", lambda m: chr(int(m.group(1), 16)), text)
+    # JSON spells an astral character as two escapes (a surrogate pair): join a valid pair into the one character.
+    # A lone surrogate becomes U+FFFD, as it does in the output (`_clean`).
+    unescaped = unescaped.encode("utf-16", "surrogatepass").decode("utf-16", "replace")
     decoded = html.unescape(unquote(unquote(unescaped)))
     # NFKC expands some characters (U+FDFA becomes 18): refuse BEFORE normalising a text whose canonical form would
     # pass the redactor's cap (InputTooLarge, a RedactionError), as redact_text does for its own views.
@@ -842,6 +845,11 @@ def prepare_output(
     )
     long_enough = [x for x in secrets or [] if len(x) >= MIN_SCRUBBED_SECRET]
     if long_enough:
+        forms = sorted({f for x in long_enough for f in _secret_forms(x)})
+        # The cut above may have split a secret. Strip its front NOW: the scrub below can swap the text for its
+        # decoded view (when another secret is whole), and that turns a half-written `&#10` into a newline and `%C3`
+        # into U+FFFD, which no longer read as the start of a form.
+        raw = _strip_fragment(raw, forms)
         raw = _fit(_derived(raw, long_enough))
         seen: tuple[str, str] | None = (
             None  # (raw, its decoded view): decoded once per distinct raw, not per form
@@ -857,8 +865,8 @@ def prepare_output(
                     # the secret hides behind an encoding layer: use the decoded text (that one reply loses its
                     # original spelling, which is the price of not showing the secret)
                     raw = _fit(seen[1].replace(form, "<SECRET_REDACTED>"))
-        # a cut may have split a secret, leaving its front next to the marker: remove it (see `_strip_fragment`)
-        raw = _strip_fragment(raw, sorted({f for x in long_enough for f in _secret_forms(x)}))
+        # `_fit` cuts too: remove the front of a secret it split (see `_strip_fragment`)
+        raw = _strip_fragment(raw, forms)
     return truncate(runmap.redact_untrusted(raw, mapping), max_bytes)
 
 

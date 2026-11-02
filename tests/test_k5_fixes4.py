@@ -63,7 +63,7 @@ def test_the_changelog_merge_order_names_the_four_prs():
     # heading names the three merges in sequence, and #48 is said to go in first as well
     order = re.match(r"\d+\. \*\*Order: (.*?)\*\*", line.strip())
     assert order, line
-    assert re.findall(r"#\d+", order.group(1)) == ["#49", "#42", "#41"], order.group(1)
+    assert re.findall(r"#\d+", order.group(1)) == ["#49", "#42", "#43", "#41"], order.group(1)
     assert "**#48 goes in first as well" in line, line
 
 
