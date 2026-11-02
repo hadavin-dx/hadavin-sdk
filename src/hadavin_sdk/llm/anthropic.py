@@ -17,7 +17,7 @@ from typing import Any
 import anthropic  # the extra: a missing install fails at start-up with the hint (backends.make)
 
 from hadavin_sdk.errors import ConfigError
-from hadavin_sdk.llm.common import Answer, NetworkLLM, pinned, reply
+from hadavin_sdk.llm.common import Answer, NetworkLLM, parse_stage, pinned, reply
 from hadavin_sdk.models import Reply, ToolCall
 
 API_BASE_URL = "https://api.anthropic.com"
@@ -77,6 +77,22 @@ def retryable(exc: BaseException) -> bool | None:
     return True if isinstance(exc, google_auth.TransportError) else None
 
 
+_DECODE_NAMES = {"APIResponseValidationError", "DecodingError", "JSONDecodeError"}
+
+
+def answered(exc: BaseException) -> bool | None:
+    """A response arrived (2xx) and the SDK could not decode or validate it: the request was billed. Matched by class
+    name and module so this file does not import httpx (it is a dependency of the SDK, not of this package)."""
+    for cls in type(exc).__mro__:
+        if cls.__name__ in _DECODE_NAMES and cls.__module__.split(".")[0] in {
+            "anthropic",
+            "httpx",
+            "json",
+        }:
+            return True
+    return None
+
+
 def make(settings: Any, deps: Any) -> AnthropicLLM:
     name = settings.api_key_secret_name if settings.platform != "vertex" else None
     key = (lambda: deps.resolve(name)) if name else None
@@ -91,6 +107,7 @@ def make(settings: Any, deps: Any) -> AnthropicLLM:
 class AnthropicLLM(NetworkLLM):
     label = "anthropic"
     retryable = staticmethod(retryable)
+    answered_hook = staticmethod(answered)
 
     def __init__(
         self,
@@ -119,7 +136,9 @@ class AnthropicLLM(NetworkLLM):
         if forced:
             request["tool_choice"] = {"type": "tool", "name": forced}
         started = time.monotonic()
-        got = self._retry(lambda: self._parse(self._current().messages.create(**request)))
+        got = self._retry(
+            lambda: parse_stage(self._parse, self._current().messages.create(**request))
+        )
         return reply(
             route,
             **vars(got),

@@ -7,7 +7,9 @@ SQLSTATE hint from `policy`. The agreement check is NOT built (the amendments re
 
 from __future__ import annotations
 
+import contextlib
 import hashlib
+import json
 import re
 import time
 import uuid
@@ -20,17 +22,29 @@ from pydantic import ValidationError
 from askdata import llm_io
 from askdata.audit import AskAudit
 from askdata.ledger import Attempt, Budget, Final, LedgerLine, QueryLedger, utc_stamp
-from askdata.meter import KillSwitch, Meter, MeterError, fmt_usd, worst_case_usd
+from askdata.meter import (
+    KillSwitch,
+    Meter,
+    MeterError,
+    call_cost,
+    error_cost,
+    fmt_usd,
+    worst_case_usd,
+)
 from askdata.pgsource import Limits, PgError, RunResult
 from askdata.policy import REASONS, Outcome, decide, exit_code, pick_reason, rule_hint
 from askdata.prompt import Prompt
 from askdata.safe_text import clean
+from askdata.settings import RUNTIME
 from askdata.validate import RULES, Rejected, Validated, validate
 from hadavin_sdk.audit.protocol import AuditUnavailable
 from hadavin_sdk.config import Route
 from hadavin_sdk.guard.injection import RegexDetector, injection_check
-from hadavin_sdk.llm.protocol import LLM, ProviderError, ProviderExhausted
+from hadavin_sdk.llm.protocol import LLM, ProviderError
 
+_SCHEMA_BYTES = len(
+    json.dumps(llm_io.GENERATE_SCHEMA).encode()
+)  # the forced tool schema is sent too
 NO_ROWS_NOTE = "0 rows: check the filters"
 
 
@@ -43,16 +57,20 @@ class Executor(Protocol):
 @dataclass(frozen=True)
 class Settings:
     route: str = "sql_generate"
-    max_attempts: int = 3
-    max_question_chars: int = 500
+    max_attempts: int = RUNTIME.max_attempts
+    max_question_chars: int = RUNTIME.max_question_chars
     restricted_terms: tuple[str, ...] = (
         "email", "e-mail", "mail address", "password", "passwd", "ssn", "social security",
         "card number", "credit card", "iban",
     )  # fmt: skip
     store_question: bool = True
     live: bool = True  # a live (paid) route also needs a fresh external_usd in the meter
-    transient_backoff_s: float = 1.0
-    injection_threshold: float = 0.5
+    transient_backoff_s: float = RUNTIME.transient_backoff_s
+    # requests ONE chat() may send (the LLM kind retries inside it); the meter reserves for all of them
+    llm_max_attempts: int = RUNTIME.recorded_llm_requests
+    injection_threshold: float = (
+        RUNTIME.injection_threshold
+    )  # sweep: tests/demo_askdata/test_demo_gaps.py (A-19 F-27)
 
 
 @dataclass
@@ -125,10 +143,20 @@ class Pipeline:
             hashlib.sha256(question.encode("utf-8")).hexdigest(),
         )
         gate = self._gate(question)
-        if gate:
-            run.reason = gate
-        else:
-            self._generate_and_execute(run)
+        try:
+            if gate:
+                run.reason = gate
+            else:
+                self._generate_and_execute(run)
+        except (
+            BaseException
+        ):  # Ctrl-C and the like: the question still ends in exactly one ledger line
+            run.terminal.append("model_unavailable")
+            with contextlib.suppress(
+                Exception
+            ):  # the interrupt, not a ledger problem, is what propagates
+                self._finish(run, int((time.monotonic() - t0) * 1000))
+            raise
         return self._finish(run, int((time.monotonic() - t0) * 1000))
 
     def _generate_and_execute(self, run: _Run) -> None:
@@ -142,9 +170,15 @@ class Pipeline:
                 run.terminal.append("kill_switch")
                 return
             messages = llm_io.build_messages(self.prompt.text, run.question, prev_sql, hint)
-            worst = worst_case_usd(route, len(llm_io.SYSTEM) + len(messages[0]["content"]))
+            # ONE request's worst case: the prompt AND the forced tool schema that travels with it.
+            per_try = worst_case_usd(
+                route,
+                len(llm_io.SYSTEM.encode()) + len(messages[0]["content"].encode()) + _SCHEMA_BYTES,
+            )
+            # the kind may send this many requests inside one chat(): its own bound when it knows it
+            worst = per_try * getattr(self.llm, "max_requests", self.s.llm_max_attempts)
             try:
-                self.meter.reserve(worst, live=self.s.live)
+                rid = self.meter.reserve(worst, live=self.s.live)
             except MeterError:  # OverBudget or an unreadable meter file: do not spend
                 run.terminal.append("over_budget")
                 return
@@ -159,33 +193,36 @@ class Pipeline:
                     output_schema=llm_io.GENERATE_SCHEMA,
                 )
             except (ProviderError, OSError, TimeoutError) as err:
-                # A call that failed AFTER the request was sent is charged its worst case; a refusal is free.
-                billed = isinstance(err, ProviderExhausted | OSError | TimeoutError)
-                if billed:  # the reservation stands as the charge
-                    run.cost += worst
-                else:
-                    self._settle(run, worst, Decimal(0))
-                run.attempts.append(
-                    Attempt(
-                        n=n,
-                        schema_ok=False,
-                        duration_ms=_ms(t),
-                        cost_usd=fmt_usd(worst) if billed else "0",
-                    )
-                )
-                run.terminal.append("model_unavailable")
+                cost = error_cost(err, per_try, worst, self.s.llm_max_attempts)
+                self._model_failed(run, rid, worst, cost, n, t)
                 return
-            run.cost += reply.cost_usd
+            except Exception:  # noqa: BLE001 - unknown failure inside the kind: it may have sent a request
+                self._model_failed(run, rid, worst, worst, n, t)
+                return
+            except (
+                BaseException
+            ):  # Ctrl-C and the like: close the reservation (as spent) before leaving
+                run.cost += worst  # the ledger line must show what the meter now says
+                self._settle(run, worst, worst, rid)
+                raise
+            actual = call_cost(
+                per_try,
+                worst,
+                sent=reply.attempts,
+                reply_cost=reply.cost_usd,
+                answered=reply.answered,
+            )
+            run.cost += actual
             run.tokens_in += reply.input_tokens
             run.tokens_out += reply.output_tokens
             run.model_id = reply.model_id
-            charged = self._settle(run, worst, reply.cost_usd)
+            charged = self._settle(run, worst, actual, rid)
             base = {
                 "n": n,
                 "duration_ms": _ms(t),
                 "tokens_in": reply.input_tokens,
                 "tokens_out": reply.output_tokens,
-                "cost_usd": fmt_usd(reply.cost_usd),
+                "cost_usd": fmt_usd(actual),
             }
             if not charged:  # the money is spent but not recorded: keep the attempt in the ledger
                 run.attempts.append(Attempt(schema_ok=False, **base))
@@ -220,7 +257,8 @@ class Pipeline:
                         **base,
                     )
                 )
-                run.rule_id, run.last_reason = rej.rule, "unsafe_query"
+                run.rule_id = rej.rule
+                run.last_reason = "write_request" if rej.rule == "V03" else "unsafe_query"
                 prev_sql, hint = sql_text, rule_hint(rej.rule, RULES)
                 continue
             status, retry_hint = self._execute(run, ok, sql_text, base, once)
@@ -228,15 +266,28 @@ class Pipeline:
                 return
             prev_sql, hint = sql_text, retry_hint
 
-    def _settle(self, run: _Run, reserved: Decimal, actual: Decimal) -> bool:
+    def _settle(
+        self, run: _Run, reserved: Decimal, actual: Decimal, rid: str | None = None
+    ) -> bool:
         """Replace the reservation with the real cost. False (and the question ends over budget) if the meter
         cannot be written."""
         try:
-            self.meter.settle(reserved, actual)
+            self.meter.settle(reserved, actual, rid)
         except MeterError:
             run.terminal.append("over_budget")
             return False
         return True
+
+    def _model_failed(
+        self, run: _Run, rid: str, reserved: Decimal, cost: Decimal, n: int, started: float
+    ) -> None:
+        """The model call produced no reply: book what the requests that were sent cost, record the attempt."""
+        self._settle(run, reserved, cost, rid)
+        run.cost += cost
+        run.attempts.append(
+            Attempt(n=n, schema_ok=False, duration_ms=_ms(started), cost_usd=fmt_usd(cost))
+        )
+        run.terminal.append("model_unavailable")
 
     def _execute(
         self, run: _Run, ok: Validated, sql_text: str, base: dict, once: set[str]
@@ -341,9 +392,9 @@ class Pipeline:
         route = self.routes[self.s.route]
         fields: dict[str, Any] = dict(  # noqa: C408
             query_id=run.query_id, ts=run.ts, asker=run.asker,
-            question=clean(run.question)[:500] if self.s.store_question else None, question_sha256=run.q_sha,
+            question=clean(run.question)[: RUNTIME.stored_question_chars] if self.s.store_question else None, question_sha256=run.q_sha,
             outcome=outcome, reason_code=reason, rule_id=run.rule_id,
-            attempts=run.attempts[: 6], final=final, assumptions=run.assumptions[:20], intent_event_ids=run.intents,
+            attempts=run.attempts[: RUNTIME.ledger_attempts_kept], final=final, assumptions=run.assumptions[: RUNTIME.ledger_assumptions_kept], intent_event_ids=run.intents,
             prompt_sha256=self.prompt.prompt_sha256, config_hash=self.config_hash, catalog_sha256=self.prompt.catalog_sha256,
             model_id=run.model_id or route.model_id, route=self.s.route, tokens_in=run.tokens_in, tokens_out=run.tokens_out,
             cost_usd=fmt_usd(run.cost), latency_ms=latency_ms, budget=budget, alarm=sorted(run.alarm),

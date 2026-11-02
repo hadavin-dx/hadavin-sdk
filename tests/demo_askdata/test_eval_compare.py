@@ -182,7 +182,20 @@ def test_second_look_aborted_needs_an_aborted_first_run():
     done = Lock(files={}, test_runs=1, last_test_status="complete")
     with pytest.raises(LockError, match="did not abort"):
         evalrun.sealed_gate(done, Decimal(5), split="test", second_look="aborted")
-    evalrun.sealed_gate(done, Decimal(5), split="test", second_look="harness_defect")
+    with pytest.raises(LockError, match="harness_defect"):  # a completed run is NOT a defect
+        evalrun.sealed_gate(done, Decimal(5), split="test", second_look="harness_defect")
+    evalrun.sealed_gate(
+        done.model_copy(
+            update={
+                "harness_defect_reason": "seed B drifted",
+                "harness_defect_run": "r",
+                "harness_defect_item": "g",
+            }
+        ),
+        Decimal(5),
+        split="test",
+        second_look="harness_defect",
+    )
     evalrun.sealed_gate(
         done.model_copy(update={"last_test_status": "aborted"}),
         Decimal(5),

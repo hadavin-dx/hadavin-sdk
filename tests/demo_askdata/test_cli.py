@@ -39,19 +39,26 @@ def test_ask_sql_shows_canonical_sql_hash_and_table(cli):
 
 
 @pytest.mark.parametrize(
-    ("sql", "rule"),
-    [("DELETE FROM shop.orders", "V03"), ("SELECT email FROM analytics.customers_v", "V05")],
+    ("sql", "rule", "expected"),
+    [
+        (
+            "DELETE FROM shop.orders",
+            "V03",
+            2,
+        ),  # a write attempt is a refusal (exit 2), as in the pipeline
+        ("SELECT email FROM analytics.customers_v", "V05", 3),
+    ],
 )
-def test_ask_rejects_before_the_database(cli, sql, rule):
+def test_ask_rejects_before_the_database(cli, sql, rule, expected):
     code, out = cli("ask", "--sql", sql)
-    assert code == 3 and f"rejected {rule}" in out and "nothing was sent" in out
+    assert code == expected and f"rejected {rule}" in out and "nothing was sent" in out
 
 
 def test_ask_question_uses_the_scripted_model_and_unknown_questions_abstain(cli):
     code, out = cli("ask", "How many orders per country?")
     assert code == 0 and "scripted (offline, no API call)" in out and "orders" in out
     code, out = cli("ask", "What is the meaning of life?")
-    assert code == 2 and "abstains" in out
+    assert code == 7 and "abstains" in out
 
 
 def test_terminal_control_plant_never_reaches_the_output(cli):
@@ -66,7 +73,7 @@ def test_database_refusal_is_reported_as_a_sqlstate_only(cli):
     # the validator accepts this (a CTE named like nothing exposed would not), so use a view the login lacks nothing on:
     # force a runtime failure instead: division by zero in an allowed expression
     code, out = cli("ask", "--sql", "SELECT 1 / 0 FROM analytics.orders_v")
-    assert code == 5 and "SQLSTATE 22012" in out
+    assert code == 3 and "SQLSTATE 22012" in out
 
 
 def test_demo_runs_end_to_end_offline(cli):
@@ -82,9 +89,9 @@ def test_missing_dsn_is_a_startup_error(monkeypatch, capsys):
 
 
 def test_ask_refuses_to_start_when_a_read_only_check_is_red(db, monkeypatch, capsys):
-    """G7: a red check means exit 4 and nothing is sent. The shared admin DSN is a superuser: every check is red."""
+    """G7: a red check means exit 3 (as in verify-readonly) and nothing is sent. The shared admin DSN is a superuser: every check is red."""
     monkeypatch.setenv("ASKDATA_DSN", db.admin_dsn)
-    assert main(["ask", "--sql", "SELECT count(*) FROM analytics.orders_v"]) == 4
+    assert main(["ask", "--sql", "SELECT count(*) FROM analytics.orders_v"]) == 3
     out = capsys.readouterr().out
     assert "refusing to run" in out and "RED" in out and "canonical" not in out
 
@@ -98,7 +105,7 @@ class _Refuses:
 
 
 @pytest.mark.parametrize(
-    ("sqlstate", "code"), [("28P01", 4), ("28000", 4), (None, 4), ("42501", 5)]
+    ("sqlstate", "code"), [("28P01", 4), ("28000", 4), (None, 4), ("42501", 3)]
 )
 def test_exit_code_by_sqlstate(sqlstate, code):
     assert cmd_ask(_Refuses(sqlstate), "SELECT 1", who="t") == code

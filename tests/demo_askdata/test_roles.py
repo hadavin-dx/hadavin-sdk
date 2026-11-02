@@ -25,6 +25,11 @@ DENIED = [
     "INSERT INTO analytics.orders_v VALUES (9999, 1, DATE '2026-01-01', 'paid', 1)",
     "UPDATE analytics.orders_v SET status = 'x'",
     "DROP VIEW analytics.orders_v",
+    # the large-object creators are executable by PUBLIC unless roles.sql revokes them (they persist when the
+    # read-only default is overridden, as this connection does)
+    "SELECT lo_creat(-1)",
+    "SELECT lo_create(0)",
+    "SELECT lo_from_bytea(0, 'abc'::bytea)",
 ]
 VIEWS = ["customers_v", "products_v", "orders_v", "order_items_v"]
 
@@ -68,6 +73,12 @@ def test_preflight_stops_when_another_login_would_lose_access(make_db):
     other = env.name + "_other"
     with env.admin() as conn:
         conn.execute(f'CREATE ROLE "{other}" LOGIN')  # holds CONNECT/TEMP only through PUBLIC
+        conn.execute(
+            "CREATE FUNCTION public.askdata_fn_probe() RETURNS int LANGUAGE sql AS 'SELECT 1'"
+        )
+        conn.execute(
+            f'ALTER DEFAULT PRIVILEGES FOR ROLE "{other}" IN SCHEMA public GRANT SELECT ON TABLES TO "{other}"'
+        )
     try:
         refused = env.roles_sql("-v", "confirm_dedicated=yes")
         assert refused.returncode == 3, refused.stderr
@@ -75,9 +86,12 @@ def test_preflight_stops_when_another_login_would_lose_access(make_db):
             other in refused.stdout and "PUBLIC" in refused.stdout
         )  # the listing names the login and the path
         assert "accept_loss" in refused.stderr
+        assert "askdata_fn_probe" in refused.stdout  # the PUBLIC-executable function listing
+        assert f"{other} | public | r |" in refused.stdout  # the pg_default_acl listing
         accepted = env.roles_sql("-v", "confirm_dedicated=yes", "-v", "accept_loss=yes")
         assert accepted.returncode == 0, accepted.stderr
     finally:
         with env.admin() as conn:
+            conn.execute("DROP FUNCTION IF EXISTS public.askdata_fn_probe()")
             conn.execute(f'DROP OWNED BY "{other}"')
             conn.execute(f'DROP ROLE "{other}"')

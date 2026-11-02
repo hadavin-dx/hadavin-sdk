@@ -8,6 +8,11 @@ at once.
 Vendor-neutral (lock-in audit 2026-10-31, row 2): this module knows HTTP statuses, the standard library's network
 errors and TLS, nothing else. Each kind knows its own SDK's errors and passes ``retryable(exc) -> bool | None``
 (None: no opinion, the generic rule decides) and ``detail(exc) -> str`` (an error code safe to log).
+
+Billing contract (a meter reads it): every ``ProviderError`` leaving ``with_retry`` carries ``attempts`` (requests
+actually sent). A non-transient failure is an ``UnusableAnswer`` (the provider ANSWERED, so it was billed) when
+``_answered`` says so: the kind's ``answered_hook`` decides, else a 2xx status on the error; otherwise it is a plain
+``ProviderError`` (nothing billed). ``answered`` and ``billed_usd`` are set by the kind for rounds that answered.
 """
 
 from __future__ import annotations
@@ -17,7 +22,7 @@ import ssl
 import time
 from collections.abc import Callable
 
-from hadavin_sdk.llm.protocol import ProviderError, ProviderExhausted
+from hadavin_sdk.llm.protocol import ProviderError, ProviderExhausted, UnusableAnswer
 
 BASE_DELAY_S = 0.5
 MAX_DELAY_S = 8.0
@@ -80,6 +85,17 @@ def describe(exc: BaseException, detail: Callable[[BaseException], str] | None =
     return " ".join(p for p in parts if p)
 
 
+def _answered(exc: BaseException, hook: Callable[[BaseException], bool | None] | None) -> bool:
+    """Was the failed request ANSWERED (so billed)? Decided by the STAGE the kind marked, never by a function name:
+    `UnusableAnswer` is raised by the kind itself at the "answered" stage (`post_json` for a body it could not read,
+    `parse_stage` for an answer it could not parse); an SDK error is judged by the kind's own hook; a 2xx status on the
+    error is an answer. Everything else (a failure before the request, an HTTP error status, a network error) is not."""
+    if hook is not None and (said := hook(exc)) is not None:
+        return said
+    code = status(exc)
+    return code is not None and 200 <= code < 300
+
+
 def with_retry[T](
     call: Callable[[], T],
     *,
@@ -88,19 +104,30 @@ def with_retry[T](
     sleep: Callable[[float], None] = time.sleep,
     retryable: Retryable | None = None,
     detail: Callable[[BaseException], str] | None = None,
+    answered_hook: Callable[[BaseException], bool | None] | None = None,
 ) -> T:
     for attempt in range(1, max_attempts + 1):
         try:
             return call()
-        except ProviderError:
+        except ProviderError as err:
+            err.attempts = attempt
             raise
         except Exception as exc:  # every failure is classified below, never swallowed
             if not transient(exc, retryable):
-                raise ProviderError(f"{label}: {describe(exc, detail)}") from exc
+                # `_answered` decides: the kind's answered_hook, else a 2xx status on the error (never the
+                # traceback). Answered = billed = UnusableAnswer; a failure before any request was sent (a secret
+                # read, building the body) or an HTTP error status is a plain ProviderError and is not billed.
+                answered = _answered(exc, answered_hook)
+                cls = UnusableAnswer if answered else ProviderError
+                refused = cls(f"{label}: {describe(exc, detail)}")
+                refused.attempts = attempt
+                raise refused from exc
             if attempt == max_attempts:
-                raise ProviderExhausted(
+                spent = ProviderExhausted(
                     f"{label}: {describe(exc, detail)} after {max_attempts} attempts"
-                ) from exc
+                )
+                spent.attempts = attempt
+                raise spent from exc
             # Full jitter spreads retries from many runs hitting one throttled account (not crypto); never
             # sooner than the server asked.
             jitter = random.uniform(0, min(MAX_DELAY_S, BASE_DELAY_S * 2 ** (attempt - 1)))  # noqa: S311

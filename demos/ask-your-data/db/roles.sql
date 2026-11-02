@@ -1,12 +1,17 @@
 -- Ask-your-data demo: the read-only login. Applied by an ADMIN (never by the app), once per database.
 --
---   psql -d <db> -f roles.sql -v confirm_dedicated=yes -v ro_password=<password>
+--   psql -d <db> -f roles.sql -v confirm_dedicated=yes -v ro_password=<password> \
+--        -v ro_connection_limit=N -v ro_statement_timeout=Ns -v ro_lock_timeout=Ns -v ro_idle_timeout=Ns
+--   (the numbers are required; the documented values are in askdata/settings.py, class Runtime)
 --
 -- WARNING: REVOKE ... FROM PUBLIC changes access for EVERY login role in this database. Run it on a dedicated
 -- database or a read replica, never on a shared production database. It first runs preflight_roles.sql and stops
 -- (exit 3) when other logins would lose access, unless you also pass -v accept_loss=yes.
--- Optional: -v ro_role=<name> (default askdata_ro). Without ro_password the login has no password: set one with
--- \password. (A password given with -v can end up in server logs when log_statement=all; prefer \password.)
+-- Optional: -v ro_role=<name> (default askdata_ro; lower-case letters, digits, underscore, at most 63). Without
+-- ro_password the login has no password: set one with \password. A password that IS passed must be at least 12
+-- characters (an empty one would silently leave the login with none). (A password given with -v can end up in
+-- server logs when log_statement=all; prefer \password.)
+-- NOT idempotent: a second run stops at CREATE ROLE (exit 3, the transaction is rolled back, nothing half-made).
 \set ON_ERROR_STOP on
 \if :{?confirm_dedicated}
 \else
@@ -21,6 +26,19 @@
   \set ro_role askdata_ro
 \endif
 
+SELECT (:'ro_role' ~ '^[a-z_][a-z0-9_]{0,62}$') AS ok_role \gset
+\if :ok_role
+\else
+  SELECT 'refusing: ro_role must match ^[a-z_][a-z0-9_]{0,62}$'::int;
+\endif
+\if :{?ro_password}
+  SELECT (length(:'ro_password') >= 12) AS ok_pw \gset
+  \if :ok_pw
+  \else
+    SELECT 'refusing: ro_password must be at least 12 characters (or leave it out and use \password)'::int;
+  \endif
+\endif
+
 SELECT (:'confirm_dedicated' = 'yes') AS dedicated \gset
 \if :dedicated
 \else
@@ -28,6 +46,44 @@ SELECT (:'confirm_dedicated' = 'yes') AS dedicated \gset
 \endif
 
 \ir preflight_roles.sql
+
+-- The numbers come from the caller (the CLI passes them from askdata/settings.py Runtime); this script has none.
+\if :{?ro_connection_limit}
+\else
+  SELECT 'refusing: pass -v ro_connection_limit=N -v ro_statement_timeout=Ns -v ro_lock_timeout=Ns -v ro_idle_timeout=Ns'::int;
+\endif
+\if :{?ro_statement_timeout}
+\else
+  SELECT 'refusing: pass -v ro_statement_timeout=Ns'::int;
+\endif
+\if :{?ro_lock_timeout}
+\else
+  SELECT 'refusing: pass -v ro_lock_timeout=Ns'::int;
+\endif
+\if :{?ro_idle_timeout}
+\else
+  SELECT 'refusing: pass -v ro_idle_timeout=Ns'::int;
+\endif
+-- A value from the command line is checked before it is used: a whole number, in range; a timeout is a positive
+-- number of seconds (a '0s' timeout would DISABLE the limit, so it is refused).
+SELECT (:'ro_connection_limit' ~ '^[0-9]{1,3}$') AS ok_cl_shape \gset
+\if :ok_cl_shape
+\else
+  SELECT 'refusing: ro_connection_limit must be a whole number from 1 to 999'::int;
+\endif
+SELECT (:'ro_connection_limit')::int AS cl \gset
+SELECT (:cl BETWEEN 1 AND 999) AS ok_cl_range \gset
+\if :ok_cl_range
+\else
+  SELECT 'refusing: ro_connection_limit must be from 1 to 999'::int;
+\endif
+SELECT (:'ro_statement_timeout' ~ '^[1-9][0-9]{0,2}s$'
+        AND :'ro_lock_timeout' ~ '^[1-9][0-9]{0,2}s$'
+        AND :'ro_idle_timeout' ~ '^[1-9][0-9]{0,2}s$') AS ok_timeouts \gset
+\if :ok_timeouts
+\else
+  SELECT 'refusing: each timeout must be a whole number of seconds from 1s to 999s like 15s (0s would disable it)'::int;
+\endif
 SELECT (:'accept_loss' = 'yes') AS accepted \gset
 \if :has_loss
   \if :accepted
@@ -40,7 +96,7 @@ SELECT current_database() AS dbname \gset
 
 BEGIN;  -- all or nothing: a failure leaves no half-made login behind
 
-CREATE ROLE :"ro_role" LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS CONNECTION LIMIT 5;
+CREATE ROLE :"ro_role" LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS CONNECTION LIMIT :cl;
 \if :{?ro_password}
   ALTER ROLE :"ro_role" PASSWORD :'ro_password';
 \endif
@@ -57,12 +113,20 @@ GRANT SELECT ON analytics.customers_v, analytics.products_v, analytics.orders_v,
 -- Functions created later by this admin are not PUBLIC-executable. (Existing pg_catalog functions such as
 -- pg_sleep stay executable by PUBLIC: the watchdog and the validator bound them, not this script.)
 ALTER DEFAULT PRIVILEGES REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC;
+-- The three functions that CREATE a large object are executable by PUBLIC out of the box. A session that flips
+-- default_transaction_read_only to off could create persistent large objects with them. Revoked for THIS DATABASE
+-- (it affects every login here, like the REVOKEs above). Advisory locks and the other pg_catalog functions stay
+-- callable by PUBLIC: the validator and the watchdog bound those, not this script.
+REVOKE EXECUTE ON FUNCTION pg_catalog.lo_creat(integer) FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION pg_catalog.lo_create(oid) FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION pg_catalog.lo_from_bytea(oid, bytea) FROM PUBLIC;
 
--- Defaults only: a session can change them. The revoked privileges above are what hold.
+-- The three settings below are DEFAULTS: a session can change them. What holds the line even then are the privileges
+-- granted and revoked above (no table, schema, file or program write), plus the three large-object revokes.
 ALTER ROLE :"ro_role" IN DATABASE :"dbname" SET default_transaction_read_only = on;
-ALTER ROLE :"ro_role" IN DATABASE :"dbname" SET statement_timeout = '15s';
-ALTER ROLE :"ro_role" IN DATABASE :"dbname" SET lock_timeout = '1s';
-ALTER ROLE :"ro_role" IN DATABASE :"dbname" SET idle_in_transaction_session_timeout = '15s';
+ALTER ROLE :"ro_role" IN DATABASE :"dbname" SET statement_timeout = :'ro_statement_timeout';
+ALTER ROLE :"ro_role" IN DATABASE :"dbname" SET lock_timeout = :'ro_lock_timeout';
+ALTER ROLE :"ro_role" IN DATABASE :"dbname" SET idle_in_transaction_session_timeout = :'ro_idle_timeout';
 ALTER ROLE :"ro_role" IN DATABASE :"dbname" SET search_path = analytics;
 COMMIT;
 \echo roles.sql: done

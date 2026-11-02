@@ -27,6 +27,7 @@ from pydantic import (
 
 from askdata.policy import Alarm, ReasonCode
 from askdata.safe_text import clean
+from askdata.settings import RUNTIME
 
 SCHEMA = "askdata.ledger/1"
 
@@ -90,12 +91,12 @@ class LedgerLine(_Strict):
     query_id: QueryId
     ts: Stamp
     asker: Annotated[Text, Field(max_length=64)]
-    question: Annotated[Text, Field(max_length=500)] | None
+    question: Annotated[Text, Field(max_length=RUNTIME.stored_question_chars)] | None
     question_sha256: Hex64
     outcome: Literal["answered", "abstained", "refused", "failed"]
     reason_code: ReasonCode | None = None
     rule_id: RuleId | None = None
-    attempts: Annotated[list[Attempt], Field(max_length=6)] = []
+    attempts: Annotated[list[Attempt], Field(max_length=RUNTIME.ledger_attempts_kept)] = []
     final: Final | None = None
     assumptions: list[Annotated[Text, Field(max_length=300)]] = []
     profile_drops: list[ProfileDrop] = []

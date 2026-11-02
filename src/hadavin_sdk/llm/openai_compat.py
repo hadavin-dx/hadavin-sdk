@@ -20,14 +20,18 @@ from urllib.parse import urlsplit
 from hadavin_sdk.llm.common import (
     Answer,
     NetworkLLM,
+    estimate_tokens,
     json_in_text,
     model_name,
+    parse_stage,
     pinned,
     post_json,
+    price,
     reply,
     schema_hint,
     stop_reason,
 )
+from hadavin_sdk.llm.protocol import ProviderError
 from hadavin_sdk.models import Reply, ToolCall
 
 # OpenAI's own family names without a dated snapshot (`gpt-4o`, `o3`, `chatgpt-4o-latest`) move to new models;
@@ -73,6 +77,11 @@ def _call(tool_call: dict[str, Any]) -> ToolCall | None:
 
 class OpenAICompatLLM(NetworkLLM):
     label = "openai_compat"
+    ROUNDS = 2  # the forced answer missing: one more round (each round is a full retry loop)
+
+    @property
+    def max_requests(self) -> int:
+        return self.max_attempts * self.ROUNDS
 
     def __init__(
         self,
@@ -114,12 +123,35 @@ class OpenAICompatLLM(NetworkLLM):
             ]
         if forced:
             body["tool_choice"] = {"type": "function", "function": {"name": forced}}
-        started, used = time.monotonic(), [0, 0]
-        for _ in range(2):  # the forced answer missing: one more request (design 4.3)
-            got = self._retry(
-                lambda: self._parse(post_json(self.url, body, self._headers(), self.timeout_s))
-            )
-            used = [used[0] + (got.tokens[0] or 0), used[1] + (got.tokens[1] or 0)]
+        started, used, sent, answered = time.monotonic(), [0, 0], 0, 0
+        # what travels: the messages AND the tool definitions and tool_choice (they are billed input too)
+        sent_text = json.dumps(
+            {k: body[k] for k in ("messages", "tools", "tool_choice") if k in body}
+        )
+        for _ in range(self.ROUNDS):  # the forced answer missing: one more request (design 4.3)
+            try:
+                got = self._retry(
+                    lambda: parse_stage(
+                        self._parse, post_json(self.url, body, self._headers(), self.timeout_s)
+                    )
+                )
+            except ProviderError as err:
+                # What the earlier rounds already cost must not be lost with the error (a meter charges it).
+                err.attempts += sent
+                err.answered += answered
+                err.billed_usd = price(route, used[0], used[1]) + err.billed_usd
+                raise
+            sent, answered = sent + got.attempts, answered + 1
+            # A round that reports no usage is still billed: estimate it exactly as `reply()` does, per round
+            # (it used to be added as 0, so a server that omits usage undercounted every answered round).
+            used = [
+                used[0] + (got.tokens[0] or estimate_tokens(sent_text)),
+                used[1]
+                + (
+                    got.tokens[1]
+                    or estimate_tokens(got.text + json.dumps([c.input for c in got.calls]))
+                ),
+            ]
             # Done when answered, or when asking again would end the same way (cut off, refused).
             done = stop_reason(got.stop, got.calls) in ("max_tokens", "refusal")
             if done or not forced or any(c.name == forced for c in got.calls):
@@ -129,7 +161,13 @@ class OpenAICompatLLM(NetworkLLM):
                 break
         # Some servers (Ollama among them) omit usage: None is estimated in reply().
         got.tokens = (used[0] or None, used[1] or None)
-        return reply(route, **vars(got), started=started, sent=json.dumps(body["messages"]))
+        return reply(
+            route,
+            **{**vars(got), "attempts": sent},
+            answered=answered,
+            started=started,
+            sent=sent_text,
+        )
 
     @staticmethod
     def _parse(resp: dict[str, Any]) -> Answer:

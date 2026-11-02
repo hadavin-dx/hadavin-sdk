@@ -17,8 +17,14 @@ ReasonCode = Literal[
 ]  # fmt: skip
 Alarm = Literal["validator_gap", "role_gap", "readonly_violation", "hash_mismatch"]
 
-# Exit codes of `ask`. 0 answered; 1 usage; 4 startup (red check, bad config, invalid authorization).
-EXIT_OK, EXIT_USAGE, EXIT_STARTUP = 0, 1, 4
+# THE exit-code table of every `askdata` command except `eval run` (its own 10-14 band is in evalcli.py). One meaning per
+# number, in the CLI, the README and the tests: 0 answered / ok; 1 usage; 2 refused (the tool will not do that);
+# 3 failed (validator rejected, database failed, SQL hash mismatch, model unusable, a read-only check is red
+# wherever it is found, `audit verify` found a problem); 4 startup (no DSN or config, cannot connect, cannot run the
+# checks, invalid authorization); 5 audit unavailable;
+# 6 spending limit or kill switch; 7 abstained (the data does not answer the question).
+EXIT_OK, EXIT_USAGE, EXIT_REFUSED, EXIT_FAILED, EXIT_STARTUP = 0, 1, 2, 3, 4
+EXIT_AUDIT, EXIT_BUDGET, EXIT_ABSTAINED = 5, 6, 7
 
 
 @dataclass(frozen=True)
@@ -29,21 +35,21 @@ class Reason:
 
 
 REASONS: dict[str, Reason] = {
-    "write_request": Reason("refused", 2, "This tool only reads data."),
-    "restricted_data": Reason("refused", 2, "That field is not exposed to this tool."),
-    "injection_suspected": Reason("refused", 2, "That request looks like an instruction to the tool and was not run."),
-    "over_budget": Reason("refused", 6, "Spending limit reached; not run."),
-    "kill_switch": Reason("refused", 6, "The tool is switched off."),
-    "out_of_scope": Reason("abstained", 7, "The data does not cover that."),
-    "ambiguous": Reason("abstained", 7, "The question can be read more than one way."),
-    "insufficient_schema": Reason("abstained", 7, "The data does not hold what is needed."),
-    "uncertain": Reason("abstained", 7, "Two ways of asking gave different results."),
-    "unsafe_query": Reason("failed", 3, "I could not produce a safe query for that."),
-    "execution_failed": Reason("failed", 3, "The database could not run that query."),
-    "timeout": Reason("failed", 3, "The query ran too long and was stopped."),
-    "schema_violation": Reason("failed", 3, "The model did not return a usable answer."),
-    "model_unavailable": Reason("failed", 3, "The model service is unavailable."),
-    "audit_unavailable": Reason("failed", 5, "Audit unavailable; not run."),
+    "write_request": Reason("refused", EXIT_REFUSED, "This tool only reads data."),
+    "restricted_data": Reason("refused", EXIT_REFUSED, "That field is not exposed to this tool."),
+    "injection_suspected": Reason("refused", EXIT_REFUSED, "That request looks like an instruction to the tool and was not run."),
+    "over_budget": Reason("refused", EXIT_BUDGET, "Spending limit reached; not run."),
+    "kill_switch": Reason("refused", EXIT_BUDGET, "The tool is switched off."),
+    "out_of_scope": Reason("abstained", EXIT_ABSTAINED, "The data does not cover that."),
+    "ambiguous": Reason("abstained", EXIT_ABSTAINED, "The question can be read more than one way."),
+    "insufficient_schema": Reason("abstained", EXIT_ABSTAINED, "The data does not hold what is needed."),
+    "uncertain": Reason("abstained", EXIT_ABSTAINED, "Two ways of asking gave different results."),
+    "unsafe_query": Reason("failed", EXIT_FAILED, "I could not produce a safe query for that."),
+    "execution_failed": Reason("failed", EXIT_FAILED, "The database could not run that query."),
+    "timeout": Reason("failed", EXIT_FAILED, "The query ran too long and was stopped."),
+    "schema_violation": Reason("failed", EXIT_FAILED, "The model did not return a usable answer."),
+    "model_unavailable": Reason("failed", EXIT_FAILED, "The model service is unavailable."),
+    "audit_unavailable": Reason("failed", EXIT_AUDIT, "Audit unavailable; not run."),
 }  # fmt: skip
 
 # The model's own `abstain_reason` values are reason codes (the five of the GenerateOutput schema).

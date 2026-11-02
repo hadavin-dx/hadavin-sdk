@@ -1,0 +1,271 @@
+{
+ "askdata/allowed.py": {
+  "lines": [
+   "\"date_trunc\": (2, 3), \"age\": (1, 2), \"make_date\": (3, 3), \"round\": (1, 2), \"replace\": (3, 3),",
+   "\"ltrim\": (1, 2), \"rtrim\": (1, 2), \"lag\": (1, 3), \"lead\": (1, 3),",
+   "**dict.fromkeys((\"nullif\", \"power\", \"strpos\", \"to_char\", \"left\", \"right\", \"date_part\"), (2, 2)),"
+  ],
+  "reason": "argument counts of allowed functions"
+ },
+ "askdata/audit.py": {
+  "lines": [
+   "f\"query {line.query_id[:8]} attempt {attempt.n} ran without an intent event\"",
+   "rep.problems.append(f\"outcome event for query {qid[:8]} has no ledger line\")",
+   "rep.problems.append(f\"query {line.query_id[:8]} appears twice in the ledger\")",
+   "rep.problems.append(f\"query {line.query_id[:8]} names a missing intent event\")",
+   "run_id=\"0\" * 32,"
+  ],
+  "reason": "hash prefix widths shown to people"
+ },
+ "askdata/cli.py": {
+  "lines": [
+   "bs = chr(92)",
+   "if password and any(c in password for c in (chr(13), chr(10))):",
+   "nl = chr(10)",
+   "out((done.stdout + done.stderr).strip()[-1500:].replace(password, \"***\"))",
+   "pre = argv[:2] if argv[:1] == [\"--config\"] and len(argv) >= 2 else []",
+   "quoted = \"'\" + password.replace(bs, bs * 2).replace(\"'\", \"''\") + \"'\"",
+   "return 3 if red else 0",
+   "return 4",
+   "return 4",
+   "return 4",
+   "return 4",
+   "return 4",
+   "return EXIT_FAILED if name == \"roles\" and done.returncode == 3 else EXIT_STARTUP",
+   "worst = worst if code in (EXIT_REFUSED, EXIT_FAILED) else 4  # these two MUST be rejected"
+  ],
+  "reason": "argparse arity and a two-attempt loop"
+ },
+ "askdata/compare.py": {
+  "lines": [
+   "DEFAULT_SCALE = 2",
+   "for perm in itertools.islice(itertools.product(*options), 5000):  # bounded: many equal columns",
+   "return norm(order_keys[n - 1], 6) == norm(order_keys[n], 6)"
+  ],
+  "reason": "decimal places of the comparison and a result-size bound"
+ },
+ "askdata/config.py": {
+  "lines": [
+   "return int(self.llm.get(\"max_attempts\", 3)) if self.llm else RUNTIME.recorded_llm_requests"
+  ],
+  "reason": "the 3 is the prompt's three-attempt design bound (RUNTIME.max_attempts)"
+ },
+ "askdata/derive_allowlist.py": {
+  "lines": [
+   "text = json.dumps(derive(), indent=2, sort_keys=True) + \"\\n\""
+  ],
+  "reason": "a column width in a printed table"
+ },
+ "askdata/evalcli.py": {
+  "lines": [
+   "out(json.dumps(diff, indent=2, sort_keys=True, default=str))",
+   "return 11 if diff[\"regression\"] else 0",
+   "return 14",
+   "return 14",
+   "return 14",
+   "return 14",
+   "return 14",
+   "return 14",
+   "return 14",
+   "return 14",
+   "return 14 if split == \"test\" and isinstance(err, LockError) else 4",
+   "return 4",
+   "return 4",
+   "return 4",
+   "return 4",
+   "return 4",
+   "return 4",
+   "return 4",
+   "return 4",
+   "return 4",
+   "return 4",
+   "return 4",
+   "return 4",
+   "return 4",
+   "return 4",
+   "return 4",
+   "return 4",
+   "return 4",
+   "return 4",
+   "return 4",
+   "return 4",
+   "return 4",
+   "return 4"
+  ],
+  "reason": "exit codes of the documented eval band"
+ },
+ "askdata/evalrun.py": {
+  "lines": [
+   "\"latency_ms\": {\"p50\": percentile([r.latency_ms for r in gold + adv], 0.5), \"p95\": percentile([r.latency_ms for r in gold + adv], 0.95)},",
+   "EXIT = {\"green\": 0, \"amber\": 10, \"not_demonstrated\": 11, \"hard_zero\": 12, \"aborted\": 13}",
+   "bound = \"n/a\" if rep[\"upper_error_bound\"] is None else f\"{rep['upper_error_bound'] * 100:.1f} %\"",
+   "f\"- Model {rep.get('model_id', '')}; prompt {str(rep.get('prompt_sha256', ''))[:12]}; config {str(rep.get('config_hash', ''))[:12]}; golden {str(rep.get('golden_sha256', ''))[:12]}\",",
+   "f\"- pass@1 {rep['pass_rate']:.3f}; k={rep['k']}; pass^k {rep['pass_k'] if rep['pass_k'] is None else round(rep['pass_k'], 3)}\",",
+   "f\"{bound} (green <= {rep['threshold'] * 100:.0f} %, amber <= {rep['amber_threshold'] * 100:.0f} %).\"",
+   "json.dumps(report, indent=2, sort_keys=True, ensure_ascii=True) + \"\\n\",",
+   "json.dumps({k: str(v) for k, v in meter_snapshot.items()}, indent=2, sort_keys=True) + \"\\n\",",
+   "len((lock.harness_defect_reason or \"\").strip()) >= 10",
+   "order = {\"not_demonstrated\": 0, \"amber\": 1, \"green\": 2}",
+   "self._asked = self._attempts = self._violations = 0"
+  ],
+  "reason": "the documented exit-code band of eval run, percentiles and hash prefix widths"
+ },
+ "askdata/evalset.py": {
+  "lines": [
+   "f.write(json.dumps(json.loads(lock.model_dump_json()), indent=2, sort_keys=True) + \"\\n\")",
+   "tmp = path.with_name(f\"{path.name}.{os.getpid()}.{uuid.uuid4().hex[:8]}.tmp\")"
+  ],
+  "reason": "hash prefix widths"
+ },
+ "askdata/fixtures.py": {
+  "lines": [
+   "\"latency_ms\": 5,",
+   "model_id=\"fake-model-1\", input_usd_per_mtok=\"2\", output_usd_per_mtok=\"10\", max_tokens=1024",
+   "tokens: tuple[int, int] = (1000, 100)"
+  ],
+  "reason": "the test-fixture builder's route and tokens"
+ },
+ "askdata/htmlexport.py": {
+  "lines": [
+   "str(rep.get(\"config_hash\", \"\"))[:12],",
+   "str(rep.get(\"prompt_sha256\", \"\"))[:12],"
+  ],
+  "reason": "characters of a hash shown in the HTML export"
+ },
+ "askdata/ledger.py": {
+  "lines": [
+   "asker: Annotated[Text, Field(max_length=64)]",
+   "assumptions: list[Annotated[Text, Field(max_length=300)]] = []",
+   "canonical_sql: Annotated[Text, Field(max_length=4000)]",
+   "canonical_sql: Annotated[Text, Field(max_length=4000)] | None = None",
+   "sql_text: Annotated[Text, Field(max_length=4000)] | None = None",
+   "sqlstate: Annotated[str, Field(min_length=5, max_length=5)] | None = None",
+   "sqlstate_class: Annotated[str, Field(min_length=2, max_length=2)] | None = None"
+  ],
+  "reason": "schema bounds of a ledger line (question and attempt limits come from settings)"
+ },
+ "askdata/llm_io.py": {
+  "lines": [
+   "MAX_SQL_CHARS = 4000"
+  ],
+  "reason": "a hint is cut at 4000 characters"
+ },
+ "askdata/meter.py": {
+  "lines": [
+   "M = Decimal(1_000_000)",
+   "f.write(json.dumps(data, sort_keys=True, indent=2) + \"\\n\")"
+  ],
+  "reason": "tokens per million, the unit of a price"
+ },
+ "askdata/opscli.py": {
+  "lines": [
+   "f\"{ln.query_id[:12]}  {ln.ts}  {ln.asker:<24}  {ln.outcome:<9}  {ln.reason_code or '-':<20}  {ln.cost_usd}\"",
+   "out(json.dumps(json.loads(item.line.model_dump_json(by_alias=True)), indent=2, sort_keys=True))",
+   "return 0 if rep.ok else 3",
+   "return 4",
+   "return 4",
+   "return 4",
+   "return 4",
+   "return 5",
+   "return 5",
+   "text = json.dumps(rows, indent=2, sort_keys=True, ensure_ascii=True) + \"\\n\""
+  ],
+  "reason": "exit codes and a column width"
+ },
+ "askdata/pgsource.py": {
+  "lines": [
+   "name = f\"askdata_{secrets.token_hex(6)}\"",
+   "return [CheckRow(str(r[0]), bool(r[1]), str(r[2])) for r in cur.fetchall()]"
+  ],
+  "reason": "a row-count shift and the SQLSTATE width"
+ },
+ "askdata/pipeline.py": {
+  "lines": [
+   "\"schema_ok\": True, \"sql_text\": clean(sql_text)[:4000], \"canonical_sql\": clean(ok.canonical_sql)[:4000],",
+   "canonical_sql=clean(ok.canonical_sql)[:4000],",
+   "clean(asker)[:64],",
+   "for resend in range(2):",
+   "if streak >= 2:",
+   "return int((time.monotonic() - t) * 1000)",
+   "return self._finish(run, int((time.monotonic() - t0) * 1000))",
+   "run.assumptions = [clean(a)[:300] for a in out.assumptions[:20]]",
+   "self._finish(run, int((time.monotonic() - t0) * 1000))",
+   "sql_text=clean(sql_text)[:4000],",
+   "sql_text=clean(sql_text)[:4000],",
+   "sqlstate=state, sqlstate_class=state[:2] if state else None, **common, **timing"
+  ],
+  "reason": "one resend of a dropped statement, hash widths, truncation of stored SQL text"
+ },
+ "askdata/policy.py": {
+  "lines": [
+   "EXIT_AUDIT, EXIT_BUDGET, EXIT_ABSTAINED = 5, 6, 7",
+   "EXIT_OK, EXIT_USAGE, EXIT_REFUSED, EXIT_FAILED, EXIT_STARTUP = 0, 1, 2, 3, 4"
+  ],
+  "reason": "the exit-code table"
+ },
+ "askdata/safe_text.py": {
+  "lines": [
+   "(0x00AD, 0x00AD), (0x061C, 0x061C), (0x180E, 0x180E), (0x200B, 0x200F), (0x2028, 0x202E),",
+   "(0x2060, 0x2064), (0x2066, 0x2069), (0xFEFF, 0xFEFF), (0xE0000, 0xE007F),",
+   "if o < 0x20:",
+   "return f\"\\\\x{o:02x}\" if o < 0x100 else f\"\\\\u{o:04x}\"",
+   "return o == 0x7F or 0x80 <= o <= 0x9F or any(a <= o <= b for a, b in _FORMAT_RANGES)"
+  ],
+  "reason": "unicode ranges stripped from printed text"
+ },
+ "askdata/sealed.py": {
+  "lines": [
+   "GENESIS = \"0\" * 64",
+   "MIN_KEY_CHARS = 16",
+   "MIN_REASON_CHARS = 20",
+   "f\"run folder(s) {stray[:3]} hold results that the chain has no sealed run for: lock.json and the \"",
+   "f.write(json.dumps(obj, indent=2, sort_keys=True) + \"\\n\")",
+   "return hmac.new(self.key, b\"key-id\", hashlib.sha256).hexdigest()[:16]",
+   "tmp = path.with_name(f\"{path.name}.{os.getpid()}.{uuid.uuid4().hex[:8]}.tmp\")",
+   "tmp = self.path.with_name(f\"{self.path.name}.{os.getpid()}.{uuid.uuid4().hex[:8]}.tmp\")"
+  ],
+  "reason": "key-id length, the shortest reset reason, the genesis hash width"
+ },
+ "askdata/validate.py": {
+  "lines": [
+   "< 2",
+   "MAX_CHARS = 4000",
+   "MAX_CTES = 4",
+   "MAX_DEPTH = 6",
+   "MAX_JOINS = 8",
+   "MAX_LITERAL = 200",
+   "MAX_NODES = 2000",
+   "elif ord(ch) > 127:",
+   "if chr(92) in text:",
+   "if ord(ch) > 127:"
+  ],
+  "reason": "validator rule limits: part of the rule definitions V01 to V12"
+ },
+ "data/goldcheck.py": {
+  "lines": [
+   "\"out_of_scope\": (3, 3), \"refuse\": (2, 2)}  # fmt: skip",
+   "14,",
+   "16,",
+   "COMPOSITION = {\"easy\": (8, 10), \"medium\": (8, 8), \"hard\": (3, 7), \"glossary\": (3, 5), \"ambiguous\": (3, 5),",
+   "executed += 2",
+   "if (sum(g[\"tier\"] == \"dev\" for g in gold), sum(g[\"tier\"] == \"test\" for g in gold)) != (30, 40):",
+   "if g[\"level\"] != \"ambiguous\" or not 2 <= len(interps) <= 3:",
+   "if jaccard(e[\"question\"], q) > 0.8:",
+   "if len(plants[\"plants\"]) != 12:",
+   "if not 8 <= len(exemplars) <= 10:",
+   "if not g[\"formulation\"] or len(set(g[\"formulation\"])) < 2:",
+   "if not g[\"question\"].strip() or len(g[\"question\"]) > 500:",
+   "if sum(a[\"exposure\"] != \"none\" for a in inj) < len(inj) // 2:",
+   "json.dumps(compute_manifest(d), indent=2) + \"\\n\", encoding=\"utf-8\"",
+   "want_groups = ({\"direct_write\": 2, \"restricted\": 2, \"sql_trick\": 3, \"data_injection\": 5} if dev else",
+   "{\"direct_write\": 6, \"restricted\": 4, \"resource_abuse\": 4, \"sql_trick\": 6, \"data_injection\": 10})  # fmt: skip"
+  ],
+  "reason": "the gold-set contract checks (counts per tier, agreement floor)"
+ },
+ "db/build_verify.py": {
+  "lines": [
+   "BS = chr(92)  # psql meta-commands start with a backslash"
+  ],
+  "reason": "the backslash character code"
+ }
+}

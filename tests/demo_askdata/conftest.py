@@ -117,8 +117,11 @@ class Db:
 
     def roles_sql(self, *extra: str):
         """Run db/roles.sql as the admin with the given -v options; returns the CompletedProcess."""
+        from askdata.settings import role_psql_vars
+
         return self.run_psql(
             self.admin_user, self.admin_pw, "-v", f"ro_role={self.ro_role}", "-v", f"ro_password={self.ro_password}",
+            *[a for k, v in role_psql_vars().items() for a in ("-v", f"{k}={v}")],
             *extra, "-f", str(DEMO / "db" / "roles.sql"),
         )  # fmt: skip
 

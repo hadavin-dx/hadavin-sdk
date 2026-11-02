@@ -7,9 +7,13 @@ they differ from the file), the sealed-run counter and the minimum remaining bud
 
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import json
 import os
+import time
+import uuid
+from collections.abc import Callable, Iterator
 from decimal import Decimal
 from pathlib import Path
 from typing import Annotated, Literal
@@ -22,8 +26,13 @@ from pydantic import (
     model_validator,
 )
 
+from askdata.settings import RUNTIME, Sealed
+
 Hex64 = Annotated[str, StringConstraints(pattern=r"^[0-9a-f]{64}$")]
 Tier = Literal["easy", "medium", "hard", "glossary", "ambiguous", "out_of_scope", "refuse"]
+
+
+_SEALED = Sealed()  # the documented defaults live in settings.py
 
 
 class _Strict(BaseModel):
@@ -117,18 +126,42 @@ def sha256_file(path: Path) -> str:
 
 
 class Thresholds(_Strict):
-    green_max_upper: Decimal = Decimal(
-        "0.10"
+    green_max_upper: Decimal = (
+        _SEALED.green_max_upper
     )  # one-sided 95 % upper bound of the confident-wrong rate
-    amber_max_upper: Decimal = Decimal("0.15")
+    amber_max_upper: Decimal = _SEALED.amber_max_upper
 
 
 class Lock(_Strict):
     files: dict[str, Hex64]
     thresholds: Thresholds = Thresholds()
     test_runs: int = 0
-    sealed_min_remaining_usd: Decimal = Decimal("3.00")
-    last_test_status: Literal["none", "complete", "aborted"] = "none"
+    sealed_min_remaining_usd: Decimal = _SEALED.first_run_min_remaining_usd  # the FIRST sealed run
+    second_look_min_remaining_usd: Decimal = (
+        _SEALED.second_look_min_remaining_usd
+    )  # a --second-look run (A-03)
+    last_test_status: Literal["none", "complete", "aborted", "running", "unverified"] = "none"
+    # "<config_hash>:<model_id>" of the last finished `eval run --split dev --live --smoke`; a sealed --live run needs
+    # the SAME key (a changed prompt, config or model needs a new smoke run).
+    smoke_key: str | None = None
+    # Written BY HAND into lock.json after a defect in OUR harness or data is proved. It names the run folder the defect
+    # was seen in and the gold/adversarial item id, and it is consumed by one `--second-look harness_defect`.
+    harness_defect_reason: str | None = None
+    harness_defect_run: str | None = None
+    harness_defect_item: str | None = None
+    # Mirrors of the sealed-run chain (sealed.py): the chain's last `sha`, and an HMAC over test_runs, smoke_key and
+    # chain_head when a key is configured. `load()` replays the chain over them after a crash.
+    chain_head: str | None = None
+    core_hash: str | None = (
+        None  # hash of everything but the seal and the hand-written fields, at the last commit
+    )
+    keyed: bool = (
+        False  # the set was frozen with an HMAC key: a keyless gate is refused from then on
+    )
+    seal: str | None = None
+    max_second_looks: int = (
+        _SEALED.max_second_looks
+    )  # sealed runs allowed beyond the first, however they are justified
     second_look_allowed_for: list[Literal["aborted", "harness_defect"]] = [
         "aborted",
         "harness_defect",
@@ -150,23 +183,116 @@ def read_lock(eval_dir: Path) -> Lock:
         raise LockError(f"lock.json missing or invalid: {type(err).__name__}") from None
 
 
+def fsync_dir(path: Path) -> None:
+    """Make a rename durable: fsync the parent directory where the platform allows it (POSIX). Best effort."""
+    if os.name == "nt":
+        return
+    try:
+        fd = os.open(Path(path).parent, os.O_RDONLY)
+    except OSError:
+        return
+    try:
+        os.fsync(fd)
+    except OSError:
+        pass
+    finally:
+        os.close(fd)
+
+
+def replace_with_retry(src: Path, dst: Path) -> None:
+    """os.replace that retries a PermissionError (Windows refuses while a reader holds the file open), unlinks `src`
+    when it finally gives up, and fsyncs the directory after a success."""
+    for attempt in range(RUNTIME.lock_replace_attempts):
+        try:
+            os.replace(src, dst)
+            fsync_dir(dst)
+            return
+        except PermissionError:
+            if attempt == RUNTIME.lock_replace_attempts - 1:
+                Path(src).unlink(missing_ok=True)
+                raise
+            time.sleep(RUNTIME.lock_replace_wait_s)
+
+
 def write_lock(eval_dir: Path, lock: Lock) -> None:
     path = lock_path(eval_dir)
-    tmp = path.with_name(path.name + ".tmp")
-    with open(tmp, "w", encoding="utf-8", newline="\n") as f:
-        f.write(json.dumps(json.loads(lock.model_dump_json()), indent=2, sort_keys=True) + "\n")
-        f.flush()
-        os.fsync(f.fileno())
-    os.replace(tmp, path)
+    tmp = _write_tmp(path, lock)
+    replace_with_retry(tmp, path)
 
 
-def freeze(eval_dir: Path, names: list[str], thresholds: Thresholds | None = None) -> Lock:
-    """Create lock.json from the current files (the freeze step; run once, before the dev set is frozen for use)."""
-    lock = Lock(
+def _write_tmp(path: Path, lock: Lock) -> Path:
+    """The lock text in a uniquely named temp file next to `path` (two writers never share one)."""
+    tmp = path.with_name(f"{path.name}.{os.getpid()}.{uuid.uuid4().hex[:8]}.tmp")
+    try:
+        with open(tmp, "w", encoding="utf-8", newline="\n") as f:
+            f.write(json.dumps(json.loads(lock.model_dump_json()), indent=2, sort_keys=True) + "\n")
+            f.flush()
+            os.fsync(f.fileno())
+    except BaseException:
+        tmp.unlink(missing_ok=True)  # a failed write (disk full) leaves no temp file behind
+        raise
+    return tmp
+
+
+@contextlib.contextmanager
+def lock_guard(eval_dir: Path, wait_s: float = RUNTIME.lock_wait_s) -> Iterator[None]:
+    """Exclusive OS lock across read lock.json -> decide -> write lock.json (the sealed counter's critical section)."""
+    from askdata.meter import _try_lock, _unlock  # the same primitive the meter file uses
+
+    Path(eval_dir).mkdir(parents=True, exist_ok=True)
+    with open(lock_path(eval_dir).with_name("lock.json.lock"), "a+b") as f:
+        deadline = time.monotonic() + wait_s
+        while not _try_lock(f):
+            if time.monotonic() > deadline:
+                raise LockError("lock.json is busy (another eval run holds it)")
+            time.sleep(RUNTIME.lock_poll_s)
+        try:
+            yield
+        finally:
+            _unlock(f)
+
+
+def make_lock(
+    eval_dir: Path,
+    names: list[str],
+    thresholds: Thresholds | None = None,
+    lock_fields: dict | None = None,
+) -> Lock:
+    """The Lock a freeze would write for the files as they are now (nothing is written)."""
+    return Lock(
         files={n: sha256_file(Path(eval_dir) / n) for n in names},
         thresholds=thresholds or Thresholds(),
+        **(lock_fields or {}),
     )
-    write_lock(eval_dir, lock)
+
+
+def freeze(
+    eval_dir: Path,
+    names: list[str],
+    thresholds: Thresholds | None = None,
+    *,
+    no_clobber: bool = False,
+    seal: Callable[[Lock], Lock] | None = None,
+    lock_fields: dict | None = None,
+    prebuilt: Lock | None = None,
+) -> Lock:
+    """Create lock.json from the current files (the freeze step; run once, before the dev set is frozen for use).
+    `no_clobber`: write a temp file, then `os.link` it to lock.json, which fails if lock.json exists, so a crash never
+    leaves an empty lock.json and an existing lock (with its sealed counter) is never replaced."""
+    lock = prebuilt or make_lock(eval_dir, names, thresholds, lock_fields)
+    if seal:
+        lock = seal(lock)
+    if not no_clobber:
+        write_lock(eval_dir, lock)
+        return lock
+    path = lock_path(eval_dir)
+    tmp = _write_tmp(path, lock)
+    try:
+        os.link(tmp, path)
+    except FileExistsError:
+        raise LockError("lock.json already exists") from None
+    finally:
+        tmp.unlink(missing_ok=True)
     return lock
 
 

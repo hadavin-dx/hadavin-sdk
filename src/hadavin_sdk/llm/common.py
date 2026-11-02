@@ -16,6 +16,7 @@ from typing import Any
 from urllib.parse import urlsplit
 
 from hadavin_sdk.errors import ConfigError
+from hadavin_sdk.llm.protocol import ProviderError, UnusableAnswer
 from hadavin_sdk.llm.retry import with_retry
 from hadavin_sdk.models import Reply, ToolCall
 
@@ -58,7 +59,9 @@ def pinned(
 def estimate_tokens(text: str) -> int:
     """For a provider that reports no usage. Deliberately pessimistic (3 chars a token, never 0): a budget fed
     zeros never fires."""
-    return max(1, len(text) // 3)
+    return max(
+        1, len(text.encode("utf-8")) // 3
+    )  # BYTES, so CJK and emoji (3-4 bytes a character) are not undercounted
 
 
 def tools_for(
@@ -157,6 +160,8 @@ def reply(
     stop: str | None,
     started: float,
     sent: str,
+    attempts: int = 1,
+    answered: int = 1,
 ) -> Reply:
     """The Reply, priced from the route. Missing usage is estimated from what was sent and received. A cut-off
     answer keeps its cost but loses its tool calls: their input may be incomplete."""
@@ -176,6 +181,8 @@ def reply(
         model_id=route.model_id,
         stop_reason=stop,
         latency_ms=int((time.monotonic() - started) * 1000),
+        attempts=attempts,
+        answered=answered,
     )
 
 
@@ -187,6 +194,14 @@ class Answer:
     calls: list[ToolCall]
     tokens: tuple[int | None, int | None]
     stop: str | None
+    attempts: int = 1  # set by `_retry`: requests sent for this answer
+
+
+def price(route: Any, tokens_in: int, tokens_out: int) -> Decimal:
+    return (
+        Decimal(tokens_in) * route.input_usd_per_mtok
+        + Decimal(tokens_out) * route.output_usd_per_mtok
+    ) / Decimal(1_000_000)
 
 
 class NetworkLLM:
@@ -203,6 +218,12 @@ class NetworkLLM:
         sleep: Callable[[float], None] = time.sleep,
     ) -> None:
         self.routes, self.max_attempts, self._sleep = routes, max_attempts, sleep
+
+    @property
+    def max_requests(self) -> int:
+        """The most requests ONE `chat()` can send; a meter reserves for all of them. A kind that asks again
+        inside `chat()` multiplies this."""
+        return self.max_attempts
 
     def chat(
         self,
@@ -230,18 +251,30 @@ class NetworkLLM:
         raise NotImplementedError
 
     def _retry(self, call: Callable[[], Answer]) -> Answer:
-        return with_retry(
-            call,
+        sent = 0
+
+        def counted() -> Answer:
+            nonlocal sent
+            sent += 1
+            return call()
+
+        got = with_retry(
+            counted,
             label=self.label,
             max_attempts=self.max_attempts,
             sleep=self._sleep,
             retryable=self.retryable,
             detail=self.detail,
+            answered_hook=self.answered_hook,
         )
+        got.attempts = sent
+        return got
 
     # The kind's own SDK errors (llm/retry.py stays vendor-neutral): None means no opinion / no code.
     retryable: Callable[[BaseException], bool | None] | None = None
     detail: Callable[[BaseException], str] | None = None
+    # True/False when the kind knows an SDK error means "the provider answered, the answer was unusable" (billed)
+    answered_hook: Callable[[BaseException], bool | None] | None = None
 
 
 class _NoRedirect(urllib.request.HTTPRedirectHandler):
@@ -257,6 +290,39 @@ _LOCAL_OPENER = urllib.request.build_opener(_NoRedirect, urllib.request.ProxyHan
 _LOOPBACK = frozenset({"127.0.0.1", "localhost", "::1"})
 
 
+# A provider that reports more tokens than this in one answer is wrong or hostile: no model answers 10 million.
+MAX_REPORTED_TOKENS = 10_000_000
+
+
+def _check_usage(tokens: tuple[Any, Any] | None) -> None:
+    """Reported usage must be missing (it is estimated) or a non-negative whole number within bounds: a negative or
+    absurd number would otherwise be priced as is."""
+    for value in tokens or ():
+        if value is None:
+            continue
+        if (
+            isinstance(value, bool)
+            or not isinstance(value, int)
+            or not 0 <= value <= MAX_REPORTED_TOKENS
+        ):
+            raise ValueError("provider usage is not a plausible token count")
+
+
+def parse_stage[T](parse: Callable[..., T], *args: Any) -> T:
+    """The ANSWERED stage of a call: the provider replied and `parse` reads the reply. Any failure in `parse` means the
+    request was answered and billed but unusable, so it is an `UnusableAnswer`. Call it as
+    `parse_stage(self._parse, <the call that sends the request>)`: the argument is evaluated BEFORE the stage starts,
+    so a failure while building or sending the request is not an answer."""
+    try:
+        out = parse(*args)
+        _check_usage(getattr(out, "tokens", None))
+        return out
+    except ProviderError:
+        raise
+    except Exception as exc:  # noqa: BLE001
+        raise UnusableAnswer(f"unusable answer ({type(exc).__name__})") from None
+
+
 def post_json(url: str, body: dict[str, Any], headers: dict[str, str], timeout_s: float) -> Any:
     """One POST; an HTTP error status raises ``urllib.error.HTTPError`` (its ``code`` drives the retry)."""
     req = urllib.request.Request(  # noqa: S310 - https or keyless loopback, checked in the settings
@@ -267,4 +333,11 @@ def post_json(url: str, body: dict[str, Any], headers: dict[str, str], timeout_s
     )
     opener = _LOCAL_OPENER if urlsplit(url).hostname in _LOOPBACK else _OPENER
     with opener.open(req, timeout=timeout_s) as resp:  # nosec B310
-        return json.loads(resp.read())
+        # The server ANSWERED (a 2xx). A body that is cut short or is not JSON is an unusable answer and is
+        # billed, not a refusal: it is classified here, where the request is known to have been sent.
+        try:
+            return json.loads(resp.read())
+        except OSError:
+            raise  # a reset or a read timeout is the NETWORK's failure: retried, not an answer
+        except Exception as exc:  # noqa: BLE001 - JSONDecodeError, UnicodeDecodeError, IncompleteRead, RecursionError, MemoryError...
+            raise UnusableAnswer(f"unusable response body ({type(exc).__name__})") from None

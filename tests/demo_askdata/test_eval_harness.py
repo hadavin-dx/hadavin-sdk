@@ -10,6 +10,7 @@ from pathlib import Path
 import pytest
 from askdata import cli, evalrun, prompt
 from askdata.config import load_config
+from askdata.evalcli import _gate as evalcli_gate
 from askdata.evalcli import build_harness, cmd_run
 from askdata.evalrun import Config, Harness, HarnessError, Incomparable, RecordingExecutor
 from askdata.evalset import (
@@ -22,6 +23,7 @@ from askdata.evalset import (
     load_jsonl,
     read_lock,
     verify_files,
+    write_lock,
 )
 from askdata.fixtures import Step, write_script
 
@@ -445,7 +447,20 @@ def test_sealed_gate_rules():
         split="test",
         second_look="aborted",
     )
-    evalrun.sealed_gate(used, Decimal(5), split="test", second_look="harness_defect")
+    with pytest.raises(LockError, match="harness_defect"):
+        evalrun.sealed_gate(used, Decimal(5), split="test", second_look="harness_defect")
+    evalrun.sealed_gate(
+        used.model_copy(
+            update={
+                "harness_defect_reason": "x" * 12,
+                "harness_defect_run": "r",
+                "harness_defect_item": "g",
+            }
+        ),
+        Decimal(5),
+        split="test",
+        second_look="harness_defect",
+    )
 
 
 def test_item_schemas_are_strict(tmp_path):
@@ -541,7 +556,9 @@ def cli_env(tmp_path):
         ).model_dump_json()
         + "\n"
     )
-    freeze(ev, ["gold.dev.jsonl", "adversarial.dev.jsonl", "gold.test.jsonl", "adversarial.jsonl"])
+    evalcli_gate(cfg).create(
+        ["gold.dev.jsonl", "adversarial.dev.jsonl", "gold.test.jsonl", "adversarial.jsonl"]
+    )
     for g in rows + trows:
         write_script(cfg.paths.recorded_dir, pr.text, g.question, [Step(sql=g.gold_sql)])
     write_script(
@@ -600,7 +617,23 @@ def test_the_sealed_run_counts_at_start_and_a_second_needs_a_reason(cli_env, cap
     assert (
         "one invocation" in capsys.readouterr().out and read_lock(cfg.paths.eval_dir).test_runs == 1
     )
+    lk = read_lock(cfg.paths.eval_dir)  # the owner writes the proved defect into lock.json by hand
+    first_run = next(cfg.paths.runs_dir.iterdir()).name
+    item = json.loads((cfg.paths.eval_dir / "gold.test.jsonl").read_text().splitlines()[0])["id"]
+    write_lock(
+        cfg.paths.eval_dir,
+        lk.model_copy(
+            update={
+                "harness_defect_reason": "gold query wrong",
+                "harness_defect_run": first_run,
+                "harness_defect_item": item,
+            }
+        ),
+    )
     cmd_run(cfg, "test", 1, "harness_defect", harness_factory=factory)
+    assert (
+        read_lock(cfg.paths.eval_dir).harness_defect_reason is None
+    )  # one defect buys one second look
     labels = sorted(
         json.loads(p.joinpath("report.json").read_text())["label"]
         for p in cfg.paths.runs_dir.iterdir()
