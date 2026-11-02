@@ -5,3 +5,5 @@ Please report a suspected vulnerability privately through GitHub: the **Security
 details, and a private channel will be arranged. Do not post vulnerability details publicly.
 
 Reports are answered within 5 working days.
+
+The repository also holds developer tools under `tools/` (a mutation runner that starts `pytest` subprocesses on a chosen tree, a Unicode table generator). They are not part of the published package and nothing in `src/` imports them.

@@ -5,10 +5,11 @@ every occurrence of ``old`` by ``new`` in one file, runs pytest with a JUnit fil
 ``testing.mutation.judge``. A mutant counts as GOOD only if the verdict is KILLED, or CRASH when the mutant sets ``allow_crash``. The
 unmutated copy must pass first (otherwise every kill is meaningless). Stdlib only; runs pytest through ``sys.executable``.
 
-This is a developer tool, not a runtime module: no ``hadavin_sdk`` module imports it and it is not re-exported. It stays in the package
-(and not in a separate tools folder) because demo repositories take it from core by path and pin (``core_copies.json``), and moving
-it would break that import. It runs a subprocess on caller-chosen trees, so every path it reads, copies or writes is checked to stay
-inside its tree (``_inside``: a ``..`` part or an absolute path is a ``ValueError``), and every pytest run has a timeout.
+This is a developer tool, not a runtime module: it lives in ``tools/`` (NOT in the wheel, not under ``src``). A demo that wants it
+copies ``tools/mutation_runner.py`` from core like any other core file (a ``core_copies.json`` row, ``import_rewrite`` of nothing: it
+imports only ``hadavin_sdk.testing.mutation``). It runs a subprocess on caller-chosen trees, so the mutant file is found by LISTING the
+tree (``_locate``: the caller's string is compared with the listed names and never joined to a path), every other path is checked to
+stay inside its tree (``_inside``: a ``..`` part or an absolute path is a ``ValueError``), and every pytest run has a timeout.
 """
 
 from __future__ import annotations
@@ -64,8 +65,26 @@ def _inside(base: Path, rel: str) -> Path:
 TIMED_OUT = -9  # returned instead of an exit code when the run exceeded its timeout
 
 
+def _locate(base: Path, rel: str) -> Path:
+    """The file ``rel`` names inside ``base``, found by listing the tree (``os.walk``; a match is accepted only if its real path stays inside the tree): the caller's string is only
+    COMPARED as data with the listed relative names and is never joined to a path, so it cannot steer a read or a write out of the tree."""
+    want = _relative(rel).replace("\\", "/")
+    for dirpath, _dirs, files in os.walk(base):
+        for name in files:
+            full = os.path.join(dirpath, name)
+            if os.path.relpath(full, base).replace(os.sep, "/") != want:
+                continue
+            real_base, real_full = os.path.realpath(base), os.path.realpath(full)
+            # a link (or junction) out of the tree does not count
+            if os.path.commonpath([real_base, real_full]) == real_base:
+                return Path(full)
+    raise ValueError(f"no such file inside the tree: {rel!r}")
+
+
 def _pytest(cwd: Path, tests: Sequence[str], junit: Path, timeout: float) -> int:
-    env = dict(os.environ, PYTHONPATH=str(cwd / "src"))
+    env = dict(
+        os.environ, PYTHONPATH=os.pathsep.join([str(cwd / "src"), str(cwd)])
+    )  # the tree root too: tests may import tools.*
     try:
         r = subprocess.run(  # noqa: S603
             [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", "--noconftest", "-x", f"--junitxml={junit}", "--", *tests],
@@ -87,7 +106,7 @@ def run_mutants(
 ) -> list[tuple[str, Verdict, str, bool]]:
     """(name, verdict, failing test id, good). Raises ``RuntimeError`` if the unmutated copy fails or times out; a mutant run that exceeds
     ``timeout`` seconds is ``(name, Verdict.ERROR, "TIMEOUT", False)``. Every ``tests`` and ``extra_dirs`` entry and every mutant file
-    must stay inside its tree (``ValueError``)."""
+    must name a file inside its tree (``ValueError``)."""
     root = Path(root)
     for t in (*tests, *extra_dirs):
         _relative(t)
@@ -115,7 +134,7 @@ def run_mutants(
             if only and not any(o in m.name for o in only):
                 continue
             fresh()
-            p = _inside(tmp, m.file)
+            p = _locate(tmp, m.file)
             text = p.read_text(encoding="utf-8")
             if m.old not in text:
                 out.append((m.name, Verdict.ERROR, "SNIPPET NOT FOUND", False))

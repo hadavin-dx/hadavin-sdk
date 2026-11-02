@@ -71,6 +71,8 @@ DEFAULT_MAX_ROWS = (
 
 class RowStore:
     def __init__(self, max_rows: int | None = DEFAULT_MAX_ROWS) -> None:
+        if max_rows is not None and (type(max_rows) is not int or max_rows < 1):
+            raise ValueError("max_rows must be None or an int >= 1")
         self._rows: dict[str, Any] = {}
         self._pending: set[str] = set()
         self._lock = threading.Lock()

@@ -4,16 +4,16 @@ These modules were promoted from a demo's reviews (core PR #50). All are vendor-
 
 ## `LeakPolicy` (`guard/egress_text.py`): one validated place for every threshold
 
-There is no default policy: `check_text(..., policy=)` is required. `LeakPolicy()` (the table below) equals `LeakPolicy.payments()`, the strict profile. `LeakPolicy.general()` is for replies that carry order ids and phone numbers: `max_digits` 12, `max_total_digits` 22, `max_exempt_digits` 9, `max_dates` 3, `account_min_len` 14; it does not stop a card number sent in pieces, so pair it with protected values.
+There is no default policy: `check_text(..., policy=)` is required, and a config section needs `profile: payments` or `profile: general` (`LeakPolicy.from_mapping`). `LeakPolicy()` (the table below) equals `LeakPolicy.payments()`, the strict profile. `LeakPolicy.general()` is for replies that carry order ids and phone numbers: `max_digits` 12, `max_total_digits` 12, `max_exempt_digits` 8, `max_dates` 2, `account_min_len` 14. **Guarantee, both presets:** fewer than 12 digits in total leave in one reply (plain digit-like characters + digits of set-aside amounts and references + 5 per date), so a card number (13 or more digits) cannot leave split across text, amounts and dates; `max_total_digits` can never exceed 12 (validated); a Luhn scan over the digit stream is a second line. The price: `general()` refuses any phone number with 12 or more digits (E.164 for India or the UK) unless the caller passes `allowed_patterns`; `payments()` refuses an order id of 8 digits or more. The defaults for `date_years` (2000-2099) and `currencies` (30 ISO codes) are payments-flavoured and `general()` inherits them: set them from config for another domain.
 
 | Field | Default (`payments()`) | Meaning |
 |---|---|---|
 | `max_digits` | 8 | plain digit-like characters allowed once set-aside tokens are removed (fewer than this) |
-| `max_total_digits` | 14 | the SUM of the plain digit-like characters, the digits of set-aside amounts and references, and 5 per date must stay below this; at most 2 x `max_digits` - 2 |
+| `max_total_digits` | 12 | the SUM of the plain digit-like characters, the digits of set-aside amounts and references, and 5 per date must stay below this; at most 12 (below the shortest card number) and at most 2 x `max_digits` - 2 |
 | `date_years` | (2000, 2099) | years a date may have to be set aside |
 | `max_len` | 4096 | text longer than this is refused unscanned (`TEXT_TOO_LONG`); ceiling 100000 |
 | `max_exempt_tokens` | 6 | dates, amounts and allowed references that may be set aside |
-| `max_exempt_digits` | 7 | digits inside amounts and allowed references; must be below `max_digits` |
+| `max_exempt_digits` | 6 | digits inside amounts and allowed references; must be below `max_digits` |
 | `max_dates` | 2 | valid dates that may be set aside (ISO, day-first and month-first); a date counts 5 digits in the total (it carries about 15 bits) |
 | `amounts_need_currency` | True | an amount is set aside only with a currency symbol or code next to it |
 | `currencies` | 30 ISO codes | the codes that anchor an amount (configurable) |
@@ -38,7 +38,7 @@ There is no default policy: `check_text(..., policy=)` is required. `LeakPolicy(
 | `ConfigHolder.swap(expect=)` | None (no compare-and-set) |
 | `freeze` / `thaw` bounds | 64 levels, 1000000 values counted per visit |
 | `mutation_runner.run_mutants(timeout=)` | 900 seconds per pytest run |
-| `RowStore(max_rows=)` | 100000 rows per store (`None` opts out) |
+| `RowStore(max_rows=)` | 100000 rows per store (`None` opts out; 0, negative, bool, float and text are a ValueError) |
 | `approvals/gate.py` fold bound | 1 000 000 characters |
 
 ## The fold rule
@@ -52,3 +52,18 @@ There is no default policy: `check_text(..., policy=)` is required. `LeakPolicy(
 | Per-tenant kill-switch row | `models.KillSwitch` is one global row (schema change); each client deployment has its own database, so a global stop is the right scope today | the first deployment that serves two tenants from one database: add a tenant column, migration, `Limits.stop(by, tenant=)`, a per-tenant `StopGate` key | `runtime/stop_gate.py` docstring, CHANGELOG |
 | Outbox, signer, Verifier protocol, reservations | they belong to the signed-approvals work (PR #49) and stage 2; nothing here claims them (only `check_rowstore_contract` exists in `testing/contracts.py`) | PR #49 merge, then contract checks for them | CHANGELOG |
 | `guard/redact.py` does not fold | the input mask matches raw text, and its offsets change after NFKD drops marks; a fold-aware mask needs an offset map | design review of "scan folded text, mask by span map"; until then redact detects on folded text and, on a hit, masks the whole token or line (fail closed), and the output check `egress_text` is the backstop | CHANGELOG, `guard/redact.py` |
+
+## Copying a core file into a demo (rows for `core_copies.json`)
+
+A demo that keeps a byte copy lists one row per file; `core_pr` is 50 until it merges, then the copy is dropped for the pin.
+
+```json
+{"core_path": "src/hadavin_sdk/guard/textnorm.py",   "core_sha256": "<tests/fixtures/textnorm_manifest.json>", "core_pr": 50,
+ "import_rewrite": [["hadavin_sdk.guard._confusables", "<demo package>.guard._confusables"]]}
+{"core_path": "src/hadavin_sdk/guard/_confusables.py", "core_sha256": "<manifest>", "core_pr": 50, "import_rewrite": []}
+{"core_path": "src/hadavin_sdk/guard/egress_text.py", "core_sha256": "<sha256>", "core_pr": 50,
+ "import_rewrite": [["hadavin_sdk.guard.textnorm", "<demo package>.guard.textnorm"]]}
+{"core_path": "tests/fixtures/textnorm_vectors.json", "core_sha256": "<manifest>", "core_pr": 50, "import_rewrite": []}
+```
+
+The generator pin test (`tools/gen_confusables.py`, `tools/data/confusables.txt`) stays in core: a demo cannot run it. `stop_gate.py` needs core's `limits.py` with `Limits.stop/reset(by, source)` and `Limits.is_stopped()` (copy it together or pin core at PR #50 or later); `StopGate` raises `TypeError` at construction otherwise. `tools/mutation_runner.py` is a developer tool outside the wheel: copy it like any other file. Hashes of the three text-fold files: `tests/fixtures/textnorm_manifest.json`.

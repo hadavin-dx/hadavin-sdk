@@ -27,4 +27,4 @@ does not grant any licence to use it.
 
 ## Security
 
-See [SECURITY.md](SECURITY.md).
+See [SECURITY.md](SECURITY.md). Developer tools in `tools/` (a mutation runner that starts `pytest` subprocesses, a Unicode table generator) are not shipped in the wheel and nothing imports them.

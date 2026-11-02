@@ -1,4 +1,4 @@
-"""Reverts one guard at a time (``hadavin_sdk.testing.mutation_runner``) and requires the intended test to fail for the intended reason.
+"""Reverts one guard at a time (``tools.mutation_runner``) and requires the intended test to fail for the intended reason.
 Not collected by pytest. Run from the repo root:
 
     uv run python tests/promoted_mutants.py            # all mutants; exit 1 if any is not killed by its test
@@ -8,7 +8,11 @@ Not collected by pytest. Run from the repo root:
 import sys
 from pathlib import Path
 
-from hadavin_sdk.testing.mutation_runner import Mutant, run_mutants
+sys.path.insert(
+    0, str(Path(__file__).resolve().parents[1])
+)  # the repo root: tools.* is not installed
+
+from tools.mutation_runner import Mutant, run_mutants
 
 ROOT = Path(__file__).resolve().parents[1]
 TEST = "tests/test_promoted_controls.py"
@@ -20,7 +24,7 @@ CV, SG, RS, CA = (
     S + "audit/capped.py",
 )
 TN, EG, MU = S + "guard/textnorm.py", S + "guard/egress_text.py", S + "testing/mutation.py"
-MR, CT, GT = S + "testing/mutation_runner.py", S + "testing/contracts.py", S + "approvals/gate.py"
+MR, CT, GT = "tools/mutation_runner.py", S + "testing/contracts.py", S + "approvals/gate.py"
 CF, RD, GEN = S + "guard/_confusables.py", S + "guard/redact.py", "tools/gen_confusables.py"
 
 M = [
@@ -771,14 +775,14 @@ M = [
     Mutant(
         "gate: release does not write the stop again",
         SG,
-        "        if again:\n            if self._limits is not None:",
-        "        if again:\n            if False:",
+        "        if again:\n            durable: bool | None = None\n            if self._limits is not None:",
+        "        if again:\n            durable: bool | None = None\n            if False:",
         "test_a_late_release_cannot_undo",
     ),
     Mutant(
         "gate: release after a newer engage does not raise",
         SG,
-        '            raise StopGateBusy("an engage ran during the release: the stop stays on")',
+        '            raise StopGateBusy("an engage ran during the release: the stop stays on", durable)',
         "            return",
         "test_a_late_release_cannot_undo",
     ),
@@ -913,7 +917,7 @@ M = [
     Mutant(
         "runner: the mutant file is not checked again",
         MR,
-        "            p = _inside(tmp, m.file)",
+        "            p = _locate(tmp, m.file)",
         "            p = tmp / m.file",
         "test_the_runner_refuses_paths",
     ),
@@ -956,23 +960,151 @@ M = [
     Mutant(
         "egress: weak letters not counted in a letters-only run",
         EG,
-        "            total += strong + weak",
+        "            total += strong + glued + loose",
         "            total += strong",
         "test_weak_digit_look_alikes",
     ),
     Mutant(
         "egress: weak letters counted beside digits",
         EG,
-        "            total += digits + strong\n",
-        "            total += digits + strong + weak\n",
+        "            total += digits + strong + glued\n",
+        "            total += digits + strong + glued + loose\n",
         "test_weak_digit_look_alikes",
     ),
     Mutant(
         "egress: weak letters qualify a letters-only run",
         EG,
-        "        elif ch in _WEAK_DIGITISH:\n            weak += 1",
+        "        elif ch in _WEAK_DIGITISH:\n            tok_weak += 1",
         "        elif ch in _WEAK_DIGITISH:\n            strong += 1",
         "test_weak_digit_look_alikes",
+    ),
+    Mutant(
+        "rows: a zero row limit accepted",
+        RS,
+        "(type(max_rows) is not int or max_rows < 1)",
+        "(type(max_rows) is not int)",
+        "test_the_row_store_row_limit_is_validated",
+    ),
+    Mutant(
+        "rows: a bool row limit accepted",
+        RS,
+        "(type(max_rows) is not int or max_rows < 1)",
+        "(not isinstance(max_rows, int) or max_rows < 1)",
+        "test_the_row_store_row_limit_is_validated",
+    ),
+    Mutant(
+        "egress: the total may exceed a card length",
+        EG,
+        "is_int(self.max_total_digits, 1, MAX_TOTAL_DIGITS_CEILING)",
+        "is_int(self.max_total_digits, 1, 128)",
+        "test_the_plain_and_the_set_aside_digits_add_up",
+    ),
+    Mutant(
+        "allow: a case difference is a spoof alarm",
+        TN,
+        "    if _canon(a) == _canon(b):\n        return AllowVerdict.VARIANT",
+        "    if False:\n        return AllowVerdict.VARIANT",
+        "test_allow_decisions_are_exact",
+    ),
+    Mutant(
+        "allow: a verdict has a truth value",
+        TN,
+        "        raise TypeError(\"an AllowVerdict has no truth value: compare with 'is AllowVerdict.EQUAL'\")",
+        "        return True",
+        "test_allow_decisions_are_exact",
+    ),
+    Mutant(
+        "deny: same_person does not fold",
+        TN,
+        "    return fold_key(a) == fold_key(b)",
+        "    return a == b",
+        "test_allow_decisions_are_exact",
+    ),
+    Mutant(
+        "policy: a section without a profile is accepted",
+        EG,
+        '        if profile not in ("payments", "general"):',
+        "        if False:",
+        "test_there_is_no_default_policy",
+    ),
+    Mutant(
+        "gate: an old Limits is accepted",
+        SG,
+        '            if "source" not in params and not any(',
+        "            if False and not any(",
+        "test_a_stop_gate_over_a_limits_without_source",
+    ),
+    Mutant(
+        "gate: a busy release hides a failed second stop",
+        SG,
+        "                    durable = False\n",
+        "                    durable = True\n",
+        "test_a_busy_release_says_whether",
+    ),
+    Mutant(
+        "gate: the cache survives the second stop",
+        SG,
+        "                self._cached = None\n            raise StopGateBusy",
+        "            raise StopGateBusy",
+        "test_a_busy_release_says_whether",
+    ),
+    Mutant(
+        "egress: the Luhn check is wrong",
+        EG,
+        "    return total % 10 == 0",
+        "    return total % 10 == 1",
+        "test_a_luhn_valid_card",
+    ),
+    Mutant(
+        "egress: the card scan ignores the separators",
+        EG,
+        '        digits = "".join(ch for ch in seg if ch.isdigit() and ch.isascii())',
+        "        digits = seg",
+        "test_the_micro_and_ohm_signs",
+        allow_crash=True,
+    ),
+    Mutant(
+        "egress: the card scan reads across dates",
+        EG,
+        "    for seg in stream.split(_MARK):",
+        '    for seg in (stream.replace(_MARK, ""),):',
+        "test_a_luhn_valid_card",
+    ),
+    Mutant(
+        "egress: the card scan is not called",
+        EG,
+        "    if _card_run(card_stream):",
+        "    if False:",
+        "test_check_text_runs_the_card_scan_last",
+    ),
+    Mutant(
+        "egress: a weak letter in a word counts beside digits",
+        EG,
+        "        if tok_cnt >= 2:",
+        "        if tok_cnt >= 1:",
+        "test_weak_digit_look_alikes",
+    ),
+    Mutant(
+        "runner: the mutant file is joined as a path",
+        MR,
+        "            p = _locate(tmp, m.file)",
+        "            p = Path(tmp) / m.file",
+        "test_the_runner_refuses_paths",
+    ),
+    Mutant(
+        "runner: a link out of the tree is listed",
+        MR,
+        "            if os.path.commonpath([real_base, real_full]) == real_base:",
+        "            if True:",
+        "test_the_runner_refuses_paths",
+    ),
+    Mutant(
+        "table: the vendored file is not the pinned one",
+        GEN,
+        'DEFAULT_INPUT = Path(__file__).resolve().parent / "data" / "confusables.txt"',
+        'DEFAULT_INPUT = Path(__file__).resolve().parent / "data" / "missing.txt"',
+        "test_the_generator_reproduces",
+        allow_crash=True,
     ),
 ]
 

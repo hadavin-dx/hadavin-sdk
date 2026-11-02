@@ -134,51 +134,68 @@
   characters is not folded (the other views still run).
 - **Behaviour change in `guard/redact.py` (interim, fail closed):** a line with non-ASCII text is scanned a second time in its FOLDED form;
   on a hit the whole line is replaced by its folded form with the hits masked (offsets are not mapped back, so `restore` gives the folded
-  value). **`redact.py` still does not fold in general:** the input mask matches the raw text first, so a value hidden behind look-alike
+  value). The replaced line is LOSSY: the fold drops legitimate marks (Hindi and Thai vowel signs, the breve of Cyrillic short i).
+  **`redact.py` still does not fold in general:** the input mask matches the raw text first, so a value hidden behind look-alike
   letters, another script's digits or an invisible character INSIDE the value is caught only by this second pass and by the output check
   (`guard/egress_text.py`) and the gate views, not by the first pass. What the redactor still does not catch: a value split by a character
   that changes the fold's shape (for example digits spelled as words), look-alike letters in a non-folded script, and a secret no pattern
   knows. A fold-aware mask (scan folded text, mask by span map) is a tracked item in `docs/promoted-controls.md`.
 - **`Limits.stop(by, source="cli")` / `Limits.reset(by, source="cli")` and `Limits.is_stopped()`** (small core change; PR #48 also edits
-  `limits.py`: rebase it after this PR). A gate flip is audited with `source="gate"`, not as a CLI action.
-- **Merge order:** PR #49 (refunds) and this PR both edit this Unreleased section and share `guard/textnorm.py`. Merge #50 first. #49 must
-  copy `guard/textnorm.py` AND the generated `guard/_confusables.py` byte for byte (the sha256 of `textnorm.py` is in the PR description
-  and in the studio notes; `core_sync_check` compares it), copy `tests/fixtures/textnorm_vectors.json`, and then adopt the new names
-  (`has_mixed_script`, `allow_equal`; `squeeze` is keyword-only for `loose`). The adoption patch lives in the studio folder
-  (`egm\bhovix-core\promote-refunds\patch-adopt-textnorm.diff`), not in this repository: in short, `identity_text` and `reply_check` also
-  drop unassigned code points (Cn), and `identity_key(lookalikes="refuse")` also refuses `has_mixed_script(raw)`.
+  `limits.py`: rebase it after this PR). A gate flip is audited with `source="gate"`, not as a CLI action. `StopGate` checks at
+  construction that its `Limits` has the `source` parameter and raises `TypeError` otherwise: copy `stop_gate.py` together with `limits.py`
+  (or pin core at PR #50 or later).
+- **Merge order and re-sync of the copies:** PR #49 (refunds) and this PR both edit this Unreleased section and share
+  `guard/textnorm.py`. Merge #50 first. Every repository that keeps a byte copy (the demos, #49) re-copies, in one commit:
+  `guard/textnorm.py` (sha256 `954ae52c5521d569eb9f8de0bf0258268885d76dd486d1d64f8c95c69ec77ee4`), the generated `guard/_confusables.py` (sha256 `41740c11734e2ec1e5a63f9325dffa04226c84f3b81b43c1b5c7e766f8a0ccfd`; `textnorm.py` imports it) and
+  `tests/fixtures/textnorm_vectors.json` (sha256 `1a1944708f7d1737588d7b02666620ceb308b0fe4a71ce2a312c4dc29113d349`); the same three hashes are pinned in `tests/fixtures/textnorm_manifest.json`.
+  Then update the repository's `core_copies.json` rows (`core_path`, `core_sha256`, `import_rewrite`: `textnorm.py` imports
+  `hadavin_sdk.guard._confusables`, `egress_text.py` imports `hadavin_sdk.guard.textnorm`) and adopt the new names: `safe_equal(a, b)` ->
+  `allow_equal(a, b) is AllowVerdict.EQUAL` (`VARIANT` and `LOOKALIKE` refuse; `LOOKALIKE` is the audit alarm), `confusable_not_equal` is
+  gone, `mixed_script` -> `has_mixed_script`, DENY comparisons -> `same_person`, `squeeze(raw, loose=...)` is keyword-only,
+  `check_text(..., policy=)` is required (`LeakPolicy.payments()` / `.general()`, config sections need `profile:`), `runtime/control.py`
+  is gone (use `StopGate`; handle `StopGateBusy`). For PR #49 in short: `identity_text` and `reply_check` also drop unassigned code points
+  (Cn), and `identity_key(lookalikes="refuse")` also refuses `has_mixed_script(raw)`.
 
 ### Added (promoted controls; vendor-neutral)
 Call sites in `src`: `approvals/gate.py` (the fold), `guard/redact.py` (the interim fold), `limits.py` (`source`, `is_stopped`). The other
-modules below have none yet; demos take them from core by path and pin.
-- `guard/textnorm.py` (+ generated `guard/_confusables.py`, `tools/gen_confusables.py`): ONE text fold. The fold makes look-alike text
-  EQUAL, for DENY decisions only (separation of duties, blocklists, leak scans). It is the shared fold of `egress_text` and the G5 gate
-  views; `guard/redact.py` has its own first pass (see Changed) and `approvals/gate.py` keeps a separate invisible-character table for
-  its other views, so this is NOT "one fold everywhere" yet. For an ALLOW decision use `allow_equal(a, b)` (`EQUAL` only for identical
-  strings; `LOOKALIKE` and `DIFFERENT` refuse). `names_equal` is a tolerant name comparison, never an ALLOW. `has_mixed_script` is the
-  fail-closed backstop for look-alikes the table does not list; the micro and ohm signs are exempt. The look-alike table is generated from
-  Unicode UTS #39 `confusables.txt` (MA, pinned sha256, 18.0.0) plus 16 listed letters and a rule for Latin small capitals; the
-  generator runs offline from a file the maintainer fetches (not shipped). Unassigned code points (Cn) are dropped (depends on the Python
-  Unicode version). Tests pin the table, a shared vector file and a property that every value is ASCII.
-- `guard/egress_text.py`: output check for text a person reads: digit budget (plain, set-aside and date digits ADD UP), capped set-aside
-  tokens, protected values (also short and non-Latin ones; CJK and Thai match as substrings), typed `Violation`s, validated
-  `LeakPolicy`. **No default policy**: `check_text(..., policy=LeakPolicy.payments())` (strict) or `LeakPolicy.general()`. Defaults
-  table: `docs/promoted-controls.md`. Distinct from `guard/redact.py` (the input mask).
-  Digit-like letters: O o I l L S s B Z z G Q count; the lowercase i b g q are WEAK (prose such as "big issue") and count only inside a
-  letters-only run with 6 strong letters, so `OlISBZGq` is refused (residual: weak letters beside real digits, `1b5i7g3q`, are not counted).
+modules below have no call site in this repository yet.
+- `guard/textnorm.py` (+ generated `guard/_confusables.py`, `tools/gen_confusables.py`, vendored `tools/data/confusables.txt`): the shared
+  text fold of `egress_text` and the G5 gate views. The fold makes look-alike text EQUAL, for DENY decisions only (`same_person`,
+  blocklists, leak scans). `guard/redact.py` has its own first pass (see Changed) and `approvals/gate.py` keeps a separate invisible-
+  character table for its other views, so this is NOT "one fold everywhere" yet. For an ALLOW decision use `allow_equal(a, b)` (`EQUAL`
+  only for identical strings; `VARIANT`, `LOOKALIKE` and `DIFFERENT` refuse; a plain `Enum` whose truth value raises, so `if
+  allow_equal(a, b):` cannot be written by mistake). `names_equal` is a tolerant name comparison for prose, neither ALLOW nor DENY.
+  `has_mixed_script` is the fail-closed backstop for look-alikes the table does not list; the micro and ohm signs are exempt. The
+  look-alike table is generated from Unicode UTS #39 `confusables.txt` (MA, version 18.0.0, dated 2026-08-06, sha256 pinned in the
+  generator) plus 16 listed letters and a rule for Latin small capitals. unicode.org serves only a "latest" URL, so the 763 KB data file
+  is vendored (Unicode License v3, notice in the file and in the generated header) and a test regenerates the table offline. The
+  small-capital rule reads character names from the running interpreter: the checked-in table was generated with Python 3.13.3 /
+  Unicode 15.1.0 (`DATA_UNICODEDATA`), the regeneration test runs only on that Unicode version. Unassigned code points (Cn) are dropped
+  (depends on the Python Unicode version). Tests pin the table, the manifest, a shared vector file and a property that every value is ASCII.
+- `guard/egress_text.py`: output check for text a person reads. Digit budget: plain digit-like characters, the digits of set-aside amounts
+  and references, and 5 per date ADD UP and must stay below 12 in every preset (the shortest card number has 13); a Luhn scan over the digit
+  stream is the second line. Capped set-aside tokens, protected values (also short and non-Latin ones; CJK and Thai match as substrings),
+  typed `Violation`s, validated `LeakPolicy`. **No default policy**: `check_text(..., policy=LeakPolicy.payments())` (strict) or
+  `LeakPolicy.general()` (ids and phone numbers up to 11 digits; a phone with 12 or more digits needs `allowed_patterns`). Defaults
+  table: `docs/promoted-controls.md`. Distinct from `guard/redact.py` (the input mask). Digit-like letters: O o I l L S s B Z z G Q count;
+  the lowercase i b g q are WEAK (prose such as "big issue") and count only in a token with 2 or more digits or strong letters, or inside a
+  letters-only run with 6 strong letters, so `OlISBZGq` and `1b5i7g3q` are refused; a weak letter in a token of its own ("is big 12345")
+  never counts beside digits.
 - `runtime/config_view.py`: deep-frozen views (accident-proofing, not a sandbox), one immutable `ConfigView`, `ConfigHolder.swap(expect=)`,
   depth and node bounds on `freeze` and `thaw`.
 - `runtime/stop_gate.py`: `StopGate`, the in-process effect barrier in front of the audited durable stop (`Limits.stop` / `Limits.reset`,
   one write path); `engage` flips the process flag first and fails closed when the store is down (and records the stop itself if
-  `Limits.stop` raises); `release` is audit-first and cannot undo a newer `engage`; `aengage` / `aeffect` for asyncio. The old in-process
-  `KillSwitch` class never shipped on `main`; there is no compatibility shim. The durable switch is ONE global row: a per-tenant stop is a
-  tracked item.
-- `runtime/rowstore.py`: copy-on-read row store (default limit 100000 rows), validate then audit then write, `KeyPending` vs `DuplicateKey`.
+  `Limits.stop` raises); `release` is audit-first and cannot undo a newer `engage` (`StopGateBusy.durable` says whether the stop was
+  written again); `aengage` / `aeffect` for asyncio. The old in-process `KillSwitch` class never shipped on `main`; there is no
+  compatibility shim. The durable switch is ONE global row: a per-tenant stop is a tracked item.
+- `runtime/rowstore.py`: copy-on-read row store (default limit 100000 rows, validated), validate then audit then write, `KeyPending` vs
+  `DuplicateKey`.
 - `audit/capped.py`: per-tenant capped audit for refused attempts (bounded tenants, kinds and keys, marker reserved under the lock,
   back-off) and an `AuditSink` adapter (`intent=True` for audit-before-write).
-- `testing/mutation.py`, `testing/mutation_runner.py`, `testing/contracts.py`: mutation-kill judge, a small runner (paths confined to
-  its tree, a timeout per pytest run), and a row-store contract check. **Not included:** the outbox, signer and `Verifier` contracts and
-  reservations belong to PR #49 and stage 2 (a tracked item); only `check_rowstore_contract` exists here.
+- `testing/mutation.py`, `testing/contracts.py`: mutation-kill judge and a row-store contract check (in the wheel). `tools/mutation_runner.py`
+  (NOT in the wheel, nothing imports it): a small runner, paths confined to its tree, a timeout per pytest run. **Not included:** the
+  outbox, signer and `Verifier` contracts and reservations belong to PR #49 and stage 2 (a tracked item); only `check_rowstore_contract`
+  exists here.
 
 ### Added
 - **G4 command withholding** (P5/P6 follow-ups). `channel.clean` now withholds every command a person could

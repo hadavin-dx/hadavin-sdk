@@ -1,4 +1,4 @@
-"""ONE text fold for every place that compares or scans text for a protected value.
+"""The shared text fold of ``guard.egress_text`` and the G5 gate views, for any place that compares or scans text for a protected value.
 
 Used by ``guard.egress_text`` (output check) and ``approvals.gate`` (secret views); a kind or demo that needs a comparison key
 imports ``fold`` / ``squeeze`` from here instead of keeping its own table. Do not use ``fold`` to display or store text: it drops
@@ -8,10 +8,12 @@ THE RULE (read before using ``fold``): ``fold`` makes look-alike text EQUAL. Tha
 duties: "alice" and the Cyrillic-a "alice" are the same person; a blocklist; a leak scan). It is WRONG for an ALLOW decision ("this
 address equals the verified address", an allowlist): folding there lets a look-alike address through.
   * ALLOW decision: ``allow_equal(a, b)`` is the WHOLE decision. EQUAL only for identical strings (``a == b``, no normalisation, so
-    the text you verified is the text you use); LOOKALIKE means the strings differ but fold to the same text (a spoof attempt or a
-    case/width/ligature variant: refuse, and audit it as such); DIFFERENT is an ordinary mismatch (refuse). The caller that wants
+    the text you verified is the text you use); VARIANT means a case, width, ligature or whitespace difference only (refuse); LOOKALIKE
+    means the strings differ but fold to the same text through homoglyphs or invisible characters (a spoof attempt: refuse and audit it
+    as such); DIFFERENT is an ordinary mismatch (refuse). The caller that wants
     case-insensitive domains lowercases the domain itself BEFORE comparing and uses the lowered text afterwards.
-  * ``names_equal`` is NOT an ALLOW comparison: NFKC, case and whitespace insensitive equality for people's names in prose.
+  * DENY decision: ``same_person(a, b)`` (built on ``fold_key``). ``names_equal`` is neither: NFKC, case and whitespace insensitive equality
+    for people's names in prose.
 
 ``fold`` (stdlib only, linear):
   1. NFKD, so a base letter and its combining mark separate; 2. drop control, format, combining-mark, private-use, surrogate and
@@ -33,7 +35,7 @@ from __future__ import annotations
 
 import re
 import unicodedata
-from enum import StrEnum
+from enum import Enum
 
 from hadavin_sdk.guard._confusables import TABLE as CONFUSABLES
 
@@ -88,25 +90,46 @@ def _canon(s: str) -> str:
     return " ".join(unicodedata.normalize("NFKC", s).casefold().split())
 
 
-class AllowVerdict(StrEnum):
+def fold_key(raw: str) -> str:
+    """The comparison key of a DENY decision: ``fold`` with case folded and whitespace collapsed. One definition for every caller."""
+    return fold(raw, casefold=True, collapse_ws=True)
+
+
+def same_person(a: str, b: str) -> bool:
+    """DENY comparator (separation of duties, a blocklist): True when ``a`` and ``b`` have the same ``fold_key``. Look-alike letters,
+    case, width, ligatures, invisible characters and marks all compare equal, which is the safe side for a DENY. NEVER an ALLOW.
+    Linear in the input; the caller bounds the length first (``egress_text`` does)."""
+    return fold_key(a) == fold_key(b)
+
+
+class AllowVerdict(Enum):
+    """Result of ``allow_equal``. A plain ``Enum`` on purpose: ``if allow_equal(a, b):`` raises ``TypeError`` instead of being always
+    true. Compare with ``is AllowVerdict.EQUAL``."""
+
     EQUAL = "EQUAL"  # identical strings: the only verdict that allows
     DIFFERENT = "DIFFERENT"  # an ordinary mismatch: refuse
-    LOOKALIKE = "LOOKALIKE"  # differs but folds equal (homoglyph, case, width, ligature, invisible character): refuse and audit as a spoof
+    VARIANT = "VARIANT"  # differs only in case, width, ligature or whitespace (NFKC + casefold equal): refuse, a plain mistake or a variant
+    LOOKALIKE = "LOOKALIKE"  # differs but folds equal through homoglyphs, invisible characters or marks: refuse and audit as a spoof
+
+    def __bool__(self) -> bool:
+        raise TypeError("an AllowVerdict has no truth value: compare with 'is AllowVerdict.EQUAL'")
 
 
 def allow_equal(a: str, b: str) -> AllowVerdict:
     """The whole ALLOW decision for "is this the verified value?": only ``EQUAL`` allows. No normalisation: the comparison is ``a == b``
-    so the value that was verified is the value that is used."""
+    so the value that was verified is the value that is used. The input length is not bounded here (the work is linear); bound it first."""
     if a == b:
         return AllowVerdict.EQUAL
-    if fold(a, casefold=True, collapse_ws=True) == fold(b, casefold=True, collapse_ws=True):
+    if _canon(a) == _canon(b):
+        return AllowVerdict.VARIANT
+    if same_person(a, b):
         return AllowVerdict.LOOKALIKE
     return AllowVerdict.DIFFERENT
 
 
 def names_equal(a: str, b: str) -> bool:
-    """People's names in prose: NFKC, case and whitespace insensitive. NEVER for an ALLOW decision (``allow_equal``): a German sharp-s word equals its "ss" spelling
-    here and a fullwidth at-sign equals the ASCII one."""
+    """People's names in prose: NFKC, case and whitespace insensitive. NOT an ALLOW decision (``allow_equal``) and NOT a DENY decision
+    either (``same_person``: this one does not fold look-alikes, so a Cyrillic-a name is a different name here)."""
     return _canon(a) == _canon(b)
 
 
@@ -124,7 +147,9 @@ def has_mixed_script(text: str) -> bool:
     """True if any word mixes Latin letters with Cyrillic, Greek, Armenian, Cherokee, Coptic, Georgian, Hebrew, Lisu or another
     look-alike-rich script (UTS #39 style). Invisible and combining characters are removed first (a zero-width space inside a word does
     not split it). The micro sign and the ohm sign are exempt (unit symbols); a Greek mu or omega typed as a Greek letter next to Latin
-    letters is flagged. A fail-closed deny signal that does not depend on the look-alike table. Digits and punctuation are script-neutral."""
+    letters is flagged. The micro and ohm signs are removed BEFORE the analysis, so a word that holds only such a sign plus a
+    look-alike letter (micro sign + Cyrillic a) is not flagged by this function; the fold and the table still see the Cyrillic letter. A
+    fail-closed deny signal that does not depend on the look-alike table. Digits and punctuation are script-neutral."""
     kept = "".join(
         ch
         for ch in text

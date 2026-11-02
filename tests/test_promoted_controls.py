@@ -19,6 +19,7 @@ import uuid
 from pathlib import Path
 
 import pytest
+from tools.mutation_runner import Mutant, run_mutants
 
 from hadavin_sdk.audit.capped import CappedAudit, sink_append
 from hadavin_sdk.audit.local_dir import LocalDirSink
@@ -32,6 +33,7 @@ from hadavin_sdk.guard.textnorm import (
     fold,
     has_mixed_script,
     names_equal,
+    same_person,
     squeeze,
 )
 from hadavin_sdk.limits import Limits
@@ -56,7 +58,6 @@ from hadavin_sdk.runtime.stop_gate import EffectBlocked, StopGate, StopGateBusy
 from hadavin_sdk.store.memory import MemoryStore
 from hadavin_sdk.testing.contracts import check_rowstore_contract
 from hadavin_sdk.testing.mutation import Verdict, first_failure, first_failure_junit, judge
-from hadavin_sdk.testing.mutation_runner import Mutant, run_mutants
 
 FIX = Path(__file__).parent / "fixtures"
 P = LeakPolicy.payments()
@@ -816,9 +817,22 @@ def test_allow_decisions_are_exact_and_a_look_alike_is_reported_as_one():
         ("a  b", "a b"),
     ]
     for x, y in pairs:
-        assert allow_equal(x, y) is AllowVerdict.LOOKALIKE, (x, y)
+        assert allow_equal(x, y) is AllowVerdict.VARIANT, (x, y)  # refused, but not a spoof alarm
+        assert same_person(x, y), (x, y)  # and the same person for a DENY
         assert names_equal(x, y), (x, y)  # the name comparison stays tolerant, and is not an ALLOW
-    assert not names_equal("alice", "bob")
+    assert not names_equal("alice", "bob") and not same_person("alice", "bob")
+    assert same_person(real, spoof) and not names_equal(
+        real, spoof
+    )  # a DENY sees the spoof; the name comparison does not
+    with pytest.raises(TypeError):
+        bool(
+            allow_equal(real, real)
+        )  # 'if allow_equal(a, b):' would always be true: it is refused instead
+    with pytest.raises(TypeError):
+        _ = not allow_equal(real, spoof)
+    assert (
+        allow_equal("a" + chr(0x200B), "a") is AllowVerdict.LOOKALIKE
+    )  # an invisible character is a spoof, not a variant
     assert (
         allow_equal("alice@bank.example", spoof) is not AllowVerdict.EQUAL
         and allow_equal("", "") is AllowVerdict.EQUAL
@@ -1004,7 +1018,7 @@ def test_exempt_tokens_are_not_a_free_pass_for_a_card_number_or_an_account():
     ):
         assert check_text(text) == Violation.DIGIT_BUDGET, text  # AND and XYZ are not currencies
     assert (
-        check_text("dated 2026-11-01, total 1,500,000 USD") is None
+        check_text("dated 2026-11-01, total 15,000 USD") is None
         and check_text("total $1,500.00 due 2026-11-30") is None
     )
     assert (
@@ -1014,7 +1028,7 @@ def test_exempt_tokens_are_not_a_free_pass_for_a_card_number_or_an_account():
         check_text("on 2026-11-01 and 2026-11-02 and 2026-11-03 and 2026-11-04")
         == Violation.EXEMPT_TOKENS
     )  # more dates than max_dates
-    assert check_text("tax 12,345.67", policy=LeakPolicy(amounts_need_currency=False)) is None
+    assert check_text("tax 1,345.67", policy=LeakPolicy(amounts_need_currency=False)) is None
     assert (
         check_text("$1.50 $2.50") == Violation.EXEMPT_TOKENS
     )  # side by side: adjacency alone, few digits
@@ -1148,17 +1162,17 @@ def test_the_length_is_bounded_first_and_types_are_typed():
 
 def test_thresholds_come_from_a_validated_policy_and_the_defaults_table_is_documented():
     p = LeakPolicy.from_mapping(
-        {"max_digits": 12, "date_years": [1990, 2100], "currencies": ["XTS"]}
+        {"profile": "payments", "max_digits": 12, "date_years": [1990, 2100], "currencies": ["XTS"]}
     )
-    assert check_text("id 1234 5678 9012", policy=LeakPolicy(max_digits=13)) is None
+    assert check_text("id 1234 5678 901", policy=LeakPolicy(max_digits=13)) is None
     assert (
-        check_text("id 1234 5678 9012", policy=LeakPolicy(max_digits=12)) == Violation.DIGIT_BUDGET
+        check_text("id 1234 5678 901", policy=LeakPolicy(max_digits=11)) == Violation.DIGIT_BUDGET
     )
     assert check_text("1995-05-05", policy=p) is None
     for bad in ({"max_digits": 0}, {"max_len": -1}, {"max_len": 10**9}, {"date_years": [2100, 2000]}, {"nope": 1}, {"max_digits": "8"}, {"on_short": "skip"},
                 {"max_exempt_digits": 99}, {"currencies": ["usd"]}, {"account_min_len": 2}):  # fmt: skip
         with pytest.raises(ValueError):
-            LeakPolicy.from_mapping(bad)
+            LeakPolicy.from_mapping({"profile": "payments", **bad})
     docs = (Path(__file__).resolve().parents[1] / "docs" / "promoted-controls.md").read_text(
         encoding="utf-8"
     )
@@ -1272,21 +1286,26 @@ def test_the_plain_and_the_set_aside_digits_add_up():
     for text in (
         "ref 4111111 total $1,111,111.11 USD",  # 7 plain + 9 in an amount: a 16-digit card
         "4111111 $1,111,111.11",
-        "4111111 $11,111.11",  # 7 + 7: the exempt budget alone allows it, the sum does not
+        "4111111 $1,111.11",  # 7 plain + 6 in an amount: the exempt budget alone allows it, the sum does not
         "411111 $11,111.11 on 2026-03-01",  # 6 + 7 + a date
         "4111 2026-03-01 2026-03-02 2026-03-03",  # a card as dates: more dates than allowed
     ):
         assert check_text(text) is not None, text
-    assert check_text("4111111 $11,111.11") == Violation.DIGIT_BUDGET
+    assert check_text("4111111 $1,111.11") == Violation.DIGIT_BUDGET
     assert (
-        check_text("pay $1,250.00 for order 123456") is None
+        check_text("pay $1,250.00 for order 12345") is None
         and check_text("due 2026-03-01 for $1,250.00") is None
     )
     assert check_text("a 2026-03-01 and 2026-03-02 and nothing else") is None  # 2 dates: 10 of 14
     assert (
         check_text("4111111 for 2026-03-01 and 2026-03-02") == Violation.DIGIT_BUDGET
     )  # 7 + 10 of 14
-    for bad in ({"max_exempt_digits": 8}, {"max_total_digits": 15}, {"max_total_digits": 0}):
+    for bad in (
+        {"max_exempt_digits": 8},
+        {"max_total_digits": 13},
+        {"max_total_digits": 0},
+        {"max_digits": 6, "max_exempt_digits": 2, "max_total_digits": 11},
+    ):
         with pytest.raises(ValueError):
             LeakPolicy(
                 **bad
@@ -1298,14 +1317,20 @@ def test_there_is_no_default_policy_and_the_presets_are_named():
         egress_text.check_text("hello")  # the policy is required
     assert not hasattr(egress_text, "DEFAULT_POLICY")
     pay, gen = LeakPolicy.payments(), LeakPolicy.general()
-    assert pay.max_digits == 8 and pay.max_total_digits == 14
+    assert pay.max_digits == 8 and pay.max_total_digits == 12
     ten_digit_phone = "phone 0123456789 thanks"
     assert egress_text.check_text(ten_digit_phone, policy=pay) is not None
     assert egress_text.check_text(ten_digit_phone, policy=gen) is None
     assert (
         egress_text.check_text("4111 1111 1111 1111", policy=gen) == Violation.DIGIT_BUDGET
     )  # a card in one piece is still refused
-    assert LeakPolicy.from_mapping({}) == pay
+    assert (
+        LeakPolicy.from_mapping({"profile": "payments"}) == pay
+        and LeakPolicy.from_mapping({"profile": "general"}) == gen
+    )
+    for no_profile in ({}, None, {"max_digits": 9}, {"profile": "strict"}):
+        with pytest.raises(ValueError):
+            LeakPolicy.from_mapping(no_profile)  # a config must name its profile
 
 
 def test_a_protected_value_in_unspaced_text_and_glued_to_digits_is_found():
@@ -1526,7 +1551,7 @@ def test_engaged_is_the_flag_blocked_reads_the_store_and_the_second_engage_says_
 
 # ---- review round 3: the mutation runner stays inside its tree, and stops a hanging mutant --------------------------------------------------
 def test_the_runner_refuses_paths_that_leave_its_tree(tmp_path):
-    from hadavin_sdk.testing import mutation_runner as mr
+    from tools import mutation_runner as mr
 
     for bad in (
         "../x.py",
@@ -1558,6 +1583,11 @@ def test_the_runner_refuses_paths_that_leave_its_tree(tmp_path):
     assert link.exists(), "the test could not create a link out of the tree"
     with pytest.raises(ValueError):
         mr._inside(tmp_path / "base", "link/outside.txt")  # a link out of the tree is refused too
+    (tmp_path / "real.txt").write_text("x", encoding="utf-8")
+    with pytest.raises(ValueError):
+        mr._locate(
+            tmp_path / "base", "link/real.txt"
+        )  # the listing does not follow the link out of the tree
     with pytest.raises(ValueError):
         Mutant("name", "a.py", "a", "b", "abc")  # expect shorter than 4 characters
     victim = tmp_path / "victim.txt"
@@ -1609,7 +1639,7 @@ def test_a_mutant_that_loops_forever_times_out_instead_of_hanging_the_run(tmp_pa
 
 
 def test_a_test_path_that_starts_with_a_dash_is_a_path_not_a_pytest_option(tmp_path):
-    from hadavin_sdk.testing import mutation_runner as mr
+    from tools import mutation_runner as mr
 
     (tmp_path / "test_ok.py").write_text("def test_a():\n    assert True\n", encoding="utf-8")
     assert mr._pytest(tmp_path, ["test_ok.py"], tmp_path / "r2.xml", 60) == 0
@@ -1766,5 +1796,177 @@ def test_weak_digit_look_alikes_count_inside_a_qualified_run_but_prose_stays_fre
         assert check_text(text) is None, text
     assert (
         egress_text._digitish_count("OlISBZGq", 6) == 8
-        and egress_text._digitish_count("1b5i7g3q", 6) == 4
+        and egress_text._digitish_count("1b5i7g3q", 6) == 8
     )  # the residual, stated
+
+
+def test_a_card_length_sequence_is_refused_in_every_preset_even_when_split():
+    card_splits = (
+        "ref 4111111 total $1,111,111.11 USD",
+        "4111111 $1,111,111.11",
+        "411111 $11,111.11 on 2026-03-01",
+        "4111 2026-03-01 2026-03-02 and 1234",
+        "41111111 $1,234.56",
+        "4111 1111 1111 1111",
+        "4111111 $11,111.11",
+    )
+    for preset in (LeakPolicy.payments(), LeakPolicy.general()):
+        for text in card_splits:
+            assert egress_text.check_text(text, policy=preset) is not None, (
+                text,
+                preset.max_digits,
+            )
+    with pytest.raises(ValueError):
+        LeakPolicy(
+            max_digits=30, max_total_digits=13
+        )  # no policy may allow 13 digits across pieces
+    assert egress_text.check_text("phone 0123456789 thanks", policy=LeakPolicy.general()) is None
+
+
+def test_the_row_store_row_limit_is_validated():
+    for bad in (0, -1, True, 1.5, "3", False):
+        with pytest.raises(ValueError):
+            RowStore(max_rows=bad)
+    assert RowStore(max_rows=1)._max_rows == 1
+
+
+def test_a_luhn_valid_card_across_pieces_is_found_and_dates_are_not_part_of_the_stream():
+    card = "4111111111111111"
+    assert egress_text._luhn_ok(card) and not egress_text._luhn_ok("4111111111111112")
+    mark = egress_text._MARK
+    assert (
+        egress_text._card_run("pay 4111 1111 $11,111.11 ref 11") is True
+    )  # 4111 1111 11111 111 11 -> stream holds the card
+    assert (
+        egress_text._card_run("4111 1111 " + mark + " 1111 1111") is False
+    )  # split at a set-aside date
+    assert egress_text._card_run("order 1234567 and 2026") is False  # fewer than 13 digits
+    assert egress_text._card_run("x" + card[:7] + "-" + card[7:] + "y") is True
+    assert egress_text.check_text(card, policy=LeakPolicy.general()) is not None
+
+
+def test_weak_letters_glued_to_digits_count_but_a_prose_token_does_not():
+    assert (
+        egress_text._digitish_count("1b5i7g3q", 6) == 8
+        and check_text("1b5i7g3q") == Violation.DIGIT_BUDGET
+    )
+    assert (
+        check_text("this is big 12345") is None
+        and egress_text._digitish_count("is big 12345", 6) == 6
+    )
+    assert check_text("OlISBZGq") == Violation.DIGIT_BUDGET
+
+
+def test_a_stop_gate_over_a_limits_without_source_fails_at_construction():
+    class OldLimits:
+        audit = None
+
+        def stop(self, by):
+            pass
+
+        def reset(self, by):
+            pass
+
+        def is_stopped(self):
+            return False
+
+    with pytest.raises(TypeError, match="limits.py"):
+        StopGate(OldLimits())
+    StopGate(FakeLimits())  # the real surface is fine
+
+
+def test_a_busy_release_says_whether_the_stop_was_written_again_and_clears_the_cache():
+    lim = FakeLimits()
+    g = StopGate(lim, cache_ttl=1000.0)
+    g.engage(list, lambda k: "x", by="u1")
+    lim.during_reset = lambda: g.engage(list, lambda k: "x", by="u2")
+    real_stop = lim.stop
+
+    def stop_after_a_read(by, source="cli"):
+        g.durable_on()  # a reader fills the cache with the old "off" just before the switch is written
+        real_stop(by, source)
+
+    lim.stop = stop_after_a_read
+    with pytest.raises(StopGateBusy) as ei:
+        g.release(by="u1")
+    assert ei.value.durable is True and g._cached is None and g.blocked()
+    lim2 = FakeLimits()
+    g2 = StopGate(lim2)
+    g2.engage(list, lambda k: "x", by="u1")
+
+    def engage_then_break_the_store():
+        g2.engage(list, lambda k: "x", by="u2")
+        lim2.stop = lambda by, source="cli": (_ for _ in ()).throw(OSError("down"))
+
+    lim2.during_reset = engage_then_break_the_store
+    with pytest.raises(StopGateBusy) as ei2:
+        g2.release(by="u1")
+    assert (
+        ei2.value.durable is False and g2.engaged
+    )  # the switch may be off, the process stays engaged, and the error says so
+
+
+def test_redact_leaves_an_existing_placeholder_on_a_non_ascii_line_alone():
+    from hadavin_sdk.guard.redact import redact
+
+    r = redact("mail alice@example.com and caf" + chr(0xE9))
+    assert r.text == "mail <EMAIL_1> and caf" + chr(0xE9) and list(r.mapping) == ["<EMAIL_1>"]
+
+
+def test_the_manifest_pins_the_files_a_demo_copies():
+    import hashlib
+
+    root = Path(__file__).resolve().parents[1]
+    manifest = json.loads((FIX / "textnorm_manifest.json").read_text(encoding="utf-8"))
+    for rel, sha in manifest["files"].items():
+        data = (root / rel).read_bytes().replace(b"\r\n", b"\n")
+        assert hashlib.sha256(data).hexdigest() == sha, (
+            rel,
+            "changed: re-sync the demos and update the manifest and the CHANGELOG",
+        )
+    assert set(manifest["files"]) == {
+        "src/hadavin_sdk/guard/textnorm.py",
+        "src/hadavin_sdk/guard/_confusables.py",
+        "tests/fixtures/textnorm_vectors.json",
+    }
+    log = root / "CHANGELOG.md"
+    if log.exists():  # the mutation copies do not carry it
+        assert manifest["files"]["src/hadavin_sdk/guard/_confusables.py"] in log.read_text(
+            encoding="utf-8"
+        )
+
+
+def test_the_generator_reproduces_the_checked_in_table_offline(tmp_path):
+    import importlib.util
+    import unicodedata
+
+    from hadavin_sdk.guard import _confusables
+
+    root = Path(__file__).resolve().parents[1]
+    spec = importlib.util.spec_from_file_location(
+        "gen_confusables2", root / "tools" / "gen_confusables.py"
+    )
+    gen = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(gen)
+    data = (root / "tools" / "data" / "confusables.txt").read_bytes()
+    assert (
+        gen.DEFAULT_INPUT.read_bytes() == data
+    )  # the generator reads the vendored file by default
+    import hashlib
+
+    assert (
+        hashlib.sha256(data).hexdigest() == gen.PINNED_SHA256 == _confusables.DATA_SHA256
+    )  # the vendored file is the pinned one
+    if unicodedata.unidata_version != _confusables.DATA_UNICODEDATA:
+        pytest.skip(
+            "the small-capital rule reads this interpreter's character names: regenerate only on Unicode "
+            + _confusables.DATA_UNICODEDATA
+        )
+    assert gen.build(data.decode("utf-8")) == _confusables.TABLE
+
+
+def test_check_text_runs_the_card_scan_last(monkeypatch):
+    monkeypatch.setattr(egress_text, "_card_run", lambda stream: True)
+    assert check_text("hello there") == Violation.CARD_NUMBER
+    monkeypatch.setattr(egress_text, "_card_run", lambda stream: False)
+    assert check_text("hello there") is None

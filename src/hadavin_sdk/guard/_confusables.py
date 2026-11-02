@@ -7,6 +7,7 @@ trademark of Unicode, Inc.
 
 DATA_SHA256 = "6ed3ee967c9dfdf6677d563c9985182fbc50a2efb7d6059cd57b2e2ce18f5b92"
 DATA_VERSION = "18.0.0"
+DATA_UNICODEDATA = "15.1.0"
 ENTRIES = 677
 
 # code point -> ASCII letters/digits

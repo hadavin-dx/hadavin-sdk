@@ -1,6 +1,6 @@
 """Judge one mutation-test run by the REASON for the kill, not only the exit code.
 
-Harness contract (the runner is ``testing.mutation_runner``; this judges one run): revert one guard in a copy of the package, run the
+Harness contract (the runner is ``tools/mutation_runner.py``, not shipped; this judges one run): revert one guard in a copy of the package, run the
 targeted tests, then call ``judge(returncode, test_id, first_line, expect=..., pinned=...)`` with the FAILING TEST ID and the FIRST
 ``E `` line of THAT test. ``first_failure_junit(xml)`` extracts both from a JUnit file (robust for ids that contain ``-``,
 ``|`` or ``[...]``); ``first_failure(stdout)`` parses ``-rf`` text and is only safe for ids without `` - ``.

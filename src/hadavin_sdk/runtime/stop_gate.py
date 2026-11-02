@@ -37,6 +37,7 @@ from __future__ import annotations
 
 import asyncio
 import contextvars
+import inspect
 import re
 import threading
 import time
@@ -67,7 +68,12 @@ class EffectBlocked(RuntimeError):
 
 
 class StopGateBusy(RuntimeError):
-    """``release`` was called while a sweep is running."""
+    """``release`` was called while a sweep is running, or an ``engage`` ran during it (then ``durable`` says whether the stop was written
+    again: True yes, False the second ``Limits.stop`` failed so the durable switch may be OFF while this process stays ENGAGED)."""
+
+    def __init__(self, msg: str, durable: bool | None = None) -> None:
+        super().__init__(msg)
+        self.durable = durable
 
 
 @dataclass
@@ -93,6 +99,14 @@ def _label(who: object) -> str:
 
 class StopGate:
     def __init__(self, limits: LimitsLike | None = None, *, cache_ttl: float = 0.0) -> None:
+        for name in ("stop", "reset") if limits is not None else ():
+            params = inspect.signature(getattr(limits, name)).parameters
+            if "source" not in params and not any(
+                p.kind is inspect.Parameter.VAR_KEYWORD for p in params.values()
+            ):
+                raise TypeError(
+                    f"StopGate needs Limits.{name}(by, source=...) (hadavin-sdk with PR #50): copy stop_gate.py together with limits.py"
+                )
         self._limits = limits
         self._cond = threading.Condition()
         self._on = False
@@ -264,12 +278,16 @@ class StopGate:
             if not again:
                 self._on = False
         if again:
+            durable: bool | None = None
             if self._limits is not None:
                 try:
                     self._limits.stop(_label(by), source="gate")
+                    durable = True
                 except Exception as e:  # noqa: BLE001 - the gate is engaged either way
+                    durable = False
                     self._audit_stop_failed(by, type(e).__name__)
-            raise StopGateBusy("an engage ran during the release: the stop stays on")
+                self._cached = None
+            raise StopGateBusy("an engage ran during the release: the stop stays on", durable)
 
     async def aengage(
         self,

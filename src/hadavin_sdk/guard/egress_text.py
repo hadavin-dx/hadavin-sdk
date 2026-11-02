@@ -14,7 +14,7 @@ counted as 8. Residual: weak letters beside real digits (``1b5i7g3q``) and runs 
 Set-aside tokens are not free, and the budgets ADD UP: a card number split into a plain part and an "amount" must not slip through.
 The set-aside amounts and references have their own budget (``max_exempt_tokens``, ``max_exempt_digits``, always below
 ``max_digits``), two of them side by side are refused, an amount counts only with a currency from ``LeakPolicy.currencies`` next to
-it, and ``max_total_digits`` (below ``2 * max_digits - 1``) caps the SUM of the plain digit-like characters, the digits of the
+it, and ``max_total_digits`` (at most 12, below the shortest card number, and below ``2 * max_digits - 1``) caps the SUM of the plain digit-like characters, the digits of the
 set-aside amounts and references, and ``DATE_DIGITS`` (5) per date. A date is not free either: a valid date from the allowed years
 carries about 15 bits (4.6 decimal digits), so ``max_dates`` dates can still carry a few digits of an id; ``max_total_digits`` counts
 them. Residual: digits spelled as words, or written as numerals of a script the fold does not map (Chinese numerals, for example),
@@ -35,13 +35,14 @@ symbols); turn it off with ``deny_mixed_script=False`` only where such words are
 The text is bounded FIRST (``max_len``, typed ``TEXT_TOO_LONG`` / ``TEXT_NOT_STRING``), so the fold's cost is bounded. Every threshold is
 a ``LeakPolicy`` field (validated; ``LeakPolicy.from_mapping`` rejects unknown keys).
 
-There is NO default policy: ``check_text`` needs ``policy=``. ``LeakPolicy.payments()`` is the strict profile (8-digit budget, 14 in
-total, 2000-2099 dates; it refuses an order id or a phone number of 8 digits or more); ``LeakPolicy.general()`` is for replies that
-legitimately carry ids and phone numbers (12-digit budget, 22 in total), at the price of letting a card number out when it is sent in pieces: pair it with a protected-value list. Defaults table: ``docs/promoted-controls.md``.
+There is NO default policy: ``check_text`` needs ``policy=``. ``LeakPolicy.payments()`` is the strict profile (fewer than 8 plain digits,
+fewer than 12 in total, 2000-2099 dates; it refuses an order id or a phone number of 8 digits or more); ``LeakPolicy.general()`` is for replies that
+legitimately carry ids and phone numbers (12-digit budget, 12 in total, 8 set-aside digits): a card number (13 or more digits) is refused in every preset, also when split across text, amounts and dates; the price is that a reply with a long id AND an amount AND a date is refused. Defaults table: ``docs/promoted-controls.md``.
 """
 
 from __future__ import annotations
 
+import dataclasses
 import re
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
@@ -50,8 +51,11 @@ from enum import StrEnum
 from functools import lru_cache
 from typing import Any
 
-from hadavin_sdk.guard.textnorm import fold, has_mixed_script, squeeze
+from hadavin_sdk.guard.textnorm import fold, fold_key, has_mixed_script, squeeze
 
+MAX_TOTAL_DIGITS_CEILING = (
+    12  # the shortest card number has 13 digits: no preset may let that many out across pieces
+)
 DATE_DIGITS = (
     5  # digits one date counts in the combined budget: log10(100 years x 12 months x 31 days) = 4.6
 )
@@ -115,17 +119,18 @@ class Violation(StrEnum):
     DIGIT_BUDGET = "DIGIT_BUDGET"
     EXEMPT_TOKENS = "EXEMPT_TOKENS"
     PROTECTED_VALUE = "PROTECTED_VALUE"
+    CARD_NUMBER = "CARD_NUMBER"
     MIXED_SCRIPT = "MIXED_SCRIPT"
 
 
 @dataclass(frozen=True)
 class LeakPolicy:
     max_digits: int = 8
-    max_total_digits: int = 14
+    max_total_digits: int = 12
     date_years: tuple[int, int] = (2000, 2099)
     max_len: int = 4096
     max_exempt_tokens: int = 6
-    max_exempt_digits: int = 7
+    max_exempt_digits: int = 6
     max_dates: int = 2
     amounts_need_currency: bool = True
     currencies: frozenset[str] = field(default=DEFAULT_CURRENCIES)
@@ -159,9 +164,9 @@ class LeakPolicy:
             "max_exempt_digits must be below max_digits",
         )
         need(
-            is_int(self.max_total_digits, 1, 128)
+            is_int(self.max_total_digits, 1, MAX_TOTAL_DIGITS_CEILING)
             and self.max_total_digits <= 2 * self.max_digits - 2,
-            "max_total_digits must be an int in 1..(2 x max_digits - 2): the plain and the set-aside digits add up",
+            "max_total_digits must be an int in 1..12 and at most 2 x max_digits - 2: the plain and the set-aside digits add up, and a card has 13 or more",
         )
         need(type(self.amounts_need_currency) is bool, "amounts_need_currency must be a bool")
         need(
@@ -179,21 +184,27 @@ class LeakPolicy:
 
     @classmethod
     def payments(cls) -> LeakPolicy:
-        """Strict: for approver cards and replies near money. Refuses 8 or more plain digit-like characters, or 14 or more in total."""
+        """Strict: for approver cards and replies near money. Refuses 8 or more plain digit-like characters, or 12 or more in total."""
         return cls()
 
     @classmethod
     def general(cls) -> LeakPolicy:
-        """For replies that carry order ids and phone numbers (up to 11 plain digits, 21 in total). Weaker against a card number
-        split into pieces: use a protected-value list with it."""
+        """For replies that carry order ids and phone numbers (up to 11 plain digits, 11 in total). Still refuses a
+        13-digit card number split into pieces."""
         return cls(
-            max_digits=12, max_total_digits=22, max_exempt_digits=9, max_dates=3, account_min_len=14
+            max_digits=12, max_total_digits=12, max_exempt_digits=8, max_dates=2, account_min_len=14
         )
 
     @classmethod
     def from_mapping(cls, raw: Mapping[str, Any] | None) -> LeakPolicy:
-        """Build from a config section; unknown keys are an error (a typo must not silently keep a default)."""
+        """Build from a config section. The section MUST name its starting point: ``profile: payments`` or ``profile: general``; the other
+        keys override single fields. A section without a profile, an unknown profile or an unknown key is an error (a config must not
+        silently pick the strict profile, and a typo must not silently keep a default)."""
         raw = dict(raw or {})
+        profile = raw.pop("profile", None)
+        if profile not in ("payments", "general"):
+            raise ValueError('leak policy needs profile: "payments" or "general"')
+        base = cls.payments() if profile == "payments" else cls.general()
         unknown = sorted(set(raw) - set(cls.__dataclass_fields__))
         if unknown:
             raise ValueError(f"unknown leak policy key: {unknown[0]}")
@@ -201,7 +212,7 @@ class LeakPolicy:
             raw["date_years"] = tuple(raw["date_years"])
         if "currencies" in raw:
             raw["currencies"] = frozenset(raw["currencies"])
-        return cls(**raw)
+        return dataclasses.replace(base, **raw)
 
 
 @lru_cache(maxsize=64)
@@ -232,29 +243,67 @@ def _digitish_count(t: str, letter_run_min: int) -> int:
     """Digits plus digit-like letters. Characters are grouped into runs of digits and digit-like letters (separators are skipped, any
     other letter ends the run). In a run that holds a real digit every strong letter counts; a run of letters only counts once it holds at
     least ``letter_run_min`` strong letters (a fully letter-encoded account), so ordinary words made of such letters stay free. Weak
-    letters (lowercase i b g q) extend a run and count only in a letters-only run that has ``letter_run_min`` strong letters; beside a
-    real digit they do not count ("this is big 12345" would otherwise count 11)."""
-    total, digits, strong, weak = 0, 0, 0, 0
+    letters (lowercase i b g q) count when they sit in the same separator-free token as at least 2 digits or strong letters (``OlISBZGq``,
+    ``1b5i7g3q``); a weak letter in a token of its own ("is big 12345") extends a letters-only run that already qualifies and never counts
+    beside real digits."""
+    total, digits, strong, glued, loose = 0, 0, 0, 0, 0
+    tok_cnt, tok_weak = 0, 0
+
+    def flush() -> None:
+        nonlocal glued, loose, tok_cnt, tok_weak
+        # a token with 2 or more digits or strong letters is not a word like "is" or "this"
+        if tok_cnt >= 2:
+            glued += tok_weak
+        else:
+            loose += tok_weak
+        tok_cnt, tok_weak = 0, 0
 
     def close() -> None:
-        nonlocal total, digits, strong, weak
+        nonlocal total, digits, strong, glued, loose
+        flush()
         if digits:
-            total += digits + strong
+            total += digits + strong + glued
         elif strong >= letter_run_min:
-            total += strong + weak
-        digits = strong = weak = 0
+            total += strong + glued + loose
+        digits = strong = glued = loose = 0
 
     for ch in t:
         if ch.isdigit():
             digits += 1
+            tok_cnt += 1
         elif ch in _DIGITISH:
             strong += 1
+            tok_cnt += 1
         elif ch in _WEAK_DIGITISH:
-            weak += 1
-        elif not _SEPARATORS.fullmatch(ch):
+            tok_weak += 1
+        elif _SEPARATORS.fullmatch(ch):
+            flush()
+        else:
             close()
     close()
     return total
+
+
+def _luhn_ok(digits: str) -> bool:
+    total = 0
+    for i, ch in enumerate(reversed(digits)):
+        d = int(ch)
+        if i % 2:
+            d = d * 2 - 9 if d > 4 else d * 2
+        total += d
+    return total % 10 == 0
+
+
+def _card_run(stream: str) -> bool:
+    """True if the digits of ``stream`` (in order, separators ignored, split at set-aside dates) hold a Luhn-valid run of 13 to 19 digits:
+    a card number spread over plain text and amounts. Defence in depth: the presets already refuse 12 or more digits in total."""
+    for seg in stream.split(_MARK):
+        digits = "".join(ch for ch in seg if ch.isdigit() and ch.isascii())
+        for n in range(13, 20):
+            for i in range(len(digits) - n + 1):
+                if _luhn_ok(digits[i : i + n]):
+                    return True
+    return False
 
 
 def _word_hit(w: str, tf: str) -> bool:
@@ -288,7 +337,7 @@ def check_text(
             raise ValueError(
                 "a protected value is empty or not text: refusing to check with a value that would match everything or nothing"
             )
-        fv = fold(p, casefold=True, collapse_ws=True)
+        fv = fold_key(p)
         if not fv:
             raise ValueError(
                 "a protected value folds to nothing: refusing to check with a value that would match everything or nothing"
@@ -335,6 +384,9 @@ def check_text(
         )
 
     t = _DAY_FIRST_OR_MONTH_FIRST.sub(day_month_year, t)
+    card_stream = (
+        t  # amounts and plain digits still in place; dates and allowed references already set aside
+    )
     n_dates, d2 = t.count(_MARK) - marks_allowed, digits_in(t)
     t = (anchored if policy.amounts_need_currency else any_amount).sub(_MARK, t)
     for p in allowed_patterns:
@@ -348,7 +400,7 @@ def check_text(
         if k in sq or (len(kd) >= policy.min_protected_digits and any(kd in s for s in sq_digits)):
             return Violation.PROTECTED_VALUE
     if words:
-        tf = fold(text, casefold=True, collapse_ws=True)
+        tf = fold_key(text)
         for w in words:
             if _word_hit(w, tf):
                 return Violation.PROTECTED_VALUE
@@ -373,6 +425,9 @@ def check_text(
         or plain + exempt_digits + DATE_DIGITS * n_dates >= policy.max_total_digits
     ):
         return Violation.DIGIT_BUDGET
+    # defence in depth: the budgets above already keep the digits below 12
+    if _card_run(card_stream):
+        return Violation.CARD_NUMBER
     return None
 
 

@@ -23,7 +23,7 @@ class Limits:
 
     def blocked(self, agent_id: str) -> list[str]:
         reasons = []
-        if self.store.get_kill_switch().on:
+        if self.is_stopped():
             reasons.append("kill_switch")
         day, month = self.store.spend_totals(agent_id, now().date())  # a read, no write
         budget = self.registry.agents[agent_id].budget_usd

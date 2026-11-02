@@ -1,9 +1,14 @@
 """Generate ``src/hadavin_sdk/guard/_confusables.py`` from the Unicode UTS #39 ``confusables.txt`` (the MA table).
 
-Run (stdlib only; the data file is NOT vendored, it is 760 KB and fetched by the maintainer):
+Run (stdlib only; offline: the data file is vendored in ``tools/data/confusables.txt``, 763 KB, Unicode License v3, its notice is in the
+file and in the generated header; unicode.org serves only the "latest" URL, there is no versioned one, hence the copy and the pin):
 
-    curl -o confusables.txt https://www.unicode.org/Public/security/latest/confusables.txt
-    python tools/gen_confusables.py confusables.txt
+    python tools/gen_confusables.py                      # reads tools/data/confusables.txt
+    python tools/gen_confusables.py other.txt            # refused unless it has the pinned sha256
+
+Python dependency: the small-capital rule reads character NAMES from the running interpreter's ``unicodedata``; the checked-in output was
+generated with Python 3.13.3 / Unicode 15.1.0 (``DATA_UNICODEDATA`` in the generated file). Another interpreter may add entries; the
+checked-in file is the artifact and a test regenerates and compares only when the Unicode version matches.
 
 The input must have the pinned sha256 below (version 18.0.0, dated 2026-08-06); another file is refused, so a changed table is a
 reviewed change: update ``PINNED_SHA256`` and the generated file in the same commit. Licence: Unicode License v3 (data files may be
@@ -40,6 +45,7 @@ SUPPLEMENT: dict[int, str] = {
     0xF8: "o", 0x142: "l", 0x111: "d",
 }  # fmt: skip
 DROPPED = frozenset({"Cc", "Cf", "Mn", "Me", "Zl", "Zp", "Co", "Cs", "Cn"})
+DEFAULT_INPUT = Path(__file__).resolve().parent / "data" / "confusables.txt"
 OUT = Path(__file__).resolve().parents[1] / "src" / "hadavin_sdk" / "guard" / "_confusables.py"
 _SMALL_CAP = re.compile(r"LATIN (?:LETTER )?SMALL CAPITAL ([A-Z])")
 _LINE = re.compile(r"^([0-9A-F]{4,6})\s*;\s*([0-9A-F ]+?)\s*;\s*MA\b")
@@ -50,6 +56,7 @@ _HEADER = (
     'trademark of Unicode, Inc.\n"""\n\n'
     'DATA_SHA256 = "{sha}"\n'
     'DATA_VERSION = "{ver}"\n'
+    'DATA_UNICODEDATA = "{uni}"\n'
     "ENTRIES = {n}\n\n"
     "# code point -> ASCII letters/digits\n"
     "TABLE: dict[int, str] = {{\n"
@@ -88,10 +95,10 @@ def build(text: str) -> dict[int, str]:
 
 
 def main(argv: list[str]) -> int:
-    if len(argv) != 2:
+    if len(argv) > 2:
         print(__doc__)
         return 2
-    raw = Path(argv[1]).read_bytes()
+    raw = Path(argv[1] if len(argv) == 2 else DEFAULT_INPUT).read_bytes()
     sha = hashlib.sha256(raw).hexdigest()
     if sha != PINNED_SHA256:
         print(f"refused: sha256 {sha} is not the pinned {PINNED_SHA256}")
