@@ -671,6 +671,10 @@ def test_a_homoglyph_stop_by_is_stored_as_a_hash():
     store = MemoryStore()
     Limits(store, _Audit(), _Reg()).stop("d\u0433ill")  # type: ignore[arg-type]
     assert store.get_kill_switch().by.startswith("h:")
+    Limits(store, _Audit(), _Reg()).stop("жж")  # type: ignore[arg-type]
+    assert store.get_kill_switch().by.startswith("h:"), (
+        "a single-script word with no Latin look-alike: only the ASCII rule catches it"
+    )
 
 
 class _Body:

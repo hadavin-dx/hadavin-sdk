@@ -59,12 +59,17 @@ MUTANTS = [
     ),
     ("old: stop by accepts any non-ASCII text", LM, "ascii_only=True", "ascii_only=False"),
     ("old: response body not capped", EX, "        if n > limit:", "        if False:"),
-    ("old: combining marks allowed in identity text", IT, '"Cs", "Mn", "Me"', '"Cs", "Me"'),
+    (
+        "old: combining marks allowed in identity text",
+        IT,
+        '"Cs", "Cn", "Mn", "Me"',
+        '"Cs", "Cn", "Me"',
+    ),
     (
         "old: look-alike letters allowed into the identity key",
         IT,
-        'if lookalikes == "refuse" and any(',
-        "if False and any(",
+        'if lookalikes == "refuse" and (',
+        "if False and (",
     ),
     (
         "old: recipient compared through the accent-dropping fold",
@@ -107,7 +112,7 @@ MUTANTS = [
     (
         "old: reply to an unverified recipient accepted",
         RC,
-        "    if want is None or exact_key(recipient) != want:",
+        "    if want is None or not same_recipient(recipient, verified_recipient):",
         "    if False:",
     ),
     (
