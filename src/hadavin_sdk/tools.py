@@ -760,7 +760,11 @@ def prepare_output(
     layers), escape the result markers and placeholder look-alikes, redact with the run's map, then truncate to
     `max_bytes`."""
     raw = _cut(_sanitise(raw), raw_cap)
-    raw = _cut(raw, min(max(2 * max_bytes, MIN_REDACTION_WINDOW), defaults.MAX_REDACT_CHARS))
+    # The window leaves room for the marker `_cut` appends, so a cut text is still within the redactor's cap.
+    raw = _cut(
+        raw,
+        min(max(2 * max_bytes, MIN_REDACTION_WINDOW), defaults.MAX_REDACT_CHARS - len(TRUNCATED)),
+    )
     long_enough = [x for x in secrets or [] if len(x) >= MIN_SCRUBBED_SECRET]
     if long_enough:
         raw = _derived(raw, long_enough)

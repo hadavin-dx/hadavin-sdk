@@ -84,5 +84,5 @@ testpaths = ["tests"]
 pythonpath = ["."]
 markers = [
     "live: calls a real paid or cloud service; CI deselects it, run only on the owner's yes",
-    "perf: measures CPU time (redaction patterns on 64 and 256 KiB); CI runs it in its own step that never blocks a merge",
+    "perf: timing tests (redaction patterns, end to end with views); CI runs them in their own step, which blocks a merge",
 ]

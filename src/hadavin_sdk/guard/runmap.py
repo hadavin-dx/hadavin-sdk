@@ -52,7 +52,11 @@ def _nfkd_len(char: str) -> int:
 
 
 def _expanded_len(text: str) -> int:
-    """An upper bound of the NFKC length of `text` (the NFKD length of each distinct character, cached)."""
+    """An upper bound of the NFKC length of `text` (the NFKD length of each distinct character, cached). It can be
+    higher than the real NFKC length where composition shortens a sequence (a Greek iota with dialytika and tonos,
+    U+0390, is 3 characters in NFKD and 1 in NFKC): a text of mostly such characters near the cap is refused
+    although its canonical form would fit. The false refusal is fail-closed and needs a text of that kind within
+    a factor of three of the cap."""
     if text.isascii():
         return len(text)
     return sum(n * _nfkd_len(c) for c, n in collections.Counter(text).items())
@@ -300,7 +304,9 @@ def redact_text(
 
 def redact_value(value: Any, mapping: dict[str, str]) -> Any:
     """`redact_text` over every string (and dict key) inside a JSON-shaped value. The total text is capped too (a
-    value of many small strings is as costly as one big one)."""
+    value of many small strings is as costly as one big one). The total is the expansion estimate of every string
+    and key. The callers' own bounds (the model's output tokens for a tool call's inputs, `evidence.py` for the
+    proposal's inputs) keep the real input far below the cap; this cap is the backstop, not the usual limit."""
     if _chars(value) > defaults.MAX_REDACT_CHARS:
         raise InputTooLarge("InputTooLarge")
     return _redact_value(value, mapping)
