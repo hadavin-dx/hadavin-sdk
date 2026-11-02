@@ -71,6 +71,7 @@ import re
 
 from markdown_it import MarkdownIt
 
+from hadavin_sdk.guard import textnorm
 from hadavin_sdk.guard.redact import strip_ansi
 
 # A link label may hold escaped brackets (`[a\]b]`); a destination may be anything but `)`.
@@ -209,6 +210,9 @@ def normalise(text: str) -> str:
 _RENDERED_MARKUP = re.compile(r"[*~`]")
 
 
+_FOLD_MAX = 1_000_000
+
+
 def _views(text: str) -> set[str]:
     """Every way a reader may see `text`: as written; without escape sequences (a space where one glued two words,
     and also written out as text); without control characters; and without any invisible character. A key split
@@ -217,6 +221,15 @@ def _views(text: str) -> set[str]:
     views = {text, strip_ansi(text), _ANSI_AS_TEXT.sub(" ", text)}
     views |= {strip_controls(v) for v in views}
     views |= {_INVISIBLE.sub("", v) for v in views}
+    # One shared fold (look-alike letters, other scripts' digits, combining marks), applied to the as-written text and to the most
+    # reduced view only: folding every distinct view cost ~0.6 s per MB each. Text beyond _FOLD_MAX is not folded (the other views
+    # still ran); a model reply is bounded far below this. NOTE: the invisible-character set above (`_INVISIBLE`) is URL-parser-specific
+    # and differs from textnorm's on purpose; the two are not one table.
+    if len(text) <= _FOLD_MAX:
+        views |= {
+            textnorm.fold(text),
+            textnorm.fold(_INVISIBLE.sub("", strip_controls(strip_ansi(text)))),
+        }
     return views
 
 
