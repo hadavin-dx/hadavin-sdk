@@ -173,7 +173,9 @@ def run_case(
             # An exhausted call may have been processed and billed: charge by the billing contract (llm/protocol.py)
             # so the K1b cap holds; a provably unbilled one charges nothing.
             if route_prices is not None:
-                budget.charge(cost_to_settle(exc, worst_case_usd(route_prices, system, messages)))
+                budget.charge(
+                    cost_to_settle(exc, worst_case_usd(route_prices, system, messages), agent="k1b")
+                )
             if isinstance(exc, ProviderExhausted):
                 out.status, out.stop_reason = "error", "provider_exhausted"
             else:

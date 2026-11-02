@@ -285,3 +285,65 @@ def test_mf_a_non_numeric_amount_is_a_config_error_before_any_connection(monkeyp
     for junk in ("abc", "", "1,5"):
         with pytest.raises(ConfigError):
             migrate.release_reservation("dsn", "a", datetime.date(2020, 1, 1), junk)
+
+
+@pytest.mark.parametrize("junk", [None, "x", float("nan"), object()])
+def test_m1_a_garbage_attempts_on_the_fallback_error_neither_raises_nor_releases(junk, clock):  # noqa: F811
+    fb_err = ProviderError("fallback refused")
+    fb_err.attempts = junk
+    llm = ResilientLLM(
+        Stub(ProviderExhausted("read timeout")),
+        Stub(fb_err),
+        CircuitBreaker(failures=1, reset_after_s=60.0),
+        fallback_metered=True,
+    )
+    with pytest.raises(
+        ProviderError
+    ) as e:  # the ProviderError itself, not a TypeError from the handler
+        llm.chat([], system="", route="r")
+    assert e.value is fb_err
+    assert cost_to_settle(e.value, D("1")) == D("1")
+
+
+def test_m1_the_billed_usd_warning_names_the_agent_and_route(caplog):
+    e = UnusableAnswer("x")
+    e.billed_usd = D("9")
+    with caplog.at_level("WARNING"):
+        assert cost_to_settle(e, D("1"), agent="agent-7", route="route-x") == D("1")
+    assert "agent=agent-7" in caplog.text and "route=route-x" in caplog.text
+
+
+def test_m5_release_reservation_with_the_portal_role_is_a_store_unavailable_by_class_name():
+    import psycopg
+    from psycopg import sql
+    from psycopg.conninfo import make_conninfo
+
+    from hadavin_sdk.store.migrate import migrate, release_reservation
+    from hadavin_sdk.store.protocol import StoreUnavailable
+
+    for dsn in pg_schema():
+        pt, mt = "pt_" + uuid.uuid4().hex[:10], "mt_" + uuid.uuid4().hex[:10]
+        with psycopg.connect(dsn, autocommit=True) as db:
+            for n in (pt, mt):
+                db.execute(sql.SQL("CREATE ROLE {} LOGIN").format(sql.Identifier(n)))
+        migrate(dsn, portal_role=pt, maintenance_role=mt)
+        try:
+            with pytest.raises(StoreUnavailable) as err:
+                release_reservation(
+                    make_conninfo(dsn, user=pt), "p", datetime.date(2026, 3, 15), D("1")
+                )
+            assert "InsufficientPrivilege" in str(err.value) and "permission" not in str(err.value)
+        finally:
+            with psycopg.connect(dsn, autocommit=True) as db:
+                for n in (pt, mt):
+                    db.execute(sql.SQL("DROP OWNED BY {}").format(sql.Identifier(n)))
+                    db.execute(sql.SQL("DROP ROLE {}").format(sql.Identifier(n)))
+
+
+def test_m1_metered_llm_passes_the_agent_and_route_to_the_warning(caplog, clock):  # noqa: F811
+    err = UnusableAnswer("x")
+    err.billed_usd = D("9")
+    lim = _limits(MemoryStore(), daily="1")
+    with caplog.at_level("WARNING"), pytest.raises(UnusableAnswer):
+        MeteredLLM(Stub(err), lim, "a", ROUTES).chat([], system="", route="r")
+    assert "agent=a" in caplog.text and "route=r" in caplog.text

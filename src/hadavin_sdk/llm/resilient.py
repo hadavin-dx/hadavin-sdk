@@ -239,10 +239,15 @@ class ResilientLLM:
             out = self.fallback.chat(*args, **kwargs)
         except ProviderError as fe:
             # The primary's unknown requests are not forgotten because the fallback failed too: a meter must keep
-            # the reservation. (A SUCCESSFUL fallback settles at its own reply cost; the primary's unknown billing is
-            # not priceable: stated limit, CHANGELOG.)
+            # the reservation. Bound: at most ONE primary worst case per fallback event (the primary's own count is
+            # added once; a SUCCESSFUL fallback settles at its own reply cost, the primary's unknown billing is not
+            # priceable: stated limit, CHANGELOG). A garbage ``attempts`` on the fallback's error is left alone:
+            # ``unknown_requests`` counts it as 1, so ``cost_to_settle`` keeps the reservation anyway.
             lost = unknown_requests(cause) if cause is not None else 0
             if lost:
-                fe.attempts = max(0, int(getattr(fe, "attempts", 1))) + lost
+                try:
+                    fe.attempts = max(0, int(getattr(fe, "attempts", 1))) + lost
+                except (TypeError, ValueError, OverflowError):
+                    pass
             raise
         return out.model_copy(update={"fallback_used": True, "served_by": served_by})

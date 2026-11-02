@@ -71,7 +71,9 @@ def unknown_requests(exc: BaseException) -> int:
     return attempts - answered - refused
 
 
-def cost_to_settle(exc: BaseException, reserved: Decimal) -> Decimal:
+def cost_to_settle(
+    exc: BaseException, reserved: Decimal, *, agent: str = "", route: str = ""
+) -> Decimal:
     """What a meter should settle a reservation to after ``exc`` (see the billing contract on ``ProviderError``).
     Never more than ``reserved`` (a provider-reported ``billed_usd`` above the worst case is a bad number, not a bill) and
     never raises: anything it cannot read keeps the whole reservation (the fail-safe direction)."""
@@ -84,7 +86,11 @@ def cost_to_settle(exc: BaseException, reserved: Decimal) -> Decimal:
             if not billed.is_finite() or billed <= 0:
                 return reserved  # never settle a billed answer at zero
             if billed > reserved:
-                _LOG.warning("billed_usd above the reservation: settling at the reservation")
+                _LOG.warning(
+                    "billed_usd above the reservation: settling at the reservation (agent=%s route=%s)",
+                    agent,
+                    route,
+                )
                 return reserved
             return billed
         return Decimal(0)

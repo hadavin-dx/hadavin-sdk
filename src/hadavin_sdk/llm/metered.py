@@ -73,7 +73,7 @@ class MeteredLLM:
         except ProviderError as exc:
             # The billing contract (llm/protocol.py): release only if nothing was sent or every request was
             # refused; book a billed answer at its cost; keep the worst case when the outcome is unknown.
-            self._settle(res, cost_to_settle(exc, res.usd))
+            self._settle(res, cost_to_settle(exc, res.usd, agent=self.agent_id, route=route))
             raise
         self._settle(res, reply.cost_usd)
         return reply

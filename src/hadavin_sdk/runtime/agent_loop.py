@@ -343,7 +343,9 @@ class Runtime:
             ) as exc:  # a refused key or request must not strand the run in WORKING
                 # Settle by the billing contract: released only if nothing was sent or every request was refused;
                 # an answered (billed) call is booked at its cost, never at zero; anything unknown stays booked.
-                self._settle(run, res, cost_to_settle(exc, res.usd))
+                self._settle(
+                    run, res, cost_to_settle(exc, res.usd, agent=agent_id, route=agent.model_route)
+                )
                 if isinstance(exc, QuotaReached):
                     code = "provider_quota"  # a per-period quota, not money: waiting for its reset
                 elif isinstance(exc, SpendLimitReached):

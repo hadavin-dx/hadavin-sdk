@@ -12,10 +12,12 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
 
+import psycopg
 from psycopg import sql
 
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.store.postgres import connect
+from hadavin_sdk.store.protocol import StoreUnavailable
 
 MIGRATIONS = Path(__file__).parent / "migrations"
 
@@ -276,7 +278,8 @@ def migrate(
 #   Why a separate identity: a stuck reservation is an OPERATOR act, so it runs under its own login, not the runtime's.
 #                 This is NOT a privilege boundary against the runtime role: the runtime holds SELECT, INSERT and UPDATE
 #                 on both spend tables (reserve and settle need them), so raw SQL under the runtime login can already write
-#                 any `usd`, release or not. The runtime role cannot DELETE, which is the only difference.
+#                 any `usd`, release or not. The maintenance role has only ONE power the runtime lacks: DELETE. It is
+#                 NARROWER than the runtime on INSERT (denied) and on key columns (UPDATE of `usd` only, never agent_id).
 #   Real controls: (1) DSN separation: HADAVIN_MAINTENANCE_DSN is held by the operator and is never in the runtime's
 #                 environment (the CLI only checks that it is set; it cannot tell which role the DSN names); (2) the
 #                 command is one named agent and day, a positive finite amount, and the store clamps at zero in the same
@@ -288,7 +291,7 @@ def migrate(
 #                 headroom until the day or month rolls over). That role could already DELETE any counter row (which resets
 #                 it to zero and hands out cap headroom, the worse direction), so the grant adds no new class of harm.
 #                 `usd` is the only writable column, so no key (agent_id, day, month) can be changed.
-#   Negative test: tests/test_pr48_review4.py::test_privilege_matrix_on_the_spend_tables (real Postgres: the actual
+#   Negative test: tests/test_pr48_review6.py::test_privilege_matrix_on_the_spend_tables (real Postgres: the actual
 #                 matrix for the runtime, maintenance and portal logins) and the maintenance role's other denials.
 
 
@@ -341,6 +344,10 @@ def release_reservation(
         if not dry_run:
             store.settle_spend([(key, day, -usd)])
         return before, store.spend_totals(key, day)
+    except (
+        psycopg.Error
+    ) as exc:  # e.g. a DSN of the portal role: no privilege; class name only, no message
+        raise StoreUnavailable(f"release-reservation: {type(exc).__name__}") from None
     finally:
         store.close()
 

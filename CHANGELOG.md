@@ -139,20 +139,24 @@
   month). Agent rows are never pruned.
 - **Tracked follow-up (not done here on purpose):** `CHECK (usd >= 0)` on `spend` and `spend_month` is a migration.
   Number plan: #49 = 0005, #42 = 0006, #41 = 0007, so the CHECK is **0008**, added after #49 and #41 merge (they rewrite the
-  same store code). Until then the clamp holds in the statement only: **it does not cover raw SQL**, and the maintenance
+  same store code). It must be `CHECK (usd >= 0 AND usd <> 'NaN')` (NUMERIC accepts NaN, and `NaN >= 0` is true in Postgres):
+  clean any existing negative or NaN rows first, or add it `NOT VALID` and then `VALIDATE CONSTRAINT`. The tracked GitHub
+  issue is NOT filed yet (the owner files it; the text is in `egm/bhovix-core/pr48/builder-notes-9.md`). Until then the clamp holds in the statement only: **it does not cover raw SQL**, and the maintenance
   role holds UPDATE (usd), so raw SQL can still write a negative value. After #49/#41 the clamps in postgres `_add` and
   memory `settle_spend` must be redone; `test_ma_*` fails if one is lost.
 - **A provider-reported `billed_usd` is bounded by the reservation (M2):** `cost_to_settle` never settles above the
   reserved worst case (logged), so an absurd or hostile number (`1e999999`, `1e9`) cannot lock an agent or a shared cap.
-  Not bounded: `reply.cost_usd` on the SUCCESS path, which is priced from provider-reported token counts (existing,
-  ticketed). `cost_to_settle` also never raises: an unreadable count or price keeps the whole reservation.
+  The cap can overshoot by (real bill - reserved) and that is accepted: the reservation is the worst-case bound, so a bill
+  above it means the price table or the bound is wrong (the warning log names the agent and route). NOT bounded:
+  `reply.cost_usd` on the SUCCESS path, which is priced from provider-reported token counts (existing, ticketed).
+  `cost_to_settle` also never raises: an unreadable count or price keeps the whole reservation.
 - **`UnusableAnswer` now lives in `llm/protocol.py` (M3):** `answered = 1`, `refused = 0`, `billed_usd` 0 (unpriced keeps the
   reservation). **Merge instruction for #43:** import it from `llm.protocol` and delete #43's own class; keep `with_retry`'s
   stamping from this PR (`err.attempts` only if not already stamped, plus `refused`); #43's `err.attempts = attempt` on
   every `ProviderError` must not replace it. Contract tests: `tests/test_pr48_review6.py::test_m3_*`.
 - **A fallback that also fails keeps the primary's unknown request (m-a):** its error carries the primary's unknown count, so
-  a meter keeps the reservation. Stated limit: a fallback that SUCCEEDS settles at its own reply cost; the primary's unknown
-  billing cannot be priced.
+  a meter keeps the reservation. Bound: at most one primary worst case per fallback event. Stated limit: a fallback that
+  SUCCEEDS settles at its own reply cost; the primary's unknown billing cannot be priced.
 - **Memory store** month totals read a per-agent day index instead of scanning every counter under the global lock.
 - A failed probe no longer clears "opened for spend" (`_open_spend = spend or _open_spend`). The `ci.yml` checkout comment
   now says what the scan covers.

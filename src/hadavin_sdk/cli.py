@@ -365,9 +365,9 @@ def _release_reservation(cfg, args) -> int:
         )
     except StoreUnavailable:
         print(
-            "failed: StoreUnavailable. If the maintenance role was created before this release it lacks "
-            "UPDATE (usd) on the spend tables: re-run `hadavin-sdk migrate --maintenance-role <role>` "
-            "(set HADAVIN_DEBUG=1 for the traceback)",
+            "failed: StoreUnavailable. HADAVIN_MAINTENANCE_DSN must name the maintenance role; if that role was "
+            "created before this release it lacks UPDATE (usd) on the spend tables: re-run "
+            "`hadavin-sdk migrate --maintenance-role <role>` (set HADAVIN_DEBUG=1 for the traceback)",
             file=sys.stderr,
         )
         if os.environ.get("HADAVIN_DEBUG") == "1":
