@@ -22,6 +22,7 @@ the CLI as the emergency path.
 
 **Rotating the signing secret:** put the new secret in the secrets backend under the configured name and restart the
 receiver; requests signed with the old one are refused. Click nonces older than the signature window need no handling.
+There is ONE signing secret: rotating it drops every click in flight and makes already-posted buttons unusable until the card is reposted (plan it outside a live labelling hour). The runtime role may DELETE from `seen_actions` (the purge needs it), so a compromised runtime could remove a nonce and replay a captured request within its 5 minutes; `allowed_team_id` and the audit rows are the compensating controls.
 Pin the workspace with `policy.allowed_team_id` in `baseline.yaml` so a click from another workspace that shares the
 secret is refused; the Slack payload shape is parsed in `approvals/hmac_v0.py` only (another channel kind brings its
 own `parse_action`).

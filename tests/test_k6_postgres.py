@@ -312,3 +312,44 @@ def test_k6_runtime_role_cannot_rewrite_labels_or_levels(pg_world):
     ):
         with pytest.raises(psycopg.errors.InsufficientPrivilege):
             w.store._db.execute(stmt)
+
+
+def test_k6_two_connections_the_lock_orders_a_check_and_its_insert(two_connections):
+    """Deterministic interleaving: B has read the run's latest label (no harmful yet) and pauses before inserting;
+    A commits a harmful label in that gap. Without the per-run lock B then buries it with a `wrong`; with the lock A
+    waits for B, so the final latest label is harmful whichever way the two serialise."""
+    import threading
+
+    from hadavin_sdk.models import latest_labels
+
+    a, b = two_connections
+    a.add_labels([(_lab("q9", "agree", "user:1", 1), None)], may_lower_harmful=False)
+    b_checked, a_done = threading.Event(), threading.Event()
+    real_exec = b._exec
+
+    def paused_exec(query, params=()):
+        cur = real_exec(query, params)
+        if "FROM labels WHERE run_id" in str(
+            query
+        ):  # B's sticky check has just read the latest label
+            b_checked.set()
+            a_done.wait(
+                2
+            )  # with the lock A cannot finish until B does, so this times out and B goes on
+        return cur
+
+    b._exec = paused_exec
+
+    def run_a():
+        b_checked.wait(5)
+        a.add_labels([(_lab("q9", "harmful", "user:2", 2), None)], may_lower_harmful=False)
+        a_done.set()
+
+    t = threading.Thread(target=run_a)
+    t.start()
+    try:
+        b.add_labels([(_lab("q9", "wrong", "user:3", 3), None)], may_lower_harmful=False)
+    except Exception:  # noqa: BLE001, S110 - a refusal is also a correct outcome; the stored order decides
+        pass
+    t.join()
+    assert latest_labels(a.list_labels("q9"))["q9"].label == "harmful"

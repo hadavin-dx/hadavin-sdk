@@ -481,9 +481,15 @@ def test_k6_two_error_rates_reported(w):
         w.label(rid, name, when=day(7))
     text = w.measure.render_report(WEEK, NOW)
     wrong_line = next(ln for ln in text.splitlines() if ln.startswith("- Wrong rate on proposals"))
-    miss_line = next(ln for ln in text.splitlines() if ln.startswith("- Miss rate on abstentions"))
+    fa_line = next(ln for ln in text.splitlines() if ln.startswith("- False-abstain rate"))
+    ok_line = next(ln for ln in text.splitlines() if ln.startswith("- Correct abstentions"))
     assert wrong_line.startswith("- Wrong rate on proposals: 1 of 7 (14%)")
-    assert miss_line.startswith("- Miss rate on abstentions: 1 of 4 (25%)")
+    # answerable = 7 labelled proposals + 1 labelled should-have-answered = 8; the denominator is not the abstentions
+    assert fa_line.startswith(
+        "- False-abstain rate (answerable questions the agent held back): 1 of 8 (12%)"
+    )
+    assert "95% upper bound" in fa_line and "n = 8" in fa_line
+    assert "3 of 4 labelled abstentions; abstention label coverage 4 of 4" in ok_line
     assert "accuracy" not in text.lower()  # never blended into one number
 
 
@@ -962,8 +968,10 @@ def test_k6_baseline_loads_a_filled_ceiling(tmp_path):
         (_ceiling(counts="[wrong]"), "must include harmful"),
         (_ceiling(counts="[harmful, nonsense]"), "unknown labels: nonsense"),
         (_ceiling(max="lots"), "whole numbers"),
-        (_ceiling(max="-1"), ">= 0"),
-        (_ceiling(window_days="0"), ">= 0 and window_days >= 1"),
+        (_ceiling(max="-1"), "whole numbers"),
+        (_ceiling(max="1000001"), "ceiling.max must be 0..1000000"),
+        (_ceiling(window_days="3651"), "window_days 1..3650"),
+        (_ceiling(window_days="0"), "window_days 1..3650"),
         (": : :\n  - [", "cannot be read"),
     ],
 )

@@ -287,8 +287,11 @@ def test_audit_checkpoints_migration_adds_alg_and_label_and_old_rows_get_default
         for path in old:
             db.execute("INSERT INTO schema_migrations (version) VALUES (%s)", (path.stem,))
         db.execute("INSERT INTO audit_checkpoints (seq, hash, signature) VALUES (1, 'h', 's')")
-    # Pinned, not derived from the folder: a migration added later must be listed here on purpose.
-    assert migrate(fresh_dsn) == ["0004_audit_checkpoint_meta", "0005_measure"]
+    # 0004 plus the K6 measure migration, found by name: its number changes at rebase (see CHANGELOG).
+    measure_file = next(
+        p.stem for p in MIGRATIONS.glob("*_measure.sql")
+    )  # its number changes at rebase
+    assert migrate(fresh_dsn) == ["0004_audit_checkpoint_meta", measure_file]
     with psycopg.connect(fresh_dsn, autocommit=True) as db:
         assert db.execute("SELECT seq, alg, key_label FROM audit_checkpoints").fetchall() == [
             (1, None, None)

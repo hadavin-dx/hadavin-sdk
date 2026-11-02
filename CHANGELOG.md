@@ -4,9 +4,30 @@
 
 ### Upgrade steps
 - **K6 measurement, demotion and the weekly report.** Run `hadavin-sdk migrate --runtime-role R` (migration
-  `0005_measure.sql`; it is renumbered to the next free number at rebase, only before any database has applied it):
+  `0005_measure.sql`):
   tables `labels` (with `seq`), `level_events`, `reports`, `seen_actions`, `announcements`, columns `tick_state.detail`
   and `plans.config_hash/model_id/prompt_sha256`, and the views `v_pilot_week`, `v_caught_week`, `v_approval_week`.
+  - **Migration number (rebase step, not done yet on purpose).** #49 takes `0005_reservations`, #42 `0006_evidence`
+    and this PR `0007_measure`. `migrate` refuses a gap, so this branch keeps `0005_measure.sql` until the other two
+    are merged. When rebasing onto them run `git mv src/hadavin_sdk/store/migrations/0005_measure.sql
+    src/hadavin_sdk/store/migrations/0007_measure.sql` (the name inside `tests/test_p2_postgres.py` is looked up by
+    the `*_measure.sql` glob, so nothing else changes) and update the file name in this paragraph;
+    `check_ledger` fails the suite on a duplicate or a gap, and
+    `test_k6_migration_number_documented` fails when this paragraph names a file that is not on disk.
+    Renumbering is safe only before any database applied `0005_measure`: no pilot database has (owner to confirm in
+    writing before the rename; a database that did would need its `schema_migrations` row renamed by hand).
+  - **What "append-only" means here.** `labels`, `level_events` and `reports` are append-only **for the runtime
+    role** (SELECT, INSERT grants) and an UPDATE/DELETE/TRUNCATE-refusing trigger. They are **not tamper-evident**
+    (no hash chain; the table owner or a superuser can drop the trigger). The cross-check is the hash-chained audit:
+    each label is audited after it commits (`label`, `object_ref = label_id`; through the audit outbox if the sink is down), so a label row with no audit entry, or an audit entry with no row, is a discrepancy to investigate. Numbers drawn from these tables are
+    counts of recorded labels, not tamper-evident evidence.
+  - **Bounds.** `ceiling.window_days` 1..3650 and `ceiling.max` 0..1,000,000 (same as the policy fields); whole
+    numbers in a button value or in `baseline.yaml` are ASCII digits only (`[0-9]{1,18}`).
+  - **Signing secret rotation and the nonce table.** The channel has ONE signing secret: rotating it makes every
+    button already posted unusable (a click signed with the old secret is refused 401) until the card is reposted, and
+    in-flight clicks inside the 5-minute window are lost. `seen_actions` gives the runtime role DELETE (the purge step
+    needs it), so a compromised runtime could delete a nonce and replay a captured signed request inside its 5-minute
+    window; the signed workspace pin (`allowed_team_id`) and the per-action audit rows are the compensating controls.
   - **Who and what.** `Principal.admin_rights` (`stop`, `reset`, `clear_override`, `approve_label_import`) and
     `Principal.label_agents` (agent ids or `*`; not stated is allowed in dev and refused in pilot/prod) are separate
     from action `rights`. Admin rights apply to `kind: person` only. `pilot`/`prod` need at least one person with
@@ -27,9 +48,10 @@
     ceiling demotion, needs the section 6.1 numbers for an action at suggest, is bound to the demotion its card was
     posted for, and a harmful demotion is cleared by someone other than the labeller and not sooner than
     `policy.harmful_clear_min_age_h` (default 24 h, floor 24 unless `allow_weaker_than_spec`; refusal `too_soon`).
-    **Label time, not run time:** the wrong rule (`wrong_limit` inside `wrong_window_days`), the recent-harmful
+    **Label time, not run time (for the rules only):** the wrong rule (`wrong_limit` inside `wrong_window_days`), the recent-harmful
     check for promotion and the ceiling window are measured from when the label was given (`labels.created_at`,
-    commit order), never from when the run happened; an old run labelled today counts today. A clear does not erase recent
+    commit order), never from when the run happened; an old run labelled today counts today. The weekly report's counts and its wrong/harmful list use ONE other rule: a run belongs to the week it
+    was created in and its latest label counts there, whenever it was given (`v_pilot_week` and the list agree). A clear does not erase recent
     wrongs: they still count inside the window, so one new wrong re-demotes at once (the card says until when).
   - **Promotion.** `promote-check AGENT ACTION` (exit 2 for an unknown agent/action) writes
     `promotions/<agent>.<action>.json` from labels on proposals made under the CURRENT config hash, needing a green

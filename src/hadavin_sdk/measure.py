@@ -11,8 +11,9 @@ Rules that matter (kernel design K6, section 6.1):
 
 * A label comes from a person known to ``principals.yaml``, on a run that exists, and fits the run: the four
   proposal labels need a plan, the two abstain labels need none. The latest eligible label of a run is its label.
-* A ``harmful`` label, or 3 ``wrong`` labels for one action in 14 days, demotes that action (append-only
-  ``level_events``; a line owner's signed ``clear`` is the only way back). The demotion row and the label are one
+* A ``harmful`` label, or 3 ``wrong`` labels for one action in 14 days, demotes that action (``level_events``
+  is append-only for the runtime role, by grants and an UPDATE/DELETE-refusing trigger; it is not tamper-evident: no
+  hash chain, so the audit cross-check is the control; a line owner's signed ``clear`` is the only way back). The demotion row and the label are one
   transaction: if either cannot be stored the label is refused and nothing changes.
 * The effective level never rises above the config level, and a store that cannot be read means ``shadow``.
 * A chat label counts as evidence; a csv label counts only after a line owner approves the import.
@@ -81,6 +82,11 @@ WRONGS_KIND = (
 _ALIASES = {
     "should_have_answered": "missed"
 }  # the abstain button's value before K6 built its parser
+# Whole numbers that arrive as text (a button's seq, a baseline.yaml number): ASCII digits only, so one number has
+# one spelling (Python's own digit test also accepts Arabic-Indic digits and superscripts), and short enough for int().
+_DIGITS = re.compile(r"[0-9]{1,18}")
+WINDOW_DAYS_MAX = 3650  # the same ceiling the policy's day windows have
+CEILING_MAX_BOUND = 10**6  # the same ceiling as the policy's count fields
 _ID = re.compile(r"[A-Za-z0-9_.-]{1,100}")
 _NAME = re.compile(r"[A-Za-z0-9_-]{1,100}")
 _PLACEHOLDER = re.compile(r"<[^>]*>")
@@ -185,9 +191,9 @@ def _policy_from(raw: Any) -> Policy:
     bounds = {
         "promotion_min_labelled": (1, 10**6),
         "promotion_max_wrong_harmful": (0, 10**6),
-        "promotion_harmful_window_days": (1, 3650),
+        "promotion_harmful_window_days": (1, WINDOW_DAYS_MAX),
         "wrong_limit": (1, 1000),
-        "wrong_window_days": (1, 3650),
+        "wrong_window_days": (1, WINDOW_DAYS_MAX),
         "promotion_min_labellers": (1, 1000),
         "wrong_rise_flag_min": (1, 10**6),
         "harmful_clear_min_age_h": (0, 8760),
@@ -257,7 +263,7 @@ def parse_action_value(value: str) -> ParsedAction | None:
         parts[0] == "clear"
         and len(parts) == 4
         and all(_NAME.fullmatch(p) for p in parts[1:3])
-        and parts[3].isdigit()
+        and _DIGITS.fullmatch(parts[3])
     ):
         return ParsedAction(
             "clear", (parts[1], parts[2], parts[3])
@@ -362,15 +368,19 @@ def load_baseline(root: Path) -> Ceiling:
             f"{BASELINE_FILE}: ceiling.counts must include harmful: a harmful verdict always counts "
             "against the ceiling and config cannot take it out"
         )
-    try:
-        ceil_max = int(str(raw["max"]).strip())
-        window = int(str(raw["window_days"]).strip())
-    except ValueError:
+    texts = (str(raw["max"]).strip(), str(raw["window_days"]).strip())
+    if not all(
+        _DIGITS.fullmatch(t) for t in texts
+    ):  # ASCII digits only: no signs, '_', Arabic-Indic digits
         raise ConfigError(
             f"{BASELINE_FILE}: ceiling.max and ceiling.window_days must be whole numbers"
-        ) from None
-    if ceil_max < 0 or window < 1:
-        raise ConfigError(f"{BASELINE_FILE}: ceiling.max must be >= 0 and window_days >= 1")
+        )
+    ceil_max, window = int(texts[0]), int(texts[1])
+    if not 0 <= ceil_max <= CEILING_MAX_BOUND or not 1 <= window <= WINDOW_DAYS_MAX:
+        raise ConfigError(
+            f"{BASELINE_FILE}: ceiling.max must be 0..{CEILING_MAX_BOUND} and "
+            f"ceiling.window_days 1..{WINDOW_DAYS_MAX}"
+        )
     return Ceiling(
         str(raw["metric"]).strip(),
         ceil_max,
@@ -1033,6 +1043,12 @@ class Measure:
                 return 200, "replay"
         try:
             status, reason = self._dispatch(action.user, parsed)
+        except (ValueError, OverflowError):
+            # The request itself cannot be acted on (client side): the claim stays spent, so the same signed
+            # request cannot be re-sent; a 4xx, not a 503 that invites a retry.
+            _LOG.warning("click refused: not a valid request")
+            self._audit("-", parsed.kind, action.user, result="refused", error_code="malformed")
+            return 400, "malformed"
         except Exception:
             self._release(action.nonce if claimed else "")
             raise
@@ -1093,6 +1109,8 @@ class Measure:
             plan, refusal = self._check(x.principal_id, x.run_id, x.label)
             if refusal is None and self._sticky_blocked(x.principal_id, x.run_id, x.label):
                 refusal = LabelResult(False, "harmful_is_sticky")
+            elif refusal is None and self._would_overwrite(x.run_id, x.label):
+                refusal = LabelResult(False, "newer_label_exists")
             if refusal is not None:
                 problems.append(f"row {i}: {refusal.reason}")
                 continue
@@ -1130,6 +1148,13 @@ class Measure:
         )
         self._safe_enforce()
         return 200, f"approved:{len(items)}"
+
+    def _would_overwrite(self, run_id: str, label: str) -> bool:
+        """Would storing this csv row make it the run's latest label over a different eligible one? "Latest by seq"
+        would let an older csv verdict silently replace a newer chat verdict (only harmful is sticky), so such a row
+        is refused: the labeller re-labels in chat if the csv verdict is the right one."""
+        cur = latest_labels(self.store.list_labels(run_id)).get(run_id)
+        return cur is not None and cur.label != label
 
     def _sticky_blocked(self, principal_id: str, run_id: str, label: str) -> bool:
         """Would this label lower a harmful verdict that its author may not lower?"""
@@ -1303,6 +1328,8 @@ class Measure:
             plan, refusal = self._check(by, run_id, label)
             if refusal is None and self._sticky_blocked(by, run_id, label):
                 refusal = LabelResult(False, "harmful_is_sticky")
+            elif refusal is None and approved_by and self._would_overwrite(run_id, label):
+                refusal = LabelResult(False, "newer_label_exists")
             if refusal is not None:
                 problems.append(f"row {i}: {refusal.reason}")
                 continue
@@ -1575,6 +1602,15 @@ class Measure:
         finally:
             self._release(claim)
 
+    def _run_week(self, run_id: str) -> date | None:
+        """The ISO week (Monday, UTC) a run was created in: the one bucketing rule of the weekly report. A run
+        belongs to its creation week; its latest label counts there, whenever the label was given. (The demotion
+        and ceiling windows are different on purpose: they run on label time, see the changelog.)"""
+        try:
+            return week_start(self.store.get_run(run_id).created_at)
+        except NotFound:
+            return None
+
     def render_report(self, week: date, at: datetime | None = None) -> str:
         at = at or self.clock()
         start = datetime(week.year, week.month, week.day, tzinfo=UTC)
@@ -1602,8 +1638,18 @@ class Measure:
             ),
             "",
             "## Labels and the two error rates (never blended)",
+            (
+                "How to read it: a run is counted in the week it was created, with its latest label whenever "
+                "that was given. Scorecard right = agree + partial, but the agree rate counts agree only (partial is not "
+                "agreement); wrong = wrong; harmful = harmful; "
+                "abstention fine = abstain_ok; abstention that should have answered = missed (the False-abstain "
+                "rate below); abstained runs are counted by reason code, labelled or not. Scorecard 'This period' = the "
+                "counts above; 'Cumulative' = the per-action lines (all time); 'Value in window' = the ceiling line."
+            ),
         ]
         labelled = pw.agree + pw.partial + pw.wrong + pw.harmful
+        labelled_abst = pw.abstain_ok + pw.missed
+        answerable = labelled + pw.missed
         out += [
             (
                 f"- Proposals labelled: {labelled} of {pw.proposals}: agree {pw.agree}, partial {pw.partial}, "
@@ -1611,8 +1657,14 @@ class Measure:
             ),
             f"- Wrong rate on proposals: {_rate(pw.wrong + pw.harmful, labelled)}.",
             (
-                f"- Miss rate on abstentions: {_rate(pw.missed, pw.missed + pw.abstain_ok)} "
-                f"(abstentions labelled: fine {pw.abstain_ok}, should have answered {pw.missed})."
+                f"- False-abstain rate (answerable questions the agent held back): "
+                f"{_rate(pw.missed, answerable)} [answerable = labelled proposals {labelled} + abstentions "
+                f"labelled should-have-answered {pw.missed}; n = {answerable}]."
+            ),
+            (
+                f"- Correct abstentions (traps the agent rightly refused): {pw.abstain_ok} of {labelled_abst} "
+                f"labelled abstentions; abstention label coverage {labelled_abst} of {pw.abstained} "
+                "abstained runs (an unlabelled abstention is not counted either way)."
             ),
         ]
         if pw.proposals and labelled / pw.proposals < self.th.min_coverage:
@@ -1633,15 +1685,17 @@ class Measure:
             out.append(
                 f"- {agent_id}.{action_id}: labelled n={nm.labelled}, wrong + harmful "
                 f"{nm.wrong + nm.harmful}, upper bound on the wrong rate {bound}; "
-                f"coverage {nm.coverage:.0%}, agree {nm.agree_rate:.0%}; labelled by {nm.labellers} "
+                f"coverage {nm.coverage:.0%}, agree {nm.agree_rate:.0%} of labelled (agree only; partial not counted); labelled by {nm.labellers} "
                 f"people, the busiest gave {nm.top_labeller_share:.0%} of the labels."
             )
-        out += ["", "## Every wrong and harmful label this week"]
+        out += ["", "## Every wrong and harmful label on this week's runs"]
         labels = [
             x
-            for x in latest_labels(self.store.list_labels_between(start, end)).values()
-            if x.label in ("wrong", "harmful")
-        ]  # eligible and latest per run, like every other number here
+            for x in latest_labels(
+                self.store.list_labels_between(start, at + timedelta(seconds=1))
+            ).values()
+            if x.label in ("wrong", "harmful") and self._run_week(x.run_id) == week
+        ]  # eligible and latest per run, bucketed by the run's week like every count above
         out += [f"- {x.run_id}: {x.label} (by {x.principal_id}, {x.channel})" for x in labels] or [
             "- none"
         ]
@@ -1843,7 +1897,7 @@ def _weaker_than(a: Thresholds, b: Thresholds) -> bool:
 def _verdict_key(label_id: str) -> str:
     """A csv row is one verdict whether it is pending (`-p`) or approved (`-a`): the demotion it causes is keyed by
     the row, so approving an import never demotes (or announces) a second time."""
-    return re.sub(r"^(csv-[0-9a-f]{64}-\d+)-[pa]$", r"\1", label_id)
+    return re.sub(r"^(csv-[0-9a-f]{64}-[0-9]+)-[pa]$", r"\1", label_id)
 
 
 def _rate(k: int, n: int) -> str:
@@ -1870,7 +1924,15 @@ def _summary(week: date, body: str) -> str:
         ln
         for ln in body.splitlines()
         if ln.startswith(
-            ("- Runs", "- Proposals labelled", "- Wrong rate", "- Miss rate", "- FLAG", "- ceiling")
+            (
+                "- Runs",
+                "- Proposals labelled",
+                "- Wrong rate",
+                "- False-abstain rate",
+                "- Correct abstentions",
+                "- FLAG",
+                "- ceiling",
+            )
         )
     ]
     return f"Pilot report for the week of {week.isoformat()} is ready.\n" + "\n".join(keep)

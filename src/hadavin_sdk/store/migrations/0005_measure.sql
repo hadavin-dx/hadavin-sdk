@@ -1,6 +1,9 @@
 -- Hadavin core store, version 0005 (K6 measurement): labels, level events, weekly reports, the tick detail column
 -- and the three views the weekly report and the portal read. Labels, level events and reports are append-only for the
--- runtime role (SELECT, INSERT); a demotion is cleared by a later `clear` row, never by a DELETE.
+-- runtime role (SELECT, INSERT); a demotion is cleared by a later `clear` row, never by a DELETE. They are NOT
+-- tamper-evident: there is no hash chain. The triggers below refuse UPDATE, DELETE and TRUNCATE to every role, the
+-- table owner included, but a superuser or the owner can drop a trigger; the control for that is the audit cross-check
+-- (each label is audited after commit as a `label` entry with object_ref = label_id; the audit is hash-chained).
 
 CREATE TABLE labels (
     seq          BIGSERIAL UNIQUE,   -- insertion order: "latest" means the highest seq, never created_at
@@ -58,6 +61,21 @@ CREATE TABLE reports (
     created_at TIMESTAMPTZ NOT NULL
 );
 
+CREATE OR REPLACE FUNCTION hadavin_measure_append_only() RETURNS trigger LANGUAGE plpgsql AS
+$f$ BEGIN RAISE EXCEPTION 'labels, level_events and reports are append-only'; END $f$;
+CREATE OR REPLACE TRIGGER labels_append_only BEFORE UPDATE OR DELETE ON labels
+    FOR EACH ROW EXECUTE FUNCTION hadavin_measure_append_only();
+CREATE OR REPLACE TRIGGER labels_no_truncate BEFORE TRUNCATE ON labels
+    FOR EACH STATEMENT EXECUTE FUNCTION hadavin_measure_append_only();
+CREATE OR REPLACE TRIGGER level_events_append_only BEFORE UPDATE OR DELETE ON level_events
+    FOR EACH ROW EXECUTE FUNCTION hadavin_measure_append_only();
+CREATE OR REPLACE TRIGGER level_events_no_truncate BEFORE TRUNCATE ON level_events
+    FOR EACH STATEMENT EXECUTE FUNCTION hadavin_measure_append_only();
+CREATE OR REPLACE TRIGGER reports_append_only BEFORE UPDATE OR DELETE ON reports
+    FOR EACH ROW EXECUTE FUNCTION hadavin_measure_append_only();
+CREATE OR REPLACE TRIGGER reports_no_truncate BEFORE TRUNCATE ON reports
+    FOR EACH STATEMENT EXECUTE FUNCTION hadavin_measure_append_only();
+
 -- K4's backlog step writes it (oldest_received_age_s, events started late); the weekly report reads it.
 ALTER TABLE tick_state ADD COLUMN detail JSONB;
 
@@ -93,12 +111,21 @@ SELECT r.week,
 FROM r LEFT JOIN p USING (run_id) LEFT JOIN l USING (run_id)
 GROUP BY r.week;
 
+CREATE OR REPLACE FUNCTION hadavin_try_jsonb(t TEXT) RETURNS jsonb LANGUAGE plpgsql IMMUTABLE AS
+$f$ BEGIN RETURN t::jsonb; EXCEPTION WHEN others THEN RETURN NULL; END $f$;
+
+-- audit_entries.body is TEXT: a row whose body is not a JSON object must not break the portal view, so it is read
+-- through a guard (a non-JSON body, or JSON that is not an object, is skipped).
 CREATE VIEW v_caught_week AS
+WITH j AS (
+    SELECT at, run_id,
+           CASE WHEN body ~ '^\s*\{' THEN hadavin_try_jsonb(body) END AS b
+    FROM audit_entries)
 SELECT date_trunc('week', at::timestamptz AT TIME ZONE 'UTC')::date AS week,
-       body::jsonb ->> 'caught_by'               AS caught_by,
+       b ->> 'caught_by'                          AS caught_by,
        count(DISTINCT run_id)                     AS n
-FROM audit_entries
-WHERE body::jsonb ->> 'caught_by' IS NOT NULL
+FROM j
+WHERE b ->> 'caught_by' IS NOT NULL
 GROUP BY 1, 2;
 
 CREATE VIEW v_approval_week AS
