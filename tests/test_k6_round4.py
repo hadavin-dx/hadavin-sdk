@@ -305,3 +305,27 @@ def test_k6_a_non_json_audit_body_does_not_break_the_caught_view(owner_db):
         )
     rows = owner_db.execute("SELECT caught_by, n FROM v_caught_week").fetchall()
     assert rows == [("gate", 1)]
+
+
+# --- m5: an approval whose id is a measurement keyword is still an approval -----------------------------------
+
+
+@pytest.mark.parametrize("kw", ["label", "clear", "stop", "reset", "approve_import"])
+def test_k6_an_approval_value_is_never_ours_whatever_the_approval_id(kw):
+    assert not measure.is_ours(f"{kw}|{'a' * 64}|0|approve")
+    assert not measure.is_ours(f"{kw}|{'a' * 64}|3|reject")
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "label|run-1|wrong",
+        "clear|test-agent|x|12",
+        "stop",
+        "reset",
+        "approve_import|" + "a" * 64,
+        "label:x:y",
+    ],
+)
+def test_k6_measurement_values_are_still_ours(value):
+    assert measure.is_ours(value)

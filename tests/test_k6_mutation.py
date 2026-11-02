@@ -119,6 +119,16 @@ MUTATIONS = [
         False,
     ),
     (
+        "approval-grammar-not-checked",
+        "measure.py",
+        'if len(fields) == 4 and fields[3] in ("approve", "reject") and _DIGITS.fullmatch(fields[2]):',
+        "if False:",
+        [
+            "tests/test_k6_round4.py::test_k6_an_approval_value_is_never_ours_whatever_the_approval_id"
+        ],
+        False,
+    ),
+    (
         "csv-import-overwrites-newer-label",
         "measure.py",
         "elif refusal is None and self._would_overwrite(x.run_id, x.label):",

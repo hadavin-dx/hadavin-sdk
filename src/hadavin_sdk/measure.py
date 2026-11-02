@@ -277,7 +277,12 @@ def parse_action_value(value: str) -> ParsedAction | None:
 
 def is_ours(value: str) -> bool:
     """First field decides whether this click is a measurement click (even a malformed one: it is refused here,
-    never read as an approval)."""
+    never read as an approval). An approval button has a fixed grammar, ``approval_id|plan_hash|step|approve`` (or
+    ``reject``): a value of that shape is never ours, whatever the approval id is called (an id equal to ``label`` or
+    ``clear`` is not misrouted). No measurement value ends in ``approve`` or ``reject``."""
+    fields = value.split("|")
+    if len(fields) == 4 and fields[3] in ("approve", "reject") and _DIGITS.fullmatch(fields[2]):
+        return False
     return re.split(r"[|:]", value, maxsplit=1)[0] in (
         "label",
         "clear",
