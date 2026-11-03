@@ -124,16 +124,3 @@ def test_a_tail_of_half_escapes_that_decodes_to_nothing_goes_with_the_front():
         cut = "ok " + tail + tools_mod.TRUNCATED
         out = tools_mod._strip_fragment(cut, forms)
         assert out == "ok " + tools_mod.TRUNCATED, (tail, out)
-
-
-def test_the_kubernetes_defaults_live_in_the_kind_module_not_in_generic_defaults():
-    from hadavin_sdk.sources import kubernetes as kmod
-
-    s = kmod.KubernetesSettings(api_url="https://kube.example.internal", namespaces=["prod"])
-    assert (s.page_size, s.max_pages, s.json_cap_bytes, s.log_bytes) == (
-        kmod.K8S_PAGE_SIZE,
-        kmod.K8S_MAX_PAGES,
-        kmod.K8S_JSON_CAP_BYTES,
-        kmod.K8S_LOG_BYTES,
-    )
-    assert not [n for n in dir(defaults) if n.startswith("K8S_")]

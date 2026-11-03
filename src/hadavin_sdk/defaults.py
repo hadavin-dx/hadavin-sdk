@@ -103,4 +103,9 @@ STORED_KINDS = (
     "TENANT",
 )  # not UUID: a UUID is often a session or API token, so it is placeholdered but never stored
 
-# The Kubernetes source's own defaults (page size, caps) live in `sources/kubernetes.py`, with the kind.
+# --- the Kubernetes source (KubernetesSettings) -----------------------------------------------------------------------
+K8S_PAGE_SIZE = 20  # list page size: a deployment object can be tens of KB
+K8S_MAX_PAGES = 25  # pages followed per list; past that the answer says it is incomplete
+K8S_JSON_CAP_BYTES = 1024 * 1024  # fetch cap for a JSON list reply
+K8S_LOG_SLACK_BYTES = 8192  # fetch-cap room over `log_bytes` for the line framing
+K8S_LOG_BYTES = 65536  # asked of the API as limitBytes

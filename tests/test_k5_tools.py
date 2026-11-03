@@ -303,8 +303,16 @@ def test_k5_redaction_error_abstains(tmp_path, monkeypatch):
     llm = ScriptLLM([{"noaction": True}])
     rt, cards = build_runtime(k5_cfg(tmp_path), llm)
 
+    real = runmap.redact
+    calls = []
+
     def broken(text, mapping=None, **kw):
-        raise RuntimeError("redactor down")
+        # the run's own redaction (the first call) fails; the card that reports the abstention goes through the same
+        # choke point now, so it is redacted by the working redactor (an outage of the redactor itself shows no card)
+        calls.append(1)
+        if len(calls) == 1:
+            raise RuntimeError("redactor down")
+        return real(text, mapping=mapping, **kw)
 
     monkeypatch.setattr(runmap, "redact", broken)
     run = handle(rt)
