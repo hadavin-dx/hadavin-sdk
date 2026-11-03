@@ -19,6 +19,7 @@ import shutil
 import subprocess  # nosec B404 - a developer tool that runs pytest on trees it copied itself
 import sys
 import tempfile
+import time
 from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath, PureWindowsPath
@@ -70,6 +71,11 @@ CHILD_ENV = (
     "PATH", "PATHEXT", "SYSTEMROOT", "SYSTEMDRIVE", "WINDIR", "COMSPEC", "TEMP", "TMP", "TMPDIR", "HOME", "USERPROFILE",
     "LANG", "LC_ALL", "PYTHONHASHSEED", "PYTHONUTF8", "PYTHONIOENCODING",
 )  # fmt: skip  # the only variables a mutant run inherits
+CHILD_FIXED_ENV = {
+    "PYTHONNOUSERSITE": "1"
+}  # set, not inherited: the child never imports from the caller's user site-packages
+SETUP_TRIES = 5  # attempts to clear and rebuild the temp copy (a Windows file lock may hold a file for a moment)
+SETUP_WAIT = 0.5  # seconds between those attempts
 TREE_KILL_TIMEOUT = 60.0  # seconds ``taskkill`` may take before the child itself is killed anyway
 
 
@@ -92,6 +98,7 @@ def _locate(base: Path, rel: str) -> Path:
 def _pytest(cwd: Path, tests: Sequence[str], junit: Path, timeout: float) -> int:
     # an ALLOWLIST, not os.environ: a mutant run must not see a database DSN, a token or any other secret of the caller; PYTHONPATH also holds the tree root (tests may import tools.*)
     env = {k: os.environ[k] for k in CHILD_ENV if k in os.environ}
+    env.update(CHILD_FIXED_ENV)
     env["PYTHONPATH"] = os.pathsep.join([str(cwd / "src"), str(cwd)])
     cmd = [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", "--noconftest", "-x", f"--junitxml={junit}", "--", *tests]  # fmt: skip
     # own process group (POSIX session / Windows group): on a timeout the whole tree dies, not only pytest (a test may have started psql or a server)
@@ -143,7 +150,7 @@ def run_mutants(
     baseline_timeout: float | None = None,
     on_result: Callable[[tuple[str, Verdict, str, bool]], None] | None = None,
 ) -> list[tuple[str, Verdict, str, bool]]:
-    """(name, verdict, failing test id, good). Raises ``RuntimeError`` if the unmutated copy fails or times out; a mutant run that exceeds
+    """(name, verdict, failing test id, good). Raises ``RuntimeError`` if the unmutated copy fails or times out; a mutant whose temp copy cannot be built (after ``SETUP_TRIES`` tries) is ``(name, Verdict.ERROR, "SETUP FAILED: <error class>", False)``; a mutant run that exceeds
     ``timeout`` seconds is ``(name, Verdict.ERROR, "TIMEOUT", False)``. The unmutated baseline run gets ``baseline_timeout`` (default: ``timeout``),
     so a test can use a short mutant timeout without failing a slow baseline. ``on_result`` is called with each result as soon as that mutant
     finishes (stream it and a timeout of the whole run still leaves a kill list). Every ``tests`` and ``extra_dirs`` entry and every mutant file
@@ -155,26 +162,40 @@ def run_mutants(
     # ONE snapshot of the tree at the start: every mutant copy is made from it, so an edit of ``root`` while the run is going (a developer
     # saving a file, a second tool) can never leak into a later mutant
     snap = Path(tempfile.mkdtemp(prefix="mutants_snap_"))
-    shutil.copytree(root / "src", snap / "src", ignore=shutil.ignore_patterns("__pycache__"))
+    shutil.copytree(
+        root / "src", snap / "src", symlinks=True, ignore=shutil.ignore_patterns("__pycache__")
+    )  # links stay links (never followed out of the tree)
     for t in tests:
         dst = _inside(snap, t)
         dst.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy(_inside(root, t), dst)
     for d in extra_dirs:
         if _inside(root, d).exists():
-            shutil.copytree(_inside(root, d), _inside(snap, d), dirs_exist_ok=True)
+            shutil.copytree(_inside(root, d), _inside(snap, d), symlinks=True, dirs_exist_ok=True)
 
-    def fresh() -> None:
+    def build() -> None:
         shutil.rmtree(tmp, ignore_errors=True)
         (tmp / "tests").mkdir(parents=True)
-        shutil.copytree(snap / "src", tmp / "src")
+        shutil.copytree(snap / "src", tmp / "src", symlinks=True)
         for t in tests:
             dst = _inside(tmp, t)
             dst.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy(_inside(snap, t), dst)
         for d in extra_dirs:
             if _inside(snap, d).exists():
-                shutil.copytree(_inside(snap, d), _inside(tmp, d), dirs_exist_ok=True)
+                shutil.copytree(
+                    _inside(snap, d), _inside(tmp, d), symlinks=True, dirs_exist_ok=True
+                )
+
+    def fresh() -> None:
+        """Rebuild the temp copy: retried ``SETUP_TRIES`` times, then the last ``OSError`` is raised (never swallowed)."""
+        for attempt in range(SETUP_TRIES):
+            try:
+                return build()
+            except OSError:
+                if attempt == SETUP_TRIES - 1:
+                    raise
+                time.sleep(SETUP_WAIT)
 
     out: list[tuple[str, Verdict, str, bool]] = []
 
@@ -190,7 +211,11 @@ def run_mutants(
         for m in mutants:
             if only and not any(o in m.name for o in only):
                 continue
-            fresh()
+            try:
+                fresh()
+            except OSError as exc:  # a setup failure is a RESULT ROW for this mutant, never a crash of the run and never silent
+                emit((m.name, Verdict.ERROR, f"SETUP FAILED: {type(exc).__name__}", False))
+                continue
             p = _locate(tmp, m.file)
             text = p.read_text(encoding="utf-8")
             if m.old not in text:

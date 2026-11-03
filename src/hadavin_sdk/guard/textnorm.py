@@ -1,6 +1,6 @@
-"""The shared text fold of ``guard.egress_text`` and the G5 gate views, for any place that compares or scans text for a protected value.
+"""The shared text fold of ``guard.egress_text`` and ``guard.redact``, for any place that compares or scans text for a protected value.
 
-Used by ``guard.egress_text`` (output check) and ``approvals.gate`` (secret views); a kind or demo that needs a comparison key
+Used by ``guard.egress_text`` (output check) and ``guard.redact`` (the second, folded scan); a kind or demo that needs a comparison key
 imports ``fold`` / ``squeeze`` from here instead of keeping its own table. Do not use ``fold`` to display or store text: it drops
 legitimate marks (Hindi and Thai vowel signs, the breve of Cyrillic short i) and so over-collides, which is the safe side for a DENY.
 

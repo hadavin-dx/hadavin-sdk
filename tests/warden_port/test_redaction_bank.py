@@ -1,4 +1,4 @@
-"""Ported from WARDEN tests/test_redaction_bank.py (PR #206 head 14fc549, veerarakesh56/warden). Kept 16 tests; dropped 5 that need WARDEN-only modules or unported gate policy (listed in the PR).
+"""Ported from WARDEN tests/test_redaction_bank.py (PR #206 head 14fc549, the upstream project). Kept 16 tests; dropped 5 that need WARDEN-only modules or unported gate policy (listed in the PR).
 
 Bank details (owner order 2026-10-28, lane S2; plan docs/designs/small/redaction-bank-patterns.md, section 4.1).
 

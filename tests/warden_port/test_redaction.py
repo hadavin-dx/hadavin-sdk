@@ -1,4 +1,4 @@
-"""Ported from WARDEN tests/test_redaction.py (main a1e76cbf, veerarakesh56/warden). Kept 35 tests; dropped 1 that need WARDEN-only modules or unported gate policy (listed in the PR)."""
+"""Ported from WARDEN tests/test_redaction.py (main a1e76cbf, the upstream project). Kept 35 tests; dropped 1 that need WARDEN-only modules or unported gate policy (listed in the PR)."""
 
 import pytest
 

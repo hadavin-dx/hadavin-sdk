@@ -931,18 +931,13 @@ def test_the_generator_refuses_an_unpinned_file_and_is_deterministic(tmp_path):
     )  # data, name rule, no ASCII source
 
 
-def test_the_gate_views_use_the_shared_fold_and_refuse_huge_text():
-    from hadavin_sdk.approvals import gate
+def test_the_live_secret_path_masks_a_key_hidden_behind_look_alikes():
+    # the REAL entry point of approval and channel text: channel.clean = redact -> sanitise -> redact (the G5 re-scan)
+    from hadavin_sdk.approvals.channel import clean
 
-    spoofed = "AK" + chr(0x406) + "A" + chr(0x406) + "OSFODNN7EXAMPLE"
-    assert "AKIAIOSFODNN7EXAMPLE" in gate._views(spoofed)
-    old = gate._FOLD_MAX
-    gate._FOLD_MAX = 10
-    try:
-        with pytest.raises(ValueError):
-            gate._views(spoofed)  # beyond the bound the text is refused, never scanned unfolded
-    finally:
-        gate._FOLD_MAX = old
+    spoofed = "key AK" + chr(0x406) + "A" + chr(0x406) + "OSFODNN7EXAMPLE end"
+    assert "AKIAIOSFODNN7EXAMPLE" not in clean(spoofed)
+    assert chr(0x406) not in clean(spoofed)
 
 
 def decode(s):
@@ -1638,7 +1633,8 @@ def test_the_runner_children_see_an_allowlisted_environment_only(tmp_path, monke
         "import os\n\ndef test_no_secret_reaches_the_child():\n"
         "    assert 'HADAVIN_TEST_PG_DSN' not in os.environ\n"
         "    assert 'SOME_API_TOKEN' not in os.environ\n"
-        "    assert 'PATH' in os.environ\n",
+        "    assert 'PATH' in os.environ\n"
+        "    assert os.environ.get('PYTHONNOUSERSITE') == '1'\n",
     )
     # the unmutated baseline must pass: it fails (RuntimeError) while the child inherits os.environ
     assert run_mutants(root, [], ["tests/test_core.py"], extra_dirs=(), timeout=120) == []
@@ -2402,7 +2398,8 @@ def _splits_cases(count, rng, n_cases):
 
 # GOLDEN BEHAVIOUR TABLE: (text, count now, count at bf84b8b, the commit before this rule). Measured by running both trees; the old values are
 # pinned here instead of re-deriving the old rule by editing the module's source, so no test depends on str.replace of the code. Every row has
-# now > old, so each assertion below fails on the old code (checked: evidence-12.md runs this file against a bf84b8b checkout).
+# now > old. The 'old' column is only compared with 'now' here: the proof that the old code fails is a run of this file against a bf84b8b checkout
+# (evidence-12.md: 10 tests failed, 4 passed there, partly because the old module lacks the new names), not this table.
 _GOLDEN = (
     ("4 " + " x ".join(["I"] * 15), 16, 2),
     ("4 " + " x ".join(["l"] * 15), 16, 2),
@@ -2553,6 +2550,21 @@ def test_the_manifest_pins_the_files_a_demo_copies():
             assert sha in text, rel  # the CHANGELOG re-copy list names every pinned hash
 
 
+def test_one_huge_value_is_refused_and_text_leaks_fails_closed():
+    P = LeakPolicy.general()
+    huge = "x" * (egress_text.MAX_VALUE_LEN + 1)
+    with pytest.raises(ValueError):
+        egress_text.check_text("hello", [huge], policy=P)
+    with pytest.raises(ValueError):
+        egress_text.check_text("hello", allowed=[huge], policy=P)
+    assert egress_text.check_text("hello", ["x" * egress_text.MAX_VALUE_LEN], policy=P) is None
+    # a caller that reads False as "no leak" is never opened by refused input: the bool wrapper returns True
+    for bad in ([huge], [""], ["\u200b"]):
+        assert egress_text.text_leaks("hello", bad, policy=P) is True
+    assert egress_text.text_leaks("hello", allowed=[huge], policy=P) is True
+    assert egress_text.text_leaks("hello", ["real-value"], policy=P) is False
+
+
 def test_the_protected_and_allowed_lists_are_bounded_and_an_endless_one_is_refused():
     import itertools
 
@@ -2585,11 +2597,114 @@ def test_the_residual_is_exactly_what_the_docs_say():
     for policy in (LeakPolicy.payments(), LeakPolicy.general()):
         text = " ".join(["OlSx"] * 819)
         assert len(text) == 4094 <= policy.max_len
-        assert (
-            egress_text.check_text(text, policy=policy) is None
-        )  # 819 x 3 = 2457 letters for digits leave
-        assert egress_text.check_text(" ".join(["xl"] * 1000), policy=policy) is None
+        assert egress_text.check_text(text, policy=policy) is None  # 819 x 3 = 2457
+        illx = " ".join(["Illx"] * 819)
+        assert len(illx) == 4094 and egress_text.check_text(illx, policy=policy) is None
+        xl = " ".join(["xl"] * 1365)
+        assert len(xl) == 4094 and egress_text.check_text(xl, policy=policy) is None  # 1 each
+        assert len(" ".join(["xl"] * 1366)) > policy.max_len  # 1365 is the most that fits
     assert (
         egress_text.check_text("4 " + " ".join(["OlSZBxxxxx"] * 3), policy=LeakPolicy.payments())
         == Violation.DIGIT_BUDGET
     )
+    docs = (FIX.parent.parent / "docs" / "promoted-controls.md").read_text(encoding="utf-8")
+    section = docs[docs.index("## Residual of the digit check") : docs.index("## Other defaults")]
+    for number in (
+        "819 words",
+        "4,094",
+        "2,457",
+        "1,365",
+        "4,096",
+        "`Illx`",
+        "`letter_run_min` = 6",
+    ):
+        assert number in section, number
+    assert LeakPolicy().letter_run_min == 6
+    # one home: no other file restates the list
+    for rel in ("src/hadavin_sdk/guard/egress_text.py", "CHANGELOG.md"):
+        if (FIX.parent.parent / rel).exists():  # the mutation copies do not carry the CHANGELOG
+            other = (FIX.parent.parent / rel).read_text(encoding="utf-8")
+            assert "xl xl" not in other and "Ib x Ib" not in other, rel
+    assert "%" not in section and "percent" not in section
+
+
+def test_every_mutant_definition_names_its_killing_test():
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(
+        "promoted_mutants_defs", FIX.parent / "promoted_mutants.py"
+    )
+    defs = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(defs)
+    names = re.findall(r"^def (test_\w+)", Path(__file__).read_text(encoding="utf-8"), re.MULTILINE)
+    assert len(defs.M) >= 150 and len({m.name for m in defs.M}) == len(defs.M)
+    for m in defs.M:
+        if m.only_test:
+            assert m.only_test in names, (m.name, m.only_test)
+        elif m.allow_crash:
+            pass  # the killer is an exception message (a pinned error type), not a named test
+        else:
+            assert any(n.startswith(m.expect) for n in names), (m.name, m.expect)
+
+
+def _copytree_failing(monkeypatch, fail_calls):
+    """Make ``shutil.copytree`` raise ``PermissionError`` on the numbered calls (1-based) made by the runner."""
+    import shutil
+
+    from tools import mutation_runner
+
+    real, calls = shutil.copytree, []
+
+    def flaky(*a, **kw):
+        dst = Path(
+            a[1]
+        )  # shutil.copytree calls itself for every sub-folder: count only the runner's own copy of src
+        if (
+            dst.name == "src"
+            and dst.parent.name.startswith("mutants_")
+            and "snap" not in dst.parent.name
+        ):
+            calls.append(1)
+        if len(calls) in fail_calls and calls and dst.name == "src":
+            raise PermissionError("file in use")
+        return real(*a, **kw)
+
+    monkeypatch.setattr(mutation_runner.shutil, "copytree", flaky)
+    monkeypatch.setattr(mutation_runner, "SETUP_WAIT", 0.0)
+
+
+def test_a_setup_failure_for_one_mutant_is_a_result_row_and_a_blip_is_retried(
+    tmp_path, monkeypatch
+):
+    root = _pk_tree(
+        tmp_path, "from pk.core import go\n\ndef test_go_is_true():\n    assert go(True) is True\n"
+    )
+    a = Mutant("a", "src/pk/core.py", "return flag", "return False", "test_go_is_true")
+    b = Mutant("b", "src/pk/core.py", "return flag", "return not flag", "test_go_is_true")
+    # call 1 = baseline copy; calls 2..6 = every try for mutant a (SETUP_TRIES = 5)
+    _copytree_failing(monkeypatch, set(range(2, 7)))
+    out = run_mutants(root, [a, b], ["tests/test_core.py"], extra_dirs=(), timeout=120)
+    assert [(n, v, t) for n, v, t, _g in out] == [
+        ("a", Verdict.ERROR, "SETUP FAILED: PermissionError"),
+        ("b", Verdict.KILLED, out[1][2]),
+    ], out
+    assert [g for *_x, g in out] == [False, True]
+    # a lock that clears after two tries costs nothing: the mutant is judged as usual
+    _copytree_failing(monkeypatch, {2, 3})
+    again = run_mutants(root, [a], ["tests/test_core.py"], extra_dirs=(), timeout=120)
+    assert [(n, v) for n, v, _t, _g in again] == [("a", Verdict.KILLED)], again
+
+
+def test_the_runner_keeps_a_symlink_a_link(tmp_path):
+    root = _pk_tree(
+        tmp_path,
+        "import pathlib, pk\n\ndef test_ext_is_a_link():\n"
+        "    assert (pathlib.Path(pk.__file__).parent / 'ext.py').is_symlink()\n",
+    )
+    outside = tmp_path / "outside.py"
+    outside.write_text("X = 1\n", encoding="utf-8")
+    try:
+        (root / "src" / "pk" / "ext.py").symlink_to(outside)
+    except (OSError, NotImplementedError):
+        pytest.skip("this system does not allow creating symlinks")
+    assert run_mutants(root, [], ["tests/test_core.py"], extra_dirs=(), timeout=120) == []

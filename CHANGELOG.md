@@ -129,26 +129,24 @@
 
 
 ### Changed (promoted controls, from a demo's reviews; PR #50)
-- **Behaviour change in `approvals/gate.py`:** the secret views of the G5 gate now also include `textnorm.fold` of the text (look-alike
-  letters, other scripts' digits, combining marks), so a key hidden behind such characters is now caught. Text over 1,000,000
-  characters is not folded (the other views still run).
+- **`approvals/gate.py`:** no behaviour change. The unused helpers `_views` and `_rendered` (secret views ported with the gate in slice 2 that no code ever called) are deleted; the live secret check of approval and channel text is `approvals.channel.clean` (redact, sanitise, redact again), whose scans use the fold described below.
 - **Behaviour change in `guard/redact.py` (interim, fail closed):** a line with non-ASCII text is scanned a second time in its FOLDED form;
   on a hit the whole line is replaced by its folded form with the hits masked (offsets are not mapped back, so `restore` gives the folded
   value). The replaced line is LOSSY: the fold drops legitimate marks (Hindi and Thai vowel signs, the breve of Cyrillic short i).
   **`redact.py` still does not fold in general:** the input mask matches the raw text first, so a value hidden behind look-alike
   letters, another script's digits or an invisible character INSIDE the value is caught only by this second pass and by the output check
-  (`guard/egress_text.py`) and the gate views, not by the first pass. What the redactor still does not catch: a value split by a character
+  (`guard/egress_text.py`) and the second scan, not by the first pass. What the redactor still does not catch: a value split by a character
   that changes the fold's shape (for example digits spelled as words), look-alike letters in a non-folded script, and a secret no pattern
   knows. A fold-aware mask (scan folded text, mask by span map) is a tracked item in `docs/promoted-controls.md`.
 - **`Limits.stop(by, source="cli")` / `Limits.reset(by, source="cli")` and `Limits.is_stopped()`** (small core change; PR #48 also edits
   `limits.py`: rebase it after this PR). A gate flip is audited with `source="gate"`, not as a CLI action. `StopGate` checks at
   construction that its `Limits` has the `source` parameter and raises `TypeError` otherwise: copy `stop_gate.py` together with `limits.py`
   (or pin core at PR #50 or later).
-- **Round 9 (review of PR #50):** `check_text` refuses more than 10000 protected values or 1000 allowed references (`ValueError`); the gate's `_views` refuses text over 1,000,000 characters instead of scanning it unfolded; `tools/mutation_runner.py` snapshots the tree once, passes an environment allowlist to its children and can pin a mutant to one test (`only_test`); the residual of the digit check is stated once with its numbers in `docs/promoted-controls.md`.
+- **Round 9 (review of PR #50):** `check_text` refuses more than 10000 protected values or 1000 allowed references (`ValueError`), and a protected value or allowed reference longer than 4096 characters (`MAX_VALUE_LEN`; `text_leaks` now returns True, never raises, for input `check_text` refuses); `tools/mutation_runner.py` snapshots the tree once, passes an environment allowlist to its children and can pin a mutant to one test (`only_test`); the residual of the digit check is listed only in `docs/promoted-controls.md`.
 - **Merge order and re-sync of the copies:** PR #49 (a downstream demo repo) and this PR both edit this Unreleased section and share
   `guard/textnorm.py`. Merge #50 first. Every repository that keeps a byte copy (the demos, #49) re-copies, in one commit:
-  `guard/textnorm.py` (sha256 `576b4cba43c70666db9020f6d3cc3d309ca7fda34e52ff3fd687d42a9d9d1200`), `guard/egress_text.py` (sha256 `b228cfef65988832c4876ecfadba8247c1d061cd11637314c728210a35863679`; the digit counting changed in review rounds 4 to 6, a stale copy silently keeps the old counting), `runtime/stop_gate.py` (sha256 `69c2f365efb54fddb902e816f2c9647e7ad2c65fc13343f74f8b564afac668c7`; copy it with core's `limits.py` from the same core commit), the generated `guard/_confusables.py` (sha256 `41740c11734e2ec1e5a63f9325dffa04226c84f3b81b43c1b5c7e766f8a0ccfd`; `textnorm.py` imports it) and
-  `tests/fixtures/textnorm_vectors.json` (sha256 `1a1944708f7d1737588d7b02666620ceb308b0fe4a71ce2a312c4dc29113d349`); the same hashes (all but `limits.py`, which other PRs also edit) are pinned in `tests/fixtures/textnorm_manifest.json`. The consumers are every repository with a `core_copies.json` (dealdesk, refunds, apexc, intake).
+  `guard/textnorm.py` (sha256 `fd9d0ffdbe7d480db29c9e47bb4be4025fbc19638bf83eef9e6d323483659b14`), `guard/egress_text.py` (sha256 `c05b2d6bb28e5a36c75fe3a770c6175a838eb1eac7c3847519ca4940697b7d10`; the digit counting changed in review rounds 4 to 6, a stale copy silently keeps the old counting), `runtime/stop_gate.py` (sha256 `69c2f365efb54fddb902e816f2c9647e7ad2c65fc13343f74f8b564afac668c7`; copy it with core's `limits.py` from the same core commit), the generated `guard/_confusables.py` (sha256 `41740c11734e2ec1e5a63f9325dffa04226c84f3b81b43c1b5c7e766f8a0ccfd`; `textnorm.py` imports it) and
+  `tests/fixtures/textnorm_vectors.json` (sha256 `1a1944708f7d1737588d7b02666620ceb308b0fe4a71ce2a312c4dc29113d349`); the same hashes (all but `limits.py`, which other PRs also edit) are pinned in `tests/fixtures/textnorm_manifest.json`. The consumers are every repository with a `core_copies.json`.
   Then update the repository's `core_copies.json` rows (`core_path`, `core_sha256`, `import_rewrite`: `textnorm.py` imports
   `hadavin_sdk.guard._confusables`, `egress_text.py` imports `hadavin_sdk.guard.textnorm`) and adopt the new names: `safe_equal(a, b)` ->
   `allow_equal(a, b) is AllowVerdict.EQUAL` (`VARIANT` and `LOOKALIKE` refuse; `LOOKALIKE` is the audit alarm), `confusable_not_equal` is
@@ -158,12 +156,12 @@
   (Cn), and `identity_key(lookalikes="refuse")` also refuses `has_mixed_script(raw)`.
 
 ### Added (promoted controls; vendor-neutral)
-Call sites in `src`: `approvals/gate.py` (the fold), `guard/redact.py` (the interim fold), `limits.py` (`source`, `is_stopped`). The other
+Call sites in `src`: `guard/redact.py` (the interim fold), `limits.py` (`source`, `is_stopped`). The other
 modules below have no call site in this repository yet.
 - `guard/textnorm.py` (+ generated `guard/_confusables.py`, `tools/gen_confusables.py`, vendored `tools/data/confusables.txt`): the shared
-  text fold of `egress_text` and the G5 gate views. The fold makes look-alike text EQUAL, for DENY decisions only (`same_person`,
+  text fold of `egress_text` and `guard/redact.py`. The fold makes look-alike text EQUAL, for DENY decisions only (`same_person`,
   blocklists, leak scans). `guard/redact.py` has its own first pass (see Changed) and `approvals/gate.py` keeps a separate invisible-
-  character table for its other views, so this is NOT "one fold everywhere" yet. For an ALLOW decision use `allow_equal(a, b)` (`EQUAL`
+  character table for URL parsing, so this is NOT "one fold everywhere" yet. For an ALLOW decision use `allow_equal(a, b)` (`EQUAL`
   only for identical strings; `VARIANT`, `LOOKALIKE` and `DIFFERENT` refuse; a plain `Enum` whose truth value raises, so `if
   allow_equal(a, b):` cannot be written by mistake). `names_equal` is a tolerant name comparison for prose, neither ALLOW nor DENY.
   `has_mixed_script` is the fail-closed backstop for look-alikes the table does not list; the micro and ohm signs are exempt. The
@@ -192,9 +190,7 @@ modules below have no call site in this repository yet.
   counted over the whole text, so `4 x lllll x lllll x lllll`, `4 I x I x I ...` and `4 OlSZBxxxxx OlSZBxxxxx OlSZBxxxxx` are refused.
   False refusals on prose with a digit (`Boss 1234`, `Oslo 1234`, `Bill 1234`, `BLISS GLOSS`) are by design and measured (docs); the free-word
   caps count pieces, not words. **What this does NOT
-  stop:** a writer who knows the rules can hide digits as single letters inside ordinary-looking words that hold at most 3 strong letters and a filler letter (`xl xl xl`, `OlSxxxxxxx`) or as `Ib` pairs split by filler (`4 Ib x Ib x Ib`; counting them refuses about 5% more prose), spell digits as words,
-  use unmapped numerals, or split a digit-free letter number with filler letters; it is a heuristic against copied, formatted or leaked
-  numbers, not a proof; use structured fields for anything that must not leave. The Luhn scan over the digit stream cannot fire through `check_text` while the
+  stop:** see "Residual of the digit check" in `docs/promoted-controls.md`, the only list of residuals. The Luhn scan over the digit stream cannot fire through `check_text` while the
   budgets hold (it is an independent card test, tested directly). `has_mixed_script` treats a newline or tab as a word break; its script
   list is curated (see its docstring), not the full UTS #39 script-extension data.
 - `runtime/config_view.py`: deep-frozen views (accident-proofing, not a sandbox), one immutable `ConfigView`, `ConfigHolder.swap(expect=)`,

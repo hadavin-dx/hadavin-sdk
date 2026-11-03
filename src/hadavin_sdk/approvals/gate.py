@@ -1,6 +1,6 @@
 """Text cleaning for anything people read (approval and channel text).
 
-Copied then edited from WARDEN `src/warden/gate.py` @ a1e76cbf (veerarakesh56/warden): rule G3
+Copied then edited from WARDEN `src/warden/gate.py` @ a1e76cbf (the upstream project): rule G3
 (`sanitise_text` and its helpers) and G4 (`withhold_commands`, rewritten platform-neutral and fail closed).
 Not ported (WARDEN outbound policy): enforce, hedge,
 leaked_kinds/data_leaks/assembled_kinds/where_withheld, for_terminal,
@@ -66,12 +66,10 @@ P13 in the verifier; the report says when it fired.
 
 from __future__ import annotations
 
-import html
 import re
 
 from markdown_it import MarkdownIt
 
-from hadavin_sdk.guard import textnorm
 from hadavin_sdk.guard.redact import strip_ansi
 
 # A link label may hold escaped brackets (`[a\]b]`); a destination may be anything but `)`.
@@ -194,8 +192,6 @@ _INVISIBLE = re.compile(
 _INVISIBLE_IN_NAME = re.compile(
     r"(?<=[A-Za-z0-9_.:/@\-])" + _INVISIBLE.pattern + r"(?=[A-Za-z0-9_.:/@\-])"
 )
-# A terminal escape written out as text - argparse's repr() of an argument: `'\x1b[2JAKIA...'`.
-_ANSI_AS_TEXT = re.compile(r"(?:\\x1[bB]|\\033|\\[eE]|\\u001[bB])\[[0-?]*[ -/]*[@-~]")
 
 
 def normalise(text: str) -> str:
@@ -204,40 +200,6 @@ def normalise(text: str) -> str:
     from link removal and the gate itself then joined it into a live link, and `AKIA<ZWSP>...` passed G5 and
     went out whole (eighth review, 2026-10-01)."""
     return _INVISIBLE_IN_NAME.sub("", strip_controls(strip_ansi(text)))
-
-
-# Emphasis, strike and code markers. Not `_`: a key split by it is whole as written already (`\w` holds it).
-_RENDERED_MARKUP = re.compile(r"[*~`]")
-
-
-_FOLD_MAX = 1_000_000
-
-
-def _views(text: str) -> set[str]:
-    """Every way a reader may see `text`: as written; without escape sequences (a space where one glued two words,
-    and also written out as text); without control characters; and without any invisible character. A key split
-    by one of them is whole in some view, and a key the removal glues to a letter is bounded in another (ninth
-    review: checking only the normalised text sent `x<BEL>AKIA...` whole). Raises ValueError for text over `_FOLD_MAX` (refuse, do not scan)."""
-    views = {text, strip_ansi(text), _ANSI_AS_TEXT.sub(" ", text)}
-    views |= {strip_controls(v) for v in views}
-    views |= {_INVISIBLE.sub("", v) for v in views}
-    # One shared fold (look-alike letters, other scripts' digits, combining marks), applied to the as-written text and to the most
-    # reduced view only: folding every distinct view cost ~0.6 s per MB each. FAIL CLOSED: text longer than _FOLD_MAX raises ValueError,
-    # so a caller can never scan the unfolded views of a huge text and pass it (a model reply is bounded far below this). NOTE: the
-    # invisible-character set above (`_INVISIBLE`) is URL-parser-specific and differs from textnorm's on purpose; the two are not one table.
-    if len(text) > _FOLD_MAX:
-        raise ValueError(f"text longer than {_FOLD_MAX} characters is refused, not scanned")
-    views |= {
-        textnorm.fold(text),
-        textnorm.fold(_INVISIBLE.sub("", strip_controls(strip_ansi(text)))),
-    }
-    return views
-
-
-def _rendered(views: set[str]) -> set[str]:
-    """As a renderer shows them (register R9-O1): Slack and Markdown consume emphasis, strike and code markers and
-    decode entities, so `AKIA**IOSFODNN7...**` and `AKIA&amp;...` show a key joined that no view held whole."""
-    return {_RENDERED_MARKUP.sub("", html.unescape(v)) for v in views}
 
 
 def _defang_outside_code(line: str) -> str:

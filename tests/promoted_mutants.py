@@ -604,20 +604,6 @@ M = [
         "        pass",
         "test_the_contract_check_raises",
     ),
-    Mutant(
-        "gate: views skip the shared fold",
-        GT,
-        'textnorm.fold(text),\n        textnorm.fold(_INVISIBLE.sub("", strip_controls(strip_ansi(text)))),',
-        'text,\n        _INVISIBLE.sub("", strip_controls(strip_ansi(text))),',
-        "test_the_gate_views_use_the_shared_fold",
-    ),
-    Mutant(
-        "gate: fold bound removed",
-        GT,
-        "if len(text) > _FOLD_MAX:",
-        "if False:",
-        "test_the_gate_views_use_the_shared_fold",
-    ),
     # review round 3: allow_equal, mixed script, generated table, generator
     Mutant(
         "allow: equality is normalised",
@@ -1270,6 +1256,22 @@ M = [
         "if False:",
         "test_the_protected_and_allowed_lists_are_bounded",
         only_test="test_the_protected_and_allowed_lists_are_bounded_and_an_endless_one_is_refused",
+    ),
+    Mutant(
+        "egress: one huge value is not refused",
+        EG,
+        "    if any(isinstance(v, str) and len(v) > MAX_VALUE_LEN",
+        "    if False and any(isinstance(v, str) and len(v) > MAX_VALUE_LEN",
+        "test_one_huge_value_is_refused",
+        only_test="test_one_huge_value_is_refused_and_text_leaks_fails_closed",
+    ),
+    Mutant(
+        "egress: text_leaks fails open on refused input",
+        EG,
+        "    except ValueError:\n        return True",
+        "    except ValueError:\n        return False",
+        "test_one_huge_value_is_refused",
+        only_test="test_one_huge_value_is_refused_and_text_leaks_fails_closed",
     ),
     Mutant(
         "egress: the free words are not used up",

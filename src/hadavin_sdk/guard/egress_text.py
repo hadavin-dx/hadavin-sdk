@@ -17,11 +17,7 @@ most ``max_free_words`` (2; 4 in ``general()``) words are free in the whole text
 ``general()`` while ``4 Ib Ib Ib ...`` does not. A letter glued to a digit (``12345678901s``) counts. A second reading counts, over the
 whole text, the real digits plus the strong letters of every token made only of strong letters (``lllll``, a lone ``I``) and of every token
 with 4 or more strong letters (``OlSZBxxxxx``), so ``4 x lllll x lllll``, ``4 I x I x I x I x I x I x I x I x I`` and
-``4 OlSZBxxxxx OlSZBxxxxx OlSZBxxxxx`` are refused. The price is false refusals on prose that holds a digit (see ``_digitish_count``). WHAT THIS DOES NOT STOP: someone who knows these rules can hide digits as letters inside
-ordinary-looking words with at most 3 strong letters and a filler letter (``xl xl xl``, ``OlSxxxxxxx``), as one-strong-one-weak pairs split by filler (``4 Ib x Ib x Ib``), as the same digits written as
-words, or as numerals of a script the fold does not map; it is a
-heuristic against copied, formatted or leaked numbers, not a proof. Anything that must not leave belongs in a structured field, not in
-free text.
+``4 OlSZBxxxxx OlSZBxxxxx OlSZBxxxxx`` are refused. The price is false refusals on prose that holds a digit (see ``_digitish_count``). WHAT THIS DOES NOT STOP: see "Residual of the digit check" in ``docs/promoted-controls.md`` (the only list).
 
 Set-aside tokens are not free, and the budgets ADD UP: a card number split into a plain part and an "amount" must not slip through.
 The set-aside amounts and references have their own budget (``max_exempt_tokens``, ``max_exempt_digits``, always below
@@ -29,8 +25,7 @@ The set-aside amounts and references have their own budget (``max_exempt_tokens`
 it, and ``max_total_digits`` (at most 12, below the shortest card number, and at most ``2 x max_digits - 2``) caps the SUM of the plain digit-like characters, the digits of the
 set-aside amounts and references, and ``DATE_DIGITS`` (5) per date. A date is not free either: a valid date from the allowed years
 carries about 15 bits (4.6 decimal digits), so ``max_dates`` dates can still carry a few digits of an id; ``max_total_digits`` counts
-them. Residual: digits spelled as words, or written as numerals of a script the fold does not map (Chinese numerals, for example),
-are not counted.
+them.
 
 Protected values: the caller supplies them (the check cannot find a secret it was not given). A value with at least
 ``min_protected_len`` Latin letters or digits is matched as a squeezed key (and, with 6+ digits, as its digits in order with anything
@@ -67,6 +62,7 @@ from typing import Any
 from hadavin_sdk.guard.textnorm import fold, fold_key, has_mixed_script, squeeze
 
 MAX_PROTECTED_VALUES = 10_000  # at most this many protected values per call (more: ValueError, never a silent partial check)
+MAX_VALUE_LEN = 4_096  # at most this many characters in ONE protected value or allowed reference (longer: ValueError)
 MAX_ALLOWED_VALUES = (
     1_000  # at most this many allowed references per call (each one is a regex pass over the text)
 )
@@ -305,10 +301,8 @@ def _digitish_count(
     letters is also refused when they form one run of ``letter_run_min`` or more (``BLISS GLOSS``). Many lone ``I`` or ``O`` beside digits
     add up. Mixed-case prose with ordinary words and short numbers is rarely affected (see the measurement in the docs).
 
-    WHAT THIS DOES NOT STOP. A writer who knows these rules can hide digits as letters inside ordinary-looking words that hold at most 3
-    strong letters and a filler letter (``xl xl xl``, ``OlSxxxxxxx``), or as a word of one strong and one weak letter split by filler
-    (``4 Ib x Ib x Ib ...``: counting those would refuse about 5 percent more ordinary prose, measured): this is a heuristic against copied, formatted and accidentally
-    leaked numbers, not a proof against an adversary. Use structured fields, not free text, for anything that must not leave."""
+    WHAT THIS DOES NOT STOP: see "Residual of the digit check" in ``docs/promoted-controls.md`` (the only list). Use structured fields,
+    not free text, for anything that must not leave."""
     total = 0
     text_plain = text_letters = 0
     free_left = max_free_text
@@ -433,7 +427,7 @@ def check_text(
 ) -> Violation | None:
     """The first violation found, or None. ``allowed`` are exact references (bounded, case-insensitive); ``allowed_patterns`` are
     reference shapes. Both are set aside (and counted as exempt tokens). At most ``MAX_PROTECTED_VALUES`` protected values and
-    ``MAX_ALLOWED_VALUES`` allowed references per call: more raises ``ValueError`` (the check refuses; it never runs a partial
+    ``MAX_ALLOWED_VALUES`` allowed references per call, each at most ``MAX_VALUE_LEN`` characters: more or longer raises ``ValueError`` (the check refuses; it never runs a partial
     list), and an endless iterable is cut at the cap + 1 and refused."""
     if not isinstance(text, str):
         return Violation.TEXT_NOT_STRING
@@ -444,6 +438,10 @@ def check_text(
     if len(protected) > MAX_PROTECTED_VALUES or len(allowed) > MAX_ALLOWED_VALUES:
         raise ValueError(
             "too many protected values or allowed references: refusing a partial check"
+        )
+    if any(isinstance(v, str) and len(v) > MAX_VALUE_LEN for v in (*protected, *allowed)):
+        raise ValueError(
+            f"a protected value or allowed reference is longer than {MAX_VALUE_LEN} characters"
         )
     keys: list[tuple[str, str]] = []  # (squeezed key, digits of the key)
     words: list[str] = []
@@ -556,4 +554,10 @@ def text_leaks(
     policy: LeakPolicy,
     **kw: Any,
 ) -> bool:
-    return check_text(text, protected, allowed, policy=policy, **kw) is not None
+    """True when ``check_text`` finds a violation. FAILS CLOSED: input ``check_text`` refuses with ``ValueError`` (too many or too long
+    values, an empty value, a value that folds to nothing) also returns True, so a caller that treats False as "no leak" can never be
+    opened by bad input. Call ``check_text`` itself to see the reason."""
+    try:
+        return check_text(text, protected, allowed, policy=policy, **kw) is not None
+    except ValueError:
+        return True

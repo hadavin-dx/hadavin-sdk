@@ -1,4 +1,4 @@
-"""Ported from WARDEN tests/test_gate_review3.py (main a1e76cbf, veerarakesh56/warden). Kept 2 tests; dropped 5 that need WARDEN-only modules or unported gate policy (listed in the PR).
+"""Ported from WARDEN tests/test_gate_review3.py (main a1e76cbf, the upstream project). Kept 2 tests; dropped 5 that need WARDEN-only modules or unported gate policy (listed in the PR).
 
 The outbound gate against the third independent review's render harness (2026-09-30).
 
