@@ -193,9 +193,36 @@
 - **Maintenance commands never show connection details:** `migrate`, `release-reservation`, `prune-runs` and `spend-drift`
   turn any connect failure (refused, unreachable, bad DSN, and a failing IAM token fetch) into `StoreUnavailable` carrying
   the exception's class name only, no host, port, user, account or token (`store/migrate.py::_connect`).
-- **Worst-case latency of one spend call** (documented in `store/postgres.py`): `attempts x (pool_wait_s + 8 x
-  lock_timeout_ms / 1000) + backoff_s x (1 + 2 + ... + (attempts - 1))`; defaults (3, 10 s, 5000 ms, 0.02 s) give about
-  150 s, the maximums (10, 300 s, 60000 ms, 5 s) about 8,025 s. Size the settings so this bound suits the caller.
+- **Worst-case latency of one spend call** (documented in `store/postgres.py`; this entry corrects the first one, which
+  left out the connect stage and the statement timeout): `attempts x (pool_wait_s + (2 x 10 s connect + 0.05 s) + 8 x
+  min(lock_timeout_s, statement_timeout_s)) + backoff_s x (1 + 2 + ... + (attempts - 1))`; defaults (3, 10 s, 5 s, 30 s,
+  0.02 s) give about 210 s, the maximums (10, 300 s, 60 s, 3600 s, 5 s) about 8,226 s; a hard ceiling (every one of ~16
+  statements running to `statement_timeout`) is about 1,530 s at the defaults. Size the settings so this bound suits the
+  caller.
+- **A stalled or black-holed Postgres session no longer hangs a spend call (PR #48, review 10):** every spend transaction
+  sets `statement_timeout` (new setting `spend_statement_timeout_s`, default 30 s) and `idle_in_transaction_session_timeout`
+  (`spend_idle_in_tx_timeout_s`, default 60 s) per transaction, and every connection sets libpq keepalives and
+  `tcp_user_timeout` (a dead peer is detected client-side, where no server timeout can reach). Before this only
+  `connect_timeout=10` and `lock_timeout` existed. A retry after a lock timeout, a deadlock or a serialization failure keeps
+  its pooled connection (it used to close it and reconnect, renegotiating TLS and an IAM token under contention); only a real
+  connection error closes one. `build()` and the pool's connector turn any connect failure (also a malformed DSN or a failing
+  IAM token provider) into `StoreUnavailable` with the class name only. The connect timeout and retry pause are named constants.
+- **Every metered call site books the marks (class sweep, PR #48 review 10):** the class was "a mark or cost is dropped on a
+  path nobody tested". Sites that read `cost_usd` or `attempts` to meter, and what they do now: `MeteredLLM` (error and reply),
+  the agent loop's chat (error and reply), the K1b replay's chat (error and reply), the K1b tool-result judge, the agent loop's
+  injection screen (`Verdict.prior_unknown_requests`, new; a judge reply or error that carried marks), `guard/injection.AnyOf`
+  (sums the marks) and the ask-your-data demo pipeline (error and reply; it used to book the worst case once and ignore the
+  marks and the counts). Reporting only, not metering (left alone): `evals.py` cost total, `extract.ExtractResult.cost_usd`.
+- **Marks are clamped and read safely:** a mark above 16 (`MAX_MARKS`, deeper than any fallback chain) counts as 16, a
+  non-int or negative one as 0, and `cost_to_settle` adds the marks even if the error's own counts are garbage (it used to lose
+  them). An outer `ResilientLLM` whose PRIMARY is itself a `ResilientLLM` adds the inner chain's marks. A reused exception or reply
+  instance never accumulates marks: they are read only from an inner `ResilientLLM`. A fallback that raises something other than
+  a `ProviderError` after an unknown primary is re-raised as a `ProviderExhausted` carrying the marks.
+- **Known gaps stated plainly:** (1) The K1b `CallTimeout` branch books ONE worst case for an abandoned call whose retry layer
+  can send twice; it is unchanged by this PR (it predates it) and the cap still stops the run. (2) The agent loop's failure
+  path never calls `store.add_cost` (a failed call has no known cost) while the success path does: this is the same on `main`
+  and is not changed here. (3) A judge verdict's marks are booked at the largest judge's worst case, and the K1b judge's at the
+  loop's own worst case (neither has its own reservation at that point): the fail-safe direction, not exact.
 - **Spend-connection gate is FIFO and configurable; the hot-key ceiling is measured (pool exhaustion report):** on postgres:17,
   2,000 simultaneous reservations on one agent counter through 8 spend connections failed 734 to 1,858 callers with
   `StoreUnavailable: no spend connection free (pool exhausted)` (the cap held: fail closed), and a 16-worker run lost 8
@@ -219,6 +246,14 @@
   now says what the scan covers.
 
 ### Upgrade steps
+- **Billing contract, one added field (PR #48): read it before you ship a custom meter.** `ProviderError` and `Reply` both carry
+  `prior_unknown_requests` (default 0; `Verdict` too). A custom meter that reads only `attempts`/`answered`/`refused` or
+  `Reply.cost_usd` must switch to `cost_to_settle` / `reply_cost_to_settle` (or read the field) to see the marks. **Behaviour
+  change you will notice:** when the primary failed with unknown billing and the fallback then FAILED with a refusal, the
+  fallback's error used to carry the primary's request inside `attempts` (so a meter reading `attempts` KEPT the
+  reservation); it now keeps its own counts (refused) and the mark lives in the new field, so a meter that reads only
+  `attempts` now sees 'refused' and RELEASES the reservation, losing the primary's possible bill. Built-in meters
+  (`MeteredLLM`, the agent loop, the K1b replay, the injection screen) are updated.
 - **K3 pilot build path (levels, shadow cut-off, fail-closed loading).** Action contracts change shape:
   `executor.system` moves to a contract field `target_system`, and `executor` is now a tagged union
   (`kind: none | manual | http`). Edit every contract: move `system:` out of `executor:` to `target_system:` beside

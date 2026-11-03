@@ -30,7 +30,7 @@ class ProviderError(RuntimeError):
     - ``prior_unknown_requests`` (added in PR #48; default 0 keeps every existing raiser unchanged) failed PRIMARIES of
       unknown billing that a fallback layer saw before this error: one mark per failed primary, nested fallbacks add up.
       A SUCCESSFUL call carries the same count on ``Reply.prior_unknown_requests``. Both paths settle through one helper
-      (``_book_marks``): the call's own settlement PLUS one reservation per mark. A non-int or negative mark counts as 0
+      (``book_marks``): the call's own settlement PLUS one reservation per mark. A non-int or negative mark counts as 0
       (it never raises)."""
 
     attempts = 1
@@ -94,19 +94,24 @@ def unknown_requests(exc: BaseException) -> int:
     return attempts - answered - refused
 
 
-def _prior_marks(obj: Any) -> int:
-    """``prior_unknown_requests`` of an error or reply as a safe count: anything but a plain int in 0..10**6 is 0."""
+MAX_MARKS = 16  # a fallback chain is never deeper than this; a larger count is clamped (fail safe), not trusted
+
+
+def prior_marks(obj: Any) -> int:
+    """``prior_unknown_requests`` of an error, reply or verdict as a safe count: anything but a plain int is 0, a
+    negative is 0, and a count above ``MAX_MARKS`` (a chain cannot be that deep) is clamped to it, so one bad number can
+    never book a million reservations and lock an agent."""
     try:
         v = getattr(obj, "prior_unknown_requests", 0)
     except Exception:  # noqa: BLE001 - a property that raises counts as no mark, never an exception
         return 0
-    return v if type(v) is int and 0 <= v <= _MAX_COUNT else 0
+    return min(v, MAX_MARKS) if type(v) is int and v > 0 else 0
 
 
-def _book_marks(own: Decimal, reserved: Decimal, obj: Any) -> Decimal:
+def book_marks(own: Decimal, reserved: Decimal, obj: Any) -> Decimal:
     """The ONE place marks are priced, for the error path and the reply path alike: ``own`` plus one reservation per
     mark of ``obj`` (``own`` alone when there is none)."""
-    marks = _prior_marks(obj)
+    marks = prior_marks(obj)
     return own + reserved * marks if marks > 0 else own
 
 
@@ -115,11 +120,16 @@ def cost_to_settle(
 ) -> Decimal:
     """What a meter should settle a reservation to after ``exc`` (see the billing contract on ``ProviderError``).
     The error's own part never exceeds ``reserved`` (a provider-reported ``billed_usd`` above the worst case is a bad
-    number, not a bill); each ``prior_unknown_requests`` mark adds one more reservation (``_book_marks``). Never raises:
+    number, not a bill); each ``prior_unknown_requests`` mark adds one more reservation (``book_marks``). Never raises:
     anything it cannot read keeps the whole reservation (the fail-safe direction)."""
+    marks = prior_marks(exc)  # first: a failure to read the counts below must not lose the marks
     try:
-        return _book_marks(_own_cost(exc, reserved, agent, route), reserved, exc)
+        own = _own_cost(exc, reserved, agent, route)
     except Exception:  # noqa: BLE001 - never raises: the reservation is kept
+        own = reserved
+    try:
+        return own + reserved * marks
+    except Exception:  # noqa: BLE001 - a reservation that is not a number: nothing more can be said
         return reserved
 
 
@@ -144,9 +154,9 @@ def _own_cost(exc: BaseException, reserved: Decimal, agent: str, route: str) -> 
 
 def reply_cost_to_settle(reply: Any, reserved: Decimal) -> Decimal:
     """What a meter settles after a SUCCESSFUL call: the reply's own cost, plus (if a fallback served it after a primary
-    whose billing is unknown) one reservation per failed primary (``_book_marks``, shared with ``cost_to_settle``), so no
+    whose billing is unknown) one reservation per failed primary (``book_marks``, shared with ``cost_to_settle``), so no
     bill is lost. Never raises on a bad mark count (it counts as 0)."""
-    return _book_marks(reply.cost_usd, reserved, reply)
+    return book_marks(reply.cost_usd, reserved, reply)
 
 
 class UnusableAnswer(ProviderError):

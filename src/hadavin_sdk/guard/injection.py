@@ -10,6 +10,7 @@ import re
 from decimal import Decimal
 from typing import Protocol
 
+from hadavin_sdk.llm.protocol import prior_marks
 from hadavin_sdk.models import Verdict
 
 _LOG = logging.getLogger("hadavin_sdk.guard")
@@ -74,6 +75,7 @@ class AnyOf:
             backend="+".join(v.backend for v in flagged or verdicts),
             reason_code=flagged[0].reason_code if flagged else None,
             cost_usd=sum((v.cost_usd for v in verdicts), Decimal(0)),
+            prior_unknown_requests=sum(v.prior_unknown_requests for v in verdicts),
         )
 
 
@@ -97,4 +99,11 @@ def injection_check(detector: Detector, text: str, source: str) -> Verdict:
         # Named after the detector that failed, so a list's verdict says which one.
         name = getattr(detector, "backend", None)
         name = name if isinstance(name, str) and name else "error"
-        return Verdict(flagged=True, score=1.0, backend=name, reason_code="guard_unavailable")
+        # A judge whose model call failed after a failed primary of unknown billing: its marks are still bills.
+        return Verdict(
+            flagged=True,
+            score=1.0,
+            backend=name,
+            reason_code="guard_unavailable",
+            prior_unknown_requests=prior_marks(exc),
+        )

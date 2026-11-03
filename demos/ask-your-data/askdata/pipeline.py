@@ -29,7 +29,7 @@ from askdata.validate import RULES, Rejected, Validated, validate
 from hadavin_sdk.audit.protocol import AuditUnavailable
 from hadavin_sdk.config import Route
 from hadavin_sdk.guard.injection import RegexDetector, injection_check
-from hadavin_sdk.llm.protocol import LLM, ProviderError, ProviderExhausted
+from hadavin_sdk.llm.protocol import LLM, ProviderError, cost_to_settle, reply_cost_to_settle
 
 NO_ROWS_NOTE = "0 rows: check the filters"
 
@@ -159,33 +159,36 @@ class Pipeline:
                     output_schema=llm_io.GENERATE_SCHEMA,
                 )
             except (ProviderError, OSError, TimeoutError) as err:
-                # A call that failed AFTER the request was sent is charged its worst case; a refusal is free.
-                billed = isinstance(err, ProviderExhausted | OSError | TimeoutError)
-                if billed:  # the reservation stands as the charge
-                    run.cost += worst
-                else:
-                    self._settle(run, worst, Decimal(0))
+                # By the billing contract (llm/protocol.py): a refusal is free, an unknown outcome keeps the worst case
+                # (one more per failed primary a fallback carried), a billed answer is booked at its cost. A transport
+                # error (OSError, TimeoutError) may have been processed: the worst case stands.
+                charge = (
+                    cost_to_settle(err, worst, agent="askdata", route=self.s.route)
+                    if isinstance(err, ProviderError)
+                    else worst
+                )
+                run.cost += charge
+                if charge != worst:
+                    self._settle(run, worst, charge)
                 run.attempts.append(
-                    Attempt(
-                        n=n,
-                        schema_ok=False,
-                        duration_ms=_ms(t),
-                        cost_usd=fmt_usd(worst) if billed else "0",
-                    )
+                    Attempt(n=n, schema_ok=False, duration_ms=_ms(t), cost_usd=fmt_usd(charge))
                 )
                 run.terminal.append("model_unavailable")
                 return
-            run.cost += reply.cost_usd
+            spent = reply_cost_to_settle(
+                reply, worst
+            )  # + one worst case per failed primary of unknown billing
+            run.cost += spent
             run.tokens_in += reply.input_tokens
             run.tokens_out += reply.output_tokens
             run.model_id = reply.model_id
-            charged = self._settle(run, worst, reply.cost_usd)
+            charged = self._settle(run, worst, spent)
             base = {
                 "n": n,
                 "duration_ms": _ms(t),
                 "tokens_in": reply.input_tokens,
                 "tokens_out": reply.output_tokens,
-                "cost_usd": fmt_usd(reply.cost_usd),
+                "cost_usd": fmt_usd(spent),
             }
             if not charged:  # the money is spent but not recorded: keep the attempt in the ledger
                 run.attempts.append(Attempt(schema_ok=False, **base))

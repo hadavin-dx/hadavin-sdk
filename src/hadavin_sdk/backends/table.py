@@ -138,6 +138,11 @@ class PostgresSettings(KindSettings):
     spend_lock_timeout_ms: int = Field(default=5000, ge=100, le=60000)
     spend_reserve_attempts: int = Field(default=3, ge=1, le=10)
     spend_backoff_s: float = Field(default=0.02, gt=0, le=5)
+    # Server-side bounds on one spend transaction (set per transaction): a statement that runs longer is cancelled, and a
+    # session that sits idle inside an open transaction (a stalled caller, a black-holed connection) is ended, so its row
+    # locks and pool slot come back. Whole seconds or fractions; see the latency formula in store/postgres.py.
+    spend_statement_timeout_s: float = Field(default=30.0, gt=0, le=3600)
+    spend_idle_in_tx_timeout_s: float = Field(default=60.0, gt=0, le=3600)
 
     @model_validator(mode="after")
     def _checks(self) -> PostgresSettings:

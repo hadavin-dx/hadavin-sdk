@@ -20,6 +20,7 @@ from typing import Any
 
 from hadavin_sdk.guard.injection import injection_check
 from hadavin_sdk.llm.common import ANSWER_TOOL, loads_bounded
+from hadavin_sdk.llm.protocol import prior_marks
 from hadavin_sdk.models import Verdict
 
 PROMPT = (Path(__file__).parent / "judge_prompt.md").read_text(encoding="utf-8")
@@ -80,6 +81,7 @@ class JudgeDetector:
                 backend=self.backend,
                 reason_code="guard_unavailable",
                 cost_usd=reply.cost_usd,
+                prior_unknown_requests=prior_marks(reply),
             )
         injection, confidence = answer
         score = float(confidence) if injection else 0.0
@@ -90,6 +92,7 @@ class JudgeDetector:
             backend=self.backend,
             reason_code="injection_suspected" if flagged else None,
             cost_usd=reply.cost_usd,
+            prior_unknown_requests=prior_marks(reply),
         )
 
 

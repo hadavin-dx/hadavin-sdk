@@ -259,9 +259,11 @@ class Reply(Shape):
     latency_ms: int = 0
     fallback_used: bool = False  # True: a fallback vendor served this call (llm/resilient.py)
     served_by: str | None = None  # the fallback backend's label when fallback_used
-    # Marks for FAILED primaries whose billing is unknown (one per primary, nested fallbacks add up), when a fallback
+    # BILLING MARKS. FAILED primaries whose billing is unknown (one per primary, nested fallbacks add up), when a fallback
     # then served this call. A meter books one reservation (one primary worst case) per mark on top of this reply's
-    # cost: see llm.protocol.reply_cost_to_settle.
+    # cost (``llm.protocol.reply_cost_to_settle``); the error twin is ``ProviderError.prior_unknown_requests``. Never read
+    # ``cost_usd`` alone to meter a call. Only a plain int counts: anything else is 0, and a count above
+    # ``llm.protocol.MAX_MARKS`` (16) is clamped to it.
     prior_unknown_requests: int = 0
 
 
@@ -273,6 +275,9 @@ class Verdict(Shape):
     cost_usd: Decimal = Decimal(
         0
     )  # a model-backed detector's call (llm_judge), charged by the caller
+    # Failed primaries of unknown billing behind this verdict (the judge's reply, or its error, carried them): the caller
+    # books one reservation of the judge per mark on top of ``cost_usd`` (``llm.protocol.book_marks``).
+    prior_unknown_requests: int = 0
 
 
 class RunResult(Shape):

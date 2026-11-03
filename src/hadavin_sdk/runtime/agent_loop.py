@@ -33,6 +33,7 @@ from hadavin_sdk.llm.protocol import (
     ProviderExhausted,
     QuotaReached,
     SpendLimitReached,
+    book_marks,
     cost_to_settle,
     reply_cost_to_settle,
 )
@@ -246,10 +247,8 @@ class Runtime:
         if judges:
             ask = [{"role": "user", "content": f"Screen the attached text (source: {source})."}]
             size = prompt_bytes(ask, _JUDGE_PROMPT, [text.encode("utf-8")], None, _JUDGE_SCHEMA)
-            worst = sum(
-                (worst_case_usd(self.registry.config.routes[j.route], size) for j in judges),
-                Decimal(0),
-            )
+            worsts = [worst_case_usd(self.registry.config.routes[j.route], size) for j in judges]
+            worst = sum(worsts, Decimal(0))
             gate = self._gate(run, worst, cited)
             if isinstance(gate, Run):
                 return gate
@@ -258,7 +257,11 @@ class Runtime:
         if res is not None:
             # A judge that failed may still have been billed: keep the worst case booked then.
             unknown = verdict.reason_code == "guard_unavailable"
-            self._settle(run, res, res.usd if unknown else verdict.cost_usd)
+            # One judge worst case per mark (the largest judge's: a verdict does not say which judge's chain failed; the
+            # fail-safe direction), through the same helper as every other metered call.
+            self._settle(
+                run, res, book_marks(res.usd if unknown else verdict.cost_usd, max(worsts), verdict)
+            )
         elif verdict.cost_usd:
             self.limits.charge(
                 run.agent_id, verdict.cost_usd

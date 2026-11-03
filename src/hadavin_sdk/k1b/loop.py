@@ -28,6 +28,7 @@ from hadavin_sdk.llm.protocol import (
     LLM,
     ProviderError,
     ProviderExhausted,
+    book_marks,
     cost_to_settle,
     reply_cost_to_settle,
 )
@@ -219,7 +220,17 @@ def run_case(
             else:
                 shown, ids = render(snap.call(call.name, call.input))
                 verdict = injection_check(detector, shown, "k1b-tool-result")
-                budget.charge(verdict.cost_usd)
+                # a judge verdict that carries marks books one agent-call worst case per mark (the judge's own
+                # reservation is not known here: the loop's worst case stands in for it)
+                budget.charge(
+                    book_marks(
+                        verdict.cost_usd,
+                        worst_case_usd(route_prices, system, messages)
+                        if route_prices is not None
+                        else 0,
+                        verdict,
+                    )
+                )
                 if verdict.flagged:
                     out.injection_flagged += 1
                     shown, ids = _dumps(NO_DATA), set()

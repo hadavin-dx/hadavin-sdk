@@ -126,6 +126,17 @@ def password_source(iam_auth: bool, region: str | None) -> PasswordSource | None
     return auth_aws.rds_iam(region)
 
 
+CONNECT_TIMEOUT_S = 10  # libpq connect_timeout: one connect attempt (the pool retries once: see CONNECT_RETRY_PAUSE_S)
+CONNECT_RETRY_PAUSE_S = 0.05  # pause before the pool's second connect attempt
+_TCP_GUARDS = {  # libpq: dead-peer detection for an idle or black-holed session (ignored on unix sockets)
+    "keepalives": 1,
+    "keepalives_idle": 30,
+    "keepalives_interval": 10,
+    "keepalives_count": 3,
+    "tcp_user_timeout": 60000,
+}
+
+
 def connect(
     dsn: str,
     *,
@@ -147,7 +158,11 @@ def connect(
             extra["password"] = password(
                 parts["host"], int(parts.get("port") or 5432), parts["user"]
             )
-    conn = psycopg.connect(dsn, autocommit=True, connect_timeout=10, **extra)
+    # A black-holed TCP session must not hang a caller forever: the server-side timeouts below cannot reach a client
+    # that never hears back, so the client detects a dead peer itself (keepalives, tcp_user_timeout where the OS has it).
+    for name, value in _TCP_GUARDS.items():
+        extra.setdefault(name, value)
+    conn = psycopg.connect(dsn, autocommit=True, connect_timeout=CONNECT_TIMEOUT_S, **extra)
     # Plan hashes include created_at: datetimes must come back in UTC whatever the server's TimeZone is.
     conn.execute("SET TIME ZONE 'UTC'")
     return conn
@@ -176,8 +191,10 @@ def build(settings, deps) -> PostgresStore:
 
     try:
         conn = connector()
-    except psycopg.OperationalError as exc:
-        # The class only: driver messages can carry the host and user.
+    except ConfigError:
+        raise
+    except Exception as exc:  # noqa: BLE001 - psycopg (also a malformed DSN), an IAM token provider, anything
+        # The class only: driver and SDK messages can carry the DSN, host, user, account or token.
         raise StoreUnavailable(
             f"store postgres: cannot connect ({exc.__class__.__name__})"
         ) from None
@@ -189,6 +206,8 @@ def build(settings, deps) -> PostgresStore:
         lock_timeout_ms=settings.spend_lock_timeout_ms,
         reserve_attempts=settings.spend_reserve_attempts,
         backoff_s=settings.spend_backoff_s,
+        statement_timeout_s=settings.spend_statement_timeout_s,
+        idle_in_tx_timeout_s=settings.spend_idle_in_tx_timeout_s,
     )
 
 
@@ -271,6 +290,13 @@ _SPEND_DEFAULTS = {
 }
 
 
+_RETRYABLE = (
+    psycopg.errors.SerializationFailure,
+    psycopg.errors.DeadlockDetected,
+    psycopg.errors.LockNotAvailable,
+)
+
+
 class PostgresStore:
     # ponytail: one connection behind one lock per process; a pool (psycopg_pool) when throughput matters.
     # A dropped connection fails the call (the run ends safely); reconnect-on-error arrives with S11 hosting.
@@ -290,21 +316,30 @@ class PostgresStore:
     # MEASURE with pgbench against YOUR database (a custom script that updates one row per transaction) and with a burst
     # test, then size ``spend_pool_wait_s``: B simultaneous callers on one key need about B / rate seconds. The cap is
     # never exceeded whatever the rate. See tests/test_pr48_pool.py.
-    # WORST-CASE LATENCY of one spend call (reserve/settle/prune), NOT bounded by spend_pool_wait_s alone. Postgres
-    # applies lock_timeout to each lock acquisition separately, and a reserve with a run key can wait on up to 8 lock
-    # statements (an INSERT and a SELECT ... FOR UPDATE per counter). Each attempt waits for a pool slot, then for its
-    # locks; a lock timeout retries the whole transaction after a linear backoff:
-    #     attempts x (pool_wait_s + 8 x lock_timeout_ms / 1000) + backoff_s x (1 + 2 + ... + (attempts - 1))
-    #     defaults (3, 10 s, 5000 ms, 0.02 s):   3 x (10 + 40) + 0.06       = about 150 s
-    #     maximums (10, 300 s, 60000 ms, 5 s):   10 x (300 + 480) + 225     = about 8,025 s
-    # In practice one hot key waits on ONE lock at a time, so a lock wait is usually far below this; size the settings
-    # so that this bound is acceptable to the caller (an agent run holds its reservation until it settles).
+    # WORST-CASE LATENCY of one spend call (reserve/settle/prune), NOT bounded by spend_pool_wait_s alone. Each attempt
+    # waits for a pool slot, may CONNECT (no idle connection: two tries of CONNECT_TIMEOUT_S plus one pause, TLS and an IAM
+    # token included), then runs its statements: Postgres applies lock_timeout to each lock acquisition separately (a reserve
+    # with a run key waits on up to 8 lock statements) and statement_timeout caps every statement, so a lock wait is bounded
+    # by min(lock_timeout, statement_timeout). A lock timeout retries the whole transaction (on the SAME connection) after a
+    # linear backoff:
+    #     attempts x (pool_wait_s + (2 x CONNECT_TIMEOUT_S + CONNECT_RETRY_PAUSE_S) + 8 x min(lock_timeout_s, statement_timeout_s))
+    #       + backoff_s x (1 + 2 + ... + (attempts - 1))
+    #     defaults (3, 10 s, 5 s, 30 s, 0.02 s):    3 x (10 + 20.05 + 40) + 0.06    = about 210 s
+    #     maximums (10, 300 s, 60 s, 3600 s, 5 s):  10 x (300 + 20.05 + 480) + 225  = about 8,226 s
+    # HARD ceiling (every one of about 16 statements of a transaction running to statement_timeout): replace the last
+    # term by 16 x statement_timeout_s (defaults: 3 x (10 + 20.05 + 480) = about 1,530 s). A session that stalls BETWEEN
+    # statements is ended by idle_in_transaction_session_timeout (default 60 s) and a dead TCP peer by the libpq keepalives
+    # (_TCP_GUARDS), which release its locks and its pool slot. In practice one hot key waits on ONE lock at a time, so a lock
+    # wait is usually far below this; size the settings so that this bound is acceptable to the caller (an agent run holds
+    # its reservation until it settles).
     # The defaults live in ONE place, the settings model (backends/table.py ``PostgresSettings``); the class reads them.
     LOCK_TIMEOUT_MS = _SPEND_DEFAULTS["spend_lock_timeout_ms"]
     RESERVE_ATTEMPTS = _SPEND_DEFAULTS["spend_reserve_attempts"]
     POOL_SIZE = _SPEND_DEFAULTS["spend_pool_size"]
     POOL_WAIT_S = _SPEND_DEFAULTS["spend_pool_wait_s"]
     BACKOFF_S = _SPEND_DEFAULTS["spend_backoff_s"]
+    STATEMENT_TIMEOUT_S = _SPEND_DEFAULTS["spend_statement_timeout_s"]
+    IDLE_IN_TX_TIMEOUT_S = _SPEND_DEFAULTS["spend_idle_in_tx_timeout_s"]
 
     def __init__(
         self,
@@ -316,6 +351,8 @@ class PostgresStore:
         lock_timeout_ms: int | None = None,
         reserve_attempts: int | None = None,
         backoff_s: float | None = None,
+        statement_timeout_s: float | None = None,
+        idle_in_tx_timeout_s: float | None = None,
     ) -> None:
         self._db = conn
         self._connector = connector
@@ -345,6 +382,20 @@ class PostgresStore:
             )
         if backoff_s is not None and not (math.isfinite(backoff_s) and backoff_s >= 0):
             raise ConfigError("store postgres: backoff_s must be a finite number of at least 0")
+        for label, v in (
+            ("statement_timeout_s", statement_timeout_s),
+            ("idle_in_tx_timeout_s", idle_in_tx_timeout_s),
+        ):
+            if v is not None and (
+                type(v) not in (int, float) or not (math.isfinite(v) and v >= 0.001)
+            ):
+                raise ConfigError(
+                    f"store postgres: {label} must be a finite number of at least 0.001"
+                )
+        if statement_timeout_s is not None:
+            self.STATEMENT_TIMEOUT_S = statement_timeout_s
+        if idle_in_tx_timeout_s is not None:
+            self.IDLE_IN_TX_TIMEOUT_S = idle_in_tx_timeout_s
         if lock_timeout_ms is not None:
             self.LOCK_TIMEOUT_MS = lock_timeout_ms
         if reserve_attempts is not None:
@@ -640,17 +691,28 @@ class PostgresStore:
                     try:
                         conn = self._connector()
                         break
-                    except psycopg.Error as exc:
+                    except ConfigError:
+                        raise
+                    except Exception as exc:  # noqa: BLE001 - psycopg, a malformed DSN, an IAM token provider
                         if attempt == 2:
                             raise StoreUnavailable(
                                 f"store postgres: cannot connect ({type(exc).__name__})"
                             ) from None
-                        time.sleep(0.05)
+                        time.sleep(CONNECT_RETRY_PAUSE_S)
             yield conn
-        except BaseException:
-            if conn is not None:
+        except BaseException as exc:
+            # A retryable contention error (the transaction was rolled back, the session is fine) keeps its connection:
+            # closing it would reconnect, and renegotiate TLS and an IAM token, exactly when the database is busiest.
+            keep = (
+                isinstance(exc, _RETRYABLE)
+                and conn is not None
+                and not conn.closed
+                and not conn.broken
+                and conn.info.transaction_status == psycopg.pq.TransactionStatus.IDLE
+            )
+            if conn is not None and not keep:
                 conn.close()
-            conn = None
+                conn = None
             raise
         finally:
             if conn is not None:
@@ -671,11 +733,7 @@ class PostgresStore:
                         return self._run_tx(self._db, work)
                 with self._borrow() as conn:
                     return self._run_tx(conn, work)
-            except (
-                psycopg.errors.SerializationFailure,
-                psycopg.errors.DeadlockDetected,
-                psycopg.errors.LockNotAvailable,
-            ) as exc:
+            except _RETRYABLE as exc:
                 last = exc
                 if attempt + 1 < self.RESERVE_ATTEMPTS:
                     time.sleep(self.BACKOFF_S * (attempt + 1))
@@ -691,9 +749,16 @@ class PostgresStore:
     def _run_tx(self, conn: psycopg.Connection, work: Callable[[psycopg.Connection], Any]) -> Any:
         try:
             with conn.transaction():
+                # Per transaction (set_config ... true): a lock wait, any one statement, and a stall INSIDE the
+                # transaction are all bounded, so a black-holed or stalled session releases its locks and pool slot.
                 conn.execute(
-                    "SELECT set_config('lock_timeout', %s, true)",
-                    (f"{int(self.LOCK_TIMEOUT_MS)}ms",),
+                    "SELECT set_config('lock_timeout', %s, true), set_config('statement_timeout', %s, true), "
+                    "set_config('idle_in_transaction_session_timeout', %s, true)",
+                    (
+                        f"{int(self.LOCK_TIMEOUT_MS)}ms",
+                        f"{max(1, int(self.STATEMENT_TIMEOUT_S * 1000))}ms",
+                        f"{max(1, int(self.IDLE_IN_TX_TIMEOUT_S * 1000))}ms",
+                    ),
                 )
                 return work(conn)
         except (

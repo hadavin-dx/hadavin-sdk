@@ -32,12 +32,13 @@ from typing import Any
 
 from hadavin_sdk.llm.protocol import (
     LLM,
+    MAX_MARKS,
     DeadlineExceeded,
     ProviderError,
     ProviderExhausted,
     SpendLimitReached,
-    _prior_marks,
     counts_valid,
+    prior_marks,
     unknown_requests,
 )
 from hadavin_sdk.models import Reply
@@ -240,6 +241,13 @@ class ResilientLLM:
         lost = unknown_requests(cause) if cause is not None else 0
         if cause is not None and not lost and counts_valid(cause) and cause.answered > 0:
             lost = 1  # the primary ANSWERED and billed before it was given up on: one reservation, never dropped
+        # Marks the primary itself carries (it is a ResilientLLM whose own chain failed): they are bills of THIS call.
+        # Read only from an inner ResilientLLM: any other object may hand back a reused exception or reply that still
+        # holds a mark from an earlier call.
+        marks = (1 if lost else 0) + (
+            prior_marks(cause) if isinstance(self.primary, ResilientLLM) else 0
+        )
+        inner = isinstance(self.fallback, ResilientLLM)
         try:
             out = self.fallback.chat(*args, **kwargs)
         except ProviderError as fe:
@@ -247,8 +255,21 @@ class ResilientLLM:
             # mark per failed primary (``prior_unknown_requests``, the same count and the same helper as a successful
             # fallback's Reply), and a meter books one reservation per mark on top of the error's own settlement
             # (``cost_to_settle``). ``attempts`` is no longer touched: it stays the fallback's own sent count.
-            fe.prior_unknown_requests = (1 if lost else 0) + _prior_marks(fe)
+            fe.prior_unknown_requests = min(
+                marks + (prior_marks(fe) if inner else 0), MAX_MARKS
+            )  # ASSIGNED, never accumulated on a reused instance
             raise
+        except Exception as fe:
+            # Not a ProviderError (a bug, a timeout, a driver error): a meter would book one reservation for it and
+            # the primary's possible bill would be lost. With a mark to keep, raise a ProviderExhausted (billing
+            # unknown, carrying the marks) from it; with none, the exception passes unchanged.
+            if not marks:
+                raise
+            wrapped = ProviderExhausted(
+                f"llm: fallback failed ({type(fe).__name__}) after an unknown primary"
+            )
+            wrapped.prior_unknown_requests = min(marks, MAX_MARKS)
+            raise wrapped from None
         return out.model_copy(
             update={
                 "fallback_used": True,
@@ -257,6 +278,8 @@ class ResilientLLM:
                 # unknown, as cost_to_settle keeps one reservation per call), PLUS the inner fallback's own marks: a
                 # nested fallback whose primary also failed unknown is a second, distinct possible bill. The meter
                 # books one reservation per mark (reply_cost_to_settle). max() here dropped one when both were set.
-                "prior_unknown_requests": (1 if lost else 0) + _prior_marks(out),
+                "prior_unknown_requests": min(
+                    marks + (prior_marks(out) if inner else 0), MAX_MARKS
+                ),
             }
         )

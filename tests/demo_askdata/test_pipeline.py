@@ -269,6 +269,38 @@ def test_a_failed_call_after_sending_is_charged_its_worst_case(tmp_path):
     assert Decimal(a.line.cost_usd) == spent
 
 
+def test_a_failed_fallback_after_an_unknown_primary_is_charged_one_more_worst_case(tmp_path):
+    # The marks the chain carries are bills too: the pipeline books them through the shared billing helper.
+    def spent_with(marks):
+        k = Kit(tmp_path / f"m{marks}")
+
+        class Boom:
+            def chat(self, *a, **kw):
+                err = ProviderExhausted("5xx")
+                err.prior_unknown_requests = marks
+                raise err
+
+        k.pipeline.llm = Boom()
+        k.pipeline.ask(Q)
+        return k.meter.snapshot()["askdata_spent"]
+
+    assert spent_with(1) == 2 * spent_with(0)
+
+
+def test_a_refused_fallback_after_an_unknown_primary_is_not_free(tmp_path):
+    k = Kit(tmp_path)
+
+    class Refuse:
+        def chat(self, *a, **kw):
+            err = ProviderError("bad key")  # refused, but the primary before it was unknown
+            err.prior_unknown_requests = 1
+            raise err
+
+    k.pipeline.llm = Refuse()
+    k.pipeline.ask(Q)
+    assert k.meter.snapshot()["askdata_spent"] > Decimal("0.0102")
+
+
 def test_a_refused_request_is_free(tmp_path):
     k = Kit(tmp_path)
 

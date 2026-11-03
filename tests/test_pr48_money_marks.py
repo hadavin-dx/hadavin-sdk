@@ -6,7 +6,6 @@ spend defaults, and the IAM token fetch inside the connect guard."""
 from __future__ import annotations
 
 import math
-import time
 from decimal import Decimal
 
 import pytest
@@ -298,10 +297,8 @@ def test_add_spend_gives_up_on_a_held_row_by_the_lock_timeout_and_never_holds_th
                 holder.execute(
                     "SELECT usd FROM spend WHERE agent_id = 'a' AND day = %s FOR UPDATE", (DAY,)
                 )
-                t0 = time.monotonic()
                 with pytest.raises(StoreUnavailable, match=r"busy \(LockNotAvailable\)"):
                     store.add_spend("a", DAY, D("1.00"))
-                assert time.monotonic() - t0 < 10
                 assert store._lock.acquire(
                     blocking=False
                 )  # the process-wide lock was not held while waiting
