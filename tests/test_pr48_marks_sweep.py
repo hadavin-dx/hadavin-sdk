@@ -416,3 +416,14 @@ def test_a_real_connection_error_still_closes_the_pooled_connection():
             assert holder[0].closed
         finally:
             store.close()
+
+
+def test_a_plain_primary_that_reuses_an_exception_with_a_stale_mark_adds_only_its_own_bill():
+    stale = ProviderExhausted("x")
+    stale.attempts, stale.refused, stale.prior_unknown_requests = (
+        1,
+        0,
+        5,
+    )  # a mark left over from an older call
+    llm = ResilientLLM(Stub(stale), Stub(_fallback_reply()), _breaker(), fallback_metered=True)
+    assert _chat(llm).prior_unknown_requests == 1  # the primary's one unknown request, not 1 + 5
