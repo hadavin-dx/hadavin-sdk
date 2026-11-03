@@ -1,7 +1,7 @@
 """Claude through the ``anthropic`` SDK, on the Claude API, Google Vertex AI or Azure AI Foundry (``platform``).
 
 Ports WARDEN ``AnthropicProvider`` (design 4.3): SDK retries off (``llm/retry.py`` decides), a socket timeout
-(``call_timeout_s``, per socket operation, not a wall clock), an explicit base URL on every platform, the key read
+(``call_timeout_s``, per socket operation, not a wall clock; ``deadline_s`` is the wall clock, see llm/retry.py), an explicit base URL on every platform, the key read
 on every call (a rotated key is picked up), and ``output_schema`` forced through one tool.
 Needs ``hadavin-sdk[anthropic]``.
 """
@@ -17,7 +17,8 @@ from typing import Any
 import anthropic  # the extra: a missing install fails at start-up with the hint (backends.make)
 
 from hadavin_sdk.errors import ConfigError
-from hadavin_sdk.llm.common import Answer, NetworkLLM, pinned, reply
+from hadavin_sdk.llm.common import Answer, NetworkLLM, error_body, pinned, reply
+from hadavin_sdk.llm.retry import status
 from hadavin_sdk.models import Reply, ToolCall
 
 API_BASE_URL = "https://api.anthropic.com"
@@ -77,20 +78,46 @@ def retryable(exc: BaseException) -> bool | None:
     return True if isinstance(exc, google_auth.TransportError) else None
 
 
+def spend_limit(exc: BaseException) -> bool:
+    """The monthly spend-cap 429: no retry-after, retrying fails until the next month. Classified by the error
+    code in the body (the message prefix only when the body has no details), never by status alone."""
+    try:
+        if status(exc) != 429:
+            return False
+        body = error_body(exc)
+        err = body.get("error", body) if body is not None else None
+        if not isinstance(err, dict):
+            return False
+        details = err.get("details")
+        if isinstance(details, dict) and "error_code" in details:
+            return details["error_code"] == "enforced_spend_limit_reached"
+        message = err.get("message")  # never str(): a hostile object's __str__ could raise
+        # The message prefix is a fallback only: it was NOT verified against a live response (no spend authorised);
+        # the error code in `details` above is the documented signal and is tried first.
+        return isinstance(message, str) and message.startswith(
+            "You have reached your API usage limits"
+        )
+    except Exception:  # noqa: BLE001 - a classifier must not raise inside the except block that calls it
+        return False
+
+
 def make(settings: Any, deps: Any) -> AnthropicLLM:
     name = settings.api_key_secret_name if settings.platform != "vertex" else None
     key = (lambda: deps.resolve(name)) if name else None
-    return AnthropicLLM(
+    llm = AnthropicLLM(
         client(settings, key() if key else None),
         pinned(dict(deps.routes), floating),
         settings.max_attempts,
         key=key,
     )
+    llm.deadline_s = settings.deadline_s
+    return llm
 
 
 class AnthropicLLM(NetworkLLM):
     label = "anthropic"
     retryable = staticmethod(retryable)
+    spend_limit = staticmethod(spend_limit)
 
     def __init__(
         self,

@@ -20,7 +20,9 @@ from urllib.parse import urlsplit
 from hadavin_sdk.llm.common import (
     Answer,
     NetworkLLM,
+    error_body,
     json_in_text,
+    loads_bounded,
     model_name,
     pinned,
     post_json,
@@ -28,6 +30,7 @@ from hadavin_sdk.llm.common import (
     schema_hint,
     stop_reason,
 )
+from hadavin_sdk.llm.retry import status
 from hadavin_sdk.models import Reply, ToolCall
 
 # OpenAI's own family names without a dated snapshot (`gpt-4o`, `o3`, `chatgpt-4o-latest`) move to new models;
@@ -51,7 +54,7 @@ def floating(model_id: str, base_url: str) -> bool:
 
 def make(settings: Any, deps: Any) -> OpenAICompatLLM:
     name = settings.api_key_secret_name
-    return OpenAICompatLLM(
+    llm = OpenAICompatLLM(
         settings.base_url,
         (lambda: deps.resolve(name)) if name else None,
         pinned(dict(deps.routes), lambda m: floating(m, settings.base_url)),
@@ -59,20 +62,37 @@ def make(settings: Any, deps: Any) -> OpenAICompatLLM:
         settings.max_attempts,
         cap_field="max_completion_tokens" if settings.max_completion_tokens else "max_tokens",
     )
+    llm.deadline_s = settings.deadline_s
+    return llm
 
 
 def _call(tool_call: dict[str, Any]) -> ToolCall | None:
     """The function call, or None when its arguments are not a JSON object (never guessed at)."""
     fn = tool_call.get("function") or {}
     try:
-        args = json.loads(fn.get("arguments") or "{}")
+        args = loads_bounded(fn.get("arguments") or "{}")
     except ValueError:
         return None
     return ToolCall(name=fn.get("name", ""), input=args) if isinstance(args, dict) else None
 
 
+def spend_limit(exc: BaseException) -> bool:
+    """A 429 whose body says the account is out of quota or credit (``error.code`` or ``error.type`` is
+    ``insufficient_quota``; OpenAI's documented code, other servers may differ): retrying fails until it is
+    topped up. A plain rate-limit 429 is retried."""
+    try:
+        if status(exc) != 429:
+            return False
+        body = error_body(exc)
+        err = body.get("error") if body is not None else None
+        return isinstance(err, dict) and "insufficient_quota" in (err.get("code"), err.get("type"))
+    except Exception:  # noqa: BLE001 - must not raise inside the caller's except block
+        return False
+
+
 class OpenAICompatLLM(NetworkLLM):
     label = "openai_compat"
+    spend_limit = staticmethod(spend_limit)
 
     def __init__(
         self,

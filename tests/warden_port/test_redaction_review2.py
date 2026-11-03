@@ -72,7 +72,8 @@ def test_a_credential_is_still_masked_in_every_line():
     assert all(secret not in line for line in out), out
 
 
-def test_redacting_many_lines_stays_fast():
+@pytest.mark.parametrize("timed", [False, pytest.param(True, marks=pytest.mark.perf)])
+def test_redacting_many_lines_stays_fast(timed):
     """Third review (2026-09-30): 300 log lines took 68 s (122 s measured here) once there were more
     found values than Python's regex cache holds; the same lines now take under a second."""
     import time
@@ -95,7 +96,8 @@ def test_redacting_many_lines_stays_fast():
         )
     start = time.perf_counter()
     out, mapping = redact_many(lines)
-    assert time.perf_counter() - start < 15, "redaction cost regressed"
+    if timed:  # machine-relative: only under -m perf
+        assert time.perf_counter() - start < 15, "redaction cost regressed"
     assert len(mapping) > 512
     assert not any("q9Zq9Z" in line for line in out)
 

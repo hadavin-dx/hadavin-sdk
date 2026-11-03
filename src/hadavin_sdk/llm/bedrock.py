@@ -53,7 +53,9 @@ def make(settings: Any, deps: Any) -> BedrockLLM:
             ignore_configured_endpoint_urls=True,
         ),
     )
-    return BedrockLLM(client, pinned(dict(deps.routes), floating), settings.max_attempts)
+    llm = BedrockLLM(client, pinned(dict(deps.routes), floating), settings.max_attempts)
+    llm.deadline_s = settings.deadline_s
+    return llm
 
 
 def floating(model_id: str) -> bool:

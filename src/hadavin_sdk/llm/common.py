@@ -12,10 +12,12 @@ import urllib.request
 from collections.abc import Callable
 from dataclasses import dataclass
 from decimal import Decimal
+from itertools import islice
 from typing import Any
 from urllib.parse import urlsplit
 
 from hadavin_sdk.errors import ConfigError
+from hadavin_sdk.llm.protocol import SpendLimitReached
 from hadavin_sdk.llm.retry import with_retry
 from hadavin_sdk.models import Reply, ToolCall
 
@@ -95,7 +97,10 @@ def turns(
         texts = [str(m["content"])]
         if docs and m["role"] == "user":
             texts, docs = docs + texts, []
-        out.append((m["role"], texts))
+        if out and out[-1][0] == m["role"]:  # providers want alternating roles: one turn holds both
+            out[-1][1].extend(texts)
+        else:
+            out.append((m["role"], texts))
     return out
 
 
@@ -107,17 +112,118 @@ def schema_hint(system: str, output_schema: dict[str, Any]) -> str:
     )
 
 
-def json_in_text(text: str) -> dict[str, Any] | None:
-    """The first JSON object in a text answer (bare, fenced or after a sentence), or None."""
-    start = text.find("{")
-    while start != -1:
-        try:
-            found, _ = json.JSONDecoder().raw_decode(text, start)
-        except ValueError:
-            start = text.find("{", start + 1)
-            continue
-        return found if isinstance(found, dict) else None
+# Model output is untrusted. The stdlib parser recurses on nesting (a deep reply raises RecursionError, which is
+# not a ValueError) and a huge reply costs time and memory, so both are bounded BEFORE parsing.
+MAX_JSON_CHARS = 1_000_000
+MAX_JSON_DEPTH = 64
+_SCAN_BUDGET = 2_000_000  # characters all candidates of one json_in_text call may scan in total
+_MAX_RESPONSE_BYTES = 16_000_000
+_MAX_RESPONSE_CHARS = 16_000_000  # a vendor response (not a model's JSON answer)
+_MAX_CANDIDATES = (
+    50  # `{` positions tried in one text, so a reply full of braces cannot go quadratic
+)
+
+
+class ReplyUnparseable(ValueError):
+    """A model reply too large or too deeply nested to parse safely (treated as an invalid reply)."""
+
+
+def nesting_ok(
+    text: str, start: int = 0, limit: int = MAX_JSON_DEPTH, budget: list[int] | None = None
+) -> bool:
+    """True if the JSON value starting at ``start`` nests no deeper than ``limit`` (string-aware, linear, stops
+    as soon as the value closes or the limit is passed). ``budget`` ([characters left]) is shared across calls and
+    spent as the scan reads; an empty budget answers False, so many candidates cannot add up to a CPU burn."""
+    depth, in_str, esc = 0, False, False
+    for ch in islice(text, start, None):
+        if budget is not None:
+            budget[0] -= 1
+            if budget[0] < 0:
+                return False
+        if in_str:
+            if esc:
+                esc = False
+            elif ch == "\\":
+                esc = True
+            elif ch == '"':
+                in_str = False
+        elif ch == '"':
+            in_str = True
+        elif ch in "[{":
+            depth += 1
+            if depth > limit:
+                return False
+        elif ch in "]}":
+            depth -= 1
+            if depth <= 0:
+                return True
+    return True
+
+
+def loads_bounded(text: str, max_chars: int = MAX_JSON_CHARS) -> Any:
+    """``json.loads`` for model output: size and nesting bounded first; ReplyUnparseable (a ValueError) or
+    JSONDecodeError for anything else, never RecursionError."""
+    if len(text) > max_chars or not nesting_ok(text.lstrip()):
+        raise ReplyUnparseable("reply too large or too deeply nested")
+    try:
+        return json.loads(text)
+    except RecursionError as exc:  # belt and braces: the scan above should have refused it
+        raise ReplyUnparseable("reply too deeply nested") from exc
+
+
+def error_body(exc: BaseException) -> dict[str, Any] | None:
+    """The JSON object an HTTP error carried: an SDK error's parsed ``body``, or a urllib ``HTTPError``'s body
+    (read once, at most 4 KiB, size and nesting bounded). Never raises: a classifier must not fail inside the
+    handler of the error it classifies."""
+    try:
+        body = getattr(exc, "body", None)
+        if isinstance(body, dict):
+            return body
+        read = getattr(exc, "read", None)
+        if callable(read):
+            parsed = loads_bounded(read(4096).decode("utf-8", "replace"), 4096)
+            return parsed if isinstance(parsed, dict) else None
+    except Exception:  # noqa: BLE001 - unreadable body means "not a spend limit"
+        return None
     return None
+
+
+def json_in_text(text: str) -> dict[str, Any] | None:
+    """The first JSON object in a text answer (bare, fenced or after a sentence), or None. Oversized or too
+    deeply nested text yields None, never an exception."""
+    if len(text) > MAX_JSON_CHARS:
+        return None
+    start = text.find("{")
+    budget = [_SCAN_BUDGET]
+    for _ in range(_MAX_CANDIDATES):
+        if start == -1 or budget[0] < 0:
+            return None
+        # A `{` inside a JSON array is a list item, not the answer object.
+        if not _inside_array(text, start) and nesting_ok(text, start, budget=budget):
+            try:
+                found, _ = json.JSONDecoder().raw_decode(text, start)
+            except (ValueError, RecursionError):
+                pass
+            else:
+                return found if isinstance(found, dict) else None
+        # An object that opens like JSON but never closes is a cut-off answer: the objects nested in it are
+        # fragments of it, so none of them is returned.
+        if _JSON_OPEN.match(text, start):
+            return None
+        start = text.find("{", start + 1)
+    return None
+
+
+_JSON_OPEN = re.compile(r'\{\s*["}]')
+
+
+def _inside_array(text: str, start: int) -> bool:
+    """True when the `{` at `start` directly follows `[` or a `,` after a JSON value (`}`, `]` or a string):
+    an item of an array. A comma after prose (`Sure, {...}`) does not count."""
+    before = text[:start].rstrip()
+    if before.endswith("["):
+        return True
+    return before.endswith(",") and before[:-1].rstrip()[-1:] in ("}", "]", '"')
 
 
 # Why an answer ended, in each provider's words, folded into Reply.stop_reason (WARDEN providers.py B11, M7):
@@ -237,11 +343,21 @@ class NetworkLLM:
             sleep=self._sleep,
             retryable=self.retryable,
             detail=self.detail,
+            spend_limit=self.spend_limit,
+            spend_error=self.spend_error,
+            deadline_s=self.deadline_s,
         )
 
     # The kind's own SDK errors (llm/retry.py stays vendor-neutral): None means no opinion / no code.
     retryable: Callable[[BaseException], bool | None] | None = None
     detail: Callable[[BaseException], str] | None = None
+    spend_limit: Callable[[BaseException], bool] | None = (
+        None  # the kind's own "spend cap reached" test
+    )
+    spend_error: type[SpendLimitReached] = SpendLimitReached  # what a positive spend_limit raises
+    deadline_s: float | None = (
+        None  # overall wall clock for one call's attempts and sleeps (config)
+    )
 
 
 class _NoRedirect(urllib.request.HTTPRedirectHandler):
@@ -267,4 +383,10 @@ def post_json(url: str, body: dict[str, Any], headers: dict[str, str], timeout_s
     )
     opener = _LOCAL_OPENER if urlsplit(url).hostname in _LOOPBACK else _OPENER
     with opener.open(req, timeout=timeout_s) as resp:  # nosec B310
-        return json.loads(resp.read())
+        raw = resp.read(_MAX_RESPONSE_BYTES + 1)  # never the whole of an endless body
+        if len(raw) > _MAX_RESPONSE_BYTES:
+            raise ReplyUnparseable("response too large")
+        try:
+            return loads_bounded(raw.decode("utf-8"), _MAX_RESPONSE_CHARS)
+        except UnicodeDecodeError as exc:
+            raise ReplyUnparseable("response is not UTF-8") from exc

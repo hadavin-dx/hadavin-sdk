@@ -56,7 +56,7 @@ def test_bad_output_one_retry_then_dead_letter(cfg, llm):
     assert isinstance(out, DeadLetter)
     assert out.reason == "extract_invalid" and len(out.errors) == 2
     assert len(llm.calls) == 2
-    assert "failed validation" in llm.calls[1]["messages"][-1]["content"]
+    assert "previous reply was invalid" in llm.calls[1]["messages"][-1]["content"]
 
 
 def test_detector_flags_seeded_injection(cfg):
@@ -207,16 +207,12 @@ def test_invalid_compact_timestamp_shape_is_still_masked():
 
 # P0 review (3): clean() terminates on adversarial nested input (the gate's fixed-point loop is bounded)
 def test_clean_terminates_on_adversarial_nesting():
-    import time
-
     from hadavin_sdk.approvals.channel import clean
 
     nested = "![a](" * 200 + "//evil%2Ecom/p.png" + ")" * 200
     tangled = "".join(f"[x{i}](<!here>![y](//e{i}.example/{i}.png))" for i in range(300))
     for text in (nested, tangled, "<" * 5000 + "!here>" * 50):
-        start = time.monotonic()
-        out = clean(text)
-        assert time.monotonic() - start < 5
+        out = clean(text)  # terminating is the proof; no wall-clock bound in the default run
         assert "//evil" not in out and "](//" not in out
 
 

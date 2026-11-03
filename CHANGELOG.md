@@ -2,6 +2,222 @@
 
 ## Unreleased
 
+### Core hardening 1 (G-01, G-04, G-05, G-08)
+- **`extract()` no longer leaks document content (R85, R14).** The retry prompt and `DeadLetter.errors` carry the
+  failing field path and the error type only (`inner.n: int_parsing`); never pydantic's message or input. A path
+  element that is not a schema property name (a dict key, an extra key) shows as `*`. The model's invalid reply is
+  no longer echoed back in the retry turn, and the retry wording is now R85's ("Your previous reply was invalid: ...
+  Reply again with only the corrected JSON object."). Fenced or prose-wrapped JSON now parses (R82). (A list, string or null
+  reply was already a validation error and still is; tests pin it as a regression guard, it is not a change.) Anything that matched the old text `That failed validation`
+  must change.
+- **Spend-cap 429 is never retried (G-05).** The Claude API monthly cap (HTTP 429, `rate_limit_error`,
+  `error.details.error_code == "enforced_spend_limit_reached"`, no `retry-after`; platform.claude.com/docs/en/api/rate-limits,
+  read 2026-11-01) is raised after ONE attempt as the new `SpendLimitReached` (a `ProviderError`; the agent loop ends the
+  run `NEEDS_PERSON` / `over_budget`). Other 429s (throttles; the docs say not every 429 has `retry-after`) are retried
+  with backoff and jitter. Each kind supplies its own test through `NetworkLLM.spend_limit`: `anthropic` (above),
+  `openai_compat` (`error.code`/`error.type == "insufficient_quota"`) and `gemini` (a 429 whose violated quota id contains
+  `PerDay`; written from Google's documented error shape, not run against a live key). `bedrock` has no spend-cap 429
+  (its throttles are rate limits) and `fake` none. Classifiers never raise.
+- **`retry-after` is honoured, with a ceiling (m6).** The wait is the larger of the jitter and the server's ask, up to
+  `RETRY_AFTER_CEILING_S` (60 s); a server asking for more is not retried (`ProviderExhausted`), because retrying sooner
+  than asked is throttled again. Before, the ask was silently cut to 8 s.
+- **`deadline_s` is a real wall-clock bound, on by default (m5).** New default 120 s on every network `backends.llm` kind
+  (set `deadline_s: null` for none). Every attempt runs under the time left; an attempt still running at the end is
+  abandoned (`DeadlineExceeded`, a `ProviderExhausted`). The abandoned request may still finish and be billed, so the agent
+  loop keeps that call's reserved worst case booked. Upgrade: a call that legitimately takes longer than 120 s needs a
+  larger `deadline_s`.
+- **Model JSON is bounded before it is parsed (M3).** Replies over 1,000,000 characters or nested deeper than 64 are
+  an invalid reply (retry, then dead letter), never a `RecursionError` out of `extract()`. Same for the judge, the OpenAI
+  tool-argument parser, `json_in_text` and vendor response bodies (`loads_bounded`, `json_in_text`).
+- **Consecutive same-role messages are merged into one turn on every kind (m12)**, and the `extract()` retry is one user
+  turn: the ask plus the sanitized failure summary (field path and error type, never the reply).
+- **New `llm/resilient.py`**: `ResilientLLM(primary, fallback, CircuitBreaker(...), send_documents_to_fallback=False,
+  fallback_metered=False, on_fallback=hook)`. **Customer data leaves for the fallback vendor**: messages and the system
+  prompt always, documents only with `send_documents_to_fallback=True` (default: a call with documents fails closed with
+  the primary's typed error). A `SpendLimitReached` on the primary is NOT routed to the fallback unless
+  `fallback_metered=True` (its cost is booked against the same `Limits`). Every fallback call is logged, passed to
+  `on_fallback` (wire it to the audit sink; a raising hook stops the call) and marked on the reply (`Reply.fallback_used`,
+  `Reply.served_by`). The breaker ignores outcomes of calls that started before it opened, abandons a probe that has not
+  reported within `probe_timeout_s`, and the wrapper supports `copy.copy` (shares the breaker); `deepcopy` and `pickle` raise `TypeError`. Not yet reachable from config (factory change after PR #42).
+- **Reserve-then-settle budget (G-04, R214), now used by the runtime.** `Limits.reserve(agent_id, worst_case_usd, run_id,
+  run_day)` -> `Reservation`, then `Limits.settle(reservation, actual_usd)` (or `release`). ONE atomic store step
+  (`Store.reserve_spend`) reads the kill switch and books the run (`max_run_usd`), daily and monthly caps all-or-nothing:
+  in memory under one lock, on Postgres in one transaction on a connection of its own with `lock_timeout` (5 s), a bounded
+  retry on serialization failure / deadlock / lock timeout, then fail closed (`StoreUnavailable`). `settle` is one atomic
+  store step (`Store.settle_spend`), counts as settled only after the store accepted it (a failed settle can be retried),
+  and a second settle or a release after a settle is refused. `Limits.prune_runs()` deletes per-run counters older than 7
+  days, but the RUNTIME database role cannot DELETE (least privilege) and `Runtime` no longer prunes: use
+  `hadavin-sdk migrate --maintenance-role <role>` (that role gets SELECT, DELETE and (round 4) UPDATE (usd) on `spend` and `spend_month` and nothing
+  else) and run `hadavin-sdk prune-runs [--keep-days 7]` with `HADAVIN_MAINTENANCE_DSN` from a scheduled job. Money inputs must be finite, non-negative `Decimal`s (`ValueError` otherwise; `charge`
+  too).
+- **The agent loop reserves before every model call (M1).** `Runtime` books `worst_case_usd(route, prompt_bytes(...))`
+  (prompt = messages, system, documents, tool schemas; `max_tokens` at the output rate) before `llm.chat`, and settles to
+  the real cost after: concurrent runs cannot overshoot the daily, monthly or per-run cap, and `max_run_usd` is enforced
+  (`NEEDS_PERSON`, `run_budget`). An `llm_judge` screen is reserved and settled the same way. A call is now refused when its
+  WORST case does not fit, so a budget is reached earlier than before (a run that used to be `DENIED limits.daily_budget` at
+  the gate now ends `NEEDS_PERSON limits.daily_budget` before the model). A limits store that cannot answer ends the run
+  `limits.unavailable`.
+  **Upgrade steps:** (1) `worst_case_usd` now takes a prompt size in BYTES (`prompt_bytes(messages, system, documents,
+  tools, output_schema)`), at most `Route.prompt_bytes_per_token` bytes per token (new optional route field, default 1, a
+  true bound for byte-level tokenizers); raise it per route only after measuring the tokenizer. (2) A custom `Store` must add
+  `reserve_spend`, `settle_spend` and `prune_spend` (signatures in `store/protocol.py`); `Limits(...)` now raises
+  `StoreLacksReserve` naming the missing methods instead of failing at the first call. (3) `blocked()` + `charge()` still
+  work but keep the check-then-charge race; the runtime no longer uses `charge` except for a custom paid detector.
+  (4) `Reply` gains `fallback_used` and `served_by`. (5) `Limits(..., tenant="client-x")` (new, optional) prefixes every counter key, so two clients on one store never share a budget or run share (R371); one deployment per client with its own store stays the default. A refused fallback is also reported to `on_fallback` as `llm_fallback_refused` (R372).
+
+### Round-2 review fixes (PR #48)
+- **Spend reason lives in the breaker (per epoch):** a late success of a call that started before the circuit opened can
+  no longer clear "opened by a spend cap" and send the next call to the unmetered fallback. `DeadlineExceeded` on the
+  primary is never served by the fallback (the abandoned request's bill would vanish from the meter); it is raised.
+- **Postgres spend work uses a bounded pool** (`PostgresStore.POOL_SIZE`, default 8) and every driver error becomes
+  `StoreUnavailable` with the class name only. `settle_spend` no longer sorts: callers pass the run counter first, the
+  order `reserve` takes. A take-back (negative delta) never creates a missing counter and never takes one below zero. Current rule (Postgres): it locks the DAY row (`SELECT ... FOR UPDATE`), takes `min(amount, day total)` from the day and the same amount from the month (`GREATEST(usd - take, 0)`), and takes nothing for a day with no row or a day total of zero or less; the memory store clamps with `max(0, ...)`.
+- **Counter keys are injective and validated (R371):** with a tenant the key is `<len>:<tenant>/<name>`; agent ids and
+  tenants must match `[A-Za-z0-9._-]{1,64}` (`AgentRecord.id`, `Limits(tenant=)`), and `config.yaml` has an optional
+  `tenant`, passed to `Limits` by `app.build`. Setting a tenant starts new counters (keys change); the default (empty) is
+  unchanged. **An agent id with `/` or `:` is now refused at load.**
+- **Hostile bodies:** the spend-limit check of a 429 runs inside the deadline-bounded attempt and reads at most 4 KiB;
+  `post_json` reads at most 16 MB (a bounded read, not read-all) and refuses non-UTF-8; `json_in_text` has a total scan
+  budget (2,000,000 characters); hung attempts hold a slot, at most 64 at once (`MAX_INFLIGHT_ATTEMPTS`).
+- **Metered calls outside the loop:** `llm.metered.MeteredLLM(inner, limits, agent_id, routes)` reserves and settles each
+  call; `evals.gate(..., limits=)` uses it, and `extract()` takes a `MeteredLLM` like any `LLM`. The K1b replay keeps its
+  own sequential USD cap.
+- `prune_spend` is now `prune_spend(before)` (all run counters, any tenant) in the `Store` protocol.
+- **For the rebasers (#48 merges first).** #42 (`runtime/agent_loop.py`, 5 hunks): keep `_gate`/`_settle`/`_screen` and the
+  reserve/settle around `llm.chat`; `Runtime.__init__` has NO `prune_runs()` call any more. #43 (`llm/retry.py`,
+  `common.py`, `anthropic.py`, `openai_compat.py`, `gemini.py`, `protocol.py`, `models.py`): keep #48's size and nesting
+  bound in `post_json` (`loads_bounded`, the 16 MB read cap) when `UnusableAnswer` lands, and run #43's `answered_hook`
+  INSIDE the deadline-bounded attempt (`attempt_once` in `with_retry`), so it cannot outlive `deadline_s`.
+
+### Round-3 review fixes (PR #48)
+- **Every Postgres driver error is `StoreUnavailable`, class name only** (`psycopg.Error`, not only `OperationalError`):
+  `InsufficientPrivilege`, `DataError` and the rest no longer escape raw with text that can quote a parameter value.
+- **An exhausted provider may have billed (superseded by round 4: see the billing contract below).**
+- **The spend reason is sticky for the whole failure streak** in `CircuitBreaker`: four `SpendLimitReached` then one
+  `ProviderExhausted` still opens the circuit "for spend", so an unmetered fallback is not used to route around the cap.
+- **`QuotaReached`** (new, a subclass of `SpendLimitReached`): a Gemini per-day quota is a request quota, not a money cap;
+  the loop reports `provider_quota`. `with_retry(spend_error=)` and `NetworkLLM.spend_error` choose the class.
+- **A refused reservation rolls back** its transaction, so no zero-value counter rows are committed (agent rows are never
+  pruned, so a refused day would otherwise leave rows forever).
+- **`MeteredLLM`**: a settle that fails after a good reply is logged and the reply is returned (the worst case stays
+  booked), as in the loop. `Valid.replies` (raw model text) is excluded from `repr`.
+- **Scope of "every call is reserved" (R214), stated plainly:** the agent loop reserves every `llm.chat`; `extract()` and
+  `evals.gate` meter only when given a `MeteredLLM` / `limits=`; the K1b replay uses its own sequential USD cap. The
+  Anthropic message-prefix test for a spend limit is a fallback behind the documented `error_code` and was not checked
+  against a live response (no spend authorised); it can only add a refusal, never allow a call.
+
+### Round-4 review fixes (PR #48)
+- **One billing contract for every provider error (M-B, M-D; shared with PR #43).** `ProviderError` carries `attempts`
+  (requests actually sent; 0 = provably nothing left the process), `answered` (answered AND billed, HTTP 2xx), `refused`
+  (explicitly refused, HTTP 4xx incl. 429: not processed) and `billed_usd`. `attempts - answered - refused` is the number
+  of requests with UNKNOWN billing (a timeout or reset after sending, a 5xx). `cost_to_settle(exc, reserved)` is the one
+  rule every meter uses: nothing unknown and nothing answered = release; anything unknown = keep the whole reservation;
+  answered = book `billed_usd`, and never zero (a billed answer with no price keeps the reservation). Class defaults mean
+  "one request, refused" for `ProviderError`, `SpendLimitReached`, `QuotaReached`, and "one request, unknown" for
+  `ProviderExhausted` and `DeadlineExceeded`. `with_retry` stamps the real counts; `ResilientLLM` stamps `attempts = 0`
+  on its own local refusals (circuit open, fallback refused). So a provider outage, a 429 streak or an open circuit no
+  longer books worst cases it never spent, while a timeout, a 5xx or a billed unusable answer still does.
+  **For PR #43 (rebase note):** `ProviderError.attempts/answered/billed_usd` and `UnusableAnswer` keep their names and
+  meaning; #43 adds only `refused` (default 1 on `ProviderError`, 0 on `ProviderExhausted`), keeps its stamping inside
+  `with_retry`, and uses this PR's `UnusableAnswer` (below) instead of its own class. The agent loop, `MeteredLLM` and the K1b replay settle through
+  `cost_to_settle` and need no change.
+- **K1b** charges an exhausted call of unknown outcome against its own USD cap (it charged nothing before).
+- **A take-back never goes below zero (M-A):** a repeated command or a race with a late settle cannot hand out cap
+  headroom. Postgres: the day row is locked (`FOR UPDATE`), `min(amount, day total)` leaves the day and the month
+  (`GREATEST(usd - take, 0)`); memory store: `max(0, ...)`.
+- **`hadavin-sdk release-reservation --agent A --day D --amount USD [--dry-run]` (M-A, M-C):** takes a stranded
+  reservation back from one agent's DAY and MONTH counters. It runs as the maintenance role, which now holds
+  `UPDATE (usd)` on `spend` and `spend_month` (the usd column only; no key can change) besides SELECT and DELETE. Policy
+  and over-breadth review: comment above `release_reservation` in `store/migrate.py`. Re-run `migrate --maintenance-role`
+  to apply the grant (without it the command fails with a hint to do so). **This is an operator procedure under a
+  separate identity, NOT a privilege boundary against the runtime role:** the runtime role holds SELECT, INSERT and
+  UPDATE on both spend tables, so raw SQL under it (or under the maintenance login) can write any `usd`. The real controls
+  are DSN separation (`HADAVIN_MAINTENANCE_DSN` is held by the operator, never in the runtime's environment; the CLI only
+  checks that it is set), the in-statement clamp at zero (it covers writes through the store, not raw SQL) and the
+  server's own audit (pgaudit or `log_statement`). The actual matrix is asserted by
+  `test_privilege_matrix_on_the_spend_tables` against real Postgres. A stranded reservation otherwise stays booked until its day AND its month roll over: it counts
+  against the MONTHLY cap for up to about 31 days (the earlier text "ages out with the day or month" was wrong for the
+  month). Agent rows are never pruned.
+- **Tracked follow-up (not done here on purpose):** `CHECK (usd >= 0)` on `spend` and `spend_month` is a migration.
+  Number plan: #49 = 0005, #42 = 0006, #41 = 0007, so the CHECK is **0008**, added after #49 and #41 merge (they rewrite the
+  same store code). It must be `CHECK (usd >= 0 AND usd <> 'NaN')` (NUMERIC accepts NaN, and `NaN >= 0` is true in Postgres):
+  clean any existing negative or NaN rows first, or add it `NOT VALID` and then `VALIDATE CONSTRAINT`. The tracked GitHub
+  issue is NOT filed yet (the owner files it; the text is in `egm/bhovix-core/pr48/builder-notes-9.md`). Until then the clamp holds in the statement only: **it does not cover raw SQL**, and the maintenance
+  role holds UPDATE (usd), so raw SQL can still write a negative value. After #49/#41 the clamps in postgres `_add` and
+  memory `settle_spend` must be redone; `test_ma_*` fails if one is lost.
+- **A provider-reported `billed_usd` is bounded by the reservation (M2):** `cost_to_settle` never settles above the
+  reserved worst case (logged), so an absurd or hostile number (`1e999999`, `1e9`) cannot lock an agent or a shared cap.
+  The cap can overshoot by (real bill - reserved) and that is accepted: the reservation is the worst-case bound, so a bill
+  above it means the price table or the bound is wrong (the warning log names the agent and route). NOT bounded:
+  `reply.cost_usd` on the SUCCESS path, which is priced from provider-reported token counts (existing, ticketed).
+  `cost_to_settle` also never raises: an unreadable count or price keeps the whole reservation.
+- **`UnusableAnswer` now lives in `llm/protocol.py` (M3):** `answered = 1`, `refused = 0`, `billed_usd` 0 (unpriced keeps the
+  reservation). **Merge instruction for #43:** import it from `llm.protocol` and delete #43's own class; keep `with_retry`'s
+  stamping from this PR (`err.attempts` only if not already stamped, plus `refused`); #43's `err.attempts = attempt` on
+  every `ProviderError` must not replace it. Contract tests: `tests/test_pr48_review6.py::test_m3_*`.
+- **A fallback that also fails keeps the primary's unknown request (m-a):** its error carries the primary's unknown count, so
+  a meter keeps the reservation. A primary that ANSWERED and was billed (nothing else unknown) counts as one unknown request too, so
+  a later fallback never drops its bill. A fallback that SUCCEEDS carries the same count on `Reply.prior_unknown_requests`, and the
+  agent loop, `MeteredLLM` and the K1b replay settle it at the reply's cost PLUS one reservation
+  (`reply_cost_to_settle`), so the primary's possible bill is not dropped. **Billing-contract change by one field (PR #48,
+  review 10):** `ProviderError` gains `prior_unknown_requests: int = 0` (the same name and meaning as on `Reply`): one mark
+  per failed primary of unknown billing, nested fallbacks add up. A failing fallback no longer rewrites its own
+  `attempts`; it sets this field, and `cost_to_settle` books its own settlement PLUS one reservation per mark, through the
+  same helper as `reply_cost_to_settle` (`protocol._book_marks`), so the error path and the reply path cannot drift. A
+  non-int, negative or raising mark counts as 0 (never raises). Default 0 leaves every existing raiser and meter
+  unchanged; a client-written meter that reads only `attempts` must adopt `cost_to_settle` to see the marks. Bound: one
+  reservation per failed primary that may have billed.
+- **Billing counts are validated strictly:** `attempts`, `answered`, `refused` must be plain `int` (no bool, float, string,
+  None, nan), 0 to 10**6, with `answered + refused <= attempts`. Anything else, or an attribute that raises, is treated as
+  UNKNOWN and the reservation is kept (`cost_to_settle` never raises).
+- **Release-reservation takes the same amount from day and month (review 8, major 1):** `PostgresStore._add` used to clamp
+  the day and the month counter independently, so a take-back larger than the day's total removed the full amount from the
+  month and handed out cap headroom with no booking behind it (month < sum of days; the memory store, which derives month
+  from its days, could not diverge). It now locks the day row, takes `min(amount, day total)` from both, and takes back nothing
+  for a day with no row. The CLI says "nothing released" instead of "released" when nothing changed. A nested
+  `ResilientLLM` fallback carries one mark per failed primary: its own (0 or 1) PLUS the inner fallback's marks (a sum; review 9 had the
+  `max`, which dropped one bill). New settings `spend_lock_timeout_ms`, `spend_reserve_attempts`,
+  `spend_backoff_s` replace hardcoded constants. `release-reservation` has no app-level audit event: pgaudit/log_statement is a
+  documented deploy precondition (see `store/migrate.py`).
+- **`hadavin-sdk spend-drift` (read-only):** lists every agent and month whose MONTH counter is below the sum of its DAY
+  counters (drift left by an older release or raw SQL; the take-back clamp hides it, it does not repair it). It runs in a
+  `SET TRANSACTION READ ONLY` transaction and changes nothing. Exit 0 = clean, 1 = drift found (on purpose, not a crash),
+  2 = refused, 3 = store unavailable. A month row that is missing while its days exist is reported (month total 0).
+- **`PostgresStore` constructor validation (PR #48, review 9 and 10):** `lock_timeout_ms` and `reserve_attempts` must be
+  whole numbers of at least 1 (0 means "wait forever" in Postgres), `backoff_s` a finite number of at least 0, `pool_size`
+  a whole number of at least 1, `pool_wait_s` a finite number above 0 (no bool, float for an int, string, nan or inf); a
+  bad value is a `ConfigError`. New settings `spend_lock_timeout_ms` (100..60000), `spend_reserve_attempts` (1..10),
+  `spend_backoff_s` (above 0, at most 5) in `PostgresSettings`; the class constants read their defaults from that model, one
+  place. `add_spend` (the unreserved charge) now runs through the same bounded, retried spend transaction as every other
+  spend write (lock timeout, retries, `StoreUnavailable` by class name) instead of waiting unbounded on the process lock.
+- **Maintenance commands never show connection details:** `migrate`, `release-reservation`, `prune-runs` and `spend-drift`
+  turn any connect failure (refused, unreachable, bad DSN, and a failing IAM token fetch) into `StoreUnavailable` carrying
+  the exception's class name only, no host, port, user, account or token (`store/migrate.py::_connect`).
+- **Worst-case latency of one spend call** (documented in `store/postgres.py`): `attempts x (pool_wait_s + 8 x
+  lock_timeout_ms / 1000) + backoff_s x (1 + 2 + ... + (attempts - 1))`; defaults (3, 10 s, 5000 ms, 0.02 s) give about
+  150 s, the maximums (10, 300 s, 60000 ms, 5 s) about 8,025 s. Size the settings so this bound suits the caller.
+- **Spend-connection gate is FIFO and configurable; the hot-key ceiling is measured (pool exhaustion report):** on postgres:17,
+  2,000 simultaneous reservations on one agent counter through 8 spend connections failed 734 to 1,858 callers with
+  `StoreUnavailable: no spend connection free (pool exhausted)` (the cap held: fail closed), and a 16-worker run lost 8
+  because `BoundedSemaphore` wakes waiters in no order, so a few starved past their wait. The gate is now first-in-first-out
+  (`_FairSlots`), and `spend_pool_size` (1 to 64, default 8) and `spend_pool_wait_s` (default 10) are `PostgresSettings`.
+  CEILING, machine and network dependent: every reservation on one hot agent key takes the same row locks and runs in one
+  transaction of about 10 to 16 round trips, one after another, whatever the pool size; several agent keys run in parallel.
+  There is no simple formula (COMMIT's fsync is paid once per reservation, not per round trip).
+  Measured data points (not a promise): keyed by the latency of one pgbench update transaction: ~7-8 ms (pgbench 127-138 tps on a loaded machine)
+  gave 5 to 11/s; ~42 ms gave 2 to 4/s. The earlier "100 to 125/s" claim had no recorded run and is dropped. Runs such as "2,000 callers, 10 s wait, about
+  200 admitted" show the LOAD SHAPE (a queue longer than the patience fails closed), not a capacity. Operators: run pgbench
+  (a custom script that updates one row per transaction) and a burst test against your database, and size
+  `spend_pool_wait_s` for the burst you expect (B simultaneous callers on one key need about B / rate seconds).
+  No setting weakens the cap: a caller that gives up never books anything (`tests/test_pr48_pool.py` checks booked ==
+  admitted on a 300-caller burst with a long and a 50 ms wait). A gate waiter that is interrupted during its wait now passes its
+  slot on instead of losing the permit (`_FairSlots`).
+  The pool tests assert safety (booked == admitted, typed refusals only, no permit leak), not an admission count; the throughput floors
+  are `@pytest.mark.perf` tests, which CI deselects (`-m "not live and not perf"`); run `pytest -m perf` on a quiet machine.
+- **Memory store** month totals read a per-agent day index instead of scanning every counter under the global lock.
+- A failed probe no longer clears "opened for spend" (`_open_spend = spend or _open_spend`). The `ci.yml` checkout comment
+  now says what the scan covers.
+
 ### Upgrade steps
 - **K3 pilot build path (levels, shadow cut-off, fail-closed loading).** Action contracts change shape:
   `executor.system` moves to a contract field `target_system`, and `executor` is now a tagged union

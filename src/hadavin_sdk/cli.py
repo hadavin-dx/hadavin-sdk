@@ -56,6 +56,15 @@ def _positive(text: str) -> int:
     return k
 
 
+def _day(text: str):
+    from datetime import date
+
+    try:
+        return date.fromisoformat(text)
+    except ValueError:
+        raise argparse.ArgumentTypeError("must be a date, YYYY-MM-DD") from None
+
+
 def _money(text: str) -> Decimal:
     try:
         d = Decimal(text)
@@ -67,7 +76,8 @@ def _money(text: str) -> Decimal:
 
 
 def main(argv: list[str] | None = None) -> int:
-    """Run the CLI. ConfigError exits 2 and any other uncaught exception exits 3 (never Python's crash code 1)."""
+    """Run the CLI. ConfigError exits 2 and any other uncaught exception exits 3 (never Python's crash code 1). Exit 1 is
+    never a crash: ``gate`` failing and ``spend-drift`` finding drift return it on purpose from ``_main``."""
     try:
         return _main(argv)
     except ConfigError as exc:
@@ -96,7 +106,30 @@ def _main(argv: list[str] | None = None) -> int:
     mig = sub.add_parser("migrate", help="apply the postgres store schema (migration role)")
     mig.add_argument("--runtime-role", help="grant this database role what the runtime needs")
     mig.add_argument(
+        "--maintenance-role",
+        help="grant this database role DELETE and UPDATE (usd) on the spend counters only (prune-runs, release-reservation)",
+    )
+    mig.add_argument(
         "--portal-role", help="grant this database role SELECT on the portal's relations only"
+    )
+    prn = sub.add_parser(
+        "prune-runs",
+        help="delete old per-run spend counters (maintenance role; HADAVIN_MAINTENANCE_DSN)",
+    )
+    prn.add_argument("--keep-days", type=_positive, default=7)
+    rel = sub.add_parser(
+        "release-reservation",
+        help="take a stranded reservation back from one agent's day and month counters (maintenance role)",
+    )
+    rel.add_argument("--agent", required=True, help="the agent id")
+    rel.add_argument(
+        "--day", required=True, type=_day, help="the day it was booked, YYYY-MM-DD (UTC)"
+    )
+    rel.add_argument("--amount", required=True, type=_money, help="USD to take back")
+    rel.add_argument("--dry-run", action="store_true", help="only show the totals")
+    sub.add_parser(
+        "spend-drift",
+        help="READ ONLY: list agent months whose month counter is below the sum of its days (exit 1 if any)",
     )
     aud = sub.add_parser("audit", help="check the chain audit")
     aud.add_argument("action", choices=["verify"])
@@ -130,7 +163,13 @@ def _main(argv: list[str] | None = None) -> int:
         return _tick()
     cfg = load_config()
     if args.cmd == "migrate":
-        return _migrate(cfg, args.runtime_role, args.portal_role)
+        return _migrate(cfg, args.runtime_role, args.portal_role, args.maintenance_role)
+    if args.cmd == "prune-runs":
+        return _prune_runs(cfg, args.keep_days)
+    if args.cmd == "release-reservation":
+        return _release_reservation(cfg, args)
+    if args.cmd == "spend-drift":
+        return _spend_drift(cfg)
     reg = load_registry(cfg)
     if args.cmd in (
         "replay",
@@ -304,7 +343,119 @@ def _tick() -> int:
     return run_tick(app)
 
 
-def _migrate(cfg, runtime_role: str | None, portal_role: str | None = None) -> int:
+def _release_reservation(cfg, args) -> int:
+    store = cfg.backends.store
+    dsn = os.environ.get("HADAVIN_MAINTENANCE_DSN")
+    if store.kind != "postgres" or not dsn:
+        print(
+            "refused: release-reservation needs the postgres store and HADAVIN_MAINTENANCE_DSN "
+            "(the maintenance role's DSN, never the runtime's)",
+            file=sys.stderr,
+        )
+        return 2
+    from hadavin_sdk.store.migrate import release_reservation
+    from hadavin_sdk.store.postgres import ca_file
+
+    ca = ca_file(store, make("secrets", cfg.backends.secrets).get)
+    try:
+        before, after = release_reservation(
+            dsn,
+            args.agent,
+            args.day,
+            args.amount,
+            tenant=cfg.tenant,
+            dry_run=args.dry_run,
+            iam_auth=store.iam_auth,
+            region=store.region,
+            sslmode=store.sslmode,
+            sslrootcert=ca,
+        )
+    except StoreUnavailable:
+        print(
+            "failed: StoreUnavailable. HADAVIN_MAINTENANCE_DSN must name the maintenance role; if that role was "
+            "created before this release it lacks UPDATE (usd) on the spend tables: re-run "
+            "`hadavin-sdk migrate --maintenance-role <role>` (set HADAVIN_DEBUG=1 for the traceback)",
+            file=sys.stderr,
+        )
+        if os.environ.get("HADAVIN_DEBUG") == "1":
+            traceback.print_exc()
+        return 3
+    if before == after and not args.dry_run:
+        print(
+            f"nothing released for {args.agent} on {args.day}: no counter row or it was already zero "
+            f"(day {before[0]}, month {before[1]})"
+        )
+        return 0
+    verb = "would release" if args.dry_run else "released"
+    print(
+        f"{verb} up to {args.amount} USD for {args.agent} on {args.day}: "
+        f"day {before[0]} -> {after[0]}, month {before[1]} -> {after[1]}"
+    )
+    return 0
+
+
+def _prune_runs(cfg, keep_days: int) -> int:
+    store = cfg.backends.store
+    dsn = os.environ.get("HADAVIN_MAINTENANCE_DSN")
+    if store.kind != "postgres" or not dsn:
+        print(
+            "refused: prune-runs needs the postgres store and HADAVIN_MAINTENANCE_DSN "
+            "(the maintenance role's DSN, never the runtime's)",
+            file=sys.stderr,
+        )
+        return 2
+    from hadavin_sdk.store.migrate import prune_run_counters
+    from hadavin_sdk.store.postgres import ca_file
+
+    ca = ca_file(store, make("secrets", cfg.backends.secrets).get)
+    n = prune_run_counters(
+        dsn,
+        keep_days,
+        iam_auth=store.iam_auth,
+        region=store.region,
+        sslmode=store.sslmode,
+        sslrootcert=ca,
+    )
+    print(f"pruned: {n} run counter rows")
+    return 0
+
+
+def _spend_drift(cfg) -> int:
+    """Exit 0 clean, 1 drift found (one line per agent month), 2 refused, 3 store unavailable. Reads only."""
+    store = cfg.backends.store
+    dsn = os.environ.get("HADAVIN_MAINTENANCE_DSN")
+    if store.kind != "postgres" or not dsn:
+        print(
+            "refused: spend-drift needs the postgres store and HADAVIN_MAINTENANCE_DSN "
+            "(the maintenance role's DSN, never the runtime's)",
+            file=sys.stderr,
+        )
+        return 2
+    from hadavin_sdk.store.migrate import spend_drift
+    from hadavin_sdk.store.postgres import ca_file
+
+    ca = ca_file(store, make("secrets", cfg.backends.secrets).get)
+    try:
+        rows = spend_drift(
+            dsn, iam_auth=store.iam_auth, region=store.region, sslmode=store.sslmode, sslrootcert=ca
+        )
+    except StoreUnavailable as exc:
+        print(f"failed: {exc}", file=sys.stderr)  # class name only, never driver text
+        return 3
+    for agent, month, month_usd, days_usd in rows:
+        print(
+            f"DRIFT: {agent} {month:%Y-%m}: month {month_usd} below the sum of its days {days_usd}"
+        )
+    print("no drift" if not rows else f"{len(rows)} agent month(s) drifted; nothing was changed")
+    return 1 if rows else 0
+
+
+def _migrate(
+    cfg,
+    runtime_role: str | None,
+    portal_role: str | None = None,
+    maintenance_role: str | None = None,
+) -> int:
     store = cfg.backends.store
     if store.kind != "postgres":
         print(
@@ -324,6 +475,7 @@ def _migrate(cfg, runtime_role: str | None, portal_role: str | None = None) -> i
         dsn,
         runtime_role=runtime_role,
         portal_role=portal_role,
+        maintenance_role=maintenance_role,
         iam_auth=store.iam_auth,
         region=store.region,
         sslmode=store.sslmode,

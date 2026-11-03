@@ -128,7 +128,8 @@ def test_errors_carry_only_the_sqlstate(db):
 # --------------------------------------------------------------------------------------------- T-E8 caps
 
 
-def test_caps_watchdog_cancels_a_blocked_statement(db, capsys):
+@pytest.mark.parametrize("timed", [False, pytest.param(True, marks=pytest.mark.perf)])
+def test_caps_watchdog_cancels_a_blocked_statement(db, capsys, timed):
     timeout = 2.0
     start = time.monotonic()
     with pytest.raises(PgError) as caught:
@@ -139,7 +140,8 @@ def test_caps_watchdog_cancels_a_blocked_statement(db, capsys):
             f"\nT-E8 watchdog: pg_sleep(30) cancelled after {elapsed:.2f}s (limit {timeout}s, server default 15s)"
         )
     assert caught.value.sqlstate == "57014"
-    assert elapsed < timeout + 1  # measured 0.02-0.05 s over locally (docker, Windows)
+    if timed:  # wall clock only under -m perf; SQLSTATE 57014 is the default-run proof
+        assert elapsed < timeout + 1  # measured 0.02-0.05 s over locally (docker, Windows)
     assert not [t for t in threading.enumerate() if t.name == WATCHDOG_NAME and t.is_alive()]
 
 
@@ -157,7 +159,9 @@ def test_caps_row_cap_returns_exactly_max_rows(db):
 def test_caps_byte_cap_stops_wide_rows(db):
     result = PgSource(db.ro_dsn).run(
         "SELECT repeat('x', 100000) AS w FROM generate_series(1, 1000)",
-        limits=Limits(max_bytes=450_000),
+        # The default batch (200 rows of 100 KB = 20 MB per fetch) and the 10 s watchdog made this test depend on the
+        # machine's speed. A small batch bounds the work per fetch; the watchdog is not what is under test here.
+        limits=Limits(max_bytes=450_000, batch=5, statement_timeout_s=120.0),
     )
     assert result.truncated and len(result.rows) == 4 and result.byte_count <= 450_000
 

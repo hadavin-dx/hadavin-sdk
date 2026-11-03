@@ -30,7 +30,8 @@ class Budget(BaseModel):
 
 class AgentRecord(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
-    id: str
+    # No '/' or ':' (they delimit spend-counter keys, R371) and a bounded length.
+    id: str = Field(pattern=r"^[A-Za-z0-9._-]{1,64}$")
     status: Literal["draft", "live", "retired"]
     data_class: Literal["public", "internal", "confidential", "restricted"]
     model_route: str

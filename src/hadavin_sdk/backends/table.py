@@ -38,6 +38,9 @@ class _LLMSettings(KindSettings):
         default=60.0, gt=0
     )  # socket timeout, per operation (not a wall clock)
     max_attempts: int = Field(default=3, ge=1, le=10)
+    # Real wall clock for one call across all attempts and sleeps (an attempt still running at the end is
+    # abandoned, see llm/retry.py); None turns the bound off.
+    deadline_s: float | None = Field(default=120.0, gt=0)
 
 
 class AnthropicSettings(_LLMSettings):
@@ -125,6 +128,16 @@ class PostgresSettings(KindSettings):
     # The server's CA bundle, cloud-neutral: a file path, or a PEM held in any secrets kind.
     sslrootcert: str | None = None
     sslrootcert_secret_name: str | None = None
+    # Spend-counter connections per process and how long a caller waits for one before failing closed (see
+    # store/postgres.py: the measured ceiling is per hot agent key, not per connection).
+    spend_pool_size: int = Field(default=8, ge=1, le=64)
+    spend_pool_wait_s: float = Field(default=10.0, gt=0, le=300)
+    # How long one reservation waits for a row lock, how many times it is retried after a serialization failure or
+    # deadlock, and the first back-off between tries (it grows linearly). The worst-case wait of one spend call
+    # combines all four settings and is NOT capped by spend_pool_wait_s: see the formula in store/postgres.py.
+    spend_lock_timeout_ms: int = Field(default=5000, ge=100, le=60000)
+    spend_reserve_attempts: int = Field(default=3, ge=1, le=10)
+    spend_backoff_s: float = Field(default=0.02, gt=0, le=5)
 
     @model_validator(mode="after")
     def _checks(self) -> PostgresSettings:
