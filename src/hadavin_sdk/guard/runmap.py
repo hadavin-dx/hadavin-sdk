@@ -72,7 +72,7 @@ def undo(text: str, clean: bool = False) -> str:
     and depth (`&#37;41`, `%2541`, `%26%2390%3B`). The depth is capped at `defaults.SCRUB_MAX_LAYERS`; a text that
     still changes then raises `TooDeep` (fail closed). This is our own design, not a quoted standard: the scrub must
     FIND a secret in any spelling, so it decodes more than a validator would. The sources only bound it: CWE-174
-    (cwe.mitre.org/data/definitions/174.html, fetched 2026-11-03) warns that decoding the same input twice lets
+    (MITRE CWE list, entry 174, fetched 2026-11-03) warns that decoding the same input twice lets
     values slip past checks, and says to reject input that does not conform; OWASP's Input Validation Cheat Sheet
     (fetched 2026-11-03) says to decode before checking, to cap parser nesting depth, and does not describe
     decoding to a fixed point; CWE-176 is Unicode handling. With `clean`, a half-written escape at the end of the text is
