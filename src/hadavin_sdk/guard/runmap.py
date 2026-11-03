@@ -15,6 +15,7 @@ import functools
 import hashlib
 import html
 import re
+import time
 import unicodedata
 from collections.abc import Callable
 from typing import Any
@@ -63,19 +64,29 @@ def nfkc(text: str) -> str:
     return canonical(fits_after_nfkc(text))
 
 
-_HEX_ESCAPE = re.compile(r"\\x([0-9a-fA-F]{2})")
+_HEX_ESCAPE = re.compile(r"\\(?:x([0-9a-fA-F]{2})|U([0-9a-fA-F]{8})|([0-3][0-7]{2}))")
+
+
+def _one_escape(m: re.Match[str]) -> str:
+    if m.group(1):
+        return chr(int(m.group(1), 16))
+    if m.group(2):
+        cp = int(m.group(2), 16)
+        return chr(cp) if cp <= 0x10FFFF else m.group(0)
+    return chr(int(m.group(3), 8))
 
 
 def hex_unescape(text: str) -> str:
-    """Backslash-x escapes (a backslash, x and two hex digits), as C, Python and many log pipelines write them.
-    Octal escapes are NOT decoded."""
-    return _HEX_ESCAPE.sub(lambda m: chr(int(m.group(1), 16)), text) if "\\x" in text else text
+    """Backslash escapes a log pipeline or a language writes for one character: backslash-x and two hex digits,
+    backslash-U and eight hex digits, and a three-digit octal escape (backslash and 000 to 377). NOT decoded: the brace
+    form `u{41}`, the percent-u form `%u0041`, a one- or two-digit octal escape, and named escapes."""
+    return _HEX_ESCAPE.sub(_one_escape, text) if chr(92) in text else text
 
 
 def undo(text: str, clean: bool = False) -> str:
     """The text with the encodings an attacker or a log pipeline layers over a value undone: JSON string escapes
     (backslash-u with surrogate pairs joined, and the one-character escapes: PHP writes every slash as backslash-slash),
-    backslash-x escapes (not octal), percent-encoding, HTML entities, then NFKC and invisible characters. Each round applies the three decoders ONE
+    backslash-x, backslash-U and octal escapes, percent-encoding, HTML entities, then NFKC and invisible characters. Each round applies the three decoders ONE
     AT A TIME (a combined step turns a half-written `&#10` that percent-decoding just exposed into a newline before
     anyone can see it was half an escape), and the round repeats to a fixed point: the layers nest in any order
     and depth (`&#37;41`, `%2541`, `%26%2390%3B`). The depth is capped at `defaults.SCRUB_MAX_LAYERS`; a text that
@@ -350,6 +361,22 @@ def _held(text: str) -> int:
     return len(PLACEHOLDER.findall(text))
 
 
+def _keep_earlier_masks(view: str, current: dict[str, str]) -> str:
+    """Before a decoded VIEW is redacted, the decoded spelling of every value pass one already masked is replaced by its
+    placeholder: `password=p%40ss%20word` is masked whole in pass one, its view reads `password=p@ss word`, and the
+    pattern would mask only `p@ss` there; if the view then replaces the text, ` word` would be shown."""
+    for ph, original in list(current.items()):
+        try:
+            decoded = undo(original)
+        except RedactionError:
+            continue
+        # only where decoding INTRODUCED whitespace (`%20`): that is what breaks a value pattern in the view
+        breaks = any(c.isspace() for c in decoded) and not any(c.isspace() for c in original)
+        if breaks and len(decoded) >= 4 and decoded in view:
+            view = view.replace(decoded, ph)
+    return view
+
+
 def redact_text(
     text: str, mapping: dict[str, str], neutralise: Callable[[str], str] | None = None
 ) -> str:
@@ -372,6 +399,7 @@ def redact_text(
     vendor guardrail input); the registry (`guard/producers.py`) lists them. No bare `redact()` call remains outside
     this module: the second pass of `approvals/channel.py` `clean` is this function too."""
     _within_cap(text)
+    started = time.monotonic()
     try:
         text = fits_after_nfkc(_clean(text))
         if neutralise is not None:
@@ -381,9 +409,16 @@ def redact_text(
         cache = getattr(mapping, "redact_cache", None)
         result = redact(text, mapping=mapping, _cache=cache)
         out, current = result.text, result.mapping
+        if views and time.monotonic() - started > defaults.REDACT_BUDGET_S:
+            raise InputTooLarge("InputTooLarge")
         for view in views:
+            if (
+                time.monotonic() - started > defaults.REDACT_BUDGET_S
+            ):  # a hostile text: fail closed, nothing shown
+                raise InputTooLarge("InputTooLarge")
             if neutralise is not None:
                 view = fits_after_nfkc(neutralise(view))
+            view = _keep_earlier_masks(view, current)
             again = redact(view, mapping=current, _cache=cache)
             # a new value, or a known one only the view spells in a way pass one could not read
             if again.mapping != current or _held(again.text) > _held(out):
@@ -414,6 +449,15 @@ def safe_head(text: str, limit: int, mapping: dict[str, str] | None = None) -> s
         return SAFE_HEAD_NOTE
 
 
+def drop_margin(text: str) -> str:
+    """The end of a text cut at the redaction cap, dropped: `defaults.cut_margin` characters, and back to the last
+    whitespace within 256 characters so the cut does not fall inside a word."""
+    kept = text[: max(len(text) - defaults.cut_margin(len(text)), 0)]
+    tail = kept[-256:]
+    i = max(tail.rfind(" "), tail.rfind(chr(10)))
+    return kept[: len(kept) - len(tail) + i + 1].rstrip(" ") if i >= 0 and len(kept) > 256 else kept
+
+
 def redact_bounded(
     text: str, mapping: dict[str, str], neutralise: Callable[[str], str] | None = None
 ) -> tuple[str, bool]:
@@ -424,7 +468,7 @@ def redact_bounded(
     cut = len(text) > defaults.MAX_REDACT_CHARS
     out = redact_text(text[: defaults.MAX_REDACT_CHARS], mapping, neutralise)
     if cut:
-        out = out[: max(len(out) - defaults.CUT_MARGIN, 0)]
+        out = drop_margin(out)
     return out, cut
 
 

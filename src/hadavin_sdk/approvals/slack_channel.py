@@ -69,7 +69,16 @@ class SlackChannel:
         # `req.summary` was cleaned once when it was built (`summary()`); it is shown whole or not at all: a silent cut
         # would hide the end of what the approver is approving
         # withholding commands can join what it removed around: redact once more through the choke point
-        shown = runmap.redact_text(withhold_commands(req.summary), {})
+        # The map is seeded with the placeholders the summary already holds (a fake original that never occurs in text),
+        # so a placeholder this pass adds never reuses one of their numbers.
+        withheld = withhold_commands(req.summary)
+        seeded = runmap.RunMap(
+            {
+                ph: "\0seed" + ph
+                for ph in (m.group(0) for m in runmap.PLACEHOLDER.finditer(withheld))
+            }
+        )
+        shown = runmap.redact_text(withheld, seeded)
         if len(shown) > self.max_card_chars:
             shown = "(the summary is too long to show here; open the full request in the console)"
         blocks: list[dict[str, Any]] = [

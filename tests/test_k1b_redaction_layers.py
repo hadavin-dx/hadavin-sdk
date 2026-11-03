@@ -138,13 +138,20 @@ def test_only_known_modules_call_the_bare_pattern_redactor():
 
     root = pathlib.Path(hadavin_sdk.__file__).resolve().parent
     callers = set()
-    for path in root.rglob("*.py"):
+    demos = (
+        root.parents[1] / "demos"
+    )  # the demos too: no bare redactor anywhere outside runmap.py (and redact.py itself)
+    for path in [*root.rglob("*.py"), *(demos.rglob("*.py") if demos.exists() else [])]:
         for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
             if isinstance(node, ast.Call):
                 fn = node.func
                 name = fn.id if isinstance(fn, ast.Name) else getattr(fn, "attr", "")
                 if name in {"redact", "redact_many"}:
-                    callers.add(path.relative_to(root).as_posix())
+                    callers.add(
+                        path.relative_to(root).as_posix()
+                        if path.is_relative_to(root)
+                        else "demos/" + path.relative_to(demos).as_posix()
+                    )
     assert callers == {"guard/runmap.py"}, sorted(
         callers
     )  # the choke point only: the card second pass uses it too

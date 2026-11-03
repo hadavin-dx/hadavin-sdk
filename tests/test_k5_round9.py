@@ -30,7 +30,8 @@ SPELLINGS = {
     "assignment": "password%3Dhunter2",
 }
 NEEDLES = ("IOSFODNN7EXAMPLE", "hunter2")
-PLACEHOLDER = re.compile(r"<[A-Z][A-Z0-9]*_\d+>")
+# a placeholder that does NOT come from the IP address every runtime document carries: it can only come from the secret
+PLACEHOLDER = re.compile(r"<(?!IPV4_)[A-Z][A-Z0-9]*_\d+>")
 
 
 def _plan(inputs):
@@ -119,6 +120,26 @@ def _runtime(s, rq, *, doc=None, reason=None, host="<IPV4_1>"):
     return llm.everything_sent() + " ".join(c.text for c in cards)
 
 
+def _grounding(s, rq):
+    """`grounded` compares the identifier the model typed, redacted, with the evidence, redacted: with the layered decode
+    both read the same secret into the same placeholder (the value is grounded); without it the typed value stays raw
+    and does not match. Returns the placeholders in the map, and fails if the value was not grounded."""
+    from hadavin_sdk.runtime import evidence
+
+    tmp_path = rq.getfixturevalue("tmp_path")
+    k5_tools.RESULTS["app"] = "ERROR upstream 10.0.0.5 refused"
+    rt, _ = build_runtime(k5_cfg(tmp_path), ScriptLLM([]))
+    contract = rt.registry.contracts["rollout_undo"]
+    mapping = runmap.RunMap()
+    texts = [runmap.redact_text(f"host {s} down", mapping)]
+    ok = evidence.grounded(contract, {"host": s}, texts, mapping)
+    # an assignment-shaped identifier (`password=...`) is not an identifier the contract grounds; the other two must be
+    assert ok or "password" in s, (
+        "the layered identifier was not read as the secret in the evidence"
+    )
+    return " ".join(mapping)
+
+
 def _k1b_raw(s, rq):
     e = rq.getfixturevalue("env")
     e.run(ScriptedLLM([text_reply("word " + s), submit_not_sure()]))
@@ -163,9 +184,11 @@ DRIVERS = {
         .logs
     ),
     "k1b stored raw model output": _k1b_raw,
-    "evidence grounding": None,  # driven by its own test below (a model-written identifier)
+    "evidence grounding": lambda s, rq: _grounding(s, rq),
     "evidence proposal inputs": lambda s, rq: _runtime(s, rq, reason=s),
-    "document and model-written arguments": lambda s, rq: _runtime(s, rq, reason=s),
+    "document and model-written arguments": lambda s, rq: _runtime(
+        s, rq, doc=f"checkout 5xx at host-a {s} revision 17"
+    ),
     "judge input": _judge,
     "vendor guardrail input": _guardrail,
     "injection screen log line": _log_line,
@@ -222,6 +245,44 @@ def test_clean_redacts_again_what_sanitising_joined(filler, spelling):
     cut = len(s) // 2
     out = channel_mod.clean(f"note {s[:cut]}{filler}{s[cut:]} end")
     assert not any(n in out for n in NEEDLES), (filler, spelling, out)
+
+
+def test_the_slack_summary_with_a_withheld_command_and_a_layered_secret_shows_neither():
+    """`withhold_commands` replaces a command by a note (it never joins what surrounds it), so the join case cannot be
+    built there; this pins that a command AND a layered secret in one summary are both gone from the block."""
+    from types import SimpleNamespace
+
+    from hadavin_sdk.approvals.slack_channel import SlackChannel
+
+    ch = SlackChannel.__new__(SlackChannel)
+    ch.max_card_chars = 2900
+    req = SimpleNamespace(
+        summary="run `kubectl delete pod web` then " + SPELLINGS["percent"],
+        current_step=0,
+        steps=[1],
+        approval_id="a1",
+        status="PENDING",
+    )
+    shown = ch._blocks(req, None)[0]["text"]["text"]
+    assert "kubectl delete" not in shown and "IOSFODNN7EXAMPLE" not in shown
+
+
+def test_the_slack_re_redaction_never_reuses_a_placeholder_number():
+    from types import SimpleNamespace
+
+    from hadavin_sdk.approvals.slack_channel import SlackChannel
+
+    ch = SlackChannel.__new__(SlackChannel)
+    ch.max_card_chars = 2900
+    req = SimpleNamespace(
+        summary="host <IPV4_1> and 10.0.0.9",
+        current_step=0,
+        steps=[1],
+        approval_id="a1",
+        status="PENDING",
+    )
+    shown = ch._blocks(req, None)[0]["text"]["text"]
+    assert shown.count("<IPV4_1>") == 1 and "<IPV4_2>" in shown and "10.0.0.9" not in shown
 
 
 def test_the_slack_summary_is_redacted_once_more_after_commands_are_withheld():
@@ -284,11 +345,74 @@ def test_the_margin_follows_a_cut_made_after_the_scrub_grew_the_text():
     assert len(out) <= cap - tools_mod.defaults.CUT_MARGIN + len(tools_mod.TRUNCATED) + 20
 
 
-def test_backslash_x_escapes_are_decoded_and_octal_is_stated_as_not():
+def test_backslash_x_escapes_are_decoded():
     """One escaped character is enough to hide a key from the pattern (the plain test of the whole key passes without
     the decoder, because the redactor reads a fully escaped key by other means)."""
     bs = chr(92)
     for spelled in (bs + "x41KIA" + "IOSFODNN7EXAMPLE", "password" + bs + "x3dhunter2"):
         out = runmap.redact_text(f"k {spelled} z", {})
         assert not any(n in out for n in NEEDLES) and PLACEHOLDER.search(out), (spelled, out)
-    assert runmap.undo(bs + "101") == bs + "101"  # octal is documented as not decoded
+
+
+# ---- round 10: M-3, N-2, N-1 -------------------------------------------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "password%<i> </i>3Dhunter2 end",  # the input of round 9: markup that became a space between key and value
+        "password%<b></b>3Dhunter2 end",
+        "password<span> </span>=hunter2 end",
+    ],
+)
+def test_a_key_and_value_split_by_markup_are_masked_in_a_card(text):
+    out = channel_mod.clean("note " + text)
+    assert "hunter2" not in out, out
+
+
+def test_clean_keeps_placeholders_and_is_stable_on_ordinary_text():
+    assert channel_mod.clean("host <IPV4_1> down <b>x</b>") == "host <IPV4_1> down x"
+    assert channel_mod.clean("a b c 1 2 3 words") == "a b c 1 2 3 words"
+
+
+def test_the_swap_to_a_decoded_view_keeps_what_pass_one_masked():
+    """`password=p%40ss%20word` is masked whole in pass one; another secret makes the decoded view replace the text; the
+    view reads `password=p@ss word` and used to leave ` word` behind."""
+    text = "password=p%40ss%20word and " + SPELLINGS["percent"]
+    out = runmap.redact_text(text, {})
+    assert " word" not in out and "p@ss" not in out and "IOSFODNN7EXAMPLE" not in out, out
+    out2 = tools_mod.prepare_output(text, {}, 4096, ["p%40ss%20word", "Zk3#" + "9qWd"])
+    assert " word" not in out2 and "p@ss" not in out2, out2
+
+
+def test_unicode_and_octal_escapes_are_decoded_and_the_rest_listed():
+    bs = chr(92)
+    assert runmap.undo(bs + "U00000041") == "A"
+    assert runmap.undo(bs + "101") == "A"
+    for kept in (bs + "u{41}", "%u0041", bs + "41", bs + "7"):  # documented as not decoded
+        assert runmap.undo(kept) == kept
+
+
+def test_a_rsa_8192_key_straddling_the_cut_leaves_no_fragment():
+    import base64
+
+    body = "".join(
+        base64.b64encode(bytes((i * 11 + j) % 256 for j in range(48))).decode() + "\n"
+        for i in range(110)
+    )
+    pem = "-----BEGIN " + "PRIVATE KEY-----\n" + body + "-----END " + "PRIVATE KEY-----"
+    cap = tools_mod.defaults.MAX_REDACT_CHARS
+    for back in (200, 1200, 3000, 5000):
+        raw = "word " * ((cap - back) // 5) + pem + "tail " * 400
+        out = tools_mod.prepare_output(raw, {}, cap, [])
+        flat = body.replace("\n", "")
+        assert not any(
+            flat[i : i + 24] in out.replace("\n", "") for i in range(0, len(flat) - 24, 8)
+        ), back
+    assert tools_mod.defaults.CUT_MARGIN >= 8192
+
+
+def test_the_work_budget_refuses_a_text_that_costs_more_than_it_allows(monkeypatch):
+    monkeypatch.setattr(tools_mod.defaults, "REDACT_BUDGET_S", 0.0)
+    with pytest.raises(runmap.InputTooLarge):
+        runmap.redact_text("%63url -u " * 20000, {})

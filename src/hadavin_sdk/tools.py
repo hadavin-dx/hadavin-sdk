@@ -969,7 +969,7 @@ def prepare_output(
         TRUNCATED
     ):  # a secret straddling the cut is a fragment at the end: drop that end
         body = out[: -len(TRUNCATED)]
-        out = body[: max(len(body) - defaults.CUT_MARGIN, 0)] + TRUNCATED
+        out = runmap.drop_margin(body) + TRUNCATED
     return truncate(out, max_bytes)
 
 

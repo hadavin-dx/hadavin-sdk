@@ -15,20 +15,29 @@ if TYPE_CHECKING:
 
 
 def clean(text: str) -> str:
-    """Redact, then WARDEN's G3 cleaning (`gate.sanitise_text`): no link, image, HTML, mention, control
-    character or forged markdown structure survives in text a person acts on. Then G4
-    (`gate.withhold_commands`): no command a person could paste to change a system, on any platform."""
-    # one choke point (NFKC, invisible characters, JSON escapes, the size cap): a card text over the cap is REFUSED
-    # (InputTooLarge), never cut, because a cut shows its tail and can split a secret
+    """WARDEN's G3 cleaning (`gate.sanitise_text`): no link, image, HTML, mention, control character or forged
+    markdown structure survives in text a person acts on; then G4 (`gate.withhold_commands`): no command a person could
+    paste to change a system, on any platform; then ONE redaction, last."""
+    # Sanitise and withhold FIRST, redact ONCE and LAST through the one choke point (NFKC, invisible characters, escapes,
+    # the layered decode, the size cap; a text over the cap is REFUSED, never cut): nothing transforms the text after its
+    # final redaction, so a tag, a zero-width character or a removed command cannot join pieces pass one saw apart.
+    # Placeholders already in the text (`<IPV4_1>`) survive sanitising (tested).
+    cleaned = withhold_commands(sanitise_text(text))
     mapping = runmap.RunMap()
-    first = runmap.redact_text(text, mapping)
-    # Sanitising removes invisible and control characters and tags, which can join a split secret
-    # (`AKIA` + zero-width space + `IOSF...`) or a split command: G4 reads the cleaned text, and the result is
-    # redacted again (WARDEN's G5 re-scan), in the same placeholder namespace.
-    # the same choke point, not the bare redactor: sanitising can JOIN what a tag, a zero-width character or a
-    # removed command split (`%41KIA<b></b>IOS...` becomes `%41KIAIOS...`), and a joined layered spelling needs the
-    # layered views to be found
-    return runmap.redact_text(withhold_commands(sanitise_text(first)), mapping)
+    out = runmap.redact_text(cleaned, mapping)
+    # A key and a value split by markup that became a space (`password%<i> </i>3Dx`) read as one only without spaces:
+    # that view is used when it finds a secret the spaced text hid (fidelity of that one card is traded for safety).
+    compact_map = runmap.RunMap()
+    compact = runmap.redact_text("".join(cleaned.split()), compact_map)
+    if _secret_kinds(compact_map) - _secret_kinds(mapping):
+        return compact
+    return out
+
+
+def _secret_kinds(mapping: dict[str, str]) -> set[str]:
+    kinds = {m.group(1) for ph in mapping if (m := runmap.PLACEHOLDER.fullmatch(ph))}
+    # a markup-split KEY and value: the assignment kinds only (the entropy kind would fire on any run of words joined)
+    return kinds & {"SECRET", "APIKEY", "BEARER", "BASIC", "URLCRED"}
 
 
 class Channel(Protocol):

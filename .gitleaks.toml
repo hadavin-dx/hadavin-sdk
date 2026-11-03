@@ -14,6 +14,6 @@ condition = "AND"
 regexTarget = "secret"
 paths = ['''^tests/demo_askdata/test_demo_literals\.py$''']
 regexes = [
-    '''^(?:-----BEGIN [A-Z ]*PRIVATE KEY-----",\s*")*-----BEGIN [A-Z ]*PRIVATE KEY-----$''',
+    '''^(?:-----BEGIN [A-Z ]*PRIVATE KEY-----",\s*"){0,2}-----BEGIN [A-Z ]*PRIVATE KEY-----$''',
     '''^abcdefgh12345678$''',
 ]
