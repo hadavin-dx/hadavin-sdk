@@ -134,7 +134,9 @@ def test_the_same_value_gets_one_placeholder_across_records():
 def test_only_known_modules_call_the_bare_pattern_redactor():
     """Class test: a model-bound text that skips `redact_text` (layers, NFKC, caps) is the bug class of the bundle
     path. Every module that calls the bare `redact(...)`/`redact_many(...)` is listed; adding one needs a review."""
-    root = pathlib.Path(__file__).resolve().parents[1] / "src" / "hadavin_sdk"
+    import hadavin_sdk
+
+    root = pathlib.Path(hadavin_sdk.__file__).resolve().parent
     callers = set()
     for path in root.rglob("*.py"):
         for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):

@@ -7,9 +7,12 @@ import pathlib
 
 import pytest
 
+import hadavin_sdk
 from hadavin_sdk.guard.producers import MODEL_CALLERS, PRODUCERS
 
-ROOT = pathlib.Path(__file__).resolve().parents[1] / "src" / "hadavin_sdk"
+ROOT = (
+    pathlib.Path(hadavin_sdk.__file__).resolve().parent
+)  # the package that is imported (so a mutated copy is read)
 
 
 def _tree(rel: str) -> ast.Module:
