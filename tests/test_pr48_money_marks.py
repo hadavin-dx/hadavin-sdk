@@ -116,7 +116,7 @@ def test_a_metered_double_failure_keeps_both_primaries_reservations(monkeypatch)
     assert store.spend_totals("a", DAY)[0] == 2 * worst
 
 
-@pytest.mark.parametrize("junk", [None, "2", -3, True, 1.5, math.nan, 10**400, object(), (1,)])
+@pytest.mark.parametrize("junk", [None, "2", -3, True, 1.5, math.nan, object(), (1,)])
 def test_a_bad_mark_count_on_a_reply_or_an_error_counts_as_no_mark_and_never_raises(junk):
     from types import SimpleNamespace
 

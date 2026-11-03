@@ -309,7 +309,8 @@ def test_m1_a_garbage_attempts_on_the_fallback_error_neither_raises_nor_releases
     ) as e:  # the ProviderError itself, not a TypeError from the handler
         llm.chat([], system="", route="r")
     assert e.value is fb.made[0]
-    assert cost_to_settle(e.value, D("1")) == D("1")
+    # two possible bills: the fallback's own (garbage counts are unknown: the whole reservation) plus the primary's mark
+    assert cost_to_settle(e.value, D("1")) == D("2")
 
 
 def test_m1_the_billed_usd_warning_names_the_agent_and_route(caplog):
