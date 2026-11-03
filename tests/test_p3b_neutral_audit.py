@@ -320,7 +320,10 @@ def test_connect_signs_in_through_the_iam_helper_for_store_and_migrate(monkeypat
     from hadavin_sdk.store import migrate as migrate_mod
 
     seen.clear()
-    with pytest.raises(Stop):
+    from hadavin_sdk.store.protocol import StoreUnavailable
+
+    # migrate goes through the maintenance connect guard: any connect failure leaves as its class name only
+    with pytest.raises(StoreUnavailable, match=r"cannot connect \(Stop\)"):
         migrate_mod.migrate(dsn, iam_auth=True, region="region-x", sslrootcert=str(ca))
     assert seen["password"] == "tok:region-x:rt"  # noqa: S105 - the fake helper's output
 
