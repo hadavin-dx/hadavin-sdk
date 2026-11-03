@@ -65,6 +65,8 @@ def nfkc(text: str) -> str:
 
 
 _HEX_ESCAPE = re.compile(r"\\(?:x([0-9a-fA-F]{2})|U([0-9a-fA-F]{8})|([0-3][0-7]{2}))")
+_PCT_U = re.compile(r"%u([0-9a-fA-F]{4})")
+_BRACE_U = re.compile(r"\\u\{([0-9a-fA-F]{1,6})\}")
 
 
 def _one_escape(m: re.Match[str]) -> str:
@@ -78,9 +80,17 @@ def _one_escape(m: re.Match[str]) -> str:
 
 def hex_unescape(text: str) -> str:
     """Backslash escapes a log pipeline or a language writes for one character: backslash-x and two hex digits,
-    backslash-U and eight hex digits, and a three-digit octal escape (backslash and 000 to 377). NOT decoded: the brace
-    form `u{41}`, the percent-u form `%u0041`, a one- or two-digit octal escape, and named escapes."""
-    return _HEX_ESCAPE.sub(_one_escape, text) if chr(92) in text else text
+    backslash-U and eight hex digits, and a three-digit octal escape (backslash and 000 to 377). NOT decoded: a one- or
+    two-digit octal escape and named escapes (`\1` and Windows paths would decode wrongly)."""
+    if "%u" in text:
+        text = _PCT_U.sub(lambda m: chr(int(m.group(1), 16)), text)
+    if chr(92) in text:
+        text = _BRACE_U.sub(
+            lambda m: chr(int(m.group(1), 16)) if int(m.group(1), 16) <= 0x10FFFF else m.group(0),
+            text,
+        )
+        text = _HEX_ESCAPE.sub(_one_escape, text)
+    return text
 
 
 def undo(text: str, clean: bool = False) -> str:
@@ -361,18 +371,34 @@ def _held(text: str) -> int:
     return len(PLACEHOLDER.findall(text))
 
 
-def _keep_earlier_masks(view: str, current: dict[str, str]) -> str:
-    """Before a decoded VIEW is redacted, the decoded spelling of every value pass one already masked is replaced by its
-    placeholder: `password=p%40ss%20word` is masked whole in pass one, its view reads `password=p@ss word`, and the
-    pattern would mask only `p@ss` there; if the view then replaces the text, ` word` would be shown."""
-    for ph, original in list(current.items()):
+_VALUE_END = frozenset(" \t\n;&,\"'")
+
+
+def _decoded_masks(current: dict[str, str]) -> list[tuple[str, str]]:
+    """(placeholder, decoded original) for the values pass one masked whose DECODED spelling differs and is assignment
+    shaped (`key=value`): the redactor's value pattern stops at a space, `;`, `&`, `,` or a quote, so a decoded view
+    can mask only a prefix of what pass one masked whole (`password=ab%3Bzq9` reads `password=ab;zq9`). Computed once per
+    call and bounded (256 entries of at most 4,096 characters), outside the per-view loop."""
+    out = []
+    for ph, original in list(current.items())[:256]:
+        if len(original) > 4096:
+            continue
         try:
             decoded = undo(original)
         except RedactionError:
             continue
-        # only where decoding INTRODUCED whitespace (`%20`): that is what breaks a value pattern in the view
-        breaks = any(c.isspace() for c in decoded) and not any(c.isspace() for c in original)
-        if breaks and len(decoded) >= 4 and decoded in view:
+        # only where decoding INTRODUCED a character that ends a value pattern (space, `;`, `&`, `,`, a quote)
+        introduced = any(c in _VALUE_END and c not in original for c in decoded)
+        if introduced and len(decoded) >= 4:
+            out.append((ph, decoded))
+    return out
+
+
+def _keep_earlier_masks(view: str, pairs: list[tuple[str, str]]) -> str:
+    """Before a decoded VIEW is redacted, the decoded spelling of every value pass one masked is replaced by its
+    placeholder: if the view then replaces the text, the part of the value its pattern would not reach is not shown."""
+    for ph, decoded in pairs:
+        if decoded in view:
             view = view.replace(decoded, ph)
     return view
 
@@ -411,6 +437,7 @@ def redact_text(
         out, current = result.text, result.mapping
         if views and time.monotonic() - started > defaults.REDACT_BUDGET_S:
             raise InputTooLarge("InputTooLarge")
+        pairs = _decoded_masks(current) if views else []
         for view in views:
             if (
                 time.monotonic() - started > defaults.REDACT_BUDGET_S
@@ -418,7 +445,7 @@ def redact_text(
                 raise InputTooLarge("InputTooLarge")
             if neutralise is not None:
                 view = fits_after_nfkc(neutralise(view))
-            view = _keep_earlier_masks(view, current)
+            view = _keep_earlier_masks(view, pairs)
             again = redact(view, mapping=current, _cache=cache)
             # a new value, or a known one only the view spells in a way pass one could not read
             if again.mapping != current or _held(again.text) > _held(out):

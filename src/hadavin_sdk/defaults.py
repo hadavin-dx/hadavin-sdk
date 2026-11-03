@@ -43,7 +43,9 @@ MAX_BUNDLE_CHARS = 8 * MAX_REDACT_CHARS
 # part dropped, never shown.
 CUT_MARGIN = 8192
 # The most wall-clock seconds one `redact_text` call may spend before it refuses (fail closed, `InputTooLarge`): a hostile
-# text costs 1 to 4 s at the cap and every extra view repeats that. Checked between the passes.
+# text costs 1 to 4 s at the cap and every extra view repeats that. Checked between the passes, NOT inside one: a single
+# pass can run about 7 s on a hostile text, so one call can take up to the budget plus one pass, and `clean()` makes two
+# calls (the text and its tag-stripped view).
 REDACT_BUDGET_S = 6.0
 
 

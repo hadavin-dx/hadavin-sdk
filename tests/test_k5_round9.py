@@ -389,7 +389,10 @@ def test_unicode_and_octal_escapes_are_decoded_and_the_rest_listed():
     bs = chr(92)
     assert runmap.undo(bs + "U00000041") == "A"
     assert runmap.undo(bs + "101") == "A"
-    for kept in (bs + "u{41}", "%u0041", bs + "41", bs + "7"):  # documented as not decoded
+    for kept in (
+        bs + "41",
+        bs + "7",
+    ):  # a one- or two-digit octal escape: documented as not decoded
         assert runmap.undo(kept) == kept
 
 

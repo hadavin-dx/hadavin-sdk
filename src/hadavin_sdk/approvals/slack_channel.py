@@ -16,7 +16,7 @@ from typing import Any
 
 from hadavin_sdk.approvals import slack
 from hadavin_sdk.approvals.cards import Card, Delivery
-from hadavin_sdk.approvals.channel import clean
+from hadavin_sdk.approvals.channel import _neutralise, clean
 from hadavin_sdk.approvals.gate import withhold_commands
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.guard import runmap
@@ -78,7 +78,7 @@ class SlackChannel:
                 for ph in (m.group(0) for m in runmap.PLACEHOLDER.finditer(withheld))
             }
         )
-        shown = runmap.redact_text(withheld, seeded)
+        shown = runmap.redact_text(withheld, seeded, neutralise=_neutralise)
         if len(shown) > self.max_card_chars:
             shown = "(the summary is too long to show here; open the full request in the console)"
         blocks: list[dict[str, Any]] = [

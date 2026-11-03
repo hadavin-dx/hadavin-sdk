@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from collections.abc import Mapping
 from typing import TYPE_CHECKING, Protocol
 
@@ -18,26 +19,49 @@ def clean(text: str) -> str:
     """WARDEN's G3 cleaning (`gate.sanitise_text`): no link, image, HTML, mention, control character or forged
     markdown structure survives in text a person acts on; then G4 (`gate.withhold_commands`): no command a person could
     paste to change a system, on any platform; then ONE redaction, last."""
-    # Sanitise and withhold FIRST, redact ONCE and LAST through the one choke point (NFKC, invisible characters, escapes,
-    # the layered decode, the size cap; a text over the cap is REFUSED, never cut): nothing transforms the text after its
-    # final redaction, so a tag, a zero-width character or a removed command cannot join pieces pass one saw apart.
-    # Placeholders already in the text (`<IPV4_1>`) survive sanitising (tested).
-    cleaned = withhold_commands(sanitise_text(text))
-    mapping = runmap.RunMap()
-    out = runmap.redact_text(cleaned, mapping)
-    # A key and a value split by markup that became a space (`password%<i> </i>3Dx`) read as one only without spaces:
-    # that view is used when it finds a secret the spaced text hid (fidelity of that one card is traded for safety).
-    compact_map = runmap.RunMap()
-    compact = runmap.redact_text("".join(cleaned.split()), compact_map)
-    if _secret_kinds(compact_map) - _secret_kinds(mapping):
-        return compact
+    # The neutralising hook (sanitise, then withhold commands) runs on the text AND on every decoded view the redactor
+    # tries (`redact_text(..., neutralise=)`): a view that replaces the text (because it found a secret only the decoding
+    # shows) is sanitised too, so `%72m -rf /`, `%3Cimg%3E`, `&lt;!channel&gt;` cannot come back as a command, an image
+    # or a mention. Nothing transforms the text after its final redaction. Placeholders already in the text
+    # (`<IPV4_1>`) survive sanitising (tested) and are seeded into the map so a new one never reuses their number.
+    text = text.replace("\x00", "")
+    mapping = _seeded(text)
+    out = runmap.redact_text(text, mapping, neutralise=_neutralise)
+    # A key and a value split by markup (`password%<i></i>3Dx`) read as one only when the tags are DELETED, not turned
+    # into spaces: that joined view is used when it finds MORE assignment-kind secrets than the text itself.
+    joined = _TAGS.sub("", text)
+    if joined != text:
+        joined_map = _seeded(joined)
+        alt = runmap.redact_text(joined, joined_map, neutralise=_neutralise)
+        if _assignment_secrets(joined_map) > _assignment_secrets(mapping):
+            return alt
     return out
 
 
-def _secret_kinds(mapping: dict[str, str]) -> set[str]:
-    kinds = {m.group(1) for ph in mapping if (m := runmap.PLACEHOLDER.fullmatch(ph))}
-    # a markup-split KEY and value: the assignment kinds only (the entropy kind would fire on any run of words joined)
-    return kinds & {"SECRET", "APIKEY", "BEARER", "BASIC", "URLCRED"}
+_TAGS = re.compile(r"(?:<[^<>]{0,200}>\s*)+")
+_ASSIGNMENT_KINDS = {"SECRET", "APIKEY", "BEARER", "BASIC", "URLCRED"}
+
+
+def _neutralise(text: str) -> str:
+    return withhold_commands(sanitise_text(text))
+
+
+def _seeded(text: str) -> runmap.RunMap:
+    """A map that already holds the placeholders in `text` (a fake original that never occurs in text)."""
+    return runmap.RunMap(
+        {m.group(0): "\0seed" + m.group(0) for m in runmap.PLACEHOLDER.finditer(text)}
+    )
+
+
+def _assignment_secrets(mapping: dict[str, str]) -> int:
+    """How many assignment-kind secrets the map holds (seed entries do not count)."""
+    return sum(
+        1
+        for ph, original in mapping.items()
+        if not original.startswith("\0seed")
+        and (m := runmap.PLACEHOLDER.fullmatch(ph))
+        and m.group(1) in _ASSIGNMENT_KINDS
+    )
 
 
 class Channel(Protocol):
