@@ -170,13 +170,16 @@ def _is_redactor_value(node: ast.AST) -> bool:
 
 
 def test_in_producer_functions_a_head_slice_only_follows_a_redaction():
-    """Data-flow aware: in every registered producer function a head slice `x[:N]` must slice a value that came from a
-    redaction function (directly, or through a name assigned from one, or from a slice of such a name, in the same
-    function). A slice of anything else is a cut before redaction. A digest prefix (`plan.hash()[:12]`) is not text."""
+    """Data-flow aware AND ordered: in every registered producer function a head slice `x[:N]` must slice a value that
+    was assigned from a redaction function (or from a slice of such a name) on an EARLIER line. A slice inside the very
+    statement that assigns the name (`m = redact(m[:150])`) is a cut before redaction. A digest prefix
+    (`plan.hash()[:12]`) is not text."""
     bad = []
     for name, rel, func, _chokes in PRODUCERS:
         for fn in _functions(_tree(ROOT / rel), func):
-            redacted: set[str] = set()
+            redacted_after: dict[
+                str, int
+            ] = {}  # name -> the line after which it holds redacted text
             for _ in range(
                 3
             ):  # a small fixed point: names derived from a redacted name stay redacted
@@ -187,10 +190,15 @@ def test_in_producer_functions_a_head_slice_only_follows_a_redaction():
                     derived = (
                         isinstance(src, ast.Subscript)
                         and isinstance(src.value, ast.Name)
-                        and src.value.id in redacted
+                        and src.value.id in redacted_after
+                        and src.lineno > redacted_after[src.value.id]
                     )
                     if _is_redactor_value(src) or derived:
-                        redacted |= {t.id for t in n.targets if isinstance(t, ast.Name)}
+                        for t in n.targets:
+                            if isinstance(t, ast.Name):
+                                redacted_after[t.id] = min(
+                                    redacted_after.get(t.id, 10**9), n.end_lineno or n.lineno
+                                )
             for n in ast.walk(fn):
                 if (
                     isinstance(n, ast.Subscript)
@@ -199,11 +207,11 @@ def test_in_producer_functions_a_head_slice_only_follows_a_redaction():
                 ):
                     v = n.value
                     is_hash = isinstance(v, ast.Call) and getattr(v.func, "attr", "") == "hash"
-                    ok = (
-                        is_hash
-                        or _is_redactor_value(v)
-                        or (isinstance(v, ast.Name) and v.id in redacted)
+                    after = (
+                        isinstance(v, ast.Name)
+                        and v.id in redacted_after
+                        and n.lineno > redacted_after[v.id]
                     )
-                    if not ok:
+                    if not (is_hash or _is_redactor_value(v) or after):
                         bad.append(f"{name}: {rel}:{n.lineno}")
     assert not bad, bad
