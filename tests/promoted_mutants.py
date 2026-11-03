@@ -939,6 +939,7 @@ M = [
         "            if out.isascii()\n",
         "            if True\n",
         "test_redact_masks_a_value_hidden",
+        only_test="test_redact_masks_a_value_hidden_behind_look_alikes_on_the_line_and_leaves_other_text_alone",
     ),
     Mutant(
         "redact: a folded hit is dropped",
@@ -946,6 +947,7 @@ M = [
         "return masked + eol if masked != folded else line",
         "return line",
         "test_redact_masks_a_value_hidden",
+        only_test="test_redact_masks_a_value_hidden_behind_look_alikes_on_the_line_and_leaves_other_text_alone",
     ),
     Mutant(
         "egress: weak letters not counted in a letters-only run",
