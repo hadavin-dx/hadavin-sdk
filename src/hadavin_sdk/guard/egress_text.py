@@ -9,14 +9,17 @@ whatever lies between them (separators, letters, look-alikes, other scripts' dig
 G and Q: "strong") count when they sit in a run with a real digit (``8 O 1 l 5 S``), or form a letter-only run of ``letter_run_min`` or
 more (``OlISBZGQ``: then the weak letters i b g q of the run count too). The lowercase i, b, g, q ("big issue", "is") are WEAK: they
 never start a run and never qualify one; they count when they sit in a token with at least 2 digits or strong letters (``1b5i7g3q`` is 8).
-A run's count is the larger of its digit reading and its letter-only reading, and the whole count is MONOTONIC (appending a token never
-lowers it). Ordinary words are mostly free: in a run that holds a digit, the strong letters of the first ``max_free_words_run`` (2) words
+A run's count is the larger of its digit reading and its letter-only reading. The count is MONOTONIC when a separator and a token are
+appended (a property test pins it); it is NOT monotonic under every edit (gluing a letter to a word can lower it), and the docstring of
+``_digitish_count`` says which edits are covered. Ordinary words are mostly free: in a run that holds a digit, the strong letters of the first ``max_free_words_run`` (2) words
 (a token with no digit and 1 to 3 strong letters plus another letter: ``call``, ``Hello``, ``Total``, ``is``) are not counted, and at
 most ``max_free_words`` (2; 4 in ``general()``) words are free in the whole text, so ``id is 12345678901`` and ``call 5551234567`` pass
 ``general()`` while ``4 Ib Ib Ib ...`` does not. A letter glued to a digit (``12345678901s``) counts. A second reading counts, over the
-whole text, the real digits plus the strong letters of tokens made only of strong letters (``lllll``) or dense in them (``lllllx``), so
-``4 x lllll x lllll x lllll`` is refused. WHAT THIS DOES NOT STOP: someone who knows these rules can hide digits as letters inside
-ordinary-looking words (``xl xl xl``), as the same digits written as words, or as numerals of a script the fold does not map; it is a
+whole text, the real digits plus the strong letters of every token made only of strong letters (``lllll``, a lone ``I``) and of every token
+with 4 or more strong letters (``OlSZBxxxxx``), so ``4 x lllll x lllll``, ``4 I x I x I x I x I x I x I x I x I`` and
+``4 OlSZBxxxxx OlSZBxxxxx OlSZBxxxxx`` are refused. The price is false refusals on prose that holds a digit (see ``_digitish_count``). WHAT THIS DOES NOT STOP: someone who knows these rules can hide digits as letters inside
+ordinary-looking words with at most 3 strong letters and a filler letter (``xl xl xl``, ``OlSxxxxxxx``), as one-strong-one-weak pairs split by filler (``4 Ib x Ib x Ib``), as the same digits written as
+words, or as numerals of a script the fold does not map; it is a
 heuristic against copied, formatted or leaked numbers, not a proof. Anything that must not leave belongs in a structured field, not in
 free text.
 
@@ -261,32 +264,46 @@ def _valid_date(y: int, m: int, d: int, years: tuple[int, int]) -> bool:
 def _digitish_count(
     t: str, letter_run_min: int, max_free_run: int = 2, max_free_text: int = 2
 ) -> int:
-    """How many digit-like characters ``t`` carries: ``max(runs, whole text)``. MONOTONIC: appending a separator and any token never lowers
-    the result (a property test pins it), so padding, splitting or adding a digit cannot lower the count.
+    """How many digit-like characters ``t`` carries: ``max(runs, whole text)``.
+
+    MONOTONICITY, exactly what is true. Appending a separator and a token never lowers the result (a seeded property test with 20000+ cases
+    pins it, with a sensitivity control). Inserting a separator or a filler token BETWEEN tokens that are made only of strong letters
+    never lowers the whole-text reading either (the same test splits such tokens through filler). NOT covered: gluing a letter to the
+    end of a token can change what the token is (a glued filler letter turns ``Ol`` into a token with a filler letter, so it no longer
+    counts as a letters-only token, and the free-word and dense rules look at the glued token instead): that is the same capability as
+    hiding digits inside ordinary-looking words, which is NOT stopped (see the end).
 
     RUNS. Characters are grouped into runs of digits and digit-like letters; separators are skipped, any other ASCII letter ends the run. A
     run that holds a real digit counts its digits, its strong letters (O o I l L S s B Z z G Q) and the weak letters (i b g q) that sit in a
     token with 2 or more digits or strong letters, MINUS the strong letters of at most ``max_free_run`` "words" (see below). A run WITHOUT a
     digit counts only once it holds ``letter_run_min`` strong letters (a fully letter-encoded number): then it counts all of its letters,
-    weak ones included, and the free words do not apply. A run's count is the larger of the two readings, which is what keeps the count
-    monotonic (adding one digit to a letter-only run cannot lower it).
+    weak ones included, and the free words do not apply. A run's count is the larger of the two readings (adding one digit to a letter-only
+    run cannot lower it).
 
     FREE WORDS. A token with no digit is a candidate word when it holds 1 to 3 strong letters and another ASCII letter (``call``,
     ``Hello``, ``Total``, ``status``, ``shipped``), or exactly one strong letter and a weak one (``is``). In a run that holds a digit, the
-    strong letters of the first ``max_free_run`` candidate words of the run are not counted, and at most ``max_free_text`` words are free
-    in the WHOLE text (an order is fixed: the first words next to digits). So ``id is 12345678901`` and ``Total 12345678901`` stay under the
-    budget, and the leak is bounded: ``4 Ib Ib Ib ...`` counts everything past the cap. A letter glued to a digit (``12345678901s``) is part
-    of the number and counts.
+    strong letters of the first ``max_free_run`` candidate pieces of the run are not counted, and at most ``max_free_text`` pieces are free
+    in the WHOLE text (an order is fixed: the first pieces next to digits). The cap counts PIECES (a candidate word cut by a filler letter
+    into several runs is several pieces), not whole words. So ``id is 12345678901`` and ``Total 12345678901`` stay under the budget, and
+    the leak is bounded: ``4 Ib Ib Ib ...`` counts everything past the cap. A letter glued to a digit (``12345678901s``) counts.
 
-    WHOLE TEXT. In a text that holds a real digit, the sum of the real digits and the strong letters of every token made only of strong
-    letters (``lllll``, ``Ol``, at least 2 characters) and of "dense" tokens (4 or more strong letters, a majority of the token:
-    ``lllllx``) is a second reading, so ``4 x lllll x lllll x lllll`` cannot be split into runs below the budget. A lone strong letter and
-    tokens with weak letters do not count here (``boss``, ``I``), and a text without any real digit has no whole-text reading (prose such
-    as ``BLISS and a GLOSS finish on the SOIL`` stays free; a digit-free letter number split by filler letters is NOT stopped).
+    WHOLE TEXT. In a text that holds a real digit, the sum of the real digits and the strong letters of (a) every token made only of
+    strong letters, of any length including ONE (``lllll``, ``Ol``, ``I``, ``so``, ``Oslo``) and (b) every token with 4 or more strong
+    letters and any other letters (``OlSZBxxxxx``, ``lllllx``) is a second reading. So a number cannot be split into runs below the budget
+    with one-letter or filler-letter separators (``4 I x I x I x ...``, ``4 OlSZBxxxxx OlSZBxxxxx ...``). Tokens with weak letters do not
+    count here (``boss``, ``Ib``; the run reading handles ``Ib`` pairs), and a text without any real digit has no whole-text reading
+    (prose such as ``BLISS and a GLOSS finish on the SOIL`` stays free; a digit-free letter number split by filler letters is NOT stopped).
 
-    WHAT THIS DOES NOT STOP. A writer who knows these rules can hide digits as letters inside ordinary-looking words (``xl xl xl``): this is
-    a heuristic against copied, formatted and accidentally leaked numbers, not a proof against an adversary. Use structured fields, not
-    free text, for anything that must not leave."""
+    FALSE REFUSALS (fail closed, measured on generated prose, see ``docs/promoted-controls.md``). Once a text holds a real digit, every
+    strong-letter-only word adds to the count: ``Boss 1234`` under ``payments()`` is 4 + 3 + 1 = 8 and is refused, as are ``Oslo 1234``
+    and ``Bill 1234``; under ``general()`` ``Bill 12345678901`` is refused. A text with no digit but two words made only of strong
+    letters is also refused when they form one run of ``letter_run_min`` or more (``BLISS GLOSS``). Many lone ``I`` or ``O`` beside digits
+    add up. Mixed-case prose with ordinary words and short numbers is rarely affected (see the measurement in the docs).
+
+    WHAT THIS DOES NOT STOP. A writer who knows these rules can hide digits as letters inside ordinary-looking words that hold at most 3
+    strong letters and a filler letter (``xl xl xl``, ``OlSxxxxxxx``), or as a word of one strong and one weak letter split by filler
+    (``4 Ib x Ib x Ib ...``: counting those would refuse about 5 percent more ordinary prose, measured): this is a heuristic against copied, formatted and accidentally
+    leaked numbers, not a proof against an adversary. Use structured fields, not free text, for anything that must not leave."""
     total = 0
     text_plain = text_letters = 0
     free_left = max_free_text
@@ -337,11 +354,10 @@ def _digitish_count(
                 wk += 1
             else:
                 ot += 1
-        n = len(tok)
         word = d == 0 and sg >= 1 and ((ot >= 1 and sg <= 3) or (ot == 0 and wk >= 1 and sg == 1))
         if d:
             text_plain += d + sg + (wk if d + sg >= 2 else 0)
-        elif (ot == 0 and wk == 0 and n >= 2) or (ot >= 1 and sg >= 4 and 2 * sg > n):
+        elif (ot == 0 and wk == 0) or (ot >= 1 and sg >= 4):
             text_letters += sg
         piece = 0
         for ch in tok:

@@ -19,7 +19,7 @@ import shutil
 import subprocess  # nosec B404 - a developer tool that runs pytest on trees it copied itself
 import sys
 import tempfile
-from collections.abc import Iterable, Sequence
+from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath, PureWindowsPath
 
@@ -62,7 +62,7 @@ def _inside(base: Path, rel: str) -> Path:
     return path
 
 
-TIMED_OUT = -9  # returned instead of an exit code when the run exceeded its timeout
+TIMED_OUT = -1000  # returned instead of an exit code when the run exceeded its timeout; no process exit status is this low (POSIX -9 is a SIGKILL, for example the OOM killer, and is judged as an error)
 TREE_KILL_TIMEOUT = 60.0  # seconds ``taskkill`` may take before the child itself is killed anyway
 
 
@@ -134,10 +134,12 @@ def run_mutants(
     only: Sequence[str] = (),
     timeout: float = 900.0,
     baseline_timeout: float | None = None,
+    on_result: Callable[[tuple[str, Verdict, str, bool]], None] | None = None,
 ) -> list[tuple[str, Verdict, str, bool]]:
     """(name, verdict, failing test id, good). Raises ``RuntimeError`` if the unmutated copy fails or times out; a mutant run that exceeds
     ``timeout`` seconds is ``(name, Verdict.ERROR, "TIMEOUT", False)``. The unmutated baseline run gets ``baseline_timeout`` (default: ``timeout``),
-    so a test can use a short mutant timeout without failing a slow baseline. Every ``tests`` and ``extra_dirs`` entry and every mutant file
+    so a test can use a short mutant timeout without failing a slow baseline. ``on_result`` is called with each result as soon as that mutant
+    finishes (stream it and a timeout of the whole run still leaves a kill list). Every ``tests`` and ``extra_dirs`` entry and every mutant file
     must name a file inside its tree (``ValueError``)."""
     root = Path(root)
     for t in (*tests, *extra_dirs):
@@ -158,6 +160,12 @@ def run_mutants(
                 shutil.copytree(src, _inside(tmp, d), dirs_exist_ok=True)
 
     out: list[tuple[str, Verdict, str, bool]] = []
+
+    def emit(row: tuple[str, Verdict, str, bool]) -> None:
+        out.append(row)
+        if on_result is not None:
+            on_result(row)
+
     try:
         fresh()
         if _pytest(tmp, tests, tmp / "base.xml", baseline_timeout or timeout) != 0:
@@ -169,13 +177,13 @@ def run_mutants(
             p = _locate(tmp, m.file)
             text = p.read_text(encoding="utf-8")
             if m.old not in text:
-                out.append((m.name, Verdict.ERROR, "SNIPPET NOT FOUND", False))
+                emit((m.name, Verdict.ERROR, "SNIPPET NOT FOUND", False))
                 continue
             p.write_text(text.replace(m.old, m.new), encoding="utf-8", newline="\n")
             junit = tmp / "r.xml"
             rc = _pytest(tmp, tests, junit, timeout)
             if rc == TIMED_OUT:
-                out.append((m.name, Verdict.ERROR, "TIMEOUT", False))
+                emit((m.name, Verdict.ERROR, "TIMEOUT", False))
                 continue
             test_id, first = (
                 first_failure_junit(junit.read_text(encoding="utf-8"))
@@ -183,9 +191,7 @@ def run_mutants(
                 else ("", "")
             )
             v = judge(rc, test_id, first, expect=m.expect)
-            out.append(
-                (m.name, v, test_id, v is Verdict.KILLED or (v is Verdict.CRASH and m.allow_crash))
-            )
+            emit((m.name, v, test_id, v is Verdict.KILLED or (v is Verdict.CRASH and m.allow_crash)))
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
     return out

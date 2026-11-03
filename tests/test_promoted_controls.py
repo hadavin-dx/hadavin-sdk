@@ -1943,6 +1943,32 @@ def test_the_baseline_run_gets_its_own_timeout(tmp_path, monkeypatch):
     assert seen == [9, 9]  # the baseline falls back to the mutant timeout
 
 
+def test_the_runner_streams_each_result_and_keeps_a_sigkill_apart_from_a_timeout(tmp_path, monkeypatch):
+    from tools import mutation_runner as mr
+
+    assert mr.TIMED_OUT != -9 and mr.TIMED_OUT < -64  # no process exit status can equal it
+    root = tmp_path / "pkg"
+    (root / "src" / "pk").mkdir(parents=True)
+    (root / "tests").mkdir()
+    (root / "src" / "pk" / "core.py").write_text("def go(flag):\n    return flag\n", encoding="utf-8")
+    (root / "tests" / "test_core.py").write_text("def test_a():\n    assert True\n", encoding="utf-8")
+    codes = iter([0, -9, mr.TIMED_OUT])  # baseline, a mutant killed by SIGKILL (the OOM killer), a mutant that timed out
+
+    monkeypatch.setattr(mr, "_pytest", lambda cwd, tests, junit, timeout: next(codes))
+    muts = [Mutant(f"m{i}", "src/pk/core.py", "return flag", "return not flag", "test_a_x") for i in range(2)]
+    seen, finished = [], []
+    mr_run = mr.run_mutants
+
+    def on_result(row):
+        seen.append(row[0])
+        finished.append(len(seen))  # called once per mutant, in order, before the run returns
+
+    out = mr_run(root, muts, ["tests/test_core.py"], extra_dirs=(), on_result=on_result)
+    assert seen == ["m0", "m1"] and finished == [1, 2] and [r[0] for r in out] == seen
+    assert out[0][1] is Verdict.ERROR and out[0][2] != "TIMEOUT" and out[0][3] is False  # SIGKILL: an error, not a timeout
+    assert out[1] == ("m1", Verdict.ERROR, "TIMEOUT", False)
+
+
 def test_a_timeout_kills_the_whole_process_tree_not_only_pytest(tmp_path):
     import time
 
@@ -2247,6 +2273,129 @@ def test_redact_leaves_an_existing_placeholder_on_a_non_ascii_line_alone():
 
     r = redact("mail alice@example.com and caf" + chr(0xE9))
     assert r.text == "mail <EMAIL_1> and caf" + chr(0xE9) and list(r.mapping) == ["<EMAIL_1>"]
+
+
+# ---- review round 7 (code-7): splitting through filler, gluing, boundary constants -------------------------------------------------------
+_STRONG_ONLY = ["I", "O", "l", "S", "Z", "B", "o", "s", "z", "Ol", "IS", "BZ", "lll", "OlS", "lllll", "Oslo", "Boss", "OlISBZGQ", "so"]
+_FILLER = ["x", "y", "k", "m", "xx", "w", "kmw", "N", "H"]  # no digit-like letter
+_SEPS = [" ", "  ", "-", ",", ".", ":", ";", "/", " - "]
+
+
+def _split_case(rng):
+    """A text with a real digit: tokens made only of strong letters, digits and filler, ready to be split through filler."""
+    parts = ["4"]
+    for _ in range(rng.randint(1, 14)):
+        parts.append(rng.choice((*_STRONG_ONLY, *_STRONG_ONLY, "7", "12", *_FILLER)))
+    return parts
+
+
+def _joined(parts, rng):
+    return "".join(p + (rng.choice(_SEPS) if i < len(parts) - 1 else "") for i, p in enumerate(parts))
+
+
+def _splits_cases(count, rng, n_cases):
+    """Yield (before, after) for n_cases: a filler token inserted between tokens, or a strong-only token cut in two with a separator or
+    a filler token in the cut (the 'split through filler' edit)."""
+    for _ in range(n_cases):
+        parts = _split_case(rng)
+        before = _joined(parts, rng)
+        i = rng.randrange(len(parts))
+        if rng.random() < 0.5 and len(parts[i]) >= 2 and all(c in "OolISsZzBGQ" for c in parts[i]):
+            cut = rng.randint(1, len(parts[i]) - 1)
+            parts2 = [*parts[:i], parts[i][:cut], rng.choice(_FILLER), parts[i][cut:], *parts[i + 1 :]]
+        else:
+            parts2 = [*parts[: i + 1], rng.choice(_FILLER), *parts[i + 1 :]]
+        yield before, _joined(parts2, rng)
+
+
+def _old_count():
+    """The count of the previous round (a token of ONE strong letter and a sparse cluster never counted over the whole text): the control."""
+    import inspect
+
+    src = inspect.getsource(egress_text._digitish_count)
+    new = "elif (ot == 0 and wk == 0) or (ot >= 1 and sg >= 4):"
+    assert new in src
+    ns = dict(vars(egress_text))
+    exec(src.replace(new, "elif (ot == 0 and wk == 0 and n >= 2) or (ot >= 1 and sg >= 4 and 2 * sg > n):").replace("        word =", "        n = len(tok)\n        word ="), ns)  # noqa: S102 - a test-only control built from the module's own source
+    return ns["_digitish_count"]
+
+
+def test_splitting_a_letter_number_through_filler_never_lowers_the_count():
+    import random
+
+    rng = random.Random(20261103)  # noqa: S311 - a seeded test generator, not a secret
+    count = egress_text._digitish_count
+    cases = list(_splits_cases(count, rng, 20000))
+    assert len(cases) == 20000
+    bad = [(b, a) for b, a in cases if count(a, 6) < count(b, 6)]
+    assert not bad, bad[:3]
+    # sensitivity control: the same cases make the PREVIOUS rule drop (the generator has teeth), so this test fails on the old code
+    old = _old_count()
+    dropped = [(b, a) for b, a in cases if old(a, 6) < old(b, 6)]
+    assert len(dropped) >= 100, len(dropped)
+
+
+def test_one_letter_and_filler_split_card_numbers_are_refused():
+    payments, general = LeakPolicy.payments(), LeakPolicy.general()
+    for text in (
+        "4 " + " x ".join(["I"] * 15),
+        "4 " + " x ".join(["l"] * 15),
+        "4 " + " ".join(["I", "x"] * 15),
+        "4 OlSZBxxxxx OlSZBxxxxx OlSZBxxxxx",
+        "4 OlSZBxxxxxx OlSZBxxxxxx OlSZBxxxxxx",
+        "4 OlSZBy OlSZBy OlSZBy",
+    ):
+        assert egress_text.check_text(text, policy=payments) == Violation.DIGIT_BUDGET, text
+        assert egress_text.check_text(text, policy=general) == Violation.DIGIT_BUDGET, text
+    old = _old_count()
+    assert old("4 " + " x ".join(["I"] * 15), 6) < 8 and old("4 OlSZBxxxxx OlSZBxxxxx OlSZBxxxxx", 6) < 8  # fail on the old rule
+
+
+def test_gluing_a_letter_never_lowers_a_cluster_of_four_and_does_lower_a_short_word():
+    import random
+
+    rng = random.Random(7)  # noqa: S311 - a seeded test generator, not a secret
+    count = egress_text._digitish_count
+    big = [t for t in _STRONG_ONLY if sum(c in "OolISsZzBGQ" for c in t) >= 4]
+    assert big, "the generator needs clusters of 4 or more strong letters"
+    for _ in range(20000):
+        parts = _split_case(rng)
+        spots = [i for i, p in enumerate(parts) if p in big]
+        if not spots:
+            continue
+        before = _joined(parts, rng)
+        i = rng.choice(spots)
+        parts[i] += rng.choice("xyk")
+        after = _joined(parts, rng)
+        assert count(after, 6) >= count(before, 6), (before, after)
+    # the limit, stated: a glued letter turns a short strong-only token into a word, so it can lower the count (the same capability
+    # as hiding digits inside ordinary-looking words, which is documented as NOT stopped)
+    assert count("4 Ol Ol Ol Ol", 6) > count("4 Olx Olx Olx Olx", 6)
+
+
+def test_the_false_refusals_on_prose_are_the_documented_ones():
+    payments, general = LeakPolicy.payments(), LeakPolicy.general()
+    for text in ("Boss 1234", "Oslo 1234", "Bill 1234"):
+        assert egress_text.check_text(text, policy=payments) == Violation.DIGIT_BUDGET, text
+        assert egress_text.check_text(text, policy=general) is None, text
+    assert egress_text.check_text("Bill 12345678901", policy=general) == Violation.DIGIT_BUDGET
+    assert egress_text.check_text("BLISS GLOSS", policy=payments) == Violation.DIGIT_BUDGET
+    assert egress_text.check_text("I paid 1234 for it", policy=payments) is None
+    docs = (Path(__file__).resolve().parents[1] / "docs" / "promoted-controls.md").read_text(encoding="utf-8")
+    for phrase in ("Boss 1234", "Oslo 1234", "Bill 1234", "BLISS GLOSS", "PIECES"):
+        assert phrase in docs, phrase
+
+
+def test_the_boundary_constants_of_the_whole_text_reading():
+    count = egress_text._digitish_count
+    assert count("4 I I I I I I I", 6) == 8  # a lone strong letter counts over the whole text (ot == 0 and wk == 0)
+    assert count("4 xlll xlll", 6) == 1  # 3 strong letters with filler: a word, not counted (sg >= 4 not met)
+    assert count("4 xllll xllll", 6) == 9  # 4 strong letters with filler count whatever the filler (sg >= 4)
+    assert count("4 xlllllllllllxxxxxxxxxxxxxxx", 6) >= 12  # a sparse cluster counts (no majority rule)
+    assert count("1b 7", 6) == 2  # one digit and a weak letter: the weak letter does not count (d + sg < 2)
+    assert count("1b5i7g3q", 6) == 8  # a token with 2 or more digit-like characters: its weak letters count
+    assert count("l 1 Zq call 4", 6, 2, 2) == 3  # a bare strong letter is not a free word: `call` keeps its free slot
+    assert count("4 IbIb", 6) == 5  # the weak letters of a token with 2+ strong letters count
 
 
 # last on purpose: a mutation of a pinned file must be judged by the test aimed at it, not by this hash pin
