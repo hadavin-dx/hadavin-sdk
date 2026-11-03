@@ -301,8 +301,19 @@ def test_junk_ahead_cannot_use_up_the_pairing_slots_and_a_long_value_is_masked_o
 
 
 def test_the_tag_deleted_view_keeps_real_placeholders_and_line_breaks():
-    out = channel_mod.clean("host <IPV4_1> line\nnext <SECRET_2> password%<i> </i>3Dxyz9abc end")
-    assert "xyz9abc" not in out and "<IPV4_1>" in out and "<SECRET_2>" in out and "\n" in out, out
+    out = channel_mod.clean(
+        "<b>head</b>\nhost <IPV4_1> line\nnext <SECRET_2> password%<i> </i>3Dxyz9abc end"
+    )
+    assert "xyz9abc" not in out and "<IPV4_1>" in out and "<SECRET_2>" in out, out
+    assert "head\nhost" in out and "line\nnext" in out, (
+        out
+    )  # a line break after a tag survives the view
+
+
+def test_more_pairable_values_than_the_bound_are_refused_not_skipped():
+    text = " ".join(f"password=ab%3Bzz{i}" for i in range(300)) + " and " + KEY
+    with pytest.raises(runmap.InputTooLarge):
+        runmap.redact_text(text, {})
 
 
 def test_a_plain_secret_and_a_markup_split_one_are_both_masked():
