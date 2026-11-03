@@ -89,6 +89,8 @@ jobs:
       # Timing tests have their own step and it blocks: the check is a ratio (4x text, limit 12x time) with wall
       # clock, so a noisy runner moves both runs alike; a real super-linear pattern is a merge blocker.
       - name: Performance of the redaction patterns (blocks)
+        env:
+          HADAVIN_TEST_PG_DSN: postgresql://postgres@localhost:5432/postgres  # one perf test needs the postgres service
         run: pytest -q -m perf -rs
 
   security:
