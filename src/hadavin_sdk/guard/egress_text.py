@@ -61,10 +61,15 @@ from dataclasses import dataclass, field
 from datetime import date
 from enum import StrEnum
 from functools import lru_cache
+from itertools import islice
 from typing import Any
 
 from hadavin_sdk.guard.textnorm import fold, fold_key, has_mixed_script, squeeze
 
+MAX_PROTECTED_VALUES = 10_000  # at most this many protected values per call (more: ValueError, never a silent partial check)
+MAX_ALLOWED_VALUES = (
+    1_000  # at most this many allowed references per call (each one is a regex pass over the text)
+)
 MAX_TOTAL_DIGITS_CEILING = (
     12  # the shortest card number has 13 digits: no preset may let that many out across pieces
 )
@@ -285,7 +290,7 @@ def _digitish_count(
     strong letters of the first ``max_free_run`` candidate pieces of the run are not counted, and at most ``max_free_text`` pieces are free
     in the WHOLE text (an order is fixed: the first pieces next to digits). The cap counts PIECES (a candidate word cut by a filler letter
     into several runs is several pieces), not whole words. So ``id is 12345678901`` and ``Total 12345678901`` stay under the budget, and
-    the leak is bounded: ``4 Ib Ib Ib ...`` counts everything past the cap. A letter glued to a digit (``12345678901s``) counts.
+    ``4 Ib Ib Ib ...`` counts everything past the cap inside a digit run (words with filler letters that are not next to a digit are never counted: see ``docs/promoted-controls.md``, the residual section). A letter glued to a digit (``12345678901s``) counts.
 
     WHOLE TEXT. In a text that holds a real digit, the sum of the real digits and the strong letters of (a) every token made only of
     strong letters, of any length including ONE (``lllll``, ``Ol``, ``I``, ``so``, ``Oslo``) and (b) every token with 4 or more strong
@@ -427,11 +432,19 @@ def check_text(
     allowed_patterns: Iterable[re.Pattern[str]] = (),
 ) -> Violation | None:
     """The first violation found, or None. ``allowed`` are exact references (bounded, case-insensitive); ``allowed_patterns`` are
-    reference shapes. Both are set aside (and counted as exempt tokens)."""
+    reference shapes. Both are set aside (and counted as exempt tokens). At most ``MAX_PROTECTED_VALUES`` protected values and
+    ``MAX_ALLOWED_VALUES`` allowed references per call: more raises ``ValueError`` (the check refuses; it never runs a partial
+    list), and an endless iterable is cut at the cap + 1 and refused."""
     if not isinstance(text, str):
         return Violation.TEXT_NOT_STRING
     if len(text) > policy.max_len:
         return Violation.TEXT_TOO_LONG
+    protected = list(islice(protected, MAX_PROTECTED_VALUES + 1))
+    allowed = list(islice(allowed, MAX_ALLOWED_VALUES + 1))
+    if len(protected) > MAX_PROTECTED_VALUES or len(allowed) > MAX_ALLOWED_VALUES:
+        raise ValueError(
+            "too many protected values or allowed references: refusing a partial check"
+        )
     keys: list[tuple[str, str]] = []  # (squeezed key, digits of the key)
     words: list[str] = []
     for p in protected:

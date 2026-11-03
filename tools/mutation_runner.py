@@ -1,6 +1,6 @@
 """A small mutation runner: revert one guard at a time in a temp copy of a package and judge the kill by its reason.
 
-``run_mutants(root, mutants, ...)`` copies ``root/src`` (and the listed test files and fixtures) to a temp dir for EACH mutant, replaces
+``run_mutants(root, mutants, ...)`` takes ONE snapshot of ``root/src`` (and the listed test files and fixtures) when it starts (an edit of ``root`` during the run never leaks into a later mutant) and copies it to a temp dir for EACH mutant; the pytest child sees only the environment variables in ``CHILD_ENV`` (no DSN, token or other secret of the caller), replaces
 every occurrence of ``old`` by ``new`` in one file, runs pytest with a JUnit file on the targeted tests, and judges the failing test with
 ``testing.mutation.judge``. A mutant counts as GOOD only if the verdict is KILLED, or CRASH when the mutant sets ``allow_crash``. The
 unmutated copy must pass first (otherwise every kill is meaningless). Stdlib only; runs pytest through ``sys.executable``.
@@ -36,11 +36,14 @@ class Mutant:
     allow_crash: bool = (
         False  # the intended reaction is a crash (an exception other than an assertion)
     )
+    only_test: str = ""  # a test function name: run ONLY that test (of the first test file), so the killer never depends on test order or a fuzz seed
 
     def __post_init__(self) -> None:
         _relative(self.file)
         if len(self.expect) < 4:
             raise ValueError("expect must be at least 4 characters")
+        if self.only_test and not self.only_test.isidentifier():
+            raise ValueError("only_test must be a test function name")
 
 
 def _relative(rel: str) -> str:
@@ -63,6 +66,10 @@ def _inside(base: Path, rel: str) -> Path:
 
 
 TIMED_OUT = -1000  # returned instead of an exit code when the run exceeded its timeout; no process exit status is this low (POSIX -9 is a SIGKILL, for example the OOM killer, and is judged as an error)
+CHILD_ENV = (
+    "PATH", "PATHEXT", "SYSTEMROOT", "SYSTEMDRIVE", "WINDIR", "COMSPEC", "TEMP", "TMP", "TMPDIR", "HOME", "USERPROFILE",
+    "LANG", "LC_ALL", "PYTHONHASHSEED", "PYTHONUTF8", "PYTHONIOENCODING",
+)  # fmt: skip  # the only variables a mutant run inherits
 TREE_KILL_TIMEOUT = 60.0  # seconds ``taskkill`` may take before the child itself is killed anyway
 
 
@@ -83,9 +90,9 @@ def _locate(base: Path, rel: str) -> Path:
 
 
 def _pytest(cwd: Path, tests: Sequence[str], junit: Path, timeout: float) -> int:
-    env = dict(
-        os.environ, PYTHONPATH=os.pathsep.join([str(cwd / "src"), str(cwd)])
-    )  # the tree root too: tests may import tools.*
+    # an ALLOWLIST, not os.environ: a mutant run must not see a database DSN, a token or any other secret of the caller; PYTHONPATH also holds the tree root (tests may import tools.*)
+    env = {k: os.environ[k] for k in CHILD_ENV if k in os.environ}
+    env["PYTHONPATH"] = os.pathsep.join([str(cwd / "src"), str(cwd)])
     cmd = [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", "--noconftest", "-x", f"--junitxml={junit}", "--", *tests]  # fmt: skip
     # own process group (POSIX session / Windows group): on a timeout the whole tree dies, not only pytest (a test may have started psql or a server)
     own = (
@@ -145,19 +152,29 @@ def run_mutants(
     for t in (*tests, *extra_dirs):
         _relative(t)
     tmp = Path(tempfile.mkdtemp(prefix="mutants_"))
+    # ONE snapshot of the tree at the start: every mutant copy is made from it, so an edit of ``root`` while the run is going (a developer
+    # saving a file, a second tool) can never leak into a later mutant
+    snap = Path(tempfile.mkdtemp(prefix="mutants_snap_"))
+    shutil.copytree(root / "src", snap / "src", ignore=shutil.ignore_patterns("__pycache__"))
+    for t in tests:
+        dst = _inside(snap, t)
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy(_inside(root, t), dst)
+    for d in extra_dirs:
+        if _inside(root, d).exists():
+            shutil.copytree(_inside(root, d), _inside(snap, d), dirs_exist_ok=True)
 
     def fresh() -> None:
         shutil.rmtree(tmp, ignore_errors=True)
         (tmp / "tests").mkdir(parents=True)
-        shutil.copytree(root / "src", tmp / "src", ignore=shutil.ignore_patterns("__pycache__"))
+        shutil.copytree(snap / "src", tmp / "src")
         for t in tests:
             dst = _inside(tmp, t)
             dst.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy(_inside(root, t), dst)
+            shutil.copy(_inside(snap, t), dst)
         for d in extra_dirs:
-            src = _inside(root, d)
-            if src.exists():
-                shutil.copytree(src, _inside(tmp, d), dirs_exist_ok=True)
+            if _inside(snap, d).exists():
+                shutil.copytree(_inside(snap, d), _inside(tmp, d), dirs_exist_ok=True)
 
     out: list[tuple[str, Verdict, str, bool]] = []
 
@@ -181,7 +198,8 @@ def run_mutants(
                 continue
             p.write_text(text.replace(m.old, m.new), encoding="utf-8", newline="\n")
             junit = tmp / "r.xml"
-            rc = _pytest(tmp, tests, junit, timeout)
+            operands = [f"{tests[0]}::{m.only_test}", *tests[1:]] if m.only_test else tests
+            rc = _pytest(tmp, operands, junit, timeout)
             if rc == TIMED_OUT:
                 emit((m.name, Verdict.ERROR, "TIMEOUT", False))
                 continue
@@ -196,4 +214,5 @@ def run_mutants(
             )
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
+        shutil.rmtree(snap, ignore_errors=True)
     return out

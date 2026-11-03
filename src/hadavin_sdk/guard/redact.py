@@ -846,7 +846,7 @@ class _Redactor:
         )
 
     def _folded_line(self, line: str) -> str:
-        """Interim fail-closed fold (PR #50 review): a value hidden behind look-alike letters, another script's digits or invisible
+        """Interim fail-closed fold: a value hidden behind look-alike letters, another script's digits or invisible
         characters does not match the patterns above. For a line with non-ASCII text, run the patterns again on its FOLDED form
         (``textnorm.fold``); on a hit the whole line is replaced by the folded line with the hits masked (offsets are not mapped back,
         so ``restore`` gives the folded value). A line with no hit is returned unchanged. A full fold-aware mask (scan folded text,

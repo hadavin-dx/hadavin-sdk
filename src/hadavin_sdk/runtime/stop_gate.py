@@ -106,7 +106,7 @@ class StopGate:
                 p.kind is inspect.Parameter.VAR_KEYWORD for p in params.values()
             ):
                 raise TypeError(
-                    f"StopGate needs Limits.{name}(by, source=...) (hadavin-sdk with PR #50): copy stop_gate.py together with limits.py"
+                    f"StopGate needs Limits.{name}(by, source=...) (a hadavin-sdk core release that has them): copy stop_gate.py together with limits.py"
                 )
         self._limits = limits
         self._cond = threading.Condition()

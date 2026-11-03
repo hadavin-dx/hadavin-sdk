@@ -217,19 +217,20 @@ def _views(text: str) -> set[str]:
     """Every way a reader may see `text`: as written; without escape sequences (a space where one glued two words,
     and also written out as text); without control characters; and without any invisible character. A key split
     by one of them is whole in some view, and a key the removal glues to a letter is bounded in another (ninth
-    review: checking only the normalised text sent `x<BEL>AKIA...` whole)."""
+    review: checking only the normalised text sent `x<BEL>AKIA...` whole). Raises ValueError for text over `_FOLD_MAX` (refuse, do not scan)."""
     views = {text, strip_ansi(text), _ANSI_AS_TEXT.sub(" ", text)}
     views |= {strip_controls(v) for v in views}
     views |= {_INVISIBLE.sub("", v) for v in views}
     # One shared fold (look-alike letters, other scripts' digits, combining marks), applied to the as-written text and to the most
-    # reduced view only: folding every distinct view cost ~0.6 s per MB each. Text beyond _FOLD_MAX is not folded (the other views
-    # still ran); a model reply is bounded far below this. NOTE: the invisible-character set above (`_INVISIBLE`) is URL-parser-specific
-    # and differs from textnorm's on purpose; the two are not one table.
-    if len(text) <= _FOLD_MAX:
-        views |= {
-            textnorm.fold(text),
-            textnorm.fold(_INVISIBLE.sub("", strip_controls(strip_ansi(text)))),
-        }
+    # reduced view only: folding every distinct view cost ~0.6 s per MB each. FAIL CLOSED: text longer than _FOLD_MAX raises ValueError,
+    # so a caller can never scan the unfolded views of a huge text and pass it (a model reply is bounded far below this). NOTE: the
+    # invisible-character set above (`_INVISIBLE`) is URL-parser-specific and differs from textnorm's on purpose; the two are not one table.
+    if len(text) > _FOLD_MAX:
+        raise ValueError(f"text longer than {_FOLD_MAX} characters is refused, not scanned")
+    views |= {
+        textnorm.fold(text),
+        textnorm.fold(_INVISIBLE.sub("", strip_controls(strip_ansi(text)))),
+    }
     return views
 
 

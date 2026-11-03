@@ -931,7 +931,7 @@ def test_the_generator_refuses_an_unpinned_file_and_is_deterministic(tmp_path):
     )  # data, name rule, no ASCII source
 
 
-def test_the_gate_views_use_the_shared_fold_and_skip_huge_text():
+def test_the_gate_views_use_the_shared_fold_and_refuse_huge_text():
     from hadavin_sdk.approvals import gate
 
     spoofed = "AK" + chr(0x406) + "A" + chr(0x406) + "OSFODNN7EXAMPLE"
@@ -939,9 +939,8 @@ def test_the_gate_views_use_the_shared_fold_and_skip_huge_text():
     old = gate._FOLD_MAX
     gate._FOLD_MAX = 10
     try:
-        assert "AKIAIOSFODNN7EXAMPLE" not in gate._views(
-            spoofed
-        )  # beyond the bound the fold is skipped (the other views still ran)
+        with pytest.raises(ValueError):
+            gate._views(spoofed)  # beyond the bound the text is refused, never scanned unfolded
     finally:
         gate._FOLD_MAX = old
 
@@ -1617,6 +1616,58 @@ def test_the_runner_refuses_paths_that_leave_its_tree(tmp_path):
     ):
         with pytest.raises(ValueError):
             run_mutants(root, [], tests, extra_dirs=extra)
+
+
+def _pk_tree(tmp_path, test_body):
+    root = tmp_path / "pkg"
+    (root / "src" / "pk").mkdir(parents=True)
+    (root / "tests").mkdir()
+    (root / "src" / "pk" / "__init__.py").write_text("", encoding="utf-8")
+    (root / "src" / "pk" / "core.py").write_text(
+        "def go(flag):\n    return flag\n", encoding="utf-8"
+    )
+    (root / "tests" / "test_core.py").write_text(test_body, encoding="utf-8")
+    return root
+
+
+def test_the_runner_children_see_an_allowlisted_environment_only(tmp_path, monkeypatch):
+    monkeypatch.setenv("HADAVIN_TEST_PG_DSN", "postgresql://u:p@h/db")  # the real caller's secret
+    monkeypatch.setenv("SOME_API_TOKEN", "tok")
+    root = _pk_tree(
+        tmp_path,
+        "import os\n\ndef test_no_secret_reaches_the_child():\n"
+        "    assert 'HADAVIN_TEST_PG_DSN' not in os.environ\n"
+        "    assert 'SOME_API_TOKEN' not in os.environ\n"
+        "    assert 'PATH' in os.environ\n",
+    )
+    # the unmutated baseline must pass: it fails (RuntimeError) while the child inherits os.environ
+    assert run_mutants(root, [], ["tests/test_core.py"], extra_dirs=(), timeout=120) == []
+
+
+def test_an_edit_of_the_tree_during_the_run_does_not_leak_into_a_later_mutant(tmp_path):
+    root = _pk_tree(
+        tmp_path,
+        "from pk.core import go\n\ndef test_go_is_true():\n    assert go(True) is True\n",
+    )
+    m1 = Mutant("one", "src/pk/core.py", "return flag", "return False", "test_go_is_true")
+    m2 = Mutant("two", "src/pk/core.py", "return flag", "return not flag", "test_go_is_true")
+
+    def edit_root_after_first(row):  # a second tool / a save while the run is going
+        (root / "src" / "pk" / "core.py").write_text(
+            "def go(flag):\n    return None\n", encoding="utf-8"
+        )
+
+    out = run_mutants(
+        root,
+        [m1, m2],
+        ["tests/test_core.py"],
+        extra_dirs=(),
+        timeout=120,
+        on_result=edit_root_after_first,
+    )
+    assert [(n, v) for n, v, _t, _g in out] == [("one", Verdict.KILLED), ("two", Verdict.KILLED)], (
+        out
+    )
 
 
 def test_a_mutant_that_loops_forever_times_out_instead_of_hanging_the_run(tmp_path):
@@ -2349,21 +2400,30 @@ def _splits_cases(count, rng, n_cases):
         yield before, _joined(parts2, rng)
 
 
-def _old_count():
-    """The count of the previous round (a token of ONE strong letter and a sparse cluster never counted over the whole text): the control."""
-    import inspect
+# GOLDEN BEHAVIOUR TABLE: (text, count now, count at bf84b8b, the commit before this rule). Measured by running both trees; the old values are
+# pinned here instead of re-deriving the old rule by editing the module's source, so no test depends on str.replace of the code. Every row has
+# now > old, so each assertion below fails on the old code (checked: evidence-12.md runs this file against a bf84b8b checkout).
+_GOLDEN = (
+    ("4 " + " x ".join(["I"] * 15), 16, 2),
+    ("4 " + " x ".join(["l"] * 15), 16, 2),
+    ("4 OlSZBxxxxx x OlSZBxxxxx x OlSZBxxxxx", 16, 6),
+    ("4 OlSZBxxxxxx y OlSZBxxxxxx", 11, 6),
+    ("4 O x l O x l Ol Ol", 9, 5),
+    ("4,x-l", 2, 1),
+    ("4;y,O", 2, 1),
+    ("4,w:s", 2, 1),
+    ("4.x:s", 2, 1),
+    ("4;x;l", 2, 1),
+    ("4.y,z", 2, 1),
+    ("4-H l", 2, 1),
+    ("4;k-z", 2, 1),
+)
 
-    src = inspect.getsource(egress_text._digitish_count)
-    new = "elif (ot == 0 and wk == 0) or (ot >= 1 and sg >= 4):"
-    assert new in src
-    ns = dict(vars(egress_text))
-    exec(  # noqa: S102 - a test-only control built from the module's own source
-        src.replace(
-            new, "elif (ot == 0 and wk == 0 and n >= 2) or (ot >= 1 and sg >= 4 and 2 * sg > n):"
-        ).replace("        word =", "        n = len(tok)\n        word ="),
-        ns,
-    )
-    return ns["_digitish_count"]
+
+def test_golden_counts_of_the_whole_text_reading():
+    for text, now, old in _GOLDEN:
+        assert old < now
+        assert egress_text._digitish_count(text, 6) == now, text
 
 
 def test_splitting_a_letter_number_through_filler_never_lowers_the_count():
@@ -2375,10 +2435,7 @@ def test_splitting_a_letter_number_through_filler_never_lowers_the_count():
     assert len(cases) == 20000
     bad = [(b, a) for b, a in cases if count(a, 6) < count(b, 6)]
     assert not bad, bad[:3]
-    # sensitivity control: the same cases make the PREVIOUS rule drop (the generator has teeth), so this test fails on the old code
-    old = _old_count()
-    dropped = [(b, a) for b, a in cases if old(a, 6) < old(b, 6)]
-    assert len(dropped) >= 100, len(dropped)
+    # the generator has teeth: the golden table above holds pairs from this generator that the previous rule lowered (6154 of 20000 at bf84b8b)
 
 
 def test_one_letter_and_filler_split_card_numbers_are_refused():
@@ -2393,11 +2450,6 @@ def test_one_letter_and_filler_split_card_numbers_are_refused():
     ):
         assert egress_text.check_text(text, policy=payments) == Violation.DIGIT_BUDGET, text
         assert egress_text.check_text(text, policy=general) == Violation.DIGIT_BUDGET, text
-    old = _old_count()
-    assert (
-        old("4 " + " x ".join(["I"] * 15), 6) < 8
-        and old("4 OlSZBxxxxx OlSZBxxxxx OlSZBxxxxx", 6) < 8
-    )  # fail on the old rule
 
 
 def test_gluing_a_letter_never_lowers_a_cluster_of_four_and_does_lower_a_short_word():
@@ -2449,7 +2501,7 @@ def test_the_boundary_constants_of_the_whole_text_reading():
         count("4 xllll xllll", 6) == 9
     )  # 4 strong letters with filler count whatever the filler (sg >= 4)
     assert (
-        count("4 xlllllllllllxxxxxxxxxxxxxxx", 6) >= 12
+        count("4 xlllllllllllxxxxxxxxxxxxxxx", 6) == 12
     )  # a sparse cluster counts (no majority rule)
     assert (
         count("1b 7", 6) == 2
@@ -2466,6 +2518,12 @@ def test_the_boundary_constants_of_the_whole_text_reading():
     assert (
         count("g1qx9", 6) == 4
     )  # two digit-like characters are enough for the weak letters to count (d + sg >= 2)
+    assert (
+        count("S\u00e9lbS", 3) == 4
+    )  # a non-ASCII letter ends a token (it is not an ASCII filler letter that would glue the pieces)
+    assert (
+        count("b\u00e9b1OlZii", 6) == 7
+    )  # the weak letters of a lone token (fewer than 2 digit-like characters) do not join the run's count
     assert count("4 IbIb", 6) == 5  # the weak letters of a token with 2+ strong letters count
 
 
@@ -2493,3 +2551,45 @@ def test_the_manifest_pins_the_files_a_demo_copies():
         text = log.read_text(encoding="utf-8")
         for rel, sha in manifest["files"].items():
             assert sha in text, rel  # the CHANGELOG re-copy list names every pinned hash
+
+
+def test_the_protected_and_allowed_lists_are_bounded_and_an_endless_one_is_refused():
+    import itertools
+
+    P = LeakPolicy.general()
+    ok = [f"secret-{i:05d}" for i in range(egress_text.MAX_PROTECTED_VALUES)]
+    assert egress_text.check_text("hello there", ok, policy=P) is None
+    with pytest.raises(ValueError):
+        egress_text.check_text("hello", ok + ["one-more-value"], policy=P)
+    with pytest.raises(ValueError):
+        egress_text.check_text(
+            "hello", itertools.repeat("endless-value"), policy=P
+        )  # not consumed whole
+    with pytest.raises(ValueError):
+        egress_text.check_text(
+            "hello",
+            allowed=[f"REF-{i}" for i in range(egress_text.MAX_ALLOWED_VALUES + 1)],
+            policy=P,
+        )
+    assert (
+        egress_text.check_text(
+            "hello",
+            allowed=itertools.islice(itertools.repeat("REF-1"), egress_text.MAX_ALLOWED_VALUES),
+            policy=P,
+        )
+        is None
+    )
+
+
+def test_the_residual_is_exactly_what_the_docs_say():
+    for policy in (LeakPolicy.payments(), LeakPolicy.general()):
+        text = " ".join(["OlSx"] * 819)
+        assert len(text) == 4094 <= policy.max_len
+        assert (
+            egress_text.check_text(text, policy=policy) is None
+        )  # 819 x 3 = 2457 letters for digits leave
+        assert egress_text.check_text(" ".join(["xl"] * 1000), policy=policy) is None
+    assert (
+        egress_text.check_text("4 " + " ".join(["OlSZBxxxxx"] * 3), policy=LeakPolicy.payments())
+        == Violation.DIGIT_BUDGET
+    )

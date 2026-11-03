@@ -4,7 +4,7 @@
     "src/hadavin_sdk/guard/textnorm.py": "576b4cba43c70666db9020f6d3cc3d309ca7fda34e52ff3fd687d42a9d9d1200",
     "src/hadavin_sdk/guard/_confusables.py": "41740c11734e2ec1e5a63f9325dffa04226c84f3b81b43c1b5c7e766f8a0ccfd",
     "tests/fixtures/textnorm_vectors.json": "1a1944708f7d1737588d7b02666620ceb308b0fe4a71ce2a312c4dc29113d349",
-    "src/hadavin_sdk/guard/egress_text.py": "7e4187d58b44f7fde18c70718912980a1d75967805a4c2aef767c2d655888caa",
-    "src/hadavin_sdk/runtime/stop_gate.py": "1582ff760560dcbdf769b444381b3038fcf67f3d7fece6e88ea07d147f2958e4"
+    "src/hadavin_sdk/guard/egress_text.py": "b228cfef65988832c4876ecfadba8247c1d061cd11637314c728210a35863679",
+    "src/hadavin_sdk/runtime/stop_gate.py": "69c2f365efb54fddb902e816f2c9647e7ad2c65fc13343f74f8b564afac668c7"
   }
 }
