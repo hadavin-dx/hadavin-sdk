@@ -71,7 +71,7 @@
   primary is never served by the fallback (the abandoned request's bill would vanish from the meter); it is raised.
 - **Postgres spend work uses a bounded pool** (`PostgresStore.POOL_SIZE`, default 8) and every driver error becomes
   `StoreUnavailable` with the class name only. `settle_spend` no longer sorts: callers pass the run counter first, the
-  order `reserve` takes. A take-back (negative delta) never creates a missing counter, and (round 4) never takes an existing one below zero: `GREATEST(usd + delta, 0)` in the same SQL statement, `max(0, ...)` in the memory store.
+  order `reserve` takes. A take-back (negative delta) never creates a missing counter and never takes one below zero. Current rule (Postgres): it locks the DAY row (`SELECT ... FOR UPDATE`), takes `min(amount, day total)` from the day and the same amount from the month (`GREATEST(usd - take, 0)`), and takes nothing for a day with no row or a day total of zero or less; the memory store clamps with `max(0, ...)`.
 - **Counter keys are injective and validated (R371):** with a tenant the key is `<len>:<tenant>/<name>`; agent ids and
   tenants must match `[A-Za-z0-9._-]{1,64}` (`AgentRecord.id`, `Limits(tenant=)`), and `config.yaml` has an optional
   `tenant`, passed to `Limits` by `app.build`. Setting a tenant starts new counters (keys change); the default (empty) is
@@ -122,8 +122,9 @@
   `with_retry`, and uses this PR's `UnusableAnswer` (below) instead of its own class. The agent loop, `MeteredLLM` and the K1b replay settle through
   `cost_to_settle` and need no change.
 - **K1b** charges an exhausted call of unknown outcome against its own USD cap (it charged nothing before).
-- **A take-back never goes below zero (M-A):** clamped in the same statement in Postgres and in the memory store, so a
-  repeated command or a race with a late settle cannot hand out cap headroom.
+- **A take-back never goes below zero (M-A):** a repeated command or a race with a late settle cannot hand out cap
+  headroom. Postgres: the day row is locked (`FOR UPDATE`), `min(amount, day total)` leaves the day and the month
+  (`GREATEST(usd - take, 0)`); memory store: `max(0, ...)`.
 - **`hadavin-sdk release-reservation --agent A --day D --amount USD [--dry-run]` (M-A, M-C):** takes a stranded
   reservation back from one agent's DAY and MONTH counters. It runs as the maintenance role, which now holds
   `UPDATE (usd)` on `spend` and `spend_month` (the usd column only; no key can change) besides SELECT and DELETE. Policy
@@ -158,8 +159,14 @@
   a meter keeps the reservation. A primary that ANSWERED and was billed (nothing else unknown) counts as one unknown request too, so
   a later fallback never drops its bill. A fallback that SUCCEEDS carries the same count on `Reply.prior_unknown_requests`, and the
   agent loop, `MeteredLLM` and the K1b replay settle it at the reply's cost PLUS one reservation
-  (`reply_cost_to_settle`), so the primary's possible bill is not dropped. Bound: at most one primary worst case per
-  fallback event (a cap can be exceeded by that amount, as with any bill above its reservation).
+  (`reply_cost_to_settle`), so the primary's possible bill is not dropped. **Billing-contract change by one field (PR #48,
+  review 10):** `ProviderError` gains `prior_unknown_requests: int = 0` (the same name and meaning as on `Reply`): one mark
+  per failed primary of unknown billing, nested fallbacks add up. A failing fallback no longer rewrites its own
+  `attempts`; it sets this field, and `cost_to_settle` books its own settlement PLUS one reservation per mark, through the
+  same helper as `reply_cost_to_settle` (`protocol._book_marks`), so the error path and the reply path cannot drift. A
+  non-int, negative or raising mark counts as 0 (never raises). Default 0 leaves every existing raiser and meter
+  unchanged; a client-written meter that reads only `attempts` must adopt `cost_to_settle` to see the marks. Bound: one
+  reservation per failed primary that may have billed.
 - **Billing counts are validated strictly:** `attempts`, `answered`, `refused` must be plain `int` (no bool, float, string,
   None, nan), 0 to 10**6, with `answered + refused <= attempts`. Anything else, or an attribute that raises, is treated as
   UNKNOWN and the reservation is kept (`cost_to_settle` never raises).
@@ -168,9 +175,27 @@
   month and handed out cap headroom with no booking behind it (month < sum of days; the memory store, which derives month
   from its days, could not diverge). It now locks the day row, takes `min(amount, day total)` from both, and takes back nothing
   for a day with no row. The CLI says "nothing released" instead of "released" when nothing changed. A nested
-  `ResilientLLM` fallback keeps the inner carried bill (`max`). New settings `spend_lock_timeout_ms`, `spend_reserve_attempts`,
+  `ResilientLLM` fallback carries one mark per failed primary: its own (0 or 1) PLUS the inner fallback's marks (a sum; review 9 had the
+  `max`, which dropped one bill). New settings `spend_lock_timeout_ms`, `spend_reserve_attempts`,
   `spend_backoff_s` replace hardcoded constants. `release-reservation` has no app-level audit event: pgaudit/log_statement is a
   documented deploy precondition (see `store/migrate.py`).
+- **`hadavin-sdk spend-drift` (read-only):** lists every agent and month whose MONTH counter is below the sum of its DAY
+  counters (drift left by an older release or raw SQL; the take-back clamp hides it, it does not repair it). It runs in a
+  `SET TRANSACTION READ ONLY` transaction and changes nothing. Exit 0 = clean, 1 = drift found (on purpose, not a crash),
+  2 = refused, 3 = store unavailable. A month row that is missing while its days exist is reported (month total 0).
+- **`PostgresStore` constructor validation (PR #48, review 9 and 10):** `lock_timeout_ms` and `reserve_attempts` must be
+  whole numbers of at least 1 (0 means "wait forever" in Postgres), `backoff_s` a finite number of at least 0, `pool_size`
+  a whole number of at least 1, `pool_wait_s` a finite number above 0 (no bool, float for an int, string, nan or inf); a
+  bad value is a `ConfigError`. New settings `spend_lock_timeout_ms` (100..60000), `spend_reserve_attempts` (1..10),
+  `spend_backoff_s` (above 0, at most 5) in `PostgresSettings`; the class constants read their defaults from that model, one
+  place. `add_spend` (the unreserved charge) now runs through the same bounded, retried spend transaction as every other
+  spend write (lock timeout, retries, `StoreUnavailable` by class name) instead of waiting unbounded on the process lock.
+- **Maintenance commands never show connection details:** `migrate`, `release-reservation`, `prune-runs` and `spend-drift`
+  turn any connect failure (refused, unreachable, bad DSN, and a failing IAM token fetch) into `StoreUnavailable` carrying
+  the exception's class name only, no host, port, user, account or token (`store/migrate.py::_connect`).
+- **Worst-case latency of one spend call** (documented in `store/postgres.py`): `attempts x (pool_wait_s + 8 x
+  lock_timeout_ms / 1000) + backoff_s x (1 + 2 + ... + (attempts - 1))`; defaults (3, 10 s, 5000 ms, 0.02 s) give about
+  150 s, the maximums (10, 300 s, 60000 ms, 5 s) about 8,025 s. Size the settings so this bound suits the caller.
 - **Spend-connection gate is FIFO and configurable; the hot-key ceiling is measured (pool exhaustion report):** on postgres:17,
   2,000 simultaneous reservations on one agent counter through 8 spend connections failed 734 to 1,858 callers with
   `StoreUnavailable: no spend connection free (pool exhausted)` (the cap held: fail closed), and a 16-worker run lost 8

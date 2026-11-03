@@ -36,6 +36,7 @@ from hadavin_sdk.llm.protocol import (
     ProviderError,
     ProviderExhausted,
     SpendLimitReached,
+    _prior_marks,
     counts_valid,
     unknown_requests,
 )
@@ -242,15 +243,11 @@ class ResilientLLM:
         try:
             out = self.fallback.chat(*args, **kwargs)
         except ProviderError as fe:
-            # The primary's unknown requests are not forgotten because the fallback failed too: a meter must keep
-            # the reservation. Bound: at most ONE primary worst case per fallback event (the primary's own count is
-            # added once; a primary that ANSWERED and was billed, with nothing else unknown, counts as one too). A SUCCESSFUL fallback carries the same count on the Reply (``prior_unknown_requests``) and a
-            # meter books one reservation on top of the fallback's cost (``reply_cost_to_settle``). A garbage ``attempts`` on the fallback's error is left alone:
-            # ``unknown_requests`` counts it as 1, so ``cost_to_settle`` keeps the reservation anyway.
-            if lost and counts_valid(
-                fe
-            ):  # garbage (-5, True, 1.5, nan, ...) stays garbage: unknown, reservation kept
-                fe.attempts = fe.attempts + lost
+            # The primary's unknown requests are not forgotten because the fallback failed too: the error carries one
+            # mark per failed primary (``prior_unknown_requests``, the same count and the same helper as a successful
+            # fallback's Reply), and a meter books one reservation per mark on top of the error's own settlement
+            # (``cost_to_settle``). ``attempts`` is no longer touched: it stays the fallback's own sent count.
+            fe.prior_unknown_requests = (1 if lost else 0) + _prior_marks(fe)
             raise
         return out.model_copy(
             update={
@@ -260,7 +257,6 @@ class ResilientLLM:
                 # unknown, as cost_to_settle keeps one reservation per call), PLUS the inner fallback's own marks: a
                 # nested fallback whose primary also failed unknown is a second, distinct possible bill. The meter
                 # books one reservation per mark (reply_cost_to_settle). max() here dropped one when both were set.
-                "prior_unknown_requests": (1 if lost else 0)
-                + max(0, getattr(out, "prior_unknown_requests", 0)),
+                "prior_unknown_requests": (1 if lost else 0) + _prior_marks(out),
             }
         )

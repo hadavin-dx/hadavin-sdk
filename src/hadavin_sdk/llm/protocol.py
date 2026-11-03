@@ -26,13 +26,18 @@ class ProviderError(RuntimeError):
     request was sent, a 5xx). A meter settles with ``cost_to_settle(exc, reserved)``: nothing unknown and nothing
     answered = release; something unknown = keep the whole reservation; something answered = book what it cost, and
     never zero. The counts must be plain ints (0..10**6, ``answered + refused <= attempts``); anything else, or an
-    attribute that raises, is UNKNOWN. A SUCCESSFUL call after a failed primary of unknown billing carries
-    ``Reply.prior_unknown_requests``; a meter settles it with ``reply_cost_to_settle`` (reply cost + one reservation)."""
+    attribute that raises, is UNKNOWN.
+    - ``prior_unknown_requests`` (added in PR #48; default 0 keeps every existing raiser unchanged) failed PRIMARIES of
+      unknown billing that a fallback layer saw before this error: one mark per failed primary, nested fallbacks add up.
+      A SUCCESSFUL call carries the same count on ``Reply.prior_unknown_requests``. Both paths settle through one helper
+      (``_book_marks``): the call's own settlement PLUS one reservation per mark. A non-int or negative mark counts as 0
+      (it never raises)."""
 
     attempts = 1
     answered = 0
     refused = 1
     billed_usd: Any = 0
+    prior_unknown_requests: int = 0
 
 
 class ProviderExhausted(ProviderError):
@@ -89,41 +94,59 @@ def unknown_requests(exc: BaseException) -> int:
     return attempts - answered - refused
 
 
+def _prior_marks(obj: Any) -> int:
+    """``prior_unknown_requests`` of an error or reply as a safe count: anything but a plain int in 0..10**6 is 0."""
+    try:
+        v = getattr(obj, "prior_unknown_requests", 0)
+    except Exception:  # noqa: BLE001 - a property that raises counts as no mark, never an exception
+        return 0
+    return v if type(v) is int and 0 <= v <= _MAX_COUNT else 0
+
+
+def _book_marks(own: Decimal, reserved: Decimal, obj: Any) -> Decimal:
+    """The ONE place marks are priced, for the error path and the reply path alike: ``own`` plus one reservation per
+    mark of ``obj`` (``own`` alone when there is none)."""
+    marks = _prior_marks(obj)
+    return own + reserved * marks if marks > 0 else own
+
+
 def cost_to_settle(
     exc: BaseException, reserved: Decimal, *, agent: str = "", route: str = ""
 ) -> Decimal:
     """What a meter should settle a reservation to after ``exc`` (see the billing contract on ``ProviderError``).
-    Never more than ``reserved`` (a provider-reported ``billed_usd`` above the worst case is a bad number, not a bill) and
-    never raises: anything it cannot read keeps the whole reservation (the fail-safe direction)."""
+    The error's own part never exceeds ``reserved`` (a provider-reported ``billed_usd`` above the worst case is a bad
+    number, not a bill); each ``prior_unknown_requests`` mark adds one more reservation (``_book_marks``). Never raises:
+    anything it cannot read keeps the whole reservation (the fail-safe direction)."""
     try:
-        attempts, answered, refused = _counts(exc)
-        if attempts - answered - refused > 0:
-            return reserved  # unknown: the call may have been billed, keep the worst case booked
-        if answered > 0:
-            billed = Decimal(getattr(exc, "billed_usd", 0))
-            if not billed.is_finite() or billed <= 0:
-                return reserved  # never settle a billed answer at zero
-            if billed > reserved:
-                _LOG.warning(
-                    "billed_usd above the reservation: settling at the reservation (agent=%s route=%s)",
-                    agent,
-                    route,
-                )
-                return reserved
-            return billed
-        return Decimal(0)
+        return _book_marks(_own_cost(exc, reserved, agent, route), reserved, exc)
     except Exception:  # noqa: BLE001 - never raises: the reservation is kept
         return reserved
 
 
+def _own_cost(exc: BaseException, reserved: Decimal, agent: str, route: str) -> Decimal:
+    attempts, answered, refused = _counts(exc)
+    if attempts - answered - refused > 0:
+        return reserved  # unknown: the call may have been billed, keep the worst case booked
+    if answered > 0:
+        billed = Decimal(getattr(exc, "billed_usd", 0))
+        if not billed.is_finite() or billed <= 0:
+            return reserved  # never settle a billed answer at zero
+        if billed > reserved:
+            _LOG.warning(
+                "billed_usd above the reservation: settling at the reservation (agent=%s route=%s)",
+                agent,
+                route,
+            )
+            return reserved
+        return billed
+    return Decimal(0)
+
+
 def reply_cost_to_settle(reply: Any, reserved: Decimal) -> Decimal:
-    """What a meter settles after a SUCCESSFUL call. Normally the reply's own cost. If a fallback served the call after
-    a primary whose billing is unknown (``reply.prior_unknown_requests``), the primary may have been billed too: book
-    one primary worst case (the reservation) per failed primary on top of the fallback's cost, so no bill is lost
-    (nested fallbacks carry one mark per failed primary)."""
-    cost = reply.cost_usd
-    marks = getattr(reply, "prior_unknown_requests", 0)
-    return cost + reserved * marks if marks > 0 else cost
+    """What a meter settles after a SUCCESSFUL call: the reply's own cost, plus (if a fallback served it after a primary
+    whose billing is unknown) one reservation per failed primary (``_book_marks``, shared with ``cost_to_settle``), so no
+    bill is lost. Never raises on a bad mark count (it counts as 0)."""
+    return _book_marks(reply.cost_usd, reserved, reply)
 
 
 class UnusableAnswer(ProviderError):

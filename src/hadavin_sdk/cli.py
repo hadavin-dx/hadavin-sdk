@@ -76,7 +76,8 @@ def _money(text: str) -> Decimal:
 
 
 def main(argv: list[str] | None = None) -> int:
-    """Run the CLI. ConfigError exits 2 and any other uncaught exception exits 3 (never Python's crash code 1)."""
+    """Run the CLI. ConfigError exits 2 and any other uncaught exception exits 3 (never Python's crash code 1). Exit 1 is
+    never a crash: ``gate`` failing and ``spend-drift`` finding drift return it on purpose from ``_main``."""
     try:
         return _main(argv)
     except ConfigError as exc:

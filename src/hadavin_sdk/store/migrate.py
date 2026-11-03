@@ -301,10 +301,14 @@ def migrate(
 
 def _connect(dsn: str, **kw) -> psycopg.Connection:
     """``connect`` for the maintenance commands: a refused, unreachable or malformed DSN becomes StoreUnavailable
-    carrying the driver's class name only (its message can quote the host, port and user)."""
+    carrying the exception's class name only (the driver's message can quote the host, port and user; an IAM token
+    fetch error from boto can quote the account or the token). Our own ConfigError messages pass through: they name
+    settings, never a secret."""
     try:
         return connect(dsn, **kw)
-    except psycopg.Error as exc:
+    except ConfigError:
+        raise
+    except Exception as exc:  # noqa: BLE001 - psycopg, botocore, anything: the class name is all that leaves
         raise StoreUnavailable(f"store postgres: cannot connect ({type(exc).__name__})") from None
 
 

@@ -28,6 +28,7 @@ from hadavin_sdk.llm.resilient import CircuitBreaker, ResilientLLM
 from hadavin_sdk.llm.retry import with_retry
 from hadavin_sdk.store.memory import MemoryStore
 from tests.contracts.kinds.store_postgres import pg_schema
+from tests.helpers_money import FreshRaises, _fallback_reply, _unknown_total
 from tests.test_core_hardening_review import _doc, build
 from tests.test_core_hardening_round2 import (  # noqa: F401 - fixtures are used by name
     DAY,
@@ -136,13 +137,6 @@ def _settle_via_metered(store, billed):
     return store.spend_totals("a", DAY)
 
 
-def _unknown_total(store):
-    lim = _limits(store, daily="1")
-    with pytest.raises(ProviderExhausted):
-        MeteredLLM(Stub(ProviderExhausted("t")), lim, "a", ROUTES).chat([], system="", route="r")
-    return store.spend_totals("a", DAY)
-
-
 @pytest.mark.parametrize("absurd", ["1e999999", "1e9"])
 def test_m2_an_absurd_billed_usd_books_the_worst_case_not_the_absurd_number_memory(absurd, clock):  # noqa: F811
     worst = _unknown_total(MemoryStore())
@@ -229,7 +223,9 @@ def test_ma_a_failed_fallback_carries_the_primarys_unknown_billing(clock):  # no
     )
     with pytest.raises(ProviderError) as e:
         llm.chat([], system="", route="r")
-    assert unknown_requests(e.value) == 1
+    assert (
+        e.value.prior_unknown_requests == 1 and unknown_requests(e.value) == 0
+    )  # the mark, not a rewritten count
     assert cost_to_settle(e.value, D("1")) == D("1")
     store = MemoryStore()
     lim = _limits(store, daily="1")
@@ -294,22 +290,6 @@ def test_mf_a_non_numeric_amount_is_a_config_error_before_any_connection(monkeyp
     for junk in ("abc", "", "1,5"):
         with pytest.raises(ConfigError):
             migrate.release_reservation("dsn", "a", datetime.date(2020, 1, 1), junk)
-
-
-class FreshRaises:
-    """A test double that raises a NEW exception on every call (a shared instance would accumulate the carry)."""
-
-    label = "fresh"
-
-    def __init__(self, cls, msg="x", **attrs):
-        self.cls, self.msg, self.attrs, self.made = cls, msg, attrs, []
-
-    def chat(self, *a, **k):
-        e = self.cls(self.msg)
-        for n, v in self.attrs.items():
-            setattr(e, n, v)
-        self.made.append(e)
-        raise e
 
 
 @pytest.mark.parametrize("cls", [ProviderError, ProviderExhausted, DeadlineExceeded])
@@ -384,12 +364,6 @@ def test_mb_an_inconsistent_set_of_counts_keeps_the_reservation():
 
 
 # --- MAJOR 1 (review 6): a SUCCESSFUL fallback after a primary of unknown billing keeps that bill booked -------------------
-
-
-def _fallback_reply(cost="0.0007"):
-    from hadavin_sdk.models import Reply
-
-    return Reply(text="ok", model_id="fb", cost_usd=D(cost))
 
 
 def test_major1_the_reply_of_a_fallback_after_an_unknown_primary_carries_the_count():

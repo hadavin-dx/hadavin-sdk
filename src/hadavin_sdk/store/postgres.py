@@ -32,6 +32,7 @@ from psycopg.rows import dict_row
 from psycopg.types.json import Jsonb
 from pydantic import BaseModel
 
+from hadavin_sdk.backends.table import PostgresSettings
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.models import (
     ApprovalDecision,
@@ -265,6 +266,11 @@ class _FairSlots:
                 raise ValueError("released too many times")
 
 
+_SPEND_DEFAULTS = {
+    n: f.default for n, f in PostgresSettings.model_fields.items() if n.startswith("spend_")
+}
+
+
 class PostgresStore:
     # ponytail: one connection behind one lock per process; a pool (psycopg_pool) when throughput matters.
     # A dropped connection fails the call (the run ends safely); reconnect-on-error arrives with S11 hosting.
@@ -293,11 +299,12 @@ class PostgresStore:
     #     maximums (10, 300 s, 60000 ms, 5 s):   10 x (300 + 480) + 225     = about 8,025 s
     # In practice one hot key waits on ONE lock at a time, so a lock wait is usually far below this; size the settings
     # so that this bound is acceptable to the caller (an agent run holds its reservation until it settles).
-    LOCK_TIMEOUT_MS = 5000
-    RESERVE_ATTEMPTS = 3
-    POOL_SIZE = 8
-    POOL_WAIT_S = 10.0
-    BACKOFF_S = 0.02
+    # The defaults live in ONE place, the settings model (backends/table.py ``PostgresSettings``); the class reads them.
+    LOCK_TIMEOUT_MS = _SPEND_DEFAULTS["spend_lock_timeout_ms"]
+    RESERVE_ATTEMPTS = _SPEND_DEFAULTS["spend_reserve_attempts"]
+    POOL_SIZE = _SPEND_DEFAULTS["spend_pool_size"]
+    POOL_WAIT_S = _SPEND_DEFAULTS["spend_pool_wait_s"]
+    BACKOFF_S = _SPEND_DEFAULTS["spend_backoff_s"]
 
     def __init__(
         self,
@@ -314,12 +321,16 @@ class PostgresStore:
         self._connector = connector
         self._lock = threading.Lock()
         self._idle: queue.LifoQueue[psycopg.Connection] = queue.LifoQueue()
-        self.POOL_SIZE = pool_size if pool_size is not None else type(self).POOL_SIZE
-        self.POOL_WAIT_S = pool_wait_s if pool_wait_s is not None else type(self).POOL_WAIT_S
-        self._slots = _FairSlots(self.POOL_SIZE)
         # Defaults live on the class (documented); settings (spend_lock_timeout_ms, spend_reserve_attempts,
         # spend_backoff_s) override them per instance. Direct construction is checked too: lock_timeout 0 means
         # "wait forever" in Postgres and a negative backoff makes time.sleep raise mid-retry.
+        if pool_size is not None and (type(pool_size) is not int or pool_size < 1):
+            raise ConfigError("store postgres: pool_size must be a whole number of at least 1")
+        if pool_wait_s is not None and (
+            type(pool_wait_s) not in (int, float)
+            or not (math.isfinite(pool_wait_s) and pool_wait_s > 0)
+        ):
+            raise ConfigError("store postgres: pool_wait_s must be a finite number above 0")
         if lock_timeout_ms is not None and (
             type(lock_timeout_ms) is not int or lock_timeout_ms < 1
         ):
@@ -338,8 +349,13 @@ class PostgresStore:
             self.LOCK_TIMEOUT_MS = lock_timeout_ms
         if reserve_attempts is not None:
             self.RESERVE_ATTEMPTS = reserve_attempts
+        if pool_size is not None:
+            self.POOL_SIZE = pool_size
+        if pool_wait_s is not None:
+            self.POOL_WAIT_S = pool_wait_s
         if backoff_s is not None:
             self.BACKOFF_S = backoff_s
+        self._slots = _FairSlots(self.POOL_SIZE)
 
     # --- generic helpers ---------------------------------------------------------------------------------
 
@@ -559,21 +575,28 @@ class PostgresStore:
         return self._select(DeadLetter, "dead_letters", "run_id = %s", (run_id,), " ORDER BY seq")
 
     def add_spend(self, agent_id: str, day: date, usd: Decimal) -> tuple[Decimal, Decimal]:
-        """Day and month counters, each one atomic upsert, in one transaction: exact under concurrency."""
+        """Day and month counters, each one atomic upsert, in one transaction: exact under concurrency. Runs through
+        ``_spend_tx`` like every other spend write: a bounded lock wait (``lock_timeout``), a few retries of a
+        serialization failure or deadlock, StoreUnavailable by class name otherwise, and never the process-wide lock
+        while it waits on a row (a pooled connection of its own)."""
         month = day.replace(day=1)
-        with self._lock, self._db.transaction():
-            d = self._exec(
+
+        def work(conn: psycopg.Connection) -> tuple[Decimal, Decimal]:
+            cur = conn.cursor(row_factory=dict_row)
+            d = cur.execute(
                 "INSERT INTO spend (agent_id, day, usd) VALUES (%s, %s, %s) "
                 "ON CONFLICT (agent_id, day) DO UPDATE SET usd = spend.usd + EXCLUDED.usd RETURNING usd",
                 (agent_id, day, usd),
             ).fetchone()["usd"]
-            m = self._exec(
+            m = cur.execute(
                 "INSERT INTO spend_month (agent_id, month, usd) VALUES (%s, %s, %s) "
                 "ON CONFLICT (agent_id, month) DO UPDATE SET usd = spend_month.usd + EXCLUDED.usd "
                 "RETURNING usd",
                 (agent_id, month, usd),
             ).fetchone()["usd"]
-        return Decimal(d), Decimal(m)
+            return Decimal(d), Decimal(m)
+
+        return self._spend_tx(work)
 
     def spend_totals(self, agent_id: str, day: date) -> tuple[Decimal, Decimal]:
         with self._lock:

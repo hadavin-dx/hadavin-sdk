@@ -37,6 +37,7 @@ from hadavin_sdk.models import KillSwitch, Reply
 from hadavin_sdk.store.memory import MemoryStore
 from hadavin_sdk.store.protocol import StoreUnavailable
 from tests.contracts.kinds.store_postgres import pg_schema
+from tests.helpers_money import ROUTES, Stub, _limits, _pg_store
 
 D = Decimal
 MID = datetime(2026, 3, 15, 12, 0, tzinfo=UTC)
@@ -46,27 +47,6 @@ DAY = MID.date()
 @pytest.fixture
 def clock(monkeypatch):
     monkeypatch.setattr(limits_mod, "now", lambda: MID)
-
-
-def _limits(store, tenant="", daily="1", monthly="100", max_run=None):
-    agent = SimpleNamespace(
-        budget_usd=SimpleNamespace(daily=D(daily), monthly=D(monthly)),
-        max_run_usd=None if max_run is None else D(max_run),
-    )
-    return Limits(store, None, SimpleNamespace(agents={"a": agent}), tenant=tenant)  # type: ignore[arg-type]
-
-
-def _pg_store(dsn, **kw):
-    pytest.importorskip("psycopg")
-    from hadavin_sdk.actions.secrets import FakeSecretProvider
-    from hadavin_sdk.backends import make
-    from hadavin_sdk.backends.table import PostgresSettings
-
-    settings = PostgresSettings(kind="postgres", dsn_secret_name="pg-dsn")  # noqa: S106 - a name
-    store = make("store", settings, FakeSecretProvider({"pg-dsn": dsn}))
-    for k, v in kw.items():
-        setattr(store, k, v)
-    return store
 
 
 @pytest.fixture
@@ -194,20 +174,6 @@ def test_the_runtime_and_maintenance_roles_must_differ():
 
 
 # --- MAJOR 2 and 3: the breaker keeps the trip reason; a deadline never falls back ---------------------------------
-
-
-class Stub:
-    label = "stub"
-
-    def __init__(self, *outcomes):
-        self.outcomes, self.n = list(outcomes), 0
-
-    def chat(self, messages, **kw):
-        self.n += 1
-        o = self.outcomes[min(self.n, len(self.outcomes)) - 1]
-        if isinstance(o, BaseException):
-            raise o
-        return o
 
 
 OK = Reply(text="ok", model_id="m")
@@ -643,11 +609,6 @@ def test_hung_attempts_cannot_pile_up_threads_past_the_bound(monkeypatch):
 
 
 # --- MINOR 11: calls outside the agent loop are metered --------------------------------------------------------------
-
-
-ROUTES = {
-    "r": Route(model_id="m-1", input_usd_per_mtok=D(3), output_usd_per_mtok=D(15), max_tokens=100)
-}
 
 
 def test_metered_llm_reserves_settles_releases_and_refuses(clock):

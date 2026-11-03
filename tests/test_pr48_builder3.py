@@ -1,6 +1,8 @@
-"""Review 9 of PR #48 (money path): the day-row lock of a take-back under real concurrency, a committed parity fuzz
-(memory vs Postgres: reserve, settle, release across a month boundary), the month clamp on a drifted database, the
-read-only drift check, the nested-fallback carry, the PostgresSettings spend knobs, and the maintenance connect guard."""
+"""Money-path behaviour of the spend counters and the billing marks: the day-row lock of a take-back under real
+concurrency, a seeded parity fuzz (memory vs Postgres: reserve, settle, release across a month boundary), the month
+clamp on a drifted database, the read-only drift check, the per-mark settlement of a failed or successful fallback, the
+PostgresStore constructor limits and spend settings, the retry/backoff of a spend transaction, and the maintenance
+connect guard (no host, port, user, account or token ever leaves)."""
 
 from __future__ import annotations
 
@@ -16,7 +18,15 @@ import pytest
 
 from hadavin_sdk.store.memory import MemoryStore
 from tests.contracts.kinds.store_postgres import pg_schema
-from tests.test_core_hardening_round2 import _pg_store
+from tests.helpers_money import (
+    ROUTES,
+    FreshRaises,
+    Stub,
+    _fallback_reply,
+    _limits,
+    _pg_store,
+    _unknown_total,
+)
 
 D = Decimal
 DAY = datetime.date(2026, 3, 9)
@@ -37,7 +47,27 @@ def _blocked_by(watch, pid: int, deadline_s: float = 30.0) -> None:
         time.sleep(0.01)
 
 
-# --- MAJOR-A: the take-back reads the day row under FOR UPDATE ------------------------------------------------------------
+def _all_queued_behind(watch, pid: int, n: int, deadline_s: float = 60.0) -> None:
+    """Wait (polling the server, deadline kept) until ``n`` backends are blocked by the transaction of ``pid``, directly
+    or through the queue behind it (``pg_blocking_pids`` chain). Only the holder's own waiters count, never other
+    sessions of the same database."""
+    end = time.monotonic() + deadline_s
+    while True:
+        queued = watch.execute(
+            "WITH RECURSIVE w(pid) AS (SELECT pid FROM pg_stat_activity WHERE %s = ANY(pg_blocking_pids(pid)) "
+            "UNION SELECT a.pid FROM pg_stat_activity a JOIN w ON w.pid = ANY(pg_blocking_pids(a.pid))) "
+            "SELECT count(*) FROM w",
+            (pid,),
+        ).fetchone()[0]
+        if queued >= n:
+            return
+        assert time.monotonic() < end, (
+            f"only {queued} of {n} take-backs queued behind the row holder"
+        )
+        time.sleep(0.01)
+
+
+# --- a take-back reads the day row under FOR UPDATE ------------------------------------------------------------
 
 
 def test_a_take_back_waits_for_a_concurrent_writer_and_reads_its_committed_total():
@@ -108,17 +138,7 @@ def test_eight_concurrent_take_backs_of_the_whole_day_leave_zero_not_minus_seven
                 for t in ts:
                     t.start()
                 try:
-                    end = time.monotonic() + 60
-                    while (
-                        watch.execute(
-                            "SELECT count(*) FROM pg_stat_activity WHERE wait_event_type = 'Lock' "
-                            "AND datname = current_database() AND pid <> %s",
-                            (holder.info.backend_pid,),
-                        ).fetchone()[0]
-                        < 8
-                    ):
-                        assert time.monotonic() < end, "the take-backs never all queued on the row"
-                        time.sleep(0.01)
+                    _all_queued_behind(watch, holder.info.backend_pid, 8)
                 finally:
                     holder.commit()
                     for t in ts:
@@ -129,7 +149,7 @@ def test_eight_concurrent_take_backs_of_the_whole_day_leave_zero_not_minus_seven
             store.close()
 
 
-# --- MINOR-1 (N2): the month clamp on an already drifted database ---------------------------------------------------------
+# --- the month clamp on an already drifted database ---------------------------------------------------------
 
 
 def test_a_take_back_on_a_drifted_month_clamps_the_month_at_zero_and_the_drift_check_sees_it():
@@ -177,7 +197,7 @@ def test_the_drift_check_fails_closed_by_class_name_only():
     bad, host = _bad_dsn()
     with pytest.raises(StoreUnavailable, match=r"^store postgres: cannot connect \(\w+\)$") as e:
         spend_drift(bad)
-    assert "leaky" not in str(e.value) and host not in str(e.value)
+    assert "leaky" not in str(e.value) and not (host and host in str(e.value))
     assert psycopg  # the driver is present for the cases above
 
 
@@ -203,7 +223,7 @@ def test_the_spend_drift_cli_reports_and_exits_one(cfg_dir, monkeypatch, capsys)
     assert cli.main(["spend-drift"]) == 0 and "no drift" in capsys.readouterr().out
 
 
-# --- MAJOR-A follow-up: a committed, seeded parity fuzz across a month boundary --------------------------------------------
+# --- a committed, seeded parity fuzz across a month boundary --------------------------------------------
 
 FUZZ_DAYS = [
     datetime.date(2026, 10, 30),
@@ -285,13 +305,12 @@ def test_memory_and_postgres_agree_after_every_operation_of_2000_seeded_sequence
             pg.close()
 
 
-# --- MAJOR-B: nested fallback carries one mark per failed primary -------------------------------------------------------
+# --- a nested fallback carries one mark per failed primary -------------------------------------------------------
 
 
 def _carry(outer_lost: int, inner_lost: int):
     from hadavin_sdk.llm.protocol import ProviderExhausted
     from hadavin_sdk.llm.resilient import CircuitBreaker, ResilientLLM
-    from tests.test_pr48_review6 import FreshRaises, Stub, _fallback_reply
 
     def primary(lost):  # lost 0: provably sent nothing; lost n: n requests of unknown billing
         return FreshRaises(ProviderExhausted, "x", attempts=lost, refused=0)
@@ -325,7 +344,6 @@ def test_a_nested_fallback_carries_one_mark_per_failed_primary(outer_lost, inner
 )
 def test_the_meter_books_one_reservation_per_mark(marks, expected):
     from hadavin_sdk.llm.protocol import reply_cost_to_settle
-    from tests.test_pr48_review6 import _fallback_reply
 
     reply = _fallback_reply().model_copy(update={"prior_unknown_requests": marks})
     assert reply_cost_to_settle(reply, D("0.40")) == D(expected)
@@ -334,9 +352,8 @@ def test_the_meter_books_one_reservation_per_mark(marks, expected):
 def test_a_metered_nested_fallback_books_both_primaries_worst_cases(monkeypatch):
     import hadavin_sdk.limits as limits_mod
     from hadavin_sdk.llm.metered import MeteredLLM
-    from tests.test_core_hardening_round2 import DAY as RDAY
-    from tests.test_core_hardening_round2 import MID, ROUTES, _limits
-    from tests.test_pr48_review6 import _unknown_total
+    from tests.helpers_money import DAY as RDAY
+    from tests.helpers_money import MID
 
     monkeypatch.setattr(limits_mod, "now", lambda: MID)
     store = MemoryStore()
@@ -345,7 +362,7 @@ def test_a_metered_nested_fallback_books_both_primaries_worst_cases(monkeypatch)
     assert store.spend_totals("a", RDAY)[0] == 2 * worst + D("0.0007")
 
 
-# --- MINOR-4/5: the spend knobs are validated and reach the store --------------------------------------------------------
+# --- the spend settings are validated and reach the store --------------------------------------------------------
 
 
 def test_postgres_settings_spend_knobs_have_pinned_bounds():
@@ -425,7 +442,7 @@ def test_direct_construction_refuses_wait_forever_and_bad_backoff():
     assert (store.LOCK_TIMEOUT_MS, store.RESERVE_ATTEMPTS, store.BACKOFF_S) == (1, 1, 0)
 
 
-# --- MINOR-6: maintenance commands never print the host, port or user of a refused connection ---------------------------
+# --- maintenance commands never print the host, port or user of a refused connection ---------------------------
 
 
 def _bad_dsn() -> tuple[str, str]:
@@ -466,7 +483,9 @@ def test_release_reservation_and_prune_refuse_a_dead_dsn_by_class_name_only():
             call()
         assert e.value.__cause__ is None and e.value.__suppress_context__
         for leak in ("leaky", host, "port"):
-            assert leak not in str(e.value)
+            assert not leak or leak not in str(
+                e.value
+            )  # an empty host (a unix socket) must not make this vacuous
 
 
 def test_the_release_cli_prints_no_connection_detail_even_with_debug(cfg_dir, monkeypatch, capsys):
@@ -492,4 +511,4 @@ def test_the_release_cli_prints_no_connection_detail_even_with_debug(cfg_dir, mo
         assert rc in (2, 3), (argv, out.err[-300:])  # refused or unavailable, never a crash
         assert "StoreUnavailable" in out.err or "cannot connect" in out.err, (argv, out.err[-300:])
         for leak in ("leaky", host, "port", "connection failed", "FATAL"):
-            assert leak not in out.err + out.out, (argv, leak)
+            assert not leak or leak not in out.err + out.out, (argv, leak)
