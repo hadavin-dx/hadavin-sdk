@@ -79,20 +79,19 @@ def test_a_percent_or_fullwidth_email_and_password_assignment_are_masked():
 
 
 def test_env_name_value_pairs_labels_and_secret_data_are_masked_with_their_key():
-    k8s = (
-        (
-            "k8s/pod.json",
-            {
-                "kind": "Pod",
-                "spec": {"env": [{"name": "DB_PASSWORD", "value": PW}]},
-                "labels": {"password": PW},
-            },
+    """One bundle per shape and a DIFFERENT value each: a shared value would be masked by one shape's hit in all."""
+    shapes = {
+        "env entry": (
+            {"kind": "Pod", "spec": {"env": [{"name": "DB_PASSWORD", "value": "alpha-one"}]}},
+            "alpha-one",
         ),
-        ("k8s/secret.json", {"kind": "Secret", "data": {"password": "aHVudGVyMg=="}}),
-    )
-    out, _ = redact_bundle(_bundle(k8s=k8s))
-    shown = _shown(out)
-    assert PW not in shown and "aHVudGVyMg" not in shown
+        "label": ({"kind": "Pod", "labels": {"password": "beta-two"}}, "beta-two"),
+        "secret data": ({"kind": "Secret", "data": {"db": "Z2FtbWEtdGhyZWU="}}, "Z2FtbWEtdGhyZWU"),
+        "short value": ({"kind": "Pod", "labels": {"token": "ab"}}, '"ab"'),
+    }
+    for name, (record, needle) in shapes.items():
+        out, _ = redact_bundle(_bundle(k8s=(("k8s/x.json", record),)))
+        assert needle not in _shown(out), name
 
 
 def test_no_key_exempts_a_value_at_any_depth():
@@ -156,3 +155,28 @@ def test_percent_and_entity_layers_are_undone_for_pattern_secrets_in_a_bundle():
     for s in ("%41KIA" + "IOSFODNN7EXAMPLE", "&#65;KIA" + "IOSFODNN7EXAMPLE", "password%3D" + PW):
         shown = _shown(redact_bundle(_bundle(**_log(f"x {s} y")))[0])
         assert "IOSFODNN7EXAMPLE" not in shown and PW not in shown, s
+
+
+def test_a_base64_token_wrapping_a_quoted_or_hex_spelling_of_a_secret_is_replaced_whole():
+    """Direct on the function (the redactor's own high-entropy pattern would hide a gap through a whole-prompt check)."""
+    from hadavin_sdk import tools as tools_mod
+
+    secret = "Zk3#9qWd" + "Xv7/pL2m"
+    import base64
+    import urllib.parse as up
+
+    for spelling in (
+        up.quote(secret, safe=""),
+        secret.encode().hex(),
+        secret.encode().hex().upper(),
+    ):
+        tok = base64.b64encode(("x=" + spelling).encode()).decode()
+        assert tools_mod._derived(f"a {tok} b", [secret]) == "a <SECRET_REDACTED> b", spelling
+
+
+def test_a_mime_wrapped_token_is_one_token():
+    from hadavin_sdk import tools as tools_mod
+
+    tok = "QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVo" * 3
+    wrapped = "\n".join(tok[i : i + 76] for i in range(0, len(tok), 76))
+    assert len(tools_mod._B64_TOKEN.findall("x\n" + wrapped + "\ny")) == 1
