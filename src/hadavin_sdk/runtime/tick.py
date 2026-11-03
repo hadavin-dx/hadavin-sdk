@@ -26,7 +26,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Any
 
-from hadavin_sdk.guard.redact import redact
+from hadavin_sdk.guard.runmap import safe_head
 from hadavin_sdk.models import AuditEvent, RunState, TickState
 from hadavin_sdk.runtime.runs import IllegalTransition, advance
 from hadavin_sdk.store.protocol import StaleState, is_connectivity_error
@@ -284,15 +284,12 @@ _PROBE = "heartbeat"  # the tick_state key read once, to find out whether the st
 _DRIVERS = ("psycopg", "urllib", "http", "botocore", "boto3", "socket", "ssl")
 
 
-_MESSAGE_SCAN_CHARS = 4096
-
-
 def _message(exc: Exception) -> str:
     """Redacted and one line. Driver and network errors carry hosts and users: their type says enough."""
     if type(exc).__module__.split(".")[0] in _DRIVERS or isinstance(exc, OSError):
         return "(driver error; details withheld)"
-    # cut before redacting (a bare redact() has no cap of its own); only the first 500 characters are kept anyway
-    return redact(str(exc)[:_MESSAGE_SCAN_CHARS]).text.replace("\n", " ")[:500]
+    # redact first, then keep the first 500 characters (a cut first splits a secret); `safe_head` bounds the work
+    return safe_head(str(exc), 500).replace("\n", " ")
 
 
 def _run_step(ctx: TickContext, step: TickStep) -> str:

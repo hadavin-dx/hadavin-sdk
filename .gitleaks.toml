@@ -1,0 +1,10 @@
+# gitleaks configuration: the default rules plus one path-anchored allowlist (it does not depend on a commit id, so a
+# squash or rebase of the branch that adds the file cannot invalidate it).
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "tests/demo_askdata/test_demo_literals.py is a scanner test: it plants fake literals to prove its own scan catches them (a PEM header line with no key body, and the placeholder abcdefgh12345678)"
+condition = "AND"
+paths = ['''^tests/demo_askdata/test_demo_literals\.py$''']
+regexes = ['''-----BEGIN [A-Z ]*PRIVATE KEY-----''', '''abcdefgh12345678''']

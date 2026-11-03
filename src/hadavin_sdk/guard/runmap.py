@@ -332,6 +332,23 @@ def redact_text(
     return out
 
 
+SAFE_HEAD_NOTE = "(details withheld)"
+
+
+def safe_head(text: str, limit: int, mapping: dict[str, str] | None = None) -> str:
+    """Redact FIRST, then keep the first `limit` characters: the order every short model-bound or logged message
+    (an exception text, a validation error, a card line) needs, because a cut first splits a secret and the
+    redactor no longer sees a whole one. The work is bounded by cutting the INPUT at the redactor's cap, far past
+    anything shown (`limit` is far below the cap), so a secret that straddles that cut is never in the part kept.
+    Never raises: a text the redactor refuses (too large after NFKC, or any failure) becomes a fixed note."""
+    try:
+        return redact_text(text[: defaults.MAX_REDACT_CHARS], {} if mapping is None else mapping)[
+            :limit
+        ]
+    except RedactionError:
+        return SAFE_HEAD_NOTE
+
+
 def redact_value(value: Any, mapping: dict[str, str]) -> Any:
     """`redact_text` over every string (and dict key) inside a JSON-shaped value. The total text is capped too (a
     value of many small strings is as costly as one big one). The total is the expansion estimate of every string

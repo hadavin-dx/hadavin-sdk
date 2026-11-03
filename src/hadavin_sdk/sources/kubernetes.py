@@ -18,8 +18,14 @@ from urllib.parse import quote
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from hadavin_sdk import defaults
 from hadavin_sdk.sources import Record, SourceError
+
+# The kind's own defaults (they were in the generic `defaults.py`).
+K8S_PAGE_SIZE = 20  # list page size: a deployment object can be tens of KB
+K8S_MAX_PAGES = 25  # pages followed per list; past that the answer says it is incomplete
+K8S_JSON_CAP_BYTES = 1024 * 1024  # fetch cap for a JSON list reply
+K8S_LOG_SLACK_BYTES = 8192  # fetch-cap room over `log_bytes` for the line framing
+K8S_LOG_BYTES = 65536  # asked of the API as limitBytes
 
 # The operation ids a manifest may list for this source, each bound to one method and one path (design 6.4): a
 # call that fits no binding is refused by `ToolContext.fetch`, so an id is never just a label.
@@ -58,10 +64,10 @@ class KubernetesSettings(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
     api_url: str = Field(pattern=r"^https?://[^\s/?#]+/?$")
     namespaces: tuple[str, ...] = Field(min_length=1)
-    page_size: int = Field(default=defaults.K8S_PAGE_SIZE, gt=0)
-    max_pages: int = Field(default=defaults.K8S_MAX_PAGES, gt=0)
-    json_cap_bytes: int = Field(default=defaults.K8S_JSON_CAP_BYTES, gt=0)
-    log_bytes: int = Field(default=defaults.K8S_LOG_BYTES, gt=0)
+    page_size: int = Field(default=K8S_PAGE_SIZE, gt=0)
+    max_pages: int = Field(default=K8S_MAX_PAGES, gt=0)
+    json_cap_bytes: int = Field(default=K8S_JSON_CAP_BYTES, gt=0)
+    log_bytes: int = Field(default=K8S_LOG_BYTES, gt=0)
 
 
 def covers(entry: str, target: str) -> bool:
@@ -282,9 +288,7 @@ class KubernetesSource:
             f"/api/v1/namespaces/{quote(scope, safe='')}/pods/{quote(pod, safe='')}/log"
             f"?timestamps=true&sinceTime={quote(start, safe='')}&limitBytes={self._cfg.log_bytes}"
         )
-        text = self._call(
-            path, "k8s.pod_log", max_bytes=self._cfg.log_bytes + defaults.K8S_LOG_SLACK_BYTES
-        )
+        text = self._call(path, "k8s.pod_log", max_bytes=self._cfg.log_bytes + K8S_LOG_SLACK_BYTES)
         out: list[Record] = []
         lines = text.splitlines()
         for i, line in enumerate(lines):

@@ -101,26 +101,21 @@ def test_redact_value_counts_the_expansion_of_all_strings_together(monkeypatch):
     assert runmap.redact_value([each] * 100, {})  # 9,000 after NFKC: fine
 
 
-# --- m-C: the bare redact() callers cut their input -----------------------------------------------------------------------------------------
+# --- m-C: the short-message callers redact FIRST, then keep a head; a card over the cap is refused --------------------------------------------
 
 
-def test_a_card_text_is_cut_before_the_bare_redactor(monkeypatch):
+def test_a_card_text_over_the_cap_is_refused_not_cut():
+    with pytest.raises(runmap.InputTooLarge):
+        channel_mod.clean("x" * (defaults.MAX_REDACT_CHARS * 2))
+
+
+def test_a_tick_error_message_is_redacted_then_cut_and_the_work_is_bounded(monkeypatch):
     seen = []
-    real = channel_mod.redact
+    real = runmap.redact_text
     monkeypatch.setattr(
-        channel_mod, "redact", lambda text, **kw: seen.append(len(text)) or real(text, **kw)
-    )
-    channel_mod.clean("x" * (defaults.MAX_REDACT_CHARS * 2))
-    assert (
-        seen and max(seen) <= defaults.MAX_REDACT_CHARS + 1000
-    )  # the second pass reads the cleaned (shorter) text
-
-
-def test_a_tick_error_message_is_cut_before_the_bare_redactor(monkeypatch):
-    seen = []
-    real = tick_mod.redact
-    monkeypatch.setattr(
-        tick_mod, "redact", lambda text, **kw: seen.append(len(text)) or real(text, **kw)
+        runmap,
+        "redact_text",
+        lambda text, m, *a, **k: seen.append(len(text)) or real(text, m, *a, **k),
     )
     assert len(tick_mod._message(ValueError("e" * 1_000_000))) <= 500
-    assert seen == [tick_mod._MESSAGE_SCAN_CHARS]
+    assert seen and max(seen) <= defaults.MAX_REDACT_CHARS

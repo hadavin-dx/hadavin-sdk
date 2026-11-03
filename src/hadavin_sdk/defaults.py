@@ -36,6 +36,8 @@ MAX_DOCUMENT_BYTES = (
 # "password=" 4.0 s, full-width 3.7 s, IP addresses 2.6 s, "password=" 1.4 s, 14,563 U+FDFA (a 262,000-character
 # view) 3.0 s. Size any timeout around ~8 s per call at the cap, not the 7 us per character a plain text costs.
 MAX_REDACT_CHARS = MAX_DOCUMENT_BYTES
+# A case bundle is many strings, each within the cap above; the SUM is capped too (redaction cost is linear in it).
+MAX_BUNDLE_CHARS = 8 * MAX_REDACT_CHARS
 # The scrub of handed-out secrets in a tool result (`tools.prepare_output`); validated in `config.ScrubSettings`.
 SCRUB_TAIL_WINDOW = 256  # bytes looked back over for a place to cut that is not inside a token
 SCRUB_MIN_REDACTION_WINDOW = (
@@ -101,9 +103,4 @@ STORED_KINDS = (
     "TENANT",
 )  # not UUID: a UUID is often a session or API token, so it is placeholdered but never stored
 
-# --- the Kubernetes source (KubernetesSettings) -----------------------------------------------------------------------
-K8S_PAGE_SIZE = 20  # list page size: a deployment object can be tens of KB
-K8S_MAX_PAGES = 25  # pages followed per list; past that the answer says it is incomplete
-K8S_JSON_CAP_BYTES = 1024 * 1024  # fetch cap for a JSON list reply
-K8S_LOG_SLACK_BYTES = 8192  # fetch-cap room over `log_bytes` for the line framing
-K8S_LOG_BYTES = 65536  # asked of the API as limitBytes
+# The Kubernetes source's own defaults (page size, caps) live in `sources/kubernetes.py`, with the kind.

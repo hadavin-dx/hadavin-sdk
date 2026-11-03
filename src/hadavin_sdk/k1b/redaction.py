@@ -29,6 +29,7 @@ from collections import Counter
 from collections.abc import Callable
 from typing import Any
 
+from hadavin_sdk import defaults
 from hadavin_sdk.guard import runmap
 from hadavin_sdk.k1b.bundle import Bundle, parse_ts
 from hadavin_sdk.tools import redact_layered
@@ -165,9 +166,16 @@ def redact_bundle(b: Bundle) -> tuple[Bundle, Counter[str]]:
     record is masked in the earlier ones). The map is dropped here; a string over the cap raises `InputTooLarge`."""
     mapping = runmap.RunMap()
 
+    total = 0
+
     def mask(s: str) -> str:
+        nonlocal total
+        total += len(s)
+        if total > 2 * defaults.MAX_BUNDLE_CHARS:  # pass 1 and pass 2 both count
+            raise runmap.InputTooLarge("InputTooLarge")
         return redact_layered(s, mapping)
 
     _apply(b, mask)  # pass 1: find every value
+    total = 0
     out = _apply(b, mask)  # pass 2: mask with the whole map
     return out, Counter(_kind(p) for p in mapping)
