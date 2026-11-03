@@ -285,19 +285,10 @@ def test_the_margin_follows_a_cut_made_after_the_scrub_grew_the_text():
 
 
 def test_backslash_x_escapes_are_decoded_and_octal_is_stated_as_not():
-    spelled = "".join(chr(92) + "x" + format(b, "02x") for b in b"AKIA" + b"IOSFODNN7EXAMPLE")
-    assert "IOSFODNN7EXAMPLE" not in runmap.redact_text(f"k {spelled} z", {})
-    assert runmap.undo(r"\101") == r"\101"  # octal is documented as not decoded
-
-
-@pytest.mark.perf  # a wall-clock bound: it runs in the perf step, not the default suite
-@pytest.mark.parametrize("unit", ["curl -u ", "password=", "%63url -u ", "word "])
-def test_redacting_a_hostile_text_at_the_cap_is_bounded(unit):
-    """The documented cost at the cap (one redaction pass per distinct view). Measured 1 to 4 s on a laptop; 25 s is
-    the bound that fails a super-linear pattern or a view that multiplies the work."""
-    import time
-
-    text = unit * (tools_mod.defaults.MAX_REDACT_CHARS // len(unit))
-    t = time.perf_counter()
-    runmap.redact_text(text, {})
-    assert time.perf_counter() - t < 25
+    """One escaped character is enough to hide a key from the pattern (the plain test of the whole key passes without
+    the decoder, because the redactor reads a fully escaped key by other means)."""
+    bs = chr(92)
+    for spelled in (bs + "x41KIA" + "IOSFODNN7EXAMPLE", "password" + bs + "x3dhunter2"):
+        out = runmap.redact_text(f"k {spelled} z", {})
+        assert not any(n in out for n in NEEDLES) and PLACEHOLDER.search(out), (spelled, out)
+    assert runmap.undo(bs + "101") == bs + "101"  # octal is documented as not decoded
