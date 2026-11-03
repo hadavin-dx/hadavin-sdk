@@ -607,8 +607,8 @@ M = [
     Mutant(
         "gate: views skip the shared fold",
         GT,
-        'textnorm.fold(text),\n            textnorm.fold(_INVISIBLE.sub("", strip_controls(strip_ansi(text)))),',
-        'text,\n            _INVISIBLE.sub("", strip_controls(strip_ansi(text))),',
+        'textnorm.fold(text),\n        textnorm.fold(_INVISIBLE.sub("", strip_controls(strip_ansi(text)))),',
+        'text,\n        _INVISIBLE.sub("", strip_controls(strip_ansi(text))),',
         "test_the_gate_views_use_the_shared_fold",
     ),
     Mutant(
@@ -821,8 +821,9 @@ M = [
         "gate: a second engage claims a durable write",
         SG,
         "return EngageResult(complete=False, already_sweeping=True, durable=None)",
-        "return EngageResult(complete=False, already_sweeping=True)",
+        "return EngageResult(complete=False, already_sweeping=True, durable=True)",
         "test_engaged_is_the_flag",
+        only_test="test_engaged_is_the_flag_blocked_reads_the_store_and_the_second_engage_says_it_wrote_nothing",
     ),
     Mutant(
         "gate: a second engage says complete",
