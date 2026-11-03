@@ -28,17 +28,19 @@ def clean(text: str) -> str:
     mapping = _seeded(text)
     out = runmap.redact_text(text, mapping, neutralise=_neutralise)
     # A key and a value split by markup (`password%<i></i>3Dx`) read as one only when the tags are DELETED, not turned
-    # into spaces: that joined view is used when it finds MORE assignment-kind secrets than the text itself.
+    # into spaces: that joined view (real placeholders and line breaks kept) is used when it finds a secret value the
+    # text pass did not (compared by the originals, spaces ignored), not by count or kind.
     joined = _TAGS.sub("", text)
     if joined != text:
         joined_map = _seeded(joined)
         alt = runmap.redact_text(joined, joined_map, neutralise=_neutralise)
-        if _assignment_secrets(joined_map) > _assignment_secrets(mapping):
+        if _assignment_originals(joined_map) - _assignment_originals(mapping):
             return alt
     return out
 
 
-_TAGS = re.compile(r"(?:<[^<>]{0,200}>\s*)+")
+# A tag, but never a real placeholder (`<IPV4_1>`), and only the spaces and tabs after it (never a line break).
+_TAGS = re.compile(r"(?:<(?![A-Z][A-Z0-9]*_\d+>)[^<>]{0,200}>[ \t]*)+")
 _ASSIGNMENT_KINDS = {"SECRET", "APIKEY", "BEARER", "BASIC", "URLCRED"}
 
 
@@ -53,15 +55,15 @@ def _seeded(text: str) -> runmap.RunMap:
     )
 
 
-def _assignment_secrets(mapping: dict[str, str]) -> int:
-    """How many assignment-kind secrets the map holds (seed entries do not count)."""
-    return sum(
-        1
+def _assignment_originals(mapping: dict[str, str]) -> set[str]:
+    """The originals of the assignment-kind secrets a map holds (seed entries excluded), spaces ignored."""
+    return {
+        "".join(original.split())
         for ph, original in mapping.items()
         if not original.startswith("\0seed")
         and (m := runmap.PLACEHOLDER.fullmatch(ph))
         and m.group(1) in _ASSIGNMENT_KINDS
-    )
+    }
 
 
 class Channel(Protocol):

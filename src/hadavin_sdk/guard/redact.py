@@ -609,7 +609,9 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
             # The value: any non-separator char, OR a comma that does NOT begin a new key=value pair
             # (so a comma-bearing secret is masked WHOLE, but `k=v,k2=v2` is not gobbled). `&` stops a
             # URL query-param value at the next parameter. Char-by-char, so no catastrophic backtracking.
-            r"((?:[^\s\"';,&]|,(?!\s*[\w.\-]+\s*[:=]))+)"
+            # A numeric HTML entity (`&#59;`, `&amp;#59;` once escaped, `&#x3b;`) is ONE character of the value, not the `&` of a query separator:
+            # an entity-encoded `;` or `&` must not end the value early and leave its tail shown.
+            r"((?:&(?:amp;)?#[0-9]{1,7};|&(?:amp;)?#[xX][0-9a-fA-F]{1,6};|[^\s\"';,&]|,(?!\s*[\w.\-]+\s*[:=]))+)"
         ),
     ),
     # A hex key under a credential's name no pattern above lists - `ENCRYPTION_KEY=`, `hmac_key=`,

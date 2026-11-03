@@ -81,19 +81,32 @@ NO_HOOK_OK = {
     "guard/judge.py",  # the text goes to a model, not to a person's screen
     "guard/bedrock_guardrail.py",  # the text goes to a vendor screen
     "runtime/evidence.py",  # grounding compares redacted strings, nothing is shown
-    "tools.py",  # a tool result goes to the model
-}
+}  # tools.py is NOT exempt: it has no raw `redact_text` call (prepare_output uses redact_untrusted/redact_bounded)
 
 
-def _is_unhooked_redact_text(n: ast.AST) -> bool:
-    if not isinstance(n, ast.Call):
+def _callee_name(f: ast.AST) -> str:
+    return f.id if isinstance(f, ast.Name) else getattr(f, "attr", "")
+
+
+def _hook_is_missing(n: ast.Call) -> bool:
+    """A `redact_text` call without a real neutralising hook: no `neutralise=` keyword, `neutralise=None`, or a third
+    positional argument that is `None`."""
+    if _callee_name(n.func) != "redact_text":
         return False
-    f = n.func
-    name = f.id if isinstance(f, ast.Name) else getattr(f, "attr", "")
+    for k in n.keywords:
+        if k.arg == "neutralise":
+            return isinstance(k.value, ast.Constant) and k.value.value is None
+    if len(n.args) >= 3:
+        return isinstance(n.args[2], ast.Constant) and n.args[2].value is None
+    return True
+
+
+def _aliases_redact_text(n: ast.AST) -> bool:
+    """`rt = runmap.redact_text` or passing it around: a reference that is not a call hides the call from this test."""
     return (
-        name == "redact_text"
-        and not any(k.arg == "neutralise" for k in n.keywords)
-        and len(n.args) < 3
+        isinstance(n, ast.Assign)
+        and _callee_name(n.value) == "redact_text"
+        and not isinstance(n.value, ast.Call)
     )
 
 
@@ -101,13 +114,38 @@ def test_every_redact_text_call_that_feeds_a_card_passes_the_neutralise_hook():
     bad = []
     for path in ROOT.rglob("*.py"):
         rel = path.relative_to(ROOT).as_posix()
-        if rel in NO_HOOK_OK:
+        for n in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
+            if rel in NO_HOOK_OK:
+                continue
+            if (isinstance(n, ast.Call) and _hook_is_missing(n)) or _aliases_redact_text(n):
+                bad.append(f"{rel}:{n.lineno}")
+    assert not bad, bad
+
+
+def test_the_hook_check_itself_catches_a_missing_none_and_an_alias():
+    def parse(src):
+        return ast.parse(src).body[0]
+
+    assert _hook_is_missing(parse("redact_text(t, m)").value)
+    assert _hook_is_missing(parse("runmap.redact_text(t, m, None)").value)
+    assert _hook_is_missing(parse("runmap.redact_text(t, m, neutralise=None)").value)
+    assert not _hook_is_missing(parse("runmap.redact_text(t, m, neutralise=_neutralise)").value)
+    assert _aliases_redact_text(parse("rt = runmap.redact_text"))
+
+
+def test_only_clean_and_the_slack_block_call_the_card_sanitisers():
+    allowed = {"approvals/gate.py", "approvals/channel.py", "approvals/slack_channel.py"}
+    bad = []
+    for path in ROOT.rglob("*.py"):
+        rel = path.relative_to(ROOT).as_posix()
+        if rel in allowed:
             continue
-        bad += [
-            f"{rel}:{n.lineno}"
-            for n in ast.walk(ast.parse(path.read_text(encoding="utf-8")))
-            if _is_unhooked_redact_text(n)
-        ]
+        for n in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
+            if isinstance(n, ast.Call) and _callee_name(n.func) in {
+                "sanitise_text",
+                "withhold_commands",
+            }:
+                bad.append(f"{rel}:{n.lineno}")
     assert not bad, bad
 
 
@@ -192,7 +230,7 @@ def test_clean_and_the_fake_channel_do_not_reuse_a_placeholder_number():
 def _imports_the_bare_redactor(n: ast.AST) -> bool:
     return (
         isinstance(n, ast.ImportFrom)
-        and (n.module or "").endswith(("guard.redact", "guard"))
+        and ((n.module or "").endswith(("guard.redact", "guard")) or n.level > 0)
         and any(a.name in {"redact", "redact_many"} for a in n.names)
     )
 
@@ -236,3 +274,42 @@ def test_a_secret_in_a_tool_call_argument_is_masked_in_the_stored_call_record(sp
     run = handle(rt)
     stored = repr([c.inputs for c in store.list_tool_calls(run.run_id)])
     assert "IOSFODNN7EXAMPLE" not in stored and "hunter2" not in stored, stored
+
+
+# ---- round 12: the reviewer's concrete inputs (the class is covered by tests/test_k5_round12_fuzz.py) ---------------------------------------
+
+
+@pytest.mark.parametrize("enc", ["%0D", "%0B", "%0C", "%E2%80%A8", "%1C", "%C2%85"])
+def test_every_white_space_character_encoded_in_a_value_keeps_the_whole_value_masked(enc):
+    out = runmap.redact_text(f"password=ab{enc}zq9tail and {KEY}", {})
+    assert "zq9" not in out, (enc, out)
+
+
+def test_a_value_with_a_plain_comma_and_an_encoded_one_is_masked_whole():
+    assert "x=1" not in runmap.redact_text(f"password=a,b%2Cx=1 and {KEY}", {})
+
+
+def test_junk_ahead_cannot_use_up_the_pairing_slots_and_a_long_value_is_masked_or_refused():
+    junk = " ".join(f"<IPV4_{i}>" for i in range(400))
+    assert "zq9" not in runmap.redact_text(f"{junk} password=ab%3Bzq9 and {KEY}", {})
+    long = "q" * 4200
+    try:
+        out = runmap.redact_text(f"password={long}%3Bzq9tail and {KEY}", {})
+    except runmap.InputTooLarge:
+        return
+    assert "zq9" not in out
+
+
+def test_the_tag_deleted_view_keeps_real_placeholders_and_line_breaks():
+    out = channel_mod.clean("host <IPV4_1> line\nnext <SECRET_2> password%<i> </i>3Dxyz9abc end")
+    assert "xyz9abc" not in out and "<IPV4_1>" in out and "<SECRET_2>" in out and "\n" in out, out
+
+
+def test_a_plain_secret_and_a_markup_split_one_are_both_masked():
+    out = channel_mod.clean("api_key=AAAA7777 and password%<i> </i>3Dhunter2 end")
+    assert "AAAA7777" not in out and "hunter2" not in out, out
+
+
+def test_markdown_cannot_be_formed_around_a_placeholder():
+    out = channel_mod.clean("see [a](<IPV4_1>) and 10.0.0.9 and [b](10.0.0.9)")
+    assert "](" not in out and "10.0.0.9" not in out, out

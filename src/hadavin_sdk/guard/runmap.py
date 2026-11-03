@@ -372,24 +372,36 @@ def _held(text: str) -> int:
 
 
 _VALUE_END = frozenset(" \t\n;&,\"'")
+_ENCODED_MARKS = ("%", chr(92), "&")
+MAX_DECODED_MASKS = 256
 
 
-def _decoded_masks(current: dict[str, str]) -> list[tuple[str, str]]:
-    """(placeholder, decoded original) for the values pass one masked whose DECODED spelling differs and is assignment
-    shaped (`key=value`): the redactor's value pattern stops at a space, `;`, `&`, `,` or a quote, so a decoded view
-    can mask only a prefix of what pass one masked whole (`password=ab%3Bzq9` reads `password=ab;zq9`). Computed once per
-    call and bounded (256 entries of at most 4,096 characters), outside the per-view loop."""
+def _decoded_masks(current: dict[str, str], text: str) -> list[tuple[str, str]]:
+    """(placeholder, decoded original) for the values pass one masked WHOLE whose decoded spelling would stop a value
+    pattern early (the decoded text holds white space of any kind, or `;`, `&`, `,` or a quote): `password=ab%3Bzq9` is
+    one value in pass one and `password=ab;zq9` in the decoded view, which would mask only `ab`. Only entries whose
+    original occurs in THIS text and holds an encoding character are considered (so earlier junk in the run's map cannot
+    use up the slots); more than `MAX_DECODED_MASKS` of them, or one value over `defaults.MAX_REDACT_CHARS`, cannot be
+    paired and the text is refused (`InputTooLarge`, nothing shown), never skipped. Computed once per call."""
     out = []
-    for ph, original in list(current.items())[:256]:
-        if len(original) > 4096:
+    for ph, original in current.items():
+        if original.startswith("\0seed") or not (
+            any(c in original for c in _ENCODED_MARKS) or not original.isascii()
+        ):
             continue
+        if original not in text:
+            continue
+        if len(out) >= MAX_DECODED_MASKS or len(original) > defaults.MAX_REDACT_CHARS:
+            raise InputTooLarge("InputTooLarge")
         try:
             decoded = undo(original)
         except RedactionError:
             continue
-        # only where decoding INTRODUCED a character that ends a value pattern (space, `;`, `&`, `,`, a quote)
-        introduced = any(c in _VALUE_END and c not in original for c in decoded)
-        if introduced and len(decoded) >= 4:
+        if (
+            decoded != original
+            and len(decoded) >= 4
+            and any(c.isspace() or c in _VALUE_END for c in decoded)
+        ):
             out.append((ph, decoded))
     return out
 
@@ -437,7 +449,15 @@ def redact_text(
         out, current = result.text, result.mapping
         if views and time.monotonic() - started > defaults.REDACT_BUDGET_S:
             raise InputTooLarge("InputTooLarge")
-        pairs = _decoded_masks(current) if views else []
+        pairs = _decoded_masks(current, text) if views else []
+        if (
+            neutralise is not None
+        ):  # the view is neutralised before it is redacted: pair the neutralised spelling too
+            pairs += [
+                (ph, n)
+                for ph, d in pairs
+                if (n := fits_after_nfkc(neutralise(d))) != d and len(n) >= 4
+            ]
         for view in views:
             if (
                 time.monotonic() - started > defaults.REDACT_BUDGET_S
