@@ -114,11 +114,13 @@ def _frag_free(out: str, secret: str) -> bool:
 @pytest.mark.parametrize("pre", range(3300, 4300, 100))
 @pytest.mark.parametrize("kind", ["jwt", "pem"])
 def test_a_long_token_straddling_the_old_cut_point_leaves_no_fragment(pre, kind):
+    """The old pre-cut fell at max(2 x max_bytes, 4096) = 4096 raw characters for max_bytes 2048. A prefix of long
+    e-mail addresses shrinks about four-fold when redacted, so what the cut left of the token landed INSIDE the final
+    window (max_bytes). The token must be redacted whole before any cut."""
     secret = _jwt(900) if kind == "jwt" else _pem()
-    # a shrinking prefix: emails become short placeholders, so cut material would land inside the final window
-    prefix = ("bob@example.com " * (pre // 16 + 1))[:pre]
+    prefix = ("bob.smith@verylongexamplehost.example.com " * (pre // 42 + 1))[:pre]
     raw = prefix + "\n" + secret + "\n" + "tail words " * 200
-    out = tools_mod.prepare_output(raw, {}, 1000, [])
+    out = tools_mod.prepare_output(raw, {}, 2048, [])
     assert _frag_free(out, secret), (kind, pre)
 
 
