@@ -80,27 +80,49 @@ def test_a_take_back_waits_for_a_concurrent_writer_and_reads_its_committed_total
 
 
 def test_eight_concurrent_take_backs_of_the_whole_day_leave_zero_not_minus_seven():
+    # Eight take-backs of the whole day queue behind a transaction that holds the day row, then all run at once.
+    # With the row lock each reads the total left by the one before (1.00, then 0): the day ends at 0. Without it
+    # every one reads 1.00 before the holder commits and the queued UPDATEs end at 1.00 - 8 x 1.00 = -7.00.
+    psycopg = pytest.importorskip("psycopg")
     for dsn in pg_schema():
         store = _pg_store(dsn, LOCK_TIMEOUT_MS=30000)
         try:
             store.settle_spend([("a", DAY, D("1.00"))])
-            store.settle_spend(
-                [("a", DAY.replace(day=2), D("3.00"))]
-            )  # another day of the same month
-            gate, errors = threading.Barrier(8), []
+            store.settle_spend([("a", DAY.replace(day=2), D("3.00"))])  # another day, same month
+            errors: list[BaseException] = []
 
-            def take_back(store=store, errors=errors, gate=gate):
+            def take_back(store=store, errors=errors):
                 try:
-                    gate.wait(30)
                     store.settle_spend([("a", DAY, D("-1.00"))])
                 except BaseException as exc:  # noqa: BLE001 - reported below
                     errors.append(exc)
 
-            ts = [threading.Thread(target=take_back) for _ in range(8)]
-            for t in ts:
-                t.start()
-            for t in ts:
-                t.join(60)
+            with (
+                psycopg.connect(dsn) as holder,
+                psycopg.connect(dsn, autocommit=True) as watch,
+            ):
+                holder.execute(
+                    "SELECT usd FROM spend WHERE agent_id = 'a' AND day = %s FOR UPDATE", (DAY,)
+                )
+                ts = [threading.Thread(target=take_back) for _ in range(8)]
+                for t in ts:
+                    t.start()
+                try:
+                    end = time.monotonic() + 60
+                    while (
+                        watch.execute(
+                            "SELECT count(*) FROM pg_stat_activity WHERE wait_event_type = 'Lock' "
+                            "AND datname = current_database() AND pid <> %s",
+                            (holder.info.backend_pid,),
+                        ).fetchone()[0]
+                        < 8
+                    ):
+                        assert time.monotonic() < end, "the take-backs never all queued on the row"
+                        time.sleep(0.01)
+                finally:
+                    holder.commit()
+                    for t in ts:
+                        t.join(60)
             assert not errors, [type(x).__name__ for x in errors]
             assert store.spend_totals("a", DAY) == (D("0"), D("3.00"))
         finally:
