@@ -1211,28 +1211,28 @@ M = [
         EG,
         "elif (ot == 0 and wk == 0) or (ot >= 1 and sg >= 4):",
         "elif (ot == 0 and wk == 0 and sg >= 2) or (ot >= 1 and sg >= 4):",
-        "test_one_letter_and_filler_split",
+        "test_splitting_a_letter_number_through_filler",
     ),
     Mutant(
         "egress: a cluster of four strong letters with filler needs five",
         EG,
         "elif (ot == 0 and wk == 0) or (ot >= 1 and sg >= 4):",
         "elif (ot == 0 and wk == 0) or (ot >= 1 and sg >= 5):",
-        "test_the_boundary_constants",
+        "test_splitting_a_letter_number_through_filler",
     ),
     Mutant(
         "egress: a sparse cluster needs a majority of strong letters",
         EG,
         "elif (ot == 0 and wk == 0) or (ot >= 1 and sg >= 4):",
         "elif (ot == 0 and wk == 0) or (ot >= 1 and sg >= 4 and 2 * sg > sg + ot):",
-        "test_the_boundary_constants",
+        "test_splitting_a_letter_number_through_filler",
     ),
     Mutant(
         "egress: the weak letters of a one-digit-one-strong token count",
         EG,
         "text_plain += d + sg + (wk if d + sg >= 2 else 0)",
         "text_plain += d + sg + (wk if d + sg >= 1 else 0)",
-        "test_the_boundary_constants",
+        "test_weak_letters_glued_to_digits_count",
     ),
     Mutant(
         "egress: the weak letters of a two-character token need three",
@@ -1280,9 +1280,15 @@ M = [
 
 if __name__ == "__main__":
     only = sys.argv[1:]
-    def show(row):  # one line per mutant, as soon as it finishes: a timeout of the whole run still leaves a kill list
+
+    def show(
+        row,
+    ):  # one line per mutant, as soon as it finishes: a timeout of the whole run still leaves a kill list
         name, v, test_id, good = row
-        print(f"{'ok ' if good else 'BAD'} {v:12} {name}  [{test_id.split('::')[-1][:60]}]", flush=True)
+        print(
+            f"{'ok ' if good else 'BAD'} {v:12} {name}  [{test_id.split('::')[-1][:60]}]",
+            flush=True,
+        )
 
     res = run_mutants(
         ROOT, M, [TEST], extra_dirs=("tests/fixtures", "docs", "tools"), only=only, on_result=show

@@ -191,7 +191,9 @@ def run_mutants(
                 else ("", "")
             )
             v = judge(rc, test_id, first, expect=m.expect)
-            emit((m.name, v, test_id, v is Verdict.KILLED or (v is Verdict.CRASH and m.allow_crash)))
+            emit(
+                (m.name, v, test_id, v is Verdict.KILLED or (v is Verdict.CRASH and m.allow_crash))
+            )
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
     return out

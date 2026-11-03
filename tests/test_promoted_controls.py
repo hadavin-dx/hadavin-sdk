@@ -1943,19 +1943,30 @@ def test_the_baseline_run_gets_its_own_timeout(tmp_path, monkeypatch):
     assert seen == [9, 9]  # the baseline falls back to the mutant timeout
 
 
-def test_the_runner_streams_each_result_and_keeps_a_sigkill_apart_from_a_timeout(tmp_path, monkeypatch):
+def test_the_runner_streams_each_result_and_keeps_a_sigkill_apart_from_a_timeout(
+    tmp_path, monkeypatch
+):
     from tools import mutation_runner as mr
 
     assert mr.TIMED_OUT != -9 and mr.TIMED_OUT < -64  # no process exit status can equal it
     root = tmp_path / "pkg"
     (root / "src" / "pk").mkdir(parents=True)
     (root / "tests").mkdir()
-    (root / "src" / "pk" / "core.py").write_text("def go(flag):\n    return flag\n", encoding="utf-8")
-    (root / "tests" / "test_core.py").write_text("def test_a():\n    assert True\n", encoding="utf-8")
-    codes = iter([0, -9, mr.TIMED_OUT])  # baseline, a mutant killed by SIGKILL (the OOM killer), a mutant that timed out
+    (root / "src" / "pk" / "core.py").write_text(
+        "def go(flag):\n    return flag\n", encoding="utf-8"
+    )
+    (root / "tests" / "test_core.py").write_text(
+        "def test_a():\n    assert True\n", encoding="utf-8"
+    )
+    codes = iter(
+        [0, -9, mr.TIMED_OUT]
+    )  # baseline, a mutant killed by SIGKILL (the OOM killer), a mutant that timed out
 
     monkeypatch.setattr(mr, "_pytest", lambda cwd, tests, junit, timeout: next(codes))
-    muts = [Mutant(f"m{i}", "src/pk/core.py", "return flag", "return not flag", "test_a_x") for i in range(2)]
+    muts = [
+        Mutant(f"m{i}", "src/pk/core.py", "return flag", "return not flag", "test_a_x")
+        for i in range(2)
+    ]
     seen, finished = [], []
     mr_run = mr.run_mutants
 
@@ -1965,7 +1976,9 @@ def test_the_runner_streams_each_result_and_keeps_a_sigkill_apart_from_a_timeout
 
     out = mr_run(root, muts, ["tests/test_core.py"], extra_dirs=(), on_result=on_result)
     assert seen == ["m0", "m1"] and finished == [1, 2] and [r[0] for r in out] == seen
-    assert out[0][1] is Verdict.ERROR and out[0][2] != "TIMEOUT" and out[0][3] is False  # SIGKILL: an error, not a timeout
+    assert (
+        out[0][1] is Verdict.ERROR and out[0][2] != "TIMEOUT" and out[0][3] is False
+    )  # SIGKILL: an error, not a timeout
     assert out[1] == ("m1", Verdict.ERROR, "TIMEOUT", False)
 
 
@@ -2276,7 +2289,27 @@ def test_redact_leaves_an_existing_placeholder_on_a_non_ascii_line_alone():
 
 
 # ---- review round 7 (code-7): splitting through filler, gluing, boundary constants -------------------------------------------------------
-_STRONG_ONLY = ["I", "O", "l", "S", "Z", "B", "o", "s", "z", "Ol", "IS", "BZ", "lll", "OlS", "lllll", "Oslo", "Boss", "OlISBZGQ", "so"]
+_STRONG_ONLY = [
+    "I",
+    "O",
+    "l",
+    "S",
+    "Z",
+    "B",
+    "o",
+    "s",
+    "z",
+    "Ol",
+    "IS",
+    "BZ",
+    "lll",
+    "OlS",
+    "lllll",
+    "Oslo",
+    "Boss",
+    "OlISBZGQ",
+    "so",
+]
 _FILLER = ["x", "y", "k", "m", "xx", "w", "kmw", "N", "H"]  # no digit-like letter
 _SEPS = [" ", "  ", "-", ",", ".", ":", ";", "/", " - "]
 
@@ -2290,7 +2323,9 @@ def _split_case(rng):
 
 
 def _joined(parts, rng):
-    return "".join(p + (rng.choice(_SEPS) if i < len(parts) - 1 else "") for i, p in enumerate(parts))
+    return "".join(
+        p + (rng.choice(_SEPS) if i < len(parts) - 1 else "") for i, p in enumerate(parts)
+    )
 
 
 def _splits_cases(count, rng, n_cases):
@@ -2302,7 +2337,13 @@ def _splits_cases(count, rng, n_cases):
         i = rng.randrange(len(parts))
         if rng.random() < 0.5 and len(parts[i]) >= 2 and all(c in "OolISsZzBGQ" for c in parts[i]):
             cut = rng.randint(1, len(parts[i]) - 1)
-            parts2 = [*parts[:i], parts[i][:cut], rng.choice(_FILLER), parts[i][cut:], *parts[i + 1 :]]
+            parts2 = [
+                *parts[:i],
+                parts[i][:cut],
+                rng.choice(_FILLER),
+                parts[i][cut:],
+                *parts[i + 1 :],
+            ]
         else:
             parts2 = [*parts[: i + 1], rng.choice(_FILLER), *parts[i + 1 :]]
         yield before, _joined(parts2, rng)
@@ -2316,7 +2357,12 @@ def _old_count():
     new = "elif (ot == 0 and wk == 0) or (ot >= 1 and sg >= 4):"
     assert new in src
     ns = dict(vars(egress_text))
-    exec(src.replace(new, "elif (ot == 0 and wk == 0 and n >= 2) or (ot >= 1 and sg >= 4 and 2 * sg > n):").replace("        word =", "        n = len(tok)\n        word ="), ns)  # noqa: S102 - a test-only control built from the module's own source
+    exec(  # noqa: S102 - a test-only control built from the module's own source
+        src.replace(
+            new, "elif (ot == 0 and wk == 0 and n >= 2) or (ot >= 1 and sg >= 4 and 2 * sg > n):"
+        ).replace("        word =", "        n = len(tok)\n        word ="),
+        ns,
+    )
     return ns["_digitish_count"]
 
 
@@ -2348,7 +2394,10 @@ def test_one_letter_and_filler_split_card_numbers_are_refused():
         assert egress_text.check_text(text, policy=payments) == Violation.DIGIT_BUDGET, text
         assert egress_text.check_text(text, policy=general) == Violation.DIGIT_BUDGET, text
     old = _old_count()
-    assert old("4 " + " x ".join(["I"] * 15), 6) < 8 and old("4 OlSZBxxxxx OlSZBxxxxx OlSZBxxxxx", 6) < 8  # fail on the old rule
+    assert (
+        old("4 " + " x ".join(["I"] * 15), 6) < 8
+        and old("4 OlSZBxxxxx OlSZBxxxxx OlSZBxxxxx", 6) < 8
+    )  # fail on the old rule
 
 
 def test_gluing_a_letter_never_lowers_a_cluster_of_four_and_does_lower_a_short_word():
@@ -2381,20 +2430,42 @@ def test_the_false_refusals_on_prose_are_the_documented_ones():
     assert egress_text.check_text("Bill 12345678901", policy=general) == Violation.DIGIT_BUDGET
     assert egress_text.check_text("BLISS GLOSS", policy=payments) == Violation.DIGIT_BUDGET
     assert egress_text.check_text("I paid 1234 for it", policy=payments) is None
-    docs = (Path(__file__).resolve().parents[1] / "docs" / "promoted-controls.md").read_text(encoding="utf-8")
+    docs = (Path(__file__).resolve().parents[1] / "docs" / "promoted-controls.md").read_text(
+        encoding="utf-8"
+    )
     for phrase in ("Boss 1234", "Oslo 1234", "Bill 1234", "BLISS GLOSS", "PIECES"):
         assert phrase in docs, phrase
 
 
 def test_the_boundary_constants_of_the_whole_text_reading():
     count = egress_text._digitish_count
-    assert count("4 I I I I I I I", 6) == 8  # a lone strong letter counts over the whole text (ot == 0 and wk == 0)
-    assert count("4 xlll xlll", 6) == 1  # 3 strong letters with filler: a word, not counted (sg >= 4 not met)
-    assert count("4 xllll xllll", 6) == 9  # 4 strong letters with filler count whatever the filler (sg >= 4)
-    assert count("4 xlllllllllllxxxxxxxxxxxxxxx", 6) >= 12  # a sparse cluster counts (no majority rule)
-    assert count("1b 7", 6) == 2  # one digit and a weak letter: the weak letter does not count (d + sg < 2)
-    assert count("1b5i7g3q", 6) == 8  # a token with 2 or more digit-like characters: its weak letters count
-    assert count("l 1 Zq call 4", 6, 2, 2) == 3  # a bare strong letter is not a free word: `call` keeps its free slot
+    assert (
+        count("4 I I I I I I I", 6) == 8
+    )  # a lone strong letter counts over the whole text (ot == 0 and wk == 0)
+    assert (
+        count("4 xlll xlll", 6) == 1
+    )  # 3 strong letters with filler: a word, not counted (sg >= 4 not met)
+    assert (
+        count("4 xllll xllll", 6) == 9
+    )  # 4 strong letters with filler count whatever the filler (sg >= 4)
+    assert (
+        count("4 xlllllllllllxxxxxxxxxxxxxxx", 6) >= 12
+    )  # a sparse cluster counts (no majority rule)
+    assert (
+        count("1b 7", 6) == 2
+    )  # one digit and a weak letter: the weak letter does not count (d + sg < 2)
+    assert (
+        count("1b5i7g3q", 6) == 8
+    )  # a token with 2 or more digit-like characters: its weak letters count
+    assert (
+        count("l 1 Zq call 4", 6, 2, 2) == 3
+    )  # a bare strong letter is not a free word: `call` keeps its free slot
+    assert (
+        count("4 lllxlllxllxxxxxxxxxxxx", 6) == 9
+    )  # strong letters split into runs below the run minimum, inside a mostly-filler token, still count (sg >= 4, no majority rule)
+    assert (
+        count("g1qx9", 6) == 4
+    )  # two digit-like characters are enough for the weak letters to count (d + sg >= 2)
     assert count("4 IbIb", 6) == 5  # the weak letters of a token with 2+ strong letters count
 
 
