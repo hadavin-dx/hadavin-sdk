@@ -37,6 +37,7 @@ from hadavin_sdk.runtime.agent_loop import Hooks, Runtime
 from hadavin_sdk.sources import Source
 from hadavin_sdk.sources.kinds import KINDS
 from hadavin_sdk.store import Store
+from hadavin_sdk.store.protocol import missing_methods
 
 _LOG = logging.getLogger("hadavin_sdk.app")
 
@@ -143,6 +144,10 @@ def build(
     signer = make("signer", b.signer, secrets)
     anchor = make("anchor", b.anchor, secrets)
     store = make("store", b.store, secrets)
+    if lacking := missing_methods(store):
+        raise ConfigError(
+            f"the store backend lacks {', '.join(lacking)}: added to the Store protocol in this version (see CHANGELOG, Upgrade steps)"
+        )
     purge_store = store
     if purge_name := getattr(b.store, "purge_dsn_secret_name", None):
         # The purge step deletes evidence; the runtime identity cannot. A second connection, a second role.

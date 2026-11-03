@@ -45,3 +45,17 @@ KINDS: dict[str, SourceKind] = {
         endpoint=lambda settings: settings.api_url,
     ),
 }
+
+
+def register(name: str, kind: SourceKind) -> None:
+    """Add a kind. Two kinds whose operation prefixes overlap (`k8s.` and `k8s.metrics.`) would both claim a tool's
+    operation: refused here, not at the first run."""
+    for other_name, other in KINDS.items():
+        if other_name != name and (
+            kind.operation_prefix.startswith(other.operation_prefix)
+            or other.operation_prefix.startswith(kind.operation_prefix)
+        ):
+            raise ValueError(
+                f"source kind {name!r}: prefix {kind.operation_prefix!r} overlaps {other_name!r}"
+            )
+    KINDS[name] = kind

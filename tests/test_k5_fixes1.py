@@ -1,4 +1,4 @@
-"""Fixes for the code review of PR #42 (egm/bhovix-core/pr42/review-code-1.md): M2 input cap on redaction, M3 grounding
+"""Fixes from the first code review: M2 input cap on redaction, M3 grounding
 cannot be left off, m1 the request carries the checked host, m2 more refused ranges, m3 lookups cannot pile up threads,
 m5 what the redactor does not claim, and the ledger refusing two migrations with one number (B2)."""
 

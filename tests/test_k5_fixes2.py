@@ -1,4 +1,4 @@
-"""Fixes for the second code review of PR #42 (egm/bhovix-core/pr42/review-code-2.md): M-A the cap is on the work (views),
+"""Fixes from the second code review: M-A the cap is on the work (views),
 m-1 the reason a document is refused, m-2 one bound, m-3/m-7 NAT64, m-4 the lookup permit, m-5 suffix grammar, m-8 nested
 identifier flags, m-9 evals message, and the migration ledger refusing a database that applied the old file name."""
 
@@ -182,6 +182,7 @@ def test_adjacent_variable_repeats_are_refused():
     )  # fixed repeats are free
 
 
+@pytest.mark.perf  # a wall-clock or CPU-time bound: it runs in the perf step, not the default suite
 @pytest.mark.perf  # a wall-clock or CPU-time bound: it runs in the perf step, not the default suite
 def test_the_worst_allowed_suffix_is_fast_on_a_hostile_name():
     """Two overlapping variable repeats of 64 on a name that never matches: polynomial, and measured."""

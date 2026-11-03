@@ -1,4 +1,4 @@
-"""PR #42 evidence 14: a secret's front survived LAYERED encodings. `pct(entity(secret))` cut inside the token
+"""A secret's front survived LAYERED encodings. `pct(entity(secret))` cut inside the token
 leaked at 7 of 451 cut points. Class: any ordered stack of the supported encodings (percent, HTML entity decimal and
 hex, backslash-u, backslash-slash, NFKC full-width, a base64 token front) of any depth up to the cap must not let a
 fragment of a registered secret survive the scrub, whatever the cut. Root cause: the decoder applied percent-decoding
@@ -92,7 +92,7 @@ def run(
     return survivors(out, secret)
 
 
-# ---- the failing cases of evidence 14, every cut point of the layered spellings ------------------------------
+# ---- the recorded failing cases, every cut point of the layered spellings ------------------------------
 
 
 @pytest.mark.parametrize(
@@ -226,3 +226,63 @@ def test_ascii_text_never_reaches_the_normaliser(monkeypatch):
     monkeypatch.setattr(runmap, "fits_after_nfkc", lambda t: calls.append(t) or t)
     tools_mod._nfkc("%EF%B7%BA" * 10)
     assert calls == []
+
+
+# --- round 6: pattern-shaped secrets behind layers, and the cut after the redaction ----------------------------------------------------
+@pytest.mark.parametrize(
+    "spelling",
+    [
+        "%41KIA" + "IOSFODNN7EXAMPLE",
+        "&#65;KIA" + "IOSFODNN7EXAMPLE",
+        "password%3Dhunter2",
+        "&#x70;assword=hunter2",
+    ],
+)
+def test_a_pattern_shaped_secret_behind_a_layer_is_masked_in_every_tool_result_without_a_handed_out_secret(
+    spelling,
+):
+    out = prepare_output(f"line {spelling} end", {}, 16384, [])
+    assert "IOSFODNN7EXAMPLE" not in out and "hunter2" not in out
+
+
+def test_a_text_nested_past_the_cap_with_no_secret_handed_out_is_not_shown():
+    deep = "%41KIA" + "IOSFODNN7EXAMPLE"
+    for _ in range(defaults.SCRUB_MAX_LAYERS + 2):
+        deep = up.quote(deep, safe="")
+    assert prepare_output(deep, {}, 16384, []).startswith(MARKER)
+
+
+def test_error_reason_redacts_a_jwt_before_the_160_character_cut():
+    jwt = (
+        "eyJhbGciOiJIUzI1NiJ9."
+        + "eyJzdWIiOiJhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhIn0."
+        + "c2lnbmF0dXJlc2lnbmF0dXJl"
+    )
+    msg = "x" * (160 - len("ValueError: ") - 12) + jwt  # the cut at 160 would land inside the token
+    reason = tools_mod.error_reason(ValueError(msg), [])
+    assert "eyJzdWIi" not in reason and "eyJhbGci" not in reason
+
+
+def test_error_reason_with_an_expanding_message_and_a_handed_out_secret_is_refused():
+    with pytest.raises(RedactionError):
+        tools_mod.error_reason(ValueError("ﷺ" * 87000), [SECRET])
+
+
+def test_a_mime_wrapped_base64_of_a_handed_out_secret_is_masked():
+    body = base64.b64encode(("password=" + SECRET + " " * 60).encode()).decode()
+    wrapped = "\n".join(body[i : i + 76] for i in range(0, len(body), 76))
+    assert "\n" in wrapped
+    for text in (wrapped, wrapped.replace("\n", "\r\n")):
+        out = prepare_output("attachment:\n" + text + "\nend", {}, 16384, [SECRET])
+        assert SECRET not in out and body[:20] not in out
+
+
+def test_a_base64_of_a_quoted_or_hex_spelling_of_a_handed_out_secret_is_masked():
+    for spelling in (
+        up.quote(SECRET, safe=""),
+        SECRET.encode().hex(),
+        SECRET.encode().hex().upper(),
+    ):
+        tok = base64.b64encode(("x=" + spelling).encode()).decode()
+        out = prepare_output(f"blob {tok} end", {}, 16384, [SECRET])
+        assert tok not in out, spelling

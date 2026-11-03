@@ -1,4 +1,4 @@
-"""Fixes for the third code review of PR #42 (egm/bhovix-core/pr42/review-code-3.md): M-B the secret scrub in tool results
+"""Fixes from the third code review: M-B the secret scrub in tool results
 normalised before any cap, m-A nested identifier flags for every action, m-B aggregate expansion in redact_value, m-C bare
 redact() callers cut their input."""
 

@@ -465,6 +465,7 @@ def test_class_mutability_tool_bodies_are_trusted_code_this_is_the_ceiling():
 @pytest.mark.parametrize(
     "body", ["time.sleep(3600)", "threading.Event().wait()", "while True: pass"]
 )
+@pytest.mark.perf  # a wall-clock or CPU-time bound: it runs in the perf step, not the default suite
 def test_class_threads_a_tool_that_never_returns_does_not_block_process_exit(body):
     script = textwrap.dedent(
         f"""

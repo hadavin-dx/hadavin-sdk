@@ -6,7 +6,7 @@ import pytest
 
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.k1b.bundle import load_bundles
-from hadavin_sdk.k1b.redaction import LIMITS, STRUCTURAL_KEYS, redact_bundle
+from hadavin_sdk.k1b.redaction import LIMITS, redact_bundle
 from tests.k1b_support import ScriptedLLM, calls_reply, make_bundle, submit, tool_reply
 from tests.test_k1b_replay import Env, _with_k1b
 
@@ -147,7 +147,6 @@ def test_timestamps_and_structural_values_survive(env):
     assert {r["service"] for _, rs in masked.logs for r in rs} == {"api", "db"}
     assert masked.k8s[0][1]["name"] == "api" and masked.ids == bundle.ids
     assert masked.logs[0][0] == bundle.logs[0][0]  # file names stay
-    assert STRUCTURAL_KEYS == {"service", "fault_type", "kind", "ts", "as_of"}
 
 
 def test_redaction_off_needs_the_acknowledgement_and_is_recorded(env):

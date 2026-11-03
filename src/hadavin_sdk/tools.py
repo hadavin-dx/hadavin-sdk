@@ -685,12 +685,17 @@ def _boundary(data: bytes, tail: int = TAIL_WINDOW) -> int:
     return last + 1 if last >= 0 else window_start
 
 
-_B64_TOKEN = re.compile(r"[A-Za-z0-9+/_=-]{12,}")
+# MIME base64 wraps every 76 columns (CRLF or LF): the lines of one token are joined before decoding
+B64_MIN_TOKEN = (
+    12  # one bound for the whole-token scan and the cut-tail strip (CHANGELOG states it)
+)
+_B64_TOKEN = re.compile(rf"[A-Za-z0-9+/_=-]{{{B64_MIN_TOKEN},}}(?:\r?\n[A-Za-z0-9+/_=-]{(4,)})*")
 
 
 def _b64_holds(token: str, secrets: list[str], depth: int) -> bool:
     """Does `token` decode (base64, standard or URL-safe) to text holding a secret, or, `depth` levels down, to
     more base64 that does?"""
+    token = "".join(token.split())
     padded = token + "=" * (-len(token) % 4)
     padded32 = token + "=" * (-len(token) % 8)
     for decode, data in (
@@ -712,8 +717,10 @@ def _b64_holds(token: str, secrets: list[str], depth: int) -> bool:
 def _derived(text: str, secrets: list[str]) -> str:
     """Tokens that decode (base64, standard or URL-safe, twice) to something holding a secret: a derived
     Basic-auth header, a token wrapping the secret, a doubly encoded one. Replaced whole."""
+    # every spelling of every secret: the token may wrap the quoted, hex or JSON-escaped form, not only the raw one
+    forms = sorted({f for x in secrets for f in _secret_forms(x)})
     return _B64_TOKEN.sub(
-        lambda m: "<SECRET_REDACTED>" if _b64_holds(m.group(0), secrets, 2) else m.group(0), text
+        lambda m: "<SECRET_REDACTED>" if _b64_holds(m.group(0), forms, 2) else m.group(0), text
     )
 
 
@@ -849,7 +856,9 @@ def _strip_b64_tail(body: str, bforms: list[bytes], scrub: ScrubSettings) -> str
     while i > low and body[i - 1] in _B64_CHARS:
         i -= 1
     tok = body[i:]
-    if len(tok) < 8:  # a wrapped credential is longer; a short run of letters is just a word
+    if (
+        len(tok) < B64_MIN_TOKEN
+    ):  # a wrapped credential is longer; a short run of letters is just a word
         return body
     t = tok.replace("-", "+").replace("_", "/").rstrip("=")
     if len(t) % 4 == 1:
@@ -1001,7 +1010,25 @@ def prepare_output(
     long_enough = [x for x in secrets or [] if len(x) >= scrub.min_secret]
     if long_enough:
         raw = _scrub(raw, long_enough, scrub)
-    return truncate(runmap.redact_untrusted(raw, mapping), max_bytes)
+    return truncate(redact_layered(raw, mapping), max_bytes)
+
+
+def redact_layered(raw: str, mapping: dict[str, str]) -> str:
+    """`redact_untrusted` for EVERY tool result, not only when a secret was handed out: a pattern-shaped secret
+    (`%41KIAIOSFODNN7EXAMPLE`, `&#65;KIAIOSFODNN7EXAMPLE`, `password%3Dhunter2`) is found in the decoded view too.
+    The view (layers undone to a fixed point, `_undo`) replaces the text only when redacting it found something new,
+    as `redact_text` does for its own views; a text nested deeper than the cap is not shown (fail closed)."""
+    out = runmap.redact_untrusted(raw, mapping)
+    try:
+        view = _undo(raw)
+    except TooDeep:
+        return MARKER + TRUNCATED
+    if view != raw:
+        before = dict(mapping)
+        again = runmap.redact_untrusted(view, mapping)
+        if mapping != before or runmap._held(again) > runmap._held(out):
+            return again
+    return out
 
 
 def error_reason(
@@ -1020,6 +1047,10 @@ def error_reason(
             message, defaults.MAX_REDACT_CHARS - len(TRUNCATED), scrub.tail_window
         )  # bounded work
         message = _scrub(message, long_enough, scrub)
+    # patterns FIRST, then the cut: a cut first splits a JWT or a key and the redactor no longer sees a whole one
+    message = redact_layered(
+        _cut(message, defaults.MAX_REDACT_CHARS - len(TRUNCATED), scrub.tail_window), {}
+    )
     if refused:
         return message[:200]
     return f"{type(exc).__name__}: {message[:160]}"

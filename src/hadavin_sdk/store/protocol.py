@@ -146,3 +146,15 @@ class Store(Protocol):
         still move (OPEN_STATES: received, working, plan ready, awaiting approval, executing, verifying) is kept,
         because restoring its inputs needs it (NEEDS_PERSON cannot move, so its map ages normally); the 400-day ceiling passes `keep_open=False`. Returns the count."""
         ...
+
+
+def missing_methods(store: object) -> list[str]:
+    """The methods of `Store` that `store` does not have. A custom store written for an earlier version lacks the
+    evidence methods (`add_tool_call`, `list_tool_calls`, `purge_tool_calls`, `put_redaction_map`,
+    `get_redaction_map`, `purge_redaction_maps`); the app refuses it at start with these names rather than failing
+    on the first tool call."""
+    return sorted(
+        n
+        for n, v in vars(Store).items()
+        if callable(v) and not n.startswith("_") and not callable(getattr(store, n, None))
+    )
