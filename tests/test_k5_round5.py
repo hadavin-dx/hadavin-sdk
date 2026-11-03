@@ -246,6 +246,7 @@ def test_m2_a_toolbox_without_a_proposal_check_is_refused(tmp_path):
 # --- M3: a runaway return value is cut before redaction ------------------------------------------------------------------
 
 
+@pytest.mark.perf  # a wall-clock bound: runs in the perf step, not the default suite
 def test_m3_a_multi_megabyte_return_is_cut_before_redaction():
     huge = "ERROR 10.0.0.5 retry\n" * 400_000  # about 8 MB
     started = __import__("time").monotonic()

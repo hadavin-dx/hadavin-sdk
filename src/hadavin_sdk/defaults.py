@@ -48,6 +48,9 @@ SCRUB_FRAGMENT_SCAN = (
     4096  # how far back from a cut the strip looks for the front of a partial secret
 )
 SCRUB_FRAGMENT_MIN = 1  # characters of a secret's front that are removed next to a cut
+SCRUB_MAX_LAYERS = (
+    8  # nested encodings (percent, entity, backslash) undone before the scrub fails closed
+)
 SCRUB_PARTIAL_END = 10  # the longest half-written escape a cut can leave; added to the look-back
 SOURCE_REPROBE_S = 3600  # how often the scope of a configured source is probed again while running
 MAX_TOOL_BYTES_PER_RUN = 262_144  # bytes of tool results one run may send to the model
