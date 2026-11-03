@@ -686,10 +686,10 @@ def _boundary(data: bytes, tail: int = TAIL_WINDOW) -> int:
 
 
 # MIME base64 wraps every 76 columns (CRLF or LF): the lines of one token are joined before decoding
-B64_MIN_TOKEN = (
-    12  # one bound for the whole-token scan and the cut-tail strip (CHANGELOG states it)
+B64_MIN_TOKEN = 8  # one bound for the whole-token scan and the cut-tail strip (CHANGELOG states it)
+_B64_TOKEN = re.compile(
+    r"[A-Za-z0-9+/_=-]{" + str(B64_MIN_TOKEN) + r",}(?:\r?\n[A-Za-z0-9+/_=-]{4,})*"
 )
-_B64_TOKEN = re.compile(rf"[A-Za-z0-9+/_=-]{{{B64_MIN_TOKEN},}}(?:\r?\n[A-Za-z0-9+/_=-]{(4,)})*")
 
 
 def _b64_holds(token: str, secrets: list[str], depth: int) -> bool:
@@ -718,7 +718,7 @@ def _derived(text: str, secrets: list[str]) -> str:
     """Tokens that decode (base64, standard or URL-safe, twice) to something holding a secret: a derived
     Basic-auth header, a token wrapping the secret, a doubly encoded one. Replaced whole."""
     # every spelling of every secret: the token may wrap the quoted, hex or JSON-escaped form, not only the raw one
-    forms = sorted({f for x in secrets for f in _secret_forms(x)})
+    forms = sorted(set(secrets) | {f for x in secrets for f in _secret_forms(x)})
     return _B64_TOKEN.sub(
         lambda m: "<SECRET_REDACTED>" if _b64_holds(m.group(0), forms, 2) else m.group(0), text
     )

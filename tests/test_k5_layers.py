@@ -269,12 +269,13 @@ def test_error_reason_with_an_expanding_message_and_a_handed_out_secret_is_refus
 
 
 def test_a_mime_wrapped_base64_of_a_handed_out_secret_is_masked():
-    body = base64.b64encode(("password=" + SECRET + " " * 60).encode()).decode()
+    # 50 bytes of padding: the secret straddles the first wrap, so no single line decodes to the whole secret
+    body = base64.b64encode(("p" * 50 + SECRET + " " * 60).encode()).decode()
     wrapped = "\n".join(body[i : i + 76] for i in range(0, len(body), 76))
     assert "\n" in wrapped
     for text in (wrapped, wrapped.replace("\n", "\r\n")):
         out = prepare_output("attachment:\n" + text + "\nend", {}, 16384, [SECRET])
-        assert SECRET not in out and body[:20] not in out
+        assert SECRET not in out and body[:30] not in out and body[-30:] not in out
 
 
 def test_a_base64_of_a_quoted_or_hex_spelling_of_a_handed_out_secret_is_masked():
