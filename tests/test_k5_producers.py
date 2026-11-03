@@ -142,3 +142,68 @@ def test_no_message_is_cut_with_a_slice_before_it_is_redacted():
                         bad.append(f"{path.relative_to(ROOT).as_posix()}:{n.lineno}")
     # `tools.error_reason` slices a message that was ALREADY redacted into `message` (assigned from redact_bounded)
     assert not [b for b in bad if not b.startswith("tools.py:")], bad
+
+
+REDACTORS = {
+    "redact_text",
+    "redact_untrusted",
+    "redact_bounded",
+    "redact_value",
+    "redact_layered",
+    "safe_head",
+    "clean",
+}
+
+
+def _is_redactor_value(node: ast.AST) -> bool:
+    """A call to a redaction function, possibly indexed (`redact_bounded(...)[0]`) or `.replace`d."""
+    while isinstance(node, ast.Subscript | ast.Attribute):
+        node = node.value
+    if isinstance(node, ast.Call):
+        f = node.func
+        name = f.id if isinstance(f, ast.Name) else getattr(f, "attr", "")
+        if name in REDACTORS:
+            return True
+        if isinstance(f, ast.Attribute):  # `safe_head(...).replace(...)`
+            return _is_redactor_value(f.value)
+    return False
+
+
+def test_in_producer_functions_a_head_slice_only_follows_a_redaction():
+    """Data-flow aware: in every registered producer function a head slice `x[:N]` must slice a value that came from a
+    redaction function (directly, or through a name assigned from one, or from a slice of such a name, in the same
+    function). A slice of anything else is a cut before redaction. A digest prefix (`plan.hash()[:12]`) is not text."""
+    bad = []
+    for name, rel, func, _chokes in PRODUCERS:
+        for fn in _functions(_tree(ROOT / rel), func):
+            redacted: set[str] = set()
+            for _ in range(
+                3
+            ):  # a small fixed point: names derived from a redacted name stay redacted
+                for n in ast.walk(fn):
+                    if not isinstance(n, ast.Assign):
+                        continue
+                    src = n.value
+                    derived = (
+                        isinstance(src, ast.Subscript)
+                        and isinstance(src.value, ast.Name)
+                        and src.value.id in redacted
+                    )
+                    if _is_redactor_value(src) or derived:
+                        redacted |= {t.id for t in n.targets if isinstance(t, ast.Name)}
+            for n in ast.walk(fn):
+                if (
+                    isinstance(n, ast.Subscript)
+                    and isinstance(n.slice, ast.Slice)
+                    and n.slice.lower is None
+                ):
+                    v = n.value
+                    is_hash = isinstance(v, ast.Call) and getattr(v.func, "attr", "") == "hash"
+                    ok = (
+                        is_hash
+                        or _is_redactor_value(v)
+                        or (isinstance(v, ast.Name) and v.id in redacted)
+                    )
+                    if not ok:
+                        bad.append(f"{name}: {rel}:{n.lineno}")
+    assert not bad, bad

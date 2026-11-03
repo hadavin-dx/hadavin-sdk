@@ -63,10 +63,19 @@ def nfkc(text: str) -> str:
     return canonical(fits_after_nfkc(text))
 
 
+_HEX_ESCAPE = re.compile(r"\\x([0-9a-fA-F]{2})")
+
+
+def hex_unescape(text: str) -> str:
+    """Backslash-x escapes (a backslash, x and two hex digits), as C, Python and many log pipelines write them.
+    Octal escapes are NOT decoded."""
+    return _HEX_ESCAPE.sub(lambda m: chr(int(m.group(1), 16)), text) if "\\x" in text else text
+
+
 def undo(text: str, clean: bool = False) -> str:
     """The text with the encodings an attacker or a log pipeline layers over a value undone: JSON string escapes
     (backslash-u with surrogate pairs joined, and the one-character escapes: PHP writes every slash as backslash-slash),
-    percent-encoding, HTML entities, then NFKC and invisible characters. Each round applies the three decoders ONE
+    backslash-x escapes (not octal), percent-encoding, HTML entities, then NFKC and invisible characters. Each round applies the three decoders ONE
     AT A TIME (a combined step turns a half-written `&#10` that percent-decoding just exposed into a newline before
     anyone can see it was half an escape), and the round repeats to a fixed point: the layers nest in any order
     and depth (`&#37;41`, `%2541`, `%26%2390%3B`). The depth is capped at `defaults.SCRUB_MAX_LAYERS`; a text that
@@ -80,7 +89,7 @@ def undo(text: str, clean: bool = False) -> str:
     cur = text
     for _ in range(defaults.SCRUB_MAX_LAYERS + 1):
         step = cur
-        for decode in (nfkc, json_unescape, unquote, html.unescape):
+        for decode in (nfkc, json_unescape, hex_unescape, unquote, html.unescape):
             if clean:
                 while m := PARTIAL_ESCAPE.search(
                     step, max(len(step) - 4 * defaults.SCRUB_PARTIAL_END, 0)
@@ -360,8 +369,8 @@ def redact_text(
     becomes 18), so 87,000 of them are under the input cap and a 1.5-million-character view (24 s measured).
     That covers every caller that goes through `redact_text` / `redact_untrusted` / `redact_value` (document, tool
     result, model-written argument, eval case, card text, log and tick lines through `safe_head`, the judge and the
-    vendor guardrail input); the registry (`guard/producers.py`) lists them. The one bare `redact()` call outside this
-    module is the second pass of `approvals/channel.py` `clean`, on text this function already redacted."""
+    vendor guardrail input); the registry (`guard/producers.py`) lists them. No bare `redact()` call remains outside
+    this module: the second pass of `approvals/channel.py` `clean` is this function too."""
     _within_cap(text)
     try:
         text = fits_after_nfkc(_clean(text))

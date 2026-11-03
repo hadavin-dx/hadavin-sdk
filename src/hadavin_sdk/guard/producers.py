@@ -1,10 +1,12 @@
-"""Every producer of text that reaches a model, a vendor screen, a card, a log or a person, and the redaction function
+"""The producers of text that reaches a model, a vendor screen, a card, a log or a person that this registry covers, and the redaction function
 each one calls. Data only: `tests/test_k5_producers.py` parses each function and fails when a producer stops calling
 its function, when that function no longer reaches `runmap.redact_text` (the one choke point: NFKC, invisible
 characters, JSON escapes, the layered decode to a fixed point, the size cap, then the pattern redactor), when a module
 that calls a model (`.chat(` or `.apply_guardrail(`) is not listed, or when a message is cut with `[:N]` before it is
 redacted. `tests/test_k5_round8.py` pushes a percent-, entity- and assignment-encoded secret through each producer.
-Adding a producer means adding a row here and a test that the row is true."""
+Not covered: the ask-your-data demo's own ledger and command line (`OUTSIDE_THE_CHOKE_POINT`), and parsing of the
+model's own reply (`k1b/loop.py` `parse_diagnosis`). Adding a producer means adding a row here and a driver in
+`tests/test_k5_round9.py`."""
 
 from __future__ import annotations
 

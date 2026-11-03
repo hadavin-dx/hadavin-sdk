@@ -1,7 +1,10 @@
 # gitleaks configuration: the default rules plus one allowlist anchored on the file path AND on the whole finding
 # (regexTarget is the finding's secret, so each regex must match ALL of it: a real key block or any other value in that
 # file is still reported). It does not depend on a commit id, so a squash or rebase of the branch that adds the file
-# cannot invalidate it.
+# cannot invalidate it. The file it names is on another branch's history (a scanner test); CI scans every fetched ref, so
+# the entry is needed there even where the file is absent from this tree. `condition = "AND"` means the path AND a
+# regex must both match (checked: the same header lines in any other path are reported, and so is a real key block in
+# that path).
 [extend]
 useDefault = true
 

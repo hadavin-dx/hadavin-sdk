@@ -19,6 +19,7 @@ from hadavin_sdk.approvals.cards import Card, Delivery
 from hadavin_sdk.approvals.channel import clean
 from hadavin_sdk.approvals.gate import withhold_commands
 from hadavin_sdk.errors import ConfigError
+from hadavin_sdk.guard import runmap
 from hadavin_sdk.llm.common import post_json
 from hadavin_sdk.models import ApprovalDecision, ApprovalRequest
 
@@ -67,7 +68,8 @@ class SlackChannel:
         step = f"Step {req.current_step + 1} of {len(req.steps)}"
         # `req.summary` was cleaned once when it was built (`summary()`); it is shown whole or not at all: a silent cut
         # would hide the end of what the approver is approving
-        shown = withhold_commands(req.summary)
+        # withholding commands can join what it removed around: redact once more through the choke point
+        shown = runmap.redact_text(withhold_commands(req.summary), {})
         if len(shown) > self.max_card_chars:
             shown = "(the summary is too long to show here; open the full request in the console)"
         blocks: list[dict[str, Any]] = [

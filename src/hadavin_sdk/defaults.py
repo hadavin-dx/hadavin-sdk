@@ -39,7 +39,7 @@ MAX_REDACT_CHARS = MAX_DOCUMENT_BYTES
 # A case bundle is many strings, each within the cap above; the SUM is capped too (redaction cost is linear in it).
 MAX_BUNDLE_CHARS = 8 * MAX_REDACT_CHARS
 # A text over the redaction cap is cut at the cap, redacted, and this many characters of the result's end are dropped: a
-# secret that straddles the cut leaves only a fragment of at most this length (a PEM key is about 1.7 KB), and it is the
+# secret that straddles the cut leaves only a fragment of at most this length (a PEM key is about 1.7 KB for RSA-2048 and about 3.2 KB for RSA-4096; 4,096 covers both), and it is the
 # part dropped, never shown.
 CUT_MARGIN = 4096
 # The scrub of handed-out secrets in a tool result (`tools.prepare_output`); validated in `config.ScrubSettings`.

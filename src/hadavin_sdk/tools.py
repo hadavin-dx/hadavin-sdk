@@ -956,7 +956,14 @@ def prepare_output(
     was_cut = raw != before  # cut at the redactor's cap (the fetch ceiling is far above it)
     long_enough = [x for x in secrets or [] if len(x) >= scrub.min_secret]
     if long_enough:
-        raw = _scrub(raw, long_enough, scrub)
+        scrubbed = _scrub(raw, long_enough, scrub)
+        # the scrub can grow the text (a short secret becomes the longer marker) and cut it again at the cap
+        was_cut = was_cut or (
+            scrubbed.endswith(TRUNCATED)
+            and not raw.endswith(TRUNCATED)
+            and scrubbed != MARKER + TRUNCATED  # the fail-closed text stays whole
+        )
+        raw = scrubbed
     out = redact_layered(raw, mapping)
     if was_cut and out.endswith(
         TRUNCATED
@@ -996,8 +1003,10 @@ def error_reason(
     # patterns FIRST, then the cut: a cut first splits a JWT or a key and the redactor no longer sees a whole one
     try:
         message = runmap.redact_bounded(message, {}, runmap.neutralise_untrusted)[0]
-    except runmap.TooDeep:
-        message = MARKER
+    except (
+        runmap.RedactionError
+    ):  # too deep, or too large once normalised: a fixed note, never the text
+        message = runmap.SAFE_HEAD_NOTE
     if refused:
         return message[:200]
     return f"{type(exc).__name__}: {message[:160]}"

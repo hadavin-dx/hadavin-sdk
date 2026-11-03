@@ -8,7 +8,6 @@ from typing import TYPE_CHECKING, Protocol
 from hadavin_sdk.approvals import hmac_v0
 from hadavin_sdk.approvals.gate import sanitise_text, withhold_commands
 from hadavin_sdk.guard import runmap
-from hadavin_sdk.guard.redact import redact
 from hadavin_sdk.models import ApprovalDecision, ApprovalRequest
 
 if TYPE_CHECKING:
@@ -26,7 +25,10 @@ def clean(text: str) -> str:
     # Sanitising removes invisible and control characters and tags, which can join a split secret
     # (`AKIA` + zero-width space + `IOSF...`) or a split command: G4 reads the cleaned text, and the result is
     # redacted again (WARDEN's G5 re-scan), in the same placeholder namespace.
-    return redact(withhold_commands(sanitise_text(first)), mapping=mapping).text
+    # the same choke point, not the bare redactor: sanitising can JOIN what a tag, a zero-width character or a
+    # removed command split (`%41KIA<b></b>IOS...` becomes `%41KIAIOS...`), and a joined layered spelling needs the
+    # layered views to be found
+    return runmap.redact_text(withhold_commands(sanitise_text(first)), mapping)
 
 
 class Channel(Protocol):

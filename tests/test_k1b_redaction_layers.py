@@ -145,13 +145,9 @@ def test_only_known_modules_call_the_bare_pattern_redactor():
                 name = fn.id if isinstance(fn, ast.Name) else getattr(fn, "attr", "")
                 if name in {"redact", "redact_many"}:
                     callers.add(path.relative_to(root).as_posix())
-    assert (
+    assert callers == {"guard/runmap.py"}, sorted(
         callers
-        == {
-            "guard/runmap.py",  # the choke point
-            "approvals/channel.py",  # the second pass of `clean`, in the namespace the choke point started (a card line)
-        }
-    ), sorted(callers)
+    )  # the choke point only: the card second pass uses it too
 
 
 def test_percent_and_entity_layers_are_undone_for_pattern_secrets_in_a_bundle():
