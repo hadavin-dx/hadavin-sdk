@@ -2727,7 +2727,7 @@ def test_text_changed_after_the_mask_is_masked_again_whatever_look_alikes_hide_t
         "E": chr(0x415),
         "P": chr(0x420),
     }
-    rng = random.Random(50)
+    rng = random.Random(50)  # noqa: S311  # a seeded test fuzz, not a secret
     for _ in range(300):
         text = "".join(
             alike[c]
