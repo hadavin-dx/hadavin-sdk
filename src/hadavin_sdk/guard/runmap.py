@@ -381,7 +381,7 @@ def _decoded_masks(current: dict[str, str], text: str) -> list[tuple[str, str]]:
     pattern early (the decoded text holds white space of any kind, or `;`, `&`, `,` or a quote): `password=ab%3Bzq9` is
     one value in pass one and `password=ab;zq9` in the decoded view, which would mask only `ab`. Only entries whose
     original occurs in THIS text and holds an encoding character are considered (so earlier junk in the run's map cannot
-    use up the slots); more than `MAX_DECODED_MASKS` of them, or one value over `defaults.MAX_REDACT_CHARS`, cannot be
+    use up the slots); more than `MAX_DECODED_MASKS` of them, or one that cannot be decoded (nested too deep), cannot be
     paired and the text is refused (`InputTooLarge`, nothing shown), never skipped. Computed once per call."""
     out = []
     for ph, original in current.items():
@@ -391,12 +391,11 @@ def _decoded_masks(current: dict[str, str], text: str) -> list[tuple[str, str]]:
             continue
         if original not in text:
             continue
-        if len(out) >= MAX_DECODED_MASKS or len(original) > defaults.MAX_REDACT_CHARS:
+        if len(out) >= MAX_DECODED_MASKS:
             raise InputTooLarge("InputTooLarge")
-        try:
-            decoded = undo(original)
-        except RedactionError:
-            continue
+        decoded = undo(
+            original
+        )  # a RedactionError (nested too deep) propagates: fail closed, nothing shown
         if (
             decoded != original
             and len(decoded) >= 4
