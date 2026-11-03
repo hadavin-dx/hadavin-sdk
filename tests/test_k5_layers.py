@@ -258,7 +258,9 @@ def test_error_reason_redacts_a_jwt_before_the_160_character_cut():
         + "eyJzdWIiOiJhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhIn0."
         + "c2lnbmF0dXJlc2lnbmF0dXJl"
     )
-    msg = "x" * (160 - len("ValueError: ") - 12) + jwt  # the cut at 160 would land inside the token
+    msg = (
+        "failed with " * 10 + jwt
+    )  # words, so only the token is a secret; a cut at 150 or 160 lands inside it
     reason = tools_mod.error_reason(ValueError(msg), [])
     assert "eyJzdWIi" not in reason and "eyJhbGci" not in reason
 
