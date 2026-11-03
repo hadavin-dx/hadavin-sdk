@@ -129,7 +129,7 @@ def test_a_tail_of_half_escapes_that_decodes_to_nothing_goes_with_the_front():
 def test_the_kubernetes_defaults_live_in_the_kind_module_not_in_generic_defaults():
     from hadavin_sdk.sources import kubernetes as kmod
 
-    s = kmod.KubernetesSettings(api_url="https://kube.example.internal")
+    s = kmod.KubernetesSettings(api_url="https://kube.example.internal", namespaces=["prod"])
     assert (s.page_size, s.max_pages, s.json_cap_bytes, s.log_bytes) == (
         kmod.K8S_PAGE_SIZE,
         kmod.K8S_MAX_PAGES,
