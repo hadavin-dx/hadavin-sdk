@@ -1,4 +1,4 @@
-"""Ported from WARDEN tests/test_redaction_classes.py (main a1e76cbf, the upstream project). Kept 3 tests; dropped 1 that need WARDEN-only modules or unported gate policy (listed in the PR).
+"""Ported from the upstream project's tests/test_redaction_classes.py. Kept 3 tests; dropped 1 that need upstream-only modules or unported gate policy (listed in the PR).
 
 Every class the owner listed (2026-10-21) is masked, with a corpus for each - and the evidence WARDEN reasons from
 is not: timestamps, resource names, a Kubernetes service's name, AWS's own host names, version strings, status codes.

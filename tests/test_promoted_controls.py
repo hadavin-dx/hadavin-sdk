@@ -1,4 +1,4 @@
-"""Generic controls promoted from a demo's review 8 and hardened by four reviews of PR #50: read-only config view, stop gate over the
+"""Generic controls promoted from a demo and hardened in review of PR #50: read-only config view, stop gate over the
 audited durable stop, row store, capped audit, one text fold, output check, mutation judge and runner. No demo import; look-alikes are
 built with chr(). No wall-clock assertions: ordering is made with Events."""
 
@@ -1275,7 +1275,7 @@ def test_the_runner_kills_a_mutant_of_a_tiny_package(tmp_path):
     assert by["crash mutant"] == (Verdict.CRASH, False)  # an exception is not an assertion kill
 
 
-# ---- review round 3: digit budget that adds up, CJK, presets, no default policy ---------------------------------------------------------
+# ---- digit budget that adds up, CJK, presets, no default policy ---------------------------------------------------------
 def test_the_plain_and_the_set_aside_digits_add_up():
     for text in (
         "ref 4111111 total $1,111,111.11 USD",  # 7 plain + 9 in an amount: a 16-digit card
@@ -1360,7 +1360,7 @@ def test_a_look_alike_name_in_a_single_script_is_folded_to_the_protected_latin_v
     )
 
 
-# ---- review round 3: stop gate over the real Limits ---------------------------------------------------------------------------------------
+# ---- stop gate over the real Limits ---------------------------------------------------------------------------------------
 def real_limits(tmp_path, store=None, sink=None):
     return Limits(store or MemoryStore(), sink or LocalDirSink(tmp_path), None)
 
@@ -1543,7 +1543,7 @@ def test_engaged_is_the_flag_blocked_reads_the_store_and_the_second_engage_says_
     assert g3.blocked() and g3._cached is None  # engage clears the cache
 
 
-# ---- review round 3: the mutation runner stays inside its tree, and stops a hanging mutant --------------------------------------------------
+# ---- the mutation runner stays inside its tree, and stops a hanging mutant --------------------------------------------------
 def test_the_runner_refuses_paths_that_leave_its_tree(tmp_path):
     from tools import mutation_runner as mr
 
@@ -1826,7 +1826,7 @@ def test_redact_masks_a_value_hidden_behind_look_alikes_on_the_line_and_leaves_o
     )  # only the hit line changes
 
 
-# ---- review round 5 (code-4): documented guarantees, newline in the script check, honest docs, process-tree kill -------------------------
+# ---- documented guarantees, newline in the script check, honest docs, process-tree kill -------------------------
 def test_general_delivers_ids_up_to_eleven_digits_and_payments_keeps_order_numbers_free():
     general, payments = LeakPolicy.general(), LeakPolicy.payments()
     for text in (
@@ -2101,7 +2101,7 @@ def test_check_text_runs_the_card_scan_last(monkeypatch):
     assert check_text("hello there") is None
 
 
-# ---- review round 6 (code-6): a monotonic count, caps on free words, a whole-text reading ---------------------------------------------
+# ---- a monotonic count, caps on free words, a whole-text reading ---------------------------------------------
 _MONO_TOKENS = [
     "4", "12", "5551234567", "O", "l", "S", "I", "b", "q", "Ib", "Ob", "Sb", "is", "Gq", "Ol", "IS", "BZ", "call", "Hello", "Total", "xl",
     "x", "lllll", "lllllx", "boss", "big", "12345678901s", "1b5i7g3q", "Zeal", "id", "a", "to", "SOS", "oil", "OlISBZGq", "9",
@@ -2337,7 +2337,7 @@ def test_redact_leaves_an_existing_placeholder_on_a_non_ascii_line_alone():
     assert r.text == "mail <EMAIL_1> and caf" + chr(0xE9) and list(r.mapping) == ["<EMAIL_1>"]
 
 
-# ---- review round 7 (code-7): splitting through filler, gluing, boundary constants -------------------------------------------------------
+# ---- splitting through filler, gluing, boundary constants -------------------------------------------------------
 _STRONG_ONLY = [
     "I",
     "O",
@@ -2564,6 +2564,10 @@ def test_one_huge_value_is_refused_and_text_leaks_fails_closed():
     for bad in ([huge], [""], ["\u200b"]):
         assert egress_text.text_leaks("hello", bad, policy=P) is True
     assert egress_text.text_leaks("hello", allowed=[huge], policy=P) is True
+    assert (
+        egress_text.text_leaks("hello", 5, policy=P) is True
+    )  # not iterable: TypeError, also fail closed
+    assert egress_text.text_leaks("hello", allowed=[7], policy=P) is True  # not text
     assert egress_text.text_leaks("hello", ["real-value"], policy=P) is False
 
 
@@ -2625,8 +2629,18 @@ def test_the_residual_is_exactly_what_the_docs_say():
     # one home: no other file restates the list
     for rel in ("src/hadavin_sdk/guard/egress_text.py", "CHANGELOG.md"):
         if (FIX.parent.parent / rel).exists():  # the mutation copies do not carry the CHANGELOG
-            other = (FIX.parent.parent / rel).read_text(encoding="utf-8")
-            assert "xl xl" not in other and "Ib x Ib" not in other, rel
+            other = (FIX.parent.parent / rel).read_text(encoding="utf-8").lower()
+            for token in (
+                "xl xl",
+                "ib x ib",
+                "no letter mapping",
+                "does not map",
+                "letter number split",
+            ):
+                assert token not in other, (
+                    rel,
+                    token,
+                )  # a re-worded copy of the residual list is caught by these tokens
     assert "%" not in section and "percent" not in section
 
 
@@ -2648,7 +2662,7 @@ def test_every_mutant_definition_names_its_killing_test():
         elif m.allow_crash:
             pass  # the killer is an exception message (a pinned error type), not a named test
         else:
-            assert any(n.startswith(m.expect) for n in names), (m.name, m.expect)
+            assert m.expect in names, (m.name, m.expect)  # the EXACT name of one test, not a prefix
 
 
 def _copytree_failing(monkeypatch, fail_calls):
@@ -2737,3 +2751,75 @@ def test_text_changed_after_the_mask_is_masked_again_whatever_look_alikes_hide_t
         )
         out = clean(f"the key {text} was pasted")
         assert key not in out and textnorm.fold(out).count(key) == 0, (text, out)
+
+
+_FW = str.maketrans(
+    {c: chr(ord(c) + 0xFEE0) for c in "<>!@:/`abcdefghijklmnopqrstuvwxyz"}
+)  # full-width forms: live ASCII after the fold
+_LIVE = ("<!", "@here", "@channel", "://", "```", "kubectl delete", "<http", "](")
+
+
+def _is_live(text: str) -> list[str]:
+    """Live syntax in the text as written, or (not a fence: the sanitiser breaks fences with an invisible character on purpose) after the fold."""
+    folded = textnorm.fold(text).lower()
+    return [p for p in _LIVE if p in text.lower() or (p != "```" and p in folded)]
+
+
+def test_a_fold_on_hit_rewrite_never_emits_folded_text_so_nothing_goes_live_after_the_neutralising():
+    # class lesson of PR #42 INSIDE the redactor: the second redact of channel.clean runs after sanitise and withhold; its fold-on-hit rewrite
+    # used to emit the FOLDED line, turning full-width text into live mentions, links, commands and fences nobody had neutralised.
+    from hadavin_sdk.approvals.channel import clean
+    from hadavin_sdk.guard.redact import redact
+
+    key = chr(0x410) + "KIA" + "IOSFODNN7EXAMPLE"
+    payload = "<!channel> @here kubectl delete pods https://evil.example/x ```".translate(_FW)
+    for text in (
+        f"{key} {payload}",
+        f"{chr(0x410)}KIA<b>IOSFODNN7EXAMPLE {payload}",
+        f"{payload} {key}",
+    ):
+        out = clean(text)
+        assert "AKIAIOSFODNN7EXAMPLE" not in textnorm.fold(out), (text, out)
+        assert _is_live(out) == [], (text, out, _is_live(out))
+        # redact() alone neutralises nothing, but its own rewrite must add no live ASCII: no live syntax as written in its output
+        raw = redact(text).text
+        assert [p for p in _LIVE if p in raw.lower()] == [], (text, raw)
+    assert "<APIKEY_1>" in clean(
+        f"{key} {payload}"
+    )  # the hit is still reported, by its placeholder
+
+
+def test_the_look_alike_fuzz_keeps_both_the_key_and_live_syntax_out():
+    from hadavin_sdk.approvals.channel import clean
+
+    key = "AKIA" + "IOSFODNN7EXAMPLE"
+    alike = {
+        "A": chr(0x410),
+        "I": chr(0x406),
+        "O": chr(0x41E),
+        "S": chr(0x405),
+        "E": chr(0x415),
+        "P": chr(0x420),
+    }
+    payloads = [
+        "<!channel>", "<!here>", "@here", "@channel", "kubectl delete pods", "https://evil.example/x", "```", "[x](http://e.example)",
+    ]  # fmt: skip
+    rng = random.Random(51)  # noqa: S311  # a seeded test fuzz, not a secret
+    for _ in range(300):
+        text = "".join(
+            alike[c]
+            if c in alike and rng.random() < 0.5
+            else c + (chr(0x200B) if rng.random() < 0.15 else "")
+            for c in key
+        )
+        if (
+            rng.random() < 0.5
+        ):  # a tag INSIDE the key: redact finds no key until the sanitiser has removed the tag
+            at = rng.randrange(1, len(text) - 1)
+            text = text[:at] + "<b>" + text[at:]
+        live = rng.choice(payloads)
+        live = live.translate(_FW) if rng.random() < 0.7 else live
+        line = rng.choice([f"the key {text} {live} end", f"{live} {text}", f"{text}<b>{live}"])
+        out = clean(line)
+        assert key not in textnorm.fold(out), (line, out)
+        assert _is_live(out) == [], (line, out, _is_live(out))

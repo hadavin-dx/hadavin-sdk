@@ -293,7 +293,7 @@ def _digitish_count(
     letters and any other letters (``OlSZBxxxxx``, ``lllllx``) is a second reading. So a number cannot be split into runs below the budget
     with one-letter or filler-letter separators (``4 I x I x I x ...``, ``4 OlSZBxxxxx OlSZBxxxxx ...``). Tokens with weak letters do not
     count here (``boss``, ``Ib``; the run reading handles ``Ib`` pairs), and a text without any real digit has no whole-text reading
-    (prose such as ``BLISS and a GLOSS finish on the SOIL`` stays free; a digit-free letter number split by filler letters is NOT stopped).
+    (prose such as ``BLISS and a GLOSS finish on the SOIL`` stays free; what that leaves open is listed in ``docs/promoted-controls.md``).
 
     FALSE REFUSALS (fail closed, measured on generated prose, see ``docs/promoted-controls.md``). Once a text holds a real digit, every
     strong-letter-only word adds to the count: ``Boss 1234`` under ``payments()`` is 4 + 3 + 1 = 8 and is refused, as are ``Oslo 1234``
@@ -554,10 +554,10 @@ def text_leaks(
     policy: LeakPolicy,
     **kw: Any,
 ) -> bool:
-    """True when ``check_text`` finds a violation. FAILS CLOSED: input ``check_text`` refuses with ``ValueError`` (too many or too long
+    """True when ``check_text`` finds a violation. FAILS CLOSED: input ``check_text`` refuses with ``ValueError`` or ``TypeError`` (too many or too long
     values, an empty value, a value that folds to nothing) also returns True, so a caller that treats False as "no leak" can never be
     opened by bad input. Call ``check_text`` itself to see the reason."""
     try:
         return check_text(text, protected, allowed, policy=policy, **kw) is not None
-    except ValueError:
+    except (ValueError, TypeError):
         return True

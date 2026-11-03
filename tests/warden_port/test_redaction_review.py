@@ -1,4 +1,4 @@
-"""Ported from WARDEN tests/test_redaction_review.py (main a1e76cbf, the upstream project). Kept 4 tests; dropped 4 that need WARDEN-only modules or unported gate policy (listed in the PR).
+"""Ported from the upstream project's tests/test_redaction_review.py. Kept 4 tests; dropped 4 that need upstream-only modules or unported gate policy (listed in the PR).
 
 The redaction cases the independent review of 2026-09-28 found (A-C-4, A-C-5, A-C-22).
 

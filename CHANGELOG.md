@@ -131,8 +131,10 @@
 ### Changed (promoted controls, from a demo's reviews; PR #50)
 - **`approvals/gate.py`:** no behaviour change. The unused helpers `_views` and `_rendered` (secret views ported with the gate in slice 2 that no code ever called) are deleted; the live secret check of approval and channel text is `approvals.channel.clean` (redact, sanitise, redact again), whose scans use the fold described below.
 - **Behaviour change in `guard/redact.py` (interim, fail closed):** a line with non-ASCII text is scanned a second time in its FOLDED form;
-  on a hit the whole line is replaced by its folded form with the hits masked (offsets are not mapped back, so `restore` gives the folded
-  value). The replaced line is LOSSY: the fold drops legitimate marks (Hindi and Thai vowel signs, the breve of Cyrillic short i).
+  on a hit the WHOLE LINE is replaced by the fixed note `[line withheld: look-alike text hid a protected value]` plus the placeholders of the
+  hits, and the folded text is NEVER emitted (the fold turns full-width and look-alike characters into live ASCII, and `approvals.channel.clean`
+  runs this scan after the text was neutralised: an emitted folded line could carry a live mention, link, command or fence to a person; fixed in
+  the redactor, so every caller is safe). Masking inside the original line needs a character map and is a tracked item. The replaced line is LOSSY: all of the line except the placeholders is dropped.
   **`redact.py` still does not fold in general:** the input mask matches the raw text first, so a value hidden behind look-alike
   letters, another script's digits or an invisible character INSIDE the value is caught only by this second pass and by the output check
   (`guard/egress_text.py`) and the second scan, not by the first pass. What the redactor still does not catch: a value split by a character
@@ -142,10 +144,10 @@
   `limits.py`: rebase it after this PR). A gate flip is audited with `source="gate"`, not as a CLI action. `StopGate` checks at
   construction that its `Limits` has the `source` parameter and raises `TypeError` otherwise: copy `stop_gate.py` together with `limits.py`
   (or pin core at PR #50 or later).
-- **Round 9 (review of PR #50):** `check_text` refuses more than 10000 protected values or 1000 allowed references (`ValueError`), and a protected value or allowed reference longer than 4096 characters (`MAX_VALUE_LEN`; `text_leaks` now returns True, never raises, for input `check_text` refuses); `tools/mutation_runner.py` snapshots the tree once, passes an environment allowlist to its children and can pin a mutant to one test (`only_test`); the residual of the digit check is listed only in `docs/promoted-controls.md`.
+- **Review fixes (PR #50):** `check_text` refuses more than 10000 protected values or 1000 allowed references (`ValueError`), and a protected value or allowed reference longer than 4096 characters (`MAX_VALUE_LEN`; `text_leaks` now returns True, never raises, for input `check_text` refuses); `tools/mutation_runner.py` snapshots the tree once, passes an environment allowlist to its children and can pin a mutant to one test (`only_test`); the residual of the digit check is listed only in `docs/promoted-controls.md`. The mutant run (`tests/promoted_mutants.py`) is a manual gate on Python 3.13 before promotion, not a CI job (see the same file).
 - **Merge order and re-sync of the copies:** PR #49 (a downstream demo repo) and this PR both edit this Unreleased section and share
   `guard/textnorm.py`. Merge #50 first. Every repository that keeps a byte copy (the demos, #49) re-copies, in one commit:
-  `guard/textnorm.py` (sha256 `fd9d0ffdbe7d480db29c9e47bb4be4025fbc19638bf83eef9e6d323483659b14`), `guard/egress_text.py` (sha256 `c05b2d6bb28e5a36c75fe3a770c6175a838eb1eac7c3847519ca4940697b7d10`; the digit counting changed in review rounds 4 to 6, a stale copy silently keeps the old counting), `runtime/stop_gate.py` (sha256 `69c2f365efb54fddb902e816f2c9647e7ad2c65fc13343f74f8b564afac668c7`; copy it with core's `limits.py` from the same core commit), the generated `guard/_confusables.py` (sha256 `41740c11734e2ec1e5a63f9325dffa04226c84f3b81b43c1b5c7e766f8a0ccfd`; `textnorm.py` imports it) and
+  `guard/textnorm.py` (sha256 `fd9d0ffdbe7d480db29c9e47bb4be4025fbc19638bf83eef9e6d323483659b14`), `guard/egress_text.py` (sha256 `1f8243d4753632ae72fc0f637b4e0e5afb6ef373aa4f9e9c59cf00fbe6d3e9fa`; the digit counting changed in review rounds 4 to 6, a stale copy silently keeps the old counting), `runtime/stop_gate.py` (sha256 `69c2f365efb54fddb902e816f2c9647e7ad2c65fc13343f74f8b564afac668c7`; copy it with core's `limits.py` from the same core commit), the generated `guard/_confusables.py` (sha256 `41740c11734e2ec1e5a63f9325dffa04226c84f3b81b43c1b5c7e766f8a0ccfd`; `textnorm.py` imports it) and
   `tests/fixtures/textnorm_vectors.json` (sha256 `1a1944708f7d1737588d7b02666620ceb308b0fe4a71ce2a312c4dc29113d349`); the same hashes (all but `limits.py`, which other PRs also edit) are pinned in `tests/fixtures/textnorm_manifest.json`. The consumers are every repository with a `core_copies.json`.
   Then update the repository's `core_copies.json` rows (`core_path`, `core_sha256`, `import_rewrite`: `textnorm.py` imports
   `hadavin_sdk.guard._confusables`, `egress_text.py` imports `hadavin_sdk.guard.textnorm`) and adopt the new names: `safe_equal(a, b)` ->
@@ -184,7 +186,7 @@ modules below have no call site in this repository yet.
   (a letter glued to a word can change what the word is). It is the larger of a per-run reading and a whole-text reading. Ordinary words are free in a run that holds a digit:
   the strong letters of the first `max_free_words_run` (2) words, and at most `max_free_words` (2; `general()` 4) words in the whole text
   (new `LeakPolicy` fields), so `general()` lets `id is 12345678901`, `Total 12345678901` and `call 5551234567` through, while
-  `4 Ib Ib Ib ...` and `Ob Ib Sb Zb Bb Lb 5` are refused (the review-6 blocker: the earlier deferred word rule let a letter-encoded card
+  `4 Ib Ib Ib ...` and `Ob Ib Sb Zb Bb Lb 5` are refused (the earlier deferred word rule let a letter-encoded card
   through once one digit was appended). A letter glued to a digit (`12345678901s`) counts. In a text with a real digit, strong letters of
   every token made only of strong letters (even one: `I`) and of every token with 4 or more strong letters (`lllllx`, `OlSZBxxxxx`) are
   counted over the whole text, so `4 x lllll x lllll x lllll`, `4 I x I x I ...` and `4 OlSZBxxxxx OlSZBxxxxx OlSZBxxxxx` are refused.

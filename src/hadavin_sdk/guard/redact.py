@@ -1,7 +1,6 @@
 """Pattern-based redaction for logs, audit and channel text (documents go to the model unredacted).
 
-Copied from WARDEN `src/warden/redaction.py` at PR #206 head 14fc549 (branch `redaction-bank-patterns`,
-the upstream project): the full pattern table, including the bank codes (BANKCODE: BSB, sort code, ABA,
+Copied from the upstream project's redaction module: the full pattern table, including the bank codes (BANKCODE: BSB, sort code, ABA,
 CA transit/institution) and accounts (BANKACCT), and the PHONE date guard. Edits: this header,
 `RedactionResult.kinds` (the slice 1 callers read the kinds found), and a PHONE guard for compact
 14-digit timestamps. Placeholders are `<KIND_n>`.
@@ -812,6 +811,9 @@ def _countable(suffix: str) -> bool:
     return suffix.isascii() and suffix.isdigit() and len(suffix) <= 18
 
 
+FOLD_NOTE = "[line withheld: look-alike text hid a protected value]"  # fixed text: the folded line is never emitted
+
+
 class _Redactor:
     """One placeholder namespace (map, reverse map, counters) shared by every text of one call."""
 
@@ -848,18 +850,28 @@ class _Redactor:
     def _folded_line(self, line: str) -> str:
         """Interim fail-closed fold: a value hidden behind look-alike letters, another script's digits or invisible
         characters does not match the patterns above. For a line with non-ASCII text, run the patterns again on its FOLDED form
-        (``textnorm.fold``); on a hit the whole line is replaced by the folded line with the hits masked (offsets are not mapped back,
-        so ``restore`` gives the folded value). A line with no hit is returned unchanged. A full fold-aware mask (scan folded text,
-        mask by span map) is a tracked item in ``docs/promoted-controls.md``."""
+        (``textnorm.fold``). On a hit the WHOLE LINE is replaced by ``FOLD_NOTE`` plus the placeholders of the hits, and the folded text is
+        NEVER emitted: the fold turns full-width and look-alike characters into live ASCII (a mention, a link, a command, a fence), and a
+        caller that neutralises text before calling ``redact`` last (``approvals.channel.clean``) would send that live text to a person.
+        ``restore`` of the placeholders gives the folded value. A line with no hit is returned unchanged. Masking the hits inside the
+        ORIGINAL line needs a character map and is a tracked item in ``docs/promoted-controls.md``."""
         if line.isascii():
             return line
         body = line.rstrip("\r\n")
         eol = line[len(body) :]
         folded = fold(body)
-        masked = folded
+        hits: list[str] = []
+
+        def mask(m: re.Match[str], label: str) -> str:
+            masked = self._mask(m, label)
+            if masked != m.group(0):
+                hits.append(masked)
+            return masked
+
+        cur = folded
         for label, pattern in PATTERNS:
-            masked = pattern.sub(lambda m, label=label: self._mask(m, label), masked)
-        return masked + eol if masked != folded else line
+            cur = pattern.sub(lambda m, label=label: mask(m, label), cur)
+        return f"{FOLD_NOTE} {' '.join(dict.fromkeys(hits))}{eol}" if hits else line
 
     def _mask(self, m: re.Match[str], label: str) -> str:
         """One match of `label`'s pattern, its value replaced by its placeholder (a new one when it is new)."""
