@@ -1,1 +1,6 @@
 # gitleaks false positives, by fingerprint (commit:file:rule:line). Each line says why it is not a secret.
+# PR #43 commit 7d03d0f: tests/demo_askdata/test_demo_literals.py is a scanner test. Line 350 holds only PEM header words
+# ("-----BEGIN PRIVATE KEY-----", no key body); lines 360-361 hold the placeholder `abcdefgh12345678`. Read in full 2026-11-03: not credentials.
+7d03d0f07600289db43b4ae70cfa260c2bf78c31:tests/demo_askdata/test_demo_literals.py:private-key:350
+7d03d0f07600289db43b4ae70cfa260c2bf78c31:tests/demo_askdata/test_demo_literals.py:generic-api-key:360
+7d03d0f07600289db43b4ae70cfa260c2bf78c31:tests/demo_askdata/test_demo_literals.py:generic-api-key:361
