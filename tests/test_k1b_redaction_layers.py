@@ -54,7 +54,7 @@ def _shown(b: Bundle) -> str:
 SPELLINGS = {
     "fullwidth": "ＡＫＩＡ" + "IOSFODNN7EXAMPLE",
     "zero-width": "AK\u200bIA" + "IOSFODNN7EXAMPLE",
-    "json-escape": "\u0041KIA" + "IOSFODNN7EXAMPLE",
+    "json-escape": r"\u0041KIA" + "IOSFODNN7EXAMPLE",
     "plain": AWS,
 }
 
@@ -87,7 +87,7 @@ def test_env_name_value_pairs_labels_and_secret_data_are_masked_with_their_key()
         ),
         "label": ({"kind": "Pod", "labels": {"password": "beta-two"}}, "beta-two"),
         "secret data": ({"kind": "Secret", "data": {"db": "Z2FtbWEtdGhyZWU="}}, "Z2FtbWEtdGhyZWU"),
-        "short value": ({"kind": "Pod", "labels": {"token": "ab"}}, '"ab"'),
+        "short value": ({"kind": "Pod", "labels": {"token": "ab"}}, "'ab'"),
     }
     for name, (record, needle) in shapes.items():
         out, _ = redact_bundle(_bundle(k8s=(("k8s/x.json", record),)))
@@ -145,12 +145,13 @@ def test_only_known_modules_call_the_bare_pattern_redactor():
                 name = fn.id if isinstance(fn, ast.Name) else getattr(fn, "attr", "")
                 if name in {"redact", "redact_many"}:
                     callers.add(path.relative_to(root).as_posix())
-    assert callers <= {
-        "guard/redact.py",  # the redactor itself
-        "guard/runmap.py",  # the choke point
-        "approvals/channel.py",  # cut to a bound first, then the bare pass (a card line)
-        "runtime/tick.py",  # a tick error message, cut to a bound first
-    }, sorted(callers)
+    assert (
+        callers
+        == {
+            "guard/runmap.py",  # the choke point
+            "approvals/channel.py",  # the second pass of `clean`, in the namespace the choke point started (a card line)
+        }
+    ), sorted(callers)
 
 
 def test_percent_and_entity_layers_are_undone_for_pattern_secrets_in_a_bundle():

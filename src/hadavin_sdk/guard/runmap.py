@@ -13,10 +13,12 @@ from __future__ import annotations
 import collections
 import functools
 import hashlib
+import html
 import re
 import unicodedata
 from collections.abc import Callable
 from typing import Any
+from urllib.parse import unquote
 
 from hadavin_sdk import defaults
 from hadavin_sdk.guard.redact import ARN_TAIL, PATTERNS, SECRET_KINDS, kind_of, redact
@@ -38,6 +40,59 @@ class RedactionError(RuntimeError):
 
 class InputTooLarge(RedactionError):
     """The text, or a view of it that the second pass would scan, is longer than `defaults.MAX_REDACT_CHARS`."""
+
+
+# The end of a text cut inside an escape: a spelling the decoder cannot read yet, so no form matches it and the
+# front of a character stays visible (`\u005`, `&#9`, `%C3`, half of a surrogate pair).
+PARTIAL_ESCAPE = re.compile(
+    r"(?:&#(?:[xX][0-9a-fA-F]*|[0-9]*)|&[A-Za-z]*|\\u[dD][89abAB][0-9a-fA-F]{2}(?:\\u?[0-9a-fA-F]{0,3}|\\)?|\\u[0-9a-fA-F]{0,3}|\\|(?:%[89a-fA-F][0-9a-fA-F])+%?[0-9a-fA-F]?|%[0-9a-fA-F]?)$"
+)
+
+
+class TooDeep(RedactionError):
+    """A text still changes after `defaults.SCRUB_MAX_LAYERS` rounds of decoding: more nested encodings than any
+    honest producer writes. The scrub cannot say what it holds, so it fails closed (a marker, never the text)."""
+
+
+def nfkc(text: str) -> str:
+    """NFKC and invisible characters. It runs INSIDE every round: a full-width `%` or `&` is an escape character
+    only after NFKC, and NFKC expands some characters (U+FDFA becomes 18), so a text whose canonical form would pass
+    the redactor's cap is refused first (InputTooLarge, a RedactionError), as redact_text does for its own views."""
+    if text.isascii():  # NFKC leaves ASCII alone, and ASCII has no invisible format characters
+        return text
+    return canonical(fits_after_nfkc(text))
+
+
+def undo(text: str, clean: bool = False) -> str:
+    """The text with the encodings an attacker or a log pipeline layers over a value undone: JSON string escapes
+    (backslash-u with surrogate pairs joined, and the one-character escapes: PHP writes every slash as backslash-slash),
+    percent-encoding, HTML entities, then NFKC and invisible characters. Each round applies the three decoders ONE
+    AT A TIME (a combined step turns a half-written `&#10` that percent-decoding just exposed into a newline before
+    anyone can see it was half an escape), and the round repeats to a fixed point: the layers nest in any order
+    and depth (`&#37;41`, `%2541`, `%26%2390%3B`). The depth is capped at `defaults.SCRUB_MAX_LAYERS`; a text that
+    still changes then raises `TooDeep` (fail closed). This is our own design, not a quoted standard: the scrub must
+    FIND a secret in any spelling, so it decodes more than a validator would. The sources only bound it: CWE-174
+    (cwe.mitre.org/data/definitions/174.html, fetched 2026-11-03) warns that decoding the same input twice lets
+    values slip past checks, and says to reject input that does not conform; OWASP's Input Validation Cheat Sheet
+    (fetched 2026-11-03) says to decode before checking, to cap parser nesting depth, and does not describe
+    decoding to a fixed point; CWE-176 is Unicode handling. With `clean`, a half-written escape at the end of the text is
+    dropped before every decoder (the tail a cut left)."""
+    cur = text
+    for _ in range(defaults.SCRUB_MAX_LAYERS + 1):
+        step = cur
+        for decode in (nfkc, json_unescape, unquote, html.unescape):
+            if clean:
+                while m := PARTIAL_ESCAPE.search(
+                    step, max(len(step) - 4 * defaults.SCRUB_PARTIAL_END, 0)
+                ):
+                    step = step[
+                        : m.start()
+                    ]  # repeat: the look-back may start inside a run of half escapes
+            step = decode(step)
+        if step == cur:
+            return cur
+        cur = step
+    raise TooDeep("TooDeep")
 
 
 def _within_cap(text: str) -> str:
@@ -273,7 +328,9 @@ def _views(text: str) -> list[str]:
     # would come back with real newlines whenever the second pass finds anything.
     unescaped = fits_after_nfkc(json_unescape(text, simple="/"))
     out = []
-    for view in (canonical(text), canonical(unescaped)):
+    # the layers undone to a fixed point (percent, entity, backslash, NFKC, any order, up to the depth cap; deeper
+    # raises TooDeep and nothing is redacted or shown): `%41KIA...`, `&#65;KIA...`, `password%3Dx`
+    for view in (canonical(text), canonical(unescaped), fits_after_nfkc(undo(text))):
         view = _clean(view)
         if view != text and view not in out:
             out.append(view)
@@ -302,15 +359,15 @@ def redact_text(
     `InputTooLarge` (a RedactionError) is raised and nothing is redacted. NFKC expands some characters (U+FDFA
     becomes 18), so 87,000 of them are under the input cap and a 1.5-million-character view (24 s measured).
     That covers every caller that goes through `redact_text` / `redact_untrusted` / `redact_value` (document, tool
-    result, model-written argument, eval case); `tools._decoded` calls `fits_after_nfkc` itself, and the two bare
-    `redact()` callers outside this module (approvals/channel.py `clean`, runtime/tick.py `_message`) cut their input
-    first."""
+    result, model-written argument, eval case, card text, log and tick lines through `safe_head`, the judge and the
+    vendor guardrail input); the registry (`guard/producers.py`) lists them. The one bare `redact()` call outside this
+    module is the second pass of `approvals/channel.py` `clean`, on text this function already redacted."""
     _within_cap(text)
     try:
         text = fits_after_nfkc(_clean(text))
         if neutralise is not None:
             text = fits_after_nfkc(neutralise(text))
-        scan = not text.isascii() or "\\u" in text or "\\/" in text
+        scan = not text.isascii() or any(c in text for c in "\\%&")
         views = _views(text) if scan else []  # _views refuses a view that would pass the cap
         cache = getattr(mapping, "redact_cache", None)
         result = redact(text, mapping=mapping, _cache=cache)
@@ -323,7 +380,7 @@ def redact_text(
             if again.mapping != current or _held(again.text) > _held(out):
                 out, current = again.text, again.mapping
         out = _clean(out)
-    except InputTooLarge:
+    except (InputTooLarge, TooDeep):
         raise
     except Exception as exc:  # noqa: BLE001 - whatever the redactor raised, nothing is sent
         raise RedactionError(type(exc).__name__) from None
@@ -338,15 +395,28 @@ SAFE_HEAD_NOTE = "(details withheld)"
 def safe_head(text: str, limit: int, mapping: dict[str, str] | None = None) -> str:
     """Redact FIRST, then keep the first `limit` characters: the order every short model-bound or logged message
     (an exception text, a validation error, a card line) needs, because a cut first splits a secret and the
-    redactor no longer sees a whole one. The work is bounded by cutting the INPUT at the redactor's cap, far past
-    anything shown (`limit` is far below the cap), so a secret that straddles that cut is never in the part kept.
-    Never raises: a text the redactor refuses (too large after NFKC, or any failure) becomes a fixed note."""
+    redactor no longer sees a whole one. The text is redacted up to the redactor's cap (`redact_bounded`: past the
+    cap it is cut for bounded work and the end of the result is dropped), then the head is kept.
+    Never raises: a text the redactor refuses (too large after NFKC, nested too deep, or any failure) becomes a
+    fixed note."""
     try:
-        return redact_text(text[: defaults.MAX_REDACT_CHARS], {} if mapping is None else mapping)[
-            :limit
-        ]
+        return redact_bounded(text, {} if mapping is None else mapping)[0][:limit]
     except RedactionError:
         return SAFE_HEAD_NOTE
+
+
+def redact_bounded(
+    text: str, mapping: dict[str, str], neutralise: Callable[[str], str] | None = None
+) -> tuple[str, bool]:
+    """`redact_text` with bounded work for a text of any size: up to `defaults.MAX_REDACT_CHARS` the text is redacted
+    whole (no cut before the redaction); past it the text is cut at the cap, redacted, and the last
+    `defaults.CUT_MARGIN` characters of the result are dropped, because a secret straddling the cut is only a
+    fragment there. Returns (redacted text, whether it was cut)."""
+    cut = len(text) > defaults.MAX_REDACT_CHARS
+    out = redact_text(text[: defaults.MAX_REDACT_CHARS], mapping, neutralise)
+    if cut:
+        out = out[: max(len(out) - defaults.CUT_MARGIN, 0)]
+    return out, cut
 
 
 def redact_value(value: Any, mapping: dict[str, str]) -> Any:

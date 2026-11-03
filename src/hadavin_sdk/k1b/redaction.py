@@ -32,7 +32,6 @@ from typing import Any
 from hadavin_sdk import defaults
 from hadavin_sdk.guard import runmap
 from hadavin_sdk.k1b.bundle import Bundle, parse_ts
-from hadavin_sdk.tools import redact_layered
 
 SCHEME = (
     "every text value and every key of the alert, metrics, logs, deploys, Kubernetes records and runbooks is "
@@ -92,6 +91,15 @@ SENSITIVE_KEY = re.compile(
 )
 
 
+_CAMEL = re.compile(r"(?<=[a-z0-9])(?=[A-Z])")
+
+
+def sensitive(key: object) -> bool:
+    """Does a key (or an env entry's name) say its value is a credential? camelCase is split first (`clientSecret`,
+    `accessToken`, `dbPassword` read as `client_secret` ...)."""
+    return isinstance(key, str) and SENSITIVE_KEY.search(_CAMEL.sub("_", key)) is not None
+
+
 def _pair(key: str, value: str, f: Callable[[str], str]) -> str:
     """A value whose key names a credential, redacted WITH its key (`password=hunter2`), so the redactor's key=value
     patterns see it. A Kubernetes Secret value is base64: its decoded text is tried too. If the redactor still leaves
@@ -115,15 +123,18 @@ def _walk(
     """Every string is redacted, at any depth: no key exempts a value. `key` is the parent key, so a value under a
     credential key (or under a Kubernetes Secret's data) and an env entry `{"name": "DB_PASSWORD", "value": ...}` are
     redacted together with the key that names them."""
+    sens = secret_data or sensitive(key)  # inherited by everything nested under a credential key
     if isinstance(obj, str):
         if parse_ts(obj) is not None:
             return obj
-        if key is not None and (secret_data or SENSITIVE_KEY.search(key)):
+        if key is not None and sens:
             return _pair(key, obj, f)
         return f(obj)
+    if isinstance(obj, int | float) and not isinstance(obj, bool) and sens:
+        return MASKED  # a number under a credential key (a PIN, a numeric token) is a value too
     if isinstance(obj, dict):
         name = obj.get("name")
-        named = isinstance(name, str) and SENSITIVE_KEY.search(name) is not None
+        named = sensitive(name)
         secret = obj.get("kind") == "Secret"
         out: dict[Any, Any] = {}
         for k, v in obj.items():
@@ -132,7 +143,7 @@ def _walk(
             elif secret and k in ("data", "stringData") and isinstance(v, dict):
                 out[_key(k, f)] = {_key(kx, f): _walk(vx, f, str(kx), True) for kx, vx in v.items()}
             else:
-                out[_key(k, f)] = _walk(v, f, k)
+                out[_key(k, f)] = _walk(v, f, k, sens)
         return out
     if isinstance(obj, list):
         return [_walk(v, f, key, secret_data) for v in obj]
@@ -173,7 +184,10 @@ def redact_bundle(b: Bundle) -> tuple[Bundle, Counter[str]]:
         total += len(s)
         if total > 2 * defaults.MAX_BUNDLE_CHARS:  # pass 1 and pass 2 both count
             raise runmap.InputTooLarge("InputTooLarge")
-        return redact_layered(s, mapping)
+        try:
+            return runmap.redact_untrusted(s, mapping)
+        except runmap.TooDeep:  # nested deeper than the cap: not shown
+            return MASKED
 
     _apply(b, mask)  # pass 1: find every value
     total = 0

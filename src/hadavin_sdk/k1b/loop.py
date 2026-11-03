@@ -20,6 +20,7 @@ from decimal import Decimal
 
 from hadavin_sdk.config import Route
 from hadavin_sdk.guard.injection import Detector, injection_check
+from hadavin_sdk.guard.runmap import safe_head
 from hadavin_sdk.k1b.bundle import Bundle
 from hadavin_sdk.k1b.diagnosis import Diagnosis, parse_diagnosis, parse_diagnosis_text
 from hadavin_sdk.k1b.tools import ALLOWED_TOOLS, NO_DATA, SUBMIT, TOOL_SPECS, Snapshot, render
@@ -183,14 +184,14 @@ def run_case(
             out.via = "text"
             out.diagnosis = parse_diagnosis_text(reply.text)
             if out.diagnosis is None:
-                out.raw = reply.text[:RAW_LIMIT]
+                out.raw = safe_head(reply.text, RAW_LIMIT)
             return out
         for call in reply.tool_calls:
             if call.name == SUBMIT:
                 out.via = "tool"
                 out.diagnosis = parse_diagnosis(call.input)
                 if out.diagnosis is None:
-                    out.raw = _dumps(call.input)[:RAW_LIMIT]
+                    out.raw = safe_head(_dumps(call.input), RAW_LIMIT)
                 return out
             if out.tool_calls >= max_tool_calls:
                 out.status, out.stop_reason = "capped", "max_tool_calls"

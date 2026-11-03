@@ -19,6 +19,7 @@ import boto3  # the extra: a missing install fails at start-up with the hint (ba
 from botocore.config import Config
 
 from hadavin_sdk.errors import ConfigError
+from hadavin_sdk.guard import runmap
 from hadavin_sdk.models import Verdict
 
 _ACTIONS = frozenset({"NONE", "GUARDRAIL_INTERVENED"})
@@ -94,6 +95,9 @@ class GuardrailDetector:
     def check(self, text: str, source: str) -> Verdict:
         if not text.strip():  # nothing to screen; the API refuses empty content
             return Verdict(flagged=False, score=0.0, backend=self.backend)
+        text = runmap.redact_text(
+            text, {}
+        )  # sent to a vendor service: redacted even if the caller did already
         resp = self._client.apply_guardrail(
             guardrailIdentifier=self.guardrail_id,
             guardrailVersion=self.version,

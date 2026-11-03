@@ -18,7 +18,6 @@ import base64
 import bisect
 import functools
 import hashlib
-import html
 import importlib
 import ipaddress
 import json
@@ -36,7 +35,7 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal
-from urllib.parse import quote, quote_plus, unquote, urlsplit, urlunsplit
+from urllib.parse import quote, quote_plus, urlsplit, urlunsplit
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
@@ -724,54 +723,8 @@ def _derived(text: str, secrets: list[str]) -> str:
     )
 
 
-class TooDeep(runmap.RedactionError):
-    """A text still changes after `defaults.SCRUB_MAX_LAYERS` rounds of decoding: more nested encodings than any
-    honest producer writes. The scrub cannot say what it holds, so it fails closed (a marker, never the text)."""
-
-
-def _nfkc(text: str) -> str:
-    """NFKC and invisible characters. It runs INSIDE every round: a full-width `%` or `&` is an escape character
-    only after NFKC, and NFKC expands some characters (U+FDFA becomes 18), so a text whose canonical form would pass
-    the redactor's cap is refused first (InputTooLarge, a RedactionError), as redact_text does for its own views."""
-    if text.isascii():  # NFKC leaves ASCII alone, and ASCII has no invisible format characters
-        return text
-    return runmap.canonical(runmap.fits_after_nfkc(text))
-
-
-def _undo(text: str, clean: bool = False) -> str:
-    """The text with the encodings an attacker or a log pipeline layers over a value undone: JSON string escapes
-    (backslash-u with surrogate pairs joined, and the one-character escapes: PHP writes every slash as backslash-slash),
-    percent-encoding, HTML entities, then NFKC and invisible characters. Each round applies the three decoders ONE
-    AT A TIME (a combined step turns a half-written `&#10` that percent-decoding just exposed into a newline before
-    anyone can see it was half an escape), and the round repeats to a fixed point: the layers nest in any order
-    and depth (`&#37;41`, `%2541`, `%26%2390%3B`). The depth is capped at `defaults.SCRUB_MAX_LAYERS`; a text that
-    still changes then raises `TooDeep` (fail closed). This is our own design, not a quoted standard: the scrub must
-    FIND a secret in any spelling, so it decodes more than a validator would. The sources only bound it: CWE-174
-    (cwe.mitre.org/data/definitions/174.html, fetched 2026-11-03) warns that decoding the same input twice lets
-    values slip past checks, and says to reject input that does not conform; OWASP's Input Validation Cheat Sheet
-    (fetched 2026-11-03) says to decode before checking, to cap parser nesting depth, and does not describe
-    decoding to a fixed point; CWE-176 is Unicode handling. With `clean`, a half-written escape at the end of the text is
-    dropped before every decoder (the tail a cut left)."""
-    cur = text
-    for _ in range(defaults.SCRUB_MAX_LAYERS + 1):
-        step = cur
-        for decode in (_nfkc, runmap.json_unescape, unquote, html.unescape):
-            if clean:
-                while m := _PARTIAL_ESCAPE.search(
-                    step, max(len(step) - 4 * defaults.SCRUB_PARTIAL_END, 0)
-                ):
-                    step = step[
-                        : m.start()
-                    ]  # repeat: the look-back may start inside a run of half escapes
-            step = decode(step)
-        if step == cur:
-            return cur
-        cur = step
-    raise TooDeep("TooDeep")
-
-
 def _decoded(text: str) -> str:
-    return _undo(text)
+    return undo(text)
 
 
 def _sanitise(text: str) -> str:
@@ -807,6 +760,9 @@ def _secret_forms(secret: str) -> set[str]:
 
 
 _DEFAULT_SCRUB = ScrubSettings()
+TooDeep = runmap.TooDeep
+undo = runmap.undo
+nfkc = runmap.nfkc
 MARKER = "<SECRET_REDACTED>"
 
 
@@ -822,11 +778,6 @@ def _fit(text: str, scrub: ScrubSettings = _DEFAULT_SCRUB) -> str:
     return _cut(text, defaults.MAX_REDACT_CHARS - len(TRUNCATED), scrub.tail_window)
 
 
-# The end of a text cut inside an escape: a spelling the decoder cannot read yet, so no form matches it and the
-# front of a character stays visible (`\u005`, `&#9`, `%C3`, half of a surrogate pair).
-_PARTIAL_ESCAPE = re.compile(
-    r"(?:&#(?:[xX][0-9a-fA-F]*|[0-9]*)|&[A-Za-z]*|\\u[dD][89abAB][0-9a-fA-F]{2}(?:\\u?[0-9a-fA-F]{0,3}|\\)?|\\u[0-9a-fA-F]{0,3}|\\|(?:%[89a-fA-F][0-9a-fA-F])+%?[0-9a-fA-F]?|%[0-9a-fA-F]?)$"
-)
 _B64_CHARS = frozenset(string.ascii_letters + string.digits + "+/_=-")
 _HEXLIKE = re.compile(r"[0-9a-fA-F]{12,}")
 
@@ -842,7 +793,7 @@ def _first_decoded(char: str) -> str:
 
 def _decoded_clean(text: str, window: int = 4 * defaults.SCRUB_PARTIAL_END) -> str:
     """`_undo` for the tail a cut left (see there)."""
-    return _undo(text, clean=True)
+    return undo(text, clean=True)
 
 
 def _strip_b64_tail(body: str, bforms: list[bytes], scrub: ScrubSettings) -> str:
@@ -881,14 +832,14 @@ def _strip_fragment(text: str, forms: list[str], scrub: ScrubSettings = _DEFAULT
     masked). If `text` ends with the marker, remove the longest stretch before it that reads, once the encoding
     layers and NFKC are undone (`_decoded`), as the start of a form of a handed-out secret (at least
     `fragment_min` characters; hex also in any case). First a half-written escape at the very end
-    (`_PARTIAL_ESCAPE`: the decoder cannot read it, so no form matches it) and the front of a base64 token that
+    (`runmap.PARTIAL_ESCAPE`: the decoder cannot read it, so no form matches it) and the front of a base64 token that
     wraps a secret (`_strip_b64_tail`) are removed. `forms` is sorted: `t` starts a form exactly when the form
     that sorts at or after `t` starts with it. At most `fragment_scan` start positions are tried, each with one
     `_decoded` call, and only where the character reads as the first character of a form."""
     if not text.endswith(TRUNCATED):
         return text
     body = text[: -len(TRUNCATED)]
-    while m := _PARTIAL_ESCAPE.search(
+    while m := runmap.PARTIAL_ESCAPE.search(
         body, max(len(body) - 4 * scrub.partial_end, 0)
     ):  # an escape the cut left half written
         body = body[: m.start()]
@@ -917,7 +868,7 @@ def _strip_fragment(text: str, forms: list[str], scrub: ScrubSettings = _DEFAULT
             continue
         try:
             t = _decoded_clean(body[i:], 4 * scrub.partial_end)
-        except TooDeep:  # fail closed: a tail nested deeper than the cap goes with the front
+        except runmap.TooDeep:  # fail closed: a tail nested deeper than the cap goes with the front
             return body[:i] + TRUNCATED
         except runmap.InputTooLarge:
             continue
@@ -948,7 +899,7 @@ def _scrub(raw: str, long_enough: list[str], scrub: ScrubSettings = _DEFAULT_SCR
     """See `_scrub_layers`. A text nested deeper than the layer cap cannot be read: it is not shown at all."""
     try:
         return _scrub_layers(raw, long_enough, scrub)
-    except TooDeep:
+    except runmap.TooDeep:
         return MARKER + TRUNCATED
 
 
@@ -998,19 +949,21 @@ def prepare_output(
     it before the `[truncated]` marker is removed too (`_strip_fragment`)."""
     tail = scrub.tail_window
     raw = _cut(_sanitise(raw), raw_cap, tail)
-    # The window leaves room for the marker `_cut` appends, so a cut text is still within the redactor's cap.
-    raw = _cut(
-        raw,
-        min(
-            max(2 * max_bytes, scrub.min_redaction_window),
-            defaults.MAX_REDACT_CHARS - len(TRUNCATED),
-        ),
-        tail,
-    )
+    # Redaction works on the whole result up to the redactor's cap (no cut before the patterns have seen a token that
+    # is longer than the window: a JWT, a PEM key). The cap leaves room for the marker `_cut` appends.
+    before = raw
+    raw = _cut(raw, defaults.MAX_REDACT_CHARS - len(TRUNCATED), tail)
+    was_cut = raw != before  # cut at the redactor's cap (the fetch ceiling is far above it)
     long_enough = [x for x in secrets or [] if len(x) >= scrub.min_secret]
     if long_enough:
         raw = _scrub(raw, long_enough, scrub)
-    return truncate(redact_layered(raw, mapping), max_bytes)
+    out = redact_layered(raw, mapping)
+    if was_cut and out.endswith(
+        TRUNCATED
+    ):  # a secret straddling the cut is a fragment at the end: drop that end
+        body = out[: -len(TRUNCATED)]
+        out = body[: max(len(body) - defaults.CUT_MARGIN, 0)] + TRUNCATED
+    return truncate(out, max_bytes)
 
 
 def redact_layered(raw: str, mapping: dict[str, str]) -> str:
@@ -1018,17 +971,10 @@ def redact_layered(raw: str, mapping: dict[str, str]) -> str:
     (`%41KIAIOSFODNN7EXAMPLE`, `&#65;KIAIOSFODNN7EXAMPLE`, `password%3Dhunter2`) is found in the decoded view too.
     The view (layers undone to a fixed point, `_undo`) replaces the text only when redacting it found something new,
     as `redact_text` does for its own views; a text nested deeper than the cap is not shown (fail closed)."""
-    out = runmap.redact_untrusted(raw, mapping)
     try:
-        view = _undo(raw)
-    except TooDeep:
+        return runmap.redact_untrusted(raw, mapping)
+    except runmap.TooDeep:
         return MARKER + TRUNCATED
-    if view != raw:
-        before = dict(mapping)
-        again = runmap.redact_untrusted(view, mapping)
-        if mapping != before or runmap._held(again) > runmap._held(out):
-            return again
-    return out
 
 
 def error_reason(
@@ -1048,9 +994,10 @@ def error_reason(
         )  # bounded work
         message = _scrub(message, long_enough, scrub)
     # patterns FIRST, then the cut: a cut first splits a JWT or a key and the redactor no longer sees a whole one
-    message = redact_layered(
-        _cut(message, defaults.MAX_REDACT_CHARS - len(TRUNCATED), scrub.tail_window), {}
-    )
+    try:
+        message = runmap.redact_bounded(message, {}, runmap.neutralise_untrusted)[0]
+    except runmap.TooDeep:
+        message = MARKER
     if refused:
         return message[:200]
     return f"{type(exc).__name__}: {message[:160]}"

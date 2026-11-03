@@ -93,7 +93,8 @@ def test_the_front_is_removed_when_the_cut_inside_the_loop_splits_a_later_secret
 def test_the_ordinary_cut_is_not_shortened_without_a_secret_in_it():
     out = tools_mod.prepare_output("word " * 80_000, {}, CAP, [SECRET])
     assert out.endswith(("word" + tools_mod.TRUNCATED, "word " + tools_mod.TRUNCATED))
-    assert len(out) > WINDOW - 300  # nothing but the cut itself was taken off
+    # the cut itself, and the margin (`defaults.CUT_MARGIN`) dropped from the end of a result cut at the cap
+    assert len(out) > WINDOW - defaults.CUT_MARGIN - 300
 
 
 def test_even_one_or_two_characters_of_a_secret_before_the_marker_are_removed():

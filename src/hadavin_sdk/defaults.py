@@ -38,6 +38,10 @@ MAX_DOCUMENT_BYTES = (
 MAX_REDACT_CHARS = MAX_DOCUMENT_BYTES
 # A case bundle is many strings, each within the cap above; the SUM is capped too (redaction cost is linear in it).
 MAX_BUNDLE_CHARS = 8 * MAX_REDACT_CHARS
+# A text over the redaction cap is cut at the cap, redacted, and this many characters of the result's end are dropped: a
+# secret that straddles the cut leaves only a fragment of at most this length (a PEM key is about 1.7 KB), and it is the
+# part dropped, never shown.
+CUT_MARGIN = 4096
 # The scrub of handed-out secrets in a tool result (`tools.prepare_output`); validated in `config.ScrubSettings`.
 SCRUB_TAIL_WINDOW = 256  # bytes looked back over for a place to cut that is not inside a token
 SCRUB_MIN_REDACTION_WINDOW = (
@@ -103,7 +107,9 @@ STORED_KINDS = (
     "TENANT",
 )  # not UUID: a UUID is often a session or API token, so it is placeholdered but never stored
 
-# --- the Kubernetes source (KubernetesSettings) -----------------------------------------------------------------------
+# --- kubernetes kind: the Kubernetes source (KubernetesSettings). Decision: kind defaults stay here with every other default
+# (a repo rule keeps one set); when a second kind arrives each kind gets its own `<kind>_defaults.py` and the rule test
+# becomes syntax-tree based (K5-ITO outline in sources/kinds.py) -------------------
 K8S_PAGE_SIZE = 20  # list page size: a deployment object can be tens of KB
 K8S_MAX_PAGES = 25  # pages followed per list; past that the answer says it is incomplete
 K8S_JSON_CAP_BYTES = 1024 * 1024  # fetch cap for a JSON list reply

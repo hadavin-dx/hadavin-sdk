@@ -65,14 +65,13 @@ class SlackChannel:
 
     def _blocks(self, req: ApprovalRequest, approver_ids: list[str] | None) -> list[dict[str, Any]]:
         step = f"Step {req.current_step + 1} of {len(req.steps)}"
+        # `req.summary` was cleaned once when it was built (`summary()`); it is shown whole or not at all: a silent cut
+        # would hide the end of what the approver is approving
+        shown = withhold_commands(req.summary)
+        if len(shown) > self.max_card_chars:
+            shown = "(the summary is too long to show here; open the full request in the console)"
         blocks: list[dict[str, Any]] = [
-            {
-                "type": "section",
-                "text": {
-                    "type": "plain_text",
-                    "text": withhold_commands(clean(req.summary)[: self.max_card_chars]),
-                },
-            },
+            {"type": "section", "text": {"type": "plain_text", "text": shown}},
         ]
         if approver_ids is None:  # decided or expired: the buttons go
             blocks.append(

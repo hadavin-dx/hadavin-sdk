@@ -162,7 +162,7 @@ def test_text_fallback_and_unreadable(env):
 
 
 def test_raw_is_capped_at_2000_characters(env):
-    env.run(ScriptedLLM([text_reply("x" * 5000), submit_not_sure()]))
+    env.run(ScriptedLLM([text_reply("word " * 1000), submit_not_sure()]))
     assert len(env.case()["raw"]) == 2000
 
 

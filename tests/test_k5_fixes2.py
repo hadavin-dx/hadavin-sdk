@@ -183,7 +183,6 @@ def test_adjacent_variable_repeats_are_refused():
 
 
 @pytest.mark.perf  # a wall-clock or CPU-time bound: it runs in the perf step, not the default suite
-@pytest.mark.perf  # a wall-clock or CPU-time bound: it runs in the perf step, not the default suite
 def test_the_worst_allowed_suffix_is_fast_on_a_hostile_name():
     """Two overlapping variable repeats of 64 on a name that never matches: polynomial, and measured."""
     from hadavin_sdk.runtime import evidence
