@@ -19,6 +19,7 @@ import pytest
 
 from hadavin_sdk import defaults
 from hadavin_sdk import tools as tools_mod
+from hadavin_sdk.guard import runmap
 from hadavin_sdk.guard.runmap import RedactionError
 from hadavin_sdk.scrub_settings import ScrubSettings
 from hadavin_sdk.tools import MARKER, TRUNCATED, prepare_output
@@ -211,3 +212,17 @@ def test_100kb_adversarial_layered_input_is_bounded(names):
         t = time.perf_counter()
         prepare_output(text, {}, 2000, [SHORT])
         assert time.perf_counter() - t < 20
+
+
+def test_ascii_shortcut_in_nfkc_equals_the_full_canonical_form_for_every_ascii_character():
+    """The shortcut is only sound if NFKC plus invisible-removal is the identity on ASCII: checked for all 128."""
+    for cp in range(128):
+        assert tools_mod._nfkc(chr(cp)) == runmap.canonical(chr(cp))
+
+
+def test_ascii_text_never_reaches_the_normaliser(monkeypatch):
+    """The percent-encoded expanding text is ASCII: the refusal must come from the decoded text, not the raw one."""
+    calls = []
+    monkeypatch.setattr(runmap, "fits_after_nfkc", lambda t: calls.append(t) or t)
+    tools_mod._nfkc("%EF%B7%BA" * 10)
+    assert calls == []

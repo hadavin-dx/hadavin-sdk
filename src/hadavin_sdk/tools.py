@@ -738,9 +738,12 @@ def _undo(text: str, clean: bool = False) -> str:
     AT A TIME (a combined step turns a half-written `&#10` that percent-decoding just exposed into a newline before
     anyone can see it was half an escape), and the round repeats to a fixed point: the layers nest in any order
     and depth (`&#37;41`, `%2541`, `%26%2390%3B`). The depth is capped at `defaults.SCRUB_MAX_LAYERS`; a text that
-    still changes then raises `TooDeep` (fail closed: the standard defence against nested-encoding evasion is to
-    decode to a fixed point under a depth cap and reject what exceeds it, OWASP Input Validation Cheat Sheet,
-    "canonicalization", and CWE-174 double decoding). With `clean`, a half-written escape at the end of the text is
+    still changes then raises `TooDeep` (fail closed). This is our own design, not a quoted standard: the scrub must
+    FIND a secret in any spelling, so it decodes more than a validator would. The sources only bound it: CWE-174
+    (cwe.mitre.org/data/definitions/174.html, fetched 2026-11-03) warns that decoding the same input twice lets
+    values slip past checks, and says to reject input that does not conform; OWASP's Input Validation Cheat Sheet
+    (fetched 2026-11-03) says to decode before checking, to cap parser nesting depth, and does not describe
+    decoding to a fixed point; CWE-176 is Unicode handling. With `clean`, a half-written escape at the end of the text is
     dropped before every decoder (the tail a cut left)."""
     cur = text
     for _ in range(defaults.SCRUB_MAX_LAYERS + 1):
