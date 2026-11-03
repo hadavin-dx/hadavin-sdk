@@ -240,3 +240,19 @@ def hadavin_sdk_file() -> str:
     import hadavin_sdk
 
     return hadavin_sdk.__file__
+
+
+def test_the_vendor_guardrail_receives_redacted_text_even_when_the_caller_did_not():
+    from hadavin_sdk.guard.bedrock_guardrail import GuardrailDetector
+
+    seen = {}
+
+    class Client:
+        def apply_guardrail(self, **kw):
+            seen["text"] = kw["content"][0]["text"]["text"]
+            return {"action": "NONE", "assessments": []}
+
+    GuardrailDetector(Client(), "g", "1", 0.5).check(
+        "mail " + SPELLINGS["percent"] + " and bob.smith@example.com", "t"
+    )
+    assert _clean(seen["text"]) and "bob.smith" not in seen["text"]
