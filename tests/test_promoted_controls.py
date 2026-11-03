@@ -1877,7 +1877,9 @@ def test_the_egress_docstring_states_what_the_code_counts():
     counted = egress_text._digitish_count
     assert counted("1b5i7g3q", 6) == 8 and counted("OlISBZGq", 6) == 8  # what the sentence claims
     assert "``1b5i7g3q`` is 8" in doc and "MONOTONIC" in doc and "WHAT THIS DOES NOT STOP" in doc
-    assert "xl xl xl" in doc and "free text" in doc  # the rule-aware writer is named, not hidden
+    assert (
+        "docs/promoted-controls.md" in doc and "free text" in doc
+    )  # the residual has one home, linked from here
     fn = counted.__doc__
     for phrase in (
         "MONOTONIC",
@@ -2631,6 +2633,8 @@ def test_the_residual_is_exactly_what_the_docs_say():
 def test_every_mutant_definition_names_its_killing_test():
     import importlib.util
 
+    if not (FIX.parent / "promoted_mutants.py").exists():
+        pytest.skip("the mutation copies carry only this test file")
     spec = importlib.util.spec_from_file_location(
         "promoted_mutants_defs", FIX.parent / "promoted_mutants.py"
     )
@@ -2708,3 +2712,28 @@ def test_the_runner_keeps_a_symlink_a_link(tmp_path):
     except (OSError, NotImplementedError):
         pytest.skip("this system does not allow creating symlinks")
     assert run_mutants(root, [], ["tests/test_core.py"], extra_dirs=(), timeout=120) == []
+
+
+def test_text_changed_after_the_mask_is_masked_again_whatever_look_alikes_hide_the_key():
+    # class lesson of PR #42: anything transformed AFTER the redact step must be re-checked. Seeded fuzz through the real entry point.
+    from hadavin_sdk.approvals.channel import clean
+
+    key = "AKIA" + "IOSFODNN7EXAMPLE"
+    alike = {
+        "A": chr(0x410),
+        "I": chr(0x406),
+        "O": chr(0x41E),
+        "S": chr(0x405),
+        "E": chr(0x415),
+        "P": chr(0x420),
+    }
+    rng = random.Random(50)
+    for _ in range(300):
+        text = "".join(
+            alike[c]
+            if c in alike and rng.random() < 0.5
+            else c + (chr(0x200B) if rng.random() < 0.15 else "")
+            for c in key
+        )
+        out = clean(f"the key {text} was pasted")
+        assert key not in out and textnorm.fold(out).count(key) == 0, (text, out)
