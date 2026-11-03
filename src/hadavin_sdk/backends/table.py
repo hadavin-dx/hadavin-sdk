@@ -133,7 +133,8 @@ class PostgresSettings(KindSettings):
     spend_pool_size: int = Field(default=8, ge=1, le=64)
     spend_pool_wait_s: float = Field(default=10.0, gt=0, le=300)
     # How long one reservation waits for a row lock, how many times it is retried after a serialization failure or
-    # deadlock, and the first back-off between tries (it grows linearly).
+    # deadlock, and the first back-off between tries (it grows linearly). The worst-case wait of one spend call
+    # combines all four settings and is NOT capped by spend_pool_wait_s: see the formula in store/postgres.py.
     spend_lock_timeout_ms: int = Field(default=5000, ge=100, le=60000)
     spend_reserve_attempts: int = Field(default=3, ge=1, le=10)
     spend_backoff_s: float = Field(default=0.02, gt=0, le=5)

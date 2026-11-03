@@ -2,7 +2,7 @@
 suite, tests/contracts/test_store.py, in P1b."""
 
 import logging
-import time
+from datetime import timedelta
 from decimal import Decimal
 
 import pytest
@@ -56,10 +56,17 @@ def test_runtime_passes_store_touch_as_the_heartbeat(cfg_dir):
     seen = {}
 
     def execute(plan, decision, approval, heartbeat=None):
+        import sys
+
         before = rt.store.get_run(plan.run_id).updated_at
-        time.sleep(0.01)
-        heartbeat()
-        seen["moved"] = rt.store.get_run(plan.run_id).updated_at > before
+        later = before + timedelta(seconds=1)  # an injected store clock instead of a sleep
+        mod = sys.modules[type(rt.store).__module__]
+        old, mod.now = mod.now, lambda: later
+        try:
+            heartbeat()
+        finally:
+            mod.now = old
+        seen["moved"] = rt.store.get_run(plan.run_id).updated_at == later
         return RunResult(outcome="succeeded", external_ref="rec-001")
 
     rt, cfg = build(

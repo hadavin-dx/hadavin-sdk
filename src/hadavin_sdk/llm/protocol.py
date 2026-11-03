@@ -119,9 +119,11 @@ def cost_to_settle(
 def reply_cost_to_settle(reply: Any, reserved: Decimal) -> Decimal:
     """What a meter settles after a SUCCESSFUL call. Normally the reply's own cost. If a fallback served the call after
     a primary whose billing is unknown (``reply.prior_unknown_requests``), the primary may have been billed too: book
-    one primary worst case (the reservation) on top of the fallback's cost, so that bill is not lost."""
+    one primary worst case (the reservation) per failed primary on top of the fallback's cost, so no bill is lost
+    (nested fallbacks carry one mark per failed primary)."""
     cost = reply.cost_usd
-    return cost + reserved if getattr(reply, "prior_unknown_requests", 0) > 0 else cost
+    marks = getattr(reply, "prior_unknown_requests", 0)
+    return cost + reserved * marks if marks > 0 else cost
 
 
 class UnusableAnswer(ProviderError):

@@ -362,7 +362,7 @@ class Runtime:
             # Any other exception leaves the worst case booked (the call may have been billed): fail safe.
             spent = reply_cost_to_settle(
                 reply, res.usd
-            )  # + one primary worst case after a failed primary
+            )  # + one primary worst case per failed primary (nested fallbacks)
             self._settle(run, res, spent)
             self.store.add_cost(run.run_id, spent)
             if reply.stop_reason in (

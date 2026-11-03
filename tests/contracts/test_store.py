@@ -1,7 +1,6 @@
 """Store suite: the public Store Protocol only, over every registered store kind (P2 adds postgres)."""
 
 import threading
-import time
 from datetime import date, timedelta
 from decimal import Decimal
 
@@ -74,12 +73,15 @@ def test_add_cost_accumulates_and_unknown_run_is_not_found(store):
         store.add_cost("run-missing", Decimal(1))
 
 
-def test_touch_moves_updated_at_and_keeps_state(store):
+def test_touch_moves_updated_at_and_keeps_state(store, monkeypatch):
+    import sys
+
     run = _run(store, S.WORKING)
-    time.sleep(0.01)
+    later = run.updated_at + timedelta(seconds=1)  # an injected clock: no sleep, no clock-tick race
+    monkeypatch.setattr(sys.modules[type(store).__module__], "now", lambda: later)
     store.touch(run.run_id)
     got = store.get_run(run.run_id)
-    assert got.updated_at > run.updated_at and got.state == S.WORKING
+    assert got.updated_at == later and got.state == S.WORKING
     with pytest.raises(NotFound):
         store.touch("run-missing")
 

@@ -4,7 +4,7 @@ the real cost after; a refused booking raises ``OverBudget`` and the model is ne
 error is settled with ``cost_to_settle`` (the billing contract on ``ProviderError``): released when nothing was sent
 or every request was refused (4xx, 429); booked at its cost when the provider answered and billed (never at zero); the
 worst case stays booked when a request may have been processed (timeout, reset, 5xx, ``DeadlineExceeded``). A fallback that
-SUCCEEDS after a primary of unknown billing is booked at its own cost PLUS one reservation (``reply_cost_to_settle``). If the
+SUCCEEDS after a primary of unknown billing is booked at its own cost PLUS one reservation per failed primary (``reply_cost_to_settle``). If the
 store cannot take the settlement of a good reply, the worst case stays booked (it fails safe), the failure is logged
 and the reply is still returned.
 

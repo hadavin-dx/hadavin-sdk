@@ -12,6 +12,7 @@ from __future__ import annotations
 import collections
 import ipaddress
 import logging
+import math
 import os
 import queue
 import tempfile
@@ -283,6 +284,15 @@ class PostgresStore:
     # MEASURE with pgbench against YOUR database (a custom script that updates one row per transaction) and with a burst
     # test, then size ``spend_pool_wait_s``: B simultaneous callers on one key need about B / rate seconds. The cap is
     # never exceeded whatever the rate. See tests/test_pr48_pool.py.
+    # WORST-CASE LATENCY of one spend call (reserve/settle/prune), NOT bounded by spend_pool_wait_s alone. Postgres
+    # applies lock_timeout to each lock acquisition separately, and a reserve with a run key can wait on up to 8 lock
+    # statements (an INSERT and a SELECT ... FOR UPDATE per counter). Each attempt waits for a pool slot, then for its
+    # locks; a lock timeout retries the whole transaction after a linear backoff:
+    #     attempts x (pool_wait_s + 8 x lock_timeout_ms / 1000) + backoff_s x (1 + 2 + ... + (attempts - 1))
+    #     defaults (3, 10 s, 5000 ms, 0.02 s):   3 x (10 + 40) + 0.06       = about 150 s
+    #     maximums (10, 300 s, 60000 ms, 5 s):   10 x (300 + 480) + 225     = about 8,025 s
+    # In practice one hot key waits on ONE lock at a time, so a lock wait is usually far below this; size the settings
+    # so that this bound is acceptable to the caller (an agent run holds its reservation until it settles).
     LOCK_TIMEOUT_MS = 5000
     RESERVE_ATTEMPTS = 3
     POOL_SIZE = 8
@@ -308,7 +318,22 @@ class PostgresStore:
         self.POOL_WAIT_S = pool_wait_s if pool_wait_s is not None else type(self).POOL_WAIT_S
         self._slots = _FairSlots(self.POOL_SIZE)
         # Defaults live on the class (documented); settings (spend_lock_timeout_ms, spend_reserve_attempts,
-        # spend_backoff_s) override them per instance.
+        # spend_backoff_s) override them per instance. Direct construction is checked too: lock_timeout 0 means
+        # "wait forever" in Postgres and a negative backoff makes time.sleep raise mid-retry.
+        if lock_timeout_ms is not None and (
+            type(lock_timeout_ms) is not int or lock_timeout_ms < 1
+        ):
+            raise ConfigError(
+                "store postgres: lock_timeout_ms must be a whole number of at least 1"
+            )
+        if reserve_attempts is not None and (
+            type(reserve_attempts) is not int or reserve_attempts < 1
+        ):
+            raise ConfigError(
+                "store postgres: reserve_attempts must be a whole number of at least 1"
+            )
+        if backoff_s is not None and not (math.isfinite(backoff_s) and backoff_s >= 0):
+            raise ConfigError("store postgres: backoff_s must be a finite number of at least 0")
         if lock_timeout_ms is not None:
             self.LOCK_TIMEOUT_MS = lock_timeout_ms
         if reserve_attempts is not None:

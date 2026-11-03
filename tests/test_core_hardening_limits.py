@@ -453,6 +453,32 @@ def _hammer_agent(agent, limitses, n, cost, run_id):
     return won, lost
 
 
+def test_postgres_reserve_refuses_while_the_kill_switch_is_on_or_its_row_is_missing():
+    # The fast, direct gate check (the flip test below proves the ordering under load but can take long to fail).
+    from tests.contracts.kinds.store_postgres import pg_schema
+
+    psycopg = pytest.importorskip("psycopg")
+    from tests.test_core_hardening_round2 import _pg_store
+
+    day = date(2026, 3, 9)
+    for dsn in pg_schema():
+        store = _pg_store(dsn)
+        try:
+            store.set_kill_switch(KillSwitch(on=True, by="t"))
+            assert store.reserve_spend("a", day, D("0.01"), D(5), D(5)) == ["kill_switch"]
+            store.set_kill_switch(KillSwitch(on=False, by="t"))
+            assert store.reserve_spend("a", day, D("0.01"), D(5), D(5)) == []
+            with psycopg.connect(dsn, autocommit=True) as db:
+                db.execute("DELETE FROM kill_switch")
+            assert store.reserve_spend("a", day, D("0.01"), D(5), D(5)) == ["kill_switch"]
+            assert store.spend_totals("a", day) == (
+                D("0.01"),
+                D("0.01"),
+            )  # only the one admitted booking
+        finally:
+            store.close()
+
+
 def test_postgres_kill_switch_flip_is_seen_by_every_later_reserve():
     from tests.contracts.kinds.store_postgres import pg_schema
 

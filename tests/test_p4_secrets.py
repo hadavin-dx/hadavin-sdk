@@ -2,7 +2,6 @@
 The AWS kind runs on moto (in-process, $0); no real AWS call is made."""
 
 import threading
-import time
 from concurrent.futures import ThreadPoolExecutor
 
 import boto3
@@ -73,13 +72,28 @@ def test_ttl_zero_reads_every_time():
 def test_concurrent_misses_fetch_once_so_an_older_value_never_overwrites_a_newer_one():
     calls, started = [], threading.Event()
 
+    class SpyLock:  # records that a caller found the lock held, i.e. arrived while the fetch ran
+        def __init__(self, lock):
+            self.lock, self.contended = lock, threading.Event()
+
+        def __enter__(self):
+            if not self.lock.acquire(blocking=False):
+                self.contended.set()
+                self.lock.acquire()
+            return self
+
+        def __exit__(self, *exc):
+            self.lock.release()
+
     def answer(op, params):
         calls.append(params["SecretId"])
         started.set()
-        time.sleep(0.05)  # a slow GetSecretValue: the second caller arrives while it runs
+        # a slow GetSecretValue: return only once the second caller is waiting on the lock (event, not a sleep)
+        assert spy.contended.wait(30), "the second caller never arrived during the fetch"
         return {"Name": params["SecretId"], "SecretString": f"v{len(calls)}"}
 
     provider = SecretsManagerProvider(stub_client("secretsmanager", answer), ttl_s=300)
+    provider._lock = spy = SpyLock(provider._lock)
     with ThreadPoolExecutor(2) as pool:
         first = pool.submit(provider.get, "a")
         started.wait()

@@ -126,6 +126,10 @@ def _main(argv: list[str] | None = None) -> int:
     )
     rel.add_argument("--amount", required=True, type=_money, help="USD to take back")
     rel.add_argument("--dry-run", action="store_true", help="only show the totals")
+    sub.add_parser(
+        "spend-drift",
+        help="READ ONLY: list agent months whose month counter is below the sum of its days (exit 1 if any)",
+    )
     aud = sub.add_parser("audit", help="check the chain audit")
     aud.add_argument("action", choices=["verify"])
     rep = sub.add_parser(
@@ -163,6 +167,8 @@ def _main(argv: list[str] | None = None) -> int:
         return _prune_runs(cfg, args.keep_days)
     if args.cmd == "release-reservation":
         return _release_reservation(cfg, args)
+    if args.cmd == "spend-drift":
+        return _spend_drift(cfg)
     reg = load_registry(cfg)
     if args.cmd in (
         "replay",
@@ -411,6 +417,36 @@ def _prune_runs(cfg, keep_days: int) -> int:
     )
     print(f"pruned: {n} run counter rows")
     return 0
+
+
+def _spend_drift(cfg) -> int:
+    """Exit 0 clean, 1 drift found (one line per agent month), 2 refused, 3 store unavailable. Reads only."""
+    store = cfg.backends.store
+    dsn = os.environ.get("HADAVIN_MAINTENANCE_DSN")
+    if store.kind != "postgres" or not dsn:
+        print(
+            "refused: spend-drift needs the postgres store and HADAVIN_MAINTENANCE_DSN "
+            "(the maintenance role's DSN, never the runtime's)",
+            file=sys.stderr,
+        )
+        return 2
+    from hadavin_sdk.store.migrate import spend_drift
+    from hadavin_sdk.store.postgres import ca_file
+
+    ca = ca_file(store, make("secrets", cfg.backends.secrets).get)
+    try:
+        rows = spend_drift(
+            dsn, iam_auth=store.iam_auth, region=store.region, sslmode=store.sslmode, sslrootcert=ca
+        )
+    except StoreUnavailable as exc:
+        print(f"failed: {exc}", file=sys.stderr)  # class name only, never driver text
+        return 3
+    for agent, month, month_usd, days_usd in rows:
+        print(
+            f"DRIFT: {agent} {month:%Y-%m}: month {month_usd} below the sum of its days {days_usd}"
+        )
+    print("no drift" if not rows else f"{len(rows)} agent month(s) drifted; nothing was changed")
+    return 1 if rows else 0
 
 
 def _migrate(

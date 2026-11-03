@@ -218,7 +218,7 @@ def migrate(
         raise ConfigError("migrations are inconsistent: " + "; ".join(problems))
     applied = []
     with (
-        connect(
+        _connect(
             dsn, iam_auth=iam_auth, region=region, sslmode=sslmode, sslrootcert=sslrootcert
         ) as db,
         db.transaction(),
@@ -299,6 +299,15 @@ def migrate(
 #                 matrix for the runtime, maintenance and portal logins) and the maintenance role's other denials.
 
 
+def _connect(dsn: str, **kw) -> psycopg.Connection:
+    """``connect`` for the maintenance commands: a refused, unreachable or malformed DSN becomes StoreUnavailable
+    carrying the driver's class name only (its message can quote the host, port and user)."""
+    try:
+        return connect(dsn, **kw)
+    except psycopg.Error as exc:
+        raise StoreUnavailable(f"store postgres: cannot connect ({type(exc).__name__})") from None
+
+
 def release_reservation(
     dsn: str,
     agent_id: str,
@@ -336,14 +345,16 @@ def release_reservation(
     if day > now().date():
         raise ConfigError("day must not be in the future")
     key = counter_key(tenant, agent_id)
-    conn = connect(dsn, iam_auth=iam_auth, region=region, sslmode=sslmode, sslrootcert=sslrootcert)
 
-    def connector():
+    def connector():  # the spend pool's own connect: it retries once and reports the class name only
         return connect(
             dsn, iam_auth=iam_auth, region=region, sslmode=sslmode, sslrootcert=sslrootcert
         )
 
-    store = PostgresStore(conn, connector)
+    store = PostgresStore(
+        _connect(dsn, iam_auth=iam_auth, region=region, sslmode=sslmode, sslrootcert=sslrootcert),
+        connector,
+    )
     try:
         before = store.spend_totals(key, day)
         if not dry_run:
@@ -376,15 +387,48 @@ def prune_run_counters(
 
     if keep_days < 1:
         raise ConfigError("keep_days must be at least 1")
-    conn = connect(dsn, iam_auth=iam_auth, region=region, sslmode=sslmode, sslrootcert=sslrootcert)
 
-    def connector():
+    def connector():  # the spend pool's own connect: it retries once and reports the class name only
         return connect(
             dsn, iam_auth=iam_auth, region=region, sslmode=sslmode, sslrootcert=sslrootcert
         )
 
-    store = PostgresStore(conn, connector)
+    store = PostgresStore(
+        _connect(dsn, iam_auth=iam_auth, region=region, sslmode=sslmode, sslrootcert=sslrootcert),
+        connector,
+    )
     try:
         return store.prune_spend(now().date() - timedelta(days=keep_days))
     finally:
         store.close()
+
+
+def spend_drift(
+    dsn: str,
+    *,
+    iam_auth: bool = False,
+    region: str | None = None,
+    sslmode: str | None = None,
+    sslrootcert: str | None = None,
+) -> list[tuple[str, object, object, object]]:
+    """READ ONLY: every (agent_id, month, month_total, sum_of_days) whose MONTH counter is below the sum of its DAY
+    counters, the drift that hands out monthly headroom nobody paid for (left by an older release or by raw SQL; the
+    take-back clamp hides it, it does not repair it). Nothing is changed: repair is a decision for the operator.
+    A month ABOVE its days is not reported (pruned per-run day rows leave that, harmlessly)."""
+    with _connect(
+        dsn, iam_auth=iam_auth, region=region, sslmode=sslmode, sslrootcert=sslrootcert
+    ) as db:
+        try:
+            with db.transaction():
+                # the database refuses any write in this check
+                db.execute("SET TRANSACTION READ ONLY")
+                rows = db.execute(
+                    "SELECT s.agent_id, date_trunc('month', s.day)::date AS month, COALESCE(m.usd, 0), "
+                    "SUM(s.usd) FROM spend s LEFT JOIN spend_month m "
+                    "ON m.agent_id = s.agent_id AND m.month = date_trunc('month', s.day)::date "
+                    "GROUP BY s.agent_id, date_trunc('month', s.day)::date, m.usd "
+                    "HAVING COALESCE(m.usd, 0) < SUM(s.usd) ORDER BY 1, 2"
+                ).fetchall()
+        except psycopg.Error as exc:  # e.g. a role without SELECT: class name only
+            raise StoreUnavailable(f"spend-drift: {type(exc).__name__}") from None
+    return [tuple(r) for r in rows]

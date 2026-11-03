@@ -620,7 +620,14 @@ def test_postgres_reserve_settle_storm_has_no_wrong_totals(clock):
 
 
 def test_hung_attempts_cannot_pile_up_threads_past_the_bound(monkeypatch):
-    monkeypatch.setattr(retry, "_SLOTS", threading.BoundedSemaphore(3))
+    returned = threading.Semaphore(0)
+
+    class Slots(threading.BoundedSemaphore):  # signals each slot handed back (event sync, no sleep)
+        def release(self, n=1):
+            super().release(n)
+            returned.release()
+
+    monkeypatch.setattr(retry, "_SLOTS", Slots(3))
     release = threading.Event()
     for _ in range(3):
         with pytest.raises(DeadlineExceeded):
@@ -628,7 +635,8 @@ def test_hung_attempts_cannot_pile_up_threads_past_the_bound(monkeypatch):
     with pytest.raises(ProviderExhausted, match="too many attempts"):
         retry.with_retry(lambda: "x", label="t", max_attempts=1, deadline_s=0.5)
     release.set()
-    time.sleep(0.3)
+    for _ in range(3):
+        assert returned.acquire(timeout=30), "a hung attempt never handed its slot back"
     assert (
         retry.with_retry(lambda: "x", label="t", max_attempts=1, deadline_s=1.0) == "x"
     )  # slots came back

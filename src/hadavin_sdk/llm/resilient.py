@@ -256,8 +256,11 @@ class ResilientLLM:
             update={
                 "fallback_used": True,
                 "served_by": served_by,
-                "prior_unknown_requests": max(
-                    lost, getattr(out, "prior_unknown_requests", 0)
-                ),  # the meter books one primary worst case on top; a nested fallback keeps its inner carry
+                # One mark per failed primary that may have billed (this one: 0 or 1, however many of its retries were
+                # unknown, as cost_to_settle keeps one reservation per call), PLUS the inner fallback's own marks: a
+                # nested fallback whose primary also failed unknown is a second, distinct possible bill. The meter
+                # books one reservation per mark (reply_cost_to_settle). max() here dropped one when both were set.
+                "prior_unknown_requests": (1 if lost else 0)
+                + max(0, getattr(out, "prior_unknown_requests", 0)),
             }
         )
