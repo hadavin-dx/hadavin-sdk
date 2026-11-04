@@ -506,6 +506,10 @@ LITERAL_OK: dict[tuple[str, str], str] = {
         "aws",
     ): "G4 command shape: one of many programs (tests/test_g4_parity.py)",
     (f"{PKG}.approvals.gate", "s3"): "G4 read-only shape: `aws s3 ls` (tests/test_g4_parity.py)",
+    (
+        f"{PKG}.guard.http",
+        "Azure",
+    ): "METADATA_ENDPOINTS names the cloud whose host address the deny table refuses (documentation of a refusal, not a dependency)",
     (f"{PKG}.config", "slack"): "the retired slice 1 config key, refused with its new place",
     (
         f"{PKG}.llm.openai_compat",
