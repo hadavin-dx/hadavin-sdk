@@ -2830,3 +2830,29 @@ def test_the_look_alike_fuzz_keeps_both_the_key_and_live_syntax_out():
         out = clean(line)
         assert key not in textnorm.fold(out), (line, out)
         assert _is_live(out) == [], (line, out, _is_live(out))
+
+
+def test_a_test_file_that_is_not_among_the_copied_tests_fails_before_any_mutant_runs(tmp_path):
+    root = _pk_tree(
+        tmp_path, "from pk.core import go\n\ndef test_go_is_true():\n    assert go(True) is True\n"
+    )
+    ok = Mutant("ok", "src/pk/core.py", "return flag", "return False", "test_go_is_true")
+    bad = Mutant(
+        "bad",
+        "src/pk/core.py",
+        "return flag",
+        "return not flag",
+        "test_go_is_true",
+        test_file="tests/elsewhere.py",
+    )
+    ran = []
+    with pytest.raises(ValueError, match="elsewhere"):
+        run_mutants(
+            root,
+            [ok, bad],
+            ["tests/test_core.py"],
+            extra_dirs=(),
+            timeout=120,
+            on_result=ran.append,
+        )
+    assert ran == []  # the first mutant was not run

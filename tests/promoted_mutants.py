@@ -1361,7 +1361,7 @@ M = [
         HT,
         "embedded = [ip.ipv4_mapped, ip.sixtofour]",
         "embedded = [ip.sixtofour]",
-        "test_an_ipv4_mapped_form_of_a_metadata_address_is_refused",
+        "test_an_ipv4_mapped_form_of_a_refused_address_is_refused",
         test_file=HTTP_TEST,
     ),
     Mutant(
@@ -1378,6 +1378,7 @@ M = [
         "(ip in _BENCHMARK or ip in _THIS_NETWORK)",
         "(ip in _THIS_NETWORK)",
         "test_the_benchmarking_range_is_refused_to_its_last_address",
+        only_test="test_the_benchmarking_range_is_refused_to_its_last_address",
         test_file=HTTP_TEST,
     ),
     Mutant(
@@ -1386,6 +1387,7 @@ M = [
         "(ip in _BENCHMARK or ip in _THIS_NETWORK)",
         "(ip in _BENCHMARK)",
         "test_this_network_is_refused",
+        only_test="test_this_network_is_refused",
         test_file=HTTP_TEST,
     ),
     Mutant(
@@ -1395,7 +1397,6 @@ M = [
         "ipaddress.ip_address(sockaddr[0])",
         "test_an_ipv6_zone_id_does_not_hide_the_address",
         test_file=HTTP_TEST,
-        allow_crash=True,  # the zone id makes the address a different object: the test fails with an exception
     ),
 ]
 

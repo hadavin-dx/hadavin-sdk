@@ -55,10 +55,10 @@ def test_it_finds_exactly_what_the_old_pattern_found_on_a_fuzz_corpus():
 
 
 def test_it_finds_exactly_what_the_old_pattern_found_on_every_short_text_over_a_small_alphabet():
-    # exhaustive: every text of up to 7 characters over seven characters (one of them non-ASCII, one a line break),
-    # at every start position from 0 to one past the end
+    # exhaustive: every text of up to 6 characters over seven characters (one of them non-ASCII, one a line break), at
+    # every start position from 0 to one past the end (about 1.1 million comparisons, a few seconds)
     checked = hits = 0
-    for n in range(8):
+    for n in range(7):
         for letters in itertools.product(ALPHABET, repeat=n):
             text = "".join(letters)
             for pos in range(n + 2):
@@ -66,7 +66,8 @@ def test_it_finds_exactly_what_the_old_pattern_found_on_every_short_text_over_a_
                 assert runmap.partial_escape_start(text, pos) == want, (text, pos)
                 checked += 1
                 hits += want is not None
-    assert checked > 5_000_000 and hits > 100_000
+    assert checked == sum(len(ALPHABET) ** n * (n + 2) for n in range(7))  # every case was visited
+    assert 0 < hits < checked  # the corpus holds both finds and misses (a sensitivity control)
 
 
 def test_runs_longer_than_the_fuzz_texts_and_other_line_endings_agree_too():

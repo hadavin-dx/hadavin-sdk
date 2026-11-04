@@ -84,9 +84,9 @@ _BENCHMARK = ipaddress.IPv4Network((bytes((198, 18, 0, 0)), 15))
 _THIS_NETWORK = ipaddress.IPv4Network((bytes((0, 0, 0, 0)), 8))
 # 100.64.0.0/10 (carrier-grade NAT, where some clouds and VPNs put in-cluster services) is allowed on purpose,
 # like the other private ranges; the manifest host allowlist bounds what a tool may name.
-# NAT64 (the well-known prefix) is refused whole, by this rule and not by the standard library's flags (which differ
-# between Python versions): an IPv6-only cluster behind DNS64/NAT64 cannot use the in-process fetch and needs the
-# egress proxy (K7) instead.
+# NAT64 (the well-known prefix) is refused whole by an explicit rule here, so the refusal does not depend on the
+# standard library (which also refuses it today, because the whole range is reserved there): an IPv6-only cluster
+# behind DNS64/NAT64 cannot use the in-process fetch and needs the egress proxy (K7) instead.
 _NAT64 = ipaddress.IPv6Network((_v6(0x64, 0xFF9B, 0, 0, 0, 0, 0, 0), 96))
 # the local-use NAT64 prefix (RFC 8215): refused whole
 _NAT64_LOCAL = ipaddress.IPv6Network((_v6(0x64, 0xFF9B, 1, 0, 0, 0, 0, 0), 48))
@@ -148,8 +148,9 @@ def _resolve(host: str, port: int):
 
 
 def checked_connection(address, timeout=socket._GLOBAL_DEFAULT_TIMEOUT, source_address=None):
-    """Resolve the host ONCE, refuse it if any answer is loopback, link-local (the cloud metadata address),
-    unspecified, multicast or reserved, and connect to a checked address. The name is looked up exactly once, so
+    """Resolve the host ONCE, refuse it if any answer is loopback, link-local, unspecified, multicast, reserved, a
+    cloud metadata address (METADATA_ENDPOINTS), in the benchmarking range or "this network", NAT64, or an IPv6 form that
+    carries one of these (IPv4-mapped, 6to4, Teredo), and connect to a checked address. The name is looked up exactly once, so
     a DNS answer that changes between the check and the connect (rebinding) cannot reach the socket; TLS still
     verifies the certificate against the NAME (the connection keeps `host` for SNI). Private ranges are allowed:
     in-cluster services live there. An explicit loopback NAME (127.0.0.1, localhost, ::1) is connected as it is,

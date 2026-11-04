@@ -159,8 +159,14 @@ def run_mutants(
     finishes (stream it and a timeout of the whole run still leaves a kill list). Every ``tests`` and ``extra_dirs`` entry and every mutant file
     must name a file inside its tree (``ValueError``)."""
     root = Path(root)
+    mutants = list(mutants)
     for t in (*tests, *extra_dirs):
         _relative(t)
+    for m in mutants:  # before anything runs: a bad `test_file` must not surface after earlier mutants were already run
+        if m.test_file and m.test_file not in tests:
+            raise ValueError(
+                f"mutant {m.name!r}: test_file {m.test_file!r} is not one of the copied tests"
+            )
     tmp = Path(tempfile.mkdtemp(prefix="mutants_"))
     # ONE snapshot of the tree at the start: every mutant copy is made from it, so an edit of ``root`` while the run is going (a developer
     # saving a file, a second tool) can never leak into a later mutant
@@ -227,8 +233,6 @@ def run_mutants(
             p.write_text(text.replace(m.old, m.new), encoding="utf-8", newline="\n")
             junit = tmp / "r.xml"
             if m.test_file:
-                if m.test_file not in tests:
-                    raise ValueError(f"test_file {m.test_file!r} is not one of the copied tests")
                 operands = [f"{m.test_file}::{m.only_test}" if m.only_test else m.test_file]
             else:
                 operands = [f"{tests[0]}::{m.only_test}", *tests[1:]] if m.only_test else tests

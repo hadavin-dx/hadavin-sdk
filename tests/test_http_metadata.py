@@ -108,13 +108,32 @@ def test_the_module_text_holds_no_ip_address_literal():
         assert v4.search(sample) or v6.search(sample), sample
 
 
+VENDOR_WORDS = re.compile(
+    r"(?<![A-Za-z0-9])(slack|teams|aws|azure|gcp|github|gitlab|bedrock|anthropic|vertex|gemini|openai|kms|s3|foundry"
+    r"|google|alibaba|oracle|amazon|microsoft|digitalocean|openstack)(?![A-Za-z0-9])",
+    re.IGNORECASE,
+)  # not \b: that treats `_` as part of a word, and `aws_region` would pass
+
+
+def test_the_vendor_words_check_sees_a_name_inside_an_identifier_and_ignores_a_word_that_only_contains_one():
+    for text in (
+        "aws_region",
+        "AWS",
+        "my-azure",
+        "x.google.com",
+        "the_gcp_zone",
+        "Slack:",
+        "s3://b",
+        "KMS key",
+    ):
+        assert VENDOR_WORDS.search(text), text
+    for text in ("laws", "teamsters", "awsome", "this s3rver", "none of these"):
+        assert not VENDOR_WORDS.search(text), text
+
+
 def test_the_table_names_no_vendor_in_any_string():
     # the lock-in rule: core logic names no vendor. The vendor names sit in comments (the scan skips comments).
-    words = re.compile(
-        r"\b(slack|teams|aws|azure|gcp|github|gitlab|bedrock|anthropic|vertex|gemini|openai|kms|s3|foundry"
-        r"|google|alibaba|oracle|amazon|microsoft|digitalocean|openstack)\b",
-        re.IGNORECASE,
-    )
+    words = VENDOR_WORDS
     strings = [n.value for n in _string_constants(SOURCE.read_text(encoding="utf-8"))]
     assert [s for s in strings if words.search(s)] == []
     try:  # also the real guard's patterns, where this test file sits beside it (not in a mutation copy)
@@ -138,10 +157,49 @@ def test_each_metadata_address_is_refused(address):
     assert http._refused(ipaddress.ip_address(address))
 
 
-@pytest.mark.parametrize("address", sorted(a for a in EXPECTED if "." in a))
-def test_an_ipv4_mapped_form_of_a_metadata_address_is_refused(address):
-    assert http._refused(ipaddress.ip_address("::ffff:" + address))
-    assert not http._refused(ipaddress.ip_address("::ffff:" + PUBLIC_V4[0]))  # negative control
+MAPPED_REFUSED = sorted(a for a in EXPECTED if "." in a) + [
+    "198.19.1.1",
+    "0.5.5.5",
+    "127.0.0.1",
+    "169.254.1.1",
+]
+MAPPED_ALLOWED = [*PUBLIC_V4, "10.0.0.1", "100.64.0.1", "172.16.5.5", "192.168.1.1"]
+
+
+@pytest.fixture
+def v6_flags_off(monkeypatch):
+    """The standard library's own IPv6 flags answer False, so only the guard's explicit rules can refuse an address. Whether
+    `::ffff:0:0/96` counts as reserved there differs between Python versions; with the flags off the test does not depend on it."""
+    for name in ("is_reserved", "is_loopback", "is_link_local", "is_unspecified", "is_multicast"):
+        monkeypatch.setattr(ipaddress.IPv6Address, name, property(lambda self: False))
+
+
+@pytest.mark.parametrize("address", MAPPED_REFUSED)
+def test_an_ipv4_mapped_form_of_a_refused_address_is_refused(address, v6_flags_off):
+    mapped = ipaddress.ip_address("::ffff:" + address)
+    assert mapped.ipv4_mapped == _v4(address) and http._refused(_v4(address))
+    assert http._refused(mapped)  # only the embedded-address rule can refuse it here
+
+
+@pytest.mark.parametrize("address", MAPPED_ALLOWED)
+def test_an_ipv4_mapped_form_of_an_allowed_address_is_allowed_by_the_guards_own_rules(
+    address, v6_flags_off
+):
+    mapped = ipaddress.ip_address("::ffff:" + address)
+    assert mapped.ipv4_mapped == _v4(address) and not http._refused(_v4(address))
+    assert not http._refused(
+        mapped
+    )  # negative control: the rule above is not "refuse every mapped address"
+
+
+@pytest.mark.parametrize("address", MAPPED_REFUSED + MAPPED_ALLOWED)
+def test_with_the_real_standard_library_a_mapped_address_is_never_allowed_when_its_embedded_one_is_refused(
+    address,
+):
+    mapped = ipaddress.ip_address("::ffff:" + address)
+    if http._refused(_v4(address)):
+        assert http._refused(mapped)  # on every Python version
+    # an allowed embedded address may still be refused where the standard library reserves the whole mapped range (fail closed)
 
 
 @pytest.mark.parametrize("address", sorted(a for a in EXPECTED if "." in a))
@@ -176,8 +234,8 @@ def test_a_teredo_address_with_a_public_server_and_a_public_client_is_allowed():
 
 
 @pytest.mark.parametrize("prefix", [b"\x00\x64\xff\x9b", b"\x00\x64\xff\x9b\x00\x01"])
-def test_a_nat64_address_is_refused_by_its_prefix_whatever_it_embeds(prefix):
-    # the prefix is refused whole: even a public embedded address, so there is no embedded-address path to test
+def test_a_nat64_address_is_refused_whatever_it_embeds(prefix):
+    # the prefix is refused whole by an explicit rule (the standard library also reserves the range): even a public embedded address
     assert http._refused(_nat64(prefix, PUBLIC_V4[0]))
     assert http._refused(_nat64(prefix, "169.254.169.254"))
 
@@ -244,9 +302,12 @@ def _answers(*addresses):
 
 
 def _no_connection(monkeypatch):
+    """Record every connection attempt (a list the test asserts is empty), so a mistake shows as an AssertionError."""
+    connected: list = []
     monkeypatch.setattr(
-        socket, "create_connection", lambda *a, **k: pytest.fail("connected to a refused address")
+        socket, "create_connection", lambda addr, *a, **k: connected.append(addr) or "connected"
     )
+    return connected
 
 
 @pytest.mark.parametrize("address", sorted(EXPECTED))
@@ -254,18 +315,20 @@ def test_a_name_that_resolves_to_a_metadata_address_is_refused_before_any_connec
     address, monkeypatch
 ):
     monkeypatch.setattr(http, "_resolve", lambda host, port: _answers(address))
-    _no_connection(monkeypatch)
+    connected = _no_connection(monkeypatch)
     with pytest.raises(EgressRefused):
         http.checked_connection(("service.example", 80))
+    assert connected == []
 
 
 def test_one_public_answer_among_metadata_answers_still_refuses_the_whole_name(monkeypatch):
     monkeypatch.setattr(
         http, "_resolve", lambda host, port: _answers(PUBLIC_V4[0], "169.254.169.254")
     )
-    _no_connection(monkeypatch)
+    connected = _no_connection(monkeypatch)
     with pytest.raises(EgressRefused):
         http.checked_connection(("service.example", 80))
+    assert connected == []
 
 
 def test_a_public_answer_is_connected_to(monkeypatch):
@@ -283,9 +346,10 @@ def test_an_ipv6_zone_id_does_not_hide_the_address(zone, monkeypatch):
     # getaddrinfo can answer `fe80::1%eth0`; an address with its zone is a different object, so the zone is cut first
     for address in ("fd00:ec2::254", "fe80::1"):
         monkeypatch.setattr(http, "_resolve", lambda host, port, a=address + zone: _answers(a))
-        _no_connection(monkeypatch)
+        connected = _no_connection(monkeypatch)
         with pytest.raises(EgressRefused):
             http.checked_connection(("service.example", 80))
+        assert connected == []
 
 
 def test_a_trailing_dot_name_is_resolved_and_checked_like_any_name(monkeypatch):
@@ -293,9 +357,10 @@ def test_a_trailing_dot_name_is_resolved_and_checked_like_any_name(monkeypatch):
     monkeypatch.setattr(
         http, "_resolve", lambda host, port: seen.append(host) or _answers("169.254.169.254")
     )
-    _no_connection(monkeypatch)
+    connected = _no_connection(monkeypatch)
     with pytest.raises(EgressRefused):
         http.checked_connection(("metadata.example.", 80))
+    assert connected == []
     assert seen == ["metadata.example."]
 
 
