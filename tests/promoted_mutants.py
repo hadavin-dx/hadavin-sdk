@@ -16,6 +16,8 @@ from tools.mutation_runner import Mutant, run_mutants
 
 ROOT = Path(__file__).resolve().parents[1]
 TEST = "tests/test_promoted_controls.py"
+HTTP_TEST = "tests/test_http_metadata.py"  # the killers of the metadata-guard mutants live here (Mutant.test_file)
+HT = "src/hadavin_sdk/guard/http.py"
 S = "src/hadavin_sdk/"
 CV, SG, RS, CA = (
     S + "runtime/config_view.py",
@@ -1329,6 +1331,72 @@ M = [
         "# Date: 2026-08-07, 01:05:35 GMT",
         "test_the_generator_reproduces_the_checked_in_table_offline",
     ),
+    # the address guard of guard/http.py (killers in tests/test_http_metadata.py)
+    Mutant(
+        "http: the Teredo server is not checked",
+        HT,
+        "embedded += list(ip.teredo)",
+        "embedded += [ip.teredo[1]]",
+        "test_a_teredo_address_whose_server_is_a_metadata_address_is_refused",
+        test_file=HTTP_TEST,
+    ),
+    Mutant(
+        "http: the Teredo client is not checked",
+        HT,
+        "embedded += list(ip.teredo)",
+        "embedded += [ip.teredo[0]]",
+        "test_a_teredo_address_whose_client_is_a_metadata_address_is_refused",
+        test_file=HTTP_TEST,
+    ),
+    Mutant(
+        "http: the 6to4 address is not checked",
+        HT,
+        "embedded = [ip.ipv4_mapped, ip.sixtofour]",
+        "embedded = [ip.ipv4_mapped]",
+        "test_a_6to4_form_of_a_metadata_address_is_refused",
+        test_file=HTTP_TEST,
+    ),
+    Mutant(
+        "http: the IPv4-mapped address is not checked",
+        HT,
+        "embedded = [ip.ipv4_mapped, ip.sixtofour]",
+        "embedded = [ip.sixtofour]",
+        "test_an_ipv4_mapped_form_of_a_metadata_address_is_refused",
+        test_file=HTTP_TEST,
+    ),
+    Mutant(
+        "http: the metadata set is ignored",
+        HT,
+        "if ip in _METADATA or (",
+        "if (",
+        "test_each_metadata_address_is_refused",
+        test_file=HTTP_TEST,
+    ),
+    Mutant(
+        "http: the benchmarking range is allowed",
+        HT,
+        "(ip in _BENCHMARK or ip in _THIS_NETWORK)",
+        "(ip in _THIS_NETWORK)",
+        "test_the_benchmarking_range_is_refused_to_its_last_address",
+        test_file=HTTP_TEST,
+    ),
+    Mutant(
+        "http: this network is allowed",
+        HT,
+        "(ip in _BENCHMARK or ip in _THIS_NETWORK)",
+        "(ip in _BENCHMARK)",
+        "test_this_network_is_refused",
+        test_file=HTTP_TEST,
+    ),
+    Mutant(
+        "http: a zone id is kept on the address",
+        HT,
+        'ipaddress.ip_address(sockaddr[0].split("%")[0])',
+        "ipaddress.ip_address(sockaddr[0])",
+        "test_an_ipv6_zone_id_does_not_hide_the_address",
+        test_file=HTTP_TEST,
+        allow_crash=True,  # the zone id makes the address a different object: the test fails with an exception
+    ),
 ]
 
 if __name__ == "__main__":
@@ -1344,7 +1412,12 @@ if __name__ == "__main__":
         )
 
     res = run_mutants(
-        ROOT, M, [TEST], extra_dirs=("tests/fixtures", "docs", "tools"), only=only, on_result=show
+        ROOT,
+        M,
+        [TEST, HTTP_TEST],
+        extra_dirs=("tests/fixtures", "docs", "tools"),
+        only=only,
+        on_result=show,
     )
     bad = [n for n, _, _, g in res if not g]
     print(f"{len(res) - len(bad)} of {len(res)} good; problems: {bad}")

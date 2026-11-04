@@ -2654,10 +2654,17 @@ def test_every_mutant_definition_names_its_killing_test():
     )
     defs = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(defs)
-    names = re.findall(r"^def (test_\w+)", Path(__file__).read_text(encoding="utf-8"), re.MULTILINE)
+
+    def names_in(path: Path) -> list[str]:
+        return re.findall(r"^def (test_\w+)", path.read_text(encoding="utf-8"), re.MULTILINE)
+
+    names = names_in(Path(__file__))
     assert len(defs.M) >= 150 and len({m.name for m in defs.M}) == len(defs.M)
     for m in defs.M:
-        if m.only_test:
+        if m.test_file:  # the killer lives in another test file
+            there = names_in(FIX.parent.parent / m.test_file)
+            assert (m.only_test or m.expect) in there, (m.name, m.test_file)
+        elif m.only_test:
             assert m.only_test in names, (m.name, m.only_test)
         elif m.allow_crash:
             pass  # the killer is an exception message (a pinned error type), not a named test

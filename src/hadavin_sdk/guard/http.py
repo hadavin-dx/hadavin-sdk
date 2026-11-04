@@ -34,7 +34,8 @@ def _v6(*hextets: int) -> ipaddress.IPv6Address:
 
 @dataclass(frozen=True)
 class MetadataEndpoint:
-    """One address a cloud (or a cloud-like platform) serves its instance-metadata service on."""
+    """One address a platform serves its instance-metadata service on. The notes are vendor-neutral on purpose (core logic
+    names no vendor); the comments beside each row say which platform it is."""
 
     address: ipaddress.IPv4Address | ipaddress.IPv6Address
     provider: str
@@ -45,50 +46,50 @@ class MetadataEndpoint:
 # and a request to one hands out the credentials of the machine it runs on (the classic server-side request forgery
 # target). The numbers are written as numbers; the literal text of an address never appears in this module.
 METADATA_ENDPOINTS: tuple[MetadataEndpoint, ...] = (
-    MetadataEndpoint(
+    MetadataEndpoint(  # AWS, Azure, Google Cloud, OpenStack, DigitalOcean and others
         _v4(169, 254, 169, 254),
-        "AWS, Azure, Google Cloud, OpenStack, DigitalOcean and others",
-        "the de-facto link-local metadata address: instance credentials and identity tokens",
+        "link-local metadata address shared by most clouds",
+        "instance credentials and identity tokens",
     ),
-    MetadataEndpoint(
-        _v4(100, 100, 100, 200), "Alibaba Cloud", "its metadata service: instance role credentials"
+    MetadataEndpoint(  # Alibaba Cloud
+        _v4(100, 100, 100, 200),
+        "carrier-grade-NAT address used by one provider",
+        "instance role credentials",
     ),
-    MetadataEndpoint(
+    MetadataEndpoint(  # Oracle Cloud (its older metadata address); the address is inside 192.0.0.0/24, the IETF protocol assignments
         _v4(192, 0, 0, 192),
-        "Oracle Cloud",
-        "its older metadata address (the range is also reserved for dual-stack lite): instance credentials",
+        "address inside the IETF protocol-assignments range (a /24), used by one provider",
+        "instance credentials",
     ),
-    MetadataEndpoint(
+    MetadataEndpoint(  # AWS over IPv6
         _v6(0xFD00, 0x0EC2, 0, 0, 0, 0, 0, 0x0254),
-        "AWS (IPv6)",
-        "the IPv6 form of the AWS metadata service",
+        "IPv6 unique-local metadata address of one provider",
+        "instance credentials and identity tokens",
     ),
-    MetadataEndpoint(
+    MetadataEndpoint(  # Azure (the virtual public IP of the host)
         _v4(168, 63, 129, 16),
-        "Azure",
-        "the virtual public IP of the host (wire server, extension and provisioning data)",
+        "public-looking address one provider serves to its own virtual machines only",
+        "host services for the machine: provisioning data and extension secrets",
     ),
-    MetadataEndpoint(
+    MetadataEndpoint(  # Google Cloud over IPv6
         _v6(0xFD20, 0x00CE, 0, 0, 0, 0, 0, 0x0254),
-        "Google Cloud (IPv6)",
-        "the IPv6 form of the Google metadata service",
+        "IPv6 unique-local metadata address of one provider",
+        "instance credentials and identity tokens",
     ),
 )
 _METADATA = frozenset(e.address for e in METADATA_ENDPOINTS)
-# 198.18.0.0/15 is the benchmarking range (RFC 2544); some platforms answer on it from inside the host, and it is never a
-# public service a tool should call.
+# Reserved for benchmarking (RFC 2544), never a public service a tool should call.
 _BENCHMARK = ipaddress.IPv4Network((bytes((198, 18, 0, 0)), 15))
-# "this host on this network" (0.0.0.0/8): Linux connects it to the local host.
+# 0.0.0.0 reaches the local host on Linux; the whole /8 is not a routable destination.
 _THIS_NETWORK = ipaddress.IPv4Network((bytes((0, 0, 0, 0)), 8))
 # 100.64.0.0/10 (carrier-grade NAT, where some clouds and VPNs put in-cluster services) is allowed on purpose,
 # like the other private ranges; the manifest host allowlist bounds what a tool may name.
 # NAT64 (the well-known prefix) is refused whole, by this rule and not by the standard library's flags (which differ
 # between Python versions): an IPv6-only cluster behind DNS64/NAT64 cannot use the in-process fetch and needs the
 # egress proxy (K7) instead.
-_NAT64 = ipaddress.ip_network("64:ff9b::/96")
-_NAT64_LOCAL = ipaddress.ip_network(
-    "64:ff9b:1::/48"
-)  # the local-use NAT64 prefix (RFC 8215): refused whole
+_NAT64 = ipaddress.IPv6Network((_v6(0x64, 0xFF9B, 0, 0, 0, 0, 0, 0), 96))
+# the local-use NAT64 prefix (RFC 8215): refused whole
+_NAT64_LOCAL = ipaddress.IPv6Network((_v6(0x64, 0xFF9B, 1, 0, 0, 0, 0, 0), 48))
 # One budget for the whole process: the read tools, the LLM clients and the executor share it. During a real DNS
 # outage 8 stuck lookups refuse every new outbound name lookup until the resolver gives up (fail closed, and
 # self-healing: a permit comes back when its thread ends).

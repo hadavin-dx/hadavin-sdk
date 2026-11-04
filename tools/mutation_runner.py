@@ -37,7 +37,8 @@ class Mutant:
     allow_crash: bool = (
         False  # the intended reaction is a crash (an exception other than an assertion)
     )
-    only_test: str = ""  # a test function name: run ONLY that test (of the first test file), so the killer never depends on test order or a fuzz seed
+    test_file: str = ""  # one of the `tests` files: run ONLY this file for the mutant (its killer is not in the first file)
+    only_test: str = ""  # a test function name: run ONLY that test (of the first test file, or of `test_file`), so the killer never depends on test order or a fuzz seed
 
     def __post_init__(self) -> None:
         _relative(self.file)
@@ -45,6 +46,8 @@ class Mutant:
             raise ValueError("expect must be at least 4 characters")
         if self.only_test and not self.only_test.isidentifier():
             raise ValueError("only_test must be a test function name")
+        if self.test_file:
+            _relative(self.test_file)
 
 
 def _relative(rel: str) -> str:
@@ -223,7 +226,12 @@ def run_mutants(
                 continue
             p.write_text(text.replace(m.old, m.new), encoding="utf-8", newline="\n")
             junit = tmp / "r.xml"
-            operands = [f"{tests[0]}::{m.only_test}", *tests[1:]] if m.only_test else tests
+            if m.test_file:
+                if m.test_file not in tests:
+                    raise ValueError(f"test_file {m.test_file!r} is not one of the copied tests")
+                operands = [f"{m.test_file}::{m.only_test}" if m.only_test else m.test_file]
+            else:
+                operands = [f"{tests[0]}::{m.only_test}", *tests[1:]] if m.only_test else tests
             rc = _pytest(tmp, operands, junit, timeout)
             if rc == TIMED_OUT:
                 emit((m.name, Verdict.ERROR, "TIMEOUT", False))
