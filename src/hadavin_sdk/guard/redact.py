@@ -930,6 +930,19 @@ class _Redactor:
             out = pattern.sub(lambda m, label=label: self._mask(m, label), out)
         return out
 
+    @staticmethod
+    def _dry_hits(text: str) -> set[str]:
+        """What the patterns would match in ``text`` (compared after the fold), without registering any placeholder."""
+        found: set[str] = set()
+
+        def note(m: re.Match[str]) -> str:
+            found.add(fold(m.group(0)))
+            return "\0"
+
+        for _label, pattern in PATTERNS:
+            text = pattern.sub(note, text)
+        return found
+
     def _folded_line(self, line: str) -> str:
         """Interim fail-closed fold: a value hidden behind look-alike letters, another script's digits or invisible
         characters does not match the patterns above. For a line with non-ASCII text, run the patterns again on its FOLDED form
@@ -943,6 +956,8 @@ class _Redactor:
         body = line.rstrip("\r\n")
         eol = line[len(body) :]
         folded = fold(body)
+        if self._dry_hits(folded) <= self._dry_hits(body):
+            return line  # the fold finds nothing the direct patterns do not (``‹IPV4_2›`` only folds to ``<IPV4_2>``): the direct pass handles it
         hits: list[str] = []
 
         def mask(m: re.Match[str], label: str) -> str:

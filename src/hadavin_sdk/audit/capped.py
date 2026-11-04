@@ -21,6 +21,7 @@ import threading
 from collections.abc import Callable
 from typing import Any
 
+from hadavin_sdk.guard.runmap import safe_head
 from hadavin_sdk.models import AuditEvent
 
 _TENANT_MAX = 64
@@ -45,7 +46,9 @@ def sink_append(
 
     def append(kind: str, **fields: Any) -> Any:
         tenant = (
-            str(fields.get("tenant") or "-")[:_TENANT_MAX].replace("%", "%25").replace("|", "%7C")
+            safe_head(str(fields.get("tenant") or "-"), _TENANT_MAX)
+            .replace("%", "%25")
+            .replace("|", "%7C")
         )
         ref = str(fields.get("object_ref") or fields.get("key") or "-")
         bucket = str(fields.get("bucket") or "")
@@ -99,7 +102,7 @@ class CappedAudit:
         return key, slot
 
     def append(self, tenant: str, kind: str, bucket: str, /, **fields: Any) -> bool:
-        kind = str(kind)[:_KIND_MAX]
+        kind = safe_head(str(kind), _KIND_MAX)
         with self._lock:
             key, slot = self._slot(tenant, kind, bucket)
             slot[1] += 1
@@ -141,11 +144,11 @@ class CappedAudit:
     def suppressed(self, tenant: str, kind: str, bucket: str | None = None) -> int:
         """Events past the cap for THIS tenant and kind in the current bucket; 0 for a tenant never seen (or one that shares the overflow
         counter: ask ``overflow_suppressed``), and 0 if ``bucket`` is given and is not the current one."""
-        return self._count((tenant[:_TENANT_MAX], str(kind)[:_KIND_MAX]), bucket)
+        return self._count((tenant[:_TENANT_MAX], safe_head(str(kind), _KIND_MAX)), bucket)
 
     def overflow_suppressed(self, kind: str, bucket: str | None = None) -> int:
         """Events past the cap on the shared overflow counter of ``kind`` (all tenants that did not get a counter of their own)."""
-        return self._count((_OVERFLOW, str(kind)[:_KIND_MAX]), bucket)
+        return self._count((_OVERFLOW, safe_head(str(kind), _KIND_MAX)), bucket)
 
     def _count(self, key: tuple[str | None, str], bucket: str | None) -> int:
         with self._lock:
