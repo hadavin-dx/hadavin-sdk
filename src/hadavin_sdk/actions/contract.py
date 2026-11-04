@@ -110,6 +110,8 @@ _KEYWORDS = {
     "properties",
     "required",
     "additionalProperties",
+    # K5: marks an input whose value must appear in the cited evidence (a resource name, id or revision).
+    "identifier",
 }
 
 
@@ -132,6 +134,9 @@ def schema_problems(schema: Any, where: str = "input_schema") -> list[str]:
         v = schema.get(key)
         if key in schema and (not isinstance(v, int) or isinstance(v, bool) or v < 0):
             out.append(f"{where}: {key} must be a non-negative integer")
+    ident = schema.get("identifier")
+    if "identifier" in schema and (not isinstance(ident, bool) or (ident and t != "string")):
+        out.append(f"{where}: identifier must be a boolean (true only on a string property)")
     if "enum" in schema and not isinstance(schema["enum"], list):
         out.append(f"{where}: enum must be a list")
     req = schema.get("required", [])

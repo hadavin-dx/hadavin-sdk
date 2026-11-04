@@ -115,6 +115,9 @@ SslMode = Literal["disable", "allow", "prefer", "require", "verify-ca", "verify-
 
 class PostgresSettings(KindSettings):
     dsn_secret_name: str
+    # A second DSN (another database role) for the evidence purge, the only identity that may DELETE
+    # `tool_calls` and `redaction_maps` (`hadavin-sdk migrate --purge-role`). None: the runtime's own DSN.
+    purge_dsn_secret_name: str | None = None
     iam_auth: bool = (
         False  # RDS IAM login: no database password anywhere (needs the `aws` extra too)
     )

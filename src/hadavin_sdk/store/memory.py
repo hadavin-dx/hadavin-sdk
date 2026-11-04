@@ -8,6 +8,7 @@ from datetime import date, datetime
 from decimal import Decimal
 
 from hadavin_sdk.models import (
+    OPEN_STATES,
     ApprovalDecision,
     ApprovalRequest,
     ApprovalStatus,
@@ -18,6 +19,7 @@ from hadavin_sdk.models import (
     Run,
     RunState,
     TickState,
+    ToolCallRecord,
     now,
 )
 from hadavin_sdk.store.protocol import NotFound, StaleState
@@ -36,6 +38,8 @@ class MemoryStore:
         self._spend: dict[tuple[str, date], Decimal] = defaultdict(Decimal)
         self._kill = KillSwitch()
         self._ticks: dict[str, TickState] = {}
+        self._tool_calls: dict[str, ToolCallRecord] = {}
+        self._maps: dict[str, tuple[dict[str, str], datetime]] = {}
 
     @staticmethod
     def _get(table: dict, key: str):
@@ -227,3 +231,52 @@ class MemoryStore:
     def save_tick_state(self, state: TickState) -> None:
         with self._lock:
             self._ticks[state.step] = state.model_copy()
+
+    def add_tool_call(self, call: ToolCallRecord) -> None:
+        with self._lock:
+            if call.call_id in self._tool_calls:
+                raise StaleState(f"tool call exists: {call.call_id}")
+            self._tool_calls[call.call_id] = call.model_copy(deep=True)
+
+    def list_tool_calls(self, run_id: str) -> list[ToolCallRecord]:
+        with self._lock:
+            rows = [c for c in self._tool_calls.values() if c.run_id == run_id]
+            return [
+                c.model_copy(deep=True)
+                for c in sorted(rows, key=lambda c: (c.created_at, c.call_id))
+            ]
+
+    def purge_tool_calls(self, before: datetime, *, keep_run_ids: frozenset[str]) -> int:
+        with self._lock:
+            gone = [
+                k
+                for k, c in self._tool_calls.items()
+                if c.created_at < before and c.run_id not in keep_run_ids
+            ]
+            for k in gone:
+                del self._tool_calls[k]
+            return len(gone)
+
+    def put_redaction_map(self, run_id: str, mapping: dict[str, str]) -> None:
+        with self._lock:
+            self._maps[run_id] = (dict(mapping), now())
+
+    def get_redaction_map(self, run_id: str) -> dict[str, str] | None:
+        with self._lock:
+            found = self._maps.get(run_id)
+            return dict(found[0]) if found else None
+
+    def purge_redaction_maps(
+        self, before: datetime, *, keep_run_ids: frozenset[str], keep_open: bool = True
+    ) -> int:
+        with self._lock:
+            gone = []
+            for k, (_, at) in self._maps.items():
+                run = self._runs.get(k)
+                if keep_open and run is not None and run.state in OPEN_STATES:
+                    continue
+                if (run.updated_at if run is not None else at) < before and k not in keep_run_ids:
+                    gone.append(k)
+            for k in gone:
+                del self._maps[k]
+            return len(gone)

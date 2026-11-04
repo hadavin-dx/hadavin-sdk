@@ -29,6 +29,12 @@ class Grant:
     kind: Literal["table", "view", "sequence"]
     runtime: str
     portal: bool = False
+    purge: str = (
+        ""  # table-level privileges of the purge role (the evidence deleter) on this relation
+    )
+    # Columns the purge role may SELECT (a DELETE's WHERE needs them) and nothing else: it cannot read a stored
+    # original or a tool result.
+    purge_cols: tuple[str, ...] = ()
 
 
 _RW = "SELECT, INSERT, UPDATE"
@@ -38,7 +44,7 @@ _APPEND = "SELECT, INSERT"  # written once, never changed
 # relations here (K5-core `redaction_maps`, K6 labels and reports, ...); the portal list never holds
 # `redaction_maps`, `events`, `tick_state.detail` or secrets.
 GRANTS: dict[str, Grant] = {
-    "runs": Grant("table", _RW, portal=True),
+    "runs": Grant("table", _RW, portal=True, purge_cols=("run_id", "state", "updated_at")),
     "plans": Grant("table", _RW, portal=True),
     "gate_decisions": Grant("table", _APPEND, portal=True),
     "approval_requests": Grant("table", _RW, portal=True),
@@ -51,6 +57,12 @@ GRANTS: dict[str, Grant] = {
     "audit_entries": Grant("table", _APPEND, portal=True),
     "audit_checkpoints": Grant("table", _APPEND, portal=True),
     "audit_outbox": Grant("table", "SELECT, INSERT, DELETE"),
+    # K5-core: append and purge only (no UPDATE); `redaction_maps` is never portal-readable.
+    # The runtime role appends and reads evidence; only the purge role (its own identity) deletes it.
+    "tool_calls": Grant(
+        "table", _APPEND, purge="DELETE", purge_cols=("call_id", "run_id", "created_at")
+    ),
+    "redaction_maps": Grant("table", _RW, purge="DELETE", purge_cols=("run_id", "updated_at")),
     "approval_decisions_seq_seq": Grant("sequence", "USAGE"),
     "dead_letters_seq_seq": Grant("sequence", "USAGE"),
 }
@@ -154,7 +166,7 @@ def check_grants(paths: list[Path]) -> list[str]:
     return problems
 
 
-def _apply_grants(db, role_name: str, privileges) -> None:
+def _apply_grants(db, role_name: str, privileges, columns=None) -> None:
     """Reset the role's rights on every relation in `GRANTS`, then give back what `privileges(grant)` names."""
     role = sql.Identifier(role_name)
     schema = db.execute("SELECT current_schema()").fetchone()[0]
@@ -167,6 +179,87 @@ def _apply_grants(db, role_name: str, privileges) -> None:
         db.execute(sql.SQL("REVOKE ALL ON {} {} FROM {}").format(what, rel, role))
         if wanted := privileges(grant):
             db.execute(sql.SQL("GRANT {} ON {} {} TO {}").format(sql.SQL(wanted), what, rel, role))
+        if columns is not None and (cols := columns(grant)):
+            db.execute(
+                sql.SQL("GRANT SELECT ({}) ON {} TO {}").format(
+                    sql.SQL(", ").join(sql.Identifier(c) for c in cols), rel, role
+                )
+            )
+
+
+_TABLE_PRIVS = ("SELECT", "INSERT", "UPDATE", "DELETE", "TRUNCATE", "REFERENCES", "TRIGGER")
+
+
+def effective_problems(db, role: str, expected_table, expected_cols=None) -> list[str]:
+    """What the role can REALLY do, however it got it (a direct grant, a role it is a member of, PUBLIC, a default
+    privilege, ownership), against the grant map: any relation of the schema, in GRANTS or not, on which it can do
+    more than `expected_table(grant)` (and, for columns, `expected_cols(grant)`). A superuser, a role that can
+    create roles or databases or bypass row security, a role that owns a relation or can CREATE in the schema is a
+    problem too. The grants above are made first and this runs in the same transaction, so a problem rolls them back."""
+    problems: list[str] = []
+    row = db.execute(
+        "SELECT rolsuper, rolcreaterole, rolcreatedb, rolbypassrls FROM pg_roles WHERE rolname = %s",
+        (role,),
+    ).fetchone()
+    if row is None:
+        return [f"{role}: the role does not exist"]
+    if any(row):
+        problems.append(
+            f"{role}: is a superuser or can create roles or databases or bypass row security"
+        )
+    schema = db.execute("SELECT current_schema()").fetchone()[0]
+    if db.execute("SELECT has_schema_privilege(%s, %s, 'CREATE')", (role, schema)).fetchone()[0]:
+        problems.append(f"{role}: can CREATE in schema {schema}")
+    rels = db.execute(
+        "SELECT c.oid, c.relname, c.relkind, pg_get_userbyid(c.relowner) FROM pg_class c "
+        "JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = %s AND c.relkind IN ('r','p','v','m','S')",
+        (schema,),
+    ).fetchall()
+    for oid, name, kind, owner in rels:
+        if owner == role:
+            problems.append(f"{role}: owns {name}")
+        grant = GRANTS.get(name)
+        if kind == "S":
+            allowed = (
+                {p.strip() for p in expected_table(grant).split(",") if p.strip()}
+                if grant
+                else set()
+            )
+            for p in ("USAGE", "SELECT", "UPDATE"):
+                if (
+                    p not in allowed
+                    and db.execute(
+                        "SELECT has_sequence_privilege(%s, %s, %s)", (role, oid, p)
+                    ).fetchone()[0]
+                ):
+                    problems.append(f"{role}: can {p} sequence {name}")
+            continue
+        allowed = (
+            {p.strip() for p in expected_table(grant).split(",") if p.strip()} if grant else set()
+        )
+        allowed_cols = set(expected_cols(grant)) if (grant and expected_cols) else set()
+        for p in _TABLE_PRIVS:
+            if (
+                p not in allowed
+                and db.execute("SELECT has_table_privilege(%s, %s, %s)", (role, oid, p)).fetchone()[
+                    0
+                ]
+            ):
+                problems.append(
+                    f"{role}: can {p} {name}" + ("" if grant else " (not in the grant map)")
+                )
+        for (col,) in db.execute(
+            "SELECT attname FROM pg_attribute WHERE attrelid = %s AND attnum > 0 AND NOT attisdropped",
+            (oid,),
+        ).fetchall():
+            for p in ("SELECT", "INSERT", "UPDATE"):
+                if p in allowed or (p == "SELECT" and col in allowed_cols):
+                    continue
+                if db.execute(
+                    "SELECT has_column_privilege(%s, %s, %s, %s)", (role, oid, col, p)
+                ).fetchone()[0]:
+                    problems.append(f"{role}: can {p} {name}.{col}")
+    return problems
 
 
 def _excess_privileges(db, role: str) -> list[str]:
@@ -192,20 +285,22 @@ def migrate(
     *,
     runtime_role: str | None = None,
     portal_role: str | None = None,
+    purge_role: str | None = None,
     iam_auth: bool = False,
     region: str | None = None,
     sslmode: str | None = None,
     sslrootcert: str | None = None,
 ) -> list[str]:
     """Apply pending migrations; return the versions applied by this call. With `runtime_role`, give it the
-    privileges `GRANTS` lists (never TRUNCATE; DELETE only on the outbox). With `portal_role`, SELECT on the
+    privileges `GRANTS` lists (never TRUNCATE; DELETE only on the outbox and the purged evidence tables). With `portal_role`, SELECT on the
     relations marked `portal` and nothing else. The ledger and the grant map are checked first: a bad file name,
     a gap, or a relation with no `GRANTS` entry stops the run before it touches the database."""
-    for role in (runtime_role, portal_role):
+    for role in (runtime_role, portal_role, purge_role):
         if role is not None and not _ROLE.fullmatch(role):
             raise ConfigError(f"not a plain database role name: {role!r}")
-    if runtime_role is not None and runtime_role == portal_role:
-        raise ConfigError("the runtime role and the portal role must be different roles")
+    named = [r for r in (runtime_role, portal_role, purge_role) if r is not None]
+    if len(set(named)) != len(named):
+        raise ConfigError("the runtime, portal and purge roles must be different roles")
     files = _migration_files()
     if problems := check_ledger(files) + check_grants(files):
         raise ConfigError("migrations are inconsistent: " + "; ".join(problems))
@@ -223,24 +318,39 @@ def migrate(
         )
         done = {r[0] for r in db.execute("SELECT version FROM schema_migrations").fetchall()}
         if gone := sorted(done - {p.stem for p in files}):
-            raise ConfigError(f"applied migrations have no file in this release: {', '.join(gone)}")
+            raise ConfigError(
+                f"applied migrations have no file in this release: {', '.join(gone)}. If a migration file was renamed "
+                "and its tables already exist, rename the ledger row by hand (change the version of that row in the "
+                "schema_migrations table to the new file name); if its content changed too, drop what it made and "
+                "run migrate again"
+            )
         for path in files:
             if path.stem in done:
                 continue
             db.execute(path.read_text(encoding="utf-8"))  # a file shipped in this package
             db.execute("INSERT INTO schema_migrations (version) VALUES (%s)", (path.stem,))
             applied.append(path.stem)
-        if runtime_role and portal_role:
-            q = "SELECT pg_has_role(%s, %s, 'MEMBER')"  # a member keeps the other's rights, whatever we REVOKE
-            if (
-                db.execute(q, (runtime_role, portal_role)).fetchone()[0]
-                or db.execute(q, (portal_role, runtime_role)).fetchone()[0]
-            ):
-                raise ConfigError(
-                    "the runtime role and the portal role must not be members of each other"
-                )
+        q = "SELECT pg_has_role(%s, %s, 'MEMBER')"  # a member keeps the other's rights, whatever we REVOKE
+        for a in named:
+            for b in named:
+                if a != b and db.execute(q, (a, b)).fetchone()[0]:
+                    raise ConfigError(
+                        "the runtime, portal and purge roles must not be members of each other"
+                    )
         if runtime_role:
             _apply_grants(db, runtime_role, lambda g: g.runtime)
+            if bad := effective_problems(db, runtime_role, lambda g: g.runtime if g else ""):
+                raise ConfigError(
+                    "the runtime role holds more than the grant map: " + "; ".join(bad[:20])
+                )
+        if purge_role:
+            _apply_grants(db, purge_role, lambda g: g.purge, lambda g: g.purge_cols)
+            if bad := effective_problems(
+                db, purge_role, lambda g: g.purge if g else "", lambda g: g.purge_cols if g else ()
+            ):
+                raise ConfigError(
+                    "the purge role holds more than the grant map: " + "; ".join(bad[:20])
+                )
         if portal_role:
             _apply_grants(db, portal_role, lambda g: "SELECT" if g.portal else "")
             if extra := _excess_privileges(db, portal_role):

@@ -15,7 +15,7 @@ import psycopg
 import pytest
 from psycopg.conninfo import make_conninfo
 
-from .conftest import DEMO, _split, load_script
+from tests.demo_askdata.conftest import DEMO, _split, load_script
 
 lumen = load_script("lumen")
 COL = lumen.COLUMNS

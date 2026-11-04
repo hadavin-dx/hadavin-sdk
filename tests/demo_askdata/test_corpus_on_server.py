@@ -5,7 +5,7 @@ import pytest
 from askdata.pgsource import PgSource
 from askdata.validate import validate
 
-from .corpus import BENIGN
+from tests.demo_askdata.corpus import BENIGN
 
 
 @pytest.mark.parametrize(("name", "sql"), BENIGN, ids=[b[0] for b in BENIGN])

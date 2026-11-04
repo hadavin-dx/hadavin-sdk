@@ -1,6 +1,6 @@
 """P1 (spike seed): the seed is deterministic (a private SplitMix64, no library), so a reload yields the same table hashes."""
 
-from .conftest import load_script
+from tests.demo_askdata.conftest import load_script
 
 HASHES = {
     "customers": "09fad2a948ec65ab0a9e541afe1c52a82f65f74c4fe945f35332298a4d8dbac0",

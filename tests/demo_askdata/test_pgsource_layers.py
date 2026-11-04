@@ -128,6 +128,7 @@ def test_errors_carry_only_the_sqlstate(db):
 # --------------------------------------------------------------------------------------------- T-E8 caps
 
 
+@pytest.mark.perf  # a wall-clock or CPU-time bound: it runs in the perf step, not the default suite
 def test_caps_watchdog_cancels_a_blocked_statement(db, capsys):
     timeout = 2.0
     start = time.monotonic()
@@ -136,10 +137,13 @@ def test_caps_watchdog_cancels_a_blocked_statement(db, capsys):
     elapsed = time.monotonic() - start
     with capsys.disabled():
         print(
-            f"\nT-E8 watchdog: pg_sleep(30) cancelled after {elapsed:.2f}s (limit {timeout}s, server default 15s)"
+            f"\nT-E8 watchdog: pg_sleep(30) cancelled after {elapsed:.2f}s (watchdog {timeout}s; the assertion allows {timeout + 1}s: the timer, the cancel round trip to the server and the connection close)"
         )
     assert caught.value.sqlstate == "57014"
-    assert elapsed < timeout + 1  # measured 0.02-0.05 s over locally (docker, Windows)
+    # The bound is timeout + 1 s, not timeout: the timer fires at `timeout`, then the cancel is sent over the network and
+    # the driver unwinds (0.02-0.05 s idle; 0.47 s on a loaded laptop, which printed 2.47 s against 2.0 s). A
+    # wall-clock check, so it runs in the perf step.
+    assert elapsed < timeout + 1
     assert not [t for t in threading.enumerate() if t.name == WATCHDOG_NAME and t.is_alive()]
 
 
@@ -157,7 +161,10 @@ def test_caps_row_cap_returns_exactly_max_rows(db):
 def test_caps_byte_cap_stops_wide_rows(db):
     result = PgSource(db.ro_dsn).run(
         "SELECT repeat('x', 100000) AS w FROM generate_series(1, 1000)",
-        limits=Limits(max_bytes=450_000),
+        # The default batch (200 rows of 100 KB = 20 MB per fetch) and the 10 s watchdog made this test depend on the
+        # machine's speed (9 of 10 solo runs failed on a loaded laptop, on main too). A small batch bounds the work
+        # per fetch, and the watchdog is not what is under test here (the test above covers it).
+        limits=Limits(max_bytes=450_000, batch=5, statement_timeout_s=120.0),
     )
     assert result.truncated and len(result.rows) == 4 and result.byte_count <= 450_000
 

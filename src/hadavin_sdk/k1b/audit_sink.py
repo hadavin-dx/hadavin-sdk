@@ -11,7 +11,8 @@ import getpass
 from typing import Any
 
 from hadavin_sdk.audit.protocol import AuditSink
-from hadavin_sdk.backends import make, platform_secrets
+from hadavin_sdk.backends import platform_secrets
+from hadavin_sdk.backends.factory import make
 from hadavin_sdk.config import Config
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.models import AuditEvent

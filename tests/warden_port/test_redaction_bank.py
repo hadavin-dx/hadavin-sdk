@@ -351,6 +351,7 @@ def test_L1_a_copy_glued_to_other_characters_is_not_swept():
     assert f"A{ACCT}x" in lines[1]
 
 
+@pytest.mark.perf  # a wall-clock or CPU-time bound: it runs in the perf step, not the default suite
 def test_T1_a_planted_line_is_read_in_linear_time():
     for text in ("BSB" + " " * 50000 + "x", "account" + " " * 50000 + "x"):
         start = time.process_time()

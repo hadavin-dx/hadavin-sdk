@@ -6,7 +6,7 @@ import pytest
 from askdata.validate import validate
 from pglast import ast
 
-from .corpus import BENIGN
+from tests.demo_askdata.corpus import BENIGN
 
 
 def test_oracle_is_the_pinned_version():

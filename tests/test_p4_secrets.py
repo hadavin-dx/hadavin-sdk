@@ -12,7 +12,7 @@ from moto import mock_aws
 
 from hadavin_sdk.actions.secrets_aws import SecretsManagerProvider
 from hadavin_sdk.actions.secrets_env import EnvSecretProvider
-from hadavin_sdk.backends import make
+from hadavin_sdk.backends.factory import make
 from hadavin_sdk.backends.platform_secrets import bound
 from hadavin_sdk.backends.table import (
     AwsSecretsManagerSettings,

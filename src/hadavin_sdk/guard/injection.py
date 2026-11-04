@@ -10,6 +10,7 @@ import re
 from decimal import Decimal
 from typing import Protocol
 
+from hadavin_sdk.guard.runmap import safe_head
 from hadavin_sdk.models import Verdict
 
 _LOG = logging.getLogger("hadavin_sdk.guard")
@@ -92,7 +93,7 @@ def injection_check(detector: Detector, text: str, source: str) -> Verdict:
             "detector %s failed, run flagged: %s: %s",
             type(detector).__name__,
             type(exc).__name__,
-            str(exc)[:300],
+            safe_head(str(exc), 300),
         )
         # Named after the detector that failed, so a list's verdict says which one.
         name = getattr(detector, "backend", None)

@@ -44,6 +44,7 @@ _WOULD_BE = {
     "scope.agent": "Would be refused: action not allowed for this agent or requester",
     "scope.principal": "Would be refused: action not allowed for this agent or requester",
     "input.schema": "Would be refused: inputs fail the contract's schema",
+    "input.unresolved": "Would be refused: input could not be resolved",
 }
 _SIGN_OFF = "If suggested: needs sign-off by a person with step-up (not available in this release)"
 
