@@ -44,10 +44,53 @@ class InputTooLarge(RedactionError):
 
 
 # The end of a text cut inside an escape: a spelling the decoder cannot read yet, so no form matches it and the
-# front of a character stays visible (`\u005`, `&#9`, `%C3`, half of a surrogate pair).
-PARTIAL_ESCAPE = re.compile(
-    r"(?:&#(?:[xX][0-9a-fA-F]*|[0-9]*)|&[A-Za-z]*|\\u[dD][89abAB][0-9a-fA-F]{2}(?:\\u?[0-9a-fA-F]{0,3}|\\)?|\\u[0-9a-fA-F]{0,3}|\\|(?:%[89a-fA-F][0-9a-fA-F])+%?[0-9a-fA-F]?|%[0-9a-fA-F]?)$"
+# front of a character stays visible (`\u005`, `&#9`, `%C3`, half of a surrogate pair). Every alternative here is
+# short, or is one character class under one star whose first character cannot occur inside it, so a search is
+# linear. The one open-ended spelling, a run of `%XX` bytes, is scanned by `_pct_run_start`: a regex with a repeated
+# group before an end anchor takes time that grows with the square of the run.
+_PARTIAL_ESCAPE = re.compile(
+    r"(?:&#(?:[xX][0-9a-fA-F]*|[0-9]*)|&[A-Za-z]*|\\u[dD][89abAB][0-9a-fA-F]{2}(?:\\u?[0-9a-fA-F]{0,3}|\\)?|\\u[0-9a-fA-F]{0,3}|\\|%[0-9a-fA-F]?)$"
 )
+_HEXDIGITS = frozenset("0123456789abcdefABCDEF")
+_HIGH_HEX = frozenset("89abcdefABCDEF")
+
+
+def _pct_run_start(text: str, pos: int) -> int | None:
+    """The leftmost start (at or after `pos`) of a run of one or more `%XX` bytes (first digit 8 to F) that ends the
+    text, optionally followed by a lone `%`, a lone hex digit, or `%` and a hex digit. Linear: it walks back from the
+    end, three characters at a time, for each of the few shapes the end can have."""
+    n = len(text)
+    ends = [n, n - 1] if text.endswith("\n") else [n]  # `$` also matches before a final line break
+    best: int | None = None
+    for end in ends:
+        for tail in (0, 1, 2):
+            i = end - tail
+            if i < 0:
+                continue
+            tail_text = text[i:end]
+            if tail == 1 and tail_text != "%" and tail_text not in _HEXDIGITS:
+                continue
+            if tail == 2 and not (tail_text[0] == "%" and tail_text[1] in _HEXDIGITS):
+                continue
+            while (
+                i - 3 >= pos
+                and text[i - 3] == "%"
+                and text[i - 2] in _HIGH_HEX
+                and text[i - 1] in _HEXDIGITS
+            ):
+                i -= 3
+                if best is None or i < best:
+                    best = i
+    return best
+
+
+def partial_escape_start(text: str, pos: int = 0) -> int | None:
+    """Where the half-written escape that ends `text` starts (the leftmost start at or after `pos`), or None."""
+    found = _PARTIAL_ESCAPE.search(text, pos)
+    run = _pct_run_start(text, pos)
+    if found is None:
+        return run
+    return found.start() if run is None else min(found.start(), run)
 
 
 class TooDeep(RedactionError):
@@ -112,11 +155,13 @@ def undo(text: str, clean: bool = False) -> str:
         step = cur
         for decode in (nfkc, json_unescape, hex_unescape, unquote, html.unescape):
             if clean:
-                while m := PARTIAL_ESCAPE.search(
-                    step, max(len(step) - 4 * defaults.SCRUB_PARTIAL_END, 0)
-                ):
+                while (
+                    cut := partial_escape_start(
+                        step, max(len(step) - 4 * defaults.SCRUB_PARTIAL_END, 0)
+                    )
+                ) is not None:
                     step = step[
-                        : m.start()
+                        :cut
                     ]  # repeat: the look-back may start inside a run of half escapes
             step = decode(step)
         if step == cur:

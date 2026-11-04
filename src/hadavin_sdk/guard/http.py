@@ -15,29 +15,71 @@ import socket
 import ssl
 import threading
 import urllib.request
+from dataclasses import dataclass
 
 from hadavin_sdk.guard.egress import EgressRefused, normalise_host
 
 LOOPBACK = frozenset({"127.0.0.1", "localhost", "::1"})
 
 
-# Addresses that name a cloud's metadata service (they are private or link-local, and a request there hands out
-# credentials). The AWS one over IPv6 is `fd00:ec2::254`.
-_METADATA = frozenset(
-    ipaddress.ip_address(a)
-    for a in (
-        "169.254.169.254",
-        "100.100.100.200",
-        "192.0.0.192",
-        "fd00:ec2::254",
-        "168.63.129.16",
-        "fd20:ce::254",
-    )
+def _v4(*octets: int) -> ipaddress.IPv4Address:
+    """An IPv4 address from its four numbers (the table below is read as numbers, not as dotted text)."""
+    return ipaddress.IPv4Address(bytes(octets))
+
+
+def _v6(*hextets: int) -> ipaddress.IPv6Address:
+    """An IPv6 address from its eight 16-bit groups."""
+    return ipaddress.IPv6Address(b"".join(h.to_bytes(2, "big") for h in hextets))
+
+
+@dataclass(frozen=True)
+class MetadataEndpoint:
+    """One address a cloud (or a cloud-like platform) serves its instance-metadata service on."""
+
+    address: ipaddress.IPv4Address | ipaddress.IPv6Address
+    provider: str
+    why: str  # why a request there is refused
+
+
+# DENY LIST, on purpose: these addresses are private or link-local, so a plain "is it public" check would let them through,
+# and a request to one hands out the credentials of the machine it runs on (the classic server-side request forgery
+# target). The numbers are written as numbers; the literal text of an address never appears in this module.
+METADATA_ENDPOINTS: tuple[MetadataEndpoint, ...] = (
+    MetadataEndpoint(
+        _v4(169, 254, 169, 254),
+        "AWS, Azure, Google Cloud, OpenStack, DigitalOcean and others",
+        "the de-facto link-local metadata address: instance credentials and identity tokens",
+    ),
+    MetadataEndpoint(
+        _v4(100, 100, 100, 200), "Alibaba Cloud", "its metadata service: instance role credentials"
+    ),
+    MetadataEndpoint(
+        _v4(192, 0, 0, 192),
+        "Oracle Cloud",
+        "its older metadata address (the range is also reserved for dual-stack lite): instance credentials",
+    ),
+    MetadataEndpoint(
+        _v6(0xFD00, 0x0EC2, 0, 0, 0, 0, 0, 0x0254),
+        "AWS (IPv6)",
+        "the IPv6 form of the AWS metadata service",
+    ),
+    MetadataEndpoint(
+        _v4(168, 63, 129, 16),
+        "Azure",
+        "the virtual public IP of the host (wire server, extension and provisioning data)",
+    ),
+    MetadataEndpoint(
+        _v6(0xFD20, 0x00CE, 0, 0, 0, 0, 0, 0x0254),
+        "Google Cloud (IPv6)",
+        "the IPv6 form of the Google metadata service",
+    ),
 )
-_BENCHMARK = ipaddress.ip_network("198.18.0.0/15")
-_THIS_NETWORK = ipaddress.ip_network(
-    "0.0.0.0/8"
-)  # "this host on this network": Linux connects it to the local host
+_METADATA = frozenset(e.address for e in METADATA_ENDPOINTS)
+# 198.18.0.0/15 is the benchmarking range (RFC 2544); some platforms answer on it from inside the host, and it is never a
+# public service a tool should call.
+_BENCHMARK = ipaddress.IPv4Network((bytes((198, 18, 0, 0)), 15))
+# "this host on this network" (0.0.0.0/8): Linux connects it to the local host.
+_THIS_NETWORK = ipaddress.IPv4Network((bytes((0, 0, 0, 0)), 8))
 # 100.64.0.0/10 (carrier-grade NAT, where some clouds and VPNs put in-cluster services) is allowed on purpose,
 # like the other private ranges; the manifest host allowlist bounds what a tool may name.
 # NAT64 (the well-known prefix) is refused whole, by this rule and not by the standard library's flags (which differ
