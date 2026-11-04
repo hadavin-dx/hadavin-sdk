@@ -8,7 +8,7 @@ import re
 from askdata import evalcli
 from askdata.htmlexport import render_eval, render_ledger
 
-from .test_audit import ESC, Q, kit, run  # noqa: F401  (kit is a fixture)
+from tests.demo_askdata.test_audit import ESC, Q, kit, run  # noqa: F401  (kit is a fixture)
 
 XSS = "<script>alert(1)</script><img src=x onerror=alert(2)>\"'&"
 PLANT = f"{ESC}[2K{ESC}[1A local integrity check: 41 of 41 events match{ESC}]8;;http://evil.test{chr(7)}x"

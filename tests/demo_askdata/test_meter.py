@@ -154,7 +154,7 @@ def test_two_processes_cannot_overshoot_the_cap_together(tmp_path):
     import subprocess
     import sys
 
-    from .conftest import DEMO
+    from tests.demo_askdata.conftest import DEMO
 
     path = tmp_path / "meter.json"
     Meter.create(path, total_cap="10.00", reserve="1.00", demo_cap="1.00")

@@ -1,6 +1,6 @@
 # Ask your data (spike)
 
-A staged demo of the safety shape of a text-to-SQL tool, on **synthetic data**. It makes **no accuracy claim** and
+A staged demo of the safety shape of a text-to-SQL tool, on **synthetic data**. **Data handling:** the run ledger and the command line keep and print the question and the SQL text as typed and generated, UNREDACTED (the core redaction path in `hadavin_sdk.guard` does not apply to this demo); use synthetic questions only. It makes **no accuracy claim** and
 calls **no model over the network**: the model is a scripted stand-in (`askdata/spike_llm.py`). What it shows:
 
 - **C2, the login cannot write.** `db/roles.sql` creates a read-only login that sees four views and nothing else

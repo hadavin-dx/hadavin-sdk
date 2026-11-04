@@ -72,6 +72,7 @@ def test_a_credential_is_still_masked_in_every_line():
     assert all(secret not in line for line in out), out
 
 
+@pytest.mark.perf  # a wall-clock or CPU-time bound: it runs in the perf step, not the default suite
 def test_redacting_many_lines_stays_fast():
     """Third review (2026-09-30): 300 log lines took 68 s (122 s measured here) once there were more
     found values than Python's regex cache holds; the same lines now take under a second."""

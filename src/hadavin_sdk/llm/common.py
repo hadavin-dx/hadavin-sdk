@@ -16,6 +16,7 @@ from typing import Any
 from urllib.parse import urlsplit
 
 from hadavin_sdk.errors import ConfigError
+from hadavin_sdk.guard import http as http_guard
 from hadavin_sdk.llm.retry import with_retry
 from hadavin_sdk.models import Reply, ToolCall
 
@@ -244,17 +245,11 @@ class NetworkLLM:
     detail: Callable[[BaseException], str] | None = None
 
 
-class _NoRedirect(urllib.request.HTTPRedirectHandler):
-    """A redirect would carry the API key to a host nobody configured: refuse every redirect."""
-
-    def redirect_request(self, req, fp, code, msg, headers, newurl):
-        return None
-
-
-_OPENER = urllib.request.build_opener(_NoRedirect)
-# A loopback model is reached directly: an HTTP_PROXY would otherwise carry the plain-http prompt off the machine.
-_LOCAL_OPENER = urllib.request.build_opener(_NoRedirect, urllib.request.ProxyHandler({}))
-_LOOPBACK = frozenset({"127.0.0.1", "localhost", "::1"})
+# No redirects: one would carry the API key to a host nobody configured. A loopback model is reached directly
+# (an HTTP_PROXY would otherwise carry the plain-http prompt off the machine).
+_OPENER = http_guard.ENV_PROXY_OPENER
+_LOCAL_OPENER = http_guard.LOCAL_OPENER
+_LOOPBACK = http_guard.LOOPBACK
 
 
 def post_json(url: str, body: dict[str, Any], headers: dict[str, str], timeout_s: float) -> Any:

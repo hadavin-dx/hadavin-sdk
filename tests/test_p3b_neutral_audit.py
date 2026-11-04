@@ -21,7 +21,7 @@ from hadavin_sdk.audit.signer import LocalSigner
 from hadavin_sdk.audit.signer_azure import AzureKeyVaultSigner
 from hadavin_sdk.audit.signer_gcp import GcpKmsSigner
 from hadavin_sdk.audit.signer_vault import VaultTransitSigner
-from hadavin_sdk.backends import make
+from hadavin_sdk.backends.factory import make
 from hadavin_sdk.backends.table import (
     AzureImmutableBlobSettings,
     AzureKeyVaultKeySettings,
@@ -516,7 +516,7 @@ def _anchored_with(signer):
 def test_configured_key_label_wins_and_make_sets_it(tmp_path, monkeypatch):
     monkeypatch.setenv("HADAVIN_KEY_DIR", str(tmp_path))
     from hadavin_sdk.audit.signer import generate_key
-    from hadavin_sdk.backends import make
+    from hadavin_sdk.backends.factory import make
     from hadavin_sdk.backends.table import Ed25519LocalSettings
 
     pem = tmp_path / "k.pem"
@@ -675,7 +675,7 @@ def test_a_real_kms_signer_with_an_arn_key_id_still_gets_a_label_without_it():
             return {"PublicKey": b""}
 
     s = KmsSigner("arn:aws:kms:eu-west-1:123456789012:key/abc", Stub())
-    s.public_key = lambda: b"" * 32  # type: ignore[method-assign]
+    s.public_key = lambda: b"\x01" * 32  # type: ignore[method-assign]
     s.alg = "ed25519"
     label = chain.signer_label(s)
     assert label.startswith("pk:") and "123456789012" not in label

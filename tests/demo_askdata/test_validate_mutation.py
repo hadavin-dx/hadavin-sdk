@@ -5,8 +5,8 @@ breaking (per rule id, not per check site). Mutations go through askdata.validat
 import askdata.validate as v
 import pytest
 
-from .attackrun import outcome
-from .corpus import ATTACKS
+from tests.demo_askdata.attackrun import outcome
+from tests.demo_askdata.corpus import ATTACKS
 
 RULES = sorted(v.RULES)
 

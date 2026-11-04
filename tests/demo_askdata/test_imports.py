@@ -4,7 +4,7 @@ and the execution path has exactly one place that sends SQL."""
 import ast
 from pathlib import Path
 
-from .conftest import DEMO
+from tests.demo_askdata.conftest import DEMO
 
 VENDOR_HOME = {"psycopg": "pgsource.py", "sqlglot": "validate.py"}
 CALLS_THAT_SEND = {"execute", "executemany", "copy", "stream", "executescript"}

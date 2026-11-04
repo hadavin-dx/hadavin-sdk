@@ -8,7 +8,7 @@ from askdata.allowed import CAST_TARGETS, FUNCTIONS, LUMEN_VIEWS, VIEWS
 from askdata.validate import Rejected, validate
 from sqlglot import exp
 
-from .conftest import DEMO
+from tests.demo_askdata.conftest import DEMO
 
 STATEMENTS = derive_tool.gold_statements()
 

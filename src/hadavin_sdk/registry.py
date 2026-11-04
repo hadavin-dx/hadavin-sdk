@@ -9,7 +9,8 @@ import hashlib
 import json
 import re
 from dataclasses import dataclass
-from typing import Literal
+from dataclasses import field as dc_field
+from typing import Any, Literal
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
@@ -20,6 +21,13 @@ from hadavin_sdk.config import Config, ConfigError, Money, confined, load_yaml
 from hadavin_sdk.guard.judge import PROMPT_SHA256 as JUDGE_PROMPT_SHA256
 from hadavin_sdk.identity import Principal
 from hadavin_sdk.models import ChainStep, sha256_hex
+from hadavin_sdk.tools import (
+    ToolSpec,
+    module_sha256,
+    parse_manifest,
+    read_operations,
+    spec_problems,
+)
 
 
 class Budget(BaseModel):
@@ -60,6 +68,9 @@ class Registry:
     principals: dict[str, Principal]
     chains: dict[str, Chain]
     contracts: dict[str, ActionContract]
+    # agent id -> tool name -> manifest entry (`tools/<agent>.yaml`, K5). An agent with tools_allowed and no
+    # manifest uses the callables handed to `app.build(tools=...)` (replay and tests).
+    tools: dict[str, dict[str, ToolSpec]] = dc_field(default_factory=dict)
 
     def _prompt_path(self, agent_id: str):
         return confined(self.config.root, self.agents[agent_id].prompt_file)
@@ -137,6 +148,19 @@ class Registry:
                     if getattr(llm, k, None)
                 },
                 **({"judges": judges} if judges else {}),
+                # A re-pinned tool module is different code: the agent needs a new qualification.
+                **(
+                    {"tool_pins": dict(sorted(pins.items()))}
+                    if (pins := self.config.tool_module_hashes)
+                    else {}
+                ),
+                # The read tools the agent investigates with (K5): a changed tool needs a new qualification.
+                # Only when a manifest exists, so agents without one keep their hash.
+                **(
+                    {"tools": [dump(t) for _, t in sorted(self.tools[agent_id].items())]}
+                    if self.tools.get(agent_id)
+                    else {}
+                ),
                 # The bar the gate run passed: raising it must not leave an old green run standing. Only when not
                 # the default 1.0, so agents gated at the default keep their hash.
                 **(
@@ -167,6 +191,19 @@ def _by_id(items: list, model: type, where: str) -> dict:
     return out
 
 
+def _nested_identifier(sub: dict[str, Any]) -> bool:
+    """True if `identifier` appears anywhere inside this input's schema other than as its own top-level flag."""
+
+    def walk(node: Any) -> bool:
+        if isinstance(node, dict):
+            return isinstance(node.get("identifier"), bool) or any(walk(v) for v in node.values())
+        if isinstance(node, list):
+            return any(walk(v) for v in node)
+        return False
+
+    return any(walk(v) for k, v in sub.items() if k != "identifier")
+
+
 def load_registry(config: Config) -> Registry:
     root = config.root
     raw_agents = _yaml(root / "agents.yaml")
@@ -188,10 +225,114 @@ def load_registry(config: Config) -> Registry:
     problems = _cross_check(config, agents, chains, contracts)
     if problems:
         raise ConfigError("; ".join(problems))
-    reg = Registry(config, agents, principals, chains, contracts)
+    tools = _load_tools(config, agents, contracts)
+    reg = Registry(config, agents, principals, chains, contracts, tools)
     if problems := deferred.check(reg):
         raise ConfigError("; ".join(problems))
     return reg
+
+
+def _load_tools(config: Config, agents: dict, contracts: dict) -> dict[str, dict[str, ToolSpec]]:
+    """Read `tools/<agent>.yaml` for every agent and check each entry (K5). Every problem fails at start-up."""
+    # Pins first, and fatal at once: nothing below may import a tool module that is unpinned or does not match.
+    if pin_problems := _module_pin_problems(config):
+        raise ConfigError("; ".join(pin_problems))
+    folder = config.root / "tools"
+    problems: list[str] = []
+    found: dict[str, dict[str, ToolSpec]] = {}
+    if folder.is_dir():
+        problems += [
+            f"tools/{p.name}: no agent {p.stem}"
+            for p in sorted(folder.glob("*.yaml"))
+            if p.stem not in agents
+        ]
+    read_ops: set[str] | None = None
+    for agent_id, agent in agents.items():
+        path = folder / f"{agent_id}.yaml"
+        if not path.is_file():
+            continue
+        where = f"tools/{path.name}"
+        specs = parse_manifest(_yaml(path), where)
+        if specs and read_ops is None:
+            read_ops = read_operations(config.tool_modules, config.tool_module_hashes)
+        found[agent_id] = {}
+        problems += [  # grounding checks declared inputs only, so a tooled agent's contracts must be closed
+            f"{where}: action {action} must set `additionalProperties: false` on its input_schema "
+            "(an agent with tools cannot have undeclared inputs)"
+            for action in agent.scope_allowed
+            if action in contracts
+            and (contracts[action].input_schema or {}).get("additionalProperties") is not False
+        ]
+        for spec in specs:
+            found[agent_id][spec.name] = spec
+            problems += [
+                f"{where}: {p}"
+                for p in spec_problems(spec, config.tool_modules, config.evidence.cluster_suffixes)
+            ]
+            problems += [
+                f"{where}: tool {spec.name}: {p}" for p in schema_problems(spec.input_schema)
+            ]
+            if spec.name not in agent.tools_allowed:
+                problems.append(f"{where}: tool {spec.name} is not in the agent's tools_allowed")
+            for (
+                action
+            ) in agent.scope_allowed:  # every string input says whether it must be grounded
+                if action not in contracts:
+                    continue  # reported where the agent's scope is checked
+                props = (contracts[action].input_schema or {}).get("properties") or {}
+                # Grounding is a string match. A string input says true or false; any other kind of input
+                # (integer, array, object) cannot be grounded, so it must say `identifier: false` outright
+                # instead of silently skipping the check; a boolean carries no name to ground.
+                problems += [
+                    f"{where}: action {action} input {pname!r} must say `identifier: true` or `identifier: false`"
+                    for pname, sub in props.items()
+                    if isinstance(sub, dict)
+                    and sub.get("type") != "boolean"
+                    and "identifier" not in sub
+                ]
+            if spec.name in contracts:
+                problems.append(f"{where}: tool {spec.name} has the id of an action contract")
+            problems += [
+                f"{where}: tool {spec.name}: operation {op!r} is not on the read list of tool_modules"
+                for op in spec.operations
+                if op not in (read_ops or set())
+            ]
+            problems += [  # a POST read (a review, a query body) is named in the config, not only in tool code
+                f"{where}: tool {spec.name}: operation {op!r} is bound to {read_ops[op][0]}; "
+                "list it in evidence.post_read_operations to allow it"
+                for op in spec.operations
+                if read_ops
+                and op in read_ops
+                and read_ops[op][0] != "GET"
+                and op not in config.evidence.post_read_operations
+            ]
+    if problems:
+        raise ConfigError("; ".join(problems))
+    return found
+
+
+def _module_pin_problems(config: Config) -> list[str]:
+    """Tool modules are code with the process's rights: in pilot and prod each one is pinned by the SHA-256 of
+    its source file (`tool_module_hashes`), and a pin that is listed must match."""
+    out = []
+    for module in config.tool_modules:
+        pin = config.tool_module_hashes.get(module)
+        if pin is None:
+            if config.environment in deferred.LIVE:
+                out.append(
+                    f"tool module {module} has no tool_module_hashes pin (required in pilot and prod)"
+                )
+            continue
+        try:
+            actual = module_sha256(module)  # reads files, imports nothing
+        except ConfigError as exc:
+            out.append(str(exc))
+            continue
+        if actual != pin:
+            out.append(
+                f"tool module {module}: its source hash is {actual[:12]}..., the pin says {pin[:12]}..."
+            )
+    return out
 
 
 def _cross_check(config, agents, chains, contracts) -> list[str]:
@@ -216,6 +357,14 @@ def _cross_check(config, agents, chains, contracts) -> list[str]:
         props = (c.input_schema or {}).get("properties") or {}
         if "key" in props:
             out.append(f"action {c.id}: input 'key' is reserved for the idempotency key")
+        # Grounding reads the TOP-LEVEL inputs only (evidence.identifier_inputs): an `identifier` flag deeper in an
+        # object or array would be silently ignored, for every agent, tooled or not. Refused (flag the top-level
+        # input, or say `identifier: false` on it). Fail closed: any boolean `identifier` below the top level counts.
+        out += [
+            f"action {c.id}: input {n!r} has an `identifier` flag below the top level, which grounding does not read"
+            for n, sub in props.items()
+            if isinstance(sub, dict) and _nested_identifier(sub)
+        ]
         http = c.executor if c.executor.kind == "http" else None
         for op in filter(None, [http and http.operation, http and http.lookup_operation]):
             for field in re.findall(r"{(\w+)}", op):

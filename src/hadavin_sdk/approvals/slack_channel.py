@@ -16,9 +16,10 @@ from typing import Any
 
 from hadavin_sdk.approvals import slack
 from hadavin_sdk.approvals.cards import Card, Delivery
-from hadavin_sdk.approvals.channel import clean
+from hadavin_sdk.approvals.channel import _neutralise, clean
 from hadavin_sdk.approvals.gate import withhold_commands
 from hadavin_sdk.errors import ConfigError
+from hadavin_sdk.guard import runmap
 from hadavin_sdk.llm.common import post_json
 from hadavin_sdk.models import ApprovalDecision, ApprovalRequest
 
@@ -65,14 +66,23 @@ class SlackChannel:
 
     def _blocks(self, req: ApprovalRequest, approver_ids: list[str] | None) -> list[dict[str, Any]]:
         step = f"Step {req.current_step + 1} of {len(req.steps)}"
-        blocks: list[dict[str, Any]] = [
+        # `req.summary` was cleaned once when it was built (`summary()`); it is shown whole or not at all: a silent cut
+        # would hide the end of what the approver is approving
+        # withholding commands can join what it removed around: redact once more through the choke point
+        # The map is seeded with the placeholders the summary already holds (a fake original that never occurs in text),
+        # so a placeholder this pass adds never reuses one of their numbers.
+        withheld = withhold_commands(req.summary)
+        seeded = runmap.RunMap(
             {
-                "type": "section",
-                "text": {
-                    "type": "plain_text",
-                    "text": withhold_commands(clean(req.summary)[: self.max_card_chars]),
-                },
-            },
+                ph: "\0seed" + ph
+                for ph in (m.group(0) for m in runmap.PLACEHOLDER.finditer(withheld))
+            }
+        )
+        shown = runmap.redact_text(withheld, seeded, neutralise=_neutralise)
+        if len(shown) > self.max_card_chars:
+            shown = "(the summary is too long to show here; open the full request in the console)"
+        blocks: list[dict[str, Any]] = [
+            {"type": "section", "text": {"type": "plain_text", "text": shown}},
         ]
         if approver_ids is None:  # decided or expired: the buttons go
             blocks.append(

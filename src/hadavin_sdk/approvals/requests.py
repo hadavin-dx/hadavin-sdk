@@ -9,6 +9,7 @@ from datetime import datetime, timedelta
 from hadavin_sdk.approvals.channel import Channel, clean
 from hadavin_sdk.audit.protocol import AuditSink
 from hadavin_sdk.guard.injection import Detector, injection_check
+from hadavin_sdk.guard.runmap import RedactionError
 from hadavin_sdk.models import (
     ApprovalDecision,
     ApprovalRequest,
@@ -34,11 +35,20 @@ def summary(plan: Plan, detector: Detector | None = None) -> str:
     (the model copied them from a document) get a warning so a person does not approve them on autopilot."""
     inputs = canonical_json(plan.inputs)
     flagged = detector is not None and injection_check(detector, inputs, "approval_summary").flagged
-    return clean(
-        f"{WARNING if flagged else ''}{plan.agent_id} asks to run {plan.action_id} "
-        f"v{plan.action_version} ({plan.risk_class}) on {plan.target.system}. Inputs: {inputs}. "
-        f"Expected: {plan.expected_outcome}. Plan {plan.hash()[:12]}."
-    )
+    try:
+        return clean(
+            f"{WARNING if flagged else ''}{plan.agent_id} asks to run {plan.action_id} "
+            f"v{plan.action_version} ({plan.risk_class}) on {plan.target.system}. Inputs: {inputs}. "
+            f"Expected: {plan.expected_outcome}. Plan {plan.hash()[:12]}."
+        )
+    except (
+        RedactionError
+    ):  # inputs too large to redact (or nested too deep): the approver still sees what and where
+        return clean(
+            f"{WARNING if flagged else ''}{plan.agent_id} asks to run {plan.action_id} "
+            f"v{plan.action_version} ({plan.risk_class}) on {plan.target.system}. "
+            f"Inputs: (too large to show here). Plan {plan.hash()[:12]}."
+        )
 
 
 class Approvals:

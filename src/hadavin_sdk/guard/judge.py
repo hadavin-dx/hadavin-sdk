@@ -18,6 +18,7 @@ import json
 from pathlib import Path
 from typing import Any
 
+from hadavin_sdk.guard import runmap
 from hadavin_sdk.guard.injection import injection_check
 from hadavin_sdk.llm.common import ANSWER_TOOL
 from hadavin_sdk.models import Verdict
@@ -65,6 +66,9 @@ class JudgeDetector:
         self.llm, self.route, self.threshold = llm, route, threshold
 
     def check(self, text: str, source: str) -> Verdict:
+        # defence in depth: the judge is a model, so its input goes through the choke point even when the caller
+        # already redacted (placeholders pass unchanged); a refusal raises and `injection_check` flags (fail closed)
+        text = runmap.redact_text(text, {})
         reply = self.llm.chat(
             [{"role": "user", "content": _ASK.format(source=source)}],
             system=PROMPT,

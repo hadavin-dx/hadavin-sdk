@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
+import re
 from collections.abc import Mapping
 from typing import TYPE_CHECKING, Protocol
 
 from hadavin_sdk.approvals import hmac_v0
 from hadavin_sdk.approvals.gate import sanitise_text, withhold_commands
-from hadavin_sdk.guard.redact import redact
+from hadavin_sdk.guard import runmap
 from hadavin_sdk.models import ApprovalDecision, ApprovalRequest
 
 if TYPE_CHECKING:
@@ -15,14 +16,54 @@ if TYPE_CHECKING:
 
 
 def clean(text: str) -> str:
-    """Redact, then WARDEN's G3 cleaning (`gate.sanitise_text`): no link, image, HTML, mention, control
-    character or forged markdown structure survives in text a person acts on. Then G4
-    (`gate.withhold_commands`): no command a person could paste to change a system, on any platform."""
-    first = redact(text)
-    # Sanitising removes invisible and control characters and tags, which can join a split secret
-    # (`AKIA` + zero-width space + `IOSF...`) or a split command: G4 reads the cleaned text, and the result is
-    # redacted again (WARDEN's G5 re-scan), in the same placeholder namespace.
-    return redact(withhold_commands(sanitise_text(first.text)), mapping=first.mapping).text
+    """WARDEN's G3 cleaning (`gate.sanitise_text`): no link, image, HTML, mention, control character or forged
+    markdown structure survives in text a person acts on; then G4 (`gate.withhold_commands`): no command a person could
+    paste to change a system, on any platform; then ONE redaction, last."""
+    # The neutralising hook (sanitise, then withhold commands) runs on the text AND on every decoded view the redactor
+    # tries (`redact_text(..., neutralise=)`): a view that replaces the text (because it found a secret only the decoding
+    # shows) is sanitised too, so `%72m -rf /`, `%3Cimg%3E`, `&lt;!channel&gt;` cannot come back as a command, an image
+    # or a mention. Nothing transforms the text after its final redaction. Placeholders already in the text
+    # (`<IPV4_1>`) survive sanitising (tested) and are seeded into the map so a new one never reuses their number.
+    text = text.replace("\x00", "")
+    mapping = _seeded(text)
+    out = runmap.redact_text(text, mapping, neutralise=_neutralise)
+    # A key and a value split by markup (`password%<i></i>3Dx`) read as one only when the tags are DELETED, not turned
+    # into spaces: that joined view (real placeholders and line breaks kept) is used when it finds a secret value the
+    # text pass did not (compared by the originals, spaces ignored), not by count or kind.
+    joined = _TAGS.sub("", text)
+    if joined != text:
+        joined_map = _seeded(joined)
+        alt = runmap.redact_text(joined, joined_map, neutralise=_neutralise)
+        if _assignment_originals(joined_map) - _assignment_originals(mapping):
+            return alt
+    return out
+
+
+# A tag, but never a real placeholder (`<IPV4_1>`), and only the spaces and tabs after it (never a line break).
+_TAGS = re.compile(r"(?:<(?![A-Z][A-Z0-9]*_\d+>)[^<>]{0,200}>[ \t]*)+")
+_ASSIGNMENT_KINDS = {"SECRET", "APIKEY", "BEARER", "BASIC", "URLCRED"}
+
+
+def _neutralise(text: str) -> str:
+    return withhold_commands(sanitise_text(text))
+
+
+def _seeded(text: str) -> runmap.RunMap:
+    """A map that already holds the placeholders in `text` (a fake original that never occurs in text)."""
+    return runmap.RunMap(
+        {m.group(0): "\0seed" + m.group(0) for m in runmap.PLACEHOLDER.finditer(text)}
+    )
+
+
+def _assignment_originals(mapping: dict[str, str]) -> set[str]:
+    """The originals of the assignment-kind secrets a map holds (seed entries excluded), spaces ignored."""
+    return {
+        "".join(original.split())
+        for ph, original in mapping.items()
+        if not original.startswith("\0seed")
+        and (m := runmap.PLACEHOLDER.fullmatch(ph))
+        and m.group(1) in _ASSIGNMENT_KINDS
+    }
 
 
 class Channel(Protocol):

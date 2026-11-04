@@ -241,6 +241,7 @@ def test_g4_withholds_each_write_shape_and_leaves_reads_and_plain_words():
         assert WITHHELD in withhold_commands(story), story
 
 
+@pytest.mark.perf  # a wall-clock or CPU-time bound: it runs in the perf step, not the default suite
 def test_g4_reads_hostile_text_in_linear_time():
     """WARDEN review 2026-10-16: model text is attacker-shaped, so no input may make G4 backtrack."""
     hostile = [

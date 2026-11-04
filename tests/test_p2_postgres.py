@@ -204,7 +204,7 @@ def test_cli_kill_switch_reaches_every_process(cfg_dir, monkeypatch, capsys):
             lambda settings, deps, dsn=dsn: FakeSecretProvider({"pg-dsn": dsn}),
         )
         assert cli.main(["--config", str(cfg_dir), "limits", "stop", "--by", "user:a"]) == 0
-        from hadavin_sdk.backends import make
+        from hadavin_sdk.backends.factory import make
 
         other = make(
             "store", load_config(cfg_dir).backends.store, FakeSecretProvider({"pg-dsn": dsn})
@@ -244,7 +244,7 @@ def test_plan_hash_survives_a_non_utc_timestamp():
 
 
 def test_cas_race_across_two_connections_has_one_winner(migrated_dsn):
-    from hadavin_sdk.backends import make
+    from hadavin_sdk.backends.factory import make
     from hadavin_sdk.models import RunState
     from hadavin_sdk.store.protocol import StaleState
 
@@ -287,7 +287,7 @@ def test_audit_checkpoints_migration_adds_alg_and_label_and_old_rows_get_default
         for path in old:
             db.execute("INSERT INTO schema_migrations (version) VALUES (%s)", (path.stem,))
         db.execute("INSERT INTO audit_checkpoints (seq, hash, signature) VALUES (1, 'h', 's')")
-    assert migrate(fresh_dsn) == ["0004_audit_checkpoint_meta"]
+    assert migrate(fresh_dsn) == ["0004_audit_checkpoint_meta", "0005_evidence"]
     with psycopg.connect(fresh_dsn, autocommit=True) as db:
         assert db.execute("SELECT seq, alg, key_label FROM audit_checkpoints").fetchall() == [
             (1, None, None)
