@@ -855,7 +855,7 @@ M = [
     Mutant(
         "capped: kind not clipped",
         CA,
-        "        kind = str(kind)[:_KIND_MAX]\n        with self._lock:\n            key, slot",
+        "        kind = safe_head(str(kind), _KIND_MAX)\n        with self._lock:\n            key, slot",
         "        with self._lock:\n            key, slot",
         "test_capped_audit_clips_the_kind_caps_distinct_kinds_and_purges_once_per_bucket",
     ),
@@ -890,7 +890,7 @@ M = [
     Mutant(
         "capped: pipe in the tenant is not escaped",
         CA,
-        '.replace("%", "%25").replace("|", "%7C")',
+        '            .replace("|", "%7C")\n',
         "",
         "test_a_tenant_called_star_or_with_a_pipe_cannot_collide_with_the_overflow_counter_or_another_tenant",
     ),
@@ -948,8 +948,8 @@ M = [
     Mutant(
         "redact: the folded pass never runs",
         RD,
-        "            if out.isascii()\n",
-        "            if True\n",
+        "        if not out.isascii():\n",
+        "        if False:\n",
         "test_redact_masks_a_value_hidden",
         only_test="test_redact_masks_a_value_hidden_behind_look_alikes_on_the_line_and_leaves_other_text_alone",
     ),
