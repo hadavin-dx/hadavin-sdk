@@ -126,6 +126,7 @@ jobs:
       - name: Stale gitleaks ignore entries (each commit must exist on a fetched branch and not on main; entries expire)
         run: |
           fail=0
+          [ "$(git rev-parse --is-shallow-repository)" = false ] || { echo "shallow clone: the history checks below would be blind"; fail=1; }
           git rev-parse --verify -q origin/main > /dev/null || { echo "origin/main is missing"; fail=1; }
           [ -f .gitleaksignore ] || { echo ".gitleaksignore is missing"; fail=1; touch .gitleaksignore; }
           # any line that is not blank, not a comment and not a 40-hex fingerprint entry escapes the checks below
@@ -153,7 +154,7 @@ jobs:
             gl_tmp=$(mktemp)
             git ls-tree -r -z --name-only HEAD > "$gl_tmp" || { echo "git ls-tree failed"; fail=1; }
             if tr '\0' '\n' < "$gl_tmp" | grep -E "$pat"; then echo "files under handover/ are in this checkout's tree: the temporary allowlist would hide generic keys in them"; fail=1; fi
-            if [ "$have_branch" = 1 ]; then range="HEAD --remotes --not origin/core/cloud-handover"; else range="HEAD --remotes"; fi
+            if [ "$have_branch" = 1 ]; then range="HEAD --all --not origin/core/cloud-handover"; else range="HEAD --all"; fi
             # shellcheck disable=SC2086
             git log -m --name-only -z --format= $range -- > "$gl_tmp" || { echo "git log failed"; fail=1; }
             if tr '\0' '\n' < "$gl_tmp" | grep -E "$pat"; then echo "files under handover/ exist in the history of HEAD or of a branch other than core/cloud-handover: the temporary allowlist would hide generic keys in them"; fail=1; fi
