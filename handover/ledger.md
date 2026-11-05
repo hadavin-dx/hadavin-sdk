@@ -1019,3 +1019,10 @@
 | BL-core-p3a-r6-adv-R6-7 | P3A | MINOR | see report | OPEN | reviews/P3a-round6-adversarial.md | 3c9fe6a |
 | BL-core-p3a-r6-adv-R6-8 | P3A | MINOR | see report | OPEN | reviews/P3a-round6-adversarial.md | 3c9fe6a |
 | BL-core-p3a-r6-adv-R6-9 | P3A | NIT | see report | OPEN | reviews/P3a-round6-adversarial.md | 3c9fe6a |
+| BL-core-p3a-r6-cor-C6-1 | P3A | MAJOR | see report | OPEN | reviews/P3a-round6-correctness.md | 3c9fe6a |
+| BL-core-p3a-r6-cor-C6-2 | P3A | MINOR | see report | OPEN | reviews/P3a-round6-correctness.md | 3c9fe6a |
+| BL-core-p3a-r6-cor-C6-3 | P3A | MINOR | see report | OPEN | reviews/P3a-round6-correctness.md | 3c9fe6a |
+| BL-core-p3a-r6-cor-C6-4 | P3A | NIT | see report | OPEN | reviews/P3a-round6-correctness.md | 3c9fe6a |
+| BL-core-p3a-r6-cor-C6-5 | P3A | NIT | see report | OPEN | reviews/P3a-round6-correctness.md | 3c9fe6a |
+| BL-core-p3a-r6-cor-C6-6 | P3A | NIT | see report | OPEN | reviews/P3a-round6-correctness.md | 3c9fe6a |
+| BL-core-p3a-r6-cor-C6-7 | P3A | NIT | see report | OPEN | reviews/P3a-round6-correctness.md | 3c9fe6a |
