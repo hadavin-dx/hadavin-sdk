@@ -306,8 +306,6 @@ def _text_use(node: ast.AST, names: set[str], exc: set[str], safe: set[str]) -> 
     if isinstance(node, ast.Name):
         return node.id in names and node.id not in exc
     if isinstance(node, ast.Attribute):
-        if node.attr in _SAFE_ATTRS and _object_expr(node.value, exc):
-            return False
         return _uses_raw(node, names, exc, safe)
     if isinstance(node, ast.FormattedValue):
         return _uses_raw(node.value, names, exc, safe)

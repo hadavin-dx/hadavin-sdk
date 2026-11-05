@@ -65,6 +65,13 @@ def test_a_word_glued_to_an_escape_and_a_key_still_masks_the_key():
     )  # needs a word boundary: only the spaced form masks it
 
 
+def test_more_than_eight_invisible_runs_still_get_the_all_spaced_form():
+    text = (
+        ("b" + ZW) * 10 + "see" + ESC + KEY
+    )  # the escape is the 11th run: no single-run form covers it
+    assert "aaaa" not in shown(text)
+
+
 def test_osc_and_dcs_payloads_are_dropped_with_their_sequence():
     assert "title" not in shown("a" + ESC + "]0;title" + BEL + "b")
     assert "hidden" not in shown("a" + C1_DCS + "hidden" + chr(0x9C) + "b")
