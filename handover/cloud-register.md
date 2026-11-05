@@ -224,5 +224,5 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | r6-P4a-resolve | round 6 resolve of tickets/P4a.md using reviews/P4a-round6-adversarial.md + -correctness.md | opus (claude-opus-5-5) | 22:52Z | +45min | REPORTED | verify, push, rev author |
 | r9-P1-resolve | round 9 resolve of tickets/P1.md rev 10 (adv ADV-R9-1..19, cor COR-R9-1..10) | opus (claude-opus-5-5) | 22:56Z | +50min | REPORTED | verify, push, rev 11 author |
 | rev7-P4a-author | author rewrite tickets/P4a.md rev 7 from reviews/P4a-round6-resolve.md | sonnet (claude-sonnet-5-5) | 22:58Z | +40min | running (a19bdb79fa0dcedbe) | verify, push, round 7 reviewers |
-| r5-LK-resolve | round 5 resolve of designs/lookalike-leak.md (draft 6) incl. order 13 | opus (claude-opus-5-5) | 23:00Z | +50min | running (abed601a34bbdee75) | verify, push, round 6 reviewers |
+| r5-LK-resolve | round 5 resolve of designs/lookalike-leak.md (draft 6) incl. order 13 | opus (claude-opus-5-5) | 23:00Z | +50min | REPORTED | verify, push, round 6 reviewers |
 | rev11-P1-author | author rewrite tickets/P1.md rev 11 from reviews/P1-round9-resolve.md | sonnet (claude-sonnet-5-5) | 23:06Z | +45min | running (a0692b86be8064780) | verify, push, round 10 reviewers |
