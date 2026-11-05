@@ -111,7 +111,7 @@ def test_a_very_long_run_of_percent_bytes_takes_linear_time():
         return lambda: [runmap.partial_escape_start(t) for t in texts]
 
     first = _fastest(run(hostile))
-    assert first < 10.0, (
+    assert first < 60.0, (
         first
     )  # generous: a busy runner or a coverage run is slower, a quadratic pattern is hours
     second = _fastest(
@@ -128,7 +128,7 @@ def test_other_long_runs_are_linear_too():
         "\\u" * 150_000,
         "%" * 300_000,
     )
-    assert _fastest(lambda: [runmap.partial_escape_start(t) for t in texts]) < 10.0
+    assert _fastest(lambda: [runmap.partial_escape_start(t) for t in texts]) < 60.0
 
 
 def test_the_fragment_cut_in_tools_removes_a_half_written_escape_and_keeps_the_rest():

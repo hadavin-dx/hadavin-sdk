@@ -234,8 +234,9 @@ def test_a_teredo_address_with_a_public_server_and_a_public_client_is_allowed():
 
 
 @pytest.mark.parametrize("prefix", [b"\x00\x64\xff\x9b", b"\x00\x64\xff\x9b\x00\x01"])
-def test_a_nat64_address_is_refused_whatever_it_embeds(prefix):
-    # the prefix is refused whole by an explicit rule (the standard library also reserves the range): even a public embedded address
+def test_a_nat64_address_is_refused_whatever_it_embeds(prefix, v6_flags_off):
+    # the prefix is refused whole by the guard's own explicit rule, so the standard library's flags are switched off here
+    # (it also reserves the range, which would hide a deleted rule): even a public embedded address
     assert http._refused(_nat64(prefix, PUBLIC_V4[0]))
     assert http._refused(_nat64(prefix, "169.254.169.254"))
 
