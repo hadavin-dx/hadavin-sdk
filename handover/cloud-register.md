@@ -186,3 +186,9 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | r5-P4a-cor | round 5 review of tickets/P4a.md rev 5 | sonnet (claude-sonnet-5-5) | now | +50min | now | REPORTED | collect, save, resolve |
 | r4-P2d-adv | round 4 review of tickets/P2d.md rev 4 (egm:egm-design) | sonnet (claude-sonnet-5-5) | now | +50min | now | REPORTED | collect, save, resolve |
 | r4-P2d-cor | round 4 review of tickets/P2d.md rev 4 (egm:egm-codebase-details) | sonnet (claude-sonnet-5-5) | now | +50min | now | REPORTED | collect, save, resolve |
+| rev8-P1 | author P1 ticket next revision (round resolve applied) | sonnet (claude-sonnet-5-5) | now | +60min | running | verify, commit, push, launch next round |
+| rev9-P2a | author P2a ticket next revision (round resolve applied) | sonnet (claude-sonnet-5-5) | now | +60min | running | verify, commit, push, launch next round |
+| rev6-P4a | author P4a ticket next revision (round resolve applied) | sonnet (claude-sonnet-5-5) | now | +60min | running | verify, commit, push, launch next round |
+| rev5-P2d | author P2d ticket next revision (round resolve applied) | sonnet (claude-sonnet-5-5) | now | +60min | running | verify, commit, push, launch next round |
+| rev9-P3a | author P3a ticket next revision (round resolve applied) | sonnet (claude-sonnet-5-5) | now | +60min | running | verify, commit, push, launch next round |
+| rev9-P4d | author P4d ticket next revision (round resolve applied) | sonnet (claude-sonnet-5-5) | now | +60min | running | verify, commit, push, launch next round |
