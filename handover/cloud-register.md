@@ -165,7 +165,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | rev4-P4a | author P4a ticket rev 4 (round 3 resolve 9f1ea43) | sonnet (claude-sonnet-5-5) | now | +45min | REPORTED | verify, explicit add, commit, push, launch round 4 |
 | r6-P2a-adv | round 6 adversarial review of tickets/P2a.md rev 7 (bd846f2) | sonnet (claude-sonnet-5-5) | now | +45min | REPORTED | save report, ledger rows |
 | r6-P2a-cor | round 6 correctness review of tickets/P2a.md rev 7 (bd846f2) | sonnet (claude-sonnet-5-5) | now | +45min | REPORTED | save report, ledger rows |
-| rev8-P3a | author P3a ticket rev 8 (round 6 resolve c19b7e7) | sonnet (claude-sonnet-5-5) | now | +50min | running | verify, explicit add, commit, push, launch round 7 |
+| rev8-P3a | author P3a ticket rev 8 (round 6 resolve c19b7e7) | sonnet (claude-sonnet-5-5) | now | +50min | REPORTED | verify, explicit add, commit, push, launch round 7 |
 | rev7-P1 | author P1 ticket rev 7 (round 5 resolve) | sonnet (claude-sonnet-5-5) | now | +50min | running | verify, explicit add, commit, push, launch round 6 |
 | r7-P4d-adv | round 7 adversarial review of tickets/P4d.md rev 8 | sonnet (claude-sonnet-5-5) | now | +45min | REPORTED | save report, ledger rows |
 | r7-P4d-cor | round 7 correctness review of tickets/P4d.md rev 8 | sonnet (claude-sonnet-5-5) | now | +45min | REPORTED | save report, ledger rows |
@@ -174,3 +174,5 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | rev8-P2a | author P2a ticket rev 8 (round 6 resolve) | sonnet (claude-sonnet-5-5) | now | +50min | now | running | collect, save, resolve |
 | r3-P2d-adv | round 3 adversarial review of tickets/P2d.md rev 3 | sonnet (claude-sonnet-5-5) | now | +50min | now | running | collect, save, resolve |
 | r3-P2d-cor | round 3 correctness review of tickets/P2d.md rev 3 | sonnet (claude-sonnet-5-5) | now | +50min | now | running | collect, save, resolve |
+| r7-P3a-adv | round 7 review of tickets/P3a.md rev 8 | sonnet (claude-sonnet-5-5) | now | +45min | now | running | collect, save |
+| r7-P3a-cor | round 7 review of tickets/P3a.md rev 8 | sonnet (claude-sonnet-5-5) | now | +45min | now | running | collect, save |
