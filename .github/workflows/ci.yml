@@ -79,6 +79,8 @@ jobs:
         run: ruff check src tests demos
       - name: Format
         run: ruff format --check src tests demos
+      - name: Secrets and banned names in the tracked files (the repo is public)
+        run: python tools/scan_repo.py
       - name: The postgres client the database tests shell out to is present (else they would skip silently)
         run: psql --version
       - name: Tests (no live calls)

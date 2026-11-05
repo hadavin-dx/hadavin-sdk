@@ -1,0 +1,3 @@
+# path:reason, one per line. The whole file is skipped by tools/scan_repo.py.
+tests/test_no_reference_material.py:defines the BANNED list, so it contains every banned name by design
+tests/test_k1b_redaction_layers.py:fixture values that the redaction layers must mask, not real passwords
