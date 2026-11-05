@@ -8,7 +8,7 @@
     "src/hadavin_sdk/runtime/stop_gate.py": "864961b4525063024810bb92ad4178ddfe5647cfed184f97f0ca960327fbf770",
     "src/hadavin_sdk/runtime/rowstore.py": "7ac72628eebc3c32df06e368941b179a5c3a144181f56e6cee9ba71f71a30734",
     "src/hadavin_sdk/runtime/config_view.py": "31160290846c0397e59fc3760bc8816683d089cda6bb062cac6d0593c85014d7",
-    "src/hadavin_sdk/audit/capped.py": "4348cbd905bbc3796221d745a06149d850ee33fb0da89ba7064ddc88b6ae1550",
+    "src/hadavin_sdk/audit/capped.py": "60212bfdc0d2e799991a4991280900a7d8dc6e93c32717b2fd3917ef6cbe5170",
     "src/hadavin_sdk/testing/mutation.py": "986b8dc8b27076676793fc953cb3c7e329ea08ae5f945b0f585a6ba242f8b3b4",
     "src/hadavin_sdk/testing/contracts.py": "3e8939de7324e66249051b48775cb295badcbd5b42e7c86ac13d7a3af9d480b3",
     "tools/mutation_runner.py": "c32b92c69e9eec8fa5d362fd9d0d4505812b8c198ae0406834cce8403fa97d24"

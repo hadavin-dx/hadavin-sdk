@@ -58,7 +58,7 @@ def _withheld(text: str, key: bytes | None) -> str:
 def _clip(value: Any, limit: int, key: bytes | None = None) -> str:
     """The text for an append-only audit field. Control characters become spaces (``_strip``). Only the first ``limit`` + 4096 characters
     are ever redacted, THEN the result is clipped to ``limit``. If the value is longer than that head AND the head ends inside a word (a
-    secret could continue beyond the cut: ``https://user:`` + 5,000 characters of password), or the redactor refuses the head, the field is
+    secret could continue beyond the cut: a URL whose password is 5,000 characters long), or the redactor refuses the head, the field is
     ``(details withheld; len=N; sha8=...)``: ``sha8`` is a keyed hash of the raw text (``label_key``; not guessable from the audit) and no
     content. A secret that starts within the first ``limit`` characters and ends within the head is redacted whole; one that needs more
     than 4096 characters of context is not claimed to be caught, the rule above withholds the field. Outsider-chosen text never reaches

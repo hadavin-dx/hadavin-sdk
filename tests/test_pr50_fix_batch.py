@@ -221,7 +221,9 @@ def test_many_short_non_ascii_lines_cost_no_per_line_pattern_runs(monkeypatch):
         _Redactor, "_dry_hits", staticmethod(lambda t: calls.append(1) or real_hits(t))
     )
     monkeypatch.setattr(
-        _Redactor, "_folded_line", lambda self, ln: calls.append(1) or real_line(self, ln)
+        _Redactor,
+        "_folded_line",
+        lambda self, ln, *more: calls.append(1) or real_line(self, ln, *more),
     )
     out = redact("é\n" * 20_000).text
     assert out == "é\n" * 20_000
@@ -274,6 +276,9 @@ def test_restore_false_cannot_clear_a_stop_this_process_engaged():
         g.restore(
             False, by="ops"
         )  # still refused: only the audited release clears what this process engaged
+    assert not [
+        e for e in lim.audit.intents if e.operation == "restore"
+    ]  # refused before any audit row was written
     lim.store.ks = StoredKillSwitch(on=True)
     g.release(by="u1")
     g.restore(False, by="ops")  # nothing engaged here any more

@@ -242,9 +242,11 @@ M = [
     Mutant(
         "rowstore: int keys accepted",
         RS,
-        "type(k) is str and json_keys_ok(v, _depth + 1)",
-        "json_keys_ok(v, _depth + 1)",
+        "if type(k) is not str:",
+        "if False:",
         "test_the_row_store_meets_the_contract",
+        allow_crash=True,
+        crash_type="TypeError",
     ),
     Mutant(
         "rowstore: NaN accepted",
@@ -260,7 +262,7 @@ M = [
         "raise DuplicateKey(key)",
         "DuplicateKey",
         allow_crash=True,
-        crash_type="KeyPending",
+        crash_type="DuplicateKey",
     ),
     Mutant(
         "rowstore: get returns the live row",
@@ -465,7 +467,7 @@ M = [
         "if False:",
         "normalize() argument",
         allow_crash=True,
-        crash_type="AttributeError",
+        crash_type="TypeError",
     ),
     Mutant(
         "egress: folds-to-nothing value skipped",
@@ -2105,7 +2107,7 @@ M += [
             'literals = ("127.0.0.1", "::1") if named == "localhost" else (named,)',
             'literals = ("127.0.0.1",)',
             "test_localhost_tries_ipv4_then_ipv6_and_an_explicit_address_is_used_alone",
-            "",
+            "OSError",
         ),
         (
             "b3: a crash row is good whatever the exception",

@@ -41,6 +41,13 @@ def test_restore_true_then_false_cannot_clear_a_stop_on_an_unaudited_gate():
             False, by="ops"
         )  # FAIL-BEFORE: cleared silently, no audit row, nothing to say it happened
     assert g.engaged and g.blocked()
+    lim = FakeLimits()
+    lim.audit = None  # a Limits whose audit sink is missing cannot clear a restored stop either
+    g2 = StopGate(lim)
+    g2.restore(True)
+    with pytest.raises(StopGateBusy):
+        g2.restore(False, by="ops")
+    assert g2.engaged
 
 
 def test_restore_false_needs_the_durable_switch_off_and_writes_an_audit_row():

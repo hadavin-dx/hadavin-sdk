@@ -15,9 +15,8 @@ import pytest
 from tools import mutation_runner as mr
 from tools.mutation_runner import Mutant, run_mutants
 
-from hadavin_sdk.audit import capped, labelkey
+from hadavin_sdk.audit import capped
 from hadavin_sdk.audit.capped import CappedAudit, _clip
-from hadavin_sdk.errors import SwitchChanged
 from hadavin_sdk.guard import http, textnorm
 from hadavin_sdk.guard.redact import FOLD_NOTE, _Redactor, redact
 from hadavin_sdk.guard.runmap import InputTooLarge, redact_text
@@ -158,6 +157,8 @@ def test_a_stop_that_lands_between_the_reset_intent_and_the_write_is_kept():
 
 
 def test_an_undisturbed_release_still_clears_and_reset_expect_is_checked():
+    from hadavin_sdk.errors import SwitchChanged  # new in batch 3
+
     lim, store, _ = _real_limits()
     a = StopGate(lim)
     a.engage(list, lambda k: "x", by="alice")
@@ -182,6 +183,8 @@ def test_labels_are_stable_across_gates_with_the_same_key_and_differ_with_anothe
 
 
 def test_the_fallback_key_is_logged_once(monkeypatch, caplog):
+    from hadavin_sdk.audit import labelkey  # imported here: the module is new in batch 3
+
     monkeypatch.setattr(labelkey, "_fallback", None)
     with caplog.at_level(logging.WARNING, logger=labelkey.__name__):
         x, y = _label("José"), _label("José")
@@ -204,7 +207,8 @@ def test_restore_false_reads_the_durable_switch_fresh_not_through_the_cache():
     lim = FakeLimits()
     g = StopGate(lim, cache_ttl=1000.0)
     assert not g.durable_on()  # caches "off"
-    g.restore(True)
+    g.restore(True)  # (this clears the cache)
+    assert not g.durable_on()  # caches "off" again
     lim.store.ks = KillSwitch(on=True, by="ops")
     with pytest.raises(StopGateBusy):
         g.restore(
@@ -437,3 +441,23 @@ def test_allow_crash_without_a_crash_type_is_refused_and_a_truncated_junit_marks
 def test_taskkill_is_resolved_under_system_root():
     path = Path(mr._taskkill())
     assert path.name.lower() == "taskkill.exe" and path.parent.name.lower() == "system32"
+
+
+def test_a_pattern_that_matched_nowhere_in_a_line_is_not_run_on_it(monkeypatch):
+    runs = []
+
+    class Counting:
+        def finditer(self, text):
+            runs.append(text)
+            return iter(())
+
+        def sub(self, repl, text):
+            return text
+
+    monkeypatch.setattr(redact_mod, "PATTERNS", [*redact_mod.PATTERNS, ("TENANT", Counting())])
+    out = redact("plain line" + chr(10) + "café josé@example.com ok").text
+    assert "<EMAIL_1>" in out
+    assert (
+        "cafe jose@example.com ok" not in runs
+    )  # the line's own round skipped it (only the whole-text scans ran it)
+    assert len(runs) >= 2  # ... and the two whole-text scans did
