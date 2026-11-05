@@ -1325,3 +1325,9 @@
 | BL-core-P1-r9-cor-COR-R9-2 | P1 | MAJOR | see report | OPEN | reviews/P1-round9-correctness.md | 82b477e |
 | BL-core-lookalike-r5-cor-COR-LK5-1 | lookalike | MAJOR | see report | OPEN | reviews/lookalike-round5-correctness.md | 2af179b |
 | BL-core-lookalike-r5-cor-COR-LK5-2 | lookalike | MAJOR | see report | OPEN | reviews/lookalike-round5-correctness.md | 2af179b |
+| BL-core-lookalike-r5-adv-ADV-LK5-1 | lookalike | MAJOR | see report | OPEN | reviews/lookalike-round5-adversarial.md | 2af179b |
+| BL-core-lookalike-r5-adv-ADV-LK5-2 | lookalike | MAJOR | see report | OPEN | reviews/lookalike-round5-adversarial.md | 2af179b |
+| BL-core-lookalike-r5-adv-ADV-LK5-3 | lookalike | MAJOR | see report | OPEN | reviews/lookalike-round5-adversarial.md | 2af179b |
+| BL-core-lookalike-r5-adv-ADV-LK5-4 | lookalike | MAJOR | see report | OPEN | reviews/lookalike-round5-adversarial.md | 2af179b |
+| BL-core-lookalike-r5-adv-ADV-LK5-5 | lookalike | MAJOR | see report | OPEN | reviews/lookalike-round5-adversarial.md | 2af179b |
+| BL-core-lookalike-r5-adv-ADV-LK5-6 | lookalike | MAJOR | see report | OPEN | reviews/lookalike-round5-adversarial.md | 2af179b |
