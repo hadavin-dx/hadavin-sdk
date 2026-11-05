@@ -1207,3 +1207,15 @@
 | BL-core-p2a-r7-cor-COR-R7-6 | P2A | MINOR | see report | OPEN | reviews/P2a-round7-correctness.md | 3b40ae6 |
 | BL-core-p2a-r7-cor-COR-R7-7 | P2A | NIT | see report | OPEN | reviews/P2a-round7-correctness.md | 3b40ae6 |
 | BL-core-p2a-r7-cor-COR-R7-8 | P2A | NIT | see report | OPEN | reviews/P2a-round7-correctness.md | 3b40ae6 |
+| BL-core-p2d-r4-adv-ADV-R4-1 | P2D | MAJOR | see report | OPEN | reviews/P2d-round4-adversarial.md | 74a12aa |
+| BL-core-p2d-r4-adv-ADV-R4-2 | P2D | MAJOR | see report | OPEN | reviews/P2d-round4-adversarial.md | 74a12aa |
+| BL-core-p2d-r4-adv-ADV-R4-3 | P2D | MAJOR | see report | OPEN | reviews/P2d-round4-adversarial.md | 74a12aa |
+| BL-core-p2d-r4-adv-ADV-R4-4 | P2D | MAJOR | see report | OPEN | reviews/P2d-round4-adversarial.md | 74a12aa |
+| BL-core-p2d-r4-adv-ADV-R4-5 | P2D | MINOR | see report | OPEN | reviews/P2d-round4-adversarial.md | 74a12aa |
+| BL-core-p2d-r4-adv-ADV-R4-6 | P2D | MAJOR | see report | OPEN | reviews/P2d-round4-adversarial.md | 74a12aa |
+| BL-core-p2d-r4-adv-ADV-R4-7 | P2D | MINOR | see report | OPEN | reviews/P2d-round4-adversarial.md | 74a12aa |
+| BL-core-p2d-r4-adv-ADV-R4-8 | P2D | MAJOR | see report | OPEN | reviews/P2d-round4-adversarial.md | 74a12aa |
+| BL-core-p2d-r4-adv-ADV-R4-9 | P2D | MINOR | see report | OPEN | reviews/P2d-round4-adversarial.md | 74a12aa |
+| BL-core-p2d-r4-adv-ADV-R4-10 | P2D | MINOR | see report | OPEN | reviews/P2d-round4-adversarial.md | 74a12aa |
+| BL-core-p2d-r4-adv-ADV-R4-11 | P2D | NIT | see report | OPEN | reviews/P2d-round4-adversarial.md | 74a12aa |
+| BL-core-p2d-r4-adv-ADV-R4-12 | P2D | NIT | see report | OPEN | reviews/P2d-round4-adversarial.md | 74a12aa |
