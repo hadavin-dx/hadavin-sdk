@@ -72,6 +72,11 @@ def test_more_than_eight_invisible_runs_still_get_the_all_spaced_form():
     assert "aaaa" not in shown(text)
 
 
+def test_a_value_that_needs_a_boundary_on_both_sides_gets_the_all_spaced_form():
+    out = shown("ab" + ZW + IBAN + ZW + "cd")  # no single-run form spaces both sides
+    assert IBAN not in out and "82WEST" not in out
+
+
 def test_osc_and_dcs_payloads_are_dropped_with_their_sequence():
     assert "title" not in shown("a" + ESC + "]0;title" + BEL + "b")
     assert "hidden" not in shown("a" + C1_DCS + "hidden" + chr(0x9C) + "b")
