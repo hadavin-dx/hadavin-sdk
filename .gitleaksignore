@@ -1,5 +1,6 @@
 # gitleaks false positives, by fingerprint (commit:file:rule:line). Each line says why it is not a secret.
 
+# EXPIRES 2026-12-31
 # TEMPORARY (remove when branches core/cloud-handover and handover-src/c1a-8460813 are deleted at the end of the core-complete mission).
 # CI scans every fetched ref, so test fixtures on those two branches are scanned on every pull request.
 # Each entry below is a FAKE credential used by a redaction test (made-up values such as hunter2pass, Tr0ub4dor-x9q,
