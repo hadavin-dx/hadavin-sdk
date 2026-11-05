@@ -1360,3 +1360,5 @@
 | BL-core-lookalike-r7-adv-ADV-LK7-1 | lookalike | MAJOR | see report | OPEN | reviews/lookalike-round7-adversarial.md | 2c60222 |
 | BL-core-lookalike-r7-adv-ADV-LK7-2 | lookalike | MAJOR | see report | OPEN | reviews/lookalike-round7-adversarial.md | 2c60222 |
 | BL-core-lookalike-r7-adv-ADV-LK7-3 | lookalike | MAJOR | see report | OPEN | reviews/lookalike-round7-adversarial.md | 2c60222 |
+| BL-core-lookalike-r7-cor-COR-LK7-1 | lookalike | MAJOR | see report | OPEN | reviews/lookalike-round7-correctness.md | 2c60222 |
+| BL-core-lookalike-r7-cor-COR-LK7-2 | lookalike | MAJOR | see report | OPEN | reviews/lookalike-round7-correctness.md | 2c60222 |
