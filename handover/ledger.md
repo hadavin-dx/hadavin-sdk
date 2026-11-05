@@ -811,3 +811,15 @@
 | BL-core-p4d-r5-adv-F8 | P4D | MINOR | see report | OPEN | reviews/P4d-round5-adversarial.md | 7e63580 |
 | BL-core-p4d-r5-adv-F9 | P4D | MINOR | see report | OPEN | reviews/P4d-round5-adversarial.md | 7e63580 |
 | BL-core-p4d-r5-adv-F10 | P4D | MINOR | see report | OPEN | reviews/P4d-round5-adversarial.md | 7e63580 |
+| BL-core-p4d-r5-cor-C1 | P4D | MAJOR | i10 half-up not killed by pinned input | OPEN | reviews/P4d-round5-correctness.md | edc7c27 |
+| BL-core-p4d-r5-cor-C2 | P4D | MAJOR | row (d) is a value fail-before; i11 unrelated | OPEN | reviews/P4d-round5-correctness.md | edc7c27 |
+| BL-core-p4d-r5-cor-C3 | P4D | MINOR | see report | OPEN | reviews/P4d-round5-correctness.md | edc7c27 |
+| BL-core-p4d-r5-cor-C4 | P4D | MINOR | see report | OPEN | reviews/P4d-round5-correctness.md | edc7c27 |
+| BL-core-p4d-r5-cor-C5 | P4D | MINOR | see report | OPEN | reviews/P4d-round5-correctness.md | edc7c27 |
+| BL-core-p4d-r5-cor-C6 | P4D | MINOR | see report | OPEN | reviews/P4d-round5-correctness.md | edc7c27 |
+| BL-core-p4d-r5-cor-C7 | P4D | MINOR | see report | OPEN | reviews/P4d-round5-correctness.md | edc7c27 |
+| BL-core-p4d-r5-cor-C8 | P4D | MINOR | see report | OPEN | reviews/P4d-round5-correctness.md | edc7c27 |
+| BL-core-p4d-r5-cor-C9 | P4D | MINOR | see report | OPEN | reviews/P4d-round5-correctness.md | edc7c27 |
+| BL-core-p4d-r5-cor-C10 | P4D | MINOR | see report | OPEN | reviews/P4d-round5-correctness.md | edc7c27 |
+| BL-core-p4d-r5-cor-C11 | P4D | MINOR | see report | OPEN | reviews/P4d-round5-correctness.md | edc7c27 |
+| BL-core-p4d-r5-cor-C12 | P4D | NIT | see report | OPEN | reviews/P4d-round5-correctness.md | edc7c27 |
