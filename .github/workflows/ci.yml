@@ -140,7 +140,9 @@ jobs:
           if [ -n "$exp" ] && [ "$(date -u +%F)" \> "$exp" ]; then echo "gitleaks ignore entries expired on $exp"; fail=1; fi
           if [ -n "$exp" ] && [ "$exp" \> "$(date -u -d '+90 days' +%F)" ]; then echo "EXPIRES is more than 90 days ahead: $exp"; fail=1; fi
           # the temporary allowlist in .gitleaks.toml lives and dies with branch core/cloud-handover and the same EXPIRES date
-          if grep -q '^targetRules' .gitleaks.toml; then
+          if grep -qE '^\s*targetRules' .gitleaks.toml; then
+            # the allowlist is path-wide, not branch-wide: keep its paths out of any tree this job checks out (main, PRs)
+            if git ls-tree -r --name-only HEAD | grep -E '^handover/(reviews|tickets|evidence)/'; then echo "files under handover/ are in this tree: the temporary allowlist would hide generic keys in them"; fail=1; fi
             git rev-parse --verify -q origin/core/cloud-handover > /dev/null || { echo "temporary allowlist in .gitleaks.toml outlived branch core/cloud-handover: delete it"; fail=1; }
             [ -n "$exp" ] || { echo "temporary allowlist in .gitleaks.toml needs the EXPIRES date in .gitleaksignore"; fail=1; }
           fi
