@@ -1299,3 +1299,8 @@
 | BL-core-LK-r3-cor-COR-LK3-1 | LK | MAJOR | see report | OPEN | reviews/lookalike-round3-correctness.md | 74a6e26 |
 | BL-core-LK-r3-cor-COR-LK3-2 | LK | MAJOR | see report | OPEN | reviews/lookalike-round3-correctness.md | 74a6e26 |
 | BL-core-LK-r3-cor-COR-LK3-3 | LK | MAJOR | see report | OPEN | reviews/lookalike-round3-correctness.md | 74a6e26 |
+| BL-core-P1-r8-adv-ADV-R8-1 | P1 | MAJOR | see report | OPEN | reviews/P1-round8-adversarial.md | 74a6e26 |
+| BL-core-P1-r8-adv-ADV-R8-2 | P1 | MAJOR | see report | OPEN | reviews/P1-round8-adversarial.md | 74a6e26 |
+| BL-core-P1-r8-adv-ADV-R8-3 | P1 | MAJOR | see report | OPEN | reviews/P1-round8-adversarial.md | 74a6e26 |
+| BL-core-P1-r8-adv-ADV-R8-4 | P1 | MAJOR | see report | OPEN | reviews/P1-round8-adversarial.md | 74a6e26 |
+| BL-core-P1-r8-adv-ADV-R8-5 | P1 | MAJOR | see report | OPEN | reviews/P1-round8-adversarial.md | 74a6e26 |
