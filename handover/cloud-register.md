@@ -108,4 +108,4 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | r1-P4b1-adv | round 1 adversarial review of tickets/P4b1.md (15d01fa), egm:egm-design | sonnet (claude-sonnet-5-5) | 17:09Z | +35min | running | save report, ledger rows |
 | r1-P4b1-cor | round 1 correctness review of P4b1 (15d01fa), egm:egm-codebase-details | sonnet (claude-sonnet-5-5) | 17:09Z | +35min | running | save report, ledger rows |
 | r1-P5b1-adv | round 1 adversarial review of tickets/P5b1.md (30fd0e8), egm:egm-design | sonnet (claude-sonnet-5-5) | 17:09Z | +35min | running | save report, ledger rows |
-| r1-P5b1-cor | round 1 correctness review of P5b1 (30fd0e8), egm:egm-codebase-details | sonnet (claude-sonnet-5-5) | 17:09Z | +35min | running | save report, ledger rows |
+| r1-P5b1-cor | round 1 correctness review of P5b1 (30fd0e8), egm:egm-codebase-details | sonnet (claude-sonnet-5-5) | 17:09Z | +35min | NOT STARTED (20-agent limit); start when a slot frees | save report, ledger rows |
