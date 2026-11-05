@@ -147,10 +147,17 @@ jobs:
             have_branch=1
             git rev-parse --verify -q origin/core/cloud-handover > /dev/null || { have_branch=0; echo "temporary allowlist in .gitleaks.toml outlived branch core/cloud-handover: delete it"; fail=1; }
             [ -n "$exp" ] || { echo "temporary allowlist in .gitleaks.toml needs the EXPIRES date in .gitleaksignore"; fail=1; }
-            # the allowlist is path-wide, not branch-wide: keep its paths out of this checkout's tree AND history (only the named branch may carry them)
-            if [ "$have_branch" = 1 ]; then range="HEAD --not origin/core/cloud-handover"; else range="HEAD"; fi
+            # the allowlist is path-wide, not branch-wide: no such path may exist in this checkout's TREE, nor in the history of
+            # HEAD or of any fetched branch other than the one named branch (git errors fail the step; -z avoids path quoting)
+            pat='^handover/(reviews|tickets|evidence)/'
+            gl_tmp=$(mktemp)
+            git ls-tree -r -z --name-only HEAD > "$gl_tmp" || { echo "git ls-tree failed"; fail=1; }
+            if tr '\0' '\n' < "$gl_tmp" | grep -E "$pat"; then echo "files under handover/ are in this checkout's tree: the temporary allowlist would hide generic keys in them"; fail=1; fi
+            if [ "$have_branch" = 1 ]; then range="HEAD --remotes --not origin/core/cloud-handover"; else range="HEAD --remotes"; fi
             # shellcheck disable=SC2086
-            if git -c core.quotePath=false log --name-only --format= $range -- | grep -E '^"?handover/(reviews|tickets|evidence)/'; then echo "files under handover/ exist in this checkout's tree or history: the temporary allowlist would hide generic keys in them"; fail=1; fi
+            git log -m --name-only -z --format= $range -- > "$gl_tmp" || { echo "git log failed"; fail=1; }
+            if tr '\0' '\n' < "$gl_tmp" | grep -E "$pat"; then echo "files under handover/ exist in the history of HEAD or of a branch other than core/cloud-handover: the temporary allowlist would hide generic keys in them"; fail=1; fi
+            rm -f "$gl_tmp"
           fi
           exit "$fail"
       - name: Secrets in the whole history (gitleaks, checksum-verified binary)
