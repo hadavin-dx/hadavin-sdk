@@ -51,6 +51,8 @@ def regex_redactor(settings, deps) -> RegexRedactor:
         settings.max_token_chars,
         settings.max_line_chars,
         settings.max_session_values,
+        settings.max_work,
+        settings.max_walk_items,
     )
 
 

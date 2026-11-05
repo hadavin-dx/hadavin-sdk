@@ -91,17 +91,24 @@ class GeminiSettings(_LLMSettings):
 
 class RegexRedactorSettings(KindSettings):
     """Limits of the regex redactor (all part of the config hash; over a limit the input is refused as `too_large`).
-    The defaults repeat the constants in guard/redactor.py; a test keeps them equal (this module imports nothing)."""
+    The defaults and upper bounds repeat the constants in guard/redactor.py; a test keeps them equal (this module
+    imports nothing). The upper bounds sit well below the point where one line takes tens of seconds."""
 
     kind: Literal["regex"]
     max_doc_chars: int = Field(
         default=200_000, gt=0, le=1_000_000
     )  # one document, and each tool result
-    max_token_chars: int = Field(default=8192, gt=0, le=1_000_000)  # longest run without whitespace
-    max_line_chars: int = Field(default=20_000, gt=0, le=1_000_000)  # longest line
+    max_token_chars: int = Field(default=1024, gt=0, le=50_000)  # longest run without whitespace
+    max_line_chars: int = Field(default=10_000, gt=0, le=50_000)  # longest line
+    max_work: int = Field(
+        default=100_000_000, gt=0, le=2_000_000_000
+    )  # sum of squared line lengths
     max_session_values: int = Field(
-        default=100_000, gt=0, le=1_000_000
+        default=5000, gt=0, le=100_000
     )  # distinct values one run can mark
+    max_walk_items: int = Field(
+        default=20_000, gt=0, le=1_000_000
+    )  # keys and containers the key walk examines
 
 
 class RegexSettings(KindSettings):
@@ -552,6 +559,10 @@ TABLE: dict[str, dict[str, Entry]] = {
             hosts=lambda s: ["generativelanguage.googleapis.com"],
         ),
     },
+    # Second kind (single-dependency rule): `service`, a client-run masking service or a model-based entity recogniser.
+    # Trigger: ticket KERNEL-1, or the first client whose documents carry names in free prose. It implements the
+    # Redactor protocol of guard/redactor.py (name, version, fingerprint, mask, check, find, lint) through the public
+    # MaskSession API only. Not built: nothing needs it before that trigger.
     "redactor": {
         "regex": Entry(RegexRedactorSettings, f"{_BUILTIN}:regex_redactor", neutral=True),
     },

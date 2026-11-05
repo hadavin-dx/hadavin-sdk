@@ -4,25 +4,44 @@
 
 ### Upgrade steps
 - **C1a redactor kind (masking before the model; the wiring into the runtime arrives with C1b to C1d).**
-  - **`config_hash` changes once more**: the redactor (`masking: regex@2`, plus any non-default redactor limit) is part
-    of what an agent is qualified on. Every agent needs ONE new gate run (`hadavin-sdk gate <agent>`). A later change of
-    `REGEX_VERSION` (any edit of `guard/redact.py` or `guard/redactor.py`, including core PR #50) needs another one, on purpose.
+  - **`config_hash` changes once more**: the redactor (`masking: regex@3:<fingerprint of the masking code>`, plus any
+    non-default redactor limit) is part of what an agent is qualified on. Every agent needs ONE new gate run
+    (`hadavin-sdk gate <agent>`). A later change of `REGEX_VERSION` (any edit of `guard/redact.py` or
+    `guard/redactor.py`, including core PR #50) needs another one, on purpose; the kind refuses to start when
+    `guard/redact.py` differs from the source hash pinned for its version.
   - **`pilot` and `prod` configs must name the redactor**: add `backends: {redactor: {kind: regex}}`. Without it the
-    config is refused at load (`dev` keeps the default). The default `regex` kind is the only kind today.
-  - New limits in `backends.redactor`: `max_doc_chars` (200000), `max_token_chars` (8192, longest run without
-    whitespace), `max_line_chars` (20000), `max_session_values` (100000). Input over a limit is REFUSED as `too_large`,
-    never passed on. Text that legitimately exceeds them (Chinese or Japanese without spaces, minified JSON, base64 or
-    data URIs, hex dumps) must be split by the caller before it is sent.
-  - Prompts, contract text and schemas of LIVE agents (and the contracts in their `scope_allowed`) are checked at
-    load: a real-looking email, IBAN, card, key or password in them refuses the registry (the message names the file and
-    line, never the text). Prose such as `Customer name: as printed` passes. A prompt with a byte order mark or that is
-    not UTF-8 is a `ConfigError`. Contract key `restorable` is refused until ticket C1f.
+    config is refused at load (`dev` keeps the default). The default `regex` kind is the only kind today; the
+    alternative is a `service` kind (a client-run masking service or a model-based entity recogniser), built when
+    ticket KERNEL-1 or a client with names in free prose needs it.
+  - **Limits in `backends.redactor`** (all part of the hash; upper bounds are validated): `max_doc_chars` (200000),
+    `max_token_chars` (1024, longest run without whitespace), `max_line_chars` (10000), `max_work` (100000000, the
+    sum of the squared line lengths: the patterns slow down with the square of a line), `max_session_values` (5000),
+    `max_walk_items` (20000). Input over a limit is REFUSED as `too_large`, never passed on unmasked. Text that
+    legitimately exceeds them (Chinese or Japanese without spaces, minified JSON, base64 or data URIs, hex dumps) must
+    be split by the caller before it is sent. For example a single line with 4,000 emails is refused; the same emails
+    on separate lines pass.
+  - **Time**: at the defaults an ordinary 190,000-character document takes about 1 s and the slowest shape measured
+    about 3 s on a laptop, with the interpreter lock held (every thread of the process waits). Budget a few seconds per
+    call and run masking off the event loop. Masks of one session run one after another; `check` does not wait for them.
+  - **Behaviour changes**: escape sequences (ANSI/C1) are removed, nested forms included, and never reach the model; a
+    byte order mark or non-UTF-8 bytes in a prompt file is a `ConfigError`; `RedactionError("any other code")` becomes
+    `internal`; a closed `MaskSession` refuses further use; `refuse_unsafe_keys` (replaces `refuse_mark_keys`) refuses
+    dict keys that are mark-shaped or hold PII or secrets, and any object it cannot walk.
+  - **Trusted text is checked at load**: prompts of every agent that is not retired (draft prompts go through the gate)
+    and the `id`, `description`, `expected_outcome` and `input_schema` of the contracts they can use: a real-looking email,
+    IBAN, card, key, bank code, address or password in them refuses the registry. The message names the prompt file and
+    line, or the schema path by position (never a property name), and the kinds, never the text. Prose such as
+    `Customer name: as printed` passes, and so do plain numbers in a schema. A prompt file edited after load is refused
+    when it is read. Contract key `restorable` is refused until ticket C1f.
   - **What the regex redactor does NOT mask** (it does not claim more): a spaced, lower-case or hyphenated IBAN; names
     in free prose; values glued to other characters (`bob@example.com_x`); zero-width or soft-hyphen characters inside a
-    value; percent-encoded (`%40`), HTML-entity (`&#64;`), base64, full-width and line-wrapped forms; images and PDFs
-    (refused as `unsupported_input`, never read). Some patterns in `guard/redact.py` are slow on long lines made of one
-    repeated shape (`curl curl curl ...` costs about 12 s per 190000 characters); the pattern fix is a separate ticket
-    (BL-core-c1a-001).
+    value; percent-encoded forms other than `%40` in an email, HTML-entity (`&#64;`), base64, full-width and line-wrapped
+    forms; images and PDFs (refused as `unsupported_input`, never read). Some patterns in `guard/redact.py` are slow on
+    long lines of one repeated shape; the pattern fix is a separate ticket (BL-core-c1a-001, blocks merge).
+  - **C1b obligations** (the mark text `<KIND_n>` carries no session identity): one `MaskSession` per run context, never
+    shared between runs; the judge uses the same context; contract test `test_two_threads_two_runs_no_crosstalk`; restore
+    only on an exact `<KIND_n>` match, with no NFKC, entity or percent decoding first; call `close()` (or use the
+    session as a context manager) at the end of the run; call masking outside an `except` block.
 - **K3 pilot build path (levels, shadow cut-off, fail-closed loading).** Action contracts change shape:
   `executor.system` moves to a contract field `target_system`, and `executor` is now a tagged union
   (`kind: none | manual | http`). Edit every contract: move `system:` out of `executor:` to `target_system:` beside

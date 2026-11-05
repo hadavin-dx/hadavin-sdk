@@ -9,6 +9,7 @@ import hashlib
 import json
 import re
 from dataclasses import dataclass
+from dataclasses import field as dc_field
 from typing import Literal
 
 import yaml
@@ -62,12 +63,22 @@ class Registry:
     principals: dict[str, Principal]
     chains: dict[str, Chain]
     contracts: dict[str, ActionContract]
+    # sha256 of each prompt file as it was when the trusted-text lint read it (see `prompt`).
+    prompt_pins: dict[str, str] = dc_field(default_factory=dict)
 
     def _prompt_path(self, agent_id: str):
         return confined(self.config.root, self.agents[agent_id].prompt_file)
 
     def prompt(self, agent_id: str) -> str:
-        return self._prompt_path(agent_id).read_text(encoding="utf-8")
+        """The prompt, exactly the bytes the load-time lint read: a file edited after load is refused, so a value
+        cannot be added to a prompt after the check."""
+        raw = self._prompt_path(agent_id).read_bytes()
+        pinned = self.prompt_pins.get(agent_id)
+        if pinned is not None and hashlib.sha256(raw).hexdigest() != pinned:
+            raise ConfigError(
+                f"agent {agent_id}: prompt file changed since the registry was loaded; restart"
+            )
+        return raw.decode("utf-8")
 
     def prompt_sha256(self, agent_id: str) -> str:
         return hashlib.sha256(self._prompt_path(agent_id).read_bytes()).hexdigest()
@@ -129,7 +140,7 @@ class Registry:
                 "actions": [dump(self.contracts[a]) for a in sorted(agent.scope_allowed)],
                 "llm_backend": llm.kind,
                 # What masks the text before the model (D6/F4): a new redactor version needs a new gate run.
-                "masking": f"{redactor.name}@{redactor.version}",
+                "masking": f"{redactor.name}@{redactor.version}:{redactor.fingerprint}",
                 **(
                     {"masking_settings": extra}
                     if (extra := {k: v for k, v in dump(masking).items() if k != "kind"})
@@ -200,103 +211,146 @@ def load_registry(config: Config) -> Registry:
     problems = _cross_check(config, agents, chains, contracts)
     if problems:
         raise ConfigError("; ".join(problems))
-    if problems := _trusted_text_problems(config, agents, contracts):
+    problems, pins = _trusted_text_problems(config, agents, contracts)
+    if problems:
         raise ConfigError("; ".join(problems))
-    reg = Registry(config, agents, principals, chains, contracts)
+    reg = Registry(config, agents, principals, chains, contracts, pins)
     if problems := deferred.check(reg):
         raise ConfigError("; ".join(problems))
     return reg
 
 
-def _strings(value, path="", skip_pattern=True):
-    """(path, text) for every string in a nested schema: keys and EVERY scalar (numbers, booleans) as text.
-    A ``pattern`` whose value is a string is a regex rule, not text, and is skipped; a property named
-    ``pattern`` (its value is a mapping) is walked like any other."""
+# Words of a JSON-schema (and of the contract subset used here) that may appear as a key in an error path. Any other
+# key is data (a property name, an enum member used as key) and is shown as its position only: a key can be a value.
+_SCHEMA_WORDS = frozenset(
+    [
+        "type",
+        "enum",
+        "maxLength",
+        "minLength",
+        "pattern",
+        "properties",
+        "required",
+        "additionalProperties",
+        "items",
+        "default",
+        "const",
+        "examples",
+        "description",
+        "title",
+        "minimum",
+        "maximum",
+        "format",
+    ]
+)
+
+
+def _strings(value, path=""):
+    """(path, text, is_number) for every string in a nested schema: keys, and EVERY scalar (numbers, booleans) as
+    text. A ``pattern`` whose value is a string, inside a mapping that has a ``type`` (schema keyword position), is a
+    regex rule and is skipped; a property named ``pattern`` or data under ``default`` is walked. Paths show a key only
+    if it is a schema word, else its position (``key#2``): a key can itself be a real value."""
     if isinstance(value, dict):
-        for k, v in value.items():
-            yield f"{path}.{k}", str(k)
-            if skip_pattern and k == "pattern" and isinstance(v, str):
+        schema_node = "type" in value
+        for i, (k, v) in enumerate(value.items()):
+            name = str(k) if k in _SCHEMA_WORDS else f"key#{i}"
+            yield f"{path}.{name}", str(k), False
+            if schema_node and k == "pattern" and isinstance(v, str):
                 continue
-            yield from _strings(v, f"{path}.{k}", skip_pattern)
+            yield from _strings(v, f"{path}.{name}")
     elif isinstance(value, (list, tuple)):
         for i, v in enumerate(value):
-            yield from _strings(v, f"{path}[{i}]", skip_pattern)
+            yield from _strings(v, f"{path}[{i}]")
     elif value is not None:
-        yield path, str(value)
+        yield path, str(value), not isinstance(value, str)
 
 
 _BOM = "\ufeff"
 
 
-def _trusted_text_problems(config, agents, contracts) -> list[str]:
-    """Prompts, contract text and schemas go to the model unmasked, so they must hold nothing that looks like a real
-    value (the client must not put PII or secrets in them). Only what a live agent can use is read: live agents'
-    prompts and the contracts in their ``scope_allowed``. Messages name the place (file, line or schema path) and the
-    kinds, never the text. Which kinds are linted, and why, is in ``RegexRedactor.lint``."""
-    redactor = make("redactor", config.backends.redactor)
-    lint = getattr(redactor, "lint", redactor.find)
-    out: list[str] = []
+def _read_prompt(config, a):
+    """(text, sha256 of the bytes, problem). The bytes are hashed once: `Registry.prompt()` refuses a file that
+    changed after this check."""
+    path = confined(config.root, a.prompt_file)
+    raw = path.read_bytes()
+    sha = hashlib.sha256(raw).hexdigest()
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        return (
+            None,
+            sha,
+            f"agent {a.id}: prompt {a.prompt_file} is not valid UTF-8 (byte offset {exc.start})",
+        )
+    if text.startswith(_BOM):
+        return (
+            None,
+            sha,
+            f"agent {a.id}: prompt {a.prompt_file} starts with a byte order mark; remove it",
+        )
+    return text, sha, None
 
-    def check(where: str, text: str, lines: bool = True) -> None:
+
+def _trusted_text_problems(config, agents, contracts) -> tuple[list[str], dict[str, str]]:
+    """Prompts, contract text and schemas go to the model unmasked, so they must hold nothing that looks like a real
+    value (the client must not put PII or secrets in them). Returns (problems, sha256 of every prompt checked).
+
+    What is read, and why (the code that sends it to a model):
+      * prompts of every agent that is not retired: live ones run (runtime/agent_loop.py:250), draft ones go through
+        the gate (evals.py:48);
+      * the contracts in their ``scope_allowed``: ``id``, ``description``, ``input_schema`` are sent as tool
+        definitions (runtime/agent_loop.py:246, evals.py:36); ``expected_outcome`` reaches the approval card and the
+        audit, not the model (runtime/plan.py:20, approvals/cards.py:86), and is read too because the card goes to a
+        channel;
+      * NOT read (not sent to a model): ``executor.operation``, ``lookup_operation``, ``secret_name``
+        (actions/executor.py:67-156, app.py:65), ``target_system``, ``idempotency_header``, ``verify_check``,
+        ``rollback``, ``rollback_test``, ``undo_test``, ``command_template`` and ``undo_command_template`` (manual
+        executors are refused at load until K8: deferred.py), retired agents.
+    Messages name the place (prompt file and line, or schema path with positions) and the kinds, never the text."""
+    redactor = make("redactor", config.backends.redactor)
+    out: list[str] = []
+    pins: dict[str, str] = {}
+
+    def check(where: str, text: str, lines: bool = True, numeric: bool = False) -> None:
         try:
-            kinds = lint(text)
+            kinds = redactor.lint(text, numeric=numeric)
             if not kinds:
                 return
             at = ""
-            if (
-                lines
-            ):  # the lines that hold a hit on their own; a hit that spans lines is reported as such
+            if lines:
+                # The lines that hold a hit on their own. Context-gated kinds (bank words) may need the whole text,
+                # so a hit that no single line shows is reported as "across lines".
                 hits = [
                     n
                     for n, line in enumerate(text.split(chr(10)), 1)
-                    if line.strip() and lint(line)
+                    if line.strip() and redactor.lint(line)
                 ]
                 at = f" line {', '.join(map(str, hits[:5]))}" if hits else " (across lines)"
             out.append(f"{where}{at}: holds text the redactor would mask ({', '.join(kinds)})")
         except RedactionError as exc:
             out.append(f"{where}: cannot be checked ({exc.code})")
 
-    live = [a for a in agents.values() if a.status == "live"]
-    for a in live:
-        path = confined(config.root, a.prompt_file)
-        if not path.is_file():  # reported by _cross_check
+    use = [a for a in agents.values() if a.status != "retired"]
+    for a in use:
+        if not confined(config.root, a.prompt_file).is_file():  # reported by _cross_check
             continue
-        raw = path.read_bytes()
-        try:
-            text = raw.decode("utf-8")
-        except UnicodeDecodeError as exc:
-            out.append(
-                f"agent {a.id}: prompt {a.prompt_file} is not valid UTF-8 (byte offset {exc.start})"
-            )
-            continue
-        if text.startswith(_BOM):
-            out.append(
-                f"agent {a.id}: prompt {a.prompt_file} starts with a byte order mark; remove it"
-            )
-            continue
-        check(f"agent {a.id}: prompt {a.prompt_file}", text)
-    for cid in sorted({x for a in live for x in a.scope_allowed} & set(contracts)):
+        text, sha, problem = _read_prompt(config, a)
+        pins[a.id] = sha
+        if problem:
+            out.append(problem)
+        else:
+            check(f"agent {a.id}: prompt {a.prompt_file}", text)
+    for cid in sorted({x for a in use for x in a.scope_allowed} & set(contracts)):
         c = contracts[cid]
-        fields = {
-            f: str(getattr(c, f) or "")
-            for f in (
-                "id",
-                "description",
-                "expected_outcome",
-                "target_system",
-                "idempotency_header",
-                "verify_check",
-                "rollback",
-            )
-        }
-        parts = list(fields.items()) + [
-            (f"input_schema{p}", t) for p, t in _strings(c.input_schema)
-        ]
-        for where, text in parts:
-            if text:
-                check(f"action {cid}: {where}", text, lines=False)
-        check(f"action {cid}: all text joined", chr(10).join(t for _, t in parts))
-    return out
+        fields = {f: str(getattr(c, f) or "") for f in ("id", "description", "expected_outcome")}
+        parts = [(f, t, False) for f, t in fields.items() if t]
+        parts += [(f"input_schema{p}", t, num) for p, t, num in _strings(c.input_schema)]
+        for where, text, num in parts:
+            # A number written in a schema (an enum member, a length) is a number, not prose: only a card number
+            # (digits that pass the Luhn check) is refused. A number kept as a string is linted like any text.
+            check(f"action {cid}: {where}", text, lines=False, numeric=num)
+        check(f"action {cid}: all text joined", " ".join(t for _, t, num in parts if not num))
+    return out, pins
 
 
 def _cross_check(config, agents, chains, contracts) -> list[str]:
