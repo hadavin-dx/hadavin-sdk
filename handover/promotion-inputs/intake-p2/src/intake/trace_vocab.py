@@ -1,0 +1,116 @@
+"""The closed vocabulary of the trace and the log (design WP2c B6). Static tuples, no imports: every other trace module reads from here.
+
+``failing`` values are the property names of ``validators.RECORD_SCHEMA`` plus ``record`` (checked at run time against the schema; the schema is not
+imported here so this module stays import-free); ``bank`` values are ``BANK_OUTCOMES``; ``reason`` values are ``REASON_WORDS``.
+"""
+
+STEPS = (
+    "received",
+    "read",
+    "data_gate",
+    "mask",
+    "request",
+    "reply",
+    "restore",
+    "ground",
+    "checks",
+    "state",
+    "selfcheck_a",
+    "selfcheck_b",
+    "selfcheck_c",
+    "selfcheck_d",
+    "selfcheck_e",
+    "selfcheck_warn",
+    "decision",
+    "export",
+    "run",
+)
+DERIVED_STEPS = ("decision", "export")  # never stored; built by trace_rows from decisions/exports
+LOG_ONLY_STEPS = ("run",)  # log lines only, never a trace row
+EVENTS = ("file", "text", "result", "summary", "value", "call", "body", "answer", "close", "warn")
+RESULTS = ("pass", "fail", "warn", "info")
+GATE_RESULTS = ("pass", "refused")
+RESTORE_RESULTS = ("same", "MISMATCH")
+BANK_OUTCOMES = ("ok", "changed", "none_found", "no_details_on_file", "not_run")
+WARN_REASONS = ("quarantine_cap", "rename_failed", "trace_refused")
+REASON_WORDS = WARN_REASONS + ("gate_refused", "selfcheck_failed", "approved", "rejected", "exported")
+COUNT_KEYS = (
+    "bytes",
+    "chars",
+    "total",
+    "distinct",
+    "money_cut",
+    "kept_money",
+    "kept_id",
+    "kept_name",
+    "joined_unlocated",
+    "narrowed_phone",
+    "narrowed_id",
+    "narrowed_person",
+    "digit8",
+    "at_sign",
+    "digit13_19",
+    "mixed20",
+    "fallback",
+    "in_tok",
+    "out_tok",
+    "cost_micro",
+    "reserve_estimate_micro",
+    "restored",
+    "unknown",
+    "left",
+    "lines",
+    "spellings",
+    "hits",
+    "withheld",
+    "reason_given",
+    "segment",
+    "bank_ok",
+    "bank_changed",
+    "bank_none_found",
+    "bank_no_details",
+    "bank_not_run",
+    "IBAN",
+    "BANK",
+    "ROUTING",
+    "CARD",
+    "EMAIL",
+    "PHONE",
+    "PERSON",
+    "ID",
+    "SECRET",
+)
+FIELDS = (
+    "run",
+    "seq",
+    "at",
+    "item",
+    "step",
+    "event",
+    "result",
+    "code",
+    "flag",
+    "flags",
+    "state",
+    "bank",
+    "reason",
+    "text_fp",
+    "body_fp",
+    "ph",
+    "kind",
+    "kinds",
+    "len",
+    "places",
+    "fp",
+    "fp_stored",
+    "fp_restored",
+    "tier",
+    "model_id",
+    "error",
+    "model_mismatch",
+    "ok",
+    "failing",
+    "path",
+    "text",
+) + COUNT_KEYS
+FREE_TEXT_FIELDS = ("text", "path")  # the only fields check (e) scans

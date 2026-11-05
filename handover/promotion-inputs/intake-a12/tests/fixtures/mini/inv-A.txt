@@ -1,0 +1,16 @@
+INVOICE
+
+Supplier: Acme Ltd
+Invoice No: INV-1001
+Invoice Date: 2026-10-01
+Currency: USD
+
+Description      Qty   Unit price   Amount
+Widget A           2       $12.50   $25.00
+Shipping line      1        $5.00    $5.00
+
+VAT                                  $3.00
+Total due                           $33.00
+
+Bank: IBAN GB82 WEST 1234 5698 7654 32
+Payment due 30 days from invoice date.

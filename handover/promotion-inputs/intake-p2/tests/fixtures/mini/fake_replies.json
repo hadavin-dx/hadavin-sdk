@@ -1,0 +1,306 @@
+{
+  "01a300e89c292b42468ec51597a8d28d6bfc36356d913f22b80ed34f222a065b:read": {
+    "cost_micro": 0,
+    "error": null,
+    "fields": {
+      "adjustments": [
+        {
+          "amount_minor": 700,
+          "label": "VAT"
+        }
+      ],
+      "currency": "USD",
+      "invoice_date": "2026-10-05",
+      "invoice_no": "INV-2002",
+      "lines": [
+        {
+          "amount_minor": 6000,
+          "description": "Desk lamp",
+          "qty": 3,
+          "unit_cost_minor": 2000
+        },
+        {
+          "amount_minor": 1000,
+          "description": "Delivery charge",
+          "qty": 1,
+          "unit_cost_minor": 1000
+        }
+      ],
+      "po_ref": "PO-7002",
+      "supplier_name": "Birch Supplies Limited",
+      "total_minor": 8000
+    },
+    "in_tok": 248,
+    "model_id": "fake-read",
+    "out_tok": 110
+  },
+  "2a1c2b9308d4adfaf4465b5d7a854e05c78235ac5926b855d572e76b83c7551c:fallback": {
+    "cost_micro": 0,
+    "error": null,
+    "fields": {
+      "adjustments": [
+        {
+          "amount_minor": 300,
+          "label": "VAT"
+        }
+      ],
+      "currency": "USD",
+      "invoice_date": "2026-10-01",
+      "invoice_no": "INV-1001",
+      "lines": [
+        {
+          "amount_minor": 2500,
+          "description": "Widget A",
+          "qty": 2,
+          "unit_cost_minor": 1250
+        },
+        {
+          "amount_minor": 500,
+          "description": "Shipping line",
+          "qty": 1,
+          "unit_cost_minor": 500
+        }
+      ],
+      "po_ref": null,
+      "supplier_name": "Acme Ltd",
+      "total_minor": 3300
+    },
+    "in_tok": 246,
+    "model_id": "fake-fallback",
+    "out_tok": 110
+  },
+  "2a1c2b9308d4adfaf4465b5d7a854e05c78235ac5926b855d572e76b83c7551c:read": {
+    "cost_micro": 0,
+    "error": null,
+    "fields": {
+      "adjustments": [
+        {
+          "amount_minor": 300,
+          "label": "VAT"
+        }
+      ],
+      "currency": "USD",
+      "invoice_date": "2026-10-01",
+      "invoice_no": "INV-1001",
+      "lines": [
+        {
+          "amount_minor": 2500,
+          "description": "Widget A",
+          "qty": 2,
+          "unit_cost_minor": 1250
+        },
+        {
+          "amount_minor": 500,
+          "description": "Shipping line",
+          "qty": 1,
+          "unit_cost_minor": 500
+        }
+      ],
+      "po_ref": null,
+      "supplier_name": "Acme Ltd",
+      "total_minor": 3300
+    },
+    "in_tok": 246,
+    "model_id": "fake-read",
+    "out_tok": 110
+  },
+  "7814c1f7a1caa5d371216d1966e64da5f0080dfc11ea984fd43fca9f9942510f:read": {
+    "cost_micro": 0,
+    "error": null,
+    "fields": {
+      "adjustments": [],
+      "currency": "USD",
+      "invoice_date": "2026-10-09",
+      "invoice_no": "INV-3003",
+      "lines": [
+        {
+          "amount_minor": 1500,
+          "description": "Bolt M8",
+          "qty": 10,
+          "unit_cost_minor": 150
+        },
+        {
+          "amount_minor": 500,
+          "description": "Washer M8",
+          "qty": 20,
+          "unit_cost_minor": 25
+        }
+      ],
+      "po_ref": null,
+      "supplier_name": "Cedar Industrial Inc",
+      "total_minor": 2000
+    },
+    "in_tok": 205,
+    "model_id": "fake-read",
+    "out_tok": 110
+  },
+  "7a1c47b1d033e3312bc0bd51295d4414c14f8c22557129397264853087d5ca24:fallback": {
+    "cost_micro": 0,
+    "error": null,
+    "fields": {
+      "adjustments": [],
+      "currency": "USD",
+      "invoice_date": "2026-10-12",
+      "invoice_no": "INV-4004",
+      "lines": [
+        {
+          "amount_minor": 274,
+          "description": "Part 01 bracket",
+          "qty": 2,
+          "unit_cost_minor": 137
+        },
+        {
+          "amount_minor": 522,
+          "description": "Part 02 bracket",
+          "qty": 3,
+          "unit_cost_minor": 174
+        },
+        {
+          "amount_minor": 844,
+          "description": "Part 03 bracket",
+          "qty": 4,
+          "unit_cost_minor": 211
+        },
+        {
+          "amount_minor": 248,
+          "description": "Part 04 bracket",
+          "qty": 1,
+          "unit_cost_minor": 248
+        },
+        {
+          "amount_minor": 570,
+          "description": "Part 05 bracket",
+          "qty": 2,
+          "unit_cost_minor": 285
+        },
+        {
+          "amount_minor": 966,
+          "description": "Part 06 bracket",
+          "qty": 3,
+          "unit_cost_minor": 322
+        },
+        {
+          "amount_minor": 1436,
+          "description": "Part 07 bracket",
+          "qty": 4,
+          "unit_cost_minor": 359
+        },
+        {
+          "amount_minor": 396,
+          "description": "Part 08 bracket",
+          "qty": 1,
+          "unit_cost_minor": 396
+        },
+        {
+          "amount_minor": 866,
+          "description": "Part 09 bracket",
+          "qty": 2,
+          "unit_cost_minor": 433
+        },
+        {
+          "amount_minor": 1410,
+          "description": "Part 10 bracket",
+          "qty": 3,
+          "unit_cost_minor": 470
+        },
+        {
+          "amount_minor": 2028,
+          "description": "Part 11 bracket",
+          "qty": 4,
+          "unit_cost_minor": 507
+        },
+        {
+          "amount_minor": 544,
+          "description": "Part 12 bracket",
+          "qty": 1,
+          "unit_cost_minor": 544
+        },
+        {
+          "amount_minor": 1162,
+          "description": "Part 13 bracket",
+          "qty": 2,
+          "unit_cost_minor": 581
+        },
+        {
+          "amount_minor": 1854,
+          "description": "Part 14 bracket",
+          "qty": 3,
+          "unit_cost_minor": 618
+        },
+        {
+          "amount_minor": 2620,
+          "description": "Part 15 bracket",
+          "qty": 4,
+          "unit_cost_minor": 655
+        },
+        {
+          "amount_minor": 692,
+          "description": "Part 16 bracket",
+          "qty": 1,
+          "unit_cost_minor": 692
+        },
+        {
+          "amount_minor": 1458,
+          "description": "Part 17 bracket",
+          "qty": 2,
+          "unit_cost_minor": 729
+        },
+        {
+          "amount_minor": 2298,
+          "description": "Part 18 bracket",
+          "qty": 3,
+          "unit_cost_minor": 766
+        },
+        {
+          "amount_minor": 3212,
+          "description": "Part 19 bracket",
+          "qty": 4,
+          "unit_cost_minor": 803
+        },
+        {
+          "amount_minor": 840,
+          "description": "Part 20 bracket",
+          "qty": 1,
+          "unit_cost_minor": 840
+        },
+        {
+          "amount_minor": 1754,
+          "description": "Part 21 bracket",
+          "qty": 2,
+          "unit_cost_minor": 877
+        },
+        {
+          "amount_minor": 2742,
+          "description": "Part 22 bracket",
+          "qty": 3,
+          "unit_cost_minor": 914
+        },
+        {
+          "amount_minor": 3804,
+          "description": "Part 23 bracket",
+          "qty": 4,
+          "unit_cost_minor": 951
+        },
+        {
+          "amount_minor": 988,
+          "description": "Part 24 bracket",
+          "qty": 1,
+          "unit_cost_minor": 988
+        },
+        {
+          "amount_minor": 2050,
+          "description": "Part 25 bracket",
+          "qty": 2,
+          "unit_cost_minor": 1025
+        }
+      ],
+      "po_ref": null,
+      "supplier_name": "Dunmore Trading Co",
+      "total_minor": 35578
+    },
+    "in_tok": 494,
+    "model_id": "fake-fallback",
+    "out_tok": 685
+  },
+  "7a1c47b1d033e3312bc0bd51295d4414c14f8c22557129397264853087d5ca24:read": "timeout"
+}

@@ -1,0 +1,7 @@
+INVOICE INV-1001
+Supplier: Acme Widgets Ltd
+Your PO PO-77 USD
+Pay by transfer
+IBAN GB82 WEST 1234 5698 7654 32
+BIC WESTGB2L
+Total 125.00

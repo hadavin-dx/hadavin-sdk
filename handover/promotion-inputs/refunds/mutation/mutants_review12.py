@@ -1,0 +1,172 @@
+"""Mutants for round 12 (RateCap lock, egress scheme rule, log-space Clopper-Pearson, look-alike fold in the marker scan). (name, file, regex, replacement).
+
+Not listed, equivalent by construction: shifting the log-sum by its maximum only changes a result that is already below 1e-300, which no verdict can see."""
+
+G, V, T = "src/refunds/guards.py", "src/refunds/verdict.py", "src/refunds/textnorm.py"
+
+NEW = [
+    ("r12 ratecap: lock is a no-op", G, r"threading\.Lock\(\)", '__import__("contextlib").nullcontext()'),
+    ("r12 egress: scheme rule removed", G, r'for u in SCHEME\.findall\(URL\.sub\(" ", clean\)\):', "for u in []:"),
+    (
+        "r12 egress: scheme text still scanned as a domain",
+        G,
+        r'no_urls = EMAIL\.sub\(" ", SCHEME\.sub\(" ", URL\.sub\(" ", clean\)\)\)',
+        'no_urls = EMAIL.sub(" ", URL.sub(" ", clean))',
+    ),
+    ("r12 verdict: wrong log-binomial coefficient", V, r"lgamma\(n - i \+ 1\)", "lgamma(n - i)"),
+    (
+        "r12 verdict: p=0 edge ignored",
+        V,
+        r"if p <= 0\.0:\n        return 1\.0 if lo <= 0 <= hi else 0\.0",
+        "if p <= 0.0:\n        return 0.0",
+    ),
+    (
+        "r12 verdict: p=1 edge ignored",
+        V,
+        r"if p >= 1\.0:\n        return 1\.0 if lo <= n <= hi else 0\.0",
+        "if p >= 1.0:\n        return 0.0",
+    ),
+    (
+        "r12 textnorm: look-alike fold dropped from the marker scan",
+        T,
+        r" or bool\(fm\) and any\(_hit\(fm, skeleton\(h\)\) for h in views\)",
+        "",
+    ),
+    ("r12 textnorm: skeleton does not fold", T, r"return _core\.fold_key\(s\)", "return s.casefold()"),
+    ("r12 egress: a space or TAB inside a dangerous scheme word allowed", G, r'r"\\s\?"\.join\(w\)', '"".join(w)'),
+    ("r12 egress: a space before :// allowed", G, r"\{1,20\}\\s\?://", "{1,20}://"),
+    (
+        "r12 textnorm: no separator allowed between the letters of a marker",
+        T,
+        r're\.escape\(ch\) \+ _SEP \+ "\*"',
+        "re.escape(ch)",
+    ),
+    (
+        "r12 ingest SPEC MODEL (not product code): id reuse check off",
+        "tests/ingest_model.py",
+        r"if self\.write_ahead and self\.id_reuse_check:",
+        "if False:",
+    ),
+    # ---- round 14 (review 10)
+    ("r13 egress: hosts compared without IDNA folding", G, r'return h\.encode\("idna"\)\.decode\("ascii"\)', "return h"),
+    (
+        "r13 egress: allow-list hosts not folded",
+        G,
+        r"hosts = \{_hostkey\(x\) for x in allowed_hosts\}",
+        "hosts = set(allowed_hosts)",
+    ),
+    (
+        "r13 egress: allow-listed links not case-folded",
+        G,
+        r"links = \{\s*x\.casefold\(\) for x in allowed_links\s*\}",
+        "links = set(allowed_links)",
+    ),
+    (
+        "r13 egress: special-scheme forms without // allowed",
+        G,
+        r"\|\(\?<!\[a-z0-9\]\)\(\?:https\?\|ftps\?\|wss\?\)",
+        r"|(?<![a-z0-9])(?:zzzz)",
+    ),
+    ("r13 egress: UNC path allowed", G, r'\|\(\?<!\[\\w\\\\\]\)\\\\\\\\\[\^\\s<>\\"\']\+', ""),
+    (
+        "r13 egress: scheme list narrowed to the first six",
+        G,
+        r'"blob", "about", "ms-msdt", "search-ms", "sip", "sips", "intent",\s+"view-source", "ldap", "jar", "resource", "chrome", "smb", "ssh", "magnet", "mms", "itms", "gopher",',
+        "",
+    ),
+    ("r13 ratecap: limits not validated", G, r"if not isinstance\(v, int\) or isinstance\(v, bool\) or v < lo:", "if False:"),
+    ("r13 ratecap: non-finite timestamp stored", G, r"or not math\.isfinite\(now_s\):", "or False:"),
+    ("r13 ratecap: release of an unknown token frees a slot", G, r"if token not in self\._live:", "if False:"),
+    ("r13 verdict: mode not validated", V, r"if mode not in MODES:", "if False:"),
+    ("r13 textnorm: digit markers get separator tolerance", T, r" and not any\(ch\.isdigit\(\) for ch in m\)", ""),
+    (
+        "r13 textnorm: short markers get separator tolerance",
+        T,
+        r"loose = len\(m\.replace\(\" \", \"\"\)\) >= MIN_SEPARATED_LEN",
+        "loose = True",
+    ),
+    (
+        "r13 ingest SPEC MODEL (not product code): body-less delivery skipped",
+        "tests/ingest_model.py",
+        r"if not \(isinstance\(body, str\) and len\(body\) == 64 and all\(c in \"0123456789abcdef\" for c in body\)\):",
+        "if False:",
+    ),
+    (
+        "r13 ingest SPEC MODEL (not product code): worker takes the caller's message, not the first",
+        "tests/ingest_model.py",
+        r"self\.handle\(self\.messages\.get\(mid, msgs\[mid\]\)\)",
+        "self.handle(msgs[mid])",
+    ),
+    (
+        "r13 ingest SPEC MODEL (not product code): reject key cut to 12 hex",
+        "tests/ingest_model.py",
+        r"#id_reuse-\{body\}",
+        "#id_reuse-{body[:12]}",
+    ),
+    ("r13 egress: last label may stop before a word character", G, r"\[\^\\W\\d_\]\[\\w-\]\{1,62\}", r"[^\W\d_]{2,24}"),
+    # ---- round 16 (review 11)
+    (
+        "r14 egress: the raw (accent-keeping) view is not checked",
+        G,
+        r"raw = _defang\(_SPACED_DOT\.sub\(\".\", normalise_keep_marks\(text\)\)\)",
+        "raw = clean",
+    ),
+    ("r14 egress: only the clean view is checked", G, r"for base in \(clean, raw\):", "for base in (clean,):"),
+    ("r14 textnorm: the raw view drops combining marks", T, r'unicodedata\.category\(ch\) not in \("Mn", "Me"\)', "True"),
+    ("r14 egress: any-scheme rule removed", G, r"for m in ANY_SCHEME\.finditer\(URL\.sub\(\" \", view\)\):", "for m in []:"),
+    ("r14 egress: any-scheme rule also flags a digit after the colon", G, r"\(\?!\[\\s\\d\]\)\[\^\\s<>", r"(?!\\s)[^\\s<>"),
+    ("r14 egress: mailto no longer allowed by default", G, r"m\.group\(1\)\.casefold\(\) not in allowed_schemes and ", ""),
+    ("r14 egress: protocol-relative host needs whitespace before it", G, r"\(\?<!\[\\w:/\.-\]\)//", r"(?<!\\S)//"),
+    ("r14 egress: bank details next to their keyword not checked", G, r" or BANK_DETAILS\.search\(clean\)", ""),
+    (
+        "r14 ratecap: a far-future step is accepted",
+        G,
+        r"\(self\._last is not None and abs\(now_s - self\._last\) > self\.MAX_JUMP_S\)",
+        "False",
+    ),
+    (
+        "r14 ratecap: reset_clock takes any value",
+        G,
+        r"if isinstance\(now_s, bool\) or not isinstance\(now_s, \(int, float\)\) or not math\.isfinite\(now_s\):\n            raise ValueError",
+        "if False:\n            raise ValueError",
+    ),
+    (
+        "r14 verdict: interval counts not type-checked",
+        V,
+        r"any\(isinstance\(v, bool\) or not isinstance\(v, int\) for v in \(x, n\)\)\s+or ",
+        "",
+    ),
+    (
+        "r14 ingest SPEC MODEL (not product code): side rows counted as source ids",
+        "tests/ingest_model.py",
+        r'primary = \{\s*k for k in p\.ledger if "#" not in k\s*\}',
+        "primary = set(p.ledger)",
+    ),
+    ("r14 egress: percent-escapes not decoded", G, r"dec, stable = _percent_decode\(base\)", "dec, stable = base, True"),
+    (
+        "r14 egress: nested encoding not refused",
+        G,
+        r"if not stable or _undecodable_host_token\(dec\):",
+        "if _undecodable_host_token(dec):",
+    ),
+    (
+        "r14 egress: undecodable percent token not refused",
+        G,
+        r"if not stable or _undecodable_host_token\(dec\):",
+        "if not stable:",
+    ),
+    (
+        "r14 egress: decoding stops after one round",
+        G,
+        r"for _ in range\(4\):\n        d = unquote\(s\)",
+        "for _ in range(1):\n        d = unquote(s)",
+    ),
+    ("r14 ratecap: no absolute bound on a reading", G, r"abs\(now_s\) > self\.MAX_ABS_S or ", ""),
+    (
+        "r14 ratecap: a huge step backwards is accepted",
+        G,
+        r"abs\(now_s - self\._last\) > self\.MAX_JUMP_S",
+        "now_s - self._last > self.MAX_JUMP_S",
+    ),
+    ("r14 verdict: upper bound not range-checked", V, r" or not 0\.0 <= upper <= 1\.0", ""),
+]

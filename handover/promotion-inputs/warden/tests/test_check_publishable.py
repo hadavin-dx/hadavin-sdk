@@ -1,0 +1,318 @@
+"""The publishability checker, tested against things it MUST refuse.
+
+A secret scanner that has only ever been shown clean input has not been tested — it has been
+admired. Every test here hands it something that must fail, because the day this matters is the day
+a real credential is sitting in a file, and "it printed clean" is exactly what a broken scanner does.
+
+The second half tests the *other* failure mode, which is the one that actually kills these tools in
+practice: **crying wolf.** A checker that flags ordinary text gets bypassed within a week, and a
+bypassed checker is worse than none because it also provides false comfort.
+"""
+
+from __future__ import annotations
+
+import pathlib
+import subprocess
+import sys
+
+import pytest
+
+from fakes import AWS_ACCESS_KEY_ID
+
+ROOT = pathlib.Path(__file__).resolve().parents[1]
+SCRIPT = ROOT / "scripts" / "check_publishable.py"
+
+
+def _synth(*parts: str) -> str:
+    """Assemble a credential-shaped string at runtime.
+
+    ⛔ These fixtures must look exactly like real credentials, or the scanner they exercise is being
+    tested against text that could never fool it. But a literal that looks like a real credential in
+    a committed file is itself a finding - GitHub's push protection blocked this very file on a
+    fabricated Slack token, which is precisely the behaviour you want from it.
+
+    So the literal never appears in the source. It exists only in memory, and only inside a
+    temporary file the checker is pointed at. Both properties are needed and they are not in
+    conflict; they just cannot be satisfied by a string literal.
+    """
+    return "".join(parts)
+
+
+def _scan(tmp_path: pathlib.Path, name: str, content: str) -> tuple[int, str]:
+    (tmp_path / name).write_text(content, encoding="utf-8")
+    result = subprocess.run(
+        [sys.executable, str(SCRIPT), "--dir", str(tmp_path)],
+        capture_output=True, text=True, check=False,
+    )
+    return result.returncode, result.stdout + result.stderr
+
+
+# --------------------------------------------------------------------------- must REFUSE
+
+
+@pytest.mark.parametrize(
+    "name,content,expect",
+    [
+        ("keys.txt", "AWS_ACCESS_KEY_ID=" + _synth("AKIA", "2E0RXAMPLE", "Q7WXYZ") + "\n", "access key"),
+        ("keys.txt", _synth("ASIA", "2E0RXAMPLE", "Q7WXYZ") + "\n", "access key"),
+        ("cfg.yaml", "aws_secret_access_key: " + _synth("aB3dE5gH7jK9lM1nO3pQ", "5rS7tU9vW1xY3zA5bC7d") + "\n", "secret access key"),
+        ("run.log", "arn:aws:ecs:ap-south-1:" + _synth("847263", "519048") + ":cluster/prod\n",
+         "account id"),
+        # ⚠ Deliberately NOT named .pem: that filename is refused by the name rule before the
+        # content rule is reached, so a .pem here would assert the wrong half of the scanner.
+        ("notes.md", _synth("-----BEGIN ", "RSA PRIVATE KEY", "-----")
+         + "\nMIIEpAIBAAKCAQEA\n", "private key"),
+        ("hook.txt", _synth("https://hooks.", "slack.com/services/")
+         + "T00000000/B00000000/abcdefghijklmnop\n", "Slack"),
+        ("hook.txt", _synth("https://hooks.", "slack.com/triggers/")
+         + "T00000000/1234567890/abcdefghijklmnop\n", "Slack"),
+        ("ecr.txt", _synth("8472", "63519048") + ".dkr.ecr.ap-south-2.amazonaws.com/app:v2\n", "account id"),
+        ("tmp.txt", "address = " + _synth("prod-ns.", "a1b2c.tmprl.cloud") + ":7233\n", "Temporal"),
+        ("slack.txt", "workspace " + _synth("T0", "4ABCD9EF") + " user " + _synth("U0", "7XYZ12AB") + "\n",
+         "Slack workspace"),
+        ("path.txt", "profile at " + _synth("C:", "\\Users\\", "jdoe") + "\\AppData\n", "Windows user-profile"),
+        ("hook.txt", _synth("https://acme.", "webhook.office.com/webhookb2/")
+         + "0a1b2c3d-4e5f@0a1b2c3d/IncomingWebhook/abc/def\n", "Teams"),
+        ("hook.txt", _synth("https://prod-12.westus.", "logic.azure.com:443/workflows/")
+         + "abc123/triggers/manual/paths/invoke?api-version=2016-06-01&sig=QwErTyUiOp\n", "Teams"),
+        ("tok.txt", _synth("hf", "_", "QwErTyUiOpAsDfGhJkLzXcVbNm12345678") + "\n", "Hugging Face"),
+        ("tok.txt", _synth("xo", "xb", "-2846013925-3947261508-QwErTyUiOpAsDfGh") + "\n", "Slack token"),
+        ("k.txt", _synth("sk-", "ant-", "api03-QwErTyUiOpAsDfGhJkLzXcVbNm1234567890") + "\n", "Anthropic"),
+        ("k.txt", _synth("AI", "za", "SyD9fK2mQ7xR4tV6wY8zB1cE3gH5jL7nP9r") + "\n", "Google"),
+        ("k.txt", _synth("gs", "k_", "QwErTyUiOpAsDfGhJkLzXcVbNm1234567890QwErTyUi") + "\n", "Groq"),
+        ("k.txt", _synth("gh", "p_", "QwErTyUiOpAsDfGhJkLzXcVbNm1234567890") + "\n", "GitHub"),
+        ("dsn.txt", "postgresql://warden:" + _synth("Tr0ub4", "dor3xK9") + "@db.internal:5432/orders\n", "connection string"),
+        ("h.txt", "Authorization: Bearer " + _synth("eyJhbGciOiJIUzI1NiIs", "InR5cCI6IkpXVCJ9") + "\n", "bearer"),
+    ],
+)
+def test_a_real_secret_is_refused(tmp_path, name, content, expect):
+    code, out = _scan(tmp_path, name, content)
+    assert code != 0, f"scanner passed something it must refuse:\n{out}"
+    assert expect.lower() in out.lower(), out
+
+
+@pytest.mark.parametrize(
+    "name",
+    [".env", ".env.production", "terraform.tfvars", "prod.tfvars",
+     "terraform.tfstate", "terraform.tfstate.backup", "id_rsa", "server.pem", "kubeconfig"],
+)
+def test_a_forbidden_file_is_refused_even_when_empty(tmp_path, name):
+    """⛔ Content-blind on purpose. A tfstate carries every `sensitive` value in PLAINTEXT, and an
+    empty one today is a full one tomorrow. The filename alone is the finding."""
+    code, out = _scan(tmp_path, name, "")
+    assert code != 0, f"{name} was accepted:\n{out}"
+    assert "must never be tracked" in out
+
+
+def test_the_tfvars_example_is_the_one_permitted_exception(tmp_path):
+    code, out = _scan(tmp_path, "terraform.tfvars.example", 'region = "ap-south-1"\n')
+    assert code == 0, out
+
+
+def test_no_path_is_exempt_from_the_scan(tmp_path):
+    """Naming audit item 5 (2026-10-16): seven files - the redaction tests and three other tests,
+    the redaction module, the CI workflow - were skipped whole, so a real secret pasted into one of
+    them would have been published. Every path git tracks now gets a planted key, and the scan must
+    refuse each one. A path exemption, for a file or a directory, fails this."""
+    tracked = subprocess.run(["git", "ls-files"], cwd=ROOT, capture_output=True, text=True,
+                             check=True).stdout.splitlines()
+    assert "src/warden/redaction.py" in tracked
+    assert "tests/test_redaction.py" in tracked
+    key = _synth("AKIA", "Q3RZ7XKM", "2PLW5NBT")
+    for rel in tracked:
+        (tmp_path / rel).parent.mkdir(parents=True, exist_ok=True)
+        (tmp_path / rel).write_text(f"leaked {key}\n", encoding="utf-8")
+    result = subprocess.run([sys.executable, str(SCRIPT), "--dir", str(tmp_path)],
+                            capture_output=True, text=True, check=False)
+    assert result.returncode != 0
+    refused = {line.strip().split(":", 1)[0] for line in result.stdout.splitlines()
+               if "an AWS access key id" in line or "must never be tracked" in line}
+    assert not set(tracked) - refused, sorted(set(tracked) - refused)[:20]
+
+
+# --------------------------------------------------------------------------- must ACCEPT
+
+
+@pytest.mark.parametrize(
+    "content",
+    [
+        "the deployment finished at 1757400000000 ms\n",          # a 13-digit epoch
+        "checked 82 files tracked by git\n",
+        "resources = [\"*\"]\n",
+        "postgresql://warden:<REDACTED>@db:5432/warden\n",
+        "arn:aws:ecs:ap-south-1:<ACCOUNT>:cluster/prod\n",         # already redacted
+        AWS_ACCESS_KEY_ID + "\n",                                  # AWS's documented example
+        "password = var.db_password\n",                            # a reference, not a value
+        "postgresql://user:${DB_PASSWORD}@host:5432/db\n",         # interpolated
+        "set the value to your-password-here\n",
+    ],
+)
+def test_ordinary_text_is_not_flagged(tmp_path, content):
+    """Crying wolf is the failure mode that actually kills these tools. A checker that flags
+    ordinary lines gets bypassed within a week, and a bypassed checker also provides false comfort."""
+    code, out = _scan(tmp_path, "notes.md", content)
+    assert code == 0, f"false positive on {content!r}:\n{out}"
+
+
+def test_a_binary_file_does_not_crash_it(tmp_path):
+    (tmp_path / "blob.bin").write_bytes(bytes(range(256)) * 8)
+    result = subprocess.run(
+        [sys.executable, str(SCRIPT), "--dir", str(tmp_path)],
+        capture_output=True, text=True, check=False,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+
+
+def test_the_repository_as_it_stands_is_publishable():
+    """The check that matters. Runs against what git actually tracks - not what anyone intended to
+    track - so it answers 'what is really on GitHub' rather than 'what did I mean to put there'."""
+    result = subprocess.run(
+        [sys.executable, str(SCRIPT)], cwd=ROOT, capture_output=True, text=True, check=False,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+
+
+# --------------------------------------------------------------------------- the blinding bug
+#
+# ⛔ A placeholder used to suppress every finding on its LINE rather than just itself. Redaction
+# writes `<ACCOUNT>` into exactly the lines that carry ARNs, so redacting an account id switched off
+# scanning for any real credential sitting beside it - and a JSON report is usually a single line,
+# so one `<ACCOUNT>` blinded the entire file.
+#
+# That defeated the only guarantee this script offers. "The redactor ran" and "the redactor worked"
+# are different claims, and the second had quietly stopped being checked.
+
+
+def test_a_redacted_placeholder_does_not_hide_a_real_secret_beside_it(tmp_path):
+    key = _synth("AKIA", "IOSFODNN", "7NOTREAL")
+    code, out = _scan(
+        tmp_path, "report.json",
+        '{"arn":"arn:aws:ecs:ap-south-2:<ACCOUNT>:cluster/x","key":"' + key + '"}\n',
+    )
+    assert code != 0, "a real AWS key was waved through because <ACCOUNT> was on the same line"
+    assert "AKIA" in out
+
+
+def test_a_placeholder_value_is_still_allowed(tmp_path):
+    """The rule has to keep working for what it was written for: the VALUE being a placeholder."""
+    code, _ = _scan(tmp_path, "conf.yaml", 'aws_access_key_id: <YOUR_KEY_HERE>\n')
+    assert code == 0
+
+
+def test_a_single_line_json_report_is_scanned_all_the_way_along(tmp_path):
+    """The realistic shape. A benchmark report is one line with many fields, and only the first
+    account id becomes a placeholder."""
+    key = _synth("AKIA", "IOSFODNN", "7NOTREAL")
+    dsn = "postgres://user:" + _synth("hun", "ter", "2") + "@db.example.com:5432/app"
+    code, out = _scan(
+        tmp_path, "one-line.json",
+        '{"a":"arn:aws:iam::<ACCOUNT>:role/r","b":"111122223333","c":"' + key + '",'
+        '"d":"' + dsn + '"}\n',
+    )
+    assert code != 0
+    assert "AKIA" in out, "the key later in the line was not reached"
+    assert "dsn-password" in out, "the DSN password even later in the line was not reached"
+
+
+def test_new_files_not_yet_git_added_are_scanned(monkeypatch):
+    """Run before `git add` (the documented order), the scan used to skip every NEW file: a fixture
+    password in a new test reached CI that way (2026-09-25)."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("cp_untracked", SCRIPT)
+    cp = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(cp)
+    seen = {}
+
+    def fake_run(cmd, **kw):
+        seen["cmd"] = cmd
+        return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
+    monkeypatch.setattr(cp.subprocess, "run", fake_run)
+    cp._tracked_files(staged=False)
+    assert seen["cmd"][:2] == ["git", "ls-files"]
+    assert "--others" in seen["cmd"]
+    assert "--exclude-standard" in seen["cmd"]
+
+
+
+def _scan_one(tmp_path, sub, name, content):
+    """One file in its own directory: _scan checks the whole directory."""
+    directory = tmp_path / sub
+    directory.mkdir()
+    return _scan(directory, name, content)
+
+
+def test_a_personal_email_is_refused_and_a_fixture_domain_is_not(tmp_path):
+    """Owner rule R3. The scanner had no email pattern at all (independent review, 2026-09-28)."""
+    code, out = _scan_one(tmp_path, "a", "notes.md", "contact: someone.real@" + "gmail.com\n")  # split
+    assert code != 0, out
+    assert "personal email" in out.lower(), out
+    code, out = _scan_one(tmp_path, "b", "notes.md", "contact: some%40" + "outlook.com\n")
+    assert code != 0, out
+    code, out = _scan_one(tmp_path, "c", "fixture.md", "user priya.nair@corp.io logged in\n")
+    assert code == 0, out
+
+
+def test_a_bare_account_id_is_refused_and_the_documented_example_is_not(tmp_path):
+    code, out = _scan_one(tmp_path, "a", "a.md", "account " + "4444" + "55556666" + " owns it\n")  # split
+    assert code != 0, out
+    assert "account id" in out.lower(), out
+    code, out = _scan_one(tmp_path, "b", "b.md", "account 123456789012 is the AWS docs example\n")
+    assert code == 0, out
+
+
+
+@pytest.mark.parametrize("value", [
+    "whsec_" + "C2FVsBQIhrscChlQIMV+b5sSYspob7oD",
+    "sk_live_" + "abcdefghijklmnopqrst",
+    "github_pat_" + "11ABCDEFG0123456789_abcdefghij",
+    "glpat-" + "abcDEF1234567890xyz",
+    "npm_" + "abcdefghijklmnopqrstuvwxyz0123456789",
+    "SG." + "abcdefghijklmnopq" + "." + "abcdefghijklmnopq",
+    "hvs." + "CAESIabcdefghijklmnopqrstuvwxyz",
+    "xapp-" + "1-A0B1C2D3-12345-abcdef",
+])
+def test_vendor_token_shapes_are_caught(tmp_path, value):
+    """2026-09-30: a Stripe webhook secret shape in a test file reached GitHub (its secret scanning
+    flagged it) because this guard had no pattern for it."""
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("check_publishable", SCRIPT)
+    cp = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(cp)
+    names = [name for name, rx, _ in cp.PATTERNS if rx.search(f"x = '{value}'")]
+    assert names, value
+
+
+# --------------------------------------------------------------------------- scan(), called directly
+
+
+def _module():
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("check_publishable", SCRIPT)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def test_scan_reports_each_finding_with_its_place_in_order(tmp_path):
+    """Characterisation (before the cognitive-complexity split of scan): a forbidden name (not read), a missing file
+    (skipped), a path outside the root (named in full), a binary file read through its bytes, every match on a line
+    in pattern order, a documented example and a placeholder value let through."""
+    mod = _module()
+    key = _synth("AKIA", "2E0RXAMPLE", "Q7WXYZ")
+    account = _synth("847263", "519048")
+    (tmp_path / ".env").write_text(f"K={key}\n", encoding="utf-8")
+    (tmp_path / "notes.md").write_text(f"fine\nkey {key} in arn:aws:iam::{account}:root\n{AWS_ACCESS_KEY_ID}\n"
+                                       "aws_access_key_id: <YOUR_KEY_HERE>\n", encoding="utf-8")
+    (tmp_path / "blob.bin").write_bytes(b"\x00\x01" + key.encode() + b"\xff")
+    outside = tmp_path.parent / f"{tmp_path.name}-outside.txt"
+    outside.write_text(f"{key}\n", encoding="utf-8")
+    paths = [tmp_path / ".env", tmp_path / "gone.txt", tmp_path / "notes.md", tmp_path / "blob.bin", outside]
+    assert mod.scan(paths, root=tmp_path) == [
+        ".env: this file must never be tracked by git",
+        "notes.md:2: an AWS access key id (aws-access-key: AKIA...YZ)",
+        "notes.md:2: a 12-digit AWS account id (account-id: 8472...48)",
+        "blob.bin:1: an AWS access key id (aws-access-key: AKIA...YZ)",
+        f"{outside}:1: an AWS access key id (aws-access-key: AKIA...YZ)",
+    ]

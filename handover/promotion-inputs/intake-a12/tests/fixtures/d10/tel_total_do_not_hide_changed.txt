@@ -1,0 +1,6 @@
+INVOICE INV-1001
+Supplier: Acme Widgets Ltd
+Your PO PO-77 USD
+Tel 0207 123 4567
+Total 125000.00
+Account No 87654321

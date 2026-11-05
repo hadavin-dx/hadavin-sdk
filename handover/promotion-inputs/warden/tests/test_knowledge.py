@@ -1,0 +1,205 @@
+"""The incident knowledge base: it loads, it validates loudly, and it matches deterministically."""
+
+from __future__ import annotations
+
+import pytest
+
+from warden.knowledge import KnowledgeBase, KnowledgeError, default_knowledge_base
+from warden.models import ActionKind, Alert, ContextBundle, Severity
+
+
+def _alert(name="PodOOMKilled", sev=Severity.high, summary=""):
+    return Alert(
+        alert_id="t", name=name, severity=sev, service="checkout",
+        environment="staging", summary=summary, started_at="2026-08-23T00:00:00Z",
+    )
+
+
+# ------------------------------------------------------------------ the shipped catalog
+
+def test_bundled_catalog_loads_and_is_internally_valid():
+    kb = default_knowledge_base()
+    assert len(kb.signatures) >= 20
+    # Every suggested action across the whole catalog is a real ActionKind (the loader enforces it;
+    # this proves the shipped file actually passes that gate, not just that the gate exists).
+    for sig in kb.signatures:
+        assert sig.suggested_actions, f"{sig.id} has no actions"
+        for a in sig.suggested_actions:
+            assert isinstance(a.kind, ActionKind)
+
+
+def test_catalog_covers_the_full_maturity_curriculum():
+    kb = default_knowledge_base()
+    maturities = {s.maturity for s in kb.signatures}
+    assert {"basic", "intermediate", "advanced"} <= maturities
+
+
+def test_ids_are_unique():
+    # default_knowledge_base would raise on load if not; assert the property directly too.
+    kb = default_knowledge_base()
+    ids = [s.id for s in kb.signatures]
+    assert len(ids) == len(set(ids))
+
+
+# ------------------------------------------------------------------ loud validation
+
+def _kb_from(signatures):
+    """Build a KB from in-memory signature dicts, through the real parser/validator."""
+    return KnowledgeBase([KnowledgeBase._parse_signature(s) for s in signatures])
+
+
+_GOOD = dict(
+    id="X-1", category="memory", maturity="basic", title="t", root_cause="rc",
+    detect={"log_contains": ["boom"]},
+    suggested_actions=[{"kind": "restart_pods", "rationale": "r"}],
+    remediation_risk="low",
+)
+
+
+def test_a_fake_action_kind_is_rejected_at_load():
+    bad = dict(_GOOD)
+    bad["suggested_actions"] = [{"kind": "delete_database", "rationale": "r"}]
+    with pytest.raises(KnowledgeError, match="not a valid ActionKind"):
+        _kb_from([bad])
+
+
+def test_an_unknown_detect_key_is_rejected_at_load():
+    bad = dict(_GOOD)
+    bad["detect"] = {"lgo_contains": ["typo"]}  # misspelled key -> would silently never fire
+    with pytest.raises(KnowledgeError, match="unknown detect key"):
+        _kb_from([bad])
+
+
+def test_a_bad_maturity_is_rejected():
+    bad = dict(_GOOD)
+    bad["maturity"] = "expert"
+    with pytest.raises(KnowledgeError, match="maturity"):
+        _kb_from([bad])
+
+
+def test_a_signature_with_no_actions_is_rejected():
+    bad = dict(_GOOD)
+    bad["suggested_actions"] = []
+    with pytest.raises(KnowledgeError, match="at least one"):
+        _kb_from([bad])
+
+
+def test_a_bad_regex_is_rejected():
+    bad = dict(_GOOD)
+    bad["detect"] = {"name_matches": "("}  # unbalanced
+    with pytest.raises(KnowledgeError, match="regex"):
+        _kb_from([bad])
+
+
+# ------------------------------------------------------------------ matching
+
+def test_oom_incident_ranks_oom_signature():
+    kb = default_knowledge_base()
+    ctx = ContextBundle(
+        logs=["pod checkout OOMKilled", "memory cgroup out of memory"],
+        metrics={"oom_killed_count": 3, "restart_count": 2},
+    )
+    top = kb.match(_alert(name="PodOOMKilled", summary="memory at 94%"), ctx, limit=3)
+    assert top, "expected at least one match"
+    assert top[0].signature.id == "K8S-OOM-001"
+    assert ActionKind.scale_up in [a.kind for a in top[0].signature.suggested_actions]
+
+
+def test_severity_guard_excludes_low_severity_from_a_critical_only_signature():
+    kb = default_knowledge_base()
+    # CASCADE-001 declares severity_in: [critical, high]. A low alert with the same words must not match it.
+    ctx = ContextBundle(logs=["circuit breaker open", "cascading failure"])
+    low = kb.match(_alert(name="CascadingFailure", sev=Severity.low), ctx)
+    assert all(m.signature.id != "CASCADE-001" for m in low)
+    high = kb.match(_alert(name="CascadingFailure", sev=Severity.critical), ctx)
+    assert any(m.signature.id == "CASCADE-001" for m in high)
+
+
+def test_no_signal_means_no_match():
+    kb = default_knowledge_base()
+    ctx = ContextBundle(logs=["everything is completely fine and nominal"])
+    assert kb.match(_alert(name="AllGood", summary="nominal"), ctx) == []
+
+
+def test_score_counts_signals_and_orders_by_it():
+    kb = default_knowledge_base()
+    ctx = ContextBundle(
+        logs=["OOMKilled", "cgroup out of memory"],
+        metrics={"oom_killed_count": 1},
+    )
+    top = kb.match(_alert(name="PodOOMKilled"), ctx, limit=1)[0]
+    assert top.score == len(top.signals) >= 2
+
+
+# ------------------------------------------------------------------ reaching the model, or not
+#
+# ⛔ The module docstring used to claim the top matches were "folded into the reasoning prompt".
+# They were not: `graph.py` never imported this module, and the matches only decorated the report
+# after the graph had finished. A reader would have found that in ten minutes.
+#
+# It is now true, behind a flag that is OFF by default, because the honest version of this feature
+# is an experiment rather than a boast: run the same faults with the catalog on and off and publish
+# the difference. These tests pin both arms.
+
+
+def _state(context):
+    # A plain dict in the shape of warden.graph.WardenState: a TypedDict checks only the shape.
+    return {"alert": _alert(), "context": context, "redacted_logs": list(context.logs),
+            "redacted_deploys": [], "redaction_map": {}}
+
+
+def test_the_catalog_does_not_reach_the_prompt_by_default(monkeypatch):
+    from warden.graph import _evidence_blob
+
+    monkeypatch.delenv("WARDEN_KNOWLEDGE_IN_PROMPT", raising=False)
+    blob = _evidence_blob(_state(ContextBundle(logs=["OOMKilled", "cgroup out of memory"])))
+    assert "KNOWN PATTERNS" not in blob
+    assert "K8S-OOM" not in blob
+
+
+def test_the_catalog_reaches_the_prompt_when_asked_for(monkeypatch):
+    from warden.graph import _evidence_blob
+
+    monkeypatch.setenv("WARDEN_KNOWLEDGE_IN_PROMPT", "1")
+    blob = _evidence_blob(_state(ContextBundle(logs=["OOMKilled", "cgroup out of memory"])))
+    assert "KNOWN PATTERNS" in blob
+    # A signature id and its root cause, so the ablation is actually feeding the model something.
+    assert any(s.signature.id in blob
+               for s in default_knowledge_base().match(_alert(), ContextBundle(logs=["OOMKilled"])))
+
+
+def test_the_catalog_is_offered_as_a_candidate_not_as_an_answer(monkeypatch):
+    """A prompt that states a cause invites the model to agree with it. The wording has to leave
+    room for the catalog to be wrong, because on the fault classes it does not cover it will be."""
+    from warden.graph import _evidence_blob
+
+    monkeypatch.setenv("WARDEN_KNOWLEDGE_IN_PROMPT", "1")
+    blob = _evidence_blob(_state(ContextBundle(logs=["OOMKilled"])))
+    assert "not a" in blob
+    assert "conclusion" in blob
+
+
+def test_an_incident_the_catalog_does_not_cover_adds_nothing(monkeypatch):
+    """The arm is only interesting if it is empty when the catalog has nothing to say — otherwise
+    the 'catalog on' arm is just a longer prompt."""
+    from warden.graph import _evidence_blob
+
+    monkeypatch.setenv("WARDEN_KNOWLEDGE_IN_PROMPT", "1")
+    quiet = ContextBundle(logs=["everything is completely fine and nominal"])
+    state = {"alert": _alert(name="AllGood", summary="nominal"), "context": quiet,
+             "redacted_logs": list(quiet.logs), "redacted_deploys": [], "redaction_map": {}}
+    assert "KNOWN PATTERNS" not in _evidence_blob(state)
+
+
+@pytest.mark.parametrize("text", ["pool exhausted, no replica lag", "not replica lag related", "without replica lag"])
+def test_a_negated_term_is_not_a_match(text):
+    """inc-005's summary said "no replica lag" and REPLICA-LAG-001 was listed as fitting, at lag 0."""
+    ids = [m.signature.id for m in default_knowledge_base().match(
+        _alert(name="DBConnectionsStuck", summary=text), ContextBundle(metrics={"replica_lag_seconds": 0.0}))]
+    assert "REPLICA-LAG-001" not in ids
+
+
+def test_the_same_term_affirmed_elsewhere_still_matches():
+    ids = [m.signature.id for m in default_knowledge_base().match(
+        _alert(name="DBSlow", summary="no replica lag at 04:00; replica lag 90s at 04:10"), ContextBundle())]
+    assert "REPLICA-LAG-001" in ids
