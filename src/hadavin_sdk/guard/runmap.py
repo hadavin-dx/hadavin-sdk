@@ -86,6 +86,9 @@ def _pct_run_start(text: str, pos: int) -> int | None:
 
 def partial_escape_start(text: str, pos: int = 0) -> int | None:
     """Where the half-written escape that ends `text` starts (the leftmost start at or after `pos`), or None."""
+    pos = max(
+        pos, 0
+    )  # the old regex search read a negative start as 0; the run walk would wrap around
     found = _PARTIAL_ESCAPE.search(text, pos)
     run = _pct_run_start(text, pos)
     if found is None:

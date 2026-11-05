@@ -244,3 +244,13 @@ def test_strip_fragment_loop_repeats_until_the_run_is_gone_even_with_a_small_sca
         body + tools.TRUNCATED, ["Zq9Lm4pTvX2"], ScrubSettings(fragment_scan=64)
     )
     assert out == "x" + tools.TRUNCATED
+
+
+@pytest.mark.parametrize("pos", [-1, -3, -100])
+@pytest.mark.parametrize(
+    ("text", "expected"), [("%C3%C3", 0), ("%C3", 0), ("x&abc", 1), ("abc", None)]
+)
+def test_a_negative_start_reads_as_zero_like_the_old_pattern_did(text, expected, pos):
+    # CodeRabbit found that the percent-run walk wrapped around on a negative start; the old regex search clamped it to 0.
+    assert runmap.partial_escape_start(text, pos) == expected
+    assert runmap.partial_escape_start(text, pos) == runmap.partial_escape_start(text, 0)
