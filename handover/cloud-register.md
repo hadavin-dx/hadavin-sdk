@@ -131,3 +131,5 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | r4-P1-cor | round 4 correctness review of tickets/P1.md rev 5 (b13ff07), egm:egm-codebase-details | sonnet (claude-sonnet-5-5) | 19:05Z | +40min | running | save report, ledger rows |
 | r5-P4d-adv | round 5 adversarial review of tickets/P4d.md rev 6, egm:egm-design | sonnet (claude-sonnet-5-5) | now | +35min | running | save report, ledger rows |
 | r5-P4d-cor | round 5 correctness review of tickets/P4d.md rev 6, egm:egm-codebase-details | sonnet (claude-sonnet-5-5) | now | +35min | running | save report, ledger rows |
+| rev6-P2a | author rewrite tickets/P2a.md rev 6 from reviews/P2a-round4-resolve.md (continues agent a64cfd8eaa8b64a3a) | sonnet (claude-sonnet-5-5) | now | +30min | running | verify, explicit add, commit, push, round 5 reviewers |
+| rev2-P2d | author rewrite tickets/P2d.md rev 2 from reviews/P2d-round1-resolve.md (new general-purpose agent) | sonnet (claude-sonnet-5-5) | now | +35min | running | verify, explicit add, commit, push, round 2 reviewers |
