@@ -137,7 +137,7 @@ def test_main_maps_config_error_to_2_and_anything_else_to_3(cfg_dir, monkeypatch
         raise RuntimeError("secret-looking text")
 
     monkeypatch.setattr(cli, "_main", refuse)
-    assert cli.main(["x"]) == 2 and "refused: nope" in capsys.readouterr().err
+    assert cli.main(["x"]) == 2 and "refused: ConfigError: nope" in capsys.readouterr().err
     monkeypatch.setattr(cli, "_main", crash)
     assert cli.main(["x"]) == 3
     err = capsys.readouterr().err
