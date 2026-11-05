@@ -290,12 +290,19 @@ def test_padding_longer_than_the_raw_read_drops_the_partial_word():
 
 
 def test_long_key_shrinking_then_half_email_at_the_cap_edge():
-    # the key is masked to a short mark, so the final cut would fall AFTER the pre-cap point
-    text = KEY + "b" * 2300 + " " + "x" * 80 + " " + EMAIL
-    cap = 300 * 8
-    text = text[: cap - 5]  # cut inside the email at the pre-cap edge
-    out = _sm()(ValueError(text + "m"), 300)
-    assert "bob" not in out and "example" not in out and "bob@" not in out
+    # the long key is masked to a short mark, so the final cut would fall AFTER the pre-cap point
+    text = KEY + "b" * 2300 + " " + "x" * 60 + " " + EMAIL  # the cap (2400) lands inside the email
+    assert len(text) > 300 * 8
+    out = _sm()(ValueError(text), 300)
+    assert "bob" not in out and "example" not in out and "<APIKEY_1>" in out
+
+
+def test_huge_message_read_is_bounded():
+    import time
+
+    t0 = time.perf_counter()
+    _sm()(ValueError("a " * 3_000_000), 300)  # 6 million characters
+    assert time.perf_counter() - t0 < 1.0  # only 64*limit characters are ever read and cleaned
 
 
 def test_truncated_text_ends_with_marker_and_no_half_value():

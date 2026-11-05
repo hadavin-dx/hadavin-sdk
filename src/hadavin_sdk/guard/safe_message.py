@@ -96,10 +96,9 @@ def safe_text(
     try:
         full = str(exc)
         cap = limit * _PRECAP_FACTOR
+        # Read at most 64*limit characters; NFKC can grow that ~18x, so it is capped again below.
         text = _clean(full[: limit * _RAW_FACTOR])
         truncated = len(full) > limit * _RAW_FACTOR
-        if len(text) > cap:  # pre-fold cap
-            text, truncated = text[:cap], True
         text = _clean(unicodedata.normalize("NFKC", text))  # NFKC can expand a character ~18x
         if len(text) > cap:  # post-fold cap
             text, truncated = text[:cap], True  # post-fold cut
@@ -110,7 +109,7 @@ def safe_text(
         return UNAVAILABLE
     if truncated:
         masked += TRUNCATED
-    return " ".join(masked.split())[:limit]
+    return masked[:limit]  # the input had no whitespace runs or newlines and the marks add none
 
 
 def with_class(exc: BaseException, text: str) -> str:
