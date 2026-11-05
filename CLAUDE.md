@@ -29,7 +29,7 @@ Order for every package: (1) new idea: `egm:egm-brainstorm` then `egm:egm-draft`
 Never use the native plan mode (`EnterPlanMode`); EGM replaces it (a hook blocks it).
 
 ## Models
-Opus 5.5 (`claude-opus-5-5`) for planning skills (brainstorm, draft, resolve); Sonnet 5.5 (`claude-sonnet-5-5`) for building, evidence and reviews; Haiku 5.5 only for plain lookups. Set the model explicitly on every Agent call. Choose the cheapest model that does the job; a change of tier needs an evaluation or review result. Any product code that calls a model follows the cost rules in `.claude/rules/model-choice-and-cost-follow-bible.md`.
+Full table and the one-time patch for the EGM plugin (upstream says `model: inherit`): `handover/MODEL-ROUTING.md`. Opus 5.5 (`claude-opus-5-5`) for planning skills (brainstorm, draft, resolve); Sonnet 5.5 (`claude-sonnet-5-5`) for building, evidence and reviews; Haiku 5.5 only for plain lookups. Set the model explicitly on every Agent call. Choose the cheapest model that does the job; a change of tier needs an evaluation or review result. Any product code that calls a model follows the cost rules in `.claude/rules/model-choice-and-cost-follow-bible.md`.
 
 ## Sub-agents
 Every general-purpose sub-agent brief starts with the contents of `handover/BRIEF-PREAMBLE.md` (first line `STUDIO-PREAMBLE v1`, and it must contain `EGM-GATE v1`); a hook enforces this. Keep a live register of agents (id, purpose, start, expected end, last check, state, next action) before starting each one; check each at its expected end; close it when it reports; stop helpers; never run unbounded loops; never kill a process you did not start. Supervision is the rule, the count of agents is secondary.

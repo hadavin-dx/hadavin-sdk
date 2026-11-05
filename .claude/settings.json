@@ -1,19 +1,62 @@
 {
   "model": "claude-sonnet-5-5",
   "extraKnownMarketplaces": {
-    "egm": { "source": { "source": "github", "repo": "google/elephant-goldfish-model" } }
+    "egm": {
+      "source": {
+        "source": "github",
+        "repo": "google/elephant-goldfish-model"
+      }
+    }
   },
-  "enabledPlugins": { "egm@egm": true },
+  "enabledPlugins": {
+    "egm@egm": true
+  },
   "permissions": {
-    "deny": ["Read(./.env)", "Read(./.env.*)", "Read(./**/*.pem)", "Read(./**/*.key)"]
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(./**/*.pem)",
+      "Read(./**/*.key)"
+    ]
   },
   "hooks": {
     "UserPromptSubmit": [
-      { "hooks": [ { "type": "command", "command": "sh .claude/hooks/egm-gate.sh", "timeout": 5 } ] }
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh .claude/hooks/egm-gate.sh",
+            "timeout": 5
+          }
+        ]
+      }
     ],
     "PreToolUse": [
-      { "matcher": "EnterPlanMode", "hooks": [ { "type": "command", "command": "sh .claude/hooks/block-planmode.sh" } ] },
-      { "matcher": "Agent", "hooks": [ { "type": "command", "command": "python3 .claude/hooks/agent_preamble_gate.py", "timeout": 5 } ] }
+      {
+        "matcher": "EnterPlanMode",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh .claude/hooks/block-planmode.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "Agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 .claude/hooks/agent_preamble_gate.py",
+            "timeout": 5
+          }
+        ]
+      }
     ]
+  },
+  "effortLevel": "medium",
+  "modelSettings": {
+    "claude-opus-5-5": {
+      "effortLevel": "high"
+    }
   }
 }
