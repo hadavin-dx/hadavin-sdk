@@ -753,3 +753,15 @@
 | BL-core-p2d-r1-cor-C13 | P2D | NIT | redact keyword-only signature | OPEN | reviews/P2d-round1-correctness.md | c34fe24 |
 | BL-core-p2d-r1-cor-C14 | P2D | NIT | 43 lines not 45 | OPEN | reviews/P2d-round1-correctness.md | c34fe24 |
 | BL-core-p2d-r1-cor-C15 | P2D | NIT | guarantee sentence third case | OPEN | reviews/P2d-round1-correctness.md | c34fe24 |
+| BL-core-p2a-r4-adv-A1 | P2A | MAJOR | guard function reads public.* tables; fails in non-public schema; build names from current_schema() | OPEN | reviews/P2a-round4-adversarial.md | 1b533fd |
+| BL-core-p2a-r4-adv-A2 | P2A | MAJOR | breakglass alarm only sees CLI resets; direct psql reset writes no audit row; reconcile kill_switch_resets | OPEN | reviews/P2a-round4-adversarial.md | 1b533fd |
+| BL-core-p2a-r4-adv-A3 | P2A | MAJOR | limits stop probes first: stop can be delayed/aborted; stop first, probe after | OPEN | reviews/P2a-round4-adversarial.md | 1b533fd |
+| BL-core-p2a-r4-adv-A4 | P2A | MINOR | mutants G2/G3 equivalent after migrate() re-issue | OPEN | reviews/P2a-round4-adversarial.md | 1b533fd |
+| BL-core-p2a-r4-adv-A5 | P2A | MINOR | reset done but audit outcome failed: no exit code | OPEN | reviews/P2a-round4-adversarial.md | 1b533fd |
+| BL-core-p2a-r4-adv-A6 | P2A | MINOR | re-seed version below gate _durable_version | OPEN | reviews/P2a-round4-adversarial.md | 1b533fd |
+| BL-core-p2a-r4-adv-A7 | P2A | MINOR | trigger does not set NEW.by on ON to OFF | OPEN | reviews/P2a-round4-adversarial.md | 1b533fd |
+| BL-core-p2a-r4-adv-A8 | P2A | MINOR | guard_dry_run 42501 check vacuous (lost UPDATE / placeholder) | OPEN | reviews/P2a-round4-adversarial.md | 1b533fd |
+| BL-core-p2a-r4-adv-A9 | P2A | MINOR | set_config needs str(ms) | OPEN | reviews/P2a-round4-adversarial.md | 1b533fd |
+| BL-core-p2a-r4-adv-A10 | P2A | MINOR | hand-applied guard file leaves deny-all until migrate | OPEN | reviews/P2a-round4-adversarial.md | 1b533fd |
+| BL-core-p2a-r4-adv-A11 | P2A | NIT | stop returns RETURNING | OPEN | reviews/P2a-round4-adversarial.md | 1b533fd |
+| BL-core-p2a-r4-adv-A12 | P2A | NIT | probe dead tuples | OPEN | reviews/P2a-round4-adversarial.md | 1b533fd |
