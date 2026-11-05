@@ -96,7 +96,8 @@ def test_detector_failure_is_logged_and_flagged(caplog):
 
 
 # Pinned value: a change here means every deployed agent must be re-gated (CHANGELOG "Upgrade steps").
-PINNED_CONFIG_HASH = "3ac5b7c34e7a0d7750a75adcd4642364be70af601e8078ee6b46c0dfb0f1be9e"
+# C1a: the redactor (name@version) joined the hash, so this value changed once (was 3ac5b7c3...f1be9e).
+PINNED_CONFIG_HASH = "037b876609dbb89ff74a88c5f0b9f138475e7cf7874e121912797dee28a939d5"
 
 
 def test_config_hash_is_pinned(cfg_dir):

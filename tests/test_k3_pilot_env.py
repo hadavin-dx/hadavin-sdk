@@ -56,6 +56,7 @@ def pilot_cfg(tmp_path: Path, *, env="pilot", agent=None, contract=None, config=
             "signer": {"kind": "ed25519_local", "private_key_path": "audit-key.pem"},
             "llm": {"kind": "openai_compat", "base_url": "https://llm.example/v1"},
             "detector": [{"kind": "regex", "threshold": 0.5}],
+            "redactor": {"kind": "regex"},  # a live config names its redactor (C1a)
             "channel": {
                 "kind": "slack",
                 "channel_id": "C0TEST",

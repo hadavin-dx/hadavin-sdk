@@ -390,6 +390,13 @@ EXCEPTIONS: dict[str, ExceptionEntry] = {
         date(2026, 10, 31),
         date(2027, 4, 30),
     ),
+    "redactor": ExceptionEntry(
+        "accepted",
+        "regex is the only kind; the Redactor protocol in guard/redactor.py is the seam (ticket C1a)",
+        "KERNEL-1, or the first client whose documents carry names in free prose (a model or service kind)",
+        date(2026, 11, 5),
+        date(2027, 2, 1),
+    ),
     "channel": ExceptionEntry(
         "accepted",
         "Slack is the only interactive approval kind in the pilot (owner, design v5 11.6)",

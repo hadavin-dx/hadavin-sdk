@@ -12,14 +12,16 @@ README; this module never claims more than ``guard.redact`` covers. No put-back 
 from __future__ import annotations
 
 import hashlib
-import importlib
 import inspect
 import re
+import sys
 from collections.abc import Mapping
 from typing import Any, NoReturn, Protocol, runtime_checkable
 
+import hadavin_sdk.guard.redact  # noqa: F401  (loads the submodule)
+
 # The submodule, not `guard.redact` the function that guard/__init__ exports under the same name.
-_redact = importlib.import_module("hadavin_sdk.guard.redact")
+_redact = sys.modules["hadavin_sdk.guard.redact"]
 
 # Bump whenever guard/redact.py PATTERNS or the sweep rules change (a test pins the hashes below).
 REGEX_VERSION = "1"

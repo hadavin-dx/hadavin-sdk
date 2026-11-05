@@ -510,37 +510,35 @@ def test_old_qualified_line_rejected(tmp_path):
         assert_qualified(reg, "test-agent")
 
 
-def pilot_config(tmp_path, **backends):
-    from tests.test_k3_pilot_env import pilot_cfg
-
-    root = pilot_cfg(tmp_path)
-    if backends:
-        set_backends(root, **backends)
-    return root
-
-
-def test_pilot_config_without_redactor_refused(tmp_path):
-    from hadavin_sdk.config import ConfigError, load_config
-
-    with pytest.raises(ConfigError, match="redactor"):
-        load_config(pilot_config(tmp_path))
-
-
-@pytest.mark.parametrize("env", ["pilot", "prod"])
-def test_live_config_with_named_redactor_loads(tmp_path, env):
-    from hadavin_sdk.config import ConfigError, load_config
+def pilot_config(tmp_path, env="pilot", redactor=None):
+    """The K3 pilot config (it names the redactor), with the redactor entry replaced or removed."""
     from tests.test_k3_pilot_env import pilot_cfg
 
     root = pilot_cfg(tmp_path, env=env)
-    set_backends(root, redactor={"kind": "regex"})
-    try:
-        cfg = load_config(root)
-    except (
-        ConfigError
-    ) as exc:  # prod has its own refusals (anchor, signer); the redactor must not be one
-        assert "redactor" not in str(exc)
-    else:
-        assert cfg.backends.explicit >= {"redactor"}
+    path = root / "config.yaml"
+    cfg = yaml.safe_load(path.read_text(encoding="utf-8"))
+    del cfg["backends"]["redactor"]
+    if redactor is not None:
+        cfg["backends"]["redactor"] = redactor
+    path.write_text(yaml.safe_dump(cfg), encoding="utf-8")
+    return root
+
+
+@pytest.mark.parametrize("env", ["pilot", "prod"])
+def test_pilot_config_without_redactor_refused(tmp_path, env):
+    from hadavin_sdk.config import ConfigError, load_config
+
+    with pytest.raises(ConfigError, match=r"redactor: not named"):
+        load_config(pilot_config(tmp_path, env=env))
+
+
+def test_pilot_config_with_redactor_named_loads(tmp_path):
+    from hadavin_sdk.config import load_config
+
+    cfg = load_config(pilot_config(tmp_path, redactor={"kind": "regex"}))
+    assert "redactor" in cfg.backends.explicit
+    cfg = load_config(pilot_config(tmp_path / "bare", redactor="regex"))
+    assert cfg.backends.redactor.kind == "regex"
 
 
 def test_dev_config_without_redactor_still_loads(tmp_path):
