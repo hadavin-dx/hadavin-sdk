@@ -1269,3 +1269,13 @@
 | BL-core-LK-r1-cor-COR-LK-1 | LK | MAJOR | see report | OPEN | reviews/lookalike-round1-correctness.md | 6772704 |
 | BL-core-LK-r1-cor-COR-LK-2 | LK | MAJOR | see report | OPEN | reviews/lookalike-round1-correctness.md | 6772704 |
 | BL-core-LK-r1-cor-COR-LK-3 | LK | MAJOR | see report | OPEN | reviews/lookalike-round1-correctness.md | 6772704 |
+| BL-core-P1-r7-adv-ADV-R7-1 | P1 | MAJOR | see report | OPEN | reviews/P1-round7-adversarial.md | 8d56284 |
+| BL-core-P1-r7-adv-ADV-R7-2 | P1 | MAJOR | see report | OPEN | reviews/P1-round7-adversarial.md | 8d56284 |
+| BL-core-P1-r7-adv-ADV-R7-3 | P1 | MAJOR | see report | OPEN | reviews/P1-round7-adversarial.md | 8d56284 |
+| BL-core-P1-r7-adv-ADV-R7-4 | P1 | MAJOR | see report | OPEN | reviews/P1-round7-adversarial.md | 8d56284 |
+| BL-core-P1-r7-adv-ADV-R7-5 | P1 | MAJOR | see report | OPEN | reviews/P1-round7-adversarial.md | 8d56284 |
+| BL-core-P1-r7-adv-ADV-R7-6 | P1 | MAJOR | see report | OPEN | reviews/P1-round7-adversarial.md | 8d56284 |
+| BL-core-P3a-r8-adv-ADV-R8-1 | P3a | MAJOR | see report | OPEN | reviews/P3a-round8-adversarial.md | ee96dbc |
+| BL-core-P3a-r8-adv-ADV-R8-2 | P3a | MAJOR | see report | OPEN | reviews/P3a-round8-adversarial.md | ee96dbc |
+| BL-core-P3a-r8-adv-ADV-R8-3 | P3a | MAJOR | see report | OPEN | reviews/P3a-round8-adversarial.md | ee96dbc |
+| BL-core-P3a-r8-adv-ADV-R8-4 | P3a | MAJOR | see report | OPEN | reviews/P3a-round8-adversarial.md | ee96dbc |
