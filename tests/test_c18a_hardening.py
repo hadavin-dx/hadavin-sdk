@@ -143,6 +143,18 @@ def test_hostile_module_and_name_cannot_break_the_handler():
     assert sm(hostile("x")) == "Hostile"  # trust check failed -> withheld, nothing raised
 
 
+def test_hostile_class_name_cannot_break_the_handler():
+    from hadavin_sdk.guard.safe_message import with_class
+
+    class Meta(type):
+        @property
+        def __name__(cls):  # type: ignore[override]
+            raise RuntimeError("boom")
+
+    hostile = Meta("X", (Exception,), {"__module__": "hadavin_sdk.x"})
+    assert with_class(hostile("x"), "text") == "Exception: text"
+
+
 def test_class_name_is_sanitised():
     evil = type(
         "Evil\nerror_kind=Fake" + ESC + "[31m", (Exception,), {"__module__": "hadavin_sdk.x"}
