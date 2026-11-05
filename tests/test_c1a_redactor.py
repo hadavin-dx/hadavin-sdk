@@ -1067,10 +1067,13 @@ def test_session_public_api_for_a_second_kind():
     assert s.issue("IBAN", IBAN) == "<IBAN_1>"
     assert (s.original_of("<EMAIL_2>"), s.original_of("<EMAIL_9>")) == ("b@example.com", None)
     assert s.size == 3 and s.issued("<IBAN_1>")
-    assert isinstance(s.snapshot(), dict) and s.absorb(
+    assert isinstance(s.snapshot(), dict)
+    assert (
+        r.mask("a@example.com", s) == "<EMAIL_1>"
+    )  # the regex kind now holds an engine for this session
+    assert s.absorb(
         {**s.snapshot(), "<EMAIL_3>": "c@example.com"}
-    )
-    # and the regex kind keeps working on a session another writer changed
+    )  # another writer grows the mapping
     assert r.mask("a@example.com d@example.com", s) == "<EMAIL_1> <EMAIL_4>"
     assert s.lock is not s.exclusive and isinstance(s.cache, dict)
 
@@ -1112,7 +1115,7 @@ def test_close_forgets_originals_in_every_cache_poisons_the_session_and_is_a_con
         )  # the sweep now compiles finders that hold the originals
         assert in_re_cache("zedperson") and redact._standalone.cache_info().currsize > 0
     assert s.closed
-    assert not in_re_cache("zed.person") and redact._standalone.cache_info().currsize == 0
+    assert not in_re_cache("zedperson") and redact._standalone.cache_info().currsize == 0
     assert s.snapshot() == {} and s.counts == {}
     for call in (
         lambda: r.mask("new@example.com", s),
@@ -1276,19 +1279,25 @@ def _closed_session():
 
 
 def test_keyboard_interrupt_propagates_without_the_text_in_its_frames(monkeypatch):
+    import types
+
     secret = "dave.private@example.com"  # noqa: S105 - a fake address
     redact = _redact_mod()
 
-    def interrupt(self, text):
+    def interrupt(*args):
         raise KeyboardInterrupt
 
-    monkeypatch.setattr(redact._Redactor, "find", interrupt)
+    # Raised from inside guard/redactor.py (the escape removal), whose frames hold the input text.
+    monkeypatch.setattr(redact, "_ANSI", types.SimpleNamespace(sub=interrupt))
     r, s, _ = kit()
     with pytest.raises(KeyboardInterrupt) as info:
-        r.mask(f"hello {secret}", s)
+        r.mask(f"hello {secret} \x1b[0m", s)
+    seen = 0
     for frame in _frames_of(info.value):
         if frame.f_code.co_filename.replace(chr(92), "/").endswith("guard/redactor.py"):
+            seen += 1
             assert secret not in repr(frame.f_locals), frame.f_code.co_name
+    assert seen >= 1
     assert s.size == 0  # and the session is usable afterwards
     monkeypatch.undo()
     assert r.mask(f"hello {secret}", s) == "hello <EMAIL_1>"
