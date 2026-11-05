@@ -28,7 +28,7 @@ It finds the installed EGM plugin and sets `model:` in every skill and agent fil
 ```
 grep -rh "^model:" ~/.claude/plugins/*/egm* 2>/dev/null | sort | uniq -c
 ```
-Expected: 3 lines of `claude-opus-5-5` and the rest `claude-sonnet-5-5`, no `inherit`. If a plugin update later restores `inherit`, run the script again.
+Expected: `claude-opus-5-5` only on egm-brainstorm, egm-draft and egm-resolve (3 per plugin copy), everything else `claude-sonnet-5-5`, no `inherit`. The script patches every copy it finds (Claude, Cursor and distribution folders). Start a NEW session after patching: agents already loaded keep their old model. If a plugin update later restores `inherit`, run the script again.
 
 ## Prompt to paste into the cloud session (short form)
 > Follow `handover/MODEL-ROUTING.md` exactly. First run `python3 handover/tools/egm_model_patch.py` and show me the grep check. From now on: this session runs on Sonnet 5.5; Opus 5.5 only for `egm:egm-brainstorm`, `egm:egm-draft` and `egm:egm-resolve`; Sonnet 5.5 for builders, evidence runners, all reviewers and every other agent; Haiku 5.5 only for plain lookups (list, grep, read a CI log, mechanical format); set the `model` field explicitly on every Agent call; never use a cheaper model for review, money, redaction, security or merge decisions; to move any step to a cheaper model first compare 5 real inputs against Sonnet and record the result in the ticket. Report which model ran each agent in every evidence file.

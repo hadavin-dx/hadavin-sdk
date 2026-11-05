@@ -7,7 +7,7 @@ started on Opus would run every reviewer on Opus. The studio routing (see handov
   Sonnet 5.5: every other EGM skill (review, review-loop, drift-report, bootstrap) and every egm reviewer agent
 Usage: python3 egm_model_patch.py [PLUGIN_ROOT ...]   (default: every EGM plugin folder found under ~/.claude/plugins)
 Run it once at the start of a session, before the first EGM call; it is idempotent. It edits only the `model:` line in
-the frontmatter of skills/*/SKILL.md, agents/*.md and .claude-plugin/agents/*.md and prints every change.
+the frontmatter of skills/*/SKILL.md, agents/*.md, .claude-plugin/agents/*.md and .cursor-plugin/agents/*.md and prints every change.
 """
 import re
 import sys
@@ -20,7 +20,7 @@ OPUS_SKILLS = {"egm-brainstorm", "egm-draft", "egm-resolve"}
 
 def find_roots() -> list[Path]:
     base = Path.home() / ".claude" / "plugins"
-    roots = {p.parent.parent for p in base.rglob("skills/egm-brainstorm/SKILL.md")}
+    roots = {p.parent.parent.parent for p in base.rglob("skills/egm-brainstorm/SKILL.md")}
     return sorted(roots)
 
 
@@ -54,7 +54,7 @@ def main() -> int:
         return 1
     changed = 0
     for root in roots:
-        files = list(root.glob("skills/*/SKILL.md")) + list(root.glob("agents/*.md")) + list(root.glob(".claude-plugin/agents/*.md"))
+        files = list(root.glob("skills/*/SKILL.md")) + list(root.glob("agents/*.md")) + list(root.glob(".claude-plugin/agents/*.md")) + list(root.glob(".cursor-plugin/agents/*.md"))
         for f in files:
             line = patch(f)
             if line:
