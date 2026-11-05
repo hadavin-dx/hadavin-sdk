@@ -171,7 +171,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | r7-P4d-cor | round 7 correctness review of tickets/P4d.md rev 8 | sonnet (claude-sonnet-5-5) | now | +45min | REPORTED | save report, ledger rows |
 | r4-P4a-adv | round 4 adversarial review of tickets/P4a.md rev 4 | sonnet (claude-sonnet-5-5) | now | +45min | REPORTED | save report, ledger rows |
 | r4-P4a-cor | round 4 correctness review of tickets/P4a.md rev 4 | sonnet (claude-sonnet-5-5) | now | +45min | REPORTED | save report, ledger rows |
-| rev8-P2a | author P2a ticket rev 8 (round 6 resolve) | sonnet (claude-sonnet-5-5) | now | +50min | now | running | collect, save, resolve |
+| rev8-P2a | author P2a ticket rev 8 (round 6 resolve) | sonnet (claude-sonnet-5-5) | now | +50min | now | REPORTED | collect, save, resolve |
 | r3-P2d-adv | round 3 adversarial review of tickets/P2d.md rev 3 | sonnet (claude-sonnet-5-5) | now | +50min | now | REPORTED | collect, save, resolve |
 | r3-P2d-cor | round 3 correctness review of tickets/P2d.md rev 3 | sonnet (claude-sonnet-5-5) | now | +50min | now | REPORTED | collect, save, resolve |
 | r7-P3a-adv | round 7 review of tickets/P3a.md rev 8 | sonnet (claude-sonnet-5-5) | now | +45min | now | REPORTED | collect, save |
@@ -180,3 +180,5 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | rev4-P2d | author P2d ticket rev 4 (round 3 resolve 0cdc5ab) | sonnet (claude-sonnet-5-5) | now | +60min | now | running | collect, verify, commit, round 4 |
 | r6-P1-adv | round 6 review of tickets/P1.md rev 7 (99828b6) | sonnet (claude-sonnet-5-5) | now | +50min | now | REPORTED | collect, save, resolve |
 | r6-P1-cor | round 6 review of tickets/P1.md rev 7 (99828b6) | sonnet (claude-sonnet-5-5) | now | +50min | now | running | collect, save, resolve |
+| r7-P2a-adv | round 7 review of tickets/P2a.md rev 8 | sonnet (claude-sonnet-5-5) | now | +50min | now | running | collect, save, resolve |
+| r7-P2a-cor | round 7 review of tickets/P2a.md rev 8 | sonnet (claude-sonnet-5-5) | now | +50min | now | running | collect, save, resolve |
