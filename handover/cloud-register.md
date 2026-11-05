@@ -66,9 +66,12 @@ Order 5 of LEAD-ORDERS.md. The round 2 resolve reports are reviews/<P>-round2-re
 |---|---|---|---|---|---|---|
 | rev3-P3a-correctness | egm:egm-codebase-details on tickets/P3a.md rev 4 | sonnet (claude-sonnet-5-5) | 16:39Z | 17:09Z | running | save reviews/P3a-round3-correctness.md |
 | rev3-P3a-adversarial | egm:egm-design on tickets/P3a.md rev 4 | sonnet (claude-sonnet-5-5) | 16:39Z | 17:09Z | running | save reviews/P3a-round3-adversarial.md |
-| rev3-P4d-correctness | egm:egm-codebase-details on tickets/P4d.md rev 4 (b215b50) | sonnet (claude-sonnet-5-5) | 16:40Z | 17:10Z | running | save reviews/P4d-round3-correctness.md |
+| rev3-P4d-correctness (SPAWNED LATE ~16:55Z; the earlier row was written before the agent existed: my mistake) | egm:egm-codebase-details on tickets/P4d.md rev 4 (b215b50) | sonnet (claude-sonnet-5-5) | 16:40Z | 17:10Z | running | save reviews/P4d-round3-correctness.md |
 | rev3-P4d-adversarial | egm:egm-design on tickets/P4d.md rev 4 | sonnet (claude-sonnet-5-5) | 16:40Z | 17:10Z | running | save reviews/P4d-round3-adversarial.md |
 | rev3-P2a-correctness | egm:egm-codebase-details on tickets/P2a.md rev 4 (6d84ad6) | sonnet (claude-sonnet-5-5) | 16:41Z | 17:11Z | running | save reviews/P2a-round3-correctness.md |
 | rev3-P2a-adversarial | egm:egm-design on tickets/P2a.md rev 4 | sonnet (claude-sonnet-5-5) | 16:41Z | 17:11Z | running | save reviews/P2a-round3-adversarial.md |
 | rev3-P1-correctness | egm:egm-codebase-details on tickets/P1.md rev 4 (221513b) | sonnet (claude-sonnet-5-5) | 16:41Z | 17:11Z | running | save reviews/P1-round3-correctness.md |
 | rev3-P1-adversarial | egm:egm-design on tickets/P1.md rev 4 | sonnet (claude-sonnet-5-5) | 16:41Z | 17:11Z | running | save reviews/P1-round3-adversarial.md |
+
+## Truth table at the time of STATUS 'READY FOR COMPACT'
+Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acecb19dd55a5e570. Finished and saved: P3a r3 adv+cor, P2a r3 adv+cor, P1 r3 adv+cor. Authors idle (resumable): P1 aaaeea25aaef763ea, P2a a64cfd8eaa8b64a3a, P3a a7dc068fb47091bf0, P4d a8190d79eb2c7579c.

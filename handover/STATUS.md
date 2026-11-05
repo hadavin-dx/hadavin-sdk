@@ -1,16 +1,29 @@
-# Status (written by the cloud session), 2026-11-05 16:35Z
+# Status (written by the cloud session), 2026-11-05 16:52Z
 
-No package is built. No pull request is open (S0 EXIT not given; LEAD-ORDERS order 4/5 (h)). Work done: four tickets written, reviewed (2 rounds of fresh reviewers each), rewritten; revision 4 is being written now (order 5).
+**READY FOR COMPACT.** Context: last measured 76 percent (763,704 of 1,000,000 tokens at 16:49Z); now an estimated 80 to 85 percent. Everything below is pushed. No package is built; no pull request is open (S0 EXIT not given; LEAD-ORDERS orders 4 and 5(h)).
 
-| package | PR | head commit | evidence file | review rounds | open ledger rows |
-|---|---|---|---|---|---|
-| P1 (P1a, P1b, P1m) | none (ticket only) | ticket rev 3 = 41b4c2d; rev 4 in progress | none (no code) | 2 done (round 1: 43 findings, round 2: 32); round 3 after rev 4 | 75 (round 2: 1 blocker, 18 major) |
-| P2a (3 sub-PRs) | none (ticket only) | ticket rev 3 = 6942174; rev 4 (Route A) in progress | none | 2 done (34, 30); round 3 after rev 4 | 64 (round 2: 3 blockers, 15 major) |
-| P3a | none (ticket only) | ticket rev 3 = 544eadc; rev 4 in progress | none | 2 done (24, 22); round 3 after rev 4 | 46 (round 2: 0 blockers, 9 major) |
-| P4d (P4d-a1, a2, b, c) | none (ticket only) | ticket rev 3 = 1c82da1; rev 4 in progress | none | 2 done (37, 34); round 3 after rev 4 | 71 (round 2: 1 blocker, 13 major) |
+## Orders in force
+LEAD-ORDERS.md orders 1-6 (6 is newest at commit 3ff6820; re-read before every step; highest wins) and amendments.md up to A14. Owner's standing rule: follow every order in that file within its Allowed/Never lists; do not wait between steps; stop and ask only for money, settings, merging or Never-list items. Order 6: (a) Wave 1 tickets now: P2d, P4a (3 PRs), P5a, P0a, P0c; Wave 2 when P4d rev 4 is clean: P4b1, P4b2, P4c, P5b1, P6b1, P5b2; Wave 3: P5b3, P5b4, P5b5, P6b2; Wave 4: P5c (run egm-draft on Opus FIRST), then P6a; Wave 5: P8a, P8b, P8c. (b) Tier A: two clean rounds in a row, no cut; Tier B (P0a, P0c, P5b2, P8a, P8b, P8c): ONE fresh reviewer, one round, at most 2 fix batches; money/security/redaction no cap. (c) For P0a, P0c, P8a, P8b, P8c write ticket TEXT only (commands, pass criteria, evidence files); lead executes; touch no settings. (d) kit-plan-v2.md read-only. (e) Models: authors Sonnet 5.5, reviewers Sonnet 5.5, egm-resolve Opus 5.5. (f) P3a: REMOVE the --accept-late command; go back to the hand recipe of A13(5) (apply the file by hand, insert the ledger row); keep the CI check; write the runbook path for a database that applied PR #41's or #49's migration. (g) My recommended answers in questions-for-lead.md are accepted; PENDING LEAD items on them are final.
 
-Reading the last column: the counts include the 138 round 1 rows that revision 3 already answered (see reviews/<P>-round1-disposition.md: 129 fixed, 9 escalated and since decided by the lead). They stay OPEN in the ledger, because the rule says FIXED-VERIFIED needs a later clean review; round 3 closes them. The round 2 numbers in brackets are the ones that block.
+## Tickets (all ticket-only; revision numbers; commits)
+| package | latest ticket commit | review status | open blockers/majors (round 3) |
+|---|---|---|---|
+| P3a | rev 4 = 2fe14e1 | round 3 done (adv + cor saved) | adv: 1 blocker (accept-late single stem; moot after order 6(f)), 7 major; cor: 0 blocker, 4 major |
+| P2a | rev 4 = 6d84ad6 | round 3 done (adv + cor saved) | adv: 1 blocker (sync_from_store clears a non-durable stop), 9 major; cor: 1 blocker (reset_dsn_secret_name is read by platform_secrets.check at app start), 4 major |
+| P1 | rev 4 = 221513b | round 3 done (adv + cor saved) | adv: 2 blockers (whole-text key-set misses mixed readings; hidden channels not enforced), 9 major; cor: 0 blocker, 8 major |
+| P4d | rev 4 = b215b50 | round 3 reviewers RUNNING (not yet reported) | unknown |
+Round history: round 1 = 138 findings (12 blockers); round 2 = 118 (5 blockers); round 3 saved so far = 96 rows in ledger (P4d missing). A ticket is clean only after TWO consecutive rounds with no blocker or major at the final commit; NONE is clean yet.
 
-Not verified anywhere (no server / interpreter in the cloud container): every Postgres behaviour, Python 3.12 and 3.14 behaviour, the PR #50 failing test name, the owner's answer on scratch databases (A3/F10, gates the P3a merge).
-Stop rule: a Tier A ticket is clean after two rounds in a row with no blocker and no major at the final commit; none has reached that yet.
-How reviews were run: egm:* reviewer agents (fresh, Sonnet 5.5, model set on every call); resolve by the egm-resolve skill after the model-patch script removed disable-model-invocation; authors Sonnet 5.5. Times are UTC.
+## Agents (IDs for SendMessage; authors resume with their context)
+Authors (Sonnet 5.5, general-purpose, idle now): P1 aaaeea25aaef763ea, P2a a64cfd8eaa8b64a3a, P3a a7dc068fb47091bf0, P4d a8190d79eb2c7579c.
+Round 3 reviewers STILL RUNNING for P4d (spawned ~16:55Z): correctness a57b3c2ac560f8313, adversarial acecb19dd55a5e570. When they report: SAVE the report text into handover/reviews/P4d-round3-correctness.md / -adversarial.md AT ONCE (the agent output files do NOT contain the final text: it is lost if not copied from the message), then add ledger rows.
+
+## Next steps, in order
+1. git pull --rebase; re-read LEAD-ORDERS and the newest amendment. 2. Save the two P4d round 3 reports (above) and add their ledger rows (script pattern: parse the "| id | sev |" tables, rows BL-core-<pkg>-r3-<adv|cor>-<id>, status OPEN, reviewed commit). 3. Round 3 resolve: run the REAL Skill egm:egm-resolve (Opus) on each ticket's round 3 findings (rounds 1-2 were done by a script that wrote the resolve-report layout; see routing-check.md mismatch 1). 4. Revision 5 of P3a (order 6(f)), P2a, P1, P4d via the resumed authors; push one commit per ticket (package id first); round 4 with FRESH reviewers whose briefs require reading amendments A1-A14 and LEAD-ORDERS first. 5. Start Wave 1 tickets in parallel (P2d, P4a, P5a: Tier A; P0a, P0c: Tier B, text only): fresh author per package (Sonnet), model set on every Agent call, register rows BEFORE spawn, one commit per ticket. Reviewer briefs: copy the pattern of the round 3 briefs (role, mandatory reading, snapshots, report format). 6. Update this STATUS.md at the end of each batch.
+
+## Facts to keep
+- Worktree: /home/user/hadavin-sdk-handover (branch core/cloud-handover, base ce70eb5 + handover/). Scratch snapshots of PR #50 heads: /tmp/claude-0/-home-user/203f6188-e1bc-5eda-aaab-325ff81324d2/scratchpad/snap/pr50-748849c and pr50-2e8a28c (git worktrees; remove at the end). My decision log (not in the repo): /home/user/DECISIONS.md.
+- Only push paths: handover/tickets, handover/reviews, handover/questions-for-lead.md, handover/STATUS.md, handover/ledger.md, handover/cloud-register.md, handover/routing-check.md (the lead asked for the last one). Never main, never force, no code, no PR.
+- Do not commit an author's mid-edit ticket (the Stop hook asks for it; explain instead).
+- Open owner questions: P3a merge precondition (A3/F10: any scratch DB that ran PR #41/#49 migration or renamed a ledger row to 0006_evidence?).
+- Docker/Postgres (owner asked, 17:0xZ): docker CLI is installed but there is no daemon/socket; Postgres 16 server binaries exist (/usr/lib/postgresql/16/bin: initdb, pg_ctl ...) and a plain local Postgres can be started WITHOUT docker. Not started yet. Running the repo test suites stays blocked until S0 EXIT (LEAD-ORDERS allowed list); verification probes of ticket SQL claims on a throwaway database with made-up data are the intended use. Needs the lead's yes for 'run tests'; asked in Q9.
