@@ -117,3 +117,8 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | probe-design | model probe: egm:egm-design | sonnet | now | +2min | REPORTED, see evidence/model-probe.md | same |
 | probe-cod | model probe: egm:egm-codebase-details | sonnet | now | +2min | REPORTED, see evidence/model-probe.md | same |
 | probe-haiku | model probe: general-purpose, model haiku | haiku | now | +2min | REPORTED, see evidence/model-probe.md | same |
+| r1-P2d-adv | round 1 adversarial review of tickets/P2d.md rev 1, egm:egm-design | sonnet (claude-sonnet-5-5) | 18:00Z | +30min | running | save report, ledger rows |
+| r1-P2d-cor | round 1 correctness review of tickets/P2d.md rev 1, egm:egm-codebase-details | sonnet (claude-sonnet-5-5) | 18:00Z | +30min | running | save report, ledger rows |
+| r1-P4a-adv | round 1 adversarial review of tickets/P4a.md rev 1 (bd061b3), egm:egm-design | sonnet (claude-sonnet-5-5) | 18:00Z | +35min | running | save report, ledger rows |
+| r1-P4a-cor | round 1 correctness review of tickets/P4a.md rev 1, egm:egm-codebase-details | sonnet (claude-sonnet-5-5) | 18:00Z | +35min | running | save report, ledger rows |
+| r1-P5b1-cor | round 1 correctness review of P5b1 (30fd0e8), egm:egm-codebase-details | sonnet (claude-sonnet-5-5) | 18:00Z | +35min | running (restart of the NOT STARTED row) | save report, ledger rows |
