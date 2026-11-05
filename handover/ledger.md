@@ -1342,3 +1342,8 @@
 | BL-core-lookalike-r6-cor-COR-LK6-3 | lookalike | MAJOR | see report | OPEN | reviews/lookalike-round6-correctness.md | 1677d72 |
 | BL-core-lookalike-r6-cor-COR-LK6-4 | lookalike | MAJOR | see report | OPEN | reviews/lookalike-round6-correctness.md | 1677d72 |
 | BL-core-lookalike-r6-cor-COR-LK6-5 | lookalike | MAJOR | see report | OPEN | reviews/lookalike-round6-correctness.md | 1677d72 |
+| BL-core-P1-r10-adv-ADV-R10-1 | P1 | MAJOR | see report | OPEN | reviews/P1-round10-adversarial.md | d055d28 |
+| BL-core-P1-r10-adv-ADV-R10-2 | P1 | MAJOR | see report | OPEN | reviews/P1-round10-adversarial.md | d055d28 |
+| BL-core-P1-r10-adv-ADV-R10-3 | P1 | MAJOR | see report | OPEN | reviews/P1-round10-adversarial.md | d055d28 |
+| BL-core-P1-r10-adv-ADV-R10-4 | P1 | MAJOR | see report | OPEN | reviews/P1-round10-adversarial.md | d055d28 |
+| BL-core-P1-r10-adv-ADV-R10-5 | P1 | MAJOR | see report | OPEN | reviews/P1-round10-adversarial.md | d055d28 |

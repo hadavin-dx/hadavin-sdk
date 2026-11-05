@@ -228,7 +228,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | rev11-P1-author | author rewrite tickets/P1.md rev 11 from reviews/P1-round9-resolve.md | sonnet (claude-sonnet-5-5) | 23:06Z | +45min | REPORTED | verify, push, round 10 reviewers |
 | r6-LK-adv | round 6 adversarial review of designs/lookalike-leak.md draft 6 | sonnet (claude-sonnet-5-5) | now | +45min | REPORTED | save report, ledger rows |
 | r6-LK-cor | round 6 correctness review of designs/lookalike-leak.md draft 6 | sonnet (claude-sonnet-5-5) | now | +45min | REPORTED-INCOMPLETE (reviewer lost context) | save report, ledger rows |
-| r10-P1-adv | round 10 adversarial review of tickets/P1.md rev 11 (d055d28) | sonnet (claude-sonnet-5-5) | now | +45min | running | save report, ledger rows |
+| r10-P1-adv | round 10 adversarial review of tickets/P1.md rev 11 (d055d28) | sonnet (claude-sonnet-5-5) | now | +45min | REPORTED | save report, ledger rows |
 | r10-P1-cor | round 10 correctness review of tickets/P1.md rev 11 (d055d28) | sonnet (claude-sonnet-5-5) | now | +45min | running | save report, ledger rows |
 | r7-P4a-adv | round 7 adversarial review of tickets/P4a.md rev 7 (b782b8d) | sonnet (claude-sonnet-5-5) | now | +45min | running | save report, ledger rows |
 | r7-P4a-cor | round 7 correctness review of tickets/P4a.md rev 7 (b782b8d) | sonnet (claude-sonnet-5-5) | now | +45min | running | save report, ledger rows |
