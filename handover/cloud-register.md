@@ -159,7 +159,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | rev3-P2d | author rewrite tickets/P2d.md rev 3 from reviews/P2d-round2-resolve.md | sonnet (claude-sonnet-5-5) | now | +50min | running | verify, explicit add, commit, push, round 3 reviewers |
 | r3-P4a-adv | round 3 adversarial review of tickets/P4a.md rev 3 | sonnet (claude-sonnet-5-5) | now | +45min | REPORTED | save report, ledger rows |
 | r3-P4a-cor | round 3 correctness review of tickets/P4a.md rev 3 | sonnet (claude-sonnet-5-5) | now | +45min | REPORTED | save report, ledger rows |
-| r6-P3a-adv | round 6 adversarial review of tickets/P3a.md rev 7 (3c9fe6a) | sonnet (claude-sonnet-5-5) | now | +45min | running | save report, ledger rows |
+| r6-P3a-adv | round 6 adversarial review of tickets/P3a.md rev 7 (3c9fe6a) | sonnet (claude-sonnet-5-5) | now | +45min | REPORTED | save report, ledger rows |
 | r6-P3a-cor | round 6 correctness review of tickets/P3a.md rev 7 (3c9fe6a) | sonnet (claude-sonnet-5-5) | now | +45min | running | save report, ledger rows |
 | rev8-P4d | author P4d ticket rev 8 (round 6 resolve f360ed0) | sonnet (claude-sonnet-5-5) | now | +45min | running | verify, explicit add, commit, push, launch round 7 |
 | rev4-P4a | author P4a ticket rev 4 (round 3 resolve 9f1ea43) | sonnet (claude-sonnet-5-5) | now | +45min | running | verify, explicit add, commit, push, launch round 4 |

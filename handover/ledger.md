@@ -1010,3 +1010,12 @@
 | BL-core-p4a-r3-cor-R3-12 | P4A | MINOR | see report | OPEN | reviews/P4a-round3-correctness.md | 72194a2 |
 | BL-core-p4a-r3-cor-R3-13 | P4A | NIT | see report | OPEN | reviews/P4a-round3-correctness.md | 72194a2 |
 | BL-core-p4a-r3-cor-R3-14 | P4A | NIT | see report | OPEN | reviews/P4a-round3-correctness.md | 72194a2 |
+| BL-core-p3a-r6-adv-R6-1 | P3A | MAJOR | see report | OPEN | reviews/P3a-round6-adversarial.md | 3c9fe6a |
+| BL-core-p3a-r6-adv-R6-2 | P3A | MAJOR | see report | OPEN | reviews/P3a-round6-adversarial.md | 3c9fe6a |
+| BL-core-p3a-r6-adv-R6-3 | P3A | MAJOR | see report | OPEN | reviews/P3a-round6-adversarial.md | 3c9fe6a |
+| BL-core-p3a-r6-adv-R6-4 | P3A | MINOR | see report | OPEN | reviews/P3a-round6-adversarial.md | 3c9fe6a |
+| BL-core-p3a-r6-adv-R6-5 | P3A | MINOR | see report | OPEN | reviews/P3a-round6-adversarial.md | 3c9fe6a |
+| BL-core-p3a-r6-adv-R6-6 | P3A | MINOR | see report | OPEN | reviews/P3a-round6-adversarial.md | 3c9fe6a |
+| BL-core-p3a-r6-adv-R6-7 | P3A | MINOR | see report | OPEN | reviews/P3a-round6-adversarial.md | 3c9fe6a |
+| BL-core-p3a-r6-adv-R6-8 | P3A | MINOR | see report | OPEN | reviews/P3a-round6-adversarial.md | 3c9fe6a |
+| BL-core-p3a-r6-adv-R6-9 | P3A | NIT | see report | OPEN | reviews/P3a-round6-adversarial.md | 3c9fe6a |
