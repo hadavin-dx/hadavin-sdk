@@ -1323,3 +1323,5 @@
 | BL-core-P1-r9-adv-ADV-R9-5 | P1 | MAJOR | see report | OPEN | reviews/P1-round9-adversarial.md | 82b477e |
 | BL-core-P1-r9-cor-COR-R9-1 | P1 | MAJOR | see report | OPEN | reviews/P1-round9-correctness.md | 82b477e |
 | BL-core-P1-r9-cor-COR-R9-2 | P1 | MAJOR | see report | OPEN | reviews/P1-round9-correctness.md | 82b477e |
+| BL-core-lookalike-r5-cor-COR-LK5-1 | lookalike | MAJOR | see report | OPEN | reviews/lookalike-round5-correctness.md | 2af179b |
+| BL-core-lookalike-r5-cor-COR-LK5-2 | lookalike | MAJOR | see report | OPEN | reviews/lookalike-round5-correctness.md | 2af179b |

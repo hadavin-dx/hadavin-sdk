@@ -220,7 +220,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | r9-P1-cor | round 9 correctness review of tickets/P1.md rev 10 (head 82b477e) | sonnet (claude-sonnet-5-5) | 22:38Z | +45min | REPORTED-INCOMPLETE (context compacted, no usable findings; re-run as r9b) | save report, ledger rows |
 | r9b-P1-cor | round 9 correctness re-run of tickets/P1.md rev 10 (head 82b477e), narrower scope | sonnet (claude-sonnet-5-5) | 22:49Z | +40min | REPORTED | save report, ledger rows |
 | r5-LK-adv | round 5 adversarial review of designs/lookalike-leak.md draft 5 | sonnet (claude-sonnet-5-5) | 22:51Z | +45min | running (aa6584094a88daf3a) | save report, ledger rows |
-| r5-LK-cor | round 5 correctness review of designs/lookalike-leak.md draft 5 | sonnet (claude-sonnet-5-5) | 22:51Z | +45min | running (a00d70fd155cce28f) | save report, ledger rows |
+| r5-LK-cor | round 5 correctness review of designs/lookalike-leak.md draft 5 | sonnet (claude-sonnet-5-5) | 22:51Z | +45min | REPORTED | save report, ledger rows |
 | r6-P4a-resolve | round 6 resolve of tickets/P4a.md using reviews/P4a-round6-adversarial.md + -correctness.md | opus (claude-opus-5-5) | 22:52Z | +45min | REPORTED | verify, push, rev author |
 | r9-P1-resolve | round 9 resolve of tickets/P1.md rev 10 (adv ADV-R9-1..19, cor COR-R9-1..10) | opus (claude-opus-5-5) | 22:56Z | +50min | running (a072aace00787cd03) | verify, push, rev 11 author |
 | rev7-P4a-author | author rewrite tickets/P4a.md rev 7 from reviews/P4a-round6-resolve.md | sonnet (claude-sonnet-5-5) | 22:58Z | +40min | running (a19bdb79fa0dcedbe) | verify, push, round 7 reviewers |
