@@ -102,7 +102,7 @@ def test_one_failing_step_lets_the_others_run_and_exits_1(app, caplog):
     state = app.store.get_tick_state("first")
     assert state.last_error.startswith("RuntimeError: ") and secret not in state.last_error
     assert state.last_ok_at is None and app.store.get_tick_state("second").last_error is None
-    assert "step=first error_kind=RuntimeError" in caplog.text and secret not in caplog.text
+    assert "step=first error=RuntimeError:" in caplog.text and secret not in caplog.text
     assert "failed=first" in caplog.text
 
 

@@ -25,7 +25,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Any
 
-from hadavin_sdk.guard.redact import redact
+from hadavin_sdk.guard.safe_message import safe_message
 from hadavin_sdk.models import AuditEvent, RunState, TickState
 from hadavin_sdk.runtime.runs import IllegalTransition, advance
 from hadavin_sdk.store.protocol import StaleState, is_connectivity_error
@@ -206,16 +206,6 @@ def _safe_log(msg: str, *args: object) -> None:
 _PROBE = "heartbeat"  # the tick_state key read once, to find out whether the store answers
 
 
-_DRIVERS = ("psycopg", "urllib", "http", "botocore", "boto3", "socket", "ssl")
-
-
-def _message(exc: Exception) -> str:
-    """Redacted and one line. Driver and network errors carry hosts and users: their type says enough."""
-    if type(exc).__module__.split(".")[0] in _DRIVERS or isinstance(exc, OSError):
-        return "(driver error; details withheld)"
-    return redact(str(exc)).text.replace("\n", " ")[:500]
-
-
 def _run_step(ctx: TickContext, step: TickStep) -> str:
     store = ctx.app.store
     prev, error = None, None
@@ -225,8 +215,8 @@ def _run_step(ctx: TickContext, step: TickStep) -> str:
             return SKIPPED
         step.fn(ctx)
     except Exception as exc:  # noqa: BLE001 - one step never stops the others
-        error = f"{type(exc).__name__}: {_message(exc)}"
-        _LOG.error("step=%s error_kind=%s message=%s", step.name, type(exc).__name__, _message(exc))
+        error = safe_message(exc, 500)
+        _LOG.error("step=%s error=%s", step.name, error)
     try:
         store.save_tick_state(
             TickState(
