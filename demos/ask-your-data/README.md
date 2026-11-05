@@ -80,6 +80,55 @@ other logins would lose access (`--accept-loss` to override).
   zero breached, 13 aborted (meter or kill switch), 14 a sealed run refused, 4 startup. Compare: 0 no regression, 11 regression,
   4 not comparable. Only the scripted model is connected; a live route needs the owner's yes at each budget step.
 
+## Export for the console
+
+`askdata/export.py` maps one eval run into `hadavin.demo-export/1`, the single file the demo console reads. It is
+read-only and adds no model call: ledger lines (`askdata.ledger/1`), audit events and the run's `report.json` and
+`results.jsonl` in, the export JSON out on standard output (errors go to standard error, exit 4).
+
+```
+uv run --locked --no-build --extra askdata python -m askdata.export --config askdata.yaml --run <run name> --synthetic > export.json
+```
+
+`<run name>` is a folder under `paths.runs_dir` (a name, never a path). `--synthetic` is required: it is the caller's
+statement that the run used synthetic data (the export cannot check it). The export is refused unless every ledger
+line of the run names the scripted model. `--deny-list FILE` (one term per line: other clients' names, canaries) refuses an
+export that carries any of them, without echoing the term. Every input is checked once up front and a bad one is an
+`export: ...` message with exit 4, never a traceback.
+
+Mapping: `sql_sha256` goes to a step's `args_summary`; validator rules V01 to V12 become `R-ASK-001` to `R-ASK-012`
+in `rule_id` (the contract's id shape; the reason text keeps "validator rule V03"); refusals and abstentions keep their
+reason code and fixed sentence. The scorecard carries the confident-wrong count with its one-sided 95 % upper bound,
+false-abstain, wrong-and-allowed, coverage, the hard zeros with their definitions and the verdict wording. Every count
+is derived from the `cases` list (one case per run, adversarial runs included), because the portal kit recomputes them
+that way: `n` = cases, `n_answered` = cases that expected an answer or a refusal, `confident_wrong` = those that were
+wrong and confident (listed by case id), `false_abstain` = cases that expected an answer and got none, `wrong_and_allowed`
+= among the cases whose action went through the gate, those not correct. The confident-wrong rate and bound are
+recomputed from those counts; `pass_rate`, `pass_k` and the abstention rates are the eval report's own. A report verdict
+of green (never allowed on a scripted run) or an amber the recomputed numbers contradict is exported as
+`not_demonstrated`; an aborted run is labelled aborted.
+
+What it does not claim: the model is `scripted`, the data is synthetic, the result is a smoke result and no accuracy
+number is given. Money is not applicable (a read-only tool moves none) and there are no approvals or adapter calls.
+The audit chain (`hash-chain/1`) is rebuilt at export time with the kit's recipe, with no signature and no external
+anchor: anyone who edits the file can recompute it, so it shows internal consistency, not that the source is untouched.
+`audit.events` and `verify` cover this run; the audit folder's own check covers the whole folder and is quoted in the
+readiness row.
+
+`examples/export.example.json` comes from the offline scripted run (SQLite stand-ins, no Postgres; fixed clock and ids,
+so regeneration is byte-identical and a test checks it): `python -m tests.demo_askdata.make_export_example` from the
+repo root.
+
+The kit is the judge, not a local copy of its schema: `vendor/portal-kit` is an INTERIM vendoring of kit PR
+hadavin-dx/hadavin-demos#5 at commit `f7f297a73da069153bf912ead6279983274b5cc4` (`vendor/KIT.lock` holds the per-file
+hashes and the tree hash; `README-INTERIM.md` says why it is not releasable: re-vendor from a merged kit commit with
+`portal-kit/tools/vendor.py copy` before delivery). Only the tests import it (`tests/demo_askdata/kitload.py`; a test
+checks that `askdata` and `src` never do). The committed example passes the kit's own checker: with the repo's test
+environment and `PYTHONPATH` set to `vendor/portal-kit` plus this folder, `python -m hadavin_kit.kitcheck <folder with
+export.json> --demo askdata --kit-lock vendor/KIT.lock` exits 0 (the tests run exactly that). The studio check
+`tools/core_sync_check.py --demo demos/ask-your-data --kit <kit checkout at that commit>` is clean (this demo lives in
+the core repo, so `core_copies.json` lists no copies and ignores its own folders).
+
 ## 90-second recording script (owner records; async-first)
 
 Put the caption "Staged on synthetic data" on the first screen. Say no accuracy number. Before publishing, check the

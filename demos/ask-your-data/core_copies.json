@@ -1,0 +1,11 @@
+{
+ "core_commit": "660814674ece8ad578293e5412633d796eddb96f",
+ "files": {},
+ "allowed_local": {},
+ "ignore": [
+  "askdata/",
+  "data/",
+  "db/"
+ ],
+ "note": "This demo lives inside the core repo (demos/ask-your-data); its own sources are not copies of core modules. It consumes core through the hadavin_sdk import."
+}

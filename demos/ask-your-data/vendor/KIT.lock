@@ -1,0 +1,35 @@
+{
+ "files": {
+  "console/app.css": "49833f4437ca1eb777707b64391a1586f36f4756dca796baa9d12cf68e52827d",
+  "console/app.js": "42f3000efcf2a0587d364d0630cb3cded29f4290a9fa6238ad4fbe4bd0f4cfc8",
+  "console/build_console.py": "55dc78ddca39ccd251406a8c95ef2d26526e63c6870f854a6a6cf60cb0b46326",
+  "console/chain.js": "36e9e7fe7abd4aa2f35ae32ea87ac894412cce67a7acb5add3083796f54163ad",
+  "console/index.template.html": "2d1ee8cba98e28342de40f406ac9448cf997441836ec29fc8b71c9162a595b3a",
+  "hadavin_kit/__init__.py": "f628d1660ce28e8bab41a6580e9844542f98d711601cb9d932287f77ae88a29b",
+  "hadavin_kit/chain.py": "d7a4a2d56c99ff48566a64751b998ffe26c414f3a3d1089d97b47eef7cd651fc",
+  "hadavin_kit/evalcore.py": "7fe0ce18dedbd04b718971e3576a99e3ed8e02c1b57c7007f15a0a96fc03e284",
+  "hadavin_kit/export_rules.py": "9e10b9e314a7308b671a2b77e3dddb8b264b6e8f83a888ea604685ab1c7e493d",
+  "hadavin_kit/honest.py": "3b6ed6fb8132e16760a05830773a912d2ee2b2fc1aacea20a7a91d1d56add5d6",
+  "hadavin_kit/kitcheck.py": "e8147c4dc34181be2157b505db0ffa414019c719144d264954d707480544f53b",
+  "hadavin_kit/kitsum.py": "9f20213bd628e640820f47e9a567a41ecca8f4175c28e81d7e6af1c1de5a4176",
+  "hadavin_kit/paths.py": "097733628575458abc275f69c9af46b9cd9394bbea16653d4d1375fe21694359",
+  "hadavin_kit/problems.py": "514ca95bb212ba699d1e5980ef508b5791ffa26575832b5baffba69198b9ce12",
+  "hadavin_kit/pytest_plugin.py": "de0e45c4a5a481d436b33ff550327a648a8a8e0ab560b9b51472ef0b46192145",
+  "hadavin_kit/rules_v11.py": "6f1aad83e44523c0079fef07cf9426312c2e9d15b5bd123c7ba21d524a89398e",
+  "hadavin_kit/scripted_llm.py": "0227eea5a4fe15f569e5cb8240193e727754df18f8cf39858009462d655b9f36",
+  "hadavin_kit/strict_json.py": "983c26f73cdc9f4bc3e1c8a92a152ddae99c3d4cd20663ff90918f57feef8fd6",
+  "hadavin_kit/textnorm.py": "9bcaf22ebdca990e373e238cb10adfc32dffa3a0a5fc851266aa3227c5fd0d34",
+  "hadavin_kit/validate.py": "2b22130ddc27771f7ab16a56343750c6907c5f6e6eec945d22905fd86770a24c",
+  "hadavin_kit/versioning.py": "cc74caa290d9c282df804fe2527081fc3875ecb13fed7277ecfd5bf46cc2898e",
+  "schema/demo-export.v1.json": "a7bc74af5d5111b20b0268c2d28038305e9622648c014867d19376f83a9a18e3"
+ },
+ "format": "hadavin-kit-lock/1",
+ "kit_commit": "f7f297a73da069153bf912ead6279983274b5cc4",
+ "requires": {
+  "hadavin-sdk": "hadavin-sdk @ git+https://github.com/hadavin-dx/hadavin-sdk@660814674ece8ad578293e5412633d796eddb96f",
+  "jsonschema": "jsonschema==4.26.0"
+ },
+ "schema_minor_max": 1,
+ "tree_sha256": "24153f6bbd907a5cd1a92726ad51c039a85f6cd6874f95ac89d9b2ad4dec3160",
+ "vendor_dir": "vendor/portal-kit"
+}
