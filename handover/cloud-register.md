@@ -127,3 +127,5 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | r4-P2a-cor | round 4 correctness review of tickets/P2a.md rev 5, egm:egm-codebase-details | sonnet (claude-sonnet-5-5) | 18:30Z | +35min | running | save report, ledger rows |
 | rev6-P3a (resumed author a7dc068fb47091bf0) | apply reviews/P3a-round4-resolve.md to tickets/P3a.md (rev 6) | sonnet (claude-sonnet-5-5) | 18:40Z | +40min | running | on report: verify, commit, push, round-5 reviewers |
 | rev2-P4a (new author, sonnet) | apply reviews/P4a-round1-resolve.md to tickets/P4a.md (rev 2) | sonnet (claude-sonnet-5-5) | 18:55Z | +45min | running | on report: verify, commit, push, round-2 reviewers |
+| r4-P1-adv | round 4 adversarial review of tickets/P1.md rev 5 (b13ff07), egm:egm-design | sonnet (claude-sonnet-5-5) | 19:05Z | +40min | running | save report, ledger rows |
+| r4-P1-cor | round 4 correctness review of tickets/P1.md rev 5 (b13ff07), egm:egm-codebase-details | sonnet (claude-sonnet-5-5) | 19:05Z | +40min | running | save report, ledger rows |
