@@ -1169,3 +1169,12 @@
 | BL-core-p1-r6-cor-COR-R6-6 | P1 | MINOR | see report | OPEN | reviews/P1-round6-correctness.md | 99828b6 |
 | BL-core-p1-r6-cor-COR-R6-7 | P1 | NIT | see report | OPEN | reviews/P1-round6-correctness.md | 99828b6 |
 | BL-core-p1-r6-cor-COR-R6-8 | P1 | NIT | see report | OPEN | reviews/P1-round6-correctness.md | 99828b6 |
+| BL-core-p2a-r7-adv-ADV-R7-1 | P2A | MAJOR | see report | OPEN | reviews/P2a-round7-adversarial.md | 3b40ae6 |
+| BL-core-p2a-r7-adv-ADV-R7-2 | P2A | MAJOR | see report | OPEN | reviews/P2a-round7-adversarial.md | 3b40ae6 |
+| BL-core-p2a-r7-adv-ADV-R7-3 | P2A | MINOR | see report | OPEN | reviews/P2a-round7-adversarial.md | 3b40ae6 |
+| BL-core-p2a-r7-adv-ADV-R7-4 | P2A | MINOR | see report | OPEN | reviews/P2a-round7-adversarial.md | 3b40ae6 |
+| BL-core-p2a-r7-adv-ADV-R7-5 | P2A | MINOR | see report | OPEN | reviews/P2a-round7-adversarial.md | 3b40ae6 |
+| BL-core-p2a-r7-adv-ADV-R7-6 | P2A | MINOR | see report | OPEN | reviews/P2a-round7-adversarial.md | 3b40ae6 |
+| BL-core-p2a-r7-adv-ADV-R7-7 | P2A | NIT | see report | OPEN | reviews/P2a-round7-adversarial.md | 3b40ae6 |
+| BL-core-p2a-r7-adv-ADV-R7-8 | P2A | NIT | see report | OPEN | reviews/P2a-round7-adversarial.md | 3b40ae6 |
+| BL-core-p2a-r7-adv-ADV-R7-9 | P2A | NIT | see report | OPEN | reviews/P2a-round7-adversarial.md | 3b40ae6 |

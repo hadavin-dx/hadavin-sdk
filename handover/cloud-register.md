@@ -180,7 +180,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | rev4-P2d | author P2d ticket rev 4 (round 3 resolve 0cdc5ab) | sonnet (claude-sonnet-5-5) | now | +60min | now | running | collect, verify, commit, round 4 |
 | r6-P1-adv | round 6 review of tickets/P1.md rev 7 (99828b6) | sonnet (claude-sonnet-5-5) | now | +50min | now | REPORTED | collect, save, resolve |
 | r6-P1-cor | round 6 review of tickets/P1.md rev 7 (99828b6) | sonnet (claude-sonnet-5-5) | now | +50min | now | REPORTED | collect, save, resolve |
-| r7-P2a-adv | round 7 review of tickets/P2a.md rev 8 | sonnet (claude-sonnet-5-5) | now | +50min | now | running | collect, save, resolve |
+| r7-P2a-adv | round 7 review of tickets/P2a.md rev 8 | sonnet (claude-sonnet-5-5) | now | +50min | now | REPORTED | collect, save, resolve |
 | r7-P2a-cor | round 7 review of tickets/P2a.md rev 8 | sonnet (claude-sonnet-5-5) | now | +50min | now | running | collect, save, resolve |
 | r5-P4a-adv | round 5 review of tickets/P4a.md rev 5 | sonnet (claude-sonnet-5-5) | now | +50min | now | running | collect, save, resolve |
 | r5-P4a-cor | round 5 review of tickets/P4a.md rev 5 | sonnet (claude-sonnet-5-5) | now | +50min | now | running | collect, save, resolve |
