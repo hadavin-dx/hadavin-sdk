@@ -73,8 +73,8 @@ def test_more_than_eight_invisible_runs_still_get_the_all_spaced_form():
 
 
 def test_a_value_that_needs_a_boundary_on_both_sides_gets_the_all_spaced_form():
-    out = shown("ab" + ZW + IBAN + ZW + "cd")  # no single-run form spaces both sides
-    assert IBAN not in out and "82WEST" not in out
+    out = shown("ab" + ZW + "4111111111111111" + ZW + "cd")  # no single-run form spaces both sides
+    assert "4111" not in out
 
 
 def test_osc_and_dcs_payloads_are_dropped_with_their_sequence():
