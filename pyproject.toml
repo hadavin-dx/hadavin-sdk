@@ -66,6 +66,8 @@ exclude-newer-package = { google-api-core = "2026-10-24T00:00:00Z", grpcio = "20
 
 [tool.ruff]
 line-length = 100
+# The temporary handover folder holds verbatim copies for the cloud session; it is removed before the final merge.
+extend-exclude = ["handover", ".claude"]
 src = ["src", "tests", "demos"]
 
 [tool.ruff.lint]

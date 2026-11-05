@@ -1,5 +1,5 @@
 # Review of plan-v1.md, round 1 (EGM Uninterrupted Full Flow, consolidated)
-Target: C:\Users\rakes\Downloads\Hadavin\egm\hadavin-sdk\core-complete\plan-v1.md (whole file). Date 2026-11-05. Synthesizer: egm-synthesizer. Reviewers (fresh, parallel): egm-zoom-out (stage 5), egm-comprehension (6), egm-design, egm-structural, egm-style (7), egm-implementation-readiness, egm-codebase-details (9), egm-zoom-out again (8, after the others).
+Target: <studio>/egm\hadavin-sdk\core-complete\plan-v1.md (whole file). Date 2026-11-05. Synthesizer: egm-synthesizer. Reviewers (fresh, parallel): egm-zoom-out (stage 5), egm-comprehension (6), egm-design, egm-structural, egm-style (7), egm-implementation-readiness, egm-codebase-details (9), egm-zoom-out again (8, after the others).
 Stage reports: plan1-zoom-out.md (Z), plan1-comprehension.md (C), plan1-critic.md (D=design, S=structural, ST=style), plan1-readiness.md (R, X), plan1-zoom-out-2.md (ZZ).
 
 Totals after deduplication: 6 BLOCKER, 18 MAJOR, 12 MINOR. Verdict: do NOT freeze; fix, then round 2. S0 (P0a-P0f) is startable as written; S1 onward is not.
