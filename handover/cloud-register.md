@@ -64,14 +64,14 @@ Order 5 of LEAD-ORDERS.md. The round 2 resolve reports are reviews/<P>-round2-re
 ## Round 3 reviews (fresh agents, Sonnet 5.5, read-only; ticket revision 4 only; brief requires reading amendments A1-A14 first)
 | agent | purpose | model | started | expected end | state | next action |
 |---|---|---|---|---|---|---|
-| rev3-P3a-correctness | egm:egm-codebase-details on tickets/P3a.md rev 4 | sonnet (claude-sonnet-5-5) | 16:39Z | 17:09Z | REPORTED, not saved yet | save reviews/P3a-round3-correctness.md |
-| rev3-P3a-adversarial | egm:egm-design on tickets/P3a.md rev 4 | sonnet (claude-sonnet-5-5) | 16:39Z | 17:09Z | REPORTED, not saved yet | save reviews/P3a-round3-adversarial.md |
-| rev3-P4d-correctness (SPAWNED LATE ~16:55Z; the earlier row was written before the agent existed: my mistake) | egm:egm-codebase-details on tickets/P4d.md rev 4 (b215b50) | sonnet (claude-sonnet-5-5) | 16:40Z | 17:10Z | REPORTED, not saved yet | save reviews/P4d-round3-correctness.md |
-| rev3-P4d-adversarial | egm:egm-design on tickets/P4d.md rev 4 | sonnet (claude-sonnet-5-5) | 16:40Z | 17:10Z | REPORTED, not saved yet | save reviews/P4d-round3-adversarial.md |
-| rev3-P2a-correctness | egm:egm-codebase-details on tickets/P2a.md rev 4 (6d84ad6) | sonnet (claude-sonnet-5-5) | 16:41Z | 17:11Z | REPORTED, not saved yet | save reviews/P2a-round3-correctness.md |
-| rev3-P2a-adversarial | egm:egm-design on tickets/P2a.md rev 4 | sonnet (claude-sonnet-5-5) | 16:41Z | 17:11Z | REPORTED, not saved yet | save reviews/P2a-round3-adversarial.md |
-| rev3-P1-correctness | egm:egm-codebase-details on tickets/P1.md rev 4 (221513b) | sonnet (claude-sonnet-5-5) | 16:41Z | 17:11Z | REPORTED, not saved yet | save reviews/P1-round3-correctness.md |
-| rev3-P1-adversarial | egm:egm-design on tickets/P1.md rev 4 | sonnet (claude-sonnet-5-5) | 16:41Z | 17:11Z | REPORTED, not saved yet | save reviews/P1-round3-adversarial.md |
+| rev3-P3a-correctness | egm:egm-codebase-details on tickets/P3a.md rev 4 | sonnet (claude-sonnet-5-5) | 16:39Z | 17:09Z | REPORTED, saved | save reviews/P3a-round3-correctness.md |
+| rev3-P3a-adversarial | egm:egm-design on tickets/P3a.md rev 4 | sonnet (claude-sonnet-5-5) | 16:39Z | 17:09Z | REPORTED, saved | save reviews/P3a-round3-adversarial.md |
+| rev3-P4d-correctness (SPAWNED LATE ~16:55Z; the earlier row was written before the agent existed: my mistake) | egm:egm-codebase-details on tickets/P4d.md rev 4 (b215b50) | sonnet (claude-sonnet-5-5) | 16:40Z | 17:10Z | REPORTED, saved | save reviews/P4d-round3-correctness.md |
+| rev3-P4d-adversarial | egm:egm-design on tickets/P4d.md rev 4 | sonnet (claude-sonnet-5-5) | 16:40Z | 17:10Z | REPORTED, saved | save reviews/P4d-round3-adversarial.md |
+| rev3-P2a-correctness | egm:egm-codebase-details on tickets/P2a.md rev 4 (6d84ad6) | sonnet (claude-sonnet-5-5) | 16:41Z | 17:11Z | REPORTED, saved | save reviews/P2a-round3-correctness.md |
+| rev3-P2a-adversarial | egm:egm-design on tickets/P2a.md rev 4 | sonnet (claude-sonnet-5-5) | 16:41Z | 17:11Z | REPORTED, saved | save reviews/P2a-round3-adversarial.md |
+| rev3-P1-correctness | egm:egm-codebase-details on tickets/P1.md rev 4 (221513b) | sonnet (claude-sonnet-5-5) | 16:41Z | 17:11Z | REPORTED, saved | save reviews/P1-round3-correctness.md |
+| rev3-P1-adversarial | egm:egm-design on tickets/P1.md rev 4 | sonnet (claude-sonnet-5-5) | 16:41Z | 17:11Z | REPORTED, saved | save reviews/P1-round3-adversarial.md |
 
 ## Truth table at the time of STATUS 'READY FOR COMPACT'
 Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acecb19dd55a5e570. Finished and saved: P3a r3 adv+cor, P2a r3 adv+cor, P1 r3 adv+cor. Authors idle (resumable): P1 aaaeea25aaef763ea, P2a a64cfd8eaa8b64a3a, P3a a7dc068fb47091bf0, P4d a8190d79eb2c7579c.
@@ -79,20 +79,20 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 ## Order 6 author agents (Sonnet 5.5, general-purpose; spawned 16:53Z UTC, expected end 17:28Z UTC)
 | agent | purpose | model | started | expected end | state | next action |
 |---|---|---|---|---|---|---|
-| author-P2d | draft tickets/P2d.md (Wave 1, Tier A (redaction)); brief = scratchpad author-brief.md | sonnet (claude-sonnet-5-5) | 16:53Z | 17:28Z | REPORTED, not saved yet | verify, commit/push, 2 fresh egm reviewers (1 for Tier B) |
-| author-P4a | draft tickets/P4a.md (Wave 1, Tier A money, 3 PRs); brief = scratchpad author-brief.md | sonnet (claude-sonnet-5-5) | 16:53Z | 17:28Z | REPORTED, not saved yet | verify, commit/push, 2 fresh egm reviewers (1 for Tier B) |
-| author-P5a | draft tickets/P5a.md (Wave 1, Tier A); brief = scratchpad author-brief.md | sonnet (claude-sonnet-5-5) | 16:53Z | 17:28Z | REPORTED, not saved yet | verify, commit/push, 2 fresh egm reviewers (1 for Tier B) |
-| author-P0a | draft tickets/P0a.md (Wave 1, Tier B, text only); brief = scratchpad author-brief.md | sonnet (claude-sonnet-5-5) | 16:53Z | 17:28Z | REPORTED, not saved yet | verify, commit/push, 2 fresh egm reviewers (1 for Tier B) |
-| author-P0c | draft tickets/P0c.md (Wave 1, Tier B, text only); brief = scratchpad author-brief.md | sonnet (claude-sonnet-5-5) | 16:53Z | 17:28Z | REPORTED, not saved yet | verify, commit/push, 2 fresh egm reviewers (1 for Tier B) |
-| author-P4b1 | draft tickets/P4b1.md (Wave 2, Tier A money); brief = scratchpad author-brief.md | sonnet (claude-sonnet-5-5) | 16:53Z | 17:28Z | REPORTED, not saved yet | verify, commit/push, 2 fresh egm reviewers (1 for Tier B) |
-| author-P4b2 | draft tickets/P4b2.md (Wave 2, Tier A money); brief = scratchpad author-brief.md | sonnet (claude-sonnet-5-5) | 16:53Z | 17:28Z | REPORTED, not saved yet | verify, commit/push, 2 fresh egm reviewers (1 for Tier B) |
-| author-P4c | draft tickets/P4c.md (Wave 2, Tier A money); brief = scratchpad author-brief.md | sonnet (claude-sonnet-5-5) | 16:53Z | 17:28Z | REPORTED, not saved yet | verify, commit/push, 2 fresh egm reviewers (1 for Tier B) |
-| author-P5b1 | draft tickets/P5b1.md (Wave 2, Tier A); brief = scratchpad author-brief.md | sonnet (claude-sonnet-5-5) | 16:53Z | 17:28Z | REPORTED, not saved yet | verify, commit/push, 2 fresh egm reviewers (1 for Tier B) |
-| author-P5b2 | draft tickets/P5b2.md (Wave 2, Tier B); brief = scratchpad author-brief.md | sonnet (claude-sonnet-5-5) | 16:53Z | 17:28Z | REPORTED, not saved yet | verify, commit/push, 2 fresh egm reviewers (1 for Tier B) |
-| author-P6b1 | draft tickets/P6b1.md (Wave 2, Tier A); brief = scratchpad author-brief.md | sonnet (claude-sonnet-5-5) | 16:53Z | 17:28Z | REPORTED, not saved yet | verify, commit/push, 2 fresh egm reviewers (1 for Tier B) |
-| rev5-P4d (resumed author a8190d79eb2c7579c) | apply 40 round 3 findings (resolve report reviews/P4d-round3-resolve.md) to tickets/P4d.md | sonnet (claude-sonnet-5-5) | 17:20Z | 18:00Z | REPORTED, not saved yet | on report: verify, push, round 4 fresh reviewers |
-| rev5-P3a (resumed author a7dc068fb47091bf0) | apply round 3 resolve (reviews/P3a-round3-resolve.md): REMOVE --accept-late per order 6(f) | sonnet (claude-sonnet-5-5) | 17:28Z | 18:00Z | REPORTED, not saved yet | on report: verify, push, round 4 |
-| rev5-P2a (resumed author a64cfd8eaa8b64a3a) | apply round 3 resolve (reviews/P2a-round3-resolve.md); merge 1a+1b | sonnet (claude-sonnet-5-5) | 17:07Z | +40min | REPORTED, not saved yet | on report: verify, push, round 4 |
+| author-P2d | draft tickets/P2d.md (Wave 1, Tier A (redaction)); brief = scratchpad author-brief.md | sonnet (claude-sonnet-5-5) | 16:53Z | 17:28Z | REPORTED, saved | verify, commit/push, 2 fresh egm reviewers (1 for Tier B) |
+| author-P4a | draft tickets/P4a.md (Wave 1, Tier A money, 3 PRs); brief = scratchpad author-brief.md | sonnet (claude-sonnet-5-5) | 16:53Z | 17:28Z | REPORTED, saved | verify, commit/push, 2 fresh egm reviewers (1 for Tier B) |
+| author-P5a | draft tickets/P5a.md (Wave 1, Tier A); brief = scratchpad author-brief.md | sonnet (claude-sonnet-5-5) | 16:53Z | 17:28Z | REPORTED, saved | verify, commit/push, 2 fresh egm reviewers (1 for Tier B) |
+| author-P0a | draft tickets/P0a.md (Wave 1, Tier B, text only); brief = scratchpad author-brief.md | sonnet (claude-sonnet-5-5) | 16:53Z | 17:28Z | REPORTED, saved | verify, commit/push, 2 fresh egm reviewers (1 for Tier B) |
+| author-P0c | draft tickets/P0c.md (Wave 1, Tier B, text only); brief = scratchpad author-brief.md | sonnet (claude-sonnet-5-5) | 16:53Z | 17:28Z | REPORTED, saved | verify, commit/push, 2 fresh egm reviewers (1 for Tier B) |
+| author-P4b1 | draft tickets/P4b1.md (Wave 2, Tier A money); brief = scratchpad author-brief.md | sonnet (claude-sonnet-5-5) | 16:53Z | 17:28Z | REPORTED, saved | verify, commit/push, 2 fresh egm reviewers (1 for Tier B) |
+| author-P4b2 | draft tickets/P4b2.md (Wave 2, Tier A money); brief = scratchpad author-brief.md | sonnet (claude-sonnet-5-5) | 16:53Z | 17:28Z | REPORTED, saved | verify, commit/push, 2 fresh egm reviewers (1 for Tier B) |
+| author-P4c | draft tickets/P4c.md (Wave 2, Tier A money); brief = scratchpad author-brief.md | sonnet (claude-sonnet-5-5) | 16:53Z | 17:28Z | REPORTED, saved | verify, commit/push, 2 fresh egm reviewers (1 for Tier B) |
+| author-P5b1 | draft tickets/P5b1.md (Wave 2, Tier A); brief = scratchpad author-brief.md | sonnet (claude-sonnet-5-5) | 16:53Z | 17:28Z | REPORTED, saved | verify, commit/push, 2 fresh egm reviewers (1 for Tier B) |
+| author-P5b2 | draft tickets/P5b2.md (Wave 2, Tier B); brief = scratchpad author-brief.md | sonnet (claude-sonnet-5-5) | 16:53Z | 17:28Z | REPORTED, saved | verify, commit/push, 2 fresh egm reviewers (1 for Tier B) |
+| author-P6b1 | draft tickets/P6b1.md (Wave 2, Tier A); brief = scratchpad author-brief.md | sonnet (claude-sonnet-5-5) | 16:53Z | 17:28Z | REPORTED, saved | verify, commit/push, 2 fresh egm reviewers (1 for Tier B) |
+| rev5-P4d (resumed author a8190d79eb2c7579c) | apply 40 round 3 findings (resolve report reviews/P4d-round3-resolve.md) to tickets/P4d.md | sonnet (claude-sonnet-5-5) | 17:20Z | 18:00Z | REPORTED, saved | on report: verify, push, round 4 fresh reviewers |
+| rev5-P3a (resumed author a7dc068fb47091bf0) | apply round 3 resolve (reviews/P3a-round3-resolve.md): REMOVE --accept-late per order 6(f) | sonnet (claude-sonnet-5-5) | 17:28Z | 18:00Z | REPORTED, saved | on report: verify, push, round 4 |
+| rev5-P2a (resumed author a64cfd8eaa8b64a3a) | apply round 3 resolve (reviews/P2a-round3-resolve.md); merge 1a+1b | sonnet (claude-sonnet-5-5) | 17:07Z | +40min | REPORTED, saved | on report: verify, push, round 4 |
 | r4-P4d-adv | round 4 adversarial review of tickets/P4d.md rev 5 (d12bfa7), egm:egm-design | sonnet (claude-sonnet-5-5) | 17:07Z | +30min | REPORTED, saved | save report, ledger rows |
 | r4-P4d-cor | round 4 correctness review of P4d rev 5, egm:egm-codebase-details | sonnet (claude-sonnet-5-5) | 17:07Z | +30min | REPORTED, saved | save report, ledger rows |
 | r4-P3a-adv | round 4 adversarial review of tickets/P3a.md rev 5 (60e16a5), egm:egm-design | sonnet (claude-sonnet-5-5) | 17:07Z | +25min | REPORTED, saved reviews/P3a-round4-adversarial.md | save report, ledger rows |
@@ -104,15 +104,15 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | r1-P0a-cor | round 1 single reviewer (Tier B) of tickets/P0a.md (c826f2d), egm:egm-codebase-details | sonnet (claude-sonnet-5-5) | 17:07Z | +30min | REPORTED, saved reviews/P0a-round1-reviewer.md | save report, ledger rows |
 | r1-P0c-cor | round 1 single reviewer (Tier B) of tickets/P0c.md (e1ffdb5), egm:egm-codebase-details | sonnet (claude-sonnet-5-5) | 17:07Z | +30min | REPORTED, saved reviews/P0c-round1-reviewer.md | save report, ledger rows |
 | r1-P5b2-cor | round 1 single reviewer (Tier B) of tickets/P5b2.md (45fe05b), egm:egm-codebase-details | sonnet (claude-sonnet-5-5) | 17:07Z | +30min | REPORTED, saved reviews/P5b2-round1-reviewer.md | save report, ledger rows |
-| rev5-P1 (resumed author aaaeea25aaef763ea) | apply round 3 resolve (reviews/P1-round3-resolve.md) to tickets/P1.md | sonnet (claude-sonnet-5-5) | 17:08Z | +45min | REPORTED, not saved yet | on report: verify, push, round 4 |
+| rev5-P1 (resumed author aaaeea25aaef763ea) | apply round 3 resolve (reviews/P1-round3-resolve.md) to tickets/P1.md | sonnet (claude-sonnet-5-5) | 17:08Z | +45min | REPORTED, saved | on report: verify, push, round 4 |
 | r1-P4b1-adv | round 1 adversarial review of tickets/P4b1.md (15d01fa), egm:egm-design | sonnet (claude-sonnet-5-5) | 17:09Z | +35min | REPORTED, saved reviews/P4b1-round1-adversarial.md | save report, ledger rows |
 | r1-P4b1-cor | round 1 correctness review of P4b1 (15d01fa), egm:egm-codebase-details | sonnet (claude-sonnet-5-5) | 17:09Z | +35min | REPORTED, saved | save report, ledger rows |
 | r1-P5b1-adv | round 1 adversarial review of tickets/P5b1.md (30fd0e8), egm:egm-design | sonnet (claude-sonnet-5-5) | 17:09Z | +35min | REPORTED, saved | save report, ledger rows |
 | r1-P5b1-cor | round 1 correctness review of P5b1 (30fd0e8), egm:egm-codebase-details | sonnet (claude-sonnet-5-5) | 17:09Z | +35min | NOT STARTED (20-agent limit); start when a slot frees | save report, ledger rows |
 | r1-P5a-adv | round 1 adversarial review of tickets/P5a.md (def2d2a), egm:egm-design | sonnet (claude-sonnet-5-5) | 17:45Z | +35min | REPORTED, saved | save report, ledger rows |
-| r1-P5a-cor | round 1 correctness review of P5a, egm:egm-codebase-details | sonnet (claude-sonnet-5-5) | 17:45Z | +35min | REPORTED, not saved yet | save report, ledger rows |
-| r1-P4b2-adv | round 1 adversarial review of tickets/P4b2.md (f2349e3), egm:egm-design | sonnet (claude-sonnet-5-5) | 17:45Z | +35min | REPORTED, not saved yet | save report, ledger rows |
-| r1-P4b2-cor | round 1 correctness review of P4b2, egm:egm-codebase-details | sonnet (claude-sonnet-5-5) | 17:45Z | +35min | REPORTED, not saved yet | save report, ledger rows |
+| r1-P5a-cor | round 1 correctness review of P5a, egm:egm-codebase-details | sonnet (claude-sonnet-5-5) | 17:45Z | +35min | REPORTED, saved | save report, ledger rows |
+| r1-P4b2-adv | round 1 adversarial review of tickets/P4b2.md (f2349e3), egm:egm-design | sonnet (claude-sonnet-5-5) | 17:45Z | +35min | REPORTED, saved | save report, ledger rows |
+| r1-P4b2-cor | round 1 correctness review of P4b2, egm:egm-codebase-details | sonnet (claude-sonnet-5-5) | 17:45Z | +35min | REPORTED, saved | save report, ledger rows |
 | probe-gp | model probe: general-purpose, model sonnet | sonnet | now | +2min | REPORTED, see evidence/model-probe.md | record in evidence/model-probe.md |
 | probe-design | model probe: egm:egm-design | sonnet | now | +2min | REPORTED, see evidence/model-probe.md | same |
 | probe-cod | model probe: egm:egm-codebase-details | sonnet | now | +2min | REPORTED, see evidence/model-probe.md | same |
