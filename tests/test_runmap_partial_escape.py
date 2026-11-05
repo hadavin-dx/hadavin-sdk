@@ -8,6 +8,8 @@ import random
 import re
 import time
 
+import pytest
+
 from hadavin_sdk import tools as tools_mod
 from hadavin_sdk.guard import runmap
 
@@ -99,7 +101,7 @@ def test_the_listed_endings_are_found_and_whole_escapes_are_not():
 
 
 def test_a_very_long_run_of_percent_bytes_takes_linear_time():
-    # the old pattern took 1.0 s for 5000 such groups, 16 s for 20000 and 65 s for 40000 (measured 2026-11-06, evidence-2a); this is far less for 600000
+    # the old pattern took 1.0 s for 5000 such groups, 16 s for 20000 and 65 s for 40000 (measured once on the author's laptop, 2026-11-06); this is far less for 600000
     hostile = [
         "%C3" * 200_000 + "X",
         "%C3" * 200_000,
@@ -149,7 +151,53 @@ def test_the_fragment_cut_in_tools_removes_a_half_written_escape_and_keeps_the_r
 
 
 def test_a_run_the_old_pattern_took_seconds_on_is_instant():
-    # 15 000 groups: the old repeated-group pattern needed about 9 s here; a function that is linear needs milliseconds.
+    # 15 000 groups: the old repeated-group pattern needed about 10 s here; a function that is linear needs milliseconds.
     # This is the quick guard that fails fast if the quadratic pattern is ever put back (the larger test above would take hours).
     text = "x" + "%C3" * 15_000 + "y"
     assert _fastest(lambda: [runmap.partial_escape_start(text)]) < 2.0
+
+
+# The two callers of `partial_escape_start`. The expected values below were produced by the code BEFORE this change
+# (the same inputs were run on the source of origin/main b34eef8 and gave exactly these outputs), so they pin "same result".
+UNDO_CLEAN = [
+    ("pw=abc%C3", "pw=abc"),
+    ("pw=abc%C3%A", "pw=abc"),
+    ("pw=abc&#9", "pw=abc"),
+    ("pw=abc&amp", "pw=abc"),
+    ("ok text", "ok text"),
+    ("a%C3%A9 b%C3", "a\xe9 b"),
+    ("x" + chr(92) + "u00", "x"),
+    ("x%C3%A9%C3%", "x"),
+    ("line%C3\n", "line"),
+    ("&&&&", ""),
+    ("%C3%C3%C3%C3", ""),
+    ("tok%C3%80%C3%81 end", "tok\xc0\xc1 end"),
+    ("tail&#x4", "tail"),
+]
+
+
+@pytest.mark.parametrize(("text", "expected"), UNDO_CLEAN)
+def test_undo_with_clean_drops_a_half_written_escape_at_the_end(text, expected):
+    assert runmap.undo(text, clean=True) == expected
+
+
+def test_undo_without_clean_keeps_the_half_written_escape_as_it_always_did():
+    assert runmap.undo("pw=abc%C3") == "pw=abc\ufffd"
+    assert runmap.undo("&&&&") == "&&&&"
+
+
+@pytest.mark.parametrize(
+    ("body", "expected"),
+    [
+        ("abc%C3", "abc"),
+        ("abc%C3%A", "abc"),
+        ("abc&#9", "abc"),
+        ("abc", "abc"),
+        ("abc%C3%A9 tail%C3", "abc%C3%A9 tail"),
+    ],
+)
+def test_strip_fragment_removes_a_half_written_escape_before_the_marker(body, expected):
+    from hadavin_sdk import tools
+
+    out = tools._strip_fragment(body + tools.TRUNCATED, ["Zq9Lm4pTvX2"])
+    assert out == expected + tools.TRUNCATED

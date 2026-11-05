@@ -18,7 +18,7 @@ from hadavin_sdk.guard import http
 from hadavin_sdk.guard.egress import EgressRefused
 
 # The independent check of the table: the six addresses as text, copied from the earlier reviewed version of the module
-# (PR 42 snapshot, `guard/http.py`, its `_METADATA` set). The module now holds them as numbers.
+# (the former `_METADATA` set of `guard/http.py`, before this change). The module now holds them as numbers.
 EXPECTED = {
     "169.254.169.254",
     "100.100.100.200",
@@ -141,7 +141,7 @@ def test_the_table_names_no_vendor_in_any_string():
     assert [s for s in strings if words.search(s)] == []
     try:  # also the real guard's patterns, where this test file sits beside it (not in a mutation copy)
         from tests.test_lockin_guard import PATTERNS
-    except ImportError:
+    except ModuleNotFoundError:
         pytest.skip("tests.test_lockin_guard is not importable here (a mutation copy)")
     hits = [
         (label, s)
