@@ -724,3 +724,32 @@
 | BL-core-p4a-r1-cor-F14 | P4A | NIT | C8 expected results for bool/empty/float | OPEN | reviews/P4a-round1-correctness.md | bd061b3 |
 | BL-core-p4a-r1-cor-F15 | P4A | NIT | pilot_cfg tests need price_checks; grep configs | OPEN | reviews/P4a-round1-correctness.md | bd061b3 |
 | BL-core-p4a-r1-cor-F16 | P4A | NIT | rollback departure from template unstated | OPEN | reviews/P4a-round1-correctness.md | bd061b3 |
+| BL-core-p5b1-r1-cor-C1 | P5B1 | MAJOR | P5a diagnose does not read retry_count / error_type fallback: golden rows 10,17, R13 unbacked | OPEN | reviews/P5b1-round1-correctness.md | 30fd0e8 |
+| BL-core-p5b1-r1-cor-C2 | P5B1 | MAJOR | P4b2 undeclared hot files (protocol, retry, common, bedrock); order; two counters; detail references | OPEN | reviews/P5b1-round1-correctness.md | 30fd0e8 |
+| BL-core-p5b1-r1-cor-C3 | P5B1 | MAJOR | fail-closed gaps: transient/_chain/__eq__/retryable hook/Bedrock _code non-dict | OPEN | reviews/P5b1-round1-correctness.md | 30fd0e8 |
+| BL-core-p5b1-r1-cor-C4 | P5B1 | MAJOR | llm_wire.py harness and fixtures not in CHANGE list; rows 2-17 sources missing | OPEN | reviews/P5b1-round1-correctness.md | 30fd0e8 |
+| BL-core-p5b1-r1-cor-C5 | P5B1 | MAJOR | hostile rows do not fit P5a Row format; CORPUS_STEP bump; H14 ledger link | OPEN | reviews/P5b1-round1-correctness.md | 30fd0e8 |
+| BL-core-p5b1-r1-cor-C6 | P5B1 | MAJOR | describe vs P5a class_name_of; two rules for one class | OPEN | reviews/P5b1-round1-correctness.md | 30fd0e8 |
+| BL-core-p5b1-r1-cor-C7 | P5B1 | MINOR | R7 forbids the ticket's own raise f-string | OPEN | reviews/P5b1-round1-correctness.md | 30fd0e8 |
+| BL-core-p5b1-r1-cor-C8 | P5B1 | MINOR | M14 survives on OSError kinds; name Claude kind for 777 | OPEN | reviews/P5b1-round1-correctness.md | 30fd0e8 |
+| BL-core-p5b1-r1-cor-C9 | P5B1 | MINOR | retried HTTPError bodies left open | OPEN | reviews/P5b1-round1-correctness.md | 30fd0e8 |
+| BL-core-p5b1-r1-cor-C10 | P5B1 | MINOR | R4 tripwire swallowed by safe_facts; __class__ | OPEN | reviews/P5b1-round1-correctness.md | 30fd0e8 |
+| BL-core-p5b1-r1-cor-C11 | P5B1 | MINOR | stale header; request-id shape owner | OPEN | reviews/P5b1-round1-correctness.md | 30fd0e8 |
+| BL-core-p5b1-r1-cor-C12 | P5B1 | MINOR | default_facts timeout vs connection ordering | OPEN | reviews/P5b1-round1-correctness.md | 30fd0e8 |
+| BL-core-p5b1-r1-cor-C13 | P5B1 | MINOR | missing mutants (row 28, bounds, close) | OPEN | reviews/P5b1-round1-correctness.md | 30fd0e8 |
+| BL-core-p5b1-r1-cor-C14 | P5B1 | NIT | wording/cite fixes; delete kind_hint | OPEN | reviews/P5b1-round1-correctness.md | 30fd0e8 |
+| BL-core-p2d-r1-cor-C1 | P2D | MAJOR | N2 unkillable: import-time constants; literals equivalent | OPEN | reviews/P2d-round1-correctness.md | c34fe24 |
+| BL-core-p2d-r1-cor-C2 | P2D | MAJOR | FOLD_NOTE exact text not pinned; N6 survives | OPEN | reviews/P2d-round1-correctness.md | c34fe24 |
+| BL-core-p2d-r1-cor-C3 | P2D | MAJOR | SEAM-2/ERR-1/SEAM-4 patch the wrong name; cache keys not exposed | OPEN | reviews/P2d-round1-correctness.md | c34fe24 |
+| BL-core-p2d-r1-cor-C4 | P2D | MAJOR | P1b dependency / xfail holes / MAP-1 need a lead decision; P2a/P4d order | OPEN | reviews/P2d-round1-correctness.md | c34fe24 |
+| BL-core-p2d-r1-cor-C5 | P2D | MINOR | mutant rows 5,7,12,20 stale snippets | OPEN | reviews/P2d-round1-correctness.md | c34fe24 |
+| BL-core-p2d-r1-cor-C6 | P2D | MINOR | test 29 does not prove the 4,096-char check | OPEN | reviews/P2d-round1-correctness.md | c34fe24 |
+| BL-core-p2d-r1-cor-C7 | P2D | MINOR | no mutants for runmap thread_time edits | OPEN | reviews/P2d-round1-correctness.md | c34fe24 |
+| BL-core-p2d-r1-cor-C8 | P2D | MINOR | FOLD_NOTE imports break collection on ce70eb5 | OPEN | reviews/P2d-round1-correctness.md | c34fe24 |
+| BL-core-p2d-r1-cor-C9 | P2D | MINOR | test labels A/U wrong; test 27 explanation | OPEN | reviews/P2d-round1-correctness.md | c34fe24 |
+| BL-core-p2d-r1-cor-C10 | P2D | MINOR | probes ran code; figures UNVERIFIED | OPEN | reviews/P2d-round1-correctness.md | c34fe24 |
+| BL-core-p2d-r1-cor-C11 | P2D | MINOR | P1a rev 5 size rule dependency missing from Depends-on | OPEN | reviews/P2d-round1-correctness.md | c34fe24 |
+| BL-core-p2d-r1-cor-C12 | P2D | MINOR | P2a defaults.py/CHANGELOG order | OPEN | reviews/P2d-round1-correctness.md | c34fe24 |
+| BL-core-p2d-r1-cor-C13 | P2D | NIT | redact keyword-only signature | OPEN | reviews/P2d-round1-correctness.md | c34fe24 |
+| BL-core-p2d-r1-cor-C14 | P2D | NIT | 43 lines not 45 | OPEN | reviews/P2d-round1-correctness.md | c34fe24 |
+| BL-core-p2d-r1-cor-C15 | P2D | NIT | guarantee sentence third case | OPEN | reviews/P2d-round1-correctness.md | c34fe24 |
