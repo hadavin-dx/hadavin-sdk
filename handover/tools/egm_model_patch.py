@@ -6,8 +6,12 @@ started on Opus would run every reviewer on Opus. The studio routing (see handov
   Opus 5.5  : egm-brainstorm, egm-draft, egm-resolve (planning and negotiation skills)
   Sonnet 5.5: every other EGM skill (review, review-loop, drift-report, bootstrap) and every egm reviewer agent
 Usage: python3 egm_model_patch.py [PLUGIN_ROOT ...]   (default: every EGM plugin folder found under ~/.claude/plugins)
-Run it once at the start of a session, before the first EGM call; it is idempotent. It edits only the `model:` line in
-the frontmatter of skills/*/SKILL.md, agents/*.md, .claude-plugin/agents/*.md and .cursor-plugin/agents/*.md and prints every change.
+It also removes the line `disable-model-invocation: true` from the skills: upstream sets it, which means only a person who
+types the slash command can start a skill and the model is refused when it calls the Skill tool (this is why the cloud
+session could not start egm-review-loop or egm-resolve). The studio rule is that EGM skills are called through the Skill
+tool, so the flag is removed.
+Run it once at the start of a session, before the first EGM call; it is idempotent. It edits only the `model:` line and that
+flag in the frontmatter of skills/*/SKILL.md, agents/*.md, .claude-plugin/agents/*.md and .cursor-plugin/agents/*.md and prints every change.
 """
 import re
 import sys
@@ -41,6 +45,9 @@ def patch(path: Path) -> str | None:
         new_front = re.sub(r"^model:.*$", f"model: {want}", front, count=1, flags=re.M)
     else:
         new_front = front + f"\nmodel: {want}"
+    if path.name == "SKILL.md":
+        new_front = re.sub(r"^disable-model-invocation:.*(\r?\n|$)", "", new_front, flags=re.M)
+        new_front = new_front.rstrip("\r\n")
     if new_front == front:
         return None
     path.write_text(text[: m.start(2)] + new_front + text[m.end(2):], encoding="utf-8", newline="")

@@ -32,3 +32,6 @@ Expected: `claude-opus-5-5` only on egm-brainstorm, egm-draft and egm-resolve (3
 
 ## Prompt to paste into the cloud session (short form)
 > Follow `handover/MODEL-ROUTING.md` exactly. First run `python3 handover/tools/egm_model_patch.py` and show me the grep check. From now on: this session runs on Sonnet 5.5; Opus 5.5 only for `egm:egm-brainstorm`, `egm:egm-draft` and `egm:egm-resolve`; Sonnet 5.5 for builders, evidence runners, all reviewers and every other agent; Haiku 5.5 only for plain lookups (list, grep, read a CI log, mechanical format); set the `model` field explicitly on every Agent call; never use a cheaper model for review, money, redaction, security or merge decisions; to move any step to a cheaper model first compare 5 real inputs against Sonnet and record the result in the ticket. Report which model ran each agent in every evidence file.
+
+## Why the EGM skills may be refused (found 2026-11-05)
+Upstream sets `disable-model-invocation: true` on all seven EGM skills. A skill with that flag can only be started by a person typing the slash command; when the model calls the Skill tool it is refused. The patch script now removes that flag as well. After running it, START A NEW SESSION: the list of skills is read when a session starts.
