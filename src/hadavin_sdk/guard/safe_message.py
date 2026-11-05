@@ -150,10 +150,7 @@ def _trusted(exc: BaseException, also_trust: frozenset[str]) -> bool:
     for i, cls in enumerate(type(exc).__mro__):
         if cls is object:
             continue
-        mod = getattr(cls, "__module__", None)
-        if not isinstance(mod, str):
-            return False
-        root = mod.split(".")[0]
+        root = cls.__module__.split(".")[0]  # a non-str __module__ raises: the caller withholds
         if root in allowed or (root == "builtins" and i > 0):  # a built-in INSTANCE is withheld
             continue
         return False

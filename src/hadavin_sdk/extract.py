@@ -24,9 +24,8 @@ def _failure(exc: Exception) -> str:
         return "ValidationError: " + safe_str("; ".join(parts), 300)
     if isinstance(exc, json.JSONDecodeError):
         return f"JSONDecodeError: {safe_str(exc.msg, 100)} at position {exc.pos}"
-    return safe_message(
-        exc, 300
-    )  # any other ValueError: class name only (built-in text is withheld)
+    # Any other ValueError: class name only (built-in text is withheld).
+    return safe_message(exc, 300)
 
 
 @dataclass

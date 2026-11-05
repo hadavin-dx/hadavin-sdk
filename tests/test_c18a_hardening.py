@@ -107,20 +107,65 @@ def test_hadavin_sdk_class_text_is_shown_masked_and_also_trust_is_explicit():
 # --- 6: back off before a value that was cut in half ----------------------------------------------------------
 
 
+def _straddle(material: str, cut_in: int) -> str:
+    """A long key (masked to a short mark) first, so the 2400-character cap lands `cut_in` characters into
+    `material` while the displayed text is short enough to show it."""
+    pad = 2400 - len(KEY) - 1 - cut_in
+    text = KEY + "b" * pad + " " + material + " tail words"
+    assert len(text) > 2400
+    return text
+
+
 def test_aadhaar_straddling_the_cap_is_not_half_shown():
-    out = sm(ConfigError("x " * 1195 + "2345 6789 0123 tail"))
+    out = sm(ConfigError(_straddle("2345 6789 0123", len("2345 6789 "))))
     assert "2345" not in out and "6789" not in out and out.endswith("[truncated]")
 
 
 def test_open_quote_after_a_shrinking_key_is_not_half_shown():
-    text = KEY + "b" * 2300 + ' password="correct horse battery staple" end'
-    out = sm(ConfigError(text))
+    material = 'password="correct horse battery staple"'
+    out = sm(ConfigError(_straddle(material, len('password="correct horse batt'))))
     assert "correct" not in out and "horse" not in out and "<APIKEY_1>" in out
 
 
 def test_assignment_near_the_cap_is_not_half_shown():
-    out = sm(ConfigError("w " * 1195 + "token=abcdefghij0123456789 more words"))
-    assert "abcdefghij" not in out and "token=" not in out
+    material = "password=correct horse battery staple"
+    out = sm(ConfigError(_straddle(material, len("password=correct horse batt"))))
+    assert "horse" not in out and "password=" not in out and "<APIKEY_1>" in out
+
+
+def test_putty_key_lines_masked_before_newlines_are_squeezed():
+    putty = "\n".join(
+        [
+            "PuTTY-User-Key-File-3: ssh-ed25519",
+            "Encryption: none",
+            "Comment: k",
+            "Public-Lines: 2",
+            "AAAAC3NzaC1lZDI1NTE5AAAAIAbc",
+            "Private-Lines: 1",
+            "AAAAIQCsecretsecretsecret1234",
+            "Private-MAC: abcdef0123",
+        ]
+    )
+    out = sm(ConfigError("failed " + putty))
+    assert "secretsecret" not in out and "<PRIVKEY_1>" in out
+
+
+def test_fullwidth_key_prefix_is_folded_then_masked():
+    out = sm(ConfigError("see " + u(0xFF53, 0xFF4B, 0xFF0D) + "a" * 30))
+    assert "aaaa" not in out and "<APIKEY_1>" in out
+
+
+def test_os_error_subclass_in_the_sdk_is_still_withheld():
+    cls = type("SdkOs", (OSError,), {"__module__": "hadavin_sdk.x"})
+    assert sm(cls("host db.internal")) == "SdkOs"
+
+
+def test_safe_str_rejects_a_non_positive_limit_and_masks_plain_text():
+    from hadavin_sdk.guard.safe_message import safe_str
+
+    with pytest.raises(ValueError):
+        safe_str("x", 0)
+    assert safe_str("mail " + EMAIL) == "mail <EMAIL_1>"
 
 
 def test_multi_line_secret_is_masked_before_newlines_are_squeezed():
@@ -200,6 +245,7 @@ def test_tick_logging_drops_tracebacks_and_silences_other_libraries(capsys):
     ours, root = logging.getLogger("hadavin_sdk"), logging.getLogger()
     before = (list(ours.handlers), list(root.handlers), ours.level)
     try:
+        root.handlers[:] = []  # pytest's own root handlers would hide the "last resort" printer
         cli._tick_logging()
         cli._tick_logging()  # idempotent: one handler
         try:
