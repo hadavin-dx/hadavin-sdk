@@ -51,3 +51,12 @@ The Sonnet fix-batch rows above were stopped at 15:05Z before writing anything. 
 | rev2-P4d-adversarial | egm:egm-design on tickets/P4d.md rev 3 | sonnet (claude-sonnet-5-5) | 15:10Z | 15:40Z | reported, report saved, closed | saved reviews/P4d-round2-adversarial.md |
 | rev2-P1-correctness | egm:egm-codebase-details on tickets/P1.md rev 3 | sonnet (claude-sonnet-5-5) | 15:12Z | 15:42Z | reported, report saved, closed | saved reviews/P1-round2-correctness.md |
 | rev2-P1-adversarial | egm:egm-design on tickets/P1.md rev 3 | sonnet (claude-sonnet-5-5) | 15:12Z | 15:42Z | reported, report saved, closed | saved reviews/P1-round2-adversarial.md |
+
+## Revision 4 (round 3 preparation): authors resumed; Sonnet 5.5; started 16:33Z, expected end 17:13Z
+Order 5 of LEAD-ORDERS.md. The round 2 resolve reports are reviews/<P>-round2-resolve-report.md; each author applies them and writes reviews/<P>-round2-disposition.md.
+| agent | purpose | model | started | expected end | state | next action |
+|---|---|---|---|---|---|---|
+| rev4-P1 (resumed author) | apply 32 round 2 findings to tickets/P1.md | sonnet (claude-sonnet-5-5) | 16:33Z | 17:13Z | running | verify, commit, round 3 |
+| rev4-P2a (resumed author) | apply 30 round 2 findings to tickets/P2a.md (Route A) | sonnet (claude-sonnet-5-5) | 16:33Z | 17:13Z | running | same |
+| rev4-P3a (resumed author) | apply 22 round 2 findings to tickets/P3a.md | sonnet (claude-sonnet-5-5) | 16:33Z | 17:13Z | running | same |
+| rev4-P4d (resumed author) | apply 34 round 2 findings to tickets/P4d.md | sonnet (claude-sonnet-5-5) | 16:33Z | 17:13Z | running | same |
