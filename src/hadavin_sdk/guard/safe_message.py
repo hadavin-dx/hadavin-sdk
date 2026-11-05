@@ -1,86 +1,171 @@
 """One safe way to put an exception into a log line or a stored error field.
 
 Exception text can carry the very values the redactor exists to hide (a detector that chokes on a document
-repeats pieces of it). `safe_text` and `safe_message` therefore:
+repeats pieces of it). `safe_text`, `safe_message` and `safe_str` therefore:
 
-* show the text only for exception classes whose whole class chain (MRO) lives in Python built-ins or
-  ``hadavin_sdk``; a driver, SDK, HTTP or user class, any subclass of one, and any OSError shows its class
-  name only, because its text can carry hosts, users, DSNs or tokens. A caller that knows a class is safe to
-  show (extract.py: pydantic validation errors, which it needs for the retry prompt) names its top-level
-  modules in ``also_trust``;
-* strip invisible characters, collapse whitespace, cap the input, then fold look-alike characters (NFKC),
-  so a value cannot hide behind a zero-width character, a full-width form or a wall of padding;
-* mask first and cut second, so a value that straddles the cut is never half shown; when the text was cut
-  before masking, the trailing partial word is dropped and ``[truncated]`` is added;
-* fail closed: if masking itself raises (including RecursionError), the text is replaced by a fixed note.
+* show the text of an exception ONLY if its class belongs to ``hadavin_sdk`` (or to a module the caller names in
+  ``also_trust``) and every other class in its MRO is a built-in base. Everything else, including every plain
+  built-in (``KeyError(field)``, ``ValueError("could not convert string to float: '...'")``,
+  ``UnicodeEncodeError``, ``ImportError``), every OSError, and any class with a driver or user ancestor,
+  shows its class name only: their text routinely quotes the document or a host;
+* read at most 64*limit characters, replace invisible characters, fold look-alikes (NFKC), drop combining
+  marks, squeeze whitespace (but keep single newlines so multi-line secrets still match) and cap the input;
+* mask first and cut second, so a value that straddles the cut is not half shown. When something was cut
+  before masking, the text is backed off to the last word boundary before any open quote, ``=`` or trailing
+  digit run, and ``[truncated]`` is added;
+* mask e-mail addresses with its own Unicode-aware pattern (the redactor's address pattern is ASCII-only),
+  then run the redactor. Invisible characters are removed in one candidate and replaced by a space in the
+  other (a key after an escape sequence needs the space; a value split by a zero-width character needs the
+  removal); the candidate with more masks wins;
+* fail closed and never raise on exception-derived data: a failing check withholds, a failing mask gives a
+  fixed note.
 
-What this does NOT promise (stated so nobody over-trusts it):
-* Built-in exceptions can carry arbitrary document text: ``KeyError(key)``, ``ValueError(f"cannot parse {doc}")``,
-  ``AssertionError(data)``, ``SyntaxError``. Only patterns the redactor recognises are masked. I kept built-ins
-  shown (masked) because an operator needs the message of a failing step; the alternative, showing only
-  ``hadavin_sdk`` classes, would make every tick failure a bare class name. Revisit if a client's threat model
-  needs it: remove ``builtins`` from ``_TRUSTED_MODULES``.
-* The allowlist trusts the *declared* ``__module__`` of each class; a class that lies about its module is
-  trusted.
-* Coverage limits inherited from ``guard.redact``: a name in free prose, a spaced IBAN and lowercase-hex
-  presigned-URL signatures are not recognised; cross-script look-alikes are not folded by NFKC (an email with
-  a Cyrillic letter is still masked today because the email pattern is Unicode-wide; other value kinds may not be). Strict xfail tests mark each; when the redactor learns one, that test XPASSes, the
-  run fails, and the test must become a normal test (review again 2027-01-31; nothing enforces the date).
+What this does NOT promise (stated so nobody over-trusts it): only patterns the redactor and the e-mail mask
+recognise are masked. A name in free prose, a spaced IBAN and lowercase-hex presigned-URL signatures are not
+recognised (strict xfail tests mark each; when the redactor learns one, that test XPASSes, the run fails and
+the test must become a normal test; review again 2027-01-31, nothing enforces the date). A text that has BOTH
+a key after an escape sequence and a value split by a zero-width character gets only one of the two forms
+masked. The allowlist trusts the declared ``__module__``. The redactor's own address pattern gap is recorded
+for the pattern ticket (BL-core-c1a-001); this module does not edit ``guard/redact.py``.
 """
 
 from __future__ import annotations
 
+import re
 import unicodedata
 
 from hadavin_sdk.guard.redact import redact
 
-# The text of an exception is shown only if EVERY class in its MRO (but ``object``) lives in one of these.
-_TRUSTED_MODULES = frozenset({"builtins", "hadavin_sdk"})
-_RAW_FACTOR = (
-    64  # str(exc) is read up to limit * 64 characters (so padding cannot push a value out of view)
-)
-_PRECAP_FACTOR = 8  # redact sees at most limit * 8 characters, measured after folding and stripping
+# The text of an exception is shown only if its class lives in one of these (built-in ANCESTORS are fine).
+_TRUSTED_MODULES = frozenset({"hadavin_sdk"})
+_RAW_FACTOR = 64  # at most limit * 64 characters of str(exc) are read
+_PRECAP_FACTOR = 8  # redact sees at most limit * 8 characters
 UNAVAILABLE = "(message unavailable)"
 WITHHELD = "(withheld)"
 TRUNCATED = " [truncated]"
-# Invisible characters that can split a value without changing how it looks: format (Cf), private use (Co),
-# control (Cc) except the whitespace kinds, plus known blank fillers and variation selectors.
-_KEEP_CONTROL = "\t\n\r\x0b\x0c"
-_FILLERS = frozenset("\u034f\u115f\u1160\u3164\uffa0\u2800")
+_ESC = chr(0x1B)
+_KEEP_CONTROL = (
+    "\t\n\r\x0b\x0c" + _ESC
+)  # ESC is left to the redactor's ANSI handling, removed afterwards
+_FILLERS = frozenset(map(chr, (0x034F, 0x115F, 0x1160, 0x3164, 0xFFA0, 0x2800)))
+# A Unicode-aware address: word characters (any script) in the local part and the domain.
+_EMAIL = re.compile(r"(?<![\w.+-])[\w.+-]+@[\w-]+(?:\.[\w-]+)+")
+_MARK = re.compile(r"<[A-Z_]+_\d+>")
+_SPACES = re.compile(r"[ \t\f\v\r]+")
+_NEWLINES = re.compile(r" ?\n[ \n]*")
 
 
-def _invisible(c: str) -> bool:
+def _invisible(c: str, marks: bool = False) -> bool:
+    """Characters that can split a value without changing how it looks. `marks` also covers combining marks."""
     cat = unicodedata.category(c)
     if cat == "Cc":
         return c not in _KEEP_CONTROL
-    return (
-        cat in {"Cf", "Co"}
-        or c in _FILLERS
-        or "\ufe00" <= c <= "\ufe0f"
-        or "\U000e0100" <= c <= "\U000e01ef"
-    )
+    if cat in {"Cf", "Co", "Cn", "Cs"} or c in _FILLERS:
+        return True
+    return marks and cat in {"Mn", "Me"}
 
 
-def _clean(s: str) -> str:
-    return " ".join("".join(c for c in s if not _invisible(c)).split())
+def _fold(s: str, repl: str) -> str:
+    s = "".join(repl if _invisible(c) else c for c in s)
+    s = unicodedata.normalize("NFKC", s)
+    return "".join(repl if _invisible(c, True) else c for c in s)
+
+
+def _squeeze(s: str) -> str:
+    return _NEWLINES.sub("\n", _SPACES.sub(" ", s)).strip()
+
+
+def _mask_emails(s: str) -> str:
+    n = 0
+
+    def mark(_m: re.Match[str]) -> str:
+        nonlocal n
+        n += 1
+        return f"<EMAIL_{n}>"
+
+    return _EMAIL.sub(mark, s)
+
+
+def _last_ws(s: str, end: int | None = None) -> int:
+    end = len(s) if end is None else end
+    return max(s.rfind(" ", 0, end), s.rfind("\n", 0, end))
+
+
+def _back_off(s: str) -> str:
+    """Drop the trailing word, then anything that could be the start of a value cut in half."""
+    cut = _last_ws(s)
+    s = s[:cut] if cut >= 0 else ""
+    for q in ('"', "'"):  # an open quote: back off to the whitespace before it
+        if s.count(q) % 2 == 1:
+            cut = _last_ws(s, s.rfind(q))
+            s = s[:cut] if cut >= 0 else ""
+    i = s.rfind("=")  # key=value near the end
+    if i >= max(0, len(s) - 200):
+        cut = _last_ws(s, i)
+        s = s[:cut] if cut >= 0 else ""
+    words = s.split(" ")  # a trailing run of digit groups (card, Aadhaar, phone)
+    while words and words[-1].isdigit():
+        words.pop()
+    return " ".join(words)
+
+
+def _candidate(text: str, cap: int, truncated: bool) -> str:
+    if len(text) > cap:
+        text, truncated = text[:cap], True
+    if truncated:
+        text = _back_off(text)
+    masked = redact(_mask_emails(text)).text.replace(_ESC, "")
+    return masked + TRUNCATED if truncated else masked
+
+
+def safe_str(raw: str, limit: int = 300) -> str:
+    """Mask and bound a plain string the same way as exception text. UNAVAILABLE if masking failed."""
+    if limit <= 0:
+        raise ValueError("limit must be positive")
+    try:
+        cut = raw[: limit * _RAW_FACTOR]
+        truncated = len(raw) > len(cut)
+        cap = limit * _PRECAP_FACTOR
+        forms = dict.fromkeys(
+            _squeeze(_fold(cut, repl)) for repl in ("", " ")
+        )  # one form if nothing invisible
+        outs = [_candidate(text, cap, truncated) for text in forms]
+        best = max(outs, key=lambda o: len(_MARK.findall(o)))  # ties keep the first (removal) form
+        flat = " ".join(best.split())
+        if len(flat) <= limit:
+            return flat
+        if best.endswith(TRUNCATED) and limit > 2 * len(
+            TRUNCATED
+        ):  # keep the marker, make room for it
+            return flat[: limit - len(TRUNCATED)].rstrip() + TRUNCATED
+        return flat[:limit]
+    except Exception:  # noqa: BLE001 - fail closed on anything, RecursionError included
+        return UNAVAILABLE
 
 
 def _trusted(exc: BaseException, also_trust: frozenset[str]) -> bool:
     if isinstance(exc, OSError):  # sockets, files, DNS: hosts and paths
         return False
     allowed = _TRUSTED_MODULES | also_trust
-    for cls in type(exc).__mro__:
+    for i, cls in enumerate(type(exc).__mro__):
         if cls is object:
             continue
         mod = getattr(cls, "__module__", None)
-        if not isinstance(mod, str) or mod.split(".")[0] not in allowed:
+        if not isinstance(mod, str):
             return False
+        root = mod.split(".")[0]
+        if root in allowed or (root == "builtins" and i > 0):  # a built-in INSTANCE is withheld
+            continue
+        return False
     return True
 
 
-def _cut_partial_word(s: str) -> str:
-    cut = s.rfind(" ")
-    return s[:cut] if cut >= 0 else ""
+def _name(exc: BaseException) -> str:
+    try:
+        raw = str(type(exc).__name__)
+    except Exception:  # noqa: BLE001 - a hostile metaclass must not break the handler
+        raw = ""
+    return "".join(c for c in raw if c.isprintable() and not c.isspace())[:64] or "Exception"
 
 
 def safe_text(
@@ -88,33 +173,25 @@ def safe_text(
 ) -> str:
     """The masked, one-line text of `exc`, at most `limit` characters.
 
-    WITHHELD if the class may not show its text, UNAVAILABLE if masking failed, "" if there was no text."""
+    WITHHELD if the class may not show its text, UNAVAILABLE if reading or masking failed, "" if no text."""
     if limit <= 0:
         raise ValueError("limit must be positive")
-    if not _trusted(exc, also_trust):
+    try:
+        trusted = _trusted(exc, also_trust)
+    except Exception:  # noqa: BLE001 - a hostile __module__ or metaclass: withhold
+        return WITHHELD
+    if not trusted:
         return WITHHELD
     try:
-        full = str(exc)
-        cap = limit * _PRECAP_FACTOR
-        # Read at most 64*limit characters; NFKC can grow that ~18x, so it is capped again below.
-        text = _clean(full[: limit * _RAW_FACTOR])
-        truncated = len(full) > limit * _RAW_FACTOR
-        text = _clean(unicodedata.normalize("NFKC", text))  # NFKC can expand a character ~18x
-        if len(text) > cap:  # post-fold cap
-            text, truncated = text[:cap], True  # post-fold cut
-        if truncated:  # a value may be cut in half at the edge: drop the last word before masking
-            text = _cut_partial_word(text)
-        masked = redact(text).text
-    except Exception:  # noqa: BLE001 - fail closed on anything, RecursionError included
+        raw = str(exc)
+    except Exception:  # noqa: BLE001 - a broken __str__ must not break the handler that logs it
         return UNAVAILABLE
-    if truncated:
-        masked += TRUNCATED
-    return masked[:limit]  # the input had no whitespace runs or newlines and the marks add none
+    return safe_str(raw, limit)
 
 
 def with_class(exc: BaseException, text: str) -> str:
     """`ClassName: text`; the class name alone if the text is empty or withheld."""
-    name = type(exc).__name__
+    name = _name(exc)
     return f"{name}: {text}" if text and text != WITHHELD else name
 
 

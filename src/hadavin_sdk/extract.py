@@ -8,14 +8,25 @@ from decimal import Decimal
 
 from pydantic import BaseModel, ValidationError
 
-from hadavin_sdk.guard.safe_message import safe_message
+from hadavin_sdk.guard.safe_message import safe_message, safe_str
 from hadavin_sdk.llm.protocol import LLM
 from hadavin_sdk.models import DeadLetter, Reply
 
 _ASK = "Extract the fields from the attached document. Answer with JSON matching the schema only."
 
-# Validation errors are shown (masked) because the retry prompt needs them; pydantic echoes `input_value`.
-_SHOWN = frozenset({"pydantic", "pydantic_core", "json"})
+
+def _failure(exc: Exception) -> str:
+    """Why validation failed, for DeadLetter.errors and the retry prompt: where and what, never the value
+    (pydantic's `input_value` is the model's own output, which can be a name, an address or an amount)."""
+    if isinstance(exc, ValidationError):
+        found = exc.errors(include_input=False, include_url=False)
+        parts = [f"{'.'.join(str(p) for p in e['loc']) or '(root)'}: {e['msg']}" for e in found]
+        return "ValidationError: " + safe_str("; ".join(parts), 300)
+    if isinstance(exc, json.JSONDecodeError):
+        return f"JSONDecodeError: {safe_str(exc.msg, 100)} at position {exc.pos}"
+    return safe_message(
+        exc, 300
+    )  # any other ValueError: class name only (built-in text is withheld)
 
 
 @dataclass
@@ -58,7 +69,7 @@ def extract(
         try:
             return Valid(schema.model_validate(_parse(reply)), replies)
         except (ValidationError, ValueError) as exc:  # JSONDecodeError is a ValueError
-            errors.append(safe_message(exc, 300, _SHOWN))
+            errors.append(_failure(exc))
             messages = [
                 *messages,
                 {"role": "assistant", "content": reply.text or "(tool call)"},

@@ -26,6 +26,7 @@ the current folder (and its check modules) is importable.
 from __future__ import annotations
 
 import argparse
+import copy
 import logging
 import os
 import sys
@@ -72,13 +73,17 @@ def main(argv: list[str] | None = None) -> int:
     try:
         return _main(argv)
     except ConfigError as exc:
-        print(f"refused: {exc}", file=sys.stderr)
+        print(f"refused: {safe_message(exc, 500)}", file=sys.stderr)
         return 2
     except Exception as exc:  # noqa: BLE001 - the class name only: a message could carry a secret
         print(
             f"failed: {type(exc).__name__} (set HADAVIN_DEBUG=1 for the traceback)", file=sys.stderr
         )
-        if os.environ.get("HADAVIN_DEBUG") == "1":
+        # Opt-in traceback for an interactive operator; never for the unattended `tick` (its stderr is the log
+        # pipeline) and note that a traceback also prints the __cause__ chain (SDK ConfigError text included).
+        if os.environ.get("HADAVIN_DEBUG") == "1" and "tick" not in (
+            argv if argv is not None else sys.argv[1:]
+        ):
             traceback.print_exc()
         return 3
 
@@ -198,7 +203,7 @@ def _main(argv: list[str] | None = None) -> int:
         if args.cmd != "audit":
             raise
         # An unreachable or un-migrated store is not evidence of tampering: never exit 1 for it.
-        print(f"could not verify: {exc}", file=sys.stderr)
+        print(f"could not verify: {safe_message(exc, 500)}", file=sys.stderr)
         return 3
     if args.cmd == "audit":
         return audit_verify(audit)
@@ -273,6 +278,27 @@ def score_cmd(audit, args) -> int:
     return 0
 
 
+class _NoTraceback(logging.Formatter):
+    """Message only: a traceback (exc_info / stack) can quote the exception text, which is not masked."""
+
+    def format(self, record: logging.LogRecord) -> str:
+        record = copy.copy(record)
+        record.exc_info = record.exc_text = record.stack_info = None
+        return super().format(record)
+
+
+def _tick_logging() -> None:
+    """Our own loggers go to stderr as plain messages; the root logger is silent, so a third-party library's
+    log.exception() cannot print a traceback onto the tick's stderr."""
+    ours = logging.getLogger("hadavin_sdk")
+    if not any(isinstance(h.formatter, _NoTraceback) for h in ours.handlers):  # once per process
+        handler = logging.StreamHandler(sys.stderr)
+        handler.setFormatter(_NoTraceback("%(message)s"))
+        ours.addHandler(handler)
+    ours.setLevel(logging.INFO)
+    logging.getLogger().addHandler(logging.NullHandler())  # no lastResort handler for other loggers
+
+
 def _tick() -> int:
     """Build the app with every qualified agent (an unqualified one must not stop approvals expiring)."""
     from hadavin_sdk.app import build
@@ -280,7 +306,7 @@ def _tick() -> int:
     from hadavin_sdk.runtime.tick import run_tick
 
     # The summary line and step errors go to stderr (the logger is otherwise silent below WARNING).
-    logging.basicConfig(level=logging.INFO, stream=sys.stderr, format="%(message)s")
+    _tick_logging()
     try:
         reg = load_registry(load_config())
         agents = []

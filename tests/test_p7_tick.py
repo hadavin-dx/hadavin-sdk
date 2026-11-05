@@ -94,19 +94,17 @@ def test_one_failing_step_lets_the_others_run_and_exits_1(app, caplog):
     secret = "AKIA" + "IOSFODNN7EXAMPLE"
 
     def boom(ctx):
-        raise RuntimeError(f"broken with {secret}\nsecond line")
+        raise ConfigError(f"broken with {secret}\nsecond line")
 
     steps = [TickStep("first", 0, boom), TickStep("second", 0, lambda ctx: ran.append("second"))]
     assert run_tick(app, steps=steps) == 1
     assert ran == ["second"]
     state = app.store.get_tick_state("first")
-    assert state.last_error.startswith("RuntimeError: ") and secret not in state.last_error
+    assert state.last_error.startswith("ConfigError: ") and secret not in state.last_error
     assert state.last_ok_at is None and app.store.get_tick_state("second").last_error is None
-    assert (
-        "step=first error_kind=RuntimeError message=" in caplog.text and secret not in caplog.text
-    )
+    assert "step=first error_kind=ConfigError message=" in caplog.text and secret not in caplog.text
     line = next(ln for ln in caplog.text.splitlines() if "step=first" in ln)
-    assert caplog.text.count("RuntimeError") == 1 and "second line" in line  # one prefix, one line
+    assert caplog.text.count("ConfigError") == 1 and "second line" in line  # one prefix, one line
     assert "failed=first" in caplog.text
 
 
