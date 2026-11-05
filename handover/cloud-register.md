@@ -39,3 +39,13 @@ The Sonnet fix-batch rows above were stopped at 15:05Z before writing anything. 
 | apply-P2a (resumed) | same for P2a | sonnet (claude-sonnet-5-5) | 15:06Z | 15:46Z | running | same |
 | apply-P3a (resumed) | same for P3a | sonnet (claude-sonnet-5-5) | 15:06Z | 15:46Z | running | same |
 | apply-P4d (resumed) | same for P4d | sonnet (claude-sonnet-5-5) | 15:06Z | 15:46Z | running | same |
+
+## Round 2 reviews (fresh agents, Sonnet 5.5, read-only; they get the ticket and authorities only, NOT round 1 findings or dispositions)
+| agent | purpose | model | started | expected end | state | next action |
+|---|---|---|---|---|---|---|
+| rev2-P2a-correctness | egm:egm-codebase-details on tickets/P2a.md rev 3 | sonnet (claude-sonnet-5-5) | 15:10Z | 15:40Z | running | save reviews/P2a-round2-correctness.md |
+| rev2-P2a-adversarial | egm:egm-design on tickets/P2a.md rev 3 | sonnet (claude-sonnet-5-5) | 15:10Z | 15:40Z | running | save reviews/P2a-round2-adversarial.md |
+| rev2-P3a-correctness | egm:egm-codebase-details on tickets/P3a.md rev 3 | sonnet (claude-sonnet-5-5) | 15:10Z | 15:40Z | running | save reviews/P3a-round2-correctness.md |
+| rev2-P3a-adversarial | egm:egm-design on tickets/P3a.md rev 3 | sonnet (claude-sonnet-5-5) | 15:10Z | 15:40Z | running | save reviews/P3a-round2-adversarial.md |
+| rev2-P4d-correctness | egm:egm-codebase-details on tickets/P4d.md rev 3 | sonnet (claude-sonnet-5-5) | 15:10Z | 15:40Z | running | save reviews/P4d-round2-correctness.md |
+| rev2-P4d-adversarial | egm:egm-design on tickets/P4d.md rev 3 | sonnet (claude-sonnet-5-5) | 15:10Z | 15:40Z | running | save reviews/P4d-round2-adversarial.md |
