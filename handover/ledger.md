@@ -1224,3 +1224,16 @@
 | BL-core-p2d-r4-cor-COR-R4-3 | P2D | MINOR | see report | OPEN | reviews/P2d-round4-correctness.md | 74a12aa |
 | BL-core-p2d-r4-cor-COR-R4-4 | P2D | MINOR | see report | OPEN | reviews/P2d-round4-correctness.md | 74a12aa |
 | BL-core-p2d-r4-cor-COR-R4-5 | P2D | MINOR | see report | OPEN | reviews/P2d-round4-correctness.md | 74a12aa |
+| BL-core-p4a-r6-adv-ADV-R6-1 | P4A | MAJOR | see report | OPEN | reviews/P4a-round6-adversarial.md | 900c825 |
+| BL-core-p4a-r6-adv-ADV-R6-2 | P4A | MAJOR | see report | OPEN | reviews/P4a-round6-adversarial.md | 900c825 |
+| BL-core-p4a-r6-adv-ADV-R6-3 | P4A | MAJOR | see report | OPEN | reviews/P4a-round6-adversarial.md | 900c825 |
+| BL-core-p4a-r6-adv-ADV-R6-4 | P4A | MINOR | see report | OPEN | reviews/P4a-round6-adversarial.md | 900c825 |
+| BL-core-p4a-r6-adv-ADV-R6-5 | P4A | MINOR | see report | OPEN | reviews/P4a-round6-adversarial.md | 900c825 |
+| BL-core-p4a-r6-adv-ADV-R6-6 | P4A | MINOR | see report | OPEN | reviews/P4a-round6-adversarial.md | 900c825 |
+| BL-core-p4a-r6-adv-ADV-R6-7 | P4A | MINOR | see report | OPEN | reviews/P4a-round6-adversarial.md | 900c825 |
+| BL-core-p4a-r6-adv-ADV-R6-8 | P4A | MINOR | see report | OPEN | reviews/P4a-round6-adversarial.md | 900c825 |
+| BL-core-p4a-r6-adv-ADV-R6-9 | P4A | MINOR | see report | OPEN | reviews/P4a-round6-adversarial.md | 900c825 |
+| BL-core-p4a-r6-adv-ADV-R6-10 | P4A | MINOR | see report | OPEN | reviews/P4a-round6-adversarial.md | 900c825 |
+| BL-core-p4a-r6-adv-ADV-R6-11 | P4A | NIT | see report | OPEN | reviews/P4a-round6-adversarial.md | 900c825 |
+| BL-core-p4a-r6-adv-ADV-R6-12 | P4A | NIT | see report | OPEN | reviews/P4a-round6-adversarial.md | 900c825 |
+| BL-core-p4a-r6-adv-ADV-R6-13 | P4A | NIT | see report | OPEN | reviews/P4a-round6-adversarial.md | 900c825 |
