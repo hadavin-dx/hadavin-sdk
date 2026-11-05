@@ -238,41 +238,157 @@ def test_interactive_refused_is_masked(monkeypatch, capsys):
     assert out.startswith("refused: ConfigError: ") and KEY not in out and "example.com" not in out
 
 
-def test_debug_traceback_is_skipped_for_tick_only(monkeypatch, capsys):
+def test_debug_detail_is_for_a_terminal_and_never_for_tick(monkeypatch):
+    import io
+
     from hadavin_sdk import cli
 
+    class Tty(io.StringIO):
+        def isatty(self):
+            return True
+
+    real_main = cli._main
     monkeypatch.setenv("HADAVIN_DEBUG", "1")
     monkeypatch.setattr(
         cli, "_main", lambda argv=None: (_ for _ in ()).throw(RuntimeError("secret " + KEY))
     )
-    assert cli.main(["tick"]) == 3
-    assert "Traceback" not in capsys.readouterr().err
+    monkeypatch.setattr(cli, "_CMD", None)
+    pipe = io.StringIO()
+    monkeypatch.setattr(cli.sys, "stderr", pipe)
     assert cli.main(["gate", "x"]) == 3
-    assert "Traceback" in capsys.readouterr().err  # an interactive operator asked for it
+    assert "debug:" not in pipe.getvalue() and KEY not in pipe.getvalue()  # a pipe or a log file
+    tty = Tty()
+    monkeypatch.setattr(cli.sys, "stderr", tty)
+    assert cli.main(["gate", "x"]) == 3
+    assert "debug: RuntimeError at " in tty.getvalue() and "Traceback" not in tty.getvalue()
+    assert KEY not in tty.getvalue()
+    # `tick` keeps quiet even on a terminal. The command is the PARSED sub-command, not the word in argv:
+    # `--config tick limits stop` is a `limits` run and does get the detail.
+    monkeypatch.setattr(cli, "_main", real_main)
+    monkeypatch.setattr(cli, "_CMD", None)
+    monkeypatch.setattr(
+        "hadavin_sdk.runtime.tick.run_tick", lambda app: (_ for _ in ()).throw(RuntimeError("x"))
+    )
+    monkeypatch.setattr(cli, "load_config", lambda *a, **k: object())
+    monkeypatch.setattr(cli, "load_registry", lambda cfg: type("R", (), {"agents": {}})())
+    monkeypatch.setattr("hadavin_sdk.app.build", lambda *a, **k: object())
+    tty2 = Tty()
+    monkeypatch.setattr(cli.sys, "stderr", tty2)
+    assert cli.main(["tick"]) == 3
+    assert "debug:" not in tty2.getvalue() and cli._CMD == "tick"
+    monkeypatch.setattr(
+        cli, "load_config", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("x"))
+    )
+    tty3 = Tty()
+    monkeypatch.setattr(cli.sys, "stderr", tty3)
+    assert cli.main(["--config", "tick", "limits", "stop", "--by", "me"]) == 3
+    assert "debug:" in tty3.getvalue() and cli._CMD == "limits"
 
 
-def test_tick_logging_drops_tracebacks_and_silences_other_libraries(capsys):
+def _tick_logging_state():
+    ours, root = logging.getLogger("hadavin_sdk"), logging.getLogger()
+    return (
+        list(ours.handlers),
+        ours.level,
+        ours.propagate,
+        list(root.handlers),
+        root.level,
+        logging.lastResort,
+    )
+
+
+def _restore_tick_logging(state):
     from hadavin_sdk import cli
 
     ours, root = logging.getLogger("hadavin_sdk"), logging.getLogger()
-    before = (list(ours.handlers), list(root.handlers), ours.level)
+    ours.handlers[:], ours.level, ours.propagate = state[0], state[1], state[2]
+    root.handlers[:], root.level, logging.lastResort = state[3], state[4], state[5]
+    cli._TICK_LOGGING_READY = False
+
+
+def test_tick_logging_is_traceback_free_visible_and_installed_once(monkeypatch):
+    import io
+
+    from hadavin_sdk import cli
+
+    state = _tick_logging_state()
+    buf = io.StringIO()
+    monkeypatch.setattr(cli.sys, "stderr", buf)
     try:
-        root.handlers[:] = []  # pytest's own root handlers would hide the "last resort" printer
+        cli._TICK_LOGGING_READY = False
         cli._tick_logging()
-        cli._tick_logging()  # idempotent: one handler
+        n_ours, n_root = (
+            len(logging.getLogger("hadavin_sdk").handlers),
+            len(logging.getLogger().handlers),
+        )
+        cli._tick_logging()
+        cli._tick_logging()
+        assert (
+            len(logging.getLogger("hadavin_sdk").handlers),
+            len(logging.getLogger().handlers),
+        ) == (
+            n_ours,
+            n_root,
+        )  # no duplication across calls
+        assert logging.getLogger("hadavin_sdk").propagate is False
         try:
             raise ConfigError("inner " + KEY)
         except ConfigError:
             logging.getLogger("hadavin_sdk.x").exception("ours failed")
-            logging.getLogger("thirdparty").exception("theirs failed with " + KEY)
-        err = capsys.readouterr().err
-        assert "ours failed" in err and "Traceback" not in err and KEY not in err
-        assert "theirs failed" not in err
-        assert sum(isinstance(h.formatter, cli._NoTraceback) for h in ours.handlers) == 1
+            logging.getLogger("thirdparty").exception("theirs failed")
+            logging.getLogger("thirdparty").info("theirs info")
+        logging.getLogger("other").warning("plain warning")
+        err = buf.getvalue()
+        assert (
+            "ours failed" in err and "theirs failed" in err and "plain warning" in err
+        )  # all visible
+        assert "theirs info" not in err  # root stays at WARNING
+        assert "Traceback" not in err and "inner" not in err  # no exc_info of anybody
+        assert logging.lastResort is not None and isinstance(
+            logging.lastResort.formatter, cli._NoTraceback
+        )
     finally:
-        ours.handlers[:] = before[0]
-        root.handlers[:] = before[1]
-        ours.setLevel(before[2])
+        _restore_tick_logging(state)
+
+
+def test_tick_logging_handler_follows_the_current_stderr(monkeypatch):
+    import io
+
+    from hadavin_sdk import cli
+
+    state = _tick_logging_state()
+    try:
+        cli._TICK_LOGGING_READY = False
+        cli._tick_logging()
+        first, second = io.StringIO(), io.StringIO()
+        monkeypatch.setattr(cli.sys, "stderr", first)
+        logging.getLogger("hadavin_sdk").error("one")
+        monkeypatch.setattr(cli.sys, "stderr", second)
+        logging.getLogger("hadavin_sdk").error("two")
+        assert (
+            "one" in first.getvalue()
+            and "two" in second.getvalue()
+            and "two" not in first.getvalue()
+        )
+    finally:
+        _restore_tick_logging(state)
+
+
+def test_tick_logging_with_caplog_style_root_handlers_still_prints_ours(monkeypatch, caplog):
+    import io
+
+    from hadavin_sdk import cli
+
+    state = _tick_logging_state()
+    buf = io.StringIO()
+    monkeypatch.setattr(cli.sys, "stderr", buf)
+    try:
+        cli._TICK_LOGGING_READY = False
+        cli._tick_logging()
+        logging.getLogger("hadavin_sdk.tick").error("step=probe boom")
+        assert "step=probe boom" in buf.getvalue()
+    finally:
+        _restore_tick_logging(state)
 
 
 # --- 4/9: exact exit code ----------------------------------------------------------------------------------

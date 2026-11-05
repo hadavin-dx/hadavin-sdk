@@ -30,7 +30,6 @@ import copy
 import logging
 import os
 import sys
-import traceback
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
@@ -40,7 +39,7 @@ from hadavin_sdk.backends import make, platform_secrets
 from hadavin_sdk.config import load_config
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.guard.injection import combine
-from hadavin_sdk.guard.safe_message import safe_message
+from hadavin_sdk.guard.safe_message import class_name, locator, safe_message
 from hadavin_sdk.limits import Limits
 from hadavin_sdk.models import new_id
 from hadavin_sdk.registry import load_registry
@@ -68,6 +67,9 @@ def _money(text: str) -> Decimal:
     return d
 
 
+_CMD: str | None = None  # the sub-command of this run, set by _main once the arguments are parsed
+
+
 def main(argv: list[str] | None = None) -> int:
     """Run the CLI. ConfigError exits 2 and any other uncaught exception exits 3 (never Python's crash code 1)."""
     try:
@@ -77,14 +79,13 @@ def main(argv: list[str] | None = None) -> int:
         return 2
     except Exception as exc:  # noqa: BLE001 - the class name only: a message could carry a secret
         print(
-            f"failed: {type(exc).__name__} (set HADAVIN_DEBUG=1 for the traceback)", file=sys.stderr
+            f"failed: {class_name(exc)} (set HADAVIN_DEBUG=1 on a terminal for where it happened)",
+            file=sys.stderr,
         )
-        # Opt-in traceback for an interactive operator; never for the unattended `tick` (its stderr is the log
-        # pipeline) and note that a traceback also prints the __cause__ chain (SDK ConfigError text included).
-        if os.environ.get("HADAVIN_DEBUG") == "1" and "tick" not in (
-            argv if argv is not None else sys.argv[1:]
-        ):
-            traceback.print_exc()
+        # Opt-in detail for a person at a terminal only: never for `tick` or any run whose stderr is a pipe
+        # or a log file. Masked text and a file:line locator; no traceback (it prints the __cause__ chain).
+        if os.environ.get("HADAVIN_DEBUG") == "1" and sys.stderr.isatty() and _CMD != "tick":
+            print(f"debug: {safe_message(exc, 500)} at {locator(exc)}", file=sys.stderr)
         return 3
 
 
@@ -130,6 +131,8 @@ def _main(argv: list[str] | None = None) -> int:
     sc.add_argument("--cause-list", required=True, type=Path)
     sc.add_argument("--bundles", required=True, type=Path)
     args = p.parse_args(argv)
+    global _CMD
+    _CMD = args.cmd
     if args.config:
         os.environ["HADAVIN_CONFIG_DIR"] = args.config
     if args.cmd == "tick":
@@ -267,7 +270,7 @@ def score_cmd(audit, args) -> int:
         atomic_write(report_dir / "score-report.md", render_score_report(res))
     except Exception as exc:
         audit.emit_outcome(
-            "score_report", run_id, **ref, result="failed", error_code=type(exc).__name__
+            "score_report", run_id, **ref, result="failed", error_code=class_name(exc)
         )
         raise
     # Raising appends: a lost event is a failed command (exit 3), with the report already on disk.
@@ -287,16 +290,43 @@ class _NoTraceback(logging.Formatter):
         return super().format(record)
 
 
+class _Stderr(logging.StreamHandler):  # type: ignore[type-arg]
+    """Writes to whatever sys.stderr is NOW (a test or a wrapper may replace it after the handler was made)."""
+
+    def __init__(self) -> None:
+        super().__init__(sys.stderr)
+
+    @property  # type: ignore[override]
+    def stream(self):
+        return sys.stderr
+
+    @stream.setter
+    def stream(self, value: object) -> None:
+        pass
+
+
+_TICK_LOGGING_READY = False
+
+
 def _tick_logging() -> None:
-    """Our own loggers go to stderr as plain messages; the root logger is silent, so a third-party library's
-    log.exception() cannot print a traceback onto the tick's stderr."""
+    """One traceback-free stderr handler, installed once per process: our loggers (INFO and up) do not
+    propagate, the root logger shows other libraries' WARNING and up as plain lines, and logging's last-resort
+    printer is the same handler. A library's log.exception() therefore cannot print a traceback (the exception
+    text it quotes is not masked) and a library's real warnings stay visible."""
+    global _TICK_LOGGING_READY
+    if _TICK_LOGGING_READY:
+        return
+    _TICK_LOGGING_READY = True
+    handler = _Stderr()
+    handler.setFormatter(_NoTraceback("%(message)s"))
     ours = logging.getLogger("hadavin_sdk")
-    if not any(isinstance(h.formatter, _NoTraceback) for h in ours.handlers):  # once per process
-        handler = logging.StreamHandler(sys.stderr)
-        handler.setFormatter(_NoTraceback("%(message)s"))
-        ours.addHandler(handler)
+    ours.addHandler(handler)
     ours.setLevel(logging.INFO)
-    logging.getLogger().addHandler(logging.NullHandler())  # no lastResort handler for other loggers
+    ours.propagate = False
+    root = logging.getLogger()
+    root.addHandler(handler)
+    root.setLevel(logging.WARNING)
+    logging.lastResort = handler
 
 
 def _tick() -> int:
@@ -326,7 +356,7 @@ def _tick() -> int:
         print(f"tick: config error: {safe_message(exc, 500)}", file=sys.stderr)
         return 2
     except Exception as exc:  # noqa: BLE001 - any other start-up failure is a config error, never "1"
-        print(f"tick: config error: {type(exc).__name__}", file=sys.stderr)
+        print(f"tick: config error: {class_name(exc)}", file=sys.stderr)
         return 2
     return run_tick(app)
 
@@ -392,7 +422,7 @@ def _kill_switch_store_down(what: str, exc: BaseException) -> int:
         )
         return 4
     print(
-        f"kill switch NOT {what}: the store answered with an error ({type(exc).__name__}); run "
+        f"kill switch NOT {what}: the store answered with an error ({class_name(exc)}); run "
         "hadavin-sdk migrate and check the runtime role's grants. Nothing was changed.",
         file=sys.stderr,
     )

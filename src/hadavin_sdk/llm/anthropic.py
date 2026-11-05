@@ -17,6 +17,7 @@ from typing import Any
 import anthropic  # the extra: a missing install fails at start-up with the hint (backends.make)
 
 from hadavin_sdk.errors import ConfigError
+from hadavin_sdk.guard.safe_message import safe_str
 from hadavin_sdk.llm.common import Answer, NetworkLLM, pinned, reply
 from hadavin_sdk.models import Reply, ToolCall
 
@@ -53,7 +54,9 @@ def client(settings: Any, key: str | None) -> Any:
             )
         return anthropic.Anthropic(api_key=key, base_url=API_BASE_URL, **common)
     except ValueError as exc:  # e.g. ANTHROPIC_FOUNDRY_RESOURCE set beside our explicit base URL
-        raise ConfigError(f"backend llm 'anthropic' ({settings.platform}): {exc}") from exc
+        raise ConfigError(
+            f"backend llm 'anthropic' ({settings.platform}): {safe_str(str(exc), 500)}"
+        ) from exc
 
 
 # Claude's moving aliases. Every Claude API id is a pinned snapshot (WARDEN, checked 2026-10-02), dated or not.

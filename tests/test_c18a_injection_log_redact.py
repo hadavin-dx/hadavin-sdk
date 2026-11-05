@@ -131,7 +131,7 @@ def test_huge_message_bounded_and_masked(caplog):
 
 @pytest.mark.parametrize("fail", [ValueError("boom"), RecursionError("deep"), MemoryError()])
 def test_redact_failure_fails_closed(caplog, monkeypatch, fail):
-    def broken(text):
+    def broken(text, **kw):
         raise fail
 
     monkeypatch.setattr("hadavin_sdk.guard.safe_message.redact", broken)
@@ -158,61 +158,57 @@ def test_injection_check_does_not_swallow_redaction_error():
         injection_check(Redacting(), "t", "doc")
 
 
-# --- the class guard: no log, print, store, return or re-raise in a handler may carry raw exception text ----
+# --- the class guard: exception text must not reach a log, print, store, call, return or raise unmasked ------
+# Inverted rule (batch 5): inside every except handler, and every function that takes an exception, ANY call
+# that receives text derived from the exception is a leak unless the callee is a masking helper or a pure
+# string/conversion function. Waivers below are explicit and counted.
 
 SRC = Path(__file__).resolve().parents[1] / "src" / "hadavin_sdk"
 _LEVELS = {"debug", "info", "warning", "warn", "error", "exception", "critical", "log", "fatal"}
 _TRACE = {"format_exc", "format_exception", "print_exc", "print_exception", "format_tb", "print_tb"}
-_SAFE_CALLS = {"safe_message", "safe_text", "safe_str", "_failure"}
-_SINK_WORDS = ("err", "msg", "message", "note", "text", "status", "summary", "detail", "reason")
-_SINK_METHODS = {"append", "extend", "add"}
-_POS_SINKS = {
+_MASKING = {"safe_message", "safe_text", "safe_str", "_failure", "class_name", "locator"}
+_PURE_FUNCS = {
+    "str", "repr", "format", "ascii", "len", "type", "isinstance", "issubclass", "bool", "int", "float",
+    "list", "tuple", "set", "frozenset", "dict", "sorted", "reversed", "enumerate", "zip", "map", "filter",
+    "min", "max", "sum", "any", "all", "getattr", "hasattr", "id", "hash", "iter", "next",
+}  # fmt: skip
+_PURE_METHODS = {
+    "format", "format_map", "join", "split", "rsplit", "splitlines", "strip", "lstrip", "rstrip", "lower",
+    "upper", "replace", "encode", "decode", "startswith", "endswith", "get", "items", "keys", "values",
+    "count", "index", "find", "rfind", "partition", "rpartition", "title", "capitalize", "casefold",
+    "zfill", "ljust", "rjust", "center", "expandtabs", "swapcase", "translate", "removeprefix",
+    "removesuffix",
+}  # fmt: skip
+_OBJECT_SINKS = {
+    "append",
+    "extend",
+    "add",
+    "insert",
     "put",
     "put_nowait",
-    "save",
-    "update",
     "setdefault",
-    "send",
-    "write",
+    "update",
     "push",
-    "insert",
-    "set",
 }
 _REPORTERS = {"record_exception", "capture_exception", "capture_message"}
 _LOGGER_NAMES = {"lg", "audit", "logging"}
+_EXC_PARAM_NAMES = {"e", "exc", "err", "error", "ex", "exception"}
+_SAFE_ATTRS = {"code", "status", "status_code", "errno", "returncode", "pos", "lineno"}
+_CHAIN_ATTRS = {"__cause__", "__context__"}
 
-_OPERATOR = (
-    "an interactive operator command prints the exception through safe_message(exc, 500), so no waiver is "
-    "needed for it; this reason is used only where the traceback itself is the point"
-)
-_RAISE = (
-    "builds a ConfigError from a pydantic/yaml/SDK error at config load; the text is the operator's own "
-    "config and only ever reaches a print through safe_message(exc, 500) (cli.py: refused:, could not "
-    "verify:, tick:), see test_tick_config_error_secret_masked and test_interactive_refused_masked."
-)
+_RAISE_NOTE = "an error is re-raised with the original kept as __cause__ (documented; tracebacks are not printed)"
 _DESCRIBE = (
     "llm.retry.describe() builds the text from the class name, the HTTP status and the kind's own error code, "
     "never from the SDK message (pinned by test_with_retry_error_text_never_has_sdk_message)."
 )
 _HANDOFF = (
     "k1b/loop.py hands the exception OBJECT from the worker thread to the caller thread, which re-raises it; "
-    "nothing prints or stores its text here (pinned by the callers' own log tests)."
+    "nothing prints or stores its text here."
 )
+_OBJECTS = "collects or returns exception OBJECTS (no text): the callers decide what to print, through safe_message"
 # (file, enclosing function, unparsed statement) -> (reason, expected count). A second identical statement in
-# the same function is NOT waived silently: the count must match exactly. `raise X(...) from e` keeps the
-# original error as __cause__; a traceback print would show it (cli.py HADAVIN_DEBUG is skipped for `tick`).
+# the same function is NOT waived silently: the count must match exactly.
 WAIVERS: dict[tuple[str, str, str], tuple[str, int]] = {
-    ("config.py", "_one", "raise ConfigError(f'backends.{cap} ({kind}): {exc}') from exc"): (
-        _RAISE,
-        1,
-    ),
-    ("config.py", "load_config", "raise ConfigError(str(exc)) from exc"): (_RAISE, 1),
-    ("registry.py", "load_registry", "raise ConfigError(str(exc)) from exc"): (_RAISE, 1),
-    (
-        "llm/anthropic.py",
-        "client",
-        "raise ConfigError(f\"backend llm 'anthropic' ({settings.platform}): {exc}\") from exc",
-    ): (_RAISE, 1),
     (
         "llm/retry.py",
         "with_retry",
@@ -224,14 +220,6 @@ WAIVERS: dict[tuple[str, str, str], tuple[str, int]] = {
         "raise ProviderExhausted(f'{label}: {describe(exc, detail)} after {max_attempts} attempts') from exc",
     ): (_DESCRIBE, 1),
     ("k1b/loop.py", "work", "box['exc'] = exc"): (_HANDOFF, 1),
-    ("llm/retry.py", "_chain", "seen.append(e)"): (
-        "walks the exception chain and collects the exception OBJECTS in a local list (no text)",
-        1,
-    ),
-    ("cli.py", "main", "traceback.print_exc()"): (
-        "opt-in HADAVIN_DEBUG=1 traceback to an interactive operator's terminal; skipped for `tick`",
-        1,
-    ),
 }
 
 
@@ -259,15 +247,30 @@ def _is_logger(base: ast.AST) -> bool:
     return last.endswith(("log", "logger")) or last in _LOGGER_NAMES
 
 
-def _is_safe_wrapper(node: ast.AST, exc: set[str]) -> bool:
-    """safe_message(<exc>, ...) / safe_text(<exc>, ...) with the exception object itself as first argument
-    (safe_message(str(e)) is NOT safe; safe_str(<text>) masks a plain string, so it is), or type(<x>).__name__
-    / <x>.__class__.__name__, or an isinstance / type test."""
-    if isinstance(node, ast.Call) and getattr(node.func, "id", "") in _SAFE_CALLS:
-        a = node.args[0] if node.args else None
-        if node.func.id == "safe_str":
+def _object_expr(node: ast.AST, exc: set[str]) -> bool:
+    """The exception object itself, or its __cause__ / __context__ chain."""
+    while isinstance(node, ast.Attribute) and node.attr in _CHAIN_ATTRS:
+        node = node.value
+    return isinstance(node, ast.Name) and node.id in exc
+
+
+def _is_safe_wrapper(node: ast.AST, exc: set[str], safe: set[str]) -> bool:
+    """safe_message(<exc>) / safe_text(<exc>) with the exception object (or its cause chain) as first
+    argument or as exc=, safe_str(<text>), type(<x>).__name__ / <x>.__class__.__name__, an isinstance / type
+    test. `safe_message(str(e))` is NOT safe. A function of that name defined or imported from elsewhere in
+    the module is not the masking helper."""
+    if isinstance(node, ast.Call) and getattr(node.func, "id", "") in _MASKING:
+        name = node.func.id
+        if name not in safe:
+            return False
+        if name in {"safe_str", "class_name", "locator"}:
             return True
-        return isinstance(a, ast.Name) and a.id in exc
+        first = (
+            node.args[0]
+            if node.args
+            else next((k.value for k in node.keywords if k.arg == "exc"), None)
+        )
+        return first is not None and _object_expr(first, exc)
     if isinstance(node, ast.Call) and getattr(node.func, "id", "") in {"isinstance", "type"}:
         return True  # a class test or the class object: no message text
     if isinstance(node, ast.Attribute) and node.attr == "__name__":
@@ -279,14 +282,46 @@ def _is_safe_wrapper(node: ast.AST, exc: set[str]) -> bool:
     return False
 
 
-def _uses_raw(node: ast.AST, names: set[str], exc: set[str]) -> bool:
-    if _is_safe_wrapper(node, exc):
+def _uses_raw(node: ast.AST, names: set[str], exc: set[str], safe: set[str]) -> bool:
+    if _is_safe_wrapper(node, exc, safe):
+        return False
+    if (
+        isinstance(node, ast.Attribute)
+        and node.attr in _SAFE_ATTRS
+        and _object_expr(node.value, exc)
+    ):
         return False
     if isinstance(node, ast.Name) and node.id in names:
         return True
     if isinstance(node, (ast.Attribute, ast.Subscript)) and ast.unparse(node) in names:
         return True
-    return any(_uses_raw(c, names, exc) for c in ast.iter_child_nodes(node))
+    return any(_uses_raw(c, names, exc, safe) for c in ast.iter_child_nodes(node))
+
+
+def _text_use(node: ast.AST, names: set[str], exc: set[str], safe: set[str]) -> bool:
+    """Like _uses_raw, but the exception OBJECT passed along (f(exc), (x, exc)) is not text; str(exc),
+    f"{exc}", .format(exc) and text aliases are."""
+    if _is_safe_wrapper(node, exc, safe):
+        return False
+    if isinstance(node, ast.Name):
+        return node.id in names and node.id not in exc
+    if isinstance(node, ast.Attribute):
+        if node.attr in _SAFE_ATTRS and _object_expr(node.value, exc):
+            return False
+        return _uses_raw(node, names, exc, safe)
+    if isinstance(node, ast.FormattedValue):
+        return _uses_raw(node.value, names, exc, safe)
+    if isinstance(node, ast.Call):
+        f = node.func
+        if getattr(f, "id", "") in {"str", "repr", "format", "ascii"} or getattr(f, "attr", "") in {
+            "format",
+            "format_map",
+            "join",
+        }:
+            return _uses_raw(node, names, exc, safe)
+        args = [*node.args, *(k.value for k in node.keywords)]
+        return any(_text_use(a, names, exc, safe) for a in args if not _object_expr(a, exc))
+    return any(_text_use(c, names, exc, safe) for c in ast.iter_child_nodes(node))
 
 
 def _truthy(node: ast.AST) -> bool:
@@ -297,6 +332,8 @@ def _target_names(t: ast.AST) -> set[str]:
     """Names a store taints: the target itself and, for attribute / subscript stores, the parent object."""
     if isinstance(t, (ast.Tuple, ast.List)):
         return set().union(*(_target_names(e) for e in t.elts)) if t.elts else set()
+    if isinstance(t, ast.Starred):
+        return _target_names(t.value)
     if isinstance(t, ast.Name):
         return {t.id}
     if isinstance(t, (ast.Attribute, ast.Subscript)):
@@ -307,6 +344,16 @@ def _target_names(t: ast.AST) -> set[str]:
     return set()
 
 
+def _pattern_names(p: ast.AST) -> set[str]:
+    out: set[str] = set()
+    for n in ast.walk(p):
+        for attr in ("name", "rest"):
+            v = getattr(n, attr, None)
+            if isinstance(v, str) and isinstance(n, (ast.MatchAs, ast.MatchStar, ast.MatchMapping)):
+                out.add(v)
+    return out
+
+
 def _enclosing(node: ast.AST, parents: dict[ast.AST, ast.AST]) -> str:
     while node in parents:
         node = parents[node]
@@ -315,14 +362,21 @@ def _enclosing(node: ast.AST, parents: dict[ast.AST, ast.AST]) -> str:
     return "<module>"
 
 
-def _module_info(tree: ast.AST) -> tuple[set[str], set[str], set[str]]:
-    """Names for the traceback module, bare traceback functions, and aliased log methods (w = _LOG.warning)."""
+def _module_info(tree: ast.AST, module: str) -> tuple[set[str], set[str], set[str], set[str]]:
+    """Traceback module names, bare traceback functions, aliased log methods (w = _LOG.warning), and the
+    masking helpers that really are hadavin_sdk's (not redefined or imported from elsewhere)."""
     tb_mods, tb_funcs, log_funcs = {"traceback"}, set(), set()
+    foreign: set[str] = set()
     for n in ast.walk(tree):
         if isinstance(n, ast.Import):
             tb_mods |= {a.asname or a.name for a in n.names if a.name == "traceback"}
-        elif isinstance(n, ast.ImportFrom) and n.module == "traceback":
-            tb_funcs |= {a.asname or a.name for a in n.names if a.name in _TRACE}
+        elif isinstance(n, ast.ImportFrom):
+            if n.module == "traceback":
+                tb_funcs |= {a.asname or a.name for a in n.names if a.name in _TRACE}
+            elif n.module != "hadavin_sdk.guard.safe_message":
+                foreign |= {a.asname or a.name for a in n.names}
+        elif isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            foreign.add(n.name)
         elif (
             isinstance(n, ast.Assign)
             and isinstance(n.value, ast.Attribute)
@@ -330,7 +384,10 @@ def _module_info(tree: ast.AST) -> tuple[set[str], set[str], set[str]]:
             and _is_logger(n.value.value)
         ):
             log_funcs |= {t.id for t in n.targets if isinstance(t, ast.Name)}
-    return tb_mods, tb_funcs, log_funcs
+    safe = set(_MASKING) if module == "guard/safe_message.py" else set(_MASKING) - foreign
+    if module == "extract.py":
+        safe.add("_failure")
+    return tb_mods, tb_funcs, log_funcs, safe
 
 
 def _is_log_getattr(f: ast.AST) -> bool:
@@ -345,56 +402,41 @@ def _is_log_getattr(f: ast.AST) -> bool:
     )
 
 
+def _exc_params(fn: ast.FunctionDef | ast.AsyncFunctionDef) -> list[str]:
+    """Parameters that carry an exception: named like one, or annotated with an Exception / Error type
+    (quoted, Optional, Union, | all count; a Callable that takes one does not)."""
+    out = []
+    a = fn.args
+    for p in [*a.posonlyargs, *a.args, *a.kwonlyargs, *([a.vararg] if a.vararg else [])]:
+        note = ast.unparse(p.annotation) if p.annotation is not None else ""
+        if "Callable" in note:
+            continue
+        if note:  # an annotated parameter is an exception only if its type says so
+            if re.search(r"(Exception|Error)", note):
+                out.append(p.arg)
+        elif p.arg in _EXC_PARAM_NAMES:
+            out.append(p.arg)
+    return out
+
+
 def _scopes(tree: ast.AST):
-    """(node, exception name, body) for every except handler, and for every function that takes an exception
-    as a parameter (annotated Exception / BaseException / ...Error): its body is checked as a handler is."""
+    """(node, exception names, body) for every except handler and every (async) function that takes an
+    exception: its body is checked as a handler is."""
     for n in ast.walk(tree):
         if isinstance(n, ast.ExceptHandler):
-            yield n, n.name, n.body
-        elif isinstance(n, ast.FunctionDef):
-            for a in n.args.args + n.args.kwonlyargs:
-                note = ast.unparse(a.annotation) if a.annotation is not None else ""
-                if re.fullmatch(r"([\w.]+\.)?\w*(Exception|Error)( \| None)?", note):
-                    yield n, a.arg, n.body
+            yield n, [n.name] if n.name else [], n.body
+        elif isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            params = _exc_params(n)
+            if params:
+                yield n, params, n.body
 
 
-_SAFE_ATTRS = {"code", "status", "status_code", "errno", "returncode", "pos", "lineno"}
-
-
-def _text_use(node: ast.AST, names: set[str], exc: set[str]) -> bool:
-    """Like _uses_raw, but the exception OBJECT passed along (return f(exc), return (x, exc), seen.append(exc))
-    is not text; str(exc), f"{exc}", .format(exc) and text aliases are."""
-    if _is_safe_wrapper(node, exc):
-        return False
-    if isinstance(node, ast.Name):
-        return node.id in names and node.id not in exc
-    if isinstance(node, ast.Attribute):
-        if node.attr in _SAFE_ATTRS and isinstance(node.value, ast.Name) and node.value.id in exc:
-            return False
-        return _uses_raw(node, names, exc)
-    if isinstance(node, ast.FormattedValue):
-        return _uses_raw(node.value, names, exc)
-    if isinstance(node, ast.Call):
-        f = node.func
-        if getattr(f, "id", "") in {"str", "repr", "format", "ascii"} or getattr(f, "attr", "") in {
-            "format",
-            "format_map",
-            "join",
-        }:
-            return _uses_raw(node, names, exc)
-        args = [*node.args, *(k.value for k in node.keywords)]
-        return any(
-            _text_use(a, names, exc) for a in args if not (isinstance(a, ast.Name) and a.id in exc)
-        )
-    return any(_text_use(c, names, exc) for c in ast.iter_child_nodes(node))
-
-
-def find_leaks(source: str) -> list[tuple[int, str, str, str]]:
+def find_leaks(source: str, module: str = "") -> list[tuple[int, str, str, str]]:
     """(line, why, unparsed statement, enclosing function) for every leak of exception text in a handler,
     plus exception objects obtained outside a handler (future.exception(), gather(return_exceptions=True))."""
     tree = ast.parse(source)
     parents = {c: p for p in ast.walk(tree) for c in ast.iter_child_nodes(p)}
-    tb_mods, tb_funcs, log_funcs = _module_info(tree)
+    tb_mods, tb_funcs, log_funcs, safe = _module_info(tree, module)
     found: list[tuple[int, str, str, str]] = []
     for n in ast.walk(tree):  # exception objects obtained outside any handler
         if isinstance(n, ast.Call):
@@ -413,40 +455,38 @@ def find_leaks(source: str) -> list[tuple[int, str, str, str]]:
                         _enclosing(n, parents),
                     )
                 )
-    for scope_node, exc, body in _scopes(tree):
-        is_func = isinstance(
-            scope_node, ast.FunctionDef
-        )  # a helper that takes an exception: sinks only
-        names = {exc} if exc else set()
-        objs = set(names)  # names bound to the exception OBJECT (e = exc, e = exc.__cause__)
+    for scope_node, excs, body in _scopes(tree):
+        is_func = isinstance(scope_node, (ast.FunctionDef, ast.AsyncFunctionDef))
+        objs = set(excs)  # names bound to the exception OBJECT (e = exc, e = exc.__cause__)
+        names = set(excs)
         nodes = [n for st in body for n in ast.walk(st)]
-        raised = {id(n.exc) for n in nodes if isinstance(n, ast.Raise) and n.exc is not None}
-        while (
-            True
-        ):  # aliases until nothing new: x = str(e), self.x = ..., a, b = ..., (m := ...), s += ...
-            before = len(names)
+        while True:  # aliases until nothing new: x = str(e), self.x = ..., a, b = ..., for x in ..., with ... as f
+            before = (len(names), len(objs))
             for n in nodes:
-                if isinstance(n, ast.Assign) and _uses_raw(n.value, names, objs):
+                if isinstance(n, ast.Assign) and _uses_raw(n.value, names, objs, safe):
                     for t in n.targets:
                         names |= _target_names(t)
                 elif isinstance(n, (ast.AnnAssign, ast.NamedExpr)) and n.value is not None:
-                    if _uses_raw(n.value, names, objs):
+                    if _uses_raw(n.value, names, objs, safe):
                         names |= _target_names(n.target)
-                elif isinstance(n, ast.AugAssign) and _uses_raw(n.value, names, objs):
+                elif isinstance(n, ast.AugAssign) and _uses_raw(n.value, names, objs, safe):
                     names |= _target_names(n.target)
-            for n in nodes:  # object aliases: e = exc / e = exc.__cause__ stay objects
+                elif isinstance(n, (ast.For, ast.AsyncFor, ast.comprehension)):
+                    if _uses_raw(n.iter, names, objs, safe):
+                        names |= _target_names(n.target)
+                elif isinstance(n, ast.withitem) and n.optional_vars is not None:
+                    if _uses_raw(n.context_expr, names, objs, safe):
+                        names |= _target_names(n.optional_vars)
+                elif isinstance(n, ast.Match) and _uses_raw(n.subject, names, objs, safe):
+                    for case in n.cases:
+                        names |= _pattern_names(case.pattern)
                 v = n.value if isinstance(n, ast.Assign) else None
-                if isinstance(v, ast.Attribute) and v.attr in {"__cause__", "__context__"}:
-                    v = v.value
-                if isinstance(v, ast.Name) and v.id in objs:
+                if _object_expr(v, objs) if v is not None else False:
                     objs |= {t.id for t in n.targets if isinstance(t, ast.Name)}
-            if len(names) == before:
+            if (len(names), len(objs)) == before:
                 break
-        fn = (
-            scope_node.name
-            if isinstance(scope_node, ast.FunctionDef)
-            else _enclosing(scope_node, parents)
-        )
+        fn = scope_node.name if is_func else _enclosing(scope_node, parents)
+        raised = {id(n.exc) for n in nodes if isinstance(n, ast.Raise) and n.exc is not None}
 
         def flag(node: ast.AST, why: str, fn: str = fn) -> None:
             found.append((node.lineno, why, ast.unparse(node), fn))
@@ -455,25 +495,28 @@ def find_leaks(source: str) -> list[tuple[int, str, str, str]]:
             if isinstance(n, ast.Raise):
                 c = n.exc
                 if isinstance(c, ast.Call) and any(
-                    _uses_raw(a, names, objs) for a in [*c.args, *(k.value for k in c.keywords)]
+                    _uses_raw(a, names, objs, safe)
+                    for a in [*c.args, *(k.value for k in c.keywords)]
                 ):
                     flag(n, "raise carries raw exception text")
                 continue
             if isinstance(n, (ast.Return, ast.Yield, ast.YieldFrom)) and n.value is not None:
-                if not is_func and _text_use(n.value, names, objs):
+                if (
+                    is_func
+                ):  # a helper that inspects an exception may return codes; handlers may not leak
+                    continue
+                if _object_expr(n.value, objs):
+                    flag(n, "exception object returned or yielded (a caller may log it)")
+                elif _text_use(n.value, names, objs, safe):
                     flag(n, "returns or yields raw exception text")
                 continue
-            if isinstance(
-                n, (ast.Assign, ast.AugAssign)
-            ):  # the exception OBJECT parked outside this scope
-                v = n.value
+            if isinstance(n, (ast.Assign, ast.AugAssign, ast.AnnAssign)) and n.value is not None:
                 tg = n.targets if isinstance(n, ast.Assign) else [n.target]
-                if (
-                    isinstance(v, ast.Name)
-                    and v.id in objs
-                    and any(isinstance(t, (ast.Attribute, ast.Subscript)) for t in tg)
-                ):
-                    flag(n, "exception object stored outside the handler's scope")
+                if any(isinstance(t, (ast.Attribute, ast.Subscript)) for t in tg):
+                    if _object_expr(n.value, objs):
+                        flag(n, "exception object stored outside the handler's scope")
+                    elif _text_use(n.value, names, objs, safe):
+                        flag(n, "raw exception text stored in an attribute or subscript")
                 continue
             if not isinstance(n, ast.Call):
                 continue
@@ -486,55 +529,58 @@ def find_leaks(source: str) -> list[tuple[int, str, str, str]]:
             ):
                 flag(n, "traceback / exc_info / reporter in a handler")
                 continue
-            recv = _chain(n.func.value) if isinstance(n.func, ast.Attribute) else []
-            recv_last = recv[-1].lower() if recv else ""
+            callee = n.func.id if isinstance(n.func, ast.Name) else None
+            method = n.func.attr if isinstance(n.func, ast.Attribute) else None
+            if callee in _MASKING and callee in safe:
+                first = (
+                    n.args[0]
+                    if n.args
+                    else next((k.value for k in n.keywords if k.arg == "exc"), None)
+                )
+                text_given = first is not None and not _object_expr(first, objs)
+                if (
+                    callee in {"safe_message", "safe_text"}
+                    and text_given
+                    and _uses_raw(first, names, objs, safe)
+                ):
+                    flag(n, "safe_message / safe_text need the exception object, not its text")
+                continue
+            kw_vals = [(k.arg, k.value) for k in n.keywords]
             is_log = (
                 (
-                    isinstance(n.func, ast.Attribute)
-                    and _is_logger(n.func.value)
-                    and (n.func.attr in _LEVELS or recv_last == "audit")
+                    method is not None
+                    and (method in _LEVELS or (_is_logger(n.func.value) and "audit" in ids))
                 )
-                or (isinstance(n.func, ast.Name) and n.func.id in log_funcs)
+                or (callee is not None and callee in log_funcs)
                 or _is_log_getattr(n.func)
             )
-            is_bare = isinstance(n.func, ast.Name) and any(
-                k in n.func.id.lower() for k in ("log", "warn", "emit")
-            )
             is_out = (
-                is_bare
-                or ids == ["print"]
+                ids == ["print"]
                 or ids == ["warnings", "warn"]
                 or (len(ids) >= 2 and ids[-1] == "write" and ids[-2] in {"stderr", "stdout"})
+                or (
+                    callee is not None and any(k in callee.lower() for k in ("log", "warn", "emit"))
+                )
             )
-            kw_vals = [(k.arg, k.value) for k in n.keywords]
             if is_log or is_out:
-                if getattr(n.func, "attr", "") == "exception" and is_log:
+                if method == "exception" and is_log:
                     flag(n, "_LOG.exception logs the traceback")
                 for arg, val in kw_vals:
                     if arg == "exc_info" and _truthy(val):  # exc_info branch
                         flag(n, "exc_info")
                 parts = [*n.args, *(v for a, v in kw_vals if a != "exc_info")]  # kwargs branch
-                if any(_uses_raw(p, names, objs) for p in parts):
+                if any(_uses_raw(p, names, objs, safe) for p in parts):
                     flag(n, "raw exception text in a log/print")
                 continue
-            if any(
-                a and any(w in a.lower() for w in _SINK_WORDS) and _uses_raw(v, names, objs)
-                for a, v in kw_vals
-            ):  # store branch
-                flag(n, "raw exception text stored in a keyword field")
-            elif (
-                isinstance(n.func, ast.Attribute)
-                and n.func.attr in _SINK_METHODS | _POS_SINKS
-                and any(_text_use(a, names, objs) for a in n.args)
-            ):
-                flag(n, "raw exception text stored via a method call")
-            elif (
-                isinstance(n.func, ast.Name)
-                and n.func.id[:1].isupper()
-                and id(n) not in raised
-                and any(_uses_raw(a, names, objs) for a in n.args)
-            ):
-                flag(n, "raw exception text passed to a constructor")
+            if is_func or callee in _PURE_FUNCS or method in _PURE_METHODS:
+                continue  # helpers: only log / print / store / raise sinks are checked
+            args = [*n.args, *(v for _, v in kw_vals)]
+            if method in _OBJECT_SINKS and any(_object_expr(a, objs) for a in n.args):
+                flag(n, "exception object stored in a container or queue")
+            elif any(_text_use(a, names, objs, safe) for a in args) and id(n) not in raised:
+                flag(
+                    n, "raw exception text passed to a call"
+                )  # inverted rule: any unknown callee is a sink
     return found
 
 
@@ -544,7 +590,7 @@ def test_no_raw_exc_in_log_calls_ast():
     bad, used = [], Counter()
     for path in sorted(SRC.rglob("*.py")):
         rel = path.relative_to(SRC).as_posix()
-        for line, why, text, fn in find_leaks(path.read_text(encoding="utf-8")):
+        for line, why, text, fn in find_leaks(path.read_text(encoding="utf-8"), rel):
             if (rel, fn, text) in WAIVERS:
                 used[(rel, fn, text)] += 1
             else:
@@ -600,10 +646,36 @@ _BARE = "try:\n pass\nexcept Exception:\n "
         _HEAD + "raise ConfigError(f'bad {e}')",
         _HEAD + "raise X(e)",
         _HEAD + "raise X(msg=str(e))",
+        _HEAD + "self.last_error = str(e)",
+        _HEAD + "obj.attr['k'] = f'{e}'",
+        _HEAD + "for line in str(e).splitlines():\n  _LOG.warning('x %s', line)",
+        _HEAD + "with open(str(e)) as f:\n  _LOG.warning('x %s', f)",
+        _HEAD + "match str(e):\n  case m:\n   _LOG.warning('x %s', m)",
+        _HEAD + "xs = [c for c in str(e)]\n _LOG.warning('x %s', xs)",
+        _HEAD + "notify(str(e))",
+        _HEAD + "report(f'{e}')",
+        _HEAD + "slack_post(text=str(e))",
+        _HEAD + "requests.post(url, json={'text': str(e)})",
+        _HEAD + "click.echo(str(e))",
+        _HEAD + "typer.echo(f'{e}')",
+        _HEAD + "console.print(str(e))",
+        _HEAD + "out.write(str(e))",
+        _HEAD + "l.error('x %s', e)",
+        _HEAD + "_L.error('x %s', e)",
+        _HEAD + "Row(content=str(e))",
+        _HEAD + "Row(failure=str(e))",
+        _HEAD + "Row(payload=str(e))",
+        _HEAD + "Row(anything=str(e))",
+        _HEAD + "errors.append(e)",
+        _HEAD + "queue.put(e)",
+        _HEAD + "return (1, str(e))",
+        _HEAD + "return e",
+        _HEAD + "x = e.__cause__\n return x",
+        _HEAD + "seen.append(e)",
+        _HEAD + "safe_message(str(e))",
         _HEAD + "c = b\n b = a\n a = str(e)\n _LOG.warning('x %s', c)",
         _HEAD + "return str(e)",
         _HEAD + "return f'failed: {e}'",
-        _HEAD + "return (1, str(e))",
         _HEAD + "yield str(e)",
         _HEAD + "msg = ''\n msg += str(e)\n _LOG.warning('x %s', msg)",
         _HEAD + "queue.put(str(e))",
@@ -628,6 +700,13 @@ _BARE = "try:\n pass\nexcept Exception:\n "
         _HEAD + "self.last = e",
         "def f(exc: BaseException):\n print(str(exc))\n",
         "def f(exc: ValueError | None):\n _LOG.warning('x %s', exc)\n",
+        "async def f(exc: BaseException):\n print(str(exc))\n",
+        "def f(e):\n _LOG.warning('x %s', e)\n",
+        "def f(err: 'ValueError'):\n print(err)\n",
+        "def f(exc: Optional[BaseException] = None):\n print(str(exc))\n",
+        "def f(a, /, exc: Union[ValueError, None]):\n print(str(exc))\n",
+        "def safe_text(e):\n return str(e)\ntry:\n pass\nexcept Exception as e:\n _LOG.warning('x %s', safe_text(e))\n",
+        "from other import safe_message\ntry:\n pass\nexcept Exception as e:\n _LOG.warning('x %s', safe_message(e))\n",
         "fut.exception()",
         "asyncio.gather(*tasks, return_exceptions=True)",
         _HEAD + "traceback.print_exc()",
@@ -660,13 +739,14 @@ def test_ast_checker_flags_bad_shapes(src):
         _HEAD + "raise ConfigError('x') from e",
         _HEAD + "raise ConfigError(safe_message(e))",
         _HEAD + "raise",
-        _HEAD + "return e",
-        _HEAD + "x = e.__cause__\n return x",
+        _HEAD + "x = e.__cause__\n _LOG.warning('x %s', safe_message(x))",
+        _HEAD + "_LOG.warning('x %s', e.errno)",
+        _HEAD + "_LOG.warning('x %s', safe_message(exc=e))",
+        _HEAD + "_LOG.warning('x %s', safe_message(e.__cause__))",
         _HEAD + "return safe_message(e)",
         _HEAD + "return type(e).__name__",
         _HEAD + "return (e.code, None)",
         _HEAD + "return helper('set', e)",
-        _HEAD + "seen.append(e)",
         _HEAD + "d.update(x=1)",
         _HEAD + "Row(note='fixed')",
         _HEAD + "x = e.__cause__\n _LOG.warning('x %s', type(x).__name__)",

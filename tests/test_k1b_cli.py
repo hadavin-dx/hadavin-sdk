@@ -1,5 +1,6 @@
 """K1b phase 6: the replay and score commands end to end on the fake llm kind, exit codes, the main wrapper."""
 
+import io
 import json
 
 import pytest
@@ -185,14 +186,26 @@ def test_exempt_keys_still_check_values_and_outcome_keys_still_refuse(tmp_path):
         load_bundle(make_bundle(tmp_path / "alert", alert=alert))
 
 
-def test_debug_env_prints_the_traceback(monkeypatch, capsys):
+def test_debug_env_prints_a_masked_locator_on_a_terminal_only(monkeypatch, capsys):
+    """HADAVIN_DEBUG=1 used to print the traceback (it quotes the exception text, which is not masked). It now
+    prints the masked message and a file:line locator, and only when stderr is a terminal."""
+
     def crash(*_a, **_k):
         raise RuntimeError("boom")
+
+    class Tty(io.StringIO):
+        def isatty(self):
+            return True
 
     monkeypatch.setattr(cli, "_main", crash)
     monkeypatch.setenv("HADAVIN_DEBUG", "1")
     assert cli.main(["x"]) == 3
-    assert "Traceback" in capsys.readouterr().err
+    assert "debug:" not in capsys.readouterr().err  # a pipe or a log file: nothing extra
+    tty = Tty()
+    monkeypatch.setattr(cli.sys, "stderr", tty)
+    assert cli.main(["x"]) == 3
+    out = tty.getvalue()
+    assert "debug: RuntimeError at test_k1b_cli.py:" in out and "Traceback" not in out
 
 
 def test_report_write_failure_leaves_started_then_failed_and_no_score_run(

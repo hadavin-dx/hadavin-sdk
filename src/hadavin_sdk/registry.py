@@ -18,18 +18,19 @@ from hadavin_sdk import deferred
 from hadavin_sdk.actions.contract import ActionContract, schema_problems
 from hadavin_sdk.config import Config, ConfigError, Money, confined, load_yaml
 from hadavin_sdk.guard.judge import PROMPT_SHA256 as JUDGE_PROMPT_SHA256
+from hadavin_sdk.guard.safe_message import safe_str
 from hadavin_sdk.identity import Principal
 from hadavin_sdk.models import ChainStep, sha256_hex
 
 
 class Budget(BaseModel):
-    model_config = ConfigDict(extra="forbid", frozen=True)
+    model_config = ConfigDict(extra="forbid", frozen=True, hide_input_in_errors=True)
     daily: Money
     monthly: Money
 
 
 class AgentRecord(BaseModel):
-    model_config = ConfigDict(extra="forbid", frozen=True)
+    model_config = ConfigDict(extra="forbid", frozen=True, hide_input_in_errors=True)
     id: str
     status: Literal["draft", "live", "retired"]
     data_class: Literal["public", "internal", "confidential", "restricted"]
@@ -48,7 +49,7 @@ class AgentRecord(BaseModel):
 
 
 class Chain(BaseModel):
-    model_config = ConfigDict(extra="forbid", frozen=True)
+    model_config = ConfigDict(extra="forbid", frozen=True, hide_input_in_errors=True)
     id: str
     steps: list[ChainStep]
 
@@ -184,7 +185,7 @@ def load_registry(config: Config) -> Registry:
     except ConfigError:
         raise
     except (ValidationError, TypeError, yaml.YAMLError) as exc:
-        raise ConfigError(str(exc)) from exc
+        raise ConfigError(safe_str(str(exc), 2000)) from exc
     problems = _cross_check(config, agents, chains, contracts)
     if problems:
         raise ConfigError("; ".join(problems))

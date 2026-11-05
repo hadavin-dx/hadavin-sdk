@@ -176,7 +176,7 @@ def test_input_is_capped_before_masking(monkeypatch):
     import hadavin_sdk.guard.safe_message as mod
 
     real = mod.redact
-    monkeypatch.setattr(mod, "redact", lambda t: (seen.append(len(t)), real(t))[1])
+    monkeypatch.setattr(mod, "redact", lambda t, **kw: (seen.append(len(t)), real(t, **kw))[1])
     _sm()(ConfigError("z" * 200_000), 300)
     assert seen and max(seen) <= 300 * 8
 
@@ -194,7 +194,7 @@ def test_200k_message_within_time_budget():
 def test_redact_failure_returns_unavailable(monkeypatch, fail):
     import hadavin_sdk.guard.safe_message as mod
 
-    def broken(text):
+    def broken(text, **kw):
         raise fail
 
     monkeypatch.setattr(mod, "redact", broken)
@@ -265,7 +265,10 @@ def test_tick_step_error_has_one_class_prefix_and_masked_text(caplog):
     assert err.count("ConfigError") == 1 and "example.com" not in err and "<EMAIL_1>" in err
     assert "\n" not in err
     line = next(ln for ln in caplog.text.splitlines() if "step=probe" in ln)
-    assert "step=probe error_kind=ConfigError message='step died for <EMAIL_1> second line'" in line
+    assert (
+        "step=probe error_kind=ConfigError at=test_c18a_safe_message.py:" in line
+        and "message='step died for <EMAIL_1> second line'" in line
+    )
     assert caplog.text.count("ConfigError") == 1 and "example.com" not in caplog.text
 
 
@@ -309,7 +312,7 @@ def test_nfkc_expansion_is_capped_again(monkeypatch):
 
     seen = []
     real = mod.redact
-    monkeypatch.setattr(mod, "redact", lambda t: (seen.append(len(t)), real(t))[1])
+    monkeypatch.setattr(mod, "redact", lambda t, **kw: (seen.append(len(t)), real(t, **kw))[1])
     _sm()(ConfigError("\ufdfa" * 2400), 300)  # each folds to 18 characters
     assert seen and max(seen) <= 300 * 8
 
@@ -371,7 +374,7 @@ def test_tick_log_withheld_says_withheld_and_last_error_has_no_suffix(caplog):
 
     with caplog.at_level(logging.ERROR, logger="hadavin_sdk.tick"):
         tick._run_step(ctx, tick.TickStep("probe", 0, boom))
-    assert ctx.app.store.saved.last_error == "ConnectionError"
+    assert ctx.app.store.saved.last_error.startswith("ConnectionError [test_c18a_safe_message.py:")
     assert "message='(withheld)'" in caplog.text and "db.internal" not in caplog.text
 
 
@@ -396,7 +399,7 @@ def test_tick_masks_once(monkeypatch):
 
     calls = []
     real = mod.redact
-    monkeypatch.setattr(mod, "redact", lambda t: (calls.append(1), real(t))[1])
+    monkeypatch.setattr(mod, "redact", lambda t, **kw: (calls.append(1), real(t, **kw))[1])
     ctx = _step_ctx()
     tick._run_step(
         ctx, tick.TickStep("probe", 0, lambda c: (_ for _ in ()).throw(ConfigError("a")))

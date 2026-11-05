@@ -25,7 +25,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Any
 
-from hadavin_sdk.guard.safe_message import safe_text, with_class
+from hadavin_sdk.guard.safe_message import class_name, locator, safe_text, with_class
 from hadavin_sdk.models import AuditEvent, RunState, TickState
 from hadavin_sdk.runtime.runs import IllegalTransition, advance
 from hadavin_sdk.store.protocol import StaleState, is_connectivity_error
@@ -66,7 +66,7 @@ def _each(items: list[Any], fn: Callable[[Any], None], what: str) -> None:
         except (StaleState, IllegalTransition):
             _LOG.debug("%s: moved by another worker, skipped", what)
         except Exception as exc:  # noqa: BLE001 - isolate the item; re-raised below
-            _LOG.warning("%s: %s", what, type(exc).__name__)
+            _LOG.warning("%s: %s", what, class_name(exc))
             first = first or exc
     if first is not None:
         raise first
@@ -218,9 +218,14 @@ def _run_step(ctx: TickContext, step: TickStep) -> str:
         text = safe_text(
             exc, 500
         )  # masked once; the stored string and the log line both come from it
-        error = with_class(exc, text)
+        where = locator(
+            exc
+        )  # file:line of the innermost frame: diagnosable without any document content
+        error = with_class(exc, text) + (f" [{where}]" if where else "")
         # %r quotes the value so masked text can never forge a `key=value` field of this line.
-        _LOG.error("step=%s error_kind=%s message=%r", step.name, type(exc).__name__, text)
+        _LOG.error(
+            "step=%s error_kind=%s at=%s message=%r", step.name, class_name(exc), where or "-", text
+        )
     try:
         store.save_tick_state(
             TickState(
@@ -231,9 +236,7 @@ def _run_step(ctx: TickContext, step: TickStep) -> str:
             )
         )
     except Exception as exc:  # noqa: BLE001 - an unrecorded step counts as failed
-        _LOG.error(
-            "step=%s error_kind=%s message=tick_state not saved", step.name, type(exc).__name__
-        )
+        _LOG.error("step=%s error_kind=%s message=tick_state not saved", step.name, class_name(exc))
         return FAILED
     return OK if error is None else FAILED
 
@@ -246,12 +249,12 @@ def run_tick(app: App, now: datetime | None = None, steps: list[TickStep] | None
         app.store.get_tick_state(_PROBE)  # the store answers, or nothing runs
     except Exception as exc:  # noqa: BLE001 - any store failure: change nothing
         if is_connectivity_error(exc):
-            _safe_log("step=- error_kind=%s message=store unreachable", type(exc).__name__)
+            _safe_log("step=- error_kind=%s message=store unreachable", class_name(exc))
             return STORE_UNREACHABLE
         _safe_log(
             "step=- error_kind=%s message=store answers but is not ready: run hadavin-sdk migrate "
             "and check the runtime role's grants",
-            type(exc).__name__,
+            class_name(exc),
         )
         return STORE_NOT_READY
     for step in STEPS if steps is None else steps:
@@ -259,7 +262,7 @@ def run_tick(app: App, now: datetime | None = None, steps: list[TickStep] | None
     try:
         heartbeat(ctx)
     except Exception as exc:  # noqa: BLE001 - a log line never changes the exit code
-        _safe_log("step=- error_kind=%s message=heartbeat line not written", type(exc).__name__)
+        _safe_log("step=- error_kind=%s message=heartbeat line not written", class_name(exc))
     if FAILED in ctx.results.values():
         # A scheduler must tell "the store went away" (4) from "a step failed with the store up" (1).
         try:
@@ -268,7 +271,7 @@ def run_tick(app: App, now: datetime | None = None, steps: list[TickStep] | None
             if is_connectivity_error(exc):
                 _safe_log(
                     "step=- error_kind=%s message=store unreachable after the steps",
-                    type(exc).__name__,
+                    class_name(exc),
                 )
                 return STORE_UNREACHABLE
             # answers but not ready: the step failures stand, exit 1
