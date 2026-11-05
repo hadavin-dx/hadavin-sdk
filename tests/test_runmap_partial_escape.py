@@ -151,7 +151,7 @@ def test_the_fragment_cut_in_tools_removes_a_half_written_escape_and_keeps_the_r
 
 
 def test_a_run_the_old_pattern_took_seconds_on_is_instant():
-    # 15 000 groups: the old repeated-group pattern needed about 10 s here; a function that is linear needs milliseconds.
+    # 15 000 groups: the old repeated-group pattern needed an estimated 10 s here; a function that is linear needs milliseconds.
     # This is the quick guard that fails fast if the quadratic pattern is ever put back (the larger test above would take hours).
     text = "x" + "%C3" * 15_000 + "y"
     assert _fastest(lambda: [runmap.partial_escape_start(text)]) < 2.0
@@ -220,3 +220,27 @@ def test_strip_fragment_repeats_over_a_run_longer_than_its_window(body):
 
     out = tools._strip_fragment(body + tools.TRUNCATED, ["Zq9Lm4pTvX2"])
     assert out == "abc" + tools.TRUNCATED
+
+
+# The look-back window is part of the result, not only of the cost: an `&` followed by hundreds of letters begins a
+# 'half-written entity' that reaches back past the window, and the callers have always left it alone. These outputs
+# were produced by the code BEFORE this change (checked on the source of origin/main b34eef8).
+@pytest.mark.parametrize("n", [500, 2000])
+def test_a_half_escape_far_before_the_end_is_left_alone_by_the_windowed_callers(n):
+    from hadavin_sdk import tools
+
+    text = "x&" + "a" * n
+    assert runmap.undo(text, clean=True) == text
+    assert tools._strip_fragment(text + tools.TRUNCATED, ["Zq9Lm4pTvX2"]) == text + tools.TRUNCATED
+
+
+def test_strip_fragment_loop_repeats_until_the_run_is_gone_even_with_a_small_scan():
+    # With the smallest allowed scan (64 positions) the step after the loop cannot clean a long run; only the loop can.
+    from hadavin_sdk import tools
+    from hadavin_sdk.scrub_settings import ScrubSettings
+
+    body = "x" + "%C3" * 3000
+    out = tools._strip_fragment(
+        body + tools.TRUNCATED, ["Zq9Lm4pTvX2"], ScrubSettings(fragment_scan=64)
+    )
+    assert out == "x" + tools.TRUNCATED
