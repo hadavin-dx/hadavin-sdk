@@ -1,3 +1,4 @@
+# ruff: noqa: C408
 """Reverts one guard at a time (``tools.mutation_runner``) and requires the intended test to fail for the intended reason.
 Not collected by pytest. Run from the repo root:
 
@@ -90,6 +91,7 @@ M = [
         "",
         "cannot freeze a Decimal",
         allow_crash=True,
+        crash_type="TypeError",
     ),
     Mutant(
         "view: freeze shares objects",
@@ -162,6 +164,7 @@ M = [
         "except KeyboardInterrupt as e:",
         "OSError: store down",
         allow_crash=True,
+        crash_type="OSError",
     ),
     Mutant(
         "gate: release skips the audit path",
@@ -191,6 +194,7 @@ M = [
         "except ZeroDivisionError as e:",
         "RuntimeError: x",
         allow_crash=True,
+        crash_type="RuntimeError",
     ),
     Mutant(
         "gate: an interrupt loses the item",
@@ -256,6 +260,7 @@ M = [
         "raise DuplicateKey(key)",
         "DuplicateKey",
         allow_crash=True,
+        crash_type="KeyPending",
     ),
     Mutant(
         "rowstore: get returns the live row",
@@ -300,6 +305,7 @@ M = [
         "self._n = self._n",
         "test_a_late_event_of_the_previous_bucket_neither_resets_nor_bypasses_the_cap",
         allow_crash=True,  # without the purge the counts loop meets an evicted bucket: a KeyError is the expected kill
+        crash_type="KeyError",
         test_file=FB,
         only_test="test_a_late_event_of_the_previous_bucket_neither_resets_nor_bypasses_the_cap",
     ),
@@ -459,6 +465,7 @@ M = [
         "if False:",
         "normalize() argument",
         allow_crash=True,
+        crash_type="AttributeError",
     ),
     Mutant(
         "egress: folds-to-nothing value skipped",
@@ -467,6 +474,7 @@ M = [
         "if False:",
         "IndexError",
         allow_crash=True,  # the empty word then crashes _word_hit (IndexError): still a refusal to run
+        crash_type="IndexError",
     ),
     Mutant(
         "egress: short protected value skips the check",
@@ -587,6 +595,7 @@ M = [
         "if False:\n            raise ValueError",
         "unexpected keyword argument",
         allow_crash=True,
+        crash_type="TypeError",
     ),
     # judge, runner, contracts, gate
     Mutant(
@@ -1166,6 +1175,7 @@ M = [
         "    except ZeroDivisionError:\n        pass\n",
         "FileNotFoundError",
         allow_crash=True,
+        crash_type="FileNotFoundError",
     ),
     Mutant(
         "egress: a digit lowers a letters-only run",
@@ -1413,6 +1423,7 @@ M = [
         "shown, tenant = tenant[:_TENANT_MAX], tenant[:_TENANT_MAX]",
         "test_a_non_string_tenant_is_a_name_not_a_type_error",
         allow_crash=True,
+        crash_type="TypeError",
         test_file=FB,
         only_test="test_a_non_string_tenant_is_a_name_not_a_type_error",
     ),
@@ -1556,7 +1567,17 @@ M = [
     ],
     # PR #50 fix batch 2 (ledger BL-core-pr50-r2-007 to 023); killers live in tests/test_pr50_fix_batch2.py
     *[
-        Mutant(name, file, old, new_, test, allow_crash=crash, test_file=FB2, only_test=test)
+        Mutant(
+            name,
+            file,
+            old,
+            new_,
+            test,
+            allow_crash=bool(crash),
+            crash_type=crash,
+            test_file=FB2,
+            only_test=test,
+        )
         for name, file, old, new_, test, crash in (
             (
                 "b2: restore(False) on an unaudited gate clears the stop",
@@ -1564,7 +1585,7 @@ M = [
                 "            if audit is None:",
                 "            if False:",
                 "test_restore_true_then_false_cannot_clear_a_stop_on_an_unaudited_gate",
-                True,  # the old guard's absence shows as an AttributeError on None, the expected crash
+                "AttributeError",  # the old guard's absence shows as an AttributeError on None, the expected crash
             ),
             (
                 "b2: restore(False) ignores the durable switch",
@@ -1572,7 +1593,7 @@ M = [
                 'raise StopGateBusy("restore(False): the durable switch is on or unreadable")',
                 "pass",
                 "test_restore_false_needs_the_durable_switch_off_and_writes_an_audit_row",
-                False,
+                "",
             ),
             (
                 "b2: restore(False) writes no audit row",
@@ -1580,7 +1601,7 @@ M = [
                 "audit.write_intent(",
                 "(lambda e: None)(",
                 "test_restore_false_needs_the_durable_switch_off_and_writes_an_audit_row",
-                False,
+                "",
             ),
             (
                 "b2: restore(False) bumps the generation",
@@ -1588,7 +1609,7 @@ M = [
                 "            if on:\n                self._gen += 1",
                 "            self._gen += 1",
                 "test_restore_false_does_not_make_a_release_in_flight_raise_when_no_engage_ran",
-                True,  # the release raises StopGateBusy: an exception is the expected kill
+                "StopGateBusy",  # the release raises StopGateBusy: an exception is the expected kill
             ),
             (
                 "b2: release keeps the engaged marker",
@@ -1596,7 +1617,7 @@ M = [
                 "                self._engaged_here = False\n",
                 "                pass\n",
                 "test_release_clears_the_engaged_marker_so_restore_works_after_it",
-                True,
+                "StopGateBusy",
             ),
             (
                 "b2: a label starting with id: passes through",
@@ -1604,7 +1625,7 @@ M = [
                 'if _LABEL.fullmatch(who) and not who.startswith("id:"):',
                 "if _LABEL.fullmatch(who):",
                 "test_a_label_that_starts_with_id_is_hashed_and_the_hash_is_salted",
-                False,
+                "",
             ),
             (
                 "b2: the label hash has no salt",
@@ -1612,7 +1633,7 @@ M = [
                 'hmac.new(_SALT, who.encode("utf-8", "replace"), hashlib.sha256)',
                 'hashlib.sha256(who.encode("utf-8", "replace"))',
                 "test_a_label_that_starts_with_id_is_hashed_and_the_hash_is_salted",
-                False,
+                "",
             ),
             (
                 "b2: a value is redacted whole before the clip",
@@ -1620,7 +1641,7 @@ M = [
                 "head = text[: limit + _PRE_MARGIN].translate(_CTRL)",
                 "head = text.translate(_CTRL)",
                 "test_a_huge_non_ascii_value_is_pre_clipped_before_the_redactor_sees_it",
-                False,
+                "",
             ),
             (
                 "b2: control characters are kept",
@@ -1628,7 +1649,7 @@ M = [
                 "_CTRL = {",
                 "_CTRL = {c: c for c in ()} and {",
                 "test_control_characters_never_reach_any_audit_field",
-                False,
+                "",
             ),
             (
                 "b2: the tenant is clipped before it is redacted",
@@ -1636,7 +1657,7 @@ M = [
                 "return _clip(tenant if isinstance(tenant, str) else repr(tenant), _TENANT_MAX)",
                 "return _clip((tenant if isinstance(tenant, str) else repr(tenant))[:_TENANT_MAX], _TENANT_MAX)",
                 "test_a_secret_straddling_the_limit_is_not_shown_as_a_fragment",
-                False,
+                "",
             ),
             (
                 "b2: a refused value loses its length and hash",
@@ -1644,7 +1665,7 @@ M = [
                 'return f"(details withheld; len={n}; sha8={digest})"',
                 'return "(details withheld)"',
                 "test_a_value_the_redactor_refuses_keeps_its_length_and_a_hash_but_no_content",
-                False,
+                "",
             ),
             (
                 "b2: the buckets kept are the last two, not the greatest two",
@@ -1652,7 +1673,7 @@ M = [
                 "kept = sorted([*self._buckets, bucket])[-2:]",
                 "kept = [*self._buckets[-1:], bucket]",
                 "test_rotating_three_buckets_cannot_reset_the_cap",
-                False,
+                "",
             ),
             (
                 "b2: a stale bucket is counted from zero",
@@ -1660,7 +1681,7 @@ M = [
                 "return key, [bucket, self._cap, True, 0, 0]",
                 "return key, [bucket, 0, False, 0, 0]",
                 "test_a_late_event_of_an_old_bucket_never_evicts_a_newer_one",
-                False,
+                "",
             ),
             (
                 "b2: max_keys counts every kept bucket",
@@ -1668,7 +1689,7 @@ M = [
                 "self._cnt.get(bucket, 0) >= self._max_keys",
                 "len(self._n) >= self._max_keys",
                 "test_a_key_flood_on_one_day_does_not_overflow_the_next_day",
-                False,
+                "",
             ),
             (
                 "b2: a long bucket is a counter key as it is",
@@ -1676,7 +1697,7 @@ M = [
                 "bucket = _key_name(bucket)  # a long bucket",
                 "bucket = str(bucket)  # a long bucket",
                 "test_a_long_bucket_is_clipped_in_the_counter_key_and_the_docstring_is_current",
-                False,
+                "",
             ),
             (
                 "b2: the offset after a masked value is off by one",
@@ -1684,7 +1705,7 @@ M = [
                 "prev = where[e - 1] + 1",
                 "prev = where[e - 1]",
                 "test_the_malformed_offset_is_caught_by_a_value_in_front_of_and_behind_other_text",
-                False,
+                "",
             ),
             (
                 "b2: the text before a masked value restarts at zero",
@@ -1692,7 +1713,7 @@ M = [
                 "out += [body[prev : where[s]], placeholder]",
                 "out += [body[: where[s]], placeholder]",
                 "test_in_place_masking_cases",
-                False,
+                "",
             ),
             (
                 "b2: the line scan asks for no budget",
@@ -1700,7 +1721,7 @@ M = [
                 "            self._over_budget(started)\n            for m in pattern.finditer(text):",
                 "            for m in pattern.finditer(text):",
                 "test_line_hits_asks_for_the_budget_once_per_pattern",
-                False,
+                "",
             ),
             (
                 "b2: the rounds are not capped at four",
@@ -1708,7 +1729,7 @@ M = [
                 "MAX_FOLD_ROUNDS = 4  # rounds",
                 "MAX_FOLD_ROUNDS = 40  # rounds",
                 "test_four_rounds_that_never_converge_fall_through_to_the_withhold",
-                False,
+                "",
             ),
             (
                 "b2: a multi-line fold value is left",
@@ -1716,7 +1737,7 @@ M = [
                 "if reach.get(i, i) > i:",
                 "if False:",
                 "test_a_multi_line_value_that_only_the_fold_sees_is_replaced_not_left",
-                False,
+                "",
             ),
             (
                 "b2: the views get no shared deadline",
@@ -1724,7 +1745,7 @@ M = [
                 "_deadline=started + defaults.REDACT_BUDGET_S",
                 "_deadline=None",
                 "test_one_deadline_covers_the_text_and_all_its_views",
-                False,
+                "",
             ),
             (
                 "b2: a refused junit stops the run",
@@ -1732,7 +1753,7 @@ M = [
                 "except ValueError:  # a refused JUnit",
                 "except KeyError:  # a refused JUnit",
                 "test_a_refused_junit_marks_that_mutant_error_and_the_run_goes_on",
-                True,
+                "ValueError",
             ),
             (
                 "b2: the junit has no size ceiling",
@@ -1740,7 +1761,7 @@ M = [
                 "if len(xml_text) > MAX_JUNIT_CHARS:",
                 "if False:",
                 "test_a_junit_text_over_the_ceiling_is_refused",
-                False,
+                "",
             ),
             (
                 "b2: the store has no total cap",
@@ -1748,7 +1769,7 @@ M = [
                 "and self._total + sum(self._reserved.values()) + delta > self._max_total_bytes",
                 "and False",
                 "test_the_total_cap_refuses_the_row_that_would_pass_it_and_frees_on_delete",
-                False,
+                "",
             ),
             (
                 "b2: the row size is checked after the whole encode",
@@ -1756,7 +1777,7 @@ M = [
                 "if max_bytes is not None and total > max_bytes:",
                 "if False:",
                 "test_the_row_size_is_counted_while_encoding",
-                False,
+                "",
             ),
             (
                 "b2: loopback connects to the name",
@@ -1764,10 +1785,337 @@ M = [
                 'literal = "::1" if named == "::1" else "127.0.0.1"',
                 "literal = named",
                 "test_the_loopback_skip_connects_to_a_literal_address",
-                False,
+                "",
             ),
         )
     ],
+]
+
+# ---- batch 3: rows whose guarded text moved are retargeted here (by name), then the new rows ------------------------------------------------------
+import dataclasses
+
+FB3 = "tests/test_pr50_fix_batch3.py"  # the killers of the PR #50 fix batch 3
+_RETARGET = {
+    "gate: release skips the audit path": dict(
+        old='self._limits.reset(self._lbl(by), source="gate")'
+    ),
+    "rowstore: a row is not validated first": dict(
+        old='        clean, size = _validated(row, self._max_row_bytes, key) if op != "delete" else (None, 0)',
+        new="        clean, size = (row, 0)",
+    ),
+    "capped: tenant not clipped": dict(
+        old="kind_key, tenant_key, raw_bucket = _key_name(kind), _key_name(tenant), bucket",
+        new="kind_key, tenant_key, raw_bucket = _key_name(kind), str(tenant), bucket",
+    ),
+    "runner: crash counts as good": dict(
+        old="crash_ok = v is Verdict.CRASH and m.allow_crash and m.crash_type in first",
+        new="crash_ok = v is Verdict.CRASH",
+        expect="test_a_crash_row_is_good_only_when_the_exception_class_is_the_declared_one",
+        only_test="test_a_crash_row_is_good_only_when_the_exception_class_is_the_declared_one",
+        test_file=FB3,
+    ),
+    "capped: kind not clipped": dict(
+        old="kind_key, tenant_key, raw_bucket = _key_name(kind),",
+        new="kind_key, tenant_key, raw_bucket = str(kind),",
+    ),
+    "capped: the marker names the first overflowing tenant": dict(
+        old='tenant="*" if key[0] is _OVERFLOW else _name(tenant, self._label_key),',
+        new="tenant=_name(tenant, self._label_key),",
+    ),
+    "fix: a non-string tenant is sliced": dict(
+        old="kind_key, tenant_key, raw_bucket = _key_name(kind), _key_name(tenant), bucket",
+        new="kind_key, tenant_key, raw_bucket = _key_name(kind), tenant[:_TENANT_MAX], bucket",
+    ),
+    "fix: the fold scan has no time budget": dict(old="if time.thread_time() > deadline:"),
+    "fix: accented and other-script lines are withheld whole again": dict(
+        old='return (text, where, alike) if text == fold(body).replace("\\u2044", "/") else None',
+    ),
+    "fix: an object reference is not clipped": dict(
+        old='ref = _clip(fields.get("object_ref") or fields.get("key") or "-", _REF_MAX, label_key)',
+    ),
+    "fix: an error code is not clipped": dict(
+        old="error_code=_clip(code, _CODE_MAX, label_key) if code else None,"
+    ),
+    "fix: restore does not bump the generation": dict(
+        old="                if on:\n                    self._gen += 1", new="                pass"
+    ),
+    "fix: an odd principal is written as a question mark": dict(
+        old='return "id:" + keyed_hex(who, 32, key)'
+    ),
+    "b2: restore(False) bumps the generation": dict(
+        old="                if on:\n                    self._gen += 1",
+        new="                self._gen += 1",
+    ),
+    "b2: the label hash has no salt": dict(
+        old="keyed_hex(who, 32, key)",
+        new='__import__("hashlib").sha256(who.encode("utf-8", "replace")).hexdigest()[:32]',
+    ),
+    "b2: a value is redacted whole before the clip": dict(
+        old="head = _strip(text[: limit + _PRE_MARGIN])", new="head = _strip(text)"
+    ),
+    "b2: control characters are kept": dict(
+        old='return "".join(" " if unicodedata.category(c) in ("Cc", "Cf", "Zl", "Zp") else c for c in text)',
+        new="return text",
+    ),
+    "b2: the tenant is clipped before it is redacted": dict(
+        old="return _clip(tenant if isinstance(tenant, str) else repr(tenant), _TENANT_MAX, key)",
+        new="return _clip((tenant if isinstance(tenant, str) else repr(tenant))[:_TENANT_MAX], _TENANT_MAX, key)",
+    ),
+    "b2: a refused value loses its length and hash": dict(
+        old='return f"(details withheld; len={len(text)}; sha8={keyed_hex(text, 8, key)})"',
+    ),
+    "b2: a long bucket is a counter key as it is": dict(
+        old="        bucket = _key_name(bucket)\n        with self._lock:",
+        new="        bucket = str(bucket)\n        with self._lock:",
+    ),
+    "b2: a refused junit stops the run": dict(old="except JUNIT_REFUSED:", new="except KeyError:"),
+    "b2: the row size is checked after the whole encode": dict(
+        old="_walk(o, [max_bytes if max_bytes is not None else 1 << 62])",
+        new="_walk(o, [1 << 62])",
+        expect="test_a_huge_string_is_refused_by_length_without_encoding_it",
+        only_test="test_a_huge_string_is_refused_by_length_without_encoding_it",
+        test_file=FB3,
+    ),
+    "b2: loopback connects to the name": dict(
+        old='literals = ("127.0.0.1", "::1") if named == "localhost" else (named,)',
+        new="literals = (host,)",
+    ),
+}
+for _i, _m in enumerate(M):
+    if _m.name in _RETARGET:
+        M[_i] = dataclasses.replace(_m, **_RETARGET.pop(_m.name))
+assert not _RETARGET, sorted(_RETARGET)
+
+M += [
+    Mutant(
+        name,
+        file,
+        old,
+        new_,
+        test,
+        allow_crash=bool(crash),
+        crash_type=crash,
+        test_file=FB3,
+        only_test=test,
+    )
+    for name, file, old, new_, test, crash in (
+        (
+            "b3: the fold treatment ignores a bank word elsewhere",
+            RD,
+            "            self.bank_near = True",
+            "            pass",
+            "test_an_account_number_below_an_accented_or_full_width_keyword_is_masked_when_a_bank_word_stands_elsewhere",
+            "",
+        ),
+        (
+            "b3: a suspect line gets every pattern",
+            RD,
+            "ln = self._folded_line(ln, which.get(i))",
+            "ln = self._folded_line(ln, None)",
+            "test_a_suspect_line_loops_only_the_patterns_that_matched_it",
+            "",
+        ),
+        (
+            "b3: the pattern filter is off",
+            RD,
+            "if only is not None and n not in only and label not in _CONTEXT_LABELS:",
+            "if False:",
+            "test_a_suspect_line_loops_only_the_patterns_that_matched_it",
+            "",
+        ),
+        (
+            "b3: the budget is the wall clock again",
+            RD,
+            "if time.thread_time() > deadline:",
+            "if time.monotonic() > deadline:",
+            "test_the_budget_is_cpu_time_of_the_thread_not_the_wall_clock",
+            "AssertionError",
+        ),
+        (
+            "b3: a fraction slash is not mapped",
+            RD,
+            'c.isalnum() or c == "." or (c == "/" and "\\u2044" in f)',
+            'c.isalnum() or c == "."',
+            "test_one_half_is_masked_around_but_a_full_width_slash_is_still_an_attack",
+            "",
+        ),
+        (
+            "b3: any slash is allowed in a sign",
+            RD,
+            'c.isalnum() or c == "." or (c == "/" and "\\u2044" in f)',
+            'c.isalnum() or c == "." or c == "/"',
+            "test_one_half_is_masked_around_but_a_full_width_slash_is_still_an_attack",
+            "",
+        ),
+        (
+            "b3: the alignment never checks the budget",
+            RD,
+            "if not i & 4095:",
+            "if False:",
+            "test_aligned_fold_checks_the_budget_every_4096_characters",
+            "",
+        ),
+        (
+            "b3: a suppressed event is redacted anyway",
+            CA,
+            "        if kind_key in _RESERVED_KINDS:",
+            "        _name(tenant, self._label_key)\n        if kind_key in _RESERVED_KINDS:",
+            "test_suppressed_events_do_no_redaction",
+            "",
+        ),
+        (
+            "b3: a head cut inside a word is shown",
+            CA,
+            "if len(text) > len(head) and head and not head[-1].isspace():",
+            "if False:",
+            "test_a_long_password_that_needs_context_beyond_the_cut_is_withheld_not_cut",
+            "",
+        ),
+        (
+            "b3: the withheld hash is unkeyed",
+            CA,
+            "sha8={keyed_hex(text, 8, key)}",
+            'sha8={__import__("hashlib").sha256(text.encode()).hexdigest()[:8]}',
+            "test_the_withheld_hash_is_keyed_and_no_raw_head_is_cached",
+            "",
+        ),
+        (
+            "b3: the clip has no limit",
+            CA,
+            "return redact_bounded(head, {})[0][:limit]",
+            "return redact_bounded(head, {})[0]",
+            "test_the_clip_never_exceeds_its_limit_and_strips_format_characters",
+            "",
+        ),
+        (
+            "b3: the marker passes the raw bucket",
+            CA,
+            "bucket=_clip(raw_bucket, _KIND_MAX, self._label_key),",
+            "bucket=raw_bucket,",
+            "test_the_marker_passes_a_clipped_bucket_and_a_stale_bucket_leaves_one_trace",
+            "",
+        ),
+        (
+            "b3: a stale bucket leaves no trace",
+            CA,
+            "if stale_marker:  # one trace per stale bucket",
+            "if False:  # one trace per stale bucket",
+            "test_the_marker_passes_a_clipped_bucket_and_a_stale_bucket_leaves_one_trace",
+            "",
+        ),
+        (
+            "b3: kinds are never purged",
+            CA,
+            'self._kinds = {k[1] for k in self._n} - {"*"}',
+            "pass",
+            "test_kinds_are_purged_with_their_bucket_and_the_marker_kinds_are_reserved",
+            "",
+        ),
+        (
+            "b3: the marker kinds are not reserved",
+            CA,
+            "        if kind_key in _RESERVED_KINDS:",
+            "        if False:",
+            "test_kinds_are_purged_with_their_bucket_and_the_marker_kinds_are_reserved",
+            "",
+        ),
+        (
+            "b3: release is not a compare-and-set",
+            SG,
+            'self._limits.reset(self._lbl(by), source="gate", expect=self._wrote)',
+            'self._limits.reset(self._lbl(by), source="gate")',
+            "test_a_release_does_not_turn_off_a_stop_an_operator_set_after_the_gate_engaged",
+            "",
+        ),
+        (
+            "b3: reset ignores a changed switch",
+            S + "limits.py",
+            "if now_ks.on and (now_ks.by, now_ks.ts) != tuple(expect):",
+            "if False:",
+            "test_a_stop_that_lands_between_the_reset_intent_and_the_write_is_kept",
+            "",
+        ),
+        (
+            "b3: restore reads the cached switch",
+            SG,
+            "if self._stopped_fresh():",
+            "if self.durable_on():",
+            "test_restore_false_reads_the_durable_switch_fresh_not_through_the_cache",
+            "",
+        ),
+        (
+            "b3: restore(False) needs no by",
+            SG,
+            "if not on and by is None:",
+            "if False:",
+            "test_restore_false_needs_by_and_writes_it_as_the_principal",
+            "",
+        ),
+        (
+            "b3: the second critical section does not look again",
+            SG,
+            "if not on and (self._engaged_here or self._gen != gen):",
+            "if False:",
+            "test_an_engage_during_the_restore_audit_keeps_the_stop_and_writes_a_refused_outcome",
+            "",
+        ),
+        (
+            "b3: restore writes no outcome row",
+            SG,
+            'audit.write_outcome(event("restore_refused" if refused else "restore_done"))',
+            "pass",
+            "test_a_successful_restore_writes_the_done_row",
+            "",
+        ),
+        (
+            "b3: a key costs nothing in the total",
+            RS,
+            "return json.loads(text), len(text) + len(key)",
+            "return json.loads(text), len(text)",
+            "test_keys_count_in_the_total_and_an_inflight_write_counts_too",
+            "",
+        ),
+        (
+            "b3: a write in flight is not reserved",
+            RS,
+            "and self._total + sum(self._reserved.values()) + delta > self._max_total_bytes",
+            "and self._total + delta > self._max_total_bytes",
+            "test_keys_count_in_the_total_and_an_inflight_write_counts_too",
+            "",
+        ),
+        (
+            "b3: a store without a limit needs no opt-out",
+            RS,
+            "if not unbounded_ok:",
+            "if False:",
+            "test_a_store_without_a_limit_needs_the_named_opt_out_and_the_contract_checks_full_stores",
+            "",
+        ),
+        (
+            "b3: the contract skips the full-store check",
+            CT,
+            "if make_small is not None:",
+            "if False:",
+            "test_a_store_without_a_limit_needs_the_named_opt_out_and_the_contract_checks_full_stores",
+            "",
+        ),
+        (
+            "b3: localhost is tried on IPv4 only",
+            HT,
+            'literals = ("127.0.0.1", "::1") if named == "localhost" else (named,)',
+            'literals = ("127.0.0.1",)',
+            "test_localhost_tries_ipv4_then_ipv6_and_an_explicit_address_is_used_alone",
+            "",
+        ),
+        (
+            "b3: a crash row is good whatever the exception",
+            MR,
+            "crash_ok = v is Verdict.CRASH and m.allow_crash and m.crash_type in first",
+            "crash_ok = v is Verdict.CRASH and m.allow_crash",
+            "test_a_crash_row_is_good_only_when_the_exception_class_is_the_declared_one",
+            "",
+        ),
+    )
 ]
 
 if __name__ == "__main__":
@@ -1781,11 +2129,15 @@ if __name__ == "__main__":
             f"{'ok ' if good else 'BAD'} {v:12} {name}  [{test_id.split('::')[-1][:60]}]",
             flush=True,
         )
+        if not good:
+            import tools.mutation_runner as _mr
+
+            print("      first line:", _mr.FIRST_LINES.get(name, "")[:150], flush=True)
 
     res = run_mutants(
         ROOT,
         M,
-        [TEST, HTTP_TEST, FB, FB2],
+        [TEST, HTTP_TEST, FB, FB2, FB3],
         extra_dirs=("tests/fixtures", "docs", "tools"),
         only=only,
         on_result=show,

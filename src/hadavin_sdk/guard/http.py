@@ -161,8 +161,15 @@ def checked_connection(address, timeout=socket._GLOBAL_DEFAULT_TIMEOUT, source_a
     named = normalise_host(host)
     if named in LOOPBACK:
         # connect to a LITERAL loopback address (never a name that a resolver could answer differently), never to the raw text
-        literal = "::1" if named == "::1" else "127.0.0.1"
-        return socket.create_connection((literal, port), timeout, source_address)
+        # the NAME localhost is tried as 127.0.0.1 and then ::1 (a service bound to only one of them is reached); an explicit address is used as it is
+        literals = ("127.0.0.1", "::1") if named == "localhost" else (named,)
+        last: OSError | None = None
+        for literal in literals:
+            try:
+                return socket.create_connection((literal, port), timeout, source_address)
+            except OSError as exc:
+                last = exc
+        raise last or OSError("loopback could not be reached")
     ips: list[str] = []
     for _, _, _, _, sockaddr in _resolve(host, port):
         ip = ipaddress.ip_address(sockaddr[0].split("%")[0])

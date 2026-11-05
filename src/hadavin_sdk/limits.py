@@ -5,6 +5,7 @@ from __future__ import annotations
 from decimal import Decimal
 
 from hadavin_sdk.audit.protocol import AuditSink
+from hadavin_sdk.errors import SwitchChanged
 from hadavin_sdk.models import AuditEvent, KillSwitch, now
 from hadavin_sdk.registry import Registry
 from hadavin_sdk.store.protocol import Store
@@ -49,7 +50,21 @@ class Limits:
         self.store.set_kill_switch(KillSwitch(on=True, by=by))
         self.audit.write_outcome(self._event(True, by, "stop", source))
 
-    def reset(self, by: str, source: str = "cli") -> None:
-        """Removing a safety control is audited first; if that fails, the switch stays on."""
+    def switch(self) -> KillSwitch:
+        """The stored kill-switch record (``on``, ``by``, ``ts``)."""
+        return self.store.get_kill_switch()
+
+    def reset(
+        self, by: str, source: str = "cli", expect: tuple[str | None, object] | None = None
+    ) -> None:
+        """Removing a safety control is audited first; if that fails, the switch stays on. With ``expect=(by, ts)`` (what the caller's own stop
+        wrote) the switch is cleared ONLY if it is still that record: read again after the audit intent and just before the write, so a
+        stop by an operator or by another gate in between is kept (``SwitchChanged``, an outcome row ``reset_refused``). The store has no
+        atomic compare-and-set, so a stop landing between that read and the write is not seen: that window is the store kind's to close."""
         self.audit.write_intent(self._event(False, by, "reset", source))
+        if expect is not None:
+            now_ks = self.store.get_kill_switch()
+            if now_ks.on and (now_ks.by, now_ks.ts) != tuple(expect):
+                self.audit.write_outcome(self._event(True, by, "reset_refused", source))
+                raise SwitchChanged("the durable stop is not the one this caller wrote")
         self.store.set_kill_switch(KillSwitch(on=False, by=by))

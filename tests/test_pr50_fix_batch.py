@@ -3,7 +3,7 @@
 Every test here was run against 2e8a28c (the reviewed head) and fails there EXCEPT the regression guards that pass on it on purpose:
 test_attacks_are_still_withheld_whole_and_never_emitted_folded, test_native_digits_of_a_value_are_masked_in_place_not_withheld, and the
 tests that read the repository's docs, manifest, CHANGELOG or tools/ (those fail against the old repository state, not the old source:
-test_every_promoted_file_is_pinned_or_named_as_pinned_by_core_commit, test_the_guarantee_sentence_states_its_own_limit,
+test_every_byte_copy_file_is_pinned_and_has_a_core_copies_row, test_the_guarantee_sentence_states_its_own_limit,
 test_the_unicode_version_dependence_of_the_fold_is_documented_and_checked, test_the_runner_wires_pinned_so_another_failing_test_is_other_test).
 No wall-clock
 assertion except one ratio test marked ``perf`` (the count-based test beside it is the deterministic one). Look-alikes and secrets are
@@ -51,23 +51,15 @@ PINNED = (
     "src/hadavin_sdk/testing/contracts.py",
     "tools/mutation_runner.py",
 )
-UNPINNED = ()  # batch 2 pinned redact.py and limits.py too (see test_pr50_fix_batch2.py)
 
 
-def test_every_promoted_file_is_pinned_or_named_as_pinned_by_core_commit():
+def test_every_byte_copy_file_is_pinned_and_has_a_core_copies_row():
     manifest = json.loads((ROOT / "tests/fixtures/textnorm_manifest.json").read_text("utf-8"))
     for rel in PINNED:
         assert rel in manifest["files"], rel  # FAIL-BEFORE: only five files were pinned
     if not (ROOT / "CHANGELOG.md").exists():
         pytest.skip("the mutation copies do not carry the CHANGELOG")
     docs = (ROOT / "docs/promoted-controls.md").read_text("utf-8")
-    log = (ROOT / "CHANGELOG.md").read_text("utf-8")
-    for rel in UNPINNED:
-        assert rel not in manifest["files"]
-        name = rel.removeprefix("src/hadavin_sdk/")
-        assert (
-            f"`{name}` is NOT pinned by hash" in docs and f"`{name}` is NOT pinned by hash" in log
-        ), rel
     for rel in PINNED:
         assert f'"core_path": "{rel}"' in docs, rel  # a core_copies.json row for every pinned file
 
@@ -180,7 +172,7 @@ def test_rowstore_caps_keys_and_rows_and_the_audited_key_is_clipped():
     rs.put_audited(
         lambda *a, **k: None, "k", "ok", {"blob": "x" * 60_000}
     )  # inside the default 65,536
-    big = RowStore(max_row_bytes=None)
+    big = RowStore(max_row_bytes=None, allow_unbounded=True)
     big.put_audited(lambda *a, **k: None, "k", "ok", {"blob": "x" * 100_000})
     small = RowStore(max_row_bytes=10)
     with pytest.raises(ValueError):
@@ -273,19 +265,21 @@ def test_restore_false_cannot_clear_a_stop_this_process_engaged():
     g = StopGate(lim)
     g.engage(list, lambda k: "x", by="u1")
     with pytest.raises(StopGateBusy):
-        g.restore(False)  # FAIL-BEFORE: silently cleared the flag, no audit
+        g.restore(False, by="ops")  # FAIL-BEFORE: silently cleared the flag, no audit
     assert g.engaged and g.blocked()
     lim.store.ks = StoredKillSwitch(
         on=False
     )  # an operator reset the durable switch behind the gate's back
     with pytest.raises(StopGateBusy):
-        g.restore(False)  # still refused: only the audited release clears what this process engaged
+        g.restore(
+            False, by="ops"
+        )  # still refused: only the audited release clears what this process engaged
     lim.store.ks = StoredKillSwitch(on=True)
     g.release(by="u1")
-    g.restore(False)  # nothing engaged here any more
+    g.restore(False, by="ops")  # nothing engaged here any more
     g.restore(True)
     assert g.engaged
-    g.restore(False)  # a restart restoring "off" from persisted state
+    g.restore(False, by="ops")  # a restart restoring "off" from persisted state
     assert not g.engaged
 
 
@@ -303,7 +297,7 @@ def test_restore_false_is_refused_during_a_sweep_and_restore_true_wins_over_a_re
     t.start()
     assert inside.wait(5)
     try:
-        g.restore(False)
+        g.restore(False, by="ops")
     except StopGateBusy as e:
         errors.append(e)
     go.set()

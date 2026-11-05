@@ -41,10 +41,7 @@ from __future__ import annotations
 
 import asyncio
 import contextvars
-import hashlib
-import hmac
 import inspect
-import os
 import re
 import threading
 import time
@@ -53,6 +50,8 @@ from contextlib import asynccontextmanager, contextmanager
 from dataclasses import dataclass, field
 from typing import Any, Protocol
 
+from hadavin_sdk.audit.labelkey import keyed_hex
+from hadavin_sdk.limits import SwitchChanged
 from hadavin_sdk.models import AuditEvent
 
 _OWN: contextvars.ContextVar[dict[int, int] | None] = contextvars.ContextVar(
@@ -98,28 +97,32 @@ class EngageResult:
     already_sweeping: bool = False  # another engage owns the sweep; nothing was undone here (so ``complete`` is False for this call)
 
 
-_SALT = os.urandom(16)  # per process: see _label
 _LABEL = re.compile(r"[A-Za-z0-9_.:@ -]{1,60}")
 
 
-def _label(who: object) -> str:
-    """The principal written to the audit: a plain label as it is; any other printable text (an accented name, a ``+``, a long id) as
-    ``id:`` plus 32 hex digits of an HMAC-SHA256 under a per-process random salt, so two different principals stay two different
-    principals inside one process and no raw text is stored; the salt means a name or an e-mail cannot be recovered by hashing a
-    dictionary (the price: the same principal gets a different label after a restart). A plain label that itself starts with ``id:``
-    is hashed too, so nobody can impersonate a hashed identity. A non-string or text with a control character is ``?``."""
+def _label(who: object, key: bytes | None = None) -> str:
+    """The principal written to the audit. A plain label (letters, digits and ``_ . : @ space -``, at most 60) is stored AS WRITTEN: that
+    includes a plain e-mail address, which is personal data; give operators a login name, not an address, or accept that. Any other
+    printable text (an accented name, a ``+``, a long id) and any label starting with ``id:`` becomes ``id:`` plus 32 hex digits of an
+    HMAC-SHA256 under ``key`` (the deployment's ``label_key``; without one, a random key of this process, logged once, so the label is then
+    NOT stable across processes). A non-string or text with a control character is ``?``."""
     if not isinstance(who, str):
         return "?"
     if _LABEL.fullmatch(who) and not who.startswith("id:"):
         return who
     if not who.isprintable() or not who:
         return "?"
-    return "id:" + hmac.new(_SALT, who.encode("utf-8", "replace"), hashlib.sha256).hexdigest()[:32]
+    return "id:" + keyed_hex(who, 32, key)
 
 
 class StopGate:
     def __init__(
-        self, limits: LimitsLike | None = None, *, cache_ttl: float = 0.0, unaudited: bool = False
+        self,
+        limits: LimitsLike | None = None,
+        *,
+        cache_ttl: float = 0.0,
+        unaudited: bool = False,
+        label_key: bytes | None = None,
     ) -> None:
         if limits is None and not unaudited:
             raise ValueError(
@@ -134,6 +137,11 @@ class StopGate:
                     f"StopGate needs Limits.{name}(by, source=...) (a hadavin-sdk core release that has them): copy stop_gate.py together with limits.py"
                 )
         self._limits = limits
+        self._label_key = label_key
+        self._wrote: tuple[str | None, Any] | None = (
+            None  # (by, ts) of the durable stop THIS gate wrote: release clears only that one
+        )
+        self._cas = limits is not None and "expect" in inspect.signature(limits.reset).parameters
         self._cond = threading.Condition()
         self._on = False
         self._inflight = 0
@@ -147,6 +155,9 @@ class StopGate:
         self._last: EngageResult | None = None
 
     # ---- state -------------------------------------------------------------------------------------------------------------
+    def _lbl(self, who: object) -> str:
+        return _label(who, self._label_key)
+
     @property
     def engaged(self) -> bool:
         """The process flag only (no store read). ``blocked()`` also reads the durable switch."""
@@ -172,45 +183,79 @@ class StopGate:
         self._cached = (now, on)
         return on
 
+    def _read_switch(self) -> tuple[str | None, Any] | None:
+        """(by, ts) of the durable switch as stored now, or None when the Limits cannot say or the store fails."""
+        try:
+            ks = self._limits.switch()  # type: ignore[union-attr]
+            return (ks.by, ks.ts) if ks.on else None
+        except Exception:  # noqa: BLE001 - no record: release then clears without the check
+            return None
+
+    def _stopped_fresh(self) -> bool:
+        """The durable switch read straight from the store (never through ``cache_ttl``); unreadable counts as stopped."""
+        try:
+            return bool(self._limits.is_stopped()) if self._limits is not None else True
+        except Exception:  # noqa: BLE001 - an unreadable store fails closed
+            return True
+
     def blocked(self) -> bool:
         return self._on or self.durable_on()
 
-    def restore(self, on: bool) -> None:
+    def restore(self, on: bool, by: str | None = None) -> None:
         """Set the in-process flag from persisted state (a restart). No store write, no sweep. ``restore(True)`` bumps the generation, so a
-        release in flight cannot undo it. ``restore(False)`` clears a stop only when (a) this process did not engage it (only the audited
-        ``release`` clears an engage: ``StopGateBusy``), (b) the gate has a ``Limits`` with an audit sink (an unaudited gate cannot clear a stop:
-        ``StopGateBusy``) and (c) the durable switch reads OFF; it then writes an audit row (``operation="restore"``, intent first: if that fails the flag
-        stays on and the error propagates). A restore of "off" over a flag that is already off writes nothing."""
+        release in flight cannot undo it. ``restore(False)`` needs ``by`` (who clears it; written as the principal) and clears a stop only
+        when (a) this process did not engage it (only the audited ``release`` clears an engage: ``StopGateBusy``), (b) the gate has a
+        ``Limits`` with an audit sink (an unaudited gate cannot clear a stop: ``StopGateBusy``) and (c) the durable switch, read fresh from
+        the store (never through ``cache_ttl``), reads OFF. It writes an intent row (``operation="restore"``), then clears, then an outcome
+        row (``restore_done``); if an engage or another restore ran meanwhile, the flag stays on and an outcome row ``restore_refused``
+        is written (no dangling intent). A restore of "off" over a flag that is already off writes nothing."""
+        if not on and by is None:
+            raise ValueError("restore(False) needs by: who clears the stop")
         with self._cond:
+            gen = self._gen
             if not on and self._engaged_here:
                 raise StopGateBusy(
                     "restore(False) cannot clear a stop this process engaged: use release"
                 )
+        audit = None
         if not on and self._on:
-            if self.durable_on():
+            if self._stopped_fresh():
                 raise StopGateBusy("restore(False): the durable switch is on or unreadable")
             audit = getattr(self._limits, "audit", None)
             if audit is None:
                 raise StopGateBusy(
                     "restore(False) cannot clear a stop on a gate with no audit sink"
                 )
-            audit.write_intent(
-                AuditEvent(
+
+            def event(operation: str) -> AuditEvent:
+                return AuditEvent(
                     run_id="-",
                     domain="limits",
-                    operation="restore",
-                    principal="-",
+                    operation=operation,
+                    principal=self._lbl(by),
                     source="gate",
                     result="off",
                 )
-            )
+
+            audit.write_intent(event("restore"))
         with self._cond:
-            if not on and self._engaged_here:  # an engage ran while the audit was written
-                raise StopGateBusy("an engage ran during restore(False): the stop stays on")
-            if on:
-                self._gen += 1
-            self._cached = None
-            self._on = bool(on)
+            if not on and (self._engaged_here or self._gen != gen):
+                refused = True  # an engage or another restore ran while the audit was written
+            else:
+                refused = False
+                if on:
+                    self._gen += 1
+                self._cached = None
+                self._on = bool(on)
+        if audit is not None:
+            try:
+                audit.write_outcome(event("restore_refused" if refused else "restore_done"))
+            except Exception:  # noqa: BLE001, S110 - the flag state is what matters
+                pass
+        if refused:
+            raise StopGateBusy(
+                "an engage or a restore ran during restore(False): the stop stays on"
+            )
 
     # ---- effects -----------------------------------------------------------------------------------------------------------
     def _enter(self) -> None:
@@ -288,8 +333,9 @@ class StopGate:
         try:
             if self._limits is not None:
                 try:
-                    self._limits.stop(_label(by), source="gate")
+                    self._limits.stop(self._lbl(by), source="gate")
                     res.durable = True
+                    self._wrote = self._read_switch()
                 except Exception as e:  # noqa: BLE001 - the process is already stopped; report that the durable write failed
                     # the class name only: a driver message can carry a host, a user or a DSN piece
                     res.durable, res.store_error = False, type(e).__name__
@@ -318,7 +364,7 @@ class StopGate:
     def _audit_stop_failed(self, by: str, error: str) -> None:
         """``Limits.stop`` raised, so it may have written no audit row: record the emergency stop here (best effort, never raises)."""
         event = AuditEvent(
-            run_id="-", domain="limits", operation="stop", principal=_label(by), source="gate",
+            run_id="-", domain="limits", operation="stop", principal=self._lbl(by), source="gate",
             result="on", error_code=f"durable_write_failed:{error}"[:60],
         )  # fmt: skip
         try:
@@ -335,18 +381,28 @@ class StopGate:
                 raise StopGateBusy("a sweep is running")
             gen = self._gen
         if self._limits is not None:
-            self._limits.reset(_label(by), source="gate")
+            try:
+                if self._cas and self._wrote is not None:
+                    self._limits.reset(self._lbl(by), source="gate", expect=self._wrote)
+                else:
+                    self._limits.reset(self._lbl(by), source="gate")
+            except SwitchChanged as e:
+                self._cached = None
+                raise StopGateBusy(
+                    "the durable switch was set by someone else since this gate stopped: not cleared"
+                ) from e
         with self._cond:
             self._cached = None
             again = self._gen != gen
             if not again:
                 self._on = False
                 self._engaged_here = False
+                self._wrote = None
         if again:
             durable: bool | None = None
             if self._limits is not None:
                 try:
-                    self._limits.stop(_label(by), source="gate")
+                    self._limits.stop(self._lbl(by), source="gate")
                     durable = True
                 except Exception as e:  # noqa: BLE001 - the gate is engaged either way
                     durable = False

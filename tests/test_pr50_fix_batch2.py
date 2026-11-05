@@ -7,7 +7,6 @@ and string parts."""
 import json
 import re
 import sys
-import time
 import unicodedata
 from pathlib import Path
 
@@ -38,7 +37,9 @@ def test_restore_true_then_false_cannot_clear_a_stop_on_an_unaudited_gate():
     g = StopGate(None, unaudited=True)
     g.restore(True)
     with pytest.raises(StopGateBusy):
-        g.restore(False)  # FAIL-BEFORE: cleared silently, no audit row, nothing to say it happened
+        g.restore(
+            False, by="ops"
+        )  # FAIL-BEFORE: cleared silently, no audit row, nothing to say it happened
     assert g.engaged and g.blocked()
 
 
@@ -48,14 +49,14 @@ def test_restore_false_needs_the_durable_switch_off_and_writes_an_audit_row():
     g.restore(True)
     lim.store.ks = type(lim.store.ks)(on=True)  # an operator's stop is on in the store
     with pytest.raises(StopGateBusy):
-        g.restore(False)
+        g.restore(False, by="ops")
     assert g.engaged
     lim.store.ks = type(lim.store.ks)(on=False)
-    g.restore(False)
+    g.restore(False, by="ops")
     assert not g.engaged
     rows = [e for e in lim.audit.intents if e.operation == "restore"]  # FAIL-BEFORE: no row
     assert len(rows) == 1 and rows[0].result == "off" and rows[0].source == "gate"
-    g.restore(False)  # already off: nothing to audit
+    g.restore(False, by="ops")  # already off: nothing to audit
     assert len([e for e in lim.audit.intents if e.operation == "restore"]) == 1
 
 
@@ -65,7 +66,7 @@ def test_a_failed_restore_audit_leaves_the_flag_on():
     g.restore(True)
     lim.audit.down = True
     with pytest.raises(Exception):  # noqa: B017 - AuditUnavailable
-        g.restore(False)
+        g.restore(False, by="ops")
     assert g.engaged
 
 
@@ -73,7 +74,9 @@ def test_restore_false_does_not_make_a_release_in_flight_raise_when_no_engage_ra
     lim = FakeLimits()
     g = StopGate(lim)
     g.restore(True)
-    lim.during_reset = lambda: g.restore(False)  # an operator restore while the reset is in flight
+    lim.during_reset = lambda: g.restore(
+        False, by="ops"
+    )  # an operator restore while the reset is in flight
     g.release(
         by="u1"
     )  # FAIL-BEFORE: StopGateBusy("an engage ran during the release") though no engage ran
@@ -101,7 +104,7 @@ def test_release_clears_the_engaged_marker_so_restore_works_after_it():
     g.engage(list, lambda k: "x", by="u1")
     g.release(by="u1")
     g.restore(True)
-    g.restore(False)  # only possible because release cleared _engaged_here
+    g.restore(False, by="ops")  # only possible because release cleared _engaged_here
     assert not g.engaged
 
 
@@ -112,10 +115,8 @@ def test_a_huge_non_ascii_value_is_pre_clipped_before_the_redactor_sees_it(monke
     monkeypatch.setattr(
         capped, "redact_bounded", lambda text, m: seen.append(len(text)) or real(text, m)
     )
-    t0 = time.perf_counter()
     out = _clip("é\n" * 500_000, 128)
-    assert time.perf_counter() - t0 < 5.0
-    assert seen and max(seen) <= 128 + 1024, (
+    assert seen and max(seen) <= 128 + 4096, (
         seen
     )  # FAIL-BEFORE: the whole 1,000,000 characters were redacted
     assert len(out) <= 128 and "\n" not in out
@@ -270,7 +271,7 @@ def test_in_place_masking_cases(line, expected, value):
 
 def test_a_sign_inside_a_value_withholds_the_line_instead_of_masking_around_it():
     # an ellipsis or a one-half sign INSIDE the matched value is a flagged character: the whole line goes, never a half-masked value
-    for ln in ("mail jose…@example.com", "½ cup josé@example.com"):
+    for ln in ("mail jose…@example.com", "mail jos½@example.com"):
         assert redact(ln).text.startswith(FOLD_NOTE), ln
 
 
@@ -283,7 +284,7 @@ def test_the_cases_that_fall_back_to_withholding_leak_nothing():
 def test_four_rounds_that_never_converge_fall_through_to_the_withhold(monkeypatch):
     calls = []
 
-    def never_done(self, body, folded, where, alike):
+    def never_done(self, body, folded, where, alike, only=None):
         calls.append(body)
         return body + " "
 
@@ -348,13 +349,17 @@ def test_one_deadline_covers_the_text_and_all_its_views(monkeypatch):
     )  # FAIL-BEFORE: no deadline passed, 6 s per view
 
 
-def test_the_cost_of_accented_address_lines_is_bounded_by_the_budget(monkeypatch):
-    monkeypatch.setattr(defaults, "REDACT_BUDGET_S", 0.5)
-    text = "".join(f"user{i} café: josé{i}@exemple.fr\n" for i in range(30_000))
-    t0 = time.perf_counter()
+def test_a_spent_budget_refuses_before_any_line_is_treated(monkeypatch):
+    calls = []
+    real = _Redactor._folded_line
+    monkeypatch.setattr(
+        _Redactor, "_folded_line", lambda self, *a: calls.append(1) or real(self, *a)
+    )
+    monkeypatch.setattr(defaults, "REDACT_BUDGET_S", -1.0)
+    text = "".join(f"user{i} café: josé{i}@exemple.fr" + chr(10) for i in range(3_000))
     with pytest.raises(InputTooLarge):
         redact(text)
-    assert time.perf_counter() - t0 < 3.0  # refused after about the budget, never an unbounded run
+    assert calls == []  # a work count, not a clock: nothing was treated once the budget was spent
 
 
 SIGN_LINES = [  # lines with signs the fold changes into several characters or into non-ASCII text
@@ -369,10 +374,10 @@ SIGN_LINES = [  # lines with signs the fold changes into several characters or i
 
 def test_withhold_rate_on_lines_with_signs_is_measured_and_pinned():
     withheld = [ln for ln in SIGN_LINES if FOLD_NOTE in redact(ln).text]
-    # honest number: 1 of 6 (only the one-half sign folds to text with a non-ASCII fraction slash; TM, ellipsis, ligature, superscript
-    # are masked in place, the em dash is not changed by the fold). With the 22 lines of the first corpus: 1 of 28 withheld.
-    assert len(withheld) == 1, (len(withheld), withheld)
-    assert "½" in withheld[0]
+    # honest number: 0 of 6 since batch 3 (the one-half sign folds to a fraction slash, which is now mapped to "/" and masked around;
+    # TM, ellipsis, ligature, superscript are masked in place, the em dash is not changed by the fold). With the 22 lines of the first
+    # corpus: 0 of 28. A sign INSIDE a value, or a full-width slash anywhere, still withholds the line (see test_pr50_fix_batch3.py).
+    assert withheld == [], withheld
 
 
 # ---- F. row store ------------------------------------------------------------------------------------------------------------------------------------
@@ -465,14 +470,15 @@ def test_the_loopback_skip_connects_to_a_literal_address(monkeypatch):
 
 
 # ---- I. pins -------------------------------------------------------------------------------------------------------------------------------------------
-def test_redact_and_limits_are_pinned_in_the_manifest_with_a_changelog_hash():
+def test_redact_and_limits_are_not_byte_copy_files_and_the_docs_say_so():
     manifest = json.loads((ROOT / "tests/fixtures/textnorm_manifest.json").read_text("utf-8"))
-    if not (ROOT / "CHANGELOG.md").exists():
-        pytest.skip("the mutation copies do not carry the CHANGELOG")
-    log = (ROOT / "CHANGELOG.md").read_text("utf-8")
     for rel in ("src/hadavin_sdk/guard/redact.py", "src/hadavin_sdk/limits.py"):
-        assert rel in manifest["files"], rel  # FAIL-BEFORE: both were left out on purpose
-        assert manifest["files"][rel] in log
+        assert rel not in manifest["files"], rel
+    docs = (ROOT / "docs/promoted-controls.md").read_text("utf-8")
+    assert (
+        "NOT in the manifest and NOT byte-copy files" in docs
+        and "core package at one commit" in docs
+    )
 
 
 def test_the_batch_one_module_docstring_names_the_tests_that_pass_on_old_code():

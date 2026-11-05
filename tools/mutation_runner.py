@@ -24,7 +24,7 @@ from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath, PureWindowsPath
 
-from hadavin_sdk.testing.mutation import Verdict, first_failure_junit, judge
+from hadavin_sdk.testing.mutation import MAX_JUNIT_CHARS, Verdict, first_failure_junit, judge
 
 
 @dataclass(frozen=True)
@@ -37,6 +37,10 @@ class Mutant:
     allow_crash: bool = (
         False  # the intended reaction is a crash (an exception other than an assertion)
     )
+    crash_type: str = ""  # REQUIRED with allow_crash: the exception CLASS NAME that must appear in the first ``E`` line, or the mutant is not good
+    crash_markers: tuple[
+        str, ...
+    ] = ()  # passed to ``judge``: a first line holding one of these is a CRASH even if it is an assertion
     test_file: str = ""  # one of the `tests` files: run ONLY this file for the mutant (its killer is not in the first file)
     pinned: str = ""  # the test id (as ``first_failure_junit`` writes it, ``tests/test_x::test_y``) that must be the one failing; another failing test is OTHER_TEST
     only_test: str = ""  # a test function name: run ONLY that test (of the first test file, or of `test_file`), so the killer never depends on test order or a fuzz seed
@@ -45,6 +49,12 @@ class Mutant:
         _relative(self.file)
         if len(self.expect) < 4:
             raise ValueError("expect must be at least 4 characters")
+        if self.allow_crash and not self.crash_type.isidentifier():
+            raise ValueError(
+                "allow_crash needs crash_type: the exception class name the kill must show"
+            )
+        if self.crash_type and not self.allow_crash:
+            raise ValueError("crash_type without allow_crash")
         if self.only_test and not self.only_test.isidentifier():
             raise ValueError("only_test must be a test function name")
         if self.test_file:
@@ -80,6 +90,19 @@ CHILD_FIXED_ENV = {
 }  # set, not inherited: the child never imports from the caller's user site-packages
 SETUP_TRIES = 5  # attempts to clear and rebuild the temp copy (a Windows file lock may hold a file for a moment)
 SETUP_WAIT = 0.5  # seconds between those attempts
+# a refused JUnit file (DOCTYPE, ENTITY, too large) or a truncated one (ET.ParseError is a SyntaxError) is THIS mutant's ERROR, not the end of the run
+JUNIT_REFUSED = (ValueError, SyntaxError)
+FIRST_LINES: dict[
+    str, str
+] = {}  # mutant name -> the first ``E`` line of its kill (diagnostics, and what ``crash_type`` is checked against)
+
+
+def _taskkill() -> str:
+    """taskkill.exe by its full path under %SystemRoot%\\System32, not by a PATH search (a planted taskkill in a work folder is not run)."""
+    root = os.environ.get("SystemRoot") or os.environ.get("SYSTEMROOT") or r"C:\\Windows"
+    return str(Path(root) / "System32" / "taskkill.exe")
+
+
 TREE_KILL_TIMEOUT = 60.0  # seconds ``taskkill`` may take before the child itself is killed anyway
 
 
@@ -128,7 +151,7 @@ def _kill_tree(proc: subprocess.Popen[bytes]) -> None:
     try:
         if os.name == "nt":
             subprocess.run(  # noqa: S603  # nosec B603 B607 - fixed argv, the pid is our own child
-                ["taskkill", "/F", "/T", "/PID", str(proc.pid)],  # noqa: S607
+                [_taskkill(), "/F", "/T", "/PID", str(proc.pid)],
                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False, timeout=TREE_KILL_TIMEOUT,
             )  # fmt: skip
         else:
@@ -242,18 +265,30 @@ def run_mutants(
                 emit((m.name, Verdict.ERROR, "TIMEOUT", False))
                 continue
             try:
+                too_big = (
+                    junit.exists() and junit.stat().st_size > MAX_JUNIT_CHARS
+                )  # looked at BEFORE the file is read
+                if too_big:
+                    raise ValueError("junit file over the ceiling")
                 test_id, first = (
                     first_failure_junit(junit.read_text(encoding="utf-8"))
                     if junit.exists()
                     else ("", "")
                 )
-            except ValueError:  # a refused JUnit file (DOCTYPE, ENTITY, too large) is THIS mutant's ERROR, not the end of the run
+            except JUNIT_REFUSED:
                 emit((m.name, Verdict.ERROR, "JUNIT REFUSED", False))
                 continue
-            v = judge(rc, test_id, first, expect=m.expect, pinned=m.pinned or None)
-            emit(
-                (m.name, v, test_id, v is Verdict.KILLED or (v is Verdict.CRASH and m.allow_crash))
+            v = judge(
+                rc,
+                test_id,
+                first,
+                expect=m.expect,
+                pinned=m.pinned or None,
+                crash_markers=m.crash_markers,
             )
+            FIRST_LINES[m.name] = first
+            crash_ok = v is Verdict.CRASH and m.allow_crash and m.crash_type in first
+            emit((m.name, v, test_id, v is Verdict.KILLED or crash_ok))
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
         shutil.rmtree(snap, ignore_errors=True)

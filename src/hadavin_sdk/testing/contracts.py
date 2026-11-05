@@ -15,7 +15,9 @@ def _check(ok: bool, msg: str) -> None:
         raise AssertionError(msg)  # not `assert`: it must survive python -O
 
 
-def check_rowstore_contract(make: Callable[[], Any]) -> None:
+def check_rowstore_contract(
+    make: Callable[[], Any], make_small: Callable[[], Any] | None = None
+) -> None:
     store, audited = make(), []
     store.put_audited(
         lambda kind, **f: audited.append((kind, f["key"])), "row_added", "k1", {"a": [1, 2]}
@@ -87,3 +89,16 @@ def check_rowstore_contract(make: Callable[[], Any]) -> None:
             pass
         else:
             raise AssertionError("deleting a missing key must raise KeyError")
+    # a store that holds ONE row: the second put is a refusal, not a half-write
+    if make_small is not None:
+        small, seen2 = make_small(), []
+        small.put_audited(lambda kind, **f: seen2.append(f["key"]), "row_added", "a", {})
+        try:
+            small.put_audited(lambda kind, **f: seen2.append(f["key"]), "row_added", "b", {})
+        except Exception as e:  # noqa: BLE001 - the contract names the type below
+            _check(type(e).__name__ == "StoreFull", "a full store refuses with StoreFull")
+        else:
+            raise AssertionError("a full store must refuse")
+        _check(
+            seen2 == ["a"] and small.keys() == ["a"], "a refused put is neither audited nor stored"
+        )

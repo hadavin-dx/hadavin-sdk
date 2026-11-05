@@ -895,6 +895,8 @@ def _countable(suffix: str) -> bool:
     return suffix.isascii() and suffix.isdigit() and len(suffix) <= 18
 
 
+# patterns whose match depends on what stands around them, or on placeholders already placed: they take a full round whatever the scan found
+_CONTEXT_LABELS = frozenset({"BANKACCT", "BANKCODE"})
 MAX_FOLD_ROUNDS = 4  # rounds of in-place masking per line before the line is withheld
 FOLD_NOTE = "[line withheld: look-alike text hid a protected value]"  # fixed text: the folded line is never emitted
 
@@ -923,7 +925,10 @@ def _char_class(ch: str) -> tuple[str, int] | None:
             flag = 1  # a look-alike letter of another script
         else:
             return None  # a full-width or compatibility letter: live ASCII after the fold
-    elif f.isascii() and all(c.isalnum() or c == "." for c in f):
+    elif (g := f.replace("\u2044", "/")).isascii() and all(
+        c.isalnum() or c == "." or (c == "/" and "\u2044" in f) for c in g
+    ):
+        f = g  # a fraction slash (U+2044, as in a one-half sign) is a plain slash here; any other character that folds to "/" is refused
         flag = 1  # a sign that spells letters, digits or dots (an ellipsis, TM, a ligature, a superscript digit): masked around, never inside
     else:
         return None
@@ -939,7 +944,7 @@ class _Redactor:
         cache: dict | None = None,
         deadline: float | None = None,
     ) -> None:
-        # the time.monotonic() value the folded scan must finish by; runmap passes ONE deadline for a text and all its views
+        # the time.thread_time() value (CPU seconds of the calling thread, so load from other threads cannot change the outcome) the folded scan must finish by; runmap passes ONE deadline for a text and all its views
         self._deadline = deadline
         self._scan_deadline = float("inf")
         self._cache = (
@@ -981,7 +986,7 @@ class _Redactor:
     def _over_budget(deadline: float) -> None:
         """Fail closed (``InputTooLarge``) when the folded scan is past its deadline; checked per pattern, per line, per round and per 4096
         characters of the alignment."""
-        if time.monotonic() > deadline:
+        if time.thread_time() > deadline:
             from hadavin_sdk.guard.runmap import InputTooLarge  # runmap imports this module
 
             raise InputTooLarge("InputTooLarge")
@@ -1002,20 +1007,22 @@ class _Redactor:
 
     def _line_hits(
         self, text: str, starts: list[int], started: float
-    ) -> tuple[dict[int, Counter[tuple[str, str]]], dict[int, int]]:
+    ) -> tuple[dict[int, Counter[tuple[str, str]]], dict[int, int], dict[int, set[int]]]:
         """Per line (the line holding the start of the match): the (pattern, folded value) of every match, and for a match that runs over
         several lines the last line it reaches. One pass of each pattern over the whole text, not one run of every pattern per line."""
         per: dict[int, Counter[tuple[str, str]]] = {}
         reach: dict[int, int] = {}
-        for label, pattern in PATTERNS:
+        which: dict[int, set[int]] = {}
+        for n, (label, pattern) in enumerate(PATTERNS):
             self._over_budget(started)
             for m in pattern.finditer(text):
                 line = bisect_right(starts, m.start()) - 1
                 per.setdefault(line, Counter())[(label, fold(m.group(0)))] += 1
+                which.setdefault(line, set()).add(n)
                 last = bisect_right(starts, max(m.end() - 1, m.start())) - 1
                 if last > line:
                     reach[line] = max(reach.get(line, line), last)
-        return per, reach
+        return per, reach, which
 
     def _fold_scan(self, text: str) -> str:
         """The fold pass over a text with non-ASCII characters. A cheap whole-text scan first finds the lines whose FOLDED form holds a match
@@ -1025,7 +1032,7 @@ class _Redactor:
         started = (
             self._deadline
             if self._deadline is not None
-            else time.monotonic() + defaults.REDACT_BUDGET_S
+            else time.thread_time() + defaults.REDACT_BUDGET_S
         )
         self._scan_deadline = started
         lines = text.splitlines(keepends=True)
@@ -1044,8 +1051,12 @@ class _Redactor:
                 starts.append(at)
                 at += len(ln)
             offsets.append(starts)
-        direct, _ = self._line_hits(text, offsets[0], started)
-        folded, reach = self._line_hits("".join(folded_lines), offsets[1], started)
+        direct, _, _ = self._line_hits(text, offsets[0], started)
+        folded, reach, which = self._line_hits("".join(folded_lines), offsets[1], started)
+        if _has_bank_word("".join(folded_lines)):
+            # a bank word anywhere in the FOLDED text counts as bank context for every line treated here (over-masking is the safe side):
+            # without this, an account number below a keyword spelled with an accent or full-width letters stayed in clear
+            self.bank_near = True
         suspects = {i for i, c in folded.items() if c - direct.get(i, Counter())}
         if not suspects:
             return text
@@ -1063,7 +1074,7 @@ class _Redactor:
                     out.append(self._withhold(block, "".join(lines[i : reach[i] + 1])))
                     skip_to = reach[i]
                     continue
-                ln = self._folded_line(ln)
+                ln = self._folded_line(ln, which.get(i))
             out.append(ln)
         return "".join(out)
 
@@ -1093,17 +1104,24 @@ class _Redactor:
                 where.extend([i] * len(f))
                 alike.extend([flag] * len(f))
         text = "".join(parts)
-        return (text, where, alike) if text == fold(body) else None
+        return (text, where, alike) if text == fold(body).replace("\u2044", "/") else None
 
     def _mask_in_place(
-        self, body: str, folded: str, where: list[int], alike: bytearray
+        self,
+        body: str,
+        folded: str,
+        where: list[int],
+        alike: bytearray,
+        only: set[int] | None = None,
     ) -> str | None:
         """Mask the matches found in ``folded`` inside ``body`` itself: the output is ``body`` with each matched value replaced by its
         placeholder; every other character stays as written, and no folded text is ever emitted. ``None`` when a masked value contains a
         look-alike letter: that is a value HIDDEN behind look-alikes (an attack), not an ordinary word of another script next to it."""
         taken = bytearray(len(folded))
         claims: list[tuple[int, int, str]] = []
-        for label, pattern in PATTERNS:
+        for n, (label, pattern) in enumerate(PATTERNS):
+            if only is not None and n not in only and label not in _CONTEXT_LABELS:
+                continue  # a pattern that matched nowhere in this line's folded text (the whole-text scan said so)
             for m in pattern.finditer(folded):
                 if any(taken[m.start() : m.end()]):
                     continue  # overlaps a value masked by an earlier pattern; the next round sees it
@@ -1126,7 +1144,7 @@ class _Redactor:
             prev = where[e - 1] + 1
         return "".join(out) + body[prev:] if claims else body
 
-    def _folded_line(self, line: str) -> str:
+    def _folded_line(self, line: str, only: set[int] | None = None) -> str:
         """Fail-closed fold: a value hidden behind look-alike letters, another script's digits, accents or invisible characters does not
         match the patterns above. For a line with non-ASCII text, run the patterns again on its FOLDED form (``textnorm.fold``), BEFORE the
         direct patterns run; a hit is a match the line itself does not give (copies are counted, so a look-alike copy of a value that also
@@ -1155,7 +1173,7 @@ class _Redactor:
             aligned = self._aligned_fold(cur, self._scan_deadline)
             if aligned is None:
                 break
-            new = self._mask_in_place(cur, *aligned)
+            new = self._mask_in_place(cur, *aligned, only=only)
             if new is None:
                 break  # a value hidden behind look-alikes: withhold below
             if new == cur:

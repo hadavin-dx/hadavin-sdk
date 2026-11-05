@@ -249,13 +249,11 @@ class FakeLimits:
 
 
 def test_the_fake_limits_matches_the_real_surface():
-    for name in ("stop", "reset"):
-        assert list(inspect.signature(getattr(Limits, name)).parameters) == ["self", "by", "source"]
-        assert list(inspect.signature(getattr(FakeLimits, name)).parameters) == [
-            "self",
-            "by",
-            "source",
-        ]
+    assert list(inspect.signature(Limits.stop).parameters) == ["self", "by", "source"]
+    assert list(inspect.signature(FakeLimits.stop).parameters) == ["self", "by", "source"]
+    # the real reset also takes expect=(by, ts) (compare-and-set); the fake has no such parameter, so the gate calls it without
+    assert list(inspect.signature(Limits.reset).parameters) == ["self", "by", "source", "expect"]
+    assert list(inspect.signature(FakeLimits.reset).parameters) == ["self", "by", "source"]
     assert list(inspect.signature(Limits.is_stopped).parameters) == ["self"]
 
 
@@ -480,7 +478,7 @@ def test_restore_sets_the_flag_without_a_store_write_and_the_ttl_cache_is_honour
     g = StopGate(lim)
     g.restore(True)
     assert g.engaged and lim.log == []
-    g.restore(False)
+    g.restore(False, by="ops")
     g2 = StopGate(lim, cache_ttl=1000.0)
     assert not g2.durable_on()
     lim.store.ks = StoredKillSwitch(on=True)
@@ -1788,7 +1786,9 @@ def test_freeze_has_a_node_budget_and_thaw_a_depth_guard(monkeypatch):
 
 def test_the_row_store_has_a_default_row_limit_and_none_opts_out():
     rs = RowStore()
-    assert rs._max_rows == 100_000 and RowStore(max_rows=None)._max_rows is None
+    assert (
+        rs._max_rows == 100_000 and RowStore(max_rows=None, allow_unbounded=True)._max_rows is None
+    )
     small = RowStore(max_rows=2)
     for i in range(2):
         small.put_audited(lambda *a, **k: None, "k", f"r{i}", {})
@@ -2549,8 +2549,6 @@ def test_the_manifest_pins_the_files_a_demo_copies():
         "src/hadavin_sdk/testing/mutation.py",
         "src/hadavin_sdk/testing/contracts.py",
         "tools/mutation_runner.py",
-        "src/hadavin_sdk/guard/redact.py",
-        "src/hadavin_sdk/limits.py",
     }
     log = root / "CHANGELOG.md"
     if log.exists():  # the mutation copies do not carry it

@@ -481,7 +481,7 @@ def redact_text(
     vendor guardrail input); the registry (`guard/producers.py`) lists them. No bare `redact()` call remains outside
     this module: the second pass of `approvals/channel.py` `clean` is this function too."""
     _within_cap(text)
-    started = time.monotonic()
+    started = time.thread_time()
     try:
         text = fits_after_nfkc(_clean(text))
         if neutralise is not None:
@@ -493,7 +493,7 @@ def redact_text(
             text, mapping=mapping, _cache=cache, _deadline=started + defaults.REDACT_BUDGET_S
         )
         out, current = result.text, result.mapping
-        if views and time.monotonic() - started > defaults.REDACT_BUDGET_S:
+        if views and time.thread_time() - started > defaults.REDACT_BUDGET_S:
             raise InputTooLarge("InputTooLarge")
         pairs = _decoded_masks(current, text) if views else []
         if (
@@ -506,7 +506,7 @@ def redact_text(
             ]
         for view in views:
             if (
-                time.monotonic() - started > defaults.REDACT_BUDGET_S
+                time.thread_time() - started > defaults.REDACT_BUDGET_S
             ):  # a hostile text: fail closed, nothing shown
                 raise InputTooLarge("InputTooLarge")
             if neutralise is not None:
