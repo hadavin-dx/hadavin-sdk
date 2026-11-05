@@ -217,4 +217,5 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | r4-LK-cor | round 4 correctness review of designs/lookalike-leak.md draft 4 (head bdab309) | sonnet (claude-sonnet-5-5) | now | +45min | REPORTED | save report, ledger rows |
 | r4-LK-resolve | round 4 resolve of designs/lookalike-leak.md (draft 5), reviews/lookalike-round4-*.md | opus (claude-opus-5-5) | 22:37Z | +50min | running (abd0074833a3cf6e5) | verify, push, round 5 reviewers |
 | r9-P1-adv | round 9 adversarial review of tickets/P1.md rev 10 (head 82b477e) | sonnet (claude-sonnet-5-5) | 22:38Z | +45min | REPORTED | save report, ledger rows |
-| r9-P1-cor | round 9 correctness review of tickets/P1.md rev 10 (head 82b477e) | sonnet (claude-sonnet-5-5) | 22:38Z | +45min | running (ad7d4406a4550b435) | save report, ledger rows |
+| r9-P1-cor | round 9 correctness review of tickets/P1.md rev 10 (head 82b477e) | sonnet (claude-sonnet-5-5) | 22:38Z | +45min | REPORTED-INCOMPLETE (context compacted, no usable findings; re-run as r9b) | save report, ledger rows |
+| r9b-P1-cor | round 9 correctness re-run of tickets/P1.md rev 10 (head 82b477e), narrower scope | sonnet (claude-sonnet-5-5) | 22:49Z | +40min | running | save report, ledger rows |
