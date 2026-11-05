@@ -93,10 +93,10 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | rev5-P4d (resumed author a8190d79eb2c7579c) | apply 40 round 3 findings (resolve report reviews/P4d-round3-resolve.md) to tickets/P4d.md | sonnet (claude-sonnet-5-5) | 17:20Z | 18:00Z | running | on report: verify, push, round 4 fresh reviewers |
 | rev5-P3a (resumed author a7dc068fb47091bf0) | apply round 3 resolve (reviews/P3a-round3-resolve.md): REMOVE --accept-late per order 6(f) | sonnet (claude-sonnet-5-5) | 17:28Z | 18:00Z | running | on report: verify, push, round 4 |
 | rev5-P2a (resumed author a64cfd8eaa8b64a3a) | apply round 3 resolve (reviews/P2a-round3-resolve.md); merge 1a+1b | sonnet (claude-sonnet-5-5) | 17:07Z | +40min | running | on report: verify, push, round 4 |
-| r4-P4d-adv | round 4 adversarial review of tickets/P4d.md rev 5 (d12bfa7), egm:egm-design | sonnet (claude-sonnet-5-5) | 17:07Z | +30min | running | save report, ledger rows |
-| r4-P4d-cor | round 4 correctness review of P4d rev 5, egm:egm-codebase-details | sonnet (claude-sonnet-5-5) | 17:07Z | +30min | running | save report, ledger rows |
+| r4-P4d-adv | round 4 adversarial review of tickets/P4d.md rev 5 (d12bfa7), egm:egm-design | sonnet (claude-sonnet-5-5) | 17:07Z | +30min | REPORTED, saved | save report, ledger rows |
+| r4-P4d-cor | round 4 correctness review of P4d rev 5, egm:egm-codebase-details | sonnet (claude-sonnet-5-5) | 17:07Z | +30min | REPORTED, saved | save report, ledger rows |
 | r4-P3a-adv | round 4 adversarial review of tickets/P3a.md rev 5 (60e16a5), egm:egm-design | sonnet (claude-sonnet-5-5) | 17:07Z | +25min | REPORTED, saved reviews/P3a-round4-adversarial.md | save report, ledger rows |
-| r4-P3a-cor | round 4 correctness review of P3a rev 5, egm:egm-codebase-details | sonnet (claude-sonnet-5-5) | 17:07Z | +25min | running | save report, ledger rows |
+| r4-P3a-cor | round 4 correctness review of P3a rev 5, egm:egm-codebase-details | sonnet (claude-sonnet-5-5) | 17:07Z | +25min | REPORTED, saved | save report, ledger rows |
 | r1-P6b1-adv | round 1 adversarial review of tickets/P6b1.md (315ab52), egm:egm-design | sonnet (claude-sonnet-5-5) | 17:07Z | +30min | REPORTED, saved reviews/P6b1-round1-adversarial.md | save report, ledger rows |
 | r1-P6b1-cor | round 1 correctness review of P6b1, egm:egm-codebase-details | sonnet (claude-sonnet-5-5) | 17:07Z | +30min | REPORTED, saved reviews/P6b1-round1-correctness.md | save report, ledger rows |
 | r1-P4c-adv | round 1 adversarial review of tickets/P4c.md (63549c7), egm:egm-design | sonnet (claude-sonnet-5-5) | 17:07Z | +30min | REPORTED, saved reviews/P4c-round1-adversarial.md | save report, ledger rows |
@@ -106,10 +106,10 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | r1-P5b2-cor | round 1 single reviewer (Tier B) of tickets/P5b2.md (45fe05b), egm:egm-codebase-details | sonnet (claude-sonnet-5-5) | 17:07Z | +30min | REPORTED, saved reviews/P5b2-round1-reviewer.md | save report, ledger rows |
 | rev5-P1 (resumed author aaaeea25aaef763ea) | apply round 3 resolve (reviews/P1-round3-resolve.md) to tickets/P1.md | sonnet (claude-sonnet-5-5) | 17:08Z | +45min | running | on report: verify, push, round 4 |
 | r1-P4b1-adv | round 1 adversarial review of tickets/P4b1.md (15d01fa), egm:egm-design | sonnet (claude-sonnet-5-5) | 17:09Z | +35min | REPORTED, saved reviews/P4b1-round1-adversarial.md | save report, ledger rows |
-| r1-P4b1-cor | round 1 correctness review of P4b1 (15d01fa), egm:egm-codebase-details | sonnet (claude-sonnet-5-5) | 17:09Z | +35min | running | save report, ledger rows |
-| r1-P5b1-adv | round 1 adversarial review of tickets/P5b1.md (30fd0e8), egm:egm-design | sonnet (claude-sonnet-5-5) | 17:09Z | +35min | running | save report, ledger rows |
+| r1-P4b1-cor | round 1 correctness review of P4b1 (15d01fa), egm:egm-codebase-details | sonnet (claude-sonnet-5-5) | 17:09Z | +35min | REPORTED, saved | save report, ledger rows |
+| r1-P5b1-adv | round 1 adversarial review of tickets/P5b1.md (30fd0e8), egm:egm-design | sonnet (claude-sonnet-5-5) | 17:09Z | +35min | REPORTED, saved | save report, ledger rows |
 | r1-P5b1-cor | round 1 correctness review of P5b1 (30fd0e8), egm:egm-codebase-details | sonnet (claude-sonnet-5-5) | 17:09Z | +35min | NOT STARTED (20-agent limit); start when a slot frees | save report, ledger rows |
-| r1-P5a-adv | round 1 adversarial review of tickets/P5a.md (def2d2a), egm:egm-design | sonnet (claude-sonnet-5-5) | 17:45Z | +35min | running | save report, ledger rows |
+| r1-P5a-adv | round 1 adversarial review of tickets/P5a.md (def2d2a), egm:egm-design | sonnet (claude-sonnet-5-5) | 17:45Z | +35min | REPORTED, saved | save report, ledger rows |
 | r1-P5a-cor | round 1 correctness review of P5a, egm:egm-codebase-details | sonnet (claude-sonnet-5-5) | 17:45Z | +35min | running | save report, ledger rows |
 | r1-P4b2-adv | round 1 adversarial review of tickets/P4b2.md (f2349e3), egm:egm-design | sonnet (claude-sonnet-5-5) | 17:45Z | +35min | running | save report, ledger rows |
 | r1-P4b2-cor | round 1 correctness review of P4b2, egm:egm-codebase-details | sonnet (claude-sonnet-5-5) | 17:45Z | +35min | running | save report, ledger rows |
