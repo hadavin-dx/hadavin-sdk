@@ -75,3 +75,18 @@ Order 5 of LEAD-ORDERS.md. The round 2 resolve reports are reviews/<P>-round2-re
 
 ## Truth table at the time of STATUS 'READY FOR COMPACT'
 Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acecb19dd55a5e570. Finished and saved: P3a r3 adv+cor, P2a r3 adv+cor, P1 r3 adv+cor. Authors idle (resumable): P1 aaaeea25aaef763ea, P2a a64cfd8eaa8b64a3a, P3a a7dc068fb47091bf0, P4d a8190d79eb2c7579c.
+
+## Order 6 author agents (Sonnet 5.5, general-purpose; spawned 16:53Z UTC, expected end 17:28Z UTC)
+| agent | purpose | model | started | expected end | state | next action |
+|---|---|---|---|---|---|---|
+| author-P2d | draft tickets/P2d.md (Wave 1, Tier A (redaction)); brief = scratchpad author-brief.md | sonnet (claude-sonnet-5-5) | 16:53Z | 17:28Z | running | verify, commit/push, 2 fresh egm reviewers (1 for Tier B) |
+| author-P4a | draft tickets/P4a.md (Wave 1, Tier A money, 3 PRs); brief = scratchpad author-brief.md | sonnet (claude-sonnet-5-5) | 16:53Z | 17:28Z | running | verify, commit/push, 2 fresh egm reviewers (1 for Tier B) |
+| author-P5a | draft tickets/P5a.md (Wave 1, Tier A); brief = scratchpad author-brief.md | sonnet (claude-sonnet-5-5) | 16:53Z | 17:28Z | running | verify, commit/push, 2 fresh egm reviewers (1 for Tier B) |
+| author-P0a | draft tickets/P0a.md (Wave 1, Tier B, text only); brief = scratchpad author-brief.md | sonnet (claude-sonnet-5-5) | 16:53Z | 17:28Z | running | verify, commit/push, 2 fresh egm reviewers (1 for Tier B) |
+| author-P0c | draft tickets/P0c.md (Wave 1, Tier B, text only); brief = scratchpad author-brief.md | sonnet (claude-sonnet-5-5) | 16:53Z | 17:28Z | running | verify, commit/push, 2 fresh egm reviewers (1 for Tier B) |
+| author-P4b1 | draft tickets/P4b1.md (Wave 2, Tier A money); brief = scratchpad author-brief.md | sonnet (claude-sonnet-5-5) | 16:53Z | 17:28Z | running | verify, commit/push, 2 fresh egm reviewers (1 for Tier B) |
+| author-P4b2 | draft tickets/P4b2.md (Wave 2, Tier A money); brief = scratchpad author-brief.md | sonnet (claude-sonnet-5-5) | 16:53Z | 17:28Z | running | verify, commit/push, 2 fresh egm reviewers (1 for Tier B) |
+| author-P4c | draft tickets/P4c.md (Wave 2, Tier A money); brief = scratchpad author-brief.md | sonnet (claude-sonnet-5-5) | 16:53Z | 17:28Z | running | verify, commit/push, 2 fresh egm reviewers (1 for Tier B) |
+| author-P5b1 | draft tickets/P5b1.md (Wave 2, Tier A); brief = scratchpad author-brief.md | sonnet (claude-sonnet-5-5) | 16:53Z | 17:28Z | running | verify, commit/push, 2 fresh egm reviewers (1 for Tier B) |
+| author-P5b2 | draft tickets/P5b2.md (Wave 2, Tier B); brief = scratchpad author-brief.md | sonnet (claude-sonnet-5-5) | 16:53Z | 17:28Z | running | verify, commit/push, 2 fresh egm reviewers (1 for Tier B) |
+| author-P6b1 | draft tickets/P6b1.md (Wave 2, Tier A); brief = scratchpad author-brief.md | sonnet (claude-sonnet-5-5) | 16:53Z | 17:28Z | running | verify, commit/push, 2 fresh egm reviewers (1 for Tier B) |
