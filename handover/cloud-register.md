@@ -104,3 +104,4 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | r1-P0a-cor | round 1 single reviewer (Tier B) of tickets/P0a.md (c826f2d), egm:egm-codebase-details | sonnet (claude-sonnet-5-5) | 17:07Z | +30min | running | save report, ledger rows |
 | r1-P0c-cor | round 1 single reviewer (Tier B) of tickets/P0c.md (e1ffdb5), egm:egm-codebase-details | sonnet (claude-sonnet-5-5) | 17:07Z | +30min | running | save report, ledger rows |
 | r1-P5b2-cor | round 1 single reviewer (Tier B) of tickets/P5b2.md (45fe05b), egm:egm-codebase-details | sonnet (claude-sonnet-5-5) | 17:07Z | +30min | running | save report, ledger rows |
+| rev5-P1 (resumed author aaaeea25aaef763ea) | apply round 3 resolve (reviews/P1-round3-resolve.md) to tickets/P1.md | sonnet (claude-sonnet-5-5) | 17:08Z | +45min | running | on report: verify, push, round 4 |
