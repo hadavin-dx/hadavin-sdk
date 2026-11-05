@@ -708,3 +708,19 @@
 | BL-core-p2d-r1-adv-F12 | P2D | MINOR | evidence step 0 must be a blocking gate | OPEN | reviews/P2d-round1-adversarial.md | c34fe24 |
 | BL-core-p2d-r1-adv-F13 | P2D | MINOR | P5c coupling unchecked | OPEN | reviews/P2d-round1-adversarial.md | c34fe24 |
 | BL-core-p2d-r1-adv-F14 | P2D | NIT | ERR-1 asserts CPython semantics | OPEN | reviews/P2d-round1-adversarial.md | c34fe24 |
+| BL-core-p4a-r1-cor-F1 | P4A | MAJOR | test_p5_llm.py:260 breaks by design (Gemini total mismatch); C2 row same trap | OPEN | reviews/P4a-round1-correctness.md | bd061b3 |
+| BL-core-p4a-r1-cor-F2 | P4A | MAJOR | Usage validator ValueError not mapped to UsageMissing('invalid'); escapes agent_loop / settles at zero | OPEN | reviews/P4a-round1-correctness.md | bd061b3 |
+| BL-core-p4a-r1-cor-F3 | P4A | MAJOR | C2/C7 fail-before fixtures raise ValidationError on ce70eb5 (extra=forbid) | OPEN | reviews/P4a-round1-correctness.md | bd061b3 |
+| BL-core-p4a-r1-cor-F4 | P4A | MINOR | 24 recorded files not 48 | OPEN | reviews/P4a-round1-correctness.md | bd061b3 |
+| BL-core-p4a-r1-cor-F5 | P4A | MINOR | grep evidence cannot be empty (comment) | OPEN | reviews/P4a-round1-correctness.md | bd061b3 |
+| BL-core-p4a-r1-cor-F6 | P4A | MINOR | a1-3 second half equivalent | OPEN | reviews/P4a-round1-correctness.md | bd061b3 |
+| BL-core-p4a-r1-cor-F7 | P4A | MINOR | checked_count cap boundary 10**9 untested | OPEN | reviews/P4a-round1-correctness.md | bd061b3 |
+| BL-core-p4a-r1-cor-F8 | P4A | MINOR | a2-18 unkillable | OPEN | reviews/P4a-round1-correctness.md | bd061b3 |
+| BL-core-p4a-r1-cor-F9 | P4A | MINOR | Gemini missing total + missing candidates undefined | OPEN | reviews/P4a-round1-correctness.md | bd061b3 |
+| BL-core-p4a-r1-cor-F10 | P4A | MINOR | openai_compat: raise before the second request | OPEN | reviews/P4a-round1-correctness.md | bd061b3 |
+| BL-core-p4a-r1-cor-F11 | P4A | MINOR | interim window has no date/merge-order guard | OPEN | reviews/P4a-round1-correctness.md | bd061b3 |
+| BL-core-p4a-r1-cor-F12 | P4A | MINOR | hot-file order omissions vs P5b1/P4b2 | OPEN | reviews/P4a-round1-correctness.md | bd061b3 |
+| BL-core-p4a-r1-cor-F13 | P4A | MINOR | 'after round 5 escalates' conflicts with no round cap | OPEN | reviews/P4a-round1-correctness.md | bd061b3 |
+| BL-core-p4a-r1-cor-F14 | P4A | NIT | C8 expected results for bool/empty/float | OPEN | reviews/P4a-round1-correctness.md | bd061b3 |
+| BL-core-p4a-r1-cor-F15 | P4A | NIT | pilot_cfg tests need price_checks; grep configs | OPEN | reviews/P4a-round1-correctness.md | bd061b3 |
+| BL-core-p4a-r1-cor-F16 | P4A | NIT | rollback departure from template unstated | OPEN | reviews/P4a-round1-correctness.md | bd061b3 |
