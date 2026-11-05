@@ -46,7 +46,7 @@ TRUNCATED = " [truncated]"
 # Invisible characters that can split a value without changing how it looks: format (Cf), private use (Co),
 # control (Cc) except the whitespace kinds, plus known blank fillers and variation selectors.
 _KEEP_CONTROL = "\t\n\r\x0b\x0c"
-_FILLERS = frozenset("͏ᅟᅠㅤﾠ⠀")
+_FILLERS = frozenset("\u034f\u115f\u1160\u3164\uffa0\u2800")
 
 
 def _invisible(c: str) -> bool:
@@ -54,7 +54,10 @@ def _invisible(c: str) -> bool:
     if cat == "Cc":
         return c not in _KEEP_CONTROL
     return (
-        cat in {"Cf", "Co"} or c in _FILLERS or "︀" <= c <= "️" or "\U000e0100" <= c <= "\U000e01ef"
+        cat in {"Cf", "Co"}
+        or c in _FILLERS
+        or "\ufe00" <= c <= "\ufe0f"
+        or "\U000e0100" <= c <= "\U000e01ef"
     )
 
 
@@ -92,15 +95,14 @@ def safe_text(
         return WITHHELD
     try:
         full = str(exc)
+        cap = limit * _PRECAP_FACTOR
         text = _clean(full[: limit * _RAW_FACTOR])
         truncated = len(full) > limit * _RAW_FACTOR
-        if len(text) > limit * _PRECAP_FACTOR:
-            text, truncated = text[: limit * _PRECAP_FACTOR], True
-        text = _clean(
-            unicodedata.normalize("NFKC", text)
-        )  # NFKC can expand a character ~18x: cap again
-        if len(text) > limit * _PRECAP_FACTOR:
-            text, truncated = text[: limit * _PRECAP_FACTOR], True
+        if len(text) > cap:  # pre-fold cap
+            text, truncated = text[:cap], True
+        text = _clean(unicodedata.normalize("NFKC", text))  # NFKC can expand a character ~18x
+        if len(text) > cap:  # post-fold cap
+            text, truncated = text[:cap], True  # post-fold cut
         if truncated:  # a value may be cut in half at the edge: drop the last word before masking
             text = _cut_partial_word(text)
         masked = redact(text).text

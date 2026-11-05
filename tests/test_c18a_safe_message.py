@@ -9,7 +9,7 @@ import pytest
 
 EMAIL, IBAN = "bob@example.com", "GB82WEST12345698765432"
 ZW = "\u200b"  # zero-width space (format character, category Cf)
-FULLWIDTH_BOB = "ｂｏｂ"
+FULLWIDTH_BOB = "\uff42\uff4f\uff42"
 
 
 def _sm():
@@ -165,7 +165,7 @@ def test_zero_width_char_cannot_hide_a_value():
 
 def test_fullwidth_email_is_folded_and_masked():
     out = _sm()(ValueError(f"{FULLWIDTH_BOB}@example.com"))
-    assert "example" not in out and "ｂ" not in out and "<EMAIL_1>" in out
+    assert "example" not in out and "\uff42" not in out and "<EMAIL_1>" in out
 
 
 def test_input_is_capped_before_masking(monkeypatch):
@@ -303,10 +303,20 @@ def test_truncated_text_ends_with_marker_and_no_half_value():
     assert "bob" not in out
 
 
+def test_nfkc_expansion_is_capped_again(monkeypatch):
+    import hadavin_sdk.guard.safe_message as mod
+
+    seen = []
+    real = mod.redact
+    monkeypatch.setattr(mod, "redact", lambda t: (seen.append(len(t)), real(t))[1])
+    _sm()(ValueError("\ufdfa" * 2400), 300)  # each folds to 18 characters
+    assert seen and max(seen) <= 300 * 8
+
+
 def test_43k_adversarial_input_is_time_bounded():
     import time
 
-    nasty = ["=" * 43_000, "-" * 43_000, " =" * 21_000, ("ﷺ" * 2400) + EMAIL, EMAIL * 4000]
+    nasty = ["=" * 43_000, "-" * 43_000, " =" * 21_000, ("\ufdfa" * 2400) + EMAIL, EMAIL * 4000]
     t0 = time.perf_counter()
     for text in nasty:
         _sm()(ValueError(text), 300)
@@ -314,11 +324,11 @@ def test_43k_adversarial_input_is_time_bounded():
 
 
 def test_combining_grapheme_joiner_cannot_split_an_email():
-    out = _sm()(ValueError("bob@exa͏mple.com"))
+    out = _sm()(ValueError("bob@exa\u034fmple.com"))
     assert "example" not in out and "bob" not in out
 
 
-@pytest.mark.parametrize("ch", ["ㅤ", "⠀", "\x00", "\x08", "", "️"])
+@pytest.mark.parametrize("ch", ["\u3164", "\u2800", "\x00", "\x08", "\ue000", "\ufe0f"])
 def test_other_invisibles_removed(ch):
     out = _sm()(ValueError(f"bo{ch}b@example.com"))
     assert "example" not in out and "bob" not in out
@@ -326,7 +336,7 @@ def test_other_invisibles_removed(ch):
 
 
 def test_cyrillic_lookalike_in_email_masked():
-    assert "example" not in _sm()(ValueError("bоb@exаmple.com"))
+    assert "example" not in _sm()(ValueError("b\u043eb@ex\u0430mple.com"))
 
 
 def test_withheld_text_is_marked_in_safe_text_and_empty_means_empty():
