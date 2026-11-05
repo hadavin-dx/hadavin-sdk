@@ -122,3 +122,4 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | r1-P4a-adv | round 1 adversarial review of tickets/P4a.md rev 1 (bd061b3), egm:egm-design | sonnet (claude-sonnet-5-5) | 18:00Z | +35min | running | save report, ledger rows |
 | r1-P4a-cor | round 1 correctness review of tickets/P4a.md rev 1, egm:egm-codebase-details | sonnet (claude-sonnet-5-5) | 18:00Z | +35min | running | save report, ledger rows |
 | r1-P5b1-cor | round 1 correctness review of P5b1 (30fd0e8), egm:egm-codebase-details | sonnet (claude-sonnet-5-5) | 18:00Z | +35min | running (restart of the NOT STARTED row) | save report, ledger rows |
+| rev6-P4d (resumed author a8190d79eb2c7579c) | apply round 4 resolve (reviews/P4d-round4-resolve.md) to tickets/P4d.md | sonnet (claude-sonnet-5-5) | 18:10Z | +40min | running | on report: verify, push, 2 fresh reviewers (round 5) |
