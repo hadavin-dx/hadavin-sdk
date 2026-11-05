@@ -95,7 +95,7 @@ A demo that keeps a byte copy lists one row per file; `core_pr` is 50 until it m
 
 The generator pin test (`tools/gen_confusables.py`, `tools/data/confusables.txt`) stays in core: a demo cannot run it. `stop_gate.py` needs core's `limits.py` with `Limits.stop/reset(by, source)` and `Limits.is_stopped()` (copy it together or pin core at PR #50 or later); `StopGate` raises `TypeError` at construction otherwise. `tools/mutation_runner.py` is a developer tool outside the wheel: copy it like any other file. Hashes of the five pinned files: `tests/fixtures/textnorm_manifest.json`.
 
-**Pinned files and the commit pin.** Every file a demo may copy is in the manifest (the five above plus `runtime/rowstore.py`, `runtime/config_view.py`, `audit/capped.py`, `testing/mutation.py`, `testing/contracts.py` and `tools/mutation_runner.py`). `guard/redact.py` is NOT pinned by hash and `limits.py` is NOT pinned by hash: a demo that uses them pins the core commit (the PR #50 merge or later). Rows for the new files:
+**Pinned files and the commit pin.** Every file a demo may copy is in the manifest (the five above plus `runtime/rowstore.py`, `runtime/config_view.py`, `audit/capped.py`, `testing/mutation.py`, `testing/contracts.py` and `tools/mutation_runner.py`). `guard/redact.py` and `limits.py` are pinned by hash too (so any change shows as a manifest change); a demo that uses them still takes the whole core package at one core commit (the PR #50 merge or later), because `redact.py` needs `defaults.py` and `guard/runmap.py` and `limits.py` needs the store, audit and registry kinds. Rows for the new files:
 
 ```json
 {"core_path": "src/hadavin_sdk/runtime/rowstore.py", "core_sha256": "<manifest>", "core_pr": 50, "import_rewrite": []}
@@ -107,3 +107,5 @@ The generator pin test (`tools/gen_confusables.py`, `tools/data/confusables.txt`
 ```
 
 **Unicode version.** `fold` drops unassigned (Cn) code points, and which code points are unassigned depends on the Python build's Unicode version (stated in `guard/textnorm.py`): a character assigned in a newer Unicode is dropped by an older Python and kept by a newer one. The look-alike table is generated and pinned; the Cn set is not. Run the same Python minor version in core CI, the mutation gate and a demo, or accept that a newly assigned character is treated as dropped on an old build.
+
+**Cost of the folded scan.** About 1 ms per line that holds an accented or other-script value (one laptop): 2,000 such lines 2.0 s. The scan stops at `defaults.REDACT_BUDGET_S` (6 s, one deadline for a text and all its views) and raises `InputTooLarge`: a text of about 6,000 accented-address lines or more is refused, not slowed. Lines the fold cannot mask in place are withheld whole; measured on the two corpora in `tests/test_pr50_fix_batch.py` and `tests/test_pr50_fix_batch2.py`: 1 of 28.

@@ -489,7 +489,9 @@ def redact_text(
         scan = not text.isascii() or any(c in text for c in "\\%&")
         views = _views(text) if scan else []  # _views refuses a view that would pass the cap
         cache = getattr(mapping, "redact_cache", None)
-        result = redact(text, mapping=mapping, _cache=cache)
+        result = redact(
+            text, mapping=mapping, _cache=cache, _deadline=started + defaults.REDACT_BUDGET_S
+        )
         out, current = result.text, result.mapping
         if views and time.monotonic() - started > defaults.REDACT_BUDGET_S:
             raise InputTooLarge("InputTooLarge")
@@ -510,7 +512,9 @@ def redact_text(
             if neutralise is not None:
                 view = fits_after_nfkc(neutralise(view))
             view = _keep_earlier_masks(view, pairs)
-            again = redact(view, mapping=current, _cache=cache)
+            again = redact(
+                view, mapping=current, _cache=cache, _deadline=started + defaults.REDACT_BUDGET_S
+            )
             # a new value, or a known one only the view spells in a way pass one could not read
             if again.mapping != current or _held(again.text) > _held(out):
                 out, current = again.text, again.mapping

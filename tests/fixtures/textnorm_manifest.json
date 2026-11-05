@@ -1,16 +1,18 @@
 {
-  "note": "sha256 of the files a demo copies byte for byte from core; update with the CHANGELOG when one changes. guard/redact.py and limits.py are NOT here on purpose: they are used through the core package (pin the core commit).",
+  "note": "sha256 of the files a demo copies byte for byte from core, or takes at one core commit (redact.py and limits.py need the whole package); update with the CHANGELOG when one changes.",
   "files": {
     "src/hadavin_sdk/guard/textnorm.py": "fd9d0ffdbe7d480db29c9e47bb4be4025fbc19638bf83eef9e6d323483659b14",
     "src/hadavin_sdk/guard/_confusables.py": "41740c11734e2ec1e5a63f9325dffa04226c84f3b81b43c1b5c7e766f8a0ccfd",
     "tests/fixtures/textnorm_vectors.json": "1a1944708f7d1737588d7b02666620ceb308b0fe4a71ce2a312c4dc29113d349",
-    "src/hadavin_sdk/guard/egress_text.py": "b5931824f6b355abf5607b1ce55e422e91e548f10c152cc31dcd38cf583e69f8",
-    "src/hadavin_sdk/runtime/stop_gate.py": "4e85f695ad6144fa56bb6f881f1853a417a1be934b25d690e8c2f004bda1eef3",
-    "src/hadavin_sdk/runtime/rowstore.py": "d1b83fb62a6b85c197a88f097680aeb668a98f6a193a6dd59aa6bd3e26184c98",
+    "src/hadavin_sdk/guard/egress_text.py": "8ac034507995e3bbcae1b155162c26818c8608953e4cccb78aa59d4f5984ae98",
+    "src/hadavin_sdk/runtime/stop_gate.py": "7a8fabfd2ced815c95078885b49801ebd464d1e8d4fa91ed6f22e61db945ddbd",
+    "src/hadavin_sdk/runtime/rowstore.py": "d01a5ce07ebc44cb824d7a5274973075c916a65123f7631fd4bee7bc6e23893d",
     "src/hadavin_sdk/runtime/config_view.py": "31160290846c0397e59fc3760bc8816683d089cda6bb062cac6d0593c85014d7",
-    "src/hadavin_sdk/audit/capped.py": "2cf06769c68967f0a70de6df0f10cc4e98c8433a2e994f9ea7844453c2f2a80c",
-    "src/hadavin_sdk/testing/mutation.py": "3e9f1102d0ffd1199d747834a562ff8f3266eae3ca520232ce340aa98d4c2476",
+    "src/hadavin_sdk/audit/capped.py": "69663b3cd54c5587a3335fb6e25a76ee77d0d533771a23d012e53aa73f9d1fd1",
+    "src/hadavin_sdk/testing/mutation.py": "79907964cc4b4f7ca3c1becedce03f97c3d0beacdaa211ecbb8b3ddda82327fa",
     "src/hadavin_sdk/testing/contracts.py": "fc9d2682e8ba166bb3bf907a000a46add8a45ee40ee7d60fdc311c98b77455dc",
-    "tools/mutation_runner.py": "002baf27f57c77f309c91a49e6cad42e90811ebccc6d0932354125c95def22c9"
+    "tools/mutation_runner.py": "15879fe0052df9bf3cc39e9cd4b0ab2c68d619f275872feb853949fd7a6d40db",
+    "src/hadavin_sdk/guard/redact.py": "92e3e2b1f6fce7276e5e77f22201441f7b8f5567def267753fd4822576c616fd",
+    "src/hadavin_sdk/limits.py": "c116d4d28b4d50dd33790d9dc926333a6df60238cee6bd518c1f57de0b88512b"
   }
 }

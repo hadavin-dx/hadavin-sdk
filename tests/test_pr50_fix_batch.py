@@ -1,6 +1,11 @@
 """Fix batch for core PR #50 after the first independent review (ledger BL-core-pr50-r2-001 to 006).
 
-Every test here was run against 2e8a28c (the reviewed head) and fails there; the list is in the batch's evidence note. No wall-clock
+Every test here was run against 2e8a28c (the reviewed head) and fails there EXCEPT the regression guards that pass on it on purpose:
+test_attacks_are_still_withheld_whole_and_never_emitted_folded, test_native_digits_of_a_value_are_masked_in_place_not_withheld, and the
+tests that read the repository's docs, manifest, CHANGELOG or tools/ (those fail against the old repository state, not the old source:
+test_every_promoted_file_is_pinned_or_named_as_pinned_by_core_commit, test_the_guarantee_sentence_states_its_own_limit,
+test_the_unicode_version_dependence_of_the_fold_is_documented_and_checked, test_the_runner_wires_pinned_so_another_failing_test_is_other_test).
+No wall-clock
 assertion except one ratio test marked ``perf`` (the count-based test beside it is the deterministic one). Look-alikes and secrets are
 built from parts with ``chr()``."""
 
@@ -45,7 +50,7 @@ PINNED = (
     "src/hadavin_sdk/testing/contracts.py",
     "tools/mutation_runner.py",
 )
-UNPINNED = ("src/hadavin_sdk/guard/redact.py", "src/hadavin_sdk/limits.py")
+UNPINNED = ()  # batch 2 pinned redact.py and limits.py too (see test_pr50_fix_batch2.py)
 
 
 def test_every_promoted_file_is_pinned_or_named_as_pinned_by_core_commit():
@@ -303,9 +308,9 @@ def test_restore_false_is_refused_during_a_sweep_and_restore_true_wins_over_a_re
 
 def test_odd_principals_keep_a_distinct_audit_label_instead_of_a_question_mark():
     a, b = _label("José"), _label("Josè")
-    assert re.fullmatch(r"id:[0-9a-f]{16}", a) and a != b  # FAIL-BEFORE: both were "?"
-    assert re.fullmatch(r"id:[0-9a-f]{16}", _label("+"))
-    assert re.fullmatch(r"id:[0-9a-f]{16}", _label("x" * 200))
+    assert re.fullmatch(r"id:[0-9a-f]{32}", a) and a != b  # FAIL-BEFORE: both were "?"
+    assert re.fullmatch(r"id:[0-9a-f]{32}", _label("+"))
+    assert re.fullmatch(r"id:[0-9a-f]{32}", _label("x" * 200))
     assert _label("alice smith") == "alice smith"
     for hostile in ("bad\nlabel; DROP", "", 7, None, "tab\there"):
         assert _label(hostile) == "?", hostile
@@ -321,7 +326,7 @@ def test_the_loopback_skip_connects_to_the_checked_host(monkeypatch):
         socket, "create_connection", lambda addr, *a, **k: seen.append(addr) or "sock"
     )
     assert http.checked_connection(("LocalHost.", 8080)) == "sock"
-    assert seen == [("localhost", 8080)]  # FAIL-BEFORE: connected to "LocalHost." as written
+    assert seen == [("127.0.0.1", 8080)]  # FAIL-BEFORE: connected to "LocalHost." as written
 
 
 def test_junit_with_a_doctype_or_entity_is_refused_not_parsed():

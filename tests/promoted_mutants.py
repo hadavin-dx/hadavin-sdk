@@ -17,6 +17,7 @@ from tools.mutation_runner import Mutant, run_mutants
 ROOT = Path(__file__).resolve().parents[1]
 TEST = "tests/test_promoted_controls.py"
 FB = "tests/test_pr50_fix_batch.py"  # the killers of the PR #50 fix batch
+FB2 = "tests/test_pr50_fix_batch2.py"  # the killers of the PR #50 fix batch 2
 HTTP_TEST = "tests/test_http_metadata.py"  # the killers of the metadata-guard mutants live here (Mutant.test_file)
 HT = "src/hadavin_sdk/guard/http.py"
 S = "src/hadavin_sdk/"
@@ -28,6 +29,7 @@ CV, SG, RS, CA = (
 )
 TN, EG, MU = S + "guard/textnorm.py", S + "guard/egress_text.py", S + "testing/mutation.py"
 MR, CT, GT = "tools/mutation_runner.py", S + "testing/contracts.py", S + "approvals/gate.py"
+GM = S + "guard/runmap.py"
 CF, RD, GEN = S + "guard/_confusables.py", S + "guard/redact.py", "tools/gen_confusables.py"
 
 M = [
@@ -200,7 +202,7 @@ M = [
     Mutant(
         "gate: label stored raw",
         SG,
-        "    if _LABEL.fullmatch(who):\n        return who\n",
+        '    if _LABEL.fullmatch(who) and not who.startswith("id:"):\n        return who\n',
         "    if True:\n        return who\n",
         "test_one_failing_undo_does_not_stop_the_sweep_and_an_interrupt_keeps_the_partial_result",
     ),
@@ -229,8 +231,8 @@ M = [
     Mutant(
         "rowstore: a row is not validated first",
         RS,
-        '        clean = (\n            copy_row(row, self._max_row_bytes) if op != "delete" else None\n        )  # validate and copy first\n',
-        "        clean = row\n",
+        '        clean, size = _validated(row, self._max_row_bytes) if op != "delete" else (None, 0)\n',
+        "        clean, size = (row, 0)\n",
         "test_the_row_store_meets_the_contract",
     ),
     Mutant(
@@ -294,7 +296,7 @@ M = [
     Mutant(
         "capped: a new bucket does not reset",
         CA,
-        "self._n = {k: v for k, v in self._n.items() if k[2] in self._buckets}",
+        "self._n = {k: v for k, v in self._n.items() if k[2] in kept}",
         "pass",
         "test_a_late_event_of_the_previous_bucket_neither_resets_nor_bypasses_the_cap",
         test_file=FB,
@@ -317,15 +319,15 @@ M = [
     Mutant(
         "capped: unbounded keys",
         CA,
-        "if key not in self._n and len(self._n) >= self._max_keys:",
+        "if key not in self._n and self._cnt.get(bucket, 0) >= self._max_keys:",
         "if False:",
         "test_capped_audit_memory_is_bounded_by_max_keys_with_an_overflow_counter",
     ),
     Mutant(
         "capped: tenant not clipped",
         CA,
-        "tenant, bucket = _name(tenant), str(bucket)",
-        "tenant, bucket = str(tenant), str(bucket)",
+        "shown, tenant = _name(tenant), _key_name(tenant)",
+        "shown, tenant = _name(tenant), str(tenant)",
         "test_capped_audit_memory_is_bounded_by_max_keys_with_an_overflow_counter",
     ),
     Mutant(
@@ -860,7 +862,7 @@ M = [
     Mutant(
         "capped: kind not clipped",
         CA,
-        "        kind = safe_head(str(kind), _KIND_MAX)\n        with self._lock:\n            key, slot",
+        "        kind = _clip(kind, _KIND_MAX)\n        with self._lock:\n            key, slot",
         "        with self._lock:\n            key, slot",
         "test_capped_audit_clips_the_kind_caps_distinct_kinds_and_purges_once_per_bucket",
     ),
@@ -881,15 +883,15 @@ M = [
     Mutant(
         "capped: overflow key collides with a tenant called star",
         CA,
-        "key = (_OVERFLOW, kind, bucket)  # one shared counter per kind",
-        'key = ("*", kind, bucket)  # one shared counter per kind',
+        "                _OVERFLOW,\n                kind,\n                bucket,\n            )  # one shared counter per kind",
+        '                "*",\n                kind,\n                bucket,\n            )  # one shared counter per kind',
         "test_capped_audit_memory_is_bounded_by_max_keys_with_an_overflow_counter",
     ),
     Mutant(
         "capped: the marker names the first overflowing tenant",
         CA,
-        '                        tenant="*" if key[0] is _OVERFLOW else tenant,',
-        "                        tenant=tenant,",
+        '                        tenant="*" if key[0] is _OVERFLOW else shown,',
+        "                        tenant=shown,",
         "test_a_tenant_called_star_or_with_a_pipe_cannot_collide_with_the_overflow_counter_or_another_tenant",
     ),
     Mutant(
@@ -1405,8 +1407,8 @@ M = [
     Mutant(  # the intended reaction of the old code was a TypeError, so a crash is the expected kill
         "fix: a non-string tenant is sliced",
         CA,
-        "tenant, bucket = _name(tenant), str(bucket)",
-        "tenant, bucket = tenant[:_TENANT_MAX], str(bucket)",
+        "shown, tenant = _name(tenant), _key_name(tenant)",
+        "shown, tenant = tenant[:_TENANT_MAX], tenant[:_TENANT_MAX]",
         "test_a_non_string_tenant_is_a_name_not_a_type_error",
         allow_crash=True,
         test_file=FB,
@@ -1425,7 +1427,7 @@ M = [
             (
                 "fix: the fold scan has no time budget",
                 RD,
-                "if time.monotonic() - started > defaults.REDACT_BUDGET_S:",
+                "if time.monotonic() > deadline:",
                 "if False:",
                 "test_the_fold_scan_stops_at_the_time_budget_with_input_too_large",
             ),
@@ -1474,8 +1476,8 @@ M = [
             (
                 "fix: a new bucket forgets the previous one",
                 CA,
-                "self._buckets = [*self._buckets[-1:], bucket]",
-                "self._buckets = [bucket]",
+                "kept = sorted([*self._buckets, bucket])[-2:]",
+                "kept = [bucket]",
                 "test_a_late_event_of_the_previous_bucket_neither_resets_nor_bypasses_the_cap",
             ),
             (
@@ -1488,14 +1490,14 @@ M = [
             (
                 "fix: a row has no size cap",
                 RS,
-                'if max_bytes is not None and len(text.encode("utf-8", "replace")) > max_bytes:',
-                "if False:",
+                'raise ValueError("a row is over max_row_bytes")',
+                "pass",
                 "test_rowstore_caps_keys_and_rows_and_the_audited_key_is_clipped",
             ),
             (
                 "fix: restore(False) clears an engaged stop",
                 SG,
-                "if not on and (self._engaged_here or self._sweeping):",
+                "if not on and self._engaged_here:",
                 "if False:",
                 "test_restore_false_cannot_clear_a_stop_this_process_engaged",
             ),
@@ -1516,14 +1518,14 @@ M = [
             (
                 "fix: an odd principal is written as a question mark",
                 SG,
-                'return "id:" + hashlib.sha256(who.encode("utf-8", "replace")).hexdigest()[:16]',
+                'return "id:" + hmac.new(_SALT, who.encode("utf-8", "replace"), hashlib.sha256).hexdigest()[:32]',
                 'return "?"',
                 "test_odd_principals_keep_a_distinct_audit_label_instead_of_a_question_mark",
             ),
             (
                 "fix: loopback connects to the raw host",
                 HT,
-                "return socket.create_connection((named, port), timeout, source_address)",
+                "return socket.create_connection((literal, port), timeout, source_address)",
                 "return socket.create_connection(address, timeout, source_address)",
                 "test_the_loopback_skip_connects_to_the_checked_host",
             ),
@@ -1550,6 +1552,220 @@ M = [
             ),
         )
     ],
+    # PR #50 fix batch 2 (ledger BL-core-pr50-r2-007 to 023); killers live in tests/test_pr50_fix_batch2.py
+    *[
+        Mutant(name, file, old, new_, test, allow_crash=crash, test_file=FB2, only_test=test)
+        for name, file, old, new_, test, crash in (
+            (
+                "b2: restore(False) on an unaudited gate clears the stop",
+                SG,
+                "            if audit is None:",
+                "            if False:",
+                "test_restore_true_then_false_cannot_clear_a_stop_on_an_unaudited_gate",
+                True,  # the old guard's absence shows as an AttributeError on None, the expected crash
+            ),
+            (
+                "b2: restore(False) ignores the durable switch",
+                SG,
+                'raise StopGateBusy("restore(False): the durable switch is on or unreadable")',
+                "pass",
+                "test_restore_false_needs_the_durable_switch_off_and_writes_an_audit_row",
+                False,
+            ),
+            (
+                "b2: restore(False) writes no audit row",
+                SG,
+                "audit.write_intent(",
+                "(lambda e: None)(",
+                "test_restore_false_needs_the_durable_switch_off_and_writes_an_audit_row",
+                False,
+            ),
+            (
+                "b2: restore(False) bumps the generation",
+                SG,
+                "            if on:\n                self._gen += 1",
+                "            self._gen += 1",
+                "test_restore_false_does_not_make_a_release_in_flight_raise_when_no_engage_ran",
+                True,  # the release raises StopGateBusy: an exception is the expected kill
+            ),
+            (
+                "b2: release keeps the engaged marker",
+                SG,
+                "                self._engaged_here = False\n",
+                "                pass\n",
+                "test_release_clears_the_engaged_marker_so_restore_works_after_it",
+                True,
+            ),
+            (
+                "b2: a label starting with id: passes through",
+                SG,
+                'if _LABEL.fullmatch(who) and not who.startswith("id:"):',
+                "if _LABEL.fullmatch(who):",
+                "test_a_label_that_starts_with_id_is_hashed_and_the_hash_is_salted",
+                False,
+            ),
+            (
+                "b2: the label hash has no salt",
+                SG,
+                'hmac.new(_SALT, who.encode("utf-8", "replace"), hashlib.sha256)',
+                'hashlib.sha256(who.encode("utf-8", "replace"))',
+                "test_a_label_that_starts_with_id_is_hashed_and_the_hash_is_salted",
+                False,
+            ),
+            (
+                "b2: a value is redacted whole before the clip",
+                CA,
+                "head = text[: limit + _PRE_MARGIN].translate(_CTRL)",
+                "head = text.translate(_CTRL)",
+                "test_a_huge_non_ascii_value_is_pre_clipped_before_the_redactor_sees_it",
+                False,
+            ),
+            (
+                "b2: control characters are kept",
+                CA,
+                "_CTRL = {",
+                "_CTRL = {c: c for c in ()} and {",
+                "test_control_characters_never_reach_any_audit_field",
+                False,
+            ),
+            (
+                "b2: the tenant is clipped before it is redacted",
+                CA,
+                "return _clip(tenant if isinstance(tenant, str) else repr(tenant), _TENANT_MAX)",
+                "return _clip((tenant if isinstance(tenant, str) else repr(tenant))[:_TENANT_MAX], _TENANT_MAX)",
+                "test_a_secret_straddling_the_limit_is_not_shown_as_a_fragment",
+                False,
+            ),
+            (
+                "b2: a refused value loses its length and hash",
+                CA,
+                'return f"(details withheld; len={n}; sha8={digest})"',
+                'return "(details withheld)"',
+                "test_a_value_the_redactor_refuses_keeps_its_length_and_a_hash_but_no_content",
+                False,
+            ),
+            (
+                "b2: the buckets kept are the last two, not the greatest two",
+                CA,
+                "kept = sorted([*self._buckets, bucket])[-2:]",
+                "kept = [*self._buckets[-1:], bucket]",
+                "test_rotating_three_buckets_cannot_reset_the_cap",
+                False,
+            ),
+            (
+                "b2: a stale bucket is counted from zero",
+                CA,
+                "return key, [bucket, self._cap, True, 0, 0]",
+                "return key, [bucket, 0, False, 0, 0]",
+                "test_a_late_event_of_an_old_bucket_never_evicts_a_newer_one",
+                False,
+            ),
+            (
+                "b2: max_keys counts every kept bucket",
+                CA,
+                "self._cnt.get(bucket, 0) >= self._max_keys",
+                "len(self._n) >= self._max_keys",
+                "test_a_key_flood_on_one_day_does_not_overflow_the_next_day",
+                False,
+            ),
+            (
+                "b2: a long bucket is a counter key as it is",
+                CA,
+                "bucket = _key_name(bucket)  # a long bucket",
+                "bucket = str(bucket)  # a long bucket",
+                "test_a_long_bucket_is_clipped_in_the_counter_key_and_the_docstring_is_current",
+                False,
+            ),
+            (
+                "b2: the offset after a masked value is off by one",
+                RD,
+                "prev = where[e - 1] + 1",
+                "prev = where[e - 1]",
+                "test_the_malformed_offset_is_caught_by_a_value_in_front_of_and_behind_other_text",
+                False,
+            ),
+            (
+                "b2: the text before a masked value restarts at zero",
+                RD,
+                "out += [body[prev : where[s]], placeholder]",
+                "out += [body[: where[s]], placeholder]",
+                "test_in_place_masking_cases",
+                False,
+            ),
+            (
+                "b2: the line scan asks for no budget",
+                RD,
+                "            self._over_budget(started)\n            for m in pattern.finditer(text):",
+                "            for m in pattern.finditer(text):",
+                "test_line_hits_asks_for_the_budget_once_per_pattern",
+                False,
+            ),
+            (
+                "b2: the rounds are not capped at four",
+                RD,
+                "MAX_FOLD_ROUNDS = 4  # rounds",
+                "MAX_FOLD_ROUNDS = 40  # rounds",
+                "test_four_rounds_that_never_converge_fall_through_to_the_withhold",
+                False,
+            ),
+            (
+                "b2: a multi-line fold value is left",
+                RD,
+                "if reach.get(i, i) > i:",
+                "if False:",
+                "test_a_multi_line_value_that_only_the_fold_sees_is_replaced_not_left",
+                False,
+            ),
+            (
+                "b2: the views get no shared deadline",
+                GM,
+                "_deadline=started + defaults.REDACT_BUDGET_S",
+                "_deadline=None",
+                "test_one_deadline_covers_the_text_and_all_its_views",
+                False,
+            ),
+            (
+                "b2: a refused junit stops the run",
+                MR,
+                "except ValueError:  # a refused JUnit",
+                "except KeyError:  # a refused JUnit",
+                "test_a_refused_junit_marks_that_mutant_error_and_the_run_goes_on",
+                True,
+            ),
+            (
+                "b2: the junit has no size ceiling",
+                MU,
+                "if len(xml_text) > MAX_JUNIT_CHARS:",
+                "if False:",
+                "test_a_junit_text_over_the_ceiling_is_refused",
+                False,
+            ),
+            (
+                "b2: the store has no total cap",
+                RS,
+                "and self._total + sum(self._reserved.values()) + delta > self._max_total_bytes",
+                "and False",
+                "test_the_total_cap_refuses_the_row_that_would_pass_it_and_frees_on_delete",
+                False,
+            ),
+            (
+                "b2: the row size is checked after the whole encode",
+                RS,
+                "if max_bytes is not None and total > max_bytes:",
+                "if False:",
+                "test_the_row_size_is_counted_while_encoding",
+                False,
+            ),
+            (
+                "b2: loopback connects to the name",
+                HT,
+                'literal = "::1" if named == "::1" else "127.0.0.1"',
+                "literal = named",
+                "test_the_loopback_skip_connects_to_a_literal_address",
+                False,
+            ),
+        )
+    ],
 ]
 
 if __name__ == "__main__":
@@ -1567,7 +1783,7 @@ if __name__ == "__main__":
     res = run_mutants(
         ROOT,
         M,
-        [TEST, HTTP_TEST, FB],
+        [TEST, HTTP_TEST, FB, FB2],
         extra_dirs=("tests/fixtures", "docs", "tools"),
         only=only,
         on_result=show,

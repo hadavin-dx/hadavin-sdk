@@ -19,6 +19,7 @@ it was removed - second review, 2026-09-30.)
 
 from __future__ import annotations
 
+import functools
 import re
 import string
 import time
@@ -872,6 +873,7 @@ def redact(
     near: tuple[str, ...] = (),
     _sweep_copies: bool = True,
     _cache: dict | None = None,
+    _deadline: float | None = None,
 ) -> RedactionResult:
     """Scrub `text`, then prove the scrub worked.
 
@@ -879,7 +881,7 @@ def redact(
     model still sees that two log lines refer to the same host. `near`: related texts redacted apart
     (a record's other fields) whose bank words still count as bank context here, as in redact_many.
     """
-    r = _Redactor(mapping, _cache)
+    r = _Redactor(mapping, _cache, _deadline)
     r.bank_near = any(_has_bank_word(strip_ansi(t)) for t in near)
     out = r.find(text)
     if _sweep_copies:  # redact_many's first pass only FINDS values; its second pass masks
@@ -893,13 +895,53 @@ def _countable(suffix: str) -> bool:
     return suffix.isascii() and suffix.isdigit() and len(suffix) <= 18
 
 
+MAX_FOLD_ROUNDS = 4  # rounds of in-place masking per line before the line is withheld
 FOLD_NOTE = "[line withheld: look-alike text hid a protected value]"  # fixed text: the folded line is never emitted
+
+
+@functools.lru_cache(maxsize=65536)
+def _char_class(ch: str) -> tuple[str, int] | None:
+    """What the fold does to ONE non-ASCII-printable character: (its folded text, 1 if it is a look-alike or sign that must not sit inside a
+    masked value else 0), or ``None`` when the fold does something a legitimate text does not (see ``_Redactor._aligned_fold``)."""
+    f = fold(ch)
+    flag = 0
+    if f == ch or f == "":
+        pass
+    elif ch.isspace():
+        if f != " ":
+            return None
+    elif unicodedata.category(ch) == "Nd":
+        if not (len(f) == 1 and f.isascii() and f.isdigit()):
+            return None
+    elif len(f) == 1 and f.isalpha():
+        nfd = unicodedata.normalize("NFD", ch)
+        if nfd[0] == f and all(unicodedata.category(c) == "Mn" for c in nfd[1:]):
+            flag = (
+                0 if f.isascii() else 1
+            )  # a letter that lost its accent or mark (e -> e, the Japanese de -> te)
+        elif f.isascii() and ch.isalpha() and unicodedata.normalize("NFKC", ch) == ch:
+            flag = 1  # a look-alike letter of another script
+        else:
+            return None  # a full-width or compatibility letter: live ASCII after the fold
+    elif f.isascii() and all(c.isalnum() or c == "." for c in f):
+        flag = 1  # a sign that spells letters, digits or dots (an ellipsis, TM, a ligature, a superscript digit): masked around, never inside
+    else:
+        return None
+    return f, flag
 
 
 class _Redactor:
     """One placeholder namespace (map, reverse map, counters) shared by every text of one call."""
 
-    def __init__(self, mapping: dict[str, str] | None, cache: dict | None = None) -> None:
+    def __init__(
+        self,
+        mapping: dict[str, str] | None,
+        cache: dict | None = None,
+        deadline: float | None = None,
+    ) -> None:
+        # the time.monotonic() value the folded scan must finish by; runmap passes ONE deadline for a text and all its views
+        self._deadline = deadline
+        self._scan_deadline = float("inf")
         self._cache = (
             cache  # a run's built finders, reused while its map is unchanged (see runmap.RunMap)
         )
@@ -936,9 +978,10 @@ class _Redactor:
         return out
 
     @staticmethod
-    def _over_budget(started: float) -> None:
-        """Fail closed (``InputTooLarge``) when the folded scan has used ``defaults.REDACT_BUDGET_S``; checked per pattern and per line."""
-        if time.monotonic() - started > defaults.REDACT_BUDGET_S:
+    def _over_budget(deadline: float) -> None:
+        """Fail closed (``InputTooLarge``) when the folded scan is past its deadline; checked per pattern, per line, per round and per 4096
+        characters of the alignment."""
+        if time.monotonic() > deadline:
             from hadavin_sdk.guard.runmap import InputTooLarge  # runmap imports this module
 
             raise InputTooLarge("InputTooLarge")
@@ -959,23 +1002,32 @@ class _Redactor:
 
     def _line_hits(
         self, text: str, starts: list[int], started: float
-    ) -> dict[int, Counter[tuple[str, str]]]:
-        """Per line (the line holding the start of the match): the (pattern, folded value) of every match. One pass of each pattern over the
-        whole text, not one run of every pattern per line."""
+    ) -> tuple[dict[int, Counter[tuple[str, str]]], dict[int, int]]:
+        """Per line (the line holding the start of the match): the (pattern, folded value) of every match, and for a match that runs over
+        several lines the last line it reaches. One pass of each pattern over the whole text, not one run of every pattern per line."""
         per: dict[int, Counter[tuple[str, str]]] = {}
+        reach: dict[int, int] = {}
         for label, pattern in PATTERNS:
             self._over_budget(started)
             for m in pattern.finditer(text):
                 line = bisect_right(starts, m.start()) - 1
                 per.setdefault(line, Counter())[(label, fold(m.group(0)))] += 1
-        return per
+                last = bisect_right(starts, max(m.end() - 1, m.start())) - 1
+                if last > line:
+                    reach[line] = max(reach.get(line, line), last)
+        return per, reach
 
     def _fold_scan(self, text: str) -> str:
         """The fold pass over a text with non-ASCII characters. A cheap whole-text scan first finds the lines whose FOLDED form holds a match
         the line itself does not (one pattern pass over the text and one over its folded form, matches counted per line); only those lines
         get the exact per-line treatment of ``_folded_line``. Many short non-ASCII lines (``é`` x 130,000) therefore cost two passes, not
         two pattern runs per line. The work is bounded by ``defaults.REDACT_BUDGET_S`` (``InputTooLarge``, checked inside the passes)."""
-        started = time.monotonic()
+        started = (
+            self._deadline
+            if self._deadline is not None
+            else time.monotonic() + defaults.REDACT_BUDGET_S
+        )
+        self._scan_deadline = started
         lines = text.splitlines(keepends=True)
         folded_lines = []
         for ln in lines:
@@ -992,21 +1044,31 @@ class _Redactor:
                 starts.append(at)
                 at += len(ln)
             offsets.append(starts)
-        direct = self._line_hits(text, offsets[0], started)
-        folded = self._line_hits("".join(folded_lines), offsets[1], started)
+        direct, _ = self._line_hits(text, offsets[0], started)
+        folded, reach = self._line_hits("".join(folded_lines), offsets[1], started)
         suspects = {i for i, c in folded.items() if c - direct.get(i, Counter())}
         if not suspects:
             return text
         out = []
+        skip_to = -1
         for i, ln in enumerate(lines):
+            if i <= skip_to:
+                continue  # inside a multi-line value already replaced
             if i in suspects:
                 self._over_budget(started)
+                if reach.get(i, i) > i:
+                    # a fold-only value that runs over several lines (a PEM block with a look-alike inside): the lines it covers are
+                    # replaced together by the note and the placeholders of its hits, folded text never emitted
+                    block = "".join(folded_lines[i : reach[i] + 1])
+                    out.append(self._withhold(block, "".join(lines[i : reach[i] + 1])))
+                    skip_to = reach[i]
+                    continue
                 ln = self._folded_line(ln)
             out.append(ln)
         return "".join(out)
 
     @staticmethod
-    def _aligned_fold(body: str) -> tuple[str, list[int], bytearray] | None:
+    def _aligned_fold(body: str, deadline: float) -> tuple[str, list[int], bytearray] | None:
         """``fold(body)``, the index in ``body`` of every character it keeps, and a flag per kept character that marks a LOOK-ALIKE LETTER
         (a letter of another script that the fold turns into an ASCII letter, as in ordinary Cyrillic or Arabic words). Returned when the fold
         only does what a legitimate text can contain: decimal digits of another script to ASCII digits (Arabic-Indic, Devanagari, full-width
@@ -1015,32 +1077,21 @@ class _Redactor:
         punctuation mark that becomes live ASCII, a symbol): such a line is an attack signal and ``_folded_line`` withholds it whole."""
         parts, where, alike = [], [], bytearray()
         for i, ch in enumerate(body):
-            f = ch if " " <= ch <= "~" else fold(ch)
-            flag = 0
-            if f == ch or f == "":
-                pass
-            elif ch.isspace():
-                if f != " ":
-                    return None
-            elif unicodedata.category(ch) == "Nd":
-                if not (len(f) == 1 and f.isascii() and f.isdigit()):
-                    return None
-            elif len(f) == 1 and f.isalpha():
-                nfd = unicodedata.normalize("NFD", ch)
-                if nfd[0] == f and all(unicodedata.category(c) == "Mn" for c in nfd[1:]):
-                    flag = (
-                        0 if f.isascii() else 1
-                    )  # a letter that lost its accent or mark (e -> e, the Japanese de -> te)
-                elif f.isascii() and ch.isalpha() and unicodedata.normalize("NFKC", ch) == ch:
-                    flag = 1  # a look-alike letter of another script
-                else:
-                    return None  # a full-width or compatibility letter: live ASCII after the fold
-            else:
+            if not i & 4095:
+                _Redactor._over_budget(deadline)
+            if " " <= ch <= "~":
+                parts.append(ch)
+                where.append(i)
+                alike.append(0)
+                continue
+            cls = _char_class(ch)
+            if cls is None:
                 return None
+            f, flag = cls
             if f:
                 parts.append(f)
-                where.append(i)
-                alike.append(flag)
+                where.extend([i] * len(f))
+                alike.extend([flag] * len(f))
         text = "".join(parts)
         return (text, where, alike) if text == fold(body) else None
 
@@ -1097,20 +1148,27 @@ class _Redactor:
             return line
         body = line.rstrip("\r\n")
         eol = line[len(body) :]
-        folded = fold(body)
-        if not (self._dry_hits(folded) - self._dry_hits(body)):
-            return line  # the fold finds nothing the direct patterns do not (``‹IPV4_2›`` only folds to ``<IPV4_2>``): the direct pass handles it
         cur = body
-        for _ in range(4):
-            aligned = self._aligned_fold(cur)
+        # each round is ONE sweep of the patterns over the folded text; a round that changes nothing ends the loop
+        for _ in range(MAX_FOLD_ROUNDS):
+            self._over_budget(self._scan_deadline)
+            aligned = self._aligned_fold(cur, self._scan_deadline)
             if aligned is None:
                 break
             new = self._mask_in_place(cur, *aligned)
-            if new is None or new == cur:
-                break  # a value hidden behind look-alikes, or nothing could be masked in place: withhold below
+            if new is None:
+                break  # a value hidden behind look-alikes: withhold below
+            if new == cur:
+                return cur + eol if cur != body else line  # nothing (more) to mask in place
             cur = new
-            if cur.isascii() or not (self._dry_hits(fold(cur)) - self._dry_hits(cur)):
-                return cur + eol
+        folded = fold(body)
+        if not (self._dry_hits(folded) - self._dry_hits(body)):
+            return line  # the fold finds nothing the direct patterns do not (``‹IPV4_2›`` only folds to ``<IPV4_2>``): the direct pass handles it
+        return self._withhold(folded, line, eol)
+
+    def _withhold(self, folded: str, line: str, eol: str = chr(10)) -> str:
+        """The fixed note plus the placeholders of the hits found in ``folded`` (never the folded text); ``line`` (what stands there) when
+        the patterns mask nothing."""
         hits: list[str] = []
 
         def mask(m: re.Match[str], label: str) -> str:

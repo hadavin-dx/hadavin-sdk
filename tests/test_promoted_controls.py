@@ -2549,6 +2549,8 @@ def test_the_manifest_pins_the_files_a_demo_copies():
         "src/hadavin_sdk/testing/mutation.py",
         "src/hadavin_sdk/testing/contracts.py",
         "tools/mutation_runner.py",
+        "src/hadavin_sdk/guard/redact.py",
+        "src/hadavin_sdk/limits.py",
     }
     log = root / "CHANGELOG.md"
     if log.exists():  # the mutation copies do not carry it

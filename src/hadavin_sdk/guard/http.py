@@ -160,8 +160,9 @@ def checked_connection(address, timeout=socket._GLOBAL_DEFAULT_TIMEOUT, source_a
     host, port = address
     named = normalise_host(host)
     if named in LOOPBACK:
-        # connect to the host that was CHECKED (its normalised spelling), never to the raw text that merely normalises to it
-        return socket.create_connection((named, port), timeout, source_address)
+        # connect to a LITERAL loopback address (never a name that a resolver could answer differently), never to the raw text
+        literal = "::1" if named == "::1" else "127.0.0.1"
+        return socket.create_connection((literal, port), timeout, source_address)
     ips: list[str] = []
     for _, _, _, _, sockaddr in _resolve(host, port):
         ip = ipaddress.ip_address(sockaddr[0].split("%")[0])

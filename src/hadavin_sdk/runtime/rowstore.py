@@ -12,7 +12,8 @@ reservations, approvals). Rules it enforces so callers cannot get them wrong:
 * readers get copies (``get``, ``snapshot``); the rows themselves are private;
 * ``update_audited`` / ``delete_audited`` follow the same order (a hold becomes released; a row is removed);
 * scope: ONE store holds ONE collection (one tenant, one kind of row): create one per tenant. ``max_rows`` bounds it, ``max_key_chars``
-  (default 256) bounds a key and ``max_row_bytes`` (default 65,536, the size of the row as ``json.dumps`` writes it; ``None`` opts out) bounds a row: a key and a
+  (default 256) bounds a key, ``max_row_bytes`` (default 65,536 bytes of ASCII-escaped JSON, counted while the row is encoded; ``None`` opts out)
+  bounds a row and ``max_total_bytes`` (default 64 MiB of the same, ``None`` opts out) bounds the whole store (``StoreFull``): a key and a
   row come from outside, and the key goes into the audit event. ``snapshot`` copies every row under the lock (O(rows)): do not call it per
   request on a large store.
 """
@@ -49,18 +50,27 @@ def json_keys_ok(o: Any, _depth: int = 0) -> bool:
     return not isinstance(o, (tuple, set, frozenset))
 
 
-def copy_row(o: Any, max_bytes: int | None = None) -> Any:
-    """A validated JSON-shaped deep copy. Raises ``ValueError`` for non-string keys, tuples, sets, NaN or Infinity, and for a row whose
-    JSON text (``json.dumps``, ASCII-escaped) is over ``max_bytes`` (when given)."""
+def _validated(o: Any, max_bytes: int | None) -> tuple[Any, int]:
+    """(the deep copy, its size in bytes of ASCII-escaped JSON text). The size is counted WHILE the row is encoded, so a row over
+    ``max_bytes`` is refused after at most ``max_bytes`` of encoding work, not after the whole of it."""
     if not json_keys_ok(o):
         raise ValueError("a row may hold only string keys and no tuple or set")
+    chunks, total = [], 0
     try:
-        text = json.dumps(o, allow_nan=False)
-    except (TypeError, ValueError, RecursionError) as e:
+        for chunk in json.JSONEncoder(allow_nan=False).iterencode(o):
+            total += len(chunk)
+            if max_bytes is not None and total > max_bytes:
+                raise ValueError("a row is over max_row_bytes")
+            chunks.append(chunk)
+    except (TypeError, RecursionError) as e:
         raise ValueError(f"row is not JSON-serialisable: {type(e).__name__}") from e
-    if max_bytes is not None and len(text.encode("utf-8", "replace")) > max_bytes:
-        raise ValueError("a row is over max_row_bytes")
-    return json.loads(text)
+    return json.loads("".join(chunks)), total
+
+
+def copy_row(o: Any, max_bytes: int | None = None) -> Any:
+    """A validated JSON-shaped deep copy. Raises ``ValueError`` for non-string keys, tuples, sets, NaN or Infinity, and for a row whose
+    JSON text (ASCII-escaped, as ``json.dumps`` writes it) is over ``max_bytes`` (when given)."""
+    return _validated(o, max_bytes)[0]
 
 
 class RowStoreLike(Protocol):
@@ -74,7 +84,10 @@ DEFAULT_MAX_ROWS = (
     100_000  # one collection of one tenant; ``max_rows=None`` is the explicit opt-out
 )
 DEFAULT_MAX_KEY_CHARS = 256
-DEFAULT_MAX_ROW_BYTES = 65_536  # ``max_row_bytes=None`` is the explicit opt-out
+DEFAULT_MAX_ROW_BYTES = (
+    65_536  # ASCII-escaped JSON bytes; ``max_row_bytes=None`` is the explicit opt-out
+)
+DEFAULT_MAX_TOTAL_BYTES = 67_108_864  # 64 MiB of ASCII-escaped JSON in one store; ``max_total_bytes=None`` is the explicit opt-out
 
 
 class RowStore:
@@ -84,6 +97,7 @@ class RowStore:
         *,
         max_key_chars: int = DEFAULT_MAX_KEY_CHARS,
         max_row_bytes: int | None = DEFAULT_MAX_ROW_BYTES,
+        max_total_bytes: int | None = DEFAULT_MAX_TOTAL_BYTES,
     ) -> None:
         if max_rows is not None and (type(max_rows) is not int or max_rows < 1):
             raise ValueError("max_rows must be None or an int >= 1")
@@ -91,7 +105,15 @@ class RowStore:
             raise ValueError("max_key_chars must be an int >= 1")
         if max_row_bytes is not None and (type(max_row_bytes) is not int or max_row_bytes < 2):
             raise ValueError("max_row_bytes must be None or an int >= 2")
+        if max_total_bytes is not None and (
+            type(max_total_bytes) is not int or max_total_bytes < 2
+        ):
+            raise ValueError("max_total_bytes must be None or an int >= 2")
         self._max_key_chars, self._max_row_bytes = max_key_chars, max_row_bytes
+        self._max_total_bytes = max_total_bytes
+        self._sizes: dict[str, int] = {}  # key -> bytes of the stored row
+        self._reserved: dict[str, int] = {}  # key -> bytes added by the write in flight
+        self._total = 0  # bytes of all stored rows
         self._rows: dict[str, Any] = {}
         self._pending: set[str] = set()
         self._lock = threading.Lock()
@@ -104,9 +126,8 @@ class RowStore:
             raise ValueError("a key is a non-empty string")
         if len(key) > self._max_key_chars:
             raise ValueError("a key is over max_key_chars")
-        clean = (
-            copy_row(row, self._max_row_bytes) if op != "delete" else None
-        )  # validate and copy first
+        # validate and copy first
+        clean, size = _validated(row, self._max_row_bytes) if op != "delete" else (None, 0)
         with self._lock:
             if key in self._pending:
                 raise KeyPending(key)
@@ -120,17 +141,29 @@ class RowStore:
                 and len(self._rows) + len(self._pending) >= self._max_rows
             ):
                 raise StoreFull(key)
+            delta = size - self._sizes.get(key, 0)
+            if (
+                op != "delete"
+                and self._max_total_bytes is not None
+                and self._total + sum(self._reserved.values()) + delta > self._max_total_bytes
+            ):
+                raise StoreFull(key)
             self._pending.add(key)
+            self._reserved[key] = max(delta, 0)
         try:
             append(kind, key=key)  # audit before the write; raises -> nothing is changed
             with self._lock:
                 if op == "delete":
                     del self._rows[key]
+                    self._total -= self._sizes.pop(key, 0)
                 else:
                     self._rows[key] = clean
+                    self._total += size - self._sizes.get(key, 0)
+                    self._sizes[key] = size
         finally:
             with self._lock:
                 self._pending.discard(key)
+                self._reserved.pop(key, None)
 
     def put_audited(self, append: Callable[..., Any], kind: str, key: str, row: Any) -> None:
         self._write_audited("put", append, kind, key, row)

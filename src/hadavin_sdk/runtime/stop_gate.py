@@ -42,7 +42,9 @@ from __future__ import annotations
 import asyncio
 import contextvars
 import hashlib
+import hmac
 import inspect
+import os
 import re
 import threading
 import time
@@ -96,20 +98,23 @@ class EngageResult:
     already_sweeping: bool = False  # another engage owns the sweep; nothing was undone here (so ``complete`` is False for this call)
 
 
+_SALT = os.urandom(16)  # per process: see _label
 _LABEL = re.compile(r"[A-Za-z0-9_.:@ -]{1,60}")
 
 
 def _label(who: object) -> str:
     """The principal written to the audit: a plain label as it is; any other printable text (an accented name, a ``+``, a long id) as
-    ``id:`` plus 16 hex digits of its SHA-256, so two different principals stay two different principals and no raw text is stored;
-    a non-string or text with a control character is ``?`` (it is never stored raw)."""
+    ``id:`` plus 32 hex digits of an HMAC-SHA256 under a per-process random salt, so two different principals stay two different
+    principals inside one process and no raw text is stored; the salt means a name or an e-mail cannot be recovered by hashing a
+    dictionary (the price: the same principal gets a different label after a restart). A plain label that itself starts with ``id:``
+    is hashed too, so nobody can impersonate a hashed identity. A non-string or text with a control character is ``?``."""
     if not isinstance(who, str):
         return "?"
-    if _LABEL.fullmatch(who):
+    if _LABEL.fullmatch(who) and not who.startswith("id:"):
         return who
     if not who.isprintable() or not who:
         return "?"
-    return "id:" + hashlib.sha256(who.encode("utf-8", "replace")).hexdigest()[:16]
+    return "id:" + hmac.new(_SALT, who.encode("utf-8", "replace"), hashlib.sha256).hexdigest()[:32]
 
 
 class StopGate:
@@ -171,15 +176,39 @@ class StopGate:
         return self._on or self.durable_on()
 
     def restore(self, on: bool) -> None:
-        """Set the in-process flag from persisted state (a restart). No store write, no sweep. ``restore(False)`` raises ``StopGateBusy`` while
-        this process holds an engage (only the audited ``release`` clears one) or while a sweep runs; it bumps the generation, so a release in
-        flight cannot undo it."""
+        """Set the in-process flag from persisted state (a restart). No store write, no sweep. ``restore(True)`` bumps the generation, so a
+        release in flight cannot undo it. ``restore(False)`` clears a stop only when (a) this process did not engage it (only the audited
+        ``release`` clears an engage: ``StopGateBusy``), (b) the gate has a ``Limits`` with an audit sink (an unaudited gate cannot clear a stop:
+        ``StopGateBusy``) and (c) the durable switch reads OFF; it then writes an audit row (``operation="restore"``, intent first: if that fails the flag
+        stays on and the error propagates). A restore of "off" over a flag that is already off writes nothing."""
         with self._cond:
-            if not on and (self._engaged_here or self._sweeping):
+            if not on and self._engaged_here:
                 raise StopGateBusy(
                     "restore(False) cannot clear a stop this process engaged: use release"
                 )
-            self._gen += 1
+        if not on and self._on:
+            if self.durable_on():
+                raise StopGateBusy("restore(False): the durable switch is on or unreadable")
+            audit = getattr(self._limits, "audit", None)
+            if audit is None:
+                raise StopGateBusy(
+                    "restore(False) cannot clear a stop on a gate with no audit sink"
+                )
+            audit.write_intent(
+                AuditEvent(
+                    run_id="-",
+                    domain="limits",
+                    operation="restore",
+                    principal="-",
+                    source="gate",
+                    result="off",
+                )
+            )
+        with self._cond:
+            if not on and self._engaged_here:  # an engage ran while the audit was written
+                raise StopGateBusy("an engage ran during restore(False): the stop stays on")
+            if on:
+                self._gen += 1
             self._cached = None
             self._on = bool(on)
 

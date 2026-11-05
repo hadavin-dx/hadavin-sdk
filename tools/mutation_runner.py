@@ -241,11 +241,15 @@ def run_mutants(
             if rc == TIMED_OUT:
                 emit((m.name, Verdict.ERROR, "TIMEOUT", False))
                 continue
-            test_id, first = (
-                first_failure_junit(junit.read_text(encoding="utf-8"))
-                if junit.exists()
-                else ("", "")
-            )
+            try:
+                test_id, first = (
+                    first_failure_junit(junit.read_text(encoding="utf-8"))
+                    if junit.exists()
+                    else ("", "")
+                )
+            except ValueError:  # a refused JUnit file (DOCTYPE, ENTITY, too large) is THIS mutant's ERROR, not the end of the run
+                emit((m.name, Verdict.ERROR, "JUNIT REFUSED", False))
+                continue
             v = judge(rc, test_id, first, expect=m.expect, pinned=m.pinned or None)
             emit(
                 (m.name, v, test_id, v is Verdict.KILLED or (v is Verdict.CRASH and m.allow_crash))

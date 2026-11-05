@@ -23,6 +23,8 @@ import xml.etree.ElementTree as ET
 from collections.abc import Iterable
 from enum import StrEnum
 
+MAX_JUNIT_CHARS = 8_000_000  # a JUnit file of one targeted pytest run is a few KB; this is a ceiling, not a target
+
 
 class Verdict(StrEnum):
     SURVIVED = "SURVIVED"
@@ -78,9 +80,11 @@ def first_failure(stdout: str) -> tuple[str, str]:
 def first_failure_junit(xml_text: str) -> tuple[str, str]:
     """(failing test id, first assertion line of THAT test) from a pytest JUnit XML file. The id is ``classname`` with ``.`` read as ``/`` plus
     ``::name``: a path-like id (``tests/test_x::test_y``; a test in a class reads ``tests/test_x/TestC::test_y``), the form ``Mutant.pinned``
-    must use. A DOCTYPE or ENTITY declaration raises ``ValueError``."""
+    must use. A DOCTYPE or ENTITY declaration, or a text over ``MAX_JUNIT_CHARS``, raises ``ValueError`` (the runner marks that mutant ERROR)."""
     # The file is written by our own pytest run, but the parser is shipped: a DOCTYPE or ENTITY declaration (the way an XML bomb or an
     # external entity is written) is refused before parsing, so only plain elements reach expat.
+    if len(xml_text) > MAX_JUNIT_CHARS:
+        raise ValueError("a JUnit file over MAX_JUNIT_CHARS is refused")
     low = xml_text.lower()
     if "<!doctype" in low or "<!entity" in low:
         raise ValueError("a JUnit file with a DOCTYPE or ENTITY declaration is refused")
