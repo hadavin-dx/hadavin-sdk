@@ -38,6 +38,7 @@ class Mutant:
         False  # the intended reaction is a crash (an exception other than an assertion)
     )
     test_file: str = ""  # one of the `tests` files: run ONLY this file for the mutant (its killer is not in the first file)
+    pinned: str = ""  # the test id (as ``first_failure_junit`` writes it, ``tests/test_x::test_y``) that must be the one failing; another failing test is OTHER_TEST
     only_test: str = ""  # a test function name: run ONLY that test (of the first test file, or of `test_file`), so the killer never depends on test order or a fuzz seed
 
     def __post_init__(self) -> None:
@@ -245,7 +246,7 @@ def run_mutants(
                 if junit.exists()
                 else ("", "")
             )
-            v = judge(rc, test_id, first, expect=m.expect)
+            v = judge(rc, test_id, first, expect=m.expect, pinned=m.pinned or None)
             emit(
                 (m.name, v, test_id, v is Verdict.KILLED or (v is Verdict.CRASH and m.allow_crash))
             )

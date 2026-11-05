@@ -11,8 +11,10 @@ reservations, approvals). Rules it enforces so callers cannot get them wrong:
   ``snapshot`` without deadlock and a slow audit store never blocks readers;
 * readers get copies (``get``, ``snapshot``); the rows themselves are private;
 * ``update_audited`` / ``delete_audited`` follow the same order (a hold becomes released; a row is removed);
-* scope: ONE store holds ONE collection (one tenant, one kind of row): create one per tenant. ``max_rows`` bounds it.
-  ``snapshot`` copies every row under the lock (O(rows)): do not call it per request on a large store.
+* scope: ONE store holds ONE collection (one tenant, one kind of row): create one per tenant. ``max_rows`` bounds it, ``max_key_chars``
+  (default 256) bounds a key and ``max_row_bytes`` (default 65,536, the size of the row as ``json.dumps`` writes it; ``None`` opts out) bounds a row: a key and a
+  row come from outside, and the key goes into the audit event. ``snapshot`` copies every row under the lock (O(rows)): do not call it per
+  request on a large store.
 """
 
 from __future__ import annotations
@@ -47,14 +49,18 @@ def json_keys_ok(o: Any, _depth: int = 0) -> bool:
     return not isinstance(o, (tuple, set, frozenset))
 
 
-def copy_row(o: Any) -> Any:
-    """A validated JSON-shaped deep copy. Raises ``ValueError`` for non-string keys, tuples, sets, NaN or Infinity."""
+def copy_row(o: Any, max_bytes: int | None = None) -> Any:
+    """A validated JSON-shaped deep copy. Raises ``ValueError`` for non-string keys, tuples, sets, NaN or Infinity, and for a row whose
+    JSON text (``json.dumps``, ASCII-escaped) is over ``max_bytes`` (when given)."""
     if not json_keys_ok(o):
         raise ValueError("a row may hold only string keys and no tuple or set")
     try:
-        return json.loads(json.dumps(o, allow_nan=False))
+        text = json.dumps(o, allow_nan=False)
     except (TypeError, ValueError, RecursionError) as e:
         raise ValueError(f"row is not JSON-serialisable: {type(e).__name__}") from e
+    if max_bytes is not None and len(text.encode("utf-8", "replace")) > max_bytes:
+        raise ValueError("a row is over max_row_bytes")
+    return json.loads(text)
 
 
 class RowStoreLike(Protocol):
@@ -67,12 +73,25 @@ class RowStoreLike(Protocol):
 DEFAULT_MAX_ROWS = (
     100_000  # one collection of one tenant; ``max_rows=None`` is the explicit opt-out
 )
+DEFAULT_MAX_KEY_CHARS = 256
+DEFAULT_MAX_ROW_BYTES = 65_536  # ``max_row_bytes=None`` is the explicit opt-out
 
 
 class RowStore:
-    def __init__(self, max_rows: int | None = DEFAULT_MAX_ROWS) -> None:
+    def __init__(
+        self,
+        max_rows: int | None = DEFAULT_MAX_ROWS,
+        *,
+        max_key_chars: int = DEFAULT_MAX_KEY_CHARS,
+        max_row_bytes: int | None = DEFAULT_MAX_ROW_BYTES,
+    ) -> None:
         if max_rows is not None and (type(max_rows) is not int or max_rows < 1):
             raise ValueError("max_rows must be None or an int >= 1")
+        if type(max_key_chars) is not int or max_key_chars < 1:
+            raise ValueError("max_key_chars must be an int >= 1")
+        if max_row_bytes is not None and (type(max_row_bytes) is not int or max_row_bytes < 2):
+            raise ValueError("max_row_bytes must be None or an int >= 2")
+        self._max_key_chars, self._max_row_bytes = max_key_chars, max_row_bytes
         self._rows: dict[str, Any] = {}
         self._pending: set[str] = set()
         self._lock = threading.Lock()
@@ -83,7 +102,11 @@ class RowStore:
     ) -> None:
         if type(key) is not str or not key:
             raise ValueError("a key is a non-empty string")
-        clean = copy_row(row) if op != "delete" else None  # validate and copy first
+        if len(key) > self._max_key_chars:
+            raise ValueError("a key is over max_key_chars")
+        clean = (
+            copy_row(row, self._max_row_bytes) if op != "delete" else None
+        )  # validate and copy first
         with self._lock:
             if key in self._pending:
                 raise KeyPending(key)

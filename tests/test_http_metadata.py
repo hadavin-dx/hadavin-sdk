@@ -364,7 +364,9 @@ def test_a_trailing_dot_name_is_resolved_and_checked_like_any_name(monkeypatch):
     assert seen == ["metadata.example."]
 
 
-def test_an_explicit_loopback_name_is_connected_as_written_even_with_a_dot_or_capitals(monkeypatch):
+def test_an_explicit_loopback_name_is_connected_in_its_normalised_spelling_even_with_a_dot_or_capitals(
+    monkeypatch,
+):
     connected = []
     monkeypatch.setattr(
         socket, "create_connection", lambda addr, *a, **k: connected.append(addr) or "ok"
@@ -374,7 +376,8 @@ def test_an_explicit_loopback_name_is_connected_as_written_even_with_a_dot_or_ca
     )
     for host in ("localhost", "LOCALHOST.", "127.0.0.1", "::1"):
         assert http.checked_connection((host, 80)) == "ok"
-    assert [h for h, _ in connected] == ["localhost", "LOCALHOST.", "127.0.0.1", "::1"]
+    # the host that was CHECKED (its normalised spelling) is the one connected to, never the raw text that merely normalises to it
+    assert [h for h, _ in connected] == ["localhost", "localhost", "127.0.0.1", "::1"]
 
 
 @pytest.mark.parametrize(

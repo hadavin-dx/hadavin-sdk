@@ -158,8 +158,10 @@ def checked_connection(address, timeout=socket._GLOBAL_DEFAULT_TIMEOUT, source_a
     may not be loopback). The LLM clients and the executor use this connection too, so a pilot or prod deployment
     must not point their endpoints at a loopback name."""
     host, port = address
-    if normalise_host(host) in LOOPBACK:
-        return socket.create_connection(address, timeout, source_address)
+    named = normalise_host(host)
+    if named in LOOPBACK:
+        # connect to the host that was CHECKED (its normalised spelling), never to the raw text that merely normalises to it
+        return socket.create_connection((named, port), timeout, source_address)
     ips: list[str] = []
     for _, _, _, _, sockaddr in _resolve(host, port):
         ip = ipaddress.ip_address(sockaddr[0].split("%")[0])

@@ -5,8 +5,10 @@ At most ``cap`` rows per (tenant, kind, bucket) (a bucket is for example a UTC d
 written and rolled back, with a growing back-off, if it fails (no duplicate marker, no I/O on every suppressed event). Memory is
 bounded: at most ``max_keys`` (tenant, kind) counters, one bucket each, and at most ``max_kinds`` distinct kinds (further kinds share the
 kind ``*``); when the table is full, a new key shares the overflow counter of its kind, which no real tenant name can collide with and
-whose marker names the tenant ``*``. A tenant name and a kind are clipped to 64 characters. Stale buckets are purged once per bucket
-change, not on every new key. The cap is per process: N workers allow N x cap rows.
+whose marker names the tenant ``*``. A tenant name (after the escaping below) and a kind are clipped to 64 characters, an object reference or
+key to 128 and an error code to 96; ``sink_append`` redacts every one of them first (``safe_head``), because an outsider chooses them and the
+audit is append-only. The counters of the two most recent buckets are kept (a late event of the previous bucket, as at midnight, neither resets
+nor bypasses a counter); older ones are purged once per bucket change, not on every new key. The cap is per process: N workers allow N x cap rows.
 Never use it for an event that guards an action; those are written strictly before the action (``intent=True`` uses
 ``write_intent`` and raises ``AuditUnavailable``).
 
@@ -26,7 +28,33 @@ from hadavin_sdk.models import AuditEvent
 
 _TENANT_MAX = 64
 _KIND_MAX = 64
+_REF_MAX = 128  # an object reference or key, after redaction
+_CODE_MAX = 96  # an error code ("kind@bucket")
 _OVERFLOW = None  # tenant part of the overflow key: a real tenant name is always a string
+
+
+def _clip(value: Any, limit: int) -> str:
+    """Redact first, then keep ``limit`` characters (``safe_head``): outsider-chosen text never reaches the append-only audit whole."""
+    return safe_head(str(value), limit)
+
+
+def _name(tenant: Any) -> str:
+    """A tenant as a counter key: a string as it is (a name is data, not a message), anything else by its ``repr``; at most 64 characters."""
+    text = tenant if isinstance(tenant, str) else repr(tenant)
+    return text[:_TENANT_MAX]
+
+
+def _tenant_ref(tenant: Any) -> str:
+    """The tenant part of ``object_ref``: redacted and clipped, ``%`` and ``|`` escaped, the ESCAPED text at most ``_TENANT_MAX`` characters
+    (an escape is never cut in the middle)."""
+    out, n = [], 0
+    for ch in _clip(tenant, _TENANT_MAX):
+        e = "%25" if ch == "%" else "%7C" if ch == "|" else ch
+        if n + len(e) > _TENANT_MAX:
+            break
+        out.append(e)
+        n += len(e)
+    return "".join(out)
 
 
 def sink_append(
@@ -45,20 +73,17 @@ def sink_append(
     (a hold creation is not a refusal)."""
 
     def append(kind: str, **fields: Any) -> Any:
-        tenant = (
-            safe_head(str(fields.get("tenant") or "-"), _TENANT_MAX)
-            .replace("%", "%25")
-            .replace("|", "%7C")
-        )
-        ref = str(fields.get("object_ref") or fields.get("key") or "-")
-        bucket = str(fields.get("bucket") or "")
-        sk = str(fields.get("suppressed_kind") or "")
+        tenant = _tenant_ref(fields.get("tenant") or "-")
+        ref = _clip(fields.get("object_ref") or fields.get("key") or "-", _REF_MAX)
+        kind = _clip(kind, _KIND_MAX)
+        bucket = _clip(fields.get("bucket") or "", _KIND_MAX)
+        sk = _clip(fields.get("suppressed_kind") or "", _KIND_MAX)
         code = fields.get("error_code") or (
             f"{sk}@{bucket}" if sk else (f"{kind}@{bucket}" if bucket else None)
         )
         event = AuditEvent(
             run_id=run_id, domain=domain, operation=kind, principal=principal, source=source, object_ref=f"{tenant}|{ref}",
-            decision=decision, result=result, error_code=code,
+            decision=decision, result=result, error_code=_clip(code, _CODE_MAX) if code else None,
         )  # fmt: skip
         return sink.write_intent(event) if intent else sink.write_outcome(event)
 
@@ -77,31 +102,36 @@ class CappedAudit:
             raise ValueError("max_kinds must be an int >= 1")
         self._append, self._cap, self._max_keys, self._max_kinds = append, cap, max_keys, max_kinds
         self._lock = threading.Lock()
-        # (tenant or None for overflow, kind) -> [bucket, count, marker written, marker failures, suppressed events to skip before the next marker try]
-        self._n: dict[tuple[str | None, str], list[Any]] = {}
+        # (tenant or None for overflow, kind, bucket) -> [bucket, count, marker written, marker failures, suppressed events to skip before the next marker try]
+        self._n: dict[tuple[str | None, str, str], list[Any]] = {}
         self._kinds: set[str] = set()
-        self._bucket: str | None = None  # the bucket the last purge ran for
+        self._buckets: list[
+            str
+        ] = []  # the two most recent distinct buckets seen: their counters are kept
 
     def _slot(
         self, tenant: str, kind: str, bucket: str
-    ) -> tuple[tuple[str | None, str], list[Any]]:
-        if bucket != self._bucket:  # a new bucket: drop every counter of an old one, once
-            self._n = {k: v for k, v in self._n.items() if v[0] == bucket}
-            self._bucket = bucket
+    ) -> tuple[tuple[str | None, str, str], list[Any]]:
+        # a new bucket: drop the counters of all but the two latest, once
+        if bucket not in self._buckets:
+            self._buckets = [*self._buckets[-1:], bucket]
+            self._n = {k: v for k, v in self._n.items() if k[2] in self._buckets}
         if kind not in self._kinds:
             if len(self._kinds) >= self._max_kinds:
                 kind = "*"
             else:
                 self._kinds.add(kind)
-        key: tuple[str | None, str] = (tenant[:_TENANT_MAX], kind)
+        key: tuple[str | None, str, str] = (tenant, kind, bucket)
         if key not in self._n and len(self._n) >= self._max_keys:
-            key = (_OVERFLOW, kind)  # one shared counter per kind
+            key = (_OVERFLOW, kind, bucket)  # one shared counter per kind
         slot = self._n.get(key)
         if slot is None:  # a counter of an older bucket was purged above
             slot = self._n[key] = [bucket, 0, False, 0, 0]
         return key, slot
 
     def append(self, tenant: str, kind: str, bucket: str, /, **fields: Any) -> bool:
+        # a non-string tenant is a name, not a TypeError
+        tenant, bucket = _name(tenant), str(bucket)
         kind = safe_head(str(kind), _KIND_MAX)
         with self._lock:
             key, slot = self._slot(tenant, kind, bucket)
@@ -118,7 +148,7 @@ class CappedAudit:
                 try:
                     self._append(
                         "audit_suppressed",
-                        tenant="*" if key[0] is _OVERFLOW else tenant[:_TENANT_MAX],
+                        tenant="*" if key[0] is _OVERFLOW else tenant,
                         suppressed_kind=key[1],
                         bucket=bucket,
                     )
@@ -131,7 +161,7 @@ class CappedAudit:
         safe = {
             ("field_" + k if k in ("kind", "tenant") else k): v for k, v in fields.items()
         }  # reserved names are renamed, never collide
-        self._append(kind, **{**safe, "tenant": tenant[:_TENANT_MAX]})
+        self._append(kind, **{**safe, "tenant": tenant})
         return True
 
     def deny(self, tenant: str, kind: str, bucket: str, /, **fields: Any) -> None:
@@ -144,7 +174,7 @@ class CappedAudit:
     def suppressed(self, tenant: str, kind: str, bucket: str | None = None) -> int:
         """Events past the cap for THIS tenant and kind in the current bucket; 0 for a tenant never seen (or one that shares the overflow
         counter: ask ``overflow_suppressed``), and 0 if ``bucket`` is given and is not the current one."""
-        return self._count((tenant[:_TENANT_MAX], safe_head(str(kind), _KIND_MAX)), bucket)
+        return self._count((_name(tenant), safe_head(str(kind), _KIND_MAX)), bucket)
 
     def overflow_suppressed(self, kind: str, bucket: str | None = None) -> int:
         """Events past the cap on the shared overflow counter of ``kind`` (all tenants that did not get a counter of their own)."""
@@ -152,9 +182,15 @@ class CappedAudit:
 
     def _count(self, key: tuple[str | None, str], bucket: str | None) -> int:
         with self._lock:
-            slot = self._n.get(key)
+            if bucket is None:
+                if not self._buckets:
+                    return 0
+                bucket = self._buckets[-1]  # the current (latest) bucket
+            else:
+                bucket = str(bucket)
+            slot = self._n.get((*key, bucket))
             if slot is None and key[0] is not _OVERFLOW and key[1] not in self._kinds:
-                slot = self._n.get((key[0], "*"))  # a kind past max_kinds is counted under "*"
-            if slot is None or (bucket is not None and slot[0] != bucket):
-                return 0
-            return max(0, slot[1] - self._cap)
+                slot = self._n.get(
+                    (key[0], "*", bucket)
+                )  # a kind past max_kinds is counted under "*"
+            return 0 if slot is None else max(0, slot[1] - self._cap)

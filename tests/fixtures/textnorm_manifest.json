@@ -1,10 +1,16 @@
 {
-  "note": "sha256 of the files a demo copies byte for byte from core; update with the CHANGELOG when one changes",
+  "note": "sha256 of the files a demo copies byte for byte from core; update with the CHANGELOG when one changes. guard/redact.py and limits.py are NOT here on purpose: they are used through the core package (pin the core commit).",
   "files": {
     "src/hadavin_sdk/guard/textnorm.py": "fd9d0ffdbe7d480db29c9e47bb4be4025fbc19638bf83eef9e6d323483659b14",
     "src/hadavin_sdk/guard/_confusables.py": "41740c11734e2ec1e5a63f9325dffa04226c84f3b81b43c1b5c7e766f8a0ccfd",
     "tests/fixtures/textnorm_vectors.json": "1a1944708f7d1737588d7b02666620ceb308b0fe4a71ce2a312c4dc29113d349",
-    "src/hadavin_sdk/guard/egress_text.py": "1f8243d4753632ae72fc0f637b4e0e5afb6ef373aa4f9e9c59cf00fbe6d3e9fa",
-    "src/hadavin_sdk/runtime/stop_gate.py": "69c2f365efb54fddb902e816f2c9647e7ad2c65fc13343f74f8b564afac668c7"
+    "src/hadavin_sdk/guard/egress_text.py": "b5931824f6b355abf5607b1ce55e422e91e548f10c152cc31dcd38cf583e69f8",
+    "src/hadavin_sdk/runtime/stop_gate.py": "4e85f695ad6144fa56bb6f881f1853a417a1be934b25d690e8c2f004bda1eef3",
+    "src/hadavin_sdk/runtime/rowstore.py": "d1b83fb62a6b85c197a88f097680aeb668a98f6a193a6dd59aa6bd3e26184c98",
+    "src/hadavin_sdk/runtime/config_view.py": "31160290846c0397e59fc3760bc8816683d089cda6bb062cac6d0593c85014d7",
+    "src/hadavin_sdk/audit/capped.py": "2cf06769c68967f0a70de6df0f10cc4e98c8433a2e994f9ea7844453c2f2a80c",
+    "src/hadavin_sdk/testing/mutation.py": "3e9f1102d0ffd1199d747834a562ff8f3266eae3ca520232ce340aa98d4c2476",
+    "src/hadavin_sdk/testing/contracts.py": "fc9d2682e8ba166bb3bf907a000a46add8a45ee40ee7d60fdc311c98b77455dc",
+    "tools/mutation_runner.py": "002baf27f57c77f309c91a49e6cad42e90811ebccc6d0932354125c95def22c9"
   }
 }

@@ -32,7 +32,7 @@ from typing import Any
 MAX_DEPTH = 64
 MAX_NODES = 1_000_000
 _LEAF = (
-    str, int, float, bool, type(None), bytes, frozenset, decimal.Decimal, _dt.datetime, _dt.date, _dt.time, _dt.timedelta,
+    str, int, float, bool, type(None), bytes, decimal.Decimal, _dt.datetime, _dt.date, _dt.time, _dt.timedelta,
     enum.Enum, uuid.UUID, pathlib.PurePath,
 )  # fmt: skip
 
@@ -80,7 +80,9 @@ class FrozenList(list):
 
 def _tick(budget: list[int], depth: int) -> None:
     if depth > MAX_DEPTH:
-        raise TypeError(f"configuration is nested deeper than {MAX_DEPTH} levels (or is cyclic)")
+        raise TypeError(
+            f"configuration is nested more than {MAX_DEPTH} levels below its top value (or is cyclic)"
+        )
     budget[0] -= 1
     if budget[0] < 0:
         raise TypeError(

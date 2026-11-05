@@ -16,6 +16,7 @@ from tools.mutation_runner import Mutant, run_mutants
 
 ROOT = Path(__file__).resolve().parents[1]
 TEST = "tests/test_promoted_controls.py"
+FB = "tests/test_pr50_fix_batch.py"  # the killers of the PR #50 fix batch
 HTTP_TEST = "tests/test_http_metadata.py"  # the killers of the metadata-guard mutants live here (Mutant.test_file)
 HT = "src/hadavin_sdk/guard/http.py"
 S = "src/hadavin_sdk/"
@@ -199,8 +200,8 @@ M = [
     Mutant(
         "gate: label stored raw",
         SG,
-        'return who if isinstance(who, str) and _LABEL.fullmatch(who) else "?"',
-        "return who",
+        "    if _LABEL.fullmatch(who):\n        return who\n",
+        "    if True:\n        return who\n",
         "test_one_failing_undo_does_not_stop_the_sweep_and_an_interrupt_keeps_the_partial_result",
     ),
     Mutant(
@@ -228,8 +229,8 @@ M = [
     Mutant(
         "rowstore: a row is not validated first",
         RS,
-        'clean = copy_row(row) if op != "delete" else None  # validate and copy first',
-        "clean = row",
+        '        clean = (\n            copy_row(row, self._max_row_bytes) if op != "delete" else None\n        )  # validate and copy first\n',
+        "        clean = row\n",
         "test_the_row_store_meets_the_contract",
     ),
     Mutant(
@@ -286,16 +287,18 @@ M = [
     Mutant(
         "capped: tenants share a counter",
         CA,
-        "key: tuple[str | None, str] = (tenant[:_TENANT_MAX], kind)",
-        'key: tuple[str | None, str] = ("*", kind)',
+        "key: tuple[str | None, str, str] = (tenant, kind, bucket)",
+        'key: tuple[str | None, str, str] = ("*", kind, bucket)',
         "test_capped_audit_is_per_tenant_per_bucket_and_visible",
     ),
     Mutant(
         "capped: a new bucket does not reset",
         CA,
-        "self._n = {k: v for k, v in self._n.items() if v[0] == bucket}",
+        "self._n = {k: v for k, v in self._n.items() if k[2] in self._buckets}",
         "pass",
-        "test_capped_audit_is_per_tenant_per_bucket_and_visible",
+        "test_a_late_event_of_the_previous_bucket_neither_resets_nor_bypasses_the_cap",
+        test_file=FB,
+        only_test="test_a_late_event_of_the_previous_bucket_neither_resets_nor_bypasses_the_cap",
     ),
     Mutant(
         "capped: marker not reserved under the lock",
@@ -321,8 +324,8 @@ M = [
     Mutant(
         "capped: tenant not clipped",
         CA,
-        "key: tuple[str | None, str] = (tenant[:_TENANT_MAX], kind)",
-        "key: tuple[str | None, str] = (tenant, kind)",
+        "tenant, bucket = _name(tenant), str(bucket)",
+        "tenant, bucket = str(tenant), str(bucket)",
         "test_capped_audit_memory_is_bounded_by_max_keys_with_an_overflow_counter",
     ),
     Mutant(
@@ -871,29 +874,29 @@ M = [
     Mutant(
         "capped: stale scan on every call",
         CA,
-        "        if bucket != self._bucket:",
+        "        if bucket not in self._buckets:",
         "        if True:",
         "test_capped_audit_clips_the_kind_caps_distinct_kinds_and_purges_once_per_bucket",
     ),
     Mutant(
         "capped: overflow key collides with a tenant called star",
         CA,
-        "key = (_OVERFLOW, kind)  # one shared counter per kind",
-        'key = ("*", kind)  # one shared counter per kind',
+        "key = (_OVERFLOW, kind, bucket)  # one shared counter per kind",
+        'key = ("*", kind, bucket)  # one shared counter per kind',
         "test_capped_audit_memory_is_bounded_by_max_keys_with_an_overflow_counter",
     ),
     Mutant(
         "capped: the marker names the first overflowing tenant",
         CA,
-        '                        tenant="*" if key[0] is _OVERFLOW else tenant[:_TENANT_MAX],',
-        "                        tenant=tenant[:_TENANT_MAX],",
+        '                        tenant="*" if key[0] is _OVERFLOW else tenant,',
+        "                        tenant=tenant,",
         "test_a_tenant_called_star_or_with_a_pipe_cannot_collide_with_the_overflow_counter_or_another_tenant",
     ),
     Mutant(
         "capped: pipe in the tenant is not escaped",
         CA,
-        '            .replace("|", "%7C")\n',
-        "",
+        '        e = "%25" if ch == "%" else "%7C" if ch == "|" else ch',
+        '        e = "%25" if ch == "%" else ch',
         "test_a_tenant_called_star_or_with_a_pipe_cannot_collide_with_the_overflow_counter_or_another_tenant",
     ),
     # mutation runner
@@ -1291,8 +1294,8 @@ M = [
     Mutant(
         "egress: text_leaks fails open on refused input",
         EG,
-        "    except (ValueError, TypeError):\n        return True",
-        "    except (ValueError, TypeError):\n        return False",
+        "    except Exception:  # noqa: BLE001 - fail closed: any failure of the check reads as a leak\n        return True",
+        "    except Exception:  # noqa: BLE001 - fail closed: any failure of the check reads as a leak\n        return False",
         "test_one_huge_value_is_refused",
         only_test="test_one_huge_value_is_refused_and_text_leaks_fails_closed",
     ),
@@ -1398,6 +1401,155 @@ M = [
         "test_an_ipv6_zone_id_does_not_hide_the_address",
         test_file=HTTP_TEST,
     ),
+    # PR #50 fix batch (ledger BL-core-pr50-r2-001 to 006)
+    Mutant(  # the intended reaction of the old code was a TypeError, so a crash is the expected kill
+        "fix: a non-string tenant is sliced",
+        CA,
+        "tenant, bucket = _name(tenant), str(bucket)",
+        "tenant, bucket = tenant[:_TENANT_MAX], str(bucket)",
+        "test_a_non_string_tenant_is_a_name_not_a_type_error",
+        allow_crash=True,
+        test_file=FB,
+        only_test="test_a_non_string_tenant_is_a_name_not_a_type_error",
+    ),
+    *[
+        Mutant(name, file, old, new_, test, test_file=FB, only_test=test)
+        for name, file, old, new_, test in (
+            (
+                "fix: every non-ASCII line gets the per-line check",
+                RD,
+                "suspects = {i for i, c in folded.items() if c - direct.get(i, Counter())}",
+                "suspects = set(range(len(lines)))",
+                "test_many_short_non_ascii_lines_cost_no_per_line_pattern_runs",
+            ),
+            (
+                "fix: the fold scan has no time budget",
+                RD,
+                "if time.monotonic() - started > defaults.REDACT_BUDGET_S:",
+                "if False:",
+                "test_the_fold_scan_stops_at_the_time_budget_with_input_too_large",
+            ),
+            (
+                "fix: a value hidden behind look-alikes is masked in place",
+                RD,
+                "if any(any(alike[s:e]) for s, e, _ in claims):",
+                "if False:",
+                "test_attacks_are_still_withheld_whole_and_never_emitted_folded",
+            ),
+            (
+                "fix: accented and other-script lines are withheld whole again",
+                RD,
+                "return (text, where, alike) if text == fold(body) else None",
+                "return None",
+                "test_benign_multilingual_corpus_has_a_zero_false_withhold_rate",
+            ),
+            (
+                "fix: a set compare hides a look-alike copy",
+                RD,
+                "if not (self._dry_hits(folded) - self._dry_hits(body)):",
+                "if set(self._dry_hits(folded)) <= set(self._dry_hits(body)):",
+                "test_a_lookalike_copy_of_a_value_that_also_stands_in_clear_is_still_a_hit",
+            ),
+            (
+                "fix: an object reference is not clipped",
+                CA,
+                'ref = _clip(fields.get("object_ref") or fields.get("key") or "-", _REF_MAX)',
+                'ref = str(fields.get("object_ref") or fields.get("key") or "-")',
+                "test_ref_key_and_error_code_are_redacted_and_clipped_before_the_audit",
+            ),
+            (
+                "fix: an error code is not clipped",
+                CA,
+                "error_code=_clip(code, _CODE_MAX) if code else None,",
+                "error_code=code,",
+                "test_ref_key_and_error_code_are_redacted_and_clipped_before_the_audit",
+            ),
+            (
+                "fix: the escaped tenant is not clipped",
+                CA,
+                "if n + len(e) > _TENANT_MAX:",
+                "if False:",
+                "test_the_escaped_tenant_is_clipped_after_the_escaping",
+            ),
+            (
+                "fix: a new bucket forgets the previous one",
+                CA,
+                "self._buckets = [*self._buckets[-1:], bucket]",
+                "self._buckets = [bucket]",
+                "test_a_late_event_of_the_previous_bucket_neither_resets_nor_bypasses_the_cap",
+            ),
+            (
+                "fix: a key has no length cap",
+                RS,
+                "if len(key) > self._max_key_chars:",
+                "if False:",
+                "test_rowstore_caps_keys_and_rows_and_the_audited_key_is_clipped",
+            ),
+            (
+                "fix: a row has no size cap",
+                RS,
+                'if max_bytes is not None and len(text.encode("utf-8", "replace")) > max_bytes:',
+                "if False:",
+                "test_rowstore_caps_keys_and_rows_and_the_audited_key_is_clipped",
+            ),
+            (
+                "fix: restore(False) clears an engaged stop",
+                SG,
+                "if not on and (self._engaged_here or self._sweeping):",
+                "if False:",
+                "test_restore_false_cannot_clear_a_stop_this_process_engaged",
+            ),
+            (
+                "fix: a gate without an audit trail is accepted",
+                SG,
+                "if limits is None and not unaudited:",
+                "if False:",
+                "test_a_gate_without_an_audit_trail_must_say_so",
+            ),
+            (
+                "fix: restore does not bump the generation",
+                SG,
+                "            self._gen += 1\n            self._cached = None\n            self._on = bool(on)",
+                "            self._cached = None\n            self._on = bool(on)",
+                "test_restore_false_is_refused_during_a_sweep_and_restore_true_wins_over_a_release_in_flight",
+            ),
+            (
+                "fix: an odd principal is written as a question mark",
+                SG,
+                'return "id:" + hashlib.sha256(who.encode("utf-8", "replace")).hexdigest()[:16]',
+                'return "?"',
+                "test_odd_principals_keep_a_distinct_audit_label_instead_of_a_question_mark",
+            ),
+            (
+                "fix: loopback connects to the raw host",
+                HT,
+                "return socket.create_connection((named, port), timeout, source_address)",
+                "return socket.create_connection(address, timeout, source_address)",
+                "test_the_loopback_skip_connects_to_the_checked_host",
+            ),
+            (
+                "fix: junit with a DOCTYPE is parsed",
+                MU,
+                'if "<!doctype" in low or "<!entity" in low:',
+                "if False:",
+                "test_junit_with_a_doctype_or_entity_is_refused_not_parsed",
+            ),
+            (
+                "fix: the runner drops pinned",
+                MR,
+                "pinned=m.pinned or None",
+                "pinned=None",
+                "test_the_runner_wires_pinned_so_another_failing_test_is_other_test",
+            ),
+            (
+                "fix: the contract skips update and delete",
+                CT,
+                'if all(hasattr(store, name) for name in ("update_audited", "delete_audited")):',
+                "if False:",
+                "test_the_contract_also_checks_update_and_delete",
+            ),
+        )
+    ],
 ]
 
 if __name__ == "__main__":
@@ -1415,7 +1567,7 @@ if __name__ == "__main__":
     res = run_mutants(
         ROOT,
         M,
-        [TEST, HTTP_TEST],
+        [TEST, HTTP_TEST, FB],
         extra_dirs=("tests/fixtures", "docs", "tools"),
         only=only,
         on_result=show,

@@ -6,7 +6,7 @@ targeted tests, then call ``judge(returncode, test_id, first_line, expect=..., p
 ``|`` or ``[...]``); ``first_failure(stdout)`` parses ``-rf`` text and is only safe for ids without `` - ``.
 
 Verdicts: SURVIVED (exit 0), NO_TESTS (exit 5), ERROR (any other exit code except 1), WRONG_REASON (``expect`` is not in the test id or
-line), OTHER_TEST (not the test pinned in a reviewed baseline), CRASH (the first line is not an AssertionError, or it matches a
+line), OTHER_TEST (not the test pinned in a reviewed baseline: ``Mutant.pinned`` of ``tools/mutation_runner.py``), CRASH (the first line is not an AssertionError, or it matches a
 ``crash_markers`` pattern such as an executor's ``denied:internal_error``), KILLED (an AssertionError, the intended way). Only an
 AssertionError (or ``Failed: DID NOT RAISE``) first line is KILLED; anything else (KeyError, TypeError, an import error, ``pytest.fail``
 with another message) is CRASH, so a mutant that merely breaks the code is not counted as an assertion kill. A runner should count CRASH
@@ -76,9 +76,15 @@ def first_failure(stdout: str) -> tuple[str, str]:
 
 
 def first_failure_junit(xml_text: str) -> tuple[str, str]:
-    """(failing test id, first assertion line of THAT test) from a pytest JUnit XML file."""
-    # the junit file is written by our own pytest run, not untrusted input
-    root = ET.fromstring(xml_text)  # noqa: S314  # nosec B314
+    """(failing test id, first assertion line of THAT test) from a pytest JUnit XML file. The id is ``classname`` with ``.`` read as ``/`` plus
+    ``::name``: a path-like id (``tests/test_x::test_y``; a test in a class reads ``tests/test_x/TestC::test_y``), the form ``Mutant.pinned``
+    must use. A DOCTYPE or ENTITY declaration raises ``ValueError``."""
+    # The file is written by our own pytest run, but the parser is shipped: a DOCTYPE or ENTITY declaration (the way an XML bomb or an
+    # external entity is written) is refused before parsing, so only plain elements reach expat.
+    low = xml_text.lower()
+    if "<!doctype" in low or "<!entity" in low:
+        raise ValueError("a JUnit file with a DOCTYPE or ENTITY declaration is refused")
+    root = ET.fromstring(xml_text)  # noqa: S314  # nosec B314 - no DOCTYPE/ENTITY, checked above
     for case in root.iter("testcase"):
         bad = case.find("failure")
         if bad is None:

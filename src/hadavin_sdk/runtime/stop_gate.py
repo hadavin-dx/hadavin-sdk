@@ -15,6 +15,10 @@ acting has a check-then-act race. The durable switch is read on every ``effect()
 and an unreadable store is treated as ENGAGED (fail closed). Cross-process safety of one particular effect (a conditional write in
 the target system) is the effect's own job.
 
+A gate needs an audit trail: ``StopGate(limits)`` takes a ``Limits`` (which carries the audit sink); ``StopGate(None)`` raises ``ValueError`` at construction (at start-up, never in an emergency) unless ``unaudited=True`` says plainly that this gate
+writes no audit row (a test, or a process whose stop is audited elsewhere). ``restore(False)`` never clears a stop this process engaged, and
+never during a sweep (``StopGateBusy``): only ``release`` (audited) does.
+
 Local flag and store can drift: after an operator runs ``limits reset`` the gate that was engaged stays blocked until its own
 ``release()`` (a process never un-stops itself from outside). ``engaged`` is the PROCESS FLAG only (no store read); ``durable_on()``
 is the durable switch (a store read, unreadable means on); ``blocked()`` is either. With ``cache_ttl > 0`` a cached "off" can hide an
@@ -37,6 +41,7 @@ from __future__ import annotations
 
 import asyncio
 import contextvars
+import hashlib
 import inspect
 import re
 import threading
@@ -95,11 +100,26 @@ _LABEL = re.compile(r"[A-Za-z0-9_.:@ -]{1,60}")
 
 
 def _label(who: object) -> str:
-    return who if isinstance(who, str) and _LABEL.fullmatch(who) else "?"
+    """The principal written to the audit: a plain label as it is; any other printable text (an accented name, a ``+``, a long id) as
+    ``id:`` plus 16 hex digits of its SHA-256, so two different principals stay two different principals and no raw text is stored;
+    a non-string or text with a control character is ``?`` (it is never stored raw)."""
+    if not isinstance(who, str):
+        return "?"
+    if _LABEL.fullmatch(who):
+        return who
+    if not who.isprintable() or not who:
+        return "?"
+    return "id:" + hashlib.sha256(who.encode("utf-8", "replace")).hexdigest()[:16]
 
 
 class StopGate:
-    def __init__(self, limits: LimitsLike | None = None, *, cache_ttl: float = 0.0) -> None:
+    def __init__(
+        self, limits: LimitsLike | None = None, *, cache_ttl: float = 0.0, unaudited: bool = False
+    ) -> None:
+        if limits is None and not unaudited:
+            raise ValueError(
+                "StopGate writes no audit row without a Limits (its audit is the audit): pass one, or pass unaudited=True to say that this gate is not audited"
+            )
         for name in ("stop", "reset") if limits is not None else ():
             params = inspect.signature(getattr(limits, name)).parameters
             if "source" not in params and not any(
@@ -113,7 +133,10 @@ class StopGate:
         self._on = False
         self._inflight = 0
         self._sweeping = False
-        self._gen = 0  # bumped by every engage; release refuses to clear the flag if it moved
+        self._gen = (
+            0  # bumped by every engage and restore; release refuses to clear the flag if it moved
+        )
+        self._engaged_here = False  # an engage of THIS process set the flag; only release clears it
         self._cache_ttl = max(0.0, float(cache_ttl))
         self._cached: tuple[float, bool] | None = None
         self._last: EngageResult | None = None
@@ -148,8 +171,16 @@ class StopGate:
         return self._on or self.durable_on()
 
     def restore(self, on: bool) -> None:
-        """Set the in-process flag from persisted state (a restart). No store write, no sweep."""
+        """Set the in-process flag from persisted state (a restart). No store write, no sweep. ``restore(False)`` raises ``StopGateBusy`` while
+        this process holds an engage (only the audited ``release`` clears one) or while a sweep runs; it bumps the generation, so a release in
+        flight cannot undo it."""
         with self._cond:
+            if not on and (self._engaged_here or self._sweeping):
+                raise StopGateBusy(
+                    "restore(False) cannot clear a stop this process engaged: use release"
+                )
+            self._gen += 1
+            self._cached = None
             self._on = bool(on)
 
     # ---- effects -----------------------------------------------------------------------------------------------------------
@@ -216,6 +247,7 @@ class StopGate:
         drain within ``timeout`` the sweep is NOT run (``complete=False``, nothing undone): call ``engage`` again (it is idempotent)."""
         with self._cond:
             self._on = True
+            self._engaged_here = True
             self._gen += 1
             self._cached = None
             if self._sweeping:
@@ -280,6 +312,7 @@ class StopGate:
             again = self._gen != gen
             if not again:
                 self._on = False
+                self._engaged_here = False
         if again:
             durable: bool | None = None
             if self._limits is not None:

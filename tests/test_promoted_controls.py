@@ -275,7 +275,7 @@ def test_engage_goes_through_limits_and_two_instances_share_the_durable_switch()
         raise AssertionError("an effect must not start")
     a.release(by="u-ctl-01")
     assert not b.blocked() and lim.log[-1] == ("reset", "u-ctl-01")
-    assert StopGate(None).blocked() is False
+    assert StopGate(None, unaudited=True).blocked() is False
 
 
 def test_engage_fails_closed_when_the_store_is_down():
@@ -305,7 +305,7 @@ def test_release_is_audit_first_and_leaves_the_switch_on_if_the_audit_fails():
 
 
 def test_a_port_that_checks_outside_the_lock_cannot_escape_the_gate():
-    g = StopGate()
+    g = StopGate(unaudited=True)
     checked, go, started = threading.Event(), threading.Event(), []
 
     def port():
@@ -328,7 +328,7 @@ def test_a_port_that_checks_outside_the_lock_cannot_escape_the_gate():
 
 
 def test_engage_waits_for_effects_in_flight_with_a_timeout_and_sweeps_after():
-    g = StopGate()
+    g = StopGate(unaudited=True)
     entered, release = threading.Event(), threading.Event()
     swept = []
 
@@ -360,7 +360,7 @@ def test_engage_waits_for_effects_in_flight_with_a_timeout_and_sweeps_after():
 
 
 def test_an_incomplete_sweep_runs_nothing_and_a_second_engage_completes_it():
-    g, swept = StopGate(), []
+    g, swept = StopGate(unaudited=True), []
     entered, release = threading.Event(), threading.Event()
 
     def effect():
@@ -381,7 +381,7 @@ def test_an_incomplete_sweep_runs_nothing_and_a_second_engage_completes_it():
 
 
 def test_engage_inside_an_effect_does_not_wait_for_itself():
-    g = StopGate()
+    g = StopGate(unaudited=True)
     with g.effect():
         res = g.engage(
             lambda: ["k"], lambda k: "ok", by="u1", timeout=30
@@ -390,7 +390,7 @@ def test_engage_inside_an_effect_does_not_wait_for_itself():
 
 
 def test_a_second_engage_runs_no_undo_and_release_during_a_sweep_is_refused():
-    g = StopGate()
+    g = StopGate(unaudited=True)
     inside, go, calls, second = threading.Event(), threading.Event(), [], []
 
     def undo(k):
@@ -411,7 +411,7 @@ def test_a_second_engage_runs_no_undo_and_release_during_a_sweep_is_refused():
 
 
 def test_one_failing_undo_does_not_stop_the_sweep_and_an_interrupt_keeps_the_partial_result():
-    g = StopGate()
+    g = StopGate(unaudited=True)
 
     def undo(k):
         if k == "bad":
@@ -422,7 +422,7 @@ def test_one_failing_undo_does_not_stop_the_sweep_and_an_interrupt_keeps_the_par
         ("bad", "error:RuntimeError"),
         ("good", "ok"),
     ]
-    g2 = StopGate()
+    g2 = StopGate(unaudited=True)
 
     def undo2(k):
         if k == "b":
@@ -1902,7 +1902,7 @@ def test_the_egress_docstring_states_what_the_code_counts():
 
 
 def test_a_second_engage_is_not_complete():
-    gate = StopGate()
+    gate = StopGate(unaudited=True)
     started, hold = threading.Event(), threading.Event()
 
     def items():
@@ -2196,7 +2196,7 @@ def test_a_store_error_reports_the_class_name_only_and_no_store_reports_nothing_
     res = StopGate(Boom()).engage(list, lambda k: "x", by="u")
     assert res.durable is False and res.store_error == "OSError"
     assert "hunter2" not in repr(res)
-    assert StopGate().engage(list, lambda k: "x", by="u").durable is None
+    assert StopGate(unaudited=True).engage(list, lambda k: "x", by="u").durable is None
 
 
 def test_weak_digit_look_alikes_count_inside_a_qualified_run_but_prose_stays_free():
@@ -2399,29 +2399,28 @@ def _splits_cases(count, rng, n_cases):
 
 
 # GOLDEN BEHAVIOUR TABLE: (text, count now, count at bf84b8b, the commit before this rule). Measured by running both trees; the old values are
-# pinned here instead of re-deriving the old rule by editing the module's source, so no test depends on str.replace of the code. Every row has
-# now > old. The 'old' column is only compared with 'now' here: the proof that the old code fails is a run of this file against a bf84b8b checkout
+# pinned here instead of re-deriving the old rule by editing the module's source, so no test depends on str.replace of the code. The proof
+# that the old code fails (a table of literals cannot show it) is a run of this file against a bf84b8b checkout
 # (evidence-12.md: 10 tests failed, 4 passed there, partly because the old module lacks the new names), not this table.
 _GOLDEN = (
-    ("4 " + " x ".join(["I"] * 15), 16, 2),
-    ("4 " + " x ".join(["l"] * 15), 16, 2),
-    ("4 OlSZBxxxxx x OlSZBxxxxx x OlSZBxxxxx", 16, 6),
-    ("4 OlSZBxxxxxx y OlSZBxxxxxx", 11, 6),
-    ("4 O x l O x l Ol Ol", 9, 5),
-    ("4,x-l", 2, 1),
-    ("4;y,O", 2, 1),
-    ("4,w:s", 2, 1),
-    ("4.x:s", 2, 1),
-    ("4;x;l", 2, 1),
-    ("4.y,z", 2, 1),
-    ("4-H l", 2, 1),
-    ("4;k-z", 2, 1),
+    ("4 " + " x ".join(["I"] * 15), 16),
+    ("4 " + " x ".join(["l"] * 15), 16),
+    ("4 OlSZBxxxxx x OlSZBxxxxx x OlSZBxxxxx", 16),
+    ("4 OlSZBxxxxxx y OlSZBxxxxxx", 11),
+    ("4 O x l O x l Ol Ol", 9),
+    ("4,x-l", 2),
+    ("4;y,O", 2),
+    ("4,w:s", 2),
+    ("4.x:s", 2),
+    ("4;x;l", 2),
+    ("4.y,z", 2),
+    ("4-H l", 2),
+    ("4;k-z", 2),
 )
 
 
 def test_golden_counts_of_the_whole_text_reading():
-    for text, now, old in _GOLDEN:
-        assert old < now
+    for text, now in _GOLDEN:
         assert egress_text._digitish_count(text, 6) == now, text
 
 
@@ -2544,6 +2543,12 @@ def test_the_manifest_pins_the_files_a_demo_copies():
         "src/hadavin_sdk/guard/egress_text.py",
         "src/hadavin_sdk/runtime/stop_gate.py",
         "tests/fixtures/textnorm_vectors.json",
+        "src/hadavin_sdk/runtime/rowstore.py",
+        "src/hadavin_sdk/runtime/config_view.py",
+        "src/hadavin_sdk/audit/capped.py",
+        "src/hadavin_sdk/testing/mutation.py",
+        "src/hadavin_sdk/testing/contracts.py",
+        "tools/mutation_runner.py",
     }
     log = root / "CHANGELOG.md"
     if log.exists():  # the mutation copies do not carry it

@@ -52,3 +52,38 @@ def check_rowstore_contract(make: Callable[[], Any]) -> None:
         lambda kind, **f: seen.append(sorted(store.snapshot())), "row_added", "k4", {}
     )
     _check(seen == [["k1"]], "an audit callback may read the store")
+    # the other two audited writes, when the store has them
+    if all(hasattr(store, name) for name in ("update_audited", "delete_audited")):
+        ops = []
+        store.update_audited(
+            lambda kind, **f: ops.append((kind, f["key"])), "row_changed", "k1", {"a": 9}
+        )
+        _check(
+            ops == [("row_changed", "k1")] and store.get("k1") == {"a": 9},
+            "update: audit, then write",
+        )
+        try:
+            store.update_audited(failing, "row_changed", "k1", {"a": 10})
+        except OSError:
+            pass
+        else:
+            raise AssertionError("a failed audit write must propagate from update")
+        _check(store.get("k1") == {"a": 9}, "a failed audit write must change nothing")
+        try:
+            store.delete_audited(failing, "row_removed", "k1")
+        except OSError:
+            pass
+        else:
+            raise AssertionError("a failed audit write must propagate from delete")
+        _check("k1" in store.snapshot(), "a failed audit write must remove nothing")
+        store.delete_audited(lambda kind, **f: ops.append((kind, f["key"])), "row_removed", "k1")
+        _check(
+            ops[-1] == ("row_removed", "k1") and "k1" not in store.snapshot(),
+            "delete: audit, then remove",
+        )
+        try:
+            store.delete_audited(lambda kind, **f: None, "row_removed", "nope")
+        except KeyError:
+            pass
+        else:
+            raise AssertionError("deleting a missing key must raise KeyError")

@@ -21,9 +21,14 @@ from __future__ import annotations
 
 import re
 import string
+import time
+import unicodedata
+from bisect import bisect_right
+from collections import Counter
 from dataclasses import dataclass, field
 from typing import Any
 
+from hadavin_sdk import defaults
 from hadavin_sdk.guard.textnorm import fold
 
 # Ordered deliberately: the greedy/most-specific patterns run before the narrow ones, otherwise a
@@ -925,39 +930,187 @@ class _Redactor:
         if not out.isascii():
             # The folded scan runs FIRST, on the text as written: a direct pass first could mask only the ASCII tail of a value hidden behind
             # look-alike letters (``al<look-alike>ce@example.com`` -> ``al<look-alike><EMAIL_1>``) and leave its head in the text.
-            out = "".join(self._folded_line(ln) for ln in out.splitlines(keepends=True))
+            out = self._fold_scan(out)
         for label, pattern in PATTERNS:
             out = pattern.sub(lambda m, label=label: self._mask(m, label), out)
         return out
 
     @staticmethod
-    def _dry_hits(text: str) -> set[str]:
-        """What the patterns would match in ``text`` (compared after the fold), without registering any placeholder."""
-        found: set[str] = set()
+    def _over_budget(started: float) -> None:
+        """Fail closed (``InputTooLarge``) when the folded scan has used ``defaults.REDACT_BUDGET_S``; checked per pattern and per line."""
+        if time.monotonic() - started > defaults.REDACT_BUDGET_S:
+            from hadavin_sdk.guard.runmap import InputTooLarge  # runmap imports this module
+
+            raise InputTooLarge("InputTooLarge")
+
+    @staticmethod
+    def _dry_hits(text: str) -> Counter[str]:
+        """What the patterns would match in ``text`` (counted after the fold, copies counted: a look-alike copy of a value that also
+        appears in clear is a second hit), without registering any placeholder."""
+        found: Counter[str] = Counter()
 
         def note(m: re.Match[str]) -> str:
-            found.add(fold(m.group(0)))
+            found[fold(m.group(0))] += 1
             return "\0"
 
         for _label, pattern in PATTERNS:
             text = pattern.sub(note, text)
         return found
 
+    def _line_hits(
+        self, text: str, starts: list[int], started: float
+    ) -> dict[int, Counter[tuple[str, str]]]:
+        """Per line (the line holding the start of the match): the (pattern, folded value) of every match. One pass of each pattern over the
+        whole text, not one run of every pattern per line."""
+        per: dict[int, Counter[tuple[str, str]]] = {}
+        for label, pattern in PATTERNS:
+            self._over_budget(started)
+            for m in pattern.finditer(text):
+                line = bisect_right(starts, m.start()) - 1
+                per.setdefault(line, Counter())[(label, fold(m.group(0)))] += 1
+        return per
+
+    def _fold_scan(self, text: str) -> str:
+        """The fold pass over a text with non-ASCII characters. A cheap whole-text scan first finds the lines whose FOLDED form holds a match
+        the line itself does not (one pattern pass over the text and one over its folded form, matches counted per line); only those lines
+        get the exact per-line treatment of ``_folded_line``. Many short non-ASCII lines (``é`` x 130,000) therefore cost two passes, not
+        two pattern runs per line. The work is bounded by ``defaults.REDACT_BUDGET_S`` (``InputTooLarge``, checked inside the passes)."""
+        started = time.monotonic()
+        lines = text.splitlines(keepends=True)
+        folded_lines = []
+        for ln in lines:
+            if ln.isascii():
+                folded_lines.append(ln)
+            else:
+                body = ln.rstrip("\r\n")
+                folded_lines.append(fold(body) + ln[len(body) :])
+        self._over_budget(started)
+        offsets: list[list[int]] = []
+        for group in (lines, folded_lines):
+            starts, at = [], 0
+            for ln in group:
+                starts.append(at)
+                at += len(ln)
+            offsets.append(starts)
+        direct = self._line_hits(text, offsets[0], started)
+        folded = self._line_hits("".join(folded_lines), offsets[1], started)
+        suspects = {i for i, c in folded.items() if c - direct.get(i, Counter())}
+        if not suspects:
+            return text
+        out = []
+        for i, ln in enumerate(lines):
+            if i in suspects:
+                self._over_budget(started)
+                ln = self._folded_line(ln)
+            out.append(ln)
+        return "".join(out)
+
+    @staticmethod
+    def _aligned_fold(body: str) -> tuple[str, list[int], bytearray] | None:
+        """``fold(body)``, the index in ``body`` of every character it keeps, and a flag per kept character that marks a LOOK-ALIKE LETTER
+        (a letter of another script that the fold turns into an ASCII letter, as in ordinary Cyrillic or Arabic words). Returned when the fold
+        only does what a legitimate text can contain: decimal digits of another script to ASCII digits (Arabic-Indic, Devanagari, full-width
+        ...), an accented Latin letter to its base letter, a Unicode space to a space, a look-alike letter (flagged), and dropping of marks,
+        format and control characters. ``None`` when any character is folded in another way (a full-width or compatibility letter or
+        punctuation mark that becomes live ASCII, a symbol): such a line is an attack signal and ``_folded_line`` withholds it whole."""
+        parts, where, alike = [], [], bytearray()
+        for i, ch in enumerate(body):
+            f = ch if " " <= ch <= "~" else fold(ch)
+            flag = 0
+            if f == ch or f == "":
+                pass
+            elif ch.isspace():
+                if f != " ":
+                    return None
+            elif unicodedata.category(ch) == "Nd":
+                if not (len(f) == 1 and f.isascii() and f.isdigit()):
+                    return None
+            elif len(f) == 1 and f.isalpha():
+                nfd = unicodedata.normalize("NFD", ch)
+                if nfd[0] == f and all(unicodedata.category(c) == "Mn" for c in nfd[1:]):
+                    flag = (
+                        0 if f.isascii() else 1
+                    )  # a letter that lost its accent or mark (e -> e, the Japanese de -> te)
+                elif f.isascii() and ch.isalpha() and unicodedata.normalize("NFKC", ch) == ch:
+                    flag = 1  # a look-alike letter of another script
+                else:
+                    return None  # a full-width or compatibility letter: live ASCII after the fold
+            else:
+                return None
+            if f:
+                parts.append(f)
+                where.append(i)
+                alike.append(flag)
+        text = "".join(parts)
+        return (text, where, alike) if text == fold(body) else None
+
+    def _mask_in_place(
+        self, body: str, folded: str, where: list[int], alike: bytearray
+    ) -> str | None:
+        """Mask the matches found in ``folded`` inside ``body`` itself: the output is ``body`` with each matched value replaced by its
+        placeholder; every other character stays as written, and no folded text is ever emitted. ``None`` when a masked value contains a
+        look-alike letter: that is a value HIDDEN behind look-alikes (an attack), not an ordinary word of another script next to it."""
+        taken = bytearray(len(folded))
+        claims: list[tuple[int, int, str]] = []
+        for label, pattern in PATTERNS:
+            for m in pattern.finditer(folded):
+                if any(taken[m.start() : m.end()]):
+                    continue  # overlaps a value masked by an earlier pattern; the next round sees it
+                res = self._mask_ex(m, label)
+                if res is None or not res[0]:
+                    continue
+                original, placeholder = res
+                group = m.group(0)
+                i = group.find(original)
+                while i >= 0:
+                    s = m.start() + i
+                    claims.append((s, s + len(original), placeholder))
+                    taken[s : s + len(original)] = b"\x01" * len(original)
+                    i = group.find(original, i + len(original))
+        if any(any(alike[s:e]) for s, e, _ in claims):
+            return None
+        out, prev = [], 0
+        for s, e, placeholder in sorted(claims):
+            out += [body[prev : where[s]], placeholder]
+            prev = where[e - 1] + 1
+        return "".join(out) + body[prev:] if claims else body
+
     def _folded_line(self, line: str) -> str:
-        """Interim fail-closed fold: a value hidden behind look-alike letters, another script's digits or invisible
-        characters does not match the patterns above. For a line with non-ASCII text, run the patterns again on its FOLDED form
-        (``textnorm.fold``), BEFORE the direct patterns run. On a hit the WHOLE LINE is replaced by ``FOLD_NOTE`` plus the placeholders of the hits, and the folded text is
-        NEVER emitted: the fold turns full-width and look-alike characters into live ASCII (a mention, a link, a command, a fence), and a
-        caller that neutralises text before calling ``redact`` last (``approvals.channel.clean``) would send that live text to a person.
-        ``restore`` of the placeholders gives the folded value. A line with no hit is returned unchanged. Masking the hits inside the
-        ORIGINAL line needs a character map and is a tracked item in ``docs/promoted-controls.md``."""
+        """Fail-closed fold: a value hidden behind look-alike letters, another script's digits, accents or invisible characters does not
+        match the patterns above. For a line with non-ASCII text, run the patterns again on its FOLDED form (``textnorm.fold``), BEFORE the
+        direct patterns run; a hit is a match the line itself does not give (copies are counted, so a look-alike copy of a value that also
+        stands in clear is a hit).
+
+        * If the fold only turns other scripts' digits into ASCII digits, accented Latin letters into their base letters, Unicode spaces into
+          spaces, look-alike letters of other scripts into ASCII letters (ordinary Cyrillic or Arabic words) or drops marks and invisible
+          characters (``_aligned_fold``), and no matched value contains a look-alike letter, only the matched VALUES are replaced by their
+          placeholders, in the line as written (``josé@example.com`` becomes ``<EMAIL_1>`` and the rest of the line stays). This repeats
+          (at most 4 rounds) until the fold finds nothing more; a line that still hits then is withheld.
+        * Otherwise (a value written with look-alike letters, or a full-width or compatibility character: the signals of an attack) the
+          WHOLE LINE is replaced by
+          ``FOLD_NOTE`` plus the placeholders of the hits, and the folded text is NEVER emitted: the fold turns full-width and look-alike
+          characters into live ASCII (a mention, a link, a command, a fence), and a caller that neutralises text before calling ``redact``
+          last (``approvals.channel.clean``) would send that live text to a person. ``restore`` of the placeholders gives the folded value.
+
+        A line with no hit is returned unchanged."""
         if line.isascii():
             return line
         body = line.rstrip("\r\n")
         eol = line[len(body) :]
         folded = fold(body)
-        if self._dry_hits(folded) <= self._dry_hits(body):
+        if not (self._dry_hits(folded) - self._dry_hits(body)):
             return line  # the fold finds nothing the direct patterns do not (``‹IPV4_2›`` only folds to ``<IPV4_2>``): the direct pass handles it
+        cur = body
+        for _ in range(4):
+            aligned = self._aligned_fold(cur)
+            if aligned is None:
+                break
+            new = self._mask_in_place(cur, *aligned)
+            if new is None or new == cur:
+                break  # a value hidden behind look-alikes, or nothing could be masked in place: withhold below
+            cur = new
+            if cur.isascii() or not (self._dry_hits(fold(cur)) - self._dry_hits(cur)):
+                return cur + eol
         hits: list[str] = []
 
         def mask(m: re.Match[str], label: str) -> str:
@@ -973,22 +1126,27 @@ class _Redactor:
 
     def _mask(self, m: re.Match[str], label: str) -> str:
         """One match of `label`'s pattern, its value replaced by its placeholder (a new one when it is new)."""
+        res = self._mask_ex(m, label)
+        return m.group(0) if res is None else m.group(0).replace(*res)
+
+    def _mask_ex(self, m: re.Match[str], label: str) -> tuple[str, str] | None:
+        """``_mask`` without the replacing: (the sensitive value, its placeholder), or ``None`` when the match is left alone."""
         # group(1) exists for TENANT, where only the value is sensitive, not the key name.
         # The first group that took part: a pattern may offer the value in several written forms.
         original = next((g for g in m.groups() if g is not None), m.group(0))
         if label == "SECRET" and (
             original.lower().strip(".,;:)(<>") in _NOT_A_VALUE or _SAYS_NONE.fullmatch(original)
         ):
-            return m.group(0)
+            return None
         if label == "HOSTNAME" and _KEPT_HOST.search(
             original
         ):  # a name WARDEN reads and acts on, or AWS's own
-            return m.group(0)
+            return None
         # An account is a bank's only beside a bank word; a grouped card number is left to CREDITCARD (a secret).
         if label == "BANKACCT" and (
             _CARD_SHAPE.fullmatch(original) or not (self.bank_near or _bank_context(m))
         ):
-            return m.group(0)
+            return None
         # A value holding placeholders already placed (`Cookie: a=<JWT_1>; sid=...`) is stored restored,
         # so restore() gives the original back in one step; one that is nothing but placeholders is
         # masked already (seventh review: excluding `<` instead left the cookies after it in clear).
@@ -998,11 +1156,11 @@ class _Redactor:
         if _PLACEHOLDER.search(original) and not re.search(
             r"[A-Za-z0-9]", _PLACEHOLDER.sub("", original)
         ):
-            return m.group(0)
+            return None
         placeholder = (
             self.reverse[full] if full in self.reverse else self._place(label, full, original)
         )
-        return m.group(0).replace(original, placeholder)
+        return original, placeholder
 
     def _place(self, label: str, full: str, original: str) -> str:
         """A new placeholder for `full`; for a secret kind, one too for each secret-shaped piece of it."""

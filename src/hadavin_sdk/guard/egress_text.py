@@ -555,9 +555,10 @@ def text_leaks(
     **kw: Any,
 ) -> bool:
     """True when ``check_text`` finds a violation. FAILS CLOSED: input ``check_text`` refuses with ``ValueError`` or ``TypeError`` (too many or too long
-    values, an empty value, a value that folds to nothing) also returns True, so a caller that treats False as "no leak" can never be
+    values, an empty value, a value that folds to nothing) also returns True (as does ANY other exception of the check, e.g. a ``RecursionError``
+    or ``MemoryError``-free failure of a custom ``policy``), so a caller that treats False as "no leak" can never be
     opened by bad input. Call ``check_text`` itself to see the reason."""
     try:
         return check_text(text, protected, allowed, policy=policy, **kw) is not None
-    except (ValueError, TypeError):
+    except Exception:  # noqa: BLE001 - fail closed: any failure of the check reads as a leak
         return True
