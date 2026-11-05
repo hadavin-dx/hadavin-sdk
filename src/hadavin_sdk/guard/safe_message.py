@@ -290,6 +290,21 @@ def safe_text(
     return safe_str(raw, limit)
 
 
+def validation_text(exc: BaseException, limit: int = 2000) -> str:
+    """A configuration error for the operator: pydantic's "where: message" list without the offending input
+    (the messages are written by us), any other error through safe_str. A masking pass over our own messages
+    would turn words such as "secrets: env" into <SECRET_1>."""
+    try:
+        errors = getattr(exc, "errors", None)
+        if callable(errors):
+            found = errors(include_input=False, include_url=False)
+            parts = [f"{'.'.join(str(p) for p in e['loc']) or '(root)'}: {e['msg']}" for e in found]
+            return " ".join("; ".join(parts).split())[:limit]
+    except Exception:  # noqa: BLE001, S110 - fall through to the masked plain text
+        pass
+    return safe_str(str(exc), limit)
+
+
 def with_class(exc: BaseException, text: str) -> str:
     """`ClassName: text`; the class name alone if the text is empty or withheld."""
     name = class_name(exc)

@@ -17,7 +17,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from hadavin_sdk import deferred
 from hadavin_sdk.backends.table import DEFAULTS, DEV_ONLY, NOT_PROD, TABLE, KindSettings
 from hadavin_sdk.errors import ConfigError
-from hadavin_sdk.guard.safe_message import safe_str
+from hadavin_sdk.guard.safe_message import validation_text
 
 __all__ = [
     "Backends",
@@ -112,7 +112,7 @@ def _one(cap: str, raw: Any, root: Path) -> KindSettings:
     try:
         return model(**data)
     except ValidationError as exc:
-        raise ConfigError(f"backends.{cap} ({kind}): {safe_str(str(exc), 2000)}") from exc
+        raise ConfigError(f"backends.{cap} ({kind}): {validation_text(exc)}") from exc
 
 
 def parse_backends(raw: Any, root: Path) -> Backends:
@@ -289,4 +289,4 @@ def load_config(config_dir: Path | None = None) -> Config:
     except ConfigError:
         raise
     except (ValueError, TypeError, yaml.YAMLError) as exc:  # pydantic errors are ValueErrors
-        raise ConfigError(safe_str(str(exc), 2000)) from exc
+        raise ConfigError(validation_text(exc)) from exc

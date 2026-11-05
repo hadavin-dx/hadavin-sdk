@@ -18,7 +18,7 @@ from hadavin_sdk import deferred
 from hadavin_sdk.actions.contract import ActionContract, schema_problems
 from hadavin_sdk.config import Config, ConfigError, Money, confined, load_yaml
 from hadavin_sdk.guard.judge import PROMPT_SHA256 as JUDGE_PROMPT_SHA256
-from hadavin_sdk.guard.safe_message import safe_str
+from hadavin_sdk.guard.safe_message import validation_text
 from hadavin_sdk.identity import Principal
 from hadavin_sdk.models import ChainStep, sha256_hex
 
@@ -185,7 +185,7 @@ def load_registry(config: Config) -> Registry:
     except ConfigError:
         raise
     except (ValidationError, TypeError, yaml.YAMLError) as exc:
-        raise ConfigError(safe_str(str(exc), 2000)) from exc
+        raise ConfigError(validation_text(exc)) from exc
     problems = _cross_check(config, agents, chains, contracts)
     if problems:
         raise ConfigError("; ".join(problems))

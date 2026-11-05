@@ -166,7 +166,15 @@ def test_injection_check_does_not_swallow_redaction_error():
 SRC = Path(__file__).resolve().parents[1] / "src" / "hadavin_sdk"
 _LEVELS = {"debug", "info", "warning", "warn", "error", "exception", "critical", "log", "fatal"}
 _TRACE = {"format_exc", "format_exception", "print_exc", "print_exception", "format_tb", "print_tb"}
-_MASKING = {"safe_message", "safe_text", "safe_str", "_failure", "class_name", "locator"}
+_MASKING = {
+    "safe_message",
+    "safe_text",
+    "safe_str",
+    "_failure",
+    "class_name",
+    "locator",
+    "validation_text",
+}
 _PURE_FUNCS = {
     "str", "repr", "format", "ascii", "len", "type", "isinstance", "issubclass", "bool", "int", "float",
     "list", "tuple", "set", "frozenset", "dict", "sorted", "reversed", "enumerate", "zip", "map", "filter",

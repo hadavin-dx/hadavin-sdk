@@ -408,3 +408,32 @@ def test_redact_work_is_bounded_for_the_adversarial_43k_input(monkeypatch):
         total.clear()
         shown(text)
         assert sum(total) <= 4 * 300 * 8  # a few forms at most, each capped
+
+
+# --- config wrappers: our own messages stay readable, the offending input never appears ----------------------
+
+
+def test_validation_text_keeps_our_message_and_drops_the_input():
+    from pydantic import BaseModel, ValidationError, field_validator
+
+    from hadavin_sdk.guard.safe_message import validation_text
+
+    class Cfg(BaseModel):
+        secrets: str
+
+        @field_validator("secrets")
+        @classmethod
+        def known(cls, v):
+            raise ValueError("refused: secrets: env, store: memory, llm: fake")
+
+    with pytest.raises(ValidationError) as ei:
+        Cfg(secrets=KEY)
+    out = validation_text(ei.value)
+    assert "llm: fake" in out and "secrets: env" in out and KEY not in out and "aaaa" not in out
+
+
+def test_validation_text_masks_a_plain_error_text():
+    from hadavin_sdk.guard.safe_message import validation_text
+
+    assert KEY not in validation_text(ValueError("bad value " + KEY))
+    assert validation_text(ValueError("bad value " + KEY)).startswith("bad value")
