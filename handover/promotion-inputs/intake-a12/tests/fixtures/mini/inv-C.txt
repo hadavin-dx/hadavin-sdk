@@ -1,0 +1,11 @@
+Invoice: INV-3003
+Supplier: Cedar Industrial Inc
+Date: 2026-10-09
+Currency: USD
+
+Description|Qty|Unit|Amount
+Bolt M8|10|1.50|15.00
+Washer M8|20|0.25|5.00
+Total|||20.00
+
+Payment details: Routing 111222333 Account 999999999

@@ -1,0 +1,55 @@
+# Ruff configuration for agent-killswitch
+target-version = "py310"
+line-length = 100
+
+[lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "N",    # pep8-naming
+    "UP",   # pyupgrade
+    "B",    # flake8-bugbear
+    "SIM",  # flake8-simplify
+    "TCH",  # flake8-type-checking
+    "RUF",  # Ruff-specific rules
+]
+ignore = [
+    "E501",    # line too long (handled by formatter)
+    "B008",    # do not perform function calls in argument defaults
+    "SIM108",  # use ternary operator
+    "UP007",   # use X | Y for union types (we support 3.10)
+
+    # --- Deliberate, documented exceptions ---------------------------------
+    # N818 "exception name should end in Error": `KillSwitchTriggered` and
+    # `CircuitBreakerOpen` are CONTROL-FLOW SIGNALS, not failures — the same
+    # category as the standard library's StopIteration, KeyboardInterrupt and
+    # SystemExit, none of which carry the suffix. `except KillSwitchTriggered:`
+    # states the intent exactly; renaming would make the API less clear.
+    "N818",
+
+    # TC001/TC002/TC003 "move this import into a TYPE_CHECKING block": this
+    # library has ZERO required runtime dependencies and imports only from the
+    # standard library, so guarding those imports saves no install time and no
+    # import time. It would only add a conditional block and quoted annotations
+    # to every module — cost without benefit here.
+    "TC001",
+    "TC002",
+    "TC003",
+]
+
+[lint.per-file-ignores]
+# RUF006 wants every asyncio task reference held in a long-lived collection. In these
+# tests the task is created, awaited-through and consumed inside a single coroutine, so
+# the local binding already keeps it alive for exactly as long as it must exist. The
+# library code itself does hold real references - see integrations/asyncio_tasks.py.
+"tests/**" = ["RUF006"]
+
+[lint.isort]
+known-first-party = ["agent_killswitch"]
+
+[format]
+quote-style = "double"
+indent-style = "space"
+docstring-code-format = true

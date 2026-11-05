@@ -1,0 +1,4 @@
+INVOICE INV-1001
+Supplier: Acme Widgets Ltd
+Your PO PO-77 USD
+IBAN XX12 3456 7890 1234 5678 Payment due
