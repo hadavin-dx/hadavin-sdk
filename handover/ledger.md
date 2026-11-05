@@ -1316,3 +1316,8 @@
 | BL-core-lookalike-r4-adv-ADV-LK4-10 | lookalike | MAJOR | see report | OPEN | reviews/lookalike-round4-adversarial.md | bdab309 |
 | BL-core-lookalike-r4-adv-ADV-LK4-11 | lookalike | MAJOR | see report | OPEN | reviews/lookalike-round4-adversarial.md | bdab309 |
 | BL-core-lookalike-r4-adv-ADV-LK4-12 | lookalike | MAJOR | see report | OPEN | reviews/lookalike-round4-adversarial.md | bdab309 |
+| BL-core-P1-r9-adv-ADV-R9-1 | P1 | MAJOR | see report | OPEN | reviews/P1-round9-adversarial.md | 82b477e |
+| BL-core-P1-r9-adv-ADV-R9-2 | P1 | MAJOR | see report | OPEN | reviews/P1-round9-adversarial.md | 82b477e |
+| BL-core-P1-r9-adv-ADV-R9-3 | P1 | MAJOR | see report | OPEN | reviews/P1-round9-adversarial.md | 82b477e |
+| BL-core-P1-r9-adv-ADV-R9-4 | P1 | MAJOR | see report | OPEN | reviews/P1-round9-adversarial.md | 82b477e |
+| BL-core-P1-r9-adv-ADV-R9-5 | P1 | MAJOR | see report | OPEN | reviews/P1-round9-adversarial.md | 82b477e |
