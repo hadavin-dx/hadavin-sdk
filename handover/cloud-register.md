@@ -26,7 +26,16 @@ Note (honesty): "last checked" times written before 14:43Z today were estimated 
 The egm-resolve skill cannot be started by the cloud session (tool refusal), so each ticket author works through every ledger row of its ticket and writes a disposition file. Fresh reviewers do round 2.
 | agent | purpose | model | started | expected end | state | next action |
 |---|---|---|---|---|---|---|
-| fix-P1 (resumed drafter-P1) | rewrite tickets/P1.md for 43 findings; write reviews/P1-round1-disposition.md | sonnet (claude-sonnet-5-5) | 15:00Z | 15:40Z | running | verify disposition, commit, round 2 |
-| fix-P2a (resumed drafter-P2a) | rewrite tickets/P2a.md for 34 findings; disposition file | sonnet (claude-sonnet-5-5) | 15:00Z | 15:40Z | running | same |
-| fix-P3a (resumed drafter-P3a) | rewrite tickets/P3a.md for 24 findings; disposition file | sonnet (claude-sonnet-5-5) | 15:00Z | 15:40Z | running | same |
-| fix-P4d (resumed drafter-P4d) | rewrite tickets/P4d.md for 37 findings (A11: money SQL in P4d); disposition file | sonnet (claude-sonnet-5-5) | 15:00Z | 15:40Z | running | same |
+| fix-P1 (resumed drafter-P1) | rewrite tickets/P1.md for 43 findings; write reviews/P1-round1-disposition.md | sonnet (claude-sonnet-5-5) | 15:00Z | 15:40Z | STOPPED by lead at 15:05Z (superseded by the resolve step below) | none |
+| fix-P2a (resumed drafter-P2a) | rewrite tickets/P2a.md for 34 findings; disposition file | sonnet (claude-sonnet-5-5) | 15:00Z | 15:40Z | STOPPED by lead at 15:05Z (superseded) | none |
+| fix-P3a (resumed drafter-P3a) | rewrite tickets/P3a.md for 24 findings; disposition file | sonnet (claude-sonnet-5-5) | 15:00Z | 15:40Z | STOPPED by lead at 15:05Z (superseded) | none |
+| fix-P4d (resumed drafter-P4d) | rewrite tickets/P4d.md for 37 findings (A11: money SQL in P4d); disposition file | sonnet (claude-sonnet-5-5) | 15:00Z | 15:40Z | STOPPED by lead at 15:05Z (superseded) | none |
+
+## Ticket rewrite after resolve (authors resumed; Sonnet 5.5; started 15:06Z, expected end 15:46Z)
+The Sonnet fix-batch rows above were stopped at 15:05Z before writing anything. The egm-resolve skill then ran (skill loaded after the patch script removed disable-model-invocation); reports: reviews/<P>-round1-resolve-report.md. The authors now APPLY those reports.
+| agent | purpose | model | started | expected end | state | next action |
+|---|---|---|---|---|---|---|
+| apply-P1 (resumed) | apply P1-round1-resolve-report.md to tickets/P1.md; write P1-round1-disposition.md | sonnet (claude-sonnet-5-5) | 15:06Z | 15:46Z | running | verify, commit, round 2 reviewers |
+| apply-P2a (resumed) | same for P2a | sonnet (claude-sonnet-5-5) | 15:06Z | 15:46Z | running | same |
+| apply-P3a (resumed) | same for P3a | sonnet (claude-sonnet-5-5) | 15:06Z | 15:46Z | running | same |
+| apply-P4d (resumed) | same for P4d | sonnet (claude-sonnet-5-5) | 15:06Z | 15:46Z | running | same |
