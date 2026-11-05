@@ -58,5 +58,15 @@ be U+0431 -> 6
 4. Tier N rows at limit 1: 1 isolated U+E000 FALSE, 2 TRUE, 10 TRUE; 1 x U+FDD0 FALSE, 2 TRUE, 5 TRUE; two ESC colour sequences TRUE (ANSI is tier N: a stated false refusal). 64 consecutive ZWSP in a 1,000-character text: rule 5 TRUE, rule 6 FALSE (6.4 % is below 10 %), so that row tests rule 5, not rule 6.
 5. Digit-valued table sources (probe B of round 7, re-run): 71 all-digit values, 62 of them from a source that is not category Nd, 54 of those letters, by value 2: 8, 3: 15, 4: 3, 5: 2, 6: 9, 7: 4, 8: 5, 9: 8; 9 entries read `b`, 9 read `6`; Cyrillic Ze U+0437 and U+0417 read `3`, Cyrillic small Be U+0431 reads `6`. (Round 7 wrote the same counts.) The table has 677 entries and the longest value has 3 characters.
 
+## Revision 10 re-run (2026-11-05; `python3 -I`; one script, read-only, no repository code imported)
+Method: for every code point up to `sys.maxunicode`, count those in category Mn or Me, and those with `str.isspace()`; bits per symbol = log2(count); bytes at the size cap = floor(262,144 x bits / 8). Positions are ignored, so these are upper bounds by symbols only.
+Output (Python 3.13.18, Unicode 15.1.0):
+```
+Mn+Me 1998 10.96 359279
+isspace 29 4.86 159186
+3.13.18 15.1.0
+```
+The ticket (revision 10) uses these as the sizes of two channels the hidden-channel signal does not count (ADV-R8-4, PENDING LEAD 33). Not run: any entity step, `has_hidden_channel`, `scan_keyset`.
+
 ## Not run
 `has_hidden_channel`, `scan_keyset`, `scan_match`, any timing (S_call, SK-5 per-call cost), the entity step, the ideographic-selector row, the U+2063, U+0000, U+0600 and bidi-pair runs, `fold` on U+FFFD (probe A of round 7 stands; it is about `748849c`, not about P1b), Python 3.12 and 3.14.
