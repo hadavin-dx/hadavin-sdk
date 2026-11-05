@@ -851,3 +851,17 @@
 | BL-core-p4a-r2-cor-R2-C9 | P4A | NIT | see report | OPEN | reviews/P4a-round2-correctness.md | 60fedf6 |
 | BL-core-p4a-r2-cor-R2-C10 | P4A | NIT | see report | OPEN | reviews/P4a-round2-correctness.md | 60fedf6 |
 | BL-core-p4a-r2-cor-R2-C11 | P4A | NIT | see report | OPEN | reviews/P4a-round2-correctness.md | 60fedf6 |
+| BL-core-p4a-r2-adv-R2-1 | P4A | BLOCKER | see report | OPEN | reviews/P4a-round2-adversarial.md | 60fedf6 |
+| BL-core-p4a-r2-adv-R2-2 | P4A | MAJOR | see report | OPEN | reviews/P4a-round2-adversarial.md | 60fedf6 |
+| BL-core-p4a-r2-adv-R2-3 | P4A | MAJOR | see report | OPEN | reviews/P4a-round2-adversarial.md | 60fedf6 |
+| BL-core-p4a-r2-adv-R2-4 | P4A | MAJOR | see report | OPEN | reviews/P4a-round2-adversarial.md | 60fedf6 |
+| BL-core-p4a-r2-adv-R2-5 | P4A | MAJOR | see report | OPEN | reviews/P4a-round2-adversarial.md | 60fedf6 |
+| BL-core-p4a-r2-adv-R2-6 | P4A | MAJOR | see report | OPEN | reviews/P4a-round2-adversarial.md | 60fedf6 |
+| BL-core-p4a-r2-adv-R2-7 | P4A | MAJOR | see report | OPEN | reviews/P4a-round2-adversarial.md | 60fedf6 |
+| BL-core-p4a-r2-adv-R2-8 | P4A | MAJOR | see report | OPEN | reviews/P4a-round2-adversarial.md | 60fedf6 |
+| BL-core-p4a-r2-adv-R2-9 | P4A | MAJOR | see report | OPEN | reviews/P4a-round2-adversarial.md | 60fedf6 |
+| BL-core-p4a-r2-adv-R2-10 | P4A | MINOR | see report | OPEN | reviews/P4a-round2-adversarial.md | 60fedf6 |
+| BL-core-p4a-r2-adv-R2-11 | P4A | MINOR | see report | OPEN | reviews/P4a-round2-adversarial.md | 60fedf6 |
+| BL-core-p4a-r2-adv-R2-12 | P4A | MINOR | see report | OPEN | reviews/P4a-round2-adversarial.md | 60fedf6 |
+| BL-core-p4a-r2-adv-R2-13 | P4A | MINOR | see report | OPEN | reviews/P4a-round2-adversarial.md | 60fedf6 |
+| BL-core-p4a-r2-adv-R2-14 | P4A | MINOR | see report | OPEN | reviews/P4a-round2-adversarial.md | 60fedf6 |
