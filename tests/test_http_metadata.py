@@ -134,6 +134,19 @@ def test_the_vendor_words_check_sees_a_name_inside_an_identifier_and_ignores_a_w
         assert not VENDOR_WORDS.search(text), text
 
 
+def _guard_module_is_absent(exc: ModuleNotFoundError) -> bool:
+    """True only when the `tests` package or the guard file itself is missing (a mutation copy), never for a module the guard file imports."""
+    return exc.name in ("tests", "tests.test_lockin_guard")
+
+
+def test_only_a_missing_guard_file_is_skipped_any_other_missing_module_is_a_failure():
+    assert _guard_module_is_absent(ModuleNotFoundError(name="tests"))
+    assert _guard_module_is_absent(ModuleNotFoundError(name="tests.test_lockin_guard"))
+    assert not _guard_module_is_absent(ModuleNotFoundError(name="hadavin_sdk.backends.table"))
+    assert not _guard_module_is_absent(ModuleNotFoundError(name="tests.other"))
+    assert not _guard_module_is_absent(ModuleNotFoundError())
+
+
 def test_the_table_names_no_vendor_in_any_string():
     # the lock-in rule: core logic names no vendor. The vendor names sit in comments (the scan skips comments).
     words = VENDOR_WORDS
@@ -142,7 +155,7 @@ def test_the_table_names_no_vendor_in_any_string():
     try:  # also the real guard's patterns, where this test file sits beside it (not in a mutation copy)
         from tests.test_lockin_guard import PATTERNS
     except ModuleNotFoundError as exc:
-        if exc.name not in ("tests", "tests.test_lockin_guard"):
+        if not _guard_module_is_absent(exc):
             raise  # a missing module INSIDE the guard file is a real failure, not a mutation copy
         pytest.skip("tests.test_lockin_guard is not importable here (a mutation copy)")
     hits = [

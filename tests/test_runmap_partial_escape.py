@@ -210,3 +210,13 @@ def test_strip_fragment_removes_a_half_written_escape_before_the_marker(body, ex
 
     out = tools._strip_fragment(body + tools.TRUNCATED, ["Zq9Lm4pTvX2"])
     assert out == expected + tools.TRUNCATED
+
+
+@pytest.mark.parametrize(
+    "body", ["abc" + "%C3" * 80, "abc" + "&" * 100, "abc" + "%C3%A9" * 30 + "%C3"]
+)
+def test_strip_fragment_repeats_over_a_run_longer_than_its_window(body):
+    from hadavin_sdk import tools
+
+    out = tools._strip_fragment(body + tools.TRUNCATED, ["Zq9Lm4pTvX2"])
+    assert out == "abc" + tools.TRUNCATED
