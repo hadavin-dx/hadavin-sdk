@@ -1266,3 +1266,6 @@
 | BL-core-LK-r1-adv-ADV-LK-2 | LK | MAJOR | see report | OPEN | reviews/lookalike-round1-adversarial.md | 6772704 |
 | BL-core-LK-r1-adv-ADV-LK-3 | LK | MAJOR | see report | OPEN | reviews/lookalike-round1-adversarial.md | 6772704 |
 | BL-core-LK-r1-adv-ADV-LK-4 | LK | MAJOR | see report | OPEN | reviews/lookalike-round1-adversarial.md | 6772704 |
+| BL-core-LK-r1-cor-COR-LK-1 | LK | MAJOR | see report | OPEN | reviews/lookalike-round1-correctness.md | 6772704 |
+| BL-core-LK-r1-cor-COR-LK-2 | LK | MAJOR | see report | OPEN | reviews/lookalike-round1-correctness.md | 6772704 |
+| BL-core-LK-r1-cor-COR-LK-3 | LK | MAJOR | see report | OPEN | reviews/lookalike-round1-correctness.md | 6772704 |
