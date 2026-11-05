@@ -17,3 +17,14 @@ regexes = [
     '''^(?:-----BEGIN [A-Z ]*PRIVATE KEY-----",\s*"){0,2}-----BEGIN [A-Z ]*PRIVATE KEY-----$''',
     '''^abcdefgh12345678$''',
 ]
+
+# TEMPORARY (same lifetime as the .gitleaksignore entries: delete when branch core/cloud-handover is deleted; owner approved 2026-11-05).
+# The cloud session's review and ticket notes (markdown prose on that branch) quote file names, identifiers and test values;
+# the entropy heuristic generic-api-key flags prose lines there on every pull request. Only that one heuristic rule is
+# allowed, only for markdown under handover/{reviews,tickets,evidence}/ . All specific rules (cloud keys, private keys,
+# tokens) and every other path stay fully scanned.
+[[allowlists]]
+description = "temporary: entropy heuristic only, markdown notes of the handover branch"
+condition = "AND"
+targetRules = ["generic-api-key"]
+paths = ['''^handover/(reviews|tickets|evidence)/[^/]+\.md$''']
