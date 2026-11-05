@@ -63,8 +63,8 @@ _ANSI_COMMON = [
     r"(?:\x1b\]|\x9d)[^\x07\x1b\x9c]*(?:\x07|\x1b\\|\x9c|\Z)",
     r"(?:\x1bP|\x1bX|\x1b\^|\x1b_|\x90|\x98|\x9e|\x9f)[^\x1b\x9c]*(?:\x1b\\|\x9c|\Z)",
 ]
-_ANSI_FULL = re.compile("|".join([*_ANSI_COMMON, r"(?:\x1b\[|\x9b)[0-?]*[ -/]*[@-~]", r"\x1b"]))
-_ANSI_NOFINAL = re.compile("|".join([*_ANSI_COMMON, r"(?:\x1b\[|\x9b)[0-?]*[ -/]*", r"\x1b"]))
+_ANSI_FULL = re.compile("|".join([*_ANSI_COMMON, r"(?:\x1b\[|\x9b)[0-?]*[ -/]*[@-~]"]))
+_ANSI_NOFINAL = re.compile("|".join([*_ANSI_COMMON, r"(?:\x1b\[|\x9b)[0-?]*[ -/]*"]))
 _DOTS = "." + chr(0x3002) + chr(0xFF61)
 _LOCAL = r"(?:\"[^\"\n]{1,64}\"|[\w.+'&-]+)"
 # A domain: dotted names need a letter in the last label (numpy@1.26.4 is a version, not a mailbox); a single

@@ -58,6 +58,10 @@ def test_escape_sequences_never_hide_or_eat_part_of_a_secret(name):
         assert bit not in out, (bit, out)
 
 
+def test_a_word_glued_to_an_escape_and_a_key_still_masks_the_key():
+    assert AKIA not in shown("see" + ESC + AKIA) and "KIAIOSF" not in shown("see" + ESC + AKIA)
+
+
 def test_a_lone_escape_character_is_not_left_in_the_output():
     assert ESC not in shown("a" + ESC + "b") and C1_CSI not in shown("a" + C1_CSI + "b")
 
