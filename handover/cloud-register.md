@@ -190,7 +190,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | rev9-P2a | author P2a ticket next revision (round resolve applied) | sonnet (claude-sonnet-5-5) | now | +60min | REPORTED | verify, commit, push, launch next round |
 | rev6-P4a | author P4a ticket next revision (round resolve applied) | sonnet (claude-sonnet-5-5) | now | +60min | REPORTED | verify, commit, push, launch next round |
 | rev5-P2d | author P2d ticket next revision (round resolve applied) | sonnet (claude-sonnet-5-5) | now | +60min | REPORTED | verify, commit, push, launch next round |
-| rev9-P3a | author P3a ticket next revision (round resolve applied) | sonnet (claude-sonnet-5-5) | now | +60min | running | verify, commit, push, launch next round |
+| rev9-P3a | author P3a ticket next revision (round resolve applied) | sonnet (claude-sonnet-5-5) | now | +60min | REPORTED | verify, commit, push, launch next round |
 | rev9-P4d | author P4d ticket next revision (round resolve applied) | sonnet (claude-sonnet-5-5) | now | +60min | REPORTED | verify, commit, push, launch next round |
 | r6-P4a-adv | round 6 review of tickets/P4a.md rev 6 (egm:egm-design) | sonnet (claude-sonnet-5-5) | now | +50min | now | REPORTED | collect, save, resolve |
 | r6-P4a-cor | round 6 review of tickets/P4a.md rev 6 (egm:egm-codebase-details) | sonnet (claude-sonnet-5-5) | now | +50min | now | REPORTED | collect, save, resolve |
@@ -200,3 +200,5 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | r7-P1-cor | round 7 correctness review of tickets/P1.md rev 8 | sonnet (claude-sonnet-5-5) | now | +45min | running | save report, ledger rows |
 | r1-LK-adv | round 1 adversarial review of designs/lookalike-leak.md | sonnet (claude-sonnet-5-5) | now | +45min | running | save report, ledger rows |
 | r1-LK-cor | round 1 correctness review of designs/lookalike-leak.md | sonnet (claude-sonnet-5-5) | now | +45min | running | save report, ledger rows |
+| r8-P3a-adv | round 8 review of tickets/P3a.md rev 9 | sonnet (claude-sonnet-5-5) | now | +45min | running | save report, ledger rows |
+| r8-P3a-cor | round 8 review of tickets/P3a.md rev 9 | sonnet (claude-sonnet-5-5) | now | +45min | running | save report, ledger rows |
