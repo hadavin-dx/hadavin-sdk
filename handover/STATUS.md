@@ -30,3 +30,10 @@ Round 3 reviewer STILL RUNNING for P4d: correctness a57b3c2ac560f8313 (adversari
 
 ## Order 6 author agents RUNNING (spawned ~17:10Z, Sonnet 5.5, general-purpose, brief = scratchpad/author-brief.md; each writes ONLY handover/tickets/<ID>.md; do NOT commit a ticket while its author is mid-edit)
 P2d a632fabf44df2ced1 | P4a ac3f9b388f9a3f295 | P5a a102c0f3b71e0a1c8 | P0a ab90864643851268f (Tier B, text only) | P0c a5d85e36518e109da (Tier B, text only) | P4b1 ac14e8fc0c82b9b10 | P4b2 aa1f5274703272e7f | P4c a5a9ad628b0e8ba15 | P5b1 a70ae24e87b0aafb8 | P5b2 a350538ff078ca00f (Tier B) | P6b1 abed62ba06e2ab49d. When one reports: verify its claims against the code, commit+push its ticket (one commit, package id first), register 2 fresh egm reviewers (1 for Tier B) with the round-3 brief pattern (role, mandatory reading A1-A14 + LEAD-ORDERS, snapshots, report format), SAVE each review at once (output files do not hold the final text). Wave 3 (P5b3, P5b4, P5b5, P6b2), Wave 4 (P5c: egm-draft on Opus first; then P6a), Wave 5 (P8a, P8b, P8c) NOT started.
+
+## Update (cloud session, after owner GO via the laptop lead)
+- Pushed tickets: P4d rev 5, P3a rev 5, P0a, P0c, P4c, P5b2, P6b1, P4b1 (rev 1). Resolve reports: P4d, P3a, P2a, P1 (round 3).
+- Running: authors rev 5 of P2a and P1; round 4 reviewers of P4d and P3a; round 1 reviewers of P6b1, P4c, P4b1 (two each) and one each for P0a, P0c, P5b2 (Tier B). Wave 1/2 authors still out: P2d, P4a, P5a, P4b2, P5b1 (a P5b1 file exists but its author has not reported).
+- Open points for the lead: P4b1 needs P4d to let settle_spend accept actual > reserved (P4b1 item 1); P4b1-c waits for the lead's answer on where the Replay Check lives; P0a: copyright owner of promoted Warden code (owner-only); the `security` check is red on main (17 test-password fingerprints, see P0a).
+- Context note: autocompact window set by the owner to 300k; I did not change any setting.
+- READY FOR COMPACT: yes (all state is in this folder: cloud-register.md, ledger.md, reviews/).
