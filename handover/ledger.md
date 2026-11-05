@@ -918,3 +918,13 @@
 | BL-core-p2a-r5-cor-R5-C19 | P2A | MINOR | see report | OPEN | reviews/P2a-round5-correctness.md | 60fedf6 |
 | BL-core-p2a-r5-cor-R5-C20 | P2A | MINOR | see report | OPEN | reviews/P2a-round5-correctness.md | 60fedf6 |
 | BL-core-p2a-r5-cor-R5-C21 | P2A | MINOR | see report | OPEN | reviews/P2a-round5-correctness.md | 60fedf6 |
+| BL-core-p2d-r2-adv-R2-1 | P2D | MAJOR | see report | OPEN | reviews/P2d-round2-adversarial.md | d6be4de |
+| BL-core-p2d-r2-adv-R2-2 | P2D | MINOR | see report | OPEN | reviews/P2d-round2-adversarial.md | d6be4de |
+| BL-core-p2d-r2-adv-R2-3 | P2D | MINOR | see report | OPEN | reviews/P2d-round2-adversarial.md | d6be4de |
+| BL-core-p2d-r2-adv-R2-4 | P2D | MINOR | see report | OPEN | reviews/P2d-round2-adversarial.md | d6be4de |
+| BL-core-p2d-r2-adv-R2-5 | P2D | MINOR | see report | OPEN | reviews/P2d-round2-adversarial.md | d6be4de |
+| BL-core-p2d-r2-adv-R2-6 | P2D | MINOR | see report | OPEN | reviews/P2d-round2-adversarial.md | d6be4de |
+| BL-core-p2d-r2-adv-R2-7 | P2D | MINOR | see report | OPEN | reviews/P2d-round2-adversarial.md | d6be4de |
+| BL-core-p2d-r2-adv-R2-8 | P2D | MINOR | see report | OPEN | reviews/P2d-round2-adversarial.md | d6be4de |
+| BL-core-p2d-r2-adv-R2-9 | P2D | MINOR | see report | OPEN | reviews/P2d-round2-adversarial.md | d6be4de |
+| BL-core-p2d-r2-adv-R2-10 | P2D | NIT | see report | OPEN | reviews/P2d-round2-adversarial.md | d6be4de |
