@@ -801,3 +801,13 @@
 | BL-core-p1-r4-adv-R4-N1 | P1 | NIT | see report | OPEN | reviews/P1-round4-adversarial.md | b13ff07 |
 | BL-core-p1-r4-adv-R4-N2 | P1 | NIT | see report | OPEN | reviews/P1-round4-adversarial.md | b13ff07 |
 | BL-core-p1-r4-adv-R4-N3 | P1 | NIT | see report | OPEN | reviews/P1-round4-adversarial.md | b13ff07 |
+| BL-core-p4d-r5-adv-F1 | P4D | MAJOR | b15 unkillable by B4(vii): FK KEY SHARE | OPEN | reviews/P4d-round5-adversarial.md | 7e63580 |
+| BL-core-p4d-r5-adv-F2 | P4D | MINOR | see report | OPEN | reviews/P4d-round5-adversarial.md | 7e63580 |
+| BL-core-p4d-r5-adv-F3 | P4D | MINOR | see report | OPEN | reviews/P4d-round5-adversarial.md | 7e63580 |
+| BL-core-p4d-r5-adv-F4 | P4D | MINOR | see report | OPEN | reviews/P4d-round5-adversarial.md | 7e63580 |
+| BL-core-p4d-r5-adv-F5 | P4D | MINOR | see report | OPEN | reviews/P4d-round5-adversarial.md | 7e63580 |
+| BL-core-p4d-r5-adv-F6 | P4D | MINOR | see report | OPEN | reviews/P4d-round5-adversarial.md | 7e63580 |
+| BL-core-p4d-r5-adv-F7 | P4D | MINOR | see report | OPEN | reviews/P4d-round5-adversarial.md | 7e63580 |
+| BL-core-p4d-r5-adv-F8 | P4D | MINOR | see report | OPEN | reviews/P4d-round5-adversarial.md | 7e63580 |
+| BL-core-p4d-r5-adv-F9 | P4D | MINOR | see report | OPEN | reviews/P4d-round5-adversarial.md | 7e63580 |
+| BL-core-p4d-r5-adv-F10 | P4D | MINOR | see report | OPEN | reviews/P4d-round5-adversarial.md | 7e63580 |
