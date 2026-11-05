@@ -1280,3 +1280,11 @@
 | BL-core-P3a-r8-adv-ADV-R8-3 | P3a | MAJOR | see report | OPEN | reviews/P3a-round8-adversarial.md | ee96dbc |
 | BL-core-P3a-r8-adv-ADV-R8-4 | P3a | MAJOR | see report | OPEN | reviews/P3a-round8-adversarial.md | ee96dbc |
 | BL-core-P1-r7-cor-COR-R7-1 | P1 | MAJOR | see report | OPEN | reviews/P1-round7-correctness.md | 8d56284 |
+| BL-core-LK-r2-adv-ADV-LK2-1 | LK | MAJOR | see report; decided in reviews/lookalike-round2-resolve.md, applied in draft 3 | OPEN | reviews/lookalike-round2-adversarial.md | e2f811e |
+| BL-core-LK-r2-adv-ADV-LK2-2 | LK | MAJOR | see report; decided in reviews/lookalike-round2-resolve.md, applied in draft 3 | OPEN | reviews/lookalike-round2-adversarial.md | e2f811e |
+| BL-core-LK-r2-adv-ADV-LK2-3 | LK | MAJOR | see report; decided in reviews/lookalike-round2-resolve.md, applied in draft 3 | OPEN | reviews/lookalike-round2-adversarial.md | e2f811e |
+| BL-core-LK-r2-adv-ADV-LK2-4 | LK | MAJOR | see report; decided in reviews/lookalike-round2-resolve.md, applied in draft 3 | OPEN | reviews/lookalike-round2-adversarial.md | e2f811e |
+| BL-core-LK-r2-cor-COR-LK2-1 | LK | MAJOR | see report; decided in reviews/lookalike-round2-resolve.md, applied in draft 3 | OPEN | reviews/lookalike-round2-correctness.md | e2f811e |
+| BL-core-LK-r2-cor-COR-LK2-2 | LK | MAJOR | see report; decided in reviews/lookalike-round2-resolve.md, applied in draft 3 | OPEN | reviews/lookalike-round2-correctness.md | e2f811e |
+| BL-core-LK-r2-cor-COR-LK2-3 | LK | MAJOR | see report; decided in reviews/lookalike-round2-resolve.md, applied in draft 3 | OPEN | reviews/lookalike-round2-correctness.md | e2f811e |
+| BL-core-LK-r2-res-RES-LK2-A | LK/P5c | MAJOR | PHONE does not mask a 10-16 digit number before a sentence-final full stop (probe); row ACC-1c to P5c | OPEN | reviews/lookalike-round2-resolve.md | e2f811e |
