@@ -3,7 +3,7 @@ Times UTC. Model column = the model set explicitly on the Agent call (MODEL-ROUT
 
 | agent | purpose | model | started | expected end | last checked | state | next action |
 |---|---|---|---|---|---|---|---|
-| drafter-P1 | draft handover/tickets/P1.md (text folding) from TICKET-TEMPLATE; read-only on code, no build | sonnet (claude-sonnet-5-5) | 2026-11-05 14:27Z | 15:12Z | - | running | read report, verify claims, then egm-review-loop |
-| drafter-P3a | draft handover/tickets/P3a.md (migration rule) | sonnet (claude-sonnet-5-5) | 2026-11-05 14:27Z | 15:12Z | - | running | same |
+| drafter-P1 | draft P1 ticket | sonnet (claude-sonnet-5-5) | 2026-11-05 14:27Z | 15:12Z | 2026-11-05 14:36Z | reported; RESUMED for revision (amendments A2, A8, A9) | expected end 15:06Z; then verify + egm-review-loop |
+| drafter-P3a | draft P3a ticket | sonnet (claude-sonnet-5-5) | 2026-11-05 14:27Z | 15:12Z | 2026-11-05 14:36Z | reported; RESUMED for revision (A3, A8, A9, F6, F10) | expected end 15:06Z; then verify + egm-review-loop |
 | drafter-P2a | draft handover/tickets/P2a.md (stop state, 3 PRs) | sonnet (claude-sonnet-5-5) | 2026-11-05 14:27Z | 15:12Z | - | running | same |
-| drafter-P4d | draft handover/tickets/P4d.md (store contract suite) | sonnet (claude-sonnet-5-5) | 2026-11-05 14:27Z | 15:12Z | 2026-11-05 ~14:40Z | reported, closed | verify done (5/6 spot-checks ok, 6th below); next: egm-review-loop |
+| drafter-P4d | draft P4d ticket | sonnet (claude-sonnet-5-5) | 2026-11-05 14:27Z | 15:12Z | 2026-11-05 14:36Z | reported; RESUMED for revision (F7, F2, D1, A8) | expected end 15:06Z; then verify + egm-review-loop |
