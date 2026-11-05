@@ -6,4 +6,4 @@ Times UTC. Model column = the model set explicitly on the Agent call (MODEL-ROUT
 | drafter-P1 | draft handover/tickets/P1.md (text folding) from TICKET-TEMPLATE; read-only on code, no build | sonnet (claude-sonnet-5-5) | 2026-11-05 14:27Z | 15:12Z | - | running | read report, verify claims, then egm-review-loop |
 | drafter-P3a | draft handover/tickets/P3a.md (migration rule) | sonnet (claude-sonnet-5-5) | 2026-11-05 14:27Z | 15:12Z | - | running | same |
 | drafter-P2a | draft handover/tickets/P2a.md (stop state, 3 PRs) | sonnet (claude-sonnet-5-5) | 2026-11-05 14:27Z | 15:12Z | - | running | same |
-| drafter-P4d | draft handover/tickets/P4d.md (store contract suite) | sonnet (claude-sonnet-5-5) | 2026-11-05 14:27Z | 15:12Z | - | running | same |
+| drafter-P4d | draft handover/tickets/P4d.md (store contract suite) | sonnet (claude-sonnet-5-5) | 2026-11-05 14:27Z | 15:12Z | 2026-11-05 ~14:40Z | reported, closed | verify done (5/6 spot-checks ok, 6th below); next: egm-review-loop |
