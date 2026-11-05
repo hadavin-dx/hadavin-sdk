@@ -225,7 +225,7 @@ def _strings(value, path="", skip_pattern=True):
         yield path, str(value)
 
 
-_BOM = "﻿"
+_BOM = "\ufeff"
 
 
 def _trusted_text_problems(config, agents, contracts) -> list[str]:

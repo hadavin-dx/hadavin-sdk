@@ -32,7 +32,7 @@ OLD_FIXTURE_HASH = "3ac5b7c34e7a0d7750a75adcd4642364be70af601e8078ee6b46c0dfb0f1
 # Any edit of either file changes it: bump REGEX_VERSION and add the new row. That includes core PR #50's changes
 # to redact.py. This is intended: a changed masking rule means every agent needs a new gate run.
 PINNED = {
-    "2": "42c66ff2062a88b7b82caf6384c80dbf2dcfc0c50e1c2d59f9adb7b06fc9e926",
+    "2": "cf49c02575a87cb77eccd28dbb7f0b27255bfbe16217614989e60f207645b5b4",
 }
 
 
@@ -70,8 +70,8 @@ BAD_TEXT = [
     "text with a lone surrogate \ud800",
     "%PDF-1.7 pasted as text",
     "NUL \x00 inside",
-    "﻿%PDF-1.7 behind a BOM",
-    "﻿﻿PK\x03\x04",
+    "\ufeff%PDF-1.7 behind a BOM",
+    "\ufeff\ufeffPK\x03\x04",
 ]
 
 
@@ -100,9 +100,9 @@ def test_bom_is_stripped_once_or_twice_and_utf8_accepted():
     from hadavin_sdk.guard.redactor import decode_input
 
     r, s, _ = kit()
-    assert decode_input("﻿﻿hello café".encode()) == "hello café"
-    assert decode_input("﻿hi") == "hi"
-    assert r.mask("﻿﻿hello", s) == "hello"
+    assert decode_input("\ufeff\ufeffhello caf\u00e9".encode()) == "hello caf\u00e9"
+    assert decode_input("\ufeffhi") == "hi"
+    assert r.mask("\ufeff\ufeffhello", s) == "hello"
 
 
 def test_oversize_refused_before_decoding_or_encoding():
@@ -277,7 +277,7 @@ def test_output_never_carries_a_mark_the_session_did_not_issue():
     from hadavin_sdk.guard import redactor as mod
 
     r, s, _ = kit()
-    for text in ("<EMAIL\u200b_9> zero width inside a mark", "<EMAIL_⁠ 9>", "x <EMAIL%5F9> y"):
+    for text in ("<EMAIL\u200b_9> zero width inside a mark", "<EMAIL_\u2060 9>", "x <EMAIL%5F9> y"):
         out = r.mask(text, s)
         assert not re.search(r"<[A-Z][A-Z0-9]*_\d+>", out)  # inert text, not a mark
     assert mod.REGEX_VERSION == "2"

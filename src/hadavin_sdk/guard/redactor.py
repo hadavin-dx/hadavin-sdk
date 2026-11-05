@@ -60,7 +60,7 @@ _MARK = _redact._PLACEHOLDER  # <KIND_n>, the one shape of a mark
 # File signatures that are not text: PDF, PNG, JPEG, GIF, zip (and so docx/xlsx).
 _SIGNATURES = (b"%PDF-", b"\x89PNG", b"\xff\xd8\xff", b"GIF87a", b"GIF89a", b"PK\x03\x04")
 _SIGNATURE_TEXT = tuple(s.decode("latin-1") for s in _SIGNATURES)
-_BOM = "﻿"
+_BOM = "\ufeff"
 _BOM8 = _BOM.encode()
 
 CODES = ("unsupported_input", "too_large", "forged_mark", "self_check_failed", "internal")
