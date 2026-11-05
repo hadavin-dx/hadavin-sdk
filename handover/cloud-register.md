@@ -92,7 +92,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | author-P6b1 | draft tickets/P6b1.md (Wave 2, Tier A); brief = scratchpad author-brief.md | sonnet (claude-sonnet-5-5) | 16:53Z | 17:28Z | REPORTED, saved | verify, commit/push, 2 fresh egm reviewers (1 for Tier B) |
 | rev5-P4d (resumed author a8190d79eb2c7579c) | apply 40 round 3 findings (resolve report reviews/P4d-round3-resolve.md) to tickets/P4d.md | sonnet (claude-sonnet-5-5) | 17:20Z | 18:00Z | REPORTED, saved | on report: verify, push, round 4 fresh reviewers |
 | rev5-P3a (resumed author a7dc068fb47091bf0) | apply round 3 resolve (reviews/P3a-round3-resolve.md): REMOVE --accept-late per order 6(f) | sonnet (claude-sonnet-5-5) | 17:28Z | 18:00Z | REPORTED, saved | on report: verify, push, round 4 |
-| rev5-P2a (resumed author a64cfd8eaa8b64a3a) | apply round 3 resolve (reviews/P2a-round3-resolve.md); merge 1a+1b | sonnet (claude-sonnet-5-5) | 17:07Z | +40min | REPORTED, saved | on report: verify, push, round 4 |
+| rev5-P2a (resumed author a64cfd8eaa8b64a3a) | apply round 3 resolve (reviews/P2a-round3-resolve.md); merge 1a+1b | sonnet (claude-sonnet-5-5) | 17:07Z | +40min | CLOSED, reported 18:25Z, rev 5 committed | on report: verify, push, round 4 |
 | r4-P4d-adv | round 4 adversarial review of tickets/P4d.md rev 5 (d12bfa7), egm:egm-design | sonnet (claude-sonnet-5-5) | 17:07Z | +30min | REPORTED, saved | save report, ledger rows |
 | r4-P4d-cor | round 4 correctness review of P4d rev 5, egm:egm-codebase-details | sonnet (claude-sonnet-5-5) | 17:07Z | +30min | REPORTED, saved | save report, ledger rows |
 | r4-P3a-adv | round 4 adversarial review of tickets/P3a.md rev 5 (60e16a5), egm:egm-design | sonnet (claude-sonnet-5-5) | 17:07Z | +25min | REPORTED, saved reviews/P3a-round4-adversarial.md | save report, ledger rows |
@@ -117,9 +117,11 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | probe-design | model probe: egm:egm-design | sonnet | now | +2min | REPORTED, see evidence/model-probe.md | same |
 | probe-cod | model probe: egm:egm-codebase-details | sonnet | now | +2min | REPORTED, see evidence/model-probe.md | same |
 | probe-haiku | model probe: general-purpose, model haiku | haiku | now | +2min | REPORTED, see evidence/model-probe.md | same |
-| r1-P2d-adv | round 1 adversarial review of tickets/P2d.md rev 1, egm:egm-design | sonnet (claude-sonnet-5-5) | 18:00Z | +30min | running | save report, ledger rows |
+| r1-P2d-adv | round 1 adversarial review of tickets/P2d.md rev 1, egm:egm-design | sonnet (claude-sonnet-5-5) | 18:00Z | +30min | REPORTED, saved | save report, ledger rows |
 | r1-P2d-cor | round 1 correctness review of tickets/P2d.md rev 1, egm:egm-codebase-details | sonnet (claude-sonnet-5-5) | 18:00Z | +30min | running | save report, ledger rows |
-| r1-P4a-adv | round 1 adversarial review of tickets/P4a.md rev 1 (bd061b3), egm:egm-design | sonnet (claude-sonnet-5-5) | 18:00Z | +35min | running | save report, ledger rows |
+| r1-P4a-adv | round 1 adversarial review of tickets/P4a.md rev 1 (bd061b3), egm:egm-design | sonnet (claude-sonnet-5-5) | 18:00Z | +35min | REPORTED, saved | save report, ledger rows |
 | r1-P4a-cor | round 1 correctness review of tickets/P4a.md rev 1, egm:egm-codebase-details | sonnet (claude-sonnet-5-5) | 18:00Z | +35min | running | save report, ledger rows |
 | r1-P5b1-cor | round 1 correctness review of P5b1 (30fd0e8), egm:egm-codebase-details | sonnet (claude-sonnet-5-5) | 18:00Z | +35min | running (restart of the NOT STARTED row) | save report, ledger rows |
 | rev6-P4d (resumed author a8190d79eb2c7579c) | apply round 4 resolve (reviews/P4d-round4-resolve.md) to tickets/P4d.md | sonnet (claude-sonnet-5-5) | 18:10Z | +40min | running | on report: verify, push, 2 fresh reviewers (round 5) |
+| r4-P2a-adv | round 4 adversarial review of tickets/P2a.md rev 5, egm:egm-design | sonnet (claude-sonnet-5-5) | 18:30Z | +35min | running | save report, ledger rows |
+| r4-P2a-cor | round 4 correctness review of tickets/P2a.md rev 5, egm:egm-codebase-details | sonnet (claude-sonnet-5-5) | 18:30Z | +35min | running | save report, ledger rows |

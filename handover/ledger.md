@@ -676,3 +676,35 @@
 | BL-core-p5a-r1-cor-C9 | P5A | MINOR | T8 `socket.gaierror` on `.invalid` giving `gai=-2` is not marked UNVERIFIED; no resolver can give EAI_AGAIN (-3). Assert `code=os_error` + in-range ga | OPEN | reviews/P5a-round1-correctness.md | def2d2a |
 | BL-core-p5a-r1-cor-C10 | P5A | MINOR | Tick writers cited `tick.py:292`/`:324`; 292 is the `_message` producer, the writes are 316 (error string), 317 (log), 324 (`last_error`). | OPEN | reviews/P5a-round1-correctness.md | def2d2a |
 | BL-core-p5a-r1-cor-C11 | P5A | NIT | A4/F6 lists `errors.py` hot for P5a, ticket deviates (cite F6); `ConfigError` OR rule only adds `VaultError`/`UnknownRecording` (`llm/fake.py:47` prin | OPEN | reviews/P5a-round1-correctness.md | def2d2a |
+| BL-core-p4a-r1-adv-F1 | P4A | BLOCKER | P4a-1 creates the UsageMissing zero-booking window (fail-open); must merge after P4b1-a or stay estimate-capable | OPEN | reviews/P4a-round1-adversarial.md | bd061b3 |
+| BL-core-p4a-r1-adv-F2 | P4A | MAJOR | implausible_zero rule: cache-read-only prompt; move into cost_usd; P4b2 mapping keeps reservation | OPEN | reviews/P4a-round1-adversarial.md | bd061b3 |
+| BL-core-p4a-r1-adv-F3 | P4A | MAJOR | SDK getattr fix incomplete (output_tokens missing); reachable hostile forms per kind not shown | OPEN | reviews/P4a-round1-adversarial.md | bd061b3 |
+| BL-core-p4a-r1-adv-F4 | P4A | MAJOR | Gemini totalTokenCount cross-check unverified; cut to v1.1 | OPEN | reviews/P4a-round1-adversarial.md | bd061b3 |
+| BL-core-p4a-r1-adv-F5 | P4A | MAJOR | openai_compat two requests per chat(): reservation sized for one; worst_case needs request multiple | OPEN | reviews/P4a-round1-adversarial.md | bd061b3 |
+| BL-core-p4a-r1-adv-F6 | P4A | MAJOR | worst_case_usd uses a guessed token estimate, not a bound; rename or byte-derived bound; C7 tautology | OPEN | reviews/P4a-round1-adversarial.md | bd061b3 |
+| BL-core-p4a-r1-adv-F7 | P4A | MAJOR | price_checks: duplicated human record, startup outage after 30 days; cut | OPEN | reviews/P4a-round1-adversarial.md | bd061b3 |
+| BL-core-p4a-r1-adv-F8 | P4A | MAJOR | P4a-3 (tier, geo multiplier, PriceTable refactor) has no found defect; cut per order 7 | OPEN | reviews/P4a-round1-adversarial.md | bd061b3 |
+| BL-core-p4a-r1-adv-F9 | P4A | MAJOR | Tier basis after the call: direction of error unstated; cache-excluded reading | OPEN | reviews/P4a-round1-adversarial.md | bd061b3 |
+| BL-core-p4a-r1-adv-F10 | P4A | MAJOR | Under-count paths asserted safe: Bedrock cache write, unknown nested cache_creation key | OPEN | reviews/P4a-round1-adversarial.md | bd061b3 |
+| BL-core-p4a-r1-adv-F11 | P4A | MAJOR | Mutants a1-3, a1-14, a2-18 unkillable/equivalent; U10 re-point | OPEN | reviews/P4a-round1-adversarial.md | bd061b3 |
+| BL-core-p4a-r1-adv-F12 | P4A | MAJOR | U6 lower-bound assertion; demo pipeline.py hand-edit | OPEN | reviews/P4a-round1-adversarial.md | bd061b3 |
+| BL-core-p4a-r1-adv-F13 | P4A | MAJOR | Reply/Usage validators vs recordings in evals/k1b/demos: greps not stated | OPEN | reviews/P4a-round1-adversarial.md | bd061b3 |
+| BL-core-p4a-r1-adv-F14 | P4A | MINOR | probe 1 output not saved under evidence/ | OPEN | reviews/P4a-round1-adversarial.md | bd061b3 |
+| BL-core-p4a-r1-adv-F15 | P4A | MINOR | fail-before ImportError claim is intent, not evidence | OPEN | reviews/P4a-round1-adversarial.md | bd061b3 |
+| BL-core-p4a-r1-adv-F16 | P4A | MINOR | decimal.Inexact is not a ProviderError | OPEN | reviews/P4a-round1-adversarial.md | bd061b3 |
+| BL-core-p4a-r1-adv-F17 | P4A | MINOR | unknown service_tier value read as standard (fail-open) | OPEN | reviews/P4a-round1-adversarial.md | bd061b3 |
+| BL-core-p4a-r1-adv-F20 | P4A | NIT | one word two meanings: worst case | OPEN | reviews/P4a-round1-adversarial.md | bd061b3 |
+| BL-core-p2d-r1-adv-F1 | P2D | MAJOR | fail-before tree lacks P1a defaults.py hunk: collection errors | OPEN | reviews/P2d-round1-adversarial.md | c34fe24 |
+| BL-core-p2d-r1-adv-F2 | P2D | MAJOR | N2 literals mutant unkillable; import-time binding | OPEN | reviews/P2d-round1-adversarial.md | c34fe24 |
+| BL-core-p2d-r1-adv-F3 | P2D | MAJOR | surface with no defect: constants move, WARDEN strip, THREAD-1, SEAM-1/2/4, ERR-1 | OPEN | reviews/P2d-round1-adversarial.md | c34fe24 |
+| BL-core-p2d-r1-adv-F4 | P2D | MAJOR | tag/unassigned hidden keys stay in clear; xfail + proposed P2d-2 has no owner/date | OPEN | reviews/P2d-round1-adversarial.md | c34fe24 |
+| BL-core-p2d-r1-adv-F5 | P2D | MAJOR | restore pins wrong spelling jose@exemple.fr; store original slice or guard | OPEN | reviews/P2d-round1-adversarial.md | c34fe24 |
+| BL-core-p2d-r1-adv-F6 | P2D | MAJOR | P1b dependency override unproven; xfail keyed on a P1b name | OPEN | reviews/P2d-round1-adversarial.md | c34fe24 |
+| BL-core-p2d-r1-adv-F7 | P2D | MAJOR | fail-before 'assertion' claim unsupported for R/H/U rows; module-level imports | OPEN | reviews/P2d-round1-adversarial.md | c34fe24 |
+| BL-core-p2d-r1-adv-F8 | P2D | MAJOR | scan 4-17x slower; 1.5x already refuses; availability regression | OPEN | reviews/P2d-round1-adversarial.md | c34fe24 |
+| BL-core-p2d-r1-adv-F9 | P2D | MINOR | N8 self-contradictory; N3 duplicate | OPEN | reviews/P2d-round1-adversarial.md | c34fe24 |
+| BL-core-p2d-r1-adv-F10 | P2D | MINOR | ALIGN-1 in unit suite; HOSTILE-1 no time assertion | OPEN | reviews/P2d-round1-adversarial.md | c34fe24 |
+| BL-core-p2d-r1-adv-F11 | P2D | MINOR | redact() direct call gets N x budget | OPEN | reviews/P2d-round1-adversarial.md | c34fe24 |
+| BL-core-p2d-r1-adv-F12 | P2D | MINOR | evidence step 0 must be a blocking gate | OPEN | reviews/P2d-round1-adversarial.md | c34fe24 |
+| BL-core-p2d-r1-adv-F13 | P2D | MINOR | P5c coupling unchecked | OPEN | reviews/P2d-round1-adversarial.md | c34fe24 |
+| BL-core-p2d-r1-adv-F14 | P2D | NIT | ERR-1 asserts CPython semantics | OPEN | reviews/P2d-round1-adversarial.md | c34fe24 |
