@@ -1,0 +1,248 @@
+# P0a ticket: backups, push model of plan rule 9, third-party check (Tier B, TEXT ONLY, revision 1)
+
+Author: cloud session (Sonnet 5.5). Drafted 2026-11-05 (UTC; IST = UTC+5:30). The LEAD executes every step below. The cloud session touches no repository setting, ruleset, secret, workflow or tag, and opens no pull request (LEAD-ORDERS order 6c). The lead runs the review of this text; the author does not review it.
+
+Reading note: "ruleset" means GitHub's repository rule set that guards the branch `main` (what plan-v3 calls "branch protection"). "The cloud token" means the credential the cloud session pushes with. "Fake secret" means a made-up value built at run time and never written into any note.
+
+## 0. What the cloud session read live on 2026-11-05 (read-only GitHub API calls; every figure below is from a command output, rerun it)
+
+| # | Fact | Command (read-only) | Result |
+|---|---|---|---|
+| F1 | The plan's check command does not work on this repo | `gh api repos/hadavin-dx/hadavin-sdk/branches/main/protection` | HTTP 404 "Branch not protected". Main is guarded by a RULESET, not classic branch protection. Plan-v3 section 9 row "Repository protections and scan" names the wrong command: use F2 and F3 (needs an amendment, see PENDING LEAD 1). |
+| F2 | The ruleset today | `gh api repos/hadavin-dx/hadavin-sdk/rulesets` then `.../rulesets/26047302` | One ruleset "main", enforcement active, target `~DEFAULT_BRANCH`, `bypass_actors: []`. Rules: `deletion`, `non_fast_forward`, `pull_request` (0 approvals required, merge method squash only, no thread-resolution requirement), `required_status_checks` = `check` and `security` (integration 15368 = GitHub Actions). `current_user_can_bypass` for the cloud session: "never". |
+| F3 | Rules that apply to main | `gh api repos/hadavin-dx/hadavin-sdk/rules/branches/main --jq '[.[].type]'` | `["deletion","non_fast_forward","pull_request","required_status_checks"]` |
+| F4 | Only one ruleset exists: nothing guards TAGS | same list call as F2 | Plan rule 9(b) ("tags `pre-*` and release tags are created only by the lead") is NOT enforced by GitHub today. |
+| F5 | CodeQL and SonarCloud are not required checks | check runs of main `a5bf80b`: `gh api repos/hadavin-dx/hadavin-sdk/commits/a5bf80b8142f8fca783488b096ff3b4a65a1ffa3/check-runs --jq '.check_runs[]\|[.name,.app.id,.app.slug]\|@tsv'` | They exist as `Analyze (python)` and `Analyze (actions)` (app 15368) and `SonarCloud Code Analysis` (app 12526) but the ruleset requires only `check` and `security`. The comment at the top of `.github/workflows/ci.yml` says CodeQL and SonarCloud "also gate merges"; the ruleset does not say so. |
+| F6 | Merge rights are not limited to the lead | F2 (0 approvals, no bypass list) plus `gh api repos/hadavin-dx/hadavin-sdk --jq '{allow_auto_merge,delete_branch_on_merge,allow_squash_merge}'` | `allow_auto_merge: true`. Any identity with write access can merge a pull request whose two required checks are green. The cloud session has tools named `merge_pull_request` and `enable_pr_auto_merge`; only the instruction text stops it today. Plan rule 9(a) "only the lead merges" is a promise, not a control. A fine-grained token cannot separate "push a branch" from "merge a pull request" (both need contents write), so the control must be in the ruleset or in the repository setting. |
+| F7 | The existing secret scan is RED on main | `gh api repos/hadavin-dx/hadavin-sdk/commits/a5bf80b8142f8fca783488b096ff3b4a65a1ffa3/check-runs --jq '.check_runs[]\|select(.name=="security")\|[.conclusion,.html_url]\|@tsv'`; log of job 127328651791 (run 42051549426) | `security` = failure on the last Dependabot merges (also `ee19432`, `6e97e44`). Cause (from the job log): step "Secrets in the whole history (gitleaks)": "192 commits scanned ... leaks found: 17". The 17 findings are in files that are only on the handover branch (12, under `handover/promotion-inputs/`, commit `2288bf535e`) and on the C1a backup branch (5, `tests/test_c1a_redactor.py`, commits `c791692858` and `c440e29504`). I read five of them: all are made-up test passwords (for example `password: <12 letters and digits>`, `curl -u admin:<word>`). The scan reads every branch and tag because the job checks out the full history (`fetch-depth: 0`). So every pull request is blocked by `security` until step 2 is done. This was caused by pushing the handover and backup branches. |
+| F8 | Both backup branches are ALREADY on origin | `git ls-remote --heads origin 'refs/heads/handover-src/*'` | `748849c8154fd5c0fb160ef0126ef3a9c38dc175 refs/heads/handover-src/pr50-local-748849c` and `8460813d93d24d9ca1de3daacb868cb439e961f6 refs/heads/handover-src/c1a-8460813`. `2e8a28c` (the pushed PR #50 head, branch `core/promote-apexc-review8`) is an ancestor of `748849c` (6 commits further). The cloud session cannot say who pushed them or whether the lead's laptop still holds copies. |
+| F9 | Push protection and secret scanning are on | `gh api repos/hadavin-dx/hadavin-sdk --jq .security_and_analysis` | secret_scanning enabled, push_protection enabled, non-provider patterns disabled, validity checks disabled, Dependabot security updates enabled. |
+| F10 | The cloud token expires inside 30 days | `gh api -i repos/hadavin-dx/hadavin-sdk \| grep -i expiration` | `Github-Authentication-Token-Expiration: 2026-11-05 22:58:44 UTC` (04:28 IST on 2026-11-06). `X-Oauth-Scopes` is empty, which is how a fine-grained credential or app credential looks. |
+| F11 | CI runs only on pushes to `main` and on READY pull requests to `main` | `.github/workflows/ci.yml` `on:` block and `if: ... draft == false` | A push to any other branch runs NOTHING. "The CI scan job on a test push" (plan section 9) therefore means a test PULL REQUEST that is marked ready, not a bare push to a branch. |
+| F12 | A vendor-name scan already exists as a test | `tests/test_no_reference_material.py` (`BANNED`, 10 case-sensitive strings; `test_no_vendor_brand_string_is_tracked`) runs inside the `check` job | It scans the working tree only (not history), skips files it cannot decode as text by FAILING, and has no client or demo names. |
+
+NOT VERIFIABLE FROM THE CLOUD (say it plainly; the lead checks each):
+* The actual permission list of the cloud token (the page in GitHub settings). The API field `permissions.admin: true` on `GET /repos/...` shows the ACCOUNT's role, not the token's; a fine-grained token can be narrower. The cloud session did not and must not test its own limits by writing. The `403` answers the cloud saw for `/actions/permissions`, `/actions/secrets` and `/environments` came from the cloud proxy ("not permitted through this proxy"), NOT from GitHub, so they prove nothing about the token.
+* Whether a ruleset "restrict updates" rule blocks merging a pull request for a non-bypass identity (GitHub documents it as restricting all updates to the ref; the cloud has not seen it work here). Test in step 3.
+* The exact JSON field names for bypass actors and the `update` rule. Use the web page for those two, then read the result back with `gh api` and save it.
+* Repository secrets, environments, Actions permissions, the Dependabot secret store (proxy blocks them; admin rights not used).
+* Anything about the lead's laptop (local branch names, local clones).
+
+## 1. Ticket fields (template order)
+
+1. **Package id and name:** P0a, backups, push model of rule 9 (a)-(d) and (h), third-party check.
+2. **Path class:** security (repository protections, secret scan). Extended review (no round cap): no. Tier B per plan row P0a and order 6(b). PENDING LEAD 2: order 6(b) also says "security tickets have no round cap"; recommendation: Tier B stands (one fresh reviewer, one round, at most 2 fix batches) because no code changes and the lead reads every setting back from the GitHub API; the lead overrules if wanted.
+3. **Depends on:** none (plan). The "banned-name" half of rule 9(h) is BUILT by P0d (plan note 3) and cannot be proven before P0d is merged; this ticket gives P0d its design (section 5) and proves the secret half and the existing vendor-name test now (step 4). The plan row P0a is therefore finished in two parts: P0a-now and P0a-after-P0d (step 6).
+4. **Problem in plain words:** Work that exists only on the lead's laptop (PR #50 local head `748849c`, C1a head `8460813`) must be backed up, and the backup branches must not break the repository's checks. The plan's rules about who may change `main`, who may create tags, what the cloud credential may do and what the scan job must catch are only promises today. Measured today: main has a ruleset but it does not require CodeQL or SonarCloud, nothing stops the cloud from merging or enabling auto-merge, nothing guards tags, the secret scan has been failing on main since the handover and backup branches were pushed, and no job scans for private names. The core is a public repository, so one leaked secret or client name cannot be taken back. We must also list any third-party file in the repository and any duty to print its owner's notice.
+5. **Source of the code:** none. No code is taken. Facts come from the live API reads in section 0, from `.github/workflows/ci.yml`, `.gitleaks.toml`, `.gitleaksignore`, `tests/test_no_reference_material.py`, `tests/test_repo_rules.py`, and from `handover/promotion-inputs/` (read only).
+6. **Target module and path:** no module in `src/hadavin_sdk/`. Settings and evidence only (section 3).
+7. **Interface:** none (no code). The interface of the name scan that P0d builds is in section 5.
+8. **Neutral default / working alternative:** the guards are written as plain rules (the ruleset JSON saved in `handover/evidence/`, the scan as a script under `tools/` with free tools: gitleaks and Python), so they can be recreated on another host or as a branch-protection setting. Alternative if the repository goes private or moves host: the same rules as classic branch protection plus a server-side hook; trigger: the repository leaves GitHub. A test double is not an alternative.
+9. **Files to create, change, delete** (the lead does all of them; the cloud session none): section 3.
+10. **Existing core code reused:** CI jobs `check` and `security` (`.github/workflows/ci.yml`), gitleaks 8.30.1 pinned with a checksum, `.gitleaks.toml`, `.gitleaksignore`, `tests/test_no_reference_material.py` (the `BANNED` tuple and its planted-copy test), `tests/test_repo_rules.py` (licence text rule). Nothing new is written for the secret half.
+11. **Security and least-privilege notes:** section 4 (identities and rights; what the cloud session must NOT do). No secret is created, printed or stored by this ticket; the probe secret is made up at run time. Personal data: none; the owner's full name appears in the Warden NOTICE file and is deliberately not repeated here.
+12. **Tests:** section 6 (a settings ticket has probes, not unit tests). The FAIL-BEFORE rows are the "today" column: each must show the defect on the current state before the lead changes anything.
+13. **Mutation plan:** section 6 (planted values; each is killed by a named job step).
+14. **Evidence commands:** section 7; raw output to `handover/evidence/P0a-1.md` (this is the plan's `protections.md`), `P0a-2-third-party.txt` and `P0a-3-name-scan.md` (after P0d).
+15. **Reviewers:** one fresh reviewer (Tier B), reading this ticket and the evidence files only, and re-running the read-only commands of section 0 (they need no credentials beyond read).
+16. **Done =** section 8. All gates green means: `check` and `security` green on a control pull request, CodeQL, SonarCloud green, CodeRabbit noted.
+17. **Rollback:** section 9.
+
+## 2. Steps the lead runs, in this order (each with its pass criterion)
+
+Times are not estimated (plan section 10). Run from a clone of `hadavin-dx/hadavin-sdk` with an administrator login of the lead (never the cloud token).
+
+**Step 0. Save the "before" state (rollback file).**
+```
+mkdir -p handover/evidence && cd handover/evidence
+gh api repos/hadavin-dx/hadavin-sdk/rulesets/26047302 > P0a-ruleset-before.json
+gh api repos/hadavin-dx/hadavin-sdk > P0a-repo-before.json
+git tag -l > P0a-tags-before.txt
+```
+Pass: the three files exist and `P0a-ruleset-before.json` contains `"enforcement":"active"`. Tag `pre-P0a` on the current `main` (lead only, rule 9(b)): `git tag pre-P0a origin/main && git push origin pre-P0a`.
+
+**Step 1. Backups (rule: back up unpushed work).** The two branches exist (F8). The lead's laptop must hold the same objects. Run on the laptop:
+```
+git cat-file -t 748849c8154fd5c0fb160ef0126ef3a9c38dc175   # expect: commit
+git cat-file -t 8460813d93d24d9ca1de3daacb868cb439e961f6   # expect: commit
+git push origin 748849c8154fd5c0fb160ef0126ef3a9c38dc175:refs/heads/handover-src/pr50-local-748849c
+git push origin 8460813d93d24d9ca1de3daacb868cb439e961f6:refs/heads/handover-src/c1a-8460813
+git ls-remote --heads origin 'refs/heads/handover-src/*'
+```
+Rules: never add `--force`. If a branch name already points at the same commit the push says "Everything up-to-date" (expected). If it points at a DIFFERENT commit, stop and write it into the evidence: do not overwrite. If a `cat-file` says "missing", the local object is gone: tell the owner at once (the origin copy is then the only copy; do not delete it). Names are kept as they are because `memo-5`, CLOUD-PROMPT and the handover notes already use them. Pass: `ls-remote` prints exactly the two full commit ids of F8. Keep both branches until the end-of-project rule of plan section 11: before they are deleted, the lead creates archive tags `archive/pr50-local-748849c` and `archive/c1a-8460813` (or writes a ledger disposition per open row).
+Also record the other unmerged heads for the same list (read only): `git ls-remote --heads origin` (core-hardening-1, demo-askdata-export, demo-gaps, k6, core/promote-refunds-r8, core/promote-apexc-review8 and the Dependabot branches). Pass: each unmerged head is either listed with a PR number or marked "no PR".
+
+**Step 2. Make the existing secret scan green again (this is a fix, not a deferral).** Three options; recommendation first:
+ (a) RECOMMENDED: add the 17 fingerprints of appendix A to `.gitleaksignore`, one line each with a comment that says "made-up test password, read by the lead on <date>"; change nothing else. Open it as a pull request from `main` (lead). The fingerprint is `commit:file:rule:line`, so a different line or file is still reported. The lead first reruns the scan locally to regenerate the list and compare (same gitleaks version as CI, 8.30.1):
+```
+gitleaks git --redact --no-banner --config .gitleaks.toml --report-format json --report-path /tmp/gl.json .   # in a clone that has fetched every branch
+python3 -I -c 'import json; [print(f["Fingerprint"]) for f in json.load(open("/tmp/gl.json"))]'
+```
+ Pass: the printed fingerprints equal appendix A (17 lines), and the lead has read each line once (`git show <commit>:<file> | sed -n <line>p`) and found a made-up value.
+ (b) A path allowlist for `^handover/` in `.gitleaks.toml`: fewer lines but hides a real leak inside `handover/`; not recommended.
+ (c) Delete the handover and backup branches: not allowed before the end (plan section 11).
+ Pass for the step: on the pull request, job `security` is green with all steps, and `gitleaks` prints "no leaks found".
+ Note: new fake secrets in later handover pushes will re-open this; the cloud's handover pushes contain no test code, only text, so none are expected. The scan job still fails for any new finding: that is the intended behaviour.
+
+**Step 3. Set the push model of rule 9 (a)-(d).** One item per row; "today" is from section 0.
+
+| Rule | Required state | Today | Lead action (web page first, then save the JSON) |
+|---|---|---|---|
+| 9(a) required checks | `check`, `security`, `Analyze (python)`, `Analyze (actions)`, `SonarCloud Code Analysis` required on main | only `check`, `security` | Add three `required_status_checks` entries to ruleset 26047302: `{"context":"Analyze (python)","integration_id":15368}`, `{"context":"Analyze (actions)","integration_id":15368}`, `{"context":"SonarCloud Code Analysis","integration_id":12526}`. Edit `P0a-ruleset-before.json` into `P0a-ruleset-after.json`, remove read-only fields (`id`, `node_id`, `_links`, `created_at`, `updated_at`, `source`, `source_type`, `current_user_can_bypass`), then `gh api -X PUT repos/hadavin-dx/hadavin-sdk/rulesets/26047302 --input P0a-ruleset-after.json`. PENDING LEAD 3: CodeRabbit is a status that appears only on pull requests; recommendation: do NOT make it required (a reviewer bot outage would block all merges); the lead reads its comments before merging, as the plan already says. |
+| 9(a) no force-push, no deletion | present | present (`non_fast_forward`, `deletion`) | none |
+| 9(a) only the lead merges | an identity other than the lead cannot merge into `main`, and cannot enable auto-merge | NOT enforced (F6) | PENDING LEAD 4. Options: (A) RECOMMENDED: in the ruleset add the rule "Restrict updates" and set the lead's administrator role as the only bypass actor with mode "pull request" (so the lead still merges through a pull request, nobody else can move `main`); and turn repository setting "Allow auto-merge" OFF (Dependabot bumps are merged by the lead under rule 12, so nothing needs it). (B) one required approving review: refused, because the cloud token very probably acts as the owner's own account and an author cannot approve their own pull request, so the lead could never merge. (C) a separate machine account for the cloud with only "write" and a protected `main`: still can merge when checks are green; no gain. Option A's one unverified assumption (section 0): that "Restrict updates" also blocks the merge button for non-bypass users. Prove it with probe M below; if it fails, fall back to: set the cloud identity's role so it has no write access to `main` through a separate token that only the lead issues, and write the gap in the ledger as OWNER-ONLY. |
+| 9(b) tags | `pre-*`, `archive/*` and release tags (`v*`) can be created, moved or deleted only by the lead | no tag ruleset (F4) | Create a second ruleset, target "tag", include patterns `refs/tags/pre-*`, `refs/tags/archive/*`, `refs/tags/v*`, rules `creation`, `update`, `deletion`, bypass actor the lead's administrator role. Save the result with `gh api repos/hadavin-dx/hadavin-sdk/rulesets --jq '.[]\|[.id,.name,.target]\|@tsv'` and the JSON of the new one in `P0a-tag-ruleset.json`. |
+| 9(c) cloud token | fine-grained (not classic), only this repository; permissions: Contents write, Pull requests write, Metadata read; NO Administration, NO Workflows, NO Secrets, NO Actions, NO Environments, NO Pages, NO Variables; expiry within 30 days | expiry 22:58 UTC 2026-11-05 (F10); permission list unknown | The lead opens the credential's page in GitHub settings and copies the permission list into `P0a-1.md` (a screenshot is NOT kept: public repo rule against images; type the list). If the token is a classic one or has any extra permission, replace it and write the new expiry date. Rule 9(c) says "write to non-main branches only": that is enforced by the ruleset (row "only the lead merges"), not by the token. |
+| 9(c) workflows | only the lead edits `.github/workflows` | cannot be seen from the cloud | Probe W (below). |
+| 9(d) CI test jobs: read-only repository permission, no real secrets, no internet except the local database | `permissions: contents: read` in `ci.yml` (present); no secrets used in `check`/`security`; exceptions only CodeQL (security-events write) and SonarCloud (its token) | `ci.yml` has top-level `permissions: contents: read` (read from file). The `check` job needs internet for `uv sync` and the `security` job downloads gitleaks and Trivy from GitHub: so "no internet" is NOT true today. | PENDING LEAD 5: plan rule 9(d) says "no internet" but the install steps need the package index. Recommendation: reword 9(d) to "no secrets, read-only token, and the only outbound traffic is to the package index and the pinned scanner downloads (checksum verified)"; do not try to cut the network. The lead lists the repository's Actions secrets (names only) in `P0a-1.md` (`gh secret list --repo hadavin-dx/hadavin-sdk`, needs the lead's admin login) and confirms the only secret is SonarCloud's. |
+| 9(h) scan on every push | secrets: gitleaks (whole history), Semgrep `p/secrets`, Trivy secrets, GitHub push protection; names: section 5 | secrets: all present; names: only the vendor-name test (F12) | Secret half: nothing to change. Name half: P0d, design in section 5. |
+
+Probes M and W (negative tests; run only AFTER the lead has made the settings change; they need the cloud token, so the OWNER tells the cloud session in its own window to run them; the cloud session does not run them on its own):
+ * Probe M (merge refused): the lead prepares a throwaway pull request from branch `probe/p0a-merge` that changes one comment line in `handover/README.md` and keeps the checks pending. The cloud token then calls `gh api -X PUT repos/hadavin-dx/hadavin-sdk/pulls/<n>/merge -f merge_method=squash` and also `gh api -X PUT repos/hadavin-dx/hadavin-sdk/pulls/<n>/ccr/auto_merge`. Expected: both refused, and the answer names the repository rule. Record the exact answer text in `P0a-1.md` (the cloud session has not seen it). While checks are pending the merge would also be refused for that reason alone, so the lead repeats the call once with the checks green on a pull request that CAN be abandoned: if it then merges, the probe FAILED; the lead reverts through a pull request and keeps the failure in the ledger.
+ * Probe W (workflow edit refused): the cloud token pushes branch `probe/p0a-workflow` that changes one comment in `.github/workflows/ci.yml`. Expected: GitHub refuses the push ("refusing to allow ... to create or update workflow ... without `workflow` scope"; wording not seen by the cloud). Record the answer.
+ * Probe T (tag refused): the cloud token tries `git push origin HEAD:refs/tags/pre-probe`. Expected: refused by the tag ruleset. If it succeeds the lead deletes the tag and the probe failed.
+After the probes the lead closes the throwaway pull request and deletes the three probe branches (the cloud session may not delete branches).
+
+## 3. Files and settings (all changed by the lead)
+
+| Item | Change | Reason |
+|---|---|---|
+| ruleset 26047302 "main" | add 3 required checks; add "Restrict updates" with the lead as the only bypass actor (option A) | rule 9(a) |
+| new tag ruleset | as in step 3 | rule 9(b) |
+| repository setting "Allow auto-merge" | off (option A) | only the lead merges |
+| `.gitleaksignore` | + 17 lines (appendix A), each with a "why it is not a secret" comment | step 2 |
+| `.github/workflows/ci.yml` | none for P0a. P0d adds the name-scan step to the `security` job (lead edits; cloud has no workflow scope). Also P0d should fix the header comment of `ci.yml` after the ruleset change so it names exactly the required checks. | F5 |
+| `handover/evidence/P0a-1.md` | protections evidence (plan's `protections.md`) | plan section 9 |
+| `handover/evidence/P0a-2-third-party.txt` | the third-party list (section 5 of this ticket gives the expected content) | plan note 1 |
+| `handover/evidence/P0a-3-name-scan.md` | name-scan proof after P0d | plan section 9 |
+| `handover/evidence/P0a-ruleset-before.json`, `-after.json`, `P0a-tag-ruleset.json`, `P0a-repo-before.json`, `P0a-tags-before.txt` | rollback and proof copies | section 9 |
+Delete: nothing. `handover/` itself is deleted by the lead at the end (plan section 11); the temporary scan exclusions for `handover/` in section 5 are removed in the same commit.
+
+## 4. Security and least privilege (identities, rights, what the cloud session must NOT do)
+
+| Identity | Reads | Writes | Note |
+|---|---|---|---|
+| Cloud token (fine-grained, expires within 30 days) | repository contents, pull requests, metadata | branches other than `main` (including `core/cloud-handover` for `handover/`), pull requests, comments | no merge (ruleset), no tag (tag ruleset), no workflow file, no secret, no setting, no deletion of branches |
+| Lead administrator login | everything | rulesets, settings, tags, merges, `.github/workflows` | used only for the steps above; agents never get this login |
+| CI job `check` / `security` | repository contents | nothing (`contents: read`) | no secret in these jobs |
+| CodeQL job | contents | security events | exception named in rule 9(d) |
+| SonarCloud | contents | its own service | exception named in rule 9(d); its token stays in Actions secrets |
+
+The cloud session must NOT: change a ruleset, branch protection, repository setting, Actions setting, secret, variable, environment or tag; edit `.github/workflows/*`; merge or enable auto-merge on any pull request; delete any branch (backup branches included); force-push; push to `main`; create `pre-*`, `archive/*` or `v*` tags; commit any fake secret or private name into `handover/`; run the probes M, W, T without the owner's written yes in its own window; read or print the cloud token; open a pull request before an order says "S0 EXIT". Its handover pushes to `core/cloud-handover` stay inside `handover/`.
+
+## 5. Banned-name scan: design for P0d to build (rule 9(h); text only here)
+
+**Why the secret scanner is not enough.** Gitleaks finds key-shaped strings. A client name, the name of a private repository or the owner's account name is not key-shaped, and a public repository keeps it forever once pushed (history included). Today only ten vendor-inspired brand strings are checked, only in the working tree, by `tests/test_no_reference_material.py`.
+
+**Three lists, three places.**
+1. Class V, vendor-inspired product names: plain text, `tools/banned_names/vendor.txt`, one name per line, case-sensitive and a case-insensitive twin where the test already treats it so. It starts as a copy of the ten strings in `BANNED`; the test file is changed to read this file so there is one list, not two. These names are already public in that test, so a plain list reveals nothing new.
+2. Class P, private names (real client names, names of private repositories and projects, the owner's account name): they must NOT appear in plain text anywhere in the public repository, including this ticket. They are stored as SHA-256 digests in `tools/banned_names/private.sha256`, one digest per line, with a class tag and no name in the comment. Spelling normalisation (one function in the scanner, used both to make digests and to scan): Unicode NFKC, then case-fold, then keep only letters and digits (drop spaces, dots, dashes, underscores, slashes). The lead creates digests on the laptop with the scanner's own `--digest "<name>"` option (P0d provides it), never in a cloud session. Honest limit: a digest of a short, guessable name can be confirmed by someone who already suspects it; it cannot be read back. If the lead prefers zero exposure, the alternative is an Actions secret holding the list; it is NOT recommended because it adds a secret to a scan job (rule 9(d)), is not available to Dependabot-triggered runs (they would fail or skip) and a changed script could print it. PENDING LEAD 6 (which names go in Class P is the lead's decision; the cloud will not be told them).
+3. Class K, canary: one made-up entry, `p0a-canary-banned-name-7d41`, in the plain list, so that a planted file can prove the job fails without using any real name. A second canary digest in `private.sha256` is for the digest path (made-up string, written in the P0d unit test only).
+
+**What is scanned** (all three inside the existing `security` job as extra steps, so the already-required check `security` covers it and no ruleset change is needed): (i) every tracked text file of the checked-out tree; a file that cannot be read as UTF-8 text FAILS the scan (same rule as the existing test); (ii) the added lines of every commit in every fetched branch and tag (`git log -p --all`), because the history is public; (iii) every commit message (`git log --all --format=%B`). Matching: split text on non-alphanumerics and on lower-to-upper case changes, then hash every run of 1 to 4 neighbouring pieces joined together; a name inside a longer word (`xyzacmecorpxyz`) is NOT caught and an altered spelling (homoglyph, base64) is NOT caught; P1's folding module is the future upgrade (outline, trigger: P1 merged). PR titles and bodies are not scanned (PENDING LEAD 7: recommendation: add them in a later change, the step would need event data that can carry hostile text).
+**Temporary exclusion:** the path `handover/` is excluded from class P while it exists (it quotes demo and source-repository names on purpose); `.gitleaks`-style fingerprints are not needed. The exclusion is removed in the same commit that deletes `handover/`. Class V has NO exclusion: `handover/` must stay free of vendor strings (the existing test already enforces that on the tree).
+**Baseline.** Main already contains source names in 38 files (the string WARDEN, the name of the owner's private source repository, and a Warden commit id; 12 files include the owner's account name followed by the repository name, found with `git grep -l -i <account name> origin/main`). If the lead puts those in class P the scan fails on main until the 12 provenance comments are reworded and, for history, until a start commit is set. Recommendation (PENDING LEAD 8): put the owner's account name in class P; reword the 12 comments to "the owner's private Warden repository, commit <short id>" in one comment-only pull request after S0 EXIT; give the history scan a start commit (a value in the scanner's config, the commit before the first scan) so old history is not re-reported; and record in the ledger that the old commits still contain the name unless the repository history is rewritten (a rewrite changes every commit id and re-pins every demo; owner decision, not in v1).
+**Output rule.** Class P findings print the file, line and the first 8 hex characters of the digest, NEVER the matched text, so a failing log does not leak the name. Class V and K print the text.
+**Fail closed.** Exit non-zero when: a list file is missing, unreadable or empty; the canary is absent from the plain list; the digest file has fewer than 1 entry per tag the scanner knows; any file in scope cannot be read.
+**How a planted name proves the job fails (the proof is part of the P0d pull request and repeated by the lead in step 6):**
+ 1. Unit tests in `tests/test_banned_names.py` (P0d): canary planted in a temp tree is caught; planted in a temp git repository's HISTORY (added then removed in a later commit) is caught by the history pass; a spelling variant (`P0A_Canary-Banned.Name 7d41` style, camel case) is caught; the digest path catches a made-up name; a clean tree passes; an empty list, a missing canary and an unreadable file each fail closed; the output for a class P hit contains no part of the name. Each test is run against the scanner with the matching line deleted (a mutant) and must then fail: that is the fail-before.
+ 2. CI proof by the lead on a pull request (step 6): branch `probe/p0a-name`, one new file `tests/fixtures/_p0a_probe_name.txt` containing the canary; ready pull request; job `security` must fail in the new step and name the file; a control pull request with the file removed must be green. The planted canary is made up, so nothing private enters the public history; the lead deletes the probe branch after.
+
+## 6. Tests: probes for settings (today's result is the fail-before; all run by the lead)
+
+| Probe | What the lead does | Today (before) | Expected after | Killed by (mutation) |
+|---|---|---|---|---|
+| S1 plan command | `gh api .../branches/main/protection` | 404 | not used any more; `rules/branches/main` lists the 5 required checks | n/a |
+| S2 scan red | read `security` conclusion on newest `main` commit | failure (F7) | success | removing the `.gitleaksignore` lines turns it red again (lead may skip) |
+| S3 control PR | harmless one-line change in a pull request marked ready | red because of S2 | `check`, `security`, CodeQL, SonarCloud all green | n/a |
+| S4 planted fake secret | branch `probe/p0a-secret`: add `tests/fixtures/_p0a_probe_secret.txt` with `service_api_key = "<32 random letters and digits made at run time, e.g. python3 -c 'import secrets,string;print(\"\".join(secrets.choice(string.ascii_letters+string.digits) for _ in range(32)))'>"`; open a READY pull request | would be red anyway (S2), so run only after S2/S3 are green | `security` fails at step "Secrets in the whole history (gitleaks)" with a `generic-api-key` finding; `check` unaffected | the gitleaks step; Semgrep `p/secrets` may also fire (note which) |
+| S5 planted vendor name | branch `probe/p0a-vendor`: file containing one string from `BANNED` | `check` red at `test_no_vendor_brand_string_is_tracked` | same (this is a regression pin, killed by removing that string from `BANNED`) | `tests/test_no_reference_material.py` |
+| S6 planted canary | section 5 proof | no such job | `security` fails in the name step | the scanner unit tests (P0d) |
+| S7 push protection | try to push (as the lead, on a scratch branch) a line holding a REAL-FORMAT provider token that is made up (for example the AWS example key `AKIAIOSFODNN7EXAMPLE` is NOT flagged; use a made-up value of a documented provider shape) | unknown | GitHub refuses the push (feature F9) | n/a; skip if the lead does not want to trigger a security alert email |
+| S8 ruleset readback | `gh api .../rules/branches/main --jq '[.[]\|select(.type=="required_status_checks")\|.parameters.required_status_checks[].context]'` | `["check","security"]` | the 5 names of step 3 | n/a |
+| S9 tag ruleset | probe T | n/a | refused | n/a |
+| S10 merge/auto-merge/workflow | probes M, W | n/a | refused | n/a |
+Each probe branch holds only its planted file; the lead closes the pull request without merging and deletes the branch. A probe that passes where a failure is expected is a FAILED probe: it is written into the evidence and into `handover/ledger.md` as a MAJOR row, not smoothed over.
+
+## 7. Evidence commands and files (raw output saved; the lead runs; no judging in the file)
+
+```
+cd handover/evidence
+{ echo "== S1"; gh api repos/hadavin-dx/hadavin-sdk/branches/main/protection 2>&1 | head -c 400
+  echo; echo "== rules on main"; gh api repos/hadavin-dx/hadavin-sdk/rules/branches/main
+  echo; echo "== ruleset list"; gh api repos/hadavin-dx/hadavin-sdk/rulesets
+  echo; echo "== repo flags"; gh api repos/hadavin-dx/hadavin-sdk --jq '{allow_auto_merge,delete_branch_on_merge,allow_squash_merge,allow_merge_commit,allow_rebase_merge,security_and_analysis}'
+  echo; echo "== backups"; git ls-remote --heads origin 'refs/heads/handover-src/*'
+  echo; echo "== newest main checks"; gh api repos/hadavin-dx/hadavin-sdk/commits/main/check-runs --jq '.check_runs[]|[.name,.conclusion]|@tsv'
+  echo; echo "== actions secrets (names)"; gh secret list --repo hadavin-dx/hadavin-sdk
+  echo; echo "== token page (typed list)"; echo "<lead types the permission list and expiry here>"
+} > P0a-1.md 2>&1
+```
+Append to `P0a-1.md` the URL of each probe pull request, the failing step name and the log's first error line for S4, S5 and S6, and the exact answers of probes M, W, T. The pull request numbers and head commit ids are written next to each. Times in UTC and IST. The third-party file (section below) is `P0a-2-third-party.txt`. The name-scan proof is `P0a-3-name-scan.md`.
+
+## 8. Third-party files and notice duties: how to list them, and what the cloud found
+
+The pass criterion (plan note 1) is a text file `handover/evidence/P0a-2-third-party.txt` that lists every third-party file or notice duty found, or the single word `none`. A duty means: a licence or a notice that says a copy must be printed, kept or credited.
+Lead's commands (run on every remote head listed by `git ls-remote --heads origin`, not only `main`; replace `<ref>`):
+```
+R=origin/<ref>
+git grep -n -I -i -E 'spdx-license-identifier|apache license|licensed under the|unicode, inc|unicode license|creative commons|public domain|permission is hereby granted|\(c\) ?(19|20)[0-9]{2}|all rights reserved|copyright' $R -- . ':!uv.lock'
+git grep -n -I -i -E 'ported from|copied (then edited )?from|adapted from|derived from|taken from|vendored|generated from' $R -- . ':!uv.lock'
+git ls-tree -r -l $R | awk '$4>40000 {print $4, $5}' | sort -rn
+git ls-tree -r --name-only $R | grep -iE '\.(png|jpe?g|gif|webp|svg|ico|pdf|woff2?|ttf|otf|zip|tar|gz|whl|bin|so|dll)$'
+git ls-tree -r --name-only $R | grep -iE '(^|/)(licen[sc]e|notice|copying|third.?party)'
+git log --all --diff-filter=A --name-only --format= | sort -u | grep -iE 'data/|vendor|third|licen|notice'
+```
+For libraries (installed, not copied): `uv export --locked --all-extras --no-emit-project --format requirements-txt | grep -c '=='` and `uv run --all-extras python -I -c "import importlib.metadata as m; [print(d.metadata['Name'], d.metadata.get('License-Expression') or d.metadata.get('License')) for d in m.distributions()]"`. The core's wheel contains only `src/hadavin_sdk`; libraries are installed by pip, so the repository itself owes no library notice; a client delivery that ships a container image or a copied library would (not part of P0a; UNVERIFIED because the cloud did not run the library listing).
+
+What the cloud found (read-only, git objects of the 10 non-Dependabot remote heads, 2026-11-05; the lead's rerun overrides this):
+ 1. `main` (`a5bf80b`) and every other non-Dependabot head except the two PR #50 heads of finding 2 (core-hardening-1, core/promote-refunds-r8, demo-askdata-export, demo-gaps, k6, handover-src/c1a-8460813, and `core/cloud-handover` outside `handover/`; the Dependabot branches were not scanned): no licence or copyright text other than the proprietary Hadavin one (`LICENSE`, `README.md`, `pyproject.toml`; `tests/test_repo_rules.py` fails any other licence text), no binary file (images, fonts, archives), no file over 200 KB except `uv.lock` (machine generated). Largest data file: `demos/ask-your-data/data/gold.jsonl`, 69,780 bytes (made-up data per the demo rules; content not re-read: UNVERIFIED). RFC numbers in comments are references to specifications, not copies.
+ 2. `core/promote-apexc-review8` (PR #50 pushed head `2e8a28c`) and `handover-src/pr50-local-748849c` (`748849c`): ONE THIRD-PARTY FILE: `tools/data/confusables.txt`, 763,128 bytes, a copy of Unicode's confusables data (UTS #39, version 18.0.0, dated 2026-08-06), plus two files derived from it: `src/hadavin_sdk/guard/_confusables.py` (12,435 bytes, generated) and `tools/gen_confusables.py` (6,309 bytes, the generator). DUTY: the Unicode License v3 (named in those files, https://www.unicode.org/terms_of_use.html). The data file keeps Unicode's own copyright line and the link as Unicode ships it, and the generated file repeats the copyright and the link. The repository holds NO copy of the licence's permission text. Whether the link alone satisfies the licence is a legal question the cloud cannot settle (not a lawyer; UNVERIFIED). Recommended fix, owned by the P1 pull request: add `THIRD-PARTY-NOTICES.md` (NOT a file named `LICENSE`, because `tests/test_repo_rules.py` requires every file with that name to be the proprietary text) carrying the full licence text copied from unicode.org and the data file's name, version and sha256 `6ed3ee967c9dfdf6677d563c9985182fbc50a2efb7d6059cd57b2e2ce18f5b92`; keep the data file byte-identical (mark it `-text` in `.gitattributes`). The P1 ticket (revision 4, line about "its notice is in the file and in the generated header") does not yet say this: PENDING LEAD 9 (tell the P1 author, or accept the link-only reading in writing). The file is already public on those two branches today.
+ 3. `core/cloud-handover`, folder `handover/promotion-inputs/` (temporary; public; deleted at the end): Apache License 2.0 text in `warden/LICENSE`, `killswitch/LICENSE`, `helios/LICENSE`; `warden/NOTICE` (names the owner personally as copyright holder and quotes Apache section 4(d)); the killswitch copyright line carries an old studio name (see MANIFEST-SUMMARY; not repeated here); copies of the Unicode data header in four `_confusables.py` files plus `intake-a12/src/intake/confusables_data.py` and `tools/gen_confusables_wp3.py`; the demo, portal-kit and refunds `LICENSE` files are the proprietary Hadavin text (apexc and dealdesk have their own short "all rights reserved" text). The brief expected Apache headers inside Warden source files: a search for "Apache" and "SPDX" found them ONLY in LICENSE, NOTICE, README and pyproject files, so there are no per-file headers to keep. TRAP: `tests/test_repo_rules.py` fails for any tracked file named `LICENSE` that is not the proprietary text and for any `pyproject.toml` whose licence is not `LicenseRef-Proprietary`. `handover/promotion-inputs/{warden,killswitch,helios}/LICENSE` and `killswitch/pyproject.toml` would fail it, so `handover/` must never be merged into `main` (plan section 11 already deletes it first); the lead keeps pull-request branches based on `main`.
+ 4. Code promoted from Warden that is ALREADY on `main`: 38 files say they are ported from Warden (19 in `src/hadavin_sdk`, 15 in `tests/warden_port`, plus 4 others). Warden is the owner's own code, Apache-2.0 in its own repository with the owner named personally in its NOTICE, while this repository's `LICENSE` names Hadavin. NOTICE DUTIES, both OWNER decisions (PENDING LEAD 10, owner-only): (i) is the copyright holder of the promoted Warden code the owner personally or Hadavin? If personally, a short written licence or assignment from the owner to Hadavin should exist, because Apache section 4(d) otherwise obliges a redistributor to carry the NOTICE; (ii) does Warden contain contributions by anyone else? The cloud cannot read the private repository; the lead runs `git shortlog -sne --all` there (do not paste e-mail addresses into this repository) and writes only the count of authors into `P0a-2-third-party.txt`. Until (ii) is answered, the file must say "UNVERIFIED: Warden authorship".
+ 5. Fixtures: `tests/fixtures/reference_material_sha256.txt` holds hashes only (no third-party content). No other third-party file was found. The two course-material guards cover only images and PDFs whose hashes are known.
+Expected content of `P0a-2-third-party.txt` after the lead's rerun: one block per finding 2, 3, 4 (file, size, licence, who owns the fix, status) plus a line `none` for each other head; if the lead's rerun finds more, they are added. The fix owners: finding 2 -> P1 (notice file); finding 3 -> deletion of `handover/` at the end plus the trap note; finding 4 -> owner.
+
+## 9. Done = and Rollback
+
+**Done (Tier B, one fresh reviewer, one round, at most 2 fix batches):**
+ * P0a-now: steps 0 to 3 done with `P0a-1.md` showing the new `rules/branches/main` (5 required checks, restrict-updates or the lead-approved alternative), the tag ruleset, the token page list, `allow_auto_merge` off; `.gitleaksignore` merged and `security` green on `main`; probes S3, S4, S5, M, W, T all behaved as expected or are in the ledger as findings; `P0a-2-third-party.txt` written and every duty has an owner; backups verified (step 1).
+ * P0a-after-P0d: probe S6 passes (name scan fails on the canary, control green) and `P0a-3-name-scan.md` holds the raw output. Until then plan section 9 row "Repository protections and scan" is half proven; the lead says so in `s0-report.md`.
+ * Plan amendments to write (PENDING LEAD 1 and 5): replace the command in section 9 by `gh api repos/hadavin-dx/hadavin-sdk/rules/branches/main` plus the ruleset id; reword rule 9(d) "no internet".
+ * Gates: `check`, `security`, CodeQL, SonarCloud green on the control pull request; CodeRabbit comments read.
+
+**Rollback.** Tag `pre-P0a` (step 0). Ruleset: `gh api -X PUT repos/hadavin-dx/hadavin-sdk/rulesets/26047302 --input handover/evidence/P0a-ruleset-before.json` (after removing the read-only fields as in step 3); delete the new tag ruleset with `gh api -X DELETE repos/hadavin-dx/hadavin-sdk/rulesets/<id>`; turn "Allow auto-merge" back on only if `P0a-repo-before.json` shows it was on (it was). `.gitleaksignore`: revert the pull request. Backup branches: never rolled back (they are copies; deleting them is forbidden until the end-of-project rule). Not revertible: a probe secret or probe name that reached a public branch stays visible in that branch's history until the branch is deleted (they are made up). Loud failure: after a rollback the S8 readback shows `["check","security"]` and the S2 probe still turns red on a planted secret.
+
+## Appendix A. The 17 gitleaks fingerprints seen in job log 127328651791 (commit:file:rule:line; none holds a secret value)
+```
+2288bf535e5dc011e04b5c5a79fdc3ce73e72d48:handover/promotion-inputs/intake-p2/tests/test_mask_review2.py:curl-auth-user:185
+2288bf535e5dc011e04b5c5a79fdc3ce73e72d48:handover/promotion-inputs/warden/tests/test_gate_review8.py:generic-api-key:49
+2288bf535e5dc011e04b5c5a79fdc3ce73e72d48:handover/promotion-inputs/warden/tests/test_bench_jobs.py:generic-api-key:493
+2288bf535e5dc011e04b5c5a79fdc3ce73e72d48:handover/promotion-inputs/warden/tests/test_redaction_review.py:curl-auth-user:52
+2288bf535e5dc011e04b5c5a79fdc3ce73e72d48:handover/promotion-inputs/warden/tests/test_slack_review5.py:generic-api-key:83
+c79169285807eba9d74c91307b17b6a25b740437:tests/test_c1a_redactor.py:generic-api-key:1065
+c79169285807eba9d74c91307b17b6a25b740437:tests/test_c1a_redactor.py:generic-api-key:1097
+c79169285807eba9d74c91307b17b6a25b740437:tests/test_c1a_redactor.py:generic-api-key:1185
+c440e29504220c2624a96e54dec9784d0cbe6042:tests/test_c1a_redactor.py:generic-api-key:1519
+c440e29504220c2624a96e54dec9784d0cbe6042:tests/test_c1a_redactor.py:generic-api-key:1742
+2288bf535e5dc011e04b5c5a79fdc3ce73e72d48:handover/promotion-inputs/warden/tests/test_redaction.py:generic-api-key:69
+2288bf535e5dc011e04b5c5a79fdc3ce73e72d48:handover/promotion-inputs/warden/tests/test_redaction.py:generic-api-key:71
+2288bf535e5dc011e04b5c5a79fdc3ce73e72d48:handover/promotion-inputs/warden/tests/test_redaction.py:generic-api-key:96
+2288bf535e5dc011e04b5c5a79fdc3ce73e72d48:handover/promotion-inputs/warden/tests/test_redaction.py:generic-api-key:106
+2288bf535e5dc011e04b5c5a79fdc3ce73e72d48:handover/promotion-inputs/warden/tests/test_redaction.py:generic-api-key:136
+2288bf535e5dc011e04b5c5a79fdc3ce73e72d48:handover/promotion-inputs/warden/tests/test_redaction.py:generic-api-key:377
+2288bf535e5dc011e04b5c5a79fdc3ce73e72d48:handover/promotion-inputs/warden/tests/test_runtime_module_g6.py:generic-api-key:83
+```
+I read lines 69 (warden test_redaction), 49 (gate_review8), 185 (intake-p2), 1065 and 1519 (C1a) and saw made-up passwords; the other 12 are UNREAD by the cloud session. Later C1a commits may hold more lines the scan did not report only because they are not on a scanned ref; the lead's local rerun in step 2 is the authority.
+
+## Appendix B. PENDING LEAD list (decisions that are not the author's; recommendation first)
+1. Amend plan section 9 row to use the ruleset commands (F1). Yes.
+2. Tier B vs "security has no cap". Tier B.
+3. CodeRabbit not required. Agreed as written.
+4. Only-the-lead-merges control: option A (restrict updates, lead bypass, auto-merge off).
+5. Reword rule 9(d) "no internet". Yes.
+6. Class P (private names) as digests, list chosen by the lead on the laptop.
+7. PR titles/bodies not scanned in the first version.
+8. Reword the 12 provenance comments naming the owner's account and private repository; history start commit; no history rewrite in v1.
+9. Tell the P1 author to add `THIRD-PARTY-NOTICES.md` with the Unicode licence text.
+10. Owner: copyright holder of promoted Warden code; contributors in Warden.
