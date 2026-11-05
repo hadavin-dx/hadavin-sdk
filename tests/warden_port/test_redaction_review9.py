@@ -1,4 +1,4 @@
-"""Ported from WARDEN tests/test_redaction_review9.py (main a1e76cbf, veerarakesh56/warden). Kept 3 tests; dropped 2 that need WARDEN-only modules or unported gate policy (listed in the PR).
+"""Ported from the upstream project's tests/test_redaction_review9.py. Kept 3 tests; dropped 2 that need upstream-only modules or unported gate policy (listed in the PR).
 
 Ninth independent review (2026-10-01), redaction: cookies in every written form, values whose start an earlier
 pattern masked, tools saying "there is none", and a secret inside a compound value echoed alone elsewhere."""

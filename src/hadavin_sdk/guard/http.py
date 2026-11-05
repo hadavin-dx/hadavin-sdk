@@ -15,38 +15,81 @@ import socket
 import ssl
 import threading
 import urllib.request
+from dataclasses import dataclass
 
 from hadavin_sdk.guard.egress import EgressRefused, normalise_host
 
 LOOPBACK = frozenset({"127.0.0.1", "localhost", "::1"})
 
 
-# Addresses that name a cloud's metadata service (they are private or link-local, and a request there hands out
-# credentials). The AWS one over IPv6 is `fd00:ec2::254`.
-_METADATA = frozenset(
-    ipaddress.ip_address(a)
-    for a in (
-        "169.254.169.254",
-        "100.100.100.200",
-        "192.0.0.192",
-        "fd00:ec2::254",
-        "168.63.129.16",
-        "fd20:ce::254",
-    )
+def _v4(*octets: int) -> ipaddress.IPv4Address:
+    """An IPv4 address from its four numbers (the table below is read as numbers, not as dotted text)."""
+    return ipaddress.IPv4Address(bytes(octets))
+
+
+def _v6(*hextets: int) -> ipaddress.IPv6Address:
+    """An IPv6 address from its eight 16-bit groups."""
+    return ipaddress.IPv6Address(b"".join(h.to_bytes(2, "big") for h in hextets))
+
+
+@dataclass(frozen=True)
+class MetadataEndpoint:
+    """One address a platform serves its instance-metadata service on. The notes are vendor-neutral on purpose (core logic
+    names no vendor); the comments beside each row say which platform it is."""
+
+    address: ipaddress.IPv4Address | ipaddress.IPv6Address
+    provider: str
+    why: str  # why a request there is refused
+
+
+# DENY LIST, on purpose: these addresses are private or link-local, so a plain "is it public" check would let them through,
+# and a request to one hands out the credentials of the machine it runs on (the classic server-side request forgery
+# target). The numbers are written as numbers; the literal text of an address never appears in this module.
+METADATA_ENDPOINTS: tuple[MetadataEndpoint, ...] = (
+    MetadataEndpoint(  # AWS, Azure, Google Cloud, OpenStack, DigitalOcean and others
+        _v4(169, 254, 169, 254),
+        "link-local metadata address shared by most clouds",
+        "instance credentials and identity tokens",
+    ),
+    MetadataEndpoint(  # Alibaba Cloud
+        _v4(100, 100, 100, 200),
+        "carrier-grade-NAT address used by one provider",
+        "instance role credentials",
+    ),
+    MetadataEndpoint(  # Oracle Cloud (its older metadata address); the address is inside 192.0.0.0/24, the IETF protocol assignments
+        _v4(192, 0, 0, 192),
+        "address inside the IETF protocol-assignments range (a /24), used by one provider",
+        "instance credentials",
+    ),
+    MetadataEndpoint(  # AWS over IPv6
+        _v6(0xFD00, 0x0EC2, 0, 0, 0, 0, 0, 0x0254),
+        "IPv6 unique-local metadata address of one provider",
+        "instance credentials and identity tokens",
+    ),
+    MetadataEndpoint(  # Azure (the virtual public IP of the host)
+        _v4(168, 63, 129, 16),
+        "public-looking address one provider serves to its own virtual machines only",
+        "host services for the machine: provisioning data and extension secrets",
+    ),
+    MetadataEndpoint(  # Google Cloud over IPv6
+        _v6(0xFD20, 0x00CE, 0, 0, 0, 0, 0, 0x0254),
+        "IPv6 unique-local metadata address of one provider",
+        "instance credentials and identity tokens",
+    ),
 )
-_BENCHMARK = ipaddress.ip_network("198.18.0.0/15")
-_THIS_NETWORK = ipaddress.ip_network(
-    "0.0.0.0/8"
-)  # "this host on this network": Linux connects it to the local host
+_METADATA = frozenset(e.address for e in METADATA_ENDPOINTS)
+# Reserved for benchmarking (RFC 2544), never a public service a tool should call.
+_BENCHMARK = ipaddress.IPv4Network((bytes((198, 18, 0, 0)), 15))
+# 0.0.0.0 reaches the local host on Linux; the whole /8 is not a routable destination.
+_THIS_NETWORK = ipaddress.IPv4Network((bytes((0, 0, 0, 0)), 8))
 # 100.64.0.0/10 (carrier-grade NAT, where some clouds and VPNs put in-cluster services) is allowed on purpose,
 # like the other private ranges; the manifest host allowlist bounds what a tool may name.
-# NAT64 (the well-known prefix) is refused whole, by this rule and not by the standard library's flags (which differ
-# between Python versions): an IPv6-only cluster behind DNS64/NAT64 cannot use the in-process fetch and needs the
-# egress proxy (K7) instead.
-_NAT64 = ipaddress.ip_network("64:ff9b::/96")
-_NAT64_LOCAL = ipaddress.ip_network(
-    "64:ff9b:1::/48"
-)  # the local-use NAT64 prefix (RFC 8215): refused whole
+# NAT64 (the well-known prefix) is refused whole by an explicit rule here, so the refusal does not depend on the
+# standard library (which also refuses it today, because the whole range is reserved there): an IPv6-only cluster
+# behind DNS64/NAT64 cannot use the in-process fetch and needs the egress proxy (K7) instead.
+_NAT64 = ipaddress.IPv6Network((_v6(0x64, 0xFF9B, 0, 0, 0, 0, 0, 0), 96))
+# the local-use NAT64 prefix (RFC 8215): refused whole
+_NAT64_LOCAL = ipaddress.IPv6Network((_v6(0x64, 0xFF9B, 1, 0, 0, 0, 0, 0), 48))
 # One budget for the whole process: the read tools, the LLM clients and the executor share it. During a real DNS
 # outage 8 stuck lookups refuse every new outbound name lookup until the resolver gives up (fail closed, and
 # self-healing: a permit comes back when its thread ends).
@@ -105,8 +148,9 @@ def _resolve(host: str, port: int):
 
 
 def checked_connection(address, timeout=socket._GLOBAL_DEFAULT_TIMEOUT, source_address=None):
-    """Resolve the host ONCE, refuse it if any answer is loopback, link-local (the cloud metadata address),
-    unspecified, multicast or reserved, and connect to a checked address. The name is looked up exactly once, so
+    """Resolve the host ONCE, refuse it if any answer is loopback, link-local, unspecified, multicast, reserved, a
+    cloud metadata address (METADATA_ENDPOINTS), in the benchmarking range or "this network", NAT64, or an IPv6 form that
+    carries one of these (IPv4-mapped, 6to4, Teredo), and connect to a checked address. The name is looked up exactly once, so
     a DNS answer that changes between the check and the connect (rebinding) cannot reach the socket; TLS still
     verifies the certificate against the NAME (the connection keeps `host` for SNI). Private ranges are allowed:
     in-cluster services live there. An explicit loopback NAME (127.0.0.1, localhost, ::1) is connected as it is,

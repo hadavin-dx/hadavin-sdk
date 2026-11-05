@@ -208,6 +208,92 @@
   before starting the runtime; until then start-up raises `Unqualified`. After this one re-gate, adding an optional
   field with a default no longer un-qualifies agents, and swapping the llm backend does.
 
+
+### Changed (promoted controls, from a demo's reviews; PR #50)
+- **`approvals/gate.py`:** no behaviour change. The unused helpers `_views` and `_rendered` (secret views ported with the gate in slice 2 that no code ever called) are deleted; the live secret check of approval and channel text is `approvals.channel.clean` (neutralise, then one redaction last), whose scans use the fold described below.
+- **Behaviour change in `guard/redact.py` (interim, fail closed):** a line with non-ASCII text is scanned FIRST in its FOLDED form (look-alike
+  letters, other scripts' digits, invisible characters), before the direct patterns run. On a hit the WHOLE LINE is replaced by the fixed note
+  `[line withheld: look-alike text hid a protected value]` plus the placeholders of the hits, and the folded text is NEVER emitted (the fold
+  turns full-width and look-alike characters into live ASCII, and `approvals.channel.clean` redacts LAST, after the text was neutralised: an
+  emitted folded line could carry a live mention, link, command or fence to a person; fixed in the redactor, so every caller is safe). Running
+  the fold first also stops a direct pass from masking only the ASCII tail of a value (`al<look-alike>ce@example.com` kept its head). Masking
+  inside the original line needs a character map and is a tracked item. The replaced line is LOSSY: all of the line except the placeholders is
+  dropped. **`redact.py` still does not fold in general:** a line without non-ASCII text goes through the direct patterns only. What the
+  redactor still does not catch: a value split by a character that changes the fold's shape (for example digits spelled as words),
+  look-alike letters in a non-folded script, and a secret no pattern knows. A fold-aware mask (scan folded text, mask by span map) is a
+  tracked item in `docs/promoted-controls.md`.
+- **`Limits.stop(by, source="cli")` / `Limits.reset(by, source="cli")` and `Limits.is_stopped()`** (small core change; PR #48 also edits
+  `limits.py`: rebase it after this PR). A gate flip is audited with `source="gate"`, not as a CLI action. `StopGate` checks at
+  construction that its `Limits` has the `source` parameter and raises `TypeError` otherwise: copy `stop_gate.py` together with `limits.py`
+  (or pin core at PR #50 or later).
+- **Review fixes (PR #50):** `check_text` refuses more than 10000 protected values or 1000 allowed references (`ValueError`), and a protected value or allowed reference longer than 4096 characters (`MAX_VALUE_LEN`; `text_leaks` now returns True, never raises, for input `check_text` refuses); `tools/mutation_runner.py` snapshots the tree once, passes an environment allowlist to its children and can pin a mutant to one test (`only_test`); the residual of the digit check is listed only in `docs/promoted-controls.md`. The mutant run (`tests/promoted_mutants.py`) is a manual gate on Python 3.13 before promotion, not a CI job (see the same file).
+- **Static-analysis fixes (SonarCloud):** `guard/runmap.py` finds a half-written escape at the end of a text with `partial_escape_start` (linear; the old pattern with a repeated `%XX` group took time that grew with the square of the run: 79 s for 40000 groups) and `PARTIAL_ESCAPE` is gone (a private pattern plus the function replace it; `tools.py` uses the function). `guard/http.py` holds the cloud-metadata deny list as one documented table `METADATA_ENDPOINTS` (provider and reason per address), built from numbers, with the same six addresses and ranges as before; the notes in the table are vendor-neutral (the platform names are in comments), and the networks are built from numbers. Other changes in `guard/http.py` are NOT part of this PR: the 0.0.0.0/8 refusal, the local-use NAT64 prefix, refusing NAT64 by prefix and the stuck-lookup budget came with PR #42 (already on main).
+- **Merge order and re-sync of the copies:** PR #49 (a downstream demo repo) and this PR both edit this Unreleased section and share
+  `guard/textnorm.py`. Merge #50 first. Every repository that keeps a byte copy (the demos, #49) re-copies, in one commit:
+  `guard/textnorm.py` (sha256 `fd9d0ffdbe7d480db29c9e47bb4be4025fbc19638bf83eef9e6d323483659b14`), `guard/egress_text.py` (sha256 `1f8243d4753632ae72fc0f637b4e0e5afb6ef373aa4f9e9c59cf00fbe6d3e9fa`; the digit counting changed in review rounds 4 to 6, a stale copy silently keeps the old counting), `runtime/stop_gate.py` (sha256 `69c2f365efb54fddb902e816f2c9647e7ad2c65fc13343f74f8b564afac668c7`; copy it with core's `limits.py` from the same core commit), the generated `guard/_confusables.py` (sha256 `41740c11734e2ec1e5a63f9325dffa04226c84f3b81b43c1b5c7e766f8a0ccfd`; `textnorm.py` imports it) and
+  `tests/fixtures/textnorm_vectors.json` (sha256 `1a1944708f7d1737588d7b02666620ceb308b0fe4a71ce2a312c4dc29113d349`); the same hashes (all but `limits.py`, which other PRs also edit) are pinned in `tests/fixtures/textnorm_manifest.json`. The consumers are every repository with a `core_copies.json`.
+  Then update the repository's `core_copies.json` rows (`core_path`, `core_sha256`, `import_rewrite`: `textnorm.py` imports
+  `hadavin_sdk.guard._confusables`, `egress_text.py` imports `hadavin_sdk.guard.textnorm`) and adopt the new names: `safe_equal(a, b)` ->
+  `allow_equal(a, b) is AllowVerdict.EQUAL` (`VARIANT` and `LOOKALIKE` refuse; `LOOKALIKE` is the audit alarm), `confusable_not_equal` is
+  gone, `mixed_script` -> `has_mixed_script`, DENY comparisons -> `same_person`, `squeeze(raw, loose=...)` is keyword-only,
+  `check_text(..., policy=)` is required (`LeakPolicy.payments()` / `.general()`, config sections need `profile:`), `runtime/control.py`
+  is gone (use `StopGate`; handle `StopGateBusy`). For PR #49 in short: `identity_text` and `reply_check` also drop unassigned code points
+  (Cn), and `identity_key(lookalikes="refuse")` also refuses `has_mixed_script(raw)`.
+
+### Added (promoted controls; vendor-neutral)
+Call sites in `src`: `guard/redact.py` (the interim fold), `limits.py` (`source`, `is_stopped`). The other
+modules below have no call site in this repository yet.
+- `guard/textnorm.py` (+ generated `guard/_confusables.py`, `tools/gen_confusables.py`, vendored `tools/data/confusables.txt`): the shared
+  text fold of `egress_text` and `guard/redact.py`. The fold makes look-alike text EQUAL, for DENY decisions only (`same_person`,
+  blocklists, leak scans). `guard/redact.py` has its own first pass (see Changed) and `approvals/gate.py` keeps a separate invisible-
+  character table for URL parsing, so this is NOT "one fold everywhere" yet. For an ALLOW decision use `allow_equal(a, b)` (`EQUAL`
+  only for identical strings; `VARIANT`, `LOOKALIKE` and `DIFFERENT` refuse; a plain `Enum` whose truth value raises, so `if
+  allow_equal(a, b):` cannot be written by mistake). `names_equal` is a tolerant name comparison for prose, neither ALLOW nor DENY.
+  `has_mixed_script` is the fail-closed backstop for look-alikes the table does not list; the micro and ohm signs are exempt. The
+  look-alike table is generated from Unicode UTS #39 `confusables.txt` (MA, version 18.0.0, dated 2026-08-06, sha256 pinned in the
+  generator) plus 16 listed letters and a rule for Latin small capitals. unicode.org serves only a "latest" URL, so the 763 KB data file
+  is vendored (Unicode License v3, notice in the file and in the generated header) and a test regenerates the table offline. The
+  small-capital rule reads character names from the running interpreter: the checked-in table was generated with Python 3.13.3 /
+  Unicode 15.1.0 (`DATA_UNICODEDATA`), the regeneration test runs only on that Unicode version. Unassigned code points (Cn) are dropped
+  (depends on the Python Unicode version). Tests pin the table, the manifest, a shared vector file and a property that every value is ASCII.
+- `guard/egress_text.py`: output check for text a person reads. Digit budget: plain digit-like characters, the digits of set-aside amounts
+  and references, and 5 per date ADD UP and must stay below 12 in every preset (the shortest card number has 13); a Luhn scan over the digit
+  stream is kept as an independent card test (it cannot fire through `check_text` while the budgets hold). Capped set-aside tokens, protected values (also short and non-Latin ones; CJK and Thai match as substrings),
+  typed `Violation`s, validated `LeakPolicy`. **No default policy**: `check_text(..., policy=LeakPolicy.payments())` (strict) or
+  `LeakPolicy.general()` (ids and phone numbers up to 11 digits; a phone with 12 or more digits needs `allowed_patterns`). Defaults
+  table: `docs/promoted-controls.md`. Distinct from `guard/redact.py` (the input mask). Digit-like letters: O o I l L S s B Z z G Q count;
+  the lowercase i b g q are WEAK (prose such as "big issue") and count only in a token with 2 or more digits or strong letters, or inside a
+  letters-only run with 6 strong letters, so `OlISBZGq` and `1b5i7g3q` (8 digit-like characters each) are refused by `payments()` (limit 8)
+  and allowed by `general()` (8 is below 12, the same as plain 12345678). The count is MONOTONIC for appended "separator + token" and for inserting a separator or a filler token between tokens
+  made only of strong letters (a seeded fuzz test of 20000+ cases pins both, with a sensitivity control); it is NOT monotonic for every edit
+  (a letter glued to a word can change what the word is). It is the larger of a per-run reading and a whole-text reading. Ordinary words are free in a run that holds a digit:
+  the strong letters of the first `max_free_words_run` (2) words, and at most `max_free_words` (2; `general()` 4) words in the whole text
+  (new `LeakPolicy` fields), so `general()` lets `id is 12345678901`, `Total 12345678901` and `call 5551234567` through, while
+  `4 Ib Ib Ib ...` and `Ob Ib Sb Zb Bb Lb 5` are refused (the earlier deferred word rule let a letter-encoded card
+  through once one digit was appended). A letter glued to a digit (`12345678901s`) counts. In a text with a real digit, strong letters of
+  every token made only of strong letters (even one: `I`) and of every token with 4 or more strong letters (`lllllx`, `OlSZBxxxxx`) are
+  counted over the whole text, so `4 x lllll x lllll x lllll`, `4 I x I x I ...` and `4 OlSZBxxxxx OlSZBxxxxx OlSZBxxxxx` are refused.
+  False refusals on prose with a digit (`Boss 1234`, `Oslo 1234`, `Bill 1234`, `BLISS GLOSS`) are by design and measured (docs); the free-word
+  caps count pieces, not words. **What this does NOT
+  stop:** see "Residual of the digit check" in `docs/promoted-controls.md`, the only list of residuals. The Luhn scan over the digit stream cannot fire through `check_text` while the
+  budgets hold (it is an independent card test, tested directly). `has_mixed_script` treats a newline or tab as a word break; its script
+  list is curated (see its docstring), not the full UTS #39 script-extension data.
+- `runtime/config_view.py`: deep-frozen views (accident-proofing, not a sandbox), one immutable `ConfigView`, `ConfigHolder.swap(expect=)`,
+  depth and node bounds on `freeze` and `thaw`.
+- `runtime/stop_gate.py`: `StopGate`, the in-process effect barrier in front of the audited durable stop (`Limits.stop` / `Limits.reset`,
+  one write path); `engage` flips the process flag first and fails closed when the store is down (and records the stop itself if
+  `Limits.stop` raises); `release` is audit-first and cannot undo a newer `engage` (`StopGateBusy.durable` says whether the stop was
+  written again); `aengage` / `aeffect` for asyncio. The old in-process `KillSwitch` class never shipped on `main`; there is no
+  compatibility shim. The durable switch is ONE global row: a per-tenant stop is a tracked item.
+- `runtime/rowstore.py`: copy-on-read row store (default limit 100000 rows, validated), validate then audit then write, `KeyPending` vs
+  `DuplicateKey`.
+- `audit/capped.py`: per-tenant capped audit for refused attempts (bounded tenants, kinds and keys, marker reserved under the lock,
+  back-off) and an `AuditSink` adapter (`intent=True` for audit-before-write).
+- `testing/mutation.py`, `testing/contracts.py`: mutation-kill judge and a row-store contract check (in the wheel). `tools/mutation_runner.py`
+  (NOT in the wheel, nothing imports it): a small runner, paths confined to its tree, a timeout per pytest run. **Not included:** the
+  outbox, signer and `Verifier` contracts and reservations belong to PR #49 and stage 2 (a tracked item); only `check_rowstore_contract`
+  exists here.
+
 ### Added
 - **G4 command withholding** (P5/P6 follow-ups). `channel.clean` now withholds every command a person could
   paste to change a system: `[command withheld (G4)]` stands in its place.

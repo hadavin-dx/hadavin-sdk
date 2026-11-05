@@ -1,7 +1,6 @@
 """Pattern-based redaction for logs, audit and channel text (the runtime redacts the document and every tool result with it before the model sees them).
 
-Copied from WARDEN `src/warden/redaction.py` at PR #206 head 14fc549 (branch `redaction-bank-patterns`,
-veerarakesh56/warden): the full pattern table, including the bank codes (BANKCODE: BSB, sort code, ABA,
+Copied from the upstream project's redaction module: the full pattern table, including the bank codes (BANKCODE: BSB, sort code, ABA,
 CA transit/institution) and accounts (BANKACCT), and the PHONE date guard. Edits: this header,
 `RedactionResult.kinds` (the slice 1 callers read the kinds found), and a PHONE guard for compact
 14-digit timestamps. Placeholders are `<KIND_n>`.
@@ -24,6 +23,8 @@ import re
 import string
 from dataclasses import dataclass, field
 from typing import Any
+
+from hadavin_sdk.guard.textnorm import fold
 
 # Ordered deliberately: the greedy/most-specific patterns run before the narrow ones, otherwise a
 # narrow pattern eats part of a broader secret (a UUID inside an ARN, an EMAIL inside a connection
@@ -887,6 +888,9 @@ def _countable(suffix: str) -> bool:
     return suffix.isascii() and suffix.isdigit() and len(suffix) <= 18
 
 
+FOLD_NOTE = "[line withheld: look-alike text hid a protected value]"  # fixed text: the folded line is never emitted
+
+
 class _Redactor:
     """One placeholder namespace (map, reverse map, counters) shared by every text of one call."""
 
@@ -918,9 +922,54 @@ class _Redactor:
 
     def find(self, text: str) -> str:
         out = strip_ansi(text)
+        if not out.isascii():
+            # The folded scan runs FIRST, on the text as written: a direct pass first could mask only the ASCII tail of a value hidden behind
+            # look-alike letters (``al<look-alike>ce@example.com`` -> ``al<look-alike><EMAIL_1>``) and leave its head in the text.
+            out = "".join(self._folded_line(ln) for ln in out.splitlines(keepends=True))
         for label, pattern in PATTERNS:
             out = pattern.sub(lambda m, label=label: self._mask(m, label), out)
         return out
+
+    @staticmethod
+    def _dry_hits(text: str) -> set[str]:
+        """What the patterns would match in ``text`` (compared after the fold), without registering any placeholder."""
+        found: set[str] = set()
+
+        def note(m: re.Match[str]) -> str:
+            found.add(fold(m.group(0)))
+            return "\0"
+
+        for _label, pattern in PATTERNS:
+            text = pattern.sub(note, text)
+        return found
+
+    def _folded_line(self, line: str) -> str:
+        """Interim fail-closed fold: a value hidden behind look-alike letters, another script's digits or invisible
+        characters does not match the patterns above. For a line with non-ASCII text, run the patterns again on its FOLDED form
+        (``textnorm.fold``), BEFORE the direct patterns run. On a hit the WHOLE LINE is replaced by ``FOLD_NOTE`` plus the placeholders of the hits, and the folded text is
+        NEVER emitted: the fold turns full-width and look-alike characters into live ASCII (a mention, a link, a command, a fence), and a
+        caller that neutralises text before calling ``redact`` last (``approvals.channel.clean``) would send that live text to a person.
+        ``restore`` of the placeholders gives the folded value. A line with no hit is returned unchanged. Masking the hits inside the
+        ORIGINAL line needs a character map and is a tracked item in ``docs/promoted-controls.md``."""
+        if line.isascii():
+            return line
+        body = line.rstrip("\r\n")
+        eol = line[len(body) :]
+        folded = fold(body)
+        if self._dry_hits(folded) <= self._dry_hits(body):
+            return line  # the fold finds nothing the direct patterns do not (``‹IPV4_2›`` only folds to ``<IPV4_2>``): the direct pass handles it
+        hits: list[str] = []
+
+        def mask(m: re.Match[str], label: str) -> str:
+            masked = self._mask(m, label)
+            if masked != m.group(0):
+                hits.append(masked)
+            return masked
+
+        cur = folded
+        for label, pattern in PATTERNS:
+            cur = pattern.sub(lambda m, label=label: mask(m, label), cur)
+        return f"{FOLD_NOTE} {' '.join(dict.fromkeys(hits))}{eol}" if hits else line
 
     def _mask(self, m: re.Match[str], label: str) -> str:
         """One match of `label`'s pattern, its value replaced by its placeholder (a new one when it is new)."""

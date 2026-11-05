@@ -6,6 +6,8 @@ details, and a private channel will be arranged. Do not post vulnerability detai
 
 Reports are answered within 5 working days.
 
+The repository also holds developer tools under `tools/` (a mutation runner that starts `pytest` subprocesses on a chosen tree, a Unicode table generator). They are not part of the published package and nothing in `src/` imports them.
+
 ## Stated limits of redaction (reviewed, not bugs)
 
 Redaction is pattern based and treats the end of a value the way the redactor's own value pattern does. Two consequences are known and stated:

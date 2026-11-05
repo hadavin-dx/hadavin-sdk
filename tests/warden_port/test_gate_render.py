@@ -1,4 +1,4 @@
-"""Ported from WARDEN tests/test_gate_render.py (main a1e76cbf, veerarakesh56/warden). Kept 1 tests; dropped 8 that need WARDEN-only modules or unported gate policy (listed in the PR).
+"""Ported from the upstream project's tests/test_gate_render.py. Kept 1 tests; dropped 8 that need upstream-only modules or unported gate policy (listed in the PR).
 
 The outbound gate judged by a real renderer, not by regex (independent review, 2026-09-28).
 
