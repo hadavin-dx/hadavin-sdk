@@ -1922,7 +1922,7 @@ M += [
             RD,
             "if only is not None and n not in only and label not in _CONTEXT_LABELS:",
             "if False:",
-            "test_a_suspect_line_loops_only_the_patterns_that_matched_it",
+            "test_a_pattern_that_matched_nowhere_in_a_line_is_not_run_on_it",
             "",
         ),
         (
