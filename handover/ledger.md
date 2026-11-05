@@ -1354,3 +1354,6 @@
 | BL-core-P4a-r7-adv-ADV-R7-3 | P4a | MAJOR | see report | OPEN | reviews/P4a-round7-adversarial.md | b782b8d |
 | BL-core-P4a-r7-adv-ADV-R7-4 | P4a | MAJOR | see report | OPEN | reviews/P4a-round7-adversarial.md | b782b8d |
 | BL-core-P4a-r7-adv-ADV-R7-5 | P4a | MAJOR | see report | OPEN | reviews/P4a-round7-adversarial.md | b782b8d |
+| BL-core-P4a-r7-cor-COR-R7-1 | P4a | MAJOR | see report | OPEN | reviews/P4a-round7-correctness.md | b782b8d |
+| BL-core-P4a-r7-cor-COR-R7-2 | P4a | MAJOR | see report | OPEN | reviews/P4a-round7-correctness.md | b782b8d |
+| BL-core-P4a-r7-cor-COR-R7-3 | P4a | MAJOR | see report | OPEN | reviews/P4a-round7-correctness.md | b782b8d |
