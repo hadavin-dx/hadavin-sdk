@@ -996,3 +996,17 @@
 | BL-core-p1-r5-cor-C15 | P1 | MINOR | see report | OPEN | reviews/P1-round5-correctness.md | 11fa7d9 |
 | BL-core-p1-r5-cor-C16 | P1 | NIT | see report | OPEN | reviews/P1-round5-correctness.md | 11fa7d9 |
 | BL-core-p1-r5-cor-C17 | P1 | NIT | see report | OPEN | reviews/P1-round5-correctness.md | 11fa7d9 |
+| BL-core-p4a-r3-cor-R3-1 | P4A | MAJOR | see report | OPEN | reviews/P4a-round3-correctness.md | 72194a2 |
+| BL-core-p4a-r3-cor-R3-2 | P4A | MAJOR | see report | OPEN | reviews/P4a-round3-correctness.md | 72194a2 |
+| BL-core-p4a-r3-cor-R3-3 | P4A | MAJOR | see report | OPEN | reviews/P4a-round3-correctness.md | 72194a2 |
+| BL-core-p4a-r3-cor-R3-4 | P4A | MINOR | see report | OPEN | reviews/P4a-round3-correctness.md | 72194a2 |
+| BL-core-p4a-r3-cor-R3-5 | P4A | MINOR | see report | OPEN | reviews/P4a-round3-correctness.md | 72194a2 |
+| BL-core-p4a-r3-cor-R3-6 | P4A | MINOR | see report | OPEN | reviews/P4a-round3-correctness.md | 72194a2 |
+| BL-core-p4a-r3-cor-R3-7 | P4A | MINOR | see report | OPEN | reviews/P4a-round3-correctness.md | 72194a2 |
+| BL-core-p4a-r3-cor-R3-8 | P4A | MINOR | see report | OPEN | reviews/P4a-round3-correctness.md | 72194a2 |
+| BL-core-p4a-r3-cor-R3-9 | P4A | MINOR | see report | OPEN | reviews/P4a-round3-correctness.md | 72194a2 |
+| BL-core-p4a-r3-cor-R3-10 | P4A | MINOR | see report | OPEN | reviews/P4a-round3-correctness.md | 72194a2 |
+| BL-core-p4a-r3-cor-R3-11 | P4A | MINOR | see report | OPEN | reviews/P4a-round3-correctness.md | 72194a2 |
+| BL-core-p4a-r3-cor-R3-12 | P4A | MINOR | see report | OPEN | reviews/P4a-round3-correctness.md | 72194a2 |
+| BL-core-p4a-r3-cor-R3-13 | P4A | NIT | see report | OPEN | reviews/P4a-round3-correctness.md | 72194a2 |
+| BL-core-p4a-r3-cor-R3-14 | P4A | NIT | see report | OPEN | reviews/P4a-round3-correctness.md | 72194a2 |
