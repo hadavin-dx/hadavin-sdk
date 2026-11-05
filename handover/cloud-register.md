@@ -214,4 +214,4 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | r3-LK-resolve | egm-resolve look-alike round 3 (ADV-LK3-1..13, COR-LK3-1..10) -> draft 4 | opus (claude-opus-5-5) | now | +45min | REPORTED | verify, commit, push |
 | r10-P1-author | P1 rev 10 author from reviews/P1-round8-resolve.md | sonnet (claude-sonnet-5-5) | now | +60min | running | verify, commit, push, then round 9 reviewers |
 | r4-LK-adv | round 4 adversarial review of designs/lookalike-leak.md draft 4 (head bdab309) | sonnet (claude-sonnet-5-5) | now | +45min | running | save report, ledger rows |
-| r4-LK-cor | round 4 correctness review of designs/lookalike-leak.md draft 4 (head bdab309) | sonnet (claude-sonnet-5-5) | now | +45min | running | save report, ledger rows |
+| r4-LK-cor | round 4 correctness review of designs/lookalike-leak.md draft 4 (head bdab309) | sonnet (claude-sonnet-5-5) | now | +45min | REPORTED | save report, ledger rows |
