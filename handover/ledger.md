@@ -765,3 +765,17 @@
 | BL-core-p2a-r4-adv-A10 | P2A | MINOR | hand-applied guard file leaves deny-all until migrate | OPEN | reviews/P2a-round4-adversarial.md | 1b533fd |
 | BL-core-p2a-r4-adv-A11 | P2A | NIT | stop returns RETURNING | OPEN | reviews/P2a-round4-adversarial.md | 1b533fd |
 | BL-core-p2a-r4-adv-A12 | P2A | NIT | probe dead tuples | OPEN | reviews/P2a-round4-adversarial.md | 1b533fd |
+| BL-core-p2a-r4-cor-C1 | P2A | MAJOR | see report | OPEN | reviews/P2a-round4-correctness.md | 1b533fd |
+| BL-core-p2a-r4-cor-C2 | P2A | MAJOR | see report | OPEN | reviews/P2a-round4-correctness.md | 1b533fd |
+| BL-core-p2a-r4-cor-C3 | P2A | MAJOR | see report | OPEN | reviews/P2a-round4-correctness.md | 1b533fd |
+| BL-core-p2a-r4-cor-C4 | P2A | MAJOR | see report | OPEN | reviews/P2a-round4-correctness.md | 1b533fd |
+| BL-core-p2a-r4-cor-C5 | P2A | MINOR | see report | OPEN | reviews/P2a-round4-correctness.md | 1b533fd |
+| BL-core-p2a-r4-cor-C6 | P2A | MINOR | see report | OPEN | reviews/P2a-round4-correctness.md | 1b533fd |
+| BL-core-p2a-r4-cor-C7 | P2A | MINOR | see report | OPEN | reviews/P2a-round4-correctness.md | 1b533fd |
+| BL-core-p2a-r4-cor-C8 | P2A | MINOR | see report | OPEN | reviews/P2a-round4-correctness.md | 1b533fd |
+| BL-core-p2a-r4-cor-C9 | P2A | MINOR | see report | OPEN | reviews/P2a-round4-correctness.md | 1b533fd |
+| BL-core-p2a-r4-cor-C10 | P2A | MINOR | see report | OPEN | reviews/P2a-round4-correctness.md | 1b533fd |
+| BL-core-p2a-r4-cor-C11 | P2A | MINOR | see report | OPEN | reviews/P2a-round4-correctness.md | 1b533fd |
+| BL-core-p2a-r4-cor-C12 | P2A | MINOR | see report | OPEN | reviews/P2a-round4-correctness.md | 1b533fd |
+| BL-core-p2a-r4-cor-C13 | P2A | NIT | see report | OPEN | reviews/P2a-round4-correctness.md | 1b533fd |
+| BL-core-p2a-r4-cor-C14 | P2A | NIT | see report | OPEN | reviews/P2a-round4-correctness.md | 1b533fd |
