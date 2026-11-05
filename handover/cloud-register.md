@@ -35,10 +35,10 @@ The egm-resolve skill cannot be started by the cloud session (tool refusal), so 
 The Sonnet fix-batch rows above were stopped at 15:05Z before writing anything. The egm-resolve skill then ran (skill loaded after the patch script removed disable-model-invocation); reports: reviews/<P>-round1-resolve-report.md. The authors now APPLY those reports.
 | agent | purpose | model | started | expected end | state | next action |
 |---|---|---|---|---|---|---|
-| apply-P1 (resumed) | apply P1-round1-resolve-report.md to tickets/P1.md; write P1-round1-disposition.md | sonnet (claude-sonnet-5-5) | 15:06Z | 15:46Z | running | verify, commit, round 2 reviewers |
-| apply-P2a (resumed) | same for P2a | sonnet (claude-sonnet-5-5) | 15:06Z | 15:46Z | running | same |
-| apply-P3a (resumed) | same for P3a | sonnet (claude-sonnet-5-5) | 15:06Z | 15:46Z | running | same |
-| apply-P4d (resumed) | same for P4d | sonnet (claude-sonnet-5-5) | 15:06Z | 15:46Z | running | same |
+| apply-P1 (resumed) | apply P1-round1-resolve-report.md to tickets/P1.md; write P1-round1-disposition.md | sonnet (claude-sonnet-5-5) | 15:06Z | 15:46Z | reported, closed | verify, commit, round 2 reviewers |
+| apply-P2a (resumed) | same for P2a | sonnet (claude-sonnet-5-5) | 15:06Z | 15:46Z | reported, closed | same |
+| apply-P3a (resumed) | same for P3a | sonnet (claude-sonnet-5-5) | 15:06Z | 15:46Z | reported, closed | same |
+| apply-P4d (resumed) | same for P4d | sonnet (claude-sonnet-5-5) | 15:06Z | 15:46Z | reported, closed | same |
 
 ## Round 2 reviews (fresh agents, Sonnet 5.5, read-only; they get the ticket and authorities only, NOT round 1 findings or dispositions)
 | agent | purpose | model | started | expected end | state | next action |
