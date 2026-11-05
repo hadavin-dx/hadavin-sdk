@@ -1,5 +1,8 @@
 """The address guard of `guard.http`: one documented metadata deny table built from numbers, and what `_refused` and
-`checked_connection` do with every kind of address (metadata, embedded IPv4 forms, special ranges, allowed private ranges)."""
+`checked_connection` do with every kind of address (metadata, embedded IPv4 forms, special ranges, allowed private ranges).
+
+The refusal tests are characterization tests: `_refused` and `checked_connection` behave as before this change, and they pin
+that. What the change adds is the table, and the tests that name it (table equality, built from numbers, per-row checks)."""
 
 from __future__ import annotations
 
@@ -139,7 +142,7 @@ def test_the_table_names_no_vendor_in_any_string():
     try:  # also the real guard's patterns, where this test file sits beside it (not in a mutation copy)
         from tests.test_lockin_guard import PATTERNS
     except ImportError:
-        return
+        pytest.skip("tests.test_lockin_guard is not importable here (a mutation copy)")
     hits = [
         (label, s)
         for s in strings

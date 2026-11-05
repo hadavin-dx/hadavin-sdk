@@ -34,8 +34,8 @@ def _v6(*hextets: int) -> ipaddress.IPv6Address:
 
 @dataclass(frozen=True)
 class MetadataEndpoint:
-    """One address a platform serves its instance-metadata service on. The notes are vendor-neutral on purpose (core logic
-    names no vendor); the comments beside each row say which platform it is."""
+    """One address a platform serves its instance-metadata service on. The notes are vendor-neutral on purpose (no
+    vendor name in a string); the comments beside each row say which platform it is."""
 
     address: ipaddress.IPv4Address | ipaddress.IPv6Address
     provider: str
@@ -44,7 +44,7 @@ class MetadataEndpoint:
 
 # DENY LIST, on purpose: these addresses are private or link-local, so a plain "is it public" check would let them through,
 # and a request to one hands out the credentials of the machine it runs on (the classic server-side request forgery
-# target). The numbers are written as numbers; the literal text of an address never appears in this module.
+# target). The numbers are written as numbers; no address appears in a string in the code (a few comments show one, for the reader).
 METADATA_ENDPOINTS: tuple[MetadataEndpoint, ...] = (
     MetadataEndpoint(  # AWS, Azure, Google Cloud, OpenStack, DigitalOcean and others
         _v4(169, 254, 169, 254),

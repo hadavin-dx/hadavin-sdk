@@ -99,7 +99,7 @@ def test_the_listed_endings_are_found_and_whole_escapes_are_not():
 
 
 def test_a_very_long_run_of_percent_bytes_takes_linear_time():
-    # the old pattern took 1.3 s for 5000 such groups, 23 s for 20000 and 79 s for 40000 (measured); this is far less for 600000
+    # the old pattern took 1.0 s for 5000 such groups, 16 s for 20000 and 65 s for 40000 (measured 2026-11-06, evidence-2a); this is far less for 600000
     hostile = [
         "%C3" * 200_000 + "X",
         "%C3" * 200_000,
@@ -146,3 +146,10 @@ def test_the_fragment_cut_in_tools_removes_a_half_written_escape_and_keeps_the_r
     assert "%C3" not in out and out.endswith(tools_mod.TRUNCATED)
     # a text without the marker is returned as it is
     assert tools_mod._strip_fragment("abc%C3", forms) == "abc%C3"
+
+
+def test_a_run_the_old_pattern_took_seconds_on_is_instant():
+    # 15 000 groups: the old repeated-group pattern needed about 9 s here; a function that is linear needs milliseconds.
+    # This is the quick guard that fails fast if the quadratic pattern is ever put back (the larger test above would take hours).
+    text = "x" + "%C3" * 15_000 + "y"
+    assert _fastest(lambda: [runmap.partial_escape_start(text)]) < 2.0
