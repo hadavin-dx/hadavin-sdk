@@ -88,7 +88,7 @@ def first_failure_junit(xml_text: str) -> tuple[str, str]:
     low = xml_text.lower()
     if "<!doctype" in low or "<!entity" in low:
         raise ValueError("a JUnit file with a DOCTYPE or ENTITY declaration is refused")
-    root = ET.fromstring(xml_text)  # noqa: S314  # nosec B314 - no DOCTYPE/ENTITY, checked above
+    root = ET.fromstring(xml_text)  # noqa: S314  # nosec B314
     for case in root.iter("testcase"):
         bad = case.find("failure")
         if bad is None:

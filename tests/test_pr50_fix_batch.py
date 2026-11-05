@@ -26,6 +26,7 @@ from hadavin_sdk.guard import egress_text, http, textnorm
 from hadavin_sdk.guard.egress_text import LeakPolicy
 from hadavin_sdk.guard.redact import FOLD_NOTE, _Redactor, redact
 from hadavin_sdk.guard.runmap import InputTooLarge
+from hadavin_sdk.models import KillSwitch as StoredKillSwitch
 from hadavin_sdk.runtime import config_view
 from hadavin_sdk.runtime.rowstore import RowStore
 from hadavin_sdk.runtime.stop_gate import StopGate, StopGateBusy, _label
@@ -223,8 +224,13 @@ def test_a_non_string_tenant_is_a_name_not_a_type_error():
 # ---- 4. the fold pass is bounded -------------------------------------------------------------------------------------------------------------------
 def test_many_short_non_ascii_lines_cost_no_per_line_pattern_runs(monkeypatch):
     calls = []
-    real = _Redactor._dry_hits
-    monkeypatch.setattr(_Redactor, "_dry_hits", staticmethod(lambda t: calls.append(1) or real(t)))
+    real_hits, real_line = _Redactor._dry_hits, _Redactor._folded_line
+    monkeypatch.setattr(
+        _Redactor, "_dry_hits", staticmethod(lambda t: calls.append(1) or real_hits(t))
+    )
+    monkeypatch.setattr(
+        _Redactor, "_folded_line", lambda self, ln: calls.append(1) or real_line(self, ln)
+    )
     out = redact("é\n" * 20_000).text
     assert out == "é\n" * 20_000
     assert calls == [], len(
@@ -269,6 +275,12 @@ def test_restore_false_cannot_clear_a_stop_this_process_engaged():
     with pytest.raises(StopGateBusy):
         g.restore(False)  # FAIL-BEFORE: silently cleared the flag, no audit
     assert g.engaged and g.blocked()
+    lim.store.ks = StoredKillSwitch(
+        on=False
+    )  # an operator reset the durable switch behind the gate's back
+    with pytest.raises(StopGateBusy):
+        g.restore(False)  # still refused: only the audited release clears what this process engaged
+    lim.store.ks = StoredKillSwitch(on=True)
     g.release(by="u1")
     g.restore(False)  # nothing engaged here any more
     g.restore(True)

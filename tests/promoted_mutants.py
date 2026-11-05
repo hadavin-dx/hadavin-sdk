@@ -297,8 +297,9 @@ M = [
         "capped: a new bucket does not reset",
         CA,
         "self._n = {k: v for k, v in self._n.items() if k[2] in kept}",
-        "pass",
+        "self._n = self._n",
         "test_a_late_event_of_the_previous_bucket_neither_resets_nor_bypasses_the_cap",
+        allow_crash=True,  # without the purge the counts loop meets an evicted bucket: a KeyError is the expected kill
         test_file=FB,
         only_test="test_a_late_event_of_the_previous_bucket_neither_resets_nor_bypasses_the_cap",
     ),
@@ -966,6 +967,7 @@ M = [
         """        return f"{FOLD_NOTE} {' '.join""",
         """        return cur + eol if hits else line  # f"{FOLD_NOTE} {' '.join""",
         "test_a_fold_on_hit_rewrite_never_emits_folded_text_so_nothing_goes_live_after_the_neutralising",
+        only_test="test_a_fold_on_hit_rewrite_never_emits_folded_text_so_nothing_goes_live_after_the_neutralising",
     ),
     Mutant(
         "redact: a folded hit is dropped",
