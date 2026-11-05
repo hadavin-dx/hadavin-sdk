@@ -161,3 +161,4 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | r3-P4a-cor | round 3 correctness review of tickets/P4a.md rev 3 | sonnet (claude-sonnet-5-5) | now | +45min | running | save report, ledger rows |
 | r6-P3a-adv | round 6 adversarial review of tickets/P3a.md rev 7 (3c9fe6a) | sonnet (claude-sonnet-5-5) | now | +45min | running | save report, ledger rows |
 | r6-P3a-cor | round 6 correctness review of tickets/P3a.md rev 7 (3c9fe6a) | sonnet (claude-sonnet-5-5) | now | +45min | running | save report, ledger rows |
+| rev8-P4d | author P4d ticket rev 8 (round 6 resolve f360ed0) | sonnet (claude-sonnet-5-5) | now | +45min | running | verify, explicit add, commit, push, launch round 7 |
