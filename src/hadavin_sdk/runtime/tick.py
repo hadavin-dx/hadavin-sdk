@@ -25,7 +25,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Any
 
-from hadavin_sdk.guard.safe_message import safe_message, safe_text
+from hadavin_sdk.guard.safe_message import safe_text, with_class
 from hadavin_sdk.models import AuditEvent, RunState, TickState
 from hadavin_sdk.runtime.runs import IllegalTransition, advance
 from hadavin_sdk.store.protocol import StaleState, is_connectivity_error
@@ -215,10 +215,12 @@ def _run_step(ctx: TickContext, step: TickStep) -> str:
             return SKIPPED
         step.fn(ctx)
     except Exception as exc:  # noqa: BLE001 - one step never stops the others
-        error = safe_message(exc, 500)
-        _LOG.error(
-            "step=%s error_kind=%s message=%s", step.name, type(exc).__name__, safe_text(exc, 500)
-        )
+        text = safe_text(
+            exc, 500
+        )  # masked once; the stored string and the log line both come from it
+        error = with_class(exc, text)
+        # %r quotes the value so masked text can never forge a `key=value` field of this line.
+        _LOG.error("step=%s error_kind=%s message=%r", step.name, type(exc).__name__, text)
     try:
         store.save_tick_state(
             TickState(

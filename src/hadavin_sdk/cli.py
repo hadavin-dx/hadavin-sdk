@@ -39,6 +39,7 @@ from hadavin_sdk.backends import make, platform_secrets
 from hadavin_sdk.config import load_config
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.guard.injection import combine
+from hadavin_sdk.guard.safe_message import safe_message
 from hadavin_sdk.limits import Limits
 from hadavin_sdk.models import new_id
 from hadavin_sdk.registry import load_registry
@@ -293,10 +294,10 @@ def _tick() -> int:
                 )
         app = build(None, agents)
     except StoreUnavailable as exc:
-        print(f"tick: {exc}", file=sys.stderr)
+        print(f"tick: {safe_message(exc, 500)}", file=sys.stderr)
         return 4
     except ConfigError as exc:
-        print(f"tick: config error: {exc}", file=sys.stderr)
+        print(f"tick: config error: {safe_message(exc, 500)}", file=sys.stderr)
         return 2
     except Exception as exc:  # noqa: BLE001 - any other start-up failure is a config error, never "1"
         print(f"tick: config error: {type(exc).__name__}", file=sys.stderr)

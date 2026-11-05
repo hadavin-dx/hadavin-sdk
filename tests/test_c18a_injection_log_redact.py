@@ -156,28 +156,61 @@ def test_injection_check_does_not_swallow_redaction_error():
         injection_check(Redacting(), "t", "doc")
 
 
-# --- the class guard: no log call or print in src may carry a raw exception ------------------------------
+# --- the class guard: no log, print, store or re-raise in a handler may carry raw exception text -----------
 
 SRC = Path(__file__).resolve().parents[1] / "src" / "hadavin_sdk"
 _LEVELS = {"debug", "info", "warning", "warn", "error", "exception", "critical", "log", "fatal"}
 _TRACE = {"format_exc", "format_exception", "print_exc", "print_exception", "format_tb", "print_tb"}
 _SAFE_CALLS = {"safe_message", "safe_text"}
+_SINK_KW = {"errors", "last_error", "error_code", "message", "detail", "error", "reason"}
+_SINK_METHODS = {"append", "extend", "add"}
+_LOGGER_NAMES = {"lg", "audit", "logging"}
 
-# Operator-terminal output that deliberately shows the exception: (file, unparsed call) -> reason.
 _OPERATOR = (
-    "ConfigError / StoreUnavailable text printed to the operator's own terminal (never a log or a store): "
-    "it is written by us or echoes the operator's own config file, and the secrets kind keeps secret "
-    "values out of config. Masking would also collapse the multi-line validation report the operator needs."
+    "ConfigError / StoreUnavailable text printed to an interactive operator's terminal (never a log or a "
+    "store; CI captures the output of these commands, which is why the unattended `tick` prints are NOT "
+    "waived): it is written by us or echoes the operator's own config file, and the secrets kind keeps "
+    "secret values out of config. Masking would also collapse the multi-line validation report."
 )
-WAIVERS: dict[tuple[str, str], str] = {
-    ("cli.py", "print(f'refused: {exc}', file=sys.stderr)"): _OPERATOR,
-    ("cli.py", "print(f'could not verify: {exc}', file=sys.stderr)"): _OPERATOR,
-    ("cli.py", "print(f'tick: {exc}', file=sys.stderr)"): _OPERATOR,
-    ("cli.py", "print(f'tick: config error: {exc}', file=sys.stderr)"): _OPERATOR,
+_RAISE = (
+    "builds a ConfigError from a pydantic/yaml/SDK error at config load; the text is the operator's own "
+    "config and only ever reaches an interactive print (waived above) or the tick print, which masks it "
+    "with safe_message (see test_tick_config_error_secret_masked)."
+)
+_DESCRIBE = (
+    "llm.retry.describe() builds the text from the class name, the HTTP status and the kind's own error code, "
+    "never from the SDK message (pinned by test_with_retry_error_text_never_has_sdk_message)."
+)
+# (file, enclosing function, unparsed statement) -> (reason, expected count). A second identical statement in
+# the same function is NOT waived silently: the count must match exactly.
+WAIVERS: dict[tuple[str, str, str], tuple[str, int]] = {
+    ("cli.py", "main", "print(f'refused: {exc}', file=sys.stderr)"): (_OPERATOR, 1),
+    ("cli.py", "_main", "print(f'could not verify: {exc}', file=sys.stderr)"): (_OPERATOR, 1),
+    ("config.py", "_one", "raise ConfigError(f'backends.{cap} ({kind}): {exc}') from exc"): (
+        _RAISE,
+        1,
+    ),
+    ("config.py", "load_config", "raise ConfigError(str(exc)) from exc"): (_RAISE, 1),
+    ("registry.py", "load_registry", "raise ConfigError(str(exc)) from exc"): (_RAISE, 1),
     (
-        "cli.py",
-        "traceback.print_exc()",
-    ): "opt-in HADAVIN_DEBUG=1 traceback to the operator's terminal only",
+        "llm/anthropic.py",
+        "client",
+        "raise ConfigError(f\"backend llm 'anthropic' ({settings.platform}): {exc}\") from exc",
+    ): (_RAISE, 1),
+    (
+        "llm/retry.py",
+        "with_retry",
+        "raise ProviderError(f'{label}: {describe(exc, detail)}') from exc",
+    ): (_DESCRIBE, 1),
+    (
+        "llm/retry.py",
+        "with_retry",
+        "raise ProviderExhausted(f'{label}: {describe(exc, detail)} after {max_attempts} attempts') from exc",
+    ): (_DESCRIBE, 1),
+    ("cli.py", "main", "traceback.print_exc()"): (
+        "opt-in HADAVIN_DEBUG=1 traceback to the interactive operator's terminal only",
+        1,
+    ),
 }
 
 
@@ -195,17 +228,24 @@ def _chain(node: ast.AST) -> list[str]:
 
 
 def _is_logger(base: ast.AST) -> bool:
+    if isinstance(base, ast.Call):
+        f = base.func
+        if isinstance(f, ast.Attribute) and f.attr == "getChild":  # _LOG.getChild("x")
+            return _is_logger(f.value)
+        return getattr(f, "attr", getattr(f, "id", "")) == "getLogger"
     ids = _chain(base)
-    if not ids:
-        return False
-    last = ids[-1].lower()
-    return last.endswith(("log", "logger")) or last in {"logging", "getlogger()"}
+    last = ids[-1].lower() if ids else ""
+    return last.endswith(("log", "logger")) or last in _LOGGER_NAMES
 
 
-def _is_safe_wrapper(node: ast.AST) -> bool:
-    """safe_message(...) / safe_text(...) or type(<x>).__name__ / <x>.__class__.__name__."""
+def _is_safe_wrapper(node: ast.AST, exc: str | None) -> bool:
+    """safe_message(<exc>, ...) / safe_text(<exc>, ...) with the exception object itself as first argument
+    (safe_message(str(e)) is NOT safe), or type(<x>).__name__ / <x>.__class__.__name__."""
     if isinstance(node, ast.Call) and getattr(node.func, "id", "") in _SAFE_CALLS:
-        return True
+        a = node.args[0] if node.args else None
+        return isinstance(a, ast.Name) and a.id == exc
+    if isinstance(node, ast.Call) and getattr(node.func, "id", "") in {"isinstance", "type"}:
+        return True  # a class test or the class object: no message text
     if isinstance(node, ast.Attribute) and node.attr == "__name__":
         v = node.value
         if isinstance(v, ast.Call) and getattr(v.func, "id", "") == "type":
@@ -215,78 +255,136 @@ def _is_safe_wrapper(node: ast.AST) -> bool:
     return False
 
 
-def _uses_raw(node: ast.AST, names: set[str]) -> bool:
-    if _is_safe_wrapper(node):
+def _uses_raw(node: ast.AST, names: set[str], exc: str | None) -> bool:
+    if _is_safe_wrapper(node, exc):
         return False
     if isinstance(node, ast.Name) and node.id in names:
         return True
-    return any(_uses_raw(c, names) for c in ast.iter_child_nodes(node))
+    if isinstance(node, (ast.Attribute, ast.Subscript)) and ast.unparse(node) in names:
+        return True
+    return any(_uses_raw(c, names, exc) for c in ast.iter_child_nodes(node))
 
 
 def _truthy(node: ast.AST) -> bool:
     return not (isinstance(node, ast.Constant) and node.value in (False, None))
 
 
-def find_leaks(source: str) -> list[tuple[int, str, str]]:
-    """(line, why, unparsed call) for every leak of exception text inside any `except` handler."""
-    found: list[tuple[int, str, str]] = []
-    for handler in ast.walk(ast.parse(source)):
+def _target_names(t: ast.AST) -> set[str]:
+    if isinstance(t, (ast.Tuple, ast.List)):
+        return set().union(*(_target_names(e) for e in t.elts)) if t.elts else set()
+    if isinstance(t, ast.Name):
+        return {t.id}
+    if isinstance(t, (ast.Attribute, ast.Subscript)):
+        return {ast.unparse(t)}
+    return set()
+
+
+def _enclosing(node: ast.AST, parents: dict[ast.AST, ast.AST]) -> str:
+    while node in parents:
+        node = parents[node]
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            return node.name
+    return "<module>"
+
+
+def find_leaks(source: str) -> list[tuple[int, str, str, str]]:
+    """(line, why, unparsed statement, enclosing function) for every leak of exception text in a handler."""
+    tree = ast.parse(source)
+    parents = {c: p for p in ast.walk(tree) for c in ast.iter_child_nodes(p)}
+    found: list[tuple[int, str, str, str]] = []
+    for handler in ast.walk(tree):
         if not isinstance(handler, ast.ExceptHandler):
             continue
-        names = {handler.name} if handler.name else set()
-        calls = [n for st in handler.body for n in ast.walk(st)]
-        for _ in range(2):  # aliases: m = str(exc) makes m raw too
-            for n in calls:
-                raw = isinstance(n, (ast.Assign, ast.AnnAssign)) and n.value is not None
-                if raw and _uses_raw(n.value, names):
-                    targets = n.targets if isinstance(n, ast.Assign) else [n.target]
-                    names |= {t.id for t in targets if isinstance(t, ast.Name)}
-        for call in calls:
-            if not isinstance(call, ast.Call):
+        exc = handler.name
+        names = {exc} if exc else set()
+        nodes = [n for st in handler.body for n in ast.walk(st)]
+        for _ in range(3):  # aliases: x = str(e), self.x = ..., a, b = ..., (m := ...)
+            for n in nodes:
+                if isinstance(n, ast.Assign) and _uses_raw(n.value, names, exc):
+                    for t in n.targets:
+                        names |= _target_names(t)
+                elif (
+                    isinstance(n, ast.AnnAssign)
+                    and n.value
+                    and _uses_raw(n.value, names, exc)
+                    or isinstance(n, ast.NamedExpr)
+                    and _uses_raw(n.value, names, exc)
+                ):
+                    names |= _target_names(n.target)
+        fn = _enclosing(handler, parents)
+
+        def flag(node: ast.AST, why: str, fn: str = fn) -> None:
+            found.append((node.lineno, why, ast.unparse(node), fn))
+
+        for n in nodes:
+            if isinstance(n, ast.Raise):
+                c = n.exc
+                if isinstance(c, ast.Call) and any(
+                    _uses_raw(a, names, exc) for a in [*c.args, *(k.value for k in c.keywords)]
+                ):
+                    flag(n, "raise carries raw exception text")
                 continue
-            ids = _chain(call.func)
-            text = ast.unparse(call)
-
-            def flag(why: str, call=call, text=text) -> None:
-                found.append((call.lineno, why, text))
-
+            if not isinstance(n, ast.Call):
+                continue
+            ids = _chain(n.func)
             if (ids[:1] == ["traceback"] and ids[-1] in _TRACE) or ids == ["sys", "exc_info"]:
-                flag("traceback / exc_info in a handler")
+                flag(n, "traceback / exc_info in a handler")
                 continue
+            recv = _chain(n.func.value) if isinstance(n.func, ast.Attribute) else []
+            recv_last = recv[-1].lower() if recv else ""
             is_log = (
-                isinstance(call.func, ast.Attribute)
-                and call.func.attr in _LEVELS
-                and _is_logger(call.func.value)
+                isinstance(n.func, ast.Attribute)
+                and _is_logger(n.func.value)
+                and (n.func.attr in _LEVELS or recv_last == "audit")
+            )
+            is_bare = isinstance(n.func, ast.Name) and any(
+                k in n.func.id.lower() for k in ("log", "warn", "emit")
             )
             is_out = (
-                ids == ["print"]
+                is_bare
+                or ids == ["print"]
                 or ids == ["warnings", "warn"]
                 or (len(ids) >= 2 and ids[-1] == "write" and ids[-2] in {"stderr", "stdout"})
             )
-            if not (is_log or is_out):
+            kw_vals = [(k.arg, k.value) for k in n.keywords]
+            if is_log or is_out:
+                if is_log and n.func.attr == "exception":
+                    flag(n, "_LOG.exception logs the traceback")
+                for arg, val in kw_vals:
+                    if arg == "exc_info" and _truthy(val):  # exc_info branch
+                        flag(n, "exc_info")
+                parts = [*n.args, *(v for a, v in kw_vals if a != "exc_info")]  # kwargs branch
+                if any(_uses_raw(p, names, exc) for p in parts):
+                    flag(n, "raw exception text in a log/print")
                 continue
-            if is_log and call.func.attr == "exception":
-                flag("_LOG.exception logs the traceback")
-            for kw in call.keywords:
-                if kw.arg == "exc_info" and _truthy(kw.value):  # exc_info branch
-                    flag("exc_info")
-            parts = [*call.args, *(kw.value for kw in call.keywords if kw.arg != "exc_info")]
-            if any(_uses_raw(a, names) for a in parts):
-                flag(f"raw exception text in {'a log call' if is_log else ids[-1]}")
+            if any(a in _SINK_KW and _uses_raw(v, names, exc) for a, v in kw_vals):  # store branch
+                flag(n, "raw exception text stored in a keyword field")
+            elif (
+                isinstance(n.func, ast.Attribute)
+                and n.func.attr in _SINK_METHODS
+                and any(_uses_raw(a, names, exc) for a in n.args)
+            ):
+                flag(n, "raw exception text stored via append/extend/add")
     return found
 
 
 def test_no_raw_exc_in_log_calls_ast():
-    bad, used = [], set()
+    from collections import Counter
+
+    bad, used = [], Counter()
     for path in sorted(SRC.rglob("*.py")):
         rel = path.relative_to(SRC).as_posix()
-        for line, why, text in find_leaks(path.read_text(encoding="utf-8")):
-            if (rel, text) in WAIVERS:
-                used.add((rel, text))
+        for line, why, text, fn in find_leaks(path.read_text(encoding="utf-8")):
+            if (rel, fn, text) in WAIVERS:
+                used[(rel, fn, text)] += 1
             else:
-                bad.append(f"{rel}:{line}: {why}: {text[:90]}")
-    assert not bad, "raw exception text in a log/print (use safe_message):\n" + "\n".join(bad)
-    assert used == set(WAIVERS), f"stale waivers: {sorted(set(WAIVERS) - used)}"
+                bad.append(f"{rel}:{line} in {fn}(): {why}: {text[:100]}")
+    assert not bad, "raw exception text leaks (use safe_message or the class name):\n" + "\n".join(
+        bad
+    )
+    assert dict(used) == {k: v[1] for k, v in WAIVERS.items()}, (
+        "waiver counts differ (stale or extra)"
+    )
 
 
 _HEAD = "try:\n pass\nexcept Exception as e:\n "
@@ -308,10 +406,30 @@ _BARE = "try:\n pass\nexcept Exception:\n "
         _HEAD + "self._log.error('x %s', e)",
         _HEAD + "self.logger.error('x %s', e)",
         _HEAD + "LOGGER.error('x %s', e)",
+        _HEAD + "lg.error('x %s', e)",
+        _HEAD + "audit.write(e)",
+        _HEAD + "_LOG.getChild('a').error('x %s', e)",
         _HEAD + "m = str(e)\n _LOG.warning('x %s', m)",
+        _HEAD + "self.err = str(e)\n _LOG.warning('x %s', self.err)",
+        _HEAD + "a, b = str(e), 1\n _LOG.warning('x %s', a)",
+        _HEAD + "if (m := str(e)):\n  _LOG.warning('x %s', m)",
         _HEAD + "print(f'refused: {e}')",
         _HEAD + "sys.stderr.write(str(e))",
         _HEAD + "warnings.warn(str(e))",
+        _HEAD + "_safe_log('x %s', e)",
+        _HEAD + "emit(e)",
+        _HEAD + "warn_user(str(e))",
+        _HEAD + "audit_log('x %s', e)",
+        _HEAD + "_LOG.warning('x %s', safe_message(str(e)))",
+        _HEAD + "Row(errors=[str(e)])",
+        _HEAD + "Row(last_error=str(e))",
+        _HEAD + "write(message=f'{e}')",
+        _HEAD + "errors.append(f'{e}')",
+        _HEAD + "errors.extend([str(e)])",
+        _HEAD + "raise ConfigError(str(e))",
+        _HEAD + "raise ConfigError(f'bad {e}')",
+        _HEAD + "raise X(e)",
+        _HEAD + "raise X(msg=str(e))",
         _HEAD + "traceback.print_exc()",
         _HEAD + "x = traceback.format_exc()",
         _HEAD + "x = sys.exc_info()",
@@ -336,6 +454,12 @@ def test_ast_checker_flags_bad_shapes(src):
         _HEAD + "m = safe_message(e)\n _LOG.warning('x %s', m)",
         _HEAD + "print(type(e).__name__)",
         _HEAD + "_LOG.warning('x')",
+        _HEAD + "_safe_log('x %s', type(e).__name__)",
+        _HEAD + "errors.append(safe_message(e, 300, S))",
+        _HEAD + "Row(last_error=safe_text(e))",
+        _HEAD + "raise ConfigError('x') from e",
+        _HEAD + "raise ConfigError(safe_message(e))",
+        _HEAD + "raise",
         _BARE + "_LOG.warning('x')",
         _BARE + "print('could not verify')",
         _HEAD + "_LOG.warning('x', exc_info=False)",
@@ -343,3 +467,12 @@ def test_ast_checker_flags_bad_shapes(src):
 )
 def test_ast_checker_passes_good_shapes(src):
     assert not find_leaks(src + "\n"), src
+
+
+def test_waiver_is_keyed_on_function_and_count():
+    """A second identical print, or the same print in another function, is not waived by the first."""
+    one = "def f():\n try:\n  pass\n except Exception as e:\n  print(f'refused: {e}')\n"
+    two = one + "  print(f'refused: {e}')\n"
+    other = one.replace("def f", "def g")
+    assert [(w, f) for _, _, w, f in find_leaks(one)] == [("print(f'refused: {e}')", "f")]
+    assert len(find_leaks(two)) == 2 and find_leaks(other)[0][3] == "g"

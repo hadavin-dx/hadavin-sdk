@@ -42,7 +42,8 @@ def test_redact_before_truncate():
 
 
 def test_limit_applies_to_text():
-    assert _sm()(ValueError("y" * 1000), 50) == "ValueError: " + "y" * 50
+    out = _sm()(ValueError("y " * 500), 50)
+    assert out.startswith("ValueError: y y y") and len(out) == len("ValueError: ") + 50
 
 
 def test_newlines_stripped():
@@ -199,7 +200,7 @@ def test_redact_failure_returns_unavailable(monkeypatch, fail):
 
 def test_safe_text_has_no_class_prefix():
     assert _st()(ValueError("plain")) == "plain"
-    assert _st()(_cls("V", "psycopg")("x")) == ""
+    assert _st()(_cls("V", "psycopg")("x")) == "(withheld)"
 
 
 # --- coverage limits inherited from the redactor (documented, strict xfail: expiry note below) -----------
@@ -261,5 +262,212 @@ def test_tick_step_error_has_one_class_prefix_and_masked_text(caplog):
     assert err.count("RuntimeError") == 1 and "example.com" not in err and "<EMAIL_1>" in err
     assert "\n" not in err
     line = next(ln for ln in caplog.text.splitlines() if "step=probe" in ln)
-    assert "step=probe error_kind=RuntimeError message=step died for <EMAIL_1> second line" in line
+    assert (
+        "step=probe error_kind=RuntimeError message='step died for <EMAIL_1> second line'" in line
+    )
     assert caplog.text.count("RuntimeError") == 1 and "example.com" not in caplog.text
+
+
+# --- batch 3: padding, invisibles, truncation, tick path, extract -------------------------------------------
+
+KEY = "sk-" + "a" * 30
+
+
+def test_whitespace_padding_cannot_push_a_value_into_a_cut():
+    out = _sm()(ValueError(" " * 2395 + EMAIL), 300)
+    assert "bob" not in out and "example.com" not in out
+
+
+def test_many_invisible_characters_before_a_value():
+    out = _sm()(ValueError((ZW * 5000) + "ok " + (ZW * 5000) + EMAIL), 300)
+    assert "bob" not in out and "example.com" not in out and "ZW" not in out
+
+
+def test_padding_longer_than_the_raw_read_drops_the_partial_word():
+    # raw read is limit*64 = 19200 characters: the value starts inside it and is cut in half by it
+    out = _sm()(ValueError(" " * 19190 + EMAIL), 300)
+    assert "bob" not in out and out.endswith("[truncated]")
+
+
+def test_long_key_shrinking_then_half_email_at_the_cap_edge():
+    # the key is masked to a short mark, so the final cut would fall AFTER the pre-cap point
+    text = KEY + "b" * 2300 + " " + "x" * 80 + " " + EMAIL
+    cap = 300 * 8
+    text = text[: cap - 5]  # cut inside the email at the pre-cap edge
+    out = _sm()(ValueError(text + "m"), 300)
+    assert "bob" not in out and "example" not in out and "bob@" not in out
+
+
+def test_truncated_text_ends_with_marker_and_no_half_value():
+    out = _sm()(ValueError(("word " * 700) + "bob@exa"), 300)
+    assert "bob" not in out
+
+
+def test_43k_adversarial_input_is_time_bounded():
+    import time
+
+    nasty = ["=" * 43_000, "-" * 43_000, " =" * 21_000, ("ﷺ" * 2400) + EMAIL, EMAIL * 4000]
+    t0 = time.perf_counter()
+    for text in nasty:
+        _sm()(ValueError(text), 300)
+    assert time.perf_counter() - t0 < 4.0  # five inputs; the caps make it milliseconds
+
+
+def test_combining_grapheme_joiner_cannot_split_an_email():
+    out = _sm()(ValueError("bob@exa͏mple.com"))
+    assert "example" not in out and "bob" not in out
+
+
+@pytest.mark.parametrize("ch", ["ㅤ", "⠀", "\x00", "\x08", "", "️"])
+def test_other_invisibles_removed(ch):
+    out = _sm()(ValueError(f"bo{ch}b@example.com"))
+    assert "example" not in out and "bob" not in out
+    assert ch not in _sm()(ValueError(f"a{ch}b"))
+
+
+def test_cyrillic_lookalike_in_email_masked():
+    assert "example" not in _sm()(ValueError("bоb@exаmple.com"))
+
+
+def test_withheld_text_is_marked_in_safe_text_and_empty_means_empty():
+    assert _st()(OSError("x")) == "(withheld)"
+    assert _st()(ValueError()) == ""
+
+
+def _step_ctx():
+    class _Store:
+        saved = None
+
+        def get_tick_state(self, name):
+            return None
+
+        def save_tick_state(self, st):
+            self.saved = st
+
+    class _App:
+        store = _Store()
+
+    class _Ctx:
+        now = dt.datetime(2026, 1, 1, tzinfo=dt.UTC)
+        app = _App()
+
+    return _Ctx
+
+
+def test_tick_log_withheld_says_withheld_and_last_error_has_no_suffix(caplog):
+    from hadavin_sdk.runtime import tick
+
+    ctx = _step_ctx()
+
+    def boom(c):
+        raise ConnectionError("db.internal user=admin")
+
+    with caplog.at_level(logging.ERROR, logger="hadavin_sdk.tick"):
+        tick._run_step(ctx, tick.TickStep("probe", 0, boom))
+    assert ctx.app.store.saved.last_error == "ConnectionError"
+    assert "message='(withheld)'" in caplog.text and "db.internal" not in caplog.text
+
+
+def test_tick_log_message_cannot_forge_fields(caplog):
+    from hadavin_sdk.runtime import tick
+
+    ctx = _step_ctx()
+
+    def boom(c):
+        raise RuntimeError("x step=evil error_kind=Fake ok=true")
+
+    with caplog.at_level(logging.ERROR, logger="hadavin_sdk.tick"):
+        tick._run_step(ctx, tick.TickStep("probe", 0, boom))
+    line = next(ln for ln in caplog.text.splitlines() if "step=probe" in ln)
+    assert "message='x step=evil" in line  # the whole value sits inside one quoted field
+    assert line.count("message=") == 1
+
+
+def test_tick_masks_once(monkeypatch):
+    import hadavin_sdk.guard.safe_message as mod
+    from hadavin_sdk.runtime import tick
+
+    calls = []
+    real = mod.redact
+    monkeypatch.setattr(mod, "redact", lambda t: (calls.append(1), real(t))[1])
+    ctx = _step_ctx()
+    tick._run_step(
+        ctx, tick.TickStep("probe", 0, lambda c: (_ for _ in ()).throw(RuntimeError("a")))
+    )
+    assert len(calls) == 1
+
+
+def _config_error_with_secret():
+    from pydantic import BaseModel, Field, ValidationError
+
+    from hadavin_sdk.errors import ConfigError
+
+    class Cfg(BaseModel):
+        api_key: str = Field(max_length=5)
+
+    try:
+        Cfg(api_key=KEY)
+    except ValidationError as exc:
+        return ConfigError(f"backends.llm (anthropic): {exc}")
+    raise AssertionError("expected a validation error")
+
+
+@pytest.mark.parametrize("raiser", ["load_config", "build"])
+def test_tick_config_error_secret_masked(monkeypatch, capsys, raiser):
+    from hadavin_sdk import cli
+
+    err = _config_error_with_secret()
+    assert KEY in str(err)  # the raw error really carries the secret-shaped value
+    if raiser == "load_config":
+        monkeypatch.setattr(cli, "load_config", lambda *a, **k: (_ for _ in ()).throw(err))
+    else:
+        monkeypatch.setattr(cli, "load_config", lambda *a, **k: object())
+        monkeypatch.setattr(cli, "load_registry", lambda cfg: type("R", (), {"agents": {}})())
+        monkeypatch.setattr("hadavin_sdk.app.build", lambda *a, **k: (_ for _ in ()).throw(err))
+    assert cli.main(["tick"]) == 2
+    out = capsys.readouterr().err
+    assert KEY not in out and "ConfigError" in out
+
+
+def test_tick_store_unavailable_masked(monkeypatch, capsys):
+    from hadavin_sdk import cli
+    from hadavin_sdk.store.protocol import StoreUnavailable
+
+    monkeypatch.setattr(
+        cli, "load_config", lambda *a, **k: (_ for _ in ()).throw(StoreUnavailable(f"x {EMAIL}"))
+    )
+    assert cli.main(["tick"]) in (2, 4)
+    assert "example.com" not in capsys.readouterr().err
+
+
+def test_extract_dead_letter_masks_validation_error_input():
+    """BL-005: a pydantic ValidationError echoes input_value; DeadLetter.errors must be masked."""
+    from pydantic import BaseModel
+
+    from hadavin_sdk.extract import extract
+    from hadavin_sdk.models import DeadLetter, Reply
+
+    class Out(BaseModel):
+        total: int
+
+    class Llm:
+        def chat(self, messages, **kw):
+            return Reply(text=f'{{"total": "contact {EMAIL} iban {IBAN}"}}', model_id="m")
+
+    res = extract(Llm(), b"doc", Out, run_id="r1", route="r")
+    assert isinstance(res, DeadLetter)
+    joined = " ".join(res.errors)
+    assert "ValidationError" in joined  # still useful for the retry prompt
+    assert "example.com" not in joined and IBAN not in joined and "<EMAIL_1>" in joined
+
+
+def test_with_retry_error_text_never_has_sdk_message():
+    """Pins the waiver for llm/retry.py: ProviderError text is class + status, never the SDK message."""
+    from hadavin_sdk.llm.retry import ProviderError, with_retry
+
+    def call():
+        raise ValueError(f"request body had {EMAIL}")
+
+    with pytest.raises(ProviderError) as ei:
+        with_retry(call, label="llm", max_attempts=2, sleep=lambda s: None)
+    assert "example.com" not in str(ei.value)
