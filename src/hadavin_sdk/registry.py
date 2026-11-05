@@ -19,6 +19,7 @@ from hadavin_sdk.actions.contract import ActionContract, schema_problems
 from hadavin_sdk.backends import make
 from hadavin_sdk.config import Config, ConfigError, Money, confined, load_yaml
 from hadavin_sdk.guard.judge import PROMPT_SHA256 as JUDGE_PROMPT_SHA256
+from hadavin_sdk.guard.redactor import RedactionError
 from hadavin_sdk.identity import Principal
 from hadavin_sdk.models import ChainStep, sha256_hex
 
@@ -97,8 +98,9 @@ class Registry:
         with a default never un-qualifies existing agents. The llm backend kind is included, so a backend swap
         with the same model id needs a new gate run.
 
-        Upgrade note (slice 2 P1a): this version changes the hash itself, so every agent needs ONE new gate run
-        (`hadavin-sdk gate <agent>`) before the runtime starts it again; see CHANGELOG.md."""
+        Upgrade notes (CHANGELOG.md): slice 2 P1a changed the hash once; C1a changes it again because the redactor
+        (`masking`: name@version, plus any non-default redactor limits) is part of what an agent is qualified on.
+        Every agent needs ONE new gate run (`hadavin-sdk gate <agent>`) before the runtime starts it again."""
         agent = self.agents[agent_id]
         llm = self.config.backends.llm
         masking = self.config.backends.redactor
@@ -206,39 +208,94 @@ def load_registry(config: Config) -> Registry:
     return reg
 
 
-def _strings(value, skip=frozenset({"pattern"})):
-    """Every string in a nested schema: keys and values; a regex ``pattern`` is a rule, not text."""
-    if isinstance(value, str):
-        yield value
-    elif isinstance(value, dict):
+def _strings(value, path="", skip_pattern=True):
+    """(path, text) for every string in a nested schema: keys and EVERY scalar (numbers, booleans) as text.
+    A ``pattern`` whose value is a string is a regex rule, not text, and is skipped; a property named
+    ``pattern`` (its value is a mapping) is walked like any other."""
+    if isinstance(value, dict):
         for k, v in value.items():
-            yield str(k)
-            if k not in skip:
-                yield from _strings(v, skip)
+            yield f"{path}.{k}", str(k)
+            if skip_pattern and k == "pattern" and isinstance(v, str):
+                continue
+            yield from _strings(v, f"{path}.{k}", skip_pattern)
     elif isinstance(value, (list, tuple)):
-        for v in value:
-            yield from _strings(v, skip)
+        for i, v in enumerate(value):
+            yield from _strings(v, f"{path}[{i}]", skip_pattern)
+    elif value is not None:
+        yield path, str(value)
+
+
+_BOM = "﻿"
 
 
 def _trusted_text_problems(config, agents, contracts) -> list[str]:
-    """Prompts, contract text and schemas go to the model unmasked, so they must hold nothing the redactor would
-    mask (the client must not put PII or secrets in them). Names the place and the kinds, never the text."""
+    """Prompts, contract text and schemas go to the model unmasked, so they must hold nothing that looks like a real
+    value (the client must not put PII or secrets in them). Only what a live agent can use is read: live agents'
+    prompts and the contracts in their ``scope_allowed``. Messages name the place (file, line or schema path) and the
+    kinds, never the text. Which kinds are linted, and why, is in ``RegexRedactor.lint``."""
     redactor = make("redactor", config.backends.redactor)
-    out = []
+    lint = getattr(redactor, "lint", redactor.find)
+    out: list[str] = []
 
-    def lint(where: str, text: str) -> None:
-        if kinds := redactor.find(text):
-            out.append(f"{where}: holds text the redactor would mask ({', '.join(kinds)})")
+    def check(where: str, text: str, lines: bool = True) -> None:
+        try:
+            kinds = lint(text)
+            if not kinds:
+                return
+            at = ""
+            if (
+                lines
+            ):  # the lines that hold a hit on their own; a hit that spans lines is reported as such
+                hits = [
+                    n
+                    for n, line in enumerate(text.split(chr(10)), 1)
+                    if line.strip() and lint(line)
+                ]
+                at = f" line {', '.join(map(str, hits[:5]))}" if hits else " (across lines)"
+            out.append(f"{where}{at}: holds text the redactor would mask ({', '.join(kinds)})")
+        except RedactionError as exc:
+            out.append(f"{where}: cannot be checked ({exc.code})")
 
-    for a in agents.values():
+    live = [a for a in agents.values() if a.status == "live"]
+    for a in live:
         path = confined(config.root, a.prompt_file)
-        if path.is_file():  # a missing prompt is reported by _cross_check
-            lint(f"agent {a.id}: prompt", path.read_text(encoding="utf-8"))
-    for c in contracts.values():
-        for field in ("description", "expected_outcome"):
-            lint(f"action {c.id}: {field}", getattr(c, field))
-        for text in _strings(c.input_schema):
-            lint(f"action {c.id}: input_schema", text)
+        if not path.is_file():  # reported by _cross_check
+            continue
+        raw = path.read_bytes()
+        try:
+            text = raw.decode("utf-8")
+        except UnicodeDecodeError as exc:
+            out.append(
+                f"agent {a.id}: prompt {a.prompt_file} is not valid UTF-8 (byte offset {exc.start})"
+            )
+            continue
+        if text.startswith(_BOM):
+            out.append(
+                f"agent {a.id}: prompt {a.prompt_file} starts with a byte order mark; remove it"
+            )
+            continue
+        check(f"agent {a.id}: prompt {a.prompt_file}", text)
+    for cid in sorted({x for a in live for x in a.scope_allowed} & set(contracts)):
+        c = contracts[cid]
+        fields = {
+            f: str(getattr(c, f) or "")
+            for f in (
+                "id",
+                "description",
+                "expected_outcome",
+                "target_system",
+                "idempotency_header",
+                "verify_check",
+                "rollback",
+            )
+        }
+        parts = list(fields.items()) + [
+            (f"input_schema{p}", t) for p, t in _strings(c.input_schema)
+        ]
+        for where, text in parts:
+            if text:
+                check(f"action {cid}: {where}", text, lines=False)
+        check(f"action {cid}: all text joined", chr(10).join(t for _, t in parts))
     return out
 
 

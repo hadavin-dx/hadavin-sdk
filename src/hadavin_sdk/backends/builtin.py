@@ -46,7 +46,12 @@ def regex_detector(settings, deps) -> RegexDetector:
 
 
 def regex_redactor(settings, deps) -> RegexRedactor:
-    return RegexRedactor(settings.max_doc_chars)
+    return RegexRedactor(
+        settings.max_doc_chars,
+        settings.max_token_chars,
+        settings.max_line_chars,
+        settings.max_session_values,
+    )
 
 
 def fake_channel(settings, deps) -> FakeChannel:

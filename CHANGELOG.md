@@ -3,6 +3,26 @@
 ## Unreleased
 
 ### Upgrade steps
+- **C1a redactor kind (masking before the model; the wiring into the runtime arrives with C1b to C1d).**
+  - **`config_hash` changes once more**: the redactor (`masking: regex@2`, plus any non-default redactor limit) is part
+    of what an agent is qualified on. Every agent needs ONE new gate run (`hadavin-sdk gate <agent>`). A later change of
+    `REGEX_VERSION` (any edit of `guard/redact.py` or `guard/redactor.py`, including core PR #50) needs another one, on purpose.
+  - **`pilot` and `prod` configs must name the redactor**: add `backends: {redactor: {kind: regex}}`. Without it the
+    config is refused at load (`dev` keeps the default). The default `regex` kind is the only kind today.
+  - New limits in `backends.redactor`: `max_doc_chars` (200000), `max_token_chars` (8192, longest run without
+    whitespace), `max_line_chars` (20000), `max_session_values` (100000). Input over a limit is REFUSED as `too_large`,
+    never passed on. Text that legitimately exceeds them (Chinese or Japanese without spaces, minified JSON, base64 or
+    data URIs, hex dumps) must be split by the caller before it is sent.
+  - Prompts, contract text and schemas of LIVE agents (and the contracts in their `scope_allowed`) are checked at
+    load: a real-looking email, IBAN, card, key or password in them refuses the registry (the message names the file and
+    line, never the text). Prose such as `Customer name: as printed` passes. A prompt with a byte order mark or that is
+    not UTF-8 is a `ConfigError`. Contract key `restorable` is refused until ticket C1f.
+  - **What the regex redactor does NOT mask** (it does not claim more): a spaced, lower-case or hyphenated IBAN; names
+    in free prose; values glued to other characters (`bob@example.com_x`); zero-width or soft-hyphen characters inside a
+    value; percent-encoded (`%40`), HTML-entity (`&#64;`), base64, full-width and line-wrapped forms; images and PDFs
+    (refused as `unsupported_input`, never read). Some patterns in `guard/redact.py` are slow on long lines made of one
+    repeated shape (`curl curl curl ...` costs about 12 s per 190000 characters); the pattern fix is a separate ticket
+    (BL-core-c1a-001).
 - **K3 pilot build path (levels, shadow cut-off, fail-closed loading).** Action contracts change shape:
   `executor.system` moves to a contract field `target_system`, and `executor` is now a tagged union
   (`kind: none | manual | http`). Edit every contract: move `system:` out of `executor:` to `target_system:` beside

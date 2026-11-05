@@ -90,9 +90,18 @@ class GeminiSettings(_LLMSettings):
 
 
 class RegexRedactorSettings(KindSettings):
+    """Limits of the regex redactor (all part of the config hash; over a limit the input is refused as `too_large`).
+    The defaults repeat the constants in guard/redactor.py; a test keeps them equal (this module imports nothing)."""
+
     kind: Literal["regex"]
-    # The most characters of one document, and of each tool result, the redactor accepts; more is `too_large`.
-    max_doc_chars: int = Field(default=200_000, gt=0)
+    max_doc_chars: int = Field(
+        default=200_000, gt=0, le=1_000_000
+    )  # one document, and each tool result
+    max_token_chars: int = Field(default=8192, gt=0, le=1_000_000)  # longest run without whitespace
+    max_line_chars: int = Field(default=20_000, gt=0, le=1_000_000)  # longest line
+    max_session_values: int = Field(
+        default=100_000, gt=0, le=1_000_000
+    )  # distinct values one run can mark
 
 
 class RegexSettings(KindSettings):
