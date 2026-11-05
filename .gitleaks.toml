@@ -1,4 +1,5 @@
-# gitleaks configuration: the default rules plus one allowlist anchored on the file path AND on the whole finding
+# gitleaks configuration: the default rules plus two allowlists (the second is TEMPORARY, see the end of the file).
+# First allowlist: anchored on the file path AND on the whole finding
 # (regexTarget is the finding's secret, so each regex must match ALL of it: a real key block or any other value in that
 # file is still reported). It does not depend on a commit id, so a squash or rebase of the branch that adds the file
 # cannot invalidate it. The file it names is on another branch's history (a scanner test); CI scans every fetched ref, so

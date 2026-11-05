@@ -139,6 +139,11 @@ jobs:
           if [ -z "$exp" ] && grep -qE '^[0-9a-f]{40}:' .gitleaksignore; then echo "entries exist but no '# EXPIRES YYYY-MM-DD' line"; fail=1; fi
           if [ -n "$exp" ] && [ "$(date -u +%F)" \> "$exp" ]; then echo "gitleaks ignore entries expired on $exp"; fail=1; fi
           if [ -n "$exp" ] && [ "$exp" \> "$(date -u -d '+90 days' +%F)" ]; then echo "EXPIRES is more than 90 days ahead: $exp"; fail=1; fi
+          # the temporary allowlist in .gitleaks.toml lives and dies with branch core/cloud-handover and the same EXPIRES date
+          if grep -q '^targetRules' .gitleaks.toml; then
+            git rev-parse --verify -q origin/core/cloud-handover > /dev/null || { echo "temporary allowlist in .gitleaks.toml outlived branch core/cloud-handover: delete it"; fail=1; }
+            [ -n "$exp" ] || { echo "temporary allowlist in .gitleaks.toml needs the EXPIRES date in .gitleaksignore"; fail=1; }
+          fi
           exit "$fail"
       - name: Secrets in the whole history (gitleaks, checksum-verified binary)
         run: |
