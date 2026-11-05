@@ -120,11 +120,8 @@ def extract(
         replies.append(reply)
         try:
             return Valid(schema.model_validate(_parse(reply)), replies)
-        except (
-            ValidationError,
-            ValueError,
-            RecursionError,
-        ) as exc:  # JSONDecodeError is a ValueError
+        # A JSONDecodeError is a ValueError; 100000 open brackets raise RecursionError.
+        except (ValidationError, ValueError, RecursionError) as exc:
             errors.append(_failure(exc, schema))
             messages = [
                 *messages,

@@ -215,12 +215,10 @@ def _run_step(ctx: TickContext, step: TickStep) -> str:
             return SKIPPED
         step.fn(ctx)
     except Exception as exc:  # noqa: BLE001 - one step never stops the others
-        text = safe_text(
-            exc, 500
-        )  # masked once; the stored string and the log line both come from it
-        where = locator(
-            exc
-        )  # file:line of the innermost frame: diagnosable without any document content
+        # Masked once: the stored string and the log line both come from `text`.
+        text = safe_text(exc, 500)
+        # file:line of the innermost frame: diagnosable without any document content.
+        where = locator(exc)
         error = with_class(exc, text) + (f" [{where}]" if where else "")
         # %r quotes the value so masked text can never forge a `key=value` field of this line.
         _LOG.error(

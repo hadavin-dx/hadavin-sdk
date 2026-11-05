@@ -646,6 +646,7 @@ _BARE = "try:\n pass\nexcept Exception:\n "
         _HEAD + "raise ConfigError(f'bad {e}')",
         _HEAD + "raise X(e)",
         _HEAD + "raise X(msg=str(e))",
+        _HEAD + "with str(e) as f:\n  _LOG.warning('x %s', f)",
         _HEAD + "self.last_error = str(e)",
         _HEAD + "obj.attr['k'] = f'{e}'",
         _HEAD + "for line in str(e).splitlines():\n  _LOG.warning('x %s', line)",

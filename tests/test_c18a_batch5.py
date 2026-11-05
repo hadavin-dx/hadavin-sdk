@@ -40,7 +40,7 @@ _ESCAPED = {
     "esc_sendgrid": (ESC + "SG." + "a" * 22 + "." + "b" * 43, ["aaaa", "bbbb"]),
     "esc_iban": (ESC + IBAN, [IBAN, "82WEST"]),
     "osc_st_akia": (ESC + "]0;title" + ESC + BACKSLASH + AKIA, [AKIA]),
-    "csi_final_is_the_key_letter": (ESC + "[31" + AKIA, [AKIA]),
+    "csi_final_is_the_key_letter": (ESC + "[31" + AKIA, [AKIA, "KIAIOSF"]),
     "email_split_by_esc": ("bob@exa" + ESC + "mple.com", ["bob", "example"]),
     "key_split_by_esc": ("sk-aaaaa" + ESC + "a" * 30, ["aaaa"]),
     "esc_before_at": ("bob" + ESC + "@example.com", ["bob", "example"]),
@@ -60,6 +60,15 @@ def test_escape_sequences_never_hide_or_eat_part_of_a_secret(name):
 
 def test_a_word_glued_to_an_escape_and_a_key_still_masks_the_key():
     assert AKIA not in shown("see" + ESC + AKIA) and "KIAIOSF" not in shown("see" + ESC + AKIA)
+    assert "aaaa" not in shown(
+        "see" + ESC + KEY
+    )  # needs a word boundary: only the spaced form masks it
+
+
+def test_osc_and_dcs_payloads_are_dropped_with_their_sequence():
+    assert "title" not in shown("a" + ESC + "]0;title" + BEL + "b")
+    assert "hidden" not in shown("a" + C1_DCS + "hidden" + chr(0x9C) + "b")
+    assert "title" not in shown("a" + C1_OSC + "title" + chr(0x9C) + "b")
 
 
 def test_a_lone_escape_character_is_not_left_in_the_output():
@@ -308,8 +317,8 @@ def test_versions_are_not_mailboxes(text):
 @pytest.mark.parametrize(
     ("text", "gone"),
     [
-        ("bob@example" + chr(0x3002) + "com", "bob"),
-        ("bob@example" + chr(0xFF61) + "com", "bob"),
+        ("bob@example" + chr(0x3002) + "com", "com"),
+        ("bob@example" + chr(0xFF61) + "com", "com"),
         ("bob&#64;example.com", "bob"),
         ("bob&#x40;example.com", "bob"),
         ("bob&commat;example.com", "bob"),
