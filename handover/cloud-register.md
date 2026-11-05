@@ -233,8 +233,9 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | r7-P4a-adv | round 7 adversarial review of tickets/P4a.md rev 7 (b782b8d) | sonnet (claude-sonnet-5-5) | now | +45min | REPORTED | save report, ledger rows |
 | r7-P4a-cor | round 7 correctness review of tickets/P4a.md rev 7 (b782b8d) | sonnet (claude-sonnet-5-5) | now | +45min | REPORTED-INCOMPLETE (reviewer lost context; 5 nits lost) | save report, ledger rows |
 | r6-LK-resolve | round 6 resolve of designs/lookalike-leak.md (draft 7) using reviews/lookalike-round6-*.md | opus (claude-opus-5-5) | now | +50min | REPORTED | verify, push, round 7 reviewers |
-| r10-P1-resolve | round 10 resolve of tickets/P1.md rev 11 using reviews/P1-round10-*.md | opus (claude-opus-5-5) | now | +50min | running | verify, push, rev 12 author |
+| r10-P1-resolve | round 10 resolve of tickets/P1.md rev 11 using reviews/P1-round10-*.md | opus (claude-opus-5-5) | now | +50min | REPORTED | verify, push, rev 12 author |
 | r7-P4a-resolve | round 7 resolve of tickets/P4a.md rev 7 using reviews/P4a-round7-*.md | opus (claude-opus-5-5) | now | +50min | REPORTED | verify, push, rev 8 author, round 8 reviewers |
 | rev8-P4a-author | author rewrite tickets/P4a.md rev 8 from reviews/P4a-round7-resolve.md | sonnet (claude-sonnet-5-5) | now | +40min | running | verify, push, round 8 reviewers |
 | r7-LK-adv | round 7 adversarial review of designs/lookalike-leak.md draft 7 | sonnet (claude-sonnet-5-5) | now | +45min | running | save report, ledger rows |
 | r7-LK-cor | round 7 correctness review of designs/lookalike-leak.md draft 7 | sonnet (claude-sonnet-5-5) | now | +45min | running | save report, ledger rows |
+| rev12-P1-author | author rewrite tickets/P1.md rev 12 from reviews/P1-round10-resolve.md | sonnet (claude-sonnet-5-5) | now | +40min | running | verify, push, round 11 reviewers |
