@@ -1149,3 +1149,15 @@
 | BL-core-p3a-r7-cor-COR-R7-10 | P3A | MINOR | see report | OPEN | reviews/P3a-round7-correctness.md | dc3d6e5 |
 | BL-core-p3a-r7-cor-COR-R7-11 | P3A | NIT | see report | OPEN | reviews/P3a-round7-correctness.md | dc3d6e5 |
 | BL-core-p3a-r7-cor-COR-R7-12 | P3A | NIT | see report | OPEN | reviews/P3a-round7-correctness.md | dc3d6e5 |
+| BL-core-p1-r6-adv-ADV-R6-1 | P1 | MAJOR | see report | OPEN | reviews/P1-round6-adversarial.md | 99828b6 |
+| BL-core-p1-r6-adv-ADV-R6-2 | P1 | MAJOR | see report | OPEN | reviews/P1-round6-adversarial.md | 99828b6 |
+| BL-core-p1-r6-adv-ADV-R6-3 | P1 | MAJOR | see report | OPEN | reviews/P1-round6-adversarial.md | 99828b6 |
+| BL-core-p1-r6-adv-ADV-R6-4 | P1 | MAJOR | see report | OPEN | reviews/P1-round6-adversarial.md | 99828b6 |
+| BL-core-p1-r6-adv-ADV-R6-5 | P1 | MINOR | see report | OPEN | reviews/P1-round6-adversarial.md | 99828b6 |
+| BL-core-p1-r6-adv-ADV-R6-6 | P1 | MINOR | see report | OPEN | reviews/P1-round6-adversarial.md | 99828b6 |
+| BL-core-p1-r6-adv-ADV-R6-7 | P1 | MINOR | see report | OPEN | reviews/P1-round6-adversarial.md | 99828b6 |
+| BL-core-p1-r6-adv-ADV-R6-8 | P1 | MINOR | see report | OPEN | reviews/P1-round6-adversarial.md | 99828b6 |
+| BL-core-p1-r6-adv-ADV-R6-9 | P1 | MINOR | see report | OPEN | reviews/P1-round6-adversarial.md | 99828b6 |
+| BL-core-p1-r6-adv-ADV-R6-10 | P1 | MINOR | see report | OPEN | reviews/P1-round6-adversarial.md | 99828b6 |
+| BL-core-p1-r6-adv-ADV-R6-11 | P1 | NIT | see report | OPEN | reviews/P1-round6-adversarial.md | 99828b6 |
+| BL-core-p1-r6-adv-ADV-R6-12 | P1 | NIT | see report | OPEN | reviews/P1-round6-adversarial.md | 99828b6 |
