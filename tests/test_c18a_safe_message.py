@@ -123,6 +123,13 @@ def test_user_subclass_of_driver_exception_withheld_by_mro():
     assert _sm()(mine("host=db.internal")) == "MyError"
 
 
+def test_trusted_class_with_driver_ancestor_withheld_by_mro():
+    """Even our own wrapper class is withheld if any ancestor is a driver class."""
+    driver = _cls("DriverError", "psycopg.errors")
+    ours = _cls("OurWrapper", "hadavin_sdk.store.x", driver)
+    assert _sm()(ours("host=db.internal")) == "OurWrapper"
+
+
 def test_user_subclass_of_builtin_in_own_module_withheld():
     assert _sm()(_cls("Mine", "my_app.errors", ValueError)("x")) == "Mine"
 
