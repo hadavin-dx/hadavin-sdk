@@ -210,5 +210,6 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | r8-P1-cor | round 8 correctness review of tickets/P1.md rev 9 (head 74a6e26) | sonnet (claude-sonnet-5-5) | now | +45min | REPORTED | save report, ledger rows |
 | r3-LK-adv | round 3 adversarial review of designs/lookalike-leak.md draft 3 (head 74a6e26) | sonnet (claude-sonnet-5-5) | now | +45min | REPORTED | save report, ledger rows |
 | r3-LK-cor | round 3 correctness review of designs/lookalike-leak.md draft 3 (head 74a6e26) | sonnet (claude-sonnet-5-5) | now | +45min | REPORTED | save report, ledger rows |
-| r8-P1-resolve | egm-resolve P1 round 8 (ADV-R8-1..11, COR-R8-1..12) | opus (claude-opus-5-5) | now | +45min | running | verify, commit, push |
+| r8-P1-resolve | egm-resolve P1 round 8 (ADV-R8-1..11, COR-R8-1..12) | opus (claude-opus-5-5) | now | +45min | REPORTED | verify, commit, push |
 | r3-LK-resolve | egm-resolve look-alike round 3 (ADV-LK3-1..13, COR-LK3-1..10) -> draft 4 | opus (claude-opus-5-5) | now | +45min | running | verify, commit, push |
+| r10-P1-author | P1 rev 10 author from reviews/P1-round8-resolve.md | sonnet (claude-sonnet-5-5) | now | +60min | running | verify, commit, push, then round 9 reviewers |
