@@ -1288,3 +1288,4 @@
 | BL-core-LK-r2-cor-COR-LK2-2 | LK | MAJOR | see report; decided in reviews/lookalike-round2-resolve.md, applied in draft 3 | OPEN | reviews/lookalike-round2-correctness.md | e2f811e |
 | BL-core-LK-r2-cor-COR-LK2-3 | LK | MAJOR | see report; decided in reviews/lookalike-round2-resolve.md, applied in draft 3 | OPEN | reviews/lookalike-round2-correctness.md | e2f811e |
 | BL-core-LK-r2-res-RES-LK2-A | LK/P5c | MAJOR | PHONE does not mask a 10-16 digit number before a sentence-final full stop (probe); row ACC-1c to P5c | OPEN | reviews/lookalike-round2-resolve.md | e2f811e |
+| BL-core-P1-r8-cor-COR-R8-1 | P1 | MAJOR | see report | OPEN | reviews/P1-round8-correctness.md | 74a6e26 |
