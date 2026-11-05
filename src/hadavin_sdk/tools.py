@@ -832,17 +832,17 @@ def _strip_fragment(text: str, forms: list[str], scrub: ScrubSettings = _DEFAULT
     masked). If `text` ends with the marker, remove the longest stretch before it that reads, once the encoding
     layers and NFKC are undone (`_decoded`), as the start of a form of a handed-out secret (at least
     `fragment_min` characters; hex also in any case). First a half-written escape at the very end
-    (`runmap.PARTIAL_ESCAPE`: the decoder cannot read it, so no form matches it) and the front of a base64 token that
+    (`runmap.partial_escape_start`: the decoder cannot read it, so no form matches it) and the front of a base64 token that
     wraps a secret (`_strip_b64_tail`) are removed. `forms` is sorted: `t` starts a form exactly when the form
     that sorts at or after `t` starts with it. At most `fragment_scan` start positions are tried, each with one
     `_decoded` call, and only where the character reads as the first character of a form."""
     if not text.endswith(TRUNCATED):
         return text
     body = text[: -len(TRUNCATED)]
-    while m := runmap.PARTIAL_ESCAPE.search(
-        body, max(len(body) - 4 * scrub.partial_end, 0)
-    ):  # an escape the cut left half written
-        body = body[: m.start()]
+    while (
+        cut := runmap.partial_escape_start(body, max(len(body) - 4 * scrub.partial_end, 0))
+    ) is not None:  # an escape the cut left half written
+        body = body[:cut]
     hexes = sorted(f.lower() for f in forms if _HEXLIKE.fullmatch(f))
     firsts = {f[0] for f in forms}  # the hex forms are in `forms` in both cases
     n = len(body)
