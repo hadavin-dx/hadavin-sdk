@@ -1347,3 +1347,5 @@
 | BL-core-P1-r10-adv-ADV-R10-3 | P1 | MAJOR | see report | OPEN | reviews/P1-round10-adversarial.md | d055d28 |
 | BL-core-P1-r10-adv-ADV-R10-4 | P1 | MAJOR | see report | OPEN | reviews/P1-round10-adversarial.md | d055d28 |
 | BL-core-P1-r10-adv-ADV-R10-5 | P1 | MAJOR | see report | OPEN | reviews/P1-round10-adversarial.md | d055d28 |
+| BL-core-P1-r10-cor-COR-R10-1 | P1 | MAJOR | see report | OPEN | reviews/P1-round10-correctness.md | d055d28 |
+| BL-core-P1-r10-cor-COR-R10-2 | P1 | MAJOR | see report | OPEN | reviews/P1-round10-correctness.md | d055d28 |
