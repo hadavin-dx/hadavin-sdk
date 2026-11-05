@@ -157,5 +157,5 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | r5-P1-adv | round 5 adversarial review of tickets/P1.md rev 6 | sonnet (claude-sonnet-5-5) | now | +45min | running | save report, ledger rows |
 | r5-P1-cor | round 5 correctness review of tickets/P1.md rev 6 | sonnet (claude-sonnet-5-5) | now | +45min | running | save report, ledger rows |
 | rev3-P2d | author rewrite tickets/P2d.md rev 3 from reviews/P2d-round2-resolve.md | sonnet (claude-sonnet-5-5) | now | +50min | running | verify, explicit add, commit, push, round 3 reviewers |
-| r3-P4a-adv | round 3 adversarial review of tickets/P4a.md rev 3 | sonnet (claude-sonnet-5-5) | now | +45min | running | save report, ledger rows |
+| r3-P4a-adv | round 3 adversarial review of tickets/P4a.md rev 3 | sonnet (claude-sonnet-5-5) | now | +45min | REPORTED | save report, ledger rows |
 | r3-P4a-cor | round 3 correctness review of tickets/P4a.md rev 3 | sonnet (claude-sonnet-5-5) | now | +45min | running | save report, ledger rows |
