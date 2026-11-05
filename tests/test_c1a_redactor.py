@@ -296,11 +296,15 @@ def test_final_output_is_rescanned_for_unissued_marks(monkeypatch):
 
     monkeypatch.setattr(sys.modules["hadavin_sdk.guard.redact"]._Redactor, "sweep", planting)
     with pytest.raises(RedactionError) as info:
-        r.mask("hello", s)
+        r.mask(
+            "dropped@example.com", s
+        )  # the engine places EMAIL_2 before the rescan refuses the output
     assert info.value.code == "forged_mark"
     assert s._snapshot() == before  # nothing was absorbed
     monkeypatch.undo()
-    assert r.mask("new@example.com", s) == "<EMAIL_2>"  # the session recovers, numbering intact
+    assert (
+        r.mask("new@example.com", s) == "<EMAIL_2>"
+    )  # the engine was reset: numbering intact, no gap
 
 
 def test_mark_next_to_raw_value_still_masked():
@@ -408,7 +412,17 @@ def test_session_is_private_and_cannot_be_copied():
     r.mask("bob@example.com", s)
     assert "bob" not in repr(s) and "example" not in repr(s)
     assert not hasattr(s, "mapping") and not hasattr(s, "__dict__")
-    for fn in (pickle.dumps, copy.copy, copy.deepcopy, lambda x: x.__getstate__()):
+    for fn in (
+        pickle.dumps,
+        copy.copy,
+        copy.deepcopy,
+        lambda x: x.__getstate__(),
+        lambda x: (
+            x.__reduce__()
+        ),  # each guard on its own: they back each other up under pickle and copy
+        lambda x: x.__copy__(),
+        lambda x: x.__deepcopy__({}),
+    ):
         with pytest.raises(TypeError):
             fn(s)
     assert s.issued("<EMAIL_1>") and not s.issued("<EMAIL_2>")
