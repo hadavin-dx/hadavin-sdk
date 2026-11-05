@@ -1279,3 +1279,4 @@
 | BL-core-P3a-r8-adv-ADV-R8-2 | P3a | MAJOR | see report | OPEN | reviews/P3a-round8-adversarial.md | ee96dbc |
 | BL-core-P3a-r8-adv-ADV-R8-3 | P3a | MAJOR | see report | OPEN | reviews/P3a-round8-adversarial.md | ee96dbc |
 | BL-core-P3a-r8-adv-ADV-R8-4 | P3a | MAJOR | see report | OPEN | reviews/P3a-round8-adversarial.md | ee96dbc |
+| BL-core-P1-r7-cor-COR-R7-1 | P1 | MAJOR | see report | OPEN | reviews/P1-round7-correctness.md | 8d56284 |
