@@ -947,3 +947,13 @@
 | BL-core-p4d-r6-adv-R6-5 | P4D | MINOR | see report | OPEN | reviews/P4d-round6-adversarial.md | a49b196 |
 | BL-core-p4d-r6-adv-R6-6 | P4D | MINOR | see report | OPEN | reviews/P4d-round6-adversarial.md | a49b196 |
 | BL-core-p4d-r6-adv-R6-7 | P4D | NIT | see report | OPEN | reviews/P4d-round6-adversarial.md | a49b196 |
+| BL-core-p4d-r6-cor-R6-C1 | P4D | MAJOR | see report | OPEN | reviews/P4d-round6-correctness.md | a49b196 |
+| BL-core-p4d-r6-cor-R6-C2 | P4D | MINOR | see report | OPEN | reviews/P4d-round6-correctness.md | a49b196 |
+| BL-core-p4d-r6-cor-R6-C3 | P4D | MINOR | see report | OPEN | reviews/P4d-round6-correctness.md | a49b196 |
+| BL-core-p4d-r6-cor-R6-C4 | P4D | MINOR | see report | OPEN | reviews/P4d-round6-correctness.md | a49b196 |
+| BL-core-p4d-r6-cor-R6-C5 | P4D | MINOR | see report | OPEN | reviews/P4d-round6-correctness.md | a49b196 |
+| BL-core-p4d-r6-cor-R6-C6 | P4D | MINOR | see report | OPEN | reviews/P4d-round6-correctness.md | a49b196 |
+| BL-core-p4d-r6-cor-R6-C7 | P4D | MINOR | see report | OPEN | reviews/P4d-round6-correctness.md | a49b196 |
+| BL-core-p4d-r6-cor-R6-C8 | P4D | NIT | see report | OPEN | reviews/P4d-round6-correctness.md | a49b196 |
+| BL-core-p4d-r6-cor-R6-C9 | P4D | NIT | see report | OPEN | reviews/P4d-round6-correctness.md | a49b196 |
+| BL-core-p4d-r6-cor-R6-C10 | P4D | NIT | see report | OPEN | reviews/P4d-round6-correctness.md | a49b196 |
