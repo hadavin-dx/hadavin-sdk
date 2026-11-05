@@ -194,5 +194,5 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | rev9-P4d | author P4d ticket next revision (round resolve applied) | sonnet (claude-sonnet-5-5) | now | +60min | running | verify, commit, push, launch next round |
 | r6-P4a-adv | round 6 review of tickets/P4a.md rev 6 (egm:egm-design) | sonnet (claude-sonnet-5-5) | now | +50min | now | REPORTED | collect, save, resolve |
 | r6-P4a-cor | round 6 review of tickets/P4a.md rev 6 (egm:egm-codebase-details) | sonnet (claude-sonnet-5-5) | now | +50min | now | running | collect, save, resolve |
-| r5-P2d-adv | round 5 review of tickets/P2d.md rev 5 (egm:egm-design) | sonnet (claude-sonnet-5-5) | now | +50min | now | running | collect, save, resolve |
+| r5-P2d-adv | round 5 review of tickets/P2d.md rev 5 (egm:egm-design) | sonnet (claude-sonnet-5-5) | now | +50min | now | REPORTED | collect, save, resolve |
 | r5-P2d-cor | round 5 review of tickets/P2d.md rev 5 (egm:egm-codebase-details) | sonnet (claude-sonnet-5-5) | now | +50min | now | running | collect, save, resolve |
