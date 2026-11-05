@@ -21,3 +21,12 @@ Note (honesty): "last checked" times written before 14:43Z today were estimated 
 | rev-P2a-adversarial | egm:egm-design on tickets/P2a.md | sonnet (claude-sonnet-5-5) | 14:43Z | 15:13Z | reported, report saved, closed | n/a: save report |
 | rev-P4d-correctness | egm:egm-codebase-details on tickets/P4d.md (d2d658b) | sonnet (claude-sonnet-5-5) | 14:43Z | 15:13Z | reported, report saved, closed | n/a: save report |
 | rev-P4d-adversarial | egm:egm-design on tickets/P4d.md | sonnet (claude-sonnet-5-5) | 14:43Z | 15:13Z | reported, report saved, closed | n/a: save report |
+
+## Round 1 fix batch (ticket authors resumed; Sonnet 5.5; started 15:00Z, expected end 15:40Z)
+The egm-resolve skill cannot be started by the cloud session (tool refusal), so each ticket author works through every ledger row of its ticket and writes a disposition file. Fresh reviewers do round 2.
+| agent | purpose | model | started | expected end | state | next action |
+|---|---|---|---|---|---|---|
+| fix-P1 (resumed drafter-P1) | rewrite tickets/P1.md for 43 findings; write reviews/P1-round1-disposition.md | sonnet (claude-sonnet-5-5) | 15:00Z | 15:40Z | running | verify disposition, commit, round 2 |
+| fix-P2a (resumed drafter-P2a) | rewrite tickets/P2a.md for 34 findings; disposition file | sonnet (claude-sonnet-5-5) | 15:00Z | 15:40Z | running | same |
+| fix-P3a (resumed drafter-P3a) | rewrite tickets/P3a.md for 24 findings; disposition file | sonnet (claude-sonnet-5-5) | 15:00Z | 15:40Z | running | same |
+| fix-P4d (resumed drafter-P4d) | rewrite tickets/P4d.md for 37 findings (A11: money SQL in P4d); disposition file | sonnet (claude-sonnet-5-5) | 15:00Z | 15:40Z | running | same |
