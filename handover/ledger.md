@@ -1262,3 +1262,7 @@
 | BL-core-p4a-r6-cor-COR-R6-8 | P4A | MINOR | see report | OPEN | reviews/P4a-round6-correctness.md | 900c825 |
 | BL-core-p4a-r6-cor-COR-R6-6 | P4A | NIT | see report | OPEN | reviews/P4a-round6-correctness.md | 900c825 |
 | BL-core-p4a-r6-cor-COR-R6-7 | P4A | NIT | see report | OPEN | reviews/P4a-round6-correctness.md | 900c825 |
+| BL-core-LK-r1-adv-ADV-LK-1 | LK | MAJOR | see report | OPEN | reviews/lookalike-round1-adversarial.md | 6772704 |
+| BL-core-LK-r1-adv-ADV-LK-2 | LK | MAJOR | see report | OPEN | reviews/lookalike-round1-adversarial.md | 6772704 |
+| BL-core-LK-r1-adv-ADV-LK-3 | LK | MAJOR | see report | OPEN | reviews/lookalike-round1-adversarial.md | 6772704 |
+| BL-core-LK-r1-adv-ADV-LK-4 | LK | MAJOR | see report | OPEN | reviews/lookalike-round1-adversarial.md | 6772704 |

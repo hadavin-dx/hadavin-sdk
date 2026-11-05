@@ -198,7 +198,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | r5-P2d-cor | round 5 review of tickets/P2d.md rev 5 (egm:egm-codebase-details) | sonnet (claude-sonnet-5-5) | now | +50min | now | running | collect, save, resolve |
 | r7-P1-adv | round 7 adversarial review of tickets/P1.md rev 8 | sonnet (claude-sonnet-5-5) | now | +45min | running | save report, ledger rows |
 | r7-P1-cor | round 7 correctness review of tickets/P1.md rev 8 | sonnet (claude-sonnet-5-5) | now | +45min | running | save report, ledger rows |
-| r1-LK-adv | round 1 adversarial review of designs/lookalike-leak.md | sonnet (claude-sonnet-5-5) | now | +45min | running | save report, ledger rows |
+| r1-LK-adv | round 1 adversarial review of designs/lookalike-leak.md | sonnet (claude-sonnet-5-5) | now | +45min | REPORTED | save report, ledger rows |
 | r1-LK-cor | round 1 correctness review of designs/lookalike-leak.md | sonnet (claude-sonnet-5-5) | now | +45min | running | save report, ledger rows |
 | r8-P3a-adv | round 8 review of tickets/P3a.md rev 9 | sonnet (claude-sonnet-5-5) | now | +45min | running | save report, ledger rows |
 | r8-P3a-cor | round 8 review of tickets/P3a.md rev 9 | sonnet (claude-sonnet-5-5) | now | +45min | running | save report, ledger rows |
