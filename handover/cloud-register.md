@@ -92,3 +92,8 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | author-P6b1 | draft tickets/P6b1.md (Wave 2, Tier A); brief = scratchpad author-brief.md | sonnet (claude-sonnet-5-5) | 16:53Z | 17:28Z | running | verify, commit/push, 2 fresh egm reviewers (1 for Tier B) |
 | rev5-P4d (resumed author a8190d79eb2c7579c) | apply 40 round 3 findings (resolve report reviews/P4d-round3-resolve.md) to tickets/P4d.md | sonnet (claude-sonnet-5-5) | 17:20Z | 18:00Z | running | on report: verify, push, round 4 fresh reviewers |
 | rev5-P3a (resumed author a7dc068fb47091bf0) | apply round 3 resolve (reviews/P3a-round3-resolve.md): REMOVE --accept-late per order 6(f) | sonnet (claude-sonnet-5-5) | 17:28Z | 18:00Z | running | on report: verify, push, round 4 |
+| rev5-P2a (resumed author a64cfd8eaa8b64a3a) | apply round 3 resolve (reviews/P2a-round3-resolve.md); merge 1a+1b | sonnet (claude-sonnet-5-5) | 17:07Z | +40min | running | on report: verify, push, round 4 |
+| r4-P4d-adv | round 4 adversarial review of tickets/P4d.md rev 5 (d12bfa7), egm:egm-design | sonnet (claude-sonnet-5-5) | 17:07Z | +30min | running | save report, ledger rows |
+| r4-P4d-cor | round 4 correctness review of P4d rev 5, egm:egm-codebase-details | sonnet (claude-sonnet-5-5) | 17:07Z | +30min | running | save report, ledger rows |
+| r4-P3a-adv | round 4 adversarial review of tickets/P3a.md rev 5 (60e16a5), egm:egm-design | sonnet (claude-sonnet-5-5) | 17:07Z | +25min | running | save report, ledger rows |
+| r4-P3a-cor | round 4 correctness review of P3a rev 5, egm:egm-codebase-details | sonnet (claude-sonnet-5-5) | 17:07Z | +25min | running | save report, ledger rows |
