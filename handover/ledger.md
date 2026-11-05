@@ -1254,3 +1254,11 @@
 | BL-core-p2d-r5-adv-ADV-R5-15 | P2D | MINOR | see report | OPEN | reviews/P2d-round5-adversarial.md | d2cceb5 |
 | BL-core-p2d-r5-adv-ADV-R5-16 | P2D | MINOR | see report | OPEN | reviews/P2d-round5-adversarial.md | d2cceb5 |
 | BL-core-p2d-r5-adv-ADV-R5-17 | P2D | NIT | see report | OPEN | reviews/P2d-round5-adversarial.md | d2cceb5 |
+| BL-core-p4a-r6-cor-COR-R6-1 | P4A | MINOR | see report | OPEN | reviews/P4a-round6-correctness.md | 900c825 |
+| BL-core-p4a-r6-cor-COR-R6-2 | P4A | MINOR | see report | OPEN | reviews/P4a-round6-correctness.md | 900c825 |
+| BL-core-p4a-r6-cor-COR-R6-3 | P4A | MINOR | see report | OPEN | reviews/P4a-round6-correctness.md | 900c825 |
+| BL-core-p4a-r6-cor-COR-R6-4 | P4A | MINOR | see report | OPEN | reviews/P4a-round6-correctness.md | 900c825 |
+| BL-core-p4a-r6-cor-COR-R6-5 | P4A | MINOR | see report | OPEN | reviews/P4a-round6-correctness.md | 900c825 |
+| BL-core-p4a-r6-cor-COR-R6-8 | P4A | MINOR | see report | OPEN | reviews/P4a-round6-correctness.md | 900c825 |
+| BL-core-p4a-r6-cor-COR-R6-6 | P4A | NIT | see report | OPEN | reviews/P4a-round6-correctness.md | 900c825 |
+| BL-core-p4a-r6-cor-COR-R6-7 | P4A | NIT | see report | OPEN | reviews/P4a-round6-correctness.md | 900c825 |
