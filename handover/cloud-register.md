@@ -181,6 +181,6 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | r6-P1-adv | round 6 review of tickets/P1.md rev 7 (99828b6) | sonnet (claude-sonnet-5-5) | now | +50min | now | REPORTED | collect, save, resolve |
 | r6-P1-cor | round 6 review of tickets/P1.md rev 7 (99828b6) | sonnet (claude-sonnet-5-5) | now | +50min | now | REPORTED | collect, save, resolve |
 | r7-P2a-adv | round 7 review of tickets/P2a.md rev 8 | sonnet (claude-sonnet-5-5) | now | +50min | now | REPORTED | collect, save, resolve |
-| r7-P2a-cor | round 7 review of tickets/P2a.md rev 8 | sonnet (claude-sonnet-5-5) | now | +50min | now | running | collect, save, resolve |
-| r5-P4a-adv | round 5 review of tickets/P4a.md rev 5 | sonnet (claude-sonnet-5-5) | now | +50min | now | running | collect, save, resolve |
-| r5-P4a-cor | round 5 review of tickets/P4a.md rev 5 | sonnet (claude-sonnet-5-5) | now | +50min | now | running | collect, save, resolve |
+| r7-P2a-cor | round 7 review of tickets/P2a.md rev 8 | sonnet (claude-sonnet-5-5) | now | +50min | now | REPORTED | collect, save, resolve |
+| r5-P4a-adv | round 5 review of tickets/P4a.md rev 5 | sonnet (claude-sonnet-5-5) | now | +50min | now | REPORTED | collect, save, resolve |
+| r5-P4a-cor | round 5 review of tickets/P4a.md rev 5 | sonnet (claude-sonnet-5-5) | now | +50min | now | REPORTED | collect, save, resolve |
