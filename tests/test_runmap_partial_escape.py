@@ -181,6 +181,15 @@ def test_undo_with_clean_drops_a_half_written_escape_at_the_end(text, expected):
     assert runmap.undo(text, clean=True) == expected
 
 
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [("x" + "%C3" * 80, "x"), ("y" + "&" * 100, "y"), ("z" + "%C3%A9" * 30 + "%C3", "z")],
+)
+def test_undo_with_clean_repeats_until_a_run_longer_than_its_window_is_gone(text, expected):
+    # the look-back window is a few dozen characters, so a long run needs the loop to go round many times
+    assert runmap.undo(text, clean=True) == expected
+
+
 def test_undo_without_clean_keeps_the_half_written_escape_as_it_always_did():
     assert runmap.undo("pw=abc%C3") == "pw=abc\ufffd"
     assert runmap.undo("&&&&") == "&&&&"
