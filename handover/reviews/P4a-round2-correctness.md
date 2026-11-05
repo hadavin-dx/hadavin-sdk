@@ -1,0 +1,16 @@
+# P4a round 2 correctness review (egm:egm-codebase-details), condensed
+Target: tickets/P4a.md rev 2 (60fedf6; money, Tier A). Verdict: stop rule NOT met: 0 blocker, 4 major (R2-C1..C4), 4 minor, 3 nit. Reviewer ran nothing; pydantic coercion (C1) judged from knowledge, probe numbers stay UNVERIFIED until E0. Condensed by the lead.
+
+| id | sev | where | problem | fix |
+|---|---|---|---|---|
+| R2-C1 | Major | P4a-2 C8, config.py interface | C8 expects `max_prompt_tokens` True/"7"/7.0 refused, but `_Strict` (`config.py:50-52`) has no `strict=True`; pydantic v2 lax mode likely coerces "7" and 7.0 (and True as 1). `Route.max_tokens` has the same shape (`:59`). | declare `StrictInt | None` (or `Field(strict=True)`) and say so, or move the values to "coerced" after a probe added to E0 |
+| R2-C2 | Major | Anthropic nested cache rule, C3b, mutant a2-19 | rule refuses a `cache_creation` that is not an object, but the SDK field is Optional and fixtures (`recorded_http/anthropic/text.json:20-22`, `tool_call.json:25-27`) carry only input/output tokens: `model_dump` emits null on an ordinary reply, so read literally every ordinary Anthropic reply is refused. a2-19 guards only `cache_creation_input_tokens: null`. | absent/null `cache_creation` accepted as zero; C3b row with existing fixtures; mutant "null cache_creation refused" |
+| R2-C3 | Major | mutant a2-17, C11 | C11 uses 8 threads x 250 calls over DISTINCT recordings; `fake.py:41-44` locks only a per-digest counter and `list.append`, so removing the lock cannot change the result: a2-17 survives. | several threads on the SAME recording digest (attempts 1..N each used once; missing-file `UnknownRecording` exposes the race), or drop the lock half of a2-17 |
+| R2-C4 | Major | cross-ticket with P4b1, P4b2, P4c | P4b1 (lines 142, 149, 167, 184-185, 233) still says tiers, monotone-price rule, price-date check, W2 "wrong tier"; P4a has none and `Rates` is flat. P4b2:48,66 says `llm/protocol.py` untouched by P4a, but P4a-1/-2 edit it. P4a-1 and P4b1-a must merge consecutively. | require P4b1 and P4b2 revisions citing `rates(route).highest_prompt()`, `cost_usd`, `Reply.usage`, `UsageMissing`; add P4b2 to the "lead checks" list |
+| R2-C5 | Minor | `reply()` signature | P4a-2 adds `Answer.facts` and says `reply()` calls `check_facts` but never states the new `facts` parameter | write the signature (`facts` default `{}`); C12 pins it |
+| R2-C6 | Minor | config.py hot-file order | omits P4b2-b (`P4b2.md:164`) and P6b1 (`P6b1.md:33`, `Config._cross_checks`) | add |
+| R2-C7 | Minor | mutation plan | no mutants for (a) ephemeral_5m counted again, (b) M1 output in the `max_prompt_tokens` basis, (c) the `service_tier` regex, (d) the Reply validator | add (a), (b), (c) |
+| R2-C8 | Minor | C9 / Reply validator | `Reply(cache_read_tokens=True)` is coerced to 1 before the after-validator, so "bool refused" holds only for `Usage`/`build_usage` | `mode="before"` check, or relabel |
+| R2-C9 | Nit | Reply( count | 25 constructions plus the class line, not 26 | reword |
+| R2-C10 | Nit | stale cites | `config.py:37-42` -> 40-44; `agent_loop.py` except at 432-439; `common.py:203-211` -> 200-206; `bedrock.py:171-177` -> 172-176 | fix |
+| R2-C11 | Nit | P4a-1 tests | `BedrockLLM._parse(resp, in_text)` has two parameters (`bedrock.py:162`) | say `_parse(body, in_text=False)` |

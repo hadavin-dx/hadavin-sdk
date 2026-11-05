@@ -139,7 +139,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | rP3a-- | round   review of tickets/.md (head 60fedf6) | sonnet (claude-sonnet-5-5) | now | +40min | running | save report, ledger rows |
 | r2-P4a-adv | round 2 adversarial review of tickets/egm:egm-design.md (head 60fedf6) | sonnet (claude-sonnet-5-5) | now | +40min | running | save report, ledger rows |
 | rP4a-- | round   review of tickets/.md (head 60fedf6) | sonnet (claude-sonnet-5-5) | now | +40min | running | save report, ledger rows |
-| r2-P4a-cor | round 2 correctness review of tickets/egm:egm-codebase-details.md (head 60fedf6) | sonnet (claude-sonnet-5-5) | now | +40min | running | save report, ledger rows |
+| r2-P4a-cor | round 2 correctness review of tickets/egm:egm-codebase-details.md (head 60fedf6) | sonnet (claude-sonnet-5-5) | now | +40min | REPORTED, saved | save report, ledger rows |
 | rP4a-- | round   review of tickets/.md (head 60fedf6) | sonnet (claude-sonnet-5-5) | now | +40min | running | save report, ledger rows |
 | r5-P2a-adv | round 5 adversarial review of tickets/egm:egm-design.md (head 60fedf6) | sonnet (claude-sonnet-5-5) | now | +40min | running | save report, ledger rows |
 | rP2a-- | round   review of tickets/.md (head 60fedf6) | sonnet (claude-sonnet-5-5) | now | +40min | running | save report, ledger rows |

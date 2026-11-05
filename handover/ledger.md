@@ -840,3 +840,14 @@
 | BL-core-p1-r4-cor-C15 | P1 | MINOR | see report | OPEN | reviews/P1-round4-correctness.md | b13ff07 |
 | BL-core-p1-r4-cor-C16 | P1 | NIT | see report | OPEN | reviews/P1-round4-correctness.md | b13ff07 |
 | BL-core-p1-r4-cor-C17 | P1 | NIT | see report | OPEN | reviews/P1-round4-correctness.md | b13ff07 |
+| BL-core-p4a-r2-cor-R2-C1 | P4A | MAJOR | see report | OPEN | reviews/P4a-round2-correctness.md | 60fedf6 |
+| BL-core-p4a-r2-cor-R2-C2 | P4A | MAJOR | see report | OPEN | reviews/P4a-round2-correctness.md | 60fedf6 |
+| BL-core-p4a-r2-cor-R2-C3 | P4A | MAJOR | see report | OPEN | reviews/P4a-round2-correctness.md | 60fedf6 |
+| BL-core-p4a-r2-cor-R2-C4 | P4A | MAJOR | see report | OPEN | reviews/P4a-round2-correctness.md | 60fedf6 |
+| BL-core-p4a-r2-cor-R2-C5 | P4A | MINOR | see report | OPEN | reviews/P4a-round2-correctness.md | 60fedf6 |
+| BL-core-p4a-r2-cor-R2-C6 | P4A | MINOR | see report | OPEN | reviews/P4a-round2-correctness.md | 60fedf6 |
+| BL-core-p4a-r2-cor-R2-C7 | P4A | MINOR | see report | OPEN | reviews/P4a-round2-correctness.md | 60fedf6 |
+| BL-core-p4a-r2-cor-R2-C8 | P4A | MINOR | see report | OPEN | reviews/P4a-round2-correctness.md | 60fedf6 |
+| BL-core-p4a-r2-cor-R2-C9 | P4A | NIT | see report | OPEN | reviews/P4a-round2-correctness.md | 60fedf6 |
+| BL-core-p4a-r2-cor-R2-C10 | P4A | NIT | see report | OPEN | reviews/P4a-round2-correctness.md | 60fedf6 |
+| BL-core-p4a-r2-cor-R2-C11 | P4A | NIT | see report | OPEN | reviews/P4a-round2-correctness.md | 60fedf6 |
