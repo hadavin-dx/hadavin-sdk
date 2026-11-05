@@ -1161,8 +1161,9 @@ def test_check_counts_and_issued_do_not_wait_for_a_running_mask(monkeypatch):
 
     def slow(self, text):
         out = real(self, text)
-        inside.set()
-        release.wait(5)
+        if threading.current_thread() is not threading.main_thread():  # only the worker is held
+            inside.set()
+            release.wait(5)
         return out
 
     monkeypatch.setattr(redact._Redactor, "find", slow)
