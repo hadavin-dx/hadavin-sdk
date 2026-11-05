@@ -1357,3 +1357,6 @@
 | BL-core-P4a-r7-cor-COR-R7-1 | P4a | MAJOR | see report | FIXED-UNVERIFIED | reviews/P4a-round7-correctness.md | b782b8d |
 | BL-core-P4a-r7-cor-COR-R7-2 | P4a | MAJOR | see report | FIXED-UNVERIFIED | reviews/P4a-round7-correctness.md | b782b8d |
 | BL-core-P4a-r7-cor-COR-R7-3 | P4a | MAJOR | see report | FIXED-UNVERIFIED | reviews/P4a-round7-correctness.md | b782b8d |
+| BL-core-lookalike-r7-adv-ADV-LK7-1 | lookalike | MAJOR | see report | OPEN | reviews/lookalike-round7-adversarial.md | 2c60222 |
+| BL-core-lookalike-r7-adv-ADV-LK7-2 | lookalike | MAJOR | see report | OPEN | reviews/lookalike-round7-adversarial.md | 2c60222 |
+| BL-core-lookalike-r7-adv-ADV-LK7-3 | lookalike | MAJOR | see report | OPEN | reviews/lookalike-round7-adversarial.md | 2c60222 |
