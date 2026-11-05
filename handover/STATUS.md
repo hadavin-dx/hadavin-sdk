@@ -9,6 +9,8 @@ No package is built. No pull request is open (S0 EXIT not given; LEAD-ORDERS ord
 | P3a | none (ticket only) | ticket rev 3 = 544eadc; rev 4 in progress | none | 2 done (24, 22); round 3 after rev 4 | 46 (round 2: 0 blockers, 9 major) |
 | P4d (P4d-a1, a2, b, c) | none (ticket only) | ticket rev 3 = 1c82da1; rev 4 in progress | none | 2 done (37, 34); round 3 after rev 4 | 71 (round 2: 1 blocker, 13 major) |
 
+Reading the last column: the counts include the 138 round 1 rows that revision 3 already answered (see reviews/<P>-round1-disposition.md: 129 fixed, 9 escalated and since decided by the lead). They stay OPEN in the ledger, because the rule says FIXED-VERIFIED needs a later clean review; round 3 closes them. The round 2 numbers in brackets are the ones that block.
+
 Not verified anywhere (no server / interpreter in the cloud container): every Postgres behaviour, Python 3.12 and 3.14 behaviour, the PR #50 failing test name, the owner's answer on scratch databases (A3/F10, gates the P3a merge).
 Stop rule: a Tier A ticket is clean after two rounds in a row with no blocker and no major at the final commit; none has reached that yet.
 How reviews were run: egm:* reviewer agents (fresh, Sonnet 5.5, model set on every call); resolve by the egm-resolve skill after the model-patch script removed disable-model-invocation; authors Sonnet 5.5. Times are UTC.
