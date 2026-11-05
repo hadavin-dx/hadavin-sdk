@@ -127,6 +127,18 @@ def test_open_quote_after_a_shrinking_key_is_not_half_shown():
     assert "correct" not in out and "horse" not in out and "<APIKEY_1>" in out
 
 
+def test_open_quote_without_an_assignment_is_not_half_shown():
+    material = 'the passphrase is "correct horse battery staple"'
+    out = sm(ConfigError(_straddle(material, len('the passphrase is "correct horse batt'))))
+    assert "correct" not in out and "horse" not in out and "<APIKEY_1>" in out
+
+
+def test_extract_failure_for_any_other_value_error_is_the_class_name_only():
+    from hadavin_sdk.extract import _failure
+
+    assert _failure(ValueError("Acme GmbH owes 5 EUR")) == "ValueError"
+
+
 def test_assignment_near_the_cap_is_not_half_shown():
     material = "password=correct horse battery staple"
     out = sm(ConfigError(_straddle(material, len("password=correct horse batt"))))
@@ -134,7 +146,7 @@ def test_assignment_near_the_cap_is_not_half_shown():
 
 
 def test_putty_key_lines_masked_before_newlines_are_squeezed():
-    putty = "\n".join(
+    putty = chr(10).join(
         [
             "PuTTY-User-Key-File-3: ssh-ed25519",
             "Encryption: none",
