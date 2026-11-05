@@ -1,1 +1,25 @@
 # gitleaks false positives, by fingerprint (commit:file:rule:line). Each line says why it is not a secret.
+
+# TEMPORARY (remove when branches core/cloud-handover and handover-src/c1a-8460813 are deleted at the end of the core-complete mission).
+# CI scans every fetched ref, so test fixtures on those two branches are scanned on every pull request.
+# Each entry below is a FAKE credential used by a redaction test (made-up values such as hunter2pass, Tr0ub4dor-x9q,
+# AbCdEf123456key); checked by reading the line at that commit on 2026-11-05. No real secret is allowed here.
+# Promoted Warden / Intake test files (branch core/cloud-handover, handover/promotion-inputs):
+2288bf535e5dc011e04b5c5a79fdc3ce73e72d48:handover/promotion-inputs/intake-p2/tests/test_mask_review2.py:curl-auth-user:185
+2288bf535e5dc011e04b5c5a79fdc3ce73e72d48:handover/promotion-inputs/warden/tests/test_bench_jobs.py:generic-api-key:493
+2288bf535e5dc011e04b5c5a79fdc3ce73e72d48:handover/promotion-inputs/warden/tests/test_gate_review8.py:generic-api-key:49
+2288bf535e5dc011e04b5c5a79fdc3ce73e72d48:handover/promotion-inputs/warden/tests/test_redaction.py:generic-api-key:106
+2288bf535e5dc011e04b5c5a79fdc3ce73e72d48:handover/promotion-inputs/warden/tests/test_redaction.py:generic-api-key:136
+2288bf535e5dc011e04b5c5a79fdc3ce73e72d48:handover/promotion-inputs/warden/tests/test_redaction.py:generic-api-key:377
+2288bf535e5dc011e04b5c5a79fdc3ce73e72d48:handover/promotion-inputs/warden/tests/test_redaction.py:generic-api-key:69
+2288bf535e5dc011e04b5c5a79fdc3ce73e72d48:handover/promotion-inputs/warden/tests/test_redaction.py:generic-api-key:71
+2288bf535e5dc011e04b5c5a79fdc3ce73e72d48:handover/promotion-inputs/warden/tests/test_redaction.py:generic-api-key:96
+2288bf535e5dc011e04b5c5a79fdc3ce73e72d48:handover/promotion-inputs/warden/tests/test_redaction_review.py:curl-auth-user:52
+2288bf535e5dc011e04b5c5a79fdc3ce73e72d48:handover/promotion-inputs/warden/tests/test_runtime_module_g6.py:generic-api-key:83
+2288bf535e5dc011e04b5c5a79fdc3ce73e72d48:handover/promotion-inputs/warden/tests/test_slack_review5.py:generic-api-key:83
+# Core redactor test (branch handover-src/c1a-8460813):
+c440e29504220c2624a96e54dec9784d0cbe6042:tests/test_c1a_redactor.py:generic-api-key:1519
+c440e29504220c2624a96e54dec9784d0cbe6042:tests/test_c1a_redactor.py:generic-api-key:1742
+c79169285807eba9d74c91307b17b6a25b740437:tests/test_c1a_redactor.py:generic-api-key:1065
+c79169285807eba9d74c91307b17b6a25b740437:tests/test_c1a_redactor.py:generic-api-key:1097
+c79169285807eba9d74c91307b17b6a25b740437:tests/test_c1a_redactor.py:generic-api-key:1185
