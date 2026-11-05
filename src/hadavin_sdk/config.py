@@ -11,11 +11,26 @@ from typing import Annotated, Any, Literal, get_args
 from urllib.parse import urlsplit
 
 import yaml
-from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, ValidationError, model_validator
+from pydantic import (
+    BaseModel,
+    BeforeValidator,
+    ConfigDict,
+    Field,
+    PrivateAttr,
+    ValidationError,
+    model_validator,
+)
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from hadavin_sdk import deferred
-from hadavin_sdk.backends.table import DEFAULTS, DEV_ONLY, NOT_PROD, TABLE, KindSettings
+from hadavin_sdk.backends.table import (
+    DEFAULTS,
+    DEV_ONLY,
+    NOT_PROD,
+    TABLE,
+    KindSettings,
+    RegexRedactorSettings,
+)
 from hadavin_sdk.errors import ConfigError
 
 __all__ = [
@@ -23,6 +38,7 @@ __all__ = [
     "Config",
     "ConfigError",
     "K1bSettings",
+    "RegexRedactorSettings",
     "Route",
     "confined",
     "load_config",
@@ -62,8 +78,15 @@ class Backends(_Strict):
     store: KindSettings
     audit: KindSettings
     llm: KindSettings
+    redactor: KindSettings
     detector: tuple[KindSettings, ...]
     channel: KindSettings
+    # The capabilities the config file named (the rest came from DEFAULTS). Set by `parse_backends`.
+    _explicit: frozenset[str] = PrivateAttr(default=frozenset())
+
+    @property
+    def explicit(self) -> frozenset[str]:
+        return self._explicit
 
     def entries(self) -> list[tuple[str, KindSettings]]:
         out = [(cap, getattr(self, cap)) for cap in TABLE if cap != "detector"]
@@ -138,7 +161,9 @@ def parse_backends(raw: Any, root: Path) -> Backends:
                 raise ConfigError("backends.detector: llm_judge needs another detector beside it")
         else:
             built[cap] = _one(cap, value, root)
-    return Backends(**built)
+    backends = Backends(**built)
+    backends._explicit = frozenset(raw)
+    return backends
 
 
 _LOOPBACK = {"127.0.0.1", "localhost", "::1"}
@@ -205,6 +230,9 @@ class Config(_Strict):
                 f"{c}: {s.kind}" for c, s in self.backends.entries() if (c, s.kind) in DEV_ONLY
             ]
             refused += ["allow_insecure_loopback"] if self.allow_insecure_loopback else []
+        if self.environment != "dev" and "redactor" not in self.backends.explicit:
+            # The default regex redactor is for dev and tests; a live config names the masking kind it chose.
+            refused.append("redactor: not named (write backends.redactor: {kind: regex})")
         refused += _anchor_refusals(self.environment, self.backends)
         if refused:
             raise ValueError(f"environment {self.environment}: refused: {', '.join(refused)}")

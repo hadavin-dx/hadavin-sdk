@@ -9,6 +9,7 @@ from hadavin_sdk.actions.secrets import FakeSecretProvider
 from hadavin_sdk.approvals.channel import FakeChannel
 from hadavin_sdk.audit.local_dir import LocalDirSink
 from hadavin_sdk.guard.injection import RegexDetector
+from hadavin_sdk.guard.redactor import RegexRedactor
 from hadavin_sdk.llm.fake import FakeLLM
 from hadavin_sdk.store.memory import MemoryStore
 
@@ -42,6 +43,10 @@ def fake_llm(settings, deps) -> FakeLLM:
 
 def regex_detector(settings, deps) -> RegexDetector:
     return RegexDetector(settings.threshold)
+
+
+def regex_redactor(settings, deps) -> RegexRedactor:
+    return RegexRedactor(settings.max_doc_chars)
 
 
 def fake_channel(settings, deps) -> FakeChannel:

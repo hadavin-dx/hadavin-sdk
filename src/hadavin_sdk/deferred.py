@@ -29,6 +29,8 @@ DEFERRED_KEYS = {
     "org_directory": "Phase 2 (request tracker)",
     "intake_forms": "Phase 2 (request tracker)",
     "provisioning": "Phase 2 (request tracker)",
+    # Put-back of masked values into a plan (design needs an approval card that shows each restored field).
+    "restorable": "ticket C1f",
 }
 LIVE = ("pilot", "prod")
 

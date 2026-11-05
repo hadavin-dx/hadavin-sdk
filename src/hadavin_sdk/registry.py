@@ -16,6 +16,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from hadavin_sdk import deferred
 from hadavin_sdk.actions.contract import ActionContract, schema_problems
+from hadavin_sdk.backends import make
 from hadavin_sdk.config import Config, ConfigError, Money, confined, load_yaml
 from hadavin_sdk.guard.judge import PROMPT_SHA256 as JUDGE_PROMPT_SHA256
 from hadavin_sdk.identity import Principal
@@ -100,6 +101,8 @@ class Registry:
         (`hadavin-sdk gate <agent>`) before the runtime starts it again; see CHANGELOG.md."""
         agent = self.agents[agent_id]
         llm = self.config.backends.llm
+        masking = self.config.backends.redactor
+        redactor = make("redactor", masking)
 
         def dump(model) -> dict:
             return model.model_dump(
@@ -123,6 +126,13 @@ class Registry:
                 "route": dump(self.config.routes[agent.model_route]),
                 "actions": [dump(self.contracts[a]) for a in sorted(agent.scope_allowed)],
                 "llm_backend": llm.kind,
+                # What masks the text before the model (D6/F4): a new redactor version needs a new gate run.
+                "masking": f"{redactor.name}@{redactor.version}",
+                **(
+                    {"masking_settings": extra}
+                    if (extra := {k: v for k, v in dump(masking).items() if k != "kind"})
+                    else {}
+                ),
                 # Where and how the model runs (design 4.3); keys only when set, so `fake` agents keep their hash.
                 **{
                     f"llm_{k}": getattr(llm, k)
@@ -188,10 +198,48 @@ def load_registry(config: Config) -> Registry:
     problems = _cross_check(config, agents, chains, contracts)
     if problems:
         raise ConfigError("; ".join(problems))
+    if problems := _trusted_text_problems(config, agents, contracts):
+        raise ConfigError("; ".join(problems))
     reg = Registry(config, agents, principals, chains, contracts)
     if problems := deferred.check(reg):
         raise ConfigError("; ".join(problems))
     return reg
+
+
+def _strings(value, skip=frozenset({"pattern"})):
+    """Every string in a nested schema: keys and values; a regex ``pattern`` is a rule, not text."""
+    if isinstance(value, str):
+        yield value
+    elif isinstance(value, dict):
+        for k, v in value.items():
+            yield str(k)
+            if k not in skip:
+                yield from _strings(v, skip)
+    elif isinstance(value, (list, tuple)):
+        for v in value:
+            yield from _strings(v, skip)
+
+
+def _trusted_text_problems(config, agents, contracts) -> list[str]:
+    """Prompts, contract text and schemas go to the model unmasked, so they must hold nothing the redactor would
+    mask (the client must not put PII or secrets in them). Names the place and the kinds, never the text."""
+    redactor = make("redactor", config.backends.redactor)
+    out = []
+
+    def lint(where: str, text: str) -> None:
+        if kinds := redactor.find(text):
+            out.append(f"{where}: holds text the redactor would mask ({', '.join(kinds)})")
+
+    for a in agents.values():
+        path = confined(config.root, a.prompt_file)
+        if path.is_file():  # a missing prompt is reported by _cross_check
+            lint(f"agent {a.id}: prompt", path.read_text(encoding="utf-8"))
+    for c in contracts.values():
+        for field in ("description", "expected_outcome"):
+            lint(f"action {c.id}: {field}", getattr(c, field))
+        for text in _strings(c.input_schema):
+            lint(f"action {c.id}: input_schema", text)
+    return out
 
 
 def _cross_check(config, agents, chains, contracts) -> list[str]:

@@ -1,4 +1,4 @@
-"""Pattern-based redaction for logs, audit and channel text (documents go to the model unredacted).
+"""Pattern-based redaction for logs, audit, channel text and, through guard.redactor, everything sent to a model.
 
 Copied from WARDEN `src/warden/redaction.py` at PR #206 head 14fc549 (branch `redaction-bank-patterns`,
 veerarakesh56/warden): the full pattern table, including the bank codes (BANKCODE: BSB, sort code, ABA,

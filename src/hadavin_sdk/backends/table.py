@@ -89,6 +89,12 @@ class GeminiSettings(_LLMSettings):
     api_key_secret_name: str
 
 
+class RegexRedactorSettings(KindSettings):
+    kind: Literal["regex"]
+    # The most characters of one document, and of each tool result, the redactor accepts; more is `too_large`.
+    max_doc_chars: int = Field(default=200_000, gt=0)
+
+
 class RegexSettings(KindSettings):
     threshold: float = Field(default=0.5, gt=0.0, le=1.0)  # 0 would flag every clean text (score 0)
 
@@ -537,6 +543,9 @@ TABLE: dict[str, dict[str, Entry]] = {
             hosts=lambda s: ["generativelanguage.googleapis.com"],
         ),
     },
+    "redactor": {
+        "regex": Entry(RegexRedactorSettings, f"{_BUILTIN}:regex_redactor", neutral=True),
+    },
     "detector": {
         "regex": Entry(RegexSettings, f"{_BUILTIN}:regex_detector", neutral=True),
         # llm_judge connects through the configured llm kind (its hosts are the llm's).
@@ -571,6 +580,7 @@ ALLOWED: dict[str, frozenset[str]] = {
     "store": frozenset(),
     "audit": frozenset({"store", "signer", "anchor"}),
     "llm": frozenset({"routes"}),
+    "redactor": frozenset(),
     "detector": frozenset({"llm"}),
     "channel": frozenset({"store"}),
 }
@@ -581,6 +591,7 @@ DEFAULTS: dict[str, str] = {
     "signer": "none",
     "anchor": "none",
     "store": "memory",
+    "redactor": "regex",
     "detector": "regex",
     "channel": "fake",
 }
