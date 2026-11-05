@@ -940,3 +940,10 @@
 | BL-core-p2d-r2-cor-R2-C10 | P2D | MINOR | see report | OPEN | reviews/P2d-round2-correctness.md | d6be4de |
 | BL-core-p2d-r2-cor-R2-C11 | P2D | MINOR | see report | OPEN | reviews/P2d-round2-correctness.md | d6be4de |
 | BL-core-p2d-r2-cor-R2-C12 | P2D | MINOR | see report | OPEN | reviews/P2d-round2-correctness.md | d6be4de |
+| BL-core-p4d-r6-adv-R6-1 | P4D | MAJOR | see report | OPEN | reviews/P4d-round6-adversarial.md | a49b196 |
+| BL-core-p4d-r6-adv-R6-2 | P4D | MAJOR | see report | OPEN | reviews/P4d-round6-adversarial.md | a49b196 |
+| BL-core-p4d-r6-adv-R6-3 | P4D | MAJOR | see report | OPEN | reviews/P4d-round6-adversarial.md | a49b196 |
+| BL-core-p4d-r6-adv-R6-4 | P4D | MINOR | see report | OPEN | reviews/P4d-round6-adversarial.md | a49b196 |
+| BL-core-p4d-r6-adv-R6-5 | P4D | MINOR | see report | OPEN | reviews/P4d-round6-adversarial.md | a49b196 |
+| BL-core-p4d-r6-adv-R6-6 | P4D | MINOR | see report | OPEN | reviews/P4d-round6-adversarial.md | a49b196 |
+| BL-core-p4d-r6-adv-R6-7 | P4D | NIT | see report | OPEN | reviews/P4d-round6-adversarial.md | a49b196 |
