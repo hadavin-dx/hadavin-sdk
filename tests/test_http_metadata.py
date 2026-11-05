@@ -141,7 +141,9 @@ def test_the_table_names_no_vendor_in_any_string():
     assert [s for s in strings if words.search(s)] == []
     try:  # also the real guard's patterns, where this test file sits beside it (not in a mutation copy)
         from tests.test_lockin_guard import PATTERNS
-    except ModuleNotFoundError:
+    except ModuleNotFoundError as exc:
+        if exc.name not in ("tests", "tests.test_lockin_guard"):
+            raise  # a missing module INSIDE the guard file is a real failure, not a mutation copy
         pytest.skip("tests.test_lockin_guard is not importable here (a mutation copy)")
     hits = [
         (label, s)
