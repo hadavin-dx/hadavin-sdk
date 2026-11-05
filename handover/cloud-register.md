@@ -57,7 +57,7 @@ Order 5 of LEAD-ORDERS.md. The round 2 resolve reports are reviews/<P>-round2-re
 | agent | purpose | model | started | expected end | state | next action |
 |---|---|---|---|---|---|---|
 | rev4-P1 (resumed author) | apply 32 round 2 findings to tickets/P1.md | sonnet (claude-sonnet-5-5) | 16:33Z | 17:13Z | running | verify, commit, round 3 |
-| rev4-P2a (resumed author) | apply 30 round 2 findings to tickets/P2a.md (Route A) | sonnet (claude-sonnet-5-5) | 16:33Z | 17:13Z | running | same |
+| rev4-P2a (resumed author) | apply 30 round 2 findings to tickets/P2a.md (Route A) | sonnet (claude-sonnet-5-5) | 16:33Z | 17:13Z | reported, closed | round 3 |
 | rev4-P3a (resumed author) | apply 22 round 2 findings to tickets/P3a.md | sonnet (claude-sonnet-5-5) | 16:33Z | 17:13Z | reported, closed | round 3 |
 | rev4-P4d (resumed author) | apply 34 round 2 findings to tickets/P4d.md | sonnet (claude-sonnet-5-5) | 16:33Z | 17:13Z | reported, closed | round 3 |
 
@@ -68,3 +68,5 @@ Order 5 of LEAD-ORDERS.md. The round 2 resolve reports are reviews/<P>-round2-re
 | rev3-P3a-adversarial | egm:egm-design on tickets/P3a.md rev 4 | sonnet (claude-sonnet-5-5) | 16:39Z | 17:09Z | running | save reviews/P3a-round3-adversarial.md |
 | rev3-P4d-correctness | egm:egm-codebase-details on tickets/P4d.md rev 4 (b215b50) | sonnet (claude-sonnet-5-5) | 16:40Z | 17:10Z | running | save reviews/P4d-round3-correctness.md |
 | rev3-P4d-adversarial | egm:egm-design on tickets/P4d.md rev 4 | sonnet (claude-sonnet-5-5) | 16:40Z | 17:10Z | running | save reviews/P4d-round3-adversarial.md |
+| rev3-P2a-correctness | egm:egm-codebase-details on tickets/P2a.md rev 4 (6d84ad6) | sonnet (claude-sonnet-5-5) | 16:41Z | 17:11Z | running | save reviews/P2a-round3-correctness.md |
+| rev3-P2a-adversarial | egm:egm-design on tickets/P2a.md rev 4 | sonnet (claude-sonnet-5-5) | 16:41Z | 17:11Z | running | save reviews/P2a-round3-adversarial.md |
