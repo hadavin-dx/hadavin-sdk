@@ -1,0 +1,21 @@
+# Look-alike design, round 6 adversarial review (draft 6)
+
+Status: saved by the lead from the reviewer's hand-back (condensed). Reviewer read the design, LEAD-ORDERS, P1.md lines 1-53, P2d.md lines 1-81 and parts of the old-code snapshot. Nothing was run. Verdict: not clean. 1 Blocker, 5 Major, 6 Nit.
+
+| id | sev | finding | proposed fix |
+|---|---|---|---|
+| ADV-LK6-1 | Blocker | Design line 45 (section 5 item 3) / row LK-PH: a genuine placeholder is replaced by a space, so when the placeholder replaced characters OF V itself (an IP or known word inside V, V written with one look-alike letter) the copy's key loses them and V is not found; the masked part leaks. No row covers a masked value that replaced V's characters. | Read two forms: (a) placeholder to space (as now), (b) placeholder to its original from the map, keeping a space where the original is in the checked set. Rows LK-PH-SWALLOW, LK-PH-SWALLOW-NAME; mutant "form (b) not read"; P-2 timing counts the extra calls. |
+| ADV-LK6-2 | Major | k1b/redaction.py::mask (line 54): a refused string no longer teaches the shared map, so a value first revealed in it is sent in clear in a later string (order: log 1 `password=<V>` plus look-alike copy, then log 2 plain V). LK-BUNDLE only tests the other order. | (a) cut the k1b edit (recommended; deletes M43, LK-BUNDLE, one file, the leak), or (b) update the caller's map before raising plus a reversed-order row. |
+| ADV-LK6-3 | Major | Confusables table lacks Latin stroke letters (U+0127, U+0167, U+0180, U+01B6, U+0268, U+0289); NFKD does not decompose them; "every look-alike letter" is false. Other holes UNVERIFIED. | P1 table-completeness property test over "LATIN SMALL/CAPITAL LETTER X WITH ..." names; extend generator; until then xfail row LK-STROKE and a section 10 line. |
+| ADV-LK6-4 | Major | Line 9 says 12+ raw characters; line 42 drops keys under 8, so a 12-char value with 5+ symbols is not covered. Owned as FR-6b/xfail but never accepted as a cut from order 11's threshold. | Say "12+ raw AND key 8+" and add a PENDING LEAD to accept the cut (or add a second key type: raw `in` after NFKC and case fold, punctuation kept). |
+| ADV-LK6-5 | Major | Tests that cannot fail: FR-8 ("or passed"), FR-33 ("or passed"), FR-15/FR-22 (time printed, no assertion), FR-16 (conditional), GOLD-1 (shares scan_keyset and a length filter), M12 (only killer FR-8). Missing mutants: budget check, check run on input `mapping` instead of `current`, form (b). | Assert exact classes or P-2 bounds; GOLD-1 independent length filter; add the three mutants. |
+| ADV-LK6-6 | Major (cut) | Delete the IN-GATED middle outcome (PL-LK-32 is the resolve's addition, not order 13): three builds, a 16-char exempt set, gate finder, M45/M46, LK-GATE, FR-31a/b; gate hole: NBSP/U+3000 between name parts has no gate character. | Delete; P-1 gives IN or OUT as ordered. |
+| ADV-LK6-7 | Nit (cut candidate) | The finder (grouping, split, cache) refactors `_build`; only for a hostile 2000 originals x 8 keys x 262k text. | Dedupe keys, plain `in`, deadline check between originals; drop M11, M12, LK-CACHE, LK-NOCACHE if P-2 timing fits. |
+| ADV-LK6-8 | Nit | A planted value that scan_keyset refuses (nine nested `&amp;`) makes every later check in the run raise. Cheap denial of service; run ends anyway on agent paths. | Optional: refuse the creating text once, never store it. |
+| ADV-LK6-9 | Nit | A copy split across separate texts (head in tool result A, tail in B) passes; no regression. | Owner summary says "within one text". |
+| ADV-LK6-10 | Nit | Quoted-printable, UTF-7, Punycode, `\N{NAME}` are neither decoded nor listed in LKV-9. | Add to section 10 and LKV-9. |
+| ADV-LK6-11 | Nit | Line 75 says every row runs on every path; LK-KIND-NUM says "bare path"; redact_text path for other-script digits untested. | State the expectation. |
+| ADV-LK6-12 | Nit (scope) | The `error_reason` redact-before-cut change fixes an existing straddle bug, not part of order 11; handed-out secrets are a fourth way. | Own small PR so P2d-2 stays reviewable. |
+
+Reviewer: do not cut `redact_many` or bare `redact`.
+Not verified by reviewer: P1 rev 11 behaviour, all timings, whether scan_keyset handles each "covered" case, callers of the five card sites, Warden, that the patterns mask the pieces in the ADV-LK6-1 examples.

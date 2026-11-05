@@ -1331,3 +1331,9 @@
 | BL-core-lookalike-r5-adv-ADV-LK5-4 | lookalike | MAJOR | see report | FIXED-UNVERIFIED | reviews/lookalike-round5-adversarial.md | 2af179b |
 | BL-core-lookalike-r5-adv-ADV-LK5-5 | lookalike | MAJOR | see report | FIXED-UNVERIFIED | reviews/lookalike-round5-adversarial.md | 2af179b |
 | BL-core-lookalike-r5-adv-ADV-LK5-6 | lookalike | MAJOR | see report | FIXED-UNVERIFIED | reviews/lookalike-round5-adversarial.md | 2af179b |
+| BL-core-lookalike-r6-adv-ADV-LK6-1 | lookalike | BLOCKER | see report | OPEN | reviews/lookalike-round6-adversarial.md | 1677d72 |
+| BL-core-lookalike-r6-adv-ADV-LK6-2 | lookalike | MAJOR | see report | OPEN | reviews/lookalike-round6-adversarial.md | 1677d72 |
+| BL-core-lookalike-r6-adv-ADV-LK6-3 | lookalike | MAJOR | see report | OPEN | reviews/lookalike-round6-adversarial.md | 1677d72 |
+| BL-core-lookalike-r6-adv-ADV-LK6-4 | lookalike | MAJOR | see report | OPEN | reviews/lookalike-round6-adversarial.md | 1677d72 |
+| BL-core-lookalike-r6-adv-ADV-LK6-5 | lookalike | MAJOR | see report | OPEN | reviews/lookalike-round6-adversarial.md | 1677d72 |
+| BL-core-lookalike-r6-adv-ADV-LK6-6 | lookalike | MAJOR | see report | OPEN | reviews/lookalike-round6-adversarial.md | 1677d72 |
