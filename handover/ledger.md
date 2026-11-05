@@ -1337,3 +1337,8 @@
 | BL-core-lookalike-r6-adv-ADV-LK6-4 | lookalike | MAJOR | see report | OPEN | reviews/lookalike-round6-adversarial.md | 1677d72 |
 | BL-core-lookalike-r6-adv-ADV-LK6-5 | lookalike | MAJOR | see report | OPEN | reviews/lookalike-round6-adversarial.md | 1677d72 |
 | BL-core-lookalike-r6-adv-ADV-LK6-6 | lookalike | MAJOR | see report | OPEN | reviews/lookalike-round6-adversarial.md | 1677d72 |
+| BL-core-lookalike-r6-cor-COR-LK6-1 | lookalike | BLOCKER | see report | OPEN | reviews/lookalike-round6-correctness.md | 1677d72 |
+| BL-core-lookalike-r6-cor-COR-LK6-2 | lookalike | MAJOR | see report | OPEN | reviews/lookalike-round6-correctness.md | 1677d72 |
+| BL-core-lookalike-r6-cor-COR-LK6-3 | lookalike | MAJOR | see report | OPEN | reviews/lookalike-round6-correctness.md | 1677d72 |
+| BL-core-lookalike-r6-cor-COR-LK6-4 | lookalike | MAJOR | see report | OPEN | reviews/lookalike-round6-correctness.md | 1677d72 |
+| BL-core-lookalike-r6-cor-COR-LK6-5 | lookalike | MAJOR | see report | OPEN | reviews/lookalike-round6-correctness.md | 1677d72 |
