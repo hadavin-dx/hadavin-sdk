@@ -149,7 +149,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | rev6-P1 | author rewrite tickets/P1.md rev 6 from reviews/P1-round4-resolve.md | sonnet (claude-sonnet-5-5) | now | +60min | running | verify, explicit add, commit, push, round 5 reviewers |
 | rev3-P4a | author rewrite tickets/P4a.md rev 3 from reviews/P4a-round2-resolve.md | sonnet (claude-sonnet-5-5) | now | +50min | running | verify, explicit add, commit, push, round 3 reviewers |
 | r2-P2d-adv | round 2 adversarial review of tickets/P2d.md (head d6be4de) | sonnet (claude-sonnet-5-5) | now | +40min | REPORTED | save report, ledger rows |
-| r2-P2d-cor | round 2 correctness review of tickets/P2d.md (head d6be4de) | sonnet (claude-sonnet-5-5) | now | +40min | running | save report, ledger rows |
+| r2-P2d-cor | round 2 correctness review of tickets/P2d.md (head d6be4de) | sonnet (claude-sonnet-5-5) | now | +40min | REPORTED | save report, ledger rows |
 | rev7-P3a | author rewrite tickets/P3a.md rev 7 from reviews/P3a-round5-resolve.md | sonnet (claude-sonnet-5-5) | now | +50min | running | verify, explicit add, commit, push, round 6 reviewers |
 | rev7-P2a | author rewrite tickets/P2a.md rev 7 from reviews/P2a-round5-resolve.md | sonnet (claude-sonnet-5-5) | now | +60min | running | verify, explicit add, commit, push, round 6 reviewers |
 | r6-P4d-adv | round 6 adversarial review of tickets/P4d.md rev 7 | sonnet (claude-sonnet-5-5) | now | +45min | running | save report, ledger rows |

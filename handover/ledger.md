@@ -928,3 +928,15 @@
 | BL-core-p2d-r2-adv-R2-8 | P2D | MINOR | see report | OPEN | reviews/P2d-round2-adversarial.md | d6be4de |
 | BL-core-p2d-r2-adv-R2-9 | P2D | MINOR | see report | OPEN | reviews/P2d-round2-adversarial.md | d6be4de |
 | BL-core-p2d-r2-adv-R2-10 | P2D | NIT | see report | OPEN | reviews/P2d-round2-adversarial.md | d6be4de |
+| BL-core-p2d-r2-cor-R2-C1 | P2D | MAJOR | see report | OPEN | reviews/P2d-round2-correctness.md | d6be4de |
+| BL-core-p2d-r2-cor-R2-C2 | P2D | MAJOR | see report | OPEN | reviews/P2d-round2-correctness.md | d6be4de |
+| BL-core-p2d-r2-cor-R2-C3 | P2D | MAJOR | see report | OPEN | reviews/P2d-round2-correctness.md | d6be4de |
+| BL-core-p2d-r2-cor-R2-C4 | P2D | MAJOR | see report | OPEN | reviews/P2d-round2-correctness.md | d6be4de |
+| BL-core-p2d-r2-cor-R2-C5 | P2D | MINOR | see report | OPEN | reviews/P2d-round2-correctness.md | d6be4de |
+| BL-core-p2d-r2-cor-R2-C6 | P2D | MINOR | see report | OPEN | reviews/P2d-round2-correctness.md | d6be4de |
+| BL-core-p2d-r2-cor-R2-C7 | P2D | MINOR | see report | OPEN | reviews/P2d-round2-correctness.md | d6be4de |
+| BL-core-p2d-r2-cor-R2-C8 | P2D | MINOR | see report | OPEN | reviews/P2d-round2-correctness.md | d6be4de |
+| BL-core-p2d-r2-cor-R2-C9 | P2D | MINOR | see report | OPEN | reviews/P2d-round2-correctness.md | d6be4de |
+| BL-core-p2d-r2-cor-R2-C10 | P2D | MINOR | see report | OPEN | reviews/P2d-round2-correctness.md | d6be4de |
+| BL-core-p2d-r2-cor-R2-C11 | P2D | MINOR | see report | OPEN | reviews/P2d-round2-correctness.md | d6be4de |
+| BL-core-p2d-r2-cor-R2-C12 | P2D | MINOR | see report | OPEN | reviews/P2d-round2-correctness.md | d6be4de |
