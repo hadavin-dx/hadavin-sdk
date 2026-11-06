@@ -359,3 +359,11 @@ Ticket body is 345 lines (over about 250): 4 demo repos x 16 mutants (48 applica
 **BN-23 (DEMAND, lead order 57).** Build note only; ticket text unchanged. DEMAND: WEAK, inferred: the demos pin old core copies (`tickets/P8a.md:40`), and `studio-notes/GAPS.md:54` moves 're-pinning the other three demos' to the background, which leaves the Intake demo's re-pin in the slice. P8b depends on P8a (`tickets/P8b.md:59`) but has no demand. No ticket states the Intake demo needs this one by name. Note `tickets/P8a.md:32` lists every v1 row as a dependency, so P5b4, P5b5 and P6b2 would block it unless that line is amended.
 
 **BN-24 (lead order 59 item 4; this note wins over the dependency list in the line starting "Depends on (merged first)").** The dependency list names only built or ACTIVE tickets. Remove from it P5b4, P5b5 and P6b2 (DEFERRED, `freeze-list.md`); AK0, AK2a, AK4a, P8b, AK-G15, AK-G16 and AK-G1 are not in the list and stay out. When a deferred ticket is un-deferred, its row returns here by a new build note.
+
+**BN-25 (RUNG TABLE as a real table, lead order 69 item 3, ladder v2; written 2026-11-06; append-only; the ticket stays frozen; this note adds the table the cloud check needs and changes no verdict).** Rows restate BN-22 in table form. No new search.
+
+| component | why our code (guarantee) | rung tried (old numbering stays valid) | tool, licence (SPDX), version, date | evidence (source, date) | verdict |
+|---|---|---|---|---|---|
+| Pin bump in `pyproject.toml` and `uv.lock` | none; the lead sits manually | 1 no-code: a manual step | none | BN-22 row 1 | CUT (2026-11-06; no code to cut; a bot costs more than one bump) |
+| Delete or keep copies; copy tests; one-line scripts (R1c, R10) | existing tests | 1 no-code: plain git plus existing tests | git (GPL-2.0, system tool); 2026-11-06 | BN-22 row 2 | CUT-TO-CONFIG+GLUE (2026-11-06) |
+| R13 and R14 checks at deny and allow sites | core safety chain | 2 our core module | none (our code) | BN-22 row 3; not audited here | KEEP-CODE UNVERIFIED (core safety chain; not audited) |

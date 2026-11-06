@@ -23,3 +23,29 @@ The four base dependencies (markdown-it-py, pydantic, pydantic-settings, pyyaml)
 1. psycopg and psycopg-binary (LGPL-3.0): the Postgres store, migrations and tick all import it. Needs the owner's written yes, or a replacement driver (asyncpg is Apache-2.0; pg8000 is BSD-3-Clause; both UNVERIFIED by me and a store rewrite is large: do not start without the owner's decision). My recommendation: ask the owner for a yes for unmodified dynamic use, with the notice shipped, because the alternative is a rewrite of the store layer.
 2. pglast (GPL-3.0) in the test group: my recommendation is to remove it, because P3a decided against it (BN-19/BN-20) and the oracle use was only for a one-off differential in TOOLS.md T-125. Removing it changes `pyproject.toml` and `uv.lock` (a PR, not mine to merge).
 3. Third-party notices: the core's THIRD-PARTY-NOTICES coverage for the shipped extras was not checked in this scan.
+
+## Part 2 (order 69, 2026-11-06): what is inside the psycopg-binary wheel
+Read: the file `psycopg_binary-3.3.6-cp313-cp313-manylinux2014_x86_64` wheel from pypi.org, unpacked with Python in isolated mode in a fresh directory. Only this one platform wheel was read. The macOS and Windows wheels bundle other libraries and are NOT read (UNVERIFIED; the notice text below must be re-checked if a client builds on them).
+
+Finding that matters: the wheel ships ONE licence file (`LICENSE.txt`, LGPL-3.0-only, METADATA `License-Expression: LGPL-3.0-only`). It ships NO licence text for the 15 bundled shared libraries in `psycopg_binary.libs/`. So the SPDX values below are from the well-known licence of each upstream project, matched by library name and version string, NOT read from the wheel. Treat each as UNVERIFIED until the upstream licence file for the exact version is read.
+
+| bundled library (file) | upstream project | SPDX (from upstream, UNVERIFIED) | on the allowlist? |
+|---|---|---|---|
+| libpq 5.18 | PostgreSQL | PostgreSQL | yes (BSD-style; equivalent to MIT/ISC) |
+| libssl 3, libcrypto 3 | OpenSSL 3 | Apache-2.0 | yes |
+| libgssapi_krb5, libkrb5, libk5crypto, libkrb5support, libcom_err | MIT Kerberos 5 | BSD-style / MIT-style (krb5 notice file) | yes (permissive) |
+| libsasl2 | Cyrus SASL | BSD-Attribution-HPND-disclaimer (CMU BSD-style) | yes (permissive, BSD-style) |
+| libldap, liblber (2.0.200) | OpenLDAP | OLDAP-2.8 (OpenLDAP Public License) | NOT named on the allowlist; BSD-style in effect. GOES TO THE LEAD |
+| libpcre 1.2.0 | PCRE (1) | BSD-3-Clause | yes |
+| libselinux | SELinux userspace | Public domain (libselinux) | not named; no restriction. GOES TO THE LEAD with the OpenLDAP row |
+| libkeyutils 1.5 | keyutils (string `keyutils-1.5.8` found in the file) | LGPL-2.1-or-later | yes (LGPL, unmodified, separate shared object) |
+| libcrypt | libxcrypt | LGPL-2.1-or-later | yes (LGPL, unmodified, separate shared object) |
+
+Result: no GPL, AGPL, SSPL, BUSL, non-commercial or unknown library is bundled by name. Two rows are not literally on the allowlist (OLDAP-2.8 and public-domain libselinux). Both are permissive in effect, but the allowlist is the owner's hard rule, so I send both to the lead (not decided by me). Also: three LGPL pieces ship together (psycopg itself LGPL-3.0, keyutils and libxcrypt LGPL-2.1+). All are used unmodified and sit in separate files, so the replace-by-the-user condition holds. I did not run `ldd` or verify which of the 15 libraries are really loaded.
+
+### Draft THIRD-PARTY-NOTICES entry (text only; no repository file edited; for the P0a / hygiene ticket)
+> **psycopg and psycopg-binary (LGPL-3.0)** — Used unmodified, for the PostgreSQL store, through the optional install groups `pg` and `askdata`. Installed as a separate package, so you can replace it with another build of psycopg (for example `pip install psycopg` with your own libpq) without changing our code. The licence text is in the package (`psycopg_binary-<version>.dist-info/licenses/LICENSE.txt`). The binary wheel also carries shared libraries from other projects (PostgreSQL libpq, OpenSSL, MIT Kerberos, Cyrus SASL, OpenLDAP, PCRE, keyutils, libxcrypt, SELinux), each under its own licence; their texts are in those projects. Source for psycopg: its public repository.
+Open for the lead: the wording "source offer" if a client ships our package in a product; and whether the entry lists the bundled libraries by name (as above) or only points to the wheel.
+
+### Register line (order 69 item 2)
+pglast 8.7 — GPL-3.0-or-later — **test-only, GPL, owner decision 2026-11-01, must never be added to a runtime extra.** Used only as the CI oracle for the ask-your-data SQL check. A test must prove that `src/` never imports it (guard row to be added to the P0a / hygiene ticket; see q160).
