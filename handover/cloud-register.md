@@ -533,3 +533,4 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | rv-P5b4-r3-cor | egm-codebase-details round 3 P5b4 rev 3 | 10:25Z | +10min | running | save |
 | rv-P5b3-r3-adv | egm-design round 3 P5b3 rev 3 | 10:35Z | +10min | running | save |
 | rv-P5b3-r3-cor | egm-codebase-details round 3 P5b3 rev 3 | 10:35Z | +10min | running | save |
+| sv-AK-G1-r1 | saver AK-G1 round 1 pair | 10:50Z | +5min | running | verify, push |
