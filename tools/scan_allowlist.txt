@@ -1,4 +1,4 @@
 # path:rule:reason, one per line. An entry skips only that rule on that file; a missing file or reason fails the scan.
 tests/test_no_reference_material.py:banned-name:defines the BANNED list, so it contains every banned name by design
-tests/test_k1b_redaction_layers.py:password-literal:fixture values that the redaction layers must mask, not real passwords
-demos/ask-your-data/README.md:password-literal:documents a placeholder value the reader replaces, not a real password
+tests/test_k1b_redaction_layers.py:credential-literal:fixture values that the redaction layers must mask, not real passwords
+demos/ask-your-data/README.md:credential-literal:documents a placeholder value the reader replaces, not a real password

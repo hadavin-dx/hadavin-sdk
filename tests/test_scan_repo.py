@@ -20,7 +20,7 @@ CASES = {
     "slack-token": "t = '" + "xox" + "b-" + "1234567890-abcdef" + "'",
     "github-token": "t = '" + "gh" + "p_" + "c" * 36 + "'",
     "github-fine-grained-token": "t = '" + "github" + "_pat_" + "d" * 30 + "'",
-    "password-literal": "pass" + "word = 'hunter22xyz'",
+    "credential-literal": "pass" + "word = 'hunter22xyz'",
     "banned-name": "see " + BANNED_NAME,
 }
 # more shapes of the same rules that must also be caught
@@ -29,7 +29,7 @@ MORE_HITS = {
     "sk-api-key": "k = '" + "sk-" + "proj-" + "e" * 30 + "_" + "f" * 10 + "'",
     "private-key-header": "-----BEGIN " + "PGP PRIVATE" + " KEY BLOCK-----",
     "slack-token": "t = '" + "xox" + "e-" + "1234567890-abcdef" + "'",
-    "password-literal": "DB_PASS" + "WORD = 'hunter22xyz'",
+    "credential-literal": "DB_PASS" + "WORD = 'hunter22xyz'",
 }
 # shapes that must NOT be flagged (too short, wrong prefix, no literal)
 NEAR_MISSES = [
