@@ -9,8 +9,8 @@ imports no `config`.
 from __future__ import annotations
 
 import decimal
-from decimal import Decimal
 from collections.abc import Mapping
+from decimal import Decimal
 from typing import Any
 
 from hadavin_sdk.llm.protocol import UnpricedUsage, UsageMissing

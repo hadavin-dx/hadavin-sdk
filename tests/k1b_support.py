@@ -276,7 +276,7 @@ class RecordingLLM:
         self.inner, self.dir, self.attempts = inner, Path(recorded_dir), {}
 
     @property
-    def REQUESTS_PER_CHAT(self) -> int:  # noqa: N802 - the declared name the charge helper reads
+    def REQUESTS_PER_CHAT(self) -> int:
         return self.inner.REQUESTS_PER_CHAT
 
     @property
