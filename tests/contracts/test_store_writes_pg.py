@@ -577,14 +577,15 @@ def _calls(store, run):
 
 @pytest.mark.parametrize("name", WRITE_METHODS)
 def test_a_lone_caller_finishes_for_every_write_method(make, name):
+    """The setup runs on the thread too: with a plain Lock even `create_run` would wait for itself."""
     store = make()
-    run = _new_run(store)
-    call = _calls(store, run)[name]
     outcome = {}
 
     def go():
         try:
-            call()
+            run = _new_run(store)
+            outcome["setup"] = True
+            _calls(store, run)[name]()
         except Exception as exc:  # noqa: BLE001
             outcome["error"] = exc
 
