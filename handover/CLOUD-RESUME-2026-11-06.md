@@ -38,7 +38,7 @@ The owner paused all work for today (2026-11-06). ORDER 104 in `handover/LEAD-OR
 ## 5. PR state at the pause (heads as the lead last saw them; verify with `gh pr list` before acting)
 - MERGED: 67, 68, 81, 82 (and earlier chain items).
 - 63 core/P1a -> main, head 2ff0afe: CI green, lead round 7 NOT CLEAN (3 MAJOR, see queue), redaction path, no round cap.
-- 66 core/P4d -> main (P4d-a1), head 0ee16cc: lead round 2 no blocker/major; lead's local run 3 failed tests (KeyError HADAVIN_TEST_PG_DSN, no Postgres on the laptop; CI green): fix the 3 tests to skip or use require_backend; then the lead merges.
+- 66 core/P4d -> main (P4d-a1), head 0ee16cc (you pushed 92dbb1e later: the lead has NOT reviewed that delta yet): lead round 2 no blocker/major; lead's local run 3 failed tests (KeyError HADAVIN_TEST_PG_DSN, no Postgres on the laptop; CI green): fix the 3 tests to skip or use require_backend; then the lead merges.
 - 75 core/P4d-a2 -> core/P4d (money, READY head f8b9056): lead review starts only after PR 66 merges (stack).
 - 70 core/P1b -> core/P1a (head 06de589 at last look; builder was merging P1a fix6): lead review after PR 63 merges.
 - 73 core/P3a-2 -> core/P3a (draft; order 103: retarget to main 0dabf1f).
