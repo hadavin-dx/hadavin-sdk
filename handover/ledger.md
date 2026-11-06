@@ -1275,10 +1275,10 @@
 | BL-core-P1-r7-adv-ADV-R7-4 | P1 | MAJOR | see report | OPEN | reviews/P1-round7-adversarial.md | 8d56284 |
 | BL-core-P1-r7-adv-ADV-R7-5 | P1 | MAJOR | see report | OPEN | reviews/P1-round7-adversarial.md | 8d56284 |
 | BL-core-P1-r7-adv-ADV-R7-6 | P1 | MAJOR | see report | OPEN | reviews/P1-round7-adversarial.md | 8d56284 |
-| BL-core-P3a-r8-adv-ADV-R8-1 | P3a | MAJOR | see report | OPEN | reviews/P3a-round8-adversarial.md | ee96dbc |
-| BL-core-P3a-r8-adv-ADV-R8-2 | P3a | MAJOR | see report | OPEN | reviews/P3a-round8-adversarial.md | ee96dbc |
-| BL-core-P3a-r8-adv-ADV-R8-3 | P3a | MAJOR | see report | OPEN | reviews/P3a-round8-adversarial.md | ee96dbc |
-| BL-core-P3a-r8-adv-ADV-R8-4 | P3a | MAJOR | see report | OPEN | reviews/P3a-round8-adversarial.md | ee96dbc |
+| BL-core-P3a-r8-adv-ADV-R8-1 | P3a | MAJOR | see report | FIXED-UNVERIFIED | reviews/P3a-round8-adversarial.md | ee96dbc |
+| BL-core-P3a-r8-adv-ADV-R8-2 | P3a | MAJOR | see report | FIXED-UNVERIFIED | reviews/P3a-round8-adversarial.md | ee96dbc |
+| BL-core-P3a-r8-adv-ADV-R8-3 | P3a | MAJOR | see report | FIXED-UNVERIFIED | reviews/P3a-round8-adversarial.md | ee96dbc |
+| BL-core-P3a-r8-adv-ADV-R8-4 | P3a | MAJOR | see report | FIXED-UNVERIFIED | reviews/P3a-round8-adversarial.md | ee96dbc |
 | BL-core-P1-r7-cor-COR-R7-1 | P1 | MAJOR | see report | OPEN | reviews/P1-round7-correctness.md | 8d56284 |
 | BL-core-LK-r2-adv-ADV-LK2-1 | LK | MAJOR | see report; decided in reviews/lookalike-round2-resolve.md, applied in draft 3 | OPEN | reviews/lookalike-round2-adversarial.md | e2f811e |
 | BL-core-LK-r2-adv-ADV-LK2-2 | LK | MAJOR | see report; decided in reviews/lookalike-round2-resolve.md, applied in draft 3 | OPEN | reviews/lookalike-round2-adversarial.md | e2f811e |
@@ -1440,7 +1440,7 @@
 | BL-core-P4d-r8-adv-M2 | P4d | MAJOR | excess-bound refusal leaves only under-booking exits (release/smaller retry) | FIXED-UNVERIFIED | reviews/P4d-round8-adversarial.md | a321940 |
 | BL-core-P2a-r8-adv-M1 | P2a | MAJOR | reset records previous resetter as old_by (stale by on request-only stops); audit attribution wrong | OPEN | reviews/P2a-round8-adversarial.md | 4c7baa2 |
 | BL-core-P4d-r8-cor-M1 | P4d | MAJOR | row a7 price 1E-30 refused by Route validator, fixture unbuildable (same as adv M1) | FIXED-UNVERIFIED | reviews/P4d-round8-correctness.md | 4fff3cc |
-| BL-core-P3a-r8-cor-M1 | P3a | MAJOR | H11 plants 2,3 use plain CREATE FUNCTION which _SAFE_CREATE refuses; test never reaches read-back | OPEN | reviews/P3a-round8-correctness.md | 7b31e3b |
+| BL-core-P3a-r8-cor-M1 | P3a | MAJOR | H11 plants 2,3 use plain CREATE FUNCTION which _SAFE_CREATE refuses; test never reaches read-back | FIXED-UNVERIFIED | reviews/P3a-round8-correctness.md | 7b31e3b |
 | BL-core-P2d-r5-cor-M1 | P2d | MAJOR | see reviews/P2d-round5-correctness.md M1 | OPEN | reviews/P2d-round5-correctness.md | 7b31e3b |
 | BL-core-P2d-r5-cor-M2 | P2d | MAJOR | see reviews/P2d-round5-correctness.md M2 | OPEN | reviews/P2d-round5-correctness.md | 7b31e3b |
 | BL-core-P2d-r5-cor-M3 | P2d | MAJOR | see reviews/P2d-round5-correctness.md M3 | OPEN | reviews/P2d-round5-correctness.md | 7b31e3b |
