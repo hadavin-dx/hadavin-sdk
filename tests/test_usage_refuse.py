@@ -45,6 +45,8 @@ PRICED = ROUTES["default"]  # 3.00 in, 15.00 out per million tokens
 FREE = PRICED.model_copy(
     update={"input_usd_per_mtok": D(0), "output_usd_per_mtok": D(0)}
 )  # built directly: only the Config check of P4a-2 refuses a zero price
+# the cap, with a stand-in on a tree that predates P4a (the fail-before run)
+CAP = getattr(defaults, "MAX_USAGE_TOKENS_PER_CLASS", 10**9)
 CANARY = "canary" + "-" + "value"  # built from parts: never one literal
 
 
@@ -376,7 +378,7 @@ def test_u3_anthropic_usage_that_is_missing_or_not_an_object():
 
 @pytest.mark.parametrize("cls", [OpenAICompatWire, GeminiWire], ids=["openai_compat", "gemini"])
 def test_u3_boundary_exactly_the_cap_is_accepted_and_one_more_is_refused(cls):
-    cap = defaults.MAX_USAGE_TOKENS_PER_CLASS
+    cap = CAP
     assert cap == 10**9
     for which in ("input", "output"):
         w = cls()
@@ -532,7 +534,7 @@ def test_u3_gemini_a_bad_total_is_invalid(bad):
 def test_u3b_build_usage_and_add_usage_refuse_with_typed_errors():
     from hadavin_sdk.llm.protocol import add_usage, build_usage
 
-    cap = defaults.MAX_USAGE_TOKENS_PER_CLASS
+    cap = CAP
     with pytest.raises(ProviderError) as caught:
         build_usage(cap + 1, 5)
     assert type(caught.value) is UsageMissing
@@ -704,7 +706,7 @@ def test_u5_a_boolean_count_is_invalid(tmp_path):
 
 
 def test_u5_a_recording_at_the_cap_loads_and_one_above_is_refused(tmp_path):
-    cap = defaults.MAX_USAGE_TOKENS_PER_CLASS
+    cap = CAP
     reply = _fake(tmp_path, {"text": "x", "input_tokens": cap, "output_tokens": 1}).chat(
         MSGS, system="", route="r"
     )
@@ -923,9 +925,7 @@ def test_u10_the_agent_loop_ends_needs_person_provider_error_after_one_call(cfg_
 # U13 Usage invariants.
 
 
-@pytest.mark.parametrize(
-    "bad", [True, 1.0, "1", None, -1, defaults.MAX_USAGE_TOKENS_PER_CLASS + 1], ids=repr
-)
+@pytest.mark.parametrize("bad", [True, 1.0, "1", None, -1, CAP + 1], ids=repr)
 @pytest.mark.parametrize("slot", [0, 1, 2, 3])
 def test_u13_usage_refuses_a_bad_count_in_any_class(bad, slot):
     args = [1, 1, 0, 0]
@@ -935,7 +935,7 @@ def test_u13_usage_refuses_a_bad_count_in_any_class(bad, slot):
 
 
 def test_u13_usage_accepts_the_cap_sums_the_prompt_and_is_frozen():
-    cap = defaults.MAX_USAGE_TOKENS_PER_CLASS
+    cap = CAP
     u = models.Usage(cap, cap, cap, cap)
     assert u.prompt_tokens == cap * 3
     assert models.Usage(3, 4, 5, 6).prompt_tokens == 3 + 5 + 6
@@ -952,7 +952,7 @@ def test_u14_cost_usd_is_exact_over_seeded_cases():
     from hadavin_sdk.llm.pricing import cost_usd
 
     rng = random.Random(4242)  # noqa: S311 - a seeded test generator, not a secret
-    cap = defaults.MAX_USAGE_TOKENS_PER_CLASS
+    cap = CAP
     top = int(defaults.MAX_ROUTE_PRICE_USD_PER_MTOK * 10**6)
     for _ in range(2000):
         pin, pout = (D(rng.randint(0, top)).scaleb(-6) for _ in range(2))
@@ -966,7 +966,7 @@ def test_u14_cost_usd_is_exact_over_seeded_cases():
 def test_u14_max_case_at_the_price_bound_is_exact():
     from hadavin_sdk.llm.common import reply
 
-    cap, top = defaults.MAX_USAGE_TOKENS_PER_CLASS, defaults.MAX_ROUTE_PRICE_USD_PER_MTOK
+    cap, top = CAP, defaults.MAX_ROUTE_PRICE_USD_PER_MTOK
     route = PRICED.model_copy(update={"input_usd_per_mtok": D(top), "output_usd_per_mtok": D(top)})
     got = reply(route, text="x", calls=[], usage=models.Usage(cap, cap), stop=None, started=0.0)
     assert Fraction(got.cost_usd) == Fraction(2 * cap * top, 10**6)
