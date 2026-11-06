@@ -61,3 +61,4 @@
 2026-11-06 01:53 UTC / 07:23 IST | step=P4d r8 adv saved (2 Majors) | done=LK r10 resolve saved, LK draft 11 author launched, 6 older-package reviewers launched | next=wait P4d cor + P2a/P3a/P2d reviews; P1 r14 resolve -> rev16; P4a rev11 -> r11 reviewers | blocked=no | context=ok
 2026-11-06 01:56 UTC / 07:26 IST | step=P2a r8 adv saved (1 Major) | done=- | next=wait remaining reviewers/author/resolve agents | blocked=no | context=ok
 2026-11-06 01:57 UTC / 07:27 IST | step=P4d r8 cor saved (1 Major, same as adv M1) | done=P4d r8 both reviews | next=P4d rev 10 resolve+author; wait P2a/P3a/P2d cor, P1 resolve, P4a rev11, LK draft11 | blocked=no | context=ok
+2026-11-06 01:58 UTC / 07:28 IST | step=saved P3a r8 cor, P2d r5 cor; P1 r14 resolve in; P4a rev11 in | done=P4d r8 both, P3a r8 cor, P2d r5 cor, P2a r8 adv | next=P1 rev16 author (final), P4a r11 reviewers, P4d rev10, P2a/P3a/P2d resolves | blocked=no | context=ok

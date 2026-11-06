@@ -1432,11 +1432,16 @@
 | BL-core-LK-r10-adv-B | LK | MAJOR | owner summary over-claims vs strict xfails | FIXED-UNVERIFIED | reviews/LK-round10-adversarial.md | f386cbd |
 | BL-core-LK-r10-adv-C | LK | MAJOR | P-1 IN/OUT measure mixes catches, special corpora, false refusals | FIXED-UNVERIFIED | reviews/LK-round10-adversarial.md | f386cbd |
 | BL-core-LK-r10-adv-D | LK | MAJOR | count form never compared with a window rule | FIXED-UNVERIFIED | reviews/LK-round10-adversarial.md | f386cbd |
-| BL-core-P1-r14-cor-1 | P1 | MAJOR | FILL-NAMES row predicate false for U+2422 (category So); red on correct code | OPEN | reviews/P1-round14-correctness.md | ad1d1f4 |
-| BL-core-P1-r14-adv-1 | P1 | MAJOR | FILL-NAMES predicate false for U+2422/2423 (same as r14-cor-1) | OPEN | reviews/P1-round14-adversarial.md | 81483aa |
-| BL-core-P1-r14-adv-2 | P1 | MAJOR | re-pointed mutants 7,8,9,18 cannot be KILLED once P1a adds an import-time digest check | OPEN | reviews/P1-round14-adversarial.md | 81483aa |
-| BL-core-P1-r14-adv-3 | P1 | MAJOR | coverage sentence reads exhaustive for enclosed/dingbat forms (U+24EB-24F4, U+1F10B-C missing); build PIN-ENCL from names | OPEN | reviews/P1-round14-adversarial.md | 81483aa |
+| BL-core-P1-r14-cor-1 | P1 | MAJOR | FILL-NAMES row predicate false for U+2422 (category So); red on correct code | FIXED-UNVERIFIED | reviews/P1-round14-correctness.md | ad1d1f4 |
+| BL-core-P1-r14-adv-1 | P1 | MAJOR | FILL-NAMES predicate false for U+2422/2423 (same as r14-cor-1) | FIXED-UNVERIFIED | reviews/P1-round14-adversarial.md | 81483aa |
+| BL-core-P1-r14-adv-2 | P1 | MAJOR | re-pointed mutants 7,8,9,18 cannot be KILLED once P1a adds an import-time digest check | FIXED-UNVERIFIED | reviews/P1-round14-adversarial.md | 81483aa |
+| BL-core-P1-r14-adv-3 | P1 | MAJOR | coverage sentence reads exhaustive for enclosed/dingbat forms (U+24EB-24F4, U+1F10B-C missing); build PIN-ENCL from names | FIXED-UNVERIFIED | reviews/P1-round14-adversarial.md | 81483aa |
 | BL-core-P4d-r8-adv-M1 | P4d | MAJOR | test row a7 (price 1E-30) refused by the Route validator; i10h/i10g lose killer | OPEN | reviews/P4d-round8-adversarial.md | a321940 |
 | BL-core-P4d-r8-adv-M2 | P4d | MAJOR | excess-bound refusal leaves only under-booking exits (release/smaller retry) | OPEN | reviews/P4d-round8-adversarial.md | a321940 |
 | BL-core-P2a-r8-adv-M1 | P2a | MAJOR | reset records previous resetter as old_by (stale by on request-only stops); audit attribution wrong | OPEN | reviews/P2a-round8-adversarial.md | 4c7baa2 |
 | BL-core-P4d-r8-cor-M1 | P4d | MAJOR | row a7 price 1E-30 refused by Route validator, fixture unbuildable (same as adv M1) | OPEN | reviews/P4d-round8-correctness.md | 4fff3cc |
+| BL-core-P3a-r8-cor-M1 | P3a | MAJOR | H11 plants 2,3 use plain CREATE FUNCTION which _SAFE_CREATE refuses; test never reaches read-back | OPEN | reviews/P3a-round8-correctness.md | 7b31e3b |
+| BL-core-P2d-r5-cor-M1 | P2d | MAJOR | see reviews/P2d-round5-correctness.md M1 | OPEN | reviews/P2d-round5-correctness.md | 7b31e3b |
+| BL-core-P2d-r5-cor-M2 | P2d | MAJOR | see reviews/P2d-round5-correctness.md M2 | OPEN | reviews/P2d-round5-correctness.md | 7b31e3b |
+| BL-core-P2d-r5-cor-M3 | P2d | MAJOR | see reviews/P2d-round5-correctness.md M3 | OPEN | reviews/P2d-round5-correctness.md | 7b31e3b |
+| BL-core-P2d-r5-cor-M4 | P2d | MAJOR | see reviews/P2d-round5-correctness.md M4 | OPEN | reviews/P2d-round5-correctness.md | 7b31e3b |
