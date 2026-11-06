@@ -415,7 +415,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | r2-P6a-adv | Round 2 adversarial P6a rev 2 | egm-design | 03:10Z | +10min | REPORTED | save |
 | r2-P6a-cor | Round 2 correctness P6a rev 2 | egm-codebase-details | 03:10Z | +10min | REPORTED | save |
 | r3-P4b1-adv | Round 3 adversarial P4b1 rev 3 | egm-design | 03:10Z | +12min | REPORTED | save |
-| r3-P4b1-cor | Round 3 correctness P4b1 rev 3 | egm-codebase-details | 03:10Z | +12min | running | save |
+| r3-P4b1-cor | Round 3 correctness P4b1 rev 3 | egm-codebase-details | 03:10Z | +12min | REPORTED | save |
 | res-r1-P5b4 | Opus resolve P5b4 r1 (1 Blocker, Majors) | opus | 03:10Z | +30min | running | rev 2 author |
 | res-r1-P8a | Opus resolve P8a r1 (8 Majors) | opus | 03:10Z | +30min | running | rev 2 author |
 | res-r1-P5b3 | Opus resolve P5b3 r1 (11 Majors) | opus | 03:11Z | +30min | running | rev 2 author |
@@ -430,3 +430,4 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | rev-P5b5-2 | Opus author P5b5 rev 2 (shrinks to tests + page) | opus | 03:14Z | +25min | running | round 2 |
 | sav-P6a-r2-P4b1-r3adv | Saver: P6a r2 adv+cor, P4b1 r3 adv reports to reviews/ and ledger | claude | 03:15Z | +10min | REPORTED | verify, push; launch P6a rev 3 resolve |
 | res-r2-P6a | Opus resolve P6a round 2 (adv 4 Major, cor 4 Major) + order 22 | opus | 03:16Z | +25min | running | verify, then rev 3 author |
+| sav-P4b1-r3cor | Saver: P4b1 r3 correctness report + ledger | claude | 03:17Z | +8min | running | verify, then P4b1 round 3 resolve |
