@@ -151,3 +151,9 @@ KILL_SWITCH_ROLE_LOCK_TIMEOUT_MS = 10000
 KILL_SWITCH_ROLE_IDLE_IN_TRANSACTION_TIMEOUT_MS = 60000
 KILL_SWITCH_RUNTIME_CONNECTION_LIMIT = 20
 KILL_SWITCH_STOP_CONNECTION_LIMIT = 2
+
+# --- model usage counts (P4a-1): one named block. Rebase note: if another package adds a block at the end of this file
+# first, keep both blocks and keep this one whole -------------------------------------------------------------------
+MAX_USAGE_TOKENS_PER_CLASS = (
+    1_000_000_000  # the most one class of tokens (input, output, a cache class) may be in one count
+)

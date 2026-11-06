@@ -7,7 +7,6 @@ text, read back as the same forced tool call. Needs ``hadavin-sdk[aws]``.
 
 from __future__ import annotations
 
-import json
 import time
 from collections.abc import Callable
 from typing import Any
@@ -25,6 +24,7 @@ from hadavin_sdk.llm.common import (
     reply,
     schema_hint,
 )
+from hadavin_sdk.llm.protocol import UsageMissing, build_usage
 from hadavin_sdk.llm.retry import retryable_status
 from hadavin_sdk.models import Reply, ToolCall
 
@@ -154,9 +154,7 @@ class BedrockLLM(NetworkLLM):
             }
         started = time.monotonic()
         got = self._retry(lambda: self._parse(self._client.converse(**request), in_text))
-        return reply(
-            route, **vars(got), started=started, sent=system + json.dumps(request["messages"])
-        )
+        return reply(route, **vars(got), started=started)
 
     @staticmethod
     def _parse(resp: dict[str, Any], in_text: bool) -> Answer:
@@ -169,10 +167,12 @@ class BedrockLLM(NetworkLLM):
         ]
         if in_text and (found := json_in_text(text)) is not None:
             calls = [ToolCall(name=ANSWER_TOOL, input=found)]
-        usage = resp.get("usage") or {}
+        raw = resp.get("usage")
+        if not isinstance(raw, dict):
+            raise UsageMissing("absent", "usage")
         return Answer(
             text=text,
             calls=calls,
-            tokens=(usage.get("inputTokens"), usage.get("outputTokens")),
+            usage=build_usage(raw.get("inputTokens"), raw.get("outputTokens")),
             stop=resp.get("stopReason"),
         )
