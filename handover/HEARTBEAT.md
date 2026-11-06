@@ -362,3 +362,4 @@ WAITING ON LEAD (all): nothing I wait for on a PR; open asks stay as in q240 (re
 CORRECTION: q242 and q243 headers carry wrong clock times (16:40Z and 16:50Z); the real time was about 15:55Z. Content is right.
 P1b | READY PR 70 head 06de589, 113/113 mutants, suites green 3.13+3.12 | builders running: P1a fix6, P3a-1, P4d-a1 | blocked on: lead review; re-merge after P1a fix6
 P3a-1 | READY PR 68 head 53d5bd2 (order 100 done; suites on pre-merge tree 9b665b1; CI check/tests-py312 running on 53d5bd2) | builders running: P1a fix6, P4d-a1 | blocked on: lead review; P3a-2 merge later
+P3a-2 | ORDER 103 builder started (merge main 0dabf1f, hand_recipe, ledger rows, CHANGELOG, evidence on final head) | builders running: P1a fix6, P4d-a1, P3a-2 | blocked on: -; P1b waits for P1a fix6
