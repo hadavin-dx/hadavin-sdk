@@ -1405,3 +1405,5 @@
 | BL-core-P4a-r9-cor-F1 | P4a | MAJOR | see report | OPEN | reviews/P4a-round9-correctness.md | a01a8b2 |
 | BL-core-P4a-r9-cor-F2 | P4a | MAJOR | see report | OPEN | reviews/P4a-round9-correctness.md | a01a8b2 |
 | BL-core-P4a-r9-cor-F3 | P4a | MAJOR | see report (lead decision PL49) | OPEN | reviews/P4a-round9-correctness.md | a01a8b2 |
+| BL-core-lookalike-r9-cor-F3 | lookalike | MAJOR | see report | OPEN | reviews/lookalike-round9-correctness.md | 871dc07 |
+| BL-core-lookalike-r9-cor-F4 | lookalike | MAJOR | see report | OPEN | reviews/lookalike-round9-correctness.md | 871dc07 |
