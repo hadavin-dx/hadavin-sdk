@@ -1391,3 +1391,6 @@
 | BL-core-lookalike-r8-cor-F1 | lookalike | MAJOR | see report | OPEN | reviews/lookalike-round8-correctness.md | 2ca11dd |
 | BL-core-lookalike-r8-cor-F2 | lookalike | MAJOR | see report | OPEN | reviews/lookalike-round8-correctness.md | 2ca11dd |
 | BL-core-lookalike-r8-cor-F3 | lookalike | MAJOR | see report | OPEN | reviews/lookalike-round8-correctness.md | 2ca11dd |
+| BL-core-P1-r12-adv-M1 | P1 | MAJOR | see report | OPEN | reviews/P1-round12-adversarial.md | 3f0236f |
+| BL-core-P1-r12-adv-M2 | P1 | MAJOR | see report | OPEN | reviews/P1-round12-adversarial.md | 3f0236f |
+| BL-core-P1-r12-adv-M3 | P1 | MAJOR | see report | OPEN | reviews/P1-round12-adversarial.md | 3f0236f |
