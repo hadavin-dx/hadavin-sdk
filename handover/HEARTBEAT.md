@@ -74,3 +74,4 @@
 02:15Z / 07:45 IST | step=P3a rev10 verified (3a7f85d), FROZEN | done=P4d,P3a | next=P2d,P2a,P4a authors then freeze-list.md | blocked=none | context=ok
 02:17Z / 07:47 IST | step=order 18 read; P4a rev12 verified (2826fa8, 573 lines, FROZEN) | done=P4d,P3a,P4a | next=P2d rev6, P2a rev10 authors, then freeze-list.md; no new rounds | blocked=none | context=ok
 02:19Z / 07:49 IST | step=P2a rev10 verified (2744e50, 480 lines), FROZEN | done=P4d,P3a,P4a,P2a | next=P2d rev6 author, then freeze-list.md | blocked=none | context=ok
+02:20Z / 07:50 IST | step=order 19: DECISIONS.md copied+pushed, NEEDS LEAD index added | done=P4d,P3a,P4a,P2a frozen | next=P2d rev6 author, freeze-list.md | blocked=none | context=ok
