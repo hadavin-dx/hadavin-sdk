@@ -393,7 +393,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | rev-P5c-2 | Opus author: P5c revision 2 from reviews/P5c-round1-resolve.md | opus | 03:02Z | +45min | running | verify; round 2 |
 | rev-P6b2-2 | Opus author: P6b2 revision 2 from reviews/P6b2-round1-resolve.md | opus | 03:02Z | +45min | running | verify; round 2 |
 | r2-P8b-adv | egm-design adversarial round 2 of P8b rev 2 | sonnet | 03:02Z | +20min | running | save |
-| r2-P8b-cor | egm-codebase-details correctness round 2 of P8b rev 2 | sonnet | 03:02Z | +20min | running | save |
+| r2-P8b-cor | egm-codebase-details correctness round 2 of P8b rev 2 | sonnet | 03:02Z | +20min | REPORTED | save |
 | r3-P6b1-adv | egm-design adversarial round 3 (LAST) of P6b1 rev 3 | sonnet | 03:03Z | +20min | running | save |
 | r3-P6b1-cor | egm-codebase-details correctness round 3 (LAST) of P6b1 rev 3 | sonnet | 03:03Z | +20min | running | save |
 | res-r2-P4b2 | Opus egm-resolve P4b2 round 2 (5 Majors + minors) | opus | 03:03Z | +30min | running | save, rev 4 author |
@@ -405,4 +405,4 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | r1-P5b5-adv | round 1 ticket review | sonnet | 03:04Z | +20min | running | save |
 | r1-P5b5-cor | round 1 ticket review | sonnet | 03:04Z | +20min | running | save |
 | r3-P5b2-adv | egm-design adversarial round 3 of P5b2 rev 3 | sonnet | 03:05Z | +20min | running | save |
-| r3-P5b2-cor | egm-codebase-details correctness round 3 of P5b2 rev 3 | sonnet | 03:05Z | +20min | NOT LAUNCHED (20-agent cap), relaunch when a slot frees | save |
+| r3-P5b2-cor | egm-codebase-details correctness round 3 of P5b2 rev 3 | sonnet | 03:05Z | +20min | running | save |
