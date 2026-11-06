@@ -563,7 +563,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | au-P5b4-bn | Opus BN author P5b4 (BN-1..17 + banner) | 13:55Z | +10min | REPORTED | verify, push |
 | rs-AK0-r3 | Opus resolve AK0 round 3 (LAST; build notes win; 9 Majors) | 14:00Z | +25min | REPORTED | verify, then BN author |
 | sv-AKG2-r2 | saver AK-G2 round 2 pair | 14:15Z | +5min | REPORTED | verify, push |
-| rs-AKG2-r2 | Opus resolve AK-G2 round 2 (1 Blocker, 9 Majors) | 14:25Z | +25min | running | verify, then rev 3 author |
+| rs-AKG2-r2 | Opus resolve AK-G2 round 2 (1 Blocker, 9 Majors) | 14:25Z | +25min | REPORTED | verify, then rev 3 author |
 | au-AK4a-r3 | Opus author AK4a revision 3 | 14:45Z | +30min | running | verify, then round 3 pair |
 | au-AKG1-r2 | Opus author AK-G1 revision 2 | 14:45Z | +30min | running | verify, then round 2 pair |
 | rv-AK1-r3-adv | egm-design AK1 rev3 round 3 | 04:40Z | +20min | running | save |
@@ -571,3 +571,4 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | au-P5b3-bn | Opus BN author P5b3 (BN-1..15 + banner) | 04:23Z | +25min | REPORTED | verify, push |
 | au-AK0-bn | Opus BN author AK0 (BN-1..17 + banner) | 04:24Z | +25min | REPORTED | verify, push |
 | au-AK2a-r3 | Opus author AK2a revision 3 | 04:26Z | +30min | running | verify, then round 3 pair |
+| au-AKG2-r3 | Opus author AK-G2 revision 3 | 04:29Z | +30min | running | verify, then round 3 pair |
