@@ -1,0 +1,57 @@
+head: 7442c0f4eb7b3df9504e23065314720892cc35a3
+command: pytest tests/test_mutation_runner.py tests/test_mutation_runner_meta.py tests/test_mutation_runner_helpers.py -rs -rP -m 'not live and not perf' -p no:cacheprovider
+start: 2026-11-06T03:53:28Z
+-----
+============================= test session starts ==============================
+platform linux -- Python 3.13.18, pytest-9.2.0, pluggy-1.7.0
+rootdir: <build-dir>
+configfile: pyproject.toml
+plugins: platformdirs-4.13.5, anyio-4.15.1
+collected 51 items
+
+tests/test_mutation_runner.py ...................................        [ 68%]
+tests/test_mutation_runner_meta.py .....                                 [ 78%]
+tests/test_mutation_runner_helpers.py ...........                        [100%]
+
+==================================== PASSES ====================================
+____ test_g_every_search_string_occurs_exactly_once_in_the_file_it_targets _____
+----------------------------- Captured stdout call -----------------------------
+judge: an exception line counts as a kill: occurs once in src/hadavin_sdk/testing/mutation.py
+judge: crash markers ignored: occurs once in src/hadavin_sdk/testing/mutation.py
+judge: short expect accepted: occurs once in src/hadavin_sdk/testing/mutation.py
+runner: crash counts as good: occurs once in tools/mutation_runner.py
+runner: an absolute path is accepted: occurs once in tools/mutation_runner.py
+runner: a dotdot part is accepted: occurs once in tools/mutation_runner.py
+runner: a link out of the tree is accepted: occurs once in tools/mutation_runner.py
+runner: the mutant file is not checked again: occurs once in tools/mutation_runner.py
+runner: a short expect is accepted: occurs once in tools/mutation_runner.py
+runner: a timeout is reported as an exit code: occurs once in tools/mutation_runner.py
+runner: a dash path is an option: occurs once in tools/mutation_runner.py
+runner: the mutant file is joined as a path: occurs once in tools/mutation_runner.py
+runner: a link out of the tree is listed: occurs once in tools/mutation_runner.py
+runner: a timeout leaves the grandchildren running: occurs once in tools/mutation_runner.py
+runner: a failing tree kill is not caught: occurs once in tools/mutation_runner.py
+runner: the baseline timeout is ignored: occurs once in tools/mutation_runner.py
+fix: junit with a DOCTYPE is parsed: occurs once in src/hadavin_sdk/testing/mutation.py
+fix: the runner drops pinned: occurs once in tools/mutation_runner.py
+b2: a refused junit stops the run: occurs once in tools/mutation_runner.py
+b2: the junit has no size ceiling: occurs once in src/hadavin_sdk/testing/mutation.py
+b3: a crash row is good whatever the exception: occurs once in tools/mutation_runner.py
+runner: the child inherits the whole environment: occurs once in tools/mutation_runner.py
+runner: a later mutant is built from the live tree: occurs once in tools/mutation_runner.py
+runner: the mutation is not applied: occurs once in tools/mutation_runner.py
+runner: a timeout code equals SIGKILL: occurs once in tools/mutation_runner.py
+runner: a setup failure is not retried: occurs once in tools/mutation_runner.py
+runner: a symlink is copied as a file: occurs once in tools/mutation_runner.py
+runner: a test_file outside the copied tests is accepted: occurs once in tools/mutation_runner.py
+runner: allow_crash without a crash_type is accepted: occurs once in tools/mutation_runner.py
+runner: a truncated junit stops the run: occurs once in tools/mutation_runner.py
+runner: taskkill is not taken from System32: occurs once in tools/mutation_runner.py
+runner: an interrupt leaves the run going: occurs once in tools/mutation_runner.py
+runner: a finished run's background process lives on: occurs once in tools/mutation_runner.py
+runner: a planted pytest.ini is picked up: occurs once in tools/mutation_runner.py
+runner: a baseline timeout of 0 is unset: occurs once in tools/mutation_runner.py
+runner: a crash class is matched as a substring: occurs once in tools/mutation_runner.py
+runner: a stream name is accepted: occurs once in tools/mutation_runner.py
+============================= 51 passed in 18.58s ==============================
+exit: 0
