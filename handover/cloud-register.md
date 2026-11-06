@@ -673,4 +673,4 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | rt-E | Sonnet rung-table build notes: P4b1, P4b2, P4c, P8a, P8b (order 56) | 08:10Z | +30min | REPORTED | verify, commit |
 | rt-S | Sonnet rung-table build notes: P0a, P0c, P1, P2a, P2d, P3a, P4a, P4d (short tables) (order 56) | 08:10Z | +30min | REPORTED | verify, commit |
 | rt-R | Sonnet rung-table build notes: retrospective rows P1m and P1a (order 56 item 4) (order 56) | 08:10Z | +30min | running | verify, commit |
-| au-P0t | Opus author P0t stage rename ticket (order 56 item 5) | 08:11Z | +30min | running | save |
+| au-P0t | Opus author P0t stage rename ticket (order 56 item 5) | 08:11Z | +30min | REPORTED | save |
