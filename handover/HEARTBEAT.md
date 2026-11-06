@@ -180,3 +180,4 @@
 07:37Z | step=order 46 reply (q110), register fix | done=BN-32 | next=AK-G15 freeze result, EGM AK-G15/AK-G16 | blocked=none
 07:38Z | step=AK-G15 frozen r3 BN-1..27 (2565250) pushed | next=EGM AK-G15 brainstorm+draft, AK-G16 EGM result | blocked=NEEDS LEAD 23-25
 07:43Z | step=AK-G16 EGM brainstorm+draft saved (52da4fa), q112 | next=AK-G15 EGM result, DECISIONS.md | blocked=NEEDS LEAD C1,C2,C8
+07:43Z | step=order 47: launched A15+speed plan and 6 ticket authors | next=save results, ticket review rounds | blocked=none
