@@ -758,11 +758,11 @@
  {
   "id": "r085",
   "class": "unassigned code points",
-  "source": "DENY view: a code point unassigned in Unicode 15.1 that a newer table maps to l (gap 2: the table entry wins before the drop)",
+  "source": "DENY view: a code point unassigned in Unicode 15.1 reads as nothing (the pinned 15.1.0 table has no unassigned source; a newer table that maps one is read before the drop, gap 2, tested with a stubbed table)",
   "a": "p\ud804\udfd4",
   "b": "pl",
-  "relation": "equal",
-  "status": "p1b"
+  "relation": "different",
+  "status": "not_taken"
  },
  {
   "id": "r086",
@@ -1043,7 +1043,7 @@
   "a": "INV-2026",
   "b": "INV\u20102026",
   "relation": "equal",
-  "status": "p1b"
+  "status": "current"
  },
  {
   "id": "r115",
@@ -1052,7 +1052,7 @@
   "a": "INV-2026",
   "b": "INV\u22122026",
   "relation": "equal",
-  "status": "p1b"
+  "status": "current"
  },
  {
   "id": "r116",
@@ -1061,7 +1061,7 @@
   "a": "a/b",
   "b": "a\u2215b",
   "relation": "equal",
-  "status": "p1b"
+  "status": "current"
  },
  {
   "id": "r117",
@@ -1070,7 +1070,7 @@
   "a": "it's",
   "b": "it\u2019s",
   "relation": "equal",
-  "status": "p1b"
+  "status": "current"
  },
  {
   "id": "r118",

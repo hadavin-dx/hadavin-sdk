@@ -1,26 +1,28 @@
 {
  "note": "One entry, for the current alg (not a history): one section per Unicode data version the supported Pythons carry (3.12: 15.0.0, 3.13: 15.1.0). Replace it, with a hand bump of alg, in the pull request that changes what a key can be. Regenerate each section on the interpreter of its version with: python -c 'import json; from tests.test_textnorm_differential import live_hashes; print(json.dumps(live_hashes()))'. The hashes are of the bare keys and views, without the tag of an unpinned interpreter; the readings of a text are joined in their fixed order by U+001F.",
- "alg": "fold4",
+ "alg": "fold5",
  "unidata": "15.1.0",
  "sections": {
   "15.0.0": {
    "hashes": {
-    "identity_key": "a701e40f85a2d37b5da895001e934cbede2d3098fe11a287c5aac1294d97bc4f",
+    "identity_key": "8ee719c735708ffd4537d90d12f83409cb6790591a5968255b8ff5758577def2",
     "squeeze": "7368c4692417bc861672268b6392667d340b1a556863c3058822e1478aa861d9",
     "squeeze_loose": "03c32c9f58eb4defcf78629ef559c20c1677a0ca20183610ae8c53bce3d2462d",
-    "identity_keys": "233730a0f0ba8fdb55a6df5cb1d13970b7c6a632563d8c02fec4ddf102034ea5",
-    "fold_views": "2ce9debaabc84b8763cbfca937e13419cba535bf0245edbc13aa0ec1659a3bb1",
-    "squeeze_views": "c4a2f83f2dca99c40dae2f7f5b2a34c99baff4d4bbfe08e8a439bc42a11eb511"
+    "identity_keys": "5140e3cea1866609f7257b404c1b88fcca8a978c21ad1952312a163cd2b084ee",
+    "fold_views": "dfece27faf6cfb5d296c6afd058532bc7e84baa1e7f0aa57d68464026181cd1b",
+    "squeeze_views": "c4a2f83f2dca99c40dae2f7f5b2a34c99baff4d4bbfe08e8a439bc42a11eb511",
+    "scan_keyset": "bb6dc88bec4f23c4c7a6bfa7efd6175e66ac52a338ac3f7411f3db618bbf596f"
    }
   },
   "15.1.0": {
    "hashes": {
-    "identity_key": "e1e91426b47dee0ed37059a650fd691a5a87fea5bac9cf5ec3ca3625bdfeb6b2",
+    "identity_key": "d984e240782197c3dc2ed6308cee6edc52c4a20aa392f96be6d0d47d9540106f",
     "squeeze": "7368c4692417bc861672268b6392667d340b1a556863c3058822e1478aa861d9",
     "squeeze_loose": "03c32c9f58eb4defcf78629ef559c20c1677a0ca20183610ae8c53bce3d2462d",
-    "identity_keys": "6b2af30f7f6bfb0f10ac7a264e3b40588ee177459d793ef29bc2430aec306fd0",
-    "fold_views": "58382278973c699354830fb37c7cd83e9b8b9f48a07c0708c01c61a42176fd41",
-    "squeeze_views": "c4a2f83f2dca99c40dae2f7f5b2a34c99baff4d4bbfe08e8a439bc42a11eb511"
+    "identity_keys": "bee8f6ff442630e81da11695b67567a52347b55d12d67db4404bf63a76c11c87",
+    "fold_views": "9abc0220940b62f17ae7abbdf4faaf1949f0bb56b85f7188bfdd7064dec3f430",
+    "squeeze_views": "c4a2f83f2dca99c40dae2f7f5b2a34c99baff4d4bbfe08e8a439bc42a11eb511",
+    "scan_keyset": "f6ebb86718d66d42010f648d9cbbd33308f3344f0454b33eb8f338ef4538361d"
    }
   }
  }
