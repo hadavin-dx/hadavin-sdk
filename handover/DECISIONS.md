@@ -426,3 +426,6 @@ What: builder returns such values unchanged. Options: unchanged vs pad to 8 plac
 
 ## 2026-11-06T13:18:25Z P1a fix5 brief: by-reference preamble
 What: brief carries the two gate markers and tells the builder to read BRIEF-PREAMBLE.md instead of pasting 11 KB. Options: paste vs reference. Why: same as earlier briefs (logged deviation); confidence medium; reversible; answered-by-user: no.
+
+## 2026-11-06T13:50:21Z P3a-2: push q195 commit 66a5710 before main merge (INFORM, answered-by-user: no)
+What: push the manifest cleanup (66a5710) now as a fast-forward; merge main later in a separate push, after core/P3a has merged main. Options: (a) push now; (b) wait, merge once, push once. Why (a): no history rewrite, avoids losing work, the commit is small and its own tests passed at earlier heads. Confidence medium-high. Reversible: yes (a revert commit). Risk: PR 73 head briefly has no fresh heavy-run logs; evidence will say so.
