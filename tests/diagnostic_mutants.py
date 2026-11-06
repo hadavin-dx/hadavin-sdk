@@ -1,0 +1,375 @@
+"""The mutants of the diagnostics (``guard/diagnostic.py`` and ``codes.py``), run through the P1m runner (``tools.mutation_runner``).
+
+Each mutant changes ONE thing in a temp copy of the package. The test named in ``only_test`` must fail, it must be the test pinned in
+``pinned``, and the first failing line must hold ``expect`` (a fragment of the assertion message, not of the test name). Search strings are
+exact copies of the formatted source. Not collected by pytest. Run from the repo root:
+
+    uv run python tests/diagnostic_mutants.py            # all mutants; exit 1 if any is not good
+    uv run python tests/diagnostic_mutants.py frame      # only mutants whose name contains the text
+
+Equivalent, stated and not run: removing ``type(frame.f_code.co_filename) is str`` from frame rule (c): no frame with a non-``str``
+``co_filename`` can be built (``code.replace`` raises ``TypeError``), so the check stays as cheap defence.
+"""
+
+import sys
+from pathlib import Path
+
+sys.path.insert(
+    0, str(Path(__file__).resolve().parents[1])
+)  # the repo root: tools.* is not installed
+
+from tools.mutation_runner import Mutant, run_mutants
+
+ROOT = Path(__file__).resolve().parents[1]
+D = "src/hadavin_sdk/guard/diagnostic.py"
+C = "src/hadavin_sdk/codes.py"
+TD, TC, TV = (
+    "tests/test_diagnostic.py",
+    "tests/test_diagnostic_codes.py",
+    "tests/test_diagnostic_validation.py",
+)
+TESTS = [TD, TC, TV]
+
+
+def mutant(name, file, old, new, test_file, killer, expect, **kw):
+    pin = test_file.removesuffix(".py") + "::" + killer
+    return Mutant(
+        name, file, old, new, expect, test_file=test_file, only_test=killer, pinned=pin, **kw
+    )
+
+
+M = [
+    # codes and table
+    mutant(
+        "code set: a member is removed",
+        C,
+        '    tool_refused = "tool_refused"\n',
+        '    tool_refused = "tool_refusedx"\n',
+        TC,
+        "test_code_set_is_the_frozen_list",
+        "assert [",
+    ),
+    mutant(
+        "table: NotFound row removed",
+        C,
+        '        _P + "store.protocol:NotFound": Code.store_conflict,\n',
+        "",
+        TC,
+        "test_pinned_code_per_class",
+        "does not give its pinned code",
+    ),
+    mutant(
+        "table: VaultError set back to config_invalid",
+        C,
+        '"actions.secrets_vault:VaultError": Code.provider_http',
+        '"actions.secrets_vault:VaultError": Code.config_invalid',
+        TC,
+        "test_pinned_code_per_class",
+        "does not give its pinned code",
+    ),
+    mutant(
+        "table: TextnormError row removed",
+        C,
+        '        _P + "guard.textnorm:TextnormError": Code.scan_failed,\n',
+        "",
+        TC,
+        "test_textnorm_error_family_maps_to_scan_failed",
+        "scan_failed",
+    ),
+    mutant(
+        "identity check removed from the own-class lookup",
+        D,
+        "            if code is not None and _is_the_named_class(cls):",
+        "            if code is not None:",
+        TC,
+        "test_spoofed_class_gets_no_own_code",
+        "foreign_exception",
+    ),
+    mutant(
+        "step token: a str subclass is accepted",
+        C,
+        "            if type(value) is str and value in TICK_STEPS:",
+        "            if isinstance(value, str) and value in TICK_STEPS:",
+        TC,
+        "test_step_token_is_closed_and_final",
+        "assert",
+    ),
+    # families and facts
+    mutant(
+        "timeout is not tested before os error",
+        D,
+        "    if issubclass(tp, TimeoutError):",
+        "    if False:",
+        TD,
+        "test_family_order_timeout_before_os_error",
+        "code=timeout",
+    ),
+    mutant(
+        "gaierror handled as a plain os error",
+        D,
+        "    if issubclass(tp, socket.gaierror):",
+        "    if False:",
+        TD,
+        "test_gaierror_gives_gai_not_errno",
+        "gaierror",
+    ),
+    mutant(
+        "a bool is accepted as a number",
+        D,
+        "    return value if type(value) is int and lo <= value <= hi else None",
+        "    return value if isinstance(value, int) and lo <= value <= hi else None",
+        TD,
+        "test_facts_bounds_table",
+        "assert",
+    ),
+    mutant(
+        "the upper bound is off by one",
+        D,
+        "    return value if type(value) is int and lo <= value <= hi else None",
+        "    return value if type(value) is int and lo <= value < hi else None",
+        TD,
+        "test_facts_bounds_table",
+        "assert",
+    ),
+    mutant(
+        "sqlstate uses match instead of fullmatch",
+        D,
+        "_SQLSTATE_RE.fullmatch(value) is None",
+        "_SQLSTATE_RE.match(value) is None",
+        TD,
+        "test_fact_patterns_use_fullmatch",
+        "assert",
+    ),
+    mutant(
+        "phase: 08 and 28 swapped",
+        D,
+        '{"28": Phase.auth, "08": Phase.connect}',
+        '{"28": Phase.connect, "08": Phase.auth}',
+        TD,
+        "test_psycopg_phase_is_sqlstate_class_only",
+        "sqlstate=",
+    ),
+    mutant(
+        "psycopg also detected by module name",
+        D,
+        "    if type(base) is type and issubclass(tp, base):",
+        '    if type(base) is type and (issubclass(tp, base) or tp.__module__.startswith("psycopg")):',
+        TD,
+        "test_psycopg_claimed_module_name_is_not_trusted",
+        "assert",
+    ),
+    mutant(
+        "facts merged from the more than 12 limit removed",
+        D,
+        "    return tuple(ordered[: defaults.DIAG_MAX_FACTS])",
+        "    return tuple(ordered)",
+        TD,
+        "test_more_than_12_facts_keeps_priority_12",
+        "assert 13 == 12",
+    ),
+    # rules 3 and 4
+    mutant(
+        "group: nested groups are walked",
+        D,
+        "        if nested:\n            return Code.foreign_exception, {}",
+        "        if False:\n            return Code.foreign_exception, {}",
+        TD,
+        "test_exception_group_takes_first_member_code",
+        "code=",
+    ),
+    mutant(
+        "internal_bug is decided on any counted frame, not the raise frame",
+        D,
+        "    name = _counted_module(links[-1][0])",
+        "    name = next((n for n in (_counted_module(f) for f, _ in reversed(links)) if n), None)",
+        TD,
+        "test_internal_bug_is_decided_on_the_raise_frame",
+        "code=foreign_exception",
+    ),
+    mutant(
+        "built-in identity check removed",
+        D,
+        "    return type(tname) is str and getattr(builtins, tname, None) is tp",
+        "    return type(tname) is str and hasattr(builtins, tname)",
+        TD,
+        "test_internal_bug_is_decided_on_the_raise_frame",
+        "code=foreign_exception",
+    ),
+    mutant(
+        "the traceback step bound is removed",
+        D,
+        "        if steps > defaults.DIAG_TB_STEPS:",
+        "        if False:",
+        TD,
+        "test_long_traceback_is_foreign",
+        "code=foreign_exception",
+    ),
+    mutant(
+        "diagnose catches BaseException",
+        D,
+        "    except Exception:  # noqa: BLE001 - the fixed fallback; nothing about the exception is in it",
+        "    except BaseException:  # noqa: BLE001",
+        TD,
+        "test_baseexception_from_hostile_getattr_propagates",
+        "DID NOT RAISE",
+    ),
+    mutant(
+        "the fallback fp is changed",
+        D,
+        'FALLBACK_FP: Final = _fingerprint("unknown", Code.foreign_exception.value, "-", "-")',
+        'FALLBACK_FP: Final = _fingerprint("unknown", Code.foreign_exception.value, "-", "x")',
+        TD,
+        "test_fallback_fp_is_pinned",
+        "assert",
+    ),
+    # kind and frames
+    mutant(
+        "kind identity check removed",
+        D,
+        '        if not _is_the_named_class(tp):\n            return "dynamic_class"',
+        '        if False:\n            return "dynamic_class"',
+        TD,
+        "test_kind_identity_rule",
+        "assert",
+    ),
+    mutant(
+        "the foreign package list is not checked",
+        D,
+        '        if mod.split(".")[0] in FOREIGN_PACKAGES_OK and _KIND_RE.fullmatch(text):',
+        "        if _KIND_RE.fullmatch(text):",
+        TD,
+        "test_off_list_foreign_class_prints_foreign_class",
+        "assert",
+    ),
+    mutant(
+        "the fp ignores the relative path",
+        D,
+        '    text = f"{kind}|{code}|{function}|{relpath}"',
+        '    text = f"{kind}|{code}|{function}"',
+        TD,
+        "test_locator_and_fp",
+        "fp=ed342ffb",
+    ),
+    mutant(
+        "frame rule a removed",
+        D,
+        "        if type(name) is not str:  # rule a",
+        "        if False:  # rule a",
+        TD,
+        "test_frame_rule_a_name_must_be_exactly_str",
+        "frame rule",
+    ),
+    mutant(
+        "frame rule b removed",
+        D,
+        "        if module is None or g is not vars(module):  # rule b",
+        "        if module is None:  # rule b",
+        TD,
+        "test_frame_rule_b_globals_must_be_the_module_namespace",
+        "frame rule",
+    ),
+    mutant(
+        "frame rule c removed",
+        D,
+        "        if type(filename) is not str or filename != module.__file__:  # rule c, raw strings",
+        "        if type(filename) is not str:  # rule c, raw strings",
+        TD,
+        "test_frame_rule_c_filename_must_be_the_module_file",
+        "frame rule",
+    ),
+    mutant(
+        "the per-frame try/except is removed",
+        D,
+        '    except Exception:  # noqa: BLE001 - a frame whose check raises is "not counted"\n        return None',
+        "    except ZeroDivisionError:\n        return None",
+        TD,
+        "test_frame_check_that_raises_means_not_counted",
+        "TypeError",
+        allow_crash=True,
+        crash_type="TypeError",
+    ),
+    # rendering and validation
+    mutant(
+        "the line cap is off by one",
+        D,
+        "            if len(line) + 1 + len(part) > defaults.DIAG_LINE_CHARS:",
+        "            if len(line) + 1 + len(part) > defaults.DIAG_LINE_CHARS + 1:",
+        TD,
+        "test_grammar_a_shape_and_cap_boundary",
+        "cap boundary",
+    ),
+    mutant(
+        "the line cap is removed",
+        D,
+        "            if len(line) + 1 + len(part) > defaults.DIAG_LINE_CHARS:",
+        "            if False:",
+        TD,
+        "test_grammar_a_shape_and_cap_boundary",
+        "cap boundary",
+    ),
+    mutant(
+        "pydantic input is requested",
+        D,
+        "include_url=False, include_context=False, include_input=False)  # type: ignore[attr-defined]\n    types",
+        "include_url=False, include_context=False, include_input=True)  # type: ignore[attr-defined]\n    types",
+        TV,
+        "test_pydantic_error_reads_are_closed_ast",
+        "assert",
+    ),
+    mutant(
+        "more than 5 types are printed",
+        D,
+        "    for entry in found[: defaults.DIAG_MAX_ERRORS]:",
+        "    for entry in found:",
+        TV,
+        "test_more_than_5_errors_gives_plus_n_more",
+        "assert",
+    ),
+    mutant(
+        "the +N more tail is wrong",
+        D,
+        'text += f"; +{count - defaults.DIAG_MAX_ERRORS} more"',
+        'text += f"; +{count} more"',
+        TV,
+        "test_more_than_5_errors_gives_plus_n_more",
+        "assert",
+    ),
+    mutant(
+        "a type outside the closed list is printed",
+        D,
+        "    return value if value in VALIDATION_TYPES else VALIDATION_OTHER",
+        "    return value",
+        TV,
+        "test_a_type_outside_the_closed_list_prints_other",
+        "assert",
+    ),
+]
+
+if __name__ == "__main__":
+    only = sys.argv[1:]
+    if only and not any(o in m.name for m in M for o in only):
+        print(f"no mutant name contains any of {only}; nothing was run", file=sys.stderr)
+        sys.exit(2)
+    first_lines = {}
+
+    def show(row):
+        name, v, test_id, good = row
+        print(
+            f"{'ok ' if good else 'BAD'} {v:12} {name}  [{test_id.split('::')[-1][:60]}]",
+            flush=True,
+        )
+        if not good:
+            print("      first line:", first_lines.get(name, "")[:150], flush=True)
+
+    res = run_mutants(
+        ROOT,
+        M,
+        TESTS,
+        extra_dirs=("tests/data", "tests/fixtures"),
+        only=only,
+        on_result=show,
+        first_lines=first_lines,
+    )
+    bad = [n for n, _, _, g in res if not g]
+    print(f"{len(res) - len(bad)} of {len(res)} good; problems: {bad}")
+    sys.exit(1 if bad else 0)
