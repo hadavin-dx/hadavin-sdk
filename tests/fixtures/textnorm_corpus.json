@@ -982,7 +982,7 @@
   "source": "size rule: weight 262,146 is refused (SEAM-1)",
   "a": {
    "repeat": [
-    "\ua516",
+    "\ud83d\udf5c",
     87382
    ]
   },
@@ -1556,6 +1556,96 @@
   "a": "\uff11\uff12",
   "b": "12",
   "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r172",
+  "class": "Hindi and Thai marks",
+  "source": "DENY view: names that differ only by a non-spacing mark (Mn) collide; a false lockout, accepted (order 79)",
+  "a": "\u0938\u0941\u092e\u0928",
+  "b": "\u0938\u092e\u0928",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r173",
+  "class": "Hindi and Thai marks",
+  "source": "DENY view: names that differ only by a non-spacing mark (Mn) collide; a false lockout, accepted (order 79)",
+  "a": "\u0939\u0902\u0938",
+  "b": "\u0939\u0938",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r174",
+  "class": "Hindi and Thai marks",
+  "source": "DENY view: a spacing mark (Mc) or a base letter is kept, so the names stay different (order 79)",
+  "a": "\u0926\u0940\u092a\u0915",
+  "b": "\u0926\u093f\u092a\u0915",
+  "relation": "different",
+  "status": "current"
+ },
+ {
+  "id": "r175",
+  "class": "Hindi and Thai marks",
+  "source": "DENY view: a spacing mark (Mc) or a base letter is kept, so the names stay different (order 79)",
+  "a": "\u092e\u094b\u0939\u0928",
+  "b": "\u092e\u0939\u0928",
+  "relation": "different",
+  "status": "current"
+ },
+ {
+  "id": "r176",
+  "class": "Hindi and Thai marks",
+  "source": "DENY view: a spacing mark (Mc) or a base letter is kept, so the names stay different (order 79)",
+  "a": "\u0926\u0941\u0903\u0916",
+  "b": "\u0926\u0941\u0916",
+  "relation": "different",
+  "status": "current"
+ },
+ {
+  "id": "r177",
+  "class": "Hindi and Thai marks",
+  "source": "DENY view: names that differ only by a non-spacing mark (Mn) collide; a false lockout, accepted (order 79)",
+  "a": "\u0e2a\u0e34\u0e19",
+  "b": "\u0e2a\u0e19",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r178",
+  "class": "Hindi and Thai marks",
+  "source": "DENY view: names that differ only by a non-spacing mark (Mn) collide; a false lockout, accepted (order 79)",
+  "a": "\u0e28\u0e23\u0e35",
+  "b": "\u0e28\u0e23",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r179",
+  "class": "Hindi and Thai marks",
+  "source": "DENY view: names that differ only by a non-spacing mark (Mn) collide; a false lockout, accepted (order 79)",
+  "a": "\u0e19\u0e32",
+  "b": "\u0e19\u0e49\u0e32",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r180",
+  "class": "Hindi and Thai marks",
+  "source": "DENY view: a spacing mark (Mc) or a base letter is kept, so the names stay different (order 79)",
+  "a": "\u0e21\u0e32\u0e25\u0e32",
+  "b": "\u0e21\u0e32\u0e25",
+  "relation": "different",
+  "status": "current"
+ },
+ {
+  "id": "r181",
+  "class": "Hindi and Thai marks",
+  "source": "DENY view: a spacing mark (Mc) or a base letter is kept, so the names stay different (order 79)",
+  "a": "\u0e40\u0e2a\u0e37\u0e2d",
+  "b": "\u0e2a\u0e37\u0e2d",
+  "relation": "different",
   "status": "current"
  }
 ]
