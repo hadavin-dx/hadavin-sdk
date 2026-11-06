@@ -573,4 +573,5 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | au-AK2a-r3 | Opus author AK2a revision 3 | 04:26Z | +30min | running | verify, then round 3 pair |
 | au-AKG2-r3 | Opus author AK-G2 revision 3 | 04:29Z | +30min | running | verify, then round 3 pair |
 | bu-P1m-r3fix | Sonnet builder P1m order 31 batch (1 Major + 7 Minors) in build P1m | 04:30Z | +30min | running | verify, push core/P1m, heartbeat |
-| sv-AK1-r3 | saver AK1 round 3 pair (4 ADV Majors, 5 COR Majors) | 04:30Z | +8min | running | verify, push, then Opus resolve (BN) |
+| sv-AK1-r3 | saver AK1 round 3 pair (4 ADV Majors, 5 COR Majors) | 04:30Z | +8min | REPORTED | verify, push, then Opus resolve (BN) |
+| rs-AK1-r3 | Opus resolve AK1 round 3 (last; 9 Majors -> build notes) | 04:30Z | +25min | running | verify, then BN author |
