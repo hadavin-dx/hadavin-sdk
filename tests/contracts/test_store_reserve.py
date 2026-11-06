@@ -113,6 +113,17 @@ def test_a_cap_is_exact_at_the_boundary_and_one_micro_dollar_over_is_refused(sto
     assert store.spend_totals(agent, utc_today(store)) == (D(2), D(2))
 
 
+def test_run_and_month_caps_are_exact_at_the_boundary_too(store):
+    agent = "rs-cap2"
+    run = _run(store, agent)
+    for caps, which in (((None, None, D(2)), "run"), ((None, D(4), None), "month")):
+        _reserve(store, agent, "1", run=run, caps=caps)
+        _reserve(store, agent, "1", run=run, caps=caps)  # lands exactly on the cap
+        with pytest.raises(SpendCapExceeded) as e:
+            _reserve(store, agent, "0.000001", run=run, caps=caps)
+        assert e.value.which == which
+
+
 def test_the_first_failing_cap_is_named_in_the_order_run_day_month(store):
     agent = "rs-order"
     run = _run(store, agent)

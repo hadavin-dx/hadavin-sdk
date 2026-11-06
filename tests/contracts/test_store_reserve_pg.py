@@ -143,3 +143,22 @@ def test_expired_to_settled_must_keep_expired_at(rt):
         "UPDATE spend_reservations SET status = 'settled', settled_usd = 1, closed_at = now(), "
         "expired_at = now() + interval '1 hour' WHERE reservation_id = 'k1'",
     )
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        "reserved_usd = 2",
+        "agent_id = 'b'",
+        "day = day + 1",
+        "meta = jsonb_build_object()",
+        "schema_version = 2",
+    ],
+)
+def test_a_legal_transition_cannot_carry_a_change_of_an_identity_field(rt, change):
+    drv.execute(rt, INSERT.format(extra="", vals=""), ("c1",))
+    sql = (
+        "UPDATE spend_reservations SET status = 'released', closed_at = now(), "  # noqa: S608
+        f"{change} WHERE reservation_id = 'c1'"
+    )
+    assert "change refused" in _refused(rt, sql)
