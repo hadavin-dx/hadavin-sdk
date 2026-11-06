@@ -1555,3 +1555,7 @@
 | R2-P4c-ADV-6 | Major | P4c | An alert can be lost silently, which contradicts the P4c-1 promise "nothing is ever lost silently". -> reviews/P4c-round2-adversarial.md | OPEN |
 | R2-P4c-ADV-7 | Major | P4c | m17 cannot be killed by T11(b). -> reviews/P4c-round2-adversarial.md | OPEN |
 | R2-P4c-ADV-8 | Major | P4c | m10 "alert sent before the run state is written" has no test that observes order. -> reviews/P4c-round2-adversarial.md | OPEN |
+| R2-P4c-COR-1 | Major | P4c | Ticket written against P4b1 rev 1; overshoot handling owned by neither ticket. -> reviews/P4c-round2-correctness.md | OPEN |
+| R2-P4c-COR-2 | Major | P4c | Tick step stays green during an outage because a failed retry re-claims the row (claimed_at reset). -> reviews/P4c-round2-correctness.md | OPEN |
+| R2-P4c-COR-3 | Major | P4c | MeteredLLM (llm/metered.py) unaddressed: double reserve risk and T8 scan fails on it. -> reviews/P4c-round2-correctness.md | OPEN |
+| R2-P4c-COR-4 | Major | P4c | _screen/_wall_stop signature and two call-site edits not specified. -> reviews/P4c-round2-correctness.md | OPEN |
