@@ -267,3 +267,26 @@ def test_migrate_refuses_a_missing_or_login_reset_group_and_a_missing_name(w):
 
 def test_nokey_label_is_a_valid_stop_label(w):
     assert w.stop(w.stoprole, NOKEY_LABEL)[0] is True
+
+
+def test_a_registered_login_outside_the_group_cannot_clear_even_with_table_rights(w):
+    """The guard checks group membership itself; a registered label and an UPDATE grant are not enough."""
+    with w.admin() as db:
+        db.execute(
+            "INSERT INTO kill_switch_login_labels (login_name, label) VALUES (%s, %s)",
+            (w.outsider, "id:k1:" + "f" * 32),
+        )
+        db.execute(
+            sql.SQL("GRANT USAGE ON SCHEMA {} TO {}").format(
+                sql.Identifier(w.schema), sql.Identifier(w.outsider)
+            )
+        )
+        db.execute(
+            sql.SQL("GRANT SELECT, UPDATE ON kill_switch TO {}").format(sql.Identifier(w.outsider))
+        )
+        db.execute('UPDATE kill_switch SET "on" = true WHERE id = 1')
+    with w.as_(w.outsider) as db:
+        with pytest.raises(psycopg.Error) as e:
+            db.execute('UPDATE kill_switch SET "on" = false WHERE id = 1')
+        assert _sqlstate(e) == "HD001"
+    assert w.state()[0] is True
