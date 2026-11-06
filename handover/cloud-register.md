@@ -744,3 +744,5 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | bd-P4a | (update) | 2026-11-06T13:11:52Z | INTERIM: mutants 87/87; 3.13 full 1 inherited failure (test_p7_tick, from P2a-1 base); 3.12 pending; not pushed |
 | bd-P4a | Sonnet builder P4a | 2026-11-06T13:16:49Z | REPORTED: core/P4a c86e685 pushed+verified, NO PR (base core/P2a-1 not on origin); evidence in reviews/P4a |
 | bd-P1a-fix5 | Sonnet builder P1a fix5 (order 90, priority) | 2026-11-06T13:18:25Z (expected end +90 min) | RUNNING |
+| bd-P2a-1 | Sonnet builder P2a-1 | 2026-11-06T13:28:55Z | PUSHED core/P2a-1 e323ac7, draft PR 76 (base core/P4d-a2); remaining list in q206 |
+| bd-P4a-merge | Sonnet builder P4a resumed | 2026-11-06T13:28:55Z | RUNNING: merge P2a-1 e323ac7, rerun, draft stacked PR |
