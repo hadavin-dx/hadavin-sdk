@@ -16,7 +16,7 @@ from collections.abc import Iterator
 import psycopg
 import pytest
 from askdata.validate import Rejected, validate
-from psycopg.conninfo import make_conninfo
+from psycopg.conninfo import conninfo_to_dict, make_conninfo
 
 from tests.demo_askdata.attackrun import outcome
 from tests.demo_askdata.conftest import Db
@@ -129,8 +129,15 @@ def prove_harm(attack: Attack, dsn: str) -> str:
                 c.execute(attack.sql)
         return f"still running when the {TIMEOUT_MS} ms statement_timeout cancelled it"
     if kind in ("leak", "exec"):
+        sql_text = attack.sql
+        if "dblink_connect('dbname=postgres')" in sql_text:
+            # The corpus text names no host, so it reaches the default socket (port 5432), which is another
+            # server, or none, when the test server is a private one. Point it at the server under test.
+            parts = conninfo_to_dict(dsn)
+            target = " ".join(f"{k}={parts[k]}" for k in ("host", "port") if parts.get(k))
+            sql_text = sql_text.replace("dbname=postgres", f"dbname=postgres {target}".strip())
         with psycopg.connect(dsn, autocommit=True) as c:
-            cur = c.execute(attack.sql)
+            cur = c.execute(sql_text)
             cells = _cells(cur) if kind == "leak" else []
         if kind == "leak":
             assert any(needle in cell for cell in cells), f"no cell contains {needle!r}"

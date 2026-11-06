@@ -38,6 +38,8 @@ from hadavin_sdk.store.protocol import (
     check_id,
     check_int,
     check_reserve,
+    check_step_name,
+    check_text,
     check_usd,
 )
 
@@ -78,6 +80,7 @@ class MemoryStore:
             raise NotFound(key) from None
 
     def create_run(self, run: Run) -> None:
+        check_text(run)
         with self._lock:
             if run.run_id in self._runs:
                 raise StaleState(f"run exists: {run.run_id}")
@@ -90,6 +93,7 @@ class MemoryStore:
     def transition(
         self, run_id: str, expected: RunState, new: RunState, reason_code: str | None = None
     ) -> Run:
+        check_text(reason_code)
         with self._lock:
             run = self._runs.get(run_id)
             if run is None:
@@ -139,6 +143,11 @@ class MemoryStore:
 
     def save_plan(self, plan: Plan) -> None:
         with self._lock:
+            check_text(plan)
+            if any(
+                q.plan_id == plan.plan_id and q.run_id != plan.run_id for q in self._plans.values()
+            ):
+                raise StaleState(f"plan id used by another run: {plan.plan_id}")
             self._plans[plan.run_id] = plan.model_copy(deep=True)
 
     def get_plan(self, run_id: str) -> Plan:
@@ -146,6 +155,7 @@ class MemoryStore:
             return self._get(self._plans, run_id)
 
     def save_gate_decision(self, decision: GateDecision) -> None:
+        check_text(decision)
         with self._lock:
             if decision.run_id in self._gates:
                 raise StaleState(f"gate decision exists: {decision.run_id}")
@@ -156,6 +166,7 @@ class MemoryStore:
             return self._get(self._gates, run_id)
 
     def save_approval_request(self, req: ApprovalRequest) -> None:
+        check_text(req)
         with self._lock:
             self._approvals[req.approval_id] = req.model_copy(deep=True)
 
@@ -166,6 +177,7 @@ class MemoryStore:
     def update_approval_request(
         self, req: ApprovalRequest, expected_status: str, expected_step: int
     ) -> None:
+        check_text(req)
         with self._lock:
             cur = self._approvals.get(req.approval_id)
             if cur is None:
@@ -181,6 +193,8 @@ class MemoryStore:
         expected_status: str,
         expected_step: int,
     ) -> None:
+        check_text(decision)
+        check_text(req)
         with self._lock:
             cur = self._approvals.get(req.approval_id)
             if cur is None:
@@ -201,6 +215,7 @@ class MemoryStore:
             ]
 
     def save_approval_decision(self, decision: ApprovalDecision) -> None:
+        check_text(decision)
         with self._lock:
             key = (decision.approval_id, decision.step)
             if any((d.approval_id, d.step) == key for d in self._decisions):
@@ -217,10 +232,15 @@ class MemoryStore:
     def list_approvals(self, statuses: set[ApprovalStatus]) -> list[ApprovalRequest]:
         with self._lock:
             return [
-                r.model_copy(deep=True) for r in self._approvals.values() if r.status in statuses
+                r.model_copy(deep=True)
+                for r in sorted(
+                    self._approvals.values(), key=lambda r: (r.created_at, r.approval_id)
+                )
+                if r.status in statuses
             ]
 
     def add_dead_letter(self, dl: DeadLetter) -> None:
+        check_text(dl)
         with self._lock:
             self._dead[dl.run_id].append(dl.model_copy(deep=True))
 
@@ -436,6 +456,7 @@ class MemoryStore:
             return self._kill.model_copy(deep=True)
 
     def set_kill_switch(self, ks: KillSwitch) -> None:
+        check_text(ks)
         with self._lock:
             self._kill = ks.model_copy(deep=True)
 
@@ -446,9 +467,12 @@ class MemoryStore:
 
     def save_tick_state(self, state: TickState) -> None:
         with self._lock:
+            check_step_name(state.step)
+            check_text(state)
             self._ticks[state.step] = state.model_copy()
 
     def add_tool_call(self, call: ToolCallRecord) -> None:
+        check_text(call)
         with self._lock:
             if call.call_id in self._tool_calls:
                 raise StaleState(f"tool call exists: {call.call_id}")
@@ -474,6 +498,7 @@ class MemoryStore:
             return len(gone)
 
     def put_redaction_map(self, run_id: str, mapping: dict[str, str]) -> None:
+        check_text(mapping)
         with self._lock:
             self._maps[run_id] = (dict(mapping), now())
 

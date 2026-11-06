@@ -1,5 +1,5 @@
 version = 1
-revision = 5
+revision = 3
 requires-python = ">=3.12"
 resolution-markers = [
     "python_full_version >= '3.14' and sys_platform == 'win32'",
@@ -11,9 +11,9 @@ resolution-markers = [
 [options]
 
 [options.exclude-newer-package]
-google-api-core = "2026-10-24T00:00:00Z"
-grpcio = "2026-10-24T00:00:00Z"
 grpcio-status = "2026-10-24T00:00:00Z"
+grpcio = "2026-10-24T00:00:00Z"
+google-api-core = "2026-10-24T00:00:00Z"
 
 [[package]]
 name = "annotated-types"
@@ -832,6 +832,7 @@ gcp = [
 ]
 pg = [
     { name = "psycopg", extra = ["binary"] },
+    { name = "tenacity" },
 ]
 signer = [
     { name = "cryptography" },
@@ -874,6 +875,7 @@ requires-dist = [
     { name = "pydantic-settings", specifier = "==2.16.1" },
     { name = "pyyaml", specifier = "==6.0.3" },
     { name = "sqlglot", marker = "extra == 'askdata'", specifier = "==30.26.0" },
+    { name = "tenacity", marker = "extra == 'pg'", specifier = "==9.2.1" },
 ]
 provides-extras = ["anthropic", "aws", "signer", "pg", "askdata", "azure", "gcp"]
 
@@ -2020,6 +2022,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/db/a1/3b8ed9c1fc3aa6eebb57732d924ddaa0500ecc3b638d0454816320994383/stevedore-5.9.1.tar.gz", hash = "sha256:e97a2667923efda926e8713fde6a73616df68210a3cbc6f02b48967b676fd8bf", size = 518111, upload-time = "2026-08-20T15:25:14.754Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/c5/97/bba6e7ec2f5498b9dcb7b1b6400086b80ae5a8ebaff4b25e8c8add75f439/stevedore-5.9.1-py3-none-any.whl", hash = "sha256:5c8ff3a9f336cc1a06ac0f597bc79d11a2f950bfd32e290ca56b5a301fafafbf", size = 54931, upload-time = "2026-08-20T15:25:13.602Z" },
+]
+
+[[package]]
+name = "tenacity"
+version = "9.2.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/82/9e/497c1c8ebe5a5b5d1d4a7511aea22c0bb1a97e3170d98abdef0e1b34265a/tenacity-9.2.1.tar.gz", hash = "sha256:a606b5c808d0cded4a359d5b9932d867ff2a6a6b64d37350260fd01bbdf83839", size = 58261, upload-time = "2026-10-07T12:13:01.633Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d6/26/1ff2b0721ac66a3ec5b1402b333110b352ab0a8724052ac279a7b82d40c4/tenacity-9.2.1-py3-none-any.whl", hash = "sha256:9e56f17539296baab7beabb08b92f6ee3d7be92d8be72d763360677c2ad6580e", size = 32310, upload-time = "2026-10-07T12:13:00.102Z" },
 ]
 
 [[package]]

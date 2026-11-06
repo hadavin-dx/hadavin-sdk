@@ -9,11 +9,13 @@ Neutral protocol: the PostgreSQL wire protocol and SQL (any Postgres: RDS, Cloud
 
 from __future__ import annotations
 
+import functools
 import ipaddress
 import logging
 import os
 import tempfile
 import threading
+import time
 from collections.abc import Callable, Mapping
 from datetime import date, datetime
 from decimal import Decimal
@@ -26,6 +28,13 @@ from psycopg.conninfo import conninfo_to_dict
 from psycopg.rows import dict_row
 from psycopg.types.json import Jsonb
 from pydantic import BaseModel
+from tenacity import (
+    RetryCallState,
+    Retrying,
+    retry_if_exception,
+    stop_after_attempt,
+    wait_exponential_jitter,
+)
 
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.models import (
@@ -54,11 +63,13 @@ from hadavin_sdk.store.protocol import (
     SpendCapExceeded,
     SpendOutcome,
     StaleState,
+    StoreBusy,
     StoreUnavailable,
     check_day,
     check_id,
     check_int,
     check_reserve,
+    check_text,
     check_usd,
 )
 
@@ -189,7 +200,11 @@ def build(settings, deps) -> PostgresStore:
         raise StoreUnavailable(
             f"store postgres: cannot connect ({exc.__class__.__name__})"
         ) from None
-    return PostgresStore(conn)
+    return PostgresStore(
+        conn,
+        lock_timeout_ms=getattr(settings, "lock_timeout_ms", 1000),
+        call_budget_ms=getattr(settings, "call_budget_ms", 5000),
+    )
 
 
 def _row(model: BaseModel) -> dict[str, Any]:
@@ -206,16 +221,124 @@ def _row(model: BaseModel) -> dict[str, Any]:
     return out
 
 
+# Only these two sqlstates are retried (a deadlock and a serialization failure); never 40003 (outcome unknown).
+_RETRY_SQLSTATES = frozenset({"40001", "40P01"})
+_ATTEMPTS = 3
+
+
+def _sqlstate(exc: BaseException) -> str | None:
+    return getattr(exc, "sqlstate", None) if isinstance(exc, psycopg.Error) else None
+
+
+def _map_error(exc: psycopg.Error) -> Exception | None:
+    """Driver error -> Protocol error (the class only, never the driver text: it can carry values). None: let it
+    through unchanged (connection, schema and privilege errors)."""
+    E = psycopg.errors
+    if isinstance(exc, E.UniqueViolation):
+        return StaleState("conflict: the row already exists")
+    if isinstance(exc, E.ForeignKeyViolation):
+        return NotFound("a referenced row does not exist")
+    if isinstance(
+        exc, E.CheckViolation | E.NotNullViolation | E.DataError | E.ProgramLimitExceeded
+    ):
+        return ValueError(f"the store cannot hold this value ({type(exc).__name__})")
+    if isinstance(exc, E.LockNotAvailable | E.QueryCanceled):
+        return StoreBusy(f"the store was busy ({type(exc).__name__})")
+    if _sqlstate(exc) in _RETRY_SQLSTATES:
+        return StoreBusy(f"the store was busy ({type(exc).__name__})")
+    return None
+
+
+def _writes(retry: bool = True):
+    """Mark a write method: one transaction per attempt whose first statement sets the timeouts, a whole-call
+    budget, retries on 40001 and 40P01 only (`retry=False`: none, the call raises `StoreBusy` at once), and the
+    driver errors mapped to Protocol errors. See `PostgresStore._write`."""
+
+    def deco(fn):
+        @functools.wraps(fn)
+        def wrapper(self, *args, **kwargs):
+            return self._write(fn, retry, args, kwargs)
+
+        wrapper._writes = True  # the scan test reads this
+        wrapper._retry = retry
+        return wrapper
+
+    return deco
+
+
 class PostgresStore:
     # ponytail: one connection behind one lock per process; a pool (psycopg_pool) when throughput matters.
     # A dropped connection fails the call (the run ends safely); reconnect-on-error arrives with S11 hosting.
-    def __init__(self, conn: psycopg.Connection) -> None:
+    def __init__(
+        self,
+        conn: psycopg.Connection,
+        *,
+        on_retry: Callable[[str, int], None] | None = None,
+        lock_timeout_ms: int = 1000,
+        call_budget_ms: int = 5000,
+    ) -> None:
         self._db = conn
-        self._lock = threading.Lock()
+        # Re-entrant: the write wrapper holds it for a whole transaction and the helpers take it again inside.
+        self._lock = threading.RLock()
+        self._on_retry = on_retry
+        self._lock_timeout_ms = lock_timeout_ms
+        self._call_budget_ms = call_budget_ms
+        self._deadline: float | None = None  # monotonic; set only by the thread that holds the lock
+
+    def _write(self, fn, retry: bool, args: tuple, kwargs: dict):
+        for a in (*args, *kwargs.values()):
+            if isinstance(a, BaseModel | dict | str):
+                check_text(a)
+        deadline = time.monotonic() + self._call_budget_ms / 1000
+
+        def attempt():
+            with self._lock:
+                if self._deadline is not None:  # called from inside another wrapped write
+                    return fn(self, *args, **kwargs)
+                left = int((deadline - time.monotonic()) * 1000)
+                if left < 1:
+                    raise StoreBusy("the call budget was spent")
+                self._deadline = deadline
+                try:
+                    with self._db.transaction():
+                        self._db.execute(
+                            "SELECT set_config('lock_timeout', %s, true), "
+                            "set_config('statement_timeout', %s, true)",
+                            (str(min(self._lock_timeout_ms, left)), str(left)),
+                        )
+                        return fn(self, *args, **kwargs)
+                finally:
+                    self._deadline = None
+
+        def before_sleep(state: RetryCallState) -> None:
+            if self._on_retry is not None:
+                exc = state.outcome.exception()
+                self._on_retry(_sqlstate(exc) or "", state.attempt_number)
+
+        # The sleep happens between attempts, outside the lock and outside any transaction.
+        retrying = Retrying(
+            stop=stop_after_attempt(_ATTEMPTS if retry else 1),
+            wait=wait_exponential_jitter(multiplier=0.02, max=1, exp_base=2, jitter=0.02),
+            retry=retry_if_exception(lambda e: retry and _sqlstate(e) in _RETRY_SQLSTATES),
+            before_sleep=before_sleep,
+            reraise=True,
+        )
+        try:
+            return retrying(attempt)
+        except psycopg.Error as exc:
+            mapped = _map_error(exc)
+            if mapped is None:
+                raise
+            raise mapped from None
 
     # --- generic helpers ---------------------------------------------------------------------------------
 
     def _exec(self, query, params=()) -> psycopg.Cursor:
+        """The one way a method sends SQL. Inside a wrapped write it first compares the monotonic clock with the
+        call's deadline: a spent budget rolls the transaction back (the raise) and the statement is NOT sent."""
+        deadline = self._deadline
+        if deadline is not None and time.monotonic() >= deadline:
+            raise StoreBusy("the call budget was spent")
         return self._db.cursor(row_factory=dict_row).execute(query, params)
 
     def _insert(self, table: str, model: BaseModel, upsert_on: str | None = None) -> None:
@@ -252,6 +375,7 @@ class PostgresStore:
 
     # --- runs --------------------------------------------------------------------------------------------
 
+    @_writes()
     def create_run(self, run: Run) -> None:
         try:
             self._insert("runs", run)
@@ -271,6 +395,7 @@ class PostgresStore:
             ).fetchone()
         return StaleState(stale) if exists else NotFound(value)
 
+    @_writes()
     def transition(
         self, run_id: str, expected: RunState, new: RunState, reason_code: str | None = None
     ) -> Run:
@@ -290,6 +415,7 @@ class PostgresStore:
         if cur.rowcount == 0:
             raise NotFound(run_id)
 
+    @_writes(retry=False)
     def add_cost(self, run_id: str, usd: Decimal) -> None:
         check_usd(usd, max_decimals=8)
         with self._lock, self._db.transaction():
@@ -302,6 +428,7 @@ class PostgresStore:
             if row["cost_usd"] > MAX_COUNTER_USD:  # the ValueError rolls the transaction back
                 raise ValueError("the run counter would pass its ceiling")
 
+    @_writes(retry=False)
     def touch(self, run_id: str) -> None:
         self._update_run("UPDATE runs SET updated_at = %s WHERE run_id = %s", now(), run_id)
 
@@ -316,12 +443,14 @@ class PostgresStore:
 
     # --- plans and gate decisions --------------------------------------------------------------------------
 
+    @_writes()
     def save_plan(self, plan: Plan) -> None:
         self._insert("plans", plan, upsert_on="run_id")
 
     def get_plan(self, run_id: str) -> Plan:
         return self._one(Plan, "plans", "run_id", run_id)
 
+    @_writes()
     def save_gate_decision(self, decision: GateDecision) -> None:
         try:
             self._insert("gate_decisions", decision)  # append-only: the runtime role has no UPDATE
@@ -333,12 +462,14 @@ class PostgresStore:
 
     # --- approvals -----------------------------------------------------------------------------------------
 
+    @_writes()
     def save_approval_request(self, req: ApprovalRequest) -> None:
         self._insert("approval_requests", req, upsert_on="approval_id")
 
     def get_approval_request(self, approval_id: str) -> ApprovalRequest:
         return self._one(ApprovalRequest, "approval_requests", "approval_id", approval_id)
 
+    @_writes()
     def update_approval_request(
         self, req: ApprovalRequest, expected_status: str, expected_step: int
     ) -> None:
@@ -360,6 +491,7 @@ class PostgresStore:
                 f"{req.approval_id}: not {expected_status}/{expected_step}",
             )
 
+    @_writes()
     def record_decision(
         self,
         decision: ApprovalDecision,
@@ -406,6 +538,7 @@ class PostgresStore:
             (now,),
         )
 
+    @_writes()
     def save_approval_decision(self, decision: ApprovalDecision) -> None:
         try:
             self._insert("approval_decisions", decision)
@@ -428,17 +561,19 @@ class PostgresStore:
             "approval_requests",
             "status = ANY(%s)",
             (sorted(statuses),),
-            " ORDER BY created_at",
+            " ORDER BY created_at, approval_id",
         )
 
     # --- dead letters, spend, kill switch ------------------------------------------------------------------
 
+    @_writes(retry=False)
     def add_dead_letter(self, dl: DeadLetter) -> None:
         self._insert("dead_letters", dl)
 
     def list_dead_letters(self, run_id: str) -> list[DeadLetter]:
         return self._select(DeadLetter, "dead_letters", "run_id = %s", (run_id,), " ORDER BY seq")
 
+    @_writes(retry=False)
     def add_spend(self, agent_id: str, day: date, usd: Decimal) -> tuple[Decimal, Decimal]:
         """Day and month counters, each one atomic upsert, in one transaction: exact under concurrency."""
         check_usd(usd, max_decimals=8)
@@ -494,6 +629,7 @@ class PostgresStore:
         cur = self._exec(query, key).fetchone()
         return SpendCapExceeded(which, cap, cur["v"] if cur else Decimal(0), amount)
 
+    @_writes()
     def reserve_spend(
         self,
         reservation_id: str,
@@ -663,11 +799,13 @@ class PostgresStore:
                     )
             return SpendOutcome(self._reservation(claim), True)
 
+    @_writes()
     def settle_spend(self, reservation_id: str, actual_usd: Decimal) -> SpendOutcome:
         check_id(reservation_id, "reservation_id")
         check_usd(actual_usd, max_decimals=6)
         return self._close(reservation_id, "settled", actual_usd.quantize(Decimal("1E-6")))
 
+    @_writes()
     def release_spend(self, reservation_id: str) -> SpendOutcome:
         check_id(reservation_id, "reservation_id")
         return self._close(reservation_id, "released", None)
@@ -692,6 +830,7 @@ class PostgresStore:
             ).fetchall()
         return [self._reservation(r) for r in rows]
 
+    @_writes()
     def sweep_spend_reservations(
         self, older_than_s: int, *, limit: int = 100
     ) -> list[SpendReservation]:
@@ -736,6 +875,7 @@ class PostgresStore:
             return KillSwitch(on=True, by="system:kill_switch_row_missing")
         return found[0]
 
+    @_writes()
     def set_kill_switch(self, ks: KillSwitch) -> None:
         row = {"id": 1, **_row(ks)}
         cols = [sql.Identifier(c) for c in row]
@@ -753,11 +893,13 @@ class PostgresStore:
         found = self._select(TickState, "tick_state", "step = %s", (step,))
         return found[0] if found else None
 
+    @_writes()
     def save_tick_state(self, state: TickState) -> None:
         self._insert("tick_state", state, upsert_on="step")
 
     # --- evidence (K5) ------------------------------------------------------------------------------------------
 
+    @_writes()
     def add_tool_call(self, call: ToolCallRecord) -> None:
         try:
             self._insert("tool_calls", call)
@@ -776,9 +918,11 @@ class PostgresStore:
         with self._lock:
             return self._exec(query, (before, sorted(keep))).rowcount
 
+    @_writes()
     def purge_tool_calls(self, before: datetime, *, keep_run_ids: frozenset[str]) -> int:
         return self._purge("tool_calls", "created_at", before, keep_run_ids)
 
+    @_writes()
     def put_redaction_map(self, run_id: str, mapping: dict[str, str]) -> None:
         with self._lock:
             self._exec(
@@ -795,6 +939,7 @@ class PostgresStore:
             ).fetchone()
         return dict(row["mapping"]) if row else None
 
+    @_writes()
     def purge_redaction_maps(
         self, before: datetime, *, keep_run_ids: frozenset[str], keep_open: bool = True
     ) -> int:

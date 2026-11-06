@@ -24,7 +24,7 @@ dependencies = [
 anthropic = ["anthropic[vertex]==2.1.0"]
 aws = ["boto3==1.43.122", "cryptography==50.0.2"]
 signer = ["cryptography==50.0.2"]
-pg = ["psycopg[binary]==3.3.6"]
+pg = ["psycopg[binary]==3.3.6", "tenacity==9.2.1"]
 # The Ask-your-data demo (demos/ask-your-data): its own parser and driver pins.
 askdata = ["sqlglot==30.26.0", "psycopg[binary]==3.3.6"]
 # Cloud-neutral backends: secret stores (P4b; `vault` and `mounted_file` need no extra), audit signers and
