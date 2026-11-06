@@ -104,3 +104,89 @@ Count 0 (also 0 against origin/main).
 - No CI, no 3.14 job, no pilot/prod deployment, no live Postgres beyond what the full suite includes.
 - PyPI candidates other than `confusables` not measured (UNVERIFIED).
 - Egress (V11-1) and the look-alike placeholder marker (P1c): not done, by order.
+
+---
+# Merge of origin/core/P1a 2572847 (fix5 + main 13ebfaf) into core/P1b - head 06de58995df8bde34871f3d203d6bc40ee2f5169
+
+Plain merge (no rebase, no force, no amend). All runs with PYTHONPATH=<build-dir>/src; import path:
+```
+3.13.18 15.1.0 <build-dir>/src/hadavin_sdk/__init__.py
+3.12.13 15.0.0 <build-dir>/src/hadavin_sdk/__init__.py
+```
+
+## Full suite (pytest exit code)
+```
+3.13:
+10544 passed, 455 skipped in 496.84s (0:08:16)
+RC=0
+3.12:
+10544 passed, 455 skipped in 650.62s (0:10:50)
+RC=0
+```
+
+## textnorm_mutants (113 = 77 P1a fix4 + 22 P1b + 14 P1a fix5)
+```
+3.13:
+113 of 113 good; problems: []
+RC=0
+3.12:
+113 of 113 good; problems: []
+RC=0
+```
+
+## ruff-check
+```
+All checks passed!
+RC=0
+```
+
+## ruff-format
+```
+329 files already formatted
+RC=0
+```
+
+## bandit
+```
+[manager]	WARNING	Test in comment: SafeLoader is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: subclass is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: the is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: pinned is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: bytes is not a test name or id, ignoring
+[tester]	WARNING	nosec encountered (B102), but no failed test on file src/hadavin_sdk/tools.py:389
+[tester]	WARNING	nosec encountered (B102), but no failed test on file src/hadavin_sdk/tools.py:389
+RC=0
+```
+
+## scan_repo
+```
+
+RC=0
+```
+
+## Hygiene grep on lines added vs origin/core/P1a
+```
+0
+```
+
+## How the conflicts were resolved
+- textnorm.py: all nine conflicts were docstrings; the code merged cleanly. P1a fix5's marks-dropped views (`_without_spacing_marks`, `_views(marks_dropped=)`) and P1b's `scan_keyset`, `scan_holds`, `EmptyView`, `_PUNCT` map and fold5 both hold. One real fix: `_all_views` (behind `scan_views`/`scan_holds`) now reads the six-view `fold_views` (marks_dropped=True) so it matches the public `fold_views`; `scan_views` is now at most 6 + 6 + 8 = 20 views (was 14).
+- Generator: name rules (fix5) kept, `_SMALL_CAP` dropped, Scripts.txt/_scripts.py (P1b) kept. Output of the generator equals the checked-in `_confusables.py` (852 entries) and `_scripts.py` (751 ranges).
+- app.py: `is_live(cfg.environment)` (main) plus `textnorm.require_pinned_unidata()` (P1b).
+- Golden regenerated on 3.12 (15.0.0) and 3.13 (15.1.0), alg fold5; manifest regenerated (five files; data files kept).
+- Mutants: both lists kept (113). Meta counts updated. The P1b mutant "scan_views: only fold_views are read" lost its old killer, because fix5 makes fold_views alone find every Mc/Lm/Sk hiding; it now has its own unparametrized killer in test_textnorm_scan.py (`test_scan_views_has_the_fold_the_squeeze_and_the_scan_keys_and_no_empty_view`).
+- NOT weakened, but changed because fix5 changed the facts (each is a test of P1b that assumed the old facts):
+  * siblings: the `_reads_as_letters` exemption (5 Mc, 140 Lm) is gone; every Mc/Lm/Sk code point must be found by scan_holds, scan_views, fold_views AND squeeze_views (stricter than before).
+  * `test_no_value_of_the_table_is_zero_or_one` became `test_no_letter_of_the_table_is_read_as_zero_or_one`: fix5's name rules add digit forms that NAME 0, 1 and 10 (category No); a letter-like source mapping to 0/1 still fails. The digit-decision table has three new entries.
+  * enclosed-forms pin: the selection without a table entry fell from the ticket's 135 to 30 because fix5 reads most of them from their names. The test now requires (selected + in table) >= 100 and selected >= 20, and still requires no ASCII key for the 30.
+  * `scan_holds` both-sides test: dropped the assertion that fold_views misses a spacing mark (false after fix5); added a punctuation case ("pass-word") that only the squeeze half finds, on both sides.
+  * `test_textnorm_app.py`: `dev_cfg` became `demo_cfg`, `deferred.LIVE` became `stages.is_live` (main's stage rename).
+  * differential: rows r114 to r117 (dashes, quotes) are strict expected failures in P1a; here P1b reads them, so the P1b version of the test (which has no xfail for them) is kept.
+- Behaviour kept from P1b: `scan_holds` still raises `EmptyView` for a value with no ASCII letter or digit (Chinese-only), although fix5 can scan such a value through `fold_views`. This is the P1b notes' order ("refuse an empty view"); a lead may want to relax it now that fix5 exists.
+- The changelog "squeeze views are redundant" finding is obsolete: fix5 makes fold_views and squeeze_views each find all 974 Mc/Lm/Sk code points.
+
+## NEEDS LEAD (unchanged)
+- src/hadavin_sdk/guard/runmap.py `canonical`; src/hadavin_sdk/guard/injection.py `_score` (and the oversize-text guard_unavailable flag); src/hadavin_sdk/runtime/evidence.py `normalise` (left exact on purpose).
+
+## NOT run
+- No CI, no 3.14 job, no gitleaks, no live Postgres beyond the full suite.
