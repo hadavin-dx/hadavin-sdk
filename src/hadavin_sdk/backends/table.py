@@ -128,6 +128,10 @@ class PostgresSettings(KindSettings):
     # The server's CA bundle, cloud-neutral: a file path, or a PEM held in any secrets kind.
     sslrootcert: str | None = None
     sslrootcert_secret_name: str | None = None
+    # Write timeouts (P4d): how long one statement may wait for a row lock, and the whole wall-clock budget of one
+    # write call across its retries. A spent budget or a lock wait that ran out is `StoreBusy`.
+    lock_timeout_ms: int = Field(default=1000, ge=100, le=60000)
+    call_budget_ms: int = Field(default=5000, ge=500, le=60000)
 
     @model_validator(mode="after")
     def _checks(self) -> PostgresSettings:

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 import re
 from collections.abc import Mapping
 from dataclasses import dataclass
@@ -166,6 +167,10 @@ def is_connectivity_error(exc: BaseException) -> bool:
     """True for "the store cannot be reached" (a refused or dropped connection, a timeout), false for an error
     from a store that answered: a missing table, a missing grant. No driver import: psycopg's connection
     errors are recognised by class name along the MRO."""
+    if isinstance(exc, StoreBusy):
+        return False
+    if getattr(exc, "sqlstate", None) in ("40001", "40P01", "55P03", "57014"):
+        return False
     if isinstance(exc, StoreUnavailable | OSError):
         return True
     return any(
@@ -180,6 +185,49 @@ class StoreUnavailable(ConfigError):
 
 class NotFound(KeyError):
     pass
+
+
+class StoreBusy(RuntimeError):
+    """A write could not finish in time: a lock wait, the call budget, or retries on a deadlock or a serialization
+    failure ran out. The call changed nothing; a caller may send the same call again. Not a connectivity error."""
+
+
+_STEP_RE = re.compile(r"[a-z_]+")
+
+
+def check_step_name(s: object) -> str:
+    """A tick step name: one or more of `a-z` and `_`, the whole string (a trailing newline does not pass)."""
+    if type(s) is not str or _STEP_RE.fullmatch(s) is None:
+        raise ValueError("a tick step name must match [a-z_]+")
+    return s
+
+
+def _scan_text(x: object, depth: int = 0) -> None:
+    if depth > 64:
+        raise ValueError("a value is nested too deeply")
+    if isinstance(x, str):
+        if "\x00" in x:
+            raise ValueError("text must not hold a NUL character")
+        try:
+            x.encode("utf-8")
+        except UnicodeEncodeError:
+            raise ValueError("text must not hold a lone surrogate") from None
+    elif isinstance(x, float):
+        if not math.isfinite(x):
+            raise ValueError("a number must be finite")
+    elif isinstance(x, Mapping):
+        for k, v in x.items():
+            _scan_text(k, depth + 1)
+            _scan_text(v, depth + 1)
+    elif isinstance(x, list | tuple | set | frozenset):
+        for v in x:
+            _scan_text(v, depth + 1)
+
+
+def check_text(model: object) -> None:
+    """Deep scan of every string field and dict key of `model.model_dump()` for NUL and lone surrogates, and of
+    nested data for NaN and infinite floats. `ValueError` on the first hit; the message never echoes the value."""
+    _scan_text(model.model_dump() if hasattr(model, "model_dump") else model)
 
 
 class Store(Protocol):

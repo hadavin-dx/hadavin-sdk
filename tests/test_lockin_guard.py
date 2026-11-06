@@ -73,6 +73,7 @@ LIBRARY_IMPORTS: dict[str, set[str]] = {  # open-source libraries kept in their 
         f"{PKG}.audit.signer_gcp",
     },
     "markdown_it": {f"{PKG}.approvals.gate"},
+    "tenacity": {f"{PKG}.store.postgres"},  # P4d-a2-ii: the write wrapper's back-off (BN-16)
     # added later: fastapi, authlib, webauthn (portal_api only)
 }
 # (top-level import, module) -> scheduled fix. Empty on main: P3b moved every vendor import into its kind.
