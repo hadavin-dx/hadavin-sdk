@@ -388,10 +388,10 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | rev-P5b2-3 | Opus author: P5b2 revision 3 from reviews/P5b2-round2-resolve.md | opus | 02:57Z | +45min | REPORTED | verify; round 3 reviewers; one resolve; freeze |
 | rev-P4c-3 | Opus author: P4c revision 3 from reviews/P4c-round2-resolve.md | opus | 02:58Z | +45min | REPORTED | verify; round 3 reviewers; resolve; freeze |
 | rev-P4b1-3 | Opus author: P4b1 revision 3 from reviews/P4b1-round2-resolve.md | opus | 02:59Z | +45min | REPORTED | verify; round 3 reviewers; resolve; freeze |
-| rev-P5a-3 | Opus author: P5a revision 3 from reviews/P5a-round2-resolve.md (was NOT launched earlier: lead slip, found 03:00Z) | opus | 03:00Z | +45min | running | verify; P5b1 rev 3 waits for it; round 3 reviewers |
+| rev-P5a-3 | Opus author: P5a revision 3 from reviews/P5a-round2-resolve.md (was NOT launched earlier: lead slip, found 03:00Z) | opus | 03:00Z | +45min | REPORTED | verify; P5b1 rev 3 waits for it; round 3 reviewers |
 | rev-P6a-2 | Opus author: P6a revision 2 from reviews/P6a-round1-resolve.md | opus | 03:00Z | +45min | REPORTED | verify; round 2 reviewers |
 | rev-P5c-2 | Opus author: P5c revision 2 from reviews/P5c-round1-resolve.md | opus | 03:02Z | +45min | REPORTED | verify; round 2 |
-| rev-P6b2-2 | Opus author: P6b2 revision 2 from reviews/P6b2-round1-resolve.md | opus | 03:02Z | +45min | running | verify; round 2 |
+| rev-P6b2-2 | Opus author: P6b2 revision 2 from reviews/P6b2-round1-resolve.md | opus | 03:02Z | +45min | REPORTED | verify; round 2 |
 | r2-P8b-adv | egm-design adversarial round 2 of P8b rev 2 | sonnet | 03:02Z | +20min | REPORTED | save |
 | r2-P8b-cor | egm-codebase-details correctness round 2 of P8b rev 2 | sonnet | 03:02Z | +20min | REPORTED | save |
 | r3-P6b1-adv | egm-design adversarial round 3 (LAST) of P6b1 rev 3 | sonnet | 03:03Z | +20min | running | save |
@@ -405,10 +405,10 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | r1-P5b5-adv | round 1 ticket review | sonnet | 03:04Z | +20min | REPORTED | save |
 | r1-P5b5-cor | round 1 ticket review | sonnet | 03:04Z | +20min | REPORTED | save |
 | r3-P5b2-adv | egm-design adversarial round 3 of P5b2 rev 3 | sonnet | 03:05Z | +20min | REPORTED | save |
-| r3-P5b2-cor | egm-codebase-details correctness round 3 of P5b2 rev 3 | sonnet | 03:05Z | +20min | running | save |
+| r3-P5b2-cor | egm-codebase-details correctness round 3 of P5b2 rev 3 | sonnet | 03:05Z | +20min | REPORTED | save |
 | sav-P5b5-r1 | Saver: P5b5 round 1 reports + ledger | sonnet | 03:06Z | +10min | REPORTED | resolve |
 | r3-P4c-adv | egm-design adversarial round 3 of P4c rev 3 (money) | sonnet | 03:06Z | +20min | REPORTED | save |
-| r3-P4c-cor | egm-codebase-details correctness round 3 of P4c rev 3 | sonnet | 03:06Z | +20min | running | save |
+| r3-P4c-cor | egm-codebase-details correctness round 3 of P4c rev 3 | sonnet | 03:06Z | +20min | REPORTED | save |
 | sav-P5b4-P8a-r1 | Saver: P5b4 cor, P8a adv+cor round 1 + ledger | sonnet | 03:07Z | +10min | REPORTED | resolves |
 | res-r1-P5b5 | Opus egm-resolve P5b5 round 1 (1 Blocker, 11 Majors) | opus | 03:07Z | +30min | running | rev 2 author |
 | sav-P5b3-P6b1-P8b-P5b2 | Saver: P5b3 r1 adv+cor, P6b1 r3 adv+cor, P8b r2 adv (cor pending), P5b2 r3 adv | sonnet | 03:09Z | +12min | REPORTED | resolves |
@@ -420,5 +420,10 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | res-r1-P8a | Opus resolve P8a r1 (8 Majors) | opus | 03:10Z | +30min | running | rev 2 author |
 | res-r1-P5b3 | Opus resolve P5b3 r1 (11 Majors) | opus | 03:11Z | +30min | running | rev 2 author |
 | res-r3-P6b1 | Opus resolve P6b1 r3 (3 Majors) | opus | 03:11Z | +25min | running | rev 4/freeze |
-| sav-P8b-P5b2-P4c | Saver: P8b r2 cor, P5b2 r3 cor, P4c r3 adv+cor | sonnet | 03:11Z | +12min | running | resolves |
+| sav-P8b-P5b2-P4c | Saver: P8b r2 cor, P5b2 r3 cor, P4c r3 adv+cor | sonnet | 03:11Z | +12min | REPORTED | resolves |
 | rev-P4b2-4 | Opus author P4b2 rev 4 (round 2 resolve) | opus | 03:11Z | +25min | running | round 3 |
+| res-r3-P4c | Opus resolve P4c r3 (1 Blocker, 6 Majors) | opus | 03:12Z | +25min | running | build notes / freeze |
+| res-r3-P5b2 | Opus resolve P5b2 r3 (7 Majors) | opus | 03:12Z | +25min | running | build notes / freeze |
+| res-r2-P8b | Opus resolve P8b r2 (1 Blocker, 9 Majors) | opus | 03:12Z | +30min | running | rev 3 |
+| r3-P5a-adv | Round 3 adversarial P5a rev 3 | egm-design | 03:13Z | +12min | running | save |
+| r3-P5a-cor | Round 3 correctness P5a rev 3 | egm-codebase-details | 03:13Z | +12min | running | save |
