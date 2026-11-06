@@ -559,3 +559,4 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | rv-AKG2-r2-cor | egm-codebase-details round 2 AK-G2 rev 2 | 13:20Z | +10min | running | save |
 | sv-AK2a-r2 | saver AK2a round 2 pair | 13:35Z | +5min | REPORTED | verify, push |
 | sv-AK0-r3 | saver AK0 round 3 pair | 13:45Z | +5min | running | verify, push |
+| rs-AK2a-r2 | Opus resolve AK2a round 2 (20 Majors) | 13:50Z | +25min | running | verify, then rev 3 author |
