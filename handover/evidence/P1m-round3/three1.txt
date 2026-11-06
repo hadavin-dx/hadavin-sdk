@@ -1,0 +1,104 @@
+...............................F...............F............F..F.        [100%]
+=================================== FAILURES ===================================
+__ test_a_crash_row_is_good_only_when_the_exception_class_is_the_declared_one __
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-208/test_a_crash_row_is_good_only_0')
+
+    def test_a_crash_row_is_good_only_when_the_exception_class_is_the_declared_one(tmp_path):
+        root = _raising_tree(tmp_path)
+        base = ("src/pk/core.py", "return flag", 'raise ValueError("boom")', "boom")
+        right = Mutant("right", *base, allow_crash=True, crash_type="ValueError")
+        wrong = Mutant("wrong", *base, allow_crash=True, crash_type="KeyError")
+        # a class that only CONTAINS the declared name (``MyValueError``) is not the declared class
+        lookalike = Mutant(
+            "lookalike",
+            "src/pk/core.py",
+            "return flag",
+            'raise type("MyValueError", (Exception,), {})("boom")',
+            "test_a",
+            allow_crash=True,
+            crash_type="ValueError",
+        )
+        first_lines = {}
+        res = {
+            n: (v, good)
+            for n, v, _t, good in run_mutants(
+                root,
+                [right, wrong, lookalike],
+                ["tests/test_core.py"],
+                extra_dirs=(),
+                timeout=120,
+                first_lines=first_lines,
+            )
+        }
+        assert res["right"] == (Verdict.CRASH, True)
+        assert res["wrong"] == (Verdict.CRASH, False), (
+            "a crash row was good for another exception class"
+        )  # FAIL-BEFORE: any exception counted as good
+>       assert res["lookalike"] == (Verdict.CRASH, False), (
+            "a crash row was good for a lookalike class name"
+        )
+E       AssertionError: a crash row was good for a lookalike class name
+E       assert (<Verdict.WRO...ASON'>, False) == (<Verdict.CRA...RASH'>, False)
+E         
+E         At index 0 diff: <Verdict.WRONG_REASON: 'WRONG_REASON'> != <Verdict.CRASH: 'CRASH'>
+E         Use -v to get more diff
+
+tests/test_mutation_runner.py:880: AssertionError
+________________ test_the_manifest_pins_the_files_a_demo_copies ________________
+
+    def test_the_manifest_pins_the_files_a_demo_copies():
+        root = Path(__file__).resolve().parents[1]
+        manifest = json.loads((FIX / "mutation_manifest.json").read_text(encoding="utf-8"))
+        for rel, sha in manifest["files"].items():
+            data = (root / rel).read_bytes().replace(b"\r\n", b"\n")
+            assert hashlib.sha256(data).hexdigest() == sha, (
+                rel,
+                "changed: re-sync the demos and update the manifest and the CHANGELOG",
+            )
+        assert set(manifest["files"]) == {
+            "src/hadavin_sdk/testing/__init__.py",
+            "src/hadavin_sdk/testing/mutation.py",
+            "tools/__init__.py",
+            "tools/mutation_runner.py",
+        }
+        log = root / "CHANGELOG.md"
+        if log.exists():  # the mutation copies do not carry it
+            text = log.read_text(encoding="utf-8")
+            for rel, sha in manifest["files"].items():
+>               assert sha in text, rel  # the CHANGELOG re-copy list names every pinned hash
+                ^^^^^^^^^^^^^^^^^^^^^^^
+E               AssertionError: src/hadavin_sdk/testing/mutation.py
+E               assert '75c32a4e501f5c3a4edcd6f1fd8a58603ebb2ef6fd43842e558ce0761eaee03e' in '# Changelog\n\n## Unreleased\n\n### Upgrade steps\n- **Code-quality scanner fixes (SonarCloud, an automated code-qual...495991b7852b855`\n  - `tools/mutation_runner.py`: `7d6e6ccd28162264339572ba3d9387406fe2b49a40f1f6cb29ac217f4a21a4bc`\n'
+
+tests/test_mutation_runner.py:1265: AssertionError
+_______ test_a_there_are_the_listed_number_of_mutants_with_unique_names ________
+
+    def test_a_there_are_the_listed_number_of_mutants_with_unique_names():
+        names = [m.name for m in mm.M]
+        assert len(names) == EXPECTED_MUTANTS and len(set(names)) == EXPECTED_MUTANTS, names
+        assert {m.file for m in mm.M} == {mm.MU, mm.MR}
+        assert sum(m.file == mm.MU for m in mm.M) == 6
+>       assert sum(m.file == mm.MR for m in mm.M) == EXPECTED_MUTANTS - 5
+E       assert 43 == (49 - 5)
+E        +  where 43 = sum(<generator object test_a_there_are_the_listed_number_of_mutants_with_unique_names.<locals>.<genexpr> at 0x7fada3769700>)
+
+tests/test_mutation_runner_meta.py:103: AssertionError
+____ test_g_every_search_string_occurs_exactly_once_in_the_file_it_targets _____
+
+    def test_g_every_search_string_occurs_exactly_once_in_the_file_it_targets():
+        lines = []
+        for m in mm.M:
+            text = (ROOT / m.file).read_text(encoding="utf-8")
+            count = text.count(m.old)
+>           assert count == 1, f"{m.name}: the search string occurs {count} times in {m.file}"
+E           AssertionError: runner: a failing tree kill is not caught: the search string occurs 0 times in tools/mutation_runner.py
+E           assert 0 == 1
+
+tests/test_mutation_runner_meta.py:150: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_mutation_runner.py::test_a_crash_row_is_good_only_when_the_exception_class_is_the_declared_one
+FAILED tests/test_mutation_runner.py::test_the_manifest_pins_the_files_a_demo_copies
+FAILED tests/test_mutation_runner_meta.py::test_a_there_are_the_listed_number_of_mutants_with_unique_names
+FAILED tests/test_mutation_runner_meta.py::test_g_every_search_string_occurs_exactly_once_in_the_file_it_targets
+4 failed, 61 passed in 25.45s

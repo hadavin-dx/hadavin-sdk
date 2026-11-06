@@ -1,0 +1,12 @@
+E       AssertionError: the POSIX probe did not ask the (faked) system call
+E       assert [] == [(77, 0)]
+E         
+E         Right contains one more item: (77, 0)
+E         Use -v to get more diff
+E       AssertionError: assert [] == [(PosixPath('...tory': True})]
+E         
+E         Right contains one more item: (PosixPath('/tmp/pytest-of-root/pytest-213/test_dir_link_makes_a_junction0'), PosixPath('/tmp/pytest-of-root/pytest-213/test_dir_link_makes_a_junction0/s'), {'target_is_directory': True})
+E         Use -v to get more diff
+FAILED tests/test_mutation_runner_helpers.py::test_pid_alive_uses_the_windows_probe_only_on_windows
+FAILED tests/test_mutation_runner_helpers.py::test_dir_link_makes_a_junction_on_windows_and_a_symlink_elsewhere
+2 failed, 9 passed in 0.21s

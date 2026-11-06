@@ -572,7 +572,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | au-AK0-bn | Opus BN author AK0 (BN-1..17 + banner) | 04:24Z | +25min | REPORTED | verify, push |
 | au-AK2a-r3 | Opus author AK2a revision 3 | 04:26Z | +30min | REPORTED | verify, then round 3 pair |
 | au-AKG2-r3 | Opus author AK-G2 revision 3 | 04:29Z | +30min | REPORTED | verify, then round 3 pair |
-| bu-P1m-r3fix | Sonnet builder P1m order 31 batch (1 Major + 7 Minors) in build P1m | 04:30Z | +30min | running | verify, push core/P1m, heartbeat |
+| bu-P1m-r3fix | Sonnet builder P1m order 31 batch (1 Major + 7 Minors) in build P1m | 04:30Z | +30min | REPORTED | verify, push core/P1m, heartbeat |
 | sv-AK1-r3 | saver AK1 round 3 pair (4 ADV Majors, 5 COR Majors) | 04:30Z | +8min | REPORTED | verify, push, then Opus resolve (BN) |
 | rs-AK1-r3 | Opus resolve AK1 round 3 (last; 9 Majors -> build notes) | 04:30Z | +25min | REPORTED | verify, then BN author |
 | rv-AK4a-r3-adv | egm-design AK4a rev3 round 3 | 04:33Z | +20min | REPORTED | save |
@@ -582,9 +582,10 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | sv-AK4a-r3 | saver AK4a round 3 pair (1 Blocker, 8 Majors) | 04:40Z | +8min | REPORTED | verify, push, Opus resolve (BN) |
 | rs-AK4a-r3 | Opus resolve AK4a round 3 (last; 1 Blocker 8 Majors -> BN) | 04:40Z | +25min | running | verify, then BN author |
 | rv-AKG2-r3-adv | egm-design AK-G2 rev3 round 3 | 04:41Z | +20min | REPORTED | save |
-| rv-AKG2-r3-cor | egm-codebase-details AK-G2 rev3 round 3 | 04:41Z | +20min | running | save |
+| rv-AKG2-r3-cor | egm-codebase-details AK-G2 rev3 round 3 | 04:41Z | +20min | REPORTED | save |
 | rv-AK2a-r3-adv | egm-design AK2a rev3 round 3 | 04:43Z | +20min | running | save |
 | rv-AK2a-r3-cor | egm-codebase-details AK2a rev3 round 3 | 04:43Z | +20min | running | save |
 | sv-AKG1-r2 | saver AK-G1 round 2 pair | 04:43Z | +8min | REPORTED | verify, push, Opus resolve |
-| au-AK1-bn | author AK1 build notes BN-1..17 | 04:43Z | +20min | running | verify, push |
+| au-AK1-bn | author AK1 build notes BN-1..17 | 04:43Z | +20min | REPORTED | verify, push |
 | rs-AKG1-r2 | Opus resolve AK-G1 round 2 (2 Blocker 8 Major) | 04:45Z | +25min | running | verify, then rev 3 |
+| sv-AKG2-r3 | saver AK-G2 round 3 pair (5+7 Majors) | 04:47Z | +8min | running | verify, push, Opus resolve (BN) |
