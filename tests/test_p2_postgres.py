@@ -20,6 +20,7 @@ from hadavin_sdk.models import (
     KillSwitch,
     Plan,
     Run,
+    SpendReservation,
     TickState,
 )
 
@@ -37,6 +38,7 @@ TABLES = {
     "dead_letters": DeadLetter,
     "kill_switch": KillSwitch,
     "tick_state": TickState,
+    "spend_reservations": SpendReservation,
 }
 EXTRA_COLUMNS = {"approval_decisions": {"seq"}, "dead_letters": {"seq"}, "kill_switch": {"id"}}
 
@@ -287,7 +289,9 @@ def test_audit_checkpoints_migration_adds_alg_and_label_and_old_rows_get_default
         for path in old:
             db.execute("INSERT INTO schema_migrations (version) VALUES (%s)", (path.stem,))
         db.execute("INSERT INTO audit_checkpoints (seq, hash, signature) VALUES (1, 'h', 's')")
-    assert migrate(fresh_dsn) == ["0004_audit_checkpoint_meta", "0005_evidence"]
+    assert migrate(fresh_dsn) == [
+        p.stem for p in sorted(MIGRATIONS.glob("*.sql")) if p.stem >= "0004"
+    ]
     with psycopg.connect(fresh_dsn, autocommit=True) as db:
         assert db.execute("SELECT seq, alg, key_label FROM audit_checkpoints").fetchall() == [
             (1, None, None)

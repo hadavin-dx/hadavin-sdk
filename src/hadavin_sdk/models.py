@@ -9,16 +9,39 @@ import hashlib
 import json
 import re
 import uuid
-from datetime import UTC, datetime
-from decimal import Decimal
+from datetime import UTC, date, datetime
+from decimal import ROUND_UP, Decimal
 from enum import StrEnum
 from typing import Any, ClassVar, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from hadavin_sdk import defaults
+
 
 def now() -> datetime:
     return datetime.now(UTC)
+
+
+_COST_UNIT = Decimal("1E-8")
+
+
+def round_cost_up(x: Decimal) -> Decimal:
+    """A model call's cost rounded UP to 8 decimals (R214: never down). Refuses (`ValueError`) what the store would
+    refuse after a paid call: a non-finite value (checked FIRST: `quantize` of a quiet NaN returns NaN without an
+    error), a negative or minus-zero value, and one above `defaults.MAX_USD`. The value is not passed through the
+    arithmetic context before `quantize`, so a 29-digit value keeps its last digit."""
+    if not isinstance(x, Decimal):
+        raise ValueError("cost must be a Decimal")  # noqa: TRY004 - a bad value
+    if not x.is_finite():
+        raise ValueError("cost must be a finite number")
+    if x.is_signed():
+        raise ValueError("cost must not be negative")
+    if x > defaults.MAX_USD:
+        raise ValueError(f"cost must be at most {defaults.MAX_USD}")
+    if x.as_tuple().exponent >= -8:  # type: ignore[operator]  # already exact at 8 decimals: keep its form
+        return x
+    return x.quantize(_COST_UNIT, rounding=ROUND_UP)
 
 
 def new_id(prefix: str) -> str:
@@ -301,6 +324,11 @@ class Reply(Shape):
     stop_reason: str = "end_turn"
     latency_ms: int = 0
 
+    @field_validator("cost_usd")
+    @classmethod
+    def _cost_rounded_up(cls, v: Decimal) -> Decimal:
+        return round_cost_up(v)
+
 
 class Verdict(Shape):
     flagged: bool
@@ -311,9 +339,32 @@ class Verdict(Shape):
         0
     )  # a model-backed detector's call (llm_judge), charged by the caller
 
+    @field_validator("cost_usd")
+    @classmethod
+    def _cost_rounded_up(cls, v: Decimal) -> Decimal:
+        return round_cost_up(v)
+
 
 class RunResult(Shape):
     outcome: Literal["succeeded", "failed", "unknown"]
     external_ref: str | None = None
     error_code: str | None = None
     retryable: bool = False
+
+
+class SpendReservation(Shape):
+    """One reserved amount of spend (P4d-b). `status` moves open -> settled / released / expired; an expired row
+    holds the worst case (`settled_usd == reserved_usd`) until it is settled or released once. Amounts are exact
+    Decimals at six decimal places."""
+
+    reservation_id: str
+    agent_id: str
+    day: date
+    run_id: str | None = None
+    reserved_usd: Decimal
+    status: Literal["open", "settled", "released", "expired"] = "open"
+    settled_usd: Decimal | None = None
+    created_at: datetime
+    closed_at: datetime | None = None
+    expired_at: datetime | None = None
+    meta: dict[str, Any] | None = None

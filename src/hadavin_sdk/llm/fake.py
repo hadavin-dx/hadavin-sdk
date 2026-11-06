@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any
 
 from hadavin_sdk.config import Route
-from hadavin_sdk.models import Reply
+from hadavin_sdk.models import Reply, round_cost_up
 
 
 class UnknownRecording(KeyError):
@@ -47,8 +47,11 @@ class FakeLLM:
             raise UnknownRecording(path.name)
         data = json.loads(path.read_text(encoding="utf-8"))
         r = self.routes[route]
-        cost = (
-            Decimal(data.get("input_tokens", 0)) * r.input_usd_per_mtok
-            + Decimal(data.get("output_tokens", 0)) * r.output_usd_per_mtok
-        ) / Decimal(1_000_000)
+        cost = round_cost_up(
+            (
+                Decimal(data.get("input_tokens", 0)) * r.input_usd_per_mtok
+                + Decimal(data.get("output_tokens", 0)) * r.output_usd_per_mtok
+            )
+            / Decimal(1_000_000)
+        )
         return Reply(**data, cost_usd=cost, model_id=r.model_id)

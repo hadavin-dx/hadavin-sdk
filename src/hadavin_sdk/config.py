@@ -75,6 +75,22 @@ class Route(_Strict):
     output_usd_per_mtok: Money
     max_tokens: int = Field(gt=0)
 
+    @field_validator("input_usd_per_mtok", "output_usd_per_mtok")
+    @classmethod
+    def _price(cls, v: Decimal) -> Decimal:
+        """Finite (pydantic already refuses non-finite Decimals; kept as a second line), not negative or minus zero,
+        at most `defaults.MAX_ROUTE_PRICE_USD_PER_MTOK`, at most 6 decimals (checked last, so a huge exponent cannot
+        make `quantize` raise)."""
+        if not v.is_finite():
+            raise ValueError("a price must be a finite number")
+        if v.is_signed():
+            raise ValueError("a price must not be negative")
+        if v > defaults.MAX_ROUTE_PRICE_USD_PER_MTOK:
+            raise ValueError(f"a price may be at most {defaults.MAX_ROUTE_PRICE_USD_PER_MTOK}")
+        if v != v.quantize(Decimal("1E-6")):
+            raise ValueError("a price may have at most 6 decimal places")
+        return v
+
 
 class Backends(_Strict):
     """One validated settings model per capability (built by `parse_backends`, never from raw YAML)."""
