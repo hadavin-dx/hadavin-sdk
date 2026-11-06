@@ -551,3 +551,6 @@ Tails read by me: 3.13 `10438 passed, 1 skipped, 28 deselected` RC=0; 3.12 same 
 Honest caveats: the head-SHA line on each log was added AFTER the run (the tree HEAD was 967d5a1 during the runs, builder's word); no PostgreSQL 17, no perf or live tests; Postgres 16 locally; one skip is tests/contracts/test_llm.py:95; killer table is from the 66a5710 run, not re-derived at 967d5a1 (mutants did re-run at 967d5a1, 36/36).
 Evidence scrubbed to reviews/P3a-2/ (hygiene 0); BN-P3a-2-a..e placed in tickets/P3a.md. Builder cleanup done (Postgres 5432 stopped, worktrees removed).
 PR 73 is not stacked on an unmerged PR except core/P3a (PR 68 merged per its body); left READY (not draft) since base P3a holds main.
+
+## q235 (2026-11-06T15:25:00Z) CORRECTION to q234
+q234 said core/P3a's PR 68 was merged. Wrong: PR 68 is OPEN (base main, mergeable_state blocked); only main was merged INTO core/P3a. So PR 73 is stacked on an unmerged PR. Order 91 says stacked PRs are DRAFT; the lead's order 95 said "then READY", so I left PR 73 ready. NEEDS LEAD: confirm ready or draft. Also: PR 73 shows only SonarCloud and CodeRabbit (skipped) checks; the full CI (check, tests-py312, security) does not run on it because its base is not main. Its full-suite proof is the builder's logs only.
