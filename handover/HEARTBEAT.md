@@ -253,3 +253,19 @@
 2026-11-06T11:47:31Z | step=P1c rev6 committed (q180); round 5 launching | next=P1a fix4 verify | blocked=lead PL19
 2026-11-06T11:47:56Z | step=P1c round 5 reviewers launched | next=P1a fix4 verify; round 5 reports | blocked=lead PL19
 2026-11-06T11:53:25Z | step=order 82 read (PL19 b, PL20 a) q181 | next=round 5 reports -> resolve rev 7 incl PL19 b; P1a fix4 verify | blocked=none
+2026-11-06T11:58:46Z | ORDER 83 format: package | stage | builders running | blocked on
+P1a | fix4 build, local, push after verify | 1 | -
+P1b | merge local (1c12470); redo on fix4 head | 0 | P1a fix4 verify
+P1c | rev 7 resolve (freeze) | 0 (1 resolver) | -
+P0t | PR 67 awaiting lead round 3 | 0 | lead
+P3a-1 | PR 68 fix1 (order 74) | 0 | builder not yet started (next free slot)
+P3a-2 | build | 1 | -
+P2a-1 | build | 1 | -
+P4d-a2 | build | 1 | -
+P2d-1 | build | 1 | P1b only for fold views (P2d-2/P1c)
+P4b1 | build | 1 | -
+P5a | build | 1 | -
+P0a | build | 1 | -
+P2d-2, P4c, P4b2, P4a, P5b1-3, P5c, P6a, P6b1, P8a, P0c | queued (frozen tickets) | 0 | free builder slot
+P0d, P0e, P0b, P8c | NO TICKET IN REPO | 0 | lead must supply ticket
+concurrency: 8 builders + 1 resolver running at 2026-11-06T11:58:46Z; load/RAM to be measured

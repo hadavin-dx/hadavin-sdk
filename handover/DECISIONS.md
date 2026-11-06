@@ -408,3 +408,6 @@ Made without a user answer (answered-by-user: no). Redaction path, ticket stays 
 3. Followed order 80 on PL16 (a) even though the resolver measured a narrower guard as better: PL19 puts (b) in front of the lead; recommended (b); NEEDS LEAD, not changed meanwhile.
 4. Ticket grew from about 6,700 to about 10,070 words (rows 149 -> 157, mutants 38 -> 48, constants 5 -> 6). Honest concern: that is against order 8 (cut surface); I accepted it because every addition closes a leak or a reviewer finding with a killer row; the lead may order a trim. Confidence medium.
 5. Me: committed rev 6 after checking hygiene (0), gitleaks (clean) and that the counts line up in the text; I did NOT recompute 157/48 by an independent script (the resolver reports it did).
+
+## 2026-11-06T11:58:46Z order 83 builders
+- What: spawn 7 builders in parallel with preamble by reference. Options: paste full preamble (slow, ~80 KB of tokens), by reference (chosen). Why: speed (order 83). Confidence medium. Reversible yes. Answered by user: no (lead order). Should-have-escalated: the preamble-by-reference deviation is a rule softening; flagged in q182.

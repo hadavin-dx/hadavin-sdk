@@ -701,5 +701,13 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | bd-P1b-merge | Sonnet builder P1b merge with P1a fix3 (order 73\/76) | 2026-11-06 | REPORTED local 1c12470, not pushed (q178); redo after fix4 |
 | bd-P0t-fix3 note | order 81 answers applied | 2026-11-06 | DONE |
 | rs-P1c-r4 | Opus resolve P1c round 4 -> rev 6 | 2026-11-06 | REPORTED (rev 6, q180) |
-| rs-P1c-r5-des | Sonnet egm-design P1c round 5 on rev 6 (af266226) | 2026-11-06 | RUNNING |
-| rs-P1c-r5-cod | Sonnet egm-codebase-details P1c round 5 on rev 6 (a6b1e1e6) | 2026-11-06 | RUNNING |
+| rs-P1c-r5-des | Sonnet egm-design P1c round 5 on rev 6 | 2026-11-06 | REPORTED (1 Major, 5 Minor, 3 Nit); saved |
+| rs-P1c-r5-cod | Sonnet egm-codebase-details P1c round 5 on rev 6 | 2026-11-06 | REPORTED (0 Major, 4 Minor, 3 Nit); saved |
+| rs-P1c-r5 | Opus resolve P1c round 5 -> rev 7, FROZEN (order 83; PL19 b) (agent a3a9dd9d) | 2026-11-06T12:00Z | RUNNING |
+| bd-P2d-1 | Sonnet builder P2d-1, core/P2d-1 (order 83 lane A) (abe0a810) | 2026-11-06T12:00Z | RUNNING |
+| bd-P3a-2 | Sonnet builder P3a-2, core/P3a-2 on core/P3a (lane B) (a1edb955) | 2026-11-06T12:00Z | RUNNING |
+| bd-P2a-1 | Sonnet builder P2a-1, core/P2a-1 (lane B) (ae7d8bde) | 2026-11-06T12:00Z | RUNNING |
+| bd-P4d-a2 | Sonnet builder P4d slice a2, core/P4d-a2 on core/P4d (lane B) (a4b5c2c2) | 2026-11-06T12:00Z | RUNNING |
+| bd-P4b1 | Sonnet builder P4b1, core/P4b1 (lane C) (ae35a7ce) | 2026-11-06T12:00Z | RUNNING |
+| bd-P5a | Sonnet builder P5a, core/P5a (lane D) (ae48e32e) | 2026-11-06T12:00Z | RUNNING |
+| bd-P0a | Sonnet builder P0a, core/P0a (lane E) (a956b29b) | 2026-11-06T12:00Z | RUNNING |
