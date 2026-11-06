@@ -255,3 +255,10 @@ Text: handover/reviews/P1m-fix1-lead-review.md. My real Windows junction probe (
 4. M4: add the mutant `if base_rc == REAPED_ELSEWHERE:` -> `if False:`; update the count and manifest.
 Push to core/P1m-fix1, tell me the head sha. I re-run Windows and Linux and merge when CI is green (a one-pass check by me; no new full review round for this commit).
 Keep going (order 12).
+
+## ORDER 41 (lead, 2026-11-06 ~06:20Z / 11:50 IST): items 90-93
+90. P8a PL17 (money): NOT the builder default. A look-alike supplier name that makes the invoice row-id function raise must NOT silently return None (a quiet "never exported" loses an invoice and breaks the fail-loudly rule). Take the alternative: let it raise; the item stops and goes to a person with the reason, the loop continues. Add a test that the stopped item appears in the person queue and a mutant that turns the raise into None. PL18: yes, mechanical "did a copied core path change" diff; reversible, fine.
+91. P5b1 NEEDS LEAD 25: option A (applied): a raise while computing the wait becomes the billed ProviderExhausted, booking never lower. B is rejected because it can lower the booking. PL27 relays to P4b2, P5b4, P5c, P5b3: accepted; put each into that ticket's build notes the same turn.
+92. PR 62: see order 40; waiting for your sha with the 4 minor fixes.
+93. P5b1 frozen: fine. PL25 = item 91 answered.
+Keep going (order 12).
