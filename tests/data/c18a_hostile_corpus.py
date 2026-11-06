@@ -25,7 +25,15 @@ from hadavin_sdk.codes import Code
 from hadavin_sdk.errors import ConfigError
 
 CORPUS_STEP: Final = "R1"  # last redesign step merged; each P5b pull request bumps it
-STEPS: Final = ("R1", "R1P", "R3a", "R3c", "R3b", "R2", "R5")  # P5b1=R1P, P5b2=R3a, P5b3=R3c+R3b, P5b4=R2, P5b5=R5
+STEPS: Final = (
+    "R1",
+    "R1P",
+    "R3a",
+    "R3c",
+    "R3b",
+    "R2",
+    "R5",
+)  # P5b1=R1P, P5b2=R3a, P5b3=R3c+R3b, P5b4=R2, P5b5=R5
 CLASSES: Final = (
     "pii_plain", "pii_obfuscated", "pii_encoded", "ansi_c1", "email_unicode", "secret_shapes", "foreign_driver",
     "builtin_text", "pydantic_input", "json_decode", "hostile_class", "field_forging", "size_time", "config_detail",
@@ -58,9 +66,13 @@ HOST: Final = _p("db-quentin-abernathy", ".example", ".invalid")
 USER: Final = _p("quentin", "_abernathy")
 AWS: Final = _p("AKIA", "IOSFODNN7EXAMPLE")
 SKKEY: Final = _p("sk-", "Zq" * 12)
-JWT: Final = _p("eyJ", "hbGciOiJIUzI1NiJ9", ".", "eyJzdWIiOiJ6enoifQ", ".", "p5aSignature0123456789")
+JWT: Final = _p(
+    "eyJ", "hbGciOiJIUzI1NiJ9", ".", "eyJzdWIiOiJ6enoifQ", ".", "p5aSignature0123456789"
+)
 PEM_BODY: Final = _p("ZZZFAKEPEM", "BODYp5a0123")
-PEM: Final = _p("-----BEGIN ", "PRIVATE", " KEY-----\n", PEM_BODY, "\n-----END ", "PRIVATE", " KEY-----")
+PEM: Final = _p(
+    "-----BEGIN ", "PRIVATE", " KEY-----\n", PEM_BODY, "\n-----END ", "PRIVATE", " KEY-----"
+)
 PWPHRASE: Final = _p("correct horse", " battery")
 GHTOKEN: Final = _p("gh", "p_", "Zz" * 18)
 INVOICE: Final = _p("Total EUR 1,234.00 ", "Abernathy Textiles GmbH")
@@ -212,12 +224,7 @@ def _f_json_real(doc: str) -> BaseException:
 
 
 def _f_unicode_encode(text: str) -> BaseException:
-    try:
-        text.encode("ascii") if text.isascii() else None
-        (text + "\u00e9").encode("ascii")
-    except UnicodeEncodeError as e:
-        return e
-    raise AssertionError("encoded")
+    return UnicodeEncodeError("ascii", text + "\u00e9", 0, 1, "ordinal not in range for " + text)
 
 
 def _f_deep() -> BaseException:
@@ -521,7 +528,7 @@ class _Asserting(BaseModel):
     @field_validator("name")
     @classmethod
     def _check(cls, v: str) -> str:
-        assert v == "ok", v  # noqa: S101 - the row wants an assertion_error type
+        assert v == "ok", v
         return v
 
 
@@ -571,7 +578,20 @@ def _add(cls: str, kind: str, status: str, owner: str, spec: dict[str, object], 
          code: Code | None, why: str, ledger: tuple[str, ...] = (), reason: str = "") -> None:  # fmt: skip
     _SEQ[cls] = _SEQ.get(cls, 0) + 1
     _ROWS.append(
-        Row(f"HC-{cls}-{_SEQ[cls]:02d}", cls, ledger, kind, status, owner, spec, canaries, expect, code, why, reason)  # type: ignore[arg-type]
+        Row(
+            f"HC-{cls}-{_SEQ[cls]:02d}",
+            cls,
+            ledger,
+            kind,
+            status,
+            owner,
+            spec,
+            canaries,
+            expect,
+            code,
+            why,
+            reason,
+        )  # type: ignore[arg-type]
     )
 
 
@@ -587,8 +607,27 @@ def exc(cls: str, factory: str, args: tuple[object, ...], canaries: tuple[str, .
     _add(cls, "exception", "active", "R1", spec, canaries, expect, code, why, ledger)
 
 
-def val(cls: str, model: str, document: str, canaries: tuple[str, ...], why: str, *, ledger: tuple[str, ...] = ()) -> None:
-    _add(cls, "validation", "active", "R1", {"model": model, "document": document}, canaries, "no_canary", None, why, ledger)
+def val(
+    cls: str,
+    model: str,
+    document: str,
+    canaries: tuple[str, ...],
+    why: str,
+    *,
+    ledger: tuple[str, ...] = (),
+) -> None:
+    _add(
+        cls,
+        "validation",
+        "active",
+        "R1",
+        {"model": model, "document": document},
+        canaries,
+        "no_canary",
+        None,
+        why,
+        ledger,
+    )
 
 
 def later(cls: str, kind: str, owner: str, spec: dict[str, object], why: str, reason: str, *, ledger: tuple[str, ...] = (),
@@ -596,7 +635,7 @@ def later(cls: str, kind: str, owner: str, spec: dict[str, object], why: str, re
     _add(cls, kind, "later", owner, spec, canaries, "no_canary", None, why, ledger, reason)
 
 
-def L(n: int) -> tuple[str, ...]:  # noqa: N802 - short on purpose
+def L(n: int) -> tuple[str, ...]:
     return (f"BL-core-c18a-{n:03d}",)
 
 
@@ -604,132 +643,559 @@ E_, N_ = (EMAIL,), (NAME,)
 GOLD_FALLBACK = r"unknown: diag_v=1 code=foreign_exception step=extract at=- fp=2a1e659d"
 
 # pii_plain (6)
-exc("pii_plain", "value_error", (f"cannot send to {EMAIL}",), E_, "an e-mail address in args[0]", ledger=L(1))
+exc(
+    "pii_plain",
+    "value_error",
+    (f"cannot send to {EMAIL}",),
+    E_,
+    "an e-mail address in args[0]",
+    ledger=L(1),
+)
 exc("pii_plain", "value_error", (f"IBAN {IBAN} rejected",), (IBAN,), "an IBAN in args[0]")
 exc("pii_plain", "runtime_error", (f"card {CARD} declined",), (CARD,), "a card number in args[0]")
 exc("pii_plain", "value_error", (f"unknown payee {NAME}",), N_, "a person's name in args[0]")
 exc("pii_plain", "type_error", (f"call back on {PHONE}",), (PHONE,), "a phone number in args[0]")
-exc("pii_plain", "value_error", (f"deliver to {ADDRESS}",), (ADDRESS,), "a street address in args[0]")
+exc(
+    "pii_plain",
+    "value_error",
+    (f"deliver to {ADDRESS}",),
+    (ADDRESS,),
+    "a street address in args[0]",
+)
 
 # pii_obfuscated (10): spellings the fold reads through
 _IBAN_SPACED = " ".join(IBAN[i : i + 4] for i in range(0, len(IBAN), 4))
-exc("pii_obfuscated", "value_error", (f"IBAN {_IBAN_SPACED} rejected",), (IBAN,), "a spaced IBAN", ledger=L(11))
-exc("pii_obfuscated", "value_error", (f"mail {EMAIL.replace('@', chr(0x200b) + '@')}",), E_, "zero-width space inside an e-mail", ledger=L(23))
-exc("pii_obfuscated", "value_error", (f"mail {EMAIL.replace('@', chr(0xff20))}",), E_, "a fullwidth at sign", ledger=L(28))
-exc("pii_obfuscated", "value_error", (f"mail {EMAIL.replace('a', chr(0x0430))}",), E_, "Cyrillic a for Latin a", ledger=L(39))
-exc("pii_obfuscated", "value_error", (f"mail {EMAIL.upper()}",), E_, "upper-case e-mail", ledger=L(44))
+exc(
+    "pii_obfuscated",
+    "value_error",
+    (f"IBAN {_IBAN_SPACED} rejected",),
+    (IBAN,),
+    "a spaced IBAN",
+    ledger=L(11),
+)
+exc(
+    "pii_obfuscated",
+    "value_error",
+    (f"mail {EMAIL.replace('@', chr(0x200B) + '@')}",),
+    E_,
+    "zero-width space inside an e-mail",
+    ledger=L(23),
+)
+exc(
+    "pii_obfuscated",
+    "value_error",
+    (f"mail {EMAIL.replace('@', chr(0xFF20))}",),
+    E_,
+    "a fullwidth at sign",
+    ledger=L(28),
+)
+exc(
+    "pii_obfuscated",
+    "value_error",
+    (f"mail {EMAIL.replace('a', chr(0x0430))}",),
+    E_,
+    "Cyrillic a for Latin a",
+    ledger=L(39),
+)
+exc(
+    "pii_obfuscated",
+    "value_error",
+    (f"mail {EMAIL.upper()}",),
+    E_,
+    "upper-case e-mail",
+    ledger=L(44),
+)
 exc("pii_obfuscated", "value_error", (f"payee {NAME.upper()}",), N_, "an upper-case name")
-exc("pii_obfuscated", "value_error", (f"payee {NAME.replace('e', chr(0x0435))}",), N_, "Cyrillic e for Latin e in a name")
-exc("pii_obfuscated", "value_error", (f"mail {''.join(c + chr(0x0301) for c in EMAIL[:6])}{EMAIL[6:]}",), E_, "combining marks inside an e-mail")
-exc("pii_obfuscated", "value_error", (f"payee {NAME.replace(' ', chr(0xe0020) + ' ')}",), N_, "a tag character inside a name")
-exc("pii_obfuscated", "value_error", (f"card {CARD[:4]}-{CARD[4:8]}.{CARD[8:12]} {CARD[12:]}",), (CARD,), "a card number with mixed separators")
+exc(
+    "pii_obfuscated",
+    "value_error",
+    (f"payee {NAME.replace('e', chr(0x0435))}",),
+    N_,
+    "Cyrillic e for Latin e in a name",
+)
+exc(
+    "pii_obfuscated",
+    "value_error",
+    (f"mail {''.join(c + chr(0x0301) for c in EMAIL[:6])}{EMAIL[6:]}",),
+    E_,
+    "combining marks inside an e-mail",
+)
+exc(
+    "pii_obfuscated",
+    "value_error",
+    (f"payee {NAME.replace(' ', chr(0xE0020) + ' ')}",),
+    N_,
+    "a tag character inside a name",
+)
+exc(
+    "pii_obfuscated",
+    "value_error",
+    (f"card {CARD[:4]}-{CARD[4:8]}.{CARD[8:12]} {CARD[12:]}",),
+    (CARD,),
+    "a card number with mixed separators",
+)
 
 # pii_encoded (9): the oracle decodes these views
-exc("pii_encoded", "value_error", (f"mail {EMAIL.replace('@', '&commat;')}",), E_, "HTML entity with a semicolon", ledger=L(40))
-exc("pii_encoded", "value_error", (f"mail {EMAIL.replace('@', '&#64')}",), E_, "numeric HTML entity without a semicolon")
-exc("pii_encoded", "value_error", (f"mail {EMAIL.replace('@', '&#0000064;')}",), E_, "numeric HTML entity with padding")
-exc("pii_encoded", "value_error", (f"mail {EMAIL.replace('@', '%40')}",), E_, "percent-encoded at sign")
-exc("pii_encoded", "value_error", (f"mail {EMAIL.replace('@', '%2540')}",), E_, "double percent-encoded at sign")
-exc("pii_encoded", "value_error", (f"mail {EMAIL.replace('@', chr(92) + 'x40')}",), E_, "backslash x40", ledger=L(50))
-exc("pii_encoded", "value_error", (f"mail {EMAIL.replace('@', '&#64;')}",), E_, "numeric HTML entity with a semicolon")
-exc("pii_encoded", "value_error", (f"mail {EMAIL.replace('@', '=40')}",), E_, "quoted-printable at sign")
-exc("pii_encoded", "value_error", (f"mail {EMAIL.replace('@', '%u0040')}",), E_, "percent-u at sign")
+exc(
+    "pii_encoded",
+    "value_error",
+    (f"mail {EMAIL.replace('@', '&commat;')}",),
+    E_,
+    "HTML entity with a semicolon",
+    ledger=L(40),
+)
+exc(
+    "pii_encoded",
+    "value_error",
+    (f"mail {EMAIL.replace('@', '&#64')}",),
+    E_,
+    "numeric HTML entity without a semicolon",
+)
+exc(
+    "pii_encoded",
+    "value_error",
+    (f"mail {EMAIL.replace('@', '&#0000064;')}",),
+    E_,
+    "numeric HTML entity with padding",
+)
+exc(
+    "pii_encoded",
+    "value_error",
+    (f"mail {EMAIL.replace('@', '%40')}",),
+    E_,
+    "percent-encoded at sign",
+)
+exc(
+    "pii_encoded",
+    "value_error",
+    (f"mail {EMAIL.replace('@', '%2540')}",),
+    E_,
+    "double percent-encoded at sign",
+)
+exc(
+    "pii_encoded",
+    "value_error",
+    (f"mail {EMAIL.replace('@', chr(92) + 'x40')}",),
+    E_,
+    "backslash x40",
+    ledger=L(50),
+)
+exc(
+    "pii_encoded",
+    "value_error",
+    (f"mail {EMAIL.replace('@', '&#64;')}",),
+    E_,
+    "numeric HTML entity with a semicolon",
+)
+exc(
+    "pii_encoded",
+    "value_error",
+    (f"mail {EMAIL.replace('@', '=40')}",),
+    E_,
+    "quoted-printable at sign",
+)
+exc(
+    "pii_encoded", "value_error", (f"mail {EMAIL.replace('@', '%u0040')}",), E_, "percent-u at sign"
+)
 
 # ansi_c1 (7)
 _A, _B = EMAIL[:9], EMAIL[9:]
-exc("ansi_c1", "value_error", (f"mail {_A}\x1b{_B}",), E_, "a lone ESC inside an e-mail", ledger=L(13))
-exc("ansi_c1", "value_error", (f"key \x1b{AWS}",), (AWS,), "ESC and a capital letter before a key", ledger=L(27))
-exc("ansi_c1", "value_error", (f"mail {_A}\x1b[1;31m{_B}",), E_, "a CSI sequence with parameters inside an e-mail", ledger=L(36))
-exc("ansi_c1", "value_error", (f"card \x1b[{CARD[:4]}-{CARD[4:8]}-{CARD[8:12]}-{CARD[12:]}",), (CARD,), "ESC [ before digits", ledger=L(43))
-exc("ansi_c1", "value_error", (f"mail {_A}\u009b31m{_B}",), E_, "U+009B before a letter run", ledger=L(37))
-exc("ansi_c1", "value_error", (f"mail {_A}\u009d0;title\u0007{_B}",), E_, "U+009D (OSC) inside an e-mail")
-exc("ansi_c1", "value_error", (f"mail {_A}\x1b]0;x\x07{_B}",), E_, "an OSC sequence inside an e-mail")
+exc(
+    "ansi_c1",
+    "value_error",
+    (f"mail {_A}\x1b{_B}",),
+    E_,
+    "a lone ESC inside an e-mail",
+    ledger=L(13),
+)
+exc(
+    "ansi_c1",
+    "value_error",
+    (f"key \x1b{AWS}",),
+    (AWS,),
+    "ESC and a capital letter before a key",
+    ledger=L(27),
+)
+exc(
+    "ansi_c1",
+    "value_error",
+    (f"mail {_A}\x1b[1;31m{_B}",),
+    E_,
+    "a CSI sequence with parameters inside an e-mail",
+    ledger=L(36),
+)
+exc(
+    "ansi_c1",
+    "value_error",
+    (f"card \x1b[{CARD[:4]}-{CARD[4:8]}-{CARD[8:12]}-{CARD[12:]}",),
+    (CARD,),
+    "ESC [ before digits",
+    ledger=L(43),
+)
+exc(
+    "ansi_c1",
+    "value_error",
+    (f"mail {_A}\u009b31m{_B}",),
+    E_,
+    "U+009B before a letter run",
+    ledger=L(37),
+)
+exc(
+    "ansi_c1",
+    "value_error",
+    (f"mail {_A}\u009d0;title\u0007{_B}",),
+    E_,
+    "U+009D (OSC) inside an e-mail",
+)
+exc(
+    "ansi_c1",
+    "value_error",
+    (f"mail {_A}\x1b]0;x\x07{_B}",),
+    E_,
+    "an OSC sequence inside an e-mail",
+)
 
 # email_unicode (6)
-exc("email_unicode", "value_error", (f"mail {EMAIL.replace('quentin', 'quent' + chr(0x0456) + 'n')}",), E_, "Cyrillic i in the local part", ledger=L(14))
-exc("email_unicode", "value_error", (f"mail {EMAIL.replace('abernathy', 'abernathy' + chr(0x17b4))}",), E_, "an invisible Khmer vowel", ledger=L(20))
-exc("email_unicode", "value_error", (f"mail {EMAIL.replace('.', chr(0x3002))}",), E_, "ideographic full stops", ledger=L(35))
-exc("email_unicode", "value_error", (f"mail {EMAIL.replace('@', chr(0xff20)).replace('.', chr(0xff0e))}",), E_, "fullwidth at sign and dots", ledger=L(49))
-exc("email_unicode", "value_error", ("mail jos\u00e9.abernathy@example.invalid",), ("jos\u00e9.abernathy@example.invalid",), "an accented local part")
-exc("email_unicode", "value_error", (f"mail {EMAIL.replace('example', 'ex' + chr(0x0430) + 'mple')}",), E_, "Cyrillic a in the domain")
+exc(
+    "email_unicode",
+    "value_error",
+    (f"mail {EMAIL.replace('quentin', 'quent' + chr(0x0456) + 'n')}",),
+    E_,
+    "Cyrillic i in the local part",
+    ledger=L(14),
+)
+exc(
+    "email_unicode",
+    "value_error",
+    (f"mail {EMAIL.replace('abernathy', 'abernathy' + chr(0x17B4))}",),
+    E_,
+    "an invisible Khmer vowel",
+    ledger=L(20),
+)
+exc(
+    "email_unicode",
+    "value_error",
+    (f"mail {EMAIL.replace('.', chr(0x3002))}",),
+    E_,
+    "ideographic full stops",
+    ledger=L(35),
+)
+exc(
+    "email_unicode",
+    "value_error",
+    (f"mail {EMAIL.replace('@', chr(0xFF20)).replace('.', chr(0xFF0E))}",),
+    E_,
+    "fullwidth at sign and dots",
+    ledger=L(49),
+)
+exc(
+    "email_unicode",
+    "value_error",
+    ("mail jos\u00e9.abernathy@example.invalid",),
+    ("jos\u00e9.abernathy@example.invalid",),
+    "an accented local part",
+)
+exc(
+    "email_unicode",
+    "value_error",
+    (f"mail {EMAIL.replace('example', 'ex' + chr(0x0430) + 'mple')}",),
+    E_,
+    "Cyrillic a in the domain",
+)
 
 # secret_shapes (6)
 exc("secret_shapes", "value_error", (f"key {AWS}",), (AWS,), "the AWS example key", ledger=L(24))
 exc("secret_shapes", "value_error", (f"key {SKKEY}",), (SKKEY,), "an sk- shaped key")
 exc("secret_shapes", "value_error", (f"token {JWT}",), (JWT,), "a JWT shaped token")
 exc("secret_shapes", "value_error", (f"key {PEM}",), (PEM_BODY,), "a PEM block")
-exc("secret_shapes", "value_error", (_p("pass", "word", '="', PWPHRASE),), (PWPHRASE,), "an unterminated quote after a password assignment")
-exc("secret_shapes", "value_error", (f"token {GHTOKEN}",), (GHTOKEN,), "a GitHub token shaped value")
+exc(
+    "secret_shapes",
+    "value_error",
+    (_p("pass", "word", '="', PWPHRASE),),
+    (PWPHRASE,),
+    "an unterminated quote after a password assignment",
+)
+exc(
+    "secret_shapes", "value_error", (f"token {GHTOKEN}",), (GHTOKEN,), "a GitHub token shaped value"
+)
 
 # foreign_driver (8): 5 real classes, 3 hand-built (not the real class)
 _DRV = (HOST, USER)
 for _d in ("psycopg", "urllib3", "botocore", "anthropic", "pydantic_core"):
-    exc("foreign_driver", "driver", (_d,), _DRV, f"the real {_d} error with a host and a user", ledger=L(2) if _d == "psycopg" else ())
+    exc(
+        "foreign_driver",
+        "driver",
+        (_d,),
+        _DRV,
+        f"the real {_d} error with a host and a user",
+        ledger=L(2) if _d == "psycopg" else (),
+    )
 for _d in ("httpx", "openai", "sqlalchemy.exc"):
     exc("foreign_driver", "driver", (_d,), _DRV, f"not the real class: a hand-built error claiming module {_d}", expect="golden",
         golden=r"dynamic_class: diag_v=1 code=foreign_exception step=extract at=- fp=[0-9a-f]{8}")  # fmt: skip
 
 # builtin_text (10)
-exc("builtin_text", "value_error", (f"could not convert string to float: {INVOICE!r}",), (INVOICE,), "a ValueError quoting an invoice line", ledger=L(22))
+exc(
+    "builtin_text",
+    "value_error",
+    (f"could not convert string to float: {INVOICE!r}",),
+    (INVOICE,),
+    "a ValueError quoting an invoice line",
+    ledger=L(22),
+)
 exc("builtin_text", "key_error", (NAME,), N_, "a KeyError holding a document field")
 exc("builtin_text", "unicode_encode", (f"{NAME} ",), N_, "a UnicodeEncodeError over a name")
-exc("builtin_text", "import_error", (f"cannot import name {NAME!r}",), N_, "an ImportError with a name")
-exc("builtin_text", "attribute_error", (f"'dict' object has no attribute {NAME!r}",), N_, "an AttributeError with a name")
-exc("builtin_text", "index_error", (f"row for {EMAIL} out of range",), E_, "an IndexError with an e-mail")
-exc("builtin_text", "type_error", (f"unsupported operand for {INVOICE!r}",), (INVOICE,), "a TypeError with an invoice line")
+exc(
+    "builtin_text",
+    "import_error",
+    (f"cannot import name {NAME!r}",),
+    N_,
+    "an ImportError with a name",
+)
+exc(
+    "builtin_text",
+    "attribute_error",
+    (f"'dict' object has no attribute {NAME!r}",),
+    N_,
+    "an AttributeError with a name",
+)
+exc(
+    "builtin_text",
+    "index_error",
+    (f"row for {EMAIL} out of range",),
+    E_,
+    "an IndexError with an e-mail",
+)
+exc(
+    "builtin_text",
+    "type_error",
+    (f"unsupported operand for {INVOICE!r}",),
+    (INVOICE,),
+    "a TypeError with an invoice line",
+)
 exc("builtin_text", "assertion_error", (f"expected {NAME}",), N_, "an AssertionError with a name")
-exc("builtin_text", "os_error", (2, "No such file", f"/data/{NAME.replace(' ', '_')}.pdf"), (NAME.replace(" ", "_"),), "an OSError with a file name")
-exc("builtin_text", "system_exit", (f"stopping for {NAME}",), N_, "a SystemExit passed in (not an Exception)", ledger=L(51), expect="grammar", code=Code.foreign_exception)
+exc(
+    "builtin_text",
+    "os_error",
+    (2, "No such file", f"/data/{NAME.replace(' ', '_')}.pdf"),
+    (NAME.replace(" ", "_"),),
+    "an OSError with a file name",
+)
+exc(
+    "builtin_text",
+    "system_exit",
+    (f"stopping for {NAME}",),
+    N_,
+    "a SystemExit passed in (not an Exception)",
+    ledger=L(51),
+    expect="grammar",
+    code=Code.foreign_exception,
+)
 
 # pydantic_input (12)
-val("pydantic_input", "invoice", json.dumps({"total": f"{NAME} units", "vendor": "x"}), N_, "int_parsing quoting the input", ledger=L(21))
-val("pydantic_input", "invoice", json.dumps({"total": 1, "vendor": "x", NAME: 1}), N_, "extra_forbidden with the stray key", ledger=L(29))
+val(
+    "pydantic_input",
+    "invoice",
+    json.dumps({"total": f"{NAME} units", "vendor": "x"}),
+    N_,
+    "int_parsing quoting the input",
+    ledger=L(21),
+)
+val(
+    "pydantic_input",
+    "invoice",
+    json.dumps({"total": 1, "vendor": "x", NAME: 1}),
+    N_,
+    "extra_forbidden with the stray key",
+    ledger=L(29),
+)
 val("pydantic_input", "lit", json.dumps({"pick": EMAIL}), E_, "literal_error quoting the input")
-val("pydantic_input", "pet", json.dumps({"pet": {"kind": NAME}}), N_, "discriminated union with a wrong tag", ledger=L(38))
-val("pydantic_input", "dict", json.dumps({NAME: "not a number"}), N_, "a RootModel[dict] key in loc")
+val(
+    "pydantic_input",
+    "pet",
+    json.dumps({"pet": {"kind": NAME}}),
+    N_,
+    "discriminated union with a wrong tag",
+    ledger=L(38),
+)
+val(
+    "pydantic_input", "dict", json.dumps({NAME: "not a number"}), N_, "a RootModel[dict] key in loc"
+)
 val("pydantic_input", "uuid", json.dumps({"ident": NAME}), N_, "uuid_parsing quoting the input")
-val("pydantic_input", "custom", json.dumps({"name": NAME}), N_, "a custom validator error with the value")
-val("pydantic_input", "asserting", json.dumps({"name": NAME}), N_, "an assertion error with the value")
-val("pydantic_input", "many", json.dumps({"a": NAME}), N_, "seven errors: the first quotes the input")
+val(
+    "pydantic_input",
+    "custom",
+    json.dumps({"name": NAME}),
+    N_,
+    "a custom validator error with the value",
+)
+val(
+    "pydantic_input",
+    "asserting",
+    json.dumps({"name": NAME}),
+    N_,
+    "an assertion error with the value",
+)
+val(
+    "pydantic_input",
+    "many",
+    json.dumps({"a": NAME}),
+    N_,
+    "seven errors: the first quotes the input",
+)
 val("pydantic_input", "invoice", f"{{{EMAIL} garbage", E_, "json_invalid quoting the text")
 val("pydantic_input", "short", json.dumps({"name": NAME}), N_, "string_too_long quoting the input")
-val("pydantic_input", "enumerated", json.dumps({"color": EMAIL}), E_, "an enum error quoting the input")
+val(
+    "pydantic_input",
+    "enumerated",
+    json.dumps({"color": EMAIL}),
+    E_,
+    "an enum error quoting the input",
+)
 
 # json_decode (4)
-exc("json_decode", "json_error", (EMAIL, NAME, 5), (EMAIL, NAME), "msg and doc carry canaries", ledger=L(42), code=Code.validation_failed)
-exc("json_decode", "json_real", (json.dumps({"n": NAME}) [:-1] + ' "x"}',), N_, "a real parse error over a document with a name", code=Code.validation_failed)
+exc(
+    "json_decode",
+    "json_error",
+    (EMAIL, NAME, 5),
+    (EMAIL, NAME),
+    "msg and doc carry canaries",
+    ledger=L(42),
+    code=Code.validation_failed,
+)
+exc(
+    "json_decode",
+    "json_real",
+    (json.dumps({"n": NAME})[:-1] + ' "x"}',),
+    N_,
+    "a real parse error over a document with a name",
+    code=Code.validation_failed,
+)
 exc("json_decode", "json_error", (EMAIL, NAME, 10**12), (EMAIL, NAME), "a position out of bounds is dropped", golden=r"json\.decoder\.JSONDecodeError: diag_v=1 code=validation_failed step=extract at=- fp=[0-9a-f]{8}")  # fmt: skip
-exc("json_decode", "json_error", (EMAIL.replace("@", "%40"), NAME.upper(), 0), (EMAIL, NAME), "msg and doc in encoded spellings", code=Code.validation_failed)
+exc(
+    "json_decode",
+    "json_error",
+    (EMAIL.replace("@", "%40"), NAME.upper(), 0),
+    (EMAIL, NAME),
+    "msg and doc in encoded spellings",
+    code=Code.validation_failed,
+)
 
 # hostile_class (16)
-exc("hostile_class", "dynamic", (NAME.replace(" ", "_"), "x"), (NAME.replace(" ", "_"),), "a dynamic class named like personal data", ledger=L(3))
+exc(
+    "hostile_class",
+    "dynamic",
+    (NAME.replace(" ", "_"), "x"),
+    (NAME.replace(" ", "_"),),
+    "a dynamic class named like personal data",
+    ledger=L(3),
+)
 exc("hostile_class", "meta_module", (NAME,), N_, "a class whose __module__ raises", ledger=L(19))
 exc("hostile_class", "meta_name", (NAME,), N_, "a class whose __name__ raises")
 exc("hostile_class", "str_raises", (NAME,), N_, "__str__ raises")
 exc("hostile_class", "repr_raises", (NAME,), N_, "__repr__ raises")
 exc("hostile_class", "meta_eq", (NAME,), N_, "a metaclass whose __eq__ and __hash__ raise")
-exc("hostile_class", "getattr_raises", (NAME,), N_, "an OSError whose __getattr__ raises", golden=GOLD_FALLBACK)
-exc("hostile_class", "meta_mro", (NAME,), N_, "a metaclass whose __mro__ raises", golden=GOLD_FALLBACK)
+exc(
+    "hostile_class",
+    "getattr_raises",
+    (NAME,),
+    N_,
+    "an OSError whose __getattr__ raises",
+    golden=GOLD_FALLBACK,
+)
+exc(
+    "hostile_class",
+    "meta_mro",
+    (NAME,),
+    N_,
+    "a metaclass whose __mro__ raises",
+    golden=GOLD_FALLBACK,
+)
 exc("hostile_class", "str_sub_args", (NAME,), N_, "args holding a str subclass")
 exc("hostile_class", "exc_in_args", (NAME,), N_, "args holding another exception")
 exc("hostile_class", "str_recursion", (NAME,), N_, "__str__ recurses without end")
 exc("hostile_class", "big_args", (NAME,), N_, "a 1 MiB args[0]", expect="bounded")
 exc("hostile_class", "attrs_everywhere", (NAME,), N_, "a canary in every attribute")
-exc("hostile_class", "dynamic_module", ("Err", [], ValueError, NAME), N_, "a __module__ that is a list")
-exc("hostile_class", "dynamic_module", ("Err", None, ValueError, NAME), N_, "a __module__ that is None")
-exc("hostile_class", "errno_keyboard_interrupt", (NAME,), N_, "errno raises KeyboardInterrupt: it must propagate", expect="propagates")
+exc(
+    "hostile_class",
+    "dynamic_module",
+    ("Err", [], ValueError, NAME),
+    N_,
+    "a __module__ that is a list",
+)
+exc(
+    "hostile_class",
+    "dynamic_module",
+    ("Err", None, ValueError, NAME),
+    N_,
+    "a __module__ that is None",
+)
+exc(
+    "hostile_class",
+    "errno_keyboard_interrupt",
+    (NAME,),
+    N_,
+    "errno raises KeyboardInterrupt: it must propagate",
+    expect="propagates",
+)
 
 # field_forging (9)
 _NL = f"{NAME.replace(' ', '_')}\ncode=config_invalid"
-exc("field_forging", "dynamic", (_NL, "x"), (NAME.replace(" ", "_"),), "a class name with a newline and a forged field", ledger=L(12))
-exc("field_forging", "dynamic", ("\x1b[31m" + NAME.replace(" ", "_"), "x"), (NAME.replace(" ", "_"),), "a class name with an ANSI colour", ledger=L(25))
-exc("field_forging", "dynamic", ("Err step=sweep fp=00000000 " + NAME.replace(" ", "_"), "x"), (NAME.replace(" ", "_"),), "a class name with forged step and fp", ledger=L(34))
+exc(
+    "field_forging",
+    "dynamic",
+    (_NL, "x"),
+    (NAME.replace(" ", "_"),),
+    "a class name with a newline and a forged field",
+    ledger=L(12),
+)
+exc(
+    "field_forging",
+    "dynamic",
+    ("\x1b[31m" + NAME.replace(" ", "_"), "x"),
+    (NAME.replace(" ", "_"),),
+    "a class name with an ANSI colour",
+    ledger=L(25),
+)
+exc(
+    "field_forging",
+    "dynamic",
+    ("Err step=sweep fp=00000000 " + NAME.replace(" ", "_"), "x"),
+    (NAME.replace(" ", "_"),),
+    "a class name with forged step and fp",
+    ledger=L(34),
+)
 exc("field_forging", "value_error", ("jane_doe",), ("jane_doe",), "a name-shaped step", step="jane_doe", golden=r"ValueError: diag_v=1 code=foreign_exception step=other at=- fp=[0-9a-f]{8}")  # fmt: skip
-exc("field_forging", "value_error", (NAME,), N_, "a step with a newline and a forged fp", step="sweep\nfp=00000000")
+exc(
+    "field_forging",
+    "value_error",
+    (NAME,),
+    N_,
+    "a step with a newline and a forged fp",
+    step="sweep\nfp=00000000",
+)
 exc("field_forging", "value_error", (NAME,), N_, "a step in the wrong case", step="Sweep")
-exc("field_forging", "dynamic", (NAME.replace(" ", "_") + "." * 3 + "a b", "x"), (NAME.replace(" ", "_"),), "a class name with dots and a space")
-exc("field_forging", "dynamic", ("N" * 81 + NAME.replace(" ", "_"), "x"), (NAME.replace(" ", "_"),), "an 81 character class name")
-exc("field_forging", "dynamic_module", ("Err", "a b\nc", ValueError, NAME), N_, "a module name with a space and a newline")
+exc(
+    "field_forging",
+    "dynamic",
+    (NAME.replace(" ", "_") + "." * 3 + "a b", "x"),
+    (NAME.replace(" ", "_"),),
+    "a class name with dots and a space",
+)
+exc(
+    "field_forging",
+    "dynamic",
+    ("N" * 81 + NAME.replace(" ", "_"), "x"),
+    (NAME.replace(" ", "_"),),
+    "an 81 character class name",
+)
+exc(
+    "field_forging",
+    "dynamic_module",
+    ("Err", "a b\nc", ValueError, NAME),
+    N_,
+    "a module name with a space and a newline",
+)
 
 # size_time (5): algorithmic bounds only
 exc("size_time", "big_message", (NAME,), N_, "a 1 MiB message", expect="bounded")
@@ -739,30 +1205,141 @@ exc("size_time", "deep_json", (), (), "100000 nested brackets", expect="bounded"
 _add("size_time", "exception", "active", "R1", {"factory": "chain", "args": (NAME,), "step": "extract", "reads_zero": True}, N_, "bounded", None, "a 5000 link cause chain whose links count their own reads", (L(16)))  # fmt: skip
 
 # config_detail (4)
-exc("config_detail", "config_wrapped", (f"Value error, {NAME} at line 3",), N_, "a ConfigError wrapping text with a name", ledger=L(8), code=Code.config_invalid)
-exc("config_detail", "config_wrapped", (f"input_value={EMAIL}",), E_, "a ConfigError wrapping an input value", code=Code.config_invalid)
-exc("config_detail", "config_wrapped", (f"yaml: could not parse {INVOICE}",), (INVOICE,), "a ConfigError wrapping a yaml sentence", code=Code.config_invalid)
-exc("config_detail", "config_error", (f"bad key {NAME}",), N_, "a plain ConfigError with a name", code=Code.config_invalid)
+exc(
+    "config_detail",
+    "config_wrapped",
+    (f"Value error, {NAME} at line 3",),
+    N_,
+    "a ConfigError wrapping text with a name",
+    ledger=L(8),
+    code=Code.config_invalid,
+)
+exc(
+    "config_detail",
+    "config_wrapped",
+    (f"input_value={EMAIL}",),
+    E_,
+    "a ConfigError wrapping an input value",
+    code=Code.config_invalid,
+)
+exc(
+    "config_detail",
+    "config_wrapped",
+    (f"yaml: could not parse {INVOICE}",),
+    (INVOICE,),
+    "a ConfigError wrapping a yaml sentence",
+    code=Code.config_invalid,
+)
+exc(
+    "config_detail",
+    "config_error",
+    (f"bad key {NAME}",),
+    N_,
+    "a plain ConfigError with a name",
+    code=Code.config_invalid,
+)
 
 # locator_frames (10)
 _LP = NAME.replace(" ", "_")
 _NF = r"KeyError: diag_v=1 code=foreign_exception step=extract at=- fp=[0-9a-f]{8}"
 _OWN = r"KeyError: diag_v=1 code=foreign_exception step=extract at=stats\.py:2 fp=[0-9a-f]{8}"
-exc("locator_frames", "compiled", ("made_up_p5a_file.py", NAME, None), N_, "compile() with a made-up file name", ledger=L(41), golden=_NF)
+exc(
+    "locator_frames",
+    "compiled",
+    ("made_up_p5a_file.py", NAME, None),
+    N_,
+    "compile() with a made-up file name",
+    ledger=L(41),
+    golden=_NF,
+)
 exc("locator_frames", "string_code", (NAME,), N_, "code run from a string (<string>)", golden=_NF)
-exc("locator_frames", "compiled", (f"{_LP}.py", NAME, "p5a_probe_nowhere"), N_, "a file name that is a person's name", golden=_NF)
-exc("locator_frames", "compiled", ("a" * 300 + ".py", NAME, "p5a_probe_nowhere"), N_, "a very long path", golden=_NF)
-exc("locator_frames", "compiled", ("\u00e9\u00e8_p5a.py", NAME, "p5a_probe_nowhere"), N_, "a non-ASCII path", golden=_NF)
-exc("locator_frames", "in_stats", ("other_file_in_package", NAME), N_, "the real namespace under another file inside the package folder (rule c)", golden=_NF)
-exc("locator_frames", "swapped_name", (NAME,), N_, "__name__ is a str subclass equal to the real name (rule a)", golden=_NF, ctx="swap_stats_name")
-exc("locator_frames", "foreign_namespace", (NAME,), N_, "the real module name and file in a different namespace dict (rule b)", golden=_NF)
-exc("locator_frames", "outer_own", ("p5a_probe_nowhere", NAME), N_, "an inner frame whose __name__ names no module: the next own frame outward", golden=_OWN)
+exc(
+    "locator_frames",
+    "compiled",
+    (f"{_LP}.py", NAME, "p5a_probe_nowhere"),
+    N_,
+    "a file name that is a person's name",
+    golden=_NF,
+)
+exc(
+    "locator_frames",
+    "compiled",
+    ("a" * 300 + ".py", NAME, "p5a_probe_nowhere"),
+    N_,
+    "a very long path",
+    golden=_NF,
+)
+exc(
+    "locator_frames",
+    "compiled",
+    ("\u00e9\u00e8_p5a.py", NAME, "p5a_probe_nowhere"),
+    N_,
+    "a non-ASCII path",
+    golden=_NF,
+)
+exc(
+    "locator_frames",
+    "in_stats",
+    ("other_file_in_package", NAME),
+    N_,
+    "the real namespace under another file inside the package folder (rule c)",
+    golden=_NF,
+)
+exc(
+    "locator_frames",
+    "swapped_name",
+    (NAME,),
+    N_,
+    "__name__ is a str subclass equal to the real name (rule a)",
+    golden=_NF,
+    ctx="swap_stats_name",
+)
+exc(
+    "locator_frames",
+    "foreign_namespace",
+    (NAME,),
+    N_,
+    "the real module name and file in a different namespace dict (rule b)",
+    golden=_NF,
+)
+exc(
+    "locator_frames",
+    "outer_own",
+    ("p5a_probe_nowhere", NAME),
+    N_,
+    "an inner frame whose __name__ names no module: the next own frame outward",
+    golden=_OWN,
+)
 exc("locator_frames", "outer_own", ("p5a_probe_novars", NAME), N_, "an inner frame whose module entry has no vars(): the next own frame outward", golden=_OWN, ctx="novars_module")  # fmt: skip
 
 # group (3)
-exc("group", "group", ("timeout_first", NAME), N_, "the first member's code is used", expect="grammar", code=Code.timeout)
-exc("group", "group", ("nested", NAME), N_, "a nested group is foreign_exception", expect="grammar", code=Code.foreign_exception)
-exc("group", "group", ("raises", NAME), N_, "a member list that raises is foreign_exception", expect="grammar", code=Code.foreign_exception)
+exc(
+    "group",
+    "group",
+    ("timeout_first", NAME),
+    N_,
+    "the first member's code is used",
+    expect="grammar",
+    code=Code.timeout,
+)
+exc(
+    "group",
+    "group",
+    ("nested", NAME),
+    N_,
+    "a nested group is foreign_exception",
+    expect="grammar",
+    code=Code.foreign_exception,
+)
+exc(
+    "group",
+    "group",
+    ("raises", NAME),
+    N_,
+    "a member list that raises is foreign_exception",
+    expect="grammar",
+    code=Code.foreign_exception,
+)
 
 # own_class_spoof (7)
 exc("own_class_spoof", "dynamic_module", ("ConfigError", "hadavin_sdk.errors", Exception, NAME), N_, "a class named ConfigError claiming the real module", golden=r"dynamic_class: diag_v=1 code=foreign_exception step=extract at=- fp=[0-9a-f]{8}")  # fmt: skip
@@ -790,7 +1367,11 @@ for _n, _what in ((26, "root handler formats exc_info"), (30, "root NullHandler 
                   (46, "third-party record text reaches stderr"), (47, "library warning prints raw")):  # fmt: skip
     later("logging_layer", "scenario", "R2", {"argv": ("tick",), "script": _what, "channel": "stderr", "env": {}},
           f"the logging layer must not print foreign text: {_what}", "the logging layer arrives with P5b4 (R2)", ledger=L(_n), canaries=N_)  # fmt: skip
-for _n, _what in ((6, "tick writes last_error and log from one place"), (9, "extract writes DeadLetter.errors"), (17, "cli prints")):
+for _n, _what in (
+    (6, "tick writes last_error and log from one place"),
+    (9, "extract writes DeadLetter.errors"),
+    (17, "cli prints"),
+):
     later("writer_wiring", "scenario", "R3c", {"argv": (), "script": _what, "channel": "store", "env": {}},
           f"the writers must use render(): {_what}", "the writers are wired in P5b3 (R3c)", ledger=L(_n), canaries=N_)  # fmt: skip
 for _n, _what in ((5, "sweep table gap"), (33, "ConfigError(f'...{exc}') site")):
@@ -808,4 +1389,6 @@ for _n in (7, 18):
 
 ROWS: Final[tuple[Row, ...]] = tuple(_ROWS)
 PROPAGATES_ROWS: Final = tuple(r.id for r in ROWS if r.expect == "propagates")
-NO_OLD_WRITER_PATH: Final = frozenset[str]()  # validation rows the real extraction model accepts (filled by the evidence run)
+NO_OLD_WRITER_PATH: Final = frozenset[
+    str
+]()  # validation rows the real extraction model accepts (filled by the evidence run)

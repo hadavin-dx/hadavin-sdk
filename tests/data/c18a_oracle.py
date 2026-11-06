@@ -22,6 +22,9 @@ _ESCAPES = (
     re.compile(r"=([0-9A-F]{2})"),
 )
 _PERCENT_DEPTH = 4
+_ANSI = re.compile(
+    r"(?:\x1b\[|\u009b)[0-?]*[ -/]*[@-~]|(?:\x1b\]|\u009d)[^\x07\x1b]*(?:\x07|\x1b\\)?|\x1b[@-Z\\-_]|[\u0080-\u009f]"
+)
 
 _KIND = r"[A-Za-z0-9_.]{1,80}"
 _FACT = r" [a-z_]{1,30}=-?[A-Za-z0-9_.-]{1,120}"
@@ -55,6 +58,8 @@ def views(output: str) -> list[str]:
     for pattern in _ESCAPES:
         found.append(_decode(pattern, output))
     found.append(html.unescape(text))
+    found.append(_ANSI.sub("", output))
+    found.append(_ANSI.sub("", html.unescape(output)))
     return found
 
 

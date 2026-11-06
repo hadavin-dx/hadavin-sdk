@@ -12,7 +12,14 @@ import pytest
 from hadavin_sdk import defaults, stats
 from hadavin_sdk.codes import FACT_BOUNDS, FactKey, Phase, ProviderErrorType, Where
 from hadavin_sdk.errors import ConfigError
-from hadavin_sdk.guard.diagnostic import FALLBACK_FP, Diagnostic, SafeToken, class_name_of, diagnose, render
+from hadavin_sdk.guard.diagnostic import (
+    FALLBACK_FP,
+    Diagnostic,
+    SafeToken,
+    class_name_of,
+    diagnose,
+    render,
+)
 from tests.data import c18a_hostile_corpus as corpus
 from tests.data.c18a_oracle import grammar_ok
 
@@ -26,26 +33,28 @@ def line_of(exc: BaseException, **kw: object) -> str:
 def test_grammar_a_shape_and_cap_boundary() -> None:
     d = diagnose(ValueError("x"), step=STEP)
     assert grammar_ok(render(d))
-    base = render(Diagnostic("K", d.code, "extract", "-", (), "0" * 8))
-    fact = (FactKey.key, SafeToken.of("a" * 120, frozenset({"a" * 120})))
-    facts = (fact,) * 1
-    one = render(Diagnostic("K", d.code, "extract", "-", facts, "0" * 8))
-    assert one == base + " key=" + "a" * 120
-    # the cap: add facts until the line is just under, at and over 400 characters
-    for room in (399, 400, 401):
-        pad = room - len(base) - 1
-        fk = FactKey.key
-        tok = SafeToken.of("b" * (pad - 4), frozenset({"b" * (pad - 4)})) if pad - 4 <= 120 else None
-        if tok is None:
-            continue
-        out = render(Diagnostic("K", d.code, "extract", "-", ((fk, tok),), "0" * 8))
-        assert len(out) <= defaults.DIAG_LINE_CHARS
+    base = Diagnostic("K", d.code, "extract", "-", (), "0" * 8)
+    start = len(render(base)) + len(" key=") + 120 + len(" cause_kind=") + 120
+    for total, kept in ((399, True), (400, True), (401, False)):
+        n = total - start - len(" field=")
+        text = "f" * n
+        facts = (
+            (FactKey.key, SafeToken.of("a" * 120, frozenset({"a" * 120}))),
+            (FactKey.cause_kind, SafeToken.of("a" * 120, frozenset({"a" * 120}))),
+            (FactKey.field, SafeToken.of(text, frozenset({text}))),
+        )
+        out = render(Diagnostic("K", d.code, "extract", "-", facts, "0" * 8))
+        assert (" field=" in out) is kept, f"cap boundary at {total}: {len(out)}"
+        assert len(out) <= defaults.DIAG_LINE_CHARS and " key=" in out and " fp=00000000" in out
 
 
 def test_cap_drops_trailing_facts_and_keeps_the_head() -> None:
     d = diagnose(ValueError("x"), step=STEP)
     token = SafeToken.of("c" * 120, frozenset({"c" * 120}))
-    facts = tuple((k, token) for k in (FactKey.type, FactKey.key, FactKey.cause_kind, FactKey.field, FactKey.request_id))
+    facts = tuple(
+        (k, token)
+        for k in (FactKey.type, FactKey.key, FactKey.cause_kind, FactKey.field, FactKey.request_id)
+    )
     out = render(Diagnostic("K", d.code, "extract", "-", facts, "0" * 8))
     assert len(out) <= defaults.DIAG_LINE_CHARS
     assert out.startswith("K: diag_v=1 code=") and " fp=00000000" in out
@@ -53,13 +62,19 @@ def test_cap_drops_trailing_facts_and_keeps_the_head() -> None:
 
 
 def test_diagnose_never_raises_on_exception() -> None:
-    for row in (r for r in corpus.ROWS if r.status == "active" and r.kind == "exception" and r.expect != "propagates"):
+    for row in (
+        r
+        for r in corpus.ROWS
+        if r.status == "active" and r.kind == "exception" and r.expect != "propagates"
+    ):
         import contextlib
 
-        ctx = corpus.CONTEXTS[row.spec["ctx"]]() if row.spec.get("ctx") else contextlib.nullcontext()  # type: ignore[index]
+        ctx = (
+            corpus.CONTEXTS[row.spec["ctx"]]() if row.spec.get("ctx") else contextlib.nullcontext()
+        )  # type: ignore[index]
         with ctx:
             diagnose(corpus.build_exception(row.spec), step=STEP)
-    rng = random.Random(5)
+    rng = random.Random(5)  # noqa: S311 - seeded test data, not security
     for _ in range(300):
         text = "".join(chr(rng.randrange(0, 0x3000)) for _ in range(rng.randrange(0, 40)))
         n = rng.randrange(0, 3)
@@ -92,13 +107,26 @@ def test_non_exception_baseexception_passed_in_is_foreign() -> None:
 
 def test_fallback_fp_is_pinned() -> None:
     assert FALLBACK_FP == "2a1e659d"
-    out = render(diagnose(corpus.build_exception({"factory": "getattr_raises", "args": ("x",)}), step=STEP))
+    out = render(
+        diagnose(corpus.build_exception({"factory": "getattr_raises", "args": ("x",)}), step=STEP)
+    )
     assert out == "unknown: diag_v=1 code=foreign_exception step=extract at=- fp=2a1e659d"
 
 
 def test_str_repr_args_getitem_notes_are_never_called() -> None:
     reads: list[str] = []
-    names = ("args", "__notes__", "__cause__", "__context__", "filename", "filename2", "strerror", "doc", "msg", "message")
+    names = (
+        "args",
+        "__notes__",
+        "__cause__",
+        "__context__",
+        "filename",
+        "filename2",
+        "strerror",
+        "doc",
+        "msg",
+        "message",
+    )
 
     class Spy(OSError):
         def __getattribute__(self, name: str) -> object:
@@ -124,7 +152,9 @@ def test_facts_bounds_table() -> None:
         for value, kept in ((lo - 1, False), (lo, True), (hi, True), (hi + 1, False)):
             out = line_of(ValueError("x"), facts={key: value})
             assert (f" {key.value}={value}" in out) is kept, (key, value, out)
-        assert f" {key.value}=" not in line_of(ValueError("x"), facts={key: True})  # a bool is not a number
+        assert f" {key.value}=" not in line_of(
+            ValueError("x"), facts={key: True}
+        )  # a bool is not a number
         assert f" {key.value}=" not in line_of(ValueError("x"), facts={key: "5"})  # type: ignore[dict-item]
 
 
@@ -171,7 +201,11 @@ def test_facts_read_from_exc_only() -> None:
 
 
 def test_exception_group_takes_first_member_code() -> None:
-    for kind, code in (("timeout_first", "timeout"), ("nested", "foreign_exception"), ("raises", "foreign_exception")):
+    for kind, code in (
+        ("timeout_first", "timeout"),
+        ("nested", "foreign_exception"),
+        ("raises", "foreign_exception"),
+    ):
         out = line_of(corpus.build_exception({"factory": "group", "args": (kind, "Quentin")}))
         assert f"code={code} " in out and "Quentin" not in out
     assert "code=foreign_exception" in line_of(ExceptionGroup("x", [ValueError("y")]))
@@ -190,7 +224,10 @@ def test_kind_identity_rule() -> None:
     assert class_name_of(ValueError("x")) == "ValueError"
     assert class_name_of(socket.gaierror(-2, "x")) == "socket.gaierror"
     assert class_name_of(type("Jane", (ValueError,), {})("x")) == "dynamic_class"
-    assert class_name_of(type("N" * 81, (ValueError,), {"__module__": "builtins"})("x")) == "dynamic_class"
+    assert (
+        class_name_of(type("N" * 81, (ValueError,), {"__module__": "builtins"})("x"))
+        == "dynamic_class"
+    )
 
     class Inner(Exception):
         pass
@@ -211,7 +248,10 @@ def test_locator_and_fp() -> None:
         raise AssertionError
 
     out = run()
-    assert out == f"ValueError: diag_v=1 code=internal_bug step=extract at=stats.py:{re.search(r'stats.py:(\d+)', out).group(1)} fp=ed342ffb"  # type: ignore[union-attr]
+    assert (
+        out
+        == f"ValueError: diag_v=1 code=internal_bug step=extract at=stats.py:{re.search(r'stats.py:(\d+)', out).group(1)} fp=ed342ffb"
+    )  # type: ignore[union-attr]
     assert "at=-" in line_of(corpus._f_compiled("made_up.py", "x", None))
 
 
@@ -222,7 +262,7 @@ def test_internal_bug_is_decided_on_the_raise_frame() -> None:
 
     def env() -> str:
         try:
-            os.environ["P5A_NOT_SET_ANYWHERE"]  # noqa: B018
+            os.environ["P5A_NOT_SET_ANYWHERE"]
         except KeyError as e:
             return line_of(e)
         raise AssertionError
@@ -244,7 +284,9 @@ def test_family_order_timeout_before_os_error() -> None:
 
 def test_gaierror_gives_gai_not_errno() -> None:
     out = line_of(socket.gaierror(-2, "x"))
-    assert out.startswith("socket.gaierror: diag_v=1 code=os_error step=extract at=- fp=") and out.endswith(" gai=-2")
+    assert out.startswith(
+        "socket.gaierror: diag_v=1 code=os_error step=extract at=- fp="
+    ) and out.endswith(" gai=-2")
 
 
 def test_psycopg_phase_is_sqlstate_class_only() -> None:
@@ -255,12 +297,16 @@ def test_psycopg_phase_is_sqlstate_class_only() -> None:
         (errors.ConnectionFailure, "08006", Phase.connect),
     ):
         out = line_of(cls("x"))
-        assert f"code=db_error step=extract at=- fp=" in out and out.endswith(f" sqlstate={sqlstate} phase={phase.value}"), out
+        assert "code=db_error step=extract at=- fp=" in out and out.endswith(
+            f" sqlstate={sqlstate} phase={phase.value}"
+        ), out
         assert out.startswith(f"psycopg.errors.{cls.__name__}: ")
 
 
 def test_psycopg_claimed_module_name_is_not_trusted() -> None:
-    fake = type("OperationalError", (Exception,), {"__module__": "psycopg.errors", "sqlstate": "28P01"})
+    fake = type(
+        "OperationalError", (Exception,), {"__module__": "psycopg.errors", "sqlstate": "28P01"}
+    )
     out = line_of(fake("x"))
     assert "code=db_error" not in out and "sqlstate" not in out
 
@@ -268,3 +314,61 @@ def test_psycopg_claimed_module_name_is_not_trusted() -> None:
 def test_golden_lines_t8_t9_t10() -> None:
     assert re.fullmatch(r"json\.decoder\.JSONDecodeError: diag_v=1 code=validation_failed step=extract at=- fp=[0-9a-f]{8} position=3",
                         line_of(corpus._f_json("m", "d", 3)))  # fmt: skip
+
+
+def _row(cls: str, n: int) -> corpus.Row:
+    return next(r for r in corpus.ROWS if r.id == f"HC-{cls}-{n:02d}")
+
+
+def _golden(row: corpus.Row) -> None:
+    import contextlib
+
+    ctx = corpus.CONTEXTS[row.spec["ctx"]]() if row.spec.get("ctx") else contextlib.nullcontext()  # type: ignore[index]
+    with ctx:
+        out = line_of(corpus.build_exception(row.spec))
+    assert re.fullmatch(str(row.spec["golden"]), out), f"frame rule: {out}"
+
+
+def test_frame_rule_a_name_must_be_exactly_str() -> None:
+    _golden(_row("locator_frames", 7))
+
+
+def test_frame_rule_b_globals_must_be_the_module_namespace() -> None:
+    _golden(_row("locator_frames", 8))
+
+
+def test_frame_rule_c_filename_must_be_the_module_file() -> None:
+    _golden(_row("locator_frames", 6))
+
+
+def test_frame_check_that_raises_means_not_counted() -> None:
+    _golden(_row("locator_frames", 10))
+    _golden(_row("locator_frames", 9))
+
+
+def test_long_traceback_is_foreign() -> None:
+    import sys
+
+    d = vars(stats)
+    src = "def _p5a_probe_deep(n):\n    if n == 0:\n        raise KeyError('x')\n    return _p5a_probe_deep(n - 1)\n"
+    old = sys.getrecursionlimit()
+    sys.setrecursionlimit(6000)
+    try:
+        exec(compile(src, stats.__file__, "exec"), d)  # noqa: S102
+        for depth, code in (
+            (20, "internal_bug"),
+            (defaults.DIAG_TB_STEPS + 50, "foreign_exception"),
+        ):
+            try:
+                d["_p5a_probe_deep"](depth)
+            except KeyError as e:
+                assert f"code={code} " in line_of(e), (depth, line_of(e))
+    finally:
+        d.pop("_p5a_probe_deep", None)
+        sys.setrecursionlimit(old)
+
+
+def test_off_list_foreign_class_prints_foreign_class() -> None:
+    row = _row("foreign_name", 1)
+    with corpus.CONTEXTS["vendor_module"]():
+        assert class_name_of(corpus.build_exception(row.spec)) == "foreign_class"

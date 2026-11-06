@@ -17,7 +17,9 @@ CAN = "Quentin Abernathy"
 
 
 def err(model: str, doc: dict[str, object] | str) -> BaseException:
-    return corpus.build_validation_error({"model": model, "document": doc if isinstance(doc, str) else json.dumps(doc)})
+    return corpus.build_validation_error(
+        {"model": model, "document": doc if isinstance(doc, str) else json.dumps(doc)}
+    )
 
 
 def test_closed_type_list_is_pydantic_error_types() -> None:
@@ -34,7 +36,9 @@ def test_grammar_v_and_plain_cases() -> None:
 
 
 def test_validation_text_length_bound() -> None:
-    out = validation_text(err("many", {"a": CAN, "b": CAN, "c": CAN, "d": CAN, "e": CAN, "f": CAN, "g": CAN}))
+    out = validation_text(
+        err("many", {"a": CAN, "b": CAN, "c": CAN, "d": CAN, "e": CAN, "f": CAN, "g": CAN})
+    )
     assert len(out) <= 108 and grammar_ok(out, "V")
     assert re.fullmatch(r"[a-z_; ]+", out.replace("+", "").replace("more", "")) or "more" in out
 
@@ -96,13 +100,23 @@ def test_pydantic_error_reads_are_closed_ast() -> None:
 
     src = Path(__file__).resolve().parents[1] / "src/hadavin_sdk/guard/diagnostic.py"
     tree = ast.parse(src.read_text(encoding="utf-8"))
-    calls = [n for n in ast.walk(tree) if isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute) and n.func.attr == "errors"]
+    calls = [
+        n
+        for n in ast.walk(tree)
+        if isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute) and n.func.attr == "errors"
+    ]
     assert len(calls) == 1
     kws = {k.arg: ast.literal_eval(k.value) for k in calls[0].keywords}
     assert kws == {"include_url": False, "include_context": False, "include_input": False}
-    fn = next(n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef) and n.name == "_error_types")
+    fn = next(
+        n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef) and n.name == "_error_types"
+    )
     assert calls[0] in list(ast.walk(fn))
-    subs = [n for n in ast.walk(fn) if isinstance(n, ast.Subscript) and isinstance(n.slice, ast.Constant)]
+    subs = [
+        n
+        for n in ast.walk(fn)
+        if isinstance(n, ast.Subscript) and isinstance(n.slice, ast.Constant)
+    ]
     assert {s.slice.value for s in subs} == {"type"}
 
 
