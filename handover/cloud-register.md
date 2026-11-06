@@ -310,7 +310,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | bs-P2a-cor | build-start review (order 20) of frozen tickets/P2a.md, egm:*, read-only | sonnet | 02:31Z | +45min | REPORTED | save report as reviews/P2a-buildstart-cor.md; then ONE resolve |
 | bs-P4a-adv | build-start review (order 20) of frozen tickets/P4a.md, egm:*, read-only | sonnet | 02:31Z | +45min | REPORTED | save report as reviews/P4a-buildstart-adv.md; then ONE resolve |
 | bs-P4a-cor | build-start review (order 20) of frozen tickets/P4a.md, egm:*, read-only | sonnet | 02:31Z | +45min | REPORTED | save report as reviews/P4a-buildstart-cor.md; then ONE resolve |
-| res1-P4b1 | Opus egm-resolve of round-1 reviews of tickets/P4b1.md (order 20 item 6) | opus | 02:32Z | +40min | running | commit report; launch revision author |
+| res1-P4b1 | Opus egm-resolve of round-1 reviews of tickets/P4b1.md (order 20 item 6) | opus | 02:32Z | +40min | REPORTED | commit report; launch revision author |
 | res1-P4b2 | Opus egm-resolve of round-1 reviews of tickets/P4b2.md (order 20 item 6) | opus | 02:32Z | +40min | running | commit report; launch revision author |
 | res1-P4c | Opus egm-resolve of round-1 reviews of tickets/P4c.md (order 20 item 6) | opus | 02:32Z | +40min | REPORTED | commit report; launch revision author |
 | res1-P6b1 | Opus egm-resolve of round-1 reviews of tickets/P6b1.md (order 20 item 6) | opus | 02:32Z | +40min | REPORTED | commit report; launch revision author |
@@ -331,3 +331,4 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | rev2-P4c | Sonnet revision author for P4c after round-1 resolve (order 20) | sonnet | 02:38Z | +60min | running | verify commit and counts; then round 2 reviewers |
 | res-bs-P4d | Opus egm-resolve build-start P4d (one round) | opus | 02:38Z | +60min | running | verify build notes in tickets/P4d.md; S0 EXIT P4d effective |
 | res-bs-P4a | Opus egm-resolve build-start P4a (one round) | opus | 02:38Z | +60min | running | verify build notes in tickets/P4a.md; S0 EXIT P4a effective |
+| rev2-P4b1 | Sonnet revision author for P4b1 after round-1 resolve (order 20) | sonnet | 02:39Z | +60min | running | verify commit and counts; then round 2 reviewers |
