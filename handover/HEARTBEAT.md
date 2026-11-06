@@ -293,3 +293,8 @@ P2d-2 | NOT started: merging origin/core/P1b onto P2d-1 WIP b12b7dd conflicts in
 P4a/P4c/P4b1/P4b2/P6b1 | waiting: P2a-1 WIP 77ace26 exists but P4d-b/a2-i not pushed yet | 0 | P4d-a2
 2026-11-06T12:16:46Z | package | stage | builders running | blocked on
 P8c | ticket FROZEN rev 2; build after P8a | 0 | P8a (q183), merged kinds
+2026-11-06T12:17:38Z | package | stage | builders running | blocked on
+P4d-a2 | pushed c31f336 (a2-i, P4d-b); a2-ii (StoreBusy, write wrapper) not built; mutation, 3.12 run, fail-before pending; one demo dblink test failure needs a base check | 1 | -
+P4b1 | restarted stacked on c31f336 | 1 | StoreBusy rows (a2-ii)
+P4a/P4c | NOT started: merging P2a-1 WIP 77ace26 onto c31f336 conflicts (config.py, defaults.py, tests/test_p2_postgres.py); P2a-1 WIP not green | 0 | P2a-1 final head, merge by its builder or me
+11 agents running
