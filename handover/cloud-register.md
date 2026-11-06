@@ -416,3 +416,5 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | r2-P6a-cor | Round 2 correctness P6a rev 2 | egm-codebase-details | 03:10Z | +10min | running | save |
 | r3-P4b1-adv | Round 3 adversarial P4b1 rev 3 | egm-design | 03:10Z | +12min | running | save |
 | r3-P4b1-cor | Round 3 correctness P4b1 rev 3 | egm-codebase-details | 03:10Z | +12min | running | save |
+| res-r1-P5b4 | Opus resolve P5b4 r1 (1 Blocker, Majors) | opus | 03:10Z | +30min | running | rev 2 author |
+| res-r1-P8a | Opus resolve P8a r1 (8 Majors) | opus | 03:10Z | +30min | running | rev 2 author |
