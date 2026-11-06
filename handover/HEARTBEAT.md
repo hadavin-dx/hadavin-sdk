@@ -66,3 +66,4 @@
 2026-11-06 02:02 UTC / 07:32 IST | step=LK draft 11 verified (d3e8239, 242 lines) -> FROZEN under order 16 | done=LK design | next=P1 rev16, P4a r11, resolves | blocked=no | context=ok
 2026-11-06 02:03 UTC / 07:33 IST | step=P4a r11 adv saved (2 Major) | next=wait P4a r11 cor, then Opus resolve + rev 12 | blocked=no | context=ok
 2026-11-06 02:04 UTC / 07:34 IST | step=P4a r11 cor saved (0 Major, 6 nits); P4a resolve launched | next=resolves P4d/P3a/P2d/P2a/P4a -> authors; P1 rev16 | blocked=no | context=ok
+2026-11-06 02:06 UTC / 07:36 IST | step=P1 rev 16 verified (da0b49c, 363 lines, six-copy core sentence identical x6 by diff) -> P1 FROZEN under order 16; P4d resolve saved, rev 10 author launched | next=wait S0 EXIT P1; P4a/P3a/P2d/P2a resolves -> authors | blocked=no (S0 EXIT from lead) | context=ok
