@@ -620,3 +620,5 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | bn-P8a | Opus BN author P8a (round 3 resolve 3a57e40 -> BN-1..20, freeze) | 06:02Z | +25min | REPORTED | verify, push, freeze-list |
 | bn-P5b1 | Opus BN author P5b1 (round 3 resolve 6ff0be0 -> BN-1..16 + BN-3B, freeze) | 06:02Z | +25min | REPORTED | verify, push |
 | ds-AKG1-o39 | Opus: apply order 39 answers 1-4 to AK-G1 design rev 2 -> rev 3 | 06:07Z | +20min | running | verify, push |
+| au-AKG15 | Opus author AK-G15 rev 1 (durable needs-a-person queue) | 06:07Z | +40min | running | verify, push, review pair |
+| au-AKG16 | Opus author AK-G16 rev 1 (deployment into client's cloud) | 06:07Z | +40min | running | verify, push, review pair |
