@@ -177,3 +177,4 @@
 07:29Z | step=AK-G16 frozen rev 3 + BN-1..31 (8edf296), item 108 | done=pushed | next=AK-G15 resolve/freeze, P1a sha | blocked=none
 07:32Z | step=P1a fix1 4df0ccd verified (probe 0/0 on 3.12+3.13), item 109 | done=pushed | next=AK-G15 resolve/freeze; DECISIONS | blocked=none
 07:36Z | step=order 46 recorded; AK-G16 BN-32 (PL19 b, PL20 a, PL1 yes); launching EGM brainstorm+draft AK-G16 | next=AK-G15 resolve result, EGM AK-G15 | blocked=none
+07:37Z | step=order 46 reply (q110), register fix | done=BN-32 | next=AK-G15 freeze result, EGM AK-G15/AK-G16 | blocked=none
