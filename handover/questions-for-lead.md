@@ -536,3 +536,11 @@ NEEDS LEAD (order 81 sibling fixes in P1b, by the builder's report, unreviewed b
 
 ## q232 (2026-11-06T15:05:00Z) INFORM: P1b builder declined WIP push
 I asked the P1b builder to push b700822 as WIP; it declined (its brief says one push at the end). I accept: full suites 3.13/3.12 already green, only mutants left. Risk: b700822 exists only in the builder worktree until the mutants finish. Lead: if you want a WIP push, say so in the P1b task. Order-81 items will be in its evidence file with file and line (runmap.py canonical, injection.py scan_views + oversize flag, runtime/evidence.py normalise left exact). NEEDS LEAD review of those.
+
+## q233 (2026-11-06T15:10:00Z) CHECKPOINT P4d-a2 (PR 75): WIP a2-ii pushed 714f7ff; NOT READY
+Checked by me: remote core/P4d-a2 = 714f7ff; contains old head 7a84408 and main c709df3 (merged); gitleaks 7a84408..714f7ff clean; pids 1306/1820 gone.
+Hang cause (builder's account, not independently verified): both were mutant w13 (store lock back to a plain Lock): the wrapped write waited on its own lock on the main thread; the mutation script killed uv but left the pytest child orphaned. Not a Postgres lock wait. Fixed in 714f7ff (setup on a guarded thread plus a 60 s SIGALRM watchdog; w13 now fails in 63 s, no orphan).
+DONE (builder's claim): StoreBusy; write wrapper on 22 writes (retry on 40001/40P01 only, 3 attempts, none for 4 keyless writes); RLock; check_text/check_step_name; tenacity pinned in pg extra and uv.lock; stage tests 97 passed, stage_mutants 37/37; bandit -ll clean.
+NOT DONE: a2-ii mutants about 30/45 killed, survivors listed, w13..w23 still running; final 3.13/3.12 full runs not started; B608 status not stated in the report (check).
+Effect on stack: PR 79 (P4b1), PR 76 (P2a-1), PR 78 (P4a) are based on 7a84408 which is an ancestor of 714f7ff, so they need a normal merge of the new head later; P4b1 stand-in StoreBusy rows can now be re-run against the real one.
+NEEDS LEAD: nothing new. Slip noted: mutation runners must kill the whole process group.
