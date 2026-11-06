@@ -389,7 +389,7 @@ def test_migrate_refuses_when_an_applied_migration_has_no_file(roles, monkeypatc
     files = mig._migration_files()
     monkeypatch.setattr(mig, "_migration_files", lambda: files[:-1])
     # The grant map still names the removed file's tables; only the applied-without-file refusal is under test.
-    monkeypatch.setattr(mig, "check_grants", lambda paths: [])
+    monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
     with pytest.raises(ConfigError, match="no file in this release"):
         mig.migrate(dsn)
 

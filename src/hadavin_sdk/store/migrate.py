@@ -3,6 +3,14 @@
 Run under a migration role, never by the runtime. Every pending `migrations/NNNN_*.sql` file is applied in one
 transaction under a transaction-scoped advisory lock, so two concurrent runs apply each file once. Pattern
 ported from WARDEN `audit.py:migrate` (main a1e76cbf). Rollback = restore the snapshot taken before migrating.
+
+The file-name rules, the late-file and gone-name refusals and the SQL text rules live in `migration_numbers`
+(no database library there); this module only calls them. Each file is read ONCE; the text that was scanned is
+the text that is executed. After each file, in the same transaction, `migrate` reads back the database user
+names, three session settings, the text-reading settings, the transaction clock and id, and the state of every
+trigger in the migration schema, and refuses if anything is LEFT changed (it cannot see a change that a file
+makes and undoes before it ends). Precondition: the migration role is not a superuser (a superuser can change
+what the read-back does not read).
 """
 
 from __future__ import annotations
@@ -15,9 +23,21 @@ from typing import Literal
 from psycopg import sql
 
 from hadavin_sdk.errors import ConfigError
+from hadavin_sdk.store.migration_numbers import (
+    MIGRATE_LOCK,
+    MIGRATIONS,
+    MigrationNumberError,
+    check_ledger,
+    gone_message,
+    list_migration_files,
+    order_problems,
+    read_files,
+    refused_statements,
+    statement_text,
+)
 from hadavin_sdk.store.postgres import connect
 
-MIGRATIONS = Path(__file__).parent / "migrations"
+__all__ = ["GRANTS", "MIGRATIONS", "Grant", "check_grants", "check_ledger", "migrate"]
 
 
 @dataclass(frozen=True)
@@ -66,9 +86,8 @@ GRANTS: dict[str, Grant] = {
     "approval_decisions_seq_seq": Grant("sequence", "USAGE"),
     "dead_letters_seq_seq": Grant("sequence", "USAGE"),
 }
-_LOCK = int.from_bytes(b"hadvnmig", "big") >> 1  # one fixed key for every migrate run
+_LOCK = MIGRATE_LOCK  # one fixed key for every migrate run (defined once, in migration_numbers)
 _ROLE = re.compile(r"[a-z_][a-z0-9_]{0,62}")
-_FILE = re.compile(r"(\d{4})_[a-z0-9_]+\.sql")
 _CREATE = re.compile(
     r"CREATE\s+(?:OR\s+REPLACE\s+)?(?:MATERIALIZED\s+)?(TABLE|VIEW)\s+(?:IF\s+NOT\s+EXISTS\s+)?(\w+)",
     re.IGNORECASE,
@@ -91,20 +110,7 @@ _UNREAD = re.compile(
 
 
 def _migration_files(folder: Path = MIGRATIONS) -> list[Path]:
-    return sorted(folder.glob("*.sql"))
-
-
-def check_ledger(paths: list[Path]) -> list[str]:
-    """Problems with the file names: each is `NNNN_<name>.sql` and the numbers run 1, 2, 3 ... with no repeat or gap."""
-    problems = [
-        f"{p.name}: not named NNNN_<name>.sql" for p in paths if not _FILE.fullmatch(p.name)
-    ]
-    numbers = sorted(int(p.name[:4]) for p in paths if _FILE.fullmatch(p.name))
-    for n in sorted({n for n in numbers if numbers.count(n) > 1}):
-        problems.append(f"two migrations are numbered {n:04d}")
-    missing = sorted(set(range(1, max(numbers, default=0) + 1)) - set(numbers))
-    problems += [f"migration {n:04d} is missing" for n in missing]
-    return problems
+    return list_migration_files(folder)
 
 
 def _table_body(text: str, start: int) -> str:
@@ -120,16 +126,27 @@ def _table_body(text: str, start: int) -> str:
     return text[open_at:]
 
 
-def _scan(paths: list[Path]) -> tuple[dict[str, str], list[str]]:
+def _scan(
+    paths: list[Path], texts: dict[Path, str] | None = None
+) -> tuple[dict[str, str], list[str]]:
     """(relation name -> kind, unread statements). Kinds: every table, view and serial-column sequence the
     migrations create. A statement that could create a relation or sequence in a way this scan does not read
     (quoted or schema-qualified name, UNLOGGED/TEMP/FOREIGN tables, CREATE SEQUENCE, IDENTITY, ADD COLUMN ...
-    SERIAL) is returned as a problem, never skipped: the guard fails closed."""
+    SERIAL) is returned as a problem, never skipped: the guard fails closed. With `texts` the scan reads that text
+    (the text `migrate` will execute); without it each file is read. Comments are removed by the single-pass lexer
+    and every quoted part is kept, so a statement inside a string or a `$$` body is still seen."""
     found: dict[str, str] = {}
     unread: list[str] = []
     for path in paths:
-        text = re.sub(r"/\*.*?\*/", "", path.read_text(encoding="utf-8"), flags=re.DOTALL)
-        text = re.sub(r"--[^\n]*", "", text)
+        raw = texts[path] if texts is not None else path.read_text(encoding="utf-8")
+        text, lexer_problem = statement_text(raw, keep_quoted=True)
+        if lexer_problem:
+            unread.append(f"{path.name}: {lexer_problem}")
+        unread += [
+            f"{path.name}: {reason}"
+            for reason in refused_statements(raw)
+            if reason != lexer_problem
+        ]
         for m in _ANY_CREATE.finditer(text):
             if not _SAFE_CREATE.match(text, m.start()):
                 snippet = " ".join(text[m.start() : m.start() + 40].split())
@@ -147,10 +164,10 @@ def _scan(paths: list[Path]) -> tuple[dict[str, str], list[str]]:
     return found, unread
 
 
-def check_grants(paths: list[Path]) -> list[str]:
+def check_grants(paths: list[Path], texts: dict[Path, str] | None = None) -> list[str]:
     """Problems between the migrations and `GRANTS`: a relation they create with no entry (it would get no grant
     and fail at runtime), an entry for a relation no migration creates, or an entry of the wrong kind."""
-    created, problems = _scan(paths)
+    created, problems = _scan(paths, texts)
     problems += [
         f"{n} ({k}) is created by a migration but is not in GRANTS"
         for n, k in sorted(created.items())
@@ -280,6 +297,93 @@ def _excess_privileges(db, role: str) -> list[str]:
     return extra
 
 
+# What the read-back reads after each file (module constants: the tests answer them by exact text).
+# The nine values are compared with the values saved before the first file; `transaction_timestamp()` and
+# `txid_current()` are the backstop for a COMMIT the text rules did not see (a COMMIT starts a new transaction).
+_READBACK_VALUES = (
+    "current_user",
+    "session_user",
+    "session_replication_role",
+    "search_path",
+    "standard_conforming_strings",
+    "backslash_quote",
+    "client_encoding",
+    "transaction_timestamp",
+    "txid_current",
+)
+_READBACK_VALUES_SQL = (
+    "SELECT current_user, session_user, current_setting('session_replication_role'), "
+    "current_setting('search_path'), current_setting('standard_conforming_strings'), "
+    "current_setting('backslash_quote'), current_setting('client_encoding'), "
+    "transaction_timestamp(), txid_current()"
+)
+# Triggers of the migration schema only (the schema `current_schema()` names now); internal ones are skipped.
+_READBACK_TRIGGERS_SQL = (
+    "SELECT t.tgrelid, t.tgname, t.tgenabled, c.relname, n.nspname FROM pg_trigger t "
+    "JOIN pg_class c ON c.oid = t.tgrelid JOIN pg_namespace n ON n.oid = c.relnamespace "
+    "WHERE NOT t.tgisinternal AND n.nspname = current_schema()"
+)
+
+
+@dataclass(frozen=True)
+class _Saved:
+    values: tuple
+    triggers: dict  # (tgrelid, tgname) -> (tgenabled, schema, table)
+
+
+def _read_back(db) -> _Saved:
+    values = tuple(db.execute(_READBACK_VALUES_SQL).fetchone())
+    triggers = {
+        (relid, name): (enabled, schema, table)
+        for relid, name, enabled, table, schema in db.execute(_READBACK_TRIGGERS_SQL).fetchall()
+    }
+    return _Saved(values, triggers)
+
+
+def _refuse_unusual_strings(saved: _Saved) -> None:
+    """The lexer reads strings as `standard_conforming_strings = on` does; any other start value is refused."""
+    value = saved.values[_READBACK_VALUES.index("standard_conforming_strings")]
+    if value != "on":
+        raise ConfigError(
+            f"standard_conforming_strings is {value!r} for this session; migrate needs 'on' "
+            "(the file checks read strings the way 'on' does)"
+        )
+
+
+def _label(*names: str) -> str:
+    """Names of database objects for a message: control characters are written as escapes."""
+    return ".".join(ascii(n)[1:-1] for n in names)
+
+
+def _check_read_back(db, saved: _Saved, file_name: str) -> _Saved:
+    """Read again after `file_name` and compare. The seven user and setting values, the transaction clock and id
+    must equal the values saved before the first file; a saved trigger must still exist; no trigger may be
+    disabled (`D`) or replica-only (`R`) unless it already was. Refuses with every difference named. Returns the
+    trigger state just read (the base for the next file); the saved values stay those of the start."""
+    now = _read_back(db)
+    problems = [
+        f"{item} was {old!a} and is now {new!a}"
+        for item, old, new in zip(_READBACK_VALUES, saved.values, now.values, strict=True)
+        if old != new
+    ]
+    for key, (_enabled, schema, table) in sorted(saved.triggers.items(), key=lambda kv: str(kv[0])):
+        if key not in now.triggers:
+            problems.append(f"trigger {_label(schema, table, key[1])} no longer exists")
+    for key, (enabled, schema, table) in sorted(now.triggers.items(), key=lambda kv: str(kv[0])):
+        before = saved.triggers.get(key)
+        if enabled in ("D", "R") and (before is None or before[0] != enabled):
+            problems.append(
+                f"trigger {_label(schema, table, key[1])} is now "
+                f"{'disabled' if enabled == 'D' else 'replica-only'}"
+            )
+    if problems:
+        raise ConfigError(
+            f"migration {ascii(file_name)[1:-1]} left the database session changed: "
+            + "; ".join(problems)
+        )
+    return _Saved(saved.values, now.triggers)
+
+
 def migrate(
     dsn: str,
     *,
@@ -302,7 +406,10 @@ def migrate(
     if len(set(named)) != len(named):
         raise ConfigError("the runtime, portal and purge roles must be different roles")
     files = _migration_files()
-    if problems := check_ledger(files) + check_grants(files):
+    if problems := check_ledger(files):
+        raise MigrationNumberError(problems)
+    texts = read_files(files)  # the only read of each file: the text scanned is the text executed
+    if problems := check_grants(files, texts=texts):
         raise ConfigError("migrations are inconsistent: " + "; ".join(problems))
     applied = []
     with (
@@ -317,17 +424,18 @@ def migrate(
             "(version TEXT PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT now())"
         )
         done = {r[0] for r in db.execute("SELECT version FROM schema_migrations").fetchall()}
-        if gone := sorted(done - {p.stem for p in files}):
-            raise ConfigError(
-                f"applied migrations have no file in this release: {', '.join(gone)}. If a migration file was renamed "
-                "and its tables already exist, rename the ledger row by hand (change the version of that row in the "
-                "schema_migrations table to the new file name); if its content changed too, drop what it made and "
-                "run migrate again"
-            )
-        for path in files:
-            if path.stem in done:
-                continue
-            db.execute(path.read_text(encoding="utf-8"))  # a file shipped in this package
+        if gone := gone_message(done, files):
+            raise MigrationNumberError([gone])
+        schema = db.execute("SELECT current_schema()").fetchone()[0]
+        if late := order_problems(done, files, texts, schema):
+            raise MigrationNumberError(late)
+        pending = [p for p in files if p.stem not in done]
+        if pending:
+            saved = _read_back(db)
+            _refuse_unusual_strings(saved)
+        for path in pending:
+            db.execute(texts[path])  # the text that was scanned, never a second read
+            saved = _check_read_back(db, saved, path.name)
             db.execute("INSERT INTO schema_migrations (version) VALUES (%s)", (path.stem,))
             applied.append(path.stem)
         q = "SELECT pg_has_role(%s, %s, 'MEMBER')"  # a member keeps the other's rights, whatever we REVOKE
