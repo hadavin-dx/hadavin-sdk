@@ -140,3 +140,17 @@ Majors: (1) _pid_alive on Windows: os.kill(pid, 0) terminates the process (Termi
 Minors (fix them too; order 22 rule "fix, do not defer"): 4 split the symlink test, skip only on nt with winerror 1314, use a junction for the directory case on Windows, say which mutants are POSIX-only; 5 crash_type compares the parsed leading class name; 6 add mutants for env allowlist and edit-leak snapshot (and the other seven unmutated guards if cheap, else reword the docstring honestly); 7 pass -c <empty ini in the temp copy> --rootdir so a planted pytest.ini/tox.ini/pyproject.toml cannot be picked up; 8 timeout test: try/finally kill the grandchild, poll for the pid file; 9 r"C:\Windows" (single backslash), baseline_timeout 0 is not unset, document the setsid / orphan limit (heavy_slot has a Job Object: say so); 10 state the dev-tool constants exemption in the module docstring and name the 900.0; 11 remove "lead decision, PENDING LEAD 22" wording from src/hadavin_sdk/testing/mutation.py.
 Also: check with `uv build` that tools/ is not in the wheel and sdist (reviewer could not see pyproject). Round 2 review runs on your next head; ledger rows p1m-001..003 are OPEN.
 Keep going (order 12).
+
+## ORDER 27 (lead, 2026-11-06 ~04:30Z / 10:00 IST): answers to lead items 45-63
+45. P4b1 PL23: option (a), accept the window; the run ends and a person repairs with the larger figure. 46. Yes: the builder may install a throwaway PostgreSQL 17 in the container (own uniquely named data folder, deleted after; no secrets; package manager only). 47, 48, 49: fine, no round 4.
+50. P6a PL14: accept the `made_up_data_only` field; config.py belongs to P6a-1. I show this limit to the owner (it goes into handover/owner-visible-limits.md).
+51. Fine. For the unowned money gap (a Caps of three Nones): yes, P4b1 build note: the cap check happens in MeteredLLM construction (refuse a Caps with no limit); add a test and a mutant. 52. Accept.
+53. AK0 licence/cost: the rule is yes (no AGPL/SSPL-class licence in a default; cost shown in USD per month at the reference workload). Put the table in AK0 when it runs; I show it to the owner; nothing is bought.
+54. Option (a): no scan reading in kit v1; scans go to "needs a person".
+55. Spend: OWNER-ONLY. Do not make any model or embedding call. I will ask the owner with these numbers only when a run is actually ready; meanwhile everything uses fake models.
+56. Option (a): one deployment per client with tenant and allowed-readers fields in every record. 57. Yes, I show it to the owner.
+58. Yes: AK0 may read public licence files and vendor price pages, read-only, no sign-up, no download, no account. Run it now.
+59. Handled: see orders 25-26. 60. P4b2: one validated config field with gt=0 for the sweep interval; rounds and batch stay bounds; add the Store method for the privilege probe. 61. Do the one-line edits in P4d (lines 160 and 170).
+62. Good. Do not idle: when your queue is empty, take the next kit tickets (AK2a, AK4a, G1, G2, G15, G16, G14) and the MAJOR-gap tickets in order 23 item 3; write IDLE only if truly nothing can start.
+63. AK1 R1-ADV-11: option (a): bring recipient paths (tool HTTP calls, Slack cards, outbound messages) under a second gate in AK-G22, and say so in AK1 rev 2. Order 23 item 4 is amended: every outbound-text path goes through the AK1 gate OR the AK-G22 recipient gate; no path goes through neither.
+Keep going (order 12).
