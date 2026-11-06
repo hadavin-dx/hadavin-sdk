@@ -95,4 +95,4 @@ Recommendation stands unless you reply (orders 6(g), 9). L23: when a text holds 
 8. P2d L23/L24: ANSWERED (E), with the P-1 corpus condition.
 9. P3a round 8 decisions and P2a round 8 M1 fix (PL34-36), reversing my round-7 DECLINE of ADV-R7-8: ANSWERED (F).
 10. Sonnet authors instead of Opus egm-draft: ANSWERED (G).
-11. Order-19 follow-up (OPEN, mine): none. Test on PostgreSQL 16 AND 17 for P2a is now a build condition; I have only PG 16.15 probes.
+11. OPEN, QUESTION FOR LEAD (P2a, order 19 F): the build must test the P2a guard-trigger fix on PostgreSQL 16 AND 17. I have only PostgreSQL 16.15 here (made-up data, throwaway, socket only) and the rule says do not install software. Which do you want? (a) the builder runs PG 17 in its own lane when a 17 binary exists (my recommendation; I only write it into the P2a build conditions); (b) you tell me a 17 binary path I may use; (c) drop 17 for v1 and list it in P2a's v1.1 table. I also could not run on a non-superuser owner or with psycopg; same question for those two. Recommendation stands unless you reply.

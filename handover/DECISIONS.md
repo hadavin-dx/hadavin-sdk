@@ -279,3 +279,7 @@ File: handover/reviews/P4a-round8-resolve.md. Ticket not edited (an author write
 ## 2026-11-06 ~03:15Z Lead's answers to flagged entries (LEAD-ORDERS order 19) - recorded, not user answers
 - A frozen revisions without fresh review: keep freeze; ONE fresh egm review of each frozen revision as first step of its build lane (lead schedules; P4a first). B look-alike set (PL-LK-24, 26/31/32/36/37/42..61, P-1 "at most 2 of 450"): accepted; owner-visible limits listed in order 19 B. C P1 PL35-38, 40, 41, 43, 49-52: accepted; PL46(a) uses the narrower wording. D money PL50-65 incl. PL64 and P4d PL22/23: accepted; builder proves never-under-book with a test row per case. E P2d L23/L24 confirmed with a P-1 corpus condition. F P3a and P2a round 8 (PL34-36): accepted; P2a trigger must be tested on PostgreSQL 16 and 17; probe decides P3a lock check. G Sonnet authors for frozen revisions: accepted.
 - Answered-by-user: no (the lead answered; none needs the owner except where order 19 says so). Logged so my "answered-by-user: no" entries stay honest.
+
+## 2026-11-06 ~03:45Z Owner told me to ask the lead via NEEDS LEAD whenever I am unsure
+- Standing practice from now: any doubt (missing tool, unprovable condition, scope) goes as a numbered line under NEEDS LEAD in questions-for-lead.md, with options and a recommendation, not into a silent assumption.
+- First use: NEEDS LEAD 11 (PG 17 / non-superuser owner / psycopg for the P2a trigger test). Answered-by-user: the owner said to do this; the answer to line 11 is still OPEN.
