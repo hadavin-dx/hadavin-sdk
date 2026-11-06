@@ -157,3 +157,4 @@
 06:22Z | step=AK-G15 rev 1 (4732f19) verified, item 96 | done=P1a, PR62 sha | next=AK-G15 round 1 review pair, bn-o41, AK-G16 | blocked=NEEDS LEAD 28, AK-G15 PL1-6,11,13,14
 06:23Z | step=order 41 build notes 683d83f verified, item 97 | done=order 41 | next=AK-G15 r1 reviews, AK-G16 | blocked=NEEDS LEAD 28,29
 06:24Z | step=AK-G16 rev 1 (c816370) verified, item 98 | done=order 41, P1a, PR62 | next=AK-G16 r1 reviews, AK-G15 r1 report | blocked=NEEDS LEAD 28,29, AK-G15/16 PLs
+06:25Z | step=AK-G15 r1 adversarial saved (2 Blocker 7 Major) | done=... | next=COR report, then resolve | blocked=none
