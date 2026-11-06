@@ -332,7 +332,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | res-bs-P4d | Opus egm-resolve build-start P4d (one round) | opus | 02:38Z | +60min | REPORTED | verify build notes in tickets/P4d.md; S0 EXIT P4d effective |
 | res-bs-P4a | Opus egm-resolve build-start P4a (one round) | opus | 02:38Z | +60min | REPORTED | verify build notes in tickets/P4a.md; S0 EXIT P4a effective |
 | rev2-P4b1 | Sonnet revision author for P4b1 after round-1 resolve (order 20) | sonnet | 02:39Z | +60min | running | verify commit and counts; then round 2 reviewers |
-| res-bs-P1 | Opus egm-resolve build-start P1 (one round) | opus | 02:40Z | +60min | running | verify build notes in tickets/P1.md; S0 EXIT P1 effective |
+| res-bs-P1 | Opus egm-resolve build-start P1 (one round) | opus | 02:40Z | +60min | REPORTED | verify build notes in tickets/P1.md; S0 EXIT P1 effective |
 | rev2-P4b2 | Sonnet revision author for P4b2 after round-1 resolve | sonnet | 02:40Z | +60min | running | verify commit and counts; then round 2 reviewers |
 | r2-P5a-adv | Sonnet egm-design adversarial round 2 of tickets/P5a.md | sonnet | 02:40Z | +30min | REPORTED | save report to reviews/; then resolve |
 | r2-P5a-cor | Sonnet egm-codebase-details correctness round 2 of tickets/P5a.md | sonnet | 02:40Z | +30min | REPORTED | save report to reviews/; then resolve |
@@ -343,15 +343,25 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | r2-P5b2-adv | P5b2 round-2 reviewer (adv) | sonnet | 02:43Z | +30min | REPORTED | save report, ledger, then resolve/rev3 |
 | r2-P5b2-cor | P5b2 round-2 reviewer (cor) | sonnet | 02:43Z | +30min | running | save report, ledger, then resolve/rev3 |
 | r1-P8b-adv | P8b ticket reviewer (adv) | sonnet | 02:43Z | +30min | REPORTED | save report, ledger, resolve |
-| r1-P8b-cor | P8b ticket reviewer (cor) | sonnet | 02:43Z | +30min | running | save report, ledger, resolve |
+| r1-P8b-cor | P8b ticket reviewer (cor) | sonnet | 02:43Z | +30min | REPORTED | save report, ledger, resolve |
 | r2-P6b1-adv | P6b1 ticket reviewer (adv) | sonnet | 02:43Z | +30min | QUEUED (agent limit) | save report, ledger, resolve |
 | r2-P6b1-cor | P6b1 ticket reviewer (cor) | sonnet | 02:43Z | +30min | QUEUED (agent limit) | save report, ledger, resolve |
-| r1-P5b4-adv | P5b4 ticket reviewer (adv) | sonnet | 02:43Z | +30min | running | save report, ledger, resolve |
+| r1-P5b4-adv | P5b4 ticket reviewer (adv) | sonnet | 02:43Z | +30min | REPORTED | save report, ledger, resolve |
 | r1-P5b4-cor | P5b4 ticket reviewer (cor) | sonnet | 02:43Z | +30min | running | save report, ledger, resolve |
 | r1-P8a-adv | P8a round-1 reviewer (adv) | sonnet | 02:45Z | +30min | QUEUED (agent limit) | launch when slots free |
 | r1-P8a-cor | P8a round-1 reviewer (cor) | sonnet | 02:45Z | +30min | QUEUED (agent limit) | launch when slots free |
 | r1-P5b3-adv | P5b3 round-1 reviewer (adv) | sonnet | 02:45Z | +30min | QUEUED (agent limit) | launch when slots free |
 | r1-P5b3-cor | P5b3 round-1 reviewer (cor) | sonnet | 02:45Z | +30min | QUEUED (agent limit) | launch when slots free |
 | res-r2-P5a | Opus egm-resolve P5a round 2 | opus | 02:46Z | +45min | running | verify disposition; then rev 3 author, round 3 reviewers (cap 3 rounds) |
-| r2-P4c-adv | P4c round-2 reviewer (adv) | sonnet | 02:46Z | +30min | running | save report, ledger, resolve |
+| r2-P4c-adv | P4c round-2 reviewer (adv) | sonnet | 02:46Z | +30min | REPORTED | save report, ledger, resolve |
 | r2-P4c-cor | P4c round-2 reviewer (cor) | sonnet | 02:46Z | +30min | running | save report, ledger, resolve |
+| save-reports-0611 | Sonnet saves 6 reviewer reports from task outputs (P5b2 r2 cor, P6b1 r2 adv+cor, P5b4 r1 adv, P8b r1 cor, P4c r2 adv) + ledger rows | sonnet | 03:10Z | +20min | running | verify commit; then launch resolves |
+| fix-P4b2-maint | Opus: restore P4b2 maintenance identity per order 21 (rev 2 correction) | opus | 03:10Z | +30min | running | verify commit; then round 2 reviewers |
+| r2-P5b1-adv | P5b1 round-2 reviewer (adv) | sonnet | 03:10Z | +30min | running | save, ledger, resolve |
+| r2-P5b1-cor | P5b1 round-2 reviewer (cor) | sonnet | 03:10Z | +30min | running | save, ledger, resolve |
+| r2-P4b1-adv | P4b1 round-2 reviewer (adv) | sonnet | 03:10Z | +30min | running | save, ledger, resolve |
+| r2-P4b1-cor | P4b1 round-2 reviewer (cor) | sonnet | 03:10Z | +30min | running | save, ledger, resolve |
+| r1-P5c-adv | P5c round-1 reviewer (adv) | sonnet | 03:10Z | +30min | running | save, ledger, resolve |
+| r1-P5c-cor | P5c round-1 reviewer (cor) | sonnet | 03:10Z | +30min | running | save, ledger, resolve |
+| r1-P6a-adv | P6a round-1 reviewer (adv) | sonnet | 03:10Z | +30min | running | save, ledger, resolve |
+| r1-P6a-cor | P6a round-1 reviewer (cor) | sonnet | 03:10Z | +30min | running | save, ledger, resolve |
