@@ -591,7 +591,12 @@ def test_a_lone_caller_finishes_for_every_write_method(make, name):
     thread = threading.Thread(target=go, daemon=True)
     thread.start()
     thread.join(10)
-    assert not thread.is_alive(), f"{name} did not finish: it waits for its own lock"
+    stuck = thread.is_alive()
+    if (
+        stuck
+    ):  # free the server: a stuck transaction would block the schema drop in the fixture's teardown
+        store._db.close()
+    assert not stuck, f"{name} did not finish: it waits for its own lock"
     error = outcome.get("error")
     # the two purges are refused for the runtime login by design (the purge role owns them): still a finished call
     assert error is None or (name.startswith("purge_") and drv.sqlstate(error) == "42501"), repr(
