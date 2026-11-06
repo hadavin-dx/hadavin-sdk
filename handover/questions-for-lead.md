@@ -83,3 +83,16 @@ No answer needed unless you disagree; recommendations stand (orders 6(g), 9). PL
 
 ## Q14 (P2d round 5 resolve, 2026-11-06): please confirm or reverse L23 and L24 (redaction path)
 Recommendation stands unless you reply (orders 6(g), 9). L23: when a text holds a hidden-channel character, refuse the whole text (only for non-ASCII text); the per-line cut-out is dropped, so a text with a flag emoji or an ideographic variation selector is refused whole. L24: the second alias reader and its five rows are cut; the first build step checks whether a leak exists, and if so the reader comes back. Details: reviews/P2d-round5-resolve.md.
+
+## NEEDS LEAD (index of every DECISIONS.md entry flagged "lead should see / should have been escalated"; order 19). Status after order 19 answers: ANSWERED unless marked OPEN.
+1. Frozen revisions without a fresh review (P4d 10, P3a 10, P2a 10, P2d 6, P4a 12): ANSWERED (A): keep freeze, one egm review at build start.
+2. P1 PL-round7 contradiction / A14(3) departure and security-adjacent acceptance (DECISIONS lines ~49, ~55): ANSWERED (C).
+3. Look-alike PL-LK-16/17 (redactor behaviour for every caller), PL-LK-22 (availability residue): ANSWERED (B).
+4. Look-alike drafts: gives back masking draft 5 had; extends order 13 rule; PL-LK-36 narrows order-11 threshold; PL-LK-37 new rule (DECISIONS ~108, ~133): ANSWERED (B).
+5. Look-alike ADV-R10-1 / false ADV-R10-2 sentence from my own round-9 resolve (DECISIONS ~145): ANSWERED (B/C) - record only.
+6. k1b.run_case cannot reach request 2 with a real kind; earlier rounds never checked (DECISIONS ~166): ANSWERED (D, PL54).
+7. Money PL54, PL55 (replay fake-only), PL50-65, P4d PL16/19 withdrawn, PL22/23: ANSWERED (D).
+8. P2d L23/L24: ANSWERED (E), with the P-1 corpus condition.
+9. P3a round 8 decisions and P2a round 8 M1 fix (PL34-36), reversing my round-7 DECLINE of ADV-R7-8: ANSWERED (F).
+10. Sonnet authors instead of Opus egm-draft: ANSWERED (G).
+11. Order-19 follow-up (OPEN, mine): none. Test on PostgreSQL 16 AND 17 for P2a is now a build condition; I have only PG 16.15 probes.
