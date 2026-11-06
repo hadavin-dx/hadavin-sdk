@@ -44,3 +44,38 @@ def test_usage_missing_is_charged_exactly_what_a_billed_failure_is(tmp_path):
 def test_a_plain_refusal_is_still_free(tmp_path):
     _, spent = _spent_when(tmp_path, ProviderError("bad key"))
     assert spent == 0
+
+
+def _spent_with_wire(tmp_path, failures):
+    """The pipeline driven by a real OpenAI-compatible kind whose request 1 was answered (300 in, 7 out, no answer)
+    and whose request 2 failed in the way `failures` serves."""
+    from tests.contracts.kinds.llm_wire import OpenAICompatWire
+    from tests.demo_askdata.kit import ROUTE
+
+    wire = OpenAICompatWire()
+    try:
+        k = Kit(tmp_path)
+        first = wire.scenario("text")
+        first["body"]["choices"][0]["message"]["content"] = "no idea"
+        wire.set_tokens(first, 300, 7)
+        k.pipeline.llm = wire.serve(first, *failures(wire), routes={k.pipeline.s.route: ROUTE})
+        answer = k.pipeline.ask(Q)
+        return answer, k.meter.snapshot()["askdata_spent"], len(wire.requests)
+    finally:
+        wire.close()
+
+
+def test_c16a_a_failed_request_two_after_an_answered_request_one_is_booked_not_free(tmp_path):
+    cases = {
+        "exhausted": lambda w: [w.scenario("throttle")] * 3,
+        "http_400": lambda w: [{"status": 400, "body": {"error": {"message": "x", "code": "c"}}}],
+        "unparsable": lambda w: [{"status": 200, "body": {"choices": []}}],
+    }
+    for name, failures in cases.items():
+        (tmp_path / name).mkdir()
+        answer, spent, requests = _spent_with_wire(tmp_path / name, failures)
+        assert requests >= 2
+        assert (
+            spent > 0
+        )  # the temporary demo edit books the reserved amount, never less than a refusal's zero
+        assert Decimal(answer.line.cost_usd) == spent
