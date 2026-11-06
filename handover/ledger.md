@@ -1507,3 +1507,14 @@
 | R2-P5a-COR-6 | Major | P5a | see reviews/P5a-round2-correctness.md | OPEN |
 | R2-P5a-COR-7 | Major | P5a | see reviews/P5a-round2-correctness.md | OPEN |
 | R2-P5a-COR-8 | Major | P5a | see reviews/P5a-round2-correctness.md | OPEN |
+| R1-P8b-ADV-1 | Blocker | P8b | see reviews/P8b-round1-adversarial.md | OPEN |
+| R1-P8b-ADV-2 | Blocker | P8b | see reviews/P8b-round1-adversarial.md | OPEN |
+| R1-P8b-ADV-3 | Blocker | P8b | see reviews/P8b-round1-adversarial.md | OPEN |
+| R1-P8b-ADV-4 | Blocker | P8b | see reviews/P8b-round1-adversarial.md | OPEN |
+| R1-P8b-ADV-5 | Major | P8b | see reviews/P8b-round1-adversarial.md | OPEN |
+| R1-P8b-ADV-6 | Major | P8b | see reviews/P8b-round1-adversarial.md | OPEN |
+| R1-P8b-ADV-7 | Major | P8b | see reviews/P8b-round1-adversarial.md | OPEN |
+| R1-P8b-ADV-8 | Major | P8b | see reviews/P8b-round1-adversarial.md | OPEN |
+| R1-P8b-ADV-9 | Major | P8b | see reviews/P8b-round1-adversarial.md | OPEN |
+| R1-P8b-ADV-10 | Major | P8b | see reviews/P8b-round1-adversarial.md | OPEN |
+| R1-P8b-ADV-11 | Major | P8b | see reviews/P8b-round1-adversarial.md | OPEN |
