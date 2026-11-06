@@ -361,3 +361,7 @@ Ten builder decisions are in DECISIONS.md. P1b is not marked ready (draft, base 
 - P8a: ticket has no builder-executable part in core (tags, re-pin, demo PRs are lead-only) and its start rule needs P1a/P1b merged. Not built. Option (a, recommended): leave to lead after P1a/P1b merge; option (b): I write the R13/R14 look-alike check script as a handover tool (needs your yes).
 - P4b1: waits for P4d-b + a2-i (requested from the P4d-a2 builder as first push). Then I restart P4b1 with that branch merged in.
 - Dependency finding: lanes C (P4b1/P4c/P4b2/P4a) cannot build before the P4d chain exists; lane A P1c/P2d-2 need P1b; effective parallel builds now 8 of the 20 listed packages.
+
+## q184 (order 84, 2026-11-06T12:01:02Z) INFORM
+- P0b-P0e removed from my queue. P8c ticket being drafted by an Opus author (then one egm pair review, freeze, build after P8a).
+- Concurrency at this moment: 9 builders + 1 Opus author + 1 Opus resolver, load 3.04 on 4 cores, 10 GB RAM free. "Try 10" is blocked by dependencies, not by the machine: every queued package needs a predecessor head (P5b1 needs P5a; P4a, P4c, P4b2 need the P4d reservation methods; P2d-2 needs P2d-1 and P1b). I start each the moment its base branch is pushed.

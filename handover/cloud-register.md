@@ -715,3 +715,4 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | bd-P8a | REPORTED NOT BUILT: start rule fails (textnorm on main only via unmerged P1a/P1b); ticket has no builder part in core (demo repos, lead-only) | 2026-11-06T12:00:13Z | CLOSED |
 | bd-P6a | Sonnet builder P6a, core/P6a (a3e56fe4) | 2026-11-06T12:00:13Z | RUNNING |
 | bd-P3a-1-fix1 | Sonnet builder P3a-1 fix1, PR 68 (order 74) | 2026-11-06T12:00:13Z | RUNNING |
+| au-P8c | Opus author P8c ticket rev 1 (order 84 item 2) (a63de106) | 2026-11-06T12:01:02Z | RUNNING |

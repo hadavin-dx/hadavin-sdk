@@ -274,3 +274,4 @@ P4b1 | stopped, no code | 0 | P4d-b + a2-i (P4d-a2 builder told to do them first
 P8a | not built | 0 | needs P1a/P1b merged; ticket work is lead-only demo-repo steps (R0a-c)
 P6a | build | 1 | -
 P3a-1 | fix1 build (PR 68) | 1 | -
+2026-11-06T12:01:02Z | order 84 read | P0b/P0c/P0d/P0e removed from queue (lead lane S0) | P8c ticket author running; one egm pair review then freeze | queue for free slots: P2d-2, P4b2, P4c, P4a, P5b1-3, P5c, P6b1, P8a, P8c; each stacks on a predecessor head once pushed (P5b1 after P5a, P4a/P4c/P4b2 after P4d, P2d-2 after P2d-1 and P1b) | concurrency: 9 builders + 1-2 authors/resolvers, load 3.0 (4 cores), RAM 10 GB free; stable so far, 10 not tried: no queued package has a base yet
