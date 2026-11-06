@@ -1566,3 +1566,48 @@
 | R2-P4b1-COR-1 | Major | P4b1 | Zero-price route (fake kind) gives W=0 and ValueError before the model is called. -> reviews/P4b1-round2-correctness.md | OPEN |
 | R2-P4b1-COR-2 | Major | P4b1 | Decimal USD/Mtok route price to integer micro-dollar conversion unspecified. -> reviews/P4b1-round2-correctness.md | OPEN |
 | R2-P4b1-COR-3 | Major | P4b1 | "Release on ANY exception" undecided for NotFound/conflict/CounterDamaged/ValueError rows. -> reviews/P4b1-round2-correctness.md | OPEN |
+| R2-P5b1-ADV-1 | Major | P5b1 | The test is `xfail(strict=True)` with no `raises=` and no positive control. -> reviews/P5b1-round2-adversarial.md | OPEN |
+| R2-P5b1-ADV-2 | Major | P5b1 | M38 ("a kind adapter does not end in `default_facts`") says it is killed by R1 rows 22, 23, 31. -> reviews/P5b1-round2-adversarial.md | OPEN |
+| R2-P5b1-ADV-3 | Major | P5b1 | Validation is done twice: in `ProviderError.__init__` and in `ProviderFacts.__post_init__`/`clean_*`. -> reviews/P5b1-round2-adversarial.md | OPEN |
+| R2-P5b1-ADV-4 | Major | P5b1 | R4 variant (b) raises a `BaseException` on any attribute read outside the adapter's allow-list, and runs the stand-in through `with_retry`. -> reviews/P5b1-round2-adversarial.md | OPEN |
+| R2-P5b1-COR-1 | Major | P5b1 | Fail-closed makes inputs (1)-(4) a plain `ProviderError`. -> reviews/P5b1-round2-correctness.md | OPEN |
+| R2-P5b1-COR-2 | Major | P5b1 | P5a.md on disk is revision 2 (written 02:40 UTC, five minutes before this ticket), but the ticket cites "revision 1" for specific lines and rules. -> reviews/P5b1-round2-correctness.md | OPEN |
+| R2-P5b1-COR-3 | Major | P5b1 | M38 ("a kind adapter does not end in `default_facts`") names R1 rows 22, 23 and 31 as killers. -> reviews/P5b1-round2-correctness.md | OPEN |
+| R2-P5b1-COR-4 | Major | P5b1 | FAIL-BEFORE is promised "on an ASSERTION on the base, not an import error", and the evidence runner copies the new test files into the P5a-merge worktree. -> reviews/P5b1-round2-correctness.md | OPEN |
+| R2-P5b1-COR-5 | Major | P5b1 | Contradiction on the Amazon fall-through. -> reviews/P5b1-round2-correctness.md | OPEN |
+| R2-P5b1-COR-6 | Major | P5b1 | LEAD relay in P4a.md line 204: the pickle pin must include `UsageMissing` and `UnpricedUsage`, each round-tripping through its own `__reduce__`. -> reviews/P5b1-round2-correctness.md | OPEN |
+| R2-P5b1-COR-7 | Major | P5b1 | P5a.md line 41: status-derived codes apply only when the instance carries `status`, `error_type`, `request_id` and `retryable` "with exactly the right types". -> reviews/P5b1-round2-correctness.md | OPEN |
+| R1-P6a-ADV-1 | Blocker | P6a | The fail-before table cannot be produced as written. -> reviews/P6a-round1-adversarial.md | OPEN |
+| R1-P6a-ADV-2 | Major | P6a | The test-double seam is incomplete. S2 refuses `secrets`, `channel`, `detector` and `llm`. -> reviews/P6a-round1-adversarial.md | OPEN |
+| R1-P6a-ADV-3 | Major | P6a | S3 and T3 pin that the redactor is "named", not that it masks. -> reviews/P6a-round1-adversarial.md | OPEN |
+| R1-P6a-ADV-4 | Major | P6a | The scanner has blind spots. (a) Only a literal first string argument counts. -> reviews/P6a-round1-adversarial.md | OPEN |
+| R1-P6a-ADV-6 | Major | P6a | The wording overclaims. The title and line 38 present S2 as closing the hole, but `allow_test_doubles=True` is a one-word flag. -> reviews/P6a-round1-adversarial.md | OPEN |
+| R1-P6a-ADV-7 | Major | P6a | Mutant gaps. (a) Mutant 10 (check before `sources=`) cannot be killed if T5(f) passes only `sources=`. -> reviews/P6a-round1-adversarial.md | OPEN |
+| R1-P6a-ADV-8 | Major | P6a | S5 (strict pin) carries cost and risk beyond the plan row. -> reviews/P6a-round1-adversarial.md | OPEN |
+| R1-P6a-ADV-9 | Major | P6a | Sequencing and size. S1 and S2 (`app.py` check, T1, T2, T5) need nothing from P5c, P6b or P4b, yet P6a merges last behind about 20 packages. -> reviews/P6a-round1-adversarial.md | OPEN |
+| R1-P6a-COR-1 | Major | P6a | The expected table is wrong in two places. -> reviews/P6a-round1-correctness.md | OPEN |
+| R1-P6a-COR-2 | Major | P6a | No prod-valid fixture exists. `pilot_cfg(env="prod")` (`tests/test_k3_pilot_env.py:35-74`) has `anchor` unset (default `none`) and a signer with `private_key_path`. -> reviews/P6a-round1-correctness.md | OPEN |
+| R1-P6a-COR-3 | Major | P6a | The count of tests needing `allow_test_doubles=True` is false. -> reviews/P6a-round1-correctness.md | OPEN |
+| R1-P6a-COR-4 | Major | P6a | S4 says `_sink_callers` "now uses `model_call_sites`" and "the result is unchanged on today's tree". -> reviews/P6a-round1-correctness.md | OPEN |
+| R1-P6a-COR-5 | Major | P6a | Mutant 10 (new check placed before the `sources=` check) is killed by T5(f) only if the row passes `sources=` together with an override. -> reviews/P6a-round1-correctness.md | OPEN |
+| R1-P6a-COR-6 | Major | P6a | The claim is stronger than the test. The header and plan row say "no code path in `src/` reaches the llm kind except through the masking wrapper". -> reviews/P6a-round1-correctness.md | OPEN |
+| R1-P5c-ADV-1 | Major | P5c | The wrapper's masking mode is not specified. -> reviews/P5c-round1-adversarial.md | OPEN |
+| R1-P5c-ADV-2 | Major | P5c | "Joined with a separator that cannot be part of a value, split back after." Main's `redact_text` can return the redacted VIEW in place of the text. -> reviews/P5c-round1-adversarial.md | OPEN |
+| R1-P5c-ADV-3 | Major | P5c | `MaskSession` is "not a dict", with `_map_of` for `regex` and `restore` only. -> reviews/P5c-round1-adversarial.md | OPEN |
+| R1-P5c-ADV-4 | Major | P5c | `Runtime.inputs_view` (agent_loop.py:269-284) runs at execute time after approval and reads the STORED map (`store.get_redaction_map`). -> reviews/P5c-round1-adversarial.md | OPEN |
+| R1-P5c-ADV-5 | Major | P5c | `guard/producers.py` is data enforced by `tests/test_k5_producers.py`, and the ticket does not list it. -> reviews/P5c-round1-adversarial.md | OPEN |
+| R1-P5c-ADV-6 | Major | P5c | Pattern (ii) turns `Account Number: <12 digits>` into BANKACCT, which is never stored. -> reviews/P5c-round1-adversarial.md | OPEN |
+| R1-P5c-ADV-7 | Major | P5c | The fingerprint covers only the `redact.py` hash plus `REGEX_VERSION`. -> reviews/P5c-round1-adversarial.md | OPEN |
+| R1-P5c-ADV-8 | Major | P5c | C1a's second-engine `_check` is dropped. `check` runs only on `system`, `tools` and `output_schema`. -> reviews/P5c-round1-adversarial.md | OPEN |
+| R1-P5c-ADV-9 | Major | P5c | Mutants M4 (`__copy__` removed) and M5 (`__deepcopy__` removed) look equivalent. -> reviews/P5c-round1-adversarial.md | OPEN |
+| R1-P5c-ADV-10 | Major | P5c | T3-15a..f are called "FB on main, where order 11(1) says all six LEAKED". -> reviews/P5c-round1-adversarial.md | OPEN |
+| R1-P5c-ADV-11 | Major | P5c | The `received` event (agent_loop.py:349) is written BEFORE the size check (:354) and BEFORE masking (:367). -> reviews/P5c-round1-adversarial.md | OPEN |
+| R1-P5c-ADV-12 | Major | P5c | `extract` returns `Valid` holding placeholders, and its session is closed. -> reviews/P5c-round1-adversarial.md | OPEN |
+| R1-P5c-COR-1 | Blocker | P5c | The ticket contradicts itself on escaping. -> reviews/P5c-round1-correctness.md | OPEN |
+| R1-P5c-COR-2 | Major | P5c | The money-adjacent finding stops at ACCOUNTID. -> reviews/P5c-round1-correctness.md | OPEN |
+| R1-P5c-COR-3 | Major | P5c | T3-15 and T2-14 are marked "FB" (fail before). -> reviews/P5c-round1-correctness.md | OPEN |
+| R1-P5c-COR-4 | Major | P5c | Some mutants cannot be killed or cannot be written. -> reviews/P5c-round1-correctness.md | OPEN |
+| R1-P5c-COR-5 | Major | P5c | The `received` event is written at agent_loop.py:349, before the size check (:354), before the limits stop and before masking (:367). -> reviews/P5c-round1-correctness.md | OPEN |
+| R1-P5c-COR-6 | Major | P5c | "Strong keywords" are not defined. The regex `_ACCT_WORD` (main redact.py:82) is `(accounts?/acct\.?/acc\.?/a/c)` plus an OPTIONAL number suffix. -> reviews/P5c-round1-correctness.md | OPEN |
+| R1-P5c-COR-7 | Major | P5c | "Upper-case first letter by `str.isupper()` in a check, not by `[A-Z]`" needs a callback after the regex match. -> reviews/P5c-round1-correctness.md | OPEN |
+| R1-P5c-COR-8 | Major | P5c | P5c-1 is described as "No caller changes". -> reviews/P5c-round1-correctness.md | OPEN |
