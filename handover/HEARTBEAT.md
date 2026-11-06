@@ -163,3 +163,4 @@
 06:32Z | step=order 42 read; P1a builder resumed for official Unicode licence commit | done=AK-G16 r1 saved | next=P1a sha to lead, AK-G15/16 resolves | blocked=none (NEEDS LEAD 30 answered by order 42)
 06:33Z | step=AK-G15 r1 resolve verified; item 100 (NEEDS LEAD 15-19, AK-G2 hole R1-RES-1) | done=... | next=AK-G15 rev 2 author, AK-G16 resolve, P1a licence sha | blocked=NEEDS LEAD AK-G15 15-19
 06:34Z | step=P1a 96c5a50 verified, item 101; AK-G15 rev 2 author running | done=order 42 | next=AK-G16 resolve, AK-G15 rev2 verify | blocked=NEEDS LEAD AK-G15 15-19
+06:36Z | step=AK-G16 r1 resolve verified; item 102 (NEEDS LEAD 12-15); rev 2 author running | done=... | next=verify rev 2s | blocked=NEEDS LEAD AK-G16 12-15, AK-G15 15-19
