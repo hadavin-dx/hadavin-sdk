@@ -1021,9 +1021,9 @@
  {
   "id": "r112",
   "class": "case",
-  "source": "DENY view: upper and lower case are one (capital Greek Eta reads h under pass A)",
+  "source": "DENY view: upper and lower case are one (capital Greek Eta and small eta fold together; the small eta reads n, so the capital's own look-alike h is given up for case symmetry)",
   "a": "\u0397\u0397",
-  "b": "hh",
+  "b": "\u03b7\u03b7",
   "relation": "equal",
   "status": "current"
  },

@@ -82,13 +82,13 @@ def _functions(path: Path) -> list[str]:
     return [n.name for n in tree.body if isinstance(n, ast.FunctionDef)]
 
 
-def test_a_the_list_has_41_mutants_28_repointed_and_13_new_with_unique_names():
+def test_a_the_list_has_51_mutants_28_repointed_13_new_and_10_of_fold2_with_unique_names():
     names = [m.name for m in mm.M]
-    assert len(names) == 41 and len(set(names)) == 41, names
+    assert len(names) == 51 and len(set(names)) == 51, names
     assert tuple(names[:28]) == REPOINTED, (
         "the first 28 are the re-pointed mutants, in the order of the placement table"
     )
-    assert len(names[28:]) == 13
+    assert len(names[28:]) == 23  # 13 of the first package and 10 of fold2 (order 44)
 
 
 def test_a_every_mutant_names_its_test_file_and_its_killer_and_the_killer_exists():
@@ -135,7 +135,7 @@ def test_a_the_moved_tests_and_the_new_killers_exist_once_each():
 def test_a_print_the_placement_table():
     rows = [f"{m.name} | {m.test_file} | {m.only_test}" for m in mm.M]
     print("\n".join(rows))
-    assert len(rows) == 41
+    assert len(rows) == 51
 
 
 def test_b_every_xfail_of_the_differential_file_is_strict_and_names_assertion_error():

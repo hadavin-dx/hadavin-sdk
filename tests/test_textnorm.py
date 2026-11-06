@@ -37,7 +37,9 @@ from hadavin_sdk.guard.textnorm import (
     has_hidden_channel,
     has_mixed_script,
     identity_key,
+    key_tag,
     names_equal,
+    require_pinned_unidata,
     same_person,
     squeeze,
 )
@@ -47,6 +49,11 @@ FIX = Path(__file__).parent / "fixtures"
 CAP = defaults.TEXTNORM_MAX_CHARS
 A516 = chr(0xA516)  # weight 3: its fold is three letters
 FDFA = chr(0xFDFA)  # weight 18: NFKC makes 18 characters from it
+
+
+def bare(key):
+    """A key without the tag of an interpreter whose Unicode version is not the pin (``key_tag()`` is empty on the pinned version)."""
+    return key.removeprefix(key_tag())
 
 
 def refused(exc, message, fn, *args, **kwargs):
@@ -294,13 +301,13 @@ def test_an_unassigned_code_point_is_dropped_before_anything_else():
         and cp not in _confusables.TABLE
     )
     assert fold("a" + chr(pick) + "b") == "ab", f"unassigned U+{pick:04X} is kept"
-    assert identity_key("a" + chr(pick) + "b") == "ab"
+    assert bare(identity_key("a" + chr(pick) + "b")) == "ab"
 
 
 def test_the_empty_and_invisible_only_texts_have_the_empty_key():
-    assert identity_key("") == "" and fold("") == ""
-    assert identity_key(chr(0x200B) + chr(0x200C)) == ""
-    assert identity_key(" \t\n") == ""
+    assert bare(identity_key("")) == "" and fold("") == ""
+    assert bare(identity_key(chr(0x200B) + chr(0x200C))) == ""
+    assert bare(identity_key(" \t\n")) == ""
     assert fold_key is identity_key
 
 
@@ -345,7 +352,7 @@ def test_max_value_len_is_the_longest_value_of_the_table():
 
 # ---- FOLD_VERSION ------------------------------------------------------------------------------------------------------------------------
 def test_the_version_string_names_the_algorithm_the_table_and_both_unicode_versions():
-    m = re.fullmatch(r"alg=fold1\|tbl=([0-9a-f]{12}):(\d+)\|ucd=([^|]+)\|ud=([^|]+)", FOLD_VERSION)
+    m = re.fullmatch(r"alg=fold2\|tbl=([0-9a-f]{12}):(\d+)\|ucd=([^|]+)\|ud=([^|]+)", FOLD_VERSION)
     assert m, f"FOLD_VERSION has the wrong shape: {FOLD_VERSION}"
     assert m[4] == unicodedata.unidata_version, "FOLD_VERSION has no ud= part of this interpreter"
     assert m[3] == _confusables.DATA_VERSION
@@ -366,13 +373,130 @@ def test_a_changed_table_gives_another_version_string_without_reloading_the_modu
     assert fold(chr(0x430)) == "a"
 
 
+# ---- idempotence and case symmetry, for every code point and for pairs ---------------------------------------------------------------------
+def _non_surrogates():
+    return (chr(cp) for cp in range(sys.maxunicode + 1) if not 0xD800 <= cp <= 0xDFFF)
+
+
+def _pairs():
+    """Every ordered two-character string over the keys of the look-alike table, the characters of its values, a combining mark and a space."""
+    alphabet = [chr(cp) for cp in _confusables.TABLE]
+    alphabet += sorted(set("".join(_confusables.TABLE.values())))
+    alphabet += [chr(0x301), " "]
+    return (a + b for a in alphabet for b in alphabet)
+
+
+def _not_idempotent(texts):
+    bad = []
+    for t in texts:
+        key = identity_key(t)
+        if (
+            key != t and identity_key(key) != key
+        ):  # a key equal to the text is trivially a fixed point (only a speed-up)
+            bad.append(t)
+    return bad
+
+
+def _case_asymmetric(texts, key=None):
+    key = key or identity_key
+    return [
+        t for t in texts if (u := t.upper()) != (l := t.lower()) and key(u) != key(l)
+    ]  # u == l: nothing to compare
+
+
+def _show(texts):
+    return [" ".join(f"U+{ord(ch):04X}" for ch in t) for t in texts[:5]]
+
+
+def test_identity_key_is_idempotent_for_every_code_point():
+    bad = _not_idempotent(_non_surrogates())
+    assert not bad, f"identity_key is not idempotent for {len(bad)} code points, first {_show(bad)}"
+
+
+def test_identity_key_is_case_symmetric_for_every_code_point():
+    bad = _case_asymmetric(_non_surrogates())
+    assert not bad, (
+        f"identity_key is not case symmetric for {len(bad)} code points, first {_show(bad)}"
+    )
+
+
+def test_identity_key_is_idempotent_for_pairs_built_from_the_table():
+    bad = _not_idempotent(_pairs())
+    assert not bad, f"identity_key is not idempotent for {len(bad)} pairs, first {_show(bad)}"
+
+
+def test_identity_key_is_case_symmetric_for_pairs_built_from_the_table():
+    bad = _case_asymmetric(_pairs())
+    assert not bad, f"identity_key is not case symmetric for {len(bad)} pairs, first {_show(bad)}"
+
+
+def test_squeeze_is_case_symmetric_for_every_code_point():
+    bad = _case_asymmetric(_non_surrogates(), squeeze)
+    assert not bad, f"squeeze is not case symmetric for {len(bad)} code points, first {_show(bad)}"
+
+
+def test_the_old_failures_are_gone_a_capital_o_stroke_and_the_small_one_are_one_person():
+    assert same_person("B\u00d8B", "bob") and same_person("b\u00f8b", "BOB")
+    assert bare(identity_key("\u00d8")) == bare(identity_key("\u00f8")) == "o", (
+        "O with stroke is not case symmetric"
+    )
+    assert bare(identity_key("\u1f80")) == bare(identity_key("\u1f80".upper())), (
+        "a Greek letter with iota is not case symmetric"
+    )
+
+
+def test_the_case_fold_table_is_on_the_case_fold_image_and_its_conflicts_are_the_known_thirteen():
+    table = textnorm._CF_TABLE
+    for cp, value in table.items():
+        ch = chr(cp)
+        assert cp >= 0x80 and ch.casefold() == ch, f"U+{cp:04X} is not a casefolded non-ASCII key"
+        assert value.isascii() and value == value.casefold() and value, (
+            f"U+{cp:04X} has a value that is not lower-case ASCII"
+        )
+    reaching = {}
+    for cp, value in _confusables.TABLE.items():
+        folded = chr(cp).casefold()
+        assert len(folded) == 1, (
+            f"U+{cp:04X} has a case fold of {len(folded)} characters: look it up through its parts"
+        )
+        assert ord(folded) in table, f"U+{cp:04X} lost its look-alike through the case fold"
+        reaching.setdefault(ord(folded), {})[cp] = value.casefold()
+    conflicts = sorted(f for f, sources in reaching.items() if len(set(sources.values())) > 1)
+    assert conflicts == [
+        0x1BD,
+        0x3B7,
+        0x3BC,
+        0x3BD,
+        0x3C5,
+        0x3ED,
+        0x442,
+        0x4CF,
+        0x575,
+        0x118C3,
+        0x118C6,
+        0x118D5,
+        0x118DC,
+    ], "the letters whose capital and small forms disagree changed: " + str(
+        [hex(c) for c in conflicts]
+    )
+    for folded in (
+        conflicts
+    ):  # the entry of the letter that is its own case fold wins; otherwise the lowest code point
+        own = reaching[folded].get(folded)
+        expected = own if own is not None else reaching[folded][min(reaching[folded])]
+        assert table[folded] == expected, (
+            f"U+{folded:04X} does not take the entry of its own letter"
+        )
+
+
 # ---- the Unicode pin ---------------------------------------------------------------------------------------------------------------------
 def test_check_pinned_unidata_raises_when_strict_and_warns_otherwise(monkeypatch):
-    here = unicodedata.unidata_version
-    check_pinned_unidata(here, strict=True)  # the same version: silent
+    # independent of the interpreter: its Unicode version is stubbed, and so is the pin
+    monkeypatch.setattr(unicodedata, "unidata_version", "7.7.7")
+    check_pinned_unidata("7.7.7", strict=True)  # the same version: silent
     with warnings.catch_warnings():
         warnings.simplefilter("error")
-        check_pinned_unidata(here)
+        check_pinned_unidata("7.7.7")
     refused(
         UnidataMismatch,
         "strict mode accepted another version",
@@ -390,8 +514,64 @@ def test_check_pinned_unidata_raises_when_strict_and_warns_otherwise(monkeypatch
         check_pinned_unidata,
         strict=True,
     )
-    monkeypatch.setattr(defaults, "TEXTNORM_PINNED_UNIDATA", here)
-    check_pinned_unidata(strict=True)
+    monkeypatch.setattr(defaults, "TEXTNORM_PINNED_UNIDATA", "7.7.7")
+    accepted("the patched pinned version is not used", check_pinned_unidata, strict=True)
+
+
+def test_require_pinned_unidata_is_the_guard_and_fails_closed(monkeypatch):
+    monkeypatch.setattr(defaults, "TEXTNORM_PINNED_UNIDATA", "15.1.0")
+    monkeypatch.setattr(unicodedata, "unidata_version", "15.0.0")
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")  # it must RAISE UnidataMismatch, never warn
+        refused(
+            UnidataMismatch,
+            "require_pinned_unidata accepted another Unicode version",
+            require_pinned_unidata,
+        )
+        refused(
+            UnidataMismatch,
+            "require_pinned_unidata ignored its argument",
+            require_pinned_unidata,
+            "15.1.0",
+        )
+        accepted(
+            "require_pinned_unidata refused the version it was given",
+            require_pinned_unidata,
+            "15.0.0",
+        )
+    assert not issubclass(UnidataMismatch, (ValueError, TypeError)), (
+        "a DENY caller's except clause would swallow it"
+    )
+    try:
+        require_pinned_unidata()
+    except UnidataMismatch as err:
+        assert "15.0.0" in str(err) and "15.1.0" in str(err)
+    monkeypatch.setattr(unicodedata, "unidata_version", "15.1.0")
+    accepted("require_pinned_unidata refused the pinned version", require_pinned_unidata)
+    monkeypatch.setattr(defaults, "TEXTNORM_PINNED_UNIDATA", "16.0.0")
+    refused(UnidataMismatch, "the patched pin is not read", require_pinned_unidata)
+
+
+def test_a_key_made_on_another_unicode_version_carries_that_version_and_never_equals_another(
+    monkeypatch,
+):
+    monkeypatch.setattr(defaults, "TEXTNORM_PINNED_UNIDATA", "15.1.0")
+    monkeypatch.setattr(unicodedata, "unidata_version", "15.1.0")
+    assert key_tag() == "" and identity_key("Bob") == "bob", "the pinned version has the bare key"
+    pinned_key = identity_key("bob")
+    monkeypatch.setattr(unicodedata, "unidata_version", "15.0.0")
+    other = identity_key("Bob")
+    assert other != pinned_key, "a key made on another Unicode version equals the pinned key"
+    assert other.endswith("bob") and "ud=15.0.0" in other and "alg=fold2" in other, (
+        "the tag does not name the algorithm and the Unicode version"
+    )
+    assert identity_key(other) == other, "the key of another version is not idempotent"
+    assert same_person("BØB", "bob") and not same_person("bob", "bobb")
+    monkeypatch.setattr(unicodedata, "unidata_version", "9.9.9")
+    assert identity_key("Bob") != other, "keys of two non-pinned versions are equal"
+    # on the pinned version nothing a person types can reach a tagged key: U+E000 is private use and is dropped
+    monkeypatch.setattr(unicodedata, "unidata_version", "15.1.0")
+    assert identity_key(other) != other and "\ue000" not in identity_key(other)
 
 
 # ---- input rules: type, then size --------------------------------------------------------------------------------------------------------
@@ -457,7 +637,9 @@ def test_a_hostile_eq_cannot_make_two_texts_equal():
 
 
 def test_the_cap_itself_is_accepted_and_one_more_ascii_character_is_refused():
-    assert len(accepted("a text of exactly the cap is refused", identity_key, "a" * CAP)) == CAP
+    assert (
+        len(bare(accepted("a text of exactly the cap is refused", identity_key, "a" * CAP))) == CAP
+    )
     refused(TextTooLong, "a text over the cap is accepted", identity_key, "a" * (CAP + 1))
     for fn in ONE_ARG:
         refused(TextTooLong, f"{fn.__name__} accepted a text over the cap", fn, "a" * (CAP + 1))
@@ -470,7 +652,7 @@ def test_the_cap_itself_is_accepted_and_one_more_ascii_character_is_refused():
 def test_the_size_rule_counts_what_a_character_becomes_not_its_length():
     # U+A516 becomes three letters: SEAM-1
     refused(TextTooLong, "87,382 x U+A516 (W 262,146) is accepted", identity_key, A516 * 87382)
-    assert accepted("W 262,143 is refused", identity_key, A516 * 87381) == "l" * 262143
+    assert bare(accepted("W 262,143 is refused", identity_key, A516 * 87381)) == "l" * 262143
     refused(
         TextTooLong,
         "262,144 x U+A516 (plain length at the cap) is accepted",
@@ -479,10 +661,10 @@ def test_the_size_rule_counts_what_a_character_becomes_not_its_length():
     )
     # U+FDFA becomes eighteen characters in NFKC
     refused(TextTooLong, "cap/18 + 1 x U+FDFA is accepted", identity_key, FDFA * (CAP // 18 + 1))
-    assert len(accepted("cap/18 x U+FDFA is refused", identity_key, FDFA * (CAP // 18))) > 0
+    assert len(bare(accepted("cap/18 x U+FDFA is refused", identity_key, FDFA * (CAP // 18)))) > 0
     # NFKD makes two characters of an accented letter
     assert (
-        len(accepted("W exactly at the cap is refused", identity_key, chr(0xE9) * (CAP // 2)))
+        len(bare(accepted("W exactly at the cap is refused", identity_key, chr(0xE9) * (CAP // 2))))
         == CAP // 2
     )
     refused(
@@ -505,7 +687,7 @@ def test_the_size_rule_checks_every_argument_left_to_right():
 
 def test_the_cap_is_read_when_the_function_runs(monkeypatch):
     monkeypatch.setattr(defaults, "TEXTNORM_MAX_CHARS", 5)
-    assert accepted("the patched cap refuses a short text", identity_key, "abcde") == "abcde"
+    assert bare(accepted("the patched cap refuses a short text", identity_key, "abcde")) == "abcde"
     refused(TextTooLong, "the patched cap is not used", identity_key, "abcdef")
 
 
@@ -598,7 +780,7 @@ def test_the_hidden_channel_signal_refuses_what_is_not_text():
 
 
 # ---- names ---------------------------------------------------------------------------------------------------------------------------------
-def test_the_public_names_are_exactly_the_listed_seventeen():
+def test_the_public_names_are_exactly_the_listed_nineteen():
     assert sorted(textnorm.__all__) == sorted(
         [
             "FILLERS",
@@ -615,12 +797,14 @@ def test_the_public_names_are_exactly_the_listed_seventeen():
             "has_hidden_channel",
             "has_mixed_script",
             "identity_key",
+            "key_tag",
             "names_equal",
+            "require_pinned_unidata",
             "same_person",
             "squeeze",
         ]
     )
-    assert len(textnorm.__all__) == len(set(textnorm.__all__)) == 17
+    assert len(textnorm.__all__) == len(set(textnorm.__all__)) == 19
 
 
 def test_every_name_the_module_defines_is_public_and_listed_or_private():

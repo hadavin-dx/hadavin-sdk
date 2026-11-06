@@ -9,7 +9,7 @@ pytest. Run from the repo root:
     uv run python tests/textnorm_mutants.py            # all mutants; exit 1 if any is not good
     uv run python tests/textnorm_mutants.py squeeze    # only mutants whose name contains the text
 
-41 mutants: 28 are the re-pointed mutants of the earlier text-fold list (the killers moved with their tests) and 13 are new. Tests with no
+51 mutants: 28 are the re-pointed mutants of the earlier text-fold list (the killers moved with their tests), 13 are new and 10 are the mutants of fold2 (order 44). Tests with no
 mutant: the golden test, the differential rows, the manifest test, the notices test, the perf rows (they are outside every test list below:
 the runner copies no ``pyproject.toml`` or notices file) and the meta-tests.
 
@@ -66,6 +66,14 @@ MAXLEN = "test_max_value_len_is_the_longest_value_of_the_table"
 HIDDEN = "test_tag_characters_and_free_variation_selectors_are_a_hidden_channel"
 EMOJI = "test_the_two_emoji_selectors_and_other_invisible_characters_are_not_counted"
 PINCHECK = "test_check_pinned_unidata_raises_when_strict_and_warns_otherwise"
+REQUIRE = "test_require_pinned_unidata_is_the_guard_and_fails_closed"
+TAG = "test_a_key_made_on_another_unicode_version_carries_that_version_and_never_equals_another"
+IDEM = "test_identity_key_is_idempotent_for_every_code_point"
+SYMM = "test_identity_key_is_case_symmetric_for_every_code_point"
+SQUEEZE_SYMM = "test_squeeze_is_case_symmetric_for_every_code_point"
+CFTABLE = (
+    "test_the_case_fold_table_is_on_the_case_fold_image_and_its_conflicts_are_the_known_thirteen"
+)
 
 M = [
     # ---- the 28 re-pointed mutants (rows 1 to 28 of the placement table in the ticket) ----
@@ -75,10 +83,10 @@ M = [
     mutant("fold: unassigned characters kept", TN, '"Co", "Cs", "Cn"}', '"Co", "Cs"}',
         MARKS, "U+E0002 changes the fold"),
     mutant("fold: look-alikes not folded", TN,
-        "    s = s.translate(_DIGITS).translate(_TABLE)", "    s = s.translate(_DIGITS)",
-        LOOKS, "look-alike U+0405 is not folded"),
+        "    s = s.casefold().translate(_CF_TABLE) if casefold else s.translate(_TABLE)",
+        "    s = s.casefold() if casefold else s", LOOKS, "look-alike U+0405 is not folded"),
     mutant("fold: other digits not folded", TN,
-        "    s = s.translate(_DIGITS).translate(_TABLE)", "    s = s.translate(_TABLE)",
+        "    s = s.translate(_DIGITS)\n    # casefold BEFORE", "    # casefold BEFORE",
         LOOKS, "other-script digits are not folded"),
     mutant("fold: the digit table is empty", TN,
         "_DIGITS = types.MappingProxyType(\n    _build_digit_table()\n)", "_DIGITS = {}",
@@ -170,7 +178,33 @@ M = [
         PINCHECK, "the patched pinned version is not used"),
     mutant("squeeze: the pattern keeps no digits", TN,
         '_NON_ALNUM = re.compile(r"[^A-Z0-9]")', '_NON_ALNUM = re.compile(r"[^A-Z]")', SQUEEZE, "squeeze removed a digit"),
-    mutant("squeeze: no upper-casing", TN, "    s = _fold(raw).upper()", "    s = _fold(raw)", SQUEEZE, "squeeze lost a letter"),
+    mutant("squeeze: no upper-casing", TN, "    s = _fold(raw, casefold=True).upper()", "    s = _fold(raw, casefold=True)", SQUEEZE, "squeeze lost a letter"),
+    # ---- the mutants of fold2 (order 44): the order of the fold, the Unicode pin and its tag ----
+    mutant("order: the look-alike table runs before the case fold (the old order)", TN,
+        "    s = s.casefold().translate(_CF_TABLE) if casefold else s.translate(_TABLE)",
+        "    s = s.translate(_TABLE).casefold() if casefold else s.translate(_TABLE)",
+        IDEM, "identity_key is not idempotent for"),
+    mutant("order: no case fold before the marks are dropped", TN,
+        "raw.casefold() if casefold else raw)", "raw)", SYMM, "identity_key is not case symmetric for"),
+    mutant("order: the case fold table is the raw table", TN,
+        "_CF_TABLE = types.MappingProxyType(_build_cf_table(CONFUSABLES))",
+        "_CF_TABLE = types.MappingProxyType(dict(CONFUSABLES))", CFTABLE, "is not a casefolded non-ASCII key"),
+    mutant("order: a capital wins over its own small letter", TN,
+        "    return {**derived, **own}", "    return {**own, **derived}", CFTABLE, "does not take the entry of its own letter"),
+    mutant("squeeze: no case fold before the look-alike table", TN,
+        "    s = _fold(raw, casefold=True).upper()", "    s = _fold(raw).upper()", SQUEEZE_SYMM, "squeeze is not case symmetric for"),
+    mutant("pin: require_pinned_unidata only warns", TN,
+        "    check_pinned_unidata(expected, strict=True)", "    check_pinned_unidata(expected)", REQUIRE, "require_pinned_unidata accepted another Unicode version"),
+    mutant("pin: require_pinned_unidata binds the pin at definition", TN,
+        "def require_pinned_unidata(expected: str | None = None) -> None:",
+        "def require_pinned_unidata(expected: str | None = defaults.TEXTNORM_PINNED_UNIDATA) -> None:",
+        REQUIRE, "the patched pin is not read"),
+    mutant("tag: a key of another Unicode version has no tag", TN,
+        "    if version == defaults.TEXTNORM_PINNED_UNIDATA:", "    if True:", TAG, "a key made on another Unicode version equals the pinned key"),
+    mutant("tag: the tag does not name the version", TN,
+        '    return f"\\ue000alg={_ALG}|ud={version}\\ue000"', '    return f"\\ue000alg={_ALG}\\ue000"', TAG, "the tag does not name the algorithm"),
+    mutant("tag: the key of another version is folded again with its tag", TN,
+        "    if tag and raw.startswith(tag):", "    if False:", TAG, "the key of another version is not idempotent"),
 ]  # fmt: skip
 
 
