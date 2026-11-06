@@ -15,7 +15,7 @@ from pathlib import Path
 
 import pytest
 
-from tests.test_k5_perf import FLOOR_S, MIN_SMALL_S
+from tests.fixtures.timing import FLOOR_S, MIN_SMALL_S
 
 FUZZ_CASES = 2000
 FUZZ_SEED = 20261106
@@ -493,8 +493,8 @@ def test_gone_rename_case(mn):
 
 def test_gone_newer_case(mn):
     msg = _gone(mn, {"0007_z"}, REAL)
-    assert "newer than this release" in msg and "(runbook case (b) and (e)" not in msg
-    assert "see runbook case (b) and (e)." in msg
+    assert "newer than this release" in msg and "runbook" not in msg
+    assert "a database administrator must look at the records before anyone changes them." in msg
     assert "drop what it made" not in msg and "by hand" not in msg
 
 
@@ -552,7 +552,7 @@ def test_gone_message_prefix_in_every_case(mn):
 
 
 def test_statement_text_exact_output(mn):
-    st = mn.statement_text
+    st = mn.lex
     assert st("SELECT 'a''b';") == ("SELECT '';", "")
     assert st('SELECT "x""y" FROM t;') == ('SELECT "" FROM t;', "")
     assert st('SELECT "x""y" FROM t;', keep_quoted=True) == ('SELECT "x""y" FROM t;', "")
@@ -564,7 +564,7 @@ def test_statement_text_exact_output(mn):
 
 
 def test_e_string_and_dollar_cases(mn):
-    st = mn.statement_text
+    st = mn.lex
     assert st("SELECT E'a\\'b';") == ("SELECT E'';", "")
     assert st("SELECT E'a\\'b';", keep_quoted=True) == ("SELECT E'a\\'b';", "")
     assert st("SELECT e'x';") == ("SELECT e'';", "")
@@ -579,7 +579,7 @@ def test_e_string_and_dollar_cases(mn):
 
 def test_e_string_continuation_is_refused(mn):
     text = "SELECT E'a'\n'\\';\nCOMMIT;\n-- it's\n"
-    got = mn.statement_text(text)[1]
+    got = mn.lex(text)[1]
     assert got == "E'' string continued at line 2", (
         "a literal after an E literal keeps E mode on the server"
     )
@@ -587,19 +587,17 @@ def test_e_string_continuation_is_refused(mn):
         mn.refused_statements(text)
         == ["E'' string continued at line 2"] + mn.refused_statements(text)[1:]
     )
-    assert (
-        mn.statement_text("SELECT E'a' -- c\n /* x */ 'b';")[1] == "E'' string continued at line 2"
-    )
-    assert mn.statement_text("SELECT 'a'\n'b';")[1] == "", "a plain literal continues in plain mode"
-    assert mn.statement_text("SELECT E'a', 'b';")[1] == ""
+    assert mn.lex("SELECT E'a' -- c\n /* x */ 'b';")[1] == "E'' string continued at line 2"
+    assert mn.lex("SELECT 'a'\n'b';")[1] == "", "a plain literal continues in plain mode"
+    assert mn.lex("SELECT E'a', 'b';")[1] == ""
 
 
 def test_e_after_identifier_is_not_a_prefix(mn):
-    assert mn.statement_text("SELECT NE'x\\';") == ("SELECT NE'';", "")
+    assert mn.lex("SELECT NE'x\\';") == ("SELECT NE'';", "")
 
 
 def test_dollar_after_identifier_is_not_a_tag(mn):
-    assert mn.statement_text("SELECT a$b$ x; $b$") == (
+    assert mn.lex("SELECT a$b$ x; $b$") == (
         "SELECT a$b$ x; $$",
         "dollar body not closed at line 1",
     )
@@ -607,19 +605,19 @@ def test_dollar_after_identifier_is_not_a_tag(mn):
 
 def test_non_ascii_dollar_tag(mn):
     assert mn.refused_statements("SELECT $é$ COMMIT; $é$;") == []
-    assert mn.statement_text("SELECT $€$ x $€$;") == ("SELECT $$;", "")
+    assert mn.lex("SELECT $€$ x $€$;") == ("SELECT $$;", "")
     assert mn.refused_statements("SELECT $é$ x $é$; COMMIT;") == [
         "COMMIT: transaction control is not allowed (the run is one transaction)"
     ]
 
 
 def test_parameters_are_left_alone(mn):
-    assert mn.statement_text("SELECT $1, $23;") == ("SELECT $1, $23;", "")
+    assert mn.lex("SELECT $1, $23;") == ("SELECT $1, $23;", "")
 
 
 def test_unrecognised_dollar_refuses(mn):
-    assert mn.statement_text("SELECT $;")[1] == "unrecognised $ at line 1"
-    assert mn.statement_text("SELECT\n$ab;")[1] == "unrecognised $ at line 2"
+    assert mn.lex("SELECT $;")[1] == "unrecognised $ at line 1"
+    assert mn.lex("SELECT\n$ab;")[1] == "unrecognised $ at line 2"
 
 
 @pytest.mark.parametrize(
@@ -633,20 +631,14 @@ def test_unrecognised_dollar_refuses(mn):
     ],
 )
 def test_unterminated_parts_refuse_with_the_line(mn, text, problem):
-    assert mn.statement_text(text)[1] == problem
-    assert mn.statement_text(text, keep_quoted=True)[1] == problem, (
-        "both views give the same problem"
-    )
+    assert mn.lex(text)[1] == problem
+    assert mn.lex(text, keep_quoted=True)[1] == problem, "both views give the same problem"
     assert mn.refused_statements(text)[0] == problem
 
 
 def test_crlf_counts_as_one_line(mn):
-    assert (
-        mn.statement_text("SELECT 1;\r\nSELECT 2;\r\nSELECT 'x;")
-        .__getitem__(1)
-        .endswith("at line 3")
-    )
-    assert mn.statement_text("a\rb\rSELECT 'x;")[1].endswith("at line 3")
+    assert mn.lex("SELECT 1;\r\nSELECT 2;\r\nSELECT 'x;").__getitem__(1).endswith("at line 3")
+    assert mn.lex("a\rb\rSELECT 'x;")[1].endswith("at line 3")
 
 
 def test_comment_ends_at_cr(mn):
@@ -659,7 +651,9 @@ def test_comment_ends_at_cr(mn):
         (f"SELECT 1;{VT}COMMIT;", "COMMIT"),
     ):
         got = mn.refused_statements(text)
-        assert got and got[0].startswith(word), repr(text)
+        assert any(r.startswith(word) for r in got), repr(
+            text
+        )  # a vertical tab is also a hidden character
     assert mn.refused_statements(f"-- x{LF}COMMIT;")[0].startswith("COMMIT"), (
         "the line feed control"
     )
@@ -781,7 +775,7 @@ def test_the_real_files_read_clean(mn):
     counts = []
     for p in _real(mn):
         text = p.read_text(encoding="utf-8")
-        cleaned, problem = mn.statement_text(text)
+        cleaned, problem = mn.lex(text)
         assert problem == "", p.name
         assert mn.refused_statements(text) == [], p.name
         counts.append(len([s for s in cleaned.split(";") if s.strip()]))
@@ -791,7 +785,7 @@ def test_the_real_files_read_clean(mn):
 def test_a_million_characters_finish(mn):
     text = "SELECT 'a''b' /* c */ -- d\n;" * 40000
     assert len(text) > 1_000_000
-    assert mn.statement_text(text)[1] == ""
+    assert mn.lex(text)[1] == ""
 
 
 def _linear(measure, unit: str, small: int, big: int) -> bool:
@@ -815,7 +809,7 @@ def test_lexer_is_linear(mn):
     units = ["'", '"', "$a$", "/*", "--", "E'\\", ";", "$a$ x ", "a$"]
     slow = [
         (fn.__name__, unit)
-        for fn in (mn.statement_text, mn.refused_statements)
+        for fn in (mn.lex, mn.refused_statements)
         for unit in units
         if not _linear(lambda t, f=fn: _median_time(f, t), unit, small, big)
     ]
@@ -841,8 +835,8 @@ def test_lexer_property_never_raises_and_cr_equals_lf(mn):
     rng = random.Random(FUZZ_SEED)  # noqa: S311 - a seeded test generator, not a secret
     for case in range(FUZZ_CASES):
         text = "".join(rng.choice(ALPHABET) for _ in range(rng.randint(0, 40)))
-        cleaned, problem = mn.statement_text(text)  # must never raise
-        _, problem_kept = mn.statement_text(text, keep_quoted=True)
+        cleaned, problem = mn.lex(text)  # must never raise
+        _, problem_kept = mn.lex(text, keep_quoted=True)
         msg = f"seed {FUZZ_SEED} case {case}: {text!r}"
         assert problem == problem_kept, msg
         if not problem:
