@@ -346,3 +346,4 @@ P2d-1 | draft PR 77 6d5616b; needs re-merge of P1a fix5 | 7 | PR 63 fix5
 | P5a | BLE001 reasons + tests owed (order 93) | P1a fix5, P4d-a2, P5b1, P3a-2, P1b, P4b1 | heavy slots (priority per order 93) |
 P5b1 | PR 80 draft, head b6fb1c2, evidence scrubbed | builders running: P1a fix5, P4d-a2, P1b redo | blocked on: full suites at final head, P5a merge
 ORDER95 | relayed | builders running: P1a fix5, P4d-a2, P1b redo, P3a-2 finals, P5b1 reruns | blocked on: heavy slots, lead PR 81
+P3a-2 | READY PR 73 head 967d5a1, finals green | builders running: P1a fix5, P4d-a2, P1b, P5b1 | blocked on: heavy slots

@@ -544,3 +544,10 @@ DONE (builder's claim): StoreBusy; write wrapper on 22 writes (retry on 40001/40
 NOT DONE: a2-ii mutants about 30/45 killed, survivors listed, w13..w23 still running; final 3.13/3.12 full runs not started; B608 status not stated in the report (check).
 Effect on stack: PR 79 (P4b1), PR 76 (P2a-1), PR 78 (P4a) are based on 7a84408 which is an ancestor of 714f7ff, so they need a normal merge of the new head later; P4b1 stand-in StoreBusy rows can now be re-run against the real one.
 NEEDS LEAD: nothing new. Slip noted: mutation runners must kill the whole process group.
+
+## q234 (2026-11-06T15:20:00Z) REPORT P3a-2: READY for your review. PR 73 (base core/P3a 606a9fe), head 967d5a1
+Checked by me: remote core/P3a-2 = 967d5a1 = PR head; 66a5710 is an ancestor (plain fast-forward); contains core/P3a 606a9fe; gitleaks 66a5710..967d5a1 clean; mergeable_state clean.
+Tails read by me: 3.13 `10438 passed, 1 skipped, 28 deselected` RC=0; 3.12 same counts RC=0; mutants 36/36 killed RC=0; bandit -ll clean; ruff clean; stage tests 37/37 (builder's claim for the last three).
+Honest caveats: the head-SHA line on each log was added AFTER the run (the tree HEAD was 967d5a1 during the runs, builder's word); no PostgreSQL 17, no perf or live tests; Postgres 16 locally; one skip is tests/contracts/test_llm.py:95; killer table is from the 66a5710 run, not re-derived at 967d5a1 (mutants did re-run at 967d5a1, 36/36).
+Evidence scrubbed to reviews/P3a-2/ (hygiene 0); BN-P3a-2-a..e placed in tickets/P3a.md. Builder cleanup done (Postgres 5432 stopped, worktrees removed).
+PR 73 is not stacked on an unmerged PR except core/P3a (PR 68 merged per its body); left READY (not draft) since base P3a holds main.
