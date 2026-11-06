@@ -386,3 +386,19 @@ When one refusal carries several reasons, the run `reason_code`, the audit row a
 - Whether `run_id="-"` is still the convention on the build base (read on `ce70eb5` only).
 - Every line number into `src/` on the build base (P2a-1, P4a, P4b1 and P4d move them).
 - P2a-1's final SQL for the kill-switch read.
+
+**BN-1 (RUNG TABLE, lead order 56, R448).** Build note only; ticket stays frozen.
+
+Source of all rows: `reviews/rung-audit-1-part-E.md` (read-only audit, 2026-11-06; summary in `reviews/rung-audit-1.md`). Rung numbers are order 54's: 1 studio code, 2 client's tool, 3 no-code, 4 MCP server, 5 library or standard tool, 6 new model feature, 7 our code. Web facts read 2026-11-06 (github.com only); doc sites that failed DNS are UNVERIFIED. Existing ticket text is untouched; the freeze is not reopened. No cut in this note is applied.
+
+Ticket body is 388 lines (over about 250): two sub-tickets (P4c-1 alert ledger, P4c-2 metered run path plus wall alert) on the money path and the no-lost-message path, 7 component rows; candidate to split at P4c-1 / P4c-2. Audit: no cut.
+
+| component | need | rung tried | evidence (source, date) | what only our code gives | verdict |
+|---|---|---|---|---|---|
+| max_run_usd on run path via one MeteredLLM and scope per run (P4c-2) | reserve before every call incl. judge; fail closed (P4c:193, rule 2 :99) | 7 | P4c:196 | per-run money cap | KEEP-CODE (exact-decimal reserve/settle) |
+| Overshoot and settle-failure handling (P4c-2) | end run with own reason code and card (P4c:104-110) | 7 | P4c:104-110 | run state written first | KEEP-CODE |
+| registry.py / deferred.py checks | validate caps and `alert_to` | 1 (validated config, pydantic) | P4c-2 interface | n/a | KEEP (it is config) |
+| alerts.render, WallAlerter.raise_wall sending | fixed-text alert via channel kind | 1 (channel kind, Slack) or 2/3 (client alert tool, n8n) | P4c-2 interface; `slack_channel.py:45` | template text is a few strings | KEEP (already rung 1); templates stay code, text is checked by `channel.clean` |
+| wall_alerts ledger (P4c-1: 1 table, 3 store methods, migration, grant) | at least once, normally once, per agent per wall per period; survive crash between decide and sent (P4c:128-131) | 2 or 5 (Alertmanager `repeat_interval`; PagerDuty `dedup_key`) | Alertmanager configuration doc (github.com/prometheus/alertmanager, 2026-11-06): `repeat_interval` repeats, does not say it dedupes, leaves it to the receiver via `groupKey`; PagerDuty `dedup_key` UNVERIFIED (site blocked) | durable not-yet-sent record in the client's own store; a log-fed tool loses the alert if the process dies first; Alertmanager needs a metrics source core lacks | KEEP-CODE for core (R368 no lost message). Gap test idea: kill the process after run state is written and before `channel.send`; no later run hits the wall that period; tick retry still delivers within `WALL_ALERT_RETRY_AFTER_S`. Option: client with PagerDuty/Opsgenie sends a dedup key, "normally once" moves to the tool. If P4c-1 were cut: about 3-5 agent-hours saved (not proposed) |
+| Retry tick step and red rule (P4c-2) | retry unsent alerts for current and previous period; red on failure (P4c:13-14) | 1 (existing tick) | P4c:13 | glue on rung 1 | KEEP |
+| MAX_DOCUMENT_BYTES tied to prompt bound | config bound may only be lowered (P4c:30) | config | P4c:30 | config plus one constant | KEEP (already config) |

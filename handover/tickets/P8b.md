@@ -510,3 +510,17 @@ Build note only; the freeze is not reopened.
 
 **BN-19 (genericity audit finding G-15, lead order 53; rename part).** Ledger row: move `tests/warden_port/` to `tests/ported/` in one rename-only pull request with `git mv` (no test deleted, no test edited); the layout lines that name `tests/warden_port/` (lines 130 and 145) then read `tests/ported/` once that pull request merges. The k1b test names (`tests/test_k1b_*.py`, `tests/k1b_support.py`) follow AK4a BN-20.
 Build note only; the freeze is not reopened.
+
+**BN-20 (RUNG TABLE, lead order 56, R448).** Build note only; ticket stays frozen.
+
+Source of all rows: `reviews/rung-audit-1-part-E.md` (read-only audit, 2026-11-06; summary in `reviews/rung-audit-1.md`). Rung numbers are order 54's: 1 studio code, 2 client's tool, 3 no-code, 4 MCP server, 5 library or standard tool, 6 new model feature, 7 our code. Web facts read 2026-11-06 (github.com only); doc sites that failed DNS are UNVERIFIED. Existing ticket text is untouched; the freeze is not reopened. No cut in this note is applied.
+
+Ticket body is 512 lines (over about 250): docs and process ticket with 16 page sections plus a planted-fault test set (about 21 faults); candidate to split (pages vs ledger check). Audit: one partial cut only, proposed.
+
+| component | need | rung tried | evidence (source, date) | what only our code gives | verdict |
+|---|---|---|---|---|---|
+| 16 pages in `docs/kinds/` | plain-word page per kind, fixed headings, Backends rows from `TABLE` (P8b:98-110, 150) | 5 (pdoc / mkdocstrings) | UNVERIFIED | plain-word role and "what it does not do" are writing; a generator gives signatures only | KEEP (writing) |
+| T1 and T6 checks (grep, awk) | page set equals `TABLE` keys plus extras; headings; labels (P8b:161, 166) | 5 (markdownlint / Vale) | UNVERIFIED | set comparison against `TABLE` is project-specific | KEEP (small shell, no tool covers 80 percent) |
+| T4 drift report | no open drift in `docs/kinds/` (P8b:164) | 1 (`egm:egm-drift-report`) | P8b:47 | n/a | KEEP (already rung 1) |
+| T2 `p8b_ledger_check.awk` plus about 21 planted faults (P1-P24) | cloud ledger has no unresolved BLOCKER or MAJOR (P8b:162, 181-203) | 1 (studio `ledger_check.py`, already run at T3 on the laptop) | P8b:163, 388; tool not visible in cloud (P8b:439); what `ledger_check.py` does is UNVERIFIED | only that the cloud checks itself before the copy; no order 54 guarantee | CUT-TO-CONFIG+GLUE (partial): drop T2 and its planted faults, normalise the 5-cell rows (needed anyway, PENDING LEAD 6), gate on T3 alone, or copy `ledger_check.py` into the cloud branch. About 1.5-3 agent-hours saved; risk: a bad row is caught one round trip later. PROPOSED, NOT APPLIED: waits for the lead/owner |
+| T5 section 9 paths | every path exists (P8b:165) | 5 (`test -e`) | P8b:165 | n/a | KEEP (standard tool) |

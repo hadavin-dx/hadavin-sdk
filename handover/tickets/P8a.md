@@ -343,3 +343,15 @@ Copied from `reviews/P8a-round3-resolve.md` (table "Decisions", column "decision
 - (f) **PENDING LEAD 18:** answered yes. BN-10 b's mechanical "did a copied core path change" diff is the rule (reversible), not a default.
 - (g) The mandatory adversarial reader also reads the exporter diff of (b) and every caller R0b lists for `item_row_id`.
 - (h) **Counts after BN-21:** 16 mutants (M1-M16); 48 applicable cells (apexc 13, dealdesk 14, intake 11, refunds 10) and 16 N/A; 21 pass-criterion rows (unchanged: R14 gains 1 intake row, as BN-4 added 4); 18 PENDING LEAD items (open: 2-8, 12-16; closed: 1, 9, 10, 11, 17, 18). These numbers supersede BN-14's and the "Counts" section's.
+
+**BN-22 (RUNG TABLE, lead order 56, R448).** Build note only; ticket stays frozen.
+
+Source of all rows: `reviews/rung-audit-1-part-E.md` (read-only audit, 2026-11-06; summary in `reviews/rung-audit-1.md`). Rung numbers are order 54's: 1 studio code, 2 client's tool, 3 no-code, 4 MCP server, 5 library or standard tool, 6 new model feature, 7 our code. Web facts read 2026-11-06 (github.com only); doc sites that failed DNS are UNVERIFIED. Existing ticket text is untouched; the freeze is not reopened. No cut in this note is applied.
+
+Ticket body is 345 lines (over about 250): 4 demo repos x 16 mutants (48 applicable cells, per BN-21 counts) and 21 pass-criterion rows; candidate to split per repo. Audit: no cut, no core code in this ticket.
+
+| component | need | rung tried | evidence (source, date) | what only our code gives | verdict |
+|---|---|---|---|---|---|
+| Pin bump in `pyproject.toml` and `uv.lock` | move 4 demos to ONE `<FINAL>` commit; stop if `origin/main` moves (P8a:33-38) | 5 (Renovate or Dependabot) | Renovate pep621 manager readme (github.com/renovatebot/renovate, 2026-11-06): supports `uv` incl. `uv.lock`; git-commit dependency support not stated (UNVERIFIED) | n/a, one-time bump; "same commit, stop if main moves" is a start rule | KEEP the lead's manual sitting (no code to cut; a bot costs more than one bump) |
+| Delete or keep copies; copy tests; R1c and R10 one-line scripts | delete copies core now provides, prove nothing drifted (P8a:39-55, BN-7, BN-8, BN-15) | 1 (each demo's copy test, P8a:55) plus 5 (git) | P8a:54-55 | look-alike checks do not get weaker (R13, R14) | KEEP (plain git plus existing tests) |
+| R13 and R14 checks at deny and allow sites | no look-alike check gets weaker (P8a:29, BN-3, BN-4) | 7 | P8a:29 | redaction and egress safety | KEEP (core safety chain; not audited here) |
