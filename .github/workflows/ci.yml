@@ -1,6 +1,7 @@
 name: CI
 
-# Required checks for main: "check" and "security" (defined here). CodeQL (GitHub default setup) and SonarCloud (an
+# Required checks for main: "check" and "security" (defined here). A third job, "tests-py312" (the tests on Python 3.12), is not a
+# required check yet (a repository setting the lead takes to the owner). CodeQL (GitHub default setup) and SonarCloud (an
 # external app) also gate merges but are configured outside this file. The tools in this file are free and keep
 # working when the repository turns private; CodeQL default setup is NOT free on a private repository (paid).
 on:
