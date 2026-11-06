@@ -1,0 +1,200 @@
+FFFFFF                                                                   [100%]
+=================================== FAILURES ===================================
+____ test_a_test_path_that_starts_with_a_dash_is_a_path_not_a_pytest_option ____
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-291/test_a_test_path_that_starts_w0')
+
+    def test_a_test_path_that_starts_with_a_dash_is_a_path_not_a_pytest_option(tmp_path):
+        """The `--` marker is NOT the fence (on Python 3.12.3 `pytest -- -x` still takes -x as an option and exits 0), so the argv builder
+        itself refuses such a path. As a bare option "-x" would collect and pass test_ok.py in the cwd."""
+        (tmp_path / "test_ok.py").write_text("def test_a():\n    assert True\n", encoding="utf-8")
+        assert mr._pytest(tmp_path, ["test_ok.py"], tmp_path / "r2.xml", 60) == 0
+        for bad in ("-x", "--help", "-", "@args.txt"):
+>           _must_refuse(
+                "a test path with a dash or an at sign reached the pytest argv",
+                mr._pytest,
+                tmp_path,
+                [bad],
+                tmp_path / "r.xml",
+                60,
+            )
+
+tests/test_mutation_runner.py:502: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+label = 'a test path with a dash or an at sign reached the pytest argv'
+call = <function _pytest at 0x7efddb376f20>, match = ''
+args = (PosixPath('/tmp/pytest-of-root/pytest-291/test_a_test_path_that_starts_w0'), ['-x'], PosixPath('/tmp/pytest-of-root/pytest-291/test_a_test_path_that_starts_w0/r.xml'), 60)
+kwargs = {}
+
+    def _must_refuse(label, call, *args, match="", **kwargs):
+        """Call ``call``; it must raise ``ValueError``. Otherwise the test fails with ``<label>: was not refused`` as the FIRST
+        assertion line, so a mutation run can tell which guard was removed."""
+        try:
+            call(*args, **kwargs)
+        except ValueError as exc:
+            assert match in str(exc), f"{label}: refused with another message: {exc}"
+            return
+>       raise AssertionError(f"{label}: was not refused")
+E       AssertionError: a test path with a dash or an at sign reached the pytest argv: was not refused
+
+tests/test_mutation_runner.py:220: AssertionError
+_ test_a_path_that_starts_with_a_dash_is_refused_in_both_grammars_and_dot_slash_is_the_way_out _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-291/test_a_path_that_starts_with_a0')
+
+    def test_a_path_that_starts_with_a_dash_is_refused_in_both_grammars_and_dot_slash_is_the_way_out(
+        tmp_path,
+    ):
+        """Root fix of the dash class: the runner refuses a test path, a fixture folder and a mutant file that starts with `-`
+        (before anything is copied or run), and accepts the same name written `./name`."""
+        for bad in ("-x", "--help", "-", "-x/y.py", "-x -q"):
+>           _must_refuse("a path that starts with a dash was accepted", mr._relative, bad)
+
+tests/test_mutation_runner.py:519: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+label = 'a path that starts with a dash was accepted'
+call = <function _relative at 0x7efddb374860>, match = '', args = ('-x',)
+kwargs = {}
+
+    def _must_refuse(label, call, *args, match="", **kwargs):
+        """Call ``call``; it must raise ``ValueError``. Otherwise the test fails with ``<label>: was not refused`` as the FIRST
+        assertion line, so a mutation run can tell which guard was removed."""
+        try:
+            call(*args, **kwargs)
+        except ValueError as exc:
+            assert match in str(exc), f"{label}: refused with another message: {exc}"
+            return
+>       raise AssertionError(f"{label}: was not refused")
+E       AssertionError: a path that starts with a dash was accepted: was not refused
+
+tests/test_mutation_runner.py:220: AssertionError
+_ test_a_path_that_starts_with_an_at_sign_is_refused_because_pytest_reads_it_as_an_argument_file _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-291/test_a_path_that_starts_with_a1')
+
+    def test_a_path_that_starts_with_an_at_sign_is_refused_because_pytest_reads_it_as_an_argument_file(
+        tmp_path,
+    ):
+        """Sibling of the dash class: `pytest @file` reads further arguments from `file`, also after `--`."""
+        for bad in ("@args.txt", "@"):
+>           _must_refuse("a path that starts with an at sign was accepted", mr._relative, bad)
+
+tests/test_mutation_runner.py:559: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+label = 'a path that starts with an at sign was accepted'
+call = <function _relative at 0x7efddb374860>, match = '', args = ('@args.txt',)
+kwargs = {}
+
+    def _must_refuse(label, call, *args, match="", **kwargs):
+        """Call ``call``; it must raise ``ValueError``. Otherwise the test fails with ``<label>: was not refused`` as the FIRST
+        assertion line, so a mutation run can tell which guard was removed."""
+        try:
+            call(*args, **kwargs)
+        except ValueError as exc:
+            assert match in str(exc), f"{label}: refused with another message: {exc}"
+            return
+>       raise AssertionError(f"{label}: was not refused")
+E       AssertionError: a path that starts with an at sign was accepted: was not refused
+
+tests/test_mutation_runner.py:220: AssertionError
+_ test_a_leader_reaped_by_someone_else_is_known_as_ended_so_its_group_is_not_signalled _
+
+    @pytest.mark.skipif(
+        sys.platform == "win32" or not hasattr(os, "waitid"), reason="the waitid wait is POSIX only"
+    )
+    def test_a_leader_reaped_by_someone_else_is_known_as_ended_so_its_group_is_not_signalled():
+        """SIGCHLD ignored (or a stray ``wait``) reaps the child before the runner looks: ``os.waitid`` raises ``ChildProcessError``.
+        ``proc`` must learn that it has ended, or ``_kill_tree`` would ``killpg`` a group of a reaped (possibly reused) pid."""
+        proc = subprocess.Popen([sys.executable, "-c", "pass"])  # our own interpreter, a fixed argument
+        try:
+            os.waitid(os.P_PID, proc.pid, os.WEXITED | os.WNOWAIT)  # ended, not reaped
+            os.waitpid(proc.pid, 0)  # someone else reaps it
+            mr._wait_unreaped(proc, 30)
+>           assert proc.returncode is not None, (
+                "the reaped leader was still unknown to its Popen object"
+            )
+E           AssertionError: the reaped leader was still unknown to its Popen object
+E           assert None is not None
+E            +  where None = <Popen: returncode: None args: ['<scratch>...
+
+tests/test_mutation_runner.py:1363: AssertionError
+_ test_run_mutants_is_not_re_entrant_and_a_nested_call_leaves_the_outer_one_alone _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-291/test_run_mutants_is_not_re_ent0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7efddb4dbce0>
+
+    @pytest.mark.skipif(sys.platform == "win32", reason="the signal state is POSIX only")
+    def test_run_mutants_is_not_re_entrant_and_a_nested_call_leaves_the_outer_one_alone(
+        tmp_path, monkeypatch
+    ):
+        root = _raising_tree(tmp_path)
+        seen = {}
+    
+        def nested(*a, **k):
+            before = dict(mr._SIGNALS)
+            try:
+                run_mutants(root, [], ["tests/test_core.py"], extra_dirs=(), timeout=60)
+            except RuntimeError as exc:
+                seen["error"] = str(exc)
+            seen["unchanged"] = dict(mr._SIGNALS) == before
+            return 0
+    
+        monkeypatch.setattr(mr, "_pytest", nested)
+        run_mutants(root, [], ["tests/test_core.py"], extra_dirs=(), timeout=60)
+>       assert "not re-entrant" in seen.get("error", ""), "a nested run_mutants call was not refused"
+E       AssertionError: a nested run_mutants call was not refused
+E       assert 'not re-entrant' in 'maximum recursion depth exceeded'
+E        +  where 'maximum recursion depth exceeded' = <built-in method get of dict object at 0x7efddae10580>('error', '')
+E        +    where <built-in method get of dict object at 0x7efddae10580> = {'error': 'maximum recursion depth exceeded', 'unchanged': True}.get
+
+tests/test_mutation_runner.py:1388: AssertionError
+_ test_a_relative_link_that_points_out_of_the_tree_is_refused_at_snapshot_time _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-291/test_a_relative_link_that_poin0')
+
+    def test_a_relative_link_that_points_out_of_the_tree_is_refused_at_snapshot_time(tmp_path):
+        """A relative link such as ``../../../x`` in ``src`` is copied as a link, and in the copy (a sibling of the snapshot in the shared
+        temp folder) it would resolve to a neighbour, not to what it meant. An absolute link keeps its meaning and stays (see the keep-a-link test)."""
+        shared = tmp_path / "shared_temp"
+        shared.mkdir()
+        root = _raising_tree(tmp_path)
+        (tmp_path / "outside.txt").write_text("x", encoding="utf-8")
+        _symlink_or_skip("../../../outside.txt", root / "src" / "pk" / "out.txt")
+        with pytest.MonkeyPatch.context() as mp:
+            mp.setattr(tempfile, "tempdir", str(shared))
+>           _must_refuse(
+                "a relative link out of the tree was copied",
+                run_mutants, root, [], ["tests/test_core.py"], extra_dirs=(), match="outside the tree",
+            )  # fmt: skip
+
+tests/test_mutation_runner.py:1403: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+label = 'a relative link out of the tree was copied'
+call = <function run_mutants at 0x7efddb377420>, match = 'outside the tree'
+args = (PosixPath('/tmp/pytest-of-root/pytest-291/test_a_relative_link_that_poin0/pkg'), [], ['tests/test_core.py'])
+kwargs = {'extra_dirs': ()}
+
+    def _must_refuse(label, call, *args, match="", **kwargs):
+        """Call ``call``; it must raise ``ValueError``. Otherwise the test fails with ``<label>: was not refused`` as the FIRST
+        assertion line, so a mutation run can tell which guard was removed."""
+        try:
+            call(*args, **kwargs)
+        except ValueError as exc:
+            assert match in str(exc), f"{label}: refused with another message: {exc}"
+            return
+>       raise AssertionError(f"{label}: was not refused")
+E       AssertionError: a relative link out of the tree was copied: was not refused
+
+tests/test_mutation_runner.py:220: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_mutation_runner.py::test_a_test_path_that_starts_with_a_dash_is_a_path_not_a_pytest_option
+FAILED tests/test_mutation_runner.py::test_a_path_that_starts_with_a_dash_is_refused_in_both_grammars_and_dot_slash_is_the_way_out
+FAILED tests/test_mutation_runner.py::test_a_path_that_starts_with_an_at_sign_is_refused_because_pytest_reads_it_as_an_argument_file
+FAILED tests/test_mutation_runner.py::test_a_leader_reaped_by_someone_else_is_known_as_ended_so_its_group_is_not_signalled
+FAILED tests/test_mutation_runner.py::test_run_mutants_is_not_re_entrant_and_a_nested_call_leaves_the_outer_one_alone
+FAILED tests/test_mutation_runner.py::test_a_relative_link_that_points_out_of_the_tree_is_refused_at_snapshot_time
+6 failed, 47 deselected in 2.01s
