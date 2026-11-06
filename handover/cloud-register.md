@@ -597,3 +597,5 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | bn-AKG2 | Opus BN author AK-G2 (apply BN-1..23 + banner into ticket) | 04:58Z | +20min | REPORTED | verify, push, relay PL7-18 |
 | bn-AK2a | Opus BN author AK2a (apply BN-1..20 + banner into ticket) | 05:05Z | +20min | REPORTED | verify, push, relay PL7-14 |
 | bd-P1m-r4 | Sonnet builder P1m PR 61 order 33 batch (dash root fix, py3.12 CI, flake, review-3 minors) | 05:08Z | +60min | running | verify (rerun 3 runner test files), tell lead |
+| ra-AKG1-r3 | egm-design adversarial AK-G1 round 3 (rev 3, 42368a3, LAST) | 05:08Z | +15min | running | saver |
+| rc-AKG1-r3 | egm-codebase-details correctness AK-G1 round 3 | 05:08Z | +15min | running | saver |
