@@ -637,3 +637,6 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | rr-AKG15-r2-cor | Sonnet egm-codebase-details review AK-G15 rev 2 round 2 | 06:45Z | +20min | REPORTED | save
 | rr-AKG16-r2-adv | Sonnet egm-design review AK-G16 rev 2 round 2 | 06:46Z | +20min | REPORTED | save
 | rr-AKG16-r2-cor | Sonnet egm-codebase-details review AK-G16 rev 2 round 2 | 06:46Z | +20min | REPORTED | save
+| rs-AKG15-r2 | Opus egm-resolve AK-G15 rev 2 round 2 (+ order 43 answers) | 07:20Z | +25min | running | save |
+| rs-AKG16-r2 | Opus egm-resolve AK-G16 rev 2 round 2 (+ order 43 answers) | 07:20Z | +25min | running | save |
+| o43-notes | Opus: AK-G2 build note R1-RES-1, AK-G16 relay lines in AK-G1/AK-G2, owner-visible-limits 13-21 | 07:20Z | +20min | running | commit |
