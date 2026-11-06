@@ -18,7 +18,7 @@ import anthropic  # the extra: a missing install fails at start-up with the hint
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.llm.common import Answer, NetworkLLM, pinned, reply
 from hadavin_sdk.llm.protocol import UsageMissing, build_usage
-from hadavin_sdk.models import Reply, ToolCall
+from hadavin_sdk.models import Reply, ToolCall, Usage
 
 API_BASE_URL = "https://api.anthropic.com"
 
@@ -90,6 +90,7 @@ def make(settings: Any, deps: Any) -> AnthropicLLM:
 
 class AnthropicLLM(NetworkLLM):
     label = "anthropic"
+    REQUESTS_PER_CHAT = 1  # one request a chat; `common.request_bound` reads it
     retryable = staticmethod(retryable)
 
     def __init__(
@@ -127,8 +128,10 @@ class AnthropicLLM(NetworkLLM):
         return self._client.with_options(api_key=self._key()) if self._key else self._client
 
     @staticmethod
-    def _usage(resp: Any):
-        """The counts, read from the raw dict form so a null or a wrong type reaches `checked_count` as sent."""
+    def _usage(resp: Any) -> tuple[Usage, dict[str, object]]:
+        """The counts and the pricing words, read from the raw dict form so a null or a wrong type reaches
+        `checked_count` as sent. A cache class is 0 when null or absent; a count is kept and refused later by
+        `cost_usd`. The nested `cache_creation` object is not read."""
         raw = getattr(resp, "usage", None)
         if raw is None:
             raise UsageMissing("absent", "usage")
@@ -136,16 +139,24 @@ class AnthropicLLM(NetworkLLM):
             raw = raw.model_dump()
         if not isinstance(raw, dict):
             raise UsageMissing("absent", "usage")
-        return build_usage(raw.get("input_tokens"), raw.get("output_tokens"))
+        usage = build_usage(
+            raw.get("input_tokens"),
+            raw.get("output_tokens"),
+            cache_write_tokens=raw.get("cache_creation_input_tokens"),
+            cache_read_tokens=raw.get("cache_read_input_tokens"),
+        )
+        return usage, {k: raw[k] for k in ("service_tier", "speed") if k in raw}
 
     @staticmethod
     def _parse(resp: Any) -> Answer:
         # Thinking blocks are the model's working, never its answer: only text and tool calls are read.
+        usage, facts = AnthropicLLM._usage(resp)
         return Answer(
             text="".join(b.text for b in resp.content if b.type == "text"),
             calls=[
                 ToolCall(name=b.name, input=b.input) for b in resp.content if b.type == "tool_use"
             ],
-            usage=AnthropicLLM._usage(resp),
+            usage=usage,
             stop=resp.stop_reason,
+            facts=facts,
         )

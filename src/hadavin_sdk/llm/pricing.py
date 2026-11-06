@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import decimal
 from decimal import Decimal
+from collections.abc import Mapping
 from typing import Any
 
 from hadavin_sdk.llm.protocol import UnpricedUsage, UsageMissing
@@ -54,3 +55,20 @@ def cost_usd(usage: Usage, route: Any) -> Decimal:
         )
     except decimal.DecimalException as exc:
         raise UsageMissing("invalid") from exc
+
+
+# The pricing words a provider may report next to the counts, and the one value each is priced at. Any other value
+# (a faster or cheaper or dearer tier, a type that is not text) is a price this table does not hold.
+_STANDARD = "standard"
+_PRICING_WORDS = ("service_tier", "speed")
+
+
+def check_facts(route: Any, facts: Mapping[str, object]) -> None:
+    """A pricing word that is absent or null is fine; present, it must be the text `standard` exactly, else
+    `UnpricedUsage(<word>)`. The value is never echoed (it came from the provider)."""
+    for word in _PRICING_WORDS:
+        value = facts.get(word)
+        if value is None:
+            continue
+        if type(value) is not str or value != _STANDARD:
+            raise UnpricedUsage(word)

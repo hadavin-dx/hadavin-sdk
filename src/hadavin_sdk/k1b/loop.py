@@ -18,15 +18,15 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from decimal import Decimal
 
+from hadavin_sdk import defaults
 from hadavin_sdk.config import Route
 from hadavin_sdk.guard.injection import Detector, injection_check
 from hadavin_sdk.guard.runmap import safe_head
 from hadavin_sdk.k1b.bundle import Bundle
 from hadavin_sdk.k1b.diagnosis import Diagnosis, parse_diagnosis, parse_diagnosis_text
 from hadavin_sdk.k1b.tools import ALLOWED_TOOLS, NO_DATA, SUBMIT, TOOL_SPECS, Snapshot, render
-from hadavin_sdk.llm.common import estimate_tokens
 from hadavin_sdk.llm.protocol import LLM, ProviderError, ProviderExhausted
-from hadavin_sdk.models import Reply
+from hadavin_sdk.models import Reply, round_cost_up
 
 SYSTEM_PROMPT = (
     "You are diagnosing one past incident from a frozen snapshot. Use only what the tools return; cite evidence "
@@ -112,14 +112,44 @@ def _chat_bounded(llm: LLM, wait_s: float, /, *args: object, **kwargs: object) -
     return box["reply"]  # type: ignore[return-value]
 
 
-def worst_case_usd(route: Route, system: str, messages: list[dict[str, str]]) -> Decimal:
-    """Upper estimate for one abandoned call (one attempt, a full reply): the pessimistic input estimate plus
-    ``max_tokens`` of output. Charged when a call times out, because its real cost is unknown."""
-    tokens_in = estimate_tokens(system + _dumps(messages))
-    return (
+def worst_case_usd(
+    route: Route,
+    system: str,
+    messages: list[dict[str, str]],
+    *,
+    tools: list[dict[str, object]],
+    requests: int = 1,
+) -> Decimal:
+    """The most `requests` requests could cost, rounded UP once. One request's worth: the byte bound of the prompt
+    (system, messages and tool specs, in UTF-8; one token per byte at most, `PROMPT_BYTES_PER_TOKEN`) at the input
+    price, plus ``max_tokens`` of output at the output price. Charged when a call's real cost is unknown."""
+    prompt = (system + _dumps(messages) + _dumps(tools)).encode("utf-8", "surrogatepass")
+    tokens_in = -(-len(prompt) // defaults.PROMPT_BYTES_PER_TOKEN)
+    one = (
         Decimal(tokens_in) * route.input_usd_per_mtok
         + Decimal(route.max_tokens) * route.output_usd_per_mtok
-    ) / Decimal(1_000_000)
+    )
+    return round_cost_up(one * requests / Decimal(1_000_000))
+
+
+def _count_or(value: object, fallback: int) -> int:
+    return value if type(value) is int and value >= 1 else fallback
+
+
+def _charge_factor(llm: object) -> int:
+    """How many requests one failed call may have been billed for: the requests of one chat times the attempts.
+    Total and plain: an object that declares nothing usable is charged the fallbacks, never an error."""
+    return _count_or(
+        getattr(llm, "REQUESTS_PER_CHAT", None), defaults.CHARGE_FALLBACK_REQUESTS
+    ) * _count_or(getattr(llm, "max_attempts", None), defaults.CHARGE_FALLBACK_ATTEMPTS)
+
+
+def _worst_case_of_call(
+    llm: object, route_prices: Route, system: str, messages: list[dict[str, str]]
+) -> Decimal:
+    return worst_case_usd(
+        route_prices, system, messages, tools=TOOL_SPECS, requests=_charge_factor(llm)
+    )
 
 
 def run_case(
@@ -167,13 +197,19 @@ def run_case(
             # The abandoned call may still be running and billed (a retry layer can re-send), so charge the
             # worst case and stop the run: at most one such call per invocation, and the cap still holds.
             if route_prices is not None:
-                budget.charge(worst_case_usd(route_prices, system, messages))
+                budget.charge(_worst_case_of_call(llm, route_prices, system, messages))
             out.status, out.stop_reason, out.halt = "timeout", "call_timeout", "aborted"
             return out
         except ProviderExhausted:
+            # Out of retries: the attempts may all have been billed, so the whole-call maximum is booked.
+            if route_prices is not None:
+                budget.charge(_worst_case_of_call(llm, route_prices, system, messages))
             out.status, out.stop_reason = "error", "provider_exhausted"
             return out
         except ProviderError:
+            # Every other provider failure (a `UsageMissing` included) may have been billed too: same booking.
+            if route_prices is not None:
+                budget.charge(_worst_case_of_call(llm, route_prices, system, messages))
             out.status, out.stop_reason, out.halt = "error", "aborted", "aborted"
             return out
         budget.charge(reply.cost_usd)
