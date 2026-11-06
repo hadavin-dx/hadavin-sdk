@@ -358,7 +358,7 @@ def load_tool_module(module: str, pins: Mapping[str, str] | None = None) -> type
     carries the same digest, otherwise (imported by name, or from older bytes) it is refused. What the pin does
     NOT cover is refused where it can be seen (parent `__init__.py` with code, relative imports) and stated where
     it cannot: absolute imports of other project modules, data files and the standard library are outside it.
-    Without a pin (dev only; pilot and prod require one) it is an ordinary import."""
+    Without a pin (demo only; pilot and prod require one) it is an ordinary import."""
     pin = (pins or {}).get(module)
     try:
         if pin is None:

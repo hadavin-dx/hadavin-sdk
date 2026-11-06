@@ -103,7 +103,7 @@ def test_env_secrets_map_names_to_prefixed_variables(monkeypatch):
         provider.get("missing.one")
 
 
-def _config(tmp_path, secrets, environment="dev"):
+def _config(tmp_path, secrets, environment="demo"):
     cfg_dir = make_cfg(tmp_path)
     path = cfg_dir / "config.yaml"
     raw = yaml.safe_load(path.read_text(encoding="utf-8"))
@@ -112,7 +112,7 @@ def _config(tmp_path, secrets, environment="dev"):
     return cfg_dir
 
 
-def test_env_secrets_are_dev_only(tmp_path):
+def test_env_secrets_are_demo_only(tmp_path):
     assert load_config(_config(tmp_path, {"kind": "env"})).backends.secrets.kind == "env"
     with pytest.raises(ConfigError, match="secrets: env"):
         load_config(_config(tmp_path, {"kind": "env"}, "pilot"))
