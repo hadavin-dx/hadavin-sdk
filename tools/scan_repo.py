@@ -30,9 +30,7 @@ SECRET_RULES = {
     "slack-token": re.compile(r"\bxox[abeoprs]-[A-Za-z0-9-]{10,}"),
     "github-token": re.compile(r"\bgh[pousr]_[A-Za-z0-9]{36,}"),
     "github-fine-grained-token": re.compile(r"\bgithub_pat_[A-Za-z0-9_]{22,}"),
-    "password-literal": re.compile(
-        r"""(?i)[\w.-]*password["']?(?:\s*=\s*|:\s*)(['"])[^'"\s]{8,}\1"""
-    ),
+    "password-literal": re.compile(r"""(?i)password["']?(?:\s*=\s*|:\s*)(['"])[^'"\s]{8,}\1"""),
 }
 
 

@@ -172,3 +172,13 @@ def test_allowlist_entry_with_an_empty_reason_fails(tmp_path):
     repo = _repo(tmp_path, {"a.txt": "x = 1\n"})
     rc, out = _scan(repo, allow="a.txt:sk-api-key:\n")
     assert rc == 1 and "needs path:rule:reason" in out
+
+
+def test_long_word_runs_do_not_hang_the_password_rule(tmp_path):
+    """A minified or base64 line must not cost quadratic time (the rule has no open-ended prefix)."""
+    import time
+
+    repo = _repo(tmp_path, {"min.js": "a" * 300_000 + "\n" + "pass" + "word" * 50_000 + "\n"})
+    start = time.monotonic()
+    rc, _ = _scan(repo)
+    assert rc == 0 and time.monotonic() - start < 20
