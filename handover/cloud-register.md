@@ -732,3 +732,5 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | bd-P6a | Sonnet builder P6a-1 | 2026-11-06T12:37:30Z | REPORTED: PR 72 ready, head c72c16a (12 files, +535/-9); P6a-2 NOT built (needs P5c) |
 | bd-P0a-fix1 | Sonnet builder P0a fix1 | 2026-11-06T12:41:40Z | REPORTED + PUSHED: PR 71 head c17f3c9 (d4cde30..c17f3c9, 1 file, 166 lines) |
 | bd-P3a-2 | Sonnet builder P3a-2 | 2026-11-06T12:48:35Z | REPORTED: PR 73 ready, base core/P3a (stacked on PR 68), head 659f9e3, 8 files +1000/-40 |
+| bd-P3a-1-fix1 | Sonnet builder P3a-1 fix1 | 2026-11-06T12:50:13Z | REPORTED + PUSHED: core/P3a 91a439d (ff of 7155fb4, 7 files +958/-89), PR 68 body updated |
+| bd-P3a-2-merge | Sonnet builder P3a-2 resumed to merge core/P3a 91a439d | 2026-11-06T12:50:13Z | RUNNING |
