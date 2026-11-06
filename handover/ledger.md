@@ -1611,3 +1611,17 @@
 | R1-P5c-COR-6 | Major | P5c | "Strong keywords" are not defined. The regex `_ACCT_WORD` (main redact.py:82) is `(accounts?/acct\.?/acc\.?/a/c)` plus an OPTIONAL number suffix. -> reviews/P5c-round1-correctness.md | OPEN |
 | R1-P5c-COR-7 | Major | P5c | "Upper-case first letter by `str.isupper()` in a check, not by `[A-Z]`" needs a callback after the regex match. -> reviews/P5c-round1-correctness.md | OPEN |
 | R1-P5c-COR-8 | Major | P5c | P5c-1 is described as "No caller changes". -> reviews/P5c-round1-correctness.md | OPEN |
+| R1-P6b2-ADV-1 | Major | P6b2 | Google client scanner rule matches names ending in Client, but the sites call module.Client(), so it finds 10 of 13 and E7 cannot pass. -> reviews/P6b2-round1-adversarial.md | OPEN |
+| R1-P6b2-ADV-2 | Major | P6b2 | EXEMPT switches off the env lint for six files though only secrets_env and secrets_vault read the environment. -> reviews/P6b2-round1-adversarial.md | OPEN |
+| R1-P6b2-ADV-3 | Major | P6b2 | Identity and rights test cannot fail: free-text rights allow wildcards, are not tied to SDK calls or GRANTS, and none can sit beside another identity. -> reviews/P6b2-round1-adversarial.md | OPEN |
+| R1-P6b2-ADV-4 | Major | P6b2 | Mutant Ma17 is unkillable because C5 triggers a migrate raise, while the leak path is a provider raising ConfigError that main prints. -> reviews/P6b2-round1-adversarial.md | OPEN |
+| R1-P6b2-ADV-5 | Major | P6b2 | Environment lint misses evasions such as shutil.os.environ, vars(os), /proc/self/environ, subprocess env, ctypes getenv. -> reviews/P6b2-round1-adversarial.md | OPEN |
+| R1-P6b2-ADV-6 | Major | P6b2 | S3 flags only constant make("secrets") calls, so variable arguments and the factory.py importlib loader reach a secrets provider unchecked. -> reviews/P6b2-round1-adversarial.md | OPEN |
+| R1-P6b2-ADV-7 | Major | P6b2 | Ambient cloud identity hole is only stated and deferred although a pilot/prod startup refusal on known credential variables is possible now. -> reviews/P6b2-round1-adversarial.md | OPEN |
+| R1-P6b2-ADV-8 | Major | P6b2 | A password-less migration DSN lets libpq read PGPASSWORD, passfile or service file, bypassing the secrets kind; fixable in _migrate. -> reviews/P6b2-round1-adversarial.md | OPEN |
+| R1-P6b2-ADV-9 | Major | P6b2 | The highest-privilege migration credential is protected only by prose, and its ref name sits in runtime config with no policy, negative test or env refusal. -> reviews/P6b2-round1-adversarial.md | OPEN |
+| R1-P6b2-COR-1 | Major | P6b2 | I6 allows bootstrap for builtin.py, which is also the factory of 8 kinds such as llm fake, so I6 and I7 contradict and Mb6 cannot be killed. -> reviews/P6b2-round1-correctness.md | OPEN |
+| R1-P6b2-COR-2 | Major | P6b2 | E12 requires more than 150 scanned files but src has about 100, so it would fail on correct code. -> reviews/P6b2-round1-correctness.md | OPEN |
+| R1-P6b2-COR-3 | Major | P6b2 | New kind_identity.py holds bare vendor strings that the lock-in guard's literal scan flags, turning a test red while the ticket forbids editing that file. -> reviews/P6b2-round1-correctness.md | OPEN |
+| R1-P6b2-COR-4 | Major | P6b2 | Rights regex charset excludes semicolon, apostrophe and backtick used in the 31-row table, and the table-to-tuple mapping is undefined. -> reviews/P6b2-round1-correctness.md | OPEN |
+| R1-P6b2-COR-5 | Major | P6b2 | Rule for non-constant dynamic imports is unstated: executor.py, tools.py and factory.py would fail S1 on day one or leave a route open. -> reviews/P6b2-round1-correctness.md | OPEN |
