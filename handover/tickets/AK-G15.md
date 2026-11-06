@@ -1,4 +1,4 @@
-# Package ticket AK-G15 (REVISION 3, DRAFT): the durable queue of "needs a person" items. Assembly Kit, Tier A. Path class SECURITY and REDACTION (extended review), MONEY (the re-run of a message). Absorbs the "work queue" part of plan-v3 P7k, and `compare_ids`, `IdComparison` and `list_inbound` from AK-G2 (order 34 item 72)
+# Package ticket AK-G15 (REVISION 3, FROZEN: build notes BN-1 to BN-27 at the end win): the durable queue of "needs a person" items. Assembly Kit, Tier A. Path class SECURITY and REDACTION (extended review), MONEY (the re-run of a message). Absorbs the "work queue" part of plan-v3 P7k, and `compare_ids`, `IdComparison` and `list_inbound` from AK-G2 (order 34 item 72)
 
 Revision line: **revision 3 DRAFT**, written 2026-11-06 from about 07:02 UTC (12:32 IST; IST = UTC+5:30) by a ticket author under LEAD-ORDERS order 20 item 6, order 23 item 2, order 27 item 62 and order 43 items 13-19. Git commit time is the reference. Revision 2 DRAFT was commit `20dae12`; revision 1 DRAFT was commit `4732f19`. Text only: no code, no pull request, no test run, no sub-agent, no model or embedding call, no spend, no secret, no client data. **Review rounds:** round 1 done (`reviews/AK-G15-round1-adversarial.md` 20 ids, `reviews/AK-G15-round1-correctness.md` 16 ids, `reviews/AK-G15-round1-resolve.md` 30 rows). Round 2 done (`reviews/AK-G15-round2-adversarial.md` 19 ids, `reviews/AK-G15-round2-correctness.md` 13 ids, `reviews/AK-G15-round2-resolve.md` 32 decision rows: 29 PROPOSE FIX, 3 DECLINE; 1 Blocker R2-COR-1 and 13 Majors). This revision applies every row of the round 2 resolve. **This is the LAST ticket revision before round 3** (the cap is 3 ticket rounds counted from round 1, order 20 item 6). After round 3 come freeze and build notes. This is a security, redaction and money path, so the RESULT review of built code has no round cap (CLAUDE.md "Money, redaction and security paths have no round cap").
 
@@ -604,3 +604,299 @@ None of PENDING LEAD 20 to 22 needs the owner: no money, secret, repository sett
 - Revision 3 (2026-11-06, from about 07:02 UTC / 12:32 IST): applies the round 2 resolve (`reviews/AK-G15-round2-resolve.md`, 32 decision rows: 29 PROPOSE FIX, 3 DECLINE) and the lead's answers to NEEDS LEAD 13-19 (order 43). The LAST revision before round 3 (cap 3). 3 sub-PRs (a, b, c), 51 test rows (a 24, b 18, c 9), 128 mutants (a 72, b 39, c 17), 12 store methods (a 10, b 2) plus 2 Postgres-store helpers, 1 table with its CHECKs and 3 triggers, 1 partial index, 1 unique constraint and 2 partial unique indexes on it, 1 new index on `inbound_receipts` (the duplicate collection index of revision 2 is dropped, R2-COR-1), 1 database function, 2 new database roles (`queue_worker`, the re-run owner role of AK-G2 BN-24), 2 new exception classes (`QueueRefused` 13 codes, `RerunRefused` 3 codes), 14 INFORM (I1-I14), 22 PENDING LEAD (7 NEEDS LEAD still open: 1, 2, 3, 4, 5, 6, 11; 7 ANSWERED: 13-19; 6 INFORM: 8, 9, 12, 20, 21, 22; 2 replaced: 7 by 19, 10 by 17), 10 owner-visible limits (13-21 in the lead's file, 22 proposed; wording for 15, 18, 21, 22 in PENDING LEAD 20), 16 later rows (V1-V16). New thresholds, all from config or `defaults.py`: `queue.max_waiting_items` (`QUEUE_MAX_WAITING_ITEMS` 2000, ceiling `QUEUE_MAX_WAITING_CEILING` 100000) and `QUEUE_CLOCK_WINDOW_S` 600. Revision 2's "found by this author" item (1) and INFORM I12 were wrong and are corrected. Every "migration role" owner of the function is replaced by the re-run owner role of BN-24. "Counts if an answer differs" deleted.
 - Revision 2 (2026-11-06, from 06:34 UTC / 12:04 IST): applies the round 1 resolve (`reviews/AK-G15-round1-resolve.md`, 30 rows, 37 ids). 3 sub-PRs (a, b, c), 45 test rows (a 23, b 13, c 9), 101 mutants (a 60, b 27, c 14), 12 store methods (a 10, b 2), 1 table with 3 triggers, 1 partial index, 1 unique constraint and 1 partial unique index, 2 new indexes on `inbound_receipts`, 1 database function, 1 new database role, 2 new exception classes, 13 INFORM (I1-I13), 19 PENDING LEAD (14 NEEDS LEAD: 1, 2, 3, 4, 5, 6, 11, 13, 14, 15, 16, 17, 18, 19; 3 INFORM: 8, 9, 12; 2 replaced: 7 by 19, 10 by 17), 9 proposed owner-visible limits (13-21), 15 later rows (V1-V15). All counts assumed the MEANWHILE answers to NEEDS LEAD 15-19. Cut: `assign`/`on_behalf_of`, `closed_30d` counters, listing closed items, the command (MEANWHILE), the `reuse_of IS NULL` clause, `enable_seqscan`. One AK-G2 build note requested through the lead (Couplings). Commit `20dae12`.
 - Revision 1 (2026-11-06, from 06:12 UTC / 11:42 IST): first draft. 3 sub-PRs (a, b, c), 39 test rows (a 20, b 12, c 7), 83 mutants (a 49, b 23, c 11), 11 store methods, 1 table, 1 trigger, 1 new database role, 1 new exception class, 11 INFORM (I1-I11), 14 PENDING LEAD (9 NEEDS LEAD: 1, 2, 3, 4, 5, 6, 11, 13, 14; 5 INFORM: 7, 8, 9, 10, 12), 7 proposed owner-visible limits (13-19), 12 later rows (V1-V12). Commit `4732f19`.
+
+## Build notes (round 3 resolve)
+
+> **BUILD NOTES WIN.** AK-G15 had review rounds 1-3. Review round 3 (`reviews/AK-G15-round3-adversarial.md`, `reviews/AK-G15-round3-correctness.md`) found 0 Blockers and 14 Majors counting both reviewers (8 adversarial, 6 correctness). Round 3 is the last round. The money/redaction extra round of order 20 item 6 (`LEAD-ORDERS.md:80`) needs "no Blocker and at most 2 Majors", so it does not apply: there is no round 4. **This ticket is FROZEN at revision 3** (commit `d725725`). The builder applies build notes BN-1 to BN-27 below, from `reviews/AK-G15-round3-resolve.md`. Where a build note and the text above disagree, the build note wins. Everything above is append-only history and is not rewritten or renumbered. The build-start review reads this ticket together with these notes, and with the PL13 brainstorm and draft (still not run). The CHANGELOG sections are history, not instructions. The "51 rows / 128 mutants" numbers above are superseded by BN-27.
+>
+> **Naming.** These notes are "AK-G15 BN-n". In the text above them, a bare "BN-24" or "BN-4" still means AK-G2's build note (`tickets/AK-G2.md`). These notes always write "AK-G2 BN-24" in full.
+>
+> **Three notes are MEANWHILE texts, not instructions:** BN-2 (part; PENDING LEAD 24), BN-4 (PENDING LEAD 25) and BN-6 (part; PENDING LEAD 23). The lead has not answered them yet. Until the lead answers:
+> - -a builds everything except the `readers` cap (BN-2) and the per-kind ceiling (BN-4);
+> - -b builds everything except the ownership-transfer step of the re-run function and the N12b/N12c end-state assertions (BN-6). No re-run can complete without that step, so -b cannot reach Done before the answer;
+> - -c builds everything except the readers-cap validator (BN-2).
+>
+> **Totals after the decided notes:** 51 test rows (a 24, b 18, c 9) and 143 mutants (a 80, b 46, c 17); 149 if PL23-25 are answered as recommended (BN-27). There are 27 PENDING LEAD items. Open NEEDS LEAD: 1-6, 11, 23, 24, 25. PENDING LEAD 21 is WITHDRAWN (BN-19). Each note cites the finding id it comes from.
+
+**BN-1.** [from R3-ADV-1] **A second canary for the staff-id columns.**
+- *Why.* The canary `person-1@example.invalid` matches AK1's `READER_PATTERN` (`[A-Za-z0-9][A-Za-z0-9_.:@-]{0,127}`): every character is in the set. So Q4's cases "canary in a `readers` element / in `assignee` / in `closed_by` is refused" cannot pass on correct code, and M-a72 cannot be killed.
+- *Change.* Q4 uses a second canary, `person 1 note` (it holds spaces, so it fails `READER_PATTERN`), for exactly these cases:
+  - the runtime INSERT with it in one `readers` element;
+  - the worker claim that sets `assignee` to it;
+  - the worker close that sets `closed_by` to it.
+
+  Every other Q4 case keeps `person-1@example.invalid`; the `tenant` CHECK refuses that one (`@` and `.` are outside `TENANT_PATTERN`).
+- *Said plainly in Q4 and in Security notes "Redaction":* a reader-shaped string, an e-mail shape included, passes the staff-id CHECKs by design. They are staff principal ids.
+- *Killers.* M-a72 is killed by Q4 (`readers` element, second canary). M-a79 (BN-13) is killed by Q4 (`assignee`/`closed_by`, second canary).
+- *Counts.* Rows and mutants unchanged by this note.
+
+**BN-2.** [from R3-ADV-2; NEEDS LEAD 24 for the cap] **"Cannot store text" is overstated: correct the wording (decided); cap the staff-id array (MEANWHILE).**
+- *Decided wording* (replaces the claims at `:140` and `:285`): "The database CHECKs refuse free text: spaces, and any character outside each column's pattern or closed set. They do not stop someone who holds the runtime or worker database password from hiding CODED data in id-shaped columns:
+  - `readers` (one or more elements, each up to 128 characters of letters, digits and `_.:@-`);
+  - `assignee` and `closed_by`;
+  - the hex columns `binding`, `delivery_key` and `item_id`.
+
+  That coded data survives `purge_*` and `forget_user`." The adversary list (Reviewers) gains "park coded data in id-shaped columns".
+- **MEANWHILE (NEEDS LEAD 24, not yet answered). This is the recommendation, not an instruction.**
+  - `defaults.QUEUE_MAX_READERS = 50`, -a's `defaults.py` block;
+  - the CHECK `cardinality(readers) <= 50` on `queue_items`, pinned by N14 against the constant;
+  - a `QueueSettings` field validator refusing a tenant with more than `QUEUE_MAX_READERS` queue readers (`ConfigError` naming the tenant);
+  - Q4: as runtime, an INSERT with 51 `readers` elements is refused, SQLSTATE `23514`;
+  - W2: a config with 51 readers for one tenant gives `ConfigError`;
+  - mutants M-a83 (the cardinality CHECK removed; killed by Q4, 51 elements) and M-c18 (the validator removed; killed by W2).
+  - Honest residual: at most about 6.4 KB (50 x 128 characters) in `readers`, plus the fixed-length hex columns, per row.
+  - Not built until the lead answers.
+
+**BN-3.** [from R3-ADV-3 + R3-COR-1] **Collection selects per tenant, so a full tenant cannot starve the others.**
+- *Why.* The revision 3 SELECT is one global `ORDER BY received_at LIMIT 500` (`:211`), and `room` is applied after it (`:212`). So a tenant at its ceiling with 500 or more older waiting receipts fills every batch. Nothing is created, and `queue_watch` stops after batch 1 because "fewer than the limit" were created (`:242`).
+- *Change* (Interface 4 method 11, `collect_inbound_items`; signature unchanged). Inside one transaction:
+  1. Compute each configured tenant's waiting count (through `queue_items_waiting`) and `room = max_waiting - count`.
+  2. For each tenant with `room > 0`, in sorted tenant order, run the SELECT of `:211` with `r.tenant = %(tenant)s` in place of `= ANY(%(tenants)s)` and `LIMIT min(room, limit)`. Insert as `:212`.
+  3. Skip tenants with `room <= 0` before any SELECT.
+
+  `queue_watch` (Interface 7 (1)) repeats batches while ANY tenant created exactly its per-tenant limit, at most `defaults.QUEUE_COLLECT_BATCHES`. The `uncollected` count of unconfigured tenants is unchanged (first batch only).
+- *Not a starvation source (contested part of R3-COR-1):* a `key_conflict` receipt never re-enters a batch. The key CHECK makes the holder's columns equal the receipt's, so the anti-join excludes it.
+- *Test.* New N2 case: `tenant-a` at its ceiling (`max_waiting_items = 5`, 5 waiting items) with 600 older waiting receipts, plus 10 newer receipts of `tenant-b`. The first tick creates 10 `tenant-b` items and 0 `tenant-a` items, and `queue_watch` reports `queue_full tenant-a=5`. N11 still asserts BN-4's `inbound_receipts_waiting` for the receipt side (the per-tenant form uses it with `tenant` leading).
+- *Mutant.* **M-b44** (the per-tenant SELECT replaced by one global SELECT with `ANY(%(tenants)s)`), killed by that N2 case. M-b35 (room removed) keeps N2's ceiling case.
+- *Counts.* -b mutants +1.
+
+**BN-4.** [from R3-ADV-4; NEEDS LEAD 25] **MEANWHILE (NEEDS LEAD 25, not yet answered). This is the recommendation, not an instruction.**
+- *Why.* One ceiling shared by both kinds lets a mass inbound event (thousands of receipts exhausting attempts) fill all 2000 slots. Every chat hand-off is then refused with `queue_full`, so the safety path is starved by bulk inbound.
+- *Recommendation (a).* Count the ceiling per (tenant, kind): each kind may have up to `queue.max_waiting_items` waiting items. No new setting.
+  - `open_queue_item`'s guard counts `WHERE tenant = %s AND kind = 'chat' AND state IN ('open','claimed')`; collection's `room` counts `kind = 'inbound'`.
+  - `queue_watch`'s `queue_full` is raised per kind (`queue_full tenant-a/chat=n`).
+  - Q21 gains: 3 waiting inbound items at `max_waiting_items = 3` do not refuse a chat hand-off.
+  - N2 gains the mirror case.
+  - Mutants M-a84 (the `kind` filter removed from the open guard; Q21 per-kind case) and M-b52 (the `kind` filter removed from collection's room; N2 per-kind case).
+  - Entry 22's wording changes (PENDING LEAD 26).
+- *Until answered,* the shared ceiling of revision 3 is built as written, and these cases and mutants are not counted.
+
+**BN-5.** [from R3-ADV-5] **A dedupe hit on a CLOSED holder is refused, never returned as success.**
+- *Why.* An item can open before the takeover commits (`:147`), and a person may close it `no_action`. The sweep's retry then calls `open_handoff` with the same key. Revision 3 returns the closed item's id as success, so AK-G1 marks the conversation handed off and nobody sees it. That breaks AK-G1 I-4 in the lost-item direction (R368).
+- *Change* (Interface 6, `open_handoff`). After the decoy check (binding or round differs gives `key_conflict`, unchanged), a held key whose holder has `state = 'closed'` raises `QueueRefused("key_closed")` and writes no event. AK-G1 then ends the run `handoff_unavailable` (its path for any raising hook, design `:252`, `:326`). `QueueRefused` gains the code `key_closed`: **14 codes**.
+  - The store method `open_queue_item` also returns the holder's `state`. The return becomes `tuple[str, bool, str, int, str] | None` (id, created, binding, round, state). The runtime SELECT grant already holds `state` (`:262`).
+  - Collection is unchanged: the anti-join excludes a receipt whose round-0 item exists in any state.
+- *Test.* Q1 new case: open, claim, close `no_action`, then the same `HandoffRequest` again raises `QueueRefused("key_closed")` and writes no event (both stores). Q19 covers the new code's message.
+- *Mutant.* **M-a75** (a closed holder returned as success), killed by that Q1 case.
+- *Relay.* PENDING LEAD 27 to AK-G1: reopening the item does not clear this, because the sweep's key is the run id.
+- *Counts.* -a mutants +1; `QueueRefused` codes 13 -> 14.
+
+**BN-6.** [from R3-ADV-6 + R3-COR-3 + R3-COR-9 + R3-COR-14; NEEDS LEAD 23 for the ownership transfer] **How the two new roles reach the database.**
+- *Facts (read in `src/`, `ce70eb5`):*
+  - `migrate()` takes only `runtime_role`, `portal_role` and `purge_role` (`store/migrate.py:285-292`); `cli._migrate` passes exactly those three (`cli.py:138`, `:312-334`).
+  - `_SAFE_CREATE` (`store/migrate.py:80-84`) accepts `CREATE OR REPLACE FUNCTION` and `CREATE TRIGGER` and refuses every other `CREATE`, `CREATE ROLE` included.
+  - `migrate` grants `USAGE ON SCHEMA current_schema()` to each role it handles (`:172-173`).
+  - `effective_problems` reports a role that can CREATE in the schema (`:197`, `:210-211`).
+- *Decided:*
+  1. **No migration creates a role.** The database administrator creates the `queue_worker` LOGIN role and the NOLOGIN re-run owner role before migrating, as for the runtime, portal and purge roles. This withdraws "the `queue_worker` role" from -a's migration (`:159`) and "the creation of the re-run owner role" under AK-G2 BN-24 option (ii) (`:249`). Neither name is written in code (no-hardcoding rule).
+  2. **`migrate` gains two arguments,** each through `_ROLE`, the distinct-roles check and the pairwise not-member checks, as P2a's `reset_role` (`tickets/P2a.md:244-245`):
+     - `worker_role: str | None = None` (-a; optional, like `runtime_role`; `migrate` applies the worker's `GRANTS` rows to it);
+     - `rerun_owner_role` (REQUIRED once -b's migration file is pending; a call without it raises `ConfigError` naming the argument; checked NOLOGIN). It comes with AK-G2 BN-24's build: in AK-G2-a under option (i), in AK-G15-b under option (ii). The lead's choice is unchanged and still open.
+  3. **`cli.py` IS touched.** `hadavin-sdk migrate` gains `--worker-role` (-a) and `--rerun-owner-role` (with AK-G2 BN-24's build), passed through `_migrate`. `:150` "`cli.py` is not touched" is withdrawn (it was about the cut `compare-ids` command).
+  4. The re-run function is created with `CREATE OR REPLACE FUNCTION`, which `_SAFE_CREATE` already accepts. The guard is not extended. The trigger literal in AK-G2's guard is written by whichever migration builds AK-G2 BN-24's guard, from the same `rerun_owner_role` value.
+  5. The owner role gets `USAGE` on the schema through `migrate`'s normal grant path (`:173`). The grants table gains that row.
+- *Tests and mutants (decided).*
+  - Q15 gains: `migrate(worker_role=<made-up name>)` gives that role exactly the worker rows of the grants table (catalogue, BN-22). **M-a76** (the `worker_role` argument ignored, so no worker grants) is killed by it.
+  - N12c gains: `migrate` without `rerun_owner_role` while -b's migration is pending raises `ConfigError` naming the argument; with a LOGIN role it raises too. **M-b45** (the argument not required) is killed by it.
+- **MEANWHILE (NEEDS LEAD 23, not yet answered). This is the recommendation, not an instruction.**
+  - *Why it is open.* PostgreSQL (general knowledge, UNVERIFIED) lets a role run `ALTER FUNCTION ... OWNER TO r` only when it can `SET ROLE` to `r` and `r` holds CREATE on the function's schema; a superuser bypasses both.
+  - *Recommendation (a).* -b's migration, in one transaction:
+    1. `GRANT CREATE ON SCHEMA <schema> TO <owner>`;
+    2. grant the migrating role membership of the owner role with SET (and `INHERIT FALSE` where the server supports it);
+    3. `ALTER FUNCTION ... OWNER TO <owner>`;
+    4. revoke the membership;
+    5. `REVOKE CREATE ON SCHEMA <schema> FROM <owner>`.
+    
+    A later migration that replaces the function body repeats the same grant, alter and revoke.
+  - *End state, asserted by N12c:* the owner role has no CREATE on the schema (`has_schema_privilege` false, which `effective_problems` also reports); no login role, the migration role included, is a member of it (`pg_has_role(..., 'MEMBER')` false).
+  - *End state, asserted by N12b:* the EXECUTE set is exactly {`queue_worker`, the owner role}.
+  - *Mutants:* M-b50 (the CREATE revoke removed; N12c) and M-b51 (the membership revoke removed; N12b and N12c).
+  - *Alternatives:* (b) a superuser runs -b's migration; (c) the migration role stays a member for ever, and N12b's set then includes it.
+  - Not built until the lead answers. -b leaves out steps 1-5 and these two assertions.
+
+**BN-7.** [from R3-ADV-7] **The inbound insert-trigger cross-check also compares `run_id`.**
+- *Why.* -b's cross-check (`:222`) compares `tenant`, `source`, `delivery_key`, `generation` and `reason`, but not `run_id`. A runtime-role decoy could carry any pattern-valid `run_id` into its binding and every audit event (attribution forgery).
+- *Change.* -b's insert-trigger function adds `NEW.run_id = <the waiting receipt's run_id>`. This is possible because BN-19 makes both NOT NULL; the runtime role reads the column, AK-G2 `:221`. The collect-side comparison already covers `run_id` through `binding`. `:44` item (6) and Security notes (`:288`) are then true as written ("can differ only in `readers` and `binding`").
+- *Test.* N2 trigger side gains: as runtime, an inbound round-0 INSERT that matches a waiting receipt in every column except `run_id` is refused.
+- *Mutant.* **M-b46** (the `run_id` comparison removed from the cross-check), killed by that case. M-b40 (the whole cross-check removed) keeps its killers.
+- *Counts.* -b mutants +1.
+
+**BN-8.** [from R3-ADV-8] **The key CHECK is written per round.**
+- *Why.* `:220` states the chat clause ("`= run_id`") with no round qualifier, so a reopened chat item (round 1, reopen-formula key) would fail it.
+- *Change.* The CHECK is one `CASE`:
+  - `WHEN round > 0` -> the reopen formula (both kinds);
+  - `WHEN kind = 'chat'` (round 0) -> `idempotency_key = run_id AND idempotency_key ~ '^run-[0-9a-f]{32}$'`;
+  - `ELSE` (inbound round 0) -> the inbound formula.
+- *Test.* Q10 gains a Postgres case: a CHAT item reopened gives a round-1 item, accepted by the CHECK, whose stored key equals `tenant_key(tenant, "reopen", <closed id>)`.
+- *Killers.* M-a71 (key CHECK removed) is killed by Q4's direct INSERT as before. A CHECK written without the round qualifier fails this Q10 case (build-time check, not a mutant).
+- *Counts.* Unchanged.
+
+**BN-9.** [from R3-ADV-9] **`lease_until` gets a database bound.**
+- *Why.* The clock window covers `updated_at`, `closed_at` and `first_claimed_at` only. A worker-connection holder (or a bug) could set `lease_until` to year 9999, and the item could never be claimed again.
+- *Change.* `defaults.QUEUE_LEASE_MAX_S = 86400` (-a block) replaces the literal `le 86400` on `queue.lease_s` (Interface 7). The update trigger refuses any row where `NEW.lease_until > NEW.updated_at + QUEUE_LEASE_MAX_S seconds`; the value is a SQL literal pinned by N14.
+- *Test.* Q15 gains: as worker, a claim with `lease_until = updated_at + 86401 s` is refused (the trigger's error, not `42501`), row unchanged; at exactly `+86400 s` it is accepted.
+- *Mutant.* **M-a77** (the `lease_until` bound removed), killed by that case.
+- *Counts.* -a mutants +1. Limit 16 still holds: a worker-connection holder can renew a lease daily.
+
+**BN-10.** [from R3-ADV-10] **What `opened_at` means for an inbound item (wording).**
+- Interface 4 method 11 states that `opened_at` (and `updated_at`) of a collected item is the collection tick's injected `now`, NOT the receipt's `received_at`: an old `received_at` would break the clock window. So `age`, `oldest_age_s` and `over_service_time` count from collection.
+- A receipt held back by the ceiling is already loud (`queue_full`, every tick), and an unconfigured tenant's receipts are loud (`uncollected`).
+- Limit 13's added sentence is PENDING LEAD 26.
+- No row or mutant change.
+
+**BN-11.** [from R3-ADV-11] **Open events, said exactly (wording).**
+- `:229` "So a crash between the insert's commit and its event leaves an event at the next retry or sweep" becomes "... is repaired when the caller retries (AK-G1's sweep retries until the takeover commits); if no caller retries, the item exists without an event, and `queue_watch` still counts it".
+- Why opens write no `write_intent`: an open is the safety path. An audit outage must not turn every hand-off into `handoff_unavailable`. `write_outcome` never raises (`audit/protocol.py:23-25`).
+- `already_open` is written on every repeat call, so one event per sweep tick per takeover that never commits. That growth stops once the takeover commits or a person closes the item (BN-5 then refuses), and `queue_watch` fails the tick once the item passes the service time.
+- No row or mutant change.
+
+**BN-12.** [from R3-ADV-12] **N3b case (2): name the planted row.**
+- The second item for the same receipt generation is planted as owner with the insert trigger disabled (rolled back at the end) as a `round = 1` row:
+  - `reopens` = the first item's `item_id`;
+  - `idempotency_key` = the reopen formula over that id;
+  - `reason = 'reopened'`;
+  - the same `tenant`, `source`, `delivery_key`, `generation` and `run_id`;
+  - `state = 'claimed'` with its own `assignee`, a live `lease_until`, `first_claimed_at` and `version = 1`.
+- The first item is also `claimed`, by another person. This row passes every CHECK (BN-8's per-round key CHECK included), the unique key, `queue_items_successor` and `queue_items_inbound_subject` (round 0 only).
+- The two persons then call `close(..., rerun)` concurrently (BN-24's barrier). Pass: exactly one success, the receipt's generation + 1 once.
+- M-b32's killer is unchanged: N3b (2).
+
+**BN-13.** [from R3-ADV-13 + R3-COR-12] **One mutant per CHECK group, and the missing boundary mutants.** New mutants, each with its killer:
+- **M-a78** (migration): one id-pattern CHECK removed. It has 8 variants, run separately, one per CHECK on `tenant`, `item_id`, `reopens`, `conversation_id`, `run_id`, `delivery_key`, `source` and `binding`. Each variant is killed by its own Q4 direct-INSERT case. Q4 gains the missing cases for `reopens`, `delivery_key`, `source` and `binding`, so every variant has one. The mutant counts as one id; every variant must be killed.
+- **M-a79** (migration): the `assignee`/`closed_by` CHECK removed. Killed by Q4 (worker, BN-1's second canary).
+- **M-a80** (migration): the round-bound CHECK (`round BETWEEN 0 AND 20`) removed. Killed by Q9 (as owner, trigger disabled, `round = 21`).
+- **M-a82** (store, both): the ceiling compare `<` changed to `<=` (an open refused one item early). Killed by Q21's boundary case (at `max_waiting - 1` an open works).
+- **M-b49** (re-run function, memory: store code): step (1), the `p_max_reruns` range check 0-10, removed. Killed by N4b (direct call as worker with `p_max_reruns = 11` on a message at generation 10 must give `rerun_limit`; without the check it re-runs). N4b's setup gains that generation.
+- *Not mutated, said plainly:* the 600-second window's exact boundary. `clock_timestamp()` moves during a test, so a boundary case would be flaky. M-a68 and M-a69 (removal) and N14 (the literal) cover the window.
+- *Counts.* -a +4 (M-a78, M-a79, M-a80, M-a82), -b +1 (M-b49).
+
+**BN-14.** [from R3-ADV-14] **N13 is not an expected failure.**
+- Delete "Strict expected failure until BN-24 is built" from N13 (`:333`): AK-G2 BN-24 is a HARD dependency of -b (`:160`).
+- Under AK-G2 BN-24 option (ii) (built in -b's migration), N13 fails by assertion on -b's base and is **-b's FAIL-BEFORE**. Its evidence file is `b-failbefore.txt`, run in a throwaway worktree of -b's base with only the test file copied, as Q0's. `:291` and `:485` ("-b has no fail-before", "No fail-before file") are corrected for that case.
+- Under option (i), N13 passes on -b's base: a premise check, not a fail-before.
+- No count change.
+
+**BN-15.** [from R3-ADV-15] **`queue_full` in `queue_watch` means "at the ceiling" (wording).**
+- W4 and Interface 7 (4) state: `queue_full` fires when a tenant's waiting items are `>= queue.max_waiting_items`, that is, when the NEXT new item would be refused, even if nothing was refused yet. This is an early loud signal, on purpose.
+- W4's ceiling case asserts it at exactly the ceiling with no refusal yet.
+- Entry 22's sentence is PENDING LEAD 26. No mutant change.
+
+**BN-16.** [from R3-ADV-16] **Map the function's refusals by SQLSTATE, never by message text.**
+- The function raises each code with its own SQLSTATE: `RAISE ... USING ERRCODE = 'QS001'` (`stale`), `'QS002'` (`outcome_unknown_not_acknowledged`), `'QS003'` (`rerun_limit`), `'QS004'` (`subject_erased`).
+- The map is `defaults.QUEUE_RERUN_SQLSTATES` (-b), pinned by N14 against the function text.
+- The Postgres store maps by exact `sqlstate` only (`QS001` -> `StaleState`, the other three -> `RerunRefused(code)`); every other error propagates unchanged, whatever its message.
+- Whether class `QS` collides with a PostgreSQL class is UNVERIFIED; `b-postgres.txt` shows the raised codes.
+- *Test.* N3 gains: a test-only trigger on the receipt raising `RAISE EXCEPTION 'stale'` (default SQLSTATE `P0001`) makes the call raise the database error, NOT `StaleState`, and nothing changes.
+- *Mutant.* **M-b47** (mapping by message substring), killed by that case.
+- *Counts.* -b mutants +1.
+
+**BN-17.** [from R3-ADV-17 + R3-COR-11 + R3-COR-17] **Cite corrections** (read on the working tree, last `src/` commit `ce70eb5`):
+- `:192` `models.py:36-41` -> `models.py:38-43` (`canonical_json`); `sha256_hex` is `:46-47`.
+- `:115` the `NEEDS_PERSON` comment `:71-73` -> `:72-74`.
+
+Line numbers stay informative, never test literals (`:111`). No count change.
+
+**BN-18.** [from R3-ADV-18] **Which sub-PR ships each helper.**
+- `PostgresStore.database_identity()` ships in -a (file list `:248`).
+- `PostgresStore.role_memberships()` ships in -b (file list `:249`).
+- Both are first CALLED by -c's `app.build` (Interface 7).
+- The Done line reads: "12 store methods (a 10, b 2) plus 2 Postgres-store helpers (`database_identity` in -a, `role_memberships` in -b), not protocol methods". No count change.
+
+**BN-19.** [from R3-COR-2] **Inbound items always have a `run_id`: the NULL branch is cut.**
+- *Facts (AK-G2 ticket text):*
+  - `run_id` is `run_id_for(delivery_key, generation)` on every receipt that is not an id-reuse row (`tickets/AK-G2.md:142`);
+  - `receive` writes `run_id_for(key, 0)` (`:181`), and a reopen writes the formula (`:167`);
+  - id-reuse rows are always `refused` and never `needs_person` (`:148`, `:242`).
+  
+  So no waiting receipt has a NULL `run_id`. `:172` "nullable" and `:175` "a NULL `run_id` stays NULL" concern id-reuse rows only. Revision 3's example (`:184`, "a `body_missing` receipt that never ran") was wrong: `body_missing` is set on a receipt whose `run_id` was written at `:181`.
+- *Change:*
+  - `NeedsPersonItem.run_id: str` (required) for both kinds, and the CHECK `run_id IS NOT NULL` for every row (with its pattern).
+  - Interface 4 method 6, step (4): delete the "When it is NULL" branch; the open-run and `outcome_unknown` checks always run.
+  - Step (8): the function writes the formula `run_id_for(delivery_key, generation + 1)` always, exactly AK-G2 `:167`.
+  - Every audit event writes `run_id=item.run_id`, and the `or "-"` fallback is deleted (`:16`, `:230`, `:234`).
+  - `CollectedItem.run_id: str`.
+- *Tests:*
+  - N1's NULL case is replaced. A `needs_person` receipt planted as owner with a NULL `run_id` makes `collect_inbound_items` fail (the CHECK refusal propagates, the tick step fails loudly), and no item is written.
+  - N3's NULL case is deleted.
+  - Q13's note about `run_id == "-"` (`:307`) is void.
+- *Mutant.* **M-b43** (the `run_id IS NOT NULL` CHECK removed for inbound rows), killed by N1 (as owner, trigger disabled, an inbound INSERT with NULL `run_id` must be refused by the CHECK).
+- **PENDING LEAD 21 is WITHDRAWN** (moot: the NULL case never reaches the re-run). AK-G2 needs no build-note question.
+- *Counts.* -b mutants +1; N1 and N3 lose one case each and N1 gains one; rows unchanged.
+
+**BN-20.** [from R3-COR-4] **Correct killers for M-a9 and M-b4.**
+- **M-a9** (`version = expect_version` removed from claim). Q7's named case "one version, two claimers" is refused by the state clause anyway (the item is `claimed`, with another person's live lease), so it is NOT M-a9's killer; it stays as a test of the state clause. M-a9's killers are:
+  - Q7's first case, a wrong `expect_version` on an OPEN item gives `stale`;
+  - a new Q7 stale-view case: `person-1` claims and then releases (version 2); `person-2` claims with the version it listed before (0) and gets `stale`, with the item unchanged. Both stores.
+  
+  Q5 stays the race test, not a named killer.
+- **M-b4** (collection's `ON CONFLICT DO NOTHING` removed). "A second collection creates none" never reaches the INSERT (the anti-join excludes the receipt), so it is NOT the killer. New N2 race case: at the hook between collection's SELECT and its INSERT (`:319`), a REAL second collection call collects the same receipt. With the clause, the first call ends without error, `key_conflicts == {}`, and exactly one item exists. Without it, the unique violation fails the call. Memory: the same hook, the same assertion.
+- *Counts.* Unchanged (killers only).
+
+**BN-21.** [from R3-COR-5] **M-b11 is not equivalent; N4 asserts the audit too.**
+- The Python pre-check (`queue_subject_present`, check (3) at `:232`) runs BEFORE `write_intent` (`:234`). So N4's "body erased" case (body deleted before `close` is called) also asserts that NO audit event, intent or outcome, was written for the call.
+- Under M-b11 the function refuses with the same `subject_erased`, but only after an intent and an outcome event exist, so the case fails.
+- M-b11 is kept, killed by N4 (audit assertion). No count change.
+
+**BN-22.** [from R3-COR-6] **Grant tests assert the permission error and the catalogue.**
+- Every denied statement in Q15, N12 and N12c runs as its role and asserts SQLSTATE `42501` (`insufficient_privilege`). "Refused" or "row unchanged" alone is not enough, because a trigger may also refuse.
+- Q15 (for `queue_items`, `conversations` and the purge and portal roles) and N12 (for AK-G2's tables and the function) also check the catalogue, for every role and relation in the grants table: `has_table_privilege(role, rel, p)` and `has_column_privilege(role, rel, col, p)` are true exactly for the listed rights and false for every other one (`SELECT`, `INSERT`, `UPDATE`, `DELETE`, `TRUNCATE`).
+- Killers named:
+  - M-a41 (runtime UPDATE): Q15 catalogue + `42501` on the runtime UPDATE;
+  - M-a43 (worker DELETE): Q15 catalogue + `42501` on the worker DELETE (the delete trigger would also refuse);
+  - M-b28 (worker UPDATE on `inbound_receipts`): N12 catalogue + `42501`.
+- No count change.
+
+**BN-23.** [from R3-COR-7] **The round arms of the decoy comparisons, said plainly.**
+- On Postgres the key CHECK makes a `round > 0` holder of a chat key (`= run_id`) or of an inbound round-0 key impossible. Disabling a trigger does not disable a CHECK, so the round arms of the dedupe-hit check (Interface 6) and of the collect-side comparison are reachable only in the memory store. They stay as a second line.
+- **M-a51** is redefined as "the dedupe-hit BINDING comparison removed", killed by Q1 (decoy with another binding, both stores).
+- New **M-a81** (the dedupe-hit ROUND comparison removed), killed by Q1's memory dict plant (`round = 1` holder of a chat key).
+- **M-b41** is redefined as "the collect-side `binding`/`reason` comparison removed", killed by N2 (both stores).
+- New **M-b48** (the collect-side ROUND comparison removed), killed by N2's memory dict plant.
+- Q1 and N2 drop the Postgres `round` decoy plant, which cannot be made.
+- *Counts.* -a +1, -b +1.
+
+**BN-24.** [from R3-COR-8] **N3b's concurrency technique, named.**
+- In cases (1) and (2), a third connection first takes `SELECT ... FOR UPDATE` on the receipt row.
+- Then both callers start. The test waits until both show `wait_event_type = 'Lock'` in `pg_stat_activity` (a bounded wait: 10 s, then the test fails), then commits the third connection.
+- Under M-b31 or M-b32 the callers may not wait. The test still asserts the outcome: exactly one success; the receipt's generation + 1 once; the others `stale`. Under M-b32 the second receipt update hits AK-G2's trigger (`received -> received` is not allowed) and raises a database error, not `stale`, so the case fails.
+- M-b33 keeps its killer, N3b (3). No count change.
+
+**BN-25.** [from R3-COR-10] **The schema name is resolved at migration time; the store's SQL is unqualified.**
+- `migrate` reads `current_schema()` (`store/migrate.py:172`, `:210`).
+- P2a's frozen B20 (`tickets/P2a.md:515`): the store calls functions unqualified, like every store statement; the schema comes from the DSN's `search_path`; `<S>` stays only inside function bodies and in `migrate()`.
+- So:
+  - `<schema>` in the re-run function and the queue trigger bodies is `migrate`'s `current_schema()`, substituted when the file is applied, by P2a-1's `<S>` mechanism as merged;
+  - the Postgres store calls `hadavin_queue_close_rerun(...)` UNQUALIFIED (replaces `<schema>.` at `:201`) and runs the collection SELECT unqualified (replaces `<schema>.` at `:211`);
+  - the "UNVERIFIED" on `<schema>` (`:105`) is removed for the name's source. P2a-1's substitution mechanism stays UNVERIFIED.
+- N12, N12b and N15 keep their qualified names in TEST SQL. N15 is unchanged.
+- That a function is never looked up in `pg_temp` for an unqualified call is UNVERIFIED (general PostgreSQL knowledge). The worker has no CREATE in any schema (`effective_problems`).
+- No count change.
+
+**BN-26.** [from R3-COR-16] **Cite correction: there is no `deps.resolve`.**
+- `:241` and `:278` "through `deps.resolve`" become "built by `make("store", <the store settings with dsn_secret_name = queue.worker_dsn_secret_name>, secrets)`, as the purge store is (`app.py:151-160`); the secret is read through the secrets kind passed to `make`".
+- No count change.
+
+**BN-27.** [totals] **Counts after these notes** (supersede `:346`, `:481`, `:491`).
+- **Test rows:** 51 (a 24, b 18, c 9), unchanged. Extended without a new id: Q1, Q4, Q7, Q9, Q10, Q15, Q21, N1, N2, N3, N3b, N4, N4b, N12, N12c, N13, N14, W4.
+- **FAIL-BEFORE:** Q0 (premise); N13 under AK-G2 BN-24 option (ii) (BN-14).
+- **Mutants:** **143** (a 80, b 46, c 17).
+  - New in -a: M-a75 (BN-5), M-a76 (BN-6), M-a77 (BN-9), M-a78, M-a79, M-a80, M-a82 (BN-13), M-a81 (BN-23).
+  - New in -b: M-b43 (BN-19), M-b44 (BN-3), M-b45 (BN-6), M-b46 (BN-7), M-b47 (BN-16), M-b48 (BN-23), M-b49 (BN-13).
+  - Redefined killers or scope: M-a9, M-b4 (BN-20); M-b11 (BN-21); M-a41, M-a43, M-b28 (BN-22); M-a51, M-b41 (BN-23); M-a71 (BN-8); M-a72 (BN-1).
+  - None deleted.
+- **If PL23, PL24 and PL25 are answered as recommended:** +M-b50, M-b51 (PL23), M-a83, M-c18 (PL24), M-a84, M-b52 (PL25), giving **149** (a 82, b 49, c 18). Rows stay 51.
+- **Other counts:**
+  - `QueueRefused` 14 codes (+`key_closed`, BN-5); `RerunRefused` 3 codes, now raised by SQLSTATE (BN-16).
+  - Store methods 12 (a 10, b 2) plus 2 Postgres-store helpers (BN-18).
+  - `migrate` arguments +2 (`worker_role` -a, `rerun_owner_role` with AK-G2 BN-24's build); `cli.py migrate` flags +2 (BN-6).
+  - New `defaults.py` constants: `QUEUE_LEASE_MAX_S` (-a, BN-9), `QUEUE_RERUN_SQLSTATES` (-b, BN-16); `QUEUE_MAX_READERS` only under PL24 (a).
+  - Database objects unchanged, except that the CHECKs change (BN-8, BN-19, and BN-2 under PL24).
+- **PENDING LEAD:** 27 items.
+  - Open NEEDS LEAD: 1-6, 11, 23, 24, 25.
+  - ANSWERED: 13-19.
+  - INFORM: 8, 9, 12, 20, 22, 26, 27.
+  - Replaced: 7, 10.
+  - WITHDRAWN: 21.
+  
+  PL23-27 are written in full in `reviews/AK-G15-round3-resolve.md` ("PENDING LEAD"), each with options and a recommendation.
+- **Round 3 decisions:** 35 finding ids, 28 decision rows; 26 rows carry these notes; R3-COR-13 and R3-COR-15 are CONTESTED with checkable evidence (resolve, facts 8 and 9) and change nothing.
