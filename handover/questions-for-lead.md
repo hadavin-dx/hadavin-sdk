@@ -316,3 +316,8 @@ Done under order 69:
 - Honest note: the slowdown actually measured grows with the NUMBER of encoded values in one text; the maximum does not bound that, and whether long runs have any quadratic path is UNVERIFIED.
 - PL9 (new): over-long runs not covered by the high-entropy mask are refused (applied). Alternative: mask them whole with one placeholder. Round 2 decides unless you answer.
 - Next: Goldfish round 2 on rev 3 with a db17c53 snapshot (design + codebase reviewers, Sonnet, read-only). No build before P1b merges.
+
+## q164 (order 72 applied; INFORM; one departure disclosed)
+- Round 2 (design + codebase reviewers, Sonnet, read-only, snapshot of commit db17c53 plus rev 3) is RUNNING. DEPARTURE: I launched it before your order 72 arrived, so the id lists were not yet in the ticket. My own listing from rev 3: B-ids B1-B31 with B10 cut (30 live), M-ids M1-M23 with M7 cut (22 live), H1-H7 (7), A1-A3 (3). The first-round count mismatch (31/23) was my grep including the cut ids. I apply your order-72 edits in rev 4 with the round-2 resolve (id lists in the ticket, a row that measures about 1,200 distinct encoded values on a hostile text with any quadratic path UNVERIFIED until a test shows the shape, a rung-table line "nothing outside stdlib is used for the scan", and the plain-words refusal message naming the limit and what to do). Logged in DECISIONS.md.
+- PL9 kept as the refusal (no whole-mask), per order 72 item 1; round 2 may overrule with evidence.
+- Builders: P0t fix1 started (order 71, priority after P1a fix3); P1a fix3 and P1b still running.
