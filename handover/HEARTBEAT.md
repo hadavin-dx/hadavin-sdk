@@ -280,3 +280,8 @@ P3a-1 | fix1 build (PR 68) | 1 | -
 2026-11-06T12:11:22Z | package | stage | builders running | blocked on
 P0a | PR 71 ready (d4cde30), waiting lead review/CI | 0 | class P scanner is P0d (lead lane)
 others: 9 builders running (P1a-fix4, P0t-fix4, P2d-1, P3a-2, P2a-1, P4d-a2, P5a, P6a, P3a-1-fix1); no queued package has a pushed base branch yet, so no new start
+2026-11-06T12:13:09Z | package | stage | builders running | blocked on
+P1c | ticket FROZEN rev 7; build waits for P1b head (BS-3 gate) | 0 | P1a fix4 then P1b merge
+P0t | fix4 builder running | 1 | -
+P1a | fix4 builder running | 1 | -
+others: P2d-1, P3a-2, P2a-1, P4d-a2, P5a, P6a, P3a-1-fix1 building (9 builders); P8c resolve running

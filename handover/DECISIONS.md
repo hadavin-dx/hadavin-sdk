@@ -411,3 +411,6 @@ Made without a user answer (answered-by-user: no). Redaction path, ticket stays 
 
 ## 2026-11-06T11:58:46Z order 83 builders
 - What: spawn 7 builders in parallel with preamble by reference. Options: paste full preamble (slow, ~80 KB of tokens), by reference (chosen). Why: speed (order 83). Confidence medium. Reversible yes. Answered by user: no (lead order). Should-have-escalated: the preamble-by-reference deviation is a rule softening; flagged in q182.
+
+## 2026-11-06T12:13:09Z P1c rev 7 freeze: PL24 and PL25 applied as (a) without lead answer
+Options: PL24 (a) decode value-less units again each loop / (b) only units holding a new value; PL25 (a) cap check after (a) and (c) / (b) after every step. Why (a): (b) for PL25 would refuse texts the base accepts. Confidence medium; reversible (ticket text frozen, switch recorded in BUILD NOTES). Answered by user: no.
