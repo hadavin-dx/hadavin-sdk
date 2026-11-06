@@ -1,6 +1,7 @@
 # Package ticket P6a: the client-profile check, in two pull requests. P6a-1: a pilot or production app cannot start with test objects handed in by code, and a dev config that names a real model must say it holds only made-up data. P6a-2: a CI test catches code in `src/` that reaches the model by a side door. DRAFT revision 3
 
 **Revision line.** DRAFT revision 3, written 2026-11-06 from about 03:30 UTC (09:00 IST; IST = UTC+5:30) by a ticket-author agent, under lead order 20 item 6 (ticket only: no code, no pull request, no suite run, no sub-agent). It applies every decision of `handover/reviews/P6a-round2-resolve.md`: 22 decision rows over 27 finding ids (R2-ADV-1 to 14, R2-COR-1 to 12, and the resolve's own Major N4), plus the 5 order-22 rows of that resolve. It also carries three corrections I found while re-reading (CHANGELOG, N5 to N7). Revision 2 was written 2026-11-06 at about 03:00 UTC (08:30 IST). **This revision is the input of ticket review round 3**, the last ticket round: two fresh reviewers (correctness and adversarial), then one resolve. Cap (order 20 item 6): 3 ticket rounds counting from round 1. The "one more round" exception there covers money and redaction packages only, not security.
+> **Build notes win.** Revision 3 is frozen text. Where a build note BN-1 to BN-13 (from `handover/reviews/P6a-round3-resolve.md`, copied into the section "Build notes (round 3)" at the end of this ticket) differs from the revision 3 text, the build note wins. The CHANGELOG sections are history, not instructions. Line cites into `tickets/P5c.md` were written against P5c revision 2: find each by its name (BN-12), not by its line number.
 
 Plan row: plan-v3 section 6, row P6a, step S4. Split by lead order 22 item 24.
 
@@ -362,3 +363,98 @@ PENDING LEAD items 1-14: items 2, 3, 4, 8, 9, 10, 11, 12 closed or answered (by 
 **Revision 2 (2026-11-06, about 03:00 UTC / 08:30 IST):** from `reviews/P6a-round1-resolve.md`; 54 rows, 37 mutants, 12 PENDING LEAD items.
 
 **Revision 1 (2026-11-06, about 02:45 UTC / 08:15 IST):** first draft; 70 test rows, 16 mutants, 7 PENDING LEAD items.
+
+## Build notes (round 3 resolve; these win over the text above)
+
+**BN-1. A real approval channel in a dev config needs `made_up_data_only: true` (R3-ADV-1; PENDING LEAD 15, default taken).**
+- S6 gains a third item. In `Config._cross_checks`, when `environment == "dev"` and `made_up_data_only` is not `true`, the `channel` kind is added to the one `refused` list (as `channel: <kind>`) when it is not in `DEV_ONLY`. Today that means `channel: slack`.
+- Why: a real channel kind sends text built from case data to a vendor service (the approval summary, the shadow and abstain cards, the notices). That text is masked, with the order 19 B limits. This is the same reason S6 gives for the vendor detector.
+- The rule is written as "not in `DEV_ONLY`", so it fails closed: a later channel kind (for example email, A6) is refused in dev too, until its package decides otherwise in its own diff.
+- What S6 does NOT add, and why. Each of these kinds sends no case text out:
+  - the `secrets` kinds send secret names and receive values;
+  - the `signer` and `anchor` kinds send digests;
+  - the `store` and `audit` kinds hold data in the operator's own database or folder, and do not send it to a vendor.
+  - If a later kind sends case text out, its package adds it to S6.
+- The one message's closing sentence becomes: "a dev config that names a real model, a vendor detector or a real approval channel sends text out: set made_up_data_only: true only when every input is made up; client data runs only in pilot or prod".
+- New row **T7 (a3)**: one row per `channel` kind outside `DEV_ONLY`, read from `TABLE` (1 today: `slack`). A dev config with `llm: fake` (with `recorded_dir`), that channel and no field is refused, with `channel: slack` and `made_up_data_only` in the message. On the base it FAILS by assertion: the probe shows the config loads.
+- New mutant **46**: "the S6 channel item dropped". Killer: T7 (a3).
+- So that each T7 row proves one item, the other T7 rows (a), (a2), (b) and (d) use `channel: fake`.
+- The recount script also lists every dev test config whose channel kind is not in `DEV_ONLY`. Grep finds none today (Facts). Each one found gets `made_up_data_only: true`; the check is never loosened.
+- The CHANGELOG entry's change (2) reads "a dev config that names a real llm kind, the `bedrock_guardrail` detector or a real channel kind needs `made_up_data_only: true`".
+- Security notes (f) and (g) read "a real model, the vendor detector or a real approval channel" wherever they say "a real model or the vendor detector".
+- If the lead answers PENDING LEAD 15 with (b): drop the channel item, T7 (a3) and mutant 46, and add one sentence to Security notes (g): "a real approval channel in dev is allowed without the field, because its text is masked (`slack_channel.py:67-81`); the masking limits of order 19 B apply to it". The counts then go back.
+
+**BN-2. P6a-1's merge gate (R3-ADV-2; PENDING LEAD 16).**
+- "Depends on (merged first)" for P6a-1 reads: "the merge chain of order 20 item 4". P4c-2 is removed from it.
+- P4c-2, P4b2-b and P2a-1 are NOT merge gates of P6a-1. S2 reads only `cfg` and the given keyword values, right after `load_config`. S6 sits in `Config._cross_checks`. Neither uses anything those packages add (Facts).
+- The `app.py` hot-file line "P2a-1, P4b2-b, P4c-2, P6a-1, P5c-3, P6b2-a" is the preferred REBASE order, not a gate. Whichever of P2a-1, P4b2-b or P4c-2 has merged when P6a-1 starts, P6a-1 rebases on current main before its review (order 20 item 5 rule), and the later ones rebase on P6a-1.
+- At that rebase, the builder runs BN-3 again.
+- The P4b1/P4b2 "text only" sentence stands.
+- The relays to P6b2 (`:139`) and P4c (`:40`, `:307`) say "preferred rebase order" instead of a fixed order.
+
+**BN-3. Base recount and the T5 (b) list (R3-ADV-3, R3-ADV-4, R3-COR-2, R3-COR-5).**
+- At module level, `tests/test_client_profile.py` computes `REFUSED = [n for n, p in inspect.signature(app_mod.build).parameters.items() if p.kind is p.KEYWORD_ONLY and n not in {"tools", "sources", "hold_run_ids", "timeout_s", "allow_test_doubles"}]`. These are literal names, not `_LIVE_HOOKS`, which does not exist on the base (the import rule). On today's tree this gives `secrets, channel, detector, llm, clock` (probe), so T5 (b) has 10 items on the base AND at head.
+- T5 (b) and (c) take each keyword's non-default value from one test-local table `SAMPLES`:
+  - `secrets`: the `made` provider;
+  - `channel`: `FakeChannel()`;
+  - `detector`: a stub detector;
+  - `llm`: a `ScriptedLLM`;
+  - `clock`: a lambda returning a fixed made-up time.
+- At module level, `assert set(REFUSED) <= set(SAMPLES), f"build keywords with no sample: {sorted(set(REFUSED) - set(SAMPLES))}"`. A new keyword then fails collection with its name, and so it gets decided: either a sample (it is refused) or a reviewed `_LIVE_HOOKS` entry. That is the T7 (a) "fails so it gets decided" rule, at collection time.
+- Base recount step, before step 0 of the fail-before:
+  - The builder prints `inspect.signature(build)` and the `TABLE` pairs at P6a-1's base into `<handover>/evidence/P6a/p6a1-base-recount.txt`.
+  - It classifies each keyword or pair that is not in this ticket's lists: keyword refused or `_LIVE_HOOKS`; pair `DEV_ONLY` or `CLIENT_REVIEWED`, with a reason.
+  - The fixed counts (42 rows, now 43 with BN-1; 19 FAIL, now 20) are for today's tree. If the base moves them, the builder writes the new numbers and the reason in that file and in the PR body, and the step 0 collection count follows that file.
+  - Rows from explicit lists never move. Rows read from `TABLE` (T2 (b), T7 (a), T7 (a3)) or from the signature (T5 (b)) may move, and each moved row is named.
+
+**BN-4. Mutants under `tests/` (R3-ADV-5).** If the P1m runner cannot mutate files under `tests/` (mutants 23-28, 36-45 and 47), the builder runs them by hand:
+- each mutant is one hunk, applied with `git apply` in the scratch worktree;
+- the named killer rows are run there with the evidence command form;
+- the patch text, the command, its output and `rc=` are appended to `<sub>-mutants.txt`;
+- `git checkout -- tests` restores the tree, and `git status` is shown clean after each mutant.
+
+The evidence says which mutants ran by hand. KILLED still means "the named killer failed".
+
+**BN-5. `operator` forms the scanner must resolve (R3-ADV-6).** `model_call_sites` and `dynamic_attr_sites` use ONE resolver for the two names `attrgetter` and `methodcaller`. It accepts:
+- (i) `operator.<name>`, where `operator` is the module imported under any name (`import operator` or `import operator as op`);
+- (ii) `from operator import <name>`, with or without `as <alias>`.
+
+Other ways to reach these names are not followed: a module object passed around, or `importlib`. Security notes (c) gains one sentence saying so. `functools` needs no rule: `partial(llm.chat)` is found by the `.chat` read whatever `functools` is called (ticket line 22).
+
+New planted row **T6 (c) 8th**: `import operator as op; op.attrgetter("chat")`. It is reported. New mutant **47**: "the resolver matches only `from operator import ...` (the attribute form dropped)". Killer: the new row. The existing `methodcaller` row (attribute form) and `attrgetter as g` row (import form) now kill a resolver that handles one name only, because both names go through the one resolver. The P6a-2 fail-before keeps its 5 forms (the new row is a row of the new helper, ticket line 179).
+
+**BN-6. T6 (a) evidence table (R3-ADV-7).** `<handover>/evidence/P6a/p6a2-sites.md` holds one row per site outside `llm/` at P6a-2's base, with these columns:
+- `(module, function)`;
+- in today's six (item 9): yes or no;
+- for a "no" row, or for one of today's six that is gone, the P5c commit and the hunk (`file:line` in the P5c diff) that caused it.
+
+The reviewer rejects a difference that has no hunk. T6 (a)'s written set is that table's first column.
+
+**BN-7. The `llm/` exemption, stated (R3-ADV-8).** Security notes (c) gains this text: "The scan skips every file under `llm/` by prefix, as `_sink_callers` does today (`tests/test_k5_producers.py:86`). A new non-adapter file inside `llm/` that calls `.chat` is not seen by P6a-2. What covers it is P5c: T3-07 (b) keeps every `make("llm", ...)` in the named builders, T3-07 (c) keeps raw llm kind imports inside `llm/`, `backends/builtin.py` and `app.py`, and T3-06 plus `Runtime`'s `isinstance` check refuse a model object that is not the wrapper (P5c revision 3, by name). P6a-2 is a tripwire, not the guard." No second allowed set (order 8: the sentence closes the finding, and a second set would add surface to a tripwire).
+
+**BN-8. `prod_cfg` values and the prod build path (R3-ADV-9, R3-COR-3).**
+- `prod_cfg` is `pilot_cfg(tmp_path, env="prod")`, then its `config.yaml` is edited:
+  - `backends.signer = {kind: ed25519_local, private_key_secret_name: audit-key}`;
+  - `backends.anchor = {kind: s3_object_lock, bucket: madeup-bucket, region: madeup-region-1, retention_ack: true}`.
+- Probe on today's tree: `load_config` loads it, and `app.build` with the `made` patch reaches `make("signer")` in pilot and in prod, with `record == ["secrets", "signer"]`.
+- T0 stays `load_config` only. T5 (m) prod is the row that runs `load_registry` and the other start-up checks.
+- The builder confirms both at the base in the fail-before table (T0 PASS, T5 (m) pilot and prod PASS). If either fails at the base, the builder fixes the fixture, never the row, and names the cause in the evidence.
+
+**BN-9. Relay to P5c: the redactor key in P6a's fixtures (R3-COR-1).** Add to the P5c couplings: "P5c-1's sweep of pilot and prod fixtures for the explicit-`redactor` rule (`tickets/P5c.md:330`) includes `pilot_cfg` (`tests/test_k3_pilot_env.py:35`) and every fixture in `tests/test_client_profile.py`. `prod_cfg` derives from `pilot_cfg`, so one key there covers T0, T1 and T5. Without it, T0 and T5 (m), (n), (o) go red at P5c-1." Add to the UNVERIFIED list: "`pilot_cfg` has no `redactor` key today; after P5c-1 it needs one".
+
+**BN-10. T5 (f) and (h) match the old text (R3-COR-4).** T5 (f) requires `match="configure Config.sources"` and asserts `"allow_test_doubles" not in str(err.value)`. T5 (h) requires `match="plain callables"` and the same absence. The "new text" rule of the Tests field applies to refusal rows of the new rule only. With this, mutants 13 and 14 fail on the absence check.
+
+**BN-11. Postgres cite (R3-COR-6).** In the Postgres evidence command, read "the Postgres service as CI (`.github/workflows/ci.yml:38-40`, test step `:84-88`)".
+
+**BN-12. P5c cites by name (own finding N1).** P5c is now revision 3 (`tickets/P5c.md:1`).
+- Every `tickets/P5c.md:<line>` in P6a revision 3 was written against P5c revision 2. The builder finds each by its name:
+  - `MaskedLLM` / `MaskedLLM.of`;
+  - the `Runtime` check;
+  - the `app.py` wrap;
+  - T1-12, T3-06, T3-07 (b), (c), (d), T3-17, M30;
+  - the hot-file list.
+- Today these are at `:268`, `:273`/`:334`, `:341`, `:442`, `:492`, `:490`, `:504`, `:573` and `:156-164` (read now).
+- "Ticket states" reads "P5c revision 3".
+- P5c revision 3's `Runtime` check also requires `MeteredLLM` inside the wrapper (`:334`). This does not touch P6a's rows: every T5 row stops at `make("signer")` (BN-8), before `Runtime`.
+
+**BN-13. PENDING LEAD 14 closed (order 27 item 50).** PENDING LEAD 14 reads "CLOSED by order 27 item 50: the field accepted, `config.py` belongs to P6a-1; the lead puts the limit in `handover/owner-visible-limits.md`". S6's "PENDING LEAD 14 = NEEDS LEAD 50, pending" wording is void.
