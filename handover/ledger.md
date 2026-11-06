@@ -1369,3 +1369,9 @@
 | BL-core-P4a-r8-adv-ADV-R8-5 | P4a | MAJOR | see report | OPEN | reviews/P4a-round8-adversarial.md | d12b498 |
 | BL-core-P4a-r8-adv-ADV-R8-6 | P4a | MAJOR | see report | OPEN | reviews/P4a-round8-adversarial.md | d12b498 |
 | BL-core-P4a-r8-adv-ADV-R8-7 | P4a | MAJOR | see report | OPEN | reviews/P4a-round8-adversarial.md | d12b498 |
+| BL-core-P4a-r8-cor-COR-R8-1 | P4a | MAJOR | see report | OPEN | reviews/P4a-round8-correctness.md | d12b498 |
+| BL-core-P4a-r8-cor-COR-R8-2 | P4a | MAJOR | see report | OPEN | reviews/P4a-round8-correctness.md | d12b498 |
+| BL-core-P4a-r8-cor-COR-R8-3 | P4a | MAJOR | see report | OPEN | reviews/P4a-round8-correctness.md | d12b498 |
+| BL-core-P4a-r8-cor-COR-R8-4 | P4a | MAJOR | see report | OPEN | reviews/P4a-round8-correctness.md | d12b498 |
+| BL-core-P4a-r8-cor-COR-R8-5 | P4a | MAJOR | see report | OPEN | reviews/P4a-round8-correctness.md | d12b498 |
+| BL-core-P4a-r8-cor-COR-R8-6 | P4a | MAJOR | see report | OPEN | reviews/P4a-round8-correctness.md | d12b498 |
