@@ -8,7 +8,6 @@ Needs ``hadavin-sdk[anthropic]``.
 
 from __future__ import annotations
 
-import json
 import re
 import time
 from collections.abc import Callable
@@ -18,6 +17,7 @@ import anthropic  # the extra: a missing install fails at start-up with the hint
 
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.llm.common import Answer, NetworkLLM, pinned, reply
+from hadavin_sdk.llm.protocol import UsageMissing, build_usage
 from hadavin_sdk.models import Reply, ToolCall
 
 API_BASE_URL = "https://api.anthropic.com"
@@ -120,16 +120,23 @@ class AnthropicLLM(NetworkLLM):
             request["tool_choice"] = {"type": "tool", "name": forced}
         started = time.monotonic()
         got = self._retry(lambda: self._parse(self._current().messages.create(**request)))
-        return reply(
-            route,
-            **vars(got),
-            started=started,
-            sent=system + json.dumps(request["messages"]),
-        )
+        return reply(route, **vars(got), started=started)
 
     def _current(self) -> Any:
         """The client with today's key: the platform secret is read per call, so rotation needs no restart."""
         return self._client.with_options(api_key=self._key()) if self._key else self._client
+
+    @staticmethod
+    def _usage(resp: Any):
+        """The counts, read from the raw dict form so a null or a wrong type reaches `checked_count` as sent."""
+        raw = getattr(resp, "usage", None)
+        if raw is None:
+            raise UsageMissing("absent", "usage")
+        if hasattr(raw, "model_dump"):
+            raw = raw.model_dump()
+        if not isinstance(raw, dict):
+            raise UsageMissing("absent", "usage")
+        return build_usage(raw.get("input_tokens"), raw.get("output_tokens"))
 
     @staticmethod
     def _parse(resp: Any) -> Answer:
@@ -139,6 +146,6 @@ class AnthropicLLM(NetworkLLM):
             calls=[
                 ToolCall(name=b.name, input=b.input) for b in resp.content if b.type == "tool_use"
             ],
-            tokens=(resp.usage.input_tokens, resp.usage.output_tokens),
+            usage=AnthropicLLM._usage(resp),
             stop=resp.stop_reason,
         )

@@ -8,14 +8,14 @@ the ``x-goog-api-key`` header, never the URL, and is read on every call (a rotat
 
 from __future__ import annotations
 
-import json
 import time
 from collections.abc import Callable
 from typing import Any
 from urllib.parse import quote
 
 from hadavin_sdk.llm.common import Answer, NetworkLLM, pinned, post_json, reply
-from hadavin_sdk.models import Reply, ToolCall
+from hadavin_sdk.llm.protocol import UsageMissing, build_usage, checked_count
+from hadavin_sdk.models import Reply, ToolCall, Usage
 
 BASE_URL = "https://generativelanguage.googleapis.com/v1beta"
 
@@ -88,21 +88,45 @@ class GeminiLLM(NetworkLLM):
                 post_json(url, body, {"x-goog-api-key": self._key()}, self.timeout_s)
             )
         )
-        return reply(
-            route, **vars(got), started=started, sent=system + json.dumps(body["contents"])
-        )
+        return reply(route, **vars(got), started=started)
+
+    @staticmethod
+    def _usage(raw: dict[str, Any], *, blocked: bool) -> Usage:
+        """Input is `promptTokenCount`. Output is the candidates plus the thoughts (thinking is billed as output
+        and `candidatesTokenCount` leaves it out), or, when `totalTokenCount` is present, the larger of that and
+        `total - prompt` (PL58: an output the provider billed outside the two fields is still counted). A missing
+        `candidatesTokenCount` is 0 only for a blocked prompt (no candidates plus a `blockReason`); anywhere else
+        a candidate may have been billed for what it wrote, so it is refused."""
+        prompt = checked_count(raw.get("promptTokenCount"), "input_tokens")
+        cand_raw = raw.get("candidatesTokenCount")
+        cand = 0 if cand_raw is None and blocked else checked_count(cand_raw, "output_tokens")
+        thoughts_raw = raw.get("thoughtsTokenCount")
+        thoughts = 0 if thoughts_raw is None else checked_count(thoughts_raw, "output_tokens")
+        out = cand + thoughts
+        if raw.get("totalTokenCount") is not None:
+            # The total counts the prompt too, so it may pass the per-class cap legitimately: only its form is
+            # checked here, and the output derived from it goes through `build_usage` and its cap below.
+            total = raw["totalTokenCount"]
+            if type(total) is not int or total < 0:
+                raise UsageMissing("invalid", "output_tokens")
+            out = max(out, total - prompt)
+        return build_usage(prompt, out)
 
     @staticmethod
     def _parse(resp: dict[str, Any]) -> Answer:
-        usage = resp.get("usageMetadata") or {}
-        # Thinking is billed as output; candidatesTokenCount leaves it out.
-        out = (usage.get("candidatesTokenCount") or 0) + (usage.get("thoughtsTokenCount") or 0)
-        tokens = (usage.get("promptTokenCount"), out or None)
+        raw = resp.get("usageMetadata")
+        if not isinstance(raw, dict):
+            raise UsageMissing("absent", "usage")
         if not resp.get("candidates"):
             if (resp.get("promptFeedback") or {}).get(
                 "blockReason"
             ):  # the prompt itself was blocked
-                return Answer(text="", calls=[], tokens=tokens, stop="SAFETY")
+                return Answer(
+                    text="",
+                    calls=[],
+                    usage=GeminiLLM._usage(raw, blocked=True),
+                    stop="SAFETY",
+                )
             raise ValueError("gemini answered with no candidates")  # a ProviderError, never a guess
         candidate = resp["candidates"][0]
         if (
@@ -118,6 +142,6 @@ class GeminiLLM(NetworkLLM):
                 for p in parts
                 if "functionCall" in p
             ],
-            tokens=tokens,
+            usage=GeminiLLM._usage(raw, blocked=False),
             stop=candidate.get("finishReason"),
         )

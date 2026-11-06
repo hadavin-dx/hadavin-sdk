@@ -9,6 +9,7 @@ import hashlib
 import json
 import re
 import uuid
+from dataclasses import dataclass
 from datetime import UTC, date, datetime
 from decimal import ROUND_UP, Decimal
 from enum import StrEnum
@@ -321,6 +322,31 @@ class ToolCall(BaseModel):
     model_config = ConfigDict(extra="forbid")
     name: str
     input: dict[str, Any]
+
+
+@dataclass(frozen=True, slots=True)
+class Usage:
+    """What a provider reported for one call, in tokens per class. Plain `int`s only (a `bool` is refused), none
+    negative, none above `defaults.MAX_USAGE_TOKENS_PER_CLASS`. The llm kinds build it through `build_usage`
+    (`llm/protocol.py`), which refuses with a typed error first; the `ValueError` here is a backstop for a
+    programming error. Only input and output are priced; a non-zero cache class is refused as unpriced."""
+
+    input_tokens: int
+    output_tokens: int
+    cache_write_tokens: int = 0
+    cache_read_tokens: int = 0
+
+    def __post_init__(self) -> None:
+        for name in ("input_tokens", "output_tokens", "cache_write_tokens", "cache_read_tokens"):
+            v = getattr(self, name)
+            if type(v) is not int:
+                raise ValueError(f"{name} must be an int")
+            if v < 0 or v > defaults.MAX_USAGE_TOKENS_PER_CLASS:
+                raise ValueError(f"{name} is out of range")
+
+    @property
+    def prompt_tokens(self) -> int:
+        return self.input_tokens + self.cache_write_tokens + self.cache_read_tokens
 
 
 class Reply(Shape):

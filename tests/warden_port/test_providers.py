@@ -20,6 +20,7 @@ from hadavin_sdk.config import parse_backends
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.llm import ProviderError
 from hadavin_sdk.llm.common import estimate_tokens
+from hadavin_sdk.llm.protocol import UsageMissing
 from tests.contracts.kinds.builtin import ROUTES
 from tests.contracts.kinds.llm_wire import KEY, GeminiWire, OpenAICompatWire
 from tests.contracts.test_llm import CALL
@@ -88,15 +89,17 @@ def test_openai_adapter_maps_text_and_usage():
         wire.close()
 
 
-def test_openai_adapter_estimates_when_the_provider_reports_no_usage():
-    """Some OpenAI-compatible servers (Ollama among them) omit usage. Zeros would disarm the budget."""
+def test_openai_adapter_is_refused_when_the_provider_reports_no_usage():
+    """A server that leaves usage out (a local one, for instance) is refused, never estimated: a guessed count would
+    make the spend counters add up a number the provider never charged. One request is sent and none is repeated."""
     wire = OpenAICompatWire()
     try:
         fx = wire.scenario("text")
         del fx["body"]["usage"]
-        reply = wire.serve(fx).chat(**CALL)
-        assert reply.input_tokens > 0, "no usage reported and no estimate - budget would never fire"
-        assert reply.output_tokens > 0 and reply.cost_usd > 0
+        with pytest.raises(UsageMissing) as caught:
+            wire.serve(fx).chat(**CALL)
+        assert caught.value.reason == "absent"
+        assert len(wire.requests) == 1
     finally:
         wire.close()
 

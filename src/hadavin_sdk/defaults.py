@@ -163,3 +163,9 @@ KILL_SWITCH_CALL_BUDGET_MS = 5000  # statement_timeout of the stop and the probe
 KILL_SWITCH_CALL_LOCK_TIMEOUT_MS = (
     1000  # lock_timeout of the same connection (a stop waits less than a migration)
 )
+
+# --- model usage counts (P4a-1): one named block. Rebase note: if another package adds a block at the end of this file
+# first, keep both blocks and keep this one whole -------------------------------------------------------------------
+MAX_USAGE_TOKENS_PER_CLASS = (
+    1_000_000_000  # the most one class of tokens (input, output, a cache class) may be in one count
+)

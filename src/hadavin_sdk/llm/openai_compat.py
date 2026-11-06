@@ -1,5 +1,8 @@
 """Any OpenAI-shaped chat API (OpenAI, Groq, OpenRouter, a local Ollama) over stdlib HTTP, no SDK.
 
+A server that leaves usage out of its replies (some local servers do, Ollama among them) is refused with
+``UsageMissing`` in v1: its reply is never estimated, so it cannot be used until it reports token counts.
+
 Ports WARDEN ``OpenAICompatProvider`` (design 4.3). The key goes only to the configured ``base_url`` (https, or a
 keyless loopback model; checked in the settings), never through a redirect, and is read on every call (a rotated
 key is picked up). ``output_schema`` is forced through ``tool_choice``; a server that ignores it answers in text,
@@ -28,6 +31,8 @@ from hadavin_sdk.llm.common import (
     schema_hint,
     stop_reason,
 )
+from hadavin_sdk.llm.pricing import check_input_plausible, check_output_plausible
+from hadavin_sdk.llm.protocol import UsageMissing, add_usage, build_usage
 from hadavin_sdk.models import Reply, ToolCall
 
 # OpenAI's own family names without a dated snapshot (`gpt-4o`, `o3`, `chatgpt-4o-latest`) move to new models;
@@ -114,12 +119,16 @@ class OpenAICompatLLM(NetworkLLM):
             ]
         if forced:
             body["tool_choice"] = {"type": "function", "function": {"name": forced}}
-        started, used = time.monotonic(), [0, 0]
+        started, used = time.monotonic(), None
         for _ in range(2):  # the forced answer missing: one more request (design 4.3)
             got = self._retry(
                 lambda: self._parse(post_json(self.url, body, self._headers(), self.timeout_s))
             )
-            used = [used[0] + (got.tokens[0] or 0), used[1] + (got.tokens[1] or 0)]
+            # Each request is checked on its own before the sum hides it: a zero on one request that holds text
+            # or a tool call, or a zero input on a priced route, is refused here (PL57). Two statements.
+            check_input_plausible(got.usage, route)
+            check_output_plausible(got.usage, got.text, got.calls)
+            used = got.usage if used is None else add_usage(used, got.usage)
             # Done when answered, or when asking again would end the same way (cut off, refused).
             done = stop_reason(got.stop, got.calls) in ("max_tokens", "refusal")
             if done or not forced or any(c.name == forced for c in got.calls):
@@ -127,18 +136,20 @@ class OpenAICompatLLM(NetworkLLM):
             if (found := json_in_text(got.text)) is not None:
                 got.calls = [ToolCall(name=forced, input=found)]
                 break
-        # Some servers (Ollama among them) omit usage: None is estimated in reply().
-        got.tokens = (used[0] or None, used[1] or None)
-        return reply(route, **vars(got), started=started, sent=json.dumps(body["messages"]))
+        # A server that omits usage is refused inside `_parse` (`UsageMissing`); nothing is estimated.
+        got.usage = used
+        return reply(route, **vars(got), started=started)
 
     @staticmethod
     def _parse(resp: dict[str, Any]) -> Answer:
         choice = resp["choices"][0]
         message = choice.get("message") or {}
-        usage = resp.get("usage") or {}
+        raw = resp.get("usage")
+        if not isinstance(raw, dict):
+            raise UsageMissing("absent", "usage")
         return Answer(
             text=message.get("content") or "",
             calls=[c for c in map(_call, message.get("tool_calls") or []) if c is not None],
-            tokens=(usage.get("prompt_tokens"), usage.get("completion_tokens")),
+            usage=build_usage(raw.get("prompt_tokens"), raw.get("completion_tokens")),
             stop=choice.get("finish_reason"),
         )

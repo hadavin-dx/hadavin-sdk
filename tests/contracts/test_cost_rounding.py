@@ -8,7 +8,7 @@ import pytest
 from pydantic import ValidationError
 
 from hadavin_sdk.config import Route
-from hadavin_sdk.models import Reply, Verdict
+from hadavin_sdk.models import Reply, Usage, Verdict
 
 D = Decimal
 MAX_USD = D(10**12)
@@ -46,9 +46,7 @@ def _round_up_fraction(x: Fraction) -> Decimal:
 def test_reply_rounds_the_cost_up(name, n, price, want):
     from hadavin_sdk.llm.common import reply
 
-    got = reply(
-        _route(price), text="x", calls=[], tokens=(n, 5), stop="end_turn", started=0.0, sent="s"
-    )
+    got = reply(_route(price), text="x", calls=[], usage=Usage(n, 5), stop="end_turn", started=0.0)
     assert got.cost_usd == D(want)
     assert got.cost_usd == _round_up_fraction(_exact(n, price))
     assert got.cost_usd.as_tuple().exponent >= -8
@@ -108,7 +106,7 @@ def test_a_route_that_skipped_validation_gives_value_error():
 
     bad = _route("1").model_copy(update={"input_usd_per_mtok": D("NaN")})
     with pytest.raises(ValueError):
-        reply(bad, text="x", calls=[], tokens=(5, 5), stop=None, started=0.0, sent="s")
+        reply(bad, text="x", calls=[], usage=Usage(5, 5), stop=None, started=0.0)
 
 
 def test_exactness_at_the_price_bound():
@@ -116,7 +114,7 @@ def test_exactness_at_the_price_bound():
 
     for price in ("1000000", "999999.999999"):
         got = reply(
-            _route(price), text="x", calls=[], tokens=(10**9, 5), stop=None, started=0.0, sent="s"
+            _route(price), text="x", calls=[], usage=Usage(10**9, 5), stop=None, started=0.0
         )
         assert got.cost_usd == _round_up_fraction(_exact(10**9, price))
 

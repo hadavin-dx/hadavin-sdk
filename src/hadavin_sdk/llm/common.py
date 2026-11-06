@@ -11,14 +11,14 @@ import time
 import urllib.request
 from collections.abc import Callable
 from dataclasses import dataclass
-from decimal import Decimal, DecimalException
 from typing import Any
 from urllib.parse import urlsplit
 
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.guard import http as http_guard
+from hadavin_sdk.llm.pricing import check_output_plausible, cost_usd
 from hadavin_sdk.llm.retry import with_retry
-from hadavin_sdk.models import Reply, ToolCall, round_cost_up
+from hadavin_sdk.models import Reply, ToolCall, Usage, round_cost_up
 
 # The forced tool an `output_schema` becomes: its input schema IS the schema, so the API enforces the shape.
 ANSWER_TOOL = "submit_answer"
@@ -57,8 +57,9 @@ def pinned(
 
 
 def estimate_tokens(text: str) -> int:
-    """For a provider that reports no usage. Deliberately pessimistic (3 chars a token, never 0): a budget fed
-    zeros never fires."""
+    """A guess at the tokens a text COULD use (3 chars a token, never 0). It bounds nothing: it estimates what a
+    call could use, never what it used. A provider reply without usage is refused (`UsageMissing`), not estimated
+    with this."""
     return max(1, len(text) // 3)
 
 
@@ -149,41 +150,28 @@ def stop_reason(raw: str | None, calls: list[ToolCall]) -> str:
     return "tool_use" if calls else "end_turn"
 
 
-def price_cost(route: Any, tokens_in: int, tokens_out: int) -> Decimal:
-    """The exact cost of a call from the route's prices, rounded UP to 8 decimals (`models.round_cost_up`).
-    A route that skipped validation (`model_copy(update=...)`) with a bad price gives `ValueError`: every decimal
-    arithmetic error (`InvalidOperation`, `Overflow`, ...) is translated here, the one choke point of all callers."""
-    try:
-        cost = (
-            Decimal(tokens_in) * route.input_usd_per_mtok
-            + Decimal(tokens_out) * route.output_usd_per_mtok
-        ) / Decimal(1_000_000)
-    except DecimalException as exc:
-        raise ValueError("the route's price is not a usable number") from exc
-    return round_cost_up(cost)
-
-
 def reply(
     route: Any,
     *,
     text: str,
     calls: list[ToolCall],
-    tokens: tuple[int | None, int | None],
+    usage: Usage,
     stop: str | None,
     started: float,
-    sent: str,
 ) -> Reply:
-    """The Reply, priced from the route. Missing usage is estimated from what was sent and received. A cut-off
-    answer keeps its cost but loses its tool calls: their input may be incomplete."""
-    tokens_in = tokens[0] or estimate_tokens(sent)
-    tokens_out = tokens[1] or estimate_tokens(text + json.dumps([c.input for c in calls]))
-    cost = price_cost(route, tokens_in, tokens_out)
+    """The Reply, priced from the route and the counts the provider reported (never estimated). A reported output
+    of 0 on a reply that holds text or a tool call is refused (`UsageMissing("implausible_zero")`); `cost_usd`
+    refuses a cache count and a zero input on a priced route. The exact cost is rounded UP once, here
+    (`models.round_cost_up`). A cut-off answer keeps its cost but loses its tool calls: their input may be
+    incomplete."""
+    check_output_plausible(usage, text, calls)
+    cost = round_cost_up(cost_usd(usage, route))
     stop = stop_reason(stop, calls)
     return Reply(
         text=text,
         tool_calls=[] if stop == "max_tokens" else calls,
-        input_tokens=tokens_in,
-        output_tokens=tokens_out,
+        input_tokens=usage.input_tokens,
+        output_tokens=usage.output_tokens,
         cost_usd=cost,
         model_id=route.model_id,
         stop_reason=stop,
@@ -197,7 +185,7 @@ class Answer:
 
     text: str
     calls: list[ToolCall]
-    tokens: tuple[int | None, int | None]
+    usage: Usage
     stop: str | None
 
 

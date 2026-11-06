@@ -29,7 +29,7 @@ from askdata.validate import RULES, Rejected, Validated, validate
 from hadavin_sdk.audit.protocol import AuditUnavailable
 from hadavin_sdk.config import Route
 from hadavin_sdk.guard.injection import RegexDetector, injection_check
-from hadavin_sdk.llm.protocol import LLM, ProviderError, ProviderExhausted
+from hadavin_sdk.llm.protocol import LLM, ProviderError, ProviderExhausted, UsageMissing
 
 NO_ROWS_NOTE = "0 rows: check the filters"
 
@@ -160,7 +160,7 @@ class Pipeline:
                 )
             except (ProviderError, OSError, TimeoutError) as err:
                 # A call that failed AFTER the request was sent is charged its worst case; a refusal is free.
-                billed = isinstance(err, ProviderExhausted | OSError | TimeoutError)
+                billed = isinstance(err, ProviderExhausted | UsageMissing | OSError | TimeoutError)
                 if billed:  # the reservation stands as the charge
                     run.cost += worst
                 else:
