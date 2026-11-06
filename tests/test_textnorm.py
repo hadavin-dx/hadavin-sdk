@@ -8,6 +8,7 @@ fragment of that message, so a message is never reworded without the list.
 
 import ast
 import enum
+import functools
 import hashlib
 import html
 import importlib.util
@@ -47,6 +48,22 @@ FIX = Path(__file__).parent / "fixtures"
 CAP = defaults.TEXTNORM_MAX_CHARS
 SSS = chr(0x1F75C)  # weight 3: its fold is three letters (the one table value of length 3)
 FDFA = chr(0xFDFA)  # weight 18: NFKC makes 18 characters from it
+# The two coverage sentences. Each must stand WORD FOR WORD (whitespace aside) in every place that states it.
+SCAN_COVERAGE = (
+    "A value with NO ASCII letter or digit (Chinese, Arabic, Hindi, Thai) is found by the script views of ``fold_views`` (the non-ASCII letters and "
+    "marks of the text, with whitespace, punctuation, symbols and ASCII characters removed), so an inserted space, hyphen, line break, ASCII letter or "
+    "mark does not hide it; an inserted look-alike letter of that script, or a respelling of it, is not covered."
+)
+NAME_COVERAGE = (
+    "NAME RULES COVER: small capitals, negative circled and negative squared letters, the crossed negative squared P, regional indicator letters, "
+    "the squared small d, Latin letters with a stroke, hook or similar mark, and the circled, negative circled, double circled and sans-serif digits "
+    "and numbers (0 to 10); the circled numbers 11 to 20 are read by NFKC, the negative circled numbers 11 to 20 are not read (a named gap)."
+)
+
+
+def _squash(text):
+    """``text`` with every run of whitespace (a line break inside a docstring) as one space."""
+    return " ".join(text.split())
 
 
 def bare(key):
@@ -1167,7 +1184,7 @@ def test_the_hidden_channel_signal_refuses_what_is_not_text():
 
 
 # ---- names ---------------------------------------------------------------------------------------------------------------------------------
-def test_the_public_names_are_exactly_the_listed_twenty():
+def test_the_public_names_are_exactly_the_listed_twenty_two():
     assert sorted(textnorm.__all__) == sorted(
         [
             "FILLERS",
@@ -1177,6 +1194,7 @@ def test_the_public_names_are_exactly_the_listed_twenty():
             "TextTooLong",
             "TextnormError",
             "UnidataMismatch",
+            "ViewTooShort",
             "allow_equal",
             "fold",
             "fold_views",
@@ -1188,11 +1206,12 @@ def test_the_public_names_are_exactly_the_listed_twenty():
             "names_equal",
             "require_pinned_unidata",
             "could_be_same_person",
+            "scan_needles",
             "squeeze",
             "squeeze_views",
         ]
     )
-    assert len(textnorm.__all__) == len(set(textnorm.__all__)) == 20
+    assert len(textnorm.__all__) == len(set(textnorm.__all__)) == 22
 
 
 def test_every_name_the_module_defines_is_public_and_listed_or_private():
@@ -1690,10 +1709,10 @@ def test_squeeze_views_removes_every_character_that_reads_as_no_ascii_letter_or_
     assert checked > 3000, "too few code points were checked"
 
 
-def test_the_marks_dropped_views_are_at_most_six_and_keep_every_script_and_letter():
-    """``fold_views`` and ``squeeze_views`` return the spelling variants (at most three) and the same spelling variants of the text without its
-    Mc, Lm and Sk characters: at most six, none repeated; a text without such a mark has no extra view; ``identity_keys`` is unchanged
-    (at most three)."""
+def test_the_marks_dropped_views_are_at_most_six_for_squeeze_and_nine_for_fold_and_keep_every_script_and_letter():
+    """``squeeze_views`` returns the spelling variants (at most three) and the same spelling variants of the text without its Mc, Lm and Sk
+    characters: at most six, none repeated. ``fold_views`` adds the script view of each marks-dropped variant: at most nine. A text without
+    such a mark has no extra view; ``identity_keys`` is unchanged (at most three)."""
     eta = "\u0397"
     for text in (
         "pass\u0c02word",
@@ -1701,12 +1720,12 @@ def test_the_marks_dropped_views_are_at_most_six_and_keep_every_script_and_lette
         "plain",
         "\u0928\u092e\u0938\u094d\u0924\u0947\u0903",
     ):
-        for views in (
-            textnorm.fold_views(text, casefold=True),
-            textnorm.squeeze_views(text),
+        for views, limit in (
+            (textnorm.fold_views(text, casefold=True), 9),
+            (textnorm.squeeze_views(text), 6),
         ):
-            assert 1 <= len(views) <= 6 and len(set(views)) == len(views), (
-                f"a view is repeated or there are more than six: {views}"
+            assert 1 <= len(views) <= limit and len(set(views)) == len(views), (
+                f"a view is repeated or there are more than the limit {limit}: {views}"
             )
         assert 1 <= len(textnorm.identity_keys(text)) <= 3, (
             "identity_keys grew with the marks-dropped views"
@@ -1747,13 +1766,15 @@ def test_the_spelling_variants_keep_a_spacing_combining_mark_while_the_scan_view
     assert marks
     for ch in marks:
         text = "pass" + ch + "word"
-        assert "password" not in identity_key(text) or ord(ch) in _confusables.TABLE, (
+        assert "password" not in identity_key(text), (
             f"identity_key dropped the spacing mark U+{ord(ch):04X}"
         )
         assert identity_key(text) != identity_key("password"), (
             f"identity_key dropped the spacing mark U+{ord(ch):04X}"
         )
-        assert not could_be_same_person(text, "password") or ord(ch) in _confusables.TABLE, ch
+        assert not could_be_same_person(text, "password"), (
+            f"could_be_same_person dropped the spacing mark U+{ord(ch):04X}"
+        )
         assert "password" in textnorm.fold_views(text, casefold=True), (
             f"fold_views does not hold the secret hidden with the spacing mark U+{ord(ch):04X}"
         )
@@ -1791,7 +1812,7 @@ def test_a_value_with_no_ascii_letter_or_digit_is_found_by_the_fold_views_scan_w
     cases = (
         ("Devanagari + U+0903", devanagari, devanagari[:3] + "\u0903" + devanagari[3:]),
         ("Chinese + U+02C6", chinese, chinese[:2] + "\u02c6" + chinese[2:]),
-        ("Thai + a tone mark (U+0E48)", thai, thai[:4] + "\u0e48" + thai[4:]),
+        ("Thai + the maiyamok U+0E46 (Lm)", thai, thai[:4] + "\u0e46" + thai[4:]),
         ("Thai + U+02C6", thai, thai[:4] + "\u02c6" + thai[4:]),
     )
     for label, secret, hidden in cases:
@@ -1806,8 +1827,236 @@ def test_a_value_with_no_ascii_letter_or_digit_is_found_by_the_fold_views_scan_w
         )
     assert not _scan_holds(chinese, "\u5bc6\u7801"), "a different value was found"
     doc = textnorm.fold_views.__doc__ or ""
-    assert "NO ASCII letter or digit" in doc and "alone" in doc and "marks-dropped" in doc, (
+    assert _squash(SCAN_COVERAGE) in _squash(doc), (
         "the fold_views docstring does not say what a scan of a value with no ASCII letter or digit relies on"
+    )
+
+
+# ---- fix6: the script views, the minimum length, the case rule, the documented limits --------------------------------------------------
+CHINESE = "\u5bc6\u7801\u6d4b\u8bd5"  # four ideographs
+HINDI = "\u092a\u093e\u0938\u0935\u0930\u094d\u0921"  # "password" in Devanagari, with an Mc (U+093E) and an Mn (virama)
+THAI = "\u0e23\u0e2b\u0e31\u0e2a\u0e1c\u0e48\u0e32\u0e19"
+INSERTED_TEXTS = {
+    "a space": " ",
+    "a hyphen": "-",
+    "a line feed": "\n",
+    "a carriage return and line feed": "\r\n",
+    "a line separator (U+2028)": "\u2028",
+    "a no-break space": "\u00a0",
+    "a full stop": ".",
+    "an ASCII letter": "q",
+    "an upper-case ASCII letter": "Q",
+    "an ASCII digit": "7",
+    "a zero-width space": "\u200b",
+}
+
+
+def _scan(value, text):
+    """The documented scan, whole: the needles of ``scan_needles(value)`` against every ``fold_views(text, casefold=True)`` and
+    ``squeeze_views(text)`` view. ``ViewTooShort`` propagates (a caller refuses)."""
+    needles = textnorm.scan_needles(value)
+    views = (
+        *textnorm.fold_views(text, casefold=True, collapse_ws=True),
+        *textnorm.squeeze_views(text),
+    )
+    return any(n in v for n in needles for v in views)
+
+
+def test_a_separator_an_ascii_letter_or_a_mark_inserted_into_a_chinese_hindi_or_thai_value_does_not_hide_it():
+    """p1a6-001: for a value with no ASCII letter or digit ``squeeze_views`` is ``""`` and the old scan relied on the marks-dropped views, which a
+    space, a hyphen, a line break or an ASCII letter defeated. The script view removes them. Every value, at every position, with every
+    inserted text of ``INSERTED_TEXTS`` is found; and a benign text (the value missing a character, the characters swapped, another value
+    of the same script) is not."""
+    benign = {
+        CHINESE: (
+            "token: nothing here",
+            "\u5bc6\u6d4b\u8bd5",
+            "\u7801\u5bc6\u6d4b\u8bd5",
+            "\u5bc6 \u7801",
+        ),
+        HINDI: (
+            "token: nothing here",
+            HINDI[:-1],
+            HINDI[::-1],
+            "\u0928\u092e\u0938\u094d\u0924\u0947",
+        ),
+        THAI: (
+            "token: nothing here",
+            THAI[:-1],
+            THAI[::-1],
+            "\u0e2a\u0e27\u0e31\u0e2a\u0e14\u0e35",
+        ),
+    }
+    for value, negatives in benign.items():
+        assert textnorm.squeeze_views(value) == ("",), "the value has an ASCII letter or digit"
+        assert _scan(value, value), "the value is not found in itself"
+        for label, extra in INSERTED_TEXTS.items():
+            for pos in range(1, len(value)):
+                hidden = value[:pos] + extra + value[pos:]
+                assert _scan(value, "token: " + hidden + " end"), (
+                    f"the scan misses {value!r} with {label} inserted at {pos}"
+                )
+        for text in negatives:
+            assert not _scan(value, text), f"the scan finds {value!r} in the benign text {text!r}"
+
+
+def test_a_value_in_a_script_view_is_found_across_every_inserted_text_at_once():
+    """Several insertions in one text (a space, a letter, a line break and a hyphen) and the script view of the text itself."""
+    for value in (CHINESE, HINDI, THAI):
+        pieces = [value[0]] + [c for c in value[1:]]
+        hidden = " q-\n".join(pieces)
+        assert _scan(value, hidden), f"several insertions hide {value!r}"
+        assert (
+            textnorm.fold_views(value, casefold=True, collapse_ws=True)[-1]
+            in textnorm.fold_views(hidden, casefold=True, collapse_ws=True)[-1]
+        ), "the last (script) view of the text does not hold the value"
+
+
+def test_the_script_view_keeps_only_non_ascii_letters_and_marks_and_is_left_out_when_empty_or_repeated():
+    views = textnorm.fold_views("ab \u5bc6-\u7801 7", casefold=True)
+    assert "\u5bc6\u7801" in views, (
+        "the script view of a text with a separator, ASCII letters and a digit is missing"
+    )
+    assert textnorm._script_view("ab \u5bc6-\u7801 7!") == "\u5bc6\u7801"
+    for ascii_text in ("plain", "pass word 12", "-- ++"):
+        assert all(v.isascii() for v in textnorm.fold_views(ascii_text, casefold=True)), ascii_text
+        assert all(v for v in textnorm.fold_views(ascii_text, casefold=True)[1:]), (
+            "an empty script view was kept"
+        )
+    assert len(textnorm.fold_views("plain", casefold=True)) == 1, "an ASCII text got a script view"
+    chinese_views = textnorm.fold_views(CHINESE, casefold=True)
+    assert chinese_views == (CHINESE,), "the script view of a text that is only script is repeated"
+
+
+def test_the_minimum_view_length_is_one_number_for_every_view_and_a_short_value_is_refused(
+    monkeypatch,
+):
+    """p1a6-001: ``defaults.TEXTNORM_MIN_VIEW_CHARS`` is read when ``scan_needles`` runs and applies to the spelling-variant views, the marks-dropped views,
+    the script views and the squeeze views alike. The error is a ``TextnormError`` (not a ``ValueError``) and carries no part of the value."""
+    assert defaults.TEXTNORM_MIN_VIEW_CHARS == 2
+    for short in ("", "x", "\u200b", "\u5bc6", "\u5bc6 ", "7", " \u5bc6\n"):
+        with pytest.raises(textnorm.ViewTooShort) as caught:
+            textnorm.scan_needles(short)
+        assert isinstance(caught.value, TextnormError) and not isinstance(caught.value, ValueError)
+        assert short.strip() == "" or short not in str(caught.value), "the message holds the value"
+    value = "\u5bc6\u7801\u6d4b\u8bd5abc"
+    families = {
+        "spelling variant": value.casefold(),
+        "script view": CHINESE,
+        "squeeze view": "ABC",
+    }
+    for minimum, expected_present in ((2, 3), (3, 3), (4, 2), (7, 1)):
+        monkeypatch.setattr(defaults, "TEXTNORM_MIN_VIEW_CHARS", minimum)
+        needles = textnorm.scan_needles(value)
+        assert all(len(n) >= minimum for n in needles), (
+            f"a needle is shorter than the minimum {minimum}: {needles}"
+        )
+        present = [name for name, v in families.items() if v in needles]
+        assert len(present) == expected_present, (
+            f"wrong views at the minimum {minimum}: needles {needles}, families {present}"
+        )
+    monkeypatch.setattr(defaults, "TEXTNORM_MIN_VIEW_CHARS", 8)
+    with pytest.raises(textnorm.ViewTooShort):
+        textnorm.scan_needles(value)
+
+
+def test_scan_needles_returns_each_needle_once_and_checks_the_text_first():
+    needles = textnorm.scan_needles("Password")
+    assert len(needles) == len(set(needles)) and "password" in needles and "PASSWORD" in needles
+    with pytest.raises(NotText):
+        textnorm.scan_needles(b"password")  # type: ignore[arg-type]
+    with pytest.raises(TextTooLong):
+        textnorm.scan_needles("a" * (CAP + 1))
+    assert "scan_needles" in (textnorm.__doc__ or "") and "TEXTNORM_MIN_VIEW_CHARS" in (
+        textnorm.__doc__ or ""
+    ), "the module docstring does not name the minimum for P1b"
+
+
+def test_a_scan_built_without_casefold_misses_a_case_variant_and_the_rule_says_to_pass_casefold():
+    """p1a6-004: ``fold_views(casefold=False)`` keeps case (for display and comparison callers). A scan built on it misses "SECRET" for the value
+    "secret"; the documented scan passes ``casefold=True`` and finds both. The default is kept; this test documents why the docstring says
+    to pass the flag, and fails if the documented scan stops finding an upper/lower variant."""
+    for value, text in (
+        ("secret-token", "x SECRET-TOKEN x"),
+        ("SECRET-TOKEN", "x secret-token x"),
+        ("Straße", "STRASSE"),
+    ):
+        assert _scan(value, text), (
+            f"the documented scan misses a case variant: {value!r} in {text!r}"
+        )
+        folded_value = textnorm.fold_views(value)  # casefold=False, the default
+        folded_text = textnorm.fold_views(text)
+        assert not any(n in v for n in folded_value for v in folded_text if n), (
+            "the case-keeping default found the variant: the default changed, so the rule in the docstring is out of date"
+        )
+    doc = _squash((textnorm.__doc__ or "") + (textnorm.fold_views.__doc__ or ""))
+    assert "pass ``casefold=True``" in doc.replace(
+        "PASS ``casefold=True, collapse_ws=True``", "pass ``casefold=True``"
+    ), "THE RULE FOR A SCAN does not say to pass casefold=True"
+
+
+def test_the_documented_limit_a_modifier_letter_that_replaces_a_letter_with_another_inserted_is_not_caught():
+    """R13-LM-MIX, a limit stated in the module docstring ("No exemption" holds for INSERTION only). "pa" + superscript s + "s" + superscript h + "word":
+    the first modifier letter stands for the letter s, the second is inserted. The marks-dropped views lose the s the first one stood for; the
+    other views read the inserted one as an h. No view holds PASSWORD. If this starts to pass, move the case into the insertion test and update the docstring."""
+    text = "pa\u02e2s\u02b0word"
+    assert unicodedata.category("\u02e2") == "Lm" and unicodedata.category("\u02b0") == "Lm"
+    assert not any("PASSWORD" in v for v in textnorm.squeeze_views(text)), (
+        "R13-LM-MIX is now caught: the documented limit is out of date"
+    )
+    assert any("PASWORD" in v for v in textnorm.squeeze_views(text)), (
+        "the marks-dropped view changed"
+    )
+    doc = _squash(textnorm.__doc__ or "")
+    assert "INSERTION only" in doc and "NOT caught" in doc, "the docstring does not state the limit"
+
+
+def test_the_coverage_sentences_are_the_same_in_every_place_that_states_them():
+    """p1a6-005: ONE coverage sentence for the name rules in ``textnorm.py``, ``tools/gen_confusables.py`` and the CHANGELOG, and one for the
+    scan of a script value in ``textnorm.py`` (module and ``fold_views`` docstrings) and the CHANGELOG."""
+    gen = (ROOT / "tools" / "gen_confusables.py").read_text(encoding="utf-8")
+    sources = {
+        "textnorm module docstring": textnorm.__doc__ or "",
+        "generator docstring": gen,
+    }
+    log = ROOT / "CHANGELOG.md"
+    if log.exists():  # the mutation copies do not carry it
+        sources["CHANGELOG"] = log.read_text(encoding="utf-8")
+    for place, text in sources.items():
+        assert _squash(NAME_COVERAGE) in _squash(text), (
+            f"{place}: the name-rule coverage sentence differs"
+        )
+    scan_places = {
+        "textnorm module docstring": textnorm.__doc__ or "",
+        "fold_views docstring": textnorm.fold_views.__doc__ or "",
+    }
+    if "CHANGELOG" in sources:
+        scan_places["CHANGELOG"] = sources["CHANGELOG"]
+    for place, text in scan_places.items():
+        assert _squash(SCAN_COVERAGE) in _squash(text), (
+            f"{place}: the scan coverage sentence differs"
+        )
+
+
+def test_the_module_does_not_export_a_second_name_for_the_table():
+    """p1a6-005: the import alias ``CONFUSABLES`` was a public-looking name beside ``_confusables.TABLE``; it is private now."""
+    assert not hasattr(textnorm, "CONFUSABLES") and "CONFUSABLES" not in textnorm.__all__
+    assert textnorm._CONFUSABLES is _confusables.TABLE
+
+
+def test_step_three_keeps_every_whitespace_character_and_the_sk_wording_is_exact():
+    """p1a6-005: the docstring said that line and paragraph separators are dropped; they are kept and become a space, like tab and line feed. And only a
+    COMPATIBILITY Sk becomes a space: the diaeresis and the small tilde do, the grave accent and the circumflex stay."""
+    for ws in ("\t", "\n", "\r", "\u2028", "\u2029", "\u00a0", "\u3000"):
+        assert fold("a" + ws + "b") == "a b", f"U+{ord(ws):04X} did not become a space"
+    for compat in ("\u00a8", "\u02dc"):
+        assert unicodedata.category(compat) == "Sk" and fold("a" + compat + "b") == "a b"
+    for other in ("`", "^", "\u02c2"):
+        assert unicodedata.category(other) == "Sk" and fold("a" + other + "b") == "a" + other + "b"
+    doc = _squash(textnorm.__doc__ or "")
+    assert "EXCEPT that every whitespace character" in doc and "U+2028" in doc
+    assert "a compatibility Sk" in doc and "line and paragraph separator, private-use" not in doc, (
+        "the docstring step 3 or the Sk wording is the old one"
     )
 
 
@@ -1832,24 +2081,112 @@ KNOWN_NAME_GAPS = {
     "G3 turned digit": "TURNED DIGIT TWO and THREE (U+218A, U+218B) are the digits turned over, which are not the digits",
     "G4 read as another letter by UTS #39": "the vendored UTS #39 data reads the letter as a different one than its name says "
     "(V with hook as u, V with palatal hook as y): the data is the authority, the table follows it",
+    "G6 letter of another script named like a Latin letter": "SAMARITAN MODIFIER LETTER I and MODIFIER LETTER CYRILLIC SMALL I/U/E "
+    "end their names in a Latin letter but are letters of the Samaritan and Cyrillic scripts: the sweep's name grammar catches them, "
+    "they are not Latin look-alikes, and a Cyrillic modifier letter next to Latin letters is a mixed-script signal",
+    "G7 symbol named like a letter": "SCRIPT CAPITAL P (U+2118, the Weierstrass p) is a mathematical symbol (Sm), not the letter P",
+    "G5 negative circled number 11 to 20": "NEGATIVE CIRCLED NUMBER ELEVEN to TWENTY (U+24EB to U+24F4) have no decomposition and the name rules "
+    "stop at ten (the circled numbers 11 to 20 are read by NFKC): a named gap, not read",
+}
+
+
+@functools.cache
+def _data_prototypes():
+    """The vendored UTS #39 file as {source code point: prototype text} (MA lines), read once."""
+    text = (ROOT / "tools" / "data" / "confusables.txt").read_text(encoding="utf-8")
+    return {
+        int(m[1], 16): "".join(chr(int(h, 16)) for h in m[2].split())
+        for m in re.finditer(r"^([0-9A-F]{4,6}) ;\t?([0-9A-F ]+);\s*MA\b", text, re.MULTILINE)
+    }
+
+
+# The code point classes of gap G2, one named entry per class (the first word of the character name). A new class is a failing test.
+G2_CLASSES = {
+    **dict.fromkeys(
+        (
+            *(
+                "AEGEAN",
+                "BHAIKSUKI",
+                "BRAHMI",
+                "CHORASMIAN",
+                "COPTIC",
+                "ETHIOPIC",
+                "HATRAN",
+                "IMPERIAL",
+                "INDIC",
+            ),
+            *(
+                "INSCRIPTIONAL",
+                "KAKTOVIK",
+                "KHAROSHTHI",
+                "KHMER",
+                "MANICHAEAN",
+                "MAYAN",
+                "MEDEFAIDRIN",
+                "MENDE",
+            ),
+            *(
+                "MEROITIC",
+                "NABATAEAN",
+                "NEW",
+                "OLD",
+                "OTTOMAN",
+                "PALMYRENE",
+                "PHOENICIAN",
+                "PSALTER",
+                "RUMI",
+            ),
+            *("SINHALA", "SOGDIAN", "TELUGU", "GREEK"),
+        ),
+        "a number of a script or numeral system with its own glyphs",
+    ),
+    **dict.fromkeys(
+        ("COUNTING", "TALLY"), "a counting rod or a tally mark: a stroke pattern, not a digit"
+    ),
+    **dict.fromkeys(
+        ("IDEOGRAPHIC", "CIRCLED", "PARENTHESIZED"),
+        "an ideographic numeral (one, two, ... nine), alone or in a circle or parentheses: an ideograph, not the digit",
+    ),
 }
 
 
 def _data_sources():
     """The code points the vendored UTS #39 file lists as sources (MA lines)."""
-    text = (ROOT / "tools" / "data" / "confusables.txt").read_text(encoding="utf-8")
-    return {int(m[1], 16) for m in re.finditer(r"^([0-9A-F]{4,6}) ;.*;\s*MA\b", text, re.MULTILINE)}
+    return set(_data_prototypes())
 
 
-def _read_by_data(ch):
-    """True when the vendored UTS #39 data reads ``ch`` or its other-case form (a name rule never splits a capital from its small letter)."""
-    sources = _data_sources()
-    return any(ord(c) in sources for c in {ch, ch.lower(), ch.upper()} if len(c) == 1)
+def _data_reading(ch):
+    """What the vendored UTS #39 data reads ``ch`` as, or else its other-case form (a name rule never splits a capital from its small letter);
+    ``None`` when it lists neither."""
+    protos = _data_prototypes()
+    for c in (ch, ch.lower(), ch.upper()):
+        if len(c) == 1 and ord(c) in protos:
+            return protos[ord(c)]
+    return None
+
+
+def _g4_reading(ch):
+    """What the data reads ``ch`` as, directly or through its NFKC form (a modifier letter small v with hook is NFKC-read as the Latin small v
+    with hook, which the data reads as u); ``None`` when the data lists neither."""
+    reading = _data_reading(ch) or _data_reading(unicodedata.normalize("NFKC", ch))
+    return reading if reading and re.fullmatch(r"[A-Za-z0-9]", reading) else None
+
+
+# Names that say one ASCII letter outside the plain Latin block: NFKC reads most of them (mathematical, fullwidth, circled, parenthesized,
+# modifier letters, double-struck, script and black-letter capitals); the sweep requires every one to be read or to be in a named gap.
+_LETTER_FORMS = re.compile(
+    r"LATIN|REGIONAL INDICATOR|MATHEMATICAL|MODIFIER LETTER|DOUBLE-STRUCK|BLACK-LETTER|^SCRIPT "
+)
+_NUMBER_WORD = {
+    "TEN": 10, "ELEVEN": 11, "TWELVE": 12, "THIRTEEN": 13, "FOURTEEN": 14, "FIFTEEN": 15, "SIXTEEN": 16,
+    "SEVENTEEN": 17, "EIGHTEEN": 18, "NINETEEN": 19, "TWENTY": 20,
+}  # fmt: skip
 
 
 def _name_sweep():
-    """Every code point whose name says one ASCII letter (LATIN ... LETTER x, REGIONAL INDICATOR SYMBOL LETTER x) or one ASCII digit (a name
-    with DIGIT, or any No/Nd code point with a value 0-9), with what ``squeeze_views`` reads for it alone. Returns (cp, name, expected, views)."""
+    """Every code point whose name says one ASCII letter (LATIN ... LETTER x, REGIONAL INDICATOR SYMBOL LETTER x, MATHEMATICAL ... CAPITAL x, ...)
+    or one ASCII digit (a name with DIGIT, or any No/Nd code point with a value 0-9) or a circled number 10 to 20, with what ``squeeze_views`` reads
+    for it alone. Returns (cp, name, expected, views)."""
     rows = []
     for cp in range(sys.maxunicode + 1):
         ch = chr(cp)
@@ -1858,12 +2195,14 @@ def _name_sweep():
             continue
         expected = None
         letter = _NAMED_LETTER.fullmatch(name)
-        if letter and ("LATIN" in name or "REGIONAL INDICATOR" in name):
+        if letter and _LETTER_FORMS.search(name):
             expected = letter[1]
         elif unicodedata.category(ch) in ("No", "Nd"):
             value = unicodedata.numeric(ch, None)
             if value is not None and value == int(value) and 0 <= value <= 9:
                 expected = str(int(value))
+            elif "CIRCLED NUMBER" in name and name.rsplit(" ", 1)[-1] in _NUMBER_WORD:
+                expected = str(_NUMBER_WORD[name.rsplit(" ", 1)[-1]])
         elif "DIGIT" in name:
             digit = _NAMED_DIGIT.fullmatch(name)
             expected = _DIGIT_WORD[digit[1]] if digit else None
@@ -1878,10 +2217,16 @@ def _gap_family(cp, name):
         return "G1 dropped on purpose"
     if name.startswith("TURNED DIGIT"):
         return "G3 turned digit"
+    if "NEGATIVE CIRCLED NUMBER" in name:
+        return "G5 negative circled number 11 to 20"
     if unicodedata.category(ch) in ("No", "Nd"):
         return "G2 numeral of another script or system"
-    if _read_by_data(ch):
+    if _g4_reading(ch) is not None:
         return "G4 read as another letter by UTS #39"
+    if name.startswith(("SAMARITAN MODIFIER LETTER", "MODIFIER LETTER CYRILLIC")):
+        return "G6 letter of another script named like a Latin letter"
+    if name == "SCRIPT CAPITAL P":
+        return "G7 symbol named like a letter"
     return None
 
 
@@ -1900,7 +2245,31 @@ def test_every_code_point_whose_name_says_one_ascii_letter_or_digit_is_read_as_i
         "code points read as nothing that their name says, in no named gap family: "
         + "; ".join(unnamed[:20])
     )
+    math_rows = [(n, views) for _, n, e, views in rows if "MATHEMATICAL" in n]
+    assert len(math_rows) > 600, "the MATHEMATICAL letter and digit forms are not in the sweep"
+    assert all(any(e in v for v in views) for _, n, e, views in rows if "MATHEMATICAL" in n), (
+        "a MATHEMATICAL form is not read (NFKC reads them all)"
+    )
+    assert any("CIRCLED NUMBER ELEVEN" in n for _, n, _, _ in rows) and any(
+        _gap_family(cp, n) == "G5 negative circled number 11 to 20" for cp, n, _ in unread
+    ), (
+        "the circled numbers 11 to 20 are not in the sweep or the negative circled ones are not named as a gap"
+    )
     assert {_gap_family(cp, name) for cp, name, _ in unread} <= set(KNOWN_NAME_GAPS)
+    for cp, name, _ in unread:
+        if _gap_family(cp, name).startswith("G2"):
+            assert name.split()[0] in G2_CLASSES, (
+                f"U+{cp:04X} {name}: a new class of numeral that is not read; name it in G2_CLASSES with its reason"
+            )
+    for cp, name, exp, views in rows:
+        if (cp, name, exp) in unread and _gap_family(cp, name).startswith("G4"):
+            reading = _g4_reading(chr(cp))
+            assert reading.upper() != exp.upper(), (
+                f"U+{cp:04X} {name} is in G4 but the data does not read it as ANOTHER letter ({reading!r}, expected {exp})"
+            )
+            assert any(reading.upper() in v for v in views), (
+                f"U+{cp:04X} {name}: the table does not follow the data (it should read {reading!r})"
+            )
     # a gap family is only a gap: the circled and negative circled digits and the letter forms are NOT in it
     for cp, name, _ in unread:
         assert not re.search(
@@ -1989,12 +2358,13 @@ def test_latin_letters_with_a_stroke_hook_bar_or_tail_read_as_their_letter_in_th
         assert views and all(v != "" for v in views), (
             f"U+{ord(ch):04X} ({unicodedata.name(ch)}) is read as nothing"
         )
-        if not _read_by_data(
+        reading = _g4_reading(
             ch
-        ):  # the data reads some of them as another letter (V with hook as u): the data is the authority
-            assert letter in views[0], (
-                f"U+{ord(ch):04X} ({unicodedata.name(ch)}) is not read as {letter}"
-            )
+        )  # the data reads some letters as another one (V with hook as u): the data is the authority
+        letter = (reading or letter).upper()
+        assert letter in views[0], (
+            f"U+{ord(ch):04X} ({unicodedata.name(ch)}) is not read as {letter}"
+        )
     assert checked > 100, "the family is smaller than the Unicode data lists"
     assert squeeze("\u0126unter") == "HUNTER" and squeeze("\u0127unter") == "HUNTER", (
         "H with stroke is not read as h"

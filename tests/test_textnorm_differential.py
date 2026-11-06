@@ -14,7 +14,7 @@ tag of an unpinned interpreter (the hashes are of the bare keys, so the 15.0.0 s
 on Python 3.13). A change of behaviour shows as a failure here; a change that makes keys different bumps ``alg`` by hand and replaces the
 entry in the same pull request (no test enforces the bump; the reviewer checks it). The golden test ASSERTS on every interpreter whose
 Unicode version has a section (3.12 and 3.13: no skip); on a version without one (a newer Python) it is only reported (``pytest.skip``
-with the fingerprint, printed by ``-rs``), and it FAILS if ``HADAVIN_REQUIRE_PINNED_UNIDATA=1`` is set. The two sections are the same
+with the fingerprint, printed by ``-rs``), and it FAILS if ``HADAVIN_REQUIRE_PINNED_UNIDATA`` is ``1``, ``true`` or ``yes`` (any case; another value fails the run loudly). The two sections are the same
 text apart from the code points assigned only in 15.1.0.
 """
 
@@ -195,7 +195,7 @@ def test_the_golden_hashes_equal_the_live_ones():
     section = GOLDEN["sections"].get(unicodedata.unidata_version)
     if section is None:
         message = f"no golden section for {_fingerprint()} (sections: {sorted(GOLDEN['sections'])}): reported, not asserted"
-        if os.environ.get("HADAVIN_REQUIRE_PINNED_UNIDATA") == "1":
+        if pin_required(os.environ):
             pytest.fail(message)
         pytest.skip(message)
     live = live_hashes()
@@ -205,9 +205,28 @@ def test_the_golden_hashes_equal_the_live_ones():
         )
 
 
+_TRUE = frozenset({"1", "true", "yes"})
+_FALSE = frozenset({"", "0", "false", "no"})
+
+
+def pin_required(env):
+    """Whether the run is required to be on the pinned Unicode version: ``HADAVIN_REQUIRE_PINNED_UNIDATA`` is ``1``, ``true`` or ``yes`` in any
+    letter case (spaces around it are ignored). Unset, empty, ``0``, ``false`` and ``no`` mean it is not required. ANY OTHER value (``on``,
+    ``2``, ``enable``) is refused loudly (``pytest.UsageError``): a CI variable with a typo must not turn the pin off in silence."""
+    raw = env.get("HADAVIN_REQUIRE_PINNED_UNIDATA", "")
+    value = raw.strip().lower()
+    if value in _TRUE:
+        return True
+    if value in _FALSE:
+        return False
+    raise pytest.UsageError(
+        f"HADAVIN_REQUIRE_PINNED_UNIDATA={raw!r} is not understood: use 1, true or yes (required) or 0, false, no or nothing (not required)"
+    )
+
+
 def _pin_violation(env, version, pinned):
     """The message of a run that is required to be on the pinned Unicode version and is not, else ``None``."""
-    if env.get("HADAVIN_REQUIRE_PINNED_UNIDATA") == "1" and version != pinned:
+    if pin_required(env) and version != pinned:
         return (
             f"HADAVIN_REQUIRE_PINNED_UNIDATA=1 but this Python carries Unicode {version}, "
             f"not the pinned {pinned}: run the suite on the interpreter of the pin"
@@ -216,12 +235,46 @@ def _pin_violation(env, version, pinned):
 
 
 def test_the_interpreter_is_on_the_pinned_unicode_version_when_the_run_requires_it():
-    """Fails when ``HADAVIN_REQUIRE_PINNED_UNIDATA=1`` and ``unicodedata.unidata_version`` is not
-    ``defaults.TEXTNORM_PINNED_UNIDATA``; passes without the variable (a developer on another Python still runs the suite)."""
+    """Fails when ``HADAVIN_REQUIRE_PINNED_UNIDATA`` is ``1``, ``true`` or ``yes`` (any case) and ``unicodedata.unidata_version`` is not
+    ``defaults.TEXTNORM_PINNED_UNIDATA``; passes without the variable (a developer on another Python still runs the suite). A value
+    that is none of the accepted spellings fails the run loudly. When the run requires the pin, the PRODUCT guard ``require_pinned_unidata()``
+    is called too, the one entry point that pilot and prod call at start-up."""
     message = _pin_violation(
         os.environ, unicodedata.unidata_version, defaults.TEXTNORM_PINNED_UNIDATA
     )
     assert message is None, message
+    if pin_required(os.environ):
+        textnorm.require_pinned_unidata()  # raises UnidataMismatch off the pin
+
+
+def test_the_product_guard_agrees_with_the_interpreter_and_with_the_pin_constant():
+    """``require_pinned_unidata`` from product code, with no environment variable: it returns on the pinned Unicode version and raises
+    ``UnidataMismatch`` on any other, whichever interpreter runs the suite; and it reads ``defaults.TEXTNORM_PINNED_UNIDATA``."""
+    if unicodedata.unidata_version == defaults.TEXTNORM_PINNED_UNIDATA:
+        assert textnorm.require_pinned_unidata() is None
+    else:
+        with pytest.raises(textnorm.UnidataMismatch):
+            textnorm.require_pinned_unidata()
+    with pytest.raises(textnorm.UnidataMismatch):
+        textnorm.require_pinned_unidata("0.0.0")
+    assert textnorm.require_pinned_unidata(unicodedata.unidata_version) is None
+
+
+def test_the_pin_variable_accepts_one_true_and_yes_in_any_case_and_refuses_other_values_loudly():
+    var = "HADAVIN_REQUIRE_PINNED_UNIDATA"
+    for yes in ("1", "true", "TRUE", "True", "yes", "YES", "Yes", " 1 ", "tRuE"):
+        assert pin_required({var: yes}) is True, yes
+    for no in ("", "0", "false", "False", "NO", "no", " "):
+        assert pin_required({var: no}) is False, no
+    assert pin_required({}) is False
+    for odd in ("on", "2", "enable", "y", "t", "required", "1 1", "truee"):
+        with pytest.raises(pytest.UsageError):
+            pin_required({var: odd})
+    pinned = defaults.TEXTNORM_PINNED_UNIDATA
+    other = "16.0.0" if pinned != "16.0.0" else "15.1.0"
+    for yes in ("true", "YES"):
+        assert _pin_violation({var: yes}, other, pinned) is not None, yes
+        assert _pin_violation({var: yes}, pinned, pinned) is None, yes
 
 
 def test_the_pin_check_fails_only_when_required_and_off_the_pin():
