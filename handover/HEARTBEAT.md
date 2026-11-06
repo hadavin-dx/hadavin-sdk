@@ -200,3 +200,4 @@
 2026-11-06T08:13:54Z | step=rung-table notes A-E verified+pushed (q130) | next=rt-S, part F, P0t, P1a fix2, AK-G16 render_mode BN | blocked=none
 2026-11-06T08:16:03Z | step=orders 57/58: freeze-list DEFERRED, AK0 BN-35, P5c BN-24, AK-G16 BN-38, rt-S pushed (q131-134) | next=DEMAND agent, TOOLS.md, part F, P0t (+order57 B5), P1a fix2 | blocked=hook/settings (q131, owner yes)
 2026-11-06T08:16:42Z | step=P0t verified+pushed (q135) | next=await DEMAND, TOOLS.md, part F, P1a fix2 | blocked=none
+2026-11-06T08:19:59Z | step=TOOLS.md, part F, DEMAND lines verified+pushed (q136-139) | next=P1a fix2 (running), await lead on q131/q135/q136/q138 | blocked=lead answers
