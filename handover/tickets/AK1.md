@@ -1,6 +1,8 @@
-# Package ticket AK1 (REVISION 3, DRAFT): the pipeline step contract and the ONE outbound gate. Assembly Kit, Tier A. Path class MONEY and REDACTION (extended review). Absorbs the tenant-namespace part of plan-v3 P7b
+# Package ticket AK1 (REVISION 3, FROZEN with build notes): the pipeline step contract and the ONE outbound gate. Assembly Kit, Tier A. Path class MONEY and REDACTION (extended review). Absorbs the tenant-namespace part of plan-v3 P7b
 
-Revision line: **revision 3 DRAFT**, written 2026-11-06 from 04:14 UTC (09:44 IST; IST = UTC+5:30) by a ticket author under LEAD-ORDERS order 20 item 6. Revision 2 was committed 03:56:57 UTC (09:26:57 IST, `6cb4037`); the round 2 resolve was committed 04:11:34 UTC (09:41:34 IST, `17dd685`); revision 1 was committed 03:33:33 UTC (09:03:33 IST, `defeb23`). Git commit times are the reference; the "~" times written inside orders can be wrong (order 20). Text only: no code, no pull request, no test run, no sub-agent, no model or embedding call, no spend, no secret, no client data. **Review rounds:** round 1 done (`reviews/AK1-round1-*.md`, 25 resolve rows). Round 2 done: `reviews/AK1-round2-adversarial.md` (0 Blockers, 8 Majors (its header says 6; its table lists R2-ADV-1 to -8), 5 Minors, 2 Nits), `reviews/AK1-round2-correctness.md` (1 Blocker, 3 Majors, 5 Minors, 3 Nits), `reviews/AK1-round2-resolve.md` (27 finding ids in 23 rows). **This revision applies every PROPOSE FIX row of that resolve exactly, keeps its CONTESTED parts and its two DECLINEs, and adds its PENDING LEAD 5 and 6.** Round 3 is the LAST round under the cap of 3 (order 20 item 6); a 4th is allowed only if round 3 has no Blocker and at most 2 Majors (money and redaction package). After round 3 the ticket is frozen and open Majors become build notes.
+Revision line: **revision 3, FROZEN with build notes BN-1 to BN-17 (review round 3 had 9 Majors, so no round 4; see the banner below and the section "Build notes (round 3)" at the end)**, written 2026-11-06 from 04:14 UTC (09:44 IST; IST = UTC+5:30) by a ticket author under LEAD-ORDERS order 20 item 6. Revision 2 was committed 03:56:57 UTC (09:26:57 IST, `6cb4037`); the round 2 resolve was committed 04:11:34 UTC (09:41:34 IST, `17dd685`); revision 1 was committed 03:33:33 UTC (09:03:33 IST, `defeb23`). Git commit times are the reference; the "~" times written inside orders can be wrong (order 20). Text only: no code, no pull request, no test run, no sub-agent, no model or embedding call, no spend, no secret, no client data. **Review rounds:** round 1 done (`reviews/AK1-round1-*.md`, 25 resolve rows). Round 2 done: `reviews/AK1-round2-adversarial.md` (0 Blockers, 8 Majors (its header says 6; its table lists R2-ADV-1 to -8), 5 Minors, 2 Nits), `reviews/AK1-round2-correctness.md` (1 Blocker, 3 Majors, 5 Minors, 3 Nits), `reviews/AK1-round2-resolve.md` (27 finding ids in 23 rows). **This revision applies every PROPOSE FIX row of that resolve exactly, keeps its CONTESTED parts and its two DECLINEs, and adds its PENDING LEAD 5 and 6.** Round 3 is the LAST round under the cap of 3 (order 20 item 6); a 4th is allowed only if round 3 has no Blocker and at most 2 Majors (money and redaction package). After round 3 the ticket is frozen and open Majors become build notes.
+
+> **BUILD NOTES WIN.** Review round 3 (`reviews/AK1-round3-adversarial.md`, `reviews/AK1-round3-correctness.md`) had 9 Majors, so there is no round 4 (order 20 item 6). This ticket is FROZEN at revision 3. The builder applies build notes BN-1 to BN-17 in `reviews/AK1-round3-resolve.md`. Where a build note and the text below disagree, the build note wins. The build-start review (order 19 A) reads this ticket together with those notes, and the AK1-b delta note of BN-11. The CHANGELOG sections are history, not instructions. Totals after the notes: 66 test rows (S 14, G 29, L 16, C 7), 82 mutants (A 22, B 38 with M-B11 retired, C 22), split 21 / 53 / 8. `KIND_CLASS` lives in `backends/table.py` and `OutboundRefused` in `errors.py` (BN-1, BN-2). `RESERVED_GATED` is deleted (BN-6).
 
 **EGM note.** `egm:egm-brainstorm` and `egm:egm-draft` were NOT run: order 6(e) says no brainstorm or draft for a package the plan already defines (kit-plan-v2 row AK1), and this author's brief forbids sub-agents (a Skill call starts one). The EGM review of this ticket is the lead's rounds (`egm:*` reviewers, then `egm:egm-resolve`).
 
@@ -239,7 +241,7 @@ Merge order: AK1-a, then AK1-b, then AK1-c. AK2a and AK4a-2 need only AK1-a; AK4
     - C6 the k1b path: `cli.main([...k1b replay...])` with the pilot config of C1 exits with the config error, and a spy on `make` counts 0 (covers `cli.py:222`). New feature.
     - C7 handed-in objects: a pilot `app.build(..., detector=<raw GuardrailDetector fake>)` and a pilot `app.build(..., channel=<fake>)` are each refused with `ConfigError` before any `make` (spy 0); in dev both are accepted. New feature.
   - Race/process: S11 (threads). Money concurrency is P4b1's 8-process test; the gate adds no counter. Contract suite: S10 over both audit kinds; G7-G9 and G28 over the memory store and, where CI Postgres exists, P4d-a1's `store_pair`.
-  - Counts: 64 rows (S 13, G 29, L 15, C 7). Real fail-before: C1 and C3; weak fail-before by shim: S8 and L1; pins: G14 (regression pin), C4 and C5; the rest are new features killed by mutants.
+  - Counts: 66 rows (S 14, G 29, L 16, C 7; S14 and L17 added by build notes BN-8 and BN-1). Real fail-before: C1 and C3; weak fail-before by shim: S8 and L1; pins: G14 (regression pin), C4 and C5; the rest are new features killed by mutants.
 
 - **Mutation plan (which behaviours get a mutant, which test kills each):** plain patches to the named file, or a planted file or edit where marked; run with P1m's mutation runner (`tools/mutation_runner.py`; P1m is draft PR 61, not merged; UNVERIFIED until it merges).
 
@@ -323,7 +325,7 @@ Merge order: AK1-a, then AK1-b, then AK1-c. AK2a and AK4a-2 need only AK1-a; AK4
 | M-C19 | planted edit | a registry-capability `make(` call in `app.py` without `gate=` | L10 |
 | M-C20 | lint helper of L8 | (meta) one library (for example `azure`) removed from the closed list | L12 |
 
-  Counts: 76 mutants (A 20; B 36, M-B11 retired and not counted; C 20). AK1-a runs M-A1 to M-A19 (19); AK1-b runs M-A20, M-B1 to M-B37 except M-B11, and M-C1, M-C2, M-C3, M-C8, M-C9, M-C10, M-C12, M-C13, M-C14, M-C17, M-C18, M-C19, M-C20 (50); AK1-c runs M-C4, M-C5, M-C6, M-C7, M-C11, M-C15, M-C16 (7). M-C7 and M-C11 are labelled "pin": they guard the wrap order that C4, C5 and the judge rule rely on, they cannot fail on the base, and they stay in AK1-c. Every mutant has a named killer; none is labelled equivalent in advance (a survivor is fixed by a test, never by deleting the mutant).
+  Counts: 82 mutants (A 22; B 38, M-B11 retired and not counted; C 22; M-A21, M-A22, M-B38, M-B39, M-C21 and M-C22 added by build notes BN-1, BN-2, BN-7, BN-8 and BN-9). AK1-a runs M-A1 to M-A19, M-A21 and M-A22 (21); AK1-b runs M-A20, M-B1 to M-B39 except M-B11, and M-C1, M-C2, M-C3, M-C8, M-C9, M-C10, M-C12, M-C13, M-C14, M-C17, M-C18, M-C19, M-C20, M-C21 (53); AK1-c runs M-C4, M-C5, M-C6, M-C7, M-C11, M-C15, M-C16, M-C22 (8). M-C7 and M-C11 are labelled "pin": they guard the wrap order that C4, C5 and the judge rule rely on, they cannot fail on the base, and they stay in AK1-c. Every mutant has a named killer; none is labelled equivalent in advance (a survivor is fixed by a test, never by deleting the mutant).
 
 - **Evidence commands (exact), and where the raw output is saved:** in the core repository root, each sub-PR on its own branch:
   - AK1-a: `uv run --all-extras --group test pytest tests/test_pipeline_step_contract.py -q > handover/evidence/AK1/AK1-a-tests.txt 2>&1; echo rc=$? >> handover/evidence/AK1/AK1-a-tests.txt`; the full suite once at the final head (same form, `AK1-a-suite.txt`); `ruff check`, `ruff format --check`, `bandit -ll -r src` (`AK1-a-lint.txt`); fail-before S8 in a throwaway worktree of the branch base with only the test file copied (`AK1-a-failbefore.txt`; expected: an assertion failure in S8, collection succeeds); mutants M-A1 to M-A19 (`AK1-a-mutants.txt`).
@@ -428,3 +430,173 @@ Merge order: AK1-a, then AK1-b, then AK1-c. AK2a and AK4a-2 need only AK1-a; AK4
   - **My own finds (not resolve rows; stated so round 3 can check them):** `azure` was missing from L8's closed list (three kind modules import it on main) and `subprocess` is added (`demos/ask-your-data/askdata/cli.py:16`, pre-listed `no_text`); L12 parametrised over the closed list and M-C20 added so a dropped library is caught; `_OPENER` and `_LOCAL_OPENER` added to `TRANSPORT_IMPORTS` (resolve row 5's builder clause); `no_training_statement` removed from `OUTBOUND_CODES` (no path raises it after row 1 (7)); the redundant `actions/secrets_vault.py` row removed from `NON_TABLE_PATHS`; "Import boundary" rule from `tests/test_repo_rules.py:295-309`; old UNVERIFIED items closed by reading (`pipeline/` package rules, the chain audit kind at `tests/contracts/kinds/audit_chain.py:120`); cite fixes `models.py:60` (was `:61`), P5c lines `:281`, `:286`, `:288`, `:342`, `:343` (each was one line off), `AK2a.md:50`, `:61` (were `:49`, `:54`); a one-paragraph money, redaction and security summary in Rules.
   - Surface cut: the statement check in `make` and its code; the `app.py` vendor-screen refusal; M-B11; a marker on built objects; one `NON_TABLE_PATHS` row.
   - Totals: 3 sub-PRs; 64 test rows (S 13, G 29, L 15, C 7); 76 mutants (A 20, B 36 with M-B11 retired, C 20), split 19 / 50 / 7; 10 INFORM (I3, I5 changed; I6 answered); 6 PENDING LEAD (1 and 3 answered; 2, 4, 5, 6 open; 5 and 6 new); 11 later rows (V7 closed as taken; V8 relabelled); UNVERIFIED U1-U10.
+- Frozen at revision 3 (2026-11-06, 04:45 UTC / 10:15 IST), on `reviews/AK1-round3-resolve.md` (commit `66ba350`): review round 3 (`reviews/AK1-round3-adversarial.md`, `reviews/AK1-round3-correctness.md`; 23 finding ids, 0 Blocker, 9 Majors) leaves no round 4 (order 20 item 6). The ticket body is NOT rewritten. Added: the banner under the revision line, the section "Build notes (round 3)" (BN-1 to BN-17, copied word for word) and PENDING LEAD 7 to 12. Changed: the title and the revision line now say frozen with build notes; the two Counts lines now say 66 test rows (S 14, G 29, L 16, C 7) and 82 mutants (A 22, B 38 with M-B11 retired, C 22), split 21 / 53 / 8. The revision 3 totals above are history.
+
+## Build notes (round 3)
+
+These notes WIN over the text above (banner). They are copied word for word from `reviews/AK1-round3-resolve.md` (commit `66ba350`); that file also holds the Facts (F1-F10), the per-finding Decisions table, Positions and Couplings, which the build-start review reads with them.
+- **Line cites of this ticket inside the notes** (`:41`, `:74`, `:133`, `:357`, `AK1.md:288`, `:324`, `:342`, `:368`, and the `app.py` cite places `:32`, `:155`, `:168`) are line numbers of revision 3 as committed (`3a3fcca`). The banner adds 2 lines near the top, so in this file the same text is at that number plus 2 (for example I2 is now line 344).
+- **BN-4 and I5.** I5 holds no literal `detectors.py:50` cite (it says "contract tests"); read it as including `tests/test_p6_detectors.py:355`. C2's own cite of `detectors.py:50` is replaced by BN-4's C2 wording.
+
+**BN-1. Where the classification lives (R3-COR-1).**
+- `KIND_CLASS` (the `(capability, kind) -> (class, reason)` data of Interface 4) moves from `guard/outbound.py` to `backends/table.py`, next to `DEV_ONLY`, `NOT_PROD` and `NOT_YET_GATED`. It stays pure data, and `table.py` keeps importing no `hadavin_sdk` module.
+- `guard/outbound.py` imports `KIND_CLASS` and `NOT_YET_GATED` from `backends.table`. `GATE_REGISTRY`, `NON_TABLE_PATHS`, `RECIPIENT_PATHS`, `TRANSPORT_IMPORTS`, `Gated`, `GateContext` and `gate_context` stay in `guard/outbound.py`.
+- **`config.py` (AK1-c) reads `KIND_CLASS` and `NOT_YET_GATED` from `backends.table` only, and never imports `guard.outbound`, `backends.factory`, `limits` or `registry`.**
+- `guard/outbound.py` may import `config` and `limits` at module level (probe P-a: clean). The ticket's sentence "if a cycle appears, the builder imports `Config` inside `gate_context`" is deleted, because that fallback still cycles (F1).
+- The Import boundary paragraph gains the direction: `config` -> `backends.table` only. `backends.factory` -> `guard.outbound` -> {`backends.table`, `config`, `limits`, `errors`, `pipeline.step`, `llm/masked.py`, `llm/metered.py`, `guard/redactor.py`, `audit.protocol`}. Nothing on that list imports `guard.outbound` or `backends.factory`.
+- **New row L17 (in `tests/test_outbound_gate_lint.py`), fresh-interpreter imports.** The row is parametrised over a list written in the test: `hadavin_sdk.config`, `hadavin_sdk.backends.table`, `hadavin_sdk.backends.factory`, `hadavin_sdk.guard.outbound`, `hadavin_sdk.pipeline`, `hadavin_sdk.pipeline.step`, `hadavin_sdk.errors`, `hadavin_sdk.limits`, `hadavin_sdk.registry`, `hadavin_sdk.guard.redactor`, `hadavin_sdk.llm.masked`, `hadavin_sdk.llm.metered`, `hadavin_sdk.app`, `hadavin_sdk.cli`.
+  - For each module, `subprocess.run([sys.executable, "-I", "-c", f"import {m}"])` with the package on `sys.path` exits 0, with that module imported FIRST.
+  - A module that does not exist yet on the branch is a test failure, not a skip.
+  - The list grows when a module joins the import chain.
+- **Mutant M-C22** (`config.py`, planted edit): `config.py` imports `KIND_CLASS` from `guard.outbound`. Killed by L17.
+- Files that change because of this note: M-C1 (`bedrock_guardrail` re-classified `local`) is applied in `backends/table.py`. L1 and L7 now patch `backends.table.KIND_CLASS`.
+
+**BN-2. Where `OutboundRefused` lives (R3-COR-2).**
+- `class OutboundRefused(RuntimeError)` and `OUTBOUND_CODES` are defined in `src/hadavin_sdk/errors.py` (AK1-b), and `guard/outbound.py` re-exports both (`from hadavin_sdk.errors import OUTBOUND_CODES, OutboundRefused`).
+- `pipeline/step.py` takes the `REASON_BY_ERROR` key from `hadavin_sdk.errors` and NEVER imports `guard.outbound`.
+- `current_object_ref()` and its `ContextVar` stay in `pipeline/step.py`, and `guard/outbound.py` imports them from there. `pipeline/__init__.py` may re-export `step` (probe P-a: clean with this layout).
+- The Import boundary paragraph says: `pipeline.step` -> {`errors`, `audit.protocol`, `models`, and the P4b1/P5c error modules}, never `guard.outbound`.
+- **P5a's row key becomes `"hadavin_sdk.errors:OutboundRefused" -> egress_refused`.** P5a's identity walk resolves the class through `sys.modules[cls.__module__]` (F2). Interface 8's row text changes to this key (PENDING LEAD 11).
+- `errors.py` is a hot file (amendment F6: P5a, P5b3, P5b5); see BN-5.
+- **Mutant M-B39** (`pipeline/step.py`, planted edit): `step.py` imports `OutboundRefused` from `guard.outbound`. Killed by L17.
+
+**BN-3. Lock-in literals (R3-COR-3).**
+- AK1-b adds `LITERAL_OK` rows to `tests/test_lockin_guard.py` for exactly the `(module, literal)` pairs that rule c (`test_core_logic_names_no_vendor`) reports on the AK1-b branch, each with the reason "a `KIND_CLASS` key names this TABLE kind (AK1)" or "a `RECIPIENT_PATHS` entry names this TABLE kind (AK1)".
+- **Expected on the BN-1 layout:** `(hadavin_sdk.backends.table, "anthropic")`, `(…, "bedrock")`, `(…, "gemini")`, `(…, "slack")`. Add `(hadavin_sdk.guard.outbound, "slack")` if `RECIPIENT_PATHS` writes the slack kind as a bare string.
+- The builder pastes rule c's output before and after. A row is never added for a literal that rule c does not report, because stale rows fail (`:626-630`).
+- An `Entry` field was considered and rejected: it changes every `Entry(...)` in a hot file. A name chosen to fall under the `TABLE` skip (`:560`) was also rejected: it games the scanner.
+- Files: AK1-b CHANGES `tests/test_lockin_guard.py` (`LITERAL_OK` only). The file joins the hot-file list (BN-5). Done is unchanged: `test_lockin_guard.py` must pass.
+
+**BN-4. The vendor-screen cites and C2 (R3-COR-4).**
+- **"What I read" (`:41`):** `tests/contracts/kinds/detectors.py:50` calls `make` for the JUDGE (`llm_judge`). The `bedrock_guardrail` contract rows build `GuardrailDetector(...)` directly (`detectors.py:89-98`). The one test that calls `make` on the vendor screen is `tests/test_p6_detectors.py:355`, with the AWS environment and `check_filter` patched (`:344-354`).
+- **Interface 5 (`:133`), PENDING LEAD 5 (`:357`) and I5:** each cite of `detectors.py:50` becomes `tests/test_p6_detectors.py:355`.
+- **C2, second half:** "`make("detector", guardrail_settings())` with `check_filter` and the AWS environment patched as in `tests/test_p6_detectors.py:344-355` still builds; the row needs extra `aws` and is skipped without `boto3`, as that test is." The rule "`make` never refuses `NOT_YET_GATED`" is kept, because that test needs it.
+
+**BN-5. Hot files and merge order (R3-COR-5).**
+- The words "new on this list" are deleted: amendment F6 already lists `backends/table.py`.
+- **Merge-order-only constraints (not build dependencies).** No AK1 sub-PR is open at the same time as another package that edits the same file. Kit work yields to v1 (order 23 item 5), so the AK1 sub-PR rebases after the v1 package that is open.
+  - **AK1-b** shares files as follows:
+    - `backends/table.py`: P5b3, P5b4, P5c, P6b2, P6a.
+    - `errors.py`: P5a, P5b3, P5b5.
+    - `tests/test_lockin_guard.py`: P4d, P5c, P6b2, P6a.
+    - `guard/redactor.py`, `llm/masked.py`: P5c.
+    - `llm/metered.py`: P4b1.
+  - **AK1-c** shares files as follows:
+    - `config.py`: P4b1, P5b3, P5c, P6a, P6b1, P6b2.
+    - `app.py`: P4c-2, P5c-3, P6a, P6b2.
+- At build start, the builder reads each named ticket's Files field and lists in the evidence which of them really edit the file. My list counts mentions only (Honest note). The lead sets the order where two are open.
+
+**BN-6. A closed list of classes per capability (R3-ADV-1; surface cut).**
+- `tests/test_outbound_gate_lint.py` holds `CLASSES_BY_CAPABILITY`, written in the test:
+  - `secrets`, `signer`, `anchor`, `store`, `audit`: `{"no_text", "local"}`.
+  - `detector`: `{"local", "through_llm", "gated"}`.
+  - `channel`: `{"recipient", "local"}`.
+  - `llm`: `{"gated"}`.
+- **A capability that is not a key may carry only `gated`.** So a new capability (`ocr`, `vision`, `embedder`, `reranker`, `scan_reader`) cannot be labelled `no_text`, `local`, `recipient` or `through_llm` without an edit to this lint, which a reviewer sees.
+- `local` is allowed where `no_text` is because it is the stricter label: L16 checks it and L2 forbids it when `hosts` is set.
+- **L3 rewritten:** for every `(c, k)` in `KIND_CLASS`, the class is in `CLASSES_BY_CAPABILITY.get(c, {"gated"})`.
+- **Cut:** `RESERVED_GATED` is DELETED from `guard/outbound.py` and from every place the ticket names it (split table, Interface 4, L3, L10, M-C2, V9's wording). The map's default covers it, and no src code read it.
+- **L10 (ii) rewritten:** `REGISTRY_CAPS` = every capability with a `GATE_REGISTRY` row, plus every capability literal in a `make(` call that is not a key of `CLASSES_BY_CAPABILITY`. So `make("embedder"` outside `app.py`, or without `gate=`, still fails (M-C13 and M-C19 keep their killers). `llm` keeps rule (iii).
+- **L7 gains two cases.** (a) A test copy of `TABLE` with a new capability `"ocr"` whose kind is labelled `no_text` makes L3 fail. (b) The same with `"ocr"` labelled `gated` passes L3. (b) still fails L5 (no registry row), as intended.
+- **M-C2 redefined:** "(meta) L3's lookup gives an unlisted capability every class instead of `{"gated"}`". Killed by L7 (a).
+- Interface 4's limit paragraph gains this sentence: "a capability not in the lint's closed map can only be `gated`".
+
+**BN-7. L8: reuse, stdlib network modules, demos default-deny (R3-ADV-2 remainder, R3-COR-13).**
+- **Reuse.** L8 imports `module_name`, `_dynamic_target` and `factory_modules` from `tests.test_lockin_guard` (F5) and writes no second AST walker. The ticket's "Existing core code reused" line names them. `test_lockin_guard.py`'s rule a stays THE default-deny for third-party and dynamic imports in `src/`. L8 does not duplicate it, and the ticket says so.
+- **Closed list additions (stdlib, any submodule):** `ftplib`, `imaplib`, `poplib`, `nntplib`, `xmlrpc`, `socketserver`, `asyncio`, `multiprocessing`, `ctypes`. On main nothing imports them (F5), so no row is needed.
+  - `pipeline/step.py` must not import `asyncio`: BN-12 catches `Exception` only, so `asyncio.CancelledError` propagates without a name. S7 imports it in the test.
+- **Demos default-deny (new, L8 part (b)).** A module under `demos/` with no `NON_TABLE_PATHS` row may import only: the stdlib, `hadavin_sdk`, its own demo package (the top-level name of its folder, `askdata` today), and `DEMO_LIBRARIES = {"pydantic", "yaml", "sqlglot"}`, written in the test. Any dynamic import call (`_dynamic_target`) in `demos/` fails. Both rules pass on main (F5).
+- **L12 gains two planted cases:** a demo module importing `urllib3`, and a demo module calling `importlib.import_module("x")`. Each makes L8 fail.
+- **Mutant M-C21:** "(meta) L8's demos default-deny removed". Killed by L12.
+- **Security item (8) rewritten:** "a module that reaches the network through a stdlib module not on L8's list, or through `os.system`/`os.exec*`, is not seen by L8; third-party and dynamic imports in `src/` are refused by `test_lockin_guard.py` rule a, and in `demos/` by L8 (b)."
+
+**BN-8. `content_sha256` and lone surrogates (R3-ADV-3).**
+- **Definition:** `content_sha256 = hashlib.sha256(body if type(body) is bytes else body.encode("utf-8")).hexdigest()` (strict UTF-8). It is NOT `models.sha256_hex`, which raises for `bytes` and hashes a JSON-quoted string (F6). A `str` body and the `bytes` of its UTF-8 encoding give the same hash.
+- **Refusal:** the `StepInput` constructor encodes a `str` body with strict UTF-8 and raises `ValueError("body: not valid UTF-8")` on failure. The message holds no body text, and the error is raised `from None`. So the property cannot raise, and step (a) of `run_step` cannot raise from it.
+- The final-state rule is unchanged: a `StepInput` that cannot be built is not an item. Its caller (AK2a's reader) owns its final state, as for every other constructor refusal (Interface 2).
+- **New row S14:**
+  - (i) a `str` body with `"\ud800"` gives `ValueError`, and a canary in the body is not in the message;
+  - (ii) a `bytes` body's hash equals `hashlib.sha256(body).hexdigest()`;
+  - (iii) `StepInput(body="ab")` and `StepInput(body=b"ab")` have equal hashes;
+  - (iv) `run_step`'s intent `inputs_hash` equals `content_sha256`.
+- **New mutants:**
+  - M-A21 (`pipeline/step.py`): `content_sha256` uses `models.sha256_hex(body)`. Killed by S14 (ii) and (iii).
+  - M-A22 (`pipeline/step.py`): the constructor's UTF-8 check is removed. Killed by S14 (i).
+
+**BN-9. Reservation vs failure booking (R3-ADV-4; PENDING LEAD 9).**
+- The hold stays `request_bound(raw) x W`, exactly as on the llm path (`P4b1.md:269`), because `book_call` is P4b1-b's one function.
+- **Security "What the gate does NOT stop" gains item (9):** "a failed send of a kind with `max_attempts` > 1 books `count x attempts x W` against a hold of `count x W`, so a daily cap can be passed by up to `count x (attempts - 1) x W` (2W for count 1 and 3 attempts); the next reserve is then refused. This is the llm path's window (`P4b1.md:269`, its PENDING LEAD 17; order 19 D accepted the whole-call maximum) and applies to every registry kind."
+- The Rules money paragraph (`:74`) ends with "…; on a failed send the booking can exceed the reservation and the cap by the window in Security item (9)."
+- **G27 gains case (ii):** a raw fake with `REQUESTS_PER_CHAT=1` and `max_attempts=3`. The `worst` passed to `limits.hold` equals `1 x W`. A failing send then books `3 x W` (spy on `book_call`'s `count`, `attempts` and `w`).
+- **New mutant M-B38** (`guard/outbound.py`): the reservation is multiplied by `attempts`. Killed by G27 (ii).
+
+**BN-10. `Config` built without its validator (R3-ADV-5; cut, no new refusal).**
+- Security gains item (10): "a `Config` built with `model_construct` or changed with `model_copy(update=...)` skips the validator, so the vendor-screen refusal (and every other validator refusal on main: `DEV_ONLY`, loopback, anchors) does not run; no `src/` code does this today (grep). It is in-repo code only, like item (5)."
+- Relay to P6a (owner of `config.py`): one rule for the whole `Config` (for example, `app.build` re-validates `cfg` with `Config.model_validate(cfg.model_dump())`) belongs there, not in AK1. Revision 3's cut of the `app.py` refusal stands.
+
+**BN-11. AK1-b's first build step: a delta note (R3-ADV-9).**
+- Before any AK1-b edit, the builder writes `handover/evidence/AK1/AK1-b-delta.md`. For each borrowed name, it gives the name as this ticket states it, the merged code's name, file and line, and "same" or the difference. The names are: `mask_leaves`, `book_call`, `current_masking`, `current_scope`, the run context, `Limits.hold`, `Limits.caps`' shape, `request_bound`, the W rule, `billing_outcome`, `AttemptCounts`, `METER_MIN_MICRO`, `Redactor.fingerprint`, `OverBudget(("kill_switch",))`, `SessionClosed`, `MeterError`, `RedactionError`, `_no_training_refusals`.
+- It is read in the build-start review (order 19 A); this is not a new review round. Where it differs, the builder follows the merged code, keeps the ticket's rule, and asks the lead only if a rule cannot be kept.
+- U1 gains: `Redactor.fingerprint` (`P5c.md:288`) and `OverBudget(("kill_switch",))` (`P4b1.md:32`, `:37`), both from ticket text.
+
+**BN-12. Small test and wording fixes (R3-ADV-6, -7, -8, -10).**
+- **M-C9:** the file is `backends/factory.py` (C1's `KIND_CLASS` lookup in `make`), and the killer is G16 (an unclassified kind gives `ungated_kind`). It stays separate from M-B16, which removes the check, while M-C9 replaces it with a fallback.
+- **G5 gains (iii)**, run through `run_step` with a gated `probe` step: no masking run ends `needs_person masking_refused`, because `SessionClosed` subclasses `RedactorRefusal` (`P5c.md:210`); no meter scope ends `needs_person step_error`, because `MeterError` is not in `REASON_BY_ERROR` and only its subclasses `OverBudget`/`MeterUnavailable` are (`P4b1.md:31`). Raw calls are 0 in both.
+- **C5 gains a `cli._k1b` case (pin):** in dev (k1b replay is dev-only in v1, order 19 D), with a spy on `replay_cmd`, the `llm_judge` detector holds the very llm object passed to `replay_cmd`, and that object is P5c-4's wrapper (`P5c.md:343`). AK1 does not edit `cli.py`, and no mutant is added. If P5c's wrap is missing, this pin fails.
+- **Interface 3 (d) wording:** "`run_step` catches `Exception` only, and the `REASON_BY_ERROR` walk applies to it. Every `BaseException` that is not an `Exception` (the four stop requests and any other) propagates unchanged after (e) writes `step_error` best effort."
+
+**BN-13. Cites and the codes row (R3-COR-6, -7, -8).**
+- `app.py:89-97` becomes `app.py:90-98` (three places: `:32`, `:155`, `:168`).
+- `tests/test_repo_rules.py:295-301` becomes `:296-302`; `:295` becomes `:296`; `:420-421` becomes `:410-411`.
+- Files and the split table: "CHANGE `codes.py` (one `OWN_CODES` row, key per BN-2) only if P5a has merged; otherwise P5a's first build step adds it (`P5a.md:39`)."
+
+**BN-14. Test copies for `"probe"` (R3-COR-9).** `make` reads four module-level names of `hadavin_sdk.backends.factory`:
+- `TABLE` (`factory.py:36`) and `ALLOWED` (`:52`), the same `dict` objects as in `backends.table`;
+- `KIND_CLASS` (BN-1, imported by name from `backends.table`);
+- `GATE_REGISTRY` (imported by name from `guard.outbound`).
+
+How the G rows patch them:
+- `monkeypatch.setitem(table.TABLE, "probe", {...})` and `monkeypatch.setitem(table.ALLOWED, "probe", frozenset())`;
+- `monkeypatch.setattr` of `KIND_CLASS` and `GATE_REGISTRY` on BOTH `hadavin_sdk.backends.factory` and `hadavin_sdk.guard.outbound` (and on `hadavin_sdk.config` for C3), each with a copy that adds the probe rows.
+
+The probe `Entry.factory` string points at a test module. G29 lists these patches as its setup.
+
+**BN-15. "Can build when" (R3-COR-10; PENDING LEAD 10).**
+- **AK1-b:** "after AK1-a, P5c-1, P5c-2, P4a-1, P4a-2, P4b1-a, P4b1-b and P4b2-a merge (and P4d, which P4b1 needs); P4a merges last in its chain (order 20 item 4), P5c later".
+- **AK1-c:** "after AK1-b, P4c-2, P5c-3, P6a-1 and P6b1 merge".
+- **All three:** "and only after a numbered S0 EXIT order that names AK1 (order 23 says the kit takes an S0-EXIT-style standing order after freeze; none names AK1 yet)".
+
+**BN-16. Masking fingerprint changes (R3-COR-11).**
+- Rollback for AK1-b no longer says "behaviour-preserving" alone. It adds: "`guard/redactor.py` is a P5c masking source (`P5c.md:237`), so the masking fingerprint and every agent's `config_hash` change on merge and change back on revert."
+- The CHANGELOG line for AK1-b says the same.
+- The evidence prints the fingerprint on the base and on the head (`AK1-b-fingerprint.txt`), and P5c's own fingerprint test (T1-02) must pass on the head.
+- No literal pin is added: P5c replaced hand pins with the computed value on purpose (`P5c.md:67`).
+
+**BN-17. Header and relays (R3-COR-12, plus the BN deltas).**
+- The authorities line reads "orders 6-31". Orders 30 and 31 are P1m's. Order 30 items 64 and 66 touch P5c's scope, not AK1's.
+- Relay to AK0: `AK0.md:63` cites `AK1.md:288` and `:324`, which are now M-B21 and M-C20. AK0 should cite I2 by name (`AK1.md:342` today) and the AK0 relay line (`:368`).
+- **Table delta for the builder (one place):**
+  - New rows: S14, L17.
+  - Changed rows: L3, L7, L8, L10, L12, G5, G27, C2, C5.
+  - New mutants: M-A21, M-A22, M-B38, M-B39, M-C21, M-C22.
+  - Redefined: M-C2, and the files and killers of M-C1 and M-C9.
+  - Deleted: `RESERVED_GATED`.
+- **Totals:** 66 test rows (S 14, G 29, L 16 = L1-L5 and L7-L17, C 7). 82 mutants (A 22; B 38 = M-B1..M-B39 minus M-B11; C 22).
+- **Split:**
+  - AK1-a: M-A1..M-A19, M-A21, M-A22 = 21.
+  - AK1-b: M-A20, 38 B, and M-C1, C2, C3, C8, C9, C10, C12, C13, C14, C17, C18, C19, C20, C21 = 53.
+  - AK1-c: M-C4, C5, C6, C7, C11, C15, C16, C22 = 8.
+
+## PENDING LEAD (round 3; numbering continues after 6; copied word for word from `reviews/AK1-round3-resolve.md`)
+Routing rule: an item that touches an owner hard rule (least privilege, thresholds, money, redaction) and that I cannot recommend on checkable evidence is NEEDS LEAD. An item I can recommend that way is INFORM, and the builder takes the recommendation meanwhile.
+7. **NEW, INFORM. Freeze with build notes, no round 4.** Round 3 had 9 distinct Majors. Recommend: yes, per order 20 item 6. The banner goes under the revision line. The build-start review reads the ticket, this file and the BN-11 delta note.
+8. **NEW, INFORM (least privilege). Closed class map per capability (BN-6).** Recommend: accept. A capability not in the lint's map can only be `gated`, so a new outbound part that was mislabelled fails closed at test time. Cost: a future ticket that truly needs a new non-gated capability edits one lint line, in review. Confidence 85 percent. Reversible (one test constant).
+9. **NEW, INFORM (money). Cap window on failed sends with retries (BN-9).** Recommend: keep the hold at `request_bound x W` for gated kinds, as on the llm path, and state the window `count x (attempts - 1) x W`. Reasons:
+   - The rule and its window were accepted for the llm path (order 19 D, PL54; `P4b1.md:269`, `:409`).
+   - `book_call` is one shared function.
+   - Holding the full failure bound would refuse more work early, for example a 3-attempt kind needing 3x headroom.
+   
+   This is INFORM, not NEEDS LEAD, because the lead already accepted the identical rule. If the lead reads order 19 D as covering the llm only, it becomes NEEDS LEAD, and the alternative is "hold `count x attempts x W` on both paths" (a P4b1 build note). Recommend that the lead adds this window to `owner-visible-limits.md` next to P4b1's. Confidence 75 percent. Reversible before the AK2b merge.
+10. **NEW, LEAD (not owner). S0 EXIT for AK1 (BN-15).** Order 23 promises an "S0-EXIT-style standing order after freeze" for kit packages, but no numbered order names AK1. Recommend: a standing S0 EXIT for AK1-a now, effective when its build-start review resolve is done. AK1-a needs nothing unmerged. AK1-b and AK1-c are each effective when their dependencies in BN-15 merge. Only the lead can give it.
+11. **NEW, INFORM. `OutboundRefused` moves to `errors.py` (BN-2).** Recommend: accept. It is the only probe-clean layout that keeps `pipeline/__init__.py` free to re-export `step`. Cost: P5a's key string changes, and `errors.py` gains a fourth sharer. The lead relays the key to P5a. Confidence 80 percent. Reversible (one class, one re-export).
+12. **NEW, INFORM. `Config` validator bypass stated, not fixed in AK1 (BN-10).** Recommend: accept. P6a decides whether `app.build` re-validates the whole `Config`. Confidence 70 percent.
