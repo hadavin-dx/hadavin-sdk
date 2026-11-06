@@ -9,14 +9,15 @@ import json
 import re
 import time
 import urllib.request
-from collections.abc import Callable
-from dataclasses import dataclass
+from collections.abc import Callable, Mapping
+from dataclasses import dataclass, field
+from types import MappingProxyType
 from typing import Any
 from urllib.parse import urlsplit
 
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.guard import http as http_guard
-from hadavin_sdk.llm.pricing import check_output_plausible, cost_usd
+from hadavin_sdk.llm.pricing import check_facts, check_output_plausible, cost_usd
 from hadavin_sdk.llm.retry import with_retry
 from hadavin_sdk.models import Reply, ToolCall, Usage, round_cost_up
 
@@ -150,6 +151,22 @@ def stop_reason(raw: str | None, calls: list[ToolCall]) -> str:
     return "tool_use" if calls else "end_turn"
 
 
+_NO_FACTS: Mapping[str, object] = MappingProxyType({})
+
+
+def request_bound(llm: Any) -> int:
+    """The most requests one `chat` call sends, as the kind declares it (`REQUESTS_PER_CHAT`). Strict: an object
+    with no declaration is a `TypeError`; a declared value that is not an int of at least 1 (a bool is refused) is
+    a `ValueError`. It is NOT multiplied by `max_attempts`."""
+    try:
+        n = llm.REQUESTS_PER_CHAT
+    except AttributeError:
+        raise TypeError(f"{type(llm).__name__} declares no REQUESTS_PER_CHAT") from None
+    if type(n) is not int or n < 1:
+        raise ValueError(f"{type(llm).__name__}.REQUESTS_PER_CHAT must be an int of at least 1")
+    return n
+
+
 def reply(
     route: Any,
     *,
@@ -158,13 +175,15 @@ def reply(
     usage: Usage,
     stop: str | None,
     started: float,
+    facts: Mapping[str, object] = _NO_FACTS,
 ) -> Reply:
-    """The Reply, priced from the route and the counts the provider reported (never estimated). A reported output
-    of 0 on a reply that holds text or a tool call is refused (`UsageMissing("implausible_zero")`); `cost_usd`
+    """The Reply, priced from the route and the counts the provider reported (never estimated). The provider's
+    pricing words (`facts`) are checked first (`pricing.check_facts`). A reported output of 0 on a reply that holds text or a tool call is refused (`UsageMissing("implausible_zero")`); `cost_usd`
     refuses a cache count and a zero input on a priced route. The exact cost is rounded UP once, here
     (`models.round_cost_up`). A cut-off answer keeps its cost but loses its tool calls: their input may be
     incomplete."""
     check_output_plausible(usage, text, calls)
+    check_facts(route, facts)
     cost = round_cost_up(cost_usd(usage, route))
     stop = stop_reason(stop, calls)
     return Reply(
@@ -187,6 +206,7 @@ class Answer:
     calls: list[ToolCall]
     usage: Usage
     stop: str | None
+    facts: Mapping[str, object] = field(default_factory=lambda: _NO_FACTS)
 
 
 class NetworkLLM:

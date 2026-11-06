@@ -20,6 +20,7 @@ from collections.abc import Callable
 from typing import Any
 from urllib.parse import urlsplit
 
+from hadavin_sdk import defaults
 from hadavin_sdk.llm.common import (
     Answer,
     NetworkLLM,
@@ -32,7 +33,7 @@ from hadavin_sdk.llm.common import (
     stop_reason,
 )
 from hadavin_sdk.llm.pricing import check_input_plausible, check_output_plausible
-from hadavin_sdk.llm.protocol import UsageMissing, add_usage, build_usage
+from hadavin_sdk.llm.protocol import ProviderError, UsageMissing, add_usage, build_usage
 from hadavin_sdk.models import Reply, ToolCall
 
 # OpenAI's own family names without a dated snapshot (`gpt-4o`, `o3`, `chatgpt-4o-latest`) move to new models;
@@ -78,6 +79,7 @@ def _call(tool_call: dict[str, Any]) -> ToolCall | None:
 
 class OpenAICompatLLM(NetworkLLM):
     label = "openai_compat"
+    REQUESTS_PER_CHAT = defaults.OPENAI_COMPAT_REQUESTS_PER_CHAT  # `common.request_bound` reads it
 
     def __init__(
         self,
@@ -120,10 +122,21 @@ class OpenAICompatLLM(NetworkLLM):
         if forced:
             body["tool_choice"] = {"type": "function", "function": {"name": forced}}
         started, used = time.monotonic(), None
-        for _ in range(2):  # the forced answer missing: one more request (design 4.3)
-            got = self._retry(
-                lambda: self._parse(post_json(self.url, body, self._headers(), self.timeout_s))
-            )
+        for n in range(
+            self.REQUESTS_PER_CHAT
+        ):  # the forced answer missing: one more request (design 4.3)
+            try:
+                got = self._retry(
+                    lambda: self._parse(post_json(self.url, body, self._headers(), self.timeout_s))
+                )
+            except UsageMissing:
+                raise  # request 2 answered without usage stays visible as itself (its cause is not wrapped)
+            except ProviderError as exc:
+                if n == 0:
+                    raise  # a failed first request is unchanged: the original error, free of charge
+                # Request 1 was answered and billed; its counts would be lost. `UsageMissing` already means
+                # "book the reserved amount or the worst case" to every caller. The real error stays as the cause.
+                raise UsageMissing("absent", "usage") from exc
             # Each request is checked on its own before the sum hides it: a zero on one request that holds text
             # or a tool call, or a zero input on a priced route, is refused here (PL57). Two statements.
             check_input_plausible(got.usage, route)

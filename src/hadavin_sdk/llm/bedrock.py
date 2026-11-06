@@ -112,6 +112,7 @@ def retryable(exc: BaseException) -> bool | None:
 
 class BedrockLLM(NetworkLLM):
     label = "bedrock"
+    REQUESTS_PER_CHAT = 1  # one request a chat; `common.request_bound` reads it
     retryable = staticmethod(retryable)
     detail = staticmethod(detail)
 
@@ -173,6 +174,11 @@ class BedrockLLM(NetworkLLM):
         return Answer(
             text=text,
             calls=calls,
-            usage=build_usage(raw.get("inputTokens"), raw.get("outputTokens")),
+            usage=build_usage(
+                raw.get("inputTokens"),
+                raw.get("outputTokens"),
+                cache_write_tokens=raw.get("cacheWriteInputTokens"),
+                cache_read_tokens=raw.get("cacheReadInputTokens"),
+            ),
             stop=resp.get("stopReason"),
         )

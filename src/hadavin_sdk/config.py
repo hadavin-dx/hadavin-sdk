@@ -445,6 +445,22 @@ class Config(_Strict):
         return value
 
     @model_validator(mode="after")
+    def _priced_routes_for_real_backends(self) -> Config:
+        """A zero price makes every reply cost 0, so no spend cap could fire. Only the fake llm kind may have one.
+        Names the routes only, never their prices."""
+        if self.backends.llm.kind != "fake":
+            zero = [
+                name
+                for name, r in self.routes.items()
+                if r.input_usd_per_mtok == 0 or r.output_usd_per_mtok == 0
+            ]
+            if zero:
+                raise ValueError(
+                    f"routes with a zero input or output price need the fake llm kind: {', '.join(sorted(zero))}"
+                )
+        return self
+
+    @model_validator(mode="after")
     def _cross_checks(self) -> Config:
         for source, ref in self.scope_inventory.items():
             if not _inventory_ref_ok(ref):

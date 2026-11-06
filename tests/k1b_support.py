@@ -18,6 +18,9 @@ class ScriptedLLM:
     """Replies in call order (a Reply, or a callable taking the messages). Records every call. Keys nothing on
     ``documents`` (the K1a helper's ``documents[0]`` use is why this is a new class)."""
 
+    REQUESTS_PER_CHAT = 1  # what the k1b charge helper reads: one request, one attempt
+    max_attempts = 1
+
     def __init__(self, replies: list[Reply | Callable[[list[dict[str, Any]]], Reply]]) -> None:
         self.replies = list(replies)
         self.calls: list[dict[str, Any]] = []
@@ -271,6 +274,14 @@ class RecordingLLM:
 
     def __init__(self, inner: ScriptedLLM, recorded_dir: Path) -> None:
         self.inner, self.dir, self.attempts = inner, Path(recorded_dir), {}
+
+    @property
+    def REQUESTS_PER_CHAT(self) -> int:  # noqa: N802 - the declared name the charge helper reads
+        return self.inner.REQUESTS_PER_CHAT
+
+    @property
+    def max_attempts(self) -> int:
+        return self.inner.max_attempts
 
     def chat(self, messages, *, system, route, tools=None, documents=None, output_schema=None):
         reply = self.inner.chat(messages, system=system, route=route, tools=tools)

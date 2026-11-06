@@ -30,6 +30,7 @@ from hadavin_sdk.k1b.causelist import load_cause_list
 from hadavin_sdk.k1b.diagnosis import Diagnosis
 from hadavin_sdk.k1b.redaction import SCHEME, redact_bundle
 from hadavin_sdk.k1b.report import DISCLAIMER, render_replay_report
+from hadavin_sdk.llm.common import NetworkLLM
 from hadavin_sdk.llm.protocol import LLM
 from hadavin_sdk.models import new_id
 from hadavin_sdk.registry import Registry
@@ -61,7 +62,9 @@ class ReplayResult:
 
 
 def _sha(text: str) -> str:
-    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+    # "surrogatepass": a model's tool name can hold a lone surrogate, which plain UTF-8 refuses (every valid string
+    # hashes as before).
+    return hashlib.sha256(text.encode("utf-8", "surrogatepass")).hexdigest()
 
 
 def _diagnosis_dict(d: Diagnosis) -> dict[str, Any]:
@@ -80,6 +83,10 @@ def outputs_files(out: Path) -> list[str]:
     return sorted(
         p.relative_to(out).as_posix() for d in out.glob("run*") for p in d.rglob("*") if p.is_file()
     )
+
+
+# An allowlist: a detector kind that calls a paid service is refused without an edit (PL62).
+_REPLAY_DETECTORS = frozenset({"regex", "llm_judge"})
 
 
 def _refuse_zero_price(registry: Registry, agent_id: str, llm_kind: str) -> None:
@@ -107,7 +114,8 @@ def _replay(
     clock: Callable[[], float] | None = None,
 ) -> ReplayResult:
     """Raises ``ConfigError`` for any refusal (nothing written), ``AuditUnavailable`` when an event cannot be
-    written. Aborts (non-transient provider error) and the USD cap return exit code 1."""
+    written. Aborts (non-transient provider error) and the USD cap return exit code 1. ``llm_kind`` is a label the
+    caller promises is true: the guard reads labels, plus one check that a real network kind object is refused."""
     cfg = registry.config
     if k < 1:
         raise ConfigError("replay k must be at least 1")
@@ -116,6 +124,16 @@ def _replay(
     if agent_id not in registry.agents:
         raise ConfigError(f"unknown agent {agent_id!r}")
     _refuse_zero_price(registry, agent_id, llm_kind or cfg.backends.llm.kind)
+    # The loop books only the answered attempt of an answered call and has no meter, so the hidden billed attempts of
+    # a real model have no owner here (PL55): v1 replays only the fake kind and the detectors that cost nothing.
+    if (llm_kind or cfg.backends.llm.kind) != "fake":
+        raise ConfigError("k1b replay runs only on the fake llm kind in v1")
+    if isinstance(
+        llm, NetworkLLM
+    ):  # a real network object under a "fake" label is refused too (PL66)
+        raise ConfigError("k1b replay runs only on the fake llm kind in v1")
+    if any(d.kind not in _REPLAY_DETECTORS for d in cfg.backends.detector):
+        raise ConfigError("k1b replay runs only the regex and llm_judge detector kinds in v1")
     if not cfg.k1b.redact and not acknowledge_masked:
         raise ConfigError(
             "k1b.redact is false: client data would go to the model unmasked. Pass "

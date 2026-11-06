@@ -39,6 +39,7 @@ def make(settings: Any, deps: Any) -> GeminiLLM:
 
 class GeminiLLM(NetworkLLM):
     label = "gemini"
+    REQUESTS_PER_CHAT = 1  # one request a chat; `common.request_bound` reads it
 
     def __init__(
         self,

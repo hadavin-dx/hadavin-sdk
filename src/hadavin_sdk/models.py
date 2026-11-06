@@ -359,6 +359,11 @@ class Reply(Shape):
     stop_reason: str = "end_turn"
     latency_ms: int = 0
 
+    @property
+    def usage(self) -> Usage:
+        """The counts this reply was priced from (input and output; a cache class is refused before a Reply exists)."""
+        return Usage(self.input_tokens, self.output_tokens)
+
     @field_validator("cost_usd")
     @classmethod
     def _cost_rounded_up(cls, v: Decimal) -> Decimal:

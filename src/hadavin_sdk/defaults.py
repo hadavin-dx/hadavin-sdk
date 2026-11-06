@@ -169,3 +169,16 @@ KILL_SWITCH_CALL_LOCK_TIMEOUT_MS = (
 MAX_USAGE_TOKENS_PER_CLASS = (
     1_000_000_000  # the most one class of tokens (input, output, a cache class) may be in one count
 )
+
+# --- model request counts and k1b charges (P4a-2): one named block. Rebase note: if another package adds a block at the
+# end of this file first, keep both blocks and keep this one whole ------------------------------------------------------
+OPENAI_COMPAT_REQUESTS_PER_CHAT = 2  # the forced answer missing: one more request (design 4.3)
+CHARGE_FALLBACK_REQUESTS = (
+    2  # k1b charge for a llm that declares no usable REQUESTS_PER_CHAT; not below any kind's
+)
+CHARGE_FALLBACK_ATTEMPTS = (
+    10  # k1b charge for a llm that declares no usable max_attempts; not below the setting's `le`
+)
+PROMPT_BYTES_PER_TOKEN = (
+    1  # the prompt bound: one token for every byte, the most any tokenizer can use
+)
