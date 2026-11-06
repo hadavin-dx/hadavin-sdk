@@ -600,4 +600,5 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | ra-AKG1-r3 | egm-design adversarial AK-G1 round 3 (rev 3, 42368a3, LAST) | 05:08Z | +15min | REPORTED | saver |
 | rc-AKG1-r3 | egm-codebase-details correctness AK-G1 round 3 | 05:08Z | +15min | REPORTED | saver |
 | sv-AKG1-r3 | saver AK-G1 round 3 pair (7+3 Majors) | 05:14Z | +8min | REPORTED | verify, push, Opus resolve (BN) |
-| rs-AKG1-r3 | Opus resolve AK-G1 round 3 (last; 10 Majors -> BN) | 05:15Z | +25min | running | verify, then BN author |
+| rs-AKG1-r3 | Opus resolve AK-G1 round 3 (last; 10 Majors -> BN) | 05:15Z | +25min | REPORTED | verify, then BN author |
+| bn-AKG1 | Opus BN author AK-G1 (apply BN-1..28 + banner into ticket) | 05:23Z | +20min | running | verify, push, relay PL10-18 |
