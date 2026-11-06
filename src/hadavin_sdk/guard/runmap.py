@@ -431,7 +431,10 @@ def _decoded_masks(
     one value in pass one and `password=ab;zq9` in the decoded view, which would mask only `ab`. Only entries whose
     original occurs in THIS text and holds an encoding character are considered (so earlier junk in the run's map cannot
     use up the slots); more than `MAX_DECODED_MASKS` of them, or one that cannot be decoded (nested too deep), cannot be
-    paired and the text is refused (`InputTooLarge`, nothing shown), never skipped. Computed once per call."""
+    paired and the text is refused (`InputTooLarge`, nothing shown), never skipped. Computed once per call.
+    `deadline` (a `time.thread_time()` value, shared with stage 1 and every view) is checked once per stored original, before
+    any skip; a spent deadline raises `InputTooLarge`.
+    """
     out = []
     for ph, original in current.items():
         if deadline is not None and time.thread_time() > deadline:

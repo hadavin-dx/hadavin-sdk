@@ -757,3 +757,9 @@ def test_view_2_what_a_view_does_to_the_output():
     out3 = runmap.redact_text("password: hunt\u200ber2", m3)
     assert "hunt" not in out3 and "er2" not in out3.replace("<SECRET_", ""), out3
     assert set(m3.values()) >= {"hunt\u200ber2", "hunter2"}, m3
+
+
+def test_text_before_a_masked_value_is_kept_once_between_two_in_place_masks():
+    _old_tree_guard()
+    r = redact("a josé@example.com b maría@example.com c")
+    assert r.text == "a <EMAIL_1> b <EMAIL_2> c", r.text
