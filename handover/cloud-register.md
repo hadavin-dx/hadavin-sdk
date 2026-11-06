@@ -379,11 +379,11 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | res-r2-P5b1 | Opus egm-resolve P5b1 round 2 | opus | ~02:56Z | +45min | REPORTED | verify; rev 3; round 3 |
 | res-r1-P5c | Opus egm-resolve P5c round 1 | opus | ~02:56Z | +45min | running | verify; rev 2; round 2 |
 | res-r1-P6a | Opus egm-resolve P6a round 1 | opus | ~02:56Z | +45min | REPORTED | verify; rev 2; round 2 |
-| rev-P8b-2 | Opus author: P8b revision 2 from reviews/P8b-round1-resolve.md | opus | 02:55Z | +45min | running | verify; round 2 reviewers |
+| rev-P8b-2 | Opus author: P8b revision 2 from reviews/P8b-round1-resolve.md | opus | 02:55Z | +45min | REPORTED | verify; round 2 reviewers |
 | rev-P6b1-3 | Opus author: P6b1 revision 3 from reviews/P6b1-round2-resolve.md | opus | 02:55Z | +45min | running | verify; round 3 reviewers; freeze |
-| res-r1-P6b2 | Opus egm-resolve P6b2 round 1 | opus | 02:56Z | +45min | running | verify; rev 2; round 2 |
+| res-r1-P6b2 | Opus egm-resolve P6b2 round 1 | opus | 02:56Z | +45min | REPORTED | verify; rev 2; round 2 |
 | fix-P4b2-maint | (closed) maintenance identity restored, rev 3 daae169 pushed | opus | 03:10Z | - | CLOSED (REPORTED, verified) | round 2 reviewers |
-| r2-P4b2-adv | egm-design adversarial round 2 of tickets/P4b2.md rev 3 | sonnet | 02:57Z | +30min | running | save, ledger, resolve |
+| r2-P4b2-adv | egm-design adversarial round 2 of tickets/P4b2.md rev 3 | sonnet | 02:57Z | +30min | running | REPORTED |
 | r2-P4b2-cor | egm-codebase-details correctness round 2 of tickets/P4b2.md rev 3 | sonnet | 02:57Z | +30min | running | save, ledger, resolve |
 | rev-P5b2-3 | Opus author: P5b2 revision 3 from reviews/P5b2-round2-resolve.md | opus | 02:57Z | +45min | running | verify; round 3 reviewers; one resolve; freeze |
 | rev-P4c-3 | Opus author: P4c revision 3 from reviews/P4c-round2-resolve.md | opus | 02:58Z | +45min | running | verify; round 3 reviewers; resolve; freeze |
