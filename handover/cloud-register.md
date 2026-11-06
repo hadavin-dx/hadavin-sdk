@@ -486,3 +486,5 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | au-P6b2-r3 | Opus author P6b2 revision 3 (per round-2 resolve) | 06:00Z | +40min | running | verify |
 | rv-P5b5-r3-adv | P5b5 r3 adversarial (egm-design) | 06:10Z | +30min | running | verify |
 | rv-P5b5-r3-cor | P5b5 r3 correctness (egm-codebase-details) | 06:10Z | +30min | running | verify |
+| au-AKG1 | Opus author ticket AK-G1 (conversational agent with tools) | 06:25Z | +40min | running | verify |
+| au-AKG2 | Opus author ticket AK-G2 (inbound trigger kind, absorbs P7a) | 06:25Z | +40min | running | verify |
