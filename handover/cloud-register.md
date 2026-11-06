@@ -635,5 +635,5 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | au-AKG16-r2 | Opus author AK-G16 revision 2 from round 1 resolve | 06:36Z | +40min | REPORTED | verify
 | rr-AKG15-r2-adv | Sonnet egm-design review AK-G15 rev 2 round 2 | 06:45Z | +20min | REPORTED | save
 | rr-AKG15-r2-cor | Sonnet egm-codebase-details review AK-G15 rev 2 round 2 | 06:45Z | +20min | running | save
-| rr-AKG16-r2-adv | Sonnet egm-design review AK-G16 rev 2 round 2 | 06:46Z | +20min | running | save
+| rr-AKG16-r2-adv | Sonnet egm-design review AK-G16 rev 2 round 2 | 06:46Z | +20min | REPORTED | save
 | rr-AKG16-r2-cor | Sonnet egm-codebase-details review AK-G16 rev 2 round 2 | 06:46Z | +20min | running | save
