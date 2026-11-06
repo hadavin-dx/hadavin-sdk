@@ -49,6 +49,10 @@ ALLOWED: dict[str, tuple[set[str], str]] = {
         {"url"},
         "the Unicode License notice in the header of a generated table",
     ),
+    "guard/_scripts.py": (
+        {"url"},
+        "the Unicode License notice in the header of a generated table",
+    ),
     "llm/anthropic.py": ({"url"}, "the Anthropic and Vertex kind's endpoints"),
     "llm/gemini.py": ({"url"}, "the Gemini kind's endpoint"),
     "tools.py": (

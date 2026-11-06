@@ -37,7 +37,7 @@ REPOINTED = (
     "allow: a mismatch is always a look-alike",
     "mixed: invisible characters not removed first",
     "mixed: the micro sign is flagged",
-    "mixed: Cherokee not a look-alike script",
+    "mixed: Cherokee exempt next to Latin",
     "table: Cherokee A missing",
     "table: small capital rule missing",
     "table: ASCII sources accepted",
@@ -87,30 +87,63 @@ def _functions(path: Path) -> list[str]:
     return [n.name for n in tree.body if isinstance(n, ast.FunctionDef)]
 
 
-def test_a_the_list_has_138_mutants_28_repointed_12_new_9_of_fold2_3_of_fold3_16_of_fold4_9_of_fix4_14_of_fix5_5_of_fix6_32_of_fix7_and_10_of_fix8_with_unique_names():
+def test_a_the_list_has_226_mutants_77_of_p1a_fix4_26_of_p1b_14_of_p1a_fix5_5_of_fix6_31_of_fix7_10_of_p1a_fix8_and_63_of_the_p1b_fix_batch_with_unique_names():
     names = [m.name for m in mm.M]
-    assert len(names) == 138 and len(set(names)) == 138, names
+    assert len(names) == 226 and len(set(names)) == 226, names
     assert tuple(names[:28]) == REPOINTED, (
         "the first 28 are the re-pointed mutants, in the order of the placement table"
     )
     assert (
-        len(names[28:]) == 110
-    )  # 12 of the first package, 9 of fold2, 3 of fold3, 16 of fold4, 9 of fix4, 14 of fix5, 5 of fix6, 32 of fix7 and 10 of fix8
+        len(names[28:]) == 198
+    )  # 12 of the first package, 9 of fold2, 3 of fold3, 16 of fold4, 9 of fix4, 26 of P1b, 14 of fix5, 5 of fix6, 31 of fix7, 63 of the P1b fix batch (30 of the first batch and 33 of order 137) and 10 of P1a fix8 (the list order is the merge order, not the date order)
     assert names[52:53] == ["fold: case folded before the marks are dropped (the fold2 order)"], (
         "the restored fold2 mutant is the first of the fold4 mutants"
     )
-    assert all(n.split(":")[0] in {"marks", "names", "pin"} for n in names[77:91]), (
-        "names 78 to 91 are the mutants of fix5"
+    assert all(n.split(":")[0] in {"marks", "names", "pin"} for n in names[103:117]), (
+        "names 104 to 117 are the mutants of fix5"
     )
-    assert sum(n.startswith("names:") for n in names[77:91]) == 6, (
+    assert sum(n.startswith("names:") for n in names[103:117]) == 6, (
         "the six name-rule mutants of fix5"
     )
-    assert all(n.split(":")[0] in {"script", "scan", "names"} for n in names[91:96]), (
-        "names 92 to 96 are the mutants of fix6"
+    assert all(n.split(":")[0] in {"script", "scan", "names"} for n in names[117:122]), (
+        "names 118 to 122 are the mutants of fix6"
     )
     assert sum(n.startswith("readings:") for n in names) == 7, (
         "the mutants of the readings (drop one, first only, unbounded, ...)"
     )
+    assert len(names[77:103]) == 26, (
+        "P1b adds 22 mutants (and 4 more in merge 7: a fifth, 'scan_views: the scripts are not checked', was removed because scan_views no longer takes scripts), after the 77 of P1a fix4 (the 14 of P1a fix5, the 5 of fix6 and the 32 of fix7 come last)"
+    )
+    assert len(names[103:117]) == 14, "the 14 of P1a fix5"
+    assert len(names[117:122]) == 5, "the 5 of P1a fix6"
+    assert len(names[122:153]) == 31, (
+        "the 32 of P1a fix7, less the one that the fix batch removed (a bool as a minimum is refused by the floor of 2 anyway)"
+    )
+    assert len(names[153:]) == 63, (
+        "the 63 of the P1b fix batch: 30 of the first batch and 33 of order 137"
+    )
+    assert all(
+        n.split(":")[0]
+        in {
+            "runmap",
+            "keys",
+            "digits",
+            "scan",
+            "scan_views",
+            "fold_views",
+            "injection",
+            "minimum",
+            "passes",
+            "insertion",
+            "tables",
+            "register",
+            "cache",
+            "squeeze",
+            "docs",
+            "refusal",
+        }
+        for n in names[153:]
+    ), "the fix batch mutants"
 
 
 def test_a_every_mutant_names_its_test_file_and_its_killer_and_the_killer_exists():
@@ -131,11 +164,11 @@ def test_a_every_mutant_names_its_test_file_and_its_killer_and_the_killer_exists
 
 
 def test_a_the_test_list_puts_the_killer_files_first_and_leaves_out_perf_meta_and_notices():
-    assert list(mm.TESTS[:2]) == [mm.T, mm.G]
+    assert list(mm.TESTS[:3]) == [mm.T, mm.G, mm.SC]
     assert mm.TESTS[-1] == mm.D, "the differential and golden file runs last"
     for left_out in ("perf", "meta", "notices"):
         assert not any(left_out in t for t in mm.TESTS), left_out
-    assert {m.test_file for m in mm.M} == {mm.T, mm.G}
+    assert {m.test_file for m in mm.M} == {mm.T, mm.G, mm.SC, mm.SB, mm.FB, mm.O}
 
 
 def test_a_the_moved_tests_and_the_new_killers_exist_once_each():
@@ -143,6 +176,9 @@ def test_a_the_moved_tests_and_the_new_killers_exist_once_each():
         TESTS / "test_textnorm.py",
         TESTS / "test_textnorm_generator.py",
         TESTS / "test_textnorm_differential.py",
+        TESTS / "test_textnorm_scan.py",
+        TESTS / "test_textnorm_callers.py",
+        TESTS / "test_textnorm_app.py",
     ):
         tests = [n for n in _functions(path) if n.startswith("test_")]
         assert len(tests) == len(set(tests)), (
@@ -157,7 +193,7 @@ def test_a_the_moved_tests_and_the_new_killers_exist_once_each():
 def test_a_print_the_placement_table():
     rows = [f"{m.name} | {m.test_file} | {m.only_test}" for m in mm.M]
     print("\n".join(rows))
-    assert len(rows) == 138
+    assert len(rows) == 226
 
 
 def test_b_every_xfail_of_the_differential_file_is_strict_and_names_assertion_error():
@@ -189,7 +225,9 @@ def test_c_the_corpus_has_150_rows_and_3_rows_in_every_class():
         assert r["source"].strip(), f"{r['id']}: a row without a stated principle"
         if r["status"] == "not_taken":
             assert r["relation"] == "different", r["id"]
-    assert any(r["status"] == "p1b" for r in rows) and any(r["status"] == "not_taken" for r in rows)
+    assert any(
+        r["status"] == "not_taken" for r in rows
+    )  # no row is p1b any more: the whole principle is taken
 
 
 def test_g_every_search_string_occurs_exactly_once_in_the_file_it_targets():
@@ -211,7 +249,7 @@ def test_h_textnorm_holds_no_assert_statement():
 
 
 def test_i_the_changelog_states_the_true_mutant_count_the_stale_names_and_the_golden_skip():
-    """p1a6-005: the CHANGELOG counts the mutants right (it said 90 for 91), names the stale ticket names and the live ones, and says what the golden test
+    """The CHANGELOG counts the mutants right (it said 90 for 91), names the stale ticket names and the live ones, and says what the golden test
     does on an unknown Unicode version (it skips; it does not claim that nothing is skipped)."""
     log = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
     assert f"{len(mm.M)} mutants in\n  `tests/textnorm_mutants.py`" in log, (

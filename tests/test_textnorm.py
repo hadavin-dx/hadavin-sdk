@@ -52,8 +52,7 @@ FDFA = chr(0xFDFA)  # weight 18: NFKC makes 18 characters from it
 SCAN_COVERAGE = (
     "A value with NO ASCII letter or digit (Chinese, Arabic, Hindi, Thai) is found by the script views of ``fold_views`` (the non-ASCII letters of the "
     "value's own scripts, with whitespace, punctuation, symbols, ASCII characters and the letters of every other script removed), so an inserted "
-    "space, hyphen, line break, ASCII letter, mark or foreign-script letter does not hide it; a letter of the SAME script inserted, or a respelling "
-    "of it, is not covered."
+    "space, hyphen, line break, ASCII letter, mark or foreign-script letter does not hide it."
 )
 NAME_COVERAGE = (
     "NAME RULES COVER: small capitals, negative circled and negative squared letters, the crossed negative squared P, regional indicator letters, "
@@ -70,6 +69,14 @@ def _squash(text):
 def bare(key):
     """A key without the tag of an interpreter whose Unicode version is not the pin (``key_tag()`` is empty on the pinned version)."""
     return key.removeprefix(key_tag())
+
+
+def _fold_views_no_scripts(raw):
+    """``fold_views`` for a text with no protected value (``scripts`` is a required argument)."""
+    return textnorm.fold_views(raw, scripts=frozenset())
+
+
+_fold_views_no_scripts.__name__ = "fold_views"
 
 
 def refused(exc, message, fn, *args, **kwargs):
@@ -346,7 +353,9 @@ def test_the_tables_are_read_only_and_a_later_change_of_the_source_does_not_reac
     monkeypatch.setitem(_confusables.TABLE, 0x430, "z")
     monkeypatch.setitem(_confusables.TABLE, 0x2013, "q")
     assert fold(chr(0x430)) == before == "a", "a later change of _confusables.TABLE changes fold"
-    assert fold(chr(0x2013)) == chr(0x2013)
+    assert fold(chr(0x2013)) == "-", (
+        "a later change of _confusables.TABLE changes the punctuation map"
+    )
 
 
 def test_the_checked_in_table_matches_its_digest():
@@ -368,7 +377,7 @@ def test_max_value_len_is_the_longest_value_of_the_table():
 
 # ---- FOLD_VERSION ------------------------------------------------------------------------------------------------------------------------
 def test_the_version_string_names_the_algorithm_the_table_and_both_unicode_versions():
-    m = re.fullmatch(r"alg=fold4\|tbl=([0-9a-f]{12}):(\d+)\|ucd=([^|]+)\|ud=([^|]+)", FOLD_VERSION)
+    m = re.fullmatch(r"alg=fold5\|tbl=([0-9a-f]{12}):(\d+)\|ucd=([^|]+)\|ud=([^|]+)", FOLD_VERSION)
     assert m, f"FOLD_VERSION has the wrong shape: {FOLD_VERSION}"
     assert m[4] == unicodedata.unidata_version, "FOLD_VERSION has no ud= part of this interpreter"
     assert m[3] == _confusables.DATA_VERSION
@@ -772,7 +781,10 @@ def test_random_strings_are_idempotent_case_symmetric_and_stable_under_inserted_
         key = identity_key(text)
         if identity_key(key) != key:
             not_idempotent.append(text)
-        if any(len(v) > textnorm._weight(text) for v in textnorm.fold_views(text, casefold=True)):
+        if any(
+            len(v) > textnorm._weight(text)
+            for v in textnorm.fold_views(text, casefold=True, scripts=frozenset())
+        ):
             too_long.append(
                 text
             )  # a view is never longer than W (the size rule bounds the work of every reading)
@@ -828,7 +840,7 @@ def test_a_raw_text_that_starts_with_the_interpreters_own_tag_has_it_stripped_an
     monkeypatch.setattr(defaults, "TEXTNORM_PINNED_UNIDATA", "15.1.0")
     monkeypatch.setattr(unicodedata, "unidata_version", "15.0.0")
     tag = key_tag()
-    assert tag.startswith("\ue000alg=fold4|ud=15.0.0") and tag.endswith("\ue000")
+    assert tag.startswith("\ue000alg=fold5|ud=15.0.0") and tag.endswith("\ue000")
     # the stated over-collision: the tag of THIS interpreter in front of a text is read as "already a key"
     assert identity_key(tag + "Bob") == identity_key("Bob") == tag + "bob"
     assert could_be_same_person(tag + "Bob", "bob")
@@ -843,7 +855,7 @@ def test_a_raw_text_that_starts_with_the_interpreters_own_tag_has_it_stripped_an
     assert other.startswith(key_tag()) and "ud=15.0.0" in other and other != identity_key("bob")
     # on the pinned version there is no tag to strip and U+E000 is dropped like any private-use character
     monkeypatch.setattr(unicodedata, "unidata_version", "15.1.0")
-    assert key_tag() == "" and identity_key(tag + "bob") == "alg=fold4|ud=15.0.0bob"
+    assert key_tag() == "" and identity_key(tag + "bob") == "alg=fold5|ud=15.0.0bob"
 
 
 def test_the_case_fold_table_is_on_the_case_fold_image_and_its_conflicts_are_the_known_eleven():
@@ -940,7 +952,7 @@ def test_a_key_made_on_another_unicode_version_carries_that_version_and_never_eq
     monkeypatch.setattr(unicodedata, "unidata_version", "15.0.0")
     other = identity_key("Bob")
     assert other != pinned_key, "a key made on another Unicode version equals the pinned key"
-    assert other.endswith("bob") and "ud=15.0.0" in other and "alg=fold4" in other, (
+    assert other.endswith("bob") and "ud=15.0.0" in other and "alg=fold5" in other, (
         "the tag does not name the algorithm and the Unicode version"
     )
     assert identity_key(other) == other, "the key of another version is not idempotent"
@@ -1185,18 +1197,23 @@ def test_the_hidden_channel_signal_refuses_what_is_not_text():
 
 
 # ---- names ---------------------------------------------------------------------------------------------------------------------------------
-def test_the_public_names_are_exactly_the_listed_twenty_three():
+def test_the_public_names_are_exactly_the_listed_thirty_three():
     assert sorted(textnorm.__all__) == sorted(
         [
             "FILLERS",
             "FOLD_VERSION",
             "AllowVerdict",
+            "Coverage",
+            "CoverageRefused",
+            "EmptyView",
+            "FoldNotConverged",
             "NotText",
             "TextTooLong",
             "TextnormError",
             "UnidataMismatch",
             "ViewTooShort",
             "allow_equal",
+            "could_be_same_person",
             "fold",
             "fold_views",
             "has_hidden_channel",
@@ -1205,15 +1222,20 @@ def test_the_public_names_are_exactly_the_listed_twenty_three():
             "identity_keys",
             "key_tag",
             "names_equal",
+            "register_value",
             "require_pinned_unidata",
-            "could_be_same_person",
+            "scan_cache",
+            "scan_holds",
+            "scan_keyset",
             "scan_needles",
+            "scan_views",
+            "scan_views_no_value",
             "squeeze",
             "squeeze_views",
             "value_scripts",
         ]
     )
-    assert len(textnorm.__all__) == len(set(textnorm.__all__)) == 23
+    assert len(textnorm.__all__) == len(set(textnorm.__all__)) == 33
 
 
 def test_every_name_the_module_defines_is_public_and_listed_or_private():
@@ -1256,8 +1278,12 @@ def _any_shared(a, b):
 
 def _scan_finds(secret, haystack):
     """A redaction-style scan: does any view of the haystack hold any view of the secret?"""
-    needles = textnorm.fold_views(secret, casefold=True)
-    return any(n in v for v in textnorm.fold_views(haystack, casefold=True) for n in needles)
+    needles = textnorm.fold_views(secret, casefold=True, scripts=frozenset())
+    return any(
+        n in v
+        for v in textnorm.fold_views(haystack, casefold=True, scripts=frozenset())
+        for n in needles
+    )
 
 
 def test_a_greek_look_alike_with_ypogegrammeni_is_the_latin_word_for_could_be_same_person_and_for_a_scan():
@@ -1268,7 +1294,7 @@ def test_a_greek_look_alike_with_ypogegrammeni_is_the_latin_word_for_could_be_sa
     assert allow_equal(hostile, "admin") is AllowVerdict.LOOKALIKE, (
         "allow_equal does not report alpha + U+0345 + dmin as a look-alike"
     )
-    assert "admin" in textnorm.fold_views(hostile, casefold=True), (
+    assert "admin" in textnorm.fold_views(hostile, casefold=True, scripts=frozenset()), (
         "fold_views of alpha + U+0345 + dmin has no view that reads admin"
     )
     assert "ADMIN" in textnorm.squeeze_views(hostile), "squeeze_views has no view that reads ADMIN"
@@ -1299,8 +1325,8 @@ def test_a_ypogegrammeni_after_any_greek_letter_leaves_the_readings_of_the_word_
                 same = could_be_same_person(marked, plain)
                 for casefold in (False, True):
                     same = same and _any_shared(
-                        textnorm.fold_views(marked, casefold=casefold),
-                        textnorm.fold_views(plain, casefold=casefold),
+                        textnorm.fold_views(marked, casefold=casefold, scripts=frozenset()),
+                        textnorm.fold_views(plain, casefold=casefold, scripts=frozenset()),
                     )
                 same = same and _any_shared(
                     textnorm.squeeze_views(marked), textnorm.squeeze_views(plain)
@@ -1441,7 +1467,9 @@ def test_fold_views_and_squeeze_views_hold_the_single_fold_and_are_bounded():
     for text in ("admin", "\u03b1\u0345dmin", ETA + "oward  x\u200b", "\u1fb3 Mark", ""):
         for casefold in (False, True):
             for collapse_ws in (False, True):
-                views = textnorm.fold_views(text, casefold=casefold, collapse_ws=collapse_ws)
+                views = textnorm.fold_views(
+                    text, casefold=casefold, collapse_ws=collapse_ws, scripts=frozenset()
+                )
                 assert type(views) is tuple and 1 <= len(views) <= 6
                 assert len(set(views)) == len(views)
                 assert fold(text, casefold=casefold, collapse_ws=collapse_ws) in views, (
@@ -1451,10 +1479,13 @@ def test_fold_views_and_squeeze_views_hold_the_single_fold_and_are_bounded():
             views = textnorm.squeeze_views(text, loose=loose)
             assert type(views) is tuple and 1 <= len(views) <= 6
             assert squeeze(text, loose=loose) in views, "the single squeeze is not one of the views"
-    assert set(textnorm.fold_views("\u03b1\u0345dmin", casefold=False)) == {"admin", "aidmin"}
-    assert "howard" in textnorm.fold_views(ETA + "oward", casefold=True)
-    assert "Howard" in textnorm.fold_views(ETA + "oward", casefold=False)
-    for fn in (textnorm.identity_keys, textnorm.fold_views, textnorm.squeeze_views):
+    assert set(textnorm.fold_views("\u03b1\u0345dmin", casefold=False, scripts=frozenset())) == {
+        "admin",
+        "aidmin",
+    }
+    assert "howard" in textnorm.fold_views(ETA + "oward", casefold=True, scripts=frozenset())
+    assert "Howard" in textnorm.fold_views(ETA + "oward", casefold=False, scripts=frozenset())
+    for fn in (textnorm.identity_keys, _fold_views_no_scripts, textnorm.squeeze_views):
         refused(NotText, f"{fn.__name__} accepted a str subclass", fn, _Sub("a"))
         refused(TextTooLong, f"{fn.__name__} accepted a text over the cap", fn, "a" * (CAP + 1))
 
@@ -1584,7 +1615,7 @@ def test_the_cheap_length_check_runs_before_any_per_character_work(monkeypatch):
     ):
         for fn in (identity_key, squeeze, fold, has_mixed_script, has_hidden_channel):
             refused(TextTooLong, f"{fn.__name__} accepted a text longer than the cap", fn, text)
-        for fn in (textnorm.identity_keys, textnorm.fold_views, textnorm.squeeze_views):
+        for fn in (textnorm.identity_keys, _fold_views_no_scripts, textnorm.squeeze_views):
             refused(TextTooLong, f"{fn.__name__} accepted a text longer than the cap", fn, text)
         refused(
             TextTooLong,
@@ -1634,7 +1665,7 @@ def test_lead_probe_3_a_greek_look_alike_with_ypogegrammeni_against_the_latin_wo
         "passw + omicron + U+0345 + rd is not password"
     )
     assert "ADMIN" in textnorm.squeeze_views(hostile) and "admin" in textnorm.fold_views(
-        hostile, casefold=True
+        hostile, casefold=True, scripts=frozenset()
     )
     table_sources_unassigned_here = [
         cp for cp in _confusables.TABLE if unicodedata.category(chr(cp)) == "Cn"
@@ -1748,7 +1779,7 @@ def test_the_marks_dropped_views_are_at_most_six_for_squeeze_and_nine_for_fold_a
             assert identity_key(dropped) in keys, (
                 "identity_keys does not hold the check name of the marks-dropped text"
             )
-    assert len(textnorm.fold_views("plain", casefold=True)) == 1, (
+    assert len(textnorm.fold_views("plain", casefold=True, scripts=frozenset())) == 1, (
         "a text with no mark has an extra view"
     )
     # a Greek capital Eta (reads H in the upper-side variant) AND an inserted mark in one text: the marks-dropped views carry every variant
@@ -1756,7 +1787,9 @@ def test_the_marks_dropped_views_are_at_most_six_for_squeeze_and_nine_for_fold_a
         "capital Eta + a spacing mark hides howard from the scan"
     )
     # nothing else is lost: the marks-dropped view keeps the script
-    assert "\u5bc6\u7801" in textnorm.fold_views("\u5bc6\u02c6\u7801", casefold=True)
+    assert "\u5bc6\u7801" in textnorm.fold_views(
+        "\u5bc6\u02c6\u7801", casefold=True, scripts=frozenset()
+    )
 
 
 def test_the_marks_dropped_views_are_never_longer_than_the_weight_of_the_text():
@@ -1768,7 +1801,7 @@ def test_the_marks_dropped_views_are_never_longer_than_the_weight_of_the_text():
         text = chr(cp)
         weight = textnorm._weight(text)
         for views in (
-            textnorm.fold_views(text, casefold=True, collapse_ws=True),
+            textnorm.fold_views(text, casefold=True, collapse_ws=True, scripts=frozenset()),
             textnorm.squeeze_views(text, loose=True),
         ):
             assert all(len(v) <= weight for v in views), (
@@ -1794,7 +1827,7 @@ def test_identity_key_keeps_a_spacing_mark_while_the_deny_check_and_the_scan_vie
         assert could_be_same_person(text, "password"), (
             f"could_be_same_person does not see through the spacing mark U+{ord(ch):04X}"
         )
-        assert "password" in textnorm.fold_views(text, casefold=True), (
+        assert "password" in textnorm.fold_views(text, casefold=True, scripts=frozenset()), (
             f"fold_views does not hold the secret hidden with the spacing mark U+{ord(ch):04X}"
         )
     doc = textnorm.__doc__ or ""
@@ -1905,7 +1938,7 @@ def _accepted(value, why):
 
 
 def test_a_separator_an_ascii_letter_or_a_mark_inserted_into_a_chinese_hindi_or_thai_value_does_not_hide_it():
-    """p1a6-001: for a value with no ASCII letter or digit ``squeeze_views`` is ``""`` and the old scan relied on the marks-dropped views, which a
+    """For a value with no ASCII letter or digit ``squeeze_views`` is ``""`` and the old scan relied on the marks-dropped views, which a
     space, a hyphen, a line break or an ASCII letter defeated. The script view removes them. Every value, at every position, with every
     inserted text of ``INSERTED_TEXTS`` is found; and a benign text (the value missing a character, the characters swapped, another value
     of the same script) is not."""
@@ -1956,7 +1989,7 @@ def test_a_value_in_a_script_view_is_found_across_every_inserted_text_at_once():
 
 
 def test_the_script_view_keeps_only_letters_of_the_given_scripts_and_is_left_out_when_empty_or_repeated():
-    """fix7 (round 7, MAJOR-1): the script view holds LETTERS only. The old docstrings said "letters and marks", but no mark can reach the view
+    """The script view holds LETTERS only. The old docstrings said "letters and marks", but no mark can reach the view
     (Mn and Me are dropped, Mc, Lm and Sk are removed before the marks-dropped views are made), so the real rule is letters of the value's scripts."""
     han = frozenset({"HAN"})
     views = textnorm.fold_views("ab \u5bc6-\u7801 7", casefold=True, scripts=han)
@@ -1988,14 +2021,15 @@ def test_the_script_view_keeps_only_letters_of_the_given_scripts_and_is_left_out
     )
     chinese_views = textnorm.fold_views(CHINESE, casefold=True, scripts=han)
     assert chinese_views == (CHINESE,), "the script view of a text that is only script is repeated"
-    assert textnorm.fold_views(CHINESE, casefold=True) == (CHINESE,)
-    assert textnorm.fold_views("ab \u5bc6-\u7801", casefold=True)[-1] == "ab \u5bc6-\u7801", (
-        "fold_views without scripts made a script view"
-    )
+    assert textnorm.fold_views(CHINESE, casefold=True, scripts=frozenset()) == (CHINESE,)
+    assert (
+        textnorm.fold_views("ab \u5bc6-\u7801", casefold=True, scripts=frozenset())[-1]
+        == "ab \u5bc6-\u7801"
+    ), "fold_views without scripts made a script view"
 
 
 def test_the_script_view_of_a_hindi_value_is_its_letters_with_the_vowel_signs_gone():
-    """fix7 (round 7, MAJOR-1): the real rule, shown on Hindi "password". U+093E (aa) is a spacing mark (Mc): the marks-dropped views remove it
+    """The real rule, shown on Hindi "password". U+093E (aa) is a spacing mark (Mc): the marks-dropped views remove it
     before the fold, and the virama U+094D is a non-spacing mark (Mn): the fold drops it. What is left is the consonant skeleton. The scan still finds
     the value, and a text with the vowel signs left out is found too: the skeleton is the same (an over-match, the safe side)."""
     assert unicodedata.category("\u093e") == "Mc" and unicodedata.category("\u094d") == "Mn"
@@ -2026,14 +2060,15 @@ def test_the_script_view_of_a_hindi_value_is_its_letters_with_the_vowel_signs_go
 def test_the_minimum_view_length_is_one_number_per_kind_of_view_and_a_short_value_is_refused(
     monkeypatch,
 ):
-    """fix7 (round 7, MAJOR-B): ``defaults`` holds one minimum per KIND of view: spelling 2, squeeze 4, script 4, ideograph 2. Each is read when
+    """``defaults`` holds one minimum per KIND of view: spelling 2, squeeze 4, script 4, ideograph 2. Each is read when
     ``scan_needles`` runs. The error is a ``TextnormError`` (not a ``ValueError``) and carries no part of the value."""
     assert (
         defaults.TEXTNORM_MIN_SPELLING_CHARS,
         defaults.TEXTNORM_MIN_SQUEEZE_CHARS,
         defaults.TEXTNORM_MIN_SCRIPT_CHARS,
         defaults.TEXTNORM_MIN_IDEOGRAPH_CHARS,
-    ) == (2, 4, 4, 2)
+        defaults.TEXTNORM_MIN_DIGIT_CHARS,
+    ) == (2, 4, 4, 2, 6), "a minimum of defaults is not the pinned one"
     assert not hasattr(defaults, "TEXTNORM_MIN_VIEW_CHARS"), "the one global minimum is back"
     for short in (
         "",
@@ -2050,10 +2085,24 @@ def test_the_minimum_view_length_is_one_number_per_kind_of_view_and_a_short_valu
         try:
             textnorm.scan_needles(short)
         except textnorm.ViewTooShort as caught:
-            assert isinstance(caught, TextnormError) and not isinstance(caught, ValueError)
-            assert short.strip() == "" or short not in str(caught), "the message holds the value"
+            refusal = caught
         else:
             raise AssertionError(f"scan_needles accepted {short!r}: no view is long enough")
+        # asserted outside the handler, so the first failing line is the assertion and not the refusal that was caught
+        assert isinstance(refusal, TextnormError) and not isinstance(refusal, ValueError)
+        text = str(refusal)
+        if short.strip():
+            assert repr(short) not in text, "the message holds the value"
+            if short == "x":
+                # the one value that is a letter of the fixed words ("exact-match"): it must not stand alone as a token (between spaces,
+                # quotes, brackets or at an end), which is how a leaked value would show
+                assert re.search(r"(?<![\w-])x(?![\w-])", text) is None, (
+                    "the message holds the value"
+                )
+            else:
+                assert short not in text and short.strip() not in text, (
+                    "the message holds the value"
+                )
     value = "\u5bc6\u7801\u6d4b\u8bd5abcd"
     families = {
         "spelling view": value.casefold(),
@@ -2081,7 +2130,7 @@ def test_the_minimum_view_length_is_one_number_per_kind_of_view_and_a_short_valu
 
 
 def test_a_squeeze_view_needs_four_characters_so_a_short_latin_name_is_refused():
-    """fix7 (MAJOR-B): the squeeze view of a 2 or 3 letter Latin value ("Li", "Amy") is found in almost any English text; the old single minimum of 2
+    """The squeeze view of a 2 or 3 letter Latin value ("Li", "Amy") is found in almost any English text; the old single minimum of 2
     let it in. Now it is refused (the caller uses its own exact search), and four letters are scanned."""
     for name, text in (("Li", "a believer"), ("Amy", "ha my day")):
         assert name.upper() in textnorm.squeeze_views(text)[0], (
@@ -2096,7 +2145,7 @@ def test_a_squeeze_view_needs_four_characters_so_a_short_latin_name_is_refused()
 
 
 def test_a_script_view_needs_four_letters_but_two_ideographs_are_a_name():
-    """fix7 (MAJOR-B): the script minimum is tied to the value's own script letters. A 3-letter Thai or Cyrillic value gives a 3-letter
+    """The script minimum is tied to the value's own script letters. A 3-letter Thai or Cyrillic value gives a 3-letter
     needle that any text of that script holds: refused. A value that is only Han ideographs may be two long (a name); one ideograph is refused. A
     mixed value ("pw" plus ideographs) has a script part that alone is a weak needle: it needs four."""
     thai3 = "\u0e01\u0e02\u0e04"
@@ -2120,7 +2169,7 @@ def test_a_script_view_needs_four_letters_but_two_ideographs_are_a_name():
 
 
 def test_a_value_found_only_by_a_view_that_keeps_separators_is_refused():
-    """fix7 (MINOR-C): "w" plus one ideograph, an ideograph plus "5", a one-letter name: the squeeze and script views are one character and dropped; the
+    """A value of "w" plus one ideograph, an ideograph plus "5", a one-letter name: the squeeze and script views are one character and dropped; the
     exact-spelling view alone is left, and one inserted space would hide the value. ``scan_needles`` raises ``ViewTooShort`` and says so."""
     for value in ("w\u5bc6", "\u5bc6" + "5", "ab", "a\u5bc6", "\u0e01 \u0e02"):
         try:
@@ -2132,9 +2181,10 @@ def test_a_value_found_only_by_a_view_that_keeps_separators_is_refused():
             raise AssertionError(
                 f"scan_needles returned a needle for {value!r}, which a space hides"
             )
-    assert textnorm.fold_views("w\u5bc6", casefold=True, collapse_ws=True)[0] == "w\u5bc6", (
-        "the spelling view the old code would have returned is not there"
-    )
+    assert (
+        textnorm.fold_views("w\u5bc6", casefold=True, collapse_ws=True, scripts=frozenset())[0]
+        == "w\u5bc6"
+    ), "the spelling view the old code would have returned is not there"
 
 
 def test_scan_needles_returns_each_needle_once_and_checks_the_text_first():
@@ -2157,7 +2207,7 @@ def test_scan_needles_returns_each_needle_once_and_checks_the_text_first():
 
 
 def test_loose_loosens_only_the_squeeze_half_of_the_needles():
-    """fix7 (NIT): ``loose=True`` reads the digit-like letters as digits in the squeeze views only; the spelling views and the script views are the same."""
+    """``loose=True`` reads the digit-like letters as digits in the squeeze views only; the spelling views and the script views are the same."""
     plain = textnorm.scan_needles("Password")
     loose = textnorm.scan_needles("Password", loose=True)
     assert "PASSWORD" in plain and "PA55W0RD" not in plain
@@ -2172,7 +2222,7 @@ def test_loose_loosens_only_the_squeeze_half_of_the_needles():
 
 
 def test_a_scan_built_without_casefold_misses_a_case_variant_and_the_rule_says_to_pass_casefold():
-    """p1a6-004: ``fold_views(casefold=False)`` keeps case (for display and comparison callers). A scan built on it misses "SECRET" for the value
+    """``fold_views(casefold=False)`` keeps case (for display and comparison callers). A scan built on it misses "SECRET" for the value
     "secret"; the documented scan passes ``casefold=True`` and finds both. The default is kept; this test documents why the docstring says
     to pass the flag, and fails if the documented scan stops finding an upper/lower variant."""
     for value, text in (
@@ -2183,8 +2233,10 @@ def test_a_scan_built_without_casefold_misses_a_case_variant_and_the_rule_says_t
         assert _scan(value, text), (
             f"the documented scan misses a case variant: {value!r} in {text!r}"
         )
-        folded_value = textnorm.fold_views(value)  # casefold=False, the default
-        folded_text = textnorm.fold_views(text)
+        folded_value = textnorm.fold_views(
+            value, scripts=frozenset()
+        )  # casefold=False, the default
+        folded_text = textnorm.fold_views(text, scripts=frozenset())
         assert not any(n in v for n in folded_value for v in folded_text if n), (
             "the case-keeping default found the variant: the default changed, so the rule in the docstring is out of date"
         )
@@ -2195,13 +2247,13 @@ def test_a_scan_built_without_casefold_misses_a_case_variant_and_the_rule_says_t
 
 
 def test_the_documented_limit_a_modifier_letter_that_replaces_a_letter_with_another_inserted_is_not_caught():
-    """R13-LM-MIX, a limit stated in the module docstring ("No exemption" holds for INSERTION only). "pa" + superscript s + "s" + superscript h + "word":
+    """A limit stated in the module docstring ("No exemption" holds for INSERTION only). "pa" + superscript s + "s" + superscript h + "word":
     the first modifier letter stands for the letter s, the second is inserted. The marks-dropped views lose the s the first one stood for; the
     other views read the inserted one as an h. No view holds PASSWORD. If this starts to pass, move the case into the insertion test and update the docstring."""
     text = "pa\u02e2s\u02b0word"
     assert unicodedata.category("\u02e2") == "Lm" and unicodedata.category("\u02b0") == "Lm"
     assert not any("PASSWORD" in v for v in textnorm.squeeze_views(text)), (
-        "R13-LM-MIX is now caught: the documented limit is out of date"
+        "a modifier-letter replacement is now caught: the documented limit is out of date"
     )
     assert any("PASWORD" in v for v in textnorm.squeeze_views(text)), (
         "the marks-dropped view changed"
@@ -2211,7 +2263,7 @@ def test_the_documented_limit_a_modifier_letter_that_replaces_a_letter_with_anot
 
 
 def test_the_coverage_sentences_are_the_same_in_every_place_that_states_them():
-    """p1a6-005: ONE coverage sentence for the name rules in ``textnorm.py``, ``tools/gen_confusables.py`` and the CHANGELOG, and one for the
+    """ONE coverage sentence for the name rules in ``textnorm.py``, ``tools/gen_confusables.py`` and the CHANGELOG, and one for the
     scan of a script value in ``textnorm.py`` (module and ``fold_views`` docstrings) and the CHANGELOG."""
     gen = (ROOT / "tools" / "gen_confusables.py").read_text(encoding="utf-8")
     sources = {
@@ -2238,13 +2290,13 @@ def test_the_coverage_sentences_are_the_same_in_every_place_that_states_them():
 
 
 def test_the_module_does_not_export_a_second_name_for_the_table():
-    """p1a6-005: the import alias ``CONFUSABLES`` was a public-looking name beside ``_confusables.TABLE``; it is private now."""
+    """The import alias ``CONFUSABLES`` was a public-looking name beside ``_confusables.TABLE``; it is private now."""
     assert not hasattr(textnorm, "CONFUSABLES") and "CONFUSABLES" not in textnorm.__all__
     assert textnorm._CONFUSABLES is _confusables.TABLE
 
 
 def test_step_three_keeps_every_whitespace_character_and_the_sk_wording_is_exact():
-    """p1a6-005: the docstring said that line and paragraph separators are dropped; they are kept and become a space, like tab and line feed. And only a
+    """The docstring said that line and paragraph separators are dropped; they are kept and become a space, like tab and line feed. And only a
     COMPATIBILITY Sk becomes a space: the diaeresis and the small tilde do, the grave accent and the circumflex stay."""
     for ws in ("\t", "\n", "\r", "\u2028", "\u2029", "\u00a0", "\u3000"):
         assert fold("a" + ws + "b") == "a b", f"U+{ord(ws):04X} did not become a space"
@@ -2293,7 +2345,7 @@ SAME_SCRIPT_LETTER = {
 
 
 def test_a_letter_of_another_script_inserted_at_any_position_does_not_hide_a_script_value():
-    """fix7 (round 7, MAJOR-A): the script view keeps only the letters of the VALUE's scripts. A Cyrillic zhe, a Greek delta, a Hebrew alef, a kana, a
+    """The script view keeps only the letters of the VALUE's scripts. A Cyrillic zhe, a Greek delta, a Hebrew alef, a kana, a
     Latin letter that the table does not fold, and the letters of the other scripts, inserted at EVERY position (also the first and the last) of a
     Chinese, Hindi, Thai, Arabic and Hebrew value, are dropped like an ASCII letter; the value is found. Before fix7 every one of the interior
     positions hid the value."""
@@ -2305,7 +2357,11 @@ def test_a_letter_of_another_script_inserted_at_any_position_does_not_hide_a_scr
         for what, letter in FOREIGN_LETTERS.items():
             if script in textnorm.value_scripts(letter):
                 continue  # the same script: the documented limit, pinned in the next test
-            kept = [v for v in textnorm.fold_views(letter, casefold=True) if not v.isascii()]
+            kept = [
+                v
+                for v in textnorm.fold_views(letter, casefold=True, scripts=frozenset())
+                if not v.isascii()
+            ]
             assert kept and textnorm.value_scripts(letter), (
                 f"{what} is folded to ASCII: the row would prove nothing"
             )
@@ -2452,14 +2508,16 @@ def test_scripts_given_to_fold_views_must_be_a_frozenset_of_text():
         except NotText:
             continue
         raise AssertionError(f"fold_views accepted scripts = {bad!r}")
-    assert textnorm.fold_views("x", scripts=frozenset()) == textnorm.fold_views("x")
+    assert textnorm.fold_views("x", scripts=frozenset()) == textnorm.fold_views(
+        "x", scripts=frozenset()
+    )
 
 
 def test_the_minimum_constants_are_checked_when_the_module_is_imported_and_when_a_scan_takes_its_needles(
     monkeypatch,
 ):
-    """fix7 (round 7, MINOR-E): a minimum of 0, a negative number, a bool, a float, a text or None would let an empty or one-character needle through.
-    Each of the four is refused with the name of the constant: by the module when it is imported (a private copy, the module the other tests use
+    """A minimum of 0, a negative number, a bool, a float, a text or None would let an empty or one-character needle through.
+    Each of the five is refused with the name of the constant: by the module when it is imported (a private copy, the module the other tests use
     is not reloaded) and by every ``scan_needles``."""
     names = textnorm._MINIMUM_NAMES
     assert names == (
@@ -2467,8 +2525,9 @@ def test_the_minimum_constants_are_checked_when_the_module_is_imported_and_when_
         "TEXTNORM_MIN_SQUEEZE_CHARS",
         "TEXTNORM_MIN_SCRIPT_CHARS",
         "TEXTNORM_MIN_IDEOGRAPH_CHARS",
+        "TEXTNORM_MIN_DIGIT_CHARS",
     )
-    assert textnorm._validated_minimums() == (2, 4, 4, 2)
+    assert textnorm._validated_minimums() == (2, 4, 4, 2, 6)
 
     def import_message():
         """The message with which a private copy of the module refuses to be imported, or None when it was imported."""
@@ -2888,7 +2947,7 @@ def test_a_text_over_the_weight_is_refused_before_any_fold_work(monkeypatch):
         identity_key,
         textnorm.identity_keys,
         textnorm.fold,
-        textnorm.fold_views,
+        _fold_views_no_scripts,
         textnorm.squeeze,
         textnorm.squeeze_views,
     ):
@@ -3188,6 +3247,7 @@ def test_the_manifest_pins_the_files_a_demo_copies():
     assert set(manifest["files"]) == {
         "src/hadavin_sdk/guard/textnorm.py",
         "src/hadavin_sdk/guard/_confusables.py",
+        "src/hadavin_sdk/guard/_scripts.py",
         "tests/fixtures/textnorm_vectors.json",
         "tests/fixtures/textnorm_corpus.json",
     }

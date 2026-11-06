@@ -1,7 +1,7 @@
 """``THIRD-PARTY-NOTICES.md`` carries the Unicode License v3 text that the look-alike data requires next to every copy of it.
 
 The test is not circular: the grant sentence is written here once as a literal (copied from the licence text; a reviewer compares it with
-the official page), the file must hold it, name the three covered files, and the sha256 of the licence text between the two marker lines,
+the official page), the file must hold it, name the covered files, and the sha256 of the licence text between the two marker lines,
 recomputed here, must equal both the value on the first lines of the file and the value pinned in ``tests/fixtures/third_party_notices.json``.
 A later edit of the licence text therefore fails until the pin is changed on purpose. The mutation runs do not list this file (the notices
 file is not copied into a mutant tree).
@@ -21,7 +21,9 @@ BEGIN, END = "<!-- LICENSE-TEXT-BEGIN -->", "<!-- LICENSE-TEXT-END -->"
 GRANT = "Permission is hereby granted, free of charge, to any person obtaining a copy of data files and any associated documentation"
 COVERED = (
     "tools/data/confusables.txt",
+    "tools/data/Scripts.txt",
     "src/hadavin_sdk/guard/_confusables.py",
+    "src/hadavin_sdk/guard/_scripts.py",
     "tools/gen_confusables.py",
 )
 
@@ -43,7 +45,7 @@ def test_the_notices_file_holds_the_licence_grant_and_names_the_covered_files():
         assert path in text, path
         assert (ROOT / path).is_file(), path
     assert "https://www.unicode.org/license.txt" in text
-    assert "version 15.1.0" in text and "2023-08-11" in text
+    assert "version 15.1.0" in text and "2023-08-11" in text and "2023-07-28" in text
     assert "18.0.0" not in text, "the notices still name the old data version"
 
 
@@ -67,4 +69,43 @@ def test_the_data_sha256_in_the_notices_is_the_one_the_generator_pins():
     assert (
         hashlib.sha256((ROOT / "tools" / "data" / "confusables.txt").read_bytes()).hexdigest()
         == pinned
+    )
+    scripts = re.search(r'PINNED_SCRIPTS_SHA256 = "([0-9a-f]{64})"', generator)[1]
+    assert scripts in text
+    assert (
+        hashlib.sha256((ROOT / "tools" / "data" / "Scripts.txt").read_bytes()).hexdigest()
+        == scripts
+    )
+
+
+LEAD_SCRIPTS_SHA = "0eacb65169ae6eb1d399cd70826b3da15fff19f6f586eecf819b70c83b1d9b32"
+SCRIPTS_URL = "https://www.unicode.org/Public/15.1.0/ucd/Scripts.txt"
+
+
+def test_the_scripts_file_hash_and_source_are_recorded_in_the_notices_the_manifest_and_the_generator():
+    """Lead order 73: the Scripts.txt sha256 and its unicode.org source, 'verified by the lead 2026-11-06', in all three places."""
+    notices = NOTICES.read_text(encoding="utf-8")
+    generator = (ROOT / "tools" / "gen_confusables.py").read_text(encoding="utf-8")
+    manifest = json.loads(
+        (Path(__file__).parent / "fixtures" / "textnorm_manifest.json").read_text(encoding="utf-8")
+    )
+    entry = manifest["data_files"]["tools/data/Scripts.txt"]
+    assert entry["sha256"] == LEAD_SCRIPTS_SHA and entry["source"] == SCRIPTS_URL
+    assert "verified by the lead 2026-11-06" in entry["verified"]
+    assert (
+        hashlib.sha256((ROOT / "tools" / "data" / "Scripts.txt").read_bytes()).hexdigest()
+        == LEAD_SCRIPTS_SHA
+    )
+    for text, where in (
+        (notices, "THIRD-PARTY-NOTICES.md"),
+        (generator, "tools/gen_confusables.py"),
+    ):
+        assert LEAD_SCRIPTS_SHA in text, where
+        assert SCRIPTS_URL in text, where
+        assert "verified by the lead" in " ".join(text.split()), where
+    conf = manifest["data_files"]["tools/data/confusables.txt"]
+    assert conf["sha256"] in notices
+    assert (
+        hashlib.sha256((ROOT / "tools" / "data" / "confusables.txt").read_bytes()).hexdigest()
+        == conf["sha256"]
     )

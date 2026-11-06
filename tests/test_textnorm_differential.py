@@ -36,6 +36,7 @@ from hadavin_sdk.guard.textnorm import (
     allow_equal,
     could_be_same_person,
     identity_key,
+    scan_keyset,
     squeeze,
 )
 
@@ -76,26 +77,34 @@ def test_the_identity_key_agrees_with_the_stated_principle(row):
         assert not same, f"{row['class']}: {row['source']}"
 
 
-# Rows that the single check name (``identity_key``) still separates but the DENY check now passes, because it fails closed on a character this
-# Python cannot name (F6-5): r085 is a code point unassigned in Unicode 15.1 that a newer table maps to a letter. The row stays a strict expected
-# failure for ``identity_key`` (its test above) and is asserted for ``could_be_same_person``.
-DENY_FAILS_CLOSED = frozenset({"r085"})
+# Rows the identity key keeps apart but the DENY scan joins, by design: the scan key drops spaces, punctuation, controls and tag characters,
+# so these pairs are the same person for the DENY comparison (the safe side of a DENY). Named, so a new over-match shows as a failure.
+OVER_MATCH = {
+    "r020": "a tag letter is decoded in the scan key (tag text T1/T2)",
+    "r060": "a visible space is dropped by the scan key",
+    "r078": "a Unicode space is dropped by the scan key",
+    "r094": "a control is dropped by the scan key",
+    "r140": "a trailing dot is dropped by the scan key",
+    "r174": "a spacing mark (Mc) is not a letter or digit, so the scan key drops it (the safe side of a DENY)",
+    "r175": "a spacing mark (Mc) is not a letter or digit, so the scan key drops it (the safe side of a DENY)",
+    "r176": "a spacing mark (Mc) is not a letter or digit, so the scan key drops it (the safe side of a DENY)",
+}
 
 
-@pytest.mark.parametrize(
-    "row",
-    [
-        _param(r, expected_failure=r["id"] not in DENY_FAILS_CLOSED)
-        for r in CORPUS
-        if r["relation"] == "equal"
-    ],
-)
-def test_could_be_same_person_agrees_with_the_stated_principle_for_every_equal_row(row):
-    """The DENY comparator, row by row. The p1b rows (r114 to r117, punctuation) are strict expected failures: they are
-    the documented limit in its docstring, and if one starts to pass the row must move to ``current``. The rows in
-    ``DENY_FAILS_CLOSED`` are asserted here (F6-5)."""
+@pytest.mark.parametrize("row", NOT_REFUSED)
+def test_the_deny_comparison_agrees_with_the_stated_principle_and_is_never_narrower_than_the_identity_key(
+    row,
+):
     a, b = expand(row["a"]), expand(row["b"])
-    assert could_be_same_person(a, b), f"{row['class']}: {row['source']}"
+    got = could_be_same_person(a, b) or bool(scan_keyset(a) & scan_keyset(b))
+    if identity_key(a) == identity_key(b):
+        assert got, f"{row['id']}: the deny comparison is narrower than identity_key equality"
+    if row["relation"] == "equal":
+        assert got, f"{row['class']}: {row['source']}"
+    elif row["id"] in OVER_MATCH:
+        assert got, f"{row['id']}: the named over-match is gone ({OVER_MATCH[row['id']]})"
+    else:
+        assert not got, f"{row['id']}: a new over-match: {row['source']}"
 
 
 @pytest.mark.parametrize("row", NOT_REFUSED)
@@ -149,6 +158,14 @@ def _loose(text):
     return squeeze(text, loose=True)
 
 
+def _keyset_hash(texts):
+    """SHA-256 over the key-set of every text: one line per text, the helper digest of its sorted unique keys."""
+    h = hashlib.sha256()
+    for text in texts:
+        h.update((_keyset_digest(textnorm.scan_keyset(text)) + "\n").encode("ascii"))
+    return h.hexdigest()
+
+
 def _joined(fn):
     """A function that returns the readings of a text (a tuple), as one string: the readings in their fixed order, without the tag of an
     unpinned interpreter, joined by U+001F (a control character, which no key or view holds)."""
@@ -172,12 +189,16 @@ HASHED = {
     "fold_views": _joined(_fold_views),
     "squeeze_views": _joined(textnorm.squeeze_views),
 }
+KEYSET_HASHED = ("scan_keyset",)
 
 
 def live_hashes():
     """What the golden file holds, computed now. ``python -c 'from tests.test_textnorm_differential import live_hashes'`` rewrites the entry."""
     texts = [*_single_code_points(), *_corpus_rows()]
-    return {name: _digest(fn, texts) for name, fn in HASHED.items()}
+    return {
+        **{name: _digest(fn, texts) for name, fn in HASHED.items()},
+        "scan_keyset": _keyset_hash(texts),
+    }
 
 
 def _keyset_digest(keys):
@@ -200,7 +221,7 @@ def test_the_golden_file_has_one_entry_for_the_current_algorithm():
     )
     for section in GOLDEN["sections"].values():
         assert set(section) == {"hashes"}
-        assert set(section["hashes"]) == set(HASHED)
+        assert set(section["hashes"]) == {*HASHED, *KEYSET_HASHED}
         assert all(len(h) == 64 for h in section["hashes"].values())
 
 
@@ -212,7 +233,7 @@ def test_the_golden_hashes_equal_the_live_ones():
             pytest.fail(message)
         pytest.skip(message)
     live = live_hashes()
-    for name in HASHED:
+    for name in (*HASHED, *KEYSET_HASHED):
         # The alg id changes when identity_key, fold, squeeze, fold_views or squeeze_views change; a change of identity_keys ALONE keeps it,
         # because nothing may store or index an identity_keys result (rule D4 of the ticket; tests/test_textnorm_meta.py enforces the "nothing").
         action = (
@@ -331,7 +352,7 @@ def test_the_pin_variable_accepts_one_true_and_yes_in_any_case_and_refuses_other
 
 
 def test_the_pin_message_names_every_accepted_spelling_of_the_variable():
-    """fix7 (NIT): the message printed ``HADAVIN_REQUIRE_PINNED_UNIDATA=1`` although ``true`` and ``yes`` are accepted too."""
+    """The message printed ``HADAVIN_REQUIRE_PINNED_UNIDATA=1`` although ``true`` and ``yes`` are accepted too."""
     message = _pin_violation({"HADAVIN_REQUIRE_PINNED_UNIDATA": "yes"}, "15.0.0", "15.1.0")
     assert message and "=1" not in message and "1, true or yes" in message
 
@@ -374,3 +395,15 @@ def test_the_digest_helper_changes_when_one_key_changes():
 def test_a_corpus_value_may_be_a_repeat():
     assert expand("ab") == "ab" and expand({"repeat": ["ab", 3]}) == "ababab"
     assert textnorm.FOLD_VERSION == FOLD_VERSION
+
+
+# Rows the single check name (``identity_key``) still separates but the DENY check passes ALONE, because it fails closed on a character this
+# Python cannot name (F6-5, P1a fix8): r085 is a code point unassigned in Unicode 15.1 that a newer table maps to a letter. The DENY comparison
+# above also accepts the scan keys, so this row is asserted for ``could_be_same_person`` alone.
+DENY_FAILS_CLOSED = frozenset({"r085"})
+
+
+@pytest.mark.parametrize("row", [_param(r) for r in CORPUS if r["id"] in DENY_FAILS_CLOSED])
+def test_could_be_same_person_alone_fails_closed_on_a_character_this_python_cannot_name(row):
+    a, b = expand(row["a"]), expand(row["b"])
+    assert could_be_same_person(a, b), f"{row['id']}: the DENY check did not fail closed"

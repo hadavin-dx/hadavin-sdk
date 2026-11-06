@@ -89,6 +89,17 @@ def test_the_generator_refuses_an_unpinned_file_and_is_deterministic(tmp_path):
     bad = tmp_path / "confusables.txt"
     bad.write_text("0430 ;\t0061 ;\tMA\t# x\n", encoding="utf-8")
     assert gen.main(["gen", str(bad)]) == 1, "the generator accepted an unpinned file"
+    real = (ROOT / "tools" / "data" / "confusables.txt").read_bytes()
+    tampered = gen.check_input(
+        real + b"\n# edited",
+        pinned_version=gen.PINNED_VERSION,
+        pinned_date=gen.PINNED_DATE,
+        pinned_sha256=gen.PINNED_SHA256,
+        label="x",
+    )
+    assert tampered and "sha256" in tampered, (
+        "the generator accepted an unpinned file (right version and date, other bytes)"
+    )
     tab, nl = chr(9), chr(10)
     assert gen.build("0406 ;" + tab + "006C ;" + tab + "MA" + nl)[0x406] == "I", (
         "capital I prototype read as l"
@@ -186,10 +197,105 @@ def test_the_generator_reproduces_the_checked_in_table_offline():
     assert built[0x4CF] == "l", "the Cyrillic palochka no longer reads as l"
 
 
+# ---- P1b: the data is the interpreter's Unicode version, the scripts are generated from it ---------------------------------------------
+def test_the_generator_refuses_a_file_of_another_unicode_version_and_names_it():
+    from hadavin_sdk import defaults
+
+    gen = _load("gen_confusables_version")
+    raw = (ROOT / "tools" / "data" / "confusables.txt").read_bytes()
+    assert gen.PINNED_VERSION == defaults.TEXTNORM_PINNED_UNIDATA == gen.PINNED_SCRIPTS_VERSION, (
+        "the generator pins another Unicode version than the interpreter pin"
+    )
+    kw = {
+        "pinned_version": gen.PINNED_VERSION,
+        "pinned_date": gen.PINNED_DATE,
+        "pinned_sha256": gen.PINNED_SHA256,
+        "label": "the look-alike data file",
+    }
+    assert gen.check_input(raw, **kw) is None, "the vendored file is refused"
+    other = raw.replace(b"# Version: 15.1.0", b"# Version: 18.0.0", 1)
+    assert other != raw
+    reason = gen.check_input(other, **kw)
+    assert reason and "18.0.0" in reason and "15.1.0" in reason, (
+        f"another version was not refused by name: {reason}"
+    )
+    # the version is checked against the INTERPRETER pin as well: a generator whose own pin was edited together with the file is refused
+    edited = dict(kw, pinned_version="18.0.0")
+    assert gen.check_input(other, **edited), (
+        "a file and a generator pin edited together were accepted"
+    )
+    dated = raw.replace(b"# Date: 2023-08-11", b"# Date: 2023-08-12", 1)
+    assert "dated" in (gen.check_input(dated, **kw) or ""), "another date was accepted"
+    assert "sha256" in (gen.check_input(raw + b"\n#", **kw) or ""), "another hash was accepted"
+
+
+def test_the_vendored_scripts_file_is_the_pinned_one_and_the_script_data_is_its_output():
+    gen = _load("gen_confusables_scripts")
+    from hadavin_sdk.guard import _scripts
+
+    raw = gen.DEFAULT_SCRIPTS_INPUT.read_bytes()
+    assert hashlib.sha256(raw).hexdigest() == gen.PINNED_SCRIPTS_SHA256 == _scripts.DATA_SHA256, (
+        "the vendored scripts file is not the pinned one"
+    )
+    assert (
+        gen.check_input(
+            raw,
+            pinned_version=gen.PINNED_SCRIPTS_VERSION,
+            pinned_date=gen.PINNED_SCRIPTS_DATE,
+            pinned_sha256=gen.PINNED_SCRIPTS_SHA256,
+            label="the scripts data file",
+        )
+        is None
+    )
+    ranges = gen.build_scripts(raw.decode("utf-8"))
+    assert gen.scripts_digest(ranges) == _scripts.SCRIPTS_DIGEST, (
+        "the checked-in script data is not the generator's output"
+    )
+    names = sorted({n for _, _, n in ranges})
+    assert (
+        tuple(names) == _scripts.SCRIPT_NAMES
+        and len(ranges) == len(_scripts.RANGES) == _scripts.ENTRIES
+    )
+    assert [(a, b, names[i]) for a, b, i in _scripts.RANGES] == ranges
+
+
+def test_the_script_digest_changes_with_the_data():
+    gen = _load("gen_confusables_scripts_digest")
+    text = gen.DEFAULT_SCRIPTS_INPUT.read_text(encoding="utf-8")
+    base = gen.scripts_digest(gen.build_scripts(text))
+    moved = text.replace("16A0..16EA    ; Runic", "16A0..16E9    ; Runic", 1)
+    assert moved != text, "the Runic line was not found in the data file"
+    assert gen.scripts_digest(gen.build_scripts(moved)) != base, (
+        "a changed range does not change the digest"
+    )
+    assert gen.scripts_digest(gen.build_scripts(text + "\n")) == base, (
+        "a trailing newline changes the digest"
+    )
+    split = text.replace(
+        "16A0..16EA    ; Runic", "16A0..16C0    ; Runic # Lo\n16C1..16EA    ; Runic", 1
+    )
+    assert gen.scripts_digest(gen.build_scripts(split)) == base, (
+        "the way the file splits its lines changes the digest"
+    )
+
+
+def test_the_runic_and_tamil_letters_are_in_the_generated_script_data():
+    from hadavin_sdk.guard import _scripts
+
+    def script(cp):
+        for first, last, index in _scripts.RANGES:
+            if first <= cp <= last:
+                return _scripts.SCRIPT_NAMES[index]
+        return None
+
+    assert script(0x16A0) == "Runic" and script(0x0B85) == "Tamil" and script(0x61) == "Latin"
+    assert script(0x20) is None and script(0x301) is None, "Common or Inherited has an entry"
+
+
 def test_a_supplement_entry_is_never_overridden_by_a_name_rule_and_the_data_wins_over_the_supplement(
     monkeypatch,
 ):
-    """p1a6-007: the supplement is merged into the table BEFORE the name rules run, so a name rule (``setdefault``) cannot override it. The
+    """The supplement is merged into the table BEFORE the name rules run, so a name rule (``setdefault``) cannot override it. The
     supplement entry here is the small h with a stroke (U+0127), which the name rule would read as ``h``; the supplement says ``z``. And
     a data line for the same code point beats the supplement."""
     gen = _load("gen_confusables_supplement")
@@ -205,7 +311,7 @@ def test_a_supplement_entry_is_never_overridden_by_a_name_rule_and_the_data_wins
 
 
 def test_the_generator_docstring_does_not_claim_that_the_size_rule_reads_the_longest_value():
-    """p1a6-003: ``MAX_VALUE_LEN`` is written beside the table and compared with it by a test; ``textnorm.py`` does not read it (its size rule
+    """``MAX_VALUE_LEN`` is written beside the table and compared with it by a test; ``textnorm.py`` does not read it (its size rule
     weighs every character from the table itself), and the generator no longer says it does."""
     gen_src = GEN_PATH.read_text(encoding="utf-8")
     assert "which the size rule" not in gen_src and "does not read it" in gen_src
