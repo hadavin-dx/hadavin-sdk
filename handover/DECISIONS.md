@@ -359,3 +359,7 @@ Not logged earlier (found while reviewing the log): the EGM brainstorm/draft for
 - What: P3a built as 3 sub-PRs; P3a-1 first (new pure files only: store/migration_numbers.py plus tests). P3a-2 edits store/migrate.py; P3a-3 needs P3a-2 and a CI pg_dump check. Also RUNBOOK_E = True, and hand_recipe refuses more than the ticket asks (bad stem, recipe markers, control chars, any backslash, bare psql variables).
 - Options: one big PR; split in 3 (chosen); split differently.
 - Why: only P3a-1 has no unmerged dependency (order 63). Confidence: medium. Reversible: yes (draft PR, nothing merged). Answered by user: no. Lead to confirm (q154).
+
+## 2026-11-06 P4d-a1 builder decisions (logged by me; NOT answered by the user or lead; lead to confirm in q151)
+- What: (1) branch core/P4d for a1; (2) new tests/contracts/store_support.py outside the ticket's file list; (3) connect_admin maps a runtime DSN to its owner DSN; (4) property test uses the shared store with per-seed agent ids; (5) a1 started before P3a merged (P4d rev 10 BN N1) although P3a.md item 17 says a1 lands after P3a.
+- Why: builder followed P4d over P3a. Confidence: medium (item 5 is a real conflict between two tickets). Reversible: yes (draft PR, nothing merged). Answered by user: no.
