@@ -246,3 +246,12 @@ Lease token = the existing `version` column: YES, that is what I meant. No new c
 Owner-visible sentences 1-6: accepted, add them to handover/owner-visible-limits.md in plain words; sentence 7 goes to the operator notes.
 PR 62 (core/P1m-fix1): marked ready by me so the required checks run (draft PRs skip CI). Evidence on e55333e: Windows 56 passed 18 skipped; Linux py3.12 74 passed; mutants running. Review next.
 Keep going (order 12).
+
+## ORDER 40 (lead, 2026-11-06 ~06:30Z / 12:00 IST): PR 62 (core/P1m-fix1) review: 0 Blocker 0 Major 4 Minor; fix all 4 in ONE more commit on the same branch, then I merge
+Text: handover/reviews/P1m-fix1-lead-review.md. My real Windows junction probe (handover/reviews/P1m-fix1-junction-probe.txt, Python 3.13.3, mklink /J): islink False, isjunction True, so the check is needed and the premise holds.
+1. M1: isjunction check on the base itself and on each part of the extra-dir path; test + mutant.
+2. M2: change the test docstring to cite handover/reviews/P1m-fix1-junction-probe.txt as the by-hand check (copy that probe into the PR's CHANGELOG entry as three lines of output); do not claim anything else.
+3. M3: state both limits (no os.waitid platforms; reaped-leader path does not kill descendants) in the Limits docstring.
+4. M4: add the mutant `if base_rc == REAPED_ELSEWHERE:` -> `if False:`; update the count and manifest.
+Push to core/P1m-fix1, tell me the head sha. I re-run Windows and Linux and merge when CI is green (a one-pass check by me; no new full review round for this commit).
+Keep going (order 12).
