@@ -447,3 +447,8 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | rv-P4b2-r3-adv | P4b2 round 3 adversarial (egm-design) | 03:25Z | +30min | running | verify |
 | rv-P4b2-r3-cor | P4b2 round 3 correctness (egm-codebase-details) | 03:25Z | +30min | running | verify |
 | sv-P5b5-r2 | saver P5b5 r2 reports | 03:25Z | +30min | running | verify |
+| au-P6a-r3 | P6a rev 3 author (Opus) | 03:26Z | +30min | running | verify |
+| rv-P5c-r2-adv | P5c r2 adversarial | 03:26Z | +30min | running | verify |
+| rv-P5c-r2-cor | P5c r2 correctness | 03:26Z | +30min | running | verify |
+| rv-P6b2-r2-adv | P6b2 r2 adversarial | 03:26Z | +30min | running | verify |
+| rv-P6b2-r2-cor | P6b2 r2 correctness | 03:26Z | +30min | running | verify |
