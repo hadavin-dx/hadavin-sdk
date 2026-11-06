@@ -307,3 +307,12 @@ Done under order 69:
 - q160: licence register records OpenLDAP and libselinux "accepted by lead 2026-11-06, FYI to owner" (`reviews/licence-scan-1.md` part 3); psycopg notice text now lists the bundled libraries by name and version, marked "licence from upstream, not shipped in the wheel"; the P2a line 3 path fixed (`<repo>/src`); TOOLS.md rows T-135 to T-141 added, all UNVERIFIED = yes (count line 141 rows, 28 verified, 113 unverified).
 - q161: nothing applied yet by design (cuts wait for P5a build start).
 - Order 70 item 4 (core currency research, egress.py): read, not started.
+
+## q163 (P1c rev 3 written; Goldfish round 2 not yet run; one new PENDING LEAD PL9)
+`tickets/P1c.md` rev 3 (117 lines) by the Opus author, with a "Revision 3 changes" section added to `reviews/P1c-round1-resolve.md`. I checked: hygiene 0, gitleaks clean, a rung table with 6 qualifying rows. I did not re-derive its counts independently (my grep of ids gives 31 B-ids and 23 M-ids including a header mention; the author says 30 and 22; to be settled by round 2).
+- Applied from order 70: PL1 (output only ever gets original text or placeholders; row B27, mutant M19); PL2 (maximum token length back as `B64_MAX_TOKEN_CHARS = 65,536`, own defaults block; the default is a scaling of one measurement, UNVERIFIED); PL6 (no warm-up); PL8 (UTF-16LE DROPPED: no corpus row needs it; new limit L5 pinned by B6).
+- Counts (author): 133 rows (corpus 93, B 30, H 7, A 3), 2 strict xfail, 22 mutants each with a killer, 3 constants.
+- DEPARTURE to confirm: for an over-long run the author did NOT use "decode the first window". A probe showed the reading rule finds 129 printable pieces in random bytes, so a window cannot tell binary from text, and a plain skip lets a value through behind 128 lowercase letters and `/`. Rev 3: a run over the maximum is never decoded; it stays as is only if every line matches an existing high-entropy mask, otherwise `InputTooLarge` (fail closed).
+- Honest note: the slowdown actually measured grows with the NUMBER of encoded values in one text; the maximum does not bound that, and whether long runs have any quadratic path is UNVERIFIED.
+- PL9 (new): over-long runs not covered by the high-entropy mask are refused (applied). Alternative: mask them whole with one placeholder. Round 2 decides unless you answer.
+- Next: Goldfish round 2 on rev 3 with a db17c53 snapshot (design + codebase reviewers, Sonnet, read-only). No build before P1b merges.

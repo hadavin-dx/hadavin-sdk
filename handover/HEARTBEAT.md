@@ -224,3 +224,4 @@
 2026-11-06T09:59:26Z | step=order 69 items 1-3 done (q160) | next=wait for P1a fix3/P1b/P5a audit reports | blocked=lead answers q159/q160
 2026-11-06T10:00:10Z | step=P5a audit BN-23 committed (q161) | next=await P1a fix3, P1b | blocked=lead
 2026-11-06T10:07:16Z | step=order 70 applied (q162); P1c rev3 author running | next=P1a fix3, P1b, P1c rev3 reports | blocked=none
+2026-11-06T10:14:28Z | step=P1c rev3 committed (q163) | next=order 71 P0t fix1; P1c round-2 snapshot | blocked=none
