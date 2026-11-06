@@ -677,5 +677,5 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | bd-P0t | Sonnet builder, P0t stage rename (core/P0t, draft PR) | running | order 62 |
 | bd-P1b | Sonnet builder, P1b on core/P1a (core/P1b, draft PR into core/P1a) | running | order 62; confusables 15.1.0 source may block (unicode.org 403) |
 | bd-P3a | Sonnet builder, P3a plan + first unblocked sub-PR | running | order 62 |
-| bd-P4d | Sonnet builder, P4d plan + first unblocked sub-PR | running | order 62 |
+| bd-P4d | Sonnet builder, P4d plan + first unblocked sub-PR | REPORTED | order 62 |
 | au-P1c | Opus author, P1c ticket via EGM brainstorm+draft | running | order 64; Goldfish review + resolve follow |
