@@ -166,3 +166,14 @@ def test_missing_or_empty_banned_list_fails_closed(tmp_path):
     annotated.write_text("BANNED: tuple = ('zzfake',)\n", encoding="utf-8")
     repo2 = _repo(tmp_path / "r2", {"a.txt": "has zzfake\n"})
     assert _scan(repo2, banned_src=annotated)[0] == 1
+
+
+def test_the_masked_text_is_exactly_four_characters_and_stars(tmp_path):
+    _, out = _scan(_repo(tmp_path, {"x.txt": CASES["sk-api-key"]}))
+    assert "x.txt:1: sk-api-key sk-b********" in out
+
+
+def test_allowlist_entry_with_an_empty_reason_fails(tmp_path):
+    repo = _repo(tmp_path, {"a.txt": "x = 1\n"})
+    rc, out = _scan(repo, allow="a.txt:sk-api-key:\n")
+    assert rc == 1 and "needs path:rule:reason" in out
