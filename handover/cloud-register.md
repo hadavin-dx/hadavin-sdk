@@ -312,7 +312,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | bs-P4a-cor | build-start review (order 20) of frozen tickets/P4a.md, egm:*, read-only | sonnet | 02:31Z | +45min | REPORTED | save report as reviews/P4a-buildstart-cor.md; then ONE resolve |
 | res1-P4b1 | Opus egm-resolve of round-1 reviews of tickets/P4b1.md (order 20 item 6) | opus | 02:32Z | +40min | running | commit report; launch revision author |
 | res1-P4b2 | Opus egm-resolve of round-1 reviews of tickets/P4b2.md (order 20 item 6) | opus | 02:32Z | +40min | running | commit report; launch revision author |
-| res1-P4c | Opus egm-resolve of round-1 reviews of tickets/P4c.md (order 20 item 6) | opus | 02:32Z | +40min | running | commit report; launch revision author |
+| res1-P4c | Opus egm-resolve of round-1 reviews of tickets/P4c.md (order 20 item 6) | opus | 02:32Z | +40min | REPORTED | commit report; launch revision author |
 | res1-P6b1 | Opus egm-resolve of round-1 reviews of tickets/P6b1.md (order 20 item 6) | opus | 02:32Z | +40min | REPORTED | commit report; launch revision author |
 | res1-P5b2 | Opus egm-resolve of round-1 reviews of tickets/P5b2.md (order 20 item 6) | opus | 02:32Z | +40min | REPORTED | commit report; launch revision author |
 | draft-P5b3 | Opus first draft of tickets/P5b3.md (order 20 item 6, missing v1 ticket) | opus | 02:32Z | +60min | running | verify commit; then round 1 reviewers |
@@ -328,3 +328,4 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | rev2-P5b1 | Sonnet author: apply reviews/P5b1-round1-resolve.md -> next revision | sonnet | 02:32Z | +45min | running | verify; round-2 reviewers |
 | rev2-P6b1 | Sonnet revision author for P6b1 after round-1 resolve (order 20) | sonnet | 02:37Z | +60min | running | verify commit and counts; then round 2 reviewers |
 | rev2-P5b2 | Sonnet revision author for P5b2 after round-1 resolve (order 20) | sonnet | 02:37Z | +60min | running | verify commit and counts; then round 2 reviewers |
+| rev2-P4c | Sonnet revision author for P4c after round-1 resolve (order 20) | sonnet | 02:38Z | +60min | running | verify commit and counts; then round 2 reviewers |
