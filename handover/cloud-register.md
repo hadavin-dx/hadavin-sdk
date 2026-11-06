@@ -132,25 +132,25 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | r5-P4d-adv | round 5 adversarial review of tickets/P4d.md rev 6, egm:egm-design | sonnet (claude-sonnet-5-5) | now | +35min | REPORTED, saved | save report, ledger rows |
 | r5-P4d-cor | round 5 correctness review of tickets/P4d.md rev 6, egm:egm-codebase-details | sonnet (claude-sonnet-5-5) | now | +35min | REPORTED, saved | save report, ledger rows |
 | rev6-P2a | author rewrite tickets/P2a.md rev 6 from reviews/P2a-round4-resolve.md (continues agent a64cfd8eaa8b64a3a) | sonnet (claude-sonnet-5-5) | now | +30min | REPORTED, saved | verify, explicit add, commit, push, round 5 reviewers |
-| rev2-P2d | author rewrite tickets/P2d.md rev 2 from reviews/P2d-round1-resolve.md (new general-purpose agent) | sonnet (claude-sonnet-5-5) | now | +35min | running | verify, explicit add, commit, push, round 2 reviewers |
+| rev2-P2d | author rewrite tickets/P2d.md rev 2 from reviews/P2d-round1-resolve.md (new general-purpose agent) | sonnet (claude-sonnet-5-5) | now | +35min | CLOSED-STALE (no live agent; swept 03:30Z) | verify, explicit add, commit, push, round 2 reviewers |
 | r5-P3a-adv | round 5 adversarial review of tickets/egm:egm-design.md (head 60fedf6) | sonnet (claude-sonnet-5-5) | now | +40min | REPORTED | save report, ledger rows |
-| rP3a-- | round   review of tickets/.md (head 60fedf6) | sonnet (claude-sonnet-5-5) | now | +40min | running | save report, ledger rows |
+| rP3a-- | round   review of tickets/.md (head 60fedf6) | sonnet (claude-sonnet-5-5) | now | +40min | CLOSED-STALE (no live agent; swept 03:30Z) | save report, ledger rows |
 | r5-P3a-cor | round 5 correctness review of tickets/egm:egm-codebase-details.md (head 60fedf6) | sonnet (claude-sonnet-5-5) | now | +40min | REPORTED | save report, ledger rows |
-| rP3a-- | round   review of tickets/.md (head 60fedf6) | sonnet (claude-sonnet-5-5) | now | +40min | running | save report, ledger rows |
+| rP3a-- | round   review of tickets/.md (head 60fedf6) | sonnet (claude-sonnet-5-5) | now | +40min | CLOSED-STALE (no live agent; swept 03:30Z) | save report, ledger rows |
 | r2-P4a-adv | round 2 adversarial review of tickets/egm:egm-design.md (head 60fedf6) | sonnet (claude-sonnet-5-5) | now | +40min | REPORTED, saved | save report, ledger rows |
-| rP4a-- | round   review of tickets/.md (head 60fedf6) | sonnet (claude-sonnet-5-5) | now | +40min | running | save report, ledger rows |
+| rP4a-- | round   review of tickets/.md (head 60fedf6) | sonnet (claude-sonnet-5-5) | now | +40min | CLOSED-STALE (no live agent; swept 03:30Z) | save report, ledger rows |
 | r2-P4a-cor | round 2 correctness review of tickets/egm:egm-codebase-details.md (head 60fedf6) | sonnet (claude-sonnet-5-5) | now | +40min | REPORTED, saved | save report, ledger rows |
-| rP4a-- | round   review of tickets/.md (head 60fedf6) | sonnet (claude-sonnet-5-5) | now | +40min | running | save report, ledger rows |
+| rP4a-- | round   review of tickets/.md (head 60fedf6) | sonnet (claude-sonnet-5-5) | now | +40min | CLOSED-STALE (no live agent; swept 03:30Z) | save report, ledger rows |
 | r5-P2a-adv | round 5 adversarial review of tickets/egm:egm-design.md (head 60fedf6) | sonnet (claude-sonnet-5-5) | now | +40min | REPORTED | save report, ledger rows |
-| rP2a-- | round   review of tickets/.md (head 60fedf6) | sonnet (claude-sonnet-5-5) | now | +40min | running | save report, ledger rows |
+| rP2a-- | round   review of tickets/.md (head 60fedf6) | sonnet (claude-sonnet-5-5) | now | +40min | CLOSED-STALE (no live agent; swept 03:30Z) | save report, ledger rows |
 | r5-P2a-cor | round 5 correctness review of tickets/egm:egm-codebase-details.md (head 60fedf6) | sonnet (claude-sonnet-5-5) | now | +40min | REPORTED | save report, ledger rows |
-| rP2a-- | round   review of tickets/.md (head 60fedf6) | sonnet (claude-sonnet-5-5) | now | +40min | running | save report, ledger rows |
-| rev7-P4d | author rewrite tickets/P4d.md rev 7 from reviews/P4d-round5-resolve.md | sonnet (claude-sonnet-5-5) | now | +50min | running | verify, commit, round-6 reviewers |
-| rev6-P1 | author rewrite tickets/P1.md rev 6 from reviews/P1-round4-resolve.md | sonnet (claude-sonnet-5-5) | now | +60min | running | verify, explicit add, commit, push, round 5 reviewers |
-| rev3-P4a | author rewrite tickets/P4a.md rev 3 from reviews/P4a-round2-resolve.md | sonnet (claude-sonnet-5-5) | now | +50min | running | verify, explicit add, commit, push, round 3 reviewers |
+| rP2a-- | round   review of tickets/.md (head 60fedf6) | sonnet (claude-sonnet-5-5) | now | +40min | CLOSED-STALE (no live agent; swept 03:30Z) | save report, ledger rows |
+| rev7-P4d | author rewrite tickets/P4d.md rev 7 from reviews/P4d-round5-resolve.md | sonnet (claude-sonnet-5-5) | now | +50min | CLOSED-STALE (no live agent; swept 03:30Z) | verify, commit, round-6 reviewers |
+| rev6-P1 | author rewrite tickets/P1.md rev 6 from reviews/P1-round4-resolve.md | sonnet (claude-sonnet-5-5) | now | +60min | CLOSED-STALE (no live agent; swept 03:30Z) | verify, explicit add, commit, push, round 5 reviewers |
+| rev3-P4a | author rewrite tickets/P4a.md rev 3 from reviews/P4a-round2-resolve.md | sonnet (claude-sonnet-5-5) | now | +50min | CLOSED-STALE (no live agent; swept 03:30Z) | verify, explicit add, commit, push, round 3 reviewers |
 | r2-P2d-adv | round 2 adversarial review of tickets/P2d.md (head d6be4de) | sonnet (claude-sonnet-5-5) | now | +40min | REPORTED | save report, ledger rows |
 | r2-P2d-cor | round 2 correctness review of tickets/P2d.md (head d6be4de) | sonnet (claude-sonnet-5-5) | now | +40min | REPORTED | save report, ledger rows |
-| rev7-P3a | author rewrite tickets/P3a.md rev 7 from reviews/P3a-round5-resolve.md | sonnet (claude-sonnet-5-5) | now | +50min | running | verify, explicit add, commit, push, round 6 reviewers |
+| rev7-P3a | author rewrite tickets/P3a.md rev 7 from reviews/P3a-round5-resolve.md | sonnet (claude-sonnet-5-5) | now | +50min | CLOSED-STALE (no live agent; swept 03:30Z) | verify, explicit add, commit, push, round 6 reviewers |
 | rev7-P2a | author rewrite tickets/P2a.md rev 7 from reviews/P2a-round5-resolve.md | sonnet (claude-sonnet-5-5) | now | +60min | REPORTED | verify, explicit add, commit, push, round 6 reviewers |
 | r6-P4d-adv | round 6 adversarial review of tickets/P4d.md rev 7 | sonnet (claude-sonnet-5-5) | now | +45min | REPORTED | save report, ledger rows |
 | r6-P4d-cor | round 6 correctness review of tickets/P4d.md rev 7 | sonnet (claude-sonnet-5-5) | now | +45min | REPORTED | save report, ledger rows |
@@ -195,13 +195,13 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | r6-P4a-adv | round 6 review of tickets/P4a.md rev 6 (egm:egm-design) | sonnet (claude-sonnet-5-5) | now | +50min | now | REPORTED | collect, save, resolve |
 | r6-P4a-cor | round 6 review of tickets/P4a.md rev 6 (egm:egm-codebase-details) | sonnet (claude-sonnet-5-5) | now | +50min | now | REPORTED | collect, save, resolve |
 | r5-P2d-adv | round 5 review of tickets/P2d.md rev 5 (egm:egm-design) | sonnet (claude-sonnet-5-5) | now | +50min | now | REPORTED | collect, save, resolve |
-| r5-P2d-cor | round 5 review of tickets/P2d.md rev 5 (egm:egm-codebase-details) | sonnet (claude-sonnet-5-5) | now | +50min | now | running | collect, save, resolve |
+| r5-P2d-cor | round 5 review of tickets/P2d.md rev 5 (egm:egm-codebase-details) | sonnet (claude-sonnet-5-5) | now | +50min | now | CLOSED-STALE (no live agent; swept 03:30Z) | collect, save, resolve |
 | r7-P1-adv | round 7 adversarial review of tickets/P1.md rev 8 | sonnet (claude-sonnet-5-5) | now | +45min | REPORTED | save report, ledger rows |
 | r7-P1-cor | round 7 correctness review of tickets/P1.md rev 8 | sonnet (claude-sonnet-5-5) | now | +45min | REPORTED | save report, ledger rows |
 | r1-LK-adv | round 1 adversarial review of designs/lookalike-leak.md | sonnet (claude-sonnet-5-5) | now | +45min | REPORTED | save report, ledger rows |
 | r1-LK-cor | round 1 correctness review of designs/lookalike-leak.md | sonnet (claude-sonnet-5-5) | now | +45min | REPORTED | save report, ledger rows |
 | r8-P3a-adv | round 8 review of tickets/P3a.md rev 9 | sonnet (claude-sonnet-5-5) | now | +45min | REPORTED | save report, ledger rows |
-| r8-P3a-cor | round 8 review of tickets/P3a.md rev 9 | sonnet (claude-sonnet-5-5) | now | +45min | running | save report, ledger rows |
+| r8-P3a-cor | round 8 review of tickets/P3a.md rev 9 | sonnet (claude-sonnet-5-5) | now | +45min | CLOSED-STALE (no live agent; swept 03:30Z) | save report, ledger rows |
 | r2-LK-adv | round 2 adversarial review of designs/lookalike-leak.md draft 2 | sonnet (claude-sonnet-5-5) | now | +45min | REPORTED | save report, ledger rows |
 | r2-LK-cor | round 2 correctness review of designs/lookalike-leak.md draft 2 | sonnet (claude-sonnet-5-5) | now | +45min | REPORTED | save report, ledger rows |
 | r2-LK-resolve | egm-resolve of lookalike round 2 reports -> designs/lookalike-leak.md draft 3 | opus (claude-opus-5-5) | now | +45min | REPORTED | verify, commit, push |
