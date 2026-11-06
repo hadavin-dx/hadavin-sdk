@@ -385,7 +385,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | fix-P4b2-maint | (closed) maintenance identity restored, rev 3 daae169 pushed | opus | 03:10Z | - | CLOSED (REPORTED, verified) | round 2 reviewers |
 | r2-P4b2-adv | egm-design adversarial round 2 of tickets/P4b2.md rev 3 | sonnet | 02:57Z | +30min | running | REPORTED |
 | r2-P4b2-cor | egm-codebase-details correctness round 2 of tickets/P4b2.md rev 3 | sonnet | 02:57Z | +30min | running | REPORTED |
-| rev-P5b2-3 | Opus author: P5b2 revision 3 from reviews/P5b2-round2-resolve.md | opus | 02:57Z | +45min | running | verify; round 3 reviewers; one resolve; freeze |
+| rev-P5b2-3 | Opus author: P5b2 revision 3 from reviews/P5b2-round2-resolve.md | opus | 02:57Z | +45min | REPORTED | verify; round 3 reviewers; one resolve; freeze |
 | rev-P4c-3 | Opus author: P4c revision 3 from reviews/P4c-round2-resolve.md | opus | 02:58Z | +45min | running | verify; round 3 reviewers; resolve; freeze |
 | rev-P4b1-3 | Opus author: P4b1 revision 3 from reviews/P4b1-round2-resolve.md | opus | 02:59Z | +45min | running | verify; round 3 reviewers; resolve; freeze |
 | rev-P5a-3 | Opus author: P5a revision 3 from reviews/P5a-round2-resolve.md (was NOT launched earlier: lead slip, found 03:00Z) | opus | 03:00Z | +45min | running | verify; P5b1 rev 3 waits for it; round 3 reviewers |
@@ -404,3 +404,5 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | r1-P5b3-cor | round 1 ticket review | sonnet | 03:04Z | +20min | running | save |
 | r1-P5b5-adv | round 1 ticket review | sonnet | 03:04Z | +20min | running | save |
 | r1-P5b5-cor | round 1 ticket review | sonnet | 03:04Z | +20min | running | save |
+| r3-P5b2-adv | egm-design adversarial round 3 of P5b2 rev 3 | sonnet | 03:05Z | +20min | running | save |
+| r3-P5b2-cor | egm-codebase-details correctness round 3 of P5b2 rev 3 | sonnet | 03:05Z | +20min | running | save |
