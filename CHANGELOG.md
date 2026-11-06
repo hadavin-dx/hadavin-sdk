@@ -330,3 +330,17 @@
 - `mounted_file` also refuses group- or other-writable files and checks the opened file (no stat-then-read
   gap, `O_NOFOLLOW`); a Kubernetes JWT read error in `vault` is a `ConfigError`; the GCP secret fetch is bounded
   (5 s, no retry).
+
+### Added (P1m, test tooling: the mutation runner and judge)
+- `tools/mutation_runner.py` (a developer tool, not in the wheel) runs one mutant at a time on a temp copy of a package and
+  judges the kill by its reason with `hadavin_sdk.testing.mutation` (in the wheel). They moved here from the PR #50 head with
+  their 21 tests (`tests/test_mutation_runner.py`) and 21 mutants (`tests/mutation_runner_mutants.py`, run with
+  `uv run python tests/mutation_runner_mutants.py`). Edits to the moved code: the Windows-only branches of the tests are gone
+  (a link is made with `os.symlink`; a process is alive by `os.kill(pid, 0)`, a zombie counts as dead), and three `nosec`
+  comments the scanner does not need are deleted. No behaviour of the runner or the judge changed.
+- Every repository that keeps a byte copy of these files re-copies the four of them in one commit and updates its pins to the
+  sha256 values below (also pinned in `tests/fixtures/mutation_manifest.json`):
+  - `src/hadavin_sdk/testing/__init__.py`: `3c77d034fe2a1ee70adea0d0bd259a20edda397d8ebd55a0e40b63e5c21c9e1c`
+  - `src/hadavin_sdk/testing/mutation.py`: `59cf538e16c651dcd16edf740853f3bdada148ecb4d814f9e4e522c655767380`
+  - `tools/__init__.py`: `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
+  - `tools/mutation_runner.py`: `28224db08ceca2320bd2270ee210b7d36646ec5060297acb421b0aadf1df7258`

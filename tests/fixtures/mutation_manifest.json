@@ -1,0 +1,9 @@
+{
+  "note": "sha256 of the files a demo copies byte for byte from core (the mutation runner and judge); update with the CHANGELOG when one changes.",
+  "files": {
+    "src/hadavin_sdk/testing/__init__.py": "3c77d034fe2a1ee70adea0d0bd259a20edda397d8ebd55a0e40b63e5c21c9e1c",
+    "src/hadavin_sdk/testing/mutation.py": "59cf538e16c651dcd16edf740853f3bdada148ecb4d814f9e4e522c655767380",
+    "tools/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "tools/mutation_runner.py": "28224db08ceca2320bd2270ee210b7d36646ec5060297acb421b0aadf1df7258"
+  }
+}
