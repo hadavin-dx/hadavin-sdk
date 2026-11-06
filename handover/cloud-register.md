@@ -700,3 +700,4 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | bd-P1a-fix4 | Sonnet builder P1a fix4 (order 79), local commit only, no push (agent a5b583db) | 2026-11-06T11:35Z | RUNNING |
 | bd-P1b-merge | Sonnet builder P1b merge with P1a fix3 (order 73\/76) | 2026-11-06 | REPORTED local 1c12470, not pushed (q178); redo after fix4 |
 | bd-P0t-fix3 note | order 81 answers applied | 2026-11-06 | DONE |
+| rs-P1c-r4 | Opus resolve P1c round 4 -> rev 6 | 2026-11-06 | REPORTED (rev 6, q180) |

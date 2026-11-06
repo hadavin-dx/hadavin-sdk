@@ -250,3 +250,4 @@
 2026-11-06T11:33:21Z | step=order 80 read; PL15-18 answers forwarded to P1c resolve | next=verify rev 6; fix4/fix3 reports | blocked=none
 2026-11-06T11:37:03Z | step=P0t fix3 pushed b218c93 (q177); P1b merge report (q178) | next=P1c rev 6 verify; P1a fix4 verify | blocked=none
 2026-11-06T11:44:00Z | step=order 81 applied (q179, A17, PR 67 body) | next=P1a fix4 verify; P1c rev 6 verify | blocked=none
+2026-11-06T11:47:31Z | step=P1c rev6 committed (q180); round 5 launching | next=P1a fix4 verify | blocked=lead PL19
