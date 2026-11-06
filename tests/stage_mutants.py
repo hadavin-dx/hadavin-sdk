@@ -26,6 +26,7 @@ TBL = "src/hadavin_sdk/backends/table.py"
 DEFERRED = "src/hadavin_sdk/deferred.py"
 REGISTRY = "src/hadavin_sdk/registry.py"
 APP = "src/hadavin_sdk/app.py"
+REDACT = "src/hadavin_sdk/guard/redact.py"
 OLD = "d" + "ev"  # built from parts: this file is scanned by the class test it helps to check
 RAISE = (
     "            raise ValueError(\n"
@@ -91,6 +92,12 @@ M = [
     mutant("M9c app.py goes back to an allowlist of live stages", APP, 'live = cfg.environment != "demo"',
         'live = cfg.environment in ("pilot", "prod")',
         "test_a_value_that_is_not_a_stage_is_live_for_every_guard", "app treated"),
+    mutant("M10a pilot dropped from the redactor's common words", REDACT, '        "pilot",\n', "",
+        "test_the_redactor_does_not_sweep_the_stage_words_but_still_sweeps_secrets_and_other_names", "pilot is swept"),
+    mutant("M10b demo dropped from the redactor's common words", REDACT, '        "demo",\n', "",
+        "test_the_redactor_does_not_sweep_the_stage_words_but_still_sweeps_secrets_and_other_names", "demo is swept"),
+    mutant("M10c prod dropped from the redactor's common words", REDACT, '        "prod",\n', "",
+        "test_the_redactor_does_not_sweep_the_stage_words_but_still_sweeps_secrets_and_other_names", "prod is swept"),
 ]  # fmt: skip
 
 

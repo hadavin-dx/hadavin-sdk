@@ -416,10 +416,59 @@ SCANNED = (
     (".", ("README.md", "SECURITY.md")),
 )  # not scanned: pyproject.toml and uv.lock at the root (the packaging group is called dev), CHANGELOG.md (history)
 SELF = Path(__file__).resolve()
-# The ask-your-data demo and its tests have an evaluation split called dev (a dataset split, not a stage). In those two
-# places only, the two position kinds that read a bare quoted word are skipped; every other position still applies there.
-SPLIT_PLACES = ("demos/ask-your-data/", "tests/demo_askdata/")
-SPLIT_SKIPS = {"stage word then value", "list literal"}
+# The ask-your-data demo has an evaluation data split called dev (train/dev/test): a data split, not a stage (R449).
+# Only these exact lines of these exact files are exempt (the word sits inside the split constant, the split flag or the
+# split value); any other line in the same files is scanned like everywhere else. An entry that matches no line is stale
+# and fails, so the list cannot outlive the code it excuses.
+SPLIT_LINES = frozenset(
+    {
+        (
+            "demos/ask-your-data/askdata/evalcli.py",
+            'r.add_argument("--split", choices=["dev", "test"], required=True)',
+        ),
+        ("demos/ask-your-data/askdata/evalset.py", 'split: Literal["dev", "test"]'),
+        (
+            "demos/ask-your-data/data/goldcheck.py",
+            "Field names differ from design 12.2 on purpose of this task: `tier` (dev|test) is the split, `level` the difficulty,",
+        ),
+        (
+            "demos/ask-your-data/data/goldcheck.py",
+            "adversarial.dev.jsonl     12 items (`dev`): the prompt is tuned against these, never against the 16 sealed ones",
+        ),
+        (
+            "demos/ask-your-data/data/goldcheck.py",
+            "f\"composition of {level}: got {tally[('dev', level)]}/{tally[('test', level)]}, want {dev}/{test}\"",
+        ),
+        ("demos/ask-your-data/data/goldcheck.py", 'g["tier"] not in ("dev", "test")'),
+        (
+            "demos/ask-your-data/data/goldcheck.py",
+            'if (tally[("dev", level)], tally[("test", level)]) != (dev, test):',
+        ),
+        (
+            "tests/demo_askdata/test_eval_harness.py",
+            'assert cli.main(["eval", "run", "--split", "dev"]) == 4  # no config',
+        ),
+        ("tests/demo_askdata/test_eval_harness.py", 'assert cmd_run(cfg, "dev", 1, None) == 4'),
+        (
+            "tests/demo_askdata/test_eval_harness.py",
+            'assert cmd_run(cfg, "dev", 1, None, harness_factory=factory) == 4',
+        ),
+        (
+            "tests/demo_askdata/test_eval_harness.py",
+            'cmd_run(cfg, "dev", 1, None, harness_factory=factory)',
+        ),
+        (
+            "tests/demo_askdata/test_eval_harness.py",
+            'code = cmd_run(cfg, "dev", 1, None, harness_factory=factory)',
+        ),
+        ("tests/demo_askdata/test_eval_harness.py", 'split=kw.pop("split", "dev"),'),
+        ("tests/demo_askdata/test_gold_data.py", 'assert not sqls("dev") & sqls("test")'),
+        (
+            "tests/demo_askdata/test_gold_data.py",
+            'lambda rows: next(r for r in rows if r["id"] == "T07").update(tier="dev"),',
+        ),
+    }
+)
 
 
 def _hits(line: str, markdown: bool = True) -> list[str]:
@@ -430,9 +479,9 @@ def _hits(line: str, markdown: bool = True) -> list[str]:
     return [n for n, rx in POSITIONS.items() if rx.search(line) and (markdown or n != "heading")]
 
 
-def _scan() -> tuple[list[str], int]:
-    """(hits, how many lines the split exemption removed a position from)."""
-    out, skipped = [], 0
+def _scan() -> tuple[list[str], set]:
+    """(hits, the split-exemption entries that matched a line)."""
+    out, used = [], set()
     for folder, patterns in SCANNED:
         base = ROOT / folder
         if not base.is_dir():
@@ -448,13 +497,12 @@ def _scan() -> tuple[list[str], int]:
                 rel = path.relative_to(ROOT).as_posix()
                 for number, line in enumerate(text.splitlines(), 1):
                     names = _hits(line, path.suffix == ".md")
-                    if rel.startswith(SPLIT_PLACES):
-                        kept = [n for n in names if n not in SPLIT_SKIPS]
-                        skipped += len(kept) != len(names)
-                        names = kept
+                    if names and (rel, line.strip()) in SPLIT_LINES:
+                        used.add((rel, line.strip()))
+                        names = []
                     if names:
                         out.append(f"{rel}:{number} [{', '.join(names)}] {line.strip()[:100]}")
-    return sorted(set(out)), skipped
+    return sorted(set(out)), used
 
 
 def test_the_old_stage_word_is_gone():
@@ -462,14 +510,32 @@ def test_the_old_stage_word_is_gone():
     assert not found, "the old stage word is still used as a stage:\n" + "\n".join(found)
 
 
-def test_the_split_exemption_is_used_and_covers_only_the_two_places():
-    """An exemption that matches nothing is stale and fails; the two places are the demo and its tests, nothing else."""
-    _, skipped = _scan()
-    assert skipped > 0, "the evaluation-split exemption matches nothing: delete it"
-    assert SPLIT_PLACES == ("demos/ask-your-data/", "tests/demo_askdata/")
-    assert SPLIT_SKIPS == {"stage word then value", "list literal"}
-    for place in SPLIT_PLACES:
-        assert (ROOT / place).is_dir()
+def test_the_split_exemption_has_no_stale_entry_and_covers_only_the_two_demo_places():
+    """An entry that matches no line is stale and fails; every entry is in the demo or its tests, nothing else."""
+    _, used = _scan()
+    assert used == SPLIT_LINES, f"stale entries: {sorted(SPLIT_LINES - used)}"
+    for rel, _ in SPLIT_LINES:
+        assert rel.startswith(("demos/ask-your-data/", "tests/demo_askdata/")), rel
+        assert (ROOT / rel).is_file()
+
+
+def _excused(rel: str, line: str) -> bool:
+    return (rel, line.strip()) in SPLIT_LINES
+
+
+def test_a_stage_shaped_use_in_the_same_file_still_fails():
+    """The exemption excuses exact split lines only: a stage-shaped line in a file that holds one is not excused."""
+    rel = "demos/ask-your-data/askdata/evalset.py"
+    assert _excused(rel, 'split: Literal["dev", "test"]')
+    for line in (
+        f'stage = "{OLD}"',
+        f"environment: {OLD}",
+        f'split: Literal["{OLD}", "test", "pilot"]',  # a split line with a stage added is a different line
+        f'tier: Literal["{OLD}", "test"]',
+    ):
+        assert _hits(line), f"the scanner misses: {line}"
+        assert not _excused(rel, line), f"excused by mistake: {line}"
+    assert not _excused("demos/ask-your-data/askdata/other.py", 'split: Literal["dev", "test"]')
 
 
 @pytest.mark.parametrize(
@@ -536,6 +602,16 @@ def test_the_scanner_ignores_words_that_are_not_stage_positions(line):
     assert not _hits(line), f"false hit: {line}: {_hits(line)}"
 
 
+@pytest.mark.parametrize("word", ["tier", "stage", "profile", "mode"])
+def test_a_four_character_separator_between_a_stage_word_and_the_old_word_is_found(word):
+    """`stage = "dev"` has four characters (space, equals, space, quote) between the words, and `"mode": "dev"` has four
+    as well (quote, colon, space, quote): both must be found. The reach is four; five is outside the position."""
+    for sep in ('": "', ' = "', '"=: ', "':'", ": ", "="):
+        assert _hits(word + sep + OLD), f"not found: {word}{sep}{OLD}"
+    assert len('": "') == len(' = "') == 4
+    assert not _hits(word + " " * 5 + OLD), "the reach is four characters, not more"
+
+
 def test_the_scan_reads_the_places_it_claims_to():
     seen = {p for p in (ROOT / "src").rglob("*.py")}
     assert (ROOT / "src" / "hadavin_sdk" / "config.py") in seen
@@ -552,9 +628,12 @@ def test_the_scan_reads_the_places_it_claims_to():
 def test_the_redactor_does_not_sweep_the_stage_words_but_still_sweeps_secrets_and_other_names():
     from hadavin_sdk.guard.redact import _sweep
 
-    for word in ("prod", "demo", OLD):
+    for word in ("prod", "pilot", "demo", OLD):
         assert _sweep("<TENANT_1>", word) is None, f"{word} is swept like a name"
     assert _sweep("<TENANT_1>", "acme" + "corp") is not None
+    assert _sweep("<SECRET_1>", "pilot") is not None, (
+        "a secret that reads 'pilot' must still be swept"
+    )
     assert _sweep("<SECRET_1>", "demo") is not None, (
         "a secret that reads 'demo' must still be swept"
     )

@@ -1161,6 +1161,7 @@ _COMMON = frozenset(
         "test",
         "dev",
         "demo",
+        "pilot",
         "stage",
         "staging",
         "default",
