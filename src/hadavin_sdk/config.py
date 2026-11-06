@@ -344,6 +344,10 @@ class Config(_Strict):
     executor_timeout_s: float = Field(
         default=defaults.EXECUTOR_TIMEOUT_S, gt=0
     )  # dev executor only
+    # A `dev` config is taken to hold client data unless it says, in the operator's own word, that every input is
+    # made up. Only then may it name a real model, the vendor detector or a real approval channel (they send
+    # text out). It is not a lock: the code cannot check it. No effect in pilot and prod (they hold client data).
+    made_up_data_only: bool = False
     root: Path
 
     @model_validator(mode="after")
@@ -368,10 +372,31 @@ class Config(_Strict):
                 f"{c}: {s.kind}" for c, s in self.backends.entries() if (c, s.kind) in DEV_ONLY
             ]
             refused += ["allow_insecure_loopback"] if self.allow_insecure_loopback else []
+        sends_text_out = []
+        if self.environment == "dev" and not self.made_up_data_only:
+            sends_text_out = _sends_text_out(self.backends)
+        refused += sends_text_out
         refused += _anchor_refusals(self.environment, self.backends)
         if refused:
-            raise ValueError(f"environment {self.environment}: refused: {', '.join(refused)}")
+            tail = (
+                "; a dev config that names a real model, a vendor detector or a real approval channel "
+                "sends text out: set made_up_data_only: true only when every input is made up; "
+                "client data runs only in pilot or prod"
+                if sends_text_out
+                else ""
+            )
+            raise ValueError(f"environment {self.environment}: refused: {', '.join(refused)}{tail}")
         return self
+
+
+def _sends_text_out(b: Backends) -> list[str]:
+    """Kinds that send case text to a vendor service: any llm or channel kind that is not dev-only (so a kind
+    added later is refused too, until its package decides otherwise) and the `bedrock_guardrail` detector (it
+    sends text outside the llm kind; an `llm_judge` detector uses the llm kind, which is covered above)."""
+    out = [f"llm: {b.llm.kind}"] if ("llm", b.llm.kind) not in DEV_ONLY else []
+    out += ["detector: bedrock_guardrail" for d in b.detector if d.kind == "bedrock_guardrail"]
+    out += [f"channel: {b.channel.kind}"] if ("channel", b.channel.kind) not in DEV_ONLY else []
+    return out
 
 
 def _anchor_refusals(environment: str, b: Backends) -> list[str]:
