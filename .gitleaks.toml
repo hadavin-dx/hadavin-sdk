@@ -30,3 +30,16 @@ description = "temporary: entropy heuristic only, markdown notes of the handover
 condition = "AND"
 targetRules = ["generic-api-key"]
 paths = ['''^handover/(reviews|tickets|evidence)/[^/]+\.md$''']
+
+# Golden file of the text-normalisation corpus (package P1a): it stores one sha256 digest per row under the field name
+# "identity_key". The name contains "key" and the value is 64 hex digits, so the entropy heuristic fires. Allowed: ONLY the
+# generic-api-key rule, ONLY in that file, ONLY when the whole finding is exactly 64 lowercase hex digits. Any other rule,
+# any other value shape (a real key, token or longer string) and every other path stay fully scanned. Not temporary: the
+# fixture is part of the product tests. CI scans every fetched ref, so this entry must be on main before the file is.
+[[allowlists]]
+description = "textnorm golden fixture: sha256 digests under identity_key (entropy heuristic only, exact 64-hex shape, one path)"
+condition = "AND"
+targetRules = ["generic-api-key"]
+regexTarget = "secret"
+paths = ['''^tests/fixtures/textnorm_golden\.json$''']
+regexes = ['''^[0-9a-f]{64}$''']
