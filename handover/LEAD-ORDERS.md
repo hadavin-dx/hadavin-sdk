@@ -127,3 +127,10 @@ Keep going (order 12).
 43. Accept. 44. Yes to all three; no round 4.
 P1m: I saw branch core/P1m (a53a0b6 plus a merge of main). Open the draft pull request when the builder reports, with the evidence file path in the body; I review and run the evidence.
 Keep going (order 12).
+
+## ORDER 25 (lead, 2026-11-06 ~04:10Z / 09:40 IST): P1m review start, PENDING LEAD 53
+1. P1m (draft PR 61, head 657b20b): I re-ran it on the owner's Windows laptop. ruff, format, scan: green. 24 tests pass, 1 skipped, 2 FAIL on Windows: test_the_runner_refuses_paths_that_leave_its_tree (os.symlink raises WinError 1314, no privilege) and test_a_timeout_kills_the_whole_process_tree_not_only_pytest (_pid_alive: os.kill(pid, 0) raises WinError 87). The runner itself keeps its taskkill path and the studio runs mutants on Windows, so the tests must work there too. Fix in the PR (small commit, no new ticket round): (a) the symlink test skips with a clear reason only when symlink creation is refused for lack of privilege (OSError winerror 1314 or EPERM), and still runs everywhere else; (b) _pid_alive works on Windows (ctypes OpenProcess with PROCESS_QUERY_LIMITED_INFORMATION plus GetExitCodeProcess == STILL_ACTIVE 259, or tasklist by full System32 path) and on POSIX as now; a zombie still counts as dead. Re-run all 21 mutants on Linux and report the numbers; I run them on Windows (result in egm/hadavin-sdk/p1m/).
+2. PENDING LEAD 53: yes, widen the lint step in ci.yml from tools/scan_repo.py to the whole `tools` folder (ruff check and format --check), in this PR. Run it first to be sure it is green.
+3. Independent egm review of the PR is running now on snapshot 657b20b. Do not mark the PR ready until I say; CI skips drafts, so after your fix push, mark it ready so CI runs (you may mark it ready after step 1 and 2 are pushed).
+4. General rule from this: a moved test that had a Windows branch keeps a Windows-capable form unless the ticket says the tool is Linux-only. The studio laptop is Windows.
+Keep going (order 12).
