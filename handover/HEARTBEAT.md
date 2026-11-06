@@ -230,3 +230,4 @@
 2026-11-06T10:27:05Z | step=P1c round2 design report saved; Opus resolve ade980a0 launched (rev 4) | next=verify rev4, P1a fix3, P0t fix1 | blocked=none
 2026-11-06T10:30:11Z | step=order 74 read; item 11 done (A16, q166) | next=P1a fix3, P0t fix1, P1b, P1c rev4, then P3a-1 fix1 builder | blocked=none
 2026-11-06T10:41:25Z | step=P0t fix1 verified+reported (q167) | next=P1a fix3, P1b merge, P1c rev4, P3a-1 fix1 | blocked=lead q167
+2026-11-06T10:44:30Z | step=order 75 read; P0t fix2 builder resumed (no push) (q168) | next=P1a fix3, P1b, P1c rev4, P3a-1 fix1; order 76 | blocked=none
