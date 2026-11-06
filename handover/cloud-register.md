@@ -735,3 +735,5 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | bd-P3a-1-fix1 | Sonnet builder P3a-1 fix1 | 2026-11-06T12:50:13Z | REPORTED + PUSHED: core/P3a 91a439d (ff of 7155fb4, 7 files +958/-89), PR 68 body updated |
 | bd-P3a-2-merge | Sonnet builder P3a-2 resumed to merge core/P3a 91a439d | 2026-11-06T12:50:13Z | RUNNING |
 | bd-P0t-fix4 | Sonnet builder P0t fix4 | 2026-11-06T12:55:16Z | REPORTED + PUSHED: core/P0t e55b34c (ff of b218c93), CI 42220202816 green, PR 67 body updated |
+| bd-P5a | Sonnet builder P5a | 2026-11-06T12:59:59Z | REPORTED: PR 74 ready, head ea2d254 (pushed, verified), evidence in reviews/P5a |
+| bd-P4a | Sonnet builder P4a | 2026-11-06T13:00:08Z | INTERIM: local head c86e685, nothing pushed, no PR; full suites + 87 mutants queued in heavy.sh; bandit B608 postgres.py:768 to check on base |

@@ -328,3 +328,7 @@ P3a-1 | fix1 pushed 91a439d (PR 68); waiting lead review | 0 | recipe-generator 
 P3a-2 | merging new P3a base into PR 73 | 1 | -
 2026-11-06T12:55:16Z | package | stage | builders running | blocked on
 P0t | fix4 pushed e55b34c (PR 67); waiting lead review | 0 | lead: stage_mutants CI step, is_prod decision
+2026-11-06T12:59:59Z | package | stage | builders running | blocked on
+P5a | built, PR 74 head ea2d254 READY; waiting lead review | 0 | -
+2026-11-06T13:00:08Z | package | stage | builders running | blocked on
+P4a | built locally c86e685, evidence running (suites, mutants) | 1 | heavy.sh slots
