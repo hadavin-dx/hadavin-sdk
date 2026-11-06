@@ -456,7 +456,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | rs-P5b5-r2 | P5b5 round 2 resolve (Opus) | 03:26Z | +25min | running | verify |
 | rv-P8b-r3-adv | P8b r3 adversarial | 03:27Z | +30min | running | verify |
 | rv-P8b-r3-cor | P8b r3 correctness | 03:27Z | +30min | running | verify |
-| rv-P5b3-r2-adv | P5b3 r2 adversarial | 04:05Z | +30min | running | verify |
+| rv-P5b3-r2-adv | P5b3 r2 adversarial | 04:05Z | +30min | REPORTED (inline, unsaved) | verify |
 | rv-P5b3-r2-cor | P5b3 r2 correctness | 04:05Z | +30min | REPORTED (inline, unsaved) | verify |
 | rv-P5b4-r2-adv | P5b4 r2 adversarial | 04:05Z | +30min | REPORTED (inline, unsaved) | verify |
 | rv-P5b4-r2-cor | P5b4 r2 correctness | 04:05Z | +30min | REPORTED (inline, unsaved) | verify |
@@ -466,7 +466,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | rv-AK0-r1-adv | AK0 r1 adversarial | 04:20Z | +30min | REPORTED (inline, unsaved) | verify |
 | rv-AK0-r1-cor | AK0 r1 correctness | 04:20Z | +30min | REPORTED (inline, unsaved) | verify |
 | rv-AK1-r1-adv | AK1 r1 adversarial | 04:20Z | +30min | REPORTED (inline, unsaved) | verify |
-| rv-AK1-r1-cor | AK1 r1 correctness | 04:20Z | +30min | running | verify |
+| rv-AK1-r1-cor | AK1 r1 correctness | 04:20Z | +30min | REPORTED (inline, unsaved) | verify |
 | au-AK2a | AK2a ticket author (Opus) | 04:30Z | +35min | running | verify |
 | au-AK4a | AK4a ticket author (Opus) | 04:30Z | +35min | running | verify |
 | rs-P5c-r2 | P5c round 2 resolve (Opus) | 04:40Z | +30min | running | verify |
@@ -476,4 +476,6 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | bd-P1m-fix | P1m builder: Windows test fixes, ci lint widen, 21 mutants | 04:55Z | +45min | running | verify, then mark PR 61 ready (order 25) |
 | rv-P6a-r3-adv | P6a r3 adversarial | 05:05Z | +30min | running | verify |
 | rv-P6a-r3-cor | P6a r3 correctness | 05:05Z | +30min | running | verify |
-| sv-AK0-r1 | save AK0 r1 pair | 05:20Z | +15min | running | verify |
+| sv-AK0-r1 | save AK0 r1 pair | 05:20Z | +15min | REPORTED | verify |
+| sv-batch-s | save P5b4 r2 cor, P5b3 r2 pair, AK1 r1 pair | 05:30Z | +20min | running | verify |
+| rs-AK0-r1 | Opus resolve AK0 round 1 | 05:35Z | +30min | running | verify |
