@@ -264,7 +264,9 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | r9-P4a-resolve | Opus egm-resolve of P4a rev 9 over round 9 adv+cor -> rev 10 input | opus | 00:55Z | +60min | REPORTED | verify, push, rev 10 author, round 10 reviewers |
 | r9-LK-resolve | Opus egm-resolve of LK draft 9 over round 9 adv+cor -> draft 10 input | opus | 01:03Z | +60min | REPORTED | verify, push, draft 10, round 10 reviewers |
 | rev14-P1-author | author rewrite tickets/P1.md rev 14 from reviews/P1-round12-resolve.md | sonnet | 01:04Z | +45min | REPORTED | verify, push, round 13 reviewers |
-| rev10-P4a-author | author rewrite tickets/P4a.md rev 10 from reviews/P4a-round9-resolve.md | sonnet | 01:05Z | +45min | running | verify, push, round 10 reviewers |
+| rev10-P4a-author | author rewrite tickets/P4a.md rev 10 from reviews/P4a-round9-resolve.md | sonnet | 01:05Z | +45min | REPORTED | verify, push, round 10 reviewers |
 | draft10-LK-author | Opus draft 10 of designs/lookalike-leak.md from reviews/lookalike-round9-resolve.md | opus | 01:13Z | +50min | running | verify, push, round 10 reviewers |
 | r13-P1-adv | P1 round 13 adversarial review of tickets/P1.md rev 14 (8b5d849) | sonnet | 01:15Z | +45min | running | save report, ledger rows |
 | r13-P1-cor | P1 round 13 correctness review of tickets/P1.md rev 14 (8b5d849) | sonnet | 01:15Z | +45min | running | save report, ledger rows |
+| r10-P4a-adv | P4a round 10 adversarial review of tickets/P4a.md rev 10 (94c4c82) | sonnet | 01:20Z | +45min | running | save report, ledger |
+| r10-P4a-cor | P4a round 10 correctness review of tickets/P4a.md rev 10 (94c4c82) | sonnet | 01:20Z | +45min | running | save report, ledger |
