@@ -169,3 +169,4 @@
 06:52Z | step=saved 4 round-2 reports (AK-G15 adv/cor, AK-G16 adv/cor) | done=pushed | next=round-2 resolves AK-G15/AK-G16, order 43 notes | blocked=none
 06:55Z | step=order 43 appends (AK-G2 BN-24/25, AK-G1 BN-29, owner limits 13-21) | done=pushed | next=await round-2 resolves | blocked=none
 06:55Z | step=order 44 received (P1a review 1 NOT CLEAN), launching builder | done=register | next=builder fix commit, report sha | blocked=none
+06:59Z | step=AK-G16 round 2 resolve saved (13 Major, NEEDS LEAD 16-18) | done=pushed | next=AK-G16 rev 3 author; P1a fix1 builder running; AK-G15 resolve running | blocked=none
