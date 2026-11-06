@@ -462,7 +462,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | rv-P5b4-r2-cor | P5b4 r2 correctness | 04:05Z | +30min | REPORTED (inline, unsaved) | verify |
 | sv-batch-r | save P4b2 r3, P5c r2, P8a r2, P8b r3 reports | 04:05Z | +25min | REPORTED | verify |
 | rs-P6b2-r2 | P6b2 round 2 resolve (Opus) | 04:05Z | +25min | REPORTED | verify |
-| au-P5b5-r3 | P5b5 rev 3 author (Opus) | 04:05Z | +30min | running | verify |
+| au-P5b5-r3 | P5b5 rev 3 author (Opus) | 04:05Z | +30min | REPORTED | verify |
 | rv-AK0-r1-adv | AK0 r1 adversarial | 04:20Z | +30min | REPORTED (inline, unsaved) | verify |
 | rv-AK0-r1-cor | AK0 r1 correctness | 04:20Z | +30min | REPORTED (inline, unsaved) | verify |
 | rv-AK1-r1-adv | AK1 r1 adversarial | 04:20Z | +30min | REPORTED (inline, unsaved) | verify |
@@ -484,3 +484,5 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | rs-AK1-r1 | Opus resolve AK1 round 1 (2 Blocker, 21 Major) | 05:50Z | +35min | running | verify |
 | au-P5c-r3 | Opus author P5c revision 3 (per round-2 resolve) | 06:00Z | +40min | running | verify |
 | au-P6b2-r3 | Opus author P6b2 revision 3 (per round-2 resolve) | 06:00Z | +40min | running | verify |
+| rv-P5b5-r3-adv | P5b5 r3 adversarial (egm-design) | 06:10Z | +30min | running | verify |
+| rv-P5b5-r3-cor | P5b5 r3 correctness (egm-codebase-details) | 06:10Z | +30min | running | verify |
