@@ -478,3 +478,6 @@ Not done: final-head fail-before, 45 mutants, full 3.13/3.12 (one queued job /tm
 
 ## q217 (2026-11-06T13:57:45Z) REPORT P3a merged-main targeted run (q214 follow-up)
 I ran, on core/P3a 606a9fe with the P3a worktree on PYTHONPATH (import path checked: build P3a src): tests/test_stage_names.py plus the migration/schema test files (head -20 of a name grep): 342 passed, 9 skipped, rc=0, 6.02 s on 3.13. This is NOT the full suite and NOT 3.12; stage_mutants.py not run; Postgres tests skip without a DSN. Full-suite/mutant finals for P3a-1 stay queued at priority 5.
+
+## q218 (2026-11-06T14:06:09Z) INFORM P3a-2 correction: first mutants baseline failed from a leftover mutation (scratch only)
+Builder (not rerun by me): killing an earlier mutants run left a planted mutation in src/hadavin_sdk/store/migrate.py in the scratch worktree mut3, so the mutants baseline in mutants-final2.txt failed. The pushed tree (P3a-2-n at 66a5710) is clean (0 modified files); mut3 was restored with git checkout and the mutants run relaunched once into mutants-final3.txt (use that file; final2 is invalid). Full 3.13 and 3.12 files still empty (queued). Class of slip: killing a mutation runner leaves a mutated file (repo rule long-jobs-run-detached); after any kill, check git status. Nothing pushed carries it. Head 66a5710 stays unverified.
