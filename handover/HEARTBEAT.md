@@ -285,3 +285,5 @@ P1c | ticket FROZEN rev 7; build waits for P1b head (BS-3 gate) | 0 | P1a fix4 t
 P0t | fix4 builder running | 1 | -
 P1a | fix4 builder running | 1 | -
 others: P2d-1, P3a-2, P2a-1, P4d-a2, P5a, P6a, P3a-1-fix1 building (9 builders); P8c resolve running
+2026-11-06T12:13:56Z | package | stage | builders running | blocked on
+order 86: queued packages (P2d-2, P4b1, P4a, P4c, P4b2, P5b1, P6b1) have NO committed predecessor work yet: P2d-1, P5a, P2a-1, P4d-a2 hold uncommitted files only, so a stacked worktree would be empty. Asked each to make a local WIP commit (P4d-a2 to push P4d-b and a2-i); I stack the successor on each SHA the moment it arrives. Load 4.4 on 4 cores at 10 agents.
