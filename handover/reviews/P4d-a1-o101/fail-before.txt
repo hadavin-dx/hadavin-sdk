@@ -1,0 +1,20 @@
+head under test: 1a885f3 (old conftest.py, store_support.py, kinds/ and src of 1a885f3) + the NEW test files test_store_registry.py, test_pg_driver.py, test_store.py, test_store_money_baseline.py (from the fix worktree)
+cmd: HADAVIN_REQUIRE_PG=1 HADAVIN_TEST_PG_DSN=<own PG16 :55433> pytest -q -p no:cacheprovider <those 4 files>
+FAILED tests/contracts/test_store_registry.py::test_session_check_under_xdist_fails_even_when_the_controller_selected_nothing
+FAILED tests/contracts/test_store_registry.py::test_xdist_active_reads_the_worker_variable_the_option_and_the_plugin
+FAILED tests/contracts/test_store_registry.py::test_a_plain_run_with_no_file_argument_reports_a_silent_skip_a_missing_test_and_uncalled_methods
+FAILED tests/contracts/test_pg_driver.py::test_connect_role_drops_the_role_when_a_grant_fails
+FAILED tests/contracts/test_pg_driver.py::test_execute_refuses_a_placeholder_and_identifier_mismatch_with_a_clear_error[SELECT 1 FROM {}-idents0-1 {} placeholders but 0 identifiers]
+FAILED tests/contracts/test_pg_driver.py::test_execute_refuses_a_placeholder_and_identifier_mismatch_with_a_clear_error[SELECT 1-idents1-0 {} placeholders but 1 identifiers]
+FAILED tests/contracts/test_pg_driver.py::test_execute_refuses_a_placeholder_and_identifier_mismatch_with_a_clear_error[SELECT 1 FROM {} JOIN {}-idents2-2 {} placeholders but 1 identifiers]
+FAILED tests/contracts/test_pg_driver.py::test_execute_refuses_a_placeholder_and_identifier_mismatch_with_a_clear_error[SELECT 1 FROM {name}-idents3-only plain {} placeholders]
+FAILED tests/contracts/test_pg_driver.py::test_execute_refuses_a_placeholder_and_identifier_mismatch_with_a_clear_error[SELECT 1 FROM {0}-idents4-only plain {} placeholders]
+FAILED tests/contracts/test_pg_driver.py::test_execute_refuses_a_placeholder_and_identifier_mismatch_with_a_clear_error[SELECT 1 FROM {:x}-idents5-only plain {} placeholders]
+FAILED tests/contracts/test_pg_driver.py::test_execute_refuses_a_placeholder_and_identifier_mismatch_with_a_clear_error[SELECT 1 FROM {!r}-idents6-only plain {} placeholders]
+FAILED tests/contracts/test_pg_driver.py::test_execute_closes_its_cursor_also_when_the_statement_fails
+FAILED tests/contracts/test_pg_driver.py::test_pg_schema_removes_its_dsn_entries_and_schema_when_closed_and_when_thrown_into
+FAILED tests/contracts/test_pg_driver.py::test_pg_schema_drops_what_it_made_when_migrate_fails[False]
+FAILED tests/contracts/test_store.py::test_store_pair_gives_two_handles_on_the_same_data[postgres]
+15 failed, 139 passed in 21.74s
+
+NOT failing before, by design: the 34 money-baseline pins (they pin src behaviour that this PR does not change; their killers are the src mutants in mutants.log), the clean plain-run test, the body-raises role test, the migrate-failure test with runtime=True (old code already dropped there), and the unit tests of the rule that already held.

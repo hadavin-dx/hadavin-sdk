@@ -1,0 +1,5 @@
+head: 92dbb1eee64f20dc0c00aac46c0b58fb1a901f5f
+[manager]	WARNING	Test in comment: bytes is not a test name or id, ignoring
+[tester]	WARNING	nosec encountered (B102), but no failed test on file src/hadavin_sdk/tools.py:389
+[tester]	WARNING	nosec encountered (B102), but no failed test on file src/hadavin_sdk/tools.py:389
+bandit exit: 0

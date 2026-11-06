@@ -1,0 +1,21 @@
+head: 0ee16ccb2c015340ea3c63862bfc93ce5aa5f1dd  REAL pytest-xdist 3.8.0 (installed with --target into the evidence folder, NOT a repo dependency): the nested defect project (with a copy of tests/conftest.py) under the CI command with and without -n, AFTER the fix (stdout+stderr)
+== pytest -q -m not live and not perf -p no:cacheprovider -> rc 1
+.....s                                                                   [100%]contract session-end check FAILED:
+  a backend was skipped silently: require_backend: beta: planted silent skip
+  store test /tmp/tmph5agabfo/proj/tests/contracts/test_nested.py::test_skips_for_beta did not run for backend beta
+  no test body called Store.get_tick_state on backend alpha
+  no test body called Store.touch on backend alpha
+  no test body called Store.get_tick_state on backend beta
+  no test body called Store.touch on backend beta
+5 passed, 1 skipped, 2 deselected in 0.03s
+== pytest -q -m not live and not perf -p no:cacheprovider -n 2 -> rc 4
+ERROR: the contract session-end check cannot run under xdist: run without -n
+== pytest -q -m not live and not perf -p no:cacheprovider -n 0 -> rc 1
+.....s                                                                   [100%]contract session-end check FAILED:
+  a backend was skipped silently: require_backend: beta: planted silent skip
+  store test /tmp/tmph5agabfo/proj/tests/contracts/test_nested.py::test_skips_for_beta did not run for backend beta
+  no test body called Store.get_tick_state on backend alpha
+  no test body called Store.touch on backend alpha
+  no test body called Store.get_tick_state on backend beta
+  no test body called Store.touch on backend beta
+5 passed, 1 skipped, 2 deselected in 0.02s
