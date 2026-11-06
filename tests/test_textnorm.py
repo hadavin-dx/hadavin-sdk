@@ -64,8 +64,6 @@ def refused(exc, message, fn, *args, **kwargs):
         fn(*args, **kwargs)
     except exc:
         return
-    except Exception as other:  # noqa: BLE001 - reported with its class as the failure
-        raise AssertionError(f"{message} (raised {type(other).__name__} instead)") from None
     raise AssertionError(message)
 
 

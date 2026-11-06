@@ -88,8 +88,8 @@ M = [
     mutant(
         "step token: a Where name as text is accepted",
         C,
-        "            if type(value) is Where:",
-        "            if type(value) is Where or value in Where._value2member_map_:",
+        "        if type(value) is Where:",
+        "        if type(value) is Where or value in Where._value2member_map_:",
         TC,
         "test_step_token_is_closed_and_final",
         "assert",
