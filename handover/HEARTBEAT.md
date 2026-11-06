@@ -343,3 +343,4 @@ P1a | fix5 builder started (order 90, priority) | 7 | -
 2026-11-06T13:41:49Z | package | stage | builders running | blocked on
 P2d-1 | draft PR 77 6d5616b; needs re-merge of P1a fix5 | 7 | PR 63 fix5
 | P5b1 | built, final-head evidence pending | P5b1 builder resumed; P1a fix5, P4d-a2, P3a-2, P4b1, P1b | heavy.sh slots; BLE001 noqa decision (q211) |
+| P5a | BLE001 reasons + tests owed (order 93) | P1a fix5, P4d-a2, P5b1, P3a-2, P1b, P4b1 | heavy slots (priority per order 93) |
