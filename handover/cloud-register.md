@@ -691,3 +691,4 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | gf-P1c-r2-code | Goldfish round 2 P1c rev 3 (egm-codebase-details, Sonnet, snapshot db17c53) | 2026-11-06T10:15:56Z | REPORTED (saved) |
 | rs-P1c-r2 | Opus resolve P1c round 2 -> rev 4 | 2026-11-06T10:27:10Z | REPORTED (rev 4) |
 | bd-P1b-merge | Sonnet builder, P1b merge of P1a fix3 (order 73) | 2026-11-06T10:48:55Z | running (a6ae) |
+| rs-P1c-r3 | Opus resolve P1c round 3 -> rev 5 | 2026-11-06T10:55:21Z | running (ad71) |
