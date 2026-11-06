@@ -117,3 +117,4 @@
 03:43Z | step=order 27 read; P4d lines 160/170 edited (item 61); P4b2 r3 resolve saved | done=item 61 | next=AK-G1/AK-G2 authors, P4b2 BN append, relay PLs | blocked=-
 2026-11-06T03:49:48Z | step=saved P5b5 r3 pair; pushed resolves AK1 r1/P5b3 r2/P5b4 r2 | done=AK4a r1 reports in (0B/9M adv, 7M cor) | next=launch P5b5 r3 resolve, P5b4/P5b3 rev 3, AK1 rev 2, AK4a saver | blocked=-
 2026-11-06T03:51:23Z | step=pushed P6b2 rev3, AK0 rev2; AK4a r1 saved; AK2a saver and AK4a resolve running | done=P6b2 r3 reviewers launched | next=AK0 r2 reviewers, verify P5b4/P5b3/AK1 revs, P1m builder | blocked=-
+2026-11-06T03:58Z | step=pushed P5b5 r3 + AK4a r1 resolves, AK1 rev2, AK-G1 rev1; launched AK1 r2 pair, AK4a rev2 author, P5b5 BN, AK0 r2 resolve, r3/r1 pair saver | done=AK0 r2 pair saved | next=verify reports, AK-G2 r1 resolve, P6b2/P5c r3 resolves, AK-G1 r1 reviewers | blocked=none
