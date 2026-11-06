@@ -2,6 +2,8 @@
 
 Revision line: **revision 3 DRAFT**, written 2026-11-06 from 04:33 UTC (10:03 IST; IST = UTC+5:30) by a ticket author (LEAD-ORDERS order 20 item 6, order 23 item 2, order 27 items 55, 56 and 63). Revision 2 was committed 04:14:46 UTC (09:44:46 IST, `7855ad7`); the round 2 reviews 04:20:20 UTC (09:50:20 IST, `da9fbab`); the round 2 resolve 04:29:00 UTC (09:59:00 IST, `e93ff86`); revision 1 03:53:33 UTC (09:23:33 IST, `738f704`). Git commit times are the reference. Text only: no code, no pull request, no test run, no sub-agent, no model call, no spend, no secret, no client data. **Review rounds:** round 1 done (`reviews/AK-G2-round1-adversarial.md`: 0 Blockers, 12 Majors, 8 Minors, 2 Nits; `reviews/AK-G2-round1-correctness.md`: 0 Blockers, 5 Majors, 6 Minors; `reviews/AK-G2-round1-resolve.md`: 36 finding ids in 31 rows). Round 2 done (`reviews/AK-G2-round2-adversarial.md`: 1 Blocker, 6 Majors, 10 Minors, 3 Nits, its header says 8 Minors; `reviews/AK-G2-round2-correctness.md`: 0 Blockers, 3 Majors, 8 Minors, 4 Nits, its header says 7 Minors; `reviews/AK-G2-round2-resolve.md`: 36 finding ids in 28 rows: 25 PROPOSE FIX, 1 NEEDS LEAD, 2 DECLINE). This revision applies every row of that resolve. Round 3 (fresh `egm:*` reviewers, then one `egm:egm-resolve`) is next and is the LAST ticket round (cap 3, order 20 item 6); then the ticket freezes. Security path: the RESULT review of built code has no round cap.
 
+> **BUILD NOTES WIN.** Review round 3 (`reviews/AK-G2-round3-adversarial.md`, `reviews/AK-G2-round3-correctness.md`) had 12 Majors, so there is no round 4 (order 20 item 6). This ticket is FROZEN at revision 3. The builder applies build notes BN-1 to BN-23 in `reviews/AK-G2-round3-resolve.md`; where a build note and the text below disagree, the build note wins. The build-start review (order 19 A) reads this ticket together with those notes. The CHANGELOG sections are history, not instructions. Totals after the notes: 70 test rows (AK-G2-a 43, AK-G2-b 27), 103 mutants (-a 69: M-a1..M-a70 with M-a12 retired; -b 34: M-b1..M-b9 and M-b13..M-b37), 10 store methods, 3 tables. CUT by the notes: `compare_ids`, `IdComparison`, `list_inbound`, the orphan build refusal, and the tick result keys `inbound_infra_stops` and `inbound_orphans` (BN-8, BN-13, BN-14).
+
 **Read this first (1): the round 2 Blocker is closed on paper only.** Rows 1-3 of the resolve ("the run row is the commit point", the run id with a generation suffix, and "infrastructure failures do not count as tries") are a design written in this ticket. No code proves them. Round 3 should attack them first.
 
 **Read this first (2): revision 2 cut the built-in schedule, against one word of order 23 item 2, and revision 3 keeps the cut.** Order 23 item 2 lists "scheduler" among the ways in for AK-G2. This ticket builds NO schedule source (round 1 resolve row ADV-15, cut under order 7(3) and order 8(1)): a time-based trigger reaches us as a signed request to the webhook door, sent by the client's own scheduler or automation tool. That is a deviation from the order's wording, made on my recommendation, and the lead may reverse it: PENDING LEAD 5 gives the options and the cost of each.
@@ -291,7 +293,7 @@ Option for the lead (round 1 resolve row ADV-22, DECLINED by the resolver, recor
     - C6 tick still runs everything: with a slow fake step and many receipts, every tick runs `sweep`, `reconcile`, `stuck`, `checkpoint`, `purge_evidence` and `reprobe_sources` before dispatch, and dispatch makes no claim after `dispatch_budget_s`. New feature.
     - C7 no shared secrets: in `dev` and in `pilot`, each equal pair is refused with `ConfigError` naming both fields and no value: two sources of one tenant, two sources of different tenants, the current entry of one and the previous entry of another, and an inbound secret equal to the approval channel's signing secret; distinct secrets build. New feature.
     - C8 orphan sources: a store holding open receipts for (`tenant-a`, `src-old`) and a config without it: in `pilot`, `ConfigError`; in `dev`, the build goes on with one ERROR line holding names and count only, and a tick's result carries `inbound_orphans` = `"1"` and `inbound_infra_stops` = `"0"`; with `retired_sources: ["tenant-a/src-old"]`, `pilot` builds. New feature.
-  - Counts: 62 rows. AK-G2-a 37 (D0; L1-L19 and L11b, 20; D1, D2, D2b, D3a, D3b, D4, D4b, D5-D11, 14; B1-B2); AK-G2-b 25 (W1-W16; C1, C2, C2b, C3-C8). One FAIL-BEFORE row (D0); one premise row (W3). Against revision 2 (52): 11 new ids (D2b, D3a, D3b, D4b, D10, D11, L11b, W16, C2b, C7, C8), 1 removed (D3).
+  - Counts (after the round 3 build notes, BN-23; these win): 70 rows. AK-G2-a 43 (D0; L1-L11, L11b, L13-L21, 21; D1, D2, D2b, D2c, D3a, D3b, D4, D4b, D5-D14, 18; B1-B3); AK-G2-b 27 (W1-W17; C1, C2, C2b, C3-C9). One FAIL-BEFORE row (D0); one premise row (W3). The new rows D2c, D12, D13, D14, L20, L21, B3, W17 and C9 are defined in "Build notes (round 3)" below; L12 is removed (BN-14). Revision 3 as written had 62 rows (-a 37, -b 25); against revision 2 (52): 11 new ids (D2b, D3a, D3b, D4b, D10, D11, L11b, W16, C2b, C7, C8), 1 removed (D3).
 
 - **Mutation plan (each mutant has a named killer):**
 
@@ -375,7 +377,7 @@ Option for the lead (round 1 resolve row ADV-22, DECLINED by the resolver, recor
 | M-b25 | triggers/webhook.py | body size check `len <= limit` changed to `len < limit` | W6 |
 | M-b26 | triggers/webhook.py | parse catches only `ValueError`, not `RecursionError` | W5 |
 
-  Counts: 77 mutants (54 for -a: M-a1 to M-a54; 23 for -b: M-b1 to M-b9 and M-b13 to M-b26). Against revision 2 (61): 16 new (M-a45 to M-a54, M-b21 to M-b26); M-a9 and M-a40 re-pointed; M-a25 moved to the store; M-a38 restated. Ids M-b10, M-b11, M-b12 are retired with the schedule source and not reused. None is labelled equivalent in advance; a survivor is fixed by a test, never by deleting the mutant.
+  Counts (after the round 3 build notes, BN-23; these win): 103 mutants (69 for -a: M-a1 to M-a70 with M-a12 retired and not reused; 34 for -b: M-b1 to M-b9 and M-b13 to M-b37; M-b22 redefined by BN-13). The new mutants M-a55 to M-a70 and M-b27 to M-b37 and their killers are in "Build notes (round 3)" below. Revision 3 as written had 77 mutants (54 for -a: M-a1 to M-a54; 23 for -b: M-b1 to M-b9 and M-b13 to M-b26). Against revision 2 (61): 16 new (M-a45 to M-a54, M-b21 to M-b26); M-a9 and M-a40 re-pointed; M-a25 moved to the store; M-a38 restated. Ids M-b10, M-b11, M-b12 are retired with the schedule source and not reused. None is labelled equivalent in advance; a survivor is fixed by a test, never by deleting the mutant.
 
 - **Evidence commands (exact), and where the raw output is saved:** in the core repository root, each sub-PR on its own branch, by a separate EVIDENCE RUNNER agent:
   - AK-G2-a: `uv run --all-extras --group test pytest tests/test_inbound_ledger.py tests/contracts/test_store.py -q > handover/evidence/AK-G2/a-tests.txt 2>&1; echo rc=$? >> handover/evidence/AK-G2/a-tests.txt`; the full suite once at the final head (file `a-suite.txt`); `uv run --all-extras --group test ruff check`, `ruff format --check`, `bandit -ll -r src` (file `a-lint.txt`); fail-before D0 in a throwaway worktree of the branch base with only the test file copied (file `a-failbefore.txt`; expected: an assertion failure in D0, collection succeeds); mutants M-a1 to M-a54 with the P1m mutation runner (file `a-mutants.txt`; its command line is UNVERIFIED here); B1 output (file `a-burst-memory.txt`); L14 and L15 on PostgreSQL 16 and 17 (order 20 item 1; a throwaway database in its own uniquely named data folder, order 22 item 20 and order 27 item 46; file `a-postgres.txt`); B2 on PostgreSQL 16 and 17, ALONE, with no other heavy job running (file `a-burst-postgres.txt`).
@@ -384,7 +386,7 @@ Option for the lead (round 1 resolve row ADV-22, DECLINED by the resolver, recor
 
 - **Reviewers:** correctness and adversarial, fresh `egm:*` agents, given the diff, this ticket and the evidence only, never the author's verdict. The adversarial reviewer is told to try to: start two runs from one message without a reopen; get a message accepted and then lost; get a cut-off or limits-ended run reported `done`; get an unsigned, replayed or cross-source request accepted; place one tenant's body in another tenant's run; burn a message's tries with an outage; change a final receipt as the runtime role; make the purge delete a body a person still needs; strand receipts by renaming a source; and get the canary into a log, an audit field, a dead letter or a receipt column.
 
-- **Done =** every row above passes; every mutant killed; D0 fails on the base by assertion as stated; B1 and B2 correctness conditions pass, and B2's speed numbers are recorded (they become pass conditions only after PENDING LEAD 2 is answered); the plan's stop rule (independent evidence, two reviews, no open Blocker or Major in the ledger); all gates green: tests, ruff, bandit, the repo guard tests (`test_no_hardcoded_values.py`, `test_lockin_guard.py`, `test_repo_rules.py`, the migration ledger check of P3a), CodeQL, SonarCloud, CodeRabbit.
+- **Done =** every row above passes; every mutant killed; D0 fails on the base by assertion as stated; B1 and B2 correctness conditions pass, and B2's speed numbers are recorded (they become pass conditions only after PENDING LEAD 2 is answered); the plan's stop rule (independent evidence, two reviews, no open Blocker or Major in the ledger); all gates green: tests, ruff, bandit, the repo guard tests (`test_no_hardcoded_values.py`, `test_lockin_guard.py`, `test_repo_rules.py`, the migration ledger check of P3a), CodeQL, SonarCloud, CodeRabbit. **Totals the Done gate counts (after the round 3 build notes, BN-23):** 70 test rows (AK-G2-a 43, AK-G2-b 27), 103 mutants (AK-G2-a 69, AK-G2-b 34), 10 store methods, 3 tables; the evidence commands' mutant ranges read M-a1 to M-a70 without M-a12, and M-b1 to M-b9 plus M-b13 to M-b37.
 
 - **Rollback:** tag `pre-AK-G2-a` / `pre-AK-G2-b` by the lead. The migration is additive (two new tables, one trigger and one index on them, no change to existing ones); a revert of the code leaves the tables unused. **Runbook step BEFORE any revert:** count `received`, `claimed` and `needs_person` receipts per source (`list_inbound_sources` gives the counts), let dispatch drain them or record their keys and run ids, and keep the tables. Said plainly: after a revert nothing reads the tables, so open receipts wait without any alarm until that step is done; no test inside AK-G2 can survive the revert of AK-G2. Owner-visible (PENDING LEAD 4 (iv)). AK-G2-b alone is reverted by revert (no stored state of its own); the two tick steps and the `test_p7_tick.py` names go with it; the build refusals go with it, so a revert of -b also drops the orphan check.
 
@@ -473,3 +475,240 @@ Option for the lead (round 1 resolve row ADV-22, DECLINED by the resolver, recor
 - Revision 1 (2026-11-06, 03:47 UTC / 09:17 IST; committed 03:53:33 UTC / 09:23:33 IST, `738f704`): first draft. 2 sub-PRs, 44 test rows (L 14, D 7, B 2, W 11, S 5, C 5), 34 mutants, 9 INFORM, 2 PENDING LEAD, 11 later rows.
 - Revision 2 (2026-11-06, from 04:09 UTC / 09:39 IST; committed 04:14:46 UTC / 09:44:46 IST, `7855ad7`): applied all 31 rows of `reviews/AK-G2-round1-resolve.md` (36 finding ids; 17 Majors fixed on paper; DECLINE ADV-22 recorded in Couplings) and order 27 items 55, 56, 63, with AK1 revision 2's names. Cut the schedule source (against order 23 item 2's word "scheduler", PENDING LEAD 5) and more (Rules, "Cut surface"). 52 test rows (-a 31, -b 21), 61 mutants (-a 44, -b 17), 10 INFORM, 5 PENDING LEAD, 12 later rows.
 - Revision 3 (2026-11-06, from 04:33 UTC / 10:03 IST): applies all 28 rows of `reviews/AK-G2-round2-resolve.md` (36 finding ids: 25 PROPOSE FIX, 1 NEEDS LEAD written as its recommendation and marked PENDING LEAD 6, 2 DECLINE; the Blocker and 9 Majors closed on paper only) and moves AK1 cites to revision 3. Added: receipt field `generation`; `run_id` optional (`None` on id-reuse rows); derived `item_id`; `run_id_for`; store methods `reopen_inbound` and `list_inbound_sources` (nine in all); the reopen rule in the trigger; `INBOUND_REASONS` gains `run_interrupted`, `run_limits`, `run_mismatch`; the allowed-reasons table; `_classify` and `LIMITS_END`; the infrastructure-failure rule and the pause of a released source; keyed hashes (PENDING LEAD 6 (c)); `InboundSource` and `DispatchSettings` in -a; computed default `lease_s` and `INBOUND_LEASE_MARGIN_S`; `inbound.retired_sources`; `App.inbound_doors`; the equal-secret, `max_body_bytes` and orphan-source build refusals; tick result keys `inbound_infra_stops` and `inbound_orphans`; the forwarder contract; duplicate-key and JSON-string rules at the door. Cut: `count_open_inbound` and the refusal log limiter. 2 sub-PRs, 62 test rows (-a 37, -b 25; new D2b, D3a, D3b, D4b, D10, D11, L11b, W16, C2b, C7, C8; removed D3; extended L3, L6, L8, L9, L11, L15, L16, L17, L18, L19, D5, B1, B2, W2, W5, W6, C4, C5), 77 mutants (-a 54, -b 23; 16 new; M-a9 and M-a40 re-pointed, M-a25 moved, M-a38 restated; M-b10..12 stay retired), 10 INFORM (I3, I4, I5, I6, I10 reworded), 6 PENDING LEAD (4 extended with (v)-(viii); 6 new), 13 later rows (V14 new). Author choices where the resolve left a gap, and one point noticed but not changed, are listed under "Changes since revision 2" for round 3.
+
+## Build notes (round 3)
+
+Copied from `reviews/AK-G2-round3-resolve.md` (section "Build notes (round 3)") on 2026-11-06 at 04:59 UTC (10:29 IST), when the ticket froze at revision 3. These notes WIN over the text above (banner under the revision line). The decisions are unchanged. Only cites of THIS ticket's own lines were moved by +2, because the banner adds two lines: `:199` became `:201` (BN-18), and `:106` and `:213` became `:108` and `:215` (BN-22). "F1" to "F10" name the facts checked on disk in the resolve file's section "Facts I checked myself". Code cites (for example `agent_loop.py:702-703`) are unchanged; a spot check of twelve of them against `src/` on 2026-11-06 found every one correct.
+
+**BN-1. One principal per source (R3-ADV-1, R3-COR-3).**
+- `Inbox.dispatch(sources: Sequence[InboundSource], steps: Mapping[str, Step]) -> tuple[int, bool]`. Keys are source names. A configured source with no step is `ValueError` before the first claim.
+- `StartRun(runtime, principal_id: str)`: one instance per source, with no map. `run(inp)` calls `runtime.handle(inp.agent_id, principal_id=self.principal_id, ...)`.
+- **Which principal goes where (one sentence for the ticket):** `run_step(..., principal="trigger:" + source.name)` is the AUDIT principal of the pipeline step (who started the step), and `handle(principal_id=source.principal_id)` is the RUN's principal from `principals.yaml`, which `_classify` compares with `run.principal_id`.
+- -b: `app.build` builds `App.inbound_steps: Mapping[str, StartRun]` (replaces `App.inbound_step`). The three `App` fields are `inbox`, `inbound_steps` and `inbound_doors`.
+- **New row D12 (real `handle`):** two sources of one tenant, one agent, two principals, one message each, so each run carries its own source's `principal_id`, and both receipts end `done`, not `run_mismatch`.
+- **W13 gains a third source:** the same tenant and agent as the first source, another principal. Through `app.build` and a tick, each run's `principal_id` equals its source's.
+- Mutants: **M-a62** (`triggers/ledger.py`): dispatch uses one step for every source (killed by D12). **M-b37** (`app.py`): `app.build` builds one `StartRun` with the first source's principal (killed by W13).
+- Interface 5's `dispatch(sources, step)` text, the D10 and D2b setups, and `App.inbound_step` follow this note. "Noticed, NOT changed" is closed.
+
+**BN-2. A run that ends needing a person gives a receipt that needs a person (R3-ADV-2; PENDING LEAD 8).**
+- **`_classify(run, source, rec, now)`**, first match wins:
+  1. any of agent, principal or `trigger_ref` differs: `needs_person run_mismatch`;
+  2. `(run.state, run.reason_code)` in `LIMITS_END`: `needs_person run_limits`;
+  3. `run.state` in `tick.STUCK`'s keys and the run is still inside its stuck time (BN-7): leave the receipt `claimed`;
+  4. `run.state` in `tick.STUCK`'s keys otherwise: `needs_person run_interrupted`;
+  5. **`run.state is NEEDS_PERSON` (any other reason): `needs_person run_needs_person`;**
+  6. anything else: `done`.
+- **`LIMITS_END` gains** `(DENIED, "limits.kill_switch")`, `(DENIED, "limits.daily_budget")` and `(DENIED, "limits.monthly_budget")` (`agent_loop.py:702-703`, `actions/authorizer.py:44`). It is a closed set of 7 pairs, not a prefix test.
+- `INBOUND_REASONS` gains `run_needs_person`, and the Interface 1 table's `needs_person` row gains it.
+- **`run_budget` decided:** a run that hit its own per-run cap ends `NEEDS_PERSON run_budget`, so the receipt is `needs_person run_needs_person`. A person may reopen it, which can pay again. D4b's sentence "A run ending `run_budget` leaves the receipt `done`" is REPLACED by "... leaves the receipt `needs_person run_needs_person`".
+- **Words, "final state":** "`done` means exactly one run exists for this message's current generation and, when dispatch read it, that run was not stuck, not cut off, not stopped by a limit and not waiting for a person." `done` is decided at the moment dispatch reads the run. A run that later waits for a person (for example after `WAITING_FOR_APPROVAL`, if `runs.py` allows it; UNVERIFIED) is seen as a run, not as a receipt.
+- **New row D13 (real `handle`):** runs that end `NEEDS_PERSON` with `evidence_unavailable`, `tool_error`, `max_steps`, `run_budget` and `audit_unavailable` (each forced by the fake model or a fault): each receipt ends `needs_person run_needs_person`, the body is kept, and `reopen_inbound` plus dispatch starts a second run (generation 1). D4b gains the three `DENIED limits.*` cases, which give `run_limits`.
+- Mutants: **M-a63** (`triggers/ledger.py`): rule 5 removed, so such a run is `done` (killed by D13). **M-a64**: the `DENIED` pairs removed from `LIMITS_END` (killed by D4b).
+
+**BN-3. Key check against a changed inbound key (R3-ADV-3, R3-COR-12; PENDING LEAD 9).**
+- **Check value:** `key_check = _h(hkey, b"hadavin-inbound-key-check-v1")[:16]` (16 lower-case hex). It is computed in every environment; in dev without a key it is the plain-SHA-256 form. It is an HMAC of a fixed label truncated to 64 bits, so it reveals nothing about the key and may appear in a log line and in config.
+- **Storage (one row per source, so it carries tenant and readers, order 27 item 56):** new table `inbound_key_checks`, primary key `(tenant, source)`, columns `readers text[]`, `key_check text NOT NULL CHECK (key_check ~ '^[0-9a-f]{16}$')`, `set_at timestamptz`, `schema_version`. `GRANTS`: runtime `_RW`; no purge; no portal.
+- **Two store methods (10 in all after BN-14):** `get_inbound_key_check(tenant, source) -> str | None` and `set_inbound_key_check(tenant, source, readers, old: str | None, new: str) -> None`, a compare-and-set where a lost race is `StaleState`.
+- **Where it is checked:** `Inbox` checks each source once per process (and caches the result) before that source's first `receive_inbound` and before its first claim.
+  - No row: write the check (`old=None`).
+  - Equal: go on.
+  - Different, and `settings.key_check_ack` equals the CURRENT check: compare-and-set to the current value and log one WARNING ("inbound key changed for <tenant>/<source>; dedupe of messages accepted before the change is lost").
+  - Different otherwise: raise `InboundKeyChanged`. This is ONE new exception class in `triggers/ledger.py`, so Interface 9's "no new exception class" changes. Its message holds the tenant, the source and both check values, never a key.
+- **Effect:** the door answers 503 with `Retry-After` (log code `key_changed`, ERROR once per source per process, then DEBUG), so the sender keeps the message and nothing is lost. Dispatch skips that source and its step fails at the end (BN-8).
+- **Config (-b):** `inbound.key_check_ack: str | None = None`, pattern `^[0-9a-f]{16}$`. The runbook gets this text, which replaces "drain inbound before rotating": "Rotate the key only after every sender's retry horizon has passed. After a rotation, inbound stops until you copy the new check value from the ERROR line into `inbound.key_check_ack`. From then on, a retry of a message accepted before the change can start a second run."
+- **PL4 gains (ix):** "If the key behind the inbound hashes is changed, inbound stops until a person acknowledges it. After that, a sender's retry of a message accepted before the change can start a second paid run."
+- **New row L20:**
+  - (i) the first receive writes the check;
+  - (ii) a second `Inbox` over the same store with another key: `receive` raises `InboundKeyChanged`, nothing is written, and dispatch claims nothing for that source;
+  - (iii) with `key_check_ack` equal to the new check: it proceeds, the stored check is updated, and one WARNING is logged;
+  - (iv) with an ack that differs from the new check: still refused.
+- W7 gains the `key_changed` 503 and C9 the step failure.
+- Mutants: **M-a65** (`triggers/ledger.py`): the check is skipped in `Inbox.receive` (killed by L20 (ii)). **M-a66**: any ack is accepted (killed by L20 (iv)).
+- Interface 4 gains the table and its `GRANTS` row; L14 gains its rights (runtime has no DELETE; portal and purge have nothing).
+
+**BN-4. Indexes and the three growing queries (R3-ADV-4).**
+- **Migration:**
+  - REPLACE `inbound_receipts_open` with `inbound_receipts_waiting ON inbound_receipts (tenant, source, state, lease_until) WHERE state IN ('received', 'claimed', 'needs_person')`. The claim's predicate `state IN ('received', 'claimed')` implies it.
+  - ADD `inbound_receipts_reuse ON inbound_receipts (tenant, source, reuse_of) WHERE reuse_of IS NOT NULL`.
+- **`list_inbound_sources()`** returns only pairs whose count of `received`, `claimed` or `needs_person` is above 0. Interface 3 and the rollback runbook follow.
+- **Purge:** select from `inbound_bodies` joined to `inbound_receipts` on the primary key, `LEFT JOIN runs` on `run_id`. The bodies table is bounded (`body_days` plus the waiting bodies up to the ceiling), so the purge never walks the forever-growing receipts table.
+- **New row L21 (Postgres 16 and 17):** with `SET enable_seqscan = off`, `EXPLAIN` of the reuse count, the open count in `receive_inbound`, the claim, `list_inbound_sources` and the purge shows no `Seq Scan on inbound_receipts`. Raw plans are saved in `a-postgres.txt`.
+- **New row B3 (Postgres, ALONE):** 1,000,000 made-up final receipts (`generate_series`; 10 percent with `reuse_of`, 5 percent `needs_person`), plus 1,000 open receipts. Timings of `receive` (new, conflict, reuse), claim, `list_inbound_sources` and purge are recorded raw and are REPORT-ONLY (like B2). Correctness passes as the L rows. The file is `a-burst-history.txt`.
+- **Mutant M-a67** (migration): `inbound_receipts_reuse` dropped. Killed by L21.
+
+**BN-5. Tenant fence for shared agents and principals (R3-ADV-5; PENDING LEAD 10).**
+- `app.build`, in every environment: a `ConfigError` naming both sources when one `agent_id`, or one `principal_id`, appears in sources of two or more tenants. Two sources of ONE tenant may share them (BN-1).
+- Said plainly in Security "Tenant isolation": "runs carry no tenant, so this refusal is what keeps one agent from handling two tenants' bodies with the same tools, caches and approval cards".
+- C4 gains both cases (different tenants: refused; the same tenant: builds). **Mutant M-b29** (`app.py`): the refusal is removed. Killed by C4.
+
+**BN-6. Audience in the signed body (R3-ADV-6; PENDING LEAD 17).**
+- `WebhookSource.audience: str`, REQUIRED in every environment, pattern `[a-z0-9][a-z0-9._/-]{0,95}`, unique across the deployment's sources (C4).
+- **Door step (4b),** after the parse: the body's top-level `"aud"` must be a JSON string equal to `audience`; otherwise 400, log code `bad_audience`, nothing written.
+- **Forwarder contract:** "put `"aud": "<audience>"` in every body". Runbook: audience = `<deployment name>/<source name>`, deployment names unique per client.
+- **PL4 (vi) reworded:** "Two client deployments that share a signing secret cannot replay each other's requests, because each request names its audience. Only two deployments set up with the same audience AND the same secret could, which is two configuration errors."
+- **New row W17:** a correctly signed body with a missing `aud`, a wrong `aud` and `aud` as a number: 400, nothing written; the right `aud`: 202. **Mutant M-b30** (`triggers/webhook.py`): the audience check is skipped. Killed by W17.
+
+**BN-7. Slow runs, overlapping ticks, and reopen safety (R3-ADV-7, R3-ADV-14, R3-COR-11; PENDING LEAD 11).**
+- **`InboundSource.stuck_s: int`** (ge 1). -b fills it per source from the BN-17 helper for that source's agent; -a tests set it directly.
+- **`_classify` rule 3 (BN-2):** a run in a `STUCK` key state whose `updated_at >= now - source.stuck_s` is STILL RUNNING by the tick's own rule (F8). The receipt is left `claimed`, with no finish and no release (the claim already set a new lease), and it is not counted as finished. The next claim after the lease reads the run again.
+  - **Bound:** the receipt reaches its final state at most one lease after the run leaves the `STUCK` states, or after the `stuck` step moves it. A late `finish_inbound` by the first worker meets `StaleState` and is skipped (Interface 5, unchanged).
+- **Runbook line:** "the scheduler must start each tick on time even while an earlier tick still runs (overlap allowed). Concurrent ticks are safe (`tick.py:17`), and one dispatch can hold its tick for up to the lease."
+- **Reopen guard:** `reopen_inbound` also refuses with `StaleState` while a run with the receipt's current `run_id` exists in `OPEN_STATES` (`models.py:75`; UNVERIFIED members, so name the constant). In Postgres this is a `NOT EXISTS (SELECT 1 FROM runs ...)` inside the same `UPDATE`; the runtime role already reads `runs`. In memory it is `get_run`. So a `run_interrupted` receipt can be reopened only after the `stuck` step has moved its run to `NEEDS_PERSON`.
+- **AK-G15 coupling:** the reopen screen shows the previous run's state and reason, and WARNS on `outcome_unknown` (an `EXECUTING` run whose action may have happened). The new run still passes the gate and approval, and how far they catch a repeat is UNVERIFIED.
+- **PL4 gains:**
+  - (x) "Reopening a message whose earlier run may already have acted outside (its outcome is unknown) can propose the same action again; the approval step still applies."
+  - (xi) "The core marks a run as interrupted after its model-time limit; time spent in tools is not counted, so a healthy but slow run can be marked interrupted (existing core behaviour, row V16)."
+- **New row D14 (fake lease clock, real `handle`, threads):**
+  - (i) a slow step whose run is `WORKING` with a fresh `updated_at`, and a second dispatcher claiming after the lease: the receipt stays `claimed` (not `run_interrupted`); after the run succeeds, the next claim gives `done`; the fake model is called once.
+  - (ii) two concurrent ticks, one blocked in a slow step: the second tick runs `sweep`, `reconcile`, `stuck`, `checkpoint`, `purge_evidence` and `reprobe_sources`, and claims other receipts.
+- **D10 gains:** `reopen_inbound` while the first run is `WORKING` gives `StaleState`; after a `stuck` tick past `stuck_s` it works.
+- Mutants: **M-a68** (`triggers/ledger.py`): the still-running check is removed (killed by D14 (i)). **M-a69** (store and migration): reopen allowed while the run is open (killed by D10).
+
+**BN-8. The operator sees inbound trouble (R3-ADV-8, R3-COR-6; surface cut).**
+- The `inbound_dispatch` tick step does its work, then counts the orphans (BN-13) and RAISES `RuntimeError("inbound: <closed code> ...")` when an infrastructure stop happened (BN-9), a source's key check failed (BN-3), or the orphan count is above 0.
+  - The message holds names and counts only: `tenant/source=count`, never a body, a sender id or a key.
+  - `_run_step` then logs ERROR, saves `tick_state.last_error`, and the tick exits 1, or 4 when the store is unreachable after the steps (F5). The steps before it have already run, and `inbound_purge` is its own step.
+- **CUT:** `ctx.results["inbound_infra_stops"]` and `ctx.results["inbound_orphans"]` (they had no reader). Interface 8's text and "Choices" item 3 follow.
+- **New row C9:** an audit outage during dispatch, then a key-check mismatch: `run_tick` returns 1, one ERROR record names `inbound_dispatch`, `get_tick_state("inbound_dispatch").last_error` is set, and the six older steps ran.
+- C8 is rewritten in BN-13. **Mutant M-b31** (`runtime/tick.py`): the infrastructure stop does not raise. Killed by C9.
+
+**BN-9. Infrastructure failures: how they are recognised and what counts (R3-COR-1, R3-COR-2, R3-ADV-9; PENDING LEAD 13).**
+- **Classification:** at every dispatch site (`limits.blocked`, the key check, `claim_inbound`, `get_run`, the body read, `finish_inbound`, `release_inbound`), an exception with `is_connectivity_error(exc)` true (`store/protocol.py:29-38`) is an infrastructure failure: it ends the call, and dispatch returns `(n, True)`. Any other exception from those sites propagates out of `dispatch`, so the tick step fails (BN-8); the receipt is untouched beyond its lease.
+- **The door:** `is_connectivity_error` gives 503 with `Retry-After`; `InboundKeyChanged` gives 503 with `Retry-After`; anything else gives 500. Interface 7 step (6) and the log codes follow.
+- **Words, "try", replaced by:** "A crash, an overrun (the lease ran out) and a step failure (`step_error`) count. A store failure INSIDE the step, for example `create_run` inside `handle`, is a `step_error` and counts. When the store fails after a claim and leaves the receipt `claimed`, the lease expiry counts once. An infrastructure failure that dispatch itself sees (the audit intent, or the store unreachable at a dispatch call) does NOT count, and it ends that dispatch call. Bound: at most one counted try per receipt per lease; in a real outage dispatch's own claim or `get_run` fails first." No AK1 edit, and no new reason.
+- **D3a:** `create_run` raising each of `StoreUnavailable`, `OSError` and a test class `OperationalError` whose `__module__` is `"psycopg"`: each is released `step_error` and counted.
+- **D11:** the store faults use the same three classes. **D11 gains:** `release_inbound` raising the psycopg-like class leaves the receipt `claimed`, and after the lease `attempts` is 1.
+- **Mutant M-a70** (`triggers/ledger.py`): the test is `isinstance(exc, StoreUnavailable)` only. Killed by D11 (psycopg-like class).
+
+**BN-10. Names (R3-ADV-10, R3-COR-9).**
+- The HMAC key variable and the `Inbox` argument are `hkey` (`Inbox(..., hkey: bytes | None)`, `_h(hkey, ...)`, `delivery_key(hkey, ...)`).
+- `run_id_for(rec.delivery_key, generation)` is written everywhere: Interface 5 `receive` step (1) uses `run_id_for(<the new delivery_key>, 0)`; Interface 6 and L19 use `run_id_for(rec.delivery_key, generation + 1)`.
+- L19 pins `run_id_for(delivery_key, 0)` and `(…, 1)` computed from the pinned `delivery_key`, and a unit check that the function signature's first parameter is named `delivery_key`.
+
+**BN-11. Every 503 says when to retry (R3-ADV-11).**
+- Every 503 carries `Retry-After: <retry_after_s>`, whether the cause is busy, store unreachable or key changed. W10's property is unchanged.
+- W7 asserts all three. **Mutant M-b33** (`triggers/webhook.py`): no `Retry-After` on the store-error 503. Killed by W7.
+
+**BN-12. Mutants for tested behaviours (R3-ADV-12).**
+- **M-a55** `check_sender_id` uses `isinstance` (accepts a `str` subclass): L18.
+- **M-a56** a repeated reused body is answered `duplicate`: L3.
+- **M-a57** purge ceiling rule (i) removed: L13.
+- **M-a58** `_classify` skips the agent match: D2b.
+- **M-a59** `_classify` skips the principal match: D2b.
+- **M-a60** `_classify` skips the `trigger_ref` match: D2b.
+- **M-a61** `reopen_inbound` keeps `attempts`: L15, L16.
+- **M-b27** an explicit `max_body_bytes` above `evidence.max_document_bytes` is accepted: C4.
+- **M-b28** the dev server accepts a negative Content-Length: W6.
+- The Done and CHANGELOG counts follow BN-23.
+
+**BN-13. Orphan sources: checked in the dispatch step, not at build (R3-ADV-13, R3-COR-7; PENDING LEAD 16).**
+- **CUT:** the build refusal of Interface 8's last bullet, in every environment, and its dev ERROR line at build. The kill switch was never affected (F6), and the tick is no longer affected.
+- **The `inbound_dispatch` step:** orphans are the pairs from `list_inbound_sources()` (count above 0) that are neither configured nor in `retired_sources`. Retired pairs are NOT counted. A pair whose count is 0 is never listed (BN-4). The configured sources are dispatched first; then BN-8 raises with names and counts.
+- **C8 rewritten:** a store holding open receipts for (`tenant-a`, `src-old`) and a config without it.
+  - In `pilot`, `app.build` succeeds.
+  - A tick returns 1 with one ERROR record naming `tenant-a/src-old=1`, and the configured sources' receipts still finish.
+  - With `retired_sources: ["tenant-a/src-old"]`, the tick returns 0.
+- Mutants: **M-b32** (`runtime/tick.py`): orphans do not raise (killed by C8). **M-b22 redefined:** `retired_sources` ignored (killed by C8, retired case).
+- **New v1.1 row V15:** "a person closes a `needs_person` receipt without a re-run (to `refused` with reason `closed_by_person`, audited, by AK-G15)", trigger "before any pilot". Until then a source with waiting receipts is removed only with `retired_sources`.
+
+**BN-14. Cut `compare_ids` and `list_inbound` until AK-G15 (R3-ADV-15; order 8; PENDING LEAD 12).**
+- **DELETE from AK-G2-a:** `Inbox.compare_ids`, `IdComparison`, and the store method `list_inbound` (protocol, memory, Postgres). Row L12 is removed. M-a12 is retired and not reused. "What AK-G2 IS" drops "the id comparison `compare_ids`". INFORM I6's sentence about `compare_ids` is deleted.
+- **V7 rewritten:** "`list_inbound` (store), `compare_ids` both directions (dealdesk `inbox.py:271-287`, hashing with the same `delivery_key` and `hkey`), and the command `hadavin-sdk inbound compare-ids`; built in AK-G15", trigger "before any pilot (R368: comparison against the source's own ids)".
+- Said plainly (PL4 (viii), meaning unchanged): v1 code cannot compare our received ids with the sender's ids or list waiting messages; AK-G15 must ship both before any pilot.
+- Store methods after BN-3 and BN-14: `receive_inbound`, `claim_inbound`, `get_inbound_body`, `finish_inbound`, `release_inbound`, `reopen_inbound`, `list_inbound_sources`, `purge_inbound_bodies`, `get_inbound_key_check`, `set_inbound_key_check` = **10**.
+
+**BN-15. Rollback (R3-ADV-16).**
+- **Lead-run check BEFORE any revert of AK-G2-a or AK-G2-b:**
+  1. Record `list_inbound_sources()` (or the same `SELECT tenant, source, state, count(*) ... GROUP BY` as the runtime role) in `handover/evidence/AK-G2/pre-revert-<sha>.txt`.
+  2. Revert only when every count is 0, or with every open key and run id recorded in that file.
+  3. Keep the tables.
+- **This written check stands in for the template's loud-failure test:** no test inside AK-G2 can survive a revert of AK-G2.
+- **CHANGELOG line (both sub-PRs):** "Not revertible in effect while receipts are open: after a revert, waiting messages are not read and nothing raises an alarm; run the pre-revert count first."
+
+**BN-16. Small config points (R3-ADV-17).**
+- `header_prefix` gets the pattern `[A-Za-z][A-Za-z0-9-]{0,31}` (C4 gains one bad value).
+- Interface 1 says reuse rows (state `refused`) are at most `INBOUND_MAX_REUSE_ROWS` = 8 per sender id, never purged in v1, and counted by V6's trigger.
+
+**BN-17. Lease arithmetic and the stuck formula (R3-COR-4; PENDING LEAD 14).**
+- **`runtime/tick.py` (-b) gains** `stuck_after_s_for(config, registry, agent_id) -> float`, holding the formula of `:100-109` unchanged. `stuck_after_s(app, agent_id)` returns `stuck_after_s_for(app.config, app.registry, agent_id)`; this preserves behaviour, and the existing tick tests stay green. `app.build` calls the helper on the config and registry it is building, before `App` exists. `InboundSource.stuck_s` uses it too (BN-7).
+- **Interface 8's figures** read: "with a network llm kind (60 s, 3 attempts): 840 s for a 4-step agent, 1020 s for 5 steps, 2280 s for 12; with the fake llm of the test fixture (`FakeLLMSettings` has neither field, so 60 s and 1 attempt): 360 s for 4 steps, 840 s for 12."
+- **C2b rewritten:** (i) the fixture config with the 4-step agent: lease 360; (ii) plus an added 12-step agent: lease 840 (the maximum); (iii) the helper over a network-kind settings object (`_LLMSettings` defaults) for 4 and 12 steps: 840 and 2280.
+- M-b23 (fixed 900) is killed by (i) and (ii). **Mutant M-b34** (`app.py`): the minimum over agents instead of the maximum. Killed by C2b (ii).
+
+**BN-18. `max_body_bytes` follows the document cap (R3-COR-5; PENDING LEAD 15).**
+- `WebhookSource.max_body_bytes: int | None = None` (when set: ge 1, le 10485760). `None` means "equal to `evidence.max_document_bytes`", resolved at build. An explicit value above `evidence.max_document_bytes` is still refused (`:201`).
+- Security's "Cost before authentication" reads "default `evidence.max_document_bytes`".
+- **C4 gains:** a config with `evidence.max_document_bytes: 32768` and no `max_body_bytes` builds, and the door's limit is 32768; an explicit 65536 with it is refused.
+- Mutants: **M-b35** (`config.py`/`app.py`): a fixed default of 262144 (killed by C4, the 32768 case); M-b27 (BN-12) is the explicit-above case.
+- **UNVERIFIED list gains:** "P4c PL25 (a) lowers `MAX_DOCUMENT_BYTES` to about 33 KB (`reviews/P4c-round3-resolve.md:96`, order 24 item 41); `tickets/P4c.md` does not yet say so (grep: 0)."
+
+**BN-19. D2b split (R3-COR-8).**
+- **D2b:** a foreign run exists under id X BEFORE dispatch (each of another agent, principal or `trigger_ref`). The first claim's `get_run` finds it, and the receipt ends `needs_person run_mismatch`, with 0 `run_step` calls and 0 model calls. It kills M-a58, M-a59 and M-a60.
+- **New D2c:** a fault hook creates the foreign run between `get_run` and `create_run`. `handle(run_id=X)` raises `StaleState`, the receipt is released (`step_error`), and the next claim gives `run_mismatch`. It kills M-a51 together with a direct `handle` case.
+
+**BN-20. Postgres shape of the inbound methods (R3-COR-10).**
+- Interface 4 gains: the inbound methods use explicit SQL, not `_row` (`postgres.py:178-189`). `readers` is written as a sorted `list[str]` into a `text[]` column and rebuilt as a `frozenset` on read (psycopg 3.3.6 cannot adapt a `frozenset`; F7, probe). Each of the three tables has a `schema_version` column (`Shape`, `models.py:50-52`).
+- L1 and L16 compare the read-back record with the written one, including `readers` as a `frozenset`.
+
+**BN-21. Dependencies: hard versus merge order (R3-COR-13; PENDING LEAD 18).**
+- **The split table's "Depends on" for AK-G2-a:**
+  - HARD: P4d (contract harness), P3a (migration ledger check), P2a-1 (role setup and trigger rules; the `limits_unavailable` path that D4b uses), AK1-a (`pipeline/step.py` names).
+  - MERGE ORDER ONLY: P4c-2 and P5c (both edit `runtime/agent_loop.py` first). `limits.daily_budget`, `limits.monthly_budget` (`agent_loop.py:244`) and `limits_unavailable` (`:672`) already exist on main.
+- **Said plainly to the lead:** AK-G2-a cannot start until P5c merges unless the lead takes the peel (round 1 ADV-22), or lets AK-G2-a merge first and P5c rebase on `agent_loop.py`, per order 20 item 5.
+- AK-G2-b: HARD on AK-G2-a and P6a-1; AK1-b only for C5.
+
+**BN-22. Strict UTF-8, the purge's missing run, and Surface wording (R3-COR-14, R3-COR-15).**
+- **Door step (4):** `text = body.decode("utf-8")` (strict) and then `json.loads(text, object_pairs_hook=...)`, with `UnicodeDecodeError` included in the 400. W5 gains a UTF-16 body with a byte order mark: 400. **Mutant M-b36** (`triggers/webhook.py`): `json.loads(body)` on bytes. Killed by W5.
+- **Purge case (ii):** a `done` receipt whose run does not exist (the `LEFT JOIN` gives no row) is treated as "run not open", so its body is deleted at `before`. L13 gains this case.
+- **Surface:** "three `App` fields (`inbox`, `inbound_steps`, `inbound_doors`)" everywhere, so `:108` and `:215` agree.
+
+**BN-23. Table delta and totals (one place for the builder).**
+- **New rows (9):** D2c, D12, D13, D14, L20, L21, B3 (-a); W17, C9 (-b). **Removed (1):** L12.
+- **Changed rows:** L1, L3, L13, L14, L16, L18, L19, D2b, D3a, D4b, D10, D11 (-a); W5, W6, W7, W13, C2b, C4, C8 (-b).
+- **New mutants (27):** M-a55..M-a70 (16); M-b27..M-b37 (11). **Retired:** M-a12. **Redefined:** M-b22.
+- **Totals:** **70 rows**:
+  - -a 43: D0; L1-L11, L11b, L13-L21 (21); D1, D2, D2b, D2c, D3a, D3b, D4, D4b, D5-D14 (18); B1-B3.
+  - -b 27: W1-W17; C1, C2, C2b, C3-C9.
+- **Mutants: 103:**
+  - -a 69: M-a1..M-a70 minus M-a12.
+  - -b 34: M-b1..M-b9 and M-b13..M-b37.
+- **Arithmetic:** 62 + 9 - 1 = 70; 77 + 27 - 1 = 103.
+- One FAIL-BEFORE row (D0) and one premise row (W3), unchanged.
+- **Surface after the notes:**
+  - 10 store methods, 3 tables, 2 partial indexes, 1 trigger.
+  - 1 new exception class (`InboundKeyChanged`).
+  - New config fields `audience`, `key_check_ack`; `max_body_bytes` optional.
+  - New `InboundSource.stuck_s`; one tick helper.
+  - Cut: `compare_ids`, `IdComparison`, `list_inbound`, the orphan build refusal, two tick result keys.
+- **Evidence files gain** `a-burst-history.txt` (B3) and `pre-revert-<sha>.txt` (BN-15, lead-run, only at a revert).
+
+## PENDING LEAD (round 3, items 7-18)
+
+Copied from `reviews/AK-G2-round3-resolve.md` (section "PENDING LEAD"); it continues the numbering of "PENDING LEAD" above (items 1-6). NEEDS LEAD and INFORM are as the resolve file routes them: 4 NEEDS LEAD (9, 10, 11, 12) and 8 INFORM (7, 8, 13, 14, 15, 16, 17, 18). None asks the owner for money, a live call or a key.
+
+Routing rule (lead's brief): an item that touches an owner-only choice, money, redaction, least privilege, order wording or tenant isolation is NEEDS LEAD. An item where I have a recommendation and none of those applies is INFORM, and the builder takes the recommendation meanwhile. For NEEDS LEAD items too, the builder applies the recommended option meanwhile, because each is the fail-closed side.
+7. **NEW, INFORM. Freeze with build notes, no round 4.** There are 12 Majors (11 distinct), so order 20 item 6 rules out a round 4. The banner goes under the revision line.
+8. **NEW, INFORM. `done` versus `needs_person` for run ends outside `LIMITS_END` (BN-2).** Recommend `needs_person run_needs_person` for every `NEEDS_PERSON` run, and `run_limits` for `DENIED limits.*`. `run_budget` is decided as `needs_person`. Reason: reopen works only from `needs_person`, and R368 says one final state that a person can act on. Confidence 80 percent. Reversible (one classify rule).
+9. **NEW, NEEDS LEAD (secrets, money, personal data; extends PENDING LEAD 6). Key check for rotation (BN-3).**
+   - (a) **Recommended:** keep PENDING LEAD 6 (c) (inbound key derived from the restored-hash key) and add BN-3's check and acknowledgement. No new secret.
+   - (b) PENDING LEAD 6 (a), a dedicated inbound key, with the same check. One more secret per deployment, but rotating the restored-hash key then never touches inbound.
+   - (c) No check: a rotation silently allows second paid runs on retries. Not recommended.
+   - Confidence 70 percent for (a) over (b). Both are reversible before any pilot.
+10. **NEW, NEEDS LEAD (tenant isolation). Shared agent or principal across tenants (BN-5).**
+    - (a) **Recommended:** refuse at build in every environment.
+    - (b) Allow it and state it as an owner-visible limit.
+    - (a) is the R369 reading, and it costs one config check. Confidence 85 percent.
+11. **NEW, NEEDS LEAD (money). Reopen while the earlier run is still open (BN-7).**
+    - (a) **Recommended:** `reopen_inbound` refuses while that run is in `OPEN_STATES`, and AK-G15 warns on `outcome_unknown`.
+    - (b) Only AK-G15's screen warns.
+    - (a) prevents a second paid run beside a live one at the store, whichever screen calls it. Confidence 80 percent.
+12. **NEW, NEEDS LEAD (owner rule R368; order 8 cut). `compare_ids` and `list_inbound` (BN-14).**
+    - (a) **Recommended:** cut both from AK-G2 and build them, with the command, in AK-G15 before any pilot (V7).
+    - (b) Keep them, and ship V7's command in AK-G2-b now (about 20 lines, 2 rows, 1 mutant).
+    - Either way, nothing reaches a person in v1 until a caller exists. Confidence 70 percent.
+13. **NEW, INFORM. Infrastructure classification (BN-9).** Use `is_connectivity_error` at every dispatch site and at the door. A store failure inside the step counts as a try, said in Words. Confidence 85 percent.
+14. **NEW, INFORM. Lease arithmetic (BN-17).** The fake-llm numbers are 300/360 s and 780/840 s, and the network numbers 780/840 s and 2220/2280 s. A `(config, registry)` helper preserves behaviour. Confidence 90 percent.
+15. **NEW, INFORM. `max_body_bytes` default `None` (BN-18).** It follows `evidence.max_document_bytes` by name, so P4c PL25's lowering cannot break default builds. Confidence 90 percent.
+16. **NEW, INFORM. The orphan check moves from `app.build` to the dispatch step (BN-13, BN-8).** A build refusal stops the whole tick (F6). Confidence 80 percent.
+17. **NEW, INFORM (security control; changes the forwarder contract). Required `audience` (BN-6).** Recommend: required everywhere. The cost is one body field per forwarder. Confidence 75 percent.
+18. **NEW, INFORM to the lead (merge order). Hard versus merge-order dependencies (BN-21).** AK-G2-a waits for P5c unless the lead takes the peel or lets P5c rebase. The lead's call under order 20 item 5.
