@@ -23,6 +23,7 @@ from types import SimpleNamespace
 import pytest
 
 from hadavin_sdk import defaults
+from hadavin_sdk import models as _models
 from hadavin_sdk.config import Route, load_config
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.k1b import loop
@@ -31,7 +32,7 @@ from hadavin_sdk.k1b.tools import TOOL_SPECS
 from hadavin_sdk.llm import FakeLLM, ProviderError, ProviderExhausted
 from hadavin_sdk.llm import common as _common
 from hadavin_sdk.llm import protocol as _protocol
-from hadavin_sdk.models import Reply, Usage
+from hadavin_sdk.models import Reply
 from tests.contracts.kinds.builtin import ROUTES
 from tests.contracts.kinds.llm_wire import AnthropicWire, OpenAICompatWire
 from tests.contracts.test_llm import CALL, SCHEMA, TOOLS
@@ -50,6 +51,9 @@ UsageMissing = getattr(_protocol, "UsageMissing", None) or type(
 )
 UnpricedUsage = getattr(_protocol, "UnpricedUsage", None) or type(
     "UnpricedUsage", (UsageMissing,), {}
+)
+Usage = getattr(_models, "Usage", None) or __import__("collections").namedtuple(
+    "Usage", "input_tokens output_tokens cache_write_tokens cache_read_tokens", defaults=(0, 0)
 )
 request_bound = getattr(_common, "request_bound", None)
 PRICED = ROUTES["default"]  # 3.00 in, 15.00 out per million tokens
