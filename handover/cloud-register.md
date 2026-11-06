@@ -675,7 +675,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | rt-R | Sonnet rung-table build notes: retrospective rows P1m and P1a (order 56 item 4) (order 56) | 08:10Z | +30min | REPORTED | verify, commit |
 | au-P0t | Opus author P0t stage rename ticket (order 56 item 5) | 08:11Z | +30min | REPORTED | save |
 | bd-P0t | Sonnet builder, P0t stage rename (core/P0t, draft PR) | REPORTED | order 62 |
-| bd-P1b | Sonnet builder, P1b on core/P1a (core/P1b, draft PR into core/P1a) | running | order 62; confusables 15.1.0 source may block (unicode.org 403) |
+| bd-P1b | Sonnet builder, P1b on core/P1a (core/P1b, draft PR into core/P1a) | REPORTED 37b9ca6 (PR 70, draft, base core/P1a) | order 62; confusables 15.1.0 source may block (unicode.org 403) |
 | bd-P3a | Sonnet builder, P3a plan + first unblocked sub-PR | REPORTED (final: no further work) | order 62 |
 | bd-P4d | Sonnet builder, P4d plan + first unblocked sub-PR | REPORTED | order 62 |
 | au-P1c | Opus author, P1c ticket via EGM brainstorm+draft | REPORTED 1862e4c | order 64; Goldfish review + resolve follow | (rev 3 in progress: aaae)

@@ -226,3 +226,4 @@
 2026-11-06T10:07:16Z | step=order 70 applied (q162); P1c rev3 author running | next=P1a fix3, P1b, P1c rev3 reports | blocked=none
 2026-11-06T10:14:28Z | step=P1c rev3 committed (q163) | next=order 71 P0t fix1; P1c round-2 snapshot | blocked=none
 2026-11-06T10:15:56Z | step=order 72 read; P1c round 2 + P0t fix1 running (q164) | next=reports | blocked=none
+2026-11-06T10:18:42Z | step=P1b verified+reported (q165) | next=P1a fix3, P0t fix1, P1c r2 reports | blocked=lead q165
