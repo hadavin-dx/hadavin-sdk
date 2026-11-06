@@ -650,7 +650,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | rs-AKG16-r3 | Opus egm-resolve AK-G16 rev 3 round 3 (final: fixes become BN notes, freeze) | 07:18Z | +30min | REPORTED | save |
 | rs-AKG15-r3 | Opus egm-resolve AK-G15 rev 3 round 3 (final; money path: no round 4, 14 Majors; fixes become BN notes, freeze) | 07:26Z | +35min | REPORTED | save |
 | egm-AKG16 | Opus egm-brainstorm (short) + egm-draft AK-G16 render/gate flow into egm/hadavin-sdk/ak-g16/ (order 46 PL1) | 07:36Z | +40min | REPORTED | commit |
-| egm-AKG15 | Opus egm-brainstorm (short) + egm-draft AK-G15 item state machine, re-run transaction, grants into egm/hadavin-sdk/ak-g15/ (order 43 item 13) | 07:38Z | +40min | running | commit |
+| egm-AKG15 | Opus egm-brainstorm (short) + egm-draft AK-G15 item state machine, re-run transaction, grants into egm/hadavin-sdk/ak-g15/ (order 43 item 13) | 07:38Z | +40min | REPORTED | commit |
 | pl-A15 | Opus A15 amendment + speed-plan-jagrat-first.md (order 47 items 1-2) | 07:43Z | +45min | running | save, commit |
 | au-AKG17 | Opus EGM brainstorm+draft + ticket rev 1 AK-G17 SSO/sign-in | 07:43Z | +45min | running | save, commit |
 | au-JG1 | Opus EGM brainstorm+draft + ticket rev 1 JG-1 cloud_ops reader | 07:43Z | +45min | running | save, commit |
