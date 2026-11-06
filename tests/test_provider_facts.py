@@ -131,7 +131,9 @@ def _rebuilt(obj):
     ``pickle.loads`` itself is not called in a test of our own objects; the rebuild below is the same call ``loads`` would make
     (class called with the stored arguments, then the stored attributes set)."""
     pickle.dumps(obj)  # it must be picklable at all
-    func, args, state = obj.__reduce_ex__(pickle.HIGHEST_PROTOCOL)[:3]
+    reduced = obj.__reduce_ex__(pickle.HIGHEST_PROTOCOL)
+    func, args = reduced[0], reduced[1]
+    state = reduced[2] if len(reduced) > 2 else None
     clone = func(*args)
     clone.__dict__.update(state or {})
     return clone

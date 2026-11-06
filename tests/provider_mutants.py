@@ -174,7 +174,7 @@ _KILL: dict[str, tuple[str, str]] = {
         "tests/test_provider_errors_failbefore::test_r10_a_wait_computation_that_raises_is_a_decision_failure[headers.get-raises]",
     ),
     "M38": (
-        "AssertionError: (<function facts at 0x7f0ca2a977",
+        "AssertionError: (<function facts at ",
         "tests/test_provider_facts::test_r19_bare_exceptions_give_the_class_based_types[bedrock]",
     ),
     "M39": (
