@@ -454,3 +454,5 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | rv-P6b2-r2-cor | P6b2 r2 correctness | 03:26Z | +30min | running | verify |
 | rs-P5b5-r2 | P5b5 round 2 resolve (Opus) | 03:26Z | +25min | running | verify |
 | rs-P5b5-r2 | P5b5 round 2 resolve (Opus) | 03:26Z | +25min | running | verify |
+| rv-P8b-r3-adv | P8b r3 adversarial | 03:27Z | +30min | running | verify |
+| rv-P8b-r3-cor | P8b r3 correctness | 03:27Z | +30min | running | verify |
