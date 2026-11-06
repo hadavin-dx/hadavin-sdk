@@ -298,3 +298,9 @@ P4d-a2 | pushed c31f336 (a2-i, P4d-b); a2-ii (StoreBusy, write wrapper) not buil
 P4b1 | restarted stacked on c31f336 | 1 | StoreBusy rows (a2-ii)
 P4a/P4c | NOT started: merging P2a-1 WIP 77ace26 onto c31f336 conflicts (config.py, defaults.py, tests/test_p2_postgres.py); P2a-1 WIP not green | 0 | P2a-1 final head, merge by its builder or me
 11 agents running
+2026-11-06T12:24:02Z | package | stage | builders running | blocked on
+P4a | started stacked on f0465df | 1 | P4d-a2-ii (StoreBusy) rows
+P2a-1 | rebased onto P4d-a2 (f0465df, local); renumbered its migration to 0007; changed P4d-a2's reserve_spend to read the state view (flag OR open stop request); contracts+real-login suite 447 passed, 1 skipped; full suite not run | 1 | -
+P4c | next: stacks on P4b1 head once pushed | 0 | P4b1 push
+P6b1 | needs P4a head | 0 | P4a
+BN-27 check: Postgres 16 server binaries exist (/usr/lib/postgresql/16/bin); the note "no Postgres in the cloud container" is WRONG, to be corrected in the register. 12 agents running.
