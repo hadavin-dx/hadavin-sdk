@@ -1441,9 +1441,9 @@
 | BL-core-P2a-r8-adv-M1 | P2a | MAJOR | reset records previous resetter as old_by (stale by on request-only stops); audit attribution wrong | FIXED-UNVERIFIED | reviews/P2a-round8-adversarial.md | 4c7baa2 |
 | BL-core-P4d-r8-cor-M1 | P4d | MAJOR | row a7 price 1E-30 refused by Route validator, fixture unbuildable (same as adv M1) | FIXED-UNVERIFIED | reviews/P4d-round8-correctness.md | 4fff3cc |
 | BL-core-P3a-r8-cor-M1 | P3a | MAJOR | H11 plants 2,3 use plain CREATE FUNCTION which _SAFE_CREATE refuses; test never reaches read-back | FIXED-UNVERIFIED | reviews/P3a-round8-correctness.md | 7b31e3b |
-| BL-core-P2d-r5-cor-M1 | P2d | MAJOR | see reviews/P2d-round5-correctness.md M1 | OPEN | reviews/P2d-round5-correctness.md | 7b31e3b |
-| BL-core-P2d-r5-cor-M2 | P2d | MAJOR | see reviews/P2d-round5-correctness.md M2 | OPEN | reviews/P2d-round5-correctness.md | 7b31e3b |
-| BL-core-P2d-r5-cor-M3 | P2d | MAJOR | see reviews/P2d-round5-correctness.md M3 | OPEN | reviews/P2d-round5-correctness.md | 7b31e3b |
-| BL-core-P2d-r5-cor-M4 | P2d | MAJOR | see reviews/P2d-round5-correctness.md M4 | OPEN | reviews/P2d-round5-correctness.md | 7b31e3b |
+| BL-core-P2d-r5-cor-M1 | P2d | MAJOR | see reviews/P2d-round5-correctness.md M1 | FIXED-UNVERIFIED | reviews/P2d-round5-correctness.md | 7b31e3b |
+| BL-core-P2d-r5-cor-M2 | P2d | MAJOR | see reviews/P2d-round5-correctness.md M2 | FIXED-UNVERIFIED | reviews/P2d-round5-correctness.md | 7b31e3b |
+| BL-core-P2d-r5-cor-M3 | P2d | MAJOR | see reviews/P2d-round5-correctness.md M3 | FIXED-UNVERIFIED | reviews/P2d-round5-correctness.md | 7b31e3b |
+| BL-core-P2d-r5-cor-M4 | P2d | MAJOR | see reviews/P2d-round5-correctness.md M4 | FIXED-UNVERIFIED | reviews/P2d-round5-correctness.md | 7b31e3b |
 | BL-core-P4a-r11-adv-M1 | P4a | MAJOR | no row/mutant kills round-down in k1b worst_case_usd (under-book 1e-8) | FIXED-UNVERIFIED | reviews/P4a-round11-adversarial.md | 0a79b83 |
 | BL-core-P4a-r11-adv-M2 | P4a | MAJOR | P4a-1 line 197 live-call gate weaker than PL51 (P4c-2 AND P4b2-a); gate is text only | FIXED-UNVERIFIED | reviews/P4a-round11-adversarial.md | 0a79b83 |
