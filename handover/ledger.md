@@ -1499,3 +1499,11 @@
 | R2-P5b2-ADV-5 | Major | P5b2 | see reviews/P5b2-round2-adversarial.md | OPEN |
 | R2-P5b2-ADV-6 | Major | P5b2 | see reviews/P5b2-round2-adversarial.md | OPEN |
 | R2-P5b2-ADV-7 | Major | P5b2 | see reviews/P5b2-round2-adversarial.md | OPEN |
+| R2-P5a-COR-1 | Blocker | P5a | writer tests vs Done; see reviews/P5a-round2-correctness.md | OPEN |
+| R2-P5a-COR-2 | Major | P5a | see reviews/P5a-round2-correctness.md | OPEN |
+| R2-P5a-COR-3 | Major | P5a | see reviews/P5a-round2-correctness.md | OPEN |
+| R2-P5a-COR-4 | Major | P5a | see reviews/P5a-round2-correctness.md | OPEN |
+| R2-P5a-COR-5 | Major | P5a | see reviews/P5a-round2-correctness.md | OPEN |
+| R2-P5a-COR-6 | Major | P5a | see reviews/P5a-round2-correctness.md | OPEN |
+| R2-P5a-COR-7 | Major | P5a | see reviews/P5a-round2-correctness.md | OPEN |
+| R2-P5a-COR-8 | Major | P5a | see reviews/P5a-round2-correctness.md | OPEN |

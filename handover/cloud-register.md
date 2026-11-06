@@ -335,7 +335,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | res-bs-P1 | Opus egm-resolve build-start P1 (one round) | opus | 02:40Z | +60min | running | verify build notes in tickets/P1.md; S0 EXIT P1 effective |
 | rev2-P4b2 | Sonnet revision author for P4b2 after round-1 resolve | sonnet | 02:40Z | +60min | running | verify commit and counts; then round 2 reviewers |
 | r2-P5a-adv | Sonnet egm-design adversarial round 2 of tickets/P5a.md | sonnet | 02:40Z | +30min | REPORTED | save report to reviews/; then resolve |
-| r2-P5a-cor | Sonnet egm-codebase-details correctness round 2 of tickets/P5a.md | sonnet | 02:40Z | +30min | running | save report to reviews/; then resolve |
+| r2-P5a-cor | Sonnet egm-codebase-details correctness round 2 of tickets/P5a.md | sonnet | 02:40Z | +30min | REPORTED | save report to reviews/; then resolve |
 | r1-P5b5-adv | Sonnet egm-design adversarial round 1 of tickets/P5b5.md | sonnet | 02:40Z | +30min | QUEUED (agent limit 20) | save report to reviews/; then resolve |
 | r1-P5b5-cor | Sonnet egm-codebase-details correctness round 1 of tickets/P5b5.md | sonnet | 02:40Z | +30min | QUEUED (agent limit 20) | save report to reviews/; then resolve |
 | res-bs-P3a | Opus egm-resolve build-start P3a (one round) | opus | 02:41Z | +60min | running | verify build notes in tickets/P3a.md; S0 EXIT P3a effective |
@@ -352,3 +352,4 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | r1-P8a-cor | P8a round-1 reviewer (cor) | sonnet | 02:45Z | +30min | QUEUED (agent limit) | launch when slots free |
 | r1-P5b3-adv | P5b3 round-1 reviewer (adv) | sonnet | 02:45Z | +30min | QUEUED (agent limit) | launch when slots free |
 | r1-P5b3-cor | P5b3 round-1 reviewer (cor) | sonnet | 02:45Z | +30min | QUEUED (agent limit) | launch when slots free |
+| res-r2-P5a | Opus egm-resolve P5a round 2 | opus | 02:46Z | +45min | running | verify disposition; then rev 3 author, round 3 reviewers (cap 3 rounds) |
