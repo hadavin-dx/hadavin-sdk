@@ -195,3 +195,4 @@
 08:05Z | step=genericity audit saved; BN writer launched | next=rung audit A, D; P1a fix2 | blocked=G-4, G-6 need lead
 08:07Z | step=rung audit part A saved | next=part D, merge into rung-audit-1.md, AK-G2 soak note | blocked=none
 08:08Z | step=genericity build notes saved | next=rung audit part D, merge rung-audit-1.md, P1a fix2 | blocked=G-4,G-6
+08:09Z | step=rung-audit-1.md assembled | next=P1a fix2 result, wait for lead on audit | blocked=lead reads rung audit
