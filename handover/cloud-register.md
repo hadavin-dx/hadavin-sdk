@@ -273,4 +273,6 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | r10-LK-adv | LK round 10 adversarial review of designs/lookalike-leak.md draft 10 (8cc31a9) | sonnet | 01:21Z | +45min | REPORTED | save report, ledger |
 | r10-LK-cor | LK round 10 correctness review of draft 10 (8cc31a9) | sonnet | 01:21Z | +45min | REPORTED | save report, ledger |
 | r13-P1-resolve | Opus egm-resolve of P1 rev 14 over round 13 adv+cor reports -> rev 15 input | opus | 01:24Z | +60min | REPORTED | verify, push, rev 15 author, round 14 reviewers |
-| rev15-P1-author | Sonnet author: apply P1 round 13 resolve to tickets/P1.md -> rev 15 | sonnet | 01:29Z | +50min | running | verify commit, register r14 reviewers |
+| rev15-P1-author | Sonnet author: apply P1 round 13 resolve to tickets/P1.md -> rev 15 | sonnet | 01:29Z | +50min | REPORTED | verify commit, register r14 reviewers |
+| r14-P1-adv | egm-design adversarial round 14 on tickets/P1.md rev 15 (afbaac9) | sonnet | 01:36Z | +40min | running | save report, ledger |
+| r14-P1-cor | egm-codebase-details correctness round 14 on tickets/P1.md rev 15 (afbaac9) | sonnet | 01:36Z | +40min | running | save report, ledger |
