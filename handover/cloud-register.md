@@ -397,15 +397,17 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | r3-P6b1-adv | egm-design adversarial round 3 (LAST) of P6b1 rev 3 | sonnet | 03:03Z | +20min | running | save |
 | r3-P6b1-cor | egm-codebase-details correctness round 3 (LAST) of P6b1 rev 3 | sonnet | 03:03Z | +20min | running | save |
 | res-r2-P4b2 | Opus egm-resolve P4b2 round 2 (5 Majors + minors) | opus | 03:03Z | +30min | running | save, rev 4 author |
-| r1-P5b4-cor2 | round 1 ticket review | sonnet | 03:04Z | +20min | running | save |
-| r1-P8a-adv | round 1 ticket review | sonnet | 03:04Z | +20min | running | save |
-| r1-P8a-cor | round 1 ticket review | sonnet | 03:04Z | +20min | running | save |
+| r1-P5b4-cor2 | round 1 ticket review | sonnet | 03:04Z | +20min | REPORTED | save |
+| r1-P8a-adv | round 1 ticket review | sonnet | 03:04Z | +20min | REPORTED | save |
+| r1-P8a-cor | round 1 ticket review | sonnet | 03:04Z | +20min | REPORTED | save |
 | r1-P5b3-adv | round 1 ticket review | sonnet | 03:04Z | +20min | running | save |
 | r1-P5b3-cor | round 1 ticket review | sonnet | 03:04Z | +20min | running | save |
 | r1-P5b5-adv | round 1 ticket review | sonnet | 03:04Z | +20min | REPORTED | save |
 | r1-P5b5-cor | round 1 ticket review | sonnet | 03:04Z | +20min | REPORTED | save |
 | r3-P5b2-adv | egm-design adversarial round 3 of P5b2 rev 3 | sonnet | 03:05Z | +20min | running | save |
 | r3-P5b2-cor | egm-codebase-details correctness round 3 of P5b2 rev 3 | sonnet | 03:05Z | +20min | running | save |
-| sav-P5b5-r1 | Saver: P5b5 round 1 reports + ledger | sonnet | 03:06Z | +10min | running | resolve |
+| sav-P5b5-r1 | Saver: P5b5 round 1 reports + ledger | sonnet | 03:06Z | +10min | REPORTED | resolve |
 | r3-P4c-adv | egm-design adversarial round 3 of P4c rev 3 (money) | sonnet | 03:06Z | +20min | running | save |
 | r3-P4c-cor | egm-codebase-details correctness round 3 of P4c rev 3 | sonnet | 03:06Z | +20min | running | save |
+| sav-P5b4-P8a-r1 | Saver: P5b4 cor, P8a adv+cor round 1 + ledger | sonnet | 03:07Z | +10min | running | resolves |
+| res-r1-P5b5 | Opus egm-resolve P5b5 round 1 (1 Blocker, 11 Majors) | opus | 03:07Z | +30min | running | rev 2 author |
