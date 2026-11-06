@@ -485,7 +485,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | au-P5c-r3 | Opus author P5c revision 3 (per round-2 resolve) | 06:00Z | +40min | running | verify |
 | au-P6b2-r3 | Opus author P6b2 revision 3 (per round-2 resolve) | 06:00Z | +40min | running | verify |
 | rv-P5b5-r3-adv | P5b5 r3 adversarial (egm-design) | 06:10Z | +30min | REPORTED (inline, unsaved) | verify |
-| rv-P5b5-r3-cor | P5b5 r3 correctness (egm-codebase-details) | 06:10Z | +30min | running | verify |
+| rv-P5b5-r3-cor | P5b5 r3 correctness (egm-codebase-details) | 06:10Z | +30min | REPORTED (inline, unsaved) | verify |
 | au-AKG1 | Opus author ticket AK-G1 (conversational agent with tools) | 06:25Z | +40min | running | verify |
 | au-AKG2 | Opus author ticket AK-G2 (inbound trigger kind, absorbs P7a) | 06:25Z | +40min | running | verify |
 | sv-P6a-r3 | save P6a r3 pair + ledger | 06:35Z | +15min | REPORTED | verify |
@@ -495,3 +495,4 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | rv-AK2a-r1-cor | AK2a r1 correctness (egm-codebase-details) | 06:50Z | +30min | running | verify |
 | rs-P6a-r3 | Opus resolve P6a round 3 (last round, build notes) | 07:00Z | +30min | running | verify |
 | au-AK0-r2 | Opus author AK0 revision 2 | 07:05Z | +40min | running | verify |
+| sv-P5b5-r3 | save P5b5 r3 pair + ledger | 07:15Z | +15min | running | verify |
