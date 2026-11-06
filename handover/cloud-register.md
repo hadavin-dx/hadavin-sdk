@@ -386,7 +386,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | r2-P4b2-adv | egm-design adversarial round 2 of tickets/P4b2.md rev 3 | sonnet | 02:57Z | +30min | running | REPORTED |
 | r2-P4b2-cor | egm-codebase-details correctness round 2 of tickets/P4b2.md rev 3 | sonnet | 02:57Z | +30min | running | REPORTED |
 | rev-P5b2-3 | Opus author: P5b2 revision 3 from reviews/P5b2-round2-resolve.md | opus | 02:57Z | +45min | REPORTED | verify; round 3 reviewers; one resolve; freeze |
-| rev-P4c-3 | Opus author: P4c revision 3 from reviews/P4c-round2-resolve.md | opus | 02:58Z | +45min | running | verify; round 3 reviewers; resolve; freeze |
+| rev-P4c-3 | Opus author: P4c revision 3 from reviews/P4c-round2-resolve.md | opus | 02:58Z | +45min | REPORTED | verify; round 3 reviewers; resolve; freeze |
 | rev-P4b1-3 | Opus author: P4b1 revision 3 from reviews/P4b1-round2-resolve.md | opus | 02:59Z | +45min | running | verify; round 3 reviewers; resolve; freeze |
 | rev-P5a-3 | Opus author: P5a revision 3 from reviews/P5a-round2-resolve.md (was NOT launched earlier: lead slip, found 03:00Z) | opus | 03:00Z | +45min | running | verify; P5b1 rev 3 waits for it; round 3 reviewers |
 | rev-P6a-2 | Opus author: P6a revision 2 from reviews/P6a-round1-resolve.md | opus | 03:00Z | +45min | running | verify; round 2 reviewers |
@@ -407,3 +407,5 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | r3-P5b2-adv | egm-design adversarial round 3 of P5b2 rev 3 | sonnet | 03:05Z | +20min | running | save |
 | r3-P5b2-cor | egm-codebase-details correctness round 3 of P5b2 rev 3 | sonnet | 03:05Z | +20min | running | save |
 | sav-P5b5-r1 | Saver: P5b5 round 1 reports + ledger | sonnet | 03:06Z | +10min | running | resolve |
+| r3-P4c-adv | egm-design adversarial round 3 of P4c rev 3 (money) | sonnet | 03:06Z | +20min | running | save |
+| r3-P4c-cor | egm-codebase-details correctness round 3 of P4c rev 3 | sonnet | 03:06Z | +20min | running | save |
