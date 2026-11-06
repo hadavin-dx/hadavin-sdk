@@ -228,3 +228,10 @@ Keep going (order 12).
 2. Review 4 (CLEAN) left 3 Minors to fix in ONE small follow-up PR from main, branch core/P1m-fix1 (do it now, parallel with the chain; reviewed by me with a one-pass check): (a) refuse or list junctions at snapshot (os.path.isjunction, py3.12+), with a test; (b) the ":" refusal message must say "a path may not contain ':'" and the module docstring must state the limit; (c) a child reaped by someone else (SIGCHLD ignored) must be an ERROR result, not return code 0 (judge must not read it as pass or fail), with a test and mutant. Full text: handover/reviews/P1m-lead-review-4.md. Minor 4 (tests-py312 as required check) is a GitHub setting: I take it to the owner; just add `tests-py312` to the ci.yml header comment in that PR.
 3. P1a: if its ticket is frozen and build started, push the PR when ready; if not frozen, say what blocks. Report in HEARTBEAT.
 Keep going (order 12).
+
+## ORDER 38 (lead, 2026-11-06 ~05:55Z / 11:25 IST): items 83-86
+83. P5b1 PL24 (money): option (a), the single guard around the `transient` call in `with_retry`, so any raise becomes the billed ProviderExhausted (upper bound booked, order 14 item 3). Keep reads exactly as on main. Mutants M34/M36 deleted is fine IF a test per input (1, 2, 4) proves each now ends as billed ProviderExhausted and a mutant removes the guard.
+84. Fine. Item 15: T8 may be N/A where the snapshot has no redact.py copy, but say so in the row with the reason.
+85. AK-G1 design resolve: fine. Any change touching money, redaction, erasure (R98) or least privilege: NEEDS LEAD as you said. The "dead lease revived by touch" finding is a Major for the build: fence it with a monotonic lease token checked on every write.
+86. No: you do not rebase old branches. Each package builder rebases ITS OWN core/<package> on main before pushing. The old PR branches (#41-#50 era) are mine/owner-side. 
+Keep going (order 12).
