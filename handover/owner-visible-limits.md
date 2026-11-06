@@ -13,3 +13,15 @@ Added 2026-11-06 about 04:00 UTC (09:30 IST).
 - **What it does not check.** It cannot tell a password or a person's name from an ordinary name. A wrong value that looks like an ordinary name passes.
 - **What a person must do, and when.** Before the first pilot with real client data, a person re-reads every such message in the code and checks that none of them can print a password, a login or a person's name. If one can, it is rewritten to fixed words before the pilot.
 - Studio reference: package P5b3, its decision 19 (option (a)), lead order 24 item 39, follow-up row P5b3-V1.
+
+## 2. A scanned PDF with a few unreadable picture pages can be read with those pages left out
+- **What the program checks.** When the kit reads a PDF, it counts the pages it could not turn into text. A document where most pages are pictures goes to a person.
+- **What it does not check.** Up to 1 in 10 such pages can otherwise be left out without a person being told (in a 300-page PDF, up to 30 pages). The report shows how many pages were left out, but nothing stops the document from being used.
+- **What a person must do, and when.** Before the first pilot, a person decides whether 1 page in 10 is acceptable for that client, or asks for a lower share (for example 1 page in 50), which sends more mixed documents to a person. The share is a setting and stays at 1 in 10 until it is measured on real documents.
+- Studio reference: package AK2a, PENDING LEAD 9 (i), lead order 34 item 76.
+
+## 3. A name written as several words can be cut into two passages
+- **What the program checks.** Each passage cut from a document is checked for masking on its own.
+- **What it does not check.** A value written as several words, such as a two-word name, can be cut into two passages. A name the system knows only as a whole may then be sent in parts, because neither part alone is recognised.
+- **What a person must do, and when.** Before the first pilot, a person checks on the client's sample documents whether names are cut this way, and tells the studio if they are.
+- Studio reference: package AK2a, PENDING LEAD 9 (ii), lead order 34 item 76.
