@@ -172,3 +172,4 @@
 06:59Z | step=AK-G16 round 2 resolve saved (13 Major, NEEDS LEAD 16-18) | done=pushed | next=AK-G16 rev 3 author; P1a fix1 builder running; AK-G15 resolve running | blocked=none
 06:59Z | step=AK-G15 round 2 resolve saved (32 rows, 3 declined, PL20-22 INFORM) | done=pushed | next=AK-G15 rev 3 author | blocked=none
 07:04Z | step=order 45 recorded (items 105-107), relayed to AK-G16 rev 3 author | done=pushed | next=rev 3 authors, P1a sha | blocked=none
+07:11Z | step=AK-G16 rev 3 a4b7a3c (84 rows, 89 mutants, PL16-18 answered) pushed; launching round 3 reviews | next=AK-G15 rev 3, P1a sha | blocked=none
