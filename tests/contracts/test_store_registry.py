@@ -392,6 +392,37 @@ def test_xdist_active_reads_the_worker_variable_the_option_and_the_plugin(monkey
     assert xdist_active(config(False))
 
 
+def test_the_root_conftest_refuses_an_xdist_run_under_the_fail_rule_and_only_then(monkeypatch):
+    """The xdist controller never loads `tests/contracts/conftest.py`, so the refusal lives in `tests/conftest.py`
+    (real xdist 3.8.0: with the refusal absent the planted defects passed under `-n 2` with exit 0)."""
+    from types import SimpleNamespace
+
+    import tests.conftest as root
+    from tests.contracts.store_support import XDIST_MESSAGE
+
+    def config(plugin=True, **option):
+        return SimpleNamespace(
+            pluginmanager=SimpleNamespace(hasplugin=lambda name: plugin and name == "xdist"),
+            option=SimpleNamespace(**option),
+        )
+
+    for name in RULE_VARS:
+        monkeypatch.delenv(name, raising=False)
+    monkeypatch.delenv("PYTEST_XDIST_WORKER", raising=False)
+    assert (
+        root.pytest_configure(config(numprocesses=2, dist="load")) is None
+    )  # no rule: not affected
+    monkeypatch.setenv("HADAVIN_REQUIRE_PG", "1")
+    with pytest.raises(pytest.UsageError, match="xdist") as caught:
+        root.pytest_configure(config(numprocesses=2, dist="load"))
+    assert str(caught.value) == XDIST_MESSAGE
+    assert root.pytest_configure(config(numprocesses=0, dist="no")) is None  # rule on, no xdist
+    monkeypatch.delenv("HADAVIN_REQUIRE_PG")
+    monkeypatch.setenv("CI", "true")
+    with pytest.raises(pytest.UsageError):
+        root.pytest_configure(config(numprocesses=None, dist="loadfile"))
+
+
 # --- conftest.py wires the hooks (real nested pytests, order 101 item 1) ------------------------------------------
 CI_COMMAND = [
     "-q",
