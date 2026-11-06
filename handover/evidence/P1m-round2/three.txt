@@ -1,0 +1,24 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+.........................................F.................              [100%]
+=================================== FAILURES ===================================
+________________ test_the_manifest_pins_the_files_a_demo_copies ________________
+
+    def test_the_manifest_pins_the_files_a_demo_copies():
+        root = Path(__file__).resolve().parents[1]
+        manifest = json.loads((FIX / "mutation_manifest.json").read_text(encoding="utf-8"))
+        for rel, sha in manifest["files"].items():
+            data = (root / rel).read_bytes().replace(b"\r\n", b"\n")
+>           assert hashlib.sha256(data).hexdigest() == sha, (
+                rel,
+                "changed: re-sync the demos and update the manifest and the CHANGELOG",
+            )
+E           AssertionError: ('tools/mutation_runner.py', 'changed: re-sync the demos and update the manifest and the CHANGELOG')
+E           assert '7d6e6ccd2816...c217f4a21a4bc' == 'b1b637f340fe...96d106c5764b9'
+E             
+E             - b1b637f340fe6aa5f78f7045fa985d6bee37e476d0c34379e4a96d106c5764b9
+E             + 7d6e6ccd28162264339572ba3d9387406fe2b49a40f1f6cb29ac217f4a21a4bc
+
+tests/test_mutation_runner.py:1071: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_mutation_runner.py::test_the_manifest_pins_the_files_a_demo_copies
+1 failed, 58 passed in 20.43s
