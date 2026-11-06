@@ -149,3 +149,4 @@
 2026-11-06T05:53Z | step=order 38 recorded (88); P8a r3 pair + P5b1 r3 adversarial saved; P8a r3 resolve launched; lease token relayed to AK-G1 resolve | done=order 38 | next=P5b1 r3 correctness, resolves, builders | blocked=none
 2026-11-06T06:03Z | step=P8a FROZEN 2f3e197 (335 lines, BN-1..20) verified; P5b1 resolve 6ff0be0 verified, BN author running; AK-G1 design resolve pushed | done=P8a | next=P5b1 freeze, P1m-fix1/P1a builders, kit tickets AK-G15/G16/G14 | blocked=PL17 (P8a), 25 (P5b1) NEEDS LEAD
 2026-11-06T06:07Z | step=order 39 applied: owner-visible limits 7-12, operator-notes, contract-terms-notes; design rev 3 agent running; AK-G15 and AK-G16 authors launched | done=order 39 | next=verify authors, P1a builder, AK-G14 | blocked=none
+2026-11-06T06:09Z | step=order 40 received (PR 62 review 0B/0M/4m); builder resumed to fix M1-M4 in one commit | done=- | next=verify sha, tell lead | blocked=none

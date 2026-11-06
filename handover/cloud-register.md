@@ -622,3 +622,4 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | ds-AKG1-o39 | Opus: apply order 39 answers 1-4 to AK-G1 design rev 2 -> rev 3 | 06:07Z | +20min | running | verify, push |
 | au-AKG15 | Opus author AK-G15 rev 1 (durable needs-a-person queue) | 06:07Z | +40min | running | verify, push, review pair |
 | au-AKG16 | Opus author AK-G16 rev 1 (deployment into client's cloud) | 06:07Z | +40min | running | verify, push, review pair |
+| bd-P1m-fix1b | Sonnet builder (resumed) PR 62 order 40, 4 minors, one more commit | 06:09Z | +30min | running | verify, tell lead sha |
