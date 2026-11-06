@@ -10,6 +10,18 @@ copies ``tools/mutation_runner.py`` from core like any other core file (a ``core
 imports only ``hadavin_sdk.testing.mutation``). It runs a subprocess on caller-chosen trees, so the mutant file is found by LISTING the
 tree (``_locate``: the caller's string is compared with the listed names and never joined to a path), every other path is checked to
 stay inside its tree (``_inside``: a ``..`` part or an absolute path is a ``ValueError``), and every pytest run has a timeout, and a timeout kills the whole process tree of the run.
+
+Limits, stated plainly. The tree kill reaches the processes that stay in the run's process group (POSIX) or the parent chain
+(Windows ``taskkill /T``). A test or mutant that starts a process in a NEW session (``setsid``, ``start_new_session=True``) or, on
+Windows, a process whose parent has already ended, escapes it. The mutant runner does not use a Windows Job Object; the
+``heavy_slot`` helper of the core does, and is the model if this limit ever matters. After a normal exit the group is killed
+once more, so a leftover background process of a finished run does not outlive it (POSIX; on Windows the parent is gone and
+``taskkill /T`` cannot find the children).
+
+Dev-tool constants: ``MAX_JUNIT_CHARS`` (in ``testing.mutation``), ``SETUP_TRIES``, ``SETUP_WAIT``, ``TREE_KILL_TIMEOUT``, ``TIMED_OUT``,
+``CHILD_ENV`` and the default run timeout (``DEFAULT_TIMEOUT``, 900.0 seconds) are module constants here and NOT in ``defaults.py``:
+the no-hardcoding rule is about product behaviour (names, regions, prices, thresholds a deployment tunes), and this is a developer tool
+that ships in no wheel, has no config surface and is copied byte for byte into demos. A caller changes the timeouts by argument.
 """
 
 from __future__ import annotations
@@ -33,11 +45,11 @@ class Mutant:
     file: str  # relative to the copied root
     old: str
     new: str
-    expect: str  # >= 4 characters: a fragment of the failing test id or of its assertion line
+    expect: str  # >= 4 characters: a distinctive fragment of the INTENDED failing assertion line (its message), never of the killer's name
     allow_crash: bool = (
         False  # the intended reaction is a crash (an exception other than an assertion)
     )
-    crash_type: str = ""  # REQUIRED with allow_crash: the exception CLASS NAME that must appear in the first ``E`` line, or the mutant is not good
+    crash_type: str = ""  # REQUIRED with allow_crash: the exception CLASS NAME that must LEAD the first ``E`` line (parsed, not a substring match), or the mutant is not good
     crash_markers: tuple[
         str, ...
     ] = ()  # passed to ``judge``: a first line holding one of these is a CRASH even if it is an assertion
@@ -65,6 +77,9 @@ def _relative(rel: str) -> str:
     """``rel`` must be a relative path with no ``..`` part (checked as a POSIX and as a Windows path)."""
     if not isinstance(rel, str) or not rel:
         raise ValueError("a path is a non-empty string")
+    # a Windows drive, or an NTFS alternate data stream name (``file.py:stream``): neither is a plain relative path
+    if ":" in rel:
+        raise ValueError(f"path escapes its tree: {rel!r}")
     for pure in (PurePosixPath(rel), PureWindowsPath(rel)):
         if pure.is_absolute() or pure.anchor or pure.drive or ".." in pure.parts:
             raise ValueError(f"path escapes its tree: {rel!r}")
@@ -80,6 +95,10 @@ def _inside(base: Path, rel: str) -> Path:
     return path
 
 
+_IS_WINDOWS = (
+    os.name == "nt"
+)  # one place to ask (tests set it to check the Windows branch of the tree kill on any system)
+DEFAULT_TIMEOUT = 900.0  # seconds one pytest run may take (a 15-minute ceiling for the slowest killer); override by argument
 TIMED_OUT = -1000  # returned instead of an exit code when the run exceeded its timeout; no process exit status is this low (POSIX -9 is a SIGKILL, for example the OOM killer, and is judged as an error)
 CHILD_ENV = (
     "PATH", "PATHEXT", "SYSTEMROOT", "SYSTEMDRIVE", "WINDIR", "COMSPEC", "TEMP", "TMP", "TMPDIR", "HOME", "USERPROFILE",
@@ -99,11 +118,18 @@ FIRST_LINES: dict[
 
 def _taskkill() -> str:
     """taskkill.exe by its full path under %SystemRoot%\\System32, not by a PATH search (a planted taskkill in a work folder is not run)."""
-    root = os.environ.get("SystemRoot") or os.environ.get("SYSTEMROOT") or r"C:\\Windows"
+    root = os.environ.get("SystemRoot") or os.environ.get("SYSTEMROOT") or r"C:\Windows"
     return str(Path(root) / "System32" / "taskkill.exe")
 
 
 TREE_KILL_TIMEOUT = 60.0  # seconds ``taskkill`` may take before the child itself is killed anyway
+
+
+def _leading_class(first: str) -> str:
+    """The exception class name that starts a pytest ``E`` line (``E   demo.fakes.AuditWriteError: text`` gives ``AuditWriteError``;
+    a name that only CONTAINS the declared one, or that appears later in the text, does not match it)."""
+    head = first.strip().removeprefix("E").strip().split(":", 1)[0].strip()
+    return head.rsplit(".", 1)[-1]
 
 
 def _locate(base: Path, rel: str) -> Path:
@@ -127,11 +153,15 @@ def _pytest(cwd: Path, tests: Sequence[str], junit: Path, timeout: float) -> int
     env = {k: os.environ[k] for k in CHILD_ENV if k in os.environ}
     env.update(CHILD_FIXED_ENV)
     env["PYTHONPATH"] = os.pathsep.join([str(cwd / "src"), str(cwd)])
-    cmd = [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", "--noconftest", "-x", f"--junitxml={junit}", "--", *tests]  # fmt: skip
+    # an EMPTY ini file inside the copy is the config file and the copy is the rootdir: a planted pytest.ini, tox.ini, setup.cfg or
+    # pyproject.toml in a parent folder (the shared temp folder, for one) is never picked up
+    ini = cwd / "mutant_run.ini"
+    ini.write_text("", encoding="utf-8")
+    cmd = [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", "--noconftest", "-x", "-c", str(ini), f"--rootdir={cwd}", f"--junitxml={junit}", "--", *tests]  # fmt: skip
     # own process group (POSIX session / Windows group): on a timeout the whole tree dies, not only pytest (a test may have started psql or a server)
     own = (
         {"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP}
-        if os.name == "nt"
+        if _IS_WINDOWS
         else {"start_new_session": True}
     )
     # S603 stays a listed exception: the argument list holds the caller's test paths and the junit path, so ruff cannot see it as a literal. Fixed argv (our own interpreter), no shell, caller strings only as pytest operands after --
@@ -139,18 +169,24 @@ def _pytest(cwd: Path, tests: Sequence[str], junit: Path, timeout: float) -> int
         cmd, cwd=cwd, env=env, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, **own  # type: ignore[call-overload]
     ) as proc:  # fmt: skip
         try:
-            return proc.wait(timeout=timeout)
+            code = proc.wait(timeout=timeout)
         except subprocess.TimeoutExpired:
             _kill_tree(proc)
             # a mutant that loops forever is reported, never allowed to hang the run
             return TIMED_OUT
+        except BaseException:  # Ctrl-C (KeyboardInterrupt) or any other exit while waiting: never leave a spinning mutant behind
+            _kill_tree(proc)
+            raise
+        # a normal exit can leave a background process of the run behind: it is killed too
+        _kill_tree(proc)
+        return code
 
 
 def _kill_tree(proc: subprocess.Popen[bytes]) -> None:
     """Kill ``proc`` and everything it started (POSIX: its process group; Windows: ``taskkill /T``). A failing tree kill (no ``taskkill``
     on the PATH, its own timeout, ``PermissionError`` from ``killpg``) never skips the kill of the child itself."""
     try:
-        if os.name == "nt":
+        if _IS_WINDOWS:
             # S603 stays a listed exception: the pid is our own child's, but the list is not a literal to ruff. Fixed argv, no shell
             subprocess.run(  # noqa: S603
                 [_taskkill(), "/F", "/T", "/PID", str(proc.pid)],
@@ -175,12 +211,12 @@ def run_mutants(
     *,
     extra_dirs: Sequence[str] = ("tests/fixtures",),
     only: Sequence[str] = (),
-    timeout: float = 900.0,
+    timeout: float = DEFAULT_TIMEOUT,
     baseline_timeout: float | None = None,
     on_result: Callable[[tuple[str, Verdict, str, bool]], None] | None = None,
 ) -> list[tuple[str, Verdict, str, bool]]:
     """(name, verdict, failing test id, good). Raises ``RuntimeError`` if the unmutated copy fails or times out; a mutant whose temp copy cannot be built (after ``SETUP_TRIES`` tries) is ``(name, Verdict.ERROR, "SETUP FAILED: <error class>", False)``; a mutant run that exceeds
-    ``timeout`` seconds is ``(name, Verdict.ERROR, "TIMEOUT", False)``. The unmutated baseline run gets ``baseline_timeout`` (default: ``timeout``),
+    ``timeout`` seconds is ``(name, Verdict.ERROR, "TIMEOUT", False)``. The unmutated baseline run gets ``baseline_timeout`` (default: ``timeout``; 0 is a real, immediate timeout and not "unset"),
     so a test can use a short mutant timeout without failing a slow baseline. ``on_result`` is called with each result as soon as that mutant
     finishes (stream it and a timeout of the whole run still leaves a kill list). Every ``tests`` and ``extra_dirs`` entry and every mutant file
     must name a file inside its tree (``ValueError``)."""
@@ -241,7 +277,15 @@ def run_mutants(
 
     try:
         fresh()
-        if _pytest(tmp, tests, tmp / "base.xml", baseline_timeout or timeout) != 0:
+        if (
+            _pytest(
+                tmp,
+                tests,
+                tmp / "base.xml",
+                timeout if baseline_timeout is None else baseline_timeout,
+            )
+            != 0
+        ):
             raise RuntimeError("the unmutated copy does not pass its tests")
         for m in mutants:
             if only and not any(o in m.name for o in only):
@@ -289,7 +333,8 @@ def run_mutants(
                 crash_markers=m.crash_markers,
             )
             FIRST_LINES[m.name] = first
-            crash_ok = v is Verdict.CRASH and m.allow_crash and m.crash_type in first
+            declared = _leading_class(first) == m.crash_type
+            crash_ok = v is Verdict.CRASH and m.allow_crash and declared
             emit((m.name, v, test_id, v is Verdict.KILLED or crash_ok))
     finally:
         shutil.rmtree(tmp, ignore_errors=True)

@@ -88,8 +88,8 @@ def first_failure_junit(xml_text: str) -> tuple[str, str]:
     low = xml_text.lower()
     if "<!doctype" in low or "<!entity" in low:
         raise ValueError("a JUnit file with a DOCTYPE or ENTITY declaration is refused")
-    # The ONE documented exception to S314 and B314 in this file (lead decision, PENDING LEAD 22): the call is reached only after the three
-    # refusals above (size ceiling, no DOCTYPE, no ENTITY), so no entity can be declared or expanded.
+    # The ONE documented exception to S314 and B314 in this file: the call is reached only after the three refusals above (size
+    # ceiling, no DOCTYPE, no ENTITY), so no entity can be declared or expanded, and the text is written by our own pytest run.
     root = ET.fromstring(xml_text)  # noqa: S314  # nosec B314
     for case in root.iter("testcase"):
         bad = case.find("failure")
