@@ -623,3 +623,4 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | au-AKG15 | Opus author AK-G15 rev 1 (durable needs-a-person queue) | 06:07Z | +40min | running | verify, push, review pair |
 | au-AKG16 | Opus author AK-G16 rev 1 (deployment into client's cloud) | 06:07Z | +40min | running | verify, push, review pair |
 | bd-P1m-fix1b | Sonnet builder (resumed) PR 62 order 40, 4 minors, one more commit | 06:09Z | +30min | running | verify, tell lead sha |
+| bn-o41 | Opus: order 41 build notes: P8a BN-21 (PL17 raise), PL27 relays into P4b2/P5b4/P5c/P5b3 | 06:13Z | +20min | running | verify |

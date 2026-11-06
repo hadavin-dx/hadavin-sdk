@@ -151,3 +151,4 @@
 2026-11-06T06:07Z | step=order 39 applied: owner-visible limits 7-12, operator-notes, contract-terms-notes; design rev 3 agent running; AK-G15 and AK-G16 authors launched | done=order 39 | next=verify authors, P1a builder, AK-G14 | blocked=none
 2026-11-06T06:09Z | step=order 40 received (PR 62 review 0B/0M/4m); builder resumed to fix M1-M4 in one commit | done=- | next=verify sha, tell lead | blocked=none
 06:10Z | step=AK-G1 design rev 3 (c299cb3) verified, hygiene 0 | done=order 39 applied | next=order 40 verify, AK-G15/16, P1a | blocked=none
+06:13Z | step=order 41 read; bn-o41 agent running (P8a BN-21, PL27 relays) | done=design rev3 pushed | next=PR 62 sha when builder reports | blocked=none
