@@ -142,3 +142,4 @@
 2026-11-06T05:23Z | step=AK-G1 round 3 resolve verified (BN-1..28, PL10-18, PL11 blocks build start) | done=resolve | next=AK-G1 BN author | blocked=none
 2026-11-06T05:26Z | step=P1m 44e1b9d verified (70 passed on 3.13, pushed); AK-G1 frozen 6d91f5f; PL10-18 relayed (items 81-82) | done=order 33, AK-G1 | next=P4c rev4, P5b1 rev3, P8a rev3 authors; AK-G15/G16/G14 tickets | blocked=none
 2026-11-06T05:35Z | step=order 36: answers recorded in AK-G1, owner-visible-limits 4-5; EGM brainstorm+draft launched | done=order 36 relays | next=verify draft | blocked=AK-G1 build start waits on draft + build-start review
+2026-11-06T05:41Z | step=AK-G1 brainstorm+draft verified (54+476 lines, OP-1..6); EGM review pair launched | done=PL11 draft | next=resolve, tell lead; build-start review is lead's | blocked=none
