@@ -369,3 +369,4 @@ WAITING ON LEAD: nothing.
 P1a | READY PR 63 head 2ff0afe (fix6 done, finals green at that SHA) | builders running: P4d-a1, P3a-2, P1b (merge6) | blocked on: lead review; ledger rows p1a-005/007
 P1a | PR 63 CI at head 2ff0afe ALL GREEN: check, tests-py312, security, CodeQL x2, Sonar success; CodeRabbit run skipped (its comment still cites older 96c5a50: case-handling note = p1a6-004 default) | ready for lead review | builders running: P4d-a1, P3a-2, P1b merge6
 P4d-a1 | READY PR 66 head 92dbb1e (order 101 done, blocker PROVED; finals green at that SHA; CI check running) | builders running: P3a-2, P1b merge6 | blocked on: lead review; then merge 92dbb1e into P4d-a2 and stacked PRs
+P4d-a1 | PR 66 CI all green at 92dbb1e (check, tests-py312, security, CodeQL x2, Sonar; CodeRabbit skipped) | builders running: P3a-2, P1b merge6 | blocked on: lead review
