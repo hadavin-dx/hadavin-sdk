@@ -298,5 +298,5 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | rev10-P4d-author | Sonnet author: apply reviews/P4d-round8-resolve.md to tickets/P4d.md -> revision 10 (order 16: round 1 of 3 done) | sonnet | 02:05Z | +60min | REPORTED | verify commit, recount |
 | rev10-P3a-author | Sonnet author: apply reviews/P3a-round8-resolve.md to tickets/P3a.md -> revision 10 (order 16: round 1 of 3 done) | sonnet | 02:06Z | +60min | REPORTED | verify commit, recount |
 | rev6-P2d-author | Sonnet author: apply reviews/P2d-round5-resolve.md + frozen designs/lookalike-leak.md draft 11 to tickets/P2d.md -> revision 6 | sonnet | 02:06Z | +90min | running | verify commit, recount |
-| rev10-P2a-author | Sonnet author: apply reviews/P2a-round8-resolve.md to tickets/P2a.md -> revision 10 (order 16: round 1 of 3 done) | sonnet | 02:20Z | +60min | running | verify commit, recount |
+| rev10-P2a-author | Sonnet author: apply reviews/P2a-round8-resolve.md to tickets/P2a.md -> revision 10 (order 16: round 1 of 3 done) | sonnet | 02:20Z | +60min | REPORTED | verify commit, recount |
 | rev12-P4a-author | Sonnet author: apply reviews/P4a-round11-resolve.md to tickets/P4a.md -> revision 12 FINAL (order 16/17: then FROZEN) | sonnet | 02:32Z | +60min | REPORTED | verify commit, recount |
