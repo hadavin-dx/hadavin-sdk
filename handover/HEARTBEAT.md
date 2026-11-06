@@ -153,3 +153,4 @@
 06:10Z | step=AK-G1 design rev 3 (c299cb3) verified, hygiene 0 | done=order 39 applied | next=order 40 verify, AK-G15/16, P1a | blocked=none
 06:13Z | step=order 41 read; bn-o41 agent running (P8a BN-21, PL27 relays) | done=design rev3 pushed | next=PR 62 sha when builder reports | blocked=none
 06:18Z | step=PR 62 sha 4ae7174 verified (65 tests pass 3.13) | done=order 40 | next=order 41 notes (bn-o41), AK-G15/16, P1a | blocked=none
+06:18Z | step=P1a PR 63 (5a1dadc) verified, reported item 95 | done=order 40 sha, P1a | next=bn-o41, AK-G15/16 | blocked=NEEDS LEAD 28
