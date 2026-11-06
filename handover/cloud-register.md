@@ -329,7 +329,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | rev2-P6b1 | Sonnet revision author for P6b1 after round-1 resolve (order 20) | sonnet | 02:37Z | +60min | running | verify commit and counts; then round 2 reviewers |
 | rev2-P5b2 | Sonnet revision author for P5b2 after round-1 resolve (order 20) | sonnet | 02:37Z | +60min | running | verify commit and counts; then round 2 reviewers |
 | rev2-P4c | Sonnet revision author for P4c after round-1 resolve (order 20) | sonnet | 02:38Z | +60min | running | verify commit and counts; then round 2 reviewers |
-| res-bs-P4d | Opus egm-resolve build-start P4d (one round) | opus | 02:38Z | +60min | running | verify build notes in tickets/P4d.md; S0 EXIT P4d effective |
+| res-bs-P4d | Opus egm-resolve build-start P4d (one round) | opus | 02:38Z | +60min | REPORTED | verify build notes in tickets/P4d.md; S0 EXIT P4d effective |
 | res-bs-P4a | Opus egm-resolve build-start P4a (one round) | opus | 02:38Z | +60min | running | verify build notes in tickets/P4a.md; S0 EXIT P4a effective |
 | rev2-P4b1 | Sonnet revision author for P4b1 after round-1 resolve (order 20) | sonnet | 02:39Z | +60min | running | verify commit and counts; then round 2 reviewers |
 | res-bs-P1 | Opus egm-resolve build-start P1 (one round) | opus | 02:40Z | +60min | running | verify build notes in tickets/P1.md; S0 EXIT P1 effective |
