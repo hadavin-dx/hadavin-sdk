@@ -26,7 +26,8 @@ the hash, so the message names the mismatch; a changed pin is a reviewed change 
 ``PINNED_*`` blocks below and the generated files in one commit.
 
 Two constants are written beside the table: ``TABLE_DIGEST`` (the SHA-256 of the table, see ``table_digest``) and ``MAX_VALUE_LEN`` (the
-longest table value, which the size rule of ``guard/textnorm.py`` reads). ``_scripts.py`` carries ``SCRIPTS_DIGEST`` the same way (see
+longest table value; a test compares it with the table. ``guard/textnorm.py`` does not read it: its size rule weighs every character from the table itself).
+``_scripts.py`` carries ``SCRIPTS_DIGEST`` the same way (see
 ``scripts_digest``).
 
 TABLE SOURCES ARE THOSE OF THE 15.1.0 DATA FILE: the data file is the Unicode 15.1.0 release (the pin), so every source is assigned in
@@ -62,6 +63,7 @@ Selection rules (all explicit, nothing hand-curated):
         read as X in the case of the name;
       - ``[DINGBAT] [NEGATIVE|DOUBLE] CIRCLED [SANS-SERIF] DIGIT|NUMBER <ZERO..NINE|TEN>`` read as that digit (ten as ``10``; NFKC maps the
         plain circled digits, not these).
+    NAME RULES COVER: small capitals, negative circled and negative squared letters, the crossed negative squared P, regional indicator letters, the squared small d, Latin letters with a stroke, hook or similar mark, and the circled, negative circled, double circled and sans-serif digits and numbers (0 to 10); the circled numbers 11 to 20 are read by NFKC, the negative circled numbers 11 to 20 are not read (a named gap).
     The names come from the running interpreter's ``unicodedata`` (recorded in the generated header; 15.0.0 and 15.1.0 give one table).
   * the prototype of capital I, Greek Iota and Cyrillic I in the data is lower-case ``l``; an UPPER-case source with prototype ``l``
     is written as ``I`` (what a reader sees), every other source keeps its prototype.
@@ -263,7 +265,9 @@ def build(text: str) -> dict[int, str]:
     sup = {
         cp: v for cp, v in SUPPLEMENT.items() if unicodedata.normalize("NFKC", chr(cp)) == chr(cp)
     }  # a key the fold can reach
-    listed = {**sup, **out}  # what the data and the supplement say, before any name rule
+    # the data wins over the supplement; both are in ``out`` BEFORE the name rules, so no name rule overrides either
+    out = {**sup, **out}
+    listed = dict(out)  # what the data and the supplement say, before any name rule
     for cp in range(0x80, 0x20000):
         ch = chr(cp)
         value = name_rule_value(unicodedata.name(ch, ""))
@@ -278,7 +282,7 @@ def build(text: str) -> dict[int, str]:
     ovr = {
         cp: v for cp, v in OVERRIDES.items() if unicodedata.normalize("NFKC", chr(cp)) == chr(cp)
     }
-    return {**sup, **out, **ovr}
+    return {**out, **ovr}
 
 
 def build_scripts(text: str) -> list[tuple[int, int, str]]:

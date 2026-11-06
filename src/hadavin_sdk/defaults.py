@@ -138,3 +138,7 @@ TEXTNORM_MAX_CHARS = MAX_REDACT_CHARS
 TEXTNORM_PINNED_UNIDATA = "15.1.0"
 # Passes (the confirming pass included) of a scan-key reading before FoldNotConverged (read by guard/textnorm.py at the call).
 TEXTNORM_MAX_PASSES = 3
+
+# The shortest view of a protected value that a scan may use (guard.textnorm.scan_needles): the same number for every view; a shorter
+# view (an empty one above all) is found in nearly every text.
+TEXTNORM_MIN_VIEW_CHARS = 2

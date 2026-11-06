@@ -803,7 +803,7 @@ def test_scan_views_has_the_fold_the_squeeze_and_the_scan_keys_and_no_empty_view
     views = scan_views(text)
     assert views == tuple(dict.fromkeys(views)), "a view is repeated"
     assert all(views), "an empty view is in the list"
-    assert len(views) <= 20
+    assert len(views) <= 23  # 9 fold_views + 6 squeeze_views + 8 scan keys
     for v in textnorm.fold_views(text, casefold=True, collapse_ws=True) + textnorm.squeeze_views(
         text
     ):
