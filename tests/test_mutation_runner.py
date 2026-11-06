@@ -6,10 +6,12 @@ guards are in ``tests/mutation_runner_mutants.py``, and the meta-tests that chec
 from made-up files.
 """
 
+import errno
 import hashlib
 import json
 import os
 import re
+import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
@@ -70,9 +72,39 @@ def _copytree_failing(monkeypatch, fail_calls):
     monkeypatch.setattr(mutation_runner, "SETUP_WAIT", 0.0)
 
 
+_PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
+_STILL_ACTIVE = 259  # the exit code GetExitCodeProcess reports for a process that has not ended
+_ERROR_ACCESS_DENIED = 5
+
+
+def _pid_alive_windows(pid):
+    """Windows: ``os.kill(pid, 0)`` is not a probe there (it raises WinError 87), so ask for a limited handle to the
+    process and read its exit code. No handle with "access denied" means it exists and is not ours; any other
+    refusal (87, invalid parameter) means there is no such process."""
+    import ctypes
+
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    kernel32.OpenProcess.restype = ctypes.c_void_p
+    kernel32.OpenProcess.argtypes = [ctypes.c_ulong, ctypes.c_int, ctypes.c_ulong]
+    kernel32.GetExitCodeProcess.argtypes = [ctypes.c_void_p, ctypes.POINTER(ctypes.c_ulong)]
+    kernel32.CloseHandle.argtypes = [ctypes.c_void_p]
+    handle = kernel32.OpenProcess(_PROCESS_QUERY_LIMITED_INFORMATION, 0, pid)
+    if not handle:
+        return ctypes.get_last_error() == _ERROR_ACCESS_DENIED
+    try:
+        code = ctypes.c_ulong(0)
+        if not kernel32.GetExitCodeProcess(handle, ctypes.byref(code)):
+            raise OSError(f"GetExitCodeProcess failed, error {ctypes.get_last_error()}")
+        return code.value == _STILL_ACTIVE
+    finally:
+        kernel32.CloseHandle(handle)
+
+
 def _pid_alive(pid):
     """True while ``pid`` is a running process. A killed grandchild that nobody has waited for is a zombie
     (state ``Z`` in ``/proc/<pid>/stat``); a zombie counts as dead."""
+    if sys.platform == "win32":
+        return _pid_alive_windows(pid)
     try:
         os.kill(pid, 0)
     except ProcessLookupError:
@@ -84,6 +116,17 @@ def _pid_alive(pid):
     except OSError:
         return True  # no /proc here: the signal check above is all there is
     return stat.rpartition(")")[2].split()[0] != "Z"
+
+
+def _symlink_or_skip(target, link, **kwargs):
+    """``os.symlink``, but skip the test only when the system refuses for lack of privilege (Windows error 1314, or
+    EPERM). Any other failure is a real failure."""
+    try:
+        os.symlink(target, link, **kwargs)
+    except OSError as exc:
+        if getattr(exc, "winerror", None) == 1314 or exc.errno == errno.EPERM:
+            pytest.skip(f"creating a symlink needs a privilege this account lacks ({exc})")
+        raise
 
 
 # ---- mutation judge and runner ------------------------------------------------------------------------------------------
@@ -176,9 +219,9 @@ def test_the_runner_refuses_paths_that_leave_its_tree(tmp_path):
     (tmp_path / "base").mkdir()
     assert mr._inside(tmp_path / "base", "src/a.py").is_relative_to((tmp_path / "base").resolve())
     link = tmp_path / "base" / "link"
-    os.symlink(
+    _symlink_or_skip(
         tmp_path, link, target_is_directory=True
-    )  # no fallback: where links cannot be made, this test fails
+    )  # skips only when the privilege is missing
     assert link.exists(), "the test could not create a link out of the tree"
     with pytest.raises(ValueError):
         mr._inside(tmp_path / "base", "link/outside.txt")  # a link out of the tree is refused too
@@ -189,7 +232,7 @@ def test_the_runner_refuses_paths_that_leave_its_tree(tmp_path):
         )  # the listing does not follow the link out of the tree
     # A link to a FILE is listed (``os.walk`` lists it among the files), so only the real-path check keeps it out; the folder link above
     # never reaches that check on Linux, because ``os.walk`` does not enter it.
-    os.symlink(tmp_path / "real.txt", tmp_path / "base" / "file_link.txt")
+    _symlink_or_skip(tmp_path / "real.txt", tmp_path / "base" / "file_link.txt")
     with pytest.raises(ValueError):
         mr._locate(tmp_path / "base", "file_link.txt")
     with pytest.raises(ValueError):
