@@ -625,3 +625,10 @@ Routing rule: an item that touches an owner hard rule (thresholds, money, redact
 - **H0 clause letters.** H0's text has no clause letters. Its canary sentence is read as (a), BN-1's (b) rewrites its marker sentence, and (c) is new.
 - **Deadline clocks of the other k1b runs.** BN-12 names the deadline clock for H2, H10, H10b, H10c, H11 and H10d. H0 (c), H12's exactness clause and H15 also run `K1bReplayPipeline`. They follow H2's rule: a `FakeClock` that nobody advances, and `case_timeout_s` left at 300.
 - **History left as it is.** The summary "Changes since revision 2" and the CHANGELOG keep revision 3's counts (45 rows, 61 mutants, 4 PENDING LEAD). The banner and the two Counts lines carry the totals after the notes. PENDING LEAD now has 9 items: 1 to 4 above (1 updated), 5 NEEDS LEAD, and 6 to 9 INFORM.
+
+## Lead answer to PENDING LEAD 5 (order 32 item 1, 2026-11-06 05:00 UTC / 10:30 IST)
+Option 5(a), YES. These lines are an answer recorded after the freeze; build notes BN-4 and the Security sentence read with them.
+- One floor constant in `defaults.py`, one validator at config load (pilot and prod only), one E6 clause and one mutant, all in AK4a-1.
+- Starting value of the floor: 0.9. A config may only RAISE it, never lower it (order 24 item 32).
+- The ticket's Security text says: 0.9 is the lead's starting value, to be re-checked after the first real golden set; easy and trap items are gated one by one regardless of the threshold.
+- The Security sentence that said "in pilot/prod a config may lower `eval_threshold` to any value" until the lead answered is replaced by the sentence above. PENDING LEAD 5 is closed.

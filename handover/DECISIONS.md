@@ -338,3 +338,4 @@ Slip recorded at the lead's request: a throwaway PostgreSQL data folder (pg3a) w
 2026-11-06 03:55Z: Order 24 applied: P6b1 le=90 config, P4c rev 4 no round, P8a option a. P4b2 rev 4 and P8a rev 2 pushed; AK0 and AK1 authors launched (order 23). Answered-by-user: yes (lead).
 
 2026-11-06 04:05Z: P6a round 2 resolve (Opus): 27 ids, 22 rows all fix; client-data refusal read as field made_up_data_only (NEEDS LEAD 50). P5b4 rev 2 (39 decisions applied; PL14 accept, INFORM 52). Answered-by-user: no. Reversible: yes.
+- 2026-11-06 AK4a PL5 floor answered by lead order 32 item 1 (0.9, raise-only); recorded in ticket + questions-for-lead 67. Answered by user/lead: yes.
