@@ -355,3 +355,12 @@ Instructions:
 BN-stored-stage (order 78 item 6, 2026-11-06; append-only): "The first change that stores a stage must have a test that maps an old stored dev to demo on read." (from P0t PR 67; display only, never a guard decision.)
 
 BN (P0t fix4): if this change stores a stage anywhere (a column, a row, an audit field, a file), it must read an old stored value `dev` as `demo` on read, for display only and never for a guard decision, and its tests must go through that real read site: a stored `dev` is shown as `demo`, and a guard that is given the stored text still treats it as not a stage. Nothing stores a stage today (P0t deleted the unused reader).
+
+## Build notes from P4d-a2 (BN-P4d, placed 2026-11-06)
+
+# Ticket notes for P4d (builder P4d-a2)
+BN-P4d-1 (round_cost_up, a2-i): the ticket does not say what `round_cost_up` does with a value that already has 8 or fewer decimals. Built: it is returned unchanged (exponent >= -8 means no quantize); only a value with more than 8 decimals is rounded UP to 8 (R214). Reason: quantizing every value turns Decimal("0") into "0.00000000" and broke three tests in tests/test_k1b_replay.py whose printed text contains the cost. Suggested ticket text: "round_cost_up(x): after the guards, return x unchanged when x.as_tuple().exponent >= -8, else x.quantize(Decimal('1E-8'), ROUND_UP)".
+BN-P4d-2 (StoreBusy): order 86 lists StoreBusy among the b items; the ticket puts it in a2-ii. It now exists (a2-ii).
+BN-P4d-3 (check_id on existing writes): NOT applied to run_id/approval_id/call_id/agent_id of the existing writes; the ticket requires a grep proof that every deployed id conforms (registry agent ids have no pattern), PENDING LEAD item 7.
+BN-P4d-4 (wrapper): the ticket says "retries at most 3 times"; built as 3 ATTEMPTS in all (BN-16 says "3 attempts"). `stop_after_delay` is not used: the per-attempt budget check already ends the loop, and a second stop rule would be an equivalent mutant.
+BN-P4d-5 (dblink test): tests/demo_askdata/test_validate_harm.py[dblink-connect] used the default socket (port 5432); it now points dblink at the host and port of the test DSN.

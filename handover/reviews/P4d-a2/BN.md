@@ -1,3 +1,6 @@
-# Ticket errors (P4d a2/b)
-- Ticket orders a2-i/b without a2-ii, yet lead/order 86 lists StoreBusy (an a2-ii item) as needed by b; StoreBusy not built here.
-- round_cost_up spec leaves exponent >= -8 values unspecified; I return them unchanged (else 0 prints as 0.00000000, breaking k1b replay tests).
+# Ticket notes for P4d (builder P4d-a2)
+BN-P4d-1 (round_cost_up, a2-i): the ticket does not say what `round_cost_up` does with a value that already has 8 or fewer decimals. Built: it is returned unchanged (exponent >= -8 means no quantize); only a value with more than 8 decimals is rounded UP to 8 (R214). Reason: quantizing every value turns Decimal("0") into "0.00000000" and broke three tests in tests/test_k1b_replay.py whose printed text contains the cost. Suggested ticket text: "round_cost_up(x): after the guards, return x unchanged when x.as_tuple().exponent >= -8, else x.quantize(Decimal('1E-8'), ROUND_UP)".
+BN-P4d-2 (StoreBusy): order 86 lists StoreBusy among the b items; the ticket puts it in a2-ii. It now exists (a2-ii).
+BN-P4d-3 (check_id on existing writes): NOT applied to run_id/approval_id/call_id/agent_id of the existing writes; the ticket requires a grep proof that every deployed id conforms (registry agent ids have no pattern), PENDING LEAD item 7.
+BN-P4d-4 (wrapper): the ticket says "retries at most 3 times"; built as 3 ATTEMPTS in all (BN-16 says "3 attempts"). `stop_after_delay` is not used: the per-attempt budget check already ends the loop, and a second stop rule would be an equivalent mutant.
+BN-P4d-5 (dblink test): tests/demo_askdata/test_validate_harm.py[dblink-connect] used the default socket (port 5432); it now points dblink at the host and port of the test DSN.
