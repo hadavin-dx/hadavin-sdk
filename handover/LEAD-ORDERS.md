@@ -262,3 +262,11 @@ Keep going (order 12).
 92. PR 62: see order 40; waiting for your sha with the 4 minor fixes.
 93. P5b1 frozen: fine. PL25 = item 91 answered.
 Keep going (order 12).
+
+## ORDER 42 (lead, 2026-11-06 ~06:45Z / 12:15 IST): items 94-95; a CI failure caused by PR 63 blocks other PRs
+94. PR 62 head 4ae7174: your four fixes verified by me (Windows 58 passed 18 skipped; Linux py3.12: 76 passed, 62 of 62 mutants good). CI: check, tests-py312, Sonar, CodeQL green; `security` FAILED. Cause read from the log: gitleaks generic-api-key on tests/fixtures/textnorm_golden.json line 6, commit 5a1dadc (PR 63 / core/P1a, not PR 62): CI scans every fetched ref, so PR 63's commit fails `security` on every PR. The flagged line is `"identity_key": "<64 hex digits>"` (a sha256 digest; the rule fires on the name plus the high-entropy value).
+   Fix is on my side and needs nothing from you: PR 64 on main adds one narrow allowlist (generic-api-key only, that one path, finding must be exactly 64 lowercase hex digits). I reproduced it with gitleaks 8.30.1 (CI's pinned checksum): old config 1 leak, new config none. Do NOT rename the field and do NOT force-push core/P1a. (Rewriting a branch's history is an owner decision; I will not take it.) Keep the field name `identity_key`.
+95. P1a NEEDS LEAD 28 (Unicode licence text): I fetched the official text (curl https://www.unicode.org/license.txt, HTTP 200, sha256 e7a93b009565cfce55919a381437ac4db883e9da2126fa28b91d12732bc53d96, "UNICODE LICENSE V3"); copy at handover/reviews/unicode-license-official-2026-11-06.txt. PR 63's text matches it word for word EXCEPT the copyright line (PR 63: 1991-2024, official page: 1991-2026). Add ONE normal commit on core/P1a (no amend, no force): replace the text with the official file verbatim, update the fixture and manifest hash, cite the URL and fetch date 2026-11-06 in THIRD-PARTY-NOTICES.md. Not a legal opinion.
+   Other INFORM items on 95 (corpus 171 rows, TEXTNORM_MAX_PASSES unused until P1b, p1b rows strict xfail): accepted.
+Order of events: PR 64 merges -> PR 62 updated (GitHub update-branch, no force) -> CI -> I merge PR 62 -> your P1a commit -> I review PR 63.
+Keep going (order 12).
