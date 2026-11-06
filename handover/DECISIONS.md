@@ -296,3 +296,7 @@ File: handover/reviews/P4a-round8-resolve.md. Ticket not edited (an author write
 - What: the resolve (reviews/P4b2-round1-resolve.md, PENDING LEAD 12) cuts the separate maintenance identity; the sweep runs under the runtime role, as P4d says and P4d's own PENDING LEAD 11 recommends. It closes 8 findings (A6/C1, A7-A10, C10, A14, C8).
 - Options: (a) cut it (recommended by the resolve and by me); (b) keep it and fix the findings in revision 2 (the resolve lists what revision 2 would need).
 - Why (a): smaller surface; one identity fewer to grant and review. Confidence medium. Reversible: yes (before build). Answered-by-user: no. Overrides a studio amendment, so the lead should see it: INFORM LEAD, see NEEDS LEAD 13.
+
+## 2026-11-06 order 21 overrule (INFORM 13)
+- What: lead overruled my P4b2 maintenance-identity cut: KEEP it (owner least-privilege hard rule; amendment F2 stands). I had proceeded with the cut in P4b2 rev 2 (7208a9f) and announced it as INFORM 13. Answered-by-user: yes (lead order 21). My slip: I should have kept an owner hard rule as NEEDS LEAD (owner-only), not INFORM. Correction running (fix-P4b2-maint).
+- P3a ADV-5 recipe: kept my "refuse backslash" over the reviewer's SET line; confidence medium; reversible; INFORM 18.

@@ -89,3 +89,4 @@
 2026-11-06T02:44Z / 08:14 IST | step=P4a build-start resolve verified (a075b66); S0 EXIT P4a effective (gated on P4d a2-i, P2a-1, P3a merges) | done=P4d,P4a resolves | next=P1,P3a,P2a resolves; queued reviewers | blocked=agent limit | context=high
 2026-11-06T02:45Z / 08:15 IST | step=P8a (db09637), P5b3 (903c66b) drafts verified | done=4 more drafts committed (P8b,P5b4,P8a,P5b3) | next=r1 reviewers P8a/P5b3 (queued), P1/P3a/P2a resolves, P5a resolve | blocked=agent limit | context=high
 2026-11-06T02:48Z | step=order 21 read; P1 build-start resolve landed (c5c93e8); INFORM 13 overruled -> restore P4b2 maintenance identity | done=pushed; 6 reports being saved | next=resolves P5b2/P6b1/P5b4/P8b/P4c, r2 P5b1/P4b1, r1 P5c/P6a | blocked=none
+2026-11-06T02:49Z | step=P3a build-start resolve landed (f5a58d6); INFORM 13 overrule recorded | done=S0 EXIT P3a effective, P1 effective | next=push, builds, resolves after reports saved
