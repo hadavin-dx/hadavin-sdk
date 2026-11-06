@@ -746,3 +746,4 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | bd-P1a-fix5 | Sonnet builder P1a fix5 (order 90, priority) | 2026-11-06T13:18:25Z (expected end +90 min) | RUNNING |
 | bd-P2a-1 | Sonnet builder P2a-1 | 2026-11-06T13:28:55Z | PUSHED core/P2a-1 e323ac7, draft PR 76 (base core/P4d-a2); remaining list in q206 |
 | bd-P4a-merge | Sonnet builder P4a resumed | 2026-11-06T13:28:55Z | RUNNING: merge P2a-1 e323ac7, rerun, draft stacked PR |
+| bd-P2d-1 | (update) | 2026-11-06T13:32:04Z | RESUMED to finish: rerun 3.13 without -x, evidence, push, draft PR stacked on P1a (will need re-merge of P1a fix5) |
