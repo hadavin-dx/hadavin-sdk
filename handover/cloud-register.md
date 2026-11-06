@@ -538,3 +538,4 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | au-AK0-r3 | Opus author AK0 revision 3 | 11:20Z | +25min | running | verify, push, round 3 pair |
 | au-AK-G2-r2 | Opus author AK-G2 revision 2 | 11:20Z | +25min | running | verify, push, round 2 pair |
 | sv-P5b4-r3 | saver P5b4 round 3 pair | 11:30Z | +5min | running | verify, push |
+| bd-P1m-r2 | Sonnet builder P1m round 2 fixes (PR 61) | 11:45Z | +40min | running | verify head, push |
