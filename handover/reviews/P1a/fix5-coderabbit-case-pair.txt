@@ -1,0 +1,5 @@
+# CodeRabbit Major on textnorm.py:173 (case-pair gap), reproduced on head 5693d79 (tree = final tree), Python 3.13
+input U+0460 U+0415 U+0412 -> identity_keys ['web'] | squeeze WEB | squeeze_views ('WEB',) | could_be_same_person(.,'web') True | 'WEB' True
+raw case-pair gap (not in table, casefold in table): 72
+of those, not read as the table letter by identity_keys: ['0x345'] (U+0345 = combining ypogegrammeni, Mn, dropped by design / iota rule)
+of those, not read by squeeze_views: ['0x345']
