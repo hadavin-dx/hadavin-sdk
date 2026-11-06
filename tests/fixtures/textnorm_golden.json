@@ -1,0 +1,10 @@
+{
+ "note": "One entry, for the current alg (not a history). Replace it, with a hand bump of alg, in the pull request that changes what a key can be. Regenerate with: python -c 'import json; from tests.test_textnorm_differential import live_hashes; print(json.dumps(live_hashes()))'. Pinned for one interpreter: the Unicode version named in the unidata field (Python 3.13).",
+ "alg": "fold1",
+ "unidata": "15.1.0",
+ "hashes": {
+  "identity_key": "62f3ef1f14eed2654f2870ba3b4fd8d863e1e3e1837a01e6284a2402eded1885",
+  "squeeze": "96a64dd36633aa5174feba7ce1f3ee53186aa7dca6c1554d56c93c324816cb0a",
+  "squeeze_loose": "4e7c61e895cb24468e20c5634fe4492156699239474377bcfc18b99e317166ab"
+ }
+}
