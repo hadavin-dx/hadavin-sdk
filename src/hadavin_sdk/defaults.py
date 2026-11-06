@@ -143,3 +143,17 @@ STORE_PURGE_BATCH_ROWS = (
 STORE_PURGE_MIN_LEFT_MS = (
     250  # a purge starts no new batch when less than this is left of the call budget
 )
+
+
+# --- meter (P4b1-a): one named block; `meter.py`, `money.py` and `limits.py` import these ---------------------------------
+METER_MAX_HOLD_S = (
+    300  # the longest one hold is expected to stay open; a longer hold writes one log line at exit
+)
+METER_MAX_HOLD_LIMIT_S = 3600  # the largest `max_hold_s` a Meter accepts
+METER_ORPHAN_AGE_S = 600  # the floor of the age (seconds) at which an open hold counts as orphaned
+METER_ORPHAN_FACTOR = 2  # orphan age is at least this many times `max_hold_s` ...
+METER_ORPHAN_MARGIN_S = 5  # ... plus this many seconds
+METER_SETTLE_RETRIES = 2  # extra tries of the SAME settle when the store is busy
+MICRO_DECIMALS = 6  # a micro-dollar is one millionth of a US dollar: 6 decimal places
+MICRO_PER_USD = 1_000_000  # micro-dollars in one US dollar
+assert MICRO_PER_USD == 10**MICRO_DECIMALS  # noqa: S101 - import-time consistency check of two constants
