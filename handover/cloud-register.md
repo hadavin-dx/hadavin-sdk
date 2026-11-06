@@ -612,8 +612,9 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | bd-P1a | Sonnet builder core/P1a (P1 ticket rev 16 frozen, S0 EXIT P1 given) | 05:45Z | +120min | running | verify, push, draft PR, build review |
 | rr-P8a-r3-adv | egm-design ROUND 3 (last) review of P8a rev 3 | 05:46Z | +20min | REPORTED | saver, resolve |
 | rr-P8a-r3-cor | egm-codebase-details ROUND 3 (last) review of P8a rev 3 | 05:46Z | +20min | REPORTED | saver, resolve |
-| rs-AKG1-des | Opus resolve of AK-G1 design review + OP-1..6 | 05:46Z | +30min | running | verify, report to lead |
+| rs-AKG1-des | Opus resolve of AK-G1 design review + OP-1..6 | 05:46Z | +30min | REPORTED | verify, report to lead |
 | rr-P5b1-r3-adv | egm-design ROUND 3 (last) review of P5b1 rev 3 | 05:49Z | +25min | REPORTED | saver, resolve |
 | rr-P5b1-r3-cor | egm-codebase-details ROUND 3 (last) review of P5b1 rev 3 | 05:49Z | +25min | REPORTED | saver, resolve |
-| rs-P8a-r3 | Opus resolve of P8a round 3 (27 findings) | 05:53Z | +25min | running | BN author |
+| rs-P8a-r3 | Opus resolve of P8a round 3 (27 findings) | 05:53Z | +25min | REPORTED | BN author |
 | rs-P5b1-r3 | Opus resolve of P5b1 round 3 (19 findings) | 05:55Z | +25min | running | BN author |
+| bn-P8a | Opus BN author P8a (round 3 resolve 3a57e40 -> BN-1..20, freeze) | 06:02Z | +25min | running | verify, push, freeze-list |
