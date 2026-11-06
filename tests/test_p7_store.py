@@ -151,8 +151,16 @@ def test_append_only_tables_get_no_update(fresh_dsn):
             for table in ("approval_decisions", "dead_letters", "gate_decisions"):
                 assert can(table, "INSERT") and can(table, "SELECT")
                 assert not can(table, "UPDATE") and not can(table, "DELETE"), table
-            for table in ("runs", "approval_requests", "spend_month", "tick_state", "kill_switch"):
+            for table in ("runs", "approval_requests", "spend_month", "tick_state"):
                 assert can(table, "UPDATE") and not can(table, "DELETE"), table
+            for table in ("kill_switch", "kill_switch_stop_requests", "kill_switch_login_labels"):
+                assert not any(can(table, p) for p in ("SELECT", "INSERT", "UPDATE", "DELETE")), (
+                    table
+                )
+            assert can("kill_switch_state", "SELECT") and can("kill_switch_resets", "SELECT")
+            assert not can("kill_switch_resets", "INSERT") and not can(
+                "kill_switch_resets", "UPDATE"
+            )
     finally:
         with psycopg.connect(fresh_dsn, autocommit=True) as db:
             db.execute(sql.SQL("DROP OWNED BY {}").format(sql.Identifier(role)))

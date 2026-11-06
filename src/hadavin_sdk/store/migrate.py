@@ -509,10 +509,6 @@ def migrate(
         raise ConfigError(
             "the runtime, portal, purge, reset and stop roles must be different roles"
         )
-    if reset_role is None:
-        raise ConfigError(
-            "migrate needs reset_role: the NOLOGIN group whose members may reset the kill switch"
-        )
     for name, value in (
         ("max_open_stop_requests", max_open_stop_requests),
         ("lock_timeout_ms", lock_timeout_ms),
@@ -523,6 +519,10 @@ def migrate(
     files = _migration_files()
     if problems := check_ledger(files) + check_grants(files):
         raise ConfigError("migrations are inconsistent: " + "; ".join(problems))
+    if reset_role is None:
+        raise ConfigError(
+            "migrate needs reset_role: the NOLOGIN group whose members may reset the kill switch"
+        )
     applied = []
     with (
         connect(

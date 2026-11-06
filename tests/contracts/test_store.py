@@ -203,8 +203,10 @@ def test_dead_letters_and_kill_switch(store):
     assert [d.reason for d in store.list_dead_letters("run-x")] == ["r"]
     assert store.list_dead_letters("run-y") == []
     assert store.get_kill_switch().on is False
-    store.set_kill_switch(KillSwitch(on=True, by="user:a"))
-    assert (store.get_kill_switch().on, store.get_kill_switch().by) == (True, "user:a")
+    label = "id:k1:" + "a" * 32
+    state = store.set_kill_switch(KillSwitch(on=True, by=label))
+    assert (state.on, state.by, state.open_requests) == (True, label, 1)
+    assert (store.get_kill_switch().on, store.get_kill_switch().by) == (True, label)
 
 
 def test_two_threads_racing_one_cas_exactly_one_wins(store):

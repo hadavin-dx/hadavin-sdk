@@ -101,7 +101,7 @@ def test_migrate_does_not_need_a_valid_registry(cfg_dir, monkeypatch, capsys):
     (cfg_dir / "agents.yaml").write_text("- not: an agent\n", encoding="utf-8")
     monkeypatch.delenv("HADAVIN_MIGRATE_DSN", raising=False)
     assert (
-        cli.main(["--config", str(cfg_dir), "migrate"]) == 2
+        cli.main(["--config", str(cfg_dir), "migrate", "--reset-role", "grp"]) == 2
     )  # reaches the DSN check, not the registry
     assert "HADAVIN_MIGRATE_DSN" in capsys.readouterr().err
 
@@ -109,7 +109,7 @@ def test_migrate_does_not_need_a_valid_registry(cfg_dir, monkeypatch, capsys):
 def test_migrate_needs_the_migration_dsn(cfg_dir, monkeypatch, capsys):
     _use_postgres(cfg_dir)
     monkeypatch.delenv("HADAVIN_MIGRATE_DSN", raising=False)
-    assert cli.main(["--config", str(cfg_dir), "migrate"]) == 2
+    assert cli.main(["--config", str(cfg_dir), "migrate", "--reset-role", "grp"]) == 2
     assert "HADAVIN_MIGRATE_DSN" in capsys.readouterr().err
 
 
@@ -212,9 +212,11 @@ def test_cli_kill_switch_reaches_every_process(cfg_dir, monkeypatch, capsys):
         other = make(
             "store", load_config(cfg_dir).backends.store, FakeSecretProvider({"pg-dsn": dsn})
         )
-        assert (other.get_kill_switch().on, other.get_kill_switch().by) == (True, "user:a")
-        assert cli.main(["--config", str(cfg_dir), "limits", "reset", "--by", "user:a"]) == 0
-        assert other.get_kill_switch().on is False
+        state = other.get_kill_switch()
+        assert (state.on, state.open_requests) == (True, 1)
+        assert (
+            state.by.startswith("id:") and "user:a" not in state.by
+        )  # a keyed label, never the typed name
         other._db.close()
 
 

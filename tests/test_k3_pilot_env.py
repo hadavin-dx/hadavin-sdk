@@ -55,6 +55,7 @@ def pilot_cfg(tmp_path: Path, *, env="pilot", agent=None, contract=None, config=
                 "kind": "postgres",
                 "dsn_secret_name": "pg-dsn",
                 "purge_dsn_secret_name": "pg-purge",
+                "stop_credential_ref": "stop-login",
             },
             "audit": {"kind": "chain"},
             "signer": {"kind": "ed25519_local", "private_key_path": "audit-key.pem"},
@@ -70,6 +71,7 @@ def pilot_cfg(tmp_path: Path, *, env="pilot", agent=None, contract=None, config=
         "golden_dir": "golden",
         "inputs_dir": "inputs",
         "evidence": {"restored_hash_key_secret_name": "restored-key"},
+        "limits": {"label_key_secret_name": "label-key", "reset_group": "hadavin_reset"},
         **(config or {}),
     }
     contract = {**NONE_CONTRACT, **(contract or {})}
@@ -161,6 +163,7 @@ def _spy(dsn: str, resolved: list[str]) -> FakeSecretProvider:
         "pg-dsn": dsn,
         "pg-purge": dsn,
         "restored-key": "r" * 16,
+        "label-key": "l" * 32,
     }
 
     class Spy(FakeSecretProvider):
@@ -193,6 +196,7 @@ def test_k3_pilot_app_has_no_executor(tmp_path):
         assert app.executor is None
         assert app.runtime.hooks.execute is None and app.runtime.hooks.verify is None
         assert sorted(set(resolved)) == [
+            "label-key",
             "pg-dsn",
             "pg-purge",
             "restored-key",
