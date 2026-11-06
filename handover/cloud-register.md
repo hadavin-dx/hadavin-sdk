@@ -334,7 +334,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | rev2-P4b1 | Sonnet revision author for P4b1 after round-1 resolve (order 20) | sonnet | 02:39Z | +60min | running | verify commit and counts; then round 2 reviewers |
 | res-bs-P1 | Opus egm-resolve build-start P1 (one round) | opus | 02:40Z | +60min | running | verify build notes in tickets/P1.md; S0 EXIT P1 effective |
 | rev2-P4b2 | Sonnet revision author for P4b2 after round-1 resolve | sonnet | 02:40Z | +60min | running | verify commit and counts; then round 2 reviewers |
-| r2-P5a-adv | Sonnet egm-design adversarial round 2 of tickets/P5a.md | sonnet | 02:40Z | +30min | running | save report to reviews/; then resolve |
+| r2-P5a-adv | Sonnet egm-design adversarial round 2 of tickets/P5a.md | sonnet | 02:40Z | +30min | REPORTED | save report to reviews/; then resolve |
 | r2-P5a-cor | Sonnet egm-codebase-details correctness round 2 of tickets/P5a.md | sonnet | 02:40Z | +30min | running | save report to reviews/; then resolve |
 | r1-P5b5-adv | Sonnet egm-design adversarial round 1 of tickets/P5b5.md | sonnet | 02:40Z | +30min | QUEUED (agent limit 20) | save report to reviews/; then resolve |
 | r1-P5b5-cor | Sonnet egm-codebase-details correctness round 1 of tickets/P5b5.md | sonnet | 02:40Z | +30min | QUEUED (agent limit 20) | save report to reviews/; then resolve |
@@ -344,7 +344,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | r2-P5b2-cor | P5b2 round-2 reviewer (cor) | sonnet | 02:43Z | +30min | running | save report, ledger, then resolve/rev3 |
 | r1-P8b-adv | P8b ticket reviewer (adv) | sonnet | 02:43Z | +30min | running | save report, ledger, resolve |
 | r1-P8b-cor | P8b ticket reviewer (cor) | sonnet | 02:43Z | +30min | running | save report, ledger, resolve |
-| r2-P6b1-adv | P6b1 ticket reviewer (adv) | sonnet | 02:43Z | +30min | running | save report, ledger, resolve |
-| r2-P6b1-cor | P6b1 ticket reviewer (cor) | sonnet | 02:43Z | +30min | running | save report, ledger, resolve |
+| r2-P6b1-adv | P6b1 ticket reviewer (adv) | sonnet | 02:43Z | +30min | QUEUED (agent limit) | save report, ledger, resolve |
+| r2-P6b1-cor | P6b1 ticket reviewer (cor) | sonnet | 02:43Z | +30min | QUEUED (agent limit) | save report, ledger, resolve |
 | r1-P5b4-adv | P5b4 ticket reviewer (adv) | sonnet | 02:43Z | +30min | running | save report, ledger, resolve |
 | r1-P5b4-cor | P5b4 ticket reviewer (cor) | sonnet | 02:43Z | +30min | running | save report, ledger, resolve |

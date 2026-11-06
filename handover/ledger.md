@@ -1485,3 +1485,10 @@
 | BS-P2a-COR-2 | Major | P2a | see reviews/P2a-buildstart-adv.md | OPEN |
 | BS-P2a-COR-3 | Major | P2a | see reviews/P2a-buildstart-adv.md | OPEN |
 | BS-P2a-ADV-4 | Major | P2a | see reviews/P2a-buildstart-adv.md | OPEN |
+| R2-P5a-ADV-1 | Blocker | P5a | writer tests fail at merge commit; see reviews/P5a-round2-adversarial.md | OPEN |
+| R2-P5a-ADV-2 | Major | P5a | see reviews/P5a-round2-adversarial.md | OPEN |
+| R2-P5a-ADV-3 | Major | P5a | see reviews/P5a-round2-adversarial.md | OPEN |
+| R2-P5a-ADV-4 | Major | P5a | see reviews/P5a-round2-adversarial.md | OPEN |
+| R2-P5a-ADV-5 | Major | P5a | see reviews/P5a-round2-adversarial.md | OPEN |
+| R2-P5a-ADV-6 | Major | P5a | see reviews/P5a-round2-adversarial.md | OPEN |
+| R2-P5a-ADV-7 | Major | P5a | see reviews/P5a-round2-adversarial.md | OPEN |
