@@ -473,3 +473,4 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | rs-P8a-r2 | P8a round 2 resolve (Opus) | 04:40Z | +30min | running | verify |
 | rs-P8b-r3 | P8b round 3 resolve (Opus, last round, build notes) | 04:40Z | +30min | running | verify |
 | rs-P4b2-r3 | P4b2 round 3 resolve (Opus, build notes) | 04:40Z | +30min | running | verify |
+| bd-P1m-fix | P1m builder: Windows test fixes, ci lint widen, 21 mutants | 04:55Z | +45min | running | verify, then mark PR 61 ready (order 25) |
