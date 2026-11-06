@@ -330,3 +330,50 @@
 - `mounted_file` also refuses group- or other-writable files and checks the opened file (no stat-then-read
   gap, `O_NOFOLLOW`); a Kubernetes JWT read error in `vault` is a `ConfigError`; the GCP secret fetch is bounded
   (5 s, no retry).
+
+### Added (P1m, test tooling: the mutation runner and judge)
+- `tools/mutation_runner.py` (a developer tool, not in the wheel) runs one mutant at a time on a temp copy of a package and
+  judges the kill by its reason with `hadavin_sdk.testing.mutation` (in the wheel). They come with
+  their tests (`tests/test_mutation_runner.py`, one test per guard) and their mutants
+  (`tests/mutation_runner_mutants.py`, run with `uv run python tests/mutation_runner_mutants.py`). Changes after review: the tests work on Windows as well (`_pid_alive` asks the system library on Windows; a symlink is skipped only
+  on Windows without the privilege, and a junction is used for the folder case); a mutant now names a distinctive fragment of the
+  failing assertion message (not the killer's name) and the test it pins; the runner kills the run's whole process group on an
+  interrupt (Ctrl-C) and after a normal exit, hands pytest an empty ini file and the copy as rootdir (a planted `pytest.ini` is
+  never read), compares the exception class a crash row declares by its parsed leading name (not a substring), treats a baseline
+  timeout of 0 as a timeout, and refuses a path with a `:`; the `mutation.py` comment no longer holds process words. Three
+  `nosec` comments the scanner does not need are deleted.
+  A SIGTERM or SIGHUP sent to the runner now ends it like Ctrl-C (the pytest tree is killed, the temp folders are removed; POSIX);
+  after a normal exit the tree is killed on POSIX only (on Windows the pid may be reused); the temp folders are cleaned up when a
+  path is refused; the mutants script exits 2 when its filter selects no mutant; `tools` is now also checked by bandit and
+  Semgrep in CI.
+  Review round 3 (P1m): the judge looks for `expect` in the first error line only (a fragment found only in the test id no longer
+  counts; `pinned` ties a kill to its test). The runner waits for the pytest child without reaping it (`os.waitid` with `WNOWAIT`,
+  POSIX; macOS has no `waitid` and keeps the old order) and kills the process group before the reap, so the group id cannot belong to
+  another process. A SIGTERM or SIGHUP that arrives while the child is being started, while the tree is killed or while the temp
+  folders are removed is held until that step is done (then raised), and once a signal has ended the run a second one cannot cut the
+  cleanup short; the narrow window of a few instructions between a signal handler and the first line of the cleanup stays (stated in
+  the module docstring), and SIGKILL still cannot be caught. A signal that was ignored on entry (SIGHUP under `nohup`, SIGTERM from
+  a parent that ignores it) stays ignored. The ini file of a pytest run now lives in its own temp folder, no longer in the working
+  folder. `FIRST_LINES` (a module global, not safe for two runs at once) is gone: pass `first_lines={}` to `run_mutants` and read
+  it after the call. Tests: the helper tests no longer run a real `os.kill` or `os.symlink` under a faked platform (they failed on
+  Windows); the rule "a test that fakes the platform fakes every OS call of that branch" is stated in the helpers docstring; the
+  interrupt test kills its leftover process only after its assertions; the signal test starts the runner in its own session, kills
+  the leftover pytest group, and resets SIGTERM and SIGHUP to the default first. Eight new mutants (49 in all).
+  Review round 4 (P1m): a test path, fixture folder or mutant file that starts with `-` or `@` is refused (`ValueError`; write `./name`)
+  where the paths are first checked and again where the pytest command line is built; the `--` marker is no longer relied on (on
+  Python 3.12.3 `pytest -- -x` still takes `-x` as an option, and pytest reads `@name` as an argument file also after `--`). A relative
+  symlink of the snapshot that points outside the tree is refused. `run_mutants` states that it is not re-entrant and raises
+  `RuntimeError` on a nested call in the same thread (POSIX main thread). A leader that someone else already reaped is now known to
+  its `Popen` object, so the group of a reaped pid is not signalled. The docstring lists all the module constants. CI runs the tests
+  on Python 3.12 and 3.13. Tests: the liveness check of the background-process test polls against a deadline and names the state of
+  a process that survives; the signal test ends a runner that never started its child with SIGTERM before it kills the leftovers; the
+  refused-run test checks the shared folder after the first refusal. Five new mutants and one replaced (54 in all).
+- Note on the name: `tools/` is a top-level Python package called `tools`, a generic name. A repository that copies it and already
+  has its own `tools` package or folder must merge or rename deliberately; the mutants script puts the repository root on
+  `sys.path` so that `tools.mutation_runner` imports, and another `tools` earlier on the path would shadow it.
+- Every repository that keeps a byte copy of these files re-copies the four of them in one commit and updates its pins to the
+  sha256 values below (also pinned in `tests/fixtures/mutation_manifest.json`):
+  - `src/hadavin_sdk/testing/__init__.py`: `3c77d034fe2a1ee70adea0d0bd259a20edda397d8ebd55a0e40b63e5c21c9e1c`
+  - `src/hadavin_sdk/testing/mutation.py`: `75c32a4e501f5c3a4edcd6f1fd8a58603ebb2ef6fd43842e558ce0761eaee03e`
+  - `tools/__init__.py`: `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
+  - `tools/mutation_runner.py`: `3e8903fb3f3ce721256c054e875eb8d1eca09db6fd2513c4ee34b88f1463e03c`
