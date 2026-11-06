@@ -1,0 +1,270 @@
+"""``guard/diagnostic.py``: Grammar A, the closed facts, the code rules, the locator and the golden lines."""
+
+from __future__ import annotations
+
+import asyncio
+import random
+import re
+import socket
+
+import pytest
+
+from hadavin_sdk import defaults, stats
+from hadavin_sdk.codes import FACT_BOUNDS, FactKey, Phase, ProviderErrorType, Where
+from hadavin_sdk.errors import ConfigError
+from hadavin_sdk.guard.diagnostic import FALLBACK_FP, Diagnostic, SafeToken, class_name_of, diagnose, render
+from tests.data import c18a_hostile_corpus as corpus
+from tests.data.c18a_oracle import grammar_ok
+
+STEP = Where.extract
+
+
+def line_of(exc: BaseException, **kw: object) -> str:
+    return render(diagnose(exc, step=kw.pop("step", STEP), **kw))  # type: ignore[arg-type]
+
+
+def test_grammar_a_shape_and_cap_boundary() -> None:
+    d = diagnose(ValueError("x"), step=STEP)
+    assert grammar_ok(render(d))
+    base = render(Diagnostic("K", d.code, "extract", "-", (), "0" * 8))
+    fact = (FactKey.key, SafeToken.of("a" * 120, frozenset({"a" * 120})))
+    facts = (fact,) * 1
+    one = render(Diagnostic("K", d.code, "extract", "-", facts, "0" * 8))
+    assert one == base + " key=" + "a" * 120
+    # the cap: add facts until the line is just under, at and over 400 characters
+    for room in (399, 400, 401):
+        pad = room - len(base) - 1
+        fk = FactKey.key
+        tok = SafeToken.of("b" * (pad - 4), frozenset({"b" * (pad - 4)})) if pad - 4 <= 120 else None
+        if tok is None:
+            continue
+        out = render(Diagnostic("K", d.code, "extract", "-", ((fk, tok),), "0" * 8))
+        assert len(out) <= defaults.DIAG_LINE_CHARS
+
+
+def test_cap_drops_trailing_facts_and_keeps_the_head() -> None:
+    d = diagnose(ValueError("x"), step=STEP)
+    token = SafeToken.of("c" * 120, frozenset({"c" * 120}))
+    facts = tuple((k, token) for k in (FactKey.type, FactKey.key, FactKey.cause_kind, FactKey.field, FactKey.request_id))
+    out = render(Diagnostic("K", d.code, "extract", "-", facts, "0" * 8))
+    assert len(out) <= defaults.DIAG_LINE_CHARS
+    assert out.startswith("K: diag_v=1 code=") and " fp=00000000" in out
+    assert out.count("=c") < 5
+
+
+def test_diagnose_never_raises_on_exception() -> None:
+    for row in (r for r in corpus.ROWS if r.status == "active" and r.kind == "exception" and r.expect != "propagates"):
+        import contextlib
+
+        ctx = corpus.CONTEXTS[row.spec["ctx"]]() if row.spec.get("ctx") else contextlib.nullcontext()  # type: ignore[index]
+        with ctx:
+            diagnose(corpus.build_exception(row.spec), step=STEP)
+    rng = random.Random(5)
+    for _ in range(300):
+        text = "".join(chr(rng.randrange(0, 0x3000)) for _ in range(rng.randrange(0, 40)))
+        n = rng.randrange(0, 3)
+        e = [ValueError, OSError, KeyError][n](text)
+        assert grammar_ok(line_of(e))
+
+
+@pytest.mark.parametrize("exc_type", [asyncio.CancelledError, GeneratorExit, KeyboardInterrupt])
+def test_baseexception_from_hostile_getattr_propagates(exc_type: type[BaseException]) -> None:
+    class E(OSError):
+        @property
+        def errno(self) -> int:  # type: ignore[override]
+            raise exc_type()
+
+    with pytest.raises(exc_type):
+        diagnose(E(2, "x"), step=STEP)
+
+    class F(OSError):
+        @property
+        def errno(self) -> int:  # type: ignore[override]
+            raise RuntimeError("x")
+
+    assert diagnose(F(2, "x"), step=STEP).fp == FALLBACK_FP
+
+
+def test_non_exception_baseexception_passed_in_is_foreign() -> None:
+    out = line_of(KeyboardInterrupt("x"))
+    assert out.startswith("KeyboardInterrupt: ") and "code=foreign_exception" in out
+
+
+def test_fallback_fp_is_pinned() -> None:
+    assert FALLBACK_FP == "2a1e659d"
+    out = render(diagnose(corpus.build_exception({"factory": "getattr_raises", "args": ("x",)}), step=STEP))
+    assert out == "unknown: diag_v=1 code=foreign_exception step=extract at=- fp=2a1e659d"
+
+
+def test_str_repr_args_getitem_notes_are_never_called() -> None:
+    reads: list[str] = []
+    names = ("args", "__notes__", "__cause__", "__context__", "filename", "filename2", "strerror", "doc", "msg", "message")
+
+    class Spy(OSError):
+        def __getattribute__(self, name: str) -> object:
+            if name in names:
+                reads.append(name)
+            return super().__getattribute__(name)
+
+        def __str__(self) -> str:
+            reads.append("__str__")
+            return "x"
+
+        def __repr__(self) -> str:
+            reads.append("__repr__")
+            return "x"
+
+    e = Spy(2, "Quentin")
+    diagnose(e, step=STEP)
+    assert reads == [], reads
+
+
+def test_facts_bounds_table() -> None:
+    for key, (lo, hi) in FACT_BOUNDS.items():
+        for value, kept in ((lo - 1, False), (lo, True), (hi, True), (hi + 1, False)):
+            out = line_of(ValueError("x"), facts={key: value})
+            assert (f" {key.value}={value}" in out) is kept, (key, value, out)
+        assert f" {key.value}=" not in line_of(ValueError("x"), facts={key: True})  # a bool is not a number
+        assert f" {key.value}=" not in line_of(ValueError("x"), facts={key: "5"})  # type: ignore[dict-item]
+
+
+def test_fact_patterns_use_fullmatch() -> None:
+    assert SafeToken.sqlstate("28P01\n") is None
+    assert SafeToken.sqlstate("28P01") is not None
+    assert SafeToken.of("a\n", frozenset({"a\n"})) is None
+
+
+def test_safe_token_lying_str_subclass() -> None:
+    class Liar(str):
+        def __eq__(self, other: object) -> bool:
+            return True
+
+        def __hash__(self) -> int:
+            return 1
+
+    assert SafeToken.of(Liar("x"), frozenset({"abc"})) is None
+    with pytest.raises(TypeError):
+        SafeToken("x")
+
+
+def test_more_than_12_facts_keeps_priority_12() -> None:
+    facts = {k: lo for k, (lo, _hi) in FACT_BOUNDS.items()}
+    facts[FactKey.retryable] = True  # type: ignore[assignment]
+    facts[FactKey.provider_error_type] = ProviderErrorType.timeout  # type: ignore[assignment]
+    d = diagnose(ValueError("x"), step=STEP, facts=facts)  # type: ignore[arg-type]
+    assert len(d.facts) == 12
+    order = [k for k, _ in d.facts]
+    assert order == sorted(order, key=list(FactKey).index)
+    assert FactKey.duration_ms not in order and FactKey.http_status in order
+
+
+def test_facts_read_from_exc_only() -> None:
+    inner = OSError(5, "x")
+    try:
+        try:
+            raise inner
+        except OSError as e:
+            raise ConfigError("x") from e
+    except ConfigError as outer:
+        out = line_of(outer)
+    assert "code=config_invalid" in out and "errno" not in out
+
+
+def test_exception_group_takes_first_member_code() -> None:
+    for kind, code in (("timeout_first", "timeout"), ("nested", "foreign_exception"), ("raises", "foreign_exception")):
+        out = line_of(corpus.build_exception({"factory": "group", "args": (kind, "Quentin")}))
+        assert f"code={code} " in out and "Quentin" not in out
+    assert "code=foreign_exception" in line_of(ExceptionGroup("x", [ValueError("y")]))
+
+
+def test_step_token_closed_to_tick_steps() -> None:
+    from hadavin_sdk.codes import StepToken
+
+    assert "step=sweep " in render(diagnose(ValueError("x"), step=StepToken.of("sweep")))
+    for bad in ("jane_doe", "Sweep", "sweep\n", 3, None):
+        assert "step=other " in render(diagnose(ValueError("x"), step=StepToken.of(bad)))
+    assert "step=other " in render(diagnose(ValueError("x"), step="sweep"))  # type: ignore[arg-type]
+
+
+def test_kind_identity_rule() -> None:
+    assert class_name_of(ValueError("x")) == "ValueError"
+    assert class_name_of(socket.gaierror(-2, "x")) == "socket.gaierror"
+    assert class_name_of(type("Jane", (ValueError,), {})("x")) == "dynamic_class"
+    assert class_name_of(type("N" * 81, (ValueError,), {"__module__": "builtins"})("x")) == "dynamic_class"
+
+    class Inner(Exception):
+        pass
+
+    assert class_name_of(Inner("x")) == "dynamic_class"  # a <locals> class
+    assert class_name_of(ConfigError("x")) == "ConfigError"
+    import pydantic
+
+    assert class_name_of(pydantic.create_model("Jane_Doe")) == "dynamic_class"
+
+
+def test_locator_and_fp() -> None:
+    def run() -> str:
+        try:
+            stats.upper_error_bound(5, 3)
+        except ValueError as e:
+            return line_of(e)
+        raise AssertionError
+
+    out = run()
+    assert out == f"ValueError: diag_v=1 code=internal_bug step=extract at=stats.py:{re.search(r'stats.py:(\d+)', out).group(1)} fp=ed342ffb"  # type: ignore[union-attr]
+    assert "at=-" in line_of(corpus._f_compiled("made_up.py", "x", None))
+
+
+def test_internal_bug_is_decided_on_the_raise_frame() -> None:
+    out = line_of(corpus._f_in_stats("same", "x"))
+    assert "code=internal_bug" in out and "at=stats.py:" in out
+    import os
+
+    def env() -> str:
+        try:
+            os.environ["P5A_NOT_SET_ANYWHERE"]  # noqa: B018
+        except KeyError as e:
+            return line_of(e)
+        raise AssertionError
+
+    assert "code=foreign_exception" in env()
+    assert "code=foreign_exception" in line_of(corpus._f_in_stats("other_file_in_package", "x"))
+
+    class KeyError_(Exception):
+        pass
+
+    look = type("KeyError", (Exception,), {"__module__": "builtins"})
+    assert "code=foreign_exception" in line_of(look("x"))
+
+
+def test_family_order_timeout_before_os_error() -> None:
+    assert "code=timeout " in line_of(TimeoutError("x"))
+    assert "code=os_error " in line_of(ConnectionRefusedError("x"))
+
+
+def test_gaierror_gives_gai_not_errno() -> None:
+    out = line_of(socket.gaierror(-2, "x"))
+    assert out.startswith("socket.gaierror: diag_v=1 code=os_error step=extract at=- fp=") and out.endswith(" gai=-2")
+
+
+def test_psycopg_phase_is_sqlstate_class_only() -> None:
+    errors = pytest.importorskip("psycopg.errors")
+    for cls, sqlstate, phase in (
+        (errors.InvalidPassword, "28P01", Phase.auth),
+        (errors.UndefinedTable, "42P01", Phase.query),
+        (errors.ConnectionFailure, "08006", Phase.connect),
+    ):
+        out = line_of(cls("x"))
+        assert f"code=db_error step=extract at=- fp=" in out and out.endswith(f" sqlstate={sqlstate} phase={phase.value}"), out
+        assert out.startswith(f"psycopg.errors.{cls.__name__}: ")
+
+
+def test_psycopg_claimed_module_name_is_not_trusted() -> None:
+    fake = type("OperationalError", (Exception,), {"__module__": "psycopg.errors", "sqlstate": "28P01"})
+    out = line_of(fake("x"))
+    assert "code=db_error" not in out and "sqlstate" not in out
+
+
+def test_golden_lines_t8_t9_t10() -> None:
+    assert re.fullmatch(r"json\.decoder\.JSONDecodeError: diag_v=1 code=validation_failed step=extract at=- fp=[0-9a-f]{8} position=3",
+                        line_of(corpus._f_json("m", "d", 3)))  # fmt: skip

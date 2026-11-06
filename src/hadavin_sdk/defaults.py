@@ -138,3 +138,16 @@ TEXTNORM_MAX_CHARS = MAX_REDACT_CHARS
 TEXTNORM_PINNED_UNIDATA = "15.1.0"
 # Passes (the confirming pass included) of a scan-key reading before FoldNotConverged (read by guard/textnorm.py at the call).
 TEXTNORM_MAX_PASSES = 3
+
+# --- diagnostics (codes.py, guard/diagnostic.py): the safe text that replaces an error message in logs and stored fields ---
+DIAG_VERSION = 1  # the `diag_v=` field of a rendered line
+DIAG_LINE_CHARS = 400  # a rendered line is cut to this by dropping trailing facts
+DIAG_KEY_CHARS = 120  # longest value a SafeToken may hold
+DIAG_STEP_CHARS = 30  # longest step part of a rendered line
+DIAG_KIND_CHARS = 80  # longest kind part of a rendered line
+DIAG_MAX_FACTS = 12  # facts kept per diagnostic (the first by priority)
+DIAG_TB_STEPS = (
+    2000  # traceback links walked; a longer traceback gives no locator and code foreign_exception
+)
+DIAG_MAX_FRAMES = 32  # innermost frames examined for the locator
+DIAG_MAX_ERRORS = 5  # validation error types printed before "+N more"
