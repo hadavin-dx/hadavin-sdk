@@ -300,3 +300,13 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | rev6-P2d-author | Sonnet author: apply reviews/P2d-round5-resolve.md + frozen designs/lookalike-leak.md draft 11 to tickets/P2d.md -> revision 6 | sonnet | 02:06Z | +90min | REPORTED | verify commit, recount |
 | rev10-P2a-author | Sonnet author: apply reviews/P2a-round8-resolve.md to tickets/P2a.md -> revision 10 (order 16: round 1 of 3 done) | sonnet | 02:20Z | +60min | REPORTED | verify commit, recount |
 | rev12-P4a-author | Sonnet author: apply reviews/P4a-round11-resolve.md to tickets/P4a.md -> revision 12 FINAL (order 16/17: then FROZEN) | sonnet | 02:32Z | +60min | REPORTED | verify commit, recount |
+| bs-P1-adv | build-start review (order 20) of frozen tickets/P1.md, egm:*, read-only | sonnet | 02:31Z | +45min | running | save report as reviews/P1-buildstart-adv.md; then ONE resolve |
+| bs-P1-cor | build-start review (order 20) of frozen tickets/P1.md, egm:*, read-only | sonnet | 02:31Z | +45min | running | save report as reviews/P1-buildstart-cor.md; then ONE resolve |
+| bs-P3a-adv | build-start review (order 20) of frozen tickets/P3a.md, egm:*, read-only | sonnet | 02:31Z | +45min | running | save report as reviews/P3a-buildstart-adv.md; then ONE resolve |
+| bs-P3a-cor | build-start review (order 20) of frozen tickets/P3a.md, egm:*, read-only | sonnet | 02:31Z | +45min | running | save report as reviews/P3a-buildstart-cor.md; then ONE resolve |
+| bs-P4d-adv | build-start review (order 20) of frozen tickets/P4d.md, egm:*, read-only | sonnet | 02:31Z | +45min | running | save report as reviews/P4d-buildstart-adv.md; then ONE resolve |
+| bs-P4d-cor | build-start review (order 20) of frozen tickets/P4d.md, egm:*, read-only | sonnet | 02:31Z | +45min | running | save report as reviews/P4d-buildstart-cor.md; then ONE resolve |
+| bs-P2a-adv | build-start review (order 20) of frozen tickets/P2a.md, egm:*, read-only | sonnet | 02:31Z | +45min | running | save report as reviews/P2a-buildstart-adv.md; then ONE resolve |
+| bs-P2a-cor | build-start review (order 20) of frozen tickets/P2a.md, egm:*, read-only | sonnet | 02:31Z | +45min | running | save report as reviews/P2a-buildstart-cor.md; then ONE resolve |
+| bs-P4a-adv | build-start review (order 20) of frozen tickets/P4a.md, egm:*, read-only | sonnet | 02:31Z | +45min | running | save report as reviews/P4a-buildstart-adv.md; then ONE resolve |
+| bs-P4a-cor | build-start review (order 20) of frozen tickets/P4a.md, egm:*, read-only | sonnet | 02:31Z | +45min | running | save report as reviews/P4a-buildstart-cor.md; then ONE resolve |
