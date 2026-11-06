@@ -1422,16 +1422,16 @@
 | BL-core-P4a-r10-adv-M7 | P4a | MAJOR | detector kinds (bedrock_guardrail) can bill while k1b books 0; guard trusts label | FIXED-UNVERIFIED | reviews/P4a-round10-adversarial.md | 94c4c82 |
 | BL-core-P4a-r10-cor-1 | P4a | MAJOR | replay guard makes k1b replay unusable outside dev; ticket silent | FIXED-UNVERIFIED | reviews/P4a-round10-correctness.md | f386cbd |
 | BL-core-P4a-r10-cor-2 | P4a | MAJOR | "same order as P4d.md:17" false for defaults.py; P2a-1 missing from defaults/models orders | FIXED-UNVERIFIED | reviews/P4a-round10-correctness.md | f386cbd |
-| BL-core-LK-r10-cor-1 | LK | MAJOR | LK-KIND-NUM second input inconsistent | OPEN | reviews/LK-round10-correctness.md | f386cbd |
-| BL-core-LK-r10-cor-2 | LK | MAJOR | no row/mutant for empty unfiltered key list | OPEN | reviews/LK-round10-correctness.md | f386cbd |
-| BL-core-LK-r10-cor-3 | LK | MAJOR | "caught by nothing" contradicts handed-secret hex/base64 scrub | OPEN | reviews/LK-round10-correctness.md | f386cbd |
-| BL-core-LK-r10-cor-4 | LK | MAJOR | self-refusal letter list not exhaustive (Sigma, Gamma, Omega, B, G, Sh) | OPEN | reviews/LK-round10-correctness.md | f386cbd |
-| BL-core-LK-r10-cor-5 | LK | MAJOR | P-1 1-in-200 rule skewed by Greek/Cyrillic corpus | OPEN | reviews/LK-round10-correctness.md | f386cbd |
-| BL-core-LK-r10-cor-6 | LK | MAJOR | M62 killer may not kill | OPEN | reviews/LK-round10-correctness.md | f386cbd |
-| BL-core-LK-r10-adv-A | LK | MAJOR | NFKC join (Hangul/Mc) lets a whole copy pass the count form | OPEN | reviews/LK-round10-adversarial.md | f386cbd |
-| BL-core-LK-r10-adv-B | LK | MAJOR | owner summary over-claims vs strict xfails | OPEN | reviews/LK-round10-adversarial.md | f386cbd |
-| BL-core-LK-r10-adv-C | LK | MAJOR | P-1 IN/OUT measure mixes catches, special corpora, false refusals | OPEN | reviews/LK-round10-adversarial.md | f386cbd |
-| BL-core-LK-r10-adv-D | LK | MAJOR | count form never compared with a window rule | OPEN | reviews/LK-round10-adversarial.md | f386cbd |
+| BL-core-LK-r10-cor-1 | LK | MAJOR | LK-KIND-NUM second input inconsistent | FIXED-UNVERIFIED | reviews/LK-round10-correctness.md | f386cbd |
+| BL-core-LK-r10-cor-2 | LK | MAJOR | no row/mutant for empty unfiltered key list | FIXED-UNVERIFIED | reviews/LK-round10-correctness.md | f386cbd |
+| BL-core-LK-r10-cor-3 | LK | MAJOR | "caught by nothing" contradicts handed-secret hex/base64 scrub | FIXED-UNVERIFIED | reviews/LK-round10-correctness.md | f386cbd |
+| BL-core-LK-r10-cor-4 | LK | MAJOR | self-refusal letter list not exhaustive (Sigma, Gamma, Omega, B, G, Sh) | FIXED-UNVERIFIED | reviews/LK-round10-correctness.md | f386cbd |
+| BL-core-LK-r10-cor-5 | LK | MAJOR | P-1 1-in-200 rule skewed by Greek/Cyrillic corpus | FIXED-UNVERIFIED | reviews/LK-round10-correctness.md | f386cbd |
+| BL-core-LK-r10-cor-6 | LK | MAJOR | M62 killer may not kill | FIXED-UNVERIFIED | reviews/LK-round10-correctness.md | f386cbd |
+| BL-core-LK-r10-adv-A | LK | MAJOR | NFKC join (Hangul/Mc) lets a whole copy pass the count form | FIXED-UNVERIFIED | reviews/LK-round10-adversarial.md | f386cbd |
+| BL-core-LK-r10-adv-B | LK | MAJOR | owner summary over-claims vs strict xfails | FIXED-UNVERIFIED | reviews/LK-round10-adversarial.md | f386cbd |
+| BL-core-LK-r10-adv-C | LK | MAJOR | P-1 IN/OUT measure mixes catches, special corpora, false refusals | FIXED-UNVERIFIED | reviews/LK-round10-adversarial.md | f386cbd |
+| BL-core-LK-r10-adv-D | LK | MAJOR | count form never compared with a window rule | FIXED-UNVERIFIED | reviews/LK-round10-adversarial.md | f386cbd |
 | BL-core-P1-r14-cor-1 | P1 | MAJOR | FILL-NAMES row predicate false for U+2422 (category So); red on correct code | OPEN | reviews/P1-round14-correctness.md | ad1d1f4 |
 | BL-core-P1-r14-adv-1 | P1 | MAJOR | FILL-NAMES predicate false for U+2422/2423 (same as r14-cor-1) | OPEN | reviews/P1-round14-adversarial.md | 81483aa |
 | BL-core-P1-r14-adv-2 | P1 | MAJOR | re-pointed mutants 7,8,9,18 cannot be KILLED once P1a adds an import-time digest check | OPEN | reviews/P1-round14-adversarial.md | 81483aa |

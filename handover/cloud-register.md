@@ -277,7 +277,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | r14-P1-adv | egm-design adversarial round 14 on tickets/P1.md rev 15 (afbaac9) | sonnet | 01:36Z | +40min | REPORTED | save report, ledger |
 | r14-P1-cor | egm-codebase-details correctness round 14 on tickets/P1.md rev 15 (afbaac9) | sonnet | 01:36Z | +40min | REPORTED | save report, ledger |
 | r10-P4a-resolve | Opus resolve of P4a r10 adv+cor -> reviews/P4a-round10-resolve.md | opus | 01:37Z | +45min | REPORTED | verify, then rev 11 author |
-| r10-LK-resolve | Opus resolve of LK r10 adv+cor -> reviews/LK-round10-resolve.md | opus | 01:37Z | +45min | running | verify, then draft 11 author |
+| r10-LK-resolve | Opus resolve of LK r10 adv+cor -> reviews/LK-round10-resolve.md | opus | 01:37Z | +45min | REPORTED | verify, then draft 11 author |
 | r14-P1-resolve | Opus resolve of P1 r14 adv+cor -> reviews/P1-round14-resolve.md | opus | 01:45Z | +45min | running | verify, then rev 16 author |
 | rev11-P4a-author | Sonnet author: apply P4a r10 resolve to tickets/P4a.md -> rev 11 | sonnet | 01:47Z | +60min | running | verify commit, r11 reviewers |
 | r8-P2a-adv | round 8 adversarial P2a rev 9 (order 16: older package, round count 1 of 3 from now) | sonnet | 01:51Z | +45min | running | save report, ledger |
@@ -286,3 +286,4 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | r8-P4d-cor | round 8 correctness P4d rev 9 (order 16: older package, round count 1 of 3 from now) | sonnet | 01:51Z | +45min | running | save report, ledger |
 | r8-P3a-cor2 | round 8 correctness P3a rev 9 (rerun, first run lost) (order 16: older package, round count 1 of 3 from now) | sonnet | 01:51Z | +45min | running | save report, ledger |
 | r5-P2d-cor2 | round 5 correctness P2d rev 5 (rerun, first run lost) (order 16: older package, round count 1 of 3 from now) | sonnet | 01:51Z | +45min | running | save report, ledger |
+| draft11-LK-author | Sonnet author: apply LK r10 resolve to designs/lookalike-leak.md -> draft 11 (FINAL, then frozen per order 16) | sonnet | 01:52Z | +60min | running | verify commit; freeze |
