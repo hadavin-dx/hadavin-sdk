@@ -752,3 +752,4 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | bd-P5a | Sonnet builder P5a | 2026-11-06T15:45:00Z | REPORTED: core/P5a 21ca680 pushed+verified, PR 74 ready (base main); evidence reviews/P5a |
 | bd-P1b | Sonnet builder P1b redo | 2026-11-06T16:15:00Z | REPORTED: core/P1b 06de589 pushed+verified, PR 70 ready (base core/P1a); evidence reviews/P1b/merge5 |
 | bd-P3a-1-o100 | Sonnet builder P3a-1 order 100 | 2026-11-06T16:30:00Z | REPORTED: core/P3a 53d5bd2 pushed+verified, PR 68 ready; evidence reviews/P3a-1-o100 |
+| bd-P1a-fix6 | Sonnet builder P1a fix6 | 2026-11-06T16:50:00Z | REPORTED: core/P1a 2ff0afe pushed (by lead-ping), PR 63 ready; evidence reviews/P1a/fix6 |
