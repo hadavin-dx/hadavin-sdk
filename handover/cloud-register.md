@@ -442,3 +442,8 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | r2-P5b5-cor | Round 2 correctness P5b5 rev 2 (snapshot cd2243f) | egm-codebase-details | 03:21Z | +10min | running | save |
 | tk-AK0 | Opus author ticket AK0 rev 1 (research and decisions note, Tier B) | opus | 03:23Z | +35min | running | verify; round 1 reviewers |
 | tk-AK1 | Opus author ticket AK1 rev 1 (step contract + outbound gate, absorbs P7b) | opus | 03:23Z | +40min | running | verify; round 1 reviewers |
+| rv-P8a-r2-adv | P8a round 2 adversarial (egm-design) | 03:25Z | +30min | running | verify |
+| rv-P8a-r2-cor | P8a round 2 correctness (egm-codebase-details) | 03:25Z | +30min | running | verify |
+| rv-P4b2-r3-adv | P4b2 round 3 adversarial (egm-design) | 03:25Z | +30min | running | verify |
+| rv-P4b2-r3-cor | P4b2 round 3 correctness (egm-codebase-details) | 03:25Z | +30min | running | verify |
+| sv-P5b5-r2 | saver P5b5 r2 reports | 03:25Z | +30min | running | verify |
