@@ -3,7 +3,12 @@
 ``_pid_alive_windows`` talks to the Windows system library through ``ctypes``; here that library is replaced by a fake, so the
 logic (which handle is asked for, what counts as alive, that the handle is closed) is checked on any system. A real Windows run
 is still needed to prove the real calls. These tests are kept out of ``tests/test_mutation_runner.py`` because the meta-test
-pins that file to the 21 moved tests plus the manifest test.
+pins that file to its listed tests plus the manifest test.
+
+Rule for every test here and in the other two ``tests/test_mutation_runner*.py`` files: a test that fakes ``sys.platform`` or
+``os.name`` also fakes EVERY operating-system call the faked branch makes (``os.kill``, ``os.symlink``, ...). The faked branch is
+reached on a system where its real calls mean something else (on Windows ``os.kill(pid, 0)`` sends Ctrl-C, and a symlink needs a
+privilege), so the test would run the real call under the wrong flag.
 """
 
 import ctypes
@@ -127,12 +132,20 @@ def test_windows_probe_without_the_system_library_falls_back_to_tasklist(monkeyp
 
 
 def test_pid_alive_uses_the_windows_probe_only_on_windows(monkeypatch):
-    seen = []
+    seen, signalled = [], []
+
+    def no_such_process(pid, sig):
+        signalled.append((pid, sig))
+        raise ProcessLookupError(pid)
+
     monkeypatch.setattr(t, "_pid_alive_windows", lambda pid: seen.append(pid) or "win")
+    # the POSIX branch is run with the platform faked: the real ``os.kill(77, 0)`` must not run (on Windows signal 0 is Ctrl-C)
+    monkeypatch.setattr(t.os, "kill", no_such_process)
     monkeypatch.setattr(sys, "platform", "win32")
-    assert t._pid_alive(77) == "win" and seen == [77]
+    assert t._pid_alive(77) == "win" and seen == [77] and signalled == []
     monkeypatch.setattr(sys, "platform", "linux")
-    assert t._pid_alive(77) != "win" and seen == [77]
+    assert t._pid_alive(77) is False and seen == [77]
+    assert signalled == [(77, 0)], "the POSIX probe did not ask the (faked) system call"
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="the POSIX branch uses /proc and signals")
@@ -197,9 +210,15 @@ def test_dir_link_makes_a_junction_on_windows_and_a_symlink_elsewhere(monkeypatc
     monkeypatch.setattr(sys, "platform", "win32")
     t._dir_link(tmp_path, tmp_path / "j")
     assert made == [(str(tmp_path), str(tmp_path / "j"))]  # no privilege needed, so no skip either
+    # the non-Windows half with the platform faked: the link call is a recorder, so no real symlink is made (Windows needs a privilege)
+    links = []
+    monkeypatch.setattr(
+        t.os, "symlink", lambda target, link, **kw: links.append((target, link, kw))
+    )
     monkeypatch.setattr(sys, "platform", "linux")
     t._dir_link(tmp_path, tmp_path / "s")
-    assert (tmp_path / "s").is_symlink() and len(made) == 1
+    assert links == [(tmp_path, tmp_path / "s", {"target_is_directory": True})]
+    assert len(made) == 1
 
 
 def test_symlink_helper_makes_the_link_where_it_can(tmp_path):

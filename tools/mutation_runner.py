@@ -18,10 +18,18 @@ reach those processes). After a normal exit the group is killed once more, so a 
 does not outlive it (POSIX only; on Windows nothing is killed after a normal exit: the parent is gone, ``taskkill /T`` cannot
 find the children, and its pid may already belong to an unrelated process).
 
-A SIGTERM or SIGHUP sent to the process that runs ``run_mutants`` (POSIX, main thread; a SIGHUP that was ignored on entry, as under
-``nohup``, stays ignored) is turned into ``SystemExit(128 + signal number)`` for the length of the call, so the same cleanup as for
-Ctrl-C runs: the pytest tree is killed and the temp folders are removed. The old handlers are restored afterwards. SIGKILL cannot be
-caught, and then the temp folders (``mutants_*`` in the temp directory) stay.
+A SIGTERM or SIGHUP sent to the process that runs ``run_mutants`` (POSIX, main thread; a signal that was ignored on entry stays
+ignored: SIGHUP under ``nohup``, or a SIGTERM that the parent set to ignore) is turned into ``SystemExit(128 + signal number)`` for
+the length of the call, so the same cleanup as for Ctrl-C runs: the pytest tree is killed and the temp folders are removed. The old
+handlers are restored afterwards. While the cleanup runs (the tree kill, the removal of the temp folders) and while the child is
+being started, a termination signal is remembered and raised when that step is done, and once one signal has ended the run a further
+one is remembered and dropped, so a second signal cannot cut the cleanup short. What stays open: a signal in the few bytecodes
+between the handler and the cleanup's first line is held only by the "one signal already ended the run" rule, and SIGKILL cannot be
+caught, and then the temp folders (``mutants_*`` and ``mutant_ini_*`` in the temp directory) stay.
+
+On POSIX the run's process group is killed while its leader has ended but is NOT yet reaped (``os.waitid`` with ``WNOWAIT``), so the
+group id cannot belong to an unrelated process by then. Where ``os.waitid`` does not exist (macOS) the leader is reaped by ``wait``
+first and the group kill after a normal exit has the old, tiny pid-reuse risk.
 
 Packages that need a ``conftest.py`` or pytest options from a ``pyproject.toml`` / ``pytest.ini`` cannot be run by this tool: pytest
 runs with ``--noconftest`` and with an empty ini file on purpose (a planted file in a parent folder is never read).
@@ -93,7 +101,7 @@ def _relative(rel: str) -> str:
     if ":" in rel:
         raise ValueError(f"path escapes its tree: {rel!r}")
     for pure in (PurePosixPath(rel), PureWindowsPath(rel)):
-        if pure.is_absolute() or pure.anchor or pure.drive or ".." in pure.parts:
+        if pure.is_absolute() or pure.anchor or ".." in pure.parts:
             raise ValueError(f"path escapes its tree: {rel!r}")
     return rel
 
@@ -123,9 +131,6 @@ SETUP_TRIES = 5  # attempts to clear and rebuild the temp copy (a Windows file l
 SETUP_WAIT = 0.5  # seconds between those attempts
 # a refused JUnit file (DOCTYPE, ENTITY, too large) or a truncated one (ET.ParseError is a SyntaxError) is THIS mutant's ERROR, not the end of the run
 JUNIT_REFUSED = (ValueError, SyntaxError)
-FIRST_LINES: dict[
-    str, str
-] = {}  # mutant name -> the first ``E`` line of its kill (diagnostics, and what ``crash_type`` is checked against)
 
 
 def _taskkill() -> str:
@@ -134,6 +139,9 @@ def _taskkill() -> str:
     return str(Path(root) / "System32" / "taskkill.exe")
 
 
+WAIT_POLL = (
+    0.05  # seconds between two looks at a running child (POSIX ``os.waitid`` has no timeout)
+)
 TREE_KILL_TIMEOUT = 60.0  # seconds ``taskkill`` may take before the child itself is killed anyway
 
 
@@ -168,57 +176,121 @@ def _pytest(cwd: Path, tests: Sequence[str], junit: Path, timeout: float) -> int
     env["PYTHONPATH"] = os.pathsep.join([str(cwd / "src"), str(cwd)])
     # an EMPTY ini file inside the copy is the config file and the copy is the rootdir: a planted pytest.ini, tox.ini, setup.cfg or
     # pyproject.toml in a parent folder (the shared temp folder, for one) is never picked up
-    ini = cwd / "mutant_run.ini"
-    ini.write_text("", encoding="utf-8")
-    cmd = [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", "--noconftest", "-x", "-c", str(ini), f"--rootdir={cwd}", f"--junitxml={junit}", "--", *tests]  # fmt: skip
-    # own process group (POSIX session / Windows group): on a timeout the whole tree dies, not only pytest (a test may have started psql or a server)
-    own = (
-        {"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP}
-        if _IS_WINDOWS
-        else {"start_new_session": True}
-    )
-    # S603 stays a listed exception: the argument list holds the caller's test paths and the junit path, so ruff cannot see it as a literal. Fixed argv (our own interpreter), no shell, caller strings only as pytest operands after --
-    with subprocess.Popen(  # noqa: S603
-        cmd, cwd=cwd, env=env, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, **own  # type: ignore[call-overload]
-    ) as proc:  # fmt: skip
+    # the ini file lives in a private temp folder of its own, never in the caller's working folder
+    ini_dir: Path | None = None
+    proc: subprocess.Popen[bytes] | None = None
+    try:
+        with _signals_held():
+            ini_dir = Path(tempfile.mkdtemp(prefix="mutant_ini_"))
+        ini = ini_dir / "mutant_run.ini"
+        ini.write_text("", encoding="utf-8")
+        cmd = [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", "--noconftest", "-x", "-c", str(ini), f"--rootdir={cwd}", f"--junitxml={junit}", "--", *tests]  # fmt: skip
+        # own process group (POSIX session / Windows group): on a timeout the whole tree dies, not only pytest (a test may have started psql or a server)
+        own = (
+            {"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP}
+            if _IS_WINDOWS
+            else {"start_new_session": True}
+        )
+        # a termination signal during the start is held until ``proc`` is known, then raised inside this ``try``: the child is killed
+        with _signals_held():
+            # S603 stays a listed exception: the argument list holds the caller's test paths and the junit path, so ruff cannot see it as a literal. Fixed argv (our own interpreter), no shell, caller strings only as pytest operands after --
+            proc = subprocess.Popen(  # noqa: S603
+                cmd, cwd=cwd, env=env, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, **own  # type: ignore[call-overload]
+            )  # fmt: skip
         try:
-            code = proc.wait(timeout=timeout)
+            _wait_unreaped(proc, timeout)
         except subprocess.TimeoutExpired:
             _kill_tree(proc)
             # a mutant that loops forever is reported, never allowed to hang the run
             return TIMED_OUT
-        except BaseException:  # Ctrl-C (KeyboardInterrupt) or any other exit while waiting: never leave a spinning mutant behind
-            _kill_tree(proc)
-            raise
         # a normal exit can leave a background process of the run behind: on POSIX it is killed too. Not on Windows: the parent is
         # gone, taskkill /T finds no children, and the pid may already belong to an unrelated process
         if not _IS_WINDOWS:
             _kill_tree(proc)
-        return code
+        return proc.wait()
+    except BaseException:  # Ctrl-C (KeyboardInterrupt) or any other exit while waiting: never leave a spinning mutant behind
+        if proc is not None and proc.returncode is None:
+            _kill_tree(proc)
+        raise
+    finally:
+        with _signals_held():
+            if ini_dir is not None:
+                shutil.rmtree(ini_dir, ignore_errors=True)
+
+
+def _wait_unreaped(proc: subprocess.Popen[bytes], timeout: float) -> None:
+    """Return when ``proc`` has ended; raise ``subprocess.TimeoutExpired`` after ``timeout`` seconds. On POSIX the ended leader is NOT
+    reaped (``os.waitid`` with ``WNOWAIT``, polled), so the later group kill cannot hit a reused pid; ``_kill_tree`` reaps it. Windows,
+    and a POSIX without ``os.waitid`` (macOS): ``proc.wait``, which reaps. Tests patch this function to steer the wait."""
+    if _IS_WINDOWS or not hasattr(os, "waitid"):
+        proc.wait(timeout=timeout)
+        return
+    deadline = time.monotonic() + timeout
+    while True:
+        try:
+            if os.waitid(os.P_PID, proc.pid, os.WEXITED | os.WNOHANG | os.WNOWAIT) is not None:
+                return
+        except ChildProcessError:  # someone else reaped it already
+            return
+        left = deadline - time.monotonic()
+        if left <= 0:
+            raise subprocess.TimeoutExpired(proc.args, timeout)
+        time.sleep(min(WAIT_POLL, left))
 
 
 def _kill_tree(proc: subprocess.Popen[bytes]) -> None:
     """Kill ``proc`` and everything it started (POSIX: its process group; Windows: ``taskkill /T``). A failing tree kill (no ``taskkill``
-    on the PATH, its own timeout, ``PermissionError`` from ``killpg``) never skips the kill of the child itself."""
-    try:
-        if _IS_WINDOWS:
-            # S603 stays a listed exception: the pid is our own child's, but the list is not a literal to ruff. Fixed argv, no shell
-            subprocess.run(  # noqa: S603
-                [_taskkill(), "/F", "/T", "/PID", str(proc.pid)],
-                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False, timeout=TREE_KILL_TIMEOUT,
-            )  # fmt: skip
-        else:
-            os.killpg(proc.pid, signal.SIGKILL)
-    # ProcessLookupError and PermissionError are OSErrors
-    except (OSError, subprocess.TimeoutExpired):
-        pass
-    finally:
-        proc.kill()  # the child itself, always
-        proc.wait()
+    on the PATH, its own timeout, ``PermissionError`` from ``killpg``) never skips the kill of the child itself. The group is not
+    killed when the leader was already reaped (its pid may be someone else's by now), except where ``os.waitid`` is missing. A
+    termination signal during the kill is held until it is done."""
+    with _signals_held():
+        try:
+            if _IS_WINDOWS:
+                # S603 stays a listed exception: the pid is our own child's, but the list is not a literal to ruff. Fixed argv, no shell
+                subprocess.run(  # noqa: S603
+                    [_taskkill(), "/F", "/T", "/PID", str(proc.pid)],
+                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False, timeout=TREE_KILL_TIMEOUT,
+                )  # fmt: skip
+            elif proc.returncode is None or not hasattr(os, "waitid"):
+                os.killpg(proc.pid, signal.SIGKILL)
+        # ProcessLookupError and PermissionError are OSErrors
+        except (OSError, subprocess.TimeoutExpired):
+            pass
+        finally:
+            proc.kill()  # the child itself, always
+            proc.wait()
 
 
 # the signals that end a run like Ctrl-C does (POSIX; SIGHUP does not exist on Windows)
 _TERMINATING = ("SIGTERM", "SIGHUP")
+# State of the termination handling. Only the main thread changes it (the handlers run there, and ``_signals_held`` does nothing in
+# another thread): ``depth`` counts the steps that must not be cut short, ``pending`` is the first signal that arrived during one,
+# ``ended`` says that a signal has already ended the run (every later one is remembered and dropped: the cleanup is under way).
+_SIGNALS = {"depth": 0, "pending": 0, "ended": 0}
+
+
+def _signals_active() -> bool:
+    return not _IS_WINDOWS and threading.current_thread() is threading.main_thread()
+
+
+@contextlib.contextmanager
+def _signals_held() -> Iterator[None]:
+    """POSIX main thread: a termination signal that arrives inside the block does not raise there; the first one is raised as
+    ``SystemExit`` when the outermost block ends (unless a signal has already ended the run). Used around the start of the child, the
+    tree kill and the removal of temp folders. Elsewhere it changes nothing."""
+    if not _signals_active():
+        yield
+        return
+    _SIGNALS["depth"] += 1
+    try:
+        yield
+    finally:
+        _SIGNALS["depth"] -= 1
+        if _SIGNALS["depth"] == 0 and _SIGNALS["pending"]:
+            number, _SIGNALS["pending"] = _SIGNALS["pending"], 0
+            if not _SIGNALS["ended"]:
+                _SIGNALS["ended"] = 1
+                raise SystemExit(128 + number)
 
 
 @contextlib.contextmanager
@@ -226,14 +298,19 @@ def _terminations_raise() -> Iterator[None]:
     """POSIX main thread: SIGTERM and SIGHUP raise ``SystemExit(128 + signal number)`` inside the block, so the cleanup in ``finally`` and in
     ``_pytest`` runs (a stopped runner would otherwise leave the pytest tree and the temp folders behind). The old handlers are restored;
     a signal that was ignored on entry (``nohup``) stays ignored. Elsewhere (Windows, another thread) it changes nothing."""
-    if _IS_WINDOWS or threading.current_thread() is not threading.main_thread():
+    if not _signals_active():
         yield
         return
 
     def stop(signum: int, _frame: object) -> None:
+        if _SIGNALS["depth"] or _SIGNALS["ended"]:
+            _SIGNALS["pending"] = _SIGNALS["pending"] or signum
+            return
+        _SIGNALS["ended"] = 1
         raise SystemExit(128 + signum)
 
     previous: dict[int, object] = {}
+    _SIGNALS.update(depth=0, pending=0, ended=0)
     try:
         for name in _TERMINATING:
             sig = getattr(signal, name, None)
@@ -244,6 +321,7 @@ def _terminations_raise() -> Iterator[None]:
     finally:
         for sig, old in previous.items():
             signal.signal(sig, old if old is not None else signal.SIG_DFL)  # type: ignore[arg-type]
+        _SIGNALS.update(depth=0, pending=0, ended=0)
 
 
 def run_mutants(
@@ -256,16 +334,20 @@ def run_mutants(
     timeout: float = DEFAULT_TIMEOUT,
     baseline_timeout: float | None = None,
     on_result: Callable[[tuple[str, Verdict, str, bool]], None] | None = None,
+    first_lines: dict[str, str] | None = None,
 ) -> list[tuple[str, Verdict, str, bool]]:
     """(name, verdict, failing test id, good). Raises ``RuntimeError`` if the unmutated copy fails or times out; a mutant whose temp copy cannot be built (after ``SETUP_TRIES`` tries) is ``(name, Verdict.ERROR, "SETUP FAILED: <error class>", False)``; a mutant run that exceeds
     ``timeout`` seconds is ``(name, Verdict.ERROR, "TIMEOUT", False)``. The unmutated baseline run gets ``baseline_timeout`` (default: ``timeout``; 0 is a real, immediate timeout and not "unset"),
     so a test can use a short mutant timeout without failing a slow baseline. ``on_result`` is called with each result as soon as that mutant
     finishes (stream it and a timeout of the whole run still leaves a kill list). Every ``tests`` and ``extra_dirs`` entry and every mutant file
-    must name a file inside its tree (``ValueError``). A SIGTERM or SIGHUP during the call ends it like Ctrl-C (see the module docstring)."""
+    must name a file inside its tree (``ValueError``). ``first_lines``, if given, is emptied at the start and then filled with the first ``E`` line
+    of each judged kill (mutant name -> line; diagnostics, and what ``crash_type`` is checked against): it belongs to this call, so two
+    runs in two threads never share it. A SIGTERM or SIGHUP during the call ends it like Ctrl-C (see the module docstring)."""
     with _terminations_raise():
         return _run_mutants(
-            root, mutants, tests, extra_dirs, only, timeout, baseline_timeout, on_result
-        )
+            root, mutants, tests, extra_dirs, only, timeout, baseline_timeout, on_result,
+            {} if first_lines is None else first_lines,
+        )  # fmt: skip
 
 
 def _run_mutants(
@@ -277,8 +359,9 @@ def _run_mutants(
     timeout: float,
     baseline_timeout: float | None,
     on_result: Callable[[tuple[str, Verdict, str, bool]], None] | None,
+    first_lines: dict[str, str],
 ) -> list[tuple[str, Verdict, str, bool]]:
-    FIRST_LINES.clear()  # the diagnostics of an earlier run must not answer for this one
+    first_lines.clear()  # the diagnostics of an earlier run must not answer for this one
     root = Path(root)
     mutants = list(mutants)
     for t in (*tests, *extra_dirs):
@@ -288,10 +371,10 @@ def _run_mutants(
             raise ValueError(
                 f"mutant {m.name!r}: test_file {m.test_file!r} is not one of the copied tests"
             )
-    tmp = Path(tempfile.mkdtemp(prefix="mutants_"))
-    snap = tmp.with_name(
-        tmp.name + "_snap"
-    )  # made inside the try below, so no signal can leave ``tmp`` alone behind
+    # both folders are named from ONE mkdtemp, made inside the try below (held against a signal), so no signal can leave ``tmp`` alone behind
+    made: list[Path] = []
+    tmp: Path
+    snap: Path
 
     def build() -> None:
         shutil.rmtree(tmp, ignore_errors=True)
@@ -327,6 +410,10 @@ def _run_mutants(
     # the try starts right after the first temp folder exists: a refusal (a path through a link out of the tree, a missing ``src``)
     # or a signal at any later point leaves no temp folder behind
     try:
+        with _signals_held():
+            made.append(Path(tempfile.mkdtemp(prefix="mutants_")))
+        tmp = made[0]
+        snap = tmp.with_name(tmp.name + "_snap")
         snap.mkdir()
         # ONE snapshot of the tree at the start: every mutant copy is made from it, so an edit of ``root`` while the run is going (a
         # developer saving a file, a second tool) can never leak into a later mutant
@@ -398,11 +485,13 @@ def _run_mutants(
                 pinned=m.pinned or None,
                 crash_markers=m.crash_markers,
             )
-            FIRST_LINES[m.name] = first
+            first_lines[m.name] = first
             declared = _leading_class(first) == m.crash_type
             crash_ok = v is Verdict.CRASH and m.allow_crash and declared
             emit((m.name, v, test_id, v is Verdict.KILLED or crash_ok))
     finally:
-        shutil.rmtree(tmp, ignore_errors=True)
-        shutil.rmtree(snap, ignore_errors=True)
+        with _signals_held():  # a signal is raised after the removal
+            for folder in made:
+                shutil.rmtree(folder, ignore_errors=True)
+                shutil.rmtree(folder.with_name(folder.name + "_snap"), ignore_errors=True)
     return out

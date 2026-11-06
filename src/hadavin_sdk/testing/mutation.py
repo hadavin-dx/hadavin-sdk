@@ -5,8 +5,8 @@ targeted tests, then call ``judge(returncode, test_id, first_line, expect=..., p
 ``E `` line of THAT test. ``first_failure_junit(xml)`` extracts both from a JUnit file (robust for ids that contain ``-``,
 ``|`` or ``[...]``); ``first_failure(stdout)`` parses ``-rf`` text and is only safe for ids without `` - ``.
 
-Verdicts: SURVIVED (exit 0), NO_TESTS (exit 5), ERROR (any other exit code except 1), WRONG_REASON (``expect`` is not in the test id or
-line), OTHER_TEST (not the test pinned in a reviewed baseline: ``Mutant.pinned`` of ``tools/mutation_runner.py``), CRASH (the first line is not an AssertionError, or it matches a
+Verdicts: SURVIVED (exit 0), NO_TESTS (exit 5), ERROR (any other exit code except 1), WRONG_REASON (``expect`` is not in the first error
+line; the test id is NOT searched, ``pinned`` is what ties a kill to its test), OTHER_TEST (not the test pinned in a reviewed baseline: ``Mutant.pinned`` of ``tools/mutation_runner.py``), CRASH (the first line is not an AssertionError, or it matches a
 ``crash_markers`` pattern such as an executor's ``denied:internal_error``), KILLED (an AssertionError, the intended way). Only an
 AssertionError (or ``Failed: DID NOT RAISE``) first line is KILLED; anything else (KeyError, TypeError, an import error, ``pytest.fail``
 with another message) is CRASH, so a mutant that merely breaks the code is not counted as an assertion kill. A runner should count CRASH
@@ -58,7 +58,7 @@ def judge(
         return Verdict.NO_TESTS
     if rc != 1:
         return Verdict.ERROR
-    if expect and expect not in test_id and expect not in first_line:
+    if expect and expect not in first_line:
         return Verdict.WRONG_REASON
     if pinned is not None and pinned != test_id:
         return Verdict.OTHER_TEST

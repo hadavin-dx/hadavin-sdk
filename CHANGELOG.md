@@ -346,12 +346,25 @@
   after a normal exit the tree is killed on POSIX only (on Windows the pid may be reused); the temp folders are cleaned up when a
   path is refused; the mutants script exits 2 when its filter selects no mutant; `tools` is now also checked by bandit and
   Semgrep in CI.
+  Review round 3 (P1m): the judge looks for `expect` in the first error line only (a fragment found only in the test id no longer
+  counts; `pinned` ties a kill to its test). The runner waits for the pytest child without reaping it (`os.waitid` with `WNOWAIT`,
+  POSIX; macOS has no `waitid` and keeps the old order) and kills the process group before the reap, so the group id cannot belong to
+  another process. A SIGTERM or SIGHUP that arrives while the child is being started, while the tree is killed or while the temp
+  folders are removed is held until that step is done (then raised), and once a signal has ended the run a second one cannot cut the
+  cleanup short; the narrow window of a few instructions between a signal handler and the first line of the cleanup stays (stated in
+  the module docstring), and SIGKILL still cannot be caught. A signal that was ignored on entry (SIGHUP under `nohup`, SIGTERM from
+  a parent that ignores it) stays ignored. The ini file of a pytest run now lives in its own temp folder, no longer in the working
+  folder. `FIRST_LINES` (a module global, not safe for two runs at once) is gone: pass `first_lines={}` to `run_mutants` and read
+  it after the call. Tests: the helper tests no longer run a real `os.kill` or `os.symlink` under a faked platform (they failed on
+  Windows); the rule "a test that fakes the platform fakes every OS call of that branch" is stated in the helpers docstring; the
+  interrupt test kills its leftover process only after its assertions; the signal test starts the runner in its own session, kills
+  the leftover pytest group, and resets SIGTERM and SIGHUP to the default first. Eight new mutants (49 in all).
 - Note on the name: `tools/` is a top-level Python package called `tools`, a generic name. A repository that copies it and already
   has its own `tools` package or folder must merge or rename deliberately; the mutants script puts the repository root on
   `sys.path` so that `tools.mutation_runner` imports, and another `tools` earlier on the path would shadow it.
 - Every repository that keeps a byte copy of these files re-copies the four of them in one commit and updates its pins to the
   sha256 values below (also pinned in `tests/fixtures/mutation_manifest.json`):
   - `src/hadavin_sdk/testing/__init__.py`: `3c77d034fe2a1ee70adea0d0bd259a20edda397d8ebd55a0e40b63e5c21c9e1c`
-  - `src/hadavin_sdk/testing/mutation.py`: `2242c1e2313ffe9d156afd283e6774494d13af1f22d235c8ba2edfbeaee0df35`
+  - `src/hadavin_sdk/testing/mutation.py`: `75c32a4e501f5c3a4edcd6f1fd8a58603ebb2ef6fd43842e558ce0761eaee03e`
   - `tools/__init__.py`: `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
-  - `tools/mutation_runner.py`: `7d6e6ccd28162264339572ba3d9387406fe2b49a40f1f6cb29ac217f4a21a4bc`
+  - `tools/mutation_runner.py`: `b931bca7b0b1af0d8d0f48c99140e52488ee0b98ac503db23d8536420ffbe243`

@@ -16,7 +16,7 @@ from tests import mutation_runner_mutants as mm
 ROOT = Path(__file__).resolve().parents[1]
 RUNNER_TESTS = ROOT / "tests" / "test_mutation_runner.py"
 
-# every test of the runner file (21 came from an earlier version, with the refuses-paths test split one per guard; later fixes added
+# every test of the runner file (the first 21 came from an earlier version, with the refuses-paths test split one per guard; later fixes added
 # the rest); the manifest test is the last function of the file and has no mutant
 MOVED = (
     "test_mutation_judge_verdicts",
@@ -60,8 +60,14 @@ MOVED = (
     "test_a_refused_run_leaves_no_temp_folder",
     "test_the_first_lines_of_an_earlier_run_do_not_leak_into_the_next",
     "test_a_finished_run_does_not_kill_the_tree_on_windows",
+    "test_a_signal_during_the_cleanup_does_not_cut_the_cleanup_short",
+    "test_a_second_signal_cannot_cut_short_the_cleanup_of_the_first",
+    "test_a_signal_while_the_child_is_being_started_still_kills_the_child",
+    "test_a_signal_while_the_temp_folders_are_removed_leaves_none",
+    "test_the_process_group_is_killed_while_its_leader_is_not_yet_reaped",
+    "test_the_pytest_run_writes_no_file_into_its_working_folder_and_leaves_no_temp_folder",
 )
-EXPECTED_MUTANTS = 41
+EXPECTED_MUTANTS = 49
 MANIFEST_TEST = "test_the_manifest_pins_the_files_a_demo_copies"
 
 
@@ -93,8 +99,8 @@ def test_a_there_are_the_listed_number_of_mutants_with_unique_names():
     names = [m.name for m in mm.M]
     assert len(names) == EXPECTED_MUTANTS and len(set(names)) == EXPECTED_MUTANTS, names
     assert {m.file for m in mm.M} == {mm.MU, mm.MR}
-    assert sum(m.file == mm.MU for m in mm.M) == 5
-    assert sum(m.file == mm.MR for m in mm.M) == EXPECTED_MUTANTS - 5
+    assert sum(m.file == mm.MU for m in mm.M) == 6
+    assert sum(m.file == mm.MR for m in mm.M) == EXPECTED_MUTANTS - 6
 
 
 def test_a_every_mutant_names_its_test_file_and_its_killer_and_the_killer_exists():
@@ -106,8 +112,9 @@ def test_a_every_mutant_names_its_test_file_and_its_killer_and_the_killer_exists
         defined.setdefault(m.test_file, _functions(path))
         assert m.only_test in defined[m.test_file], (m.name, m.only_test, "is not in", m.test_file)
         assert m.only_test in MOVED, (m.name, m.only_test, "is not one of the runner file's tests")
-        # the judge accepts ``expect`` if it is in the failing test id OR in the first E line. A fragment of the killer's own name
-        # would be accepted whichever guard broke, so it is forbidden: ``expect`` must come from the assertion message of the guard
+        # the judge looks for ``expect`` in the first E line only (not in the test id). A fragment of the killer's own name is
+        # still forbidden, so a mutant that breaks another guard of the same test is never counted: ``expect`` must come from the
+        # assertion message of the guard
         assert m.expect != m.only_test, (m.name, "expect is the killer's name")
         assert m.expect not in m.only_test, (m.name, "expect is a part of the killer's name")
         assert m.only_test not in m.expect, (m.name, "expect holds the killer's name")

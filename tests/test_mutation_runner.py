@@ -212,9 +212,11 @@ def test_mutation_judge_verdicts():
     a = "E   AssertionError: assert 1 == 2"
     assert judge(1, "t.py::a", a) == Verdict.KILLED and judge(0, "t.py::a", a) == Verdict.SURVIVED
     assert judge(5, "t.py::a", a) == Verdict.NO_TESTS and judge(2, "t.py::a", a) == Verdict.ERROR
-    assert (
-        judge(1, "t.py::test_aaaa", a, expect="test_aaaa") == Verdict.KILLED
-        and judge(1, "t.py::a", a, expect="zzzz") == Verdict.WRONG_REASON
+    assert judge(1, "t.py::a", a, expect="assert 1 == 2") == Verdict.KILLED
+    assert judge(1, "t.py::a", a, expect="zzzz") == Verdict.WRONG_REASON
+    # the test id is NOT searched: a fragment found only in the id (the killer's own name) is the wrong reason
+    assert judge(1, "t.py::test_aaaa", a, expect="test_aaaa") == Verdict.WRONG_REASON, (
+        "an expect found only in the test id was accepted by the judge"
     )
     _must_refuse(
         "a one-letter expect was accepted by the judge", judge, 1, "t.py::a", a, expect="a"
@@ -265,9 +267,9 @@ def test_the_runner_kills_a_mutant_of_a_tiny_package(tmp_path):
     )
     res = run_mutants(
         tmp_path,
-        [Mutant("guard removed", "src/pkg/__init__.py", "if x < 0:", "if False:", "test_guard_refuses_negative"),
-         Mutant("no-op mutant", "src/pkg/__init__.py", "return x", "return x  # same", "test_guard_refuses_negative"),
-         Mutant("crash mutant", "src/pkg/__init__.py", "if x < 0:", "if 1 / 0:", "test_guard_refuses_negative"),
+        [Mutant("guard removed", "src/pkg/__init__.py", "if x < 0:", "if False:", "DID NOT RAISE"),
+         Mutant("no-op mutant", "src/pkg/__init__.py", "return x", "return x  # same", "DID NOT RAISE"),
+         Mutant("crash mutant", "src/pkg/__init__.py", "if x < 0:", "if 1 / 0:", "division by zero"),
          Mutant("missing snippet", "src/pkg/__init__.py", "nope", "x", "test_guard")],
         ["tests/test_g.py"],
     )  # fmt: skip
@@ -424,8 +426,8 @@ def test_an_edit_of_the_tree_during_the_run_does_not_leak_into_a_later_mutant(tm
         tmp_path,
         "from pk.core import go\n\ndef test_go_is_true():\n    assert go(True) is True\n",
     )
-    m1 = Mutant("one", "src/pk/core.py", "return flag", "return False", "test_go_is_true")
-    m2 = Mutant("two", "src/pk/core.py", "return flag", "return not flag", "test_go_is_true")
+    m1 = Mutant("one", "src/pk/core.py", "return flag", "return False", "assert False")
+    m2 = Mutant("two", "src/pk/core.py", "return flag", "return not flag", "assert False")
 
     def edit_root_after_first(row):  # a second tool / a save while the run is going
         (root / "src" / "pk" / "core.py").write_text(
@@ -578,25 +580,29 @@ def test_the_runner_streams_each_result_and_keeps_a_sigkill_apart_from_a_timeout
 
 
 def _patient_wait(monkeypatch, pidfile, then):
-    """Make the runner's own ``proc.wait(timeout=...)`` start only after the child has written ``pidfile`` (it is the
-    timeout of the RUN that is under test, not how fast this machine starts a child); then ``then(self, real_wait)``
+    """Make the runner's wait for the child (``mr._wait_unreaped``) start only after the child has written ``pidfile`` (it is the
+    timeout of the RUN that is under test, not how fast this machine starts a child); then ``then(proc, real_wait)``
     decides what that wait does. A child that ends first (the baseline run) is waited for as ever."""
-    real_wait = subprocess.Popen.wait
+    real_wait = mr._wait_unreaped
 
-    def wait(self, timeout=None):
-        if timeout is not None:
-            for _ in range(1200):
-                if (
-                    pidfile.exists() and pidfile.read_text(encoding="utf-8").strip()
-                ) or self.poll() is not None:
-                    break
-                time.sleep(0.1)
-            if self.poll() is None:
-                assert pidfile.exists(), "the child never wrote its pid file"
-                return then(self, real_wait)
-        return real_wait(self, timeout=timeout)
+    def ended(proc):
+        try:
+            real_wait(proc, timeout=0)  # a look, without reaping
+        except subprocess.TimeoutExpired:
+            return False
+        return True
 
-    monkeypatch.setattr(subprocess.Popen, "wait", wait)
+    def wait(proc, timeout):
+        for _ in range(1200):
+            if (pidfile.exists() and pidfile.read_text(encoding="utf-8").strip()) or ended(proc):
+                break
+            time.sleep(0.1)
+        if not ended(proc):
+            assert pidfile.exists(), "the child never wrote its pid file"
+            return then(proc, real_wait)
+        return real_wait(proc, timeout=timeout)
+
+    monkeypatch.setattr(mr, "_wait_unreaped", wait)
 
 
 def test_a_timeout_kills_the_whole_process_tree_not_only_pytest(tmp_path, monkeypatch):
@@ -611,7 +617,7 @@ def test_a_timeout_kills_the_whole_process_tree_not_only_pytest(tmp_path, monkey
         "    time.sleep(600)"
     )
     spawn = Mutant("spawn", "src/pk/core.py", "return flag", body, "test_go_is_true")
-    _patient_wait(monkeypatch, pidfile, lambda self, real_wait: real_wait(self, timeout=1))
+    _patient_wait(monkeypatch, pidfile, lambda proc, real_wait: real_wait(proc, timeout=1))
     pid = None
     try:
         out = run_mutants(
@@ -647,13 +653,12 @@ def test_an_interrupt_while_waiting_kills_the_run_and_is_not_swallowed(tmp_path,
 
     fired = []
 
-    def interrupt(self, real_wait):
-        # only the FIRST wait of the run is interrupted. Later waits with a timeout (the tree kill's own ``taskkill`` run on
-        # Windows, the cleanup in ``finally``) must work as ever, or the second KeyboardInterrupt escapes ``pytest.raises``
-        # and aborts the whole pytest session
+    def interrupt(proc, real_wait):
+        # only the FIRST wait of the run is interrupted: a second KeyboardInterrupt would escape ``pytest.raises`` and abort the
+        # whole pytest session
         if fired:
-            return real_wait(self, timeout=30)
-        fired.append(self.pid)
+            return real_wait(proc, timeout=30)
+        fired.append(proc.pid)
         raise KeyboardInterrupt
 
     _patient_wait(monkeypatch, pidfile, interrupt)
@@ -663,15 +668,24 @@ def test_an_interrupt_while_waiting_kills_the_run_and_is_not_swallowed(tmp_path,
     try:
         with pytest.raises(KeyboardInterrupt):
             mr._pytest(folder, ["test_x.py"], folder / "r.xml", 120)
+        # ``fired`` and ``killed`` hold the pid of the Popen object of the run. The pid the child wrote is NOT compared with it: on
+        # Windows a venv python.exe is a launcher that starts the real interpreter as a child, so the two differ there
+        assert len(fired) == 1, (
+            "the interrupt was raised for something other than the run's own wait"
+        )
+        assert killed == fired, (
+            "an interrupt while waiting did not kill the run before it propagated"
+        )
+        child = int(pidfile.read_text(encoding="utf-8"))  # only used to probe the descendant
+        for _ in range(50):
+            if not _pid_alive(child):
+                break
+            time.sleep(0.2)
+        assert not _pid_alive(child), "the process the test started was still running"
     finally:
+        # AFTER the assertions: a kill here before them would make "not alive" true whatever the runner did
         if pidfile.exists() and pidfile.read_text(encoding="utf-8").strip():
             _force_kill(int(pidfile.read_text(encoding="utf-8")))
-    # ``fired`` and ``killed`` hold the pid of the Popen object of the run. The pid the child wrote is NOT compared with it: on
-    # Windows a venv python.exe is a launcher that starts the real interpreter as a child, so the two differ there
-    assert len(fired) == 1, "the interrupt was raised for something other than the run's own wait"
-    assert killed == fired, "an interrupt while waiting did not kill the run before it propagated"
-    child = int(pidfile.read_text(encoding="utf-8"))  # only used to probe the descendant
-    assert not _pid_alive(child), "the process the test started was still running"
 
 
 @pytest.mark.skipif(
@@ -719,8 +733,8 @@ def test_a_setup_failure_for_one_mutant_is_a_result_row_and_a_blip_is_retried(
     root = _pk_tree(
         tmp_path, "from pk.core import go\n\ndef test_go_is_true():\n    assert go(True) is True\n"
     )
-    a = Mutant("a", "src/pk/core.py", "return flag", "return False", "test_go_is_true")
-    b = Mutant("b", "src/pk/core.py", "return flag", "return not flag", "test_go_is_true")
+    a = Mutant("a", "src/pk/core.py", "return flag", "return False", "assert False")
+    b = Mutant("b", "src/pk/core.py", "return flag", "return not flag", "assert False")
     # call 1 = baseline copy; calls 2..6 = every try for mutant a (SETUP_TRIES = 5)
     _copytree_failing(monkeypatch, set(range(2, 7)))
     out = run_mutants(root, [a, b], ["tests/test_core.py"], extra_dirs=(), timeout=120)
@@ -755,7 +769,7 @@ def test_a_test_file_that_is_not_among_the_copied_tests_fails_before_any_mutant_
     root = _pk_tree(
         tmp_path, "from pk.core import go\n\ndef test_go_is_true():\n    assert go(True) is True\n"
     )
-    ok = Mutant("ok", "src/pk/core.py", "return flag", "return False", "test_go_is_true")
+    ok = Mutant("ok", "src/pk/core.py", "return flag", "return False", "assert False")
     bad = Mutant(
         "bad",
         "src/pk/core.py",
@@ -791,7 +805,7 @@ def test_junit_with_a_doctype_or_entity_is_refused_not_parsed():
 def test_the_runner_wires_pinned_so_another_failing_test_is_other_test(tmp_path):
     body = "from pk.core import go\n\ndef test_a():\n    assert go(True) is True\n\ndef test_b():\n    assert go(True) is True\n"
     root = _pk_tree(tmp_path, body)
-    base = ("m", "src/pk/core.py", "return flag", "return False", "test_")
+    base = ("m", "src/pk/core.py", "return flag", "return False", "assert False")
     other = Mutant(*base, pinned="tests/test_core::test_does_not_exist")
     same = Mutant("m2", *base[1:], pinned="tests/test_core::test_a")
     res = run_mutants(root, [other, same], ["tests/test_core.py"], extra_dirs=(), timeout=120)
@@ -817,8 +831,8 @@ def test_a_refused_junit_marks_that_mutant_error_and_the_run_goes_on(tmp_path, m
         return real(text)
 
     monkeypatch.setattr(mutation_runner, "first_failure_junit", flaky)
-    m1 = Mutant("m1", "src/pk/core.py", "return flag", "return False", "test_")
-    m2 = Mutant("m2", "src/pk/core.py", "return flag", "return False", "test_")
+    m1 = Mutant("m1", "src/pk/core.py", "return flag", "return False", "assert False")
+    m2 = Mutant("m2", "src/pk/core.py", "return flag", "return False", "assert False")
     res = run_mutants(root, [m1, m2], ["tests/test_core.py"], extra_dirs=(), timeout=120)
     got = {n: (v, tid) for n, v, tid, _ in res}
     assert got["m1"] == (
@@ -838,7 +852,7 @@ def test_a_junit_text_over_the_ceiling_is_refused():
 
 def test_a_crash_row_is_good_only_when_the_exception_class_is_the_declared_one(tmp_path):
     root = _raising_tree(tmp_path)
-    base = ("src/pk/core.py", "return flag", 'raise ValueError("boom")', "test_a")
+    base = ("src/pk/core.py", "return flag", 'raise ValueError("boom")', "boom")
     right = Mutant("right", *base, allow_crash=True, crash_type="ValueError")
     wrong = Mutant("wrong", *base, allow_crash=True, crash_type="KeyError")
     # a class that only CONTAINS the declared name (``MyValueError``) is not the declared class
@@ -847,14 +861,20 @@ def test_a_crash_row_is_good_only_when_the_exception_class_is_the_declared_one(t
         "src/pk/core.py",
         "return flag",
         'raise type("MyValueError", (Exception,), {})("boom")',
-        "test_a",
+        "boom",
         allow_crash=True,
         crash_type="ValueError",
     )
+    first_lines = {}
     res = {
         n: (v, good)
         for n, v, _t, good in run_mutants(
-            root, [right, wrong, lookalike], ["tests/test_core.py"], extra_dirs=(), timeout=120
+            root,
+            [right, wrong, lookalike],
+            ["tests/test_core.py"],
+            extra_dirs=(),
+            timeout=120,
+            first_lines=first_lines,
         )
     }
     assert res["right"] == (Verdict.CRASH, True)
@@ -864,7 +884,7 @@ def test_a_crash_row_is_good_only_when_the_exception_class_is_the_declared_one(t
     assert res["lookalike"] == (Verdict.CRASH, False), (
         "a crash row was good for a lookalike class name"
     )
-    assert "ValueError" in mr.FIRST_LINES["right"]
+    assert "ValueError" in first_lines["right"]
 
 
 def test_the_leading_class_of_an_error_line_is_parsed_not_searched():
@@ -903,7 +923,7 @@ def test_a_truncated_junit_marks_the_mutant_error_and_the_run_goes_on(tmp_path, 
         raise ET.ParseError("no element found")
 
     monkeypatch.setattr(mr, "first_failure_junit", truncated)
-    m = Mutant("m", "src/pk/core.py", "return flag", "return False", "test_a")
+    m = Mutant("m", "src/pk/core.py", "return flag", "return False", "assert False")
     ((_name, v, tid, good),) = run_mutants(
         root, [m], ["tests/test_core.py"], extra_dirs=(), timeout=120
     )
@@ -935,6 +955,26 @@ def test_taskkill_is_resolved_under_system_root(tmp_path, monkeypatch):
     assert seen == [expected], f"taskkill was not run from System32: {seen}"
 
 
+def _kill_run_leftovers(runner, grandchild):
+    """POSIX cleanup of a runner subprocess that ``start_new_session=True`` made, and of what it left. The pytest child of a run is in
+    ITS OWN session, so the runner's group does not hold it; the grandchild a test started is in the pytest child's group, so that
+    group is found from the grandchild's pid. Groups are killed BEFORE the runner is reaped (its pid is its group id)."""
+    import signal
+
+    if grandchild is not None:
+        try:
+            os.killpg(os.getpgid(grandchild), signal.SIGKILL)  # the pytest child and the grandchild
+        except OSError:
+            pass
+        _force_kill(grandchild)
+    if runner.poll() is None:  # not yet reaped, so the pid is still its own group id
+        try:
+            os.killpg(runner.pid, signal.SIGKILL)
+        except OSError:
+            pass
+    runner.wait()
+
+
 @pytest.mark.skipif(sys.platform == "win32", reason="SIGTERM and SIGHUP are POSIX signals")
 def test_a_termination_signal_cleans_up_the_run(tmp_path):
     """A runner stopped by SIGTERM or SIGHUP must kill the pytest tree of the run and remove its temp folders (a stopped runner
@@ -957,7 +997,11 @@ def test_a_termination_signal_cleans_up_the_run(tmp_path):
             "    time.sleep(600)"
         )
         script = (
-            "import sys\n"
+            # a parent that ignores SIGTERM or SIGHUP (nohup, a service manager) hands that on to a child: reset both, or the
+            # runner would not stop and this test would fail for a reason that is not the runner's
+            "import signal, sys\n"
+            "signal.signal(signal.SIGTERM, signal.SIG_DFL)\n"
+            "signal.signal(signal.SIGHUP, signal.SIG_DFL)\n"
             f"sys.path.insert(0, {str(repo)!r})\n"
             "from tools.mutation_runner import Mutant, run_mutants\n"
             f"m = Mutant('spawn', 'src/pk/core.py', 'return flag', {body!r}, 'test_go_is_true')\n"
@@ -970,6 +1014,7 @@ def test_a_termination_signal_cleans_up_the_run(tmp_path):
             stdin=subprocess.DEVNULL,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
+            start_new_session=True,  # its own group: the cleanup below can kill it and what it left, and never the test session
         )
         pid = None
         try:
@@ -990,13 +1035,9 @@ def test_a_termination_signal_cleans_up_the_run(tmp_path):
             assert not _pid_alive(pid), f"the grandchild survived {name} of the runner"
             assert list(scratch.glob("mutants_*")) == [], f"a temp folder was left after {name}"
         finally:
-            if runner.poll() is None:
-                runner.kill()
-            runner.wait()
             if pid is None and pidfile.exists() and pidfile.read_text(encoding="utf-8").strip():
                 pid = int(pidfile.read_text(encoding="utf-8"))
-            if pid is not None:
-                _force_kill(pid)
+            _kill_run_leftovers(runner, pid)
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="signal handlers of the runner are POSIX only")
@@ -1007,17 +1048,162 @@ def test_the_signal_handlers_are_restored_and_an_ignored_sighup_stays_ignored(
 
     root = _raising_tree(tmp_path)
     seen = {}
+    # a test session started with SIGTERM ignored (nohup, a service manager) would see no handler at all: start from the default
+    old_term = signal.signal(signal.SIGTERM, signal.SIG_DFL)
     before = signal.getsignal(signal.SIGTERM)
     monkeypatch.setattr(mr, "_pytest", lambda *a, **k: seen.update(term=signal.getsignal(signal.SIGTERM), hup=signal.getsignal(signal.SIGHUP)) or 0)  # fmt: skip
     old_hup = signal.signal(signal.SIGHUP, signal.SIG_IGN)
     try:
         run_mutants(root, [], ["tests/test_core.py"], extra_dirs=(), timeout=60)
         assert signal.getsignal(signal.SIGHUP) is signal.SIG_IGN
+        assert signal.getsignal(signal.SIGTERM) == before, (
+            "the old SIGTERM handler was not restored"
+        )
     finally:
         signal.signal(signal.SIGHUP, old_hup)
+        signal.signal(signal.SIGTERM, old_term)
     assert seen["term"] not in (before, signal.SIG_DFL, signal.SIG_IGN), "no handler during the run"
     assert seen["hup"] is signal.SIG_IGN  # ignored on entry (nohup), so left ignored
-    assert signal.getsignal(signal.SIGTERM) == before, "the old SIGTERM handler was not restored"
+
+
+@pytest.fixture
+def default_termination_signals():
+    """The in-process signal tests start from the default SIGTERM and SIGHUP (a session started under nohup ignores them) and put the old ones back."""
+    import signal
+
+    old = {n: signal.signal(getattr(signal, n), signal.SIG_DFL) for n in ("SIGTERM", "SIGHUP")}
+    yield
+    for name, handler in old.items():
+        signal.signal(getattr(signal, name), handler)
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="SIGTERM is a POSIX signal")
+def test_a_signal_during_the_cleanup_does_not_cut_the_cleanup_short(default_termination_signals):
+    import signal
+
+    ran = []
+    with pytest.raises(SystemExit) as stopped, mr._terminations_raise():
+        with mr._signals_held():
+            os.kill(
+                os.getpid(), signal.SIGTERM
+            )  # delivered to this process, to the handler of the runner
+            ran.append("the cleanup went on")
+        ran.append("not reached: the signal ends the run when the cleanup is done")
+    assert ran == ["the cleanup went on"], f"a signal during the cleanup cut it short: {ran}"
+    assert stopped.value.code == 128 + signal.SIGTERM
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="SIGTERM is a POSIX signal")
+def test_a_second_signal_cannot_cut_short_the_cleanup_of_the_first(default_termination_signals):
+    import signal
+
+    ran = []
+    with pytest.raises(SystemExit) as stopped, mr._terminations_raise():
+        try:
+            os.kill(os.getpid(), signal.SIGTERM)
+        finally:  # the cleanup of a run that the first signal has ended
+            os.kill(os.getpid(), signal.SIGHUP)
+            ran.append("the cleanup went on after a second signal")
+    assert ran == ["the cleanup went on after a second signal"], (
+        f"a second signal cut the cleanup short: {ran}"
+    )
+    assert stopped.value.code == 128 + signal.SIGTERM  # the first signal answers for the exit
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="SIGTERM is a POSIX signal")
+def test_a_signal_while_the_child_is_being_started_still_kills_the_child(
+    tmp_path, monkeypatch, default_termination_signals
+):
+    import signal
+
+    folder = _spawn_test(tmp_path, "    time.sleep(120)\n")
+    real_popen, started = subprocess.Popen, []
+
+    def popen_then_signal(*a, **k):
+        proc = real_popen(*a, **k)
+        started.append(proc)
+        os.kill(
+            os.getpid(), signal.SIGTERM
+        )  # after the child exists, before the runner has its handle
+        return proc
+
+    monkeypatch.setattr(subprocess, "Popen", popen_then_signal)
+    try:
+        with pytest.raises(SystemExit) as stopped, mr._terminations_raise():
+            mr._pytest(folder, ["test_x.py"], folder / "r.xml", 120)
+        assert stopped.value.code == 128 + signal.SIGTERM
+        assert len(started) == 1
+        assert started[0].returncode is not None, (
+            "a signal while the child was being started left the child running"
+        )
+    finally:
+        for proc in started:
+            if proc.poll() is None:
+                os.killpg(proc.pid, signal.SIGKILL)
+                proc.wait()
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="SIGTERM is a POSIX signal")
+def test_a_signal_while_the_temp_folders_are_removed_leaves_none(
+    tmp_path, monkeypatch, default_termination_signals
+):
+    import shutil
+    import signal
+
+    shared = tmp_path / "shared_temp"
+    shared.mkdir()
+    monkeypatch.setattr(tempfile, "tempdir", str(shared))
+    root = _raising_tree(tmp_path)
+    ran, real_rmtree = [], shutil.rmtree
+
+    def rmtree_then_signal(path, *a, **k):
+        if ran and not any("signalled" in x for x in ran):
+            ran.append("signalled")
+            os.kill(os.getpid(), signal.SIGTERM)  # the first removal after the run
+        return real_rmtree(path, *a, **k)
+
+    monkeypatch.setattr(mr, "_pytest", lambda *a, **k: ran.append("pytest") or 0)
+    monkeypatch.setattr(mr.shutil, "rmtree", rmtree_then_signal)
+    with pytest.raises(SystemExit):
+        run_mutants(root, [], ["tests/test_core.py"], extra_dirs=())
+    assert "signalled" in ran
+    assert list(shared.iterdir()) == [], "a signal during the removal left a temp folder behind"
+
+
+@pytest.mark.skipif(
+    sys.platform == "win32" or not hasattr(os, "waitid"), reason="needs POSIX os.waitid"
+)
+def test_the_process_group_is_killed_while_its_leader_is_not_yet_reaped(tmp_path, monkeypatch):
+    (tmp_path / "test_ok.py").write_text("def test_a():\n    assert True\n", encoding="utf-8")
+    real_killpg, waitable = os.killpg, []
+
+    def watch(pgid, sig):
+        try:  # a look at the leader that does not reap it; a reaped leader is ECHILD
+            os.waitid(os.P_PID, pgid, os.WEXITED | os.WNOHANG | os.WNOWAIT)
+            waitable.append(True)
+        except ChildProcessError:
+            waitable.append(False)
+        return real_killpg(pgid, sig)
+
+    monkeypatch.setattr(mr.os, "killpg", watch)
+    assert mr._pytest(tmp_path, ["test_ok.py"], tmp_path / "r.xml", 120) == 0
+    assert waitable == [True], f"the group was killed after its leader was reaped: {waitable}"
+
+
+def test_the_pytest_run_writes_no_file_into_its_working_folder_and_leaves_no_temp_folder(
+    tmp_path, monkeypatch
+):
+    shared = tmp_path / "shared_temp"
+    shared.mkdir()
+    monkeypatch.setattr(tempfile, "tempdir", str(shared))
+    work = tmp_path / "work"
+    work.mkdir()
+    (work / "test_ok.py").write_text("def test_a():\n    assert True\n", encoding="utf-8")
+    assert mr._pytest(work, ["test_ok.py"], tmp_path / "r.xml", 120) == 0
+    assert not (work / "mutant_run.ini").exists(), (
+        "the ini file was written into the working folder"
+    )
+    assert list(shared.glob("mutant_ini_*")) == [], "the folder of the ini file was left behind"
 
 
 def test_a_refused_run_leaves_no_temp_folder(tmp_path, monkeypatch):
@@ -1048,9 +1234,12 @@ def test_a_refused_run_leaves_no_temp_folder(tmp_path, monkeypatch):
 
 def test_the_first_lines_of_an_earlier_run_do_not_leak_into_the_next(tmp_path):
     root = _raising_tree(tmp_path)
-    mr.FIRST_LINES["stale mutant"] = "E   stale"
-    run_mutants(root, [], ["tests/test_core.py"], extra_dirs=(), timeout=120)
-    assert mr.FIRST_LINES == {}, "the diagnostics of an earlier run were kept"
+    mine = {"stale mutant": "E   stale"}
+    run_mutants(root, [], ["tests/test_core.py"], extra_dirs=(), timeout=120, first_lines=mine)
+    assert mine == {}, "the diagnostics of an earlier run were kept"
+    assert not hasattr(mr, "FIRST_LINES"), (
+        "the diagnostics are a module global again (not safe for two runs at once)"
+    )
 
 
 def test_a_finished_run_does_not_kill_the_tree_on_windows(tmp_path, monkeypatch):

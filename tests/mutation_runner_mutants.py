@@ -16,8 +16,10 @@ selects no mutant at all (a typo in the filter must not look like a pass).
 
 Which mutants need what on Windows (this list is run on Linux and on Windows; the Windows run is made by whoever has a Windows machine):
 - POSIX only (the killer skips on Windows, so the mutant SURVIVES there): "a finished run's background process lives on"
-  (``taskkill /T`` walks parent links and the parent of a finished run is gone) and "a termination signal does not clean up"
-  (SIGTERM and SIGHUP are POSIX signals).
+  (``taskkill /T`` walks parent links and the parent of a finished run is gone), "a termination signal does not clean up",
+  "a signal during the cleanup cuts it short", "a second signal cuts the cleanup of the first short", "a signal while the child
+  starts orphans it" and "a signal while the temp folders go leaves one" (SIGTERM and SIGHUP are POSIX signals), and "the group is
+  killed after its leader was reaped" (``os.waitid`` is POSIX).
 - Need the symlink privilege on Windows: "a symlink is copied as a file" and "a link out of the tree is listed" (both killers make a
   FILE link; they skip there, and only there (error 1314), when the account lacks the privilege, and a skipped killer makes the
   mutant SURVIVE in that run). The folder-link case (a junction on Windows, no privilege needed) is a separate test with no mutant:
@@ -86,11 +88,11 @@ M = [
     mutant("runner: crash counts as good", MR, CRASH_OK, "crash_ok = v is Verdict.CRASH",
         TINY, "was counted as a good kill"),
     mutant("runner: an absolute path is accepted", MR,
-        '        if pure.is_absolute() or pure.anchor or pure.drive or ".." in pure.parts:',
+        '        if pure.is_absolute() or pure.anchor or ".." in pure.parts:',
         '        if ".." in pure.parts:', ABS, "an absolute, drive or empty mutant path"),
     mutant("runner: a dotdot part is accepted", MR,
-        '        if pure.is_absolute() or pure.anchor or pure.drive or ".." in pure.parts:',
-        "        if pure.is_absolute() or pure.anchor or pure.drive:",
+        '        if pure.is_absolute() or pure.anchor or ".." in pure.parts:',
+        "        if pure.is_absolute() or pure.anchor:",
         DOTDOT, "a mutant path with a dotdot part"),
     mutant("runner: a link out of the tree is accepted", MR,
         "    if path == root or not path.is_relative_to(root):", "    if False:",
@@ -118,13 +120,17 @@ M = [
     # Both kill paths of the killer raise ``PermissionError`` (``os.killpg`` on POSIX, the faked ``taskkill`` call on Windows), so
     # the declared crash class is the same on both systems.
     mutant("runner: a failing tree kill is not caught", MR,
-        "    except (OSError, subprocess.TimeoutExpired):\n        pass\n",
-        "    except ZeroDivisionError:\n        pass\n",
+        "        except (OSError, subprocess.TimeoutExpired):\n            pass\n",
+        "        except ZeroDivisionError:\n            pass\n",
         "test_a_failing_tree_kill_still_kills_the_child", "PermissionError",
         allow_crash=True, crash_type="PermissionError"),
     mutant("runner: the baseline timeout is ignored", MR,
         "timeout if baseline_timeout is None else baseline_timeout", "timeout",
         "test_the_baseline_run_gets_its_own_timeout", "the baseline run did not get its own timeout"),
+    mutant("judge: an expect found in the test id is accepted", MU,
+        "if expect and expect not in first_line:",
+        "if expect and expect not in test_id and expect not in first_line:",
+        JUDGE, "an expect found only in the test id was accepted"),
     mutant("fix: junit with a DOCTYPE is parsed", MU, 'if "<!doctype" in low or "<!entity" in low:', "if False:",
         "test_junit_with_a_doctype_or_entity_is_refused_not_parsed", "a JUnit file with a DOCTYPE was parsed"),
     mutant("fix: the runner drops pinned", MR, "pinned=m.pinned or None", "pinned=None",
@@ -194,7 +200,7 @@ M = [
         '_TERMINATING = ("SIGTERM", "SIGHUP")', "_TERMINATING = ()",
         "test_a_termination_signal_cleans_up_the_run", "did not end through its"),
     mutant("runner: the first lines of an earlier run are kept", MR,
-        "    FIRST_LINES.clear()  # the diagnostics of an earlier run must not answer for this one", "    pass",
+        "    first_lines.clear()  # the diagnostics of an earlier run must not answer for this one", "    pass",
         "test_the_first_lines_of_an_earlier_run_do_not_leak_into_the_next",
         "the diagnostics of an earlier run were kept"),
     mutant("runner: the E marker is cut as a letter", MR,
@@ -213,6 +219,36 @@ M = [
         CRASHROW, "a crash row was good for a lookalike class name"),
     mutant("runner: a stream name is accepted", MR, '    if ":" in rel:', "    if False:",
         "test_a_mutant_path_with_a_stream_name_is_refused", "a mutant path with a stream name"),
+    # ---- review round 3: pid reuse, signals during the cleanup, the ini file
+    mutant("runner: the group is killed after its leader was reaped", MR,
+        "os.WEXITED | os.WNOHANG | os.WNOWAIT) is not None", "os.WEXITED | os.WNOHANG) is not None",
+        "test_the_process_group_is_killed_while_its_leader_is_not_yet_reaped",
+        "after its leader was reaped"),
+    mutant("runner: a signal during the cleanup cuts it short", MR,
+        '        if _SIGNALS["depth"] or _SIGNALS["ended"]:', '        if _SIGNALS["ended"]:',
+        "test_a_signal_during_the_cleanup_does_not_cut_the_cleanup_short",
+        "a signal during the cleanup cut it short"),
+    mutant("runner: a second signal cuts the cleanup of the first short", MR,
+        '        if _SIGNALS["depth"] or _SIGNALS["ended"]:', '        if _SIGNALS["depth"]:',
+        "test_a_second_signal_cannot_cut_short_the_cleanup_of_the_first",
+        "a second signal cut the cleanup short"),
+    mutant("runner: a signal while the child starts orphans it", MR,
+        "``proc`` is known, then raised inside this ``try``: the child is killed\n        with _signals_held():\n",
+        "``proc`` is known, then raised inside this ``try``: the child is killed\n        if True:\n",
+        "test_a_signal_while_the_child_is_being_started_still_kills_the_child",
+        "left the child running"),
+    mutant("runner: a signal while the temp folders go leaves one", MR,
+        "        with _signals_held():  # a signal is raised after the removal\n",
+        "        if True:  # a signal is raised after the removal\n",
+        "test_a_signal_while_the_temp_folders_are_removed_leaves_none", "left a temp folder behind"),
+    mutant("runner: the ini file is written into the working folder", MR,
+        '        ini = ini_dir / "mutant_run.ini"', '        ini = cwd / "mutant_run.ini"',
+        "test_the_pytest_run_writes_no_file_into_its_working_folder_and_leaves_no_temp_folder",
+        "written into the working folder"),
+    mutant("runner: the folder of the ini file is left behind", MR,
+        "                shutil.rmtree(ini_dir, ignore_errors=True)", "                pass",
+        "test_the_pytest_run_writes_no_file_into_its_working_folder_and_leaves_no_temp_folder",
+        "was left behind"),
 ]  # fmt: skip
 
 
@@ -231,10 +267,9 @@ if __name__ == "__main__":
             flush=True,
         )
         if not good:
-            import tools.mutation_runner as _mr
+            print("      first line:", first_lines.get(name, "")[:150], flush=True)
 
-            print("      first line:", _mr.FIRST_LINES.get(name, "")[:150], flush=True)
-
+    first_lines = {}
     res = run_mutants(
         ROOT,
         M,
@@ -242,6 +277,7 @@ if __name__ == "__main__":
         extra_dirs=("tests/fixtures", "tools"),
         only=only,
         on_result=show,
+        first_lines=first_lines,
     )
     bad = [n for n, _, _, g in res if not g]
     print(f"{len(res) - len(bad)} of {len(res)} good; problems: {bad}")
