@@ -463,3 +463,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | sv-batch-r | save P4b2 r3, P5c r2, P8a r2, P8b r3 reports | 04:05Z | +25min | running | verify |
 | rs-P6b2-r2 | P6b2 round 2 resolve (Opus) | 04:05Z | +25min | running | verify |
 | au-P5b5-r3 | P5b5 rev 3 author (Opus) | 04:05Z | +30min | running | verify |
+| rv-AK0-r1-adv | AK0 r1 adversarial | 04:20Z | +30min | running | verify |
+| rv-AK0-r1-cor | AK0 r1 correctness | 04:20Z | +30min | running | verify |
+| rv-AK1-r1-adv | AK1 r1 adversarial | 04:20Z | +30min | running | verify |
+| rv-AK1-r1-cor | AK1 r1 correctness | 04:20Z | +30min | running | verify |
