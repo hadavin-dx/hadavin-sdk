@@ -1433,3 +1433,6 @@
 | BL-core-LK-r10-adv-C | LK | MAJOR | P-1 IN/OUT measure mixes catches, special corpora, false refusals | OPEN | reviews/LK-round10-adversarial.md | f386cbd |
 | BL-core-LK-r10-adv-D | LK | MAJOR | count form never compared with a window rule | OPEN | reviews/LK-round10-adversarial.md | f386cbd |
 | BL-core-P1-r14-cor-1 | P1 | MAJOR | FILL-NAMES row predicate false for U+2422 (category So); red on correct code | OPEN | reviews/P1-round14-correctness.md | ad1d1f4 |
+| BL-core-P1-r14-adv-1 | P1 | MAJOR | FILL-NAMES predicate false for U+2422/2423 (same as r14-cor-1) | OPEN | reviews/P1-round14-adversarial.md | 81483aa |
+| BL-core-P1-r14-adv-2 | P1 | MAJOR | re-pointed mutants 7,8,9,18 cannot be KILLED once P1a adds an import-time digest check | OPEN | reviews/P1-round14-adversarial.md | 81483aa |
+| BL-core-P1-r14-adv-3 | P1 | MAJOR | coverage sentence reads exhaustive for enclosed/dingbat forms (U+24EB-24F4, U+1F10B-C missing); build PIN-ENCL from names | OPEN | reviews/P1-round14-adversarial.md | 81483aa |

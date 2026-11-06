@@ -56,3 +56,4 @@
 2026-11-06 01:32 UTC / 07:02 IST | step=r10 reports saved | done=P4a r10 cor, LK r10 adv+cor saved, ledger +12 | next=rev15 P1 author running; then P4a r10 resolve (Opus), LK r10 resolve | blocked=none | context=ok
 2026-11-06 01:36 UTC / 07:06 IST | step=P1 rev15 verified (afbaac9, 1 file, six-copy x6) | done=r14 reviewers launched | next=wait; then P4a/LK resolves | blocked=none | context=ok
 2026-11-06 01:43 UTC / 07:13 IST | step=P1 r14 cor saved (1 Major borderline) | done=- | next=wait r14 adv, P4a+LK resolves | blocked=none | context=ok
+2026-11-06 01:45 UTC / 07:15 IST | step=P1 r14 not clean (3 Majors incl. mutants 7,8,9,18 vs digest check) | done=r14 adv saved | next=P1 r14 resolve (Opus); P4a+LK resolves running | blocked=none | context=ok
