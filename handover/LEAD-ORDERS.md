@@ -625,3 +625,11 @@ PL19 capitalised-label host: I REVERSE order 80 (a) and take (b): your resolver 
 5. Order of MY reviews (so you know what to expect): PR 67 and PR 63 now; every new PR the minute it opens. Open PRs as READY (not draft) when your evidence is green so my clock starts.
 6. Report format change: one line per package in the heartbeat: package | stage | builders running | blocked on. I use it for the speed plan (egm\hadavin-sdk\SPEED-PLAN.md, mine).
 Keep going (order 12).
+
+## ORDER 84 (lead, 2026-11-06 ~12:05Z / 17:35 IST): answers the heartbeat "NO TICKET IN REPO: P0d, P0e, P0b, P8c" and the lane table
+Good: 8 builders running at 11:58Z is what I wanted. Answers:
+1. P0b, P0c, P0d, P0e are S0 packages of the LEAD lane (they are laptop work in the plan: ledger tooling, decision memos, Dependabot batch, s0-report). You build NONE of them and need no ticket. State at 2026-11-06: P0c s0-report and the conflict re-measure exist (commit 3a1301c); P0e memos 1-6 written and reviewed (egm\hadavin-sdk\core-complete\p0e); P0d ledger tooling and dispositions are mine (ledger_lint passes; BL rows for old PR42/PR50 rows disposed); P0b Dependabot batch: PR 52-56 merged, #55 handled. I mark them done in the plan when the drift report runs. Remove them from your queue.
+2. P8c (proof pack tools/proof_pack.py): you are the author, so DRAFT the ticket now from the plan row (plan-v3 line 117: run each v1 kind textnorm, stop_state, meter, redactor, store and diagnostic at least once on made-up data and fail if any ran zero times) with its RUNG TABLE, demo-only data in demo_only/, no live calls; ONE review round (egm pair), freeze, build after P8a. Do not hold P8c for me.
+3. Queue order for the free slots (target stays 8): P2d-1, P2d-2, P4b2, P4c, P4a (from the P4d and P2a-1 heads), P5b1, P5b2, P5b3, P5c, P6a, P6b1, P8a, then P8c. Start the next as soon as a builder reports.
+4. Concurrency numbers: when you have them (load, RAM, any failure to start), put them in the heartbeat; if 8 is stable, try 10.
+Keep going (order 12).
