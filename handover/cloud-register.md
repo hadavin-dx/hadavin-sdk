@@ -487,7 +487,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | rv-P5b5-r3-adv | P5b5 r3 adversarial (egm-design) | 06:10Z | +30min | REPORTED (inline, unsaved) | verify |
 | rv-P5b5-r3-cor | P5b5 r3 correctness (egm-codebase-details) | 06:10Z | +30min | REPORTED (inline, unsaved) | verify |
 | au-AKG1 | Opus author ticket AK-G1 (conversational agent with tools) | 06:25Z | +40min | running | verify |
-| au-AKG2 | Opus author ticket AK-G2 (inbound trigger kind, absorbs P7a) | 06:25Z | +40min | running | verify |
+| au-AKG2 | Opus author ticket AK-G2 (inbound trigger kind, absorbs P7a) | 06:25Z | +40min | REPORTED | verify |
 | sv-P6a-r3 | save P6a r3 pair + ledger | 06:35Z | +15min | REPORTED | verify |
 | rv-AK4a-r1-adv | AK4a r1 adversarial (egm-design) | 06:45Z | +30min | REPORTED | verify |
 | rv-AK4a-r1-cor | AK4a r1 correctness (egm-codebase-details) | 06:45Z | +30min | REPORTED | verify |
@@ -511,3 +511,5 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | rv-P5c-r3-cor | egm-codebase-details round 3 P5c rev 3 | 08:30Z | +10min | running | save |
 | rs-AK2a-r1 | Opus resolve AK2a round 1 | 08:40Z | +25min | running | verify, push |
 | ap-BN-1 | Sonnet appends build notes+banner to P4b1,P4b2,P5a,P5b2,P6a,P6b1,P8b | 08:40Z | +30min | REPORTED | verify, push |
+| rv-AKG2-r1-adv | egm-design round 1 AK-G2 rev 1 | 08:55Z | +10min | running | save |
+| rv-AKG2-r1-cor | egm-codebase-details round 1 AK-G2 rev 1 | 08:55Z | +10min | running | save |
