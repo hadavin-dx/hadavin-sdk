@@ -238,6 +238,47 @@ def test_the_golden_hashes_equal_the_live_ones():
         )
 
 
+def _pin_violation(env, version, pinned):
+    """The message of a run that is required to be on the pinned Unicode version and is not, else ``None``."""
+    if env.get("HADAVIN_REQUIRE_PINNED_UNIDATA") == "1" and version != pinned:
+        return (
+            f"HADAVIN_REQUIRE_PINNED_UNIDATA=1 but this Python carries Unicode {version}, "
+            f"not the pinned {pinned}: run the suite on the interpreter of the pin"
+        )
+    return None
+
+
+def test_the_interpreter_is_on_the_pinned_unicode_version_when_the_run_requires_it():
+    """Fails when ``HADAVIN_REQUIRE_PINNED_UNIDATA=1`` and ``unicodedata.unidata_version`` is not
+    ``defaults.TEXTNORM_PINNED_UNIDATA``; passes without the variable (a developer on another Python still runs the suite)."""
+    message = _pin_violation(
+        os.environ, unicodedata.unidata_version, defaults.TEXTNORM_PINNED_UNIDATA
+    )
+    assert message is None, message
+
+
+def test_the_pin_check_fails_only_when_required_and_off_the_pin():
+    pinned = defaults.TEXTNORM_PINNED_UNIDATA
+    other = "16.0.0" if pinned != "16.0.0" else "15.1.0"
+    required = {"HADAVIN_REQUIRE_PINNED_UNIDATA": "1"}
+    assert _pin_violation({}, other, pinned) is None
+    assert _pin_violation({"HADAVIN_REQUIRE_PINNED_UNIDATA": "0"}, other, pinned) is None
+    assert _pin_violation(required, pinned, pinned) is None
+    assert _pin_violation(required, other, pinned) is not None
+
+
+def test_the_pin_constant_is_the_version_of_the_vendored_table_and_of_the_golden_file():
+    """One value in three places: a change of ``defaults.TEXTNORM_PINNED_UNIDATA`` alone must fail here."""
+    from hadavin_sdk.guard import _confusables
+
+    assert (
+        defaults.TEXTNORM_PINNED_UNIDATA
+        == _confusables.DATA_VERSION
+        == GOLDEN["unidata"]
+        == "15.1.0"
+    )
+
+
 def test_the_key_set_helper_ignores_order_and_repeats_and_keeps_the_length_prefix():
     assert _keyset_digest(["b", "a", "a"]) == _keyset_digest(["a", "b"])
     assert _keyset_digest(["ab", "c"]) != _keyset_digest(["a", "bc"]), (

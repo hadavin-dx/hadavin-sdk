@@ -8,14 +8,15 @@ marks (Mc: the Hindi vowel signs aa and i, visarga), the modifier letters (Lm) a
 
 WORDS (one word, one meaning). A SPELLING VARIANT is one of the at most three ways one text is read (see "SPELLING VARIANTS" below). A CHECK
 NAME is the comparison text made from one spelling variant; the function names say "key" (``identity_key``, ``key_tag``) and mean the
-check name. A VIEW is a text that a scan looks through: a spelling variant returned by ``fold_views`` or ``squeeze_views``, or a scan key of
+check name. A VIEW is a text that a scan looks through: a spelling variant returned by ``fold_views`` or ``squeeze_views`` (also the same spelling
+variant with the spacing marks, modifier letters and modifier symbols dropped, see "MARKS AND SCANS"), or a scan key of
 ``scan_keyset`` (``scan_views`` lists them all). "Same person"
 means the DENY test ``could_be_same_person`` returns True: it may be a different person with a look-alike name, which is the safe side.
 Nothing in v1 stores a check name: a package that must keep a person or an id for a later
 comparison stores the RAW text under its own access rules and folds it again with the current ``identity_key``.
 
 THE RULE (read before using ``fold``): ``fold`` makes look-alike text EQUAL. That is what a DENY decision wants (separation of
-duties: "alice" and the Cyrillic-a "alice" are the same person; a blocklist; a leak scan). It is WRONG for an ALLOW decision ("this
+duties: "alice" and the Cyrillic-a "alice" may be the same person; a blocklist; a leak scan). It is WRONG for an ALLOW decision ("this
 address equals the verified address", an allowlist): folding there lets a look-alike address through.
   * ALLOW decision: ``allow_equal(a, b)`` is the WHOLE decision. EQUAL only for identical strings (``a == b``, no normalisation, so
     the text you verified is the text you use); VARIANT means a case, width, ligature or whitespace difference only (refuse); LOOKALIKE
@@ -26,7 +27,7 @@ address equals the verified address", an allowlist): folding there lets a look-a
     redaction, a blocklist) is ``scan_holds(text, value)``: it looks through every view of the text, BOTH ``fold_views`` AND ``squeeze_views`` (and
   the scan keys), and refuses an empty view (see "MARKS AND SCANS" and "THE DENY SCANS"). ``identity_key``, ``fold`` and ``squeeze`` give ONE
     spelling variant and are NOT DENY comparators or scans: one spelling variant is enough to be stable and to index, never to refuse. ``names_equal`` is
-    neither: Unicode caseless equality (D146) for people's names in prose, no look-alikes.
+    neither: Unicode compatibility caseless equality for people's names in prose, no look-alikes.
 
 ``fold`` (stdlib only, linear):
   1. NFKD, so a base letter and its combining mark separate; 2. U+0345 becomes an iota after a Greek letter and is removed anywhere
@@ -41,10 +42,11 @@ address equals the verified address", an allowlist): folding there lets a look-a
 
 The look-alike table (step 7) is GENERATED from the Unicode UTS #39 ``confusables.txt`` MA table, version 15.1.0 (the Unicode version of the
 pin; the generator refuses any other version), by ``tools/gen_confusables.py`` (pinned sha256, version and date in ``guard/_confusables.py``)
-plus 16 explicit supplementary letters, one explicit override (the Cyrillic palochka U+04CF reads as ``l``, see the generator) and a
-Unicode-name rule for small capitals, all listed in the generator. A look-alike letter that Unicode listed only after 15.1.0 is NOT in the
-table. Runtime is stdlib only; the data file is not shipped. ``FOLD_VERSION``
-names the fold that made a check name.
+plus 16 explicit supplementary letters, one explicit override (the Cyrillic palochka U+04CF reads as ``l``, see the generator) and the
+Unicode-name rules of the generator (small capitals; negative circled and negative squared letters; regional indicator letters; Latin letters
+with a stroke, hook or similar mark; circled and negative circled digits), all listed in the generator. A look-alike letter that Unicode
+listed only after 15.1.0 is NOT in the table. Runtime is stdlib only; the data file is not shipped. ``FOLD_VERSION`` names the fold that made
+a check name. What is NOT read as an ASCII letter or digit is listed in ``tests/test_textnorm.py`` (``KNOWN_NAME_GAPS``) with the reason.
 
 SPELLING VARIANTS (P1a fix3, review 3; alg ``fold4`` in P1a, ``fold5`` here: P1b changes what a check name can be, see the steps above). One spelling variant is not enough for a DENY: the same text can LOOK like two different words. A Greek
 capital Eta looks like the Latin H, but the case-symmetric check name reads it as the small eta, which looks like n; a Greek letter followed by
@@ -55,11 +57,11 @@ three, never more; the number does not grow with the text), ``identity_keys(raw)
       precomposed Greek letters with ypogegrammeni case symmetric (see U+0345);
   (c) the upper-side (table-first) spelling variant: the look-alike table runs on the letter as written (capital Eta reads H, capital Mu M, capital Nu
       N, capital Upsilon Y), then case is folded, then the table of the case-fold image; U+0345 dropped.
-Two texts are the same person (``could_be_same_person``), and ``allow_equal`` says LOOKALIKE, when ANY spelling variant of one equals ANY spelling variant of the
-other. A scan holds a protected value when ANY view of the text (``fold_views``, ``squeeze_views``) holds ANY view of the value. The spelling variants
-only add matches to (b), so the relation is never narrower than ``identity_key`` equality; it is NOT transitive (capital Eta + "oward"
+``could_be_same_person`` and ``allow_equal`` (LOOKALIKE) compare spelling variants: two texts match when ANY spelling variant of one equals ANY
+spelling variant of the other. A scan holds a protected value when ANY view of the text (``fold_views``, ``squeeze_views``) holds ANY view of the
+value. The spelling variants only add matches to (b), so the relation is never narrower than ``identity_key`` equality; it is NOT transitive (capital Eta + "oward"
 matches "howard" through (c) and "noward" through (a), and those two do not match each other), so it is never a unique index, a dedupe or a
-group-by: use ``identity_key`` equality there. The size cap is checked first, once, for every spelling variant.
+group-by: use ``identity_key`` equality there. The size cap is checked first, once, for every spelling variant and view.
 
 IDEMPOTENT AND CASE-SYMMETRIC BY CONSTRUCTION (``identity_key``, ``could_be_same_person``, ``squeeze``; alg ``fold5``; the spelling variants (a) and (b)). The first order (table, then
 casefold, with a table keyed by lower-case letters; alg ``fold1``) was neither: ``identity_key("\u00d8")`` kept the capital and ``identity_key("\u00f8")``
@@ -75,10 +77,10 @@ after C agree in the check name; that ``C(P(c.upper())) == C(P(c.lower()))`` for
 on every supported Unicode version, with the one stated exemption of U+0345 below. (2) IDEMPOTENCE: the image of E is lower-case ASCII; every other character of the result survived C and is not a check name of E
 (the table keys of E are non-ASCII and casefold-stable, asserted), so a second C changes nothing and a second E changes nothing; that the
 remaining steps (P, D, the drops) leave such characters alone is again a fact about the data, checked by the same tests. The final
-form is therefore a fixed point of the whole function; a mutant that restores the old order is killed by those tests. ``fold`` WITHOUT
+form is therefore a fixed point of the whole function; a test that restores the old order fails. ``fold`` WITHOUT
 ``casefold`` keeps case and uses the raw table (no symmetry is promised for it); ``squeeze`` casefolds first.
 
-U+0345 (COMBINING GREEK YPOGEGRAMMENI; decision of P1a fix2, review 2 of this package; completed by the spelling variants of fix3). Every other mark is dropped, and dropping is what
+U+0345 (COMBINING GREEK YPOGEGRAMMENI). Every other mark is dropped, and dropping is what
 makes ``identity_key(x + mark) == identity_key(x)``. U+0345 is the one mark that cannot simply be dropped: its upper case and its case fold
 are the letter iota, and a Greek letter with the mark (U+1FB3, alpha with ypogegrammeni) upper-cases to two letters (alpha, iota). Two
 needs conflict: case symmetry (the check name of U+1FB3 must be the check name of its upper case, alpha iota) and mark insertion (the check name of
@@ -90,13 +92,13 @@ order-fixed fold) case-folded the raw text before the drop step, which turned U+
 bypass); ``fold3``, ``fold4`` and ``fold5`` have no early case fold (it is redundant once U+0345 is handled by name: 600,000 random strings gave the same check name
 with and without it). Chosen for the SINGLE check name over "always drop" because always dropping breaks case symmetry for the precomposed Greek letters with
 ypogegrammeni and for Greek text in capitals (U+1FB3 against alpha, iota in capitals), while this rule breaks nothing on them. But the single
-check name alone was a BLOCKER in review 3: a Greek look-alike plus U+0345 ("alpha U+0345 dmin") read as ``aidmin``, one invisible mark away from
-"admin", and a run of marks gave a run of ``i``. The spelling variants fix it: (a) and (c) ALWAYS drop the mark, so for ``could_be_same_person`` and for every
+check name alone is not safe: a Greek look-alike plus U+0345 ("alpha U+0345 dmin") reads as ``aidmin``, one invisible mark away from
+"admin", and a run of marks gives a run of ``i``. The spelling variants fix it: (a) and (c) ALWAYS drop the mark, so for ``could_be_same_person`` and for every
 scan "a Greek letter + U+0345" matches the letter, whatever follows, and the iota spelling variant (b) is kept for the case symmetry above.
 What the single check name does NOT promise, both stated and tested: (1) after a Greek letter the mark is an iota, so ``identity_key(alpha + U+0345)``
 is not ``identity_key(alpha)`` (the one "base + mark" pair that differs; ``could_be_same_person`` of the two is True through (a)); (2) a text that holds
 a U+0345 with NO Greek letter before it (dropped characters skipped) is not case symmetric, because ``str.upper`` turns the mark into the
-letter Iota while the fold removes it (``identity_key("\u0345")`` is ``""``, ``identity_key("\u0399")`` is ``i``): the symmetry tests exempt
+letter Iota while the fold removes it (``identity_key("ͅ")`` is ``""``, ``identity_key("Ι")`` is ``i``): the symmetry tests exempt
 exactly that shape, nothing wider. No other code point is exempt from idempotence, case symmetry or mark insertion. ``fold`` without
 ``casefold`` applies the same step.
 
@@ -129,29 +131,41 @@ interpreter (typed exactly, U+E000 included) has the tag stripped and so gets th
 the safe side of a DENY); a text that starts with the tag of ANOTHER version is not stripped (its tag text becomes part of the check name). A
 caller that did not call ``require_pinned_unidata()`` (``app.build`` does in pilot and prod; a demo or a test may not) gets tagged check names on every
 interpreter whose Unicode data is not the pin, for example Python 3.12; such check names compare only with check names made on the same version.
+A vendored copy of the Unicode character data (instead of the interpreter's) becomes the alternative when a deployment must run a Python
+whose Unicode version is not the pin and cannot be changed.
 
-MARKS AND SCANS (order 79, review 4). Three categories are NOT dropped by ``fold``, on purpose, and a caller must know it:
+MARKS AND SCANS. Three categories are NOT dropped by the spelling variants of ``fold``, on purpose, and a caller must know it:
   * Mc (spacing combining marks, 452 code points in Unicode 15.1.0, for example the Devanagari vowel signs aa and i): a spacing vowel sign
-    changes a name, so ``fold`` keeps it. "ad" + U+0903 + "min" is NOT the check name of "admin", and ``fold_views`` of "pass" + U+093E +
-    "word" does NOT hold "password".
-  * Lm (modifier letters): a real look-alike of the letter (superscript h reads as h), kept or read as that letter.
-  * Sk (modifier symbols): they become a space in ``fold_views`` and vanish in ``squeeze_views``.
-  THE RULE FOR A SCAN (redaction, blocklist, has-secret): look through BOTH ``fold_views`` AND ``squeeze_views``. A secret hidden by a spacing
-  mark, a modifier letter or a modifier symbol is NOT found in ``fold_views`` and IS found in ``squeeze_views`` (which keeps letters and
-  digits only). ``tests/test_textnorm.py`` pins both halves for EVERY Mc, Lm and Sk code point of the interpreter.
-  EMPTY VIEW: ``squeeze`` and every view of ``squeeze_views`` are ``""`` for a text without an ASCII letter or digit after the fold (for
-  example a name written in Chinese). An empty needle is found in every text, so a scan must REFUSE an empty view, never scan with it:
-  ``scan_holds`` (P1b) raises ``EmptyView`` when any view of the protected value is empty. The match positions of the original text are lost by the drops: a caller that must cut the original text needs its own map.
+    changes a name, so the spelling variants keep it. "ad" + U+0903 + "min" is NOT the check name of "admin", and the spelling-variant views of
+    ``fold_views`` of "pass" + U+093E + "word" do NOT hold "password".
+  * Lm (modifier letters): a look-alike of the letter (superscript h reads as h), kept or read as that letter.
+  * Sk (modifier symbols): they become a space in the spelling-variant views and vanish in ``squeeze_views``.
+  So that a mark inserted into a protected value cannot hide it, ``fold_views`` and ``squeeze_views`` return, besides the spelling-variant
+  views, the same views built from the text with every Mc, Lm and Sk character REMOVED BEFORE the first normalisation and before the
+  look-alike table (so an Lm or Mc that the table or NFKC would read as a letter is gone too: "pass" + U+0C02 + "word" holds "PASSWORD"). Every
+  other drop (Mn, Me, format, control and the rest) already applies to every view. These marks-dropped views keep every script and every letter.
+  At most six views per call (three spelling variants, each with and without the marks), never more.
+  THE RULE FOR A SCAN (redaction, blocklist, has-secret): look through BOTH ``fold_views`` AND ``squeeze_views`` and take the views of the
+  protected value the same way (a scan holds a value when ANY view of the text holds ANY view of the value). ``tests/test_textnorm.py`` pins it for EVERY Mc,
+  Lm and Sk code point of the interpreter, with no exemption.
+  WHAT A SCAN RELIES ON: ``squeeze_views`` keeps ASCII letters and digits only, so for a value written in one script with NO ASCII letter or
+  digit (Chinese, Arabic, Hindi, Thai) it is ``""`` and the scan relies on ``fold_views`` alone, in particular on its marks-dropped views: a mark
+  inserted into such a value is removed and the value is found, but a look-alike LETTER of that script inserted into it, or a respelling of
+  it, is not covered. EMPTY VIEW: ``squeeze`` and every view of ``squeeze_views`` are ``""`` for a text without an ASCII letter or digit after the fold. An empty needle is found in every text, so a caller must
+  REFUSE an empty view of a protected value, never scan with it: ``scan_holds`` (P1b) does, it raises ``EmptyView`` when any view of the
+  protected value is empty (so a value with no ASCII letter or digit cannot go through it; the caller needs its own exact search). ``scan_holds`` also looks through
+  ``scan_keyset`` (P1b), which is made of letters and digits only. The match positions of the original text are lost by the drops: a caller that
+  must cut the original text needs its own map.
 
 INPUT RULES (every public function): the argument must be a plain ``str`` (``type(x) is str``; a ``str`` subclass or an enum member is
 refused with ``NotText``), its LENGTH must be within ``defaults.TEXTNORM_MAX_CHARS`` (``TextTooLong``, checked first: every weight is at
 least the length, so a longer text is refused before any per-character work), and its WEIGHT W must be within the same cap. W is the sum, over the
 characters of the text, of the longest string the pipeline makes from that one character (an ASCII text has W = its length). No check name
 or view of any spelling variant is longer than W of its text (plus ``len(key_tag())`` on an unpinned interpreter), because every step acts per
-character or only joins. Messages hold lengths and constants, never the input.
+character or only joins or drops. Messages hold lengths and constants, never the input.
 Any ``TextnormError`` on a DENY or ALLOW path means REFUSE.
 
-Honest limits: a letter in neither the data nor the supplement is not folded. Dropping unassigned code points (Cn) depends on the
+Honest limits: a letter in neither the data nor the supplement nor a name rule is not folded (the known cases are listed in ``tests/test_textnorm.py``). Dropping unassigned code points (Cn) depends on the
 Python build's Unicode version (``require_pinned_unidata``): a look-alike letter assigned after Unicode 15.1 is DROPPED, not folded, on the
 pinned interpreter (P1b's decision: DROP it, tested; the pinned-Unicode guard of ``app.build`` and a move of the pin close it). The dashes, the
 minus sign, the division slash and the typographic quotes ARE read as ``-``, ``/``, ``'`` and ``"`` (P1b, gap 4: "INV-2026" and "INV" + U+2212 +
@@ -160,7 +174,8 @@ with Cyrillic, Greek, Armenian, Cherokee, Coptic, Georgian, Hebrew, Lisu, Runic,
 table knows (every script in the Unicode data except Common, Inherited and the East Asian scripts counts). Property: ``fold(x + mark) == fold(x) == fold(mark + x)`` for any non-spacing or enclosing mark (Mn, Me), format, control,
 private-use, surrogate or unassigned character that is not a table source (the nine dropped categories; no unassigned code point is a table source on the pinned version), with the one exception above (U+0345 after a Greek letter, for
 the single spelling variant (b) only); for the spelling variants, any such mark, U+0345 included, leaves a shared spelling variant
-(``could_be_same_person(x + mark, x)``). The property does NOT hold for a spacing mark (Mc), a modifier letter (Lm) or a modifier symbol (Sk).
+(``could_be_same_person(x + mark, x)``). The property does NOT hold for a spacing mark (Mc), a modifier letter (Lm) or a modifier symbol (Sk) in the
+spelling variants; the marks-dropped views of ``fold_views`` and ``squeeze_views`` hold it for those.
 """
 
 from __future__ import annotations
@@ -221,8 +236,7 @@ class NotText(TextnormError):
 
 
 class UnidataMismatch(TextnormError):
-    """The interpreter's Unicode data is not the version the check names were pinned to (``require_pinned_unidata()``, or
-    ``require_pinned_unidata()``). Fail closed: the caller must refuse to run, not fall back."""
+    """The interpreter's Unicode data is not the version the check names were pinned to (``require_pinned_unidata()``). Fail closed: the caller must refuse to run, not fall back."""
 
 
 class FoldNotConverged(TextnormError):
@@ -239,6 +253,9 @@ class EmptyView(TextnormError):
 
 _PINNED_PYTHON = "3.13"  # the Python minor version that carries Unicode 15.1.0 (the pin); only used in the message
 _DROP_CATEGORIES = frozenset({"Cc", "Cf", "Mn", "Me", "Zl", "Zp", "Co", "Cs", "Cn"})
+_SPACING_CATEGORIES = frozenset(
+    {"Mc", "Lm", "Sk"}
+)  # kept by the spelling variants, removed by the marks-dropped views of a scan
 FILLERS = frozenset(
     map(chr, (0x3164, 0x115F, 0x1160, 0x2800, 0xFFA0, 0x13441, 0x13442))
 )  # invisible letters/symbols used to glue or split words (the last two: Egyptian hieroglyph full blank and half blank)
@@ -420,11 +437,21 @@ _READINGS = (
 )
 
 
-def _prefix(nfkd: str, *, iota: bool) -> str:
+def _without_spacing_marks(text: str) -> str:
+    """``text`` without any Mc, Lm or Sk character. It runs on the RAW text, before the first normalisation: NFKD and NFKC read a modifier
+    letter such as U+02B0 as the letter h, so a mark must be gone before they run."""
+    return "".join(ch for ch in text if unicodedata.category(ch) not in _SPACING_CATEGORIES)
+
+
+def _prefix(nfkd: str, *, iota: bool, marks: bool = False) -> str:
     """The spelling variant-independent steps on an NFKD text: U+0345 (an iota after a Greek letter when ``iota``, otherwise it is dropped like any
-    mark), the drops, whitespace, NFKC, the digits and the dash/slash/quote map (gap 4)."""
+    mark), the drops (with ``marks``, also every Mc, Lm and Sk character), whitespace, NFKC, the digits and the dash/slash/quote map (gap 4)."""
     s = _subscript_iota(nfkd) if iota else nfkd
-    s = "".join(" " if ch.isspace() else ch for ch in s if _kept(ch))
+    s = "".join(
+        " " if ch.isspace() else ch
+        for ch in s
+        if _kept(ch) and not (marks and unicodedata.category(ch) in _SPACING_CATEGORIES)
+    )
     s = unicodedata.normalize("NFKC", s)
     return s.translate(_DIGITS).translate(_PUNCT)
 
@@ -453,24 +480,33 @@ def _fold(raw: str, *, casefold: bool = False, collapse_ws: bool = False) -> str
     return _finish(prefix, casefold=casefold, table_first=False, collapse_ws=collapse_ws)
 
 
-def _views(raw: str, *, casefold: bool, collapse_ws: bool) -> tuple[str, ...]:
+def _views(
+    raw: str, *, casefold: bool, collapse_ws: bool, marks_dropped: bool = False
+) -> tuple[str, ...]:
     """Every spelling variant of ``raw`` as a string, without repeats, in the order of ``_READINGS``. Without ``casefold`` there is no upper side
-    (the table already runs on the letter as written), so only (a) and (b) remain."""
-    nfkd = unicodedata.normalize("NFKD", raw)
-    with_iota = _prefix(nfkd, iota=True)
-    prefixes = {
-        True: with_iota,
-        False: _prefix(nfkd, iota=False) if _YPOGEGRAMMENI in nfkd else with_iota,
-    }
+    (the table already runs on the letter as written), so only (a) and (b) remain. With ``marks_dropped`` the same spelling variants of the
+    text WITHOUT its Mc, Lm and Sk characters follow (a scan wants them; the DENY check names do not use them): at most twice as many views."""
+    texts = [raw]
+    if marks_dropped:
+        texts.append(_without_spacing_marks(raw))
     views: list[str] = []
-    for iota, table_first in _READINGS:
-        if table_first and not casefold:
-            continue
-        view = _finish(
-            prefixes[iota], casefold=casefold, table_first=table_first, collapse_ws=collapse_ws
-        )
-        if view not in views:
-            views.append(view)
+    for marks, text in enumerate(texts):
+        nfkd = unicodedata.normalize("NFKD", text)
+        with_iota = _prefix(nfkd, iota=True, marks=bool(marks))
+        prefixes = {
+            True: with_iota,
+            False: _prefix(nfkd, iota=False, marks=bool(marks))
+            if _YPOGEGRAMMENI in nfkd
+            else with_iota,
+        }
+        for iota, table_first in _READINGS:
+            if table_first and not casefold:
+                continue
+            view = _finish(
+                prefixes[iota], casefold=casefold, table_first=table_first, collapse_ws=collapse_ws
+            )
+            if view not in views:
+                views.append(view)
     return tuple(views)
 
 
@@ -482,12 +518,16 @@ def fold(raw: str, *, casefold: bool = False, collapse_ws: bool = False) -> str:
 
 
 def fold_views(raw: str, *, casefold: bool = False, collapse_ws: bool = False) -> tuple[str, ...]:
-    """Every spelling variant of ``raw`` (at most three, one when the text has only one), for a SCAN: a redaction or a blocklist looks for the secret in
-    EVERY view of the text. ``fold(raw, ...)`` is one of them. With ``casefold`` (what a scan wants) there are up to three, without it two.
-    NOT enough alone: these views KEEP spacing marks (Mc), modifier letters (Lm) and modifier symbols (Sk), so a secret hidden with one is
-    not found here. A redaction MUST scan BOTH ``fold_views`` AND ``squeeze_views`` (module docstring, "MARKS AND SCANS")."""
+    """Every view of ``raw`` for a SCAN: a redaction or a blocklist looks for the secret in EVERY view of the text (module docstring, "MARKS AND SCANS").
+    The views are the spelling variants of ``raw`` (at most three: two without ``casefold``; ``fold(raw, ...)`` is one of them), then the same
+    spelling variants of ``raw`` with every spacing mark (Mc), modifier letter (Lm) and modifier symbol (Sk) removed before the first
+    normalisation; all scripts are kept. At most six views, none repeated. A secret hidden by inserting such a mark is found in the
+    marks-dropped views. Still NOT enough alone for a value with ASCII letters or digits: a redaction MUST scan BOTH ``fold_views`` AND
+    ``squeeze_views``. A value with NO ASCII letter or digit (Chinese, Arabic, Hindi, Thai) is scanned with ``fold_views`` alone: ``squeeze_views`` is
+    empty for it, so the marks-dropped views here are the ones that find it when a mark is inserted; an inserted look-alike letter of that
+    script is not covered."""
     _checked(raw)
-    return _views(raw, casefold=casefold, collapse_ws=collapse_ws)
+    return _views(raw, casefold=casefold, collapse_ws=collapse_ws, marks_dropped=True)
 
 
 def squeeze(raw: str, *, loose: bool = False) -> str:
@@ -502,10 +542,12 @@ def squeeze(raw: str, *, loose: bool = False) -> str:
 
 
 def squeeze_views(raw: str, *, loose: bool = False) -> tuple[str, ...]:
-    """Every spelling variant of ``raw`` squeezed as ``squeeze`` does (at most three): the views a scan on letters and digits looks through.
-    ``squeeze(raw, loose=loose)`` is one of them. A view is ``""`` for a text without an ASCII letter or digit after the fold: an empty
-    needle matches every text, so a caller must REFUSE an empty view, never scan with it. A scan reads these views AND ``fold_views`` (module
-    docstring, "MARKS AND SCANS"): this function finds a secret hidden with a spacing mark, which ``fold_views`` does not."""
+    """Every view of ``raw`` squeezed as ``squeeze`` does (at most six, none repeated): the views a scan on letters and digits looks through.
+    They are the spelling variants (at most three; ``squeeze(raw, loose=loose)`` is one of them) and the same spelling variants of ``raw`` with
+    every spacing mark (Mc), modifier letter (Lm) and modifier symbol (Sk) removed BEFORE the first normalisation and before the look-alike table,
+    so "pass" + U+0C02 + "word" holds ``PASSWORD`` (the table would read U+0C02 as the letter o). A view is ``""`` for a text without an ASCII letter or
+    digit after the fold: an empty needle matches every text, so a caller must REFUSE an empty view of a protected value, never scan with it. A
+    scan reads these views AND ``fold_views`` (module docstring, "MARKS AND SCANS")."""
     _checked(raw)
     return _squeezed(raw, loose=loose)
 
@@ -513,7 +555,7 @@ def squeeze_views(raw: str, *, loose: bool = False) -> tuple[str, ...]:
 def _squeezed(raw: str, *, loose: bool = False) -> tuple[str, ...]:
     """``squeeze_views`` on a text that was already checked."""
     out: list[str] = []
-    for view in _views(raw, casefold=True, collapse_ws=False):
+    for view in _views(raw, casefold=True, collapse_ws=False, marks_dropped=True):
         s = view.upper()
         if loose:
             s = s.translate(_LOOSE)
@@ -534,7 +576,7 @@ def key_tag() -> str:
 
 
 def _canon(s: str) -> str:
-    """Unicode D146 (compatibility caseless matching): NFKD, case fold, NFKD, case fold; a case fold of a composed letter can leave a
+    """Unicode compatibility caseless matching: NFKD, case fold, NFKD, case fold; a case fold of a composed letter can leave a
     sequence that normalises again, which is why Unicode writes it with two folds. The second fold is kept because the standard has it; on
     Unicode 15.0 and 15.1 it changes no result for any single code point (checked), so no test can tell it from a single fold. What the
     tests do pin is the NFKD step against the old NFKC (nine code points were not case symmetric). Whitespace is collapsed."""
@@ -564,7 +606,7 @@ def _keys(raw: str) -> tuple[str, ...]:
 
 def identity_keys(raw: str) -> tuple[str, ...]:
     """The check names of ``raw`` for a DENY decision: one per spelling variant (at most three, no repeats, a fixed order: (a), (b), (c) of the module
-    docstring). ``identity_key(raw)`` is one of them. Two texts are the same person when ANY key of one equals ANY key of the other
+    docstring). ``identity_key(raw)`` is one of them. Two texts match when ANY key of one equals ANY key of the other
     (``could_be_same_person``). Not transitive, so never a unique index or a group-by: use ``identity_key`` for those."""
     _checked(raw)
     return _keys(raw)
@@ -572,8 +614,10 @@ def identity_keys(raw: str) -> tuple[str, ...]:
 
 def could_be_same_person(a: str, b: str) -> bool:
     """DENY comparator (separation of duties, a blocklist): True when ANY spelling variant of ``a`` equals ANY spelling variant of ``b`` (``identity_keys``).
-    Look-alike letters, case, width, ligatures, invisible characters and marks all compare equal, which is the safe side for a DENY. Not
-    transitive. NEVER an ALLOW."""
+    Look-alike letters, case, width, ligatures, non-spacing and enclosing marks (Mn, Me) and invisible characters compare equal, which is the safe side
+    for a DENY. NOT equal: a spacing mark (Mc), modifier letter (Lm) or modifier symbol (Sk) inserted into a name makes it "different" (a scan
+    uses ``fold_views`` and ``squeeze_views``, which do remove them), and PUNCTUATION is not folded: "O'Brien" against "O" + U+2019 + "Brien", and a
+    Unicode hyphen (U+2010) against "-", compare as different (strict expected failures, corpus rows r114 to r117). Not transitive. NEVER an ALLOW."""
     _checked(a, b)
     return not set(_keys(a)).isdisjoint(_keys(b))
 
@@ -711,7 +755,7 @@ def _all_views(raw: str) -> list[str]:
     (case folded, whitespace collapsed), then ``squeeze_views``, then the sorted ``scan_keyset``."""
     out: list[str] = []
     for view in (
-        *_views(raw, casefold=True, collapse_ws=True),
+        *_views(raw, casefold=True, collapse_ws=True, marks_dropped=True),
         *_squeezed(raw),
         *sorted(_scan_keys(raw)),
     ):
@@ -723,8 +767,8 @@ def _all_views(raw: str) -> list[str]:
 def scan_views(raw: str) -> tuple[str, ...]:
     """Every view of a TEXT that a DENY scan (a redaction, a blocklist, a has-secret check) looks through: ``fold_views`` (case folded,
     whitespace collapsed), ``squeeze_views`` and ``scan_keyset``, no repeats, empty views left out (an empty view of a text holds
-    nothing). At most 3 + 3 + 8 = 14 views. Neither ``fold_views`` nor ``squeeze_views`` is enough alone: ``fold_views`` keeps the spacing
-    marks (Mc), so a secret hidden with one is not found in it; ``squeeze_views`` keeps letters and digits only, and ``scan_keyset`` adds
+    nothing). At most 6 + 6 + 8 = 20 views (``fold_views`` and ``squeeze_views`` each also read the text with its Mc, Lm and Sk characters removed).
+    Neither ``fold_views`` nor ``squeeze_views`` is enough alone: a value with no ASCII letter or digit has an empty ``squeeze_views``; ``scan_keyset`` adds
     the tag texts and the class maps. A scan holds a value when ANY view of the text holds ANY view of the value: use ``scan_holds``."""
     _checked(raw)
     return tuple(view for view in _all_views(raw) if view)
@@ -766,7 +810,7 @@ def has_hidden_channel(text: str) -> bool:
 
 
 def require_pinned_unidata(expected: str | None = None) -> None:
-    """GUARD ENTRY POINT for pilot and prod (P1b: ``app.build`` calls it): raise ``UnidataMismatch`` unless the interpreter's Unicode data
+    """GUARD ENTRY POINT for pilot and prod (the application start-up of the package that wires this module in calls it): raise ``UnidataMismatch`` unless the interpreter's Unicode data
     version is ``expected`` (default ``defaults.TEXTNORM_PINNED_UNIDATA``, read when the function runs, so a patched constant is seen).
     Fail closed: it never warns and never returns on a mismatch. A demo run or a CI run may use another version; their keys carry
     ``key_tag()``. The message says what to do: for the pin it names Python 3.13."""

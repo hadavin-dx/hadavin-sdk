@@ -461,6 +461,9 @@ def test_nb_entity_rows_the_text_reads_as_written():
 
 # ---- the digit-valued look-alikes ----------------------------------------------------------------------------------------------------------
 DIGIT_CLASS_DECISIONS = {
+    "0": "kept: the source NAMES the digit (a circled, negative circled or sans-serif digit: P1a fix5 name rule); not leetspeak",
+    "1": "kept: the source NAMES the digit (a circled, negative circled or sans-serif digit: P1a fix5 name rule); not leetspeak",
+    "10": "kept: the source NAMES the number ten (a circled number: P1a fix5 name rule)",
     "2": "kept: the source imitates the digit; leetspeak is not a look-alike class",
     "3": "class-mapped: z to 3 in scan_keyset (Cyrillic Ze reads as both)",
     "4": "kept: the source imitates the digit; leetspeak is not a look-alike class",
@@ -568,10 +571,19 @@ def test_r11_cyr_greek_fw_zw_mark_split_up_low_the_value_shares_a_key_with_its_d
     assert _disguise(VAULT, "GREEK") != VAULT and shares(_disguise(VAULT, "GREEK"), VAULT)
 
 
-def test_no_value_of_the_table_is_zero_or_one():
-    assert not [v for v in _confusables.TABLE.values() if v in ("0", "1")], (
-        "the table maps a letter to 0 or 1"
-    )
+def test_no_letter_of_the_table_is_read_as_zero_or_one():
+    """A LETTER-like source never reads as 0 or 1 (that is the squeeze's loose map, not the table's). Since P1a fix5 the table has digit
+    forms that NAME the digit (a circled zero, a negative circled one): those sources are in category No, and their name says the digit."""
+    bad = [
+        hex(cp)
+        for cp, v in _confusables.TABLE.items()
+        if v in ("0", "1")
+        and not (
+            unicodedata.category(chr(cp)) in ("No", "Nd")
+            or re.search(r"\b(ZERO|ONE)\b", unicodedata.name(chr(cp), ""))
+        )
+    ]
+    assert not bad, f"the table maps a letter to 0 or 1: {bad}"
 
 
 # ---- modifier letters (Lm) -----------------------------------------------------------------------------------------------------------------
@@ -626,6 +638,7 @@ def test_pin_encl_enclosed_forms_without_a_decomposition_or_table_entry_give_no_
         r"FOURTEEN|FIFTEEN|SIXTEEN|SEVENTEEN|EIGHTEEN|NINETEEN|TWENTY)\b|\b[0-9]{1,2}\b"
     )
     selected = []
+    in_table = 0
     for cp in range(0x80, 0x110000):
         if 0xD800 <= cp <= 0xDFFF:
             continue
@@ -645,6 +658,7 @@ def test_pin_encl_enclosed_forms_without_a_decomposition_or_table_entry_give_no_
         ):
             continue
         if cp in _confusables.TABLE:
+            in_table += 1  # P1a fix5 reads many of these forms from their names: they have an ASCII key on purpose
             continue
         selected.append(ch)
         for key in scan_keyset(ch):
@@ -653,8 +667,11 @@ def test_pin_encl_enclosed_forms_without_a_decomposition_or_table_entry_give_no_
             )
     print(f"enclosed forms selected: {len(selected)}; runs: 8 (2 readings x 4 tag texts)")
     if unicodedata.unidata_version == defaults.TEXTNORM_PINNED_UNIDATA:
-        assert len(selected) >= 100, (
-            f"the name selection chose {len(selected)} code points (the ticket's count is 135)"
+        assert len(selected) + in_table >= 100, (
+            f"the name selection chose {len(selected)} + {in_table} code points (the ticket's count is 135)"
+        )
+        assert len(selected) >= 20, (
+            f"only {len(selected)} enclosed forms are left without a table entry"
         )
     assert selected, "the selection is empty: a regex that matches nothing passes"
 
@@ -786,7 +803,7 @@ def test_scan_views_has_the_fold_the_squeeze_and_the_scan_keys_and_no_empty_view
     views = scan_views(text)
     assert views == tuple(dict.fromkeys(views)), "a view is repeated"
     assert all(views), "an empty view is in the list"
-    assert len(views) <= 14
+    assert len(views) <= 20
     for v in textnorm.fold_views(text, casefold=True, collapse_ws=True) + textnorm.squeeze_views(
         text
     ):
@@ -802,10 +819,9 @@ def test_scan_views_has_the_fold_the_squeeze_and_the_scan_keys_and_no_empty_view
 
 
 def test_scan_holds_reads_both_fold_views_and_squeeze_views_on_both_sides():
-    """ANY view of the text holds ANY view of the value. Each half is needed: the spacing mark hides the word from ``fold_views`` (the text
-    side needs ``squeeze_views``) and the value written with one is found in the plain text (the value side needs it too)."""
+    """ANY view of the text holds ANY view of the value, on both sides: the text may carry the spacing mark, or the value may. (Since P1a
+    fix5 ``fold_views`` alone also finds a mark, so this test no longer proves the squeeze half by itself: the class-map case below does.)"""
     mark = "\u093e"
-    assert "password" not in " ".join(textnorm.fold_views("pass" + mark + "word", casefold=True))
     assert scan_holds("my pass" + mark + "word is x", "password"), (
         "the text side misses the squeeze view"
     )
@@ -816,6 +832,11 @@ def test_scan_holds_reads_both_fold_views_and_squeeze_views_on_both_sides():
     assert scan_holds("MY PASSWORD", "password") and scan_holds("my p a s s w o r d", "password")
     assert scan_holds("ltq-v" + chr(0x430) + "ult-8812", "LTQ-Vault-8812"), (
         "a look-alike hides the value"
+    )
+    assert scan_holds("my pass-word is x", "password") and scan_holds(
+        "my password is x", "pass-word"
+    ), (
+        "punctuation hides the word from fold_views: only the squeeze half finds it, on the text side and on the value side"
     )
     assert not scan_holds("my passport", "password") and not scan_holds("", "password")
 

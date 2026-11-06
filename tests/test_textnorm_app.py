@@ -11,8 +11,9 @@ import pytest
 from hadavin_sdk import app as app_mod
 from hadavin_sdk import defaults
 from hadavin_sdk.guard.textnorm import UnidataMismatch
+from hadavin_sdk.stages import is_live
 from tests.conftest import qualify
-from tests.test_k3_pilot import SECRETS, dev_cfg
+from tests.test_k3_pilot import SECRETS, demo_cfg
 from tests.test_k3_pilot_env import pilot_cfg
 
 OTHER = "0.0.1"
@@ -61,7 +62,7 @@ def test_the_pinned_unicode_guard_is_on_for_pilot_and_prod_configs(
     assert "for pilot or prod" in message, (
         "the message does not say which stages need the pinned version"
     )
-    assert environment in app_mod.deferred.LIVE
+    assert is_live(environment)
 
 
 def test_a_pilot_build_on_the_pinned_version_does_not_refuse_for_the_unicode_version(
@@ -79,7 +80,7 @@ def test_a_pilot_build_on_the_pinned_version_does_not_refuse_for_the_unicode_ver
 
 def test_a_non_live_build_runs_on_another_unicode_version(tmp_path, monkeypatch):
     monkeypatch.setattr(unicodedata, "unidata_version", OTHER)
-    cfg = dev_cfg(tmp_path, {"restart_service": "shadow"})
+    cfg = demo_cfg(tmp_path, {"restart_service": "shadow"})
     qualify(app_mod.load_registry(app_mod.load_config(cfg)))
     built = app_mod.build(cfg, ["test-agent"], secrets=SECRETS)
     assert built.runtime is not None

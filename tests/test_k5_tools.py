@@ -1116,7 +1116,7 @@ def test_k5_a_float_in_a_tool_argument_does_not_strand_the_run(tmp_path):
 
 
 def _execute_runtime(tmp_path, execute_hook):
-    """A dev runtime holding a stored plan whose id input is a placeholder, ready for `execute`."""
+    """A demo runtime holding a stored plan whose id input is a placeholder, ready for `execute`."""
     from hadavin_sdk.audit import LocalDirSink
     from hadavin_sdk.guard import RegexDetector
     from hadavin_sdk.limits import Limits

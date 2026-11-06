@@ -1,29 +1,29 @@
 {
-  "note": "One entry, for the current alg (not a history): one section per Unicode data version the supported Pythons carry (3.12: 15.0.0, 3.13: 15.1.0). Replace it, with a hand bump of alg, in the pull request that changes what a key can be. Regenerate each section on the interpreter of its version with: python -c 'import json; from tests.test_textnorm_differential import live_hashes; print(json.dumps(live_hashes()))'. The hashes are of the bare keys (without the tag of an unpinned interpreter).",
-  "alg": "fold5",
-  "unidata": "15.1.0",
-  "sections": {
-    "15.0.0": {
-      "hashes": {
-        "identity_key": "cd10a49020cbbe5c19b0f98de00da342225ef390ac9c0e6a67d56605e21e9fe0",
-        "squeeze": "10bd5031c7d4e9136cfdcfd94a7c4898811b73023d62499931ae001dc39752ac",
-        "squeeze_loose": "5be884ba80137983dbad5be41df98158b1d931197555a5d15a4f2aac6d136422",
-        "identity_keys": "34940970b7e0761b00456a8151602448a464be588b4735b90e8f5f85d50ac2ef",
-        "fold_views": "eb2531f803461642399009e2b23f30e01602089419f012a09ba4ed465d70d6a2",
-        "squeeze_views": "3b03ed60db359cbca4fc9b62542415624b83c15f59cd55c9d259d29ebeb390c7",
-        "scan_keyset": "fdebb443d272b4c582b074ddbf8b77a3ebe2f9ec84e5d78f512df9bf6f5ac9db"
-      }
-    },
-    "15.1.0": {
-      "hashes": {
-        "identity_key": "f0300c8e04a89191d3ede3654f3b37fca5e17431e84c20a97d89171ab3d4075d",
-        "squeeze": "10bd5031c7d4e9136cfdcfd94a7c4898811b73023d62499931ae001dc39752ac",
-        "squeeze_loose": "5be884ba80137983dbad5be41df98158b1d931197555a5d15a4f2aac6d136422",
-        "identity_keys": "130b94312348ef73a2ed9209b6703b5139e28b7f27bd8acc33fd6cbf20244677",
-        "fold_views": "e8107d510ea9e86b21fbef76a5fdfb64a382adbb73d4718de55ef4821375a5cd",
-        "squeeze_views": "3b03ed60db359cbca4fc9b62542415624b83c15f59cd55c9d259d29ebeb390c7",
-        "scan_keyset": "7c35fdfb11dfd98b2d3a5685b5ba272e5ad62931ac191fe9b7f6cc937db35a59"
-      }
-    }
+ "note": "One entry, for the current alg (not a history): one section per Unicode data version the supported Pythons carry (3.12: 15.0.0, 3.13: 15.1.0). Replace it, with a hand bump of alg, in the pull request that changes what a key can be. Regenerate each section on the interpreter of its version with: python -c 'import json; from tests.test_textnorm_differential import live_hashes; print(json.dumps(live_hashes()))'. The hashes are of the bare keys and views (the readings joined in their fixed order) and views, without the tag of an unpinned interpreter; the readings of a text are joined in their fixed order by U+001F.",
+ "alg": "fold5",
+ "unidata": "15.1.0",
+ "sections": {
+  "15.0.0": {
+   "hashes": {
+    "identity_key": "8ee719c735708ffd4537d90d12f83409cb6790591a5968255b8ff5758577def2",
+    "squeeze": "7368c4692417bc861672268b6392667d340b1a556863c3058822e1478aa861d9",
+    "squeeze_loose": "03c32c9f58eb4defcf78629ef559c20c1677a0ca20183610ae8c53bce3d2462d",
+    "identity_keys": "5140e3cea1866609f7257b404c1b88fcca8a978c21ad1952312a163cd2b084ee",
+    "fold_views": "345df44fa936b51db558d20012a3ce8a94f19aba93b9d8b391ecf2c96f47de01",
+    "squeeze_views": "c4a2f83f2dca99c40dae2f7f5b2a34c99baff4d4bbfe08e8a439bc42a11eb511",
+    "scan_keyset": "bb6dc88bec4f23c4c7a6bfa7efd6175e66ac52a338ac3f7411f3db618bbf596f"
+   }
+  },
+  "15.1.0": {
+   "hashes": {
+    "identity_key": "d984e240782197c3dc2ed6308cee6edc52c4a20aa392f96be6d0d47d9540106f",
+    "squeeze": "7368c4692417bc861672268b6392667d340b1a556863c3058822e1478aa861d9",
+    "squeeze_loose": "03c32c9f58eb4defcf78629ef559c20c1677a0ca20183610ae8c53bce3d2462d",
+    "identity_keys": "bee8f6ff442630e81da11695b67567a52347b55d12d67db4404bf63a76c11c87",
+    "fold_views": "28544f465837c2e1f5423dcbb266dcce0e5ab15a1ba2a7248b956bde61a74ccb",
+    "squeeze_views": "c4a2f83f2dca99c40dae2f7f5b2a34c99baff4d4bbfe08e8a439bc42a11eb511",
+    "scan_keyset": "f6ebb86718d66d42010f648d9cbbd33308f3344f0454b33eb8f338ef4538361d"
+   }
   }
+ }
 }

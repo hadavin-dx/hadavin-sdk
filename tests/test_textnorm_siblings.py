@@ -18,7 +18,7 @@ from hadavin_sdk import defaults
 from hadavin_sdk.guard import _confusables, egress, injection, runmap, textnorm
 from hadavin_sdk.guard.textnorm import AllowVerdict, allow_equal, fold, identity_key
 from hadavin_sdk.runtime import evidence
-from tests.test_textnorm import _code_points_of, _reads_as_letters
+from tests.test_textnorm import _code_points_of
 from tests.test_textnorm_differential import _corpus_rows
 
 SRC = Path(__file__).resolve().parents[1] / "src" / "hadavin_sdk"
@@ -201,19 +201,11 @@ def _hidden_in_password(category):
 def test_every_scan_path_of_textnorm_finds_a_secret_hidden_with_any_mc_lm_or_sk_code_point(
     category,
 ):
-    """The paths a redaction or blocklist reads: ``scan_holds`` and ``scan_views`` (which read BOTH ``fold_views`` and ``squeeze_views``) find
-    ``password`` for EVERY code point, with no exception. ``fold_views`` alone misses a spacing mark (Mc is kept by ``fold``) and
-    ``squeeze_views`` alone misses a modifier letter that reads as a letter, so neither is enough on its own: this is why a scan must
-    read both."""
+    """The paths a redaction or blocklist reads: ``scan_holds`` and ``scan_views`` find ``password`` for EVERY code point, with no
+    exception (P1a fix5 reads the text a second time with every Mc, Lm and Sk character removed BEFORE the first normalisation, so a
+    modifier letter that reads as a letter is gone too). Since fix5 each of ``fold_views`` and ``squeeze_views`` finds it ALONE."""
     fold_alone = squeeze_alone = 0
     for ch, text in _hidden_in_password(category):
-        if _reads_as_letters(ch):
-            # the character is itself a letter or digit (a superscript h, an anusvara read as o): the word is a different word, and
-            # the view must show the letter in its place, so the inserted character still shows
-            assert any(
-                re.fullmatch("PASS[A-Z0-9]+WORD", v) for v in textnorm.squeeze_views(text)
-            ), f"squeeze_views hides U+{ord(ch):04X} ({category}), which reads as a letter"
-            continue
         assert textnorm.scan_holds(text, "password"), (
             f"scan_holds misses a secret hidden with U+{ord(ch):04X} ({category})"
         )
@@ -226,33 +218,23 @@ def test_every_scan_path_of_textnorm_finds_a_secret_hidden_with_any_mc_lm_or_sk_
         fold_alone += any("password" in v for v in textnorm.fold_views(text, casefold=True))
         squeeze_alone += "PASSWORD" in textnorm.squeeze_views(text)
     total = len(_hidden_in_password(category))
-    excepted = sum(_reads_as_letters(c) for c, _ in _hidden_in_password(category))
-    assert squeeze_alone == total - excepted, (category, squeeze_alone, total, excepted)
-    if category == "Mc":
-        assert fold_alone == 0, (
-            "fold_views alone now finds a spacing mark: the decision (Mc is kept) changed"
-        )
-        assert fold_alone < squeeze_alone, (
-            "a scan of fold_views alone is as good as both views: the rule 'read both' is moot"
-        )
+    assert squeeze_alone == total, (category, squeeze_alone, total)
+    assert fold_alone == total, (category, fold_alone, total)
 
 
-def test_scan_holds_finds_the_password_for_every_mc_lm_and_sk_code_point_that_is_not_a_letter():
+def test_scan_holds_finds_the_password_for_every_mc_lm_and_sk_code_point():
     """The same contract as the three parametrized cases, in one test (the mutation runner pins one test name)."""
     for category in ("Mc", "Lm", "Sk"):
         for ch, text in _hidden_in_password(category):
-            if not _reads_as_letters(ch):
-                assert textnorm.scan_holds(text, "password"), (
-                    f"scan_holds misses a secret hidden with U+{ord(ch):04X} ({category})"
-                )
+            assert textnorm.scan_holds(text, "password"), (
+                f"scan_holds misses a secret hidden with U+{ord(ch):04X} ({category})"
+            )
 
 
 @pytest.mark.parametrize("category", ["Mc", "Lm", "Sk"])
 def test_a_protected_value_that_holds_the_hidden_code_point_is_found_in_the_plain_text(category):
     """The other direction (the value, not the text, carries the character): ANY view of the text holds ANY view of the value."""
     for ch, value in _hidden_in_password(category):
-        if _reads_as_letters(ch):
-            continue  # it reads as a letter or digit (``pass8word``): the value is a different word, not "password"
         assert textnorm.scan_holds("the password is here", value), (
             f"scan_holds does not find a protected value written with U+{ord(ch):04X} ({category}) in the plain text"
         )
