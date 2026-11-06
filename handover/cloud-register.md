@@ -410,7 +410,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | r3-P4c-adv | egm-design adversarial round 3 of P4c rev 3 (money) | sonnet | 03:06Z | +20min | REPORTED | save |
 | r3-P4c-cor | egm-codebase-details correctness round 3 of P4c rev 3 | sonnet | 03:06Z | +20min | REPORTED | save |
 | sav-P5b4-P8a-r1 | Saver: P5b4 cor, P8a adv+cor round 1 + ledger | sonnet | 03:07Z | +10min | REPORTED | resolves |
-| res-r1-P5b5 | Opus egm-resolve P5b5 round 1 (1 Blocker, 11 Majors) | opus | 03:07Z | +30min | running | rev 2 author |
+| res-r1-P5b5 | Opus egm-resolve P5b5 round 1 (1 Blocker, 11 Majors) | opus | 03:07Z | +30min | REPORTED | rev 2 author |
 | sav-P5b3-P6b1-P8b-P5b2 | Saver: P5b3 r1 adv+cor, P6b1 r3 adv+cor, P8b r2 adv (cor pending), P5b2 r3 adv | sonnet | 03:09Z | +12min | REPORTED | resolves |
 | r2-P6a-adv | Round 2 adversarial P6a rev 2 | egm-design | 03:10Z | +10min | running | save |
 | r2-P6a-cor | Round 2 correctness P6a rev 2 | egm-codebase-details | 03:10Z | +10min | running | save |
@@ -427,3 +427,4 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | res-r2-P8b | Opus resolve P8b r2 (1 Blocker, 9 Majors) | opus | 03:12Z | +30min | running | rev 3 |
 | r3-P5a-adv | Round 3 adversarial P5a rev 3 | egm-design | 03:13Z | +12min | running | save |
 | r3-P5a-cor | Round 3 correctness P5a rev 3 | egm-codebase-details | 03:13Z | +12min | running | save |
+| rev-P5b5-2 | Opus author P5b5 rev 2 (shrinks to tests + page) | opus | 03:14Z | +25min | running | round 2 |
