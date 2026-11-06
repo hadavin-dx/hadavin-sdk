@@ -111,3 +111,15 @@ The lease token itself is not a NEEDS LEAD item: it reuses `version`, which is a
 - Majors (9): 8 PROPOSE FIX, 1 ESCALATE (DES-ADV-4). Unaddressed: 0.
 - Open points: 6 decided (all INFORM). NEEDS LEAD: 4. INFORM: 11 (I-A to I-K).
 - Design: revision 2, about 577 lines (from 476).
+
+## Order 39 applied (design revision 3, 2026-11-06)
+
+The lead answered NEEDS LEAD 1-4 and the lease-token question in `LEAD-ORDERS.md` order 39. All five are answered, order 39; no "meanwhile" text remains in the design. The text above is kept as written at revision 2.
+
+1.  NEEDS LEAD 1 = (b): after a hand-off no new value is saved in the conversation map; the person who takes over sees labels. Changed in the design: F4 (note), F5, F7 (the takeover record), `claim_turn` step 5, `record_user_turn` step 3, I-5, the "Ticket text changed" table (F5 row, INFORM I13), test cases in T18 and A15. Revision 2's cap by `max_map_entries` (option (a)) is removed.
+2.  NEEDS LEAD 2 = (a) + (c): purge by age as now; `owner-visible-limits.md` entry 12 and `contract-terms-notes.md` item 1 (queue service time shorter than `conversations_days`) are referenced in `purge_conversations` and the owner-visible limits paragraph.
+3.  NEEDS LEAD 3 = (a), the literal reading of PL15: `purge_conversations` also deletes the chat runs' `tool_calls`. Written as a lead-approved change to BN-11 ("maps only") in the header, the lead section, the "Ticket text changed" table and `purge_conversations`; test case in A22. AK-G1-c may merge only with that text applied.
+4.  NEEDS LEAD 4 = (a): the run check before `_save_map` (F8) stays; the ticket's limit 2(vi) is kept; option (b) is revisited only if the build-start review finds the window reachable in a test.
+5.  Lease token = the existing `conversations.version` column, confirmed by the lead; no new column (lease token rule, Alternative N, the lead section).
+
+Not done by me: no fresh reviewer has read revision 3, and no project test was run (design text only). The ticket and every other file are not edited.
