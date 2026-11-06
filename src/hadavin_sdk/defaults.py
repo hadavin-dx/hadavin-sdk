@@ -136,6 +136,3 @@ K8S_LOG_BYTES = 65536  # asked of the API as limitBytes
 TEXTNORM_MAX_CHARS = MAX_REDACT_CHARS
 # The Unicode data version the fold's keys were made with; check_pinned_unidata compares the interpreter with it.
 TEXTNORM_PINNED_UNIDATA = "15.1.0"
-# Passes (the confirming pass included) of a fold loop before FoldNotConverged. P1a has NO such loop and reads this constant nowhere;
-# it is first read by P1b.
-TEXTNORM_MAX_PASSES = 3

@@ -126,7 +126,28 @@ def _loose(text):
     return squeeze(text, loose=True)
 
 
-HASHED = {"identity_key": _bare(identity_key), "squeeze": squeeze, "squeeze_loose": _loose}
+def _joined(fn):
+    """A function that returns the readings of a text (a tuple), as one string: the readings in their fixed order, without the tag of an
+    unpinned interpreter, joined by U+001F (a control character, which no key or view holds)."""
+
+    def wrapped(text):
+        return "\x1f".join(view.removeprefix(textnorm.key_tag()) for view in fn(text))
+
+    return wrapped
+
+
+def _fold_views(text):
+    return textnorm.fold_views(text, casefold=True)
+
+
+HASHED = {
+    "identity_key": _bare(identity_key),
+    "squeeze": squeeze,
+    "squeeze_loose": _loose,
+    "identity_keys": _joined(textnorm.identity_keys),
+    "fold_views": _joined(_fold_views),
+    "squeeze_views": _joined(textnorm.squeeze_views),
+}
 
 
 def live_hashes():
