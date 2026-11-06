@@ -2,14 +2,16 @@
 version as the interpreter pin ``defaults.TEXTNORM_PINNED_UNIDATA`` (15.1.0).
 
 Run (stdlib only; offline: the data file is vendored in ``tools/data/confusables.txt``, Unicode License v3, the notice is in the file
-and in the generated header; unicode.org serves only the "latest" URL, there is no versioned one, hence the copy and the pin):
+and in the generated header):
 
     python tools/gen_confusables.py                      # reads tools/data/confusables.txt
     python tools/gen_confusables.py other.txt            # refused unless it has the pinned version, date and sha256
 
-WHERE THE 15.1.0 FILE CAME FROM (read on 2026-11-06): the file at https://www.unicode.org/Public/security/15.1.0/confusables.txt, fetched
-by the project lead on 2026-11-06 (718,291 bytes); the same bytes (same sha256) are in the Unicode Consortium's ``unicodetools``
-repository (``data/security/15.1.0/``) and in the ICU source tree at the tags ``release-74-1``, ``release-74-2`` and ``release-75-1``.
+WHERE THE 15.1.0 FILE CAME FROM (one statement, read on 2026-11-06): the project lead fetched it on 2026-11-06 from
+https://www.unicode.org/Public/security/15.1.0/confusables.txt (718,291 bytes). That the bytes equal the Unicode Consortium's upload is
+checked by comparing the pinned sha256 below with a fresh download of that URL, which only a person with network access can do; the
+same bytes (same sha256) are said to be in the Unicode Consortium's ``unicodetools`` repository (``data/security/15.1.0/``) and in the ICU
+source tree at the tags ``release-74-1``, ``release-74-2`` and ``release-75-1`` (not checked by this package).
 
 Why the version is checked: a look-alike table of another Unicode version than the interpreter's data maps code points the interpreter
 does not know (or misses ones it does). The generator refuses a data file whose ``# Version:`` line is not the pin, BEFORE it looks at
@@ -19,7 +21,7 @@ the hash, so the message names the mismatch; a changed pin is a reviewed change 
 Two constants are written beside the table: ``TABLE_DIGEST`` (the SHA-256 of the table, see ``table_digest``) and ``MAX_VALUE_LEN`` (the
 longest table value, which the size rule of ``guard/textnorm.py`` reads).
 
-Python dependency: the small-capital rule reads character NAMES from the running interpreter's ``unicodedata``; the checked-in output was
+Python dependency: the name rules (below) read character NAMES from the running interpreter's ``unicodedata``; the checked-in output was
 generated with Python 3.13.x / Unicode 15.1.0 (``DATA_UNICODEDATA`` in the generated file) and is the artifact. The test that compares the
 output with the checked-in file runs on 15.0.0 (Python 3.12) and 15.1.0 (Python 3.13), which give the identical table.
 
@@ -36,9 +38,18 @@ Selection rules (all explicit, nothing hand-curated):
   * SUPPLEMENT (below, explicit, 16 entries, never overrides the data): letters that read as a Latin letter but that UTS #39 does
     not list as MA (Cyrillic ka em te en ve ze, Greek kappa tau chi eta mu omega epsilon, Latin o/l/d with stroke). They
     were added by a design review and are pinned by tests/fixtures/textnorm_vectors.json;
-  * NAME RULE: a code point named ``LATIN LETTER SMALL CAPITAL X`` or ``LATIN SMALL CAPITAL X`` (X one letter) maps to the capital X.
-    UTS #39 lists only a few small capitals; the rest read as the capital letter, and the rule is by Unicode name, not by hand. The
-    names come from the running interpreter's ``unicodedata`` (recorded in the generated header); data and supplement win over it;
+  * NAME RULES (by Unicode character name, never by hand; data and supplement win over them; only a code point that no earlier
+    fold step changes, that is NFKD- and NFKC-stable and whose category is kept, can fire):
+      - ``LATIN LETTER SMALL CAPITAL X``, ``LATIN SMALL CAPITAL X`` and ``LATIN SMALL CAPITAL LETTER X`` (X one letter, optionally ``WITH`` a
+        mark) read as the capital X (UTS #39 lists only a few);
+      - ``NEGATIVE CIRCLED LATIN CAPITAL LETTER X``, ``NEGATIVE SQUARED LATIN CAPITAL LETTER X``, ``CROSSED NEGATIVE SQUARED LATIN CAPITAL
+        LETTER P`` and ``REGIONAL INDICATOR SYMBOL LETTER X`` read as the capital X, ``SQUARED LATIN SMALL LETTER D`` as d (NFKC maps
+        the other squared letters and the circled letters, not these);
+      - ``LATIN CAPITAL LETTER X WITH <mark>`` and ``LATIN SMALL LETTER X WITH <mark>`` (X one letter: H with stroke, B with hook, ...)
+        read as X in the case of the name;
+      - ``[DINGBAT] [NEGATIVE|DOUBLE] CIRCLED [SANS-SERIF] DIGIT|NUMBER <ZERO..NINE|TEN>`` read as that digit (ten as ``10``; NFKC maps the
+        plain circled digits, not these).
+    The names come from the running interpreter's ``unicodedata`` (recorded in the generated header; 15.0.0 and 15.1.0 give one table).
   * the prototype of capital I, Greek Iota and Cyrillic I in the data is lower-case ``l``; an UPPER-case source with prototype ``l``
     is written as ``I`` (what a reader sees), every other source keeps its prototype.
 """
@@ -69,13 +80,50 @@ DROPPED = frozenset(
 )  # the dropped categories (not Cn: an unassigned source is kept, so the output does not depend on the interpreter's Unicode version)
 DEFAULT_INPUT = Path(__file__).resolve().parent / "data" / "confusables.txt"
 OUT = Path(__file__).resolve().parents[1] / "src" / "hadavin_sdk" / "guard" / "_confusables.py"
-_SMALL_CAP = re.compile(r"LATIN (?:LETTER )?SMALL CAPITAL ([A-Z])")
+_DIGIT_WORDS = {
+    "ZERO": "0", "ONE": "1", "TWO": "2", "THREE": "3", "FOUR": "4",
+    "FIVE": "5", "SIX": "6", "SEVEN": "7", "EIGHT": "8", "NINE": "9", "TEN": "10",
+}  # fmt: skip
+# The Unicode-name rules (see "NAME RULES" in the module docstring): each is a full match on the character name; the second item says
+# how the letter or digit is written (``"upper"``, ``"lower"``, ``"digit"``, or ``"case"``: the capital or small word of the name).
+_NAME_RULES: tuple[tuple[re.Pattern[str], str], ...] = tuple(
+    (re.compile(pattern), how)
+    for pattern, how in (
+        (r"LATIN (?:LETTER )?SMALL CAPITAL (?:LETTER )?([A-Z])(?: WITH .+)?", "upper"),
+        (r"(?:CROSSED )?NEGATIVE (?:CIRCLED|SQUARED) LATIN CAPITAL LETTER ([A-Z])", "upper"),
+        (r"SQUARED LATIN SMALL LETTER ([A-Z])", "lower"),
+        (r"REGIONAL INDICATOR SYMBOL LETTER ([A-Z])", "upper"),
+        (r"LATIN (?:CAPITAL|SMALL) LETTER ([A-Z]) WITH .+", "case"),
+        (
+            r"(?:DINGBAT )?(?:NEGATIVE |DOUBLE )?CIRCLED (?:SANS-SERIF )?(?:DIGIT|NUMBER) ("
+            + "|".join(_DIGIT_WORDS)
+            + ")",
+            "digit",
+        ),
+    )
+)
+
+
+def name_rule_value(name: str) -> str | None:
+    """The ASCII letter or digit(s) the character NAME says (the first rule that matches wins), or None."""
+    for pattern, how in _NAME_RULES:
+        m = pattern.fullmatch(name)
+        if not m:
+            continue
+        if how == "digit":
+            return _DIGIT_WORDS[m[1]]
+        if how == "case":
+            return m[1].lower() if name.startswith("LATIN SMALL ") else m[1]
+        return m[1].lower() if how == "lower" else m[1]
+    return None
+
+
 _LINE = re.compile(r"^([0-9A-F]{4,6})\s*;\s*([0-9A-F ]+?)\s*;\s*MA\b")
 _HEADER = (
     '"""GENERATED by tools/gen_confusables.py from Unicode UTS #39 confusables.txt (MA table), version {ver}, dated {date},\n'
-    "sha256 {sha}; small-capital names from Python unicodedata {uni}. Do not edit; change the generator and regenerate.\n\n"
-    "(c) 1991-2026 Unicode, Inc. Used under the Unicode License v3 (https://www.unicode.org/terms_of_use.html). The data file itself\n"
-    "carries the notice (c) 2023 Unicode, Inc. Unicode is a registered trademark of Unicode, Inc.\n"
+    "sha256 {sha}; character names from Python unicodedata {uni}. Do not edit; change the generator and regenerate.\n\n"
+    "Copyright \u00a9 1991-2026 Unicode, Inc. Used under the Unicode License v3 (https://www.unicode.org/terms_of_use.html). The data\n"
+    "file itself carries the line \u201c# \u00a9 2023 Unicode\u00ae, Inc.\u201d. Unicode is a registered trademark of Unicode, Inc.\n"
     "THIS NOTICE MUST NOT BE REMOVED OR SHORTENED when this file is copied.\n"
     '"""\n\n'
     'DATA_SHA256 = "{sha}"\n'
@@ -132,6 +180,18 @@ def check_input(raw: bytes) -> str | None:
     return None
 
 
+def _follow_case_partner(ch: str, value: str | None, listed: dict[int, str]) -> str | None:
+    """A name rule never splits a capital from its small letter: when the data or the supplement already reads the other-case form of ``ch``
+    as another letter (UTS #39 reads the small v with hook U+028B as ``u``), ``ch`` is read as that letter in its own case."""
+    if value is None:
+        return None
+    for partner in {ch.lower(), ch.upper()} - {ch}:
+        read = listed.get(ord(partner)) if len(partner) == 1 else None
+        if read and read.casefold() != value.casefold():
+            return read.upper() if ch.isupper() else read.lower()
+    return value
+
+
 def build(text: str) -> dict[int, str]:
     out: dict[int, str] = {}
     for line in text.splitlines():
@@ -148,18 +208,21 @@ def build(text: str) -> dict[int, str]:
         if dst == "l" and unicodedata.category(ch) == "Lu":
             dst = "I"
         out[src] = dst
-    for cp in range(0x80, 0x20000):
-        m = _SMALL_CAP.fullmatch(unicodedata.name(chr(cp), ""))
-        ch = chr(cp)
-        if (
-            m
-            and unicodedata.normalize("NFKC", ch) == ch
-            and unicodedata.category(ch) not in DROPPED
-        ):
-            out.setdefault(cp, m[1])
     sup = {
         cp: v for cp, v in SUPPLEMENT.items() if unicodedata.normalize("NFKC", chr(cp)) == chr(cp)
     }  # a key the fold can reach
+    listed = {**sup, **out}  # what the data and the supplement say, before any name rule
+    for cp in range(0x80, 0x20000):
+        ch = chr(cp)
+        value = name_rule_value(unicodedata.name(ch, ""))
+        value = _follow_case_partner(ch, value, listed)
+        if (
+            value
+            and unicodedata.normalize("NFKD", ch) == ch
+            and unicodedata.normalize("NFKC", ch) == ch
+            and unicodedata.category(ch) not in DROPPED
+        ):
+            out.setdefault(cp, value)
     ovr = {
         cp: v for cp, v in OVERRIDES.items() if unicodedata.normalize("NFKC", chr(cp)) == chr(cp)
     }

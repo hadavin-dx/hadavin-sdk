@@ -9,7 +9,7 @@ sha256 of the licence text between the two marker lines (the lines themselves ar
 
 These files contain or are derived from Unicode Consortium data (UTS #39 `confusables.txt`) and carry the licence below:
 
-- `tools/data/confusables.txt` (the data file, unchanged; its own header copyright notice, "Copyright (c) 2023 Unicode, Inc.", is kept in the file)
+- `tools/data/confusables.txt` (the data file, unchanged; its own header line, "# © 2023 Unicode®, Inc.", is kept in the file)
 - `src/hadavin_sdk/guard/_confusables.py` (generated from the data file)
 - `tools/gen_confusables.py` (reads the data file)
 

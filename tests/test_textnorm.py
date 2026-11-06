@@ -1335,7 +1335,7 @@ def test_the_four_greek_capitals_that_look_like_latin_capitals_are_could_be_the_
         assert could_be_same_person(latin + rest, greek + YPOGEGRAMMENI + rest), (
             f"a capital Greek letter + U+0345 is not the Latin capital {latin}"
         )
-    assert could_be_same_person("Ho", ETA + "\u00d8"), (
+    assert could_be_same_person("Ho", ETA + "\u0275"), (
         "the upper-side reading lacks the table of the case-fold image"
     )
 
@@ -1419,14 +1419,14 @@ def test_fold_views_and_squeeze_views_hold_the_single_fold_and_are_bounded():
         for casefold in (False, True):
             for collapse_ws in (False, True):
                 views = textnorm.fold_views(text, casefold=casefold, collapse_ws=collapse_ws)
-                assert type(views) is tuple and 1 <= len(views) <= 3
+                assert type(views) is tuple and 1 <= len(views) <= 6
                 assert len(set(views)) == len(views)
                 assert fold(text, casefold=casefold, collapse_ws=collapse_ws) in views, (
                     "the single fold is not one of the views"
                 )
         for loose in (False, True):
             views = textnorm.squeeze_views(text, loose=loose)
-            assert type(views) is tuple and 1 <= len(views) <= 3
+            assert type(views) is tuple and 1 <= len(views) <= 6
             assert squeeze(text, loose=loose) in views, "the single squeeze is not one of the views"
     assert set(textnorm.fold_views("\u03b1\u0345dmin", casefold=False)) == {"admin", "aidmin"}
     assert "howard" in textnorm.fold_views(ETA + "oward", casefold=True)
@@ -1650,68 +1650,113 @@ def _code_points_of(*categories):
     ]
 
 
-def _reads_as_letters(ch):
-    """True when the character is itself read as an ASCII letter or digit, from the Unicode DATA and the table, not from the fold: its
-    NFKC form holds an ASCII letter or digit (a modifier letter such as U+02B0, superscript h, is the letter h), or a character of that form
-    is a table source (U+02E0, modifier small gamma, is a gamma, which the table reads as y), or the table maps the character itself
-    (a Telugu or Malayalam anusvara reads as o, Oriya visarga as 8)."""
-    return any(
-        (c.isascii() and c.isalnum())
-        or ord(c) in _confusables.TABLE
-        or ord(c.casefold()) in textnorm._CF_TABLE
-        for c in {ch, *unicodedata.normalize("NFKC", ch)}
-        if unicodedata.category(c)
-        not in textnorm._DROP_CATEGORIES  # a mark of the image (U+037A: space + U+0345) is dropped, not read
-    )
-
-
-def test_squeeze_views_finds_a_secret_hidden_with_any_spacing_mark_modifier_letter_or_modifier_symbol():
-    """The redaction contract: a scan looks through BOTH ``fold_views`` and ``squeeze_views``. This is the half that makes ``squeeze_views``
-    safe for a secret hidden by an inserted character of category Mc (spacing combining mark), Lm (modifier letter) or Sk (modifier symbol).
-    EVERY such code point of this interpreter is tried; nothing is skipped. The only exceptions are the code points that are themselves read
-    as a letter or digit (``_reads_as_letters``: superscript h, the letter-like Lm; an anusvara that the look-alike table reads as o): for
-    those the view must read the letter in their place, ``PASS`` + letter + ``WORD``, so the inserted character still shows. The
-    exception set is DERIVED from the Unicode data (NFKC form and the table), never written by hand."""
-    seen = {}
+def test_squeeze_views_finds_a_secret_hidden_with_every_spacing_mark_modifier_letter_or_modifier_symbol():
+    """The redaction contract for letters and digits: for EVERY code point of category Mc (spacing combining mark), Lm (modifier letter) or Sk
+    (modifier symbol) of this interpreter, ``squeeze_views("pass" + c + "word")`` holds ``PASSWORD``. There is NO exemption list: the
+    characters that NFKC or the look-alike table read as a letter (superscript h, a Telugu or Malayalam anusvara that the table reads as o,
+    an Oriya visarga that it reads as 8) are removed by the marks-dropped views before either runs."""
     for category in ("Mc", "Lm", "Sk"):
         chars = _code_points_of(category)
         assert chars, f"this interpreter has no code point of category {category}"
-        letters = 0
         for ch in chars:
             views = textnorm.squeeze_views("pass" + ch + "word")
-            if _reads_as_letters(ch):
-                letters += 1
-                assert any(re.fullmatch("PASS[A-Z0-9]+WORD", v) for v in views), (
-                    f"squeeze_views hides U+{ord(ch):04X} ({category}), which reads as a letter, from the scan: {views}"
-                )
-            else:
-                assert "PASSWORD" in views, (
-                    f"squeeze_views misses a secret hidden with U+{ord(ch):04X} ({category}): {views}"
-                )
-        seen[category] = (len(chars), letters)
-    # the exception set is small and only of letter-like characters: no Mc (apart from the table's anusvaras and visarga) and no Sk is one
-    assert seen["Sk"][1] == 0, f"a modifier symbol reads as a letter: {seen}"
-    assert seen["Mc"][1] <= 10, f"more spacing marks read as letters than the table lists: {seen}"
+            assert "PASSWORD" in views, (
+                f"squeeze_views misses a secret hidden with U+{ord(ch):04X} ({category}): {views}"
+            )
+            assert "PASSWORD" in textnorm.squeeze_views("PASS" + ch + "WORD", loose=False)
+    # the letters the old views read in the mark's place are still there as the OTHER views: the spelling variants are unchanged
+    assert "PASSOWORD" in textnorm.squeeze_views("pass\u0c02word"), (
+        "the spelling-variant views changed: U+0C02 no longer reads as the letter o there"
+    )
 
 
-def test_fold_views_keeps_a_spacing_combining_mark_so_a_scan_must_also_read_squeeze_views():
-    """Decision (order 79): Mc is KEPT by ``fold``: a Hindi or Thai spacing vowel sign changes a name, so two names that differ only by one
-    are different keys. The price is stated in the module docstring: ``fold_views`` alone does NOT find a secret hidden with a spacing mark
-    (``squeeze_views`` does). This test pins the decision for EVERY Mc code point, so the docstring cannot drift."""
+def test_squeeze_views_removes_every_character_that_reads_as_no_ascii_letter_or_digit():
+    """For every assigned code point ``c`` that ``squeeze`` reads as nothing (a space, punctuation, a symbol, a mark, a format
+    character), ``squeeze_views("pass" + c + "word")`` holds ``PASSWORD``: the pattern that keeps only upper-case letters and digits is the
+    last step of every view, so no separator hides a word."""
+    checked = 0
+    for cp in range(0x30000):
+        ch = chr(cp)
+        if unicodedata.category(ch) in ("Cs", "Co", "Cn", "Lu", "Ll", "Lt", "Lo", "Nd", "Nl", "No"):
+            continue
+        if re.search(r"[A-Za-z0-9]", unicodedata.normalize("NFKC", ch)) or cp in _confusables.TABLE:
+            continue  # it reads as a letter or a digit itself: it is not a separator
+        if squeeze(ch) != "":
+            continue  # ``squeeze`` (its own pattern, not the one under test) reads it as a letter or digit
+        checked += 1
+        assert "PASSWORD" in textnorm.squeeze_views("pass" + ch + "word"), (
+            f"squeeze_views does not remove U+{cp:04X} ({unicodedata.category(ch)}) from the middle of a word"
+        )
+    assert checked > 3000, "too few code points were checked"
+
+
+def test_the_marks_dropped_views_are_at_most_six_and_keep_every_script_and_letter():
+    """``fold_views`` and ``squeeze_views`` return the spelling variants (at most three) and the same spelling variants of the text without its
+    Mc, Lm and Sk characters: at most six, none repeated; a text without such a mark has no extra view; ``identity_keys`` is unchanged
+    (at most three)."""
+    eta = "\u0397"
+    for text in (
+        "pass\u0c02word",
+        eta + "\u0903oward",
+        "plain",
+        "\u0928\u092e\u0938\u094d\u0924\u0947\u0903",
+    ):
+        for views in (
+            textnorm.fold_views(text, casefold=True),
+            textnorm.squeeze_views(text),
+        ):
+            assert 1 <= len(views) <= 6 and len(set(views)) == len(views), (
+                f"a view is repeated or there are more than six: {views}"
+            )
+        assert 1 <= len(textnorm.identity_keys(text)) <= 3, (
+            "identity_keys grew with the marks-dropped views"
+        )
+    assert len(textnorm.fold_views("plain", casefold=True)) == 1, (
+        "a text with no mark has an extra view"
+    )
+    # a Greek capital Eta (reads H in the upper-side variant) AND an inserted mark in one text: the marks-dropped views carry every variant
+    assert "HOWARD" in textnorm.squeeze_views(eta + "\u0903oward"), (
+        "capital Eta + a spacing mark hides howard from the scan"
+    )
+    # nothing else is lost: the marks-dropped view keeps the script
+    assert "\u5bc6\u7801" in textnorm.fold_views("\u5bc6\u02c6\u7801", casefold=True)
+
+
+def test_the_marks_dropped_views_are_never_longer_than_the_weight_of_the_text():
+    """The size rule still holds with the extra views: no view of ``fold_views`` or ``squeeze_views`` is longer than the weight of its text, for
+    every code point alone (a view only drops characters, so a longer text is the sum)."""
+    for cp in range(sys.maxunicode + 1):
+        if 0xD800 <= cp <= 0xDFFF:
+            continue
+        text = chr(cp)
+        weight = textnorm._weight(text)
+        for views in (
+            textnorm.fold_views(text, casefold=True, collapse_ws=True),
+            textnorm.squeeze_views(text, loose=True),
+        ):
+            assert all(len(v) <= weight for v in views), (
+                f"a view of U+{cp:04X} is longer than its weight {weight}"
+            )
+
+
+def test_the_spelling_variants_keep_a_spacing_combining_mark_while_the_scan_views_find_the_secret():
+    """Decision: Mc is KEPT by the spelling variants (``fold``, ``identity_key``, ``could_be_same_person``): a Hindi or Thai spacing vowel
+    sign changes a name, so two names that differ only by one are different keys. The scan is not affected: for EVERY Mc code point
+    ``fold_views`` holds the secret in its marks-dropped views, so the module docstring's rule (scan both views) is the whole contract."""
     marks = _code_points_of("Mc")
     assert marks
     for ch in marks:
         text = "pass" + ch + "word"
-        for view in textnorm.fold_views(text, casefold=True):
-            assert "password" not in view, f"fold_views dropped the spacing mark U+{ord(ch):04X}"
+        assert "password" not in identity_key(text) or ord(ch) in _confusables.TABLE, (
+            f"identity_key dropped the spacing mark U+{ord(ch):04X}"
+        )
         assert identity_key(text) != identity_key("password"), (
             f"identity_key dropped the spacing mark U+{ord(ch):04X}"
         )
         assert not could_be_same_person(text, "password") or ord(ch) in _confusables.TABLE, ch
-    # the realistic case: a Devanagari vowel sign hides a password from fold_views and not from squeeze_views
-    text = "passाword"
-    assert all("password" not in v for v in textnorm.fold_views(text, casefold=True))
-    assert "PASSWORD" in textnorm.squeeze_views(text)
+        assert "password" in textnorm.fold_views(text, casefold=True), (
+            f"fold_views does not hold the secret hidden with the spacing mark U+{ord(ch):04X}"
+        )
     doc = textnorm.__doc__ or ""
     assert "BOTH" in doc and "fold_views" in doc and "squeeze_views" in doc, (
         "the module docstring does not say that a scan must read both views"
@@ -1721,6 +1766,249 @@ def test_fold_views_keeps_a_spacing_combining_mark_so_a_scan_must_also_read_sque
     assert "KEEPS the spacing" in doc and "Mc" in doc, (
         "the docstring does not say that spacing marks are kept"
     )
+
+
+def _scan_holds(secret, text):
+    """The documented two-view scan, with the refusal of an empty needle: True when some view of ``text`` (``fold_views``, then
+    ``squeeze_views``) holds a NON-EMPTY view of ``secret`` taken the same way."""
+    for views_of in (
+        lambda t: textnorm.fold_views(t, casefold=True),
+        textnorm.squeeze_views,
+    ):
+        needles = [n for n in views_of(secret) if n]
+        if any(n in v for v in views_of(text) for n in needles):
+            return True
+    return False
+
+
+def test_a_value_with_no_ascii_letter_or_digit_is_found_by_the_fold_views_scan_when_a_mark_is_inserted():
+    """Chinese, Hindi and Thai protected values: ``squeeze_views`` is empty for them (a caller must refuse an empty view), so the scan relies on
+    the marks-dropped views of ``fold_views``. A Devanagari word with a visarga (Mc), Chinese with a modifier letter, Thai with a tone mark
+    and with a modifier letter inserted: each is found, and a text that does not hold the value is not found."""
+    devanagari = "\u092a\u093e\u0938\u0935\u0930\u094d\u0921"
+    chinese = "\u5bc6\u7801\u6d4b\u8bd5"
+    thai = "\u0e23\u0e2b\u0e31\u0e2a\u0e1c\u0e48\u0e32\u0e19"
+    cases = (
+        ("Devanagari + U+0903", devanagari, devanagari[:3] + "\u0903" + devanagari[3:]),
+        ("Chinese + U+02C6", chinese, chinese[:2] + "\u02c6" + chinese[2:]),
+        ("Thai + a tone mark (U+0E48)", thai, thai[:4] + "\u0e48" + thai[4:]),
+        ("Thai + U+02C6", thai, thai[:4] + "\u02c6" + thai[4:]),
+    )
+    for label, secret, hidden in cases:
+        assert textnorm.squeeze_views(secret) == ("",), (
+            f"{label}: the value has an ASCII letter or digit"
+        )
+        assert _scan_holds(secret, "token: " + hidden + " end"), (
+            f"{label}: the scan misses the value with the mark inserted"
+        )
+        assert not _scan_holds(secret, "token: nothing here"), (
+            f"{label}: the scan finds a text without the value"
+        )
+    assert not _scan_holds(chinese, "\u5bc6\u7801"), "a different value was found"
+    doc = textnorm.fold_views.__doc__ or ""
+    assert "NO ASCII letter or digit" in doc and "alone" in doc and "marks-dropped" in doc, (
+        "the fold_views docstring does not say what a scan of a value with no ASCII letter or digit relies on"
+    )
+
+
+# ---- letter and digit forms (the Unicode-name rules of the generator) ------------------------------------------------------------------
+_DIGIT_WORD = dict(
+    zip(
+        ["ZERO", "ONE", "TWO", "THREE", "FOUR", "FIVE", "SIX", "SEVEN", "EIGHT", "NINE"],
+        "0123456789",
+        strict=True,
+    )
+)
+_NAMED_LETTER = re.compile(r"(?:.* )?(?:LETTER|CAPITAL|SMALL) ([A-Z])(?: WITH .+)?")
+_NAMED_DIGIT = re.compile(r"(?:.* )?(?:DIGIT|NUMBER|NUMERAL) (" + "|".join(_DIGIT_WORD) + ")")
+# The families of code points that the sweep finds NOT read as the ASCII letter or digit their name says, and why. Every unread row of the
+# sweep must be in one of these (a new family is a failing test, so a gap is never silent). The raw list is in the evidence file.
+KNOWN_NAME_GAPS = {
+    "G1 dropped on purpose": "a combining Latin letter or digit (Mn) and a tag letter or digit (Cf) is dropped like every mark and format "
+    "character: reading it would break fold(x + mark) == fold(x); the tag block is reported by has_hidden_channel",
+    "G2 numeral of another script or system": "a number sign with a numeric value 0-9 whose glyph is not a digit (Ethiopic, Brahmi, Aegean, "
+    "Kaktovik, counting rods, tally marks, ideographic numerals, Siyaq and the like): it has the value but not the look of the digit, so it is "
+    "not read as the digit (a reader does not see the digit); the look-alike table may read a few as a letter",
+    "G3 turned digit": "TURNED DIGIT TWO and THREE (U+218A, U+218B) are the digits turned over, which are not the digits",
+    "G4 read as another letter by UTS #39": "the vendored UTS #39 data reads the letter as a different one than its name says "
+    "(V with hook as u, V with palatal hook as y): the data is the authority, the table follows it",
+}
+
+
+def _data_sources():
+    """The code points the vendored UTS #39 file lists as sources (MA lines)."""
+    text = (ROOT / "tools" / "data" / "confusables.txt").read_text(encoding="utf-8")
+    return {int(m[1], 16) for m in re.finditer(r"^([0-9A-F]{4,6}) ;.*;\s*MA\b", text, re.MULTILINE)}
+
+
+def _read_by_data(ch):
+    """True when the vendored UTS #39 data reads ``ch`` or its other-case form (a name rule never splits a capital from its small letter)."""
+    sources = _data_sources()
+    return any(ord(c) in sources for c in {ch, ch.lower(), ch.upper()} if len(c) == 1)
+
+
+def _name_sweep():
+    """Every code point whose name says one ASCII letter (LATIN ... LETTER x, REGIONAL INDICATOR SYMBOL LETTER x) or one ASCII digit (a name
+    with DIGIT, or any No/Nd code point with a value 0-9), with what ``squeeze_views`` reads for it alone. Returns (cp, name, expected, views)."""
+    rows = []
+    for cp in range(sys.maxunicode + 1):
+        ch = chr(cp)
+        name = unicodedata.name(ch, "")
+        if not name:
+            continue
+        expected = None
+        letter = _NAMED_LETTER.fullmatch(name)
+        if letter and ("LATIN" in name or "REGIONAL INDICATOR" in name):
+            expected = letter[1]
+        elif unicodedata.category(ch) in ("No", "Nd"):
+            value = unicodedata.numeric(ch, None)
+            if value is not None and value == int(value) and 0 <= value <= 9:
+                expected = str(int(value))
+        elif "DIGIT" in name:
+            digit = _NAMED_DIGIT.fullmatch(name)
+            expected = _DIGIT_WORD[digit[1]] if digit else None
+        if expected is not None:
+            rows.append((cp, name, expected, textnorm.squeeze_views(ch)))
+    return rows
+
+
+def _gap_family(cp, name):
+    ch = chr(cp)
+    if unicodedata.category(ch) in textnorm._DROP_CATEGORIES:
+        return "G1 dropped on purpose"
+    if name.startswith("TURNED DIGIT"):
+        return "G3 turned digit"
+    if unicodedata.category(ch) in ("No", "Nd"):
+        return "G2 numeral of another script or system"
+    if _read_by_data(ch):
+        return "G4 read as another letter by UTS #39"
+    return None
+
+
+def test_every_code_point_whose_name_says_one_ascii_letter_or_digit_is_read_as_it_or_is_in_a_named_gap_family():
+    """THE SWEEP. For every code point whose Unicode name says one ASCII letter or digit, ``squeeze_views`` of it holds that letter or digit,
+    unless it is in a family of ``KNOWN_NAME_GAPS``. (The names are the interpreter's: 15.0.0 and 15.1.0 are both run.)"""
+    rows = _name_sweep()
+    assert len(rows) > 1000, "the sweep found too few code points: the name grammar is broken"
+    unread = [(cp, name, exp) for cp, name, exp, views in rows if not any(exp in v for v in views)]
+    unnamed = [
+        f"U+{cp:04X} {name} (says {exp})"
+        for cp, name, exp in unread
+        if _gap_family(cp, name) is None
+    ]
+    assert not unnamed, (
+        "code points read as nothing that their name says, in no named gap family: "
+        + "; ".join(unnamed[:20])
+    )
+    assert {_gap_family(cp, name) for cp, name, _ in unread} <= set(KNOWN_NAME_GAPS)
+    # a gap family is only a gap: the circled and negative circled digits and the letter forms are NOT in it
+    for cp, name, _ in unread:
+        assert not re.search(
+            r"CIRCLED (?:SANS-SERIF )?DIGIT|SQUARED LATIN|REGIONAL INDICATOR|LATIN \w+ LETTER [A-Z] WITH ",
+            name,
+        ) or _gap_family(cp, name) in (
+            "G1 dropped on purpose",
+            "G4 read as another letter by UTS #39",
+        ), name
+
+
+def _chars_named(pattern):
+    found = [
+        chr(cp)
+        for cp in range(sys.maxunicode + 1)
+        if re.fullmatch(pattern, unicodedata.name(chr(cp), ""))
+    ]
+    assert found, f"no code point is named like {pattern}"
+    return found
+
+
+def test_negative_circled_negative_squared_and_regional_indicator_letters_read_as_their_letter():
+    for pattern in (
+        r"NEGATIVE CIRCLED LATIN CAPITAL LETTER [A-Z]",
+        r"NEGATIVE SQUARED LATIN CAPITAL LETTER [A-Z]",
+        r"REGIONAL INDICATOR SYMBOL LETTER [A-Z]",
+        r"(?:CROSSED )?NEGATIVE SQUARED LATIN CAPITAL LETTER P",
+        r"SQUARED LATIN SMALL LETTER D",
+    ):
+        for ch in _chars_named(pattern):
+            letter = unicodedata.name(ch)[-1]
+            assert letter in textnorm.squeeze_views(ch), (
+                f"U+{ord(ch):04X} ({unicodedata.name(ch)}) is not read as the letter {letter}"
+            )
+            assert bare(identity_key(ch)) == letter.lower(), f"U+{ord(ch):04X} has the wrong key"
+    for start in (
+        0x1F150,
+        0x1F170,
+        0x1F1E6,
+    ):  # negative circled, negative squared, regional indicator letters
+        word = "".join(chr(start + ord(x) - 65) for x in "PASSWORD")
+        assert "PASSWORD" in textnorm.squeeze_views(word), (
+            f"PASSWORD written from U+{start:04X} is read as {textnorm.squeeze_views(word)}"
+        )
+        assert _scan_holds("password", "token " + word + " end")
+
+
+def test_circled_negative_circled_double_circled_and_sans_serif_digits_read_as_their_digit():
+    pattern = r"(?:DINGBAT )?(?:NEGATIVE |DOUBLE )?CIRCLED (?:SANS-SERIF )?(?:DIGIT|NUMBER) (?:ZERO|ONE|TWO|THREE|FOUR|FIVE|SIX|SEVEN|EIGHT|NINE|TEN)"
+    chars = [ch for ch in _chars_named(pattern) if unicodedata.normalize("NFKC", ch) == ch]
+    assert len(chars) >= 40, "the digit family is smaller than the Unicode data lists"
+    for ch in chars:
+        word = unicodedata.name(ch).split()[-1]
+        digit = "10" if word == "TEN" else _DIGIT_WORD[word]
+        assert digit in textnorm.squeeze_views(ch), (
+            f"U+{ord(ch):04X} ({unicodedata.name(ch)}) is not read as {digit}"
+        )
+    for start in (
+        0x2776,
+        0x278A,
+        0x2780,
+    ):  # dingbat negative circled, negative circled sans-serif, circled sans-serif: one to nine
+        word = "".join(chr(start + i) for i in range(9))
+        assert "123456789" in textnorm.squeeze_views(word), (
+            f"the digits written from U+{start:04X} are read as {textnorm.squeeze_views(word)}"
+        )
+    assert textnorm.squeeze_views("\u24ff") == ("0",) and textnorm.squeeze_views(
+        "\U0001f10b\U0001f10c"
+    ) == ("00",)
+
+
+def test_latin_letters_with_a_stroke_hook_bar_or_tail_read_as_their_letter_in_the_case_of_the_name():
+    letters = _chars_named(r"LATIN (?:CAPITAL|SMALL) LETTER [A-Z] WITH .+")
+    checked = 0
+    for ch in letters:
+        if (
+            unicodedata.normalize("NFKD", ch) != ch
+            or unicodedata.category(ch) in textnorm._DROP_CATEGORIES
+        ):
+            continue  # composed letters (A WITH GRAVE) are read through their parts
+        checked += 1
+        letter = re.fullmatch(
+            r"LATIN (?:CAPITAL|SMALL) LETTER ([A-Z]) WITH .+", unicodedata.name(ch)
+        )[1]
+        views = textnorm.squeeze_views(ch)
+        assert views and all(v != "" for v in views), (
+            f"U+{ord(ch):04X} ({unicodedata.name(ch)}) is read as nothing"
+        )
+        if not _read_by_data(
+            ch
+        ):  # the data reads some of them as another letter (V with hook as u): the data is the authority
+            assert letter in views[0], (
+                f"U+{ord(ch):04X} ({unicodedata.name(ch)}) is not read as {letter}"
+            )
+    assert checked > 100, "the family is smaller than the Unicode data lists"
+    assert squeeze("\u0126unter") == "HUNTER" and squeeze("\u0127unter") == "HUNTER", (
+        "H with stroke is not read as h"
+    )
+    assert identity_key("\u0181ob") == identity_key("Bob") and bare(identity_key("Bob")) == "bob", (
+        "B with hook is not read as b"
+    )
+    assert (
+        identity_key("\u01b2") == identity_key("\u028b") and bare(identity_key("\u028b")) == "u"
+    ), "V with hook: the capital must follow the small letter"
+    assert bare(identity_key("\u1d0c")) == "l" and bare(identity_key("\u029b")) == "g", (
+        "a small capital with a mark is not read as its letter"
+    )
+    assert _scan_holds("hunter2", "token: \u0126unt\u0113r2")
 
 
 def _collisions(names):

@@ -95,3 +95,18 @@ def test_a_text_of_a_greek_letter_and_ypogegrammeni_pairs_at_the_cap_is_read_in_
     for fn in (identity_key, textnorm.identity_keys, textnorm.fold_views, textnorm.squeeze_views):
         assert _seconds(fn, text) < 5.0, fn.__name__
     assert _seconds(textnorm.could_be_same_person, text, text[::-1]) < 8.0
+
+
+def test_a_text_at_the_cap_with_spacing_marks_is_scanned_in_linear_time_with_the_marks_dropped_views():
+    """A text with a spacing combining mark (Mc), a modifier letter (Lm) and a modifier symbol (Sk) in it gets the marks-dropped
+    readings too, so ``fold_views`` and ``squeeze_views`` build up to six views of a text at the cap (``fold_views`` builds more than one here). This is the cost of the extra
+    readings; it must stay linear (a ceiling of about 20 times the time measured on the build machine)."""
+    unit = "pass" + chr(0x0903) + chr(0x02C6) + chr(0x02C2) + "word " + chr(0x430)
+    text = unit * (CAP // len(unit))
+    assert len(text) <= CAP
+    views = textnorm.fold_views(text, casefold=True)
+    assert 2 <= len(views) <= 6
+    assert all(len(v) <= textnorm._weight(text) for v in views)
+    assert _seconds(lambda t: textnorm.fold_views(t, casefold=True), text) < 5.0
+    assert _seconds(textnorm.squeeze_views, text) < 5.0
+    assert _seconds(lambda t: textnorm.squeeze_views(t, loose=True), text) < 5.0
