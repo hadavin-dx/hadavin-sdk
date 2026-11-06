@@ -215,3 +215,4 @@
 2026-11-06T09:29:27Z | step=P0t PR 67 verified (q153) | next=P1b, P3a builder reports; P1c reviews | blocked=lead: ready-for-review, q153 decisions
 2026-11-06T09:30:45Z | step=P3a-1 PR 68 verified (q154) | next=P1b builder; P1c reviews | blocked=lead: ready-for-review, q154
 2026-11-06T09:30:56Z | step=P4d hand-back re-read: same head 1a885f3, no new facts; DECISIONS logged | next=P1b builder; P1c reviews | blocked=lead: q151,q153,q154
+2026-11-06T09:32:55Z | step=order 65: fix3 builder launched; P1 BN-18 added; P1c design review saved | next=P1c code review, P1b builder tell to merge fix3 | blocked=none

@@ -679,5 +679,6 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | bd-P3a | Sonnet builder, P3a plan + first unblocked sub-PR | REPORTED (interim: agent may resume) | order 62 |
 | bd-P4d | Sonnet builder, P4d plan + first unblocked sub-PR | REPORTED | order 62 |
 | au-P1c | Opus author, P1c ticket via EGM brainstorm+draft | REPORTED 1862e4c | order 64; Goldfish review + resolve follow |
-| gf-P1c-design | Goldfish review P1c ticket rev1 (egm-design, Sonnet) | 2026-11-06T09:28:22Z | running |
+| gf-P1c-design | Goldfish review P1c ticket rev1 (egm-design, Sonnet) | 2026-11-06T09:28:22Z | REPORTED |
 | gf-P1c-code | Goldfish review P1c ticket rev1 (egm-codebase-details, Sonnet) | 2026-11-06T09:28:22Z | running |
+| bd-P1a-fix3 | Sonnet builder, P1a fix3 on PR 63 (order 65) | 2026-11-06T09:32:55Z | running |
