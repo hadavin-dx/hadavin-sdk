@@ -11,6 +11,16 @@ names, three session settings, the text-reading settings, the transaction clock 
 trigger in the migration schema, and refuses if anything is LEFT changed (it cannot see a change that a file
 makes and undoes before it ends). Precondition: the migration role is not a superuser (a superuser can change
 what the read-back does not read).
+
+When `migrate` refuses, a database administrator repairs by hand (the full runbook, cases (a) to (f), is the section
+"Migration runbook" of CHANGELOG.md). Every hand step is a FILE of SQL run with `psql -X -v ON_ERROR_STOP=1 -f <file>`
+and your own connection settings (never typed line by line, never a connection string in a text). The file starts with
+`\\set ON_ERROR_STOP on`, then `SET search_path TO <the schema migrate uses>;`, `BEGIN;`, the advisory lock of `migrate`
+(`SELECT pg_advisory_xact_lock(<MIGRATE_LOCK>);`, only while no `migrate` runs) and ends with `COMMIT;`; after every
+`UPDATE schema_migrations` it holds a `DO` check that raises unless exactly one row with the new version exists and
+none with the old one. A late file: use the recipe in the refusal message. A renamed file or ledger row: change the
+row to the name of the one folder file with the same text after the number. A database newer than the code: run the
+newer release; do not rename, drop or edit the ledger.
 """
 
 from __future__ import annotations
@@ -398,7 +408,14 @@ def migrate(
     """Apply pending migrations; return the versions applied by this call. With `runtime_role`, give it the
     privileges `GRANTS` lists (never TRUNCATE; DELETE only on the outbox and the purged evidence tables). With `portal_role`, SELECT on the
     relations marked `portal` and nothing else. The ledger and the grant map are checked first: a bad file name,
-    a gap, or a relation with no `GRANTS` entry stops the run before it touches the database."""
+    a gap, or a relation with no `GRANTS` entry stops the run before it touches the database.
+
+    Role membership: the refusal list of `migration_numbers` is wider than a plain list of the dangerous statements.
+    `GRANT r TO s` and `REVOKE r FROM s` with no `ON` (a role-membership change) are refused in a `.sql` file, because
+    the guard cannot read what they change. A role is chosen by the person running `migrate`, so it cannot be named in
+    a static file: any role-membership change is made by `migrate()`'s own Python step, with the role as an argument,
+    and never by a migration file. (`migrate` makes none today; privileges on tables and sequences are the
+    `GRANT ... ON ...` statements it runs itself.) A `.sql` file that holds `GRANT ... ON ...` is not refused by this rule."""
     for role in (runtime_role, portal_role, purge_role):
         if role is not None and not _ROLE.fullmatch(role):
             raise ConfigError(f"not a plain database role name: {role!r}")

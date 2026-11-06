@@ -2,7 +2,7 @@
 (planted files), a hidden COMMIT, an older release's structure after the newest migrations.
 
 Every test works in a fresh scratch schema of the test database (`HADAVIN_TEST_PG_DSN`). Planted files are made up.
-A skip is a failed evidence run; in CI `test_ci_has_its_inputs` fails when the database or `psql` is missing."""
+A skip is a failed evidence run (with the DSN set none can happen: `tests/test_migration_rules.py` checks it); in CI `test_ci_has_its_inputs` fails when the database or `psql` is missing."""
 
 from __future__ import annotations
 
@@ -14,8 +14,9 @@ from pathlib import Path
 import pytest
 
 from hadavin_sdk.errors import ConfigError
+from tests.fixtures.dsn_skip import require_module
 
-psycopg = pytest.importorskip("psycopg")
+psycopg = require_module("psycopg")  # with the DSN set a missing driver FAILS (never a skip)
 from psycopg import sql
 from psycopg.conninfo import make_conninfo
 
