@@ -18,7 +18,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Annotated, Final, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, RootModel, field_validator
+from pydantic import BaseModel, ConfigDict, Field, RootModel, ValidationError, field_validator
 
 from hadavin_sdk import stats
 from hadavin_sdk.codes import Code
@@ -291,7 +291,7 @@ def _f_driver(which: str) -> BaseException:
 def _validation(model: type[BaseModel], document: str) -> BaseException:
     try:
         model.model_validate_json(document)
-    except Exception as e:  # noqa: BLE001 - the row wants the library's own error
+    except ValidationError as e:
         return e
     raise AssertionError("the document validated")
 

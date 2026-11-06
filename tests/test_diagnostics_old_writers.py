@@ -169,7 +169,7 @@ def outcome(row: corpus.Row, app, caplog) -> tuple[str, str]:
         with caplog.at_level(logging.DEBUG):
             try:
                 run_tick(app, steps=[TickStep("x", 0, fn)])
-            except BaseException as e:  # noqa: BLE001 - the verdict is "crashed"
+            except (SystemExit, RuntimeError, AttributeError) as e:
                 return "crashed", type(e).__name__
         state = app.store.get_tick_state("x")
         records = [r.getMessage() for r in caplog.records if "step=x" in r.getMessage()]

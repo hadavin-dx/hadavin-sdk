@@ -89,16 +89,13 @@ class SafeToken:
     @staticmethod
     def of(value: object, allowed: frozenset[str]) -> SafeToken | None:
         """The member of ``allowed`` that equals ``value`` (exact ``str`` only), if it fits the token pattern."""
-        try:
-            if type(value) is not str:
-                return None
-            for member in allowed:
-                if type(member) is str and member == value:
-                    if _TOKEN_RE.fullmatch(member) is None:
-                        return None
-                    return SafeToken(member, SafeToken._MINT)
-        except Exception:  # noqa: BLE001, S110 - a bad `allowed` set gives None, never a raise
-            pass
+        if type(value) is not str or type(allowed) is not frozenset:
+            return None
+        for member in allowed:
+            if type(member) is str and member == value:
+                if _TOKEN_RE.fullmatch(member) is None:
+                    return None
+                return SafeToken(member, SafeToken._MINT)
         return None
 
     @staticmethod
@@ -125,6 +122,20 @@ class Diagnostic:
 # --- identity of classes -------------------------------------------------------------------------------------------------
 
 
+# How often each guard below fired, by site name. A count only: nothing about the exception (no text, no type) is kept.
+_GUARD_FAILURES: dict[str, int] = {}
+
+
+def _guard_failed(site: str) -> None:
+    """Record that the guard at ``site`` caught an ``Exception``. A fixed site name and a count; never the exception."""
+    _GUARD_FAILURES[site] = _GUARD_FAILURES.get(site, 0) + 1
+
+
+def guard_failures() -> dict[str, int]:
+    """A copy of the guard counters (site name -> times caught)."""
+    return dict(_GUARD_FAILURES)
+
+
 def _is_the_named_class(tp: type) -> bool:
     """True if walking ``sys.modules[tp.__module__].__dict__`` along ``tp.__qualname__`` reaches ``tp`` itself."""
     try:
@@ -146,7 +157,8 @@ def _is_the_named_class(tp: type) -> bool:
             if i < len(parts) - 1:
                 scope = vars(obj)
         return obj is tp
-    except Exception:  # noqa: BLE001 - any odd attribute means "not the named class"
+    except Exception:  # noqa: BLE001 - a hostile class attribute may raise any Exception: not the named class
+        _guard_failed("named_class")
         return False
 
 
@@ -167,7 +179,8 @@ def class_name_of(exc_or_type: object) -> str:
         if mod.split(".")[0] in FOREIGN_PACKAGES_OK and _KIND_RE.fullmatch(text):
             return text
         return "foreign_class"
-    except Exception:  # noqa: BLE001 - never raises
+    except Exception:  # noqa: BLE001 - a hostile class attribute may raise any Exception: dynamic_class
+        _guard_failed("class_name")
         return "dynamic_class"
 
 
@@ -180,7 +193,8 @@ def _own_code(tp: type) -> Code | None:
             code = OWN_CODES.get(f"{mod}:{qual}")
             if code is not None and _is_the_named_class(cls):
                 return code
-        except Exception:  # noqa: BLE001, S112 - a class with a hostile attribute is not an own class
+        except Exception:  # noqa: BLE001 - a hostile class attribute may raise any Exception: not an own class
+            _guard_failed("own_code")
             continue
     return None
 
@@ -202,7 +216,8 @@ def _counted_module(frame: object) -> str | None:
         if type(filename) is not str or filename != module.__file__:  # rule c, raw strings
             return None
         return name
-    except Exception:  # noqa: BLE001 - a frame whose check raises is "not counted"
+    except Exception:  # noqa: BLE001 - a hostile frame object may raise any Exception: not counted
+        _guard_failed("counted_module")
         return None
 
 
@@ -241,7 +256,8 @@ def _locate(links: list[tuple[object, int]]) -> tuple[str, str, str]:
                 return "-", "-", "-"
             function = frame.f_code.co_name  # type: ignore[attr-defined]
             return locator, function if type(function) is str else "-", rel
-        except Exception:  # noqa: BLE001 - treated as no locator
+        except Exception:  # noqa: BLE001 - a hostile frame object may raise any Exception: no locator
+            _guard_failed("locator")
             return "-", "-", "-"
     return "-", "-", "-"
 
@@ -289,7 +305,8 @@ def validation_text(exc: BaseException) -> str:
         if type(count) is int and lo <= count <= hi and count > defaults.DIAG_MAX_ERRORS:
             text += f"; +{count - defaults.DIAG_MAX_ERRORS} more"
         return text
-    except Exception:  # noqa: BLE001 - never raises
+    except Exception:  # noqa: BLE001 - a hostile pydantic error object may raise any Exception: other
+        _guard_failed("validation_text")
         return VALIDATION_OTHER
 
 
@@ -372,7 +389,8 @@ def _classify(
                 first_member, type(first_member), read_facts=False, nested=True
             )
             return member_code, {}
-        except Exception:  # noqa: BLE001 - an unreadable member list
+        except Exception:  # noqa: BLE001 - a hostile group object may raise any Exception: foreign_exception
+            _guard_failed("group_member")
             return Code.foreign_exception, {}
     links, too_long = _links(exc)
     if _raised_in_own_code(exc, tp, links, too_long):
@@ -427,7 +445,8 @@ def diagnose(
     step_text = _step_text(step)
     try:
         return _diagnose(exc, step_text, facts)
-    except Exception:  # noqa: BLE001 - the fixed fallback; nothing about the exception is in it
+    except Exception:  # noqa: BLE001 - a hostile exception object may raise any Exception: the fixed fallback
+        _guard_failed("diagnose")
         return Diagnostic(
             kind="unknown",
             code=Code.foreign_exception,
@@ -476,7 +495,8 @@ def render(d: Diagnostic) -> str:
                 break
             line += " " + part
         return line.encode("ascii", "backslashreplace").decode("ascii")
-    except Exception:  # noqa: BLE001 - never raises
+    except Exception:  # noqa: BLE001 - a hostile diagnostic object may raise any Exception: the fixed line
+        _guard_failed("render")
         return (
             f"unknown: diag_v={defaults.DIAG_VERSION} code={Code.foreign_exception.value} "
             f"step={Where.other.value} at=- fp={FALLBACK_FP}"
