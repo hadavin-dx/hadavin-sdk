@@ -33,6 +33,7 @@ class AdapterError(RuntimeError):
 OLD_WRITER_LEAKS: tuple[str, ...] = (
     "HC-builtin_text-01",
     "HC-builtin_text-02",
+    "HC-builtin_text-03",
     "HC-builtin_text-04",
     "HC-builtin_text-05",
     "HC-builtin_text-07",
