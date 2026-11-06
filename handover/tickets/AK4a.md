@@ -632,3 +632,11 @@ Option 5(a), YES. These lines are an answer recorded after the freeze; build not
 - Starting value of the floor: 0.9. A config may only RAISE it, never lower it (order 24 item 32).
 - The ticket's Security text says: 0.9 is the lead's starting value, to be re-checked after the first real golden set; easy and trap items are gated one by one regardless of the threshold.
 - The Security sentence that said "in pilot/prod a config may lower `eval_threshold` to any value" until the lead answered is replaced by the sentence above. PENDING LEAD 5 is closed.
+
+## Build note after the freeze (lead order 53 item 2, genericity audit; continues the BN numbering above)
+
+**BN-20 (genericity audit finding G-1, lead order 53).** The k1b harness is incident-shaped (bundle `incident.json`, cause list, `DIAGNOSIS_SCHEMA`, config key `k1b`), and the `suggest` gate at `deferred.py:93-99` (audit cited `:95-98`; corrected) opens only through that replay. AK4a code depends only on a generic replay protocol (a scorer: `score(case, reply) -> CaseResult`); no new core name may carry `k1b`, `incident`, `cause_list` or `diagnosis`.
+A v1.1 row splits k1b into a core case-replay piece plus an ops-pack scorer, trigger "first non-ops agent needs `suggest`". Build note only; the freeze is not reopened.
+
+**BN-21 (genericity audit finding G-2, lead order 53).** `K1bReplayPipeline` (Interface 13, BN-12) goes in `tests/` (for example `tests/k1b_pipeline.py`), not in `src/hadavin_sdk/testing/`; it already takes everything from the caller. `src/hadavin_sdk/testing/` names no k1b, incident or cause-list term (add one grep row). The C-SPEND rows and M-H25 stay as written; M-H25's file moves with the class.
+Build note only; the freeze is not reopened.

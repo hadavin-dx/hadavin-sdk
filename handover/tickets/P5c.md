@@ -1006,3 +1006,8 @@ Source: `reviews/P5c-round3-resolve.md`, build notes BN-1 to BN-18, copied as wr
 - **Row T3-20** `test_provider_request_id_not_written_raw` (P5c-3): the inner model raises `ProviderError("x")` whose `request_id` is a made-up id built from parts (`"req_"` plus a letters-and-digits canary run), set by the P5b1 keyword, or by plain assignment if P5b1 is not merged at P5c's base (as P5b1 R18 builds its instances). Expected: the run ends NEEDS_PERSON `provider_error`; the canary appears in no audit event (every field of every `write_intent` and `write_outcome` call), in no store record of the run and in no card text. NEW.
 - **Mutant M72** (P5c-3): the chat block's `_note` gains `result=f"failed {exc.request_id}"` (the raw id written to the audit trail). Killer: T3-20.
 - **Counts (supersede BN-18 and BN-19):** P5c-3 37 rows (+T3-20), **102 rows**, plus the T2-P measurement; P5c-3 22 mutants (+M72), **67 mutants**. Done's "66 of 66" (BN-18) reads "67 of 67". Each "Other answers" count of BN-18 also gains 1 row and 1 mutant.
+
+## Build note after the freeze (lead order 53 item 2, genericity audit; continues the BN numbering above)
+
+**BN-22 (genericity audit finding G-13, lead order 53).** Wording only: the scope sentence (line 3, "decides which parts of an invoice reach a model") and the path class (line 144, "bank numbers on invoices") read "documents that carry bank details (for example an invoice)". Seven "invoice" mentions in all; Intake stays as the named example and trigger. Rows, types and constants are unchanged (no invoice-named field).
+Build note only; the freeze is not reopened.

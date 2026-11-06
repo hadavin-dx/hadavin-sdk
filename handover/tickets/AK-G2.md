@@ -734,3 +734,8 @@ Added 2026-11-06 about 06:55 UTC (12:25 IST) by the lead's session, on lead orde
 **BN-25. Tick steps and AK-G16's parts (relay, order 43 item 102 PL14; `tickets/AK-G16.md` PENDING LEAD 14 and 15, Couplings).** If AK-G2-b merges after AK-G16-a, the same PR adds each tick step it appends (`inbound_dispatch`, `inbound_purge`, and any other) to `deploy/parts.STEP_PART`; a step with no part is refused by AK-G16 test P1, loudly, never skipped. The assembled agent must run every tick part through its own entry command (which passes the agent's hooks, the hold source included); the bare `hadavin-sdk tick --part purge` is refused when `retention.hold_labelled` is true and no hook was given (AK-G16 P18b).
 
 **BN-26 (lead order 48 item 111).** The build choice of BN-24 is option (ii): BN-24 is built in AK-G15-b's migration, not in AK-G2-a. AK-G2's counts do not change (70 rows, 103 mutants); M-a71 is NOT added.
+
+## Build note after the freeze (lead order 53 item 2, genericity audit; continues the BN numbering above)
+
+**BN-27 (genericity audit finding G-14, lead order 53).** PENDING LEAD 1 (line 406) and its argument (line 97) use the use case "documents by e-mail", not "invoices by e-mail". The quoted GAPS G2 label stays as a quote. No change to the door, the rows or the counts.
+Build note only; the freeze is not reopened.

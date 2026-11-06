@@ -603,3 +603,11 @@ Routing rule: an item that touches an owner hard rule (least privilege, threshol
 
 ## Relay added after the freeze (lead order 34 item 77, 2026-11-06)
 AK2a-2's `ingest/pdf_text.py` imports `subprocess` (on L8's list), so its single-file `NON_TABLE_PATHS` row is required; "optional" applies to AK2a-1 only. AK2a's own line numbers that this ticket cites have moved by +2 after AK2a's build notes (I7 :50, I8 :52, "No outbound path" :67, PENDING LEAD 4 :384). No new AK1 round.
+
+## Build note after the freeze (lead order 53 item 2, genericity audit; continues the BN numbering above)
+
+**BN-18 (genericity audit finding G-8, lead order 53).** Approval cards are a recipient path (line 62). Card text must be case-neutral: label "Agent's reasoning" (not "Diagnosis:"), keyword `rationale` (`diagnosis` kept as a deprecated alias), abstain docstring "a missed case" (`approvals/cards.py:71-100`, `runtime/agent_loop.py:600,636`). AK1 itself edits neither file (checked); the edit is made by the ticket that gates cards (AK-G22, no ticket file yet), and golden card text rows update in that PR.
+Build note only; the freeze is not reopened.
+
+**BN-19 (genericity audit finding G-9, lead order 53).** `guard/outbound.py` docs, and any text copied from `approvals/gate.py`, name no product or flow. The WARDEN incident-report notes in `gate.py:1-60` are cut to the ported rules G3 and G4, and each Slack-syntax rule (`_SLACK`, backtick and `~~~` rules) is tagged with the renderer it serves. The stricter union of rules stays.
+Build note only; the freeze is not reopened.

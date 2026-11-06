@@ -502,3 +502,11 @@ awk '/Redaction is pattern-based and bounded/ {p=1; print; next} p && (/^$/ || /
   comm -23 "$t/want" "$t/have" | sed 's/^/MISSING-PAGE /'
   comm -13 "$t/want" "$t/have" | sed 's/^/EXTRA-PAGE /'
 ```
+
+## Build note after the freeze (lead order 53 item 2, genericity audit; continues the BN numbering above)
+
+**BN-18 (genericity audit finding G-11, lead order 53).** The drift report flags the word "incident" in core docstrings outside an ops-pack module (`defaults.py:32` "the largest incident document a run takes"; `runtime/evidence.py:6`; `sources/__init__.py:1`). The wording becomes "the run's input document". Report only; P8b edits no source.
+Build note only; the freeze is not reopened.
+
+**BN-19 (genericity audit finding G-15, lead order 53; rename part).** Ledger row: move `tests/warden_port/` to `tests/ported/` in one rename-only pull request with `git mv` (no test deleted, no test edited); the layout lines that name `tests/warden_port/` (lines 130 and 145) then read `tests/ported/` once that pull request merges. The k1b test names (`tests/test_k1b_*.py`, `tests/k1b_support.py`) follow AK4a BN-20.
+Build note only; the freeze is not reopened.
