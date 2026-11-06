@@ -247,3 +247,4 @@
 2026-11-06T11:20:36Z | step=P1c round 4 resolve launched (Opus) | next=verify rev 6, round 5; P0t fix3 and P1b reports | blocked=lead PL15-18
 2026-11-06T11:21:01Z | step=order 79 read (P1a fix4); builder launching
 2026-11-06T11:21:34Z | step=P1a fix4 builder launched (order 79) | next=P1c r4 resolve verify; fix4 verify then P0t fix3 | blocked=none
+2026-11-06T11:33:21Z | step=order 80 read; PL15-18 answers forwarded to P1c resolve | next=verify rev 6; fix4/fix3 reports | blocked=none
