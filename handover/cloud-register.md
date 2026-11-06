@@ -482,3 +482,5 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | rs-P5b4-r2 | Opus resolve P5b4 round 2 (1 Blocker) | 05:50Z | +30min | running | verify |
 | rs-P5b3-r2 | Opus resolve P5b3 round 2 (7+2 Major) | 05:50Z | +30min | running | verify |
 | rs-AK1-r1 | Opus resolve AK1 round 1 (2 Blocker, 21 Major) | 05:50Z | +35min | running | verify |
+| au-P5c-r3 | Opus author P5c revision 3 (per round-2 resolve) | 06:00Z | +40min | running | verify |
+| au-P6b2-r3 | Opus author P6b2 revision 3 (per round-2 resolve) | 06:00Z | +40min | running | verify |
