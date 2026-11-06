@@ -217,3 +217,4 @@
 2026-11-06T09:30:56Z | step=P4d hand-back re-read: same head 1a885f3, no new facts; DECISIONS logged | next=P1b builder; P1c reviews | blocked=lead: q151,q153,q154
 2026-11-06T09:32:55Z | step=order 65: fix3 builder launched; P1 BN-18 added; P1c design review saved | next=P1c code review, P1b builder tell to merge fix3 | blocked=none
 2026-11-06T09:34:16Z | step=order 66 applied (PRs 66/67/68 ready, P3a BN-21); P1c reviews saved, Opus resolve launched | next=fix3 builder, P1b builder, P1c resolve, CI on 66/67/68 | blocked=none
+2026-11-06T09:50:01Z | step=order 67: licence scan (q156), rung re-read | next=fix3, P1b builder, P1c resolve (then order-67 recheck of its rung table) | blocked=owner yes on psycopg LGPL/pglast
