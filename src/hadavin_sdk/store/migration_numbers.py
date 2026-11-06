@@ -1,18 +1,35 @@
 """The migration rule, as pure functions (no database library): file-name numbers, late files, the written recipe for
-a late file, the ledger-without-file message, and the one-pass SQL lexer with the refusal list.
+a late file, the ledger-without-file message, the one-pass SQL lexer with the refusal list, and the check that a released
+file never changes.
 
-`store/migrate.py` calls these before it connects. Nothing here opens a connection; the only file access is
-`list_migration_files`, `check_migration_numbers` (directory listings) and `read_files` (one read per file).
+`store/migrate.py` calls these before it connects (a later change, P3a-2: until it merges, NOTHING calls them and none of
+the rules here is in force). Nothing here opens a connection; the only file access is `list_migration_files`,
+`check_migration_numbers`, `released_problems` (directory listings and one read per released file) and `read_files`.
 
-Why a lexer of our own: a file that creates a table without the exact grants, or that ends the one migration
-transaction, or that changes the role or a setting, must be refused. The text rules below are a tripwire against
-accidents and a help to the reviewer of a migration; the guard that cannot be blinded by spelling is the read-back in
-`migrate()` after each file (a later change). The lexer follows the PostgreSQL scanner rules that matter for where a
-string, comment or body starts and ends, with `standard_conforming_strings = on`.
+Why a lexer of our own (R448 rung decision, 2026-11-06). The text rules do exactly two jobs the database cannot do for us:
+(a) hand `migrate._scan` a view of the file without comments, so it can refuse a `CREATE TABLE` that has no exact grants;
+(b) refuse transaction control (`COMMIT`, `END`, `ROLLBACK`, `SAVEPOINT` ...) before the run, because a hidden `COMMIT`
+ends the one migration transaction. The other refusals (`SET`, `RESET`, `ALTER ROLE`, `DO`, `EXECUTE` ...) are a tripwire
+against accidents and a help to the reviewer: the guard that cannot be blinded by spelling is the read-back in `migrate()`
+after each file (a later change), which compares the role, `search_path`, `standard_conforming_strings`,
+`backslash_quote`, `client_encoding` and the trigger state. Higher rung tried: the SQL tokenizer of sqlglot 30.26.0 (MIT,
+already pinned in the `askdata` extra). It tokenised nine probe cases like the server, but (1) it does not refuse a psql
+meta-command (`SELECT 1 \\g` comes out as the tokens BACKSLASH and VAR), (2) it accepts or refuses differently from the
+server on 399 of 20,000 random strings, and (3) it is a dependency upgrade on a safety path whose behaviour would change
+without a test failing. Result of running our lexer tests against a sqlglot-based version: `P3a-fix1-evidence/evidence.md`.
+pglast (the server's own scanner, GPL-3.0) is test-only: `tests/test_migration_numbers_fix1.py` compares it with this
+lexer. If the lexer reads a file LONGER than the server does, a `COMMIT` can hide inside a string (the dangerous
+direction); if it ends a string EARLIER, the file is refused although it is fine (the safe direction).
+
+The lexer follows the PostgreSQL scanner rules that matter for where a string, comment or body starts and ends, with
+`standard_conforming_strings = on`. Preconditions: the migration role is NOT a superuser (statements such as
+`CREATE EXTENSION`, `COPY ... PROGRAM` and `LOAD` are refused here as a tripwire, not as the guard), and the files are
+UTF-8 text without hidden characters.
 """
 
 from __future__ import annotations
 
+import hashlib
 import os
 import re
 import unicodedata
@@ -38,8 +55,6 @@ RECIPE_COMMAND = "psql -X -v ON_ERROR_STOP=1 -f recipe.sql"
 RECIPE_FIRST_LINE = "\\set ON_ERROR_STOP on"
 # The advisory-lock key of every migrate run, `migrate._LOCK` (a later change makes that name point here).
 MIGRATE_LOCK = int.from_bytes(b"hadvnmig", "big") >> 1
-# Runbook case (e) (rename recipe for databases built from a branch) is written (ticket Open point 12, recommended yes).
-RUNBOOK_E = True
 MIGRATIONS = Path(__file__).parent / "migrations"
 
 # The recipe's ledger line (text for a person to run, never executed here). Filled with `replace` after the stem passed
@@ -47,6 +62,10 @@ MIGRATIONS = Path(__file__).parent / "migrations"
 _LEDGER_INSERT = "INSERT INTO schema_migrations (version) VALUES ('{stem}');"
 _WS = " \t\n\r\f\v"  # statement-start whitespace: the server's set plus vertical tab (the safe direction)
 _ALLOWED_CONTROL = "\t\n\r\f"
+# Characters a person cannot see in a review but that change what the file is: controls (Cc), format characters such as
+# the right-to-left override, the isolates, zero-width space and the byte order mark (Cf), line and paragraph separators.
+_HIDDEN_CATEGORIES = frozenset({"Cc", "Cf", "Zl", "Zp"})
+_ASCII_CONTROL = re.compile(r"[\x00-\x08\x0b\x0e-\x1f\x7f]")
 
 
 class MigrationNumberError(ConfigError):
@@ -131,6 +150,32 @@ def read_files(files: Sequence[Path]) -> dict[Path, str]:
     return {p: p.read_text(encoding="utf-8") for p in files}
 
 
+def hidden_character(text: str) -> str:
+    """ "" when the text has no hidden character, otherwise a plain-words reason naming the first one and its line. Tab,
+    line feed, carriage return and form feed are allowed. A byte order mark at the very start is named as such."""
+    if text.startswith("\ufeff"):
+        return "the file starts with a byte order mark (U+FEFF); save it as UTF-8 without it"
+    if text.isascii():
+        m = _ASCII_CONTROL.search(text)
+        pos = m.start() if m else -1
+    else:
+        pos = next(
+            (
+                i
+                for i, ch in enumerate(text)
+                if ch not in _ALLOWED_CONTROL and unicodedata.category(ch) in _HIDDEN_CATEGORIES
+            ),
+            -1,
+        )
+    if pos < 0:
+        return ""
+    kind = "control character" if unicodedata.category(text[pos]) == "Cc" else "hidden character"
+    return (
+        f"a {kind} U+{ord(text[pos]):04X} at line {_line_of(text, pos)} "
+        "(it is not shown to a reviewer and could change what runs)"
+    )
+
+
 def _number(stem: str) -> int | None:
     return int(stem[:4]) if STEM.fullmatch(stem) else None
 
@@ -161,13 +206,15 @@ def _refuse_entry(stem: str, text: str) -> str | None:
         return "the name does not match NNNN_<name> and is printed inside quotes"
     if _RECIPE_MARKER.search(text):
         return "the text holds the words RECIPE begins or RECIPE ends, which could shorten what is copied"
-    if any(ch not in _ALLOWED_CONTROL and unicodedata.category(ch) == "Cc" for ch in text):
-        return "the text holds a control character (an escape code could hide what is copied)"
+    if hidden := hidden_character(text):
+        return f"the text holds {hidden}"
     if "\\" in text:
         return "psql would read part of it as a command (a backslash)"
-    cleaned, problem = statement_text(text)
+    cleaned, problem = lex(text)
     if problem:
         return f"the text cannot be read: {problem}"
+    if reasons := refused_statements(text):
+        return reasons[0]
     if _PSQL_VARIABLE.search(cleaned):
         return "psql would read part of it as a variable (a colon name)"
     return None
@@ -186,11 +233,11 @@ def hand_recipe(entries: Sequence[tuple[str, str]], schema: str, lock: int = MIG
         RECIPE_FIRST_LINE,
         f'SET search_path TO "{schema}";',
         "BEGIN;",
-        f"SELECT pg_advisory_xact_lock({lock});",
+        f"SELECT pg_advisory_xact_lock({int(lock)});",
     ]
     for stem, text in entries:
         lines.append(text)
-        cleaned, _ = statement_text(text)
+        cleaned = statement_text(text)  # cannot raise: _refuse_entry read this text above
         if cleaned.rsplit(";", 1)[-1].strip(_WS):
             lines.append(";")  # an unterminated last statement would swallow the INSERT
         # printed text for a person, never executed here; the stem matched STEM above, so no quote can occur
@@ -210,34 +257,66 @@ def order_problems(
         return []
     highest = max((s for s in applied if _number(s) is not None), key=lambda s: (int(s[:4]), s))
     names = _names([p.name for p in late])
+    verb = "would be" if len(late) == 1 else "would all be"
     head = (
-        f"{names} is numbered at or below the applied '{_esc(highest)}' and must not run in the normal way. "
-        "Do not rename it. A database administrator applies it by hand, as the migration role, while no "
-        "migrate runs. "
+        f"{names} {verb} applied out of order: the number is at or below '{_esc(highest)}', which this database "
+        "has already applied. Do not rename the file. What to do: a database administrator applies it by hand, as "
+        "the database user that runs migrations, while no migrate command is running. "
     )
     try:
+        if missing := [p.name for p in late if p not in texts]:
+            raise ValueError(f"the text of {_names(missing)} was not read")
         recipe = hand_recipe([(p.name[:-4], texts[p]) for p in late], schema)
     except ValueError as e:
         return [
             head
-            + f"No recipe is printed: {e}. A person must write the steps by hand, with a reviewer. "
-            "Runbook: CHANGELOG.md, case (a)."
+            + f"No recipe is printed: {e}. A person must write the steps by hand, with a reviewer."
         ]
     return [
-        head
-        + "Save the lines between the two RECIPE lines below to a file, for example recipe.sql, and run exactly: "
-        f"{RECIPE_COMMAND} with your own connection settings (-X keeps psql from reading your own startup file, "
-        "which could switch off the stop at the first error) (a PGSERVICE entry or the usual PG environment "
-        "variables; this message never prints a connection string). Do not type the lines into psql one by one. "
-        "If psql prints an error it stops and keeps nothing. Before you start, review each file against every "
-        "later applied migration. Afterwards run migrate again with the usual role options (that re-applies the "
-        "grants). Write the date, the files and your name in the change log. Runbook: CHANGELOG.md, case (a).\n"
-        + recipe
+        head + "Steps:\n"
+        "1. Save the lines between the two RECIPE lines below to a file, for example recipe.sql.\n"
+        f"2. Run exactly: {RECIPE_COMMAND} and add your own connection settings (a PGSERVICE entry or the usual "
+        "PG environment variables; this message never prints a connection string). The -X option keeps psql from "
+        "reading your own startup file, which could switch off the stop at the first error.\n"
+        "3. Do not type the lines into psql one by one. If psql prints an error it stops and keeps nothing.\n"
+        "4. Before you start, review each file against every migration applied after it.\n"
+        "5. Afterwards run migrate again with the usual role options (that applies the grants again).\n"
+        "6. Write the date, the files and your name in the change log.\n" + recipe
     ]
 
 
 def _names(names: Sequence[str]) -> str:
-    return ", ".join(_esc(n) for n in names)
+    """At most `MAX_PROBLEMS_SHOWN` names, then "and N more": one hostile ledger once meant thousands of names."""
+    shown = [_esc(n) for n in names[:MAX_PROBLEMS_SHOWN]]
+    if len(names) > MAX_PROBLEMS_SHOWN:
+        shown.append(f"and {len(names) - MAX_PROBLEMS_SHOWN} more")
+    return ", ".join(shown)
+
+
+# --- a released file never changes -------------------------------------------------------------------------------------
+
+
+def released_problems(folder: Path, manifest: Mapping[str, str]) -> list[str]:
+    """Forward-only: `manifest` maps the stem of every RELEASED file to the SHA-256 of its bytes (Windows line endings
+    read as Unix ones). A released file that is missing or changed is a problem, and so is a file that is not in the
+    manifest but is numbered at or below the highest released one. Add a row to the manifest when a release is cut."""
+    files = {p.name[:-4]: p for p in list_migration_files(folder) if NAME.fullmatch(p.name)}
+    problems: list[str] = []
+    for stem in sorted(manifest):
+        p = files.get(stem)
+        if p is None or not p.is_file():
+            problems.append(f"{_esc(stem)}: a released file is missing")
+        elif hashlib.sha256(p.read_bytes().replace(b"\r\n", b"\n")).hexdigest() != manifest[stem]:
+            problems.append(f"{_esc(stem)}: a released file was changed")
+    released = [s for s in manifest if STEM.fullmatch(s)]
+    if released:
+        top = max(released, key=lambda s: (int(s[:4]), s))
+        problems += [
+            f"{_esc(stem)}: a new migration is numbered at or below the highest released one ({_esc(top)})"
+            for stem in sorted(files)
+            if stem not in manifest and int(stem[:4]) <= int(top[:4])
+        ]
+    return problems
 
 
 # --- a ledger name that has no file ------------------------------------------------------------------------------------
@@ -246,7 +325,7 @@ def _names(names: Sequence[str]) -> str:
 def gone_message(applied: Collection[str], files: Sequence[Path]) -> str:
     """ "" when every applied name has a file. Otherwise a prefix line (kept word for word: existing tests match it)
     and ONE line per case present; each orphan gets exactly one case, decided by NAME (1 rename, 2 newer, 3 a person
-    must look). The rename line does not print the file's stem."""
+    must look). The rename line does not print the file's name. At most `MAX_PROBLEMS_SHOWN` names per line."""
     stems = {p.name[:-4] for p in files if p.name.lower().endswith(".sql")}
     orphans = sorted(a for a in applied if a not in stems)
     if not orphans:
@@ -257,39 +336,38 @@ def gone_message(applied: Collection[str], files: Sequence[Path]) -> str:
     for s in stems:
         if STEM.fullmatch(s):
             after.setdefault(s[5:], []).append(s)
-    orphan_texts = [o[5:] for o in orphans if STEM.fullmatch(o)]
+    orphan_texts = Counter(o[5:] for o in orphans if STEM.fullmatch(o))
     cases: dict[int, list[str]] = {1: [], 2: [], 3: []}
     for o in orphans:
         if STEM.fullmatch(o):
             same = after.get(o[5:], [])
-            if len(same) == 1 and same[0] not in applied and orphan_texts.count(o[5:]) == 1:
+            if len(same) == 1 and same[0] not in applied and orphan_texts[o[5:]] == 1:
                 cases[1].append(o)
                 continue
             if int(o[:4]) > highest:
                 cases[2].append(o)
                 continue
         cases[3].append(o)
-    e = " and (e)" if RUNBOOK_E else ""
-
     lines = [f"applied migrations have no file in this release: {_names(orphans)}."]
     if cases[1]:
         lines.append(
             f"{_names(cases[1])}: the folder has a file with the same name after the number, so the file was probably "
             "renamed. If it is the same migration and its tables already exist, a database administrator changes "
-            "the version of each of these ledger rows by hand to the stem of that file, under the migration lock "
-            "(runbook case (b))."
+            "the version of each of these records (table schema_migrations) by hand to the name of that file "
+            "(without .sql), while no migrate command is running."
         )
     if cases[2]:
         lines.append(
-            f"{_names(cases[2])}: this database is newer than this release. Do not rename, drop or edit the ledger. Run "
-            "the release that has these files. If the code was not reverted, and the row was renamed or the "
-            f"database was built from a branch, see runbook case (b){e}."
+            f"{_names(cases[2])}: this database is newer than this release. Do not rename, drop or edit the records "
+            "(table schema_migrations). Run the release that has these files. If the code was not reverted, and "
+            "the record was renamed or the database was built from a branch, a database administrator must look "
+            "at the records before anyone changes them."
         )
     if cases[3]:
         lines.append(
             f"{_names(cases[3])}: no file in this release has this name, and the number is not above the highest file "
             "number, so this is neither a newer database nor a plain rename. A person must look: do not rename "
-            f"or drop by guess (runbook case (c){e})."
+            "or drop by guess."
         )
     return "\n".join(lines)
 
@@ -347,17 +425,33 @@ def _skip_blank(text: str, i: int) -> int:
     return i
 
 
-def statement_text(text: str, keep_quoted: bool = False) -> tuple[str, str]:
+class SqlReadError(ValueError):
+    """`statement_text` could not read the file to its end (an unclosed quote, comment or `$` body, an unrecognised
+    `$`). The message names the problem and its line."""
+
+
+def statement_text(text: str, keep_quoted: bool = False) -> str:
+    """The text `lex` returns, or `SqlReadError`: a caller that wants the view of the file gets a complete view or no
+    view at all, never a text that stops at the first problem (fail closed). Use `lex` to get the problem as a value."""
+    cleaned, problem = lex(text, keep_quoted)
+    if problem:
+        raise SqlReadError(problem)
+    return cleaned
+
+
+def lex(text: str, keep_quoted: bool = False) -> tuple[str, str]:
     """ONE left-to-right pass: comments become one space and every quoted part is emptied (`''`, `""`, `$$`), plus a
-    problem string (`""` when fine). With `keep_quoted=True` quoted parts are kept as written and only comments are
+    problem string (`""` when fine; when it is not empty the returned text STOPS at the problem and must not be used as
+    a view of the file). With `keep_quoted=True` quoted parts are kept as written and only comments are
     replaced; the problem string is the same in both views.
 
     Handled in the same pass so that no rule runs before another: `--` to the next LF or CR; nested block comments;
     `'...'` with `''`; `E'...'` where a backslash escapes the next character (an `E` not preceded by an identifier
     character) and a second literal that continues it after a newline is refused (the server keeps E mode there);
     `"..."` with `""`; `$tag$...$tag$` (tag: ASCII letter, underscore or any non-ASCII character, then those or
-    digits; compared with case; only when the `$` is not preceded by an identifier character); `$1` is left alone and
-    any other `$` is refused. Precondition: `standard_conforming_strings = on`."""
+    digits; compared with case; the `$` is part of a NAME, not a tag, only when the run of name characters before it
+    starts with a letter, underscore or non-ASCII character: after a number or after a closing `$` it opens a tag, as
+    the server scans it); `$1` is left alone and any other `$` is refused. Precondition: `standard_conforming_strings = on`."""
     out: list[str] = []
     problem = ""
     n = len(text)
@@ -368,6 +462,8 @@ def statement_text(text: str, keep_quoted: bool = False) -> tuple[str, str]:
         if not problem:
             problem = f"{kind} at line {_line_of(text, at)}"
 
+    carried = -1  # start of the name that ends exactly at `i` when the last action was a `$` inside a name, else -1
+
     while i < n:
         m = _SPECIAL.search(text, i)
         if m is None:
@@ -377,7 +473,14 @@ def statement_text(text: str, keep_quoted: bool = False) -> tuple[str, str]:
         if j > i:
             out.append(text[i:j])
         c = text[j]
-        prev = text[j - 1] if j > 0 else ""
+        # start of the run of name characters that ends at j (j itself when there is none); it cannot reach below
+        # `i` except through a name that the last action carried over, so the scan is linear over the whole text
+        run = j
+        while run > i and _ident_char(text[run - 1]):
+            run -= 1
+        if run == i and carried >= 0:
+            run = carried
+        carried = -1
         if c == "-":
             if text.startswith("--", j):
                 k = j + 2
@@ -407,7 +510,7 @@ def statement_text(text: str, keep_quoted: bool = False) -> tuple[str, str]:
                 out.append("/")
                 i = j + 1
         elif c == "'":
-            e_mode = prev in "Ee" and prev != "" and not (j >= 2 and _ident_char(text[j - 2]))
+            e_mode = j - run == 1 and text[run] in "Ee"
             k = j + 1
             closed = False
             while True:
@@ -453,9 +556,10 @@ def statement_text(text: str, keep_quoted: bool = False) -> tuple[str, str]:
             out.append(text[j:k] if keep_quoted else '""')
             i = k
         else:  # "$"
-            if prev and _ident_char(prev):
+            if run < j and _ident_start(text[run]):  # part of a name such as a$b$
                 out.append("$")
                 i = j + 1
+                carried = run
                 continue
             k = j + 1
             if k < n and text[k].isascii() and text[k].isdigit():
@@ -493,27 +597,40 @@ _TRANSACTION = re.compile(
 _SET_ALLOWED = re.compile(rf"set{_W}local{_W}(?:lock_timeout|statement_timeout)\b", re.IGNORECASE)
 _SET = re.compile(r"(set|reset)\b", re.IGNORECASE)
 _BLIND = re.compile(
-    rf"(do|execute|alter{_W}role|alter{_W}user|alter{_W}database|drop{_W}owned|reassign{_W}owned)\b",
+    rf"(do|execute|load|discard|alter{_W}role|alter{_W}user|alter{_W}group|alter{_W}system|alter{_W}database"
+    rf"|create{_W}role|create{_W}user|create{_W}group|create{_W}extension|drop{_W}owned|reassign{_W}owned)\b",
     re.IGNORECASE,
 )
+# `COPY ... PROGRAM` runs a shell command; `GRANT r TO s` and `REVOKE r FROM s` (no ON) change role membership.
+_COPY_PROGRAM = re.compile(r"copy\b.*?\bprogram\b", re.IGNORECASE | re.DOTALL)
+_ROLE_MEMBERSHIP = re.compile(r"(grant|revoke)\b(?!.*?\bon\b)", re.IGNORECASE | re.DOTALL)
 
 
 def refused_statements(text: str) -> list[str]:
     """Reasons a file must be refused, from `statement_text` (the emptied view) and the list: a lexer problem;
     transaction control; every `SET` and `RESET` except `SET LOCAL lock_timeout` and `SET LOCAL statement_timeout`;
-    `DO`, `EXECUTE`, `ALTER ROLE|USER|DATABASE`, `DROP OWNED`, `REASSIGN OWNED`. A rule matches at the START of a
+    `DO`, `EXECUTE`, `LOAD`, `DISCARD`, `COPY ... PROGRAM`, `ALTER ROLE|USER|GROUP|SYSTEM|DATABASE`,
+    `CREATE ROLE|USER|GROUP|EXTENSION`, `GRANT` and `REVOKE` without `ON` (role membership), `DROP OWNED`,
+    `REASSIGN OWNED`; hidden characters (`hidden_character`) come first. A rule matches at the START of a
     statement (the cleaned text split at `;`, leading whitespace removed). A tripwire against accidents, not a
     sandbox: the read-back after each file is the guard."""
-    cleaned, problem = statement_text(text)
-    reasons = [problem] if problem else []
+    cleaned, problem = lex(text)
+    reasons = [hidden] if (hidden := hidden_character(text)) else []
+    if problem:
+        reasons.append(problem)
     for stmt in cleaned.split(";"):
         s = stmt.lstrip(_WS)
         if not s:
             continue
         if m := _TRANSACTION.match(s):
             word = " ".join(m.group(1).upper().split())
+            hint = (
+                "; inside a function body write $$ ... $$ instead of BEGIN ATOMIC ... END"
+                if word in ("BEGIN", "END")
+                else ""
+            )
             reasons.append(
-                f"{word}: transaction control is not allowed (the run is one transaction)"
+                f"{word}: transaction control is not allowed (the run is one transaction){hint}"
             )
         elif m := _SET.match(s):
             if not _SET_ALLOWED.match(s):
@@ -523,4 +640,12 @@ def refused_statements(text: str) -> list[str]:
         elif m := _BLIND.match(s):
             word = " ".join(m.group(1).upper().split())
             reasons.append(f"{word}: the guard cannot read what this statement does or changes")
+        elif _COPY_PROGRAM.match(s):
+            reasons.append(
+                "COPY ... PROGRAM: the guard cannot read what this statement does or changes"
+            )
+        elif m := _ROLE_MEMBERSHIP.match(s):
+            reasons.append(
+                f"{m.group(1).upper()} without ON: the guard cannot read what this statement does or changes"
+            )
     return reasons

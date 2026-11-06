@@ -17,8 +17,10 @@ import time
 
 import pytest
 
+from tests.fixtures.timing import FLOOR_S, MIN_SMALL_S
+
 SMALL, BIG = 64 * 1024, 256 * 1024
-RATIO, FLOOR_S, MIN_SMALL_S = 12.0, 0.06, 0.004
+RATIO = 12.0
 
 
 def _redact_module():
