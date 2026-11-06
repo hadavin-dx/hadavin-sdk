@@ -47,6 +47,7 @@ from hadavin_sdk.codes import (
     StepToken,
     Where,
 )
+from hadavin_sdk.neverraise import Site, record
 
 _OWN_PACKAGE = "hadavin_sdk"
 _KIND_RE = re.compile(rf"[A-Za-z0-9_.]{{1,{defaults.DIAG_KIND_CHARS}}}")
@@ -218,11 +219,9 @@ def _own_code(tp: type) -> Code | None:
     return None if match is None else match[0]
 
 
-def _bounded_attr(attrs: object, name: str, key: FactKey) -> int | None:
-    try:
-        return _bounded(key, attrs.get(name))  # type: ignore[attr-defined]
-    except Exception:  # noqa: BLE001 - a bad value is dropped alone
-        return None
+def _bounded_attr(attrs: dict[str, object], name: str, key: FactKey) -> int | None:
+    """``attrs`` is an exact ``dict`` (checked by the caller); ``get`` and the exact-type bound check cannot raise."""
+    return _bounded(key, attrs.get(name))
 
 
 def _provider_facts(exc: object) -> dict[FactKey, object]:
@@ -233,30 +232,23 @@ def _provider_facts(exc: object) -> dict[FactKey, object]:
         attrs = vars(exc)
         if type(attrs) is not dict:
             return {}
-    except Exception:  # noqa: BLE001 - no readable attributes, no provider facts
+    except Exception:  # noqa: BLE001 - never-raise guard: an unreadable __dict__ gives no provider facts, never a raise into diagnose
+        record(Site.diag_attrs_unreadable)
         return {}
     found: dict[FactKey, object] = {}
     status = _bounded_attr(attrs, "status", FactKey.http_status)
     if status is not None:
         found[FactKey.http_status] = status
-    try:
-        error_type = attrs.get("error_type")
-        if type(error_type) is ProviderErrorType:
-            found[FactKey.provider_error_type] = error_type
-    except Exception:  # noqa: BLE001, S110 - dropped alone
-        pass
-    try:
-        token = SafeToken.request_id(attrs.get("request_id"))
-        if token is not None:
-            found[FactKey.request_id] = token
-    except Exception:  # noqa: BLE001, S110 - dropped alone
-        pass
-    try:
-        retryable = attrs.get("retryable")
-        if type(retryable) is bool:
-            found[FactKey.retryable] = retryable
-    except Exception:  # noqa: BLE001, S110 - dropped alone
-        pass
+    # ``attrs`` is an exact ``dict`` and every check below is an exact-type test on a stored value: nothing here can raise.
+    error_type = attrs.get("error_type")
+    if type(error_type) is ProviderErrorType:
+        found[FactKey.provider_error_type] = error_type
+    token = SafeToken.request_id(attrs.get("request_id"))
+    if token is not None:
+        found[FactKey.request_id] = token
+    retryable = attrs.get("retryable")
+    if type(retryable) is bool:
+        found[FactKey.retryable] = retryable
     count = _bounded_attr(attrs, "retry_count", FactKey.retry_count)
     if count is not None:
         found[FactKey.retry_count] = count
@@ -485,7 +477,8 @@ def _is_provider_subclass(tp: type) -> bool:
                 cls
             ):
                 return True
-        except Exception:  # noqa: BLE001, S112 - a hostile class is not the provider class
+        except Exception:  # noqa: BLE001 - never-raise guard: a class whose names raise is not the provider class, the walk goes on
+            record(Site.diag_provider_class_check)
             continue
     return False
 

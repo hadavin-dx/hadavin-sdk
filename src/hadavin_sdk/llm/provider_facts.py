@@ -19,6 +19,7 @@ from hadavin_sdk.codes import (
     FactKey,
     ProviderErrorType,
 )
+from hadavin_sdk.neverraise import Site, record
 
 # The longest string looked up in a closed vendor table (the longest key has 29 characters), so the bound changes no result.
 TYPE_NAME_MAX: Final = 64
@@ -82,7 +83,8 @@ def safe_attr(obj: object, name: str) -> object | None:
     """``getattr`` that gives ``None`` when the lookup raises an ``Exception`` (a hostile property)."""
     try:
         return getattr(obj, name, None)
-    except Exception:  # noqa: BLE001 - a property that raises is "no value"
+    except Exception:  # noqa: BLE001 - never-raise guard: a property that raises is "no value", never a raise into the adapter
+        record(Site.facts_safe_attr)
         return None
 
 
@@ -98,6 +100,7 @@ def safe_facts(hook: Callable[[BaseException], ProviderFacts], exc: BaseExceptio
     A ``BaseException`` that is not an ``Exception`` (``KeyboardInterrupt``, ``SystemExit``) propagates."""
     try:
         got = hook(exc)
-    except Exception:  # noqa: BLE001 - an adapter failure must not replace the real error
+    except Exception:  # noqa: BLE001 - never-raise guard: an adapter failure must not replace the real provider error
+        record(Site.facts_adapter_hook)
         return NO_FACTS
     return got if type(got) is ProviderFacts else NO_FACTS

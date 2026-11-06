@@ -292,7 +292,8 @@ spec("M19", "bedrock.facts accepts any request-id shape", BD,
      "test_r19_each_kind_accepts_only_its_own_request_id_shape", FA)  # fmt: skip
 spec("M20", "the guard around the wait computation is removed", RT,
      "            try:\n                wait = max(jitter, retry_after(exc))\n"
-     "            except Exception:  # noqa: BLE001 - a wait that crashed is a decision failure too (no extra request)\n"
+     "            except Exception:  # noqa: BLE001 - never-raise guard: a crashed wait is booked as billed, never raised raw\n"
+     "                record(Site.retry_wait)\n"
      "                raise _billed(exc, label, attempt, facts) from None\n",
      "            wait = max(jitter, retry_after(exc))\n",
      "test_r10_a_wait_computation_that_raises_is_a_decision_failure", F)  # fmt: skip
@@ -327,7 +328,8 @@ spec("M30", "the length bound is removed from the Claude type lookup", AN,
      "test_t_l_a_65_character_key_is_never_looked_up", FA)  # fmt: skip
 spec("M31", "the close step is not inside try/except", RT,
      "    try:\n        if isinstance(exc, urllib.error.HTTPError):\n            exc.close()\n"
-     "    except Exception:  # noqa: BLE001, S110 - a close that fails never replaces the real error\n        pass\n",
+     "    except Exception:  # noqa: BLE001 - never-raise guard: a close that fails never replaces the real provider error\n"
+     "        record(Site.retry_close_failed_http)\n",
      "    if isinstance(exc, urllib.error.HTTPError):\n        exc.close()\n",
      "test_r8c_a_close_that_raises_never_replaces_the_real_error", F)  # fmt: skip
 spec("M32", "only the last failed HTTPError is closed", RT,
@@ -341,14 +343,15 @@ spec("M33", "the connection test comes before the timeout test", AN,
      "test_r1_stand_in_rows", W)  # fmt: skip
 spec("M35", "the guard around the retry decision is removed", RT,
      "            try:\n                decision: object = bool(transient(exc, retryable))\n"
-     "            except Exception:  # noqa: BLE001 - a decision that crashed: the request was sent, billing is unknown\n"
-     "                decision = DECISION_FAILED\n",
+     "            except Exception:  # noqa: BLE001 - never-raise guard: a crashed retry decision is booked as billed, never raised raw\n"
+     "                record(Site.retry_decision)\n                decision = DECISION_FAILED\n",
      "            decision: object = bool(transient(exc, retryable))\n",
      "test_r5_a_decision_that_crashed_is_the_billed_class", F)  # fmt: skip
 spec("M37", "a wait failure is swallowed as wait 0 and the loop goes on", RT,
-     "            except Exception:  # noqa: BLE001 - a wait that crashed is a decision failure too (no extra request)\n"
+     "            except Exception:  # noqa: BLE001 - never-raise guard: a crashed wait is booked as billed, never raised raw\n"
+     "                record(Site.retry_wait)\n"
      "                raise _billed(exc, label, attempt, facts) from None\n",
-     "            except Exception:  # noqa: BLE001\n                wait = 0.0\n",
+     "            except Exception:  # noqa: BLE001\n                record(Site.retry_wait)\n                wait = 0.0\n",
      "test_r10_a_wait_computation_that_raises_is_a_decision_failure", F)  # fmt: skip
 spec("M38", "a kind adapter does not end in default_facts", BD,
      "neutral = default_facts(exc)", "neutral = ProviderFacts(None, None, None)",

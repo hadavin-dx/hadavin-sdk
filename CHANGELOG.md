@@ -486,6 +486,7 @@
   - `tests/fixtures/textnorm_corpus.json`: `16f312ad268306a3388506da01abc1e28796255ef090f8c59160404e6cc13722`
 
 ### Changed (P5b1, provider error plumbing: checked facts on provider errors, a closed message text)
+- New `hadavin_sdk/neverraise.py` (standard library only): the never-raise guards in `guard/diagnostic.py`, `llm/provider_facts.py` and `llm/retry.py` count each failure they absorb by closed site name (never the exception text); `KeyboardInterrupt` and `SystemExit` still propagate.
 - **Upgrade step.** `detail` is removed from `with_retry` and from `NetworkLLM`. A custom llm kind that set `detail` must set `facts`
   instead: `facts(exc) -> ProviderFacts` returns checked values only (a status from 100 to 599, a `ProviderErrorType`, a request id of one
   of two closed shapes). A kind with no `facts` uses the neutral adapter `llm.retry.default_facts`.

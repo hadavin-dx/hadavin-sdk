@@ -626,7 +626,7 @@ def test_provider_facts_imports_only_the_standard_library_and_codes():
         elif isinstance(node, ast.ImportFrom):
             names.add(node.module or "")
     own = {n for n in names if n.split(".")[0] == "hadavin_sdk"}
-    assert own == {"hadavin_sdk.codes"}, own
+    assert own == {"hadavin_sdk.codes", "hadavin_sdk.neverraise"}, own
     assert all(
         n.split(".")[0] in sys.stdlib_module_names | {"hadavin_sdk", "__future__"} for n in names
     ), names

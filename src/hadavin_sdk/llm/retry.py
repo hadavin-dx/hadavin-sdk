@@ -31,6 +31,7 @@ from hadavin_sdk.llm.provider_facts import (
     safe_facts,
     status_error_type,
 )
+from hadavin_sdk.neverraise import Site, record
 
 BASE_DELAY_S = 0.5
 MAX_DELAY_S = 8.0
@@ -118,7 +119,8 @@ def describe(exc: BaseException, facts: ProviderFacts) -> str:
     place in ``llm/`` that turns a class into text."""
     try:
         class_text = class_name_of(exc)
-    except Exception:  # noqa: BLE001 - class_name_of is meant never to raise
+    except Exception:  # noqa: BLE001 - never-raise guard: the class text of a hostile class falls back to a fixed word
+        record(Site.retry_class_text)
         class_text = "dynamic_class"
     parts = [class_text]
     if facts.status is not None:
@@ -133,8 +135,8 @@ def _close_failed_http(exc: BaseException) -> None:
     try:
         if isinstance(exc, urllib.error.HTTPError):
             exc.close()
-    except Exception:  # noqa: BLE001, S110 - a close that fails never replaces the real error
-        pass
+    except Exception:  # noqa: BLE001 - never-raise guard: a close that fails never replaces the real provider error
+        record(Site.retry_close_failed_http)
 
 
 def with_retry[T](
@@ -151,11 +153,13 @@ def with_retry[T](
             return call()
         except ProviderError:
             raise
-        except Exception as exc:  # noqa: BLE001 - every failure is classified below, never swallowed
+        except Exception as exc:  # noqa: BLE001 - never-raise guard: every call failure leaves as a ProviderError, none escapes raw
+            record(Site.retry_classify)
             _close_failed_http(exc)
             try:
                 decision: object = bool(transient(exc, retryable))
-            except Exception:  # noqa: BLE001 - a decision that crashed: the request was sent, billing is unknown
+            except Exception:  # noqa: BLE001 - never-raise guard: a crashed retry decision is booked as billed, never raised raw
+                record(Site.retry_decision)
                 decision = DECISION_FAILED
             if decision is DECISION_FAILED:
                 raise _billed(exc, label, attempt, facts) from None
@@ -184,7 +188,8 @@ def with_retry[T](
             jitter = random.uniform(0, min(MAX_DELAY_S, BASE_DELAY_S * 2 ** (attempt - 1)))  # noqa: S311
             try:
                 wait = max(jitter, retry_after(exc))
-            except Exception:  # noqa: BLE001 - a wait that crashed is a decision failure too (no extra request)
+            except Exception:  # noqa: BLE001 - never-raise guard: a crashed wait is booked as billed, never raised raw
+                record(Site.retry_wait)
                 raise _billed(exc, label, attempt, facts) from None
             sleep(wait)
     raise AssertionError("unreachable")  # max_attempts >= 1 (settings)
