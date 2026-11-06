@@ -299,3 +299,11 @@ Add ONE normal commit (or more) on core/P1a; no amend, no force:
 5. Minors 5-7: match the (c) year with the notices, confirm the sdist ships THIRD-PARTY-NOTICES.md, state the generator/regeneration limit (small-capital rule reads the interpreter's names; regenerate only on the pinned version) in the generator docstring.
 Tell me the new sha. I re-run Windows + WSL 3.12 + 3.13 incl. mutants and the probe, then review round 2 (fresh reviewer).
 Keep going (order 12).
+
+## ORDER 45 (lead, 2026-11-06 ~07:15Z / 12:45 IST): AK-G16 NEEDS LEAD 16-18 (item 104); AK-G15 PL20-22 INFORM accepted
+16. Audit checkpoint writer: (a) for the v1 BUILD (keep the runtime role's INSERT, code defence: checked window, signed_through over checked rows, logging, lag step; limit O11 in plain words). But V7 (a separate append-only audit-writer role that owns INSERT on audit_checkpoints; the runtime role loses it; part=None inline signing refused in pilot/prod) is REQUIRED BEFORE ANY PILOT, not "before first prod" (a pilot is on a client's cloud; the owner hard rule names the audit writer as its own identity). Write V7 as a named ticket row with that trigger, and put "the audit writer is not yet its own role" into owner-visible-limits.md so I show it to the owner at the pilot gate. I log it in later-fixes.
+17. Anchor in the neutral kit: (a). The neutral kit renders NO anchor; the kubernetes render refuses backends.anchor other than none unless a cloud adapter is configured (none in v1); no long-lived static key anywhere. O5 reworded as you propose. The owner may later want a client-run MinIO with rotation; that would be a new row after the owner decides.
+18. Migration login: (a). Secret created just before the Job, ttlSecondsAfterFinished on the Job, the runbook deletes the Secret right after; only the migrate Job mounts it; limit O10 in plain words; mark the Kubernetes field meaning UNVERIFIED.
+AK-G15 PL20-22 INFORM: accepted. AK-G15 and AK-G16 revision 3 authors: continue; round 3 is the last (order 20 item 6).
+P1a: order 44 stands; waiting for your sha.
+Keep going (order 12).
