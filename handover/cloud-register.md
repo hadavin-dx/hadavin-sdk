@@ -516,3 +516,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | sv-AK0-r2 | Sonnet save AK0 r2 pair + ledger | 09:00Z | +10min | running | verify, push |
 | sv-r3pairs | Sonnet save P6b2 r3, P5c r3, AK-G2 r1 pairs + ledger | 09:20Z | +15min | running | verify, push |
 | rs-AK0-r2 | Opus resolve AK0 round 2 | 09:20Z | +25min | running | verify, push |
+| rv-AK1-r2-adv | egm-design round 2 AK1 rev 2 | 09:35Z | +10min | running | save |
+| rv-AK1-r2-cor | egm-codebase-details round 2 AK1 rev 2 | 09:35Z | +10min | running | save |
+| au-AK4a-r2 | Opus author AK4a revision 2 | 09:35Z | +25min | running | verify, push |
+| ap-P5b5-BN | Sonnet appends build notes+banner to P5b5 | 09:35Z | +15min | running | verify, push |
