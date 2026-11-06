@@ -32,6 +32,13 @@ def memory(tmp_path):
     return make("store", KindSettings(kind="memory"))
 
 
+@kind("store_pair", "memory")
+def memory_pair(tmp_path):
+    """The same object twice: memory is one process, one lock; `a is b` is its contract."""
+    store = make("store", KindSettings(kind="memory"))
+    return store, store
+
+
 @kind("audit", "local_dir")
 def local_dir(tmp_path):
     return make("audit", LocalDirSettings(kind="local_dir", dir=tmp_path / "audit"))

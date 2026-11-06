@@ -1,5 +1,6 @@
 """Store suite: the public Store Protocol only, over every registered store kind (P2 adds postgres)."""
 
+import random
 import threading
 import time
 from datetime import date, timedelta
@@ -14,13 +15,16 @@ from hadavin_sdk.models import (
     DeadLetter,
     GateDecision,
     KillSwitch,
+    Plan,
     Run,
     RunState,
+    Target,
     TickState,
     ToolCallRecord,
     now,
 )
 from hadavin_sdk.store.protocol import NotFound, StaleState
+from tests.contracts.store_support import utc_today
 
 S = RunState
 
@@ -414,3 +418,95 @@ def test_concurrent_create_run_with_one_id_has_one_winner(store):
     assert not other
     assert len(won) == 1 and len(stale) == 7
     assert store.get_run(shared_id).trigger_ref == f"t-{won[0]}"
+
+
+def _plan(run_id, outcome="done"):
+    return Plan(
+        run_id=run_id,
+        agent_id="a",
+        action_id="act",
+        action_version=1,
+        risk_class="reversible",
+        inputs={"k": 1},
+        target=Target(system="crm", ref="r-1"),
+        idempotency_key="idem-1",
+        expected_outcome=outcome,
+    )
+
+
+def test_plan_round_trip_replace_and_unknown_is_not_found(store):
+    """P4d-a1: `save_plan` and `get_plan` were called by no contract test before (the session-end check
+    found them)."""
+    run = _run(store)
+    first = _plan(run.run_id, "first")
+    store.save_plan(first)
+    assert store.get_plan(run.run_id) == first
+    second = _plan(run.run_id, "second")  # a new plan for the same run replaces the old one
+    store.save_plan(second)
+    got = store.get_plan(run.run_id)
+    assert got == second
+    assert got.plan_id != first.plan_id
+    with pytest.raises(NotFound):
+        store.get_plan("run-missing")
+
+
+# --- model-based property test (P4d-a1 skeleton over the existing methods; P4d-b adds the reservation ones) --
+SEEDS = range(200)
+STEPS = 30
+
+
+def _month_key(day):
+    """The reference model keys months by integer arithmetic, independent of the code's `day.replace(day=1)`."""
+    return day.year * 12 + day.month
+
+
+def test_spend_and_cost_counters_match_a_plain_python_ledger(store):
+    """200 fixed seeds x 30 steps of add_spend / add_cost / spend_totals against a reference ledger. Each seed has
+    its own agent id, so one store serves all seeds with no reset (the runtime role cannot truncate)."""
+    today = utc_today(store)
+    days = [today + timedelta(days=k) for k in range(-45, 3)]  # spans two or three calendar months
+    for seed in SEEDS:
+        rng = random.Random(seed)  # noqa: S311 - a seeded test generator, not a secret
+        agent = f"agent-{seed}"
+        runs = [_run(store) for _ in range(2)]
+        day_total: dict = {}
+        month_total: dict = {}
+        run_total = {r.run_id: Decimal(0) for r in runs}
+        for _ in range(STEPS):
+            kind = rng.choice(["spend", "spend", "cost", "totals"])
+            day = rng.choice(days)
+            usd = Decimal(rng.randrange(0, 5_000_000)) / Decimal(1_000_000)
+            if kind == "spend":
+                day_total[day] = day_total.get(day, Decimal(0)) + usd
+                month_total[_month_key(day)] = month_total.get(_month_key(day), Decimal(0)) + usd
+                got = store.add_spend(agent, day, usd)
+                assert got == (day_total[day], month_total[_month_key(day)]), (seed, day)
+            elif kind == "cost":
+                run = rng.choice(runs)
+                run_total[run.run_id] += usd
+                store.add_cost(run.run_id, usd)
+            else:
+                want = (
+                    day_total.get(day, Decimal(0)),
+                    month_total.get(_month_key(day), Decimal(0)),
+                )
+                assert store.spend_totals(agent, day) == want, (seed, day)
+            for run in runs:
+                assert store.get_run(run.run_id).cost_usd == run_total[run.run_id], (
+                    seed,
+                    run.run_id,
+                )
+
+
+def test_store_pair_gives_two_handles_on_the_same_data(store_pair):
+    """`a` writes, `b` reads it. Memory: one object twice (its contract). Postgres: two connections, so a race
+    test over the pair tests the SQL and not the in-process lock of one handle."""
+    a, b = store_pair
+    run = _run(a)
+    assert b.get_run(run.run_id).run_id == run.run_id
+    b.add_cost(run.run_id, Decimal("0.5"))
+    assert a.get_run(run.run_id).cost_usd == Decimal("0.5")
+    if a.backend == "memory":
+        assert a._inner is b._inner
+    else:
+        assert a._db is not b._db  # Postgres only: MemoryStore has no `_db`
