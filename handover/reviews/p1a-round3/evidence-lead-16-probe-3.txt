@@ -1,0 +1,9 @@
+python 3.13.3 unidata 15.1.0
+public: ['AllowVerdict', 'CONFUSABLES', 'Counter', 'Enum', 'FILLERS', 'FOLD_VERSION', 'NotText', 'TextTooLong', 'TextnormError', 'UnidataMismatch', 'allow_equal', 'annotations', 'check_pinned_unidata', 'defaults', 'fold', 'fold_key', 'has_hidden_channel', 'has
+identity_key hostile -> 'aidmin' | plain -> 'admin'
+fold hostile -> 'aidmin' | plain -> 'admin'
+squeeze hostile -> 'AIDMIN' | plain -> 'ADMIN'
+same_person(hostile, plain) = False
+same_person(alpha+U+0345 omicron variant) = False
+table TABLE entries 677 single-char sources unassigned (Cn) here: 0
+examples: []

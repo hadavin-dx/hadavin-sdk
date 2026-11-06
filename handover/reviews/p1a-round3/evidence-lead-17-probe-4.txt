@@ -1,0 +1,6 @@
+Eta key(latin)= 'howard' key(greek)= 'noward' same_person= False
+Mu key(latin)= 'mark' key(greek)= 'uark' same_person= False
+Nu key(latin)= 'nick' key(greek)= 'vick' same_person= False
+Upsilon key(latin)= 'yan' key(greek)= 'uan' same_person= False
+injection fn: Detector
+injection fn: RegexDetector
