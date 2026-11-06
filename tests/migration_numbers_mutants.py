@@ -300,7 +300,7 @@ M = [
         'MIGRATE_LOCK = int.from_bytes(b"hadvnmig", "big") >> 2',
         T2,
         "test_the_lock_key_and_the_folder_are_the_ones_migrate_uses",
-        "BinOp(left=C",
+        "== (7521403312507021671 >> 1)",  # P3a-2: migrate.py imports the key, so the last assertion of the test fires
     ),
     mutant(
         "o100: MIGRATIONS names another folder than migrate does",
@@ -308,7 +308,7 @@ M = [
         'MIGRATIONS = Path(__file__).parent / "migration"',
         T2,
         "test_the_lock_key_and_the_folder_are_the_ones_migrate_uses",
-        "BinOp(left=A",
+        "/ 'migrations')",  # P3a-2: migrate.py imports the folder, so the last assertion of the test fires
     ),
     mutant(
         "o100: NAME lets any character into a file name",
