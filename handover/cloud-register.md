@@ -544,8 +544,8 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | sv-P1m-r2 | saver P1m round 2 pair + ledger p1m rows | 12:00Z | +5min | REPORTED | verify, push |
 | au-P5c-bn | Opus author P5c build notes BN-1..18 + banner | 12:10Z | +20min | REPORTED | verify, push |
 | sv-P5b3-r3 | saver P5b3 round 3 pair | 12:25Z | +5min | REPORTED | verify, push |
-| rv-AK4a-r2-adv | egm-design round 2 AK4a rev 2 | 12:25Z | +10min | running | save |
-| rv-AK4a-r2-cor | egm-codebase-details round 2 AK4a rev 2 | 12:25Z | +10min | running | save |
+| rv-AK4a-r2-adv | egm-design round 2 AK4a rev 2 | 12:25Z | +10min | REPORTED | save |
+| rv-AK4a-r2-cor | egm-codebase-details round 2 AK4a rev 2 | 12:25Z | +10min | REPORTED | save |
 | au-AK1-r3 | Opus author AK1 revision 3 | 12:35Z | +25min | running | verify, push, round 3 pair |
 | rs-P5b3-r3 | Opus resolve P5b3 round 3 (last; build notes win) | 12:35Z | +20min | running | verify, then BN author |
 | rv-AK2a-r2-adv | egm-design round 2 AK2a rev 2 | 12:35Z | +10min | running | save |
@@ -553,3 +553,4 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | rs-AK-G1-r1 | Opus resolve AK-G1 round 1 (5 Blockers) | 12:35Z | +25min | running | verify, then rev 2 |
 | rv-AK0-r3-adv | egm-design round 3 AK0 rev 3 (last) | 12:50Z | +10min | running | save |
 | rv-AK0-r3-cor | egm-codebase-details round 3 AK0 rev 3 (last) | 12:50Z | +10min | running | save |
+| sv-AK4a-r2 | saver AK4a round 2 pair | 13:00Z | +5min | running | verify, push |
