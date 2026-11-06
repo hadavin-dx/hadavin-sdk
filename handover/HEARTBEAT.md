@@ -340,3 +340,5 @@ P3a-2 | PR 73 62fba0b READY after merge of PR 68 fix1 | 6 | -
 P4a | pushed c86e685, PR waits on core/P2a-1 push | 6 | P2a-1 builder push
 2026-11-06T13:18:25Z | package | stage | builders running | blocked on
 P1a | fix5 builder started (order 90, priority) | 7 | -
+2026-11-06T13:41:49Z | package | stage | builders running | blocked on
+P2d-1 | draft PR 77 6d5616b; needs re-merge of P1a fix5 | 7 | PR 63 fix5
