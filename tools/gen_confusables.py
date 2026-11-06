@@ -212,10 +212,8 @@ def build(text: str) -> dict[int, str]:
     sup = {
         cp: v for cp, v in SUPPLEMENT.items() if unicodedata.normalize("NFKC", chr(cp)) == chr(cp)
     }  # a key the fold can reach
-    out = {
-        **sup,
-        **out,
-    }  # the data wins over the supplement; both are in ``out`` BEFORE the name rules, so no name rule overrides either
+    # the data wins over the supplement; both are in ``out`` BEFORE the name rules, so no name rule overrides either
+    out = {**sup, **out}
     listed = dict(out)  # what the data and the supplement say, before any name rule
     for cp in range(0x80, 0x20000):
         ch = chr(cp)

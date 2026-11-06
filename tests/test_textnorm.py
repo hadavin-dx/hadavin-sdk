@@ -1935,10 +1935,15 @@ def test_the_minimum_view_length_is_one_number_for_every_view_and_a_short_value_
     the script views and the squeeze views alike. The error is a ``TextnormError`` (not a ``ValueError``) and carries no part of the value."""
     assert defaults.TEXTNORM_MIN_VIEW_CHARS == 2
     for short in ("", "x", "\u200b", "\u5bc6", "\u5bc6 ", "7", " \u5bc6\n"):
-        with pytest.raises(textnorm.ViewTooShort) as caught:
+        try:
             textnorm.scan_needles(short)
-        assert isinstance(caught.value, TextnormError) and not isinstance(caught.value, ValueError)
-        assert short.strip() == "" or short not in str(caught.value), "the message holds the value"
+        except textnorm.ViewTooShort as caught:
+            assert isinstance(caught, TextnormError) and not isinstance(caught, ValueError)
+            assert short.strip() == "" or short not in str(caught), "the message holds the value"
+        else:
+            raise AssertionError(
+                f"scan_needles accepted {short!r}: a view is shorter than the minimum {defaults.TEXTNORM_MIN_VIEW_CHARS}"
+            )
     value = "\u5bc6\u7801\u6d4b\u8bd5abc"
     families = {
         "spelling variant": value.casefold(),
