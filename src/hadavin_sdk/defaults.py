@@ -97,7 +97,7 @@ PRIVATE_SUFFIX_LABELS = frozenset(
         "invalid",
     }
 )
-EXECUTOR_TIMEOUT_S = 10.0  # the dev executor's per-call timeout (Config.executor_timeout_s)
+EXECUTOR_TIMEOUT_S = 10.0  # the demo executor's per-call timeout (Config.executor_timeout_s)
 HTTPS_PORTS = (443,)  # ports a tool may reach over https unless its manifest lists `ports`
 CLUSTER_PORTS = (80, 8080, 9090, 9093, 3100)  # the same for plain http to in-cluster hosts
 
