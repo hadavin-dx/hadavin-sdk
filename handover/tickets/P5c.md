@@ -1011,3 +1011,18 @@ Source: `reviews/P5c-round3-resolve.md`, build notes BN-1 to BN-18, copied as wr
 
 **BN-22 (genericity audit finding G-13, lead order 53).** Wording only: the scope sentence (line 3, "decides which parts of an invoice reach a model") and the path class (line 144, "bank numbers on invoices") read "documents that carry bank details (for example an invoice)". Seven "invoice" mentions in all; Intake stays as the named example and trigger. Rows, types and constants are unchanged (no invoice-named field).
 Build note only; the freeze is not reopened.
+
+**BN-23 (RUNG TABLE, lead order 56, R448).** Gate of R448 / preamble rule 20 for this ticket. Source: `reviews/rung-audit-1-part-D.md` (2026-11-06; tool facts marked RAN were run on made-up files outside the repo, READ-WHEEL means read in the installed package; the docs hosts docs.astral.sh, docs.litellm.ai and semgrep.dev were not reachable, so facts from memory are UNVERIFIED). Rows copied from the audit; no verdict changed. Ticket stays frozen.
+Size: 1013 lines, over about 250. Redaction path; 7 rows. Candidate to split (lead decides); the audit says the cost is the ticket size, not the rung.
+
+| component | need | rung tried | evidence (source, date) | what only our code gives | verdict |
+|---|---|---|---|---|---|
+| Detection engine (patterns) | already on main: `guard/redact.py`, `guard/runmap.py`; P5c does NOT port it (`P5c.md:131`) | 5: Microsoft Presidio; Protect AI LLM Guard Anonymize/Deanonymize | UNVERIFIED (no docs fetched; Presidio MIT-licensed from memory: UNVERIFIED) | Not built in P5c, nothing to cut. Presidio fits as the second `redactor` kind (R363 working alternative, outline with a trigger such as name recall on a golden set), not a replacement | KEEP (already built; no change) |
+| `Redactor` protocol, `regex` kind, kind wiring | G1, item 2 (`:117`, `:238-247`) | 1: the kind system (reused) | ticket | n/a | KEEP-CODE |
+| `MaskSession` (no copy, no pickle, closable, seeded with run map) | item 3, rule F10 | none | n/a | Run-scoped state that cannot leak after the run | KEEP-CODE |
+| Computed fingerprint in `config_hash` | items 4, 6, BN-16 | none | n/a | Evals that gate: a masking change forces a new qualification run | KEEP-CODE |
+| Account-number pattern rows (PHONE end, `_ACCT_STRONG`) | item 5, BN-4 to BN-6 | 5: Presidio recognizers (UNVERIFIED) | UNVERIFIED | Fixes to the engine already in use | KEEP-CODE |
+| `MaskedLLM` single door (re-mask, check, audit before call, strict decode, `MaskedLLM(MeteredLLM(raw))`) | item 7 (`:268-299`) | 5: gateway guardrails (LiteLLM Presidio pre-call masking: UNVERIFIED) | UNVERIFIED | Redaction BEFORE text leaves our process (a gateway masks after); audit intent before the call; meter counts the masked body; one door enforced by type | KEEP-CODE |
+| Put-back (stored kinds only, never a folded spelling, three seams; PHONE out of `STORED_KINDS`) | item 8; G9, G10 | 5: Presidio deanonymize (UNVERIFIED) | UNVERIFIED | Stored-kinds rule and "no regulated number put back into a plan an executor may act on" (money-adjacent) | KEEP-CODE |
+
+Build only; the freeze is not reopened.

@@ -458,3 +458,15 @@ The reviewer rejects a difference that has no hunk. T6 (a)'s written set is that
 - P5c revision 3's `Runtime` check also requires `MeteredLLM` inside the wrapper (`:334`). This does not touch P6a's rows: every T5 row stops at `make("signer")` (BN-8), before `Runtime`.
 
 **BN-13. PENDING LEAD 14 closed (order 27 item 50).** PENDING LEAD 14 reads "CLOSED by order 27 item 50: the field accepted, `config.py` belongs to P6a-1; the lead puts the limit in `handover/owner-visible-limits.md`". S6's "PENDING LEAD 14 = NEEDS LEAD 50, pending" wording is void.
+
+**BN-14 (RUNG TABLE, lead order 56, R448).** Gate of R448 / preamble rule 20 for this ticket. Source: `reviews/rung-audit-1-part-D.md` (2026-11-06; tool facts marked RAN were run on made-up files outside the repo, READ-WHEEL means read in the installed package; the docs hosts docs.astral.sh, docs.litellm.ai and semgrep.dev were not reachable, so facts from memory are UNVERIFIED). Rows copied from the audit; no verdict changed. Ticket stays frozen.
+Size: 460 lines, over about 250. 4 rows. Candidate to split (lead decides); the audit says the cost is the ticket size, not the rung.
+
+| component | need | rung tried | evidence (source, date) | what only our code gives | verdict |
+|---|---|---|---|---|---|
+| S1 `DEV_ONLY` / `CLIENT_REVIEWED` completeness test | every `TABLE` pair decided (`P6a.md:49-57`) | 1: existing `Config._cross_checks` refusal (reused; no code change for the config path) | ticket | A list a person decided | KEEP-CODE (a test only) |
+| S2 build-keyword guard in a live profile | `app.build` refuses test doubles unless `allow_test_doubles=True` (`:58-63`) | none | n/a | An accident guard on our own API (stated "not a boundary", `:63`) | KEEP-CODE |
+| S6 `made_up_data_only` for dev configs with a real model | `:64-73`, BN-1 | 5: pydantic (used); 2: client's data-classification policy | ticket | A start-up refusal; a policy document does not stop a process | KEEP-CODE |
+| S4 one model-call scanner | `:76-81` | 1: `tests/test_k5_producers._sink_callers` (reused, widened); 5: Semgrep `$X.chat(...)` (not run) | ticket; Semgrep UNVERIFIED for `getattr`/`attrgetter` forms | Feeds the "one door" guarantee of P5c | KEEP-CODE (rung 1 reuse; see the cross-ticket walker note) |
+
+Build only; the freeze is not reopened.
