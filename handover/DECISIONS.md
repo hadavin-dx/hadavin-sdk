@@ -300,3 +300,6 @@ File: handover/reviews/P4a-round8-resolve.md. Ticket not edited (an author write
 ## 2026-11-06 order 21 overrule (INFORM 13)
 - What: lead overruled my P4b2 maintenance-identity cut: KEEP it (owner least-privilege hard rule; amendment F2 stands). I had proceeded with the cut in P4b2 rev 2 (7208a9f) and announced it as INFORM 13. Answered-by-user: yes (lead order 21). My slip: I should have kept an owner hard rule as NEEDS LEAD (owner-only), not INFORM. Correction running (fix-P4b2-maint).
 - P3a ADV-5 recipe: kept my "refuse backslash" over the reviewer's SET line; confidence medium; reversible; INFORM 18.
+
+## 2026-11-06 P2a build-start resolve slip
+- What: the P2a resolve agent's throwaway PostgreSQL probe: it deleted its own data folder before its stop command worked, then sent SIGINT to its own server after checking arguments. A second throwaway server (pg3a, from the P3a resolve) was gone at the end; cause unproven. No product or repo state affected. Answered-by-user: no (not a decision; reported for honesty, INFORM 20).

@@ -92,3 +92,4 @@
 2026-11-06T02:49Z | step=P3a build-start resolve landed (f5a58d6); INFORM 13 overrule recorded | done=S0 EXIT P3a effective, P1 effective | next=push, builds, resolves after reports saved
 2026-11-06T02:50Z | step=build P1m launched (S0 EXIT P1) | next=builds P4d a1/a2-i, resolves after report saves
 2026-11-06T02:50Z | step=P6b2 draft landed; r1 P5c/P6a/P6b2, r2 P5b1/P4b1 reviewers + resolves P5b2/P6b1/P8b running; P1m builder running | next=verify P4b2 fix, P2a/P5a resolves
+2026-11-06T02:52Z | step=P2a build-start resolve landed (4d70490); S0 EXIT P2a effective (gated on P1m,P3a,P4d merges); P4c r2 resolve launched; P4b1 r2 both reports in | next=save P4b1 reports, resolve
