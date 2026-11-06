@@ -319,8 +319,8 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | draft-P5b4 | Opus first draft of tickets/P5b4.md (order 20 item 6, missing v1 ticket) | opus | 02:32Z | +60min | REPORTED | verify commit; then round 1 reviewers |
 | draft-P5b5 | Opus first draft of tickets/P5b5.md (order 20 item 6, missing v1 ticket) | opus | 02:32Z | +60min | running | verify commit; then round 1 reviewers |
 | draft-P5c | Opus first draft of tickets/P5c.md (order 20 item 6, missing v1 ticket) | opus | 02:32Z | +60min | QUEUED (agent limit 20; launch when a slot frees) | verify commit; then round 1 reviewers |
-| draft-P6a | Opus first draft of tickets/P6a.md (order 20 item 6, missing v1 ticket) | opus | 02:32Z | +60min | running | verify commit; then round 1 reviewers |
-| draft-P6b2 | Opus first draft of tickets/P6b2.md (order 20 item 6, missing v1 ticket) | opus | 02:32Z | +60min | running | verify commit; then round 1 reviewers |
+| draft-P6a | Opus first draft of tickets/P6a.md (order 20 item 6, missing v1 ticket) | opus | 02:32Z | +60min | REPORTED | verify commit; then round 1 reviewers |
+| draft-P6b2 | Opus first draft of tickets/P6b2.md (order 20 item 6, missing v1 ticket) | opus | 02:32Z | +60min | REPORTED | verify commit; then round 1 reviewers |
 | draft-P8a | Opus first draft of tickets/P8a.md (order 20 item 6, missing v1 ticket) | opus | 02:32Z | +60min | REPORTED | verify commit; then round 1 reviewers |
 | draft-P8b | Opus first draft of tickets/P8b.md (order 20 item 6, missing v1 ticket) | opus | 02:32Z | +60min | REPORTED | verify commit; then round 1 reviewers |
 | draft-P8c | Opus first draft of tickets/P8c.md (order 20 item 6, missing v1 ticket) | opus | 02:32Z | +60min | QUEUED (agent limit 20; launch when a slot frees) | verify commit; then round 1 reviewers |
@@ -369,3 +369,6 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | res-r2-P5b2 | Opus egm-resolve P5b2 round 2 | opus | 03:25Z | +45min | running | verify disposition; rev 3 author; round 3 |
 | res-r2-P6b1 | Opus egm-resolve P6b1 round 2 | opus | 03:25Z | +45min | running | verify; rev 3 author; round 3 |
 | res-r1-P8b | Opus egm-resolve P8b round 1 | opus | 03:25Z | +45min | running | verify; rev 2 author; round 2 |
+| draft-P6b2 | Opus first draft tickets/P6b2.md | opus | 02:50Z | | REPORTED | committed 1901def; round 1 launched |
+| r1-P6b2-adv | P6b2 round-1 reviewer (adv) | sonnet | 03:30Z | +30min | running | save, ledger, resolve |
+| r1-P6b2-cor | P6b2 round-1 reviewer (cor) | sonnet | 03:30Z | +30min | running | save, ledger, resolve |
