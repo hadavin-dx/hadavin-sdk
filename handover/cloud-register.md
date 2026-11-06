@@ -644,6 +644,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | au-AKG16-r3 | Opus author AK-G16 revision 3 (round 2 resolve + order 43) | 06:59Z | +40min | REPORTED | save, round 3 reviews |
 | au-AKG15-r3 | Opus author AK-G15 revision 3 (round 2 resolve + order 43) | 06:59Z | +40min | REPORTED | save, round 3 reviews |
 | rr-AKG16-r3-adv | Sonnet egm-design review AK-G16 rev 3 round 3 | 07:11Z | +20min | REPORTED | save |
-| rr-AKG16-r3-cor | Sonnet egm-codebase-details review AK-G16 rev 3 round 3 | 07:11Z | +20min | running | save |
+| rr-AKG16-r3-cor | Sonnet egm-codebase-details review AK-G16 rev 3 round 3 | 07:11Z | +20min | REPORTED | save |
 | rr-AKG15-r3-adv | Sonnet egm-design review AK-G15 rev 3 round 3 | 07:16Z | +25min | running | save |
 | rr-AKG15-r3-cor | Sonnet egm-codebase-details review AK-G15 rev 3 round 3 | 07:16Z | +25min | running | save |
+| rs-AKG16-r3 | Opus egm-resolve AK-G16 rev 3 round 3 (final: fixes become BN notes, freeze) | 07:18Z | +30min | running | save |
