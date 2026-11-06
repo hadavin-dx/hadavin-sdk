@@ -35,6 +35,7 @@ from hadavin_sdk.guard.textnorm import (
     TextTooLong,
     allow_equal,
     identity_key,
+    same_person,
     squeeze,
 )
 
@@ -73,6 +74,33 @@ def test_the_identity_key_agrees_with_the_stated_principle(row):
         assert same, f"{row['class']}: {row['source']}"
     else:
         assert not same, f"{row['class']}: {row['source']}"
+
+
+# Rows the identity key keeps apart but the DENY scan joins, by design: the scan key drops spaces, punctuation, controls and tag characters,
+# so these pairs are the same person for ``same_person`` (the safe side of a DENY). Named, so a new over-match shows as a failure.
+OVER_MATCH = {
+    "r020": "a tag letter is decoded in the scan key (tag text T1/T2)",
+    "r060": "a visible space is dropped by the scan key",
+    "r078": "a Unicode space is dropped by the scan key",
+    "r094": "a control is dropped by the scan key",
+    "r140": "a trailing dot is dropped by the scan key",
+}
+
+
+@pytest.mark.parametrize("row", NOT_REFUSED)
+def test_same_person_agrees_with_the_stated_principle_and_is_never_narrower_than_the_identity_key(
+    row,
+):
+    a, b = expand(row["a"]), expand(row["b"])
+    got = same_person(a, b)
+    if identity_key(a) == identity_key(b):
+        assert got, f"{row['id']}: same_person is narrower than identity_key equality"
+    if row["relation"] == "equal":
+        assert got, f"{row['class']}: {row['source']}"
+    elif row["id"] in OVER_MATCH:
+        assert got, f"{row['id']}: the named over-match is gone ({OVER_MATCH[row['id']]})"
+    else:
+        assert not got, f"{row['id']}: a new over-match: {row['source']}"
 
 
 @pytest.mark.parametrize("row", NOT_REFUSED)
@@ -126,13 +154,25 @@ def _loose(text):
     return squeeze(text, loose=True)
 
 
+def _keyset_hash(texts):
+    """SHA-256 over the key-set of every text: one line per text, the helper digest of its sorted unique keys."""
+    h = hashlib.sha256()
+    for text in texts:
+        h.update((_keyset_digest(textnorm.scan_keyset(text)) + "\n").encode("ascii"))
+    return h.hexdigest()
+
+
 HASHED = {"identity_key": _bare(identity_key), "squeeze": squeeze, "squeeze_loose": _loose}
+KEYSET_HASHED = ("scan_keyset",)
 
 
 def live_hashes():
     """What the golden file holds, computed now. ``python -c 'from tests.test_textnorm_differential import live_hashes'`` rewrites the entry."""
     texts = [*_single_code_points(), *_corpus_rows()]
-    return {name: _digest(fn, texts) for name, fn in HASHED.items()}
+    return {
+        **{name: _digest(fn, texts) for name, fn in HASHED.items()},
+        "scan_keyset": _keyset_hash(texts),
+    }
 
 
 def _keyset_digest(keys):
@@ -155,7 +195,7 @@ def test_the_golden_file_has_one_entry_for_the_current_algorithm():
     )
     for section in GOLDEN["sections"].values():
         assert set(section) == {"hashes"}
-        assert set(section["hashes"]) == set(HASHED)
+        assert set(section["hashes"]) == {*HASHED, *KEYSET_HASHED}
         assert all(len(h) == 64 for h in section["hashes"].values())
 
 
@@ -167,7 +207,7 @@ def test_the_golden_hashes_equal_the_live_ones():
             pytest.fail(message)
         pytest.skip(message)
     live = live_hashes()
-    for name in HASHED:
+    for name in (*HASHED, *KEYSET_HASHED):
         assert live[name] == section["hashes"][name], (
             f"{name}: the behaviour of the fold changed on Unicode {unicodedata.unidata_version} (bump alg and replace the entry)"
         )

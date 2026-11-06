@@ -35,7 +35,7 @@ REPOINTED = (
     "allow: a mismatch is always a look-alike",
     "mixed: invisible characters not removed first",
     "mixed: the micro sign is flagged",
-    "mixed: Cherokee not a look-alike script",
+    "mixed: Cherokee exempt next to Latin",
     "table: Cherokee A missing",
     "table: small capital rule missing",
     "table: ASCII sources accepted",
@@ -82,15 +82,14 @@ def _functions(path: Path) -> list[str]:
     return [n.name for n in tree.body if isinstance(n, ast.FunctionDef)]
 
 
-def test_a_the_list_has_53_mutants_28_repointed_13_new_9_of_fold2_and_3_of_fold3_with_unique_names():
+def test_a_the_list_has_71_mutants_28_repointed_25_of_p1a_and_18_of_p1b_with_unique_names():
     names = [m.name for m in mm.M]
-    assert len(names) == 53 and len(set(names)) == 53, names
+    assert len(names) == 71 and len(set(names)) == 71, names
     assert tuple(names[:28]) == REPOINTED, (
         "the first 28 are the re-pointed mutants, in the order of the placement table"
     )
-    assert (
-        len(names[28:]) == 25
-    )  # 13 of the first package, 9 of fold2 (order 44) and 3 of fold3 (order 49)
+    assert len(names[28:]) == 43  # 25 of P1a (13 new, 9 of fold2, 3 of fold3) and the 18 of P1b
+    assert len(names[53:]) == 18, "P1b adds 18 mutants"
 
 
 def test_a_every_mutant_names_its_test_file_and_its_killer_and_the_killer_exists():
@@ -111,11 +110,11 @@ def test_a_every_mutant_names_its_test_file_and_its_killer_and_the_killer_exists
 
 
 def test_a_the_test_list_puts_the_killer_files_first_and_leaves_out_perf_meta_and_notices():
-    assert list(mm.TESTS[:2]) == [mm.T, mm.G]
+    assert list(mm.TESTS[:3]) == [mm.T, mm.G, mm.SC]
     assert mm.TESTS[-1] == mm.D, "the differential and golden file runs last"
     for left_out in ("perf", "meta", "notices"):
         assert not any(left_out in t for t in mm.TESTS), left_out
-    assert {m.test_file for m in mm.M} == {mm.T, mm.G}
+    assert {m.test_file for m in mm.M} == {mm.T, mm.G, mm.SC}
 
 
 def test_a_the_moved_tests_and_the_new_killers_exist_once_each():
@@ -123,6 +122,9 @@ def test_a_the_moved_tests_and_the_new_killers_exist_once_each():
         TESTS / "test_textnorm.py",
         TESTS / "test_textnorm_generator.py",
         TESTS / "test_textnorm_differential.py",
+        TESTS / "test_textnorm_scan.py",
+        TESTS / "test_textnorm_callers.py",
+        TESTS / "test_textnorm_app.py",
     ):
         tests = [n for n in _functions(path) if n.startswith("test_")]
         assert len(tests) == len(set(tests)), (
@@ -137,7 +139,7 @@ def test_a_the_moved_tests_and_the_new_killers_exist_once_each():
 def test_a_print_the_placement_table():
     rows = [f"{m.name} | {m.test_file} | {m.only_test}" for m in mm.M]
     print("\n".join(rows))
-    assert len(rows) == 53
+    assert len(rows) == 71
 
 
 def test_b_every_xfail_of_the_differential_file_is_strict_and_names_assertion_error():
@@ -169,7 +171,9 @@ def test_c_the_corpus_has_150_rows_and_3_rows_in_every_class():
         assert r["source"].strip(), f"{r['id']}: a row without a stated principle"
         if r["status"] == "not_taken":
             assert r["relation"] == "different", r["id"]
-    assert any(r["status"] == "p1b" for r in rows) and any(r["status"] == "not_taken" for r in rows)
+    assert any(
+        r["status"] == "not_taken" for r in rows
+    )  # no row is p1b any more: the whole principle is taken
 
 
 def test_g_every_search_string_occurs_exactly_once_in_the_file_it_targets():

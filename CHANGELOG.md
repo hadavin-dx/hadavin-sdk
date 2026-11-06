@@ -431,13 +431,13 @@
   selectors, tag characters, width forms) for idempotence, case symmetry and inserted marks; the tag cases below. Three new mutants.
 - **The tag of the interpreter, stated.** A raw text that starts with the tag of THIS interpreter (typed exactly, U+E000 included) has the
   tag stripped before the fold, so it gets the key of the text without it (an over-collision, the safe side of a DENY); the tag of another
-  version is not stripped. Nothing in this package calls `require_pinned_unidata()` (P1b wires it): a caller that does not call it gets
+  version is not stripped. In P1a nothing called `require_pinned_unidata()` (P1b wires it into `app.build`, below): a caller that does not call it gets
   tagged keys on every interpreter whose Unicode data is not the pin, for example Python 3.12. Tested.
 - **Smaller changes of the same round.** The Unicode copyright line of the generated table reads `1991-2026`, as in `THIRD-PARTY-NOTICES.md`
   (the source distribution ships that file: listing in the review evidence). The generator docstring states its regeneration limit
   (the small-capital rule reads the interpreter's character names: regenerate only on the pinned Unicode version). The two generator
   tests now run on Python 3.12 as well (the output is identical on Unicode 15.0.0 and 15.1.0).
-- **No bounded-pass loop in P1a.** `fold` is one pass. `defaults.TEXTNORM_MAX_PASSES` is read by nothing in this package; P1b reads it first
+- **No bounded-pass loop in P1a (P1b adds one for the scan keys, below).** `fold` is one pass. `defaults.TEXTNORM_MAX_PASSES` is read by nothing in this package; P1b reads it first
   (and may add a bounded loop with a fail-closed error). Idempotence is by construction and by test, not by iterating.
 - **Unicode version guard.** `require_pinned_unidata()` raises `UnidataMismatch` (not a `ValueError` or `TypeError`) when the interpreter's
   Unicode data is not `defaults.TEXTNORM_PINNED_UNIDATA`; it never warns. Pilot and prod must call it (P1b: `app.build`). On another
@@ -447,9 +447,39 @@
 - Tests: `tests/test_textnorm.py`, `_generator.py`, `_differential.py` (171-row corpus in 25 classes; rows of the next package are
   strict `xfail`), `_meta.py`, `_perf.py` (run with `-m perf`, alone) and `tests/test_third_party_notices.py`. 53 mutants in
   `tests/textnorm_mutants.py` (run with `uv run python tests/textnorm_mutants.py`).
-- Every repository that keeps a byte copy of these files re-copies the four of them in one commit and updates its pins to the
+- (P1a values, superseded by the P1b list below.) Every repository that keeps a byte copy of these files re-copies the four of them in one commit and updates its pins to the
   sha256 values below (also pinned in `tests/fixtures/textnorm_manifest.json`):
   - `src/hadavin_sdk/guard/textnorm.py`: `40a786e0413b4fbf2f7dd05e6f865970b0fb55cbc78bcf8d10793e4570329f1a`
   - `src/hadavin_sdk/guard/_confusables.py`: `907654638cb9c1aa075070ef6eb68c94a39cb8646d9524571bb4f4d5d5eaaa4d`
   - `tests/fixtures/textnorm_vectors.json`: `1a1944708f7d1737588d7b02666620ceb308b0fe4a71ce2a312c4dc29113d349`
   - `tests/fixtures/textnorm_corpus.json`: `2df53e7b83bdc8385c1b162e0bea74481c1e326eb2836a625cd9dd2407f77a79`
+
+### Added (P1b, scan keys for DENY and ALLOW; fold4; Unicode 15.1.0 data)
+- **`scan_keyset(text)`** (new public name; `textnorm.__all__` has 21 names) returns at most 8 keys (a `frozenset`, untagged) of a text, and
+  `textnorm.same_person` is now true when the identity keys are equal OR the two key sets share a key. Order: size rule; raw modifier
+  letters (Lm) removed; the tag texts T0-T3; two readings, A (look-alike table first) and B (case fold first), each run to a fixed point
+  (`defaults.TEXTNORM_MAX_PASSES`, 3; `FoldNotConverged` when it does not settle, a new error class); the class maps `z` to `3` and `l` to `i`;
+  only letters, digits and non-Lm characters kept. No escape sequence is decoded. `identity_key` is reading B, not reading A as the ticket's
+  wording says (flagged for the lead).
+- **`fold4`** (was `fold3`; the ticket named `fold2`). Changes: the Cn (unassigned) table sources are kept before the drop; dashes (Pd) and
+  U+2212 read `-`; U+2044, U+2215, U+29F8, U+FF0F, U+2571 read `/`; U+2018, U+2019, U+201B read `'`; U+201C, U+201D, U+201F read `"`; U+FFFD
+  is dropped. The golden file has new hashes (and `scan_keyset` hashes) in both Unicode sections.
+- **Unicode data swap (a P1a-file change).** `tools/data/confusables.txt` is UTS #39 15.1.0 (2023-08-11, sha256
+  `8289f833e4cf78fde56b2080dc0e42934ef5182c9c3f4dd1fbdf2bced69fd5ed`, from unicode.org Public/security/15.1.0). `tools/gen_confusables.py`
+  pins version, date and hash, checks them in that order and refuses any other file; `_confusables.py` is regenerated (507 entries; it was 677 from the earlier data file). One override is added: U+04CF (palochka) reads `l`. Licence notice and covered-files list in
+  `THIRD-PARTY-NOTICES.md`.
+- **`has_mixed_script` (BN-14).** The script of a code point now comes from `guard/_scripts.py` (751 ranges), generated by the same generator from
+  the vendored `tools/data/Scripts.txt` (Unicode 15.1.0, dated and hashed). Every script other than Common and Inherited next to Latin is flagged,
+  except the East Asian ones (Han, Hiragana, Katakana, Hangul, Bopomofo). Runic and Tamil letters are no longer missed.
+- **`app.build` refuses to start pilot or prod** on Unicode data other than the pin (`UnidataMismatch`). Python 3.12 (Unicode 15.0.0) is therefore
+  a development and test interpreter only; unguarded callers on it get tagged keys (BN-17). `tests/conftest.py` switches the guard off for tests
+  of other things on a non-pinned interpreter; the textnorm tests never do.
+- Tests: `tests/test_textnorm_scan.py` (new), `_callers.py` (an AST lint for callers that compare raw text; new), `_app.py` (new), and changes to
+  the P1a test files. 18 new mutants (71 in `tests/textnorm_mutants.py`). Golden test: about 27 s per interpreter.
+- Every repository that keeps a byte copy of these files re-copies the five of them in one commit and updates its pins to the
+  sha256 values below (also pinned in `tests/fixtures/textnorm_manifest.json`):
+  - `src/hadavin_sdk/guard/textnorm.py`: `6ed476df74ddd152380ba4ffc9478ade076be3499daaca8e0dd74bb6588ec296`
+  - `src/hadavin_sdk/guard/_confusables.py`: `506a6a02ac51ad9f60e8164ac6693dfe7f3610204b75a822ea01fa9c5274754a`
+  - `src/hadavin_sdk/guard/_scripts.py`: `5c59f80ddfeea13b7cabc6b41e09dc12a1954045c944d65f4e62cbd51b06cc67`
+  - `tests/fixtures/textnorm_vectors.json`: `1a1944708f7d1737588d7b02666620ceb308b0fe4a71ce2a312c4dc29113d349`
+  - `tests/fixtures/textnorm_corpus.json`: `16f312ad268306a3388506da01abc1e28796255ef090f8c59160404e6cc13722`
