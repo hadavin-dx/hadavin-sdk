@@ -155,3 +155,4 @@
 06:18Z | step=PR 62 sha 4ae7174 verified (65 tests pass 3.13) | done=order 40 | next=order 41 notes (bn-o41), AK-G15/16, P1a | blocked=none
 06:18Z | step=P1a PR 63 (5a1dadc) verified, reported item 95 | done=order 40 sha, P1a | next=bn-o41, AK-G15/16 | blocked=NEEDS LEAD 28
 06:22Z | step=AK-G15 rev 1 (4732f19) verified, item 96 | done=P1a, PR62 sha | next=AK-G15 round 1 review pair, bn-o41, AK-G16 | blocked=NEEDS LEAD 28, AK-G15 PL1-6,11,13,14
+06:23Z | step=order 41 build notes 683d83f verified, item 97 | done=order 41 | next=AK-G15 r1 reviews, AK-G16 | blocked=NEEDS LEAD 28,29
