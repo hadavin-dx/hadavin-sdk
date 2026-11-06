@@ -52,3 +52,4 @@
 01:22Z / 06:52 IST | step=P1 r13 correctness saved (INCOMPLETE, 1 Major, 2 Nits; not clean) | done=report saved | next=wait P1 r13 adv, P4a r10 x2, LK r10 x2 then resolve | blocked=none | context=ok
 01:24Z / 06:54 IST | step=P1 r13 adv saved (2 Major, 1 candidate, 7 Nits; not clean); P1 r13 resolve starting | done=P1 r13 both reports saved | next=resolve, rev 15 author, r14; P4a r10 x2 and LK r10 x2 running | blocked=none | context=ok
 01:28Z / 06:58 IST | step=P1 r13 resolve saved (13 fix, 0 contest; PL49-51 new); P4a r10 adv hand-back received, not yet saved | done=resolve verified by read | next=P1 rev 15 author, save P4a r10 adv, wait P4a cor and LK r10 x2 | blocked=lead: PL49-51 | context=ok
+01:29Z / 06:59 IST | step=P4a r10 adv saved (7 Major, 8 Nits; not clean); waiting P4a r10 cor and LK r10 adv+cor | done=P1 r13 resolve + P4a r10 adv saved | next=P1 rev 15 author; P4a resolve after cor | blocked=none | context=ok

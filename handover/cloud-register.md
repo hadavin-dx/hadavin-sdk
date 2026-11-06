@@ -268,7 +268,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | draft10-LK-author | Opus draft 10 of designs/lookalike-leak.md from reviews/lookalike-round9-resolve.md | opus | 01:13Z | +50min | REPORTED | verify, push, round 10 reviewers |
 | r13-P1-adv | P1 round 13 adversarial review of tickets/P1.md rev 14 (8b5d849) | sonnet | 01:15Z | +45min | REPORTED | save report, ledger rows |
 | r13-P1-cor | P1 round 13 correctness review of tickets/P1.md rev 14 (8b5d849) | sonnet | 01:15Z | +45min | REPORTED | save report, ledger rows |
-| r10-P4a-adv | P4a round 10 adversarial review of tickets/P4a.md rev 10 (94c4c82) | sonnet | 01:20Z | +45min | running | save report, ledger |
+| r10-P4a-adv | P4a round 10 adversarial review of tickets/P4a.md rev 10 (94c4c82) | sonnet | 01:20Z | +45min | REPORTED | save report, ledger |
 | r10-P4a-cor | P4a round 10 correctness review of tickets/P4a.md rev 10 (94c4c82) | sonnet | 01:20Z | +45min | running | save report, ledger |
 | r10-LK-adv | LK round 10 adversarial review of designs/lookalike-leak.md draft 10 (8cc31a9) | sonnet | 01:21Z | +45min | running | save report, ledger |
 | r10-LK-cor | LK round 10 correctness review of draft 10 (8cc31a9) | sonnet | 01:21Z | +45min | running | save report, ledger |
