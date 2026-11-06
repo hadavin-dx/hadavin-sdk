@@ -1,0 +1,48 @@
+# P8b round 3, correctness review
+Status: REPORTED (saved from the reviewer hand-back, which is model output, not user authority).
+
+R3 CORRECTNESS review of P8b revision 3 (last round). Result: 0 Blockers, 4 Majors, 5 Minors, 2 Nits.
+
+Which tree I checked: the working tree is OLDER than the commit the ticket cites (4ec3616). There is no `tools/` folder here, and `.github/workflows/ci.yml:83` is `psql --version`, not a scan step. There is no git in this tree, so I could not read 4ec3616. Every claim about `tools/scan_repo.py` and `ci.yml:83` is UNVERIFIED. The `TABLE` facts did not drift: all counts match on this tree.
+
+| id | severity | ticket line | problem | fix |
+|---|---|---|---|---|
+| R3-COR-1 | Major | 351 (t6.sh e), 120, 212 | The README paragraph is cut with `awk '/Redaction is pattern-based and bounded/{p=1} p && /^$/{exit} p'`. In `README.md` that sentence is a bullet at line 31. The next blank lines are 26 and 43, so lines 31-42 are consecutive bullets with no blank line between them. The "paragraph" is therefore the whole bullet block. A required phrase placed in any later bullet (for example the "At rest" bullet at line 32) passes. The README paragraph claims are not tied to the paragraph. The ticket says only "found by those words, not by a line number", so a builder could not know the extent. P33 still fires on main, so the control cannot catch this. | Stop the extraction at the next line that starts with `- ` or is blank: `p && /^$|^- /` and not on the first line. Or state that the paragraph is one bullet. Add a fault: required phrases moved into the next bullet must give `MISSING-PHRASE`. |
+| R3-COR-2 | Major | 229, 234, 243 | The generator command form is `uv run python -c '<body>'`. The T1 body contains single quotes (`'\n'.join`). The T6 body is multi-line and also contains single quotes (`'config default'` and others). Both break inside a single-quoted shell string. The author only ran the bodies with `python3 -I` on an archive copy, not through this wrapper. As written the builder gets a shell or Python syntax error, and rc is non-zero, so the run stops. The builder has to invent a form, and a different form is a decision left to guess. | Write the exact wrapper, for example `uv run python - <<'PY' ... PY`, or have the builder save the body to a file and run `uv run python <file>`. Run it once. |
+| R3-COR-3 | Major | 51, 222, 229, 289-290, 374, 385 | `E/` is "the folder on branch `core/cloud-handover`". Every `hdr_core` command runs "with the current folder at the core checkout on `core/P8b`" and writes `> E/<file>`. `t1.sh` and `t6.sh` need `$E` set. These are two different checkouts. No step says there are two worktrees, that `E` is an absolute path, who sets or exports it, or who commits the evidence to `core/cloud-handover`. In step 9, `awk -f E/...` and `handover/ledger.md` are relative to a third working directory (the cloud checkout). As written, `E/x` resolves to a path that does not exist in the core checkout. | Add to step 1: the two checkout paths and `export E=<absolute path>/handover/evidence/P8b`. Use `$E` in every command. State where the commit of the evidence happens. |
+| R3-COR-4 | Major | 58, 146, 39 (rev 1 changelog), 78 | Stale or false cite. The ticket cites "P8a ticket revision 1 (draft, `db09637`)" and "P8a item 8 (`P8a.md:78`)". `P8a.md` is now revision 2 (line 1). `P8a.md:78` is a table row about an Intake test (`test_invoicecheck.py:1226`). The item-8 text (plan-table correction, "P8b updates the plan table") is at `P8a.md:174`. The cite fails, and the dependency names a superseded revision. P8b's correct row text (`core_sync_check.py --core --demo --strict-pin`) is right (A7, A9 F9, `P8a.md:123`), but the cite is wrong. | Cite `P8a.md:174` (item 8) and `P8a.md:123` (R4 command). Name "P8a revision 2 or later" without a sha. |
+| R3-COR-5 | Minor | 379 | T4 says "Run in the core checkout at the step 1 head". At step 1 head (origin/main) `docs/kinds/` does not exist; the pages come from step 4. This contradicts the `hdr_core` rule that all core files carry one `base`/`head`. | Say "at the head after step 4 (and after every page fix)". |
+| R3-COR-6 | Minor | 159 | The claim "Every check except T4 and the T3 count check has a planted fault" is too strong. Checks without a fault: T6 (d) `MISSING-NO-DEFAULT` (audit and llm), both `MISSING-LINK` lines, `MISSING-OUTLINE channel` (P31 covers executor only), `NO-INDEX`, `NO-ROW`, `NO-PAGE`, `NO-README-PARAGRAPH`, and the `BAD-PROD-CHOICE` branch for a `NOT_PROD` row. | Add 3-4 faults (delete the no-default sentence on `llm.md`, delete one link, move the channel outline, delete the index), or reword the claim to name what is covered. |
+| R3-COR-7 | Minor | 212, 369 | P33 needs the root `README.md` of `origin/main`, but step 5 copies the already rewritten README into `$S`. No command says to use `git show origin/main:README.md > "$S/README.md"`. | Add that command to step 5 and name it in P33. |
+| R3-COR-8 | Minor | 298 | `comm -3` prints a page that exists but is not wanted with a leading tab, giving `SET-DIFF <TAB>name`. Only the "want but missing" case prints `SET-DIFF name` (P9 and P17 are fine). The text promises `SET-DIFF <name>` in general. | Use two `comm` calls (`-23` as `MISSING-PAGE`, `-13` as `EXTRA-PAGE`), or strip the tab with `sed`. |
+| R3-COR-9 | Minor | 406 vs 59, 392, 402 | Depends-on item 2 exempts P8b's own `R*-P8b-*` rows. The T2 awk has no exemption and sees all 29 `R*-P8b` rows now in the ledger. T2 only passes if the lead has set them FIXED-VERIFIED with an artifact. Done item 4 does cover this, but Depends-on item 2 reads as if they may stay open. | In Depends-on item 2, add "they must be closed before the final step 9 run (Done item 4)". |
+| R3-COR-10 | Minor | 144 | The T5 list has `tests/test_redact*.py` as a known mismatch, but the replacement name is "from the P2d ticket" and not named. The builder cannot prepare the lead row. | Name the P2d test file, or say "taken from the merged P2d at T5 time". |
+| R3-COR-11 | Nit | 40 | The R-numbers (R1 to R7) refer to the resolve file, which an outside reader does not have. | Add a one-line gloss at first use. |
+| R3-COR-12 | Nit | 111 | The wording "secrets `fake` and `env` are dev only, so production uses `mounted_file` or `vault`" is correct per `table.py:597-598`. The page should not call `aws_secrets_manager` a "cloud manager" default. | Optional. |
+
+Verified. I read each of these on this tree.
+- Template: all 17 fields are present and in order.
+- `table.py` lines: `TABLE:386`; secrets 387, signer 427, anchor 467, store 492, audit 502, llm 512, detector 543, channel 558; `DEFAULTS:582-589` (6 entries); `DEV_ONLY:593-602` (6 pairs); `NOT_PROD:604` (2 pairs); comment at 591; `neutral:344` (field lines 342-344); `_UNVERIFIED:380`; regex `:544`; llm_judge `:546-548`; `table.py:546-556`.
+- Counts from the code: 31 entries (7+6+4+2+2+5+3+2), 23 `_UNVERIFIED`, 10 `neutral`.
+- Defaults: the five-of-six statement is right (secrets fake, store memory and channel fake are in `DEV_ONLY`; signer none and anchor none are in `NOT_PROD`; only detector regex is neither). audit and llm have no default.
+- `config.py` lines: `Backends:62-72`, `detector` tuple `:71`, dev-only refusal `:366-369` (non-dev), not-for-production refusal `:391-392` (prod only, so pilot allows them).
+- Other code cites: `redact:862`, `redact_many:1244`, `guard/__init__.py:3` exports `redact` only, `Detector:19`, `RegexDetector:38`, `regex_detector` at `builtin.py:43`, `Executor:47`, `contract.py:15/22/33`, `tools._secret_forms:744`, `pyproject.toml:57-58`.
+- `docs/` holds 2 Slack files. There is no `src/hadavin_sdk/README.md`.
+- Test paths: `tests/contracts/` exists. `tests/warden_port/test_redaction*.py` matches 6 files. No `tests/test_redact*.py`. The other 13 paths do not exist yet.
+- `plan-v3.md`: `:26` (ledger), `:52`, `:54`, `:75-84` (7 extra kinds correct), `:112-113`, `:174-184` (the 16 paths copied correctly), `:185`, `:187`, `:188`, `:190`, `:193`. `plan-v2.md:117` is the P8b row.
+- Orders: `LEAD-ORDERS.md` lines 19, 21, 38, 44, 66, 67, 77, 78, 79, 80, 88 hold the cited content. The phrases in `phrases.txt` are in `P1.md:20`, and "only plain copies" is at `LEAD-ORDERS.md:44`. `README.md:31` holds "Redaction is pattern-based and bounded", and none of the three required phrases are in README now, so P33 holds. A6 is `amendments.md:9`.
+- Fault arithmetic: 33 faults = T2 18 + T1 3 + T6 10 + T5 1 + T3 1. The 13 T1/T6 faults, step 5 list and ledger-fault list agree.
+- The awk was read line by line against the ledger header at `ledger.md:3` (`id|package|severity|summary|status|artifact|commit`). `$4`, `$6`, `$7` and `NF=9` are correct. Expected outputs of P1-P8, P12-P16, P21-P25 match its printf formats. No ledger line has a pipe without a leading pipe. 5-cell rows are now 272 versus 268 at ea6402f, which fits the stated growth. 1717 lines start with `|` (header + separator + 1715 rows).
+- `t1.sh` and `t6.sh` logic matches P9, P10, P17-P19, P26-P32. P10's three output lines are right for `secrets env`.
+
+Not checked, UNVERIFIED:
+- `tools/scan_repo.py` and `ci.yml:83` at 4ec3616 (absent on this tree).
+- `git ls-tree 4ec3616` claims.
+- Behaviour of the awk, `sh`, `hdr_core` and `hdr_ledger` when run (I did not run them).
+- `ledger_check.py`, `ledger_lint.py` and P20.
+- `inventory-A.md:10`.
+- `egm:egm-drift-report`.
+- Whether the scanner or CI accepts the new pages.
+- Wording of the merged P1, P2d and P5c tickets.
+- CHANGELOG line format.
+- The `reviews/` and `evidence/` folders (not read, by instruction).
