@@ -29,11 +29,11 @@ from hadavin_sdk.store.migration_numbers import (
     MigrationNumberError,
     check_ledger,
     gone_message,
+    lex,
     list_migration_files,
     order_problems,
     read_files,
     refused_statements,
-    statement_text,
 )
 from hadavin_sdk.store.postgres import connect
 
@@ -139,7 +139,7 @@ def _scan(
     unread: list[str] = []
     for path in paths:
         raw = texts[path] if texts is not None else path.read_text(encoding="utf-8")
-        text, lexer_problem = statement_text(raw, keep_quoted=True)
+        text, lexer_problem = lex(raw, keep_quoted=True)
         if lexer_problem:
             unread.append(f"{path.name}: {lexer_problem}")
         unread += [
