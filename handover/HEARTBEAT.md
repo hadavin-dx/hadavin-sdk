@@ -326,3 +326,5 @@ P3a-2 | PR 73 ready (659f9e3), stacked on PR 68 | 0 | PR 68 (P3a-1 fix1) merge; 
 2026-11-06T12:50:13Z | package | stage | builders running | blocked on
 P3a-1 | fix1 pushed 91a439d (PR 68); waiting lead review | 0 | recipe-generator deviation decision
 P3a-2 | merging new P3a base into PR 73 | 1 | -
+2026-11-06T12:55:16Z | package | stage | builders running | blocked on
+P0t | fix4 pushed e55b34c (PR 67); waiting lead review | 0 | lead: stage_mutants CI step, is_prod decision

@@ -417,3 +417,6 @@ Options: PL24 (a) decode value-less units again each loop / (b) only units holdi
 
 ## 2026-11-06T12:16:46Z P8c rev 2 freeze: items 5, 6, 8 applied as recommended; item 7 left to lead
 Options per item in tickets/P8c.md items 5-8. Confidence medium-high; reversible (frozen text, build notes). Answered by user: no.
+
+## 2026-11-06T12:55:16Z P0t fix4: is_prod semantics
+What: accepted builder choice is_prod = true for prod and any non-stage value. Options: literal (environment == prod) vs strict. Why: order 85 requires strictest rules for non-stage values. Confidence medium; reversible (one line); answered-by-user: no (raised in q197).

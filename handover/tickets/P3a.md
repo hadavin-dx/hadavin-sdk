@@ -249,3 +249,5 @@ Added 2026-11-06 02:50 UTC (08:20 IST) by the build-start resolve (`handover/rev
 | SQL check oracle in tests | check ask-your-data SQL | 4 free library | pglast 8.7, GPL-3.0-or-later, test-only, owner decision 2026-11-01 | BN-19, BN-20; `reviews/licence-scan-1.md` | KEEP-CODE (2026-11-06; test-only, out of src) |
 
 BN-stored-stage (order 78 item 6, 2026-11-06; append-only): "The first change that stores a stage must have a test that maps an old stored dev to demo on read." (from P0t PR 67; display only, never a guard decision.)
+
+BN (P0t fix4): if this change stores a stage anywhere (a column, a row, an audit field, a file), it must read an old stored value `dev` as `demo` on read, for display only and never for a guard decision, and its tests must go through that real read site: a stored `dev` is shown as `demo`, and a guard that is given the stored text still treats it as not a stage. Nothing stores a stage today (P0t deleted the unused reader).
