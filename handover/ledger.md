@@ -1380,3 +1380,7 @@
 | BL-core-P1-r11-cor-COR-R11-3 | P1 | MAJOR | see report | OPEN | reviews/P1-round11-correctness.md | 0cb3f69 |
 | BL-core-P1-r11-cor-COR-R11-4 | P1 | MAJOR | see report | OPEN | reviews/P1-round11-correctness.md | 0cb3f69 |
 | BL-core-P1-r11-cor-COR-R11-5 | P1 | MAJOR | see report | OPEN | reviews/P1-round11-correctness.md | 0cb3f69 |
+| BL-core-P1-r11-adv-ADV-R11-1 | P1 | MAJOR | see report | OPEN | reviews/P1-round11-adversarial.md | 0cb3f69 |
+| BL-core-P1-r11-adv-ADV-R11-2 | P1 | MAJOR | see report | OPEN | reviews/P1-round11-adversarial.md | 0cb3f69 |
+| BL-core-P1-r11-adv-ADV-R11-3 | P1 | MAJOR | see report | OPEN | reviews/P1-round11-adversarial.md | 0cb3f69 |
+| BL-core-P1-r11-adv-ADV-R11-4 | P1 | MAJOR | see report | OPEN | reviews/P1-round11-adversarial.md | 0cb3f69 |
