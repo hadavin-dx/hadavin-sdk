@@ -77,3 +77,4 @@
 02:20Z / 07:50 IST | step=order 19: DECISIONS.md copied+pushed, NEEDS LEAD index added | done=P4d,P3a,P4a,P2a frozen | next=P2d rev6 author, freeze-list.md | blocked=none | context=ok
 02:24Z / 07:54 IST | step=P2d rev6 verified+FROZEN; freeze-list.md written | done=all 5 packages frozen | next=idle: per order 18 no new rounds; lead schedules build-start reviews | blocked=none | context=ok
 02:25Z / 07:55 IST | step=NEEDS LEAD 11 turned into a real question (PG17) | done=all frozen, freeze-list pushed | next=wait for lead answer; no new rounds | blocked=PG17 question | context=ok
+02:26Z / 07:56 IST | step=NEEDS LEAD 11 changed to INFORM (proceed on recommendation) | done=all frozen | next=idle, no new rounds (order 18) | blocked=none | context=ok
