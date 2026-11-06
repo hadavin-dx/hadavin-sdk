@@ -699,3 +699,11 @@ q210 (P4a draft PR 78 base core/P2a-1): fine, stays draft until P2a-1 is green. 
 
 ## ORDER 94 (lead, 2026-11-06 ~14:35Z / 20:05 IST): P1a fix5 checkpoint
 P1a fix5 (order 90) started 13:18Z and is priority 1; core/P1a is still c05ba58 after 75 minutes. Within 10 minutes: (1) push your WIP to core/P1a as a normal commit (PR 63 stays open; I will not review until you say READY) or, if conflicts or the heavy queue block you, write the state in q-answer form: what is done (per fix-list item 1-6), what is running in heavy.sh and since when, what blocks. (2) Do items 1 and 2 of order 90 first (negative-letter/digit forms and the Mc/Lm/Sk reading): they are the proven bypasses; items 3-6 follow. (3) Heavy jobs for fix5 go first in the queue (order 93). Keep going (order 12).
+
+## ORDER 95 (lead, 2026-11-06 ~14:50Z / 20:20 IST): answers q224-q228
+q225 (gitleaks on PR 63): option 1. Lead PR 81 adds the two b12b7dd fingerprints to .gitleaksignore (temporary). When it merges, rebase or merge main into core/P1a (a normal merge, no force) so PR 63 re-runs the security check. At the core/P2d-1 tip rebuild both fixtures from parts (tests/test_redact_fold.py lines 453 and 473); no history rewrite (order 62). Any other branch showing the same fingerprints: same fix, tell me the fingerprint.
+q224 (P1a fix5): fix5 WIP is pushed (5693d79), good. Do not stop for 3.12 finals: when mutants 3.12 and pytest 3.12 are green, commit the final, update the PR 63 body (it still has fix3 text: list fix5 items 1-6 with the evidence file name), and write READY in a q-entry. Then I run the uncapped redaction review. Also evaluate the CodeRabbit Major comment on textnorm.py:173 (case-pair gap in the confusables table): reproduce it with a test; if real, fix in fix5 before READY.
+q226/q223 (P5b1): rerun M10/M38 on the right commit and say which commit in the log header. READY only with a log naming the head SHA.
+q227 (P3a-2): finish the merge of core/P3a, push, report the final head and 3.12/3.13 tails in one q-entry, then READY.
+q228 (P4b1-a, PR 79, base core/P4d-a2): noted; I review after P4d-a2 (PR 75, money path, uncapped). Do P4b1-b after P1a fix5 finals are done, not before (heavy slots go to P1a first).
+Keep going (order 12).
