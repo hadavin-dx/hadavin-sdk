@@ -13,6 +13,7 @@ from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.models import Plan
 from hadavin_sdk.store import migrate as mig
 from tests.contracts.kinds.store_postgres import pg_schema
+from tests.stop_state_helpers import RESET_GROUP
 
 FIXTURE = Path(__file__).parent / "fixtures" / "plan_v1.json"
 
@@ -112,7 +113,7 @@ def test_migrate_refuses_an_inconsistent_ledger_before_connecting(monkeypatch, t
 
     monkeypatch.setattr(mig, "connect", no_db)
     with pytest.raises(ConfigError, match="brand_new"):
-        mig.migrate("postgresql://unused")
+        mig.migrate("postgresql://unused", reset_role=RESET_GROUP)
 
 
 def test_migrate_refuses_one_role_for_runtime_and_portal():
@@ -140,7 +141,17 @@ def test_cli_migrate_passes_the_portal_role(cfg_dir, monkeypatch):
         return []
 
     monkeypatch.setattr("hadavin_sdk.store.migrate.migrate", fake)
-    args = ["--config", str(cfg_dir), "migrate", "--runtime-role", "rt", "--portal-role", "pt"]
+    args = [
+        "--config",
+        str(cfg_dir),
+        "migrate",
+        "--runtime-role",
+        "rt",
+        "--portal-role",
+        "pt",
+        "--reset-role",
+        "grp",
+    ]
     assert cli.main(args) == 0
     assert (seen["runtime_role"], seen["portal_role"]) == ("rt", "pt")
 
@@ -215,23 +226,24 @@ def test_the_runtime_role_holds_exactly_the_merged_map(roles):
     import psycopg
 
     dsn, runtime, _ = roles
-    mig.migrate(dsn, runtime_role=runtime)
+    mig.migrate(dsn, runtime_role=runtime, reset_role=RESET_GROUP)
     every = ("SELECT", "INSERT", "UPDATE", "DELETE", "TRUNCATE")
     with psycopg.connect(dsn, autocommit=True) as db:
         for name, grant in mig.GRANTS.items():
             if grant.kind == "sequence":
-                assert _seq_can(db, runtime, name, "USAGE"), name
+                # a sequence with an empty runtime grant belongs to a table only a SECURITY DEFINER function writes
+                assert _seq_can(db, runtime, name, "USAGE") == bool(grant.runtime), name
                 assert not _seq_can(db, runtime, name, "UPDATE"), name
                 continue
             held = {p for p in every if _can(db, runtime, name, p)}
-            assert held == set(grant.runtime.split(", ")), name
+            assert held == set(filter(None, grant.runtime.split(", "))), name
 
 
 def test_the_runtime_role_cannot_update_or_delete_the_audit_log(roles):
     import psycopg
 
     dsn, runtime, _ = roles
-    mig.migrate(dsn, runtime_role=runtime)
+    mig.migrate(dsn, runtime_role=runtime, reset_role=RESET_GROUP)
     from psycopg.conninfo import make_conninfo
 
     with psycopg.connect(make_conninfo(dsn, user=runtime), autocommit=True) as db:
@@ -250,7 +262,7 @@ def test_the_portal_role_reads_only_the_portal_relations(roles):
     import psycopg
 
     dsn, runtime, portal = roles
-    mig.migrate(dsn, runtime_role=runtime, portal_role=portal)
+    mig.migrate(dsn, runtime_role=runtime, portal_role=portal, reset_role=RESET_GROUP)
     with psycopg.connect(dsn, autocommit=True) as db:
         for name, grant in mig.GRANTS.items():
             if grant.kind == "sequence":
@@ -277,13 +289,13 @@ def test_running_migrate_again_resets_a_portal_role_to_the_map(roles):
     from psycopg import sql
 
     dsn, _, portal = roles
-    mig.migrate(dsn, portal_role=portal)
+    mig.migrate(dsn, portal_role=portal, reset_role=RESET_GROUP)
     with psycopg.connect(dsn, autocommit=True) as db:
         db.execute(
             sql.SQL("GRANT UPDATE ON runs, kill_switch TO {}").format(sql.Identifier(portal))
         )
         assert _can(db, portal, "kill_switch", "UPDATE")
-    assert mig.migrate(dsn, portal_role=portal) == []
+    assert mig.migrate(dsn, portal_role=portal, reset_role=RESET_GROUP) == []
     with psycopg.connect(dsn, autocommit=True) as db:
         assert not _can(db, portal, "runs", "UPDATE")
         assert not _can(db, portal, "kill_switch", "UPDATE")
@@ -381,7 +393,7 @@ def test_migrate_refuses_roles_that_are_members_of_each_other(roles):
             sql.SQL("GRANT {} TO {}").format(sql.Identifier(runtime), sql.Identifier(portal))
         )
     with pytest.raises(ConfigError, match="members of each other"):
-        mig.migrate(dsn, runtime_role=runtime, portal_role=portal)
+        mig.migrate(dsn, runtime_role=runtime, portal_role=portal, reset_role=RESET_GROUP)
 
 
 def test_migrate_refuses_when_an_applied_migration_has_no_file(roles, monkeypatch):
@@ -391,7 +403,7 @@ def test_migrate_refuses_when_an_applied_migration_has_no_file(roles, monkeypatc
     # The grant map still names the removed file's tables; only the applied-without-file refusal is under test.
     monkeypatch.setattr(mig, "check_grants", lambda paths: [])
     with pytest.raises(ConfigError, match="no file in this release"):
-        mig.migrate(dsn)
+        mig.migrate(dsn, reset_role=RESET_GROUP)
 
 
 # --- CodeRabbit round 1 ------------------------------------------------------------------------------
@@ -438,4 +450,4 @@ def test_migrate_refuses_a_portal_role_that_inherits_write_rights(roles):
         db.execute(sql.SQL("GRANT UPDATE, DELETE ON runs TO {}").format(sql.Identifier(other)))
         db.execute(sql.SQL("GRANT {} TO {}").format(sql.Identifier(other), sql.Identifier(portal)))
     with pytest.raises(ConfigError, match="runs:UPDATE"):
-        mig.migrate(dsn, portal_role=portal)
+        mig.migrate(dsn, portal_role=portal, reset_role=RESET_GROUP)

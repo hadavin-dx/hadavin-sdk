@@ -15,6 +15,7 @@ from hadavin_sdk.registry import load_registry
 from hadavin_sdk.runtime.agent_loop import Hooks, Runtime, Unqualified
 from hadavin_sdk.store import MemoryStore
 from tests.conftest import qualify
+from tests.stop_state_helpers import expect, operator_limits
 
 S = RunState
 
@@ -25,7 +26,7 @@ def build(cfg_dir, hooks=None, qualified=True):
     if qualified:
         qualify(reg)
     store, audit = MemoryStore(), LocalDirSink(cfg.backends.audit.dir)
-    limits = Limits(store, audit, reg)
+    limits = Limits(store, audit, reg, environment="dev")
     rt = Runtime(
         reg,
         store,
@@ -121,13 +122,19 @@ def test_budget_already_spent_stops_before_the_model(cfg_dir):
 
 def test_kill_switch_stops_and_reset_is_audited(cfg_dir):
     rt, cfg = build(cfg_dir)
-    rt.limits.stop(by="user:a")
+    op = operator_limits(rt.limits)
+    op.stop(by="user:a")
     run = rt.handle("test-agent", "svc:test-agent", _doc(cfg, "create.txt"))
     assert (run.state, run.reason_code) == (S.STOPPED, "kill_switch")
-    rt.limits.reset(by="user:a")
+    op.reset(by="user:a", **expect(op))
     assert rt.limits.blocked("test-agent") == []
+    label = op.label("user:a")
     ops = [(e.domain, e.operation, e.principal) for e in rt.audit.events("-")]
-    assert ops == [("limits", "stop", "user:a"), ("limits", "reset", "user:a")]
+    assert ops == [
+        ("limits", "stop", label),
+        ("limits", "reset_attempted", label),
+        ("limits", "reset", label),
+    ]
 
 
 def test_every_step_audited_under_the_run_id(cfg_dir):

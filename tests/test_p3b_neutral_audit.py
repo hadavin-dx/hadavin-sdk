@@ -40,6 +40,7 @@ from tests.conftest import make_cfg
 from tests.contracts.http_fake import azure_container, azure_key_clients, gcp_kms_client, gcs_bucket
 from tests.contracts.kinds.audit_neutral import AZURE_KEY, GCP_KEY, transit_key
 from tests.contracts.kinds.secrets_neutral import vault_target
+from tests.stop_state_helpers import RESET_GROUP
 
 SRC = Path(__file__).resolve().parents[1] / "src" / "hadavin_sdk"
 
@@ -295,7 +296,9 @@ def test_rds_iam_without_the_aws_extra_names_the_pip_install(monkeypatch):
         postgres.password_source(True, "region-x")
 
 
-def test_connect_signs_in_through_the_iam_helper_for_store_and_migrate(monkeypatch, tmp_path):
+def test_connect_signs_in_through_the_iam_helper_for_store_and_migrate(
+    monkeypatch, tmp_path, reset_role=RESET_GROUP
+):
     """Every caller (the store's build, `migrate`, the CLI's migrate) goes through `postgres.connect`, which
     asks the helper for the token: no caller imports boto3."""
     seen = {}
@@ -321,7 +324,9 @@ def test_connect_signs_in_through_the_iam_helper_for_store_and_migrate(monkeypat
 
     seen.clear()
     with pytest.raises(Stop):
-        migrate_mod.migrate(dsn, iam_auth=True, region="region-x", sslrootcert=str(ca))
+        migrate_mod.migrate(
+            dsn, iam_auth=True, region="region-x", sslrootcert=str(ca), reset_role=RESET_GROUP
+        )
     assert seen["password"] == "tok:region-x:rt"  # noqa: S105 - the fake helper's output
 
 

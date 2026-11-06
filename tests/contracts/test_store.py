@@ -203,8 +203,10 @@ def test_dead_letters_and_kill_switch(store):
     assert [d.reason for d in store.list_dead_letters("run-x")] == ["r"]
     assert store.list_dead_letters("run-y") == []
     assert store.get_kill_switch().on is False
-    store.set_kill_switch(KillSwitch(on=True, by="user:a"))
-    assert (store.get_kill_switch().on, store.get_kill_switch().by) == (True, "user:a")
+    label = "id:k1:" + "a" * 32
+    state = store.set_kill_switch(KillSwitch(on=True, by=label))
+    assert (state.on, state.by, state.open_requests) == (True, label, 1)
+    assert (store.get_kill_switch().on, store.get_kill_switch().by) == (True, label)
 
 
 def test_two_threads_racing_one_cas_exactly_one_wins(store):
@@ -459,3 +461,24 @@ def test_store_pair_gives_two_handles_on_the_same_data(store_pair):
         assert a._inner is b._inner
     else:
         assert a._db is not b._db  # Postgres only: MemoryStore has no `_db`
+
+
+def test_reset_clears_exactly_the_stops_the_pair_names(store):
+    """A reset names (version, open count); a stop that lands after the status was read makes it stale."""
+    from hadavin_sdk.store.protocol import StaleCount
+
+    a, b, who = "id:k1:" + "a" * 32, "id:k1:" + "b" * 32, "id:k1:" + "e" * 32
+    first = store.set_kill_switch(KillSwitch(on=True, by=a))
+    store.set_kill_switch(KillSwitch(on=True, by=b))
+    with pytest.raises(StaleCount):
+        store.reset_kill_switch(
+            who, first.version, first.open_requests
+        )  # read before the second stop
+    assert store.get_kill_switch().on is True
+    now_state = store.get_kill_switch()
+    cleared = store.reset_kill_switch(who, now_state.version, now_state.open_requests)
+    assert (cleared.on, cleared.open_requests, cleared.version) == (False, 0, now_state.version + 1)
+    with pytest.raises(
+        StaleCount
+    ):  # nothing is stopped: a second reset is stale, not a silent success
+        store.reset_kill_switch(who, cleared.version, 0)

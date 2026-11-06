@@ -35,6 +35,7 @@ def test_the_app_deletes_evidence_only_through_the_purge_identity(tmp_path):
                 "pg-dsn": dsn,
                 "pg-purge": PURGE_DSN[dsn],
                 "restored-key": "r" * 16,
+                "label-key": "l" * 32,
             }
         )
         app = app_mod.build(

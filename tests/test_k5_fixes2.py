@@ -20,6 +20,7 @@ from hadavin_sdk.models import RunState as S
 from hadavin_sdk.registry import load_registry
 from hadavin_sdk.store import migrate as mig
 from tests.k5_support import BigNormalises, ScriptLLM, build_runtime, handle, k5_cfg
+from tests.stop_state_helpers import RESET_GROUP
 
 BS = chr(92)
 
@@ -263,12 +264,14 @@ def _folder(tmp_path, names):
     folder = tmp_path / "migrations"
     folder.mkdir(parents=True)
     for n in names:
-        if n.endswith("_spend_reservations.sql"):
-            real = (
-                mig.MIGRATIONS / "0006_spend_reservations.sql"
-            )  # P4d-b's table, renumbered like the rest
-        else:
-            real = mig.MIGRATIONS / (n if n[:4] <= "0004" else "0005_evidence.sql")
+        real_name = {
+            "0006_evidence.sql": "0005_evidence.sql",
+            "0007_spend_reservations.sql": "0006_spend_reservations.sql",
+            "0008_kill_switch_guard.sql": "0007_kill_switch_guard.sql",
+        }.get(
+            n, n
+        )  # the renumbered names -> the real files (P4d-b's table and the stop state, renumbered)
+        real = mig.MIGRATIONS / ("0005_evidence.sql" if n[:4] == "0005" else real_name)
         body = "-- empty" if n == "0005_reservations.sql" else real.read_text(encoding="utf-8")
         (folder / n).write_text(body, encoding="utf-8")
     return mig._migration_files(folder)
@@ -280,6 +283,7 @@ RENAMED = [
     "0005_reservations.sql",
     "0006_evidence.sql",
     "0007_spend_reservations.sql",
+    "0008_kill_switch_guard.sql",
 ]
 
 
@@ -309,7 +313,7 @@ def test_a_database_that_applied_the_old_name_is_refused_and_nothing_is_applied(
             db.execute("INSERT INTO schema_migrations (version) VALUES ('0005_evidence')")
         monkeypatch.setattr(mig, "_migration_files", lambda: files)
         with pytest.raises(ConfigError, match="0005_evidence") as err:
-            mig.migrate(dsn)
+            mig.migrate(dsn, reset_role=RESET_GROUP)
         assert "by hand" in str(err.value)  # the repair path is in the message
         assert "0006_evidence" not in str(err.value)  # generic: no file name of ours is hard-coded
         with psycopg.connect(dsn) as db:

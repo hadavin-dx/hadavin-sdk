@@ -28,6 +28,7 @@ pytest.importorskip("psycopg", reason="needs hadavin-sdk[pg]")
 
 from hadavin_sdk.store.migrate import MIGRATIONS, migrate
 from tests.contracts.kinds.store_postgres import pg_schema
+from tests.stop_state_helpers import RESET_GROUP
 
 TABLES = {
     "runs": Run,
@@ -100,7 +101,7 @@ def test_migrate_does_not_need_a_valid_registry(cfg_dir, monkeypatch, capsys):
     (cfg_dir / "agents.yaml").write_text("- not: an agent\n", encoding="utf-8")
     monkeypatch.delenv("HADAVIN_MIGRATE_DSN", raising=False)
     assert (
-        cli.main(["--config", str(cfg_dir), "migrate"]) == 2
+        cli.main(["--config", str(cfg_dir), "migrate", "--reset-role", "grp"]) == 2
     )  # reaches the DSN check, not the registry
     assert "HADAVIN_MIGRATE_DSN" in capsys.readouterr().err
 
@@ -108,7 +109,7 @@ def test_migrate_does_not_need_a_valid_registry(cfg_dir, monkeypatch, capsys):
 def test_migrate_needs_the_migration_dsn(cfg_dir, monkeypatch, capsys):
     _use_postgres(cfg_dir)
     monkeypatch.delenv("HADAVIN_MIGRATE_DSN", raising=False)
-    assert cli.main(["--config", str(cfg_dir), "migrate"]) == 2
+    assert cli.main(["--config", str(cfg_dir), "migrate", "--reset-role", "grp"]) == 2
     assert "HADAVIN_MIGRATE_DSN" in capsys.readouterr().err
 
 
@@ -160,7 +161,7 @@ def test_two_concurrent_migrate_runs_apply_once(fresh_dsn):
     applied = []
 
     def run():
-        applied.append(migrate(fresh_dsn))
+        applied.append(migrate(fresh_dsn, reset_role=RESET_GROUP))
 
     threads = [threading.Thread(target=run) for _ in range(2)]
     for t in threads:
@@ -169,7 +170,7 @@ def test_two_concurrent_migrate_runs_apply_once(fresh_dsn):
         t.join()
     every = sorted(p.stem for p in MIGRATIONS.glob("*.sql"))  # new migrations never break this test
     assert sorted(applied, key=len) == [[], every]
-    assert migrate(fresh_dsn) == []
+    assert migrate(fresh_dsn, reset_role=RESET_GROUP) == []
 
 
 def test_runtime_role_can_write_but_not_delete(fresh_dsn):
@@ -180,7 +181,7 @@ def test_runtime_role_can_write_but_not_delete(fresh_dsn):
     with psycopg.connect(fresh_dsn, autocommit=True) as db:
         db.execute(sql.SQL("CREATE ROLE {}").format(sql.Identifier(role)))
     try:
-        migrate(fresh_dsn, runtime_role=role)
+        migrate(fresh_dsn, runtime_role=role, reset_role=RESET_GROUP)
         with psycopg.connect(fresh_dsn, autocommit=True) as db:
 
             def can(priv):
@@ -211,9 +212,11 @@ def test_cli_kill_switch_reaches_every_process(cfg_dir, monkeypatch, capsys):
         other = make(
             "store", load_config(cfg_dir).backends.store, FakeSecretProvider({"pg-dsn": dsn})
         )
-        assert (other.get_kill_switch().on, other.get_kill_switch().by) == (True, "user:a")
-        assert cli.main(["--config", str(cfg_dir), "limits", "reset", "--by", "user:a"]) == 0
-        assert other.get_kill_switch().on is False
+        state = other.get_kill_switch()
+        assert (state.on, state.open_requests) == (True, 1)
+        assert (
+            state.by.startswith("id:") and "user:a" not in state.by
+        )  # a keyed label, never the typed name
         other._db.close()
 
 
@@ -289,7 +292,7 @@ def test_audit_checkpoints_migration_adds_alg_and_label_and_old_rows_get_default
         for path in old:
             db.execute("INSERT INTO schema_migrations (version) VALUES (%s)", (path.stem,))
         db.execute("INSERT INTO audit_checkpoints (seq, hash, signature) VALUES (1, 'h', 's')")
-    assert migrate(fresh_dsn) == [
+    assert migrate(fresh_dsn, reset_role=RESET_GROUP) == [
         p.stem for p in sorted(MIGRATIONS.glob("*.sql")) if p.stem >= "0004"
     ]
     with psycopg.connect(fresh_dsn, autocommit=True) as db:

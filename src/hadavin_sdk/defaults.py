@@ -135,3 +135,19 @@ MAX_USD = 10**12  # the most one amount of money (one booking, one cost, one act
 # The most one model price may be, in USD per million tokens. 10**6 is one dollar per token, far above any list price
 # known to the author; it is not read from a provider's price list (UNVERIFIED), so a lead may lower it.
 MAX_ROUTE_PRICE_USD_PER_MTOK = 10**6
+
+# --- kill switch (stop state): the stop request table, the migration waits and the role-level settings -------------
+KILL_SWITCH_MAX_OPEN_STOP_REQUESTS = (
+    1000  # past this many open requests a stop adds no row; the switch reads ON
+)
+KILL_SWITCH_MIGRATE_LOCK_TIMEOUT_MS = (
+    2000  # a migration that waits longer for a table lock aborts (a stop waits less)
+)
+KILL_SWITCH_MIGRATE_ADVISORY_WAIT_MS = 60000  # the wait for the migration lock itself
+KILL_SWITCH_ROLE_STATEMENT_TIMEOUT_MS = (
+    30000  # role defaults for honest code only; a session can undo them
+)
+KILL_SWITCH_ROLE_LOCK_TIMEOUT_MS = 10000
+KILL_SWITCH_ROLE_IDLE_IN_TRANSACTION_TIMEOUT_MS = 60000
+KILL_SWITCH_RUNTIME_CONNECTION_LIMIT = 20
+KILL_SWITCH_STOP_CONNECTION_LIMIT = 2

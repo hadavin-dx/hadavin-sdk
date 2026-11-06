@@ -19,6 +19,8 @@ from hadavin_sdk.store.protocol import (
 from tests.contracts.store_support import utc_today
 
 D = Decimal
+STOP_LABEL = "id:k1:" + "d" * 32
+RESET_LABEL = "id:k1:" + "e" * 32
 _ids = itertools.count()
 
 
@@ -199,8 +201,8 @@ def test_the_kill_switch_refuses_a_new_reserve_and_a_replay_but_not_settle_or_re
     agent = "rs-kill"
     a = _reserve(store, agent, "1")
     b = _reserve(store, agent, "1")
+    stopped = store.set_kill_switch(KillSwitch(on=True, by=STOP_LABEL))
     try:
-        store.set_kill_switch(KillSwitch(on=True, by="user:t"))
         with pytest.raises(KillSwitchOn):
             _reserve(store, agent, "1")
         with pytest.raises(KillSwitchOn):
@@ -208,7 +210,7 @@ def test_the_kill_switch_refuses_a_new_reserve_and_a_replay_but_not_settle_or_re
         assert store.settle_spend(a.reservation.reservation_id, D("0.5")).applied is True
         assert store.release_spend(b.reservation.reservation_id).applied is True
     finally:
-        store.set_kill_switch(KillSwitch(on=False, by="user:t"))
+        store.reset_kill_switch(RESET_LABEL, stopped.version, stopped.open_requests)
 
 
 def test_the_run_must_exist_and_belong_to_the_agent(store):

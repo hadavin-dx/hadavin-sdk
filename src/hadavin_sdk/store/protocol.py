@@ -22,6 +22,7 @@ from hadavin_sdk.models import (
     Run,
     RunState,
     SpendReservation,
+    StopState,
     TickState,
     ToolCallRecord,
 )
@@ -174,6 +175,27 @@ def is_connectivity_error(exc: BaseException) -> bool:
     )
 
 
+class ResetRefused(RuntimeError):
+    """The database refused a reset: the caller is not in the reset group or has no registered label (HD001)."""
+
+
+class StaleCount(RuntimeError):
+    """The version or the open-request count changed since the operator read it, or there was nothing to clear
+    (HD003)."""
+
+
+class LabelRefused(ValueError):
+    """A name that is not a keyed label (HD004). Raised by the memory store too."""
+
+
+class SwitchRowMissing(RuntimeError):
+    """The kill_switch row is missing (HD005): a database administrator must re-seed it."""
+
+
+class NotMigrated(RuntimeError):
+    """The stop or reset function does not exist (SQLSTATE 42883): the database is not migrated."""
+
+
 class StoreUnavailable(ConfigError):
     """The store cannot be reached (`tick` exits 4; nothing was changed)."""
 
@@ -288,11 +310,20 @@ class Store(Protocol):
         """Open rows older than `older_than_s` (30 to 10**7) become `expired` (no counter moves)."""
         ...
 
-    def get_kill_switch(self) -> KillSwitch:
+    def get_kill_switch(self) -> StopState:
         """A missing or unreadable switch row reads as ON (fail closed)."""
         ...
 
-    def set_kill_switch(self, ks: KillSwitch) -> None: ...
+    def set_kill_switch(self, ks: KillSwitch) -> StopState:
+        """A STOP: only `ks.on` true is accepted (anything else raises ValueError) and `ks.by` must be a keyed
+        label (`LabelRefused`). Each call is its own open stop request; nothing is overwritten."""
+        ...
+
+    def reset_kill_switch(self, by: str, expected_version: int, expected_open: int) -> StopState:
+        """Clear exactly the stops that the pair (version, open count) named when the operator read it.
+        `StaleCount` when either changed or there was nothing to clear."""
+        ...
+
     def get_tick_state(self, step: str) -> TickState | None: ...
     def save_tick_state(self, state: TickState) -> None: ...
 

@@ -12,9 +12,13 @@ from hadavin_sdk.actions.secrets import FakeSecretProvider
 from hadavin_sdk.backends.factory import make
 from hadavin_sdk.backends.table import PostgresSettings
 from tests.contracts.kinds import kind, require_backend
+from tests.stop_state_helpers import RESET_GROUP
 
 # runtime DSN -> the DSN of the purge role of the same schema (only for `pg_schema(runtime=True)`)
 PURGE_DSN: dict[str, str] = {}
+# runtime DSN -> the DSN of a registered member of the reset group of the same schema
+RESET_DSN: dict[str, str] = {}
+RESET_LABEL = "id:k1:" + "e" * 32
 # runtime DSN -> the DSN of the owner login of the same schema (what `connect_admin` uses for a runtime DSN)
 OWNER_DSN: dict[str, str] = {}
 
@@ -36,16 +40,29 @@ def pg_schema(migrated=True, runtime=False):
         db.execute(sql.SQL("CREATE SCHEMA {}").format(sql.Identifier(schema)))
     scoped = make_conninfo(dsn, options=f"-c search_path={schema}")
     if migrated:
-        migrate(scoped)
-    role = purge = None
+        migrate(scoped, reset_role=RESET_GROUP)
+    role = purge = resetter = None
     try:
         if runtime:
-            role, purge = "rt_" + uuid.uuid4().hex[:12], "pu_" + uuid.uuid4().hex[:12]
+            role, purge, resetter = (p + uuid.uuid4().hex[:12] for p in ("rt_", "pu_", "rs_"))
             with psycopg.connect(dsn, autocommit=True) as db:
-                for r in (role, purge):
+                for r in (role, purge, resetter):
                     db.execute(sql.SQL("CREATE ROLE {} LOGIN").format(sql.Identifier(r)))
-            migrate(scoped, runtime_role=role, purge_role=purge)
+                db.execute(
+                    sql.SQL("GRANT {} TO {}").format(
+                        sql.Identifier(RESET_GROUP), sql.Identifier(resetter)
+                    )
+                )
+            migrate(scoped, runtime_role=role, purge_role=purge, reset_role=RESET_GROUP)
             runtime_dsn = make_conninfo(scoped, user=role)
+            with psycopg.connect(
+                scoped, autocommit=True
+            ) as db:  # a person's login, registered with a label
+                db.execute(
+                    "INSERT INTO kill_switch_login_labels (login_name, label) VALUES (%s, %s)",
+                    (resetter, RESET_LABEL),
+                )
+            RESET_DSN[runtime_dsn] = make_conninfo(scoped, user=resetter)
             PURGE_DSN[runtime_dsn] = make_conninfo(scoped, user=purge)
             OWNER_DSN[runtime_dsn] = scoped
             yield runtime_dsn
@@ -53,7 +70,7 @@ def pg_schema(migrated=True, runtime=False):
             yield scoped
     finally:
         with psycopg.connect(dsn, autocommit=True) as db:
-            for r in (role, purge):
+            for r in (role, purge, resetter):
                 if r:
                     db.execute(sql.SQL("DROP OWNED BY {}").format(sql.Identifier(r)))
                     db.execute(sql.SQL("DROP ROLE {}").format(sql.Identifier(r)))
@@ -64,8 +81,8 @@ class _SplitStore:
     """The runtime role for everything, the purge role for the two purges: as `app.build` wires them
     (`purge_dsn_secret_name`), so the suite runs with each identity holding only its own rights."""
 
-    def __init__(self, main, purge, runtime_dsn):
-        self._main, self._purge, self.runtime_dsn = main, purge, runtime_dsn
+    def __init__(self, main, purge, runtime_dsn, reset=None):
+        self._main, self._purge, self.runtime_dsn, self._reset = main, purge, runtime_dsn, reset
 
     def __getattr__(self, name):
         return getattr(self._main, name)
@@ -76,16 +93,22 @@ class _SplitStore:
     def purge_redaction_maps(self, *a, **k):
         return self._purge.purge_redaction_maps(*a, **k)
 
+    def reset_kill_switch(self, *a, **k):
+        """Only a registered member of the reset group can clear a stop: the runtime login cannot."""
+        return self._reset.reset_kill_switch(*a, **k)
+
     def close(self):
         self._main._db.close()
         self._purge._db.close()
+        self._reset._db.close()
 
 
 def _open_split(dsn):
     settings = PostgresSettings(kind="postgres", dsn_secret_name="pg-dsn")  # noqa: S106 - a name
     store = make("store", settings, FakeSecretProvider({"pg-dsn": dsn}))
     purge_store = make("store", settings, FakeSecretProvider({"pg-dsn": PURGE_DSN[dsn]}))
-    return _SplitStore(store, purge_store, dsn)
+    reset_store = make("store", settings, FakeSecretProvider({"pg-dsn": RESET_DSN[dsn]}))
+    return _SplitStore(store, purge_store, dsn, reset_store)
 
 
 @kind("store", "postgres")

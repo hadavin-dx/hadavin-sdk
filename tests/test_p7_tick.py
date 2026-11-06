@@ -505,7 +505,7 @@ def test_cli_migrate_warns_when_new_tables_get_no_grants(cfg_dir, monkeypatch, c
     monkeypatch.setattr(
         "hadavin_sdk.store.migrate.migrate", lambda dsn, **kw: ["0003_approvals_tick"]
     )
-    assert cli.main(["--config", str(cfg_dir), "migrate"]) == 0
+    assert cli.main(["--config", str(cfg_dir), "migrate", "--reset-role", "grp"]) == 0
     assert "--runtime-role" in capsys.readouterr().err
 
 
