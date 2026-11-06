@@ -57,3 +57,4 @@
 2026-11-06 01:36 UTC / 07:06 IST | step=P1 rev15 verified (afbaac9, 1 file, six-copy x6) | done=r14 reviewers launched | next=wait; then P4a/LK resolves | blocked=none | context=ok
 2026-11-06 01:43 UTC / 07:13 IST | step=P1 r14 cor saved (1 Major borderline) | done=- | next=wait r14 adv, P4a+LK resolves | blocked=none | context=ok
 2026-11-06 01:45 UTC / 07:15 IST | step=P1 r14 not clean (3 Majors incl. mutants 7,8,9,18 vs digest check) | done=r14 adv saved | next=P1 r14 resolve (Opus); P4a+LK resolves running | blocked=none | context=ok
+2026-11-06 01:51 UTC / 07:21 IST | step=order 16 read: freeze P1, LK, P4a after one last revision each | done=P4a r10 resolve saved, P4a rev11 author + LK r10 resolve + P1 r14 resolve running | next=P1 rev16 (final) after resolve; LK draft 11 (final); P4a r11 reviewers then resolve then rev12 final; older P3a/P2d/P2a/P4d max 3 rounds each | blocked=no | context=ok
