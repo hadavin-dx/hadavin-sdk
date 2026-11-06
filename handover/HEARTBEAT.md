@@ -318,3 +318,5 @@ P2d-2 | waits for P1b redo | 0 | P1b
 P6a | P6a-1 PR 72 ready (c72c16a); P6a-2 not built | 0 | P5c for P6a-2; P0t rename merge (rebase)
 P6b1 | waits for P4a head | 0 | P4a
 12 agents running
+2026-11-06T12:41:40Z | package | stage | builders running | blocked on
+P0a | fix1 pushed c17f3c9 (PR 71); waiting lead's fresh check | 0 | -
