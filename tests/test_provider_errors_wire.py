@@ -15,7 +15,6 @@ import pytest
 
 from hadavin_sdk.guard.diagnostic import Where, class_name_of, diagnose, render
 from hadavin_sdk.llm import ProviderError, ProviderExhausted
-from hadavin_sdk.llm.provider_facts import status_error_type
 from tests.contracts.kinds.builtin import ROUTES
 from tests.contracts.kinds.llm_wire import raising_bedrock
 from tests.fixtures.raw_http import RawServer, reply
@@ -616,6 +615,10 @@ def test_r16_bn10_quota_code_at_http_400_is_retried_by_the_code_alone():
 
 
 def test_r16_status_424_has_no_status_table_type_but_the_code_table_gives_one():
+    from hadavin_sdk.llm.provider_facts import (
+        status_error_type,  # new module: imported here so the file collects on the base
+    )
+
     assert status_error_type(424) is None
 
 

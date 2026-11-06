@@ -24,7 +24,7 @@ W = "tests/test_provider_errors_wire.py"
 F = "tests/test_provider_errors_failbefore.py"
 FA = "tests/test_provider_facts.py"
 D = "tests/test_diagnostic.py"
-TESTS = [W, F, FA, D, "tests/provider_wire_helpers.py"]
+TESTS = [W, F, FA, D, "tests/provider_wire_helpers.py", "tests/import_order_child.py"]
 S = "src/hadavin_sdk/"
 RT, PF, PR, AN, BD, DG, CD = (
     S + "llm/retry.py", S + "llm/provider_facts.py", S + "llm/protocol.py", S + "llm/anthropic.py",
