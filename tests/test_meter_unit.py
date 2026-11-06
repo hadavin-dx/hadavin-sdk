@@ -543,6 +543,24 @@ def test_t1_22b_a_planned_amount_above_the_reservation_is_carried(caplog):
     assert s.applied and store.spend_totals("ag", h.day)[0] == D("0.000030")
 
 
+def test_t1_22_a_bug_inside_the_exit_never_replaces_the_body_outcome(monkeypatch):
+    """Not a store error: the exit code itself raises (here the result reader). The body's exception still wins,
+    a succeeded body still returns, and the failure is recorded with the closed code `store_unreachable`."""
+    failed = []
+    store, meter = new_meter(on_settle_failed=failed.append)
+
+    def broken(_outcome):
+        raise RuntimeError("bug in the exit")
+
+    monkeypatch.setattr(Meter, "_settled", staticmethod(broken))
+    with pytest.raises(KeyError), meter.hold("ag", S(100), NO_CAPS) as h:
+        raise KeyError("body")
+    assert h.settle_failure.code == "store_unreachable"
+    with meter.hold("ag", S(100), NO_CAPS) as g:
+        g.record(S(40))
+    assert g.settle_failure.code == "store_unreachable" and len(failed) == 2
+
+
 def test_t1_22_a_failing_callback_never_escapes(caplog):
     def boom(_):
         raise RuntimeError("x")
