@@ -1375,3 +1375,8 @@
 | BL-core-P4a-r8-cor-COR-R8-4 | P4a | MAJOR | see report | OPEN | reviews/P4a-round8-correctness.md | d12b498 |
 | BL-core-P4a-r8-cor-COR-R8-5 | P4a | MAJOR | see report | OPEN | reviews/P4a-round8-correctness.md | d12b498 |
 | BL-core-P4a-r8-cor-COR-R8-6 | P4a | MAJOR | see report | OPEN | reviews/P4a-round8-correctness.md | d12b498 |
+| BL-core-P1-r11-cor-COR-R11-1 | P1 | MAJOR | see report | OPEN | reviews/P1-round11-correctness.md | 0cb3f69 |
+| BL-core-P1-r11-cor-COR-R11-2 | P1 | MAJOR | see report | OPEN | reviews/P1-round11-correctness.md | 0cb3f69 |
+| BL-core-P1-r11-cor-COR-R11-3 | P1 | MAJOR | see report | OPEN | reviews/P1-round11-correctness.md | 0cb3f69 |
+| BL-core-P1-r11-cor-COR-R11-4 | P1 | MAJOR | see report | OPEN | reviews/P1-round11-correctness.md | 0cb3f69 |
+| BL-core-P1-r11-cor-COR-R11-5 | P1 | MAJOR | see report | OPEN | reviews/P1-round11-correctness.md | 0cb3f69 |
