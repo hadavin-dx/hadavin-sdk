@@ -25,7 +25,15 @@ from hadavin_sdk.codes import Code
 from hadavin_sdk.errors import ConfigError
 
 CORPUS_STEP: Final = "R1P"  # last redesign step merged; each P5b pull request bumps it
-STEPS: Final = ("R1", "R1P", "R3a", "R3c", "R3b", "R2", "R5")  # P5b1=R1P, P5b2=R3a, P5b3=R3c+R3b, P5b4=R2, P5b5=R5
+STEPS: Final = (
+    "R1",
+    "R1P",
+    "R3a",
+    "R3c",
+    "R3b",
+    "R2",
+    "R5",
+)  # P5b1=R1P, P5b2=R3a, P5b3=R3c+R3b, P5b4=R2, P5b5=R5
 CLASSES: Final = (
     "pii_plain", "pii_obfuscated", "pii_encoded", "ansi_c1", "email_unicode", "secret_shapes", "foreign_driver",
     "builtin_text", "pydantic_input", "json_decode", "hostile_class", "field_forging", "size_time", "config_detail",
@@ -253,7 +261,12 @@ def _f_provider(attr: str, value: object) -> BaseException:
     return e
 
 
-def _retried(make: Callable[[], BaseException], label: str = "openai_compat", kind: str = "std", **hooks: object) -> BaseException:
+def _retried(
+    make: Callable[[], BaseException],
+    label: str = "openai_compat",
+    kind: str = "std",
+    **hooks: object,
+) -> BaseException:
     """The error ``with_retry`` raises when ``make()`` is raised from ``call`` (the P5b1 rows run the real retry loop)."""
     from hadavin_sdk.llm.protocol import ProviderError
     from hadavin_sdk.llm.retry import with_retry
@@ -263,7 +276,9 @@ def _retried(make: Callable[[], BaseException], label: str = "openai_compat", ki
         raise make()
 
     try:
-        with_retry(call, label=label, max_attempts=3, sleep=lambda _s: None, **(kind_hooks(kind) | hooks))  # type: ignore[arg-type]
+        with_retry(
+            call, label=label, max_attempts=3, sleep=lambda _s: None, **(kind_hooks(kind) | hooks)
+        )  # type: ignore[arg-type]
     except ProviderError as e:
         return e
     raise RuntimeError("the call did not fail")
@@ -280,7 +295,10 @@ def _f_retried_meta() -> BaseException:
 def _f_retried_bedrock(code: str, status: int, text: str) -> BaseException:
     from botocore.exceptions import ClientError
 
-    response = {"Error": {"Code": code, "Message": text}, "ResponseMetadata": {"HTTPStatusCode": status}}
+    response = {
+        "Error": {"Code": code, "Message": text},
+        "ResponseMetadata": {"HTTPStatusCode": status},
+    }
     return _retried(lambda: ClientError(response, "Converse"), label="bedrock", kind="bedrock")  # type: ignore[arg-type]
 
 
@@ -302,7 +320,10 @@ def _f_retried_hook(variant: str) -> BaseException:
 
 
 def _f_retried_parse(variant: str) -> BaseException:
-    make = {"value": lambda: ValueError("gemini answered with no candidates"), "key": lambda: KeyError("choices")}[variant]
+    make = {
+        "value": lambda: ValueError("gemini answered with no candidates"),
+        "key": lambda: KeyError("choices"),
+    }[variant]
     return _retried(make, label="gemini")
 
 
@@ -629,7 +650,9 @@ def _add(cls: str, kind: str, status: str, owner: str, spec: dict[str, object], 
     if rid is None:
         _SEQ[cls] = _SEQ.get(cls, 0) + 1
         rid = f"HC-{cls}-{_SEQ[cls]:02d}"
-    _ROWS.append(Row(rid, cls, ledger, kind, status, owner, spec, canaries, expect, code, why, reason))  # type: ignore[arg-type]
+    _ROWS.append(
+        Row(rid, cls, ledger, kind, status, owner, spec, canaries, expect, code, why, reason)
+    )  # type: ignore[arg-type]
 
 
 def exc(cls: str, factory: str, args: tuple[object, ...], canaries: tuple[str, ...], why: str, *, ledger: tuple[str, ...] = (),
