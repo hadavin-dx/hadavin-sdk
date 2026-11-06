@@ -85,3 +85,57 @@ Added 2026-11-06 about 04:00 UTC (09:30 IST).
 - **What a person must do, and when.** The client agrees in the contract that a person answers within the retention period.
 - In plain words: A chat that waits longer than the retention period (30 days unless the client contract says otherwise) for a person is deleted with its history, even if no person has answered it yet. The client contract must require the queue's service time to be shorter than the retention period (`conversations_days`).
 - Studio reference: order 39 item 2 (a)+(c); design AK-G1 NEEDS LEAD 2.
+
+## 13. Nobody is told when a new "needs a person" item arrives
+- **What the program checks.** The program keeps every item that needs a person in its queue. Its regular check, which runs on every tick (the program's repeating background run), fails loudly when an item has waited longer than the agreed service time, or when a waiting item belongs to a client set-up with no named queue readers.
+- **What it does not check.** It sends no notice when a new item arrives. Until the service time has passed, nobody is told.
+- **What a person must do, and when.** Before the pilot, the client names who looks at the queue and how often, and the quote says so.
+- Studio reference: package AK-G15, owner-visible limit 13, `queue_watch` step; lead order 43 item 14.
+
+## 14. Until the approvals screen exists, a person can act on a queue item only through code the studio runs
+- **What the program checks.** Every action on an item (take it, give it back, close it, open it again) goes through checked code that records who did it.
+- **What it does not check.** There is no screen yet. A client's own staff cannot act on an item by themselves.
+- **What a person must do, and when.** Until the approvals screen is built, a studio person runs the action for the client, or the pilot waits for the screen.
+- Studio reference: package AK-G15, owner-visible limit 14 (screen = ticket G14); lead order 43 item 14.
+
+## 15. Running a message again can cost money again, and can propose an outside action again
+- **What the program checks.** A person who closes an item with "run again" starts a second paid run of that message. If the earlier run may already have acted outside the program (for example sent something), the person must confirm that they saw a warning first, and the approval step for any outside action still applies. One message can be run again at most 3 times by default; the client can set this from 0 to 10, and the database refuses any number above 10.
+- **What it does not check.** It does not know whether the earlier outside action really happened. It does not stop a second run within the limit.
+- **What a person must do, and when.** Before the pilot, the client agrees the limit. The person who runs a message again reads the warning, and an approver checks any outside action again before it happens.
+- Studio reference: package AK-G15, owner-visible limit 15; PENDING LEAD 16 (a), lead order 43 item 16 (`queue.max_reruns` default 3, range 0-10).
+
+## 16. The queue trusts the person the screen names
+- **What the program checks.** Each action records the person id the calling screen gives, and checks that this person is a current queue reader for that client.
+- **What it does not check.** The queue does not log anyone in. Whoever holds the queue's database password can act as any queue person and can ignore the time limit on a taken item.
+- **What a person must do, and when.** The screen must check who the person is before it calls the queue. The queue's database password is kept only in the secrets store and given to the screen alone.
+- Studio reference: package AK-G15, owner-visible limit 16; lead order 43 item 14.
+
+## 17. An item can point at content that was already deleted
+- **What the program checks.** When the chat or message an item points at was deleted (because its retention time ended, or because a person asked to be forgotten), the program shows "content erased" and allows the item only to be closed.
+- **What it does not check.** It does not keep the content alive for an open item. Deletion wins over the queue.
+- **What a person must do, and when.** The person who sees "content erased" closes the item and, where needed, contacts the sender by another way. The client is told before the pilot.
+- Studio reference: package AK-G15, owner-visible limit 17; lead order 43 item 14.
+
+## 18. Closed queue items are kept for ever in this version
+- **What the program checks.** A closed item holds ids, a reason code, times and the staff names of the people who handled it. It holds no message text.
+- **What it does not check.** Nothing deletes closed items in this version.
+- **What a person must do, and when.** Before any pilot, the owner decides how long closed items are kept, together with how long received-message records are kept (the lead takes this decision to the owner).
+- Studio reference: package AK-G15, owner-visible limit 18; PENDING LEAD 17 (a), lead order 43 item 17; later row V4.
+
+## 19. The check that a person sees only their own clients' items is done by our code, not by the database
+- **What the program checks.** Our code and our database queries return only the items of clients for whom the person is a current queue reader. Tests try to read another client's items and must fail.
+- **What it does not check.** The database itself does not filter rows per person, because one database login serves every queue person. A fault in our code could show another client's item.
+- **What a person must do, and when.** Before the pilot, the client is told. If a client's security review asks for database-level filtering per person, the studio builds it first (later row V7).
+- Studio reference: package AK-G15, owner-visible limit 19; PENDING LEAD 11 (a).
+
+## 20. A closed item about a received message keeps a coded form of the sender's id, and so do the message records
+- **What the program checks.** The item stores the sender's id only in a coded form made with our secret key, never in plain form. In pilot and production the key always exists; only on a developer's machine can a plain coded form without the key appear.
+- **What it does not check.** Whoever holds our key and a sender's original id can match the two. The records of received messages keep the same coded id for ever in this version, so removing it from the item alone would not remove the link. After a person asks to be forgotten, a chat item still holds a conversation id that points at nothing; whether another record still links that id to the person has not been checked yet. The staff names in an item are personal data of the client's staff.
+- **What a person must do, and when.** Before any pilot, the owner decides how long closed items and received-message records are kept (limit 18), and the key is held only in the secrets store.
+- Studio reference: package AK-G15, owner-visible limit 20, Security notes "Personal data (rewritten, R1-ADV-7)"; PENDING LEAD 17 (a), lead order 43 item 17.
+
+## 21. Someone who takes over the agent's own database login could plant a fake waiting item that hides a real hand-off
+- **What the program checks.** The regular check counts every waiting item of a client, whoever it names as readers, and fails loudly once the fake item waits longer than the agreed service time. The client's current queue readers can see and close it.
+- **What it does not check.** Until then, the real hand-off is not listed on its own. A program that never reports a hand-off at all is outside what the queue can catch.
+- **What a person must do, and when.** The agent's database password is kept only in the secrets store. A person who sees an unexpected waiting item reports it to the studio as a possible break-in.
+- Studio reference: package AK-G15, owner-visible limit 21 (R1-ADV-1, remaining part); lead order 43 item 14.

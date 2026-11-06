@@ -817,3 +817,7 @@ These six new NEEDS LEAD lines (11 to 16) and three INFORM lines (10, 17, 18) sh
 - PL15: (a). `forget_user` and the conversation purge delete chat runs' maps and tool calls even when the hold names them (R98); runs rows and labels stay; the purge runs before the hold hook. Owner-visible entry 5 added ("not reviewed by counsel").
 - PL16: (a). `Grant.runtime_update_cols`, with a negative test and a mutant.
 - INFORM 10, 17, 18: accepted.
+
+## Build note after the freeze (lead order 43; continues BN-1 to BN-28 under the BUILD NOTES WIN banner at the top; the lead answers above still win where they differ)
+
+**BN-29. Tick steps and AK-G16's parts (relay, order 43 item 102 PL14; `tickets/AK-G16.md` PENDING LEAD 14 and 15, Couplings).** Added 2026-11-06 about 06:55 UTC (12:25 IST). If AK-G1-b merges after AK-G16-a, the same PR adds each tick step it appends (`sweep_conversations`, and any other) to `deploy/parts.STEP_PART`; a step with no part is refused by AK-G16 test P1, loudly, never skipped. The assembled agent must run every tick part through its own entry command (which passes the agent's hooks, the hold source included); the bare `hadavin-sdk tick --part purge` is refused when `retention.hold_labelled` is true and no hook was given (AK-G16 P18b). AK-G1 stays FROZEN.
