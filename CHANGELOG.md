@@ -333,19 +333,25 @@
 
 ### Added (P1m, test tooling: the mutation runner and judge)
 - `tools/mutation_runner.py` (a developer tool, not in the wheel) runs one mutant at a time on a temp copy of a package and
-  judges the kill by its reason with `hadavin_sdk.testing.mutation` (in the wheel). They moved here from the PR #50 head with
-  their tests (`tests/test_mutation_runner.py`, 21 moved and then split one test per guard) and their mutants
-  (`tests/mutation_runner_mutants.py`, run with `uv run python tests/mutation_runner_mutants.py`). Changes after the first review
-  of the result: the tests work on Windows as well (`_pid_alive` asks the system library on Windows; a symlink is skipped only
+  judges the kill by its reason with `hadavin_sdk.testing.mutation` (in the wheel). They come with
+  their tests (`tests/test_mutation_runner.py`, one test per guard) and their mutants
+  (`tests/mutation_runner_mutants.py`, run with `uv run python tests/mutation_runner_mutants.py`). Changes after review: the tests work on Windows as well (`_pid_alive` asks the system library on Windows; a symlink is skipped only
   on Windows without the privilege, and a junction is used for the folder case); a mutant now names a distinctive fragment of the
   failing assertion message (not the killer's name) and the test it pins; the runner kills the run's whole process group on an
   interrupt (Ctrl-C) and after a normal exit, hands pytest an empty ini file and the copy as rootdir (a planted `pytest.ini` is
   never read), compares the exception class a crash row declares by its parsed leading name (not a substring), treats a baseline
   timeout of 0 as a timeout, and refuses a path with a `:`; the `mutation.py` comment no longer holds process words. Three
   `nosec` comments the scanner does not need are deleted.
+  A SIGTERM or SIGHUP sent to the runner now ends it like Ctrl-C (the pytest tree is killed, the temp folders are removed; POSIX);
+  after a normal exit the tree is killed on POSIX only (on Windows the pid may be reused); the temp folders are cleaned up when a
+  path is refused; the mutants script exits 2 when its filter selects no mutant; `tools` is now also checked by bandit and
+  Semgrep in CI.
+- Note on the name: `tools/` is a top-level Python package called `tools`, a generic name. A repository that copies it and already
+  has its own `tools` package or folder must merge or rename deliberately; the mutants script puts the repository root on
+  `sys.path` so that `tools.mutation_runner` imports, and another `tools` earlier on the path would shadow it.
 - Every repository that keeps a byte copy of these files re-copies the four of them in one commit and updates its pins to the
   sha256 values below (also pinned in `tests/fixtures/mutation_manifest.json`):
   - `src/hadavin_sdk/testing/__init__.py`: `3c77d034fe2a1ee70adea0d0bd259a20edda397d8ebd55a0e40b63e5c21c9e1c`
   - `src/hadavin_sdk/testing/mutation.py`: `2242c1e2313ffe9d156afd283e6774494d13af1f22d235c8ba2edfbeaee0df35`
   - `tools/__init__.py`: `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
-  - `tools/mutation_runner.py`: `b1b637f340fe6aa5f78f7045fa985d6bee37e476d0c34379e4a96d106c5764b9`
+  - `tools/mutation_runner.py`: `7d6e6ccd28162264339572ba3d9387406fe2b49a40f1f6cb29ac217f4a21a4bc`

@@ -1,9 +1,9 @@
 """Tests of the mutation runner (``tools/mutation_runner.py``) and the mutation judge (``hadavin_sdk.testing.mutation``).
 
-Moved from the PR #50 head (21 tests, each of which targets one guard of the runner or judge; the mutants that revert those
-guards are in ``tests/mutation_runner_mutants.py``, and the meta-tests that check that list are in
-``tests/test_mutation_runner_meta.py``). No test here talks to a network or a model; every tree is built in ``tmp_path``
-from made-up files.
+Each test targets one guard of the runner or judge (21 tests came from an earlier version of this work and were split one per guard;
+more were added since). The mutants that revert those guards are in ``tests/mutation_runner_mutants.py``, and the meta-tests that
+check that list are in ``tests/test_mutation_runner_meta.py``. No test here talks to a network or a model; every tree is built in
+``tmp_path`` from made-up files.
 """
 
 import hashlib
@@ -277,7 +277,9 @@ def test_the_runner_kills_a_mutant_of_a_tiny_package(tmp_path):
         and by["no-op mutant"][1] is False
         and by["missing snippet"][1] is False
     ), f"a mutant of a tiny package was not killed as expected: {by}"
-    assert by["crash mutant"] == (Verdict.CRASH, False)  # an exception is not an assertion kill
+    assert by["crash mutant"] == (Verdict.CRASH, False), (
+        f"an exception without allow_crash was counted as a good kill: {by}"
+    )  # an exception is not an assertion kill
 
 
 def test_a_mutant_path_that_is_absolute_or_names_a_drive_is_refused():
@@ -330,19 +332,34 @@ def test_inside_refuses_a_path_through_a_link_out_of_the_tree(tmp_path):
     _must_refuse("a path through a link out of the tree", mr._inside, base, "link/outside.txt")
 
 
-def test_locate_does_not_list_a_file_through_a_link_out_of_the_tree(tmp_path):
+def test_inside_refuses_the_tree_itself(tmp_path):
+    base = tmp_path / "base"
+    base.mkdir()
+    _must_refuse("the tree itself was accepted as a file", mr._inside, base, ".")
+    assert mr._inside(base, "a.py") == base.resolve() / "a.py"
+
+
+def test_locate_does_not_list_a_file_link_out_of_the_tree(tmp_path):
+    """The killer of the mutant "a link out of the tree is listed". A link to a FILE is listed by ``os.walk`` among the files, so only
+    the real-path check keeps it out. On Windows a file link needs a privilege: the test skips there, and only there (error 1314)."""
     base = tmp_path / "base"
     base.mkdir()
     (base / "ok.py").write_text("x", encoding="utf-8")
     assert mr._locate(base, "ok.py") == base / "ok.py"
     (tmp_path / "real.txt").write_text("x", encoding="utf-8")
-    _dir_link(tmp_path, base / "link")
-    _must_refuse("a file listed through a folder link", mr._locate, base, "link/real.txt")
-    # A link to a FILE is listed (``os.walk`` lists it among the files), so only the real-path check keeps it out; the folder link
-    # above never reaches that check on Linux, because ``os.walk`` does not enter it. On Windows a file link needs a privilege:
-    # the test skips there, and only there, when the account lacks it.
     _symlink_or_skip(tmp_path / "real.txt", base / "file_link.txt")
     _must_refuse("a file link out of the tree was listed", mr._locate, base, "file_link.txt")
+
+
+def test_locate_does_not_list_a_file_through_a_folder_link_out_of_the_tree(tmp_path):
+    """A folder link (a junction on Windows, which needs no privilege). It has no mutant of its own: on Linux ``os.walk`` does not
+    enter a symlinked folder, so this case never reaches the real-path check; on Windows a junction may be entered and then the
+    check is what keeps the file out (not verified on Windows by the author of this test)."""
+    base = tmp_path / "base"
+    base.mkdir()
+    (tmp_path / "real.txt").write_text("x", encoding="utf-8")
+    _dir_link(tmp_path, base / "link")
+    _must_refuse("a file listed through a folder link", mr._locate, base, "link/real.txt")
 
 
 def test_the_runner_checks_a_forged_mutant_path_again(tmp_path):
@@ -383,7 +400,12 @@ def test_run_mutants_refuses_test_and_fixture_paths_that_leave_the_tree(tmp_path
 
 
 def test_the_runner_children_see_an_allowlisted_environment_only(tmp_path, monkeypatch):
-    monkeypatch.setenv("HADAVIN_TEST_PG_DSN", "postgresql://u:p@h/db")  # the real caller's secret
+    user, secret = (
+        "someone",
+        "pw",
+    )  # the DSN is made of parts: no URL with a password stands in the source
+    fake_dsn = f"postgresql://{user}:{secret}@db.invalid/x"
+    monkeypatch.setenv("HADAVIN_TEST_PG_DSN", fake_dsn)  # stands for the real caller's secret
     monkeypatch.setenv("SOME_API_TOKEN", "tok")
     root = _pk_tree(
         tmp_path,
@@ -644,10 +666,12 @@ def test_an_interrupt_while_waiting_kills_the_run_and_is_not_swallowed(tmp_path,
     finally:
         if pidfile.exists() and pidfile.read_text(encoding="utf-8").strip():
             _force_kill(int(pidfile.read_text(encoding="utf-8")))
-    pid = int(pidfile.read_text(encoding="utf-8"))
-    assert fired == [pid], "the interrupt was raised for something other than the run's own wait"
-    assert killed == [pid], "an interrupt while waiting did not kill the run before it propagated"
-    assert not _pid_alive(pid)
+    # ``fired`` and ``killed`` hold the pid of the Popen object of the run. The pid the child wrote is NOT compared with it: on
+    # Windows a venv python.exe is a launcher that starts the real interpreter as a child, so the two differ there
+    assert len(fired) == 1, "the interrupt was raised for something other than the run's own wait"
+    assert killed == fired, "an interrupt while waiting did not kill the run before it propagated"
+    child = int(pidfile.read_text(encoding="utf-8"))  # only used to probe the descendant
+    assert not _pid_alive(child), "the process the test started was still running"
 
 
 @pytest.mark.skipif(
@@ -851,6 +875,14 @@ def test_the_leading_class_of_an_error_line_is_parsed_not_searched():
     assert mr._leading_class("PermissionError: [Errno 1] x") == "PermissionError"
     assert mr._leading_class("E   AssertionError: assert 'ValueError' == 'x'") == "AssertionError"
     assert mr._leading_class("") == ""
+    # the ``E`` marker is a letter and spaces, nothing shorter: a class that starts with E keeps its letter
+    assert mr._leading_class("E   EOFError: x") == "EOFError"
+    assert mr._leading_class("EOFError: x") == "EOFError", (
+        "the first letter of EOFError was cut off"
+    )
+    assert (
+        mr._leading_class("ValueError: refused") == "ValueError"
+    )  # a message-fallback line has no marker
 
 
 def test_allow_crash_without_a_crash_type_is_refused():
@@ -901,6 +933,135 @@ def test_taskkill_is_resolved_under_system_root(tmp_path, monkeypatch):
         proc.wait()
     expected = [str(winroot / "System32" / "taskkill.exe"), "/F", "/T", "/PID", str(proc.pid)]
     assert seen == [expected], f"taskkill was not run from System32: {seen}"
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="SIGTERM and SIGHUP are POSIX signals")
+def test_a_termination_signal_cleans_up_the_run(tmp_path):
+    """A runner stopped by SIGTERM or SIGHUP must kill the pytest tree of the run and remove its temp folders (a stopped runner
+    used to skip the cleanup that Ctrl-C ran). The runner is a real subprocess; its temp folder is a folder of this test."""
+    import signal
+
+    repo = Path(mr.__file__).resolve().parents[1]
+    for name in ("SIGTERM", "SIGHUP"):
+        work = tmp_path / name
+        scratch = work / "scratch"
+        scratch.mkdir(parents=True)
+        root = _pk_tree(
+            work, "from pk.core import go\n\ndef test_go_is_true():\n    assert go(True) is True\n"
+        )
+        pidfile = work / "pid.txt"
+        body = (
+            "import subprocess, sys, time\n"
+            "    c = subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(600)'])\n"
+            f"    open({str(pidfile)!r}, 'w').write(str(c.pid))\n"
+            "    time.sleep(600)"
+        )
+        script = (
+            "import sys\n"
+            f"sys.path.insert(0, {str(repo)!r})\n"
+            "from tools.mutation_runner import Mutant, run_mutants\n"
+            f"m = Mutant('spawn', 'src/pk/core.py', 'return flag', {body!r}, 'test_go_is_true')\n"
+            f"run_mutants({str(root)!r}, [m], ['tests/test_core.py'], extra_dirs=(), timeout=600)\n"
+        )
+        env = {**os.environ, "TMPDIR": str(scratch)}
+        runner = subprocess.Popen(  # noqa: S603  # our own interpreter and a script made above, no shell
+            [sys.executable, "-c", script],
+            env=env,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        pid = None
+        try:
+            for _ in range(1200):
+                if pidfile.exists() and pidfile.read_text(encoding="utf-8").strip():
+                    break
+                assert runner.poll() is None, "the runner ended before the grandchild started"
+                time.sleep(0.1)
+            pid = int(pidfile.read_text(encoding="utf-8"))
+            runner.send_signal(getattr(signal, name))
+            assert runner.wait(timeout=60) == 128 + getattr(signal, name), (
+                f"the runner did not end through its {name} handler"
+            )
+            for _ in range(50):
+                if not _pid_alive(pid):
+                    break
+                time.sleep(0.2)
+            assert not _pid_alive(pid), f"the grandchild survived {name} of the runner"
+            assert list(scratch.glob("mutants_*")) == [], f"a temp folder was left after {name}"
+        finally:
+            if runner.poll() is None:
+                runner.kill()
+            runner.wait()
+            if pid is None and pidfile.exists() and pidfile.read_text(encoding="utf-8").strip():
+                pid = int(pidfile.read_text(encoding="utf-8"))
+            if pid is not None:
+                _force_kill(pid)
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="signal handlers of the runner are POSIX only")
+def test_the_signal_handlers_are_restored_and_an_ignored_sighup_stays_ignored(
+    tmp_path, monkeypatch
+):
+    import signal
+
+    root = _raising_tree(tmp_path)
+    seen = {}
+    before = signal.getsignal(signal.SIGTERM)
+    monkeypatch.setattr(mr, "_pytest", lambda *a, **k: seen.update(term=signal.getsignal(signal.SIGTERM), hup=signal.getsignal(signal.SIGHUP)) or 0)  # fmt: skip
+    old_hup = signal.signal(signal.SIGHUP, signal.SIG_IGN)
+    try:
+        run_mutants(root, [], ["tests/test_core.py"], extra_dirs=(), timeout=60)
+        assert signal.getsignal(signal.SIGHUP) is signal.SIG_IGN
+    finally:
+        signal.signal(signal.SIGHUP, old_hup)
+    assert seen["term"] not in (before, signal.SIG_DFL, signal.SIG_IGN), "no handler during the run"
+    assert seen["hup"] is signal.SIG_IGN  # ignored on entry (nohup), so left ignored
+    assert signal.getsignal(signal.SIGTERM) == before, "the old SIGTERM handler was not restored"
+
+
+def test_a_refused_run_leaves_no_temp_folder(tmp_path, monkeypatch):
+    shared = tmp_path / "shared_temp"
+    shared.mkdir()
+    monkeypatch.setattr(tempfile, "tempdir", str(shared))
+    # no ``src`` folder: the snapshot cannot be made, after the temp folders were made
+    bare = tmp_path / "bare"
+    (bare / "tests").mkdir(parents=True)
+    (bare / "tests" / "test_a.py").write_text("def test_a():\n    assert True\n", encoding="utf-8")
+    with pytest.raises(FileNotFoundError):
+        run_mutants(bare, [], ["tests/test_a.py"], extra_dirs=())
+    # a test file that is a link out of the tree: refused (ValueError) while the snapshot is made
+    root = _raising_tree(tmp_path)
+    outside = tmp_path / "outside_test.py"
+    outside.write_text("def test_a():\n    assert True\n", encoding="utf-8")
+    _symlink_or_skip(outside, root / "tests" / "test_link.py")
+    _must_refuse(
+        "a test file through a link out of the tree",
+        run_mutants,
+        root,
+        [],
+        ["tests/test_link.py"],
+        extra_dirs=(),
+    )
+    assert list(shared.iterdir()) == [], "a refused run left a temp folder behind"
+
+
+def test_the_first_lines_of_an_earlier_run_do_not_leak_into_the_next(tmp_path):
+    root = _raising_tree(tmp_path)
+    mr.FIRST_LINES["stale mutant"] = "E   stale"
+    run_mutants(root, [], ["tests/test_core.py"], extra_dirs=(), timeout=120)
+    assert mr.FIRST_LINES == {}, "the diagnostics of an earlier run were kept"
+
+
+def test_a_finished_run_does_not_kill_the_tree_on_windows(tmp_path, monkeypatch):
+    """Windows branch, run on any system: after a normal exit nothing is killed (the pid may belong to another process by then)."""
+    (tmp_path / "test_ok.py").write_text("def test_a():\n    assert True\n", encoding="utf-8")
+    monkeypatch.setattr(mr, "_IS_WINDOWS", True)
+    monkeypatch.setattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0, raising=False)
+    killed = []
+    monkeypatch.setattr(mr, "_kill_tree", lambda proc: killed.append(proc.pid))
+    assert mr._pytest(tmp_path, ["test_ok.py"], tmp_path / "r.xml", 120) == 0
+    assert killed == [], "the tree was killed after a normal exit on Windows"
 
 
 # last on purpose: a mutation of a pinned file must be judged by the test aimed at it, not by this hash pin

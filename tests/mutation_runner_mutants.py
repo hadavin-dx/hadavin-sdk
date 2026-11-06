@@ -11,19 +11,31 @@ test placement table. Not collected by pytest. Run from the repo root:
     uv run python tests/mutation_runner_mutants.py judge      # only mutants whose name contains the text
 
 Good means KILLED, or CRASH with the declared exception class (three mutants declare one: ``allow_crash=True`` and ``crash_type``,
-compared with the leading class name of the failing line).
+compared with the leading class name of the failing line). The script exits 1 if any mutant is not good, and 2 if the filter
+selects no mutant at all (a typo in the filter must not look like a pass).
 
-Which mutants need what on Windows (this list is run on Linux and on Windows; the Windows run is the lead's):
-- POSIX only: "a finished run's background process lives on" (its killer skips on Windows: ``taskkill /T`` walks parent links and
-  the parent of a finished run is gone).
-- Need the symlink privilege on Windows: "a symlink is copied as a file" and "a link out of the tree is listed" (a file link; the
-  killers skip there, and only there, when the account lacks it, and a skipped killer makes the mutant SURVIVE in that run).
-  The folder-link killer uses a junction on Windows, which needs no privilege.
-- Every other killer runs on both systems (the tree-kill killers use ``taskkill /T`` on Windows).
+Which mutants need what on Windows (this list is run on Linux and on Windows; the Windows run is made by whoever has a Windows machine):
+- POSIX only (the killer skips on Windows, so the mutant SURVIVES there): "a finished run's background process lives on"
+  (``taskkill /T`` walks parent links and the parent of a finished run is gone) and "a termination signal does not clean up"
+  (SIGTERM and SIGHUP are POSIX signals).
+- Need the symlink privilege on Windows: "a symlink is copied as a file" and "a link out of the tree is listed" (both killers make a
+  FILE link; they skip there, and only there (error 1314), when the account lacks the privilege, and a skipped killer makes the
+  mutant SURVIVE in that run). The folder-link case (a junction on Windows, no privilege needed) is a separate test with no mutant:
+  on Linux ``os.walk`` never enters a symlinked folder, so that test cannot tell the mutant from the original there.
+- Every other killer runs on both systems (the tree-kill killers use ``taskkill /T`` on Windows; the Windows branch after a normal
+  exit is run on any system with the Windows flag faked).
 
-Tests with no mutant (the guard is checked by the test only): the list-based path checks of ``run_mutants`` for tests and fixtures
-(each is also checked again by ``_inside``, so a mutant that removes the first check is equivalent), the timeout and baseline
-defaults, and the streaming of each result.
+Tests with no mutant (the guard is checked by the test only; names as in ``tests/test_mutation_runner.py``):
+- ``test_run_mutants_refuses_test_and_fixture_paths_that_leave_the_tree``: the list-based path checks of ``run_mutants`` for tests
+  and fixtures (each is also checked again by ``_inside``, so a mutant that removes the first check is equivalent).
+- ``test_a_refused_run_leaves_no_temp_folder`` (the place of the ``try``), ``test_the_signal_handlers_are_restored_and_an_ignored_sighup_stays_ignored``
+  (restore of the old handlers) and ``test_locate_does_not_list_a_file_through_a_folder_link_out_of_the_tree`` (see above).
+- ``test_the_runner_streams_each_result_and_keeps_a_sigkill_apart_from_a_timeout``: only the ``TIMED_OUT`` constant has a mutant;
+  the in-order streaming of each result is checked by the test only.
+- ``test_the_manifest_pins_the_files_a_demo_copies``: a hash pin, by design not mutated.
+- The tests of the Windows probe helpers in ``tests/test_mutation_runner_helpers.py`` (they test test helpers, not the runner).
+- The default ``baseline_timeout`` fallback (the baseline gets the mutant timeout when none is given) is covered only together
+  with the "baseline timeout is ignored" mutant, which replaces the whole expression.
 """
 
 import sys
@@ -53,7 +65,8 @@ JUDGE = "test_mutation_judge_verdicts"
 ABS = "test_a_mutant_path_that_is_absolute_or_names_a_drive_is_refused"
 DOTDOT = "test_a_mutant_path_with_a_dotdot_part_is_refused"
 INSIDE = "test_inside_refuses_a_path_through_a_link_out_of_the_tree"
-LOCATE = "test_locate_does_not_list_a_file_through_a_link_out_of_the_tree"
+LOCATE = "test_locate_does_not_list_a_file_link_out_of_the_tree"
+TINY = "test_the_runner_kills_a_mutant_of_a_tiny_package"
 FORGED = "test_the_runner_checks_a_forged_mutant_path_again"
 CRASHROW = "test_a_crash_row_is_good_only_when_the_exception_class_is_the_declared_one"
 TREE = "test_a_timeout_kills_the_whole_process_tree_not_only_pytest"
@@ -71,7 +84,7 @@ M = [
     mutant("judge: short expect accepted", MU, "if expect is not None and len(expect) < 4:", "if False:",
         JUDGE, "a one-letter expect was accepted by the judge"),
     mutant("runner: crash counts as good", MR, CRASH_OK, "crash_ok = v is Verdict.CRASH",
-        CRASHROW, "a crash row was good for another exception class"),
+        TINY, "was counted as a good kill"),
     mutant("runner: an absolute path is accepted", MR,
         '        if pure.is_absolute() or pure.anchor or pure.drive or ".." in pure.parts:',
         '        if ".." in pure.parts:', ABS, "an absolute, drive or empty mutant path"),
@@ -85,6 +98,9 @@ M = [
     mutant("runner: the mutant file is not checked again", MR,
         "            p = _locate(tmp, m.file)", "            p = tmp / m.file",
         FORGED, "a forged mutant path"),
+    mutant("runner: the tree itself is accepted as a file", MR,
+        "    if path == root or not path.is_relative_to(root):", "    if not path.is_relative_to(root):",
+        "test_inside_refuses_the_tree_itself", "the tree itself was accepted"),
     mutant("runner: a short expect is accepted", MR, "        if len(self.expect) < 4:", "        if False:",
         "test_a_mutant_with_a_short_expect_is_refused", "an expect of three characters"),
     mutant("runner: a timeout is reported as an exit code", MR, TIMEOUT_TAIL + "            return TIMED_OUT",
@@ -93,9 +109,6 @@ M = [
     mutant("runner: a dash path is an option", MR, '"--", *tests', "*tests",
         "test_a_test_path_that_starts_with_a_dash_is_a_path_not_a_pytest_option",
         "a test path with a dash was taken as a pytest option"),
-    mutant("runner: the mutant file is joined as a path", MR,
-        "            p = _locate(tmp, m.file)", "            p = Path(tmp) / m.file",
-        FORGED, "a forged mutant path"),
     mutant("runner: a link out of the tree is listed", MR,
         "            if os.path.commonpath([real_base, real_full]) == real_base:", "            if True:",
         LOCATE, "a file link out of the tree was listed"),
@@ -125,7 +138,7 @@ M = [
     mutant("b3: a crash row is good whatever the exception", MR, CRASH_OK,
         "crash_ok = v is Verdict.CRASH and m.allow_crash",
         CRASHROW, "a crash row was good for another exception class"),
-    # ---- guards of the moved tests that had no mutant, and the guards added by the fixes of the first result review
+    # ---- guards of the moved tests that had no mutant, and the guards added by later fixes
     mutant("runner: the child inherits the whole environment", MR,
         "env = {k: os.environ[k] for k in CHILD_ENV if k in os.environ}", "env = dict(os.environ)",
         "test_the_runner_children_see_an_allowlisted_environment_only",
@@ -169,9 +182,25 @@ M = [
         "test_an_interrupt_while_waiting_kills_the_run_and_is_not_swallowed",
         "an interrupt while waiting did not kill the run before it propagated"),
     mutant("runner: a finished run's background process lives on", MR,
-        "        # a normal exit can leave a background process of the run behind: it is killed too\n        _kill_tree(proc)\n",
+        "        # a normal exit can leave a background process of the run behind: on POSIX it is killed too. Not on Windows: the parent is\n"
+        "        # gone, taskkill /T finds no children, and the pid may already belong to an unrelated process\n"
+        "        if not _IS_WINDOWS:\n            _kill_tree(proc)\n",
         "", "test_a_background_process_left_by_a_finished_run_is_killed_too",
         "a background process of a finished run was left running"),
+    mutant("runner: a finished run's tree is killed on Windows too", MR,
+        "        if not _IS_WINDOWS:\n            _kill_tree(proc)\n", "        if True:\n            _kill_tree(proc)\n",
+        "test_a_finished_run_does_not_kill_the_tree_on_windows", "the tree was killed after a normal exit on Windows"),
+    mutant("runner: a termination signal does not clean up", MR,
+        '_TERMINATING = ("SIGTERM", "SIGHUP")', "_TERMINATING = ()",
+        "test_a_termination_signal_cleans_up_the_run", "did not end through its"),
+    mutant("runner: the first lines of an earlier run are kept", MR,
+        "    FIRST_LINES.clear()  # the diagnostics of an earlier run must not answer for this one", "    pass",
+        "test_the_first_lines_of_an_earlier_run_do_not_leak_into_the_next",
+        "the diagnostics of an earlier run were kept"),
+    mutant("runner: the E marker is cut as a letter", MR,
+        '    head = re.sub(r"^E\\s+", "", first.strip()).split(":", 1)[0].strip()',
+        '    head = first.strip().removeprefix("E").strip().split(":", 1)[0].strip()',
+        "test_the_leading_class_of_an_error_line_is_parsed_not_searched", "the first letter of EOFError was cut off"),
     mutant("runner: a planted pytest.ini is picked up", MR,
         '"-x", "-c", str(ini), f"--rootdir={cwd}", ', '"-x", ',
         "test_a_pytest_ini_planted_in_a_parent_folder_is_not_picked_up",
@@ -189,6 +218,9 @@ M = [
 
 if __name__ == "__main__":
     only = sys.argv[1:]
+    if only and not any(o in m.name for m in M for o in only):
+        print(f"no mutant name contains any of {only}; nothing was run", file=sys.stderr)
+        sys.exit(2)
 
     def show(
         row,

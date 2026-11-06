@@ -5,18 +5,26 @@ every occurrence of ``old`` by ``new`` in one file, runs pytest with a JUnit fil
 ``testing.mutation.judge``. A mutant counts as GOOD only if the verdict is KILLED, or CRASH when the mutant sets ``allow_crash``. The
 unmutated copy must pass first (otherwise every kill is meaningless). Stdlib only; runs pytest through ``sys.executable``.
 
-This is a developer tool, not a runtime module: it lives in ``tools/`` (NOT in the wheel, not under ``src``). A demo that wants it
-copies ``tools/mutation_runner.py`` from core like any other core file (a ``core_copies.json`` row, ``import_rewrite`` of nothing: it
-imports only ``hadavin_sdk.testing.mutation``). It runs a subprocess on caller-chosen trees, so the mutant file is found by LISTING the
+This is a developer tool, not a runtime module: it lives in ``tools/`` (NOT in the wheel, not under ``src``). A repository that wants
+it copies ``tools/__init__.py`` and ``tools/mutation_runner.py`` byte for byte (the files and their sha256 values are listed in
+``tests/fixtures/mutation_manifest.json``); the tool imports only ``hadavin_sdk.testing.mutation``. It runs a subprocess on caller-chosen trees, so the mutant file is found by LISTING the
 tree (``_locate``: the caller's string is compared with the listed names and never joined to a path), every other path is checked to
 stay inside its tree (``_inside``: a ``..`` part or an absolute path is a ``ValueError``), and every pytest run has a timeout, and a timeout kills the whole process tree of the run.
 
 Limits, stated plainly. The tree kill reaches the processes that stay in the run's process group (POSIX) or the parent chain
 (Windows ``taskkill /T``). A test or mutant that starts a process in a NEW session (``setsid``, ``start_new_session=True``) or, on
-Windows, a process whose parent has already ended, escapes it. The mutant runner does not use a Windows Job Object; the
-``heavy_slot`` helper of the core does, and is the model if this limit ever matters. After a normal exit the group is killed
-once more, so a leftover background process of a finished run does not outlive it (POSIX; on Windows the parent is gone and
-``taskkill /T`` cannot find the children).
+Windows, a process whose parent has already ended, escapes it. The mutant runner does not use a Windows Job Object (one would
+reach those processes). After a normal exit the group is killed once more, so a leftover background process of a finished run
+does not outlive it (POSIX only; on Windows nothing is killed after a normal exit: the parent is gone, ``taskkill /T`` cannot
+find the children, and its pid may already belong to an unrelated process).
+
+A SIGTERM or SIGHUP sent to the process that runs ``run_mutants`` (POSIX, main thread; a SIGHUP that was ignored on entry, as under
+``nohup``, stays ignored) is turned into ``SystemExit(128 + signal number)`` for the length of the call, so the same cleanup as for
+Ctrl-C runs: the pytest tree is killed and the temp folders are removed. The old handlers are restored afterwards. SIGKILL cannot be
+caught, and then the temp folders (``mutants_*`` in the temp directory) stay.
+
+Packages that need a ``conftest.py`` or pytest options from a ``pyproject.toml`` / ``pytest.ini`` cannot be run by this tool: pytest
+runs with ``--noconftest`` and with an empty ini file on purpose (a planted file in a parent folder is never read).
 
 Dev-tool constants: ``MAX_JUNIT_CHARS`` (in ``testing.mutation``), ``SETUP_TRIES``, ``SETUP_WAIT``, ``TREE_KILL_TIMEOUT``, ``TIMED_OUT``,
 ``CHILD_ENV`` and the default run timeout (``DEFAULT_TIMEOUT``, 900.0 seconds) are module constants here and NOT in ``defaults.py``:
@@ -26,13 +34,17 @@ that ships in no wheel, has no config surface and is copied byte for byte into d
 
 from __future__ import annotations
 
+import contextlib
 import os
+import re
 import shutil
+import signal
 import subprocess
 import sys
 import tempfile
+import threading
 import time
-from collections.abc import Callable, Iterable, Sequence
+from collections.abc import Callable, Iterable, Iterator, Sequence
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath, PureWindowsPath
 
@@ -127,8 +139,9 @@ TREE_KILL_TIMEOUT = 60.0  # seconds ``taskkill`` may take before the child itsel
 
 def _leading_class(first: str) -> str:
     """The exception class name that starts a pytest ``E`` line (``E   demo.fakes.AuditWriteError: text`` gives ``AuditWriteError``;
-    a name that only CONTAINS the declared one, or that appears later in the text, does not match it)."""
-    head = first.strip().removeprefix("E").strip().split(":", 1)[0].strip()
+    a name that only CONTAINS the declared one, or that appears later in the text, does not match it). The ``E`` marker is a letter
+    followed by spaces: a class such as ``EOFError`` keeps its first letter, and a line with no marker (a message fallback) is read as is."""
+    head = re.sub(r"^E\s+", "", first.strip()).split(":", 1)[0].strip()
     return head.rsplit(".", 1)[-1]
 
 
@@ -177,8 +190,10 @@ def _pytest(cwd: Path, tests: Sequence[str], junit: Path, timeout: float) -> int
         except BaseException:  # Ctrl-C (KeyboardInterrupt) or any other exit while waiting: never leave a spinning mutant behind
             _kill_tree(proc)
             raise
-        # a normal exit can leave a background process of the run behind: it is killed too
-        _kill_tree(proc)
+        # a normal exit can leave a background process of the run behind: on POSIX it is killed too. Not on Windows: the parent is
+        # gone, taskkill /T finds no children, and the pid may already belong to an unrelated process
+        if not _IS_WINDOWS:
+            _kill_tree(proc)
         return code
 
 
@@ -193,8 +208,6 @@ def _kill_tree(proc: subprocess.Popen[bytes]) -> None:
                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False, timeout=TREE_KILL_TIMEOUT,
             )  # fmt: skip
         else:
-            import signal
-
             os.killpg(proc.pid, signal.SIGKILL)
     # ProcessLookupError and PermissionError are OSErrors
     except (OSError, subprocess.TimeoutExpired):
@@ -202,6 +215,35 @@ def _kill_tree(proc: subprocess.Popen[bytes]) -> None:
     finally:
         proc.kill()  # the child itself, always
         proc.wait()
+
+
+# the signals that end a run like Ctrl-C does (POSIX; SIGHUP does not exist on Windows)
+_TERMINATING = ("SIGTERM", "SIGHUP")
+
+
+@contextlib.contextmanager
+def _terminations_raise() -> Iterator[None]:
+    """POSIX main thread: SIGTERM and SIGHUP raise ``SystemExit(128 + signal number)`` inside the block, so the cleanup in ``finally`` and in
+    ``_pytest`` runs (a stopped runner would otherwise leave the pytest tree and the temp folders behind). The old handlers are restored;
+    a signal that was ignored on entry (``nohup``) stays ignored. Elsewhere (Windows, another thread) it changes nothing."""
+    if _IS_WINDOWS or threading.current_thread() is not threading.main_thread():
+        yield
+        return
+
+    def stop(signum: int, _frame: object) -> None:
+        raise SystemExit(128 + signum)
+
+    previous: dict[int, object] = {}
+    try:
+        for name in _TERMINATING:
+            sig = getattr(signal, name, None)
+            if sig is None or signal.getsignal(sig) is signal.SIG_IGN:
+                continue
+            previous[sig] = signal.signal(sig, stop)
+        yield
+    finally:
+        for sig, old in previous.items():
+            signal.signal(sig, old if old is not None else signal.SIG_DFL)  # type: ignore[arg-type]
 
 
 def run_mutants(
@@ -219,7 +261,24 @@ def run_mutants(
     ``timeout`` seconds is ``(name, Verdict.ERROR, "TIMEOUT", False)``. The unmutated baseline run gets ``baseline_timeout`` (default: ``timeout``; 0 is a real, immediate timeout and not "unset"),
     so a test can use a short mutant timeout without failing a slow baseline. ``on_result`` is called with each result as soon as that mutant
     finishes (stream it and a timeout of the whole run still leaves a kill list). Every ``tests`` and ``extra_dirs`` entry and every mutant file
-    must name a file inside its tree (``ValueError``)."""
+    must name a file inside its tree (``ValueError``). A SIGTERM or SIGHUP during the call ends it like Ctrl-C (see the module docstring)."""
+    with _terminations_raise():
+        return _run_mutants(
+            root, mutants, tests, extra_dirs, only, timeout, baseline_timeout, on_result
+        )
+
+
+def _run_mutants(
+    root: Path,
+    mutants: Iterable[Mutant],
+    tests: Sequence[str],
+    extra_dirs: Sequence[str],
+    only: Sequence[str],
+    timeout: float,
+    baseline_timeout: float | None,
+    on_result: Callable[[tuple[str, Verdict, str, bool]], None] | None,
+) -> list[tuple[str, Verdict, str, bool]]:
+    FIRST_LINES.clear()  # the diagnostics of an earlier run must not answer for this one
     root = Path(root)
     mutants = list(mutants)
     for t in (*tests, *extra_dirs):
@@ -230,19 +289,9 @@ def run_mutants(
                 f"mutant {m.name!r}: test_file {m.test_file!r} is not one of the copied tests"
             )
     tmp = Path(tempfile.mkdtemp(prefix="mutants_"))
-    # ONE snapshot of the tree at the start: every mutant copy is made from it, so an edit of ``root`` while the run is going (a developer
-    # saving a file, a second tool) can never leak into a later mutant
-    snap = Path(tempfile.mkdtemp(prefix="mutants_snap_"))
-    shutil.copytree(
-        root / "src", snap / "src", symlinks=True, ignore=shutil.ignore_patterns("__pycache__")
-    )  # links stay links (never followed out of the tree)
-    for t in tests:
-        dst = _inside(snap, t)
-        dst.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy(_inside(root, t), dst)
-    for d in extra_dirs:
-        if _inside(root, d).exists():
-            shutil.copytree(_inside(root, d), _inside(snap, d), symlinks=True, dirs_exist_ok=True)
+    snap = tmp.with_name(
+        tmp.name + "_snap"
+    )  # made inside the try below, so no signal can leave ``tmp`` alone behind
 
     def build() -> None:
         shutil.rmtree(tmp, ignore_errors=True)
@@ -275,7 +324,24 @@ def run_mutants(
         if on_result is not None:
             on_result(row)
 
+    # the try starts right after the first temp folder exists: a refusal (a path through a link out of the tree, a missing ``src``)
+    # or a signal at any later point leaves no temp folder behind
     try:
+        snap.mkdir()
+        # ONE snapshot of the tree at the start: every mutant copy is made from it, so an edit of ``root`` while the run is going (a
+        # developer saving a file, a second tool) can never leak into a later mutant
+        shutil.copytree(
+            root / "src", snap / "src", symlinks=True, ignore=shutil.ignore_patterns("__pycache__")
+        )  # links stay links (never followed out of the tree)
+        for t in tests:
+            dst = _inside(snap, t)
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy(_inside(root, t), dst)
+        for d in extra_dirs:
+            if _inside(root, d).exists():
+                shutil.copytree(
+                    _inside(root, d), _inside(snap, d), symlinks=True, dirs_exist_ok=True
+                )
         fresh()
         if (
             _pytest(
