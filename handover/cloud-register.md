@@ -310,3 +310,19 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | bs-P2a-cor | build-start review (order 20) of frozen tickets/P2a.md, egm:*, read-only | sonnet | 02:31Z | +45min | running | save report as reviews/P2a-buildstart-cor.md; then ONE resolve |
 | bs-P4a-adv | build-start review (order 20) of frozen tickets/P4a.md, egm:*, read-only | sonnet | 02:31Z | +45min | running | save report as reviews/P4a-buildstart-adv.md; then ONE resolve |
 | bs-P4a-cor | build-start review (order 20) of frozen tickets/P4a.md, egm:*, read-only | sonnet | 02:31Z | +45min | running | save report as reviews/P4a-buildstart-cor.md; then ONE resolve |
+| res1-P4b1 | Opus egm-resolve of round-1 reviews of tickets/P4b1.md (order 20 item 6) | opus | 02:32Z | +40min | running | commit report; launch revision author |
+| res1-P4b2 | Opus egm-resolve of round-1 reviews of tickets/P4b2.md (order 20 item 6) | opus | 02:32Z | +40min | running | commit report; launch revision author |
+| res1-P4c | Opus egm-resolve of round-1 reviews of tickets/P4c.md (order 20 item 6) | opus | 02:32Z | +40min | running | commit report; launch revision author |
+| res1-P6b1 | Opus egm-resolve of round-1 reviews of tickets/P6b1.md (order 20 item 6) | opus | 02:32Z | +40min | running | commit report; launch revision author |
+| res1-P5b2 | Opus egm-resolve of round-1 reviews of tickets/P5b2.md (order 20 item 6) | opus | 02:32Z | +40min | running | commit report; launch revision author |
+| draft-P5b3 | Opus first draft of tickets/P5b3.md (order 20 item 6, missing v1 ticket) | opus | 02:32Z | +60min | running | verify commit; then round 1 reviewers |
+| draft-P5b4 | Opus first draft of tickets/P5b4.md (order 20 item 6, missing v1 ticket) | opus | 02:32Z | +60min | running | verify commit; then round 1 reviewers |
+| draft-P5b5 | Opus first draft of tickets/P5b5.md (order 20 item 6, missing v1 ticket) | opus | 02:32Z | +60min | running | verify commit; then round 1 reviewers |
+| draft-P5c | Opus first draft of tickets/P5c.md (order 20 item 6, missing v1 ticket) | opus | 02:32Z | +60min | running | verify commit; then round 1 reviewers |
+| draft-P6a | Opus first draft of tickets/P6a.md (order 20 item 6, missing v1 ticket) | opus | 02:32Z | +60min | running | verify commit; then round 1 reviewers |
+| draft-P6b2 | Opus first draft of tickets/P6b2.md (order 20 item 6, missing v1 ticket) | opus | 02:32Z | +60min | running | verify commit; then round 1 reviewers |
+| draft-P8a | Opus first draft of tickets/P8a.md (order 20 item 6, missing v1 ticket) | opus | 02:32Z | +60min | running | verify commit; then round 1 reviewers |
+| draft-P8b | Opus first draft of tickets/P8b.md (order 20 item 6, missing v1 ticket) | opus | 02:32Z | +60min | running | verify commit; then round 1 reviewers |
+| draft-P8c | Opus first draft of tickets/P8c.md (order 20 item 6, missing v1 ticket) | opus | 02:32Z | +60min | running | verify commit; then round 1 reviewers |
+| rev2-P5a | Sonnet author: apply reviews/P5a-round1-resolve.md -> next revision | sonnet | 02:32Z | +45min | running | verify; round-2 reviewers |
+| rev2-P5b1 | Sonnet author: apply reviews/P5b1-round1-resolve.md -> next revision | sonnet | 02:32Z | +45min | running | verify; round-2 reviewers |
