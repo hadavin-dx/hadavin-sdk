@@ -242,3 +242,4 @@
 2026-11-06T11:11:05Z | step=P1c rev5 committed (q176); round 4 launching | next=verify P1b report | blocked=lead PL15-18
 2026-11-06T11:12:35Z | step=P1c round 4 reviewers launched (a91da0f1, a892c1cd) | next=save reports, resolve; verify P1b report | blocked=lead PL15-18
 2026-11-06T11:17:16Z | step=P1c r4 codebase report saved (0B/6m/5n); wc -w P1c=6710 confirmed | next=design report, resolve | blocked=lead PL15-18
+2026-11-06T11:18:27Z | step=order 78 read; P0t fix3 builder launched | next=design r4 report, P1b report, P0t fix3 verify | blocked=none
