@@ -169,7 +169,7 @@ def test_directory_named_like_a_migration_is_refused(monkeypatch, tmp_path):
     monkeypatch.setattr(mig, "connect", no_db)
     with pytest.raises(Exception) as e:
         mig.migrate("postgresql://unused")
-    assert isinstance(e.value, ConfigError), repr(e.value)
+    assert type(e.value) is mn.MigrationNumberError, repr(e.value)
     assert "0006_x.sql: not a regular file" in str(e.value)
 
 
