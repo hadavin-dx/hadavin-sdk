@@ -1469,3 +1469,6 @@
 | BS-P4d-COR-2-bs | Major | P4d | see reviews/P4d-buildstart-adv.md / -cor.md | OPEN |
 | BS-P4d-ADV-6-bs | Major | P4d | see reviews/P4d-buildstart-adv.md / -cor.md | OPEN |
 | BS-P4d-COR-3-bs | Major | P4d | see reviews/P4d-buildstart-adv.md / -cor.md | OPEN |
+| BS-P1-ADV-1-bs | Major/Minor | P1 | see reviews/P1-buildstart-adv.md | OPEN |
+| BS-P1-ADV-2-bs | Major/Minor | P1 | see reviews/P1-buildstart-adv.md | OPEN |
+| BS-P1-ADV-3-bs | Major/Minor | P1 | see reviews/P1-buildstart-adv.md | OPEN |

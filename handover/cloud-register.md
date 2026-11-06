@@ -300,7 +300,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | rev6-P2d-author | Sonnet author: apply reviews/P2d-round5-resolve.md + frozen designs/lookalike-leak.md draft 11 to tickets/P2d.md -> revision 6 | sonnet | 02:06Z | +90min | REPORTED | verify commit, recount |
 | rev10-P2a-author | Sonnet author: apply reviews/P2a-round8-resolve.md to tickets/P2a.md -> revision 10 (order 16: round 1 of 3 done) | sonnet | 02:20Z | +60min | REPORTED | verify commit, recount |
 | rev12-P4a-author | Sonnet author: apply reviews/P4a-round11-resolve.md to tickets/P4a.md -> revision 12 FINAL (order 16/17: then FROZEN) | sonnet | 02:32Z | +60min | REPORTED | verify commit, recount |
-| bs-P1-adv | build-start review (order 20) of frozen tickets/P1.md, egm:*, read-only | sonnet | 02:31Z | +45min | running | save report as reviews/P1-buildstart-adv.md; then ONE resolve |
+| bs-P1-adv | build-start review (order 20) of frozen tickets/P1.md, egm:*, read-only | sonnet | 02:31Z | +45min | REPORTED | save report as reviews/P1-buildstart-adv.md; then ONE resolve |
 | bs-P1-cor | build-start review (order 20) of frozen tickets/P1.md, egm:*, read-only | sonnet | 02:31Z | +45min | REPORTED | save report as reviews/P1-buildstart-cor.md; then ONE resolve |
 | bs-P3a-adv | build-start review (order 20) of frozen tickets/P3a.md, egm:*, read-only | sonnet | 02:31Z | +45min | running | save report as reviews/P3a-buildstart-adv.md; then ONE resolve |
 | bs-P3a-cor | build-start review (order 20) of frozen tickets/P3a.md, egm:*, read-only | sonnet | 02:31Z | +45min | REPORTED | save report as reviews/P3a-buildstart-cor.md; then ONE resolve |
@@ -311,7 +311,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | bs-P4a-adv | build-start review (order 20) of frozen tickets/P4a.md, egm:*, read-only | sonnet | 02:31Z | +45min | REPORTED | save report as reviews/P4a-buildstart-adv.md; then ONE resolve |
 | bs-P4a-cor | build-start review (order 20) of frozen tickets/P4a.md, egm:*, read-only | sonnet | 02:31Z | +45min | REPORTED | save report as reviews/P4a-buildstart-cor.md; then ONE resolve |
 | res1-P4b1 | Opus egm-resolve of round-1 reviews of tickets/P4b1.md (order 20 item 6) | opus | 02:32Z | +40min | REPORTED | commit report; launch revision author |
-| res1-P4b2 | Opus egm-resolve of round-1 reviews of tickets/P4b2.md (order 20 item 6) | opus | 02:32Z | +40min | running | commit report; launch revision author |
+| res1-P4b2 | Opus egm-resolve of round-1 reviews of tickets/P4b2.md (order 20 item 6) | opus | 02:32Z | +40min | REPORTED | commit report; launch revision author |
 | res1-P4c | Opus egm-resolve of round-1 reviews of tickets/P4c.md (order 20 item 6) | opus | 02:32Z | +40min | REPORTED | commit report; launch revision author |
 | res1-P6b1 | Opus egm-resolve of round-1 reviews of tickets/P6b1.md (order 20 item 6) | opus | 02:32Z | +40min | REPORTED | commit report; launch revision author |
 | res1-P5b2 | Opus egm-resolve of round-1 reviews of tickets/P5b2.md (order 20 item 6) | opus | 02:32Z | +40min | REPORTED | commit report; launch revision author |
@@ -332,3 +332,5 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | res-bs-P4d | Opus egm-resolve build-start P4d (one round) | opus | 02:38Z | +60min | running | verify build notes in tickets/P4d.md; S0 EXIT P4d effective |
 | res-bs-P4a | Opus egm-resolve build-start P4a (one round) | opus | 02:38Z | +60min | running | verify build notes in tickets/P4a.md; S0 EXIT P4a effective |
 | rev2-P4b1 | Sonnet revision author for P4b1 after round-1 resolve (order 20) | sonnet | 02:39Z | +60min | running | verify commit and counts; then round 2 reviewers |
+| res-bs-P1 | Opus egm-resolve build-start P1 (one round) | opus | 02:40Z | +60min | running | verify build notes in tickets/P1.md; S0 EXIT P1 effective |
+| rev2-P4b2 | Sonnet revision author for P4b2 after round-1 resolve | sonnet | 02:40Z | +60min | running | verify commit and counts; then round 2 reviewers |
