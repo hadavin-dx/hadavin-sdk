@@ -30,3 +30,11 @@ Open v1.1 items: each ticket keeps its own v1.1 table in plain words (P4a 37 row
 - P2a trigger fix tested only as a superuser owner on PostgreSQL 16.15; the lead's condition is a test on 16 AND 17 by the builder.
 - The P2d-2 mutant counts (93/141 rows) leave out the design's strict xfails (104/152 with them); the design's section 8 still says "41 live", stale against its own 46.
 - Sonnet authors, not Opus egm-draft, wrote these revisions (accepted by the lead, order 19 G).
+
+## DEFERRED (lead order 57 A2, 2026-11-06): frozen, NOT deleted, NOT built until a DEMAND line exists
+| Ticket | Why deferred (lead's words, summarised) | What it needs to un-defer |
+|---|---|---|
+| AK-G16 (Kubernetes deploy kit) | no client or chain item asks for it; 25-35 h estimated; project-shaped, so it fails the genericity rule | a named client need or a core-chain dependency, written as a DEMAND line |
+| AK-G15 (person queue) | wait for a client use case; its data/API contract stays in the GAPS doors | same |
+| AK-G1 (chat) | wait for a client use case; its data/API contract stays in the GAPS doors | same |
+Rung-table notes already appended to these three (AK-G16 BN-37, AK-G15 BN-29, AK-G1 BN-32) and the accepted AK-G16 cuts stay as written; the freeze stands. Order 57 A3: the shared source scanner is NOT built; revisit only if three of the five tickets build. A4: G14 gets no ticket (lead builds it from the studio portal kit).
