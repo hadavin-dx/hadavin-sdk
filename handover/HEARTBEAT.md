@@ -347,3 +347,4 @@ P2d-1 | draft PR 77 6d5616b; needs re-merge of P1a fix5 | 7 | PR 63 fix5
 P5b1 | PR 80 draft, head b6fb1c2, evidence scrubbed | builders running: P1a fix5, P4d-a2, P1b redo | blocked on: full suites at final head, P5a merge
 ORDER95 | relayed | builders running: P1a fix5, P4d-a2, P1b redo, P3a-2 finals, P5b1 reruns | blocked on: heavy slots, lead PR 81
 P3a-2 | READY PR 73 head 967d5a1, finals green | builders running: P1a fix5, P4d-a2, P1b, P5b1 | blocked on: heavy slots
+P3a | PR 68 READY head f127367 (main merged) | builders running: P1a, P4d-a2, P1b, P5b1 | blocked on: CI security re-run

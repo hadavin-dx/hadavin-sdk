@@ -554,3 +554,7 @@ PR 73 is not stacked on an unmerged PR except core/P3a (PR 68 merged per its bod
 
 ## q235 (2026-11-06T15:25:00Z) CORRECTION to q234
 q234 said core/P3a's PR 68 was merged. Wrong: PR 68 is OPEN (base main, mergeable_state blocked); only main was merged INTO core/P3a. So PR 73 is stacked on an unmerged PR. Order 91 says stacked PRs are DRAFT; the lead's order 95 said "then READY", so I left PR 73 ready. NEEDS LEAD: confirm ready or draft. Also: PR 73 shows only SonarCloud and CodeRabbit (skipped) checks; the full CI (check, tests-py312, security) does not run on it because its base is not main. Its full-suite proof is the builder's logs only.
+
+## q236 (2026-11-06T15:12:00Z) READY: PR 68 (P3a-1, base main), head f127367 (ORDER 97)
+Done: merged origin/main (13ebfaf) into core/P3a as a plain merge commit f127367 (no force, no rewrite) and pushed; HEAD vs origin 0 0. The merge changes only .github/workflows/ci.yml and .gitleaksignore (2 files, +5 -2), so no source or test file changed and I did NOT rerun the suites (last full run: 9861 passed, 455 skipped, 3.13/3.12, at 606a9fe plus the main merge earlier). gitleaks origin/main..HEAD: no leaks. The security check on PR 68 has not been read by me yet; it re-runs on this push.
+READY for your review. PR 73 (draft per your order) is based on core/P3a: it does not yet contain f127367; merge core/P3a into core/P3a-2 later (config-only files), not needed for its tests.
