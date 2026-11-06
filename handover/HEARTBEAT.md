@@ -222,3 +222,4 @@
 2026-11-06T09:54:41Z | step=P5a BN-22 placeholder (no audit existed); P5a rung audit agent launched | next=BN-23 verdicts
 2026-11-06T09:57:42Z | step=P1c rev2 verified+committed (q159) | next=order 69 items 1-3 | blocked=P1c PL1-PL8 lead
 2026-11-06T09:59:26Z | step=order 69 items 1-3 done (q160) | next=wait for P1a fix3/P1b/P5a audit reports | blocked=lead answers q159/q160
+2026-11-06T10:00:10Z | step=P5a audit BN-23 committed (q161) | next=await P1a fix3, P1b | blocked=lead
