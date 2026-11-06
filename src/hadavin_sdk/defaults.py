@@ -129,3 +129,9 @@ K8S_MAX_PAGES = 25  # pages followed per list; past that the answer says it is i
 K8S_JSON_CAP_BYTES = 1024 * 1024  # fetch cap for a JSON list reply
 K8S_LOG_SLACK_BYTES = 8192  # fetch-cap room over `log_bytes` for the line framing
 K8S_LOG_BYTES = 65536  # asked of the API as limitBytes
+
+# --- money (P4d-a2-i): one named block; `store/protocol.py`, `models.py` and `config.py` import these -------------------
+MAX_USD = 10**12  # the most one amount of money (one booking, one cost, one actual) may be, in USD
+# The most one model price may be, in USD per million tokens. 10**6 is one dollar per token, far above any list price
+# known to the author; it is not read from a provider's price list (UNVERIFIED), so a lead may lower it.
+MAX_ROUTE_PRICE_USD_PER_MTOK = 10**6
