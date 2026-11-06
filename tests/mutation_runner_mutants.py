@@ -29,7 +29,8 @@ Which mutants need what on Windows (this list is run on Linux and on Windows; th
 
 Tests with no mutant (the guard is checked by the test only; names as in ``tests/test_mutation_runner.py``):
 - ``test_run_mutants_refuses_test_and_fixture_paths_that_leave_the_tree``: the list-based path checks of ``run_mutants`` for tests
-  and fixtures (each is also checked again by ``_inside``, so a mutant that removes the first check is equivalent).
+  and fixtures (each is also checked again by ``_inside``, so a mutant that removes the first check is equivalent). The same holds
+  for the dash and at-sign refusal of a fixture folder (``extra_dirs`` never reaches the argv; ``_relative`` is called again by ``_inside``).
 - ``test_a_refused_run_leaves_no_temp_folder`` (the place of the ``try``), ``test_the_signal_handlers_are_restored_and_an_ignored_sighup_stays_ignored``
   (restore of the old handlers) and ``test_locate_does_not_list_a_file_through_a_folder_link_out_of_the_tree`` (see above).
 - ``test_the_runner_streams_each_result_and_keeps_a_sigkill_apart_from_a_timeout``: only the ``TIMED_OUT`` constant has a mutant;
@@ -108,9 +109,30 @@ M = [
     mutant("runner: a timeout is reported as an exit code", MR, TIMEOUT_TAIL + "            return TIMED_OUT",
         "            return 1", "test_a_mutant_that_loops_forever_times_out_instead_of_hanging_the_run",
         "a timeout was not reported as one"),
-    mutant("runner: a dash path is an option", MR, '"--", *tests', "*tests",
+    mutant("runner: a dash path reaches the pytest argv", MR,
+        "    for operand in tests:  # the one place", "    for operand in ():  # the one place",
         "test_a_test_path_that_starts_with_a_dash_is_a_path_not_a_pytest_option",
-        "a test path with a dash was taken as a pytest option"),
+        "a test path with a dash or an at sign reached the pytest argv"),
+    mutant("runner: a dash path is accepted as a relative path", MR,
+        '    if arg.startswith(("-", "@")):', '    if arg.startswith(("@",)):',
+        "test_a_path_that_starts_with_a_dash_is_refused_in_both_grammars_and_dot_slash_is_the_way_out",
+        "a path that starts with a dash was accepted"),
+    mutant("runner: an at-sign path is accepted", MR,
+        '    if arg.startswith(("-", "@")):', '    if arg.startswith(("-",)):',
+        "test_a_path_that_starts_with_an_at_sign_is_refused_because_pytest_reads_it_as_an_argument_file",
+        "a path that starts with an at sign was accepted"),
+    mutant("runner: a leader reaped by someone else stays unknown", MR,
+        "            proc.poll()\n            return", "            return",
+        "test_a_leader_reaped_by_someone_else_is_known_as_ended_so_its_group_is_not_signalled",
+        "the reaped leader was still unknown to its Popen object"),
+    mutant("runner: a nested run_mutants call is accepted", MR,
+        '    if _SIGNALS["active"]:\n        raise RuntimeError(', '    if False:\n        raise RuntimeError(',
+        "test_run_mutants_is_not_re_entrant_and_a_nested_call_leaves_the_outer_one_alone",
+        "a nested run_mutants call was not refused"),
+    mutant("runner: a relative link out of the tree is copied", MR,
+        "        _refuse_links_out(snap)\n", "",
+        "test_a_relative_link_that_points_out_of_the_tree_is_refused_at_snapshot_time",
+        "a relative link out of the tree was copied"),
     mutant("runner: a link out of the tree is listed", MR,
         "            if os.path.commonpath([real_base, real_full]) == real_base:", "            if True:",
         LOCATE, "a file link out of the tree was listed"),

@@ -9,7 +9,9 @@ This is a developer tool, not a runtime module: it lives in ``tools/`` (NOT in t
 it copies ``tools/__init__.py`` and ``tools/mutation_runner.py`` byte for byte (the files and their sha256 values are listed in
 ``tests/fixtures/mutation_manifest.json``); the tool imports only ``hadavin_sdk.testing.mutation``. It runs a subprocess on caller-chosen trees, so the mutant file is found by LISTING the
 tree (``_locate``: the caller's string is compared with the listed names and never joined to a path), every other path is checked to
-stay inside its tree (``_inside``: a ``..`` part or an absolute path is a ``ValueError``), and every pytest run has a timeout, and a timeout kills the whole process tree of the run.
+stay inside its tree (``_inside``: a ``..`` part or an absolute path is a ``ValueError``), a path that starts with ``-`` or ``@`` is refused
+everywhere (``_plain_operand``: pytest would read it as an option or as an argument file, also after ``--``; ``./name`` is the way to write it),
+a relative symlink of the snapshot that points outside the tree is refused (``_refuse_links_out``), and every pytest run has a timeout, and a timeout kills the whole process tree of the run.
 
 Limits, stated plainly. The tree kill reaches the processes that stay in the run's process group (POSIX) or the parent chain
 (Windows ``taskkill /T``). A test or mutant that starts a process in a NEW session (``setsid``, ``start_new_session=True``) or, on
@@ -34,8 +36,8 @@ first and the group kill after a normal exit has the old, tiny pid-reuse risk.
 Packages that need a ``conftest.py`` or pytest options from a ``pyproject.toml`` / ``pytest.ini`` cannot be run by this tool: pytest
 runs with ``--noconftest`` and with an empty ini file on purpose (a planted file in a parent folder is never read).
 
-Dev-tool constants: ``MAX_JUNIT_CHARS`` (in ``testing.mutation``), ``SETUP_TRIES``, ``SETUP_WAIT``, ``TREE_KILL_TIMEOUT``, ``TIMED_OUT``,
-``CHILD_ENV`` and the default run timeout (``DEFAULT_TIMEOUT``, 900.0 seconds) are module constants here and NOT in ``defaults.py``:
+Dev-tool constants: ``MAX_JUNIT_CHARS`` (in ``testing.mutation``), ``SETUP_TRIES``, ``SETUP_WAIT``, ``WAIT_POLL``, ``TREE_KILL_TIMEOUT``,
+``TIMED_OUT``, ``CHILD_ENV``, ``CHILD_FIXED_ENV``, ``JUNIT_REFUSED`` and the default run timeout (``DEFAULT_TIMEOUT``, 900.0 seconds) are module constants here and NOT in ``defaults.py``:
 the no-hardcoding rule is about product behaviour (names, regions, prices, thresholds a deployment tunes), and this is a developer tool
 that ships in no wheel, has no config surface and is copied byte for byte into demos. A caller changes the timeouts by argument.
 """
@@ -93,10 +95,20 @@ class Mutant:
             _relative(self.test_file)
 
 
+def _plain_operand(arg: str) -> str:
+    """``arg`` may reach the pytest command line as an operand: it must not start with ``-`` (pytest reads it as an option; the ``--``
+    marker is not a safe fence, on some Python 3.12 builds argparse still takes the next word after it as an option) or with ``@``
+    (pytest reads ``@name`` as a file of further arguments, also after ``--``). A caller who means such a file name writes ``./name``."""
+    if arg.startswith(("-", "@")):
+        raise ValueError(f"a path may not start with '-' or '@' (write ./name): {arg!r}")
+    return arg
+
+
 def _relative(rel: str) -> str:
-    """``rel`` must be a relative path with no ``..`` part (checked as a POSIX and as a Windows path)."""
+    """``rel`` must be a relative path with no ``..`` part (checked as a POSIX and as a Windows path) and must not start with ``-`` or ``@``."""
     if not isinstance(rel, str) or not rel:
         raise ValueError("a path is a non-empty string")
+    _plain_operand(rel)
     # a Windows drive, or an NTFS alternate data stream name (``file.py:stream``): neither is a plain relative path
     if ":" in rel:
         raise ValueError(f"path escapes its tree: {rel!r}")
@@ -171,6 +183,8 @@ def _locate(base: Path, rel: str) -> Path:
 
 def _pytest(cwd: Path, tests: Sequence[str], junit: Path, timeout: float) -> int:
     # an ALLOWLIST, not os.environ: a mutant run must not see a database DSN, a token or any other secret of the caller; PYTHONPATH also holds the tree root (tests may import tools.*)
+    for operand in tests:  # the one place the caller's strings reach the argv: refuse here too, not only where the paths are first checked
+        _plain_operand(operand)
     env = {k: os.environ[k] for k in CHILD_ENV if k in os.environ}
     env.update(CHILD_FIXED_ENV)
     env["PYTHONPATH"] = os.pathsep.join([str(cwd / "src"), str(cwd)])
@@ -184,7 +198,7 @@ def _pytest(cwd: Path, tests: Sequence[str], junit: Path, timeout: float) -> int
             ini_dir = Path(tempfile.mkdtemp(prefix="mutant_ini_"))
         ini = ini_dir / "mutant_run.ini"
         ini.write_text("", encoding="utf-8")
-        cmd = [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", "--noconftest", "-x", "-c", str(ini), f"--rootdir={cwd}", f"--junitxml={junit}", "--", *tests]  # fmt: skip
+        cmd = [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", "--noconftest", "-x", "-c", str(ini), f"--rootdir={cwd}", f"--junitxml={junit}", *tests]  # fmt: skip
         # own process group (POSIX session / Windows group): on a timeout the whole tree dies, not only pytest (a test may have started psql or a server)
         own = (
             {"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP}
@@ -193,7 +207,7 @@ def _pytest(cwd: Path, tests: Sequence[str], junit: Path, timeout: float) -> int
         )
         # a termination signal during the start is held until ``proc`` is known, then raised inside this ``try``: the child is killed
         with _signals_held():
-            # S603 stays a listed exception: the argument list holds the caller's test paths and the junit path, so ruff cannot see it as a literal. Fixed argv (our own interpreter), no shell, caller strings only as pytest operands after --
+            # S603 stays a listed exception: the argument list holds the caller's test paths and the junit path, so ruff cannot see it as a literal. Fixed argv (our own interpreter), no shell, caller strings only as pytest operands that ``_plain_operand`` has checked
             proc = subprocess.Popen(  # noqa: S603
                 cmd, cwd=cwd, env=env, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, **own  # type: ignore[call-overload]
             )  # fmt: skip
@@ -230,7 +244,8 @@ def _wait_unreaped(proc: subprocess.Popen[bytes], timeout: float) -> None:
         try:
             if os.waitid(os.P_PID, proc.pid, os.WEXITED | os.WNOHANG | os.WNOWAIT) is not None:
                 return
-        except ChildProcessError:  # someone else reaped it already
+        except ChildProcessError:  # someone else reaped it already (SIGCHLD ignored): let ``proc`` learn it, or ``_kill_tree`` would signal a reaped group
+            proc.poll()
             return
         left = deadline - time.monotonic()
         if left <= 0:
@@ -265,8 +280,9 @@ def _kill_tree(proc: subprocess.Popen[bytes]) -> None:
 _TERMINATING = ("SIGTERM", "SIGHUP")
 # State of the termination handling. Only the main thread changes it (the handlers run there, and ``_signals_held`` does nothing in
 # another thread): ``depth`` counts the steps that must not be cut short, ``pending`` is the first signal that arrived during one,
-# ``ended`` says that a signal has already ended the run (every later one is remembered and dropped: the cleanup is under way).
-_SIGNALS = {"depth": 0, "pending": 0, "ended": 0}
+# ``ended`` says that a signal has already ended the run (every later one is remembered and dropped: the cleanup is under way),
+# ``active`` says that a ``run_mutants`` call of this thread is under way (one at a time: the counters are shared, see ``run_mutants``).
+_SIGNALS = {"depth": 0, "pending": 0, "ended": 0, "active": 0}
 
 
 def _signals_active() -> bool:
@@ -301,6 +317,11 @@ def _terminations_raise() -> Iterator[None]:
     if not _signals_active():
         yield
         return
+    # refused BEFORE anything is changed: the counters of the outer call stay as they are
+    if _SIGNALS["active"]:
+        raise RuntimeError(
+            "run_mutants is not re-entrant: a second call inside a running one is refused"
+        )
 
     def stop(signum: int, _frame: object) -> None:
         if _SIGNALS["depth"] or _SIGNALS["ended"]:
@@ -310,7 +331,7 @@ def _terminations_raise() -> Iterator[None]:
         raise SystemExit(128 + signum)
 
     previous: dict[int, object] = {}
-    _SIGNALS.update(depth=0, pending=0, ended=0)
+    _SIGNALS.update(depth=0, pending=0, ended=0, active=1)
     try:
         for name in _TERMINATING:
             sig = getattr(signal, name, None)
@@ -321,7 +342,7 @@ def _terminations_raise() -> Iterator[None]:
     finally:
         for sig, old in previous.items():
             signal.signal(sig, old if old is not None else signal.SIG_DFL)  # type: ignore[arg-type]
-        _SIGNALS.update(depth=0, pending=0, ended=0)
+        _SIGNALS.update(depth=0, pending=0, ended=0, active=0)
 
 
 def run_mutants(
@@ -342,12 +363,35 @@ def run_mutants(
     finishes (stream it and a timeout of the whole run still leaves a kill list). Every ``tests`` and ``extra_dirs`` entry and every mutant file
     must name a file inside its tree (``ValueError``). ``first_lines``, if given, is emptied at the start and then filled with the first ``E`` line
     of each judged kill (mutant name -> line; diagnostics, and what ``crash_type`` is checked against): it belongs to this call, so two
-    runs in two threads never share it. A SIGTERM or SIGHUP during the call ends it like Ctrl-C (see the module docstring)."""
+    runs in two threads never share it. A SIGTERM or SIGHUP during the call ends it like Ctrl-C (see the module docstring).
+    NOT re-entrant: the signal state is one module-level record, so on POSIX in the main thread a ``run_mutants`` call made while another is
+    running in the same thread (from ``on_result``, say) raises ``RuntimeError`` and leaves the outer call untouched. Calls in other threads do not
+    share that state, and each is handled by its own thread (the signal handling is then off, as the module docstring says)."""
     with _terminations_raise():
         return _run_mutants(
             root, mutants, tests, extra_dirs, only, timeout, baseline_timeout, on_result,
             {} if first_lines is None else first_lines,
         )  # fmt: skip
+
+
+def _refuse_links_out(base: Path) -> None:
+    """Refuse a RELATIVE symlink of the snapshot whose target lies outside ``base`` (``ValueError``). The snapshot and every copy of it sit
+    side by side in the shared temp folder, so such a link (``../../x`` out of ``src``) would resolve to a neighbour in that folder, not to
+    what it meant in the caller's tree. An absolute link keeps its meaning in a copy and stays a link (it is the caller's explicit choice)."""
+    real_base = os.path.realpath(base)
+    for dirpath, dirs, files in os.walk(base):  # os.walk does not enter a linked folder
+        for name in (*dirs, *files):
+            link = os.path.join(dirpath, name)
+            if not os.path.islink(link):
+                continue
+            target = os.readlink(link)
+            if os.path.isabs(target):
+                continue
+            hop = os.path.normpath(os.path.join(os.path.realpath(dirpath), target))
+            if os.path.commonpath([real_base, hop]) != real_base:
+                raise ValueError(
+                    f"a relative link points outside the tree: {os.path.relpath(link, base)!r}"
+                )
 
 
 def _run_mutants(
@@ -429,6 +473,7 @@ def _run_mutants(
                 shutil.copytree(
                     _inside(root, d), _inside(snap, d), symlinks=True, dirs_exist_ok=True
                 )
+        _refuse_links_out(snap)
         fresh()
         if (
             _pytest(

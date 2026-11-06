@@ -35,6 +35,8 @@ MOVED = (
     "test_an_edit_of_the_tree_during_the_run_does_not_leak_into_a_later_mutant",
     "test_a_mutant_that_loops_forever_times_out_instead_of_hanging_the_run",
     "test_a_test_path_that_starts_with_a_dash_is_a_path_not_a_pytest_option",
+    "test_a_path_that_starts_with_a_dash_is_refused_in_both_grammars_and_dot_slash_is_the_way_out",
+    "test_a_path_that_starts_with_an_at_sign_is_refused_because_pytest_reads_it_as_an_argument_file",
     "test_a_failing_tree_kill_still_kills_the_child",
     "test_the_baseline_run_gets_its_own_timeout",
     "test_a_baseline_timeout_of_zero_is_not_unset",
@@ -66,8 +68,11 @@ MOVED = (
     "test_a_signal_while_the_temp_folders_are_removed_leaves_none",
     "test_the_process_group_is_killed_while_its_leader_is_not_yet_reaped",
     "test_the_pytest_run_writes_no_file_into_its_working_folder_and_leaves_no_temp_folder",
+    "test_a_leader_reaped_by_someone_else_is_known_as_ended_so_its_group_is_not_signalled",
+    "test_run_mutants_is_not_re_entrant_and_a_nested_call_leaves_the_outer_one_alone",
+    "test_a_relative_link_that_points_out_of_the_tree_is_refused_at_snapshot_time",
 )
-EXPECTED_MUTANTS = 49
+EXPECTED_MUTANTS = 54
 MANIFEST_TEST = "test_the_manifest_pins_the_files_a_demo_copies"
 
 

@@ -359,6 +359,15 @@
   Windows); the rule "a test that fakes the platform fakes every OS call of that branch" is stated in the helpers docstring; the
   interrupt test kills its leftover process only after its assertions; the signal test starts the runner in its own session, kills
   the leftover pytest group, and resets SIGTERM and SIGHUP to the default first. Eight new mutants (49 in all).
+  Review round 4 (P1m): a test path, fixture folder or mutant file that starts with `-` or `@` is refused (`ValueError`; write `./name`)
+  where the paths are first checked and again where the pytest command line is built; the `--` marker is no longer relied on (on
+  Python 3.12.3 `pytest -- -x` still takes `-x` as an option, and pytest reads `@name` as an argument file also after `--`). A relative
+  symlink of the snapshot that points outside the tree is refused. `run_mutants` states that it is not re-entrant and raises
+  `RuntimeError` on a nested call in the same thread (POSIX main thread). A leader that someone else already reaped is now known to
+  its `Popen` object, so the group of a reaped pid is not signalled. The docstring lists all the module constants. CI runs the tests
+  on Python 3.12 and 3.13. Tests: the liveness check of the background-process test polls against a deadline and names the state of
+  a process that survives; the signal test ends a runner that never started its child with SIGTERM before it kills the leftovers; the
+  refused-run test checks the shared folder after the first refusal. Five new mutants and one replaced (54 in all).
 - Note on the name: `tools/` is a top-level Python package called `tools`, a generic name. A repository that copies it and already
   has its own `tools` package or folder must merge or rename deliberately; the mutants script puts the repository root on
   `sys.path` so that `tools.mutation_runner` imports, and another `tools` earlier on the path would shadow it.
@@ -367,4 +376,4 @@
   - `src/hadavin_sdk/testing/__init__.py`: `3c77d034fe2a1ee70adea0d0bd259a20edda397d8ebd55a0e40b63e5c21c9e1c`
   - `src/hadavin_sdk/testing/mutation.py`: `75c32a4e501f5c3a4edcd6f1fd8a58603ebb2ef6fd43842e558ce0761eaee03e`
   - `tools/__init__.py`: `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
-  - `tools/mutation_runner.py`: `b931bca7b0b1af0d8d0f48c99140e52488ee0b98ac503db23d8536420ffbe243`
+  - `tools/mutation_runner.py`: `3e8903fb3f3ce721256c054e875eb8d1eca09db6fd2513c4ee34b88f1463e03c`

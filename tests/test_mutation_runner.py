@@ -165,6 +165,29 @@ def _pid_alive(pid):
     return stat.rpartition(")")[2].split()[0] != "Z"
 
 
+def _describe_pid(pid):
+    """What the system says about ``pid`` (state, parent, process group), for the message of a failed liveness check."""
+    if sys.platform == "win32":
+        return "(no /proc on Windows)"
+    try:
+        stat = Path(f"/proc/{pid}/stat").read_text(encoding="utf-8")
+    except OSError as exc:
+        return f"(no /proc/{pid}/stat: {type(exc).__name__})"
+    state, ppid, pgrp = stat.rpartition(")")[2].split()[:3]
+    return f"state {state}, parent {ppid}, group {pgrp}"
+
+
+def _died_within(pid, seconds):
+    """True once ``pid`` is no longer alive, polled until a deadline (a monotonic clock, so a slow machine does not shorten it).
+    The last look is made AFTER the deadline too."""
+    deadline = time.monotonic() + seconds
+    while time.monotonic() < deadline:
+        if not _pid_alive(pid):
+            return True
+        time.sleep(0.05)
+    return not _pid_alive(pid)
+
+
 def _symlink_or_skip(target, link, **kwargs):
     """``os.symlink``, but skip the test ONLY on Windows and only when the account lacks the privilege (error 1314). On any
     other system, or for any other error, a failure to make a link is a failure of the test."""
@@ -356,7 +379,7 @@ def test_locate_does_not_list_a_file_link_out_of_the_tree(tmp_path):
 def test_locate_does_not_list_a_file_through_a_folder_link_out_of_the_tree(tmp_path):
     """A folder link (a junction on Windows, which needs no privilege). It has no mutant of its own: on Linux ``os.walk`` does not
     enter a symlinked folder, so this case never reaches the real-path check; on Windows a junction may be entered and then the
-    check is what keeps the file out (not verified on Windows by the author of this test)."""
+    check is what keeps the file out (the lead ran this test on Windows in review round 3 and it passed there)."""
     base = tmp_path / "base"
     base.mkdir()
     (tmp_path / "real.txt").write_text("x", encoding="utf-8")
@@ -471,12 +494,75 @@ def test_a_mutant_that_loops_forever_times_out_instead_of_hanging_the_run(tmp_pa
 
 
 def test_a_test_path_that_starts_with_a_dash_is_a_path_not_a_pytest_option(tmp_path):
+    """The `--` marker is NOT the fence (on Python 3.12.3 `pytest -- -x` still takes -x as an option and exits 0), so the argv builder
+    itself refuses such a path. As a bare option "-x" would collect and pass test_ok.py in the cwd."""
     (tmp_path / "test_ok.py").write_text("def test_a():\n    assert True\n", encoding="utf-8")
     assert mr._pytest(tmp_path, ["test_ok.py"], tmp_path / "r2.xml", 60) == 0
-    # as a bare option "-x" would collect and pass test_ok.py in the cwd; as an operand it is a missing file
-    assert mr._pytest(tmp_path, ["-x"], tmp_path / "r.xml", 60) != 0, (
-        "a test path with a dash was taken as a pytest option"
-    )
+    for bad in ("-x", "--help", "-", "@args.txt"):
+        _must_refuse(
+            "a test path with a dash or an at sign reached the pytest argv",
+            mr._pytest,
+            tmp_path,
+            [bad],
+            tmp_path / "r.xml",
+            60,
+        )
+    assert not (tmp_path / "r.xml").exists()
+
+
+def test_a_path_that_starts_with_a_dash_is_refused_in_both_grammars_and_dot_slash_is_the_way_out(
+    tmp_path,
+):
+    """Root fix of the dash class: the runner refuses a test path, a fixture folder and a mutant file that starts with `-`
+    (before anything is copied or run), and accepts the same name written `./name`."""
+    for bad in ("-x", "--help", "-", "-x/y.py", "-x -q"):
+        _must_refuse("a path that starts with a dash was accepted", mr._relative, bad)
+        _must_refuse(
+            "a mutant file that starts with a dash was accepted",
+            Mutant,
+            "m",
+            bad,
+            "a",
+            "b",
+            "test_x",
+        )
+        _must_refuse(
+            "a mutant test_file that starts with a dash was accepted",
+            Mutant, "m", "src/a.py", "a", "b", "test_x", test_file=bad,
+        )  # fmt: skip
+    root = _raising_tree(tmp_path)
+    shared = tmp_path / "shared_temp"
+    shared.mkdir()
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setattr(tempfile, "tempdir", str(shared))
+        _must_refuse(
+            "a test path that starts with a dash was accepted by run_mutants",
+            run_mutants, root, [], ["-x"], extra_dirs=(),
+        )  # fmt: skip
+        _must_refuse(
+            "a fixture folder that starts with a dash was accepted by run_mutants",
+            run_mutants, root, [], ["tests/test_core.py"], extra_dirs=("-fix",),
+        )  # fmt: skip
+    assert list(shared.iterdir()) == [], "a refused run left a temp folder behind"
+    # the same names are fine when they do not START with a dash
+    for ok in ("./-x", "sub/-x", "sub/-x.py", "tests/-test_dash.py"):
+        assert mr._relative(ok) == ok
+    (tmp_path / "-test_dash.py").write_text("def test_a():\n    assert True\n", encoding="utf-8")
+    assert mr._pytest(tmp_path, ["./-test_dash.py"], tmp_path / "r.xml", 60) == 0
+
+
+def test_a_path_that_starts_with_an_at_sign_is_refused_because_pytest_reads_it_as_an_argument_file(
+    tmp_path,
+):
+    """Sibling of the dash class: `pytest @file` reads further arguments from `file`, also after `--`."""
+    for bad in ("@args.txt", "@"):
+        _must_refuse("a path that starts with an at sign was accepted", mr._relative, bad)
+    _must_refuse(
+        "a test path that starts with an at sign was accepted by run_mutants",
+        run_mutants, _raising_tree(tmp_path), [], ["@args.txt"], extra_dirs=(),
+    )  # fmt: skip
+    assert mr._relative("./@args.txt") == "./@args.txt"
+    assert mr._relative("tests/@x") == "tests/@x"
 
 
 def test_a_failing_tree_kill_still_kills_the_child(monkeypatch):
@@ -702,11 +788,11 @@ def test_a_background_process_left_by_a_finished_run_is_killed_too(tmp_path):
     try:
         assert mr._pytest(folder, ["test_x.py"], folder / "r.xml", 120) == 0
         pid = int(pidfile.read_text(encoding="utf-8"))
-        for _ in range(50):
-            if not _pid_alive(pid):
-                break
-            time.sleep(0.2)
-        assert not _pid_alive(pid), "a background process of a finished run was left running"
+        # polled for up to 10 s (the first version polled the same time in 50 steps; one failure in a full 65-test run on Linux was
+        # reported, alone it passed): strict, a process still alive after the deadline fails, with what the system says about it
+        assert _died_within(pid, 10.0), (
+            f"a background process of a finished run was left running ({_describe_pid(pid)})"
+        )
     finally:
         if pid is None and pidfile.exists() and pidfile.read_text(encoding="utf-8").strip():
             pid = int(pidfile.read_text(encoding="utf-8"))
@@ -958,8 +1044,17 @@ def test_taskkill_is_resolved_under_system_root(tmp_path, monkeypatch):
 def _kill_run_leftovers(runner, grandchild):
     """POSIX cleanup of a runner subprocess that ``start_new_session=True`` made, and of what it left. The pytest child of a run is in
     ITS OWN session, so the runner's group does not hold it; the grandchild a test started is in the pytest child's group, so that
-    group is found from the grandchild's pid. Groups are killed BEFORE the runner is reaped (its pid is its group id)."""
+    group is found from the grandchild's pid. Groups are killed BEFORE the runner is reaped (its pid is its group id).
+    A runner that is still running (the pid file never appeared) is first asked to end with SIGTERM and waited for up to 30 s: its
+    handler kills the pytest child, which is in a session of its own that no group kill here reaches."""
     import signal
+
+    if runner.poll() is None:
+        runner.send_signal(signal.SIGTERM)
+        try:
+            runner.wait(timeout=30)
+        except subprocess.TimeoutExpired:
+            pass  # the SIGKILL below ends it
 
     if grandchild is not None:
         try:
@@ -1216,6 +1311,7 @@ def test_a_refused_run_leaves_no_temp_folder(tmp_path, monkeypatch):
     (bare / "tests" / "test_a.py").write_text("def test_a():\n    assert True\n", encoding="utf-8")
     with pytest.raises(FileNotFoundError):
         run_mutants(bare, [], ["tests/test_a.py"], extra_dirs=())
+    assert list(shared.iterdir()) == [], "a run with no src folder left a temp folder behind"
     # a test file that is a link out of the tree: refused (ValueError) while the snapshot is made
     root = _raising_tree(tmp_path)
     outside = tmp_path / "outside_test.py"
@@ -1251,6 +1347,68 @@ def test_a_finished_run_does_not_kill_the_tree_on_windows(tmp_path, monkeypatch)
     monkeypatch.setattr(mr, "_kill_tree", lambda proc: killed.append(proc.pid))
     assert mr._pytest(tmp_path, ["test_ok.py"], tmp_path / "r.xml", 120) == 0
     assert killed == [], "the tree was killed after a normal exit on Windows"
+
+
+@pytest.mark.skipif(
+    sys.platform == "win32" or not hasattr(os, "waitid"), reason="the waitid wait is POSIX only"
+)
+def test_a_leader_reaped_by_someone_else_is_known_as_ended_so_its_group_is_not_signalled():
+    """SIGCHLD ignored (or a stray ``wait``) reaps the child before the runner looks: ``os.waitid`` raises ``ChildProcessError``.
+    ``proc`` must learn that it has ended, or ``_kill_tree`` would ``killpg`` a group of a reaped (possibly reused) pid."""
+    proc = subprocess.Popen([sys.executable, "-c", "pass"])  # our own interpreter, a fixed argument
+    try:
+        os.waitid(os.P_PID, proc.pid, os.WEXITED | os.WNOWAIT)  # ended, not reaped
+        os.waitpid(proc.pid, 0)  # someone else reaps it
+        mr._wait_unreaped(proc, 30)
+        assert proc.returncode is not None, (
+            "the reaped leader was still unknown to its Popen object"
+        )
+    finally:
+        proc.poll()
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="the signal state is POSIX only")
+def test_run_mutants_is_not_re_entrant_and_a_nested_call_leaves_the_outer_one_alone(
+    tmp_path, monkeypatch
+):
+    root = _raising_tree(tmp_path)
+    seen = {}
+
+    def nested(*a, **k):
+        before = dict(mr._SIGNALS)
+        try:
+            run_mutants(root, [], ["tests/test_core.py"], extra_dirs=(), timeout=60)
+        except RuntimeError as exc:
+            seen["error"] = str(exc)
+        seen["unchanged"] = dict(mr._SIGNALS) == before
+        return 0
+
+    monkeypatch.setattr(mr, "_pytest", nested)
+    run_mutants(root, [], ["tests/test_core.py"], extra_dirs=(), timeout=60)
+    assert "not re-entrant" in seen.get("error", ""), "a nested run_mutants call was not refused"
+    assert seen["unchanged"], "a refused nested call changed the signal state of the outer call"
+    assert mr._SIGNALS["active"] == 0, "the signal state was left active after the call"
+
+
+def test_a_relative_link_that_points_out_of_the_tree_is_refused_at_snapshot_time(tmp_path):
+    """A relative link such as ``../../../x`` in ``src`` is copied as a link, and in the copy (a sibling of the snapshot in the shared
+    temp folder) it would resolve to a neighbour, not to what it meant. An absolute link keeps its meaning and stays (see the keep-a-link test)."""
+    shared = tmp_path / "shared_temp"
+    shared.mkdir()
+    root = _raising_tree(tmp_path)
+    (tmp_path / "outside.txt").write_text("x", encoding="utf-8")
+    _symlink_or_skip("../../../outside.txt", root / "src" / "pk" / "out.txt")
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setattr(tempfile, "tempdir", str(shared))
+        _must_refuse(
+            "a relative link out of the tree was copied",
+            run_mutants, root, [], ["tests/test_core.py"], extra_dirs=(), match="outside the tree",
+        )  # fmt: skip
+    assert list(shared.iterdir()) == [], "a refused run left a temp folder behind"
+    # a relative link that stays inside the tree is fine
+    (root / "src" / "pk" / "out.txt").unlink()
+    _symlink_or_skip("core.py", root / "src" / "pk" / "alias.py")
+    assert _baseline_passes(root), "a relative link inside the tree was refused"
 
 
 # last on purpose: a mutation of a pinned file must be judged by the test aimed at it, not by this hash pin
