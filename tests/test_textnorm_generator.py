@@ -1,7 +1,8 @@
 """The look-alike table and its generator (``tools/gen_confusables.py``): the checked-in table is the generator's output for the pinned data.
 
-Properties only, so a test holds on every interpreter. The one test that reads the small-capital NAMES of this interpreter skips (with the
-reason printed by ``-rs``) when the interpreter's Unicode version is not the one the table was generated with. The assertions a mutant must
+Properties only, so a test holds on every interpreter. The two tests that regenerate the table read the small-capital NAMES of this
+interpreter: they run on Unicode 15.0.0 (Python 3.12) and 15.1.0 (Python 3.13), where the output was compared with the checked-in table
+and is identical, and skip (reason printed by ``-rs``) on any other version. The assertions a mutant must
 trip carry a message; ``tests/textnorm_mutants.py`` names a fragment of it.
 """
 
@@ -18,6 +19,20 @@ from hadavin_sdk.guard.textnorm import fold
 
 ROOT = Path(__file__).resolve().parents[1]
 GEN_PATH = ROOT / "tools" / "gen_confusables.py"
+
+
+# The Unicode versions on which the generator was run in this package and gave the checked-in table byte for byte (3.13: 15.1.0, the
+# pin; 3.12: 15.0.0, the small-capital names are the same). Another version is not asserted: it is skipped, loudly (``-rs``).
+CHECKED_VERSIONS = frozenset({"15.0.0", "15.1.0"})
+
+
+def _skip_unless_checked_version():
+    if unicodedata.unidata_version not in CHECKED_VERSIONS:
+        pytest.skip(
+            f"the small-capital rule reads this interpreter's character names and Unicode {unicodedata.unidata_version} was never "
+            f"compared with the checked-in table (checked: {sorted(CHECKED_VERSIONS)}); regenerate only on Unicode "
+            + _confusables.DATA_UNICODEDATA
+        )
 
 
 def _load(name):
@@ -87,11 +102,7 @@ def test_the_generator_refuses_an_unpinned_file_and_is_deterministic(tmp_path):
 def test_the_generator_writes_the_digest_and_the_longest_value_it_built():
     gen = _load("gen_confusables_digest")
     data = (ROOT / "tools" / "data" / "confusables.txt").read_bytes()
-    if unicodedata.unidata_version != _confusables.DATA_UNICODEDATA:
-        pytest.skip(
-            "the small-capital rule reads this interpreter's character names: regenerate only on Unicode "
-            + _confusables.DATA_UNICODEDATA
-        )
+    _skip_unless_checked_version()
     table = gen.build(data.decode("utf-8"))
     lines = "".join(f"{cp:06X}:{table[cp]}\n" for cp in sorted(table))
     assert gen.table_digest(table) == hashlib.sha256(lines.encode("utf-8")).hexdigest()
@@ -108,9 +119,5 @@ def test_the_generator_reproduces_the_checked_in_table_offline():
     assert hashlib.sha256(data).hexdigest() == gen.PINNED_SHA256 == _confusables.DATA_SHA256, (
         "the vendored data file is not the pinned one"
     )
-    if unicodedata.unidata_version != _confusables.DATA_UNICODEDATA:
-        pytest.skip(
-            "the small-capital rule reads this interpreter's character names: regenerate only on Unicode "
-            + _confusables.DATA_UNICODEDATA
-        )
+    _skip_unless_checked_version()
     assert gen.build(data.decode("utf-8")) == _confusables.TABLE

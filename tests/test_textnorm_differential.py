@@ -8,11 +8,14 @@ row is an expected failure, strict, and only an AssertionError counts, so an Imp
 goes when a later package makes the row pass) or ``not_taken`` (a text the Intake invoice steps read as written: asserted DIFFERENT). A value
 ``{"repeat": [text, n]}`` is the text repeated n times.
 
-GOLDEN: ``tests/fixtures/textnorm_golden.json`` holds ONE entry, for the current ``alg``: one SHA-256 per hashed function over every
-non-surrogate code point and the multi-character rows of the corpus. A change of behaviour shows as a failure here; a change that makes
-keys different bumps ``alg`` by hand and replaces the entry in the same pull request (no test enforces the bump; the reviewer checks it).
-The golden test pins ONE interpreter (the pinned Unicode version); on another it is only reported (``pytest.skip`` with both fingerprints,
-printed by ``-rs``), and it FAILS if ``HADAVIN_REQUIRE_PINNED_UNIDATA=1`` is set.
+GOLDEN: ``tests/fixtures/textnorm_golden.json`` holds the entry of the current ``alg``: one section per Unicode data version, each with
+one SHA-256 per hashed function over every non-surrogate code point and the multi-character rows of the corpus, computed WITHOUT the key
+tag of an unpinned interpreter (the hashes are of the bare keys, so the 15.0.0 section is computed on Python 3.12 and the 15.1.0 section
+on Python 3.13). A change of behaviour shows as a failure here; a change that makes keys different bumps ``alg`` by hand and replaces the
+entry in the same pull request (no test enforces the bump; the reviewer checks it). The golden test ASSERTS on every interpreter whose
+Unicode version has a section (3.12 and 3.13: no skip); on a version without one (a newer Python) it is only reported (``pytest.skip``
+with the fingerprint, printed by ``-rs``), and it FAILS if ``HADAVIN_REQUIRE_PINNED_UNIDATA=1`` is set. The two sections are the same
+text apart from the code points assigned only in 15.1.0.
 """
 
 import hashlib
@@ -101,6 +104,15 @@ def _corpus_rows():
                 yield text
 
 
+def _bare(fn):
+    """``fn`` with the tag of an unpinned interpreter taken off the key: the golden hashes are of the bare keys."""
+
+    def wrapped(text):
+        return fn(text).removeprefix(textnorm.key_tag())
+
+    return wrapped
+
+
 def _digest(fn, texts):
     """SHA-256 of ``len:key`` lines of ``fn`` over ``texts`` (a key never holds a lone surrogate, but the encoding says so anyway)."""
     h = hashlib.sha256()
@@ -114,7 +126,7 @@ def _loose(text):
     return squeeze(text, loose=True)
 
 
-HASHED = {"identity_key": identity_key, "squeeze": squeeze, "squeeze_loose": _loose}
+HASHED = {"identity_key": _bare(identity_key), "squeeze": squeeze, "squeeze_loose": _loose}
 
 
 def live_hashes():
@@ -130,25 +142,34 @@ def _keyset_digest(keys):
 
 
 def test_the_golden_file_has_one_entry_for_the_current_algorithm():
-    assert set(GOLDEN) == {"note", "alg", "unidata", "hashes"}
+    assert set(GOLDEN) == {"note", "alg", "unidata", "sections"}
     assert FOLD_VERSION.startswith(f"alg={GOLDEN['alg']}|"), (
         "the golden entry is for another alg: replace it with the bump"
     )
-    assert set(GOLDEN["hashes"]) == set(HASHED)
-    assert all(len(h) == 64 for h in GOLDEN["hashes"].values())
     assert GOLDEN["unidata"] == defaults.TEXTNORM_PINNED_UNIDATA
+    assert GOLDEN["unidata"] in GOLDEN["sections"], (
+        "the pinned Unicode version has no golden section"
+    )
+    assert {"15.0.0", "15.1.0"} <= set(GOLDEN["sections"]), (
+        "Python 3.12 and 3.13 must each have a section"
+    )
+    for section in GOLDEN["sections"].values():
+        assert set(section) == {"hashes"}
+        assert set(section["hashes"]) == set(HASHED)
+        assert all(len(h) == 64 for h in section["hashes"].values())
 
 
 def test_the_golden_hashes_equal_the_live_ones():
-    if unicodedata.unidata_version != GOLDEN["unidata"]:
-        message = f"golden pinned for unicode {GOLDEN['unidata']}; this interpreter is {_fingerprint()}: reported, not asserted"
+    section = GOLDEN["sections"].get(unicodedata.unidata_version)
+    if section is None:
+        message = f"no golden section for {_fingerprint()} (sections: {sorted(GOLDEN['sections'])}): reported, not asserted"
         if os.environ.get("HADAVIN_REQUIRE_PINNED_UNIDATA") == "1":
             pytest.fail(message)
         pytest.skip(message)
     live = live_hashes()
     for name in HASHED:
-        assert live[name] == GOLDEN["hashes"][name], (
-            f"{name}: the behaviour of the fold changed (bump alg and replace the entry)"
+        assert live[name] == section["hashes"][name], (
+            f"{name}: the behaviour of the fold changed on Unicode {unicodedata.unidata_version} (bump alg and replace the entry)"
         )
 
 

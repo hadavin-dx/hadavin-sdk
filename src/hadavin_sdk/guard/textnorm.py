@@ -20,20 +20,53 @@ address equals the verified address", an allowlist): folding there lets a look-a
   1. NFKD, so a base letter and its combining mark separate; 2. drop control, format, combining-mark, private-use, surrogate and
   UNASSIGNED (Cn) characters and the invisible filler letters; 3. NFKC; 4. every Unicode whitespace character (``str.isspace``)
   becomes a space so words are never joined; 5. every Unicode decimal digit becomes an ASCII digit; 6. look-alike letters become the
-  Latin letter or digit. Case is kept unless ``casefold`` is set; ``collapse_ws`` squeezes runs of whitespace.
+  Latin letter or digit. Case is kept unless ``casefold`` is set (then ``casefold`` runs BEFORE step 6, see below); ``collapse_ws``
+  squeezes runs of whitespace.
 
 The look-alike table (step 6) is GENERATED from the Unicode UTS #39 ``confusables.txt`` MA table by ``tools/gen_confusables.py`` (pinned
 sha256, version and date in ``guard/_confusables.py``) plus 16 explicit supplementary letters and a Unicode-name rule for small capitals,
 both listed in the generator. Runtime is stdlib only; the data file is not shipped. ``FOLD_VERSION`` names the fold that made a key.
 
+IDEMPOTENT AND CASE-SYMMETRIC BY CONSTRUCTION (``identity_key``, ``same_person``, ``squeeze``; alg ``fold2``). The old order (table, then
+casefold, with a table keyed by lower-case letters) was neither: ``identity_key("\u00d8")`` kept the capital and ``identity_key("\u00f8")``
+gave ``o``, so ``same_person("B\u00d8B", "bob")`` was False, a DENY bypass. Now, with P = NFKC after the drops after NFKD, D = the digit
+table and C = ``casefold``: ``key(x) = tag + collapse(E(C(D(P(C(x))))))`` (C runs twice: first on the raw text, because the upper-case
+of a Greek letter with a trailing iota mark is a real letter that P would drop as a mark if C had not turned it into one first; again
+after P, because NFKC makes capitals) where E is the look-alike table MOVED ONTO THE CASEFOLD IMAGE
+(``_CF_TABLE``): for every table entry whose source ``s`` has ``casefold(s)`` a single character, ``E[casefold(s)] = value.casefold()``;
+when two sources reach one casefolded letter the entry of the letter that is its own case-fold wins over the entry of its capital
+(13 letters, pinned by a test: e.g. Greek eta reads n, not the capital Eta's H; ``has_mixed_script`` is the backstop for those). The
+argument: (1) CASE SYMMETRY: C is the only case-sensitive step, it runs before P and before E, E has casefolded keys only, so two texts that agree
+after C agree in the key; that ``C(P(c.upper())) == C(P(c.lower()))`` for every character is a fact about the Unicode data, which
+``tests/test_textnorm.py`` checks for ALL non-surrogate code points (and for pairs built from the table) on every supported Unicode
+version. (2) IDEMPOTENCE: the image of E is lower-case ASCII; every other character of the result survived C and is not a key of E
+(keys of E are non-ASCII and casefold-stable, asserted), so a second C changes nothing and a second E changes nothing; that the
+remaining steps (P, D, the drops) leave such characters alone is again a fact about the data, checked by the same tests. The final
+form is therefore a fixed point of the whole function; a mutant that restores the old order is killed by those tests. ``fold`` WITHOUT
+``casefold`` keeps case and uses the raw table (no symmetry is promised for it); ``squeeze`` casefolds first.
+
+NO BOUNDED-PASS LOOP IN P1a: ``fold`` is one pass and nothing loops to a fixed point; the constant ``defaults.TEXTNORM_MAX_PASSES`` is
+read by NOTHING in this package (it is first read by P1b, which may add a bounded loop with a fail-closed error). The idempotence above is
+by construction and by test, not by iterating.
+
+UNICODE DATA VERSION: the fold depends on the interpreter's Unicode data (which characters are unassigned). The pinned version is
+``defaults.TEXTNORM_PINNED_UNIDATA``. ``require_pinned_unidata()`` is the guard entry point: it raises ``UnidataMismatch`` (fail closed)
+when the interpreter's version is not the pin; pilot and prod code calls it before using any key (``app.build`` of P1b). On another
+interpreter (development, tests; Python 3.12 has Unicode 15.0.0) the functions still run, and ``identity_key`` then returns a key that
+starts with ``key_tag()``: U+E000, ``alg=fold2|ud=<this interpreter's version>``, U+E000. U+E000 is private use, which the fold
+always drops, so no key made on the pinned version can ever start with it: a key made on another version never equals one made on the
+pinned version, and two other versions never equal each other. On the pinned version the tag is empty (the bare key IS the key of
+``alg`` ``fold2``; changing the pin bumps ``alg``). ``identity_key`` of a text that already starts with the tag of this interpreter
+removes it first, so the function is idempotent there too.
+
 INPUT RULES (every public function): the argument must be a plain ``str`` (``type(x) is str``; a ``str`` subclass or an enum member is
 refused with ``NotText``), and its WEIGHT W must be within ``defaults.TEXTNORM_MAX_CHARS`` (``TextTooLong``). W is the sum, over the
 characters of the text, of the longest string the pipeline makes from that one character (an ASCII text has W = its length). No key
-is longer than W of its text, because every step acts per character or only joins. Messages hold lengths and constants, never the input.
+is longer than W of its text (plus ``len(key_tag())`` on an unpinned interpreter), because every step acts per character or only joins. Messages hold lengths and constants, never the input.
 Any ``TextnormError`` on a DENY or ALLOW path means REFUSE.
 
 Honest limits: a letter in neither the data nor the supplement is not folded. Dropping unassigned code points (Cn) depends on the
-Python build's Unicode version (``check_pinned_unidata``). ``has_mixed_script`` is the fail-closed backstop: a word that mixes Latin
+Python build's Unicode version (``require_pinned_unidata``). ``has_mixed_script`` is the fail-closed backstop: a word that mixes Latin
 with Cyrillic, Greek, Armenian, Cherokee, Coptic, Georgian, Hebrew, Lisu or another look-alike-rich script is a deny signal whatever the
 table knows. Property: ``fold(x + mark) == fold(x)`` for any combining mark, format or unassigned character.
 """
@@ -68,7 +101,9 @@ __all__ = [
     "has_hidden_channel",
     "has_mixed_script",
     "identity_key",
+    "key_tag",
     "names_equal",
+    "require_pinned_unidata",
     "same_person",
     "squeeze",
 ]
@@ -88,7 +123,8 @@ class NotText(TextnormError):
 
 
 class UnidataMismatch(TextnormError):
-    """The interpreter's Unicode data is not the version the keys were pinned to (``check_pinned_unidata(strict=True)``)."""
+    """The interpreter's Unicode data is not the version the keys were pinned to (``require_pinned_unidata()``, or
+    ``check_pinned_unidata(strict=True)``). Fail closed: the caller must refuse to run, not fall back."""
 
 
 _DROP_CATEGORIES = frozenset({"Cc", "Cf", "Mn", "Me", "Zl", "Zp", "Co", "Cs", "Cn"})
@@ -97,6 +133,23 @@ FILLERS = frozenset(
 )  # invisible letters/symbols used to glue or split words (the last two: Egyptian hieroglyph full blank and half blank)
 _LOOKALIKES = types.MappingProxyType({chr(c): v for c, v in CONFUSABLES.items()})
 _TABLE = types.MappingProxyType(dict(CONFUSABLES))
+
+
+def _build_cf_table(table: dict[int, str]) -> dict[int, str]:
+    """The look-alike table moved onto the case-fold image (see the module docstring): keyed by ``casefold(source)`` (single characters
+    only; a source whose case fold is longer is looked up through its parts), valued by the lower-cased value. A letter that is its own
+    case fold wins over its capital; otherwise the lowest code point wins (deterministic)."""
+    own: dict[int, str] = {}
+    derived: dict[int, str] = {}
+    for cp in sorted(table):
+        folded = chr(cp).casefold()
+        if len(folded) != 1:
+            continue
+        (own if folded == chr(cp) else derived).setdefault(ord(folded), table[cp].casefold())
+    return {**derived, **own}
+
+
+_CF_TABLE = types.MappingProxyType(_build_cf_table(CONFUSABLES))
 _NON_ALNUM = re.compile(r"[^A-Z0-9]")
 _LOOSE = types.MappingProxyType(
     str.maketrans("OILSBZGQ", "01158269")
@@ -112,8 +165,9 @@ def _table_digest(table: types.MappingProxyType[int, str]) -> str:
 # Which fold made a key: ``alg`` is bumped BY HAND in the pull request that changes what a key can be (the golden file shows the change),
 # ``tbl`` is the first 12 hex characters of the digest of the in-memory table and its entry count, ``ucd`` the UTS #39 data version,
 # ``ud`` the interpreter's Unicode version. Nothing stores a key in v1.
+_ALG = "fold2"
 FOLD_VERSION = (
-    f"alg=fold1|tbl={_table_digest(_TABLE)[:12]}:{len(_TABLE)}"
+    f"alg={_ALG}|tbl={_table_digest(_TABLE)[:12]}:{len(_TABLE)}"
     f"|ucd={_confusables.DATA_VERSION}|ud={unicodedata.unidata_version}"
 )
 
@@ -132,12 +186,27 @@ _DIGITS = types.MappingProxyType(
 
 
 def _char_weight(c: str) -> int:
+    """The weight of ``c``: the larger of the single-pass weight of ``c`` and of its case fold (the case-folding path folds case first)."""
+    return max(_pass_weight(c), _pass_weight(c.casefold()))
+
+
+def _pass_weight(c: str) -> int:
     """The longest string the single-pass pipeline makes from the character ``c``: after NFKD, after NFKC, after the digit and look-alike
     tables and after the case fold (drops only shorten, so they are left out: an upper bound)."""
     nfkd = unicodedata.normalize("NFKD", c)
     nfkc = unicodedata.normalize("NFKC", nfkd)
-    mapped = nfkc.translate(_DIGITS).translate(_TABLE)
-    return max(1, len(nfkd), len(nfkc), len(mapped), len(mapped.casefold()))
+    digits = nfkc.translate(_DIGITS)
+    mapped = digits.translate(_TABLE)
+    cased = digits.casefold()
+    return max(
+        1,
+        len(nfkd),
+        len(nfkc),
+        len(mapped),
+        len(mapped.casefold()),
+        len(cased),
+        len(cased.translate(_CF_TABLE)),
+    )
 
 
 def _weight(text: str) -> int:
@@ -160,17 +229,17 @@ def _checked(*texts: str) -> None:
 
 
 def _fold(raw: str, *, casefold: bool = False, collapse_ws: bool = False) -> str:
-    s = unicodedata.normalize("NFKD", raw)
+    s = unicodedata.normalize("NFKD", raw.casefold() if casefold else raw)
     s = "".join(
         " " if ch.isspace() else ch
         for ch in s
         if ch.isspace() or (unicodedata.category(ch) not in _DROP_CATEGORIES and ch not in FILLERS)
     )
     s = unicodedata.normalize("NFKC", s)
-    s = s.translate(_DIGITS).translate(_TABLE)
-    if collapse_ws:
-        s = " ".join(s.split())
-    return s.casefold() if casefold else s
+    s = s.translate(_DIGITS)
+    # casefold BEFORE the table and use the table moved onto the casefold image: idempotent and case-symmetric (module docstring)
+    s = s.casefold().translate(_CF_TABLE) if casefold else s.translate(_TABLE)
+    return " ".join(s.split()) if collapse_ws else s
 
 
 def fold(raw: str, *, casefold: bool = False, collapse_ws: bool = False) -> str:
@@ -183,10 +252,20 @@ def squeeze(raw: str, *, loose: bool = False) -> str:
     """Comparison key: folded, upper-case letters and digits only; ``loose`` also treats the digit-like letters O I L S B Z G Q as the
     digits 0 1 1 5 8 2 6 9."""
     _checked(raw)
-    s = _fold(raw).upper()
+    s = _fold(raw, casefold=True).upper()
     if loose:
         s = s.translate(_LOOSE)
     return _NON_ALNUM.sub("", s)
+
+
+def key_tag() -> str:
+    """``""`` on the pinned Unicode version; otherwise U+E000 + ``alg=<alg>|ud=<this interpreter's Unicode version>`` + U+E000, which
+    ``identity_key`` puts in front of its key so a key made on another version never equals a key made on the pinned one. Read at call
+    time. U+E000 is private use: the fold drops it, so no untagged key can start with the tag."""
+    version = unicodedata.unidata_version
+    if version == defaults.TEXTNORM_PINNED_UNIDATA:
+        return ""
+    return f"\ue000alg={_ALG}|ud={version}\ue000"
 
 
 def _canon(s: str) -> str:
@@ -195,9 +274,13 @@ def _canon(s: str) -> str:
 
 def identity_key(raw: str) -> str:
     """The comparison key of a DENY decision: ``fold`` with case folded and whitespace collapsed. One definition for every caller.
-    The empty string and invisible-only text give ``""``, which is never a value to store or index. ``fold_key`` is this function."""
+    The empty string and invisible-only text give ``""`` on the pinned Unicode version (never a value to store or index). On another version
+    the key starts with ``key_tag()``. ``fold_key`` is this function."""
     _checked(raw)
-    return _fold(raw, casefold=True, collapse_ws=True)
+    tag = key_tag()
+    if tag and raw.startswith(tag):
+        raw = raw[len(tag) :]  # already a key of this interpreter: the function stays idempotent
+    return tag + _fold(raw, casefold=True, collapse_ws=True)
 
 
 fold_key = identity_key
@@ -259,6 +342,13 @@ def has_hidden_channel(text: str) -> bool:
     side)."""
     _checked(text)
     return _HIDDEN_CHANNEL.search(text) is not None
+
+
+def require_pinned_unidata(expected: str | None = None) -> None:
+    """GUARD ENTRY POINT for pilot and prod (P1b: ``app.build`` calls it): raise ``UnidataMismatch`` unless the interpreter's Unicode data
+    version is ``expected`` (default ``defaults.TEXTNORM_PINNED_UNIDATA``, read when the function runs). Fail closed: it never warns and
+    never returns on a mismatch. Development and tests may run on another version; their keys carry ``key_tag()``."""
+    check_pinned_unidata(expected, strict=True)
 
 
 def check_pinned_unidata(expected: str | None = None, *, strict: bool = False) -> None:
