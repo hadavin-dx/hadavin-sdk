@@ -31,23 +31,21 @@ from hadavin_sdk.guard.textnorm import (
     TextTooLong,
     UnidataMismatch,
     allow_equal,
-    check_pinned_unidata,
+    could_be_same_person,
     fold,
-    fold_key,
     has_hidden_channel,
     has_mixed_script,
     identity_key,
     key_tag,
     names_equal,
     require_pinned_unidata,
-    same_person,
     squeeze,
 )
 
 ROOT = Path(__file__).resolve().parents[1]
 FIX = Path(__file__).parent / "fixtures"
 CAP = defaults.TEXTNORM_MAX_CHARS
-A516 = chr(0xA516)  # weight 3: its fold is three letters
+SSS = chr(0x1F75C)  # weight 3: its fold is three letters (the one table value of length 3)
 FDFA = chr(0xFDFA)  # weight 18: NFKC makes 18 characters from it
 
 
@@ -137,7 +135,7 @@ def test_the_digit_table_is_complete_at_import():
 def test_allow_decisions_are_exact_and_a_look_alike_is_reported_as_one():
     real, spoof = "alice@bank.example", "alice@bank.ex" + chr(0x430) + "mple"
     assert fold(real) == fold(spoof)  # DENY direction: the same person
-    assert same_person(real, spoof), "same_person does not fold a look-alike"
+    assert could_be_same_person(real, spoof), "could_be_same_person does not fold a look-alike"
     assert allow_equal(real, real) is AllowVerdict.EQUAL
     assert allow_equal(real, spoof) is AllowVerdict.LOOKALIKE, "a look-alike is not reported as one"
     assert allow_equal("alice", "bob") is AllowVerdict.DIFFERENT, (
@@ -158,10 +156,10 @@ def test_allow_decisions_are_exact_and_a_look_alike_is_reported_as_one():
         assert verdict is AllowVerdict.VARIANT, (
             f"variant pair {x!r} {y!r} gave {verdict.name}, wanted VARIANT"
         )  # refused, but not a spoof alarm
-        assert same_person(x, y), f"same_person does not fold {x!r} and {y!r}"
+        assert could_be_same_person(x, y), f"could_be_same_person does not fold {x!r} and {y!r}"
         assert names_equal(x, y), (x, y)  # the name comparison stays tolerant, and is not an ALLOW
-    assert not names_equal("alice", "bob") and not same_person("alice", "bob")
-    assert same_person(real, spoof) and not names_equal(real, spoof)
+    assert not names_equal("alice", "bob") and not could_be_same_person("alice", "bob")
+    assert could_be_same_person(real, spoof) and not names_equal(real, spoof)
     refused(
         TypeError,
         "an AllowVerdict has a truth value",
@@ -308,7 +306,7 @@ def test_the_empty_and_invisible_only_texts_have_the_empty_key():
     assert bare(identity_key("")) == "" and fold("") == ""
     assert bare(identity_key(chr(0x200B) + chr(0x200C))) == ""
     assert bare(identity_key(" \t\n")) == ""
-    assert fold_key is identity_key
+    assert not hasattr(textnorm, "fold_key"), "the old alias fold_key is back"
 
 
 # ---- the tables --------------------------------------------------------------------------------------------------------------------------
@@ -347,7 +345,7 @@ def test_the_checked_in_table_matches_its_digest():
 def test_max_value_len_is_the_longest_value_of_the_table():
     longest = max(len(v) for v in _confusables.TABLE.values())
     assert _confusables.MAX_VALUE_LEN == longest, "MAX_VALUE_LEN is not the table maximum"
-    assert len(fold(A516)) == _confusables.MAX_VALUE_LEN, "the longest value is not made by U+A516"
+    assert len(fold(SSS)) == _confusables.MAX_VALUE_LEN, "the longest value is not made by U+1F75C"
 
 
 # ---- FOLD_VERSION ------------------------------------------------------------------------------------------------------------------------
@@ -478,7 +476,7 @@ def test_squeeze_is_case_symmetric_for_every_code_point():
 
 
 def test_the_old_failures_are_gone_a_capital_o_stroke_and_the_small_one_are_one_person():
-    assert same_person("B\u00d8B", "bob") and same_person("b\u00f8b", "BOB")
+    assert could_be_same_person("B\u00d8B", "bob") and could_be_same_person("b\u00f8b", "BOB")
     assert bare(identity_key("\u00d8")) == bare(identity_key("\u00f8")) == "o", (
         "O with stroke is not case symmetric"
     )
@@ -608,7 +606,7 @@ def test_u0345_is_an_iota_after_a_greek_letter_and_is_removed_everywhere_else():
     )
     assert bare(identity_key("admin" + YPOGEGRAMMENI)) == "admin"
     assert identity_key(YPOGEGRAMMENI + "admin") == identity_key("admin")
-    assert same_person("admin" + YPOGEGRAMMENI, "admin") and same_person(
+    assert could_be_same_person("admin" + YPOGEGRAMMENI, "admin") and could_be_same_person(
         "Admin" + YPOGEGRAMMENI, "ADMIN"
     )
     for text in (
@@ -767,7 +765,7 @@ def test_random_strings_are_idempotent_case_symmetric_and_stable_under_inserted_
             upper, lower = text.upper(), text.lower()
             if identity_key(upper) != identity_key(lower) or squeeze(upper) != squeeze(lower):
                 asymmetric.append(text)
-            if not same_person(
+            if not could_be_same_person(
                 upper, lower
             ):  # the DENY comparator (the readings) is case symmetric as well
                 set_asymmetric.append(text)
@@ -780,7 +778,7 @@ def test_random_strings_are_idempotent_case_symmetric_and_stable_under_inserted_
         with_iota_mark = (
             text[:cut] + YPOGEGRAMMENI + text[cut:]
         )  # U+0345 anywhere: the readings still match
-        if not same_person(with_iota_mark, text) or not (
+        if not could_be_same_person(with_iota_mark, text) or not (
             set(textnorm.squeeze_views(with_iota_mark)) & set(textnorm.squeeze_views(text))
         ):
             set_unstable.append(with_iota_mark)
@@ -794,7 +792,7 @@ def test_random_strings_are_idempotent_case_symmetric_and_stable_under_inserted_
         f"an inserted mark changes the key of {len(not_stable)} random texts, first {_show(not_stable)}"
     )
     assert not set_asymmetric, (
-        f"same_person is not case symmetric for {len(set_asymmetric)} random texts, first {_show(set_asymmetric)}"
+        f"could_be_same_person is not case symmetric for {len(set_asymmetric)} random texts, first {_show(set_asymmetric)}"
     )
     assert not set_unstable, (
         f"a U+0345 inserted into a random text defeats the readings for {len(set_unstable)} texts, first {_show(set_unstable)}"
@@ -815,7 +813,7 @@ def test_a_raw_text_that_starts_with_the_interpreters_own_tag_has_it_stripped_an
     assert tag.startswith("\ue000alg=fold4|ud=15.0.0") and tag.endswith("\ue000")
     # the stated over-collision: the tag of THIS interpreter in front of a text is read as "already a key"
     assert identity_key(tag + "Bob") == identity_key("Bob") == tag + "bob"
-    assert same_person(tag + "Bob", "bob")
+    assert could_be_same_person(tag + "Bob", "bob")
     once = identity_key(tag + tag + "bob")
     assert once == identity_key(once) and once != tag + "bob", (
         "a double tag is stripped once, not twice"
@@ -830,7 +828,7 @@ def test_a_raw_text_that_starts_with_the_interpreters_own_tag_has_it_stripped_an
     assert key_tag() == "" and identity_key(tag + "bob") == "alg=fold4|ud=15.0.0bob"
 
 
-def test_the_case_fold_table_is_on_the_case_fold_image_and_its_conflicts_are_the_known_thirteen():
+def test_the_case_fold_table_is_on_the_case_fold_image_and_its_conflicts_are_the_known_eleven():
     table = textnorm._CF_TABLE
     for cp, value in table.items():
         ch = chr(cp)
@@ -853,11 +851,9 @@ def test_the_case_fold_table_is_on_the_case_fold_image_and_its_conflicts_are_the
         0x3BC,
         0x3BD,
         0x3C5,
-        0x3ED,
-        0x442,
         0x4CF,
-        0x575,
         0x118C3,
+        0x118C4,
         0x118C6,
         0x118D5,
         0x118DC,
@@ -875,34 +871,6 @@ def test_the_case_fold_table_is_on_the_case_fold_image_and_its_conflicts_are_the
 
 
 # ---- the Unicode pin ---------------------------------------------------------------------------------------------------------------------
-def test_check_pinned_unidata_raises_when_strict_and_warns_otherwise(monkeypatch):
-    # independent of the interpreter: its Unicode version is stubbed, and so is the pin
-    monkeypatch.setattr(unicodedata, "unidata_version", "7.7.7")
-    check_pinned_unidata("7.7.7", strict=True)  # the same version: silent
-    with warnings.catch_warnings():
-        warnings.simplefilter("error")
-        check_pinned_unidata("7.7.7")
-    refused(
-        UnidataMismatch,
-        "strict mode accepted another version",
-        check_pinned_unidata,
-        "0.0.0",
-        strict=True,
-    )
-    with pytest.warns(UserWarning, match="not the pinned"):
-        check_pinned_unidata("0.0.0")
-    # the default is read when the function runs: a patched constant is seen
-    monkeypatch.setattr(defaults, "TEXTNORM_PINNED_UNIDATA", "0.0.0")
-    refused(
-        UnidataMismatch,
-        "the patched pinned version is not used",
-        check_pinned_unidata,
-        strict=True,
-    )
-    monkeypatch.setattr(defaults, "TEXTNORM_PINNED_UNIDATA", "7.7.7")
-    accepted("the patched pinned version is not used", check_pinned_unidata, strict=True)
-
-
 def test_require_pinned_unidata_is_the_guard_and_fails_closed(monkeypatch):
     monkeypatch.setattr(defaults, "TEXTNORM_PINNED_UNIDATA", "15.1.0")
     monkeypatch.setattr(unicodedata, "unidata_version", "15.0.0")
@@ -927,10 +895,17 @@ def test_require_pinned_unidata_is_the_guard_and_fails_closed(monkeypatch):
     assert not issubclass(UnidataMismatch, (ValueError, TypeError)), (
         "a DENY caller's except clause would swallow it"
     )
-    try:
+    with pytest.raises(UnidataMismatch) as info:
         require_pinned_unidata()
-    except UnidataMismatch as err:
-        assert "15.0.0" in str(err) and "15.1.0" in str(err)
+    assert str(info.value) == (
+        "this Python uses Unicode 15.0.0; run Python 3.13 (Unicode 15.1.0) for pilot or prod"
+    ), "the pin message does not say plainly what to run"
+    monkeypatch.setattr(unicodedata, "unidata_version", "14.0.0")
+    with pytest.raises(UnidataMismatch) as info:
+        require_pinned_unidata()
+    assert "uses Unicode 14.0.0" in str(info.value), (
+        "the message does not name the detected version"
+    )
     monkeypatch.setattr(unicodedata, "unidata_version", "15.1.0")
     accepted("require_pinned_unidata refused the pinned version", require_pinned_unidata)
     monkeypatch.setattr(defaults, "TEXTNORM_PINNED_UNIDATA", "16.0.0")
@@ -951,7 +926,7 @@ def test_a_key_made_on_another_unicode_version_carries_that_version_and_never_eq
         "the tag does not name the algorithm and the Unicode version"
     )
     assert identity_key(other) == other, "the key of another version is not idempotent"
-    assert same_person("BØB", "bob") and not same_person("bob", "bobb")
+    assert could_be_same_person("BØB", "bob") and not could_be_same_person("bob", "bobb")
     monkeypatch.setattr(unicodedata, "unidata_version", "9.9.9")
     assert identity_key("Bob") != other, "keys of two non-pinned versions are equal"
     # on the pinned version nothing a person types can reach a tagged key: U+E000 is private use and is dropped
@@ -976,8 +951,8 @@ class _Hostile(str):
         return 0
 
 
-ONE_ARG = (fold, squeeze, identity_key, fold_key, has_hidden_channel, has_mixed_script)
-TWO_ARG = (same_person, allow_equal, names_equal)
+ONE_ARG = (fold, squeeze, identity_key, has_hidden_channel, has_mixed_script)
+TWO_ARG = (could_be_same_person, allow_equal, names_equal)
 
 
 def test_every_public_function_refuses_what_is_not_a_plain_str():
@@ -989,7 +964,7 @@ def test_every_public_function_refuses_what_is_not_a_plain_str():
             refused(NotText, f"{fn.__name__} accepted {type(bad).__name__} second", fn, "a", bad)
     for fn in ONE_ARG:
         assert fn(str(_Name.RED)) is not None  # the plain text of a member is accepted
-    assert same_person(str(_Name.RED), "red") and names_equal(str(_Name.RED), "RED")
+    assert could_be_same_person(str(_Name.RED), "red") and names_equal(str(_Name.RED), "RED")
 
 
 def test_a_str_subclass_is_refused_by_exact_type_not_by_isinstance():
@@ -1035,14 +1010,14 @@ def test_the_cap_itself_is_accepted_and_one_more_ascii_character_is_refused():
 
 
 def test_the_size_rule_counts_what_a_character_becomes_not_its_length():
-    # U+A516 becomes three letters: SEAM-1
-    refused(TextTooLong, "87,382 x U+A516 (W 262,146) is accepted", identity_key, A516 * 87382)
-    assert bare(accepted("W 262,143 is refused", identity_key, A516 * 87381)) == "l" * 262143
+    # U+1F75C becomes three letters: SEAM-1
+    refused(TextTooLong, "87,382 x U+1F75C (W 262,146) is accepted", identity_key, SSS * 87382)
+    assert bare(accepted("W 262,143 is refused", identity_key, SSS * 87381)) == "s" * 262143
     refused(
         TextTooLong,
-        "262,144 x U+A516 (plain length at the cap) is accepted",
+        "262,144 x U+1F75C (plain length at the cap) is accepted",
         identity_key,
-        A516 * CAP,
+        SSS * CAP,
     )
     # U+FDFA becomes eighteen characters in NFKC
     refused(TextTooLong, "cap/18 + 1 x U+FDFA is accepted", identity_key, FDFA * (CAP // 18 + 1))
@@ -1061,13 +1036,27 @@ def test_the_size_rule_counts_what_a_character_becomes_not_its_length():
 
 
 def test_the_size_rule_checks_every_argument_left_to_right():
-    big = A516 * 87382
-    refused(TextTooLong, "same_person skipped the second argument", same_person, "a", big)
+    big = SSS * 87382
+    refused(
+        TextTooLong,
+        "could_be_same_person skipped the second argument",
+        could_be_same_person,
+        "a",
+        big,
+    )
     refused(TextTooLong, "allow_equal skipped the first argument", allow_equal, big, "a")
     refused(TextTooLong, "allow_equal skipped the second argument", allow_equal, "a", big)
     refused(TextTooLong, "names_equal skipped the second argument", names_equal, "a", big)
-    refused(TextTooLong, "same_person(big, 1) is not a size refusal", same_person, big, 1)
-    refused(NotText, "same_person(1, big) is not a type refusal", same_person, 1, big)
+    refused(
+        TextTooLong,
+        "could_be_same_person(big, 1) is not a size refusal",
+        could_be_same_person,
+        big,
+        1,
+    )
+    refused(
+        NotText, "could_be_same_person(1, big) is not a type refusal", could_be_same_person, 1, big
+    )
 
 
 def test_the_cap_is_read_when_the_function_runs(monkeypatch):
@@ -1078,13 +1067,26 @@ def test_the_cap_is_read_when_the_function_runs(monkeypatch):
 
 def test_a_refusal_message_holds_lengths_and_constants_never_the_input():
     canary = "ZQXCANARY"
-    for text in (canary + "a" * CAP, canary + A516 * 90000):
+    for text in (canary + "a" * CAP, canary + SSS * 90000):
         with pytest.raises(TextTooLong) as info:
             identity_key(text)
         assert canary not in str(info.value) and "ZQX" not in str(info.value)
     with pytest.raises(NotText) as info:
         identity_key(_Sub(canary))
     assert canary not in str(info.value)
+
+
+def test_the_refusal_messages_say_in_plain_words_what_is_wrong():
+    with pytest.raises(TextTooLong) as info:
+        identity_key("a" * (CAP + 1))
+    assert str(info.value) == f"the text is too long: {CAP + 1} of {CAP} allowed", (
+        "the length message is not in plain words"
+    )
+    with pytest.raises(TextTooLong) as info:
+        identity_key(SSS * 87382)
+    assert str(info.value) == (
+        f"the text is too long once look-alike letters are expanded: {87382 * 3} of {CAP} allowed"
+    ), "the weight message is not in plain words"
 
 
 def test_the_errors_are_their_own_family_and_not_value_or_type_errors():
@@ -1165,7 +1167,7 @@ def test_the_hidden_channel_signal_refuses_what_is_not_text():
 
 
 # ---- names ---------------------------------------------------------------------------------------------------------------------------------
-def test_the_public_names_are_exactly_the_listed_twenty_two():
+def test_the_public_names_are_exactly_the_listed_twenty():
     assert sorted(textnorm.__all__) == sorted(
         [
             "FILLERS",
@@ -1176,9 +1178,7 @@ def test_the_public_names_are_exactly_the_listed_twenty_two():
             "TextnormError",
             "UnidataMismatch",
             "allow_equal",
-            "check_pinned_unidata",
             "fold",
-            "fold_key",
             "fold_views",
             "has_hidden_channel",
             "has_mixed_script",
@@ -1187,12 +1187,12 @@ def test_the_public_names_are_exactly_the_listed_twenty_two():
             "key_tag",
             "names_equal",
             "require_pinned_unidata",
-            "same_person",
+            "could_be_same_person",
             "squeeze",
             "squeeze_views",
         ]
     )
-    assert len(textnorm.__all__) == len(set(textnorm.__all__)) == 22
+    assert len(textnorm.__all__) == len(set(textnorm.__all__)) == 20
 
 
 def test_every_name_the_module_defines_is_public_and_listed_or_private():
@@ -1239,9 +1239,9 @@ def _scan_finds(secret, haystack):
     return any(n in v for v in textnorm.fold_views(haystack, casefold=True) for n in needles)
 
 
-def test_a_greek_look_alike_with_ypogegrammeni_is_the_latin_word_for_same_person_and_for_a_scan():
+def test_a_greek_look_alike_with_ypogegrammeni_is_the_latin_word_for_could_be_same_person_and_for_a_scan():
     hostile = "\u03b1\u0345dmin"  # alpha + U+0345 + "dmin": the reader sees "admin"
-    assert same_person(hostile, "admin") and same_person("admin", hostile), (
+    assert could_be_same_person(hostile, "admin") and could_be_same_person("admin", hostile), (
         "alpha + U+0345 + dmin is not the person admin"
     )
     assert allow_equal(hostile, "admin") is AllowVerdict.LOOKALIKE, (
@@ -1260,7 +1260,7 @@ def test_a_greek_look_alike_with_ypogegrammeni_is_the_latin_word_for_same_person
     assert not _scan_finds("password=", "token passwd=hunter"), (
         "the scan finds a text that is not there"
     )
-    assert not same_person(hostile, "admins") and not same_person(hostile, "adm")
+    assert not could_be_same_person(hostile, "admins") and not could_be_same_person(hostile, "adm")
 
 
 def test_a_ypogegrammeni_after_any_greek_letter_leaves_the_readings_of_the_word_matching():
@@ -1275,7 +1275,7 @@ def test_a_ypogegrammeni_after_any_greek_letter_leaves_the_readings_of_the_word_
                 YPOGEGRAMMENI + g + tail,
                 g + YPOGEGRAMMENI * 3 + tail,
             ):
-                same = same_person(marked, plain)
+                same = could_be_same_person(marked, plain)
                 for casefold in (False, True):
                     same = same and _any_shared(
                         textnorm.fold_views(marked, casefold=casefold),
@@ -1298,7 +1298,7 @@ def test_every_greek_look_alike_of_the_table_plus_ypogegrammeni_is_the_latin_wor
         if not (ch.isalpha() and unicodedata.name(ch, "").startswith("GREEK ")):
             continue
         checked += 1
-        assert same_person(ch + YPOGEGRAMMENI + "dmin", value + "dmin"), (
+        assert could_be_same_person(ch + YPOGEGRAMMENI + "dmin", value + "dmin"), (
             f"Greek U+{cp:04X} + U+0345 is not the Latin {value}"
         )
         assert _scan_finds(value + "dmin", "x " + ch + YPOGEGRAMMENI + "dmin y"), (
@@ -1307,7 +1307,7 @@ def test_every_greek_look_alike_of_the_table_plus_ypogegrammeni_is_the_latin_wor
     assert checked > 20
 
 
-def test_the_four_greek_capitals_that_look_like_latin_capitals_are_the_same_person():
+def test_the_four_greek_capitals_that_look_like_latin_capitals_are_could_be_the_same_person():
     for greek, latin, rest in (
         (ETA, "H", "oward"),
         (MU, "M", "ark"),
@@ -1320,9 +1320,9 @@ def test_the_four_greek_capitals_that_look_like_latin_capitals_are_the_same_pers
             ((latin + rest).upper(), (greek + rest).upper()),
             ((latin + rest).upper(), greek + rest.upper()),
         ):
-            assert same_person(text_latin, text_greek) and same_person(text_greek, text_latin), (
-                f"{text_latin!a} and {text_greek!a} are not the same person"
-            )
+            assert could_be_same_person(text_latin, text_greek) and could_be_same_person(
+                text_greek, text_latin
+            ), f"{text_latin!a} and {text_greek!a} are not the same person"
             assert allow_equal(text_latin, text_greek) is AllowVerdict.LOOKALIKE, (
                 f"allow_equal does not report {text_greek!a} as a look-alike of {text_latin!a}"
             )
@@ -1332,15 +1332,15 @@ def test_the_four_greek_capitals_that_look_like_latin_capitals_are_the_same_pers
             assert _any_shared(
                 textnorm.squeeze_views(text_latin), textnorm.squeeze_views(text_greek)
             ), f"no squeeze view of {text_greek!a} reads {text_latin!a}"
-        assert same_person(latin + rest, greek + YPOGEGRAMMENI + rest), (
+        assert could_be_same_person(latin + rest, greek + YPOGEGRAMMENI + rest), (
             f"a capital Greek letter + U+0345 is not the Latin capital {latin}"
         )
-    assert same_person("Ho", ETA + "\u00d8"), (
+    assert could_be_same_person("Ho", ETA + "\u00d8"), (
         "the upper-side reading lacks the table of the case-fold image"
     )
 
 
-def test_every_table_source_is_the_same_person_as_the_text_it_looks_like():
+def test_every_table_source_is_could_be_the_same_person_as_the_text_it_looks_like():
     """The table entry of a letter is how it LOOKS, whatever its case: the readings keep the entry of the letter itself (capital Eta reads H)
     and the entry of its case-fold image (Eta reads n like eta). Every source, as a word and next to Latin letters. A decimal digit of
     another script is left out: the digit step reads it as the digit it is, before the table (pinned by the digit tests)."""
@@ -1349,7 +1349,8 @@ def test_every_table_source_is_the_same_person_as_the_text_it_looks_like():
         for cp, value in _confusables.TABLE.items()
         if not chr(cp).isdecimal()
         and not (
-            same_person(chr(cp), value) and same_person("ab" + chr(cp) + "yz", "ab" + value + "yz")
+            could_be_same_person(chr(cp), value)
+            and could_be_same_person("ab" + chr(cp) + "yz", "ab" + value + "yz")
         )
     ]
     assert not bad, (
@@ -1360,17 +1361,21 @@ def test_every_table_source_is_the_same_person_as_the_text_it_looks_like():
 def test_the_readings_are_not_transitive_and_over_match_on_purpose():
     """Capital Eta reads h (own case) and n (case-fold image): it matches both words, and the two words do not match each other."""
     eta_word = ETA + "oward"
-    assert same_person(eta_word, "howard"), "the upper-side reading was dropped"
-    assert same_person(eta_word, "noward"), "the lower-side reading of a capital was dropped"
-    assert not same_person("howard", "noward"), "same_person became transitive over the readings"
+    assert could_be_same_person(eta_word, "howard"), "the upper-side reading was dropped"
+    assert could_be_same_person(eta_word, "noward"), (
+        "the lower-side reading of a capital was dropped"
+    )
+    assert not could_be_same_person("howard", "noward"), (
+        "could_be_same_person became transitive over the readings"
+    )
     # the lower-side reading of capital Eta + U+0345 (mark dropped, eta read n) is kept
-    assert same_person(ETA + YPOGEGRAMMENI + "oward", "noward"), (
+    assert could_be_same_person(ETA + YPOGEGRAMMENI + "oward", "noward"), (
         "the lower-side reading with U+0345 dropped was removed"
     )
     # the iota reading is kept: a precomposed letter with ypogegrammeni against its capitals
-    assert same_person("\u1fb3", "\u0391\u0399") and same_person("\u1fb3", "\u1fbc"), (
-        "the iota reading was dropped"
-    )
+    assert could_be_same_person("\u1fb3", "\u0391\u0399") and could_be_same_person(
+        "\u1fb3", "\u1fbc"
+    ), "the iota reading was dropped"
 
 
 def test_identity_keys_is_a_small_fixed_set_that_holds_the_single_key():
@@ -1395,7 +1400,6 @@ def test_identity_keys_is_a_small_fixed_set_that_holds_the_single_key():
         )
         assert len(set(keys)) == len(keys), "a reading is listed twice"
         assert identity_key(text) in keys, "the single key is not one of the readings"
-        assert fold_key(text) in keys
         assert keys == textnorm.identity_keys(text), "the readings are not deterministic"
         for key in keys:
             assert key == bare(key) or key.startswith(key_tag())
@@ -1432,7 +1436,7 @@ def test_fold_views_and_squeeze_views_hold_the_single_fold_and_are_bounded():
         refused(TextTooLong, f"{fn.__name__} accepted a text over the cap", fn, "a" * (CAP + 1))
 
 
-def test_identity_keys_and_same_person_hold_for_every_code_point_the_single_key_and_case_symmetry():
+def test_identity_keys_and_could_be_same_person_hold_for_every_code_point_the_single_key_and_case_symmetry():
     """Every code point except the 960,000 private-use and unassigned ones (which are dropped; checked in runs elsewhere)."""
     missing, asymmetric, too_long = [], [], []
     for ch in _non_surrogates():
@@ -1444,28 +1448,34 @@ def test_identity_keys_and_same_person_hold_for_every_code_point_the_single_key_
         if any(len(bare(k)) > textnorm._weight(ch) for k in keys):
             too_long.append(ch)  # the size rule bounds the work of every reading
         upper, lower = ch.upper(), ch.lower()
-        if upper != lower and not _exempt_from_symmetry(ch) and not same_person(upper, lower):
+        if (
+            upper != lower
+            and not _exempt_from_symmetry(ch)
+            and not could_be_same_person(upper, lower)
+        ):
             asymmetric.append(ch)
     assert not missing, (
         f"the single key is not a reading for {len(missing)} code points, first {_show(missing)}"
     )
     assert not asymmetric, (
-        f"same_person is not case symmetric for {len(asymmetric)} code points, first {_show(asymmetric)}"
+        f"could_be_same_person is not case symmetric for {len(asymmetric)} code points, first {_show(asymmetric)}"
     )
     assert not too_long, (
         f"a reading is longer than the weight for {len(too_long)} code points, first {_show(too_long)}"
     )
 
 
-def test_same_person_is_case_symmetric_for_pairs_built_from_the_table_and_the_narrowed_exemption_is_exact():
+def test_could_be_same_person_is_case_symmetric_for_pairs_built_from_the_table_and_the_narrowed_exemption_is_exact():
     bad = [
         t
         for t in _pairs()
         if (u := t.upper()) != (l := t.lower())
         and not _exempt_from_symmetry(t)
-        and not same_person(u, l)
+        and not could_be_same_person(u, l)
     ]
-    assert not bad, f"same_person is not case symmetric for {len(bad)} pairs, first {_show(bad)}"
+    assert not bad, (
+        f"could_be_same_person is not case symmetric for {len(bad)} pairs, first {_show(bad)}"
+    )
     # the exemption is the exact shape (a U+0345 with no Greek letter before it), not "any text that holds U+0345"
     assert _exempt_from_symmetry(YPOGEGRAMMENI) and _exempt_from_symmetry(
         "a" + YPOGEGRAMMENI + "\u03b1"
@@ -1485,7 +1495,7 @@ def test_same_person_is_case_symmetric_for_pairs_built_from_the_table_and_the_na
         assert identity_key(attached.upper()) == identity_key(attached.lower()), (
             f"an attached U+0345 is not case symmetric: {attached!a}"
         )
-        assert same_person(attached.upper(), attached.lower())
+        assert could_be_same_person(attached.upper(), attached.lower())
     # and the asymmetric shapes really are asymmetric, so the exemption is still needed
     assert identity_key(YPOGEGRAMMENI.upper()) != identity_key(YPOGEGRAMMENI.lower())
     assert identity_key(("a" + YPOGEGRAMMENI).upper()) != identity_key(
@@ -1496,7 +1506,7 @@ def test_same_person_is_case_symmetric_for_pairs_built_from_the_table_and_the_na
 def test_names_equal_and_the_canonical_form_are_case_symmetric_for_every_code_point():
     """Unicode caseless matching (D146): case fold, NFKD, case fold. The one code point that is not symmetric is the dotless i (U+0131): its
     upper case is I, whose case fold is i, not the dotless i. That is the Unicode rule (names_equal does not fold look-alikes); the DENY
-    comparator ``same_person`` reads the dotless i as i."""
+    comparator ``could_be_same_person`` reads the dotless i as i."""
     asymmetric = [
         ch
         for ch in _non_surrogates()
@@ -1505,7 +1515,7 @@ def test_names_equal_and_the_canonical_form_are_case_symmetric_for_every_code_po
     assert asymmetric == ["\u0131"], (
         f"_canon is not case symmetric for {len(asymmetric)} code points, first {_show(asymmetric)}"
     )
-    assert not names_equal("I", "\u0131") and same_person("I", "\u0131")
+    assert not names_equal("I", "\u0131") and could_be_same_person("I", "\u0131")
     pairs = [
         t
         for t in _pairs()
@@ -1553,7 +1563,13 @@ def test_the_cheap_length_check_runs_before_any_per_character_work(monkeypatch):
             refused(TextTooLong, f"{fn.__name__} accepted a text longer than the cap", fn, text)
         for fn in (textnorm.identity_keys, textnorm.fold_views, textnorm.squeeze_views):
             refused(TextTooLong, f"{fn.__name__} accepted a text longer than the cap", fn, text)
-        refused(TextTooLong, "same_person accepted a long text", same_person, "a", text)
+        refused(
+            TextTooLong,
+            "could_be_same_person accepted a long text",
+            could_be_same_person,
+            "a",
+            text,
+        )
     too_long = [n for n in calls if n > CAP]
     assert not too_long, (
         f"the weight was computed for a text longer than the cap (lengths {too_long[:3]})"
@@ -1575,8 +1591,8 @@ def test_a_key_made_on_another_unicode_version_carries_the_tag_on_every_reading(
     assert textnorm.identity_keys(other[0]) == (other[0],), (
         "the key of another version is not stable"
     )
-    assert same_person("\u03b1\u0345dmin", "admin")
-    assert same_person(ETA + "oward", "Howard")
+    assert could_be_same_person("\u03b1\u0345dmin", "admin")
+    assert could_be_same_person(ETA + "oward", "Howard")
 
 
 def test_lead_probe_3_a_greek_look_alike_with_ypogegrammeni_against_the_latin_word():
@@ -1588,8 +1604,10 @@ def test_lead_probe_3_a_greek_look_alike_with_ypogegrammeni_against_the_latin_wo
     assert bare(identity_key(hostile)) == bare(fold(hostile, casefold=True)) == "aidmin"
     assert squeeze(hostile) == "AIDMIN" and squeeze("admin") == "ADMIN"
     # the DENY comparator and the scan views see through it
-    assert same_person(hostile, "admin"), "same_person(alpha + U+0345 + dmin, admin) is False"
-    assert same_person("passw" + omicron + iota_sub + "rd", "password"), (
+    assert could_be_same_person(hostile, "admin"), (
+        "could_be_same_person(alpha + U+0345 + dmin, admin) is False"
+    )
+    assert could_be_same_person("passw" + omicron + iota_sub + "rd", "password"), (
         "passw + omicron + U+0345 + rd is not password"
     )
     assert "ADMIN" in textnorm.squeeze_views(hostile) and "admin" in textnorm.fold_views(
@@ -1615,12 +1633,153 @@ def test_lead_probe_4_the_four_capitals_against_the_latin_names():
         assert bare(identity_key(latin)) != bare(identity_key(greek)), (
             "the single key became a comparator"
         )
-        assert same_person(latin, greek), f"same_person({latin}, {greek!a}) is False"
-        assert (
-            same_person(greek, latin)
-            and same_person(latin.lower(), greek)
-            and same_person(latin.upper(), greek)
+        assert could_be_same_person(latin, greek), (
+            f"could_be_same_person({latin}, {greek!a}) is False"
         )
+        assert (
+            could_be_same_person(greek, latin)
+            and could_be_same_person(latin.lower(), greek)
+            and could_be_same_person(latin.upper(), greek)
+        )
+
+
+# ---- spacing marks, modifier letters and modifier symbols (P1a fix4, review 4 finding 2) -----------------------------------------------
+def _code_points_of(*categories):
+    return [
+        chr(cp) for cp in range(sys.maxunicode + 1) if unicodedata.category(chr(cp)) in categories
+    ]
+
+
+def _reads_as_letters(ch):
+    """True when the character is itself read as an ASCII letter or digit, from the Unicode DATA and the table, not from the fold: its
+    NFKC form holds an ASCII letter or digit (a modifier letter such as U+02B0, superscript h, is the letter h), or a character of that form
+    is a table source (U+02E0, modifier small gamma, is a gamma, which the table reads as y), or the table maps the character itself
+    (a Telugu or Malayalam anusvara reads as o, Oriya visarga as 8)."""
+    return any(
+        (c.isascii() and c.isalnum())
+        or ord(c) in _confusables.TABLE
+        or ord(c.casefold()) in textnorm._CF_TABLE
+        for c in {ch, *unicodedata.normalize("NFKC", ch)}
+        if unicodedata.category(c)
+        not in textnorm._DROP_CATEGORIES  # a mark of the image (U+037A: space + U+0345) is dropped, not read
+    )
+
+
+def test_squeeze_views_finds_a_secret_hidden_with_any_spacing_mark_modifier_letter_or_modifier_symbol():
+    """The redaction contract: a scan looks through BOTH ``fold_views`` and ``squeeze_views``. This is the half that makes ``squeeze_views``
+    safe for a secret hidden by an inserted character of category Mc (spacing combining mark), Lm (modifier letter) or Sk (modifier symbol).
+    EVERY such code point of this interpreter is tried; nothing is skipped. The only exceptions are the code points that are themselves read
+    as a letter or digit (``_reads_as_letters``: superscript h, the letter-like Lm; an anusvara that the look-alike table reads as o): for
+    those the view must read the letter in their place, ``PASS`` + letter + ``WORD``, so the inserted character still shows. The
+    exception set is DERIVED from the Unicode data (NFKC form and the table), never written by hand."""
+    seen = {}
+    for category in ("Mc", "Lm", "Sk"):
+        chars = _code_points_of(category)
+        assert chars, f"this interpreter has no code point of category {category}"
+        letters = 0
+        for ch in chars:
+            views = textnorm.squeeze_views("pass" + ch + "word")
+            if _reads_as_letters(ch):
+                letters += 1
+                assert any(re.fullmatch("PASS[A-Z0-9]+WORD", v) for v in views), (
+                    f"squeeze_views hides U+{ord(ch):04X} ({category}), which reads as a letter, from the scan: {views}"
+                )
+            else:
+                assert "PASSWORD" in views, (
+                    f"squeeze_views misses a secret hidden with U+{ord(ch):04X} ({category}): {views}"
+                )
+        seen[category] = (len(chars), letters)
+    # the exception set is small and only of letter-like characters: no Mc (apart from the table's anusvaras and visarga) and no Sk is one
+    assert seen["Sk"][1] == 0, f"a modifier symbol reads as a letter: {seen}"
+    assert seen["Mc"][1] <= 10, f"more spacing marks read as letters than the table lists: {seen}"
+
+
+def test_fold_views_keeps_a_spacing_combining_mark_so_a_scan_must_also_read_squeeze_views():
+    """Decision (order 79): Mc is KEPT by ``fold``: a Hindi or Thai spacing vowel sign changes a name, so two names that differ only by one
+    are different keys. The price is stated in the module docstring: ``fold_views`` alone does NOT find a secret hidden with a spacing mark
+    (``squeeze_views`` does). This test pins the decision for EVERY Mc code point, so the docstring cannot drift."""
+    marks = _code_points_of("Mc")
+    assert marks
+    for ch in marks:
+        text = "pass" + ch + "word"
+        for view in textnorm.fold_views(text, casefold=True):
+            assert "password" not in view, f"fold_views dropped the spacing mark U+{ord(ch):04X}"
+        assert identity_key(text) != identity_key("password"), (
+            f"identity_key dropped the spacing mark U+{ord(ch):04X}"
+        )
+        assert not could_be_same_person(text, "password") or ord(ch) in _confusables.TABLE, ch
+    # the realistic case: a Devanagari vowel sign hides a password from fold_views and not from squeeze_views
+    text = "passाword"
+    assert all("password" not in v for v in textnorm.fold_views(text, casefold=True))
+    assert "PASSWORD" in textnorm.squeeze_views(text)
+    doc = textnorm.__doc__ or ""
+    assert "BOTH" in doc and "fold_views" in doc and "squeeze_views" in doc, (
+        "the module docstring does not say that a scan must read both views"
+    )
+    for false_claim in ("drops legitimate marks", "for any combining mark,"):
+        assert false_claim not in doc, f"the module docstring claims again: {false_claim}"
+    assert "KEEPS the spacing" in doc and "Mc" in doc, (
+        "the docstring does not say that spacing marks are kept"
+    )
+
+
+def _collisions(names):
+    groups = {}
+    for name in names:
+        groups.setdefault(identity_key(name), []).append(name)
+    colliding = [g for g in groups.values() if len(g) > 1]
+    return len(names), len(groups), len(colliding), sum(len(g) for g in colliding)
+
+
+def test_the_false_collision_rate_of_hindi_and_thai_names_after_non_spacing_marks_are_dropped():
+    """Review 4: names that differ only by a non-spacing mark (Mn) compare equal (a false lockout in a DENY, never a bypass). The lists are
+    hand-written (``tests/fixtures/textnorm_names.json``), not a sample of a population: the counts below are what the evidence file quotes
+    as the rate, and they are asserted so the quoted figure cannot drift. (names, distinct check names, collision groups, names in a group)"""
+    lists = json.loads((FIX / "textnorm_names.json").read_text(encoding="utf-8"))
+    assert _collisions(lists["hindi"]) == (94, 94, 0, 0), (
+        "Hindi: names collide after the marks are dropped"
+    )
+    assert _collisions(lists["thai"]) == (64, 63, 1, 2), "Thai: the rate of ordinary names changed"
+    assert _collisions(lists["thai_chosen_pairs"]) == (15, 8, 6, 13), (
+        "Thai: the minimal pairs chosen to collide changed"
+    )
+
+
+def test_a_text_over_the_weight_is_refused_before_any_fold_work(monkeypatch):
+    """The claim "refused before any work" (perf file) is proven here without a clock: 16,000 x U+FDFA is far below the length cap but its
+    weight (18 each, 288,000) is over it; every fold step is replaced by one that fails, and the text must still be refused."""
+
+    def work(*args, **kwargs):
+        raise AssertionError("fold work was done for a text that must be refused")
+
+    for name in ("_prefix", "_finish", "_views", "_fold", "_keys", "_canon"):
+        monkeypatch.setattr(textnorm, name, work)
+    text = FDFA * 16_000
+    assert len(text) < CAP < textnorm._weight(text)
+
+    def must_refuse(label, fn, *args):
+        try:
+            fn(*args)
+        except TextTooLong:
+            return
+        except AssertionError as work_done:  # ``work`` ran: say so in the first line of the report
+            raise AssertionError(f"{label}: {work_done}") from None
+        except Exception as other:  # noqa: BLE001 - reported with its class as the failure
+            raise AssertionError(f"{label} raised {type(other).__name__} instead") from None
+        raise AssertionError(f"{label} did not refuse an over-weight text")
+
+    for fn in (
+        identity_key,
+        textnorm.identity_keys,
+        textnorm.fold,
+        textnorm.fold_views,
+        textnorm.squeeze,
+        textnorm.squeeze_views,
+    ):
+        must_refuse(fn.__name__, fn, text)
+    must_refuse("could_be_same_person", could_be_same_person, "a", text)
+    must_refuse("allow_equal", allow_equal, text, "a")
+    must_refuse("names_equal", names_equal, text, "a")
 
 
 # last on purpose: a mutation of a pinned file must be judged by the test aimed at it, not by this hash pin
