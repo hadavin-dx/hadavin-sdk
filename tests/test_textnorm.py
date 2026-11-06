@@ -352,7 +352,7 @@ def test_max_value_len_is_the_longest_value_of_the_table():
 
 # ---- FOLD_VERSION ------------------------------------------------------------------------------------------------------------------------
 def test_the_version_string_names_the_algorithm_the_table_and_both_unicode_versions():
-    m = re.fullmatch(r"alg=fold2\|tbl=([0-9a-f]{12}):(\d+)\|ucd=([^|]+)\|ud=([^|]+)", FOLD_VERSION)
+    m = re.fullmatch(r"alg=fold3\|tbl=([0-9a-f]{12}):(\d+)\|ucd=([^|]+)\|ud=([^|]+)", FOLD_VERSION)
     assert m, f"FOLD_VERSION has the wrong shape: {FOLD_VERSION}"
     assert m[4] == unicodedata.unidata_version, "FOLD_VERSION has no ud= part of this interpreter"
     assert m[3] == _confusables.DATA_VERSION
@@ -408,15 +408,35 @@ def _show(texts):
     return [" ".join(f"U+{ord(ch):04X}" for ch in t) for t in texts[:5]]
 
 
+YPOGEGRAMMENI = "\u0345"  # COMBINING GREEK YPOGEGRAMMENI: the one mark that is an iota after a Greek letter (module docstring)
+
+
+def _exempt_from_symmetry(text):
+    """The stated exemption: a text that holds U+0345. ``str.upper`` turns it into the letter Iota while the fold removes it unless a Greek
+    letter comes first, so the two cases of such a text can differ. ``test_u0345_*`` pins what the fold does there. Nothing else is exempt."""
+    return YPOGEGRAMMENI in text
+
+
+def _unexpected_asymmetry(texts, key=None):
+    """The case asymmetric texts that are NOT exempt, and the exempt ones that are asymmetric (the exemption must still be needed)."""
+    bad = _case_asymmetric(texts, key)
+    return [t for t in bad if not _exempt_from_symmetry(t)], [
+        t for t in bad if _exempt_from_symmetry(t)
+    ]
+
+
 def test_identity_key_is_idempotent_for_every_code_point():
     bad = _not_idempotent(_non_surrogates())
     assert not bad, f"identity_key is not idempotent for {len(bad)} code points, first {_show(bad)}"
 
 
 def test_identity_key_is_case_symmetric_for_every_code_point():
-    bad = _case_asymmetric(_non_surrogates())
+    bad, exempt = _unexpected_asymmetry(_non_surrogates())
     assert not bad, (
         f"identity_key is not case symmetric for {len(bad)} code points, first {_show(bad)}"
+    )
+    assert exempt == [YPOGEGRAMMENI], (
+        f"the exemption of U+0345 is stale: the asymmetric exempt texts are {_show(exempt)}"
     )
 
 
@@ -426,12 +446,12 @@ def test_identity_key_is_idempotent_for_pairs_built_from_the_table():
 
 
 def test_identity_key_is_case_symmetric_for_pairs_built_from_the_table():
-    bad = _case_asymmetric(_pairs())
+    bad, _ = _unexpected_asymmetry(_pairs())
     assert not bad, f"identity_key is not case symmetric for {len(bad)} pairs, first {_show(bad)}"
 
 
 def test_squeeze_is_case_symmetric_for_every_code_point():
-    bad = _case_asymmetric(_non_surrogates(), squeeze)
+    bad, _ = _unexpected_asymmetry(_non_surrogates(), squeeze)
     assert not bad, f"squeeze is not case symmetric for {len(bad)} code points, first {_show(bad)}"
 
 
@@ -443,6 +463,322 @@ def test_the_old_failures_are_gone_a_capital_o_stroke_and_the_small_one_are_one_
     assert bare(identity_key("\u1f80")) == bare(identity_key("\u1f80".upper())), (
         "a Greek letter with iota is not case symmetric"
     )
+
+
+# ---- marks, U+0345 and random strings (P1a fix2, review 2) ------------------------------------------------------------------------------
+DROP_CATEGORIES = (
+    "Cc",
+    "Cf",
+    "Mn",
+    "Me",
+    "Zl",
+    "Zp",
+    "Co",
+    "Cs",
+    "Cn",
+)  # what the fold drops (whitespace among them turns into a space)
+LATIN_BASES = (
+    "a",
+    "B",
+    "i",
+    "K",
+    "z",
+    "\u00df",
+    "\u0130",
+    "\u0131",
+    "\u00d8",
+    "\u00e6",
+)  # a, B, i, K, z, sharp s, I dot, dotless i, O stroke, ae
+GREEK_BASES = (
+    "\u03b1",
+    "\u0391",
+    "\u03b9",
+    "\u0399",
+    "\u03c3",
+    "\u03c2",
+    "\u03a3",
+    "\u03c9",
+    "\u03a9",
+    "\u03b7",
+)  # alpha .. eta
+BULK_BASES = (
+    "a",
+    "\u03b9",
+    "\u0391",
+)  # Latin a, Greek iota, Greek capital alpha: the bases of the runs below
+BIG_CLASSES = (
+    "Co",
+    "Cn",
+)  # 960,000 code points that no table, decomposition or case rule touches: checked in runs
+KEY_FUNCTIONS = (("identity_key", identity_key), ("squeeze", squeeze))
+
+
+def _assigned_drop_code_points():
+    """Every code point of the drop categories except the two big classes (about 4,300)."""
+    wanted = set(DROP_CATEGORIES) - set(BIG_CLASSES)
+    return [chr(cp) for cp in range(sys.maxunicode + 1) if unicodedata.category(chr(cp)) in wanted]
+
+
+def _bulk_drop_code_points():
+    return [
+        chr(cp) for cp in range(sys.maxunicode + 1) if unicodedata.category(chr(cp)) in BIG_CLASSES
+    ]
+
+
+def _breaks_a_key(mark, bases=LATIN_BASES + GREEK_BASES):
+    """The (function, base, side) rows where ``mark`` next to a base changes the key. The only allowed difference is U+0345 AFTER a Greek base."""
+    rows = []
+    for name, fn in KEY_FUNCTIONS:
+        for base in bases:
+            want = fn(base)
+            if fn(base + mark) != want and not (mark == YPOGEGRAMMENI and base in GREEK_BASES):
+                rows.append((name, base, "suffix"))
+            if fn(mark + base) != want:
+                rows.append((name, base, "prefix"))
+    return rows
+
+
+def _run_breaks(marks):
+    """True when a run of marks does not leave the key of its letters alone. Each mark ``m`` goes into the unit ``a m iota m`` and the units are
+    joined, so it is the suffix and the prefix of a Latin letter (a) and of a Greek letter (iota): any mark that is not dropped, or that
+    changes a neighbour, makes the key differ from the key of the plain letters repeated. One call per function for a run of 256 marks
+    (the exact check over the other, 4,300, code points uses ten Latin and ten Greek bases)."""
+    text = "".join(f"a{m}\u03b9{m}" for m in marks)
+    for _, fn in KEY_FUNCTIONS:
+        if fn(text) != fn("a\u03b9") * len(marks):
+            return True
+    return False
+
+
+def test_every_drop_category_code_point_leaves_the_key_of_a_latin_or_greek_letter_unchanged():
+    broken = {}
+    for mark in _assigned_drop_code_points():
+        rows = _breaks_a_key(mark)
+        if rows:
+            broken[mark] = rows
+    bulk = _bulk_drop_code_points()
+    for start in range(0, len(bulk), 256):
+        run = bulk[start : start + 256]
+        if _run_breaks(run):
+            for mark in run:  # a run failed: find the code points one by one
+                rows = _breaks_a_key(mark, BULK_BASES)
+                if rows:
+                    broken[mark] = rows
+    shown = [(f"U+{ord(m):04X}", rows[0]) for m, rows in list(broken.items())[:5]]
+    assert not broken, (
+        f"a drop-category code point changes the key of a letter ({len(broken)} code points), first {shown}"
+    )
+    # all categories were visited: the two parts together are exactly the drop categories
+    assert len(_assigned_drop_code_points()) + len(bulk) == sum(
+        1 for cp in range(sys.maxunicode + 1) if unicodedata.category(chr(cp)) in DROP_CATEGORIES
+    )
+
+
+def test_the_big_classes_are_nothing_but_private_use_and_unassigned_code_points():
+    assert {unicodedata.category(m) for m in _bulk_drop_code_points()} == set(BIG_CLASSES)
+    assert 900_000 < len(_bulk_drop_code_points()) < 1_000_000, "the Unicode data changed shape"
+
+
+def test_u0345_is_an_iota_after_a_greek_letter_and_is_removed_everywhere_else():
+    # removed after a Latin (or any non-Greek) letter, a digit, a space, and at the start: the name is the same name
+    assert identity_key("admin" + YPOGEGRAMMENI) == identity_key("admin")
+    assert bare(identity_key("admin" + YPOGEGRAMMENI)) == "admin"
+    assert identity_key(YPOGEGRAMMENI + "admin") == identity_key("admin")
+    assert same_person("admin" + YPOGEGRAMMENI, "admin") and same_person(
+        "Admin" + YPOGEGRAMMENI, "ADMIN"
+    )
+    for text in (
+        "a" + YPOGEGRAMMENI,
+        "7" + YPOGEGRAMMENI,
+        "\u0430" + YPOGEGRAMMENI,
+        "a " + YPOGEGRAMMENI + "b",
+        "a\n" + YPOGEGRAMMENI + "b",
+    ):
+        assert identity_key(text) == identity_key(text.replace(YPOGEGRAMMENI, "")), ascii(text)
+    assert bare(identity_key(YPOGEGRAMMENI)) == "" and squeeze(YPOGEGRAMMENI) == ""
+    # an iota after a Greek letter, with or without a mark that is dropped anywhere in between
+    alpha_iota = identity_key("\u03b1\u03b9")
+    assert bare(alpha_iota) == "ai"
+    for text in (
+        "\u03b1" + YPOGEGRAMMENI,
+        "\u1fb3",
+        "\u1fbc",
+        "\u0391\u0399",
+        "\u03b1\u0301" + YPOGEGRAMMENI,
+        "\u03b1\u200b" + YPOGEGRAMMENI,
+    ):
+        assert identity_key(text) == alpha_iota, ascii(text)
+        assert squeeze(text) == "AI", ascii(text)
+    assert identity_key("\u03b1" + YPOGEGRAMMENI) != identity_key("\u03b1"), (
+        "the one base + mark pair that differs"
+    )
+    assert bare(identity_key("\u03b1" + YPOGEGRAMMENI * 2)) == "aii", (
+        "a run of marks after a Greek letter is a run of iotas"
+    )
+    assert identity_key("\u1f80".upper()) == identity_key("\u1f80"), (
+        "a Greek letter with iota is not case symmetric"
+    )
+    # what is NOT promised, pinned so that a change is a decision: the text with U+0345 not after a Greek letter is not case symmetric
+    assert bare(identity_key("\u0399")) == "i" and bare(identity_key(YPOGEGRAMMENI)) == ""
+    assert _exempt_from_symmetry(YPOGEGRAMMENI) and not _exempt_from_symmetry("\u1fb3")
+
+
+def test_u0345_after_every_greek_letter_is_case_symmetric_and_idempotent():
+    greek = [  # the letters by name (U+0374 and U+037A are signs whose NFKD is not a Greek letter: the mark after them is removed)
+        chr(cp)
+        for cp in range(sys.maxunicode + 1)
+        if unicodedata.name(chr(cp), "").startswith("GREEK")
+        and " LETTER " in unicodedata.name(chr(cp))
+    ]
+    assert len(greek) > 300
+    bad = [
+        g + YPOGEGRAMMENI
+        for g in greek
+        if identity_key((g + YPOGEGRAMMENI).upper()) != identity_key((g + YPOGEGRAMMENI).lower())
+        or squeeze((g + YPOGEGRAMMENI).upper()) != squeeze((g + YPOGEGRAMMENI).lower())
+    ]
+    assert not bad, (
+        f"Greek letter + U+0345 is not case symmetric for {len(bad)} letters, first {_show(bad)}"
+    )
+    for g in greek:
+        text = g + YPOGEGRAMMENI
+        assert identity_key(identity_key(text)) == identity_key(text), (
+            f"not idempotent: {_show([text])}"
+        )
+        assert squeeze(text) == squeeze(g) + "I", (
+            f"Greek letter + U+0345 is not letter + iota: {_show([text])}"
+        )
+
+
+def test_other_dropped_characters_between_a_greek_letter_and_u0345_do_not_move_the_iota():
+    marks = [m for m in _assigned_drop_code_points() if m != YPOGEGRAMMENI and not m.isspace()]
+    assert len(marks) > 2000
+    for base, want in (("\u03b1", "ai"), ("\u0391", "ai"), ("a", "a"), ("\u0430", "a")):
+        for mark in marks:
+            for text in (base + mark + YPOGEGRAMMENI, base + mark + mark + YPOGEGRAMMENI):
+                assert bare(identity_key(text)) == want, (
+                    f"a dropped character moves the iota: {_show([text])}"
+                )
+    # a space IS a base: the mark after a space has no letter before it
+    assert bare(identity_key("\u03b1 " + YPOGEGRAMMENI)) == "a"
+
+
+RANDOM_SEED = 20261106
+# the invisible filler letters, written out here and not read from the module under test (a fault in that set must not change the test)
+FILLER_CODE_POINTS = (0x3164, 0x115F, 0x1160, 0x2800, 0xFFA0, 0x13441, 0x13442)
+RANDOM_STRINGS = 30_000
+RANDOM_CLASSES = {
+    "hangul jamo and fillers": [chr(c) for c in range(0x1100, 0x1200)]
+    + [chr(c) for c in range(0x3131, 0x318F)]
+    + [chr(c) for c in range(0xA960, 0xA97D)]
+    + [chr(c) for c in range(0xD7B0, 0xD7FC)]
+    + [chr(c) for c in FILLER_CODE_POINTS]
+    + ["\u3164", "\uffa0"],
+    "ligatures": [chr(c) for c in range(0xFB00, 0xFB07)]
+    + [chr(c) for c in range(0xFB13, 0xFB18)]
+    + list(
+        "\u0132\u0133\u01c4\u01c5\u01c6\u01c7\u01c8\u01c9\u01ca\u01cb\u01cc\u00df\u1e9e\u00e6\u00c6\u0153\u0152\ufdfa\u2160\u2169"
+    ),
+    "dotted and dotless i": list("Ii\u0130\u0131\u0307"),
+    "sigma": list("\u03a3\u03c3\u03c2"),
+    "zero-width": [chr(c) for c in range(0x200B, 0x2010)]
+    + [chr(c) for c in range(0x2060, 0x2065)]
+    + list("\ufeff\u180e\u034f\u00ad\u2028\u2029"),
+    "bidi": [chr(c) for c in range(0x202A, 0x202F)]
+    + [chr(c) for c in range(0x2066, 0x206A)]
+    + ["\u061c"],
+    "variation selectors": [chr(c) for c in range(0xFE00, 0xFE10)]
+    + list("\u180b\u180c\u180d\u180f")
+    + [chr(c) for c in range(0xE0100, 0xE01F0, 7)],
+    "tag characters": [chr(c) for c in range(0xE0000, 0xE0080)],
+    "width forms": [chr(c) for c in range(0xFF01, 0xFF5F)]
+    + [chr(c) for c in range(0xFF61, 0xFFDD)]
+    + ["\u3000"],
+    "greek, cyrillic and ypogegrammeni": list(
+        "\u03b1\u0391\u03b7\u0397\u03b9\u0399\u03c9\u03a9\u0430\u0435\u043e\u0440\u0441\u1fb3\u1fbc\u1f88"
+    )
+    + [YPOGEGRAMMENI] * 6,
+    "latin, digits, space, marks": list("abcXYZkK019 -.\u0301\u0338\u0e31\u0942"),
+}
+# marks that are inserted between the characters of a random text (U+0345 is the stated exception and is not among them)
+INSERTED = (
+    [
+        c
+        for name in ("zero-width", "bidi", "variation selectors", "tag characters")
+        for c in RANDOM_CLASSES[name]
+        if c not in "\u2028\u2029"
+    ]
+    + [chr(c) for c in FILLER_CODE_POINTS]
+    + ["\u0301", "\u0300", "\ue000", "\u0000", "\u0090", "\ufff0"]
+)
+
+
+def _random_texts():
+    nxt = _numbers(RANDOM_SEED)
+    classes = list(RANDOM_CLASSES.values())
+    for _ in range(RANDOM_STRINGS):
+        yield "".join(
+            (pool := classes[next(nxt) % len(classes)])[next(nxt) % len(pool)]
+            for _ in range(1 + next(nxt) % 10)
+        )
+
+
+def test_random_strings_are_idempotent_case_symmetric_and_stable_under_inserted_marks():
+    nxt = _numbers(RANDOM_SEED + 1)
+    not_idempotent, asymmetric, not_stable, seen = [], [], [], set()
+    for text in _random_texts():
+        seen.update(text)
+        key = identity_key(text)
+        if identity_key(key) != key:
+            not_idempotent.append(text)
+        sq = squeeze(text)
+        if squeeze(sq) != sq:
+            not_idempotent.append(text)
+        if not _exempt_from_symmetry(text):
+            upper, lower = text.upper(), text.lower()
+            if identity_key(upper) != identity_key(lower) or squeeze(upper) != squeeze(lower):
+                asymmetric.append(text)
+        if YPOGEGRAMMENI not in text:
+            cut = next(nxt) % (len(text) + 1)
+            mark = INSERTED[next(nxt) % len(INSERTED)]
+            moved = text[:cut] + mark + text[cut:]
+            if identity_key(moved) != key or squeeze(moved) != sq:
+                not_stable.append(moved)
+    assert not not_idempotent, (
+        f"a key is not idempotent for {len(not_idempotent)} random texts, first {_show(not_idempotent)}"
+    )
+    assert not asymmetric, (
+        f"a key is not case symmetric for {len(asymmetric)} random texts, first {_show(asymmetric)}"
+    )
+    assert not not_stable, (
+        f"an inserted mark changes the key of {len(not_stable)} random texts, first {_show(not_stable)}"
+    )
+    for name, pool in RANDOM_CLASSES.items():  # every class took part
+        assert seen & set(pool), f"the random texts never used the class {name}"
+
+
+def test_a_raw_text_that_starts_with_the_interpreters_own_tag_has_it_stripped_and_another_tag_is_not(
+    monkeypatch,
+):
+    monkeypatch.setattr(defaults, "TEXTNORM_PINNED_UNIDATA", "15.1.0")
+    monkeypatch.setattr(unicodedata, "unidata_version", "15.0.0")
+    tag = key_tag()
+    assert tag.startswith("\ue000alg=fold3|ud=15.0.0") and tag.endswith("\ue000")
+    # the stated over-collision: the tag of THIS interpreter in front of a text is read as "already a key"
+    assert identity_key(tag + "Bob") == identity_key("Bob") == tag + "bob"
+    assert same_person(tag + "Bob", "bob")
+    once = identity_key(tag + tag + "bob")
+    assert once == identity_key(once) and once != tag + "bob", (
+        "a double tag is stripped once, not twice"
+    )
+    # the tag of ANOTHER version is not stripped: its text stays in the key, so the two never collide
+    monkeypatch.setattr(unicodedata, "unidata_version", "9.9.9")
+    assert key_tag() != tag
+    other = identity_key(tag + "bob")
+    assert other.startswith(key_tag()) and "ud=15.0.0" in other and other != identity_key("bob")
+    # on the pinned version there is no tag to strip and U+E000 is dropped like any private-use character
+    monkeypatch.setattr(unicodedata, "unidata_version", "15.1.0")
+    assert key_tag() == "" and identity_key(tag + "bob") == "alg=fold3|ud=15.0.0bob"
 
 
 def test_the_case_fold_table_is_on_the_case_fold_image_and_its_conflicts_are_the_known_thirteen():
@@ -562,7 +898,7 @@ def test_a_key_made_on_another_unicode_version_carries_that_version_and_never_eq
     monkeypatch.setattr(unicodedata, "unidata_version", "15.0.0")
     other = identity_key("Bob")
     assert other != pinned_key, "a key made on another Unicode version equals the pinned key"
-    assert other.endswith("bob") and "ud=15.0.0" in other and "alg=fold2" in other, (
+    assert other.endswith("bob") and "ud=15.0.0" in other and "alg=fold3" in other, (
         "the tag does not name the algorithm and the Unicode version"
     )
     assert identity_key(other) == other, "the key of another version is not idempotent"

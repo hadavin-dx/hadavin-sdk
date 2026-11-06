@@ -9,7 +9,7 @@ pytest. Run from the repo root:
     uv run python tests/textnorm_mutants.py            # all mutants; exit 1 if any is not good
     uv run python tests/textnorm_mutants.py squeeze    # only mutants whose name contains the text
 
-51 mutants: 28 are the re-pointed mutants of the earlier text-fold list (the killers moved with their tests), 13 are new and 10 are the mutants of fold2 (order 44). Tests with no
+53 mutants: 28 are the re-pointed mutants of the earlier text-fold list (the killers moved with their tests), 13 are new, 9 are the mutants of fold2 (order 44; the tenth, "no case fold before the marks are dropped", is gone with that case fold, which fix2 showed to be redundant) and 3 are the mutants of fold3 (order 49, U+0345). Tests with no
 mutant: the golden test, the differential rows, the manifest test, the notices test, the perf rows (they are outside every test list below:
 the runner copies no ``pyproject.toml`` or notices file) and the meta-tests.
 
@@ -71,6 +71,8 @@ TAG = "test_a_key_made_on_another_unicode_version_carries_that_version_and_never
 IDEM = "test_identity_key_is_idempotent_for_every_code_point"
 SYMM = "test_identity_key_is_case_symmetric_for_every_code_point"
 SQUEEZE_SYMM = "test_squeeze_is_case_symmetric_for_every_code_point"
+DROPS = "test_every_drop_category_code_point_leaves_the_key_of_a_latin_or_greek_letter_unchanged"
+MOVES = "test_other_dropped_characters_between_a_greek_letter_and_u0345_do_not_move_the_iota"
 CFTABLE = (
     "test_the_case_fold_table_is_on_the_case_fold_image_and_its_conflicts_are_the_known_thirteen"
 )
@@ -184,8 +186,6 @@ M = [
         "    s = s.casefold().translate(_CF_TABLE) if casefold else s.translate(_TABLE)",
         "    s = s.translate(_TABLE).casefold() if casefold else s.translate(_TABLE)",
         IDEM, "identity_key is not idempotent for"),
-    mutant("order: no case fold before the marks are dropped", TN,
-        "raw.casefold() if casefold else raw)", "raw)", SYMM, "identity_key is not case symmetric for"),
     mutant("order: the case fold table is the raw table", TN,
         "_CF_TABLE = types.MappingProxyType(_build_cf_table(CONFUSABLES))",
         "_CF_TABLE = types.MappingProxyType(dict(CONFUSABLES))", CFTABLE, "is not a casefolded non-ASCII key"),
@@ -205,6 +205,14 @@ M = [
         '    return f"\\ue000alg={_ALG}|ud={version}\\ue000"', '    return f"\\ue000alg={_ALG}\\ue000"', TAG, "the tag does not name the algorithm"),
     mutant("tag: the key of another version is folded again with its tag", TN,
         "    if tag and raw.startswith(tag):", "    if False:", TAG, "the key of another version is not idempotent"),
+    # ---- the mutants of fold3 (order 49): U+0345 ----
+    mutant("iota: U+0345 is an iota after any letter, not only a Greek one", TN,
+        "            if last and _is_greek_letter(last):", "            if True:", DROPS, "a drop-category code point changes the key of a letter"),
+    mutant("iota: U+0345 is always removed, also after a Greek letter", TN,
+        "            if last and _is_greek_letter(last):", "            if False:", SYMM, "identity_key is not case symmetric for"),
+    mutant("iota: a dropped character hides the Greek letter in front of U+0345", TN,
+        "        if _kept(ch):\n            last = ch",
+        "        last = ch", MOVES, "a dropped character moves the iota"),
 ]  # fmt: skip
 
 

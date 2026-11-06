@@ -17,33 +17,49 @@ address equals the verified address", an allowlist): folding there lets a look-a
     equality for people's names in prose.
 
 ``fold`` (stdlib only, linear):
-  1. NFKD, so a base letter and its combining mark separate; 2. drop control, format, combining-mark, private-use, surrogate and
-  UNASSIGNED (Cn) characters and the invisible filler letters; 3. NFKC; 4. every Unicode whitespace character (``str.isspace``)
-  becomes a space so words are never joined; 5. every Unicode decimal digit becomes an ASCII digit; 6. look-alike letters become the
-  Latin letter or digit. Case is kept unless ``casefold`` is set (then ``casefold`` runs BEFORE step 6, see below); ``collapse_ws``
-  squeezes runs of whitespace.
+  1. NFKD, so a base letter and its combining mark separate; 2. U+0345 becomes an iota after a Greek letter and is removed anywhere
+  else (see U+0345 below); 3. drop control, format, combining-mark, private-use, surrogate and UNASSIGNED (Cn) characters and the
+  invisible filler letters; 4. NFKC; 5. every Unicode whitespace character (``str.isspace``) becomes a space so words are never
+  joined; 6. every Unicode decimal digit becomes an ASCII digit; 7. look-alike letters become the Latin letter or digit. Case is kept
+  unless ``casefold`` is set (then ``casefold`` runs just BEFORE step 7, see below); ``collapse_ws`` squeezes runs of whitespace.
 
 The look-alike table (step 6) is GENERATED from the Unicode UTS #39 ``confusables.txt`` MA table by ``tools/gen_confusables.py`` (pinned
 sha256, version and date in ``guard/_confusables.py``) plus 16 explicit supplementary letters and a Unicode-name rule for small capitals,
 both listed in the generator. Runtime is stdlib only; the data file is not shipped. ``FOLD_VERSION`` names the fold that made a key.
 
-IDEMPOTENT AND CASE-SYMMETRIC BY CONSTRUCTION (``identity_key``, ``same_person``, ``squeeze``; alg ``fold2``). The old order (table, then
-casefold, with a table keyed by lower-case letters) was neither: ``identity_key("\u00d8")`` kept the capital and ``identity_key("\u00f8")``
-gave ``o``, so ``same_person("B\u00d8B", "bob")`` was False, a DENY bypass. Now, with P = NFKC after the drops after NFKD, D = the digit
-table and C = ``casefold``: ``key(x) = tag + collapse(E(C(D(P(C(x))))))`` (C runs twice: first on the raw text, because the upper-case
-of a Greek letter with a trailing iota mark is a real letter that P would drop as a mark if C had not turned it into one first; again
-after P, because NFKC makes capitals) where E is the look-alike table MOVED ONTO THE CASEFOLD IMAGE
+IDEMPOTENT AND CASE-SYMMETRIC BY CONSTRUCTION (``identity_key``, ``same_person``, ``squeeze``; alg ``fold3``). The first order (table, then
+casefold, with a table keyed by lower-case letters; alg ``fold1``) was neither: ``identity_key("\u00d8")`` kept the capital and ``identity_key("\u00f8")``
+gave ``o``, so ``same_person("B\u00d8B", "bob")`` was False, a DENY bypass. Now, with P = NFKC after the drops after the U+0345 step after
+NFKD, D = the digit table and C = ``casefold``: ``key(x) = tag + collapse(E(C(D(P(x)))))`` where E is the look-alike table MOVED ONTO THE CASEFOLD IMAGE
 (``_CF_TABLE``): for every table entry whose source ``s`` has ``casefold(s)`` a single character, ``E[casefold(s)] = value.casefold()``;
 when two sources reach one casefolded letter the entry of the letter that is its own case-fold wins over the entry of its capital
 (13 letters, pinned by a test: e.g. Greek eta reads n, not the capital Eta's H; ``has_mixed_script`` is the backstop for those). The
-argument: (1) CASE SYMMETRY: C is the only case-sensitive step, it runs before P and before E, E has casefolded keys only, so two texts that agree
+argument: (1) CASE SYMMETRY: C is the only case-sensitive step, it runs before E, E has casefolded keys only, so two texts that agree
 after C agree in the key; that ``C(P(c.upper())) == C(P(c.lower()))`` for every character is a fact about the Unicode data, which
-``tests/test_textnorm.py`` checks for ALL non-surrogate code points (and for pairs built from the table) on every supported Unicode
-version. (2) IDEMPOTENCE: the image of E is lower-case ASCII; every other character of the result survived C and is not a key of E
+``tests/test_textnorm.py`` checks for ALL non-surrogate code points (and for pairs built from the table, and for seeded random strings)
+on every supported Unicode version, with the one stated exemption of U+0345 below. (2) IDEMPOTENCE: the image of E is lower-case ASCII; every other character of the result survived C and is not a key of E
 (keys of E are non-ASCII and casefold-stable, asserted), so a second C changes nothing and a second E changes nothing; that the
 remaining steps (P, D, the drops) leave such characters alone is again a fact about the data, checked by the same tests. The final
 form is therefore a fixed point of the whole function; a mutant that restores the old order is killed by those tests. ``fold`` WITHOUT
 ``casefold`` keeps case and uses the raw table (no symmetry is promised for it); ``squeeze`` casefolds first.
+
+U+0345 (COMBINING GREEK YPOGEGRAMMENI; decision of P1a fix2, review 2 of this package). Every other mark is dropped, and dropping is what
+makes ``identity_key(x + mark) == identity_key(x)``. U+0345 is the one mark that cannot simply be dropped: its upper case and its case fold
+are the letter iota, and a Greek letter with the mark (U+1FB3, alpha with ypogegrammeni) upper-cases to two letters (alpha, iota). Two
+needs conflict: case symmetry (the key of U+1FB3 must be the key of its upper case, alpha iota) and mark insertion (the key of
+"admin" + U+0345 must be the key of "admin"). The rule: U+0345 is read as an iota (U+03B9, then the table: ``i``) when the last kept
+character before it is a Greek letter (an alphabetic character whose Unicode name starts with GREEK; characters the fold drops, such as other
+marks or a zero-width space, are skipped when looking) and is REMOVED everywhere else (after a Latin or any other letter, after a space,
+at the start). It happens on the NFKD text, so the precomposed U+1FB3 and alpha + U+0345 get one key (``ai``). ``fold2`` (the first
+order-fixed fold) case-folded the raw text before the drop step, which turned U+0345 into an iota everywhere ("admin" + U+0345 gave ``admini``, a DENY
+bypass); ``fold3`` has no early case fold (it is redundant once U+0345 is handled by name: 600,000 random strings gave the same key with and
+without it). Chosen over "always drop" because always dropping breaks case symmetry for the precomposed Greek letters with
+ypogegrammeni and for Greek text in capitals (U+1FB3 against alpha, iota in capitals), while this rule breaks nothing on them. What the
+rule does NOT promise, both stated and tested: (1) after a Greek letter the mark is an iota, so ``identity_key(alpha + U+0345)`` is
+not ``identity_key(alpha)`` (the one "base + mark" pair that differs; the mark is a visible subscript there); (2) a text that holds U+0345
+NOT after a Greek letter is not case symmetric, because ``str.upper`` turns the mark into the letter Iota while the fold removes it
+(``identity_key("\u0345")`` is ``""``, ``identity_key("\u0399")`` is ``i``); the symmetry tests exempt every text that holds U+0345 and pin the Greek-letter case apart. No other code
+point is exempt from idempotence, case symmetry or mark insertion. ``fold`` without ``casefold`` applies the same step.
 
 NO BOUNDED-PASS LOOP IN P1a: ``fold`` is one pass and nothing loops to a fixed point; the constant ``defaults.TEXTNORM_MAX_PASSES`` is
 read by NOTHING in this package (it is first read by P1b, which may add a bounded loop with a fail-closed error). The idempotence above is
@@ -53,11 +69,15 @@ UNICODE DATA VERSION: the fold depends on the interpreter's Unicode data (which 
 ``defaults.TEXTNORM_PINNED_UNIDATA``. ``require_pinned_unidata()`` is the guard entry point: it raises ``UnidataMismatch`` (fail closed)
 when the interpreter's version is not the pin; pilot and prod code calls it before using any key (``app.build`` of P1b). On another
 interpreter (development, tests; Python 3.12 has Unicode 15.0.0) the functions still run, and ``identity_key`` then returns a key that
-starts with ``key_tag()``: U+E000, ``alg=fold2|ud=<this interpreter's version>``, U+E000. U+E000 is private use, which the fold
+starts with ``key_tag()``: U+E000, ``alg=fold3|ud=<this interpreter's version>``, U+E000. U+E000 is private use, which the fold
 always drops, so no key made on the pinned version can ever start with it: a key made on another version never equals one made on the
 pinned version, and two other versions never equal each other. On the pinned version the tag is empty (the bare key IS the key of
-``alg`` ``fold2``; changing the pin bumps ``alg``). ``identity_key`` of a text that already starts with the tag of this interpreter
-removes it first, so the function is idempotent there too.
+``alg`` ``fold3``; changing the pin bumps ``alg``). ``identity_key`` of a text that already starts with the tag of this interpreter
+removes it first, so the function is idempotent there too. The cost, stated and tested: a RAW text that starts with the tag of THIS
+interpreter (typed exactly, U+E000 included) has the tag stripped and so gets the same key as the text without it (an over-collision,
+the safe side of a DENY); a text that starts with the tag of ANOTHER version is not stripped (its tag text becomes part of the key). A
+caller that did not call ``require_pinned_unidata()`` (nothing in this package does; P1b wires it) gets tagged keys on every
+interpreter whose Unicode data is not the pin, for example Python 3.12; such keys compare only with keys made on the same version.
 
 INPUT RULES (every public function): the argument must be a plain ``str`` (``type(x) is str``; a ``str`` subclass or an enum member is
 refused with ``NotText``), and its WEIGHT W must be within ``defaults.TEXTNORM_MAX_CHARS`` (``TextTooLong``). W is the sum, over the
@@ -68,7 +88,8 @@ Any ``TextnormError`` on a DENY or ALLOW path means REFUSE.
 Honest limits: a letter in neither the data nor the supplement is not folded. Dropping unassigned code points (Cn) depends on the
 Python build's Unicode version (``require_pinned_unidata``). ``has_mixed_script`` is the fail-closed backstop: a word that mixes Latin
 with Cyrillic, Greek, Armenian, Cherokee, Coptic, Georgian, Hebrew, Lisu or another look-alike-rich script is a deny signal whatever the
-table knows. Property: ``fold(x + mark) == fold(x)`` for any combining mark, format or unassigned character.
+table knows. Property: ``fold(x + mark) == fold(x) == fold(mark + x)`` for any combining mark, format, control, private-use or unassigned character,
+with the one exception above (U+0345 after a Greek letter).
 """
 
 from __future__ import annotations
@@ -165,7 +186,7 @@ def _table_digest(table: types.MappingProxyType[int, str]) -> str:
 # Which fold made a key: ``alg`` is bumped BY HAND in the pull request that changes what a key can be (the golden file shows the change),
 # ``tbl`` is the first 12 hex characters of the digest of the in-memory table and its entry count, ``ucd`` the UTS #39 data version,
 # ``ud`` the interpreter's Unicode version. Nothing stores a key in v1.
-_ALG = "fold2"
+_ALG = "fold3"
 FOLD_VERSION = (
     f"alg={_ALG}|tbl={_table_digest(_TABLE)[:12]}:{len(_TABLE)}"
     f"|ucd={_confusables.DATA_VERSION}|ud={unicodedata.unidata_version}"
@@ -228,13 +249,45 @@ def _checked(*texts: str) -> None:
             )
 
 
+# COMBINING GREEK YPOGEGRAMMENI: the only mark whose case fold is a letter (iota); see "U+0345" in the module docstring
+_YPOGEGRAMMENI = "\u0345"
+_IOTA = "\u03b9"
+
+
+def _is_greek_letter(ch: str) -> bool:
+    """A letter whose Unicode name starts with GREEK: the Greek and Coptic block, Greek Extended and the few Greek letters elsewhere
+    (U+1D26 to U+1D2A, U+AB65). Coptic letters are not Greek here."""
+    return ch.isalpha() and unicodedata.name(ch, "").startswith("GREEK ")
+
+
+def _kept(ch: str) -> bool:
+    """True for a character the drop step keeps (whitespace is kept and later becomes a space)."""
+    return ch.isspace() or (unicodedata.category(ch) not in _DROP_CATEGORIES and ch not in FILLERS)
+
+
+def _subscript_iota(s: str) -> str:
+    """U+0345 on an NFKD text: an iota (U+03B9) when the last kept character before it is a Greek letter, otherwise removed. Characters the
+    fold drops anyway (other marks, format characters, fillers) are skipped when looking for that letter, so inserting one never changes the
+    result. A run of U+0345 after a Greek letter gives a run of iotas. This is the one place where a mark is kept (module docstring)."""
+    if _YPOGEGRAMMENI not in s:
+        return s
+    out: list[str] = []
+    last = ""  # the last character kept by the drop step
+    for ch in s:
+        if ch == _YPOGEGRAMMENI:
+            if last and _is_greek_letter(last):
+                out.append(_IOTA)
+                last = _IOTA
+            continue
+        out.append(ch)
+        if _kept(ch):
+            last = ch
+    return "".join(out)
+
+
 def _fold(raw: str, *, casefold: bool = False, collapse_ws: bool = False) -> str:
-    s = unicodedata.normalize("NFKD", raw.casefold() if casefold else raw)
-    s = "".join(
-        " " if ch.isspace() else ch
-        for ch in s
-        if ch.isspace() or (unicodedata.category(ch) not in _DROP_CATEGORIES and ch not in FILLERS)
-    )
+    s = _subscript_iota(unicodedata.normalize("NFKD", raw))
+    s = "".join(" " if ch.isspace() else ch for ch in s if _kept(ch))
     s = unicodedata.normalize("NFKC", s)
     s = s.translate(_DIGITS)
     # casefold BEFORE the table and use the table moved onto the casefold image: idempotent and case-symmetric (module docstring)
