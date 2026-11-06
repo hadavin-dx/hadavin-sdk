@@ -1,0 +1,7 @@
+HEAD 63658aaceadc2f3e8e5429c5d01681c3b8b42f67
+$ pytest -m perf (the two timing tests of test_migration_numbers.py, alone)
+heavy slot 1
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+..                                                                       [100%]
+2 passed, 135 deselected in 2.39s
+exit=0

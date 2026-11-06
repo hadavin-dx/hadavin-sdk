@@ -1,0 +1,20 @@
+# runbook DO-check raw record (PostgreSQL 16.15, own server port 55434; psql -X -v ON_ERROR_STOP=1 -f)
+## matching UPDATE
+\set ON_ERROR_STOP on
+CREATE SCHEMA rb;
+SET search_path TO rb;
+CREATE TABLE schema_migrations (version TEXT PRIMARY KEY);
+INSERT INTO schema_migrations VALUES ('0006_evidence');
+BEGIN;
+SELECT pg_advisory_xact_lock(3760701656253510835);
+UPDATE schema_migrations SET version = '0005_evidence' WHERE version = '0006_evidence';
+DO $$ BEGIN
+  IF (SELECT count(*) FROM schema_migrations WHERE version = '0005_evidence') <> 1
+     OR (SELECT count(*) FROM schema_migrations WHERE version = '0006_evidence') <> 0 THEN
+    RAISE EXCEPTION 'the ledger row was not renamed';
+  END IF;
+END $$;
+COMMIT;
+SELECT * FROM schema_migrations;
+## result: exit 0, one row 0005_evidence
+## UPDATE that matches nothing (WHERE version = 'nomatch'): ERROR: the ledger row was not renamed; CONTEXT: PL/pgSQL function inline_code_block line 4 at RAISE; exit code 3
