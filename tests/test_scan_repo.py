@@ -75,17 +75,17 @@ def _scan(repo, allow="", extra="", banned_src=None):
 
 
 @pytest.mark.parametrize("rule", CASES)
-def test_each_rule_hits_and_masks(tmp_path, rule):
+def test_each_rule_hits_and_prints_no_text(tmp_path, rule):
     rc, out = _scan(_repo(tmp_path, {"a/x.txt": "ok\n" + CASES[rule] + "\n"}))
     assert rc == 1
-    assert f"a/x.txt:2: {rule} " in out
-    assert "*" in out and "k = " not in out
+    assert f"a/x.txt:2: {rule}" in out
+    assert out.strip() == f"a/x.txt:2: {rule}"
 
 
 @pytest.mark.parametrize("rule", MORE_HITS)
 def test_other_shapes_of_each_rule_hit(tmp_path, rule):
     rc, out = _scan(_repo(tmp_path, {"a.txt": MORE_HITS[rule] + "\n"}))
-    assert rc == 1 and f"a.txt:1: {rule} " in out
+    assert rc == 1 and f"a.txt:1: {rule}" in out
 
 
 @pytest.mark.parametrize("line", NEAR_MISSES)
@@ -93,11 +93,11 @@ def test_near_misses_are_not_flagged(tmp_path, line):
     assert _scan(_repo(tmp_path, {"a.txt": line + "\n"}))[0] == 0
 
 
-def test_masked_output_never_holds_the_full_secret(tmp_path):
+def test_output_never_holds_any_part_of_the_secret(tmp_path):
     _, out = _scan(_repo(tmp_path, {"x.txt": CASES["sk-api-key"]}))
-    assert "b" * 40 not in out
+    assert "bbbb" not in out
     _, out = _scan(_repo(tmp_path, {"y.txt": CASES["github-token"]}))
-    assert "c" * 36 not in out
+    assert "cccc" not in out
 
 
 def test_aws_example_placeholder_is_allowed(tmp_path):
@@ -166,11 +166,6 @@ def test_missing_or_empty_banned_list_fails_closed(tmp_path):
     annotated.write_text("BANNED: tuple = ('zzfake',)\n", encoding="utf-8")
     repo2 = _repo(tmp_path / "r2", {"a.txt": "has zzfake\n"})
     assert _scan(repo2, banned_src=annotated)[0] == 1
-
-
-def test_the_masked_text_is_exactly_four_characters_and_stars(tmp_path):
-    _, out = _scan(_repo(tmp_path, {"x.txt": CASES["sk-api-key"]}))
-    assert "x.txt:1: sk-api-key sk-b********" in out
 
 
 def test_allowlist_entry_with_an_empty_reason_fails(tmp_path):

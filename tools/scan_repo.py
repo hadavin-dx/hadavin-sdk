@@ -1,7 +1,7 @@
 """Scan git-tracked files for secrets and banned names; exit 1 on any hit (the repo is public).
 
 Usage: python tools/scan_repo.py [--root DIR] [--allowlist FILE] [--extra FILE] [--banned-src FILE]
-Output per hit: path:line: rule  (matched text masked after 4 characters).
+Output per hit: path:line: rule (the matched text is never printed, so CI logs hold no secret).
 False positives: add `path:rule:reason` (one per line, `#` comments ok) to tools/scan_allowlist.txt. The entry skips ONLY that
 rule on that file (rule `*` skips all rules; avoid it). An entry whose file is no longer tracked, or without a reason, is itself a hit.
 Banned names: the BANNED tuple in tests/test_no_reference_material.py (read, not copied) plus tools/scan_banned_extra.txt.
@@ -70,10 +70,6 @@ def _allowed(allowlist: Path) -> tuple[dict[str, set[str]], list[str]]:
     return out, problems
 
 
-def _mask(text: str) -> str:
-    return text[:4] + "*" * min(len(text) - 4, 8)
-
-
 def scan(repo: Path, allowlist: Path, extra: Path, banned_src: Path) -> list[str]:
     banned = _banned(banned_src, extra)
     allowed, hits = _allowed(allowlist)
@@ -100,9 +96,9 @@ def scan(repo: Path, allowlist: Path, extra: Path, banned_src: Path) -> list[str
                     continue
                 for m in rx.finditer(line):
                     if m.group(0) != EXAMPLE_KEY:
-                        hits.append(f"{rel}:{n}: {rule} {_mask(m.group(0))}")
+                        hits.append(f"{rel}:{n}: {rule}")
             if "banned-name" not in skip and rel not in LIST_FILES:
-                hits += [f"{rel}:{n}: banned-name {_mask(b)}" for b in banned if b in line]
+                hits += [f"{rel}:{n}: banned-name" for b in banned if b in line]
     return hits
 
 
