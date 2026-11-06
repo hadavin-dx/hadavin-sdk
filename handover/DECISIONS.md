@@ -283,3 +283,7 @@ File: handover/reviews/P4a-round8-resolve.md. Ticket not edited (an author write
 ## 2026-11-06 ~03:45Z Owner told me to ask the lead via NEEDS LEAD whenever I am unsure
 - Standing practice from now: any doubt (missing tool, unprovable condition, scope) goes as a numbered line under NEEDS LEAD in questions-for-lead.md, with options and a recommendation, not into a silent assumption.
 - First use: NEEDS LEAD 11 (PG 17 / non-superuser owner / psycopg for the P2a trigger test). Answered-by-user: the owner said to do this; the answer to line 11 is still OPEN.
+
+## 2026-11-06 ~03:50Z Owner: with a recommendation, proceed and inform the lead; do not wait
+- Replaces my previous practice (ask and wait). Rule now: a doubt with a recommendation is logged here, listed under NEEDS LEAD as INFORM, and I proceed on the recommendation. I still wait (and ask the owner) only for MAJOR decisions with no workable recommendation, and never for the owner-only items (money, settings, secrets, merges, outside the repository).
+- Applied to NEEDS LEAD 11: proceeding with option (a). Reversible: yes. Answered-by-user: yes (the owner gave this rule); the lead has not answered line 11.
