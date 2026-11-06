@@ -9,7 +9,7 @@ pytest. Run from the repo root:
     uv run python tests/textnorm_mutants.py            # all mutants; exit 1 if any is not good
     uv run python tests/textnorm_mutants.py squeeze    # only mutants whose name contains the text
 
-87 mutants: 28 are the re-pointed mutants of the earlier text-fold list (the killers moved with their tests), 13 are new, 9 are the mutants of fold2 (order 44), 3 are the mutants of fold3 (order 49, U+0345) and 16 are the mutants of fold4 (fix3, review 3: the readings, the length check, the caseless form; the first of the 16 is the fold2 mutant "no case fold before the marks are dropped" that fold3 removed and that is restored here: it changes only the single key, and the U+0345 test kills it). Tests with no
+77 mutants: 28 are the re-pointed mutants of the earlier text-fold list (the killers moved with their tests), 12 are new (one of the 13 went with the deleted ``check_pinned_unidata``), 9 are the mutants of fold2 (order 44), 3 are the mutants of fold3 (order 49, U+0345) and 16 are the mutants of fold4 (fix3, review 3: the spelling variants, the length check, the caseless form; the first of the 16 is the fold2 mutant "no case fold before the marks are dropped" that fold3 removed and that is restored here: it changes only the single key, and the U+0345 test kills it) and 9 are the mutants of fix4 (order 79: the 15.1.0 data pin, the marks, the plain-words messages, the weight pre-check). Tests with no
 mutant: the golden test, the differential rows, the manifest test, the notices test, the perf rows (they are outside every test list below:
 the runner copies no ``pyproject.toml`` or notices file) and the meta-tests.
 
@@ -30,8 +30,9 @@ ROOT = Path(__file__).resolve().parents[1]
 T = "tests/test_textnorm.py"  # the killers of the fold, the input rules and the hidden channel
 G = "tests/test_textnorm_generator.py"  # the killers of the table and the generator
 SC = "tests/test_textnorm_scan.py"  # the killers of the DENY keys (P1b)
+SB = "tests/test_textnorm_siblings.py"  # the Mc, Lm and Sk code points on every scan path (P1b)
 D = "tests/test_textnorm_differential.py"  # the differential rows and the golden test: they have no mutant, they run in the baseline
-TESTS = [T, G, SC, D]  # killer files first; golden, differential last
+TESTS = [T, G, SC, SB, D]  # killer files first; golden, differential last
 S = "src/hadavin_sdk/guard/"
 TN, CF, GEN = S + "textnorm.py", S + "_confusables.py", "tools/gen_confusables.py"
 
@@ -56,6 +57,12 @@ LOOSE = "test_squeeze_loose_reads_the_digit_like_letters_as_digits"
 SQUEEZE = "test_squeeze_keeps_upper_case_letters_and_digits_only"
 TABLE = "test_the_table_is_generated_from_the_unicode_data_and_every_value_is_ascii"
 GENERATOR = "test_the_generator_refuses_an_unpinned_file_and_is_deterministic"
+MCKEPT = "test_fold_views_keeps_a_spacing_combining_mark_so_a_scan_must_also_read_squeeze_views"
+MCSQUEEZE = "test_squeeze_views_finds_a_secret_hidden_with_any_spacing_mark_modifier_letter_or_modifier_symbol"
+EMPTYKEY = "test_the_empty_and_invisible_only_texts_have_the_empty_key"
+PLAINMSG = "test_the_refusal_messages_say_in_plain_words_what_is_wrong"
+NOWORK = "test_a_text_over_the_weight_is_refused_before_any_fold_work"
+GENVER = "test_the_generator_refuses_any_other_unicode_version_before_it_looks_at_the_hash"
 OFFLINE = "test_the_generator_reproduces_the_checked_in_table_offline"
 VERSION = "test_the_version_string_names_the_algorithm_the_table_and_both_unicode_versions"
 READONLY = "test_the_tables_are_read_only_and_a_later_change_of_the_source_does_not_reach_fold"
@@ -66,7 +73,6 @@ ORDER = "test_the_size_rule_checks_every_argument_left_to_right"
 MAXLEN = "test_max_value_len_is_the_longest_value_of_the_table"
 HIDDEN = "test_tag_characters_and_free_variation_selectors_are_a_hidden_channel"
 EMOJI = "test_the_two_emoji_selectors_and_other_invisible_characters_are_not_counted"
-PINCHECK = "test_check_pinned_unidata_raises_when_strict_and_warns_otherwise"
 REQUIRE = "test_require_pinned_unidata_is_the_guard_and_fails_closed"
 TAG = "test_a_key_made_on_another_unicode_version_carries_that_version_and_never_equals_another"
 IDEM = "test_identity_key_is_idempotent_for_every_code_point"
@@ -75,11 +81,9 @@ SQUEEZE_SYMM = "test_squeeze_is_case_symmetric_for_every_code_point"
 DROPS = "test_every_drop_category_code_point_leaves_the_key_of_a_latin_or_greek_letter_unchanged"
 MOVES = "test_other_dropped_characters_between_a_greek_letter_and_u0345_do_not_move_the_iota"
 NOTTRANS = "test_the_readings_are_not_transitive_and_over_match_on_purpose"
-FOURCAP = "test_the_four_greek_capitals_that_look_like_latin_capitals_are_the_same_person"
+FOURCAP = "test_the_four_greek_capitals_that_look_like_latin_capitals_are_could_be_the_same_person"
 KEYSET = "test_identity_keys_is_a_small_fixed_set_that_holds_the_single_key"
-GREEKLOOK = (
-    "test_a_greek_look_alike_with_ypogegrammeni_is_the_latin_word_for_same_person_and_for_a_scan"
-)
+GREEKLOOK = "test_a_greek_look_alike_with_ypogegrammeni_is_the_latin_word_for_could_be_same_person_and_for_a_scan"
 TAGKEYS = "test_a_key_made_on_another_unicode_version_carries_the_tag_on_every_reading"
 CHEAP = "test_the_cheap_length_check_runs_before_any_per_character_work"
 NAMESSYM = "test_names_equal_and_the_canonical_form_are_case_symmetric_for_every_code_point"
@@ -96,13 +100,16 @@ TAG2 = "test_tag_t2_the_text_followed_by_the_decoded_tag_characters"
 TAG3 = "test_tag_t3_the_decoded_tag_characters_alone"
 GAP4 = "test_gap4_dashes_slashes_and_quotes_read_as_ascii_in_identity_key"
 GAP5 = "test_gap5_hidden_separators_are_dropped_and_the_scan_key_has_no_spaces"
-SAMEID = "test_same_person_the_identity_half_and_the_empty_key_sets"
-EMPTYMATCH = "test_the_scan_match_of_two_empty_key_sets_is_false_and_x_x_is_true_when_x_has_keys"
 L2I = "test_l_to_i_rows"
 LMRAW = "test_r12_lm_inserting_any_modifier_letter_still_finds_the_value"
+HOLDSBOTH = "test_scan_holds_reads_both_fold_views_and_squeeze_views_on_both_sides"
+HOLDSEMPTY = "test_scan_holds_refuses_a_value_with_an_empty_view_and_a_text_may_have_one"
+INJVIEWS = "test_the_injection_detector_reads_the_scan_views_so_a_cyrillic_o_or_a_hidden_mark_does_not_hide_a_phrase"
+CANONVIEW = "test_runmap_canonical_and_its_per_character_view_are_the_same_text_on_the_whole_corpus"
+SIBLINGS = "test_every_scan_path_of_textnorm_finds_a_secret_hidden_with_any_mc_lm_or_sk_code_point"
 LMFOLD = "test_r12_lm_fold_a_modifier_letter_that_nfkd_turns_into_a_letter_still_matches"
 CFTABLE = (
-    "test_the_case_fold_table_is_on_the_case_fold_image_and_its_conflicts_are_the_known_conflicts"
+    "test_the_case_fold_table_is_on_the_case_fold_image_and_its_conflicts_are_the_known_eleven"
 )
 
 M = [
@@ -158,7 +165,7 @@ M = [
     mutant("table: capital I prototype stays l", GEN, '            dst = "I"', '            dst = "l"',
         GENERATOR, "capital I prototype read as l", test_file=G),
     mutant("table: the generator accepts any file", GEN, "    if sha != pinned_sha256:", "    if False:",
-        GENERATOR, "accepted an unpinned file", test_file=G),
+        GENVER, "an edited file is accepted", test_file=G),
     mutant("table: the pin in the generator differs", GEN, 'PINNED_SHA256 = "8289f833', 'PINNED_SHA256 = "9289f833',
         TABLE, "pins another sha256", test_file=G),
     mutant("allow: a case difference is a spoof alarm", TN,
@@ -167,8 +174,8 @@ M = [
     mutant("allow: a verdict has a truth value", TN,
         "        raise TypeError(\"an AllowVerdict has no truth value: compare with 'is AllowVerdict.EQUAL'\")",
         "        return True", ALLOW, "an AllowVerdict has a truth value"),
-    mutant("deny: same_person does not fold", TN,
-        "    return not set(_keys(a)).isdisjoint(_keys(b)) or _scan_match(a, b)", "    return a == b", ALLOW, "same_person does not fold a look-alike"),
+    mutant("deny: could_be_same_person does not fold", TN,
+        "    return not set(_keys(a)).isdisjoint(_keys(b))", "    return a == b", ALLOW, "could_be_same_person does not fold a look-alike"),
     mutant("textnorm: a newline joins the words of the script check", TN,
         '        " " if ch.isspace() else ch  # a newline or tab separates words, as in fold',
         '        "" if ch.isspace() else ch  # a newline or tab separates words, as in fold',
@@ -193,7 +200,7 @@ M = [
         "87,382 x U+1F75C (W 262,146) is accepted"),
     mutant("size: only the first argument is checked", TN,
         "    for text in texts:\n        if type(text) is not str:", "    for text in texts[:1]:\n        if type(text) is not str:",
-        ORDER, "names_equal skipped the second argument"),
+        ORDER, "could_be_same_person skipped the second argument"),
     mutant("table: MAX_VALUE_LEN set to 2", CF, "MAX_VALUE_LEN = 3", "MAX_VALUE_LEN = 2",
         MAXLEN, "MAX_VALUE_LEN is not the table maximum"),
     mutant("hidden: the selector supplement E0100 to E01EF missing", TN,
@@ -202,10 +209,6 @@ M = [
         r"\u180b-\u180d\u180f\ufe00", r"\ufe00", HIDDEN, "Mongolian selector U+180B"),
     mutant("hidden: the emoji selectors counted", TN,
         r"\ufe00-\ufe0d\U000e0100", r"\ufe00-\ufe0f\U000e0100", EMOJI, "a colour emoji is reported as a hidden channel"),
-    mutant("pin: the pinned version bound at definition", TN,
-        "def check_pinned_unidata(expected: str | None = None, *, strict: bool = False) -> None:",
-        "def check_pinned_unidata(expected: str | None = defaults.TEXTNORM_PINNED_UNIDATA, *, strict: bool = False) -> None:",
-        PINCHECK, "the patched pinned version is not used"),
     mutant("squeeze: the pattern keeps no digits", TN,
         '_NON_ALNUM = re.compile(r"[^A-Z0-9]")', '_NON_ALNUM = re.compile(r"[^A-Z]")', SQUEEZE, "squeeze removed a digit"),
     mutant("squeeze: no upper-casing", TN, "    s = _fold(raw, casefold=True).upper()", "    s = _fold(raw, casefold=True)", SQUEEZE, "squeeze lost a letter"),
@@ -222,7 +225,7 @@ M = [
     mutant("squeeze: no case fold before the look-alike table", TN,
         "    s = _fold(raw, casefold=True).upper()", "    s = _fold(raw).upper()", SQUEEZE_SYMM, "squeeze is not case symmetric for"),
     mutant("pin: require_pinned_unidata only warns", TN,
-        "    check_pinned_unidata(expected, strict=True)", "    check_pinned_unidata(expected)", REQUIRE, "require_pinned_unidata accepted another Unicode version"),
+        '        raise UnidataMismatch(\n            f"this Python uses', '        print(\n            f"this Python uses', REQUIRE, "require_pinned_unidata accepted another Unicode version"),
     mutant("pin: require_pinned_unidata binds the pin at definition", TN,
         "def require_pinned_unidata(expected: str | None = None) -> None:",
         "def require_pinned_unidata(expected: str | None = defaults.TEXTNORM_PINNED_UNIDATA) -> None:",
@@ -232,7 +235,7 @@ M = [
     mutant("tag: the tag does not name the version", TN,
         '    return f"\\ue000alg={_ALG}|ud={version}\\ue000"', '    return f"\\ue000alg={_ALG}\\ue000"', TAG, "the tag does not name the algorithm"),
     mutant("tag: the key of another version is folded again with its tag", TN,
-        "    if tag and raw.startswith(tag):\n        raw = raw[len(tag) :]  # already", "    if False:\n        raw = raw[len(tag) :]  # already", TAG, "the key of another version is not idempotent"),
+        "    if tag and raw.startswith(tag):\n        # already a check name of this interpreter: the function stays idempotent\n        raw = raw[len(tag) :]", "    if False:\n        # already a check name of this interpreter: the function stays idempotent\n        raw = raw[len(tag) :]", TAG, "the key of another version is not idempotent"),
     # ---- the mutants of fold3 (order 49): U+0345 ----
     mutant("iota: U+0345 is an iota after any letter, not only a Greek one", TN,
         "            if last and _is_greek_letter(last):", "            if True:", DROPS, "a drop-category code point changes the key of a letter"),
@@ -267,11 +270,11 @@ M = [
     mutant("readings: reading (c) has no table of the case-fold image after the case fold", TN,
         "        s = s.translate(_TABLE).casefold().translate(_CF_TABLE)\n", "        s = s.translate(_TABLE).casefold()\n",
         FOURCAP, "the upper-side reading lacks the table of the case-fold image"),
-    mutant("deny: same_person compares one reading (identity_key)", TN,
-        "    return not set(_keys(a)).isdisjoint(_keys(b)) or _scan_match(a, b)", "    return identity_key(a) == identity_key(b)",
+    mutant("deny: could_be_same_person compares one reading (identity_key)", TN,
+        "    return not set(_keys(a)).isdisjoint(_keys(b))", "    return identity_key(a) == identity_key(b)",
         GREEKLOOK, "is not the person admin"),
     mutant("allow: a look-alike is judged by one reading", TN,
-        "    if same_person(a, b):  # any reading of one equals any reading of the other", "    if fold_key(a) == fold_key(b):",
+        "    if could_be_same_person(a, b):\n        return AllowVerdict.LOOKALIKE", "    if identity_key(a) == identity_key(b):\n        return AllowVerdict.LOOKALIKE",
         FOURCAP, "allow_equal does not report"),
     mutant("scan: fold_views gives one view", TN,
         "    return _views(raw, casefold=casefold, collapse_ws=collapse_ws)", "    return (_fold(raw, casefold=casefold, collapse_ws=collapse_ws),)",
@@ -284,7 +287,7 @@ M = [
         "    return tuple(view for view in _views(raw, casefold=True, collapse_ws=True))",
         TAGKEYS, "a reading has no tag"),
     mutant("size: the length check before the weight is missing", TN,
-        '        if len(text) > defaults.TEXTNORM_MAX_CHARS:\n            raise TextTooLong(\n                f"text length {len(text)} is over the limit {defaults.TEXTNORM_MAX_CHARS}"\n            )\n',
+        '        if len(text) > defaults.TEXTNORM_MAX_CHARS:\n            raise TextTooLong(\n                f"the text is too long: {len(text)} of {defaults.TEXTNORM_MAX_CHARS} allowed"\n            )\n',
         "", CHEAP, "the weight was computed for a text longer than the cap"),
     mutant("size: a text of exactly the cap in length is refused", TN,
         "        if len(text) > defaults.TEXTNORM_MAX_CHARS:", "        if len(text) >= defaults.TEXTNORM_MAX_CHARS:",
@@ -293,11 +296,39 @@ M = [
         '    folded = unicodedata.normalize("NFKD", unicodedata.normalize("NFKD", s).casefold()).casefold()\n    return " ".join(unicodedata.normalize("NFKD", folded).split())',
         '    folded = unicodedata.normalize("NFKC", s).casefold()\n    return " ".join(folded.split())',
         NAMESSYM, "_canon is not case symmetric"),
-    # ---- the 18 mutants of P1b (scan_keyset, same_person, gap 4, the modifier letters); each names its killer in tests/test_textnorm_scan.py ----
+    mutant("table: the generator accepts any Unicode version", GEN,
+        "    if version != unidata or pinned_version != unidata:", "    if False:",
+        GENVER, "an other Unicode version is not refused by its version", test_file=G),
+    mutant("table: the generator accepts any date", GEN,
+        "    if (date[1].strip() if date else \"?\") != pinned_date:", "    if False:",
+        GENVER, "an other date is accepted", test_file=G),
+    # ---- the mutants of fix4 (order 79): the 15.1.0 data pin, the marks, the plain-words messages, the weight pre-check ----
+    mutant("table: the palochka override is removed", GEN, '{0x4CF: "l"}', "{}",
+        OFFLINE, "differs from the checked-in table", test_file=G),
+    mutant("marks: the fold drops spacing marks (Mc)", TN, '"Mn", "Me", "Zl"', '"Mn", "Mc", "Me", "Zl"',
+        MCKEPT, "dropped the spacing mark"),
+    mutant("marks: squeeze_views keeps non-alphanumeric characters", TN,
+        '        s = _NON_ALNUM.sub("", s)\n        if s not in out:', "        if s not in out:",
+        MCSQUEEZE, "misses a secret hidden with U+"),
+    mutant("names: the alias fold_key is back", TN,
+        "    return tag + _fold(raw, casefold=True, collapse_ws=True)\n",
+        "    return tag + _fold(raw, casefold=True, collapse_ws=True)\n\n\nfold_key = identity_key\n",
+        EMPTYKEY, "the old alias fold_key is back"),
+    mutant("words: the weight message is the old one", TN,
+        '"the text is too long once look-alike letters are expanded: "', '"text weight "',
+        PLAINMSG, "the weight message is not in plain words"),
+    mutant("words: the pin message does not say what to run", TN,
+        'f"this Python uses Unicode {unicodedata.unidata_version}; {fix} for pilot or prod"',
+        'f"Unicode data {unicodedata.unidata_version} is not the pinned {expected}"',
+        REQUIRE, "does not say plainly what to run"),
+    mutant("size: the weight check is missing (the key is built first)", TN,
+        "        if weight > defaults.TEXTNORM_MAX_CHARS:\n            raise TextTooLong(", "        if False:\n            raise TextTooLong(",
+        NOWORK, "fold work was done for a text that must be refused"),
+    # ---- the mutants of P1b (scan_keyset, gap 4, the modifier letters); each names its killer in tests/test_textnorm_scan.py ----
     mutant("scan: reading B omitted", TN, "        for step in (_pass_a, _pass_b)", "        for step in (_pass_a,)",
         ETA, "reading B is missing", test_file=SC),
     mutant("scan: the not-converged raise returns the last output", TN,
-        '    raise FoldNotConverged(\n        f"a reading was still changing after {defaults.TEXTNORM_MAX_PASSES} passes"\n    )',
+        '    raise FoldNotConverged(\n        f"a spelling variant was still changing after {defaults.TEXTNORM_MAX_PASSES} passes"\n    )',
         "    return text", SIGMA, "did not raise FoldNotConverged", test_file=SC),
     mutant("scan: class map z to 3 removed", TN, '_CLASS_MAP = str.maketrans("zl", "3i")', '_CLASS_MAP = str.maketrans("l", "i")',
         SK3, "the class map z to 3 is missing", test_file=SC),
@@ -314,25 +345,38 @@ M = [
     mutant("scan_keyset: a clock parameter added", TN, "def scan_keyset(raw: str) -> frozenset[str]:",
         "def scan_keyset(raw: str, clock=None) -> frozenset[str]:", SK1, "a clock or a deadline was added", test_file=SC),
     mutant("scan_keyset: a text over the size rule does not raise", TN,
-        '    _checked(raw)\n    raw = "".join(ch for ch in raw if unicodedata.category(ch) != "Lm")',
-        '    raw = "".join(ch for ch in raw if unicodedata.category(ch) != "Lm")', SK2, "accepted a text over the size rule", test_file=SC),
+        "    _checked(raw)\n    return _scan_keys(raw)", "    return _scan_keys(raw)", SK2, "accepted a text over the size rule", test_file=SC),
     mutant("gap 4: the dash, slash and quote map removed", TN, "    return s.translate(_DIGITS).translate(_PUNCT)",
         "    return s.translate(_DIGITS)", GAP4, "gap 4 map", test_file=SC),
-    mutant("same_person: the readings half removed", TN, "    return not set(_keys(a)).isdisjoint(_keys(b)) or _scan_match(a, b)",
-        "    return _scan_match(a, b)", SAMEID, "the identity half of same_person is missing", test_file=SC),
     mutant("fold: U+FFFD kept in step S2", TN, "    if ch in FILLERS or ch == _REPLACEMENT:", "    if ch in FILLERS:",
         SK6, "U+FFFD is kept by the fold", test_file=SC),
     mutant("scan: class map l to i removed", TN, '_CLASS_MAP = str.maketrans("zl", "3i")', '_CLASS_MAP = str.maketrans("z", "3")',
         L2I, "row 1: the class map l to i is missing", test_file=SC),
     mutant("scan: the drop keeps non-whitespace punctuation", TN, 'ch.isalnum() and unicodedata.category(ch) != "Lm"',
         'not ch.isspace() and unicodedata.category(ch) != "Lm"', L2I, "row 1: the key holds a character", test_file=SC),
-    mutant("scan: both empty key-sets count as a match", TN, "    return bool(scan_keyset(a) & scan_keyset(b))",
-        "    return bool(scan_keyset(a) & scan_keyset(b)) or not (scan_keyset(a) or scan_keyset(b))", EMPTYMATCH,
-        "two empty key-sets match", test_file=SC),
     mutant("scan: the raw removal of modifier letters skipped", TN,
         '    raw = "".join(ch for ch in raw if unicodedata.category(ch) != "Lm")', "    raw = raw", LMRAW, "hides the value", test_file=SC),
     mutant("scan: the modifier-letter test removed from the key drop", TN, ' and unicodedata.category(ch) != "Lm"', "",
         LMFOLD, "survives in the key", test_file=SC),
+    mutant("scan_holds: the squeeze view of the value is not read", TN,
+        "    needles = _all_views(value)\n", "    needles = list(_views(value, casefold=True, collapse_ws=True))\n",
+        HOLDSBOTH, "the value side misses the squeeze view", test_file=SC),
+    mutant("scan_holds: the squeeze view of the text is not read", TN,
+        "for view in _all_views(text) if view for needle in needles", "for view in _views(text, casefold=True, collapse_ws=True) if view for needle in needles",
+        HOLDSBOTH, "the text side misses the squeeze view", test_file=SC),
+    mutant("scan_holds: an empty view of the value is accepted", TN,
+        '    if "" in needles:\n        raise EmptyView(', '    if False:\n        raise EmptyView(',
+        HOLDSEMPTY, "scan_holds accepted the value", test_file=SC),
+    mutant("scan_views: the squeeze views are left out of the views", TN,
+        "        *_squeezed(raw),\n        *sorted(_scan_keys(raw)),", "        *sorted(_scan_keys(raw)),",
+        SIBLINGS, "misses a secret hidden with U+", test_file=SB),
+    mutant("injection: the scan views are not read", "src/hadavin_sdk/guard/injection.py",
+        "        for view in (text, *textnorm.scan_views(text)):", "        for view in (text,):",
+        INJVIEWS, "the injection detector misses", test_file=SB),
+    mutant("runmap: canonical normalises the whole text again", "src/hadavin_sdk/guard/runmap.py",
+        "    return _canonical_view(text)[0]\n",
+        '    return "".join(c for c in unicodedata.normalize("NFKC", text) if unicodedata.category(c) != "Cf")\n',
+        CANONVIEW, "canonical and the view differ on", test_file=SB),
 ]  # fmt: skip
 
 

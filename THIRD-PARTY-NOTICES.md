@@ -17,7 +17,7 @@ These files contain or are derived from Unicode Consortium data (UTS #39 `confus
 
 ## Data version
 
-- UTS #39 `confusables.txt`, version 15.1.0, dated 2023-08-11, 17:46:40 GMT, fetched from https://www.unicode.org/Public/security/15.1.0/confusables.txt
+- UTS #39 `confusables.txt`, version 15.1.0, dated 2023-08-11, 17:46:40 GMT, fetched from https://www.unicode.org/Public/security/15.1.0/confusables.txt (718,291 bytes)
 - sha256 of the data file: 8289f833e4cf78fde56b2080dc0e42934ef5182c9c3f4dd1fbdf2bced69fd5ed
 - UCD `Scripts.txt`, version 15.1.0, dated 2023-07-28, 16:01:07 GMT, source https://www.unicode.org/Public/15.1.0/ucd/Scripts.txt, verified by the lead 2026-11-06
 - sha256 of the data file: 0eacb65169ae6eb1d399cd70826b3da15fff19f6f586eecf819b70c83b1d9b32

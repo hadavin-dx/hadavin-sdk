@@ -34,8 +34,9 @@ from hadavin_sdk.guard.textnorm import (
     AllowVerdict,
     TextTooLong,
     allow_equal,
+    could_be_same_person,
     identity_key,
-    same_person,
+    scan_keyset,
     squeeze,
 )
 
@@ -77,24 +78,27 @@ def test_the_identity_key_agrees_with_the_stated_principle(row):
 
 
 # Rows the identity key keeps apart but the DENY scan joins, by design: the scan key drops spaces, punctuation, controls and tag characters,
-# so these pairs are the same person for ``same_person`` (the safe side of a DENY). Named, so a new over-match shows as a failure.
+# so these pairs are the same person for the DENY comparison (the safe side of a DENY). Named, so a new over-match shows as a failure.
 OVER_MATCH = {
     "r020": "a tag letter is decoded in the scan key (tag text T1/T2)",
     "r060": "a visible space is dropped by the scan key",
     "r078": "a Unicode space is dropped by the scan key",
     "r094": "a control is dropped by the scan key",
     "r140": "a trailing dot is dropped by the scan key",
+    "r174": "a spacing mark (Mc) is not a letter or digit, so the scan key drops it (the safe side of a DENY)",
+    "r175": "a spacing mark (Mc) is not a letter or digit, so the scan key drops it (the safe side of a DENY)",
+    "r176": "a spacing mark (Mc) is not a letter or digit, so the scan key drops it (the safe side of a DENY)",
 }
 
 
 @pytest.mark.parametrize("row", NOT_REFUSED)
-def test_same_person_agrees_with_the_stated_principle_and_is_never_narrower_than_the_identity_key(
+def test_the_deny_comparison_agrees_with_the_stated_principle_and_is_never_narrower_than_the_identity_key(
     row,
 ):
     a, b = expand(row["a"]), expand(row["b"])
-    got = same_person(a, b)
+    got = could_be_same_person(a, b) or bool(scan_keyset(a) & scan_keyset(b))
     if identity_key(a) == identity_key(b):
-        assert got, f"{row['id']}: same_person is narrower than identity_key equality"
+        assert got, f"{row['id']}: the deny comparison is narrower than identity_key equality"
     if row["relation"] == "equal":
         assert got, f"{row['class']}: {row['source']}"
     elif row["id"] in OVER_MATCH:

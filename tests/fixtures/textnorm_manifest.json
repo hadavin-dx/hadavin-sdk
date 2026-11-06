@@ -1,11 +1,11 @@
 {
  "note": "sha256 of the files a demo copies (line endings read as LF). Recompute after the last edit of any of them, and add the hashes to the CHANGELOG re-copy list.",
  "files": {
-  "src/hadavin_sdk/guard/textnorm.py": "98a4a3dc0e20b49e999b59fe16b5cbee74dbf979215ad56be6e6175361e8a34b",
-  "src/hadavin_sdk/guard/_confusables.py": "54ad37fb69fb6ede79d34f7b1b6016837b3d7706d48c675c801e379ced4d742a",
+  "src/hadavin_sdk/guard/textnorm.py": "a6dabf37604f43e22df487b1653dc95b9742bfad4847c3de28bbc292638b3b35",
+  "src/hadavin_sdk/guard/_confusables.py": "ff6fc444a40db22a5bf4252a6f1e985ba7d8aabaa14d159fa0cdb90154f090b6",
   "src/hadavin_sdk/guard/_scripts.py": "5c59f80ddfeea13b7cabc6b41e09dc12a1954045c944d65f4e62cbd51b06cc67",
   "tests/fixtures/textnorm_vectors.json": "1a1944708f7d1737588d7b02666620ceb308b0fe4a71ce2a312c4dc29113d349",
-  "tests/fixtures/textnorm_corpus.json": "16f312ad268306a3388506da01abc1e28796255ef090f8c59160404e6cc13722"
+  "tests/fixtures/textnorm_corpus.json": "7dd05801dea7f49d60df48d2dcf9e2ac61b449470cb8962a2bde9f3b4ab83cbb"
  },
  "data_files": {
   "tools/data/confusables.txt": {

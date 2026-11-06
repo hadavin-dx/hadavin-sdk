@@ -58,8 +58,8 @@ def test_the_pinned_unicode_guard_is_on_for_pilot_and_prod_configs(
     message = str(raised)
     assert OTHER in message and defaults.TEXTNORM_PINNED_UNIDATA in message
     assert "Python 3.13" in message, "the message does not name the interpreter to use"
-    assert "will not start" in message and "read as a different key" in message, (
-        "the message does not say why"
+    assert "for pilot or prod" in message, (
+        "the message does not say which stages need the pinned version"
     )
     assert environment in app_mod.deferred.LIVE
 

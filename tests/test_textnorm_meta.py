@@ -44,7 +44,7 @@ REPOINTED = (
     "table: the pin in the generator differs",
     "allow: a case difference is a spoof alarm",
     "allow: a verdict has a truth value",
-    "deny: same_person does not fold",
+    "deny: could_be_same_person does not fold",
     "textnorm: a newline joins the words of the script check",
     "table: the vendored data file differs from the pin",
 )
@@ -74,6 +74,7 @@ EXPECTED_CLASSES = {
     "letters written as digits",
     "allow side",
     "Intake invoice steps",
+    "Hindi and Thai marks",
 }
 
 
@@ -82,22 +83,22 @@ def _functions(path: Path) -> list[str]:
     return [n.name for n in tree.body if isinstance(n, ast.FunctionDef)]
 
 
-def test_a_the_list_has_87_mutants_28_repointed_41_of_p1a_and_18_of_p1b_with_unique_names():
+def test_a_the_list_has_99_mutants_the_77_of_p1a_fix4_and_22_of_p1b_with_unique_names():
     names = [m.name for m in mm.M]
-    assert len(names) == 87 and len(set(names)) == 87, names
+    assert len(names) == 99 and len(set(names)) == 99, names
     assert tuple(names[:28]) == REPOINTED, (
         "the first 28 are the re-pointed mutants, in the order of the placement table"
     )
     assert (
-        len(names[28:]) == 59
-    )  # 41 of P1a (13 of the first package, 9 of fold2, 3 of fold3, 16 of fold4) and the 18 of P1b
-    assert names[53:54] == ["fold: case folded before the marks are dropped (the fold2 order)"], (
+        len(names[28:]) == 71
+    )  # 22 of P1b and 12 of the first package, 9 of fold2 (order 44), 3 of fold3 (order 49), 16 of fold4 (fix3) and 9 of fix4 (order 79)
+    assert names[52:53] == ["fold: case folded before the marks are dropped (the fold2 order)"], (
         "the restored fold2 mutant is the first of the fold4 mutants"
     )
     assert sum(n.startswith("readings:") for n in names) == 7, (
         "the mutants of the readings (drop one, first only, unbounded, ...)"
     )
-    assert len(names[69:]) == 18, "P1b adds 18 mutants, after the 41 of P1a"
+    assert len(names[77:]) == 22, "P1b adds 22 mutants, after the 77 of P1a"
 
 
 def test_a_every_mutant_names_its_test_file_and_its_killer_and_the_killer_exists():
@@ -122,7 +123,7 @@ def test_a_the_test_list_puts_the_killer_files_first_and_leaves_out_perf_meta_an
     assert mm.TESTS[-1] == mm.D, "the differential and golden file runs last"
     for left_out in ("perf", "meta", "notices"):
         assert not any(left_out in t for t in mm.TESTS), left_out
-    assert {m.test_file for m in mm.M} == {mm.T, mm.G, mm.SC}
+    assert {m.test_file for m in mm.M} == {mm.T, mm.G, mm.SC, mm.SB}
 
 
 def test_a_the_moved_tests_and_the_new_killers_exist_once_each():
@@ -147,7 +148,7 @@ def test_a_the_moved_tests_and_the_new_killers_exist_once_each():
 def test_a_print_the_placement_table():
     rows = [f"{m.name} | {m.test_file} | {m.only_test}" for m in mm.M]
     print("\n".join(rows))
-    assert len(rows) == 87
+    assert len(rows) == 99
 
 
 def test_b_every_xfail_of_the_differential_file_is_strict_and_names_assertion_error():

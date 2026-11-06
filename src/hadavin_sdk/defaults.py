@@ -134,7 +134,7 @@ K8S_LOG_BYTES = 65536  # asked of the API as limitBytes
 # The weighted size rule of the fold: a text whose weight W (the sum over its characters of the longest string the fold makes from
 # one character; an ASCII text has W = its length) is above this is refused with TextTooLong. Same number as the redaction cap.
 TEXTNORM_MAX_CHARS = MAX_REDACT_CHARS
-# The Unicode data version the fold's keys were made with; check_pinned_unidata compares the interpreter with it.
+# The Unicode data version the fold's keys were made with; require_pinned_unidata compares the interpreter with it.
 TEXTNORM_PINNED_UNIDATA = "15.1.0"
 # Passes (the confirming pass included) of a scan-key reading before FoldNotConverged (read by guard/textnorm.py at the call).
 TEXTNORM_MAX_PASSES = 3

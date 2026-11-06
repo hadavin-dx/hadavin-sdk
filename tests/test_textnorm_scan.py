@@ -1,4 +1,4 @@
-"""P1b: the DENY keys of the text fold (``scan_keyset``, ``same_person``), the gaps it closes, and the script check.
+"""P1b: the DENY keys of the text fold (``scan_keyset``, ``scan_holds``), the gaps it closes, and the script check.
 
 Look-alikes are built with ``chr()``. Facts of one Unicode version are never written here: the tests state properties that hold on every
 interpreter, or read the live table (the digit decisions, the modifier letters). No wall-clock assertions: the perf rows (S_call, SK-5) live
@@ -20,16 +20,19 @@ import pytest
 from hadavin_sdk import defaults
 from hadavin_sdk.guard import _confusables, textnorm
 from hadavin_sdk.guard.textnorm import (
+    EmptyView,
     FoldNotConverged,
     NotText,
     TextTooLong,
+    could_be_same_person,
     fold,
     has_hidden_channel,
     has_mixed_script,
     identity_key,
     key_tag,
-    same_person,
+    scan_holds,
     scan_keyset,
+    scan_views,
 )
 
 CAP = defaults.TEXTNORM_MAX_CHARS
@@ -61,6 +64,11 @@ def refused(exc, message, fn, *args, **kwargs):
 def shares(a, b):
     """``scan_keyset`` of the two texts share a key."""
     return bool(scan_keyset(a) & scan_keyset(b))
+
+
+def same_scan(a, b):
+    """The two texts are one check name to a DENY scan: a shared spelling variant, or a shared scan key (empty key-sets never match)."""
+    return could_be_same_person(a, b) or shares(a, b)
 
 
 def high_bits(seed):
@@ -131,7 +139,7 @@ def test_sk3_the_az3x9_rows_ze_reads_as_three_and_z():
     for t in texts:
         assert "a33x9" in scan_keyset(t), f"{t!r}: no key a33x9 (the class map z to 3 is missing)"
     for a, b in ((ZE, "3"), (ZE, "z"), ("3", "z")):
-        assert same_person(a, b), f"same_person({a!r}, {b!r}) is False"
+        assert same_scan(a, b), f"same_scan({a!r}, {b!r}) is False"
 
 
 def test_sk6_hash_tilde_at_pipe_and_the_replacement_character_are_dropped():
@@ -195,7 +203,7 @@ def test_a_tag_text_still_returns_its_keys_and_the_signal_is_a_separate_function
     assert scan_keyset(text), "a text with a tag character has no keys"
     assert has_hidden_channel(text) is True
     assert has_hidden_channel(tag("approved")) is True
-    assert same_person("alice" + tag("x"), "alice")
+    assert same_scan("alice" + tag("x"), "alice")
     assert bare(identity_key(tag("approved"))) == "", "identity_key reads the tag letters"
 
 
@@ -204,11 +212,9 @@ def test_capital_and_small_eta_read_h_and_n_in_both_directions_and_both_readings
     assert scan_keyset("\u0397\u03b7\u0397\u03b7") == {"hnhn", "nnnn"}, (
         "reading B is missing: capital Eta pair has not both keys"
     )
-    assert same_person("\u0397\u03b7\u0397\u03b7", "hnhn")
-    assert same_person("\u0397\u03b7\u0397\u03b7", "nnnn"), (
-        "reading B is missing: no match with nnnn"
-    )
-    assert same_person("hnhn", "\u0397\u03b7\u0397\u03b7") and same_person(
+    assert same_scan("\u0397\u03b7\u0397\u03b7", "hnhn")
+    assert same_scan("\u0397\u03b7\u0397\u03b7", "nnnn"), "reading B is missing: no match with nnnn"
+    assert same_scan("hnhn", "\u0397\u03b7\u0397\u03b7") and same_scan(
         "nnnn", "\u0397\u03b7\u0397\u03b7"
     )
     assert scan_keyset("\u0397") == {"h", "n"}, (
@@ -218,10 +224,10 @@ def test_capital_and_small_eta_read_h_and_n_in_both_directions_and_both_readings
 
 
 def test_capital_eta_pair_does_not_match_hn_the_pinned_limit():
-    assert not same_person("\u0397\u0397", "hn"), (
+    assert not same_scan("\u0397\u0397", "hn"), (
         "the pinned limit (each reading is one letter) changed"
     )
-    assert same_person("\u0397\u0397", "hh") and same_person("\u0397\u0397", "nn")
+    assert same_scan("\u0397\u0397", "hh") and same_scan("\u0397\u0397", "nn")
 
 
 def test_nu_upsilon_palochka_and_sigma_read_by_both_readings():
@@ -232,9 +238,9 @@ def test_nu_upsilon_palochka_and_sigma_read_by_both_readings():
         "capital and small Upsilon"
     )
     assert (
-        same_person("\u039d\u03bd", "nv")
-        and same_person("\u039d\u039d", "nn")
-        and not same_person("\u039d\u039d", "nv")
+        same_scan("\u039d\u03bd", "nv")
+        and same_scan("\u039d\u039d", "nn")
+        and not same_scan("\u039d\u039d", "nv")
     )
     assert scan_keyset("\u04c0") == {"i"} and scan_keyset("\u04cf") == {"i"}, (
         "capital and small palochka read i (l to i)"
@@ -497,7 +503,7 @@ def test_pin_found_a_digit_written_by_one_look_alike_is_the_digit(digit):
     assert _confusables.TABLE[DIGIT_SOURCES[digit]] == str(digit), (
         f"U+{DIGIT_SOURCES[digit]:04X} is not a source of {digit}"
     )
-    assert same_person("ab" + src + "cd", "ab" + str(digit) + "cd"), (
+    assert same_scan("ab" + src + "cd", "ab" + str(digit) + "cd"), (
         f"digit {digit} is not found through U+{DIGIT_SOURCES[digit]:04X}"
     )
 
@@ -737,37 +743,30 @@ def test_mixed_reading_texts_match_the_needle():
     assert cases >= 2000
 
 
-def test_same_person_the_identity_half_and_the_empty_key_sets():
-    assert same_person("!!", "!!"), "the identity half of same_person is missing"
-    assert not same_person("!!", "??"), "both empty key-sets count as a match"
+def test_same_scan_the_identity_half_and_the_empty_key_sets():
+    assert same_scan("!!", "!!"), "the identity half of same_scan is missing"
+    assert not same_scan("!!", "??"), "both empty key-sets count as a match"
 
 
-def test_same_person_properties():
-    assert same_person("alice", "alice") and same_person("", "") and same_person("\u200b", "\u200b")
-    assert same_person("alice", "al\u200bice") and same_person("Alice", "\u0410lice")
-    assert not same_person("\u0397\u0397", "hn")
-    assert (
-        same_person("\u0397", "h") and same_person("\u0397", "n") and not same_person("h", "n")
-    ), "not transitive"
+def test_same_scan_properties():
+    assert same_scan("alice", "alice") and same_scan("", "") and same_scan("\u200b", "\u200b")
+    assert same_scan("alice", "al\u200bice") and same_scan("Alice", "\u0410lice")
+    assert not same_scan("\u0397\u0397", "hn")
+    assert same_scan("\u0397", "h") and same_scan("\u0397", "n") and not same_scan("h", "n"), (
+        "not transitive"
+    )
     gen = high_bits(5)
     texts = ["".join(chr(draw(gen, 0x2000)) for _ in range(draw(gen, 6))) for _ in range(800)]
     for t in texts:
-        assert same_person(t, t), repr(t)
+        assert same_scan(t, t), repr(t)
     for a, b in zip(texts[::2], texts[1::2], strict=False):
         if identity_key(a) == identity_key(b):
-            assert same_person(a, b), (a, b)
-        assert same_person(a, b) == same_person(b, a)
-
-
-def test_the_scan_match_of_two_empty_key_sets_is_false_and_x_x_is_true_when_x_has_keys():
-    assert textnorm._scan_match("!!", "??") is False, "two empty key-sets match"
-    assert textnorm._scan_match("", "") is False, "two empty key-sets match"
-    for x in ("alice", "\u0397", "z", ZE + "x", tag("abc")):
-        assert textnorm._scan_match(x, x), repr(x)
+            assert same_scan(a, b), (a, b)
+        assert same_scan(a, b) == same_scan(b, a)
 
 
 def test_the_old_identity_groups_stay_together_for_the_deny_comparison():
-    """Every code point that shares an ``identity_key`` with another is ``same_person`` with it (never narrower than the key)."""
+    """Every code point that shares an ``identity_key`` with another is ``same_scan`` with it (never narrower than the key)."""
     groups = collections.defaultdict(list)
     for cp in range(0x110000):
         if 0xD800 <= cp <= 0xDFFF:
@@ -776,9 +775,79 @@ def test_the_old_identity_groups_stay_together_for_the_deny_comparison():
     checked = 0
     for members in groups.values():
         for other in members[1:]:
-            assert same_person(members[0], other), f"U+{ord(members[0]):04X} and U+{ord(other):04X}"
+            assert same_scan(members[0], other), f"U+{ord(members[0]):04X} and U+{ord(other):04X}"
             checked += 1
     assert checked > 1000
+
+
+# ---- scan_holds / scan_views: the one choke point of a DENY scan (P1a fix4 notes, items 2 and 3) -----------------------------------------
+def test_scan_views_has_the_fold_the_squeeze_and_the_scan_keys_and_no_empty_view():
+    text = "Pass\u093eword 12"
+    views = scan_views(text)
+    assert views == tuple(dict.fromkeys(views)), "a view is repeated"
+    assert all(views), "an empty view is in the list"
+    assert len(views) <= 14
+    for v in textnorm.fold_views(text, casefold=True, collapse_ws=True) + textnorm.squeeze_views(
+        text
+    ):
+        assert v in views or not v, f"scan_views leaves out the view {v!r}"
+    for k in scan_keyset(text):
+        assert k in views
+    assert scan_views("") == () and scan_views("\u200b") == (), (
+        "an empty or invisible text has views"
+    )
+    assert scan_views("!!") == ("!!",), "a text with no letter or digit has more than its fold view"
+    refused(NotText, "scan_views accepted bytes", scan_views, b"x")
+    refused(TextTooLong, "scan_views accepted a text over the cap", scan_views, "a" * (CAP + 1))
+
+
+def test_scan_holds_reads_both_fold_views_and_squeeze_views_on_both_sides():
+    """ANY view of the text holds ANY view of the value. Each half is needed: the spacing mark hides the word from ``fold_views`` (the text
+    side needs ``squeeze_views``) and the value written with one is found in the plain text (the value side needs it too)."""
+    mark = "\u093e"
+    assert "password" not in " ".join(textnorm.fold_views("pass" + mark + "word", casefold=True))
+    assert scan_holds("my pass" + mark + "word is x", "password"), (
+        "the text side misses the squeeze view"
+    )
+    assert scan_holds("my password is x", "pass" + mark + "word"), (
+        "the value side misses the squeeze view"
+    )
+    assert scan_holds("my pass" + mark + "word", "pass" + mark + "word")
+    assert scan_holds("MY PASSWORD", "password") and scan_holds("my p a s s w o r d", "password")
+    assert scan_holds("ltq-v" + chr(0x430) + "ult-8812", "LTQ-Vault-8812"), (
+        "a look-alike hides the value"
+    )
+    assert not scan_holds("my passport", "password") and not scan_holds("", "password")
+
+
+def test_scan_holds_refuses_a_value_with_an_empty_view_and_a_text_may_have_one():
+    """Order 79 item 3. A value with no letter or digit has an empty squeeze view, which is found in EVERY text: it would match all (and
+    skipping it would match none). Rule: RAISE ``EmptyView``, for every empty or invisible-only or non-ASCII-only value, even when the
+    text itself would not hold it."""
+    for value in ("", " ", "\u200b", "!!", "\u4e2d\u6587", "\u093e", "***"):
+        refused(
+            EmptyView,
+            f"scan_holds accepted the value {value!r}",
+            scan_holds,
+            "any text at all",
+            value,
+        )
+        refused(
+            EmptyView,
+            f"scan_holds accepted the value {value!r} for an empty text",
+            scan_holds,
+            "",
+            value,
+        )
+    assert issubclass(EmptyView, textnorm.TextnormError)
+    # a TEXT with an empty view is fine: it holds nothing
+    assert scan_holds("\u4e2d\u6587", "password") is False
+    assert scan_holds("!!", "password") is False
+    # the size and type rules come first
+    refused(NotText, "scan_holds accepted bytes as the value", scan_holds, "x", b"x")
+    refused(NotText, "scan_holds accepted bytes as the text", scan_holds, b"x", "x")
+    refused(TextTooLong, "scan_holds accepted a long text", scan_holds, "a" * (CAP + 1), "x")
+    refused(TextTooLong, "scan_holds accepted a long value", scan_holds, "x", "a" * (CAP + 1))
 
 
 # ---- has_mixed_script: every script of the data, except Common, Inherited and the East Asian ones ------------------------------------------
@@ -837,7 +906,7 @@ def test_on_another_unicode_version_identity_keys_are_tagged_and_scan_keys_are_n
     assert scan_keyset("bob" + ZE) == pinned_scan, (
         "a scan key carries a tag (they are compared at once, never stored)"
     )
-    assert same_person("bob", "b" + chr(0x43E) + "b"), (
-        "same_person is unusable on another Unicode version"
+    assert same_scan("bob", "b" + chr(0x43E) + "b"), (
+        "same_scan is unusable on another Unicode version"
     )
-    assert not same_person("bob", "bobby")
+    assert not same_scan("bob", "bobby")
