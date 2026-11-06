@@ -2,7 +2,9 @@
 
 Revision line: **revision 3 DRAFT**, written 2026-11-06 from 04:54 UTC (10:24 IST; IST = UTC+5:30) by a ticket author under LEAD-ORDERS order 20 item 6. Revision 2 was written from 04:28 UTC (09:58 IST, commit `8787e36`); revision 1 from 03:47 UTC (09:17 IST). Text only: no code, no pull request, no test run, no sub-agent, no model or embedding call, no spend, no secret, no client data. **Review rounds:** round 1 done (`reviews/AK-G1-round1-adversarial.md`: 3 Blockers, 9 Majors, 6 Minors, 2 Nits; `reviews/AK-G1-round1-correctness.md`: 2 Blockers, 13 Majors, 9 Minors, 1 Nit; `reviews/AK-G1-round1-resolve.md`: 47 finding ids, 45 from the reports plus 2 the resolver found, in 26 rows, all PROPOSE FIX, one with a CONTESTED part). Round 2 done (`reviews/AK-G1-round2-adversarial.md`: 2 Blockers, 7 Majors, 3 Minors, 1 Nit, 1 cut candidate; `reviews/AK-G1-round2-correctness.md`: 7 Majors in its table (its header says 6), 4 Minors, 2 Nits; `reviews/AK-G1-round2-resolve.md`: 28 finding ids, 27 from the reports plus 1 the resolver found, in 21 rows, all PROPOSE FIX, one with a CONTESTED part). This revision applies every row of the round 2 resolve; "Changes since revision 2" (end of file) maps each row to where it landed, and lists where this revision differs from the resolve and why. Round 3 (fresh `egm:*` reviewers, then one `egm:egm-resolve`) is next and is the LAST ticket round: the cap is 3 rounds counted from round 1 (order 20 item 6), and the "one more for money or redaction" rule needs a last round with no Blocker and at most 2 Majors, which round 2 was not. If round 3 is not clean, what remains goes into the v1.1 and limits lists in plain words and the ticket freezes (orders 16-18). The RESULT review of built code has no round cap.
 
-**Build start, said once (resolve row R2-ADV-9).** The build starts on every recommended option, except PENDING LEAD 5: AK-G1-b first builds the (b) shape, with no read tools in a chat. Option (a)'s `tools.py` edit, T26, T27, M-B27, M-B28 and the `subject_scoped` load rules land as one additive commit only after the owner chooses (a). No PENDING LEAD item blocks the build start. What the (a) commit adds, in full: Interface 10; the Interface 5 tool rules (replacing the (b) rule "`tools_allowed` must be empty"); `_tool_step`'s `subject` parameter and its plain-callable refusal (Interface 6); the `subject_scoped` tools in F10's tool list (the (b) list is `ask_for_person` only); F12; T4's tool part; T11's allowed-tool part; T12's "read tool then reply" script; T26; T27; T30's tool case; M-B12; M-B27; M-B28 (and it deletes M-B70, the (b) load-rule mutant). Why (b) first: it is the safe side, it is less surface (order 8(1)), and (a) has a residual narrower than R369. PENDING LEAD 9 records this.
+> **BUILD NOTES WIN.** Review round 3 (`reviews/AK-G1-round3-adversarial.md`, `reviews/AK-G1-round3-correctness.md`) had 10 Majors, so there is no round 4 (order 20 item 6). This ticket is FROZEN at revision 3. The builder applies build notes BN-1 to BN-28 in `reviews/AK-G1-round3-resolve.md`; where a build note and the text below disagree, the build note wins. **Build start is BLOCKED until the lead answers PENDING LEAD 11 (EGM draft); the sentence "No PENDING LEAD item blocks the build start" is withdrawn.** The build-start review (order 19 A) reads this ticket together with those notes. The "Changes since" and CHANGELOG sections are history, not instructions. Three sub-PRs: AK-G1-a, AK-G1-b, and AK-G1-c (person-bound read tools, built only if the owner chooses PENDING LEAD 5 (a)). Totals after the notes: 62 test rows (-a 21, -b 39, -c 2); 111 mutant ids (A 38, B 73); the (b) stage runs 107, and 110 after AK-G1-c (M-B70 retired). Store methods: 9. Tables: 2.
+
+**Build start, said once (resolve row R2-ADV-9).** The build starts on every recommended option, except PENDING LEAD 5: AK-G1-b first builds the (b) shape, with no read tools in a chat. Option (a)'s `tools.py` edit, T26, T27, M-B27, M-B28 and the `subject_scoped` load rules land as one additive commit only after the owner chooses (a). Build start of AK-G1-a and AK-G1-b is BLOCKED until the lead answers PENDING LEAD 11. Every other PENDING LEAD item is applied on its recommendation (BN-7; this replaces the withdrawn sentence of revision 3). What the (a) commit adds, in full: Interface 10; the Interface 5 tool rules (replacing the (b) rule "`tools_allowed` must be empty"); `_tool_step`'s `subject` parameter and its plain-callable refusal (Interface 6); the `subject_scoped` tools in F10's tool list (the (b) list is `ask_for_person` only); F12; T4's tool part; T11's allowed-tool part; T12's "read tool then reply" script; T26; T27; T30's tool case; M-B12; M-B27; M-B28 (and it deletes M-B70, the (b) load-rule mutant). Why (b) first: it is the safe side, it is less surface (order 8(1)), and (a) has a residual narrower than R369. PENDING LEAD 9 records this.
 
 **EGM note (PENDING LEAD 4 amended again in revision 3).** `egm:egm-brainstorm` and `egm:egm-draft` were NOT run for this package. It is not defined in plan-v3 or kit-plan-v2 (it comes from GAPS row G1), so order 6(e)'s "no brainstorm for a defined package" does not cover it. The author's brief forbids sub-agents (a Skill call starts one). Said plainly: the user's standing rule (brainstorm, then draft, for every major task) reads as wanting both, and they were skipped. Round 1's adversarial reviewer asked for `egm:egm-draft` on the `handle_turn` flow. The resolve chose a one-table flow section instead (section "The `handle_turn` flow" below). Round 2 then found both its Blockers in exactly that ordering (map writes; the order of delivery, hand-off and finish). That is evidence for a draft, and the recommendation in PENDING LEAD 4 is now (b). The lead decides (PENDING LEAD 4, NEEDS LEAD).
 
@@ -278,7 +280,7 @@ Merge order: AK-G1-a, then AK-G1-b. Neither carries a pilot/prod path: AK-G1-b s
     - T38 qualification (new in revision 3, resolve row R2-COR-6; regression pin of the existing gate): a conversational agent with no green record raises `Unqualified` at `Runtime` construction; after `qualify` with the `conversation` field set it constructs; changing a `conversation` setting un-qualifies it.
     - T39 map size (new in revision 3, resolve row R2-COR-9): a message that adds more than `max_map_entries` new values gives `refused message_too_complex`; a conversation whose STORED map already holds `max_map_entries` entries gives one hand-off `conversation_too_long` with zero model calls, and the next message takes the F5 path.
   - Race/process: A7 (8 threads; 8 processes on Postgres; deterministic barrier), A15 (threads, both kinds), T13 (threads). Fault and crash injection: T34, T36, T37. Contract suite: A1-A9, A15 and A18-A21 on both store kinds.
-  - Counts: **60 rows** (A 20, F 1, T 39). The (b) build runs 58 of them; T26 and T27 come with the (a) commit. Fail-before: F0 only. Regression pins: T20, T38. The rest are new behaviour killed by the mutants below. Said plainly: almost all of this package is new behaviour, so a fail-before on old code proves little; the mutants carry the proof.
+  - Counts (BN-28): **62 rows** (AK-G1-a 21: A1-A10, A12-A22; AK-G1-b 39: F0, T1-T25, T28-T40; AK-G1-c 2: T26, T27). The first build (AK-G1-a and AK-G1-b) runs 60 of them; T26 and T27 come with AK-G1-c. Fail-before: F0 only. Regression pins: T20, T38. The rest are new behaviour killed by the mutants below. Said plainly: almost all of this package is new behaviour, so a fail-before on old code proves little; the mutants carry the proof.
 
 - **Mutation plan (which behaviours get a mutant, which test kills each):** plain patches to the named file, run with P1m's mutation runner (command line copied from P1m's merged docs at build time; UNVERIFIED here). Ids of deleted mutants (M-B2, M-B3, M-B10, M-B11, M-B22, M-B35, M-C1 to M-C4) are not reused; M-C4 moved to M-A19; M-B35 was deleted in revision 3 with `lease_s`.
 
@@ -383,7 +385,7 @@ Merge order: AK-G1-a, then AK-G1-b. Neither carries a pilot/prod path: AK-G1-b s
 | M-B69 | runtime/agent_loop.py | sweep takes over a conversation whose `open_handoff` raised | T35 |
 | M-B70 | registry.py | (b) build only: conversational agent with a non-empty `tools_allowed` accepted (deleted with the (a) commit, where M-B28 covers the rule) | T11 |
 
-  Counts: **98 mutants** (34 for AK-G1-a: M-A1 to M-A34; 64 for AK-G1-b: M-B1, M-B4 to M-B9, M-B12 to M-B21, M-B23 to M-B34, M-B36 to M-B70). Every mutant has a named killer; none is labelled equivalent in advance (a survivor is fixed by a test, never by deleting the mutant). M-B20 and M-B41 depend on unmerged names (P4c-2, P5c) and stay UNVERIFIED until those merge. **By build stage (revision 3):** the (b) build runs 95 mutants (all but M-B12, M-B27 and M-B28); the (a) commit adds those three and deletes M-B70, giving 97. If the owner picks PENDING LEAD 5 (b) for good, M-B12, M-B27 and M-B28 are deleted with T26 and T27 (95 mutants, 58 rows).
+  Counts (BN-28): **111 mutant ids** (38 for AK-G1-a: M-A1 to M-A38, with M-A35 to M-A38 defined in the build notes; 73 B mutants: M-B1, M-B4 to M-B9, M-B12 to M-B21, M-B23 to M-B34, M-B36 to M-B79, with M-B71 to M-B79 defined in the build notes). Every mutant has a named killer; none is labelled equivalent in advance (a survivor is fixed by a test, never by deleting the mutant). M-B20 and M-B41 depend on unmerged names (P4c-2, P5c) and stay UNVERIFIED until those merge. **By build stage (BN-28):** the (b) stage runs 107 mutants (all but M-B12, M-B27, M-B28 and M-B53, which come with AK-G1-c); AK-G1-c adds those four and retires M-B70, giving 110. If the owner picks PENDING LEAD 5 (b) for good, AK-G1-c is never built (107 mutants, 60 rows).
 
 - **Evidence commands (exact), and where the raw output is saved:** in the core repository root, each sub-PR on its own branch, by a separate EVIDENCE RUNNER agent:
   - AK-G1-a: `uv run --all-extras --group test pytest tests/test_conversation_store.py tests/contracts -q > handover/evidence/AK-G1/AK-G1-a-tests.txt 2>&1; echo rc=$? >> handover/evidence/AK-G1/AK-G1-a-tests.txt`; the full suite once at the final head (same form, file `AK-G1-a-suite.txt`); `uv run --all-extras --group test ruff check`, `uv run --all-extras --group test ruff format --check`, `uv run --all-extras --group test bandit -ll -r src` (file `AK-G1-a-lint.txt`); the Postgres rows against a throwaway PostgreSQL 16 and 17, each in its own uniquely named data folder under the scratchpad, made-up data only, deleted after by the agent that created it (order 22 item 20, order 27 item 46; file `AK-G1-a-postgres.txt`); the Postgres contract rows once more with NO database address set (file `AK-G1-a-postgres-absent.txt`; expected: they fail, not skip; revision 3, resolve row R2-ADV-12); mutants M-A1 to M-A34 (file `AK-G1-a-mutants.txt`), with the runner command copied from P1m's merged docs into the file's first line.
@@ -392,7 +394,7 @@ Merge order: AK-G1-a, then AK-G1-b. Neither carries a pilot/prod path: AK-G1-b s
 
 - **Reviewers:** correctness and adversarial, fresh `egm:*` agents, given the diff, this ticket and the evidence only, never the author's verdict. The adversarial reviewer is told to try to: (1) get a canary from one person's message to the model, to a log, to the audit or to another person, including through a read tool; (2) make one placeholder mean two values; (3) send a reply around `deliver_reply`; (4) make a chat run post a card or reach `_submit`; (5) make a model call outside the meter scope; (6) make an exchange raise `IllegalTransition` or make two transitions; (7) lose a message (accepted and then neither answered, handed off nor recorded); (8) lose or double a promised hand-off item, by a crash or a failing queue at any point of `_end_exchange`, F7 or the sweep (revision 3); (9) post into, or change the state of, a conversation that is not the caller's own (other readers and other agents included). Extended review: no round cap for the RESULT review.
 
-- **Done =** the 60 test rows pass on both store kinds where stated (58 in the (b) build; T26 and T27 with the (a) commit); every mutant above killed for the build stage (95 in the (b) build, 97 after the (a) commit), with the mutation evidence produced only after P1m's runner merges (PR 61 is in result review, orders 25-31), so this item is conditional on that merge; the Postgres-absent run fails as expected (`AK-G1-a-postgres-absent.txt`); F0 fails on the base by assertion as stated; T20's existing tests pass unchanged; the plan's stop rule (independent evidence, two reviews, no open Blocker or Major in the ledger); all gates green: tests, ruff, ruff format, bandit, the repo guard tests (`test_no_hardcoded_values.py`, `test_lockin_guard.py`, `test_k5_producers.py`, `test_repo_rules.py`, AK1's lint), CodeQL, SonarCloud, CodeRabbit.
+- **Done =** (totals per BN-28) the 62 test rows pass on both store kinds where stated (-a 21, -b 39, -c 2; 60 in the (b) stage; T26 and T27 with AK-G1-c); every mutant killed for the build stage (107 of the 111 mutant ids in the (b) stage, 110 after AK-G1-c, M-B70 retired), with the mutation evidence produced only after P1m's runner merges (PR 61 is in result review, orders 25-31), so this item is conditional on that merge; the Postgres runs on 16 and 17 show 0 skipped conversation rows (`AK-G1-a-postgres.txt`, BN-14); F0 fails on the base by assertion as stated; T20's existing tests pass unchanged; the plan's stop rule (independent evidence, two reviews, no open Blocker or Major in the ledger); all gates green: tests, ruff, ruff format, bandit, the repo guard tests (`test_no_hardcoded_values.py`, `test_lockin_guard.py`, `test_k5_producers.py`, `test_repo_rules.py`, AK1's lint), CodeQL, SonarCloud, CodeRabbit.
 
 - **Rollback:** tags `pre-AK-G1-a`, `pre-AK-G1-b` by the lead. AK-G1-a's migration is additive (two new tables; nothing existing changes); reverting the code leaves the tables unused; dropping them deletes stored conversations and is NON-REVERTIBLE (said plainly; the lead decides, never the builder). AK-G1-b reverts cleanly (the `_tool_step` move is behaviour-preserving, T20; the `tools.py` additions have defaults that change nothing for `handle`). Neither carries a pilot/prod path, so a revert never opens a path to people.
 
@@ -572,3 +574,237 @@ Counts recounted for revision 2: 49 test rows (A 16, F 1, T 32); 64 mutants (A 2
 - Revision 1 (2026-11-06, 03:47 UTC / 09:17 IST): first draft. 3 sub-PRs, 44 test rows (A 14, T 23, W 7), 44 mutants (A 18, B 22, C 4), 10 INFORM, 4 PENDING LEAD, 10 later rows.
 - Revision 2 (2026-11-06, from 04:28 UTC / 09:58 IST): applies all 26 rows of `reviews/AK-G1-round1-resolve.md` (47 finding ids: 5 Blockers and 22 Majors closed on paper, to be confirmed by round 2). Cut: AK-G1-c (V12), actions from a chat (V11), `floors` and the P5c edit, the conversation map in `redaction_maps`, the leading-assistant drop rule, the `closed` state and `FixedReplies.refused` (V13), `approval_pending`. Added: the one-table `handle_turn` flow, `_end_exchange`, `_limit_reason`, `_keyed_digest`, `ClaimResult`, `expect_next_turn`, `Turn.delivered`, `Turn.tenant` and `readers`, `conversations.mapping`, outcome `retry`, person-bound tools (PENDING LEAD 5 (a)), `quiet_limit_s`, PENDING LEAD 5 and 6. 2 sub-PRs, 49 test rows (A 16, F 1, T 32), 64 mutants (A 26, B 38), 13 live INFORM, 6 PENDING LEAD, 13 later rows.
 - Revision 3 (2026-11-06, from 04:54 UTC / 10:24 IST): applies all 21 rows of `reviews/AK-G1-round2-resolve.md` (28 finding ids: 2 Blockers and 14 Majors closed on paper, to be confirmed by round 3, the last ticket round). By finding id: R2-ADV-1 (`version` replaces `expect_next_turn`; A15; M-A27); R2-ADV-2 and R2-RES-1 (deliver, then hand off with `idempotency_key = run_id`, then `finish_turn`; no `handed_off` when the queue raised; store method 9 `lost_exchanges`; `Runtime.sweep_conversations` and its tick step; T18 rewritten, T34, T35); R2-ADV-3 (only the owner and the conversation's agent may post; T29); R2-ADV-4 (the claim writes the run row; one rule for store failures, `store_unavailable`; A19, T36); R2-ADV-5, R2-ADV-14, R2-COR-4, R2-COR-5 (the lease is the stuck rule on the heartbeat; `lease_s` cut; 960 s corrected; hook timeout and `touch`; E6 wrapped; T37; M-B35 deleted); R2-ADV-6 (`HANDOFF_STOPS`; passing faults pause; PENDING LEAD 7 new); R2-ADV-7 (`forget_user` refuses while busy; purge deletes run maps; D5 corrected; A20, A21); R2-ADV-8 and R2-COR-7 (F0 recipe); R2-ADV-9 (build starts on the (b) shape; PENDING LEAD 9); R2-ADV-10 (new mutants, deterministic A7 barrier); R2-ADV-11 (kill-switch reply stated; T21); R2-ADV-12 (mutation evidence after P1m; Postgres-absent evidence row); R2-ADV-13 (problem statement 5 sentences; F4 cites); R2-COR-1 and R2-COR-2 (`write_intent` for refusals; pre-made run id); R2-COR-3 (`storable(rmap, kinds)` through `_keep`; T33); R2-COR-6 (qualification path; T38; PENDING LEAD 8); R2-COR-8 (P5c cites); R2-COR-9 (map size per message; `conversation_too_long`; T39); R2-COR-10 (`purge_store is store`); R2-COR-11 (`empty_message`); R2-COR-12 and R2-COR-13 (cites; P4b1-b). PENDING LEAD 2 amended ((iii), (v), new (vi), (vii)); PENDING LEAD 4 recommendation now (b). Author changes beyond the resolve: I15 (the takeover waits for the item), I16, I17, and the list in "Changes since revision 2". AK1 cites moved to its frozen revision 3 (+2 lines). 2 sub-PRs, 60 test rows (A 20, F 1, T 39), 98 mutants (A 34, B 64), 16 live INFORM, 9 PENDING LEAD (7 NEEDS LEAD, 2 INFORM), 17 later-row ids (V14 reserved), 9 store methods.
+
+## Build notes (round 3)
+
+Copied from `reviews/AK-G1-round3-resolve.md` (section "Build notes (round 3)"); the decisions are unchanged. Ticket line cites are for this frozen file with the banner (2 lines added under the revision line). Where a build note and the text above disagree, the build note wins.
+
+**BN-1. Earlier messages that were not answered by the model are shown as a label (R3-ADV-1; PENDING LEAD 12).**
+- **Rule (F10, history):** `list_turns(..., before_turn_no=n, last=history_turns)` returns whole pairs, because `history_turns` is even and turns alternate. For each pair whose assistant turn has `fixed=True`, the user turn is given to the model as `defaults.CONVERSATION_UNPROCESSED_TEXT = "[an earlier message was not processed]"`, never as its stored text. The fixed assistant turn is shown as it is.
+- **Why `fixed` is enough:** an answer is fixed exactly when the model's reply did not reach the person. That covers a paused fault (`guard_unavailable`, `evidence_unavailable` at F8, `provider_error`, limits, kill switch), a hand-off reply, and the lost-answer filler. So every turn whose screen failed, was skipped or never finished is covered, with no new column and no UPDATE on `conversation_turns`, which stays append-only.
+- **Cost, said plainly:** the model also loses an earlier message that DID pass the screen before, for example, a provider outage. The person must repeat it.
+- **Tests:** T9's passing-fault cases gain a second exchange. For `guard_unavailable`, `evidence_unavailable` and `provider_error`, a canary in the first message is absent from `ScriptedLLM.calls` of the second exchange (read through the harness's own reference to the `ScriptedLLM`, BN-4), and the label is present. T2's lost-exchange case asserts the label before the filler.
+- **Mutant M-B71** (`runtime/agent_loop.py`): the label rule removed (killed by T9).
+
+**BN-2. Exceptions after the claim, and money signals in a chat (R3-ADV-2; PENDING LEAD 13).**
+- **F11, the model call:** next to `except ProviderError`, a separate `except MeterError` (as `P4c.md:178` adds to `handle`). The exception becomes the stop code that P4c-2's rule-6 table gives it (`P4c.md:79-93`): `kill_switch` (run `STOPPED`), `run_budget`, `limits.daily_budget`, `limits.monthly_budget`, or `limits_unavailable` when the meter could not be reached. No card, and no `_wall_stop` or `_abstain` call. The chat is paused, and E6 makes the one transition.
+- **After every model call and after `_screen` (F9):** read P4c-2's per-run signal and `scope.refusal` (`P4c.md:179`) exactly as `handle` does. Overshoot gives stop `estimate_exceeded`. A settle failure gives stop `limits_unavailable`. A screen refusal gives the rule-6 code. All are passing faults (D6's list gains `estimate_exceeded` and `limits_unavailable`).
+- **Money card (PENDING LEAD 13 (a), applied meanwhile):** for `estimate_exceeded` and `limits_unavailable` only, `_end_exchange` also posts P4c-2's FIXED card text (ids and the code, no turn text) through `hooks.post_card`, wrapped like `_deliver`, without `_abstain`. T25 becomes: "spies on `hooks.post_card` and `hooks.request_approval` are never called, except one P4c-2 money card per `estimate_exceeded` or `limits_unavailable` exchange".
+- **F13:** `RedactionError` and `InputTooLarge` from `redact_text` give stop `redaction_error` (a passing fault).
+- **Crash rule (replaces the "Store failures, one rule" paragraph):**
+  - Any other `Exception` raised after the claim commits and before E6 is treated as a crash: one ERROR log line (ids and the class name), one wrapped `_to(run, NEEDS_PERSON, reason)`, result `with_person`, no delivery and no further store call.
+  - The reason is `store_unavailable` for a store error class and `internal_error` for anything else. `LeaseLost` keeps its own row (E4).
+  - A `BaseException` that is not an `Exception` (for example `KeyboardInterrupt`) is not caught. Then the lease dies and the sweep recovers the slot (BN-6).
+  - The sentence "No exception leaves `handle_turn` after F1" becomes "No `Exception` leaves `handle_turn` after F1".
+- **Tests:** new **T40** (money in a chat), with a fake meter:
+  - `OverBudget` for the day gives `paused`, run `NEEDS_PERSON limits.daily_budget`, zero cards.
+  - The overshoot signal gives `paused`, run `NEEDS_PERSON estimate_exceeded`, exactly one card whose text is P4c-2's fixed text and holds no canary.
+  - The kill switch through the meter gives run `STOPPED kill_switch`.
+  - T12's script list and T36's fault list gain `MeterError`, the overshoot signal, `RedactionError` in F13 and a plain `RuntimeError` from `llm.chat`. T36 asserts `with_person internal_error` for the last one.
+- **Mutants:**
+  - M-B72: `MeterError` not caught in F11 (T40).
+  - M-B73: F13 redaction error not caught (T36).
+  - M-B74: catch-all removed (T36).
+  - M-B75: the overshoot signal not read (T40).
+- Names follow P4c-2 and P4b1 as built. If a name differs on the build base, the builder follows the built name and says so in `AK-G1-b-notes.txt`.
+
+**BN-3. `max_steps` is reachable only with read tools (R3-ADV-3).**
+- T9's "`max_steps` reached" case and M-B53 move to AK-G1-c (BN-5), where a tool step can lead to another step.
+- In the (b) stage, T9 covers the other stops. The loop stays a bounded `for` loop, so the code is still there.
+- Every count line (ticket lines 283, 388, 397 and the revision 3 counts paragraph) is replaced by BN-28.
+
+**BN-4. One wrapper stack, in tests and in production (R3-ADV-4).**
+- **Stack:** `MaskedLLM(MeteredLLM(raw))` everywhere, built with P5c's `MaskedLLM.of` over P4b1-b's `MeteredLLM`. `Runtime.__init__` uses P5c-3's check, `isinstance(llm, MaskedLLM) and isinstance(llm.inner, MeteredLLM)` (`P5c.md:274`, `:335`). That check looks through `MaskedLLM.inner`, and P5c-3 replaces P4c-2's check.
+- **No fallback:** `handle_turn` always calls `llm.run(...)`. A model object without it cannot reach `Runtime`, and a call outside `run(...)` raises `SessionClosed` (`P5c.md:276`). The meter scope is `self.llm.inner.scope(agent_id, run_id=run.run_id)` (`P5c.md:335`).
+- **Interface 11:** "Test builders wrap it in `MeteredLLM`" becomes "test builders wrap it exactly as production does, `MaskedLLM.of(MeteredLLM(ScriptedLLM(...), limits, routes), redactor, audit)`, with one helper in `tests/conversation_support.py`".
+- **Interface 12 and the Tests header:** the harness keeps its own reference to the `ScriptedLLM` and reads `calls` from it (`MaskedLLM` has no `__getattr__`, `P5c.md:270`).
+
+**BN-5. AK-G1-c: the vehicle for person-bound read tools (R3-ADV-5; PENDING LEAD 17).**
+- **AK-G1-c** is a third sub-PR in this ticket. Branch `core/AK-G1-c` from current `origin/main`; tag `pre-AK-G1-c` by the lead; evidence files `AK-G1-c-tests.txt`, `-suite.txt`, `-lint.txt`, `-mutants.txt`, `-notes.txt`. Its own RESULT review: security path, no round cap.
+- **Depends on:** AK-G1-b merged AND the owner's answer PENDING LEAD 5 (a). It touches `tools.py` (K5 hot file), and its merge slot follows order 20 item 5.
+- **Content:** the "Build start" list at the top of the ticket, plus BN-3's `max_steps` case and M-B53.
+- **Counts:** rows T26 and T27 (plus the (a) parts of T4, T9, T11, T12 and T30). Mutants M-B12, M-B27, M-B28 and M-B53 are added, and M-B70 is retired.
+- If the owner picks PENDING LEAD 5 (b) for good, AK-G1-c is never built and V14 gets the trigger "the owner picks (a) later".
+- AK-G1-b merges in the (b) shape without waiting for the owner. Holding it back was rejected, because it would block the whole chat on an owner answer that only read tools need.
+
+**BN-6. Every takeover hands the conversation to a person (R3-ADV-6; PENDING LEAD 14).**
+- **Store (AK-G1-a):** the private takeover helper, used by `claim_turn` with `take_over` and by `lost_exchanges` with `take_over`:
+  - writes the lost-answer filler (`fixed=True`, `delivered=False`), clears the lease, and sets `state="handed_off"`;
+  - adds 1 to `version`;
+  - in `claim_turn`, then appends this message's masked user turn as `record_user_turn` does (no answer slot, no run row, no lease) and returns `ClaimResult(kind="recorded", ...)`. `recorded` may now come from `claim_turn` too.
+- **Flow:** F7's second F6 call ends in `recorded`, so the result is `with_person`, `delivered=False`, no model call. T31's sentences "the new message is answered" become "the new message is recorded, outcome `with_person`, zero model calls". T18, T34 and T35 each also assert `state == "handed_off"` after the takeover.
+- **What this closes:** D6's "final" is now true on every path, including a queue outage and a crash between E2 and E4. One invariant, stated in D9: a "needs a person" item for an exchange exists if and only if the conversation is `handed_off` once the takeover commits. PENDING LEAD 2(vii) is WITHDRAWN, and the sweep paragraph's "the conversation stays `open`" is deleted.
+- **Tests and mutant:** A4, A5 and A18 assert the state. **M-A35** (`store/memory.py`): the takeover leaves `state="open"` (killed by A4, A18, T31).
+
+**BN-7. The EGM draft blocks build start (R3-ADV-7; PENDING LEAD 11).**
+- The header's "No PENDING LEAD item blocks the build start" is withdrawn. Replacement: "Build start of AK-G1-a and AK-G1-b is BLOCKED until the lead answers PENDING LEAD 11. Every other PENDING LEAD item is applied on its recommendation."
+- PENDING LEAD 4 is superseded by 11. Round 3 has happened, so 4's "before round 3" can no longer be met.
+
+**BN-8. Meter scope and cost booking (R3-ADV-8).**
+- F8: "P4c-2's meter scope opens around the rest (UNVERIFIED name)" becomes "`with self.llm.inner.scope(agent_id, run_id=run.run_id):` (`P4c.md:8`, `P5c.md:335`)".
+- `handle_turn` never calls `limits.charge` or `store.add_cost` itself. The wrapper books every call, the run's and the screen's. F9's "`add_cost` when charged" becomes "booked by the wrapper".
+- T21 asserts the booking by run id through the fake meter.
+
+**BN-9. A reused message id with other text is refused (R3-ADV-9).**
+- `Turn` and `conversation_turns` gain `text_digest TEXT` (user turns only) = `_keyed_digest(stored_user)`.
+- `claim_turn` and `record_user_turn` take `text_digest`. A duplicate `message_id` whose digest differs gives `ClaimResult(kind="reused")` and writes nothing. `handle_turn` returns `refused message_id_reused`, audited as in F2.
+- A5 and T14 gain the case. **M-A36** (`store/memory.py`): the digest comparison removed (killed by A5).
+
+**BN-10. A3 and M-A4 (R3-ADV-10).** A3's second claim passes the version returned by a fresh `get_conversation`, so only the lease can refuse it. M-A4's killers become "A3, T13" (A7 is dropped).
+
+**BN-11. Erasure and retention against the evidence hold (R3-ADV-11, R3-COR-16; PENDING LEAD 15).**
+- `forget_user` and `purge_conversations` delete the run maps (and, for `forget_user`, the tool calls) of the chat runs named in the deleted turns, whatever `hooks.hold_run_ids` says.
+- `runs` rows and labels stay; they hold no text and no user id.
+- In `tick.purge_evidence`, the `purge_conversations` call runs right after the two ceilings and BEFORE the hold hook (F8), so a raising hook cannot block conversation retention.
+- **New row A22:** a chat run named by `hold_run_ids` still loses its run map to `forget_user` and to the conversation purge, and with a hold hook that raises, `purge_conversations` has still run and the step still fails.
+- **M-A37** (`runtime/tick.py`): the conversation purge moved after the hold hook (killed by A22).
+
+**BN-12. Text that cannot be encoded is refused (R3-ADV-12).**
+- F2 first checks that `text` holds only Unicode scalar values (no lone surrogate: `text.encode("utf-8")` succeeds). If it fails: `refused message_unreadable`, audited as in F2, nothing masked or stored. This happens before the size check, which then measures the valid encoding.
+- T15 gains `"a\ud800b"`. **M-B79**: the check removed (killed by T15).
+
+**BN-13. Rollback (R3-ADV-13).**
+- **Reverting AK-G1-a:** restores the old `Store` protocol, so custom stores load again. It is refused while AK-G1-b is merged (b depends on a). The lead reverts in the order c, b, a.
+- **Dropping the two tables:** non-revertible, and the lead decides. Before a drop, the lead saves the row counts of both tables (`SELECT count(*)`) to `handover/evidence/AK-G1/pre-drop-<sha>.txt`.
+- A16 is the loud-failure test for the protocol growth.
+- DECLINED: a separate `ConversationStore` protocol. It adds surface, and A16 and the CHANGELOG line already make the refusal loud.
+
+**BN-14. Postgres evidence: run, never "fail-not-skip" (R3-ADV-14, R3-COR-2, R3-COR-10).**
+- **Cut:** the sentence "Postgres rows FAIL, not skip, with no database address", the evidence file `AK-G1-a-postgres-absent.txt`, and its Done item. The shared helper keeps its intended skip (F2).
+- **Instead:** `AK-G1-a-postgres.txt` is produced with `HADAVIN_TEST_PG_DSN` set (the variable named at `store_postgres.py:22`), once against PostgreSQL 16 and once against 17, with `pytest -rs`. The file must show **0 skipped** among the conversation contract rows. A skip there fails Done.
+- The A-mutant run (`AK-G1-a-mutants.txt`) has the same variable set, because M-A3, M-A9, M-A13, M-A14, M-A21, M-A22, M-A25 and M-A38 are killed only by Postgres rows.
+- **Commands to be filled at build, by these fixed rules:**
+  - Each throwaway server gets its own uniquely named data folder under the scratchpad, is started from the installed binaries, holds made-up data only, and is deleted by the agent that created it (order 22 item 20, order 27 item 46).
+  - The exact `initdb`/`pg_ctl` lines and the DSN go into the first lines of the evidence file.
+  - The mutation command comes from P1m's merged docs and goes into the first line of each mutants file.
+- **Done:** "the Postgres-absent run fails as expected" becomes "the Postgres runs on 16 and 17 show 0 skipped conversation rows".
+
+**BN-15. Runtime rights on `conversations` and the lease index (R3-ADV-15; PENDING LEAD 16).**
+- **Partial index (INFORM):** `CREATE INDEX ... ON conversations (busy_run_id) WHERE busy_run_id IS NOT NULL`, for `lost_exchanges`.
+- **Column-limited UPDATE (PENDING LEAD 16 (a), applied meanwhile):**
+  - `Grant` gains `runtime_update_cols: tuple[str, ...] = ()`. When the tuple is set, `migrate` grants `UPDATE (cols)` instead of table UPDATE, and `effective_problems` checks it.
+  - The `conversations` row becomes `Grant("table", "SELECT, INSERT", runtime_update_cols=("state", "next_turn", "version", "mapping", "busy_run_id", "busy_since", "updated_at"), purge=..., purge_cols=...)`.
+  - A10 gains: as the runtime role, `UPDATE conversations SET tenant = ...` (and `user_id`, `readers`, `agent_id`) is refused.
+  - **M-A38** (`store/migrate.py`): whole-table UPDATE restored (killed by A10).
+  - `store/migrate.py` is a hot file (P2a). This PR adds the field, and no other row changes.
+
+**BN-16. Values the model invents are never saved (R3-ADV-16).**
+- Before F13, take `kept = _keep(rmap)` (the map after the user message and any tool step). F13 masks the reply with `rmap` as now. Then `stored = label_unsaved(r)` is computed against `kept`, and `finish_turn` gets `mapping=kept`.
+- So a value that first appears in the model's reply becomes `[hidden <kind>]` in the stored answer and never enters the saved map. The map grows only from the person's messages (bounded by F4) and tool results (bounded by `max_map_entries` per run).
+- T5 gains: the made-up address the model invented is absent from `conversations.mapping`. **M-B78**: `finish_turn` gets `_keep(rmap)` after F13 (killed by T5).
+
+**BN-17. Hooks that hang (R3-ADV-17).**
+- Said plainly: `CONVERSATION_HOOK_TIMEOUT_S` is a contract on AK-G22 and AK-G15, and `Runtime` does not enforce it.
+- What protects a hang: the `touch` before each hook, then the tick's `stuck` step, then E6's wrapped transition.
+- T37 gains a variant: `deliver_reply` blocks while the test ages the run past its quiet limit and runs the tick. The call then returns `with_person interrupted`, there is no second transition, and exactly one item exists after the sweep.
+- Mutants:
+  - **M-B76**: `HandoffRequest.idempotency_key` set to a fresh id instead of the run id (killed by T34: two items).
+  - **M-B77**: the `store.touch` before E5 removed (killed by a T34 spy on the store's call order: `touch` then `open_handoff`).
+
+**BN-18. One-line fixes (R3-ADV-18, R3-ADV-19, R3-COR-12, R3-COR-13, R3-COR-14, R3-COR-15).**
+- **ADV-18:**
+  - F1 raises `Unqualified` only when the agent is not in `self.agents`. A qualified agent without `conversation` gets `ValueError("agent is not conversational")`.
+  - `FixedReplies` fields default to `defaults.CONVERSATION_HANDOFF_TEXT` and `defaults.CONVERSATION_PAUSED_TEXT`.
+  - Interface 5 states that `max_message_bytes` may only be lowered (`le` equals the default).
+- **ADV-19:** the "Checked and NOT used" list gains `k1b/redaction.py` (case-replay redaction, not run-time masking).
+- **COR-12:** "keyed digests only" gains "(dev without `restored_key`: a plain hash of MASKED text, `agent_loop.py:263-267`)".
+- **COR-13:** the producers row needs `redact_untrusted` and `redact_text` called directly in the body of `handle_turn`, not in a helper, because `_called_names` reads only the function body. M-B4 and M-B33 also cover the reply mask.
+- **COR-14:** a refusal `AuditEvent` has `principal = f"chat:{agent_id}"`, `source = "runtime"`, `domain = "conversation"`, `operation = "refused"`, and `run_id` = the pre-made id (precedent: `Limits._event`, `limits.py:34`).
+- **COR-15:** D2's cite `runs.py:31` becomes `runs.py:30-32`.
+
+**BN-19. The tick step list test (R3-COR-1).**
+- AK-G1-b CHANGE gains `tests/test_p7_tick.py`. Its assertion at `:81-88` gains `"sweep_conversations"` as the LAST element. That makes the existing test the pin of the appended step.
+- The sentence "Existing tests that may break: none expected" becomes "one existing test changes on purpose: `tests/test_p7_tick.py:80-89` (the step list)". The Files field lists it.
+
+**BN-20. Purge routing in the Postgres contract helper (R3-COR-3).**
+- `_SplitStore` (`tests/contracts/kinds/store_postgres.py:59-73`) gains `purge_conversations` and `forget_user`, both sent to `self._purge`, as `app.build` sends them through `purge_store` (`app.py:151-160`). That file is already in AK-G1-a's CHANGE list.
+- A8, A9, A20, A21 and A22 on Postgres then run with the purge role's rights only.
+- `lost_exchanges` stays on the runtime role (Interface 2).
+
+**BN-21. `schema_version` columns (R3-COR-4).** Both tables gain `schema_version INTEGER NOT NULL DEFAULT 1`, as `runs` has (`0001_core.sql:7`), so the generic `_row`/`_select` helpers can be used. The builder may still write hand-written SQL. Either way, A1 reads a record back through the model.
+
+**BN-22. Stale cites (R3-COR-5).**
+- `AK-G2.md:78` and `:196` become `:197-198` (the `lease_s` rule). `:286-287` becomes `:288-289` (C2, C2b).
+- The "mask / placeholder" words cite `P5c.md:101-103` instead of `:64`.
+
+**BN-23. Where the load rules run (R3-COR-6).**
+- The conversation rules are checked for EVERY agent with `conversation`, whether or not it has a `tools/<agent>.yaml`:
+  - `scope_allowed` empty;
+  - in the (b) shape, `tools_allowed` empty;
+  - `ask_for_person` reserved;
+  - no `principals.yaml` id starting with `chat:`.
+- They run in one new function `_conversation_problems(agents, principals)`, called at the point of registry load where both are known (`registry.py:218` loads principals; `_cross_check` at `:338` does not receive them today). `_load_tools` (`:275-276`) is not that point.
+- T10 and T32 name `registry.py` as the file. M-B24, M-B25 and M-B70 patch that function.
+
+**BN-24. Clocks in tests (R3-COR-7).** The Tests header's "Every time is the fake clock" becomes: "Times handed to `claim_turn`, `finish_turn` and the tick start at `models.now()` and only move forward. A test that ages a run sets `runs.updated_at` directly (`tests/test_p7_tick.py:225-243`), because `touch` writes the wall clock (`store/memory.py:90`, `store/postgres.py:280`)."
+
+**BN-25. Duplicate outcome from the stored conversation (R3-COR-8).**
+- When a duplicate's answer slot holds a turn, the outcome is mapped from the conversation and that turn, never from the run:
+  - `state == "handed_off"` gives `with_person`;
+  - `open` with `fixed=False` gives `replied`;
+  - `open` with `fixed=True` gives `paused`.
+- After BN-6, a filler slot implies `handed_off`, so it gives `with_person`. This holds even while the first run is still `WORKING` between E4 and E6.
+- T14 gains that window, with a crash-injection point after E4 and a resend before E6.
+
+**BN-26. `handle`'s reason mapping (R3-COR-9).** Interface 6 becomes: "`handle` maps the returned reason STRING to the old transition, `kill_switch` to `_to(STOPPED, kill_switch)`, `limits.<x>` to `_to(NEEDS_PERSON, limits.<x>)`, `run_budget` to `_abstain(NEEDS_PERSON, run_budget)`, without calling `_limits_stop` or reading limits again. The `run_budget` guard note is written once, by `_limit_reason`." These names cannot clash with tool-step reasons. M-B40 stays.
+
+**BN-27. Qualification in tests (R3-COR-11).** `qualify` writes ONE record (`tests/conftest.py:68-70`). Every AK-G1 test builds a registry with ONE qualified agent: F0's base side, its branch side and T38 each have their own registry. A test that needs two agents in one `Runtime` writes both green records itself in one `qualified.jsonl`. No AK-G1 test needs it today.
+
+**BN-28. Table delta and totals (one place for the builder).**
+- **Test rows: 62.**
+  - AK-G1-a 21: A1-A10, A12-A22, with new A22.
+  - AK-G1-b 39: F0, T1-T25, T28-T40, with new T40.
+  - AK-G1-c 2: T26, T27.
+  - Extended rows (no new id): T2, T5, T9, T12, T14, T15, T18, T21, T25, T31, T34, T35, T36, T37, A3, A4, A5, A10, A18.
+- **Mutant ids: 111.**
+  - A 38: M-A1 to M-A38, with new M-A35 to M-A38.
+  - B 73: the revision 3 set plus M-B71 to M-B79.
+  - The (b) stage runs **107**: all except M-B12, M-B27, M-B28 and M-B53, which come with AK-G1-c.
+  - After AK-G1-c: **110** (those four added, M-B70 retired).
+  - If PENDING LEAD 5 (b) is final: 107.
+- **Store methods: 9** (unchanged; `claim_turn` and `record_user_turn` gain `text_digest`).
+- **New result kinds:** `reused` (store); `recorded` from `claim_turn` too.
+- **New reasons:** `message_unreadable`, `message_id_reused` (refusals); `estimate_exceeded`, `limits_unavailable`, `internal_error`.
+- **New defaults:** `CONVERSATION_UNPROCESSED_TEXT`, `CONVERSATION_HANDOFF_TEXT`, `CONVERSATION_PAUSED_TEXT`.
+- **New column:** `text_digest`. **New field:** `Grant.runtime_update_cols`. **New index:** 1.
+- **Cut:** the Postgres-absent evidence file and its Done item; the 2(vii) residual; the run read for duplicate mapping.
+- **Evidence files gain:** `AK-G1-c-*.txt` (BN-5) and `pre-drop-<sha>.txt` (BN-13, lead-run, only at a drop). They lose `AK-G1-a-postgres-absent.txt`.
+
+## PENDING LEAD, round 3 (10 to 18)
+
+Copied from `reviews/AK-G1-round3-resolve.md`; numbering continues after 9. Routing: NEEDS LEAD = 11, 12, 13, 14, 15, 16 (11 BLOCKS build start); INFORM = 10, 17, 18.
+
+Routing rule: an item that touches an owner-only choice, money, redaction, least privilege, an owner rule or the standing EGM rule is NEEDS LEAD. For every NEEDS LEAD item except 11, the builder applies the recommended option meanwhile, because it is the fail-closed side.
+
+10. **NEW, INFORM. Freeze with build notes, no round 4.** There are 10 Majors, so order 20 item 6 rules out a round 4. The banner goes under the revision line.
+11. **NEW, NEEDS LEAD (the user's standing EGM rule: brainstorm, draft, review, resolve, then build; only the user or the lead can waive it). Supersedes PENDING LEAD 4. BLOCKS BUILD START.**
+    - (a) The lead waives brainstorm and draft for AK-G1. The three ticket rounds, these build notes and the build-start review count as the plan check.
+    - (b) **Recommended:** before build start, run `egm:egm-brainstorm` (short, from GAPS G1 and this ticket), then `egm:egm-draft` on the `handle_turn` flow and the store transaction rules with BN-1 to BN-28 folded in. The build-start review (order 19 A) then reads the draft together with the ticket. It is not a fourth ticket round: the ticket stays frozen.
+    - Evidence for (b): rounds 2 and 3 found Blockers and Majors in exactly that ordering (round 2: map writes and the hand-off order; round 3: ADV-1, ADV-2 and ADV-6), and BN-6 changes the ordering again.
+    - Cost: one draft step. Confidence 75 percent.
+12. **NEW, NEEDS LEAD (redaction and security). Unprocessed earlier messages in history (BN-1).**
+    - (a) **Recommended:** the label rule on `fixed` answers. No new column and no new right.
+    - (b) A `screened` flag on turns. It needs UPDATE on turns or a second write path.
+    - Confidence 80 percent.
+13. **NEW, NEEDS LEAD (money). Meter errors and money signals in a chat (BN-2).**
+    - (a) **Recommended:** the codes become passing faults. `estimate_exceeded` and `limits_unavailable` post P4c-2's fixed money card, with no turn text, and the chat pauses.
+    - (b) No card, only the run record. This breaks the "fail loudly, tell a person" money rule.
+    - (c) Put both into `HANDOFF_STOPS`. That ends each affected chat for good for a fault in the model route or the meter, not in the conversation.
+    - Confidence 75 percent.
+14. **NEW, NEEDS LEAD (owner-visible; R368 and D6). Every lost exchange hands the conversation to a person (BN-6).**
+    - (a) **Recommended:** every takeover writes `handed_off`. PENDING LEAD 2(vii) is withdrawn. New owner-visible sentence: "after a crash, a store fault or a queue outage during an answer, that chat continues with a person, not with the agent".
+    - (b) Only lost runs whose reason is `handoff_unavailable` hand off. This leaves the crash window open.
+    - Confidence 75 percent.
+15. **NEW, NEEDS LEAD (owner rules R98 delete-by-user and the evidence hold). Erasure against the hold (BN-11).**
+    - (a) **Recommended:** `forget_user` and the conversation purge delete chat runs' maps and tool calls even when the hold names those runs. `runs` rows and labels stay. The conversation purge runs before the hold hook.
+    - (b) The hold wins until its 400-day ceiling, and the erasure report says what was kept.
+    - Confidence 70 percent.
+16. **NEW, NEEDS LEAD (least privilege). Column-limited UPDATE for the runtime role on `conversations` (BN-15).**
+    - (a) **Recommended:** the new `Grant.runtime_update_cols` field, with a negative test and a mutant.
+    - (b) Keep table UPDATE and rely on the store code. That is narrower than "exact actions and resources".
+    - Confidence 80 percent.
+17. **NEW, INFORM (merge order). AK-G1-c is the vehicle for read tools (BN-5).** It is built only after AK-G1-b merges and the owner picks PENDING LEAD 5 (a). It takes a `tools.py` slot under order 20 item 5. Confidence 85 percent.
+18. **NEW, INFORM. One wrapper stack follows P5c (BN-4).** `MaskedLLM(MeteredLLM(raw))` in tests and production, P5c-3's check, no fallback. Confidence 90 percent.
+
+
+These six new NEEDS LEAD lines (11 to 16) and three INFORM lines (10, 17, 18) should also go under "NEEDS LEAD" in `handover/questions-for-lead.md` (order 19 item 2). This build-notes brief allows a commit of this ticket only, so the session copies them.
