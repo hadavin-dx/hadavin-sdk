@@ -211,6 +211,17 @@
   field with a default no longer un-qualifies agents, and swapping the llm backend does.
 
 ### Added
+- **P4d-a1, store contract harness (test code only; a SKELETON, not yet a money contract).** No `src/` change, no
+  migration, nothing to do on upgrade. The contract suite gains a `store_pair` kind, a driver-neutral `pg_driver()`
+  for tests, `require_backend` (a missing backend fails the run under `HADAVIN_REQUIRE_PG` or `CI` and skips on a
+  laptop) and a session-end check (under that rule it fails a run that skipped a backend silently, a store test that
+  did not run on both backends, or a public `Store` method that no test body called on both). The money rules
+  (an amount must be finite, not negative and have at most 6 decimals) are NOT in a1: they arrive with P4d-a2-i.
+  Until then `add_spend` and `add_cost` accept a negative, NaN, infinite or over-6-decimal amount, as before, and
+  `tests/contracts/test_store_money_baseline.py` pins that behaviour on both backends so a2-i changes it on
+  purpose. The two places where memory and Postgres differ today are pinned apart and named there: `add_cost` of
+  a non-finite amount (memory returns it from `get_run`; Postgres stores it and `get_run` then raises for good) and
+  a signaling NaN (memory raises `decimal.InvalidOperation`; Postgres stores a NaN).
 - **G4 command withholding** (P5/P6 follow-ups). `channel.clean` now withholds every command a person could
   paste to change a system: `[command withheld (G4)]` stands in its place.
   - It covers AWS, gcloud/gsutil/bq, az, azcopy and PowerShell Az, kubectl/oc, helm, terraform/tofu/pulumi,

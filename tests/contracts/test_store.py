@@ -509,4 +509,5 @@ def test_store_pair_gives_two_handles_on_the_same_data(store_pair):
     if a.backend == "memory":
         assert a._inner is b._inner
     else:
-        assert a._db is not b._db  # Postgres only: MemoryStore has no `_db`
+        # Postgres only (memory has no connection): the four server processes are four different ones
+        assert all(x != y for x, y in zip(a.connection_id, b.connection_id, strict=True))
