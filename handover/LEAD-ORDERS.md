@@ -270,3 +270,21 @@ Keep going (order 12).
    Other INFORM items on 95 (corpus 171 rows, TEXTNORM_MAX_PASSES unused until P1b, p1b rows strict xfail): accepted.
 Order of events: PR 64 merges -> PR 62 updated (GitHub update-branch, no force) -> CI -> I merge PR 62 -> your P1a commit -> I review PR 63.
 Keep going (order 12).
+
+## ORDER 43 (lead, 2026-11-06 ~07:00Z / 12:30 IST): items 96-103; P1a received
+P1a PR 63 head 96c5a50 received (plain commit, official Unicode text): Windows 413 passed 5 xfailed, lint/format/scan clean; Windows mutants and WSL 3.12/3.13 runs in progress; then egm review.
+AK-G15 (NEEDS LEAD 13-19; also items 96, 100, 103):
+- 13 (a): run egm:egm-brainstorm (short) then egm:egm-draft on the item state machine, re-run transaction and grants before the build-start review; reports in egm/hadavin-sdk/ak-g15/. Not an extra ticket round.
+- 14 yes: add entries 13-21 to owner-visible-limits.md in plain words (cap sentence follows 16, entry 20 follows 17).
+- 15 (a): the SECURITY DEFINER function hadavin_queue_close_rerun; the worker gets EXECUTE only. The AK-G2 BUILD NOTE REQUEST (R1-RES-1: the runtime role must not be able to re-run a message by direct UPDATE) is APPROVED: write it into AK-G2 as a build note (AK-G2 stays frozen, notes win).
+- 16 (a): queue.max_reruns default 3, range 0-10 enforced inside the function.
+- 17 (a): keep closed items in v1, with the corrected personal-data statement and owner-visible entry 20; V4 trigger "before any pilot, together with AK-G2 receipt retention". Reason not (b): a purge role with DELETE is more privilege to review; I take the retention decision to the owner before any pilot.
+- 18 (a): the tenant's current config readers decide; stored readers are a record only.
+- 19 (a): library compare_ids only; no CLI command in v1.
+AK-G16 (item 102, NEEDS LEAD 12-15):
+- 12 (a): at the start of each checkpoint() re-write the newest N checkpoint rows with each row's own scheme/key fields (identical bytes = success, different = AnchorConflict); N in defaults.py; tests P16/P16b/P16c, mutants M-a13/M-a14. Make sure P16 simulates one failed anchor write and proves the next tick anchors it.
+- 13 accepted: hostile YAML cases built in memory and written to a temp folder, no scanner or workflow change.
+- 14 yes: add the relay line to AK-G1 and AK-G2.
+- 15: AK-G16 owns NO hold source. It only refuses a bare `tick --part purge` and runs every tick part through the assembled agent's own command. The hold source belongs to the ticket that defines the hold hook (find it from config.py:185 and the frozen tickets; if both K6 and P3c claim it, K6). RES-1 and RES-2 (mode 0440 with fsGroup) accepted. Mark the Kubernetes facts UNVERIFIED and add a plan-only test for the file mode.
+Item 101 done. Items 97, 99: recorded.
+Keep going (order 12).
