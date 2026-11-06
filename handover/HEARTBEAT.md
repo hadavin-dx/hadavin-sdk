@@ -239,3 +239,4 @@
 2026-11-06T11:02:03Z | step=P1a finding map + local CHANGELOG commit (q173) | next=P1c rev5, P1b report | blocked=lead (P1a review, order 77)
 2026-11-06T11:03:31Z | step=order 77 read; P0t ticket BN-fix2; P1a builder told 'eight' (local) | next=P1c rev5, P1b report, order 78 | blocked=none
 2026-11-06T11:05:33Z | step=P1a CHANGELOG eight (q175) | next=P1c rev5, P1b report | blocked=none
+2026-11-06T11:11:05Z | step=P1c rev5 committed (q176); round 4 launching | next=verify P1b report | blocked=lead PL15-18
