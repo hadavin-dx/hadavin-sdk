@@ -159,10 +159,7 @@ def test_pinned_code_per_class() -> None:
     for key in sorted(OWN_CODES):
         module, qual = key.split(":")
         cls = getattr(importlib.import_module(module), qual)
-        try:
-            exc = cls("x")
-        except TypeError:
-            continue
+        exc = cls.__new__(cls)  # no constructor: some classes need arguments
         line = render(diagnose(exc, step=codes.Where.other))
         if f"code={OWN_CODES[key].value} " not in line:
             wrong.append((key, line))
@@ -195,6 +192,9 @@ def test_step_token_is_closed_and_final() -> None:
     assert codes.StepToken.of("jane_doe") is codes.Where.other
     assert codes.StepToken.of("sweep\n") is codes.Where.other
     assert codes.StepToken.of(3) is codes.Where.other
+    assert (
+        codes.StepToken.of("extract") is codes.Where.other
+    )  # a Where name as text is not a Where member
 
     class Sub(str):
         pass

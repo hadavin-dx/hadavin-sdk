@@ -86,10 +86,10 @@ M = [
         "foreign_exception",
     ),
     mutant(
-        "step token: a str subclass is accepted",
+        "step token: a Where name as text is accepted",
         C,
-        "            if type(value) is str and value in TICK_STEPS:",
-        "            if isinstance(value, str) and value in TICK_STEPS:",
+        "            if type(value) is Where:",
+        "            if type(value) is Where or value in Where._value2member_map_:",
         TC,
         "test_step_token_is_closed_and_final",
         "assert",
@@ -111,7 +111,7 @@ M = [
         "    if False:",
         TD,
         "test_gaierror_gives_gai_not_errno",
-        "gaierror",
+        "gaierror facts",
     ),
     mutant(
         "a bool is accepted as a number",
@@ -129,7 +129,7 @@ M = [
         "    return value if type(value) is int and lo <= value < hi else None",
         TD,
         "test_facts_bounds_table",
-        "assert",
+        "kept http_status=599",
     ),
     mutant(
         "sqlstate uses match instead of fullmatch",
@@ -184,7 +184,7 @@ M = [
         "    name = next((n for n in (_counted_module(f) for f, _ in reversed(links)) if n), None)",
         TD,
         "test_internal_bug_is_decided_on_the_raise_frame",
-        "code=foreign_exception",
+        "os.environ from own code",
     ),
     mutant(
         "built-in identity check removed",
@@ -193,7 +193,7 @@ M = [
         "    return type(tname) is str and hasattr(builtins, tname)",
         TD,
         "test_internal_bug_is_decided_on_the_raise_frame",
-        "code=foreign_exception",
+        "look-alike class",
     ),
     mutant(
         "the traceback step bound is removed",
@@ -202,7 +202,7 @@ M = [
         "        if False:",
         TD,
         "test_long_traceback_is_foreign",
-        "code=foreign_exception",
+        "long traceback",
     ),
     mutant(
         "diagnose catches BaseException",
@@ -284,9 +284,7 @@ M = [
         "    except ZeroDivisionError:\n        return None",
         TD,
         "test_frame_check_that_raises_means_not_counted",
-        "TypeError",
-        allow_crash=True,
-        crash_type="TypeError",
+        "frame rule: unknown",
     ),
     # rendering and validation
     mutant(
@@ -323,7 +321,7 @@ M = [
         "    for entry in found:",
         TV,
         "test_more_than_5_errors_gives_plus_n_more",
-        "assert",
+        "types printed",
     ),
     mutant(
         "the +N more tail is wrong",
@@ -332,7 +330,7 @@ M = [
         'text += f"; +{count} more"',
         TV,
         "test_more_than_5_errors_gives_plus_n_more",
-        "assert",
+        "tail:",
     ),
     mutant(
         "a type outside the closed list is printed",
@@ -341,7 +339,7 @@ M = [
         "    return value",
         TV,
         "test_a_type_outside_the_closed_list_prints_other",
-        "assert",
+        "outside the closed list",
     ),
 ]
 
