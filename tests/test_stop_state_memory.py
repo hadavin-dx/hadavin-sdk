@@ -133,3 +133,14 @@ def test_confirmation_failure_is_loud():
     lim = Limits(Lying(), Audit(), None, environment="demo", label_key=KEY)
     with pytest.raises(StopNotConfirmed):
         lim.stop("user:a")
+
+
+def test_a_wrong_version_alone_makes_the_pair_stale():
+    lim = make()
+    lim.stop("user:a")
+    good = expect(lim)
+    with pytest.raises(SwitchChanged):
+        lim.reset(
+            RESET_NAME, expect_version=good["expect_version"] + 1, expect_open=good["expect_open"]
+        )
+    assert lim.status().on
