@@ -628,6 +628,6 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | rr-AKG15-r1-cor | Sonnet egm-codebase-details review AK-G15 rev 1 round 1 | 06:22Z | +20min | REPORTED | save report
 | rr-AKG16-r1-adv | Sonnet egm-design review AK-G16 rev 1 round 1 | 06:24Z | +20min | REPORTED | save report
 | rr-AKG16-r1-cor | Sonnet egm-codebase-details review AK-G16 rev 1 round 1 | 06:24Z | +20min | REPORTED | save report
-| rs-AKG15-r1 | Opus resolve AK-G15 round 1 (35 ids) -> reviews/AK-G15-round1-resolve.md | 06:26Z | +25min | running | verify
+| rs-AKG15-r1 | Opus resolve AK-G15 round 1 (35 ids) -> reviews/AK-G15-round1-resolve.md | 06:26Z | +25min | REPORTED | verify
 | rs-AKG16-r1 | Opus resolve AK-G16 round 1 (31 ids) -> reviews/AK-G16-round1-resolve.md | 06:28Z | +25min | running | verify
 | bd-P1a-lic | Sonnet builder (resumed) P1a: official Unicode licence text, one normal commit on core/P1a (order 42 item 95) | 06:31Z | +25min | running | verify, tell lead sha

@@ -161,3 +161,4 @@
 06:26Z | step=AK-G15 r1 correctness saved (1 Blocker 7 Major); resolve agent running | done=... | next=AK-G16 r1 reports, AK-G15 resolve verify | blocked=none
 06:27Z | step=user asked about PR 62/63 CI: PR 62 security red from P1a fixture (gitleaks) | done=item 99 | next=AK-G16 r1 saves, AK-G15 resolve | blocked=NEEDS LEAD 30
 06:32Z | step=order 42 read; P1a builder resumed for official Unicode licence commit | done=AK-G16 r1 saved | next=P1a sha to lead, AK-G15/16 resolves | blocked=none (NEEDS LEAD 30 answered by order 42)
+06:33Z | step=AK-G15 r1 resolve verified; item 100 (NEEDS LEAD 15-19, AK-G2 hole R1-RES-1) | done=... | next=AK-G15 rev 2 author, AK-G16 resolve, P1a licence sha | blocked=NEEDS LEAD AK-G15 15-19
