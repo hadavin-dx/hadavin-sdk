@@ -40,7 +40,7 @@ def _clock():
 
 
 def vault_target() -> tuple[str, str]:
-    """(address, admin token): the CI dev server, or the local fake."""
+    """(address, admin token): the CI Vault dev server, or the local fake."""
     if address := os.environ.get("HADAVIN_TEST_VAULT_ADDR"):
         return address, os.environ.get("HADAVIN_TEST_VAULT_TOKEN", ROOT)
     return fake_vault().address, ROOT

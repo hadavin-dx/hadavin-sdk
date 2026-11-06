@@ -1160,6 +1160,7 @@ _COMMON = frozenset(
         "production",
         "test",
         "dev",
+        "demo",
         "stage",
         "staging",
         "default",

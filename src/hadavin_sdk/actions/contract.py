@@ -31,7 +31,7 @@ class ManualExecutor(BaseModel):
 
 
 class HttpExecutor(BaseModel):
-    """Hadavin-run execution (Phase 2): refused in pilot and prod, kept in dev for the slice-1 tests."""
+    """Hadavin-run execution (Phase 2): refused in pilot and prod, kept in demo for the slice-1 tests."""
 
     model_config = ConfigDict(extra="forbid", frozen=True)
     kind: Literal["http"]

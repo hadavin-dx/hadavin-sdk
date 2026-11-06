@@ -12,11 +12,19 @@ from typing import Annotated, Any, Literal, get_args
 from urllib.parse import urlsplit
 
 import yaml
-from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, ValidationError, model_validator
+from pydantic import (
+    BaseModel,
+    BeforeValidator,
+    ConfigDict,
+    Field,
+    ValidationError,
+    field_validator,
+    model_validator,
+)
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from hadavin_sdk import defaults, deferred
-from hadavin_sdk.backends.table import DEFAULTS, DEV_ONLY, NOT_PROD, TABLE, KindSettings
+from hadavin_sdk.backends.table import DEFAULTS, DEMO_ONLY, NOT_PROD, TABLE, KindSettings
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.scrub_settings import ScrubSettings
 
@@ -74,6 +82,25 @@ class Backends(_Strict):
     def entries(self) -> list[tuple[str, KindSettings]]:
         out = [(cap, getattr(self, cap)) for cap in TABLE if cap != "detector"]
         return out + [("detector", d) for d in self.detector]
+
+
+# The stages (R449), in order, and nothing else. A project's own labels map to one of these in the project's config;
+# core tests the stage, never a label. The first stage was called "dev" until P0t: it is refused at load, and an old
+# STORED value is read as the first stage (history is never rewritten).
+STAGES = ("demo", "pilot", "prod")
+_OLD_STAGE = "dev"
+
+
+def stage_from_stored(value: object) -> str:
+    """A stage read back from storage (a tenant row, an audit entry, an old config copy): the old first stage name
+    reads as `demo`, a current stage reads as itself, anything else is refused. Reading never writes: the stored
+    value, and any hash computed over it, stay as they were."""
+    if isinstance(value, str):
+        if value == _OLD_STAGE:
+            return STAGES[0]
+        if value in STAGES:
+            return value
+    raise ConfigError(f"stored stage {value!r} is not one of {', '.join(STAGES)}")
 
 
 # Slice 1 keys, refused with the place they moved to (design 12.3; no clients yet, so no migration shim).
@@ -314,7 +341,7 @@ class Settings(BaseSettings):
 
 
 class Config(_Strict):
-    environment: Literal["dev", "pilot", "prod"]
+    environment: Literal["demo", "pilot", "prod"]
     routes: dict[str, Route]
     backends: Backends
     golden_dir: Path
@@ -343,8 +370,16 @@ class Config(_Strict):
     tool_module_hashes: dict[str, str] = {}
     executor_timeout_s: float = Field(
         default=defaults.EXECUTOR_TIMEOUT_S, gt=0
-    )  # dev executor only
+    )  # demo executor only
     root: Path
+
+    @field_validator("environment", mode="before")
+    @classmethod
+    def _renamed_stage(cls, value: object) -> object:
+        """R449: the old first stage name is refused with the rename; every other value is compared exactly."""
+        if isinstance(value, str) and value == _OLD_STAGE:
+            raise ValueError(f"stage {_OLD_STAGE} was renamed demo (stages: {', '.join(STAGES)})")
+        return value
 
     @model_validator(mode="after")
     def _cross_checks(self) -> Config:
@@ -363,9 +398,9 @@ class Config(_Strict):
                     f"(http only for loopback with allow_insecure_loopback): {system.base_url}"
                 )
         refused = []  # environment table, design 4.6: every refusal at once, so one fix round is enough
-        if self.environment != "dev":
+        if self.environment != "demo":
             refused = [
-                f"{c}: {s.kind}" for c, s in self.backends.entries() if (c, s.kind) in DEV_ONLY
+                f"{c}: {s.kind}" for c, s in self.backends.entries() if (c, s.kind) in DEMO_ONLY
             ]
             refused += ["allow_insecure_loopback"] if self.allow_insecure_loopback else []
         refused += _anchor_refusals(self.environment, self.backends)

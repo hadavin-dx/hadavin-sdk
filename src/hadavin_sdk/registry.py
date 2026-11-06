@@ -47,7 +47,7 @@ class AgentRecord(BaseModel):
     tools_allowed: list[str] = []
     max_steps: int = Field(gt=0)
     budget_usd: Budget
-    # Per-action autonomy. None only in dev (the slice-1 gate path). Not part of config_hash: promotion changes
+    # Per-action autonomy. None only in demo (the slice-1 gate path). Not part of config_hash: promotion changes
     # only this, so a flip never un-qualifies the agent. `act` parses so the load check can name its phase.
     levels: dict[str, Literal["shadow", "suggest", "act"]] | None = None
     max_run_usd: Money | None = (

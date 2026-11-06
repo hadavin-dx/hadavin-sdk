@@ -1,5 +1,5 @@
 # Test client config for the synthetic test-agent. Fakes only, $0.
-environment: dev
+environment: demo
 routes:
   default:
     model_id: fake-model

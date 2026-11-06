@@ -176,7 +176,7 @@ class Hooks:
     toolbox: ToolBox | None = None
     validate_proposal: Validator | None = None
     hold_run_ids: Callable[[], set[str] | frozenset[str]] | None = None
-    # Keys the HMAC of the restored inputs on the gate's audit event (None: a plain hash, dev only).
+    # Keys the HMAC of the restored inputs on the gate's audit event (None: a plain hash, demo only).
     restored_key: bytes | None = None
 
 
@@ -550,7 +550,7 @@ class Runtime:
 
     # --- plan, gate, approvals, execution ----------------------------------------------------------
     def _level(self, agent: Any, action_id: str) -> Level | None:
-        """The effective level: the lower of the config level and the override. None: slice-1 gate path (dev)."""
+        """The effective level: the lower of the config level and the override. None: slice-1 gate path (demo)."""
         if agent.levels is None:
             return None
         cfg: Level = "suggest" if agent.levels.get(action_id) == "suggest" else "shadow"
@@ -569,7 +569,9 @@ class Runtime:
     def _abstain(self, run: Run, new: RunState, reason: str | None, cited: list[str]) -> Run:
         """End a run that proposed nothing and post the abstain card (every level), so a miss can be labelled."""
         run = self._to(run, new, reason)
-        if self.hooks.post_card is None:  # no channel wired (dev slice-1): nothing to post or audit
+        if (
+            self.hooks.post_card is None
+        ):  # no channel wired (demo slice-1): nothing to post or audit
             return run
         label = _REASON_TEXT.get(reason or "", reason or "no proposal")
         caught = "guard" if reason in GUARD_STOP_REASONS else None
