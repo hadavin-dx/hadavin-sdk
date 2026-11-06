@@ -1,0 +1,42 @@
+head: 657b20b413db1fa66d974c59e62c796c1fef84a4
+command: pytest tests/test_mutation_runner.py tests/test_mutation_runner_meta.py -rs -rP -m 'not live and not perf' -p no:cacheprovider
+start: 2026-11-06T03:21:49Z
+-----
+============================= test session starts ==============================
+platform linux -- Python 3.13.18, pytest-9.2.0, pluggy-1.7.0
+rootdir: /home/user/build/P1m
+configfile: pyproject.toml
+plugins: platformdirs-4.13.5, anyio-4.15.1
+collected 27 items
+
+tests/test_mutation_runner.py ......................                     [ 81%]
+tests/test_mutation_runner_meta.py .....                                 [100%]
+
+==================================== PASSES ====================================
+____ test_g_every_search_string_occurs_exactly_once_in_the_file_it_targets _____
+----------------------------- Captured stdout call -----------------------------
+judge: an exception line counts as a kill: occurs once in src/hadavin_sdk/testing/mutation.py
+judge: crash markers ignored: occurs once in src/hadavin_sdk/testing/mutation.py
+judge: short expect accepted: occurs once in src/hadavin_sdk/testing/mutation.py
+runner: crash counts as good: occurs once in tools/mutation_runner.py
+runner: an absolute path is accepted: occurs once in tools/mutation_runner.py
+runner: a dotdot part is accepted: occurs once in tools/mutation_runner.py
+runner: a link out of the tree is accepted: occurs once in tools/mutation_runner.py
+runner: the mutant file is not checked again: occurs once in tools/mutation_runner.py
+runner: a short expect is accepted: occurs once in tools/mutation_runner.py
+runner: a timeout is reported as an exit code: occurs once in tools/mutation_runner.py
+runner: a dash path is an option: occurs once in tools/mutation_runner.py
+runner: the mutant file is joined as a path: occurs once in tools/mutation_runner.py
+runner: a link out of the tree is listed: occurs once in tools/mutation_runner.py
+runner: a timeout leaves the grandchildren running: occurs once in tools/mutation_runner.py
+runner: a failing tree kill is not caught: occurs once in tools/mutation_runner.py
+runner: the baseline timeout is ignored: occurs once in tools/mutation_runner.py
+fix: junit with a DOCTYPE is parsed: occurs once in src/hadavin_sdk/testing/mutation.py
+fix: the runner drops pinned: occurs once in tools/mutation_runner.py
+b2: a refused junit stops the run: occurs once in tools/mutation_runner.py
+b2: the junit has no size ceiling: occurs once in src/hadavin_sdk/testing/mutation.py
+b3: a crash row is good whatever the exception: occurs once in tools/mutation_runner.py
+============================= 27 passed in 45.56s ==============================
+-----
+exit code: 0
+end: 2026-11-06T03:22:35Z

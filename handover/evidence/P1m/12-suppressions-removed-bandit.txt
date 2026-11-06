@@ -1,0 +1,38 @@
+head: 657b20b413db1fa66d974c59e62c796c1fef84a4
+command: cd /tmp/claude-0/-home-user/203f6188-e1bc-5eda-aaab-325ff81324d2/scratchpad/nosup && /home/user/build/P1m/.venv/bin/bandit -q -r src tools -ll
+start: 2026-11-06T03:24:27Z
+-----
+Run started:2026-11-06 03:24:27.798705+00:00
+
+Test results:
+>> Issue: [B314:blacklist] Using xml.etree.ElementTree.fromstring to parse untrusted XML data is known to be vulnerable to XML attacks. Replace xml.etree.ElementTree.fromstring with its defusedxml equivalent function or make sure defusedxml.defuse_stdlib() is called
+   Severity: Medium   Confidence: High
+   CWE: CWE-20 (https://cwe.mitre.org/data/definitions/20.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b313-b320-xml-bad-elementtree
+   Location: src/hadavin_sdk/testing/mutation.py:93:11
+92	    # refusals above (size ceiling, no DOCTYPE, no ENTITY), so no entity can be declared or expanded.
+93	    root = ET.fromstring(xml_text)
+94	    for case in root.iter("testcase"):
+
+--------------------------------------------------
+
+Code scanned:
+	Total lines of code: 342
+	Total lines skipped (#nosec): 0
+	Total potential issues skipped due to specifically being disabled (e.g., #nosec BXXX): 0
+
+Run metrics:
+	Total issues (by severity):
+		Undefined: 0
+		Low: 4
+		Medium: 1
+		High: 0
+	Total issues (by confidence):
+		Undefined: 0
+		Low: 0
+		Medium: 0
+		High: 5
+Files skipped (0):
+-----
+exit code: 1
+end: 2026-11-06T03:24:27Z

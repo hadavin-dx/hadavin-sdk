@@ -1,0 +1,11 @@
+head: 657b20b413db1fa66d974c59e62c796c1fef84a4
+command: cd /tmp/claude-0/-home-user/203f6188-e1bc-5eda-aaab-325ff81324d2/scratchpad/nosup && /home/user/build/P1m/.venv/bin/ruff check --config /home/user/build/P1m/pyproject.toml --output-format concise src tools
+start: 2026-11-06T03:24:27Z
+-----
+src/hadavin_sdk/testing/mutation.py:93:12: S314 Using `xml` to parse untrusted data is known to be vulnerable to XML attacks; use `defusedxml` equivalents
+tools/mutation_runner.py:138:10: S603 `subprocess` call: check for execution of untrusted input
+tools/mutation_runner.py:155:13: S603 `subprocess` call: check for execution of untrusted input
+Found 3 errors.
+-----
+exit code: 1
+end: 2026-11-06T03:24:27Z
