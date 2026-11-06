@@ -279,7 +279,7 @@ def test_receiver_records_and_never_executes(app, fake_system):
     assert fake_system.creates == 1
 
 
-def test_dev_server_answers_over_http(app):
+def test_the_approvals_server_answers_over_http(app):
     _, req = _waiting(app)
     server = serve(app.approvals, port=0)
     threading.Thread(target=server.serve_forever, daemon=True).start()

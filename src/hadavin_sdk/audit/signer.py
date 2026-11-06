@@ -61,7 +61,7 @@ def verify_signature(
 
 
 class LocalSigner:
-    """An Ed25519 key in a PEM file (dev and pilot; refused in prod by the environment table)."""
+    """An Ed25519 key in a PEM file (demo and pilot; refused in prod by the environment table)."""
 
     alg: Literal["ed25519"] = "ed25519"
 
@@ -95,7 +95,7 @@ def probe(signer: Signer, label: str) -> Signer:
 
 def build_local(settings, deps) -> LocalSigner:
     """The PEM from `private_key_secret_name` (any secrets kind: Vault, a mounted Secret, a cloud store), or
-    from `private_key_path` (dev and pilot only: a key file in an image or on a disk can be copied)."""
+    from `private_key_path` (demo and pilot only: a key file in an image or on a disk can be copied)."""
     name = settings.passphrase_secret_name
     passphrase = deps.resolve(name).encode("utf-8") if name else None
     if settings.private_key_secret_name:
