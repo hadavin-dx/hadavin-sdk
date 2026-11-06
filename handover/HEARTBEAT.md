@@ -114,3 +114,4 @@
 03:40Z | step=P6a r3 adversarial in (0 Blocker, 2 Major: Slack in dev, app.py order) | done=- | next=P6a r3 correctness then save + last-round resolve | blocked=-
 03:41Z | step=order 26 received; forwarded all 11 P1m review items to builder abe19a3 (batch with order 25) | done=- | next=verify builder head+mutants+uv build, mark PR ready after lead re-review rule | blocked=-
 03:42Z | step=saved P6b2 r2 + P8b r3 resolves; launched Opus resolves P5b4 r2, P5b3 r2, AK1 r1 | done=2 resolves | next=P6b2 rev3 author, P8b build notes, relay PLs | blocked=-
+03:43Z | step=order 27 read; P4d lines 160/170 edited (item 61); P4b2 r3 resolve saved | done=item 61 | next=AK-G1/AK-G2 authors, P4b2 BN append, relay PLs | blocked=-
