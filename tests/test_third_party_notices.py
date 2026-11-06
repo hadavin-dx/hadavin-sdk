@@ -43,7 +43,8 @@ def test_the_notices_file_holds_the_licence_grant_and_names_the_covered_files():
         assert path in text, path
         assert (ROOT / path).is_file(), path
     assert "https://www.unicode.org/license.txt" in text
-    assert "18.0.0" in text and "2026-08-06" in text
+    assert "version 15.1.0" in text and "2023-08-11" in text
+    assert "18.0.0" not in text, "the notices still name the old data version"
 
 
 def test_the_licence_text_is_the_pinned_one():

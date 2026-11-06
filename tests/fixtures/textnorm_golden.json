@@ -5,22 +5,22 @@
  "sections": {
   "15.0.0": {
    "hashes": {
-    "identity_key": "0a5759d391a4954da9f32cb39635d4821abc8613766c695a3ae164fbe2467715",
-    "squeeze": "b5d6eed6df8acd31c949ced48121a3f197255f2972d6b24a21be658ba8e98f51",
-    "squeeze_loose": "d176d78c9ac9f36b389da925a71eb1154d5a8127597b6a148dfa1cbf5502e6e8",
-    "identity_keys": "56a29c1ca1393bbcf57dcd40df18e7714ab9fcb5651d1cad255b32b9ff4d47e2",
-    "fold_views": "95fbca0d8fd9188b1d1efb4dc59923ed58d074b1b73ab7c9a4becba4010e331b",
-    "squeeze_views": "7c2ef592294bd4533e86aa4bac02a026b7fbe14efbd9a8616fbbd24c9caf7d9d"
+    "identity_key": "a701e40f85a2d37b5da895001e934cbede2d3098fe11a287c5aac1294d97bc4f",
+    "squeeze": "7368c4692417bc861672268b6392667d340b1a556863c3058822e1478aa861d9",
+    "squeeze_loose": "03c32c9f58eb4defcf78629ef559c20c1677a0ca20183610ae8c53bce3d2462d",
+    "identity_keys": "b5aea03e428fbda2a251279e5ed3d8d2dc5143b0c43f242054c76b3508c65539",
+    "fold_views": "2d5a8a502b42e4ea65da2b0629be1dee6df2e91f124fa7de460520798072a755",
+    "squeeze_views": "c4a2f83f2dca99c40dae2f7f5b2a34c99baff4d4bbfe08e8a439bc42a11eb511"
    }
   },
   "15.1.0": {
    "hashes": {
-    "identity_key": "111204a51883b85607204184153b3892ce2e133c57a1bd098b9a196b4cebd23a",
-    "squeeze": "b5d6eed6df8acd31c949ced48121a3f197255f2972d6b24a21be658ba8e98f51",
-    "squeeze_loose": "d176d78c9ac9f36b389da925a71eb1154d5a8127597b6a148dfa1cbf5502e6e8",
-    "identity_keys": "3ee624a8def43c5dc4a06abf90978b1be85d7ce0c5eaf6602d3232a100ac96bf",
-    "fold_views": "d8e5f990e6293581620522b9ee35b21b7270fa82834a7eb3dc6a408d4ede6ffe",
-    "squeeze_views": "7c2ef592294bd4533e86aa4bac02a026b7fbe14efbd9a8616fbbd24c9caf7d9d"
+    "identity_key": "e1e91426b47dee0ed37059a650fd691a5a87fea5bac9cf5ec3ca3625bdfeb6b2",
+    "squeeze": "7368c4692417bc861672268b6392667d340b1a556863c3058822e1478aa861d9",
+    "squeeze_loose": "03c32c9f58eb4defcf78629ef559c20c1677a0ca20183610ae8c53bce3d2462d",
+    "identity_keys": "f15989e9fe5fa9bda0ef1fb802e00fd2fbf0c5375803b39b17510209ca26bb11",
+    "fold_views": "637540763c3f8e0c2b319d126e598ef9077474fd66bbce597ccb879cca5eacf9",
+    "squeeze_views": "c4a2f83f2dca99c40dae2f7f5b2a34c99baff4d4bbfe08e8a439bc42a11eb511"
    }
   }
  }

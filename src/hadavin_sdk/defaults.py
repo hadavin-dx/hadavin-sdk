@@ -102,7 +102,7 @@ PRIVATE_SUFFIX_LABELS = frozenset(
         "invalid",
     }
 )
-EXECUTOR_TIMEOUT_S = 10.0  # the dev executor's per-call timeout (Config.executor_timeout_s)
+EXECUTOR_TIMEOUT_S = 10.0  # the demo executor's per-call timeout (Config.executor_timeout_s)
 HTTPS_PORTS = (443,)  # ports a tool may reach over https unless its manifest lists `ports`
 CLUSTER_PORTS = (80, 8080, 9090, 9093, 3100)  # the same for plain http to in-cluster hosts
 
@@ -139,5 +139,5 @@ K8S_LOG_BYTES = 65536  # asked of the API as limitBytes
 # The weighted size rule of the fold: a text whose weight W (the sum over its characters of the longest string the fold makes from
 # one character; an ASCII text has W = its length) is above this is refused with TextTooLong. Same number as the redaction cap.
 TEXTNORM_MAX_CHARS = MAX_REDACT_CHARS
-# The Unicode data version the fold's keys were made with; check_pinned_unidata compares the interpreter with it.
+# The Unicode data version the fold's keys were made with; require_pinned_unidata compares the interpreter with it.
 TEXTNORM_PINNED_UNIDATA = "15.1.0"

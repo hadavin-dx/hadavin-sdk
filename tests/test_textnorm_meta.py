@@ -44,7 +44,7 @@ REPOINTED = (
     "table: the pin in the generator differs",
     "allow: a case difference is a spoof alarm",
     "allow: a verdict has a truth value",
-    "deny: same_person does not fold",
+    "deny: could_be_same_person does not fold",
     "textnorm: a newline joins the words of the script check",
     "table: the vendored data file differs from the pin",
 )
@@ -74,6 +74,9 @@ EXPECTED_CLASSES = {
     "letters written as digits",
     "allow side",
     "Intake invoice steps",
+    "Hindi and Thai marks",
+    "letters written as symbols",
+    "digits written as symbols",
 }
 
 
@@ -82,17 +85,23 @@ def _functions(path: Path) -> list[str]:
     return [n.name for n in tree.body if isinstance(n, ast.FunctionDef)]
 
 
-def test_a_the_list_has_69_mutants_28_repointed_13_new_9_of_fold2_3_of_fold3_and_16_of_fold4_with_unique_names():
+def test_a_the_list_has_91_mutants_28_repointed_12_new_9_of_fold2_3_of_fold3_16_of_fold4_9_of_fix4_and_14_of_fix5_with_unique_names():
     names = [m.name for m in mm.M]
-    assert len(names) == 69 and len(set(names)) == 69, names
+    assert len(names) == 91 and len(set(names)) == 91, names
     assert tuple(names[:28]) == REPOINTED, (
         "the first 28 are the re-pointed mutants, in the order of the placement table"
     )
     assert (
-        len(names[28:]) == 41
-    )  # 13 of the first package, 9 of fold2 (order 44), 3 of fold3 (order 49) and 16 of fold4 (fix3)
-    assert names[53:54] == ["fold: case folded before the marks are dropped (the fold2 order)"], (
+        len(names[28:]) == 63
+    )  # 12 of the first package, 9 of fold2, 3 of fold3, 16 of fold4, 9 of fix4 and 14 of fix5
+    assert names[52:53] == ["fold: case folded before the marks are dropped (the fold2 order)"], (
         "the restored fold2 mutant is the first of the fold4 mutants"
+    )
+    assert all(n.split(":")[0] in {"marks", "names", "pin"} for n in names[-14:]), (
+        "the last 14 are the mutants of fix5"
+    )
+    assert sum(n.startswith("names:") for n in names[-14:]) == 6, (
+        "the six name-rule mutants of fix5"
     )
     assert sum(n.startswith("readings:") for n in names) == 7, (
         "the mutants of the readings (drop one, first only, unbounded, ...)"
@@ -143,7 +152,7 @@ def test_a_the_moved_tests_and_the_new_killers_exist_once_each():
 def test_a_print_the_placement_table():
     rows = [f"{m.name} | {m.test_file} | {m.only_test}" for m in mm.M]
     print("\n".join(rows))
-    assert len(rows) == 69
+    assert len(rows) == 91
 
 
 def test_b_every_xfail_of_the_differential_file_is_strict_and_names_assertion_error():

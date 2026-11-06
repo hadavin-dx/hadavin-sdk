@@ -23,9 +23,19 @@ def _seconds(fn, *args):
     return time.perf_counter() - start
 
 
-def test_a_million_expanding_characters_are_refused_before_any_work():
-    """1,000,000 x U+FDFA expands to 18 million characters; the size rule refuses it from the weight, without building the key."""
+def test_a_million_expanding_characters_are_refused_from_the_length_before_any_work():
+    """1,000,000 x U+FDFA is over the LENGTH cap (262,144), so it is refused from its length alone, without weighing a character."""
     assert _seconds(identity_key, chr(0xFDFA) * 1_000_000) < 2.0
+
+
+def test_sixteen_thousand_expanding_characters_are_refused_from_the_weight_before_any_work():
+    """16,000 x U+FDFA is far below the length cap (262,144), so the WEIGHT path runs: 18 characters each, 288,000 in all, over the cap. The
+    refusal must come from the weight, without building a key (``tests/test_textnorm.py`` proves "no fold step ran" with no clock; this row
+    is the time ceiling)."""
+    text = chr(0xFDFA) * 16_000
+    assert len(text) < CAP < textnorm._weight(text)
+    assert _seconds(identity_key, text) < 0.5
+    assert _seconds(textnorm.squeeze_views, text) < 0.5
 
 
 def test_a_text_at_the_cap_of_distinct_kinds_of_character_is_folded_in_linear_time():
@@ -66,7 +76,7 @@ def test_a_huge_text_of_distinct_characters_is_refused_from_its_length_alone():
         has_hidden_channel,
     ):
         assert _seconds(fn, text) < 0.5, fn.__name__
-    assert _seconds(textnorm.same_person, "a", text) < 0.5
+    assert _seconds(textnorm.could_be_same_person, "a", text) < 0.5
 
 
 def test_a_text_of_distinct_characters_at_the_cap_is_weighed_and_read_in_linear_time():
@@ -76,7 +86,7 @@ def test_a_text_of_distinct_characters_at_the_cap_is_weighed_and_read_in_linear_
     assert len(set(text)) == len(text) == CAP
     for fn in (identity_key, textnorm.identity_keys, textnorm.fold_views, textnorm.squeeze_views):
         assert _seconds(fn, text) < 5.0, fn.__name__
-    assert _seconds(textnorm.same_person, text, text) < 8.0
+    assert _seconds(textnorm.could_be_same_person, text, text) < 8.0
 
 
 def test_a_text_of_a_greek_letter_and_ypogegrammeni_pairs_at_the_cap_is_read_in_linear_time():
@@ -84,4 +94,19 @@ def test_a_text_of_a_greek_letter_and_ypogegrammeni_pairs_at_the_cap_is_read_in_
     assert len(text) <= CAP
     for fn in (identity_key, textnorm.identity_keys, textnorm.fold_views, textnorm.squeeze_views):
         assert _seconds(fn, text) < 5.0, fn.__name__
-    assert _seconds(textnorm.same_person, text, text[::-1]) < 8.0
+    assert _seconds(textnorm.could_be_same_person, text, text[::-1]) < 8.0
+
+
+def test_a_text_at_the_cap_with_spacing_marks_is_scanned_in_linear_time_with_the_marks_dropped_views():
+    """A text with a spacing combining mark (Mc), a modifier letter (Lm) and a modifier symbol (Sk) in it gets the marks-dropped
+    readings too, so ``fold_views`` and ``squeeze_views`` build up to six views of a text at the cap (``fold_views`` builds more than one here). This is the cost of the extra
+    readings; it must stay linear (a ceiling of about 20 times the time measured on the build machine)."""
+    unit = "pass" + chr(0x0903) + chr(0x02C6) + chr(0x02C2) + "word " + chr(0x430)
+    text = unit * (CAP // len(unit))
+    assert len(text) <= CAP
+    views = textnorm.fold_views(text, casefold=True)
+    assert 2 <= len(views) <= 6
+    assert all(len(v) <= textnorm._weight(text) for v in views)
+    assert _seconds(lambda t: textnorm.fold_views(t, casefold=True), text) < 5.0
+    assert _seconds(textnorm.squeeze_views, text) < 5.0
+    assert _seconds(lambda t: textnorm.squeeze_views(t, loose=True), text) < 5.0
