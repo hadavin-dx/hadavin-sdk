@@ -437,3 +437,4 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | sav-P5a-r3 | Saver: P5a r3 adv+cor reports + ledger | claude | 03:18Z | +10min | REPORTED | verify; P5a round 3 resolve |
 | res-r3-P5a | Opus resolve P5a round 3 (6 Majors) -> build notes | opus | 03:19Z | +25min | running | verify |
 | rev-P5b3-2 | Opus author P5b3 rev 2 from reviews/P5b3-round1-resolve.md | opus | 03:19Z | +35min | running | verify; round 2 reviewers |
+| rev-P8b-3 | Opus author P8b rev 3 from reviews/P8b-round2-resolve.md (last round) | opus | 03:20Z | +35min | running | verify; round 3 reviewers |
