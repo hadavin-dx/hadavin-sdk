@@ -303,3 +303,8 @@ File: handover/reviews/P4a-round8-resolve.md. Ticket not edited (an author write
 
 ## 2026-11-06 P2a build-start resolve slip
 - What: the P2a resolve agent's throwaway PostgreSQL probe: it deleted its own data folder before its stop command worked, then sent SIGINT to its own server after checking arguments. A second throwaway server (pg3a, from the P3a resolve) was gone at the end; cause unproven. No product or repo state affected. Answered-by-user: no (not a decision; reported for honesty, INFORM 20).
+
+## 2026-11-06 P4b2 rev 3: maintenance identity restored (order 21 item 13)
+- What: accepted the author's rev 3 (daae169): trigger names the maintenance role with deny-all start; ENABLE ALWAYS proposed on P4d-b trigger.
+- Options: (a) keep rev 1 "role without INSERT" trigger (third-role test cannot pass); (b) name the role (chosen); (c) drop the third-role row.
+- Why: (b) is stricter least privilege and makes the negative test pass. Confidence: medium (all Postgres behaviour UNVERIFIED until built). Reversibility: ticket text only. Answered by user/lead: item 13 yes (order 21); the trigger detail no, listed as INFORM 21.
