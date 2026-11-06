@@ -129,3 +129,19 @@ K8S_MAX_PAGES = 25  # pages followed per list; past that the answer says it is i
 K8S_JSON_CAP_BYTES = 1024 * 1024  # fetch cap for a JSON list reply
 K8S_LOG_SLACK_BYTES = 8192  # fetch-cap room over `log_bytes` for the line framing
 K8S_LOG_BYTES = 65536  # asked of the API as limitBytes
+
+# --- kill switch (stop state): the stop request table, the migration waits and the role-level settings -------------
+KILL_SWITCH_MAX_OPEN_STOP_REQUESTS = (
+    1000  # past this many open requests a stop adds no row; the switch reads ON
+)
+KILL_SWITCH_MIGRATE_LOCK_TIMEOUT_MS = (
+    2000  # a migration that waits longer for a table lock aborts (a stop waits less)
+)
+KILL_SWITCH_MIGRATE_ADVISORY_WAIT_MS = 60000  # the wait for the migration lock itself
+KILL_SWITCH_ROLE_STATEMENT_TIMEOUT_MS = (
+    30000  # role defaults for honest code only; a session can undo them
+)
+KILL_SWITCH_ROLE_LOCK_TIMEOUT_MS = 10000
+KILL_SWITCH_ROLE_IDLE_IN_TRANSACTION_TIMEOUT_MS = 60000
+KILL_SWITCH_RUNTIME_CONNECTION_LIMIT = 20
+KILL_SWITCH_STOP_CONNECTION_LIMIT = 2

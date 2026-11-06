@@ -10,6 +10,7 @@ from hadavin_sdk.actions.secrets import FakeSecretProvider
 from hadavin_sdk.backends.factory import make
 from hadavin_sdk.backends.table import PostgresSettings
 from tests.contracts.kinds import kind
+from tests.stop_state_helpers import RESET_GROUP
 
 # runtime DSN -> the DSN of the purge role of the same schema (only for `pg_schema(runtime=True)`)
 PURGE_DSN: dict[str, str] = {}
@@ -33,7 +34,7 @@ def pg_schema(migrated=True, runtime=False):
         db.execute(sql.SQL("CREATE SCHEMA {}").format(sql.Identifier(schema)))
     scoped = make_conninfo(dsn, options=f"-c search_path={schema}")
     if migrated:
-        migrate(scoped)
+        migrate(scoped, reset_role=RESET_GROUP)
     role = purge = None
     try:
         if runtime:
@@ -41,7 +42,7 @@ def pg_schema(migrated=True, runtime=False):
             with psycopg.connect(dsn, autocommit=True) as db:
                 for r in (role, purge):
                     db.execute(sql.SQL("CREATE ROLE {} LOGIN").format(sql.Identifier(r)))
-            migrate(scoped, runtime_role=role, purge_role=purge)
+            migrate(scoped, runtime_role=role, purge_role=purge, reset_role=RESET_GROUP)
             runtime_dsn = make_conninfo(scoped, user=role)
             PURGE_DSN[runtime_dsn] = make_conninfo(scoped, user=purge)
             yield runtime_dsn

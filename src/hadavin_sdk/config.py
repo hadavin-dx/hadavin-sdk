@@ -12,10 +12,20 @@ from typing import Annotated, Any, Literal, get_args
 from urllib.parse import urlsplit
 
 import yaml
-from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, ValidationError, model_validator
+from pydantic import (
+    BaseModel,
+    BeforeValidator,
+    ConfigDict,
+    Field,
+    StrictInt,
+    ValidationError,
+    field_validator,
+    model_validator,
+)
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from hadavin_sdk import defaults, deferred
+from hadavin_sdk.audit.labelkey import valid_key_id
 from hadavin_sdk.backends.table import DEFAULTS, DEV_ONLY, NOT_PROD, TABLE, KindSettings
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.scrub_settings import ScrubSettings
@@ -26,6 +36,7 @@ __all__ = [
     "ConfigError",
     "EvidenceSettings",
     "K1bSettings",
+    "LimitsSettings",
     "Retention",
     "Route",
     "ScrubSettings",
@@ -308,6 +319,32 @@ def _inventory_ref_ok(ref: str) -> bool:
     )
 
 
+class LimitsSettings(_Strict):
+    """The kill switch: who may reset, the label key and the stop-request cap. The label key is read by the
+    runtime at start-up (`_secret_name` on purpose); the stop and reset database credentials are NOT (see
+    `PostgresSettings.stop_credential_ref`)."""
+
+    reset_names: frozenset[str] = (
+        frozenset()
+    )  # raw login names allowed to run `limits reset` (a typo guard)
+    reset_group: str | None = None  # the NOLOGIN database role whose members may reset
+    label_key_secret_name: str | None = None
+    key_id: str = "k1"
+    max_open_stop_requests: StrictInt = Field(
+        default=defaults.KILL_SWITCH_MAX_OPEN_STOP_REQUESTS, ge=1
+    )
+    migrate_lock_timeout_ms: StrictInt = Field(
+        default=defaults.KILL_SWITCH_MIGRATE_LOCK_TIMEOUT_MS, ge=1
+    )  # 0 would mean "no timeout" to PostgreSQL
+
+    @field_validator("key_id")
+    @classmethod
+    def _key_id(cls, v: str) -> str:
+        if not valid_key_id(v):
+            raise ValueError("key_id must match [A-Za-z0-9_-]{1,32}")
+        return v
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="HADAVIN_")
     config_dir: Path
@@ -333,6 +370,7 @@ class Config(_Strict):
     tool_timeout_s: float = Field(default=10.0, gt=0)
     retention: Retention = Retention()
     evidence: EvidenceSettings = EvidenceSettings()
+    limits: LimitsSettings = LimitsSettings()
     # design 6.6: a read source that cannot be probed names an operator-attested inventory instead (the reference
     # is format-checked and logged; its hash is NOT compared with the page and nobody is verified to have signed),
     # "<page>#<anchor> sha256:<64 hex>".
@@ -369,6 +407,13 @@ class Config(_Strict):
             ]
             refused += ["allow_insecure_loopback"] if self.allow_insecure_loopback else []
         refused += _anchor_refusals(self.environment, self.backends)
+        store = self.backends.store
+        if (
+            self.environment != "dev"
+            and getattr(store, "kind", "") == "postgres"
+            and not store.stop_credential_ref
+        ):
+            refused.append("store postgres: stop_credential_ref is required")
         if refused:
             raise ValueError(f"environment {self.environment}: refused: {', '.join(refused)}")
         return self

@@ -53,6 +53,7 @@ from hadavin_sdk.registry import load_registry
 from tests.conftest import make_cfg, qualify
 from tests.contracts.kinds.audit_chain import KEY_ALIAS, REGION, kms_stub
 from tests.contracts.kinds.store_postgres import pg_schema
+from tests.stop_state_helpers import RESET_GROUP
 
 BUCKET = "anchors-" + "contract"
 
@@ -656,7 +657,7 @@ def test_the_runtime_role_writes_and_reads_the_chain_but_cannot_rewrite_it(key):
         with psycopg.connect(dsn, autocommit=True) as db:
             db.execute(sql.SQL("CREATE ROLE {} LOGIN").format(sql.Identifier(role)))
         try:
-            migrate(dsn, runtime_role=role)
+            migrate(dsn, runtime_role=role, reset_role=RESET_GROUP)
             options = conninfo_to_dict(dsn).get("options")
             runtime_dsn = make_conninfo(dsn, user=role, options=options)
             settings = PostgresSettings(kind="postgres", dsn_secret_name="pg-dsn")  # noqa: S106 - a name

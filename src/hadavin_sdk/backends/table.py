@@ -118,6 +118,11 @@ class PostgresSettings(KindSettings):
     # A second DSN (another database role) for the evidence purge, the only identity that may DELETE
     # `tool_calls` and `redaction_maps` (`hadavin-sdk migrate --purge-role`). None: the runtime's own DSN.
     purge_dsn_secret_name: str | None = None
+    # Names of secrets that hold the DSN of the kill switch's reset login and stop login. They do NOT end in
+    # `_secret_name` on purpose: the runtime reads every `*_secret_name` field at start-up, and it must never
+    # hold these. Only `hadavin-sdk limits reset|stop|check` resolve them.
+    reset_credential_ref: str | None = None
+    stop_credential_ref: str | None = None
     iam_auth: bool = (
         False  # RDS IAM login: no database password anywhere (needs the `aws` extra too)
     )

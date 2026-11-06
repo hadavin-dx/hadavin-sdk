@@ -27,6 +27,7 @@ pytest.importorskip("psycopg", reason="needs hadavin-sdk[pg]")
 
 from hadavin_sdk.store.migrate import MIGRATIONS, migrate
 from tests.contracts.kinds.store_postgres import pg_schema
+from tests.stop_state_helpers import RESET_GROUP
 
 TABLES = {
     "runs": Run,
@@ -158,7 +159,7 @@ def test_two_concurrent_migrate_runs_apply_once(fresh_dsn):
     applied = []
 
     def run():
-        applied.append(migrate(fresh_dsn))
+        applied.append(migrate(fresh_dsn, reset_role=RESET_GROUP))
 
     threads = [threading.Thread(target=run) for _ in range(2)]
     for t in threads:
@@ -167,7 +168,7 @@ def test_two_concurrent_migrate_runs_apply_once(fresh_dsn):
         t.join()
     every = sorted(p.stem for p in MIGRATIONS.glob("*.sql"))  # new migrations never break this test
     assert sorted(applied, key=len) == [[], every]
-    assert migrate(fresh_dsn) == []
+    assert migrate(fresh_dsn, reset_role=RESET_GROUP) == []
 
 
 def test_runtime_role_can_write_but_not_delete(fresh_dsn):
@@ -178,7 +179,7 @@ def test_runtime_role_can_write_but_not_delete(fresh_dsn):
     with psycopg.connect(fresh_dsn, autocommit=True) as db:
         db.execute(sql.SQL("CREATE ROLE {}").format(sql.Identifier(role)))
     try:
-        migrate(fresh_dsn, runtime_role=role)
+        migrate(fresh_dsn, runtime_role=role, reset_role=RESET_GROUP)
         with psycopg.connect(fresh_dsn, autocommit=True) as db:
 
             def can(priv):
@@ -287,7 +288,10 @@ def test_audit_checkpoints_migration_adds_alg_and_label_and_old_rows_get_default
         for path in old:
             db.execute("INSERT INTO schema_migrations (version) VALUES (%s)", (path.stem,))
         db.execute("INSERT INTO audit_checkpoints (seq, hash, signature) VALUES (1, 'h', 's')")
-    assert migrate(fresh_dsn) == ["0004_audit_checkpoint_meta", "0005_evidence"]
+    assert migrate(fresh_dsn, reset_role=RESET_GROUP) == [
+        "0004_audit_checkpoint_meta",
+        "0005_evidence",
+    ]
     with psycopg.connect(fresh_dsn, autocommit=True) as db:
         assert db.execute("SELECT seq, alg, key_label FROM audit_checkpoints").fetchall() == [
             (1, None, None)

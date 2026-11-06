@@ -20,6 +20,7 @@ from hadavin_sdk.models import RunState as S
 from hadavin_sdk.registry import load_registry
 from hadavin_sdk.store import migrate as mig
 from tests.k5_support import BigNormalises, ScriptLLM, build_runtime, handle, k5_cfg
+from tests.stop_state_helpers import RESET_GROUP
 
 BS = chr(92)
 
@@ -299,7 +300,7 @@ def test_a_database_that_applied_the_old_name_is_refused_and_nothing_is_applied(
             db.execute("INSERT INTO schema_migrations (version) VALUES ('0005_evidence')")
         monkeypatch.setattr(mig, "_migration_files", lambda: files)
         with pytest.raises(ConfigError, match="0005_evidence") as err:
-            mig.migrate(dsn)
+            mig.migrate(dsn, reset_role=RESET_GROUP)
         assert "by hand" in str(err.value)  # the repair path is in the message
         assert "0006_evidence" not in str(err.value)  # generic: no file name of ours is hard-coded
         with psycopg.connect(dsn) as db:
