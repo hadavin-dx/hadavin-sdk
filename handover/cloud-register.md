@@ -306,7 +306,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | bs-P3a-cor | build-start review (order 20) of frozen tickets/P3a.md, egm:*, read-only | sonnet | 02:31Z | +45min | REPORTED | save report as reviews/P3a-buildstart-cor.md; then ONE resolve |
 | bs-P4d-adv | build-start review (order 20) of frozen tickets/P4d.md, egm:*, read-only | sonnet | 02:31Z | +45min | REPORTED | save report as reviews/P4d-buildstart-adv.md; then ONE resolve |
 | bs-P4d-cor | build-start review (order 20) of frozen tickets/P4d.md, egm:*, read-only | sonnet | 02:31Z | +45min | REPORTED | save report as reviews/P4d-buildstart-cor.md; then ONE resolve |
-| bs-P2a-adv | build-start review (order 20) of frozen tickets/P2a.md, egm:*, read-only | sonnet | 02:31Z | +45min | running | save report as reviews/P2a-buildstart-adv.md; then ONE resolve |
+| bs-P2a-adv | build-start review (order 20) of frozen tickets/P2a.md, egm:*, read-only | sonnet | 02:31Z | +45min | REPORTED | save report as reviews/P2a-buildstart-adv.md; then ONE resolve |
 | bs-P2a-cor | build-start review (order 20) of frozen tickets/P2a.md, egm:*, read-only | sonnet | 02:31Z | +45min | REPORTED | save report as reviews/P2a-buildstart-cor.md; then ONE resolve |
 | bs-P4a-adv | build-start review (order 20) of frozen tickets/P4a.md, egm:*, read-only | sonnet | 02:31Z | +45min | REPORTED | save report as reviews/P4a-buildstart-adv.md; then ONE resolve |
 | bs-P4a-cor | build-start review (order 20) of frozen tickets/P4a.md, egm:*, read-only | sonnet | 02:31Z | +45min | REPORTED | save report as reviews/P4a-buildstart-cor.md; then ONE resolve |
@@ -339,3 +339,4 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | r1-P5b5-adv | Sonnet egm-design adversarial round 1 of tickets/P5b5.md | sonnet | 02:40Z | +30min | QUEUED (agent limit 20) | save report to reviews/; then resolve |
 | r1-P5b5-cor | Sonnet egm-codebase-details correctness round 1 of tickets/P5b5.md | sonnet | 02:40Z | +30min | QUEUED (agent limit 20) | save report to reviews/; then resolve |
 | res-bs-P3a | Opus egm-resolve build-start P3a (one round) | opus | 02:41Z | +60min | running | verify build notes in tickets/P3a.md; S0 EXIT P3a effective |
+| res-bs-P2a | Opus egm-resolve build-start P2a (one round) | opus | 02:42Z | +60min | running | verify build notes in tickets/P2a.md; S0 EXIT P2a effective |

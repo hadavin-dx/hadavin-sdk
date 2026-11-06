@@ -1478,3 +1478,10 @@
 | BS-P3a-ADV-4 | Major | P3a | see reviews/P3a-buildstart-adv.md | OPEN |
 | BS-P3a-ADV-5 | Major | P3a | see reviews/P3a-buildstart-adv.md | OPEN |
 | BS-P3a-ADV-6 | Major | P3a | see reviews/P3a-buildstart-adv.md | OPEN |
+| BS-P2a-COR-1 | Major | P2a | see reviews/P2a-buildstart-adv.md | OPEN |
+| BS-P2a-ADV-1 | Major | P2a | see reviews/P2a-buildstart-adv.md | OPEN |
+| BS-P2a-ADV-2 | Major | P2a | see reviews/P2a-buildstart-adv.md | OPEN |
+| BS-P2a-ADV-3 | Major | P2a | see reviews/P2a-buildstart-adv.md | OPEN |
+| BS-P2a-COR-2 | Major | P2a | see reviews/P2a-buildstart-adv.md | OPEN |
+| BS-P2a-COR-3 | Major | P2a | see reviews/P2a-buildstart-adv.md | OPEN |
+| BS-P2a-ADV-4 | Major | P2a | see reviews/P2a-buildstart-adv.md | OPEN |
