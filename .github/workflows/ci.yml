@@ -76,9 +76,9 @@ jobs:
       - name: Install (locked, every backend extra and the contract-suite test group)
         run: uv sync --locked --no-build --all-extras --group test
       - name: Lint
-        run: ruff check src tests demos
+        run: ruff check src tests demos tools/scan_repo.py
       - name: Format
-        run: ruff format --check src tests demos
+        run: ruff format --check src tests demos tools/scan_repo.py
       - name: Secrets and banned names in the tracked files (the repo is public)
         run: python tools/scan_repo.py
       - name: The postgres client the database tests shell out to is present (else they would skip silently)
