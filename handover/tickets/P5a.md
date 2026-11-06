@@ -328,3 +328,13 @@ Written from `reviews/P5a-round3-resolve.md`. Each note says what it replaces. T
 Build note only; the freeze is not reopened.
 
 **BN-21 (DEMAND, lead order 57).** Build note only; ticket text unchanged. DEMAND: P5c needs P5a and P5b3 (`tickets/P5c.md:151`, `:704`: 'the real needs are P5a and P5b3'), and P5b1 lists P5a as merged-first (`tickets/P5b1.md:61`). P5c itself has demand (see its note). Contrary note: `studio-notes/GAPS.md:54` puts the P5a-P5b5 chain in the background list.
+
+**BN-22 (RUNG TABLE, lead order 56 as renumbered by orders 67/68, R448/R450).** Build note only; ticket text unchanged. NO RUNG TABLE CAN BE COPIED YET: the audit has no P5a section. `reviews/rung-audit-1-part-D.md` covers P5b1 to P6b2 only (its title line), and `reviews/rung-audit-1.md` and parts A to F name no P5a row; the only P5a mention is the P5b3 `errors.own_text` row, which cites "P5a identity rule" as the reason for KEEP-CODE (a P5b3 row, not copied here). Rows are not invented. Ladder: 0 client's own tool, 1 no-code, 2 our core modules, 3 existing free tools (MCP, plain RAG, model features), 4 free libraries (licence SPDX, version, date from TOOLS.md), 5 own code.
+
+| component | need | rung tried | evidence (source, date) | what only our code gives | verdict |
+|---|---|---|---|---|---|
+| `codes.py` (closed code list) | audit row missing | none recorded | UNVERIFIED | UNVERIFIED | NO AUDIT VERDICT |
+| `guard/diagnostic.py` (diagnostic builder, locator, facts) | audit row missing | none recorded | UNVERIFIED | UNVERIFIED | NO AUDIT VERDICT |
+| hostile corpus and 9 test files | audit row missing | none recorded | UNVERIFIED | UNVERIFIED | NO AUDIT VERDICT |
+
+Verdict counts: KEEP-CODE 0, CUT-TO-CONFIG+GLUE 0, CUT 0, NO AUDIT VERDICT 3. No rung-4 row and no tool is named, so no licence line is owed. No UNVERIFIED-KEEP row exists, because no KEEP-CODE verdict exists. Order 68 item 5 already lists P5a as "still needs a rung table first". PROPOSED, NOT APPLIED: waits for the lead/owner. A rung audit of P5a (rungs 2 to 4 for the three components above, with source and date) must exist before this ticket enters build-start review; until then the gate in R448 is not met. Ticket body is about 240 lines before the build notes (the notes add the rest); the length is the frozen revision 3, not changed here.
