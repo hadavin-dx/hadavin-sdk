@@ -477,5 +477,8 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | rv-P6a-r3-adv | P6a r3 adversarial | 05:05Z | +30min | REPORTED (inline, unsaved) | verify |
 | rv-P6a-r3-cor | P6a r3 correctness | 05:05Z | +30min | running | verify |
 | sv-AK0-r1 | save AK0 r1 pair | 05:20Z | +15min | REPORTED | verify |
-| sv-batch-s | save P5b4 r2 cor, P5b3 r2 pair, AK1 r1 pair | 05:30Z | +20min | running | verify |
+| sv-batch-s | save P5b4 r2 cor, P5b3 r2 pair, AK1 r1 pair | 05:30Z | +20min | REPORTED | verify |
 | rs-AK0-r1 | Opus resolve AK0 round 1 | 05:35Z | +30min | running | verify |
+| rs-P5b4-r2 | Opus resolve P5b4 round 2 (1 Blocker) | 05:50Z | +30min | running | verify |
+| rs-P5b3-r2 | Opus resolve P5b3 round 2 (7+2 Major) | 05:50Z | +30min | running | verify |
+| rs-AK1-r1 | Opus resolve AK1 round 1 (2 Blocker, 21 Major) | 05:50Z | +35min | running | verify |
