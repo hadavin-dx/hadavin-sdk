@@ -108,3 +108,4 @@
 03:34Z | step=AK1 rev1 verified+pushed (defeb23), AK0/AK1 r1 reviewers launched | done=questions 53-62 relayed | next=savers/resolves as reports land; AK2a/AK4a/AK-G* tickets | blocked=none
 03:35Z | step=reports saved+pushed (dfd53d9), 4 Opus resolves launched (P5c r2, P8a r2, P8b r3, P4b2 r3) | done=P6a rev3 verified+pushed | next=P6a r3 reviewers when slots free (16 agents live); P4b1/P5a/P5b2/P6b1 build notes; P1m evidence review | blocked=none (agent cap 20)
 03:35Z | step=order 25 read; P1m Windows-fix builder launched (symlink skip, _pid_alive Windows, ci lint tools, 21 mutants Linux) | done=rebased+pushed | next=verify builder, mark PR 61 ready (order 25 item 3), P6a r3 reviewers, wait for resolves | blocked=none
+03:37Z | step=AK0 r1 + P5b4 r2 reports received (P5b4 cor has 1 Blocker so round 3 follows) | done=item 63 relayed | next=save P5b4 cor, AK1 cor pending, resolves AK0/P5b4/AK1; P1m builder verify | blocked=none (waiting on saver a1a3e1d)

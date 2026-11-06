@@ -459,7 +459,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | rv-P5b3-r2-adv | P5b3 r2 adversarial | 04:05Z | +30min | running | verify |
 | rv-P5b3-r2-cor | P5b3 r2 correctness | 04:05Z | +30min | running | verify |
 | rv-P5b4-r2-adv | P5b4 r2 adversarial | 04:05Z | +30min | REPORTED (inline, unsaved) | verify |
-| rv-P5b4-r2-cor | P5b4 r2 correctness | 04:05Z | +30min | running | verify |
+| rv-P5b4-r2-cor | P5b4 r2 correctness | 04:05Z | +30min | REPORTED (inline, unsaved) | verify |
 | sv-batch-r | save P4b2 r3, P5c r2, P8a r2, P8b r3 reports | 04:05Z | +25min | REPORTED | verify |
 | rs-P6b2-r2 | P6b2 round 2 resolve (Opus) | 04:05Z | +25min | running | verify |
 | au-P5b5-r3 | P5b5 rev 3 author (Opus) | 04:05Z | +30min | running | verify |
