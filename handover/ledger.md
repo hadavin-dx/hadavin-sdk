@@ -1559,3 +1559,10 @@
 | R2-P4c-COR-2 | Major | P4c | Tick step stays green during an outage because a failed retry re-claims the row (claimed_at reset). -> reviews/P4c-round2-correctness.md | OPEN |
 | R2-P4c-COR-3 | Major | P4c | MeteredLLM (llm/metered.py) unaddressed: double reserve risk and T8 scan fails on it. -> reviews/P4c-round2-correctness.md | OPEN |
 | R2-P4c-COR-4 | Major | P4c | _screen/_wall_stop signature and two call-site edits not specified. -> reviews/P4c-round2-correctness.md | OPEN |
+| R2-P4b1-ADV-1 | Major | P4b1 | Constants missing for decimals/hold bounds; T4.4 literal scan fails on the ticket's own spec. -> reviews/P4b1-round2-adversarial.md | OPEN |
+| R2-P4b1-ADV-2 | Major | P4b1 | Unknown-attempts count read from a shared inner-model attribute; races across threads, under-books spend. -> reviews/P4b1-round2-adversarial.md | OPEN |
+| R2-P4b1-ADV-3 | Major | P4b1 | Byte bound is not a worst case for image/PDF documents; reservation and cap not a bound. -> reviews/P4b1-round2-adversarial.md | OPEN |
+| R2-P4b1-ADV-4 | Major | P4b1 | Cache-write/read token classes in neither reservation nor settle; systematic under-count with caching. -> reviews/P4b1-round2-adversarial.md | OPEN |
+| R2-P4b1-COR-1 | Major | P4b1 | Zero-price route (fake kind) gives W=0 and ValueError before the model is called. -> reviews/P4b1-round2-correctness.md | OPEN |
+| R2-P4b1-COR-2 | Major | P4b1 | Decimal USD/Mtok route price to integer micro-dollar conversion unspecified. -> reviews/P4b1-round2-correctness.md | OPEN |
+| R2-P4b1-COR-3 | Major | P4b1 | "Release on ANY exception" undecided for NotFound/conflict/CounterDamaged/ValueError rows. -> reviews/P4b1-round2-correctness.md | OPEN |
