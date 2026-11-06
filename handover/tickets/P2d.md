@@ -381,3 +381,13 @@ Rules and sources cited: STUDIO-RULES 1-9, 11-13; preamble 1-7, 9-14; plan-v3 se
 
 **BN-1 (genericity audit finding G-12, lead order 53; P2d had no build notes before this one).** V5 (`P2d.md:330`) is a v1.1 row, not a step of P2d; the audit called it a strip "already planned". When V5 fires, its comment strip also rewrites "payment/refund incident logs" (`guard/redact.py:242`) to "financial personal data in logs" and "the 30 recorded incidents" (`:466`) to "a recorded corpus". Comment-only, no mutant.
 Build note only; the freeze is not reopened.
+
+**BN-2 (RUNG TABLE, lead order 56, R448; written 2026-11-06 by reading this ticket; short form; no new review round; the ticket stays frozen; no verdict is applied and nothing is replaced).** Why this body is over 250 lines: redaction path, three pull requests, 42 mutant rows. Evidence is UNVERIFIED unless a ticket line is cited; I searched for no outside tool in this note.
+
+| Component | Why our code (guarantee) | Higher rung seen | Evidence | Verdict |
+|---|---|---|---|---|
+| P2d-1 fold scan in `guard/redact.py` (look-alike letters, other-script digits, accents, invisible characters) | redaction before the model | the redactor kind has a written alternative, a detector-model backend (trigger: a client document type the patterns miss); a maintained PII detector may cover the plain patterns (UNVERIFIED) | P2d.md:96 | KEEP-CODE for the fold scan; QUESTION for lead: any pattern part a maintained detector covers? (do not replace working code) |
+| Budget sites in `runmap.py`, CPU-time budget (`thread_time`) | bounded cost on the redaction path; fail closed with `InputTooLarge` | none | P2d.md:16 (definition of the budget) | KEEP-CODE |
+| Written-spelling alias index in the map | a later copy of a protected value is masked the same way | none | P2d.md (interface items) | KEEP-CODE |
+| P2d-2 `check_lookalike`, `LookalikeCopy`, hidden-channel refusal | a known protected value re-spelled with look-alikes must not reach the model | built on P1b `scan_keyset` | P2d.md:29-33 (table) | KEEP-CODE (the ticket lists what it does not close) |
+| P2d-2b `error_reason(..., mapping=None)` | masked error text before logs and approvers | extends existing `tools.error_reason` | P2d.md:29 | KEEP-CODE (thin glue) |

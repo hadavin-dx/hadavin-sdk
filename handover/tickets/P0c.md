@@ -203,3 +203,13 @@ Rows in this order: #41, #43, #47, #48, #49, #50 pushed, #50 local, c1a, c18a, o
 6. Dependabot rows: measured here, decided in P0b. Recommended: yes.
 
 Model used: Sonnet 5.5 (set by the lead). Files changed: this file only. Head read: `ce70eb5` (main), cloud branch `core/cloud-handover`.
+
+## Build notes (rung table, lead order 56)
+
+**BN-1 (RUNG TABLE, lead order 56, R448; written 2026-11-06 by reading this ticket; short form; no new review round; the ticket stays frozen; no verdict is applied and nothing is replaced).** Evidence is UNVERIFIED unless a ticket line is cited. I could not name a safety guarantee for either script: P0c is read-only measurement for the lead's decisions.
+
+| Component | Why our code (guarantee) | Higher rung seen in the ticket | Evidence | Verdict |
+|---|---|---|---|---|
+| `s0_measure.py` (merge probe per branch: changed files, conflict files, pairwise overlap; `ref not found` is UNMEASURED) | no safety guarantee from the R448 list; it makes sure an unmeasured row never counts as a pass | git itself does the work (`git merge-tree`, `git diff`, `git rev-list`; Security notes, P0c.md:23); the script is glue around them | Interface (P0c.md:17), P0c.md:23 | QUESTION for lead: is a 3-line shell loop enough? kept outside the repo, so no repo cost |
+| `suite_diff.py` (baseline against run: NEW_FAILURE, DB_SKIP) | no safety guarantee; it makes a skipped database visible | pytest's own junit XML; a diff of two XML files could be a maintained tool (UNVERIFIED) | Interface (P0c.md:18), planted failure check (P0c.md:27) | QUESTION for lead: same |
+| Slot count, "is refunds the first client", first counts | none: reading a constant, one owner question, counting files | no code written | P0c.md (Slot count, refunds, counts sections) | NO CODE (nothing to decide) |

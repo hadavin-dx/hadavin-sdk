@@ -246,3 +246,14 @@ I read lines 69 (warden test_redaction), 49 (gate_review8), 185 (intake-p2), 106
 8. Reword the 12 provenance comments naming the owner's account and private repository; history start commit; no history rewrite in v1.
 9. Tell the P1 author to add `THIRD-PARTY-NOTICES.md` with the Unicode licence text.
 10. Owner: copyright holder of promoted Warden code; contributors in Warden.
+
+## Build notes (rung table, lead order 56)
+
+**BN-1 (RUNG TABLE, lead order 56, R448; written 2026-11-06 by reading this ticket; short form for the core safety chain; no new review round; the ticket stays frozen; no verdict is applied and nothing is replaced).** Evidence is UNVERIFIED unless a ticket line is cited; I searched for no outside tool in this note.
+
+| Component | Why our code (guarantee) | Higher rung seen in the ticket | Evidence | Verdict |
+|---|---|---|---|---|
+| Ruleset edits, tag ruleset, auto-merge off, token permission list, probes M, W, T | none needed: only the lead merges, tags are protected, the cloud credential is narrow (tenant/least privilege) | GitHub's own repository rules and settings; the ticket writes no code | field 6 (P0a.md:38): "no module in src"; field 8 (P0a.md:40) | CONFIG (already; nothing to cut) |
+| 17 fingerprints added to `.gitleaksignore` | none: a scanner setting, each line read by the lead | gitleaks 8.30.1, already pinned in CI | field 10 (P0a.md:42) | CONFIG (already) |
+| Banned-name scanner, class V (the ten public vendor-inspired names; built by P0d, designed in section 5) | no safety guarantee named beyond what the existing test gives: it extends `tests/test_no_reference_material.py` to history and commit messages | a custom gitleaks or Semgrep rule could hold a public word list (UNVERIFIED) | section 5 (P0a.md:135-137) | QUESTION for lead: can class V be a scanner rule instead of new code? |
+| Banned-name scanner, class P (private names kept only as SHA-256 digests, history pass, output that never prints the name, fail closed) | a private name must never sit in plain text in a public repository, history included; a plain rule file would itself publish the name | not searched: whether any maintained tool matches against a hashed deny list is UNVERIFIED | section 5 (P0a.md:135-147) | QUESTION for lead: guarantee is named, but no tool search was done; ask for one before P0d starts |
