@@ -13,9 +13,8 @@ import pytest
 
 from tests.fixtures.dsn_skip import require_module
 
-require_module(
-    "psycopg"
-)  # store.migrate imports psycopg (the pg extra); with the DSN set a missing driver FAILS
+# store.migrate imports psycopg (the pg extra); with the DSN set a missing driver FAILS (never a skip)
+require_module("psycopg")
 
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.store import migrate as mig
@@ -63,6 +62,7 @@ class _Db:
         self.values, self.triggers = list(values), list(triggers)
         self.applied = list(applied)
         self.log: list[str] = []
+        self.params: list[tuple] = []  # (statement, parameters) of every statement, in order
 
     def __enter__(self):
         return self
@@ -76,6 +76,7 @@ class _Db:
     def execute(self, query, params=None):
         text = str(query)
         self.log.append(text)
+        self.params.append((text, params))
         if text == mig._READBACK_VALUES_SQL:
             return _Result([self.values.pop(0)])
         if text == mig._READBACK_TRIGGERS_SQL:
@@ -119,7 +120,7 @@ def _trigger(name="trg", enabled="O", relid=1, schema="s", table="t"):
 def test_migrate_uses_the_one_implementation_of_each_rule():
     assert mig.check_ledger is mn.check_ledger
     assert mig.MIGRATIONS is mn.MIGRATIONS
-    assert mig._LOCK == mn.MIGRATE_LOCK
+    assert mig.MIGRATE_LOCK is mn.MIGRATE_LOCK
     assert not hasattr(mig, "_FILE"), (
         "the second file-name pattern (it accepted Arabic-Indic digits) is gone"
     )
@@ -241,6 +242,13 @@ def test_gone_name_is_refused_with_the_old_phrase(monkeypatch, tmp_path):
 
 
 # --- the read-back ----------------------------------------------------------------------------------------------------
+
+
+def test_migrate_takes_the_one_advisory_lock_key_first(monkeypatch, tmp_path):
+    """The lock `migrate` takes is the key of `migration_numbers` (the key a hand recipe takes too), before anything else."""
+    err, db, _ = _run(monkeypatch, tmp_path, [START] * 3, [[], [], []])
+    assert err is None
+    assert db.params[0] == ("SELECT pg_advisory_xact_lock(%s)", (mn.MIGRATE_LOCK,))
 
 
 def test_clean_run_reads_before_each_file_insert(monkeypatch, tmp_path):

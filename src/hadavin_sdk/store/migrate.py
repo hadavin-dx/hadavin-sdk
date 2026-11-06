@@ -96,7 +96,6 @@ GRANTS: dict[str, Grant] = {
     "approval_decisions_seq_seq": Grant("sequence", "USAGE"),
     "dead_letters_seq_seq": Grant("sequence", "USAGE"),
 }
-_LOCK = MIGRATE_LOCK  # one fixed key for every migrate run (defined once, in migration_numbers)
 _ROLE = re.compile(r"[a-z_][a-z0-9_]{0,62}")
 _CREATE = re.compile(
     r"CREATE\s+(?:OR\s+REPLACE\s+)?(?:MATERIALIZED\s+)?(TABLE|VIEW)\s+(?:IF\s+NOT\s+EXISTS\s+)?(\w+)",
@@ -435,7 +434,9 @@ def migrate(
         ) as db,
         db.transaction(),
     ):
-        db.execute("SELECT pg_advisory_xact_lock(%s)", (_LOCK,))
+        db.execute(
+            "SELECT pg_advisory_xact_lock(%s)", (MIGRATE_LOCK,)
+        )  # one key, defined in migration_numbers
         db.execute(
             "CREATE TABLE IF NOT EXISTS schema_migrations "
             "(version TEXT PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT now())"
