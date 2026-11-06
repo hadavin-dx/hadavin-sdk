@@ -164,3 +164,4 @@
 06:33Z | step=AK-G15 r1 resolve verified; item 100 (NEEDS LEAD 15-19, AK-G2 hole R1-RES-1) | done=... | next=AK-G15 rev 2 author, AK-G16 resolve, P1a licence sha | blocked=NEEDS LEAD AK-G15 15-19
 06:34Z | step=P1a 96c5a50 verified, item 101; AK-G15 rev 2 author running | done=order 42 | next=AK-G16 resolve, AK-G15 rev2 verify | blocked=NEEDS LEAD AK-G15 15-19
 06:36Z | step=AK-G16 r1 resolve verified; item 102 (NEEDS LEAD 12-15); rev 2 author running | done=... | next=verify rev 2s | blocked=NEEDS LEAD AK-G16 12-15, AK-G15 15-19
+06:45Z | step=AK-G15 rev 2 (20dae12) verified, item 103; round 2 review pair started | done=... | next=round 2 reports, AK-G16 rev 2 | blocked=NEEDS LEAD AK-G15 15-19, AK-G16 12-15
