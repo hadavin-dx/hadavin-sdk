@@ -470,3 +470,5 @@ Size: 460 lines, over about 250. 4 rows. Candidate to split (lead decides); the 
 | S4 one model-call scanner | `:76-81` | 1: `tests/test_k5_producers._sink_callers` (reused, widened); 5: Semgrep `$X.chat(...)` (not run) | ticket; Semgrep UNVERIFIED for `getattr`/`attrgetter` forms | Feeds the "one door" guarantee of P5c | KEEP-CODE (rung 1 reuse; see the cross-ticket walker note) |
 
 Build only; the freeze is not reopened.
+
+**BN-15 (DEMAND, lead order 57).** Build note only; ticket text unchanged. DEMAND: AK-G2-b needs P6a-1 (`tickets/AK-G2.md:133`); the recommended slice lists P6a (`studio-notes/GAPS.md:54`; slice order needs the lead's yes, `GAPS.md:51`). AK-G16-a also needs P6a-1 (`tickets/AK-G16.md:191`) but AK-G16 is deferred.

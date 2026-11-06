@@ -326,3 +326,5 @@ Written from `reviews/P5a-round3-resolve.md`. Each note says what it replaces. T
 
 **BN-20 (genericity audit finding G-15, lead order 53).** The canary class name in the `own_module_dynamic_kind` row (line 286, `type("Jane_Doe_Invoice", ...)`) becomes `Jane_Doe_Record`; the expected line and the canary `Jane_Doe` are unchanged. Test data names no project document type.
 Build note only; the freeze is not reopened.
+
+**BN-21 (DEMAND, lead order 57).** Build note only; ticket text unchanged. DEMAND: P5c needs P5a and P5b3 (`tickets/P5c.md:151`, `:704`: 'the real needs are P5a and P5b3'), and P5b1 lists P5a as merged-first (`tickets/P5b1.md:61`). P5c itself has demand (see its note). Contrary note: `studio-notes/GAPS.md:54` puts the P5a-P5b5 chain in the background list.
