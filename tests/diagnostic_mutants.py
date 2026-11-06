@@ -207,7 +207,7 @@ M = [
     mutant(
         "diagnose catches BaseException",
         D,
-        "    except Exception:  # noqa: BLE001 - the fixed fallback; nothing about the exception is in it",
+        "    except Exception:  # noqa: BLE001 - a hostile exception object may raise any Exception: the fixed fallback",
         "    except BaseException:  # noqa: BLE001",
         TD,
         "test_baseexception_from_hostile_getattr_propagates",
@@ -280,7 +280,9 @@ M = [
     mutant(
         "the per-frame try/except is removed",
         D,
-        '    except Exception:  # noqa: BLE001 - a frame whose check raises is "not counted"\n        return None',
+        "    except Exception:  # noqa: BLE001 - a hostile frame object may raise any Exception: not counted\n"
+        '        _guard_failed("counted_module")\n'
+        "        return None",
         "    except ZeroDivisionError:\n        return None",
         TD,
         "test_frame_check_that_raises_means_not_counted",

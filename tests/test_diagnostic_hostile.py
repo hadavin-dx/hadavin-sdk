@@ -113,14 +113,8 @@ def test_every_active_row_has_teeth() -> None:
         if r.spec.get("ctx") or r.spec["factory"] in ("meta_module", "meta_name", "meta_eq", "meta_mro", "str_raises", "repr_raises",
                                                       "str_recursion", "getattr_raises", "errno_keyboard_interrupt", "chain"):  # fmt: skip
             continue
-        leaky = None
-        try:
-            e = corpus.build_exception(r.spec)
-            leaky = f"{type(e).__name__}: {e} {getattr(e, 'doc', '')} {getattr(e, 'msg', '')}"
-        except Exception:  # noqa: BLE001
-            leaky = None
-        if leaky is None:
-            continue
+        e = corpus.build_exception(r.spec)
+        leaky = f"{type(e).__name__}: {e} {getattr(e, 'doc', '')} {getattr(e, 'msg', '')}"
         if (
             r.canaries
             and r.expect == "no_canary"

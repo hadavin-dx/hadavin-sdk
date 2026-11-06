@@ -6,7 +6,7 @@ import json
 import re
 
 import pytest
-from pydantic_core import core_schema
+from pydantic_core import ValidationError, core_schema
 
 from hadavin_sdk.codes import VALIDATION_OTHER, VALIDATION_TYPES, Where
 from hadavin_sdk.guard.diagnostic import diagnose, render, validation_text
@@ -134,7 +134,7 @@ def test_t6_real_config_typo(n: int) -> None:
 
     try:
         Config.model_validate({"zzz_typo": n})
-    except Exception as e:  # noqa: BLE001
+    except ValidationError as e:
         out = render(diagnose(e, step=Where.config_load))
         assert "code=validation_failed step=config_load" in out and "zzz_typo" not in out
         assert grammar_ok(validation_text(e), "V")

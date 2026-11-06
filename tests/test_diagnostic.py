@@ -267,14 +267,13 @@ def _raised_in_stats(source: str, **names: object) -> BaseException:
     d.update(names)
     try:
         exec(compile(source, stats.__file__, "exec"), d)  # noqa: S102
-        d["_p5a_probe"]()
-    except Exception as e:  # noqa: BLE001
-        return e
+        with pytest.raises(Exception) as caught:
+            d["_p5a_probe"]()
+        return caught.value
     finally:
         d.pop("_p5a_probe", None)
         for n in names:
             d.pop(n, None)
-    raise AssertionError("no raise")
 
 
 def test_internal_bug_is_decided_on_the_raise_frame() -> None:
