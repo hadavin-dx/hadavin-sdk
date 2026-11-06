@@ -1395,3 +1395,13 @@
 | BL-core-P1-r12-adv-M2 | P1 | MAJOR | see report | OPEN | reviews/P1-round12-adversarial.md | 3f0236f |
 | BL-core-P1-r12-adv-M3 | P1 | MAJOR | see report | OPEN | reviews/P1-round12-adversarial.md | 3f0236f |
 | BL-core-P1-r12-cor-M-1 | P1 | MAJOR | see report | OPEN | reviews/P1-round12-correctness.md | 3f0236f |
+| BL-core-P4a-r9-adv-B1 | P4a | BLOCKER | see report | OPEN | reviews/P4a-round9-adversarial.md | a01a8b2 |
+| BL-core-P4a-r9-adv-M1 | P4a | MAJOR | see report | OPEN | reviews/P4a-round9-adversarial.md | a01a8b2 |
+| BL-core-P4a-r9-adv-M2 | P4a | MAJOR | see report | OPEN | reviews/P4a-round9-adversarial.md | a01a8b2 |
+| BL-core-P4a-r9-adv-M3 | P4a | MAJOR | see report | OPEN | reviews/P4a-round9-adversarial.md | a01a8b2 |
+| BL-core-P4a-r9-adv-M4 | P4a | MAJOR | see report | OPEN | reviews/P4a-round9-adversarial.md | a01a8b2 |
+| BL-core-P4a-r9-adv-M5 | P4a | MAJOR | see report | OPEN | reviews/P4a-round9-adversarial.md | a01a8b2 |
+| BL-core-P4a-r9-adv-M6 | P4a | MAJOR | see report | OPEN | reviews/P4a-round9-adversarial.md | a01a8b2 |
+| BL-core-P4a-r9-cor-F1 | P4a | MAJOR | see report | OPEN | reviews/P4a-round9-correctness.md | a01a8b2 |
+| BL-core-P4a-r9-cor-F2 | P4a | MAJOR | see report | OPEN | reviews/P4a-round9-correctness.md | a01a8b2 |
+| BL-core-P4a-r9-cor-F3 | P4a | MAJOR | see report (lead decision PL49) | OPEN | reviews/P4a-round9-correctness.md | a01a8b2 |
