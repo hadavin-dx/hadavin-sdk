@@ -384,3 +384,6 @@ P5b1 (on P5a WIP 1a99a06) and P4b1 (on P4d-a2 c31f336) running. Not started, wit
 
 ## q190 (order 87, 2026-11-06T12:24:02Z) INFORM P4a started; P2a-1 conflict resolution list; BN-27 correction
 P2a-1 builder merged P4d-a2 (c31f336): migration 0006 (P4d) kept, its stop-state migration renumbered 0007_kill_switch_guard; config.py, defaults.py, tests/test_p2_postgres.py resolved with both sides kept (its report: contracts + real-login stop-state suite 447 passed, 1 skipped; full suite NOT yet run). MONEY-PATH CHANGE to P4d-a2 code for you to see: reserve_spend read the kill-switch flag directly (memory _kill.on, Postgres SELECT "on" FROM kill_switch); now both read the state view (flag OR any open stop request) because the runtime role holds no right on the kill_switch table. P4a (a67ded69) stacked on that head; unreviewed WIP base. BN-27 CORRECTED: Postgres 16 server binaries are present in this container (builders run them); the earlier "not available" was wrong, my slip.
+
+## q191 (order 88, 2026-11-06T12:27:32Z) INFORM P0a fix1 started
+Builder resumed on core/P0a with your four-point fix list verbatim; one push to PR 71, evidence fix1.md with 6 mutants. Report will give per-id answers p0a1-001..003.

@@ -304,3 +304,5 @@ P2a-1 | rebased onto P4d-a2 (f0465df, local); renumbered its migration to 0007; 
 P4c | next: stacks on P4b1 head once pushed | 0 | P4b1 push
 P6b1 | needs P4a head | 0 | P4a
 BN-27 check: Postgres 16 server binaries exist (/usr/lib/postgresql/16/bin); the note "no Postgres in the cloud container" is WRONG, to be corrected in the register. 12 agents running.
+2026-11-06T12:27:32Z | package | stage | builders running | blocked on
+P0a | fix1 (3 Majors, order 88) started, small push | 1 | -

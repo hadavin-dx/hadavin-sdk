@@ -726,3 +726,4 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | res-P8c-r1 | Opus resolver P8c rev 2 | 2026-11-06T12:16:46Z | REPORTED: ticket FROZEN rev 2 (116 lines, 33 rows, 22 mutants); hygiene 0, gitleaks clean |
 | bd-P4b1-2 | Sonnet builder P4b1 (restart), core/P4b1 stacked on P4d-a2 c31f336 | 2026-11-06T12:17:38Z | RUNNING; StoreBusy rows BLOCKED (P4d-a2-ii not built) |
 | bd-P4a | Sonnet builder P4a, core/P4a stacked on P2a-1 WIP f0465df (contains P4d-a2 c31f336) | 2026-11-06T12:24:02Z | RUNNING |
+| bd-P0a-fix1 | Sonnet builder P0a resumed for fix1 (order 88, PR 71) | 2026-11-06T12:27:32Z | RUNNING |
