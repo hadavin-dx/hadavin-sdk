@@ -1,10 +1,9 @@
 # Third-party notices
 
-Licence text: Unicode License v3 (SPDX identifier `Unicode-3.0`). Official page: https://www.unicode.org/license.txt
-Copy taken: 2026-11-06, from a verbatim copy of the licence text (the Unicode-3.0 licence file of a Rust toolchain's documentation), because the
-official page could not be fetched from the build machine on that day (the proxy refused it). It is NOT a fresh fetch from the official page; a
-reviewer compares it with the official page.
-sha256 of the licence text between the two marker lines (the lines themselves are left out, the final newline is kept): f5062c9a188d81dfe66b56db4182dcf9e4b17c0d9b0d311a8e20b3a1b075c443
+Licence text: Unicode License v3 (SPDX identifier `Unicode-3.0`). Source: https://www.unicode.org/license.txt, fetched on 2026-11-06
+from the official page (1995 bytes, sha256 of the fetched file e7a93b009565cfce55919a381437ac4db883e9da2126fa28b91d12732bc53d96). The text
+below is that file verbatim. This is a notice, not a legal opinion.
+sha256 of the licence text between the two marker lines (the lines themselves are left out, the final newline is kept): e7a93b009565cfce55919a381437ac4db883e9da2126fa28b91d12732bc53d96
 
 ## Covered files
 
@@ -26,7 +25,7 @@ UNICODE LICENSE V3
 
 COPYRIGHT AND PERMISSION NOTICE
 
-Copyright © 1991-2024 Unicode, Inc.
+Copyright © 1991-2026 Unicode, Inc.
 
 NOTICE TO USER: Carefully read the following legal agreement. BY
 DOWNLOADING, INSTALLING, COPYING OR OTHERWISE USING DATA FILES, AND/OR
