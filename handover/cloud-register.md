@@ -537,6 +537,8 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | rs-AK1-r2 | Opus resolve AK1 round 2 (Blocker COR-1) | 10:55Z | +15min | running | verify, then rev 3 author |
 | au-AK0-r3 | Opus author AK0 revision 3 | 11:20Z | +25min | running | verify, push, round 3 pair |
 | au-AK-G2-r2 | Opus author AK-G2 revision 2 | 11:20Z | +25min | running | verify, push, round 2 pair |
-| sv-P5b4-r3 | saver P5b4 round 3 pair | 11:30Z | +5min | running | verify, push |
+| sv-P5b4-r3 | saver P5b4 round 3 pair | 11:30Z | +5min | REPORTED | verify, push |
 | bd-P1m-r2 | Sonnet builder P1m round 2 fixes (PR 61) | 11:45Z | +40min | running | verify head, push |
 | au-P6b2-bn | Opus author P6b2 build notes BN-1..15 + banner | 11:50Z | +20min | running | verify, push |
+| rs-P5b4-r3 | Opus resolve P5b4 round 3 (last; build notes) | 12:00Z | +20min | running | verify, BN author |
+| sv-P1m-r2 | saver P1m round 2 pair + ledger p1m rows | 12:00Z | +5min | running | verify, push |
