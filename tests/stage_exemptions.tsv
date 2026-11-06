@@ -1,0 +1,43 @@
+demos/ask-your-data/askdata/evalcli.py	r.add_argument("--split", choices=["dev", "test"], required=True)	data split (train/dev/test), not a stage
+demos/ask-your-data/askdata/evalrun.py	label: str = "dev"  # "dev", "sealed", "second look"	data split (train/dev/test), not a stage
+demos/ask-your-data/askdata/evalset.py	split: Literal["dev", "test"]	data split (train/dev/test), not a stage
+demos/ask-your-data/data/goldcheck.py	"counts": {"gold_dev": sum(g["tier"] == "dev" for g in gold), "gold_test": sum(g["tier"] == "test" for g in gold),	data split (train/dev/test), not a stage
+demos/ask-your-data/data/goldcheck.py	"dev_sha256": digest([g for g in gold if g["tier"] == "dev"]),	data split (train/dev/test), not a stage
+demos/ask-your-data/data/goldcheck.py	Field names differ from design 12.2 on purpose of this task: `tier` (dev|test) is the split, `level` the difficulty,	data split (train/dev/test), not a stage
+demos/ask-your-data/data/goldcheck.py	adversarial.dev.jsonl     12 items (`dev`): the prompt is tuned against these, never against the 16 sealed ones	data split (train/dev/test), not a stage
+demos/ask-your-data/data/goldcheck.py	f"composition of {level}: got {tally[('dev', level)]}/{tally[('test', level)]}, want {dev}/{test}"	data split (train/dev/test), not a stage
+demos/ask-your-data/data/goldcheck.py	g["tier"] not in ("dev", "test")	data split (train/dev/test), not a stage
+demos/ask-your-data/data/goldcheck.py	if (sum(g["tier"] == "dev" for g in gold), sum(g["tier"] == "test" for g in gold)) != (30, 40):	data split (train/dev/test), not a stage
+demos/ask-your-data/data/goldcheck.py	if (tally[("dev", level)], tally[("test", level)]) != (dev, test):	data split (train/dev/test), not a stage
+demos/ask-your-data/data/goldcheck.py	if g["exemplar"] and g["tier"] != "dev":	data split (train/dev/test), not a stage
+demos/ask-your-data/data/goldcheck.py	if src is None or src["tier"] != "dev" or src["kind"] != "answerable":	data split (train/dev/test), not a stage
+demos/ask-your-data/data/goldcheck.py	want = "dev" if dev else ("ci" if det else "test")	data split (train/dev/test), not a stage
+tests/demo_askdata/test_eval_harness.py	assert cli.main(["eval", "run", "--split", "dev"]) == 4  # no config	data split (train/dev/test), not a stage
+tests/demo_askdata/test_eval_harness.py	assert cmd_run(cfg, "dev", 1, None) == 4	data split (train/dev/test), not a stage
+tests/demo_askdata/test_eval_harness.py	assert cmd_run(cfg, "dev", 1, None, harness_factory=factory) == 4	data split (train/dev/test), not a stage
+tests/demo_askdata/test_eval_harness.py	cmd_run(cfg, "dev", 1, None, harness_factory=factory)	data split (train/dev/test), not a stage
+tests/demo_askdata/test_eval_harness.py	code = cmd_run(cfg, "dev", 1, None, harness_factory=factory)	data split (train/dev/test), not a stage
+tests/demo_askdata/test_eval_harness.py	evalrun.sealed_gate(lock, Decimal(0), split="dev", second_look=None)  # dev is never gated	data split (train/dev/test), not a stage
+tests/demo_askdata/test_eval_harness.py	r.harness.report([], [rec], split="dev", meta={})["hard_zeros"][	data split (train/dev/test), not a stage
+tests/demo_askdata/test_eval_harness.py	r.harness.report(r.harness.run_gold([it]), [], split="dev", meta={"model_id": "m"})	data split (train/dev/test), not a stage
+tests/demo_askdata/test_eval_harness.py	rep = r.harness.report([], [rec], split="dev", meta={})	data split (train/dev/test), not a stage
+tests/demo_askdata/test_eval_harness.py	rep = r.harness.report([], list(recs.values()), split="dev", meta={})	data split (train/dev/test), not a stage
+tests/demo_askdata/test_eval_harness.py	rep = r.harness.report(r.harness.run_gold([it]), [], split="dev", meta={})	data split (train/dev/test), not a stage
+tests/demo_askdata/test_eval_harness.py	rep = r.harness.report(recs, [], split="dev", meta={})	data split (train/dev/test), not a stage
+tests/demo_askdata/test_eval_harness.py	rep("green", 0, split="dev"),	data split (train/dev/test), not a stage
+tests/demo_askdata/test_eval_harness.py	rep["label"] == "dev"	data split (train/dev/test), not a stage
+tests/demo_askdata/test_eval_harness.py	split=kw.pop("split", "dev"),	data split (train/dev/test), not a stage
+tests/demo_askdata/test_gold_data.py	assert (sum(g["tier"] == "dev" for g in gold), sum(g["tier"] == "test" for g in gold)) == (	data split (train/dev/test), not a stage
+tests/demo_askdata/test_gold_data.py	assert all(ids[e["source_dev_id"]]["tier"] == "dev" for e in data["exemplars"])	data split (train/dev/test), not a stage
+tests/demo_askdata/test_gold_data.py	assert not sqls("dev") & sqls("test")	data split (train/dev/test), not a stage
+tests/demo_askdata/test_gold_data.py	lambda rows: next(r for r in rows if r["id"] == "T07").update(tier="dev"),	data split (train/dev/test), not a stage
+tests/demo_askdata/test_htmlexport.py	"split": "dev", "label": "x", "verdict_text": "green", "aborted": None,	data split (train/dev/test), not a stage
+src/hadavin_sdk/config.py	_OLD_STAGE = "dev"	the constant the rename refusal compares with
+demos/ask-your-data/askdata/evalcli.py	else ("second look" if split == "test" else "dev")	data split (train/dev/test), not a stage
+demos/ask-your-data/askdata/evalcli.py	"dev": ("gold.dev.jsonl", "adversarial.dev.jsonl"),	data split (train/dev/test), not a stage
+demos/ask-your-data/data/goldcheck.py	gold.jsonl                70 items: 30 `dev`, 40 `test` (the sealed split)	data split (train/dev/test), not a stage
+demos/ask-your-data/db/lumen.py	"Dev",	a first name in the demo's fake customer data, not a stage
+src/hadavin_sdk/guard/redact.py	"dev",	word list of the redactor (words not swept as names), not a stage check
+src/hadavin_sdk/guard/redact.py	"stage",	word list of the redactor (words not swept as names), not a stage check
+src/hadavin_sdk/guard/redact.py	"staging",	word list of the redactor (words not swept as names), not a stage check
+tests/contracts/test_sources.py	ks(api, ["prod", "staging"]).probe_scope()	Kubernetes namespace names in a probe test, not a core stage
