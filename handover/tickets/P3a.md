@@ -247,3 +247,5 @@ Added 2026-11-06 02:50 UTC (08:20 IST) by the build-start resolve (`handover/rev
 | Core guarantee rows (schema, tenant tables) | tenant isolation, audit | 2 our core module | none (our code) | BN-18 KEEP-CODE row | KEEP-CODE (2026-11-06) |
 | Glue, nothing built | none | 1 no-code | none | BN-18 | CUT-TO-CONFIG+GLUE (2026-11-06; glue, nothing built) |
 | SQL check oracle in tests | check ask-your-data SQL | 4 free library | pglast 8.7, GPL-3.0-or-later, test-only, owner decision 2026-11-01 | BN-19, BN-20; `reviews/licence-scan-1.md` | KEEP-CODE (2026-11-06; test-only, out of src) |
+
+BN-stored-stage (order 78 item 6, 2026-11-06; append-only): "The first change that stores a stage must have a test that maps an old stored dev to demo on read." (from P0t PR 67; display only, never a guard decision.)

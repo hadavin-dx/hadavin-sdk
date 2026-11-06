@@ -694,7 +694,8 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | rs-P1c-r3 | Opus resolve P1c round 3 -> rev 5 | 2026-11-06T10:55:21Z | REPORTED (rev 5) |
 
 | rs-P1c-r4-cod | Sonnet egm-codebase-details P1c round 4 on rev 5 | 2026-11-06T11:14Z | REPORTED (0 Blocker, 6 Minor, 5 Nit); saved |
-| bd-P0t-fix3 | Sonnet builder P0t fix3 (order 78), local commit only, no push | 2026-11-06T11:58Z | RUNNING (agent a98f138a) |
+| bd-P0t-fix3 | Sonnet builder P0t fix3 (order 78) | 2026-11-06T11:58Z | REPORTED, verified, PUSHED b218c93 (q177) |
 | rs-P1c-r4-des | Sonnet egm-design P1c round 4 on rev 5 | 2026-11-06T11:14Z | REPORTED (0 Blocker, 3 Major, 8 Minor, 2 Nit); saved |
 | rs-P1c-r4 | Opus resolve P1c round 4 -> rev 6 (agent aa26bc75) | 2026-11-06T11:25Z | RUNNING |
 | bd-P1a-fix4 | Sonnet builder P1a fix4 (order 79), local commit only, no push (agent a5b583db) | 2026-11-06T11:35Z | RUNNING |
+| bd-P1b-merge | Sonnet builder P1b merge with P1a fix3 (order 73\/76) | 2026-11-06 | REPORTED local 1c12470, not pushed (q178); redo after fix4 |
