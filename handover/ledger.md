@@ -1460,3 +1460,12 @@
 | BS-P4a-ADV-1 | Major | P4a | see reviews/P4a-buildstart-adv.md | OPEN |
 | BS-P4a-COR-2 | Major | P4a | see reviews/P4a-buildstart-adv.md | OPEN |
 | BS-P4a-COR-2b | Major | P4a | U5 vs input-zero rule (reviews/P4a-buildstart-cor.md) | OPEN |
+| BS-P4d-ADV-1-bs | Major | P4d | see reviews/P4d-buildstart-adv.md / -cor.md | OPEN |
+| BS-P4d-ADV-2-bs | Major | P4d | see reviews/P4d-buildstart-adv.md / -cor.md | OPEN |
+| BS-P4d-ADV-3-bs | Major | P4d | see reviews/P4d-buildstart-adv.md / -cor.md | OPEN |
+| BS-P4d-ADV-4-bs | Major | P4d | see reviews/P4d-buildstart-adv.md / -cor.md | OPEN |
+| BS-P4d-ADV-5-bs | Major | P4d | see reviews/P4d-buildstart-adv.md / -cor.md | OPEN |
+| BS-P4d-COR-1-bs | Major | P4d | see reviews/P4d-buildstart-adv.md / -cor.md | OPEN |
+| BS-P4d-COR-2-bs | Major | P4d | see reviews/P4d-buildstart-adv.md / -cor.md | OPEN |
+| BS-P4d-ADV-6-bs | Major | P4d | see reviews/P4d-buildstart-adv.md / -cor.md | OPEN |
+| BS-P4d-COR-3-bs | Major | P4d | see reviews/P4d-buildstart-adv.md / -cor.md | OPEN |
