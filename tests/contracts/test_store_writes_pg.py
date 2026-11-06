@@ -4,6 +4,7 @@ Unit rows use a stub connection and driver error objects built by `drv.make_erro
 import ast
 import contextlib
 import re
+import signal
 import threading
 import time
 from datetime import date, timedelta
@@ -312,6 +313,20 @@ def test_sql_leaves_only_through_exec_and_the_wrappers_first_statement():
 
 
 # --- real server ------------------------------------------------------------------------------------------------
+
+
+@pytest.fixture(autouse=True)
+def _watchdog():
+    """A store whose lock is not re-entrant makes a call wait for itself for ever. Turn that into a failure."""
+
+    def stop(_signum, _frame):
+        raise AssertionError("the test ran over 60 s: a call is waiting for its own lock")
+
+    old = signal.signal(signal.SIGALRM, stop)
+    signal.alarm(60)
+    yield
+    signal.alarm(0)
+    signal.signal(signal.SIGALRM, old)
 
 
 @pytest.fixture
