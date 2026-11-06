@@ -264,14 +264,23 @@ def _folder(tmp_path, names):
     folder = tmp_path / "migrations"
     folder.mkdir(parents=True)
     for n in names:
-        real = mig.MIGRATIONS / (n if n[:4] <= "0004" else "0005_evidence.sql")
+        real_name = {
+            "0006_evidence.sql": "0005_evidence.sql",
+            "0007_kill_switch_guard.sql": "0006_kill_switch_guard.sql",
+        }.get(n, n)
+        real = mig.MIGRATIONS / ("0005_evidence.sql" if n[:4] == "0005" else real_name)
         body = "-- empty" if n == "0005_reservations.sql" else real.read_text(encoding="utf-8")
         (folder / n).write_text(body, encoding="utf-8")
     return mig._migration_files(folder)
 
 
 _REAL = sorted(p.name for p in mig.MIGRATIONS.glob("*.sql"))
-RENAMED = [*_REAL[:4], "0005_reservations.sql", "0006_evidence.sql"]
+RENAMED = [
+    *_REAL[:4],
+    "0005_reservations.sql",
+    "0006_evidence.sql",
+    "0007_kill_switch_guard.sql",
+]
 
 
 def test_the_renamed_tree_is_a_valid_ledger_and_two_files_with_one_number_are_not(tmp_path):

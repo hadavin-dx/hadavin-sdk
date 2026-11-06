@@ -113,7 +113,7 @@ def test_migrate_refuses_an_inconsistent_ledger_before_connecting(monkeypatch, t
 
     monkeypatch.setattr(mig, "connect", no_db)
     with pytest.raises(ConfigError, match="brand_new"):
-        mig.migrate("postgresql://unused")
+        mig.migrate("postgresql://unused", reset_role=RESET_GROUP)
 
 
 def test_migrate_refuses_one_role_for_runtime_and_portal():
@@ -141,7 +141,17 @@ def test_cli_migrate_passes_the_portal_role(cfg_dir, monkeypatch):
         return []
 
     monkeypatch.setattr("hadavin_sdk.store.migrate.migrate", fake)
-    args = ["--config", str(cfg_dir), "migrate", "--runtime-role", "rt", "--portal-role", "pt"]
+    args = [
+        "--config",
+        str(cfg_dir),
+        "migrate",
+        "--runtime-role",
+        "rt",
+        "--portal-role",
+        "pt",
+        "--reset-role",
+        "grp",
+    ]
     assert cli.main(args) == 0
     assert (seen["runtime_role"], seen["portal_role"]) == ("rt", "pt")
 
@@ -221,11 +231,12 @@ def test_the_runtime_role_holds_exactly_the_merged_map(roles):
     with psycopg.connect(dsn, autocommit=True) as db:
         for name, grant in mig.GRANTS.items():
             if grant.kind == "sequence":
-                assert _seq_can(db, runtime, name, "USAGE"), name
+                # a sequence with an empty runtime grant belongs to a table only a SECURITY DEFINER function writes
+                assert _seq_can(db, runtime, name, "USAGE") == bool(grant.runtime), name
                 assert not _seq_can(db, runtime, name, "UPDATE"), name
                 continue
             held = {p for p in every if _can(db, runtime, name, p)}
-            assert held == set(grant.runtime.split(", ")), name
+            assert held == set(filter(None, grant.runtime.split(", "))), name
 
 
 def test_the_runtime_role_cannot_update_or_delete_the_audit_log(roles):
