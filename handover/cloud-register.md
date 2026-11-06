@@ -303,7 +303,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | bs-P1-adv | build-start review (order 20) of frozen tickets/P1.md, egm:*, read-only | sonnet | 02:31Z | +45min | running | save report as reviews/P1-buildstart-adv.md; then ONE resolve |
 | bs-P1-cor | build-start review (order 20) of frozen tickets/P1.md, egm:*, read-only | sonnet | 02:31Z | +45min | running | save report as reviews/P1-buildstart-cor.md; then ONE resolve |
 | bs-P3a-adv | build-start review (order 20) of frozen tickets/P3a.md, egm:*, read-only | sonnet | 02:31Z | +45min | running | save report as reviews/P3a-buildstart-adv.md; then ONE resolve |
-| bs-P3a-cor | build-start review (order 20) of frozen tickets/P3a.md, egm:*, read-only | sonnet | 02:31Z | +45min | running | save report as reviews/P3a-buildstart-cor.md; then ONE resolve |
+| bs-P3a-cor | build-start review (order 20) of frozen tickets/P3a.md, egm:*, read-only | sonnet | 02:31Z | +45min | REPORTED | save report as reviews/P3a-buildstart-cor.md; then ONE resolve |
 | bs-P4d-adv | build-start review (order 20) of frozen tickets/P4d.md, egm:*, read-only | sonnet | 02:31Z | +45min | running | save report as reviews/P4d-buildstart-adv.md; then ONE resolve |
 | bs-P4d-cor | build-start review (order 20) of frozen tickets/P4d.md, egm:*, read-only | sonnet | 02:31Z | +45min | running | save report as reviews/P4d-buildstart-cor.md; then ONE resolve |
 | bs-P2a-adv | build-start review (order 20) of frozen tickets/P2a.md, egm:*, read-only | sonnet | 02:31Z | +45min | running | save report as reviews/P2a-buildstart-adv.md; then ONE resolve |

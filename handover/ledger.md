@@ -1447,3 +1447,6 @@
 | BL-core-P2d-r5-cor-M4 | P2d | MAJOR | see reviews/P2d-round5-correctness.md M4 | FIXED-UNVERIFIED | reviews/P2d-round5-correctness.md | 7b31e3b |
 | BL-core-P4a-r11-adv-M1 | P4a | MAJOR | no row/mutant kills round-down in k1b worst_case_usd (under-book 1e-8) | FIXED-UNVERIFIED | reviews/P4a-round11-adversarial.md | 0a79b83 |
 | BL-core-P4a-r11-adv-M2 | P4a | MAJOR | P4a-1 line 197 live-call gate weaker than PL51 (P4c-2 AND P4b2-a); gate is text only | FIXED-UNVERIFIED | reviews/P4a-round11-adversarial.md | 0a79b83 |
+| BS-P3a-COR-1 | Major | P3a | see reviews/P3a-buildstart-cor.md | OPEN (build notes via resolve) |
+| BS-P3a-COR-2 | Major | P3a | see reviews/P3a-buildstart-cor.md | OPEN (build notes via resolve) |
+| BS-P3a-COR-3 | Major | P3a | see reviews/P3a-buildstart-cor.md | OPEN (build notes via resolve) |
