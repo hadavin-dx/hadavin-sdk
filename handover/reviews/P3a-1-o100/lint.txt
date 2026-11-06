@@ -1,0 +1,7 @@
+head 9b665b10ee4b40b4ae71776d876a04e5e98c3a72
+$ ruff check src tests tools demos
+All checks passed!
+$ ruff format --check src tests tools demos
+316 files already formatted
+$ python tools/scan_repo.py
+exit 0

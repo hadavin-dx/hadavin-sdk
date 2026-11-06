@@ -1,0 +1,46 @@
+head of the fixed tree: 9b665b10ee4b40b4ae71776d876a04e5e98c3a72 (fail-before run at base f127367: old src and old tests/fixtures/timing.py + the new test files; see below)
+BASE f127367 (src and tests/fixtures/timing.py as at f127367) + the new/changed test files of this fix
+date Fri Nov  6 15:44:43 UTC 2026
+<build-dir>/src/hadavin_sdk/__init__.py
+        quadratic = re.compile(r"\bcurl\b[^\r\n]*?[ \t]-u")  # the shape the command patterns had
+        bounded = re.compile(r"\bcurl\b[^\r\n]{0,1024}?[ \t]-u")
+        # 8x the text: a linear cost grows about 8x (limit 24x), a quadratic one about 64x
+>       assert is_superlinear(quadratic, "curl ", small=4 * 1024, big=32 * 1024)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_k5_perf.py:65: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_k5_perf.py:47: in is_superlinear
+    return _is_superlinear(lambda t: _cpu(pattern, t), unit, small, big)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+measure = <function is_superlinear.<locals>.<lambda> at 0x7f0c79c9ba60>
+unit = 'curl ', small = 4096, big = 32768
+
+    def _is_superlinear(measure, unit: str, small: int, big: int) -> bool:
+>       return timing.is_superlinear(measure, unit, small, big)
+               ^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'tests.fixtures.timing' has no attribute 'is_superlinear'
+
+tests/test_k5_perf.py:43: AttributeError
+=========================== short test summary info ============================
+FAILED tests/test_migration_numbers.py::test_the_timing_harness_flags_a_quadratic_stand_in
+FAILED tests/test_migration_numbers_guards.py::test_checked_statement_text_raises_instead_of_returning_a_cut_text
+FAILED tests/test_migration_numbers_guards.py::test_statement_text_called_the_ticket_way_returns_the_pair
+FAILED tests/test_migration_numbers_guards.py::test_migration_number_error_survives_copy_deepcopy_and_pickle
+FAILED tests/test_migration_numbers_guards.py::test_every_mutant_still_applies_to_the_source
+FAILED tests/test_timing_fixture.py::test_a_linear_cost_passes_at_any_speed[1e-12]
+FAILED tests/test_timing_fixture.py::test_a_linear_cost_passes_at_any_speed[1e-09]
+FAILED tests/test_timing_fixture.py::test_a_linear_cost_passes_at_any_speed[1e-07]
+FAILED tests/test_timing_fixture.py::test_a_linear_cost_passes_at_any_speed[1e-05]
+FAILED tests/test_timing_fixture.py::test_a_quadratic_stand_in_is_flagged_at_any_speed[1e-07]
+FAILED tests/test_timing_fixture.py::test_a_quadratic_stand_in_is_flagged_at_any_speed[1e-06]
+FAILED tests/test_timing_fixture.py::test_a_quadratic_stand_in_is_flagged_at_any_speed[1e-05]
+FAILED tests/test_timing_fixture.py::test_the_limit_is_a_ratio_of_the_two_sizes
+FAILED tests/test_timing_fixture.py::test_a_larger_size_gap_separates_the_two_shapes_more
+FAILED tests/test_timing_fixture.py::test_there_is_no_fixed_seconds_floor_on_the_big_run
+FAILED tests/test_k5_perf.py::test_the_harness_flags_a_quadratic_pattern_and_passes_a_linear_one
+16 failed, 10 passed, 201 deselected in 0.33s
+
+Note: 16 failed. Most fail because the new names (checked_statement_text, timing.is_superlinear) do not exist on f127367. Behavioural before/after: statement_text on f127367 returns a bare str (the ticket-way unpack fails); the error's str after copy is wrong. These PASS on f127367 by design (pins, killed by mutants instead): test_the_lock_key_and_the_folder_are_the_ones_migrate_uses, test_a_hostile_name_never_reaches_the_order_message.
