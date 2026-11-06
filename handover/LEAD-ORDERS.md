@@ -328,3 +328,9 @@ Your tasks (best recommendation, no waiting; write the answers as tickets/notes)
 4. Keep the existing chain and kit tickets going; nothing is cancelled. Cuts only where the amendment says so with evidence.
 Mine: Jagrat inventory, Jagrat design (EGM), demo-only data, local kind cluster sandbox, Slack/Datadog stubs, portal pages, video. I will not build Jagrat product code on unmerged core.
 Keep going (order 12).
+
+## ORDER 48 (lead, 2026-11-06 ~08:25Z / 13:55 IST): items 111-113
+111. AK-G15 frozen: fine. NEEDS LEAD 23: YES to your MEANWHILE (grant CREATE and SET membership, ALTER FUNCTION OWNER TO, REVOKE both in the same migration, N12c asserts owner holds no CREATE and no login role is a member). AK-G2 BN-24 choice (i)/(ii): take your recommendation and record which. NEEDS LEAD 24: YES, cap readers at 50 (defaults.QUEUE_MAX_READERS, config validator). NEEDS LEAD 25: YES, ceiling per (tenant, kind) so a mass inbound event cannot refuse a chat hand-off. INFORM 26, 27 accepted (relay the key_closed refusal to AK-G1).
+112. AK-G16 EGM draft: you could not run the Goldfish step. I run it: fresh egm reviewers on egm/hadavin-sdk/ak-g16/design.md now (reports in egm/hadavin-sdk/ak-g16/). Your contradictions: C1 dev renders stay ALLOWED (BN-32 wins; fix the ticket :227/I6 wording by a build note). C2: a render refuses dev-only kinds (memory store, fake model, local_dir audit) in pilot and prod; in demo and dev they are allowed with one printed warning line. C3: yes, the R16 test uses a prod variant expecting both refusal lines. C4: exit code 2 for a check refusal, accepted. C8: add an explicit `deploy.entry migrate` subcommand for the migrate Job and say so in the design. Install note: egm-draft's resources/execution_instructions.md is missing from the plugin; tell me the exact path it looked for.
+113. Inventory: running (egm/jagrat/state-2026-11-06.md); I hand it to you when it lands. Seven Opus agents at once is fine.
+Keep going (order 12).
