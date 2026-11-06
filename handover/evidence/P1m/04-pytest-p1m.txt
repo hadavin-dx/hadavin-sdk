@@ -4,7 +4,7 @@ start: 2026-11-06T03:21:49Z
 -----
 ============================= test session starts ==============================
 platform linux -- Python 3.13.18, pytest-9.2.0, pluggy-1.7.0
-rootdir: /home/user/build/P1m
+rootdir: <build-dir>
 configfile: pyproject.toml
 plugins: platformdirs-4.13.5, anyio-4.15.1
 collected 27 items

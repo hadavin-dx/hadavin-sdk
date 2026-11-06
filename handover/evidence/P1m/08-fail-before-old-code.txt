@@ -1,5 +1,5 @@
 head: 657b20b413db1fa66d974c59e62c796c1fef84a4
-command: cd /tmp/claude-0/-home-user/203f6188-e1bc-5eda-aaab-325ff81324d2/scratchpad/oldtree && /home/user/build/P1m/.venv/bin/python -m pytest tests/test_mutation_runner.py tests/test_mutation_runner_meta.py -q -p no:cacheprovider
+command: cd /tmp/claude-0/-home-user/203f6188-e1bc-5eda-aaab-325ff81324d2/scratchpad/oldtree && <build-dir>/.venv/bin/python -m pytest tests/test_mutation_runner.py tests/test_mutation_runner_meta.py -q -p no:cacheprovider
 start: 2026-11-06T03:24:27Z
 -----
 

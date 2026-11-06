@@ -1,5 +1,5 @@
 head: 657b20b413db1fa66d974c59e62c796c1fef84a4
-command: cd /tmp/claude-0/-home-user/203f6188-e1bc-5eda-aaab-325ff81324d2/scratchpad/nosup && /home/user/build/P1m/.venv/bin/bandit -q -r src tools -ll
+command: cd /tmp/claude-0/-home-user/203f6188-e1bc-5eda-aaab-325ff81324d2/scratchpad/nosup && <build-dir>/.venv/bin/bandit -q -r src tools -ll
 start: 2026-11-06T03:24:27Z
 -----
 Run started:2026-11-06 03:24:27.798705+00:00
