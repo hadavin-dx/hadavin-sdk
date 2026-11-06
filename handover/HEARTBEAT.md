@@ -320,3 +320,6 @@ P6b1 | waits for P4a head | 0 | P4a
 12 agents running
 2026-11-06T12:41:40Z | package | stage | builders running | blocked on
 P0a | fix1 pushed c17f3c9 (PR 71); waiting lead's fresh check | 0 | -
+2026-11-06T12:48:35Z | package | stage | builders running | blocked on
+P3a-2 | PR 73 ready (659f9e3), stacked on PR 68 | 0 | PR 68 (P3a-1 fix1) merge; CI unread
+11 agents running (P2d-1, P2a-1, P4d-a2, P5a, P3a-1-fix1, P0t-fix4, P5b1, P4b1, P4a, P1b-redo, + P2d-1 background)
