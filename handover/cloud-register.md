@@ -372,7 +372,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | draft-P6b2 | Opus first draft tickets/P6b2.md | opus | 02:50Z | | REPORTED | committed 1901def; round 1 launched |
 | r1-P6b2-adv | P6b2 round-1 reviewer (adv) | sonnet | 03:30Z | +30min | REPORTED (unsaved: save-r2c) | save, ledger, resolve |
 | r1-P6b2-cor | P6b2 round-1 reviewer (cor) | sonnet | 03:30Z | +30min | REPORTED (unsaved: save-r2c) | save, ledger, resolve |
-| res-r2-P4c | Opus egm-resolve P4c round 2 | opus | 02:51Z | +45min | running | verify; rev 3; round 3 |
+| res-r2-P4c | Opus egm-resolve P4c round 2 | opus | 02:51Z | +45min | REPORTED | verify; rev 3; round 3 |
 | res-r2-P4b1 | Opus egm-resolve P4b1 round 2 | opus | 02:52Z | +45min | running | launch after report save |
 | save-r2b | Sonnet saver: P5b1 r2, P6a r1, P5c r1 (adv+cor each) = 6 reports + ledger rows | sonnet | 03:45Z | +20min | REPORTED | verify, push, launch resolves |
 | save-r2c | Sonnet saver: P6b2 r1 adv (a8ac760d78cffcdde) + cor (a9f6d3e5a184b9a11) | sonnet | - | +15min | REPORTED | launch after save-r2b pushes; then P6b2 resolve |
@@ -386,3 +386,4 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | r2-P4b2-adv | egm-design adversarial round 2 of tickets/P4b2.md rev 3 | sonnet | 02:57Z | +30min | running | save, ledger, resolve |
 | r2-P4b2-cor | egm-codebase-details correctness round 2 of tickets/P4b2.md rev 3 | sonnet | 02:57Z | +30min | running | save, ledger, resolve |
 | rev-P5b2-3 | Opus author: P5b2 revision 3 from reviews/P5b2-round2-resolve.md | opus | 02:57Z | +45min | running | verify; round 3 reviewers; one resolve; freeze |
+| rev-P4c-3 | Opus author: P4c revision 3 from reviews/P4c-round2-resolve.md | opus | 02:58Z | +45min | running | verify; round 3 reviewers; resolve; freeze |
