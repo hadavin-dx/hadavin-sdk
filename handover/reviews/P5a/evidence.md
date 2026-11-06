@@ -1,4 +1,4 @@
-# P5a evidence (builder: Sonnet 5.5; order 83; raw output, no judgement beyond the stated counts)
+# P5a evidence (order 83; raw output, no judgement beyond the stated counts)
 
 Head SHA at the end of the build: ea2d254 (branch core/P5a; the lead's order 86 WIP commit was 1a99a06; history is kept, nothing amended).
 Dependency merge: core/P5a contains `origin/core/P1b` (which includes P1a), merged as a4476b8, because `guard/textnorm.py` and `scan_keyset` are not in main.
@@ -25,16 +25,16 @@ $ uv run --with bandit bandit -ll -q -r src   (bandit is not in the uv test grou
 bandit exit/issue count: exit=0 issues=0
 ```
 ```
-$ <heavy-runner> uv run --python 3.13 --all-extras --group test pytest -q -p no:cacheprovider   (collected at ea2d254)
+$ <build>/heavy.sh uv run --python 3.13 --all-extras --group test pytest -q -p no:cacheprovider   (collected at ea2d254)
 10579 passed, 455 skipped, 81 xfailed in 463.55s (0:07:43)
-$ PYTHONPATH=$PWD/src <heavy-runner> <py312> -m pytest -q -p no:cacheprovider   (python 3.12.1; collected at 8f79440, see item 2)
+$ PYTHONPATH=$PWD/src <build>/heavy.sh <build>/venv312/bin/python -m pytest -q -p no:cacheprovider   (python 3.12.1; collected at 8f79440, see item 2)
 10579 passed, 455 skipped, 81 xfailed in 601.09s (0:10:01)
 $ uv run --all-extras --group test pytest tests/test_diagnostic.py tests/test_diagnostic_codes.py tests/test_diagnostic_validation.py tests/test_diagnostic_hostile.py -q
 200 passed in 1.89s   (at ea2d254)
 ```
 
 ## Fail-before (the new surface has no old behaviour; the honest fail-before is the hostile rows against today's writers)
-Throwaway worktree `<build-dir>-failbefore` at a4476b8 (the branch base, i.e. the P1b merge) plus ONLY `codes.py`, `tests/data/__init__.py`, `tests/data/c18a_hostile_corpus.py`, `tests/data/c18a_oracle.py` and `tests/test_diagnostics_old_writers.py` (git status there: 3 untracked entries, nothing else).
+Throwaway worktree `<build>/P5a-failbefore` at a4476b8 (the branch base, i.e. the P1b merge) plus ONLY `codes.py`, `tests/data/__init__.py`, `tests/data/c18a_hostile_corpus.py`, `tests/data/c18a_oracle.py` and `tests/test_diagnostics_old_writers.py` (git status there: 3 untracked entries, nothing else).
 ```
 base (a4476b8 + 5 files):  $ pytest tests/test_diagnostics_old_writers.py -q
 53 passed, 81 xfailed in 78.26s
@@ -47,7 +47,7 @@ An earlier base run had 1 FAILED (HC-builtin_text-03 leaked but was not yet in t
 
 ## Mutants (P1m runner, `tests/diagnostic_mutants.py`, 33 mutants), run 3 at ea2d254
 ```
-$ <heavy-runner> uv run --all-extras --group test python tests/diagnostic_mutants.py   -> 33 of 33 good; problems: []
+$ <build>/heavy.sh uv run --all-extras --group test python tests/diagnostic_mutants.py   -> 33 of 33 good; problems: []
 ok  KILLED       code set: a member is removed  [test_code_set_is_the_frozen_list]
 ok  KILLED       table: NotFound row removed  [test_pinned_code_per_class]
 ok  KILLED       table: VaultError set back to config_invalid  [test_pinned_code_per_class]
@@ -90,3 +90,11 @@ Not mutated (test only): the corpus meta tests, the old-writers file, the MRO wa
 - Corpus: 161 rows = 135 active + 24 later + 2 not applicable; 24 classes; all 51 ledger ids covered (`test_every_ledger_id_is_covered`).
 - New tests: 200 in four files (+ 134 in the old-writers file).
 - Time: started 11:58Z; commits 1a99a06 .. ea2d254 before 12:50Z.
+
+## Order 93 (head 21ca680; merged origin/main 13ebfaf)
+- Guards: 9 `except Exception` sites remain in `guard/diagnostic.py`, each `# noqa: BLE001 - <reason>` on the same line, each calling `_guard_failed(site)` (a count by site name; no text, no type of the exception). Two sites were narrowed away (`SafeToken.of`, `StepToken.of`). Four P1b test guards and four P5a test guards were narrowed (`pytest.raises`, `ValidationError`, `ConfigError`, `SystemExit/RuntimeError/AttributeError`). List: `noqa_sites.txt`. Tests: `tests/test_diagnostic_guards.py` (63 tests: caught, recorded, KeyboardInterrupt/SystemExit/GeneratorExit propagate, per site; plus the line-format check).
+- Merge: plain merge, two conflicts (CHANGELOG.md, app.py: kept `is_live` and the pinned-Unicode call). Merge also broke three things, all fixed: `config._RenamedStage` added to `OWN_CODES` (config_invalid) and the pinned table test; `tests/test_textnorm_app.py` used the removed `dev_cfg` and `deferred.LIVE`; two mutant search strings re-copied.
+- ruff check: All checks passed. ruff format --check: 340 files already formatted. bandit -ll -r src: rc=0 (bandit.txt).
+- Full py3.13 (own env, import path checked to be this worktree): 10741 passed, 455 skipped, 81 xfailed (pytest313-final.log). Full py3.12: 10741 passed, 455 skipped, 81 xfailed (pytest312-final.log).
+- Mutation (P1m runner, all 33): 33 of 33 good; problems: [] (mutants-final.log). A first final run showed 32/33 because a search string had a stale indent; fixed, re-run.
+- Blame of the lint debt (BLE001 is not in the ruff select list of this repo): origin/main already holds 62 `noqa: BLE001` sites, none from P5a: 21 from K5-core, 8 each from Slice 2 P7, P3 and K3, 5 Slice 1, 4 tick exit code, 2 Ask-your-data P2, 2 Slice 2 P3b, and the rest (a few each) older. All are older than this PR.

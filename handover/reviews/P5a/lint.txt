@@ -1,0 +1,8 @@
+$ uv run --all-extras --group test ruff check .
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+All checks passed!
+$ uv run --all-extras --group test ruff format --check .
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+336 files already formatted
+$ uv run --with bandit bandit -ll -q -r src   (bandit is not in the uv test group)
+bandit exit/issue count: exit=0 issues=0

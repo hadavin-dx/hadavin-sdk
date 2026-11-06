@@ -749,3 +749,4 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | bd-P2d-1 | (update) | 2026-11-06T13:32:04Z | RESUMED to finish: rerun 3.13 without -x, evidence, push, draft PR stacked on P1a (will need re-merge of P1a fix5) |
 | bd-P2d-1 | Sonnet builder P2d-1 | 2026-11-06T13:41:49Z | REPORTED: core/P2d-1 6d5616b pushed+verified, DRAFT PR 77 (base core/P1a); evidence reviews/P2d-1 |
 | bd-P4a | (update) | 2026-11-06T13:44:25Z | DRAFT PR 78 open, head 4a0976f; merged-head suites queued |
+| bd-P5a | Sonnet builder P5a | 2026-11-06T15:45:00Z | REPORTED: core/P5a 21ca680 pushed+verified, PR 74 ready (base main); evidence reviews/P5a |
