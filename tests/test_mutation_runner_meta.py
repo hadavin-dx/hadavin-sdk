@@ -74,9 +74,11 @@ MOVED = (
     "test_a_junction_under_src_or_a_fixture_folder_is_refused_before_the_copy",
     "test_the_colon_refusal_says_a_path_may_not_contain_a_colon_and_the_docstring_states_it",
     "test_a_child_reaped_by_someone_else_is_an_error_result_not_exit_code_zero",
-    "test_a_reaped_child_is_an_error_row_for_a_mutant_and_a_refusal_for_the_baseline",
+    "test_a_reaped_child_is_an_error_row_for_a_mutant",
+    "test_a_reaped_baseline_is_refused_as_reaped_not_as_a_failing_baseline",
+    "test_a_junction_as_the_folder_itself_or_a_part_of_its_path_is_refused",
 )
-EXPECTED_MUTANTS = 59
+EXPECTED_MUTANTS = 62
 MANIFEST_TEST = "test_the_manifest_pins_the_files_a_demo_copies"
 
 

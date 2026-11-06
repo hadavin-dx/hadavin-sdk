@@ -12,7 +12,7 @@ tree (``_locate``: the caller's string is compared with the listed names and nev
 stay inside its tree (``_inside``: a ``..`` part or an absolute path is a ``ValueError``), a path that starts with ``-`` or ``@`` is refused
 everywhere (``_plain_operand``: pytest would read it as an option or as an argument file, also after ``--``; ``./name`` is the way to write it),
 a relative symlink of the snapshot that points outside the tree is refused (``_refuse_links_out``), a Windows junction (a folder link that ``shutil.copytree`` follows and copies as a real folder)
-in ``src`` or in a fixture folder is refused before the copy (``_refuse_junctions``; ``os.path.isjunction``, Python 3.12 and later, where it is always False off Windows), and every pytest run has a timeout, and a timeout kills the whole process tree of the run.
+in ``src`` or in a fixture folder, or one of those folders itself or a part of its path, is refused before the copy (``_refuse_junctions``; ``os.path.isjunction``, Python 3.12 and later, where it is always False off Windows), and every pytest run has a timeout, and a timeout kills the whole process tree of the run.
 
 The limit on names: a path may not contain ':' (a Windows drive or an NTFS stream name), so a file or folder whose name holds a colon cannot be named to this tool at all, on any system.
 
@@ -35,6 +35,11 @@ caught, and then the temp folders (``mutants_*`` and ``mutant_ini_*`` in the tem
 On POSIX the run's process group is killed while its leader has ended but is NOT yet reaped (``os.waitid`` with ``WNOWAIT``), so the
 group id cannot belong to an unrelated process by then. Where ``os.waitid`` does not exist (macOS) the leader is reaped by ``wait``
 first and the group kill after a normal exit has the old, tiny pid-reuse risk.
+
+Two more limits of the "reaped by someone else" case (SIGCHLD ignored, or a stray ``wait``). (a) Where ``os.waitid`` does not exist
+(macOS) the run is waited for with ``proc.wait``, which cannot tell a reaped child from one that exited with status 0, so such a child
+can still read as exit code 0 there: the ``REAPED_ELSEWHERE`` result exists on platforms with ``os.waitid`` only. (b) On the reaped-leader
+path the group is NOT killed (its leader's pid may belong to another process by now), so descendants the child left behind are not killed.
 
 Packages that need a ``conftest.py`` or pytest options from a ``pyproject.toml`` / ``pytest.ini`` cannot be run by this tool: pytest
 runs with ``--noconftest`` and with an empty ini file on purpose (a planted file in a parent folder is never read).
@@ -406,19 +411,25 @@ def _refuse_links_out(base: Path) -> None:
                 )
 
 
-def _refuse_junctions(base: Path) -> None:
-    """Refuse a Windows junction under ``base`` (``ValueError``). ``shutil.copytree(symlinks=True)`` does not see a junction as a link (Python
+def _refuse_junctions(root: Path, rel: str) -> None:
+    """Refuse a Windows junction at ``root / rel`` (``ValueError``): the folder itself, any part of the path ``rel`` (``tests`` in
+    ``tests/fixtures``) and anything below it. ``shutil.copytree(symlinks=True)`` does not see a junction as a link (Python
     3.12 ``islink`` is False for it), follows it and copies the target as a real folder, so the snapshot would hold files from outside the
     tree. Looked at in the CALLER's tree before the copy: afterwards nothing tells the copy from a real folder. ``os.path.isjunction`` exists
     from Python 3.12 (always False off Windows); where it is missing there is nothing to ask."""
     isjunction = getattr(os.path, "isjunction", None)
     if isjunction is None:
         return
-    for dirpath, dirs, _files in os.walk(base):
+    here = root
+    for part in re.split(r"[\\/]", rel):
+        here = here / part
+        if isjunction(here):
+            raise ValueError(f"a junction is not followed: {rel!r} (at {part!r})")
+    for dirpath, dirs, _files in os.walk(here):
         for name in dirs:
             if isjunction(os.path.join(dirpath, name)):
                 raise ValueError(
-                    f"a junction is not followed: {os.path.relpath(os.path.join(dirpath, name), base)!r}"
+                    f"a junction is not followed: {os.path.relpath(os.path.join(dirpath, name), root)!r}"
                 )
 
 
@@ -489,7 +500,7 @@ def _run_mutants(
         snap.mkdir()
         # ONE snapshot of the tree at the start: every mutant copy is made from it, so an edit of ``root`` while the run is going (a
         # developer saving a file, a second tool) can never leak into a later mutant
-        _refuse_junctions(root / "src")
+        _refuse_junctions(root, "src")
         shutil.copytree(
             root / "src", snap / "src", symlinks=True, ignore=shutil.ignore_patterns("__pycache__")
         )  # links stay links (never followed out of the tree)
@@ -499,7 +510,7 @@ def _run_mutants(
             shutil.copy(_inside(root, t), dst)
         for d in extra_dirs:
             if _inside(root, d).exists():
-                _refuse_junctions(_inside(root, d))
+                _refuse_junctions(root, d)
                 shutil.copytree(
                     _inside(root, d), _inside(snap, d), symlinks=True, dirs_exist_ok=True
                 )

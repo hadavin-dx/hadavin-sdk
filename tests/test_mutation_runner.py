@@ -1417,7 +1417,7 @@ def test_a_junction_under_src_or_a_fixture_folder_is_refused_before_the_copy(tmp
     """``shutil.copytree(symlinks=True)`` follows a Windows junction (``islink`` is False for it) and copies the target as a real
     folder, so the snapshot would hold files from outside the tree. The runner asks ``os.path.isjunction`` (Python 3.12 and later) in
     the CALLER's tree before the copy. On Linux nothing is a junction, so the test makes ``isjunction`` say that a folder named
-    ``jn`` is one (the real Windows junction is checked by hand there, see the CHANGELOG)."""
+    ``jn`` is one (a real Windows junction was probed by hand by the lead: ``handover/reviews/P1m-fix1-junction-probe.txt``, quoted in the CHANGELOG; this test does not create one)."""
     monkeypatch.setattr(
         os.path, "isjunction", lambda path: os.path.basename(path) == "jn", raising=False
     )
@@ -1477,9 +1477,7 @@ def test_a_child_reaped_by_someone_else_is_an_error_result_not_exit_code_zero(tm
     assert rc == mr.REAPED_ELSEWHERE, f"a reaped child came back as {rc}, not REAPED_ELSEWHERE"
 
 
-def test_a_reaped_child_is_an_error_row_for_a_mutant_and_a_refusal_for_the_baseline(
-    tmp_path, monkeypatch
-):
+def test_a_reaped_child_is_an_error_row_for_a_mutant(tmp_path, monkeypatch):
     root = _raising_tree(tmp_path)
     muts = [Mutant("m0", "src/pk/core.py", "return flag", "return not flag", "test_a_x")]
     codes = iter([0, mr.REAPED_ELSEWHERE])
@@ -1489,8 +1487,47 @@ def test_a_reaped_child_is_an_error_row_for_a_mutant_and_a_refusal_for_the_basel
         "a mutant run reaped by someone else was not an error row"
     )
     monkeypatch.setattr(mr, "_pytest", lambda cwd, tests, junit, timeout: mr.REAPED_ELSEWHERE)
-    with pytest.raises(RuntimeError, match="reaped by someone else"):
-        run_mutants(root, muts, ["tests/test_core.py"], extra_dirs=())
+
+
+def test_a_reaped_baseline_is_refused_as_reaped_not_as_a_failing_baseline(tmp_path, monkeypatch):
+    root = _raising_tree(tmp_path)
+    monkeypatch.setattr(mr, "_pytest", lambda cwd, tests, junit, timeout: mr.REAPED_ELSEWHERE)
+    with pytest.raises(RuntimeError) as refused:
+        run_mutants(root, [], ["tests/test_core.py"], extra_dirs=())
+    # outside the ``with``, so the failing line is this message and not a regex mismatch
+    assert "reaped by someone else" in str(refused.value), (
+        f"a reaped baseline was not named as reaped: {refused.value}"
+    )
+
+
+def test_a_junction_as_the_folder_itself_or_a_part_of_its_path_is_refused(tmp_path, monkeypatch):
+    """``isjunction`` is asked about the folder itself and about every part of its path, not only about what lies below it."""
+    root = _raising_tree(tmp_path)
+    (root / "tests" / "fixtures").mkdir()
+    junctions: set[str] = set()
+    monkeypatch.setattr(
+        os.path, "isjunction", lambda path: os.path.normpath(path) in junctions, raising=False
+    )
+    assert _baseline_passes(root), "a tree with no junction was refused"
+    cases = (
+        (root / "src", (), "the src folder itself was a junction and was copied"),
+        (
+            root / "tests" / "fixtures",
+            ("tests/fixtures",),
+            "a fixture folder that is itself a junction was copied",
+        ),
+        (
+            root / "tests",
+            ("tests/fixtures",),
+            "a junction in the middle of a fixture path was copied",
+        ),
+    )
+    for folder, extra, label in cases:
+        junctions.clear()
+        junctions.add(os.path.normpath(folder))
+        _must_refuse(
+            label, run_mutants, root, [], ["tests/test_core.py"], extra_dirs=extra, match="junction"
+        )  # fmt: skip
 
 
 # last on purpose: a mutation of a pinned file must be judged by the test aimed at it, not by this hash pin
