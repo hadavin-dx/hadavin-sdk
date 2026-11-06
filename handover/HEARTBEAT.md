@@ -185,3 +185,4 @@
 07:52Z | step=order 49: order 47 paused, files saved | next=P1a fix2 builder, AK-G16 BN-34 | blocked=none
 07:52Z | step=AK-G16 BN-34, P1a fix2 builder launched, order 50 noted | next=builder result, P1 BN-13, DECISIONS.md | blocked=none
 07:53Z | step=order 51 doors list in GAPS.md, q117 | next=P1a fix2 result, kit tickets (G14 skipped: paused), DECISIONS.md | blocked=none
+07:57Z | step=order 52: doors list generic, sign-in last | next=P1a fix2 result, DECISIONS.md, next kit ticket | blocked=none
