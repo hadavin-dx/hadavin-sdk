@@ -380,11 +380,11 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | res-r1-P5c | Opus egm-resolve P5c round 1 | opus | ~02:56Z | +45min | REPORTED | verify; rev 2; round 2 |
 | res-r1-P6a | Opus egm-resolve P6a round 1 | opus | ~02:56Z | +45min | REPORTED | verify; rev 2; round 2 |
 | rev-P8b-2 | Opus author: P8b revision 2 from reviews/P8b-round1-resolve.md | opus | 02:55Z | +45min | REPORTED | verify; round 2 reviewers |
-| rev-P6b1-3 | Opus author: P6b1 revision 3 from reviews/P6b1-round2-resolve.md | opus | 02:55Z | +45min | running | verify; round 3 reviewers; freeze |
+| rev-P6b1-3 | Opus author: P6b1 revision 3 from reviews/P6b1-round2-resolve.md | opus | 02:55Z | +45min | REPORTED | verify; round 3 reviewers; freeze |
 | res-r1-P6b2 | Opus egm-resolve P6b2 round 1 | opus | 02:56Z | +45min | REPORTED | verify; rev 2; round 2 |
 | fix-P4b2-maint | (closed) maintenance identity restored, rev 3 daae169 pushed | opus | 03:10Z | - | CLOSED (REPORTED, verified) | round 2 reviewers |
 | r2-P4b2-adv | egm-design adversarial round 2 of tickets/P4b2.md rev 3 | sonnet | 02:57Z | +30min | running | REPORTED |
-| r2-P4b2-cor | egm-codebase-details correctness round 2 of tickets/P4b2.md rev 3 | sonnet | 02:57Z | +30min | running | save, ledger, resolve |
+| r2-P4b2-cor | egm-codebase-details correctness round 2 of tickets/P4b2.md rev 3 | sonnet | 02:57Z | +30min | running | REPORTED |
 | rev-P5b2-3 | Opus author: P5b2 revision 3 from reviews/P5b2-round2-resolve.md | opus | 02:57Z | +45min | running | verify; round 3 reviewers; one resolve; freeze |
 | rev-P4c-3 | Opus author: P4c revision 3 from reviews/P4c-round2-resolve.md | opus | 02:58Z | +45min | running | verify; round 3 reviewers; resolve; freeze |
 | rev-P4b1-3 | Opus author: P4b1 revision 3 from reviews/P4b1-round2-resolve.md | opus | 02:59Z | +45min | running | verify; round 3 reviewers; resolve; freeze |
@@ -394,3 +394,6 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | rev-P6b2-2 | Opus author: P6b2 revision 2 from reviews/P6b2-round1-resolve.md | opus | 03:02Z | +45min | running | verify; round 2 |
 | r2-P8b-adv | egm-design adversarial round 2 of P8b rev 2 | sonnet | 03:02Z | +20min | running | save |
 | r2-P8b-cor | egm-codebase-details correctness round 2 of P8b rev 2 | sonnet | 03:02Z | +20min | running | save |
+| r3-P6b1-adv | egm-design adversarial round 3 (LAST) of P6b1 rev 3 | sonnet | 03:03Z | +20min | running | save |
+| r3-P6b1-cor | egm-codebase-details correctness round 3 (LAST) of P6b1 rev 3 | sonnet | 03:03Z | +20min | running | save |
+| res-r2-P4b2 | Opus egm-resolve P4b2 round 2 (5 Majors + minors) | opus | 03:03Z | +30min | running | save, rev 4 author |
