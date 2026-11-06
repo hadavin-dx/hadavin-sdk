@@ -547,7 +547,7 @@ def test_t1_22_a_bug_inside_the_exit_never_replaces_the_body_outcome(monkeypatch
     """Not a store error: the exit code itself raises (here the result reader). The body's exception still wins,
     a succeeded body still returns, and the failure is recorded with the closed code `store_unreachable`."""
     failed = []
-    store, meter = new_meter(on_settle_failed=failed.append)
+    _store, meter = new_meter(on_settle_failed=failed.append)
 
     def broken(_outcome):
         raise RuntimeError("bug in the exit")
