@@ -159,3 +159,4 @@
 06:24Z | step=AK-G16 rev 1 (c816370) verified, item 98 | done=order 41, P1a, PR62 | next=AK-G16 r1 reviews, AK-G15 r1 report | blocked=NEEDS LEAD 28,29, AK-G15/16 PLs
 06:25Z | step=AK-G15 r1 adversarial saved (2 Blocker 7 Major) | done=... | next=COR report, then resolve | blocked=none
 06:26Z | step=AK-G15 r1 correctness saved (1 Blocker 7 Major); resolve agent running | done=... | next=AK-G16 r1 reports, AK-G15 resolve verify | blocked=none
+06:27Z | step=user asked about PR 62/63 CI: PR 62 security red from P1a fixture (gitleaks) | done=item 99 | next=AK-G16 r1 saves, AK-G15 resolve | blocked=NEEDS LEAD 30
