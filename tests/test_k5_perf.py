@@ -3,8 +3,9 @@ blocking step, and the harness itself is tested with a deliberately quadratic pa
 
 What is measured: wall seconds (perf_counter: process_time ticks at 15.6 ms on Windows and read 0 for the small run,
 which made a linear pattern look like a jump), the median of three runs, on 64 KiB and 256 KiB of one pattern's own
-keyword repeated. A linear pattern takes about 4x as long on 4x the text; a quadratic one 16x; the limit is 12x of
-the small run (never less than 4 ms), with an absolute floor of 60 ms on the big run. The BANKCODE transit pattern
+keyword repeated. A linear pattern takes about 4x as long on 4x the text; a quadratic one 16x; the limit is
+3x per size ratio (12x for 4x the text) of the small run (never less than 4 ms), with no fixed seconds floor on the big
+run (`tests/fixtures/timing.py`). The BANKCODE transit pattern
 measured alone: 16 KiB 3 ms, 64 KiB 19 ms, 256 KiB 75 ms, 1 MiB 333 ms: linear (4x per 4x), about 0.3 us per char."""
 
 from __future__ import annotations
@@ -17,8 +18,9 @@ import time
 
 import pytest
 
+from tests.fixtures import timing
+
 SMALL, BIG = 64 * 1024, 256 * 1024
-RATIO, FLOOR_S, MIN_SMALL_S = 12.0, 0.06, 0.004
 
 
 def _redact_module():
@@ -38,9 +40,7 @@ def _cpu(pattern: re.Pattern[str], text: str) -> float:
 
 
 def _is_superlinear(measure, unit: str, small: int, big: int) -> bool:
-    texts = [(unit * (n // len(unit) + 1))[:n] for n in (small, big)]
-    t_small, t_big = (measure(t) for t in texts)
-    return t_big > max(FLOOR_S, RATIO * max(t_small, MIN_SMALL_S))
+    return timing.is_superlinear(measure, unit, small, big)
 
 
 def is_superlinear(pattern: re.Pattern[str], unit: str, small: int = SMALL, big: int = BIG) -> bool:
@@ -61,8 +61,9 @@ def _units(pattern: re.Pattern[str]) -> list[str]:
 def test_the_harness_flags_a_quadratic_pattern_and_passes_a_linear_one():
     quadratic = re.compile(r"\bcurl\b[^\r\n]*?[ \t]-u")  # the shape the command patterns had
     bounded = re.compile(r"\bcurl\b[^\r\n]{0,1024}?[ \t]-u")
-    assert is_superlinear(quadratic, "curl ", small=8 * 1024, big=32 * 1024)
-    assert not is_superlinear(bounded, "curl ", small=8 * 1024, big=32 * 1024)
+    # 8x the text: a linear cost grows about 8x (limit 24x), a quadratic one about 64x
+    assert is_superlinear(quadratic, "curl ", small=4 * 1024, big=32 * 1024)
+    assert not is_superlinear(bounded, "curl ", small=4 * 1024, big=32 * 1024)
 
 
 @pytest.mark.perf
