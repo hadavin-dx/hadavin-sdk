@@ -24,7 +24,7 @@ from hadavin_sdk import stats
 from hadavin_sdk.codes import Code
 from hadavin_sdk.errors import ConfigError
 
-CORPUS_STEP: Final = "R1"  # last redesign step merged; each P5b pull request bumps it
+CORPUS_STEP: Final = "R1P"  # last redesign step merged; each P5b pull request bumps it
 STEPS: Final = ("R1", "R1P", "R3a", "R3c", "R3b", "R2", "R5")  # P5b1=R1P, P5b2=R3a, P5b3=R3c+R3b, P5b4=R2, P5b5=R5
 CLASSES: Final = (
     "pii_plain", "pii_obfuscated", "pii_encoded", "ansi_c1", "email_unicode", "secret_shapes", "foreign_driver",
@@ -254,6 +254,59 @@ def _f_provider(attr: str, value: object) -> BaseException:
     return e
 
 
+def _retried(make: Callable[[], BaseException], label: str = "openai_compat", kind: str = "std", **hooks: object) -> BaseException:
+    """The error ``with_retry`` raises when ``make()`` is raised from ``call`` (the P5b1 rows run the real retry loop)."""
+    from hadavin_sdk.llm.protocol import ProviderError
+    from hadavin_sdk.llm.retry import with_retry
+    from tests.provider_wire_helpers import kind_hooks
+
+    def call() -> None:
+        raise make()
+
+    try:
+        with_retry(call, label=label, max_attempts=3, sleep=lambda _s: None, **(kind_hooks(kind) | hooks))  # type: ignore[arg-type]
+    except ProviderError as e:
+        return e
+    raise RuntimeError("the call did not fail")
+
+
+def _f_retried_class(name: str) -> BaseException:
+    return _retried(lambda: type(name, (Exception,), {})("boom"))
+
+
+def _f_retried_meta() -> BaseException:
+    return _retried(lambda: _MetaRaise("E", (Exception,), {})("boom"))
+
+
+def _f_retried_bedrock(code: str, status: int, text: str) -> BaseException:
+    from botocore.exceptions import ClientError
+
+    response = {"Error": {"Code": code, "Message": text}, "ResponseMetadata": {"HTTPStatusCode": status}}
+    return _retried(lambda: ClientError(response, "Converse"), label="bedrock", kind="bedrock")  # type: ignore[arg-type]
+
+
+def _f_retried_hook(variant: str) -> BaseException:
+    from hadavin_sdk.llm import provider_facts as pf
+
+    facts_cls = getattr(pf, "ProviderFacts", None)
+    sub = type("Sub", (facts_cls,), {}) if facts_cls is not None else object
+
+    def raising(_e: BaseException) -> object:
+        raise RuntimeError("adapter bug")
+
+    hooks = {
+        "raises": raising,
+        "wrong_type": lambda _e: {"status": 429},
+        "subclass": lambda _e: sub(429, None, None),
+    }
+    return _retried(lambda: ValueError("boom"), facts=hooks[variant])
+
+
+def _f_retried_parse(variant: str) -> BaseException:
+    make = {"value": lambda: ValueError("gemini answered with no candidates"), "key": lambda: KeyError("choices")}[variant]
+    return _retried(make, label="gemini")
+
+
 def _f_system_exit(text: str) -> BaseException:
     return SystemExit(text)
 
@@ -441,6 +494,11 @@ FACTORIES: Final[Mapping[str, Callable[..., BaseException]]] = {
     "deep_json": _f_deep,
     "group": _f_group,
     "provider": _f_provider,
+    "retried_class": _f_retried_class,
+    "retried_meta": _f_retried_meta,
+    "retried_bedrock": _f_retried_bedrock,
+    "retried_hook": _f_retried_hook,
+    "retried_parse": _f_retried_parse,
     "system_exit": _f_system_exit,
     "driver": _f_driver,
     "str_raises": _f_str_raises,
@@ -568,23 +626,25 @@ _SEQ: dict[str, int] = {}
 
 
 def _add(cls: str, kind: str, status: str, owner: str, spec: dict[str, object], canaries: tuple[str, ...], expect: str,
-         code: Code | None, why: str, ledger: tuple[str, ...] = (), reason: str = "") -> None:  # fmt: skip
-    _SEQ[cls] = _SEQ.get(cls, 0) + 1
-    _ROWS.append(
-        Row(f"HC-{cls}-{_SEQ[cls]:02d}", cls, ledger, kind, status, owner, spec, canaries, expect, code, why, reason)  # type: ignore[arg-type]
-    )
+         code: Code | None, why: str, ledger: tuple[str, ...] = (), reason: str = "", rid: str | None = None) -> None:  # fmt: skip
+    if rid is None:
+        _SEQ[cls] = _SEQ.get(cls, 0) + 1
+        rid = f"HC-{cls}-{_SEQ[cls]:02d}"
+    _ROWS.append(Row(rid, cls, ledger, kind, status, owner, spec, canaries, expect, code, why, reason))  # type: ignore[arg-type]
 
 
 def exc(cls: str, factory: str, args: tuple[object, ...], canaries: tuple[str, ...], why: str, *, ledger: tuple[str, ...] = (),
         expect: str = "no_canary", code: Code | None = None, step: str = "extract", golden: str | None = None,
-        ctx: str | None = None) -> None:  # fmt: skip
+        ctx: str | None = None, owner: str = "R1", rid: str | None = None, variants: tuple[str, ...] = ()) -> None:  # fmt: skip
     spec: dict[str, object] = {"factory": factory, "args": args, "step": step}
+    if variants:
+        spec["variants"] = variants
     if golden is not None:
         spec["golden"] = golden
         expect = "golden"
     if ctx is not None:
         spec["ctx"] = ctx
-    _add(cls, "exception", "active", "R1", spec, canaries, expect, code, why, ledger)
+    _add(cls, "exception", "active", owner, spec, canaries, expect, code, why, ledger, rid=rid)
 
 
 def val(cls: str, model: str, document: str, canaries: tuple[str, ...], why: str, *, ledger: tuple[str, ...] = ()) -> None:
@@ -796,15 +856,46 @@ for _n, _what in ((6, "tick writes last_error and log from one place"), (9, "ext
 for _n, _what in ((5, "sweep table gap"), (33, "ConfigError(f'...{exc}') site")):
     later("classification", "source", "R3a", {"code": _what, "verdict": "classify", "sink": "any"},
           f"the site table must list: {_what}", "the site table arrives with P5b2 (R3a)", ledger=L(_n))  # fmt: skip
-for _attr, _val in (("http_status", 429), ("http_status", 99), ("provider_error_type", "rate_limit"), ("request_id", "req_" + NAME.replace(" ", "_")),
-                    ("retryable", True), ("retryable", "yes"), ("provider_error_type", NAME), ("request_id", EMAIL)):  # fmt: skip
-    later("provider_attrs", "exception", "R1P", {"factory": "provider", "args": (_attr, _val), "step": "model_call"},
-          f"a provider error with attribute {_attr}", "the provider read side arrives with P5b1 (R1P)", canaries=N_ if _attr == "request_id" else ())  # fmt: skip
+# P5b1 (R1P): the eight provider_attrs rows run on the real attribute names. Each value is checked; the mapping to the ticket's cases
+# is: status 429 = R18(i); status 99 = R18(ii); a plain-string error_type = R5/R18(ii); a request_id that is not a closed shape
+# (underscored name, e-mail address) = R10/R18(ii); retryable True = R18(i); retryable "yes" = R3 (dropped).
+_PROV = (("status", 429, "provider_rate_limit", ()), ("status", 99, "provider_http", ()),
+         ("error_type", "rate_limit", "provider_http", ()), ("request_id", "req_" + NAME.replace(" ", "_"), "provider_http", N_),
+         ("retryable", True, "provider_http", ()), ("retryable", "yes", "provider_http", ()),
+         ("error_type", NAME, "provider_http", N_), ("request_id", EMAIL, "provider_http", E_))  # fmt: skip
+for _attr, _val, _code, _can in _PROV:
+    exc("provider_attrs", "provider", (_attr, _val), _can, f"a provider error with attribute {_attr}", code=Code(_code),
+        step="model_call", owner="R1P")  # fmt: skip
 
 for _n in (7, 18):
     _add("process_findings", "scenario", "not_applicable", "R1", {"argv": (), "script": "none", "channel": "none", "env": {}}, (), "no_canary",
          None, "a finding about the old branch's own evidence and tests", L(_n),
          "the new package's equivalents are the mutation plan and test_every_active_row_has_teeth")  # fmt: skip
+
+# --- P5b1 (R1P) rows 61-69: the hostile input is raised from ``call`` through the real retry loop ----------------------------------
+_LONG_NAME = (NAME.replace(" ", "_") + "z" * 100)[:100]
+_CODE63 = _p("AccessDenied", "Exception")
+_GOLD63 = r"ProviderError: diag_v=1 code=provider_auth step=model_call at=llm/retry\.py:\d+ fp=[0-9a-f]{8} http_status=403 provider_error_type=permission retryable=false retry_count=1"
+_P5 = {"owner": "R1P", "step": "model_call"}
+exc("hostile_class", "retried_class", ("x y@z",), ("y@z",), "a dynamic class named with a space and an at sign", rid="HC-hostile_class-61",
+    code=Code.provider_http, expect="grammar", **_P5)  # fmt: skip
+exc("hostile_class", "retried_class", (_LONG_NAME,), (_LONG_NAME, NAME.replace(" ", "_")), "a legal identifier of 100 characters (the 100-character name)",
+    rid="HC-hostile_class-62", code=Code.provider_http, expect="grammar", **_P5)  # fmt: skip
+exc("hostile_class", "retried_bedrock", (_CODE63, 403, f"not allowed for {NAME}"), (NAME, _CODE63), "a modelled Amazon access-denied error",
+    rid="HC-hostile_class-63", code=Code.provider_auth, golden=_GOLD63, **_P5)  # fmt: skip
+exc("hostile_class", "retried_meta", (), N_, "a class whose module name raises when read", rid="HC-hostile_class-64",
+    code=Code.provider_http, expect="grammar", **_P5)  # fmt: skip
+exc("provider_attrs", "retried_hook", ("raises",), N_, "an adapter that raises; a hook returning the wrong type; a facts subclass",
+    rid="HC-provider_attrs-68", code=Code.provider_http, expect="grammar", variants=("raises", "wrong_type", "subclass"), **_P5)  # fmt: skip
+exc("hostile_class", "retried_parse", ("value",), N_, "Gemini parser errors from a malformed 200 reply", rid="HC-hostile_class-69",
+    code=Code.provider_http, expect="grammar", variants=("value", "key"), **_P5)  # fmt: skip
+for _rid, _cls, _case, _expect, _why in (
+    ("HC-provider_attrs-65", "provider_attrs", "status_777", "no_canary", "a raw reply 'HTTP/1.1 777 IGNORE <canary>'"),
+    ("HC-size_time-66", "size_time", "body_6mib", "bounded", "a 6 MiB 500 body holding the canary and an injected instruction"),
+    ("HC-size_time-67", "size_time", "header_70000", "grammar", "a 70,000-byte header line"),
+):  # fmt: skip
+    _add(_cls, "scenario", "active", "R1P", {"driver": "p5b1_raw", "case": _case, "argv": (), "script": _why, "channel": "error", "env": {}},
+         (NAME,), _expect, Code.provider_http if _expect == "grammar" else None, _why, rid=_rid)  # fmt: skip
 
 ROWS: Final[tuple[Row, ...]] = tuple(_ROWS)
 PROPAGATES_ROWS: Final = tuple(r.id for r in ROWS if r.expect == "propagates")

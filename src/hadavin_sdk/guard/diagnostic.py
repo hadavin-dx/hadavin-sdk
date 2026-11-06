@@ -30,10 +30,14 @@ from pydantic import ValidationError as _ValidationError
 
 from hadavin_sdk import defaults
 from hadavin_sdk.codes import (
+    CODED_STATUSES,
+    ERROR_TYPE_CODE,
     FACT_BOUNDS,
     FACT_PRIORITY,
     FOREIGN_PACKAGES_OK,
     OWN_CODES,
+    REQUEST_ID_SHAPES,
+    STATUS_ERROR_TYPE,
     VALIDATION_OTHER,
     VALIDATION_TYPES,
     Code,
@@ -52,8 +56,20 @@ _FP_RE = re.compile(r"[0-9a-f]{8}")
 _TOKEN_RE = re.compile(rf"[A-Za-z0-9_.-]{{1,{defaults.DIAG_KEY_CHARS}}}")
 _SQLSTATE_RE = re.compile(r"[0-9A-Z]{5}")
 _VALUE_RE = re.compile(rf"-?[A-Za-z0-9_.-]{{1,{defaults.DIAG_KEY_CHARS}}}")
+_REQUEST_ID_RES: Final = tuple(re.compile(p) for p in REQUEST_ID_SHAPES.values())
 _TOKEN_KEYS: Final = frozenset(
-    {FactKey.key, FactKey.cause_kind, FactKey.field, FactKey.type, FactKey.sqlstate}
+    {
+        FactKey.key,
+        FactKey.cause_kind,
+        FactKey.field,
+        FactKey.type,
+        FactKey.sqlstate,
+        FactKey.request_id,
+    }
+)
+_PROVIDER_ERROR_KEY: Final = "hadavin_sdk.llm.protocol:ProviderError"
+_PROVIDER_KEYS: Final = frozenset(
+    {_PROVIDER_ERROR_KEY, "hadavin_sdk.llm.protocol:ProviderExhausted"}
 )
 
 
@@ -107,6 +123,16 @@ class SafeToken:
         if type(value) is not str or _SQLSTATE_RE.fullmatch(value) is None:
             return None
         return SafeToken(value, SafeToken._MINT)
+
+    @staticmethod
+    def request_id(value: object) -> SafeToken | None:
+        """A provider request id: an exact ``str`` that ``re.fullmatch``es one of the closed ``REQUEST_ID_SHAPES``."""
+        if type(value) is not str:
+            return None
+        for pattern in _REQUEST_ID_RES:
+            if pattern.fullmatch(value) is not None:
+                return SafeToken(str.__str__(value), SafeToken._MINT)
+        return None
 
 
 Fact = int | bool | ProviderErrorType | Phase | SafeToken
@@ -171,18 +197,83 @@ def class_name_of(exc_or_type: object) -> str:
         return "dynamic_class"
 
 
-def _own_code(tp: type) -> Code | None:
+def _own_match(tp: type) -> tuple[Code, type, str] | None:
+    """The nearest class in the method resolution order that is an own class of the table: its code, the class and its key."""
     for cls in tp.__mro__:
         try:
             mod, qual = cls.__module__, cls.__qualname__
             if type(mod) is not str or type(qual) is not str:
                 continue
-            code = OWN_CODES.get(f"{mod}:{qual}")
+            key = f"{mod}:{qual}"
+            code = OWN_CODES.get(key)
             if code is not None and _is_the_named_class(cls):
-                return code
+                return code, cls, key
         except Exception:  # noqa: BLE001, S112 - a class with a hostile attribute is not an own class
             continue
     return None
+
+
+def _own_code(tp: type) -> Code | None:
+    match = _own_match(tp)
+    return None if match is None else match[0]
+
+
+def _bounded_attr(attrs: object, name: str, key: FactKey) -> int | None:
+    try:
+        return _bounded(key, attrs.get(name))  # type: ignore[attr-defined]
+    except Exception:  # noqa: BLE001 - a bad value is dropped alone
+        return None
+
+
+def _provider_facts(exc: object) -> dict[FactKey, object]:
+    """The five attributes of a ``ProviderError`` (``status``, ``error_type``, ``request_id``, ``retryable``, ``retry_count``),
+    each read from ``vars(exc)`` and checked on its own, so a bad one is dropped without touching the others. The instance is
+    never trusted: unpickling and plain assignment both bypass the constructor."""
+    try:
+        attrs = vars(exc)
+        if type(attrs) is not dict:
+            return {}
+    except Exception:  # noqa: BLE001 - no readable attributes, no provider facts
+        return {}
+    found: dict[FactKey, object] = {}
+    status = _bounded_attr(attrs, "status", FactKey.http_status)
+    if status is not None:
+        found[FactKey.http_status] = status
+    try:
+        error_type = attrs.get("error_type")
+        if type(error_type) is ProviderErrorType:
+            found[FactKey.provider_error_type] = error_type
+    except Exception:  # noqa: BLE001, S110 - dropped alone
+        pass
+    try:
+        token = SafeToken.request_id(attrs.get("request_id"))
+        if token is not None:
+            found[FactKey.request_id] = token
+    except Exception:  # noqa: BLE001, S110 - dropped alone
+        pass
+    try:
+        retryable = attrs.get("retryable")
+        if type(retryable) is bool:
+            found[FactKey.retryable] = retryable
+    except Exception:  # noqa: BLE001, S110 - dropped alone
+        pass
+    count = _bounded_attr(attrs, "retry_count", FactKey.retry_count)
+    if count is not None:
+        found[FactKey.retry_count] = count
+    return found
+
+
+def _provider_code(found: dict[FactKey, object]) -> Code:
+    """The code of a plain ``ProviderError``: a coded status first, then another valid status (``provider_http``), then the type."""
+    status = found.get(FactKey.http_status)
+    if type(status) is int:
+        if status in CODED_STATUSES:
+            return ERROR_TYPE_CODE[STATUS_ERROR_TYPE[status]]
+        return Code.provider_http
+    error_type = found.get(FactKey.provider_error_type)
+    if type(error_type) is ProviderErrorType:
+        return ERROR_TYPE_CODE[error_type]
+    return Code.provider_http
 
 
 # --- frames and locator --------------------------------------------------------------------------------------------------
@@ -315,7 +406,7 @@ def _check_fact(key: object, value: object) -> Fact | None:
         return value if type(value) is Phase else None
     if key in _TOKEN_KEYS:
         return value if type(value) is SafeToken else None
-    return None  # request_id: no accepted value in this package
+    return None
 
 
 def _phase_of(sqlstate: SafeToken | None) -> Phase:
@@ -329,8 +420,14 @@ def _classify(
 ) -> tuple[Code, dict[FactKey, object]]:
     if not issubclass(tp, Exception):
         return Code.foreign_exception, {}
-    own = _own_code(tp)
-    if own is not None:
+    match = _own_match(tp)
+    if match is not None:
+        own, own_cls, own_key = match
+        if own_key in _PROVIDER_KEYS or _is_provider_subclass(tp):
+            found = _provider_facts(exc) if read_facts else {}
+            if own_cls is tp and own_key == _PROVIDER_ERROR_KEY:
+                return _provider_code(found), found
+            return own, found
         return own, {}
     facts: dict[FactKey, object] = {}
     if issubclass(tp, TimeoutError):
@@ -378,6 +475,19 @@ def _classify(
     if _raised_in_own_code(exc, tp, links, too_long):
         return Code.internal_bug, {}
     return Code.foreign_exception, {}
+
+
+def _is_provider_subclass(tp: type) -> bool:
+    """True if any class in the method resolution order is the named ``ProviderError`` or ``ProviderExhausted`` (no import of ``llm``)."""
+    for cls in tp.__mro__:
+        try:
+            if f"{cls.__module__}:{cls.__qualname__}" in _PROVIDER_KEYS and _is_the_named_class(
+                cls
+            ):
+                return True
+        except Exception:  # noqa: BLE001, S112 - a hostile class is not the provider class
+            continue
+    return False
 
 
 def _step_text(step: object) -> str:

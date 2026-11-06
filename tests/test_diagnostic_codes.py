@@ -10,7 +10,7 @@ from pathlib import Path
 import pytest
 
 from hadavin_sdk import codes
-from hadavin_sdk.codes import OWN_CODES, RESERVED_FOR, Code, FactKey
+from hadavin_sdk.codes import ERROR_TYPE_CODE, OWN_CODES, RESERVED_FOR, Code, FactKey
 from hadavin_sdk.guard.diagnostic import diagnose, render
 
 SRC = Path(__file__).resolve().parents[1] / "src" / "hadavin_sdk"
@@ -59,7 +59,7 @@ def test_codes_module_imports_only_the_standard_library() -> None:
 
 
 def test_every_code_member_is_reachable_or_reserved() -> None:
-    reachable = set(OWN_CODES.values()) | {
+    reachable = set(OWN_CODES.values()) | set(ERROR_TYPE_CODE.values()) | {  # the provider codes are reached by a status or a type (P5b1)
         Code.validation_failed, Code.os_error, Code.db_error, Code.internal_bug, Code.foreign_exception, Code.timeout,
     }  # fmt: skip
     for code in Code:
