@@ -529,3 +529,5 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | rv-P1m-r2-adv | egm-design review PR 61 head 7442c0f | 10:05Z | +15min | running | save |
 | rv-P1m-r2-cor | egm-codebase-details review PR 61 head 7442c0f | 10:05Z | +15min | running | save |
 | sv-AK1-r2 | Sonnet save AK1 r2 pair + ledger | 10:15Z | +10min | running | verify, push |
+| rv-P5b4-r3-adv | egm-design round 3 P5b4 rev 3 | 10:25Z | +10min | running | save |
+| rv-P5b4-r3-cor | egm-codebase-details round 3 P5b4 rev 3 | 10:25Z | +10min | running | save |
