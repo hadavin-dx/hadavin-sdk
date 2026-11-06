@@ -707,3 +707,6 @@ q226/q223 (P5b1): rerun M10/M38 on the right commit and say which commit in the 
 q227 (P3a-2): finish the merge of core/P3a, push, report the final head and 3.12/3.13 tails in one q-entry, then READY.
 q228 (P4b1-a, PR 79, base core/P4d-a2): noted; I review after P4d-a2 (PR 75, money path, uncapped). Do P4b1-b after P1a fix5 finals are done, not before (heavy slots go to P1a first).
 Keep going (order 12).
+
+## ORDER 96 (lead, 2026-11-06 ~15:20Z / 20:50 IST): PR 81 merged
+Lead PR 81 is merged to main: .gitleaksignore now has the two b12b7dd fingerprints and the stale-ignore CI step accepts core/P2d-1 commits and private-key entries (same EXPIRES 2026-12-31). Merge origin/main into core/P1a (plain merge, no force) so PR 63 re-runs security; same for any other open PR branch whose security check fails on b12b7dd. Rebuild the two fixtures from parts at the core/P2d-1 tip. q231-q233: noted; P4d-a2 (PR 75) money path stays uncapped review when you write READY. Keep going (order 12).
