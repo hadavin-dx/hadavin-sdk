@@ -289,8 +289,9 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | draft11-LK-author | Sonnet author: apply LK r10 resolve to designs/lookalike-leak.md -> draft 11 (FINAL, then frozen per order 16) | sonnet | 01:52Z | +60min | REPORTED | verify commit; freeze |
 | rev16-P1-author | Sonnet author: apply reviews/P1-round14-resolve.md to tickets/P1.md -> revision 16 (FINAL; then FROZEN per order 16) | sonnet | 01:58Z | +60min | running | verify commit; six-copy x6; recount; freeze |
 | r11-P4a-adv | round 11 adversarial P4a rev 11 (4fff3cc) (order 16: last review round before final resolve) | sonnet | 01:58Z | +45min | REPORTED | save report, ledger |
-| r11-P4a-cor | round 11 correctness P4a rev 11 (4fff3cc) | sonnet | 01:58Z | +45min | running | save report, ledger |
+| r11-P4a-cor | round 11 correctness P4a rev 11 (4fff3cc) | sonnet | 01:58Z | +45min | REPORTED | save report, ledger |
 | r8-P4d-resolve | Opus egm-resolve of round reviews for P4d rev 9 (order 16: older package, round 1 of 3) | opus | 01:59Z | +45min | running | save nothing (agent writes reviews/*-resolve.md); commit; launch author |
 | r8-P3a-resolve | Opus egm-resolve of round reviews for P3a rev 9 (order 16: older package, round 1 of 3) | opus | 01:59Z | +45min | running | save nothing (agent writes reviews/*-resolve.md); commit; launch author |
 | r5-P2d-resolve | Opus egm-resolve of round reviews for P2d rev 5 (order 16: older package, round 1 of 3) | opus | 01:59Z | +45min | running | save nothing (agent writes reviews/*-resolve.md); commit; launch author |
 | r8-P2a-resolve | Opus egm-resolve of P2a r8 reviews (rev 9) (order 16: round 1 of 3) | opus | 01:59Z | +45min | running | commit; launch author |
+| r11-P4a-resolve | Opus egm-resolve of P4a r11 reviews (rev 11) -> then final rev 12 and FROZEN | opus | 02:04Z | +45min | running | commit; launch rev 12 author |
