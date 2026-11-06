@@ -1459,3 +1459,4 @@
 | BS-P4a-COR-1 | Major | P4a | see reviews/P4a-buildstart-adv.md | OPEN |
 | BS-P4a-ADV-1 | Major | P4a | see reviews/P4a-buildstart-adv.md | OPEN |
 | BS-P4a-COR-2 | Major | P4a | see reviews/P4a-buildstart-adv.md | OPEN |
+| BS-P4a-COR-2b | Major | P4a | U5 vs input-zero rule (reviews/P4a-buildstart-cor.md) | OPEN |

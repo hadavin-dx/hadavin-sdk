@@ -309,7 +309,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | bs-P2a-adv | build-start review (order 20) of frozen tickets/P2a.md, egm:*, read-only | sonnet | 02:31Z | +45min | running | save report as reviews/P2a-buildstart-adv.md; then ONE resolve |
 | bs-P2a-cor | build-start review (order 20) of frozen tickets/P2a.md, egm:*, read-only | sonnet | 02:31Z | +45min | REPORTED | save report as reviews/P2a-buildstart-cor.md; then ONE resolve |
 | bs-P4a-adv | build-start review (order 20) of frozen tickets/P4a.md, egm:*, read-only | sonnet | 02:31Z | +45min | REPORTED | save report as reviews/P4a-buildstart-adv.md; then ONE resolve |
-| bs-P4a-cor | build-start review (order 20) of frozen tickets/P4a.md, egm:*, read-only | sonnet | 02:31Z | +45min | running | save report as reviews/P4a-buildstart-cor.md; then ONE resolve |
+| bs-P4a-cor | build-start review (order 20) of frozen tickets/P4a.md, egm:*, read-only | sonnet | 02:31Z | +45min | REPORTED | save report as reviews/P4a-buildstart-cor.md; then ONE resolve |
 | res1-P4b1 | Opus egm-resolve of round-1 reviews of tickets/P4b1.md (order 20 item 6) | opus | 02:32Z | +40min | running | commit report; launch revision author |
 | res1-P4b2 | Opus egm-resolve of round-1 reviews of tickets/P4b2.md (order 20 item 6) | opus | 02:32Z | +40min | running | commit report; launch revision author |
 | res1-P4c | Opus egm-resolve of round-1 reviews of tickets/P4c.md (order 20 item 6) | opus | 02:32Z | +40min | running | commit report; launch revision author |
