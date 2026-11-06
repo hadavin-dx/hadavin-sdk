@@ -237,6 +237,16 @@ def test_every_scan_path_of_textnorm_finds_a_secret_hidden_with_any_mc_lm_or_sk_
         )
 
 
+def test_scan_holds_finds_the_password_for_every_mc_lm_and_sk_code_point_that_is_not_a_letter():
+    """The same contract as the three parametrized cases, in one test (the mutation runner pins one test name)."""
+    for category in ("Mc", "Lm", "Sk"):
+        for ch, text in _hidden_in_password(category):
+            if not _reads_as_letters(ch):
+                assert textnorm.scan_holds(text, "password"), (
+                    f"scan_holds misses a secret hidden with U+{ord(ch):04X} ({category})"
+                )
+
+
 @pytest.mark.parametrize("category", ["Mc", "Lm", "Sk"])
 def test_a_protected_value_that_holds_the_hidden_code_point_is_found_in_the_plain_text(category):
     """The other direction (the value, not the text, carries the character): ANY view of the text holds ANY view of the value."""
