@@ -1708,3 +1708,4 @@
 | R2-P6a-COR-4 | Major | P6a | T6 (f) pins make_llm_callers to the pre-P5c set, so on the stated post-P5c base the row would fail although the ticket lists all of T6 as passing pins. -> reviews/P6a-round2-correctness.md | OPEN |
 | R3-P4b1-ADV-1 | Major | P4b1 | The store fixture is visible only under tests/contracts, so the T2 and B10 files outside that directory would fail to collect with "fixture 'store' not found". -> reviews/P4b1-round3-adversarial.md | OPEN |
 | R3-P4b1-ADV-2 | Major | P4b1 | The claim that the books can only be too high is false when the planned amount exceeds the reservation and the exit settle fails, leaving counters under-booked by up to 9W. -> reviews/P4b1-round3-adversarial.md | OPEN |
+| R3-P4b1-COR-1 | Major | P4b1 | The ticket treats CallTimeout as a ProviderError, but in code it is a plain Exception, so the R4d-1 and W16 expectation of booking attempts times W cannot pass. -> reviews/P4b1-round3-correctness.md | OPEN |
