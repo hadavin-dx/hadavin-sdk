@@ -1,8 +1,10 @@
 """P4d-a1: the store kind registry, `require_backend`, the recording proxy and the session-end check.
 
-The session-end check is unit-tested on a fake session (`SessionState`); one test runs a real nested pytest to
-prove `conftest.py` wires the hooks. Imports of the new helpers sit inside the tests so that the fail-before test
-(which needs only the old `pg_schema`) can run alone against the code before this change."""
+The session-end check is unit-tested on a fake session (`SessionState`); the nested tests at the end run a real
+pytest, with the CI command and NO file argument, on a throw-away project that holds a verbatim copy of
+`conftest.py`, to prove the hooks are wired the way CI loads them. Imports of the new helpers sit inside the
+tests so that the fail-before test (which needs only the old `pg_schema`) can run alone against the code before
+this change."""
 
 import os
 import subprocess
@@ -43,16 +45,20 @@ def test_store_and_store_pair_are_registered_for_memory_and_postgres():
 
 # --- FAIL-BEFORE: on the code before P4d-a1 this generator skipped where it must fail ------------------------
 def test_pg_schema_fails_instead_of_skipping_in_ci_without_a_database(no_rule):
+    from tests.contracts.kinds import require_backend
+
+    require_backend("postgres", dsn=False)  # no rule yet: skips where the driver is missing
     no_rule.setenv("CI", "1")
     no_rule.delenv("HADAVIN_TEST_PG_DSN", raising=False)
-    pytest.importorskip("psycopg")
     kind, _ = _outcome(lambda: next(pg_schema()))
     assert kind == "Failed", f"expected a failure in CI, got {kind}"
 
 
 def test_pg_schema_still_skips_on_a_laptop_without_a_database(no_rule):
     no_rule.delenv("HADAVIN_TEST_PG_DSN", raising=False)
-    pytest.importorskip("psycopg")
+    from tests.contracts.kinds import require_backend
+
+    require_backend("postgres", dsn=False)
     kind, msg = _outcome(lambda: next(pg_schema()))
     assert kind == "Skipped"
     assert msg.startswith("require_backend:")
@@ -296,27 +302,260 @@ def test_public_methods_lists_only_public_callables():
     assert public_methods(P) == ["a"]
 
 
-# --- conftest.py wires the hooks (a real nested pytest) --------------------------------------------------------
-def _nested(extra_env):
-    env = {k: v for k, v in os.environ.items() if k not in RULE_VARS}
+# --- the rule, as unit tests (order 101 item 2) -----------------------------------------------------------------
+def test_session_check_under_xdist_fails_even_when_the_controller_selected_nothing():
+    """The controller of an xdist run collects nothing itself: `selected` is empty there, and that must not
+    read as "nothing to check"."""
+    from tests.contracts.store_support import XDIST_MESSAGE, session_problems
+
+    controller = _state(xdist=True, selected=set(), items={}, ran=set(), called=set())
+    assert session_problems(controller) == [XDIST_MESSAGE]
+    assert session_problems(_state(xdist=True, fail_rule=False, selected=set())) == []
+
+
+def test_a_store_test_known_to_the_state_but_not_selected_is_not_expected_to_run():
+    """`-m "not perf"` removes a perf-marked store test for both backends: it must not fail every CI run."""
+    from tests.contracts.store_support import session_problems
+
+    state = _state()
+    for backend in ("memory", "postgres"):
+        state.items[f"t.py::test_perf[{backend}]"] = ("t.py::test_perf", backend)
+    assert session_problems(state) == []
+
+
+def test_one_deselected_instance_of_a_parametrized_store_test_is_not_expected_to_run():
+    from tests.contracts.store_support import session_problems
+
+    state = _state()
+    for backend in ("memory", "postgres"):
+        for n in (1, 2):
+            nodeid = f"t.py::test_c[{backend}-{n}]"
+            state.items[nodeid] = ("t.py::test_c", backend)
+            state.selected.add(nodeid)
+            if (
+                n == 1
+            ):  # instance 2 was deselected after being recorded: it is selected but never ran
+                state.ran.add(nodeid)
+    assert session_problems(state) == [
+        "store test t.py::test_c did not run for backend memory",
+        "store test t.py::test_c did not run for backend postgres",
+    ]
+    for backend in ("memory", "postgres"):  # the same test with instance 2 truly deselected
+        gone = f"t.py::test_c[{backend}-2]"
+        state.selected.discard(gone)
+        del state.items[gone]
+    assert session_problems(state) == []
+
+
+def test_a_selected_store_test_that_skips_itself_fails_the_run_whatever_the_reason():
+    """The documented rule: a store test runs on both backends or it is not a store test."""
+    from tests.contracts.store_support import session_problems
+
+    state = _state(skip_reasons=["not on this Python"])  # a reason that is not `require_backend:`
+    state.ran.discard("t.py::test_a[postgres]")
+    assert session_problems(state) == ["store test t.py::test_a did not run for backend postgres"]
+
+
+def test_xdist_active_reads_the_worker_variable_the_option_and_the_plugin(monkeypatch):
+    from types import SimpleNamespace
+
+    from tests.contracts.store_support import xdist_active
+
+    def config(plugin, **option):
+        return SimpleNamespace(
+            pluginmanager=SimpleNamespace(hasplugin=lambda name: plugin and name == "xdist"),
+            option=SimpleNamespace(**option),
+        )
+
+    monkeypatch.delenv("PYTEST_XDIST_WORKER", raising=False)
+    assert xdist_active(config(True, numprocesses=2, dist="load"))
+    assert xdist_active(config(True, numprocesses=None, dist="loadfile"))
+    assert not xdist_active(config(True, numprocesses=0, dist="no"))  # -n 0
+    assert not xdist_active(config(True, numprocesses=None, dist="no"))
+    assert not xdist_active(config(True))  # options absent
+    assert not xdist_active(
+        config(False, numprocesses=2, dist="load")
+    )  # no plugin: the option is unknown
+    monkeypatch.setenv("PYTEST_XDIST_WORKER", "gw0")
+    assert xdist_active(config(False))
+
+
+# --- conftest.py wires the hooks (real nested pytests, order 101 item 1) ------------------------------------------
+CI_COMMAND = [
+    "-q",
+    "-m",
+    "not live and not perf",
+    "-p",
+    "no:cacheprovider",
+]  # as ci.yml, no file argument
+FAKE_KINDS = """
+from tests.contracts.kinds import kind
+
+
+class Fake:
+    def __getattr__(self, name):
+        return lambda *args, **kwargs: None
+
+
+for _name in ("alpha", "beta"):
+    kind("store", _name)(lambda tmp_path: Fake())
+"""
+CALLS_EVERYTHING = """
+from hadavin_sdk.store.protocol import Store
+from tests.contracts.store_support import public_methods
+
+
+def test_calls_every_method(store):
+    for name in public_methods(Store):
+        getattr(store, name)()
+"""
+# touch is called only while a fixture sets up and get_tick_state only while it tears down, never in a body
+WITH_DEFECTS = """
+import pytest
+
+from hadavin_sdk.store.protocol import Store
+from tests.contracts.store_support import public_methods
+
+ONLY_AROUND = ("touch", "get_tick_state")
+
+
+@pytest.fixture
+def noisy(store):
+    store.touch()
+    yield store
+    store.get_tick_state()
+
+
+def _body(store):
+    for name in public_methods(Store):
+        if name not in ONLY_AROUND:
+            getattr(store, name)()
+
+
+def test_first(noisy):
+    _body(noisy)
+
+
+def test_second(noisy):
+    _body(noisy)
+
+
+def test_skips_for_beta(store):
+    if store.backend == "beta":
+        pytest.skip("require_backend: beta: planted silent skip")
+
+
+@pytest.mark.perf
+def test_perf_marked_and_deselected(store):
+    raise AssertionError("deselected by -m, must never run")
+"""
+
+
+def _project(tmp_path, test_source):
+    """A throw-away project: the real `conftest.py` and `store_support.py` copied verbatim, the kind registry
+    module, two fake store kinds, and one test file."""
+    proj = tmp_path / "proj"
+    contracts = proj / "tests" / "contracts"
+    (contracts / "kinds").mkdir(parents=True)
+    (proj / "tests" / "__init__.py").write_text("", encoding="utf-8")
+    (contracts / "__init__.py").write_text("", encoding="utf-8")
+    here = Path(__file__).parent
+    for name in ("conftest.py", "store_support.py"):
+        (contracts / name).write_text((here / name).read_text(encoding="utf-8"), encoding="utf-8")
+    (contracts / "kinds" / "__init__.py").write_text(
+        (here / "kinds" / "__init__.py").read_text(encoding="utf-8"), encoding="utf-8"
+    )
+    (contracts / "kinds" / "fake_store.py").write_text(FAKE_KINDS, encoding="utf-8")
+    (contracts / "test_nested.py").write_text(test_source, encoding="utf-8")
+    (proj / "pyproject.toml").write_text(
+        '[tool.pytest.ini_options]\ntestpaths = ["tests"]\npythonpath = ["."]\n'
+        'markers = ["live: x", "perf: y"]\n',
+        encoding="utf-8",
+    )
+    return proj
+
+
+def _nested(cwd, extra_env, args):
+    """Run pytest in `cwd` with a clean environment (the rule variables, xdist and any pytest options of the
+    outer run removed)."""
+    env = {
+        k: v
+        for k, v in os.environ.items()
+        if k not in RULE_VARS and not k.startswith(("PYTEST_", "HADAVIN_TEST_"))
+    }
+    env["PYTHONPATH"] = os.pathsep.join(filter(None, [str(ROOT / "src"), env.get("PYTHONPATH")]))
     env.update(extra_env)
-    cmd = [
-        sys.executable, "-m", "pytest", "tests/contracts/test_store.py", "-q", "-p", "no:cacheprovider",
-        "-k", "memory and test_plan_round_trip",
-    ]  # fmt: skip
+    cmd = [sys.executable, "-m", "pytest", *args]
     return subprocess.run(  # noqa: S603 - our own interpreter and a fixed command
-        cmd, cwd=ROOT, env=env, capture_output=True, text=True, timeout=120, check=False
+        cmd, cwd=cwd, env=env, capture_output=True, text=True, timeout=120, check=False
     )
 
 
 def test_conftest_fails_a_memory_only_run_under_the_rule_and_not_without_it():
-    quiet = _nested({})
+    """With a file argument (the conftest is then loaded before the session starts, the case that always worked)."""
+    args = ["tests/contracts/test_store.py", "-q", "-p", "no:cacheprovider"]
+    args += ["-k", "memory and test_plan_round_trip"]
+    quiet = _nested(ROOT, {}, args)
     assert quiet.returncode == 0, quiet.stdout[-600:]
     assert "session-end check" not in quiet.stdout
-    strict = _nested({"HADAVIN_REQUIRE_PG": "1"})
+    strict = _nested(ROOT, {"HADAVIN_REQUIRE_PG": "1"}, args)
     assert strict.returncode == 1, strict.stdout[-600:]
     assert "contract session-end check FAILED" in strict.stdout
     assert (
         "test_plan_round_trip_replace_and_unknown_is_not_found did not run for backend postgres"
         in (strict.stdout)
     )
+
+
+def test_a_plain_run_with_no_file_argument_passes_when_every_method_is_called_on_every_backend(
+    tmp_path,
+):
+    """The CI command. A pass proves nothing by itself; the next test proves the checks are alive."""
+    proj = _project(tmp_path, CALLS_EVERYTHING)
+    for rule in ({"HADAVIN_REQUIRE_PG": "1"}, {"CI": "true"}):
+        done = _nested(proj, rule, CI_COMMAND)
+        assert done.returncode == 0, done.stdout[-800:]
+        assert "session-end check" not in done.stdout
+
+
+def test_a_plain_run_with_no_file_argument_reports_a_silent_skip_a_missing_test_and_uncalled_methods(
+    tmp_path,
+):
+    """BLOCKER of order 101: a conftest in a directory that does not start with `test` is loaded during
+    collection, after `pytest_sessionstart`, so state made there was never made and every check was inert. Also
+    the wiring of what counts as "called by a test body": `touch` is called only while a fixture sets up and
+    `get_tick_state` only while it tears down, so both must be reported as never called; the lines below are the
+    complete list of what the run reports."""
+    proj = _project(tmp_path, WITH_DEFECTS)
+    strict = _nested(proj, {"HADAVIN_REQUIRE_PG": "1"}, CI_COMMAND)
+    out = strict.stdout
+    assert strict.returncode == 1, out[-800:]
+    assert "contract session-end check FAILED:" in out
+    reported = sorted(line.strip() for line in out.splitlines() if line.startswith("  "))
+    nodeid = "tests/contracts/test_nested.py::test_skips_for_beta"
+    assert reported == sorted(
+        [
+            "a backend was skipped silently: require_backend: beta: planted silent skip",
+            f"store test {proj / nodeid} did not run for backend beta",
+            "no test body called Store.get_tick_state on backend alpha",
+            "no test body called Store.get_tick_state on backend beta",
+            "no test body called Store.touch on backend alpha",
+            "no test body called Store.touch on backend beta",
+        ]
+    ), out
+    # the perf-marked store test was deselected by -m: it neither ran nor is reported
+    assert "test_perf_marked_and_deselected" not in out
+
+
+def test_the_same_defects_are_silent_without_the_fail_rule(tmp_path):
+    proj = _project(tmp_path, WITH_DEFECTS)
+    done = _nested(proj, {}, CI_COMMAND)
+    assert done.returncode == 0, done.stdout[-800:]
+    assert "session-end check" not in done.stdout
+
+
+def test_a_run_that_selects_no_store_test_is_silent_under_the_rule(tmp_path):
+    proj = _project(tmp_path, WITH_DEFECTS)
+    done = _nested(proj, {"HADAVIN_REQUIRE_PG": "1"}, [*CI_COMMAND, "-k", "no_such_test_name"])
+    assert done.returncode == 5, done.stdout[-800:]  # nothing collected
+    assert "session-end check" not in done.stdout

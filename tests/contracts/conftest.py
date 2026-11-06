@@ -93,6 +93,19 @@ def channel_factory(request, tmp_path):
 _STATE: SessionState | None = None
 
 
+def pytest_configure(config):
+    """Create the state here and not in `pytest_sessionstart`. This directory's name does not start with `test`,
+    so a plain `pytest` run (no file argument) loads this conftest only while it collects, after the session has
+    started, and `pytest_sessionstart` is never called on it: the checks were then silently inert (found by two
+    reviewers and proved by a run, order 101). `pytest_configure` is a historic hook: pluggy also calls it for a
+    plugin that registers after configuration. The nested no-file-argument runs in `test_store_registry.py` keep
+    this wired."""
+    global _STATE
+    _STATE = new_state(config)
+    RECORDER.called.clear()
+    RECORDER.in_body = False
+
+
 def _uses_store(item) -> bool:
     """A test of this directory that is parametrized over the registered store kinds. (Hooks in a conftest see
     every collected item, also those of other directories, so the path is checked.)"""
@@ -107,20 +120,10 @@ def _store_key(item) -> tuple[str, str]:
     return f"{item.path}::{item.originalname}", params.get("store") or params.get("store_pair")
 
 
-def pytest_sessionstart(session):
-    global _STATE
-    _STATE = new_state(session.config)
-    RECORDER.called.clear()
-
-
-def pytest_deselected(items):
-    for item in items:
-        if _STATE is not None and _uses_store(item):
-            _STATE.items[item.nodeid] = _store_key(item)
-
-
 @pytest.hookimpl(trylast=True)
 def pytest_collection_modifyitems(config, items):
+    """`trylast`: runs after `-k`, `-m` and `--deselect` have taken their items out, so `items` is what will run;
+    only these are expected to have run (a deselected test is not recorded at all)."""
     if _STATE is None:
         return
     for item in items:
@@ -162,6 +165,7 @@ def pytest_runtest_logreport(report):
 def pytest_sessionfinish(session, exitstatus):
     if _STATE is None or exitstatus not in (0, 1):
         return
+    _STATE.backends = tuple(sorted(KINDS["store"]))
     _STATE.called = set(RECORDER.called)
     _STATE.methods = public_methods(Store)
     problems = session_problems(_STATE)

@@ -1,6 +1,10 @@
 """Helpers of the store contract suite that are not fixtures: the recording proxy, `utc_today`, and the
 session-end check (P4d-a1). `conftest.py` wires them to pytest; the logic is here so that unit tests can feed it
-a fake session (`tests/contracts/test_store_registry.py`)."""
+a fake session (`tests/contracts/test_store_registry.py`).
+
+Public names (blessed for P4d-a2 and later, order 101): `RECORDER`, `Recorder`, `RecordingStore`, `utc_today`,
+`public_methods`, `SessionState`, `session_problems`, `xdist_active`, `new_state`, `POSTGRES_ONLY_BY_DESIGN`,
+`XDIST_MESSAGE`. A change to one of them is a change to every store test, so it goes through review as such."""
 
 from __future__ import annotations
 
@@ -80,7 +84,7 @@ class SessionState:
     fail_rule: bool
     xdist: bool = False
     backends: tuple[str, ...] = ()
-    # nodeid -> (test function id, backend) for every store test, selected or deselected
+    # nodeid -> (test function id, backend) for every SELECTED store test (a deselected one is not expected to run)
     items: dict[str, tuple[str, str]] = field(default_factory=dict)
     selected: set[str] = field(default_factory=set)
     ran: set[str] = field(default_factory=set)
@@ -90,21 +94,40 @@ class SessionState:
 
 
 def session_problems(state: SessionState) -> list[str]:
-    """The reasons to fail the run; empty when the check is off or everything holds. Off unless the fail rule is
-    on (`HADAVIN_REQUIRE_PG` or `CI`) and at least one selected test uses `store` or `store_pair`."""
-    if not state.fail_rule or not state.selected:
+    """The reasons to fail the run; empty when the check is off or everything holds.
+
+    The check is off unless the fail rule is on (`HADAVIN_REQUIRE_PG` or `CI`). The rules, all under that rule:
+
+    1. xdist is judged FIRST and whatever was selected: the controller process of an xdist run collects nothing
+       itself (its workers do), so "nothing selected" there does not mean "nothing to check"; a run with
+       `-n`/`--dist` fails with `XDIST_MESSAGE`. (A run that selects no store test and does not use xdist is
+       silent: a `-m perf` run has nothing to check.)
+    2. Only SELECTED items count. A store test that `-m`, `-k` or `--deselect` removed from the run is not
+       expected to have run, so a test marked `perf` or `live` does not fail every CI run for ever. A function is
+       judged when at least one of its items is selected, and then every backend must have run all of its
+       SELECTED items: `-k memory` (postgres items gone) fails by design, because the run no longer proves the
+       contract for Postgres; do not set the fail rule for a narrowed local run.
+    3. A selected item that is skipped fails the run whatever the reason (a mark, `pytest.skip`, a fixture): a
+       store test runs on both backends or it is not a store test. The one exemption is
+       `POSTGRES_ONLY_BY_DESIGN` (a named test that needs only Postgres), and a skip is not a way into it.
+    4. A skip whose reason starts `require_backend:` (a backend missing) is reported as such.
+    5. Every public `Store` method must have been called by some test BODY on every backend (a call made while a
+       fixture sets up or tears down does not count)."""
+    if not state.fail_rule:
         return []
     if state.xdist:
         return [XDIST_MESSAGE]
+    if not state.selected:
+        return []
     problems = [
         f"a backend was skipped silently: {reason}"
         for reason in state.skip_reasons
         if reason.startswith("require_backend:")
     ]
     by_function: dict[tuple[str, str], list[str]] = {}
-    for nodeid, key in state.items.items():
-        by_function.setdefault(key, []).append(nodeid)
-    for function in sorted({fn for fn, _ in state.items.values()}):
+    for nodeid in sorted(state.selected):
+        by_function.setdefault(state.items[nodeid], []).append(nodeid)
+    for function in sorted({fn for fn, _ in by_function}):
         needed = (
             ("postgres",)
             if function.rsplit("::", 1)[-1] in POSTGRES_ONLY_BY_DESIGN
@@ -122,9 +145,16 @@ def session_problems(state: SessionState) -> list[str]:
 
 
 def xdist_active(config) -> bool:
-    return bool(os.environ.get("PYTEST_XDIST_WORKER")) or (
-        config.pluginmanager.hasplugin("xdist")
-        and bool(getattr(config.option, "numprocesses", None))
+    """True in an xdist worker (the plugin sets `PYTEST_XDIST_WORKER` there) and in the controller of a run that
+    asks for workers (`-n N`, or `--dist` other than `no`). `-n 0` and a plain run are not xdist."""
+    if os.environ.get("PYTEST_XDIST_WORKER"):
+        return True
+    if not config.pluginmanager.hasplugin("xdist"):
+        return False
+    option = config.option
+    return bool(getattr(option, "numprocesses", None)) or getattr(option, "dist", "no") not in (
+        "no",
+        None,
     )
 
 

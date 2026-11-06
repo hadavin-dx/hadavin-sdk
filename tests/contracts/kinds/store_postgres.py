@@ -1,9 +1,11 @@
-"""The `postgres` store kind. Needs HADAVIN_TEST_PG_DSN (CI: the postgres service); skipped without it, so the
-laptop needs no Docker. Each test gets its own schema, migrated fresh and dropped afterwards."""
+"""The `postgres` store kind. Needs HADAVIN_TEST_PG_DSN (CI: the postgres service). Without it the kind skips on a
+laptop (no Docker needed) and fails under the fail rule (`HADAVIN_REQUIRE_PG` or `CI`, see `require_backend`).
+Each test gets its own schema, migrated fresh and dropped afterwards, also when the set-up fails half way."""
 
 import contextlib
 import os
 import re
+import string
 import uuid
 from collections.abc import Sequence
 from types import SimpleNamespace
@@ -22,7 +24,9 @@ OWNER_DSN: dict[str, str] = {}
 def pg_schema(migrated=True, runtime=False):
     """Yield a DSN whose search_path is a fresh (migrated) schema; drop the schema afterwards. With `runtime`,
     yield instead the DSN of a new non-owner login role that `migrate` granted its runtime rights (K2: the store
-    suite must pass with only those rights); the role is dropped afterwards."""
+    suite must pass with only those rights); the role is dropped afterwards. Everything created is dropped in the
+    `finally`, also when `migrate` or a role creation fails (a failed set-up must not leave a schema or a role
+    behind), and the DSN entries of `OWNER_DSN` and `PURGE_DSN` go with it."""
     require_backend("postgres")  # fails under HADAVIN_REQUIRE_PG or CI, else skips
     dsn = os.environ["HADAVIN_TEST_PG_DSN"]
     import psycopg
@@ -32,18 +36,20 @@ def pg_schema(migrated=True, runtime=False):
     from hadavin_sdk.store.migrate import migrate
 
     schema = f"t_{uuid.uuid4().hex[:12]}"
-    with psycopg.connect(dsn, autocommit=True) as db:
-        db.execute(sql.SQL("CREATE SCHEMA {}").format(sql.Identifier(schema)))
     scoped = make_conninfo(dsn, options=f"-c search_path={schema}")
-    if migrated:
-        migrate(scoped)
-    role = purge = None
+    created_roles: list[str] = []
+    runtime_dsn = None
     try:
+        with psycopg.connect(dsn, autocommit=True) as db:
+            db.execute(sql.SQL("CREATE SCHEMA {}").format(sql.Identifier(schema)))
+        if migrated:
+            migrate(scoped)
         if runtime:
             role, purge = "rt_" + uuid.uuid4().hex[:12], "pu_" + uuid.uuid4().hex[:12]
             with psycopg.connect(dsn, autocommit=True) as db:
                 for r in (role, purge):
                     db.execute(sql.SQL("CREATE ROLE {} LOGIN").format(sql.Identifier(r)))
+                    created_roles.append(r)
             migrate(scoped, runtime_role=role, purge_role=purge)
             runtime_dsn = make_conninfo(scoped, user=role)
             PURGE_DSN[runtime_dsn] = make_conninfo(scoped, user=purge)
@@ -52,12 +58,14 @@ def pg_schema(migrated=True, runtime=False):
         else:
             yield scoped
     finally:
+        if runtime_dsn is not None:
+            PURGE_DSN.pop(runtime_dsn, None)
+            OWNER_DSN.pop(runtime_dsn, None)
         with psycopg.connect(dsn, autocommit=True) as db:
-            for r in (role, purge):
-                if r:
-                    db.execute(sql.SQL("DROP OWNED BY {}").format(sql.Identifier(r)))
-                    db.execute(sql.SQL("DROP ROLE {}").format(sql.Identifier(r)))
-            db.execute(sql.SQL("DROP SCHEMA {} CASCADE").format(sql.Identifier(schema)))
+            for r in created_roles:
+                db.execute(sql.SQL("DROP OWNED BY {}").format(sql.Identifier(r)))
+                db.execute(sql.SQL("DROP ROLE {}").format(sql.Identifier(r)))
+            db.execute(sql.SQL("DROP SCHEMA IF EXISTS {} CASCADE").format(sql.Identifier(schema)))
 
 
 class _SplitStore:
@@ -75,6 +83,12 @@ class _SplitStore:
 
     def purge_redaction_maps(self, *a, **k):
         return self._purge.purge_redaction_maps(*a, **k)
+
+    @property
+    def connection_id(self):
+        """The server process ids of the two connections: what a test compares to see that two handles do not
+        share a connection, without naming the driver or reaching into a store's private field."""
+        return (self._main._db.info.backend_pid, self._purge._db.info.backend_pid)
 
     def close(self):
         self._main._db.close()
@@ -107,15 +121,19 @@ def postgres_pair(tmp_path):
         b.close()
 
 
-# --- the neutral driver namespace (P4d-a1). Tests use this and never import the driver; the only module that
-# may name the driver in `tests/` besides the guard's own files (see tests/test_lockin_guard.py). ----------
+# --- the neutral driver namespace (P4d-a1). The tests of the contract suite use this and never import the driver.
+# The driver is named in this module and, as the constant `PG_DRIVER_MODULE`, in `kinds/__init__.py`; older test
+# files outside `tests/contracts` still import it themselves, and P4d-c moves them here and then makes a guard
+# test enforce the two-name allow-list. -----------------------------------------------------------------------
 
 _PRIVILEGES = frozenset({"SELECT", "INSERT", "UPDATE", "DELETE"})
 
 
 def pg_driver(*, module_level=False):
-    """A small namespace of neutral operations (never the driver module itself). Skips, or under the fail rule
-    fails, when the driver is missing; `module_level=True` is for a call at the top of a test module."""
+    """A small namespace of neutral operations (never the driver module itself). It skips, or fails under the fail
+    rule, when the driver is not installed; it does NOT need a database (`dsn=False`), so the functions that
+    connect are the ones that need `HADAVIN_TEST_PG_DSN`, through the DSN a fixture hands them.
+    `module_level=True` is for a call at the top of a test module."""
     require_backend("postgres", dsn=False, module_level=module_level)
     import psycopg
     from psycopg import errors, sql
@@ -138,7 +156,8 @@ def pg_driver(*, module_level=False):
     @contextlib.contextmanager
     def connect_role(dsn, *, grants: Sequence[tuple[str, str]] = ()):
         """A throw-away login role with EXACTLY `grants` (pairs of privilege and table, in the schema of `dsn`)
-        and usage on that schema; yields its connection; drops the role afterwards."""
+        and usage on that schema; yields its connection; drops the role afterwards. The role is dropped also
+        when one of the grants fails (bug class: a half-built role left in the cluster)."""
         owner = OWNER_DSN.get(dsn, dsn)
         found = re.search(r"search_path=(\w+)", conninfo_to_dict(owner).get("options", ""))
         if not found:
@@ -147,37 +166,57 @@ def pg_driver(*, module_level=False):
         for privilege, _ in grants:
             if privilege not in _PRIVILEGES:
                 raise ValueError(f"privilege {privilege!r} is not one of {sorted(_PRIVILEGES)}")
-        with psycopg.connect(owner, autocommit=True) as admin:
-            admin.execute(sql.SQL("CREATE ROLE {} LOGIN").format(sql.Identifier(role)))
-            admin.execute(
-                sql.SQL("GRANT USAGE ON SCHEMA {} TO {}").format(
-                    sql.Identifier(schema), sql.Identifier(role)
-                )
-            )
-            for privilege, table in grants:
+        conn = None
+        created = False
+        try:
+            with psycopg.connect(owner, autocommit=True) as admin:
+                admin.execute(sql.SQL("CREATE ROLE {} LOGIN").format(sql.Identifier(role)))
+                created = True
                 admin.execute(
-                    sql.SQL("GRANT {} ON TABLE {}.{} TO {}").format(
-                        sql.SQL(privilege),
-                        sql.Identifier(schema),
-                        sql.Identifier(table),
-                        sql.Identifier(role),
+                    sql.SQL("GRANT USAGE ON SCHEMA {} TO {}").format(
+                        sql.Identifier(schema), sql.Identifier(role)
                     )
                 )
-        conn = psycopg.connect(make_conninfo(owner, user=role), autocommit=True)
-        try:
+                for privilege, table in grants:
+                    admin.execute(
+                        sql.SQL("GRANT {} ON TABLE {}.{} TO {}").format(
+                            sql.SQL(privilege),
+                            sql.Identifier(schema),
+                            sql.Identifier(table),
+                            sql.Identifier(role),
+                        )
+                    )
+            conn = psycopg.connect(make_conninfo(owner, user=role), autocommit=True)
             yield conn
         finally:
-            conn.close()
-            with psycopg.connect(owner, autocommit=True) as admin:
-                admin.execute(sql.SQL("DROP OWNED BY {}").format(sql.Identifier(role)))
-                admin.execute(sql.SQL("DROP ROLE {}").format(sql.Identifier(role)))
+            if conn is not None:
+                conn.close()
+            if created:
+                with psycopg.connect(owner, autocommit=True) as admin:
+                    admin.execute(sql.SQL("DROP OWNED BY {}").format(sql.Identifier(role)))
+                    admin.execute(sql.SQL("DROP ROLE {}").format(sql.Identifier(role)))
 
     def execute(conn, template, params=(), idents=()):
-        """Run `template` (each `{}` is filled with the next quoted identifier of `idents`); the rows as a list
-        of tuples, or an empty list for a statement that returns none."""
+        """Run `template` (each `{}` is filled with the next quoted identifier of `idents`; write `{{` and `}}`
+        for a literal brace); the rows as a list of tuples, or an empty list for a statement that returns none.
+        The number of `{}` must equal the number of `idents` and a `{}` may not be named or numbered: anything
+        else is a `ValueError` that says so (the driver's own message for a mismatch is an IndexError that
+        names neither). The cursor is closed before the call returns."""
+        parsed = [p for p in string.Formatter().parse(template) if p[1] is not None]
+        fields = [name for _, name, _, _ in parsed]
+        if any(name or spec or conv for _, name, spec, conv in parsed):
+            raise ValueError(
+                "execute: only plain {} placeholders (no name, number, format or !conversion)"
+            )
+        if len(fields) != len(idents):
+            raise ValueError(
+                f"execute: the template has {len(fields)} {{}} placeholders but {len(idents)} "
+                f"identifiers were given"
+            )
         query = sql.SQL(template).format(*[sql.Identifier(i) for i in idents])
-        cur = conn.execute(query, params)
-        return cur.fetchall() if cur.description else []
+        with conn.cursor() as cur:
+            cur.execute(query, params)
+            return cur.fetchall() if cur.description else []
 
     def sqlstate(exc):
         return getattr(exc, "sqlstate", None)
