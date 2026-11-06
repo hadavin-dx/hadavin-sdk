@@ -306,3 +306,6 @@ P6b1 | needs P4a head | 0 | P4a
 BN-27 check: Postgres 16 server binaries exist (/usr/lib/postgresql/16/bin); the note "no Postgres in the cloud container" is WRONG, to be corrected in the register. 12 agents running.
 2026-11-06T12:27:32Z | package | stage | builders running | blocked on
 P0a | fix1 (3 Majors, order 88) started, small push | 1 | -
+2026-11-06T12:36:26Z | package | stage | builders running | blocked on
+P1a | fix4 pushed c05ba58 (PR 63); waiting lead review | 0 | -
+P1b | redo merge on c05ba58 next (builder starting) | 1 | -
