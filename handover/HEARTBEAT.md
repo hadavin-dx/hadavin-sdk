@@ -190,3 +190,4 @@
 07:59Z | step=order 54 rung audit launched (5 agents) | next=merge parts, P1a fix2, genericity audit | blocked=none
 08:02Z | step=order 55: AK-G16 BN-35, GAPS door d | next=P1a fix2, genericity audit, rung audit parts | blocked=none
 08:04Z | step=rung audit part E saved | next=parts A-D, merge, P1a fix2, genericity | blocked=none
+08:04Z | step=rung audit part B saved | next=parts A, C, D, merge | blocked=none
