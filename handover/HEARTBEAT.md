@@ -112,3 +112,4 @@
 03:39Z | step=saved AK0 r1 pair + P5b4 r2 adv (pushed); launched saver ad5b45b for 5 reports | done=3 reports in | next=AK0 resolve, P5b4/P5b3/AK1 resolves, verify P1m builder | blocked=-
 03:40Z | step=P8a r2 resolve saved (33 fix, 1 contest, PL13-16) | done=P8a resolve | next=P8a rev 3 author, relay PL13-16 | blocked=-
 03:40Z | step=P6a r3 adversarial in (0 Blocker, 2 Major: Slack in dev, app.py order) | done=- | next=P6a r3 correctness then save + last-round resolve | blocked=-
+03:41Z | step=order 26 received; forwarded all 11 P1m review items to builder abe19a3 (batch with order 25) | done=- | next=verify builder head+mutants+uv build, mark PR ready after lead re-review rule | blocked=-
