@@ -545,6 +545,10 @@ def test_every_mutant_still_applies_to_the_source():
     """The slow run is `python tests/migration_numbers_mutants.py` (its docstring has the command). This cheap check
     runs with the ordinary tests: every mutant's `old` text is still in its file (so the mutation changes something),
     differs from `new`, its killer test exists, and no mutant name is used twice."""
+    if not (ROOT / "tests" / "migration_numbers_mutants.py").is_file():
+        pytest.skip(
+            "the mutants file is not in this tree (the mutant runner copies only some test files)"
+        )
     from tests import migration_numbers_mutants as mutants
 
     names = [m.name for m in mutants.M]
