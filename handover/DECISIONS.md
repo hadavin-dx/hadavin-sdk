@@ -336,3 +336,5 @@ Slip recorded at the lead's request: a throwaway PostgreSQL data folder (pg3a) w
 2026-11-06 03:50Z: P4b1 round 3 resolve (Opus): 30 ids in 26 rows; no round 4 (3 Majors); BN-1..BN-30. Money-booking window PL23 (NEEDS LEAD 45, recommend a); throwaway PostgreSQL install PL24 (NEEDS LEAD 46, recommend yes). Answered-by-user: no. Reversible: yes (ticket text).
 2026-11-06 03:52Z: P5a round 3 resolve (Opus): 23 ids, all fix; no round 4; BN-1..BN-19; 161 rows. INFORM 47. Answered-by-user: no. Confidence medium. Reversible: yes.
 2026-11-06 03:55Z: Order 24 applied: P6b1 le=90 config, P4c rev 4 no round, P8a option a. P4b2 rev 4 and P8a rev 2 pushed; AK0 and AK1 authors launched (order 23). Answered-by-user: yes (lead).
+
+2026-11-06 04:05Z: P6a round 2 resolve (Opus): 27 ids, 22 rows all fix; client-data refusal read as field made_up_data_only (NEEDS LEAD 50). P5b4 rev 2 (39 decisions applied; PL14 accept, INFORM 52). Answered-by-user: no. Reversible: yes.
