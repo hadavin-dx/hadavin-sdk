@@ -25,3 +25,15 @@ Added 2026-11-06 about 04:00 UTC (09:30 IST).
 - **What it does not check.** A value written as several words, such as a two-word name, can be cut into two passages. A name the system knows only as a whole may then be sent in parts, because neither part alone is recognised.
 - **What a person must do, and when.** Before the first pilot, a person checks on the client's sample documents whether names are cut this way, and tells the studio if they are.
 - Studio reference: package AK2a, PENDING LEAD 9 (ii), lead order 34 item 76.
+
+## 4. After a crash, a store fault or a queue outage during an answer, the chat continues with a person
+- **What the program checks.** If an answer in a chat is cut short by a crash, a fault in the data store or an outage of the queue that holds work for people, the program does not let the agent answer that chat again by itself.
+- **What it does not check.** It does not try to finish the interrupted answer. A person sees the chat, not the missing answer.
+- **What a person must do, and when.** When such a chat appears in the queue for people, a person reads it and answers or closes it. A client must be told before the pilot that this can happen.
+- Studio reference: package AK-G1, PENDING LEAD 14 (option (a), lead order 36 item 82); PENDING LEAD 2(vii) is withdrawn.
+
+## 5. Erasure takes priority over the evidence hold for chat content
+- **What the program checks.** When a person asks to be forgotten, or the retention time of chat content ends, the program deletes that chat's stored text, masked-value maps and tool call records, even when an evidence hold names the run. The run's row and its labels stay. The deletion happens before the hold is checked.
+- **What it does not check.** It does not decide whether a legal hold should override erasure. This choice has not been reviewed by counsel.
+- **What a person must do, and when.** Before the first pilot, counsel reads this rule and says whether it fits the client's duties.
+- Studio reference: package AK-G1, PENDING LEAD 15 (option (a), lead order 36 item 82), owner rule R98.

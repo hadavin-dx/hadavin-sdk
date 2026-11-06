@@ -808,3 +808,12 @@ Routing rule: an item that touches an owner-only choice, money, redaction, least
 
 
 These six new NEEDS LEAD lines (11 to 16) and three INFORM lines (10, 17, 18) should also go under "NEEDS LEAD" in `handover/questions-for-lead.md` (order 19 item 2). This build-notes brief allows a commit of this ticket only, so the session copies them.
+
+## Lead answers to PENDING LEAD 11-16 (order 36 item 82, 2026-11-06). These lines win over the build notes where they differ.
+- PL11: option (b). Run `egm:egm-brainstorm` (short) then `egm:egm-draft` on the `handle_turn` flow and the store transaction rules with BN-1..BN-28 folded in. The build-start review reads that draft with this ticket. Not a fourth ticket round. Build start of AK-G1-a and AK-G1-b stays blocked until the draft exists and the build-start review has read it. Report paths: `handover/designs/ak-g1/`.
+- PL12: (a). A label rule on fixed answers; no new column; no new right.
+- PL13: (a). `estimate_exceeded` and `limits_unavailable` post P4c-2's fixed money card with no turn text, and the chat pauses.
+- PL14: (a). Every takeover writes `handed_off`; PL2(vii) is withdrawn. Owner-visible entry 4 added.
+- PL15: (a). `forget_user` and the conversation purge delete chat runs' maps and tool calls even when the hold names them (R98); runs rows and labels stay; the purge runs before the hold hook. Owner-visible entry 5 added ("not reviewed by counsel").
+- PL16: (a). `Grant.runtime_update_cols`, with a negative test and a mutant.
+- INFORM 10, 17, 18: accepted.
