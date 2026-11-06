@@ -588,4 +588,5 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | sv-AKG1-r2 | saver AK-G1 round 2 pair | 04:43Z | +8min | REPORTED | verify, push, Opus resolve |
 | au-AK1-bn | author AK1 build notes BN-1..17 | 04:43Z | +20min | REPORTED | verify, push |
 | rs-AKG1-r2 | Opus resolve AK-G1 round 2 (2 Blocker 8 Major) | 04:45Z | +25min | running | verify, then rev 3 |
-| sv-AKG2-r3 | saver AK-G2 round 3 pair (5+7 Majors) | 04:47Z | +8min | running | verify, push, Opus resolve (BN) |
+| sv-AKG2-r3 | saver AK-G2 round 3 pair (5+7 Majors) | 04:47Z | +8min | REPORTED | verify, push, Opus resolve (BN) |
+| rs-AKG2-r3 | Opus resolve AK-G2 round 3 (last; 12 Majors -> BN) | 04:48Z | +25min | running | verify, then BN author |
