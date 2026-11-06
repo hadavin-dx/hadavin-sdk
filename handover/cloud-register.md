@@ -374,5 +374,8 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | r1-P6b2-cor | P6b2 round-1 reviewer (cor) | sonnet | 03:30Z | +30min | REPORTED (unsaved: save-r2c) | save, ledger, resolve |
 | res-r2-P4c | Opus egm-resolve P4c round 2 | opus | 02:51Z | +45min | running | verify; rev 3; round 3 |
 | res-r2-P4b1 | Opus egm-resolve P4b1 round 2 | opus | 02:52Z | +45min | running | launch after report save |
-| save-r2b | Sonnet saver: P5b1 r2, P6a r1, P5c r1 (adv+cor each) = 6 reports + ledger rows | sonnet | 03:45Z | +20min | running | verify, push, launch resolves |
-| save-r2c | Sonnet saver: P6b2 r1 adv (a8ac760d78cffcdde) + cor (a9f6d3e5a184b9a11) | sonnet | - | +15min | QUEUED (wait for save-r2b to finish, shared ledger.md) | launch after save-r2b pushes; then P6b2 resolve |
+| save-r2b | Sonnet saver: P5b1 r2, P6a r1, P5c r1 (adv+cor each) = 6 reports + ledger rows | sonnet | 03:45Z | +20min | REPORTED | verify, push, launch resolves |
+| save-r2c | Sonnet saver: P6b2 r1 adv (a8ac760d78cffcdde) + cor (a9f6d3e5a184b9a11) | sonnet | - | +15min | running | launch after save-r2b pushes; then P6b2 resolve |
+| res-r2-P5b1 | Opus egm-resolve P5b1 round 2 | opus | 04:00Z | +45min | running | verify; rev 3; round 3 |
+| res-r1-P5c | Opus egm-resolve P5c round 1 | opus | 04:00Z | +45min | running | verify; rev 2; round 2 |
+| res-r1-P6a | Opus egm-resolve P6a round 1 | opus | 04:00Z | +45min | running | verify; rev 2; round 2 |
