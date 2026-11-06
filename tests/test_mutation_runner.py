@@ -623,7 +623,15 @@ def test_an_interrupt_while_waiting_kills_the_run_and_is_not_swallowed(tmp_path,
         tmp_path, f"    open({str(pidfile)!r}, 'w').write(str(os.getpid()))\n    time.sleep(25)\n"
     )
 
+    fired = []
+
     def interrupt(self, real_wait):
+        # only the FIRST wait of the run is interrupted. Later waits with a timeout (the tree kill's own ``taskkill`` run on
+        # Windows, the cleanup in ``finally``) must work as ever, or the second KeyboardInterrupt escapes ``pytest.raises``
+        # and aborts the whole pytest session
+        if fired:
+            return real_wait(self, timeout=30)
+        fired.append(self.pid)
         raise KeyboardInterrupt
 
     _patient_wait(monkeypatch, pidfile, interrupt)
@@ -637,6 +645,7 @@ def test_an_interrupt_while_waiting_kills_the_run_and_is_not_swallowed(tmp_path,
         if pidfile.exists() and pidfile.read_text(encoding="utf-8").strip():
             _force_kill(int(pidfile.read_text(encoding="utf-8")))
     pid = int(pidfile.read_text(encoding="utf-8"))
+    assert fired == [pid], "the interrupt was raised for something other than the run's own wait"
     assert killed == [pid], "an interrupt while waiting did not kill the run before it propagated"
     assert not _pid_alive(pid)
 
