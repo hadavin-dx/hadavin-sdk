@@ -1432,3 +1432,4 @@
 | BL-core-LK-r10-adv-B | LK | MAJOR | owner summary over-claims vs strict xfails | OPEN | reviews/LK-round10-adversarial.md | f386cbd |
 | BL-core-LK-r10-adv-C | LK | MAJOR | P-1 IN/OUT measure mixes catches, special corpora, false refusals | OPEN | reviews/LK-round10-adversarial.md | f386cbd |
 | BL-core-LK-r10-adv-D | LK | MAJOR | count form never compared with a window rule | OPEN | reviews/LK-round10-adversarial.md | f386cbd |
+| BL-core-P1-r14-cor-1 | P1 | MAJOR | FILL-NAMES row predicate false for U+2422 (category So); red on correct code | OPEN | reviews/P1-round14-correctness.md | ad1d1f4 |
