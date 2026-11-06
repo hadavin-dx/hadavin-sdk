@@ -15,7 +15,7 @@ from dataclasses import dataclass
 from datetime import UTC, date, datetime
 from pathlib import Path
 
-from hadavin_sdk.backends.table import DEV_ONLY, NOT_PROD, TABLE
+from hadavin_sdk.backends.table import DEMO_ONLY, NOT_PROD, TABLE
 
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src"
@@ -215,7 +215,7 @@ def test_a_neutral_kind_has_no_vendor_only_path():
 
 def _source_docstring(mod: str) -> str:
     """The module docstring read from the source file: no import, so a kind that needs an optional extra
-    (signer, aws, pg) is checked on a default dev install too."""
+    (signer, aws, pg) is checked on a default demo install too."""
     rel = Path(*mod.split("."))
     path = SRC / rel.with_suffix(".py")
     if not path.is_file():
@@ -405,11 +405,11 @@ EXCEPTIONS: dict[str, ExceptionEntry] = {
 
 
 def coverage_problems(
-    table, dev_only, not_prod, null_kinds, exceptions: dict[str, ExceptionEntry], today: date
+    table, demo_only, not_prod, null_kinds, exceptions: dict[str, ExceptionEntry], today: date
 ) -> list[str]:
     out = []
     for cap, kinds in table.items():
-        prod = {k: e for k, e in kinds.items() if (cap, k) not in dev_only | not_prod | null_kinds}
+        prod = {k: e for k, e in kinds.items() if (cap, k) not in demo_only | not_prod | null_kinds}
         ok = any(e.neutral for e in prod.values()) and len(prod) >= 2
         if not ok and cap not in exceptions:
             out.append(
@@ -428,7 +428,7 @@ def coverage_problems(
 
 
 def test_every_capability_has_a_neutral_prod_kind_and_two_prod_kinds():
-    assert coverage_problems(TABLE, DEV_ONLY, NOT_PROD, NULL_KINDS, EXCEPTIONS, TODAY) == []
+    assert coverage_problems(TABLE, DEMO_ONLY, NOT_PROD, NULL_KINDS, EXCEPTIONS, TODAY) == []
 
 
 def test_the_anchor_is_a_capability_with_a_prod_kind_besides_s3():
@@ -440,17 +440,17 @@ class _E:
     neutral: bool = False
 
 
-def _cov(table, exceptions=None, dev_only=frozenset(), today=date(2026, 11, 1)) -> list[str]:
-    return coverage_problems(table, dev_only, NOT_PROD, NULL_KINDS, exceptions or {}, today)
+def _cov(table, exceptions=None, demo_only=frozenset(), today=date(2026, 11, 1)) -> list[str]:
+    return coverage_problems(table, demo_only, NOT_PROD, NULL_KINDS, exceptions or {}, today)
 
 
 def test_plant_one_vendor_kind_without_an_entry_is_caught():
     assert len(_cov({"x": {"aws": _E()}})) == 1
 
 
-def test_plant_only_neutral_kind_being_dev_only_is_caught():
+def test_plant_only_neutral_kind_being_demo_only_is_caught():
     table = {"x": {"mem": _E(True), "aws": _E(), "gcp": _E()}}
-    assert len(_cov(table, dev_only=frozenset({("x", "mem")}))) == 1
+    assert len(_cov(table, demo_only=frozenset({("x", "mem")}))) == 1
 
 
 def test_plant_a_capability_counting_only_none_is_caught():

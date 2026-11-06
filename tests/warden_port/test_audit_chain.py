@@ -565,7 +565,7 @@ def test_the_environment_table_rules_for_signers_and_anchors(env, anchor, signer
 
 def test_an_anchor_needs_the_chain_audit():
     local = {"kind": "local_dir", "dir": "a"}
-    found = _anchor_refusals("dev", _backends(ANCHOR, KMS, local))
+    found = _anchor_refusals("demo", _backends(ANCHOR, KMS, local))
     assert found == ["anchor s3_object_lock needs backends.audit kind chain"]
 
 

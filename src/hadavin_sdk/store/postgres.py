@@ -100,7 +100,7 @@ def tls_mode(
 ) -> str | None:
     """The sslmode to connect with. Loopback and unix sockets keep the setting or the DSN's. Any other host
     defaults to `verify-full` (the server's certificate and name are checked, so credentials cannot be
-    captured by an impostor); an explicit weaker `sslmode` is an opt-down for dev. With iam_auth (a bearer
+    captured by an impostor); an explicit weaker `sslmode` is an opt-down for demo. With iam_auth (a bearer
     token) only `verify-full` or `verify-ca` is accepted. A verified mode needs the CA bundle."""
     parts = conninfo_to_dict(dsn)
     mode = sslmode or parts.get("sslmode")
@@ -115,7 +115,7 @@ def tls_mode(
     if mode in _VERIFIED_TLS and not (sslrootcert or parts.get("sslrootcert")):
         raise ConfigError(
             f"store postgres: sslmode {mode} needs the server's CA bundle: set sslrootcert (a file) or "
-            "sslrootcert_secret_name (a PEM in the secrets backend), or opt down with sslmode for dev"
+            "sslrootcert_secret_name (a PEM in the secrets backend), or opt down with sslmode for demo"
         )
     return mode
 

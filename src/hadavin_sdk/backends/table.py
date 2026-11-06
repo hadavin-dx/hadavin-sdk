@@ -123,7 +123,7 @@ class PostgresSettings(KindSettings):
     )
     region: str | None = None
     # None: `verify-full` for any non-local host; loopback and sockets keep the DSN's. Setting a weaker mode
-    # (`require`, `disable`) is an explicit opt-down for dev, refused with iam_auth.
+    # (`require`, `disable`) is an explicit opt-down for demo, refused with iam_auth.
     sslmode: SslMode | None = None
     # The server's CA bundle, cloud-neutral: a file path, or a PEM held in any secrets kind.
     sslrootcert: str | None = None
@@ -215,7 +215,7 @@ class _SignerSettings(KindSettings):
 
 
 class Ed25519LocalSettings(_SignerSettings):
-    """The PEM key from a file (dev, pilot) or from the secrets kind (`private_key_secret_name`; prod allows
+    """The PEM key from a file (demo, pilot) or from the secrets kind (`private_key_secret_name`; prod allows
     only this, and only with a WORM anchor: config.py, environment table)."""
 
     private_key_path: Path | None = None
@@ -255,7 +255,7 @@ class _VaultConnection(KindSettings):
     """How to reach and sign in to Vault or OpenBao (the `vault` secrets kind and the `vault_transit`
     signer)."""
 
-    address: str  # https; plain http only to this machine (a dev server)
+    address: str  # https; plain http only to this machine (a local server)
     auth: Literal["token", "approle", "kubernetes"] = "token"
     namespace: str | None = None
     token_env: str = "VAULT_TOKEN"  # noqa: S105 - auth token: the variable name
@@ -592,9 +592,9 @@ DEFAULTS: dict[str, str] = {
     "channel": "fake",
 }
 
-# Environment table (design §4.6): kinds allowed only in `dev`. The names are policy levels, not deployments
+# Environment table (design §4.6): kinds allowed only in `demo`. The names are policy levels, not deployments
 # (an owner-approved exception to the no-hardcoded-environments rule).
-DEV_ONLY: frozenset[tuple[str, str]] = frozenset(
+DEMO_ONLY: frozenset[tuple[str, str]] = frozenset(
     {
         ("llm", "fake"),
         ("channel", "fake"),
