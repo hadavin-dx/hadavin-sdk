@@ -272,4 +272,4 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | r10-P4a-cor | P4a round 10 correctness review of tickets/P4a.md rev 10 (94c4c82) | sonnet | 01:20Z | +45min | running | save report, ledger |
 | r10-LK-adv | LK round 10 adversarial review of designs/lookalike-leak.md draft 10 (8cc31a9) | sonnet | 01:21Z | +45min | running | save report, ledger |
 | r10-LK-cor | LK round 10 correctness review of draft 10 (8cc31a9) | sonnet | 01:21Z | +45min | running | save report, ledger |
-| r13-P1-resolve | Opus egm-resolve of P1 rev 14 over round 13 adv+cor reports -> rev 15 input | opus | 01:24Z | +60min | running | verify, push, rev 15 author, round 14 reviewers |
+| r13-P1-resolve | Opus egm-resolve of P1 rev 14 over round 13 adv+cor reports -> rev 15 input | opus | 01:24Z | +60min | REPORTED | verify, push, rev 15 author, round 14 reviewers |
