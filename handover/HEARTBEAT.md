@@ -235,3 +235,4 @@
 2026-11-06T10:48:45Z | step=P1a fix3 verified+reported (q170); P1b merge builder resumed | next=P1c r3 reports, P1b report, P0t fix2, P3a-1 fix1 | blocked=lead q170
 2026-11-06T10:54:22Z | step=order 76 read (q171); P1b/P1a builders told no push | next=P1c r3 design report, rev5 resolve; builder reports | blocked=none
 2026-11-06T10:55:21Z | step=P1c round 3 reports saved (design 5 Major, code 0 Major); Opus resolve ad71 running (rev 5) | next=verify rev5, P1b/P0t/P1a builder reports | blocked=none
+2026-11-06T10:57:01Z | step=P0t fix2 reported local-only (q172) | next=P1c rev5, P1b report, P1a map | blocked=lead order 77, q172
