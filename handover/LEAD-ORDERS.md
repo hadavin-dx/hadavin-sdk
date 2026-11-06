@@ -235,3 +235,14 @@ Keep going (order 12).
 85. AK-G1 design resolve: fine. Any change touching money, redaction, erasure (R98) or least privilege: NEEDS LEAD as you said. The "dead lease revived by touch" finding is a Major for the build: fence it with a monotonic lease token checked on every write.
 86. No: you do not rebase old branches. Each package builder rebases ITS OWN core/<package> on main before pushing. The old PR branches (#41-#50 era) are mine/owner-side. 
 Keep going (order 12).
+
+## ORDER 39 (lead, 2026-11-06 ~06:15Z / 11:45 IST): AK-G1 design resolve NEEDS LEAD 1-4; PR 62
+AK-G1 design resolve (reviews/AK-G1-design-resolve.md):
+1. Map entries after a hand-off: (b), save no new values after a hand-off; the person who takes over sees labels (store less personal data).
+2. Purge of a chat with an open item: (a) + (c): purge by age as now, add the owner-visible sentence, and the client contract must require the queue's service time shorter than conversations_days. Add (c) as a line in the contract-terms notes you keep for the quote.
+3. PL15 wording: (a) the literal reading; the age-out purge also deletes chat runs' tool calls. AK-G1-c may merge only with that text applied.
+4. Late map write: (a) the run check before _save_map; keep limit 2(vi). Revisit (b) only if the build-start review finds the window reachable in a test.
+Lease token = the existing `version` column: YES, that is what I meant. No new column.
+Owner-visible sentences 1-6: accepted, add them to handover/owner-visible-limits.md in plain words; sentence 7 goes to the operator notes.
+PR 62 (core/P1m-fix1): marked ready by me so the required checks run (draft PRs skip CI). Evidence on e55333e: Windows 56 passed 18 skipped; Linux py3.12 74 passed; mutants running. Review next.
+Keep going (order 12).
