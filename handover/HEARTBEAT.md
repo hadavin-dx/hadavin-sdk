@@ -49,3 +49,4 @@
 01:04Z / 06:34 IST | step=P1 r12 resolve verified (17 fix, 3 decline); LK r9 resolve + P4a r9 resolve running; P1 rev 14 author starting | done=LK r9 reports saved, P1 r12 resolve pushed | next=P1 rev14 -> r13 reviewers; LK draft 10; P4a rev 10 | blocked=none | context=ok
 01:15Z / 06:45 IST | step=P1 rev 14 verified+pushed; round 13 reviewers started; P4a rev10 + LK draft10 authors running | done=P1 rev 14 (81 distinct, 109+k max 123) | next=r13 reports; P4a/LK authors | blocked=none | context=ok
 01:21Z / 06:51 IST | step=LK draft 10 + P4a rev 10 verified/pushed; round 10 reviewers (LK, P4a) and P1 round 13 reviewers running | done=3 authors verified | next=6 reports | blocked=lead: P-1 precondition widened (Greek/Cyrillic corpus), PL54 booking | context=ok
+01:22Z / 06:52 IST | step=P1 r13 correctness saved (INCOMPLETE, 1 Major, 2 Nits; not clean) | done=report saved | next=wait P1 r13 adv, P4a r10 x2, LK r10 x2 then resolve | blocked=none | context=ok

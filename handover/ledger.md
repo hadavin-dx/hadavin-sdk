@@ -1410,3 +1410,4 @@
 | BL-core-lookalike-r9-adv-M1 | lookalike | MAJOR | see report | FIXED-UNVERIFIED | reviews/lookalike-round9-adversarial.md | 871dc07 |
 | BL-core-lookalike-r9-adv-M2 | lookalike | MAJOR | see report | FIXED-UNVERIFIED | reviews/lookalike-round9-adversarial.md | 871dc07 |
 | BL-core-lookalike-r9-adv-M3 | lookalike | MAJOR | see report | FIXED-UNVERIFIED | reviews/lookalike-round9-adversarial.md | 871dc07 |
+| BL-core-P1-r13-cor-1 | P1 | MAJOR | b2 refused-junit mutant is a declared CRASH (allow_crash, ValueError); "all KILLED except one" false | OPEN | reviews/P1-round13-correctness.md | 8b5d849 |
