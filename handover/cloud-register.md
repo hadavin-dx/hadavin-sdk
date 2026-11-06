@@ -290,3 +290,6 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | rev16-P1-author | Sonnet author: apply reviews/P1-round14-resolve.md to tickets/P1.md -> revision 16 (FINAL; then FROZEN per order 16) | sonnet | 01:58Z | +60min | running | verify commit; six-copy x6; recount; freeze |
 | r11-P4a-adv | round 11 adversarial P4a rev 11 (4fff3cc) (order 16: last review round before final resolve) | sonnet | 01:58Z | +45min | running | save report, ledger |
 | r11-P4a-cor | round 11 correctness P4a rev 11 (4fff3cc) | sonnet | 01:58Z | +45min | running | save report, ledger |
+| r8-P4d-resolve | Opus egm-resolve of round reviews for P4d rev 9 (order 16: older package, round 1 of 3) | opus | 01:59Z | +45min | running | save nothing (agent writes reviews/*-resolve.md); commit; launch author |
+| r8-P3a-resolve | Opus egm-resolve of round reviews for P3a rev 9 (order 16: older package, round 1 of 3) | opus | 01:59Z | +45min | running | save nothing (agent writes reviews/*-resolve.md); commit; launch author |
+| r5-P2d-resolve | Opus egm-resolve of round reviews for P2d rev 5 (order 16: older package, round 1 of 3) | opus | 01:59Z | +45min | running | save nothing (agent writes reviews/*-resolve.md); commit; launch author |
