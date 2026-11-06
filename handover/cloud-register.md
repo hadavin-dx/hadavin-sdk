@@ -402,7 +402,8 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | r1-P8a-cor | round 1 ticket review | sonnet | 03:04Z | +20min | running | save |
 | r1-P5b3-adv | round 1 ticket review | sonnet | 03:04Z | +20min | running | save |
 | r1-P5b3-cor | round 1 ticket review | sonnet | 03:04Z | +20min | running | save |
-| r1-P5b5-adv | round 1 ticket review | sonnet | 03:04Z | +20min | running | save |
-| r1-P5b5-cor | round 1 ticket review | sonnet | 03:04Z | +20min | running | save |
+| r1-P5b5-adv | round 1 ticket review | sonnet | 03:04Z | +20min | REPORTED | save |
+| r1-P5b5-cor | round 1 ticket review | sonnet | 03:04Z | +20min | REPORTED | save |
 | r3-P5b2-adv | egm-design adversarial round 3 of P5b2 rev 3 | sonnet | 03:05Z | +20min | running | save |
 | r3-P5b2-cor | egm-codebase-details correctness round 3 of P5b2 rev 3 | sonnet | 03:05Z | +20min | running | save |
+| sav-P5b5-r1 | Saver: P5b5 round 1 reports + ledger | sonnet | 03:06Z | +10min | running | resolve |
