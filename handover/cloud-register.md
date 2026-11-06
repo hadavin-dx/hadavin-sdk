@@ -366,7 +366,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | r1-P6a-adv | P6a round-1 reviewer (adv) | sonnet | 03:10Z | +30min | running | save, ledger, resolve |
 | r1-P6a-cor | P6a round-1 reviewer (cor) | sonnet | 03:10Z | +30min | running | save, ledger, resolve |
 | build-P1m | Sonnet builder P1m on core/P1m, draft PR, evidence/P1m | sonnet | 02:50Z | +90min | running | verify PR, evidence, then review of result |
-| res-r2-P5b2 | Opus egm-resolve P5b2 round 2 | opus | 03:25Z | +45min | running | verify disposition; rev 3 author; round 3 |
+| res-r2-P5b2 | Opus egm-resolve P5b2 round 2 | opus | 03:25Z | +45min | REPORTED | verify disposition; rev 3 author; round 3 |
 | res-r2-P6b1 | Opus egm-resolve P6b1 round 2 | opus | 03:25Z | +45min | REPORTED | verify; rev 3 author; round 3 |
 | res-r1-P8b | Opus egm-resolve P8b round 1 | opus | 03:25Z | +45min | REPORTED | verify; rev 2 author; round 2 |
 | draft-P6b2 | Opus first draft tickets/P6b2.md | opus | 02:50Z | | REPORTED | committed 1901def; round 1 launched |
@@ -385,3 +385,4 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | fix-P4b2-maint | (closed) maintenance identity restored, rev 3 daae169 pushed | opus | 03:10Z | - | CLOSED (REPORTED, verified) | round 2 reviewers |
 | r2-P4b2-adv | egm-design adversarial round 2 of tickets/P4b2.md rev 3 | sonnet | 02:57Z | +30min | running | save, ledger, resolve |
 | r2-P4b2-cor | egm-codebase-details correctness round 2 of tickets/P4b2.md rev 3 | sonnet | 02:57Z | +30min | running | save, ledger, resolve |
+| rev-P5b2-3 | Opus author: P5b2 revision 3 from reviews/P5b2-round2-resolve.md | opus | 02:57Z | +45min | running | verify; round 3 reviewers; one resolve; freeze |
