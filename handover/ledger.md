@@ -1450,3 +1450,12 @@
 | BS-P3a-COR-1 | Major | P3a | see reviews/P3a-buildstart-cor.md | OPEN (build notes via resolve) |
 | BS-P3a-COR-2 | Major | P3a | see reviews/P3a-buildstart-cor.md | OPEN (build notes via resolve) |
 | BS-P3a-COR-3 | Major | P3a | see reviews/P3a-buildstart-cor.md | OPEN (build notes via resolve) |
+| BS-P1-COR-1 | Major | P1 | see reviews/P1-buildstart-cor.md | OPEN |
+| BS-P1-COR-2 | Major | P1 | see reviews/P1-buildstart-cor.md | OPEN |
+| BS-P2a-COR-1 | Major | P2a | see reviews/P2a-buildstart-cor.md | OPEN |
+| BS-P2a-COR-2 | Major | P2a | see reviews/P2a-buildstart-cor.md | OPEN |
+| BS-P2a-COR-3 | Major | P2a | see reviews/P2a-buildstart-cor.md | OPEN |
+| BS-P2a-COR-4 | Major | P2a | see reviews/P2a-buildstart-cor.md | OPEN |
+| BS-P4a-COR-1 | Major | P4a | see reviews/P4a-buildstart-adv.md | OPEN |
+| BS-P4a-ADV-1 | Major | P4a | see reviews/P4a-buildstart-adv.md | OPEN |
+| BS-P4a-COR-2 | Major | P4a | see reviews/P4a-buildstart-adv.md | OPEN |
