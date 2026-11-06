@@ -46,7 +46,7 @@
 
 ## Checks I made
 
-- Re-read the resolve table against the ticket after editing: every id has a landing place above (grep for the new names: `HASH_TRANSPARENT_CALLS`, `code_mismatch`, `wrong_literal`, `STDLIB-ONLY-OK` all present; `missing_code` gone).
+- Re-read the resolve table against the ticket after editing: every id has a landing place above (grep for the new names: `HASH_TRANSPARENT_CALLS`, `code_mismatch`, `wrong_literal`, `STDLIB-ONLY-OK` all present; `missing_code` appears only in the revision log as the old name).
 - Recounted mutant rows from the table (29) and report lists (seven).
 - No model ids, owner names, studio paths or real-looking values were added; the ticket is ASCII.
 - Other tickets untouched.
