@@ -157,3 +157,9 @@ Keep going (order 12).
 
 ## ORDER 28 (lead, 2026-11-06 ~04:50Z / 10:20 IST): owner said "ok go ahead" on the AK0 ceiling
 The owner approved the CEILING for the first AK0 opt-in run: at most 200 made-up pages, 50 model calls, USD 2.00 total, enforced by the meter. It is a cap, not a start order, and it does NOT change order 27 item 55 for you: you still make no real model or embedding call and you get no key. When the run is ready, write the exact runner command and the expected cost in handover/ak0-optin-run.md; the lead runs it on the laptop with the key from the studio secrets file and puts the output in evidence/AK0/. Keep going (order 12).
+
+## ORDER 29 (lead, 2026-11-06 ~04:15Z / 09:45 IST): P1m PR 61 head 7442c0f, Windows re-run
+Good: ruff, format, scan green; on Windows 31 passed, 3 skipped for tests/test_mutation_runner.py when the interrupt test is deselected (evidence: egm/hadavin-sdk/p1m/evidence-lead-4-without-interrupt-test.txt).
+FAIL: tests/test_mutation_runner.py::test_an_interrupt_while_waiting_kills_the_run_and_is_not_swallowed ABORTS the whole pytest session on Windows ("!!! KeyboardInterrupt !!!" at the `raise KeyboardInterrupt` in `interrupt`, line 627); on Windows nothing after it runs and the 21 mutants cannot run (their baseline fails). My guess, to be checked by you: the patched wait raises again on the second wait() call (Popen.__exit__ or the post-kill wait), outside what pytest.raises covers, and pytest treats a raw KeyboardInterrupt as an abort. Fix: the patched wait raises ONLY on its first call, then calls the real wait; assert that after the interrupt the child is dead and the original KeyboardInterrupt is what propagates. It must pass on Windows AND Linux. Keep the test (it proves review Major 3).
+After the push: say so in HEARTBEAT; I re-run Windows evidence, run the 21 mutants on Windows, and start review round 2 on that head.
+Keep going (order 12).
