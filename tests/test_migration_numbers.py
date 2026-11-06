@@ -887,3 +887,53 @@ def test_ledger_property_only_the_named_error_and_agreement(mn, tmp_path):
     _folder(sub, valid)
     mn.check_migration_numbers(sub)
     assert mn.late_files({"0001_a", "0002_b"}, mn.list_migration_files(sub)) == []
+
+
+# --- the grant scan reads through the lexer (P3a-2 wiring; `store.migrate` is imported inside each test) -------------
+
+
+def _scan_file(tmp_path: Path, text: str) -> list[str]:
+    from hadavin_sdk.store import migrate as mig
+
+    path = tmp_path / "0001_x.sql"
+    path.write_text(text, encoding="utf-8")
+    return mig.check_grants([path])
+
+
+def test_scan_comment_ends_at_cr(tmp_path):
+    """FAIL-BEFORE 8: a `--` comment ends at a carriage return as well, so the CREATE after it is seen."""
+    got = _scan_file(tmp_path, "SELECT 1; -- x\rCREATE TABLE evil_cr (x INT);")
+    assert any("evil_cr" in p for p in got), got
+    # M69: an unterminated quote must give the lexer's own text and the file name, not only the GRANTS lines
+    bad = _scan_file(tmp_path, "SELECT 'never closed;")
+    assert any("not closed at line" in p and "0001_x.sql" in p for p in bad), bad
+
+
+def test_scan_double_dash_in_string(tmp_path):
+    """FAIL-BEFORE 9: a `--` inside a string is not a comment, so the CREATE after the string is seen."""
+    got = _scan_file(tmp_path, "SELECT '--'; CREATE TABLE evil_str (x INT);")
+    assert any("evil_str" in p for p in got), got
+
+
+def test_scan_sees_create_inside_bodies_and_strings(tmp_path):
+    """Pin (passes before and after): text inside a `$$` body and a string is still seen by the grant scan, so a
+    table made inside a function body is refused, as before the lexer. M87: a scan of the emptied view fails it."""
+    body = _scan_file(
+        tmp_path,
+        "CREATE OR REPLACE FUNCTION f() RETURNS void LANGUAGE plpgsql AS $$ BEGIN "
+        "CREATE TABLE hidden_body (x INT); END $$;",
+    )
+    assert any("hidden_body" in p for p in body), body
+    string = _scan_file(tmp_path, "SELECT 'CREATE TABLE hidden_str (x INT)';")
+    assert any("hidden_str" in p for p in string), string
+
+
+def test_scan_reads_the_given_text_not_the_file(tmp_path):
+    """`check_grants(files, texts=...)` scans the text it is given (the text `migrate` executes)."""
+    from hadavin_sdk.store import migrate as mig
+
+    path = tmp_path / "0001_x.sql"
+    path.write_text("SELECT 1;", encoding="utf-8")
+    got = mig.check_grants([path], texts={path: "CREATE TABLE from_given_text (x INT);"})
+    assert any("from_given_text" in p for p in got), got
+    assert not any("from_given_text" in p for p in mig.check_grants([path]))
