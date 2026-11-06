@@ -129,3 +129,12 @@ K8S_MAX_PAGES = 25  # pages followed per list; past that the answer says it is i
 K8S_JSON_CAP_BYTES = 1024 * 1024  # fetch cap for a JSON list reply
 K8S_LOG_SLACK_BYTES = 8192  # fetch-cap room over `log_bytes` for the line framing
 K8S_LOG_BYTES = 65536  # asked of the API as limitBytes
+
+# --- text folding (guard/textnorm.py) ---
+# The weighted size rule of the fold: a text whose weight W (the sum over its characters of the longest string the fold makes from
+# one character; an ASCII text has W = its length) is above this is refused with TextTooLong. Same number as the redaction cap.
+TEXTNORM_MAX_CHARS = MAX_REDACT_CHARS
+# The Unicode data version the fold's keys were made with; check_pinned_unidata compares the interpreter with it.
+TEXTNORM_PINNED_UNIDATA = "15.1.0"
+# Passes (the confirming pass included) of a scan-key reading before FoldNotConverged (read by guard/textnorm.py at the call).
+TEXTNORM_MAX_PASSES = 3
