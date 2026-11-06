@@ -1384,3 +1384,7 @@
 | BL-core-P1-r11-adv-ADV-R11-2 | P1 | MAJOR | see report | OPEN | reviews/P1-round11-adversarial.md | 0cb3f69 |
 | BL-core-P1-r11-adv-ADV-R11-3 | P1 | MAJOR | see report | OPEN | reviews/P1-round11-adversarial.md | 0cb3f69 |
 | BL-core-P1-r11-adv-ADV-R11-4 | P1 | MAJOR | see report | OPEN | reviews/P1-round11-adversarial.md | 0cb3f69 |
+| BL-core-lookalike-r8-adv-B-1 | lookalike | BLOCKER | see report | OPEN | reviews/lookalike-round8-adversarial.md | 2ca11dd |
+| BL-core-lookalike-r8-adv-M-1 | lookalike | MAJOR | see report | OPEN | reviews/lookalike-round8-adversarial.md | 2ca11dd |
+| BL-core-lookalike-r8-adv-M-2 | lookalike | MAJOR | see report | OPEN | reviews/lookalike-round8-adversarial.md | 2ca11dd |
+| BL-core-lookalike-r8-adv-M-3 | lookalike | MAJOR | see report | OPEN | reviews/lookalike-round8-adversarial.md | 2ca11dd |

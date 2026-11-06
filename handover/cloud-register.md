@@ -245,7 +245,10 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | r11-P1-adv | round 11 adversarial review of tickets/P1.md rev 12 (commit 0cb3f69) | sonnet (claude-sonnet-5-5) | 00:05Z | +45min | REPORTED | save report, ledger rows |
 | r11-P1-cor | round 11 correctness review of tickets/P1.md rev 12 (commit 0cb3f69) | sonnet (claude-sonnet-5-5) | 00:05Z | +45min | REPORTED | save report, ledger rows |
 | r8-P4a-resolve | round 8 resolve of tickets/P4a.md rev 8 (ADV-R8-1..7, COR-R8-1..6) | opus (claude-opus-5-5) | 00:09Z | +50min | REPORTED | verify, rev 9 author, round 9 reviewers |
-| r11-P1-resolve | round 11 resolve of tickets/P1.md rev 12 (ADV-R11-1..4, COR-R11-1..5) | opus (claude-opus-5-5) | 00:12Z | +50min | running | verify, rev 13 author, round 12 reviewers |
-| r8-LK-adv | round 8 adversarial review of designs/lookalike-leak.md draft 8 (head 2ca11dd) | sonnet (claude-sonnet-5-5) | 00:18Z | +45min | running | save report, ledger rows |
-| r8-LK-cor | round 8 correctness review of designs/lookalike-leak.md draft 8 (head 2ca11dd) | sonnet (claude-sonnet-5-5) | 00:18Z | +45min | running | save report, ledger rows |
-| rev9-P4a-author | author rewrite tickets/P4a.md rev 9 from reviews/P4a-round8-resolve.md | sonnet (claude-sonnet-5-5) | 00:20Z | +40min | running | verify, push, round 9 reviewers |
+| r11-P1-resolve | round 11 resolve of tickets/P1.md rev 12 (ADV-R11-1..4, COR-R11-1..5) | opus (claude-opus-5-5) | 00:12Z | +50min | LOST (container restart; relaunch) | verify, rev 13 author, round 12 reviewers |
+| r8-LK-adv | round 8 adversarial review of designs/lookalike-leak.md draft 8 (head 2ca11dd) | sonnet (claude-sonnet-5-5) | 00:18Z | +45min | REPORTED | save report, ledger rows |
+| r8-LK-cor | round 8 correctness review of designs/lookalike-leak.md draft 8 (head 2ca11dd) | sonnet (claude-sonnet-5-5) | 00:18Z | +45min | LOST (container restart 00:25Z; relaunch) | save report, ledger rows |
+| rev9-P4a-author | author rewrite tickets/P4a.md rev 9 from reviews/P4a-round8-resolve.md | sonnet (claude-sonnet-5-5) | 00:20Z | +40min | LOST (container restart; relaunch) | verify, push, round 9 reviewers |
+| r8b-LK-cor | round 8 correctness review of designs/lookalike-leak.md draft 8 (relaunch after restart) | sonnet | 00:30Z | +45min | running | save report, ledger rows |
+| r11b-P1-resolve | round 11 resolve of tickets/P1.md (relaunch after restart) | opus | 00:30Z | +60min | running | verify, rev 13 author, round 12 reviewers |
+| rev9b-P4a-author | P4a rev 9 author (relaunch after restart; partial edits reverted) | sonnet | 00:30Z | +45min | running | verify, push, round 9 reviewers |
