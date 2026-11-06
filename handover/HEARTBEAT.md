@@ -192,3 +192,4 @@
 08:04Z | step=rung audit part E saved | next=parts A-D, merge, P1a fix2, genericity | blocked=none
 08:04Z | step=rung audit part B saved | next=parts A, C, D, merge | blocked=none
 08:05Z | step=rung audit part C saved | next=parts A, D, merge | blocked=none
+08:05Z | step=genericity audit saved; BN writer launched | next=rung audit A, D; P1a fix2 | blocked=G-4, G-6 need lead
