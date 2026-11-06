@@ -38,3 +38,12 @@ Open v1.1 items: each ticket keeps its own v1.1 table in plain words (P4a 37 row
 | AK-G15 (person queue) | wait for a client use case; its data/API contract stays in the GAPS doors | same |
 | AK-G1 (chat) | wait for a client use case; its data/API contract stays in the GAPS doors | same |
 Rung-table notes already appended to these three (AK-G16 BN-37, AK-G15 BN-29, AK-G1 BN-32) and the accepted AK-G16 cuts stay as written; the freeze stands. Order 57 A3: the shared source scanner is NOT built; revisit only if three of the five tickets build. A4: G14 gets no ticket (lead builds it from the studio portal kit).
+
+### Order 59 additions (2026-11-06): seven more DEFERRED, no demand found (freeze stays, nothing deleted; un-defer when a client or a chain item names the need)
+| Group | Tickets | Un-defer trigger |
+|---|---|---|
+| (a) document Q&A / RAG second shape | AK0, AK2a, AK4a | the first client who asks for document Q&A. AK4a pilot-size rule kept as a standing rule in `studio-notes/GAPS.md` |
+| (b) the checkers | P5b4, P5b5, P6b2 | a client or chain item that needs them |
+| (c) | P8b | after P8a, when a demo needs it |
+P8a's dependency list amended by P8a BN-24. Stay ACTIVE: AK-G2, AK1, P4b2, P4c, P5a, P5b1-3.
+**ACTIVE tickets after order 59: 22** = 33 ticket files minus 10 DEFERRED (AK-G15, AK-G16, AK-G1, AK0, AK2a, AK4a, P5b4, P5b5, P6b2, P8b) minus 1 PAUSED (JG-3). Count is from the file list in `tickets/`; P0t (draft) is included.
