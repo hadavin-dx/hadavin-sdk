@@ -1436,3 +1436,5 @@
 | BL-core-P1-r14-adv-1 | P1 | MAJOR | FILL-NAMES predicate false for U+2422/2423 (same as r14-cor-1) | OPEN | reviews/P1-round14-adversarial.md | 81483aa |
 | BL-core-P1-r14-adv-2 | P1 | MAJOR | re-pointed mutants 7,8,9,18 cannot be KILLED once P1a adds an import-time digest check | OPEN | reviews/P1-round14-adversarial.md | 81483aa |
 | BL-core-P1-r14-adv-3 | P1 | MAJOR | coverage sentence reads exhaustive for enclosed/dingbat forms (U+24EB-24F4, U+1F10B-C missing); build PIN-ENCL from names | OPEN | reviews/P1-round14-adversarial.md | 81483aa |
+| BL-core-P4d-r8-adv-M1 | P4d | MAJOR | test row a7 (price 1E-30) refused by the Route validator; i10h/i10g lose killer | OPEN | reviews/P4d-round8-adversarial.md | a321940 |
+| BL-core-P4d-r8-adv-M2 | P4d | MAJOR | excess-bound refusal leaves only under-booking exits (release/smaller retry) | OPEN | reviews/P4d-round8-adversarial.md | a321940 |
