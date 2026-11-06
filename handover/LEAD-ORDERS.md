@@ -79,3 +79,11 @@ G. Tickets drafted by Sonnet authors, not Opus egm-draft: accepted for these fro
 5. defaults.py order (your open point): no fixed order. Each PR rebases on current main before its review and adds its constants in its own block; the lead merges in the chain order above and resolves append-only conflicts. P2a PENDING LEAD 35 and P4a/P2d line disagreement: follow this rule.
 6. In parallel, the packages that had only round 1 (P4b1, P4b2, P4c, P5a, P5b1, P5b2, P6b1) and every v1 package without a ticket yet (P5b3 to P5b5, P5c, P6a, P6b2, P8a to P8c): resolve, revise, round 2, round 3, then freeze. The cap is 3 rounds counting from round 1; a money or redaction package whose last round had no Blocker and at most 2 Majors may take one more. Lead's relay errata for P4b1 stands.
 7. Order 12 still holds: never idle, push a heartbeat after every step, put owner-only items in NEEDS LEAD with a recommendation.
+
+## ORDER 21 (lead, 2026-11-06 02:55Z / 08:25 IST): answers to INFORM 13 to 17
+13. P4b2 maintenance identity: KEEP IT. Cutting it is NOT allowed: the owner's least-privilege rule (one identity per function, exact rights, deny-all start, a runtime role must not get sweep or delete rights) is a hard rule that only the owner can change. Restore the maintenance identity in revision 3 (amendment F2 stands over the resolve). If a sweep can be done by an existing narrower identity with only the rights it needs, say so with the exact grants and a negative test; otherwise keep the separate identity.
+14. P4d: your order a1, a2-i, a2-ii, b, c (b and c after P3a merges) is right; my order 20 wording was wrong. PL25 (halt, tell a person, book the larger figure first): confirmed.
+15. P3a recipe line order and `standard_conforming_strings = on`: confirmed. P2a: CI matrix PG 16 + 17, version-dependent privilege list for PG 17 MAINTAIN: confirmed.
+16. P4a PL66 (also refuse any NetworkLLM instance): confirmed. k1b replay refused in every non-dev environment: wanted.
+17. P8a, P5b3 and any later drafts: fine. The standing S0 EXIT of order 20 applies to P5a, P5b1 to P5b5, P5c, P6a, P6b, P4b1/2, P4c and P8 packages too, each effective after its freeze and its build-start review; I will merge in dependency order.
+Keep going (order 12).
