@@ -138,3 +138,4 @@
 2026-11-06T05:09Z | step=order 34 relays: AK1 relay line, owner-visible-limits 2-3, answers recorded | done=order 34 items 69-78 | next=AK-G1 r3 reviews, P1m verify | blocked=none
 2026-11-06T05:14Z | step=AK-G1 round 3 pair reported (7+3 Majors); saver launched | done=reviews | next=verify saver, Opus resolve, P1m verify | blocked=none
 2026-11-06T05:15Z | step=AK-G1 round 3 pair saved 74a39d7 (10 ledger rows); Opus resolve launched | done=AK-G1 r3 reviews | next=verify resolve then BN author; P1m builder verify | blocked=none
+2026-11-06T05:16Z | step=order 35 gateway text added (P4b1 BN-32, P5c BN-20, AK0 BN-32) | done=order 35 | next=AK-G1 resolve verify, P1m builder verify | blocked=none

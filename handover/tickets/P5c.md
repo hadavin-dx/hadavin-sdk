@@ -994,3 +994,8 @@ Source: `reviews/P5c-round3-resolve.md`, build notes BN-1 to BN-18, copied as wr
 - NL-35 (item 65): option (a). Keep the refusal; hostile row; ceiling 0 on the golden set.
 - NL-36 (item 66): option (b). Store a bare 12-digit ACCOUNTID only when an agent's config lists ACCOUNTID. No other path stores it.
 - Counts: the measurement row is a measurement, not a pass/fail row (like T2-P). Rows stay 101, mutants stay 66, as in BN-18.
+
+**BN-20 (lead order 35). Options paragraph: a client's own gateway for masking.** Scope of this ticket is UNCHANGED. Ticket text only; no build, no round.
+- (a) Our redactor (default, as ticketed).
+- (b) A client's own LLM gateway or masking service (LiteLLM, Portkey, Kong AI Gateway and Concentrate are named only as examples) as an optional second layer. Trigger: a client already runs a gateway. Outlined as a v1.1 row: an adapter only, tested against a fake gateway; no vendor import outside its kind module.
+- An adapter cannot give these unless the gateway gives them itself: restoring masked values in our code (not in the gateway); our coverage of look-alike letters and encoded or re-spelled copies of a known value. In the lead's test the default Presidio analyser missed 13 of 30 hostile inputs (plain keys, a password assignment, and full-width, Cyrillic, zero-width, percent-coded and HTML-entity spellings) and flagged 7 of 14 lines that must stay readable (`reviews/gateway-check-lead-reading-1.md`). So a gateway layer is never a replacement for this redactor.
