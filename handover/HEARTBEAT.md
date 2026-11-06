@@ -352,3 +352,4 @@ P1a | fix5 READY PR 63 head 2572847, main merged | builders running: P4d-a2, P1b
 ORDER98 | 5 slots (nproc=4), P2d-1 pushed 8b2b716, P1b merge+rerun, P5a BLE001 resumed | builders running: P4d-a2, P1b, P5a | blocked on: lead review of PR 63/68
 P4d-a2 | READY PR 75 head f8b9056, finals green | builders running: P1b, P5a | blocked on: lead review; next P2a-1/P4a/P4b1 merges of f8b9056
 P5a | READY PR 74 head 21ca680, finals green, order 93 done | builders running: P1a fix6, P1b | blocked on: lead review; CI check/tests-py312 running
+P3a-1 | ORDER 100 builder started on PR 68 | builders running: P1a fix6, P1b, P3a-1 | blocked on: -
