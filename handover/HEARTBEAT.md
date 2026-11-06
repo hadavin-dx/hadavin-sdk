@@ -233,3 +233,4 @@
 2026-11-06T10:44:30Z | step=order 75 read; P0t fix2 builder resumed (no push) (q168) | next=P1a fix3, P1b, P1c rev4, P3a-1 fix1; order 76 | blocked=none
 2026-11-06T10:47:42Z | step=P1c rev4 committed (q169) | next=P1c round 3 snapshot; P1a fix3; P1b merge; P3a-1 fix1 | blocked=lead q169 PL10
 2026-11-06T10:48:45Z | step=P1a fix3 verified+reported (q170); P1b merge builder resumed | next=P1c r3 reports, P1b report, P0t fix2, P3a-1 fix1 | blocked=lead q170
+2026-11-06T10:54:22Z | step=order 76 read (q171); P1b/P1a builders told no push | next=P1c r3 design report, rev5 resolve; builder reports | blocked=none
