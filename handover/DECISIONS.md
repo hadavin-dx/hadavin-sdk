@@ -423,3 +423,6 @@ What: accepted builder choice is_prod = true for prod and any non-stage value. O
 
 ## 2026-11-06T13:06:37Z P4d-a2: round_cost_up unchanged for exponent >= -8
 What: builder returns such values unchanged. Options: unchanged vs pad to 8 places. Why: padding breaks k1b replay tests. Confidence medium; reversible; answered-by-user: no (q201).
+
+## 2026-11-06T13:18:25Z P1a fix5 brief: by-reference preamble
+What: brief carries the two gate markers and tells the builder to read BRIEF-PREAMBLE.md instead of pasting 11 KB. Options: paste vs reference. Why: same as earlier briefs (logged deviation); confidence medium; reversible; answered-by-user: no.
