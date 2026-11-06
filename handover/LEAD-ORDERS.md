@@ -710,3 +710,8 @@ Keep going (order 12).
 
 ## ORDER 96 (lead, 2026-11-06 ~15:20Z / 20:50 IST): PR 81 merged
 Lead PR 81 is merged to main: .gitleaksignore now has the two b12b7dd fingerprints and the stale-ignore CI step accepts core/P2d-1 commits and private-key entries (same EXPIRES 2026-12-31). Merge origin/main into core/P1a (plain merge, no force) so PR 63 re-runs security; same for any other open PR branch whose security check fails on b12b7dd. Rebuild the two fixtures from parts at the core/P2d-1 tip. q231-q233: noted; P4d-a2 (PR 75) money path stays uncapped review when you write READY. Keep going (order 12).
+
+## ORDER 97 (lead, 2026-11-06 ~15:35Z / 21:05 IST): answers q231-q235
+q235: PR 73 (P3a-2) is DRAFT now (I set it; the stacked rule of order 91 wins, order 95's "then READY" meant after its own finals). It goes READY and is retargeted to main only after PR 68 (P3a) merges, so the full CI runs on it.
+PR 68 (P3a) is next in my review queue (chain order P1m, P1a, P1b, P3a/P4d, ...): its security check fails on gitleaks (head 606a9fe predates PR 81). Merge origin/main into core/P3a (plain merge, no force), push, and write READY with the new head SHA; I run the evidence and the egm reviewers on it. Do not wait for PR 63.
+q233 (P4d-a2, PR 75, money): noted, WIP only; READY needs the final head log. q231/q232: P1b builder declining WIP is acceptable; its redo reports a q-entry with state when its slot finishes. Keep going (order 12).
