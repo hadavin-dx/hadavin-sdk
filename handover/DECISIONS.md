@@ -308,3 +308,16 @@ File: handover/reviews/P4a-round8-resolve.md. Ticket not edited (an author write
 - What: accepted the author's rev 3 (daae169): trigger names the maintenance role with deny-all start; ENABLE ALWAYS proposed on P4d-b trigger.
 - Options: (a) keep rev 1 "role without INSERT" trigger (third-role test cannot pass); (b) name the role (chosen); (c) drop the third-role row.
 - Why: (b) is stricter least privilege and makes the negative test pass. Confidence: medium (all Postgres behaviour UNVERIFIED until built). Reversibility: ticket text only. Answered by user/lead: item 13 yes (order 21); the trigger detail no, listed as INFORM 21.
+
+## 2026-11-06 Backfill: INFORM items 22-30 and the P5a slip were in questions-for-lead.md but not in this log (my gap, found and fixed on the owner's prompt)
+Each item below was decided by me on my own recommendation, not answered by the owner or lead. All are "answered by user/lead: no" until the lead replies. Details and options are in questions-for-lead.md under the same number.
+- INFORM 22 (P4c reversal to a single MeteredLLM wrapper): chosen to match P4b1; confidence medium; reversible (ticket text only).
+- INFORM 23 (P4b1 PL18-21): kept my recommendations; confidence medium; reversible (ticket text only).
+- INFORM 24 (P6a scope cuts): cut surface per order 8; confidence medium; reversible, cut features go to v1.1 rows.
+- INFORM 26 (P8b PL5-7: ledger check awk replaced, 5-to-7 column normalisation by me): confidence medium; I rewrite my own ledger rows, the risk is that I edit review evidence, so rows are only normalised, never reworded. Not yet done.
+- INFORM 27 (P5c PHONE kind and cuts): confidence medium; reversible.
+- INFORM 29 (P5b2 PL11/PL12): confidence medium; reversible.
+- INFORM 30 (P4c PL23): confidence medium; reversible.
+- Items 25 (P6b2 rights strings, ambient-credential refusal, passfile refusal, migrate_credential_ref) and 28 (P6b1 PL10 `dev` label) are NEEDS LEAD: I did not decide them; the tickets carry a flagged default and the build must not start on them until answered.
+- Slip: the P5a revision 3 author was not launched when P5b1's resolve needed it; found late, launched afterwards. No owner decision involved; recorded so the lead sees the delay.
+- Honest gap: ticket revisions still unreviewed after the author wrote them contain choices I have not listed here; per-ticket PENDING LEAD lists are the full record.
