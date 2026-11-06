@@ -687,5 +687,6 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | rg-P5a-2 | Sonnet researcher, P5a rung audit BN-23 (order 68) | 2026-11-06T09:54:41Z | REPORTED |
 | au-P1c-r3 | Opus author, P1c rev 3 (order 70) | 2026-11-06T10:15:56Z | REPORTED (committed) |
 | bd-P0t-fix1 | Sonnet builder, P0t fix1 on PR 67 (order 71) | 2026-11-06T10:15:56Z | running (af6c) |
-| gf-P1c-r2-design | Goldfish round 2 P1c rev 3 (egm-design, Sonnet, snapshot db17c53) | 2026-11-06T10:15:56Z | running (a81d) |
-| gf-P1c-r2-code | Goldfish round 2 P1c rev 3 (egm-codebase-details, Sonnet, snapshot db17c53) | 2026-11-06T10:15:56Z | running (a446) |
+| gf-P1c-r2-design | Goldfish round 2 P1c rev 3 (egm-design, Sonnet, snapshot db17c53) | 2026-11-06T10:15:56Z | REPORTED (saved) |
+| gf-P1c-r2-code | Goldfish round 2 P1c rev 3 (egm-codebase-details, Sonnet, snapshot db17c53) | 2026-11-06T10:15:56Z | REPORTED (saved) |
+| rs-P1c-r2 | Opus resolve P1c round 2 -> rev 4 | 2026-11-06T10:27:10Z | running (ade9) |
