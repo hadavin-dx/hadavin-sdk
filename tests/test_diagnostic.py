@@ -297,9 +297,10 @@ def test_family_order_timeout_before_os_error() -> None:
 
 def test_gaierror_gives_gai_not_errno() -> None:
     out = line_of(socket.gaierror(-2, "x"))
-    assert out.startswith(
-        "socket.gaierror: diag_v=1 code=os_error step=extract at=- fp="
-    ) and out.endswith(" gai=-2")
+    assert out.startswith("socket.gaierror: diag_v=1 code=os_error step=extract at=- fp="), (
+        f"gaierror head: {out}"
+    )
+    assert out.endswith(" gai=-2"), f"gaierror facts: {out}"
 
 
 def test_psycopg_phase_is_sqlstate_class_only() -> None:
