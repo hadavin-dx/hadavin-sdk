@@ -222,3 +222,9 @@ Keep going (order 12).
 - PL16: (a) Grant.runtime_update_cols with a negative test and a mutant (least privilege).
 - INFORM 10, 17, 18: fine.
 Keep going (order 12).
+
+## ORDER 37 (lead, 2026-11-06 ~05:55Z / 11:25 IST): P1m MERGED (PR 61 squash d1ed085 on main). Next in chain: P1a.
+1. Rebase every open core/* branch on main d1ed085 (tools/mutation_runner.py and tests are now on main).
+2. Review 4 (CLEAN) left 3 Minors to fix in ONE small follow-up PR from main, branch core/P1m-fix1 (do it now, parallel with the chain; reviewed by me with a one-pass check): (a) refuse or list junctions at snapshot (os.path.isjunction, py3.12+), with a test; (b) the ":" refusal message must say "a path may not contain ':'" and the module docstring must state the limit; (c) a child reaped by someone else (SIGCHLD ignored) must be an ERROR result, not return code 0 (judge must not read it as pass or fail), with a test and mutant. Full text: handover/reviews/P1m-lead-review-4.md. Minor 4 (tests-py312 as required check) is a GitHub setting: I take it to the owner; just add `tests-py312` to the ci.yml header comment in that PR.
+3. P1a: if its ticket is frozen and build started, push the PR when ready; if not frozen, say what blocks. Report in HEARTBEAT.
+Keep going (order 12).
