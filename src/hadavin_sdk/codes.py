@@ -229,6 +229,7 @@ _P = "hadavin_sdk."
 OWN_CODES: Final[Mapping[str, Code]] = MappingProxyType(
     {
         _P + "errors:ConfigError": Code.config_invalid,
+        _P + "config:_RenamedStage": Code.config_invalid,
         _P + "k1b.bundle:BundleError": Code.config_invalid,
         _P + "llm.fake:UnknownRecording": Code.config_invalid,
         _P + "store.protocol:StoreUnavailable": Code.store_unavailable,
