@@ -84,23 +84,10 @@ class Backends(_Strict):
         return out + [("detector", d) for d in self.detector]
 
 
-# The stages (R449), in order, and nothing else. A project's own labels map to one of these in the project's config;
-# core tests the stage, never a label. The first stage was called "dev" until P0t: it is refused at load, and an old
-# STORED value is read as the first stage (history is never rewritten).
+# The stages, in order, and nothing else. A project's own labels map to one of these in the project's config; core
+# tests the stage, never a label. The first stage was called "dev" until the rename: it is refused at load.
 STAGES = ("demo", "pilot", "prod")
 _OLD_STAGE = "dev"
-
-
-def stage_from_stored(value: object) -> str:
-    """A stage read back from storage (a tenant row, an audit entry, an old config copy): the old first stage name
-    reads as `demo`, a current stage reads as itself, anything else is refused. Reading never writes: the stored
-    value, and any hash computed over it, stay as they were."""
-    if isinstance(value, str):
-        if value == _OLD_STAGE:
-            return STAGES[0]
-        if value in STAGES:
-            return value
-    raise ConfigError(f"stored stage {value!r} is not one of {', '.join(STAGES)}")
 
 
 # Slice 1 keys, refused with the place they moved to (design 12.3; no clients yet, so no migration shim).
@@ -376,9 +363,12 @@ class Config(_Strict):
     @field_validator("environment", mode="before")
     @classmethod
     def _renamed_stage(cls, value: object) -> object:
-        """R449: the old first stage name is refused with the rename; every other value is compared exactly."""
+        """The old first stage name is refused with the rename; every other value is compared exactly."""
         if isinstance(value, str) and value == _OLD_STAGE:
-            raise ValueError(f"stage {_OLD_STAGE} was renamed demo (stages: {', '.join(STAGES)})")
+            raise ValueError(
+                f"environment: {_OLD_STAGE} is no longer allowed; write environment: {STAGES[0]} "
+                f"(allowed values: {', '.join(STAGES)})"
+            )
         return value
 
     @model_validator(mode="after")

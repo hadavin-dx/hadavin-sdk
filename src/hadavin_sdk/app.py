@@ -14,7 +14,6 @@ from datetime import datetime
 from pathlib import Path
 from urllib.parse import urlsplit
 
-from hadavin_sdk import deferred
 from hadavin_sdk import sources as sources_mod
 from hadavin_sdk import tools as tools_mod
 from hadavin_sdk.actions.contract import schema_errors
@@ -80,7 +79,7 @@ def build(
     reg = load_registry(cfg)
     b = cfg.backends
     secrets = secrets or make("secrets", b.secrets)
-    live = cfg.environment in deferred.LIVE
+    live = cfg.environment != "demo"  # fail closed: only exactly demo is relaxed
     if live and not cfg.evidence.restored_hash_key_secret_name:
         raise ConfigError("evidence.restored_hash_key_secret_name is required in pilot and prod")
     if live and getattr(b.store, "kind", "") == "postgres" and not b.store.purge_dsn_secret_name:

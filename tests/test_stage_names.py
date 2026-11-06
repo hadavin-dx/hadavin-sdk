@@ -1,31 +1,39 @@
-"""P0t: the stages are exactly demo, pilot and prod (R449). The old first stage name is refused, never read as a stage
-(except on READ of an old stored value, which maps to demo and never rewrites history), and a class test keeps the old
-word out of every place that names a stage.
+"""The stages are exactly demo, pilot and prod. The old first stage name is refused, never read as a stage, and a
+class test keeps the old word out of every place that names a stage.
 
-Rows (BN-1 of the ticket): (a) stored old value read as demo, history untouched; (b) unknown stage and half-renamed flag
-refuse start; (c) the class test looks at stage POSITIONS only; (d) pilot and prod refuse relaxed kinds.
+No stage is stored anywhere today, so there is no read site to test. The first change that stores one must map an old
+value to demo on read for display only (never for a guard decision) and add a test through that real read site.
+
+Rows: unknown stage and half-renamed flag refuse start; the class test looks at stage POSITIONS only; pilot and prod
+refuse relaxed kinds; the live guards fail closed on a value that is not a stage.
 """
 
-import hashlib
 import re
+import unicodedata
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 import yaml
 
+from hadavin_sdk import app as app_mod
 from hadavin_sdk import config as config_mod
 from hadavin_sdk import deferred
 from hadavin_sdk.actions.secrets import FakeSecretProvider
 from hadavin_sdk.app import build
 from hadavin_sdk.backends import table
-from hadavin_sdk.config import STAGES, Config, ConfigError, load_config, stage_from_stored
+from hadavin_sdk.config import STAGES, Config, ConfigError, load_config
 from hadavin_sdk.registry import _module_pin_problems, load_registry
 from tests.conftest import make_cfg, qualify
 
 # The old word is built from parts in this file: the class test never scans this file, but a grep for it should find
 # only the places that matter.
 OLD = "d" + "ev"
-RENAMED = "stage " + OLD + " was renamed demo"
+RENAMED = (
+    "environment: "
+    + OLD
+    + " is no longer allowed; write environment: demo (allowed values: demo, pilot, prod)"
+)
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -49,11 +57,22 @@ def _set_env(cfg_dir, value):
 # --- the stage set -------------------------------------------------------------------------------------------------
 
 
-def test_the_stages_are_exactly_demo_pilot_prod():
+def test_the_stages_are_exactly_demo_pilot_prod(tmp_path):
     assert STAGES == ("demo", "pilot", "prod")
-    assert deferred.LIVE == ("pilot", "prod"), (
-        "the live stages are pilot and prod: demo is not live"
+    assert not hasattr(deferred, "LIVE"), (
+        "an allowlist of live stages is back: a new value would count as not live"
     )
+    assert _live_by_site(tmp_path / "a", "demo") == {
+        "registry": False,
+        "deferred": False,
+        "app": False,
+    }, "demo is not live"
+    for stage in ("pilot", "prod"):
+        assert _live_by_site(tmp_path / stage, stage) == {
+            "registry": True,
+            "deferred": True,
+            "app": True,
+        }, f"{stage} is live"
 
 
 def test_dev_is_refused_with_the_rename(cfg_dir):
@@ -81,6 +100,29 @@ INEXACT = [
     "test",
     "",
     "stage",
+    # look-alikes and invisible characters, built from code points (no literal look-alike in this file)
+    "d" + chr(0x0435) + "mo",  # Cyrillic small ie in place of e
+    chr(0x0434) + "emo",  # Cyrillic small de in place of d
+    "d" + chr(0x0435) + "m" + chr(0x043E),  # Cyrillic ie and o together
+    "".join(chr(0xFF00 + ord(c) - 0x20) for c in "demo"),  # fullwidth demo (NFKC gives demo)
+    "de" + chr(0x200B) + "mo",  # zero-width space inside
+    chr(0x200B) + "demo",  # zero-width space in front
+    "de" + chr(0xFEFF) + "mo",  # zero-width no-break space
+    "de" + chr(0x00AD) + "mo",  # soft hyphen
+    "demo\n",
+    "\ndemo",
+    "demo\t",
+    "demo\r",
+    "demo" + chr(0x00A0),  # no-break space (NFKC gives a plain space)
+    chr(0x00A0) + "demo",
+    "demo" + chr(0x2003),  # em space
+    chr(0x217E) + "emo",  # small roman numeral five hundred (NFKC gives d)
+    chr(0x1D41D) + "emo",  # mathematical bold d (NFKC gives d)
+    "".join(chr(c) for c in (0x24D3, 0x24D4, 0x24DC, 0x24DE)),  # circled letters (NFKC gives demo)
+    "demo" + chr(0x0301),  # demo plus a combining accent
+    "~",
+    "null",
+    "None",
 ]
 
 
@@ -109,6 +151,39 @@ def test_a_missing_stage_is_refused(cfg_dir):
     _edit(cfg_dir, lambda d: d.pop("environment"))
     with pytest.raises(ConfigError, match="environment"):
         load_config(cfg_dir)
+
+
+@pytest.mark.parametrize("raw", ["~", "null", "Null", "NULL", ""])
+def test_a_yaml_null_stage_is_refused(cfg_dir, raw):
+    """`environment: ~` (and the other YAML spellings of null, and a bare key) reads as None: refused, never a default."""
+    path = cfg_dir / "config.yaml"
+    text = path.read_text(encoding="utf-8")
+    path.write_text(text.replace("environment: demo", f"environment: {raw}"), encoding="utf-8")
+    assert f"environment: {raw}" in path.read_text(encoding="utf-8")
+    with pytest.raises(ConfigError, match="environment"):
+        load_config(cfg_dir)
+
+
+def test_the_look_alike_strings_are_what_the_list_says_they_are():
+    """The NFKC-equivalent entries really do become demo after NFKC, casefold and strip, so a program that tidied the
+    value that way would accept them: they are in the list to stop exactly that."""
+
+    def tidy(value):
+        return unicodedata.normalize("NFKC", value).casefold().strip()
+
+    tidy_to_demo = [v for v in INEXACT if tidy(v) == "demo"]
+    assert len(tidy_to_demo) >= 8, tidy_to_demo
+    for must in (
+        "".join(chr(0xFF00 + ord(c) - 0x20) for c in "demo"),
+        "demo" + chr(0x00A0),
+        chr(0x217E) + "emo",
+        chr(0x1D41D) + "emo",
+        "DEMO",
+        "demo\n",
+    ):
+        assert must in tidy_to_demo
+    for v in INEXACT:
+        assert v not in STAGES
 
 
 def test_demo_loads_and_pilot_and_prod_load_only_without_the_fakes(cfg_dir):
@@ -151,7 +226,7 @@ def test_demo_accepts_every_demo_only_kind(cfg_dir):
 
 
 def test_pilot_and_prod_refuse_every_relaxed_kind(cfg_dir):
-    """BN-1 (d): the fake model, the memory store, the other fakes and the loopback switch."""
+    """The fake model, the memory store, the other fakes and the loopback switch."""
     for stage in ("pilot", "prod"):
         _set_env(cfg_dir, stage)
         with pytest.raises(ConfigError, match=f"environment {stage}: refused: ") as err:
@@ -201,47 +276,63 @@ def test_demo_is_not_live(tmp_path):
     build(cfg_dir, ["test-agent"], secrets=FakeSecretProvider({"fixture-token": "tok" + "-stage"}))
 
 
-# --- BN-1 (a): a stored old value is read as demo, history is never rewritten -----------------------------------------
+# --- the live guards fail closed -----------------------------------------------------------------------------------------
 
 
-def test_a_stored_old_value_reads_as_demo_and_the_input_is_not_changed():
-    stored = {"environment": OLD}
-    before = repr(stored)
-    assert stage_from_stored(stored["environment"]) == "demo", (
-        "a stored old stage value was not read as demo"
+def _live_by_site(tmp_path, stage):
+    """Ask each of the three places that decide 'live' (the unpinned tool module check in registry.py, the pilot and prod
+    rules in deferred.py, the startup checks in app.py) about a config whose stage is `stage`, set on an unvalidated copy
+    (model_copy skips the check that only demo, pilot and prod load). True: that place treated the config as live."""
+    cfg_dir = make_cfg(tmp_path)
+    cfg = load_config(cfg_dir)
+    reg = load_registry(cfg)
+    qualify(reg)
+    copy = cfg.model_copy(
+        update={"environment": stage, "tool_modules": ["tests.fixtures.k5_tools"]}
     )
-    assert repr(stored) == before
-    for stage in STAGES:
-        assert stage_from_stored(stage) == stage
-
-
-def test_a_stored_unknown_value_is_refused_not_guessed():
-    for value in ["Demo", "staging", "uat", "", " " + OLD, OLD + " ", None, 3, b"demo"]:
+    in_registry = any("no tool_module_hashes pin" in p for p in _module_pin_problems(copy))
+    agent = SimpleNamespace(id="a", max_run_usd=None, data_class="internal", levels=None)
+    probe = SimpleNamespace(config=copy, contracts={}, agents={"a": agent})
+    in_deferred = any("is required in pilot and prod" in p for p in deferred.check(probe))
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setattr(app_mod, "load_config", lambda _d: copy)
+        mp.setattr(app_mod, "load_registry", lambda _c: reg)
         try:
-            got = stage_from_stored(value)
+            app_mod.build(
+                cfg_dir,
+                ["test-agent"],
+                secrets=FakeSecretProvider({"fixture-token": "tok" + "-stage"}),
+            )
+            in_app = False
         except ConfigError as exc:
-            assert "stored stage" in str(exc)
-        else:
-            raise AssertionError(f"a stored unknown stage was accepted: {value!r} -> {got!r}")
+            in_app = "restored_hash_key_secret_name is required in pilot and prod" in str(exc)
+    return {"registry": in_registry, "deferred": in_deferred, "app": in_app}
 
 
-def test_reading_an_old_stored_value_leaves_the_audit_hash_chain_as_it_was():
-    """The body that was hashed says dev; the reader maps it to demo for display, and the chain still verifies."""
-    from hadavin_sdk.audit import chain
-
-    body = '{"environment":"' + OLD + '"}'
-    at, run_id, kind = "2026-01-01T00:00:00.000000+00:00", "r1", "run.start"
-    stored_hash = chain._hash(chain.GENESIS, 1, at, run_id, kind, body)
-    assert stage_from_stored(yaml.safe_load(body)["environment"]) == "demo"
-    assert chain._hash(chain.GENESIS, 1, at, run_id, kind, body) == stored_hash
-    renamed = body.replace(OLD, "demo")
-    assert chain._hash(chain.GENESIS, 1, at, run_id, kind, renamed) != stored_hash, (
-        "a rewritten body must break the chain: that is why history is never rewritten"
-    )
-    assert hashlib.sha256(body.encode()).hexdigest() != hashlib.sha256(renamed.encode()).hexdigest()
+def test_a_value_that_is_not_a_stage_is_live_for_every_guard(tmp_path):
+    """Config refuses such a value at load, but model_copy(update=...) and model_construct skip that check. The guards
+    must then treat the config as live (strict), not as demo: only exactly demo is relaxed."""
+    for n, bad in enumerate(["stag" + "ing", "Demo", "demo ", OLD, "", None, "uat"]):
+        got = _live_by_site(tmp_path / str(n), bad)
+        for site, live in got.items():
+            assert live, f"{site} treated {bad!r} as not live (an allowlist of live stages)"
 
 
-# --- BN-1 (b): fail closed on a half-renamed flag ----------------------------------------------------------------------
+def test_each_site_is_asked_separately(tmp_path):
+    """The probe tells the three sites apart (demo: none live), so a mutant in one site is named by its own entry."""
+    assert _live_by_site(tmp_path / "d", "demo") == {
+        "registry": False,
+        "deferred": False,
+        "app": False,
+    }
+    assert _live_by_site(tmp_path / "p", "pilot") == {
+        "registry": True,
+        "deferred": True,
+        "app": True,
+    }
+
+
+# --- fail closed on a half-renamed flag ----------------------------------------------------------------------
 
 
 def test_no_old_spelling_of_the_demo_only_flag_is_left():
@@ -267,7 +358,7 @@ def test_both_spellings_of_the_stage_together_refuse_start(cfg_dir):
         load_config(cfg_dir)
 
 
-# --- BN-1 (c): the class test, stage POSITIONS only ------------------------------------------------------------------
+# --- the class test, stage POSITIONS only ------------------------------------------------------------------
 
 _W = (
     r"(?<![A-Za-z0-9])" + OLD + r"(?![A-Za-z0-9])"
@@ -306,17 +397,29 @@ POSITIONS = {
         + r"\b",
         re.IGNORECASE,
     ),
+    "stage word then value": re.compile(
+        r"\b(?:tier|stage|profile|mode)\b\W{1,4}" + OLD + r"(?![A-Za-z0-9])", re.IGNORECASE
+    ),
+    "list literal": re.compile(
+        r"[\[(\{,]\s*[`'\"]" + OLD + r"[`'\"]\s*[,\])\}]|^\s*-\s+[`'\"]?" + OLD + r"[`'\"]?\s*$",
+        re.IGNORECASE,
+    ),
     "url host": re.compile(r"://" + OLD + r"\.|://[^/\s]*-" + OLD + r"\.", re.IGNORECASE),
     "heading": re.compile(r"^#{1,6} .*" + _W, re.IGNORECASE),
 }
 SCANNED = (
-    ("src", ("*.py",)),
-    ("tests", ("*.py", "*.yaml", "*.yml")),
+    ("src", ("*.py", "*.toml", "*.json")),
+    ("tests", ("*.py", "*.yaml", "*.yml", "*.toml", "*.json")),
     ("docs", ("*",)),
-    ("demos", ("*.py", "*.md", "*.yaml", "*.json")),
+    ("demos", ("*.py", "*.md", "*.yaml", "*.json", "*.toml")),
+    (".github", ("*",)),
     (".", ("README.md", "SECURITY.md")),
-)
+)  # not scanned: pyproject.toml and uv.lock at the root (the packaging group is called dev), CHANGELOG.md (history)
 SELF = Path(__file__).resolve()
+# The ask-your-data demo and its tests have an evaluation split called dev (a dataset split, not a stage). In those two
+# places only, the two position kinds that read a bare quoted word are skipped; every other position still applies there.
+SPLIT_PLACES = ("demos/ask-your-data/", "tests/demo_askdata/")
+SPLIT_SKIPS = {"stage word then value", "list literal"}
 
 
 def _hits(line: str, markdown: bool = True) -> list[str]:
@@ -327,8 +430,9 @@ def _hits(line: str, markdown: bool = True) -> list[str]:
     return [n for n, rx in POSITIONS.items() if rx.search(line) and (markdown or n != "heading")]
 
 
-def _scan() -> list[str]:
-    out = []
+def _scan() -> tuple[list[str], int]:
+    """(hits, how many lines the split exemption removed a position from)."""
+    out, skipped = [], 0
     for folder, patterns in SCANNED:
         base = ROOT / folder
         if not base.is_dir():
@@ -341,17 +445,31 @@ def _scan() -> list[str]:
                     text = path.read_text(encoding="utf-8")
                 except UnicodeDecodeError:
                     continue
+                rel = path.relative_to(ROOT).as_posix()
                 for number, line in enumerate(text.splitlines(), 1):
-                    if names := _hits(line, path.suffix == ".md"):
-                        out.append(
-                            f"{path.relative_to(ROOT)}:{number} [{', '.join(names)}] {line.strip()[:100]}"
-                        )
-    return sorted(set(out))
+                    names = _hits(line, path.suffix == ".md")
+                    if rel.startswith(SPLIT_PLACES):
+                        kept = [n for n in names if n not in SPLIT_SKIPS]
+                        skipped += len(kept) != len(names)
+                        names = kept
+                    if names:
+                        out.append(f"{rel}:{number} [{', '.join(names)}] {line.strip()[:100]}")
+    return sorted(set(out)), skipped
 
 
 def test_the_old_stage_word_is_gone():
-    found = _scan()
+    found, _ = _scan()
     assert not found, "the old stage word is still used as a stage:\n" + "\n".join(found)
+
+
+def test_the_split_exemption_is_used_and_covers_only_the_two_places():
+    """An exemption that matches nothing is stale and fails; the two places are the demo and its tests, nothing else."""
+    _, skipped = _scan()
+    assert skipped > 0, "the evaluation-split exemption matches nothing: delete it"
+    assert SPLIT_PLACES == ("demos/ask-your-data/", "tests/demo_askdata/")
+    assert SPLIT_SKIPS == {"stage word then value", "list literal"}
+    for place in SPLIT_PLACES:
+        assert (ROOT / place).is_dir()
 
 
 @pytest.mark.parametrize(
@@ -373,6 +491,17 @@ def test_the_old_stage_word_is_gone():
         f"refused outside {OLD}, no more",
         f"https://{OLD}.example.org/x",
         f"## Running in {OLD}",
+        f"tier: {OLD}",
+        f'stage = "{OLD}"',
+        f"profile={OLD}",
+        f'"mode": "{OLD}"',
+        f"deploy.mode: `{OLD}`",
+        f'STAGES = ["{OLD}"]',
+        f'("{OLD}",)',
+        f"{{'{OLD}'}}",
+        f'x = ["a", "{OLD}"]',
+        f"  - {OLD}",
+        f'  - "{OLD}"',
     ],
 )
 def test_the_scanner_finds_each_stage_position(line):
@@ -396,6 +525,11 @@ def test_the_scanner_finds_each_stage_position(line):
         "environment variable HADAVIN_X",
         "environment: demo",
         f"for row in {OLD}:",
+        "modern mode: developer",
+        "stage: demo",
+        "  - demo",
+        f'default-groups = ["{OLD}x"]',
+        f"mode: {OLD}elop",
     ],
 )
 def test_the_scanner_ignores_words_that_are_not_stage_positions(line):
@@ -412,7 +546,7 @@ def test_the_scan_reads_the_places_it_claims_to():
     )
 
 
-# --- BN-2 (3): the redactor treats stage words as ordinary words, so `demo` joins them ----------------------------------
+# --- the redactor treats stage words as ordinary words, so `demo` joins them ----------------------------------
 
 
 def test_the_redactor_does_not_sweep_the_stage_words_but_still_sweeps_secrets_and_other_names():

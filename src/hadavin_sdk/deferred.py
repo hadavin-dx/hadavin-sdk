@@ -30,7 +30,6 @@ DEFERRED_KEYS = {
     "intake_forms": "Phase 2 (request tracker)",
     "provisioning": "Phase 2 (request tracker)",
 }
-LIVE = ("pilot", "prod")
 
 
 def key_problems(where: str, raw: Any) -> list[str]:
@@ -45,7 +44,7 @@ def key_problems(where: str, raw: Any) -> list[str]:
 
 def check(reg: Registry) -> list[str]:
     cfg = reg.config
-    live = cfg.environment in LIVE
+    live = cfg.environment != "demo"  # fail closed: only exactly demo is relaxed
     out: list[str] = []
     for c in reg.contracts.values():
         if c.executor.kind == "manual":

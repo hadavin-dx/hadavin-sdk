@@ -318,7 +318,7 @@ def _module_pin_problems(config: Config) -> list[str]:
     for module in config.tool_modules:
         pin = config.tool_module_hashes.get(module)
         if pin is None:
-            if config.environment in deferred.LIVE:
+            if config.environment != "demo":
                 out.append(
                     f"tool module {module} has no tool_module_hashes pin (required in pilot and prod)"
                 )

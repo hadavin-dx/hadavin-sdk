@@ -569,9 +569,8 @@ class Runtime:
     def _abstain(self, run: Run, new: RunState, reason: str | None, cited: list[str]) -> Run:
         """End a run that proposed nothing and post the abstain card (every level), so a miss can be labelled."""
         run = self._to(run, new, reason)
-        if (
-            self.hooks.post_card is None
-        ):  # no channel wired (demo slice-1): nothing to post or audit
+        # No channel wired (demo slice-1): nothing to post or audit.
+        if self.hooks.post_card is None:
             return run
         label = _REASON_TEXT.get(reason or "", reason or "no proposal")
         caught = "guard" if reason in GUARD_STOP_REASONS else None
