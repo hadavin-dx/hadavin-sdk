@@ -220,3 +220,4 @@
 2026-11-06T09:50:01Z | step=order 67: licence scan (q156), rung re-read | next=fix3, P1b builder, P1c resolve (then order-67 recheck of its rung table) | blocked=owner yes on psycopg LGPL/pglast
 2026-11-06T09:53:12Z | step=order 68 read; q157; P5a rung BN agent launched | next=fix3, P1b, P1c resolve, P5a BN | blocked=none
 2026-11-06T09:54:41Z | step=P5a BN-22 placeholder (no audit existed); P5a rung audit agent launched | next=BN-23 verdicts
+2026-11-06T09:57:42Z | step=P1c rev2 verified+committed (q159) | next=order 69 items 1-3 | blocked=P1c PL1-PL8 lead
