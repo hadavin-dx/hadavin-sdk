@@ -1394,3 +1394,4 @@
 | BL-core-P1-r12-adv-M1 | P1 | MAJOR | see report | OPEN | reviews/P1-round12-adversarial.md | 3f0236f |
 | BL-core-P1-r12-adv-M2 | P1 | MAJOR | see report | OPEN | reviews/P1-round12-adversarial.md | 3f0236f |
 | BL-core-P1-r12-adv-M3 | P1 | MAJOR | see report | OPEN | reviews/P1-round12-adversarial.md | 3f0236f |
+| BL-core-P1-r12-cor-M-1 | P1 | MAJOR | see report | OPEN | reviews/P1-round12-correctness.md | 3f0236f |
