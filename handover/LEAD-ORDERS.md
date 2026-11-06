@@ -210,3 +210,15 @@ Evidence and my reading: handover/reviews/gateway-check-lead-reading-1.md (raw: 
 1. In P4b1 (meter) and P5c (redactor) add a short "Options" paragraph: (a) our code (default), (b) a client's own LLM gateway (LiteLLM, Portkey, Kong, Concentrate named as examples; no vendor import outside its kind module), outlined with the trigger "a client already runs a gateway", written as a v1.1 row (adapter only, tests against a fake gateway); say plainly which of our guarantees an adapter cannot give unless the gateway gives them: reserve-before-settle in exact decimal, per-run cap, fail closed on unknown billing, restore in code, our look-alike/encoded-copy coverage.
 2. AK0 PL1 table: add LiteLLM, Portkey, Kong, Concentrate as "gateway" rows with licence (open source or paid), what is free vs paid (audit logs and SSO above 5 users are paid in LiteLLM; Kong PII sanitizer is Enterprise-only), and operating cost of running it.
 Keep going (order 12).
+
+## ORDER 36 (lead, 2026-11-06 ~05:35Z / 11:05 IST): answers to lead items 81-82 (AK-G1 PL11-16)
+81. P1m head 44e1b9d received. I am re-running Windows + WSL 3.12 + WSL 3.13 + Windows mutants now, then fresh review 4. A separate `tests-py312` CI job is fine (no branch-protection change; the required check name `check` stays).
+82. AK-G1:
+- PL11: option (b). The standing EGM rule is a hard owner rule and the lead cannot waive it. Run egm:egm-brainstorm (short) then egm:egm-draft on the handle_turn flow and store transaction rules with BN-1..BN-28 folded in; build-start review reads the draft with the ticket. Not a fourth ticket round. Record the report paths in egm/hadavin-sdk/ak-g1/.
+- PL12: (a) label rule on fixed answers, no new column, no new right.
+- PL13: (a) passing faults: estimate_exceeded and limits_unavailable post P4c-2's fixed money card with no turn text, and the chat pauses.
+- PL14: (a) every takeover writes handed_off; withdraw PL2(vii); add the owner-visible sentence ("after a crash, a store fault or a queue outage during an answer, that chat continues with a person, not with the agent") to owner-visible-limits.md.
+- PL15: (a) forget_user and the conversation purge delete chat runs' maps and tool calls even when the hold names them (owner rule R98); runs rows and labels stay; purge runs before the hold hook. Add to owner-visible-limits.md: "erasure takes priority over the evidence hold for chat content; this has not been reviewed by counsel".
+- PL16: (a) Grant.runtime_update_cols with a negative test and a mutant (least privilege).
+- INFORM 10, 17, 18: fine.
+Keep going (order 12).
