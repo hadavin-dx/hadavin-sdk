@@ -291,3 +291,5 @@ order 86: queued packages (P2d-2, P4b1, P4a, P4c, P4b2, P5b1, P6b1) have NO comm
 P5b1 | build started, stacked on P5a WIP 1a99a06 | 1 new (11 agents total) | P4a names if the ticket needs them
 P2d-2 | NOT started: merging origin/core/P1b onto P2d-1 WIP b12b7dd conflicts in tools/gen_confusables.py (P2d-1 holds an older P1a); needs P1a fix4 then P1b redone | 0 | P1a fix4
 P4a/P4c/P4b1/P4b2/P6b1 | waiting: P2a-1 WIP 77ace26 exists but P4d-b/a2-i not pushed yet | 0 | P4d-a2
+2026-11-06T12:16:46Z | package | stage | builders running | blocked on
+P8c | ticket FROZEN rev 2; build after P8a | 0 | P8a (q183), merged kinds

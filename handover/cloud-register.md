@@ -723,3 +723,4 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | bd-P0a | Sonnet builder P0a | 2026-11-06T12:11:22Z | REPORTED: PR 71 ready, head d4cde30, 1 file (61 lines); CI/CodeQL/Sonar/CodeRabbit not yet read |
 | res-P1c-r5 | Opus resolver P1c rev 7 | 2026-11-06T12:13:09Z | REPORTED: ticket FROZEN rev 7 (143 lines, 11,088 words, 157 rows, 51 mutants); hygiene 0, gitleaks clean (checked by worker) |
 | bd-P5b1 | Sonnet builder P5b1, worktree core/P5b1 stacked on P5a WIP 1a99a06 | 2026-11-06T12:14:52Z | RUNNING; told to stop and report if a P4a/P4d name is missing |
+| res-P8c-r1 | Opus resolver P8c rev 2 | 2026-11-06T12:16:46Z | REPORTED: ticket FROZEN rev 2 (116 lines, 33 rows, 22 mutants); hygiene 0, gitleaks clean |

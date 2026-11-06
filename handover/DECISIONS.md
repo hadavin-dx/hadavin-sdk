@@ -414,3 +414,6 @@ Made without a user answer (answered-by-user: no). Redaction path, ticket stays 
 
 ## 2026-11-06T12:13:09Z P1c rev 7 freeze: PL24 and PL25 applied as (a) without lead answer
 Options: PL24 (a) decode value-less units again each loop / (b) only units holding a new value; PL25 (a) cap check after (a) and (c) / (b) after every step. Why (a): (b) for PL25 would refuse texts the base accepts. Confidence medium; reversible (ticket text frozen, switch recorded in BUILD NOTES). Answered by user: no.
+
+## 2026-11-06T12:16:46Z P8c rev 2 freeze: items 5, 6, 8 applied as recommended; item 7 left to lead
+Options per item in tickets/P8c.md items 5-8. Confidence medium-high; reversible (frozen text, build notes). Answered by user: no.
