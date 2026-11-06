@@ -56,7 +56,7 @@ M = [
         "",
         TC,
         "test_pinned_code_per_class",
-        "does not give its pinned code",
+        "differs from the pinned rows",
     ),
     mutant(
         "table: VaultError set back to config_invalid",
@@ -65,7 +65,7 @@ M = [
         '"actions.secrets_vault:VaultError": Code.config_invalid',
         TC,
         "test_pinned_code_per_class",
-        "does not give its pinned code",
+        "differs from the pinned rows",
     ),
     mutant(
         "table: TextnormError row removed",

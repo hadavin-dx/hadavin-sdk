@@ -154,14 +154,44 @@ def test_every_own_exception_class_resolves_to_a_code() -> None:
     assert not missing, missing
 
 
+PINNED = {
+    "hadavin_sdk.errors:ConfigError": "config_invalid",
+    "hadavin_sdk.k1b.bundle:BundleError": "config_invalid",
+    "hadavin_sdk.llm.fake:UnknownRecording": "config_invalid",
+    "hadavin_sdk.store.protocol:StoreUnavailable": "store_unavailable",
+    "hadavin_sdk.store.protocol:StaleState": "store_conflict",
+    "hadavin_sdk.store.protocol:NotFound": "store_conflict",
+    "hadavin_sdk.runtime.runs:IllegalTransition": "store_conflict",
+    "hadavin_sdk.audit.protocol:DuplicateEvent": "store_conflict",
+    "hadavin_sdk.audit.anchors:AnchorConflict": "store_conflict",
+    "hadavin_sdk.llm.protocol:ProviderError": "provider_http",
+    "hadavin_sdk.approvals.slack_channel:SlackError": "provider_http",
+    "hadavin_sdk.sources:SourceError": "provider_http",
+    "hadavin_sdk.actions.secrets_vault:VaultError": "provider_http",
+    "hadavin_sdk.llm.protocol:ProviderExhausted": "provider_exhausted",
+    "hadavin_sdk.audit.protocol:AuditUnavailable": "audit_unavailable",
+    "hadavin_sdk.guard.egress:EgressRefused": "egress_refused",
+    "hadavin_sdk.runtime.agent_loop:Unqualified": "unqualified",
+    "hadavin_sdk.k1b.loop:CallTimeout": "timeout",
+    "hadavin_sdk.tools:ToolRefused": "tool_refused",
+    "hadavin_sdk.guard.runmap:RedactionError": "scan_failed",
+    "hadavin_sdk.guard.runmap:InputTooLarge": "scan_failed",
+    "hadavin_sdk.guard.runmap:TooDeep": "scan_failed",
+    "hadavin_sdk.guard.textnorm:TextnormError": "scan_failed",
+}
+
+
 def test_pinned_code_per_class() -> None:
+    assert {k: v.value for k, v in OWN_CODES.items()} == PINNED, (
+        "the table differs from the pinned rows"
+    )
     wrong = []
-    for key in sorted(OWN_CODES):
+    for key in sorted(PINNED):
         module, qual = key.split(":")
         cls = getattr(importlib.import_module(module), qual)
         exc = cls.__new__(cls)  # no constructor: some classes need arguments
         line = render(diagnose(exc, step=codes.Where.other))
-        if f"code={OWN_CODES[key].value} " not in line:
+        if f"code={PINNED[key]} " not in line:
             wrong.append((key, line))
     assert not wrong, f"a class does not give its pinned code: {wrong}"
 
