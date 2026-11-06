@@ -584,7 +584,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | rv-AKG2-r3-adv | egm-design AK-G2 rev3 round 3 | 04:41Z | +20min | REPORTED | save |
 | rv-AKG2-r3-cor | egm-codebase-details AK-G2 rev3 round 3 | 04:41Z | +20min | REPORTED | save |
 | rv-AK2a-r3-adv | egm-design AK2a rev3 round 3 | 04:43Z | +20min | running | save |
-| rv-AK2a-r3-cor | egm-codebase-details AK2a rev3 round 3 | 04:43Z | +20min | running | save |
+| rv-AK2a-r3-cor | egm-codebase-details AK2a rev3 round 3 | 04:43Z | +20min | REPORTED | save |
 | sv-AKG1-r2 | saver AK-G1 round 2 pair | 04:43Z | +8min | REPORTED | verify, push, Opus resolve |
 | au-AK1-bn | author AK1 build notes BN-1..17 | 04:43Z | +20min | REPORTED | verify, push |
 | rs-AKG1-r2 | Opus resolve AK-G1 round 2 (2 Blocker 8 Major) | 04:45Z | +25min | running | verify, then rev 3 |
