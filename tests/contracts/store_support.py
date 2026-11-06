@@ -98,10 +98,12 @@ def session_problems(state: SessionState) -> list[str]:
 
     The check is off unless the fail rule is on (`HADAVIN_REQUIRE_PG` or `CI`). The rules, all under that rule:
 
-    1. xdist is judged FIRST and whatever was selected: the controller process of an xdist run collects nothing
-       itself (its workers do), so "nothing selected" there does not mean "nothing to check"; a run with
-       `-n`/`--dist` fails with `XDIST_MESSAGE`. (A run that selects no store test and does not use xdist is
-       silent: a `-m perf` run has nothing to check.)
+    1. xdist is judged FIRST and whatever was selected: a process of an xdist run that collected nothing must not
+       read as "nothing to check"; it fails with `XDIST_MESSAGE`. (A run that selects no store test and does not
+       use xdist is silent: a `-m perf` run has nothing to check.) The xdist CONTROLLER never loads this
+       directory's conftest and a worker's exit status does not reach the controller's, so this branch cannot be
+       what stops a real xdist run: `tests/conftest.py` refuses it at configure time (`pytest.UsageError` with the
+       same message), and this branch is the second line for a worker.
     2. Only SELECTED items count. A store test that `-m`, `-k` or `--deselect` removed from the run is not
        expected to have run, so a test marked `perf` or `live` does not fail every CI run for ever. A function is
        judged when at least one of its items is selected, and then every backend must have run all of its

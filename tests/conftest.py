@@ -36,6 +36,19 @@ os.environ["AWS_SECRET_ACCESS_KEY"] = "fake" + "-secret-key"
 os.environ["AWS_EC2_METADATA_DISABLED"] = "true"
 
 
+def pytest_configure(config):
+    """Under the fail rule (`HADAVIN_REQUIRE_PG` or `CI`) refuse an xdist run (`-n`, `--dist`) at the start. The
+    contract suite's session-end check lives in `tests/contracts/conftest.py`, which an xdist CONTROLLER never
+    loads (it collects nothing, its workers do), and a worker's verdict does not reach the controller's exit code:
+    under xdist the check would be silently off (proved with a real xdist 3.8.0 run, order 101). Refusing here, in
+    the one conftest every run loads, is the loud alternative. Without the rule an xdist run is not affected."""
+    from tests.contracts.kinds import _fail_rule
+    from tests.contracts.store_support import XDIST_MESSAGE, xdist_active
+
+    if _fail_rule() and xdist_active(config):
+        raise pytest.UsageError(XDIST_MESSAGE)
+
+
 def make_cfg(tmp_path: Path, port: int = 0) -> Path:
     for name in ("config", "recorded", "inputs", "golden"):
         shutil.copytree(FIXTURES / name, tmp_path / name, dirs_exist_ok=True)
