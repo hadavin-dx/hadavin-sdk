@@ -78,3 +78,4 @@
 02:24Z / 07:54 IST | step=P2d rev6 verified+FROZEN; freeze-list.md written | done=all 5 packages frozen | next=idle: per order 18 no new rounds; lead schedules build-start reviews | blocked=none | context=ok
 02:25Z / 07:55 IST | step=NEEDS LEAD 11 turned into a real question (PG17) | done=all frozen, freeze-list pushed | next=wait for lead answer; no new rounds | blocked=PG17 question | context=ok
 02:26Z / 07:56 IST | step=NEEDS LEAD 11 changed to INFORM (proceed on recommendation) | done=all frozen | next=idle, no new rounds (order 18) | blocked=none | context=ok
+02:27Z / 07:57 IST | step=routing rule recorded (NEEDS LEAD 12) | done=all frozen | next=idle, no new rounds | blocked=none | context=ok
