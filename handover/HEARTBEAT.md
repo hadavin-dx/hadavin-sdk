@@ -332,3 +332,5 @@ P0t | fix4 pushed e55b34c (PR 67); waiting lead review | 0 | lead: stage_mutants
 P5a | built, PR 74 head ea2d254 READY; waiting lead review | 0 | -
 2026-11-06T13:00:08Z | package | stage | builders running | blocked on
 P4a | built locally c86e685, evidence running (suites, mutants) | 1 | heavy.sh slots
+2026-11-06T13:06:37Z | package | stage | builders running | blocked on
+P4d-a2 | PR 75 7a84408 READY (a2-i, P4d-b); a2-ii pending | 6 | -

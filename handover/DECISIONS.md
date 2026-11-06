@@ -420,3 +420,6 @@ Options per item in tickets/P8c.md items 5-8. Confidence medium-high; reversible
 
 ## 2026-11-06T12:55:16Z P0t fix4: is_prod semantics
 What: accepted builder choice is_prod = true for prod and any non-stage value. Options: literal (environment == prod) vs strict. Why: order 85 requires strictest rules for non-stage values. Confidence medium; reversible (one line); answered-by-user: no (raised in q197).
+
+## 2026-11-06T13:06:37Z P4d-a2: round_cost_up unchanged for exponent >= -8
+What: builder returns such values unchanged. Options: unchanged vs pad to 8 places. Why: padding breaks k1b replay tests. Confidence medium; reversible; answered-by-user: no (q201).

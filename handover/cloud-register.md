@@ -739,3 +739,4 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | bd-P4a | Sonnet builder P4a | 2026-11-06T13:00:08Z | INTERIM: local head c86e685, nothing pushed, no PR; full suites + 87 mutants queued in heavy.sh; bandit B608 postgres.py:768 to check on base |
 | bd-P2d-1 | Sonnet builder P2d-1 | 2026-11-06T13:01:52Z | INTERIM: local head 6d5616b (P1a merged c5d16e0), not pushed, no PR; mutants 42/42; fail-before 65 failed/18 passed; full 3.13/3.12 suites queued in heavy.sh, no result |
 | bd-P5b1 | Sonnet builder P5b1 | 2026-11-06T13:06:16Z | INTERIM local 04aac3d (on P5a WIP), not pushed; RESUMED to merge P5a ea2d254, drop noqa, run mutants/fail-before/suites, push |
+| bd-P4d-a2 | Sonnet builder P4d-a2 | 2026-11-06T13:06:37Z | REPORTED: PR 75 head 7a84408 pushed+verified; a2-i and P4d-b; a2-ii (StoreBusy) NOT built |
