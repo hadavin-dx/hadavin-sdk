@@ -1,6 +1,8 @@
-# Package ticket AK4a (REVISION 3, DRAFT): joined-pipeline test harness, first part, plus the eval gate buckets of plan-v3 P7f. Assembly Kit, Tier A. Path class SECURITY, REDACTION and MONEY (extended review)
+# Package ticket AK4a (REVISION 3, FROZEN with build notes): joined-pipeline test harness, first part, plus the eval gate buckets of plan-v3 P7f. Assembly Kit, Tier A. Path class SECURITY, REDACTION and MONEY (extended review)
 
-Revision line: **revision 3 DRAFT**, written 2026-11-06 from 04:24 UTC (09:54 IST; IST = UTC+5:30) by a ticket-revision author (LEAD-ORDERS order 20 item 6). It applies every row of `reviews/AK4a-round2-resolve.md` (27 finding ids plus 1 resolver row, in 24 rows; commit `a6509a9`) to revision 2 (`4d06a6a`, committed 04:09 UTC / 09:39 IST). Revision 2 was written from 04:01 UTC (09:31 IST) from the round 1 resolve; revision 1 from 03:38 UTC (09:08 IST). Core source: this worktree's checkout; the resolve found no cited file among the files that differ from `origin/main` `4ec3616`, and every code cite below was re-read on this checkout for revision 3. Text only: no code, no pull request, no test run, no sub-agent, no skill call, no model or embedding call, no spend, no secret, no client data.
+Revision line: **revision 3 FROZEN with build notes** (round 3 was the last round; build notes BN-1 to BN-19 from `reviews/AK4a-round3-resolve.md` are in the section "Build notes (round 3)" at the end of this file), written 2026-11-06 from 04:24 UTC (09:54 IST; IST = UTC+5:30) by a ticket-revision author (LEAD-ORDERS order 20 item 6). It applies every row of `reviews/AK4a-round2-resolve.md` (27 finding ids plus 1 resolver row, in 24 rows; commit `a6509a9`) to revision 2 (`4d06a6a`, committed 04:09 UTC / 09:39 IST). Revision 2 was written from 04:01 UTC (09:31 IST) from the round 1 resolve; revision 1 from 03:38 UTC (09:08 IST). Core source: this worktree's checkout; the resolve found no cited file among the files that differ from `origin/main` `4ec3616`, and every code cite below was re-read on this checkout for revision 3. Text only: no code, no pull request, no test run, no sub-agent, no skill call, no model or embedding call, no spend, no secret, no client data.
+
+> **BUILD NOTES WIN.** Review round 3 (`reviews/AK4a-round3-adversarial.md`, `reviews/AK4a-round3-correctness.md`) had 1 Blocker and 8 Majors, so there is no round 4 (order 20 item 6). This ticket is FROZEN at revision 3. The builder applies build notes BN-1 to BN-19 in `reviews/AK4a-round3-resolve.md`. Where a build note and the text below disagree, the build note wins. The build-start review (order 19 A) reads this ticket together with those notes. The CHANGELOG sections are history, not instructions. Totals after the notes: 49 test rows (AK4a-1 18, AK4a-2 21, AK4a-3 10) and 70 mutants (25, 34, 11). PENDING LEAD 5 (NEEDS LEAD: a pilot/prod floor for `eval_threshold`) is open. AK4a is not closed for money while F1 is open (BN-18).
 
 **Review rounds (order 20 item 6).** Round 1 done (`reviews/AK4a-round1-*.md`). Round 2 done: `reviews/AK4a-round2-adversarial.md` (1 Blocker, 6 Majors, 5 Minors, 2 Nits), `reviews/AK4a-round2-correctness.md` (4 Majors, 7 Minors, 2 Nits by its table), resolve `reviews/AK4a-round2-resolve.md` (AUTO mode). **Round 3 is next and is the last normal round:** fresh `egm:*` reviewers, then one Opus `egm:egm-resolve`. AK4a is a money, redaction and security package, so it may take a 4th round only if round 3 has no Blocker and at most 2 Majors. With round 3 as the last round in mind, revision 3 adds no surface beyond what the resolve decided; the few precisions the author added are listed under "Changes since revision 2".
 
@@ -216,7 +218,7 @@ Merge order: AK4a-1 any time after its review (in the lead's chain where it reba
     - X7 lint: inside `src/hadavin_sdk`, the only caller of `evals.gate(` is `cli.py` (AST; `tests/` is not scanned); teeth: a test copy of `testing/harness.py` with a planted `evals.gate(` caller makes the lint fail (kills M-X8).
   - Race/process: H8 (threads), H7b (a call thread), H10d (an abandoned call thread), X3 (processes). Contract suite: C-LOG runs over the memory and the chain audit sinks of `tests/contracts/conftest.py`; X3 over the shared store.
   - **Strict expected-failure rows and when their marker goes (also a Done condition):** H10, H10b and H10d (F1); H10c and X3's F5 clause (F5). For F1: whichever of AK4a-2 and the F1 fix merges second removes the markers of H10, H10b and H10d in its own PR (H10b's F4 part closes with P4a-2). For F5: the coupling rule of F5 (Findings). If a fix is on main before the row's sub-PR is built, that sub-PR writes the row as a plain row. The builder states which case applied, with the main sha.
-  - **Counts (recounted for revision 3 against this file):** 45 rows (AK4a-1: E1-E15 = 15; AK4a-2: H0, H1, H2, H4-H17 (14), H7b, H10b, H10c, H10d = 21; AK4a-3: H3, X1, X2, X3, X4, X4b, X5, X5b, X7 = 9). Real fail-before: E1, E2, E3. Weak fail-before: H1, X5. Strict expected failures: 4 rows (H10, H10b, H10c, H10d) plus X3's F5 clause. Regression pins: E11, E12, E15. Pre-build check: H0. Integration row with no mutant: X3. Clean-run rows that kill no mutant (they show the checks give no false finding on a correct pipeline): H2, H3, H6, H8, H15. The other 26 rows are new features killed by mutants (each named in the mutation table); the fail-before rows E1-E3, H1 and X5 and the pin E11 also kill mutants.
+  - **Counts (recounted after build notes BN-1 to BN-19; rows E16, E17, E18 and X8 are defined in the build notes):** 49 rows (AK4a-1: E1-E18 = 18; AK4a-2: H0, H1, H2, H4-H17 (14), H7b, H10b, H10c, H10d = 21; AK4a-3: H3, X1, X2, X3, X4, X4b, X5, X5b, X7, X8 = 10). Real fail-before: E1, E2, E3, E17. Weak fail-before: H1, X5. Strict expected failures: 4 rows (H10, H10b, H10c, H10d) plus X3's F5 clause. Regression pins: E11, E12, E15. Pre-build check: H0. Integration row with no mutant: X3. Clean-run rows (they show the checks give no false finding on a correct pipeline): H2, H3, H6, H8, H15. The other 29 rows are new features killed by mutants (each named in the mutation table or in the build notes); the fail-before rows E1-E3, E17, H1 and X5, the pin E11, and H0 and H2 (both kill M-H32, BN-1) also kill mutants.
 
 - **Mutation plan (which behaviours get a mutant, which test kills each):** plain patches to the named file; run with P1m's mutation runner (`tools/mutation_runner.py`, `tickets/P1.md:72`; UNVERIFIED until P1m merges; the mutation run depends on P1m, the build does not). Every killer row below exists in this ticket.
 
@@ -284,7 +286,7 @@ Merge order: AK4a-1 any time after its review (in the lead's chain where it reba
 | M-X8 | (lint) tests | X7's lint accepts an `evals.gate(` caller in `src` outside `cli.py` | X7 (teeth) |
 | M-X9 | testing/harness.py | `StepPipeline.cap_usd` left `None` in AK4a-3 | X1 |
 
-  Counts (recounted for revision 3 against the table): 61 mutants (AK4a-1: M-E1 to M-E21 = 21; AK4a-2: M-H1 to M-H31 = 31; AK4a-3: M-X1 to M-X9 = 9). Every mutant has a named killer row that exists above. None is labelled equivalent in advance: M-H24, equivalent on H6 in revision 2, is now killed by H11's k1b "bad then good" clause, and M-H2 by a clause whose message lacks the canary. The runner reports any survivor, and a survivor is fixed by a test, never by deleting the mutant. M-E21 lives in this table but is added by whichever of AK4a-1 and P5c-3 merges second, with E13.
+  Counts (recounted after build notes BN-1 to BN-19; the 9 added mutants M-E22 to M-E25, M-H32 to M-H34, M-X10 and M-X11 are defined in the build notes): 70 mutants (AK4a-1: M-E1 to M-E25 = 25; AK4a-2: M-H1 to M-H34 = 34; AK4a-3: M-X1 to M-X11 = 11). Every mutant has a named killer row that exists above or in the build notes. None is labelled equivalent in advance: M-H24, equivalent on H6 in revision 2, is now killed by H11's k1b "bad then good" clause, and M-H2 by a clause whose message lacks the canary. The runner reports any survivor, and a survivor is fixed by a test, never by deleting the mutant. M-E21 lives in this table but is added by whichever of AK4a-1 and P5c-3 merges second, with E13.
 
 - **Evidence commands (exact), and where the raw output is saved:** in the core repository root, each sub-PR on its own branch:
   - AK4a-1: `uv run --all-extras --group test pytest tests/test_eval_buckets.py -q > handover/evidence/AK4a/AK4a-1-tests.txt 2>&1; echo rc=$? >> handover/evidence/AK4a/AK4a-1-tests.txt`; the full suite once at the final head (same form, file `AK4a-1-suite.txt`); `uv run --all-extras --group test ruff check`, `ruff format --check`, `bandit -ll -r src` (file `AK4a-1-lint.txt`); fail-before: E1, E2, E3 in a throwaway worktree of the branch base with only the test file and fixtures copied (file `AK4a-1-failbefore.txt`; expected: three assertion failures, collection succeeds); mutants M-E1 to M-E20 (file `AK4a-1-mutants.txt`), and M-E21 with E13 in whichever PR adds them.
@@ -426,3 +428,200 @@ Merge order: AK4a-1 any time after its review (in the lead's chain where it reba
   - Not from the review: F5 found on re-reading `tickets/P4a.md:104` (row H10c; X3's timeout clause asserts only booked at least billed).
   - Counts: 3 sub-PRs; 44 test rows (E 15, H 20 in AK4a-2, AK4a-3 9: H3 and 8 X rows); 55 mutants (21, 25, 9); 5 findings (F1 open, F2 and F3 closed by AK4a, F4 closed by P4a-2, F5 owned by P4a V17/V36); 14 INFORM; 3 PENDING LEAD (1 and 2 updated, 3 new); 8 later rows.
 - Revision 1 (2026-11-06, 03:38 UTC / 09:08 IST): first draft. 3 sub-PRs, 35 test rows (E 12, H 17, X 6), 39 mutants, 3 findings, 9 INFORM, 2 PENDING LEAD, 8 later rows.
+
+## Build notes (round 3)
+Copied word for word from `reviews/AK4a-round3-resolve.md` (section "Build notes (round 3)"). They win over the text above (banner under the revision line).
+Ticket line numbers below are lines of revision 3 before the banner is added. Find each place by its text.
+Line offset in this file: the banner and its blank line add 2 lines, so every cited ticket line is 2 higher here (line 152 is now line 154, line 166 is now line 168). Cites into other files (for example `tickets/P4c.md:218`) are not affected.
+
+**BN-1. Where the item marker rides, and how C-FAULT reads it (R3-ADV-1, R3-COR-2).**
+- **Step adapter:** the first line of every made-up item document is `item_marker(item_id)`.
+- **k1b adapter:** every made-up bundle carries the marker in `incident.json` as `alert.labels["harness_item"] = item_marker(case_id)`. For example, case `case-001` gets `item-case-001`.
+  - `labels` values are strings of at most 200 characters (`k1b/bundle.py:229-235`).
+  - The key passes `_scan` and is not a credential key (fact 2).
+  - The test builds bundles with `tests/k1b_support.make_bundle` and adds this label.
+  - Interface 11's "in the bundle's document, with the case id" is replaced by this.
+- **C-FAULT's read rule (replaces "by WHOLE LINE" in Interface 11 and C-FAULT).** For each text of `received[k].texts`, the reader collects:
+  - every line (`text.splitlines()`) that is exactly equal to `item_marker(id)` of an input id; and
+  - if `json.loads(text)` succeeds, every string VALUE at any depth (dicts and lists; keys are not read) that is exactly equal to `item_marker(id)` of an input id.
+- Attempt k belongs to the one item whose marker was found. If no marker or two different markers are found, the result is `unattributed_attempt`. Every k1b attempt of a case carries the first user message, so all of its attempts are attributed.
+- **H0 gains:**
+  - (b) the marker clause names both paths: `redact_bundle` on `alert.labels` and the gate masking of a document whose first line is the marker;
+  - (c) one `K1bReplayPipeline` run of one bundle with no faults: C-FAULT's reader gives that case's id for attempt 1.
+  - H0 stays first. If (c) fails, it is an attribution defect, and the builder stops before H2.
+- **H12 gains** an exactness clause: two k1b bundles, `case-001` and `case-0010`, each attempt attributed to its own case.
+- **New mutants:**
+  - **M-H32** (`testing/harness.py`): the JSON branch is removed (lines only). Killed by H0 (c) and H2.
+  - **M-H33**: the exact compare is written as `marker in value`. Killed by H12's exactness clause.
+
+**BN-2. What C-LOG's generic record scan reads (R3-ADV-2).**
+- At check time, C-LOG reads per record, as today:
+  - `getMessage()`;
+  - the `repr` of each item of `record.args` (each value, when `args` is a dict);
+  - the formatted `exc_info` text, and `stack_info`.
+- "Every other value in `record.__dict__`" is replaced by: every value whose key is NOT in `LOG_RECORD_BASE`, plus `message` and `asctime`. `LOG_RECORD_BASE` is the key set of a fresh `logging.LogRecord("n", 10, "p", 1, "m", None, None).__dict__`, computed once at import, so it follows the running Python's version.
+- So `args`, `exc_info`, `exc_text`, `msg` and `stack_info` are read only by their own scans. M-H2 (H1 clause 2) and M-H5 (H1 clause 3) are no longer equivalent (fact 3). `extra=` fields stay covered (H1 clause 4, M-H27).
+- The sentence "None is labelled equivalent in advance ... M-H2 by a clause whose message lacks the canary" now holds.
+
+**BN-3. Duplicate and missing case ids (R3-ADV-3).**
+- In pilot/prod, label-phase errors (Interface 1: before the size rules and before any model call, one `ConfigError`) gain three checks:
+  - a line without a non-empty string `id` (the error names its `input_ref`);
+  - a repeated `id` (the error names the id);
+  - a repeated `input_ref`, or two lines whose input documents have the same sha256 of their bytes (the error names both ids).
+- The gate reads every referenced document's bytes before the first call. `registry.golden_sha256` already reads each of them.
+- Dev is unchanged, so E12 still holds.
+- Stated plainly in Security: near-copies (one character changed) are not caught. The size rule counts distinct documents, not distinct cases.
+- **New row E16** (AK4a-1). In pilot, with a valid 50-line set:
+  - line 50 repeating line 1's `id` is refused, naming it;
+  - two lines with different file names and identical bytes are refused;
+  - a line without `id` is refused, naming its `input_ref`;
+  - in each case the fake's call count is 0;
+  - in `dev`, the same three sets are accepted.
+- **Mutants:** M-E22 (`id` repeats not checked), killed by E16. M-E23 (only `input_ref` compared, document bytes not), killed by E16's identical-bytes clause.
+
+**BN-4. Traps are gated item by item; the threshold floor goes to the lead (R3-ADV-4).**
+- Interface 4 `green` gains (a2): when any line is labelled, `buckets["trap"].passed == buckets["trap"].n`. Any trap failure means not green, in every environment, as (a) does for easy items.
+- So a lowered `eval_threshold` can only let HARD items fail.
+- **New row E17, FAIL-BEFORE (real).** `dev`, 20 labelled lines (10 easy, 5 hard, 5 trap), `eval_threshold` 0.9, and exactly one trap item proposes an action. On main this is green (19 of 20 = 0.95). New code: not green.
+- **Mutant M-E24:** the trap condition is removed. Killed by E17.
+- **Threshold floor:** PENDING LEAD 5. Until the lead answers, Security says plainly: "in pilot/prod a config may lower `eval_threshold` to any value above 0; only easy and trap items are gated one by one." If the lead picks 5(a), AK4a-1 adds, in the same pull request: one floor in `defaults.py`, one validator at config load (pilot/prod only), one E6 clause and one mutant.
+- The "tightens a security gate" sentence (line 166) then reads: "tightens it in size, labels, duplicates, easy items and traps".
+
+**BN-5. `sized: true` with missing counts fails closed (R3-ADV-5).**
+- Interface 6 is retyped to `counts: Mapping[str, BucketStat] | None`. `None`, or a missing bucket key, counts as `BucketStat(n=0, passed=0, abstained=0)`, so `n`, `easy`, `hard`, `trap` and `trap_share` fail.
+- With a stored `run` in pilot/prod, `run.answerable is None` or `run.false_abstained is None` fails `false_abstain`.
+- It never raises `TypeError`.
+- **New row E18** (AK4a-1). Pilot, against a green line with `sized: true` that matches every hash:
+  - with `buckets: null`: `Unqualified`;
+  - with `buckets` missing the `trap` key: `Unqualified`;
+  - with `answerable: null`: `Unqualified`;
+  - no clause raises any other exception.
+- **Mutant M-E25:** `counts is None` returns `[]`. Killed by E18.
+- Stated in Security: a person who can write `qualified.jsonl` can forge a green line today, and AK4a does not change that. The hashes bind config and golden set, not the counts.
+
+**BN-6. The meter scope when no meter is configured; "may break" list (R3-ADV-6).**
+- AK4a-3 clause (Interface 15): `metered.scope(...)` only sets and resets a context variable (`tickets/P4b1.md:259`). Around a model object that is not a `MeteredLLM` it changes nothing, in every environment.
+- The fail-closed point in pilot/prod stays construction: the `gate` command's chain (X5b) and lint X7. A direct code caller that hands `evals.gate` an unmetered model in pilot is not refused by `evals.gate`. Stated in Security; P6a-1's refusal of handed-in objects is UNVERIFIED.
+- **New row X8** (AK4a-3). In `dev`, the E12 fixture run with a plain `ScriptLLM` under AK4a-3's code gives the same `n`, `passed`, `pass_rate` and `green` as E12. The context variable is back at its default afterwards.
+- **Mutant M-X10:** the gate refuses a model that is not metered. Killed by X8.
+- Files, "Existing tests that may break", gains AK4a-3: the 16 test files with `gate(` or `assert_qualified` (57 lines, fact 7) run before and after AK4a-3. The builder lists any that change, with the reason, and never weakens an assertion.
+- Line 152 and I7: "`evals.gate` does NOT inspect its model object" becomes "`evals.gate` makes no meter check on its model object; P5c-3's wrapper type check (Rules, order of refusals) is its only inspection".
+
+**BN-7. Registration in `guard/producers.py` (R3-COR-1).**
+- AK4a-2 Files gains: CHANGE `src/hadavin_sdk/guard/producers.py`.
+- For each module under `testing/` that the `test_k5_producers.py` scan finds (at least `testing/faults.py`), add one `MODEL_CALLERS` entry and one `OUTSIDE_THE_CHOKE_POINT` reason: "test fake: forwards to its inner fake model exactly the texts its caller sends; it produces no model input of its own".
+- The made-up test step lives in `tests/`, so it needs no entry. The builder adds no entry the scan does not ask for.
+- `guard/producers.py` joins the hot files (appends only; at least 11 tickets name it).
+- Couplings gain P4c T8 (`tickets/P4c.md:218`):
+  - its table needs a status row for each `testing/` module with `chat`, added by whichever of AK4a-2 and P4c-2 merges second;
+  - its `evals.py` row ("not capped") becomes "capped by `metered.scope` and the `gate` command's chain (AK4a-3)", updated by whichever of AK4a-3 and P4c-2 merges second.
+
+**BN-8. H15 without the run id (R3-COR-3).**
+- H15's k1b clause becomes: two runs with the same seed and scripts give byte-equal files for every path in `outputs_files` except `run*/run.json`. For each `run.json`, the parsed objects are equal after deleting `replay_run_id`.
+- `outputs.sha256` is not compared (it covers `run.json`).
+- No core function is patched.
+
+**BN-9. X7 is alias-proof; outside callers (R3-ADV-7).**
+- X7's AST lint resolves `import hadavin_sdk.evals as e`, `from hadavin_sdk import evals as e`, `from hadavin_sdk.evals import gate as g`, and `getattr(<a name bound to the evals module>, "gate")`. It flags any call of these outside `cli.py`, and any `importlib.import_module("hadavin_sdk.evals")` in `src` outside `cli.py`.
+- X7's teeth gain one planted test file per alias form.
+- **Mutant M-X11:** the lint matches only the literal attribute call `evals.gate(`. Killed by X7's `from ... import gate as g` clause.
+- Stated in Security: callers outside this repository (a client project) are not covered. The cap rests on the construction in `cli.py` and on P6a-1, not on a check inside `evals.gate`.
+
+**BN-10. Canary uniqueness across processes (R3-ADV-8).**
+- H17 gains a clause: two `subprocess` runs of `[sys.executable, "-I", "-c", <print the first Canary's value>]` print different values.
+- M-H18 ("canary from a fixed seed", including a seeded generator made once at module level) is killed by this clause.
+
+**BN-11. E9 compares integers (R3-ADV-9).** E9 asserts `sum(b.abstained for b in buckets.values()) == round(run.abstain_rate * n * k)`. It never compares floats for equality.
+
+**BN-12. Clocks and the k1b adapter's wiring (R3-ADV-10, R3-COR-7).**
+- `FakeClock.__call__()` returns the current fake time. `sleep(s)` records `s` and advances the time.
+- In every k1b row, `FaultLLM` gets its OWN `FakeClock`, used only for retry sleeps. The k1b deadline clock is a second, separate callable. So throttle and jitter sleeps never move a case towards `case_timeout_s`.
+  - In H2, H10, H10b, H10c and H11, the deadline clock is a `FakeClock` that nobody advances, and `case_timeout_s` keeps its default of 300.
+  - H10d uses the tick script `iter([0, 0, 299.99] + [1000] * 50)` with `case_timeout_s` 300, as `tests/test_k1b_replay.py:513-515` does.
+- `K1bReplayPipeline(registry, *, agent_id, bundles_dir, cause_list_dir, detector, max_usd, clock)` takes everything from the caller, because `src` must not import `tests/`. Its `run` calls `_replay` with `audit=K1bAudit(<the harness's recording sink>, principal="harness")` (`k1b/audit_sink.py:26-29`).
+  - The test builds the bundles with `tests/k1b_support.make_bundle` (plus BN-1's label), the cause list with `make_cause_list`, and the detector as `tests/k1b_support.py` does (`RegexDetector`).
+  - The config is the `dev` fixture config. Its k1b block gives `case_timeout_s` and `max_steps`.
+- `FaultLLM` replies that it builds itself (`bad_reply`, `echo`) take `model_id` from `prices[route].model_id`, the fixture route's own value. `partial_reply` copies the inner reply's `model_id`.
+
+**BN-13. What each step sends (R3-ADV-11).**
+- In the step adapter's test step, step 1 sends the item's document (marker line first).
+- Step n > 1 sends the item's document again plus the previous step's reply text as a second message. So every attempt carries the marker.
+- A `ScriptLLM` reply never needs to carry the marker, and no row depends on a reply text holding it.
+
+**BN-14. Windows (R3-COR-8; order 25 item 4).**
+- Every AK4a row is written in a Windows-capable form: `os.dup`/`os.dup2` on descriptors 1 and 2, threads, and `subprocess` with `sys.executable`. It uses no `fork`, no signals and no POSIX-only module.
+- X3 runs where its Postgres runs (CI service, `HADAVIN_REQUIRE_PG=1`) and uses P4b1's process helpers. It is not marked Linux-only.
+- UNVERIFIED on Windows: that `os.dup2` on descriptors 1 and 2 also captures the output of a child process. No Windows row depends on it, because X3 passes each worker's captured output to C-LOG itself.
+
+**BN-15. Capture independent of pytest's mode; one shared offset (R3-COR-4, R3-COR-6).**
+- Interface 12: the `sys.stdout` and `sys.stderr` replacements are text wrappers over `os.dup` of descriptors 1 and 2, taken AFTER the `os.dup2` into the temporary file. They therefore share that file's one offset with direct descriptor writes. They never open the temporary file a second time.
+- H1 clause 7 becomes: set `sys.stdout = io.StringIO()` (an object with no descriptor), then enter `capture()`, then `print(canary)`: `canary_in_print`. This kills M-H26 under `-s`, `--capture=no` and the default mode alike.
+- **New H1 clause (11):** inside `capture()`, `print("a" + canary)`, then `os.write(1, b"b")`, then `print("c")`. The captured text holds all three parts, in that order.
+- **Mutant M-H34** (`testing/harness.py`): the wrappers open the temporary file by name, so each has its own offset. Killed by H1 (11).
+
+**BN-16. The schedule draw (R3-COR-5).**
+- Interface 8: `d = hashlib.sha256(f"{seed}:{k}".encode()).digest()`. Attempt k gets a fault when `int.from_bytes(d[0:8], "big") % 100 < rate_percent`. Its kind is `sorted(kinds)[int.from_bytes(d[8:16], "big") % len(kinds)]`.
+- It has no `random` module and no `# noqa`, so the ruff `S` rules and `bandit -ll` pass with nothing suppressed. It is still a pure function of (seed, k) and independent of `PYTHONHASHSEED`, so I19 holds.
+- The modulo bias over 2^64 is negligible for these rates.
+
+**BN-17. What C-GATE proves on the llm path (R3-ADV-13).**
+- Security's "does NOT prove" list gains: "on the llm path (`MaskedLLM(MeteredLLM(raw))`) C-GATE pairs each raw call with an intent event by order, count and `domain == "llm"` only. It does not prove that the raw fake received the audited masked body. Only the `Gated` path compares hashes."
+
+**BN-18. Money is not closed while F1 is open (R3-ADV-12).**
+- Done gains: "AK4a is not closed for money while F1 is open. Its strict expected-failure rows H10, H10b and H10d are a money gap told to the owner, not a pass. The lead writes the calendar date of the F1 fix on F1's ledger row, as for F5."
+- PENDING LEAD 1 is updated (below).
+
+**BN-19. Nits; mutant and row delta; totals (R3-ADV-14, R3-COR-9, R3-COR-10).**
+- **Cites:** `registry.py:164-170` (not `:165-171`); `models.py:274` (field) and `:273` (comment).
+- **Step-adapter ids:** in H6, H8 and H12 (step adapter), ids come from `models.new_id("item")`, which matches AK1 `ITEM_ID_PATTERN` (`tickets/AK1.md:105`). The exactness test uses k1b case ids (BN-1).
+- **Rows added:** E16, E17, E18 (AK4a-1); X8 (AK4a-3). **New clauses inside existing rows:**
+  - H0 (b) and (c);
+  - H1 clause (11), and clause (7) reworded;
+  - the H12 exactness clause;
+  - the H15 rewrite;
+  - the H17 subprocess clause;
+  - X7's alias clauses;
+  - E9's integer compare.
+- **Mutants added (9):**
+  - AK4a-1: M-E22, M-E23 (BN-3); M-E24 (BN-4); M-E25 (BN-5);
+  - AK4a-2: M-H32, M-H33 (BN-1); M-H34 (BN-15);
+  - AK4a-3: M-X10 (BN-6); M-X11 (BN-9).
+- **Mutants made real, not equivalent:** M-H2, M-H5 (BN-2); M-H26 (BN-15); M-H18 (BN-10).
+- **Totals:**
+  - **49 test rows:** AK4a-1 E1-E18 = 18; AK4a-2 = 21 (unchanged); AK4a-3 H3, X1, X2, X3, X4, X4b, X5, X5b, X7, X8 = 10.
+  - **70 mutants:** M-E1 to M-E25 = 25; M-H1 to M-H34 = 34; M-X1 to M-X11 = 11.
+  - **20 rows that kill no mutant by design or are classed apart:**
+    - real fail-before: E1, E2, E3, E17 (4);
+    - weak fail-before: H1, X5 (2);
+    - regression pins: E11, E12, E15 (3);
+    - pre-build check: H0 (1);
+    - integration row: X3 (1);
+    - clean-run rows: H2, H3, H6, H8, H15 (5);
+    - strict expected failures: H10, H10b, H10c, H10d (4).
+  - **The other 29 rows** are new features killed by named mutants. E1-E3, E17, H0 (M-H32), H1, X5 and E11 also kill mutants.
+- No mutant targets `guard/producers.py`; its registration is checked by the existing `test_k5_producers.py` gate. Evidence: AK4a-1 runs mutants M-E1 to M-E20 and M-E22 to M-E25; M-E21 stays with E13.
+
+## PENDING LEAD changes (round 3; continuing the ticket's numbering after 4)
+Copied word for word from `reviews/AK4a-round3-resolve.md`. Item 1 updates PENDING LEAD 1 above; items 5 to 9 are new.
+Routing rule: an item that touches an owner hard rule (thresholds, money, redaction, security gates) is NEEDS LEAD. Everything else is INFORM, and the builder takes the recommendation meanwhile.
+- **1 (updated, money; BN-18).** Unchanged options. Added: the lead writes a calendar date for the F1 fix on F1's ledger row. Until then Done says AK4a is not closed for money.
+- **5. NEW, NEEDS LEAD (security threshold): a pilot/prod floor for `eval_threshold`.**
+  - (a) **Recommended:** a floor constant in `defaults.py`, enforced at config load only when `environment` is `pilot` or `prod`. A config may raise the threshold above the floor, never lower it below. The number is the lead's or the owner's. For illustration only, not a proposal of mine: 0.9 would let at most 5 of 50 items fail, all of them hard. Cost: one constant, one validator, one E6 clause, one mutant, in AK4a-1's pull request.
+  - (b) No floor. Security states that only easy and trap items are gated one by one (BN-4), and that a pilot config may lower the threshold to any value above 0.
+  - (c) A floor per bucket (a hard-bucket pass-rate floor). This is more surface for the same effect, because easy and trap are already 100 percent.
+  - Why (a): order 24 item 32 says thresholds come from config and a config may only tighten. With (b), a pilot could still qualify an agent that fails most hard items.
+  - Until the lead answers, the builder writes (b)'s Security sentence and adds nothing else.
+  - Reversible before the merge.
+- **6. NEW, INFORM. Freeze with build notes, no round 4.** Round 3 had 1 Blocker and 8 Majors (7 distinct). Recommend: yes, per order 20 item 6.
+- **7. NEW, INFORM. Traps gated item by item, in every environment where lines are labelled (BN-4).** Recommend: accept. Confidence 75 percent. Cost: an agent that wrongly acts on one trap in one of k runs is not green. This is the intended meaning of a trap. Reversible.
+- **8. NEW, INFORM. Duplicates refused in pilot/prod only, by id, `input_ref` and document bytes (BN-3).** Near-copies are not caught. Recommend: accept. Confidence 80 percent. Reversible.
+- **9. NEW, INFORM. The k1b marker is `alert.labels["harness_item"]`, read by line or by JSON string value (BN-1).** Probed on 3.13.18 (fact 2); H0 confirms it on the build head. Confidence 85 percent. Reversible.
+
+## Application notes (found while pasting the build notes; each settled here, none needs the lead)
+- **`replay` against `_replay` (BN-12 and Interface 13).** Interface 13 says `K1bReplayPipeline` calls `k1b.replay.replay`; BN-12 says its `run` calls `_replay`. On this checkout `replay` (`k1b/replay.py:266-277`) is the public wrapper: it passes every argument to `_replay` and, if the run dies after the output folder exists, writes `FAILED.txt`. Settled: `run` calls the public `k1b.replay.replay` with the arguments BN-12 names for `_replay`, and passes `out` as a keyword (the wrapper reads `kwargs["out"]`).
+- **Mutants in the evidence commands.** The Evidence field lists M-H1 to M-H31 for AK4a-2 and M-X1 to M-X9 for AK4a-3. After BN-19, AK4a-2 runs M-H1 to M-H34 and AK4a-3 runs M-X1 to M-X11. BN-19 states only AK4a-1's list (M-E1 to M-E20 and M-E22 to M-E25; M-E21 with E13).
+- **H2 kills M-H32.** BN-1 names H0 (c) and H2 as M-H32's killers, but BN-19 lists H2 only among the clean-run rows and leaves it out of "also kill mutants". The Counts line above names H2 as a killer. The class counts (20 and 29) do not change.
+- **Item marker wording.** BN-1 places the k1b marker in `alert.labels["harness_item"]`, a JSON string value and not a line of its own. "Words used" (item marker, "a line of text"), INFORM I17 ("a marker line") and Interface 11 are read with BN-1: for the step adapter the marker is a whole line; for k1b it is that label value.
+- **H0 clause letters.** H0's text has no clause letters. Its canary sentence is read as (a), BN-1's (b) rewrites its marker sentence, and (c) is new.
+- **Deadline clocks of the other k1b runs.** BN-12 names the deadline clock for H2, H10, H10b, H10c, H11 and H10d. H0 (c), H12's exactness clause and H15 also run `K1bReplayPipeline`. They follow H2's rule: a `FakeClock` that nobody advances, and `case_timeout_s` left at 300.
+- **History left as it is.** The summary "Changes since revision 2" and the CHANGELOG keep revision 3's counts (45 rows, 61 mutants, 4 PENDING LEAD). The banner and the two Counts lines carry the totals after the notes. PENDING LEAD now has 9 items: 1 to 4 above (1 updated), 5 NEEDS LEAD, and 6 to 9 INFORM.
