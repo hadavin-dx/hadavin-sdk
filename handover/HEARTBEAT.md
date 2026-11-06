@@ -129,3 +129,4 @@
 2026-11-06T04:52Z | step=AK4a frozen ed1b532 (BN-1..19); AK-G1 r2 resolve saved; AK2a r3 saved; AK-G2 r3 saved | done=AK1/AK4a frozen | next=AK-G2 BN, AK2a BN, AK-G1 rev3 round 3 pair | blocked=PL5 AK4a eval_threshold floor NEEDS LEAD
 2026-11-06T04:54Z | step=order 32 read; AK4a PL5 answer recorded; P4b/P5c scope unchanged per order | done=AK4a PL5 | next=AK-G2/AK2a BN after resolves, AK-G1 r3 pair | blocked=no push to core/P1m until lead reports
 2026-11-06T04:56Z | step=P5c BN-19 answers recorded | done=P5c items 64-66 | next=verify AK-G1 rev3 / AK-G2 / AK2a resolves when they report | blocked=no push to core/P1m
+2026-11-06T04:58Z | step=AK-G2 round 3 resolve verified (357 lines, BN-1..23, PL7-18, 12 Majors no round 4) | done=resolve | next=AK-G2 BN author | blocked=no push to core/P1m
