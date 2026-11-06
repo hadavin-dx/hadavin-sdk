@@ -354,3 +354,8 @@ Slip recorded at the lead's request: a throwaway PostgreSQL data folder (pg3a) w
 8. GAPS.md section D: I wrote door answers from greps and ticket cites, marking unread doors UNKNOWN; I did not read the channel kind or approvals path. Rewritten to six generic doors on order 52.
 9. P1a fix2: I launched the builder with the lead's review file as the brief and left the choice of the U+0345 rule (keep as iota after Greek base vs drop always) to the builder; the builder logs its pick. Should it be a major decision for the owner? It is a text-fold rule on a redaction path: I think the lead should confirm it when the builder reports.
 Not logged earlier (found while reviewing the log): the EGM brainstorm/draft for AK-G15 and AK-G16 ran without a real Goldfish review step (authors had no sub-agent tool); reported in q112 and q114.
+
+## 2026-11-06 P3a build split (builder decision, logged by me; NOT answered by the user or lead)
+- What: P3a built as 3 sub-PRs; P3a-1 first (new pure files only: store/migration_numbers.py plus tests). P3a-2 edits store/migrate.py; P3a-3 needs P3a-2 and a CI pg_dump check. Also RUNBOOK_E = True, and hand_recipe refuses more than the ticket asks (bad stem, recipe markers, control chars, any backslash, bare psql variables).
+- Options: one big PR; split in 3 (chosen); split differently.
+- Why: only P3a-1 has no unmerged dependency (order 63). Confidence: medium. Reversible: yes (draft PR, nothing merged). Answered by user: no. Lead to confirm (q154).
