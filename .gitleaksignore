@@ -28,3 +28,6 @@ c79169285807eba9d74c91307b17b6a25b740437:tests/test_c1a_redactor.py:generic-api-
 d1c5914db1315f01ba7c5bc80b6a1d2c8abfd7a4:handover/evidence/gateway-check/evidence-1.md:generic-api-key:50
 # Added 2026-11-06 by the lead: second cloud commit (95e1933, placeholder mask) still matched on line 50 of the same evidence copy; the later commit 79a4a01 masks every key hash. Throwaway local test-proxy key hash, no real secret. Temporary: remove when the cloud-handover branch is deleted.
 95e19338826da11c0ea2fece870ac50a2d3dcde4:handover/evidence/gateway-check/evidence-1.md:generic-api-key:50
+# Added 2026-11-06 by the lead (temporary): commit b12b7dd on branch core/P2d-1 holds two fake redaction-test fixtures (a made-up token string and a PEM header, tests/test_redact_fold.py). History cannot be rewritten (order 62); the P2d-1 tip rebuilds both from parts. Remove these lines when core/P2d-1 is merged and its branch is deleted.
+b12b7dd711206eab0dc8b3bc60de6ccd2e45caf9:tests/test_redact_fold.py:private-key:473
+b12b7dd711206eab0dc8b3bc60de6ccd2e45caf9:tests/test_redact_fold.py:generic-api-key:453
