@@ -175,3 +175,4 @@
 07:11Z | step=AK-G16 rev 3 a4b7a3c (84 rows, 89 mutants, PL16-18 answered) pushed; launching round 3 reviews | next=AK-G15 rev 3, P1a sha | blocked=none
 07:16Z | step=AK-G15 rev 3 d725725 (51 rows, 128 mutants) pushed; launching round 3 reviews | next=AK-G16 r3 cor, P1a sha | blocked=none
 07:29Z | step=AK-G16 frozen rev 3 + BN-1..31 (8edf296), item 108 | done=pushed | next=AK-G15 resolve/freeze, P1a sha | blocked=none
+07:32Z | step=P1a fix1 4df0ccd verified (probe 0/0 on 3.12+3.13), item 109 | done=pushed | next=AK-G15 resolve/freeze; DECISIONS | blocked=none

@@ -1,0 +1,8 @@
+python 3.13.18 unidata 15.1.0 ['fold', 'identity_key', 'same_person']
+not idempotent: 0 []
+case asymmetric: 0 []
+same_person('BØB','bob'): True | ik(Ø)= 'o' ik(ø)= 'o'
+python 3.12.13 unidata 15.0.0 ['fold', 'identity_key', 'same_person']
+not idempotent: 0 []
+case asymmetric: 0 []
+same_person('BØB','bob'): True | ik(Ø)= '\ue000alg=fold2|ud=15.0.0\ue000o' ik(ø)= '\ue000alg=fold2|ud=15.0.0\ue000o'
