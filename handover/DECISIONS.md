@@ -432,3 +432,8 @@ What: push the manifest cleanup (66a5710) now as a fast-forward; merge main late
 
 ## 2026-11-06 PR 80 (P5b1) converted to draft (INFORM, answered-by-user: no)
 What: set draft=true on stacked PR 80 (base core/P5a) per order 91. Options: leave ready / draft. Why: order 91. Confidence high. Reversible: yes (mark ready). 
+
+## 2026-11-06 heavy.sh slots 3 -> 5 (ORDER 98, owner-approved via lead; answered-by-user: yes, via lead's order)
+What: /home/user/build/heavy.sh now has 5 slots (was 3), swapped in as a new file so running instances were not corrupted. Options: stay 3; 4; 5. Why: owner asked why builders wait for hours; the 3 cap was for the owner's laptop.
+FACT THE ORDER DID NOT KNOW: nproc = 4 on this cloud machine (not 6). "Cores minus one" would be 3, the old value; 5 slots can oversubscribe 4 cores. I followed the order's number (it was explicit and owner-approved) and its back-off rule: if 1-min load stays above 4 for 10 minutes, or any run times out or fails from pressure, drop to 4.
+Confidence: medium. Reversible: yes (one-number edit). Risk: timing tests and 40-min heavy-wait timeouts under oversubscription.

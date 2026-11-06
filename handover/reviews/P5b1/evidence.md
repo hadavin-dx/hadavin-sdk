@@ -129,3 +129,11 @@ only exact-type checks on values of an exact dict, which cannot raise; removing 
 - The filename of P5a's WIP differed from the ticket; resolved by the merge.
 - P5a base lint debt (13 ruff errors / 6 unformatted files at WIP 1a99a06) is gone at P5a head ea2d254; P5b1 adds none.
 - R-numbers cited: R1P, R3, R5, R10, R11c, R14, R15, R16, R18; ticket notes BN-3, BN-10, BN-11, BN-12.
+
+## 9. Order 95 results (final head b6fb1c2338cb5168aef196ba962ecbf676c76c82)
+Run from a fresh detached worktree at that exact SHA, one heavy.sh job at a time, PYTHONPATH=<worktree>/src:. ; each log header names the HEAD, cwd and command.
+- order95_mutants_M10_M38.log: M10 KILLED, M38 KILLED, "2 of 2 good; problems: []", exit=0.
+- order95_full313.log (python 3.13, -m "not live and not postgres"): 10839 passed, 456 skipped, 85 xfailed in 471.32s, exit=0. The elapsed time equals the earlier af1e0df run to the hundredth of a second; the start/end timestamps in the log (14:46:19Z to 14:54:12Z) show it was a fresh run, so I take it as coincidence.
+- order95_full312.log (python 3.12, P5b1-uvenv): 10839 passed, 456 skipped, 85 xfailed in 619.87s, exit=0.
+This closes the earlier caveat that the full suites ran at af1e0df rather than at the final head. Still true: the other 43 mutants were last run at fe15175, not re-run at b6fb1c2 (order 95 asked only for M10/M38). Postgres rows skipped; P4a R3 BLOCKED.
+Order 95 item 3: origin/main (c709df3) is not an ancestor of origin/core/P5a, so main was not merged. PR 80 left as a draft. No new commits; nothing pushed.
