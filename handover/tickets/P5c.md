@@ -988,3 +988,9 @@ Source: `reviews/P5c-round3-resolve.md`, build notes BN-1 to BN-18, copied as wr
   - NEEDS LEAD 34 (b): 101 rows, 5 strict xfail, 65 mutants.
   - NEEDS LEAD 36 (a): 101 rows (ACC-12c replaces T4-13), 65 mutants.
   - NEEDS LEAD 35 (b): +1 mutant. (c): -1 row (T1-15) and -1 mutant (M12).
+
+**BN-19. Lead answers to NEEDS LEAD 34, 35, 36 (orders 29-30, items 64-66).** These lines win over BN-18's "Other answers".
+- NL-34 (item 64): option (c). A weak keyword followed by digits counts as bank context except at exactly 12 digits. Add a measurement row that counts false refusals on the benign golden set and writes the figure to the evidence folder. If the figure exceeds the ticket's stated bound, report it to the lead; do not loosen the rule silently.
+- NL-35 (item 65): option (a). Keep the refusal; hostile row; ceiling 0 on the golden set.
+- NL-36 (item 66): option (b). Store a bare 12-digit ACCOUNTID only when an agent's config lists ACCOUNTID. No other path stores it.
+- Counts: the measurement row is a measurement, not a pass/fail row (like T2-P). Rows stay 101, mutants stay 66, as in BN-18.

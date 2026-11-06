@@ -154,3 +154,4 @@ ANSWERED by lead order 22 (2026-11-06 03:20Z): INFORM 18-31 all yes; see LEAD-OR
 65. NEEDS LEAD (P5c round 3 NL-35, redaction): a stored document value equal to a word in the prompt makes calls refuse. Options: (a) keep the refusal, add a hostile row, ceiling 0 on the golden set (default); (b) allow the value through. I proceed on (a).
 66. NEEDS LEAD (P5c round 3 NL-36, redaction, least privilege): a bare 12-digit ACCOUNTID is stored and put back. Options: (a) store it always; (b) store it only when an agent's config lists ACCOUNTID (default); (c) never store it. I proceed on (b). Build notes BN-1..BN-18 of the P5c resolve carry the details; no round 4.
 67. ANSWERED (order 32 item 1): AK4a PENDING LEAD 5, option 5(a): floor 0.9 for eval_threshold in pilot/prod, config may only raise it; recorded at the end of tickets/AK4a.md.
+68. RECORDED (orders 29-30 items 64-66): P5c BN-19 holds the answers (64 (c) + false-refusal measurement row, 65 (a), 66 (b)).
