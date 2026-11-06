@@ -39,18 +39,30 @@ def _missing(_name: str):
     raise ImportError("made up")
 
 
+def _outcome(environ):
+    """What `require_module` does for a driver that cannot be imported: "fail", "skip" (with its text) or "returned".
+    A skip is caught here, so a skip where a failure is required shows as a wrong outcome and fails the test (a bare
+    skip would only mark the test as skipped, and the run would stay green)."""
+    try:
+        require_module("psycopg", environ, _missing)
+    except pytest.fail.Exception as e:
+        return "fail", str(e)
+    except pytest.skip.Exception as e:
+        return "skip", str(e)
+    return "returned", ""
+
+
 def test_a_missing_driver_with_the_dsn_set_is_a_failure():
-    with pytest.raises(
-        pytest.fail.Exception, match=r"psycopg cannot be imported but HADAVIN_TEST_PG_DSN is set"
-    ):
-        require_module("psycopg", {DSN_NAME: "postgresql://x"}, _missing)
+    kind, text = _outcome({DSN_NAME: "postgresql://x"})
+    assert kind == "fail", (kind, text)
+    assert "psycopg cannot be imported but HADAVIN_TEST_PG_DSN is set" in text
 
 
 @pytest.mark.parametrize("environ", [{}, {DSN_NAME: ""}])
 def test_a_missing_driver_without_the_dsn_is_a_skip_with_a_reason(environ):
-    with pytest.raises(pytest.skip.Exception) as e:
-        require_module("psycopg", environ, _missing)
-    assert "psycopg is not installed" in str(e.value) and DSN_NAME in str(e.value)
+    kind, text = _outcome(environ)
+    assert kind == "skip", (kind, text)
+    assert "psycopg is not installed" in text and DSN_NAME in text
 
 
 def test_a_present_module_is_returned():
