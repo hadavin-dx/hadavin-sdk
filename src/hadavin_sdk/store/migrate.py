@@ -52,6 +52,7 @@ GRANTS: dict[str, Grant] = {
     "dead_letters": Grant("table", _APPEND),
     "spend": Grant("table", _RW),
     "spend_month": Grant("table", _RW),
+    "spend_reservations": Grant("table", _RW),  # no DELETE: v1 has no pruning (P4d-b)
     "kill_switch": Grant("table", _RW),
     "tick_state": Grant("table", _RW),
     "audit_entries": Grant("table", _APPEND, portal=True),

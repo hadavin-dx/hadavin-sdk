@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, Any
 
 from hadavin_sdk import replay_records
 from hadavin_sdk.actions.contract import effective_class
+from hadavin_sdk.stages import is_live
 
 if TYPE_CHECKING:
     from hadavin_sdk.registry import Registry
@@ -30,7 +31,6 @@ DEFERRED_KEYS = {
     "intake_forms": "Phase 2 (request tracker)",
     "provisioning": "Phase 2 (request tracker)",
 }
-LIVE = ("pilot", "prod")
 
 
 def key_problems(where: str, raw: Any) -> list[str]:
@@ -45,7 +45,7 @@ def key_problems(where: str, raw: Any) -> list[str]:
 
 def check(reg: Registry) -> list[str]:
     cfg = reg.config
-    live = cfg.environment in LIVE
+    live = is_live(cfg.environment)
     out: list[str] = []
     for c in reg.contracts.values():
         if c.executor.kind == "manual":

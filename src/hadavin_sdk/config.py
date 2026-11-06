@@ -12,13 +12,22 @@ from typing import Annotated, Any, Literal, get_args
 from urllib.parse import urlsplit
 
 import yaml
-from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, ValidationError, model_validator
+from pydantic import (
+    BaseModel,
+    BeforeValidator,
+    ConfigDict,
+    Field,
+    ValidationError,
+    field_validator,
+    model_validator,
+)
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from hadavin_sdk import defaults, deferred
-from hadavin_sdk.backends.table import DEFAULTS, DEV_ONLY, NOT_PROD, TABLE, KindSettings
+from hadavin_sdk.backends.table import DEFAULTS, DEMO_ONLY, NOT_PROD, TABLE, KindSettings
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.scrub_settings import ScrubSettings
+from hadavin_sdk.stages import STAGES, is_live, is_prod
 
 __all__ = [
     "Backends",
@@ -58,6 +67,22 @@ class Route(_Strict):
     output_usd_per_mtok: Money
     max_tokens: int = Field(gt=0)
 
+    @field_validator("input_usd_per_mtok", "output_usd_per_mtok")
+    @classmethod
+    def _price(cls, v: Decimal) -> Decimal:
+        """Finite (pydantic already refuses non-finite Decimals; kept as a second line), not negative or minus zero,
+        at most `defaults.MAX_ROUTE_PRICE_USD_PER_MTOK`, at most 6 decimals (checked last, so a huge exponent cannot
+        make `quantize` raise)."""
+        if not v.is_finite():
+            raise ValueError("a price must be a finite number")
+        if v.is_signed():
+            raise ValueError("a price must not be negative")
+        if v > defaults.MAX_ROUTE_PRICE_USD_PER_MTOK:
+            raise ValueError(f"a price may be at most {defaults.MAX_ROUTE_PRICE_USD_PER_MTOK}")
+        if v != v.quantize(Decimal("1E-6")):
+            raise ValueError("a price may have at most 6 decimal places")
+        return v
+
 
 class Backends(_Strict):
     """One validated settings model per capability (built by `parse_backends`, never from raw YAML)."""
@@ -74,6 +99,13 @@ class Backends(_Strict):
     def entries(self) -> list[tuple[str, KindSettings]]:
         out = [(cap, getattr(self, cap)) for cap in TABLE if cap != "detector"]
         return out + [("detector", d) for d in self.detector]
+
+
+_OLD_STAGE = "dev"
+
+
+class _RenamedStage(ValueError):
+    """The old first stage name was written: carries the whole sentence the reader should see."""
 
 
 # Slice 1 keys, refused with the place they moved to (design 12.3; no clients yet, so no migration shim).
@@ -314,7 +346,7 @@ class Settings(BaseSettings):
 
 
 class Config(_Strict):
-    environment: Literal["dev", "pilot", "prod"]
+    environment: Literal["demo", "pilot", "prod"]  # the same three as STAGES (a test pins it)
     routes: dict[str, Route]
     backends: Backends
     golden_dir: Path
@@ -343,8 +375,20 @@ class Config(_Strict):
     tool_module_hashes: dict[str, str] = {}
     executor_timeout_s: float = Field(
         default=defaults.EXECUTOR_TIMEOUT_S, gt=0
-    )  # dev executor only
+    )  # demo executor only
     root: Path
+
+    @field_validator("environment", mode="before")
+    @classmethod
+    def _renamed_stage(cls, value: object) -> object:
+        """The old first stage name, in any case or with spaces round it, is refused with the rename sentence (a hint
+        only: every other value is refused by the allowed-values rule, and nothing is ever tidied into a stage)."""
+        if isinstance(value, str) and value.strip().casefold() == _OLD_STAGE:
+            raise _RenamedStage(
+                f"environment: {_OLD_STAGE} was renamed to {STAGES[0]}; write environment: {STAGES[0]} "
+                f"(allowed values: {', '.join(STAGES)})"
+            )
+        return value
 
     @model_validator(mode="after")
     def _cross_checks(self) -> Config:
@@ -363,9 +407,9 @@ class Config(_Strict):
                     f"(http only for loopback with allow_insecure_loopback): {system.base_url}"
                 )
         refused = []  # environment table, design 4.6: every refusal at once, so one fix round is enough
-        if self.environment != "dev":
+        if is_live(self.environment):
             refused = [
-                f"{c}: {s.kind}" for c, s in self.backends.entries() if (c, s.kind) in DEV_ONLY
+                f"{c}: {s.kind}" for c, s in self.backends.entries() if (c, s.kind) in DEMO_ONLY
             ]
             refused += ["allow_insecure_loopback"] if self.allow_insecure_loopback else []
         refused += _anchor_refusals(self.environment, self.backends)
@@ -385,10 +429,10 @@ def _anchor_refusals(environment: str, b: Backends) -> list[str]:
     if (
         anchor is not None
         and anchor.mode == "COMPLIANCE"
-        and not (environment == "prod" and anchor.retention_ack)
+        and not (environment in STAGES and is_prod(environment) and anchor.retention_ack)
     ):
         refused.append("anchor mode COMPLIANCE outside prod or without retention_ack")
-    if environment == "prod":
+    if is_prod(environment):
         refused += [f"{c}: {s.kind}" for c, s in b.entries() if (c, s.kind) in NOT_PROD]
         if anchor is not None and not anchor.retention_ack:
             refused.append(f"anchor {anchor.kind} without retention_ack")
@@ -433,6 +477,24 @@ def confined(base: Path, relative: str) -> Path:
     return path
 
 
+def _validation_text(exc: ValidationError) -> str:
+    """pydantic's text, except that the rename sentence is shown as written, without pydantic's wrapper, beside the
+    other problems found in the same file (one fix round is enough)."""
+    renamed = [
+        e["ctx"]["error"]
+        for e in exc.errors()
+        if isinstance(e.get("ctx", {}).get("error"), _RenamedStage)
+    ]
+    if not renamed:
+        return str(exc)
+    others = [
+        f"{'.'.join(str(p) for p in e['loc'])}: {e['msg']}"
+        for e in exc.errors()
+        if not isinstance(e.get("ctx", {}).get("error"), _RenamedStage)
+    ]
+    return "; ".join([*(str(r) for r in renamed), *others])
+
+
 def load_config(config_dir: Path | None = None) -> Config:
     """Every start-up problem (missing HADAVIN_CONFIG_DIR, bad YAML, bad values) is a ConfigError."""
     try:
@@ -450,5 +512,7 @@ def load_config(config_dir: Path | None = None) -> Config:
         return Config(**raw, egress_hosts=frozenset(egress), root=root)
     except ConfigError:
         raise
+    except ValidationError as exc:
+        raise ConfigError(_validation_text(exc)) from exc
     except (ValueError, TypeError, yaml.YAMLError) as exc:  # pydantic errors are ValueErrors
         raise ConfigError(str(exc)) from exc
