@@ -43,7 +43,6 @@ from tests.k1b_support import (
     submit_not_sure,
     tool_reply,
 )
-from tests.test_usage_refuse import _bedrock
 
 D = Decimal
 UsageMissing = getattr(_protocol, "UsageMissing", None) or type(
@@ -60,6 +59,25 @@ PRICED = ROUTES["default"]  # 3.00 in, 15.00 out per million tokens
 CANARY = "canary" + "-" + "value"  # built from parts: never one literal
 SRC = Path(__file__).resolve().parents[1] / "src" / "hadavin_sdk"
 OLD_TREE = request_bound is None  # the fail-before run: P4a-2 names are absent
+
+
+def _bedrock(mutate=None, scenario: str = "text"):
+    """A BedrockLLM on a plain `converse` stub (the Stubber cannot serve every shape): (llm, stub)."""
+    pytest.importorskip("boto3", reason="needs extra aws")
+    from hadavin_sdk.llm.bedrock import BedrockLLM
+    from tests.fixtures.http_fake import fixture
+
+    body = copy.deepcopy(fixture("bedrock", scenario)["body"])
+    if mutate:
+        mutate(body)
+    stub = SimpleNamespace(calls=0, body=body)
+
+    def converse(**request):
+        stub.calls += 1
+        return copy.deepcopy(stub.body)
+
+    stub.converse = converse
+    return BedrockLLM(stub, ROUTES, 3, sleep=lambda s: None), stub
 
 
 def _cost(tin: int, tout: int) -> Decimal:
