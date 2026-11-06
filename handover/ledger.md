@@ -1413,15 +1413,15 @@
 | BL-core-P1-r13-cor-1 | P1 | MAJOR | b2 refused-junit mutant is a declared CRASH (allow_crash, ValueError); "all KILLED except one" false | FIXED-UNVERIFIED | reviews/P1-round13-correctness.md | 8b5d849 |
 | BL-core-P1-r13-adv-1 | P1 | MAJOR | coverage sentence omits enclosed/negative-circled/dingbat forms (no fold, dropped or never equal to ASCII) | FIXED-UNVERIFIED | reviews/P1-round13-adversarial.md | 8b5d849 |
 | BL-core-P1-r13-adv-2 | P1 | MAJOR | Lm step 1b false reasoning (line 146), mixed superscript substitution+insertion copy leaks; no substitution row | FIXED-UNVERIFIED | reviews/P1-round13-adversarial.md | 8b5d849 |
-| BL-core-P4a-r10-adv-M1 | P4a | MAJOR | per-request zero check has no row/mutant for request 2 (under-booking class, PL57) | OPEN | reviews/P4a-round10-adversarial.md | 94c4c82 |
-| BL-core-P4a-r10-adv-M2 | P4a | MAJOR | mutant a2-27b wrong killer, not one hunk | OPEN | reviews/P4a-round10-adversarial.md | 94c4c82 |
-| BL-core-P4a-r10-adv-M3 | P4a | MAJOR | bundled multi-variant mutant rows (M4 rule) | OPEN | reviews/P4a-round10-adversarial.md | 94c4c82 |
-| BL-core-P4a-r10-adv-M4 | P4a | MAJOR | booking handler can raise on lone surrogate after a billed call (surrogatepass) | OPEN | reviews/P4a-round10-adversarial.md | 94c4c82 |
-| BL-core-P4a-r10-adv-M5 | P4a | MAJOR | stale figures (PL30, PL38, V19, V34, checklist 3, line 64) contradict PL54 | OPEN | reviews/P4a-round10-adversarial.md | 94c4c82 |
-| BL-core-P4a-r10-adv-M6 | P4a | MAJOR | "every booking is the maximum" true for k1b only; meter path 3x lower, no guard | OPEN | reviews/P4a-round10-adversarial.md | 94c4c82 |
-| BL-core-P4a-r10-adv-M7 | P4a | MAJOR | detector kinds (bedrock_guardrail) can bill while k1b books 0; guard trusts label | OPEN | reviews/P4a-round10-adversarial.md | 94c4c82 |
-| BL-core-P4a-r10-cor-1 | P4a | MAJOR | replay guard makes k1b replay unusable outside dev; ticket silent | OPEN | reviews/P4a-round10-correctness.md | f386cbd |
-| BL-core-P4a-r10-cor-2 | P4a | MAJOR | "same order as P4d.md:17" false for defaults.py; P2a-1 missing from defaults/models orders | OPEN | reviews/P4a-round10-correctness.md | f386cbd |
+| BL-core-P4a-r10-adv-M1 | P4a | MAJOR | per-request zero check has no row/mutant for request 2 (under-booking class, PL57) | FIXED-UNVERIFIED | reviews/P4a-round10-adversarial.md | 94c4c82 |
+| BL-core-P4a-r10-adv-M2 | P4a | MAJOR | mutant a2-27b wrong killer, not one hunk | FIXED-UNVERIFIED | reviews/P4a-round10-adversarial.md | 94c4c82 |
+| BL-core-P4a-r10-adv-M3 | P4a | MAJOR | bundled multi-variant mutant rows (M4 rule) | FIXED-UNVERIFIED | reviews/P4a-round10-adversarial.md | 94c4c82 |
+| BL-core-P4a-r10-adv-M4 | P4a | MAJOR | booking handler can raise on lone surrogate after a billed call (surrogatepass) | FIXED-UNVERIFIED | reviews/P4a-round10-adversarial.md | 94c4c82 |
+| BL-core-P4a-r10-adv-M5 | P4a | MAJOR | stale figures (PL30, PL38, V19, V34, checklist 3, line 64) contradict PL54 | FIXED-UNVERIFIED | reviews/P4a-round10-adversarial.md | 94c4c82 |
+| BL-core-P4a-r10-adv-M6 | P4a | MAJOR | "every booking is the maximum" true for k1b only; meter path 3x lower, no guard | FIXED-UNVERIFIED | reviews/P4a-round10-adversarial.md | 94c4c82 |
+| BL-core-P4a-r10-adv-M7 | P4a | MAJOR | detector kinds (bedrock_guardrail) can bill while k1b books 0; guard trusts label | FIXED-UNVERIFIED | reviews/P4a-round10-adversarial.md | 94c4c82 |
+| BL-core-P4a-r10-cor-1 | P4a | MAJOR | replay guard makes k1b replay unusable outside dev; ticket silent | FIXED-UNVERIFIED | reviews/P4a-round10-correctness.md | f386cbd |
+| BL-core-P4a-r10-cor-2 | P4a | MAJOR | "same order as P4d.md:17" false for defaults.py; P2a-1 missing from defaults/models orders | FIXED-UNVERIFIED | reviews/P4a-round10-correctness.md | f386cbd |
 | BL-core-LK-r10-cor-1 | LK | MAJOR | LK-KIND-NUM second input inconsistent | OPEN | reviews/LK-round10-correctness.md | f386cbd |
 | BL-core-LK-r10-cor-2 | LK | MAJOR | no row/mutant for empty unfiltered key list | OPEN | reviews/LK-round10-correctness.md | f386cbd |
 | BL-core-LK-r10-cor-3 | LK | MAJOR | "caught by nothing" contradicts handed-secret hex/base64 scrub | OPEN | reviews/LK-round10-correctness.md | f386cbd |
