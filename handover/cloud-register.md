@@ -575,7 +575,8 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | bu-P1m-r3fix | Sonnet builder P1m order 31 batch (1 Major + 7 Minors) in build P1m | 04:30Z | +30min | running | verify, push core/P1m, heartbeat |
 | sv-AK1-r3 | saver AK1 round 3 pair (4 ADV Majors, 5 COR Majors) | 04:30Z | +8min | REPORTED | verify, push, then Opus resolve (BN) |
 | rs-AK1-r3 | Opus resolve AK1 round 3 (last; 9 Majors -> build notes) | 04:30Z | +25min | running | verify, then BN author |
-| rv-AK4a-r3-adv | egm-design AK4a rev3 round 3 | 04:33Z | +20min | running | save |
-| rv-AK4a-r3-cor | egm-codebase-details AK4a rev3 round 3 | 04:33Z | +20min | running | save |
+| rv-AK4a-r3-adv | egm-design AK4a rev3 round 3 | 04:33Z | +20min | REPORTED | save |
+| rv-AK4a-r3-cor | egm-codebase-details AK4a rev3 round 3 | 04:33Z | +20min | REPORTED | save |
 | rv-AKG1-r2-adv | egm-design AK-G1 rev2 round 2 | 04:36Z | +20min | running | save |
 | rv-AKG1-r2-cor | egm-codebase-details AK-G1 rev2 round 2 | 04:36Z | +20min | running | save |
+| sv-AK4a-r3 | saver AK4a round 3 pair (1 Blocker, 8 Majors) | 04:40Z | +8min | running | verify, push, Opus resolve (BN) |
