@@ -302,7 +302,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | rev12-P4a-author | Sonnet author: apply reviews/P4a-round11-resolve.md to tickets/P4a.md -> revision 12 FINAL (order 16/17: then FROZEN) | sonnet | 02:32Z | +60min | REPORTED | verify commit, recount |
 | bs-P1-adv | build-start review (order 20) of frozen tickets/P1.md, egm:*, read-only | sonnet | 02:31Z | +45min | REPORTED | save report as reviews/P1-buildstart-adv.md; then ONE resolve |
 | bs-P1-cor | build-start review (order 20) of frozen tickets/P1.md, egm:*, read-only | sonnet | 02:31Z | +45min | REPORTED | save report as reviews/P1-buildstart-cor.md; then ONE resolve |
-| bs-P3a-adv | build-start review (order 20) of frozen tickets/P3a.md, egm:*, read-only | sonnet | 02:31Z | +45min | running | save report as reviews/P3a-buildstart-adv.md; then ONE resolve |
+| bs-P3a-adv | build-start review (order 20) of frozen tickets/P3a.md, egm:*, read-only | sonnet | 02:31Z | +45min | REPORTED | save report as reviews/P3a-buildstart-adv.md; then ONE resolve |
 | bs-P3a-cor | build-start review (order 20) of frozen tickets/P3a.md, egm:*, read-only | sonnet | 02:31Z | +45min | REPORTED | save report as reviews/P3a-buildstart-cor.md; then ONE resolve |
 | bs-P4d-adv | build-start review (order 20) of frozen tickets/P4d.md, egm:*, read-only | sonnet | 02:31Z | +45min | REPORTED | save report as reviews/P4d-buildstart-adv.md; then ONE resolve |
 | bs-P4d-cor | build-start review (order 20) of frozen tickets/P4d.md, egm:*, read-only | sonnet | 02:31Z | +45min | REPORTED | save report as reviews/P4d-buildstart-cor.md; then ONE resolve |
@@ -338,3 +338,4 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | r2-P5a-cor | Sonnet egm-codebase-details correctness round 2 of tickets/P5a.md | sonnet | 02:40Z | +30min | running | save report to reviews/; then resolve |
 | r1-P5b5-adv | Sonnet egm-design adversarial round 1 of tickets/P5b5.md | sonnet | 02:40Z | +30min | QUEUED (agent limit 20) | save report to reviews/; then resolve |
 | r1-P5b5-cor | Sonnet egm-codebase-details correctness round 1 of tickets/P5b5.md | sonnet | 02:40Z | +30min | QUEUED (agent limit 20) | save report to reviews/; then resolve |
+| res-bs-P3a | Opus egm-resolve build-start P3a (one round) | opus | 02:41Z | +60min | running | verify build notes in tickets/P3a.md; S0 EXIT P3a effective |
