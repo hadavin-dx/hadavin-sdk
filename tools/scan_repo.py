@@ -22,14 +22,14 @@ LIST_FILES = {
     "tools/scan_allowlist.txt",
 }  # they hold names by design: skip banned-name only
 
-SECRET_RULES = {
-    "aws-access-key-id": re.compile(r"\b(?:AKIA|ASIA)[0-9A-Z]{16}\b"),
-    "anthropic-api-key": re.compile(r"sk-ant-[A-Za-z0-9_-]{20,}"),
-    "sk-api-key": re.compile(r"\bsk-[A-Za-z0-9_-]{32,}"),
-    "private-key-header": re.compile(r"-----BEGIN (?:[A-Z]+ )*PRIVATE KEY(?: BLOCK)?-----"),
-    "slack-token": re.compile(r"\bxox[abeoprs]-[A-Za-z0-9-]{10,}"),
-    "github-token": re.compile(r"\bgh[pousr]_[A-Za-z0-9]{36,}"),
-    "github-fine-grained-token": re.compile(r"\bgithub_pat_[A-Za-z0-9_]{22,}"),
+PATTERNS = {
+    "cloud-id-prefix": re.compile(r"\b(?:AKIA|ASIA)[0-9A-Z]{16}\b"),
+    "llm-id-ant": re.compile(r"sk-ant-[A-Za-z0-9_-]{20,}"),
+    "llm-id-sk": re.compile(r"\bsk-[A-Za-z0-9_-]{32,}"),
+    "pem-block-header": re.compile(r"-----BEGIN (?:[A-Z]+ )*PRIVATE KEY(?: BLOCK)?-----"),
+    "chat-id-xox": re.compile(r"\bxox[abeoprs]-[A-Za-z0-9-]{10,}"),
+    "vcs-id-classic": re.compile(r"\bgh[pousr]_[A-Za-z0-9]{36,}"),
+    "vcs-id-fine": re.compile(r"\bgithub_pat_[A-Za-z0-9_]{22,}"),
     "credential-literal": re.compile(r"""(?i)password["']?(?:\s*=\s*|:\s*)(['"])[^'"\s]{8,}\1"""),
 }
 
@@ -89,7 +89,7 @@ def scan(repo: Path, allowlist: Path, extra: Path, banned_src: Path) -> list[str
         if b"\0" in data[:8000]:
             continue  # binary
         for n, line in enumerate(data.decode("utf-8", errors="replace").splitlines(), 1):
-            for rule, rx in SECRET_RULES.items():
+            for rule, rx in PATTERNS.items():
                 if rule in skip:
                     continue
                 for m in rx.finditer(line):

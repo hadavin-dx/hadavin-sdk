@@ -13,22 +13,22 @@ BANNED_NAME = "Context" + " Lake"  # a BANNED entry, split so this file stays cl
 EXAMPLE_KEY = "AKIA" + "IOSFODNN7EXAMPLE"
 
 CASES = {
-    "aws-access-key-id": "k = '" + "AKIA" + "ABCDEFGHIJKLMNOP" + "'",
-    "anthropic-api-key": "k = '" + "sk-" + "ant-" + "a" * 24 + "'",
-    "sk-api-key": "k = '" + "sk-" + "b" * 40 + "'",
-    "private-key-header": "-----BEGIN " + "RSA PRIVATE" + " KEY-----",
-    "slack-token": "t = '" + "xox" + "b-" + "1234567890-abcdef" + "'",
-    "github-token": "t = '" + "gh" + "p_" + "c" * 36 + "'",
-    "github-fine-grained-token": "t = '" + "github" + "_pat_" + "d" * 30 + "'",
+    "cloud-id-prefix": "k = '" + "AKIA" + "ABCDEFGHIJKLMNOP" + "'",
+    "llm-id-ant": "k = '" + "sk-" + "ant-" + "a" * 24 + "'",
+    "llm-id-sk": "k = '" + "sk-" + "b" * 40 + "'",
+    "pem-block-header": "-----BEGIN " + "RSA PRIVATE" + " KEY-----",
+    "chat-id-xox": "t = '" + "xox" + "b-" + "1234567890-abcdef" + "'",
+    "vcs-id-classic": "t = '" + "gh" + "p_" + "c" * 36 + "'",
+    "vcs-id-fine": "t = '" + "github" + "_pat_" + "d" * 30 + "'",
     "credential-literal": "pass" + "word = 'hunter22xyz'",
     "banned-name": "see " + BANNED_NAME,
 }
 # more shapes of the same rules that must also be caught
 MORE_HITS = {
-    "aws-access-key-id": "k = " + "ASIA" + "ABCDEFGHIJKLMNOP",
-    "sk-api-key": "k = '" + "sk-" + "proj-" + "e" * 30 + "_" + "f" * 10 + "'",
-    "private-key-header": "-----BEGIN " + "PGP PRIVATE" + " KEY BLOCK-----",
-    "slack-token": "t = '" + "xox" + "e-" + "1234567890-abcdef" + "'",
+    "cloud-id-prefix": "k = " + "ASIA" + "ABCDEFGHIJKLMNOP",
+    "llm-id-sk": "k = '" + "sk-" + "proj-" + "e" * 30 + "_" + "f" * 10 + "'",
+    "pem-block-header": "-----BEGIN " + "PGP PRIVATE" + " KEY BLOCK-----",
+    "chat-id-xox": "t = '" + "xox" + "e-" + "1234567890-abcdef" + "'",
     "credential-literal": "DB_PASS" + "WORD = 'hunter22xyz'",
 }
 # shapes that must NOT be flagged (too short, wrong prefix, no literal)
@@ -94,9 +94,9 @@ def test_near_misses_are_not_flagged(tmp_path, line):
 
 
 def test_output_never_holds_any_part_of_the_secret(tmp_path):
-    _, out = _scan(_repo(tmp_path, {"x.txt": CASES["sk-api-key"]}))
+    _, out = _scan(_repo(tmp_path, {"x.txt": CASES["llm-id-sk"]}))
     assert "bbbb" not in out
-    _, out = _scan(_repo(tmp_path, {"y.txt": CASES["github-token"]}))
+    _, out = _scan(_repo(tmp_path, {"y.txt": CASES["vcs-id-classic"]}))
     assert "cccc" not in out
 
 
@@ -107,7 +107,7 @@ def test_aws_example_placeholder_is_allowed(tmp_path):
 def test_a_real_key_beside_the_example_is_still_flagged(tmp_path):
     line = f"a = {EXAMPLE_KEY} b = " + "AKIA" + "ABCDEFGHIJKLMNOP"
     rc, out = _scan(_repo(tmp_path, {"x.txt": line + "\n"}))
-    assert rc == 1 and "aws-access-key-id" in out
+    assert rc == 1 and "cloud-id-prefix" in out
 
 
 def test_psql_variable_is_not_a_password_literal(tmp_path):
@@ -115,34 +115,34 @@ def test_psql_variable_is_not_a_password_literal(tmp_path):
 
 
 def test_clean_repo_and_binary_files_pass(tmp_path):
-    files = {"a.py": "print('hi')\n", "b.bin": b"\0" + CASES["sk-api-key"].encode()}
+    files = {"a.py": "print('hi')\n", "b.bin": b"\0" + CASES["llm-id-sk"].encode()}
     assert _scan(_repo(tmp_path, files))[0] == 0
 
 
 def test_untracked_files_are_not_scanned(tmp_path):
     _repo(tmp_path, {"a.py": "x = 1\n"})
-    (tmp_path / "late.txt").write_text(CASES["sk-api-key"])
+    (tmp_path / "late.txt").write_text(CASES["llm-id-sk"])
     assert _scan(tmp_path)[0] == 0
 
 
 def test_allowlist_skips_only_the_listed_rule_on_the_listed_file(tmp_path):
     files = {
-        "ok.txt": CASES["sk-api-key"],
-        "bad.txt": CASES["sk-api-key"],
-        "ok2.txt": CASES["github-token"],
+        "ok.txt": CASES["llm-id-sk"],
+        "bad.txt": CASES["llm-id-sk"],
+        "ok2.txt": CASES["vcs-id-classic"],
     }
     rc, out = _scan(
         _repo(tmp_path, files),
-        allow="ok.txt:sk-api-key:fixture for the test\nok2.txt:sk-api-key:wrong rule\n",
+        allow="ok.txt:llm-id-sk:fixture for the test\nok2.txt:llm-id-sk:wrong rule\n",
     )
     assert rc == 1 and "bad.txt:1:" in out and "ok.txt:1:" not in out
-    assert "ok2.txt:1: github-token" in out  # a different rule on a listed file is still flagged
+    assert "ok2.txt:1: vcs-id-classic" in out  # a different rule on a listed file is still flagged
 
 
 def test_allowlist_entry_without_a_reason_or_for_a_missing_file_fails(tmp_path):
     repo = _repo(tmp_path, {"a.txt": "x = 1\n"})
     assert "needs path:rule:reason" in _scan(repo, allow="a.txt:sk-api-key\n")[1]
-    rc, out = _scan(repo, allow="gone.txt:sk-api-key:was needed once\n")
+    rc, out = _scan(repo, allow="gone.txt:llm-id-sk:was needed once\n")
     assert rc == 1 and "stale entry, gone.txt is not tracked" in out
 
 
@@ -170,7 +170,7 @@ def test_missing_or_empty_banned_list_fails_closed(tmp_path):
 
 def test_allowlist_entry_with_an_empty_reason_fails(tmp_path):
     repo = _repo(tmp_path, {"a.txt": "x = 1\n"})
-    rc, out = _scan(repo, allow="a.txt:sk-api-key:\n")
+    rc, out = _scan(repo, allow="a.txt:llm-id-sk:\n")
     assert rc == 1 and "needs path:rule:reason" in out
 
 
