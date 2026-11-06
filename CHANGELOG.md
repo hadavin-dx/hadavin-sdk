@@ -411,7 +411,7 @@
 - Size rule: a text is refused when the sum, over its characters, of the longest string the fold makes from each character is above
   `defaults.TEXTNORM_MAX_CHARS` (read when the function runs; it is the redaction cap). A value that is not exactly `str` is refused
   (`NotText`) before the size is looked at. Both refusals say lengths and constants, never the text.
-- `FOLD_VERSION` is `alg=fold2|tbl=<12 hex>:<entries>|ucd=<table data version>|ud=<this interpreter's Unicode version>`; it changes
+- `FOLD_VERSION` is `alg=fold3|tbl=<12 hex>:<entries>|ucd=<table data version>|ud=<this interpreter's Unicode version>`; it changes
   when the table changes. The tables are read-only (`MappingProxyType`). `check_pinned_unidata` compares the interpreter's Unicode
   version with `defaults.TEXTNORM_PINNED_UNIDATA` (strict: raises; otherwise warns). The golden file has one section per Unicode version
   (15.0.0 for Python 3.12, 15.1.0 for Python 3.13); both are asserted, none is skipped; on a Python with another Unicode version the
@@ -424,6 +424,25 @@
   `squeeze` now case-folds first too. Cost: where a capital and a small letter had different look-alikes the small letter wins (13 letters,
   e.g. Greek eta reads `n`, so a capital Greek Eta is no longer read as `h`; `has_mixed_script` still flags it next to Latin letters), and
   capital look-alikes whose small form was not in the table now read as the Latin letter (more over-collision, the safe side of a DENY).
+- **`fold3` (review 2 of this package; U+0345).** `fold2` case-folded the raw text before the drop step, which turned the combining mark
+  U+0345 (COMBINING GREEK YPOGEGRAMMENI) into the letter iota: `identity_key("admin" + U+0345)` was `admini` while `identity_key("admin")`
+  was `admin`, so `same_person` was False (a DENY bypass by one invisible mark; U+0345 was the only one of all dropped code points to do
+  this). Decision, written in the `textnorm.py` docstring: U+0345 is read as an iota when a Greek letter comes before it (skipping
+  characters the fold drops) and is removed everywhere else; the early case fold is gone (it was redundant, and a differential run of
+  600,000 random strings found no difference with and without it). Chosen over "always drop" because always dropping breaks case symmetry
+  for the 63 precomposed Greek letters with ypogegrammeni (`identity_key("\u1fb3")` against `identity_key("\u1fb3".upper())`).
+  Stated and tested exceptions, nothing else is exempt: `identity_key(alpha + U+0345)` differs from `identity_key(alpha)` (it is the key
+  of alpha iota), and a text that holds U+0345 not after a Greek letter is not case symmetric (`str.upper` makes the mark a letter).
+  Across all 1,112,064 non-surrogate code points and the 171-row corpus the only key that changed from `fold2` is that of U+0345 itself.
+  Because that key changed, `alg` is `fold3` and the golden file holds new hashes (a text that names `fold1` or `fold2` reads as `fold3`).
+  New tests: every code point of the nine dropped categories (Cc Cf Mn Me Zl Zp Co Cs Cn) next to Latin and Greek letters, in front and
+  behind, through `identity_key` and `squeeze`; U+0345 after every Greek letter; other dropped characters between a Greek letter and the
+  mark; 30,000 seeded random strings (Hangul jamo and fillers, ligatures, dotted and dotless i, sigma, zero-width, bidi, variation
+  selectors, tag characters, width forms) for idempotence, case symmetry and inserted marks; the tag cases below. Three new mutants.
+- **The tag of the interpreter, stated.** A raw text that starts with the tag of THIS interpreter (typed exactly, U+E000 included) has the
+  tag stripped before the fold, so it gets the key of the text without it (an over-collision, the safe side of a DENY); the tag of another
+  version is not stripped. Nothing in this package calls `require_pinned_unidata()` (P1b wires it): a caller that does not call it gets
+  tagged keys on every interpreter whose Unicode data is not the pin, for example Python 3.12. Tested.
 - **Smaller changes of the same round.** The Unicode copyright line of the generated table reads `1991-2026`, as in `THIRD-PARTY-NOTICES.md`
   (the source distribution ships that file: listing in the review evidence). The generator docstring states its regeneration limit
   (the small-capital rule reads the interpreter's character names: regenerate only on the pinned Unicode version). The two generator
@@ -433,14 +452,14 @@
 - **Unicode version guard.** `require_pinned_unidata()` raises `UnidataMismatch` (not a `ValueError` or `TypeError`) when the interpreter's
   Unicode data is not `defaults.TEXTNORM_PINNED_UNIDATA`; it never warns. Pilot and prod must call it (P1b: `app.build`). On another
   version (development, tests; Python 3.12 has 15.0.0) `identity_key` still runs but returns `key_tag()` + key, where the tag is U+E000,
-  `alg=fold2|ud=<version>`, U+E000; U+E000 is dropped by the fold, so a key of another version never equals a key of the pinned one. The
+  `alg=fold3|ud=<version>`, U+E000; U+E000 is dropped by the fold, so a key of another version never equals a key of the pinned one. The
   pinned version has the bare key. `fold_key`, `same_person` and `allow_equal` are unchanged. Two public names are new (19).
 - Tests: `tests/test_textnorm.py`, `_generator.py`, `_differential.py` (171-row corpus in 25 classes; rows of the next package are
-  strict `xfail`), `_meta.py`, `_perf.py` (run with `-m perf`, alone) and `tests/test_third_party_notices.py`. 51 mutants in
+  strict `xfail`), `_meta.py`, `_perf.py` (run with `-m perf`, alone) and `tests/test_third_party_notices.py`. 53 mutants in
   `tests/textnorm_mutants.py` (run with `uv run python tests/textnorm_mutants.py`).
 - Every repository that keeps a byte copy of these files re-copies the four of them in one commit and updates its pins to the
   sha256 values below (also pinned in `tests/fixtures/textnorm_manifest.json`):
-  - `src/hadavin_sdk/guard/textnorm.py`: `579f2fed570e9a59cf6e3f933332f57caba84ad188e25fccd26c3762ead6651f`
+  - `src/hadavin_sdk/guard/textnorm.py`: `40a786e0413b4fbf2f7dd05e6f865970b0fb55cbc78bcf8d10793e4570329f1a`
   - `src/hadavin_sdk/guard/_confusables.py`: `907654638cb9c1aa075070ef6eb68c94a39cb8646d9524571bb4f4d5d5eaaa4d`
   - `tests/fixtures/textnorm_vectors.json`: `1a1944708f7d1737588d7b02666620ceb308b0fe4a71ce2a312c4dc29113d349`
   - `tests/fixtures/textnorm_corpus.json`: `2df53e7b83bdc8385c1b162e0bea74481c1e326eb2836a625cd9dd2407f77a79`
