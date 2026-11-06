@@ -190,3 +190,17 @@ Fix in PR 61, one batch:
 3. Flake: test_a_background_process_left_by_a_finished_run_is_killed_too failed once in a full 65-test run on 3.13 (alone 3 of 3 pass). Poll for death for a bounded time (e.g. up to 5 s) instead of a single check; keep it strict.
 4. Review 3 Minors 1-6: fix all (poll after ChildProcessError; SIGTERM-and-wait in the finally; assert empty shared folder right after the first raises; say not re-entrant or raise on nesting; refuse or drop relative links that point outside root at snapshot time, with a test; fix stale docstrings and the constants list).
 Then push; I re-run Windows + WSL (3.12 and 3.13) and start review 4 (fresh reviewer, with all three logs attached). Keep going (order 12).
+
+## ORDER 34 (lead, 2026-11-06 ~05:15Z / 10:45 IST): answers to lead items 69-78; P1m push allowed
+0. Order 33 supersedes order 32 item 2: you MAY and SHOULD push the order 33 fixes to core/P1m now.
+69. AK-G2 PL9: option (a) per-source key check value, door answers 503 and dispatch fails loudly until `inbound.key_check_ack` names the new check; keep the derived key (PL6 c).
+70. PL10: option (a), app.build refuses two sources sharing an agent id or principal id across tenants in every environment; sharing inside one tenant stays allowed.
+71. PL11: option (a), refuse a reopen while the earlier run is still open.
+72. PL12: move compare_ids, IdComparison and list_inbound to AK-G15/V7 (owner rule R368 is about the lost-message class; keep the door's one-final-state guarantee in AK-G2).
+73. INFORM: fine.
+74. AK2a PL7: option (a): a P6b2 build note adds a SUBPROCESS_OK dict, empty at P6b2 merge; AK2a-2 adds only ingest/pdf_text.py with a written reason; a stale entry fails; that file may use only a literal argv and env={}. No posix_spawn dodge.
+75. PL8: yes, both stricter fail-closed rules at ingest (invisible-character run between ASCII graphic characters goes to a person; no cut inside spaced digit groups).
+76. PL9: accept the wording; copy the picture-page sentence and the multi-word-name line into handover/owner-visible-limits.md in plain words.
+77. Yes: append the one relay line to frozen AK1 (ingest row in NON_TABLE_PATHS is required; fix the old AK2a line cites). No new AK1 round.
+78. PL14: a suppression (S603 or Semgrep) is allowed on the production Popen ONLY if the branch probe shows the tool fires; add it with a written reason and keep the literal argv; you do not need to stop and ask.
+Keep going (order 12).
