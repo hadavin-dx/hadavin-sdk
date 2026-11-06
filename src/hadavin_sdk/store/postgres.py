@@ -906,14 +906,23 @@ class PostgresStore:
             return StopState(on=True, by="system:kill_switch_row_missing")
         return found[0]
 
-    _STATE_COLS = '"on", "by", ts, schema_version, version, open_requests'
+    # Two whole statements (no string building). The casts matter: a bigint argument does not resolve to the
+    # (text, bigint, integer) signature.
+    _STOP_QUERY = (
+        'SELECT "on", "by", ts, schema_version, version, open_requests '
+        "FROM hadavin_kill_switch_stop(%s)"
+    )
+    _RESET_QUERY = (
+        'SELECT "on", "by", ts, schema_version, version, open_requests '
+        "FROM hadavin_kill_switch_reset(%s, %s::bigint, %s::int)"
+    )
 
-    def _call_switch(self, call: str, params: tuple) -> StopState:
+    def _call_switch(self, query: str, params: tuple) -> StopState:
         """Run one of the two kill-switch functions and map its SQLSTATE to a typed error (never by message
         text). The functions run as their owner; the caller needs EXECUTE only."""
         try:
             with self._lock:
-                row = self._exec(f"SELECT {self._STATE_COLS} FROM {call}", params).fetchone()  # noqa: S608
+                row = self._exec(query, params).fetchone()
         except psycopg.Error as exc:
             code = getattr(exc, "sqlstate", None)
             mapped = _SWITCH_ERRORS.get(code or "")
@@ -927,18 +936,14 @@ class PostgresStore:
         """A stop: one INSERT through `hadavin_kill_switch_stop`. The runtime has no right on the tables."""
         if ks.on is not True:
             raise ValueError("set_kill_switch only stops; a reset goes through reset_kill_switch")
-        return self._call_switch("hadavin_kill_switch_stop(%s)", (ks.by,))
+        return self._call_switch(self._STOP_QUERY, (ks.by,))
 
     @_writes()
     def reset_kill_switch(self, by: str, expected_version: int, expected_open: int) -> StopState:
         for n, top in ((expected_version, 2**63 - 1), (expected_open, 2**31 - 1)):
             if isinstance(n, bool) or not isinstance(n, int) or not 0 <= n <= top:
                 raise ValueError("reset: version and open count must be in range")
-        # The casts matter: a bigint argument does not resolve to the (text, bigint, integer) signature.
-        return self._call_switch(
-            "hadavin_kill_switch_reset(%s, %s::bigint, %s::int)",
-            (by, expected_version, expected_open),
-        )
+        return self._call_switch(self._RESET_QUERY, (by, expected_version, expected_open))
 
     def get_tick_state(self, step: str) -> TickState | None:
         found = self._select(TickState, "tick_state", "step = %s", (step,))
