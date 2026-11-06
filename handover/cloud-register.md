@@ -615,3 +615,4 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | rs-AKG1-des | Opus resolve of AK-G1 design review + OP-1..6 | 05:46Z | +30min | running | verify, report to lead |
 | rr-P5b1-r3-adv | egm-design ROUND 3 (last) review of P5b1 rev 3 | 05:49Z | +25min | REPORTED | saver, resolve |
 | rr-P5b1-r3-cor | egm-codebase-details ROUND 3 (last) review of P5b1 rev 3 | 05:49Z | +25min | running | saver, resolve |
+| rs-P8a-r3 | Opus resolve of P8a round 3 (27 findings) | 05:53Z | +25min | running | BN author |
