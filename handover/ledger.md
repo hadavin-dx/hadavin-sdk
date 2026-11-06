@@ -1420,3 +1420,15 @@
 | BL-core-P4a-r10-adv-M5 | P4a | MAJOR | stale figures (PL30, PL38, V19, V34, checklist 3, line 64) contradict PL54 | OPEN | reviews/P4a-round10-adversarial.md | 94c4c82 |
 | BL-core-P4a-r10-adv-M6 | P4a | MAJOR | "every booking is the maximum" true for k1b only; meter path 3x lower, no guard | OPEN | reviews/P4a-round10-adversarial.md | 94c4c82 |
 | BL-core-P4a-r10-adv-M7 | P4a | MAJOR | detector kinds (bedrock_guardrail) can bill while k1b books 0; guard trusts label | OPEN | reviews/P4a-round10-adversarial.md | 94c4c82 |
+| BL-core-P4a-r10-cor-1 | P4a | MAJOR | replay guard makes k1b replay unusable outside dev; ticket silent | OPEN | reviews/P4a-round10-correctness.md | f386cbd |
+| BL-core-P4a-r10-cor-2 | P4a | MAJOR | "same order as P4d.md:17" false for defaults.py; P2a-1 missing from defaults/models orders | OPEN | reviews/P4a-round10-correctness.md | f386cbd |
+| BL-core-LK-r10-cor-1 | LK | MAJOR | LK-KIND-NUM second input inconsistent | OPEN | reviews/LK-round10-correctness.md | f386cbd |
+| BL-core-LK-r10-cor-2 | LK | MAJOR | no row/mutant for empty unfiltered key list | OPEN | reviews/LK-round10-correctness.md | f386cbd |
+| BL-core-LK-r10-cor-3 | LK | MAJOR | "caught by nothing" contradicts handed-secret hex/base64 scrub | OPEN | reviews/LK-round10-correctness.md | f386cbd |
+| BL-core-LK-r10-cor-4 | LK | MAJOR | self-refusal letter list not exhaustive (Sigma, Gamma, Omega, B, G, Sh) | OPEN | reviews/LK-round10-correctness.md | f386cbd |
+| BL-core-LK-r10-cor-5 | LK | MAJOR | P-1 1-in-200 rule skewed by Greek/Cyrillic corpus | OPEN | reviews/LK-round10-correctness.md | f386cbd |
+| BL-core-LK-r10-cor-6 | LK | MAJOR | M62 killer may not kill | OPEN | reviews/LK-round10-correctness.md | f386cbd |
+| BL-core-LK-r10-adv-A | LK | MAJOR | NFKC join (Hangul/Mc) lets a whole copy pass the count form | OPEN | reviews/LK-round10-adversarial.md | f386cbd |
+| BL-core-LK-r10-adv-B | LK | MAJOR | owner summary over-claims vs strict xfails | OPEN | reviews/LK-round10-adversarial.md | f386cbd |
+| BL-core-LK-r10-adv-C | LK | MAJOR | P-1 IN/OUT measure mixes catches, special corpora, false refusals | OPEN | reviews/LK-round10-adversarial.md | f386cbd |
+| BL-core-LK-r10-adv-D | LK | MAJOR | count form never compared with a window rule | OPEN | reviews/LK-round10-adversarial.md | f386cbd |
