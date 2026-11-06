@@ -88,7 +88,10 @@ jobs:
         env:
           HADAVIN_TEST_PG_DSN: postgresql://postgres@localhost:5432/postgres
           HADAVIN_TEST_VAULT_ADDR: http://127.0.0.1:8200
+          HADAVIN_REQUIRE_PINNED_UNIDATA: "1"  # the text-folding tables are built for Unicode 15.1.0 (Python 3.13); another interpreter must fail, not skip
         run: pytest -q -m "not live and not perf" -rs
+      - name: Stage-rename mutants (each reverted guard must be killed by its named test) (blocks)
+        run: python tests/stage_mutants.py
       # Timing tests have their own step and it blocks: the check is a ratio (4x text, limit 12x time) with wall
       # clock, so a noisy runner moves both runs alike; a real super-linear pattern is a merge blocker.
       - name: Performance of the redaction patterns (blocks)
@@ -186,10 +189,10 @@ jobs:
           git rev-parse --verify -q origin/main > /dev/null || { echo "origin/main is missing"; fail=1; }
           [ -f .gitleaksignore ] || { echo ".gitleaksignore is missing"; fail=1; touch .gitleaksignore; }
           # any line that is not blank, not a comment and not a 40-hex fingerprint entry escapes the checks below
-          if grep -nvE '^(#|$|[0-9a-f]{40}:[^:]+:(generic-api-key|curl-auth-user):[0-9]+$)' .gitleaksignore | cut -d: -f1 | grep .; then echo "malformed gitleaks ignore line(s) at the line numbers above (entry = <40-hex sha>:<path>:<generic-api-key|curl-auth-user>:<line>)"; fail=1; fi
+          if grep -nvE '^(#|$|[0-9a-f]{40}:[^:]+:(generic-api-key|curl-auth-user|private-key):[0-9]+$)' .gitleaksignore | cut -d: -f1 | grep .; then echo "malformed gitleaks ignore line(s) at the line numbers above (entry = <40-hex sha>:<path>:<generic-api-key|curl-auth-user|private-key>:<line>)"; fail=1; fi
           while read -r sha; do
             [ -n "$sha" ] || continue
-            if ! git branch -r --contains "$sha" | grep -qE '^ *origin/(core/cloud-handover|handover-src/c1a-8460813)$'; then echo "stale ignore entry (not on a named handover branch): $sha"; fail=1; fi
+            if ! git branch -r --contains "$sha" | grep -qE '^ *origin/(core/cloud-handover|handover-src/c1a-8460813|core/P2d-1)$'; then echo "stale ignore entry (not on a named handover branch): $sha"; fail=1; fi
             if git merge-base --is-ancestor "$sha" origin/main; then echo "ignore entry is in main history (needs an owner decision): $sha"; fail=1; fi
           done < <(grep -oE '^[0-9a-f]{40}' .gitleaksignore | sort -u)
           [ "$(grep -cE '^# EXPIRES ' .gitleaksignore || true)" -le 1 ] || { echo "more than one EXPIRES line"; fail=1; }

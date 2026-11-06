@@ -1,12 +1,18 @@
-"""Mutants of `store/migration_numbers.py` (the lexer, the refusal list and the new fix-1 guards). Not collected by pytest.
+"""Mutants of `store/migration_numbers.py` (the lexer, the refusal list, the fix-1 and order-100 guards) and of the shared
+timing rule `tests/fixtures/timing.py`. Not collected by pytest.
 
 Each mutant reverts ONE guard in a temp copy; the test in `killer` must be the one that fails first, with a failing line
 that holds `expect`. The first 17 are the lexer mutants of the ticket (M26 a-h, M74, M50, M51, M52, M72, M73, M96, M97,
 M98; the "strings before comments" mutant of M26(i) cannot be written as a one-line revert and M86 is the timing
-stand-in, which lives in the `perf` tests); the rest are the guards added in fix 1. Run from the repo root:
+stand-in, which lives in the `perf` tests); the rest are the guards added in fix 1 and order 100. Run from the repo
+root (CI-ready: needs only the ordinary test environment, no database, no network, under a minute; exit 0 only when every
+mutant is good, and the last line is `N of N good; problems: []`):
 
     uv run python tests/migration_numbers_mutants.py            # all; exit 1 if any is not good
     uv run python tests/migration_numbers_mutants.py hidden     # only names that hold the text
+
+A cheap check that runs with the ordinary tests, `test_every_mutant_still_applies_to_the_source`, fails when a mutant's
+`old` text is no longer in its file or its killer test no longer exists, so the list cannot rot between two runs.
 """
 
 import sys
@@ -20,15 +26,17 @@ from tools.mutation_runner import Mutant, run_mutants
 
 ROOT = Path(__file__).resolve().parents[1]
 T1 = "tests/test_migration_numbers.py"
-T2 = "tests/test_migration_numbers_fix1.py"
+T2 = "tests/test_migration_numbers_guards.py"
+T3 = "tests/test_timing_fixture.py"
+TIMING = "tests/fixtures/timing.py"
 SRC = "src/hadavin_sdk/store/migration_numbers.py"
 
 
-def mutant(name, old, new, test_file, killer, expect, **kw):
+def mutant(name, old, new, test_file, killer, expect, src=SRC, **kw):
     pin = test_file[:-3] + "::" + killer
     return Mutant(
         name,
-        SRC,
+        src,
         old,
         new,
         expect,
@@ -218,11 +226,11 @@ M = [
         "assert",
     ),
     mutant(
-        "fix1: statement_text returns a cut text",
+        "fix1: checked_statement_text returns a cut text",
         "        raise SqlReadError(problem)",
         "        pass",
         T2,
-        "test_statement_text_raises_instead_of_returning_a_cut_text",
+        "test_checked_statement_text_raises_instead_of_returning_a_cut_text",
         "Failed",
     ),
     mutant(
@@ -267,6 +275,76 @@ M = [
         allow_crash=True,
         crash_type="KeyError",
     ),
+    # --- order 100
+    mutant(
+        "o100: statement_text returns the bare text, not the pair",
+        "    return lex(text, keep_quoted)\n",
+        "    return lex(text, keep_quoted)[0]\n",
+        T2,
+        "test_statement_text_called_the_ticket_way_returns_the_pair",
+        "too many values to unpack",
+        allow_crash=True,
+        crash_type="ValueError",
+    ),
+    mutant(
+        "o100: the error is not rebuilt from its problems on copy",
+        "    def __reduce__(self):",
+        "    def _not_reduce(self):",
+        T2,
+        "test_migration_number_error_survives_copy_deepcopy_and_pickle",
+        "and 13 more",
+    ),
+    mutant(
+        "o100: MIGRATE_LOCK differs from the key migrate uses",
+        'MIGRATE_LOCK = int.from_bytes(b"hadvnmig", "big") >> 1',
+        'MIGRATE_LOCK = int.from_bytes(b"hadvnmig", "big") >> 2',
+        T2,
+        "test_the_lock_key_and_the_folder_are_the_ones_migrate_uses",
+        "BinOp(left=C",
+    ),
+    mutant(
+        "o100: MIGRATIONS names another folder than migrate does",
+        'MIGRATIONS = Path(__file__).parent / "migrations"',
+        'MIGRATIONS = Path(__file__).parent / "migration"',
+        T2,
+        "test_the_lock_key_and_the_folder_are_the_ones_migrate_uses",
+        "BinOp(left=A",
+    ),
+    mutant(
+        "o100: NAME lets any character into a file name",
+        'NAME = re.compile(r"[0-9]{4}_[a-z0-9_]+\\.sql")',
+        'NAME = re.compile(r"[0-9]{4}_.+\\.sql")',
+        T1,
+        "test_a_hostile_name_never_reaches_the_order_message",
+        "== []",
+    ),
+    mutant(
+        "o100: the timing limit is not a ratio (everything passes)",
+        "PER_SIZE, MIN_SMALL_S = 3.0, 0.004",
+        "PER_SIZE, MIN_SMALL_S = 1000.0, 0.004",
+        T3,
+        "test_a_quadratic_stand_in_is_flagged_at_any_speed[1e-07]",
+        "assert",
+        src=TIMING,
+    ),
+    mutant(
+        "o100: the timing limit is too tight (everything is flagged)",
+        "PER_SIZE, MIN_SMALL_S = 3.0, 0.004",
+        "PER_SIZE, MIN_SMALL_S = 0.001, 0.004",
+        T3,
+        "test_a_linear_cost_passes_at_any_speed[1e-07]",
+        "assert not",
+        src=TIMING,
+    ),
+    mutant(
+        "o100: the small run is not floored",
+        "max(t_small, MIN_SMALL_S)",
+        "t_small",
+        T3,
+        "test_the_limit_is_a_ratio_of_the_two_sizes",
+        "0.048",
+        src=TIMING,
+    ),
 ]
 
 if __name__ == "__main__":
@@ -288,7 +366,7 @@ if __name__ == "__main__":
     res = run_mutants(
         ROOT,
         M,
-        [T1, T2],
+        [T1, T2, T3],
         extra_dirs=("tests/fixtures",),
         only=only,
         on_result=show,

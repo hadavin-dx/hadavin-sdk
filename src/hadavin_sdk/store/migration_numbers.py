@@ -12,19 +12,28 @@ Why a lexer of our own (R448 rung decision, 2026-11-06). The text rules do exact
 ends the one migration transaction. The other refusals (`SET`, `RESET`, `ALTER ROLE`, `DO`, `EXECUTE` ...) are a tripwire
 against accidents and a help to the reviewer: the guard that cannot be blinded by spelling is the read-back in `migrate()`
 after each file (a later change), which compares the role, `search_path`, `standard_conforming_strings`,
-`backslash_quote`, `client_encoding` and the trigger state. Higher rung tried: the SQL tokenizer of sqlglot 30.26.0 (MIT,
-already pinned in the `askdata` extra). It tokenised nine probe cases like the server, but (1) it does not refuse a psql
-meta-command (`SELECT 1 \\g` comes out as the tokens BACKSLASH and VAR), (2) it accepts or refuses differently from the
-server on 399 of 20,000 random strings, and (3) it is a dependency upgrade on a safety path whose behaviour would change
-without a test failing. Result of running our lexer tests against a sqlglot-based version: `P3a-fix1-evidence/evidence.md`.
-pglast (the server's own scanner, GPL-3.0) is test-only: `tests/test_migration_numbers_fix1.py` compares it with this
-lexer. If the lexer reads a file LONGER than the server does, a `COMMIT` can hide inside a string (the dangerous
-direction); if it ends a string EARLIER, the file is refused although it is fine (the safe direction).
+`backslash_quote`, `client_encoding` and the trigger state. A higher rung was looked at: the SQL tokenizer of sqlglot
+(MIT, already pinned in the `askdata` extra). It was NOT adopted, for design reasons, not for a measured score: in the one check made (2026-11-06,
+not kept here) it did not refuse a psql meta-command (`SELECT 1 \\g` comes out as tokens), and it is a dependency
+upgrade on a safety path whose behaviour could change without a test here failing. No number about sqlglot is claimed in this file,
+because the comparison that was run is not kept in this repository. pglast (the server's own scanner, GPL-3.0) is
+test-only: `tests/test_migration_numbers_guards.py` compares it with this lexer (skipped when pglast is absent). If the
+lexer reads a file LONGER than the server does, a `COMMIT` can hide inside a string (the dangerous direction); if it ends
+a string EARLIER, the file is refused although it is fine (the safe direction).
+
+Which function to call. `statement_text(text, keep_quoted=False)` returns the pair `(text, problem)` (the ticket's
+signature); `problem` is "" when the file was read to its end, and when it is not the returned text stops at the problem
+and must not be used. A caller that wants no pair and no half text uses `checked_statement_text`, which returns the text
+alone or raises `SqlReadError`. `lex` is the same as `statement_text`.
 
 The lexer follows the PostgreSQL scanner rules that matter for where a string, comment or body starts and ends, with
 `standard_conforming_strings = on`. Preconditions: the migration role is NOT a superuser (statements such as
-`CREATE EXTENSION`, `COPY ... PROGRAM` and `LOAD` are refused here as a tripwire, not as the guard), and the files are
-UTF-8 text without hidden characters.
+`CREATE EXTENSION`, `COPY ... PROGRAM` and `LOAD` are refused here as a tripwire, not as the guard), the server is
+PostgreSQL 15 or later, and the files are UTF-8 text without hidden characters. The scanner rules were compared with
+pglast 8.7 (the PostgreSQL 17 scanner) and probed on 16.15 (ticket P3a); that PostgreSQL 15 scans the same way is an
+ASSUMPTION nobody has tested here. `refused_statements` refuses `CREATE EXTENSION` outright: no extension is allowed
+today, because no planned migration creates one (grep of the tickets, in the pull request text). If one is wanted, add
+its name to a named allow-list constant here and test it; never a bypass.
 """
 
 from __future__ import annotations
@@ -48,7 +57,7 @@ STEM = re.compile(r"[0-9]{4}_[a-z0-9_]+")
 PLAIN_SCHEMA = re.compile(r"[a-z_][a-z0-9_]{0,62}")
 # One hostile name once produced thousands of problem lines: 21 problems show 20 plus "and 1 more".
 MAX_PROBLEMS_SHOWN = 20
-# The one place this command is written (the message, the module docstring of `migrate` and the CHANGELOG use it).
+# The one place this command is written (the late-file message uses it; `migrate` and the CHANGELOG runbook will, in P3a-2).
 RECIPE_COMMAND = "psql -X -v ON_ERROR_STOP=1 -f recipe.sql"
 # The one generated psql command: with it a run WITHOUT -X still stops at the first error even when a person's startup
 # file says `\set ON_ERROR_STOP off`.
@@ -78,6 +87,11 @@ class MigrationNumberError(ConfigError):
         if len(self.problems) > MAX_PROBLEMS_SHOWN:
             shown.append(f"and {len(self.problems) - MAX_PROBLEMS_SHOWN} more")
         super().__init__("migrations are inconsistent: " + "; ".join(shown))
+
+    def __reduce__(self):
+        # `copy` and `pickle` rebuild an exception as `cls(*self.args)`; `args` holds the message, which would become
+        # one "problem" per character. Rebuild from the problems instead.
+        return (type(self), (self.problems,))
 
 
 def _esc(name: str) -> str:
@@ -146,7 +160,10 @@ def check_migration_numbers(folder: Path = MIGRATIONS) -> None:
 
 def read_files(files: Sequence[Path]) -> dict[Path, str]:
     """Each file ONCE, as UTF-8 text. The same text is scanned and later executed, so a file changed on disk between
-    the scan and the run is not run in its new form. An unreadable file raises the original error."""
+    the scan and the run is not run in its new form. An unreadable file raises the original error. `read_text` in text
+    mode translates CRLF and a lone CR to LF, so the text the lexer sees (and the server later gets) has only LF; the
+    hash in `released_problems` reads bytes and does the same translation for CRLF by hand. A byte order mark is NOT
+    removed here: `hidden_character` names it and the file is refused."""
     return {p: p.read_text(encoding="utf-8") for p in files}
 
 
@@ -237,7 +254,7 @@ def hand_recipe(entries: Sequence[tuple[str, str]], schema: str, lock: int = MIG
     ]
     for stem, text in entries:
         lines.append(text)
-        cleaned = statement_text(text)  # cannot raise: _refuse_entry read this text above
+        cleaned = checked_statement_text(text)  # cannot raise: _refuse_entry read this text above
         if cleaned.rsplit(";", 1)[-1].strip(_WS):
             lines.append(";")  # an unterminated last statement would swallow the INSERT
         # printed text for a person, never executed here; the stem matched STEM above, so no quote can occur
@@ -426,17 +443,24 @@ def _skip_blank(text: str, i: int) -> int:
 
 
 class SqlReadError(ValueError):
-    """`statement_text` could not read the file to its end (an unclosed quote, comment or `$` body, an unrecognised
+    """`checked_statement_text` could not read the file to its end (an unclosed quote, comment or `$` body, an unrecognised
     `$`). The message names the problem and its line."""
 
 
-def statement_text(text: str, keep_quoted: bool = False) -> str:
+def checked_statement_text(text: str, keep_quoted: bool = False) -> str:
     """The text `lex` returns, or `SqlReadError`: a caller that wants the view of the file gets a complete view or no
-    view at all, never a text that stops at the first problem (fail closed). Use `lex` to get the problem as a value."""
+    view at all, never a text that stops at the first problem (fail closed). It returns a `str`, not a pair; the
+    ticket's name `statement_text` returns the pair."""
     cleaned, problem = lex(text, keep_quoted)
     if problem:
         raise SqlReadError(problem)
     return cleaned
+
+
+def statement_text(text: str, keep_quoted: bool = False) -> tuple[str, str]:
+    """The ticket's function: `(text, problem)`, see `lex`. Write `cleaned, problem = statement_text(...)`. It never
+    raises and never returns a bare `str`, so `statement_text(...)[0]` is the whole text and not its first character."""
+    return lex(text, keep_quoted)
 
 
 def lex(text: str, keep_quoted: bool = False) -> tuple[str, str]:
@@ -607,7 +631,7 @@ _ROLE_MEMBERSHIP = re.compile(r"(grant|revoke)\b(?!.*?\bon\b)", re.IGNORECASE | 
 
 
 def refused_statements(text: str) -> list[str]:
-    """Reasons a file must be refused, from `statement_text` (the emptied view) and the list: a lexer problem;
+    """Reasons a file must be refused, from `lex` (the emptied view) and the list: a lexer problem;
     transaction control; every `SET` and `RESET` except `SET LOCAL lock_timeout` and `SET LOCAL statement_timeout`;
     `DO`, `EXECUTE`, `LOAD`, `DISCARD`, `COPY ... PROGRAM`, `ALTER ROLE|USER|GROUP|SYSTEM|DATABASE`,
     `CREATE ROLE|USER|GROUP|EXTENSION`, `GRANT` and `REVOKE` without `ON` (role membership), `DROP OWNED`,

@@ -7,7 +7,6 @@ and not a collection error. Planted names and SQL are made up. Postgres-side tes
 from __future__ import annotations
 
 import os
-import random
 import statistics
 import sys
 import time
@@ -15,7 +14,8 @@ from pathlib import Path
 
 import pytest
 
-from tests.fixtures.timing import FLOOR_S, MIN_SMALL_S
+from tests.fixtures import timing
+from tests.fixtures.seeded import Seeded
 
 FUZZ_CASES = 2000
 FUZZ_SEED = 20261106
@@ -444,13 +444,30 @@ def test_order_problems_empty_when_nothing_is_late(mn):
     assert mn.order_problems({"0001_a"}, _paths("0001_a.sql", "0002_b.sql"), {}, "s") == []
 
 
-def test_order_message_names_are_escaped(mn):
+def test_a_hostile_name_never_reaches_the_order_message(mn):
+    """The names in the order message are file names that passed `NAME` and a highest applied name that passed `STEM`,
+    both ASCII letters, digits and underscores, so the escape (`_esc`) in that message cannot be reached by a hostile
+    name: the name is not late at all. This test fails if `NAME` or `STEM` ever lets such a name through unescaped
+    into a message that this function builds."""
+    hostile = [
+        f"0004_x{ESC}[31m.sql",
+        "0004_y\nz.sql",
+        "0004_\udcff.sql",
+        "0004_x .sql",
+        "0004_X.sql",
+    ]
+    files = [Path(n) for n in hostile]
+    texts = {p: "SELECT 1;" for p in files}
+    assert mn.late_files({"0009_z"}, files) == []
+    assert mn.order_problems({"0009_z"}, files, texts, "s") == []
+    # and an applied name that is not a stem is not a "highest applied": nothing is late
     good = Path("0004_x.sql")
-    # an applied name that is not a stem is not a highest applied stem: nothing is late, nothing is printed
     assert mn.order_problems({f"0009_z{ESC}\n\udcff"}, [good], {good: "SELECT 1;"}, "s") == []
-    msg = mn.order_problems({"0009_z"}, [good], {good: "SELECT 1;"}, "s")[0]
+    # a good late file next to the hostile ones: only the good one is named, and nothing raw is printed
+    msg = mn.order_problems({"0009_z"}, [good, *files], {good: "SELECT 1;"}, "s")[0]
     head = msg.split("-- RECIPE begins")[0]
-    assert ESC not in head and "\udcff" not in head
+    assert head.startswith("0004_x.sql would be applied out of order")
+    assert ESC not in head and "\udcff" not in head and "0004_y" not in head
 
 
 def test_lexer_problem_in_a_late_file_is_a_message(mn):
@@ -779,19 +796,14 @@ def test_the_real_files_read_clean(mn):
         assert problem == "", p.name
         assert mn.refused_statements(text) == [], p.name
         counts.append(len([s for s in cleaned.split(";") if s.strip()]))
-    assert counts == [12, 9, 8, 2, 3], "34 statements in all (the ticket's counts)"
+    # the first five files are the released ones (34 statements, the ticket's counts); a new file may follow
+    assert len(counts) >= 5 and counts[:5] == [12, 9, 8, 2, 3]
 
 
 def test_a_million_characters_finish(mn):
     text = "SELECT 'a''b' /* c */ -- d\n;" * 40000
     assert len(text) > 1_000_000
     assert mn.lex(text)[1] == ""
-
-
-def _linear(measure, unit: str, small: int, big: int) -> bool:
-    ratio = 48.0
-    t_small, t_big = (measure((unit * (n // len(unit) + 1))[:n]) for n in (small, big))
-    return t_big <= max(FLOOR_S, ratio * max(t_small, MIN_SMALL_S))
 
 
 def _median_time(fn, text: str) -> float:
@@ -811,7 +823,7 @@ def test_lexer_is_linear(mn):
         (fn.__name__, unit)
         for fn in (mn.lex, mn.refused_statements)
         for unit in units
-        if not _linear(lambda t, f=fn: _median_time(f, t), unit, small, big)
+        if timing.is_superlinear(lambda t, f=fn: _median_time(f, t), unit, small, big)
     ]
     assert not slow, slow
 
@@ -821,7 +833,7 @@ def test_the_timing_harness_flags_a_quadratic_stand_in():
     def quadratic(t: str) -> float:
         return _median_time(lambda s: sum(s.count("a", 0, i) for i in range(0, len(s), 64)), t)
 
-    assert not _linear(quadratic, "a", 16 * 1024, 256 * 1024), (
+    assert timing.is_superlinear(quadratic, "a", 16 * 1024, 256 * 1024), (
         "a quadratic function must be flagged"
     )
 
@@ -832,7 +844,7 @@ ALPHABET = list("'\"$-/*\\;EeUa&é") + [LF, CR, FF, VT] + list("comitsdnbg ")
 
 
 def test_lexer_property_never_raises_and_cr_equals_lf(mn):
-    rng = random.Random(FUZZ_SEED)  # noqa: S311 - a seeded test generator, not a secret
+    rng = Seeded(FUZZ_SEED)
     for case in range(FUZZ_CASES):
         text = "".join(rng.choice(ALPHABET) for _ in range(rng.randint(0, 40)))
         cleaned, problem = mn.lex(text)  # must never raise
@@ -847,7 +859,7 @@ def test_lexer_property_never_raises_and_cr_equals_lf(mn):
 
 
 def test_ledger_property_only_the_named_error_and_agreement(mn, tmp_path):
-    rng = random.Random(FUZZ_SEED)  # noqa: S311 - a seeded test generator, not a secret
+    rng = Seeded(FUZZ_SEED)
     pool = [
         "0001_a.sql",
         "0002_b.sql",
