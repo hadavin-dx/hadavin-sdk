@@ -43,8 +43,10 @@ def key_problems(where: str, raw: Any) -> list[str]:
 
 
 def check(reg: Registry) -> list[str]:
+    from hadavin_sdk.config import is_live  # here, not at the top: config imports this module
+
     cfg = reg.config
-    live = cfg.environment != "demo"  # fail closed: only exactly demo is relaxed
+    live = is_live(cfg.environment)
     out: list[str] = []
     for c in reg.contracts.values():
         if c.executor.kind == "manual":

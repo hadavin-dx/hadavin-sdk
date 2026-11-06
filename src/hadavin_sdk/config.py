@@ -90,6 +90,16 @@ STAGES = ("demo", "pilot", "prod")
 _OLD_STAGE = "dev"
 
 
+def is_live(environment: object) -> bool:
+    """The one place that decides 'live': anything that is not exactly the first stage (demo) is live, so a value that
+    is not a stage fails closed. app.py, deferred.py, registry.py and the config cross-checks all ask this."""
+    return environment != STAGES[0]
+
+
+class _RenamedStage(ValueError):
+    """The old first stage name was written: carries the whole sentence the reader should see."""
+
+
 # Slice 1 keys, refused with the place they moved to (design 12.3; no clients yet, so no migration shim).
 MOVED = {
     "region": "backends.<capability>.region on each AWS kind",
@@ -364,9 +374,9 @@ class Config(_Strict):
     @classmethod
     def _renamed_stage(cls, value: object) -> object:
         """The old first stage name is refused with the rename; every other value is compared exactly."""
-        if isinstance(value, str) and value == _OLD_STAGE:
-            raise ValueError(
-                f"environment: {_OLD_STAGE} is no longer allowed; write environment: {STAGES[0]} "
+        if value == _OLD_STAGE:
+            raise _RenamedStage(
+                f"environment: {_OLD_STAGE} was renamed to {STAGES[0]}; write environment: {STAGES[0]} "
                 f"(allowed values: {', '.join(STAGES)})"
             )
         return value
@@ -388,7 +398,7 @@ class Config(_Strict):
                     f"(http only for loopback with allow_insecure_loopback): {system.base_url}"
                 )
         refused = []  # environment table, design 4.6: every refusal at once, so one fix round is enough
-        if self.environment != "demo":
+        if is_live(self.environment):
             refused = [
                 f"{c}: {s.kind}" for c, s in self.backends.entries() if (c, s.kind) in DEMO_ONLY
             ]
@@ -475,5 +485,12 @@ def load_config(config_dir: Path | None = None) -> Config:
         return Config(**raw, egress_hosts=frozenset(egress), root=root)
     except ConfigError:
         raise
+    except (
+        ValidationError
+    ) as exc:  # the rename sentence alone, without pydantic's wrapper around it
+        for err in exc.errors():
+            if isinstance(err.get("ctx", {}).get("error"), _RenamedStage):
+                raise ConfigError(str(err["ctx"]["error"])) from exc
+        raise ConfigError(str(exc)) from exc
     except (ValueError, TypeError, yaml.YAMLError) as exc:  # pydantic errors are ValueErrors
         raise ConfigError(str(exc)) from exc

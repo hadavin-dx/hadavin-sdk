@@ -17,7 +17,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from hadavin_sdk import deferred
 from hadavin_sdk.actions.contract import ActionContract, schema_problems
-from hadavin_sdk.config import Config, ConfigError, Money, confined, load_yaml
+from hadavin_sdk.config import Config, ConfigError, Money, confined, is_live, load_yaml
 from hadavin_sdk.guard.judge import PROMPT_SHA256 as JUDGE_PROMPT_SHA256
 from hadavin_sdk.identity import Principal
 from hadavin_sdk.models import ChainStep, sha256_hex
@@ -318,7 +318,7 @@ def _module_pin_problems(config: Config) -> list[str]:
     for module in config.tool_modules:
         pin = config.tool_module_hashes.get(module)
         if pin is None:
-            if config.environment != "demo":
+            if is_live(config.environment):
                 out.append(
                     f"tool module {module} has no tool_module_hashes pin (required in pilot and prod)"
                 )

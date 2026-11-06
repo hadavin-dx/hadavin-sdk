@@ -1,4 +1,4 @@
-"""The mutants of the stage rename (mutants M1-M9), run by the P1m runner (``tools/mutation_runner.py``).
+"""The mutants of the stage rename (mutants M1-M11), run by the P1m runner (``tools/mutation_runner.py``).
 
 They are NOT in ``tests/mutation_runner_mutants.py``: the meta-tests of that file pin its own mutants (the runner's and the
 judge's) by count and by target file. Same runner, same judge, a separate list. Each mutant reverts ONE guard in a temp copy
@@ -29,8 +29,8 @@ APP = "src/hadavin_sdk/app.py"
 REDACT = "src/hadavin_sdk/guard/redact.py"
 OLD = "d" + "ev"  # built from parts: this file is scanned by the class test it helps to check
 RAISE = (
-    "            raise ValueError(\n"
-    '                f"environment: {_OLD_STAGE} is no longer allowed; write environment: {STAGES[0]} "\n'
+    "            raise _RenamedStage(\n"
+    '                f"environment: {_OLD_STAGE} was renamed to {STAGES[0]}; write environment: {STAGES[0]} "\n'
     "                f\"(allowed values: {', '.join(STAGES)})\"\n"
     "            )"
 )
@@ -56,17 +56,25 @@ def pair(cap, kind):
 M = [
     mutant("M1 the old word is accepted (mapped to demo)", CFG, RAISE, '            return "demo"',
         "test_dev_is_refused_with_the_rename", "DID NOT RAISE"),
-    mutant("M2 the refusal does not name the rename", CFG, "is no longer allowed; write environment:", "is unknown; write environment:",
+    mutant("M2 the refusal does not name the rename", CFG, "was renamed to", "is not known to",
         "test_dev_is_refused_with_the_rename", "the refusal does not name the rename"),
     pair("llm", "fake"), pair("channel", "fake"), pair("secrets", "fake"),
     pair("secrets", "env"), pair("store", "memory"), pair("audit", "local_dir"),
-    mutant("M4a the demo-only check still tests the old word", CFG, 'if self.environment != "demo":',
+    mutant("M2b pydantic's wrapper shows around the rename sentence", CFG, 'if isinstance(err.get("ctx", {}).get("error"), _RenamedStage):',
+        "if False:", "test_dev_is_refused_with_the_rename", "wrapper is visible"),
+    mutant("M4a the demo-only check still tests the old word", CFG, "if is_live(self.environment):",
         f'if self.environment != "{OLD}":', "test_demo_accepts_every_demo_only_kind", "demo config was refused"),
-    mutant("M4b demo joins the live stages", REGISTRY, 'if config.environment != "demo":', "if True:",
+    mutant("M4b demo joins the live stages (registry.py: if True)", REGISTRY, "if is_live(config.environment):", "if True:",
         "test_the_stages_are_exactly_demo_pilot_prod", "demo is not live"),
-    mutant("M4c pilot leaves the live stages", DEFERRED, 'live = cfg.environment != "demo"', 'live = cfg.environment == "prod"',
+    mutant("M4c pilot leaves the live stages (deferred.py)", DEFERRED, "live = is_live(cfg.environment)", 'live = cfg.environment == "prod"',
         "test_the_stages_are_exactly_demo_pilot_prod", "pilot is live"),
-    mutant("M4d the demo-only refusal is switched off", CFG, 'if self.environment != "demo":', "if False:",
+    mutant("M4f demo joins the live stages (deferred.py: live = True)", DEFERRED, "live = is_live(cfg.environment)", "live = True",
+        "test_the_stages_are_exactly_demo_pilot_prod", "demo is not live"),
+    mutant("M4g every stage is relaxed (app.py: live = False)", APP, "live = is_live(cfg.environment)", "live = False",
+        "test_the_stages_are_exactly_demo_pilot_prod", "pilot is live"),
+    mutant("M4h is_live becomes an allowlist of live stages", CFG, "return environment != STAGES[0]", "return environment in STAGES[1:]",
+        "test_the_stages_are_exactly_demo_pilot_prod", "is_live is wrong for a value that is not a stage"),
+    mutant("M4d the demo-only refusal is switched off", CFG, "if is_live(self.environment):", "if False:",
         "test_pilot_and_prod_refuse_every_relaxed_kind", "DID NOT RAISE"),
     mutant("M4e the loopback switch is allowed in pilot and prod", CFG,
         'refused += ["allow_insecure_loopback"] if self.allow_insecure_loopback else []',
@@ -80,16 +88,19 @@ M = [
         "test_values_are_compared_exactly_never_normalised", "was accepted"),
     mutant("M6 the old word comes back in src", TBL, "kinds allowed only in `demo`.", f"kinds allowed only in `{OLD}`.",
         "test_the_old_stage_word_is_gone", "the old stage word is still used as a stage"),
+    mutant("M6b the old word comes back in src as a quoted value", TBL, "NOT_PROD: frozenset[tuple[str, str]] = frozenset(",
+        f'_STAGE_DEFAULT = "{OLD}"\nNOT_PROD: frozenset[tuple[str, str]] = frozenset(',
+        "test_the_old_stage_word_is_gone", "the old stage word is still used as a stage"),
     mutant("M8 a half-renamed flag: the old name stays beside the new", TBL,
         "NOT_PROD: frozenset[tuple[str, str]] = frozenset(", "DE" + "V_ONLY = DEMO_ONLY\nNOT_PROD: frozenset[tuple[str, str]] = frozenset(",
         "test_no_old_spelling_of_the_demo_only_flag_is_left", "half-renamed"),
-    mutant("M9a registry.py goes back to an allowlist of live stages", REGISTRY, 'config.environment != "demo"',
+    mutant("M9a registry.py goes back to an allowlist of live stages", REGISTRY, "is_live(config.environment)",
         'config.environment in ("pilot", "prod")',
         "test_a_value_that_is_not_a_stage_is_live_for_every_guard", "registry treated"),
-    mutant("M9b deferred.py goes back to an allowlist of live stages", DEFERRED, 'live = cfg.environment != "demo"',
+    mutant("M9b deferred.py goes back to an allowlist of live stages", DEFERRED, "live = is_live(cfg.environment)",
         'live = cfg.environment in ("pilot", "prod")',
         "test_a_value_that_is_not_a_stage_is_live_for_every_guard", "deferred treated"),
-    mutant("M9c app.py goes back to an allowlist of live stages", APP, 'live = cfg.environment != "demo"',
+    mutant("M9c app.py goes back to an allowlist of live stages", APP, "live = is_live(cfg.environment)",
         'live = cfg.environment in ("pilot", "prod")',
         "test_a_value_that_is_not_a_stage_is_live_for_every_guard", "app treated"),
     mutant("M10a pilot dropped from the redactor's common words", REDACT, '        "pilot",\n', "",
