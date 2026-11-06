@@ -251,3 +251,5 @@ Added 2026-11-06 02:50 UTC (08:20 IST) by the build-start resolve (`handover/rev
 BN-stored-stage (order 78 item 6, 2026-11-06; append-only): "The first change that stores a stage must have a test that maps an old stored dev to demo on read." (from P0t PR 67; display only, never a guard decision.)
 
 BN (P0t fix4): if this change stores a stage anywhere (a column, a row, an audit field, a file), it must read an old stored value `dev` as `demo` on read, for display only and never for a guard decision, and its tests must go through that real read site: a stored `dev` is shown as `demo`, and a guard that is given the stored text still treats it as not a stage. Nothing stores a stage today (P0t deleted the unused reader).
+
+BN-PREV-RELEASE (order 89 q195, 2026-11-06T13:08:26Z; append-only): PREVIOUS_RELEASE_LAST = 0005_evidence, the last migration on main today; there is no release tag yet, so main's last migration is the released base. One constant, reversible.
