@@ -482,7 +482,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | rs-P5b4-r2 | Opus resolve P5b4 round 2 (1 Blocker) | 05:50Z | +30min | REPORTED | verify |
 | rs-P5b3-r2 | Opus resolve P5b3 round 2 (7+2 Major) | 05:50Z | +30min | REPORTED | verify |
 | rs-AK1-r1 | Opus resolve AK1 round 1 (2 Blocker, 21 Major) | 05:50Z | +35min | REPORTED | verify |
-| au-P5c-r3 | Opus author P5c revision 3 (per round-2 resolve) | 06:00Z | +40min | running | verify |
+| au-P5c-r3 | Opus author P5c revision 3 (per round-2 resolve) | 06:00Z | +40min | REPORTED | verify |
 | au-P6b2-r3 | Opus author P6b2 revision 3 (per round-2 resolve) | 06:00Z | +40min | REPORTED | verify |
 | rv-P5b5-r3-adv | P5b5 r3 adversarial (egm-design) | 06:10Z | +30min | REPORTED (inline, unsaved) | verify |
 | rv-P5b5-r3-cor | P5b5 r3 correctness (egm-codebase-details) | 06:10Z | +30min | REPORTED (inline, unsaved) | verify |
@@ -507,3 +507,5 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | rs-AK4a-r1 | Opus resolve AK4a round 1 | 08:10Z | +25min | running | verify, push |
 | rv-AK0-r2-adv | egm-design round 2 AK0 rev 2 | 08:20Z | +10min | running | save |
 | rv-AK0-r2-cor | egm-codebase-details round 2 AK0 rev 2 | 08:20Z | +10min | running | save |
+| rv-P5c-r3-adv | egm-design round 3 P5c rev 3 | 08:30Z | +10min | running | save |
+| rv-P5c-r3-cor | egm-codebase-details round 3 P5c rev 3 | 08:30Z | +10min | running | save |
