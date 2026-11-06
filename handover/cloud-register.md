@@ -377,7 +377,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | save-r2b | Sonnet saver: P5b1 r2, P6a r1, P5c r1 (adv+cor each) = 6 reports + ledger rows | sonnet | ~02:55Z | +20min | REPORTED | verify, push, launch resolves |
 | save-r2c | Sonnet saver: P6b2 r1 adv (a8ac760d78cffcdde) + cor (a9f6d3e5a184b9a11) | sonnet | - | +15min | REPORTED | launch after save-r2b pushes; then P6b2 resolve |
 | res-r2-P5b1 | Opus egm-resolve P5b1 round 2 | opus | ~02:56Z | +45min | REPORTED | verify; rev 3; round 3 |
-| res-r1-P5c | Opus egm-resolve P5c round 1 | opus | ~02:56Z | +45min | running | verify; rev 2; round 2 |
+| res-r1-P5c | Opus egm-resolve P5c round 1 | opus | ~02:56Z | +45min | REPORTED | verify; rev 2; round 2 |
 | res-r1-P6a | Opus egm-resolve P6a round 1 | opus | ~02:56Z | +45min | REPORTED | verify; rev 2; round 2 |
 | rev-P8b-2 | Opus author: P8b revision 2 from reviews/P8b-round1-resolve.md | opus | 02:55Z | +45min | REPORTED | verify; round 2 reviewers |
 | rev-P6b1-3 | Opus author: P6b1 revision 3 from reviews/P6b1-round2-resolve.md | opus | 02:55Z | +45min | running | verify; round 3 reviewers; freeze |
@@ -390,3 +390,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | rev-P4b1-3 | Opus author: P4b1 revision 3 from reviews/P4b1-round2-resolve.md | opus | 02:59Z | +45min | running | verify; round 3 reviewers; resolve; freeze |
 | rev-P5a-3 | Opus author: P5a revision 3 from reviews/P5a-round2-resolve.md (was NOT launched earlier: lead slip, found 03:00Z) | opus | 03:00Z | +45min | running | verify; P5b1 rev 3 waits for it; round 3 reviewers |
 | rev-P6a-2 | Opus author: P6a revision 2 from reviews/P6a-round1-resolve.md | opus | 03:00Z | +45min | running | verify; round 2 reviewers |
+| rev-P5c-2 | Opus author: P5c revision 2 from reviews/P5c-round1-resolve.md | opus | 03:02Z | +45min | running | verify; round 2 |
+| rev-P6b2-2 | Opus author: P6b2 revision 2 from reviews/P6b2-round1-resolve.md | opus | 03:02Z | +45min | running | verify; round 2 |
+| r2-P8b-adv | egm-design adversarial round 2 of P8b rev 2 | sonnet | 03:02Z | +20min | running | save |
+| r2-P8b-cor | egm-codebase-details correctness round 2 of P8b rev 2 | sonnet | 03:02Z | +20min | running | save |
