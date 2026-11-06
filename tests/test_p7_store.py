@@ -38,7 +38,7 @@ CA = "/etc/ssl/db-ca.pem"
         ("host=/var/run/postgresql dbname=core", None, None, None),  # unix socket
         ("postgresql://app@127.0.0.2/core", None, None, None),  # all of 127/8 is loopback
         (REMOTE + "?sslmode=verify-ca", None, CA, "verify-ca"),  # the DSN's mode is kept
-        (REMOTE, "require", None, "require"),  # explicit opt-down for dev (no iam)
+        (REMOTE, "require", None, "require"),  # explicit opt-down for demo (no iam)
         (REMOTE, "disable", None, "disable"),
         ("hostaddr=10.0.0.5 dbname=core", None, CA, "verify-full"),  # hostaddr counts as the host
     ],

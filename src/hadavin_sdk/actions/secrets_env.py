@@ -1,4 +1,4 @@
-"""`env` secrets: read from environment variables (`dev` only, by the environment table).
+"""`env` secrets: read from environment variables (`demo` only, by the environment table).
 
 A name maps to ``<prefix><NAME>``, upper-cased, with every character other than a letter or digit as ``_``
 (``fixture-token`` -> ``HADAVIN_SECRET_FIXTURE_TOKEN``). No cache: reading the environment costs nothing.
