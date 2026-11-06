@@ -458,8 +458,13 @@
   comparator. New public names: `identity_keys(raw)`, `fold_views(text, casefold=False)` and `squeeze_views(raw, loose=False)`. The size cap
   is checked first and by LENGTH before the per-character weighting (a 983,040-character text of distinct characters was weighed for
   seconds before it was refused). `alg` is `fold4` although the output of `identity_key`, `fold` and `squeeze` is unchanged (the key a
-  stored text holds is the same; a text that names `fold3` reads as `fold4`). `names_equal` now compares by the D146 caseless form
-  (output changes for nine code points that were asymmetric; U+0131 is the one pinned exception). `defaults.TEXTNORM_MAX_PASSES` is gone.
+  stored text holds is the same; a text that names `fold3` reads as `fold4`). BEHAVIOUR CHANGE: `names_equal` (and `allow_equal` VARIANT, which uses the same form) now compares by the
+  Unicode D146 caseless form (NFKD, case fold, NFKD, case fold) instead of NFKC and one case fold. The nine code points that were not
+  case symmetric before are U+0131 (dotless i), U+0390, U+03B0, U+1FD2, U+1FD3, U+1FD7, U+1FE2, U+1FE3 and U+1FE7 (Greek iota and upsilon
+  with dialytika plus tonos, varia, oxia or perispomeni). The eight Greek ones are now symmetric (`names_equal(c.upper(), c.lower())`
+  was False and is True); U+0131 stays asymmetric on purpose (its upper case is I, whose case fold is i; that is the Unicode rule) and is
+  the one pinned exception. Checked over all non-surrogate code points: these eight are the only single code points whose
+  `names_equal(c, c.upper())` result changed. `defaults.TEXTNORM_MAX_PASSES` is gone.
   PUNCTUATION LIMIT (unchanged, stated): the Unicode hyphen and other dashes, the minus sign, the division slash and the right single
   quotation mark are not folded to the ASCII hyphen, slash and apostrophe (corpus rows r114 to r117, strict expected failures until P1b).
   The golden file holds new sections for the three new functions; the mutants for the readings (drop one, first only, unbounded) are in
