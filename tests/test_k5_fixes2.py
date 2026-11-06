@@ -266,8 +266,11 @@ def _folder(tmp_path, names):
     for n in names:
         real_name = {
             "0006_evidence.sql": "0005_evidence.sql",
-            "0007_kill_switch_guard.sql": "0006_kill_switch_guard.sql",
-        }.get(n, n)
+            "0007_spend_reservations.sql": "0006_spend_reservations.sql",
+            "0008_kill_switch_guard.sql": "0007_kill_switch_guard.sql",
+        }.get(
+            n, n
+        )  # the renumbered names -> the real files (P4d-b's table and the stop state, renumbered)
         real = mig.MIGRATIONS / ("0005_evidence.sql" if n[:4] == "0005" else real_name)
         body = "-- empty" if n == "0005_reservations.sql" else real.read_text(encoding="utf-8")
         (folder / n).write_text(body, encoding="utf-8")
@@ -279,7 +282,8 @@ RENAMED = [
     *_REAL[:4],
     "0005_reservations.sql",
     "0006_evidence.sql",
-    "0007_kill_switch_guard.sql",
+    "0007_spend_reservations.sql",
+    "0008_kill_switch_guard.sql",
 ]
 
 

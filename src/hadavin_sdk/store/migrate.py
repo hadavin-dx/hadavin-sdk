@@ -56,6 +56,7 @@ GRANTS: dict[str, Grant] = {
     "dead_letters": Grant("table", _APPEND),
     "spend": Grant("table", _RW),
     "spend_month": Grant("table", _RW),
+    "spend_reservations": Grant("table", _RW),  # no DELETE: v1 has no pruning (P4d-b)
     # A stop is an INSERT through a function (the owner's rights); no role holds any right on these tables.
     "kill_switch": Grant("table", ""),
     "kill_switch_stop_requests": Grant("table", ""),

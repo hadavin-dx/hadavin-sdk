@@ -236,7 +236,7 @@ def test_request_and_reset_tables_are_append_only_even_for_the_owner(w):
 
 
 def test_the_functions_are_not_executable_by_public(w):
-    with w.as_(w.outsider) as db, pytest.raises(errors.InsufficientPrivilege):
+    with w.as_(w.outsider) as db, pytest.raises(DENIED):
         db.execute("SELECT * FROM hadavin_kill_switch_stop(%s)", (LABEL_A,))
 
 

@@ -11,14 +11,14 @@ import time
 import urllib.request
 from collections.abc import Callable
 from dataclasses import dataclass
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from typing import Any
 from urllib.parse import urlsplit
 
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.guard import http as http_guard
 from hadavin_sdk.llm.retry import with_retry
-from hadavin_sdk.models import Reply, ToolCall
+from hadavin_sdk.models import Reply, ToolCall, round_cost_up
 
 # The forced tool an `output_schema` becomes: its input schema IS the schema, so the API enforces the shape.
 ANSWER_TOOL = "submit_answer"
@@ -149,6 +149,19 @@ def stop_reason(raw: str | None, calls: list[ToolCall]) -> str:
     return "tool_use" if calls else "end_turn"
 
 
+def price_cost(route: Any, tokens_in: int, tokens_out: int) -> Decimal:
+    """The exact cost of a call from the route's prices, rounded UP to 8 decimals (`models.round_cost_up`).
+    A route that skipped validation (`model_copy(update=...)`) with a bad price gives `ValueError`."""
+    try:
+        cost = (
+            Decimal(tokens_in) * route.input_usd_per_mtok
+            + Decimal(tokens_out) * route.output_usd_per_mtok
+        ) / Decimal(1_000_000)
+    except InvalidOperation as exc:
+        raise ValueError("the route's price is not a usable number") from exc
+    return round_cost_up(cost)
+
+
 def reply(
     route: Any,
     *,
@@ -163,10 +176,7 @@ def reply(
     answer keeps its cost but loses its tool calls: their input may be incomplete."""
     tokens_in = tokens[0] or estimate_tokens(sent)
     tokens_out = tokens[1] or estimate_tokens(text + json.dumps([c.input for c in calls]))
-    cost = (
-        Decimal(tokens_in) * route.input_usd_per_mtok
-        + Decimal(tokens_out) * route.output_usd_per_mtok
-    ) / Decimal(1_000_000)
+    cost = price_cost(route, tokens_in, tokens_out)
     stop = stop_reason(stop, calls)
     return Reply(
         text=text,

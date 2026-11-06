@@ -130,6 +130,12 @@ K8S_JSON_CAP_BYTES = 1024 * 1024  # fetch cap for a JSON list reply
 K8S_LOG_SLACK_BYTES = 8192  # fetch-cap room over `log_bytes` for the line framing
 K8S_LOG_BYTES = 65536  # asked of the API as limitBytes
 
+# --- money (P4d-a2-i): one named block; `store/protocol.py`, `models.py` and `config.py` import these -------------------
+MAX_USD = 10**12  # the most one amount of money (one booking, one cost, one actual) may be, in USD
+# The most one model price may be, in USD per million tokens. 10**6 is one dollar per token, far above any list price
+# known to the author; it is not read from a provider's price list (UNVERIFIED), so a lead may lower it.
+MAX_ROUTE_PRICE_USD_PER_MTOK = 10**6
+
 # --- kill switch (stop state): the stop request table, the migration waits and the role-level settings -------------
 KILL_SWITCH_MAX_OPEN_STOP_REQUESTS = (
     1000  # past this many open requests a stop adds no row; the switch reads ON
