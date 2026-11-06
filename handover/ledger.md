@@ -1411,3 +1411,5 @@
 | BL-core-lookalike-r9-adv-M2 | lookalike | MAJOR | see report | FIXED-UNVERIFIED | reviews/lookalike-round9-adversarial.md | 871dc07 |
 | BL-core-lookalike-r9-adv-M3 | lookalike | MAJOR | see report | FIXED-UNVERIFIED | reviews/lookalike-round9-adversarial.md | 871dc07 |
 | BL-core-P1-r13-cor-1 | P1 | MAJOR | b2 refused-junit mutant is a declared CRASH (allow_crash, ValueError); "all KILLED except one" false | OPEN | reviews/P1-round13-correctness.md | 8b5d849 |
+| BL-core-P1-r13-adv-1 | P1 | MAJOR | coverage sentence omits enclosed/negative-circled/dingbat forms (no fold, dropped or never equal to ASCII) | OPEN | reviews/P1-round13-adversarial.md | 8b5d849 |
+| BL-core-P1-r13-adv-2 | P1 | MAJOR | Lm step 1b false reasoning (line 146), mixed superscript substitution+insertion copy leaks; no substitution row | OPEN | reviews/P1-round13-adversarial.md | 8b5d849 |
