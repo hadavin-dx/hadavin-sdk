@@ -5,7 +5,7 @@ Each mutant reverts ONE guard in a temp copy; the test in `killer` must be the o
 that holds `expect`. The first 17 are the lexer mutants of the ticket (M26 a-h, M74, M50, M51, M52, M72, M73, M96, M97,
 M98; the "strings before comments" mutant of M26(i) cannot be written as a one-line revert and M86 is the timing
 stand-in, which lives in the `perf` tests); the rest are the guards added in fix 1 and order 100. Run from the repo
-root (CI-ready: needs only the dev environment, no database, no network, under a minute; exit 0 only when every
+root (CI-ready: needs only the ordinary test environment, no database, no network, under a minute; exit 0 only when every
 mutant is good, and the last line is `N of N good; problems: []`):
 
     uv run python tests/migration_numbers_mutants.py            # all; exit 1 if any is not good
