@@ -47,7 +47,7 @@ Key created via POST /key/generate {"max_budget":0.05}. Proxy started: litellm -
 6 200 {"id":"fake-18","created":1,"model":"fake","object":"chat.completion","choices":[{"finish_reason":"stop","index":0,"message":{"content":"ok","role":"assistant"},"provider_specific_fields":{}}],"usage":{"completion_tokens":10,"prom
 7 422 {"error":{"message":"Budget has been exceeded! Key=key (sk-...Bmhw) Current cost: 0.05000000000000696, Max budget: 0.05","type":"budget_exceeded","param":null,"code":"422"}}
 Counter({422: 19, 200: 1})
-['{"error":{"message":"Budget has been exceeded! Key=1defdc1bca4fd314cfa8811d8cbf580d5c5096df577fa95577a9f36f884e8127 Current cost: 16.394000000000002, Max budget: 0.05","type":"budget_exceeded","param"', '{"error":{"message":"Budget has been exceeded! Key=1defdc1bca4fd314cfa8811d8cbf580d5c5096df577fa95577a9f36f884e8127 Current 
+['{"error":{"message":"Budget has been exceeded! Key=<KEY-HASH> Current cost: 16.394000000000002, Max budget: 0.05","type":"budget_exceeded","param"', '{"error":{"message":"Budget has been exceeded! Key=1defdc1bca4fd314cfa8811d8cbf580d5c5096df577fa95577a9f36f884e8127 Current 
  0.01
 ```
 ### Run 3 (t1c.py): one call every 12 s, spend read from DB after each
