@@ -611,7 +611,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | bd-P1m-fix1 | Sonnet builder core/P1m-fix1 (order 37 item 2, 3 minors) | 05:45Z | +40min | running | verify, push, draft PR, tell lead |
 | bd-P1a | Sonnet builder core/P1a (P1 ticket rev 16 frozen, S0 EXIT P1 given) | 05:45Z | +120min | running | verify, push, draft PR, build review |
 | rr-P8a-r3-adv | egm-design ROUND 3 (last) review of P8a rev 3 | 05:46Z | +20min | REPORTED | saver, resolve |
-| rr-P8a-r3-cor | egm-codebase-details ROUND 3 (last) review of P8a rev 3 | 05:46Z | +20min | running | saver, resolve |
+| rr-P8a-r3-cor | egm-codebase-details ROUND 3 (last) review of P8a rev 3 | 05:46Z | +20min | REPORTED | saver, resolve |
 | rs-AKG1-des | Opus resolve of AK-G1 design review + OP-1..6 | 05:46Z | +30min | running | verify, report to lead |
-| rr-P5b1-r3-adv | egm-design ROUND 3 (last) review of P5b1 rev 3 | 05:49Z | +25min | running | saver, resolve |
+| rr-P5b1-r3-adv | egm-design ROUND 3 (last) review of P5b1 rev 3 | 05:49Z | +25min | REPORTED | saver, resolve |
 | rr-P5b1-r3-cor | egm-codebase-details ROUND 3 (last) review of P5b1 rev 3 | 05:49Z | +25min | running | saver, resolve |
