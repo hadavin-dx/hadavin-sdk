@@ -314,3 +314,7 @@ P1b | redo on fix4 started (one push at end) | 1 | -
 P1c | build waits for P1b head | 0 | P1b
 P2d-2 | waits for P1b redo | 0 | P1b
 13 agents running
+2026-11-06T12:37:30Z | package | stage | builders running | blocked on
+P6a | P6a-1 PR 72 ready (c72c16a); P6a-2 not built | 0 | P5c for P6a-2; P0t rename merge (rebase)
+P6b1 | waits for P4a head | 0 | P4a
+12 agents running
