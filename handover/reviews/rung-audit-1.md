@@ -38,3 +38,9 @@ Total of the proposed cuts: roughly 10 to 18 agent-hours of builds, against a ki
 - Agent-time numbers are estimates from row and mutant counts, not measurements.
 - Order 54 item 4's rule ("a higher rung covering 80 percent or more gets cut unless the ticket proves a guarantee gap with a test idea") was applied by each author; where a part kept code it names the guarantee, and some name the test idea (P4c, AK2a, AK-G16).
 - No cut was applied. The AK-G2, AK-G15 and AK-G16 builds have not started and will not start until you have read this page.
+
+## Part F: retrospective (P1m mutation runner, P1a textnorm), added after order 56
+Source: `reviews/rung-audit-1-part-F.md` (commit a9c091d; no independent review; 13 items UNVERIFIED, GitHub API returned 403 so maintenance rests on PyPI release dates).
+- P1m: mutmut and cosmic-ray alone are not enough (both count a crash as "killed"; mutmut cannot run a named hand-written mutant); nobody tried them in the ticket. Verdict: the 107-line kill-reason judge and the runner are KEEP-CODE. Lesson: about a third of the runner and its review rounds went to a developer tool that R448's guarantee list does not name.
+- P1a: unicodedata plus the official look-alike file via our generator is already the right rung; no library gives the repeat-safe, case-symmetric keys, the U+0345 rule, the length cap and the pinned Unicode version. One improvement finding: `has_mixed_script` misses Runic and Tamil mixes; fix by generating Unicode script data with the existing generator, not by adopting confusable_homoglyphs (last release 2024-01-30).
+- Not proven either way: whether a ready-made tool covers 80 percent of the P1m runner (none of the 21 P1m or 55 P1a mutants were run through either tool).
