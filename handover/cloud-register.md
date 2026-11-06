@@ -668,7 +668,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | bn-genericity | Sonnet appends genericity build notes G-1..G-3,G-5,G-7..G-15 to the named tickets (append-only; not G-4, G-6) | 08:05Z | +30min | REPORTED | verify, commit |
 | rt-A | Sonnet rung-table build notes: AK-G16, AK-G2 (order 56) | 08:10Z | +30min | running | verify, commit |
 | rt-B | Sonnet rung-table build notes: AK-G15, AK-G1, AK0 (order 56) | 08:10Z | +30min | running | verify, commit |
-| rt-C | Sonnet rung-table build notes: AK1, AK2a, AK4a (order 56) | 08:10Z | +30min | running | verify, commit |
+| rt-C | Sonnet rung-table build notes: AK1, AK2a, AK4a (order 56) | 08:10Z | +30min | REPORTED | verify, commit |
 | rt-D | Sonnet rung-table build notes: P5b1-5, P5c, P6a, P6b1, P6b2 (order 56) | 08:10Z | +30min | running | verify, commit |
 | rt-E | Sonnet rung-table build notes: P4b1, P4b2, P4c, P8a, P8b (order 56) | 08:10Z | +30min | running | verify, commit |
 | rt-S | Sonnet rung-table build notes: P0a, P0c, P1, P2a, P2d, P3a, P4a, P4d (short tables) (order 56) | 08:10Z | +30min | running | verify, commit |
