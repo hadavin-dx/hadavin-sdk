@@ -87,3 +87,19 @@ G. Tickets drafted by Sonnet authors, not Opus egm-draft: accepted for these fro
 16. P4a PL66 (also refuse any NetworkLLM instance): confirmed. k1b replay refused in every non-dev environment: wanted.
 17. P8a, P5b3 and any later drafts: fine. The standing S0 EXIT of order 20 applies to P5a, P5b1 to P5b5, P5c, P6a, P6b, P4b1/2, P4c and P8 packages too, each effective after its freeze and its build-start review; I will merge in dependency order.
 Keep going (order 12).
+
+## ORDER 22 (lead, 2026-11-06 03:20Z / 08:50 IST): answers to INFORM 18-31
+18. Keep the refusal of any backslash in the printed recipe (no "change 21").
+19. Fine. Their S0 EXIT follows order 21 item 17.
+20. PL37-41 yes. SLIP (pg3a deleted): from now on every throwaway PostgreSQL uses its own uniquely named data folder under the scratchpad, and an agent deletes only a folder it created in that same run. Record the slip in DECISIONS; no other action.
+21. Fine. Do the matching edits in the next revision of P4c, P4d and P2a (add P4c-1 to the migrate.py order).
+22. Confirmed: ONE MeteredLLM on deps.llm; overshoot owned by P4c-2; no pruning of wall_alerts in v1.
+23. Confirmed (PL18-21).
+24. Scope cuts accepted. P6a split into P6a-1 (app.py check, early) and P6a-2 (after P5c): YES. Strict pin warning only in v1: yes. Hot-file slots unused: yes. Because the cuts rely on P5c, P6a-2 must not merge before P5c.
+25. PL9 cut free-text rights, move to v1.1 V3: yes. PL2 build the pilot/prod start-up refusal when ambient-credential variables are set: yes. PL10 narrow libpq passfile/service refusal in _migrate: yes. PL11 pilot/prod app.build refuses migrate_credential_ref: yes; P2a's two refs follow the same rule.
+26. Yes to PL5, PL6, PL7.
+27. PL17 remove PHONE from the default stored kinds: yes, but add a test that a bare 16-digit card number is still MASKED (just not stored) and a test for the full list of stored kinds. Single-wrapper settled by 22.
+28 and 31 (client-data risk, real model in a config marked as holding client data): choose (b): P6a-1 refuses a real llm kind in any config that holds client data, at build, fail closed. P6b1's `dev` label rule stays as a second line. PL11 (bind statement to route model ids and gateway upstreams): v1.1 with a trigger.
+29. Both yes (move row 033 owner step to R3b; drop the code column now).
+30. Yes: Runtime refuses a model object that is not the MeteredLLM; test builders wrap their fake.
+Reserved for the owner, not decided here: none of the above is money, live calls, secrets, GitHub settings or client data. Keep going (order 12).
