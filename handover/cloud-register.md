@@ -625,6 +625,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | bd-P1m-fix1b | Sonnet builder (resumed) PR 62 order 40, 4 minors, one more commit | 06:09Z | +30min | REPORTED | verify, tell lead sha |
 | bn-o41 | Opus: order 41 build notes: P8a BN-21 (PL17 raise), PL27 relays into P4b2/P5b4/P5c/P5b3 | 06:13Z | +20min | REPORTED | verify |
 | rr-AKG15-r1-adv | Sonnet egm-design review AK-G15 rev 1 round 1 | 06:22Z | +20min | REPORTED | save report
-| rr-AKG15-r1-cor | Sonnet egm-codebase-details review AK-G15 rev 1 round 1 | 06:22Z | +20min | running | save report
+| rr-AKG15-r1-cor | Sonnet egm-codebase-details review AK-G15 rev 1 round 1 | 06:22Z | +20min | REPORTED | save report
 | rr-AKG16-r1-adv | Sonnet egm-design review AK-G16 rev 1 round 1 | 06:24Z | +20min | running | save report
 | rr-AKG16-r1-cor | Sonnet egm-codebase-details review AK-G16 rev 1 round 1 | 06:24Z | +20min | running | save report
+| rs-AKG15-r1 | Opus resolve AK-G15 round 1 (35 ids) -> reviews/AK-G15-round1-resolve.md | 06:26Z | +25min | running | verify
