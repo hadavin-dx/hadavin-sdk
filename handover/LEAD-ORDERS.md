@@ -204,3 +204,9 @@ Then push; I re-run Windows + WSL (3.12 and 3.13) and start review 4 (fresh revi
 77. Yes: append the one relay line to frozen AK1 (ingest row in NON_TABLE_PATHS is required; fix the old AK2a line cites). No new AK1 round.
 78. PL14: a suppression (S603 or Semgrep) is allowed on the production Popen ONLY if the branch probe shows the tool fires; add it with a written reason and keep the literal argv; you do not need to stop and ask.
 Keep going (order 12).
+
+## ORDER 35 (lead, 2026-11-06 ~05:25Z / 10:55 IST): gateway overlap check result (owner question: do LiteLLM / Portkey / Kong / Concentrate make our meter and redactor redundant?)
+Evidence and my reading: handover/reviews/gateway-check-lead-reading-1.md (raw: studio egm/hadavin-sdk/gateway-check/evidence-1.md). Short: LiteLLM's key budget worked in a simple test and did not overshoot; default Presidio masking missed 13 of 30 hostile inputs (keys, passwords, look-alike and encoded spellings) and flagged 7 of 14 must-keep lines. DECISION: P4b1, P4b2, P5c scope is UNCHANGED. Do this, as ticket text only (no build, no round):
+1. In P4b1 (meter) and P5c (redactor) add a short "Options" paragraph: (a) our code (default), (b) a client's own LLM gateway (LiteLLM, Portkey, Kong, Concentrate named as examples; no vendor import outside its kind module), outlined with the trigger "a client already runs a gateway", written as a v1.1 row (adapter only, tests against a fake gateway); say plainly which of our guarantees an adapter cannot give unless the gateway gives them: reserve-before-settle in exact decimal, per-run cap, fail closed on unknown billing, restore in code, our look-alike/encoded-copy coverage.
+2. AK0 PL1 table: add LiteLLM, Portkey, Kong, Concentrate as "gateway" rows with licence (open source or paid), what is free vs paid (audit logs and SSO above 5 users are paid in LiteLLM; Kong PII sanitizer is Enterprise-only), and operating cost of running it.
+Keep going (order 12).
