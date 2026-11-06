@@ -51,6 +51,7 @@ from hadavin_sdk.models import (
     Run,
     RunState,
     SpendReservation,
+    StopState,
     TickState,
     ToolCallRecord,
     now,
@@ -60,13 +61,18 @@ from hadavin_sdk.store.protocol import (
     MIN_SWEEP_AGE_S,
     CounterDamaged,
     KillSwitchOn,
+    LabelRefused,
     NotFound,
+    NotMigrated,
     ReservationConflict,
+    ResetRefused,
     SpendCapExceeded,
     SpendOutcome,
+    StaleCount,
     StaleState,
     StoreBusy,
     StoreUnavailable,
+    SwitchRowMissing,
     check_day,
     check_id,
     check_int,
@@ -80,6 +86,21 @@ _LOG = logging.getLogger("hadavin_sdk.store")
 # A purge deletes in batches so no one statement is long enough to hit the call budget's statement timeout.
 PURGE_BATCH_ROWS = defaults.STORE_PURGE_BATCH_ROWS
 PURGE_MIN_LEFT_MS = defaults.STORE_PURGE_MIN_LEFT_MS
+
+# SQLSTATE -> typed error for the two kill-switch functions. HD001 refused, HD003 stale, HD004 bad label, HD005
+# row missing (custom codes of the functions), 42883 function missing, 42704 the reset group role is missing.
+_SWITCH_ERRORS: dict[str, type[Exception]] = {
+    "HD001": ResetRefused,
+    "HD003": StaleCount,
+    "HD004": LabelRefused,
+    "HD005": SwitchRowMissing,
+    "42883": NotMigrated,
+    "42704": ResetRefused,
+}
+_SWITCH_TEXT = {
+    "42883": "database not migrated; use the DBA stop recipe",
+    "42704": "reset group role missing",
+}
 
 
 _VERIFIED_TLS = frozenset({"verify-ca", "verify-full"})
@@ -876,28 +897,48 @@ class PostgresStore:
             ).fetchone()
         return (Decimal(d["usd"]) if d else Decimal(0)), (Decimal(m["usd"]) if m else Decimal(0))
 
-    def get_kill_switch(self) -> KillSwitch:
-        found = self._select(KillSwitch, "kill_switch", "id = 1", ())
+    def get_kill_switch(self) -> StopState:
+        found = self._select(StopState, "kill_switch_state", "true", ())
         if not found:  # migrate seeds the row: its absence means a broken schema, so fail closed
             _LOG.error(
                 "kill_switch row missing: treating the kill switch as ON; run hadavin-sdk migrate"
             )
-            return KillSwitch(on=True, by="system:kill_switch_row_missing")
+            return StopState(on=True, by="system:kill_switch_row_missing")
         return found[0]
 
+    _STATE_COLS = '"on", "by", ts, schema_version, version, open_requests'
+
+    def _call_switch(self, call: str, params: tuple) -> StopState:
+        """Run one of the two kill-switch functions and map its SQLSTATE to a typed error (never by message
+        text). The functions run as their owner; the caller needs EXECUTE only."""
+        try:
+            with self._lock:
+                row = self._exec(f"SELECT {self._STATE_COLS} FROM {call}", params).fetchone()  # noqa: S608
+        except psycopg.Error as exc:
+            code = getattr(exc, "sqlstate", None)
+            mapped = _SWITCH_ERRORS.get(code or "")
+            if mapped is None:
+                raise
+            raise mapped(_SWITCH_TEXT.get(code or "", str(code))) from exc
+        return StopState.model_validate(row)
+
     @_writes()
-    def set_kill_switch(self, ks: KillSwitch) -> None:
-        row = {"id": 1, **_row(ks)}
-        cols = [sql.Identifier(c) for c in row]
-        query = sql.SQL(
-            "INSERT INTO kill_switch ({}) VALUES ({}) ON CONFLICT (id) DO UPDATE SET {}"
-        ).format(
-            sql.SQL(", ").join(cols),
-            sql.SQL(", ").join(sql.Placeholder() * len(row)),
-            sql.SQL(", ").join(sql.SQL("{0} = EXCLUDED.{0}").format(c) for c in cols[1:]),
+    def set_kill_switch(self, ks: KillSwitch) -> StopState:
+        """A stop: one INSERT through `hadavin_kill_switch_stop`. The runtime has no right on the tables."""
+        if ks.on is not True:
+            raise ValueError("set_kill_switch only stops; a reset goes through reset_kill_switch")
+        return self._call_switch("hadavin_kill_switch_stop(%s)", (ks.by,))
+
+    @_writes()
+    def reset_kill_switch(self, by: str, expected_version: int, expected_open: int) -> StopState:
+        for n, top in ((expected_version, 2**63 - 1), (expected_open, 2**31 - 1)):
+            if isinstance(n, bool) or not isinstance(n, int) or not 0 <= n <= top:
+                raise ValueError("reset: version and open count must be in range")
+        # The casts matter: a bigint argument does not resolve to the (text, bigint, integer) signature.
+        return self._call_switch(
+            "hadavin_kill_switch_reset(%s, %s::bigint, %s::int)",
+            (by, expected_version, expected_open),
         )
-        with self._lock:
-            self._exec(query, list(row.values()))
 
     def get_tick_state(self, step: str) -> TickState | None:
         found = self._select(TickState, "tick_state", "step = %s", (step,))

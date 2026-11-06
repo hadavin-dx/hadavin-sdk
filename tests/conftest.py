@@ -101,3 +101,20 @@ def fake_system():
 @pytest.fixture
 def live_cfg_dir(tmp_path: Path, fake_system) -> Path:
     return make_cfg(tmp_path, port=fake_system.port)
+
+
+@pytest.fixture(scope="session", autouse=True)
+def _reset_group_role():
+    """The NOLOGIN group the migration names for kill-switch resets exists once per cluster."""
+    dsn = os.environ.get("HADAVIN_TEST_PG_DSN")
+    if dsn:
+        import psycopg
+
+        from tests.stop_state_helpers import RESET_GROUP
+
+        with psycopg.connect(dsn, autocommit=True) as c:
+            try:
+                c.execute(f"CREATE ROLE {RESET_GROUP} NOLOGIN")
+            except psycopg.errors.DuplicateObject:
+                pass
+    yield

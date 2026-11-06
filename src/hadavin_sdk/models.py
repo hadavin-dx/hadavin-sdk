@@ -281,6 +281,14 @@ class KillSwitch(Shape):
     on: bool = False
     by: str | None = None
     ts: datetime = Field(default_factory=now)
+    version: int = 0  # raised by 1 on every reset; with `open_requests` it names the set of stops a reset clears
+
+
+class StopState(KillSwitch):
+    """What the stop and reset functions and the state view return: the switch plus the number of open stop
+    requests. `open_requests` is not a table column, so it is not on `KillSwitch`."""
+
+    open_requests: int = 0
 
 
 class GateRun(Shape):

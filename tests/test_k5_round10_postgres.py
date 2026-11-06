@@ -11,6 +11,7 @@ import pytest
 from hadavin_sdk.config import ConfigError
 from tests.contracts.kinds import pg_test_dsn
 from tests.contracts.kinds.store_postgres import PURGE_DSN, pg_schema
+from tests.stop_state_helpers import RESET_GROUP
 
 pytestmark = pytest.mark.skipif(
     not os.environ.get("HADAVIN_TEST_PG_DSN"),
@@ -100,9 +101,15 @@ def _prepared():
         for role in (rt, pu):
             db.execute(sql.SQL("CREATE ROLE {} LOGIN").format(sql.Identifier(role)))
     scoped = make_conninfo(dsn, options=f"-c search_path={schema}")
-    migrate(scoped)
+    migrate(scoped, reset_role=RESET_GROUP)
     try:
-        yield dsn, schema, rt, pu, lambda: migrate(scoped, runtime_role=rt, purge_role=pu)
+        yield (
+            dsn,
+            schema,
+            rt,
+            pu,
+            lambda: migrate(scoped, runtime_role=rt, purge_role=pu, reset_role=RESET_GROUP),
+        )
     finally:
         with psycopg.connect(dsn, autocommit=True) as db:
             for role in (rt, pu):

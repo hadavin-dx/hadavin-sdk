@@ -21,6 +21,7 @@ from hadavin_sdk.llm import FakeLLM
 from hadavin_sdk.models import GateDecision, RunState
 from hadavin_sdk.registry import load_registry
 from hadavin_sdk.runtime.agent_loop import Hooks, Unqualified
+from tests.stop_state_helpers import operator_limits
 from tests.test_cuj import _approve, _doc, _pending
 from tests.test_executor import _approved, _plan
 from tests.test_s5_runtime import build as build_rt
@@ -285,7 +286,25 @@ def test_kill_switch_reset_refused_when_audit_down(cfg_dir, capsys, monkeypatch)
         raise OSError("disk gone")
 
     monkeypatch.setattr(rt.audit, "_write", down)
-    assert kill_switch(rt.limits, "reset", "user:a") == 3
+    # rt.limits has no reset names: the reset is denied (exit 5) and the denial goes to the outbox, so no exit 3
+    assert kill_switch(rt.limits, "reset", "user:a", expect_version=0, expect_open=0) == 5
+    assert "stays ON" in capsys.readouterr().err
+    assert "kill_switch" in rt.limits.blocked("test-agent")
+
+
+def test_reset_with_listed_name_refused_when_audit_down(cfg_dir, capsys, monkeypatch):
+    """The original purpose of the test above: a reset that cannot be audited is refused; the switch stays ON."""
+    from hadavin_sdk.cli import kill_switch
+
+    rt, _ = build_rt(cfg_dir)
+    op = operator_limits(rt.limits)
+    assert kill_switch(op, "stop", "user:a") == 0
+
+    def down(event):
+        raise OSError("disk gone")
+
+    monkeypatch.setattr(rt.audit, "_write", down)
+    assert kill_switch(op, "reset", "user:a", expect_version=0, expect_open=1) == 3
     assert "stays ON" in capsys.readouterr().err
     assert "kill_switch" in rt.limits.blocked("test-agent")
 

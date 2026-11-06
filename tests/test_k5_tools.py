@@ -1130,7 +1130,7 @@ def _execute_runtime(tmp_path, execute_hook):
     store, audit = MemoryStore(), LocalDirSink(cfg.backends.audit.dir)
     hooks = Hooks(execute=execute_hook, verify=lambda plan, result: True)
     rt = Runtime(
-        reg, store, audit, ScriptLLM([]), RegexDetector(0.5), Limits(store, audit, reg),
+        reg, store, audit, ScriptLLM([]), RegexDetector(0.5), Limits(store, audit, reg, environment="dev"),
         ["test-agent"], hooks,
     )  # fmt: skip
     run = Run(
@@ -1266,7 +1266,7 @@ def test_k5_acceptance_pilot_agent_investigates_a_recorded_bundle(tmp_path, monk
         audit,
         _Swap(llm, "restart_service"),
         RegexDetector(0.5),
-        Limits(store, audit, reg),
+        Limits(store, audit, reg, environment="dev"),
         ["ito-agent"],
         hooks,
     )

@@ -8,6 +8,7 @@ from collections.abc import Callable, Mapping
 from datetime import date, datetime
 from decimal import Decimal
 
+from hadavin_sdk.audit.labelkey import is_label
 from hadavin_sdk.models import (
     OPEN_STATES,
     ApprovalDecision,
@@ -20,6 +21,7 @@ from hadavin_sdk.models import (
     Run,
     RunState,
     SpendReservation,
+    StopState,
     TickState,
     ToolCallRecord,
     now,
@@ -29,10 +31,12 @@ from hadavin_sdk.store.protocol import (
     MIN_SWEEP_AGE_S,
     CounterDamaged,
     KillSwitchOn,
+    LabelRefused,
     NotFound,
     ReservationConflict,
     SpendCapExceeded,
     SpendOutcome,
+    StaleCount,
     StaleState,
     check_day,
     check_id,
@@ -68,6 +72,7 @@ class MemoryStore:
         self._dead: dict[str, list[DeadLetter]] = defaultdict(list)
         self._spend: dict[tuple[str, date], Decimal] = defaultdict(Decimal)
         self._kill = KillSwitch()
+        self._stops: list[tuple[str, datetime]] = []  # open stop requests, oldest first
         self._ticks: dict[str, TickState] = {}
         self._tool_calls: dict[str, ToolCallRecord] = {}
         self._maps: dict[str, tuple[dict[str, str], datetime]] = {}
@@ -452,18 +457,52 @@ class MemoryStore:
             )
             return self._spend.get((agent_id, day), Decimal(0)), month
 
-    def _kill_on(self) -> KillSwitch:
-        """The ONE read of the kill switch (the caller holds `self._lock`, a plain lock: this does not take it)."""
-        return self._kill.model_copy(deep=True)
+    def _state(self) -> StopState:
+        """The state view: ON when the flag is on or any request is open; `by`/`ts` from the flag, else from the
+        earliest open request."""
+        k, first = self._kill, (self._stops[0] if self._stops else None)
+        by, ts = (k.by, k.ts) if k.on or first is None else first
+        return StopState(
+            on=k.on or first is not None,
+            by=by,
+            ts=ts,
+            version=k.version,
+            open_requests=len(self._stops),
+        )
 
-    def get_kill_switch(self) -> KillSwitch:
-        with self._lock:
-            return self._kill_on()
+    def _kill_on(self) -> StopState:
+        """The ONE read of the kill switch for the reserve path (the caller holds `self._lock`, a plain lock: this
+        does not take it): ON when the flag is on or any stop request is open."""
+        return self._state()
 
-    def set_kill_switch(self, ks: KillSwitch) -> None:
-        check_text(ks)
+    def get_kill_switch(self) -> StopState:
         with self._lock:
-            self._kill = ks.model_copy(deep=True)
+            return self._state()
+
+    def set_kill_switch(self, ks: KillSwitch) -> StopState:
+        if ks.on is not True:
+            raise ValueError("set_kill_switch only stops; a reset goes through reset_kill_switch")
+        if not is_label(ks.by):
+            raise LabelRefused("kill switch: stop label not accepted")
+        with self._lock:
+            self._stops.append((ks.by, now()))
+            return self._state()
+
+    def reset_kill_switch(self, by: str, expected_version: int, expected_open: int) -> StopState:
+        if not is_label(by):
+            raise LabelRefused("kill switch: name not accepted")
+        for n, top in ((expected_version, 2**63 - 1), (expected_open, 2**31 - 1)):
+            if isinstance(n, bool) or not isinstance(n, int) or not 0 <= n <= top:
+                raise ValueError("reset: version and open count must be in range")
+        with self._lock:
+            if self._kill.version != expected_version:
+                raise StaleCount("kill switch: the version changed")
+            n = len(self._stops)
+            if n != expected_open or (n == 0 and not self._kill.on):
+                raise StaleCount("kill switch: the open count changed")
+            self._stops.clear()
+            self._kill = KillSwitch(on=False, by=by, version=self._kill.version + 1)
+            return self._state()
 
     def get_tick_state(self, step: str) -> TickState | None:
         with self._lock:

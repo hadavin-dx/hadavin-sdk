@@ -11,6 +11,7 @@ from hadavin_sdk.audit import AuditUnavailable, LocalDirSink
 from hadavin_sdk.config import ConfigError, load_config
 from hadavin_sdk.models import AuditEvent, RunState, ToolCall
 from hadavin_sdk.registry import load_registry
+from tests.stop_state_helpers import expect, operator_limits
 from tests.test_executor import _approved, _plan
 from tests.test_s5_runtime import build
 from tests.test_s6_approvals import _d, _request, env  # noqa: F401 - env is a fixture
@@ -147,10 +148,11 @@ def test_stop_works_when_audit_is_down(cfg_dir, monkeypatch):
         raise OSError("disk gone")
 
     monkeypatch.setattr(rt.audit, "_write", down)
-    rt.limits.stop(by="user:a")
+    op = operator_limits(rt.limits)
+    op.stop(by="user:a")
     assert "kill_switch" in rt.limits.blocked("test-agent")
     with pytest.raises(AuditUnavailable):
-        rt.limits.reset(by="user:a")
+        op.reset(by="user:a", **expect(op))
     assert "kill_switch" in rt.limits.blocked("test-agent")
 
 

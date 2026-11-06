@@ -40,10 +40,10 @@ from hadavin_sdk.backends.factory import make
 from hadavin_sdk.config import load_config
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.guard.injection import combine
-from hadavin_sdk.limits import Limits
+from hadavin_sdk.limits import Limits, StopNotPermitted, SwitchChanged
 from hadavin_sdk.models import new_id
 from hadavin_sdk.registry import load_registry
-from hadavin_sdk.store.protocol import StoreUnavailable, is_connectivity_error
+from hadavin_sdk.store.protocol import NotMigrated, StoreUnavailable, is_connectivity_error
 
 
 def _num(x: float | None, places: int = 2) -> str:
@@ -91,14 +91,29 @@ def _main(argv: list[str] | None = None) -> int:
     g.add_argument("agent")
     g.add_argument("--k", type=_positive, default=1, help="runs per golden item (pass^k)")
     lim = sub.add_parser("limits", help="kill switch")
-    lim.add_argument("action", choices=["stop", "reset"])
-    lim.add_argument("--by", required=True)
+    lim.add_argument("action", choices=["stop", "reset", "status", "whois"])
+    lim.add_argument("name", nargs="?", help="whois: the name to turn into its label")
+    lim.add_argument("--by", help="stop and reset: who is acting (stored only as a keyed label)")
+    lim.add_argument(
+        "--expect-version", type=int, help="reset: the version that `limits status` printed"
+    )
+    lim.add_argument(
+        "--expect-open", type=int, help="reset: the open_requests that `limits status` printed"
+    )
     sub.add_parser("tick", help="one pass of the housekeeping steps (run every 30-60 s)")
     mig = sub.add_parser("migrate", help="apply the postgres store schema (migration role)")
     mig.add_argument("--runtime-role", help="grant this database role what the runtime needs")
     mig.add_argument(
         "--purge-role",
         help="grant this database role the evidence purge (DELETE on tool_calls and redaction_maps) and nothing else",
+    )
+    mig.add_argument(
+        "--reset-role",
+        help="the NOLOGIN database role whose members may reset the kill switch (default: limits.reset_group)",
+    )
+    mig.add_argument(
+        "--stop-role",
+        help="the database login of the operator's stop (it may only call the stop function)",
     )
     mig.add_argument(
         "--portal-role", help="grant this database role SELECT on the portal's relations only"
@@ -133,9 +148,21 @@ def _main(argv: list[str] | None = None) -> int:
         os.environ["HADAVIN_CONFIG_DIR"] = args.config
     if args.cmd == "tick":
         return _tick()
+    if args.cmd == "limits":
+        if args.action in ("stop", "reset") and not args.by:
+            p.error(f"limits {args.action} needs --by")
+        if args.action == "whois" and not args.name:
+            p.error("limits whois needs a NAME")
     cfg = load_config()
     if args.cmd == "migrate":
-        return _migrate(cfg, args.runtime_role, args.portal_role, args.purge_role)
+        return _migrate(
+            cfg,
+            args.runtime_role,
+            args.portal_role,
+            args.purge_role,
+            reset_role=args.reset_role,
+            stop_role=args.stop_role,
+        )
     reg = load_registry(cfg)
     if args.cmd in (
         "replay",
@@ -206,7 +233,55 @@ def _main(argv: list[str] | None = None) -> int:
         return 3
     if args.cmd == "audit":
         return audit_verify(audit)
-    return kill_switch(Limits(store, audit, reg), args.action, args.by)
+    return _limits(cfg, reg, secrets, store, audit, args)
+
+
+def _limits(cfg, reg, secrets, store, audit, args) -> int:
+    """`limits stop|reset|status|whois`. The stop goes through the stopper login and the reset through the reset
+    login, each resolved here and nowhere else; the runtime never reads those two credential names."""
+    b, lim = cfg.backends, cfg.limits
+    label_key = None
+    if lim.label_key_secret_name:
+        try:
+            label_key = secrets.get(lim.label_key_secret_name).encode("utf-8")
+        except Exception:  # noqa: BLE001 - a stop must work without the key (it falls back to a fixed label)
+            label_key = b""
+
+    def on_login(ref: str):
+        return make("store", b.store.model_copy(update={"dsn_secret_name": ref}), secrets)
+
+    stop_store = reset_store = None
+    try:
+        if args.action == "stop":
+            if b.store.stop_credential_ref:
+                stop_store = on_login(b.store.stop_credential_ref)
+            else:
+                print(
+                    "warning: store.stop_credential_ref is not set; stopping through the runtime login",
+                    file=sys.stderr,
+                )
+        elif args.action == "reset" and b.store.reset_credential_ref:
+            reset_store = on_login(b.store.reset_credential_ref)
+    except StoreUnavailable as exc:
+        return _kill_switch_store_down(args.action, exc)
+    limits = Limits(
+        store,
+        audit,
+        reg,
+        environment=cfg.environment,
+        stop_store=stop_store,
+        reset_store=reset_store,
+        reset_names=lim.reset_names,
+        label_key=label_key,
+        key_id=lim.key_id,
+    )
+    return kill_switch(
+        limits,
+        args.action,
+        args.by if args.action != "whois" else args.name,
+        expect_version=args.expect_version,
+        expect_open=args.expect_open,
+    )
 
 
 def _k1b(cfg, reg, args) -> int:
@@ -310,7 +385,13 @@ def _tick() -> int:
 
 
 def _migrate(
-    cfg, runtime_role: str | None, portal_role: str | None = None, purge_role: str | None = None
+    cfg,
+    runtime_role: str | None,
+    portal_role: str | None = None,
+    purge_role: str | None = None,
+    *,
+    reset_role: str | None = None,
+    stop_role: str | None = None,
 ) -> int:
     store = cfg.backends.store
     if store.kind != "postgres":
@@ -318,6 +399,17 @@ def _migrate(
             f"refused: migrate is for the postgres store; this config uses {store.kind!r}",
             file=sys.stderr,
         )
+        return 2
+    group = cfg.limits.reset_group
+    if reset_role and group and reset_role != group:
+        print(
+            f"refused: --reset-role {reset_role!r} differs from limits.reset_group {group!r}; config is the one source",
+            file=sys.stderr,
+        )
+        return 2
+    reset_role = reset_role or group
+    if not reset_role:
+        print("refused: give --reset-role or set limits.reset_group", file=sys.stderr)
         return 2
     dsn = os.environ.get("HADAVIN_MIGRATE_DSN")
     if not dsn:
@@ -332,6 +424,10 @@ def _migrate(
         runtime_role=runtime_role,
         portal_role=portal_role,
         purge_role=purge_role,
+        reset_role=reset_role,
+        stop_role=stop_role,
+        max_open_stop_requests=cfg.limits.max_open_stop_requests,
+        lock_timeout_ms=cfg.limits.migrate_lock_timeout_ms,
         iam_auth=store.iam_auth,
         region=store.region,
         sslmode=store.sslmode,
@@ -380,23 +476,64 @@ def _kill_switch_store_down(what: str, exc: BaseException) -> int:
     return 2
 
 
-def kill_switch(limits: Limits, action: str, by: str) -> int:
-    """Run stop/reset for a caller (the CLI once a shared store exists, or an in-process admin hook).
+def _print_status(state) -> None:
+    print(
+        f"kill switch {'ON' if state.on else 'OFF'} (by {state.by}) since {state.ts.isoformat()}; "
+        f"version {state.version}, open_requests {state.open_requests}"
+    )
 
-    Exit codes: 0 done; 3 reset refused because the audit store is unavailable (the switch stays ON); 4 the
-    store is unreachable (the switch was NOT changed).
+
+def kill_switch(
+    limits: Limits,
+    action: str,
+    by: str,
+    *,
+    expect_version: int | None = None,
+    expect_open: int | None = None,
+) -> int:
+    """Run stop/reset/status/whois for a caller (the CLI once a shared store exists, or an in-process admin hook).
+
+    Exit codes: 0 done; 2 usage; 3 reset refused because the audit store is unavailable (the switch stays ON);
+    4 the store is unreachable (the switch was NOT changed); 5 not permitted (the name, the credential or the
+    database refused); 6 the stops changed since they were read, or the switch row is missing; 9 the database is
+    not migrated.
     """
+    if action == "whois":
+        try:
+            print(limits.label(by))
+        except StopNotPermitted as exc:
+            print(f"refused: {exc}", file=sys.stderr)
+            return 5
+        return 0
+    if action == "status":
+        try:
+            _print_status(limits.status())
+        except Exception as exc:  # noqa: BLE001 - classified below
+            return _kill_switch_store_down("read", exc)
+        return 0
     if action == "stop":
         try:
-            limits.stop(by)
+            state = limits.stop(by)
         except AuditUnavailable:
             raise
+        except NotMigrated:
+            print(
+                "database not migrated; use the DBA stop recipe (docs/stop-state-runbook.md)",
+                file=sys.stderr,
+            )
+            return 9
         except Exception as exc:  # noqa: BLE001 - classified below
             return _kill_switch_store_down("set", exc)
-        print(f"kill switch ON (by {by})")
+        print(f"kill switch ON (by {state.by})")
         return 0
+    if expect_version is None or expect_open is None:
+        print(
+            "reset needs --expect-version and --expect-open (read them with `limits status`)",
+            file=sys.stderr,
+        )
+        return 2
     try:
-        limits.reset(by)
+        state = limits.reset(by, expect_version=expect_version, expect_open=expect_open)
     except AuditUnavailable:
         print(
             "refused: the audit store is unavailable, so the reset cannot be recorded. "
@@ -404,9 +541,32 @@ def kill_switch(limits: Limits, action: str, by: str) -> int:
             file=sys.stderr,
         )
         return 3
+    except StopNotPermitted as exc:
+        print(f"refused: {exc}", file=sys.stderr)
+        return 5
+    except SwitchChanged as exc:
+        print(f"reset NOT done: {exc}", file=sys.stderr)
+        return 6
+    except NotMigrated:
+        print(
+            "database not migrated; use the DBA stop recipe (docs/stop-state-runbook.md)",
+            file=sys.stderr,
+        )
+        return 9
     except Exception as exc:  # noqa: BLE001 - classified below
         return _kill_switch_store_down("reset", exc)
-    print(f"kill switch OFF (by {by})")
+    try:  # a stop can land while the reset commits: read once more and say so
+        now_state = limits.status()
+    except Exception:  # noqa: BLE001 - the reset happened; only the second read failed
+        print(f"reset done (version {state.version}); the status could not be read again")
+        return 0
+    if now_state.on:
+        print(
+            f"reset done (version {state.version}); the switch is still ON: "
+            f"{now_state.open_requests} stop request(s) arrived during the reset"
+        )
+    else:
+        print(f"kill switch OFF (version {state.version})")
     return 0
 
 

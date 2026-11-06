@@ -15,6 +15,7 @@ from hadavin_sdk.llm import FakeLLM
 from hadavin_sdk.models import ApprovalDecision, RunState, Verdict
 from hadavin_sdk.registry import load_registry
 from hadavin_sdk.runtime.agent_loop import Unqualified
+from tests.stop_state_helpers import expect, operator_limits
 
 S = RunState
 T0 = datetime(2026, 10, 30, 9, 0, tzinfo=UTC)
@@ -244,16 +245,20 @@ def test_sign_off_denied_and_read_only_runs_without_approval(app, fake_system):
 @pytest.mark.parametrize("action", ["stop", "reset"])
 def test_cli_kill_switch_refused_without_shared_store(cfg_dir, capsys, action):
     """A separate CLI process cannot reach the memory store: it must refuse, not claim success."""
-    assert cli.main(["--config", str(cfg_dir), "limits", action, "--by", "user:a"]) == 2
+    extra = ["--expect-version", "0", "--expect-open", "0"] if action == "reset" else []
+    assert cli.main(["--config", str(cfg_dir), "limits", action, "--by", "user:a", *extra]) == 2
     assert "refused" in capsys.readouterr().err
     assert not (cfg_dir / "audit" / "index.jsonl").exists()
 
 
 def test_in_process_reset_is_audited(app):
-    app.limits.stop(by="user:a")
-    app.limits.reset(by="user:a")
+    op = operator_limits(app.limits)
+    op.stop(by="user:a")
+    op.reset(by="user:a", **expect(op))
+    label = op.label("user:a")
     ops = [(e.operation, e.principal) for e in app.audit.events("-")]
-    assert ops == [("stop", "user:a"), ("reset", "user:a")]
+    assert ops == [("stop", label), ("reset_attempted", label), ("reset", label)]
+    assert "user:a" not in str([e.model_dump() for e in app.audit.events("-")])
 
 
 def test_golden_input_ref_cannot_escape_inputs_dir(cfg_dir):
@@ -288,9 +293,10 @@ def test_kill_switch_with_the_store_down_exits_4_and_says_it_was_not_changed(act
         def stop(self, by):
             raise StoreUnavailable("down")
 
-        reset = stop
+        def reset(self, by, *, expect_version, expect_open):
+            raise StoreUnavailable("down")
 
-    assert cli.kill_switch(Down(), action, "user:a") == 4
+    assert cli.kill_switch(Down(), action, "user:a", expect_version=0, expect_open=0) == 4
     err = capsys.readouterr().err
     assert "NOT" in err and "unreachable" in err and "Nothing was changed" in err
 
@@ -300,9 +306,10 @@ def test_kill_switch_with_a_store_that_answers_with_an_error_exits_2_and_says_no
         def stop(self, by):
             raise type("UndefinedTable", (Exception,), {"__module__": "psycopg.errors"})("x")
 
-        reset = stop
+        def reset(self, by, *, expect_version, expect_open):
+            raise type("UndefinedTable", (Exception,), {"__module__": "psycopg.errors"})("x")
 
     for action in ("stop", "reset"):
-        assert cli.kill_switch(NotReady(), action, "user:a") == 2
+        assert cli.kill_switch(NotReady(), action, "user:a", expect_version=0, expect_open=0) == 2
         err = capsys.readouterr().err
         assert "NOT" in err and "migrate" in err and "Nothing was changed" in err

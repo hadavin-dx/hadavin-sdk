@@ -19,6 +19,7 @@ from hadavin_sdk.config import ConfigError
 from hadavin_sdk.store.migrate import migrate
 from hadavin_sdk.store.postgres import tls_mode
 from tests.contracts.kinds.store_postgres import pg_schema
+from tests.stop_state_helpers import RESET_GROUP
 
 REMOTE = "postgresql://app@db.example.internal:5432/core"
 PW = "pw" + "-p7"  # built from parts
@@ -140,7 +141,7 @@ def test_append_only_tables_get_no_update(fresh_dsn):
     with psycopg.connect(fresh_dsn, autocommit=True) as db:
         db.execute(sql.SQL("CREATE ROLE {}").format(sql.Identifier(role)))
     try:
-        migrate(fresh_dsn, runtime_role=role)
+        migrate(fresh_dsn, runtime_role=role, reset_role=RESET_GROUP)
         with psycopg.connect(fresh_dsn, autocommit=True) as db:
 
             def can(table, priv):
@@ -172,7 +173,7 @@ def test_missing_kill_switch_row_fails_closed(store, caplog):
 
 
 def test_month_spend_is_exact_under_concurrent_writers(fresh_dsn):
-    migrate(fresh_dsn)
+    migrate(fresh_dsn, reset_role=RESET_GROUP)
     settings = PostgresSettings(kind="postgres", dsn_secret_name="pg-dsn")  # noqa: S106 - a name
     stores = [make("store", settings, FakeSecretProvider({"pg-dsn": fresh_dsn})) for _ in range(4)]
     days = [date(2026, 3, d) for d in (1, 2, 3, 4)]

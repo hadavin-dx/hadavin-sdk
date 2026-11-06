@@ -208,7 +208,7 @@ def build_runtime(
         audit,
         llm,
         RegexDetector(cfg.backends.detector[0].threshold),
-        Limits(store, audit, reg),
+        Limits(store, audit, reg, environment="dev"),
         ["test-agent"],
         hooks,
     )

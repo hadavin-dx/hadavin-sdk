@@ -134,6 +134,8 @@ def build(
         # Only the purge role may DELETE evidence; without its DSN the purge fails every tick and the
         # redaction maps (plaintext originals) are kept for ever.
         raise ConfigError("backends.store.purge_dsn_secret_name is required in pilot and prod")
+    if live and not cfg.limits.label_key_secret_name:
+        raise ConfigError("limits.label_key_secret_name is required in pilot and prod")
     if sources and live:
         # A source handed in as an object would replace a configured, probed one; live deployments use Config.sources.
         raise ConfigError("sources= is for tests; configure Config.sources in pilot and prod")
@@ -165,6 +167,7 @@ def build(
         }
         | {sc.token_secret_name for sc in cfg.sources.values() if sc.token_secret_name}
         | ({cfg.evidence.restored_hash_key_secret_name} - {None})
+        | ({cfg.limits.label_key_secret_name} - {None})
     )
     platform_secrets.check(secrets, [s for _, s in b.entries()], executor_names, extra_secret_names)
     # Design 6.6: every read source has a passing scope probe or a client-signed inventory; else no start. The
@@ -215,7 +218,20 @@ def build(
         # screens the document and tool output, where untrusted text enters (config refuses a judge alone).
         summary_detector = combine([m for m in members if m.backend != "llm_judge"])
     channel = channel or make("channel", b.channel, secrets, store=store)
-    limits = Limits(store, audit, reg)
+    label_key = (
+        _secret_key(secrets, cfg.limits.label_key_secret_name, "the limits label key")
+        if cfg.limits.label_key_secret_name
+        else None
+    )
+    # The runtime process holds neither the reset nor the stop credential: Limits has no reset_store and no stop_store.
+    limits = Limits(
+        store,
+        audit,
+        reg,
+        environment=cfg.environment,
+        label_key=label_key,
+        key_id=cfg.limits.key_id,
+    )
     executor = (
         None if live else Executor(reg, secrets, timeout_s=timeout_s or cfg.executor_timeout_s)
     )
@@ -437,13 +453,17 @@ def _unprobed_tools(cfg: Config, reg: Registry) -> list[str]:
 MIN_RESTORED_KEY_BYTES = 16
 
 
+def _secret_key(secrets: SecretProvider, name: str, what: str) -> bytes:
+    key = secrets.get(name).encode("utf-8")
+    if len(key) < MIN_RESTORED_KEY_BYTES:
+        raise ConfigError(f"{what} must be at least {MIN_RESTORED_KEY_BYTES} bytes")
+    return key
+
+
 def _restored_key(secrets: SecretProvider, name: str) -> bytes:
     """The key that makes the audit's hash of the restored inputs unguessable. An empty or short one would put
     brute-forceable plain hashes of IP addresses and short names back into the audit."""
-    key = secrets.get(name).encode("utf-8")
-    if len(key) < MIN_RESTORED_KEY_BYTES:
-        raise ConfigError(f"the restored-hash key must be at least {MIN_RESTORED_KEY_BYTES} bytes")
-    return key
+    return _secret_key(secrets, name, "the restored-hash key")
 
 
 def _switched_off(disabled: set[str] | None, source_hosts: dict[str, str]):
