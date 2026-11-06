@@ -1492,3 +1492,10 @@
 | R2-P5a-ADV-5 | Major | P5a | see reviews/P5a-round2-adversarial.md | OPEN |
 | R2-P5a-ADV-6 | Major | P5a | see reviews/P5a-round2-adversarial.md | OPEN |
 | R2-P5a-ADV-7 | Major | P5a | see reviews/P5a-round2-adversarial.md | OPEN |
+| R2-P5b2-ADV-1 | Major | P5b2 | see reviews/P5b2-round2-adversarial.md | OPEN |
+| R2-P5b2-ADV-2 | Major | P5b2 | see reviews/P5b2-round2-adversarial.md | OPEN |
+| R2-P5b2-ADV-3 | Major | P5b2 | see reviews/P5b2-round2-adversarial.md | OPEN |
+| R2-P5b2-ADV-4 | Major | P5b2 | see reviews/P5b2-round2-adversarial.md | OPEN |
+| R2-P5b2-ADV-5 | Major | P5b2 | see reviews/P5b2-round2-adversarial.md | OPEN |
+| R2-P5b2-ADV-6 | Major | P5b2 | see reviews/P5b2-round2-adversarial.md | OPEN |
+| R2-P5b2-ADV-7 | Major | P5b2 | see reviews/P5b2-round2-adversarial.md | OPEN |

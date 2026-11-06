@@ -340,7 +340,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | r1-P5b5-cor | Sonnet egm-codebase-details correctness round 1 of tickets/P5b5.md | sonnet | 02:40Z | +30min | QUEUED (agent limit 20) | save report to reviews/; then resolve |
 | res-bs-P3a | Opus egm-resolve build-start P3a (one round) | opus | 02:41Z | +60min | running | verify build notes in tickets/P3a.md; S0 EXIT P3a effective |
 | res-bs-P2a | Opus egm-resolve build-start P2a (one round) | opus | 02:42Z | +60min | running | verify build notes in tickets/P2a.md; S0 EXIT P2a effective |
-| r2-P5b2-adv | P5b2 round-2 reviewer (adv) | sonnet | 02:43Z | +30min | running | save report, ledger, then resolve/rev3 |
+| r2-P5b2-adv | P5b2 round-2 reviewer (adv) | sonnet | 02:43Z | +30min | REPORTED | save report, ledger, then resolve/rev3 |
 | r2-P5b2-cor | P5b2 round-2 reviewer (cor) | sonnet | 02:43Z | +30min | running | save report, ledger, then resolve/rev3 |
 | r1-P8b-adv | P8b ticket reviewer (adv) | sonnet | 02:43Z | +30min | running | save report, ledger, resolve |
 | r1-P8b-cor | P8b ticket reviewer (cor) | sonnet | 02:43Z | +30min | running | save report, ledger, resolve |
