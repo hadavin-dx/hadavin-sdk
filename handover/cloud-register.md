@@ -283,7 +283,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | r8-P2a-adv | round 8 adversarial P2a rev 9 (order 16: older package, round count 1 of 3 from now) | sonnet | 01:51Z | +45min | REPORTED | save report, ledger |
 | r8-P2a-cor | round 8 correctness P2a rev 9 (order 16: older package, round count 1 of 3 from now) | sonnet | 01:51Z | +45min | running | save report, ledger |
 | r8-P4d-adv | round 8 adversarial P4d rev 9 (order 16: older package, round count 1 of 3 from now) | sonnet | 01:51Z | +45min | REPORTED | save report, ledger |
-| r8-P4d-cor | round 8 correctness P4d rev 9 (order 16: older package, round count 1 of 3 from now) | sonnet | 01:51Z | +45min | running | save report, ledger |
+| r8-P4d-cor | round 8 correctness P4d rev 9 (order 16: older package, round count 1 of 3 from now) | sonnet | 01:51Z | +45min | REPORTED | save report, ledger |
 | r8-P3a-cor2 | round 8 correctness P3a rev 9 (rerun, first run lost) (order 16: older package, round count 1 of 3 from now) | sonnet | 01:51Z | +45min | running | save report, ledger |
 | r5-P2d-cor2 | round 5 correctness P2d rev 5 (rerun, first run lost) (order 16: older package, round count 1 of 3 from now) | sonnet | 01:51Z | +45min | running | save report, ledger |
 | draft11-LK-author | Sonnet author: apply LK r10 resolve to designs/lookalike-leak.md -> draft 11 (FINAL, then frozen per order 16) | sonnet | 01:52Z | +60min | running | verify commit; freeze |
