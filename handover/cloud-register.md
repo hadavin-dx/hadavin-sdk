@@ -692,3 +692,5 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | rs-P1c-r2 | Opus resolve P1c round 2 -> rev 4 | 2026-11-06T10:27:10Z | REPORTED (rev 4) |
 | bd-P1b-merge | Sonnet builder, P1b merge of P1a fix3 (order 73) | 2026-11-06T10:48:55Z | running (a6ae) |
 | rs-P1c-r3 | Opus resolve P1c round 3 -> rev 5 | 2026-11-06T10:55:21Z | REPORTED (rev 5) |
+| rs-P1c-r4-des | Sonnet egm-design P1c round 4 on rev 5 | 2026-11-06T11:14Z | RUNNING |
+| rs-P1c-r4-cod | Sonnet egm-codebase-details P1c round 4 on rev 5 | 2026-11-06T11:14Z | RUNNING |
