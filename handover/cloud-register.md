@@ -719,3 +719,4 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | au-P8c | Opus author P8c rev 1 | 2026-11-06T12:06:11Z | REPORTED (97 lines, 12 mutants); committed |
 | rs-P8c-r1-des | Sonnet egm-design P8c round 1 (a16b7c90) | 2026-11-06T12:06:11Z | RUNNING |
 | rs-P8c-r1-cod | Sonnet egm-codebase-details P8c round 1 (ada1c24b) | 2026-11-06T12:06:11Z | RUNNING |
+| bd-P0t-fix4 | Sonnet builder P0t fix4 (order 85), core/P0t, one push | 2026-11-06T12:08:40Z | RUNNING |
