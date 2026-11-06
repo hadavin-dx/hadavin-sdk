@@ -104,7 +104,16 @@ def test_t1_5_ceil_cost_rounds_up_once():
     total = sum(SpendMicro.ceil_cost(7 * n % 999 + 1).micro for n in range(10_000))
     exact = sum(D(7 * n % 999 + 1) / MICRO_PER_USD for n in range(10_000))
     assert total >= exact
-    for numerator, denominator in [(1, 0), (1, -3), (-1, 1), (1.0, 1), (1, True), (True, 1)]:
+    for numerator, denominator in [
+        (1, 0),
+        (1, -3),
+        (-1, 1),
+        (-1, 1_000_000),
+        (-5, 7),
+        (1.0, 1),
+        (1, True),
+        (True, 1),
+    ]:
         with pytest.raises(ValueError):
             SpendMicro.ceil_cost(numerator, denominator)
 
