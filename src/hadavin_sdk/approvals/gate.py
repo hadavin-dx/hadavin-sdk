@@ -1,6 +1,6 @@
 """Text cleaning for anything people read (approval and channel text).
 
-Copied then edited from WARDEN `src/warden/gate.py` @ a1e76cbf (veerarakesh56/warden): rule G3
+Copied then edited from WARDEN `src/warden/gate.py` @ a1e76cbf (the WARDEN repository): rule G3
 (`sanitise_text` and its helpers) and G4 (`withhold_commands`, rewritten platform-neutral and fail closed).
 Not ported (WARDEN outbound policy): enforce, hedge,
 leaked_kinds/data_leaks/assembled_kinds/where_withheld, for_terminal,

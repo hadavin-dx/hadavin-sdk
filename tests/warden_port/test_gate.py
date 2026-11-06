@@ -1,4 +1,4 @@
-"""Ported from WARDEN tests/test_gate.py (main a1e76cbf, veerarakesh56/warden). Kept 4 tests; dropped 13 that need WARDEN-only modules or unported gate policy (listed in the PR).
+"""Ported from WARDEN tests/test_gate.py (main a1e76cbf, the WARDEN repository). Kept 4 tests; dropped 13 that need WARDEN-only modules or unported gate policy (listed in the PR).
 
 The outbound gate v0 (Phase 0): G3 untrusted-text hygiene, G5 leak block, and the Slack wiring.
 

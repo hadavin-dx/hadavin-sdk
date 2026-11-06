@@ -213,10 +213,7 @@ def test_the_slack_card_never_cuts_a_summary_silently():
     req = SimpleNamespace(
         summary="word " * 200, current_step=0, steps=[1], approval_id="a1", status="PENDING"
     )
-    try:
-        blocks = ch._blocks(req, None)
-    except Exception:  # noqa: BLE001 - only the first block matters; later blocks need a full request
-        pytest.skip("the block builder needs a full request in this build")
+    blocks = ch._blocks(req, None)
     shown = blocks[0]["text"]["text"]
     assert "too long to show" in shown and "word word" not in shown
 
