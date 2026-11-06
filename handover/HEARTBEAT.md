@@ -63,3 +63,4 @@
 2026-11-06 01:57 UTC / 07:27 IST | step=P4d r8 cor saved (1 Major, same as adv M1) | done=P4d r8 both reviews | next=P4d rev 10 resolve+author; wait P2a/P3a/P2d cor, P1 resolve, P4a rev11, LK draft11 | blocked=no | context=ok
 2026-11-06 01:58 UTC / 07:28 IST | step=saved P3a r8 cor, P2d r5 cor; P1 r14 resolve in; P4a rev11 in | done=P4d r8 both, P3a r8 cor, P2d r5 cor, P2a r8 adv | next=P1 rev16 author (final), P4a r11 reviewers, P4d rev10, P2a/P3a/P2d resolves | blocked=no | context=ok
 2026-11-06 01:59 UTC / 07:29 IST | step=P2a r8 cor saved; resolves launched P4d/P3a/P2d/P2a | done=all r8/r5 reviews saved | next=P1 rev16 author, P4a r11 reviewers, resolves -> authors | blocked=no | context=ok
+2026-11-06 02:02 UTC / 07:32 IST | step=LK draft 11 verified (d3e8239, 242 lines) -> FROZEN under order 16 | done=LK design | next=P1 rev16, P4a r11, resolves | blocked=no | context=ok
