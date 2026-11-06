@@ -103,6 +103,42 @@ def test_the_generator_refuses_an_unpinned_file_and_is_deterministic(tmp_path):
     assert 0x1D00 in table, "the small capital rule is missing"
 
 
+def test_the_name_rules_of_the_generator_read_the_letter_and_digit_forms():
+    """Each Unicode-name rule of the generator, by itself, on a table built from NO data row (the rules do not need the data file)."""
+    gen = _load("gen_confusables_rules")
+    table = gen.build("")
+    assert table.get(0x1F150) == "A" and table.get(0x1F169) == "Z", (
+        "the negative circled letters are not read as their letter"
+    )
+    assert table.get(0x1F170) == "A" and table.get(0x1F189) == "Z", (
+        "the negative squared letters are not read as their letter"
+    )
+    assert table.get(0x1F1E6) == "A" and table.get(0x1F1FF) == "Z", (
+        "the regional indicator letters are not read as their letter"
+    )
+    assert table.get(0x1F1A5) == "d", "the squared small letter d is not read as d"
+    assert table.get(0x2776) == "1" and table.get(0x2780) == "1" and table.get(0x278A) == "1", (
+        "the circled digits are not read as their digit"
+    )
+    assert table.get(0x24FF) == "0" and table.get(0x24FE) == "10" and table.get(0x277F) == "10", (
+        "the negative circled zero and the circled ten are not read"
+    )
+    assert table.get(0x126) == "H" and table.get(0x127) == "h", (
+        "a letter with a stroke is not read as its letter in its own case"
+    )
+    assert table.get(0x1D0C) == "L" and table.get(0x29B) == "G", (
+        "a small capital with a mark is not read as its capital letter"
+    )
+    data = gen.build("028B ;\t0075 ;\tMA\t# the small v with hook is read as u by the data\n")
+    assert data.get(0x28B) == "u" and data.get(0x1B2) == "U", (
+        "a capital follows the other-case form that the data already reads"
+    )
+    assert gen.name_rule_value("NEGATIVE CIRCLED DIGIT ZERO") == "0"
+    assert gen.name_rule_value("CIRCLED IDEOGRAPH ONE") is None, (
+        "a name rule read an ideograph as a digit"
+    )
+
+
 def test_the_generator_refuses_any_other_unicode_version_before_it_looks_at_the_hash(tmp_path):
     gen = _load("gen_confusables_version")
     real = (ROOT / "tools" / "data" / "confusables.txt").read_bytes()

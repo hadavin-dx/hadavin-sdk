@@ -1647,5 +1647,95 @@
   "b": "\u0e2a\u0e37\u0e2d",
   "relation": "different",
   "status": "current"
+ },
+ {
+  "id": "r182",
+  "class": "letters written as symbols",
+  "source": "DENY view: a letter written as a negative circled, negative squared or regional indicator letter is that letter (a reader sees PASSWORD)",
+  "a": "\ud83c\udd5f\ud83c\udd50\ud83c\udd62\ud83c\udd62\ud83c\udd66\ud83c\udd5e\ud83c\udd61\ud83c\udd53",
+  "b": "password",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r183",
+  "class": "letters written as symbols",
+  "source": "DENY view: a letter written as a negative circled, negative squared or regional indicator letter is that letter (a reader sees PASSWORD)",
+  "a": "\ud83c\udd7f\ud83c\udd70\ud83c\udd82\ud83c\udd82\ud83c\udd86\ud83c\udd7e\ud83c\udd81\ud83c\udd73",
+  "b": "password",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r184",
+  "class": "letters written as symbols",
+  "source": "DENY view: a letter written as a negative circled, negative squared or regional indicator letter is that letter (a reader sees PASSWORD)",
+  "a": "\ud83c\uddf5\ud83c\udde6\ud83c\uddf8\ud83c\uddf8\ud83c\uddfc\ud83c\uddf4\ud83c\uddf7\ud83c\udde9",
+  "b": "password",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r185",
+  "class": "letters written as symbols",
+  "source": "DENY view: a letter with a stroke or a hook is the letter (a reader sees hunter)",
+  "a": "\u0126unter",
+  "b": "hunter",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r186",
+  "class": "letters written as symbols",
+  "source": "DENY view: a letter with a stroke or a hook is the letter (a reader sees bob)",
+  "a": "\u0253o\u0180",
+  "b": "bob",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r187",
+  "class": "letters written as symbols",
+  "source": "DENY view: a small capital with a stroke is the capital letter",
+  "a": "\u1d0c\u1d0f\u1d05",
+  "b": "LOD",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r188",
+  "class": "digits written as symbols",
+  "source": "DENY view: a digit written as a negative circled, circled sans-serif or double circled digit is that digit",
+  "a": "\u2776\u2777\u2778\u2779\u277a\u277b\u277c\u277d\u277e",
+  "b": "123456789",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r189",
+  "class": "digits written as symbols",
+  "source": "DENY view: a digit written as a negative circled, circled sans-serif or double circled digit is that digit",
+  "a": "\u278a\u278b\u278c\u278d\u278e\u278f\u2790\u2791\u2792",
+  "b": "123456789",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r190",
+  "class": "digits written as symbols",
+  "source": "DENY view: a digit written as a negative circled, circled sans-serif or double circled digit is that digit",
+  "a": "\u2780\u2781\u2782\u2783\u2784\u2785\u2786\u2787\u2788",
+  "b": "123456789",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r191",
+  "class": "digits written as symbols",
+  "source": "DENY view: a digit written as a negative circled, circled sans-serif or double circled digit is that digit",
+  "a": "\u24ff\u24f5\u24f6\u24f7\u24f8\u24f9\u24fa\u24fb\u24fc\u24fd",
+  "b": "0123456789",
+  "relation": "equal",
+  "status": "current"
  }
 ]

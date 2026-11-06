@@ -9,7 +9,7 @@ pytest. Run from the repo root:
     uv run python tests/textnorm_mutants.py            # all mutants; exit 1 if any is not good
     uv run python tests/textnorm_mutants.py squeeze    # only mutants whose name contains the text
 
-77 mutants: 28 are the re-pointed mutants of the earlier text-fold list (the killers moved with their tests), 12 are new (one of the 13 went with the deleted ``check_pinned_unidata``), 9 are the mutants of fold2 (order 44), 3 are the mutants of fold3 (order 49, U+0345) and 16 are the mutants of fold4 (fix3, review 3: the spelling variants, the length check, the caseless form; the first of the 16 is the fold2 mutant "no case fold before the marks are dropped" that fold3 removed and that is restored here: it changes only the single key, and the U+0345 test kills it) and 9 are the mutants of fix4 (order 79: the 15.1.0 data pin, the marks, the plain-words messages, the weight pre-check). Tests with no
+91 mutants: 28 are the re-pointed mutants of the earlier text-fold list (the killers moved with their tests), 12 are new (one of the 13 went with the deleted ``check_pinned_unidata``), 9 are the mutants of fold2 (order 44), 3 are the mutants of fold3 (order 49, U+0345) and 16 are the mutants of fold4 (fix3, review 3: the spelling variants, the length check, the caseless form; the first of the 16 is the fold2 mutant "no case fold before the marks are dropped" that fold3 removed and that is restored here: it changes only the single key, and the U+0345 test kills it) and 9 are the mutants of fix4 (order 79: the 15.1.0 data pin, the marks, the plain-words messages, the weight pre-check) and 14 are the mutants of fix5 (the marks-dropped views, the letter and digit name rules, the pin constant). Tests with no
 mutant: the golden test, the differential rows, the manifest test, the notices test, the perf rows (they are outside every test list below:
 the runner copies no ``pyproject.toml`` or notices file) and the meta-tests.
 
@@ -55,8 +55,18 @@ LOOSE = "test_squeeze_loose_reads_the_digit_like_letters_as_digits"
 SQUEEZE = "test_squeeze_keeps_upper_case_letters_and_digits_only"
 TABLE = "test_the_table_is_generated_from_the_unicode_data_and_every_value_is_ascii"
 GENERATOR = "test_the_generator_refuses_an_unpinned_file_and_is_deterministic"
-MCKEPT = "test_fold_views_keeps_a_spacing_combining_mark_so_a_scan_must_also_read_squeeze_views"
-MCSQUEEZE = "test_squeeze_views_finds_a_secret_hidden_with_any_spacing_mark_modifier_letter_or_modifier_symbol"
+MCKEPT = (
+    "test_the_spelling_variants_keep_a_spacing_combining_mark_while_the_scan_views_find_the_secret"
+)
+MCSQUEEZE = "test_squeeze_views_finds_a_secret_hidden_with_every_spacing_mark_modifier_letter_or_modifier_symbol"
+NONALNUM = "test_squeeze_views_removes_every_character_that_reads_as_no_ascii_letter_or_digit"
+SIXVIEWS = "test_the_marks_dropped_views_are_at_most_six_and_keep_every_script_and_letter"
+NOASCII = "test_a_value_with_no_ascii_letter_or_digit_is_found_by_the_fold_views_scan_when_a_mark_is_inserted"
+PINTABLE = "test_no_table_source_is_in_a_dropped_category"
+RULES = "test_the_name_rules_of_the_generator_read_the_letter_and_digit_forms"
+NEGLETTERS = (
+    "test_negative_circled_negative_squared_and_regional_indicator_letters_read_as_their_letter"
+)
 EMPTYKEY = "test_the_empty_and_invisible_only_texts_have_the_empty_key"
 PLAINMSG = "test_the_refusal_messages_say_in_plain_words_what_is_wrong"
 NOWORK = "test_a_text_over_the_weight_is_refused_before_any_fold_work"
@@ -136,7 +146,7 @@ M = [
         INVISIBLE, "Cherokee next to Latin is not flagged"),
     mutant("table: Cherokee A missing", CF, '    0x13AA: "A",\n', "", TABLE,
         "named look-alike U+13AA is not folded", test_file=G),
-    mutant("table: small capital rule missing", GEN, "            out.setdefault(cp, m[1])", "            pass",
+    mutant("table: small capital rule missing", GEN, "            out.setdefault(cp, value)", "            pass",
         GENERATOR, "the small capital rule is missing", test_file=G),
     mutant("table: ASCII sources accepted", GEN, "        if src < 0x80 or not re.fullmatch", "        if not re.fullmatch",
         GENERATOR, "an ASCII source was accepted", test_file=G),
@@ -255,10 +265,10 @@ M = [
         "    if could_be_same_person(a, b):\n        return AllowVerdict.LOOKALIKE", "    if identity_key(a) == identity_key(b):\n        return AllowVerdict.LOOKALIKE",
         FOURCAP, "allow_equal does not report"),
     mutant("scan: fold_views gives one view", TN,
-        "    return _views(raw, casefold=casefold, collapse_ws=collapse_ws)", "    return (_fold(raw, casefold=casefold, collapse_ws=collapse_ws),)",
+        "    return _views(raw, casefold=casefold, collapse_ws=collapse_ws, marks_dropped=True)", "    return (_fold(raw, casefold=casefold, collapse_ws=collapse_ws),)",
         GREEKLOOK, "has no view that reads admin"),
     mutant("scan: squeeze_views gives one view", TN,
-        "    for view in _views(raw, casefold=True, collapse_ws=False):", "    for view in (_fold(raw, casefold=True),):",
+        "    for view in _views(raw, casefold=True, collapse_ws=False, marks_dropped=True):", "    for view in (_fold(raw, casefold=True),):",
         GREEKLOOK, "squeeze_views has no view that reads ADMIN"),
     mutant("tag: a reading of identity_keys has no tag", TN,
         "    return tuple(tag + view for view in _views(raw, casefold=True, collapse_ws=True))",
@@ -287,7 +297,7 @@ M = [
         MCKEPT, "dropped the spacing mark"),
     mutant("marks: squeeze_views keeps non-alphanumeric characters", TN,
         '        s = _NON_ALNUM.sub("", s)\n        if s not in out:', "        if s not in out:",
-        MCSQUEEZE, "misses a secret hidden with U+"),
+        NONALNUM, "does not remove U+"),
     mutant("names: the alias fold_key is back", TN,
         "    return tag + _fold(raw, casefold=True, collapse_ws=True)\n",
         "    return tag + _fold(raw, casefold=True, collapse_ws=True)\n\n\nfold_key = identity_key\n",
@@ -302,6 +312,51 @@ M = [
     mutant("size: the weight check is missing (the key is built first)", TN,
         "        if weight > defaults.TEXTNORM_MAX_CHARS:\n            raise TextTooLong(", "        if False:\n            raise TextTooLong(",
         NOWORK, "fold work was done for a text that must be refused"),
+    # ---- the mutants of fix5 (the marks-dropped views, the letter and digit name rules) ----
+    mutant("marks: the marks-dropped reading is not built", TN,
+        "    if marks_dropped:\n        texts.append(_without_spacing_marks(raw))", "    if False:\n        texts.append(_without_spacing_marks(raw))",
+        MCSQUEEZE, "misses a secret hidden with U+"),
+    mutant("marks: the marks are dropped after NFKD, not from the raw text", TN,
+        "        texts.append(_without_spacing_marks(raw))", "        texts.append(raw)",
+        MCSQUEEZE, "misses a secret hidden with U+"),
+    mutant("marks: fold_views has no marks-dropped views", TN,
+        "    return _views(raw, casefold=casefold, collapse_ws=collapse_ws, marks_dropped=True)",
+        "    return _views(raw, casefold=casefold, collapse_ws=collapse_ws, marks_dropped=False)",
+        NOASCII, "the scan misses the value with the mark inserted"),
+    mutant("marks: squeeze_views has no marks-dropped views", TN,
+        "    for view in _views(raw, casefold=True, collapse_ws=False, marks_dropped=True):",
+        "    for view in _views(raw, casefold=True, collapse_ws=False, marks_dropped=False):",
+        MCSQUEEZE, "misses a secret hidden with U+"),
+    mutant("marks: a spacing combining mark (Mc) is not dropped", TN,
+        '    {"Mc", "Lm", "Sk"}\n)  # kept by', '    {"Lm", "Sk"}\n)  # kept by',
+        MCSQUEEZE, "misses a secret hidden with U+"),
+    mutant("marks: a modifier letter (Lm) is not dropped", TN,
+        '    {"Mc", "Lm", "Sk"}\n)  # kept by', '    {"Mc", "Sk"}\n)  # kept by',
+        MCSQUEEZE, "misses a secret hidden with U+"),
+    mutant("marks: a view is repeated", TN,
+        "            if view not in views:\n                views.append(view)", "            views.append(view)",
+        SIXVIEWS, "repeated or there are more than six"),
+    mutant("names: the negative circled and squared letters are not read", GEN,
+        '        (r"(?:CROSSED )?NEGATIVE (?:CIRCLED|SQUARED) LATIN CAPITAL LETTER ([A-Z])", "upper"),\n', "",
+        RULES, "negative circled letters are not read", test_file=G),
+    mutant("names: the regional indicator letters are not read", GEN,
+        '        (r"REGIONAL INDICATOR SYMBOL LETTER ([A-Z])", "upper"),\n', "",
+        RULES, "regional indicator letters are not read", test_file=G),
+    mutant("names: the squared small letter is not read", GEN,
+        '        (r"SQUARED LATIN SMALL LETTER ([A-Z])", "lower"),\n', "",
+        RULES, "squared small letter d is not read", test_file=G),
+    mutant("names: the circled digits are not read", GEN,
+        "            return _DIGIT_WORDS[m[1]]", "            return None",
+        RULES, "circled digits are not read", test_file=G),
+    mutant("names: a letter with a stroke or a hook is not read", GEN,
+        '        (r"LATIN (?:CAPITAL|SMALL) LETTER ([A-Z]) WITH .+", "case"),\n', "",
+        RULES, "letter with a stroke is not read", test_file=G),
+    mutant("names: a capital does not follow its small letter", GEN,
+        "        value = _follow_case_partner(ch, value, listed)\n", "",
+        RULES, "capital follows the other-case form", test_file=G),
+    mutant("pin: the pin constant differs from the data of the table", "src/hadavin_sdk/defaults.py",
+        'TEXTNORM_PINNED_UNIDATA = "15.1.0"', 'TEXTNORM_PINNED_UNIDATA = "15.0.0"',
+        PINTABLE, "the table data is not the Unicode version of the pin", test_file=G),
 ]  # fmt: skip
 
 
