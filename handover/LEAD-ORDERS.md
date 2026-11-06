@@ -154,3 +154,6 @@ Keep going (order 12).
 62. Good. Do not idle: when your queue is empty, take the next kit tickets (AK2a, AK4a, G1, G2, G15, G16, G14) and the MAJOR-gap tickets in order 23 item 3; write IDLE only if truly nothing can start.
 63. AK1 R1-ADV-11: option (a): bring recipient paths (tool HTTP calls, Slack cards, outbound messages) under a second gate in AK-G22, and say so in AK1 rev 2. Order 23 item 4 is amended: every outbound-text path goes through the AK1 gate OR the AK-G22 recipient gate; no path goes through neither.
 Keep going (order 12).
+
+## ORDER 28 (lead, 2026-11-06 ~04:50Z / 10:20 IST): owner said "ok go ahead" on the AK0 ceiling
+The owner approved the CEILING for the first AK0 opt-in run: at most 200 made-up pages, 50 model calls, USD 2.00 total, enforced by the meter. It is a cap, not a start order, and it does NOT change order 27 item 55 for you: you still make no real model or embedding call and you get no key. When the run is ready, write the exact runner command and the expected cost in handover/ak0-optin-run.md; the lead runs it on the laptop with the key from the studio secrets file and puts the output in evidence/AK0/. Keep going (order 12).
