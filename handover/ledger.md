@@ -1518,3 +1518,40 @@
 | R1-P8b-ADV-9 | Major | P8b | see reviews/P8b-round1-adversarial.md | OPEN |
 | R1-P8b-ADV-10 | Major | P8b | see reviews/P8b-round1-adversarial.md | OPEN |
 | R1-P8b-ADV-11 | Major | P8b | see reviews/P8b-round1-adversarial.md | OPEN |
+| R2-P5b2-COR-1 | Major | P5b2 | Factory is defined as "every function that `return`s or `raise`s a site whose message interpolates one of the -> reviews/P5b2-round2-correctness.md | OPEN |
+| R2-P5b2-COR-2 | Major | P5b2 | Contradiction. -> reviews/P5b2-round2-correctness.md | OPEN |
+| R2-P5b2-COR-3 | Major | P5b2 | Contract with the consumer ticket does not match. -> reviews/P5b2-round2-correctness.md | OPEN |
+| R2-P5b2-COR-4 | Major | P5b2 | Review depth is stale. -> reviews/P5b2-round2-correctness.md | OPEN |
+| R2-P6b1-ADV-1 | Major | P6b1 | M23 ("checks in another order") has no killer for every swap. -> reviews/P6b1-round2-adversarial.md | OPEN |
+| R2-P6b1-ADV-2 | Major | P6b1 | M12 (`pilot_cfg` with a fixed date) can survive. -> reviews/P6b1-round2-adversarial.md | OPEN |
+| R2-P6b1-ADV-3 | Major | P6b1 | The fail-before accounting is wrong. -> reviews/P6b1-round2-adversarial.md | OPEN |
+| R2-P6b1-ADV-4 | Major | P6b1 | The gate is labelled by the operator. -> reviews/P6b1-round2-adversarial.md | OPEN |
+| R2-P6b1-ADV-5 | Major | P6b1 | The statement is bound to the first-hop host only. -> reviews/P6b1-round2-adversarial.md | OPEN |
+| R2-P6b1-COR-1 | Major | P6b1 | The T1b regex `refused: -> reviews/P6b1-round2-correctness.md | OPEN |
+| R2-P6b1-COR-2 | Major | P6b1 | The claim "ONLY assertion failures on ce70eb5 are T1 pilot, T1 prod and T9a pilot; -> reviews/P6b1-round2-correctness.md | OPEN |
+| R1-P5b4-ADV-1 | Blocker | P5b4 | Line 75 says bootstrap_logging "when NOT library_mode" redirects fd 2/fd 1 and removes foreign handlers. -> reviews/P5b4-round1-adversarial.md | OPEN |
+| R1-P5b4-ADV-2 | Major | P5b4 | Unattended is known only after parse_args. -> reviews/P5b4-round1-adversarial.md | OPEN |
+| R1-P5b4-ADV-3 | Major | P5b4 | The "own record" test checks only `record.args` for BaseException. -> reviews/P5b4-round1-adversarial.md | OPEN |
+| R1-P5b4-ADV-4 | Major | P5b4 | K26 ("foreign handlers not removed at process entry") cannot be killed by its named test. -> reviews/P5b4-round1-adversarial.md | OPEN |
+| R1-P5b4-ADV-5 | Major | P5b4 | The removal window is wrong. -> reviews/P5b4-round1-adversarial.md | OPEN |
+| R1-P5b4-ADV-6 | Major | P5b4 | The stream guard list has no `buffer`, `name`, `closed`, `writable`, `line_buffering`. -> reviews/P5b4-round1-adversarial.md | OPEN |
+| R1-P5b4-ADV-7 | Major | P5b4 | Shutdown. -> reviews/P5b4-round1-adversarial.md | OPEN |
+| R1-P5b4-ADV-8 | Major | P5b4 | The fail-closed path (dup or dup2 fails, one line `output_guard: -> reviews/P5b4-round1-adversarial.md | OPEN |
+| R1-P5b4-ADV-9 | Major | P5b4 | Nested or idempotent bootstrap versus library-mode `finally: -> reviews/P5b4-round1-adversarial.md | OPEN |
+| R1-P5b4-ADV-10 | Major | P5b4 | Fd 1 redirect (PENDING LEAD 3) has no S1 channel (`os.write(1, ...)`) and no mutant. -> reviews/P5b4-round1-adversarial.md | OPEN |
+| R1-P8b-COR-1 | Blocker | P8b | The script's row filter is `/^\ -> reviews/P8b-round1-correctness.md | OPEN |
+| R1-P8b-COR-2 | Major | P8b | The ledger counts are stale for the current branch. -> reviews/P8b-round1-correctness.md | OPEN |
+| R1-P8b-COR-3 | Major | P8b | "The P8a ticket is not written yet (`ls tickets/` has no `P8a.md`)". -> reviews/P8b-round1-correctness.md | OPEN |
+| R1-P8b-COR-4 | Major | P8b | Done cannot be reached and the way is left to guess. -> reviews/P8b-round1-correctness.md | OPEN |
+| R1-P8b-COR-5 | Major | P8b | The drift scope includes "the frozen tickets in `handover/tickets/`" compared with core `main`, and the pass c -> reviews/P8b-round1-correctness.md | OPEN |
+| R1-P8b-COR-6 | Major | P8b | The "Backends" table roles are not fully defined. -> reviews/P8b-round1-correctness.md | OPEN |
+| R1-P8b-COR-7 | Major | P8b | "Whether `redactor` and `detector` are the same thing is UNVERIFIED" can be settled from code. -> reviews/P8b-round1-correctness.md | OPEN |
+| R1-P8b-COR-8 | Major | P8b | PENDING LEAD 3 gives the channel outline as "email-link approval channel; -> reviews/P8b-round1-correctness.md | OPEN |
+| R2-P4c-ADV-1 | Major | P4c | The ticket is written against P4b1 revision 1, but P4b1 is now revision 2. -> reviews/P4c-round2-adversarial.md | OPEN |
+| R2-P4c-ADV-2 | Major | P4c | Exit-settle failure is not handled. -> reviews/P4c-round2-adversarial.md | OPEN |
+| R2-P4c-ADV-3 | Major | P4c | The ticket never says how a reply's `cost_usd` (a `Decimal`, possibly 7 or 8 decimals) becomes the `SpendMicro -> reviews/P4c-round2-adversarial.md | OPEN |
+| R2-P4c-ADV-4 | Major | P4c | The judge hold is described as `Limits.hold(...)` with no `run_id`. -> reviews/P4c-round2-adversarial.md | OPEN |
+| R2-P4c-ADV-5 | Major | P4c | Contradiction in the tick retry. -> reviews/P4c-round2-adversarial.md | OPEN |
+| R2-P4c-ADV-6 | Major | P4c | An alert can be lost silently, which contradicts the P4c-1 promise "nothing is ever lost silently". -> reviews/P4c-round2-adversarial.md | OPEN |
+| R2-P4c-ADV-7 | Major | P4c | m17 cannot be killed by T11(b). -> reviews/P4c-round2-adversarial.md | OPEN |
+| R2-P4c-ADV-8 | Major | P4c | m10 "alert sent before the run state is written" has no test that observes order. -> reviews/P4c-round2-adversarial.md | OPEN |
