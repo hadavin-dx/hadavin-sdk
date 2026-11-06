@@ -1855,3 +1855,7 @@ first failure: `FAILED tests/test_usage_classes.py::test_c7d_every_kind_declares
 
 
 # Summary: 87 killed of 87; not killed: 
+## UPDATE: merged head 4a0976f (core/P4a + origin/core/P2a-1 e323ac7), full suites
+py3.13 (merged313.log): 10190 passed, 562 skipped in 313.11s (0:05:13)  rc=0
+py3.12 (merged312.log): 10190 passed, 562 skipped in 292.73s (0:04:52)  rc=0
+The inherited test_p7_tick failure is gone on the merged head (fixed in P2a-1). Mutant killers per test: killers.md (14 differ from ticket row names; first-failure under -x over four files). bandit B608 at store/postgres.py:768 still on the base, handled in P4d-a2. Mutants were not re-run on the merged head.
