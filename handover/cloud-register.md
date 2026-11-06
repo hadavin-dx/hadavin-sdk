@@ -493,7 +493,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | rv-AK4a-r1-cor | AK4a r1 correctness (egm-codebase-details) | 06:45Z | +30min | REPORTED | verify |
 | rv-AK2a-r1-adv | AK2a r1 adversarial (egm-design) | 06:50Z | +30min | REPORTED (unsaved) | verify |
 | rv-AK2a-r1-cor | AK2a r1 correctness (egm-codebase-details) | 06:50Z | +30min | REPORTED (unsaved) | verify |
-| rs-P6a-r3 | Opus resolve P6a round 3 (last round, build notes) | 07:00Z | +30min | running | verify |
+| rs-P6a-r3 | Opus resolve P6a round 3 (last round, build notes) | 07:00Z | +30min | REPORTED | verify |
 | au-AK0-r2 | Opus author AK0 revision 2 | 07:05Z | +40min | REPORTED | verify |
 | sv-P5b5-r3 | save P5b5 r3 pair + ledger | 07:15Z | +15min | REPORTED | verify |
 | rs-P5b5-r3 | Opus resolve P5b5 round 3 (build notes, last round) | 07:40Z | +25min | running | verify, save |
@@ -503,9 +503,11 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | sv-AK4a-r1 | Sonnet save AK4a r1 pair + ledger | 07:40Z | +10min | REPORTED | verify, push |
 | rv-P6b2-r3-adv | egm-design round 3 P6b2 rev 3 | 08:05Z | +10min | running | save |
 | rv-P6b2-r3-cor | egm-codebase-details round 3 P6b2 rev 3 | 08:05Z | +10min | running | save |
-| sv-AK2a-r1 | Sonnet save AK2a r1 pair + ledger | 08:10Z | +10min | running | verify, push |
+| sv-AK2a-r1 | Sonnet save AK2a r1 pair + ledger | 08:10Z | +10min | REPORTED | verify, push |
 | rs-AK4a-r1 | Opus resolve AK4a round 1 | 08:10Z | +25min | running | verify, push |
 | rv-AK0-r2-adv | egm-design round 2 AK0 rev 2 | 08:20Z | +10min | running | save |
 | rv-AK0-r2-cor | egm-codebase-details round 2 AK0 rev 2 | 08:20Z | +10min | running | save |
 | rv-P5c-r3-adv | egm-design round 3 P5c rev 3 | 08:30Z | +10min | running | save |
 | rv-P5c-r3-cor | egm-codebase-details round 3 P5c rev 3 | 08:30Z | +10min | running | save |
+| rs-AK2a-r1 | Opus resolve AK2a round 1 | 08:40Z | +25min | running | verify, push |
+| ap-BN-1 | Sonnet appends build notes+banner to P4b1,P4b2,P5a,P5b2,P6a,P6b1,P8b | 08:40Z | +30min | running | verify, push |
