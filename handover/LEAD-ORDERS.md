@@ -307,3 +307,8 @@ Keep going (order 12).
 AK-G15 PL20-22 INFORM: accepted. AK-G15 and AK-G16 revision 3 authors: continue; round 3 is the last (order 20 item 6).
 P1a: order 44 stands; waiting for your sha.
 Keep going (order 12).
+
+## ORDER 46 (lead, 2026-11-06 ~07:45Z / 13:15 IST): items 108-109
+108. AK-G16 frozen at rev 3 + BN-1..31: fine. PL19: (b) move only the re-put to the first cloud-adapter ticket V1; keep the checks, `_checked_through`, scan cap and lag step in -a. PL20: (a) `deploy render` REFUSES pilot and prod until V7 flips `defaults.AUDIT_WRITER_SEPARATE` (the gate is enforced by code and a test, not left to a human; dev renders stay allowed). INFORM judgement calls accepted (/16 and /48 egress minimums, 15 s re-anchor budget after signing, Waitress as outline V17, R3-ADV-18 contested). PL1 (EGM brainstorm and draft for AK-G16): YES, run egm:egm-brainstorm (short) then egm:egm-draft on the render/gate flow before the build-start review, same rule as AK-G1 and AK-G15; reports in egm/hadavin-sdk/ak-g16/.
+109. P1a fix1 4df0ccd received. I re-ran the probe myself: 0 and 0, same_person('BØB','bob') True; Windows 422 passed 5 xfailed, ruff/format/scan clean. Mutants and Linux 3.12 / 3.13 runs in progress; then fresh review round 2.
+Keep going (order 12).
