@@ -21,6 +21,16 @@ from tests.fixtures.http_fake import Replay, fixture
 KEY = "contract" + "-key"  # built from parts: never a real-looking key
 
 
+def _put(usage: dict, mapping: dict, classes: dict) -> None:
+    """Write each named class into ``usage`` under the wire's own key; ``None`` removes the key."""
+    for name, value in classes.items():
+        key = mapping[name]
+        if value is None:
+            usage.pop(key, None)
+        else:
+            usage[key] = value
+
+
 class _HttpWire:
     kind_name = ""
 
@@ -96,6 +106,20 @@ class AnthropicWire(_HttpWire):
                 usage[key] = value
         return fx
 
+    def set_usage(self, fx, **classes):
+        """Cache, tier and speed words in this wire's own keys (P4a-2); ``None`` removes one."""
+        _put(
+            fx["body"]["usage"],
+            {
+                "cache_write_tokens": "cache_creation_input_tokens",
+                "cache_read_tokens": "cache_read_input_tokens",
+                "service_tier": "service_tier",
+                "speed": "speed",
+            },
+            classes,
+        )
+        return fx
+
 
 class OpenAICompatWire(_HttpWire):
     kind_name = "openai_compat"
@@ -135,6 +159,21 @@ class OpenAICompatWire(_HttpWire):
                 usage.pop(key, None)
             else:
                 usage[key] = value
+        return fx
+
+    def set_usage(self, fx, **classes):
+        """Sub-counts this wire reports (they are subsets of the prompt and completion counts, not read)."""
+        usage = fx["body"]["usage"]
+        details = usage.setdefault("prompt_tokens_details", {})
+        _put(
+            details,
+            {"cache_read_tokens": "cached_tokens"},
+            {"cache_read_tokens": classes.get("cache_read_tokens")},
+        )
+        if "thinking_tokens" in classes:
+            usage.setdefault("completion_tokens_details", {})["reasoning_tokens"] = classes[
+                "thinking_tokens"
+            ]
         return fx
 
 
@@ -180,7 +219,21 @@ class GeminiWire(_HttpWire):
             else:
                 usage[key] = value
         if "totalTokenCount" in usage and type(tokens_in) is int and type(tokens_out) is int:
-            usage["totalTokenCount"] = tokens_in + tokens_out  # keep the total consistent with the two counts
+            usage["totalTokenCount"] = (
+                tokens_in + tokens_out
+            )  # keep the total consistent with the two counts
+        return fx
+
+    def set_usage(self, fx, **classes):
+        """Cached-content and thoughts counts (a cached count is a subset of the prompt; thoughts are output)."""
+        _put(
+            fx["body"]["usageMetadata"],
+            {
+                "cache_read_tokens": "cachedContentTokenCount",
+                "thinking_tokens": "thoughtsTokenCount",
+            },
+            classes,
+        )
         return fx
 
 
@@ -257,6 +310,17 @@ class BedrockWire:
 
     def set_tokens(self, fx, tokens_in, tokens_out):
         fx["body"]["usage"].update(inputTokens=tokens_in, outputTokens=tokens_out)
+        return fx
+
+    def set_usage(self, fx, **classes):
+        _put(
+            fx["body"]["usage"],
+            {
+                "cache_write_tokens": "cacheWriteInputTokens",
+                "cache_read_tokens": "cacheReadInputTokens",
+            },
+            classes,
+        )
         return fx
 
     def close(self):
