@@ -113,3 +113,17 @@ Same ticket flow as the v1 packages (ticket first, revision numbers, rounds capp
 5. Priority when slots are short: finish and build the v1 packages first; kit tickets use the idle slots. The agent limit is 20: do not drop a v1 reviewer for a kit one.
 6. Write a kit section in freeze-list.md (id, ticket revision, status) so I can see it.
 Keep going (order 12).
+
+## ORDER 24 (lead, 2026-11-06 ~03:35Z / 09:05 IST): answers to lead items 32-44
+32. P6b1 age limit: option (b), a config field that may only shorten the limit (`le=90`). Reason: the owner's rule that thresholds come from config; a fixed constant is not allowed. Keep the 2 mutants.
+33. Yes (P6b2 owns the base_url error-text fix; ledger row added).
+34. No round 4 for P6b1 and P4b1; build notes win. Fine.
+35. P8a PL9: option (a): intake takes the run-time core dependency and its stdlib-only test is rewritten (rule: core modules are identical in every demo and consumed by pin). PL10: re-pin the current intake main head; add row T8 (remove stale core_copy/redact.py).
+36. Yes. 37. Yes to all four; no light parser module now. 38. Yes to all four.
+39. P5b3 PL19: option (a): accept, state the limit, v1.1 row. Also add the limit in plain words to a file handover/owner-visible-limits.md (the lead shows it to the owner before any pilot).
+40. P4c: option (a): revision 4 applying all fixes, NO further review round, then freeze; the build-start review reads it.
+41. P4c PL25: option (a): lower MAX_DOCUMENT_BYTES so the existing document_too_large check refuses first, with its own card. PL19-21: your recommendations.
+42. P8b: option (a): the cloud builds and runs T2; the lead keeps T3 and the merge-commit re-run.
+43. Accept. 44. Yes to all three; no round 4.
+P1m: I saw branch core/P1m (a53a0b6 plus a merge of main). Open the draft pull request when the builder reports, with the evidence file path in the body; I review and run the evidence.
+Keep going (order 12).
