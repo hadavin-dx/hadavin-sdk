@@ -525,7 +525,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | rs-AKG2-r1 | Opus resolve AK-G2 round 1 | 09:45Z | +25min | running | verify, push |
 | rv-AKG1-r1-adv | egm-design round 1 AK-G1 rev 1 | 09:50Z | +10min | running | save |
 | rv-AKG1-r1-cor | egm-codebase-details round 1 AK-G1 rev 1 | 09:50Z | +10min | running | save |
-| au-AK2a-r2 | Opus author AK2a revision 2 | 10:05Z | +25min | running | verify, push |
+| au-AK2a-r2 | Opus author AK2a revision 2 | 10:05Z | +25min | REPORTED | verify, push |
 | rv-P1m-r2-adv | egm-design review PR 61 head 7442c0f | 10:05Z | +15min | running | save |
 | rv-P1m-r2-cor | egm-codebase-details review PR 61 head 7442c0f | 10:05Z | +15min | running | save |
 | sv-AK1-r2 | Sonnet save AK1 r2 pair + ledger | 10:15Z | +10min | running | verify, push |
@@ -534,7 +534,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | rv-P5b3-r3-adv | egm-design round 3 P5b3 rev 3 | 10:35Z | +10min | running | save |
 | rv-P5b3-r3-cor | egm-codebase-details round 3 P5b3 rev 3 | 10:35Z | +10min | running | save |
 | sv-AK-G1-r1 | saver AK-G1 round 1 pair | 10:50Z | +5min | REPORTED | verify, push |
-| rs-AK1-r2 | Opus resolve AK1 round 2 (Blocker COR-1) | 10:55Z | +15min | running | verify, then rev 3 author |
+| rs-AK1-r2 | Opus resolve AK1 round 2 (Blocker COR-1) | 10:55Z | +15min | REPORTED | verify, then rev 3 author |
 | au-AK0-r3 | Opus author AK0 revision 3 | 11:20Z | +25min | running | verify, push, round 3 pair |
 | au-AK-G2-r2 | Opus author AK-G2 revision 2 | 11:20Z | +25min | running | verify, push, round 2 pair |
 | sv-P5b4-r3 | saver P5b4 round 3 pair | 11:30Z | +5min | REPORTED | verify, push |
@@ -542,7 +542,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | au-P6b2-bn | Opus author P6b2 build notes BN-1..15 + banner | 11:50Z | +20min | REPORTED | verify, push |
 | rs-P5b4-r3 | Opus resolve P5b4 round 3 (last; build notes) | 12:00Z | +20min | running | verify, BN author |
 | sv-P1m-r2 | saver P1m round 2 pair + ledger p1m rows | 12:00Z | +5min | REPORTED | verify, push |
-| au-P5c-bn | Opus author P5c build notes BN-1..18 + banner | 12:10Z | +20min | running | verify, push |
-| sv-P5b3-r3 | saver P5b3 round 3 pair | 12:25Z | +5min | running | verify, push |
+| au-P5c-bn | Opus author P5c build notes BN-1..18 + banner | 12:10Z | +20min | REPORTED | verify, push |
+| sv-P5b3-r3 | saver P5b3 round 3 pair | 12:25Z | +5min | REPORTED | verify, push |
 | rv-AK4a-r2-adv | egm-design round 2 AK4a rev 2 | 12:25Z | +10min | running | save |
 | rv-AK4a-r2-cor | egm-codebase-details round 2 AK4a rev 2 | 12:25Z | +10min | running | save |
