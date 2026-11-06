@@ -22,7 +22,7 @@ dependencies = [
 # the standard library and need none.
 [project.optional-dependencies]
 anthropic = ["anthropic[vertex]==2.1.0"]
-aws = ["boto3==1.43.118", "cryptography==50.0.2"]
+aws = ["boto3==1.43.122", "cryptography==50.0.2"]
 signer = ["cryptography==50.0.2"]
 pg = ["psycopg[binary]==3.3.6"]
 # The Ask-your-data demo (demos/ask-your-data): its own parser and driver pins.
