@@ -522,7 +522,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | ap-P5b5-BN | Sonnet appends build notes+banner to P5b5 | 09:35Z | +15min | REPORTED | verify, push |
 | rs-P6b2-r3 | Opus resolve P6b2 round 3 (last round: build notes) | 09:45Z | +25min | REPORTED | verify, push, append BN |
 | rs-P5c-r3 | Opus resolve P5c round 3 (last round: build notes) | 09:45Z | +25min | REPORTED | verify, push, append BN |
-| rs-AKG2-r1 | Opus resolve AK-G2 round 1 | 09:45Z | +25min | running | verify, push |
+| rs-AKG2-r1 | Opus resolve AK-G2 round 1 | 09:45Z | +25min | REPORTED | verify, push |
 | rv-AKG1-r1-adv | egm-design round 1 AK-G1 rev 1 | 09:50Z | +10min | running | save |
 | rv-AKG1-r1-cor | egm-codebase-details round 1 AK-G1 rev 1 | 09:50Z | +10min | running | save |
 | au-AK2a-r2 | Opus author AK2a revision 2 | 10:05Z | +25min | REPORTED | verify, push |
@@ -536,7 +536,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | sv-AK-G1-r1 | saver AK-G1 round 1 pair | 10:50Z | +5min | REPORTED | verify, push |
 | rs-AK1-r2 | Opus resolve AK1 round 2 (Blocker COR-1) | 10:55Z | +15min | REPORTED | verify, then rev 3 author |
 | au-AK0-r3 | Opus author AK0 revision 3 | 11:20Z | +25min | REPORTED | verify, push, round 3 pair |
-| au-AK-G2-r2 | Opus author AK-G2 revision 2 | 11:20Z | +25min | running | verify, push, round 2 pair |
+| au-AK-G2-r2 | Opus author AK-G2 revision 2 | 11:20Z | +25min | REPORTED | verify, push, round 2 pair |
 | sv-P5b4-r3 | saver P5b4 round 3 pair | 11:30Z | +5min | REPORTED | verify, push |
 | bd-P1m-r2 | Sonnet builder P1m round 2 fixes (PR 61) | 11:45Z | +40min | running | verify head, push |
 | au-P6b2-bn | Opus author P6b2 build notes BN-1..15 + banner | 11:50Z | +20min | REPORTED | verify, push |
@@ -555,3 +555,5 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | rv-AK0-r3-cor | egm-codebase-details round 3 AK0 rev 3 (last) | 12:50Z | +10min | running | save |
 | sv-AK4a-r2 | saver AK4a round 2 pair | 13:00Z | +5min | REPORTED | verify, push |
 | rs-AK4a-r2 | Opus resolve AK4a round 2 (1 Blocker, 10 Majors) | 13:10Z | +25min | running | verify, then rev 3 author |
+| rv-AKG2-r2-adv | egm-design round 2 AK-G2 rev 2 | 13:20Z | +10min | running | save |
+| rv-AKG2-r2-cor | egm-codebase-details round 2 AK-G2 rev 2 | 13:20Z | +10min | running | save |
