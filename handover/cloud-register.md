@@ -467,3 +467,5 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | rv-AK0-r1-cor | AK0 r1 correctness | 04:20Z | +30min | running | verify |
 | rv-AK1-r1-adv | AK1 r1 adversarial | 04:20Z | +30min | running | verify |
 | rv-AK1-r1-cor | AK1 r1 correctness | 04:20Z | +30min | running | verify |
+| au-AK2a | AK2a ticket author (Opus) | 04:30Z | +35min | running | verify |
+| au-AK4a | AK4a ticket author (Opus) | 04:30Z | +35min | running | verify |
