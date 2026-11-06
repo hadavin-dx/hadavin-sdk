@@ -397,3 +397,10 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | r3-P6b1-adv | egm-design adversarial round 3 (LAST) of P6b1 rev 3 | sonnet | 03:03Z | +20min | running | save |
 | r3-P6b1-cor | egm-codebase-details correctness round 3 (LAST) of P6b1 rev 3 | sonnet | 03:03Z | +20min | running | save |
 | res-r2-P4b2 | Opus egm-resolve P4b2 round 2 (5 Majors + minors) | opus | 03:03Z | +30min | running | save, rev 4 author |
+| r1-P5b4-cor2 | round 1 ticket review | sonnet | 03:04Z | +20min | running | save |
+| r1-P8a-adv | round 1 ticket review | sonnet | 03:04Z | +20min | running | save |
+| r1-P8a-cor | round 1 ticket review | sonnet | 03:04Z | +20min | running | save |
+| r1-P5b3-adv | round 1 ticket review | sonnet | 03:04Z | +20min | running | save |
+| r1-P5b3-cor | round 1 ticket review | sonnet | 03:04Z | +20min | running | save |
+| r1-P5b5-adv | round 1 ticket review | sonnet | 03:04Z | +20min | running | save |
+| r1-P5b5-cor | round 1 ticket review | sonnet | 03:04Z | +20min | running | save |
