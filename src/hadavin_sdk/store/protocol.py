@@ -167,8 +167,6 @@ def is_connectivity_error(exc: BaseException) -> bool:
     """True for "the store cannot be reached" (a refused or dropped connection, a timeout), false for an error
     from a store that answered: a missing table, a missing grant. No driver import: psycopg's connection
     errors are recognised by class name along the MRO."""
-    if isinstance(exc, StoreBusy):
-        return False
     if getattr(exc, "sqlstate", None) in ("40001", "40P01", "55P03", "57014"):
         return False
     if isinstance(exc, StoreUnavailable | OSError):
