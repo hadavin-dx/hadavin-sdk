@@ -68,3 +68,4 @@
 2026-11-06 02:04 UTC / 07:34 IST | step=P4a r11 cor saved (0 Major, 6 nits); P4a resolve launched | next=resolves P4d/P3a/P2d/P2a/P4a -> authors; P1 rev16 | blocked=no | context=ok
 2026-11-06 02:06 UTC / 07:36 IST | step=P1 rev 16 verified (da0b49c, 363 lines, six-copy core sentence identical x6 by diff) -> P1 FROZEN under order 16; P4d resolve saved, rev 10 author launched | next=wait S0 EXIT P1; P4a/P3a/P2d/P2a resolves -> authors | blocked=no (S0 EXIT from lead) | context=ok
 02:09Z / 07:39 IST | step=P2a r8 resolve saved, rev10 author launched | done=P1,LK,P4a-r11 reviews; resolves P4d,P3a,P2d,P2a; | next=wait authors P4d/P3a/P2d/P2a, P4a resolve then rev12 | blocked=none | context=ok
+02:11Z / 07:41 IST | step=order 17 read: no more fresh review rounds; P3a P4d P2a P2d P4a freeze after current revision | done=resolves P4d,P3a,P2d,P2a saved | next=verify authors (P4d,P3a,P2d,P2a), P4a resolve->rev12, then freeze-list.md | blocked=none | context=ok
