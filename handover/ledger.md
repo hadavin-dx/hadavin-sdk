@@ -1391,10 +1391,10 @@
 | BL-core-lookalike-r8-cor-F1 | lookalike | MAJOR | see report | FIXED-UNVERIFIED | reviews/lookalike-round8-correctness.md | 2ca11dd |
 | BL-core-lookalike-r8-cor-F2 | lookalike | MAJOR | see report | FIXED-UNVERIFIED | reviews/lookalike-round8-correctness.md | 2ca11dd |
 | BL-core-lookalike-r8-cor-F3 | lookalike | MAJOR | see report | FIXED-UNVERIFIED | reviews/lookalike-round8-correctness.md | 2ca11dd |
-| BL-core-P1-r12-adv-M1 | P1 | MAJOR | see report | OPEN | reviews/P1-round12-adversarial.md | 3f0236f |
-| BL-core-P1-r12-adv-M2 | P1 | MAJOR | see report | OPEN | reviews/P1-round12-adversarial.md | 3f0236f |
-| BL-core-P1-r12-adv-M3 | P1 | MAJOR | see report | OPEN | reviews/P1-round12-adversarial.md | 3f0236f |
-| BL-core-P1-r12-cor-M-1 | P1 | MAJOR | see report | OPEN | reviews/P1-round12-correctness.md | 3f0236f |
+| BL-core-P1-r12-adv-M1 | P1 | MAJOR | see report | FIXED-UNVERIFIED | reviews/P1-round12-adversarial.md | 3f0236f |
+| BL-core-P1-r12-adv-M2 | P1 | MAJOR | see report | FIXED-UNVERIFIED | reviews/P1-round12-adversarial.md | 3f0236f |
+| BL-core-P1-r12-adv-M3 | P1 | MAJOR | see report | FIXED-UNVERIFIED | reviews/P1-round12-adversarial.md | 3f0236f |
+| BL-core-P1-r12-cor-M-1 | P1 | MAJOR | see report | FIXED-UNVERIFIED | reviews/P1-round12-correctness.md | 3f0236f |
 | BL-core-P4a-r9-adv-B1 | P4a | BLOCKER | see report | OPEN | reviews/P4a-round9-adversarial.md | a01a8b2 |
 | BL-core-P4a-r9-adv-M1 | P4a | MAJOR | see report | OPEN | reviews/P4a-round9-adversarial.md | a01a8b2 |
 | BL-core-P4a-r9-adv-M2 | P4a | MAJOR | see report | OPEN | reviews/P4a-round9-adversarial.md | a01a8b2 |
