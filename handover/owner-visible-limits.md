@@ -43,3 +43,45 @@ Added 2026-11-06 about 04:00 UTC (09:30 IST).
 - **What it does not check.** Documents between about 27 KB and 256 KiB, which were accepted before, are now refused. Tool results (up to 262,144 bytes per run) can still push a call past the bound; that call then fails closed (the run stops and a person looks) instead of being sent.
 - **What a person must do, and when.** Before a pilot, tell the client the size limit. A person must split or shorten a refused document, or the lead must decide to raise the prompt bound (a money and redaction decision, not a configuration change).
 - Studio reference: package P4c, PENDING LEAD 25(a) (order 24) and the new PENDING LEAD 28 and 29.
+
+## 7. A chat answer that takes longer than about 16 minutes is treated as lost
+- **What the program checks.** The program refuses the slow answer's final write and hands the chat to a person.
+- **What it does not check.** It does not pull back a reply that is already being sent.
+- **What a person must do, and when.** A person reads the chat when it appears in the queue for people; the client is told before the pilot.
+- In plain words: If one answer takes longer than the agent's time limit (about 16 minutes with the normal model settings), the system treats that answer as lost. A person takes over that chat, and the chat history shows '[no answer was given]'. The customer may already have received that slow answer, or may still receive it shortly after, because a reply that is already being sent is not pulled back.
+- Studio reference: PENDING LEAD 2(vi)/lease fence, order 39 (lease token = the existing version column).
+
+## 8. A short database or audit fault sends every chat in progress to a person
+- **What the program checks.** The program stops answering by itself in every chat whose answer was in progress during the fault.
+- **What it does not check.** It does not retry the answers or give the chats back to the agent.
+- **What a person must do, and when.** A person reads each handed-off chat in the queue; the client is told before the pilot.
+- In plain words: If the database or the audit store fails for a moment, every chat that was being answered at that moment goes to a person, not just one.
+- Studio reference: design AK-G1, crash rule 5.
+
+## 9. The money alert card can be missing after a crash at the wrong moment
+- **What the program checks.** The program pauses the chat and records the money reason before it posts the card.
+- **What it does not check.** It does not guarantee the card after a crash in that moment.
+- **What a person must do, and when.** A person who looks at the run record sees the money reason; the operator checks for paused chats without a card.
+- In plain words: When a chat pauses because of a money limit, one alert card is posted. If the system crashes in the moment after the chat pauses, that card can be missing; the run record still shows the money reason.
+- Studio reference: design AK-G1, step E7.
+
+## 10. Deleting a person's chats is refused while one of their messages is being answered
+- **What the program checks.** The program refuses the deletion with 'busy' while an answer is in progress.
+- **What it does not check.** It does not delete in the middle of an answer. (Amends limit 2(vi) of the ticket.)
+- **What a person must do, and when.** The caller tries again later.
+- In plain words: Deleting a person's chats is refused while one of their messages is being answered. After a crash this can last up to about 16 minutes, and the caller must try again.
+- Studio reference: design AK-G1, forget_user.
+
+## 11. A message sent again under its old id can be refused after a settings change
+- **What the program checks.** The program refuses a re-sent message whose stored fingerprint no longer matches.
+- **What it does not check.** It does not accept the old id after such a change.
+- **What a person must do, and when.** The sending app sends the message again under a new id.
+- In plain words: After a change to which kinds of personal data are kept, or to the deployment's secret key, a message sent again under its old message id may be refused. The sending app must send it again under a new id.
+- Studio reference: design AK-G1, text_digest.
+
+## 12. A chat that waits longer than the retention period for a person is deleted
+- **What the program checks.** The program deletes chats by age, as for every chat.
+- **What it does not check.** It does not keep a chat because its 'needs a person' item is still open.
+- **What a person must do, and when.** The client agrees in the contract that a person answers within the retention period.
+- In plain words: A chat that waits longer than the retention period (30 days unless the client contract says otherwise) for a person is deleted with its history, even if no person has answered it yet. The client contract must require the queue's service time to be shorter than the retention period (`conversations_days`).
+- Studio reference: order 39 item 2 (a)+(c); design AK-G1 NEEDS LEAD 2.
