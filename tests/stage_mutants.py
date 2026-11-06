@@ -1,4 +1,4 @@
-"""The mutants of the stage rename (mutants M1-M11), run by the P1m runner (``tools/mutation_runner.py``).
+"""The mutants of the stage rename (named M1 to M10 with letter variants; there is no M7 or M11), run by the P1m runner (``tools/mutation_runner.py``).
 
 They are NOT in ``tests/mutation_runner_mutants.py``: the meta-tests of that file pin its own mutants (the runner's and the
 judge's) by count and by target file. Same runner, same judge, a separate list. Each mutant reverts ONE guard in a temp copy
@@ -22,6 +22,7 @@ ROOT = Path(__file__).resolve().parents[1]
 TEST = "tests/test_stage_names.py"
 PIN = "tests/test_stage_names::"
 CFG = "src/hadavin_sdk/config.py"
+STG = "src/hadavin_sdk/stages.py"
 TBL = "src/hadavin_sdk/backends/table.py"
 DEFERRED = "src/hadavin_sdk/deferred.py"
 REGISTRY = "src/hadavin_sdk/registry.py"
@@ -60,8 +61,8 @@ M = [
         "test_dev_is_refused_with_the_rename", "the refusal does not name the rename"),
     pair("llm", "fake"), pair("channel", "fake"), pair("secrets", "fake"),
     pair("secrets", "env"), pair("store", "memory"), pair("audit", "local_dir"),
-    mutant("M2b pydantic's wrapper shows around the rename sentence", CFG, 'if isinstance(err.get("ctx", {}).get("error"), _RenamedStage):',
-        "if False:", "test_dev_is_refused_with_the_rename", "wrapper is visible"),
+    mutant("M2b pydantic's wrapper shows around the rename sentence", CFG, "    if not renamed:",
+        "    if True:", "test_dev_is_refused_with_the_rename", "wrapper is visible"),
     mutant("M4a the demo-only check still tests the old word", CFG, "if is_live(self.environment):",
         f'if self.environment != "{OLD}":', "test_demo_accepts_every_demo_only_kind", "demo config was refused"),
     mutant("M4b demo joins the live stages (registry.py: if True)", REGISTRY, "if is_live(config.environment):", "if True:",
@@ -72,8 +73,20 @@ M = [
         "test_the_stages_are_exactly_demo_pilot_prod", "demo is not live"),
     mutant("M4g every stage is relaxed (app.py: live = False)", APP, "live = is_live(cfg.environment)", "live = False",
         "test_the_stages_are_exactly_demo_pilot_prod", "pilot is live"),
-    mutant("M4h is_live becomes an allowlist of live stages", CFG, "return environment != STAGES[0]", "return environment in STAGES[1:]",
+    mutant("M4h is_live becomes an allowlist of live stages", STG, "return environment != STAGES[0]", "return environment in STAGES[1:]",
         "test_the_stages_are_exactly_demo_pilot_prod", "is_live is wrong for a value that is not a stage"),
+    mutant("M4i is_prod becomes False", STG, "return environment not in STAGES[:2]", "return False",
+        "test_the_stages_are_exactly_demo_pilot_prod", "is_prod is wrong for a stage"),
+    mutant("M4j is_prod becomes an allowlist of prod", STG, "return environment not in STAGES[:2]", "return environment == STAGES[2]",
+        "test_the_stages_are_exactly_demo_pilot_prod", "is_prod is wrong for a value that is not a stage"),
+    mutant("M4k the prod-only rules go back to string equality (config.py)", CFG, "    if is_prod(environment):", '    if environment == "prod":',
+        "test_a_value_that_is_not_a_stage_gets_the_prod_only_rules", "no prod-only rule applied"),
+    mutant("M4l the prod-only rules are switched off (config.py)", CFG, "    if is_prod(environment):", "    if False:",
+        "test_a_value_that_is_not_a_stage_gets_the_prod_only_rules", "the case must be refused in prod"),
+    mutant("M4m COMPLIANCE is allowed for a value that is not a stage", CFG, "environment in STAGES and is_prod(environment)", "is_prod(environment)",
+        "test_a_value_that_is_not_a_stage_gets_the_prod_only_rules", "COMPLIANCE was allowed outside the three stages"),
+    mutant("M4n COMPLIANCE is refused in prod too", CFG, "environment in STAGES and is_prod(environment)", "False",
+        "test_a_value_that_is_not_a_stage_gets_the_prod_only_rules", "prod refused COMPLIANCE"),
     mutant("M4d the demo-only refusal is switched off", CFG, "if is_live(self.environment):", "if False:",
         "test_pilot_and_prod_refuse_every_relaxed_kind", "DID NOT RAISE"),
     mutant("M4e the loopback switch is allowed in pilot and prod", CFG,
@@ -86,10 +99,17 @@ M = [
         "            )\n"
         "        return __import__('unicodedata').normalize('NFKC', value).casefold().strip() if isinstance(value, str) else value",
         "test_values_are_compared_exactly_never_normalised", "was accepted"),
+    mutant("M5c Dev and DEV get no rename sentence", CFG, "value.strip().casefold() == _OLD_STAGE", "value == _OLD_STAGE",
+        "test_values_are_compared_exactly_never_normalised", "refused for another reason"),
+    mutant("M5d the rename sentence hides the other problems in the file", CFG, '"; ".join([*(str(r) for r in renamed), *others])',
+        "str(renamed[0])", "test_dev_is_refused_with_the_rename", "hidden by the rename sentence"),
     mutant("M6 the old word comes back in src", TBL, "kinds allowed only in `demo`.", f"kinds allowed only in `{OLD}`.",
         "test_the_old_stage_word_is_gone", "the old stage word is still used as a stage"),
     mutant("M6b the old word comes back in src as a quoted value", TBL, "NOT_PROD: frozenset[tuple[str, str]] = frozenset(",
         f'_STAGE_DEFAULT = "{OLD}"\nNOT_PROD: frozenset[tuple[str, str]] = frozenset(',
+        "test_the_old_stage_word_is_gone", "the old stage word is still used as a stage"),
+    mutant("M6c a sibling word comes back in src as a quoted value", TBL, "NOT_PROD: frozenset[tuple[str, str]] = frozenset(",
+        '_STAGE_DEFAULT = "stag' + 'ing"\nNOT_PROD: frozenset[tuple[str, str]] = frozenset(',
         "test_the_old_stage_word_is_gone", "the old stage word is still used as a stage"),
     mutant("M8 a half-renamed flag: the old name stays beside the new", TBL,
         "NOT_PROD: frozenset[tuple[str, str]] = frozenset(", "DE" + "V_ONLY = DEMO_ONLY\nNOT_PROD: frozenset[tuple[str, str]] = frozenset(",

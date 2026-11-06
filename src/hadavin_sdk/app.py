@@ -25,7 +25,7 @@ from hadavin_sdk.approvals.requests import summary
 from hadavin_sdk.audit import AuditSink
 from hadavin_sdk.backends import platform_secrets
 from hadavin_sdk.backends.factory import make
-from hadavin_sdk.config import Config, ConfigError, confined, is_live, load_config
+from hadavin_sdk.config import Config, ConfigError, confined, load_config
 from hadavin_sdk.guard.injection import Detector, combine
 from hadavin_sdk.limits import Limits
 from hadavin_sdk.llm.protocol import LLM
@@ -35,6 +35,7 @@ from hadavin_sdk.runtime import evidence
 from hadavin_sdk.runtime.agent_loop import Hooks, Runtime
 from hadavin_sdk.sources import Source
 from hadavin_sdk.sources.kinds import KINDS
+from hadavin_sdk.stages import is_live
 from hadavin_sdk.store import Store
 from hadavin_sdk.store.protocol import missing_methods
 

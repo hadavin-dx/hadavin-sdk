@@ -27,6 +27,7 @@ from hadavin_sdk import defaults, deferred
 from hadavin_sdk.backends.table import DEFAULTS, DEMO_ONLY, NOT_PROD, TABLE, KindSettings
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.scrub_settings import ScrubSettings
+from hadavin_sdk.stages import STAGES, is_live, is_prod
 
 __all__ = [
     "Backends",
@@ -84,16 +85,7 @@ class Backends(_Strict):
         return out + [("detector", d) for d in self.detector]
 
 
-# The stages, in order, and nothing else. A project's own labels map to one of these in the project's config; core
-# tests the stage, never a label. The first stage was called "dev" until the rename: it is refused at load.
-STAGES = ("demo", "pilot", "prod")
 _OLD_STAGE = "dev"
-
-
-def is_live(environment: object) -> bool:
-    """The one place that decides 'live': anything that is not exactly the first stage (demo) is live, so a value that
-    is not a stage fails closed. app.py, deferred.py, registry.py and the config cross-checks all ask this."""
-    return environment != STAGES[0]
 
 
 class _RenamedStage(ValueError):
@@ -338,7 +330,7 @@ class Settings(BaseSettings):
 
 
 class Config(_Strict):
-    environment: Literal["demo", "pilot", "prod"]
+    environment: Literal["demo", "pilot", "prod"]  # the same three as STAGES (a test pins it)
     routes: dict[str, Route]
     backends: Backends
     golden_dir: Path
@@ -373,8 +365,9 @@ class Config(_Strict):
     @field_validator("environment", mode="before")
     @classmethod
     def _renamed_stage(cls, value: object) -> object:
-        """The old first stage name is refused with the rename; every other value is compared exactly."""
-        if value == _OLD_STAGE:
+        """The old first stage name, in any case or with spaces round it, is refused with the rename sentence (a hint
+        only: every other value is refused by the allowed-values rule, and nothing is ever tidied into a stage)."""
+        if isinstance(value, str) and value.strip().casefold() == _OLD_STAGE:
             raise _RenamedStage(
                 f"environment: {_OLD_STAGE} was renamed to {STAGES[0]}; write environment: {STAGES[0]} "
                 f"(allowed values: {', '.join(STAGES)})"
@@ -420,10 +413,10 @@ def _anchor_refusals(environment: str, b: Backends) -> list[str]:
     if (
         anchor is not None
         and anchor.mode == "COMPLIANCE"
-        and not (environment == "prod" and anchor.retention_ack)
+        and not (environment in STAGES and is_prod(environment) and anchor.retention_ack)
     ):
         refused.append("anchor mode COMPLIANCE outside prod or without retention_ack")
-    if environment == "prod":
+    if is_prod(environment):
         refused += [f"{c}: {s.kind}" for c, s in b.entries() if (c, s.kind) in NOT_PROD]
         if anchor is not None and not anchor.retention_ack:
             refused.append(f"anchor {anchor.kind} without retention_ack")
@@ -468,6 +461,24 @@ def confined(base: Path, relative: str) -> Path:
     return path
 
 
+def _validation_text(exc: ValidationError) -> str:
+    """pydantic's text, except that the rename sentence is shown as written, without pydantic's wrapper, beside the
+    other problems found in the same file (one fix round is enough)."""
+    renamed = [
+        e["ctx"]["error"]
+        for e in exc.errors()
+        if isinstance(e.get("ctx", {}).get("error"), _RenamedStage)
+    ]
+    if not renamed:
+        return str(exc)
+    others = [
+        f"{'.'.join(str(p) for p in e['loc'])}: {e['msg']}"
+        for e in exc.errors()
+        if not isinstance(e.get("ctx", {}).get("error"), _RenamedStage)
+    ]
+    return "; ".join([*(str(r) for r in renamed), *others])
+
+
 def load_config(config_dir: Path | None = None) -> Config:
     """Every start-up problem (missing HADAVIN_CONFIG_DIR, bad YAML, bad values) is a ConfigError."""
     try:
@@ -485,12 +496,7 @@ def load_config(config_dir: Path | None = None) -> Config:
         return Config(**raw, egress_hosts=frozenset(egress), root=root)
     except ConfigError:
         raise
-    except (
-        ValidationError
-    ) as exc:  # the rename sentence alone, without pydantic's wrapper around it
-        for err in exc.errors():
-            if isinstance(err.get("ctx", {}).get("error"), _RenamedStage):
-                raise ConfigError(str(err["ctx"]["error"])) from exc
-        raise ConfigError(str(exc)) from exc
+    except ValidationError as exc:
+        raise ConfigError(_validation_text(exc)) from exc
     except (ValueError, TypeError, yaml.YAMLError) as exc:  # pydantic errors are ValueErrors
         raise ConfigError(str(exc)) from exc

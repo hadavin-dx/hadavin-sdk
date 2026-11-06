@@ -103,7 +103,7 @@ def test_demo_only_kinds_refused_outside_demo(cfg_dir, env):
 
 
 def test_unknown_environment_refused(cfg_dir):
-    _edit(cfg_dir, lambda d: d.update(environment="staging"))
+    _edit(cfg_dir, lambda d: d.update(environment="uat"))  # a project label, not a stage
     with pytest.raises(ConfigError, match="environment"):
         load_config(cfg_dir)
 

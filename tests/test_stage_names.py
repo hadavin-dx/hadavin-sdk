@@ -5,7 +5,7 @@ No stage is stored anywhere today, so there is no read site to test. The first c
 value to demo on read for display only (never for a guard decision) and add a test through that real read site.
 
 Rows: unknown stage and half-renamed flag refuse start; the class test looks at stage POSITIONS only; pilot and prod
-refuse relaxed kinds; the live guards fail closed on a value that is not a stage.
+refuse relaxed kinds; the live and prod-only guards fail closed on a value that is not a stage.
 """
 
 import re
@@ -23,8 +23,9 @@ from hadavin_sdk import deferred
 from hadavin_sdk.actions.secrets import FakeSecretProvider
 from hadavin_sdk.app import build
 from hadavin_sdk.backends import table
-from hadavin_sdk.config import STAGES, Config, ConfigError, is_live, load_config
+from hadavin_sdk.config import Config, ConfigError, _anchor_refusals, load_config, parse_backends
 from hadavin_sdk.registry import _module_pin_problems, load_registry
+from hadavin_sdk.stages import STAGES, is_live, is_prod
 from tests.conftest import make_cfg, qualify
 
 # The old word is built from parts in this file: the class test never scans this file, but a grep for it should find
@@ -36,6 +37,7 @@ RENAMED = (
     + " was renamed to demo; write environment: demo (allowed values: demo, pilot, prod)"
 )
 ROOT = Path(__file__).resolve().parents[1]
+ALLOWED = "Input should be 'demo', 'pilot' or 'prod'"  # pydantic's text for a value outside the three stages
 
 
 @pytest.fixture
@@ -64,9 +66,10 @@ def test_the_stages_are_exactly_demo_pilot_prod(tmp_path):
     assert typing.get_args(Config.model_fields["environment"].annotation) == STAGES
     # the one place that decides "live": only exactly the first stage is relaxed, anything else is live
     assert [is_live(s) for s in STAGES] == [False, True, True], "is_live is wrong for a stage"
-    assert all(is_live(v) for v in ("stag" + "ing", "Demo", OLD, "", None)), (
-        "is_live is wrong for a value that is not a stage"
-    )
+    assert [is_prod(s) for s in STAGES] == [False, False, True], "is_prod is wrong for a stage"
+    nonstage = ("stag" + "ing", "Demo", OLD, "", None)
+    assert all(is_live(v) for v in nonstage), "is_live is wrong for a value that is not a stage"
+    assert all(is_prod(v) for v in nonstage), "is_prod is wrong for a value that is not a stage"
     assert not hasattr(deferred, "LIVE"), (
         "an allowlist of live stages is back: a new value would count as not live"
     )
@@ -100,6 +103,13 @@ def test_dev_is_refused_with_the_rename(cfg_dir):
     assert str(via_load.value) == RENAMED, (
         "pydantic's wrapper is visible around the rename sentence"
     )
+    # beside another problem in the same file: both are shown, the sentence still without the wrapper
+    _edit(cfg_dir, lambda d: d.update(nonsense_key=1))
+    with pytest.raises(ConfigError) as both:
+        load_config(cfg_dir)
+    assert RENAMED in str(both.value), "the rename sentence is lost beside another problem"
+    assert "nonsense_key" in str(both.value), "the other problem is hidden by the rename sentence"
+    assert "validation error" not in str(both.value), "pydantic's wrapper is visible"
     # direct construction gets the same text
     loaded = load_config(make_cfg(cfg_dir.parent / "again"))
     fields = {name: getattr(loaded, name) for name in type(loaded).model_fields}
@@ -125,6 +135,9 @@ INEXACT = [
     "DEV",
     " dev",
     "dev\n",
+    "d"
+    + chr(0x0435)
+    + "v",  # the old word with a Cyrillic e: no rename hint, only the allowed-values refusal
     # six look-alikes and invisible characters, built from code points (no literal look-alike in this file); the
     # allowed-values rule in pydantic refuses the rest of the family, so these are the ones a "tidy" step would let in
     "d" + chr(0x0435) + "mo",  # Cyrillic small ie in place of e
@@ -141,29 +154,35 @@ INEXACT = [
 
 
 def test_values_are_compared_exactly_never_normalised(cfg_dir):
-    """Case, spaces, a prefix such as demo-eu, and a project label (uat) are not the stage."""
+    """Case, spaces, a prefix such as demo-eu, and a project label (uat) are not the stage. Every spelling of the old
+    word gets the rename sentence (a hint only; it is refused all the same)."""
     for value in INEXACT:
         _set_env(cfg_dir, value)
         try:
             cfg = load_config(cfg_dir)
         except ConfigError as exc:
-            assert "environment" in str(exc), f"{value!r}: refused for another reason"
+            message = str(exc)
         else:
             raise AssertionError(
                 f"a stage that is not exactly demo, pilot or prod was accepted: {value!r} -> {cfg.environment}"
             )
+        # the allowed-values text (it lists demo, not dev), or the rename sentence for the old word's spellings
+        want = RENAMED if value.strip().casefold() == OLD else ALLOWED
+        assert want in message, f"{value!r}: refused for another reason: {message[:150]}"
 
 
 @pytest.mark.parametrize("value", [None, 0, 1.5, True, ["demo"], {"demo": 1}])
 def test_a_stage_that_is_not_a_string_is_refused(cfg_dir, value):
     _set_env(cfg_dir, value)
-    with pytest.raises(ConfigError, match="environment"):
+    with pytest.raises(ConfigError, match="environment") as err:
         load_config(cfg_dir)
+    assert ALLOWED in str(err.value), f"{value!r}: not refused by the allowed-values rule"
 
 
 def test_a_missing_stage_is_refused(cfg_dir):
+    """Passes on the old code too (a missing field was always refused): it pins that no default fills the gap."""
     _edit(cfg_dir, lambda d: d.pop("environment"))
-    with pytest.raises(ConfigError, match="environment"):
+    with pytest.raises(ConfigError, match="environment\n  Field required"):
         load_config(cfg_dir)
 
 
@@ -174,29 +193,9 @@ def test_a_yaml_null_stage_is_refused(cfg_dir, raw):
     text = path.read_text(encoding="utf-8")
     path.write_text(text.replace("environment: demo", f"environment: {raw}"), encoding="utf-8")
     assert f"environment: {raw}" in path.read_text(encoding="utf-8")
-    with pytest.raises(ConfigError, match="environment"):
+    with pytest.raises(ConfigError, match="environment") as err:
         load_config(cfg_dir)
-
-
-def test_the_look_alike_strings_are_what_the_list_says_they_are():
-    """The NFKC-equivalent entries really do become demo after NFKC, casefold and strip, so a program that tidied the
-    value that way would accept them: they are in the list to stop exactly that."""
-
-    def tidy(value):
-        return unicodedata.normalize("NFKC", value).casefold().strip()
-
-    tidy_to_demo = [v for v in INEXACT if tidy(v) == "demo"]
-    assert len(tidy_to_demo) >= 6, tidy_to_demo
-    for must in (
-        "".join(chr(0xFF00 + ord(c) - 0x20) for c in "demo"),
-        "demo" + chr(0x00A0),
-        chr(0x217E) + "emo",
-        "DEMO",
-        "demo\n",
-    ):
-        assert must in tidy_to_demo
-    for v in INEXACT:
-        assert v not in STAGES
+    assert ALLOWED in str(err.value), "a null stage is not refused by the allowed-values rule"
 
 
 def test_demo_loads_and_pilot_and_prod_load_only_without_the_fakes(cfg_dir):
@@ -331,6 +330,46 @@ def test_a_value_that_is_not_a_stage_is_live_for_every_guard(tmp_path):
             assert live, f"{site} treated {bad!r} as not live (an allowlist of live stages)"
 
 
+ANCHOR = {"kind": "s3_object_lock", "bucket": "b", "region": "r"}
+KEY_FILE = {"kind": "ed25519_local", "private_key_path": "k.pem"}
+KEY_SECRET = {"kind": "ed25519_local", "private_key_secret_name": "audit-key"}
+
+
+def _backends(anchor, signer):
+    raw = {"signer": signer, "anchor": anchor, "audit": {"kind": "chain"}}
+    return parse_backends({**raw, "llm": {"kind": "fake", "recorded_dir": "r"}}, Path("."))
+
+
+def test_a_value_that_is_not_a_stage_gets_the_prod_only_rules():
+    """model_copy and model_construct skip the check that only demo, pilot and prod load. The prod-only rules (no local
+    key file, an anchor whose retention the client agreed, no signer or anchor of kind none) must then apply, as in
+    prod; and COMPLIANCE (undeletable) stays allowed in exactly prod."""
+    acked = ANCHOR | {"retention_ack": True}
+    cases = [(acked, KEY_FILE), ("none", KEY_FILE), (ANCHOR, KEY_SECRET)]
+    for (
+        anchor,
+        signer,
+    ) in cases:  # each is refused in prod, accepted in pilot: the rule is prod-only
+        assert _anchor_refusals("prod", _backends(anchor, signer)), (
+            "the case must be refused in prod"
+        )
+        assert _anchor_refusals("pilot", _backends(anchor, signer)) == [], (
+            "the case must pass pilot"
+        )
+    compliance = _backends(acked | {"mode": "COMPLIANCE"}, KEY_SECRET)
+    assert _anchor_refusals("prod", compliance) == [], "prod refused COMPLIANCE with retention_ack"
+    for bad in ("stag" + "ing", "Prod", "prod ", "", None):
+        for anchor, signer in cases:
+            found = _anchor_refusals(bad, _backends(anchor, signer))
+            assert found, f"{bad!r}: no prod-only rule applied to {anchor} / {signer}"
+            assert found == _anchor_refusals("prod", _backends(anchor, signer)), (
+                f"{bad!r}: not as prod"
+            )
+        assert any("COMPLIANCE outside prod" in r for r in _anchor_refusals(bad, compliance)), (
+            f"{bad!r}: COMPLIANCE was allowed outside the three stages"
+        )
+
+
 # --- fail closed on a half-renamed flag ----------------------------------------------------------------------
 
 
@@ -358,206 +397,121 @@ def test_both_spellings_of_the_stage_together_refuse_start(cfg_dir):
 
 
 # --- the class test, stage POSITIONS only ------------------------------------------------------------------
+# The old word (dev) and its siblings (staging, the bare stage) must not name a stage anywhere. A word is "used as a
+# stage" in a position: a value after a stage-like name (config, CLI, env var, enum member), a quoted string literal
+# (dict key, list or set member on any line, case label, conditional), a member of a stage list. Prose such as "the
+# demo stage", "developer", "stddev" and a dataset split are not positions; the data splits are listed one exact line at
+# a time in tests/stage_exemptions.tsv, each with its reason.
 
-_W = (
-    r"(?<![A-Za-z0-9])" + OLD + r"(?![A-Za-z0-9])"
-)  # the old word as a whole word, not inside another word
+_W = r"(?<![A-Za-z0-9])" + OLD + r"(?![A-Za-z0-9])"  # the old word as a whole word
+_ANY = r"(?<![A-Za-z0-9])(?:" + OLD + r"|staging|stage)(?![A-Za-z0-9])"  # the old word or a sibling
 _STAGE = r"(?:pilot|prod|production|demo)"
 _Q = r"[`'\"]?"  # a quote or backtick around the word
-_PHRASE_BEFORE = r"(?:in|for|outside|than|kept in|refused in)"
-_PHRASE_AFTER = r"(?:only|executor|stage|tier|environment|config|app|runtime|slice|install)"
-# (name, regex). Each is a place where the old word would still be a STAGE: a config value, an enum or list member
-# beside the other stages, a flag or helper name that carries the stage, a stage phrase in prose, a URL host label,
-# a heading. Words such as "developer", "device", "stddev", "vault server -dev" and a dataset split are not positions.
+_NAME = r"(?<![A-Za-z0-9])(?:env(?:ironment)?|stage|tier|profile|mode)(?![A-Za-z0-9])"
+_BEFORE = r"(?:in|for|outside|than|kept in|refused in)"
+_AFTER = r"(?:only|executor|stage|tier|environment|config|app|runtime|slice|install)"
+# (name, regex). The first three look for the old word and its siblings; the rest for the old word only.
 POSITIONS = {
-    "config value": re.compile(
-        r"environment\b[^A-Za-z0-9\n]{1,5}" + OLD + r"(?![A-Za-z0-9])", re.IGNORECASE
-    ),
+    # `environment: dev`, `ENV=dev`, `APP_ENV=dev`, `--env dev`, `STAGE_DEV`, `Environment.DEV`, `"mode": "dev"`
+    "value after a stage name": re.compile(_NAME + r"[^A-Za-z0-9\n]{1,4}" + _ANY, re.IGNORECASE),
+    # a quoted literal: `== "dev"`, `{"dev": 1}`, `case "dev":`, `"dev" if x`, a set member alone on its line
+    "quoted literal": re.compile(r"[`'\"](?:" + OLD + r"|staging|stage)[`'\"]", re.IGNORECASE),
+    # beside another stage in a list: `dev|pilot|prod`, `demo, dev`, a YAML list item `- dev`
     "list member": re.compile(
-        _W + r"[^A-Za-z0-9\n]{1,5}" + _STAGE + r"\b|\b" + _STAGE + r"[^A-Za-z0-9\n]{1,5}" + _W,
+        _ANY
+        + r"\s*[,|/;]\s*"
+        + _STAGE
+        + r"\b|\b"
+        + _STAGE
+        + r"\s*[,|/;]\s*"
+        + _ANY
+        + r"|^\s*-\s+"
+        + _ANY
+        + r"\s*$",
         re.IGNORECASE,
     ),
     "flag or helper name": re.compile(
-        r"(?<![A-Za-z0-9])" + OLD + r"_(?:only|cfg|config|env|stage|tier|mode|app|runtime)\b|"
-        r"\b(?:in|outside|is|for|not)_" + OLD + r"(?![A-Za-z0-9])|_" + OLD + r"(?:_only)?\(",
+        _W
+        + r"_(?:only|cfg|config|env|stage|tier|mode|app|runtime)\b|\b(?:in|outside|is|for|not)_"
+        + OLD
+        + r"(?![A-Za-z0-9])|_"
+        + OLD
+        + r"(?:_only)?\(",
         re.IGNORECASE,
     ),
     "stage phrase": re.compile(
-        r"\b"
-        + _PHRASE_BEFORE
-        + r" "
-        + _Q
-        + OLD
-        + r"(?![A-Za-z0-9])|"
-        + _W
-        + _Q
-        + r" "
-        + _PHRASE_AFTER
-        + r"\b",
+        r"\b" + _BEFORE + r" " + _Q + OLD + r"(?![A-Za-z0-9])|" + _W + _Q + r" " + _AFTER + r"\b",
         re.IGNORECASE,
     ),
-    "stage word then value": re.compile(
-        r"\b(?:tier|stage|profile|mode)\b\W{1,4}" + OLD + r"(?![A-Za-z0-9])", re.IGNORECASE
-    ),
-    "list literal": re.compile(
-        r"[\[(\{,]\s*[`'\"]" + OLD + r"[`'\"]\s*[,\])\}]|^\s*-\s+[`'\"]?" + OLD + r"[`'\"]?\s*$",
-        re.IGNORECASE,
-    ),
-    # the generic one: the old word as a quoted value after ==, !=, = or : whatever the name before it is
-    # (`ENV=dev`, `target: "dev"`, `deploy = "dev"`, `if env == "dev"`, `{"x": "dev"}`)
-    "compared or assigned": re.compile(r"(?:==|!=|=|:)\s*['\"]" + OLD + r"['\"]", re.IGNORECASE),
     "url host": re.compile(r"://" + OLD + r"\.|://[^/\s]*-" + OLD + r"\.", re.IGNORECASE),
     "heading": re.compile(r"^#{1,6} .*" + _W, re.IGNORECASE),
 }
-SCANNED = (
-    ("src", ("*.py", "*.toml", "*.json")),
-    ("tests", ("*.py", "*.yaml", "*.yml", "*.toml", "*.json")),
-    ("docs", ("*",)),
-    ("demos", ("*.py", "*.md", "*.yaml", "*.json", "*.toml")),
-    (".github", ("*",)),
-    ("tools", ("*.py", "*.txt", "*.md", "*.toml", "*.json")),
-    (".", ("*.md",)),
-)  # not scanned: pyproject.toml and uv.lock at the root (the packaging group is called dev), CHANGELOG.md (history)
-# The one place in src that has to name the refused word: the constant the refusal compares with. Exact line, same
-# stale-entry rule.
-REFUSAL_LINES = frozenset({("src/hadavin_sdk/config.py", '_OLD_STAGE = "dev"')})
-SELF = Path(__file__).resolve()
-# The ask-your-data demo has an evaluation data split called dev (train/dev/test): a data split, not a stage (R449).
-# Only these exact lines of these exact files are exempt (the word sits inside the split constant, the split flag or the
-# split value); any other line in the same files is scanned like everywhere else. An entry that matches no line is stale
-# and fails, so the list cannot outlive the code it excuses.
-SPLIT_LINES = frozenset(
-    {
-        (
-            "demos/ask-your-data/askdata/evalcli.py",
-            'r.add_argument("--split", choices=["dev", "test"], required=True)',
-        ),
-        ("demos/ask-your-data/askdata/evalset.py", 'split: Literal["dev", "test"]'),
-        (
-            "demos/ask-your-data/data/goldcheck.py",
-            "Field names differ from design 12.2 on purpose of this task: `tier` (dev|test) is the split, `level` the difficulty,",
-        ),
-        (
-            "demos/ask-your-data/data/goldcheck.py",
-            "adversarial.dev.jsonl     12 items (`dev`): the prompt is tuned against these, never against the 16 sealed ones",
-        ),
-        (
-            "demos/ask-your-data/data/goldcheck.py",
-            "f\"composition of {level}: got {tally[('dev', level)]}/{tally[('test', level)]}, want {dev}/{test}\"",
-        ),
-        ("demos/ask-your-data/data/goldcheck.py", 'g["tier"] not in ("dev", "test")'),
-        (
-            "demos/ask-your-data/data/goldcheck.py",
-            'if (tally[("dev", level)], tally[("test", level)]) != (dev, test):',
-        ),
-        (
-            "tests/demo_askdata/test_eval_harness.py",
-            'assert cli.main(["eval", "run", "--split", "dev"]) == 4  # no config',
-        ),
-        ("tests/demo_askdata/test_eval_harness.py", 'assert cmd_run(cfg, "dev", 1, None) == 4'),
-        (
-            "tests/demo_askdata/test_eval_harness.py",
-            'assert cmd_run(cfg, "dev", 1, None, harness_factory=factory) == 4',
-        ),
-        (
-            "tests/demo_askdata/test_eval_harness.py",
-            'cmd_run(cfg, "dev", 1, None, harness_factory=factory)',
-        ),
-        (
-            "tests/demo_askdata/test_eval_harness.py",
-            'code = cmd_run(cfg, "dev", 1, None, harness_factory=factory)',
-        ),
-        ("tests/demo_askdata/test_eval_harness.py", 'split=kw.pop("split", "dev"),'),
-        ("tests/demo_askdata/test_gold_data.py", 'assert not sqls("dev") & sqls("test")'),
-        (
-            "tests/demo_askdata/test_gold_data.py",
-            'lambda rows: next(r for r in rows if r["id"] == "T07").update(tier="dev"),',
-        ),
-        (
-            "demos/ask-your-data/askdata/evalrun.py",
-            'label: str = "dev"  # "dev", "sealed", "second look"',
-        ),
-        (
-            "demos/ask-your-data/data/goldcheck.py",
-            '"counts": {"gold_dev": sum(g["tier"] == "dev" for g in gold), "gold_test": sum(g["tier"] == "test" for g in gold),',
-        ),
-        (
-            "demos/ask-your-data/data/goldcheck.py",
-            '"dev_sha256": digest([g for g in gold if g["tier"] == "dev"]),',
-        ),
-        (
-            "demos/ask-your-data/data/goldcheck.py",
-            'if (sum(g["tier"] == "dev" for g in gold), sum(g["tier"] == "test" for g in gold)) != (30, 40):',
-        ),
-        ("demos/ask-your-data/data/goldcheck.py", 'if g["exemplar"] and g["tier"] != "dev":'),
-        (
-            "demos/ask-your-data/data/goldcheck.py",
-            'if src is None or src["tier"] != "dev" or src["kind"] != "answerable":',
-        ),
-        (
-            "demos/ask-your-data/data/goldcheck.py",
-            'want = "dev" if dev else ("ci" if det else "test")',
-        ),
-        (
-            "tests/demo_askdata/test_eval_harness.py",
-            'evalrun.sealed_gate(lock, Decimal(0), split="dev", second_look=None)  # dev is never gated',
-        ),
-        (
-            "tests/demo_askdata/test_eval_harness.py",
-            'r.harness.report([], [rec], split="dev", meta={})["hard_zeros"][',
-        ),
-        (
-            "tests/demo_askdata/test_eval_harness.py",
-            'r.harness.report(r.harness.run_gold([it]), [], split="dev", meta={"model_id": "m"})',
-        ),
-        (
-            "tests/demo_askdata/test_eval_harness.py",
-            'rep = r.harness.report([], [rec], split="dev", meta={})',
-        ),
-        (
-            "tests/demo_askdata/test_eval_harness.py",
-            'rep = r.harness.report([], list(recs.values()), split="dev", meta={})',
-        ),
-        (
-            "tests/demo_askdata/test_eval_harness.py",
-            'rep = r.harness.report(r.harness.run_gold([it]), [], split="dev", meta={})',
-        ),
-        (
-            "tests/demo_askdata/test_eval_harness.py",
-            'rep = r.harness.report(recs, [], split="dev", meta={})',
-        ),
-        ("tests/demo_askdata/test_eval_harness.py", 'rep("green", 0, split="dev"),'),
-        ("tests/demo_askdata/test_eval_harness.py", 'rep["label"] == "dev"'),
-        (
-            "tests/demo_askdata/test_gold_data.py",
-            'assert (sum(g["tier"] == "dev" for g in gold), sum(g["tier"] == "test" for g in gold)) == (',
-        ),
-        (
-            "tests/demo_askdata/test_gold_data.py",
-            'assert all(ids[e["source_dev_id"]]["tier"] == "dev" for e in data["exemplars"])',
-        ),
-        (
-            "tests/demo_askdata/test_htmlexport.py",
-            '"split": "dev", "label": "x", "verdict_text": "green", "aborted": None,',
-        ),
-    }
+# Every file of these types below these folders, and in the repo root except the three skipped by name (history, the
+# packaging group called dev, a lock file). Not scanned by type: .jsonl, the ask-your-data gold data (42 records hold the
+# data split in a tier field).
+SCANNED = ("src", "tests", "docs", "demos", ".github", "tools")
+TYPES = (
+    ".py",
+    ".md",
+    ".txt",
+    ".toml",
+    ".json",
+    ".yaml",
+    ".yml",
+    ".sql",
+    ".properties",
+    ".cfg",
+    ".ini",
 )
+SKIPPED_ROOT = ("CHANGELOG.md", "pyproject.toml", "uv.lock")
+EXEMPT_FILE = ROOT / "tests" / "stage_exemptions.tsv"
+SELF = Path(__file__).resolve()
+# Letters that look like Latin ones, as code points (no look-alike in this file). NFKC and casefold cover fullwidth,
+# roman-numeral and capital forms. A plain list until the shared fold (P1a) is merged.
+CONFUSABLES = {
+    0x0435: "e",
+    0x0501: "d",
+    0x0475: "v",
+    0x03BD: "v",
+    0x0455: "s",
+    0x0456: "i",
+    0x0430: "a",
+    0x0261: "g",
+}
+INVISIBLE = re.compile(
+    "[" + "".join(map(chr, (0x200B, 0x200C, 0x200D, 0x2060, 0xFEFF, 0xAD))) + "]"
+)
+
+
+def _exemptions() -> dict:
+    """(file, exact stripped line) -> reason, from the tsv. Real non-stage uses only: a data split, a tool name."""
+    rows = [r.split("\t") for r in EXEMPT_FILE.read_text(encoding="utf-8").splitlines() if r]
+    assert all(len(r) == 3 for r in rows), (
+        "a row of stage_exemptions.tsv is not file TAB line TAB reason"
+    )
+    return {(f, line): why for f, line, why in rows}
+
+
+def _fold(line: str) -> str:
+    """The line as a reader sees it: NFKC, casefold, invisible characters out, look-alike letters made Latin."""
+    folded = unicodedata.normalize("NFKC", line).casefold()
+    return INVISIBLE.sub("", folded).translate(CONFUSABLES)
 
 
 def _hits(line: str, markdown: bool = True) -> list[str]:
     """Names of the positions in `line`. A heading is a position in a Markdown file only (a `#` line in code is a comment)."""
     line = re.sub(
-        r"\bfor \w+ in " + OLD + r"\b", "", line, flags=re.IGNORECASE
-    )  # `for row in dev`: a dataset split, not a stage
+        r"\bfor \w+ in " + OLD + r"\b", "", _fold(line)
+    )  # `for row in dev`: a dataset split
     return [n for n, rx in POSITIONS.items() if rx.search(line) and (markdown or n != "heading")]
 
 
-def _scan_text(rel: str, text: str) -> tuple[list[str], set]:
-    """Hits in one file's text; a line that is exactly a listed split line is excused and its entry is marked used."""
-    out, used = [], set()
+def _scan_text(rel: str, text: str, exempt: dict | None = None) -> tuple[list[str], set]:
+    """Hits in one file's text; a line that is exactly an exempt line is excused and its entry is marked used."""
+    exempt, out, used = _exemptions() if exempt is None else exempt, [], set()
     for number, line in enumerate(text.splitlines(), 1):
         names = _hits(line, rel.endswith(".md"))
-        if names and (rel, line.strip()) in SPLIT_LINES | REFUSAL_LINES:
+        if names and (rel, line.strip()) in exempt:
             used.add((rel, line.strip()))
             names = []
         if names:
@@ -566,26 +520,23 @@ def _scan_text(rel: str, text: str) -> tuple[list[str], set]:
 
 
 def _scan() -> tuple[list[str], set]:
-    """(hits, the split-exemption entries that matched a line)."""
+    """(hits, the exemption entries that matched a line)."""
+    paths = [p for folder in SCANNED for p in (ROOT / folder).rglob("*")]
+    paths += [p for p in ROOT.glob("*") if p.name not in SKIPPED_ROOT]
+    paths = [
+        p for p in paths if p.suffix in TYPES or p.name.startswith(".git")
+    ]  # .gitleaks.toml, .gitignore
     out, used = [], set()
-    for folder, patterns in SCANNED:
-        base = ROOT / folder
-        if not base.is_dir():
+    for path in paths:
+        if not path.is_file() or path in (SELF, EXEMPT_FILE) or "__pycache__" in path.parts:
             continue
-        for pattern in patterns:
-            for path in base.glob(pattern) if folder == "." else base.rglob(pattern):
-                if not path.is_file() or path.resolve() == SELF or "__pycache__" in path.parts:
-                    continue
-                if folder == "." and path.name == "CHANGELOG.md":
-                    continue  # history: it says what was renamed
-                try:
-                    text = path.read_text(encoding="utf-8")
-                except UnicodeDecodeError:
-                    continue
-                rel = path.relative_to(ROOT).as_posix()
-                found, hit_entries = _scan_text(rel, text)
-                out += found
-                used |= hit_entries
+        try:
+            text = path.read_text(encoding="utf-8")
+        except UnicodeDecodeError:
+            continue
+        found, hit_entries = _scan_text(path.relative_to(ROOT).as_posix(), text)
+        out += found
+        used |= hit_entries
     return sorted(set(out)), used
 
 
@@ -594,90 +545,95 @@ def test_the_old_stage_word_is_gone():
     assert not found, "the old stage word is still used as a stage:\n" + "\n".join(found)
 
 
-def test_the_split_exemption_has_no_stale_entry_and_covers_only_the_two_demo_places():
-    """An entry that matches no line is stale and fails; every entry is in the demo or its tests, nothing else."""
+def test_the_exemptions_have_no_stale_entry():
+    """An entry that matches no line is stale and fails; each entry is one exact line of one file, with its reason."""
     _, used = _scan()
-    assert used == SPLIT_LINES | REFUSAL_LINES, (
-        f"stale entries: {sorted((SPLIT_LINES | REFUSAL_LINES) - used)}"
-    )
-    for rel, _ in SPLIT_LINES:
-        assert rel.startswith(("demos/ask-your-data/", "tests/demo_askdata/")), rel
-        assert (ROOT / rel).is_file()
+    exempt = _exemptions()
+    assert used == set(exempt), f"stale entries: {sorted(set(exempt) - used)}"
+    for (rel, _), why in exempt.items():
+        assert why.strip() and (ROOT / rel).is_file(), rel
 
 
-def test_a_stage_shaped_dev_line_in_the_same_file_as_a_split_line_still_fails():
-    """Run the real scan on the real text of a file that holds a split line, with one stage-shaped line added: the split
-    line stays excused, the added line is a hit."""
-    rel = "demos/ask-your-data/askdata/evalset.py"
+def test_a_stage_shaped_line_in_a_file_that_holds_an_exempt_line_still_fails():
+    """Run the real scan on the real text of a file with an exempt line, plus one added line: the exempt line stays
+    excused, the added line is a hit."""
+    rel, line = "demos/ask-your-data/askdata/evalset.py", 'split: Literal["dev", "test"]'
     text = (ROOT / rel).read_text(encoding="utf-8")
-    assert _scan_text(rel, text) == ([], {(rel, 'split: Literal["dev", "test"]')}), (
-        "the file as it is should be clean and use its one split entry"
-    )
-    for added in (f"environment: {OLD}", f'ENV = "{OLD}"', f'if target == "{OLD}":'):
+    assert _scan_text(rel, text)[0] == [], "the file as it is should be clean"
+    for added in (
+        f"environment: {OLD}",
+        f'ENV = "{OLD}"',
+        f'split: Literal["{OLD}", "test", "pilot"]',
+    ):
         found, used = _scan_text(rel, text + "\n" + added + "\n")
         assert len(found) == 1 and added in found[0], f"the added line was not found: {added}"
-        assert used == {(rel, 'split: Literal["dev", "test"]')}
+        assert used == {(rel, line)}
 
 
-def _excused(rel: str, line: str) -> bool:
-    return (rel, line.strip()) in SPLIT_LINES
+def _lookalike(word: str) -> str:
+    """The word with its e written as a Cyrillic ie (a code point, so no look-alike literal in this file)."""
+    return word.replace("e", chr(0x0435))
 
 
-def test_a_stage_shaped_use_in_the_same_file_still_fails():
-    """The exemption excuses exact split lines only: a stage-shaped line in a file that holds one is not excused."""
-    rel = "demos/ask-your-data/askdata/evalset.py"
-    assert _excused(rel, 'split: Literal["dev", "test"]')
-    for line in (
-        f'stage = "{OLD}"',
-        f"environment: {OLD}",
-        f'split: Literal["{OLD}", "test", "pilot"]',  # a split line with a stage added is a different line
-        f'tier: Literal["{OLD}", "test"]',
-    ):
-        assert _hits(line), f"the scanner misses: {line}"
-        assert not _excused(rel, line), f"excused by mistake: {line}"
-    assert not _excused("demos/ask-your-data/askdata/other.py", 'split: Literal["dev", "test"]')
+# One template per shape; {w} is each of the three words in turn (the old word, staging, the bare stage), {W} upper case.
+SHAPES = [
+    "environment: {w}",
+    'environment="{w}"',
+    '"environment": "{w}"',
+    "ENV={w}",  # unquoted, and the CLI and CI forms
+    "APP_ENV={w}",
+    "docker run --env {w} app",
+    "      env: {w}",
+    "STAGE_{W}",  # an enum or constant name, and an enum member
+    "Environment.{W}",
+    "tier: {w}",
+    "profile={w}",
+    '"mode": "{w}"',
+    'x = {{"{w}": 1}}',  # a dict key
+    "    case '{w}':",
+    "y = 1 if ok else '{w}'",  # a conditional expression
+    '    "{w}",',  # a set or list member alone on its line
+    'if env == "{w}":',
+    "x = {w}|pilot|prod",
+    "demo, {w}",
+    "  - {w}",
+]
+# Only for the old word: "stage" and "staging" are ordinary words in these places.
+OLD_ONLY = [
+    "{W}_ONLY = frozenset()",
+    "def {w}_cfg(tmp_path):",
+    "def test_x_outside_{w}(cfg):",
+    "kept in {w} for the tests",
+    "kinds allowed only in `{w}`.",
+    "a {w} executor",
+    "https://{w}.example.org/x",
+    "## Running in {w}",
+]
+
+
+@pytest.mark.parametrize("shape", SHAPES)
+def test_the_scanner_finds_each_shape_for_each_word(shape):
+    for word in (OLD, "staging", "stage"):
+        line = shape.format(w=word, W=word.upper())
+        assert _hits(line), f"not found: {line}"
+
+
+@pytest.mark.parametrize("shape", OLD_ONLY)
+def test_the_scanner_finds_each_old_word_only_shape(shape):
+    line = shape.format(w=OLD, W=OLD.upper())
+    assert _hits(line), f"not found: {line}"
+
+
+FULLWIDTH = "".join(chr(0xFF00 + ord(c) - 0x20) for c in OLD)
 
 
 @pytest.mark.parametrize(
-    "line",
-    [
-        f"environment: {OLD}",
-        f'environment="{OLD}"',
-        f'"environment": "{OLD}"',
-        f'Literal["{OLD}", "pilot", "prod"]',
-        f"{OLD}|pilot|prod",
-        f"demo, {OLD}",
-        f"{OLD.upper()}_ONLY = frozenset()",
-        f"def {OLD}_cfg(tmp_path):",
-        f"def test_x_outside_{OLD}(cfg):",
-        f"kept in {OLD} for the tests",
-        f"kinds allowed only in `{OLD}`.",
-        f"(`{OLD}` only, by the environment table)",
-        f"a {OLD} executor",
-        f"refused outside {OLD}, no more",
-        f"https://{OLD}.example.org/x",
-        f"## Running in {OLD}",
-        f"tier: {OLD}",
-        f'stage = "{OLD}"',
-        f"profile={OLD}",
-        f'"mode": "{OLD}"',
-        f"deploy.mode: `{OLD}`",
-        f'STAGES = ["{OLD}"]',
-        f'("{OLD}",)',
-        f"{{'{OLD}'}}",
-        f'x = ["a", "{OLD}"]',
-        f"  - {OLD}",
-        f'  - "{OLD}"',
-        f'ENV="{OLD}"',
-        f"target: '{OLD}'",
-        f'deploy = "{OLD}"',
-        f'if env == "{OLD}":',
-        f'if env != "{OLD}":',
-        f'x = {{"k": "{OLD}"}}',
-    ],
+    "word", [FULLWIDTH, _lookalike(OLD), "D" + chr(0x0435) + "V", OLD[0] + chr(0x200B) + OLD[1:]]
 )
-def test_the_scanner_finds_each_stage_position(line):
-    assert _hits(line), f"not found: {line}"
+def test_the_scanner_finds_the_word_spelled_with_look_alike_letters(word):
+    for line in (f"environment: {word}", f'x = "{word}"', f"demo, {word}"):
+        assert _hits(line), f"not found: {line!r}"
+    assert _hits(f"environment: {_lookalike('staging')}"), "staging with a look-alike letter"
 
 
 @pytest.mark.parametrize(
@@ -698,23 +654,24 @@ def test_the_scanner_finds_each_stage_position(line):
         f"for row in {OLD}:",
         "modern mode: developer",
         "stage: demo",
+        "the demo stage and the pilot stage",
         "  - demo",
         f'default-groups = ["{OLD}x"]',
         f"mode: {OLD}elop",
+        'pytest.mark.parametrize("test")',
     ],
 )
 def test_the_scanner_ignores_words_that_are_not_stage_positions(line):
     assert not _hits(line), f"false hit: {line}: {_hits(line)}"
 
 
-@pytest.mark.parametrize("word", ["tier", "stage", "profile", "mode"])
-def test_a_four_character_separator_between_a_stage_word_and_the_old_word_is_found(word):
-    """`stage = "dev"` has four characters (space, equals, space, quote) between the words, and `"mode": "dev"` has four
-    as well (quote, colon, space, quote): both must be found. The reach is four; five is outside the position."""
+@pytest.mark.parametrize("name", ["env", "environment", "tier", "stage", "profile", "mode"])
+def test_the_reach_between_a_stage_name_and_the_old_word_is_four_characters(name):
+    """`stage = "dev"` has four characters (space, equals, space, quote) between the words, `"mode": "dev"` has four
+    as well: both found. Five is outside the position."""
     for sep in ('": "', ' = "', '"=: ', "':'", ": ", "="):
-        assert _hits(word + sep + OLD), f"not found: {word}{sep}{OLD}"
-    assert len('": "') == len(' = "') == 4
-    assert not _hits(word + " " * 5 + OLD), "the reach is four characters, not more"
+        assert _hits(name + sep + OLD), f"not found: {name}{sep}{OLD}"
+    assert not _hits(name + " " * 5 + OLD), "the reach is four characters, not more"
 
 
 # --- the redactor treats stage words as ordinary words, so `demo` joins them ----------------------------------

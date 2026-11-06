@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, Any
 
 from hadavin_sdk import replay_records
 from hadavin_sdk.actions.contract import effective_class
+from hadavin_sdk.stages import is_live
 
 if TYPE_CHECKING:
     from hadavin_sdk.registry import Registry
@@ -43,8 +44,6 @@ def key_problems(where: str, raw: Any) -> list[str]:
 
 
 def check(reg: Registry) -> list[str]:
-    from hadavin_sdk.config import is_live  # here, not at the top: config imports this module
-
     cfg = reg.config
     live = is_live(cfg.environment)
     out: list[str] = []
