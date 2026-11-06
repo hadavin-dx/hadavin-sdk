@@ -660,7 +660,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | au-JG5 | Opus EGM + ticket rev 1 JG-5 fix proposals via approvals | 07:43Z | +45min | PAUSED (order 49) | save, commit |
 | bd-P1a-fix2 | Sonnet builder P1a fix2 (order 49: U+0345 blocker, tests, mutant) on core/P1a | 07:52Z | +60min | running | verify, report sha |
 | au-genericity | Opus one-time genericity audit of frozen/merged core tickets (order 53 item 2) -> reviews/genericity-audit-1.md | 07:58Z | +60min | REPORTED | save, BN list |
-| ra-A | Opus rung audit part A (order 54) -> reviews/rung-audit-1-part-A.md | 07:59Z | +45min | running | save, merge into rung-audit-1.md |
+| ra-A | Opus rung audit part A (order 54) -> reviews/rung-audit-1-part-A.md | 07:59Z | +45min | REPORTED | save, merge into rung-audit-1.md |
 | ra-B | Opus rung audit part B (order 54) -> reviews/rung-audit-1-part-B.md | 07:59Z | +45min | REPORTED | save, merge into rung-audit-1.md |
 | ra-C | Opus rung audit part C (order 54) -> reviews/rung-audit-1-part-C.md | 07:59Z | +45min | REPORTED | save, merge into rung-audit-1.md |
 | ra-D | Opus rung audit part D (order 54) -> reviews/rung-audit-1-part-D.md | 07:59Z | +45min | running | save, merge into rung-audit-1.md |
