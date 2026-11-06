@@ -528,3 +528,4 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | au-AK2a-r2 | Opus author AK2a revision 2 | 10:05Z | +25min | running | verify, push |
 | rv-P1m-r2-adv | egm-design review PR 61 head 7442c0f | 10:05Z | +15min | running | save |
 | rv-P1m-r2-cor | egm-codebase-details review PR 61 head 7442c0f | 10:05Z | +15min | running | save |
+| sv-AK1-r2 | Sonnet save AK1 r2 pair + ledger | 10:15Z | +10min | running | verify, push |
