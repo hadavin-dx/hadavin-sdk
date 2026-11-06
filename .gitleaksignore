@@ -24,3 +24,5 @@ c440e29504220c2624a96e54dec9784d0cbe6042:tests/test_c1a_redactor.py:generic-api-
 c79169285807eba9d74c91307b17b6a25b740437:tests/test_c1a_redactor.py:generic-api-key:1065
 c79169285807eba9d74c91307b17b6a25b740437:tests/test_c1a_redactor.py:generic-api-key:1097
 c79169285807eba9d74c91307b17b6a25b740437:tests/test_c1a_redactor.py:generic-api-key:1185
+# Added 2026-11-06 by the lead: evidence file copied into branch core/cloud-handover (commit d1c5914) holds a LiteLLM test-proxy key HASH from a throwaway local gateway test (Key=1de..., budget test, proxy and database deleted). Checked by reading the line at that commit. Not a credential.
+d1c5914db1315f01ba7c5bc80b6a1d2c8abfd7a4:handover/evidence/gateway-check/evidence-1.md:generic-api-key:50
