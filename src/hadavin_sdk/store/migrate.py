@@ -426,7 +426,7 @@ def migrate(
         done = {r[0] for r in db.execute("SELECT version FROM schema_migrations").fetchall()}
         if gone := gone_message(done, files):
             raise MigrationNumberError([gone])
-        schema = db.execute("SELECT current_schema()").fetchone()[0]
+        schema = db.execute("SELECT current_schema()").fetchone()[0] or ""
         if late := order_problems(done, files, texts, schema):
             raise MigrationNumberError(late)
         pending = [p for p in files if p.stem not in done]
