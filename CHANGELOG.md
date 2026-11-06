@@ -368,6 +368,20 @@
   on Python 3.12 and 3.13. Tests: the liveness check of the background-process test polls against a deadline and names the state of
   a process that survives; the signal test ends a runner that never started its child with SIGTERM before it kills the leftovers; the
   refused-run test checks the shared folder after the first refusal. Five new mutants and one replaced (54 in all).
+  Fix 1 (P1m, three review-4 Minors): (a) a Windows junction under `src` or a fixture folder is refused (`ValueError`) before the
+  snapshot copy, because `shutil.copytree` follows a junction and copies its target as a real folder (`os.path.isjunction`, Python 3.12
+  and later; where it is missing nothing is refused). (b) The refusal of a path with `:` now says "a path may not contain ':'" and the
+  module docstring states the limit. (c) A pytest child that someone else reaped first (SIGCHLD ignored) used to come back as exit code 0,
+  which the judge reads as a pass; it is now `REAPED_ELSEWHERE`: an ERROR row (`REAPED ELSEWHERE`) for a mutant, a `RuntimeError` for the
+  baseline. Six new tests, eight new mutants (62 in all). Review 5 (order 40) added: a junction is also refused when it is the `src` or fixture folder itself or a part of the fixture path (`tests` in `tests/fixtures`); a reaped baseline is named as reaped; the Limits docstring now says that without `os.waitid` (macOS) a child reaped by someone else can still read as exit code 0, and that on the reaped-leader path descendants are not killed.
+  A real Windows junction was probed by hand by the lead (not by this test, which patches `os.path.isjunction`; record: `handover/reviews/P1m-fix1-junction-probe.txt`). Run by the lead on Windows, Python 3.13.3, `mklink /J`:
+  ```
+  3.13.3 mklink rc 0
+  islink False isjunction True
+  is_dir True
+  ```
+  Also: `tests-py312` is named in the `ci.yml` header comment (no job or check name changed).
+  The byte-copy hash of `tools/mutation_runner.py` changes (new value below): re-copy it in every repository that keeps a copy.
 - Note on the name: `tools/` is a top-level Python package called `tools`, a generic name. A repository that copies it and already
   has its own `tools` package or folder must merge or rename deliberately; the mutants script puts the repository root on
   `sys.path` so that `tools.mutation_runner` imports, and another `tools` earlier on the path would shadow it.
@@ -376,4 +390,4 @@
   - `src/hadavin_sdk/testing/__init__.py`: `3c77d034fe2a1ee70adea0d0bd259a20edda397d8ebd55a0e40b63e5c21c9e1c`
   - `src/hadavin_sdk/testing/mutation.py`: `75c32a4e501f5c3a4edcd6f1fd8a58603ebb2ef6fd43842e558ce0761eaee03e`
   - `tools/__init__.py`: `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
-  - `tools/mutation_runner.py`: `3e8903fb3f3ce721256c054e875eb8d1eca09db6fd2513c4ee34b88f1463e03c`
+  - `tools/mutation_runner.py`: `489517fb224f0598e14244ded1b37fe2a68be69e2396e56e450be0d8b1c0a1a7`

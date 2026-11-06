@@ -10,6 +10,7 @@ import hashlib
 import json
 import os
 import re
+import signal
 import subprocess
 import sys
 import tempfile
@@ -1359,7 +1360,8 @@ def test_a_leader_reaped_by_someone_else_is_known_as_ended_so_its_group_is_not_s
     try:
         os.waitid(os.P_PID, proc.pid, os.WEXITED | os.WNOWAIT)  # ended, not reaped
         os.waitpid(proc.pid, 0)  # someone else reaps it
-        mr._wait_unreaped(proc, 30)
+        with pytest.raises(mr._ReapedElsewhere):
+            mr._wait_unreaped(proc, 30)
         assert proc.returncode is not None, (
             "the reaped leader was still unknown to its Popen object"
         )
@@ -1409,6 +1411,123 @@ def test_a_relative_link_that_points_out_of_the_tree_is_refused_at_snapshot_time
     (root / "src" / "pk" / "out.txt").unlink()
     _symlink_or_skip("core.py", root / "src" / "pk" / "alias.py")
     assert _baseline_passes(root), "a relative link inside the tree was refused"
+
+
+def test_a_junction_under_src_or_a_fixture_folder_is_refused_before_the_copy(tmp_path, monkeypatch):
+    """``shutil.copytree(symlinks=True)`` follows a Windows junction (``islink`` is False for it) and copies the target as a real
+    folder, so the snapshot would hold files from outside the tree. The runner asks ``os.path.isjunction`` (Python 3.12 and later) in
+    the CALLER's tree before the copy. On Linux nothing is a junction, so the test makes ``isjunction`` say that a folder named
+    ``jn`` is one (a real Windows junction was probed by hand by the lead: ``handover/reviews/P1m-fix1-junction-probe.txt``, quoted in the CHANGELOG; this test does not create one)."""
+    monkeypatch.setattr(
+        os.path, "isjunction", lambda path: os.path.basename(path) == "jn", raising=False
+    )
+    shared = tmp_path / "shared_temp"
+    shared.mkdir()
+    root = _raising_tree(tmp_path)
+    (root / "tests" / "fixtures").mkdir()
+    assert _baseline_passes(root), "a tree with no junction was refused"
+    for where in (root / "src" / "pk", root / "tests" / "fixtures"):
+        (where / "jn").mkdir()
+        label = (
+            "a junction under src was copied"
+            if where.parent.name == "src"
+            else "a junction in a fixture folder was copied"
+        )
+        extra = () if where.parent.name == "src" else ("tests/fixtures",)
+        with pytest.MonkeyPatch.context() as mp:
+            mp.setattr(tempfile, "tempdir", str(shared))
+            _must_refuse(
+                label, run_mutants, root, [], ["tests/test_core.py"], extra_dirs=extra, match="junction"
+            )  # fmt: skip
+        assert list(shared.iterdir()) == [], "a refused run left a temp folder behind"
+        (where / "jn").rmdir()
+    monkeypatch.delattr(
+        os.path, "isjunction"
+    )  # an older Python without the function: nothing to ask, nothing refused
+    (root / "src" / "pk" / "jn").mkdir()
+    assert _baseline_passes(root), "a Python without os.path.isjunction refused a tree"
+
+
+def test_the_colon_refusal_says_a_path_may_not_contain_a_colon_and_the_docstring_states_it():
+    for bad in ("a.py:stream", "C:x.py", "C:\\x.py", "src/a.py:"):
+        with pytest.raises(ValueError) as refused:
+            mr._relative(bad)
+        # outside the ``except`` block, so the failing line is this message and not the chained ValueError
+        assert "a path may not contain ':'" in str(refused.value), (
+            f"the colon message for a stream name was: {refused.value}"
+        )
+    assert "a path may not contain ':'" in (mr.__doc__ or ""), (
+        "the module docstring does not state the colon limit"
+    )
+
+
+@pytest.mark.skipif(
+    sys.platform == "win32" or not hasattr(os, "waitid"), reason="SIGCHLD and waitid are POSIX only"
+)
+def test_a_child_reaped_by_someone_else_is_an_error_result_not_exit_code_zero(tmp_path):
+    """With SIGCHLD ignored the kernel reaps the child itself and its exit status is lost; ``Popen`` then calls it 0. A FAILING test run
+    must not come back as 0 (the judge would read a pass); it comes back as ``REAPED_ELSEWHERE``."""
+    (tmp_path / "test_bad.py").write_text("def test_a():\n    assert False\n", encoding="utf-8")
+    old = signal.signal(signal.SIGCHLD, signal.SIG_IGN)
+    try:
+        rc = mr._pytest(tmp_path, ["test_bad.py"], tmp_path / "r.xml", 120)
+    finally:
+        signal.signal(signal.SIGCHLD, old)
+    assert rc != 0, "a child reaped by someone else was read as exit code 0"
+    assert rc == mr.REAPED_ELSEWHERE, f"a reaped child came back as {rc}, not REAPED_ELSEWHERE"
+
+
+def test_a_reaped_child_is_an_error_row_for_a_mutant(tmp_path, monkeypatch):
+    root = _raising_tree(tmp_path)
+    muts = [Mutant("m0", "src/pk/core.py", "return flag", "return not flag", "test_a_x")]
+    codes = iter([0, mr.REAPED_ELSEWHERE])
+    monkeypatch.setattr(mr, "_pytest", lambda cwd, tests, junit, timeout: next(codes))
+    out = run_mutants(root, muts, ["tests/test_core.py"], extra_dirs=())
+    assert out == [("m0", Verdict.ERROR, "REAPED ELSEWHERE", False)], (
+        "a mutant run reaped by someone else was not an error row"
+    )
+    monkeypatch.setattr(mr, "_pytest", lambda cwd, tests, junit, timeout: mr.REAPED_ELSEWHERE)
+
+
+def test_a_reaped_baseline_is_refused_as_reaped_not_as_a_failing_baseline(tmp_path, monkeypatch):
+    root = _raising_tree(tmp_path)
+    monkeypatch.setattr(mr, "_pytest", lambda cwd, tests, junit, timeout: mr.REAPED_ELSEWHERE)
+    with pytest.raises(RuntimeError) as refused:
+        run_mutants(root, [], ["tests/test_core.py"], extra_dirs=())
+    # outside the ``with``, so the failing line is this message and not a regex mismatch
+    assert "reaped by someone else" in str(refused.value), (
+        f"a reaped baseline was not named as reaped: {refused.value}"
+    )
+
+
+def test_a_junction_as_the_folder_itself_or_a_part_of_its_path_is_refused(tmp_path, monkeypatch):
+    """``isjunction`` is asked about the folder itself and about every part of its path, not only about what lies below it."""
+    root = _raising_tree(tmp_path)
+    (root / "tests" / "fixtures").mkdir()
+    junctions: set[str] = set()
+    monkeypatch.setattr(
+        os.path, "isjunction", lambda path: os.path.normpath(path) in junctions, raising=False
+    )
+    assert _baseline_passes(root), "a tree with no junction was refused"
+    cases = (
+        (root / "src", (), "the src folder itself was a junction and was copied"),
+        (
+            root / "tests" / "fixtures",
+            ("tests/fixtures",),
+            "a fixture folder that is itself a junction was copied",
+        ),
+        (
+            root / "tests",
+            ("tests/fixtures",),
+            "a junction in the middle of a fixture path was copied",
+        ),
+    )
+    for folder, extra, label in cases:
+        junctions.clear()
+        junctions.add(os.path.normpath(folder))
+        _must_refuse(
+            label, run_mutants, root, [], ["tests/test_core.py"], extra_dirs=extra, match="junction"
+        )  # fmt: skip
 
 
 # last on purpose: a mutation of a pinned file must be judged by the test aimed at it, not by this hash pin

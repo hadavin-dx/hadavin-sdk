@@ -11,7 +11,10 @@ it copies ``tools/__init__.py`` and ``tools/mutation_runner.py`` byte for byte (
 tree (``_locate``: the caller's string is compared with the listed names and never joined to a path), every other path is checked to
 stay inside its tree (``_inside``: a ``..`` part or an absolute path is a ``ValueError``), a path that starts with ``-`` or ``@`` is refused
 everywhere (``_plain_operand``: pytest would read it as an option or as an argument file, also after ``--``; ``./name`` is the way to write it),
-a relative symlink of the snapshot that points outside the tree is refused (``_refuse_links_out``), and every pytest run has a timeout, and a timeout kills the whole process tree of the run.
+a relative symlink of the snapshot that points outside the tree is refused (``_refuse_links_out``), a Windows junction (a folder link that ``shutil.copytree`` follows and copies as a real folder)
+in ``src`` or in a fixture folder, or one of those folders itself or a part of its path, is refused before the copy (``_refuse_junctions``; ``os.path.isjunction``, Python 3.12 and later, where it is always False off Windows), and every pytest run has a timeout, and a timeout kills the whole process tree of the run.
+
+The limit on names: a path may not contain ':' (a Windows drive or an NTFS stream name), so a file or folder whose name holds a colon cannot be named to this tool at all, on any system.
 
 Limits, stated plainly. The tree kill reaches the processes that stay in the run's process group (POSIX) or the parent chain
 (Windows ``taskkill /T``). A test or mutant that starts a process in a NEW session (``setsid``, ``start_new_session=True``) or, on
@@ -33,11 +36,16 @@ On POSIX the run's process group is killed while its leader has ended but is NOT
 group id cannot belong to an unrelated process by then. Where ``os.waitid`` does not exist (macOS) the leader is reaped by ``wait``
 first and the group kill after a normal exit has the old, tiny pid-reuse risk.
 
+Two more limits of the "reaped by someone else" case (SIGCHLD ignored, or a stray ``wait``). (a) Where ``os.waitid`` does not exist
+(macOS) the run is waited for with ``proc.wait``, which cannot tell a reaped child from one that exited with status 0, so such a child
+can still read as exit code 0 there: the ``REAPED_ELSEWHERE`` result exists on platforms with ``os.waitid`` only. (b) On the reaped-leader
+path the group is NOT killed (its leader's pid may belong to another process by now), so descendants the child left behind are not killed.
+
 Packages that need a ``conftest.py`` or pytest options from a ``pyproject.toml`` / ``pytest.ini`` cannot be run by this tool: pytest
 runs with ``--noconftest`` and with an empty ini file on purpose (a planted file in a parent folder is never read).
 
 Dev-tool constants: ``MAX_JUNIT_CHARS`` (in ``testing.mutation``), ``SETUP_TRIES``, ``SETUP_WAIT``, ``WAIT_POLL``, ``TREE_KILL_TIMEOUT``,
-``TIMED_OUT``, ``CHILD_ENV``, ``CHILD_FIXED_ENV``, ``JUNIT_REFUSED`` and the default run timeout (``DEFAULT_TIMEOUT``, 900.0 seconds) are module constants here and NOT in ``defaults.py``:
+``TIMED_OUT``, ``REAPED_ELSEWHERE``, ``CHILD_ENV``, ``CHILD_FIXED_ENV``, ``JUNIT_REFUSED`` and the default run timeout (``DEFAULT_TIMEOUT``, 900.0 seconds) are module constants here and NOT in ``defaults.py``:
 the no-hardcoding rule is about product behaviour (names, regions, prices, thresholds a deployment tunes), and this is a developer tool
 that ships in no wheel, has no config surface and is copied byte for byte into demos. A caller changes the timeouts by argument.
 """
@@ -111,7 +119,7 @@ def _relative(rel: str) -> str:
     _plain_operand(rel)
     # a Windows drive, or an NTFS alternate data stream name (``file.py:stream``): neither is a plain relative path
     if ":" in rel:
-        raise ValueError(f"path escapes its tree: {rel!r}")
+        raise ValueError(f"a path may not contain ':': {rel!r}")
     for pure in (PurePosixPath(rel), PureWindowsPath(rel)):
         if pure.is_absolute() or pure.anchor or ".." in pure.parts:
             raise ValueError(f"path escapes its tree: {rel!r}")
@@ -131,6 +139,7 @@ _IS_WINDOWS = (
     os.name == "nt"
 )  # one place to ask (tests set it to check the Windows branch of the tree kill on any system)
 DEFAULT_TIMEOUT = 900.0  # seconds one pytest run may take (a 15-minute ceiling for the slowest killer); override by argument
+REAPED_ELSEWHERE = -1001  # returned instead of an exit code when someone else reaped the child first (SIGCHLD ignored, a stray ``wait``): its exit status is lost and ``Popen`` would report 0, which the judge must never read as a pass or a fail
 TIMED_OUT = -1000  # returned instead of an exit code when the run exceeded its timeout; no process exit status is this low (POSIX -9 is a SIGKILL, for example the OOM killer, and is judged as an error)
 CHILD_ENV = (
     "PATH", "PATHEXT", "SYSTEMROOT", "SYSTEMDRIVE", "WINDIR", "COMSPEC", "TEMP", "TMP", "TMPDIR", "HOME", "USERPROFILE",
@@ -181,6 +190,10 @@ def _locate(base: Path, rel: str) -> Path:
     raise ValueError(f"no such file inside the tree: {rel!r}")
 
 
+class _ReapedElsewhere(Exception):
+    """The child ended but another waiter reaped it, so its exit status is unknown (``Popen`` itself would call it 0)."""
+
+
 def _pytest(cwd: Path, tests: Sequence[str], junit: Path, timeout: float) -> int:
     # an ALLOWLIST, not os.environ: a mutant run must not see a database DSN, a token or any other secret of the caller; PYTHONPATH also holds the tree root (tests may import tools.*)
     for operand in tests:  # the one place the caller's strings reach the argv: refuse here too, not only where the paths are first checked
@@ -217,6 +230,8 @@ def _pytest(cwd: Path, tests: Sequence[str], junit: Path, timeout: float) -> int
             _kill_tree(proc)
             # a mutant that loops forever is reported, never allowed to hang the run
             return TIMED_OUT
+        except _ReapedElsewhere:
+            return REAPED_ELSEWHERE  # ``proc`` knows it has ended (poll), so there is no group to signal and nothing to kill
         # a normal exit can leave a background process of the run behind: on POSIX it is killed too. Not on Windows: the parent is
         # gone, taskkill /T finds no children, and the pid may already belong to an unrelated process
         if not _IS_WINDOWS:
@@ -234,7 +249,9 @@ def _pytest(cwd: Path, tests: Sequence[str], junit: Path, timeout: float) -> int
 
 def _wait_unreaped(proc: subprocess.Popen[bytes], timeout: float) -> None:
     """Return when ``proc`` has ended; raise ``subprocess.TimeoutExpired`` after ``timeout`` seconds. On POSIX the ended leader is NOT
-    reaped (``os.waitid`` with ``WNOWAIT``, polled), so the later group kill cannot hit a reused pid; ``_kill_tree`` reaps it. Windows,
+    reaped (``os.waitid`` with ``WNOWAIT``, polled), so the later group kill cannot hit a reused pid; ``_kill_tree`` reaps it. If someone
+    else reaped it first (SIGCHLD ignored) its exit status is gone: ``proc`` is told it has ended, and ``_ReapedElsewhere`` is raised.
+    Windows,
     and a POSIX without ``os.waitid`` (macOS): ``proc.wait``, which reaps. Tests patch this function to steer the wait."""
     if _IS_WINDOWS or not hasattr(os, "waitid"):
         proc.wait(timeout=timeout)
@@ -245,8 +262,8 @@ def _wait_unreaped(proc: subprocess.Popen[bytes], timeout: float) -> None:
             if os.waitid(os.P_PID, proc.pid, os.WEXITED | os.WNOHANG | os.WNOWAIT) is not None:
                 return
         except ChildProcessError:  # someone else reaped it already (SIGCHLD ignored): let ``proc`` learn it, or ``_kill_tree`` would signal a reaped group
-            proc.poll()
-            return
+            proc.poll()  # sets returncode (0, a guess) so ``_kill_tree`` will not signal a reaped group
+            raise _ReapedElsewhere from None
         left = deadline - time.monotonic()
         if left <= 0:
             raise subprocess.TimeoutExpired(proc.args, timeout)
@@ -394,6 +411,28 @@ def _refuse_links_out(base: Path) -> None:
                 )
 
 
+def _refuse_junctions(root: Path, rel: str) -> None:
+    """Refuse a Windows junction at ``root / rel`` (``ValueError``): the folder itself, any part of the path ``rel`` (``tests`` in
+    ``tests/fixtures``) and anything below it. ``shutil.copytree(symlinks=True)`` does not see a junction as a link (Python
+    3.12 ``islink`` is False for it), follows it and copies the target as a real folder, so the snapshot would hold files from outside the
+    tree. Looked at in the CALLER's tree before the copy: afterwards nothing tells the copy from a real folder. ``os.path.isjunction`` exists
+    from Python 3.12 (always False off Windows); where it is missing there is nothing to ask."""
+    isjunction = getattr(os.path, "isjunction", None)
+    if isjunction is None:
+        return
+    here = root
+    for part in re.split(r"[\\/]", rel):
+        here = here / part
+        if isjunction(here):
+            raise ValueError(f"a junction is not followed: {rel!r} (at {part!r})")
+    for dirpath, dirs, _files in os.walk(here):
+        for name in dirs:
+            if isjunction(os.path.join(dirpath, name)):
+                raise ValueError(
+                    f"a junction is not followed: {os.path.relpath(os.path.join(dirpath, name), root)!r}"
+                )
+
+
 def _run_mutants(
     root: Path,
     mutants: Iterable[Mutant],
@@ -461,6 +500,7 @@ def _run_mutants(
         snap.mkdir()
         # ONE snapshot of the tree at the start: every mutant copy is made from it, so an edit of ``root`` while the run is going (a
         # developer saving a file, a second tool) can never leak into a later mutant
+        _refuse_junctions(root, "src")
         shutil.copytree(
             root / "src", snap / "src", symlinks=True, ignore=shutil.ignore_patterns("__pycache__")
         )  # links stay links (never followed out of the tree)
@@ -470,20 +510,20 @@ def _run_mutants(
             shutil.copy(_inside(root, t), dst)
         for d in extra_dirs:
             if _inside(root, d).exists():
+                _refuse_junctions(root, d)
                 shutil.copytree(
                     _inside(root, d), _inside(snap, d), symlinks=True, dirs_exist_ok=True
                 )
         _refuse_links_out(snap)
         fresh()
-        if (
-            _pytest(
-                tmp,
-                tests,
-                tmp / "base.xml",
-                timeout if baseline_timeout is None else baseline_timeout,
+        base_rc = _pytest(
+            tmp, tests, tmp / "base.xml", timeout if baseline_timeout is None else baseline_timeout
+        )
+        if base_rc == REAPED_ELSEWHERE:
+            raise RuntimeError(
+                "the baseline run was reaped by someone else: its exit status is unknown"
             )
-            != 0
-        ):
+        if base_rc != 0:
             raise RuntimeError("the unmutated copy does not pass its tests")
         for m in mutants:
             if only and not any(o in m.name for o in only):
@@ -507,6 +547,10 @@ def _run_mutants(
             rc = _pytest(tmp, operands, junit, timeout)
             if rc == TIMED_OUT:
                 emit((m.name, Verdict.ERROR, "TIMEOUT", False))
+                continue
+            # the exit status is lost: an error row, never a pass or a kill
+            if rc == REAPED_ELSEWHERE:
+                emit((m.name, Verdict.ERROR, "REAPED ELSEWHERE", False))
                 continue
             try:
                 too_big = (

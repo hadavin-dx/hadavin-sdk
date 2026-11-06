@@ -71,8 +71,14 @@ MOVED = (
     "test_a_leader_reaped_by_someone_else_is_known_as_ended_so_its_group_is_not_signalled",
     "test_run_mutants_is_not_re_entrant_and_a_nested_call_leaves_the_outer_one_alone",
     "test_a_relative_link_that_points_out_of_the_tree_is_refused_at_snapshot_time",
+    "test_a_junction_under_src_or_a_fixture_folder_is_refused_before_the_copy",
+    "test_the_colon_refusal_says_a_path_may_not_contain_a_colon_and_the_docstring_states_it",
+    "test_a_child_reaped_by_someone_else_is_an_error_result_not_exit_code_zero",
+    "test_a_reaped_child_is_an_error_row_for_a_mutant",
+    "test_a_reaped_baseline_is_refused_as_reaped_not_as_a_failing_baseline",
+    "test_a_junction_as_the_folder_itself_or_a_part_of_its_path_is_refused",
 )
-EXPECTED_MUTANTS = 54
+EXPECTED_MUTANTS = 62
 MANIFEST_TEST = "test_the_manifest_pins_the_files_a_demo_copies"
 
 
