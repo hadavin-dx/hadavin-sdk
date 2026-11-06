@@ -319,7 +319,7 @@ class PostgresStore:
         retrying = Retrying(
             stop=stop_after_attempt(_ATTEMPTS if retry else 1),
             wait=wait_exponential_jitter(multiplier=0.02, max=1, exp_base=2, jitter=0.02),
-            retry=retry_if_exception(lambda e: retry and _sqlstate(e) in _RETRY_SQLSTATES),
+            retry=retry_if_exception(lambda e: _sqlstate(e) in _RETRY_SQLSTATES),
             before_sleep=before_sleep,
             reraise=True,
         )
