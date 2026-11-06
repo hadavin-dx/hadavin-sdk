@@ -309,3 +309,8 @@ P0a | fix1 (3 Majors, order 88) started, small push | 1 | -
 2026-11-06T12:36:26Z | package | stage | builders running | blocked on
 P1a | fix4 pushed c05ba58 (PR 63); waiting lead review | 0 | -
 P1b | redo merge on c05ba58 next (builder starting) | 1 | -
+2026-11-06T12:36:56Z | package | stage | builders running | blocked on
+P1b | redo on fix4 started (one push at end) | 1 | -
+P1c | build waits for P1b head | 0 | P1b
+P2d-2 | waits for P1b redo | 0 | P1b
+13 agents running
