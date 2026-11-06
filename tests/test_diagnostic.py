@@ -82,15 +82,19 @@ def test_diagnose_never_raises_on_exception() -> None:
         assert grammar_ok(line_of(e))
 
 
-@pytest.mark.parametrize("exc_type", [asyncio.CancelledError, GeneratorExit, KeyboardInterrupt])
-def test_baseexception_from_hostile_getattr_propagates(exc_type: type[BaseException]) -> None:
+def _hostile_errno(exc_type: type[BaseException]) -> OSError:
     class E(OSError):
         @property
         def errno(self) -> int:  # type: ignore[override]
             raise exc_type()
 
-    with pytest.raises(exc_type):
-        diagnose(E(2, "x"), step=STEP)
+    return E(2, "x")
+
+
+def test_baseexception_from_hostile_getattr_propagates() -> None:
+    for exc_type in (asyncio.CancelledError, GeneratorExit, KeyboardInterrupt):
+        with pytest.raises(exc_type):
+            diagnose(_hostile_errno(exc_type), step=STEP)
 
     class F(OSError):
         @property
@@ -151,7 +155,9 @@ def test_facts_bounds_table() -> None:
     for key, (lo, hi) in FACT_BOUNDS.items():
         for value, kept in ((lo - 1, False), (lo, True), (hi, True), (hi + 1, False)):
             out = line_of(ValueError("x"), facts={key: value})
-            assert (f" {key.value}={value}" in out) is kept, (key, value, out)
+            assert (f" {key.value}={value}" in out) is kept, (
+                f"{'kept' if kept else 'dropped'} {key.value}={value}: {out}"
+            )
         assert f" {key.value}=" not in line_of(
             ValueError("x"), facts={key: True}
         )  # a bool is not a number
@@ -255,26 +261,33 @@ def test_locator_and_fp() -> None:
     assert "at=-" in line_of(corpus._f_compiled("made_up.py", "x", None))
 
 
+def _raised_in_stats(source: str, **names: object) -> BaseException:
+    """Run ``source`` as a function ``_p5a_probe`` in the real namespace of ``stats`` (own code by every frame rule) and return what it raises."""
+    d = vars(stats)
+    d.update(names)
+    try:
+        exec(compile(source, stats.__file__, "exec"), d)  # noqa: S102
+        d["_p5a_probe"]()
+    except Exception as e:  # noqa: BLE001
+        return e
+    finally:
+        d.pop("_p5a_probe", None)
+        for n in names:
+            d.pop(n, None)
+    raise AssertionError("no raise")
+
+
 def test_internal_bug_is_decided_on_the_raise_frame() -> None:
     out = line_of(corpus._f_in_stats("same", "x"))
-    assert "code=internal_bug" in out and "at=stats.py:" in out
-    import os
-
-    def env() -> str:
-        try:
-            os.environ["P5A_NOT_SET_ANYWHERE"]
-        except KeyError as e:
-            return line_of(e)
-        raise AssertionError
-
-    assert "code=foreign_exception" in env()
+    assert "code=internal_bug" in out and "at=stats.py:" in out, f"own raise: {out}"
+    env = _raised_in_stats(
+        "def _p5a_probe():\n    import os\n    return os.environ['P5A_NOT_SET_ANYWHERE']\n"
+    )
+    assert "code=foreign_exception" in line_of(env), f"os.environ from own code: {line_of(env)}"
     assert "code=foreign_exception" in line_of(corpus._f_in_stats("other_file_in_package", "x"))
-
-    class KeyError_(Exception):
-        pass
-
-    look = type("KeyError", (Exception,), {"__module__": "builtins"})
-    assert "code=foreign_exception" in line_of(look("x"))
+    look = type("KeyError", (Exception,), {})
+    fake = _raised_in_stats("def _p5a_probe():\n    raise P5A_LOOK('x')\n", P5A_LOOK=look)
+    assert "code=foreign_exception" in line_of(fake), f"look-alike class: {line_of(fake)}"
 
 
 def test_family_order_timeout_before_os_error() -> None:
@@ -304,6 +317,7 @@ def test_psycopg_phase_is_sqlstate_class_only() -> None:
 
 
 def test_psycopg_claimed_module_name_is_not_trusted() -> None:
+    pytest.importorskip("psycopg")  # the check only runs when the driver is loaded
     fake = type(
         "OperationalError", (Exception,), {"__module__": "psycopg.errors", "sqlstate": "28P01"}
     )
@@ -353,19 +367,21 @@ def test_long_traceback_is_foreign() -> None:
     src = "def _p5a_probe_deep(n):\n    if n == 0:\n        raise KeyError('x')\n    return _p5a_probe_deep(n - 1)\n"
     old = sys.getrecursionlimit()
     sys.setrecursionlimit(6000)
+    got: dict[int, str] = {}
     try:
         exec(compile(src, stats.__file__, "exec"), d)  # noqa: S102
-        for depth, code in (
-            (20, "internal_bug"),
-            (defaults.DIAG_TB_STEPS + 50, "foreign_exception"),
-        ):
+        for depth in (20, defaults.DIAG_TB_STEPS + 50):
             try:
                 d["_p5a_probe_deep"](depth)
             except KeyError as e:
-                assert f"code={code} " in line_of(e), (depth, line_of(e))
+                got[depth] = line_of(e)
     finally:
         d.pop("_p5a_probe_deep", None)
         sys.setrecursionlimit(old)
+    assert "code=internal_bug " in got[20], f"short traceback: {got[20]}"
+    assert "code=foreign_exception " in got[defaults.DIAG_TB_STEPS + 50], (
+        f"long traceback: {got[defaults.DIAG_TB_STEPS + 50]}"
+    )
 
 
 def test_off_list_foreign_class_prints_foreign_class() -> None:

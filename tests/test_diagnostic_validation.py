@@ -66,7 +66,8 @@ def test_union_tag_and_rootmodel_dict_key_never_shown() -> None:
 
 def test_more_than_5_errors_gives_plus_n_more() -> None:
     out = validation_text(err("many", {"a": CAN}))  # seven fields, all failing
-    assert out.count(";") == 5 and out.endswith("; +2 more"), out
+    assert out.count(";") == 5, f"types printed: {out}"
+    assert out.endswith("; +2 more"), f"tail: {out}"
 
 
 def test_non_validation_error_gives_other() -> None:
@@ -75,8 +76,15 @@ def test_non_validation_error_gives_other() -> None:
 
 
 def test_a_type_outside_the_closed_list_prints_other() -> None:
-    out = validation_text(err("enumerated", {"color": "blue"}))
-    assert out in VALIDATION_TYPES | {VALIDATION_OTHER}
+    from typing import Annotated
+
+    from pydantic import Field, TypeAdapter
+
+    with pytest.raises(Exception) as info:
+        TypeAdapter(Annotated[int, Field(ge=5)]).validate_python(1)
+    assert validation_text(info.value) == "other", (
+        f"outside the closed list: {validation_text(info.value)}"
+    )
 
 
 def test_json_decode_error_prints_code_and_position_only() -> None:
