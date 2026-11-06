@@ -334,3 +334,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | rev2-P4b1 | Sonnet revision author for P4b1 after round-1 resolve (order 20) | sonnet | 02:39Z | +60min | running | verify commit and counts; then round 2 reviewers |
 | res-bs-P1 | Opus egm-resolve build-start P1 (one round) | opus | 02:40Z | +60min | running | verify build notes in tickets/P1.md; S0 EXIT P1 effective |
 | rev2-P4b2 | Sonnet revision author for P4b2 after round-1 resolve | sonnet | 02:40Z | +60min | running | verify commit and counts; then round 2 reviewers |
+| r2-P5a-adv | Sonnet egm-design adversarial round 2 of tickets/P5a.md | sonnet | 02:40Z | +30min | running | save report to reviews/; then resolve |
+| r2-P5a-cor | Sonnet egm-codebase-details correctness round 2 of tickets/P5a.md | sonnet | 02:40Z | +30min | running | save report to reviews/; then resolve |
+| r1-P5b5-adv | Sonnet egm-design adversarial round 1 of tickets/P5b5.md | sonnet | 02:40Z | +30min | running | save report to reviews/; then resolve |
+| r1-P5b5-cor | Sonnet egm-codebase-details correctness round 1 of tickets/P5b5.md | sonnet | 02:40Z | +30min | running | save report to reviews/; then resolve |
