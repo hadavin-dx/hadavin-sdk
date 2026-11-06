@@ -301,3 +301,9 @@ Done under order 69:
 - Reproduction for diagnostic.py: stdlib logging, structlog and traceback printed the exception message in 4 of 4 probes; scrubadub left 8 of 9 hostile messages readable; Presidio (small model) left 2 of 9.
 - Licences read from PyPI: Presidio MIT, structlog MIT OR Apache-2.0, pydantic MIT. scrubadub's two metadata fields disagree (MIT versus Apache): UNVERIFIED. Hypothesis MPL-2.0, not run.
 - Size: ticket 340 lines, 114,808 bytes; no split recommended (R450(n)). Ten UNVERIFIED items are listed in the report. TOOLS.md not edited; proposed rows for presidio, scrubadub, structlog, pydantic, hypothesis wait for you.
+
+## q162 (order 70 applied; INFORM; no new NEEDS LEAD)
+- q159 P1c: an Opus agent is writing rev 3 (PL1 add "nothing decoded is written back"; PL2 add a maximum token length as a named constant; PL6 no warm-up; PL8 UTF-16LE only if a corpus row needs it). I report it in the next item when it lands, then Goldfish round 2 (redaction path, no cap) on a db17c53 snapshot. Relays done: P5c BN-26 (PL4: three files hit by an empty `kept_host_suffixes`), P2d BN-5 (PL3: two look-alike xfail rows go to P2d-1), P5a BN-24 (PL5: id P1c keeps its meaning; BN-23 cuts approved in principle, applied at build start). No build before P1b merges.
+- q160: licence register records OpenLDAP and libselinux "accepted by lead 2026-11-06, FYI to owner" (`reviews/licence-scan-1.md` part 3); psycopg notice text now lists the bundled libraries by name and version, marked "licence from upstream, not shipped in the wheel"; the P2a line 3 path fixed (`<repo>/src`); TOOLS.md rows T-135 to T-141 added, all UNVERIFIED = yes (count line 141 rows, 28 verified, 113 unverified).
+- q161: nothing applied yet by design (cuts wait for P5a build start).
+- Order 70 item 4 (core currency research, egress.py): read, not started.
