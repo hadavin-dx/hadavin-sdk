@@ -606,5 +606,5 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | au-P4c-r4 | Opus author P4c revision 4 (round 3 resolve, no further round per order 24) | 05:35Z | +30min | running | verify, push, freeze |
 | au-P5b1-r3 | Opus author P5b1 revision 3 (round 2 resolve) | 05:35Z | +30min | running | verify, push, round 3 pair |
 | au-P8a-r3 | Opus author P8a revision 3 (round 2 resolve) | 05:35Z | +30min | running | verify, push, round 3 pair |
-| rd-AKG1-des | egm-design review of AK-G1 turn-flow design (EGM step 3) | 05:41Z | +15min | running | resolve OP-1..6 |
+| rd-AKG1-des | egm-design review of AK-G1 turn-flow design (EGM step 3) | 05:41Z | +15min | REPORTED | resolve OP-1..6 |
 | rc-AKG1-des | egm-codebase-details review of the same | 05:41Z | +15min | running | resolve |
