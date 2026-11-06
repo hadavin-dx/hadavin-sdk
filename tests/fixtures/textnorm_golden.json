@@ -1,20 +1,26 @@
 {
- "note": "One entry, for the current alg (not a history): one section per Unicode data version the supported Pythons carry (3.12: 15.0.0, 3.13: 15.1.0). Replace it, with a hand bump of alg, in the pull request that changes what a key can be. Regenerate each section on the interpreter of its version with: python -c 'import json; from tests.test_textnorm_differential import live_hashes; print(json.dumps(live_hashes()))'. The hashes are of the bare keys (without the tag of an unpinned interpreter).",
- "alg": "fold3",
+ "note": "One entry, for the current alg (not a history): one section per Unicode data version the supported Pythons carry (3.12: 15.0.0, 3.13: 15.1.0). Replace it, with a hand bump of alg, in the pull request that changes what a key can be. Regenerate each section on the interpreter of its version with: python -c 'import json; from tests.test_textnorm_differential import live_hashes; print(json.dumps(live_hashes()))'. The hashes are of the bare keys and views, without the tag of an unpinned interpreter; the readings of a text are joined in their fixed order by U+001F.",
+ "alg": "fold4",
  "unidata": "15.1.0",
  "sections": {
   "15.0.0": {
    "hashes": {
     "identity_key": "0a5759d391a4954da9f32cb39635d4821abc8613766c695a3ae164fbe2467715",
     "squeeze": "b5d6eed6df8acd31c949ced48121a3f197255f2972d6b24a21be658ba8e98f51",
-    "squeeze_loose": "d176d78c9ac9f36b389da925a71eb1154d5a8127597b6a148dfa1cbf5502e6e8"
+    "squeeze_loose": "d176d78c9ac9f36b389da925a71eb1154d5a8127597b6a148dfa1cbf5502e6e8",
+    "identity_keys": "56a29c1ca1393bbcf57dcd40df18e7714ab9fcb5651d1cad255b32b9ff4d47e2",
+    "fold_views": "95fbca0d8fd9188b1d1efb4dc59923ed58d074b1b73ab7c9a4becba4010e331b",
+    "squeeze_views": "7c2ef592294bd4533e86aa4bac02a026b7fbe14efbd9a8616fbbd24c9caf7d9d"
    }
   },
   "15.1.0": {
    "hashes": {
     "identity_key": "111204a51883b85607204184153b3892ce2e133c57a1bd098b9a196b4cebd23a",
     "squeeze": "b5d6eed6df8acd31c949ced48121a3f197255f2972d6b24a21be658ba8e98f51",
-    "squeeze_loose": "d176d78c9ac9f36b389da925a71eb1154d5a8127597b6a148dfa1cbf5502e6e8"
+    "squeeze_loose": "d176d78c9ac9f36b389da925a71eb1154d5a8127597b6a148dfa1cbf5502e6e8",
+    "identity_keys": "3ee624a8def43c5dc4a06abf90978b1be85d7ce0c5eaf6602d3232a100ac96bf",
+    "fold_views": "d8e5f990e6293581620522b9ee35b21b7270fa82834a7eb3dc6a408d4ede6ffe",
+    "squeeze_views": "7c2ef592294bd4533e86aa4bac02a026b7fbe14efbd9a8616fbbd24c9caf7d9d"
    }
   }
  }

@@ -9,7 +9,7 @@ pytest. Run from the repo root:
     uv run python tests/textnorm_mutants.py            # all mutants; exit 1 if any is not good
     uv run python tests/textnorm_mutants.py squeeze    # only mutants whose name contains the text
 
-53 mutants: 28 are the re-pointed mutants of the earlier text-fold list (the killers moved with their tests), 13 are new, 9 are the mutants of fold2 (order 44; the tenth, "no case fold before the marks are dropped", is gone with that case fold, which fix2 showed to be redundant) and 3 are the mutants of fold3 (order 49, U+0345). Tests with no
+69 mutants: 28 are the re-pointed mutants of the earlier text-fold list (the killers moved with their tests), 13 are new, 9 are the mutants of fold2 (order 44), 3 are the mutants of fold3 (order 49, U+0345) and 16 are the mutants of fold4 (fix3, review 3: the readings, the length check, the caseless form; the first of the 16 is the fold2 mutant "no case fold before the marks are dropped" that fold3 removed and that is restored here: it changes only the single key, and the U+0345 test kills it). Tests with no
 mutant: the golden test, the differential rows, the manifest test, the notices test, the perf rows (they are outside every test list below:
 the runner copies no ``pyproject.toml`` or notices file) and the meta-tests.
 
@@ -73,6 +73,16 @@ SYMM = "test_identity_key_is_case_symmetric_for_every_code_point"
 SQUEEZE_SYMM = "test_squeeze_is_case_symmetric_for_every_code_point"
 DROPS = "test_every_drop_category_code_point_leaves_the_key_of_a_latin_or_greek_letter_unchanged"
 MOVES = "test_other_dropped_characters_between_a_greek_letter_and_u0345_do_not_move_the_iota"
+NOTTRANS = "test_the_readings_are_not_transitive_and_over_match_on_purpose"
+FOURCAP = "test_the_four_greek_capitals_that_look_like_latin_capitals_are_the_same_person"
+KEYSET = "test_identity_keys_is_a_small_fixed_set_that_holds_the_single_key"
+GREEKLOOK = (
+    "test_a_greek_look_alike_with_ypogegrammeni_is_the_latin_word_for_same_person_and_for_a_scan"
+)
+TAGKEYS = "test_a_key_made_on_another_unicode_version_carries_the_tag_on_every_reading"
+CHEAP = "test_the_cheap_length_check_runs_before_any_per_character_work"
+NAMESSYM = "test_names_equal_and_the_canonical_form_are_case_symmetric_for_every_code_point"
+U0345 = "test_u0345_is_an_iota_after_a_greek_letter_and_is_removed_everywhere_else"
 CFTABLE = (
     "test_the_case_fold_table_is_on_the_case_fold_image_and_its_conflicts_are_the_known_thirteen"
 )
@@ -85,10 +95,10 @@ M = [
     mutant("fold: unassigned characters kept", TN, '"Co", "Cs", "Cn"}', '"Co", "Cs"}',
         MARKS, "U+E0002 changes the fold"),
     mutant("fold: look-alikes not folded", TN,
-        "    s = s.casefold().translate(_CF_TABLE) if casefold else s.translate(_TABLE)",
-        "    s = s.casefold() if casefold else s", LOOKS, "look-alike U+0405 is not folded"),
+        "    if not casefold:\n        s = s.translate(_TABLE)\n    elif table_first:\n        s = s.translate(_TABLE).casefold().translate(_CF_TABLE)\n    else:\n        s = s.casefold().translate(_CF_TABLE)\n",
+        "    s = s.casefold() if casefold else s\n", LOOKS, "look-alike U+0405 is not folded"),
     mutant("fold: other digits not folded", TN,
-        "    s = s.translate(_DIGITS)\n    # casefold BEFORE", "    # casefold BEFORE",
+        "    return s.translate(_DIGITS)", "    return s",
         LOOKS, "other-script digits are not folded"),
     mutant("fold: the digit table is empty", TN,
         "_DIGITS = types.MappingProxyType(\n    _build_digit_table()\n)", "_DIGITS = {}",
@@ -140,7 +150,7 @@ M = [
         "        raise TypeError(\"an AllowVerdict has no truth value: compare with 'is AllowVerdict.EQUAL'\")",
         "        return True", ALLOW, "an AllowVerdict has a truth value"),
     mutant("deny: same_person does not fold", TN,
-        "    return fold_key(a) == fold_key(b)", "    return a == b", ALLOW, "same_person does not fold a look-alike"),
+        "    return not set(_keys(a)).isdisjoint(_keys(b))", "    return a == b", ALLOW, "same_person does not fold a look-alike"),
     mutant("textnorm: a newline joins the words of the script check", TN,
         '        " " if ch.isspace() else ch  # a newline or tab separates words, as in fold',
         '        "" if ch.isspace() else ch  # a newline or tab separates words, as in fold',
@@ -165,7 +175,7 @@ M = [
         "87,382 x U+A516 (W 262,146) is accepted"),
     mutant("size: only the first argument is checked", TN,
         "    for text in texts:\n        if type(text) is not str:", "    for text in texts[:1]:\n        if type(text) is not str:",
-        ORDER, "names_equal skipped the second argument"),
+        ORDER, "same_person skipped the second argument"),
     mutant("table: MAX_VALUE_LEN set to 2", CF, "MAX_VALUE_LEN = 3", "MAX_VALUE_LEN = 2",
         MAXLEN, "MAX_VALUE_LEN is not the table maximum"),
     mutant("hidden: the selector supplement E0100 to E01EF missing", TN,
@@ -183,8 +193,8 @@ M = [
     mutant("squeeze: no upper-casing", TN, "    s = _fold(raw, casefold=True).upper()", "    s = _fold(raw, casefold=True)", SQUEEZE, "squeeze lost a letter"),
     # ---- the mutants of fold2 (order 44): the order of the fold, the Unicode pin and its tag ----
     mutant("order: the look-alike table runs before the case fold (the old order)", TN,
-        "    s = s.casefold().translate(_CF_TABLE) if casefold else s.translate(_TABLE)",
-        "    s = s.translate(_TABLE).casefold() if casefold else s.translate(_TABLE)",
+        "        s = s.casefold().translate(_CF_TABLE)\n",
+        "        s = s.translate(_TABLE).casefold()\n",
         IDEM, "identity_key is not idempotent for"),
     mutant("order: the case fold table is the raw table", TN,
         "_CF_TABLE = types.MappingProxyType(_build_cf_table(CONFUSABLES))",
@@ -204,7 +214,7 @@ M = [
     mutant("tag: the tag does not name the version", TN,
         '    return f"\\ue000alg={_ALG}|ud={version}\\ue000"', '    return f"\\ue000alg={_ALG}\\ue000"', TAG, "the tag does not name the algorithm"),
     mutant("tag: the key of another version is folded again with its tag", TN,
-        "    if tag and raw.startswith(tag):", "    if False:", TAG, "the key of another version is not idempotent"),
+        "    if tag and raw.startswith(tag):\n        raw = raw[len(tag) :]  # already", "    if False:\n        raw = raw[len(tag) :]  # already", TAG, "the key of another version is not idempotent"),
     # ---- the mutants of fold3 (order 49): U+0345 ----
     mutant("iota: U+0345 is an iota after any letter, not only a Greek one", TN,
         "            if last and _is_greek_letter(last):", "            if True:", DROPS, "a drop-category code point changes the key of a letter"),
@@ -213,6 +223,58 @@ M = [
     mutant("iota: a dropped character hides the Greek letter in front of U+0345", TN,
         "        if _kept(ch):\n            last = ch",
         "        last = ch", MOVES, "a dropped character moves the iota"),
+    # ---- the mutants of fold4 (fix3, review 3): the readings, the length check, the caseless form; the first one is the mutant of fold2 that fold3 removed ----
+    mutant("fold: case folded before the marks are dropped (the fold2 order)", TN,
+        '    prefix = _prefix(unicodedata.normalize("NFKD", raw), iota=True)',
+        '    prefix = _prefix(unicodedata.normalize("NFKD", raw.casefold()), iota=True)',
+        U0345, "U+0345 after a Latin letter changes the key"),
+    mutant("readings: reading (a), the lower side with U+0345 dropped, is missing", TN,
+        "    (False, False),\n    (True, False),\n    (False, True),\n)", "    (True, False),\n    (False, True),\n)",
+        NOTTRANS, "the lower-side reading with U+0345 dropped was removed"),
+    mutant("readings: reading (b), the iota reading, is missing", TN,
+        "    (False, False),\n    (True, False),\n    (False, True),\n)", "    (False, False),\n    (False, True),\n)",
+        NOTTRANS, "the iota reading was dropped"),
+    mutant("readings: reading (c), the upper side, is missing", TN,
+        "    (False, False),\n    (True, False),\n    (False, True),\n)", "    (False, False),\n    (True, False),\n)",
+        NOTTRANS, "the upper-side reading was dropped"),
+    mutant("readings: only the first reading is used", TN,
+        "    for iota, table_first in _READINGS:", "    for iota, table_first in _READINGS[:1]:",
+        FOURCAP, "are not the same person"),
+    mutant("readings: a fourth reading (the number of readings is not bounded)", TN,
+        "    (False, False),\n    (True, False),\n    (False, True),\n)", "    (False, False),\n    (True, False),\n    (False, True),\n    (True, True),\n)",
+        KEYSET, "4 readings for"),
+    mutant("readings: reading (c) applies the iota rule", TN,
+        "    (False, False),\n    (True, False),\n    (False, True),\n)", "    (False, False),\n    (True, False),\n    (True, True),\n)",
+        FOURCAP, "a capital Greek letter + U+0345 is not the Latin capital"),
+    mutant("readings: reading (c) has no table of the case-fold image after the case fold", TN,
+        "        s = s.translate(_TABLE).casefold().translate(_CF_TABLE)\n", "        s = s.translate(_TABLE).casefold()\n",
+        FOURCAP, "the upper-side reading lacks the table of the case-fold image"),
+    mutant("deny: same_person compares one reading (identity_key)", TN,
+        "    return not set(_keys(a)).isdisjoint(_keys(b))", "    return identity_key(a) == identity_key(b)",
+        GREEKLOOK, "is not the person admin"),
+    mutant("allow: a look-alike is judged by one reading", TN,
+        "    if same_person(a, b):  # any reading of one equals any reading of the other", "    if fold_key(a) == fold_key(b):",
+        FOURCAP, "allow_equal does not report"),
+    mutant("scan: fold_views gives one view", TN,
+        "    return _views(raw, casefold=casefold, collapse_ws=collapse_ws)", "    return (_fold(raw, casefold=casefold, collapse_ws=collapse_ws),)",
+        GREEKLOOK, "has no view that reads admin"),
+    mutant("scan: squeeze_views gives one view", TN,
+        "    for view in _views(raw, casefold=True, collapse_ws=False):", "    for view in (_fold(raw, casefold=True),):",
+        GREEKLOOK, "squeeze_views has no view that reads ADMIN"),
+    mutant("tag: a reading of identity_keys has no tag", TN,
+        "    return tuple(tag + view for view in _views(raw, casefold=True, collapse_ws=True))",
+        "    return tuple(view for view in _views(raw, casefold=True, collapse_ws=True))",
+        TAGKEYS, "a reading has no tag"),
+    mutant("size: the length check before the weight is missing", TN,
+        '        if len(text) > defaults.TEXTNORM_MAX_CHARS:\n            raise TextTooLong(\n                f"text length {len(text)} is over the limit {defaults.TEXTNORM_MAX_CHARS}"\n            )\n',
+        "", CHEAP, "the weight was computed for a text longer than the cap"),
+    mutant("size: a text of exactly the cap in length is refused", TN,
+        "        if len(text) > defaults.TEXTNORM_MAX_CHARS:", "        if len(text) >= defaults.TEXTNORM_MAX_CHARS:",
+        CAPROW, "a text of exactly the cap is refused"),
+    mutant("canon: the old NFKC and one case fold (not Unicode D146)", TN,
+        '    folded = unicodedata.normalize("NFKD", unicodedata.normalize("NFKD", s).casefold()).casefold()\n    return " ".join(unicodedata.normalize("NFKD", folded).split())',
+        '    folded = unicodedata.normalize("NFKC", s).casefold()\n    return " ".join(folded.split())',
+        NAMESSYM, "_canon is not case symmetric"),
 ]  # fmt: skip
 
 
