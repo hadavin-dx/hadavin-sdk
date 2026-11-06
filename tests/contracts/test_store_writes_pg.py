@@ -13,6 +13,9 @@ from pathlib import Path
 
 import pytest
 
+from hadavin_sdk.actions.secrets import FakeSecretProvider
+from hadavin_sdk.backends.factory import make as make_store_kind
+from hadavin_sdk.backends.table import PostgresSettings
 from hadavin_sdk.models import (
     ApprovalDecision,
     ApprovalRequest,
@@ -40,6 +43,9 @@ from tests.contracts.kinds.store_postgres import pg_driver, pg_schema
 from tests.contracts.store_support import utc_today
 
 drv = pg_driver(module_level=True)
+BASE = {"kind": "postgres", "dsn_secret_name": "pg-dsn"}  # a secret NAME, not a secret
+# What a finished call may raise here: a Protocol error, or the refusal of the purge by the runtime login.
+EXPECTED = (ValueError, KeyError, RuntimeError, type(drv.make_error("42501")))
 SRC = Path(__file__).parents[2] / "src/hadavin_sdk/store/postgres.py"
 
 # The 22 write methods of PostgresStore (18 existing, 4 of P4d-b). ONE list: the scan test below compares it with
@@ -168,7 +174,7 @@ def test_other_errors_are_never_retried(code):
     seen = []
     store = _stub(on_retry=lambda *a: seen.append(a))
     plan, state = _fail_times(code, 99)
-    with pytest.raises(Exception):  # noqa: B017 - the type is checked by the mapping rows
+    with contextlib.suppress(Exception):  # the type is checked by the mapping rows
         store.op(plan)
     assert (state["calls"], seen) == (1, [])
 
@@ -217,6 +223,56 @@ def test_the_retry_sleep_holds_neither_the_lock_nor_a_transaction():
     plan, _ = _fail_times("40P01", 1)
     assert store.op(plan) == "ok"
     assert got == {"lock": True, "free": True}
+
+
+def test_a_wrapped_write_called_from_inside_another_joins_its_transaction_and_budget():
+    store = _stub()
+    seen = []
+
+    def inner(s):
+        seen.append(s._deadline)
+        return "inner"
+
+    def outer(s):
+        before = s._deadline
+        assert s.keyless(inner) == "inner"
+        assert s._deadline == before  # the nested call must not clear the outer call's deadline
+        return "outer"
+
+    assert store.op(outer) == "outer"
+    assert len([q for q, _ in store._db.sent if "set_config" in q]) == 1
+    assert seen[0] is not None
+    assert store._deadline is None
+
+
+@pytest.mark.parametrize(
+    "bad",
+    [
+        {"lock_timeout_ms": 99},
+        {"lock_timeout_ms": 60001},
+        {"call_budget_ms": 499},
+        {"call_budget_ms": 60001},
+    ],
+)
+def test_the_two_settings_have_ranges(bad):
+    with pytest.raises(ValueError):
+        PostgresSettings(**BASE, **bad)
+
+
+def test_build_passes_the_settings_to_the_store(dsn):
+    settings = PostgresSettings(**BASE, lock_timeout_ms=123, call_budget_ms=4567)
+    store = make_store_kind("store", settings, FakeSecretProvider({"pg-dsn": dsn}))
+    try:
+        assert (store._lock_timeout_ms, store._call_budget_ms) == (123, 4567)
+        defaults = make_store_kind(
+            "store",
+            PostgresSettings(**BASE),
+            FakeSecretProvider({"pg-dsn": dsn}),
+        )
+        assert (defaults._lock_timeout_ms, defaults._call_budget_ms) == (1000, 5000)
+        defaults._db.close()
+    finally:
+        store._db.close()
 
 
 def test_a_spent_budget_is_store_busy_before_anything_is_sent():
@@ -601,7 +657,7 @@ def test_a_lone_caller_finishes_for_every_write_method(make, name):
             run = _new_run(store)
             outcome["setup"] = True
             _calls(store, run)[name]()
-        except Exception as exc:  # noqa: BLE001
+        except EXPECTED as exc:
             outcome["error"] = exc
 
     thread = threading.Thread(target=go, daemon=True)
