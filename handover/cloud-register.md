@@ -551,10 +551,11 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | rv-AK2a-r2-adv | egm-design round 2 AK2a rev 2 | 12:35Z | +10min | REPORTED | save |
 | rv-AK2a-r2-cor | egm-codebase-details round 2 AK2a rev 2 | 12:35Z | +10min | REPORTED | save |
 | rs-AK-G1-r1 | Opus resolve AK-G1 round 1 (5 Blockers) | 12:35Z | +25min | running | verify, then rev 2 |
-| rv-AK0-r3-adv | egm-design round 3 AK0 rev 3 (last) | 12:50Z | +10min | running | save |
-| rv-AK0-r3-cor | egm-codebase-details round 3 AK0 rev 3 (last) | 12:50Z | +10min | running | save |
+| rv-AK0-r3-adv | egm-design round 3 AK0 rev 3 (last) | 12:50Z | +10min | REPORTED | save |
+| rv-AK0-r3-cor | egm-codebase-details round 3 AK0 rev 3 (last) | 12:50Z | +10min | REPORTED | save |
 | sv-AK4a-r2 | saver AK4a round 2 pair | 13:00Z | +5min | REPORTED | verify, push |
 | rs-AK4a-r2 | Opus resolve AK4a round 2 (1 Blocker, 10 Majors) | 13:10Z | +25min | running | verify, then rev 3 author |
 | rv-AKG2-r2-adv | egm-design round 2 AK-G2 rev 2 | 13:20Z | +10min | running | save |
 | rv-AKG2-r2-cor | egm-codebase-details round 2 AK-G2 rev 2 | 13:20Z | +10min | running | save |
-| sv-AK2a-r2 | saver AK2a round 2 pair | 13:35Z | +5min | running | verify, push |
+| sv-AK2a-r2 | saver AK2a round 2 pair | 13:35Z | +5min | REPORTED | verify, push |
+| sv-AK0-r3 | saver AK0 round 3 pair | 13:45Z | +5min | running | verify, push |
