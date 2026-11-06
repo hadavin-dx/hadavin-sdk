@@ -1,0 +1,14 @@
+HEAD 4f14ec88f287a589cb55e16952d974ff3d7383bc
+$ <build-dir> <build-dir>/bin/python tests/stage_mutants.py
+heavy slot 1
+Traceback (most recent call last):
+  File "<build-dir>/tests/stage_mutants.py", line 151, in <module>
+    res = run_mutants(
+          ^^^^^^^^^^^^
+  File "<build-dir>/tools/mutation_runner.py", line 388, in run_mutants
+    return _run_mutants(
+           ^^^^^^^^^^^^^
+  File "<build-dir>/tools/mutation_runner.py", line 527, in _run_mutants
+    raise RuntimeError("the unmutated copy does not pass its tests")
+RuntimeError: the unmutated copy does not pass its tests
+RC=1

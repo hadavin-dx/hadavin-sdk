@@ -755,3 +755,4 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | bd-P1a-fix6 | Sonnet builder P1a fix6 | 2026-11-06T16:50:00Z | REPORTED: core/P1a 2ff0afe pushed (by lead-ping), PR 63 ready; evidence reviews/P1a/fix6 |
 | bd-P4d-a1-o101 | Sonnet builder P4d-a1 order 101 | 2026-11-06T17:15:00Z | REPORTED: core/P4d 92dbb1e pushed+verified, PR 66 ready; evidence reviews/P4d-a1-o101 |
 | bd-P3a-2-o103 | Sonnet builder P3a-2 order 103 | 2026-11-06T17:35:00Z | CLOSED: core/P3a-2 63658aa pushed+verified, PR 73 draft; evidence reviews/P3a-2-o103 |
+| bd-P1b-merge6 | Sonnet builder P1b order 102 | 2026-11-06T17:40:00Z | CLOSED: core/P1b 4f14ec8 pushed+verified, PR 70 ready; evidence reviews/P1b/merge6 |
