@@ -365,3 +365,4 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | r1-P5c-cor | P5c round-1 reviewer (cor) | sonnet | 03:10Z | +30min | running | save, ledger, resolve |
 | r1-P6a-adv | P6a round-1 reviewer (adv) | sonnet | 03:10Z | +30min | running | save, ledger, resolve |
 | r1-P6a-cor | P6a round-1 reviewer (cor) | sonnet | 03:10Z | +30min | running | save, ledger, resolve |
+| build-P1m | Sonnet builder P1m on core/P1m, draft PR, evidence/P1m | sonnet | 02:50Z | +90min | running | verify PR, evidence, then review of result |
