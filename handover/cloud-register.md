@@ -665,4 +665,4 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | ra-C | Opus rung audit part C (order 54) -> reviews/rung-audit-1-part-C.md | 07:59Z | +45min | REPORTED | save, merge into rung-audit-1.md |
 | ra-D | Opus rung audit part D (order 54) -> reviews/rung-audit-1-part-D.md | 07:59Z | +45min | running | save, merge into rung-audit-1.md |
 | ra-E | Opus rung audit part E (order 54) -> reviews/rung-audit-1-part-E.md | 07:59Z | +45min | REPORTED | save, merge into rung-audit-1.md |
-| bn-genericity | Sonnet appends genericity build notes G-1..G-3,G-5,G-7..G-15 to the named tickets (append-only; not G-4, G-6) | 08:05Z | +30min | running | verify, commit |
+| bn-genericity | Sonnet appends genericity build notes G-1..G-3,G-5,G-7..G-15 to the named tickets (append-only; not G-4, G-6) | 08:05Z | +30min | REPORTED | verify, commit |
