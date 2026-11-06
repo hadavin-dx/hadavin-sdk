@@ -11,7 +11,11 @@ from pathlib import Path
 
 import pytest
 
-pytest.importorskip("psycopg", reason="store.migrate imports psycopg (the pg extra)")
+from tests.fixtures.dsn_skip import require_module
+
+require_module(
+    "psycopg"
+)  # store.migrate imports psycopg (the pg extra); with the DSN set a missing driver FAILS
 
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.store import migrate as mig
