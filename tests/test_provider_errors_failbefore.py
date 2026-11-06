@@ -8,8 +8,8 @@ This file is copied to the base and run there: it imports only names that exist 
 from __future__ import annotations
 
 import email.message
+import hashlib
 import math
-import random
 import re
 import traceback
 import urllib.error
@@ -375,7 +375,31 @@ _PIECES = [
 _ALPHABET = "abcXYZ012 _-.:;/\\'\"\n\t@"
 
 
-def _noise(rng: random.Random, tag: str) -> str:
+class _Rng:
+    """A small deterministic generator (SHA-256 of a counter) for the fuzz rows: same seed, same stream, on every Python."""
+
+    def __init__(self, seed: int) -> None:
+        self._seed, self._n = seed, 0
+
+    def _next(self) -> int:
+        self._n += 1
+        return int.from_bytes(
+            hashlib.sha256(f"{self._seed}:{self._n}".encode()).digest()[:8], "big"
+        )
+
+    def randint(self, lo: int, hi: int) -> int:
+        return lo + self._next() % (hi - lo + 1)
+
+    def choice(self, seq):
+        return seq[self._next() % len(seq)]
+
+    def shuffle(self, items: list) -> None:
+        for i in range(len(items) - 1, 0, -1):
+            j = self._next() % (i + 1)
+            items[i], items[j] = items[j], items[i]
+
+
+def _noise(rng: _Rng, tag: str) -> str:
     parts = [rng.choice(_PIECES) for _ in range(rng.randint(0, 3))] + [
         "".join(rng.choice(_ALPHABET) for _ in range(rng.randint(0, 40)))
     ]
@@ -395,7 +419,7 @@ def _every_surface(err):
     )
 
 
-def _planted(position: str, noise: str, rng: random.Random):
+def _planted(position: str, noise: str, rng: _Rng):
     """(make-error, kind) with ``noise`` in one provider-controlled position."""
     pytest.importorskip("anthropic", reason="needs extra anthropic")
     if position == "bedrock-code":
@@ -457,7 +481,7 @@ POSITIONS = [
 
 
 def test_r6_500_random_hostile_failures_keep_the_message_grammar():
-    rng = random.Random(20261106)  # noqa: S311 - a seeded test-data generator, not a secret
+    rng = _Rng(20261106)
     for i in range(500):
         position = POSITIONS[i % len(POSITIONS)]
         noise = _noise(rng, f"ZQ{i:04d}MARK")

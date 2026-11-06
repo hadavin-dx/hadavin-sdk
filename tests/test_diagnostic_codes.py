@@ -14,11 +14,29 @@ from hadavin_sdk.codes import ERROR_TYPE_CODE, OWN_CODES, RESERVED_FOR, Code, Fa
 from hadavin_sdk.guard.diagnostic import diagnose, render
 
 SRC = Path(__file__).resolve().parents[1] / "src" / "hadavin_sdk"
-FROZEN = (
-    "config_invalid store_unavailable store_conflict provider_http provider_timeout provider_rate_limit provider_invalid_request "
-    "provider_auth provider_exhausted audit_unavailable egress_refused unqualified validation_failed scan_failed timeout os_error "
-    "db_error internal_bug foreign_exception session_closed tool_refused"
-).split()
+FROZEN = [
+    "config_invalid",
+    "store_unavailable",
+    "store_conflict",
+    "provider_http",
+    "provider_timeout",
+    "provider_rate_limit",
+    "provider_invalid_request",
+    "provider_auth",
+    "provider_exhausted",
+    "audit_unavailable",
+    "egress_refused",
+    "unqualified",
+    "validation_failed",
+    "scan_failed",
+    "timeout",
+    "os_error",
+    "db_error",
+    "internal_bug",
+    "foreign_exception",
+    "session_closed",
+    "tool_refused",
+]
 
 
 def test_code_set_is_the_frozen_list() -> None:
@@ -32,7 +50,19 @@ def test_fact_priority_equals_fact_key_members() -> None:
 
 
 def test_fact_bounds_cover_the_number_keys() -> None:
-    numbers = {"http_status", "retry_count", "attempt", "errno", "winerror", "gai", "count", "position", "line", "column", "duration_ms"}
+    numbers = {
+        "http_status",
+        "retry_count",
+        "attempt",
+        "errno",
+        "winerror",
+        "gai",
+        "count",
+        "position",
+        "line",
+        "column",
+        "duration_ms",
+    }
     assert {k.value for k in codes.FACT_BOUNDS} == numbers
     assert len(numbers) == 11
     assert all(lo <= hi for lo, hi in codes.FACT_BOUNDS.values())
@@ -68,6 +98,18 @@ def test_every_code_member_is_reachable_or_reserved() -> None:
         assert Code(name) not in set(OWN_CODES.values()), f"{name} is reserved but reachable"
 
 
+def _visit(body: list[ast.stmt], prefix: str, module: str, found: dict[str, list[str]]) -> None:
+    for node in body:
+        if isinstance(node, ast.ClassDef):
+            bases = [
+                b.id if isinstance(b, ast.Name) else b.attr
+                for b in node.bases
+                if isinstance(b, (ast.Name, ast.Attribute))
+            ]
+            found[f"{module}:{prefix}{node.name}"] = bases
+            _visit(node.body, f"{prefix}{node.name}.", module, found)
+
+
 def _exception_classes() -> dict[str, list[str]]:
     """``module:Qualname`` -> simple base names, for every class under src whose bases lead to a built-in exception."""
     found: dict[str, list[str]] = {}
@@ -75,14 +117,7 @@ def _exception_classes() -> dict[str, list[str]]:
         rel = path.relative_to(SRC.parent).with_suffix("")
         module = ".".join(rel.parts).removesuffix(".__init__")
 
-        def visit(body: list[ast.stmt], prefix: str) -> None:
-            for node in body:
-                if isinstance(node, ast.ClassDef):
-                    bases = [b.id if isinstance(b, ast.Name) else b.attr for b in node.bases if isinstance(b, (ast.Name, ast.Attribute))]
-                    found[f"{module}:{prefix}{node.name}"] = bases
-                    visit(node.body, f"{prefix}{node.name}.")
-
-        visit(ast.parse(path.read_text(encoding="utf-8")).body, "")
+        _visit(ast.parse(path.read_text(encoding="utf-8")).body, "", module, found)
     simple = {k.split(":")[1].split(".")[-1]: v for k, v in found.items()}
 
     def is_exc(name: str, seen: frozenset[str] = frozenset()) -> bool:
@@ -109,7 +144,9 @@ def test_every_own_exception_class_resolves_to_a_code() -> None:
                 return True
             if name in seen:
                 return False
-            bases_of = [b for k, bs in classes.items() if k.split(":")[1].split(".")[-1] == name for b in bs]
+            bases_of = [
+                b for k, bs in classes.items() if k.split(":")[1].split(".")[-1] == name for b in bs
+            ]
             return any(resolved(b, seen | {name}) for b in bases_of)
 
         if key not in OWN_CODES and not any(resolved(b) for b in bases):
@@ -117,16 +154,46 @@ def test_every_own_exception_class_resolves_to_a_code() -> None:
     assert not missing, missing
 
 
-@pytest.mark.parametrize("key", sorted(OWN_CODES))
-def test_pinned_code_per_class(key: str) -> None:
-    module, qual = key.split(":")
-    cls = getattr(importlib.import_module(module), qual)
-    try:
-        exc = cls("x")
-    except TypeError:
-        pytest.skip("needs more constructor arguments")
-    line = render(diagnose(exc, step=codes.Where.other))
-    assert f"code={OWN_CODES[key].value} " in line, line
+PINNED = {
+    "hadavin_sdk.errors:ConfigError": "config_invalid",
+    "hadavin_sdk.k1b.bundle:BundleError": "config_invalid",
+    "hadavin_sdk.llm.fake:UnknownRecording": "config_invalid",
+    "hadavin_sdk.store.protocol:StoreUnavailable": "store_unavailable",
+    "hadavin_sdk.store.protocol:StaleState": "store_conflict",
+    "hadavin_sdk.store.protocol:NotFound": "store_conflict",
+    "hadavin_sdk.runtime.runs:IllegalTransition": "store_conflict",
+    "hadavin_sdk.audit.protocol:DuplicateEvent": "store_conflict",
+    "hadavin_sdk.audit.anchors:AnchorConflict": "store_conflict",
+    "hadavin_sdk.llm.protocol:ProviderError": "provider_http",
+    "hadavin_sdk.approvals.slack_channel:SlackError": "provider_http",
+    "hadavin_sdk.sources:SourceError": "provider_http",
+    "hadavin_sdk.actions.secrets_vault:VaultError": "provider_http",
+    "hadavin_sdk.llm.protocol:ProviderExhausted": "provider_exhausted",
+    "hadavin_sdk.audit.protocol:AuditUnavailable": "audit_unavailable",
+    "hadavin_sdk.guard.egress:EgressRefused": "egress_refused",
+    "hadavin_sdk.runtime.agent_loop:Unqualified": "unqualified",
+    "hadavin_sdk.k1b.loop:CallTimeout": "timeout",
+    "hadavin_sdk.tools:ToolRefused": "tool_refused",
+    "hadavin_sdk.guard.runmap:RedactionError": "scan_failed",
+    "hadavin_sdk.guard.runmap:InputTooLarge": "scan_failed",
+    "hadavin_sdk.guard.runmap:TooDeep": "scan_failed",
+    "hadavin_sdk.guard.textnorm:TextnormError": "scan_failed",
+}
+
+
+def test_pinned_code_per_class() -> None:
+    assert {k: v.value for k, v in OWN_CODES.items()} == PINNED, (
+        "the table differs from the pinned rows"
+    )
+    wrong = []
+    for key in sorted(PINNED):
+        module, qual = key.split(":")
+        cls = getattr(importlib.import_module(module), qual)
+        exc = cls.__new__(cls)  # no constructor: some classes need arguments
+        line = render(diagnose(exc, step=codes.Where.other))
+        if f"code={PINNED[key]} " not in line:
+            wrong.append((key, line))
+    assert not wrong, f"a class does not give its pinned code: {wrong}"
 
 
 def test_spoofed_class_gets_no_own_code() -> None:
@@ -155,6 +222,9 @@ def test_step_token_is_closed_and_final() -> None:
     assert codes.StepToken.of("jane_doe") is codes.Where.other
     assert codes.StepToken.of("sweep\n") is codes.Where.other
     assert codes.StepToken.of(3) is codes.Where.other
+    assert (
+        codes.StepToken.of("extract") is codes.Where.other
+    )  # a Where name as text is not a Where member
 
     class Sub(str):
         pass

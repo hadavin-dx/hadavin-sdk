@@ -17,6 +17,7 @@ from askdata.meter import worst_case_usd
 
 from hadavin_sdk.llm.retry import with_retry
 from tests.demo_askdata.kit import PROMPT, ROUTE, Kit
+from tests.provider_wire_helpers import RAW_ESCAPES
 
 Q = "How many orders are there"
 
@@ -80,7 +81,7 @@ def test_a_crashed_decision_keeps_exactly_the_worst_case_booked(tmp_path, kind):
     answer = None
     try:
         answer = k.pipeline.ask(Q)
-    except Exception as exc:  # noqa: BLE001 - on the base the crash escapes raw; the booking must still hold
+    except RAW_ESCAPES as exc:  # on the base the crash escapes raw; the booking must still hold
         escaped = exc
     after = k.meter.remaining()
     assert before - after == worst, (before, after, worst)

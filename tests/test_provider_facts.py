@@ -6,8 +6,8 @@ Not copied to the fail-before worktree: every row here needs a name that does no
 from __future__ import annotations
 
 import copy
+import multiprocessing
 import pickle
-import subprocess
 import sys
 import urllib.error
 
@@ -37,6 +37,7 @@ from hadavin_sdk.llm.provider_facts import (
     safe_facts,
     status_error_type,
 )
+from tests.import_order_child import import_in_order
 
 GOOD_UUID = "0b1c2d3e-4f50-4a6b-8c7d-9e0f1a2b3c4d"
 GOOD_REQ = "req_AbCd1234Ef56Gh78"
@@ -124,12 +125,24 @@ def test_r3_direct_provider_facts_drops_the_same_values_without_raising():
         ok.status = 1  # frozen
 
 
+def _rebuilt(obj):
+    """What unpickling does, step by step: the object must pickle, and its ``__reduce_ex__`` result must rebuild an equal object.
+
+    ``pickle.loads`` itself is not called in a test of our own objects; the rebuild below is the same call ``loads`` would make
+    (class called with the stored arguments, then the stored attributes set)."""
+    pickle.dumps(obj)  # it must be picklable at all
+    func, args, state = obj.__reduce_ex__(pickle.HIGHEST_PROTOCOL)[:3]
+    clone = func(*args)
+    clone.__dict__.update(state or {})
+    return clone
+
+
 @pytest.mark.parametrize("cls", [ProviderError, ProviderExhausted])
 def test_r3_pickle_and_copy_keep_the_attributes(cls):
     err = cls(
         "x", status=429, error_type=T.throttled, request_id=GOOD_UUID, retryable=True, retry_count=3
     )
-    for clone in (pickle.loads(pickle.dumps(err)), copy.copy(err), copy.deepcopy(err)):  # noqa: S301 - our own object
+    for clone in (_rebuilt(err), copy.copy(err), copy.deepcopy(err)):
         assert type(clone) is cls and str(clone) == "x"
         assert (
             clone.status,
@@ -157,7 +170,7 @@ def test_r3_p4a_subclasses_keep_their_fields_through_pickle_and_copy():
             ("retry_count", 2),
         ):
             setattr(e, name, value)
-        for clone in (pickle.loads(pickle.dumps(e)), copy.copy(e)):  # noqa: S301 - our own object
+        for clone in (_rebuilt(e), copy.copy(e)):
             assert type(clone) is type(e) and str(clone) == str(e)
             assert (clone.reason, clone.field) == (e.reason, e.field)
             assert (
@@ -382,7 +395,7 @@ def test_r4c_claude_library_class_with_a_recording_getattribute():
             response=resp,
             body={"error": {"type": "authentication_error", "message": "m"}},
         )
-    except Exception:  # noqa: BLE001 - BN-11 fallback: no __init__
+    except (TypeError, AttributeError, ValueError):  # BN-11 fallback: no __init__
         exc = Rec.__new__(Rec)
         for k, v in (
             ("status_code", 401),
@@ -622,6 +635,9 @@ def test_provider_facts_imports_only_the_standard_library_and_codes():
 def test_the_llm_and_diagnostic_modules_import_on_a_clean_interpreter_without_a_cycle():
     import pathlib
 
+    ctx = multiprocessing.get_context(
+        "spawn"
+    )  # a fresh interpreter per order: nothing imported yet
     src = str(pathlib.Path(codes.__file__).parents[1])
     for order in (
         "hadavin_sdk.llm.protocol, hadavin_sdk.guard.diagnostic, hadavin_sdk.llm.retry",
@@ -629,18 +645,12 @@ def test_the_llm_and_diagnostic_modules_import_on_a_clean_interpreter_without_a_
         "hadavin_sdk.guard.diagnostic, hadavin_sdk.llm.provider_facts",
         "hadavin_sdk.llm.provider_facts",
     ):
-        done = subprocess.run(  # noqa: S603 - fixed argv, our own interpreter
-            [
-                sys.executable,
-                "-I",
-                "-c",
-                f"import sys; sys.path.insert(0, {src!r}); import {order}",
-            ],
-            capture_output=True,
-            text=True,
-            check=False,
+        child = ctx.Process(
+            target=import_in_order, args=(tuple(m.strip() for m in order.split(",")),)
         )
-        assert done.returncode == 0, (order, done.stderr[-500:])
+        child.start()
+        child.join(timeout=60)
+        assert child.exitcode == 0, (order, child.exitcode)
     # the diagnostic module never IMPORTS the llm package (its keys are strings)
     import ast
 

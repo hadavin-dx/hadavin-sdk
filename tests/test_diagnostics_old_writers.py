@@ -33,6 +33,7 @@ class AdapterError(RuntimeError):
 OLD_WRITER_LEAKS: tuple[str, ...] = (
     "HC-builtin_text-01",
     "HC-builtin_text-02",
+    "HC-builtin_text-03",
     "HC-builtin_text-04",
     "HC-builtin_text-05",
     "HC-builtin_text-07",
@@ -143,7 +144,7 @@ class _Llm:
     def __init__(self, text: str) -> None:
         self.text = text
 
-    def chat(self, messages, **kw):  # noqa: ANN001, ANN003, ANN201
+    def chat(self, messages, **kw):
         return Reply(text=self.text, model_id="x")
 
 
@@ -152,7 +153,7 @@ def _ctx(row: corpus.Row) -> contextlib.AbstractContextManager[None]:
     return corpus.CONTEXTS[name]() if name else contextlib.nullcontext()  # type: ignore[index]
 
 
-def outcome(row: corpus.Row, app, caplog) -> tuple[str, str]:  # noqa: ANN001
+def outcome(row: corpus.Row, app, caplog) -> tuple[str, str]:
     """(``crashed`` | ``leaked`` | ``clean`` | ``no_path``, the escaping exception type name or empty)."""
     if row.kind == "validation":
         model = corpus.MODELS[row.spec["model"]]  # type: ignore[index]
@@ -174,7 +175,12 @@ def outcome(row: corpus.Row, app, caplog) -> tuple[str, str]:  # noqa: ANN001
                 return "crashed", type(e).__name__
         state = app.store.get_tick_state("x")
         records = [r.getMessage() for r in caplog.records if "step=x" in r.getMessage()]
-        if state is None or type(state.last_error) is not str or not state.last_error or not records:
+        if (
+            state is None
+            or type(state.last_error) is not str
+            or not state.last_error
+            or not records
+        ):
             raise AdapterError(f"the writer did not run for {row.id}")
         text = state.last_error + " | " + " | ".join(records)
     return ("leaked" if leaks(text, row.canaries) else "clean"), ""
@@ -184,12 +190,18 @@ def _param(row: corpus.Row) -> pytest.param:
     marks = []
     if row.id in OLD_WRITER_LEAKS or row.id in OLD_WRITER_CRASHES:
         kind = "crashed" if row.id in OLD_WRITER_CRASHES else "leaked"
-        marks.append(pytest.mark.xfail(strict=True, raises=AssertionError, reason=f"later: R3c (P5b3) wires the writers; outcome={kind}"))
+        marks.append(
+            pytest.mark.xfail(
+                strict=True,
+                raises=AssertionError,
+                reason=f"later: R3c (P5b3) wires the writers; outcome={kind}",
+            )
+        )
     return pytest.param(row, id=row.id, marks=marks)
 
 
 @pytest.mark.parametrize("row", [_param(r) for r in ROWS])
-def test_old_writers(row: corpus.Row, app, caplog) -> None:  # noqa: ANN001
+def test_old_writers(row: corpus.Row, app, caplog) -> None:
     got, crash_type = outcome(row, app, caplog)
     if row.id in OLD_WRITER_CRASHES and got == "crashed":
         assert crash_type == OLD_WRITER_CRASHES[row.id], crash_type

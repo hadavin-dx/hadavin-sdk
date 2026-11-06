@@ -100,6 +100,18 @@ def kind_hooks(kind: str) -> dict:
     return {}
 
 
+# The built-in exception families a crashed hook or a missed guard lets escape (every concrete class a test hook raises is one of these).
+RAW_ESCAPES: tuple[type[Exception], ...] = (
+    ArithmeticError,
+    AttributeError,
+    LookupError,
+    OSError,
+    RuntimeError,
+    TypeError,
+    ValueError,
+)
+
+
 def run_retry(make, kind="std", *, label=None, max_attempts=3, sleeps=None, **extra):
     """Run ``with_retry`` on an error factory; return ``(error, calls)``."""
     call = Counter(make)
@@ -114,7 +126,7 @@ def run_retry(make, kind="std", *, label=None, max_attempts=3, sleeps=None, **ex
         )
     except ProviderError as e:
         return e, call.calls
-    except Exception as e:  # noqa: BLE001 - a raw escape is the failure these tests exist to catch
+    except RAW_ESCAPES as e:  # a raw escape is the failure these tests exist to catch
         raise AssertionError(
             f"a raw {type(e).__name__} escaped with_retry after {call.calls} calls"
         ) from None
