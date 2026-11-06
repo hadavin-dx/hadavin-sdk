@@ -367,7 +367,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | r1-P6a-cor | P6a round-1 reviewer (cor) | sonnet | 03:10Z | +30min | running | save, ledger, resolve |
 | build-P1m | Sonnet builder P1m on core/P1m, draft PR, evidence/P1m | sonnet | 02:50Z | +90min | running | verify PR, evidence, then review of result |
 | res-r2-P5b2 | Opus egm-resolve P5b2 round 2 | opus | 03:25Z | +45min | running | verify disposition; rev 3 author; round 3 |
-| res-r2-P6b1 | Opus egm-resolve P6b1 round 2 | opus | 03:25Z | +45min | running | verify; rev 3 author; round 3 |
+| res-r2-P6b1 | Opus egm-resolve P6b1 round 2 | opus | 03:25Z | +45min | REPORTED | verify; rev 3 author; round 3 |
 | res-r1-P8b | Opus egm-resolve P8b round 1 | opus | 03:25Z | +45min | REPORTED | verify; rev 2 author; round 2 |
 | draft-P6b2 | Opus first draft tickets/P6b2.md | opus | 02:50Z | | REPORTED | committed 1901def; round 1 launched |
 | r1-P6b2-adv | P6b2 round-1 reviewer (adv) | sonnet | 03:30Z | +30min | REPORTED (unsaved: save-r2c) | save, ledger, resolve |
@@ -379,3 +379,5 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | res-r2-P5b1 | Opus egm-resolve P5b1 round 2 | opus | 04:00Z | +45min | running | verify; rev 3; round 3 |
 | res-r1-P5c | Opus egm-resolve P5c round 1 | opus | 04:00Z | +45min | running | verify; rev 2; round 2 |
 | res-r1-P6a | Opus egm-resolve P6a round 1 | opus | 04:00Z | +45min | running | verify; rev 2; round 2 |
+| rev-P8b-2 | Opus author: P8b revision 2 from reviews/P8b-round1-resolve.md | opus | 02:55Z | +45min | running | verify; round 2 reviewers |
+| rev-P6b1-3 | Opus author: P6b1 revision 3 from reviews/P6b1-round2-resolve.md | opus | 02:55Z | +45min | running | verify; round 3 reviewers; freeze |
