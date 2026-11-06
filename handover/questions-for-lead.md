@@ -526,3 +526,6 @@ WEAKER THAN IT SOUNDS (builder's own words): full suites (3.13/3.12 green, 10839
 ORDER 93: 9 BLE001 sites with reason + test + noqa_sites.txt. NEW surface not named by order 93: hadavin_sdk/neverraise.py (records by closed site name). NEEDS LEAD judgment.
 P5a-owned test files edited by the builder (c18a_hostile_corpus.py, test_diagnostic.py, test_diagnostic_codes.py): corpus 170 rows, 2 strict xfails. Reviewer should look.
 NEXT: full 3.13/3.12 at final head still owed before it leaves draft; also needs main c709df3 merge.
+
+## q230 (2026-11-06T14:58:00Z) INFORM: ORDER 95 relayed
+P1a builder: finish fix5, test CodeRabbit textnorm.py:173 on current head before READY, update PR 63 body, report READY with SHA. P3a-2 builder resumed: finals at 967d5a1, bandit, push fast-forward, PR 73 body, report. P5b1 builder resumed: M10/M38 log with SHA header, full suites at final head (queued behind P1a/P3a-2), PR 80 stays DRAFT. P4b1-b not started until P1a finals are done. P2d-1 fixtures (test_redact_fold.py 453/473) rebuilt from parts only after lead PR 81 merges and P1a is re-merged; no history rewrite. NEEDS LEAD: nothing new. Note: the P5b1 M10/M38 log from earlier has no SHA in its header, so it does not meet order 95 yet.

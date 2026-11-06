@@ -429,3 +429,6 @@ What: brief carries the two gate markers and tells the builder to read BRIEF-PRE
 
 ## 2026-11-06T13:50:21Z P3a-2: push q195 commit 66a5710 before main merge (INFORM, answered-by-user: no)
 What: push the manifest cleanup (66a5710) now as a fast-forward; merge main later in a separate push, after core/P3a has merged main. Options: (a) push now; (b) wait, merge once, push once. Why (a): no history rewrite, avoids losing work, the commit is small and its own tests passed at earlier heads. Confidence medium-high. Reversible: yes (a revert commit). Risk: PR 73 head briefly has no fresh heavy-run logs; evidence will say so.
+
+## 2026-11-06 PR 80 (P5b1) converted to draft (INFORM, answered-by-user: no)
+What: set draft=true on stacked PR 80 (base core/P5a) per order 91. Options: leave ready / draft. Why: order 91. Confidence high. Reversible: yes (mark ready). 
