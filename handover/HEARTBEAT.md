@@ -79,3 +79,4 @@
 02:25Z / 07:55 IST | step=NEEDS LEAD 11 turned into a real question (PG17) | done=all frozen, freeze-list pushed | next=wait for lead answer; no new rounds | blocked=PG17 question | context=ok
 02:26Z / 07:56 IST | step=NEEDS LEAD 11 changed to INFORM (proceed on recommendation) | done=all frozen | next=idle, no new rounds (order 18) | blocked=none | context=ok
 02:27Z / 07:57 IST | step=routing rule recorded (NEEDS LEAD 12) | done=all frozen | next=idle, no new rounds | blocked=none | context=ok
+02:32Z / 08:02 IST | step=order 20: 10 build-start reviewers launched (P1,P3a,P4d,P2a,P4a); launching resolves P4b1/P4b2/P4c/P6b1/P5b2, revisions P5a/P5b1, drafts of 9 missing tickets | done=freeze list | next=save reviewer reports, ONE resolve each, then builds | blocked=none | context=ok
