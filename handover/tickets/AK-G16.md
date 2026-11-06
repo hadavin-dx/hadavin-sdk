@@ -1,4 +1,4 @@
-# Package ticket AK-G16 (REVISION 3, DRAFT): deployment of an assembled agent into the CLIENT'S OWN cloud. Assembly Kit, Tier A. Path class SECURITY (extended review)
+# Package ticket AK-G16 (REVISION 3, FROZEN: build notes BN-1 to BN-31 at the end win): deployment of an assembled agent into the CLIENT'S OWN cloud. Assembly Kit, Tier A. Path class SECURITY (extended review)
 
 Revision line: **revision 3 DRAFT**, written 2026-11-06 from 06:59 UTC (12:29 IST; IST = UTC+5:30) by a ticket author under LEAD-ORDERS order 20 item 6, order 23 item 2, order 27 item 62 and order 43 item 102. It revises revision 2 (commit `6d47d13`, written from 06:38 UTC / 12:08 IST), which revised revision 1 (commit `c816370`). Git commit time is the reference. Text only: no code, no pull request, no test run, no sub-agent, no push, no deploy, no cloud account, no model call, no spend, no secret, no client data. **Review rounds:** round 1 done (`reviews/AK-G16-round1-adversarial.md`, 18 ids; `reviews/AK-G16-round1-correctness.md`, 13 ids; resolve `reviews/AK-G16-round1-resolve.md`, 28 rows). Round 2 done: `reviews/AK-G16-round2-adversarial.md` (15 ids: 0 Blocker, 8 Major, 5 Minor, 2 Nit), `reviews/AK-G16-round2-correctness.md` (15 ids: 0 Blocker, 5 Major, 8 Minor/Nit), resolve `reviews/AK-G16-round2-resolve.md` (30 rows: 27 PROPOSE FIX, 3 NEEDS LEAD). This revision applies EVERY row of that resolve. **Round 3 is next and is the LAST ticket round** (cap 3 rounds, order 20 item 6); after it, remaining Majors become build-time fixes (design-doc stop rule, `.claude/rules/review-loop-speed-rules.md`). The result review of built code has no cap (security path).
 
@@ -456,3 +456,335 @@ Merge order of the v1 chain is unchanged (order 20 items 2 and 4): P1m, P1a, P1b
 - Revision 1 (commit `c816370`): first draft. Counts: 4 sub-PRs, 56 test rows (-a 15, -b 23, -c 11, -d 7), 57 mutants (-a 12, -b 29, -c 10, -d 6), 11 PENDING LEAD items, 14 v1.1 rows, 8 owner-visible limits.
 - Revision 2 (commit `6d47d13`, 2026-11-06 from 06:38 UTC / 12:08 IST): applied `reviews/AK-G16-round1-resolve.md`. Counts: 5 sub-PRs; 65 test rows (-a 22, -b1 24, -b2 2, -c 10, -d 7); 67 mutants (-a 15, -b1 31, -b2 4, -c 11, -d 6); 15 PENDING LEAD items (12-15 MEANWHILE); 16 v1.1 rows; 9 owner-visible limits; 4 contract lines.
 - Revision 3 (this file, 2026-11-06 from 06:59 UTC / 12:29 IST): applies all 30 rows of `reviews/AK-G16-round2-resolve.md`, order 43 item 102 (PENDING LEAD 12-15) and order 45 items 16-18 (PENDING LEAD 16-18, answered while this revision was being written; no MEANWHILE box is left). Counts, recounted: **5 sub-PRs** (unchanged); **84 test rows** (-a 32 = 22 + P8b, P16d, P16e, P16f, P16g, P16h, P19, P20, P21, P22; -b1 33 = R1-R15 (15) + 18 YAML lint rows (L1-L9, L11, L12, L14-L20); -b2 2 = L10, L13; -c 10; -d 7); **89 mutants** (-a 24 = 15 + M-a16..M-a24; -b1 43 = 31 + M-b45 moved from -c (formerly M-c10) + M-b36..M-b44 + M-b46, M-b47; -b2 4; -c 12 = 11 - M-c10 + M-c12, M-c13; -d 6); **18 PENDING LEAD items** (12-18 ANSWERED; 3 and 11 settled by order 45, my reading; 9 open: 1, 2, 4-10); **16 v1.1 rows** (unchanged in number; V7 rewritten as a named ticket row required before any pilot, V8 gains the key ring, V11 gains the lag alert); **12 owner-visible limits** (O10, O11, O12 new; O3 and O5 reworded); **6 contract lines** (K5, K6 new). Two corrections to the resolve (the lag step cannot check signatures; the lag bound is a `defaults.py` value, not a config field) are stated at the top. If the lead cuts -b2: 82 rows, 85 mutants.
+
+## Build notes (round 3 resolve)
+
+> **BUILD NOTES WIN.** AK-G16 had review rounds 1-3. Review round 3 (`reviews/AK-G16-round3-adversarial.md`, `reviews/AK-G16-round3-correctness.md`) found 0 Blockers and 13 Majors counting both reviewers (6 adversarial, 7 correctness). Round 3 is the last round, so there is no round 4 (order 20 item 6). **This ticket is FROZEN at revision 3** (commit `a4b7a3c`). The builder applies build notes BN-1 to BN-31 below, from `reviews/AK-G16-round3-resolve.md`. Where a build note and the text above disagree, the build note wins. Everything above is append-only history and is not rewritten or renumbered. The build-start review reads this ticket together with these notes. The CHANGELOG sections are history, not instructions. The "84 rows / 89 mutants" numbers above are superseded by BN-31.
+>
+> **Two notes are MEANWHILE texts, not instructions:** BN-1 (PENDING LEAD 19) and BN-6 (PENDING LEAD 20). The lead has not answered them yet. Until the lead answers:
+> - -a builds everything except the re-put part of the re-anchor pass;
+> - -b1 builds everything except row R16.
+>
+> **Totals after the decided notes:** 85 test rows (-a 34, -b1 32, -b2 2, -c 10, -d 7) and 101 mutants (-a 30, -b1 48, -b2 4, -c 12, -d 7). PL19 and PL20 change them (BN-31). There are 20 PENDING LEAD items; open: 1, 2, 4-10, 19, 20. Each note cites the finding id it comes from.
+
+**BN-1.** [from R3-ADV-1; NEEDS LEAD 19] **MEANWHILE (NEEDS LEAD 19, not yet answered). This is the recommendation, not an instruction.**
+
+*Why.* The re-put pass cannot run in anything v1 renders:
+- R15 refuses every `backends.anchor` except `none`;
+- the pass needs an anchor (D1);
+- `part=None` has the pass off.
+
+*Recommendation, option (b): move the re-put pass to the first cloud adapter ticket (V1).*
+
+Moves to V1:
+- D1 step 4 (the re-put), the `anchor_recheck` constructor argument, `ANCHOR_RECHECK` and the `AnchorConflict` handling;
+- BN-2's time budget;
+- rows P16, P16c, P16d, P22, and P16-base (BN-14) and P16i (BN-2);
+- mutants M-a13, M-a19, M-a23, M-a31, M-a32;
+- the PL12 cost text and O3's sentence about retrying the newest 30 passes.
+
+Stays in -a under every option:
+- checks (i)-(iii) as the definition of a "checked" row;
+- `_checked_through(head)`;
+- `ANCHOR_RECHECK_SCAN = 120`, whose guard becomes 1 <= `ANCHOR_RECHECK_SCAN` <= 480, with no relation to `ANCHOR_RECHECK`;
+- the summary line (BN-8), the lag step, and P16h and P16h-base.
+
+Under (b), P16b, P16e, P16f and P16g are re-targeted to `_checked_through`. Their "never put" assertions are dropped, and each asserts the head's sign count plus its counter in BN-8's summary line:
+- P16b: an other-key row at the head's `seq` does not count as checked, so `checkpoint()` makes 1 sign call;
+- P16e and P16f: the same, for a forged signature and for a wrong hash;
+- P16g: 120 junk rows give exactly one summary line with the beyond-scan count.
+
+M-a14, M-a16, M-a17 and M-a18 stay, redefined as "key, signature or hash check removed from `_checked_through`" and "scan-cap count omitted", with the same killers re-targeted.
+
+*Option (a)* keeps everything as written, plus BN-2. *Option (c)* is (a) plus a sentence in O3: "the kit as rendered has no proof copy, so this retry never runs in v1".
+
+**What the -a builder does meanwhile:**
+1. Build the "stays in -a" list above.
+2. Do not build the "moves to V1" list.
+3. If -a is otherwise finished before the lead answers, stop, report, and wait. Do not choose.
+
+**BN-2.** [from R3-ADV-2, R3-COR-5; PROPOSE FIX (merged: a slow store starves signing)] Applies wherever the re-put pass is built: in -a under PL19 (a) or (c), in the V1 ticket under (b).
+
+1. **Order.** `checkpoint()` first signs, inserts and anchors the head exactly as today (`chain.py:309-319`), using `_checked_through` for the early return. Only after that does it run the re-put pass. This replaces "at the start of the call" (D1).
+2. **Budget.** `defaults.ANCHOR_RECHECK_BUDGET_S = 15`, measured with `time.monotonic()` from the moment `checkpoint()` is entered. The pass checks the elapsed time BEFORE each re-put. When it is at least the budget, the pass stops and logs one line: `re-anchor pass stopped: time budget spent (<k> of <n> rows)`.
+3. **Guard test (-a):** 1 <= `ANCHOR_RECHECK_BUDGET_S` <= 20.
+4. **Guard (-b1, in R11):** `ANCHOR_RECHECK_BUDGET_S + 32 < ` the audit CronJob's `activeDeadlineSeconds` (55). The 32 s is one re-put meeting an existing object: a conditional put plus a read, each at most 2 attempts of (3 s connect + 5 s read), `anchor_s3.py:88`. The arithmetic: 15 + 32 = 47 < 55. The head's own put is at most 32 s < 55; if it takes longer than 15 s, the pass does not start.
+5. **New row P16i.** A fake anchor advances a fake monotonic clock (the module's `time.monotonic` is monkeypatched) by 6 s per put. There are 30 checked, unanchored rows, and a head to sign.
+   - Expected: the head row is inserted and its put is the FIRST put the fake records.
+   - Then exactly 2 re-puts (at t = 6 and t = 12; at t = 18 the pass stops).
+   - Then the budget log line.
+6. **New mutants:**
+   - M-a31: the budget is ignored. Killer: P16i (30 re-puts).
+   - M-a32: the pass runs before signing. Killer: P16i (the first recorded put is not the head).
+7. **Corrected text.** The PL12 cost text reads: "in steady state every run makes N conditional puts that meet an existing object plus N reads: that is every run, not 'up to', unless the time budget stops the pass; at N = 30, 1,296,000 of each per month". O3's retry sentence reads "each later pass tries again, within a 15-second budget, for up to the newest 30 passes".
+
+**BN-3.** [from R3-ADV-3, R3-COR-1; PROPOSE FIX (merged: migrate has no inputs)]
+
+1. **Config (-b1).** `deploy.migrate: {secret_object: <DNS label>, egress: list[{cidr, ports, protocol}]}` is required whenever `deploy` is present. It uses the same validators as `secret_objects` and `egress`.
+2. **The function (-a).** `deploy.parts.migrate_secret_names(cfg) -> frozenset[str]` returns `backends.store.migrate_credential_ref` (P6b2 F1, `tickets/P6b2.md:412`) plus the store's CA bundle secret name when one is configured (the migrate command reads it, `cli.py:329`). `Part` is unchanged.
+3. **R1 and R2.** The sixth secret volume belongs to the migrate Job. It references `deploy.migrate.secret_object`, and its `items` list equals `migrate_secret_names(cfg)`. The migrate allow policy holds `deploy.migrate.egress` plus the DNS rule.
+4. **Distinct names.** The six Secret object names (the five parts' `secret_objects` and `deploy.migrate.secret_object`) must be pairwise distinct.
+   - The render refuses otherwise, with `secret object <name> is used by <a> and <b>`.
+   - New R2 case: app and purge configured with the same name refuse the render.
+   - New L7 case: two workloads whose secret volumes reference the same Secret object fail lint.
+5. **The L8 test input** is "the Secret object named `deploy.migrate.secret_object`". New L8 case: the tick CronJob given a secret volume that references it fails lint.
+6. **New mutant** M-b48: the distinct-name refusal is removed. Killer: R2's new case.
+7. **Counts.** Rows unchanged (cases added). Mutants +1.
+
+**BN-4.** [from R3-ADV-4; PROPOSE FIX]
+
+1. **Config.** `cluster_dns.namespace_selector`, `cluster_dns.pod_selector`, `ingress.namespace_selector` and `ingress.pod_selector` are each a map with at least one entry (pydantic `min_length=1`). Each key and value is checked against the label patterns (the Kubernetes rule is UNVERIFIED; the builder checks the documentation).
+2. **New R14 cases:** each of the four set to `{}` is refused.
+3. **L4 gains two problems:**
+   - (i) any `namespaceSelector` or `podSelector` inside any NetworkPolicy's `ingress[].from[]` or `egress[].to[]` that has no `matchLabels` entry and no `matchExpressions` entry;
+   - (ii) an empty `spec.podSelector` in any policy other than the deny-all policy.
+4. **Why (ii):** an allow policy with an empty `spec.podSelector` would give every pod that part's egress. The deny-all policy's own `spec.podSelector: {}` is its subject and stays allowed.
+5. **New L4 cases:** `{}` as the app ingress namespace selector; `{}` as the DNS rule's pod selector; `{}` in an egress `to`; an allow policy with `spec.podSelector: {}`.
+6. **New mutants:**
+   - M-b49: the L4 empty-selector check is removed. Killer: the L4 cases.
+   - M-b50: the config's `min_length` is removed. Killer: the R14 cases.
+7. The meaning of an empty selector is UNVERIFIED, but refusing it is safe whatever it means.
+8. **Counts.** Rows unchanged. Mutants +2.
+
+**BN-5.** [from R3-ADV-5; PROPOSE FIX (cut)]
+
+1. **Rule ids.** Every lint problem string begins with its rule id and a colon, for example `L14: ...`. Every hostile case asserts that its own rule id is among the ids of the returned problems. "Lint failed" is no longer enough.
+2. **L1 is CUT.** L18 refuses Role and ClusterRole as kinds, so L1 can never be the only rule that fails.
+   - L1's hostile cases (a Role with `*`, a ClusterRole with `*`) move into the L18 row and assert `L18`.
+   - The number L1 is not reused.
+3. **L6's Secret-object half is CUT** for the same reason (Secret is not an L18 kind). Its case (a Secret with `data`) moves into L18. L6 keeps its `env` half.
+4. **L16 stays.** With the rule-id assertion, M-b35 is killable whether or not L18's field list admits `projected`.
+5. **Counts.** -b1 lint rows go from 18 to 17. M-b14 (disable L1) is removed. -b1 mutants -1.
+
+**BN-6.** [from R3-ADV-6; NEEDS LEAD 20] **MEANWHILE (NEEDS LEAD 20, not yet answered). This is the recommendation, not an instruction.**
+
+*Recommendation, option (a):*
+1. `defaults.AUDIT_WRITER_SEPARATE = False` in -b1's block.
+2. `deploy render` and `deploy check` refuse `environment: pilot` and `prod` while it is `False`, with: "pilot and prod need the separate audit-writer role (V7); not built yet".
+3. V7's own PR flips it to `True`.
+4. New row R16: with the shipped value, the fixture config set to pilot and then to prod is refused, and the message names V7. Every other render and lint row runs with the constant monkeypatched to `True` through one shared fixture.
+5. New mutant M-b54: the gate check is removed. Killer: R16.
+
+*The cost, said plainly:* `dev` is already refused (I6), so under (a) no real config renders until V7 merges.
+
+*Option (b):* the gate is human-only, the lead owns it, and O12 is shown at the pilot gate (today's text). *Option (c):* both.
+
+**Meanwhile:** -b1 builds without R16 and M-b54. The lead's answer adds them.
+
+**BN-7.** [from R3-ADV-7; PROPOSE FIX (honesty)]
+
+1. **O11** reads: "A part that does the work, if taken over by an attacker, can pause audit signing for a while and can make the 'signing is behind' check look healthy. Only a person who runs `audit verify` sees it: nothing raises an alarm automatically, and nothing in v1 runs `audit verify` on a schedule (V11 is later). The fix is O12's separate role, required before any pilot."
+2. **In D1**, the residual sentence "The pause is detected ... but not prevented" reads "The pause is visible to a person who runs `audit verify` (invalid signatures); it is not prevented and raises no automatic alarm."
+3. **In the Security notes**, "`audit verify` detects both (O11)" reads "a person who runs `audit verify` sees both (O11); nothing alarms".
+4. **Runbook R11 gains:** "a person on the client side runs `audit verify` at the interval K6 names and keeps its output line in the deployment record."
+5. **K6 gains:** "and runs `audit verify` at that interval".
+6. **Not built:** a last-signed marker for the lag step. The same login could forge it, so it would be no better.
+
+**BN-8.** [from R3-ADV-8; PROPOSE FIX]
+
+1. **One summary line per run.** The per-row log lines of D1 (check failed, different key, beyond head, beyond the scan cap) are replaced by at most one line per `checkpoint()` call, counts only and no values: `checkpoint rows not checked: signature=<a> hash=<b> other_key=<c> beyond_head=<d> beyond_scan=<e>`. The line is written only when one of the counts is not zero.
+2. **Rows that change:**
+   - P16b, P16e, P16f and P16h assert their counter in that line.
+   - P16g gains a case: 120 junk rows give exactly one such line (`caplog` count = 1).
+3. **D1 step 5's "3N" sentence** is read as holding for accidental junk only. "An attacker who fills a range of future `seq` values fills the whole scan window: no older row is re-anchored or counted as checked; the summary line and `audit verify` show it."
+4. **Counts.** No row or mutant count changes.
+
+**BN-9.** [from R3-ADV-9, R3-COR-6; PROPOSE FIX (merged: server render and WSGI callable)]
+
+1. **R12 (-b1)** keeps `ingress`, `port` and `replicas` only. The `server` half moves to H6 (-d).
+2. **The app command in -b1.** The app Deployment's container command is exactly `[deploy.entry]`, with no arguments. R1 asserts it.
+3. **New config field (validated in -b1).** `deploy.wsgi_app`, pattern `^[A-Za-z_][A-Za-z0-9_.]*:[A-Za-z_][A-Za-z0-9_]*$`, names the WSGI callable (module:attribute).
+   - New R14 case: a `wsgi_app` with a space or `;` is refused.
+   - From -d on, a config without `wsgi_app` refuses the render.
+4. **-d** replaces the app command with the Gunicorn argument list: the five `deploy.server` limits as Gunicorn's flags, then `deploy.wsgi_app`.
+5. **H6** asserts both the limits and `wsgi_app` in the rendered command.
+6. **Server fields.** The five `deploy.server` fields are Gunicorn's settings, and v1 renders Gunicorn only.
+7. **Waitress** becomes a written outline, new v1.1 row **V17** (trigger: a client cannot run Gunicorn). Its limits have other names (UNVERIFIED). The WSGI adapter stays server-neutral, so the alternative needs only a render mapping.
+8. **New mutant** M-d7: `wsgi_app` is not rendered. Killer: H6.
+9. **Counts.** -d mutants +1. v1.1 rows 17.
+
+**BN-10.** [from R3-ADV-10; PROPOSE FIX] R15 and D2 read: "the `kubernetes` render refuses whenever `backends.anchor` is not `none`" (v1 has no cloud-adapter field; `target` is `Literal["kubernetes"]`). M-b46 is unchanged.
+
+**BN-11.** [from R3-ADV-11; PROPOSE FIX]
+
+1. **(a) Qualification.** `run_tick_command` qualifies agents as today (`cli.py:291-298`) only for `part=None` and `part="tick"`, and passes them to `app.build`. For `purge`, `maintenance` and `audit` it qualifies nothing, and `build_part` takes no agents: those steps start no run.
+2. **(b) The CronJob command.** Every rendered CronJob's container command is exactly `[deploy.entry, "--part", "<part>"]`, and `deploy.parts.main` receives `["--part", "<part>"]`. R1 asserts it.
+3. **(c) The clock.**
+   - `build_part(..., clock=models.now)`, and `PartApp.clock` is that argument.
+   - `models.now` is `datetime.now(UTC)` (`models.py:19-20`), the same default as `app.build` (`app.py:73`) and `Approvals` (`approvals/requests.py:65`). This closes the UNVERIFIED line "`Approvals`' default clock".
+   - It is not the database clock: D5 bounds skew at 30 s, which is negligible against retention periods counted in days.
+
+**BN-12.** [from R3-ADV-12; PROPOSE FIX]
+
+1. **One value.** `defaults.CRONJOB_STARTING_DEADLINE_S = 50` goes on EVERY CronJob. No five-field schedule runs more often than once a minute, so 50 s is shorter than every possible period, and no schedule needs parsing.
+2. **Guard test:** 1 <= value < 60.
+3. **R11** reads "`startingDeadlineSeconds` 50 on every CronJob". L19 checks exactly that value on every CronJob.
+4. **Counts.** Rows and mutants unchanged.
+
+**BN-13.** [from R3-ADV-13; PROPOSE FIX]
+
+1. **(a) Minimum prefix length.**
+   - `defaults.EGRESS_MIN_PREFIX_V4 = 16` and `EGRESS_MIN_PREFIX_V6 = 48`. Guard tests: 8 <= v4 <= 32 and 16 <= v6 <= 128.
+   - The config and L4 both refuse an egress `cidr` with a shorter prefix (after IPv4-mapped normalisation), and the message names the minimum.
+   - New cases: R14 and L4 `10.0.0.0/8`.
+2. **(b) Strict parsing.**
+   - Every `cidr` and `except` entry is parsed with `ipaddress.ip_network(value, strict=True)`. A `ValueError` is the problem `L4: not a network address: <value>` (and a config refusal), never a skip.
+   - New cases: `10.0.0.1/24` (host bits set) in R14 and L4.
+3. **(c) The metadata address set.**
+   - `METADATA_FORBIDDEN` gains `64:ff9b::a9fe:0/112`: the NAT64 well-known prefix `64:ff9b::/96` (RFC 6052, from memory, UNVERIFIED) embedding `169.254.0.0/16`.
+   - It also gains `192.0.0.192/32` (from the reviewer, UNVERIFIED).
+   - Evidence item 7 checks both and removes any it cannot confirm.
+4. **New mutants:**
+   - M-b51: the L4 minimum-prefix check is removed. Killer: the L4 `/8` case.
+   - M-b52: a parse error is skipped. Killer: the L4 host-bits case.
+5. **Counts.** Rows unchanged. Mutants +2.
+
+**BN-14.** [from R3-ADV-14, R3-COR-7; PROPOSE FIX (merged: the fail-before plan)]
+
+1. **Corrected fail-before text.** "P16, P16b-P16h and P22 fail on the base with `ImportError` (no `deploy.parts`) or `TypeError` (unknown keyword `anchor_recheck`). That shows the feature is missing, not the defect, said plainly. The twins below show the defect."
+2. **New row P16h-base** (-a, under every option). It is built directly as `audit.ChainAudit(audit._Db.memory(), key, None, 1)`, the base signature (`chain.py:156-162`; pattern `tests/warden_port/test_audit_chain.py:77`):
+   - write 3 rows and call `checkpoint()`;
+   - insert a junk checkpoint row at `seq` 10**9 by direct SQL;
+   - write 2 more rows and call `checkpoint()`;
+   - assert that a checkpoint row exists at `seq` 5.
+   - Expected on the base: `AssertionError` (the early return at `chain.py:307` sees `MAX(seq)` = 10**9). Expected on the new code: pass.
+3. **New row P16-base** (only where the pass is built: PL19 (a) or (c)).
+   - The same direct construction, with `kw = {"anchor_recheck": 30} if "anchor_recheck" in inspect.signature(audit.ChainAudit).parameters else {}`.
+   - A fake anchor fails the first put. A fresh `ChainAudit` then runs `checkpoint()`, and the test asserts the anchor holds that `seq`.
+   - Expected on the base: `AssertionError` ("never anchored").
+4. Both expected base outputs are pasted into `fail-before.txt`.
+5. **Counts.** -a rows +1 (+1 more under PL19 (a) or (c)).
+
+**BN-15.** [from R3-ADV-15, R3-COR-12; PROPOSE FIX (merged: the runbook and the -b2 cut)]
+
+1. **-b1 creates `docs/deploy-runbook.md`** (steps R1-R11). Steps R4 and R7 are needed by any deployment.
+2. **-b2** only adds the rights-list review sentence to R5. **-c** adds the live-smoke text of R8.
+3. **Dependency.** -c depends on -b2, or on -b1 if the lead cuts -b2.
+4. **If -b2 is cut**, only `deploy/rights.py`, L10 and L13 leave: -2 rows and -4 mutants against BN-31's totals.
+
+**BN-16.** [from R3-ADV-16; PROPOSE FIX]
+
+1. **O10 gains:** "The clean-up of the migration job removes the job, not the stored login: if the job fails or the operator forgets the deletion, the login stays in the cluster until a person deletes it."
+2. **Runbook R7 gains:** "after deleting the migrate Secret, list the Secret objects in the namespace and confirm the one named `deploy.migrate.secret_object` is gone; write that in the deployment record (R9)."
+3. No code. `ttlSecondsAfterFinished` leaving the Secret is the reviewer's reading (Kubernetes UNVERIFIED).
+
+**BN-17.** [from R3-ADV-17; PROPOSE FIX]
+
+1. D2's "no download from a URL during the build" reads: "no `ADD` of a URL and no `curl` or `wget` in any `RUN` line; the package index, through `uv.lock` with hashes, is the only network use during the build".
+2. R7 gains the `curl` and `wget` cases.
+3. **Counts.** Unchanged.
+
+**BN-18.** [from R3-ADV-18; PROPOSE FIX, deletion contested]
+
+1. `signed_through()` stays. Deleting it would break `tests/warden_port/test_audit_chain.py:494` and `:671`, and tests are never deleted.
+2. Its docstring gains: "MAX(seq) over every checkpoint row, checked or not; `checkpoint()` no longer uses it."
+3. M-a24 is unchanged.
+
+**BN-19.** [from R3-COR-2; PROPOSE FIX]
+
+1. **Seventh field.** `PartApp` gains a seventh field, `maintenance_store`. It is `None` except for `part="maintenance"`, where it is built from `maintenance_dsn_secret_name` exactly as P4b2 builds `App.maintenance_store` (`tickets/P4b2.md:203`, `:232`).
+2. **Text that changes.** "Exactly six fields" reads "exactly seven" in D1, Interface 1b and P17, and P17's strict `PartApp` allows the seven.
+3. **Coupling line 426** is settled: P4b2's step reads `app.maintenance_store`, so it stays in the maintenance part.
+4. **New mutant** M-a28: `maintenance_store` is left `None` for the maintenance part. Killer: P17's maintenance case on Postgres in pilot (P4b2's step raises `ConfigError`).
+5. **Counts.** -a mutants +1.
+
+**BN-20.** [from R3-COR-3; PROPOSE FIX]
+
+1. **New signature.** `secret_names_for(cfg, reg, part)` everywhere: in builds, the renderer, smoke and the tests. The renderer, `build_part` and smoke get `reg` from `load_registry(cfg)` (`registry.py:207`).
+2. **What the app and tick sets add:** the registry's tool secret names and tool CA secret names, as `app.py:111-121` reads them.
+3. **P2's oracle fixture** gains one registered tool with a `secret_names` entry and a `ca_secret_name`, written into the expected set from the fixture files.
+4. **New mutant** M-a29: `reg` is ignored, so the tool secrets are missing. Killer: P2.
+5. **Counts.** -a mutants +1.
+
+**BN-21.** [from R3-COR-4; PROPOSE FIX]
+
+1. **When `audit_lag` is a no-op pass:** the step succeeds and does nothing when:
+   - (1) the CONFIG's `backends.signer.kind` is `none` (the config, not the built sink: the tick part's sink has no signer by design); or
+   - (2) the audit sink has no `unsigned_age_s` (not a `ChainAudit`, for example `local_dir`).
+   - With a signer and an empty chain, `unsigned_age_s` returns `None`, which is a pass.
+2. **New row P19b**, three cases, each passing: signer `none` in pilot; a `local_dir` audit kind; an empty chain.
+3. **P9's "unchanged"** reads: "unchanged except that `audit_lag` also runs; it passes in dev and with no signer, and passes with inline signing while `checkpoint` keeps up".
+4. **New mutant** M-a25: the no-op guard is removed. Killer: P19b's signer-`none` case.
+5. **Counts.** -a rows +1, mutants +1.
+
+**BN-22.** [from R3-COR-8, R3-COR-17; PROPOSE FIX (re-cites)]
+
+1. Read `cli.py` qualification as `:291-298`; `build(None, agents)` as `:299` (line 82's "cli.py:297 passes no hook" is `:299`); the error mapping as `:300-308`; `run_tick(app)` as `:309`.
+2. Read the `chain.py` label check as `:508-511` and `tick.py` `STEPS` as `:249-266`.
+3. The span `cli.py:280-309` holds.
+
+**BN-23.** [from R3-COR-9; PROPOSE FIX]
+
+1. **Reuse.** L17's strict loader subclasses `config._UniqueKeyLoader` (`config.py:400-410`), so duplicate keys are refused by existing, tested code. `deploy/lint.py` maps that `ConfigError` to `L17: duplicate key ...`.
+2. **On top of it,** the loader refuses aliases and anchors, the merge key `<<`, explicit tags, and more documents than the plan's file list.
+3. **The list "Existing core code reused"** gains `_UniqueKeyLoader`.
+4. **The UNVERIFIED line** narrows to "that a subclass can refuse aliases, merge keys and tags".
+
+**BN-24.** [from R3-COR-10; PROPOSE FIX]
+
+1. **New file (-b1):** `deploy/k8s_names.py` holds every Kubernetes API group, `apiVersion`, kind and label-key string as constants. Its single `ALLOWED` entry in `tests/test_no_hardcoded_values.py` is `{"host"}`, with the reason already written for `render_k8s.py`.
+2. **No other entries.** `render_k8s.py`, `lint.py` and `plan.py` import from it and get NO `ALLOWED` entry.
+3. **R8** asserts that the table has exactly that one new entry and that the scan passes.
+
+**BN-25.** [from R3-COR-11; PROPOSE FIX]
+
+1. **The wrap.** `app.build(part=<p>)` (with `p` not `None`) and `build_part(part=<p>)` catch `ConfigError` from `platform_secrets.check` and raise `ConfigError(f"part {p}: {exc}") from exc`. `platform_secrets.py` is unchanged, and `part=None` is unchanged.
+2. **New mutant** M-a30: the `part <p>: ` prefix is dropped. Killer: P14.
+3. **Counts.** -a mutants +1.
+
+**BN-26.** [from R3-COR-13; PROPOSE FIX]
+
+1. **The refusal.** With the `kubernetes` target, the render refuses any signer setting whose name ends in `_path` and is set. Today that is `ed25519_local.private_key_path` (`table.py:217-223`). The message names the field and says to use `private_key_secret_name`.
+2. **New R15 case:** a pilot config with `private_key_path` is refused.
+3. **New mutant** M-b53: the refusal is removed. Killer: that case.
+4. **Counts.** -b1 mutants +1.
+
+**BN-27.** [from R3-COR-14; PROPOSE FIX]
+
+1. **The choke point.** The "no hold source wired" refusal lives in `run_tick_command` (one place). It applies whenever `part="purge"`, `retention.hold_labelled` is true (the default, `config.py:185`), and no `hold_run_ids` is given. That covers both the bare CLI and `deploy.parts.main(argv)` called without a hook.
+2. **New P18b case:** `main(["--part", "purge"])` with no hook exits 2 and deletes nothing.
+3. **Pilot gate.** K6 (the hold source) joins V7 on the lead's pilot-gate list.
+4. **Runbook R9 gains:** "start the purge part only when the agent's entry passes K6's hold source, or the client has written `retention.hold_labelled: false` with their yes in the deployment record".
+5. **New mutant** M-a26: the refusal works only in the bare CLI. Killer: P18b's `main` case.
+6. **Counts.** -a mutants +1.
+
+**BN-28.** [from R3-COR-15; PROPOSE FIX]
+
+1. **Check (i)** reads: "its `key_label` equals `signer_label(current signer)` and its `alg` equals `signer.alg` OR is NULL (a row written before migration 0004), exactly as `verify_rows` treats it (`chain.py:371-373`)".
+2. **New P16b case:** a NULL-`alg` row under the current label at the head's `seq` counts as checked (0 sign calls).
+3. **New mutant** M-a27: a NULL `alg` is treated as another key. Killer: that case.
+4. **Counts.** -a mutants +1.
+
+**BN-29.** [from R3-COR-16; PROPOSE FIX] The revision 3 CHANGELOG derivation reads "-a 32 = P1-P22 (22) + P3d + P8b + P16b-P16h (7) + P18b". The total of 32 was right; the listed parts double-counted P19-P22.
+
+**BN-30.** [from R3-COR-18; PROPOSE FIX]
+
+1. **The access path.** S11 (`has_table_privilege`) and D5's database clock read run SQL through the part's store `_db`, the same private access `chain.build` uses (`chain.py:525-527`).
+2. **The purge part** also checks its purge rights through `purge_store._db`.
+3. No new store method, and the contract suite stays not applicable.
+
+**BN-31.** [counts after the notes; supersede every count above]
+
+1. **Decided notes only** (pass and gate as revision 3 has them):
+
+   | Sub-PR | Rows | How the rows are made up | Mutants | How the mutants are made up |
+   |---|---|---|---|---|
+   | -a | 34 | 32 + P19b + P16h-base | 30 | 24 + M-a25..M-a30 |
+   | -b1 | 32 | 15 render + 17 lint (L1 cut) | 48 | 43 - M-b14 + M-b48..M-b53 |
+   | -b2 | 2 | | 4 | |
+   | -c | 10 | | 12 | |
+   | -d | 7 | | 7 | 6 + M-d7 |
+   | **Total** | **85** | | **101** | |
+
+2. **PL19 changes:**
+   - (a) or (c): +2 rows (P16-base, P16i) and +2 mutants (M-a31, M-a32), giving 87 rows and 103 mutants.
+   - (b): -4 rows (P16, P16c, P16d, P22) and -3 mutants (M-a13, M-a19, M-a23) move to V1, giving 81 rows and 98 mutants. M-a14, M-a16, M-a17 and M-a18 stay, redefined (BN-1).
+3. **PL20 changes:** (a) or (c): +1 row (R16) and +1 mutant (M-b54).
+4. **With the resolve's recommendations** (PL19 (b), PL20 (a)): **82 rows, 99 mutants.**
+5. **If the lead cuts -b2:** subtract 2 rows and 4 mutants from whichever total holds.
+6. **Other counts:**
+   - PENDING LEAD: 20 items (open: 1, 2, 4-10, 19, 20).
+   - v1.1 rows: 17 (V17 new).
+   - Owner-visible limits: 12 (O3, O10, O11 reworded).
+   - Contract lines: 6 (K6 reworded).
+   - Hostile inputs gain the new cases of BN-3, BN-4, BN-5, BN-13, BN-17, BN-26 and BN-27.
