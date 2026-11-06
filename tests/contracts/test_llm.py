@@ -117,3 +117,38 @@ def test_the_evals_gate_is_green_on_the_kinds_fixtures(wire, cfg_dir):
     ]
     run = evals.gate(reg, wire.serve(*answers, routes=cfg.routes), "test-agent")
     assert run.green and run.n == len(answers) == len(wire.requests)
+
+
+def test_cache_and_thinking_counts_on_every_wire(wire):
+    """P4a-2: a cache count the kind reads is refused as unpriced; a sub-count the kind does not read changes nothing
+    (cached-prompt and reasoning counts are subsets of the two counts, priced as input and output)."""
+    from hadavin_sdk.llm import UnpricedUsage
+
+    name = wire.kind_name
+    if name in ("anthropic", "bedrock"):
+        classes = {"cache_read_tokens": 5}
+        llm = wire.serve(wire.set_usage(wire.scenario("tool_call"), **classes))
+        with pytest.raises(UnpricedUsage) as err:
+            llm.chat(**CALL, tools=TOOLS)
+        assert err.value.field == "cache_read_tokens"
+        assert "5" not in str(err.value)
+        # a null or absent class is 0: the reply is priced as before
+        none = {"cache_read_tokens": None, "cache_write_tokens": None}
+        llm = wire.serve(wire.set_usage(wire.scenario("tool_call"), **none))
+        assert llm.chat(**CALL, tools=TOOLS).cost_usd == _cost(1200, 40)
+    elif name == "gemini":
+        fx = wire.set_usage(wire.scenario("tool_call"), cache_read_tokens=100, thinking_tokens=10)
+        reply = wire.serve(fx).chat(**CALL, tools=TOOLS)
+        assert (reply.input_tokens, reply.output_tokens) == (
+            1200,
+            50,
+        )  # thoughts are billed as output
+        assert reply.cost_usd == _cost(1200, 50)
+    else:
+        fx = wire.set_usage(wire.scenario("tool_call"), cache_read_tokens=100, thinking_tokens=10)
+        reply = wire.serve(fx).chat(**CALL, tools=TOOLS)
+        assert (reply.input_tokens, reply.output_tokens) == (
+            1200,
+            40,
+        )  # subsets: not added, not subtracted
+        assert reply.cost_usd == _cost(1200, 40)

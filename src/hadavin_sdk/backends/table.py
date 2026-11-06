@@ -70,7 +70,9 @@ _LOOPBACK = {"127.0.0.1", "localhost", "::1"}
 
 class OpenAICompatSettings(_LLMSettings):
     base_url: str
-    api_key_secret_name: str | None = None  # a local Ollama needs none
+    api_key_secret_name: str | None = (
+        None  # a local Ollama needs none; its replies must carry usage
+    )
     # OpenAI reasoning models refuse `max_tokens` and want `max_completion_tokens`.
     max_completion_tokens: bool = False
 

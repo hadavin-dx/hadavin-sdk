@@ -4,7 +4,9 @@ anthropic (three platforms), openai_compat and gemini; botocore's Stubber for be
 A wire harness: ``serve(*fixtures, routes=None) -> llm`` queues fixture responses and builds the kind;
 ``requests`` holds what was sent; ``max_tokens(body)`` and ``forced(body)`` read a sent request;
 ``answer(name, input)`` is a tool-call fixture for any call, ``cut_off()`` one stopped at the output cap;
-``close()``.
+``close()``. P4a: ``without_usage(fixture)`` removes the usage object from a fixture (unsupported on Bedrock, whose
+Stubber validates against the service model: its missing-usage rows drive ``BedrockLLM.chat()`` with a plain stub
+client) and ``set_tokens(fixture, tokens_in, tokens_out)`` sets the two counts (``None`` removes one).
 """
 
 import copy
@@ -17,6 +19,16 @@ from tests.contracts.kinds.builtin import ROUTES
 from tests.fixtures.http_fake import Replay, fixture
 
 KEY = "contract" + "-key"  # built from parts: never a real-looking key
+
+
+def _put(usage: dict, mapping: dict, classes: dict) -> None:
+    """Write each named class into ``usage`` under the wire's own key; ``None`` removes the key."""
+    for name, value in classes.items():
+        key = mapping[name]
+        if value is None:
+            usage.pop(key, None)
+        else:
+            usage[key] = value
 
 
 class _HttpWire:
@@ -81,6 +93,33 @@ class AnthropicWire(_HttpWire):
         fx["body"]["stop_reason"] = "max_tokens"
         return fx
 
+    def without_usage(self, fx):
+        fx["body"].pop("usage", None)
+        return fx
+
+    def set_tokens(self, fx, tokens_in, tokens_out):
+        usage = fx["body"]["usage"]
+        for key, value in (("input_tokens", tokens_in), ("output_tokens", tokens_out)):
+            if value is None:
+                usage.pop(key, None)
+            else:
+                usage[key] = value
+        return fx
+
+    def set_usage(self, fx, **classes):
+        """Cache, tier and speed words in this wire's own keys (P4a-2); ``None`` removes one."""
+        _put(
+            fx["body"]["usage"],
+            {
+                "cache_write_tokens": "cache_creation_input_tokens",
+                "cache_read_tokens": "cache_read_input_tokens",
+                "service_tier": "service_tier",
+                "speed": "speed",
+            },
+            classes,
+        )
+        return fx
+
 
 class OpenAICompatWire(_HttpWire):
     kind_name = "openai_compat"
@@ -107,6 +146,34 @@ class OpenAICompatWire(_HttpWire):
     def cut_off(self):
         fx = self.scenario("tool_call")
         fx["body"]["choices"][0]["finish_reason"] = "length"
+        return fx
+
+    def without_usage(self, fx):
+        fx["body"].pop("usage", None)
+        return fx
+
+    def set_tokens(self, fx, tokens_in, tokens_out):
+        usage = fx["body"]["usage"]
+        for key, value in (("prompt_tokens", tokens_in), ("completion_tokens", tokens_out)):
+            if value is None:
+                usage.pop(key, None)
+            else:
+                usage[key] = value
+        return fx
+
+    def set_usage(self, fx, **classes):
+        """Sub-counts this wire reports (they are subsets of the prompt and completion counts, not read)."""
+        usage = fx["body"]["usage"]
+        details = usage.setdefault("prompt_tokens_details", {})
+        _put(
+            details,
+            {"cache_read_tokens": "cached_tokens"},
+            {"cache_read_tokens": classes.get("cache_read_tokens")},
+        )
+        if "thinking_tokens" in classes:
+            usage.setdefault("completion_tokens_details", {})["reasoning_tokens"] = classes[
+                "thinking_tokens"
+            ]
         return fx
 
 
@@ -138,6 +205,35 @@ class GeminiWire(_HttpWire):
     def cut_off(self):
         fx = self.scenario("tool_call")
         fx["body"]["candidates"][0]["finishReason"] = "MAX_TOKENS"
+        return fx
+
+    def without_usage(self, fx):
+        fx["body"].pop("usageMetadata", None)
+        return fx
+
+    def set_tokens(self, fx, tokens_in, tokens_out):
+        usage = fx["body"]["usageMetadata"]
+        for key, value in (("promptTokenCount", tokens_in), ("candidatesTokenCount", tokens_out)):
+            if value is None:
+                usage.pop(key, None)
+            else:
+                usage[key] = value
+        if "totalTokenCount" in usage and type(tokens_in) is int and type(tokens_out) is int:
+            usage["totalTokenCount"] = (
+                tokens_in + tokens_out
+            )  # keep the total consistent with the two counts
+        return fx
+
+    def set_usage(self, fx, **classes):
+        """Cached-content and thoughts counts (a cached count is a subset of the prompt; thoughts are output)."""
+        _put(
+            fx["body"]["usageMetadata"],
+            {
+                "cache_read_tokens": "cachedContentTokenCount",
+                "thinking_tokens": "thoughtsTokenCount",
+            },
+            classes,
+        )
         return fx
 
 
@@ -205,6 +301,26 @@ class BedrockWire:
     def cut_off(self):
         fx = self.scenario("tool_call")
         fx["body"]["stopReason"] = "max_tokens"
+        return fx
+
+    def without_usage(self, fx):
+        raise NotImplementedError(
+            "the Stubber validates against the service model: use a plain stub client"
+        )
+
+    def set_tokens(self, fx, tokens_in, tokens_out):
+        fx["body"]["usage"].update(inputTokens=tokens_in, outputTokens=tokens_out)
+        return fx
+
+    def set_usage(self, fx, **classes):
+        _put(
+            fx["body"]["usage"],
+            {
+                "cache_write_tokens": "cacheWriteInputTokens",
+                "cache_read_tokens": "cacheReadInputTokens",
+            },
+            classes,
+        )
         return fx
 
     def close(self):

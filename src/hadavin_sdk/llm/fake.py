@@ -6,11 +6,12 @@ import hashlib
 import json
 import threading
 from collections import Counter
-from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
 from hadavin_sdk.config import Route
+from hadavin_sdk.llm.pricing import cost_usd
+from hadavin_sdk.llm.protocol import build_usage
 from hadavin_sdk.models import Reply, round_cost_up
 
 
@@ -19,6 +20,10 @@ class UnknownRecording(KeyError):
 
 
 class FakeLLM:
+    # A recorded run replays one attempt and one request: the k1b charge helper reads both.
+    REQUESTS_PER_CHAT = 1
+    max_attempts = 1
+
     def __init__(self, recorded_dir: Path, routes: dict[str, Route]) -> None:
         self.recorded_dir = Path(recorded_dir)
         self.routes = routes
@@ -47,11 +52,16 @@ class FakeLLM:
             raise UnknownRecording(path.name)
         data = json.loads(path.read_text(encoding="utf-8"))
         r = self.routes[route]
-        cost = round_cost_up(
-            (
-                Decimal(data.get("input_tokens", 0)) * r.input_usd_per_mtok
-                + Decimal(data.get("output_tokens", 0)) * r.output_usd_per_mtok
-            )
-            / Decimal(1_000_000)
+        data = dict(data)
+        cache_write, cache_read = (
+            data.pop("cache_write_tokens", None),
+            data.pop("cache_read_tokens", None),
         )
+        usage = build_usage(
+            data.get("input_tokens"),
+            data.get("output_tokens"),
+            cache_write_tokens=cache_write,
+            cache_read_tokens=cache_read,
+        )
+        cost = round_cost_up(cost_usd(usage, r))
         return Reply(**data, cost_usd=cost, model_id=r.model_id)
