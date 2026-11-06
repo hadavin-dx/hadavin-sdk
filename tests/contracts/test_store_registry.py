@@ -64,6 +64,18 @@ def test_pg_schema_still_skips_on_a_laptop_without_a_database(no_rule):
     assert msg.startswith("require_backend:")
 
 
+def test_the_driver_constant_names_the_module_the_namespace_loads():
+    """`PG_DRIVER_MODULE` is the one place the contract helpers outside `store_postgres.py` name the driver; if it
+    drifts from what `pg_driver()` imports, `require_backend` would look for the wrong module."""
+    import sys
+
+    from tests.contracts.kinds import PG_DRIVER_MODULE
+    from tests.contracts.kinds.store_postgres import pg_driver
+
+    pg_driver()
+    assert PG_DRIVER_MODULE in sys.modules
+
+
 # --- require_backend -------------------------------------------------------------------------------------------
 @pytest.mark.parametrize(
     ("env", "fails"),

@@ -165,7 +165,6 @@ def pytest_runtest_logreport(report):
 def pytest_sessionfinish(session, exitstatus):
     if _STATE is None or exitstatus not in (0, 1):
         return
-    _STATE.backends = tuple(sorted(KINDS["store"]))
     _STATE.called = set(RECORDER.called)
     _STATE.methods = public_methods(Store)
     problems = session_problems(_STATE)
