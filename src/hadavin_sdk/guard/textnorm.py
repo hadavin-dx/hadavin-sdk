@@ -29,16 +29,16 @@ address equals the verified address", an allowlist): folding there lets a look-a
 
 ``fold`` (stdlib only, linear):
   1. NFKD, so a base letter and its combining mark separate; 2. U+0345 becomes an iota after a Greek letter and is removed anywhere
-  else (spelling variant (b) only; the other spelling variants always remove it, see SPELLING VARIANTS and U+0345 below); 3. drop control, format, non-spacing and enclosing mark (Mn, Me), line and paragraph separator, private-use, surrogate and UNASSIGNED (Cn) characters and the
-  invisible filler letters; 4. NFKC; 5. every Unicode whitespace character (``str.isspace``) becomes a space so words are never
+  else (spelling variant (b) only; the other spelling variants always remove it, see SPELLING VARIANTS and U+0345 below); 3. drop control (Cc), format (Cf), non-spacing and enclosing mark (Mn, Me), private-use, surrogate and UNASSIGNED (Cn) characters and the
+  invisible filler letters, EXCEPT that every whitespace character (``str.isspace``: space, tab, line feed, the line and paragraph separators
+  U+2028 and U+2029, the no-break and ideographic spaces) is kept here and becomes a space in step 5; 4. NFKC; 5. every whitespace character becomes a space so words are never
   joined; 6. every Unicode decimal digit becomes an ASCII digit; 7. look-alike letters become the Latin letter or digit. Case is kept
   unless ``casefold`` is set (then ``casefold`` runs just BEFORE step 7, see below); ``collapse_ws`` squeezes runs of whitespace.
 
 The look-alike table (step 7) is GENERATED from the Unicode UTS #39 ``confusables.txt`` MA table, version 15.1.0 (the Unicode version of the
 pin; the generator refuses any other version), by ``tools/gen_confusables.py`` (pinned sha256, version and date in ``guard/_confusables.py``)
 plus 16 explicit supplementary letters, one explicit override (the Cyrillic palochka U+04CF reads as ``l``, see the generator) and the
-Unicode-name rules of the generator (small capitals; negative circled and negative squared letters; regional indicator letters; Latin letters
-with a stroke, hook or similar mark; circled and negative circled digits), all listed in the generator. A look-alike letter that Unicode
+Unicode-name rules of the generator, all listed in the generator. NAME RULES COVER: small capitals, negative circled and negative squared letters, the crossed negative squared P, regional indicator letters, the squared small d, Latin letters with a stroke, hook or similar mark, and the circled, negative circled, double circled and sans-serif digits and numbers (0 to 10); the circled numbers 11 to 20 are read by NFKC, the negative circled numbers 11 to 20 are not read (a named gap). A look-alike letter that Unicode
 listed only after 15.1.0 is NOT in the table. Runtime is stdlib only; the data file is not shipped. ``FOLD_VERSION`` names the fold that made
 a check name. What is NOT read as an ASCII letter or digit is listed in ``tests/test_textnorm.py`` (``KNOWN_NAME_GAPS``) with the reason.
 
@@ -123,20 +123,34 @@ MARKS AND SCANS. Three categories are NOT dropped by the spelling variants of ``
     changes a name, so the spelling variants keep it. "ad" + U+0903 + "min" is NOT the check name of "admin", and the spelling-variant views of
     ``fold_views`` of "pass" + U+093E + "word" do NOT hold "password".
   * Lm (modifier letters): a look-alike of the letter (superscript h reads as h), kept or read as that letter.
-  * Sk (modifier symbols): they become a space in the spelling-variant views and vanish in ``squeeze_views``.
+  * Sk (modifier symbols): a compatibility Sk (NFKD gives a space plus a mark: the diaeresis U+00A8, the small tilde U+02DC) becomes a space in
+    the spelling-variant views; every other Sk (the grave accent U+0060, the circumflex U+005E, the arrow head U+02C2) is kept as the symbol. ``squeeze_views`` removes both.
   So that a mark inserted into a protected value cannot hide it, ``fold_views`` and ``squeeze_views`` return, besides the spelling-variant
   views, the same views built from the text with every Mc, Lm and Sk character REMOVED BEFORE the first normalisation and before the
   look-alike table (so an Lm or Mc that the table or NFKC would read as a letter is gone too: "pass" + U+0C02 + "word" holds "PASSWORD"). Every
   other drop (Mn, Me, format, control and the rest) already applies to every view. These marks-dropped views keep every script and every letter.
-  At most six views per call (three spelling variants, each with and without the marks), never more.
+  "No exemption" holds for INSERTION only: a mark ADDED to the value is found for every Mc, Lm and Sk code point, with no exemption list. It does
+  NOT hold for a modifier letter that REPLACES a letter AND another one inserted in the same text ("pa" + superscript s + "s" + superscript h + "word": the
+  marks-dropped views lose the letter that the first modifier stood for, the other views read the inserted one as a letter): that mixed case is
+  NOT caught, it is pinned as a limit by a test, and a caller who must catch it needs its own rule.
+  At most six views per call of ``squeeze_views`` (three spelling variants, each with and without the marks); ``fold_views`` adds the script views below, so
+  at most nine.
   THE RULE FOR A SCAN (redaction, blocklist, has-secret): look through BOTH ``fold_views`` AND ``squeeze_views`` and take the views of the
-  protected value the same way (a scan holds a value when ANY view of the text holds ANY view of the value). ``tests/test_textnorm.py`` pins it for EVERY Mc,
-  Lm and Sk code point of the interpreter, with no exemption.
-  WHAT A SCAN RELIES ON: ``squeeze_views`` keeps ASCII letters and digits only, so for a value written in one script with NO ASCII letter or
-  digit (Chinese, Arabic, Hindi, Thai) it is ``""`` and the scan relies on ``fold_views`` alone, in particular on its marks-dropped views: a mark
-  inserted into such a value is removed and the value is found, but a look-alike LETTER of that script inserted into it, or a respelling of
-  it, is not covered. EMPTY VIEW: ``squeeze`` and every view of ``squeeze_views`` are ``""`` for a text without an ASCII letter or digit after the fold. An empty needle is found in every text, so a caller must
-  REFUSE an empty view of a protected value, never scan with it. The match positions of the original text are lost by the drops: a caller that
+  protected value the same way (a scan holds a value when ANY view of the text holds ANY view of the value), PASS ``casefold=True, collapse_ws=True`` to
+  ``fold_views`` (its default is ``False`` for the display and comparison uses that keep case: a scan built without it misses a value that
+  differs from the text by case alone, "Secret" against "SECRET"), and take the needles of the value with ``scan_needles``, which refuses a view
+  shorter than ``defaults.TEXTNORM_MIN_VIEW_CHARS`` (see below). ``tests/test_textnorm.py`` pins the insertion rule for EVERY Mc, Lm and Sk code point of the interpreter.
+  WHAT A SCAN RELIES ON: A value with NO ASCII letter or digit (Chinese, Arabic, Hindi, Thai) is found by the script views of ``fold_views`` (the non-ASCII letters and marks of the text, with whitespace, punctuation, symbols and ASCII characters removed), so an inserted space, hyphen, line break, ASCII letter or mark does not hide it; an inserted look-alike letter of that script, or a respelling of it, is not covered.
+  SCRIPT VIEWS (``fold_views`` only). The ASCII-only ``squeeze_views`` is ``""`` for a value in a script with no ASCII letter or digit, so ``fold_views`` also returns,
+  for the marks-dropped spelling variants, the SCRIPT VIEW: the view with every character removed that is not a non-ASCII letter or mark (whitespace,
+  punctuation, symbols, ASCII letters and digits; the digits of other scripts were turned into ASCII digits before and go too). A view that would be empty is left out, and a script view
+  equal to another view is not repeated. A scan of a value in Chinese, Hindi or Thai therefore needs the script view of the TEXT to hold the script view of the
+  value. It over-matches on purpose (the safe side): a value with ASCII letters AND a script has a script view of the script part alone, which
+  any text with that script part holds, and two words of a text that end and begin with the value's letters match across a separator.
+  MINIMUM VIEW LENGTH: ``defaults.TEXTNORM_MIN_VIEW_CHARS`` (2), the SAME number for every view (spelling variant, marks-dropped, script and squeeze
+  views). An empty needle is found in every text and a one-character needle in most, so ``scan_needles(raw)`` returns the views of a protected value
+  that reach the minimum (from ``fold_views`` with ``casefold=True, collapse_ws=True`` and from ``squeeze_views``) and raises ``ViewTooShort`` when none does. A caller
+  that scans must use it (P1b: the redaction package takes its needles from ``scan_needles`` and does not repeat the number). The match positions of the original text are lost by the drops: a caller that
   must cut the original text needs its own map.
 
 INPUT RULES (every public function): the argument must be a plain ``str`` (``type(x) is str``; a ``str`` subclass or an enum member is
@@ -173,7 +187,7 @@ from enum import Enum
 
 from hadavin_sdk import defaults
 from hadavin_sdk.guard import _confusables
-from hadavin_sdk.guard._confusables import TABLE as CONFUSABLES
+from hadavin_sdk.guard._confusables import TABLE as _CONFUSABLES
 
 __all__ = [
     "FILLERS",
@@ -183,6 +197,7 @@ __all__ = [
     "TextTooLong",
     "TextnormError",
     "UnidataMismatch",
+    "ViewTooShort",
     "allow_equal",
     "could_be_same_person",
     "fold",
@@ -194,6 +209,7 @@ __all__ = [
     "key_tag",
     "names_equal",
     "require_pinned_unidata",
+    "scan_needles",
     "squeeze",
     "squeeze_views",
 ]
@@ -212,6 +228,10 @@ class NotText(TextnormError):
     """The argument is not a plain ``str`` (a ``str`` subclass and an enum member are refused too)."""
 
 
+class ViewTooShort(TextnormError):
+    """No view of a protected value reaches ``defaults.TEXTNORM_MIN_VIEW_CHARS`` (``scan_needles``). Refuse to scan with the value: a needle that short is found in nearly every text."""
+
+
 class UnidataMismatch(TextnormError):
     """The interpreter's Unicode data is not the version the check names were pinned to (``require_pinned_unidata()``). Fail closed: the caller must refuse to run, not fall back."""
 
@@ -224,8 +244,8 @@ _SPACING_CATEGORIES = frozenset(
 FILLERS = frozenset(
     map(chr, (0x3164, 0x115F, 0x1160, 0x2800, 0xFFA0, 0x13441, 0x13442))
 )  # invisible letters/symbols used to glue or split words (the last two: Egyptian hieroglyph full blank and half blank)
-_LOOKALIKES = types.MappingProxyType({chr(c): v for c, v in CONFUSABLES.items()})
-_TABLE = types.MappingProxyType(dict(CONFUSABLES))
+_LOOKALIKES = types.MappingProxyType({chr(c): v for c, v in _CONFUSABLES.items()})
+_TABLE = types.MappingProxyType(dict(_CONFUSABLES))
 
 
 def _build_cf_table(table: dict[int, str]) -> dict[int, str]:
@@ -242,7 +262,7 @@ def _build_cf_table(table: dict[int, str]) -> dict[int, str]:
     return {**derived, **own}
 
 
-_CF_TABLE = types.MappingProxyType(_build_cf_table(CONFUSABLES))
+_CF_TABLE = types.MappingProxyType(_build_cf_table(_CONFUSABLES))
 _NON_ALNUM = re.compile(r"[^A-Z0-9]")
 _LOOSE = types.MappingProxyType(
     str.maketrans("OILSBZGQ", "01158269")
@@ -382,6 +402,17 @@ def _without_spacing_marks(text: str) -> str:
     return "".join(ch for ch in text if unicodedata.category(ch) not in _SPACING_CATEGORIES)
 
 
+def _script_view(view: str) -> str:
+    """The SCRIPT VIEW of a view: only the non-ASCII letters and marks stay. Whitespace, punctuation, symbols, ASCII letters and digits (and the
+    digits of other scripts, which are ASCII by now) are removed, so a separator or an ASCII letter inserted into a value in a script with no
+    ASCII letter or digit cannot hide it."""
+    return "".join(
+        ch
+        for ch in view
+        if not ch.isascii() and (ch.isalpha() or unicodedata.category(ch)[0] == "M")
+    )
+
+
 def _prefix(nfkd: str, *, iota: bool, marks: bool = False) -> str:
     """The spelling variant-independent steps on an NFKD text: U+0345 (an iota after a Greek letter when ``iota``, otherwise it is dropped like any
     mark), the drops (with ``marks``, also every Mc, Lm and Sk character), whitespace, NFKC and the digits."""
@@ -414,11 +445,17 @@ def _fold(raw: str, *, casefold: bool = False, collapse_ws: bool = False) -> str
 
 
 def _views(
-    raw: str, *, casefold: bool, collapse_ws: bool, marks_dropped: bool = False
+    raw: str,
+    *,
+    casefold: bool,
+    collapse_ws: bool,
+    marks_dropped: bool = False,
+    script: bool = False,
 ) -> tuple[str, ...]:
     """Every spelling variant of ``raw`` as a string, without repeats, in the order of ``_READINGS``. Without ``casefold`` there is no upper side
     (the table already runs on the letter as written), so only (a) and (b) remain. With ``marks_dropped`` the same spelling variants of the
-    text WITHOUT its Mc, Lm and Sk characters follow (a scan wants them; the DENY check names do not use them): at most twice as many views."""
+    text WITHOUT its Mc, Lm and Sk characters follow (a scan wants them; the DENY check names do not use them): at most twice as many views.
+    With ``script`` the SCRIPT VIEW of each of those follows it (``_script_view``; left out when empty or already there): at most three times as many."""
     texts = [raw]
     if marks_dropped:
         texts.append(_without_spacing_marks(raw))
@@ -440,6 +477,10 @@ def _views(
             )
             if view not in views:
                 views.append(view)
+            if script and marks:
+                only = _script_view(view)
+                if only and only not in views:
+                    views.append(only)
     return tuple(views)
 
 
@@ -454,13 +495,40 @@ def fold_views(raw: str, *, casefold: bool = False, collapse_ws: bool = False) -
     """Every view of ``raw`` for a SCAN: a redaction or a blocklist looks for the secret in EVERY view of the text (module docstring, "MARKS AND SCANS").
     The views are the spelling variants of ``raw`` (at most three: two without ``casefold``; ``fold(raw, ...)`` is one of them), then the same
     spelling variants of ``raw`` with every spacing mark (Mc), modifier letter (Lm) and modifier symbol (Sk) removed before the first
-    normalisation; all scripts are kept. At most six views, none repeated. A secret hidden by inserting such a mark is found in the
-    marks-dropped views. Still NOT enough alone for a value with ASCII letters or digits: a redaction MUST scan BOTH ``fold_views`` AND
-    ``squeeze_views``. A value with NO ASCII letter or digit (Chinese, Arabic, Hindi, Thai) is scanned with ``fold_views`` alone: ``squeeze_views`` is
-    empty for it, so the marks-dropped views here are the ones that find it when a mark is inserted; an inserted look-alike letter of that
-    script is not covered."""
+    normalisation (all scripts are kept), then the SCRIPT VIEW of each of those (non-ASCII letters and marks only; left out when empty or repeated).
+    At most nine views (six without ``casefold``), none repeated. A secret hidden by inserting such a mark is found in the
+    marks-dropped views.
+
+    THE RULE FOR A SCAN: pass ``casefold=True`` (and ``collapse_ws=True``). The default ``False`` keeps the case of the text (the display and comparison callers want that), so a scan
+    built without it misses "SECRET" when the protected value is "secret". A redaction MUST ALSO scan ``squeeze_views`` (the ASCII letters and digits with
+    every separator removed) and take its needles with ``scan_needles``.
+
+    A value with NO ASCII letter or digit (Chinese, Arabic, Hindi, Thai) is found by the script views of ``fold_views`` (the non-ASCII letters and marks of the text, with whitespace, punctuation, symbols and ASCII characters removed), so an inserted space, hyphen, line break, ASCII letter or mark does not hide it; an inserted look-alike letter of that script, or a respelling of it, is not covered."""
     _checked(raw)
-    return _views(raw, casefold=casefold, collapse_ws=collapse_ws, marks_dropped=True)
+    return _views(raw, casefold=casefold, collapse_ws=collapse_ws, marks_dropped=True, script=True)
+
+
+def scan_needles(raw: str, *, loose: bool = False) -> tuple[str, ...]:
+    """The needles of a PROTECTED VALUE ``raw`` for a scan: every view of ``fold_views(raw, casefold=True)`` and of ``squeeze_views(raw, loose=loose)``
+    that has at least ``defaults.TEXTNORM_MIN_VIEW_CHARS`` characters (the same number for every view), without repeats. A view shorter than
+    that, an empty one above all, is not a needle: it is found in every text. Raises ``ViewTooShort`` when no view reaches the minimum (the
+    value is empty, invisible, one character or a script with no letters): the caller must REFUSE to scan with that value. The text to scan
+    is read with ``fold_views(text, casefold=True, collapse_ws=True)`` and ``squeeze_views(text, loose=loose)``; it holds the value when any of those views
+    contains any needle."""
+    _checked(raw)
+    minimum = defaults.TEXTNORM_MIN_VIEW_CHARS
+    needles: list[str] = []
+    for view in (
+        *fold_views(raw, casefold=True, collapse_ws=True),
+        *squeeze_views(raw, loose=loose),
+    ):
+        if len(view) >= minimum and view not in needles:
+            needles.append(view)
+    if not needles:
+        raise ViewTooShort(
+            f"no view of the value has {minimum} characters or more: refuse to scan with it"
+        )
+    return tuple(needles)
 
 
 def squeeze(raw: str, *, loose: bool = False) -> str:

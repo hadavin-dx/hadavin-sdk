@@ -184,3 +184,29 @@ def test_the_generator_reproduces_the_checked_in_table_offline():
     built = gen.build(data.decode("utf-8"))
     assert built == _confusables.TABLE, "the generator output differs from the checked-in table"
     assert built[0x4CF] == "l", "the Cyrillic palochka no longer reads as l"
+
+
+def test_a_supplement_entry_is_never_overridden_by_a_name_rule_and_the_data_wins_over_the_supplement(
+    monkeypatch,
+):
+    """p1a6-007: the supplement is merged into the table BEFORE the name rules run, so a name rule (``setdefault``) cannot override it. The
+    supplement entry here is the small h with a stroke (U+0127), which the name rule would read as ``h``; the supplement says ``z``. And
+    a data line for the same code point beats the supplement."""
+    gen = _load("gen_confusables_supplement")
+    assert gen.name_rule_value(unicodedata.name(chr(0x127))) == "h", (
+        "the name rule no longer reads U+0127"
+    )
+    monkeypatch.setattr(gen, "SUPPLEMENT", {0x127: "z"})
+    assert gen.build("").get(0x127) == "z", "a name rule overrode a supplement entry"
+    data = "0127 ;\t0079 ;\tMA\t# the data reads it as y\n"
+    assert gen.build(data).get(0x127) == "y", "the supplement overrode a data line"
+    monkeypatch.setattr(gen, "SUPPLEMENT", {})
+    assert gen.build("").get(0x127) == "h", "the name rule does not fire without the supplement"
+
+
+def test_the_generator_docstring_does_not_claim_that_the_size_rule_reads_the_longest_value():
+    """p1a6-003: ``MAX_VALUE_LEN`` is written beside the table and compared with it by a test; ``textnorm.py`` does not read it (its size rule
+    weighs every character from the table itself), and the generator no longer says it does."""
+    gen_src = GEN_PATH.read_text(encoding="utf-8")
+    assert "which the size rule" not in gen_src and "does not read it" in gen_src
+    assert "MAX_VALUE_LEN" not in Path(textnorm.__file__).read_text(encoding="utf-8")

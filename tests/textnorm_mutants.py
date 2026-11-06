@@ -60,7 +60,10 @@ MCKEPT = (
 )
 MCSQUEEZE = "test_squeeze_views_finds_a_secret_hidden_with_every_spacing_mark_modifier_letter_or_modifier_symbol"
 NONALNUM = "test_squeeze_views_removes_every_character_that_reads_as_no_ascii_letter_or_digit"
-SIXVIEWS = "test_the_marks_dropped_views_are_at_most_six_and_keep_every_script_and_letter"
+SIXVIEWS = "test_the_marks_dropped_views_are_at_most_six_for_squeeze_and_nine_for_fold_and_keep_every_script_and_letter"
+SCRIPTINS = "test_a_separator_an_ascii_letter_or_a_mark_inserted_into_a_chinese_hindi_or_thai_value_does_not_hide_it"
+MINVIEW = "test_the_minimum_view_length_is_one_number_for_every_view_and_a_short_value_is_refused"
+SUPPLEMENT = "test_a_supplement_entry_is_never_overridden_by_a_name_rule_and_the_data_wins_over_the_supplement"
 NOASCII = "test_a_value_with_no_ascii_letter_or_digit_is_found_by_the_fold_views_scan_when_a_mark_is_inserted"
 PINTABLE = "test_no_table_source_is_in_a_dropped_category"
 RULES = "test_the_name_rules_of_the_generator_read_the_letter_and_digit_forms"
@@ -320,8 +323,8 @@ M = [
         "        texts.append(_without_spacing_marks(raw))", "        texts.append(raw)",
         MCSQUEEZE, "misses a secret hidden with U+"),
     mutant("marks: fold_views has no marks-dropped views", TN,
-        "    return _views(raw, casefold=casefold, collapse_ws=collapse_ws, marks_dropped=True)",
-        "    return _views(raw, casefold=casefold, collapse_ws=collapse_ws, marks_dropped=False)",
+        "    return _views(raw, casefold=casefold, collapse_ws=collapse_ws, marks_dropped=True, script=True)",
+        "    return _views(raw, casefold=casefold, collapse_ws=collapse_ws, marks_dropped=False, script=True)",
         NOASCII, "the scan misses the value with the mark inserted"),
     mutant("marks: squeeze_views has no marks-dropped views", TN,
         "    for view in _views(raw, casefold=True, collapse_ws=False, marks_dropped=True):",
@@ -335,7 +338,7 @@ M = [
         MCSQUEEZE, "misses a secret hidden with U+"),
     mutant("marks: a view is repeated", TN,
         "            if view not in views:\n                views.append(view)", "            views.append(view)",
-        SIXVIEWS, "repeated or there are more than six"),
+        SIXVIEWS, "repeated or there are more than the limit"),
     mutant("names: the negative circled and squared letters are not read", GEN,
         '        (r"(?:CROSSED )?NEGATIVE (?:CIRCLED|SQUARED) LATIN CAPITAL LETTER ([A-Z])", "upper"),\n', "",
         RULES, "negative circled letters are not read", test_file=G),
@@ -357,6 +360,24 @@ M = [
     mutant("pin: the pin constant differs from the data of the table", "src/hadavin_sdk/defaults.py",
         'TEXTNORM_PINNED_UNIDATA = "15.1.0"', 'TEXTNORM_PINNED_UNIDATA = "15.0.0"',
         PINTABLE, "the table data is not the Unicode version of the pin", test_file=G),
+    # ---- the mutants of fix6 (the script views, the minimum view length, the supplement merge) ----
+    mutant("script: fold_views has no script views", TN,
+        "    return _views(raw, casefold=casefold, collapse_ws=collapse_ws, marks_dropped=True, script=True)",
+        "    return _views(raw, casefold=casefold, collapse_ws=collapse_ws, marks_dropped=True, script=False)",
+        SCRIPTINS, "the scan misses"),
+    mutant("script: the script view keeps the ASCII letters", TN,
+        "        ch for ch in view if not ch.isascii() and (ch.isalpha() or unicodedata.category(ch)[0] == \"M\")",
+        "        ch for ch in view if (ch.isalpha() or unicodedata.category(ch)[0] == \"M\")",
+        SCRIPTINS, "the scan misses"),
+    mutant("scan: the minimum view length is not applied", TN,
+        "        if len(view) >= minimum and view not in needles:", "        if view not in needles:",
+        MINVIEW, "is shorter than the minimum"),
+    mutant("scan: the minimum is bound when the module is read", TN,
+        "    minimum = defaults.TEXTNORM_MIN_VIEW_CHARS\n", "    minimum = 2\n",
+        MINVIEW, "is shorter than the minimum"),
+    mutant("names: the supplement is not merged before the name rules", GEN,
+        "    out = {**sup, **out}  # the data wins over the supplement", "    out = dict(out)  # the data wins over the supplement",
+        SUPPLEMENT, "a name rule overrode a supplement entry", test_file=G),
 ]  # fmt: skip
 
 
