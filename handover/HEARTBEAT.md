@@ -196,3 +196,4 @@
 08:07Z | step=rung audit part A saved | next=part D, merge into rung-audit-1.md, AK-G2 soak note | blocked=none
 08:08Z | step=genericity build notes saved | next=rung audit part D, merge rung-audit-1.md, P1a fix2 | blocked=G-4,G-6
 08:09Z | step=rung-audit-1.md assembled | next=P1a fix2 result, wait for lead on audit | blocked=lead reads rung audit
+08:11Z | step=order 56: preamble 20-21, template, 7 agents launched | next=verify BN commits, P0t, AK-G16 render_mode BN, briefs marker | blocked=none
