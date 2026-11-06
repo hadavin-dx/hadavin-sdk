@@ -603,7 +603,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | rs-AKG1-r3 | Opus resolve AK-G1 round 3 (last; 10 Majors -> BN) | 05:15Z | +25min | REPORTED | verify, then BN author |
 | bn-AKG1 | Opus BN author AK-G1 (apply BN-1..28 + banner into ticket) | 05:23Z | +20min | REPORTED | verify, push, relay PL10-18 |
 | dr-AKG1 | Opus brainstorm+draft AK-G1 handle_turn flow (PL11 b) -> handover/designs/ak-g1/ | 05:35Z | +30min | REPORTED | verify, push, tell lead; build-start review reads it |
-| au-P4c-r4 | Opus author P4c revision 4 (round 3 resolve, no further round per order 24) | 05:35Z | +30min | running | verify, push, freeze |
+| au-P4c-r4 | Opus author P4c revision 4 (round 3 resolve, no further round per order 24) | 05:35Z | +30min | REPORTED | verify, push, freeze |
 | au-P5b1-r3 | Opus author P5b1 revision 3 (round 2 resolve) | 05:35Z | +30min | REPORTED | verify, push, round 3 pair |
 | au-P8a-r3 | Opus author P8a revision 3 (round 2 resolve) | 05:35Z | +30min | REPORTED | verify, push, round 3 pair |
 | rd-AKG1-des | egm-design review of AK-G1 turn-flow design (EGM step 3) | 05:41Z | +15min | REPORTED | resolve OP-1..6 |

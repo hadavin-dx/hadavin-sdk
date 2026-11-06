@@ -37,3 +37,9 @@ Added 2026-11-06 about 04:00 UTC (09:30 IST).
 - **What it does not check.** It does not decide whether a legal hold should override erasure. This choice has not been reviewed by counsel.
 - **What a person must do, and when.** Before the first pilot, counsel reads this rule and says whether it fits the client's duties.
 - Studio reference: package AK-G1, PENDING LEAD 15 (option (a), lead order 36 item 82), owner rule R98.
+
+## 6. Documents larger than about 27 KB are refused by the model-call size limit
+- **What the program checks.** Before a document goes to a model, the program checks that the whole request stays under the prompt size bound (100,000 bytes). To keep that promise it lowers the document size limit (`MAX_DOCUMENT_BYTES`) from 262,144 bytes to 27,872 bytes. A configuration may only lower this limit further, never raise it.
+- **What it does not check.** Documents between about 27 KB and 256 KiB, which were accepted before, are now refused. Tool results (up to 262,144 bytes per run) can still push a call past the bound; that call then fails closed (the run stops and a person looks) instead of being sent.
+- **What a person must do, and when.** Before a pilot, tell the client the size limit. A person must split or shorten a refused document, or the lead must decide to raise the prompt bound (a money and redaction decision, not a configuration change).
+- Studio reference: package P4c, PENDING LEAD 25(a) (order 24) and the new PENDING LEAD 28 and 29.
