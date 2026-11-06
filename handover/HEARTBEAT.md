@@ -336,3 +336,5 @@ P4a | built locally c86e685, evidence running (suites, mutants) | 1 | heavy.sh s
 P4d-a2 | PR 75 7a84408 READY (a2-i, P4d-b); a2-ii pending | 6 | -
 2026-11-06T13:08:26Z | package | stage | builders running | blocked on
 P3a-2 | PR 73 62fba0b READY after merge of PR 68 fix1 | 6 | -
+2026-11-06T13:16:49Z | package | stage | builders running | blocked on
+P4a | pushed c86e685, PR waits on core/P2a-1 push | 6 | P2a-1 builder push
