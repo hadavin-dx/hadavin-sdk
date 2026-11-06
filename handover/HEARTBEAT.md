@@ -244,3 +244,4 @@
 2026-11-06T11:17:16Z | step=P1c r4 codebase report saved (0B/6m/5n); wc -w P1c=6710 confirmed | next=design report, resolve | blocked=lead PL15-18
 2026-11-06T11:18:27Z | step=order 78 read; P0t fix3 builder launched | next=design r4 report, P1b report, P0t fix3 verify | blocked=none
 2026-11-06T11:19:52Z | step=P1c r4 design report saved (0B/3M/8m/2n); base-regex run: DES-2 contested (x.corp.svc.cluster.local unmasked today) | next=Opus resolve rev 6 | blocked=lead PL15-18
+2026-11-06T11:20:36Z | step=P1c round 4 resolve launched (Opus) | next=verify rev 6, round 5; P0t fix3 and P1b reports | blocked=lead PL15-18
