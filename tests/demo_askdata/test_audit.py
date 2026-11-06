@@ -40,7 +40,7 @@ def kit(tmp_path):
     k.script(Q, Step(sql=COUNT_ORDERS))
     k.script("=cmd|calc orders", Step(abstain="out_of_scope"))
     k.script("delete everything", Step(abstain="write_request"))
-    k.pipeline.ask(Q, asker="claimed:rakesh")
+    k.pipeline.ask(Q, asker="claimed:alice")
     k.pipeline.ask(
         "=cmd|calc orders",
         asker=f"claimed:evil{ESC}[2K{ESC}Q local integrity check: 41 of 41 events match",
@@ -94,7 +94,7 @@ def test_verify_is_green_labelled_local_and_exit_0(kit, capsys):
 
 def test_verify_exits_3_when_the_ledger_was_edited(kit, capsys):
     kit.ledger.path.write_bytes(
-        kit.ledger.path.read_bytes().replace(b"claimed:rakesh", b"claimed:mallory")
+        kit.ledger.path.read_bytes().replace(b"claimed:alice", b"claimed:mallory")
     )
     code, text = run(capsys, kit, "audit", "verify")
     assert code == 3 and "problem:" in text
@@ -110,7 +110,7 @@ def test_export_json_redacts_text_by_default(kit, capsys):
         and "SELECT" not in text
         and rows[0]["attempts"][0]["canonical_sql"]["length"] > 0
     )
-    assert rows[0]["asker"] == "claimed:rakesh"  # the asker is kept
+    assert rows[0]["asker"] == "claimed:alice"  # the asker is kept
 
 
 def test_export_include_text_is_an_explicit_opt_in(kit, capsys):

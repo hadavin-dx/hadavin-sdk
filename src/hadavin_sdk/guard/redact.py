@@ -1,7 +1,7 @@
 """Pattern-based redaction for logs, audit and channel text (the runtime redacts the document and every tool result with it before the model sees them).
 
 Copied from WARDEN `src/warden/redaction.py` at PR #206 head 14fc549 (branch `redaction-bank-patterns`,
-veerarakesh56/warden): the full pattern table, including the bank codes (BANKCODE: BSB, sort code, ABA,
+the WARDEN repository): the full pattern table, including the bank codes (BANKCODE: BSB, sort code, ABA,
 CA transit/institution) and accounts (BANKACCT), and the PHONE date guard. Edits: this header,
 `RedactionResult.kinds` (the slice 1 callers read the kinds found), and a PHONE guard for compact
 14-digit timestamps. Placeholders are `<KIND_n>`.

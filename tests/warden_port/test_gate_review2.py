@@ -1,4 +1,4 @@
-"""Ported from WARDEN tests/test_gate_review2.py (main a1e76cbf, veerarakesh56/warden). Kept 4 tests; dropped 7 that need WARDEN-only modules or unported gate policy (listed in the PR).
+"""Ported from WARDEN tests/test_gate_review2.py (main a1e76cbf, the WARDEN repository). Kept 4 tests; dropped 7 that need WARDEN-only modules or unported gate policy (listed in the PR).
 
 The outbound gate against the second independent review's payloads (2026-09-30, area A).
 

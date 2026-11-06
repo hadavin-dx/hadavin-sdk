@@ -16,7 +16,7 @@ H = "a" * 64
 
 def make_line(qid: str = "1" * 32, **over) -> LedgerLine:
     base = {
-        "query_id": qid, "ts": "2026-11-01T10:00:00Z", "asker": "claimed:rakesh", "question": "how many?",
+        "query_id": qid, "ts": "2026-11-01T10:00:00Z", "asker": "claimed:alice", "question": "how many?",
         "question_sha256": H, "outcome": "answered", "prompt_sha256": H, "config_hash": H, "catalog_sha256": H,
         "model_id": "m", "route": "sql_generate", "budget": Budget(spent_usd="0.01", cap_usd="8.00"),
     }  # fmt: skip

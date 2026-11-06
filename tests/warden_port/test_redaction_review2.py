@@ -1,4 +1,4 @@
-"""Ported from WARDEN tests/test_redaction_review2.py (main a1e76cbf, veerarakesh56/warden). Kept 5 tests; dropped 16 that need WARDEN-only modules or unported gate policy (listed in the PR).
+"""Ported from WARDEN tests/test_redaction_review2.py (main a1e76cbf, the WARDEN repository). Kept 5 tests; dropped 16 that need WARDEN-only modules or unported gate policy (listed in the PR).
 
 Redaction against the second independent review's probes (2026-09-30, area B).
 

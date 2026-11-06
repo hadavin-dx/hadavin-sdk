@@ -23,7 +23,7 @@ Q = "How many orders are there"
 def test_answered_question_writes_ledger_intent_and_outcome(tmp_path):
     k = Kit(tmp_path)
     k.script(Q, Step(sql=COUNT_ORDERS, assumptions=("counted all statuses",)))
-    a = k.pipeline.ask(Q, asker="claimed:rakesh")
+    a = k.pipeline.ask(Q, asker="claimed:alice")
     assert (a.outcome, a.reason, a.exit_code) == ("answered", None, 0)
     assert a.result.rows == [(11,)] and a.assumptions == ["counted all statuses"]
     line = a.line
