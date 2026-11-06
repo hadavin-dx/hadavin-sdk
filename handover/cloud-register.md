@@ -473,7 +473,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | rs-P8a-r2 | P8a round 2 resolve (Opus) | 04:40Z | +30min | REPORTED | verify |
 | rs-P8b-r3 | P8b round 3 resolve (Opus, last round, build notes) | 04:40Z | +30min | REPORTED | verify |
 | rs-P4b2-r3 | P4b2 round 3 resolve (Opus, build notes) | 04:40Z | +30min | REPORTED | verify |
-| bd-P1m-fix | P1m builder: Windows test fixes, ci lint widen, 21 mutants | 04:55Z | +45min | running | verify, then mark PR 61 ready (order 25) |
+| bd-P1m-fix | P1m builder: Windows test fixes, ci lint widen, 21 mutants | 04:55Z | +45min | REPORTED | verify, then mark PR 61 ready (order 25) |
 | rv-P6a-r3-adv | P6a r3 adversarial | 05:05Z | +30min | REPORTED | verify |
 | rv-P6a-r3-cor | P6a r3 correctness | 05:05Z | +30min | REPORTED | verify |
 | sv-AK0-r1 | save AK0 r1 pair | 05:20Z | +15min | REPORTED | verify |
@@ -509,7 +509,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | rv-AK0-r2-cor | egm-codebase-details round 2 AK0 rev 2 | 08:20Z | +10min | REPORTED (unsaved) | save |
 | rv-P5c-r3-adv | egm-design round 3 P5c rev 3 | 08:30Z | +10min | running | save |
 | rv-P5c-r3-cor | egm-codebase-details round 3 P5c rev 3 | 08:30Z | +10min | running | save |
-| rs-AK2a-r1 | Opus resolve AK2a round 1 | 08:40Z | +25min | running | verify, push |
+| rs-AK2a-r1 | Opus resolve AK2a round 1 | 08:40Z | +25min | REPORTED | verify, push |
 | ap-BN-1 | Sonnet appends build notes+banner to P4b1,P4b2,P5a,P5b2,P6a,P6b1,P8b | 08:40Z | +30min | REPORTED | verify, push |
 | rv-AKG2-r1-adv | egm-design round 1 AK-G2 rev 1 | 08:55Z | +10min | running | save |
 | rv-AKG2-r1-cor | egm-codebase-details round 1 AK-G2 rev 1 | 08:55Z | +10min | running | save |
@@ -525,3 +525,6 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | rs-AKG2-r1 | Opus resolve AK-G2 round 1 | 09:45Z | +25min | running | verify, push |
 | rv-AKG1-r1-adv | egm-design round 1 AK-G1 rev 1 | 09:50Z | +10min | running | save |
 | rv-AKG1-r1-cor | egm-codebase-details round 1 AK-G1 rev 1 | 09:50Z | +10min | running | save |
+| au-AK2a-r2 | Opus author AK2a revision 2 | 10:05Z | +25min | running | verify, push |
+| rv-P1m-r2-adv | egm-design review PR 61 head 7442c0f | 10:05Z | +15min | running | save |
+| rv-P1m-r2-cor | egm-codebase-details review PR 61 head 7442c0f | 10:05Z | +15min | running | save |
