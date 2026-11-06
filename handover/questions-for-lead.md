@@ -356,3 +356,8 @@ Ten builder decisions are in DECISIONS.md. P1b is not marked ready (draft, base 
 - Not started yet: P3a-1 fix1 (PR 68), P2d-2, P4c, P4b2, P4a, P5b1-3, P5c, P6a, P6b1, P8a, P0c: start as slots free up (target 8 builders).
 - NEEDS LEAD: no ticket in the repo for P0d, P0e, P0b, P8c. P1a has no ticket file (the P1 ticket holds the spec).
 - P1c round 5 reports saved (design: 1 Major leak in the second-run order, found real; codebase: no Major). Resolve running; will freeze at rev 7 (no round 6).
+
+## q183 (order 83, 2026-11-06T12:00:13Z) NEEDS LEAD (decisions)
+- P8a: ticket has no builder-executable part in core (tags, re-pin, demo PRs are lead-only) and its start rule needs P1a/P1b merged. Not built. Option (a, recommended): leave to lead after P1a/P1b merge; option (b): I write the R13/R14 look-alike check script as a handover tool (needs your yes).
+- P4b1: waits for P4d-b + a2-i (requested from the P4d-a2 builder as first push). Then I restart P4b1 with that branch merged in.
+- Dependency finding: lanes C (P4b1/P4c/P4b2/P4a) cannot build before the P4d chain exists; lane A P1c/P2d-2 need P1b; effective parallel builds now 8 of the 20 listed packages.

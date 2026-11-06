@@ -711,3 +711,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | bd-P4b1 | Sonnet builder P4b1, core/P4b1 (lane C) (ae35a7ce) | 2026-11-06T12:00Z | RUNNING |
 | bd-P5a | Sonnet builder P5a, core/P5a (lane D) (ae48e32e) | 2026-11-06T12:00Z | RUNNING |
 | bd-P0a | Sonnet builder P0a, core/P0a (lane E) (a956b29b) | 2026-11-06T12:00Z | RUNNING |
+| bd-P4b1 | REPORTED BLOCKED: P4d-b and P4d-a2-i (reservation methods, round_cost_up) not on any branch; no code written | 2026-11-06T12:00:13Z | CLOSED; restart after P4d-a2 push |
+| bd-P8a | REPORTED NOT BUILT: start rule fails (textnorm on main only via unmerged P1a/P1b); ticket has no builder part in core (demo repos, lead-only) | 2026-11-06T12:00:13Z | CLOSED |
+| bd-P6a | Sonnet builder P6a, core/P6a (a3e56fe4) | 2026-11-06T12:00:13Z | RUNNING |
+| bd-P3a-1-fix1 | Sonnet builder P3a-1 fix1, PR 68 (order 74) | 2026-11-06T12:00:13Z | RUNNING |

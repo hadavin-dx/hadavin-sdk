@@ -269,3 +269,8 @@ P0a | build | 1 | -
 P2d-2, P4c, P4b2, P4a, P5b1-3, P5c, P6a, P6b1, P8a, P0c | queued (frozen tickets) | 0 | free builder slot
 P0d, P0e, P0b, P8c | NO TICKET IN REPO | 0 | lead must supply ticket
 concurrency: 8 builders + 1 resolver running at 2026-11-06T11:58:46Z; load/RAM to be measured
+2026-11-06T12:00:13Z | package | stage | builders running | blocked on
+P4b1 | stopped, no code | 0 | P4d-b + a2-i (P4d-a2 builder told to do them first)
+P8a | not built | 0 | needs P1a/P1b merged; ticket work is lead-only demo-repo steps (R0a-c)
+P6a | build | 1 | -
+P3a-1 | fix1 build (PR 68) | 1 | -
