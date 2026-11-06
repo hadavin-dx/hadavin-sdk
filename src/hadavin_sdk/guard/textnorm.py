@@ -108,6 +108,9 @@ from hadavin_sdk.guard import _confusables
 from hadavin_sdk.guard._confusables import TABLE as CONFUSABLES
 
 __all__ = [
+    "FoldNotConverged",
+    "scan_keyset",
+    "require_pinned_unidata",
     "FILLERS",
     "FOLD_VERSION",
     "AllowVerdict",
@@ -466,3 +469,28 @@ def has_mixed_script(text: str) -> bool:
             if latin and other:
                 return True
     return False
+
+
+# ---- P1b SHIM (fail-before evidence only, not part of any commit) ----
+class FoldNotConverged(TextnormError):
+    """Stub: never raised."""
+
+
+def scan_keyset(text):
+    return frozenset({identity_key(text)})
+
+
+def require_pinned_unidata(expected=None):
+    return None
+_CLASS_MAP = {}
+_TABLE_SOURCES = {}
+def _converge(text, step):
+    return text
+def _pass_a(text):
+    return text
+def _scan_match(a, b):
+    return False
+_pass_b = _pass_a
+_TABLE_SOURCES = frozenset()
+_CLASS_MAP = {ord("z"): "z", ord("l"): "l"}
+_EXEMPT_WITH_LATIN = frozenset()

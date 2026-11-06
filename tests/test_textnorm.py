@@ -47,7 +47,9 @@ from hadavin_sdk.guard.textnorm import (
 ROOT = Path(__file__).resolve().parents[1]
 FIX = Path(__file__).parent / "fixtures"
 CAP = defaults.TEXTNORM_MAX_CHARS
-A516 = chr(0xA516)  # weight 3: its fold is three letters
+SSS = chr(
+    0x1F75C
+)  # weight 3: its fold is three letters (an alchemical symbol: a table source with the longest value)
 FDFA = chr(0xFDFA)  # weight 18: NFKC makes 18 characters from it
 
 
@@ -330,7 +332,9 @@ def test_the_tables_are_read_only_and_a_later_change_of_the_source_does_not_reac
     monkeypatch.setitem(_confusables.TABLE, 0x430, "z")
     monkeypatch.setitem(_confusables.TABLE, 0x2013, "q")
     assert fold(chr(0x430)) == before == "a", "a later change of _confusables.TABLE changes fold"
-    assert fold(chr(0x2013)) == chr(0x2013)
+    assert fold(chr(0x2013)) == "-", (
+        "a later change of _confusables.TABLE changes the punctuation map"
+    )
 
 
 def test_the_checked_in_table_matches_its_digest():
@@ -347,12 +351,12 @@ def test_the_checked_in_table_matches_its_digest():
 def test_max_value_len_is_the_longest_value_of_the_table():
     longest = max(len(v) for v in _confusables.TABLE.values())
     assert _confusables.MAX_VALUE_LEN == longest, "MAX_VALUE_LEN is not the table maximum"
-    assert len(fold(A516)) == _confusables.MAX_VALUE_LEN, "the longest value is not made by U+A516"
+    assert len(fold(SSS)) == _confusables.MAX_VALUE_LEN, "the longest value is not made by U+1F75C"
 
 
 # ---- FOLD_VERSION ------------------------------------------------------------------------------------------------------------------------
 def test_the_version_string_names_the_algorithm_the_table_and_both_unicode_versions():
-    m = re.fullmatch(r"alg=fold3\|tbl=([0-9a-f]{12}):(\d+)\|ucd=([^|]+)\|ud=([^|]+)", FOLD_VERSION)
+    m = re.fullmatch(r"alg=fold4\|tbl=([0-9a-f]{12}):(\d+)\|ucd=([^|]+)\|ud=([^|]+)", FOLD_VERSION)
     assert m, f"FOLD_VERSION has the wrong shape: {FOLD_VERSION}"
     assert m[4] == unicodedata.unidata_version, "FOLD_VERSION has no ud= part of this interpreter"
     assert m[3] == _confusables.DATA_VERSION
@@ -763,7 +767,7 @@ def test_a_raw_text_that_starts_with_the_interpreters_own_tag_has_it_stripped_an
     monkeypatch.setattr(defaults, "TEXTNORM_PINNED_UNIDATA", "15.1.0")
     monkeypatch.setattr(unicodedata, "unidata_version", "15.0.0")
     tag = key_tag()
-    assert tag.startswith("\ue000alg=fold3|ud=15.0.0") and tag.endswith("\ue000")
+    assert tag.startswith("\ue000alg=fold4|ud=15.0.0") and tag.endswith("\ue000")
     # the stated over-collision: the tag of THIS interpreter in front of a text is read as "already a key"
     assert identity_key(tag + "Bob") == identity_key("Bob") == tag + "bob"
     assert same_person(tag + "Bob", "bob")
@@ -778,10 +782,10 @@ def test_a_raw_text_that_starts_with_the_interpreters_own_tag_has_it_stripped_an
     assert other.startswith(key_tag()) and "ud=15.0.0" in other and other != identity_key("bob")
     # on the pinned version there is no tag to strip and U+E000 is dropped like any private-use character
     monkeypatch.setattr(unicodedata, "unidata_version", "15.1.0")
-    assert key_tag() == "" and identity_key(tag + "bob") == "alg=fold3|ud=15.0.0bob"
+    assert key_tag() == "" and identity_key(tag + "bob") == "alg=fold4|ud=15.0.0bob"
 
 
-def test_the_case_fold_table_is_on_the_case_fold_image_and_its_conflicts_are_the_known_thirteen():
+def test_the_case_fold_table_is_on_the_case_fold_image_and_its_conflicts_are_the_known_conflicts():
     table = textnorm._CF_TABLE
     for cp, value in table.items():
         ch = chr(cp)
@@ -804,11 +808,9 @@ def test_the_case_fold_table_is_on_the_case_fold_image_and_its_conflicts_are_the
         0x3BC,
         0x3BD,
         0x3C5,
-        0x3ED,
-        0x442,
         0x4CF,
-        0x575,
         0x118C3,
+        0x118C4,
         0x118C6,
         0x118D5,
         0x118DC,
@@ -898,7 +900,7 @@ def test_a_key_made_on_another_unicode_version_carries_that_version_and_never_eq
     monkeypatch.setattr(unicodedata, "unidata_version", "15.0.0")
     other = identity_key("Bob")
     assert other != pinned_key, "a key made on another Unicode version equals the pinned key"
-    assert other.endswith("bob") and "ud=15.0.0" in other and "alg=fold3" in other, (
+    assert other.endswith("bob") and "ud=15.0.0" in other and "alg=fold4" in other, (
         "the tag does not name the algorithm and the Unicode version"
     )
     assert identity_key(other) == other, "the key of another version is not idempotent"
@@ -986,14 +988,14 @@ def test_the_cap_itself_is_accepted_and_one_more_ascii_character_is_refused():
 
 
 def test_the_size_rule_counts_what_a_character_becomes_not_its_length():
-    # U+A516 becomes three letters: SEAM-1
-    refused(TextTooLong, "87,382 x U+A516 (W 262,146) is accepted", identity_key, A516 * 87382)
-    assert bare(accepted("W 262,143 is refused", identity_key, A516 * 87381)) == "l" * 262143
+    # U+1F75C becomes three letters: SEAM-1
+    refused(TextTooLong, "87,382 x U+1F75C (W 262,146) is accepted", identity_key, SSS * 87382)
+    assert bare(accepted("W 262,143 is refused", identity_key, SSS * 87381)) == "s" * 262143
     refused(
         TextTooLong,
-        "262,144 x U+A516 (plain length at the cap) is accepted",
+        "262,144 x U+1F75C (plain length at the cap) is accepted",
         identity_key,
-        A516 * CAP,
+        SSS * CAP,
     )
     # U+FDFA becomes eighteen characters in NFKC
     refused(TextTooLong, "cap/18 + 1 x U+FDFA is accepted", identity_key, FDFA * (CAP // 18 + 1))
@@ -1012,7 +1014,7 @@ def test_the_size_rule_counts_what_a_character_becomes_not_its_length():
 
 
 def test_the_size_rule_checks_every_argument_left_to_right():
-    big = A516 * 87382
+    big = SSS * 87382
     refused(TextTooLong, "same_person skipped the second argument", same_person, "a", big)
     refused(TextTooLong, "allow_equal skipped the first argument", allow_equal, big, "a")
     refused(TextTooLong, "allow_equal skipped the second argument", allow_equal, "a", big)
@@ -1029,7 +1031,7 @@ def test_the_cap_is_read_when_the_function_runs(monkeypatch):
 
 def test_a_refusal_message_holds_lengths_and_constants_never_the_input():
     canary = "ZQXCANARY"
-    for text in (canary + "a" * CAP, canary + A516 * 90000):
+    for text in (canary + "a" * CAP, canary + SSS * 90000):
         with pytest.raises(TextTooLong) as info:
             identity_key(text)
         assert canary not in str(info.value) and "ZQX" not in str(info.value)
@@ -1116,12 +1118,13 @@ def test_the_hidden_channel_signal_refuses_what_is_not_text():
 
 
 # ---- names ---------------------------------------------------------------------------------------------------------------------------------
-def test_the_public_names_are_exactly_the_listed_nineteen():
+def test_the_public_names_are_exactly_the_listed_twenty_one():
     assert sorted(textnorm.__all__) == sorted(
         [
             "FILLERS",
             "FOLD_VERSION",
             "AllowVerdict",
+            "FoldNotConverged",
             "NotText",
             "TextTooLong",
             "TextnormError",
@@ -1137,10 +1140,11 @@ def test_the_public_names_are_exactly_the_listed_nineteen():
             "names_equal",
             "require_pinned_unidata",
             "same_person",
+            "scan_keyset",
             "squeeze",
         ]
     )
-    assert len(textnorm.__all__) == len(set(textnorm.__all__)) == 19
+    assert len(textnorm.__all__) == len(set(textnorm.__all__)) == 21
 
 
 def test_every_name_the_module_defines_is_public_and_listed_or_private():
@@ -1170,6 +1174,7 @@ def test_the_manifest_pins_the_files_a_demo_copies():
     assert set(manifest["files"]) == {
         "src/hadavin_sdk/guard/textnorm.py",
         "src/hadavin_sdk/guard/_confusables.py",
+        "src/hadavin_sdk/guard/_scripts.py",
         "tests/fixtures/textnorm_vectors.json",
         "tests/fixtures/textnorm_corpus.json",
     }
