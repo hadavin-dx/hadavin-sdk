@@ -82,14 +82,22 @@ def _functions(path: Path) -> list[str]:
     return [n.name for n in tree.body if isinstance(n, ast.FunctionDef)]
 
 
-def test_a_the_list_has_71_mutants_28_repointed_25_of_p1a_and_18_of_p1b_with_unique_names():
+def test_a_the_list_has_87_mutants_28_repointed_41_of_p1a_and_18_of_p1b_with_unique_names():
     names = [m.name for m in mm.M]
-    assert len(names) == 71 and len(set(names)) == 71, names
+    assert len(names) == 87 and len(set(names)) == 87, names
     assert tuple(names[:28]) == REPOINTED, (
         "the first 28 are the re-pointed mutants, in the order of the placement table"
     )
-    assert len(names[28:]) == 43  # 25 of P1a (13 new, 9 of fold2, 3 of fold3) and the 18 of P1b
-    assert len(names[53:]) == 18, "P1b adds 18 mutants"
+    assert (
+        len(names[28:]) == 59
+    )  # 41 of P1a (13 of the first package, 9 of fold2, 3 of fold3, 16 of fold4) and the 18 of P1b
+    assert names[53:54] == ["fold: case folded before the marks are dropped (the fold2 order)"], (
+        "the restored fold2 mutant is the first of the fold4 mutants"
+    )
+    assert sum(n.startswith("readings:") for n in names) == 7, (
+        "the mutants of the readings (drop one, first only, unbounded, ...)"
+    )
+    assert len(names[69:]) == 18, "P1b adds 18 mutants, after the 41 of P1a"
 
 
 def test_a_every_mutant_names_its_test_file_and_its_killer_and_the_killer_exists():
@@ -139,7 +147,7 @@ def test_a_the_moved_tests_and_the_new_killers_exist_once_each():
 def test_a_print_the_placement_table():
     rows = [f"{m.name} | {m.test_file} | {m.only_test}" for m in mm.M]
     print("\n".join(rows))
-    assert len(rows) == 71
+    assert len(rows) == 87
 
 
 def test_b_every_xfail_of_the_differential_file_is_strict_and_names_assertion_error():

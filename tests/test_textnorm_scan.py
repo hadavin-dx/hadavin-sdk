@@ -249,7 +249,7 @@ def test_nu_upsilon_palochka_and_sigma_read_by_both_readings():
 
 
 def test_identity_key_of_each_row_equals_the_case_fold_first_reading():
-    """The ticket says reading A; the built identity path is the casefold-first order (fold4 keeps the P1a idempotent order), which the
+    """The ticket says reading A; the built identity path is the casefold-first order (fold5 keeps the P1a idempotent order), which the
     scan keys call reading B. Eta, Nu, Upsilon, palochka and Sigma all agree with it."""
     for ch in (
         "\u0397",

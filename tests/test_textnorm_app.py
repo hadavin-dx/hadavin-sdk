@@ -18,21 +18,50 @@ from tests.test_k3_pilot_env import pilot_cfg
 OTHER = "0.0.1"
 
 
-def test_a_pilot_or_prod_build_refuses_on_another_unicode_version(tmp_path, monkeypatch):
+def _prod_cfg(tmp_path):
+    """A prod config that loads: prod wants its signer key from the secrets kind and an anchor with a retention the client agreed."""
+    import yaml
+
+    cfg = pilot_cfg(tmp_path, env="prod")
+    path = cfg / "config.yaml"
+    data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    data["backends"]["signer"] = {"kind": "ed25519_local", "private_key_secret_name": "audit-key"}
+    data["backends"]["anchor"] = {
+        "kind": "gcs_retention_lock",
+        "bucket": "contract-anchors",
+        "mode": "GOVERNANCE",
+        "retention_ack": True,
+    }
+    path.write_text(yaml.safe_dump(data), encoding="utf-8")
+    return cfg
+
+
+@pytest.mark.parametrize("environment", ["pilot", "prod"])
+def test_the_pinned_unicode_guard_is_on_for_pilot_and_prod_configs(
+    tmp_path, monkeypatch, environment
+):
+    """The guard is ON in ``app.build`` for both live environments: on other Unicode data the build stops with ``UnidataMismatch`` and a message in
+    plain words that names the interpreter to use and why. (Fail-before: with the call removed from ``app.build`` the build goes on to other
+    errors or succeeds, and this test fails by assertion.)"""
     assert OTHER != defaults.TEXTNORM_PINNED_UNIDATA
     monkeypatch.setattr(unicodedata, "unidata_version", OTHER)
-    cfg = pilot_cfg(tmp_path)
+    cfg = _prod_cfg(tmp_path) if environment == "prod" else pilot_cfg(tmp_path)
+    assert app_mod.load_config(cfg).environment == environment
     raised = None
     try:
         app_mod.build(cfg, ["ito-agent"], secrets=SECRETS)
     except Exception as exc:  # noqa: BLE001 - the type is asserted below, so a build that stops for another reason fails by assertion
         raised = exc
     assert isinstance(raised, UnidataMismatch), (
-        f"the build did not refuse for the Unicode version: {raised!r}"
+        f"the {environment} build did not refuse for the Unicode version: {raised!r}"
     )
-    assert OTHER in str(raised)
-    # prod takes the same branch: ``live`` is ``environment in deferred.LIVE`` (a prod config needs more settings than this test builds)
-    assert set(app_mod.deferred.LIVE) == {"pilot", "prod"}
+    message = str(raised)
+    assert OTHER in message and defaults.TEXTNORM_PINNED_UNIDATA in message
+    assert "Python 3.13" in message, "the message does not name the interpreter to use"
+    assert "will not start" in message and "read as a different key" in message, (
+        "the message does not say why"
+    )
+    assert environment in app_mod.deferred.LIVE
 
 
 def test_a_pilot_build_on_the_pinned_version_does_not_refuse_for_the_unicode_version(

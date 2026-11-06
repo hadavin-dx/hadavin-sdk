@@ -70,14 +70,23 @@ def test_the_table_is_generated_from_the_unicode_data_and_every_value_is_ascii()
     assert len(textnorm._LOOKALIKES) == len(_confusables.TABLE)
 
 
-def test_no_table_source_is_in_a_dropped_category_other_than_unassigned():
-    """A source the fold drops before the table lookup could never be reached, except an unassigned one (the table keeps those for a newer
-    Unicode version). The set of unassigned sources is whatever the generator's filters give on this interpreter: counted, not asserted."""
+def test_no_table_source_is_in_a_dropped_category_or_unassigned():
+    """The table holds only sources ASSIGNED in Unicode 15.1: the generator drops, on the pinned interpreter, every source that is
+    unassigned (Cn) or in a dropped category, so no entry can be dead. Asserted (the count is 0 on Unicode 15.0.0 and 15.1.0, both
+    supported interpreters); on a newer interpreter a failure would be a signal to regenerate, not noise."""
+    unassigned = [cp for cp in _confusables.TABLE if unicodedata.category(chr(cp)) == "Cn"]
+    assert not unassigned, (
+        f"{len(unassigned)} table sources are unassigned: {[hex(c) for c in unassigned[:5]]}"
+    )
     for cp in _confusables.TABLE:
         category = unicodedata.category(chr(cp))
-        assert category == "Cn" or category not in textnorm._DROP_CATEGORIES, (hex(cp), category)
-    unassigned = [cp for cp in _confusables.TABLE if unicodedata.category(chr(cp)) == "Cn"]
-    print("table sources unassigned on this interpreter:", len(unassigned))
+        assert category not in textnorm._DROP_CATEGORIES, (hex(cp), category)
+    assert "Unicode 15.1 only" in (_confusables.__doc__ or ""), (
+        "the notice does not say the sources are those of Unicode 15.1"
+    )
+    assert "MUST NOT BE REMOVED" in (_confusables.__doc__ or ""), (
+        "the notice does not say it travels with copies"
+    )
 
 
 def test_the_generator_refuses_an_unpinned_file_and_is_deterministic(tmp_path):
