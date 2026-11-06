@@ -1357,11 +1357,11 @@
 | BL-core-P4a-r7-cor-COR-R7-1 | P4a | MAJOR | see report | FIXED-UNVERIFIED | reviews/P4a-round7-correctness.md | b782b8d |
 | BL-core-P4a-r7-cor-COR-R7-2 | P4a | MAJOR | see report | FIXED-UNVERIFIED | reviews/P4a-round7-correctness.md | b782b8d |
 | BL-core-P4a-r7-cor-COR-R7-3 | P4a | MAJOR | see report | FIXED-UNVERIFIED | reviews/P4a-round7-correctness.md | b782b8d |
-| BL-core-lookalike-r7-adv-ADV-LK7-1 | lookalike | MAJOR | see report | OPEN | reviews/lookalike-round7-adversarial.md | 2c60222 |
-| BL-core-lookalike-r7-adv-ADV-LK7-2 | lookalike | MAJOR | see report | OPEN | reviews/lookalike-round7-adversarial.md | 2c60222 |
-| BL-core-lookalike-r7-adv-ADV-LK7-3 | lookalike | MAJOR | see report | OPEN | reviews/lookalike-round7-adversarial.md | 2c60222 |
-| BL-core-lookalike-r7-cor-COR-LK7-1 | lookalike | MAJOR | see report | OPEN | reviews/lookalike-round7-correctness.md | 2c60222 |
-| BL-core-lookalike-r7-cor-COR-LK7-2 | lookalike | MAJOR | see report | OPEN | reviews/lookalike-round7-correctness.md | 2c60222 |
+| BL-core-lookalike-r7-adv-ADV-LK7-1 | lookalike | MAJOR | see report | FIXED-UNVERIFIED | reviews/lookalike-round7-adversarial.md | 2c60222 |
+| BL-core-lookalike-r7-adv-ADV-LK7-2 | lookalike | MAJOR | see report | FIXED-UNVERIFIED | reviews/lookalike-round7-adversarial.md | 2c60222 |
+| BL-core-lookalike-r7-adv-ADV-LK7-3 | lookalike | MAJOR | see report | FIXED-UNVERIFIED | reviews/lookalike-round7-adversarial.md | 2c60222 |
+| BL-core-lookalike-r7-cor-COR-LK7-1 | lookalike | MAJOR | see report | FIXED-UNVERIFIED | reviews/lookalike-round7-correctness.md | 2c60222 |
+| BL-core-lookalike-r7-cor-COR-LK7-2 | lookalike | MAJOR | see report | FIXED-UNVERIFIED | reviews/lookalike-round7-correctness.md | 2c60222 |
 | BL-core-P4a-r8-adv-ADV-R8-1 | P4a | BLOCKER | see report | OPEN | reviews/P4a-round8-adversarial.md | d12b498 |
 | BL-core-P4a-r8-adv-ADV-R8-2 | P4a | MAJOR | see report | OPEN | reviews/P4a-round8-adversarial.md | d12b498 |
 | BL-core-P4a-r8-adv-ADV-R8-3 | P4a | MAJOR | see report | OPEN | reviews/P4a-round8-adversarial.md | d12b498 |
