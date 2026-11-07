@@ -485,3 +485,4 @@ LAPTOP CANDIDATES (pushed heads only): PR85 0b54631 (items 3,4,10), PR72 e6a4220
 09:22Z heartbeat. ORDER 136 (q308): P1b builder queueing mutants/stage/perf/lint at b0f54b1; 3 round-2 P1b reviewers running (a2a4266 design, ac76f00 codebase, ad02248 readiness). Queue running 3 pending 10.
 09:23Z heartbeat. P1b chains queued first (q309). Queue running 3 pending 12. Reviewers a2a4266, ac76f00, ad02248 running.
 09:26Z heartbeat. P1b reviewers: design + readiness saved (q310, q311), codebase review pending (ac76f00). r3 chains queued first. Queue running 3 pending 11.
+09:28Z heartbeat. ORDER 137 ack (q312): waiting for codebase review ac76f00, then P1b batch. r3 baseline jobs cancelled. Queue running 0 pending 0.
