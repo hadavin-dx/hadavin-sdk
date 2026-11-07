@@ -766,3 +766,5 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | bd-P1b-merge7 | Sonnet builder P1b merge7 of P1a fix7 bf955e9, port 55460 | 2026-11-07T06:40Z | RUNNING |
 | ev-108 | evidence runner script evid.sh x6 (PR 66/73/72/70/80/83), ports 56010-56060 | 2026-11-07T06:35Z | RUNNING |
 | rv-109 | 12 EGM reviewers (design+code) for PR 66 delta/73/72/70/80/83 | 2026-11-07T06:50Z | RUNNING |
+| market-scan A-E (orders 119/120) | research agents, cloud, 2026-11-07 | read-only, output /home/user/build/market-scan/part*.md |
+| PR 66 builder a81e7ac5 | cloud | local 1a890b9, evidence queued, not pushed |

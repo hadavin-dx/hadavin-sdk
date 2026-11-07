@@ -411,3 +411,4 @@ ORDER 117 calibration (synthetic bench: 200 MB + 1.5M sha256 per copy, run K at 
 ORDER 116: PR 84 core/ci-evidence opened (optional, small). P1b merge7: builder stopped with local head e3f946f NOT pushed, tests queued (qsubmit) — waiting on the queue log.
 06:50Z PR80 builder stopped at local 584a7af (queue starved); its mutant-measure job moved to prio 1
 06:56Z order 118 done (q266): profile pushed, sweep clean; agents 4 running, queue runner 1; merge7 job still running
+07:00Z orders 119/120: 5 market-scan agents running (A-E, output /home/user/build/market-scan/part*.md); PR66 builder reported PARTIAL (local 1a890b9, runs queued); merge7 run still going; agents running: 4 builders + 5 scan = 9; shells: 1 runner
