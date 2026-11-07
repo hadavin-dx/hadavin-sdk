@@ -29,8 +29,10 @@ from tools.mutation_runner import Mutant, run_mutants
 ROOT = Path(__file__).resolve().parents[1]
 T = "tests/test_textnorm.py"  # the killers of the fold, the input rules and the hidden channel
 G = "tests/test_textnorm_generator.py"  # the killers of the table and the generator
+SC = "tests/test_textnorm_scan.py"  # the killers of the DENY keys (P1b)
+SB = "tests/test_textnorm_siblings.py"  # the Mc, Lm and Sk code points on every scan path (P1b)
 D = "tests/test_textnorm_differential.py"  # the differential rows and the golden test: they have no mutant, they run in the baseline
-TESTS = [T, G, D]  # killer files first; golden, differential last
+TESTS = [T, G, SC, SB, D]  # killer files first; golden, differential last
 S = "src/hadavin_sdk/guard/"
 TN, CF, GEN = S + "textnorm.py", S + "_confusables.py", "tools/gen_confusables.py"
 
@@ -115,6 +117,31 @@ TAGKEYS = "test_a_key_made_on_another_unicode_version_carries_the_tag_on_every_r
 CHEAP = "test_the_cheap_length_check_runs_before_any_per_character_work"
 NAMESSYM = "test_names_equal_and_the_canonical_form_are_case_symmetric_for_every_code_point"
 U0345 = "test_u0345_is_an_iota_after_a_greek_letter_and_is_removed_everywhere_else"
+ETA = "test_capital_and_small_eta_read_h_and_n_in_both_directions_and_both_readings"
+SIGMA = "test_sigma_needs_two_changing_passes_and_the_bound_is_exact"
+SK1 = "test_sk1_scan_keyset_has_exactly_one_parameter_named_raw"
+SK2 = "test_sk2_at_most_eight_keys_none_longer_than_the_weight_and_the_input_rules_hold"
+SK3 = "test_sk3_the_az3x9_rows_ze_reads_as_three_and_z"
+SK6 = "test_sk6_hash_tilde_at_pipe_and_the_replacement_character_are_dropped"
+TAG0 = "test_tag_t0_the_text_without_its_tag_characters"
+TAG1 = "test_tag_t1_the_tag_characters_decoded_in_place"
+TAG2 = "test_tag_t2_the_text_followed_by_the_decoded_tag_characters"
+TAG3 = "test_tag_t3_the_decoded_tag_characters_alone"
+GAP4 = "test_gap4_dashes_slashes_and_quotes_read_as_ascii_in_identity_key"
+GAP5 = "test_gap5_hidden_separators_are_dropped_and_the_scan_key_has_no_spaces"
+L2I = "test_l_to_i_rows"
+LMRAW = "test_r12_lm_inserting_any_modifier_letter_still_finds_the_value"
+SCANVIEWS = "test_scan_views_has_the_fold_the_squeeze_and_the_scan_keys_and_no_empty_view"
+HOLDSBOTH = "test_scan_holds_reads_both_fold_views_and_squeeze_views_on_both_sides"
+HOLDSEMPTY = "test_scan_holds_refuses_a_value_with_an_empty_view_and_a_text_may_have_one"
+HOLDSSCRIPTS = "test_scan_holds_reads_the_text_with_the_scripts_of_the_value_so_a_foreign_letter_does_not_hide_it"
+HOLDSSHORT = "test_scan_holds_refuses_a_value_too_short_to_scan_instead_of_answering_false"
+HOLDSKEYS = "test_scan_holds_reads_the_scan_keys_of_the_value"
+VIEWSCRIPTS = "test_scan_views_takes_the_scripts_of_the_value_and_has_a_script_view_only_with_them"
+INJVIEWS = "test_the_injection_detector_reads_the_scan_views_so_a_cyrillic_o_or_a_hidden_mark_does_not_hide_a_phrase"
+CANONVIEW = "test_runmap_canonical_and_its_per_character_view_are_the_same_text_on_the_whole_corpus"
+SIBLINGS = "test_scan_holds_finds_the_password_for_every_mc_lm_and_sk_code_point"
+LMFOLD = "test_r12_lm_fold_a_modifier_letter_that_nfkd_turns_into_a_letter_still_matches"
 CFTABLE = (
     "test_the_case_fold_table_is_on_the_case_fold_image_and_its_conflicts_are_the_known_eleven"
 )
@@ -130,12 +157,12 @@ M = [
         "    if not casefold:\n        s = s.translate(_TABLE)\n    elif table_first:\n        s = s.translate(_TABLE).casefold().translate(_CF_TABLE)\n    else:\n        s = s.casefold().translate(_CF_TABLE)\n",
         "    s = s.casefold() if casefold else s\n", LOOKS, "look-alike U+0405 is not folded"),
     mutant("fold: other digits not folded", TN,
-        "    return s.translate(_DIGITS)", "    return s",
+        "    return s.translate(_DIGITS).translate(_PUNCT)", "    return s.translate(_PUNCT)",
         LOOKS, "other-script digits are not folded"),
     mutant("fold: the digit table is empty", TN,
         "_DIGITS = types.MappingProxyType(\n    _build_digit_table()\n)", "_DIGITS = {}",
         LOOKS, "other-script digits are not folded"),
-    mutant("fold: fillers kept", TN, "_DROP_CATEGORIES and ch not in FILLERS)", "_DROP_CATEGORIES and True)",
+    mutant("fold: fillers kept", TN, "    if ch in FILLERS or ch == _REPLACEMENT:\n        return False", "    if ch == _REPLACEMENT:\n        return False",
         MARKS, "U+3164 changes the fold"),
     mutant("fold: Greek eta missing", CF, '    0x03B7: "n",\n', "", LOOKS, "look-alike U+03B7 is not folded"),
     mutant("fold: Armenian missing", CF, '    0x0585: "o",\n', "", LOOKS, "look-alike U+0585 is not folded"),
@@ -160,8 +187,8 @@ M = [
         "            ch not in _UNIT_SYMBOLS\n", INVISIBLE, "splits a mixed word"),
     mutant("mixed: the micro sign is flagged", TN,
         "            ch not in _UNIT_SYMBOLS\n", "            True\n", MICRO, "a micro or ohm sign is flagged"),
-    mutant("mixed: Cherokee not a look-alike script", TN,
-        '"CYRILLIC", "GREEK", "ARMENIAN", "CHEROKEE", "COPTIC",', '"CYRILLIC", "GREEK", "ARMENIAN", "COPTIC",',
+    mutant("mixed: Cherokee exempt next to Latin", TN,
+        '{"Han", "Hiragana", "Katakana", "Hangul", "Bopomofo"}', '{"Han", "Hiragana", "Katakana", "Hangul", "Bopomofo", "Cherokee"}',
         INVISIBLE, "Cherokee next to Latin is not flagged"),
     mutant("table: Cherokee A missing", CF, '    0x13AA: "A",\n', "", TABLE,
         "named look-alike U+13AA is not folded", test_file=G),
@@ -171,7 +198,7 @@ M = [
         GENERATOR, "an ASCII source was accepted", test_file=G),
     mutant("table: capital I prototype stays l", GEN, '            dst = "I"', '            dst = "l"',
         GENERATOR, "capital I prototype read as l", test_file=G),
-    mutant("table: the generator accepts any file", GEN, "    if sha != PINNED_SHA256:", "    if False:",
+    mutant("table: the generator accepts any file", GEN, "    if sha != pinned_sha256:", "    if False:",
         GENVER, "an edited file is accepted", test_file=G),
     mutant("table: the pin in the generator differs", GEN, 'PINNED_SHA256 = "8289f833', 'PINNED_SHA256 = "9289f833',
         TABLE, "pins another sha256", test_file=G),
@@ -304,10 +331,10 @@ M = [
         '    folded = unicodedata.normalize("NFKC", s).casefold()\n    return " ".join(folded.split())',
         NAMESSYM, "_canon is not case symmetric"),
     mutant("table: the generator accepts any Unicode version", GEN,
-        "    if version != unidata or PINNED_VERSION != unidata:", "    if False:",
+        "    if version != unidata or pinned_version != unidata:", "    if False:",
         GENVER, "an other Unicode version is not refused by its version", test_file=G),
     mutant("table: the generator accepts any date", GEN,
-        "    if (date[1].strip() if date else \"?\") != PINNED_DATE:", "    if False:",
+        "    if (date[1].strip() if date else \"?\") != pinned_date:", "    if False:",
         GENVER, "an other date is accepted", test_file=G),
     # ---- the mutants of fix4 (order 79): the 15.1.0 data pin, the marks, the plain-words messages, the weight pre-check ----
     mutant("table: the palochka override is removed", GEN, '{0x4CF: "l"}', "{}",
@@ -331,6 +358,76 @@ M = [
     mutant("size: the weight check is missing (the key is built first)", TN,
         "        if weight > defaults.TEXTNORM_MAX_CHARS:\n            raise TextTooLong(", "        if False:\n            raise TextTooLong(",
         NOWORK, "fold work was done for a text that must be refused"),
+    # ---- the mutants of P1b (scan_keyset, gap 4, the modifier letters); each names its killer in tests/test_textnorm_scan.py ----
+    mutant("scan: reading B omitted", TN, "        for step in (_pass_a, _pass_b)", "        for step in (_pass_a,)",
+        ETA, "reading B is missing", test_file=SC),
+    mutant("scan: the not-converged raise returns the last output", TN,
+        '    raise FoldNotConverged(\n        f"a spelling variant was still changing after {defaults.TEXTNORM_MAX_PASSES} passes"\n    )',
+        "    return text", SIGMA, "did not raise FoldNotConverged", test_file=SC),
+    mutant("scan: class map z to 3 removed", TN, '_CLASS_MAP = str.maketrans("zl", "3i")', '_CLASS_MAP = str.maketrans("l", "i")',
+        SK3, "the class map z to 3 is missing", test_file=SC),
+    mutant("scan: no drop of whitespace in the key", TN, 'ch.isalnum() and unicodedata.category(ch) != "Lm"',
+        '(ch.isalnum() or ch.isspace()) and unicodedata.category(ch) != "Lm"', GAP5, "a hidden separator splits the value", test_file=SC),
+    mutant("tag: T0 dropped", TN, '    return [text0, "".join(t1), text0 + "".join(decoded), "".join(decoded)]',
+        '    return ["".join(t1), text0 + "".join(decoded), "".join(decoded)]', TAG0, "T0 (the text without its tag characters)", test_file=SC),
+    mutant("tag: T1 dropped", TN, '    return [text0, "".join(t1), text0 + "".join(decoded), "".join(decoded)]',
+        '    return [text0, text0 + "".join(decoded), "".join(decoded)]', TAG1, "T1 (the tag characters decoded in place)", test_file=SC),
+    mutant("tag: T2 dropped", TN, '    return [text0, "".join(t1), text0 + "".join(decoded), "".join(decoded)]',
+        '    return [text0, "".join(t1), "".join(decoded)]', TAG2, "T2 (the text followed by the decoded", test_file=SC),
+    mutant("tag: T3 dropped", TN, '    return [text0, "".join(t1), text0 + "".join(decoded), "".join(decoded)]',
+        '    return [text0, "".join(t1), text0 + "".join(decoded)]', TAG3, "T3 (the decoded tag characters alone)", test_file=SC),
+    mutant("scan_keyset: a clock parameter added", TN, "def scan_keyset(raw: str) -> frozenset[str]:",
+        "def scan_keyset(raw: str, clock=None) -> frozenset[str]:", SK1, "a clock or a deadline was added", test_file=SC),
+    mutant("scan_keyset: a text over the size rule does not raise", TN,
+        "    _checked(raw)\n    return _scan_keys(raw)", "    return _scan_keys(raw)", SK2, "accepted a text over the size rule", test_file=SC),
+    mutant("gap 4: the dash, slash and quote map removed", TN, "    return s.translate(_DIGITS).translate(_PUNCT)",
+        "    return s.translate(_DIGITS)", GAP4, "gap 4 map", test_file=SC),
+    mutant("fold: U+FFFD kept in step S2", TN, "    if ch in FILLERS or ch == _REPLACEMENT:", "    if ch in FILLERS:",
+        SK6, "U+FFFD is kept by the fold", test_file=SC),
+    mutant("scan: class map l to i removed", TN, '_CLASS_MAP = str.maketrans("zl", "3i")', '_CLASS_MAP = str.maketrans("z", "3")',
+        L2I, "row 1: the class map l to i is missing", test_file=SC),
+    mutant("scan: the drop keeps non-whitespace punctuation", TN, 'ch.isalnum() and unicodedata.category(ch) != "Lm"',
+        'not ch.isspace() and unicodedata.category(ch) != "Lm"', L2I, "row 1: the key holds a character", test_file=SC),
+    mutant("scan: the raw removal of modifier letters skipped", TN,
+        '    raw = "".join(ch for ch in raw if unicodedata.category(ch) != "Lm")', "    raw = raw", LMRAW, "hides the value", test_file=SC),
+    mutant("scan: the modifier-letter test removed from the key drop", TN, ' and unicodedata.category(ch) != "Lm"', "",
+        LMFOLD, "survives in the key", test_file=SC),
+    mutant("scan_holds: the squeeze view of the value is not read", TN,
+        "    needles = (*scan_needles(value), *sorted(_scan_keys(value)))\n", "    needles = list(_views(value, casefold=True, collapse_ws=True))\n",
+        HOLDSBOTH, "the value side misses the squeeze view", test_file=SC),
+    mutant("scan_holds: the squeeze view of the text is not read", TN,
+        "for view in _all_views(text, scripts) if view for needle in needles", "for view in _views(text, casefold=True, collapse_ws=True) if view for needle in needles",
+        HOLDSBOTH, "the text side misses the squeeze view", test_file=SC),
+    mutant("scan_holds: an empty view of the value is accepted", TN,
+        '    if "" in _all_views(value):\n        raise EmptyView(', '    if False:\n        raise EmptyView(',
+        HOLDSEMPTY, "scan_holds accepted the value", test_file=SC),
+    mutant("scan_views: only fold_views are read (no squeeze views, no scan keys)", TN,
+        "        *_views(raw, casefold=True, collapse_ws=True, marks_dropped=True, scripts=scripts),\n        *_squeezed(raw),\n        *sorted(_scan_keys(raw)),\n",
+        "        *_views(raw, casefold=True, collapse_ws=True, marks_dropped=True, scripts=scripts),\n",
+        SCANVIEWS, "scan_views leaves out the view", test_file=SC),
+    mutant("injection: the scan views are not read", "src/hadavin_sdk/guard/injection.py",
+        "        for view in (text, *textnorm.scan_views(text)):", "        for view in (text,):",
+        INJVIEWS, "the injection detector misses", test_file=SB),
+    mutant("runmap: canonical normalises the whole text again", "src/hadavin_sdk/guard/runmap.py",
+        "    return _canonical_view(text)[0]\n",
+        '    return "".join(c for c in unicodedata.normalize("NFKC", text) if unicodedata.category(c) != "Cf")\n',
+        CANONVIEW, "canonical and the view differ on", test_file=SB),
+    # ---- P1b merge 7: the P1a fix7 API (scripts per value, ViewTooShort) ----
+    mutant("scan_holds: the text is read without the scripts of the value", TN,
+        "for view in _all_views(text, scripts) if view for needle in needles", "for view in _all_views(text) if view for needle in needles",
+        HOLDSSCRIPTS, "scan_holds misses the value with", test_file=SC),
+    mutant("scan_holds: a value too short to scan is answered", TN,
+        "    needles = (*scan_needles(value), *sorted(_scan_keys(value)))\n", "    needles = (*_all_views(value),)\n",
+        HOLDSSHORT, "answered for the value", test_file=SC),
+    mutant("scan_holds: the scan keys of the value are not needles", TN,
+        "    needles = (*scan_needles(value), *sorted(_scan_keys(value)))\n", "    needles = scan_needles(value)\n",
+        HOLDSKEYS, "the value side misses the scan key", test_file=SC),
+    mutant("scan_views: the scripts are not read", TN,
+        "_all_views(raw, scripts) if view", "_all_views(raw) if view",
+        VIEWSCRIPTS, "gives no script view for the scripts", test_file=SC),
+    mutant("scan_views: the scripts are not checked", TN,
+        "    _checked_scripts(scripts)\n    return tuple(view for view", "    return tuple(view for view",
+        VIEWSCRIPTS, "scan_views accepted scripts=", test_file=SC),
     # ---- the mutants of fix5 (the marks-dropped views, the letter and digit name rules) ----
     mutant("marks: the marks-dropped reading is not built", TN,
         "    if marks_dropped:\n        texts.append(_without_spacing_marks(raw))", "    if False:\n        texts.append(_without_spacing_marks(raw))",
@@ -353,7 +450,7 @@ M = [
         '    {"Mc", "Lm", "Sk"}\n)  # kept by', '    {"Mc", "Sk"}\n)  # kept by',
         MCSQUEEZE, "misses a secret hidden with U+"),
     mutant("marks: a view is repeated", TN,
-        "        if view not in out:\n            out.append(view)", "        out.append(view)",
+        "        scripts=scripts,\n    ):\n        if view not in out:\n            out.append(view)", "        scripts=scripts,\n    ):\n        out.append(view)",
         SIXVIEWS, "repeated or there are more than the limit"),
     mutant("names: the negative circled and squared letters are not read", GEN,
         '        (r"(?:CROSSED )?NEGATIVE (?:CIRCLED|SQUARED) LATIN CAPITAL LETTER ([A-Z])", "upper"),\n', "",
@@ -434,7 +531,7 @@ M = [
         "        out.update(_script_of(ch) for ch in set(view) if ch.isalpha())",
         GROUPS, "a Latin value has a script"),
     mutant("script: the scripts given to fold_views are not checked", TN,
-        "    _checked(raw)\n    _checked_scripts(scripts)\n", "    _checked(raw)\n",
+        "    _checked(raw)\n    _checked_scripts(scripts)\n    return _views(\n", "    _checked(raw)\n    return _views(\n",
         SCRIPTARG, "fold_views accepted scripts"),
     mutant("script: the value has no scripts in scan_needles", TN,
         "    scripts = _value_scripts(raw)\n    squeezed", "    scripts = frozenset()\n    squeezed",

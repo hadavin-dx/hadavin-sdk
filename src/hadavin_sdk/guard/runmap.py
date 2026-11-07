@@ -276,10 +276,13 @@ def storable(mapping: dict[str, str], kinds: frozenset[str] | None = None) -> di
 def canonical(text: str) -> str:
     """Untrusted text in one canonical form before it is escaped, redacted or compared: Unicode NFKC (a
     full-width `＜ＩＰＶ４＿２＞` becomes `<IPV4_2>`) with the invisible format characters removed (a zero-width
-    space inside a token no longer hides it)."""
-    return "".join(
-        c for c in unicodedata.normalize("NFKC", text) if unicodedata.category(c) != "Cf"
-    )
+    space inside a token no longer hides it). It is THE SAME TEXT as the first result of `_canonical_view`: NFKC is applied one
+    character at a time, so the text a match is searched in and the text the match positions refer to never differ (they did when
+    the whole text was composed: a + U+0301 became U+00E1 here and not in the view). A base letter and a combining mark are therefore
+    not composed."""
+    if text.isascii():
+        return text  # NFKC changes nothing and ASCII has no format character
+    return _canonical_view(text)[0]
 
 
 def _canonical_view(text: str) -> tuple[str, list[int]]:

@@ -346,7 +346,9 @@ def test_the_tables_are_read_only_and_a_later_change_of_the_source_does_not_reac
     monkeypatch.setitem(_confusables.TABLE, 0x430, "z")
     monkeypatch.setitem(_confusables.TABLE, 0x2013, "q")
     assert fold(chr(0x430)) == before == "a", "a later change of _confusables.TABLE changes fold"
-    assert fold(chr(0x2013)) == chr(0x2013)
+    assert fold(chr(0x2013)) == "-", (
+        "a later change of _confusables.TABLE changes the punctuation map"
+    )
 
 
 def test_the_checked_in_table_matches_its_digest():
@@ -368,7 +370,7 @@ def test_max_value_len_is_the_longest_value_of_the_table():
 
 # ---- FOLD_VERSION ------------------------------------------------------------------------------------------------------------------------
 def test_the_version_string_names_the_algorithm_the_table_and_both_unicode_versions():
-    m = re.fullmatch(r"alg=fold4\|tbl=([0-9a-f]{12}):(\d+)\|ucd=([^|]+)\|ud=([^|]+)", FOLD_VERSION)
+    m = re.fullmatch(r"alg=fold5\|tbl=([0-9a-f]{12}):(\d+)\|ucd=([^|]+)\|ud=([^|]+)", FOLD_VERSION)
     assert m, f"FOLD_VERSION has the wrong shape: {FOLD_VERSION}"
     assert m[4] == unicodedata.unidata_version, "FOLD_VERSION has no ud= part of this interpreter"
     assert m[3] == _confusables.DATA_VERSION
@@ -828,7 +830,7 @@ def test_a_raw_text_that_starts_with_the_interpreters_own_tag_has_it_stripped_an
     monkeypatch.setattr(defaults, "TEXTNORM_PINNED_UNIDATA", "15.1.0")
     monkeypatch.setattr(unicodedata, "unidata_version", "15.0.0")
     tag = key_tag()
-    assert tag.startswith("\ue000alg=fold4|ud=15.0.0") and tag.endswith("\ue000")
+    assert tag.startswith("\ue000alg=fold5|ud=15.0.0") and tag.endswith("\ue000")
     # the stated over-collision: the tag of THIS interpreter in front of a text is read as "already a key"
     assert identity_key(tag + "Bob") == identity_key("Bob") == tag + "bob"
     assert could_be_same_person(tag + "Bob", "bob")
@@ -843,7 +845,7 @@ def test_a_raw_text_that_starts_with_the_interpreters_own_tag_has_it_stripped_an
     assert other.startswith(key_tag()) and "ud=15.0.0" in other and other != identity_key("bob")
     # on the pinned version there is no tag to strip and U+E000 is dropped like any private-use character
     monkeypatch.setattr(unicodedata, "unidata_version", "15.1.0")
-    assert key_tag() == "" and identity_key(tag + "bob") == "alg=fold4|ud=15.0.0bob"
+    assert key_tag() == "" and identity_key(tag + "bob") == "alg=fold5|ud=15.0.0bob"
 
 
 def test_the_case_fold_table_is_on_the_case_fold_image_and_its_conflicts_are_the_known_eleven():
@@ -940,7 +942,7 @@ def test_a_key_made_on_another_unicode_version_carries_that_version_and_never_eq
     monkeypatch.setattr(unicodedata, "unidata_version", "15.0.0")
     other = identity_key("Bob")
     assert other != pinned_key, "a key made on another Unicode version equals the pinned key"
-    assert other.endswith("bob") and "ud=15.0.0" in other and "alg=fold4" in other, (
+    assert other.endswith("bob") and "ud=15.0.0" in other and "alg=fold5" in other, (
         "the tag does not name the algorithm and the Unicode version"
     )
     assert identity_key(other) == other, "the key of another version is not idempotent"
@@ -1185,18 +1187,21 @@ def test_the_hidden_channel_signal_refuses_what_is_not_text():
 
 
 # ---- names ---------------------------------------------------------------------------------------------------------------------------------
-def test_the_public_names_are_exactly_the_listed_twenty_three():
+def test_the_public_names_are_exactly_the_listed_twenty_eight():
     assert sorted(textnorm.__all__) == sorted(
         [
             "FILLERS",
             "FOLD_VERSION",
             "AllowVerdict",
+            "EmptyView",
+            "FoldNotConverged",
             "NotText",
             "TextTooLong",
             "TextnormError",
             "UnidataMismatch",
             "ViewTooShort",
             "allow_equal",
+            "could_be_same_person",
             "fold",
             "fold_views",
             "has_hidden_channel",
@@ -1206,14 +1211,16 @@ def test_the_public_names_are_exactly_the_listed_twenty_three():
             "key_tag",
             "names_equal",
             "require_pinned_unidata",
-            "could_be_same_person",
+            "scan_holds",
+            "scan_keyset",
             "scan_needles",
+            "scan_views",
             "squeeze",
             "squeeze_views",
             "value_scripts",
         ]
     )
-    assert len(textnorm.__all__) == len(set(textnorm.__all__)) == 23
+    assert len(textnorm.__all__) == len(set(textnorm.__all__)) == 28
 
 
 def test_every_name_the_module_defines_is_public_and_listed_or_private():
@@ -2893,6 +2900,7 @@ def test_the_manifest_pins_the_files_a_demo_copies():
     assert set(manifest["files"]) == {
         "src/hadavin_sdk/guard/textnorm.py",
         "src/hadavin_sdk/guard/_confusables.py",
+        "src/hadavin_sdk/guard/_scripts.py",
         "tests/fixtures/textnorm_vectors.json",
         "tests/fixtures/textnorm_corpus.json",
     }
