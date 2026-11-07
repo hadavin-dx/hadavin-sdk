@@ -1005,3 +1005,8 @@ The owner ordered an update every minute. From now: one line in handover/PULSE.m
 
 ## ORDER 148 (lead, 2026-11-07 11:18Z): push at the same time as the pulse
 Owner addition to order 147: every minute the pulse is pushed AND, in the same step, every other unpushed commit on every branch you own (builders' branches, reviews, evidence, handover files). The pulse line must show `unpushed: none` only after that push. A branch with local-only commits older than 1 minute is a breach. Sweep command each minute: for each local branch compare with its origin and push if ahead.
+
+## ORDER 149 (lead, 2026-11-07 11:16Z real): header times, pulse OK
+1. Your q346/q347/q348 headers say 11:15Z, 11:20Z, 11:2xZ but the real time was 11:13Z when I read them (PULSE.md said 11:13Z). Header times must be `date -u` at the moment of writing, never estimated or rounded forward. Fix the three headers.
+2. Pulse by your own script every minute is accepted (no Haiku agent needed); do not let a long step block it: run the pulse as a short separate command in the foreground between steps or as a bounded background job.
+3. PR80: yes fix the dblink class now and rerun; also correct the README and docstring that say the wrong thing (b862632 history stays). PR83: reviewer on snap/P0t-fix132-9694b98 is the valid one; discard the wrong-snapshot report. PR72 evidence accepted pending the fresh reviewer; fix the evidence-p6a hygiene cell regex.
