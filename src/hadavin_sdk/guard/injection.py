@@ -10,6 +10,7 @@ import re
 from decimal import Decimal
 from typing import Protocol
 
+from hadavin_sdk.guard import textnorm
 from hadavin_sdk.guard.runmap import safe_head
 from hadavin_sdk.models import Verdict
 
@@ -42,10 +43,16 @@ class RegexDetector:
         self.threshold = threshold
 
     def _score(self, text: str) -> float:
-        if _RX.search(text):
-            return 1.0
-        squashed = _SQUASH.sub("", text.lower())
-        return 1.0 if any(s in squashed for s in _SQUASHED) else 0.0
+        """1.0 when the raw text OR any view of it (``textnorm.scan_views_no_value``: the look-alike fold, the squeeze, the scan keys; there is no protected value here) holds a
+        steering phrase, so a Cyrillic o or an inserted mark does not hide it. A text the fold refuses (over the size rule) raises
+        ``TextnormError``, which ``injection_check`` turns into a flag (fail closed)."""
+        for view in (text, *textnorm.scan_views_no_value(text)):
+            if _RX.search(view):
+                return 1.0
+            squashed = _SQUASH.sub("", view.lower())
+            if any(s in squashed for s in _SQUASHED):
+                return 1.0
+        return 0.0
 
     def check(self, text: str, source: str) -> Verdict:
         score = self._score(text)
