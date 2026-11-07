@@ -897,3 +897,16 @@ PR 70 / P1b fix batch :
 7. Cyrillic/Greek refusal cost (4-letter Russian 66.1% refused): accepted as fail-closed, but (a) the refusal message must tell the user what to do (use the longer form or exact-only registration), (b) re-measure false-positive and refusal rates on a modern-register corpus (news/wiki text under a permissive licence, named and dated), not only Bible text; report both, (c) keep the Cyrillic needle minimum at 10 unless the modern corpus says otherwise.
 8. PR 70 is NOT merged by me until the fix batch is verified green AND fresh round-2 reviewers pass. Do not describe it as "about to merge". P1a (PR 63) and P1b merge together only then.
 Reviews now (cloud reviewers, read-only, snapshots, diff + evidence, report in handover/reviews/<ticket>-round2/): PR 72 (4f01c6d), PR 73 (ea40242), PR 83 (e2d8971 after your targeted rerun is green), PR 85 (final head). PR 66 delta waits for its fix head. Security/money/redaction paths: no round cap.
+
+## ORDER 131 (lead, 2026-11-07 08:50Z / 14:20 IST): USE THE WHOLE MACHINE NOW. Owner is unhappy: only one shell is running, not agents.
+Agent count is limited by nothing but dependencies; heavy test runs queue (3 slots), agents do not. Your 08:26Z heartbeat lists only 3 builders (P1b fix, PR83, P6b1) while the money chain and PR 80 have NO builder. Start ALL of these at once, each as its own agent with its own port range, own checkpoint note at 30 min, stop at 60, push heads:
+BUILDERS (start now):
+ 1. PR 66 / P4d fix builder (money chain critical path; blocks P4d-a2, P2a-1, P4a, P4b1, P4b2, P4c): apply review-1/2 fixes (pg_driver tests need DSN or skip with reason, delta 92dbb1e review) and push the head. Highest priority.
+ 2. PR 80 / P5b1 fix builder: kills M49-M57 real (no placeholders), CORPUS_STEP R3a bump + rows 005/033 + 152->154 (order 130 item 1), then push.
+ 3. P0c and P0a (PR 71): do the "checking" you list; one agent each, report in a qNNN.
+ 4. P2d-1 (PR 77) prep and P5a (PR 74) re-merge PREP on a scratch branch against core/P1b-fixwip, so they are ready the minute the P1b fix is verified (do not push to the PR branches).
+ 5. A CI/readiness agent: make the checks Sonar/CodeQL/CodeRabbit-relevant parts reproducible locally for PR 72, 73, 83, 85 (ruff, format, bandit, scan_repo, hygiene) and report any finding before CI does.
+REVIEWERS (read-only, no CPU, start now, fresh agents, snapshot + diff + evidence, not your verdict; reports in handover/reviews/<ticket>-round2/): PR 72 @4f01c6d, PR 73 @ea40242, PR 85 @26079f9 (each: egm-design + egm-codebase-details + egm-implementation-readiness), PR 83 @e2d8971 as soon as your targeted rerun is green.
+EVIDENCE RUNNERS: queue final-head verification for PR 72, 73, 85, 83 yourself; I run the laptop copy only for heads you flag as money/redaction.
+AK-* tickets stay parked until I answer q264-equivalent after reading scan 2 (lead-owed, not your blocker). JG-3 stays paused.
+In your next HEARTBEAT list every agent with start time, task, last commit/log time. Target: at least 10 agents running while the queue stays full.
