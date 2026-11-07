@@ -342,6 +342,17 @@ def test_the_russian_word_for_password_is_accepted_at_the_pinned_outcome():
     assert _value(register_value, word, strict=False).coverage == "exact_only"
 
 
+def test_the_strict_refusal_names_the_setting_that_makes_it_strict():
+    """Order 140 (1). The message of ``CoverageRefused`` names ``TEXTNORM_STRICT_COVERAGE`` and ``strict=False``, for a Latin value and for a narrowed one.
+    Killer: ``register: the refusal does not name the setting``."""
+    for value in ("Pass" + "word" + "17", han(4) + "1234"):
+        message = str(_raises(CoverageRefused, register_value, value))
+        assert "TEXTNORM_STRICT_COVERAGE" in message, (
+            f"the refusal does not name the setting: {message}"
+        )
+        assert "strict=False" in message, f"the refusal does not name the way out: {message}"
+
+
 # ---- D3: the Japanese mixed minimum -----------------------------------------------------------------------------------------------------
 def test_a_japanese_needle_of_han_and_kana_takes_the_han_minimum_and_other_mixtures_the_largest():
     """Killers: ``insertion: Han and kana take the larger minimum`` and ``insertion: any mixture that holds Han and kana takes the smaller minimum``.
