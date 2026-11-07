@@ -198,7 +198,7 @@ S3 (redactor-named refusal; P5c T1-12 builds it), S5 (strict Unicode pin; order 
     13. `sources` not excluded from the rule: T5 (f).
     14. `tools` not excluded from the rule: T5 (h).
     15. The helper compares by truth value instead of `is not` the default: T5 (i).
-    16. The check placed after `secrets = secrets or make(...)`: T5 (j) (`record` holds `"secrets"`), T5 (m) (the rebound provider is never the default, so every live build is refused).
+    16. The check placed after `secrets = secrets or make(...)`: T5 (j) (`record` holds `"secrets"`) and t5q, as the o140 evidence shows (T5 (m) was named here before; the o140 evidence shows it is NOT a killer of this mutant).
     17. The check placed after `platform_secrets.check`: T5 (j).
     18. The names taken from a fixed list of the original four (`secrets`, `channel`, `detector`, `llm`) instead of the signature: T5 (b) `clock` rows; T5 (l).
     19. The message names only the first keyword: T5 (c).
@@ -472,3 +472,6 @@ Size: 460 lines, over about 250. 4 rows. Candidate to split (lead decides); the 
 Build only; the freeze is not reopened.
 
 **BN-15 (DEMAND, lead order 57).** Build note only; ticket text unchanged. DEMAND: AK-G2-b needs P6a-1 (`tickets/AK-G2.md:133`); the recommended slice lists P6a (`studio-notes/GAPS.md:54`; slice order needs the lead's yes, `GAPS.md:51`). AK-G16-a also needs P6a-1 (`tickets/AK-G16.md:191`) but AK-G16 is deferred.
+
+## Build note S6-pilot-prod (added 2026-11-07, lead order 150, from the PR72 fix batch q352)
+In a pilot or prod config, `made_up_data_only: true` is refused, and it is also refused when the demo-only kinds (a real model, a vendor detector, a real approval channel) are present. The refusal names the kind and does not advise setting the field. S6 therefore has an effect in demo only; the line "In pilot and prod the field has no effect" above is superseded by order 132. The field must be a real YAML true or false: "yes", 1, "true", "on", null and a list are refused at load. Mutant 16 is killed by t5j and t5q (not t5m).
