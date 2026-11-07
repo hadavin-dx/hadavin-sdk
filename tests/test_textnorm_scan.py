@@ -972,6 +972,11 @@ def test_scan_holds_reads_the_text_with_the_scripts_of_the_value_so_a_foreign_le
         assert scan_holds("token: " + text + " end", MIXED), (
             f"scan_holds misses the value with {ch!r} inserted: the script view of the text keeps a letter of another script"
         )
+    # a needle under the insertion minimum has no one-inserted-letter match to fall back on: only the script view of the text finds it
+    for ch in ("\u0436", "\u03b4", "q", "-"):
+        assert scan_holds("a \u5bc6" + ch + ch + "\u7801 b", "\u5bc6\u7801"), (
+            f"scan_holds misses the value with {ch!r} inserted: the script view of the text keeps a letter of another script"
+        )
     # ONE letter of the SAME script is found since the fix batch (the "one inserted letter" match, see test_textnorm_fixbatch.py); two are not,
     # and another value is not found
     assert scan_holds("pw\u5bc6\u7801\u5929\u4fdd\u62a4", MIXED)
