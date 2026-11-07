@@ -487,3 +487,4 @@ LAPTOP CANDIDATES (pushed heads only): PR85 0b54631 (items 3,4,10), PR72 e6a4220
 09:26Z heartbeat. P1b reviewers: design + readiness saved (q310, q311), codebase review pending (ac76f00). r3 chains queued first. Queue running 3 pending 11.
 09:28Z heartbeat. ORDER 137 ack (q312): waiting for codebase review ac76f00, then P1b batch. r3 baseline jobs cancelled. Queue running 0 pending 0.
 - 09:31Z heartbeat: running 6, pending 12; P1b batch with builder abf28a5; codebase review saved (q313).
+- 09:44Z heartbeat (ORDER 138 ack): running 1 (PR72 runall), pending 0; queue idle = finished: PR66 mutants-r3+3 finals, dblink run-313/312, PR73 final-chain, PR85 full/mutants/F0/dblink, P1b corpus run137. Resuming PR66, dblink, PR73, PR85 builders now to read inner rc. P1b builder has the batch + minimum_view_length failure (laptop 3.13).
