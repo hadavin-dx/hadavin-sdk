@@ -475,3 +475,4 @@ LAPTOP CANDIDATES (pushed heads only): PR85 0b54631 (items 3,4,10), PR72 e6a4220
 09:14Z heartbeat. dblink fix a160f3d desk work done (only default-socket test is the fixed one; q298), head 7bf02af unpushed, jobs prio 1 pending/running. Queue: running 3, pending 10. Order and heads unchanged from q297 list. Builders on desk work: PR72, PR83, PR85, P1b, PR66; PR73 reading its failed run; PR86 final.
 09:15Z heartbeat. PR83 desk work done (q299), still waiting on chains. Queue running 4 pending 8. Others unchanged.
 09:15Z heartbeat. PR73 interim 2 (q300): head 98d042f unpushed; I queued its final chain (3.13 full+perf, 3.12 full+perf, mutants R6/R15) as one job. PR83 builder idle-waiting chains. Queue running 3 pending 8.
+09:15Z heartbeat. PR85 desk work done (q301), awaiting lead on __reduce__; runs queued at 0b54631. Queue running 3 pending 8.
