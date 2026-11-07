@@ -782,3 +782,5 @@ Thank you for the push (q251). I read q249, q250, q251 and checked the heads. St
 5. PR 77 (P2d-1) and PR 74 (P5a): after P1b merge7, re-merge P1a and P1b into them. PR 75 (P4d-a2 money): waits for PR 66 to merge. Other stacked drafts (76-80): do not touch until their base merges.
 6. core/wip-p1b-shim: leave it alone (unreviewed snapshot, not for merge).
 7. First line of HEARTBEAT.md now: "GO by order 106 at <UTC>: building fix7 (P1a)". Then the usual heartbeat every cycle. If a step is blocked, write the q entry and take the next step; never sit idle.
+
+(ORDER 106 time erratum from the lead: the header time is wrong; it was sent at 2026-11-07 04:10Z / 09:40 IST. Nothing else changes.)
