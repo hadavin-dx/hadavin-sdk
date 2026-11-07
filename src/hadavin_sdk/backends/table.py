@@ -72,7 +72,7 @@ class OpenAICompatSettings(_LLMSettings):
     base_url: str
     api_key_secret_name: str | None = None  # a local Ollama needs none
     # OpenAI reasoning models refuse `max_tokens` and want `max_completion_tokens`.
-    max_completion_tokens: bool = False
+    max_completion_tokens: StrictBool = False
 
     @model_validator(mode="after")
     def _https_or_keyless_loopback(self) -> OpenAICompatSettings:

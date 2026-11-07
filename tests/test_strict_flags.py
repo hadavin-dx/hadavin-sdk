@@ -1,16 +1,21 @@
 """A safety switch must not change state from loose input: "yes", 1, "true" and "on" are not the YAML value `true`.
 
-Every boolean field a config, an action contract or a tool manifest can set is a strict bool (`StrictBool`): only a real
-YAML `true` or `false` loads. A flag whose safe value is True (redaction on, the label hold on) must not be turned off by
-"no", 0, "false" or "off" either. The structural row lists every bool field in the package; a new loose one fails it,
-so it gets decided: strict, or a reviewed entry in INTERNAL with a reason.
+Every boolean field of every pydantic model in the package is a strict bool (`StrictBool`): only a real `true` or `false`
+loads. That covers what an operator writes (config, contracts, tool manifests) and the records read back from files or
+the store (`qualified.jsonl`, the replay file, store rows), because a hand-edited line saying `"green": "yes"` must not
+qualify an agent. A flag whose safe value is True (redaction on, the label hold on) must not be turned off by "no", 0,
+"false" or "off" either. The structural row lists every bool field of every model class defined at the top level of a
+package module and fails on a loose one, and fails when a module cannot be imported. It does not see dataclasses,
+TypedDicts or model classes created inside a function.
 """
 
 from __future__ import annotations
 
 import importlib
 import inspect
+import json
 import pkgutil
+import types
 import typing
 from pathlib import Path
 
@@ -20,8 +25,12 @@ from pydantic import BaseModel, ValidationError
 
 import hadavin_sdk
 from hadavin_sdk.actions.contract import ActionContract
-from hadavin_sdk.backends.table import PostgresSettings, S3ObjectLockSettings
+from hadavin_sdk.backends.table import OpenAICompatSettings, PostgresSettings, S3ObjectLockSettings
 from hadavin_sdk.config import ConfigError, load_config
+from hadavin_sdk.models import GateRun, KillSwitch, RunResult, ToolCallRecord, Verdict
+from hadavin_sdk.replay_records import FILE as REPLAY_FILE
+from hadavin_sdk.replay_records import ReplayRecord, read_records
+from hadavin_sdk.runtime.agent_loop import qualified_runs
 from hadavin_sdk.tools import ToolSpec
 from tests.k5_support import TOOL
 from tests.k5_support import _edit as _edit_file
@@ -84,6 +93,18 @@ FLAGS = [
             }
         ),
     ),
+    (
+        "openai_compat.max_completion_tokens",
+        ON_VALUES,
+        True,
+        lambda c, v: OpenAICompatSettings.model_validate(
+            {
+                "kind": "openai_compat",
+                "base_url": "https://llm.example/v1",
+                "max_completion_tokens": v,
+            }
+        ),
+    ),
     ("tool.cluster_http", ON_VALUES, True, lambda c, v: ToolSpec(**{**TOOL, "cluster_http": v})),
     (
         "contract.targets_production",
@@ -99,60 +120,113 @@ FLAGS = [
 def test_a_safety_flag_loads_only_from_a_real_bool(cfg_dir, flag, loose, real, load):
     load(cfg_dir, real)  # control: the real bool loads, so a refusal below is about the loose value
     for value in loose:
-        with pytest.raises((ConfigError, ValidationError)):
+        with pytest.raises((ConfigError, ValidationError)) as err:
             load(cfg_dir, value)
+        # refused as a type error on the field, not for some other reason
+        assert "valid boolean" in str(err.value), f"{flag}={value!r}: {err.value}"
 
 
-# Bool fields that are internal records (written by the code, not set by an operator's file). Loose input never
-# reaches them from a config; they are not safety switches. Reviewed: add a field here with a reason, or make it strict.
-INTERNAL = {
-    "hadavin_sdk.models.GateRun.green": "a stored gate result, written by the gate",
-    "hadavin_sdk.models.KillSwitch.on": "stored kill-switch state, written by the store",
-    "hadavin_sdk.models.RunResult.retryable": "a run outcome, written by the runtime",
-    "hadavin_sdk.models.ToolCallRecord.error": "a tool call row, written by the runtime",
-    "hadavin_sdk.models.Verdict.flagged": "a detector's verdict, written by the detector",
-    "hadavin_sdk.replay_records.ReplayRecord.green": "a replay record, written by the replay",
-    "hadavin_sdk.backends.table.OpenAICompatSettings.max_completion_tokens": (
-        "an API-compatibility knob (which token-limit field name to send), not a safety switch"
-    ),
+GATE_RUN = {
+    "agent_id": "madeup-agent",
+    "model_id": "madeup-model",
+    "prompt_sha256": "0" * 64,
+    "config_hash": "1" * 64,
+    "golden_sha256": "2" * 64,
+    "n": 3,
+    "passed": 3,
+    "pass_rate": 1.0,
+    "threshold": 0.9,
+    "green": True,
+    "ts": "2026-01-01T00:00:00Z",
 }
+REPLAY = {
+    "agent_id": "madeup-agent",
+    "config_hash": "1" * 64,
+    "model_id": "madeup-model",
+    "prompt_sha256": "0" * 64,
+    "bundle_sha256": "3" * 64,
+    "k": 3,
+    "pass_k": 1.0,
+    "pass_rate": 1.0,
+    "threshold": 0.9,
+    "green": True,
+    "ts": "2026-01-01T00:00:00Z",
+}
+TOOL_CALL = {
+    "call_id": "r1:1",
+    "run_id": "r1",
+    "tool": "madeup_tool",
+    "inputs": {},
+    "output": "made up",
+    "output_sha256": "4" * 64,
+}
+RECORDS = [  # (model, valid fields, bool field): records read back from files and the store
+    (GateRun, GATE_RUN, "green"),
+    (ReplayRecord, REPLAY, "green"),
+    (KillSwitch, {}, "on"),
+    (Verdict, {"flagged": False, "score": 0.0, "backend": "madeup"}, "flagged"),
+    (RunResult, {"outcome": "failed"}, "retryable"),
+    (ToolCallRecord, TOOL_CALL, "error"),
+]
+
+
+@pytest.mark.parametrize(("model", "fields", "name"), RECORDS, ids=[r[0].__name__ for r in RECORDS])
+@pytest.mark.parametrize("value", ["yes", 1, "true", "on", "no", 0])
+def test_a_record_loads_a_bool_only_from_a_real_bool(model, fields, name, value):
+    model.model_validate({**fields, name: True})  # control
+    with pytest.raises(ValidationError) as err:
+        model.model_validate({**fields, name: value})
+    assert "valid boolean" in str(err.value)
+
+
+def test_a_hand_edited_gate_line_cannot_qualify_an_agent(tmp_path):
+    """The choke point of qualification: a `qualified.jsonl` line with `"green": "yes"` is refused, not read as green."""
+    line = json.dumps({**GATE_RUN, "green": "yes"})
+    (tmp_path / "qualified.jsonl").write_text(line + "\n", encoding="utf-8")
+    registry = types.SimpleNamespace(config=types.SimpleNamespace(root=tmp_path))
+    with pytest.raises(ConfigError, match="not a gate run"):
+        qualified_runs(registry)
+
+
+def test_a_hand_edited_replay_line_cannot_qualify_an_agent(tmp_path):
+    (tmp_path / REPLAY_FILE).write_text(
+        json.dumps({**REPLAY, "green": "yes"}) + "\n", encoding="utf-8"
+    )
+    with pytest.raises(ConfigError, match="not a replay record"):
+        read_records(tmp_path)
 
 
 def _has_bool(annotation) -> bool:
     return annotation is bool or any(_has_bool(a) for a in typing.get_args(annotation))
 
 
-def _loose_bool_fields() -> list[str]:
+def _loose_bool_fields() -> tuple[list[str], list[str]]:
+    """(loose bool fields, modules that could not be imported) over every model class at the top level of a module."""
     classes: set[type] = set()
+    unimportable = []
     for info in pkgutil.walk_packages(hadavin_sdk.__path__, "hadavin_sdk."):
         try:
             module = importlib.import_module(info.name)
-        except (
-            ImportError,
-            AttributeError,
-        ):  # an optional cloud module without its extra installed
+        except (ImportError, AttributeError, SyntaxError) as exc:  # reported below, never skipped
+            unimportable.append(f"{info.name}: {type(exc).__name__}: {exc}")
             continue
         classes |= {
             c
             for _, c in inspect.getmembers(module, inspect.isclass)
             if issubclass(c, BaseModel) and c.__module__ == module.__name__
         }
-    out = []
+    loose = []
     for cls in classes:
         for name, field in cls.model_fields.items():
             strict = any(getattr(m, "strict", False) for m in field.metadata)
             if _has_bool(field.annotation) and not strict:
-                out.append(f"{cls.__module__}.{cls.__name__}.{name}")
-    return sorted(out)
+                loose.append(f"{cls.__module__}.{cls.__name__}.{name}")
+    return sorted(loose), unimportable
 
 
-def test_every_bool_field_is_strict_or_reviewed_internal():
-    loose = _loose_bool_fields()
-    inherited = {
-        f for f in loose if f.rsplit(".", 1)[1] == "retention_ack"
-    }  # subclasses repeat the base field
-    unknown = [f for f in loose if f not in INTERNAL and f not in inherited]
-    assert unknown == [], (
-        f"loose bool fields (make them StrictBool or list them in INTERNAL): {unknown}"
+def test_every_bool_field_is_strict_and_every_module_imports():
+    loose, unimportable = _loose_bool_fields()
+    assert unimportable == [], (
+        f"modules that cannot be imported (install with --all-extras): {unimportable}"
     )
-    assert not (set(INTERNAL) - set(loose)), "INTERNAL names a field that is no longer a loose bool"
+    assert loose == [], f"loose bool fields (make them StrictBool): {loose}"
