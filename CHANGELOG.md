@@ -588,7 +588,7 @@ P1b is built on P1a fix7 (origin/core/P1a bf955e9: fix7, fix6, fix5 and main; an
   - **Timings.** TIMINGS_PLACEHOLDER
 - **Rung table (R448).** Is in the pull request description, with the licence line (Unicode-3.0 for the vendored data), not here.
 - Every repository that keeps a byte copy of these files re-copies the five of them in one commit, AND copies the `TEXTNORM_*` constants of `src/hadavin_sdk/defaults.py` (the five minimums, the pass cap, the pinned Unicode version, the insertion limits and the size cap: a byte copy of `textnorm.py` stops at import without them, which is loud, not silent; `defaults.py` as a whole is not hashed because it holds other packages' constants), and updates its pins to the sha256 values below (also pinned in `tests/fixtures/textnorm_manifest.json`):
-  - `src/hadavin_sdk/guard/textnorm.py`: `da9e5bb9664944f7da1701ef427f0d16b78b026ac930d7301db674cffb3a33cf`
+  - `src/hadavin_sdk/guard/textnorm.py`: `54b1ef093f4564438274d772adbfb39b405a05a4c989c5a24f7b280027d7d2bc`
   - `src/hadavin_sdk/guard/_confusables.py`: `f79e59ec016e182e39b82931fe45bc9b38bc8a0ec03ec6bf3dda138627c902e2`
   - `src/hadavin_sdk/guard/_scripts.py`: `5c59f80ddfeea13b7cabc6b41e09dc12a1954045c944d65f4e62cbd51b06cc67`
   - `tests/fixtures/textnorm_vectors.json`: `1a1944708f7d1737588d7b02666620ceb308b0fe4a71ce2a312c4dc29113d349`

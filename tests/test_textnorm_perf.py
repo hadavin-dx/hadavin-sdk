@@ -25,6 +25,14 @@ def _record(name, seconds):
             out.write(f"{name} {seconds:.6f}\n")
 
 
+def _fold_views_plain(raw):
+    """``fold_views`` of a text with no protected value (``scripts`` is a required keyword)."""
+    return textnorm.fold_views(raw, scripts=frozenset())
+
+
+_fold_views_plain.__name__ = "fold_views"
+
+
 def _seconds(fn, *args):
     """The time of ``fn(*args)``. A refusal (``TextTooLong``) is NOT swallowed: a row that is meant to time the real fold fails if its text is refused."""
     start = time.perf_counter()
@@ -119,7 +127,7 @@ def test_a_huge_text_of_distinct_characters_is_refused_from_its_length_alone():
         identity_key,
         squeeze,
         textnorm.identity_keys,
-        textnorm.fold_views,
+        _fold_views_plain,
         textnorm.squeeze_views,
         has_hidden_channel,
     ):
@@ -150,7 +158,7 @@ def test_a_text_of_distinct_characters_at_the_cap_is_weighed_and_read_in_linear_
         "the text is not most of the cap in distinct characters"
     )
     assert textnorm._weight(text) <= CAP, "the row would be refused, not folded"
-    for fn in (identity_key, textnorm.identity_keys, textnorm.fold_views, textnorm.squeeze_views):
+    for fn in (identity_key, textnorm.identity_keys, _fold_views_plain, textnorm.squeeze_views):
         assert _seconds(fn, text) < 5.0, fn.__name__
     assert _seconds(textnorm.could_be_same_person, text, text) < 8.0
 
@@ -163,7 +171,7 @@ def test_a_text_of_a_greek_letter_and_ypogegrammeni_pairs_at_the_cap_is_read_in_
     assert textnorm._weight(text) <= CAP < textnorm._weight(text) + textnorm._weight(unit), (
         "the row would be refused, or is far below the cap"
     )
-    for fn in (identity_key, textnorm.identity_keys, textnorm.fold_views, textnorm.squeeze_views):
+    for fn in (identity_key, textnorm.identity_keys, _fold_views_plain, textnorm.squeeze_views):
         assert _seconds(fn, text) < 5.0, fn.__name__
     assert _seconds(textnorm.could_be_same_person, text, text[::-1]) < 8.0
 
