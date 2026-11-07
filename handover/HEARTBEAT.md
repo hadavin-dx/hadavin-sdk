@@ -514,3 +514,4 @@ LAPTOP CANDIDATES (pushed heads only): PR85 0b54631 (items 3,4,10), PR72 e6a4220
 10:50Z HB: queue 3 running/13 pending (P1b r7, PR73 o141, PR72 o140 waiting). Plan round 3 done (q340). Next 10:57Z. Unpushed: none.
 10:56Z HB: ORDER 145 v4.3 drafter running; lint branch fix batch sent (reviewers: 1 Blocker/6 Major); T1 mutants resubmit asked. Unpushed: none.
 10:57Z HB: P1b r7 running (summaries empty), queue 3 run/9 pend, v4.3 drafter + lint fix batch + T1 mutants in progress. Next 11:04Z. Unpushed: none.
+11:02Z HB: ORDER 146 accepted, P1d drafter started. Unpushed: none.

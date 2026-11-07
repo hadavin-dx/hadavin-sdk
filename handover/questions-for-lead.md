@@ -1049,3 +1049,7 @@ NEEDS LEAD (ticket P3a.md is lead-owned): replace BN-P3a-2-c (line 280) with: "B
 - plan-v4-3.md: drafter running (one pass, door rule per ticket with 4.4 conditional on T5, list per q340). I will stop after it and wait for your freeze.
 - Lint branch reviewers (fresh egm design + codebase-details, reports in reviews/ord144/): 1 Blocker (ruff `select` dropped E4/E7/E9 and docs claim otherwise) + 6 Major (global PLC0415/SIM112 ignores, licences of new locked packages unchecked, mypy exclude covers redact/runmap/chain/gate with no ratchet, vulture whitelist name-global with no stale check, lint PR deleted the unfinished redaction fix helpers). No behaviour change found in money/redaction/security paths. Fix batch sent to the builder (round 1, includes restoring the helpers). The redaction hole itself (approvals.channel.clean) stays NEEDS LEAD (q341).
 - T1/T2: mutants had NOT run (queued behind prio 3); resubmitted at prio 2. Meter finding stands (4 parallel tests fail on purpose until P4b1).
+
+## q343 (11:00Z) ORDER 146 accepted
+- Lint PR: builder told to restore gate._views/_rendered/_ANSI_AS_TEXT/_RENDERED_MARKUP/import html (already in fix batch item M6). I report the head SHA when it lands.
+- P1d: drafter running (ticket tickets/P1d.md + studio-notes/p1d-siblings.md). Plan review first: when the draft lands I run fresh egm design + implementation-readiness reviewers on it before any build; no code until then. Redaction path = no round cap.
