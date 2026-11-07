@@ -17,8 +17,10 @@ source tree at the tags ``release-74-1``, ``release-74-2`` and ``release-75-1`` 
 ``Scripts.txt`` is the file at https://www.unicode.org/Public/15.1.0/ucd/Scripts.txt (sha256
 0eacb65169ae6eb1d399cd70826b3da15fff19f6f586eecf819b70c83b1d9b32; header "Scripts-15.1.0.txt", dated 2023-07-28), verified by the lead on
 2026-11-06 against unicode.org.
-REGENERATION LIMIT: regenerate only on the pinned Unicode version (``defaults.TEXTNORM_PINNED_UNIDATA``, 15.1.0). The ``tbl=`` digest of
-``FOLD_VERSION`` is the only tripwire for a table that changed through the interpreter.
+THERE IS NO REGENERATION LIMIT ON THE INTERPRETER: the output depends on the pinned input file only (see "TABLE SOURCES" below; there is no
+interpreter filter), so the generator gives the same files on any Python. What is pinned is the INPUT: the generator refuses a data file that is
+not the pinned version, date and sha256. The ``tbl=`` digest of ``FOLD_VERSION`` is the tripwire for the OUTPUT: a generated table that was
+edited by hand, or regenerated from other input, no longer matches the digest the tests pin.
 
 Why the version is checked: a look-alike table of another Unicode version than the interpreter's data maps code points the interpreter
 does not know (or misses ones it does). The generator refuses a data file whose ``# Version:`` line is not the pin, BEFORE it looks at
@@ -267,7 +269,7 @@ def build(text: str) -> dict[int, str]:
     }  # a key the fold can reach
     # the data wins over the supplement; both are in ``out`` BEFORE the name rules, so no name rule overrides either
     out = {**sup, **out}
-    listed = {**sup, **out}  # what the data and the supplement say, before any name rule
+    listed = dict(out)  # what the data and the supplement say, before any name rule
     for cp in range(0x80, 0x20000):
         ch = chr(cp)
         value = name_rule_value(unicodedata.name(ch, ""))
@@ -282,7 +284,7 @@ def build(text: str) -> dict[int, str]:
     ovr = {
         cp: v for cp, v in OVERRIDES.items() if unicodedata.normalize("NFKC", chr(cp)) == chr(cp)
     }
-    return {**sup, **out, **ovr}
+    return {**out, **ovr}
 
 
 def build_scripts(text: str) -> list[tuple[int, int, str]]:

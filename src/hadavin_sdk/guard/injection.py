@@ -46,7 +46,7 @@ class RegexDetector:
         """1.0 when the raw text OR any view of it (``textnorm.scan_views``: the look-alike fold, the squeeze, the scan keys) holds a
         steering phrase, so a Cyrillic o or an inserted mark does not hide it. A text the fold refuses (over the size rule) raises
         ``TextnormError``, which ``injection_check`` turns into a flag (fail closed)."""
-        for view in (text, *textnorm.scan_views(text)):
+        for view in (text, *textnorm.scan_views(text, None)):
             if _RX.search(view):
                 return 1.0
             squashed = _SQUASH.sub("", view.lower())
