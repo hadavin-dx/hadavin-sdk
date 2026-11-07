@@ -10,6 +10,7 @@ import pytest
 
 from hadavin_sdk import app as app_mod
 from hadavin_sdk import defaults
+from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.guard.textnorm import UnidataMismatch
 from hadavin_sdk.stages import is_live
 from tests.conftest import qualify
@@ -48,14 +49,9 @@ def test_the_pinned_unicode_guard_is_on_for_pilot_and_prod_configs(
     monkeypatch.setattr(unicodedata, "unidata_version", OTHER)
     cfg = _prod_cfg(tmp_path) if environment == "prod" else pilot_cfg(tmp_path)
     assert app_mod.load_config(cfg).environment == environment
-    raised = None
-    try:
+    with pytest.raises(UnidataMismatch, match="Unicode") as caught:
         app_mod.build(cfg, ["ito-agent"], secrets=SECRETS)
-    except Exception as exc:  # noqa: BLE001 - the type is asserted below, so a build that stops for another reason fails by assertion
-        raised = exc
-    assert isinstance(raised, UnidataMismatch), (
-        f"the {environment} build did not refuse for the Unicode version: {raised!r}"
-    )
+    raised = caught.value
     message = str(raised)
     assert OTHER in message and defaults.TEXTNORM_PINNED_UNIDATA in message
     assert "Python 3.13" in message, "the message does not name the interpreter to use"
@@ -70,12 +66,11 @@ def test_a_pilot_build_on_the_pinned_version_does_not_refuse_for_the_unicode_ver
 ):
     monkeypatch.setattr(unicodedata, "unidata_version", defaults.TEXTNORM_PINNED_UNIDATA)
     cfg = pilot_cfg(tmp_path)
-    try:
+    # The build gets past the Unicode check and stops at the first thing it needs from outside: the database secret, which this test does not give.
+    # That one error is expected; any other error (and a build that succeeds) fails the test.
+    with pytest.raises(ConfigError, match="'pg-dsn' cannot be read at start-up") as caught:
         app_mod.build(cfg, ["ito-agent"], secrets=SECRETS)
-    except UnidataMismatch:  # pragma: no cover - the failure this test exists for
-        pytest.fail("a build on the pinned Unicode version was refused for its Unicode version")
-    except Exception:  # noqa: BLE001, S110 - pilot needs a database and a channel: anything else is not what this test asks
-        pass
+    assert not isinstance(caught.value, UnidataMismatch)
 
 
 def test_a_non_live_build_runs_on_another_unicode_version(tmp_path, monkeypatch):

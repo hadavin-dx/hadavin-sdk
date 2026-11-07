@@ -68,7 +68,7 @@ def test_only_the_guard_and_the_injection_detector_import_textnorm():
 
 def test_runmap_canonical_and_its_per_character_view_are_the_same_text_on_the_whole_corpus():
     """The two redaction views (``canonical`` and ``_canonical_view``, which also keeps an index back into the original) are ONE text on EVERY
-    corpus entry, marks included. Before (order 81, q178: P1b owns this): ``canonical`` normalised the whole text and the view one character at a
+    corpus entry, marks included. Before (P1b owns this): ``canonical`` normalised the whole text and the view one character at a
     time, so a + U+0301 gave U+00E1 in the first and two characters in the second, and the text a match was searched in could differ from the
     text its positions referred to."""
     for text in _corpus() + ["a\u0301", "e\u0301\u0323", "\u1100\u1161\u11a8", "ab\u0345cd"]:
@@ -118,7 +118,7 @@ def test_gap_a_look_alike_marker_is_not_recognised_by_the_redaction_view():
 
 
 def test_decision_the_evidence_grounding_key_reads_no_look_alike_because_it_is_an_allow_comparison():
-    """DECISION (order 81 names ``evidence.normalise`` as P1b's; recorded, deliberately NOT moved onto the fold views): ``evidence`` grounds an
+    """DECISION (the ticket names ``evidence.normalise`` as P1b's; recorded, deliberately NOT moved onto the fold views): ``evidence`` grounds an
     identifier the model typed against the text the tools returned, so a value is accepted when it equals something that was seen. That is an
     ALLOW decision: reading look-alikes there would let a forged identifier (a Cyrillic A in "Alice") pass as the seen one, which is what
     ``allow_equal`` exists to prevent. So the key stays exact, and a mark or a look-alike makes a grounded value look absent (the refusing
@@ -132,7 +132,7 @@ def test_decision_the_evidence_grounding_key_reads_no_look_alike_because_it_is_a
 
 
 def test_the_injection_detector_reads_the_scan_views_so_a_cyrillic_o_or_a_hidden_mark_does_not_hide_a_phrase():
-    """Order 81 (q178): the injection detector scans the raw text and every view of ``textnorm.scan_views``. 'ignore previous instructions' with
+    """The injection detector scans the raw text and every view of ``textnorm.scan_views``. 'ignore previous instructions' with
     a Cyrillic o, with a Devanagari spacing mark (Mc) or a modifier symbol (Sk) between letters, or with zero-width spaces, is flagged; it
     scored 0 on the raw text only."""
     detector = injection.RegexDetector(0.5)
@@ -159,7 +159,7 @@ def test_the_injection_detector_reads_the_scan_views_so_a_cyrillic_o_or_a_hidden
 
 def test_egress_is_not_a_consumer_and_refuses_a_look_alike_host():
     """Egress compares hosts exactly after NFKC and IDNA (an ALLOW decision), so a look-alike host is refused; that agrees with ``allow_equal``
-    (LOOKALIKE is not EQUAL). Ledger p1a-011: egress uses IDNA 2003 (``str.encode('idna')``), not the newer standard; no mismatch with
+    (LOOKALIKE is not EQUAL). Egress uses IDNA 2003 (``str.encode('idna')``), not the newer standard; no mismatch with
     ``textnorm`` is possible because ``textnorm`` is not used there."""
     allowed = frozenset({"example.com"})
     assert egress.egress_check("https://example.com/x", allowed) == "example.com"
@@ -209,13 +209,15 @@ def test_every_scan_path_of_textnorm_finds_a_secret_hidden_with_any_mc_lm_or_sk_
         assert textnorm.scan_holds(text, "password"), (
             f"scan_holds misses a secret hidden with U+{ord(ch):04X} ({category})"
         )
-        assert any("password" in v.casefold() for v in textnorm.scan_views(text)), (
+        assert any("password" in v.casefold() for v in textnorm.scan_views(text, "password")), (
             f"scan_views misses a secret hidden with U+{ord(ch):04X} ({category})"
         )
         assert textnorm.scan_holds(text, "PassWord") and textnorm.scan_holds(
             "x " + text + " y", "password"
         )
-        fold_alone += any("password" in v for v in textnorm.fold_views(text, casefold=True))
+        fold_alone += any(
+            "password" in v for v in textnorm.fold_views(text, casefold=True, scripts=frozenset())
+        )
         squeeze_alone += "PASSWORD" in textnorm.squeeze_views(text)
     total = len(_hidden_in_password(category))
     assert squeeze_alone == total, (category, squeeze_alone, total)

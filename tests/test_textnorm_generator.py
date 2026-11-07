@@ -295,7 +295,7 @@ def test_the_runic_and_tamil_letters_are_in_the_generated_script_data():
 def test_a_supplement_entry_is_never_overridden_by_a_name_rule_and_the_data_wins_over_the_supplement(
     monkeypatch,
 ):
-    """p1a6-007: the supplement is merged into the table BEFORE the name rules run, so a name rule (``setdefault``) cannot override it. The
+    """The supplement is merged into the table BEFORE the name rules run, so a name rule (``setdefault``) cannot override it. The
     supplement entry here is the small h with a stroke (U+0127), which the name rule would read as ``h``; the supplement says ``z``. And
     a data line for the same code point beats the supplement."""
     gen = _load("gen_confusables_supplement")
@@ -311,7 +311,7 @@ def test_a_supplement_entry_is_never_overridden_by_a_name_rule_and_the_data_wins
 
 
 def test_the_generator_docstring_does_not_claim_that_the_size_rule_reads_the_longest_value():
-    """p1a6-003: ``MAX_VALUE_LEN`` is written beside the table and compared with it by a test; ``textnorm.py`` does not read it (its size rule
+    """``MAX_VALUE_LEN`` is written beside the table and compared with it by a test; ``textnorm.py`` does not read it (its size rule
     weighs every character from the table itself), and the generator no longer says it does."""
     gen_src = GEN_PATH.read_text(encoding="utf-8")
     assert "which the size rule" not in gen_src and "does not read it" in gen_src

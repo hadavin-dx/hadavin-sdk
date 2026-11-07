@@ -74,7 +74,7 @@ def same_scan(a, b):
 
 
 def high_bits(seed):
-    """Integer arithmetic only; the generator takes the HIGH bits (``x >> 33``), never ``x % n`` of the raw state (ADV-R5-15)."""
+    """Integer arithmetic only; the generator takes the HIGH bits (``x >> 33``), never ``x % n`` of the raw state."""
     state = seed
     while True:
         state = (state * 6364136223846793005 + 1442695040888963407) % (1 << 64)
@@ -533,7 +533,7 @@ def test_pin_not_matched_the_letter_a_digit_look_alike_resembles_is_not_the_sour
     )
 
 
-# ---- the order 11 table: V and its disguises -----------------------------------------------------------------------------------------------
+# ---- the table of V and its disguises -----------------------------------------------------------------------------------------------
 def _lookalike(script, ch, lower_only=True):
     """The table source of the live table that reads ``ch`` and whose name starts with ``script`` (smallest code point; lower case first)."""
     best = None
@@ -802,22 +802,26 @@ def test_the_old_identity_groups_stay_together_for_the_deny_comparison():
 # ---- scan_holds / scan_views: the one choke point of a DENY scan (P1a fix4 notes, items 2 and 3) -----------------------------------------
 def test_scan_views_has_the_fold_the_squeeze_and_the_scan_keys_and_no_empty_view():
     text = "Pass\u093eword 12"
-    views = scan_views(text)
+    views = scan_views(text, "password")
     assert views == tuple(dict.fromkeys(views)), "a view is repeated"
     assert all(views), "an empty view is in the list"
-    assert len(views) <= 23  # 9 fold_views + 6 squeeze_views + 8 scan keys
-    for v in textnorm.fold_views(text, casefold=True, collapse_ws=True) + textnorm.squeeze_views(
-        text
-    ):
+    assert len(views) <= 31  # 9 fold_views + 6 squeeze_views + 16 scan keys
+    for v in textnorm.fold_views(
+        text, casefold=True, collapse_ws=True, scripts=frozenset()
+    ) + textnorm.squeeze_views(text):
         assert v in views or not v, f"scan_views leaves out the view {v!r}"
     for k in scan_keyset(text):
         assert k in views
-    assert scan_views("") == () and scan_views("\u200b") == (), (
+    assert scan_views("", "password") == () and scan_views("\u200b", None) == (), (
         "an empty or invisible text has views"
     )
-    assert scan_views("!!") == ("!!",), "a text with no letter or digit has more than its fold view"
-    refused(NotText, "scan_views accepted bytes", scan_views, b"x")
-    refused(TextTooLong, "scan_views accepted a text over the cap", scan_views, "a" * (CAP + 1))
+    assert scan_views("!!", None) == ("!!",), (
+        "a text with no letter or digit has more than its fold view"
+    )
+    refused(NotText, "scan_views accepted bytes", scan_views, b"x", None)
+    refused(
+        TextTooLong, "scan_views accepted a text over the cap", scan_views, "a" * (CAP + 1), None
+    )
 
 
 def test_scan_holds_reads_both_fold_views_and_squeeze_views_on_both_sides():
@@ -844,10 +848,11 @@ def test_scan_holds_reads_both_fold_views_and_squeeze_views_on_both_sides():
 
 
 def test_scan_holds_refuses_a_value_with_an_empty_view_and_a_text_may_have_one():
-    """Order 79 item 3. A value with no letter or digit has an empty squeeze view, which is found in EVERY text: it would match all (and
-    skipping it would match none). Rule: RAISE ``EmptyView``, for every empty or invisible-only or non-ASCII-only value, even when the
-    text itself would not hold it."""
-    for value in ("", " ", "\u200b", "!!", "\u4e2d\u6587", "\u093e", "***"):
+    """A value with no letter or digit has an empty squeeze view, which is found in EVERY text: it would match all (and
+    skipping it would match none). Rule: RAISE ``EmptyView``, for every empty or invisible-only or punctuation-only or marks-only value, even
+    when the text itself would not hold it. A value in a script with no ASCII letter (Chinese, Arabic, Thai, Hindi) is NOT empty: it has a
+    script view (P1b fix batch, M3; the ticket asks for the script views to be scanned, not for a refusal)."""
+    for value in ("", " ", "\u200b", "!!", "\u093e", "***"):
         refused(
             EmptyView,
             f"scan_holds accepted the value {value!r}",
@@ -957,7 +962,7 @@ def test_scan_holds_refuses_a_value_too_short_to_scan_instead_of_answering_false
 
 
 def test_scan_holds_reads_the_text_with_the_scripts_of_the_value_so_a_foreign_letter_does_not_hide_it():
-    """P1a fix7 (script view per script): the text is read with ``scripts=value_scripts(value)``. A Cyrillic zhe, a Greek delta, a Hebrew alef,
+    """The text is read with ``scripts=value_scripts(value)``. A Cyrillic zhe, a Greek delta, a Hebrew alef,
     a hiragana letter or an ASCII letter put inside the ideographs of the value is dropped from the script view of the text."""
     assert value_scripts(MIXED) == frozenset({"HAN"})
     for ch in ("\u0436", "\u03b4", "\u05d0", "\u3042", "q", "-", " "):
@@ -965,8 +970,10 @@ def test_scan_holds_reads_the_text_with_the_scripts_of_the_value_so_a_foreign_le
         assert scan_holds("token: " + text + " end", MIXED), (
             f"scan_holds misses the value with {ch!r} inserted: the script view of the text keeps a letter of another script"
         )
-    # a letter of the SAME script is a different spelling (the stated limit of fix7), and another value is not found
-    assert not scan_holds("pw\u5bc6\u7801\u5929\u4fdd\u62a4", MIXED)
+    # ONE letter of the SAME script is found since the fix batch (the "one inserted letter" match, see test_textnorm_fixbatch.py); two are not,
+    # and another value is not found
+    assert scan_holds("pw\u5bc6\u7801\u5929\u4fdd\u62a4", MIXED)
+    assert not scan_holds("pw\u5bc6\u7801\u5929\u5929\u4fdd\u62a4", MIXED)
     assert not scan_holds("\u5bc6\u7801\u4fdd\u62a5", MIXED)
     # a mixed value over-matches on its script part alone (the safe side, pinned)
     assert scan_holds("\u5bc6\u7801\u4fdd\u62a4", MIXED)
@@ -983,14 +990,14 @@ def test_scan_holds_reads_the_scan_keys_of_the_value():
 def test_scan_views_takes_the_scripts_of_the_value_and_has_a_script_view_only_with_them():
     han = value_scripts("\u5bc6\u7801\u4fdd\u62a4")
     text = "\u5bc6\u7801\u0436\u4fdd\u62a4"
-    with_scripts = scan_views(text, scripts=han)
+    with_scripts = scan_views(text, "\u5bc6\u7801\u4fdd\u62a4")
     assert "\u5bc6\u7801\u4fdd\u62a4" in with_scripts, (
         "scan_views gives no script view for the scripts of the value"
     )
-    assert "\u5bc6\u7801\u4fdd\u62a4" not in scan_views(text), (
-        "scan_views makes a script view without scripts"
+    assert "\u5bc6\u7801\u4fdd\u62a4" not in scan_views(text, None), (
+        "scan_views makes a script view without a value"
     )
-    assert scan_views(text, scripts=frozenset()) == scan_views(text)
-    assert len(with_scripts) <= 23 and len(scan_views(text)) <= 20, "the view-count bound"
-    for bad in ({"HAN"}, ["HAN"], "HAN", frozenset({1}), None):
-        refused(NotText, f"scan_views accepted scripts={bad!r}", scan_views, "x", scripts=bad)
+    assert han == {"HAN"}
+    assert len(with_scripts) <= 31 and len(scan_views(text, None)) <= 28, "the view-count bound"
+    refused(NotText, "scan_views accepted a non-str value", scan_views, "x", b"x")
+    refused(TypeError, "scan_views has a default for the value", scan_views, "x")

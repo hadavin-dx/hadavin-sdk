@@ -312,7 +312,7 @@ def test_the_pin_variable_accepts_one_true_and_yes_in_any_case_and_refuses_other
 
 
 def test_the_pin_message_names_every_accepted_spelling_of_the_variable():
-    """fix7 (NIT): the message printed ``HADAVIN_REQUIRE_PINNED_UNIDATA=1`` although ``true`` and ``yes`` are accepted too."""
+    """The message printed ``HADAVIN_REQUIRE_PINNED_UNIDATA=1`` although ``true`` and ``yes`` are accepted too."""
     message = _pin_violation({"HADAVIN_REQUIRE_PINNED_UNIDATA": "yes"}, "15.0.0", "15.1.0")
     assert message and "=1" not in message and "1, true or yes" in message
 
