@@ -133,24 +133,43 @@ MARKS AND SCANS. Three categories are NOT dropped by the spelling variants of ``
   NOT hold for a modifier letter that REPLACES a letter AND another one inserted in the same text ("pa" + superscript s + "s" + superscript h + "word": the
   marks-dropped views lose the letter that the first modifier stood for, the other views read the inserted one as a letter): that mixed case is
   NOT caught, it is pinned as a limit by a test, and a caller who must catch it needs its own rule.
-  At most six views per call of ``squeeze_views`` (three spelling variants, each with and without the marks); ``fold_views`` adds the script views below, so
-  at most nine.
+  At most six views per call of ``squeeze_views`` (three spelling variants, each with and without the marks); ``fold_views`` adds the script views below
+  when it is given ``scripts``, so at most nine.
   THE RULE FOR A SCAN (redaction, blocklist, has-secret): look through BOTH ``fold_views`` AND ``squeeze_views`` and take the views of the
   protected value the same way (a scan holds a value when ANY view of the text holds ANY view of the value), PASS ``casefold=True, collapse_ws=True`` to
   ``fold_views`` (its default is ``False`` for the display and comparison uses that keep case: a scan built without it misses a value that
-  differs from the text by case alone, "Secret" against "SECRET"), and take the needles of the value with ``scan_needles``, which refuses a view
-  shorter than ``defaults.TEXTNORM_MIN_VIEW_CHARS`` (see below). ``tests/test_textnorm.py`` pins the insertion rule for EVERY Mc, Lm and Sk code point of the interpreter.
-  WHAT A SCAN RELIES ON: A value with NO ASCII letter or digit (Chinese, Arabic, Hindi, Thai) is found by the script views of ``fold_views`` (the non-ASCII letters and marks of the text, with whitespace, punctuation, symbols and ASCII characters removed), so an inserted space, hyphen, line break, ASCII letter or mark does not hide it; an inserted look-alike letter of that script, or a respelling of it, is not covered.
-  SCRIPT VIEWS (``fold_views`` only). The ASCII-only ``squeeze_views`` is ``""`` for a value in a script with no ASCII letter or digit, so ``fold_views`` also returns,
-  for the marks-dropped spelling variants, the SCRIPT VIEW: the view with every character removed that is not a non-ASCII letter or mark (whitespace,
-  punctuation, symbols, ASCII letters and digits; the digits of other scripts were turned into ASCII digits before and go too). A view that would be empty is left out, and a script view
-  equal to another view is not repeated. A scan of a value in Chinese, Hindi or Thai therefore needs the script view of the TEXT to hold the script view of the
-  value. It over-matches on purpose (the safe side): a value with ASCII letters AND a script has a script view of the script part alone, which
-  any text with that script part holds, and two words of a text that end and begin with the value's letters match across a separator.
-  MINIMUM VIEW LENGTH: ``defaults.TEXTNORM_MIN_VIEW_CHARS`` (2), the SAME number for every view (spelling variant, marks-dropped, script and squeeze
-  views). An empty needle is found in every text and a one-character needle in most, so ``scan_needles(raw)`` returns the views of a protected value
-  that reach the minimum (from ``fold_views`` with ``casefold=True, collapse_ws=True`` and from ``squeeze_views``) and raises ``ViewTooShort`` when none does. A caller
-  that scans must use it (P1b: the redaction package takes its needles from ``scan_needles`` and does not repeat the number). The match positions of the original text are lost by the drops: a caller that
+  differs from the text by case alone, "Secret" against "SECRET"), PASS ``scripts=value_scripts(value)`` when the text is read for a value (see "SCRIPT VIEWS"),
+  and take the needles of the value with ``scan_needles``, which refuses a value without a long enough squeeze or script view (see
+  "MINIMUM VIEW LENGTH"). ``tests/test_textnorm.py`` pins the insertion rule for EVERY Mc, Lm and Sk code point of the interpreter.
+  WHAT A SCAN RELIES ON: A value with NO ASCII letter or digit (Chinese, Arabic, Hindi, Thai) is found by the script views of ``fold_views`` (the non-ASCII letters of the value's own scripts, with whitespace, punctuation, symbols, ASCII characters and the letters of every other script removed), so an inserted space, hyphen, line break, ASCII letter, mark or foreign-script letter does not hide it; a letter of the SAME script inserted, or a respelling of it, is not covered.
+  SCRIPT VIEWS (``fold_views`` with ``scripts``). The ASCII-only ``squeeze_views`` is ``""`` for a value in a script with no ASCII letter or digit, so
+  ``fold_views`` also returns, for the marks-dropped spelling variants, the SCRIPT VIEW: the view with every character removed that is not a non-ASCII
+  letter of one of the given scripts (whitespace, punctuation, symbols, ASCII letters and digits, the digits of other scripts that were turned into
+  ASCII digits before, and the letters of every other script). ``value_scripts(value)`` gives the scripts of the VALUE: the script group of each
+  non-ASCII letter left in the value's marks-dropped views. A script group is the first word of the Unicode character name (CYRILLIC, GREEK, HEBREW,
+  ARABIC, DEVANAGARI, THAI, LATIN and so on; two words for the families that share a first word, such as OLD TURKIC and OLD ITALIC; the characters
+  with no name, the Tangut ideographs, are the group UNNAMED), with two merged families: every CJK ideograph is HAN, and Hiragana, Katakana and the old
+  variant kana are KANA. So a Chinese value (HAN) is still found when a Cyrillic zhe, a Greek delta, a Hebrew alef, a kana or a Latin letter that
+  the table does not read is inserted: those letters are not HAN and are dropped from the script view of the text, as an ASCII letter is. A letter of
+  the SAME script (another ideograph in a Chinese value, another Thai letter in a Thai value) is a different spelling and is NOT covered. Only
+  letters can stay: the digits and marks are gone before the script view is cut (Mn, Me, Mc, Lm, Sk, Cf, Cc and the rest are dropped or removed), so
+  no mark is ever in a script view; a letter-like number (category Nl, for example the ideographic zero U+3007) is not a letter here, so it is
+  not in the needle of a value that holds it and an inserted one is dropped. A view that would be empty is left out, and a script view equal to another view is not repeated.
+  A caller reads the TEXT with the scripts of the VALUE: ``fold_views(text, casefold=True, collapse_ws=True, scripts=value_scripts(value))``; the
+  default ``scripts`` is empty and gives no script view, so a scan that forgets it misses a script value (it does not keep a foreign letter by
+  accident). With several protected values the scan reads the text once per set of scripts. The script view over-matches on purpose (the
+  safe side): a value with ASCII letters AND a script has a script view of the script part alone, which any text with that script part
+  holds, and two words of a text that end and begin with the value's letters match across a separator.
+  MINIMUM VIEW LENGTH, one number per KIND of view (``defaults``; each is a whole number of at least 1, checked when this module is imported
+  and again by every ``scan_needles``): SPELLING (``TEXTNORM_MIN_SPELLING_CHARS``, 2), SQUEEZE (``TEXTNORM_MIN_SQUEEZE_CHARS``, 4), SCRIPT
+  (``TEXTNORM_MIN_SCRIPT_CHARS``, 4) and, for a value that is only Han ideographs (no ASCII letter or digit), IDEOGRAPH
+  (``TEXTNORM_MIN_IDEOGRAPH_CHARS``, 2: a name of two ideographs is scanned, one ideograph is refused). An empty needle is found in every text and a short one in
+  most, so ``scan_needles(raw)`` returns the views of a protected value that reach the minimum of their kind (from ``fold_views`` with
+  ``casefold=True, collapse_ws=True`` and the scripts of the value, and from ``squeeze_views``). It raises ``ViewTooShort`` when no SQUEEZE or SCRIPT view
+  reaches its minimum, even if a spelling view does: a spelling view keeps the separators, so one inserted space hides a value that only it can find
+  (a three-letter name, "w" plus one ideograph). The cost, stated: a protected value of three letters or fewer is refused, and so is a mixed value whose
+  script part is shorter than four letters; the caller looks for it with its own exact search. A caller that scans must use ``scan_needles`` (P1b: the redaction
+  package takes its needles from it and does not repeat the numbers). The match positions of the original text are lost by the drops: a caller that
   must cut the original text needs its own map.
 
 INPUT RULES (every public function): the argument must be a plain ``str`` (``type(x) is str``; a ``str`` subclass or an enum member is
@@ -183,6 +202,7 @@ import sys
 import types
 import unicodedata
 from collections import Counter
+from collections.abc import Iterable
 from enum import Enum
 
 from hadavin_sdk import defaults
@@ -212,6 +232,7 @@ __all__ = [
     "scan_needles",
     "squeeze",
     "squeeze_views",
+    "value_scripts",
 ]
 
 
@@ -229,7 +250,9 @@ class NotText(TextnormError):
 
 
 class ViewTooShort(TextnormError):
-    """No view of a protected value reaches ``defaults.TEXTNORM_MIN_VIEW_CHARS`` (``scan_needles``). Refuse to scan with the value: a needle that short is found in nearly every text."""
+    """``scan_needles`` found no usable needle for a protected value: no view reaches the minimum of its kind (``defaults.TEXTNORM_MIN_SPELLING_CHARS``,
+    ``TEXTNORM_MIN_SQUEEZE_CHARS``, ``TEXTNORM_MIN_SCRIPT_CHARS``, ``TEXTNORM_MIN_IDEOGRAPH_CHARS``), or only a view that keeps separators does (an
+    inserted space would hide the value). Refuse to scan with the value: a needle that short is found in nearly every text."""
 
 
 class UnidataMismatch(TextnormError):
@@ -402,15 +425,53 @@ def _without_spacing_marks(text: str) -> str:
     return "".join(ch for ch in text if unicodedata.category(ch) not in _SPACING_CATEGORIES)
 
 
-def _script_view(view: str) -> str:
-    """The SCRIPT VIEW of a view: only the non-ASCII letters and marks stay. Whitespace, punctuation, symbols, ASCII letters and digits (and the
-    digits of other scripts, which are ASCII by now) are removed, so a separator or an ASCII letter inserted into a value in a script with no
-    ASCII letter or digit cannot hide it."""
-    return "".join(
-        ch
-        for ch in view
-        if not ch.isascii() and (ch.isalpha() or unicodedata.category(ch)[0] == "M")
+# Two or more words of a Unicode character name are the script for these first words ("OLD TURKIC" and "OLD ITALIC" are two scripts).
+_TWO_WORD_SCRIPTS = frozenset({"OLD", "NEW", "TAI", "LINEAR", "INSCRIPTIONAL", "MEROITIC"})
+# First words that name one script together: the Han ideographs (CJK UNIFIED and COMPATIBILITY IDEOGRAPH) and the two kana syllabaries with
+# the old variant kana. Hangul stays one group (jamo and syllables share the word), Bopomofo, Latin, Greek, Cyrillic, Hebrew, Arabic and the
+# rest are one group per first word. IDEOGRAPHIC (the closing mark U+3006, a letter by category) is NOT Han here: a value must hold it itself.
+_SCRIPT_GROUPS = types.MappingProxyType(
+    {"CJK": "HAN", "HIRAGANA": "KANA", "KATAKANA": "KANA", "HENTAIGANA": "KANA"}
+)
+
+
+def _script_of(ch: str) -> str:
+    """The script group of the letter ``ch``, from its Unicode character name only (``unicodedata``; no data file): the first word of the name
+    ("CYRILLIC", "GREEK", "HEBREW", "THAI", "DEVANAGARI", "ARABIC", "LATIN"), two words for the families that share a first word, and the
+    groups of ``_SCRIPT_GROUPS`` (Han; kana). A letter with no name (the Tangut ideographs) is the group ``UNNAMED``. Not the UTS #24 script
+    property: it is the cheapest rule that separates the scripts a person mixes into a value."""
+    words = unicodedata.name(ch, "").split()
+    if not words:
+        return "UNNAMED"
+    head = (
+        f"{words[0]} {words[1]}" if words[0] in _TWO_WORD_SCRIPTS and len(words) > 1 else words[0]
     )
+    return _SCRIPT_GROUPS.get(head, head)
+
+
+def _scripts_in(views: Iterable[str]) -> frozenset[str]:
+    """The script groups of the non-ASCII letters of ``views``."""
+    out: set[str] = set()
+    for view in views:
+        out.update(_script_of(ch) for ch in set(view) if not ch.isascii() and ch.isalpha())
+    return frozenset(out)
+
+
+def _script_view(view: str, scripts: frozenset[str]) -> str:
+    """The SCRIPT VIEW of a view: only the non-ASCII letters whose script group is in ``scripts`` stay. Whitespace, punctuation, symbols, ASCII
+    letters and digits (and the digits of other scripts, which are ASCII by now) are removed, and so is a letter of any OTHER script, so a
+    separator, an ASCII letter or a foreign-script letter inserted into a value cannot hide it. Marks are not here: the view is made from a
+    text whose Mn and Me marks were dropped and whose Mc, Lm and Sk characters were removed. A letter of the SAME script stays (a different spelling)."""
+    group: dict[str, bool] = {}
+    kept: list[str] = []
+    for ch in view:
+        if ch.isascii() or not ch.isalpha():
+            continue
+        if ch not in group:
+            group[ch] = _script_of(ch) in scripts
+        if group[ch]:
+            kept.append(ch)
+    return "".join(kept)
 
 
 def _prefix(nfkd: str, *, iota: bool, marks: bool = False) -> str:
@@ -444,23 +505,27 @@ def _fold(raw: str, *, casefold: bool = False, collapse_ws: bool = False) -> str
     return _finish(prefix, casefold=casefold, table_first=False, collapse_ws=collapse_ws)
 
 
-def _views(
+def _view_pairs(
     raw: str,
     *,
     casefold: bool,
     collapse_ws: bool,
     marks_dropped: bool = False,
-    script: bool = False,
-) -> tuple[str, ...]:
-    """Every spelling variant of ``raw`` as a string, without repeats, in the order of ``_READINGS``. Without ``casefold`` there is no upper side
-    (the table already runs on the letter as written), so only (a) and (b) remain. With ``marks_dropped`` the same spelling variants of the
-    text WITHOUT its Mc, Lm and Sk characters follow (a scan wants them; the DENY check names do not use them): at most twice as many views.
-    With ``script`` the SCRIPT VIEW of each of those follows it (``_script_view``; left out when empty or already there): at most three times as many."""
+    marks_only: bool = False,
+    scripts: frozenset[str] = frozenset(),
+) -> list[tuple[str, str]]:
+    """Every view of ``raw`` as ``(kind, view)``, kind ``"spelling"`` or ``"script"``, in the order of ``_READINGS``; a pair is not repeated (the
+    same text may be both kinds). Without ``casefold`` there is no upper side (the table already runs on the letter as written), so only (a)
+    and (b) remain. With ``marks_dropped`` the same spelling variants of the text WITHOUT its Mc, Lm and Sk characters follow (a scan wants them;
+    the DENY check names do not use them); with ``marks_only`` only those are made. With ``scripts`` (not empty) the SCRIPT VIEW of each
+    marks-dropped view follows it (``_script_view``; left out when empty)."""
     texts = [raw]
     if marks_dropped:
         texts.append(_without_spacing_marks(raw))
-    views: list[str] = []
+    pairs: list[tuple[str, str]] = []
     for marks, text in enumerate(texts):
+        if marks_only and not marks:
+            continue
         nfkd = unicodedata.normalize("NFKD", text)
         with_iota = _prefix(nfkd, iota=True, marks=bool(marks))
         prefixes = {
@@ -475,13 +540,36 @@ def _views(
             view = _finish(
                 prefixes[iota], casefold=casefold, table_first=table_first, collapse_ws=collapse_ws
             )
-            if view not in views:
-                views.append(view)
-            if script and marks:
-                only = _script_view(view)
-                if only and only not in views:
-                    views.append(only)
-    return tuple(views)
+            if ("spelling", view) not in pairs:
+                pairs.append(("spelling", view))
+            if scripts and marks:
+                only = _script_view(view, scripts)
+                if only and ("script", only) not in pairs:
+                    pairs.append(("script", only))
+    return pairs
+
+
+def _views(
+    raw: str,
+    *,
+    casefold: bool,
+    collapse_ws: bool,
+    marks_dropped: bool = False,
+    scripts: frozenset[str] = frozenset(),
+) -> tuple[str, ...]:
+    """Every view of ``raw`` as a string, without repeats (``_view_pairs`` without the kinds): at most three spelling variants, twice as many with
+    ``marks_dropped``, three times as many with ``scripts``."""
+    out: list[str] = []
+    for _kind, view in _view_pairs(
+        raw,
+        casefold=casefold,
+        collapse_ws=collapse_ws,
+        marks_dropped=marks_dropped,
+        scripts=scripts,
+    ):
+        if view not in out:
+            out.append(view)
+    return tuple(out)
 
 
 def fold(raw: str, *, casefold: bool = False, collapse_ws: bool = False) -> str:
@@ -491,42 +579,123 @@ def fold(raw: str, *, casefold: bool = False, collapse_ws: bool = False) -> str:
     return _fold(raw, casefold=casefold, collapse_ws=collapse_ws)
 
 
-def fold_views(raw: str, *, casefold: bool = False, collapse_ws: bool = False) -> tuple[str, ...]:
+def _checked_scripts(scripts: frozenset[str]) -> None:
+    if type(scripts) is not frozenset or any(type(item) is not str for item in scripts):
+        raise NotText("scripts must be a frozenset of str (the result of value_scripts)")
+
+
+def _value_scripts(raw: str) -> frozenset[str]:
+    """``value_scripts`` on a text that was already checked: the marks-dropped views only (a modifier letter of the value is not a script of it)."""
+    return _scripts_in(
+        view
+        for _kind, view in _view_pairs(
+            raw, casefold=True, collapse_ws=False, marks_dropped=True, marks_only=True
+        )
+    )
+
+
+def value_scripts(raw: str) -> frozenset[str]:
+    """The script groups of the PROTECTED VALUE ``raw``: the groups (``_script_of``: the first word of the Unicode name, Han and kana grouped) of the
+    non-ASCII letters that are left in its marks-dropped views after the fold. Empty for a value that is only ASCII letters, digits and
+    separators once folded (a Latin value: ``squeeze_views`` covers it). A scan of a text for this value passes the result as ``scripts`` to
+    ``fold_views`` so that a letter of any OTHER script in the text is dropped from its script views."""
+    _checked(raw)
+    return _value_scripts(raw)
+
+
+def fold_views(
+    raw: str,
+    *,
+    casefold: bool = False,
+    collapse_ws: bool = False,
+    scripts: frozenset[str] = frozenset(),
+) -> tuple[str, ...]:
     """Every view of ``raw`` for a SCAN: a redaction or a blocklist looks for the secret in EVERY view of the text (module docstring, "MARKS AND SCANS").
     The views are the spelling variants of ``raw`` (at most three: two without ``casefold``; ``fold(raw, ...)`` is one of them), then the same
     spelling variants of ``raw`` with every spacing mark (Mc), modifier letter (Lm) and modifier symbol (Sk) removed before the first
-    normalisation (all scripts are kept), then the SCRIPT VIEW of each of those (non-ASCII letters and marks only; left out when empty or repeated).
-    At most nine views (six without ``casefold``), none repeated. A secret hidden by inserting such a mark is found in the
-    marks-dropped views.
+    normalisation (all scripts are kept), then, only when ``scripts`` is given, the SCRIPT VIEW of each of those (the non-ASCII letters of the
+    scripts in ``scripts`` only; left out when empty or repeated). At most nine views (six without ``casefold``), none repeated. A secret
+    hidden by inserting such a mark is found in the marks-dropped views.
 
     THE RULE FOR A SCAN: pass ``casefold=True`` (and ``collapse_ws=True``). The default ``False`` keeps the case of the text (the display and comparison callers want that), so a scan
     built without it misses "SECRET" when the protected value is "secret". A redaction MUST ALSO scan ``squeeze_views`` (the ASCII letters and digits with
-    every separator removed) and take its needles with ``scan_needles``.
+    every separator removed) and take its needles with ``scan_needles``. The default ``scripts`` is empty: no script view. To scan a TEXT for a
+    value in a script, pass ``scripts=value_scripts(value)`` (the scripts of the VALUE, never those of the text: a text that holds a letter of
+    another script would otherwise keep it).
 
-    A value with NO ASCII letter or digit (Chinese, Arabic, Hindi, Thai) is found by the script views of ``fold_views`` (the non-ASCII letters and marks of the text, with whitespace, punctuation, symbols and ASCII characters removed), so an inserted space, hyphen, line break, ASCII letter or mark does not hide it; an inserted look-alike letter of that script, or a respelling of it, is not covered."""
+    A value with NO ASCII letter or digit (Chinese, Arabic, Hindi, Thai) is found by the script views of ``fold_views`` (the non-ASCII letters of the value's own scripts, with whitespace, punctuation, symbols, ASCII characters and the letters of every other script removed), so an inserted space, hyphen, line break, ASCII letter, mark or foreign-script letter does not hide it; a letter of the SAME script inserted, or a respelling of it, is not covered."""
     _checked(raw)
-    return _views(raw, casefold=casefold, collapse_ws=collapse_ws, marks_dropped=True, script=True)
+    _checked_scripts(scripts)
+    return _views(
+        raw, casefold=casefold, collapse_ws=collapse_ws, marks_dropped=True, scripts=scripts
+    )
+
+
+_MINIMUM_NAMES = (
+    "TEXTNORM_MIN_SPELLING_CHARS",
+    "TEXTNORM_MIN_SQUEEZE_CHARS",
+    "TEXTNORM_MIN_SCRIPT_CHARS",
+    "TEXTNORM_MIN_IDEOGRAPH_CHARS",
+)
+
+
+def _validated_minimums() -> tuple[int, int, int, int]:
+    """The four minimum lengths of ``defaults`` (spelling, squeeze, script, ideograph), each a plain ``int`` of at least 1 (``bool`` is refused).
+    Run when the module is imported and again whenever ``scan_needles`` runs, so a wrong value fails closed in both places. The message names
+    the constant and the type, and the value only when it is an ``int``."""
+    out: list[int] = []
+    for name in _MINIMUM_NAMES:
+        value = getattr(defaults, name, None)
+        if type(value) is not int or value < 1:
+            shown = value if type(value) is int else f"of type {type(value).__name__}"
+            raise TextnormError(
+                f"defaults.{name} must be a whole number of at least 1, not {shown}"
+            )
+        out.append(value)
+    return out[0], out[1], out[2], out[3]
+
+
+_validated_minimums()  # fail closed at import
 
 
 def scan_needles(raw: str, *, loose: bool = False) -> tuple[str, ...]:
-    """The needles of a PROTECTED VALUE ``raw`` for a scan: every view of ``fold_views(raw, casefold=True)`` and of ``squeeze_views(raw, loose=loose)``
-    that has at least ``defaults.TEXTNORM_MIN_VIEW_CHARS`` characters (the same number for every view), without repeats. A view shorter than
-    that, an empty one above all, is not a needle: it is found in every text. Raises ``ViewTooShort`` when no view reaches the minimum (the
-    value is empty, invisible, one character or a script with no letters): the caller must REFUSE to scan with that value. The text to scan
-    is read with ``fold_views(text, casefold=True, collapse_ws=True)`` and ``squeeze_views(text, loose=loose)``; it holds the value when any of those views
-    contains any needle."""
+    """The needles of a PROTECTED VALUE ``raw`` for a scan, without repeats: the views of ``fold_views(raw, casefold=True, collapse_ws=True)`` (the
+    spelling views and, with the scripts of the value, its script views) and of ``squeeze_views(raw, loose=loose)`` that reach the minimum of their
+    KIND: spelling ``defaults.TEXTNORM_MIN_SPELLING_CHARS``, squeeze ``TEXTNORM_MIN_SQUEEZE_CHARS``, script ``TEXTNORM_MIN_SCRIPT_CHARS`` (``TEXTNORM_MIN_IDEOGRAPH_CHARS``
+    when the value has no ASCII letter or digit and only Han ideographs). A view shorter than that, an empty one above all, is not a needle: it is
+    found in every text. Raises ``ViewTooShort`` when NO squeeze or script view reaches its minimum: the spelling views keep separators, so
+    a value that only they can find is hidden by one inserted space, and the caller must REFUSE to scan with that value (it is empty,
+    invisible, a short Latin word, a short script word, or one ideograph). ``loose=True`` loosens only the squeeze half (the digit-like letters become digits
+    in the squeeze views); the spelling and script views are the same. The text to scan is read with
+    ``fold_views(text, casefold=True, collapse_ws=True, scripts=value_scripts(raw))`` and ``squeeze_views(text, loose=loose)``; it holds the value when any
+    of those views contains any needle."""
     _checked(raw)
-    minimum = defaults.TEXTNORM_MIN_VIEW_CHARS
+    spelling_min, squeeze_min, script_min, ideograph_min = _validated_minimums()
+    scripts = _value_scripts(raw)
+    squeezed = squeeze_views(raw, loose=loose)
+    ideographs_only = scripts == frozenset({"HAN"}) and not any(squeezed)
+    minimums = {
+        "spelling": spelling_min,
+        "script": ideograph_min if ideographs_only else script_min,
+        "squeeze": squeeze_min,
+    }
+    pairs = [
+        *_view_pairs(raw, casefold=True, collapse_ws=True, marks_dropped=True, scripts=scripts),
+        *(("squeeze", view) for view in squeezed),
+    ]
     needles: list[str] = []
-    for view in (
-        *fold_views(raw, casefold=True, collapse_ws=True),
-        *squeeze_views(raw, loose=loose),
-    ):
-        if len(view) >= minimum and view not in needles:
+    proof = False  # a squeeze or script needle: an inserted separator cannot hide it
+    for kind, view in pairs:
+        if len(view) < minimums[kind]:
+            continue
+        proof = proof or kind != "spelling"
+        if view not in needles:
             needles.append(view)
-    if not needles:
+    if not proof:
         raise ViewTooShort(
-            f"no view of the value has {minimum} characters or more: refuse to scan with it"
+            "no squeeze view and no script view of the value is long enough "
+            f"(minimums: squeeze {squeeze_min}, script {script_min}, ideograph {ideograph_min}): "
+            "refuse to scan with it"
         )
     return tuple(needles)
 

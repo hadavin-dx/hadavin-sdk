@@ -143,3 +143,32 @@ def test_a_text_at_the_cap_with_spacing_marks_is_scanned_in_linear_time_with_the
     assert _seconds(lambda t: textnorm.fold_views(t, casefold=True), text) < 5.0
     assert _seconds(textnorm.squeeze_views, text) < 5.0
     assert _seconds(lambda t: textnorm.squeeze_views(t, loose=True), text) < 5.0
+
+
+def test_scan_needles_and_the_script_views_of_a_text_at_the_cap_are_built_in_linear_time():
+    """fix7 (round 7): the cost of a scan at the cap with the script views really built. The unit (an ideograph, a Latin t with a stroke, a Greek
+    capital Nu, U+0345 and a spacing mark) makes SEVEN views of ``fold_views`` with the scripts of the value (three spelling variants, the same
+    three without the spacing mark, and the script view): the highest count found, so the most work per call that this package knows of (nine is the
+    bound, not reached). The old marks row used a Cyrillic a, so its script view was empty. The value is the text itself, so ``scan_needles`` builds
+    its views and the squeeze views too. Ceiling: about 8 times the time measured on the build machine."""
+    unit = "\u5bc6\u2c66\u039d\u0345\u0903"
+    text = unit * (CAP // textnorm._weight(unit))
+    assert len(text) <= CAP and textnorm._weight(text) <= CAP, (
+        "the row would be refused, not folded"
+    )
+    scripts = textnorm.value_scripts(unit)
+    views = textnorm.fold_views(text, casefold=True, collapse_ws=True, scripts=scripts)
+    assert len(views) == 7 and any(v and not v.isascii() and v.isalpha() for v in views), (
+        "the row does not build the script view and the seven views"
+    )
+    assert all(len(v) <= textnorm._weight(text) for v in views)
+    assert (
+        _seconds(
+            lambda t: textnorm.fold_views(t, casefold=True, collapse_ws=True, scripts=scripts),
+            text,
+        )
+        < 5.0
+    )
+    assert _seconds(textnorm.scan_needles, text) < 8.0
+    assert _seconds(textnorm.value_scripts, text) < 5.0
+    assert textnorm.scan_needles(text), "the value was refused"
