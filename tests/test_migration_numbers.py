@@ -300,6 +300,8 @@ def test_recipe_order_and_command(mn):
     order = [
         lines.index('SET search_path TO "p3a_s";'),
         lines.index("BEGIN;"),
+        lines.index("SET LOCAL lock_timeout = '5s';"),
+        lines.index("SET LOCAL statement_timeout = '60s';"),
         lines.index(f"SELECT pg_advisory_xact_lock({mn.MIGRATE_LOCK});"),
         lines.index("SELECT 1;"),
         lines.index("INSERT INTO schema_migrations (version) VALUES ('0004_a');"),

@@ -62,6 +62,8 @@ RECIPE_COMMAND = "psql -X -v ON_ERROR_STOP=1 -f recipe.sql"
 # The one generated psql command: with it a run WITHOUT -X still stops at the first error even when a person's startup
 # file says `\set ON_ERROR_STOP off`.
 RECIPE_FIRST_LINE = "\\set ON_ERROR_STOP on"
+# Right after BEGIN in every hand file: an ALTER TABLE on a live table waits for a lock that stops every reader.
+RECIPE_TIMEOUTS = ("SET LOCAL lock_timeout = '5s';", "SET LOCAL statement_timeout = '60s';")
 # The advisory-lock key of every migrate run, `migrate._LOCK` (a later change makes that name point here).
 MIGRATE_LOCK = int.from_bytes(b"hadvnmig", "big") >> 1
 MIGRATIONS = Path(__file__).parent / "migrations"
@@ -250,6 +252,7 @@ def hand_recipe(entries: Sequence[tuple[str, str]], schema: str, lock: int = MIG
         RECIPE_FIRST_LINE,
         f'SET search_path TO "{schema}";',
         "BEGIN;",
+        *RECIPE_TIMEOUTS,
         f"SELECT pg_advisory_xact_lock({int(lock)});",
     ]
     for stem, text in entries:
