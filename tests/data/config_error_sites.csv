@@ -8,8 +8,8 @@ actions/secrets_env.py::EnvSecretProvider.get::e99f918f41c115cf::1,OPERATOR,"sec
 actions/secrets_file.py::MountedFileProvider._fetch::0196cf4f877ae16e::1,OPERATOR,secret name (and Vault field) from the operator's settings; the rest is fixed words
 actions/secrets_file.py::MountedFileProvider._fetch::858b0a3ef93dc107::1,OPERATOR,secret name (and Vault field) from the operator's settings; the rest is fixed words
 actions/secrets_file.py::MountedFileProvider._fetch::a72fee53ea009e02::1,OPERATOR,secret name (and Vault field) from the operator's settings; the rest is fixed words
-actions/secrets_file.py::MountedFileProvider._fetch::fd5427b6fb9f2fec::1,FOREIGN,
-actions/secrets_file.py::MountedFileProvider._fetch::fd5427b6fb9f2fec::2,FOREIGN,
+actions/secrets_file.py::MountedFileProvider._fetch::e964d603753ac3f0::1,FOREIGN,
+actions/secrets_file.py::MountedFileProvider._fetch::f284475c7b5bec66::1,FOREIGN,
 actions/secrets_file.py::build::5ad3dff654cde283::1,OPERATOR,mounted folder path from the operator's settings
 actions/secrets_gcp.py::GcpSecretManagerProvider._fetch::725499cc45521d79::1,OPERATOR,secret name (and Vault field) from the operator's settings; the rest is fixed words
 actions/secrets_gcp.py::GcpSecretManagerProvider._fetch::eab7219428a2c7e7::1,OPERATOR,secret name (and Vault field) from the operator's settings; the rest is fixed words
@@ -27,12 +27,12 @@ app.py::_restored_key::bf884a9f8ae05780::1,OPERATOR,our own module constant (an 
 app.py::_tls_context::5da9c750d3c85ee9::1,OPERATOR,CA file or CA secret name from the operator's settings
 app.py::_tls_context::6aab2b718a2eee4a::1,OPERATOR,CA file or CA secret name from the operator's settings
 app.py::_toolbox::4424acfc8d2dad46::1,OPERATOR,tool name from the tool manifest the operator wrote
+app.py::build::036d0056cc1554c4::1,FOREIGN,scope_problems pastes resource names from the cluster rules-review answer (a response); only checked to be strings
+app.py::build::12e8ef4068fc91b0::1,LITERAL,
 app.py::build::241443c47ff280d7::1,LITERAL,
-app.py::build::44046cf9213d021f::1,FOREIGN,scope_problems pastes resource names from the cluster rules-review answer (a response); only checked to be strings
-app.py::build::44046cf9213d021f::2,OPERATOR,_unprobed_tools: tool names from the manifest plus fixed words
 app.py::build::8cbd8171129655b2::1,LITERAL,
-app.py::build::905c4e1a16d38bf4::1,LITERAL,
-app.py::build::905c4e1a16d38bf4::2,LITERAL,
+app.py::build::8ee4ab9f9d6da551::1,OPERATOR,_unprobed_tools: tool names from the manifest plus fixed words
+app.py::build::92f4ad4a6fc228e8::1,LITERAL,
 app.py::build::9bb9c8e6a1caaf0b::1,LITERAL,
 app.py::build::e42d0675f83a9f27::1,OPERATOR,names of our own Store protocol methods that the custom store lacks
 approvals/slack_channel.py::build::595f596b92742e2e::1,LITERAL,
@@ -89,35 +89,35 @@ hashing.py::hash_files::a12f87f165412bc5::1,OPERATOR,"relative file names of fil
 hashing.py::hash_files::b22f4a1d110cbffe::1,LITERAL,
 k1b/audit_sink.py::build_audit::d0f0fca5d28c4b8e::1,OPERATOR,audit kind from the operator's settings
 k1b/bundle.py::_fail::4651d2550614fa26::1,OPERATOR,factory; each call is its own row
-k1b/bundle.py::_keys::ad73c4c2eb4e8711::1,OPERATOR,bundle case folder and file names given by the operator; rel is checked against the fixed layout (bundle.py:207-211) and key against ALERT_KEYS (:227) before use; no caller passes exception text
-k1b/bundle.py::_load_json::195c715f39858dfd::1,OPERATOR,bundle case folder and file names given by the operator; rel is checked against the fixed layout (bundle.py:207-211) and key against ALERT_KEYS (:227) before use; no caller passes exception text
-k1b/bundle.py::_no_surrogates::a8ac97eb81721049::1,OPERATOR,bundle case folder and file names given by the operator; rel is checked against the fixed layout (bundle.py:207-211) and key against ALERT_KEYS (:227) before use; no caller passes exception text
-k1b/bundle.py::_scan::41cdaca285881a2d::1,OPERATOR,bundle case folder and file names given by the operator; rel is checked against the fixed layout (bundle.py:207-211) and key against ALERT_KEYS (:227) before use; no caller passes exception text
-k1b/bundle.py::_scan::773c6cca7ef04d13::1,OPERATOR,bundle case folder and file names given by the operator; rel is checked against the fixed layout (bundle.py:207-211) and key against ALERT_KEYS (:227) before use; no caller passes exception text
-k1b/bundle.py::_str::57d638cb0dbbe5b6::1,OPERATOR,bundle case folder and file names given by the operator; rel is checked against the fixed layout (bundle.py:207-211) and key against ALERT_KEYS (:227) before use; no caller passes exception text
-k1b/bundle.py::_text::93ee08b6ab1afba8::1,OPERATOR,bundle case folder and file names given by the operator; rel is checked against the fixed layout (bundle.py:207-211) and key against ALERT_KEYS (:227) before use; no caller passes exception text
-k1b/bundle.py::_ts_before::70b2d21ede371446::1,OPERATOR,bundle case folder and file names given by the operator; rel is checked against the fixed layout (bundle.py:207-211) and key against ALERT_KEYS (:227) before use; no caller passes exception text
-k1b/bundle.py::_ts_before::9cf355246929a6a8::1,OPERATOR,bundle case folder and file names given by the operator; rel is checked against the fixed layout (bundle.py:207-211) and key against ALERT_KEYS (:227) before use; no caller passes exception text
-k1b/bundle.py::load_bundle::22589a15af0a8340::1,OPERATOR,bundle case folder and file names given by the operator; rel is checked against the fixed layout (bundle.py:207-211) and key against ALERT_KEYS (:227) before use; no caller passes exception text
-k1b/bundle.py::load_bundle::25f907cc56df38a9::1,OPERATOR,bundle case folder and file names given by the operator; rel is checked against the fixed layout (bundle.py:207-211) and key against ALERT_KEYS (:227) before use; no caller passes exception text
-k1b/bundle.py::load_bundle::3af6540b0927cfb9::1,OPERATOR,bundle case folder and file names given by the operator; rel is checked against the fixed layout (bundle.py:207-211) and key against ALERT_KEYS (:227) before use; no caller passes exception text
-k1b/bundle.py::load_bundle::3ce88b1034c2c206::1,OPERATOR,bundle case folder and file names given by the operator; rel is checked against the fixed layout (bundle.py:207-211) and key against ALERT_KEYS (:227) before use; no caller passes exception text
-k1b/bundle.py::load_bundle::3d0ec796149eb28b::1,OPERATOR,bundle case folder and file names given by the operator; rel is checked against the fixed layout (bundle.py:207-211) and key against ALERT_KEYS (:227) before use; no caller passes exception text
-k1b/bundle.py::load_bundle::46ed204f42ba69ac::1,OPERATOR,bundle case folder and file names given by the operator; rel is checked against the fixed layout (bundle.py:207-211) and key against ALERT_KEYS (:227) before use; no caller passes exception text
-k1b/bundle.py::load_bundle::7599a335cae3d428::1,OPERATOR,bundle case folder and file names given by the operator; rel is checked against the fixed layout (bundle.py:207-211) and key against ALERT_KEYS (:227) before use; no caller passes exception text
-k1b/bundle.py::load_bundle::7bc916c763ae4f5b::1,OPERATOR,bundle case folder and file names given by the operator; rel is checked against the fixed layout (bundle.py:207-211) and key against ALERT_KEYS (:227) before use; no caller passes exception text
-k1b/bundle.py::load_bundle::86307242b50f6152::1,OPERATOR,bundle case folder and file names given by the operator; rel is checked against the fixed layout (bundle.py:207-211) and key against ALERT_KEYS (:227) before use; no caller passes exception text
-k1b/bundle.py::load_bundle::8d303270f4e1b2f0::1,OPERATOR,bundle case folder and file names given by the operator; rel is checked against the fixed layout (bundle.py:207-211) and key against ALERT_KEYS (:227) before use; no caller passes exception text
-k1b/bundle.py::load_bundle::90f838ad849dbca0::1,OPERATOR,bundle case folder and file names given by the operator; rel is checked against the fixed layout (bundle.py:207-211) and key against ALERT_KEYS (:227) before use; no caller passes exception text
-k1b/bundle.py::load_bundle::9ed5eda2ff31842f::1,OPERATOR,bundle case folder and file names given by the operator; rel is checked against the fixed layout (bundle.py:207-211) and key against ALERT_KEYS (:227) before use; no caller passes exception text
-k1b/bundle.py::load_bundle::b8269aecae4e514f::1,OPERATOR,bundle case folder and file names given by the operator; rel is checked against the fixed layout (bundle.py:207-211) and key against ALERT_KEYS (:227) before use; no caller passes exception text
-k1b/bundle.py::load_bundle::c5448ed8fbf747a1::1,OPERATOR,bundle case folder and file names given by the operator; rel is checked against the fixed layout (bundle.py:207-211) and key against ALERT_KEYS (:227) before use; no caller passes exception text
-k1b/bundle.py::load_bundle::d54b7e7f7b7823cc::1,OPERATOR,bundle case folder and file names given by the operator; rel is checked against the fixed layout (bundle.py:207-211) and key against ALERT_KEYS (:227) before use; no caller passes exception text
-k1b/bundle.py::load_bundle::d627e8fe2949062f::1,OPERATOR,bundle case folder and file names given by the operator; rel is checked against the fixed layout (bundle.py:207-211) and key against ALERT_KEYS (:227) before use; no caller passes exception text
-k1b/bundle.py::load_bundle::d7fe88a63e2cc6ed::1,OPERATOR,bundle case folder and file names given by the operator; rel is checked against the fixed layout (bundle.py:207-211) and key against ALERT_KEYS (:227) before use; no caller passes exception text
-k1b/bundle.py::load_bundle::dd48fe9147c6665c::1,OPERATOR,bundle case folder and file names given by the operator; rel is checked against the fixed layout (bundle.py:207-211) and key against ALERT_KEYS (:227) before use; no caller passes exception text
-k1b/bundle.py::load_bundle::f7de9ac33a8c9d53::1,OPERATOR,bundle case folder and file names given by the operator; rel is checked against the fixed layout (bundle.py:207-211) and key against ALERT_KEYS (:227) before use; no caller passes exception text
-k1b/bundle.py::load_bundle::fdbc28502ba4d493::1,OPERATOR,bundle case folder and file names given by the operator; rel is checked against the fixed layout (bundle.py:207-211) and key against ALERT_KEYS (:227) before use; no caller passes exception text
+k1b/bundle.py::_keys::ad73c4c2eb4e8711::1,OPERATOR,"case matches CASE_RE (checked first in load_bundle), rel matches the fixed layout (_FILE_RES) and keys ALERT_KEYS before use; no caller passes exception text"
+k1b/bundle.py::_load_json::195c715f39858dfd::1,OPERATOR,"case matches CASE_RE (checked first in load_bundle), rel matches the fixed layout (_FILE_RES) and keys ALERT_KEYS before use; no caller passes exception text"
+k1b/bundle.py::_no_surrogates::a8ac97eb81721049::1,OPERATOR,"case matches CASE_RE (checked first in load_bundle), rel matches the fixed layout (_FILE_RES) and keys ALERT_KEYS before use; no caller passes exception text"
+k1b/bundle.py::_scan::41cdaca285881a2d::1,OPERATOR,"case matches CASE_RE (checked first in load_bundle), rel matches the fixed layout (_FILE_RES) and keys ALERT_KEYS before use; no caller passes exception text"
+k1b/bundle.py::_scan::773c6cca7ef04d13::1,OPERATOR,"case matches CASE_RE (checked first in load_bundle), rel matches the fixed layout (_FILE_RES) and keys ALERT_KEYS before use; no caller passes exception text"
+k1b/bundle.py::_str::57d638cb0dbbe5b6::1,OPERATOR,"case matches CASE_RE (checked first in load_bundle), rel matches the fixed layout (_FILE_RES) and keys ALERT_KEYS before use; no caller passes exception text"
+k1b/bundle.py::_text::93ee08b6ab1afba8::1,OPERATOR,"case matches CASE_RE (checked first in load_bundle), rel matches the fixed layout (_FILE_RES) and keys ALERT_KEYS before use; no caller passes exception text"
+k1b/bundle.py::_ts_before::70b2d21ede371446::1,OPERATOR,"case matches CASE_RE (checked first in load_bundle), rel matches the fixed layout (_FILE_RES) and keys ALERT_KEYS before use; no caller passes exception text"
+k1b/bundle.py::_ts_before::9cf355246929a6a8::1,OPERATOR,"case matches CASE_RE (checked first in load_bundle), rel matches the fixed layout (_FILE_RES) and keys ALERT_KEYS before use; no caller passes exception text"
+k1b/bundle.py::load_bundle::22589a15af0a8340::1,OPERATOR,"case matches CASE_RE (checked first in load_bundle), rel matches the fixed layout (_FILE_RES) and keys ALERT_KEYS before use; no caller passes exception text"
+k1b/bundle.py::load_bundle::25f907cc56df38a9::1,OPERATOR,"case matches CASE_RE (checked first in load_bundle), rel matches the fixed layout (_FILE_RES) and keys ALERT_KEYS before use; no caller passes exception text"
+k1b/bundle.py::load_bundle::3af6540b0927cfb9::1,OPERATOR,"case matches CASE_RE (checked first in load_bundle), rel matches the fixed layout (_FILE_RES) and keys ALERT_KEYS before use; no caller passes exception text"
+k1b/bundle.py::load_bundle::3ce88b1034c2c206::1,OPERATOR,"case matches CASE_RE (checked first in load_bundle), rel matches the fixed layout (_FILE_RES) and keys ALERT_KEYS before use; no caller passes exception text"
+k1b/bundle.py::load_bundle::3d0ec796149eb28b::1,OPERATOR,"case matches CASE_RE (checked first in load_bundle), rel matches the fixed layout (_FILE_RES) and keys ALERT_KEYS before use; no caller passes exception text"
+k1b/bundle.py::load_bundle::46ed204f42ba69ac::1,OPERATOR,"case matches CASE_RE (checked first in load_bundle), rel matches the fixed layout (_FILE_RES) and keys ALERT_KEYS before use; no caller passes exception text"
+k1b/bundle.py::load_bundle::7599a335cae3d428::1,FOREIGN,"case is path.name BEFORE the CASE_RE check passes: any folder name, control characters unescaped, shown in the message (log-injection route)"
+k1b/bundle.py::load_bundle::7bc916c763ae4f5b::1,OPERATOR,"case matches CASE_RE (checked first in load_bundle), rel matches the fixed layout (_FILE_RES) and keys ALERT_KEYS before use; no caller passes exception text"
+k1b/bundle.py::load_bundle::86307242b50f6152::1,OPERATOR,"case matches CASE_RE (checked first in load_bundle), rel matches the fixed layout (_FILE_RES) and keys ALERT_KEYS before use; no caller passes exception text"
+k1b/bundle.py::load_bundle::8d303270f4e1b2f0::1,OPERATOR,"case matches CASE_RE (checked first in load_bundle), rel matches the fixed layout (_FILE_RES) and keys ALERT_KEYS before use; no caller passes exception text"
+k1b/bundle.py::load_bundle::90f838ad849dbca0::1,OPERATOR,"case matches CASE_RE (checked first in load_bundle), rel matches the fixed layout (_FILE_RES) and keys ALERT_KEYS before use; no caller passes exception text"
+k1b/bundle.py::load_bundle::9ed5eda2ff31842f::1,OPERATOR,"case matches CASE_RE (checked first in load_bundle), rel matches the fixed layout (_FILE_RES) and keys ALERT_KEYS before use; no caller passes exception text"
+k1b/bundle.py::load_bundle::b8269aecae4e514f::1,OPERATOR,"case matches CASE_RE (checked first in load_bundle), rel matches the fixed layout (_FILE_RES) and keys ALERT_KEYS before use; no caller passes exception text"
+k1b/bundle.py::load_bundle::c5448ed8fbf747a1::1,OPERATOR,"case matches CASE_RE (checked first in load_bundle), rel matches the fixed layout (_FILE_RES) and keys ALERT_KEYS before use; no caller passes exception text"
+k1b/bundle.py::load_bundle::d54b7e7f7b7823cc::1,OPERATOR,"case matches CASE_RE (checked first in load_bundle), rel matches the fixed layout (_FILE_RES) and keys ALERT_KEYS before use; no caller passes exception text"
+k1b/bundle.py::load_bundle::d627e8fe2949062f::1,OPERATOR,"case matches CASE_RE (checked first in load_bundle), rel matches the fixed layout (_FILE_RES) and keys ALERT_KEYS before use; no caller passes exception text"
+k1b/bundle.py::load_bundle::d7fe88a63e2cc6ed::1,OPERATOR,"case matches CASE_RE (checked first in load_bundle), rel matches the fixed layout (_FILE_RES) and keys ALERT_KEYS before use; no caller passes exception text"
+k1b/bundle.py::load_bundle::dd48fe9147c6665c::1,OPERATOR,"case matches CASE_RE (checked first in load_bundle), rel matches the fixed layout (_FILE_RES) and keys ALERT_KEYS before use; no caller passes exception text"
+k1b/bundle.py::load_bundle::f7de9ac33a8c9d53::1,OPERATOR,"case matches CASE_RE (checked first in load_bundle), rel matches the fixed layout (_FILE_RES) and keys ALERT_KEYS before use; no caller passes exception text"
+k1b/bundle.py::load_bundle::fdbc28502ba4d493::1,OPERATOR,"case matches CASE_RE (checked first in load_bundle), rel matches the fixed layout (_FILE_RES) and keys ALERT_KEYS before use; no caller passes exception text"
 k1b/bundle.py::load_bundles::40b6a8ac92fdf154::1,LITERAL,
 k1b/bundle.py::load_bundles::e6db6076df7382ec::1,LITERAL,
 k1b/causelist.py::_inside::38a814b0967b498f::1,OPERATOR,file name is a fixed string passed by load_cause_list
@@ -128,8 +128,8 @@ k1b/causelist.py::_load::90cdd3a78a6755dd::1,OPERATOR,"list name is a fixed stri
 k1b/causelist.py::_load::92f2b95dbc6f5c73::1,OPERATOR,"list name is a fixed string, limits and counts are integers"
 k1b/causelist.py::_load::b2642cf6ebb45843::1,OPERATOR,"list name is a fixed string, limits and counts are integers"
 k1b/causelist.py::_load::c9288af7e892a9e7::1,OPERATOR,"list name is a fixed string, limits and counts are integers"
-k1b/causelist.py::load_cause_list::4505da0f6dc284a6::1,LITERAL,
-k1b/causelist.py::load_cause_list::4505da0f6dc284a6::2,LITERAL,
+k1b/causelist.py::load_cause_list::83f1cac3307eef8d::1,LITERAL,
+k1b/causelist.py::load_cause_list::e8d61e4ac8ba853a::1,LITERAL,
 k1b/replay.py::_refuse_zero_price::f0a9bbc79b9cfca6::1,LITERAL,
 k1b/replay.py::_replay::2ea6e962e2d6937b::1,LITERAL,
 k1b/replay.py::_replay::421ed63b47210c90::1,LITERAL,
@@ -140,15 +140,15 @@ k1b/score.py::_check_layout::0aa0533b52761ffd::1,OPERATOR,"run number, an intege
 k1b/score.py::_check_layout::5356622ac4b94358::1,LITERAL,
 k1b/score.py::_check_layout::7a93a496ea8a9eb6::1,LITERAL,
 k1b/score.py::_check_layout::866c8bd7201082a1::1,LITERAL,
-k1b/score.py::_dec::c7c69c9f63a3237a::1,LITERAL,
-k1b/score.py::_dec::c7c69c9f63a3237a::2,LITERAL,
+k1b/score.py::_dec::2f03e4a188f315d1::1,LITERAL,
+k1b/score.py::_dec::50498fb6b8043e0e::1,LITERAL,
 k1b/score.py::_read_json::9fb0b1bb05c32fdb::1,OPERATOR,what is a fixed string built with an integer by the two callers
 k1b/score.py::_record::eb001efdf50a3794::1,OPERATOR,"ordinal, an integer"
 k1b/score.py::load_answers::14ef28d5ff9de029::1,LITERAL,
 k1b/score.py::load_answers::46d945f63c082d16::1,LITERAL,
 k1b/score.py::load_answers::52bb7c4cda4eede4::1,OPERATOR,"answer ordinal, an integer"
-k1b/score.py::load_answers::a5c6d0d0bf09765b::1,OPERATOR,"answer ordinal, an integer"
-k1b/score.py::load_answers::a5c6d0d0bf09765b::2,OPERATOR,"answer ordinal, an integer"
+k1b/score.py::load_answers::8071e2ebee18b8dc::1,OPERATOR,"answer ordinal, an integer"
+k1b/score.py::load_answers::9d8e06dc940142eb::1,OPERATOR,"answer ordinal, an integer"
 k1b/score.py::load_answers::b6d0999197dbc124::1,LITERAL,
 k1b/score.py::load_answers::e57091c71759a047::1,OPERATOR,"answer ordinal, an integer"
 k1b/score.py::score::055461c8d305702a::1,OPERATOR,"run number, metadata key from a fixed tuple, and counts"
@@ -160,33 +160,33 @@ k1b/score.py::score::f4415acef9271f53::1,OPERATOR,"run number, metadata key from
 llm/anthropic.py::client::f16fb59c422d4d25::1,FOREIGN,
 llm/common.py::pinned::38e6245b9162fced::1,OPERATOR,route name and model id from the operator's settings
 registry.py::_by_id::1184a6b0919516b4::1,OPERATOR,file name is fixed by the callers; id typed in the operator's yaml
-registry.py::_load_tools::32786aa5b3e5bcc6::1,OPERATOR,"pin_problems or problems: tool, action, input and operation names from the operator's yaml, schema_problems and spec_problems output (fixed words plus the operator's values)"
-registry.py::_load_tools::44046cf9213d021f::1,OPERATOR,"pin_problems or problems: tool, action, input and operation names from the operator's yaml, schema_problems and spec_problems output (fixed words plus the operator's values)"
+registry.py::_load_tools::32786aa5b3e5bcc6::1,OPERATOR,"pin_problems from _module_pin_problems: module names and short hashes from the operator's settings, plus str() of the ConfigErrors of tools._module_files and module_sha256"
+registry.py::_load_tools::44046cf9213d021f::1,OPERATOR,"problems: tool, action, input and operation names from the operator's yaml, schema_problems and spec_problems output (fixed words plus the operator's values)"
+registry.py::load_registry::14c337433bdfe1dd::1,OPERATOR,"early (deferred.key_problems: the operator's yaml keys), _cross_check and deferred.check (ids from the operator's yaml, fixed words)"
 registry.py::load_registry::3bada809a56baae4::1,FOREIGN,
-registry.py::load_registry::44046cf9213d021f::1,OPERATOR,"early (deferred.key_problems: the operator's yaml keys), _cross_check and deferred.check (ids from the operator's yaml, fixed words)"
-registry.py::load_registry::44046cf9213d021f::2,OPERATOR,"early (deferred.key_problems: the operator's yaml keys), _cross_check and deferred.check (ids from the operator's yaml, fixed words)"
 registry.py::load_registry::4bd5af26797fce41::1,OPERATOR,"early (deferred.key_problems: the operator's yaml keys), _cross_check and deferred.check (ids from the operator's yaml, fixed words)"
+registry.py::load_registry::718777c2e52eefba::1,OPERATOR,"early (deferred.key_problems: the operator's yaml keys), _cross_check and deferred.check (ids from the operator's yaml, fixed words)"
 replay_records.py::read_records::0c8aa448491ccf02::1,OPERATOR,file name constant and a line number
 replay_records.py::read_records::2c55d28a45aecba6::1,OPERATOR,file name constant and a line number
 runtime/agent_loop.py::_check_golden_refs::896e0291f6d137b0::1,OPERATOR,golden file name from the operator's settings
 runtime/agent_loop.py::qualified_runs::368048cbf8c2ed62::1,OPERATOR,"line number, an integer"
-store/migrate.py::migrate::1bff9a371d8ad2b3::1,OPERATOR,"role name from the operator's settings; problems come from check_ledger/check_grants (file names, fixed words); catalog names read back from the database"
-store/migrate.py::migrate::1cde22a37a5aaf36::1,OPERATOR,"role name from the operator's settings; problems come from check_ledger/check_grants (file names, fixed words); catalog names read back from the database"
+store/migrate.py::migrate::1bff9a371d8ad2b3::1,OPERATOR,problems from check_ledger and check_grants: names of the migration files shipped in the package (escaped) plus fixed words
+store/migrate.py::migrate::1cde22a37a5aaf36::1,FOREIGN,gone: version strings read back from the schema_migrations table in the database
 store/migrate.py::migrate::3fdb0a28a66e9b2f::1,LITERAL,
 store/migrate.py::migrate::40db02b3ad655c40::1,LITERAL,
-store/migrate.py::migrate::5b70a3de6848f7f4::1,OPERATOR,"role name from the operator's settings; problems come from check_ledger/check_grants (file names, fixed words); catalog names read back from the database"
-store/migrate.py::migrate::8572036092447371::1,OPERATOR,"role name from the operator's settings; problems come from check_ledger/check_grants (file names, fixed words); catalog names read back from the database"
-store/migrate.py::migrate::cc384fb69683a0e2::1,OPERATOR,"role name from the operator's settings; problems come from check_ledger/check_grants (file names, fixed words); catalog names read back from the database"
-store/migrate.py::migrate::f53330a8ec02c74f::1,OPERATOR,"role name from the operator's settings; problems come from check_ledger/check_grants (file names, fixed words); catalog names read back from the database"
-store/migration_numbers.py::MigrationNumberError.__init__::3ef18624ada6657e::1,OPERATOR,problems from folder_problems/ledger checks: migration file names escaped by _esc plus fixed words
+store/migrate.py::migrate::5b70a3de6848f7f4::1,FOREIGN,"bad: relation and privilege names from effective_problems, read back from the database catalog (purge role)"
+store/migrate.py::migrate::8572036092447371::1,OPERATOR,role name typed in the operator's settings; the message echoes it with repr
+store/migrate.py::migrate::cc384fb69683a0e2::1,FOREIGN,"bad: relation and privilege names from effective_problems, read back from the database catalog (runtime role)"
+store/migrate.py::migrate::f53330a8ec02c74f::1,FOREIGN,"extra: privilege names from _excess_privileges, read back from the database catalog (portal role)"
+store/migration_numbers.py::MigrationNumberError.__init__::3b603dfb529e4dd6::1,OPERATOR,problems from folder_problems/ledger checks: migration file names escaped by _esc plus fixed words; _problems_message only joins them
 store/migration_numbers.py::check_migration_numbers::fc464faa6509b451::1,OPERATOR,problems list: file names escaped by _esc plus fixed words; the class builds its text from it
 store/postgres.py::build::356ecc824f46d20e::1,LITERAL,
 store/postgres.py::build::a590b415f6b4b552::1,FOREIGN,
 store/postgres.py::password_source::8e86b8ac36546e03::1,LITERAL,
-store/postgres.py::tls_mode::c8b038b0d24b4f40::1,OPERATOR,sslmode from the operator's settings
-store/postgres.py::tls_mode::faf4a66ef445157f::1,OPERATOR,sslmode from the operator's settings
-tools.py::_module_files::6740bbd9d8d13900::1,OPERATOR,tool module name from the operator's settings (ruling for registry.py:239: both sites in this chain are named)
-tools.py::_module_files::78ecd84b293f464a::1,OPERATOR,tool module name from the operator's settings (ruling for registry.py:239: both sites in this chain are named)
+store/postgres.py::tls_mode::c8b038b0d24b4f40::1,FOREIGN,"mode is sslmode from settings OR from the DSN (a resolved secret, conninfo_to_dict) and is echoed here; unvalidated, so treated as foreign text"
+store/postgres.py::tls_mode::faf4a66ef445157f::1,FOREIGN,"mode is sslmode from settings OR from the DSN (a resolved secret, conninfo_to_dict) and is echoed here; unvalidated, so treated as foreign text"
+tools.py::_module_files::6740bbd9d8d13900::1,OPERATOR,tool module name from the operator's settings; registry._module_pin_problems relays str() of this error into the start-up message (a relay the scan cannot see)
+tools.py::_module_files::78ecd84b293f464a::1,OPERATOR,tool module name from the operator's settings; registry._module_pin_problems relays str() of this error into the start-up message (a relay the scan cannot see)
 tools.py::load_tool_module::434647ff3fd805ff::1,OPERATOR,module name and pin from the operator's settings; problems from _reach_problems name identifiers in the operator's own tool module
 tools.py::load_tool_module::44046cf9213d021f::1,OPERATOR,module name and pin from the operator's settings; problems from _reach_problems name identifiers in the operator's own tool module
 tools.py::load_tool_module::d5460e31f29e6c5d::1,FOREIGN,

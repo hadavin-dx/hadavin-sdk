@@ -113,11 +113,23 @@ def test_committed_table_is_in_canonical_form() -> None:
     assert b"\r" not in TABLE.read_bytes()
 
 
+# The FOREIGN count is a stop sign, not a target: 21 before order 132, then +4 migrate.py rows that interpolate names read back
+# from the database, +2 store/postgres.py tls_mode rows (sslmode can come from the DSN) and +1 k1b/bundle.py row (a folder name
+# echoed before it is validated). A new FOREIGN row must be reviewed by a person who raises this number on purpose.
+FOREIGN_LIMIT = 28
+
+
 def test_the_table_has_no_blank_class_and_a_bounded_foreign_count() -> None:
     rows = need("load_csv")(TABLE)
     assert rows
     assert all(r.klass in need("CLASSES") for r in rows)
-    assert sum(r.klass == "FOREIGN" for r in rows) <= 30
+    assert sum(r.klass == "FOREIGN" for r in rows) <= FOREIGN_LIMIT
+
+
+def test_reasons_name_symbols_not_line_numbers() -> None:
+    """A line number in a reason goes stale on the next edit above it (order 132, R-2)."""
+    line_ref = re.compile(r"\.py:\d|\(:\d|\bline \d")
+    assert [r.site for r in need("load_csv")(TABLE) if line_ref.search(r.reason)] == []
 
 
 def reason_problems(rows: list[Any], patterns: dict[str, re.Pattern[str]]) -> list[str]:
@@ -476,11 +488,76 @@ def test_unit5_a_bare_raise_and_a_return_hash_their_own_node(tmp_path: Path) -> 
 
 
 def test_unit6_identical_sites_in_one_function_get_k1_and_k2(tmp_path: Path) -> None:
-    body = "def f():\n    if 1:\n        raise ConfigError('x')\n    raise ConfigError('x')\n"
+    # same text AND same guard: nothing but the source order tells them apart, so k numbers them
+    body = "def f(a):\n    if a:\n        raise ConfigError('x')\n    if a:\n        raise ConfigError('x')\n"
     found = sites_of(tmp_path, body)
     assert [s.k for s in found] == [1, 2]
     assert found[0].key.endswith("::1") and found[1].key.endswith("::2")
     assert len({s.key for s in found}) == 2
+
+
+SWAP_A = "def f(x, y, m):\n    if x:\n        raise ConfigError(m)\n    if y:\n        raise ConfigError(m)\n"
+SWAP_B = "def f(x, y, m):\n    if y:\n        raise ConfigError(m)\n    if x:\n        raise ConfigError(m)\n"
+
+
+def test_f1_swapping_two_same_text_blocks_keeps_each_key_with_its_guard(tmp_path: Path) -> None:
+    """Design F1: identical constructions were keyed by source order only, so swapping the blocks moved the labels unseen.
+    Killing mutant: M32 (the hash is not seeded with the guard)."""
+    (tmp_path / "a").mkdir()
+    (tmp_path / "b").mkdir()
+    before = sorted(sites_of(tmp_path / "a", SWAP_A), key=lambda s: s.lineno)
+    after = sorted(sites_of(tmp_path / "b", SWAP_B), key=lambda s: s.lineno)
+    assert [s.lineno for s in before] == [4, 6] and [s.lineno for s in after] == [4, 6]
+    assert len({s.key for s in before}) == 2
+    # the block guarded by x is first before the swap and second after it; its key must not change
+    assert before[0].key == after[1].key
+    assert before[1].key == after[0].key
+    assert before[0].key.endswith("::1") and before[1].key.endswith("::1")
+
+
+def test_f1_the_labels_follow_the_guard_when_the_blocks_are_swapped(tmp_path: Path) -> None:
+    """The row of the block guarded by ``x`` is still found for that block; with order keys the two classes would trade places."""
+    (tmp_path / "a").mkdir()
+    (tmp_path / "b").mkdir()
+    before = sorted(sites_of(tmp_path / "a", SWAP_A), key=lambda s: s.lineno)
+    after = sorted(sites_of(tmp_path / "b", SWAP_B), key=lambda s: s.lineno)
+    row = need("Row")
+    table = [
+        row(before[0].key, "OPERATOR", "the x block"),
+        row(before[1].key, "FOREIGN", "the y block"),
+    ]
+    report = need("compare")(after, table)
+    assert report.ok
+    by_key = {r.site: r.klass for r in table}
+    assert by_key[after[1].key] == "OPERATOR"  # the x block is second now and keeps its class
+
+
+def test_f1_a_new_same_text_site_changes_the_key_of_the_old_one_so_the_table_must_be_reviewed(
+    tmp_path: Path,
+) -> None:
+    (tmp_path / "a").mkdir()
+    alone = only(tmp_path / "a", "def f(x, m):\n    if x:\n        raise ConfigError(m)\n")
+    pair = sites_of(tmp_path, SWAP_A)
+    assert alone.key not in {s.key for s in pair}
+
+
+def test_f1_a_site_without_a_twin_keeps_the_plain_node_hash(tmp_path: Path) -> None:
+    site = only(tmp_path, "def f(x, m):\n    if x:\n        raise ConfigError(m)\n")
+    assert site.snippet_hash == need("node_hash")(call_node("ConfigError(m)"))
+
+
+def test_f1_guards_tell_apart_branches_loops_handlers_and_withs(tmp_path: Path) -> None:
+    body = (
+        "def f(x, y):\n    if x:\n        raise ConfigError('s')\n    else:\n        raise ConfigError('s')\n"
+        "    for i in x:\n        raise ConfigError('s')\n    for i in y:\n        raise ConfigError('s')\n"
+        "    try:\n        pass\n    except KeyError:\n        raise ConfigError('s')\n"
+        "    except IndexError:\n        raise ConfigError('s')\n"
+        "    with x:\n        raise ConfigError('s')\n    with y:\n        raise ConfigError('s')\n"
+    )
+    found = sites_of(tmp_path, body)
+    assert len(found) == 8
+    assert len({s.key for s in found}) == 8
+    assert all(s.key.endswith("::1") for s in found)
 
 
 # --------------------------------------------------------------------------------------------------------------------
@@ -997,17 +1074,19 @@ def test_hostile_init_assigning_args_or_missing_super_is_refused(tmp_path: Path)
     )
 
 
+MIG_ERR = (
+    f"{HEAD}\n\ndef msg(problems):\n    return 'inconsistent: ' + '; '.join(problems)\n\n\n"
+    f"class MigErr(ConfigError):\n    {HOLD}\n\n    def __init__(self, problems):\n"
+    "        self.problems = tuple(problems)\n        super().__init__(msg(self.problems))\n\n"
+    "    def __reduce__(self):\n        return (type(self), (self.problems,))\n\n\n"
+    "def check(p):\n    raise MigErr(p)\n"
+)
+
+
 def test_hostile_a_class_shaped_like_the_migration_number_error_gives_a_row_for_super(
     tmp_path: Path,
 ) -> None:
-    text = (
-        f"{HEAD}\n\nclass MigErr(ConfigError):\n    {HOLD}\n\n    def __init__(self, problems):\n"
-        "        self.problems = tuple(problems)\n        shown = list(self.problems[:3])\n"
-        "        super().__init__('inconsistent: ' + '; '.join(shown))\n\n    def __reduce__(self):\n"
-        "        return (type(self), (self.problems,))\n\n\n"
-        "def check(p):\n    raise MigErr(p)\n"
-    )
-    found = need("scan")(make(tmp_path, {"a.py": text}))
+    found = need("scan")(make(tmp_path, {"a.py": MIG_ERR}))
     assert sorted(s.symbol for s in found) == ["MigErr.__init__", "check"]
     init = next(s for s in found if s.symbol == "MigErr.__init__")
     assert (init.auto_class, init.auto_reason, init.kind) == (
@@ -1015,6 +1094,117 @@ def test_hostile_a_class_shaped_like_the_migration_number_error_gives_a_row_for_
         "unproven-origin",
         "MigErr",
     )
+
+
+def test_the_real_migration_number_error_keeps_the_original_bn8_shape() -> None:
+    """Order 130: no local, no ``if``, no helper inside ``__init__``; one attribute, one ``super().__init__`` call."""
+    tree = ast.parse((SRC / "store" / "migration_numbers.py").read_text(encoding="utf-8"))
+    cls = next(
+        n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == "MigrationNumberError"
+    )
+    init = next(n for n in cls.body if isinstance(n, ast.FunctionDef) and n.name == "__init__")
+    kinds = [type(st).__name__ for st in init.body]
+    assert kinds == ["AnnAssign", "Expr"], kinds
+    assert [n.name for n in cls.body if isinstance(n, ast.FunctionDef)] == [
+        "__init__",
+        "__reduce__",
+    ]
+
+
+INIT_BODIES = {
+    "local": "        shown = list(p)\n        super().__init__('x' + ';'.join(shown))\n",
+    "if": "        if p:\n            self.p = p\n        super().__init__('x')\n",
+    "for": "        for q in p:\n            self.p = q\n        super().__init__('x')\n",
+    "args": "        super().__init__('x')\n        self.args = (p,)\n",
+    "setattr": "        super().__init__('x')\n        setattr(self, 'args', (p,))\n",
+    "object-setattr": "        super().__init__('x')\n        object.__setattr__(self, 'args', (p,))\n",
+    "dict": "        super().__init__('x')\n        self.__dict__['args'] = (p,)\n",
+    "vars": "        super().__init__('x')\n        vars(self)['args'] = (p,)\n",
+    "add-note": "        super().__init__('x')\n        self.add_note(p)\n",
+    "args-read": "        super().__init__('x')\n        self.p = self.args\n",
+    "alias": "        me = self\n        super().__init__('x')\n        me.args = (p,)\n",
+    "unpack": "        super().__init__('x')\n        self.a, self.b = p, p\n",
+    "subscript": "        super().__init__('x')\n        self.p['k'] = p\n",
+    "setattr-in-assign": "        self.p = setattr(self, 'args', (p,))\n        super().__init__('x')\n",
+    "dict-in-assign": "        self.p = self.__dict__.update(args=(p,))\n        super().__init__('x')\n",
+    "add-note-in-assign": "        self.p = self.add_note(p)\n        super().__init__('x')\n",
+    "vars-in-super": "        super().__init__('x', vars(self).update(args=(p,)))\n",
+    "args-in-super": "        super().__init__(*self.args)\n",
+    "object-in-assign": "        self.p = object.__setattr__(self, 'args', (p,))\n        super().__init__('x')\n",
+    "call-statement": "        super().__init__('x')\n        print(p)\n",
+    "with": "        with p:\n            super().__init__('x')\n",
+    "try": "        try:\n            super().__init__('x')\n        except KeyError:\n            self.p = p\n",
+}
+
+
+@pytest.mark.parametrize("body", list(INIT_BODIES.values()), ids=list(INIT_BODIES))
+def test_hostile_init_bodies_beyond_attributes_and_super_are_refused(
+    tmp_path: Path, body: str
+) -> None:
+    text = f"{HEAD}\n\nclass A(ConfigError):\n    def __init__(self, p):\n{body}"
+    refuses(tmp_path, {"a.py": text})
+
+
+def test_a_docstring_and_annotated_attribute_in_init_are_accepted(tmp_path: Path) -> None:
+    text = (
+        f"{HEAD}\n\nclass A(ConfigError):\n    def __init__(self, p):\n        'doc'\n"
+        "        self.p: tuple = tuple(p)\n        self.q = self.p\n        super().__init__('x')\n"
+    )
+    assert [s.symbol for s in need("scan")(make(tmp_path, {"a.py": text}))] == ["A.__init__"]
+
+
+RED = "    def __reduce__(self):\n"
+REDUCES = {
+    "reduce-ex": "    def __reduce_ex__(self, protocol):\n        return (type(self), (self.problems,))\n",
+    "getstate": "    def __getstate__(self):\n        return {}\n",
+    "setstate": "    def __setstate__(self, state):\n        self.args = state\n",
+    "other-class": RED + "        return (Other, (self.problems,))\n",
+    "three-tuple": RED + "        return (type(self), (self.problems,), {'a': 1})\n",
+    "helper": RED + "        return rebuild(self)\n",
+    "different-helper": RED + "        return (type(self), (rebuild(self.problems),))\n",
+    "attr-of-attr": RED + "        return (type(self), (self.problems.x,))\n",
+    "str-self": RED + "        return (type(self), (str(self),))\n",
+    "empty-args": RED + "        return (type(self), ())\n",
+    "extra-statement": RED
+    + "        self.problems = ()\n        return (type(self), (self.problems,))\n",
+    "dunder-attr": RED + "        return (type(self), (self.__dict__,))\n",
+    "decorated": "    @property\n" + RED + "        return (type(self), (self.problems,))\n",
+    "extra-arg": "    def __reduce__(self, x=1):\n        return (type(self), (self.problems,))\n",
+    "async": "    async def __reduce__(self):\n        return (type(self), (self.problems,))\n",
+    "assigned": "    __reduce__ = helper\n",
+}
+
+
+@pytest.mark.parametrize("body", list(REDUCES.values()), ids=list(REDUCES))
+def test_hostile_pickle_helpers_other_than_the_one_exact_reduce_are_refused(
+    tmp_path: Path, body: str
+) -> None:
+    text = (
+        f"{HEAD}\n\nOther = type\n\n\ndef helper(self):\n    return 1\n\n\ndef rebuild(x):\n    return x\n\n\n"
+        f"class A(ConfigError):\n    def __init__(self, problems):\n        self.problems = problems\n"
+        f"        super().__init__('x')\n\n{body}"
+    )
+    refuses(tmp_path, {"a.py": text})
+
+
+def test_the_one_exact_reduce_is_accepted_with_a_docstring_and_two_attributes(
+    tmp_path: Path,
+) -> None:
+    text = (
+        f"{HEAD}\n\nclass A(ConfigError):\n    def __init__(self, a, b):\n        self.a = a\n        self.b = b\n"
+        "        super().__init__('x')\n\n    def __reduce__(self):\n        'rebuild'\n"
+        "        return (type(self), (self.a, self.b))\n"
+    )
+    assert [s.symbol for s in need("scan")(make(tmp_path, {"a.py": text}))] == ["A.__init__"]
+
+
+def test_two_reduce_methods_are_refused(tmp_path: Path) -> None:
+    one = "    def __reduce__(self):\n        return (type(self), (self.problems,))\n"
+    text = (
+        f"{HEAD}\n\nclass A(ConfigError):\n    def __init__(self, problems):\n        self.problems = problems\n"
+        f"        super().__init__('x')\n\n{one}\n{one}"
+    )
+    refuses(tmp_path, {"a.py": text})
 
 
 def test_hostile_non_ascii_symbol_is_refused(tmp_path: Path) -> None:
@@ -1100,3 +1290,64 @@ def test_csv_module_is_used_with_the_stated_columns() -> None:
     assert need("REASON_MAX") == 200
     assert need("HASH_LEN") == 16
     assert tuple(need("CLASSES")) == ("LITERAL", "OPERATOR", "FOREIGN")
+
+
+# --------------------------------------------------------------------------------------------------------------------
+# design F3: a site class used as a value
+
+
+VALUE_USES = {
+    "variable": "kind = ConfigError\n\n\ndef f():\n    raise kind('x')\n",
+    "argument": "def raise_as(cls, text):\n    raise cls(text)\n\n\ndef f():\n    raise_as(ConfigError, 'x')\n",
+    "tuple": "def f():\n    return (type(None), ConfigError)\n",
+    "list": "ERRORS = [ConfigError]\n",
+    "dict": "ERRORS = {'a': ConfigError}\n",
+    "partial": "import functools\n\nmake = functools.partial(ConfigError, 'x')\n",
+    "return": "def f():\n    return ConfigError\n",
+    "attribute": "import pkg.errors as errors\n\n\ndef f():\n    return errors.ConfigError\n",
+    "dunder-call": "def f():\n    raise ConfigError.__call__('x')\n",
+    "new": "def f():\n    raise ConfigError.__new__(ConfigError, 'x')\n",
+    "lambda": "make = lambda: ConfigError\n",
+    "comprehension": "def f(xs):\n    return [ConfigError for _ in xs]\n",
+    "default": "def f(cls=ConfigError):\n    raise cls('x')\n",
+    "type-call": "def f():\n    raise type(ConfigError)('x')\n",
+    "subclass-by-name": "def f(e):\n    return e.__class__ is ConfigError\n",
+}
+
+
+@pytest.mark.parametrize("body", list(VALUE_USES.values()), ids=list(VALUE_USES))
+def test_f3_a_site_class_used_as_a_value_is_refused(tmp_path: Path, body: str) -> None:
+    """Design F3. Killing mutant: M33 (the value check is removed)."""
+    refuses(tmp_path, {"m.py": HEAD + body})
+
+
+def test_f3_a_subclass_and_an_alias_used_as_a_value_are_refused(tmp_path: Path) -> None:
+    sub = "class Sub(ConfigError):\n    pass\n\n\nkind = Sub\n"
+    refuses(tmp_path, {"m.py": HEAD + sub})
+    (tmp_path / "x").mkdir()
+    alias = "from pkg.errors import ConfigError as CE\n\nkind = CE\n"
+    refuses(tmp_path / "x", {"m.py": alias})
+
+
+ALLOWED_USES = {
+    "call": "def f():\n    raise ConfigError('x')\n",
+    "bare-raise": "def f():\n    raise ConfigError\n",
+    "except": "def f():\n    try:\n        pass\n    except ConfigError:\n        pass\n",
+    "except-tuple": "def f():\n    try:\n        pass\n    except (KeyError, ConfigError):\n        pass\n",
+    "except-as": "def f():\n    try:\n        pass\n    except ConfigError as exc:\n        raise exc\n",
+    "isinstance": "def f(e):\n    return isinstance(e, ConfigError)\n",
+    "isinstance-tuple": "def f(e):\n    return isinstance(e, (KeyError, ConfigError))\n",
+    "isinstance-union": "def f(e):\n    return isinstance(e, KeyError | ConfigError)\n",
+    "issubclass": "def f(c):\n    return issubclass(c, ConfigError)\n",
+    "base": "class Sub(ConfigError):\n    pass\n",
+    "annotation": "def f(e: ConfigError) -> ConfigError:\n    return e\n",
+    "annotation-generic": "ERRORS: list[ConfigError] = []\n",
+    "class-name": "NAME = ConfigError.__name__\n",
+    "classmethod": "def f():\n    return ConfigError.from_cause\n",
+    "attribute-call": "import pkg.errors as errors\n\n\ndef f():\n    raise errors.ConfigError('x')\n",
+}
+
+
+@pytest.mark.parametrize("body", list(ALLOWED_USES.values()), ids=list(ALLOWED_USES))
+def test_f3_the_allowed_uses_of_a_site_class_still_scan(tmp_path: Path, body: str) -> None:
+    need("scan")(make(tmp_path, {"m.py": HEAD + body}))

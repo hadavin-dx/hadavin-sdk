@@ -77,16 +77,24 @@ _HIDDEN_CATEGORIES = frozenset({"Cc", "Cf", "Zl", "Zp"})
 _ASCII_CONTROL = re.compile(r"[\x00-\x08\x0b\x0e-\x1f\x7f]")
 
 
+def _problems_message(problems: Sequence[str]) -> str:
+    """The message of `MigrationNumberError`: at most `MAX_PROBLEMS_SHOWN` problems, then a count of the rest."""
+    shown = list(problems[:MAX_PROBLEMS_SHOWN])
+    if len(problems) > MAX_PROBLEMS_SHOWN:
+        shown.append(f"and {len(problems) - MAX_PROBLEMS_SHOWN} more")
+    return "migrations are inconsistent: " + "; ".join(shown)
+
+
 class MigrationNumberError(ConfigError):
     """The migration files or the ledger are inconsistent. `problems` holds all of them; the message shows at most
-    `MAX_PROBLEMS_SHOWN` and a count of the rest."""
+    `MAX_PROBLEMS_SHOWN` and a count of the rest (see `_problems_message`).
+
+    The body is kept to what the ConfigError site table scan (BN-8) allows: one attribute, one `super().__init__` call and
+    the single-shape `__reduce__` below."""
 
     def __init__(self, problems: Sequence[str]):
         self.problems: tuple[str, ...] = tuple(problems)
-        shown = list(self.problems[:MAX_PROBLEMS_SHOWN])
-        if len(self.problems) > MAX_PROBLEMS_SHOWN:
-            shown.append(f"and {len(self.problems) - MAX_PROBLEMS_SHOWN} more")
-        super().__init__("migrations are inconsistent: " + "; ".join(shown))
+        super().__init__(_problems_message(self.problems))
 
     def __reduce__(self):
         # `copy` and `pickle` rebuild an exception as `cls(*self.args)`; `args` holds the message, which would become
