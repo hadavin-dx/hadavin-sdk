@@ -50,9 +50,10 @@ SSS = chr(0x1F75C)  # weight 3: its fold is three letters (the one table value o
 FDFA = chr(0xFDFA)  # weight 18: NFKC makes 18 characters from it
 # The two coverage sentences. Each must stand WORD FOR WORD (whitespace aside) in every place that states it.
 SCAN_COVERAGE = (
-    "A value with NO ASCII letter or digit (Chinese, Arabic, Hindi, Thai) is found by the script views of ``fold_views`` (the non-ASCII letters and "
-    "marks of the text, with whitespace, punctuation, symbols and ASCII characters removed), so an inserted space, hyphen, line break, ASCII letter or "
-    "mark does not hide it; an inserted look-alike letter of that script, or a respelling of it, is not covered."
+    "A value with NO ASCII letter or digit (Chinese, Arabic, Hindi, Thai) is found by the script views of ``fold_views`` (the non-ASCII letters of the "
+    "value's own scripts, with whitespace, punctuation, symbols, ASCII characters and the letters of every other script removed), so an inserted "
+    "space, hyphen, line break, ASCII letter, mark or foreign-script letter does not hide it; a letter of the SAME script inserted, or a respelling "
+    "of it, is not covered."
 )
 NAME_COVERAGE = (
     "NAME RULES COVER: small capitals, negative circled and negative squared letters, the crossed negative squared P, regional indicator letters, "
@@ -1184,7 +1185,7 @@ def test_the_hidden_channel_signal_refuses_what_is_not_text():
 
 
 # ---- names ---------------------------------------------------------------------------------------------------------------------------------
-def test_the_public_names_are_exactly_the_listed_twenty_two():
+def test_the_public_names_are_exactly_the_listed_twenty_three():
     assert sorted(textnorm.__all__) == sorted(
         [
             "FILLERS",
@@ -1209,9 +1210,10 @@ def test_the_public_names_are_exactly_the_listed_twenty_two():
             "scan_needles",
             "squeeze",
             "squeeze_views",
+            "value_scripts",
         ]
     )
-    assert len(textnorm.__all__) == len(set(textnorm.__all__)) == 22
+    assert len(textnorm.__all__) == len(set(textnorm.__all__)) == 23
 
 
 def test_every_name_the_module_defines_is_public_and_listed_or_private():
@@ -1721,7 +1723,10 @@ def test_the_marks_dropped_views_are_at_most_six_for_squeeze_and_nine_for_fold_a
         "\u0928\u092e\u0938\u094d\u0924\u0947\u0903",
     ):
         for views, limit in (
-            (textnorm.fold_views(text, casefold=True), 9),
+            (
+                textnorm.fold_views(text, casefold=True, scripts=textnorm.value_scripts(text)),
+                9,
+            ),
             (textnorm.squeeze_views(text), 6),
         ):
             assert 1 <= len(views) <= limit and len(set(views)) == len(views), (
@@ -1792,8 +1797,9 @@ def test_the_spelling_variants_keep_a_spacing_combining_mark_while_the_scan_view
 def _scan_holds(secret, text):
     """The documented two-view scan, with the refusal of an empty needle: True when some view of ``text`` (``fold_views``, then
     ``squeeze_views``) holds a NON-EMPTY view of ``secret`` taken the same way."""
+    scripts = textnorm.value_scripts(secret)
     for views_of in (
-        lambda t: textnorm.fold_views(t, casefold=True),
+        lambda t: textnorm.fold_views(t, casefold=True, scripts=scripts),
         textnorm.squeeze_views,
     ):
         needles = [n for n in views_of(secret) if n]
@@ -1852,14 +1858,33 @@ INSERTED_TEXTS = {
 
 
 def _scan(value, text):
-    """The documented scan, whole: the needles of ``scan_needles(value)`` against every ``fold_views(text, casefold=True)`` and
-    ``squeeze_views(text)`` view. ``ViewTooShort`` propagates (a caller refuses)."""
+    """The documented scan, whole: the needles of ``scan_needles(value)`` against every ``fold_views(text, casefold=True, collapse_ws=True,
+    scripts=value_scripts(value))`` and ``squeeze_views(text)`` view. ``ViewTooShort`` propagates (a caller refuses)."""
     needles = textnorm.scan_needles(value)
     views = (
-        *textnorm.fold_views(text, casefold=True, collapse_ws=True),
+        *textnorm.fold_views(
+            text, casefold=True, collapse_ws=True, scripts=textnorm.value_scripts(value)
+        ),
         *textnorm.squeeze_views(text),
     )
     return any(n in v for n in needles for v in views)
+
+
+def _must_refuse(value, why):
+    """``scan_needles(value)`` must raise ``ViewTooShort``; otherwise fail with ``why`` as the first line of the report."""
+    try:
+        needles = textnorm.scan_needles(value)
+    except textnorm.ViewTooShort:
+        return
+    raise AssertionError(f"scan_needles accepted {value!r}: {why} (needles {needles})")
+
+
+def _accepted(value, why):
+    """``scan_needles(value)``, failing with ``why`` as the first line of the report when it raises ``ViewTooShort``."""
+    try:
+        return textnorm.scan_needles(value)
+    except textnorm.ViewTooShort as caught:
+        raise AssertionError(f"scan_needles refused {value!r}: {why} ({caught})") from None
 
 
 def test_a_separator_an_ascii_letter_or_a_mark_inserted_into_a_chinese_hindi_or_thai_value_does_not_hide_it():
@@ -1906,63 +1931,193 @@ def test_a_value_in_a_script_view_is_found_across_every_inserted_text_at_once():
         pieces = [value[0]] + [c for c in value[1:]]
         hidden = " q-\n".join(pieces)
         assert _scan(value, hidden), f"several insertions hide {value!r}"
+        scripts = textnorm.value_scripts(value)
         assert (
-            textnorm.fold_views(value, casefold=True, collapse_ws=True)[-1]
-            in textnorm.fold_views(hidden, casefold=True, collapse_ws=True)[-1]
+            textnorm.fold_views(value, casefold=True, collapse_ws=True, scripts=scripts)[-1]
+            in textnorm.fold_views(hidden, casefold=True, collapse_ws=True, scripts=scripts)[-1]
         ), "the last (script) view of the text does not hold the value"
 
 
-def test_the_script_view_keeps_only_non_ascii_letters_and_marks_and_is_left_out_when_empty_or_repeated():
-    views = textnorm.fold_views("ab \u5bc6-\u7801 7", casefold=True)
+def test_the_script_view_keeps_only_letters_of_the_given_scripts_and_is_left_out_when_empty_or_repeated():
+    """fix7 (round 7, MAJOR-1): the script view holds LETTERS only. The old docstrings said "letters and marks", but no mark can reach the view
+    (Mn and Me are dropped, Mc, Lm and Sk are removed before the marks-dropped views are made), so the real rule is letters of the value's scripts."""
+    han = frozenset({"HAN"})
+    views = textnorm.fold_views("ab \u5bc6-\u7801 7", casefold=True, scripts=han)
     assert "\u5bc6\u7801" in views, (
         "the script view of a text with a separator, ASCII letters and a digit is missing"
     )
-    assert textnorm._script_view("ab \u5bc6-\u7801 7!") == "\u5bc6\u7801"
+    assert textnorm._script_view("ab \u5bc6-\u7801 7!", han) == "\u5bc6\u7801"
+    # a value of Latin letters that the table leaves alone has the group LATIN: the ASCII letters of a text are still not in the view
+    assert textnorm._script_view("\u0294x\u0295Y", frozenset({"LATIN"})) == "\u0294\u0295", (
+        "the script view keeps an ASCII letter"
+    )
+    # not a letter: an ideographic full stop (Po), a currency sign (Sc), an emoji (So), the ideographic zero (Nl), a Chinese numeral is a letter
+    # (U+2E80 and U+31C0 are symbols whose name starts with CJK, so only the letter test keeps them out)
+    for non_letter in ("\u3002", "\u20ac", "\U0001f600", "\u3007", "\u2460", "\u2e80", "\u31c0"):
+        assert textnorm._script_view("\u5bc6" + non_letter + "\u7801", han) == "\u5bc6\u7801", (
+            f"the script view keeps the non-letter U+{ord(non_letter):04X}"
+        )
+    thai = frozenset({"THAI"})  # U+0E3F is a currency symbol whose name starts with THAI
+    assert textnorm._script_view("\u0e01\u0e3f\u0e02", thai) == "\u0e01\u0e02", (
+        "the script view keeps the non-letter U+0E3F"
+    )
     for ascii_text in ("plain", "pass word 12", "-- ++"):
-        assert all(v.isascii() for v in textnorm.fold_views(ascii_text, casefold=True)), ascii_text
-        assert all(v for v in textnorm.fold_views(ascii_text, casefold=True)[1:]), (
+        assert all(v.isascii() for v in textnorm.fold_views(ascii_text, casefold=True, scripts=han))
+        assert all(v for v in textnorm.fold_views(ascii_text, casefold=True, scripts=han)[1:]), (
             "an empty script view was kept"
         )
-    assert len(textnorm.fold_views("plain", casefold=True)) == 1, "an ASCII text got a script view"
-    chinese_views = textnorm.fold_views(CHINESE, casefold=True)
+    assert len(textnorm.fold_views("plain", casefold=True, scripts=han)) == 1, (
+        "an ASCII text got a script view"
+    )
+    chinese_views = textnorm.fold_views(CHINESE, casefold=True, scripts=han)
     assert chinese_views == (CHINESE,), "the script view of a text that is only script is repeated"
+    assert textnorm.fold_views(CHINESE, casefold=True) == (CHINESE,)
+    assert textnorm.fold_views("ab \u5bc6-\u7801", casefold=True)[-1] == "ab \u5bc6-\u7801", (
+        "fold_views without scripts made a script view"
+    )
 
 
-def test_the_minimum_view_length_is_one_number_for_every_view_and_a_short_value_is_refused(
+def test_the_script_view_of_a_hindi_value_is_its_letters_with_the_vowel_signs_gone():
+    """fix7 (round 7, MAJOR-1): the real rule, shown on Hindi "password". U+093E (aa) is a spacing mark (Mc): the marks-dropped views remove it
+    before the fold, and the virama U+094D is a non-spacing mark (Mn): the fold drops it. What is left is the consonant skeleton. The scan still finds
+    the value, and a text with the vowel signs left out is found too: the skeleton is the same (an over-match, the safe side)."""
+    assert unicodedata.category("\u093e") == "Mc" and unicodedata.category("\u094d") == "Mn"
+    scripts = textnorm.value_scripts(HINDI)
+    assert scripts == {"DEVANAGARI"}
+    skeleton = "\u092a\u0938\u0935\u0930\u0921"
+    views = textnorm.fold_views(HINDI, casefold=True, scripts=scripts)
+    assert skeleton in views, "the script view of the Hindi value is not its consonant skeleton"
+    spelling = textnorm.fold(HINDI, casefold=True)
+    assert spelling in views and spelling != skeleton, "the spelling view that keeps the Mc is gone"
+    assert "\u093e" in spelling and "\u094d" not in spelling
+    assert textnorm._script_view(spelling, scripts) == skeleton, "a mark is in a script view"
+    assert all(unicodedata.category(ch)[0] == "L" for ch in skeleton), "a mark is in the skeleton"
+    assert _scan(HINDI, "x " + skeleton + " y"), "the skeleton alone is not found"
+    doc = _squash(textnorm.__doc__ or "") + _squash(textnorm.fold_views.__doc__ or "")
+    assert "no mark is ever in a script view" in doc, (
+        "the module docstring does not say that no mark reaches a script view"
+    )
+    assert "letters and marks" not in doc and "letters or marks" not in doc, (
+        "a docstring says again that the script view keeps marks"
+    )
+    log = ROOT / "CHANGELOG.md"
+    if log.exists():
+        fix7 = log.read_text(encoding="utf-8").split("`fold4` fix7", 1)[-1]
+        assert "keeps the non-ASCII letters and marks" not in fix7
+
+
+def test_the_minimum_view_length_is_one_number_per_kind_of_view_and_a_short_value_is_refused(
     monkeypatch,
 ):
-    """p1a6-001: ``defaults.TEXTNORM_MIN_VIEW_CHARS`` is read when ``scan_needles`` runs and applies to the spelling-variant views, the marks-dropped views,
-    the script views and the squeeze views alike. The error is a ``TextnormError`` (not a ``ValueError``) and carries no part of the value."""
-    assert defaults.TEXTNORM_MIN_VIEW_CHARS == 2
-    for short in ("", "x", "\u200b", "\u5bc6", "\u5bc6 ", "7", " \u5bc6\n"):
+    """fix7 (round 7, MAJOR-B): ``defaults`` holds one minimum per KIND of view: spelling 2, squeeze 4, script 4, ideograph 2. Each is read when
+    ``scan_needles`` runs. The error is a ``TextnormError`` (not a ``ValueError``) and carries no part of the value."""
+    assert (
+        defaults.TEXTNORM_MIN_SPELLING_CHARS,
+        defaults.TEXTNORM_MIN_SQUEEZE_CHARS,
+        defaults.TEXTNORM_MIN_SCRIPT_CHARS,
+        defaults.TEXTNORM_MIN_IDEOGRAPH_CHARS,
+    ) == (2, 4, 4, 2)
+    assert not hasattr(defaults, "TEXTNORM_MIN_VIEW_CHARS"), "the one global minimum is back"
+    for short in (
+        "",
+        "x",
+        "\u200b",
+        "\u5bc6",
+        "\u5bc6 ",
+        "7",
+        " \u5bc6\n",
+        "Li",
+        "Amy",
+        "\u0e23\u0e2b\u0e31",
+    ):
         try:
             textnorm.scan_needles(short)
         except textnorm.ViewTooShort as caught:
             assert isinstance(caught, TextnormError) and not isinstance(caught, ValueError)
             assert short.strip() == "" or short not in str(caught), "the message holds the value"
         else:
-            raise AssertionError(
-                f"scan_needles accepted {short!r}: a view is shorter than the minimum {defaults.TEXTNORM_MIN_VIEW_CHARS}"
-            )
-    value = "\u5bc6\u7801\u6d4b\u8bd5abc"
+            raise AssertionError(f"scan_needles accepted {short!r}: no view is long enough")
+    value = "\u5bc6\u7801\u6d4b\u8bd5abcd"
     families = {
-        "spelling variant": value.casefold(),
+        "spelling view": value.casefold(),
         "script view": CHINESE,
-        "squeeze view": "ABC",
+        "squeeze view": "ABCD",
     }
-    for minimum, expected_present in ((2, 3), (3, 3), (4, 2), (7, 1)):
-        monkeypatch.setattr(defaults, "TEXTNORM_MIN_VIEW_CHARS", minimum)
+    for squeeze_min, script_min, spelling_min, expected in (
+        (4, 4, 2, {"spelling view", "script view", "squeeze view"}),
+        (5, 4, 2, {"spelling view", "script view"}),
+        (4, 5, 2, {"spelling view", "squeeze view"}),
+        (4, 4, 9, {"script view", "squeeze view"}),
+        (4, 4, 8, {"spelling view", "script view", "squeeze view"}),
+    ):
+        monkeypatch.setattr(defaults, "TEXTNORM_MIN_SQUEEZE_CHARS", squeeze_min)
+        monkeypatch.setattr(defaults, "TEXTNORM_MIN_SCRIPT_CHARS", script_min)
+        monkeypatch.setattr(defaults, "TEXTNORM_MIN_SPELLING_CHARS", spelling_min)
         needles = textnorm.scan_needles(value)
-        assert all(len(n) >= minimum for n in needles), (
-            f"a needle is shorter than the minimum {minimum}: {needles}"
+        present = {name for name, v in families.items() if v in needles}
+        assert present == expected, (
+            f"wrong views at the minimums {(squeeze_min, script_min, spelling_min)}: needles {needles}, kinds {present}"
         )
-        present = [name for name, v in families.items() if v in needles]
-        assert len(present) == expected_present, (
-            f"wrong views at the minimum {minimum}: needles {needles}, families {present}"
+    monkeypatch.setattr(defaults, "TEXTNORM_MIN_SQUEEZE_CHARS", 5)
+    monkeypatch.setattr(defaults, "TEXTNORM_MIN_SCRIPT_CHARS", 5)
+    _must_refuse(value, "no squeeze or script view reaches its minimum of 5")
+
+
+def test_a_squeeze_view_needs_four_characters_so_a_short_latin_name_is_refused():
+    """fix7 (MAJOR-B): the squeeze view of a 2 or 3 letter Latin value ("Li", "Amy") is found in almost any English text; the old single minimum of 2
+    let it in. Now it is refused (the caller uses its own exact search), and four letters are scanned."""
+    for name, text in (("Li", "a believer"), ("Amy", "ha my day")):
+        assert name.upper() in textnorm.squeeze_views(text)[0], (
+            "the row does not show the over-match"
         )
-    monkeypatch.setattr(defaults, "TEXTNORM_MIN_VIEW_CHARS", 8)
-    with pytest.raises(textnorm.ViewTooShort):
-        textnorm.scan_needles(value)
+        _must_refuse(name, "a squeeze view of fewer than four letters is a needle")
+    assert "ANNA" in _accepted("Anna", "a four-letter squeeze view is not a needle"), (
+        "a four-letter squeeze view is not a needle"
+    )
+    assert not _scan("Anna", "the family")
+    assert _scan("Anna", "x A-n n.a y")
+
+
+def test_a_script_view_needs_four_letters_but_two_ideographs_are_a_name():
+    """fix7 (MAJOR-B): the script minimum is tied to the value's own script letters. A 3-letter Thai or Cyrillic value gives a 3-letter
+    needle that any text of that script holds: refused. A value that is only Han ideographs may be two long (a name); one ideograph is refused. A
+    mixed value ("pw" plus ideographs) has a script part that alone is a weak needle: it needs four."""
+    thai3 = "\u0e01\u0e02\u0e04"
+    thai4 = "\u0e01\u0e02\u0e04\u0e07"
+    cyr3 = "\u0436\u0434\u0436"
+    for value in (thai3, cyr3, "\u674e", "\u674e\U0001f600"):
+        _must_refuse(value, "a script view of fewer than four letters is a needle")
+    assert _accepted(thai4, "a four-letter script view is not a needle") == (thai4,)
+    assert _accepted("\u674e\u660e", "a two-ideograph name is not a needle") == ("\u674e\u660e",)
+    assert _accepted("\u674e \u660e", "a two-ideograph name with a space is not a needle") == (
+        "\u674e \u660e",
+        "\u674e\u660e",
+    ), "the spelling view of a two-ideograph name with a space is not a needle"
+    for mixed in ("pw\u4e2d\u6587", "\u4e2d\u6587" + "7", "w\u4e2d"):
+        _must_refuse(mixed, "the script part of a mixed value is a needle at two letters")
+    assert "\u4e2d\u6587\u6d4b\u8bd5" in _accepted(
+        "pw\u4e2d\u6587\u6d4b\u8bd5", "a four-letter script part of a mixed value is not a needle"
+    ), "a four-letter script part of a mixed value is not a needle"
+    # the ideograph minimum applies to a value of Han alone, not to Han plus kana
+    _must_refuse("\u674e\u3042", "the ideograph minimum was used for Han plus kana")
+
+
+def test_a_value_found_only_by_a_view_that_keeps_separators_is_refused():
+    """fix7 (MINOR-C): "w" plus one ideograph, an ideograph plus "5", a one-letter name: the squeeze and script views are one character and dropped; the
+    exact-spelling view alone is left, and one inserted space would hide the value. ``scan_needles`` raises ``ViewTooShort`` and says so."""
+    for value in ("w\u5bc6", "\u5bc6" + "5", "ab", "a\u5bc6", "\u0e01 \u0e02"):
+        try:
+            textnorm.scan_needles(value)
+        except textnorm.ViewTooShort as caught:
+            assert "squeeze" in str(caught) and "script" in str(caught)
+            assert value not in str(caught)
+        else:
+            raise AssertionError(
+                f"scan_needles returned a needle for {value!r}, which a space hides"
+            )
+    assert textnorm.fold_views("w\u5bc6", casefold=True, collapse_ws=True)[0] == "w\u5bc6", (
+        "the spelling view the old code would have returned is not there"
+    )
 
 
 def test_scan_needles_returns_each_needle_once_and_checks_the_text_first():
@@ -1972,9 +2127,31 @@ def test_scan_needles_returns_each_needle_once_and_checks_the_text_first():
         textnorm.scan_needles(b"password")  # type: ignore[arg-type]
     with pytest.raises(TextTooLong):
         textnorm.scan_needles("a" * (CAP + 1))
-    assert "scan_needles" in (textnorm.__doc__ or "") and "TEXTNORM_MIN_VIEW_CHARS" in (
-        textnorm.__doc__ or ""
-    ), "the module docstring does not name the minimum for P1b"
+    doc = textnorm.__doc__ or ""
+    assert "scan_needles" in doc and all(
+        name in doc
+        for name in (
+            "TEXTNORM_MIN_SPELLING_CHARS",
+            "TEXTNORM_MIN_SQUEEZE_CHARS",
+            "TEXTNORM_MIN_SCRIPT_CHARS",
+            "TEXTNORM_MIN_IDEOGRAPH_CHARS",
+        )
+    ), "the module docstring does not name the minimums for P1b"
+
+
+def test_loose_loosens_only_the_squeeze_half_of_the_needles():
+    """fix7 (NIT): ``loose=True`` reads the digit-like letters as digits in the squeeze views only; the spelling views and the script views are the same."""
+    plain = textnorm.scan_needles("Password")
+    loose = textnorm.scan_needles("Password", loose=True)
+    assert "PASSWORD" in plain and "PA55W0RD" not in plain
+    assert "PA55W0RD" in loose, "loose=True did not loosen the squeeze half"
+    assert "password" in loose and "pa55w0rd" not in loose, "loose=True changed a spelling view"
+    mixed = "Password\u5bc6\u7801\u6d4b\u8bd5"
+    assert [n for n in textnorm.scan_needles(mixed) if not n.isascii()] == [
+        n for n in textnorm.scan_needles(mixed, loose=True) if not n.isascii()
+    ], "loose=True changed a script view"
+    doc = _squash(textnorm.scan_needles.__doc__ or "")
+    assert "loosens only the squeeze half" in doc, "the docstring does not say what loose loosens"
 
 
 def test_a_scan_built_without_casefold_misses_a_case_variant_and_the_rule_says_to_pass_casefold():
@@ -2063,6 +2240,265 @@ def test_step_three_keeps_every_whitespace_character_and_the_sk_wording_is_exact
     assert "a compatibility Sk" in doc and "line and paragraph separator, private-use" not in doc, (
         "the docstring step 3 or the Sk wording is the old one"
     )
+
+
+# ---- fix7: the script view per script, the minimum per kind, the documented limits ----------------------------------------------------
+ARABIC = "\u0643\u0644\u0645\u0629\u0645\u0631\u0648\u0631"  # "password" in Arabic: no letter of it reads as an ASCII letter
+HEBREW = "\u05d1\u05d2\u05d3\u05d4\u05d6\u05d7"  # six Hebrew letters that the table leaves alone (samekh would read "o")
+SCRIPT_VALUES = {
+    "Chinese": (CHINESE, "HAN"),
+    "Hindi": (HINDI, "DEVANAGARI"),
+    "Thai": (THAI, "THAI"),
+    "Arabic": (ARABIC, "ARABIC"),
+    "Hebrew": (HEBREW, "HEBREW"),
+}
+# one letter of another script each; the fold keeps every one of them as a non-ASCII letter (a test checks it)
+FOREIGN_LETTERS = {
+    "a Cyrillic zhe": "\u0436",
+    "a Greek delta": "\u03b4",
+    "a Hebrew alef": "\u05d0",
+    "a hiragana a": "\u3042",
+    "a katakana a": "\u30a2",
+    "a Latin glottal stop": "\u0294",
+    "a Latin wynn": "\u01bf",
+    "an Arabic beh": "\u0628",
+    "a Thai ko kai": "\u0e01",
+    "a Devanagari ka": "\u0915",
+    "a Han ideograph": "\u7684",
+}
+SAME_SCRIPT_LETTER = {
+    "Chinese": "\u7684",
+    "Hindi": "\u0915",
+    "Thai": "\u0e01",
+    "Arabic": "\u0628",
+    "Hebrew": "\u05d0",
+}
+
+
+def test_a_letter_of_another_script_inserted_at_any_position_does_not_hide_a_script_value():
+    """fix7 (round 7, MAJOR-A): the script view keeps only the letters of the VALUE's scripts. A Cyrillic zhe, a Greek delta, a Hebrew alef, a kana, a
+    Latin letter that the table does not fold, and the letters of the other scripts, inserted at EVERY position (also the first and the last) of a
+    Chinese, Hindi, Thai, Arabic and Hebrew value, are dropped like an ASCII letter; the value is found. Before fix7 every one of the interior
+    positions hid the value."""
+    for label, (value, script) in SCRIPT_VALUES.items():
+        assert textnorm.value_scripts(value) == {script}, label
+        assert textnorm.squeeze_views(value) == ("",), (
+            f"{label}: the value has an ASCII letter or digit"
+        )
+        for what, letter in FOREIGN_LETTERS.items():
+            if script in textnorm.value_scripts(letter):
+                continue  # the same script: the documented limit, pinned in the next test
+            kept = [v for v in textnorm.fold_views(letter, casefold=True) if not v.isascii()]
+            assert kept and textnorm.value_scripts(letter), (
+                f"{what} is folded to ASCII: the row would prove nothing"
+            )
+            for pos in range(len(value) + 1):
+                hidden = value[:pos] + letter + value[pos:]
+                assert _scan(value, "token: " + hidden + " end"), (
+                    f"{label}: the scan misses the value with {what} inserted at {pos}"
+                )
+        assert not _scan(value, "token: nothing here"), (
+            f"{label}: a text without the value was found"
+        )
+
+
+def test_a_letter_of_the_same_script_inserted_into_a_script_value_still_hides_it_the_documented_limit():
+    """fix7: the limit that the coverage sentence states. Another Han ideograph in a Chinese value, another Thai letter in a Thai value and so on is a
+    different spelling, not a foreign mark: the script view keeps it and the value is NOT found at an interior position. If this starts to fail, the
+    limit is gone: move the cases into the test above and update the sentence."""
+    for label, (value, _script) in SCRIPT_VALUES.items():
+        letter = SAME_SCRIPT_LETTER[label]
+        assert letter not in value
+        for pos in range(1, len(value)):
+            hidden = value[:pos] + letter + value[pos:]
+            assert not _scan(value, "token: " + hidden + " end"), (
+                f"{label}: the scan finds the value with a letter of its own script inserted at {pos}: the documented limit is out of date"
+            )
+        assert _scan(value, "token: " + value + letter + " end"), "the value is not found at an end"
+    assert "SAME script" in _squash(textnorm.fold_views.__doc__ or "")
+
+
+def test_every_letter_of_another_script_is_dropped_from_the_script_view_of_a_chinese_value():
+    """fix7, the CLASS: no letter of any other script, anywhere in Unicode, hides a Chinese value. Every code point is inserted into the middle of
+    the value; the value is found unless the fold turns the code point into a Han ideograph (a Kangxi radical is the ideograph written another way:
+    the same-script limit)."""
+    han = frozenset({"HAN"})
+    left, right = CHINESE[:2], CHINESE[2:]
+    checked = 0
+    for cp in range(sys.maxunicode + 1):
+        if 0xD800 <= cp <= 0xDFFF:
+            continue
+        ch = chr(cp)
+        reads = unicodedata.normalize("NFKC", unicodedata.normalize("NFKD", ch))
+        if textnorm._scripts_in([reads]) & han:
+            continue
+        checked += 1
+        views = textnorm.fold_views(left + ch + right, casefold=True, collapse_ws=True, scripts=han)
+        assert CHINESE in views, f"U+{cp:04X} inserted into a Chinese value hides it"
+    assert checked > 1_000_000, "too few code points were checked"
+
+
+def test_the_script_groups_are_the_first_word_of_the_name_with_han_and_kana_merged():
+    """fix7: how the scripts are grouped (``unicodedata`` names only): the first word of the character name; two words for the families that share a
+    first word; every CJK ideograph is HAN; Hiragana, Katakana and the old variant kana are KANA; a letter with no name is UNNAMED. The ideographic
+    closing mark (a letter by category) is not HAN: only a value that holds it keeps it."""
+    group = textnorm._script_of
+    assert group("\u5bc6") == group("\U00020000") == group("\uf900") == "HAN", (
+        "the CJK ideographs are not one group"
+    )
+    assert group("\u3042") == group("\u30a2") == group("\U0001b000") == "KANA", (
+        "Hiragana and Katakana are not one group"
+    )
+    hentai = next(
+        chr(cp)
+        for cp in range(0x1B100, 0x1B200)
+        if unicodedata.name(chr(cp), "").startswith("HENTAIGANA")
+    )
+    assert group(hentai) == "KANA", "the old variant kana are not kana"
+    assert group("\u1100") == group("\uac00") == "HANGUL", "Hangul is not one group"
+    assert group("\U00010c00") == "OLD TURKIC" and group("\U00010300") == "OLD ITALIC", (
+        "OLD TURKIC and OLD ITALIC are one group"
+    )
+    assert group("\u1950") == "TAI LE" and group("\u1a20") == "TAI THAM", (
+        "the Tai scripts are one group"
+    )
+    assert group("\U00017000") == "UNNAMED" and group("\U00018d00") == "UNNAMED", (
+        "a letter with no name is not UNNAMED"
+    )
+    assert group("\u3006") == "IDEOGRAPHIC", "the ideographic closing mark is read as Han"
+    for ch, name in (
+        ("\u0436", "CYRILLIC"),
+        ("\u03b4", "GREEK"),
+        ("\u05d0", "HEBREW"),
+        ("\u0294", "LATIN"),
+        ("\u0628", "ARABIC"),
+    ):
+        assert group(ch) == name, f"U+{ord(ch):04X} is not in the group {name}"
+    # a Japanese value holds both groups, a Chinese value one, a Latin value none (a letter of the ASCII range is not a script letter)
+    assert textnorm.value_scripts("\u5c71\u7530\u3055\u3093") == {"HAN", "KANA"}, (
+        "the scripts of a Japanese value are not Han and kana"
+    )
+    assert textnorm.value_scripts("password") == frozenset(), "a Latin value has a script"
+    assert textnorm.value_scripts("password\u5bc6\u7801") == {"HAN"}, (
+        "the ASCII letters of a mixed value are a script"
+    )
+    # a letter whose name starts with FULLWIDTH, HALFWIDTH or MATHEMATICAL never reaches a view: NFKC has made it another letter
+    for cp in range(0x80, sys.maxunicode + 1):
+        ch = chr(cp)
+        if ch.isalpha() and unicodedata.name(ch, "").startswith(
+            ("FULLWIDTH", "HALFWIDTH", "MATHEMATICAL")
+        ):
+            assert unicodedata.normalize("NFKC", ch) != ch, (
+                f"U+{cp:04X} would keep its own script group"
+            )
+    # a Japanese value (Han and kana): a Cyrillic letter inserted is dropped, a kana inserted is the same-script limit; a Han-only
+    # value is found with a kana inserted
+    japanese = "\u5c71\u7530\u592a\u90ce\u3055\u3093"
+    assert _scan(japanese, "x " + japanese[:3] + "\u0436" + japanese[3:] + " y"), (
+        "a Cyrillic letter hides a Japanese value"
+    )
+    assert not _scan(japanese, "x " + japanese[:3] + "\u3042" + japanese[3:] + " y"), (
+        "a kana inserted into a Japanese value is found: the same-script limit is gone"
+    )
+    yamada = "\u5c71\u7530\u592a\u90ce"
+    assert _scan(yamada, "x \u5c71\u7530\u3042\u592a\u90ce y"), (
+        "a kana hides a value that is only Han"
+    )
+    assert _scan(yamada, "x \u5c71\u7530\u0436\u592a\u90ce y"), (
+        "a Cyrillic letter hides a value that is only Han"
+    )
+
+
+def test_the_scripts_of_a_value_do_not_come_from_its_modifier_letters_or_ascii_letters():
+    """fix7: ``value_scripts`` reads the marks-dropped views only. A Chinese value that holds a Thai modifier letter (maiyamok, Lm) has the scripts {HAN}:
+    otherwise a Thai letter inserted into the text would be kept and hide the value."""
+    value = "\u5bc6\u7801\u0e46\u6d4b\u8bd5"
+    assert unicodedata.category("\u0e46") == "Lm"
+    assert textnorm.value_scripts(value) == {"HAN"}, "a modifier letter made a script of the value"
+    hidden = CHINESE[:2] + "\u0e01" + CHINESE[2:]
+    assert _scan(value, "x " + hidden + " y"), (
+        "a Thai letter hides a Chinese value with an Lm in it"
+    )
+    # the script views are made from the text WITHOUT its modifier letters: a Thai maiyamok in the text is not in any script view
+    thai = textnorm.value_scripts("\u0e01\u0e02\u0e04\u0e07")
+    views = textnorm.fold_views(
+        "\u0e01-\u0e02 \u0e46 \u0e04", casefold=True, collapse_ws=True, scripts=thai
+    )
+    assert "\u0e01\u0e02\u0e46\u0e04" not in views, "a script view keeps a modifier letter"
+    assert "\u0e01\u0e02\u0e04" in views, "the script view of the marks-dropped text is missing"
+
+
+def test_scripts_given_to_fold_views_must_be_a_frozenset_of_text():
+    for bad in (None, {"HAN"}, ["HAN"], "HAN", frozenset({1}), frozenset({b"HAN"})):
+        try:
+            textnorm.fold_views("x", scripts=bad)  # type: ignore[arg-type]
+        except NotText:
+            continue
+        raise AssertionError(f"fold_views accepted scripts = {bad!r}")
+    assert textnorm.fold_views("x", scripts=frozenset()) == textnorm.fold_views("x")
+
+
+def test_the_minimum_constants_are_checked_when_the_module_is_imported_and_when_a_scan_takes_its_needles(
+    monkeypatch,
+):
+    """fix7 (round 7, MINOR-E): a minimum of 0, a negative number, a bool, a float, a text or None would let an empty or one-character needle through.
+    Each of the four is refused with the name of the constant: by the module when it is imported (a private copy, the module the other tests use
+    is not reloaded) and by every ``scan_needles``."""
+    names = textnorm._MINIMUM_NAMES
+    assert names == (
+        "TEXTNORM_MIN_SPELLING_CHARS",
+        "TEXTNORM_MIN_SQUEEZE_CHARS",
+        "TEXTNORM_MIN_SCRIPT_CHARS",
+        "TEXTNORM_MIN_IDEOGRAPH_CHARS",
+    )
+    assert textnorm._validated_minimums() == (2, 4, 4, 2)
+
+    def import_message():
+        """The message with which a private copy of the module refuses to be imported, or None when it was imported."""
+        spec = importlib.util.spec_from_file_location("_textnorm_probe_minimums", textnorm.__file__)
+        probe = importlib.util.module_from_spec(spec)
+        try:
+            spec.loader.exec_module(probe)
+        except probe.TextnormError as caught:  # the copy has its own TextnormError class
+            return str(caught)
+        return None
+
+    for name in names:
+        for bad in (0, -1, True, False, 2.0, "4", None):
+            monkeypatch.setattr(defaults, name, bad)
+            for where, call in (
+                ("_validated_minimums", textnorm._validated_minimums),
+                ("scan_needles", lambda: textnorm.scan_needles("password")),
+            ):
+                error = None
+                try:
+                    call()
+                except TextnormError as caught:
+                    error = caught
+                assert error is not None, f"{where} accepted {name} = {bad!r}"
+                assert name in str(error), f"the message does not name {name}"
+                assert not isinstance(error, ValueError), "the error is a ValueError"
+        monkeypatch.setattr(defaults, name, 0)
+        message = import_message()
+        assert message is not None, f"the module was imported with {name} = 0"
+        assert name in message, f"the message does not name {name}"
+        monkeypatch.undo()
+    monkeypatch.delattr(defaults, "TEXTNORM_MIN_SQUEEZE_CHARS")
+    message = import_message()
+    assert message is not None, "the module was imported without TEXTNORM_MIN_SQUEEZE_CHARS"
+    assert "TEXTNORM_MIN_SQUEEZE_CHARS" in message, "the message does not name the constant"
+    monkeypatch.undo()
+    assert textnorm.scan_needles("password")
+
+
+def test_the_view_bounds_hold_with_the_script_views_and_nine_is_an_upper_bound():
+    """fix7: ``fold_views`` with scripts gives at most nine views and ``squeeze_views`` at most six. The highest number found (a search of 150,000
+    random texts built from the table) is seven; the perf row builds a text with seven. Nine is the bound by construction, not a count reached."""
+    unit = "\u5bc6\u2c66\u039d\u0345\u0903"
+    views = textnorm.fold_views(unit, casefold=True, scripts=textnorm.value_scripts(unit))
+    assert len(views) == 7 and len(set(views)) == 7, views
+    assert "\u5bc6" in views, "the script view of the Han letter is missing"
+    assert len(textnorm.squeeze_views(unit)) <= 6
 
 
 # ---- letter and digit forms (the Unicode-name rules of the generator) ------------------------------------------------------------------

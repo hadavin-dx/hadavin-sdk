@@ -9,7 +9,7 @@ pytest. Run from the repo root:
     uv run python tests/textnorm_mutants.py            # all mutants; exit 1 if any is not good
     uv run python tests/textnorm_mutants.py squeeze    # only mutants whose name contains the text
 
-91 mutants: 28 are the re-pointed mutants of the earlier text-fold list (the killers moved with their tests), 12 are new (one of the 13 went with the deleted ``check_pinned_unidata``), 9 are the mutants of fold2 (order 44), 3 are the mutants of fold3 (order 49, U+0345) and 16 are the mutants of fold4 (fix3, review 3: the spelling variants, the length check, the caseless form; the first of the 16 is the fold2 mutant "no case fold before the marks are dropped" that fold3 removed and that is restored here: it changes only the single key, and the U+0345 test kills it) and 9 are the mutants of fix4 (order 79: the 15.1.0 data pin, the marks, the plain-words messages, the weight pre-check) and 14 are the mutants of fix5 (the marks-dropped views, the letter and digit name rules, the pin constant). Tests with no
+128 mutants: 28 are the re-pointed mutants of the earlier text-fold list (the killers moved with their tests), 12 are new (one of the 13 went with the deleted ``check_pinned_unidata``), 9 are the mutants of fold2 (order 44), 3 are the mutants of fold3 (order 49, U+0345) and 16 are the mutants of fold4 (fix3, review 3: the spelling variants, the length check, the caseless form; the first of the 16 is the fold2 mutant "no case fold before the marks are dropped" that fold3 removed and that is restored here: it changes only the single key, and the U+0345 test kills it) and 9 are the mutants of fix4 (order 79: the 15.1.0 data pin, the marks, the plain-words messages, the weight pre-check) and 14 are the mutants of fix5 (the marks-dropped views, the letter and digit name rules, the pin constant), 5 are the mutants of fix6 (the script views, the minimum view length, the supplement merge) and 32 are the mutants of fix7 (the script view per script, the minimum per kind of view, the checks of the minimums, the proof rule, what loose loosens). The dead branch of the old script view is an equivalent mutant (it could not change a result), so it has no entry. Tests with no
 mutant: the golden test, the differential rows, the manifest test, the notices test, the perf rows (they are outside every test list below:
 the runner copies no ``pyproject.toml`` or notices file) and the meta-tests.
 
@@ -62,7 +62,23 @@ MCSQUEEZE = "test_squeeze_views_finds_a_secret_hidden_with_every_spacing_mark_mo
 NONALNUM = "test_squeeze_views_removes_every_character_that_reads_as_no_ascii_letter_or_digit"
 SIXVIEWS = "test_the_marks_dropped_views_are_at_most_six_for_squeeze_and_nine_for_fold_and_keep_every_script_and_letter"
 SCRIPTINS = "test_a_separator_an_ascii_letter_or_a_mark_inserted_into_a_chinese_hindi_or_thai_value_does_not_hide_it"
-MINVIEW = "test_the_minimum_view_length_is_one_number_for_every_view_and_a_short_value_is_refused"
+MINVIEW = "test_the_minimum_view_length_is_one_number_per_kind_of_view_and_a_short_value_is_refused"
+SQUEEZE4 = "test_a_squeeze_view_needs_four_characters_so_a_short_latin_name_is_refused"
+SCRIPT4 = "test_a_script_view_needs_four_letters_but_two_ideographs_are_a_name"
+SEPONLY = "test_a_value_found_only_by_a_view_that_keeps_separators_is_refused"
+FOREIGN = "test_a_letter_of_another_script_inserted_at_any_position_does_not_hide_a_script_value"
+SAMESCRIPT = "test_a_letter_of_the_same_script_inserted_into_a_script_value_still_hides_it_the_documented_limit"
+CLASSSWEEP = (
+    "test_every_letter_of_another_script_is_dropped_from_the_script_view_of_a_chinese_value"
+)
+GROUPS = "test_the_script_groups_are_the_first_word_of_the_name_with_han_and_kana_merged"
+VALSCRIPTS = "test_the_scripts_of_a_value_do_not_come_from_its_modifier_letters_or_ascii_letters"
+SCRIPTARG = "test_scripts_given_to_fold_views_must_be_a_frozenset_of_text"
+MINCONST = "test_the_minimum_constants_are_checked_when_the_module_is_imported_and_when_a_scan_takes_its_needles"
+SCRIPTVIEW = "test_the_script_view_keeps_only_letters_of_the_given_scripts_and_is_left_out_when_empty_or_repeated"
+HINDI = "test_the_script_view_of_a_hindi_value_is_its_letters_with_the_vowel_signs_gone"
+LOOSEHALF = "test_loose_loosens_only_the_squeeze_half_of_the_needles"
+BOUNDS = "test_the_view_bounds_hold_with_the_script_views_and_nine_is_an_upper_bound"
 SUPPLEMENT = "test_a_supplement_entry_is_never_overridden_by_a_name_rule_and_the_data_wins_over_the_supplement"
 NOASCII = "test_a_value_with_no_ascii_letter_or_digit_is_found_by_the_fold_views_scan_when_a_mark_is_inserted"
 PINTABLE = "test_no_table_source_is_in_a_dropped_category"
@@ -268,7 +284,7 @@ M = [
         "    if could_be_same_person(a, b):\n        return AllowVerdict.LOOKALIKE", "    if identity_key(a) == identity_key(b):\n        return AllowVerdict.LOOKALIKE",
         FOURCAP, "allow_equal does not report"),
     mutant("scan: fold_views gives one view", TN,
-        "    return _views(raw, casefold=casefold, collapse_ws=collapse_ws, marks_dropped=True, script=True)", "    return (_fold(raw, casefold=casefold, collapse_ws=collapse_ws),)",
+        "    return _views(\n        raw, casefold=casefold, collapse_ws=collapse_ws, marks_dropped=True, scripts=scripts\n    )\n", "    return (_fold(raw, casefold=casefold, collapse_ws=collapse_ws),)\n",
         GREEKLOOK, "has no view that reads admin"),
     mutant("scan: squeeze_views gives one view", TN,
         "    for view in _views(raw, casefold=True, collapse_ws=False, marks_dropped=True):", "    for view in (_fold(raw, casefold=True),):",
@@ -323,8 +339,8 @@ M = [
         "        texts.append(_without_spacing_marks(raw))", "        texts.append(raw)",
         MCSQUEEZE, "misses a secret hidden with U+"),
     mutant("marks: fold_views has no marks-dropped views", TN,
-        "    return _views(raw, casefold=casefold, collapse_ws=collapse_ws, marks_dropped=True, script=True)",
-        "    return _views(raw, casefold=casefold, collapse_ws=collapse_ws, marks_dropped=False, script=True)",
+        "collapse_ws=collapse_ws, marks_dropped=True, scripts=scripts\n    )",
+        "collapse_ws=collapse_ws, marks_dropped=False, scripts=scripts\n    )",
         NOASCII, "the scan misses the value with the mark inserted"),
     mutant("marks: squeeze_views has no marks-dropped views", TN,
         "    for view in _views(raw, casefold=True, collapse_ws=False, marks_dropped=True):",
@@ -337,7 +353,7 @@ M = [
         '    {"Mc", "Lm", "Sk"}\n)  # kept by', '    {"Mc", "Sk"}\n)  # kept by',
         MCSQUEEZE, "misses a secret hidden with U+"),
     mutant("marks: a view is repeated", TN,
-        "            if view not in views:\n                views.append(view)", "            views.append(view)",
+        "        if view not in out:\n            out.append(view)", "        out.append(view)",
         SIXVIEWS, "repeated or there are more than the limit"),
     mutant("names: the negative circled and squared letters are not read", GEN,
         '        (r"(?:CROSSED )?NEGATIVE (?:CIRCLED|SQUARED) LATIN CAPITAL LETTER ([A-Z])", "upper"),\n', "",
@@ -362,22 +378,122 @@ M = [
         PINTABLE, "the table data is not the Unicode version of the pin", test_file=G),
     # ---- the mutants of fix6 (the script views, the minimum view length, the supplement merge) ----
     mutant("script: fold_views has no script views", TN,
-        "    return _views(raw, casefold=casefold, collapse_ws=collapse_ws, marks_dropped=True, script=True)",
-        "    return _views(raw, casefold=casefold, collapse_ws=collapse_ws, marks_dropped=True, script=False)",
+        "collapse_ws=collapse_ws, marks_dropped=True, scripts=scripts\n    )",
+        "collapse_ws=collapse_ws, marks_dropped=True\n    )",
         SCRIPTINS, "the scan misses"),
     mutant("script: the script view keeps the ASCII letters", TN,
-        "        if not ch.isascii() and (ch.isalpha() or unicodedata.category(ch)[0] == \"M\")",
-        "        if (ch.isalpha() or unicodedata.category(ch)[0] == \"M\")",
-        SCRIPTINS, "the scan misses"),
+        "        if ch.isascii() or not ch.isalpha():\n            continue\n", "        if not ch.isalpha():\n            continue\n",
+        SCRIPTVIEW, "the script view keeps an ASCII letter"),
     mutant("scan: the minimum view length is not applied", TN,
-        "        if len(view) >= minimum and view not in needles:", "        if view not in needles:",
-        MINVIEW, "is shorter than the minimum"),
-    mutant("scan: the minimum is bound when the module is read", TN,
-        "    minimum = defaults.TEXTNORM_MIN_VIEW_CHARS\n", "    minimum = 2\n",
-        MINVIEW, "is shorter than the minimum"),
+        "        if len(view) < minimums[kind]:\n            continue\n", "",
+        MINVIEW, "scan_needles accepted"),
+    mutant("scan: the minimums are bound when the module is read", TN,
+        "    spelling_min, squeeze_min, script_min, ideograph_min = _validated_minimums()\n",
+        "    spelling_min, squeeze_min, script_min, ideograph_min = (2, 4, 4, 2)\n",
+        MINVIEW, "wrong views at the minimums"),
     mutant("names: the supplement is not merged before the name rules", GEN,
-        "    out = {**sup, **out}\n", "    out = dict(out)\n",
+        "    out = {**sup, **out}\n", "",
         SUPPLEMENT, "a name rule overrode a supplement entry", test_file=G),
+    # ---- the mutants of fix7 (the script view per script, the minimum per kind of view, the checks of the minimums) ----
+    mutant("script: the script view keeps the letters of every script", TN,
+        "            group[ch] = _script_of(ch) in scripts\n", "            group[ch] = True\n",
+        FOREIGN, "the scan misses the value with"),
+    mutant("script: the script view keeps the letters of every script (the whole range)", TN,
+        "            group[ch] = _script_of(ch) in scripts\n", "            group[ch] = True\n",
+        CLASSSWEEP, "inserted into a Chinese value hides it"),
+    mutant("script: every letter is a script of its own", TN,
+        "    return _SCRIPT_GROUPS.get(head, head)\n", "    return ch\n",
+        SAMESCRIPT, "the documented limit is out of date"),
+    mutant("script: OLD TURKIC and OLD ITALIC are one script", TN,
+        '_TWO_WORD_SCRIPTS = frozenset({"OLD", "NEW",', '_TWO_WORD_SCRIPTS = frozenset({"NEW",',
+        GROUPS, "OLD TURKIC and OLD ITALIC are one group"),
+    mutant("script: the ideographic closing mark is Han", TN,
+        '{"CJK": "HAN", "HIRAGANA"', '{"CJK": "HAN", "IDEOGRAPHIC": "HAN", "HIRAGANA"',
+        GROUPS, "the ideographic closing mark is read as Han"),
+    mutant("script: Katakana is not kana", TN,
+        '"KATAKANA": "KANA", ', "",
+        GROUPS, "Hiragana and Katakana are not one group"),
+    mutant("script: the old variant kana are not kana", TN,
+        ', "HENTAIGANA": "KANA"}', "}",
+        GROUPS, "the old variant kana are not kana"),
+    mutant("script: the Han ideographs are not named HAN", TN,
+        '{"CJK": "HAN", "HIRAGANA"', '{"HIRAGANA"',
+        GROUPS, "the CJK ideographs are not one group"),
+    mutant("script: a letter with no name is Han", TN,
+        '        return "UNNAMED"\n', '        return "HAN"\n',
+        GROUPS, "a letter with no name is not UNNAMED"),
+    mutant("script: a symbol with a script word in its name is kept", TN,
+        "        if ch.isascii() or not ch.isalpha():\n            continue\n", "        if ch.isascii():\n            continue\n",
+        SCRIPTVIEW, "the script view keeps the non-letter"),
+    mutant("script: the scripts of a value include its modifier letters", TN,
+        "            raw, casefold=True, collapse_ws=False, marks_dropped=True, marks_only=True\n",
+        "            raw, casefold=True, collapse_ws=False, marks_dropped=True\n",
+        VALSCRIPTS, "a modifier letter made a script of the value"),
+    mutant("script: the scripts of a value include its ASCII letters", TN,
+        "        out.update(_script_of(ch) for ch in set(view) if not ch.isascii() and ch.isalpha())",
+        "        out.update(_script_of(ch) for ch in set(view) if ch.isalpha())",
+        GROUPS, "a Latin value has a script"),
+    mutant("script: the scripts given to fold_views are not checked", TN,
+        "    _checked(raw)\n    _checked_scripts(scripts)\n", "    _checked(raw)\n",
+        SCRIPTARG, "fold_views accepted scripts"),
+    mutant("script: the value has no scripts in scan_needles", TN,
+        "    scripts = _value_scripts(raw)\n    squeezed", "    scripts = frozenset()\n    squeezed",
+        SCRIPT4, "a four-letter script view is not a needle"),
+    mutant("script: an empty script view is kept", TN,
+        '                if only and ("script", only) not in pairs:', '                if ("script", only) not in pairs:',
+        SCRIPTVIEW, "an empty script view was kept"),
+    mutant("script: the docstring says again that marks stay in a script view", TN,
+        "no mark is ever in a script view;", "a mark may stay in a script view;",
+        HINDI, "does not say that no mark reaches a script view"),
+    mutant("minimum: the minimums are not checked when the module is read", TN,
+        "_validated_minimums()  # fail closed at import\n", "",
+        MINCONST, "the module was imported with"),
+    mutant("minimum: scan_needles does not check the minimums", TN,
+        "    spelling_min, squeeze_min, script_min, ideograph_min = _validated_minimums()\n",
+        "    spelling_min, squeeze_min, script_min, ideograph_min = (\n        defaults.TEXTNORM_MIN_SPELLING_CHARS,\n        defaults.TEXTNORM_MIN_SQUEEZE_CHARS,\n        defaults.TEXTNORM_MIN_SCRIPT_CHARS,\n        defaults.TEXTNORM_MIN_IDEOGRAPH_CHARS,\n    )\n",
+        MINCONST, "scan_needles accepted"),
+    mutant("minimum: a bool is a minimum", TN,
+        "        if type(value) is not int or value < 1:", "        if not isinstance(value, int) or value < 1:",
+        MINCONST, "_validated_minimums accepted"),
+    mutant("minimum: zero is a minimum", TN,
+        "        if type(value) is not int or value < 1:", "        if type(value) is not int or value < 0:",
+        MINCONST, "accepted TEXTNORM_MIN_SPELLING_CHARS = 0"),
+    mutant("minimum: the message does not name the constant", TN,
+        'f"defaults.{name} must be a whole number', 'f"a minimum must be a whole number',
+        MINCONST, "the message does not name"),
+    mutant("minimum: a squeeze view needs only the spelling minimum", TN,
+        '        "squeeze": squeeze_min,\n', '        "squeeze": spelling_min,\n',
+        SQUEEZE4, "a squeeze view of fewer than four letters is a needle"),
+    mutant("minimum: a script view always needs only the ideograph minimum", TN,
+        '        "script": ideograph_min if ideographs_only else script_min,\n', '        "script": ideograph_min,\n',
+        SCRIPT4, "a script view of fewer than four letters is a needle"),
+    mutant("minimum: a value of Han ideographs needs the script minimum", TN,
+        "    ideographs_only = scripts == frozenset({\"HAN\"}) and not any(squeezed)\n", "    ideographs_only = False\n",
+        SCRIPT4, "a two-ideograph name is not a needle"),
+    mutant("minimum: a mixed value with ASCII letters gets the ideograph minimum", TN,
+        "    ideographs_only = scripts == frozenset({\"HAN\"}) and not any(squeezed)\n", "    ideographs_only = scripts == frozenset({\"HAN\"})\n",
+        SCRIPT4, "the script part of a mixed value is a needle at two letters"),
+    mutant("minimum: a value of Han and kana gets the ideograph minimum", TN,
+        "    ideographs_only = scripts == frozenset({\"HAN\"}) and not any(squeezed)\n", "    ideographs_only = \"HAN\" in scripts and not any(squeezed)\n",
+        SCRIPT4, "the ideograph minimum was used for Han plus kana"),
+    mutant("scan: a value found only by a spelling view is a needle", TN,
+        "    if not proof:\n", "    if not needles:\n",
+        SEPONLY, "which a space hides"),
+    mutant("scan: the proof flag is set by a spelling view", TN,
+        '        proof = proof or kind != "spelling"\n', "        proof = True\n",
+        SEPONLY, "which a space hides"),
+    mutant("scan: the squeeze views are not needles", TN,
+        '        *(("squeeze", view) for view in squeezed),\n', "",
+        MINVIEW, "wrong views at the minimums"),
+    mutant("scan: a script view is made for the text that keeps the marks", TN,
+        "            if scripts and marks:\n", "            if scripts:\n",
+        VALSCRIPTS, "a script view keeps a modifier letter"),
+    mutant("scan: loose is not passed to the squeeze views", TN,
+        "    squeezed = squeeze_views(raw, loose=loose)\n", "    squeezed = squeeze_views(raw)\n",
+        LOOSEHALF, "loose=True did not loosen the squeeze half"),
+    mutant("words: the docstring does not say what loose loosens", TN,
+        "``loose=True`` loosens only the squeeze half", "``loose=True`` loosens the views",
+        LOOSEHALF, "the docstring does not say what loose loosens"),
 ]  # fmt: skip
 
 

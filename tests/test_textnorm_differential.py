@@ -148,7 +148,8 @@ def _joined(fn):
 
 
 def _fold_views(text):
-    return textnorm.fold_views(text, casefold=True)
+    """``fold_views`` with the scripts of the text itself: the script views of the old (fix6) algorithm, so the golden hash does not move."""
+    return textnorm.fold_views(text, casefold=True, scripts=textnorm.value_scripts(text))
 
 
 HASHED = {
@@ -228,7 +229,7 @@ def _pin_violation(env, version, pinned):
     """The message of a run that is required to be on the pinned Unicode version and is not, else ``None``."""
     if pin_required(env) and version != pinned:
         return (
-            f"HADAVIN_REQUIRE_PINNED_UNIDATA=1 but this Python carries Unicode {version}, "
+            f"HADAVIN_REQUIRE_PINNED_UNIDATA is set (1, true or yes) but this Python carries Unicode {version}, "
             f"not the pinned {pinned}: run the suite on the interpreter of the pin"
         )
     return None
@@ -275,6 +276,12 @@ def test_the_pin_variable_accepts_one_true_and_yes_in_any_case_and_refuses_other
     for yes in ("true", "YES"):
         assert _pin_violation({var: yes}, other, pinned) is not None, yes
         assert _pin_violation({var: yes}, pinned, pinned) is None, yes
+
+
+def test_the_pin_message_names_every_accepted_spelling_of_the_variable():
+    """fix7 (NIT): the message printed ``HADAVIN_REQUIRE_PINNED_UNIDATA=1`` although ``true`` and ``yes`` are accepted too."""
+    message = _pin_violation({"HADAVIN_REQUIRE_PINNED_UNIDATA": "yes"}, "15.0.0", "15.1.0")
+    assert message and "=1" not in message and "1, true or yes" in message
 
 
 def test_the_pin_check_fails_only_when_required_and_off_the_pin():

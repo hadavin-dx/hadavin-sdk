@@ -85,26 +85,26 @@ def _functions(path: Path) -> list[str]:
     return [n.name for n in tree.body if isinstance(n, ast.FunctionDef)]
 
 
-def test_a_the_list_has_96_mutants_28_repointed_12_new_9_of_fold2_3_of_fold3_16_of_fold4_9_of_fix4_14_of_fix5_and_5_of_fix6_with_unique_names():
+def test_a_the_list_has_128_mutants_28_repointed_12_new_9_of_fold2_3_of_fold3_16_of_fold4_9_of_fix4_14_of_fix5_5_of_fix6_and_32_of_fix7_with_unique_names():
     names = [m.name for m in mm.M]
-    assert len(names) == 96 and len(set(names)) == 96, names
+    assert len(names) == 128 and len(set(names)) == 128, names
     assert tuple(names[:28]) == REPOINTED, (
         "the first 28 are the re-pointed mutants, in the order of the placement table"
     )
     assert (
-        len(names[28:]) == 68
-    )  # 12 of the first package, 9 of fold2, 3 of fold3, 16 of fold4, 9 of fix4, 14 of fix5 and 5 of fix6
+        len(names[28:]) == 100
+    )  # 12 of the first package, 9 of fold2, 3 of fold3, 16 of fold4, 9 of fix4, 14 of fix5, 5 of fix6 and 32 of fix7
     assert names[52:53] == ["fold: case folded before the marks are dropped (the fold2 order)"], (
         "the restored fold2 mutant is the first of the fold4 mutants"
     )
-    assert all(n.split(":")[0] in {"marks", "names", "pin"} for n in names[-19:-5]), (
-        "the 14 before the last 5 are the mutants of fix5"
+    assert all(n.split(":")[0] in {"marks", "names", "pin"} for n in names[77:91]), (
+        "names 78 to 91 are the mutants of fix5"
     )
-    assert sum(n.startswith("names:") for n in names[-19:-5]) == 6, (
+    assert sum(n.startswith("names:") for n in names[77:91]) == 6, (
         "the six name-rule mutants of fix5"
     )
-    assert all(n.split(":")[0] in {"script", "scan", "names"} for n in names[-5:]), (
-        "the last 5 are the mutants of fix6"
+    assert all(n.split(":")[0] in {"script", "scan", "names"} for n in names[91:96]), (
+        "names 92 to 96 are the mutants of fix6"
     )
     assert sum(n.startswith("readings:") for n in names) == 7, (
         "the mutants of the readings (drop one, first only, unbounded, ...)"
@@ -155,7 +155,7 @@ def test_a_the_moved_tests_and_the_new_killers_exist_once_each():
 def test_a_print_the_placement_table():
     rows = [f"{m.name} | {m.test_file} | {m.only_test}" for m in mm.M]
     print("\n".join(rows))
-    assert len(rows) == 96
+    assert len(rows) == 128
 
 
 def test_b_every_xfail_of_the_differential_file_is_strict_and_names_assertion_error():
@@ -225,3 +225,15 @@ def test_i_the_changelog_states_the_true_mutant_count_the_stale_names_and_the_go
     assert "STALE NAMES" in log
     assert "none is skipped" not in log, "the CHANGELOG says again that nothing is skipped"
     assert "SKIPS with the fingerprint" in log
+
+
+def test_the_changelog_marks_the_two_stale_notes_as_superseded_and_states_the_limits_once():
+    text = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
+    for needle in ("module has 20 public names", "P1b must refuse an empty view before it scans"):
+        line = next(ln for ln in text.splitlines() if needle in ln)
+        assert "superseded" in line.lower(), f"the stale note is not marked: {needle}"
+    assert text.count("MIXED VALUES OVER-MATCH") == 1, (
+        "the mixed-value over-match is not stated exactly once"
+    )
+    assert "loosens only the squeeze" in text, "the loose=True note is missing"
+    assert "MAX_VALUE_LEN" in text
