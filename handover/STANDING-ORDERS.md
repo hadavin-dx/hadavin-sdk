@@ -1,7 +1,7 @@
 # STANDING ORDERS (lead, 2026-11-07, permanent until the lead writes "STANDING ORDERS LIFTED")
 Why: the owner saw the cloud idle several times. Idle = the session ends its turn or waits for a lead message while work exists. These orders replace "wait for the lead".
 1. NEVER END A TURN WITH WORK LEFT. If you have no lead order to act on, take the first open item of the BACKLOG below. Wait only inside a running tool call (queue job, builder), never by ending your turn.
-2. Keep a self-pacing wake-up: at the end of every turn schedule your own next check in <= 8 minutes (cron/loop tool of your session) so you resume on the clock without a lead message. Heartbeat line by `date -u` at least every 8 minutes.
+2. PULSE EVERY MINUTE (owner order 2026-11-07 11:15Z, replaces the 8-minute rule): overwrite the single line in handover/PULSE.md with `date -u` time + running agents + queue + last result + unpushed (none) + next action, commit and push it EVERY MINUTE. Keep a self-pacing wake-up of 1 minute with your cron/loop tool and a background agent whose only job is the pulse. HEARTBEAT.md keeps the longer summary every 8 minutes.
 3. Agents are cheap, test slots are not: start a builder or reviewer for every independent item at once; only heavy test runs queue.
 4. PUSH EVERYTHING: every checkpoint is committed and pushed to its own branch the same turn (branches core/*, handover). Nothing may exist only in the cloud working tree. At each heartbeat list any unpushed branch (should be none).
 5. Report in questions-for-lead.md (qNNN) only what needs the lead or is a result; do not wait for an answer on the items you can continue.
