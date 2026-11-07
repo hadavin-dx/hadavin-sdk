@@ -480,3 +480,4 @@ LAPTOP CANDIDATES (pushed heads only): PR85 0b54631 (items 3,4,10), PR72 e6a4220
 09:16Z heartbeat. P1b builder abf28a5 interim: core/P1b-fixwip now b0f54b1 (test-only, +1 over 70eb0f5), core/P1b unpushed (q303). Queue running 3 pending 8.
 09:16Z heartbeat. PR66 builder a4a65a0 interim: local head c95c51c unpushed, r3 mutants queued, ci.yml revert ordered (q304). P1b builder abf28a5 waits on laptop (fixwip b0f54b1, q303). Queue running 3 pending 7.
 09:17Z heartbeat. PR66 builder interim: da08ce2 unpushed, 4 jobs queued (q305). Queue running 3 pending 10.
+09:18Z heartbeat. dblink fix RED on setup (q306), requeued prio 1, nothing pushed. Queue running 3 pending 12.
