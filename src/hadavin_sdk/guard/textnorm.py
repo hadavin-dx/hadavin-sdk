@@ -1422,8 +1422,8 @@ def register_value(value: str, *, strict: bool | None = None) -> Coverage:
         raise CoverageRefused(
             f"this protected value ({len(value)} characters) is covered {'only in part' if narrowed else 'only exactly'}: {reason}"
             f"{'; its ASCII part has no needle of its own, so a text with only that part is not found' if narrowed else ''}. "
-            "A value that cannot be covered is REFUSED in strict mode, never silently accepted. What to do: register the longer form, or "
-            "register it with strict=False and keep your own search for the inserted letter"
+            "A value that cannot be covered is REFUSED in strict mode (the setting defaults.TEXTNORM_STRICT_COVERAGE, True by default, or strict=True), never silently accepted. "
+            "What to do: register the longer form, or register it with strict=False and keep your own search for the inserted letter"
         )
     return result
 
