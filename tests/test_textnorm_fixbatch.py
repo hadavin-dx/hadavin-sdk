@@ -79,6 +79,9 @@ def test_redact_text_masks_a_decomposed_secret_after_an_invisible_character():
     ``runmap_composed_keeps_cf``."""
     stored = "m\u00fcller-vault"
     text = "key " + unicodedata.normalize("NFD", stored).replace("\u00fc", "u\u200b\u0308") + " end"
+    assert runmap.composed("u\u200b\u0308") == "\u00fc", (
+        "composed keeps the letter and its accent apart"
+    )
     out = runmap.redact_text(text, {"<NAME_1>": stored})
     assert "vault" not in out, "an invisible character keeps the letter and its accent apart"
 
@@ -87,10 +90,12 @@ def test_the_composed_view_is_a_view_and_canonical_stays_per_character():
     """Killers: ``runmap_no_composed_view`` and ``runmap_canonical_composes``. ``canonical`` composes nothing (positions stay exact); ``composed``
     does; ``_views`` lists the composed form."""
     nfd = "e\u0301"
-    assert runmap.canonical(nfd) == nfd
-    assert runmap.composed(nfd) == "\u00e9"
-    assert runmap.composed("plain ascii") == "plain ascii"
-    assert "x \u00e9" in runmap._views("x " + nfd)
+    assert runmap.canonical(nfd) == nfd, "canonical composes the letter and its mark"
+    assert runmap.composed(nfd) == "\u00e9", "composed does not join the letter and its mark"
+    assert runmap.composed("plain ascii") == "plain ascii", "composed changes an ASCII text"
+    assert "x \u00e9" in runmap._views("x " + nfd), (
+        "composed does not join the letter and its mark in _views"
+    )
 
 
 # ---- the scan keys drop Mc and Sk as well ---------------------------------------------------------------------------------------
@@ -113,8 +118,12 @@ def test_a_spacing_mark_written_instead_of_a_letter_is_still_read_by_the_scan_ke
     """The union of the two readings (the text as it is, and without the marks): U+0C02 reads as ``o`` and is NOT dropped from the key that reads
     it. Killer: ``keys_only_the_dropped_reading``."""
     keys = scan_keyset("passwంrd")
-    assert any("password" in key for key in keys), sorted(keys)
-    assert any("passwrd" in key for key in keys), sorted(keys)
+    assert any("password" in key for key in keys), (
+        f"the mark read as a letter is not read: {sorted(keys)}"
+    )
+    assert any("passwrd" in key for key in keys), (
+        f"the text without the mark is not read: {sorted(keys)}"
+    )
 
 
 # ---- the minimums of the scan's needles ---------------------------------------------------------------------------
@@ -181,9 +190,13 @@ SCRIPT_VALUES = (
 def test_a_script_value_is_scanned_and_found_with_a_separator_inserted():
     """Killer: ``scan: a value with no squeeze view is EmptyView``. Chinese, Arabic, Thai and Hindi values are scanned (the ticket asks for the script views)."""
     for value in SCRIPT_VALUES:
-        assert scan_holds("x " + value + " y", value) is True, (
-            f"{value!r} is not found (or is refused)"
-        )
+        try:
+            exact = scan_holds("x " + value + " y", value)
+        except TextnormError as refusal:
+            raise AssertionError(
+                f"{value!r} is not found (or is refused): {type(refusal).__name__}"
+            ) from None
+        assert exact is True, f"{value!r} is not found (or is refused)"
         spaced = " ".join(value.replace(" ", ""))
         assert scan_holds("x " + spaced + " y", value) is True, f"an inserted space hides {value!r}"
         assert scan_holds("an unrelated english sentence", value) is False, (
@@ -646,3 +659,71 @@ def test_a_short_cyrillic_or_greek_word_is_refused_at_a_measured_cost():
         "\u0391\u03b4\u03b5\u03bb\u03c6\u03bf\u03c2",
     ):
         assert scan_needles(word), f"{word!r} is refused: the measured cost changed"
+
+
+# ---- order 130: the refusal says what to do; the scan-key cap -------------------------------------------------------------------------
+def test_the_refusal_names_the_rule_the_length_and_what_to_do_and_never_the_value():
+    """A short value that cannot be masked is REFUSED, never ignored, and the error says so in plain words: how long the value is, that the digit
+    minimum applies to a number, and the two ways out (the longer form, or exact-match only). The value itself is not in the message. No mutant: a wording pin."""
+    d = defaults.TEXTNORM_MIN_DIGIT_CHARS
+    number = "9" * (d - 1)
+    cases = {
+        number: ("number", f"{d} digits"),
+        "Земля": ("5 characters", "longer form"),
+        "ab": ("2 characters", "exact-match only"),
+    }
+    for value, expected in cases.items():
+        with pytest.raises(ViewTooShort) as caught:
+            scan_needles(value)
+        message = str(caught.value)
+        for part in ("REFUSED, never ignored", "longer form", "exact-match only", *expected):
+            assert part in message, (
+                f"{part!r} is not in the refusal for a value of {len(value)} characters: {message}"
+            )
+        assert value not in message, "the message holds the value"
+    assert "number" not in _refusal_text("ab"), "a letter value is told it is a number"
+
+
+def _refusal_text(value):
+    with pytest.raises(ViewTooShort) as caught:
+        scan_needles(value)
+    return str(caught.value)
+
+
+def _tags(text):
+    return "".join(chr(0xE0000 + ord(ch)) for ch in text)
+
+
+def test_the_scan_key_cap_is_sixteen_by_construction_and_the_most_a_text_can_make_is_thirteen():
+    """``scan_keyset`` makes at most 2 variants x 4 tag texts x 2 passes = 16 keys. The fourth tag text (the decoded tags alone) is ASCII, which both
+    passes read alike, so a text makes at most 13 distinct keys: shown here with a text at 13, and by trying every text of up to five characters
+    from a pool that holds every kind of character that splits a key (capital Eta, spacing mark, modifier letter, modifier symbol, tag letter,
+    ASCII letter). Seventeen is impossible; the cap is a fail-closed guard (``TextTooLong``), shown by lowering it. No mutant: a bound pin."""
+    cap = textnorm._SCAN_KEY_CAP
+    assert cap == 16 == 2 * 4 * 2
+    at_most = "Η" + _tags("xy") + "ంΗq"
+    assert len(scan_keyset(at_most)) == 13, "the measured reachable maximum changed"
+    pool = ["Η", "ం", "ʰ", "˂", _tags("x"), "q"]
+    most = 0
+    for length in range(1, 6):
+        for combo in itertools.product(pool, repeat=length):
+            most = max(most, len(scan_keyset("".join(combo))))
+    assert 13 <= most <= cap, f"{most} keys: outside the bound"
+    for printable in range(0x20, 0x7F):
+        ch = chr(printable)
+        assert textnorm._scan_key(ch, textnorm._pass_a) == textnorm._scan_key(
+            ch, textnorm._pass_b
+        ), f"the two passes read {ch!r} differently: the fourth tag text can make a second key"
+
+
+def test_a_text_that_would_make_more_keys_than_the_cap_is_refused(monkeypatch):
+    """The guard is not a truncation: with the cap lowered below the 13 keys of the widest text, the call raises ``TextTooLong`` (and at the cap itself
+    it does not). No mutant: a guard that cannot fire on real input."""
+    wide = "Η" + _tags("xy") + "ంΗq"
+    textnorm._text_bundle.cache_clear()
+    monkeypatch.setattr(textnorm, "_SCAN_KEY_CAP", 13)
+    assert len(scan_keyset(wide)) == 13
+    monkeypatch.setattr(textnorm, "_SCAN_KEY_CAP", 12)
+    with pytest.raises(textnorm.TextTooLong):
+        scan_keyset(wide)
+    textnorm._text_bundle.cache_clear()
