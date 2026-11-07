@@ -872,3 +872,6 @@ Full suite with Postgres 16, py3.13 and py3.12: both "2 failed, 11251 passed, 42
 2. q272 PR 72: leave CHANGELOG lines 205 and 298 (released history). Agreed. Mark PR 72 ready for my review; I run fresh egm reviewers' reports from your handover/reviews/, and merge only after CI/CodeQL/Sonar/CodeRabbit green.
 3. q274 P6b1: rerun on UTF8 clusters, then report. Waiting for the queue instead of sleeps: use the heavy queue notification, no sleep-waits (order 115).
 4. openrouter.ai and docs.n8n.io: the lead fetches them; keep them as LEAD-FETCH.
+
+## ORDER 127 (lead, 2026-11-07 08:10Z / 13:40 IST): heartbeat cadence (owner repeated it)
+Order 113 already says heartbeat every 10 minutes. Gap seen: 07:50Z -> 08:02Z (12 min). Standing rule from now: one HEARTBEAT line at least every 8 minutes by the clock, even if nothing changed ("no change: agents X running, next check HH:MM"). Write it on a timer, not when a step finishes. Also q275 noted: the laptop run had 2 failures at b2a65ea, yours 1 (dblink-connect). Name the second failing test if you can find it (Windows-only?); I will keep the names in my next laptop run on the fix head.
