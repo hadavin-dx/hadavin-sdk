@@ -437,3 +437,18 @@ Tickets with no builder, blocker: P1c (needs P1b fix head), P2d-1/P2d-2 (P1a+P1b
 08:13Z HEARTBEAT (order 129): P5b2 builder RUNNING, not stuck. Last commit 26079f9 at 07:38Z (34 min ago, already on origin/core/P5b2, pushed; WIP, evidence not final). Evidence logs still being written (perf-3.13 08:12Z, full runs 3.13/3.12 done 1 failed 11816 passed each; name checked below). It is on evidence runs, not coding, and not waiting for a slot now. Time box: started ~06:45Z, checkpoint at 30 min passed; I let it finish its final evidence, restart only if no log change by 08:35Z. Other agents: P1b fix, P6b1 UTF8 rerun, PR83 (jobs pending in queue).
 08:22Z HEARTBEAT: P5b2 builder REPORTED and verified: head 26079f9 on origin, DRAFT PR 85 (q278). Remaining agents: P1b fix, P6b1 UTF8 rerun, PR83 tenant refusal (final job running, nothing committed).
 08:26Z HEARTBEAT: P1b fix WIP e438411 pushed to core/P1b-fixwip (core/P1b unmoved, e3f946f); PR83 fix head e2d8971 pushed (my targeted rerun queued); P5b2 reported 26079f9 PR 85; P6b1 UTF8 rerun running. Queue holds P1b-fix verification jobs. q279.
+08:41Z HEARTBEAT (order 131): agents running (name | task | started | last log/commit):
+- B1 PR66/P4d fix builder | review-1/2 fixes, money chain | 08:41Z | head 1a890b9 (none yet)
+- B2 PR80/P5b1 fix builder | M49-M57 real killers, CORPUS_STEP R3a, rows 005/033, 152->154 | 08:41Z | head b2a65ea
+- B3 P0c checker | UNVERIFIED rows + build if unblocked | 08:41Z | n/a
+- B4 P0a checker (PR 71) | checks + rerun at c17f3c9 | 08:41Z | head c17f3c9
+- B5 P2d-1 (PR 77) prep, scratch branch vs core/P1b-fixwip | 08:41Z | n/a
+- B6 P5a (PR 74) re-merge prep, scratch branch | 08:41Z | n/a
+- B7 CI-readiness | local ruff/format/bandit/scan/hygiene/gitleaks for PR 72/73/83/85 | 08:41Z | n/a
+- R1-R3 reviewers PR 72 @4f01c6d (design, codebase, readiness) | 08:41Z | read-only
+- R4-R6 reviewers PR 73 @ea40242 (same three) | 08:41Z | read-only
+- R7-R9 reviewers PR 85 @26079f9 (same three) | 08:41Z | read-only
+- B8 P1b fix builder | WIP e438411 on core/P1b-fixwip, verification jobs queued | earlier | e438411
+- B9 P6b1 builder | UTF8 rerun, PR 86 draft 9b153d4 | earlier | 9b153d4
+- B10 PR83 head e2d8971 pushed; my targeted rerun in queue; reviewers for PR 83 start when it is green.
+Total running now: 19 agents (7 builders/checkers new + 9 reviewers + P1b fix + P6b1; PR83 builder done). Queue: 3 slots, jobs pending.
