@@ -1,1 +1,1 @@
-11:17Z agents: v4.3 drafter, P1d drafter, PR80 fix, PR72+PR86 reviewers (PR83 reviewer done) | queue running=6 pending=6 | last: q347 evidence summary | unpushed: see sweep | next: read reviews, save, fix batches. PR72 d15e53a, PR86 8f6b032 awaiting evidence
+11:17Z agents: v4.3 drafter, P1d drafter, PR80 fix, PR72+PR86 reviewers (PR83 reviewer done) | queue running=6 pending=6 | last: q347 evidence summary | unpushed: see sweep | next: read reviews, save, fix batches. wake
