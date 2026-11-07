@@ -14,7 +14,6 @@ from datetime import datetime
 from pathlib import Path
 from urllib.parse import urlsplit
 
-from hadavin_sdk import deferred
 from hadavin_sdk import sources as sources_mod
 from hadavin_sdk import tools as tools_mod
 from hadavin_sdk.actions.contract import schema_errors
@@ -37,6 +36,7 @@ from hadavin_sdk.runtime import evidence
 from hadavin_sdk.runtime.agent_loop import Hooks, Runtime
 from hadavin_sdk.sources import Source
 from hadavin_sdk.sources.kinds import KINDS
+from hadavin_sdk.stages import is_live
 from hadavin_sdk.store import Store
 from hadavin_sdk.store.protocol import missing_methods
 
@@ -81,7 +81,7 @@ def build(
     reg = load_registry(cfg)
     b = cfg.backends
     secrets = secrets or make("secrets", b.secrets)
-    live = cfg.environment in deferred.LIVE
+    live = is_live(cfg.environment)
     if live:
         # The same text must fold the same way on every run: pilot and prod start only on the pinned Unicode data (raises UnidataMismatch).
         textnorm.require_pinned_unidata()

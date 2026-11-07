@@ -111,13 +111,10 @@ class StepToken:
     @staticmethod
     def of(value: object) -> StepToken | Where:
         """A tick step name becomes a ``StepToken``; a ``Where`` member stays; anything else is ``Where.other``. Never raises."""
-        try:
-            if type(value) is Where:
-                return value
-            if type(value) is str and value in TICK_STEPS:
-                return StepToken(value)
-        except Exception:  # noqa: BLE001, S110 - never raises by contract; anything odd is "other"
-            pass
+        if type(value) is Where:
+            return value
+        if type(value) is str and value in TICK_STEPS:
+            return StepToken(value)
         return Where.other
 
 
@@ -228,6 +225,7 @@ _P = "hadavin_sdk."
 OWN_CODES: Final[Mapping[str, Code]] = MappingProxyType(
     {
         _P + "errors:ConfigError": Code.config_invalid,
+        _P + "config:_RenamedStage": Code.config_invalid,
         _P + "k1b.bundle:BundleError": Code.config_invalid,
         _P + "llm.fake:UnknownRecording": Code.config_invalid,
         _P + "store.protocol:StoreUnavailable": Code.store_unavailable,

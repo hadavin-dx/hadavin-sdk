@@ -156,6 +156,7 @@ def test_every_own_exception_class_resolves_to_a_code() -> None:
 
 PINNED = {
     "hadavin_sdk.errors:ConfigError": "config_invalid",
+    "hadavin_sdk.config:_RenamedStage": "config_invalid",
     "hadavin_sdk.k1b.bundle:BundleError": "config_invalid",
     "hadavin_sdk.llm.fake:UnknownRecording": "config_invalid",
     "hadavin_sdk.store.protocol:StoreUnavailable": "store_unavailable",
