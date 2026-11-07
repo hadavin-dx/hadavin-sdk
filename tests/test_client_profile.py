@@ -1,8 +1,8 @@
 """The client-profile check: what a pilot or prod start refuses that a demo start allows.
 
-T0 the prod fixture loads; T1 demo-only kinds not covered elsewhere; T2 every TABLE pair is decided; T5 the build
-keywords in a client profile (pilot or prod); T7 a demo config that names a real model, a vendor detector or a
-real approval channel must say it holds only made-up data.
+The prod fixture loads; demo-only kinds not covered elsewhere are refused; every TABLE pair is decided; the build
+keywords are checked in a client profile (pilot or prod); a demo config that names a real model, a vendor detector
+or a real approval channel must say it holds only made-up data.
 
 Import rule: module-level names must exist before the check was added, so that a missing name fails one row and
 not the whole file. Names that exist only with the check (`_test_doubles_given`, `_LIVE_HOOKS`, the keyword
@@ -80,8 +80,8 @@ class _FalsyChannel:
 class _StubDetector:
     backend = "regex"
 
-    def check(self, text, source):  # pragma: no cover - never called
-        raise AssertionError
+    def check(self, text, source):
+        raise AssertionError("the detector is named in the config, never run")
 
 
 @pytest.fixture
@@ -100,8 +100,14 @@ def made(monkeypatch):
     return record
 
 
+def test_the_stub_detector_fails_loudly_if_a_row_ever_runs_it():
+    """The stub only names a detector in a config; if a row ran it, the row would be wrong, so it must not pass."""
+    with pytest.raises(AssertionError, match="never run"):
+        _StubDetector().check("text", "source")
+
+
 # One value per refused build keyword, not equal to its default. A new keyword with no sample fails
-# test_t5s (and the T5 rows that read SAMPLES), so it gets decided: a sample, or a reviewed `_LIVE_HOOKS` entry.
+# test_t5s (and the rows that read SAMPLES), so it gets decided: a sample, or a reviewed `_LIVE_HOOKS` entry.
 SAMPLES = {
     "secrets": _MadeSecrets(),
     "channel": FakeChannel(),
@@ -185,10 +191,16 @@ CLIENT_REVIEWED: dict[tuple[str, str], str] = {
     (
         "llm",
         "anthropic",
-    ): "a real model; masking is the gate of P5c; a pilot or prod config names it",
-    ("llm", "bedrock"): "a real model; masking is the gate of P5c; a pilot or prod config names it",
-    ("llm", "openai_compat"): "a real or self-hosted model; masking is the gate of P5c",
-    ("llm", "gemini"): "a real model; masking is the gate of P5c; a pilot or prod config names it",
+    ): "a real model; masking is a separate, later check; a pilot or prod config names it",
+    (
+        "llm",
+        "bedrock",
+    ): "a real model; masking is a separate, later check; a pilot or prod config names it",
+    ("llm", "openai_compat"): "a real or self-hosted model; masking is a separate, later check",
+    (
+        "llm",
+        "gemini",
+    ): "a real model; masking is a separate, later check; a pilot or prod config names it",
     ("detector", "regex"): "a local check; sends nothing out",
     ("detector", "llm_judge"): "uses the llm kind, so the model rules apply",
     ("detector", "bedrock_guardrail"): "a vendor screening service; demo needs made_up_data_only",
@@ -343,7 +355,7 @@ def test_t5l_a_keyword_added_later_is_refused_by_default():
 def test_t5q_any_environment_that_is_not_demo_is_live(tmp_path, made, monkeypatch, environment):
     """An environment value that is not a stage is live: the switch is needed there too. `Config.environment` is a
     Literal, so such a value never comes out of `load_config`; `model_copy` builds it. Defence in depth for a hand-built
-    Config, not a reachable load (mutant 47 is killed only by this synthetic state)."""
+    Config, not a reachable load (only this synthetic state reaches that branch)."""
     copied = load_config(pilot_cfg(tmp_path)).model_copy(update={"environment": environment})
     monkeypatch.setattr(app_mod, "load_config", lambda _dir: copied)
     with pytest.raises(ConfigError, match="allow_test_doubles") as err:
@@ -497,7 +509,7 @@ def test_t7g_the_field_still_loads_in_demo(cfg_dir):
 @pytest.mark.parametrize("value", ["yes", 1, "true", "on"])
 def test_t7h_a_loose_yes_does_not_switch_the_field_on(cfg_dir, value):
     """The field is a strict bool: "yes", 1, "true" and "on" are refused, so a safety switch cannot turn on from
-    loose input (order 133). Mutant 54 (a plain bool again) is killed here."""
+    loose input. A plain bool would let these through."""
     _edit(cfg_dir, lambda d: d.update(made_up_data_only=value))
     with pytest.raises(ConfigError, match="made_up_data_only") as err:
         load_config(cfg_dir)
@@ -506,7 +518,7 @@ def test_t7h_a_loose_yes_does_not_switch_the_field_on(cfg_dir, value):
 
 @pytest.mark.parametrize("value", ["maybe", None, [True]], ids=["word", "null", "list"])
 def test_t7i_a_value_that_is_not_a_bool_is_refused_at_load(cfg_dir, value):
-    """A null or a list is not a yes: the config does not load (mutant 55, `bool | None`, is killed here)."""
+    """A null or a list is not a yes: the config does not load (the field is not optional)."""
     _edit(cfg_dir, lambda d: d.update(made_up_data_only=value))
     with pytest.raises(ConfigError, match="made_up_data_only") as err:
         load_config(cfg_dir)
