@@ -401,7 +401,7 @@ class Config(_Strict):
             ]
             refused += ["allow_insecure_loopback"] if self.allow_insecure_loopback else []
         sends_text_out = []
-        if self.environment == STAGES[0] and not self.made_up_data_only:
+        if not is_live(self.environment) and not self.made_up_data_only:
             sends_text_out = _sends_text_out(self.backends)
         refused += sends_text_out
         refused += _anchor_refusals(self.environment, self.backends)
