@@ -88,6 +88,7 @@ jobs:
         env:
           HADAVIN_TEST_PG_DSN: postgresql://postgres@localhost:5432/postgres
           HADAVIN_TEST_VAULT_ADDR: http://127.0.0.1:8200
+          HADAVIN_REQUIRE_PINNED_UNIDATA: "1"  # the text-folding tables are built for Unicode 15.1.0 (Python 3.13); another interpreter must fail, not skip
         run: pytest -q -m "not live and not perf" -rs
       - name: Stage-rename mutants (each reverted guard must be killed by its named test) (blocks)
         run: python tests/stage_mutants.py
