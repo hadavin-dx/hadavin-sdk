@@ -276,10 +276,13 @@ def storable(mapping: dict[str, str], kinds: frozenset[str] | None = None) -> di
 def canonical(text: str) -> str:
     """Untrusted text in one canonical form before it is escaped, redacted or compared: Unicode NFKC (a
     full-width `＜ＩＰＶ４＿２＞` becomes `<IPV4_2>`) with the invisible format characters removed (a zero-width
-    space inside a token no longer hides it)."""
-    return "".join(
-        c for c in unicodedata.normalize("NFKC", text) if unicodedata.category(c) != "Cf"
-    )
+    space inside a token no longer hides it). It is THE SAME TEXT as the first result of `_canonical_view`: NFKC is applied one
+    character at a time, so the text a match is searched in and the text the match positions refer to never differ (they did when
+    the whole text was composed: a + U+0301 became U+00E1 here and not in the view). A base letter and a combining mark are therefore
+    not composed."""
+    if text.isascii():
+        return text  # NFKC changes nothing and ASCII has no format character
+    return _canonical_view(text)[0]
 
 
 def _canonical_view(text: str) -> tuple[str, list[int]]:
@@ -398,16 +401,38 @@ def _clean(text: str) -> str:
     return text.replace("\x00", "").encode("utf-8", "replace").decode("utf-8", "replace")
 
 
+def composed(text: str) -> str:
+    """The COMPOSED form of `text`: the invisible format characters removed first (so one between a letter and its accent does
+    not keep them apart), then NFKC of the WHOLE text, which joins a base letter and its combining marks (e + U+0301 becomes the
+    precomposed letter) and Hangul conjoining jamo. `canonical` normalises one character at a time (so its match positions stay
+    exact) and so composes nothing; a value that was stored precomposed and is written decomposed (macOS file names, many PDF
+    extractors) is found only in this view. The text returned has no index back into the original: it is used to FIND, never to cut."""
+    if text.isascii():
+        return text
+    kept = "".join(c for c in text if unicodedata.category(c) != "Cf")
+    return unicodedata.normalize("NFKC", kept)
+
+
 def _views(text: str) -> list[str]:
-    """Other forms a secret can hide in: the canonical view (NFKC, invisible characters removed) and the same
-    with JSON `\\uXXXX` escapes decoded. Only forms that differ from `text` are returned."""
+    """Other forms a secret can hide in: the canonical view (NFKC one character at a time, invisible characters removed), the same
+    with JSON `\\uXXXX` escapes decoded, and for each of them the COMPOSED view (`composed`: base letters joined with their marks).
+    Only forms that differ from `text` are returned; a text with no combining sequence has the same composed and canonical view,
+    so it costs nothing."""
     # `\\/` too (PHP writes every slash that way); `\\n` and the like are left alone here: a log line full of them
     # would come back with real newlines whenever the second pass finds anything.
     unescaped = fits_after_nfkc(json_unescape(text, simple="/"))
     out = []
     # the layers undone to a fixed point (percent, entity, backslash, NFKC, any order, up to the depth cap; deeper
     # raises TooDeep and nothing is redacted or shown): `%41KIA...`, `&#65;KIA...`, `password%3Dx`
-    for view in (canonical(text), canonical(unescaped), fits_after_nfkc(undo(text))):
+    undone = fits_after_nfkc(undo(text))
+    for view in (
+        canonical(text),
+        canonical(unescaped),
+        undone,
+        composed(text),
+        composed(unescaped),
+        composed(undone),
+    ):
         view = _clean(view)
         if view != text and view not in out:
             out.append(view)

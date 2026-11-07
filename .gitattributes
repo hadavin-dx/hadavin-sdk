@@ -1,2 +1,3 @@
 * text=auto eol=lf
 tools/data/confusables.txt -text
+tools/data/Scripts.txt -text

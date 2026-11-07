@@ -14,7 +14,7 @@ tag of an unpinned interpreter (the hashes are of the bare keys, so the 15.0.0 s
 on Python 3.13). A change of behaviour shows as a failure here; a change that makes keys different bumps ``alg`` by hand and replaces the
 entry in the same pull request (no test enforces the bump; the reviewer checks it). The golden test ASSERTS on every interpreter whose
 Unicode version has a section (3.12 and 3.13: no skip); on a version without one (a newer Python) it is only reported (``pytest.skip``
-with the fingerprint, printed by ``-rs``), and it FAILS if ``HADAVIN_REQUIRE_PINNED_UNIDATA=1`` is set. The two sections are the same
+with the fingerprint, printed by ``-rs``), and it FAILS if ``HADAVIN_REQUIRE_PINNED_UNIDATA`` is ``1``, ``true`` or ``yes`` (any case; another value fails the run loudly). The two sections are the same
 text apart from the code points assigned only in 15.1.0.
 """
 
@@ -36,6 +36,7 @@ from hadavin_sdk.guard.textnorm import (
     allow_equal,
     could_be_same_person,
     identity_key,
+    scan_keyset,
     squeeze,
 )
 
@@ -76,14 +77,34 @@ def test_the_identity_key_agrees_with_the_stated_principle(row):
         assert not same, f"{row['class']}: {row['source']}"
 
 
-@pytest.mark.parametrize(
-    "row", [_param(r, expected_failure=True) for r in CORPUS if r["relation"] == "equal"]
-)
-def test_could_be_same_person_agrees_with_the_stated_principle_for_every_equal_row(row):
-    """The DENY comparator, row by row. The p1b rows (r114 to r117, punctuation) are strict expected failures: they are
-    the documented limit in its docstring, and if one starts to pass the row must move to ``current``."""
+# Rows the identity key keeps apart but the DENY scan joins, by design: the scan key drops spaces, punctuation, controls and tag characters,
+# so these pairs are the same person for the DENY comparison (the safe side of a DENY). Named, so a new over-match shows as a failure.
+OVER_MATCH = {
+    "r020": "a tag letter is decoded in the scan key (tag text T1/T2)",
+    "r060": "a visible space is dropped by the scan key",
+    "r078": "a Unicode space is dropped by the scan key",
+    "r094": "a control is dropped by the scan key",
+    "r140": "a trailing dot is dropped by the scan key",
+    "r174": "a spacing mark (Mc) is not a letter or digit, so the scan key drops it (the safe side of a DENY)",
+    "r175": "a spacing mark (Mc) is not a letter or digit, so the scan key drops it (the safe side of a DENY)",
+    "r176": "a spacing mark (Mc) is not a letter or digit, so the scan key drops it (the safe side of a DENY)",
+}
+
+
+@pytest.mark.parametrize("row", NOT_REFUSED)
+def test_the_deny_comparison_agrees_with_the_stated_principle_and_is_never_narrower_than_the_identity_key(
+    row,
+):
     a, b = expand(row["a"]), expand(row["b"])
-    assert could_be_same_person(a, b), f"{row['class']}: {row['source']}"
+    got = could_be_same_person(a, b) or bool(scan_keyset(a) & scan_keyset(b))
+    if identity_key(a) == identity_key(b):
+        assert got, f"{row['id']}: the deny comparison is narrower than identity_key equality"
+    if row["relation"] == "equal":
+        assert got, f"{row['class']}: {row['source']}"
+    elif row["id"] in OVER_MATCH:
+        assert got, f"{row['id']}: the named over-match is gone ({OVER_MATCH[row['id']]})"
+    else:
+        assert not got, f"{row['id']}: a new over-match: {row['source']}"
 
 
 @pytest.mark.parametrize("row", NOT_REFUSED)
@@ -137,6 +158,14 @@ def _loose(text):
     return squeeze(text, loose=True)
 
 
+def _keyset_hash(texts):
+    """SHA-256 over the key-set of every text: one line per text, the helper digest of its sorted unique keys."""
+    h = hashlib.sha256()
+    for text in texts:
+        h.update((_keyset_digest(textnorm.scan_keyset(text)) + "\n").encode("ascii"))
+    return h.hexdigest()
+
+
 def _joined(fn):
     """A function that returns the readings of a text (a tuple), as one string: the readings in their fixed order, without the tag of an
     unpinned interpreter, joined by U+001F (a control character, which no key or view holds)."""
@@ -148,7 +177,8 @@ def _joined(fn):
 
 
 def _fold_views(text):
-    return textnorm.fold_views(text, casefold=True)
+    """``fold_views`` with the scripts of the text itself: the script views of the old (fix6) algorithm, so the golden hash does not move."""
+    return textnorm.fold_views(text, casefold=True, scripts=textnorm.value_scripts(text))
 
 
 HASHED = {
@@ -159,12 +189,16 @@ HASHED = {
     "fold_views": _joined(_fold_views),
     "squeeze_views": _joined(textnorm.squeeze_views),
 }
+KEYSET_HASHED = ("scan_keyset",)
 
 
 def live_hashes():
     """What the golden file holds, computed now. ``python -c 'from tests.test_textnorm_differential import live_hashes'`` rewrites the entry."""
     texts = [*_single_code_points(), *_corpus_rows()]
-    return {name: _digest(fn, texts) for name, fn in HASHED.items()}
+    return {
+        **{name: _digest(fn, texts) for name, fn in HASHED.items()},
+        "scan_keyset": _keyset_hash(texts),
+    }
 
 
 def _keyset_digest(keys):
@@ -187,7 +221,7 @@ def test_the_golden_file_has_one_entry_for_the_current_algorithm():
     )
     for section in GOLDEN["sections"].values():
         assert set(section) == {"hashes"}
-        assert set(section["hashes"]) == set(HASHED)
+        assert set(section["hashes"]) == {*HASHED, *KEYSET_HASHED}
         assert all(len(h) == 64 for h in section["hashes"].values())
 
 
@@ -195,33 +229,92 @@ def test_the_golden_hashes_equal_the_live_ones():
     section = GOLDEN["sections"].get(unicodedata.unidata_version)
     if section is None:
         message = f"no golden section for {_fingerprint()} (sections: {sorted(GOLDEN['sections'])}): reported, not asserted"
-        if os.environ.get("HADAVIN_REQUIRE_PINNED_UNIDATA") == "1":
+        if pin_required(os.environ):
             pytest.fail(message)
         pytest.skip(message)
     live = live_hashes()
-    for name in HASHED:
+    for name in (*HASHED, *KEYSET_HASHED):
         assert live[name] == section["hashes"][name], (
             f"{name}: the behaviour of the fold changed on Unicode {unicodedata.unidata_version} (bump alg and replace the entry)"
         )
 
 
+_TRUE = frozenset({"1", "true", "yes"})
+_FALSE = frozenset({"", "0", "false", "no"})
+
+
+def pin_required(env):
+    """Whether the run is required to be on the pinned Unicode version: ``HADAVIN_REQUIRE_PINNED_UNIDATA`` is ``1``, ``true`` or ``yes`` in any
+    letter case (spaces around it are ignored). Unset, empty, ``0``, ``false`` and ``no`` mean it is not required. ANY OTHER value (``on``,
+    ``2``, ``enable``) is refused loudly (``pytest.UsageError``): a CI variable with a typo must not turn the pin off in silence."""
+    raw = env.get("HADAVIN_REQUIRE_PINNED_UNIDATA", "")
+    value = raw.strip().lower()
+    if value in _TRUE:
+        return True
+    if value in _FALSE:
+        return False
+    raise pytest.UsageError(
+        f"HADAVIN_REQUIRE_PINNED_UNIDATA={raw!r} is not understood: use 1, true or yes (required) or 0, false, no or nothing (not required)"
+    )
+
+
 def _pin_violation(env, version, pinned):
     """The message of a run that is required to be on the pinned Unicode version and is not, else ``None``."""
-    if env.get("HADAVIN_REQUIRE_PINNED_UNIDATA") == "1" and version != pinned:
+    if pin_required(env) and version != pinned:
         return (
-            f"HADAVIN_REQUIRE_PINNED_UNIDATA=1 but this Python carries Unicode {version}, "
+            f"HADAVIN_REQUIRE_PINNED_UNIDATA is set (1, true or yes) but this Python carries Unicode {version}, "
             f"not the pinned {pinned}: run the suite on the interpreter of the pin"
         )
     return None
 
 
 def test_the_interpreter_is_on_the_pinned_unicode_version_when_the_run_requires_it():
-    """Fails when ``HADAVIN_REQUIRE_PINNED_UNIDATA=1`` and ``unicodedata.unidata_version`` is not
-    ``defaults.TEXTNORM_PINNED_UNIDATA``; passes without the variable (a developer on another Python still runs the suite)."""
+    """Fails when ``HADAVIN_REQUIRE_PINNED_UNIDATA`` is ``1``, ``true`` or ``yes`` (any case) and ``unicodedata.unidata_version`` is not
+    ``defaults.TEXTNORM_PINNED_UNIDATA``; passes without the variable (a developer on another Python still runs the suite). A value
+    that is none of the accepted spellings fails the run loudly. When the run requires the pin, the PRODUCT guard ``require_pinned_unidata()``
+    is called too, the one entry point that pilot and prod call at start-up."""
     message = _pin_violation(
         os.environ, unicodedata.unidata_version, defaults.TEXTNORM_PINNED_UNIDATA
     )
     assert message is None, message
+    if pin_required(os.environ):
+        textnorm.require_pinned_unidata()  # raises UnidataMismatch off the pin
+
+
+def test_the_product_guard_agrees_with_the_interpreter_and_with_the_pin_constant():
+    """``require_pinned_unidata`` from product code, with no environment variable: it returns on the pinned Unicode version and raises
+    ``UnidataMismatch`` on any other, whichever interpreter runs the suite; and it reads ``defaults.TEXTNORM_PINNED_UNIDATA``."""
+    if unicodedata.unidata_version == defaults.TEXTNORM_PINNED_UNIDATA:
+        assert textnorm.require_pinned_unidata() is None
+    else:
+        with pytest.raises(textnorm.UnidataMismatch):
+            textnorm.require_pinned_unidata()
+    with pytest.raises(textnorm.UnidataMismatch):
+        textnorm.require_pinned_unidata("0.0.0")
+    assert textnorm.require_pinned_unidata(unicodedata.unidata_version) is None
+
+
+def test_the_pin_variable_accepts_one_true_and_yes_in_any_case_and_refuses_other_values_loudly():
+    var = "HADAVIN_REQUIRE_PINNED_UNIDATA"
+    for yes in ("1", "true", "TRUE", "True", "yes", "YES", "Yes", " 1 ", "tRuE"):
+        assert pin_required({var: yes}) is True, yes
+    for no in ("", "0", "false", "False", "NO", "no", " "):
+        assert pin_required({var: no}) is False, no
+    assert pin_required({}) is False
+    for odd in ("on", "2", "enable", "y", "t", "required", "1 1", "truee"):
+        with pytest.raises(pytest.UsageError):
+            pin_required({var: odd})
+    pinned = defaults.TEXTNORM_PINNED_UNIDATA
+    other = "16.0.0" if pinned != "16.0.0" else "15.1.0"
+    for yes in ("true", "YES"):
+        assert _pin_violation({var: yes}, other, pinned) is not None, yes
+        assert _pin_violation({var: yes}, pinned, pinned) is None, yes
+
+
+def test_the_pin_message_names_every_accepted_spelling_of_the_variable():
+    """The message printed ``HADAVIN_REQUIRE_PINNED_UNIDATA=1`` although ``true`` and ``yes`` are accepted too."""
+    message = _pin_violation({"HADAVIN_REQUIRE_PINNED_UNIDATA": "yes"}, "15.0.0", "15.1.0")
+    assert message and "=1" not in message and "1, true or yes" in message
 
 
 def test_the_pin_check_fails_only_when_required_and_off_the_pin():

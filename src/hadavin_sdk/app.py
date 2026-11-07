@@ -26,6 +26,7 @@ from hadavin_sdk.audit import AuditSink
 from hadavin_sdk.backends import platform_secrets
 from hadavin_sdk.backends.factory import make
 from hadavin_sdk.config import Config, ConfigError, confined, load_config
+from hadavin_sdk.guard import textnorm
 from hadavin_sdk.guard.injection import Detector, combine
 from hadavin_sdk.limits import Limits
 from hadavin_sdk.llm.protocol import LLM
@@ -81,6 +82,9 @@ def build(
     b = cfg.backends
     secrets = secrets or make("secrets", b.secrets)
     live = is_live(cfg.environment)
+    if live:
+        # The same text must fold the same way on every run: pilot and prod start only on the pinned Unicode data (raises UnidataMismatch).
+        textnorm.require_pinned_unidata()
     if live and not cfg.evidence.restored_hash_key_secret_name:
         raise ConfigError("evidence.restored_hash_key_secret_name is required in pilot and prod")
     if live and getattr(b.store, "kind", "") == "postgres" and not b.store.purge_dsn_secret_name:
