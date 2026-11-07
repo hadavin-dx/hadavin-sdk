@@ -1132,3 +1132,9 @@ Files: tickets/P1d.md, studio-notes/p1d-siblings.md, evidence/P1d/ (includes a s
 Agent's own gaps: skipped egm-brainstorm and egm-draft skills; timings noisy; a prototype was written.
 Agent's claims for the lead: the split-key hole exists on main, P1b and CILINT (measured by it); plain e-mail/host names on approval cards are never masked; model path has the same hole (it recommends a P1e ticket); P1d would add LookalikeCopy before P2d-2; hook-lint guard test needs an edit; ledger row BL-hadavin-sdk-cilint-001 is missing. Worst three siblings: S1-S5 model path, e-mail/host hole in clean, S6 handed-out secrets.
 These are recommendations from a subagent, not decisions. Next step: egm design + readiness review of the ticket (no round cap, redaction path).
+
+## q360 HARD STOPPED (2026-11-07T11:47Z)
+ORDER 154 done. Agents stopped: 2 (PR80 builder abc4dc1e, PR85 builder a08acaeb; both reported killed). Agents running now: 0 (ListAgents showed only those 2; P1d drafter had already finished).
+Queue: runner stopped (1); running job wrappers killed (3: P5b2 full-3.12, P5b1 runA313, P5b1 runA312) with their pytest and the Postgres clusters I started; 6 job files moved to queue/cancelled; pending 0, running 0. The PR83 7f24178 chain and the PR72 jobs were not running at this check (no process found); their logs are UNREAD.
+All evidence from the killed jobs is partial and must not be used as a verdict. Worktrees checked after the kill: 0 uncommitted files in the 9 I looked at (P0t-fix132, wt312, P5b1, P5b2, P6a, P6b1 and 3 mutation trees), so no planted mutation is left there; the push sweep pushed nothing new and printed no DIRTY.
+Not verified: that no process of mine remains outside the patterns I searched (a final ps showed no qrun, pytest, postgres or job process).
