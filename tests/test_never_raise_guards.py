@@ -1,6 +1,6 @@
 """The never-raise guards (order 93): each ``except Exception`` in a guard is caught, RECORDED, and does not propagate, while
 ``KeyboardInterrupt`` and ``SystemExit`` (not ``Exception`` subclasses) still propagate. One test per file that holds guards:
-``guard/diagnostic.py``, ``llm/provider_facts.py``, ``llm/retry.py``. The guards are listed in ``tests/noqa_sites.txt``, keyed by
+``guard/diagnostic.py``, ``llm/provider_facts.py``, ``llm/retry.py``. The guards are listed in ``tests/fixtures/guard_ledger.txt``, keyed by
 file, function and site name (no line numbers); ``test_ledger_*`` parses the source and checks that list against the code.
 There is ONE counter (``hadavin_sdk.neverraise``); the counters are never reset, a test reads the difference it caused.
 """
@@ -29,7 +29,7 @@ GUARD_FILES = (
     "src/hadavin_sdk/llm/provider_facts.py",
     "src/hadavin_sdk/llm/retry.py",
 )
-LEDGER = Path(__file__).parent / "noqa_sites.txt"
+LEDGER = Path(__file__).parent / "fixtures" / "guard_ledger.txt"
 
 
 class Seen:
@@ -244,6 +244,18 @@ def test_a_failed_wait_computation_stops_the_loop_and_is_recorded(monkeypatch):
     assert err.__cause__ is None and err.__suppress_context__
 
 
+@pytest.mark.parametrize(
+    "site",
+    sorted(s.value.removeprefix("diag_") for s in neverraise.Site if s.value.startswith("diag_")),
+)
+def test_every_diagnostic_guard_site_records_into_the_shared_counter(site):
+    seen = Seen()
+    before = diagnostic.guard_failures()
+    diagnostic._guard_failed(site)
+    assert seen.delta() == {f"diag_{site}": 1}
+    assert diagnostic.guard_failures().get(site, 0) == before.get(site, 0) + 1
+
+
 def test_one_counter_not_two():
     assert not hasattr(neverraise, "reset"), (
         "a production module does not expose a way to zero the counters"
@@ -322,19 +334,24 @@ def test_ledger_lists_exactly_the_guards_in_the_code_by_file_function_and_site()
     actual = sorted(row for rel in GUARD_FILES for row in _guard_rows(rel))
     listed = sorted((r[0], r[1], r[2]) for r in _ledger_rows())
     assert listed == actual, (
-        "tests/noqa_sites.txt and the except-Exception handlers of the three files differ"
+        "tests/fixtures/guard_ledger.txt and the except-Exception handlers of the three files differ"
     )
     assert len(actual) == len(set(actual)), "two handlers share file, function and site"
 
 
 def test_ledger_names_a_test_that_exists_and_a_reason_for_every_row():
-    sources = "\n".join(
-        p.read_text(encoding="utf-8") for p in sorted(Path(__file__).parent.glob("test_*.py"))
-    )
+    here = Path(__file__).parent
+    in_mutant_copy = not (
+        ROOT / "pyproject.toml"
+    ).exists()  # the mutant runner copies only some test files
     for _file, _func, site, why, test in _ledger_rows():
         assert len(why) >= 30, f"{site}: no reason"
-        base = test.split("[")[0]
-        assert f"def {base}(" in sources, f"{site}: no test function {base}"
+        test_file, name = test.split("::")
+        base = name.split("[")[0]
+        path = here / test_file
+        if not path.exists() and in_mutant_copy:
+            continue
+        assert f"def {base}(" in path.read_text(encoding="utf-8"), f"{site}: no {test}"
 
 
 def test_every_site_name_is_recorded_by_exactly_one_guard_and_none_is_dead():

@@ -25,7 +25,7 @@ F = "tests/test_provider_errors_failbefore.py"
 FA = "tests/test_provider_facts.py"
 D = "tests/test_diagnostic.py"
 NR = "tests/test_never_raise_guards.py"
-TESTS = [W, F, FA, D, NR, "tests/test_diagnostic_guards.py", "tests/test_diagnostic_codes.py", "tests/noqa_sites.txt",
+TESTS = [W, F, FA, D, NR, "tests/test_diagnostic_codes.py",
          "tests/provider_wire_helpers.py", "tests/import_order_child.py"]  # fmt: skip
 S = "src/hadavin_sdk/"
 RT, PF, PR, AN, BD, DG, CD, NV = (
@@ -404,11 +404,10 @@ spec("M48", "the bool() around the retry decision is removed", RT,
      "test_r5_a_decision_that_crashed_is_the_billed_class", F)  # fmt: skip
 
 # --- the one counter, the faults-only counter, the ledger (review 1 fixes; tests in test_never_raise_guards.py and neighbours) -----
-GD = "tests/test_diagnostic_guards.py"
 CT = "tests/test_diagnostic_codes.py"
 spec("M49", "the diagnostic guards stop recording into the shared counter", DG,
      "    record(_SITES[site])\n", "    pass\n",
-     "test_guard_catches_and_records", GD)  # fmt: skip
+     "test_every_diagnostic_guard_site_records_into_the_shared_counter", NR)  # fmt: skip
 spec("M50", "with_retry counts every failed call again", RT,
      "            _close_failed_http(exc)\n", "            record(Site.retry_decision)\n            _close_failed_http(exc)\n",
      "test_an_ordinary_retried_failure_is_not_counted_and_a_genuine_fault_is", NR)  # fmt: skip
