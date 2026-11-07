@@ -1,4 +1,4 @@
-"""The mutants of the provider error plumbing (P5b1): 45 live mutants, M1 to M48 without the three deleted ones (M26, M34, M36).
+"""The mutants of the provider error plumbing (P5b1): 54 live mutants, M1 to M57 without the three deleted ones (M26, M34, M36).
 
 Each mutant changes ONE thing in a temp copy of the package (``tools.mutation_runner`` does the copy). The test named in ``only_test``
 must fail, it must be the test pinned in ``pinned``, and the first failing line must hold ``expect``: a fragment of the assertion
@@ -24,11 +24,13 @@ W = "tests/test_provider_errors_wire.py"
 F = "tests/test_provider_errors_failbefore.py"
 FA = "tests/test_provider_facts.py"
 D = "tests/test_diagnostic.py"
-TESTS = [W, F, FA, D, "tests/provider_wire_helpers.py", "tests/import_order_child.py"]
+NR = "tests/test_never_raise_guards.py"
+TESTS = [W, F, FA, D, NR, "tests/test_diagnostic_guards.py", "tests/test_diagnostic_codes.py", "tests/noqa_sites.txt",
+         "tests/provider_wire_helpers.py", "tests/import_order_child.py"]  # fmt: skip
 S = "src/hadavin_sdk/"
-RT, PF, PR, AN, BD, DG, CD = (
+RT, PF, PR, AN, BD, DG, CD, NV = (
     S + "llm/retry.py", S + "llm/provider_facts.py", S + "llm/protocol.py", S + "llm/anthropic.py",
-    S + "llm/bedrock.py", S + "guard/diagnostic.py", S + "codes.py",
+    S + "llm/bedrock.py", S + "guard/diagnostic.py", S + "codes.py", S + "neverraise.py",
 )  # fmt: skip
 
 # (number, name, file, old, new, killer function, killer file, expect, pinned id or "")
@@ -213,6 +215,15 @@ _KILL: dict[str, tuple[str, str]] = {
         "AssertionError: assert 'permission' == 'other'",
         "tests/test_provider_errors_failbefore::test_r5_claude_body_cases[type-injected-short-code]",
     ),
+    "M49": ("ssert", ""),
+    "M50": ("ssert", ""),
+    "M51": ("ssert", ""),
+    "M52": ("ssert", ""),
+    "M53": ("ssert", ""),
+    "M54": ("ssert", ""),
+    "M55": ("ssert", ""),
+    "M56": ("ssert", ""),
+    "M57": ("ssert", ""),
     "M48": (
         "AssertionError: a raw RuntimeError escaped with_",
         "tests/test_provider_errors_failbefore::test_r5_a_decision_that_crashed_is_the_billed_class[bool-raises-BN1c]",
@@ -391,6 +402,38 @@ spec("M47", "an unlisted Claude type falls through to the status table", AN,
 spec("M48", "the bool() around the retry decision is removed", RT,
      "decision: object = bool(transient(exc, retryable))", "decision: object = transient(exc, retryable)",
      "test_r5_a_decision_that_crashed_is_the_billed_class", F)  # fmt: skip
+
+# --- the one counter, the faults-only counter, the ledger (review 1 fixes; tests in test_never_raise_guards.py and neighbours) -----
+GD = "tests/test_diagnostic_guards.py"
+CT = "tests/test_diagnostic_codes.py"
+spec("M49", "the diagnostic guards stop recording into the shared counter", DG,
+     "    record(_SITES[site])\n", "    pass\n",
+     "test_guard_catches_and_records", GD)  # fmt: skip
+spec("M50", "with_retry counts every failed call again", RT,
+     "            _close_failed_http(exc)\n", "            record(Site.retry_decision)\n            _close_failed_http(exc)\n",
+     "test_an_ordinary_retried_failure_is_not_counted_and_a_genuine_fault_is", NR)  # fmt: skip
+spec("M51", "the counter lock is not reentrant", NV,
+     "_LOCK: Final = threading.RLock()", "_LOCK: Final = threading.Lock()",
+     "test_record_can_be_entered_again_on_the_same_thread", NR)  # fmt: skip
+spec("M52", "neverraise exposes reset() again", NV,
+     "def counts() -> dict[str, int]:", "def reset() -> None:\n    with _LOCK:\n        _COUNTS.clear()\n\n\ndef counts() -> dict[str, int]:",
+     "test_one_counter_not_two", NR)  # fmt: skip
+spec("M53", "SqlReadError gives config_invalid again", CD,
+     '_P + "store.migration_numbers:SqlReadError": Code.internal_bug,', '_P + "store.migration_numbers:SqlReadError": Code.config_invalid,',
+     "test_a_sql_file_that_cannot_be_read_is_a_repository_defect_not_an_operator_config_error", CT)  # fmt: skip
+spec("M54", "a failed wait computation lets the loop go on", RT,
+     "                record(Site.retry_wait)\n                raise _billed(exc, label, attempt, facts) from None\n",
+     "                record(Site.retry_wait)\n                wait = jitter\n",
+     "test_a_failed_wait_computation_stops_the_loop_and_is_recorded", NR)  # fmt: skip
+spec("M55", "a failed wait computation is not recorded", RT,
+     "                record(Site.retry_wait)\n", "                pass\n",
+     "test_a_failed_wait_computation_stops_the_loop_and_is_recorded", NR)  # fmt: skip
+spec("M56", "the adapter-hook guard records under another guard's site", PF,
+     "record(Site.facts_adapter_hook)", "record(Site.facts_safe_attr)",
+     "test_ledger_lists_exactly_the_guards_in_the_code_by_file_function_and_site", NR)  # fmt: skip
+spec("M57", "a Site member that no guard records", NV,
+     '    retry_wait = "retry_wait"\n', '    retry_wait = "retry_wait"\n    retry_unused = "retry_unused"\n',
+     "test_every_site_name_is_recorded_by_exactly_one_guard_and_none_is_dead", NR)  # fmt: skip
 
 
 def check_search_strings() -> list[str]:

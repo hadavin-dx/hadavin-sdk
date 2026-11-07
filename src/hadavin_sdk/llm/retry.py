@@ -153,8 +153,9 @@ def with_retry[T](
             return call()
         except ProviderError:
             raise
-        except Exception as exc:  # noqa: BLE001 - never-raise guard: every call failure leaves as a ProviderError, none escapes raw
-            record(Site.retry_classify)
+        except Exception as exc:  # noqa: BLE001 - a conversion, not a guard: every call failure becomes a retry or a ProviderError
+            # The ordinary failure path (a 429, a reset connection), so nothing is recorded here: the counters show faults only.
+            # ``from None`` keeps the provider text out of __cause__.
             _close_failed_http(exc)
             try:
                 decision: object = bool(transient(exc, retryable))

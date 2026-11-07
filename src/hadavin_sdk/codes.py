@@ -227,7 +227,11 @@ OWN_CODES: Final[Mapping[str, Code]] = MappingProxyType(
         _P + "errors:ConfigError": Code.config_invalid,
         _P + "config:_RenamedStage": Code.config_invalid,
         _P + "k1b.bundle:BundleError": Code.config_invalid,
-        _P + "store.migration_numbers:SqlReadError": Code.config_invalid,
+        # A shipped SQL file with an unclosed quote, comment or `$` body is a defect in this package's own data, not an operator
+        # mistake. Nothing at run time raises it today (a dev/CI tool does); the row is required so that an own class never falls
+        # back to its ValueError base. The closed list has no better fit: `config_invalid` (operator input), `validation_failed`
+        # (a pydantic model) and `foreign_exception` (not ours) are wrong.
+        _P + "store.migration_numbers:SqlReadError": Code.internal_bug,
         _P + "llm.fake:UnknownRecording": Code.config_invalid,
         _P + "store.protocol:StoreUnavailable": Code.store_unavailable,
         _P + "store.protocol:StaleState": Code.store_conflict,

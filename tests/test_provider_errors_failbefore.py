@@ -321,7 +321,14 @@ def test_r5_bedrock_uuid_with_trailing_newline_is_refused():
 
 
 def test_r5_hook_returning_the_wrong_type_or_a_subclass_or_raising_gives_no_facts():
-    from hadavin_sdk.llm.provider_facts import ProviderFacts  # new name: this row is a new feature
+    import importlib
+
+    try:  # a new module: before P5b1 the row fails on the assertion below, not on an import error
+        facts_module = importlib.import_module("hadavin_sdk.llm.provider_facts")
+    except ImportError:
+        facts_module = None
+    ProviderFacts = getattr(facts_module, "ProviderFacts", None)
+    assert ProviderFacts is not None, "hadavin_sdk.llm.provider_facts.ProviderFacts does not exist"
 
     class Lying(ProviderFacts):
         pass

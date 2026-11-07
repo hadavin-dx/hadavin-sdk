@@ -129,8 +129,15 @@ def test_r1_golden_wire_rows(row):
         err = run_chat(wire, *_serve(wire, kind, names))
         assert type(err) is cls
         assert len(wire.requests) == attempts  # regression pin (the request count)
-        assert (err.status, err.error_type, err.request_id) == (status, etype, rid)
-        assert (err.retry_count, err.retryable) == (attempts, retryable)
+        assert (
+            getattr(err, "status", None),
+            getattr(err, "error_type", None),
+            getattr(err, "request_id", None),
+        ) == (status, etype, rid)
+        assert (getattr(err, "retry_count", None), getattr(err, "retryable", None)) == (
+            attempts,
+            retryable,
+        )
         assert err.__cause__ is None and err.__context__ is not None
         text = class_name_of(err.__context__)
         assert text in LIB if kind in (A, B) else text not in LIB
@@ -146,12 +153,19 @@ def test_r1_row11_bedrock_throttle_carries_the_uuid_request_id():
         rid = str(uuid.uuid4())
         fx = wire.scenario("throttle") | {"response_meta": {"RequestId": rid}}
         err = run_chat(wire, fx, copy.deepcopy(fx), copy.deepcopy(fx))
-        assert type(err) is X and (err.status, err.error_type, err.request_id) == (
+        assert type(err) is X and (
+            getattr(err, "status", None),
+            getattr(err, "error_type", None),
+            getattr(err, "request_id", None),
+        ) == (
             429,
             T.throttled,
             rid,
         )
-        assert (err.retry_count, err.retryable) == (3, True) and len(wire.requests) == 3
+        assert (getattr(err, "retry_count", None), getattr(err, "retryable", None)) == (
+            3,
+            True,
+        ) and len(wire.requests) == 3
         assert str(err) == expected_message("bedrock", err, True)
         assert rid not in str(err)
     finally:
@@ -162,8 +176,11 @@ def test_r1_row8_claude_connection_refused_three_times():
     wire = make_wire(A)
     try:
         err = run_chat(wire, build=wire.unreachable)
-        assert type(err) is X and (err.status, err.error_type) == (None, T.connection)
-        assert (err.retry_count, err.retryable) == (3, True)
+        assert type(err) is X and (
+            getattr(err, "status", None),
+            getattr(err, "error_type", None),
+        ) == (None, T.connection)
+        assert (getattr(err, "retry_count", None), getattr(err, "retryable", None)) == (3, True)
         assert str(err) == expected_message("anthropic", err, True)
         assert wire.requests == []  # nothing reached the replay (its port was closed)
     finally:
@@ -174,8 +191,11 @@ def test_r1_row22_openai_connection_refused_three_times():
     wire = make_wire(O)
     try:
         err = run_chat(wire, build=wire.unreachable)
-        assert type(err) is X and (err.status, err.error_type) == (None, T.connection)
-        assert (err.retry_count, err.retryable) == (3, True)
+        assert type(err) is X and (
+            getattr(err, "status", None),
+            getattr(err, "error_type", None),
+        ) == (None, T.connection)
+        assert (getattr(err, "retry_count", None), getattr(err, "retryable", None)) == (3, True)
         assert str(err) == expected_message("openai_compat", err, True)
     finally:
         wire.close()
@@ -187,7 +207,12 @@ def test_r1_row25_openai_302_is_provider_http_with_status_only():
         try:
             wire.replay.url = raw.url
             err = run_chat(wire, build=lambda: wire.build(ROUTES))
-            assert (err.status, err.error_type, err.retry_count, err.retryable) == (
+            assert (
+                getattr(err, "status", None),
+                getattr(err, "error_type", None),
+                getattr(err, "retry_count", None),
+                getattr(err, "retryable", None),
+            ) == (
                 302,
                 None,
                 1,
@@ -271,7 +296,12 @@ def test_r1_stand_in_rows(row):
     else:
         err, calls = run_retry(make, kind)
     assert type(err) is cls and calls == attempts
-    assert (err.status, err.error_type, err.retry_count, err.retryable) == (
+    assert (
+        getattr(err, "status", None),
+        getattr(err, "error_type", None),
+        getattr(err, "retry_count", None),
+        getattr(err, "retryable", None),
+    ) == (
         status,
         etype,
         attempts,
@@ -287,9 +317,12 @@ def test_r1_row10_vertex_refresh_error_is_authentication():
     ga = pytest.importorskip("google.auth.exceptions", reason="needs extra vertex")
     err, calls = run_retry(lambda: ga.RefreshError("token endpoint said no"), "anthropic")
     assert (
-        type(err) is P and calls == 1 and (err.status, err.error_type) == (None, T.authentication)
+        type(err) is P
+        and calls == 1
+        and (getattr(err, "status", None), getattr(err, "error_type", None))
+        == (None, T.authentication)
     )
-    assert (err.retry_count, err.retryable) == (1, False)
+    assert (getattr(err, "retry_count", None), getattr(err, "retryable", None)) == (1, False)
     assert diagnose(err, step=Where.model_call).code.value == "provider_auth"
 
 
@@ -299,7 +332,12 @@ def test_r1_row28_a_provider_error_raised_in_call_passes_through_unchanged():
     for kind in ("std", "anthropic", "bedrock"):
         err, calls = run_retry(lambda: keep, kind)
         assert err is keep and calls == 1
-        assert (err.status, err.error_type, err.retry_count, err.retryable) == (
+        assert (
+            getattr(err, "status", None),
+            getattr(err, "error_type", None),
+            getattr(err, "retry_count", None),
+            getattr(err, "retryable", None),
+        ) == (
             418,
             T.authentication,
             None,
@@ -320,7 +358,12 @@ def test_r1_row30_status_777_without_oserror_is_retried_three_times_and_has_no_s
 
     err, calls = run_retry(make, "anthropic", label="anthropic")
     assert type(err) is X and calls == 3
-    assert (err.status, err.error_type, err.retry_count, err.retryable) == (None, None, 3, True)
+    assert (
+        getattr(err, "status", None),
+        getattr(err, "error_type", None),
+        getattr(err, "retry_count", None),
+        getattr(err, "retryable", None),
+    ) == (None, None, 3, True)
     assert str(err) == expected_message("anthropic", err, True)
 
 
@@ -338,7 +381,7 @@ def test_r2_openai_request_counts_by_status(status, count):
 
             err = run_chat(wire, build=lambda: wire.build(ROUTES))
             assert raw.requests == count
-            assert err.retry_count == count
+            assert getattr(err, "retry_count", None) == count
         finally:
             wire.close()
 
@@ -350,7 +393,7 @@ def test_r2_claude_library_777_is_retried_three_times():
             wire.replay.url = raw.url
 
             err = run_chat(wire, build=lambda: wire.build(ROUTES))
-            assert raw.requests == 3 and type(err) is X and err.status is None
+            assert raw.requests == 3 and type(err) is X and getattr(err, "status", None) is None
         finally:
             wire.close()
 
@@ -388,7 +431,7 @@ def test_r11a_status_line_text_never_reaches_the_error():
             wire.replay.url = raw.url
 
             err = run_chat(wire, build=lambda: wire.build(ROUTES))
-            assert raw.requests == 3 and type(err) is X and err.status is None
+            assert raw.requests == 3 and type(err) is X and getattr(err, "status", None) is None
             assert all(CANARY not in text for text in _everywhere(err))
             assert CANARY in str(getattr(err.__context__, "reason", ""))  # what P5b4 must hide
         finally:
@@ -414,7 +457,7 @@ def test_r11c_status_1000_is_one_request_class_text_only():
         try:
             wire.replay.url = raw.url
             err = run_chat(wire, build=lambda: wire.build(ROUTES))
-            assert raw.requests == 1 and type(err) is P and err.status is None
+            assert raw.requests == 1 and type(err) is P and getattr(err, "status", None) is None
             assert str(err) == expected_message("openai_compat", err, False)
         finally:
             wire.close()
@@ -451,7 +494,10 @@ def test_r11e_claude_library_non_json_5_mib_body_on_a_401():
 
             err = run_chat(wire, build=lambda: wire.build(ROUTES))
             assert type(err) is P and raw.requests == 1
-            assert (err.status, err.error_type) == (401, T.authentication)
+            assert (getattr(err, "status", None), getattr(err, "error_type", None)) == (
+                401,
+                T.authentication,
+            )
             assert isinstance(
                 err.__context__.body, str
             )  # the library keeps the text; the error does not
@@ -573,7 +619,12 @@ def test_r16_every_modelled_converse_code(code, status, etype, retried):
         n = 3 if retried else 1
         err = run_chat(wire, *[copy.deepcopy(fx) for _ in range(n)])
         assert type(err) is (X if retried else P) and len(wire.requests) == n
-        assert (err.status, err.error_type, err.retry_count, err.retryable) == (
+        assert (
+            getattr(err, "status", None),
+            getattr(err, "error_type", None),
+            getattr(err, "retry_count", None),
+            getattr(err, "retryable", None),
+        ) == (
             status,
             etype,
             n,
@@ -601,7 +652,12 @@ def test_r16_bn10_quota_code_at_http_400_is_retried_by_the_code_alone():
         }
         err = run_chat(wire, *[copy.deepcopy(fx) for _ in range(3)])
         assert type(err) is X and len(wire.requests) == 3
-        assert (err.status, err.error_type, err.retry_count, err.retryable) == (
+        assert (
+            getattr(err, "status", None),
+            getattr(err, "error_type", None),
+            getattr(err, "retry_count", None),
+            getattr(err, "retryable", None),
+        ) == (
             400,
             T.quota,
             3,
@@ -615,10 +671,16 @@ def test_r16_bn10_quota_code_at_http_400_is_retried_by_the_code_alone():
 
 
 def test_r16_status_424_has_no_status_table_type_but_the_code_table_gives_one():
-    from hadavin_sdk.llm.provider_facts import (
-        status_error_type,  # new module: imported here so the file collects on the base
-    )
+    import importlib
 
+    try:  # the module does not exist before P5b1: the test then fails on its assertion, not on an import error
+        facts = importlib.import_module("hadavin_sdk.llm.provider_facts")
+    except ImportError:
+        facts = None
+    status_error_type = getattr(facts, "status_error_type", None)
+    assert status_error_type is not None, (
+        "hadavin_sdk.llm.provider_facts.status_error_type does not exist"
+    )
     assert status_error_type(424) is None
 
 
@@ -698,7 +760,10 @@ def test_r14b_amazon_library_debug_log_holds_the_canary(caplog):
         caplog.set_level(logging.DEBUG)
         with pytest.raises(ProviderError) as got:
             BedrockLLM(client, routes, 3, sleep=lambda s: None).chat(**CALL)
-        assert raw.requests >= 1 and (got.value.status, got.value.error_type) == (403, T.permission)
+        assert raw.requests >= 1 and (
+            getattr(got.value, "status", None),
+            getattr(got.value, "error_type", None),
+        ) == (403, T.permission)
         assert _library_log_text(caplog, "botocore"), "no record from the 'botocore' loggers"
         leaked = [(r.name, r.levelname) for r in caplog.records if CANARY in r.getMessage()]
         assert not leaked, f"canary found in library log records (logger, level): {leaked}"
@@ -722,7 +787,11 @@ def test_r1p_corpus_rows_are_all_active_and_counted():
 def test_r1p_every_variant_of_a_row_is_clean(row):
     for variant in row.spec["variants"]:
         err = corpus.build_exception({**row.spec, "args": (variant,)})
-        assert type(err) is P and err.status is None and err.request_id is None
+        assert (
+            type(err) is P
+            and getattr(err, "status", None) is None
+            and getattr(err, "request_id", None) is None
+        )
         text = render(diagnose(err, step="model_call"))
         assert (
             grammar_ok(text, "A")
@@ -769,7 +838,7 @@ def test_r1p_scenario_rows(row):
     assert grammar_ok(line, "A") and not leaks(line, row.canaries + (CANARY,)), line
     assert all(CANARY not in text for text in _everywhere(err))
     if row.spec["case"] == "status_777":
-        assert type(err) is X and err.status is None and requests == 3
+        assert type(err) is X and getattr(err, "status", None) is None and requests == 3
     elif row.spec["case"] == "body_6mib":
         assert (
             type(err) is X

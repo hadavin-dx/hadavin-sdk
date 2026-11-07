@@ -47,6 +47,7 @@ from hadavin_sdk.codes import (
     StepToken,
     Where,
 )
+from hadavin_sdk.neverraise import Site, counts, record
 
 _OWN_PACKAGE = "hadavin_sdk"
 _KIND_RE = re.compile(rf"[A-Za-z0-9_.]{{1,{defaults.DIAG_KIND_CHARS}}}")
@@ -148,18 +149,22 @@ class Diagnostic:
 # --- identity of classes -------------------------------------------------------------------------------------------------
 
 
-# How often each guard below fired, by site name. A count only: nothing about the exception (no text, no type) is kept.
-_GUARD_FAILURES: dict[str, int] = {}
+# How often each guard below fired is kept by ``hadavin_sdk.neverraise`` (standard library only, so this module still imports no
+# ``llm`` code): one counter for every never-raise guard, here under the ``diag_<site>`` names. A count only: nothing about the
+# exception (no text, no type) is kept.
+_SITES: Final = {s.value.removeprefix("diag_"): s for s in Site if s.value.startswith("diag_")}
 
 
 def _guard_failed(site: str) -> None:
     """Record that the guard at ``site`` caught an ``Exception``. A fixed site name and a count; never the exception."""
-    _GUARD_FAILURES[site] = _GUARD_FAILURES.get(site, 0) + 1
+    record(_SITES[site])
 
 
 def guard_failures() -> dict[str, int]:
-    """A copy of the guard counters (site name -> times caught)."""
-    return dict(_GUARD_FAILURES)
+    """The counts of this module's guards (site name -> times caught), a copy."""
+    return {
+        name.removeprefix("diag_"): n for name, n in counts().items() if name.startswith("diag_")
+    }
 
 
 def _is_the_named_class(tp: type) -> bool:

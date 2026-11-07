@@ -487,7 +487,8 @@
   - `tests/fixtures/textnorm_corpus.json`: `16f312ad268306a3388506da01abc1e28796255ef090f8c59160404e6cc13722`
 
 ### Changed (P5b1, provider error plumbing: checked facts on provider errors, a closed message text)
-- New `hadavin_sdk/neverraise.py` (standard library only): the never-raise guards in `guard/diagnostic.py`, `llm/provider_facts.py` and `llm/retry.py` count each failure they absorb by closed site name (never the exception text); `KeyboardInterrupt` and `SystemExit` still propagate.
+- New `hadavin_sdk/neverraise.py` (standard library only): ONE counter for the never-raise guards in `guard/diagnostic.py`, `llm/provider_facts.py` and `llm/retry.py`. Each guard that absorbs a fault counts it by closed site name (`diag_*`, `facts_*`, `retry_*`); never the exception text; `KeyboardInterrupt` and `SystemExit` still propagate. `guard.diagnostic.guard_failures()` (P5a) is now a view of the same counter (it no longer keeps a second one). The ordinary failure path of `with_retry` (a 429 that is retried, a refused 401) counts nothing: the counters show absorbed faults only. There is no reset function; the lock is reentrant.
+- `SqlReadError` (a shipped SQL file that cannot be read to its end) now gives the code `internal_bug` (a defect in this package's own data).
 - **Upgrade step.** `detail` is removed from `with_retry` and from `NetworkLLM`. A custom llm kind that set `detail` must set `facts`
   instead: `facts(exc) -> ProviderFacts` returns checked values only (a status from 100 to 599, a `ProviderErrorType`, a request id of one
   of two closed shapes). A kind with no `facts` uses the neutral adapter `llm.retry.default_facts`.

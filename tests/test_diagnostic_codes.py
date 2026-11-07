@@ -158,7 +158,7 @@ PINNED = {
     "hadavin_sdk.errors:ConfigError": "config_invalid",
     "hadavin_sdk.config:_RenamedStage": "config_invalid",
     "hadavin_sdk.k1b.bundle:BundleError": "config_invalid",
-    "hadavin_sdk.store.migration_numbers:SqlReadError": "config_invalid",
+    "hadavin_sdk.store.migration_numbers:SqlReadError": "internal_bug",
     "hadavin_sdk.llm.fake:UnknownRecording": "config_invalid",
     "hadavin_sdk.store.protocol:StoreUnavailable": "store_unavailable",
     "hadavin_sdk.store.protocol:StaleState": "store_conflict",
@@ -210,6 +210,18 @@ def test_instance_and_class_attribute_named_code_is_ignored() -> None:
     e = E("x")
     e.code = "config_invalid"  # type: ignore[attr-defined]
     assert "code=foreign_exception " in render(diagnose(e, step=codes.Where.other))
+
+
+def test_a_sql_file_that_cannot_be_read_is_a_repository_defect_not_an_operator_config_error() -> (
+    None
+):
+    from hadavin_sdk.store.migration_numbers import SqlReadError, checked_statement_text
+
+    with pytest.raises(SqlReadError) as caught:
+        checked_statement_text("select 'unclosed")  # a real raise, with a real traceback
+    line = render(diagnose(caught.value, step=codes.Where.other))
+    assert "code=internal_bug " in line, line
+    assert "code=config_invalid" not in line, line
 
 
 def test_textnorm_error_family_maps_to_scan_failed() -> None:
