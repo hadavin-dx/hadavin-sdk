@@ -403,3 +403,4 @@ ORDER 109: 9/12 reviews saved (q259); pending PR 70 x2, PR 80 design; ORDER 108:
 PR70 reviews saved (q260): NOT CLEAN, B1 composition regression; fix builders for PR 66/73/72/83/80 spawned (order 111, ports 55471-75); PR63 round-8 reviewers + P1b merge7 running
 ORDER 112 read: GRANT $on item sent to PR73 builder; P1b fix builder queued behind merge7 (q261)
 q262: PR63 round-8 reviews saved (no Blocker; design 2 MAJOR need lead choice); P1b merge7 + 5 order-111 builders still running
+ORDER 113 read (q263): P1b fix builder brief extended; waiting on merge7 report
