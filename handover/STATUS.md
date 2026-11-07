@@ -37,3 +37,6 @@ P2d a632fabf44df2ced1 | P4a ac3f9b388f9a3f295 | P5a a102c0f3b71e0a1c8 | P0a ab90
 - Open points for the lead: P4b1 needs P4d to let settle_spend accept actual > reserved (P4b1 item 1); P4b1-c waits for the lead's answer on where the Replay Check lives; P0a: copyright owner of promoted Warden code (owner-only); the `security` check is red on main (17 test-password fingerprints, see P0a).
 - Context note: autocompact window set by the owner to 300k; I did not change any setting.
 - READY FOR COMPACT: yes (all state is in this folder: cloud-register.md, ledger.md, reviews/).
+
+## STOPPED 2026-11-07T11:38Z (ORDER 153)
+Heads: PR72 core/P6a d15e53a; PR73 core/P3a-2 2b0941b; PR80 core/P5b1 4003672; PR83 core/P0t-followup 7f24178; PR85 core/P5b2 4b1b3f9; PR86 core/P6b1 8f6b032; lint core/ci-lint-set da40870; T1/T2 core/T1-T2-tests 85b613a; P1b core/P1b-o140 0d843b4. See CLOUD-RESUME.md.

@@ -1,0 +1,383 @@
+# P1d author probes, 2026-11-07 (AUTHOR pre-checks, not an evidence run; scripts in the same folder)
+# heads: main/base 0dabf1f; P1b origin/core/P1b-fixwip 0d843b4; CILINT core/ci-lint-set eeaa502 at first run, da40870 at re-run (probe1 output identical)
+# python: scratch venv, Python 3.12.13, markdown-it-py 4.2.0, pydantic 2.14.1, pydantic-settings 2.16.1, pyyaml 6.0.3
+
+===== probe1-src-0dabf1f.txt
+pkg /tmp/claude-0/-home-user/203f6188-e1bc-5eda-aaab-325ff81324d2/scratchpad/p1d/src-0dabf1f/src/hadavin_sdk
+plain                ok   'key <APIKEY_1> here'
+pw_plain             ok   'password=<SECRET_1> end'
+md_bold_inside       LEAK 'key AKIA**IOSFODNN7EXAMPLE** here'
+md_bold2             LEAK 'key AKIA**IOSFODNN**7EXAMPLE here'
+md_italic_star       LEAK 'key AKIAIO*SFODNN7EXAMPLE* x'
+md_strike            LEAK 'key AKIA~~IOSFODNN7EXAMPLE~~ x'
+md_code              LEAK 'key AKIA`IOSFODNN7EXAMPLE` x'
+md_underscore        ok   'key <APIKEY_1> x'
+ent_named_amp        ok   'key AKIA&amp;IOSFODNN7EXAMPLE x'
+ent_named_empty      ok   'key <APIKEY_1> x'
+ent_dec              ok   'key <APIKEY_1> x'
+ent_hex              ok   'key <APIKEY_1> x'
+ent_dec_zw           ok   'key <APIKEY_1> x'
+ansi_csi             LEAK 'key AKIA IOSFODNN7EXAMPLE x'
+ansi_osc             LEAK 'key AKIA IOSFODNN7EXAMPLE x'
+ansi_as_text         ok   'key AKIA\\x1b[0mIOSFODNN7EXAMPLE x'
+ctrl_bel             ok   'key <APIKEY_1> x'
+ctrl_bs              LEAK 'key xAKIAIOSFODNN7EXAMPLE x'
+ctrl_del             ok   'key <APIKEY_1> x'
+ctrl_c1              ok   'key <APIKEY_1> x'
+zwsp                 ok   'key <APIKEY_1> x'
+zwj                  ok   'key <APIKEY_1> x'
+wj                   ok   'key <APIKEY_1> x'
+combining            LEAK 'key AKIÁIOSFODNN7EXAMPLE x'
+fullwidth            ok   'key <APIKEY_1> x'
+split_line           LEAK 'key AKIAIOSFOD\nNN7EXAMPLE x'
+lower                LEAK 'key akiaiosfodnn7example x'
+pw_md                ok   'password=<SECRET_1> end'
+pw_ent               ok   'password=<SECRET_1>&amp;XUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY end'
+pw_ansi              ok   'password=<SECRET_1> XUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY end'
+html_tag             ok   'key <APIKEY_1> x'
+md_bold_glued_word   LEAK 'keyzAKIA**IOSFODNN7EXAMPLE**'
+
+===== probe1-src-origin_core_P1b-fixwip.txt
+pkg /tmp/claude-0/-home-user/203f6188-e1bc-5eda-aaab-325ff81324d2/scratchpad/p1d/src-origin_core_P1b-fixwip/src/hadavin_sdk
+plain                ok   'key <APIKEY_1> here'
+pw_plain             ok   'password=<SECRET_1> end'
+md_bold_inside       LEAK 'key AKIA**IOSFODNN7EXAMPLE** here'
+md_bold2             LEAK 'key AKIA**IOSFODNN**7EXAMPLE here'
+md_italic_star       LEAK 'key AKIAIO*SFODNN7EXAMPLE* x'
+md_strike            LEAK 'key AKIA~~IOSFODNN7EXAMPLE~~ x'
+md_code              LEAK 'key AKIA`IOSFODNN7EXAMPLE` x'
+md_underscore        ok   'key <APIKEY_1> x'
+ent_named_amp        ok   'key AKIA&amp;IOSFODNN7EXAMPLE x'
+ent_named_empty      ok   'key <APIKEY_1> x'
+ent_dec              ok   'key <APIKEY_1> x'
+ent_hex              ok   'key <APIKEY_1> x'
+ent_dec_zw           ok   'key <APIKEY_1> x'
+ansi_csi             LEAK 'key AKIA IOSFODNN7EXAMPLE x'
+ansi_osc             LEAK 'key AKIA IOSFODNN7EXAMPLE x'
+ansi_as_text         ok   'key AKIA\\x1b[0mIOSFODNN7EXAMPLE x'
+ctrl_bel             ok   'key <APIKEY_1> x'
+ctrl_bs              LEAK 'key xAKIAIOSFODNN7EXAMPLE x'
+ctrl_del             ok   'key <APIKEY_1> x'
+ctrl_c1              ok   'key <APIKEY_1> x'
+zwsp                 ok   'key <APIKEY_1> x'
+zwj                  ok   'key <APIKEY_1> x'
+wj                   ok   'key <APIKEY_1> x'
+combining            LEAK 'key AKIÁIOSFODNN7EXAMPLE x'
+fullwidth            ok   'key <APIKEY_1> x'
+split_line           LEAK 'key AKIAIOSFOD\nNN7EXAMPLE x'
+lower                LEAK 'key akiaiosfodnn7example x'
+pw_md                ok   'password=<SECRET_1> end'
+pw_ent               ok   'password=<SECRET_1>&amp;XUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY end'
+pw_ansi              ok   'password=<SECRET_1> XUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY end'
+html_tag             ok   'key <APIKEY_1> x'
+md_bold_glued_word   LEAK 'keyzAKIA**IOSFODNN7EXAMPLE**'
+
+===== probe1-cilint-da40870.txt
+pkg /home/user/build/CILINT/src/hadavin_sdk
+plain                ok   'key <APIKEY_1> here'
+pw_plain             ok   'password=<SECRET_1> end'
+md_bold_inside       LEAK 'key AKIA**IOSFODNN7EXAMPLE** here'
+md_bold2             LEAK 'key AKIA**IOSFODNN**7EXAMPLE here'
+md_italic_star       LEAK 'key AKIAIO*SFODNN7EXAMPLE* x'
+md_strike            LEAK 'key AKIA~~IOSFODNN7EXAMPLE~~ x'
+md_code              LEAK 'key AKIA`IOSFODNN7EXAMPLE` x'
+md_underscore        ok   'key <APIKEY_1> x'
+ent_named_amp        ok   'key AKIA&amp;IOSFODNN7EXAMPLE x'
+ent_named_empty      ok   'key <APIKEY_1> x'
+ent_dec              ok   'key <APIKEY_1> x'
+ent_hex              ok   'key <APIKEY_1> x'
+ent_dec_zw           ok   'key <APIKEY_1> x'
+ansi_csi             LEAK 'key AKIA IOSFODNN7EXAMPLE x'
+ansi_osc             LEAK 'key AKIA IOSFODNN7EXAMPLE x'
+ansi_as_text         ok   'key AKIA\\x1b[0mIOSFODNN7EXAMPLE x'
+ctrl_bel             ok   'key <APIKEY_1> x'
+ctrl_bs              LEAK 'key xAKIAIOSFODNN7EXAMPLE x'
+ctrl_del             ok   'key <APIKEY_1> x'
+ctrl_c1              ok   'key <APIKEY_1> x'
+zwsp                 ok   'key <APIKEY_1> x'
+zwj                  ok   'key <APIKEY_1> x'
+wj                   ok   'key <APIKEY_1> x'
+combining            LEAK 'key AKIÁIOSFODNN7EXAMPLE x'
+fullwidth            ok   'key <APIKEY_1> x'
+split_line           LEAK 'key AKIAIOSFOD\nNN7EXAMPLE x'
+lower                LEAK 'key akiaiosfodnn7example x'
+pw_md                ok   'password=<SECRET_1> end'
+pw_ent               ok   'password=<SECRET_1>&amp;XUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY end'
+pw_ansi              ok   'password=<SECRET_1> XUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY end'
+html_tag             ok   'key <APIKEY_1> x'
+md_bold_glued_word   LEAK 'keyzAKIA**IOSFODNN7EXAMPLE**'
+
+===== probe2-src-0dabf1f.txt
+email_plain          'contact anna.m@example[.]org please'
+email_in_code        'contact `<EMAIL_1>`'
+host_corp            'host db01[.]corp[.]example[.]com down'
+url_cred             'see [link removed]'
+ipv4                 'from <IPV4_1> now'
+ent_shy              'key <APIKEY_1> x'
+ent_zwsp_named       'key <APIKEY_1> x'
+ent_nobreak          'key <APIKEY_1> x'
+ent_invtimes         'key <APIKEY_1> x'
+ent_hex_nosemi_zw    'key <APIKEY_1> x'
+ent_dec_nosemi       'key <APIKEY_1> x'
+ent_double           'key <APIKEY_1> x'
+ins_dash             'key <APIKEY_1> x'
+ins_dot              'key AKIA.IOSFODNN7EXAMPLE x'
+ansi_sgr_long        'key AKIA IOSFODNN7EXAMPLE x'
+ansi_c1_csi          'key AKIA IOSFODNN7EXAMPLE x'
+ansi_osc8_link       'key AKIA IOSFODNN7EXAMPLE x'
+ctrl_cr              'key AKIA\nIOSFODNN7EXAMPLE x'
+ctrl_vt              'key <APIKEY_1> x'
+ctrl_ff              'key <APIKEY_1> x'
+ctrl_nul             'key <APIKEY_1> x'
+ctrl_esc_alone       'key AKIA OSFODNN7EXAMPLE x'
+bidi_rlo             'key <APIKEY_1> x'
+softhyphen_raw       'key <APIKEY_1> x'
+md_link              'key AKIA [link removed] x'
+md_html_b            'key <APIKEY_1>'
+slack_mrkdwn         'key AKIA_*IOSFODNN7EXAMPLE*_ x'
+md_bs_star           'key AKIA\\*\\*IOSFODNN7EXAMPLE x'
+fullwidth_star       'key AKIA＊IOSFODNN7EXAMPLE x'
+combining_below      'key AKIẠIOSFODNN7EXAMPLE x'
+
+===== probe2-src-origin_core_P1b-fixwip.txt
+email_plain          'contact anna.m@example[.]org please'
+email_in_code        'contact `<EMAIL_1>`'
+host_corp            'host db01[.]corp[.]example[.]com down'
+url_cred             'see [link removed]'
+ipv4                 'from <IPV4_1> now'
+ent_shy              'key <APIKEY_1> x'
+ent_zwsp_named       'key <APIKEY_1> x'
+ent_nobreak          'key <APIKEY_1> x'
+ent_invtimes         'key <APIKEY_1> x'
+ent_hex_nosemi_zw    'key <APIKEY_1> x'
+ent_dec_nosemi       'key <APIKEY_1> x'
+ent_double           'key <APIKEY_1> x'
+ins_dash             'key <APIKEY_1> x'
+ins_dot              'key AKIA.IOSFODNN7EXAMPLE x'
+ansi_sgr_long        'key AKIA IOSFODNN7EXAMPLE x'
+ansi_c1_csi          'key AKIA IOSFODNN7EXAMPLE x'
+ansi_osc8_link       'key AKIA IOSFODNN7EXAMPLE x'
+ctrl_cr              'key AKIA\nIOSFODNN7EXAMPLE x'
+ctrl_vt              'key <APIKEY_1> x'
+ctrl_ff              'key <APIKEY_1> x'
+ctrl_nul             'key <APIKEY_1> x'
+ctrl_esc_alone       'key AKIA OSFODNN7EXAMPLE x'
+bidi_rlo             'key <APIKEY_1> x'
+softhyphen_raw       'key <APIKEY_1> x'
+md_link              'key AKIA [link removed] x'
+md_html_b            'key <APIKEY_1>'
+slack_mrkdwn         'key AKIA_*IOSFODNN7EXAMPLE*_ x'
+md_bs_star           'key AKIA\\*\\*IOSFODNN7EXAMPLE x'
+fullwidth_star       'key AKIA＊IOSFODNN7EXAMPLE x'
+combining_below      'key AKIẠIOSFODNN7EXAMPLE x'
+
+===== probe3
+
+===== probe5-cilint.txt
+redact_untrusted(doc)  md     LEAK 'v AKIA**IOSFODNN7EXAMPLE** w'
+redact_untrusted(doc)  ansi   LEAK 'v AKIA IOSFODNN7EXAMPLE w'
+redact_untrusted(doc)  bs     ok   'v x\x08<APIKEY_1> w'
+redact_untrusted(doc)  comb   LEAK 'v AKIÁIOSFODNN7EXAMPLE w'
+redact_untrusted(doc)  cyr    ok   'v АKIАIOSFODNN7EXAMPLE w'
+redact_untrusted(doc)  lower  LEAK 'v akiaiosfodnn7example w'
+redact_untrusted(doc)  split  LEAK 'v AKIAIOSFOD\nNN7EXAMPLE w'
+redact_untrusted(doc)  dot    LEAK 'v AKIA.IOSFODNN7EXAMPLE w'
+safe_head              md     LEAK 'v AKIA**IOSFODNN7EXAMPLE** w'
+safe_head              ansi   LEAK 'v AKIA IOSFODNN7EXAMPLE w'
+safe_head              bs     ok   'v x\x08<APIKEY_1> w'
+safe_head              comb   LEAK 'v AKIÁIOSFODNN7EXAMPLE w'
+safe_head              cyr    ok   'v АKIАIOSFODNN7EXAMPLE w'
+safe_head              lower  LEAK 'v akiaiosfodnn7example w'
+safe_head              split  LEAK 'v AKIAIOSFOD\nNN7EXAMPLE w'
+safe_head              dot    LEAK 'v AKIA.IOSFODNN7EXAMPLE w'
+redact_value(dict)     md     LEAK "{'k': 'v AKIA**IOSFODNN7EXAMPLE** w'}"
+redact_value(dict)     ansi   LEAK "{'k': 'v AKIA IOSFODNN7EXAMPLE w'}"
+redact_value(dict)     bs     ok   "{'k': 'v x\\x08<APIKEY_1> w'}"
+redact_value(dict)     comb   LEAK "{'k': 'v AKIÁIOSFODNN7EXAMPLE w'}"
+redact_value(dict)     cyr    ok   "{'k': 'v АKIАIOSFODNN7EXAMPLE w'}"
+redact_value(dict)     lower  LEAK "{'k': 'v akiaiosfodnn7example w'}"
+redact_value(dict)     split  ok   "{'k': 'v AKIAIOSFOD\\nNN7EXAMPLE w'}"
+redact_value(dict)     dot    LEAK "{'k': 'v AKIA.IOSFODNN7EXAMPLE w'}"
+prepare_output         md     LEAK 'v AKIA**IOSFODNN7EXAMPLE** w'
+prepare_output         ansi   LEAK 'v AKIA IOSFODNN7EXAMPLE w'
+prepare_output         bs     ok   'v x\x08<APIKEY_1> w'
+prepare_output         comb   LEAK 'v AKIÁIOSFODNN7EXAMPLE w'
+prepare_output         cyr    ok   'v АKIАIOSFODNN7EXAMPLE w'
+prepare_output         lower  LEAK 'v akiaiosfodnn7example w'
+prepare_output         split  LEAK 'v AKIAIOSFOD\nNN7EXAMPLE w'
+prepare_output         dot    LEAK 'v AKIA.IOSFODNN7EXAMPLE w'
+error_reason           md     LEAK 'ValueError: v AKIA**IOSFODNN7EXAMPLE** w'
+error_reason           ansi   LEAK 'ValueError: v AKIA IOSFODNN7EXAMPLE w'
+error_reason           bs     ok   'ValueError: v x\x08<APIKEY_1> w'
+error_reason           comb   LEAK 'ValueError: v AKIÁIOSFODNN7EXAMPLE w'
+error_reason           cyr    ok   'ValueError: v АKIАIOSFODNN7EXAMPLE w'
+error_reason           lower  LEAK 'ValueError: v akiaiosfodnn7example w'
+error_reason           split  LEAK 'ValueError: v AKIAIOSFOD\nNN7EXAMPLE w'
+error_reason           dot    LEAK 'ValueError: v AKIA.IOSFODNN7EXAMPLE w'
+prepare_output+handed  plain  ok   'v <SECRET_REDACTED> w'
+error_reason+handed    plain  ok   'ValueError: v <SECRET_REDACTED> w'
+prepare_output+handed  md     LEAK 'v hs-q7Z**pLm3Xv9Rt2Kw8Yn** w'
+error_reason+handed    md     LEAK 'ValueError: v hs-q7Z**pLm3Xv9Rt2Kw8Yn** w'
+prepare_output+handed  ansi   LEAK 'v hs-q7Z pLm3Xv9Rt2Kw8Yn w'
+error_reason+handed    ansi   LEAK 'ValueError: v hs-q7Z pLm3Xv9Rt2Kw8Yn w'
+prepare_output+handed  upper  LEAK 'v HS-Q7ZPLM3XV9RT2KW8YN w'
+error_reason+handed    upper  LEAK 'ValueError: v HS-Q7ZPLM3XV9RT2KW8YN w'
+prepare_output+handed  split  LEAK 'v hs-q7ZpLm\n3Xv9Rt2Kw8Yn w'
+error_reason+handed    split  LEAK 'ValueError: v hs-q7ZpLm\n3Xv9Rt2Kw8Yn w'
+prepare_output+handed  ent    ok   'v <SECRET_REDACTED> w'
+error_reason+handed    ent    ok   'ValueError: v <SECRET_REDACTED> w'
+prepare_output+handed  cyr    ok   'v hs-q7ZрLm3Xv9Rt2Kw8Yn w'
+error_reason+handed    cyr    ok   'ValueError: v hs-q7ZрLm3Xv9Rt2Kw8Yn w'
+
+===== probe4-tree-p1b.txt
+== HOSTILE
+md_bold_inside           0.001s PASS    'key AKIA**IOSFODNN7EXAMPLE** here'
+md_bold2                 0.000s PASS    'key AKIA**IOSFODNN**7EXAMPLE here'
+md_italic                0.000s PASS    'key AKIAIO*SFODNN7EXAMPLE* x'
+md_strike                0.000s PASS    'key AKIA~~IOSFODNN7EXAMPLE~~ x'
+md_code                  0.000s PASS    'key AKIA`IOSFODNN7EXAMPLE` x'
+md_glued                 0.000s PASS    'keyzAKIA**IOSFODNN7EXAMPLE**'
+ent_amp                  0.000s PASS    'key AKIA&amp;IOSFODNN7EXAMPLE x'
+ansi_csi                 0.000s PASS    'key AKIA IOSFODNN7EXAMPLE x'
+ansi_osc                 0.000s PASS    'key AKIA IOSFODNN7EXAMPLE x'
+ctrl_bs                  0.000s PASS    'key xAKIAIOSFODNN7EXAMPLE x'
+combining                0.000s PASS    'key AKIÁIOSFODNN7EXAMPLE x'
+cyrillic_A               0.000s PASS    'key АKIАIOSFODNN7EXAMPLE x'
+split_line_patternonly   0.000s PASS    'key AKIAIOSFOD\nNN7EXAMPLE x'
+lower_patternonly        0.000s PASS    'key akiaiosfodnn7example x'
+pw_ansi                  0.000s PASS    'password=<SECRET_1> XUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY end'
+pw_ent                   0.001s PASS    'password=<SECRET_1>&amp;XUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY end'
+pw_literal_amp           0.000s PASS    'password=<SECRET_1>&XUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY end'
+pw_then_md               0.000s PASS    'password=<SECRET_1> and again wJalrX**UtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY**'
+pw_then_lower            0.000s PASS    'password=<SECRET_1> and again wjalrxutnfemi/k7mdeng/bpxrficyexamplekey'
+pw_then_split            0.000s PASS    'password=<SECRET_1> and wJalrXUtn\nFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY'
+email_md                 0.000s PASS    'mail anna**.m@example[.]org** x'
+email_ansi               0.000s PASS    'mail anna.m@example[.]org x'
+ent_hex_semi_less        0.000s PASS    'key <APIKEY_1> x'
+ctrl_cr                  0.000s PASS    'key AKIA\nIOSFODNN7EXAMPLE x'
+ctrl_esc_alone           0.000s PASS    'key AKIA OSFODNN7EXAMPLE x'
+ansi_as_text             0.000s PASS    'key AKIA\\x1b[0mIOSFODNN7EXAMPLE x'
+slack_mrkdwn             0.000s PASS    'key AKIA_*IOSFODNN7EXAMPLE*_ x'
+host_corp                0.000s PASS    'host db01[.]corp[.]example[.]com down'
+md_bs_star               0.000s PASS    'key AKIA\\*\\*IOSFODNN7EXAMPLE x'
+md_escape                0.000s PASS    'key AKIA\\*IOSFODNN7EXAMPLE x'
+html_comment             0.000s PASS    'key <APIKEY_1> x'
+== BENIGN
+bold_words               0.000s PASS    'Approve **restart** of `web-01` in ~~staging~~ demo?'
+placeholder_in           0.000s PASS    'Plan for <IPV4_1> and <EMAIL_2>: rotate the key.'
+code_hash                0.000s PASS    'commit `0d843b4` and digest `a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4a1
+md_table                 0.000s PASS    '| a | b |\n|---|---|\n| **x** | `y` |'
+entities                 0.000s PASS    'Tom &amp; Jerry &amp;lt;ok&amp;gt; &amp;#169; 2026'
+ansi_color_words         0.000s PASS    'status OK done'
+ip_twice                 0.000s PASS    'host <IPV4_1> and <IPV4_1> again'
+two_ids                  0.000s PASS    '`fooBarBazQux1234567890abc`/`anotherLongIdentifier99xyz`'
+glued_code               0.000s PASS    'run `make`test now'
+email_plain              0.000s PASS    'contact anna.m@example[.]org please'
+pw_plain                 0.000s PASS    'password=<SECRET_1> end'
+accented_name            0.000s PASS    'Approve for Renée Müller-Schön'
+long_card                0.011s PASS    'Approve **step 0**: move `item-1` to `queue-b`. Approve **step 2**: move `item-
+
+===== probe4-proto5.txt
+== HOSTILE
+md_bold_inside           0.002s REFUSED _P1dRefused
+md_bold2                 0.001s REFUSED _P1dRefused
+md_italic                0.001s REFUSED _P1dRefused
+md_strike                0.001s REFUSED _P1dRefused
+md_code                  0.001s REFUSED _P1dRefused
+md_glued                 0.000s PASS    'keyzAKIA**IOSFODNN7EXAMPLE**'
+ent_amp                  0.001s PASS    'key AKIA&amp;IOSFODNN7EXAMPLE x'
+ansi_csi                 0.001s REFUSED _P1dRefused
+ansi_osc                 0.001s REFUSED _P1dRefused
+ctrl_bs                  0.001s REFUSED _P1dRefused
+combining                0.002s REFUSED _P1dRefused
+cyrillic_A               0.001s REFUSED _P1dRefused
+split_line_patternonly   0.000s PASS    'key AKIAIOSFOD\nNN7EXAMPLE x'
+lower_patternonly        0.000s PASS    'key akiaiosfodnn7example x'
+pw_ansi                  0.003s REFUSED _P1dRefused
+pw_ent                   0.002s PASS    'password=<SECRET_1>&amp;XUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY end'
+pw_literal_amp           0.001s PASS    'password=<SECRET_1>&XUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY end'
+pw_then_md               0.002s REFUSED _P1dRefused
+pw_then_lower            0.002s REFUSED _P1dRefused
+pw_then_split            0.002s REFUSED _P1dRefused
+email_md                 0.002s REFUSED _P1dRefused
+email_ansi               0.001s REFUSED _P1dRefused
+ent_hex_semi_less        0.001s PASS    'key <APIKEY_1> x'
+ctrl_cr                  0.001s REFUSED _P1dRefused
+ctrl_esc_alone           0.001s REFUSED _P1dRefused
+ansi_as_text             0.002s REFUSED _P1dRefused
+slack_mrkdwn             0.001s REFUSED _P1dRefused
+host_corp                0.001s PASS    'host <HOSTNAME_1>.example.com down'
+md_bs_star               0.000s PASS    'key AKIA\\*\\*IOSFODNN7EXAMPLE x'
+md_escape                0.000s PASS    'key AKIA\\*IOSFODNN7EXAMPLE x'
+html_comment             0.001s PASS    'key <APIKEY_1> x'
+== BENIGN
+bold_words               0.001s PASS    'Approve **restart** of `web-01` in ~~staging~~ demo?'
+placeholder_in           0.001s PASS    'Plan for <IPV4_1> and <EMAIL_2>: rotate the key.'
+code_hash                0.001s PASS    'commit `0d843b4` and digest `a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4a1
+md_table                 0.001s PASS    '| a | b |\n|---|---|\n| **x** | `y` |'
+entities                 0.001s PASS    'Tom &amp; Jerry &amp;lt;ok&amp;gt; &amp;#169; 2026'
+ansi_color_words         0.000s PASS    'status OK done'
+ip_twice                 0.001s PASS    'host <IPV4_1> and <IPV4_1> again'
+two_ids                  0.002s REFUSED _P1dRefused
+glued_code               0.000s PASS    'run `make`test now'
+email_plain              0.001s PASS    'contact <EMAIL_1> please'
+pw_plain                 0.001s PASS    'password=<SECRET_1> end'
+accented_name            0.001s PASS    'Approve for Renée Müller-Schön'
+long_card                0.024s PASS    'Approve **step 0**: move `item-1` to `queue-b`. Approve **step 2**: move `item-
+
+===== time1.txt
+== tree-p1b
+3000 0.03s ok
+30000 0.24s ok
+120000 0.98s ok
+== tree-proto
+3000 2.46s ok
+30000 190.64s ok
+
+===== probe3 (raw redactor, P1b)
+'<HIGHENTROPY_1>'
+'keyzAKIAIOSFODNN7EXAMPLE'
+'AKIA&IOSFODNN7EXAMPLE'
+'AKIA.IOSFODNN7EXAMPLE'
+'password=<SECRET_1>&cdefghijkl'
+
+===== probe6 (k1b sensitive key, CILINT)
+'db_password' True
+'db_pass\u200bword' False
+'DB_PASSWORD' True
+'db_pasѕword' False
+'db-pass**word**' False
+'dbPassword' True
+'db_pаssword' False
+
+===== prototype v5 timing (tree-proto)
+3000 0.25s ok
+30000 2.54s ok
+120000 12.90s ok
+
+===== test files run (P1b tree): tests/test_g4_parity.py tests/test_k5_fixes3.py tests/test_k5_fixes9.py tests/test_k5_layers.py tests/test_k5_round11.py tests/test_k5_round12_fuzz.py tests/test_k5_round8.py tests/test_k5_round9.py tests/test_s3_gate.py tests/test_s6_approvals.py
+base (unmodified P1b tree):
+5 failed, 2061 passed in 86.14s (0:01:26)
+FAILED tests/test_k5_round11.py::test_the_gitleaks_header_chain_regex_matches_the_three_planted_headers_and_nothing_longer
+FAILED tests/test_k5_round8.py::test_the_vendor_guardrail_receives_redacted_text_even_when_the_caller_did_not
+FAILED tests/test_k5_round9.py::test_every_registry_row_masks_every_spelling_through_its_real_function[assignment-vendor guardrail input]
+FAILED tests/test_k5_round9.py::test_every_registry_row_masks_every_spelling_through_its_real_function[entity-vendor guardrail input]
+FAILED tests/test_k5_round9.py::test_every_registry_row_masks_every_spelling_through_its_real_function[percent-vendor guardrail input]
+prototype v5:
+6 failed, 2060 passed in 121.54s (0:02:01)
+FAILED tests/test_k5_round11.py::test_every_redact_text_call_that_feeds_a_card_passes_the_neutralise_hook
+FAILED tests/test_k5_round11.py::test_the_gitleaks_header_chain_regex_matches_the_three_planted_headers_and_nothing_longer
+FAILED tests/test_k5_round8.py::test_the_vendor_guardrail_receives_redacted_text_even_when_the_caller_did_not
+FAILED tests/test_k5_round9.py::test_every_registry_row_masks_every_spelling_through_its_real_function[assignment-vendor guardrail input]
+FAILED tests/test_k5_round9.py::test_every_registry_row_masks_every_spelling_through_its_real_function[entity-vendor guardrail input]
+FAILED tests/test_k5_round9.py::test_every_registry_row_masks_every_spelling_through_its_real_function[percent-vendor guardrail input]
+prototype with full pre-pass (rejected):
+8 failed, 2058 passed in 65.28s (0:01:05)
+FAILED tests/test_k5_round11.py::test_every_redact_text_call_that_feeds_a_card_passes_the_neutralise_hook
+FAILED tests/test_k5_round11.py::test_the_gitleaks_header_chain_regex_matches_the_three_planted_headers_and_nothing_longer
+FAILED tests/test_k5_round12_fuzz.py::test_no_fragment_of_an_encoded_secret_value_survives_any_producer
+FAILED tests/test_k5_round12_fuzz.py::test_a_tag_longer_than_200_characters_splitting_an_encoded_separator_leaves_nothing
+FAILED tests/test_k5_round8.py::test_the_vendor_guardrail_receives_redacted_text_even_when_the_caller_did_not
+FAILED tests/test_k5_round9.py::test_every_registry_row_masks_every_spelling_through_its_real_function[assignment-vendor guardrail input]
+FAILED tests/test_k5_round9.py::test_every_registry_row_masks_every_spelling_through_its_real_function[entity-vendor guardrail input]
+FAILED tests/test_k5_round9.py::test_every_registry_row_masks_every_spelling_through_its_real_function[percent-vendor guardrail input]

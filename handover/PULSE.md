@@ -1,1 +1,1 @@
-11:35Z agents: v4.3 drafter, P1d drafter, PR80 fix, PR72+PR86 reviewers (PR83 reviewer done) | queue running=6 pending=14 | last: q347 evidence summary | unpushed: see sweep | next: read reviews, save, fix batches. q357
+2026-11-07T11:38Z STOPPED (ORDER 153): nothing new started; all branches pushed; no schedule; running at stop: P1d drafter, PR80 builder, PR85 builder, queue jobs unread; see CLOUD-RESUME.md
