@@ -1,0 +1,4 @@
+HEAD e3f946fa5644a9640c1d18e4371082c972f537f7
+$ <build-dir>/bin/python tools/scan_repo.py
+
+RC=0

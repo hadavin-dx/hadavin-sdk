@@ -756,3 +756,10 @@ Corrections to scan 1: Cloudflare AI Gateway DLP may only flag/block (two agents
 Prices: only GCP (pages), AWS (Price List feed), Cloudflare/Azure (docs repos) are VERIFIED; all others UNVERIFIED. LEAD-FETCH: 51 lines in the file (some duplicate); please fetch from the laptop and drop the text into handover/evidence/lead/.
 Licence flags: Lago AGPL (VERIFIED), Inngest server SSPL, n8n Sustainable-Use, Pipedream source-available, Budibase GPLv3+BSL; Appsmith Apache-2.0 and Activepieces MIT are the only fully ownable ones.
 Not searched: Restate, DBOS, Svix, Hookdeck, pg-boss/Graphile Worker/Procrastinate (likely cheap WRAP for AK-G2 claim/lease), Power Automate, Rasa, Voiceflow, Crisp, Qdrant. Ask: run a fourth pass on those? (my recommendation: yes for the Postgres queue libraries only; no money needed).
+
+## q271 (INFORM) merge7 verified and pushed; fix builder started; PR 83 UTF8 rerun; PR 80 DSN queued
+- PR 70 (core/P1b e3f946f): every log RC=0 (pytest 3.13/3.12 with Postgres 11213 passed 1 skipped; perf 39 passed; 155/155 textnorm mutants 3.13; 37/37 stage mutants 3.13; ruff, format, bandit, scan_repo; hygiene 0 x3). PR body updated, still ready. Evidence in handover/evidence/P1b/e3f946f/. Not run: CI, CodeQL, Sonar, CodeRabbit, PG17, textnorm mutants on 3.12.
+- P1b fix builder (orders 112/113) started on core/P1b from e3f946f; brief in my scratch; every item incl. one-insertion matcher with measured false-positive rate. Fresh round-2 reviewers after its head.
+- PR 83: earlier "148 failures" withdrawn: it was my SQL_ASCII cluster. UTF8 rerun: 3.13 1 failed (dblink-connect, identical on base 0dabf1f), 3.12 0 failed, perf 28 passed on both. Item (b) still the lead's decision (q269).
+- PR 80 (order 125): my DSN runs at b2a65ea queued prio 1 (3.13 and 3.12, own clusters on different ports, UTF8). I will report failing names; the lead's 2 failures may be the same two.
+- Order 123 acknowledged: verified facts go into a scan-2 addendum after pass 4.

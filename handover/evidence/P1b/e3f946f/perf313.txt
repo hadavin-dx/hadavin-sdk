@@ -1,0 +1,7 @@
+HEAD e3f946fa5644a9640c1d18e4371082c972f537f7
+$ <build-dir>/bin/python -m pytest -q -p no:cacheprovider -m perf
+
+T-E8 watchdog: pg_sleep(30) cancelled after 2.01s (watchdog 2.0s; the assertion allows 3.0s: the timer, the cancel round trip to the server and the connection close)
+.......................................                                  [100%]
+39 passed, 11214 deselected in 76.91s (0:01:16)
+RC=0
