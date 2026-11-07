@@ -637,7 +637,7 @@ def test_n3_a_tool_that_exits_is_a_failed_tool_not_a_dead_run(tmp_path):
                 "SystemExit": SystemExit,
                 "KeyboardInterrupt": KeyboardInterrupt,
                 "GeneratorExit": GeneratorExit,
-            }[body]()
+            }[body]
 
         box = tools_mod.ToolBox({"read_logs": spec}, {"read_logs": fn}, timeout_s=2)
         out = box.invoke("read_logs", {"name": "x"}, {})

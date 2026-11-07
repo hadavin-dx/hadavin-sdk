@@ -140,12 +140,12 @@ def test_only_clean_and_the_slack_block_call_the_card_sanitisers():
         rel = path.relative_to(ROOT).as_posix()
         if rel in allowed:
             continue
-        for n in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
-            if isinstance(n, ast.Call) and _callee_name(n.func) in {
-                "sanitise_text",
-                "withhold_commands",
-            }:
-                bad.append(f"{rel}:{n.lineno}")
+        bad.extend(
+            f"{rel}:{n.lineno}"
+            for n in ast.walk(ast.parse(path.read_text(encoding="utf-8")))
+            if isinstance(n, ast.Call)
+            and _callee_name(n.func) in {"sanitise_text", "withhold_commands"}
+        )
     assert not bad, bad
 
 

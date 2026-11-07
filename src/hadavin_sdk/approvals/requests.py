@@ -114,7 +114,7 @@ class Approvals:
         the request stays PENDING and ``resend_unsent`` (a tick step) tries again."""
         try:
             ref = self.channel.send(req, approver_ids)
-        except Exception as exc:  # noqa: BLE001 - any channel failure: keep the request, resend later
+        except Exception as exc:  # any channel failure: keep the request, resend later
             _LOG.warning(
                 "approval %s: channel send failed (%s); tick will resend",
                 req.approval_id,
@@ -183,7 +183,7 @@ class Approvals:
         """Show the outcome in the channel; a failure is logged (the decision is already recorded)."""
         try:
             self.channel.update(req)
-        except Exception as exc:  # noqa: BLE001 - a stale message is cosmetic
+        except Exception as exc:  # a stale message is cosmetic
             _LOG.warning(
                 "approval %s: channel update failed (%s)", req.approval_id, type(exc).__name__
             )
@@ -221,7 +221,7 @@ class Approvals:
                         f"Approval {req.approval_id} expired with no decision. Nothing was run.",
                     )
                     self.on_decided(req.run_id, "EXPIRED", None)
-                except Exception as exc:  # noqa: BLE001 - tick reconcile ends the run if this failed
+                except Exception as exc:  # tick reconcile ends the run if this failed
                     _LOG.warning(
                         "approval %s: expiry follow-up failed (%s)",
                         req.approval_id,

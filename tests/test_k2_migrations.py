@@ -157,7 +157,7 @@ def test_every_plan_field_after_v1_is_in_the_omit_set():
     """When Plan gains a field, this fails until it joins `_HASH_OMIT_IF_DEFAULT` (the v1 hash stays put)."""
     v1 = set(json.loads(FIXTURE.read_text(encoding="utf-8"))["plan"])
     assert set(Plan.model_fields) - v1 <= Plan._HASH_OMIT_IF_DEFAULT
-    assert Plan._HASH_OMIT_IF_DEFAULT <= set(Plan.model_fields)
+    assert set(Plan.model_fields) >= Plan._HASH_OMIT_IF_DEFAULT
 
 
 def test_a_new_field_at_its_default_leaves_the_v1_hash_and_a_set_value_changes_it():

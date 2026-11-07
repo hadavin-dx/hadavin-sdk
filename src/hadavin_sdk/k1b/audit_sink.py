@@ -52,7 +52,7 @@ class K1bAudit:
 def _os_user() -> str:
     try:
         return getpass.getuser()
-    except Exception:  # noqa: BLE001 - no login name available (containers): still audit, as "unknown"
+    except Exception:  # no login name available (containers): still audit, as "unknown"
         return "unknown"
 
 

@@ -61,7 +61,7 @@ class FakeSystem:
                 # bytes makes the client see a connection reset instead of the status (a flaky test).
                 raw = self.rfile.read(int(self.headers.get("Content-Length") or 0))
                 if not self._authed():
-                    return
+                    return None
                 if urlsplit(self.path).path != "/records":
                     return self._send(404)
                 body = json.loads(raw)
@@ -98,6 +98,7 @@ class FakeSystem:
                     self.wfile.write(b"ok")
                     return None
                 self._send(201, {"id": rec_id})
+                return None
 
             def do_GET(self):
                 if self.path.startswith("/stolen"):
@@ -118,6 +119,7 @@ class FakeSystem:
                 if system.verify_mismatch:
                     rec = {**rec, "amount": "0.00"}
                 self._send(200, rec)
+                return None
 
             def do_DELETE(self):
                 if not self._authed():

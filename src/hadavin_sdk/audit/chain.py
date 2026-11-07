@@ -218,14 +218,14 @@ class ChainAudit:
             return self._append(event)
         except DuplicateEvent:
             return event.event_id
-        except Exception:  # noqa: BLE001 - the contract is "never raises"
+        except Exception:  # the contract is "never raises"
             try:
                 self._db.run(
                     "INSERT INTO audit_outbox (event_id, body) VALUES (?, ?) "
                     "ON CONFLICT (event_id) DO NOTHING",
                     (event.event_id, event.model_dump_json()),
                 )
-            except Exception:  # noqa: BLE001
+            except Exception:
                 self._pending.append(event)
             return None
 
@@ -237,7 +237,7 @@ class ChainAudit:
                 done += 1
         try:
             queued = self._db.run("SELECT event_id, body FROM audit_outbox ORDER BY event_id")
-        except Exception:  # noqa: BLE001 - the database is still down: retried next time
+        except Exception:  # the database is still down: retried next time
             return done
         for event_id, body in queued:
             if self._drain(AuditEvent.model_validate_json(body)):
@@ -250,7 +250,7 @@ class ChainAudit:
             self._append(event)
         except DuplicateEvent:
             pass
-        except Exception:  # noqa: BLE001 - stays queued, retried next time
+        except Exception:  # stays queued, retried next time
             return False
         return True
 
@@ -312,7 +312,7 @@ class ChainAudit:
                 "VALUES (?, ?, ?, ?, ?) ON CONFLICT (seq) DO NOTHING RETURNING seq",
                 (seq, head, signature, self.signer.alg, signer_label(self.signer)),
             )
-        except Exception as exc:  # noqa: BLE001 - evidence, not a gate (design 4.8)
+        except Exception as exc:  # evidence, not a gate (design 4.8)
             _LOG.error("audit checkpoint not signed (%s); retried next time", type(exc).__name__)
             return None
         if new and self.anchor is not None:
@@ -327,7 +327,7 @@ class ChainAudit:
                 )
             else:
                 self.anchor.put(seq, head, signature)
-        except Exception as exc:  # noqa: BLE001 - an anchor outage must not stop the recording
+        except Exception as exc:  # an anchor outage must not stop the recording
             _LOG.error(
                 "audit checkpoint %s not anchored (%s); retried next time", seq, type(exc).__name__
             )
@@ -351,7 +351,7 @@ class ChainAudit:
             row_algs = {row[0]: row[3] for row in stored if row[3]}
             public = self.signer.public_key() if self.signer is not None else None
             anchors = self.anchor.all() if self.anchor is not None else None
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             # The class only: driver messages can carry the host and user.
             return Verification(
                 problems=[f"the audit cannot be read ({type(exc).__name__})"], unreadable=True
@@ -446,8 +446,10 @@ def _check_anchors(
             problems.append(f"checkpoint {seq} was never anchored")
         elif anchors[seq] != pair:
             problems.append(f"checkpoint {seq} differs from its anchor: the history was rewritten")
-    for seq in sorted(set(anchors) - set(stored)):
-        problems.append(f"anchor {seq} has no checkpoint here: the database lost history")
+    problems.extend(
+        f"anchor {seq} has no checkpoint here: the database lost history"
+        for seq in sorted(set(anchors) - set(stored))
+    )
 
 
 def verify_anchor_bodies(
@@ -527,7 +529,7 @@ def build(settings, deps) -> ChainAudit:
         db = _Db(store._db, store._lock, pg=True)
         try:
             db.run("SELECT alg, key_label FROM audit_checkpoints LIMIT 1")
-        except Exception as exc:  # noqa: BLE001 - any driver error here means "not migrated or unreachable"
+        except Exception as exc:  # any driver error here means "not migrated or unreachable"
             from hadavin_sdk.store.protocol import StoreUnavailable, is_connectivity_error
 
             if is_connectivity_error(exc):

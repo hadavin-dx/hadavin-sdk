@@ -7,6 +7,7 @@ One server per test session (a daemon thread on a free loopback port); tests kee
 from __future__ import annotations
 
 import base64
+import functools
 import json
 import secrets
 import threading
@@ -121,11 +122,6 @@ class FakeVault:
         threading.Thread(target=self.server.serve_forever, daemon=True).start()
 
 
-_ONE: FakeVault | None = None
-
-
+@functools.cache
 def fake_vault() -> FakeVault:
-    global _ONE
-    if _ONE is None:
-        _ONE = FakeVault()
-    return _ONE
+    return FakeVault()

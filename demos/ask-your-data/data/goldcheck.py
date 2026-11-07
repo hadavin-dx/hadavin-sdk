@@ -400,9 +400,11 @@ def validate_exemplars(exemplars: list[dict], gold: list[dict]) -> list[str]:
             out.append(
                 f"exemplar {e['id']}: must equal its dev item and that item must be flagged exemplar"
             )
-        for q in test_q:
-            if jaccard(e["question"], q) > 0.8:
-                out.append(f"exemplar {e['id']}: too similar to a sealed test question ({q!r})")
+        out.extend(
+            f"exemplar {e['id']}: too similar to a sealed test question ({q!r})"
+            for q in test_q
+            if jaccard(e["question"], q) > 0.8
+        )
     flagged = {g["id"] for g in gold if g["exemplar"]}
     if flagged != {e["source_dev_id"] for e in exemplars}:
         out.append("the dev items flagged exemplar differ from the exemplars file")

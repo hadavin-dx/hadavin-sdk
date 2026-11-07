@@ -22,7 +22,7 @@ dependencies = [
 # the standard library and need none.
 [project.optional-dependencies]
 anthropic = ["anthropic[vertex]==2.1.0"]
-aws = ["boto3==1.43.122", "cryptography==50.0.2"]
+aws = ["boto3==1.43.122", "botocore==1.43.122", "cryptography==50.0.2"]
 signer = ["cryptography==50.0.2"]
 pg = ["psycopg[binary]==3.3.6"]
 # The Ask-your-data demo (demos/ask-your-data): its own parser and driver pins.
@@ -71,7 +71,23 @@ line-length = 100
 src = ["src", "tests", "demos"]
 
 [tool.ruff.lint]
-extend-select = ["B", "DTZ", "I", "S", "TID", "UP"]
+# `select` is spelled out (the rules `extend-select` used to add to ruff's default F): with `extend-select` alone ruff 0.17.1 does not
+# report RUF100 for noqa codes of rules that are not enabled (measured: 0 findings against 158 with `select`).
+select = [
+    "F",
+    "B", "DTZ", "I", "S", "TID", "UP",
+    # Order 144 (2026-11-07): bug-finding and simplification rules (38 findings on main in src/), plus unused noqa.
+    "C4", "SIM", "PERF", "ASYNC", "RET", "PIE", "LOG", "FURB", "PGH", "RSE", "SLOT", "FLY", "YTT",
+    "PLE", "PLW", "PLC", "RUF100",
+]
+# Off by design, everywhere (a rule switched off, not a per-file ignore):
+# - PLC0415 (import outside top level): 19 in src/ and 430 in tests/ are lazy on purpose: an optional extra imported
+#   inside try/except ImportError (anthropic's google-auth, postgres' aws auth, the re compiler), the cli and config
+#   keeping start-up and the secret-holder boundary small, and imports that break a cycle. Moving them to the top
+#   would make an optional extra required.
+# - SIM112 (capitalized environment variable): Windows names its folder variable `SystemRoot`, and the mutation
+#   runner tests set it under that name on every platform; the uppercase spelling does not find it on Linux.
+ignore = ["PLC0415", "SIM112"]
 
 [tool.ruff.lint.flake8-tidy-imports]
 # Absolute imports only: the import rules in tests/ read module names, and a relative import hides one.
@@ -140,3 +156,7 @@ forbidden_modules = [
     "hadavin_sdk.registry",
 ]
 allow_indirect_imports = false
+
+[tool.deptry]
+# The package itself and the demo's own package are first party (deptry does not see them in this src layout).
+known_first_party = ["hadavin_sdk", "askdata"]

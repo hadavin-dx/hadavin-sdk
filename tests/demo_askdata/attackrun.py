@@ -29,6 +29,6 @@ def outcome(attack: Attack) -> str:
             validate(attack.sql)
         except Rejected as err:
             return err.rule
-        except Exception as err:  # noqa: BLE001  # the verdict must be a Rejected; anything else is reported
+        except Exception as err:  # the verdict must be a Rejected; anything else is reported
             return f"CRASH {type(err).__name__}"
         return "ACCEPTED"

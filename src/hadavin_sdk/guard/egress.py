@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import unicodedata
 from urllib.parse import urlsplit
 
@@ -15,10 +16,8 @@ def normalise_host(host: str | None) -> str:
     called and every allowlist entry go through it, so a trailing dot or capital letters name the same host."""
     host = unicodedata.normalize("NFKC", host or "").strip().lower().rstrip(".")
     if not host.isascii():
-        try:
+        with contextlib.suppress(UnicodeError):
             host = host.encode("idna").decode("ascii")
-        except UnicodeError:
-            pass
     return host
 
 

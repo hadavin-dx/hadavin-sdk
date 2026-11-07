@@ -26,7 +26,7 @@ def new_id(prefix: str) -> str:
 
 def _no_floats(obj: Any, path: str = "$") -> None:
     if isinstance(obj, float):
-        raise ValueError(f"float at {path}: use a decimal string")  # noqa: TRY004 - a bad value
+        raise ValueError(f"float at {path}: use a decimal string")  # a bad value
     if isinstance(obj, dict):
         for k, v in obj.items():
             _no_floats(v, f"{path}.{k}")

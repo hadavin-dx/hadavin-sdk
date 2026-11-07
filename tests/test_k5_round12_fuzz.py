@@ -74,9 +74,7 @@ def _case(rng: random.Random):
             i = rng.randint(lo, len(secret) - 1) if not long else rng.randint(lo, len(head) + 5)
             tag = rng.choice(["<b></b>", "<span></span>", "<!-- x -->"])
         secret = secret[:i] + tag + secret[i:]
-    junk = []
-    for _ in range(rng.choice([0, 0, 3, 40, 120])):
-        junk.append(f"<IPV4_{rng.randint(1, 400)}>")
+    junk = [f"<IPV4_{rng.randint(1, 400)}>" for _ in range(rng.choice([0, 0, 3, 40, 120]))]
     if rng.random() < 0.5:
         junk.append(
             "and " + "%41KIA" + "IOSFODNN7EXAMPLE"

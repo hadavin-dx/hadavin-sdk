@@ -98,7 +98,7 @@ class Snapshot:
         if not set(inputs) <= allowed:
             return NO_DATA
         out = getattr(self, f"_{name}")(inputs)
-        return out if out else NO_DATA
+        return out or NO_DATA
 
     def _window(self, inputs: dict[str, Any]) -> tuple[datetime | None, datetime] | None:
         """(start or None, end clamped to alert time), or None for a malformed or empty window."""

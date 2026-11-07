@@ -74,7 +74,7 @@ def main(argv: list[str] | None = None) -> int:
     except ConfigError as exc:
         print(f"refused: {exc}", file=sys.stderr)
         return 2
-    except Exception as exc:  # noqa: BLE001 - the class name only: a message could carry a secret
+    except Exception as exc:  # the class name only: a message could carry a secret
         print(
             f"failed: {type(exc).__name__} (set HADAVIN_DEBUG=1 for the traceback)", file=sys.stderr
         )
@@ -303,7 +303,7 @@ def _tick() -> int:
     except ConfigError as exc:
         print(f"tick: config error: {exc}", file=sys.stderr)
         return 2
-    except Exception as exc:  # noqa: BLE001 - any other start-up failure is a config error, never "1"
+    except Exception as exc:  # any other start-up failure is a config error, never "1"
         print(f"tick: config error: {type(exc).__name__}", file=sys.stderr)
         return 2
     return run_tick(app)
@@ -391,7 +391,7 @@ def kill_switch(limits: Limits, action: str, by: str) -> int:
             limits.stop(by)
         except AuditUnavailable:
             raise
-        except Exception as exc:  # noqa: BLE001 - classified below
+        except Exception as exc:  # classified below
             return _kill_switch_store_down("set", exc)
         print(f"kill switch ON (by {by})")
         return 0
@@ -404,7 +404,7 @@ def kill_switch(limits: Limits, action: str, by: str) -> int:
             file=sys.stderr,
         )
         return 3
-    except Exception as exc:  # noqa: BLE001 - classified below
+    except Exception as exc:  # classified below
         return _kill_switch_store_down("reset", exc)
     print(f"kill switch OFF (by {by})")
     return 0

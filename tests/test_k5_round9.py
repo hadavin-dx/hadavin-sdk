@@ -184,7 +184,7 @@ DRIVERS = {
         .logs
     ),
     "k1b stored raw model output": _k1b_raw,
-    "evidence grounding": lambda s, rq: _grounding(s, rq),
+    "evidence grounding": _grounding,
     "evidence proposal inputs": lambda s, rq: _runtime(s, rq, reason=s),
     "document and model-written arguments": lambda s, rq: _runtime(
         s, rq, doc=f"checkout 5xx at host-a {s} revision 17"

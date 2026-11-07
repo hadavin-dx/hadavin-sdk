@@ -173,7 +173,7 @@ class SlackChannel:
                     "unfurl_media": False,
                 },
             )
-        except Exception as exc:  # noqa: BLE001 - any failure is "not delivered", never raised
+        except Exception as exc:  # any failure is "not delivered", never raised
             return Delivery(ok=False, reason=type(exc).__name__)
         return Delivery(ok=True, ref=f"{reply.get('channel') or self.channel_id}|{reply['ts']}")
 

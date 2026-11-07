@@ -180,9 +180,11 @@ def vendor_module_problems(
             out.append(
                 f"{mod}: imports a vendor SDK but is neither a TABLE kind nor a VENDOR_HELPER"
             )
-    for mod in helpers:
-        if mod not in set().union(*vendor.values()):
-            out.append(f"VENDOR_HELPERS {mod} is not a vendor module: delete the entry")
+    out.extend(
+        f"VENDOR_HELPERS {mod} is not a vendor module: delete the entry"
+        for mod in helpers
+        if mod not in set().union(*vendor.values())
+    )
     return out
 
 
@@ -627,11 +629,12 @@ def sql_problems(folder: Path) -> list[str]:
     for path in sorted(folder.glob("*.sql")):
         text = re.sub(r"/\*.*?\*/", "", path.read_text(encoding="utf-8"), flags=re.DOTALL)
         text = re.sub(r"--[^\n]*", "", text)
-        for m in _SQL_LITERAL.finditer(text):
-            out.append(f"{path.name}: vendor literal {m.group(0)}")
-        for label, pattern in PATTERNS.items():
-            if label != "bare vendor name" and re.search(pattern, text, re.IGNORECASE):
-                out.append(f"{path.name}: {label}")
+        out.extend(f"{path.name}: vendor literal {m.group(0)}" for m in _SQL_LITERAL.finditer(text))
+        out.extend(
+            f"{path.name}: {label}"
+            for label, pattern in PATTERNS.items()
+            if label != "bare vendor name" and re.search(pattern, text, re.IGNORECASE)
+        )
     return out
 
 

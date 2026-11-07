@@ -113,13 +113,13 @@ class LocalDirSink:
             return self._write(event)
         except DuplicateEvent:
             return f"{event.event_id}.json"
-        except Exception:  # noqa: BLE001 - disk errors, a corrupt index line: the contract is "never raises"
+        except Exception:  # disk errors, a corrupt index line: the contract is "never raises"
             try:
                 self.outbox.mkdir(parents=True, exist_ok=True)
                 tmp = self.outbox / f".tmp-{event.event_id}"
                 tmp.write_text(event.model_dump_json(), encoding="utf-8")
                 os.replace(tmp, self.outbox / f"{event.event_id}.json")  # never a half file
-            except Exception:  # noqa: BLE001
+            except Exception:
                 self._pending.append(event)
             return None
 
@@ -132,7 +132,7 @@ class LocalDirSink:
                 self._write(event)
             except DuplicateEvent:
                 pass
-            except Exception:  # noqa: BLE001, S112 - safe to swallow: the event is still in memory, so nothing is lost; the next flush retries it and the audit chain only advances on a successful write
+            except Exception:  # noqa: S112 - safe to swallow: the event is still in memory, so nothing is lost; the next flush retries it and the audit chain only advances on a successful write
                 continue
             self._pending.remove(event)
             done += 1
@@ -149,7 +149,7 @@ class LocalDirSink:
                 self._write(event)
             except DuplicateEvent:
                 pass
-            except Exception:  # noqa: BLE001, S112 - safe to swallow: the file is not unlinked, so nothing is lost; the next flush retries it and a duplicate is absorbed by DuplicateEvent
+            except Exception:  # noqa: S112 - safe to swallow: the file is not unlinked, so nothing is lost; the next flush retries it and a duplicate is absorbed by DuplicateEvent
                 continue
             path.unlink()
             done += 1
@@ -165,12 +165,10 @@ class LocalDirSink:
 
     def events(self, run_id: str | None = None) -> list[AuditEvent]:
         """Read back, in write order (index order)."""
-        out = []
-        for entry in self._entries():
-            if run_id is None or entry.get("run_id") == run_id:
-                out.append(
-                    AuditEvent.model_validate_json(
-                        (self.objects / entry["key"]).read_text(encoding="utf-8")
-                    )
-                )
-        return out
+        return [
+            AuditEvent.model_validate_json(
+                (self.objects / entry["key"]).read_text(encoding="utf-8")
+            )
+            for entry in self._entries()
+            if run_id is None or entry.get("run_id") == run_id
+        ]

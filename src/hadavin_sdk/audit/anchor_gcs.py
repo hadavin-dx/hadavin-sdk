@@ -69,7 +69,7 @@ def build(settings, deps) -> GcsAnchor:
 def probed(bucket: Any, settings) -> GcsAnchor:
     try:
         bucket.reload(**_BOUNDED)
-    except Exception as exc:  # noqa: BLE001 - any SDK or network error: a start-up ConfigError
+    except Exception as exc:  # any SDK or network error: a start-up ConfigError
         raise ConfigError(
             f"audit anchor gcs_retention_lock: cannot read the bucket ({type(exc).__name__})"
         ) from None

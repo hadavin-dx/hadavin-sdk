@@ -83,7 +83,7 @@ def build(settings, deps) -> AzureBlobAnchor:
 def probed(container: Any, settings) -> AzureBlobAnchor:
     try:
         props = container.get_container_properties()
-    except Exception as exc:  # noqa: BLE001 - any SDK or network error: a start-up ConfigError
+    except Exception as exc:  # any SDK or network error: a start-up ConfigError
         raise ConfigError(
             f"audit anchor azure_immutable_blob: cannot read the container ({type(exc).__name__})"
         ) from None

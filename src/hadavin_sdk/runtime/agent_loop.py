@@ -233,7 +233,7 @@ class Runtime:
         """Audit a card post. The card is already out, so a failing audit write is logged and never raised."""
         try:
             self._note(run, "card", operation, **kw)
-        except Exception:  # noqa: BLE001 - fail-safe: the run end state is unchanged
+        except Exception:  # fail-safe: the run end state is unchanged
             _LOG.warning("run %s: audit write for card %s failed", run.run_id, operation)
 
     def _limits_stop(self, run: Run, cited: list[str] | None = None) -> Run | None:
@@ -279,7 +279,7 @@ class Runtime:
         is not the approver's own command."""
         try:
             stored = self.store.get_redaction_map(run.run_id) or {}
-        except Exception:  # noqa: BLE001 - fail closed: nothing restored
+        except Exception:  # fail closed: nothing restored
             stored = {}
         return runmap.restore_value(dict(plan.inputs), stored, self._kinds)
 
@@ -293,7 +293,7 @@ class Runtime:
         error = False
         try:
             raw = str(self.hooks.tools[name](runmap.restore_value(args, mapping, self._kinds)))
-        except Exception as exc:  # noqa: BLE001 - a broken tool must not strand the run in WORKING
+        except Exception as exc:  # a broken tool must not strand the run in WORKING
             error = True
             raw = ERROR_PREFIX + error_reason(exc)
         digest = hashlib.sha256(raw.encode("utf-8")).hexdigest()
@@ -361,7 +361,7 @@ class Runtime:
         # Redaction before the injection check and before the model; a failure sends nothing.
         try:
             self._save_map(run, rmap)
-        except Exception:  # noqa: BLE001 - the store failed: say so, it is not a redaction fault
+        except Exception:  # the store failed: say so, it is not a redaction fault
             return self._evidence_unavailable(run, cited, "map")
         try:
             safe_text = runmap.redact_untrusted(document.decode("utf-8", "replace"), rmap)
@@ -373,11 +373,11 @@ class Runtime:
         ):  # a document whose redaction work is over the cap: the same refusal as the size cap
             self._note(run, "guard", "document", result="stopped", error_code="document_too_large")
             return self._abstain(run, S.NEEDS_PERSON, "document_too_large", cited)
-        except Exception:  # noqa: BLE001 - whatever the redactor did, nothing goes to the model
+        except Exception:  # whatever the redactor did, nothing goes to the model
             return self._redaction_failed(run, cited)
         try:
             self._save_map(run, rmap)  # before anything is sent: a crash now loses no placeholder
-        except Exception:  # noqa: BLE001
+        except Exception:
             return self._evidence_unavailable(run, cited, "map")
         if len(rmap) > self._evidence.max_map_entries:  # too many distinct values to redact cheaply
             self._note(
@@ -468,14 +468,14 @@ class Runtime:
                     out = self._run_tool(call.name, call.input, rmap)
                 except runmap.RedactionError:
                     return self._redaction_failed(run, cited)
-                except Exception:  # noqa: BLE001 - a fault in the tool wiring itself, not in the tool
+                except Exception:  # a fault in the tool wiring itself, not in the tool
                     self._note(run, "tool", call.name, result="error", error_code="tool_error")
                     return self._abstain(run, S.NEEDS_PERSON, "tool_error", cited)
                 try:
                     self._save_map(
                         run, rmap
                     )  # right after the redaction, before the result is kept or sent
-                except Exception:  # noqa: BLE001
+                except Exception:
                     return self._evidence_unavailable(run, cited, call.name)
                 sent_bytes += len(out.text.encode("utf-8"))
                 if sent_bytes > self._evidence.max_tool_bytes_per_run:
@@ -497,7 +497,7 @@ class Runtime:
                 try:
                     self._save_map(run, rmap)
                     self.store.add_tool_call(record)
-                except Exception:  # noqa: BLE001 - evidence that cannot be kept cannot be cited
+                except Exception:  # evidence that cannot be kept cannot be cited
                     return self._evidence_unavailable(run, cited, call.name)
                 if len(rmap) > self._evidence.max_map_entries:
                     self._note(
@@ -563,7 +563,7 @@ class Runtime:
             return Delivery(ok=False, reason="no_card_hook")
         try:
             return self.hooks.post_card(card)
-        except Exception as exc:  # noqa: BLE001 - a broken channel must not strand the run
+        except Exception as exc:  # a broken channel must not strand the run
             return Delivery(ok=False, reason=type(exc).__name__)
 
     def _abstain(self, run: Run, new: RunState, reason: str | None, cited: list[str]) -> Run:
@@ -576,7 +576,7 @@ class Runtime:
         caught = "guard" if reason in GUARD_STOP_REASONS else None
         try:
             card: Card | None = cards.render_abstain(run.run_id, label, cited)
-        except Exception:  # noqa: BLE001 - an unrenderable card is an undelivered one
+        except Exception:  # an unrenderable card is an undelivered one
             card = None
         d = self._deliver(card)
         if d.ok and card is not None:
@@ -605,7 +605,7 @@ class Runtime:
             card: Card | None = cards.render_shadow(
                 plan, decision, cited, diagnosis=diagnosis, detector=self.detector
             )
-        except Exception:  # noqa: BLE001 - an unrenderable card is an undelivered one
+        except Exception:  # an unrenderable card is an undelivered one
             card = None
         d = self._deliver(card)
         # A fix that would only need sign-off is not a caught mistake; a would-be refusal is.
@@ -649,7 +649,9 @@ class Runtime:
                 self._save_map(run, rmap)  # the check may have redacted a raw value the model typed
             except runmap.RedactionError:
                 return self._redaction_failed(run, cited)
-            except Exception:  # noqa: BLE001 - a check that CRASHED (or whose store failed) is a fault, not a verdict
+            except (
+                Exception
+            ):  # a check that CRASHED (or whose store failed) is a fault, not a verdict
                 self._note(
                     run, "guard", "validate", result="error", error_code="evidence_unavailable"
                 )
@@ -669,7 +671,7 @@ class Runtime:
         run = self._to(run, S.PLAN_READY)
         try:  # limits unreadable: stop means stop, so no card is posted
             blocked = self.limits.blocked(agent.id)
-        except Exception:  # noqa: BLE001
+        except Exception:
             return self._to(run, S.NEEDS_PERSON, "limits_unavailable")
         try:
             decision = authorize(
@@ -680,7 +682,7 @@ class Runtime:
                 blocked,
                 self.inputs_view(run, plan),
             )
-        except Exception:  # noqa: BLE001 - a gate that fails denies; the intent below still audits it
+        except Exception:  # a gate that fails denies; the intent below still audits it
             decision = GateDecision(
                 run_id=plan.run_id, plan_hash=plan.hash(), outcome="deny", rule_id="gateway.error"
             )
@@ -805,7 +807,7 @@ class Runtime:
                 and e.object_ref == plan.plan_id
                 and e.restored_hash
             ]
-        except Exception:  # noqa: BLE001 - cannot read the audit: cannot show the values are the approved ones
+        except Exception:  # cannot read the audit: cannot show the values are the approved ones
             return self._to(run, S.NEEDS_PERSON, "audit_unavailable")
         if (
             not bound
@@ -839,7 +841,7 @@ class Runtime:
             if needs_view:
                 extra["inputs_view"] = view  # the request is built from the restored values (R6)
             result = self.hooks.execute(plan, decision, approval, **extra)
-        except Exception:  # noqa: BLE001 - the side effect may have happened: never leave EXECUTING
+        except Exception:  # the side effect may have happened: never leave EXECUTING
             result = RunResult(outcome="unknown", error_code="executor_error")
         self._note(
             run,
@@ -854,7 +856,7 @@ class Runtime:
         run = self._to(run, S.VERIFYING)
         try:
             verified = bool(self.hooks.verify(shown, result))
-        except Exception:  # noqa: BLE001 - an error is "not verified"
+        except Exception:  # an error is "not verified"
             verified = False
             self._note(run, "action", "verify", result="error", error_code="verify_error")
         if verified:
@@ -862,7 +864,7 @@ class Runtime:
         if self.hooks.rollback is not None:
             try:
                 rb = self.hooks.rollback(shown, result)
-            except Exception:  # noqa: BLE001
+            except Exception:
                 rb = RunResult(outcome="unknown", error_code="rollback_error")
             self._note(run, "action", "rollback", result=rb.outcome, error_code=rb.error_code)
             if rb.outcome == "succeeded":

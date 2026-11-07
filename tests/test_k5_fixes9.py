@@ -364,7 +364,7 @@ def test_the_scrub_constants_are_validated_config_with_one_set_of_defaults():
     s = EvidenceSettings().scrub
     assert (s.tail_window, s.min_redaction_window, s.min_secret) == (256, 4096, 6)
     assert (s.fragment_scan, s.fragment_min, s.partial_end) == (4096, 1, 10)
-    assert tools_mod.TAIL_WINDOW == s.tail_window and tools_mod.MIN_SCRUBBED_SECRET == s.min_secret
+    assert s.tail_window == tools_mod.TAIL_WINDOW and s.min_secret == tools_mod.MIN_SCRUBBED_SECRET
     for bad in (
         {"tail_window": 1},
         {"min_secret": 1},

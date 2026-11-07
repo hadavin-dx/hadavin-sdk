@@ -175,7 +175,7 @@ class KubernetesSource:
             )
         except SourceError:
             raise
-        except Exception as exc:  # noqa: BLE001 - whatever the fetch raised, the source cannot answer
+        except Exception as exc:  # whatever the fetch raised, the source cannot answer
             err = SourceError(f"kubernetes: {type(exc).__name__}")
             err.too_large = bool(getattr(exc, "too_large", False))
             raise err from None

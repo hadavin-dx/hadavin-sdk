@@ -128,7 +128,7 @@ def _resolve(host: str, port: int):
     def lookup() -> None:
         try:
             box["answers"] = socket.getaddrinfo(host, port, type=socket.SOCK_STREAM)
-        except BaseException as exc:  # noqa: BLE001 - handed to the caller
+        except BaseException as exc:  # handed to the caller
             box["error"] = exc
         finally:
             _STUCK.release()  # the thread is over, whether or not anybody still waits for it

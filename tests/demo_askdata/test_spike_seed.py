@@ -33,4 +33,4 @@ def test_row_counts_and_the_terminal_control_plant():
 def test_sql_file_holds_no_raw_control_byte():
     seed = load_script("seed")
     text = "\n".join(seed.sql_statements())
-    assert text.isascii() and not any(ord(c) < 32 and c not in "\n" for c in text)
+    assert text.isascii() and not any(ord(c) < 32 and c != "\n" for c in text)

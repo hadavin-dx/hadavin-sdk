@@ -254,7 +254,7 @@ def storable_original(kind: str, original: str) -> bool:
     if grammar is not None and grammar.fullmatch(original) is not None:
         try:
             ok = not any(p.search(original) for p in _SECRET_PATTERNS)
-        except Exception:  # noqa: BLE001 - fail closed
+        except Exception:  # fail closed
             ok = False
     if len(_STORABLE_CACHE) >= _STORABLE_CACHE_MAX:
         _STORABLE_CACHE.clear()
@@ -407,8 +407,8 @@ def _views(text: str) -> list[str]:
     out = []
     # the layers undone to a fixed point (percent, entity, backslash, NFKC, any order, up to the depth cap; deeper
     # raises TooDeep and nothing is redacted or shown): `%41KIA...`, `&#65;KIA...`, `password%3Dx`
-    for view in (canonical(text), canonical(unescaped), fits_after_nfkc(undo(text))):
-        view = _clean(view)
+    for spelling in (canonical(text), canonical(unescaped), fits_after_nfkc(undo(text))):
+        view = _clean(spelling)
         if view != text and view not in out:
             out.append(view)
     return out
@@ -504,11 +504,12 @@ def redact_text(
                 for ph, d in pairs
                 if (n := fits_after_nfkc(neutralise(d))) != d and len(n) >= 4
             ]
-        for view in views:
+        for candidate in views:
             if (
                 time.monotonic() - started > defaults.REDACT_BUDGET_S
             ):  # a hostile text: fail closed, nothing shown
                 raise InputTooLarge("InputTooLarge")
+            view = candidate
             if neutralise is not None:
                 view = fits_after_nfkc(neutralise(view))
             view = _keep_earlier_masks(view, pairs)
@@ -519,7 +520,7 @@ def redact_text(
         out = _clean(out)
     except (InputTooLarge, TooDeep):
         raise
-    except Exception as exc:  # noqa: BLE001 - whatever the redactor raised, nothing is sent
+    except Exception as exc:  # whatever the redactor raised, nothing is sent
         raise RedactionError(type(exc).__name__) from None
     mapping.clear()
     mapping.update(current)

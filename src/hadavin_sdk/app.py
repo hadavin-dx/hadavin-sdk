@@ -173,12 +173,17 @@ def build(
         None if live else Executor(reg, secrets, timeout_s=timeout_s or cfg.executor_timeout_s)
     )
     holder: dict[str, Runtime] = {}
+
+    def on_decided(run_id, status, d):
+        # the runtime does not exist yet when Approvals is built; looked up when a decision arrives
+        return holder["rt"].on_decided(run_id, status, d)
+
     approvals = Approvals(
         store,
         audit,
         reg,
         channel,
-        lambda run_id, status, d: holder["rt"].on_decided(run_id, status, d),
+        on_decided,
         clock,
         summary_detector,
     )
@@ -188,7 +193,7 @@ def build(
             return Delivery(ok=False, reason="card_too_long")
         try:
             return channel.post_card(card)
-        except Exception as exc:  # noqa: BLE001 - a broken channel is an undelivered card, never a crash
+        except Exception as exc:  # a broken channel is an undelivered card, never a crash
             return Delivery(ok=False, reason=type(exc).__name__)
 
     def request_approval(plan, decision, requested_by) -> Delivery:

@@ -246,8 +246,8 @@ def load_bundle(path: Path) -> Bundle:
             _scan(case, rel, obj, alert_time)
             if not isinstance(obj["points"], list):
                 raise _fail(case, f"{rel} points must be a list")
-            for i, pt in enumerate(obj["points"]):
-                pt = _keys(case, rel, pt, {"ts", "value"})
+            for i, raw_pt in enumerate(obj["points"]):
+                pt = _keys(case, rel, raw_pt, {"ts", "value"})
                 v = pt["value"]
                 numeric = isinstance(v, int | float) and not isinstance(v, bool)
                 if not numeric or not math.isfinite(v):
@@ -288,8 +288,8 @@ def load_bundle(path: Path) -> Bundle:
                 raise _fail(case, f"{rel} spec must be an object and events a list")
             _scan(case, rel, obj, alert_time)
             ids.add(f"{rel}#spec")
-            for i, ev in enumerate(obj["events"]):
-                ev = _keys(case, rel, ev, {"ts", "reason", "message"})
+            for i, raw_ev in enumerate(obj["events"]):
+                ev = _keys(case, rel, raw_ev, {"ts", "reason", "message"})
                 _str(case, rel, ev["reason"])
                 _str(case, rel, ev["message"])
                 _ts_before(case, rel, ev["ts"], alert_time)
@@ -312,8 +312,8 @@ def load_bundle(path: Path) -> Bundle:
         raw = _load_json(case, path, "deploys.json")
         if not isinstance(raw, list):
             raise _fail(case, "deploys.json must be a list")
-        for i, d in enumerate(raw):
-            d = _keys(case, "deploys.json", d, {"ts", "service", "version", "as_of"})
+        for i, raw_d in enumerate(raw):
+            d = _keys(case, "deploys.json", raw_d, {"ts", "service", "version", "as_of"})
             _scan(case, "deploys.json", d, alert_time)
             _str(case, "deploys.json", d["service"])
             _str(case, "deploys.json", d["version"])

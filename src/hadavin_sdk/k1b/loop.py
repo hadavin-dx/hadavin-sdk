@@ -92,7 +92,7 @@ def _chat_bounded(llm: LLM, wait_s: float, /, *args: object, **kwargs: object) -
     def work() -> None:
         try:
             box["reply"] = llm.chat(*args, **kwargs)  # type: ignore[arg-type]
-        except BaseException as exc:  # noqa: BLE001 - handed to the caller thread below
+        except BaseException as exc:  # handed to the caller thread below
             box["exc"] = exc
             if (
                 abandoned.is_set()

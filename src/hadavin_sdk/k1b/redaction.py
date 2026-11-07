@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import base64
 import binascii
+import contextlib
 import dataclasses
 import re
 from collections import Counter
@@ -105,10 +106,8 @@ def _pair(key: str, value: str, f: Callable[[str], str]) -> str:
     patterns see it. A Kubernetes Secret value is base64: its decoded text is tried too. If the redactor still leaves
     the value as it was, the value is masked whole: a value under a credential key never reaches the model."""
     spellings = [value]
-    try:
+    with contextlib.suppress(binascii.Error, UnicodeDecodeError, ValueError):
         spellings.append(base64.b64decode(value, validate=True).decode("utf-8"))
-    except (binascii.Error, UnicodeDecodeError, ValueError):
-        pass
     for text in spellings:
         masked = f(f"{key}={text}")
         if masked != f"{key}={text}":

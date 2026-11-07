@@ -100,8 +100,10 @@ def check_ledger(paths: list[Path]) -> list[str]:
         f"{p.name}: not named NNNN_<name>.sql" for p in paths if not _FILE.fullmatch(p.name)
     ]
     numbers = sorted(int(p.name[:4]) for p in paths if _FILE.fullmatch(p.name))
-    for n in sorted({n for n in numbers if numbers.count(n) > 1}):
-        problems.append(f"two migrations are numbered {n:04d}")
+    problems.extend(
+        f"two migrations are numbered {n:04d}"
+        for n in sorted({n for n in numbers if numbers.count(n) > 1})
+    )
     missing = sorted(set(range(1, max(numbers, default=0) + 1)) - set(numbers))
     problems += [f"migration {n:04d} is missing" for n in missing]
     return problems
@@ -225,29 +227,25 @@ def effective_problems(db, role: str, expected_table, expected_cols=None) -> lis
                 if grant
                 else set()
             )
-            for p in ("USAGE", "SELECT", "UPDATE"):
-                if (
-                    p not in allowed
-                    and db.execute(
-                        "SELECT has_sequence_privilege(%s, %s, %s)", (role, oid, p)
-                    ).fetchone()[0]
-                ):
-                    problems.append(f"{role}: can {p} sequence {name}")
+            problems.extend(
+                f"{role}: can {p} sequence {name}"
+                for p in ("USAGE", "SELECT", "UPDATE")
+                if p not in allowed
+                and db.execute(
+                    "SELECT has_sequence_privilege(%s, %s, %s)", (role, oid, p)
+                ).fetchone()[0]
+            )
             continue
         allowed = (
             {p.strip() for p in expected_table(grant).split(",") if p.strip()} if grant else set()
         )
         allowed_cols = set(expected_cols(grant)) if (grant and expected_cols) else set()
-        for p in _TABLE_PRIVS:
-            if (
-                p not in allowed
-                and db.execute("SELECT has_table_privilege(%s, %s, %s)", (role, oid, p)).fetchone()[
-                    0
-                ]
-            ):
-                problems.append(
-                    f"{role}: can {p} {name}" + ("" if grant else " (not in the grant map)")
-                )
+        problems.extend(
+            f"{role}: can {p} {name}" + ("" if grant else " (not in the grant map)")
+            for p in _TABLE_PRIVS
+            if p not in allowed
+            and db.execute("SELECT has_table_privilege(%s, %s, %s)", (role, oid, p)).fetchone()[0]
+        )
         for (col,) in db.execute(
             "SELECT attname FROM pg_attribute WHERE attrelid = %s AND attnum > 0 AND NOT attisdropped",
             (oid,),

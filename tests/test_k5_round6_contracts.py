@@ -38,7 +38,7 @@ def test_overlapping_prefixes_are_refused_and_the_registry_is_unchanged():
         kinds.register("k8s2", dataclasses.replace(k8s, operation_prefix="k8s.metrics."))
     with pytest.raises(ValueError, match="overlaps"):
         kinds.register("k8s3", dataclasses.replace(k8s, operation_prefix="k8"))
-    assert kinds.KINDS == before
+    assert before == kinds.KINDS
     kinds.register("kubernetes", k8s)  # re-registering the same name is not an overlap with itself
 
 

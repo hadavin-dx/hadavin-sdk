@@ -10,7 +10,7 @@ would do if it reached a privileged session; and benign statements that must be 
   pg-refuses     PostgreSQL itself raises an error; the validator is defence in depth and the test says so
 """
 
-# ruff: noqa: S608, ISC004  # SQL text is the test data; implicit concatenation keeps long statements readable
+# ruff: noqa: S608  # SQL text is the test data; implicit concatenation keeps long statements readable
 
 from __future__ import annotations
 

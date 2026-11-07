@@ -352,7 +352,8 @@ def _is_agg(item: str) -> bool:
 def render(rng: random.Random, tokens: list[str], poison: str | None = None) -> str:
     """Join tokens with odd separators and random keyword case; drop `poison` in at a token boundary."""
     out = []
-    for t in tokens:
+    for token in tokens:
+        t = token
         if t[0] not in "'\"" and t.isalpha() and rng.random() < 0.25:
             t = t.upper() if rng.random() < 0.5 else t.lower()
         out.append(t)

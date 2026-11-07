@@ -95,7 +95,7 @@ def runtime(cfg_dir: Path, llm, hooks: Hooks | None = None, *, audit=None):
     qualify(reg)
     store = MemoryStore()
     audit = audit or LocalDirSink(cfg.backends.audit.dir)
-    rt = Runtime(
+    return Runtime(
         reg,
         store,
         audit,
@@ -105,7 +105,6 @@ def runtime(cfg_dir: Path, llm, hooks: Hooks | None = None, *, audit=None):
         ["test-agent"],
         hooks,
     )
-    return rt
 
 
 def handle(rt: Runtime, document: bytes = b"checkout is down"):

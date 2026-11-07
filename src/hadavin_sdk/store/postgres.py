@@ -361,7 +361,7 @@ class PostgresStore:
                 cur = self._exec(update, [*values, req.approval_id, expected_status, expected_step])
                 if cur.rowcount == 0:
                     lost = True
-                    raise psycopg.Rollback()  # the insert above is undone with it
+                    raise psycopg.Rollback  # the insert above is undone with it
         except psycopg.errors.UniqueViolation:
             lost = True
         if lost:

@@ -247,7 +247,7 @@ def test_the_lock_key_and_the_folder_are_the_ones_migrate_uses(mn):
     if folder_there is not None:
         assert ast.dump(folder_there) == ast.dump(_assigned(here, "MIGRATIONS"))
     # the value itself, computed here from the same bytes: a change of the expression in both files is still caught
-    assert mn.MIGRATE_LOCK == int.from_bytes(b"hadvnmig", "big") >> 1
+    assert int.from_bytes(b"hadvnmig", "big") >> 1 == mn.MIGRATE_LOCK
     assert isinstance(mn.MIGRATE_LOCK, int)
     assert mn.MIGRATIONS == here.parent / "migrations" == other.parent / "migrations"
 

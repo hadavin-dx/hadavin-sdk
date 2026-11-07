@@ -6,6 +6,7 @@ check that list are in ``tests/test_mutation_runner_meta.py``. No test here talk
 ``tmp_path`` from made-up files.
 """
 
+import contextlib
 import hashlib
 import json
 import os
@@ -142,10 +143,8 @@ def _force_kill(pid):
         return
     import signal
 
-    try:
+    with contextlib.suppress(OSError):
         os.kill(pid, signal.SIGKILL)
-    except OSError:
-        pass
 
 
 def _pid_alive(pid):
@@ -1052,22 +1051,16 @@ def _kill_run_leftovers(runner, grandchild):
 
     if runner.poll() is None:
         runner.send_signal(signal.SIGTERM)
-        try:
+        with contextlib.suppress(subprocess.TimeoutExpired):  # the SIGKILL below ends it
             runner.wait(timeout=30)
-        except subprocess.TimeoutExpired:
-            pass  # the SIGKILL below ends it
 
     if grandchild is not None:
-        try:
+        with contextlib.suppress(OSError):
             os.killpg(os.getpgid(grandchild), signal.SIGKILL)  # the pytest child and the grandchild
-        except OSError:
-            pass
         _force_kill(grandchild)
     if runner.poll() is None:  # not yet reaped, so the pid is still its own group id
-        try:
+        with contextlib.suppress(OSError):
             os.killpg(runner.pid, signal.SIGKILL)
-        except OSError:
-            pass
     runner.wait()
 
 

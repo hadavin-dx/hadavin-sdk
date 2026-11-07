@@ -19,6 +19,7 @@ Concurrent ticks are safe: every state change is a compare-and-set, and a loser 
 
 from __future__ import annotations
 
+import contextlib
 import logging
 import re
 from collections.abc import Callable
@@ -69,7 +70,7 @@ def _each(items: list[Any], fn: Callable[[Any], None], what: str) -> None:
             fn(item)
         except (StaleState, IllegalTransition):
             _LOG.debug("%s: moved by another worker, skipped", what)
-        except Exception as exc:  # noqa: BLE001 - isolate the item; re-raised below
+        except Exception as exc:  # isolate the item; re-raised below
             _LOG.warning("%s: %s", what, type(exc).__name__)
             first = first or exc
     if first is not None:
@@ -272,10 +273,9 @@ STORE_NOT_READY = (
 
 def _safe_log(msg: str, *args: object) -> None:
     """Log an error line; a failing log handler must never change the exit code."""
-    try:
+    # safe to swallow: this IS the error report, so there is nowhere left to report to; the caller still returns its exit code
+    with contextlib.suppress(Exception):
         _LOG.error(msg, *args)
-    except Exception:  # noqa: BLE001, S110 - safe to swallow: this IS the error report, so there is nowhere left to report to; the caller still returns its exit code
-        pass
 
 
 _PROBE = "heartbeat"  # the tick_state key read once, to find out whether the store answers
@@ -312,7 +312,7 @@ def _run_step(ctx: TickContext, step: TickStep) -> str:
         ):
             return SKIPPED
         step.fn(ctx)
-    except Exception as exc:  # noqa: BLE001 - one step never stops the others
+    except Exception as exc:  # one step never stops the others
         error = f"{type(exc).__name__}: {_message(exc)}"
         _LOG.error("step=%s error_kind=%s message=%s", step.name, type(exc).__name__, _message(exc))
     try:
@@ -324,7 +324,7 @@ def _run_step(ctx: TickContext, step: TickStep) -> str:
                 last_error=error,
             )
         )
-    except Exception as exc:  # noqa: BLE001 - an unrecorded step counts as failed
+    except Exception as exc:  # an unrecorded step counts as failed
         _LOG.error(
             "step=%s error_kind=%s message=tick_state not saved", step.name, type(exc).__name__
         )
@@ -338,7 +338,7 @@ def run_tick(app: App, now: datetime | None = None, steps: list[TickStep] | None
     ctx = TickContext(app, now or app.approvals.clock())
     try:
         app.store.get_tick_state(_PROBE)  # the store answers, or nothing runs
-    except Exception as exc:  # noqa: BLE001 - any store failure: change nothing
+    except Exception as exc:  # any store failure: change nothing
         if is_connectivity_error(exc):
             _safe_log("step=- error_kind=%s message=store unreachable", type(exc).__name__)
             return STORE_UNREACHABLE
@@ -352,13 +352,13 @@ def run_tick(app: App, now: datetime | None = None, steps: list[TickStep] | None
         ctx.results[step.name] = _run_step(ctx, step)
     try:
         heartbeat(ctx)
-    except Exception as exc:  # noqa: BLE001 - a log line never changes the exit code
+    except Exception as exc:  # a log line never changes the exit code
         _safe_log("step=- error_kind=%s message=heartbeat line not written", type(exc).__name__)
     if FAILED in ctx.results.values():
         # A scheduler must tell "the store went away" (4) from "a step failed with the store up" (1).
         try:
             app.store.get_tick_state(_PROBE)
-        except Exception as exc:  # noqa: BLE001 - any store failure
+        except Exception as exc:  # any store failure
             if is_connectivity_error(exc):
                 _safe_log(
                     "step=- error_kind=%s message=store unreachable after the steps",

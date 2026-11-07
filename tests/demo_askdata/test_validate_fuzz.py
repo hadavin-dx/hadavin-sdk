@@ -68,7 +68,7 @@ def run_fuzz(seed: int = SEED, cases: int = CASES):
             if kind == "slot":
                 _slot_verdict(extra, err.rule, stats, failures, sql)
             continue
-        except Exception as err:  # noqa: BLE001  # any other exception is a validator bug and is reported
+        except Exception as err:  # any other exception is a validator bug and is reported
             failures.append((kind, sql, f"crash {err!r}"))
             continue
         stats["accepted"] += 1

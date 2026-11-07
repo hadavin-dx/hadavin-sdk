@@ -457,7 +457,7 @@ def test_a_hostile_name_never_reaches_the_order_message(mn):
         "0004_X.sql",
     ]
     files = [Path(n) for n in hostile]
-    texts = {p: "SELECT 1;" for p in files}
+    texts = dict.fromkeys(files, "SELECT 1;")
     assert mn.late_files({"0009_z"}, files) == []
     assert mn.order_problems({"0009_z"}, files, texts, "s") == []
     # and an applied name that is not a stem is not a "highest applied": nothing is late

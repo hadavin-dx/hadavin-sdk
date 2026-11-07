@@ -28,9 +28,9 @@ def gold_statements() -> list[tuple[str, str]]:
     out: list[tuple[str, str]] = []
     for line in (DATA / "gold.jsonl").read_text(encoding="utf-8").splitlines():
         row = json.loads(line)
-        for key in ("gold_sql", "gold_sql_alt"):
-            if row.get(key):
-                out.append((f"{row['id']}.{key}", row[key]))
+        out.extend(
+            (f"{row['id']}.{key}", row[key]) for key in ("gold_sql", "gold_sql_alt") if row.get(key)
+        )
     for line in (DATA / "exemplars.jsonl").read_text(encoding="utf-8").splitlines():
         row = json.loads(line)
         out.append((f"{row['id']}.sql", row["sql"]))

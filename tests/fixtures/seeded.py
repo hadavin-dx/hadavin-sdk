@@ -31,7 +31,4 @@ class Seeded:
 
     def sample(self, items: Sequence[T], k: int) -> list[T]:
         pool = list(items)
-        out: list[T] = []
-        for _ in range(k):
-            out.append(pool.pop(self.randint(0, len(pool) - 1)))
-        return out
+        return [pool.pop(self.randint(0, len(pool) - 1)) for _ in range(k)]

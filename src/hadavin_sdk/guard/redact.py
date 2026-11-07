@@ -660,16 +660,16 @@ PATTERNS.append(
         ),
     )
 )
-for _quote in ('"', "'"):
-    PATTERNS.append(
-        (
-            "SECRET",
-            re.compile(
-                _CRED_FLAG
-                + rf"(?:{_SP}*={_SP}*|{_SP}+){_quote}[^{_quote}\n]{{256}}[^{_quote}\n]*{_quote}?"
-            ),
-        )
+PATTERNS.extend(
+    (
+        "SECRET",
+        re.compile(
+            _CRED_FLAG
+            + rf"(?:{_SP}*={_SP}*|{_SP}+){_quote}[^{_quote}\n]{{256}}[^{_quote}\n]*{_quote}?"
+        ),
     )
+    for _quote in ('"', "'")
+)
 PATTERNS.append(
     (
         "SECRET",

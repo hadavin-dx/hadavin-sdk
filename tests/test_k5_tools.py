@@ -974,10 +974,10 @@ def test_k5_redteam_set_is_the_six_frozen_bundles():
 def test_k5_redteam_bundles_abstain_or_flag(tmp_path, bundle):
     """The fake model gives the worst-case reply at every step. Whatever it says, the guards (injection check,
     evidence check, grounding, redaction, size cap) hold: the run abstains or is flagged, and no plan exists."""
-    for name, result in bundle["results"].items():
-        if isinstance(result, dict):
-            result = result["repeat"] * result["times"] + result["tail"]
-        k5_tools.RESULTS[name] = result
+    for name, spec in bundle["results"].items():
+        k5_tools.RESULTS[name] = (
+            spec["repeat"] * spec["times"] + spec["tail"] if isinstance(spec, dict) else spec
+        )
     llm = ScriptLLM(list(bundle["script"]))
     store = MemoryStore()
     rt, cards = build_runtime(k5_cfg(tmp_path), llm, store=store)

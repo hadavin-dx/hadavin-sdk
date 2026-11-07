@@ -62,14 +62,14 @@ def test_the_table_is_documented_and_equals_the_independent_copy():
         assert (
             len(entry.provider) > 20 and len(entry.why) > 10
         )  # who serves it and why it is refused
-    assert http._METADATA == frozenset(e.address for e in http.METADATA_ENDPOINTS)
+    assert frozenset(e.address for e in http.METADATA_ENDPOINTS) == http._METADATA
 
 
 def test_the_ranges_are_built_from_numbers_and_are_the_documented_ones():
-    assert http._BENCHMARK == ipaddress.ip_network("198.18.0.0/15")
-    assert http._THIS_NETWORK == ipaddress.ip_network("0.0.0.0/8")
-    assert http._NAT64 == ipaddress.ip_network("64:ff9b::/96")
-    assert http._NAT64_LOCAL == ipaddress.ip_network("64:ff9b:1::/48")
+    assert ipaddress.ip_network("198.18.0.0/15") == http._BENCHMARK
+    assert ipaddress.ip_network("0.0.0.0/8") == http._THIS_NETWORK
+    assert ipaddress.ip_network("64:ff9b::/96") == http._NAT64
+    assert ipaddress.ip_network("64:ff9b:1::/48") == http._NAT64_LOCAL
 
 
 def _string_constants(source: str) -> list[ast.Constant]:

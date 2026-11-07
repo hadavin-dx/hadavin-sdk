@@ -95,8 +95,8 @@ def _rechain(db, edit_seq, result, key=None):
         "SELECT seq, at, run_id, kind, body FROM audit_entries ORDER BY seq"
     ).fetchall()
     prev = audit.GENESIS
-    for seq, at, run_id, kind, b in rows:
-        b = json.dumps({**json.loads(b), "result": result}) if seq == edit_seq else b
+    for seq, at, run_id, kind, stored in rows:
+        b = json.dumps({**json.loads(stored), "result": result}) if seq == edit_seq else stored
         digest = audit._hash(prev, seq, at, run_id, kind, b)
         db.execute(
             "UPDATE audit_entries SET body = ?, prev = ?, hash = ? WHERE seq = ?",

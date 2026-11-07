@@ -393,7 +393,7 @@ def load_tool_module(module: str, pins: Mapping[str, str] | None = None) -> type
         return mod
     except ConfigError:
         raise
-    except Exception as exc:  # noqa: BLE001 - whatever the module did on load, start-up refuses
+    except Exception as exc:  # whatever the module did on load, start-up refuses
         raise ConfigError(f"tool module {module} cannot be loaded ({type(exc).__name__})") from None
 
 
@@ -1110,7 +1110,7 @@ class ToolBox:
         def work() -> None:
             try:
                 box["value"] = str(self._fns[name](restored, ctx))
-            except BaseException as exc:  # noqa: BLE001 - handed to the caller below
+            except BaseException as exc:  # handed to the caller below
                 box["error"] = exc
             finally:
                 done.set()
@@ -1188,7 +1188,7 @@ class ToolBox:
                 raise ToolRefused(why)  # a source this tool reads failed its scope re-probe
             self._admit()  # `_call` frees the slot when the tool's thread ends
             raw = self._call(name, restored, ctx)
-        except Exception as exc:  # noqa: BLE001 - a failing tool becomes a result the model can react to
+        except Exception as exc:  # a failing tool becomes a result the model can react to
             error = True
             raw = ERROR_PREFIX + error_reason(exc, ctx.secrets_handed_out(), self._scrub)
         raw = _sanitise(

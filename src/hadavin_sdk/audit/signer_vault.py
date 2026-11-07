@@ -40,7 +40,7 @@ class VaultTransitSigner:
             status, answer = self._vault.authed(method, f"{self.mount}/{path}", body)
         if status != 200:
             raise VaultError(
-                f"transit {path.split('/')[0]} {self.key_name}: Vault answered {status}"
+                f"transit {path.split('/', maxsplit=1)[0]} {self.key_name}: Vault answered {status}"
             )
         data = answer.get("data")
         if not isinstance(data, dict):

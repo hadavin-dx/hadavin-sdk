@@ -86,7 +86,7 @@ def injection_check(detector: Detector, text: str, source: str) -> Verdict:
     """Any detector error is a flag (guard_unavailable), never a pass."""
     try:
         return detector.check(text, source)
-    except Exception as exc:  # noqa: BLE001 - fail closed on anything
+    except Exception as exc:  # fail closed on anything
         # The cause is logged (class and message, never the text checked) so a broken detector is
         # diagnosable, e.g. a custom detector returning a score outside 0..1.
         _LOG.warning(

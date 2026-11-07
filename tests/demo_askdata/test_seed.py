@@ -218,7 +218,7 @@ def test_manifest_matches_the_committed_file():
 
 def test_sql_output_holds_no_raw_control_byte(builds):
     text = "\n".join(lumen.sql_statements(builds["a"]))
-    assert not [c for c in text if ord(c) < 32 and c not in "\n"]
+    assert not [c for c in text if ord(c) < 32 and c != "\n"]
     assert "U&'" in text
 
 

@@ -3,8 +3,8 @@ revision = 5
 requires-python = ">=3.12"
 resolution-markers = [
     "python_full_version >= '3.15' and sys_platform == 'win32'",
-    "python_full_version == '3.14.*' and sys_platform == 'win32'",
     "python_full_version >= '3.15' and sys_platform != 'win32'",
+    "python_full_version == '3.14.*' and sys_platform == 'win32'",
     "python_full_version == '3.14.*' and sys_platform != 'win32'",
     "python_full_version < '3.14' and sys_platform == 'win32'",
     "python_full_version < '3.14' and sys_platform != 'win32'",
@@ -997,6 +997,7 @@ askdata = [
 ]
 aws = [
     { name = "boto3" },
+    { name = "botocore" },
     { name = "cryptography" },
 ]
 azure = [
@@ -1048,6 +1049,7 @@ requires-dist = [
     { name = "azure-keyvault-secrets", marker = "extra == 'azure'", specifier = "==4.12.0" },
     { name = "azure-storage-blob", marker = "extra == 'azure'", specifier = "==12.31.0" },
     { name = "boto3", marker = "extra == 'aws'", specifier = "==1.43.122" },
+    { name = "botocore", marker = "extra == 'aws'", specifier = "==1.43.122" },
     { name = "cryptography", marker = "extra == 'aws'", specifier = "==50.0.2" },
     { name = "cryptography", marker = "extra == 'azure'", specifier = "==50.0.2" },
     { name = "cryptography", marker = "extra == 'gcp'", specifier = "==50.0.2" },

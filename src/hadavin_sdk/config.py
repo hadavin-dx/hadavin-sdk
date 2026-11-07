@@ -49,7 +49,7 @@ __all__ = [
 def _money(v: object) -> object:
     if isinstance(v, float):
         # ValueError, not TypeError: pydantic turns only ValueError into a validation error.
-        raise ValueError("money must be a decimal string, not a float")  # noqa: TRY004
+        raise ValueError("money must be a decimal string, not a float")
     return v
 
 

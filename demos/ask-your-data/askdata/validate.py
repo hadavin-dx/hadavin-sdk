@@ -583,7 +583,7 @@ def _check_tree(tree: exp.Expression) -> None:
         )
     except OptimizeError:
         _fail("V05", "a column is not in the referenced views")
-    except Exception:  # noqa: BLE001  # fail closed on anything else the resolver trips over (a sqlglot bug)
+    except Exception:  # fail closed on anything else the resolver trips over (a sqlglot bug)
         _fail("V05", "the column resolver could not check this statement")
     # sqlglot's resolver lets an unknown bare column through in HAVING (it may be a select alias): after
     # resolution every column must belong to a relation, except an output name in ORDER BY (legal in Postgres).

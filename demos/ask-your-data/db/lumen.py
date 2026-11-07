@@ -463,7 +463,7 @@ def _order_plan(r: Rng, customers: list[dict]) -> list[tuple[int, int]]:
     heavy = set(r.shuffled(eligible)[:N_HEAVY])
     rest = r.shuffled([c["id"] for c in customers if c["id"] not in heavy])
     none, light = set(rest[:N_NO_ORDER]), rest[N_NO_ORDER:]
-    counts = {cid: 10 for cid in heavy} | {cid: 1 for cid in light}
+    counts = dict.fromkeys(heavy, 10) | dict.fromkeys(light, 1)
     heavy_ids, light_ids = sorted(heavy), sorted(light)
     for _ in range(HEAVY_ORDERS - 10 * N_HEAVY):
         counts[heavy_ids[r.below(len(heavy_ids))]] += 1

@@ -477,7 +477,8 @@ def _run_mutants(
         """Rebuild the temp copy: retried ``SETUP_TRIES`` times, then the last ``OSError`` is raised (never swallowed)."""
         for attempt in range(SETUP_TRIES):
             try:
-                return build()
+                build()
+                return
             except OSError:
                 if attempt == SETUP_TRIES - 1:
                     raise

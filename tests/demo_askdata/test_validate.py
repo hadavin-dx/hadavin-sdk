@@ -40,7 +40,7 @@ def test_corpus_meets_the_quotas_and_covers_the_listed_categories():
     assert len(ATTACKS) >= 80 and len(BENIGN) >= 40
     assert len({a.name for a in ATTACKS}) == len(ATTACKS)
     assert {a.rule for a in ATTACKS} == set(RULES), "every rule V01..V12 needs a tagged attack"
-    assert CATEGORIES <= {a.category for a in ATTACKS}
+    assert {a.category for a in ATTACKS} >= CATEGORIES
     harms = {a.harm.split(":")[0] for a in ATTACKS}
     assert harms <= {"write", "lock", "leak", "exec", "abuse", "pg-refuses", "none"}
 
