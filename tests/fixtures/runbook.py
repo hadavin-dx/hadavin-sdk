@@ -11,7 +11,9 @@ from pathlib import Path
 
 CHANGELOG_PATH = Path(__file__).resolve().parents[2] / "CHANGELOG.md"
 CHANGELOG = CHANGELOG_PATH.read_text(encoding="utf-8")
-RUNBOOK = CHANGELOG[CHANGELOG.index("### Migration ") :]  # "repair steps" now, "runbook" in older text
+RUNBOOK = CHANGELOG[
+    CHANGELOG.index("### Migration ") :
+]  # "repair steps" now, "runbook" in older text
 PSQL_ARGS = [
     "psql",
     "-X",
