@@ -778,7 +778,11 @@ R1P_SCN = [r for r in corpus.ROWS if r.owner_step == "R1P" and r.kind == "scenar
 
 
 def test_r1p_corpus_rows_are_all_active_and_counted():
-    assert corpus.CORPUS_STEP == "R1P"
+    assert corpus.CORPUS_STEP == "R3a"  # P5b2's step: P5b1 (R1P) rows stay active when the step moves on
+    assert [(r.id, r.status) for r in corpus.ROWS if r.owner_step == "R3a"] == [
+        ("HC-classification-01", "active"),
+        ("HC-classification-02", "active"),
+    ]  # ledger rows 005 and 033, driven by the site-table tests of P5b2
     assert {r.id for r in R1P_SCN} == {"HC-provider_attrs-65", "HC-size_time-66", "HC-size_time-67"}
     assert len(R1P_EXC) == 8 + 6 and all(r.status == "active" for r in R1P_EXC + R1P_SCN)
 

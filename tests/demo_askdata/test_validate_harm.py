@@ -8,6 +8,10 @@ this test proves that too instead of claiming harm.
 
 Run as the superuser on purpose: it is the "what if the validator and the role both failed" case. Each harmful
 statement runs in its own throwaway copy of the database (CREATE DATABASE ... TEMPLATE), so one cannot spoil the next.
+
+Machine note: the `dblink-connect` attack connects with the libpq defaults (`dbname=postgres`, no host). Set PGHOST, PGPORT and
+PGUSER to the server of HADAVIN_TEST_PG_DSN when it is not the default local one, or that single test fails with "connection to
+server on socket ... failed" (CI's service is the default, so CI needs nothing).
 """
 
 import secrets
