@@ -1,12 +1,13 @@
-"""P6a-1: the client-profile check (ticket P6a, revision 3 plus build notes BN-1 to BN-15).
+"""The client-profile check: what a pilot or prod start refuses that a demo start allows.
 
 T0 the prod fixture loads; T1 demo-only kinds not covered elsewhere; T2 every TABLE pair is decided; T5 the build
 keywords in a client profile (pilot or prod); T7 a demo config that names a real model, a vendor detector or a
 real approval channel must say it holds only made-up data.
 
-Import rule (ticket R2-ADV-1): module-level names exist on the base. Names that exist only after P6a-1
-(`_test_doubles_given`, `_LIVE_HOOKS`, the keyword `allow_test_doubles`, the config key `made_up_data_only`) are
-read inside row bodies, so on the base each row fails alone.
+Import rule: module-level names must exist before the check was added, so that a missing name fails one row and
+not the whole file. Names that exist only with the check (`_test_doubles_given`, `_LIVE_HOOKS`, the keyword
+`allow_test_doubles`, the config key `made_up_data_only`) are read inside row bodies, so without the check each
+row fails alone.
 """
 
 from __future__ import annotations
@@ -173,10 +174,10 @@ CLIENT_REVIEWED: dict[tuple[str, str], str] = {
     ("anchor", "gcs_retention_lock"): "write-once storage the client agreed retention for",
     ("store", "postgres"): "the client's own database; the production store",
     ("audit", "chain"): "the tamper-evident audit trail; the production audit kind",
-    ("llm", "anthropic"): "a real model; masked text only (P5c); a pilot or prod config names it",
-    ("llm", "bedrock"): "a real model; masked text only (P5c); a pilot or prod config names it",
-    ("llm", "openai_compat"): "a real or self-hosted model; masked text only (P5c)",
-    ("llm", "gemini"): "a real model; masked text only (P5c); a pilot or prod config names it",
+    ("llm", "anthropic"): "a real model; masked text only; a pilot or prod config names it",
+    ("llm", "bedrock"): "a real model; masked text only; a pilot or prod config names it",
+    ("llm", "openai_compat"): "a real or self-hosted model; masked text only",
+    ("llm", "gemini"): "a real model; masked text only; a pilot or prod config names it",
     ("detector", "regex"): "a local check; sends nothing out",
     ("detector", "llm_judge"): "uses the llm kind, so the model rules apply",
     ("detector", "bedrock_guardrail"): "a vendor screening service; demo needs made_up_data_only",
@@ -327,6 +328,25 @@ def test_t5l_a_keyword_added_later_is_refused_by_default():
     assert helper(params, {"secrets": None, "extra": None}) == []
 
 
+@pytest.mark.parametrize("environment", ["Demo", "uat", ""])
+def test_t5q_any_environment_that_is_not_demo_is_live(tmp_path, made, monkeypatch, environment):
+    """An environment value that is not a stage is live: the switch is needed there too."""
+    copied = load_config(pilot_cfg(tmp_path)).model_copy(update={"environment": environment})
+    monkeypatch.setattr(app_mod, "load_config", lambda _dir: copied)
+    with pytest.raises(ConfigError, match="allow_test_doubles") as err:
+        app_mod.build(tmp_path, ["ito-agent"], llm=ScriptedLLM())
+    assert "llm=" in str(err.value)
+    assert made == []
+
+
+@pytest.mark.parametrize("switch", ["no", "yes", 1, [True]], ids=["no", "yes", "one", "list"])
+def test_t5r_only_the_value_true_is_the_switch(tmp_path, made, switch):
+    root = pilot_cfg(tmp_path)
+    with pytest.raises(ConfigError, match="allow_test_doubles") as err:
+        app_mod.build(root, ["ito-agent"], llm=ScriptedLLM(), allow_test_doubles=switch)
+    assert "llm=" in str(err.value)
+
+
 @pytest.mark.parametrize("env", ["pilot", "prod"])
 def test_t5m_no_override_passes_the_check(tmp_path, made, env):
     root = _cfg_for(tmp_path, env)
@@ -432,3 +452,27 @@ def test_t7d_three_refusals_come_in_one_error(cfg_dir):
     assert "llm: openai_compat" in text
     assert "detector: bedrock_guardrail" in text
     assert "COMPLIANCE" in text
+
+
+def test_t7e_the_field_is_refused_in_pilot_and_prod(tmp_path):
+    for env in ("pilot", "prod"):
+        root = _cfg_for(tmp_path / env, env)
+        _edit(root, lambda d: d.update(made_up_data_only=True))
+        with pytest.raises(ConfigError, match="made_up_data_only") as err:
+            load_config(root)
+        assert "demo configs only" in str(err.value)
+
+
+@pytest.mark.parametrize("environment", ["Demo", "uat", ""])
+def test_t7f_the_field_is_refused_in_any_environment_that_is_not_demo(tmp_path, environment):
+    """A copied config whose environment is not a stage is live, so it may not say it holds made-up data."""
+    copied = load_config(pilot_cfg(tmp_path)).model_copy(
+        update={"environment": environment, "made_up_data_only": True}
+    )
+    with pytest.raises(ValueError, match="made_up_data_only"):
+        copied._cross_checks()
+
+
+def test_t7g_the_field_still_loads_in_demo(cfg_dir):
+    _edit(cfg_dir, lambda d: d.update(made_up_data_only=True))
+    assert load_config(cfg_dir).made_up_data_only is True

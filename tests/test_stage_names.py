@@ -314,7 +314,7 @@ def _live_by_site(tmp_path, stage):
                 cfg_dir,
                 ["test-agent"],
                 secrets=FakeSecretProvider({"fixture-token": "tok" + "-stage"}),
-                allow_test_doubles=True,  # pilot and prod refuse a handed-in provider without the switch (P6a-1)
+                allow_test_doubles=True,  # pilot and prod refuse a handed-in provider without the switch
             )
             in_app = False
         except ConfigError as exc:

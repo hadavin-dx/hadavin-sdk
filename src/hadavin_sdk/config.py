@@ -362,7 +362,8 @@ class Config(_Strict):
     )  # demo executor only
     # A `demo` config is taken to hold client data unless it says, in the operator's own word, that every input is
     # made up. Only then may it name a real model, the vendor detector or a real approval channel (they send
-    # text out). It is not a lock: the code cannot check it. No effect in pilot and prod (they hold client data).
+    # text out). It is not a lock: the code cannot check it. Pilot and prod hold client data, so a config for
+    # either (or for any environment that is not `demo`) that sets it is refused.
     made_up_data_only: bool = False
     root: Path
 
@@ -395,13 +396,17 @@ class Config(_Strict):
                     f"(http only for loopback with allow_insecure_loopback): {system.base_url}"
                 )
         refused = []  # environment table, design 4.6: every refusal at once, so one fix round is enough
-        if is_live(self.environment):
+        live = is_live(self.environment)
+        if live:
             refused = [
                 f"{c}: {s.kind}" for c, s in self.backends.entries() if (c, s.kind) in DEMO_ONLY
             ]
             refused += ["allow_insecure_loopback"] if self.allow_insecure_loopback else []
+        refused += (
+            ["made_up_data_only (for demo configs only)"] if live and self.made_up_data_only else []
+        )
         sends_text_out = []
-        if not is_live(self.environment) and not self.made_up_data_only:
+        if not live and not self.made_up_data_only:
             sends_text_out = _sends_text_out(self.backends)
         refused += sends_text_out
         refused += _anchor_refusals(self.environment, self.backends)

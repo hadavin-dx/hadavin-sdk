@@ -134,7 +134,7 @@ def planted(monkeypatch, cfg_dir):
         _edit(
             cfg_dir,
             lambda d: (
-                d.update(made_up_data_only=True),  # a real channel kind in demo (P6a-1)
+                d.update(made_up_data_only=True),  # a real channel kind in demo
                 d["backends"].update(
                     channel={"kind": "planted", "api_key_secret_name": secret_name, "reads": reads}
                 ),

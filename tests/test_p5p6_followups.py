@@ -80,7 +80,7 @@ def test_eval_threshold_also_qualifies_a_judge(cfg_dir):
 
 def test_max_completion_tokens_is_in_the_hash(cfg_dir):
     llm = {"kind": "openai_compat", "base_url": "https://llm.example/v1"}
-    _edit(cfg_dir, lambda d: d.update(made_up_data_only=True))  # a real llm kind in demo (P6a-1)
+    _edit(cfg_dir, lambda d: d.update(made_up_data_only=True))  # a real llm kind in demo
     _edit(cfg_dir, lambda d: d["backends"].update(llm=llm))
     off = _hash(cfg_dir)
     _edit(cfg_dir, lambda d: d["backends"].update(llm={**llm, "max_completion_tokens": True}))
@@ -395,7 +395,7 @@ def test_the_foundry_resource_is_in_the_hash(cfg_dir):
         "api_key_secret_name": "a",
         "resource": "one",
     }
-    _edit(cfg_dir, lambda d: d.update(made_up_data_only=True))  # a real llm kind in demo (P6a-1)
+    _edit(cfg_dir, lambda d: d.update(made_up_data_only=True))  # a real llm kind in demo
     _edit(cfg_dir, lambda d: d["backends"].update(llm=llm))
     one = _hash(cfg_dir)
     _edit(cfg_dir, lambda d: d["backends"].update(llm={**llm, "resource": "two"}))

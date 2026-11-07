@@ -107,11 +107,11 @@ def build(
     the executor and the backends' own secrets. Missing or shared secret names fail here, before the first run."""
     given = dict(locals())  # the keyword values as passed, before anything below rebinds them
     cfg = load_config(config_dir)
-    # Before any backend is built, so a refusal reads no secret, opens no connection and no folder.
+    live = is_live(cfg.environment)
+    # Before any backend is built, so a refusal reads no secret, opens no connection and no folder. Only the
+    # value True is the switch (a string or a number is not).
     live_doubles = (
-        _test_doubles_given(_BUILD_PARAMS, given)
-        if is_live(cfg.environment) and not allow_test_doubles
-        else []
+        _test_doubles_given(_BUILD_PARAMS, given) if live and allow_test_doubles is not True else []
     )
     if live_doubles:
         raise ConfigError(
@@ -121,7 +121,6 @@ def build(
     reg = load_registry(cfg)
     b = cfg.backends
     secrets = secrets or make("secrets", b.secrets)
-    live = is_live(cfg.environment)
     if live and not cfg.evidence.restored_hash_key_secret_name:
         raise ConfigError("evidence.restored_hash_key_secret_name is required in pilot and prod")
     if live and getattr(b.store, "kind", "") == "postgres" and not b.store.purge_dsn_secret_name:
