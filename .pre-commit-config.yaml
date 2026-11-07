@@ -1,0 +1,11 @@
+# Fixes lint and format problems before a commit is made (pip install pre-commit; pre-commit install). CI does NOT
+# use this file and never pushes a commit: its gate is `ruff check` and `ruff format --check` (.github/workflows/ci.yml).
+# The ruff version here must equal the one in pyproject.toml (dependency group dev).
+# An owner option, not enabled: the autofix.ci app could push these fixes to a pull request (needs a GitHub setting).
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: 38bfb07c0c64c304f47eb52090f8288150c77730  # v0.17.1
+    hooks:
+      - id: ruff-check
+        args: [--fix]
+      - id: ruff-format

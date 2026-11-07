@@ -169,9 +169,9 @@ def checked_connection(address, timeout=socket._GLOBAL_DEFAULT_TIMEOUT, source_a
     if not ips:
         raise OSError(f"{host} did not resolve")
     last: OSError | None = None
-    for ip in dict.fromkeys(ips):
+    for answer in dict.fromkeys(ips):
         try:
-            return socket.create_connection((ip, port), timeout, source_address)
+            return socket.create_connection((answer, port), timeout, source_address)
         except OSError as exc:
             last = exc
     raise last or OSError(f"{host} could not be reached")

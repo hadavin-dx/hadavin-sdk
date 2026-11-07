@@ -53,7 +53,7 @@ test = ["moto[s3,kms,secretsmanager]==5.2.5", "pglast==8.7"]
 # Free scanners that keep working when the repository turns private.
 scan = ["pip-audit==2.10.1", "bandit==1.9.4", "zizmor==1.31.1"]
 # Static checks beyond ruff (job "lint-set" in ci.yml; actionlint is a Go binary, installed there by checksum).
-lint = ["mypy==2.4.1", "import-linter==2.15", "deptry==0.25.1", "vulture==2.16"]
+lint = ["mypy==2.4.1", "types-pyyaml==6.0.12.20261030", "boto3-stubs==1.43.122", "botocore-stubs==1.43.122", "import-linter==2.15", "deptry==0.25.1", "vulture==2.16"]
 
 [build-system]
 requires = ["uv_build>=0.12,<0.14"]
@@ -68,6 +68,7 @@ exclude-newer-package = { google-api-core = "2026-10-24T00:00:00Z", grpcio = "20
 
 [tool.ruff]
 line-length = 100
+extend-exclude = ["vulture_whitelist.py"]  # not Python to run: names for vulture to count as used
 src = ["src", "tests", "demos"]
 
 [tool.ruff.lint]
@@ -157,6 +158,54 @@ forbidden_modules = [
 ]
 allow_indirect_imports = false
 
+[tool.vulture]
+# Dead code in the shipped package. tests, demos and tools use the core, so their own helper names are not judged here.
+paths = ["src", "vulture_whitelist.py"]
+min_confidence = 60
+ignore_decorators = ["@model_validator", "@field_validator"]
+# Names the standard library or pydantic calls: HTTP handler methods, urllib handler methods, pydantic's model_config.
+ignore_names = ["model_config", "do_POST", "do_GET", "log_message", "http_open", "https_open", "redirect_request"]
+
 [tool.deptry]
 # The package itself and the demo's own package are first party (deptry does not see them in this src layout).
 known_first_party = ["hadavin_sdk", "askdata"]
+
+[tool.mypy]
+# Basic mode (mypy's default strictness) on the shipped package, rolled out file by file: the files below still have
+# findings (79 on 2026-11-07, written up as ledger rows in the pull request), so mypy does not check them yet and
+# follow_imports=silent keeps their findings out of the clean files' report. Delete a line when its file is fixed;
+# the list only shrinks. tests, demos and tools are not checked yet.
+files = ["src"]
+python_version = "3.12"
+plugins = ["pydantic.mypy"]
+follow_imports = "silent"
+exclude = [
+    "^src/hadavin_sdk/actions/executor.py$",
+    "^src/hadavin_sdk/app.py$",
+    "^src/hadavin_sdk/approvals/gate.py$",
+    "^src/hadavin_sdk/approvals/requests.py$",
+    "^src/hadavin_sdk/audit/anchor_gcs.py$",
+    "^src/hadavin_sdk/audit/chain.py$",
+    "^src/hadavin_sdk/audit/signer.py$",
+    "^src/hadavin_sdk/audit/signer_aws.py$",
+    "^src/hadavin_sdk/audit/signer_azure.py$",
+    "^src/hadavin_sdk/audit/signer_gcp.py$",
+    "^src/hadavin_sdk/audit/signer_vault.py$",
+    "^src/hadavin_sdk/config.py$",
+    "^src/hadavin_sdk/evals.py$",
+    "^src/hadavin_sdk/guard/bedrock_guardrail.py$",
+    "^src/hadavin_sdk/guard/judge.py$",
+    "^src/hadavin_sdk/guard/redact.py$",
+    "^src/hadavin_sdk/guard/runmap.py$",
+    "^src/hadavin_sdk/k1b/bundle.py$",
+    "^src/hadavin_sdk/k1b/loop.py$",
+    "^src/hadavin_sdk/k1b/report.py$",
+    "^src/hadavin_sdk/llm/bedrock.py$",
+    "^src/hadavin_sdk/llm/retry.py$",
+    "^src/hadavin_sdk/registry.py$",
+    "^src/hadavin_sdk/runtime/agent_loop.py$",
+    "^src/hadavin_sdk/store/migrate.py$",
+    "^src/hadavin_sdk/store/migration_numbers.py$",
+    "^src/hadavin_sdk/store/postgres.py$",
+    "^src/hadavin_sdk/tools.py$",
+]
