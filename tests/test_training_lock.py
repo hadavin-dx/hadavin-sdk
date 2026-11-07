@@ -675,6 +675,22 @@ def test_t14_names_with_capitals_digits_and_loopback_pass(tmp_path):
     assert _load(tmp_path, "pilot", {**loopback, "no_training": statement})
 
 
+@pytest.mark.parametrize(
+    ("base_url", "host"),
+    [("http://[::1]:8000/v1", "::1"), ("https://llm.example/v1", "llm.example")],
+    ids=["loopback", "public-https"],
+)
+def test_t3b_self_hosted_is_the_operators_word_and_is_not_checked_against_the_host(
+    tmp_path, base_url, host
+):
+    """Pins today's behaviour: openai_compat accepts `self_hosted` on ANY host, loopback or public. The code cannot
+    tell a server the client runs from one it does not; refusing a public `self_hosted` belongs to P6a's
+    client-profile check. If that check lands here instead, change this test on purpose."""
+    llm = {"kind": "openai_compat", "base_url": base_url}
+    statement = _st("openai_compat", _real_today(), basis="self_hosted", hosts=[host])
+    assert _load(tmp_path, "pilot", {**llm, "no_training": statement})
+
+
 def test_t14_an_endpoint_with_no_host_name_is_refused(tmp_path):
     llm = {**SAMPLES["openai_compat"], "base_url": "https:///v1"}
     text = _hosts_bad(tmp_path, llm, ["llm.example"])
