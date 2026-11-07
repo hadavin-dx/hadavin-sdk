@@ -1112,3 +1112,6 @@ A18 recorded in studio-notes/amendments.md. Plan v4.3 edited for L16 (quote sent
 
 ## q355 (11:27Z) PR80 reviewer result: 0 Blocker, 1 Major, 5 Nit; fix batch 2 ordered
 Report: reviews/ord147/PR80-P5b1-fb4fb51-review.md. Major: the dblink-connect "fix" at fb4fb51 is documentation only; a real fix (attack string carries the test's own DSN host/port) is ordered. Nits: CHANGELOG mutant count (45 vs 54), private step ids in public test comments, fail-before not against the real base core/P5a. I confirmed fb4fb51 vs a6b664a changed only 2 files (README, test docstring), so skipped lint/mutant reruns were justified for that delta but are rerun in batch 2. Evidence so far at fb4fb51: suites 11674 passed both Pythons. The earlier note "PR85 may now re-merge core/P5b1" is withdrawn until batch 2 lands.
+
+## q356 (11:28Z) ORDER 151 done
+PR83 core/P0t-followup now 7f24178 (ff from 9694b98, 0 0; also fix/P0t-fix132). Pushed on your order BEFORE its evidence jobs finished: the suite, lint, stage mutants and the new fail-before (variant C with only new symbols stubbed) are still queued; no verdict at this head. Runner stays hash-pinned. PR85 builder told to re-merge core/P5b1 fb4fb51 (with the conflict rule); PR80 batch 2 (real dblink fix) will give a small later delta.
