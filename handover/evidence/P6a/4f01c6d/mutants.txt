@@ -1,0 +1,545 @@
+4f01c6d0bad8172ee0481cae679b4eeb079baa18
+(mutants run at b168168; src and tests of the mutated files identical at 4f01c6d0bad8172ee0481cae679b4eeb079baa18, only tests/stage_mutants.py differs)
+## mutant 1: DEMO_ONLY loses llm/fake
+status=KILLED-NAMED rc=1 clean_after=True files=tests/test_client_profile.py tests/test_p1b_backends.py
+summary=['9 failed, 72 passed in 1.21s']
+expected-killer-regex=p1b|t2a
+failing (9):
+  FAILED tests/test_client_profile.py::test_t2a_demo_only_is_exactly_the_six_pairs - AssertionError: assert frozenset({('...', 'memory')}) == {('audit', 'l...e', 'memory')}
+  FAILED tests/test_client_profile.py::test_t2b_every_pair_is_decided_with_a_reason - AssertionError: assert ['llm/fake: i...ENT_REVIEWED'] == []
+  FAILED tests/test_client_profile.py::test_t2c_planted_pair_in_both_sets_is_reported - assert False
+  FAILED tests/test_client_profile.py::test_t7a_a_real_llm_kind_in_demo_needs_the_field[fake] - KeyError: 'fake'
+  FAILED tests/test_p1b_backends.py::test_defaults_fill_optional_capabilities - hadavin_sdk.errors.ConfigError: 1 validation error for Config
+  FAILED tests/test_p1b_backends.py::test_demo_only_kinds_refused_outside_demo[pilot] - AssertionError: assert 'llm: fake' in '1 validation error for Config\n  Value error, environment pilot: refused: secrets: fake, store: memory, audit: local_...insecure_loopback [type=value_error]\n    For further information visit https://error
+  FAILED tests/test_p1b_backends.py::test_demo_only_kinds_refused_outside_demo[prod] - AssertionError: assert 'llm: fake' in '1 validation error for Config\n  Value error, environment prod: refused: secrets: fake, store: memory, audit: local_d...one, anchor: none [type=value_error]\n    For further information visit https://errors
+  FAILED tests/test_p1b_backends.py::test_missing_secret_fails_at_start_up - AssertionError: Regex pattern did not match.
+  FAILED tests/test_p1b_backends.py::test_fake_channel_signing_secret_comes_from_platform_secrets - hadavin_sdk.errors.ConfigError: 1 validation error for Config
+patch:
+  -        ("llm", "fake"),
+
+## mutant 2: DEMO_ONLY loses channel/fake
+status=KILLED-NAMED rc=1 clean_after=True files=tests/test_client_profile.py tests/test_p1b_backends.py
+summary=['8 failed, 72 passed in 1.02s']
+expected-killer-regex=p1b|t2a
+failing (8):
+  FAILED tests/test_client_profile.py::test_t2a_demo_only_is_exactly_the_six_pairs - AssertionError: assert frozenset({('...', 'memory')}) == {('audit', 'l...e', 'memory')}
+  FAILED tests/test_client_profile.py::test_t2b_every_pair_is_decided_with_a_reason - AssertionError: assert ['channel/fak...ENT_REVIEWED'] == []
+  FAILED tests/test_client_profile.py::test_t7a3_a_real_channel_kind_in_demo_needs_the_field - AssertionError: assert ['fake', 'slack'] == ['slack']
+  FAILED tests/test_p1b_backends.py::test_defaults_fill_optional_capabilities - hadavin_sdk.errors.ConfigError: 1 validation error for Config
+  FAILED tests/test_p1b_backends.py::test_demo_only_kinds_refused_outside_demo[pilot] - AssertionError: assert 'channel: fake' in '1 validation error for Config\n  Value error, environment pilot: refused: secrets: fake, store: memory, audit: local_...insecure_loopback [type=value_error]\n    For further information visit https://e
+  FAILED tests/test_p1b_backends.py::test_demo_only_kinds_refused_outside_demo[prod] - AssertionError: assert 'channel: fake' in '1 validation error for Config\n  Value error, environment prod: refused: secrets: fake, store: memory, audit: local_d...one, anchor: none [type=value_error]\n    For further information visit https://er
+  FAILED tests/test_p1b_backends.py::test_missing_secret_fails_at_start_up - AssertionError: Regex pattern did not match.
+  FAILED tests/test_p1b_backends.py::test_fake_channel_signing_secret_comes_from_platform_secrets - hadavin_sdk.errors.ConfigError: 1 validation error for Config
+patch:
+  -        ("channel", "fake"),
+
+## mutant 3: DEMO_ONLY loses secrets/fake
+status=KILLED-NAMED rc=1 clean_after=True files=tests/test_client_profile.py tests/test_p1b_backends.py
+summary=['4 failed, 76 passed in 4.90s']
+expected-killer-regex=p1b|t2a
+failing (4):
+  FAILED tests/test_client_profile.py::test_t2a_demo_only_is_exactly_the_six_pairs - AssertionError: assert frozenset({('...', 'memory')}) == {('audit', 'l...e', 'memory')}
+  FAILED tests/test_client_profile.py::test_t2b_every_pair_is_decided_with_a_reason - AssertionError: assert ['secrets/fak...ENT_REVIEWED'] == []
+  FAILED tests/test_p1b_backends.py::test_demo_only_kinds_refused_outside_demo[pilot] - AssertionError: assert 'secrets: fake' in '1 validation error for Config\n  Value error, environment pilot: refused: store: memory, audit: local_dir, llm: fake,...insecure_loopback [type=value_error]\n    For further information visit https://e
+  FAILED tests/test_p1b_backends.py::test_demo_only_kinds_refused_outside_demo[prod] - AssertionError: assert 'secrets: fake' in '1 validation error for Config\n  Value error, environment prod: refused: store: memory, audit: local_dir, llm: fake, ...one, anchor: none [type=value_error]\n    For further information visit https://er
+patch:
+  -        ("secrets", "fake"),
+
+## mutant 4: DEMO_ONLY loses secrets/env
+status=KILLED-NAMED rc=1 clean_after=True files=tests/test_client_profile.py tests/test_p1b_backends.py
+summary=['4 failed, 76 passed in 1.10s']
+expected-killer-regex=t1a|t2a
+failing (4):
+  FAILED tests/test_client_profile.py::test_t1a_secrets_env_is_refused_in_a_client_profile[pilot] - Failed: DID NOT RAISE ConfigError
+  FAILED tests/test_client_profile.py::test_t1a_secrets_env_is_refused_in_a_client_profile[prod] - Failed: DID NOT RAISE ConfigError
+  FAILED tests/test_client_profile.py::test_t2a_demo_only_is_exactly_the_six_pairs - AssertionError: assert frozenset({('...', 'memory')}) == {('audit', 'l...e', 'memory')}
+  FAILED tests/test_client_profile.py::test_t2b_every_pair_is_decided_with_a_reason - AssertionError: assert ['secrets/env...ENT_REVIEWED'] == []
+patch:
+  -        ("secrets", "env"),
+
+## mutant 5: DEMO_ONLY loses store/memory
+status=KILLED-NAMED rc=1 clean_after=True files=tests/test_client_profile.py tests/test_p1b_backends.py
+summary=['5 failed, 75 passed in 1.23s']
+expected-killer-regex=p1b|t1d|t2a
+failing (5):
+  FAILED tests/test_client_profile.py::test_t1d_a_pilot_config_that_omits_store_is_refused - Failed: DID NOT RAISE ConfigError
+  FAILED tests/test_client_profile.py::test_t2a_demo_only_is_exactly_the_six_pairs - AssertionError: assert frozenset({('...ts', 'fake')}) == {('audit', 'l...e', 'memory')}
+  FAILED tests/test_client_profile.py::test_t2b_every_pair_is_decided_with_a_reason - AssertionError: assert ['store/memor...ENT_REVIEWED'] == []
+  FAILED tests/test_p1b_backends.py::test_demo_only_kinds_refused_outside_demo[pilot] - AssertionError: assert 'store: memory' in '1 validation error for Config\n  Value error, environment pilot: refused: secrets: fake, audit: local_dir, llm: fake,...insecure_loopback [type=value_error]\n    For further information visit https://e
+  FAILED tests/test_p1b_backends.py::test_demo_only_kinds_refused_outside_demo[prod] - AssertionError: assert 'store: memory' in '1 validation error for Config\n  Value error, environment prod: refused: secrets: fake, audit: local_dir, llm: fake, ...one, anchor: none [type=value_error]\n    For further information visit https://er
+patch:
+  -        ("store", "memory"),
+
+## mutant 6: DEMO_ONLY loses audit/local_dir
+status=KILLED-NAMED rc=1 clean_after=True files=tests/test_client_profile.py tests/test_p1b_backends.py
+summary=['4 failed, 76 passed in 1.25s']
+expected-killer-regex=p1b|t2a
+failing (4):
+  FAILED tests/test_client_profile.py::test_t2a_demo_only_is_exactly_the_six_pairs - AssertionError: assert frozenset({('...', 'memory')}) == {('audit', 'l...e', 'memory')}
+  FAILED tests/test_client_profile.py::test_t2b_every_pair_is_decided_with_a_reason - AssertionError: assert ['audit/local...ENT_REVIEWED'] == []
+  FAILED tests/test_p1b_backends.py::test_demo_only_kinds_refused_outside_demo[pilot] - AssertionError: assert 'audit: local_dir' in '1 validation error for Config\n  Value error, environment pilot: refused: secrets: fake, store: memory, llm: fake, ch...insecure_loopback [type=value_error]\n    For further information visit https:
+  FAILED tests/test_p1b_backends.py::test_demo_only_kinds_refused_outside_demo[prod] - AssertionError: assert 'audit: local_dir' in '1 validation error for Config\n  Value error, environment prod: refused: secrets: fake, store: memory, llm: fake, cha...one, anchor: none [type=value_error]\n    For further information visit https:/
+patch:
+  -        ("audit", "local_dir"),
+
+## mutant 7: refusal only in prod (is_live -> == "prod")
+status=KILLED-NAMED rc=1 clean_after=True files=tests/test_client_profile.py tests/test_p1b_backends.py
+summary=['3 failed, 77 passed in 1.36s']
+expected-killer-regex=t1a.*pilot|t1d|p1b
+failing (3):
+  FAILED tests/test_client_profile.py::test_t1a_secrets_env_is_refused_in_a_client_profile[pilot] - Failed: DID NOT RAISE ConfigError
+  FAILED tests/test_client_profile.py::test_t1d_a_pilot_config_that_omits_store_is_refused - Failed: DID NOT RAISE ConfigError
+  FAILED tests/test_p1b_backends.py::test_demo_only_kinds_refused_outside_demo[pilot] - Failed: DID NOT RAISE ConfigError
+patch:
+  -        if live:
+  +        if self.environment == "prod":
+
+## mutant 8: message keeps only the first refusal
+status=KILLED-NAMED rc=1 clean_after=True files=tests/test_client_profile.py tests/test_p1b_backends.py
+summary=['3 failed, 77 passed in 1.43s']
+expected-killer-regex=p1b|t7d
+failing (3):
+  FAILED tests/test_client_profile.py::test_t7d_three_refusals_come_in_one_error - AssertionError: assert 'detector: bedrock_guardrail' in '1 validation error for Config\n  Value error, environment demo: refused: llm: openai_compat; a demo config that names... in pilot or prod [type=value_error]\n    For further information visit 
+  FAILED tests/test_p1b_backends.py::test_demo_only_kinds_refused_outside_demo[pilot] - AssertionError: assert 'llm: fake' in '1 validation error for Config\n  Value error, environment pilot: refused: secrets: fake [type=value_error]\n    For further information visit https://errors.pydantic.dev/2.14/v/value_error'
+  FAILED tests/test_p1b_backends.py::test_demo_only_kinds_refused_outside_demo[prod] - AssertionError: assert 'llm: fake' in '1 validation error for Config\n  Value error, environment prod: refused: secrets: fake [type=value_error]\n    For further information visit https://errors.pydantic.dev/2.14/v/value_error'
+patch:
+  -            raise ValueError(f"environment {self.environment}: refused: {', '.join(refused)}{tail}")
+  +            raise ValueError(f"environment {self.environment}: refused: {refused[0]}{tail}")
+
+## mutant 9: S2 check deleted
+status=KILLED-NAMED rc=1 clean_after=True files=tests/test_client_profile.py
+summary=['20 failed, 35 passed in 1.03s']
+expected-killer-regex=t5b.*llm
+failing (20):
+  FAILED tests/test_client_profile.py::test_t5b_each_test_double_is_refused_alone[secrets-pilot] - tests.test_client_profile._Reached: signer
+  FAILED tests/test_client_profile.py::test_t5b_each_test_double_is_refused_alone[secrets-prod] - tests.test_client_profile._Reached: signer
+  FAILED tests/test_client_profile.py::test_t5b_each_test_double_is_refused_alone[channel-pilot] - tests.test_client_profile._Reached: signer
+  FAILED tests/test_client_profile.py::test_t5b_each_test_double_is_refused_alone[channel-prod] - tests.test_client_profile._Reached: signer
+  FAILED tests/test_client_profile.py::test_t5b_each_test_double_is_refused_alone[detector-pilot] - tests.test_client_profile._Reached: signer
+  FAILED tests/test_client_profile.py::test_t5b_each_test_double_is_refused_alone[detector-prod] - tests.test_client_profile._Reached: signer
+  FAILED tests/test_client_profile.py::test_t5b_each_test_double_is_refused_alone[llm-pilot] - tests.test_client_profile._Reached: signer
+  FAILED tests/test_client_profile.py::test_t5b_each_test_double_is_refused_alone[llm-prod] - tests.test_client_profile._Reached: signer
+  FAILED tests/test_client_profile.py::test_t5b_each_test_double_is_refused_alone[clock-pilot] - tests.test_client_profile._Reached: signer
+  FAILED tests/test_client_profile.py::test_t5b_each_test_double_is_refused_alone[clock-prod] - tests.test_client_profile._Reached: signer
+  FAILED tests/test_client_profile.py::test_t5c_all_at_once_names_all_in_signature_order - tests.test_client_profile._Reached: signer
+  FAILED tests/test_client_profile.py::test_t5i_a_falsy_double_is_refused - tests.test_client_profile._Reached: signer
+  ... 8 more
+patch:
+  -    if live_doubles:
+  +    if False:
+
+## mutant 10: S2 looks only at llm
+status=KILLED-NAMED rc=1 clean_after=True files=tests/test_client_profile.py
+summary=['10 failed, 45 passed in 0.96s']
+expected-killer-regex=t5b.*(secrets|channel|detector|clock)
+failing (10):
+  FAILED tests/test_client_profile.py::test_t5b_each_test_double_is_refused_alone[secrets-pilot] - tests.test_client_profile._Reached: signer
+  FAILED tests/test_client_profile.py::test_t5b_each_test_double_is_refused_alone[secrets-prod] - tests.test_client_profile._Reached: signer
+  FAILED tests/test_client_profile.py::test_t5b_each_test_double_is_refused_alone[channel-pilot] - tests.test_client_profile._Reached: signer
+  FAILED tests/test_client_profile.py::test_t5b_each_test_double_is_refused_alone[channel-prod] - tests.test_client_profile._Reached: signer
+  FAILED tests/test_client_profile.py::test_t5b_each_test_double_is_refused_alone[detector-pilot] - tests.test_client_profile._Reached: signer
+  FAILED tests/test_client_profile.py::test_t5b_each_test_double_is_refused_alone[detector-prod] - tests.test_client_profile._Reached: signer
+  FAILED tests/test_client_profile.py::test_t5b_each_test_double_is_refused_alone[clock-pilot] - tests.test_client_profile._Reached: signer
+  FAILED tests/test_client_profile.py::test_t5b_each_test_double_is_refused_alone[clock-prod] - tests.test_client_profile._Reached: signer
+  FAILED tests/test_client_profile.py::test_t5c_all_at_once_names_all_in_signature_order - AssertionError: assert 'secrets=, channel=, detector=, llm=, clock=' in 'llm= replace configured parts and are for tests; in pilot and prod pass allow_test_doubles=True only from a test'
+  FAILED tests/test_client_profile.py::test_t5i_a_falsy_double_is_refused - tests.test_client_profile._Reached: signer
+patch:
+  -        _test_doubles_given(_BUILD_PARAMS, given) if live and allow_test_doubles is not True else []
+  +        [n for n in _test_doubles_given(_BUILD_PARAMS, given) if n == "llm"] if live and allow_test_doubles is not True else []
+
+## mutant 11: allow_test_doubles default True
+status=KILLED-NAMED rc=1 clean_after=True files=tests/test_client_profile.py
+summary=['16 failed, 39 passed in 0.89s']
+expected-killer-regex=t5b
+failing (16):
+  FAILED tests/test_client_profile.py::test_t5b_each_test_double_is_refused_alone[secrets-pilot] - tests.test_client_profile._Reached: signer
+  FAILED tests/test_client_profile.py::test_t5b_each_test_double_is_refused_alone[secrets-prod] - tests.test_client_profile._Reached: signer
+  FAILED tests/test_client_profile.py::test_t5b_each_test_double_is_refused_alone[channel-pilot] - tests.test_client_profile._Reached: signer
+  FAILED tests/test_client_profile.py::test_t5b_each_test_double_is_refused_alone[channel-prod] - tests.test_client_profile._Reached: signer
+  FAILED tests/test_client_profile.py::test_t5b_each_test_double_is_refused_alone[detector-pilot] - tests.test_client_profile._Reached: signer
+  FAILED tests/test_client_profile.py::test_t5b_each_test_double_is_refused_alone[detector-prod] - tests.test_client_profile._Reached: signer
+  FAILED tests/test_client_profile.py::test_t5b_each_test_double_is_refused_alone[llm-pilot] - tests.test_client_profile._Reached: signer
+  FAILED tests/test_client_profile.py::test_t5b_each_test_double_is_refused_alone[llm-prod] - tests.test_client_profile._Reached: signer
+  FAILED tests/test_client_profile.py::test_t5b_each_test_double_is_refused_alone[clock-pilot] - tests.test_client_profile._Reached: signer
+  FAILED tests/test_client_profile.py::test_t5b_each_test_double_is_refused_alone[clock-prod] - tests.test_client_profile._Reached: signer
+  FAILED tests/test_client_profile.py::test_t5c_all_at_once_names_all_in_signature_order - tests.test_client_profile._Reached: signer
+  FAILED tests/test_client_profile.py::test_t5i_a_falsy_double_is_refused - tests.test_client_profile._Reached: signer
+  ... 4 more
+patch:
+  -    allow_test_doubles: bool = False,
+  +    allow_test_doubles: bool = True,
+
+## mutant 12: S2 only for prod
+status=KILLED-NAMED rc=1 clean_after=True files=tests/test_client_profile.py
+summary=['15 failed, 40 passed in 0.96s']
+expected-killer-regex=t5b.*pilot
+failing (15):
+  FAILED tests/test_client_profile.py::test_t5b_each_test_double_is_refused_alone[secrets-pilot] - tests.test_client_profile._Reached: signer
+  FAILED tests/test_client_profile.py::test_t5b_each_test_double_is_refused_alone[channel-pilot] - tests.test_client_profile._Reached: signer
+  FAILED tests/test_client_profile.py::test_t5b_each_test_double_is_refused_alone[detector-pilot] - tests.test_client_profile._Reached: signer
+  FAILED tests/test_client_profile.py::test_t5b_each_test_double_is_refused_alone[llm-pilot] - tests.test_client_profile._Reached: signer
+  FAILED tests/test_client_profile.py::test_t5b_each_test_double_is_refused_alone[clock-pilot] - tests.test_client_profile._Reached: signer
+  FAILED tests/test_client_profile.py::test_t5c_all_at_once_names_all_in_signature_order - tests.test_client_profile._Reached: signer
+  FAILED tests/test_client_profile.py::test_t5i_a_falsy_double_is_refused - tests.test_client_profile._Reached: signer
+  FAILED tests/test_client_profile.py::test_t5j_a_refusal_builds_nothing_first - tests.test_client_profile._Reached: signer
+  FAILED tests/test_client_profile.py::test_t5q_any_environment_that_is_not_demo_is_live[Demo] - tests.test_client_profile._Reached: signer
+  FAILED tests/test_client_profile.py::test_t5q_any_environment_that_is_not_demo_is_live[uat] - tests.test_client_profile._Reached: signer
+  FAILED tests/test_client_profile.py::test_t5q_any_environment_that_is_not_demo_is_live[] - tests.test_client_profile._Reached: signer
+  FAILED tests/test_client_profile.py::test_t5r_only_the_value_true_is_the_switch[no] - tests.test_client_profile._Reached: signer
+  ... 3 more
+patch:
+  -        _test_doubles_given(_BUILD_PARAMS, given) if live and allow_test_doubles is not True else []
+  +        _test_doubles_given(_BUILD_PARAMS, given) if cfg.environment == "prod" and allow_test_doubles is not True else []
+
+## mutant 13: sources not excluded from the rule
+status=KILLED-NAMED rc=1 clean_after=True files=tests/test_client_profile.py
+summary=['1 failed, 54 passed in 1.05s']
+expected-killer-regex=t5f
+failing (1):
+  FAILED tests/test_client_profile.py::test_t5f_sources_keeps_its_own_refusal - AssertionError: Regex pattern did not match.
+patch:
+  -_OWN_REFUSAL = ("sources", "tools")
+  +_OWN_REFUSAL = ("tools",)
+
+## mutant 14: tools not excluded from the rule
+status=KILLED-NAMED rc=1 clean_after=True files=tests/test_client_profile.py
+summary=['1 failed, 54 passed in 0.94s']
+expected-killer-regex=t5h
+failing (1):
+  FAILED tests/test_client_profile.py::test_t5h_tools_keeps_its_own_refusal - AssertionError: Regex pattern did not match.
+patch:
+  -_OWN_REFUSAL = ("sources", "tools")
+  +_OWN_REFUSAL = ("sources",)
+
+## mutant 15: compare by truth value, not identity
+status=KILLED-NAMED rc=1 clean_after=True files=tests/test_client_profile.py
+summary=['4 failed, 51 passed in 1.03s']
+expected-killer-regex=t5i
+failing (4):
+  FAILED tests/test_client_profile.py::test_t5b_each_test_double_is_refused_alone[clock-pilot] - tests.test_client_profile._Reached: signer
+  FAILED tests/test_client_profile.py::test_t5b_each_test_double_is_refused_alone[clock-prod] - tests.test_client_profile._Reached: signer
+  FAILED tests/test_client_profile.py::test_t5c_all_at_once_names_all_in_signature_order - AssertionError: assert 'secrets=, channel=, detector=, llm=, clock=' in 'secrets=, channel=, detector=, llm= replace configured parts and are for tests; in pilot and prod pass allow_test_doubles=True only from a test'
+  FAILED tests/test_client_profile.py::test_t5i_a_falsy_double_is_refused - tests.test_client_profile._Reached: signer
+patch:
+  -        and given[name] is not p.default
+  +        and bool(given[name]) != bool(p.default)
+
+## mutant 16: check placed after secrets = secrets or make()
+status=KILLED-NAMED rc=1 clean_after=True files=tests/test_client_profile.py
+summary=['4 failed, 51 passed in 0.98s']
+expected-killer-regex=t5j|t5m
+failing (4):
+  FAILED tests/test_client_profile.py::test_t5j_a_refusal_builds_nothing_first - AssertionError: assert ['secrets'] == []
+  FAILED tests/test_client_profile.py::test_t5q_any_environment_that_is_not_demo_is_live[Demo] - AssertionError: assert ['secrets'] == []
+  FAILED tests/test_client_profile.py::test_t5q_any_environment_that_is_not_demo_is_live[uat] - AssertionError: assert ['secrets'] == []
+  FAILED tests/test_client_profile.py::test_t5q_any_environment_that_is_not_demo_is_live[] - AssertionError: assert ['secrets'] == []
+patch:
+  +    reg = load_registry(cfg)
+  +    b = cfg.backends
+  +    secrets = secrets or make("secrets", b.secrets)
+  -    reg = load_registry(cfg)
+  -    b = cfg.backends
+  -    secrets = secrets or make("secrets", b.secrets)
+
+## mutant 17: check placed after platform_secrets.check
+status=KILLED-NAMED rc=1 clean_after=True files=tests/test_client_profile.py
+summary=['4 failed, 51 passed in 1.06s']
+expected-killer-regex=t5j
+failing (4):
+  FAILED tests/test_client_profile.py::test_t5j_a_refusal_builds_nothing_first - AssertionError: assert ['secrets'] == []
+  FAILED tests/test_client_profile.py::test_t5q_any_environment_that_is_not_demo_is_live[Demo] - AssertionError: assert ['secrets'] == []
+  FAILED tests/test_client_profile.py::test_t5q_any_environment_that_is_not_demo_is_live[uat] - AssertionError: assert ['secrets'] == []
+  FAILED tests/test_client_profile.py::test_t5q_any_environment_that_is_not_demo_is_live[] - AssertionError: assert ['secrets'] == []
+patch:
+  -    # Before any backend is built, so a refusal reads no secret, opens no connection and no folder. Only the
+  -    # value True is the switch (a string or a number is not).
+  -    live_doubles = (
+  -        _test_doubles_given(_BUILD_PARAMS, given) if live and allow_test_doubles is not True else []
+  -    )
+  -    if live_doubles:
+  -        raise ConfigError(
+  -            f"{', '.join(f'{n}=' for n in live_doubles)} replace configured parts and are for tests; "
+  -            "in pilot and prod pass allow_test_doubles=True only from a test"
+  -        )
+  +    # Before any backend is built, so a refusal reads no secret, opens no connection and no folder. Only the
+  +    # value True is the switch (a string or a number is not).
+  +    live_doubles = (
+  +        _test_doubles_given(_BUILD_PARAMS, given) if live and allow_test_doubles is not True else []
+  +    )
+  +    if live_doubles:
+  +        raise ConfigError(
+  +            f"{', '.join(f'{n}=' for n in live_doubles)} replace configured parts and are for tests; "
+  +            "in pilot and prod pass allow_test_doubles=True only from a test"
+  +        )
+
+## mutant 18: names from a fixed list of four
+status=KILLED-NAMED rc=1 clean_after=True files=tests/test_client_profile.py
+summary=['4 failed, 51 passed in 0.91s']
+expected-killer-regex=t5b.*clock|t5l
+failing (4):
+  FAILED tests/test_client_profile.py::test_t5b_each_test_double_is_refused_alone[clock-pilot] - tests.test_client_profile._Reached: signer
+  FAILED tests/test_client_profile.py::test_t5b_each_test_double_is_refused_alone[clock-prod] - tests.test_client_profile._Reached: signer
+  FAILED tests/test_client_profile.py::test_t5c_all_at_once_names_all_in_signature_order - AssertionError: assert 'secrets=, channel=, detector=, llm=, clock=' in 'secrets=, channel=, detector=, llm= replace configured parts and are for tests; in pilot and prod pass allow_test_doubles=True only from a test'
+  FAILED tests/test_client_profile.py::test_t5l_a_keyword_added_later_is_refused_by_default - AssertionError: assert [] == ['extra']
+patch:
+  +        and name in ("secrets", "channel", "detector", "llm")
+
+## mutant 19: message names only the first keyword
+status=KILLED-NAMED rc=1 clean_after=True files=tests/test_client_profile.py
+summary=['1 failed, 54 passed in 1.01s']
+expected-killer-regex=t5c
+failing (1):
+  FAILED tests/test_client_profile.py::test_t5c_all_at_once_names_all_in_signature_order - AssertionError: assert 'secrets=, channel=, detector=, llm=, clock=' in 'secrets= replace configured parts and are for tests; in pilot and prod pass allow_test_doubles=True only from a test'
+patch:
+  -            f"{', '.join(f'{n}=' for n in live_doubles)} replace configured parts and are for tests; "
+  +            f"{live_doubles[0]}= replace configured parts and are for tests; "
+
+## mutant 20: switch ignored
+status=KILLED-NAMED rc=1 clean_after=True files=tests/test_client_profile.py tests/test_k5_round9b.py tests/test_k5_round10.py
+summary=['3 failed, 149 passed in 2.86s']
+expected-killer-regex=t5n|round9b|round10
+failing (3):
+  FAILED tests/test_client_profile.py::test_t5n_the_switch_lets_a_test_double_through - hadavin_sdk.errors.ConfigError: llm= replace configured parts and are for tests; in pilot and prod pass allow_test_doubles=True only from a test
+  FAILED tests/test_k5_round9b.py::test_a_live_deployment_without_the_key_does_not_start - AssertionError: Regex pattern did not match.
+  FAILED tests/test_k5_round10.py::test_a_live_postgres_deployment_without_a_purge_dsn_does_not_start - AssertionError: Regex pattern did not match.
+patch:
+  -        _test_doubles_given(_BUILD_PARAMS, given) if live and allow_test_doubles is not True else []
+  +        _test_doubles_given(_BUILD_PARAMS, given) if live else []
+
+## mutant 21: _LIVE_HOOKS gains llm
+status=KILLED-NAMED rc=1 clean_after=True files=tests/test_client_profile.py
+summary=['12 failed, 43 passed in 1.05s']
+expected-killer-regex=t5b.*llm|t5p
+failing (12):
+  FAILED tests/test_client_profile.py::test_t5b_each_test_double_is_refused_alone[llm-pilot] - tests.test_client_profile._Reached: signer
+  FAILED tests/test_client_profile.py::test_t5b_each_test_double_is_refused_alone[llm-prod] - tests.test_client_profile._Reached: signer
+  FAILED tests/test_client_profile.py::test_t5c_all_at_once_names_all_in_signature_order - AssertionError: assert 'secrets=, channel=, detector=, llm=, clock=' in 'secrets=, channel=, detector=, clock= replace configured parts and are for tests; in pilot and prod pass allow_test_doubles=True only from a test'
+  FAILED tests/test_client_profile.py::test_t5j_a_refusal_builds_nothing_first - tests.test_client_profile._Reached: signer
+  FAILED tests/test_client_profile.py::test_t5q_any_environment_that_is_not_demo_is_live[Demo] - tests.test_client_profile._Reached: signer
+  FAILED tests/test_client_profile.py::test_t5q_any_environment_that_is_not_demo_is_live[uat] - tests.test_client_profile._Reached: signer
+  FAILED tests/test_client_profile.py::test_t5q_any_environment_that_is_not_demo_is_live[] - tests.test_client_profile._Reached: signer
+  FAILED tests/test_client_profile.py::test_t5r_only_the_value_true_is_the_switch[no] - tests.test_client_profile._Reached: signer
+  FAILED tests/test_client_profile.py::test_t5r_only_the_value_true_is_the_switch[yes] - tests.test_client_profile._Reached: signer
+  FAILED tests/test_client_profile.py::test_t5r_only_the_value_true_is_the_switch[one] - tests.test_client_profile._Reached: signer
+  FAILED tests/test_client_profile.py::test_t5r_only_the_value_true_is_the_switch[list] - tests.test_client_profile._Reached: signer
+  FAILED tests/test_client_profile.py::test_t5p_the_live_hooks_are_exactly_two_parameters_of_build - AssertionError: assert {'hold_run_id..., 'timeout_s'} == {'hold_run_ids', 'timeout_s'}
+patch:
+  -_LIVE_HOOKS: tuple[str, ...] = ("hold_run_ids", "timeout_s")
+  +_LIVE_HOOKS: tuple[str, ...] = ("hold_run_ids", "timeout_s", "llm")
+
+## mutant 22: _LIVE_HOOKS ignored
+status=KILLED-NAMED rc=1 clean_after=True files=tests/test_client_profile.py
+summary=['2 failed, 53 passed in 1.15s']
+expected-killer-regex=t5o
+failing (2):
+  FAILED tests/test_client_profile.py::test_t5o_the_live_hooks_need_no_switch[hold_run_ids] - hadavin_sdk.errors.ConfigError: hold_run_ids= replace configured parts and are for tests; in pilot and prod pass allow_test_doubles=True only from a test
+  FAILED tests/test_client_profile.py::test_t5o_the_live_hooks_need_no_switch[timeout_s] - hadavin_sdk.errors.ConfigError: timeout_s= replace configured parts and are for tests; in pilot and prod pass allow_test_doubles=True only from a test
+patch:
+  -    skip = {"allow_test_doubles", *_OWN_REFUSAL, *_LIVE_HOOKS}
+  +    skip = {"allow_test_doubles", *_OWN_REFUSAL}
+
+## mutant 23: T5g checker: keyword branch deleted
+status=KILLED-NAMED rc=1 clean_after=True files=tests/test_client_profile.py
+summary=['2 failed, 53 passed in 0.95s']
+expected-killer-regex=t5g_planted.*direct
+failing (2):
+  FAILED tests/test_client_profile.py::test_t5g_planted_doors_are_reported[direct] - AssertionError: assert 0 == 1
+  FAILED tests/test_client_profile.py::test_t5g_planted_doors_are_reported[partial] - AssertionError: assert 0 == 1
+patch:
+  -                if kw.arg == "allow_test_doubles":
+  +                if False:
+
+## mutant 24: T5g checker: keyword only in calls named build
+status=KILLED-NAMED rc=1 clean_after=True files=tests/test_client_profile.py
+summary=['1 failed, 54 passed in 1.24s']
+expected-killer-regex=t5g_planted.*partial
+failing (1):
+  FAILED tests/test_client_profile.py::test_t5g_planted_doors_are_reported[partial] - AssertionError: assert 0 == 1
+patch:
+  -                if kw.arg == "allow_test_doubles":
+  +                if kw.arg == "allow_test_doubles" and name == "build":
+
+## mutant 25: T5g checker: ** branch deleted
+status=KILLED-NAMED rc=1 clean_after=True files=tests/test_client_profile.py
+summary=['1 failed, 54 passed in 1.06s']
+expected-killer-regex=t5g_planted.*double_star
+failing (1):
+  FAILED tests/test_client_profile.py::test_t5g_planted_doors_are_reported[double_star] - AssertionError: assert 0 == 1
+patch:
+  -                if kw.arg is None and name == "build":
+  +                if False:
+
+## mutant 26: T2 check: both-sets not reported
+status=KILLED-NAMED rc=1 clean_after=True files=tests/test_client_profile.py
+summary=['1 failed, 54 passed in 0.96s']
+expected-killer-regex=t2c.*both
+failing (1):
+  FAILED tests/test_client_profile.py::test_t2c_planted_pair_in_both_sets_is_reported - assert False
+patch:
+  -        for c, k in sorted(demo_only & set(reviewed))
+  +        for c, k in []
+
+## mutant 27: T2 check: empty reason not reported
+status=KILLED-NAMED rc=1 clean_after=True files=tests/test_client_profile.py
+summary=['1 failed, 54 passed in 1.11s']
+expected-killer-regex=t2c.*empty
+failing (1):
+  FAILED tests/test_client_profile.py::test_t2c_planted_empty_reason_is_reported - assert False
+patch:
+  -    out += [f"{c}/{k}: no reason" for (c, k), why in sorted(reviewed.items()) if not why.strip()]
+  +    out += [f"{c}/{k}: no reason" for (c, k), why in sorted(reviewed.items()) if False]
+
+## mutant 28: T2 check: neither-set not reported
+status=KILLED-NAMED rc=1 clean_after=True files=tests/test_client_profile.py
+summary=['1 failed, 54 passed in 0.95s']
+expected-killer-regex=t2c.*neither
+failing (1):
+  FAILED tests/test_client_profile.py::test_t2c_planted_kind_in_neither_set_is_reported - assert False
+patch:
+  -        for c, k in sorted(pairs - demo_only - set(reviewed))
+  +        for c, k in []
+
+## mutant 29: S6 items deleted
+status=KILLED-NAMED rc=1 clean_after=True files=tests/test_client_profile.py
+summary=['7 failed, 48 passed in 0.96s']
+expected-killer-regex=t7a
+failing (7):
+  FAILED tests/test_client_profile.py::test_t7a_a_real_llm_kind_in_demo_needs_the_field[anthropic] - Failed: DID NOT RAISE ConfigError
+  FAILED tests/test_client_profile.py::test_t7a_a_real_llm_kind_in_demo_needs_the_field[bedrock] - Failed: DID NOT RAISE ConfigError
+  FAILED tests/test_client_profile.py::test_t7a_a_real_llm_kind_in_demo_needs_the_field[gemini] - Failed: DID NOT RAISE ConfigError
+  FAILED tests/test_client_profile.py::test_t7a_a_real_llm_kind_in_demo_needs_the_field[openai_compat] - Failed: DID NOT RAISE ConfigError
+  FAILED tests/test_client_profile.py::test_t7a2_the_vendor_detector_in_demo_needs_the_field - Failed: DID NOT RAISE ConfigError
+  FAILED tests/test_client_profile.py::test_t7a3_a_real_channel_kind_in_demo_needs_the_field - Failed: DID NOT RAISE ConfigError
+  FAILED tests/test_client_profile.py::test_t7d_three_refusals_come_in_one_error - AssertionError: Regex pattern did not match.
+patch:
+  -        if not live and not self.made_up_data_only:
+  +        if False:
+
+## mutant 30: S6 runs in every stage
+status=KILLED-NAMED rc=1 clean_after=True files=tests/test_client_profile.py
+summary=['31 failed, 24 passed in 1.00s']
+expected-killer-regex=t0|t5m|t5n
+failing (31):
+  FAILED tests/test_client_profile.py::test_t0_the_prod_fixture_loads - hadavin_sdk.errors.ConfigError: 1 validation error for Config
+  FAILED tests/test_client_profile.py::test_t5b_each_test_double_is_refused_alone[secrets-pilot] - AssertionError: Regex pattern did not match.
+  FAILED tests/test_client_profile.py::test_t5b_each_test_double_is_refused_alone[secrets-prod] - AssertionError: Regex pattern did not match.
+  FAILED tests/test_client_profile.py::test_t5b_each_test_double_is_refused_alone[channel-pilot] - AssertionError: Regex pattern did not match.
+  FAILED tests/test_client_profile.py::test_t5b_each_test_double_is_refused_alone[channel-prod] - AssertionError: Regex pattern did not match.
+  FAILED tests/test_client_profile.py::test_t5b_each_test_double_is_refused_alone[detector-pilot] - AssertionError: Regex pattern did not match.
+  FAILED tests/test_client_profile.py::test_t5b_each_test_double_is_refused_alone[detector-prod] - AssertionError: Regex pattern did not match.
+  FAILED tests/test_client_profile.py::test_t5b_each_test_double_is_refused_alone[llm-pilot] - AssertionError: Regex pattern did not match.
+  FAILED tests/test_client_profile.py::test_t5b_each_test_double_is_refused_alone[llm-prod] - AssertionError: Regex pattern did not match.
+  FAILED tests/test_client_profile.py::test_t5b_each_test_double_is_refused_alone[clock-pilot] - AssertionError: Regex pattern did not match.
+  FAILED tests/test_client_profile.py::test_t5b_each_test_double_is_refused_alone[clock-prod] - AssertionError: Regex pattern did not match.
+  FAILED tests/test_client_profile.py::test_t5c_all_at_once_names_all_in_signature_order - AssertionError: Regex pattern did not match.
+  ... 19 more
+patch:
+  -        if not live and not self.made_up_data_only:
+  +        if not self.made_up_data_only:
+
+## mutant 31: made_up_data_only default True
+status=KILLED-NAMED rc=1 clean_after=True files=tests/test_client_profile.py
+summary=['38 failed, 17 passed in 1.19s']
+expected-killer-regex=t7a
+failing (38):
+  FAILED tests/test_client_profile.py::test_t0_the_prod_fixture_loads - hadavin_sdk.errors.ConfigError: 1 validation error for Config
+  FAILED tests/test_client_profile.py::test_t5b_each_test_double_is_refused_alone[secrets-pilot] - AssertionError: Regex pattern did not match.
+  FAILED tests/test_client_profile.py::test_t5b_each_test_double_is_refused_alone[secrets-prod] - AssertionError: Regex pattern did not match.
+  FAILED tests/test_client_profile.py::test_t5b_each_test_double_is_refused_alone[channel-pilot] - AssertionError: Regex pattern did not match.
+  FAILED tests/test_client_profile.py::test_t5b_each_test_double_is_refused_alone[channel-prod] - AssertionError: Regex pattern did not match.
+  FAILED tests/test_client_profile.py::test_t5b_each_test_double_is_refused_alone[detector-pilot] - AssertionError: Regex pattern did not match.
+  FAILED tests/test_client_profile.py::test_t5b_each_test_double_is_refused_alone[detector-prod] - AssertionError: Regex pattern did not match.
+  FAILED tests/test_client_profile.py::test_t5b_each_test_double_is_refused_alone[llm-pilot] - AssertionError: Regex pattern did not match.
+  FAILED tests/test_client_profile.py::test_t5b_each_test_double_is_refused_alone[llm-prod] - AssertionError: Regex pattern did not match.
+  FAILED tests/test_client_profile.py::test_t5b_each_test_double_is_refused_alone[clock-pilot] - AssertionError: Regex pattern did not match.
+  FAILED tests/test_client_profile.py::test_t5b_each_test_double_is_refused_alone[clock-prod] - AssertionError: Regex pattern did not match.
+  FAILED tests/test_client_profile.py::test_t5c_all_at_once_names_all_in_signature_order - AssertionError: Regex pattern did not match.
+  ... 26 more
+patch:
+  -    made_up_data_only: bool = False
+  +    made_up_data_only: bool = True
+
+## mutant 32: S6 llm item checks one fixed kind
+status=KILLED-NAMED rc=1 clean_after=True files=tests/test_client_profile.py
+summary=['4 failed, 51 passed in 0.86s']
+expected-killer-regex=t7a_a_real_llm
+failing (4):
+  FAILED tests/test_client_profile.py::test_t7a_a_real_llm_kind_in_demo_needs_the_field[bedrock] - Failed: DID NOT RAISE ConfigError
+  FAILED tests/test_client_profile.py::test_t7a_a_real_llm_kind_in_demo_needs_the_field[gemini] - Failed: DID NOT RAISE ConfigError
+  FAILED tests/test_client_profile.py::test_t7a_a_real_llm_kind_in_demo_needs_the_field[openai_compat] - Failed: DID NOT RAISE ConfigError
+  FAILED tests/test_client_profile.py::test_t7d_three_refusals_come_in_one_error - AssertionError: assert 'llm: openai_compat' in '1 validation error for Config\n  Value error, environment demo: refused: detector: bedrock_guardrail, anchor mode COM... in pilot or prod [type=value_error]\n    For further information visit https://e
+patch:
+  -    out = [f"llm: {b.llm.kind}"] if ("llm", b.llm.kind) not in DEMO_ONLY else []
+  +    out = [f"llm: {b.llm.kind}"] if b.llm.kind == "anthropic" else []
+
+## mutant 33: S6 guardrail item dropped
+status=KILLED-NAMED rc=1 clean_after=True files=tests/test_client_profile.py
+summary=['2 failed, 53 passed in 1.15s']
+expected-killer-regex=t7a2|t7d
+failing (2):
+  FAILED tests/test_client_profile.py::test_t7a2_the_vendor_detector_in_demo_needs_the_field - Failed: DID NOT RAISE ConfigError
+  FAILED tests/test_client_profile.py::test_t7d_three_refusals_come_in_one_error - AssertionError: assert 'detector: bedrock_guardrail' in '1 validation error for Config\n  Value error, environment demo: refused: llm: openai_compat, anchor mode COMPLIANCE o... in pilot or prod [type=value_error]\n    For further information visit 
+patch:
+  -    out += ["detector: bedrock_guardrail" for d in b.detector if d.kind == "bedrock_guardrail"]
+
+## mutant 34: field ignored (refused even with it)
+status=KILLED-NAMED rc=1 clean_after=True files=tests/test_client_profile.py
+summary=['1 failed, 54 passed in 1.00s']
+expected-killer-regex=t7b
+failing (1):
+  FAILED tests/test_client_profile.py::test_t7b_with_the_field_a_real_llm_kind_loads_in_demo - hadavin_sdk.errors.ConfigError: 1 validation error for Config
+patch:
+  -        if not live and not self.made_up_data_only:
+  +        if not live:
+
+## mutant 35: S6 raised as its own error
+status=KILLED-NAMED rc=1 clean_after=True files=tests/test_client_profile.py
+summary=['7 failed, 48 passed in 1.06s']
+expected-killer-regex=t7d
+failing (7):
+  FAILED tests/test_client_profile.py::test_t7a_a_real_llm_kind_in_demo_needs_the_field[anthropic] - AssertionError: Regex pattern did not match.
+  FAILED tests/test_client_profile.py::test_t7a_a_real_llm_kind_in_demo_needs_the_field[bedrock] - AssertionError: Regex pattern did not match.
+  FAILED tests/test_client_profile.py::test_t7a_a_real_llm_kind_in_demo_needs_the_field[gemini] - AssertionError: Regex pattern did not match.
+  FAILED tests/test_client_profile.py::test_t7a_a_real_llm_kind_in_demo_needs_the_field[openai_compat] - AssertionError: Regex pattern did not match.
+  FAILED tests/test_client_profile.py::test_t7a2_the_vendor_detector_in_demo_needs_the_field - AssertionError: Regex pattern did not match.
+  FAILED tests/test_client_profile.py::test_t7a3_a_real_channel_kind_in_demo_needs_the_field - AssertionError: Regex pattern did not match.
+  FAILED tests/test_client_profile.py::test_t7d_three_refusals_come_in_one_error - AssertionError: Regex pattern did not match.
+patch:
+  -        refused += sends_text_out
+  +        if sends_text_out:
+  +            raise ValueError("refused: " + ", ".join(sends_text_out))
+
+## mutant 46: S6 channel item dropped
+status=KILLED-NAMED rc=1 clean_after=True files=tests/test_client_profile.py
+summary=['1 failed, 54 passed in 0.99s']
+expected-killer-regex=t7a3
+failing (1):
+  FAILED tests/test_client_profile.py::test_t7a3_a_real_channel_kind_in_demo_needs_the_field - Failed: DID NOT RAISE ConfigError
+patch:
+  -    out += [f"channel: {b.channel.kind}"] if ("channel", b.channel.kind) not in DEMO_ONLY else []
+
+## mutant 47: S2 is_live replaced by in ("pilot","prod")
+status=KILLED-NAMED rc=1 clean_after=True files=tests/test_client_profile.py
+summary=['3 failed, 52 passed in 1.07s']
+expected-killer-regex=t5q
+failing (3):
+  FAILED tests/test_client_profile.py::test_t5q_any_environment_that_is_not_demo_is_live[Demo] - tests.test_client_profile._Reached: signer
+  FAILED tests/test_client_profile.py::test_t5q_any_environment_that_is_not_demo_is_live[uat] - tests.test_client_profile._Reached: signer
+  FAILED tests/test_client_profile.py::test_t5q_any_environment_that_is_not_demo_is_live[] - tests.test_client_profile._Reached: signer
+patch:
+  -        _test_doubles_given(_BUILD_PARAMS, given) if live and allow_test_doubles is not True else []
+  +        _test_doubles_given(_BUILD_PARAMS, given) if cfg.environment in ("pilot", "prod") and allow_test_doubles is not True else []
+
+## mutant 48: switch read by truthiness, not is True
+status=KILLED-NAMED rc=1 clean_after=True files=tests/test_client_profile.py
+summary=['4 failed, 51 passed in 1.10s']
+expected-killer-regex=t5r
+failing (4):
+  FAILED tests/test_client_profile.py::test_t5r_only_the_value_true_is_the_switch[no] - tests.test_client_profile._Reached: signer
+  FAILED tests/test_client_profile.py::test_t5r_only_the_value_true_is_the_switch[yes] - tests.test_client_profile._Reached: signer
+  FAILED tests/test_client_profile.py::test_t5r_only_the_value_true_is_the_switch[one] - tests.test_client_profile._Reached: signer
+  FAILED tests/test_client_profile.py::test_t5r_only_the_value_true_is_the_switch[list] - tests.test_client_profile._Reached: signer
+patch:
+  -        _test_doubles_given(_BUILD_PARAMS, given) if live and allow_test_doubles is not True else []
+  +        _test_doubles_given(_BUILD_PARAMS, given) if live and not allow_test_doubles else []
+

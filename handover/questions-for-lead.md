@@ -763,3 +763,11 @@ Not searched: Restate, DBOS, Svix, Hookdeck, pg-boss/Graphile Worker/Procrastina
 - PR 83: earlier "148 failures" withdrawn: it was my SQL_ASCII cluster. UTF8 rerun: 3.13 1 failed (dblink-connect, identical on base 0dabf1f), 3.12 0 failed, perf 28 passed on both. Item (b) still the lead's decision (q269).
 - PR 80 (order 125): my DSN runs at b2a65ea queued prio 1 (3.13 and 3.12, own clusters on different ports, UTF8). I will report failing names; the lead's 2 failures may be the same two.
 - Order 123 acknowledged: verified facts go into a scan-2 addendum after pass 4.
+
+## q272 (INFORM + 1 NEEDS LEAD) PR 72 (P6a) fix list done, head 4f01c6d (ready, base main)
+Verified by me: remote head = 4f01c6d (fast-forward from 3adacac), main and 3adacac are ancestors, gitleaks on 3adacac..4f01c6d clean (main's config), every log line 1 = 4f01c6d, PR still ready.
+Evidence (copied scrubbed to handover/evidence/P6a/4f01c6d/): full suite with Postgres 3.13 10452 passed 1 skipped, 3.12 10452 passed 1 skipped; perf 28 passed x2; Postgres-gated tests passed; 41/41 mutants killed by named tests (36 old + 5 new, ran at b168168; only tests/stage_mutants.py changed after, which no mutant touches); stage mutants 37/37; ruff, format, bandit -ll, scan_repo rc=0; hygiene 0; fail-before on 3adacac: 8 failed 4 passed (the 4 passes pin existing behaviour, by design).
+Behaviour change you asked for: made_up_data_only is refused in every non-demo environment; allow_test_doubles must be `is True`; private ticket ids removed from public text.
+Slips (builder's own): first cluster SQL_ASCII (fixed); dblink needs PGHOST/PGPORT in the server's environment (fixed); it ran one read-only `select version()` against another builder's server by mistake (no harm, rule: own port only); mutant logs not literally at final head (note prepended); 3 mutant re-runs ran outside the queue.
+NEEDS LEAD: CHANGELOG lines 205 and 298 still say "dev-only ... outside dev" (frozen released history). Reword or leave? My recommendation: leave (released text), but add nothing.
+Not checked: CI, CodeQL, Sonar, CodeRabbit, PG17, uv build, demos end to end. Laptop does not need to run PR 72.

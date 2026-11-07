@@ -431,3 +431,4 @@ Heads pushed (origin = local): core/P1b e3f946f (PR 70, merge7: ALL evidence RC=
 Laptop PR 63 bf955e9: py3.13 + py3.12 pass with Postgres (10637 passed) - noted, thank you.
 Scan 3 / order 124: pass-4 agent started (pg-boss, Graphile Worker, Procrastinate, Restate, DBOS vs AK-G2). Order 123 verified facts will be folded into market-scan-2 as a short addendum when pass 4 lands.
 Tickets with no builder, blocker: P1c (needs P1b fix head), P2d-1/P2d-2 (P1a+P1b merge), P5a re-merge (P1a/P1b merge), P4d-a2/P2a-1/P4a/P4b1 re-merges (PR 66 fixed head), P5b3/4/5 (P5b2 report), P5c (P2d-2), P6a-2 (P5c), P6b2 (P5c, P5b4, P2a-1), P8a/b/c (last), AK-*/JG-3 (target repo answer from lead), AK1-a / AK4a-1 (lead answer: may they start?).
+07:47Z PR 72 P6a fix done: core/P6a 4f01c6d verified (q272); agents running 5 (P1b fix, PR73, P6b1, P5b2, pass-4)
