@@ -761,3 +761,4 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | bd-P6a-1-o107 | Sonnet builder P6a-1 merge main + per-mutant tests, port 55437 | 2026-11-07T04:45Z | RUNNING |
 | bd-P5b1-o107 | Sonnet builder P5b1 merge P5a+main, 43 mutants, port 55438 | 2026-11-07T04:45Z | RUNNING |
 | bd-P1a-fix7 | (update) container restart stopped it at ~04:39Z; resumed 04:42Z | 2026-11-07T04:42Z | RUNNING |
+| bd-P0t-followup | (update) | 2026-11-07T05:05Z | REPORTED: core/P0t-followup 72389db pushed+verified, draft PR 83; evidence reviews/P0t-followup |

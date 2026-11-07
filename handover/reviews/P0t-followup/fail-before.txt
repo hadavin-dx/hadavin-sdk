@@ -1,0 +1,6 @@
+0dabf1fa7a2ed58e14b8bca13be1141ac59f9c71
+(base head above; new test file copied onto it, tsv and CHANGELOG as on base)
+FAILED tests/test_stage_names.py::test_the_old_stage_word_is_gone - Assertion...
+FAILED tests/test_stage_names.py::test_a_new_word_stage_value_in_a_scanned_file_fails_unless_its_exact_line_is_exempt
+FAILED tests/test_stage_names.py::test_the_changelog_states_what_is_and_is_not_masked_for_pilot_and_demo
+3 failed, 154 passed in 4.85s

@@ -395,3 +395,4 @@ P1a | fix7 build started by order 106 (MAJOR-A per-script, per-view minimums, do
  P8a | lead only; P8c | v1 kinds stackable | QUEUED
 QUEUE TRIGGERS: P1b merge7 starts when the fix7 head is pushed to core/P1a. P2d-1 and P5a re-merge start when the P1b merge7 head is pushed. P4 chain (P4d-a2, P2a-1, P4a, P4b1) starts when PR 66 is merged to main (order 106: PR 75 waits for it). P1c and P2d-2 start when PR 70 merges.
 WHY THE P4 CHAIN IS QUEUED, NOT STARTED: it is stacked on PR 75, which the lead has said waits for PR 66, and PR 75/P4b1 also need StoreBusy that PR 75 does not have yet. Say so if you want it started on the predecessor heads anyway.
+P0t-followup | DRAFT PR 83 head 72389db, evidence green (10031 x2, 11/11 mutants) | builders running: P1a fix7, P6a-1, P5b1 | blocked on: lead review
