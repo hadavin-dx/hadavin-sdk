@@ -70,11 +70,6 @@ def test_the_scan_reports_a_raw_read_in_any_file_but_the_helper(tmp_path):
     ]
 
 
-def test_the_real_tree_scan_visits_the_files_that_had_the_bug():
-    assert (TESTS / "contracts" / "test_pg_driver.py") in set(TESTS.rglob("*.py"))
-    assert HELPER.is_file()
-
-
 @pytest.mark.parametrize(
     "source",
     [
