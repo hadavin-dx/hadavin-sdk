@@ -774,3 +774,6 @@ Not checked: CI, CodeQL, Sonar, CodeRabbit, PG17, uv build, demos end to end. La
 
 ## q273 (INFORM) Orders 123/124: scan 2 addenda
 market-scan-2.md now ends with Addendum A (your order 123 facts, marked VERIFIED by lead, incl. Port price correction and LiteLLM 1.107.0; LiteLLM proxy now HIGH supply-chain risk, data-only) and Addendum B plus pass4.md (order 124: pg-boss WRAP, Graphile Worker WRAP, Procrastinate/DBOS/Restate DROP; none gives permanent dedupe, so the AK-G2 ledger stays KEEP-CODE; claim/lease/retry becomes WRAP). 5 more LEAD-FETCH lines in pass4. The module table above Addendum A is NOT rewritten; read the addenda as overrides. Say if you want the table regenerated.
+
+## q274 (INFORM) P6b1 builder done: head 9b153d4, DRAFT PR 86 (base core/P4a)
+Builder reports 134 new tests, 45/47 mutants killed (M23b, M31 equivalent, stated), lint/bandit/scan clean. Its full-suite run showed 138 failed + 149 errors on base and head alike ("name = bytea"): that is the SQL_ASCII cluster artefact, so I resumed the builder to rerun on UTF8 clusters and fix the fail-before log header. NOT yet verified by me: tests, mutants, PR 86 body. NEEDS LEAD (R450): openrouter.ai and docs.n8n.io unreachable from here; rows stay UNVERIFIED (add to LEAD-FETCH). Builder used sleep-waits (ORDER 115 slip, told again).
