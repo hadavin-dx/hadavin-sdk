@@ -33,18 +33,46 @@ def raw_reads(source: str) -> list[int]:
     return lines
 
 
-def test_no_test_file_reads_the_database_variable_by_key_except_the_helper():
+def scan(tests_dir, helper, root):
+    """`path:line` of every raw read under `tests_dir`, the one `helper` file excepted."""
     found = []
-    for path in sorted(TESTS.rglob("*.py")):
-        if path == HELPER:
+    for path in sorted(tests_dir.rglob("*.py")):
+        if path == helper:
             continue
         found += [
-            f"{path.relative_to(ROOT).as_posix()}:{n}" for n in raw_reads(path.read_text("utf-8"))
+            f"{path.relative_to(root).as_posix()}:{n}" for n in raw_reads(path.read_text("utf-8"))
         ]
+    return found
+
+
+def test_no_test_file_reads_the_database_variable_by_key_except_the_helper():
+    found = scan(TESTS, HELPER, ROOT)
     assert not found, (
         f"a raw environ[{NAME!r}] read dies with a KeyError where the test should skip; "
         f"call pg_test_dsn() from tests.contracts.kinds instead: {found}"
     )
+
+
+def test_the_scan_reports_a_raw_read_in_any_file_but_the_helper(tmp_path):
+    """The scan itself: a planted read is found in every other file and only the helper is exempt."""
+    raw = f'import os\nx = os.environ["{NAME}"]\n'
+    (tmp_path / "sub").mkdir()
+    helper = tmp_path / "sub" / "helper.py"
+    other = tmp_path / "sub" / "other.py"
+    helper.write_text(raw, "utf-8")
+    other.write_text(raw, "utf-8")
+    (tmp_path / "top.py").write_text(raw, "utf-8")
+    assert scan(tmp_path, helper, tmp_path) == ["sub/other.py:2", "top.py:2"]
+    assert scan(tmp_path, tmp_path / "nowhere.py", tmp_path) == [
+        "sub/helper.py:2",
+        "sub/other.py:2",
+        "top.py:2",
+    ]
+
+
+def test_the_real_tree_scan_visits_the_files_that_had_the_bug():
+    assert (TESTS / "contracts" / "test_pg_driver.py") in set(TESTS.rglob("*.py"))
+    assert HELPER.is_file()
 
 
 @pytest.mark.parametrize(
