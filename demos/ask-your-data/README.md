@@ -97,4 +97,9 @@ sequences removed (a talking point, optional).
 
 From the repo root, with a Postgres reachable: `HADAVIN_TEST_PG_DSN=postgresql://postgres@127.0.0.1:55432/postgres`
 and `psql` available, `pytest -q tests/demo_askdata`. Without the variable the database tests skip on a laptop and fail
-when `CI=true`. The parser oracle (`pglast`, GPL, test group only, never shipped) cross-checks the validator in CI.
+when `CI=true`. One attack of the harm check (`dblink-connect`) makes the database SERVER open a second connection to itself with the libpq
+defaults (`dbname=postgres`, no host). That connection uses the environment of the Postgres server process, not the test
+process: start your test server with `PGHOST`, `PGPORT` and `PGUSER` set to its own host, port and user (for example in the
+environment of the `pg_ctl start` command). CI needs nothing, its service listens on the default `localhost:5432`. Without
+them that one test fails with "connection to server on socket ... failed" on a server that is not on the default local
+socket; that failure is the machine, not the code. The parser oracle (`pglast`, GPL, test group only, never shipped) cross-checks the validator in CI.

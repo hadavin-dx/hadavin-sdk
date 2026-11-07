@@ -215,15 +215,42 @@ _KILL: dict[str, tuple[str, str]] = {
         "AssertionError: assert 'permission' == 'other'",
         "tests/test_provider_errors_failbefore::test_r5_claude_body_cases[type-injected-short-code]",
     ),
-    "M49": ("ssert", ""),
-    "M50": ("ssert", ""),
-    "M51": ("ssert", ""),
-    "M52": ("ssert", ""),
-    "M53": ("ssert", ""),
-    "M54": ("ssert", ""),
-    "M55": ("ssert", ""),
-    "M56": ("ssert", ""),
-    "M57": ("ssert", ""),
+    "M49": (
+        "AssertionError: assert {} == {'diag_class_name': 1}",
+        "tests/test_never_raise_guards::test_every_diagnostic_guard_site_records_into_the_shared_counter[class_name]",
+    ),
+    "M50": (
+        "AssertionError: a retried 429 is not an absorbed fault",
+        "tests/test_never_raise_guards::test_an_ordinary_retried_failure_is_not_counted_and_a_genuine_fault_is",
+    ),
+    "M51": (
+        "AssertionError: record() blocked on a lock held by its own thread",
+        "tests/test_never_raise_guards::test_record_can_be_entered_again_on_the_same_thread",
+    ),
+    "M52": (
+        "AssertionError: a production module does not expose a way to zero the counters",
+        "tests/test_never_raise_guards::test_one_counter_not_two",
+    ),
+    "M53": (
+        "AssertionError: SqlReadError: diag_v=1 code=config_invalid",
+        "tests/test_diagnostic_codes::test_a_sql_file_that_cannot_be_read_is_a_repository_defect_not_an_operator_config_error",
+    ),
+    "M54": (
+        "AssertionError: the loop stops: no further request after a failed wait computation",
+        "tests/test_never_raise_guards::test_a_failed_wait_computation_stops_the_loop_and_is_recorded",
+    ),
+    "M55": (
+        "AssertionError: assert {} == {'retry_wait': 1}",
+        "tests/test_never_raise_guards::test_a_failed_wait_computation_stops_the_loop_and_is_recorded",
+    ),
+    "M56": (
+        "AssertionError: tests/fixtures/guard_ledger.txt and the except-Exception handlers",
+        "tests/test_never_raise_guards::test_ledger_lists_exactly_the_guards_in_the_code_by_file_function_and_site",
+    ),
+    "M57": (
+        "AssertionError: a Site member that no guard records",
+        "tests/test_never_raise_guards::test_every_site_name_is_recorded_by_exactly_one_guard_and_none_is_dead",
+    ),
     "M48": (
         "AssertionError: a raw RuntimeError escaped with_",
         "tests/test_provider_errors_failbefore::test_r5_a_decision_that_crashed_is_the_billed_class[bool-raises-BN1c]",

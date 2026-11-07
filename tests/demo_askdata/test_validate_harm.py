@@ -8,6 +8,11 @@ this test proves that too instead of claiming harm.
 
 Run as the superuser on purpose: it is the "what if the validator and the role both failed" case. Each harmful
 statement runs in its own throwaway copy of the database (CREATE DATABASE ... TEMPLATE), so one cannot spoil the next.
+
+Machine note: the `dblink-connect` attack makes the database SERVER connect to itself with the libpq defaults (`dbname=postgres`, no
+host), using the environment of the server process. Start a non-default test server with PGHOST, PGPORT and PGUSER set to its own
+host, port and user, or that single test fails with "connection to server on socket ... failed" (CI's service is the default, so
+CI needs nothing).
 """
 
 import secrets

@@ -13,8 +13,9 @@ from hadavin_sdk.guard.diagnostic import diagnose, render, validation_text
 from tests.data import c18a_hostile_corpus as corpus
 from tests.data.c18a_oracle import grammar_ok, leaks
 
-# Rows with the driver ``p5b1_raw`` are driven by their owning package (P5b1: ``tests/test_provider_errors_wire.py``), not by ``diagnose`` alone.
-ACTIVE = [r for r in corpus.ROWS if r.status == "active" and r.spec.get("driver") != "p5b1_raw"]
+# Only exception and validation rows are driven by ``diagnose`` alone. ``scenario`` rows are driven by their owning package (P5b1:
+# ``tests/test_provider_errors_wire.py``) and ``source`` rows by the site-table tests of P5b2.
+ACTIVE = [r for r in corpus.ROWS if r.status == "active" and r.kind in ("exception", "validation")]
 
 
 def _ctx(row: corpus.Row) -> contextlib.AbstractContextManager[None]:
@@ -38,7 +39,7 @@ def _line(row: corpus.Row) -> str:
 def test_corpus_shape() -> None:
     assert len(corpus.ROWS) == 170
     assert len({r.id for r in corpus.ROWS}) == 170
-    assert sum(r.status == "active" for r in corpus.ROWS) == 152
+    assert sum(r.status == "active" for r in corpus.ROWS) == 154
     assert {r.cls for r in corpus.ROWS} == set(corpus.CLASSES)
     for cls, minimum in corpus.MINIMUMS.items():
         assert sum(r.cls == cls for r in corpus.ROWS) >= minimum, cls
