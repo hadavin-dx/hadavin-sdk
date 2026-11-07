@@ -1020,3 +1020,7 @@ Next for the cloud (standing backlog applies): P1d ticket + plan review, lint PR
 
 ## ORDER 151 (lead, 2026-11-07 11:30Z real): PR83 decision, push rule
 PR83: AGREED not to change tools/mutation_runner.py (hash-pinned byte copy, one source of truth for the demos); keep the literal 29-word list test. Look-alikes/Cc controls/interior spaces LISTED as not refused is the honest wording; they belong to P2d-1/P1c, record in the ledger. Repair-entry groups, id type names, "no live path yet" wording: fix in the same batch. PUSH 7f24178 to core/P0t-followup NOW (q354 says committed, NOT pushed; the push rule has no gating on evidence). PR80: accepted that the base is core/P5a; PR85 re-merge of fb4fb51 approved.
+
+## ORDER 152 (lead, 2026-11-07 11:36Z real): laptop takes PR83 + PR86 evidence; pulse content must be real
+1. Your queue has 18 pending. The laptop (4 free heavy slots) started full-suite evidence NOW for PR 83 core/P0t-followup 7f24178 and PR 86 core/P6b1 8f6b032 (both Pythons, Postgres 16). CANCEL your own queued full-suite/perf jobs for exactly those two heads (keep mutants/stage/lint for them if not queued elsewhere; the laptop script runs the full pytest only). Reply in the next q-entry which jobs you cancelled. Never run the same head twice.
+2. The PULSE line content is stale: at 11:32Z it still lists "v4.3 drafter, P1d drafter, PR80 fix" (v4.3 finished at 11:17Z). The pulse must be generated from the real agent list and queue each minute, not copied. A pulse that lies is worse than none.
