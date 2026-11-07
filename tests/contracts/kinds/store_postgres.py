@@ -25,7 +25,8 @@ def pg_schema(migrated=True, runtime=False):
     yield instead the DSN of a new non-owner login role that `migrate` granted its runtime rights (K2: the store
     suite must pass with only those rights); the role is dropped afterwards. Everything created is dropped in the
     `finally`, also when `migrate` or a role creation fails (a failed set-up must not leave a schema or a role
-    behind), and the DSN entries of `OWNER_DSN` and `PURGE_DSN` go with it."""
+    behind), and the DSN entries of `OWNER_DSN` and `PURGE_DSN` go with it. Each clean-up statement is tried even
+    when an earlier one failed; the first failure is raised after all were tried."""
     dsn = pg_test_dsn()  # fails under HADAVIN_REQUIRE_PG or CI, else skips
     import psycopg
     from psycopg import sql
@@ -59,11 +60,25 @@ def pg_schema(migrated=True, runtime=False):
         if runtime_dsn is not None:
             PURGE_DSN.pop(runtime_dsn, None)
             OWNER_DSN.pop(runtime_dsn, None)
-        with psycopg.connect(dsn, autocommit=True) as db:
-            for r in created_roles:
-                db.execute(sql.SQL("DROP OWNED BY {}").format(sql.Identifier(r)))
-                db.execute(sql.SQL("DROP ROLE {}").format(sql.Identifier(r)))
-            db.execute(sql.SQL("DROP SCHEMA IF EXISTS {} CASCADE").format(sql.Identifier(schema)))
+        failures: list[psycopg.Error] = []
+
+        def drop(db, template, name):
+            """One clean-up statement; a failure is kept and the next statement still runs."""
+            try:
+                db.execute(sql.SQL(template).format(sql.Identifier(name)))
+            except psycopg.Error as exc:
+                failures.append(exc)
+
+        try:
+            with psycopg.connect(dsn, autocommit=True) as db:
+                for r in created_roles:
+                    drop(db, "DROP OWNED BY {}", r)
+                    drop(db, "DROP ROLE {}", r)
+                drop(db, "DROP SCHEMA IF EXISTS {} CASCADE", schema)
+        except psycopg.Error as exc:  # the connection itself failed or would not close
+            failures.append(exc)
+        if failures:
+            raise failures[0]
 
 
 class _SplitStore:
