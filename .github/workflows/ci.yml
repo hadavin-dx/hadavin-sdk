@@ -239,3 +239,41 @@ jobs:
           echo "${TRIVY_SHA256}  $RUNNER_TEMP/trivy.tgz" | sha256sum -c -
           tar -xzf "$RUNNER_TEMP/trivy.tgz" -C "$RUNNER_TEMP" trivy
           "$RUNNER_TEMP/trivy" fs --skip-dirs .venv --scanners vuln,misconfig,secret --severity HIGH,CRITICAL --exit-code 1 --no-progress .
+
+  # Static checks beyond ruff, in their own job so the required checks "check" and "security" are unchanged. Not a
+  # required check yet (a repository setting the lead takes to the owner). The tools and why: docs/lint-tools.md.
+  lint-set:
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      ACTIONLINT_VERSION: "1.7.12"
+      ACTIONLINT_SHA256: "8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2  # v10.3.3
+        with:
+          version: "0.13.6"
+          checksum: "f29c3e94ffabd7e6f3ba521dba169a9b7ec12100bf3257087f0f24f6123f3645"
+          python-version: "3.13"
+          activate-environment: true
+          cache-suffix: "ci-lint-set"
+      - name: Install (locked, every backend extra, the test group and the lint group)
+        run: uv sync --locked --no-build --all-extras --group test --group lint
+      - name: Types (mypy)
+        run: mypy
+      - name: Import contracts (import-linter)
+        run: lint-imports
+      - name: Declared and imported dependencies agree (deptry)
+        run: deptry .
+      - name: Dead code (vulture)
+        run: vulture
+      - name: Workflow syntax and expressions (actionlint, checksum-verified binary)
+        run: |
+          curl -sSfL --proto "=https" --tlsv1.2 -o "$RUNNER_TEMP/actionlint.tgz" \
+            "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz"
+          echo "${ACTIONLINT_SHA256}  $RUNNER_TEMP/actionlint.tgz" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/actionlint.tgz" -C "$RUNNER_TEMP" actionlint
+          "$RUNNER_TEMP/actionlint" -color

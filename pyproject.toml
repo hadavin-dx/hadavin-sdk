@@ -52,6 +52,8 @@ dev = ["pytest==9.2.0", "ruff==0.17.1"]
 test = ["moto[s3,kms,secretsmanager]==5.2.5", "pglast==8.7"]
 # Free scanners that keep working when the repository turns private.
 scan = ["pip-audit==2.10.1", "bandit==1.9.4", "zizmor==1.31.1"]
+# Static checks beyond ruff (job "lint-set" in ci.yml; actionlint is a Go binary, installed there by checksum).
+lint = ["mypy==2.4.1", "import-linter==2.15", "deptry==0.25.1", "vulture==2.16"]
 
 [build-system]
 requires = ["uv_build>=0.12,<0.14"]
@@ -86,3 +88,55 @@ markers = [
     "live: calls a real paid or cloud service; CI deselects it, run only on the owner's yes",
     "perf: timing tests (redaction patterns, end to end with views); CI runs them in their own step, which blocks a merge",
 ]
+
+# Import contracts. They restate rules that tests/test_repo_rules.py already checks with its own scanner (K5 / M21),
+# now by a maintained graph tool; both stay. Imports under `if TYPE_CHECKING:` do not run, so they are not counted.
+[tool.importlinter]
+root_package = "hadavin_sdk"
+exclude_type_checking_imports = true
+
+[[tool.importlinter.contracts]]
+name = "Packages that must stay secret-free never reach a secret holder, even through other modules"
+type = "forbidden"
+source_modules = [
+    "hadavin_sdk.runtime",
+    "hadavin_sdk.approvals",
+    "hadavin_sdk.llm",
+    "hadavin_sdk.sources",
+    "hadavin_sdk.tools",
+    "hadavin_sdk.guard.http",
+    "hadavin_sdk.guard.runmap",
+    "hadavin_sdk.guard.egress",
+]
+forbidden_modules = [
+    "hadavin_sdk.actions.secrets",
+    "hadavin_sdk.actions.secrets_env",
+    "hadavin_sdk.actions.secrets_aws",
+    "hadavin_sdk.actions.secrets_vault",
+    "hadavin_sdk.actions.secrets_azure",
+    "hadavin_sdk.actions.secrets_gcp",
+    "hadavin_sdk.actions.secrets_file",
+    "hadavin_sdk.actions.secrets_cache",
+    "hadavin_sdk.actions.executor",
+    "hadavin_sdk.backends.platform_secrets",
+]
+allow_indirect_imports = false
+
+[[tool.importlinter.contracts]]
+name = "tools never reaches the actions package, even through other modules"
+type = "forbidden"
+source_modules = ["hadavin_sdk.tools"]
+forbidden_modules = ["hadavin_sdk.actions"]
+allow_indirect_imports = false
+
+[[tool.importlinter.contracts]]
+name = "stages is a leaf module (it imports nothing else of the package)"
+type = "forbidden"
+source_modules = ["hadavin_sdk.stages"]
+forbidden_modules = [
+    "hadavin_sdk.config",
+    "hadavin_sdk.app",
+    "hadavin_sdk.deferred",
+    "hadavin_sdk.registry",
+]
+allow_indirect_imports = false
