@@ -353,6 +353,30 @@ def test_the_strict_refusal_names_the_setting_that_makes_it_strict():
         assert "strict=False" in message, f"the refusal does not name the way out: {message}"
 
 
+def test_the_matcher_takes_a_window_that_agrees_with_the_needle_to_the_end():
+    """Killer: ``insertion: a window that agrees to the end is not a match``. ``scan_holds`` finds an exact copy before the matcher runs, so the case where
+    the window equals the second half (plus nothing, or plus one letter after it) is only reached by the matcher itself; it must say True for an exact
+    copy inside a longer view, with the half found first or second, and False when the copy is broken twice."""
+    needle = han(6)
+    other = chr(0x6A01)
+    assert textnorm._holds_with_one_insertion("ab" + needle + "cd", needle) is True, (
+        "an exact copy inside a view is not matched"
+    )
+    assert textnorm._holds_with_one_insertion(needle, needle) is True, (
+        "an exact copy that is the whole view is not matched"
+    )
+    assert textnorm._holds_with_one_insertion(needle + other, needle) is True, (
+        "an exact copy followed by one letter is not matched"
+    )
+    assert textnorm._holds_with_one_insertion(other + needle, needle) is True, (
+        "an exact copy preceded by one letter is not matched"
+    )
+    twice = needle[:2] + other + needle[2:4] + other + needle[4:]
+    assert textnorm._holds_with_one_insertion(twice, needle) is False, (
+        "two inserted letters are matched"
+    )
+
+
 # ---- D3: the Japanese mixed minimum -----------------------------------------------------------------------------------------------------
 def test_a_japanese_needle_of_han_and_kana_takes_the_han_minimum_and_other_mixtures_the_largest():
     """Killers: ``insertion: Han and kana take the larger minimum`` and ``insertion: any mixture that holds Han and kana takes the smaller minimum``.
