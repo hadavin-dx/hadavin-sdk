@@ -269,6 +269,13 @@ def test_t4_limit_must_be_a_whole_number_not_a_look_alike(tmp_path, clock, value
     assert _field_error(ei) == (("no_training_max_age_days",), "int_type")
 
 
+def test_t4b_future_beats_stale_when_both_are_true_only_for_a_direct_call():
+    """Config holds the limit to 1 or more and the slack is 0 or more, so no loaded config can be both future and
+    stale; only a direct call with a negative limit can. This row pins the documented order (future first)."""
+    msgs = _call("pilot", "gemini", _st("gemini", FIXED_TODAY + dt.timedelta(days=3)), limit=-5)
+    assert len(msgs) == 1 and "checked_on is in the future" in msgs[0], msgs
+
+
 def test_t5_future_dates_on_the_function():
     assert _call("pilot", "bedrock", _st("bedrock", FIXED_TODAY + dt.timedelta(days=1))) == []
     msgs = _call("pilot", "bedrock", _st("bedrock", FIXED_TODAY + dt.timedelta(days=2)))
