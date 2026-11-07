@@ -381,3 +381,27 @@ FAILED tests/test_k5_round8.py::test_the_vendor_guardrail_receives_redacted_text
 FAILED tests/test_k5_round9.py::test_every_registry_row_masks_every_spelling_through_its_real_function[assignment-vendor guardrail input]
 FAILED tests/test_k5_round9.py::test_every_registry_row_masks_every_spelling_through_its_real_function[entity-vendor guardrail input]
 FAILED tests/test_k5_round9.py::test_every_registry_row_masks_every_spelling_through_its_real_function[percent-vendor guardrail input]
+
+===== probe7 (P1b tree, then prototype)
+== tree-p1b
+H10    PASS    'password=<SECRET_1> and wJalrX&amp;UtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY x'
+H12a   PASS    'key AKIA IOSFODNN7EXAMPLE x'
+H12b   PASS    'key AKIA IOSFODNN7EXAMPLE x'
+H12c   PASS    'key AKIA IOSFODNN7EXAMPLE x'
+H18b   PASS    'key AKIẠIOSFODNN7EXAMPLE x'
+H20    PASS    'key AKIA＊IOSFODNN7EXAMPLE x'
+F13    PASS    'Approve αρχείο for Москва team'
+F01b   PASS    'Approve **restart** of `web-01` in ~~old~~ demo?'
+F12    PASS    'role <ARN_1> and account <ACCOUNTID_1>'
+pw_ent PASS    'password=<SECRET_1>&amp;XUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY end'
+== tree-proto
+H10    REFUSED _P1dRefused
+H12a   REFUSED _P1dRefused
+H12b   REFUSED _P1dRefused
+H12c   REFUSED _P1dRefused
+H18b   REFUSED _P1dRefused
+H20    REFUSED _P1dRefused
+F13    PASS    'Approve αρχείο for Москва team'
+F01b   PASS    'Approve **restart** of `web-01` in ~~old~~ demo?'
+F12    PASS    'role <ARN_1> and account <ACCOUNTID_1>'
+pw_ent PASS    'password=<SECRET_1>&amp;XUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY end'

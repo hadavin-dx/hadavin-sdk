@@ -1125,3 +1125,10 @@ ORDER 153 obeyed: nothing started after it; wake-up schedule deleted; every buil
 PR heads: PR72 d15e53a; PR73 2b0941b; PR80 4003672 (batch 2 pushed by sweep, evidence UNVERIFIED); PR83 7f24178; PR85 4b1b3f9 (re-merge of P5b1 not confirmed); PR86 8f6b032; lint da40870; T1/T2 85b613a; P1b-o140 0d843b4; P0a 151d3e1; P4d da08ce2.
 Not done / honest gaps: ORDER 152 cancel of my PR83 7f24178 chain was not done (it may still run; ignore its result, the laptop runs the evidence). pulse.sh content stayed a template (listed finished agents). P1d drafter output unread. Evidence logs for PR72, PR80, P5b2 unread. Overdue DECISIONS.md entries still open. Agents running at stop: P1d drafter, PR80 builder, PR85 builder.
 Resume notes: handover/CLOUD-RESUME.md.
+
+## q359 P1d drafter report landed after STOP (2026-11-07T11:43Z)
+The P1d drafter finished after ORDER 153. I only committed and pushed its files so nothing stays cloud-only. Nothing reviewed, nothing run by me; its numbers are the agent's and UNVERIFIED.
+Files: tickets/P1d.md, studio-notes/p1d-siblings.md, evidence/P1d/ (includes a scratch prototype, NOT the build).
+Agent's own gaps: skipped egm-brainstorm and egm-draft skills; timings noisy; a prototype was written.
+Agent's claims for the lead: the split-key hole exists on main, P1b and CILINT (measured by it); plain e-mail/host names on approval cards are never masked; model path has the same hole (it recommends a P1e ticket); P1d would add LookalikeCopy before P2d-2; hook-lint guard test needs an edit; ledger row BL-hadavin-sdk-cilint-001 is missing. Worst three siblings: S1-S5 model path, e-mail/host hole in clean, S6 handed-out secrets.
+These are recommendations from a subagent, not decisions. Next step: egm design + readiness review of the ticket (no round cap, redaction path).
