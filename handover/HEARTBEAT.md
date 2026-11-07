@@ -462,3 +462,4 @@ AGENTS (start ~08:51Z unless noted): PR72 fix builder a6aa883 (core/P6a, ports 5
 09:03Z heartbeat. PR73 fix builder ae28b2c interim: local head 1e6b896 not pushed, suites/perf/mutants queued (q290). Others unchanged from 09:00Z.
 09:10Z heartbeat. ORDER 133 started (q291). New: dblink fix builder a160f3d (55860-79). PR72 a6aa883 resumed for strict-bool sweep. PR73 ae28b2c, PR86 a6d7e26, P1b abf28a5 interim awaiting queue. Others unchanged.
 09:14Z heartbeat. dblink fix builder a160f3d interim: local head 7bf02af not pushed, runs queued (q292). Others unchanged from 09:10Z.
+09:20Z heartbeat. PR83 fix builder ab7b6d0 interim: local head 9694b98 not pushed, chains queued (q293). dblink a160f3d, PR73 ae28b2c, PR72 a6aa883, PR86 a6d7e26, P1b abf28a5 all interim awaiting queue. Live: PR85 a08acae, PR66 a4a65a0, PR80 abc4dc1, PR83 runner a4810a4, P2d-1 prep a9c7919, P5a prep a43d08a. Next heartbeat by 09:28Z.
