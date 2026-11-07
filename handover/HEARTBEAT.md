@@ -400,3 +400,4 @@ P6a-1 | PR 72 head 3adacac READY (merged main; 36/36 mutants with per-test table
 P5b1 | PR 80 DRAFT head 74ee54f (merged P5a+main; 45/45 mutants; suites 3.13/3.12 green by builder) | builders running: P1a fix7 | blocked on: lead (SqlReadError code, neverraise surface); P5a re-merge queued behind P1b merge7
 ORDER 110 nproc=4 mem=15GB: limit 2 heavy runs (heavy.sh now 2 slots); started: 6 evidence runs (order 108), 12 EGM reviewers (order 109), P1b merge7 builder | fix7 PR 63 head bf955e9 verified, q257 | blocked on: reviewers/evidence, lead
 ORDER 109: 9/12 reviews saved (q259); pending PR 70 x2, PR 80 design; ORDER 108: 6 evidence runs queued/running on 2 slots, load 1.96 mem 9GB free | builders: P1b merge7 | blocked: slots, lead
+PR70 reviews saved (q260): NOT CLEAN, B1 composition regression; fix builders for PR 66/73/72/83/80 spawned (order 111, ports 55471-75); PR63 round-8 reviewers + P1b merge7 running
