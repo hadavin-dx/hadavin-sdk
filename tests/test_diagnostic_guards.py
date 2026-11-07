@@ -96,6 +96,24 @@ def _render(mp: pytest.MonkeyPatch, exc_cls: type[BaseException]) -> object:
     return dg.render(_hostile("kind", exc_cls))  # type: ignore[arg-type]
 
 
+def _provider_attrs(mp: pytest.MonkeyPatch, exc_cls: type[BaseException]) -> object:
+    class Hostile:
+        @property
+        def __dict__(self):  # type: ignore[override]
+            raise exc_cls(CANARY)
+
+    return dg._provider_facts(Hostile())
+
+
+def _provider_class(mp: pytest.MonkeyPatch, exc_cls: type[BaseException]) -> object:
+    class Meta(type):
+        @property
+        def __module__(cls):  # type: ignore[override]
+            raise exc_cls(CANARY)
+
+    return dg._is_provider_subclass(Meta("Hostile", (Exception,), {}))
+
+
 # site -> (trigger, a check of the value the guard returns)
 SITES = {
     "named_class": (_named_class, lambda r: r is False),
@@ -106,6 +124,8 @@ SITES = {
     "validation_text": (_validation, lambda r: r == "other"),
     "group_member": (_group_member, lambda r: r == (Code.foreign_exception, {})),
     "diagnose": (_diagnose, lambda r: r.code is Code.foreign_exception and r.fp == dg.FALLBACK_FP),
+    "provider_attrs": (_provider_attrs, lambda r: r == {}),
+    "provider_class": (_provider_class, lambda r: r is False),
     "render": (_render, lambda r: r.startswith("unknown: ") and "code=foreign_exception" in r),
 }
 

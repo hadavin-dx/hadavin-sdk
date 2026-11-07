@@ -47,7 +47,6 @@ from hadavin_sdk.codes import (
     StepToken,
     Where,
 )
-from hadavin_sdk.neverraise import Site, record
 
 _OWN_PACKAGE = "hadavin_sdk"
 _KIND_RE = re.compile(rf"[A-Za-z0-9_.]{{1,{defaults.DIAG_KIND_CHARS}}}")
@@ -247,7 +246,7 @@ def _provider_facts(exc: object) -> dict[FactKey, object]:
         if type(attrs) is not dict:
             return {}
     except Exception:  # noqa: BLE001 - never-raise guard: an unreadable __dict__ gives no provider facts, never a raise into diagnose
-        record(Site.diag_attrs_unreadable)
+        _guard_failed("provider_attrs")
         return {}
     found: dict[FactKey, object] = {}
     status = _bounded_attr(attrs, "status", FactKey.http_status)
@@ -496,7 +495,7 @@ def _is_provider_subclass(tp: type) -> bool:
             ):
                 return True
         except Exception:  # noqa: BLE001 - never-raise guard: a class whose names raise is not the provider class, the walk goes on
-            record(Site.diag_provider_class_check)
+            _guard_failed("provider_class")
             continue
     return False
 

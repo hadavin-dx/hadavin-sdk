@@ -43,12 +43,14 @@ def _raising_module_class(exc_type):
 
 
 def test_diagnostic_guards_catch_record_and_let_base_exceptions_through():
-    # vars(exc) raises: no provider facts, one record
+    # vars(exc) raises: no provider facts, one record (diagnostic.py keeps its own per-site counter, ``guard_failures``)
+    before = diagnostic.guard_failures()
     assert diagnostic._provider_facts(_raising_dict_object(RuntimeError)) == {}
-    assert neverraise.counts() == {"diag_attrs_unreadable": 1}
+    after = diagnostic.guard_failures()
+    assert after.get("provider_attrs", 0) == before.get("provider_attrs", 0) + 1
     # a class in the MRO whose names raise is not the provider class, the walk goes on
     assert diagnostic._is_provider_subclass(_raising_module_class(ValueError)) is False
-    assert neverraise.counts()["diag_provider_class_check"] >= 1
+    assert diagnostic.guard_failures().get("provider_class", 0) >= 1
     for base in PASSING:
         with pytest.raises(base):
             diagnostic._provider_facts(_raising_dict_object(base))
