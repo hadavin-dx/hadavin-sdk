@@ -278,11 +278,14 @@ def test_a_hundred_values_against_one_text_at_the_cap_cost_one_text_pass():
     """The cache of the text's views: 100 values scanned against one text at the cap take about the time of the first value, plus a small
     amount per value (not 100 times the first)."""
     text = _cap_text("pass\u0903word \u5bc6\u7801 abc ")
-    first = _seconds(lambda t: textnorm.scan_holds(t, "value-000-none"), text)
-    start = time.perf_counter()
-    for i in range(1, 100):
-        textnorm.scan_holds(text, f"value-{i:03d}-none")
-    took = time.perf_counter() - start
+    # The views are shared only inside ``scan_cache()``: outside a scope nothing is kept between calls, by design (the views are as sensitive as the
+    # text), and every call costs a full text pass. The scope is the documented way to scan one text for many values.
+    with textnorm.scan_cache():
+        first = _seconds(lambda t: textnorm.scan_holds(t, "value-000-none"), text)
+        start = time.perf_counter()
+        for i in range(1, 100):
+            textnorm.scan_holds(text, f"value-{i:03d}-none")
+        took = time.perf_counter() - start
     _record("scan_holds 99 more values", took)
     assert took < 10 * max(first, 0.05) + 5.0, (
         f"99 values took {took:.2f} s, the first {first:.2f} s"
