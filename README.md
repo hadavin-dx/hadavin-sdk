@@ -41,6 +41,39 @@ What this release does and does not promise, in one place.
 - Every read is an audit event (principal, tool, `inputs_hash`, `output_hash`, `rows`) and a `tool_calls` row a client can review. Nothing of one client is kept in a process-global cache.
 - Kubernetes is the only built read-source kind; a second one is an SDK edit (trigger K5-ITO).
 
+## The no-training statement (pilot and prod)
+
+Words first. A **no-training statement** is a short, dated note in the client's config saying why the operator believes the model provider does not train on our requests. **This records a promise by the operator; it does not stop a provider from training.** The code checks that the note is present, well formed, allowed for that backend, written for the servers the config really talks to, and not older than 90 days. It does not check that the note is true.
+
+In `pilot` and `prod`, a real model backend (`anthropic`, `bedrock`, `openai_compat`, `gemini`) does not start without one. `dev` is unchanged: the statement is optional there, but a statement that is present must still be well formed.
+
+```yaml
+backends:
+  llm:
+    kind: openai_compat
+    base_url: https://llm.example/v1
+    no_training:
+      basis: contract_terms        # contract_terms | account_setting | self_hosted
+      reference: "Example provider API terms v1"
+      hosts: [llm.example]
+      checked_on: 2026-11-05       # the day a person last read the terms (YYYY-MM-DD)
+```
+
+- `basis`: `contract_terms` means the provider's written terms for API customers say it does not train on our requests; `account_setting` means a setting in our own account (a paid tier, an organisation data-sharing switch) turns training off; `self_hosted` means the model runs on a server the client controls and requests never reach a model provider (only `openai_compat` may say this; a loopback `self_hosted` endpoint is for a model server on the same machine and needs a tagged model id).
+- `reference`: the name of the document or setting you read: a title, a URL path or a version, naming the product or model family, and for a gateway the gateway's terms for its upstream providers. It is 8 to 200 characters (letters, digits, spaces and `. _ : / # -`), has no run of 12 digits, and must not hold a credential, a query string, or a person's or party's name (the code does not check the last).
+- `hosts`: the server names the statement is about. They must equal the host names the config talks to (the refusal prints the expected list). An Anthropic-on-Vertex backend talks to two hosts and the statement must list both. A host name must be ASCII (write an international name in its `xn--` form in `base_url`) and at most 253 characters.
+- `checked_on`: a real date (`YYYY-MM-DD`). Numbers, datetimes and other forms are refused. A date more than one day ahead of today (UTC) is refused.
+- The age limit is 90 days by default. `no_training_max_age_days` at the top level of `config.yaml` may only make it shorter (1 to 90). The age is checked when the process starts: a process that keeps running past the limit is not re-checked, and the next restart refuses to start until `checked_on` is renewed.
+
+What the code does NOT check:
+- That the statement is true.
+- The key or account tier behind a key. Two keys on the same host can fall under different data terms; the hosts field cannot see that.
+- Whether `self_hosted` really is a server the client runs.
+- The `dev` label. `environment` is written by the operator. A config labelled `dev` can name a real model backend and send real text to it with no statement at all. This check does not stop that. Client data must never run in a `dev` config.
+- The model behind a host. The statement is bound to host names only, but terms can differ per model or product on one host (partner models, preview models), and a gateway can forward to upstream providers whose terms the statement does not cover.
+- Port, scheme and path. The statement is bound to the host name only, so two endpoints on one host (two ports, or `/v1` and `/v2` on one gateway) share one statement.
+- The guardrail detector `bedrock_guardrail`, which sends client text to a cloud call, has no statement in this version.
+
 ## Licence
 
 Proprietary. Copyright (c) 2026 Hadavin. All rights reserved. See [LICENSE](LICENSE). Viewing this repository
