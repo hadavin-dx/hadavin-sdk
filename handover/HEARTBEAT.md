@@ -483,3 +483,4 @@ LAPTOP CANDIDATES (pushed heads only): PR85 0b54631 (items 3,4,10), PR72 e6a4220
 09:18Z heartbeat. dblink fix RED on setup (q306), requeued prio 1, nothing pushed. Queue running 3 pending 12.
 09:18Z heartbeat. PR83 3.13 chain green at 9694b98 (q307), 3.12 + failbefore pending. Queue running 3 pending 12.
 09:22Z heartbeat. ORDER 136 (q308): P1b builder queueing mutants/stage/perf/lint at b0f54b1; 3 round-2 P1b reviewers running (a2a4266 design, ac76f00 codebase, ad02248 readiness). Queue running 3 pending 10.
+09:23Z heartbeat. P1b chains queued first (q309). Queue running 3 pending 12. Reviewers a2a4266, ac76f00, ad02248 running.
