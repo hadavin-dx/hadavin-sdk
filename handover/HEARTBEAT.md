@@ -518,3 +518,4 @@ LAPTOP CANDIDATES (pushed heads only): PR85 0b54631 (items 3,4,10), PR72 e6a4220
 11:04Z HB: lint 5bb8ef2 reported (q344), round-2 reviewer running, P1d + v4.3 drafters running. Unpushed: none.
 11:04Z HB: P1b r7 313 at 0d843b4 all rc0 (mutants 216/216, stage 37/37, perf 43 passed 1 skipped(no PG DSN), lint rc0); 312 running. v4.3 + P1d drafters, lint round-2 reviewer running. Next 11:11Z. Unpushed: none.
 11:07Z HB: user asked for updates every 1 minute; cadence now 1 min. Lint batch 2, v4.3, P1d drafters running; P1b r7 312 running.
+11:11Z HB: q347 evidence summary; 3 reviewers (PR72/86/83) started; PR80 fix running.
