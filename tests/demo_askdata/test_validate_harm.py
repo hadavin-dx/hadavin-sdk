@@ -16,7 +16,7 @@ from collections.abc import Iterator
 import psycopg
 import pytest
 from askdata.validate import Rejected, validate
-from psycopg.conninfo import make_conninfo
+from psycopg.conninfo import conninfo_to_dict, make_conninfo
 
 from tests.demo_askdata.attackrun import outcome
 from tests.demo_askdata.conftest import Db
@@ -99,19 +99,38 @@ def _cells(cur) -> list[str]:
     ]
 
 
+def server_side_sql(attack: Attack, dsn: str) -> str:
+    """The attack text as it must run against THIS cluster.
+
+    dblink opens its connection from inside the server, which reads the postmaster's environment, not ours, so a
+    bare 'dbname=postgres' only works where the socket is the machine default. Where the attack names that bare
+    conninfo, give it the host, port and user (and password, if any) of the DSN under test, whatever of them it
+    carries, as one quoted literal.
+    The corpus text itself stays untouched: the validator is shown the original.
+    """
+    bare = "'dbname=postgres'"
+    if bare not in attack.sql:
+        return attack.sql
+    info = conninfo_to_dict(dsn)
+    wanted = {k: info[k] for k in ("host", "port", "user", "password") if k in info}
+    full = make_conninfo(dbname="postgres", **wanted).replace("'", "''")
+    return attack.sql.replace(bare, f"'{full}'")
+
+
 def prove_harm(attack: Attack, dsn: str) -> str:
     """Run the attack unvalidated on a privileged session; return a short note of the harm observed, or raise."""
     kind, _, needle = attack.harm.partition(":")
+    sql = server_side_sql(attack, dsn)
     if kind == "write":
         before = fingerprint(dsn)
         with psycopg.connect(dsn, autocommit=True) as c:
-            c.execute(attack.sql)  # simple protocol: a stacked string runs whole
+            c.execute(sql)  # simple protocol: a stacked string runs whole
         after = fingerprint(dsn)
         assert before != after, "the statement ran but changed nothing"
         return "committed state changed"
     if kind == "lock":
         with psycopg.connect(dsn) as c:
-            c.execute(attack.sql)
+            c.execute(sql)
             modes = {
                 r[0]
                 for r in c.execute(
@@ -126,11 +145,11 @@ def prove_harm(attack: Attack, dsn: str) -> str:
         with psycopg.connect(dsn, autocommit=True) as c:
             c.execute(f"SET statement_timeout = {TIMEOUT_MS}")
             with pytest.raises(psycopg.errors.QueryCanceled):
-                c.execute(attack.sql)
+                c.execute(sql)
         return f"still running when the {TIMEOUT_MS} ms statement_timeout cancelled it"
     if kind in ("leak", "exec"):
         with psycopg.connect(dsn, autocommit=True) as c:
-            cur = c.execute(attack.sql)
+            cur = c.execute(sql)
             cells = _cells(cur) if kind == "leak" else []
         if kind == "leak":
             assert any(needle in cell for cell in cells), f"no cell contains {needle!r}"
@@ -138,7 +157,7 @@ def prove_harm(attack: Attack, dsn: str) -> str:
         return "ran to completion on a privileged session"
     if kind == "pg-refuses":
         with psycopg.connect(dsn, autocommit=True) as c, pytest.raises((psycopg.Error, ValueError)):
-            c.execute(attack.sql)
+            c.execute(sql)
         return "PostgreSQL refuses it itself"
     raise AssertionError(f"unknown harm tag {attack.harm}")
 
