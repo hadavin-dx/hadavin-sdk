@@ -24,6 +24,7 @@ from hadavin_sdk.guard.textnorm import (
     FoldNotConverged,
     NotText,
     TextTooLong,
+    ViewTooShort,
     could_be_same_person,
     fold,
     has_hidden_channel,
@@ -33,6 +34,7 @@ from hadavin_sdk.guard.textnorm import (
     scan_holds,
     scan_keyset,
     scan_views,
+    value_scripts,
 )
 
 CAP = defaults.TEXTNORM_MAX_CHARS
@@ -931,3 +933,64 @@ def test_on_another_unicode_version_identity_keys_are_tagged_and_scan_keys_are_n
         "same_scan is unusable on another Unicode version"
     )
     assert not same_scan("bob", "bobby")
+
+
+# ---- P1b merge 7: the P1a fix7 API (scripts per value, one minimum per kind of view, ViewTooShort) ------------------------------------------
+MIXED = "pw\u5bc6\u7801\u4fdd\u62a4"  # "pw" and four Han ideographs: a squeeze view too short, a script view of four
+
+
+def test_scan_holds_refuses_a_value_too_short_to_scan_instead_of_answering_false():
+    """P1a fix7: ``scan_needles`` raises ``ViewTooShort`` for a Latin value of three letters or fewer and for a value only a spelling view can
+    find. ``scan_holds`` must let it out (the caller REFUSES); an answer of False would mean 'not found' for a value that was never searched."""
+    for value in ("Amy", "abc", "ab", "a", "ab-c", "w\u5bc6", "5\u5bc6"):
+        for text in ("my name is Amy", "", "ab c"):
+            refused(
+                ViewTooShort,
+                f"scan_holds answered for the value {value!r} that is too short to scan",
+                scan_holds,
+                text,
+                value,
+            )
+    assert issubclass(ViewTooShort, textnorm.TextnormError)
+    assert scan_holds("my name is J a-n e", "Jane") is True, "a value of four letters is scanned"
+    assert scan_holds("my name is Joan", "Jane") is False
+
+
+def test_scan_holds_reads_the_text_with_the_scripts_of_the_value_so_a_foreign_letter_does_not_hide_it():
+    """P1a fix7 (script view per script): the text is read with ``scripts=value_scripts(value)``. A Cyrillic zhe, a Greek delta, a Hebrew alef,
+    a hiragana letter or an ASCII letter put inside the ideographs of the value is dropped from the script view of the text."""
+    assert value_scripts(MIXED) == frozenset({"HAN"})
+    for ch in ("\u0436", "\u03b4", "\u05d0", "\u3042", "q", "-", " "):
+        text = "pw\u5bc6\u7801" + ch + "\u4fdd\u62a4"
+        assert scan_holds("token: " + text + " end", MIXED), (
+            f"scan_holds misses the value with {ch!r} inserted: the script view of the text keeps a letter of another script"
+        )
+    # a letter of the SAME script is a different spelling (the stated limit of fix7), and another value is not found
+    assert not scan_holds("pw\u5bc6\u7801\u5929\u4fdd\u62a4", MIXED)
+    assert not scan_holds("\u5bc6\u7801\u4fdd\u62a5", MIXED)
+    # a mixed value over-matches on its script part alone (the safe side, pinned)
+    assert scan_holds("\u5bc6\u7801\u4fdd\u62a4", MIXED)
+
+
+def test_scan_holds_reads_the_scan_keys_of_the_value():
+    """The scan keys of the VALUE (the class map z to 3) are needles too, not only its fold and squeeze views: 'Pazzword99' is found in a text
+    that writes it 'Pa33word99', which no fold or squeeze view of the value equals."""
+    assert scan_holds("my Pa33word99 is x", "Pazzword99"), "the value side misses the scan key"
+    assert scan_holds("my Pazzword99 is x", "Pa33word99"), "the text side misses the scan key"
+    assert not scan_holds("my Pa44word99 is x", "Pazzword99")
+
+
+def test_scan_views_takes_the_scripts_of_the_value_and_has_a_script_view_only_with_them():
+    han = value_scripts("\u5bc6\u7801\u4fdd\u62a4")
+    text = "\u5bc6\u7801\u0436\u4fdd\u62a4"
+    with_scripts = scan_views(text, scripts=han)
+    assert "\u5bc6\u7801\u4fdd\u62a4" in with_scripts, (
+        "scan_views gives no script view for the scripts of the value"
+    )
+    assert "\u5bc6\u7801\u4fdd\u62a4" not in scan_views(text), (
+        "scan_views makes a script view without scripts"
+    )
+    assert scan_views(text, scripts=frozenset()) == scan_views(text)
+    assert len(with_scripts) <= 23 and len(scan_views(text)) <= 20, "the view-count bound"
+    for bad in ({"HAN"}, ["HAN"], "HAN", frozenset({1}), None):
+        refused(NotText, f"scan_views accepted scripts={bad!r}", scan_views, "x", scripts=bad)

@@ -267,7 +267,7 @@ def build(text: str) -> dict[int, str]:
     }  # a key the fold can reach
     # the data wins over the supplement; both are in ``out`` BEFORE the name rules, so no name rule overrides either
     out = {**sup, **out}
-    listed = dict(out)  # what the data and the supplement say, before any name rule
+    listed = {**sup, **out}  # what the data and the supplement say, before any name rule
     for cp in range(0x80, 0x20000):
         ch = chr(cp)
         value = name_rule_value(unicodedata.name(ch, ""))
@@ -282,7 +282,7 @@ def build(text: str) -> dict[int, str]:
     ovr = {
         cp: v for cp, v in OVERRIDES.items() if unicodedata.normalize("NFKC", chr(cp)) == chr(cp)
     }
-    return {**out, **ovr}
+    return {**sup, **out, **ovr}
 
 
 def build_scripts(text: str) -> list[tuple[int, int, str]]:
