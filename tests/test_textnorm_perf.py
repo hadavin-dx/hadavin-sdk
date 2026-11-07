@@ -244,7 +244,7 @@ def test_scan_views_of_a_text_at_the_cap_is_built_in_linear_time():
     views = textnorm.scan_views(text, unit)
     assert 3 <= len(views) <= 31
     assert _seconds(lambda t: textnorm.scan_views(t, unit), text) < 10.0
-    assert _seconds(lambda t: textnorm.scan_views(t, None), text) < 10.0
+    assert _seconds(lambda t: textnorm.scan_views_no_value(t), text) < 10.0
 
 
 def test_scan_holds_of_a_text_at_the_cap_for_a_latin_and_for_a_script_value():

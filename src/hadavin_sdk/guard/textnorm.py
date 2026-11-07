@@ -117,12 +117,12 @@ x the tag texts T0 to T3, x2 for a text that holds a spacing mark (Mc) or a modi
 has the keys of the text as it is AND of the text without them (a few of them are look-alike letters: U+0C02 reads ``o``). ``could_be_same_person``
 is NOT widened by the scan keys (the spelling variants of P1a are the whole name test; the ticket's erratum BN-20 says "not widened in P1b").
 
-THE PUBLIC NAMES (28, pinned by ``tests/test_textnorm.py``; ``__all__`` is sorted). Errors: ``TextnormError`` (base, not a ``ValueError``),
-``TextTooLong``, ``NotText``, ``UnidataMismatch``, ``FoldNotConverged``, ``EmptyView``, ``ViewTooShort``. Check names (DENY and ALLOW):
+THE PUBLIC NAMES (33, pinned by ``tests/test_textnorm.py``; ``__all__`` is sorted). Errors: ``TextnormError`` (base, not a ``ValueError``),
+``TextTooLong``, ``NotText``, ``UnidataMismatch``, ``FoldNotConverged``, ``EmptyView``, ``ViewTooShort``, ``CoverageRefused``. Check names (DENY and ALLOW):
 ``identity_key`` (one spelling variant), ``identity_keys`` (all), ``could_be_same_person``, ``allow_equal`` and ``AllowVerdict``, ``names_equal``
 (prose only), ``fold`` (one spelling variant), ``squeeze`` (letters and digits only), ``key_tag`` and ``FOLD_VERSION`` (which fold made a check
 name), ``FILLERS`` (the invisible filler characters). Views and scans: ``fold_views``, ``squeeze_views``, ``scan_keyset``, ``value_scripts``,
-``scan_needles``, ``scan_views`` and ``scan_holds`` (the one scan). Signals: ``has_hidden_channel``, ``has_mixed_script``. Guard:
+``scan_needles``, ``scan_views``, ``scan_views_no_value`` and ``scan_holds`` (the one scan), ``scan_cache`` (the only place where the views of a text are kept). Registration of a protected value: ``register_value`` and its result ``Coverage``. Signals: ``has_hidden_channel``, ``has_mixed_script``. Guard:
 ``require_pinned_unidata``. Everything else starts with an underscore. Two scripts systems exist on purpose: ``has_mixed_script`` asks "does a
 word mix Latin with another writing system?" with the Unicode Script property of the pinned data (``guard/_scripts.py``, UTS #39 wants that one);
 the script GROUPS of ``value_scripts`` ask "which letters may a person insert into this value without changing what it is?" and are the first
@@ -220,7 +220,7 @@ MARKS AND SCANS. Three categories are NOT dropped by the spelling variants of ``
   THE COST FOR CYRILLIC AND GREEK, stated and measured (see the CHANGELOG): their letters are read as the Latin look-alikes only when they have
   one, so a short word of letters the table does not read stays a script needle of its own length, while a word of look-alike letters is a squeeze
   view of the same length; a short Cyrillic or Greek word is refused when fewer than four of its letters survive in either view. The examples are
-  pinned in ``tests/test_textnorm_scan.py``.
+  pinned in ``tests/test_textnorm_fixbatch.py``.
   ``scan_holds`` (P1b) takes its needles from ``scan_needles`` too, reads the text once per set of scripts with ``scripts=value_scripts(value)``, and
   also looks through ``scan_keyset``, which is made of letters and digits only; it lets ``ViewTooShort`` out (the caller REFUSES: a value too short to
   scan is never masked as "not found"). It raises ``EmptyView`` only when the value is too short AND has no letter or digit a scan can rely on
@@ -262,15 +262,18 @@ spelling variants; the marks-dropped views of ``fold_views`` and ``squeeze_views
 from __future__ import annotations
 
 import bisect
-import functools
+import contextlib
+import contextvars
 import hashlib
+import logging
 import re
 import sys
 import types
 import unicodedata
 from collections import Counter
-from collections.abc import Iterable
+from collections.abc import Iterable, Iterator
 from enum import Enum
+from typing import NamedTuple
 
 from hadavin_sdk import defaults
 from hadavin_sdk.guard import _confusables, _scripts
@@ -280,6 +283,8 @@ __all__ = [
     "FILLERS",
     "FOLD_VERSION",
     "AllowVerdict",
+    "Coverage",
+    "CoverageRefused",
     "EmptyView",
     "FoldNotConverged",
     "NotText",
@@ -297,11 +302,14 @@ __all__ = [
     "identity_keys",
     "key_tag",
     "names_equal",
+    "register_value",
     "require_pinned_unidata",
+    "scan_cache",
     "scan_holds",
     "scan_keyset",
     "scan_needles",
     "scan_views",
+    "scan_views_no_value",
     "squeeze",
     "squeeze_views",
     "value_scripts",
@@ -324,7 +332,7 @@ class NotText(TextnormError):
 
 class ViewTooShort(TextnormError):
     """``scan_needles`` found no usable needle for a protected value: no view reaches the minimum of its kind (``defaults.TEXTNORM_MIN_SPELLING_CHARS``,
-    ``TEXTNORM_MIN_SQUEEZE_CHARS``, ``TEXTNORM_MIN_SCRIPT_CHARS``, ``TEXTNORM_MIN_IDEOGRAPH_CHARS``), or only a view that keeps separators does (an
+    ``TEXTNORM_MIN_SQUEEZE_CHARS``, ``TEXTNORM_MIN_DIGIT_CHARS`` for a number, ``TEXTNORM_MIN_SCRIPT_CHARS``, ``TEXTNORM_MIN_IDEOGRAPH_CHARS``), or only a view that keeps separators does (an
     inserted space would hide the value). Refuse to scan with the value: a needle that short is found in nearly every text. The message says so in
     plain words (a value that cannot be masked is REFUSED, never ignored) and what to do: register the longer form, or register the value for
     exact-match only, outside this scan. It never holds the value."""
@@ -1067,9 +1075,10 @@ def _pass_b(text: str) -> str:
     return _prepare(text).casefold().translate(_CF_TABLE)
 
 
-_SCAN_KEY_CAP = (
-    16  # 2 spelling variants (the text as it is, the text without Mc/Sk) x 4 tag texts x 2 passes
-)
+# The bound on the number of scan keys: 2 spelling variants (the text as it is, the text without Mc/Sk) x 4 tag texts x 2 passes = 16. The most a
+# real text reaches is 2 x 6 + 1 = 13: the fourth tag text (the decoded tags alone) is ASCII and does not depend on the variant, and both passes
+# read ASCII alike, so it makes ONE key, not four.
+_SCAN_KEY_CAP = 16
 
 
 # Cyrillic Ze reads 3 and the table sends stroke look-alikes to l or i: join the classes.
@@ -1119,34 +1128,74 @@ def _scan_keys(raw: str) -> frozenset[str]:
         for step in (_pass_a, _pass_b)
     }
     keys.discard("")
-    if (
-        len(keys) > _SCAN_KEY_CAP
-    ):  # unreachable by construction (2 variants x 4 tag texts x 2 steps); a fail-closed guard, not a truncation
+    # A fail-closed guard against a change of the construction above, not a truncation: more keys than the bound are refused, never cut off.
+    if len(keys) > _SCAN_KEY_CAP:
         raise TextTooLong(
             f"a text made {len(keys)} scan keys, more than the {_SCAN_KEY_CAP} the construction allows"
         )
     return frozenset(keys)
 
 
-@functools.lru_cache(maxsize=2)
-def _text_bundle(
-    raw: str,
-) -> tuple[tuple[tuple[bool, str], ...], tuple[str, ...], tuple[str, ...]]:
+_Bundle = tuple[tuple[tuple[bool, str], ...], tuple[str, ...], tuple[str, ...]]
+
+# The views of one text, kept ONLY inside ``with scan_cache():`` (the variable is None everywhere else, so nothing is kept between calls). The
+# key is the SHA-256 digest of the text, never the text; the scope keeps at most two texts and is emptied when it ends, also on an exception.
+_SCAN_CACHE: contextvars.ContextVar[dict[str, _Bundle] | None] = contextvars.ContextVar(
+    "hadavin_textnorm_scan_cache", default=None
+)
+_SCAN_CACHE_TEXTS = 2
+
+
+@contextlib.contextmanager
+def scan_cache() -> Iterator[None]:
+    """A SCOPE in which the views of the texts being scanned are built once and shared: ``with scan_cache(): [scan_holds(text, v) for v in values]``
+    costs one text pass for the shared part, not one per value. Outside a scope NOTHING is kept between calls, so a text that may hold a secret
+    is not retained after the call that read it (the views are folded copies of the text, so they are as sensitive as it is). Inside the scope at most the last two texts are kept,
+    under the SHA-256 digest of the text as the key (the key holds no text); the scope empties the cache when it ends, also when an exception
+    ends it. A scope inside a scope shares the outer cache. The scope is per task and per thread (a ``contextvars`` variable)."""
+    if _SCAN_CACHE.get() is not None:
+        yield
+        return
+    token = _SCAN_CACHE.set({})
+    try:
+        yield
+    finally:
+        cache = _SCAN_CACHE.get()
+        if cache is not None:
+            cache.clear()
+        _SCAN_CACHE.reset(token)
+
+
+def _text_bundle(raw: str) -> _Bundle:
     """What every scan of one TEXT shares, whatever the protected value: the spelling readings (``_readings``, case folded, whitespace collapsed,
-    with the marks-dropped ones), the squeeze views and the sorted scan keys. A redactor that scans one text for hundreds of values builds
-    them once (the cache keeps the last two texts); only the script views depend on the value, and they are cut from the marks-dropped readings
-    in a pass over each. All tuples of ``str``, so nothing the cache returns can be changed. The text must be checked before."""
-    return (
+    with the marks-dropped ones), the squeeze views and the sorted scan keys. Built once per ``scan_cache`` scope (see there) and again for every
+    call outside one; only the script views depend on the value, and they are cut from the marks-dropped readings in a pass over each. All
+    tuples of ``str``, so nothing it returns can be changed. The text must be checked before."""
+    cache = _SCAN_CACHE.get()
+    key = ""
+    if cache is not None:
+        key = hashlib.sha256(raw.encode("utf-8", "surrogatepass")).hexdigest()
+        hit = cache.get(key)
+        if hit is not None:
+            return hit
+    bundle: _Bundle = (
         tuple(_readings(raw, casefold=True, collapse_ws=True, marks_dropped=True)),
         _squeezed(raw),
         tuple(sorted(_scan_keys(raw))),
     )
+    if cache is not None:
+        if len(cache) >= _SCAN_CACHE_TEXTS:
+            del cache[next(iter(cache))]
+        cache[key] = bundle
+    return bundle
 
 
-def _all_views(raw: str, scripts: frozenset[str] = frozenset()) -> list[str]:
+def _all_views(
+    raw: str, scripts: frozenset[str] = frozenset(), bundle: _Bundle | None = None
+) -> list[str]:
     """Every view of a checked text that a DENY scan looks through, empty ones included, no repeats, in a fixed order: ``fold_views``
     (case folded, whitespace collapsed, with the script views of ``scripts`` when given), then ``squeeze_views``, then the sorted ``scan_keyset``."""
-    readings, squeezed, keys = _text_bundle(raw)
+    readings, squeezed, keys = bundle if bundle is not None else _text_bundle(raw)
     out: list[str] = []
     for view in (*(v for _kind, v in _pairs_from(readings, scripts)), *squeezed, *keys):
         if view not in out:
@@ -1154,34 +1203,42 @@ def _all_views(raw: str, scripts: frozenset[str] = frozenset()) -> list[str]:
     return out
 
 
-def scan_views(raw: str, value: str | None) -> tuple[str, ...]:
+def scan_views(raw: str, value: str) -> tuple[str, ...]:
     """Every view of a TEXT that a DENY scan (a redaction, a blocklist, a has-secret check) looks through for the PROTECTED ``value``: ``fold_views``
     (case folded, whitespace collapsed, with the script views of ``value_scripts(value)``), ``squeeze_views`` and ``scan_keyset``, no repeats,
     empty views left out (an empty view of a text holds nothing). This is the one place that decides which scripts the text is read with:
-    it takes them from ``value`` itself, so a caller cannot forget them (``value`` has no default). ``value=None`` says, on purpose, that there is
-    no protected value (the injection check looks for ASCII steering phrases): no script view then. At most 9 + 6 + 16 = 31 views with a value
-    (``fold_views``: three spelling variants, the same three with the Mc, Lm and Sk characters removed, and the script view of each of those
-    three; ``squeeze_views``: the first six; ``scan_keyset``: sixteen at most); without a value 6 + 6 + 16 = 28. The bound 9 is by construction
-    (seven was the highest ``fold_views`` count found). Neither ``fold_views`` nor ``squeeze_views`` is enough alone: a value with no ASCII letter
+    it takes them from ``value`` itself, so a caller cannot forget them: ``value`` has no default and ``None`` raises ``NotText`` (an unset
+    configuration field must not turn into a scan without script views). A text with NO protected value (the injection check, which looks for ASCII steering phrases)
+    uses ``scan_views_no_value``. At most 9 + 6 + 16 = 31 views (``fold_views``: three spelling variants, the same three with the Mc, Lm and Sk characters
+    removed, and the script view of each of those three; ``squeeze_views``: the first six; ``scan_keyset``: sixteen at most). The bound 9 is by
+    construction (seven was the highest ``fold_views`` count found, ``tests/test_textnorm_perf.py`` and the CHANGELOG name the search). Neither ``fold_views`` nor ``squeeze_views`` is enough alone: a value with no ASCII letter
     or digit has an empty ``squeeze_views``; ``scan_keyset`` adds the tag texts and the class maps. A scan holds a value when ANY view of the
     text holds ANY needle of the value, or the value with one extra letter of its own script: use ``scan_holds``."""
+    _checked(raw, value)
+    return tuple(view for view in _all_views(raw, _value_scripts(value)) if view)
+
+
+def scan_views_no_value(raw: str) -> tuple[str, ...]:
+    """The views of a TEXT for a check that has NO protected value (the injection check): the same views as ``scan_views`` without a script view,
+    so at most 6 + 6 + 16 = 28. It is a separate function on purpose: ``scan_views`` refuses ``None``, so a missing value can never turn into a
+    scan that reads no script."""
     _checked(raw)
-    if value is None:
-        scripts: frozenset[str] = frozenset()
-    else:
-        _checked(value)
-        scripts = _value_scripts(value)
-    return tuple(view for view in _all_views(raw, scripts) if view)
+    return tuple(view for view in _all_views(raw, frozenset()) if view)
+
+
+_JAPANESE_GROUPS = frozenset({"HAN", "KANA"})
 
 
 def _insertion_minimum(needle: str) -> int:
-    """The fewest characters a script needle needs for the one-inserted-letter match: the largest per-script minimum of the script groups the
-    needle holds (``defaults.TEXTNORM_INSERTION_MIN_CHARS`` for a group not listed in ``TEXTNORM_INSERTION_MIN_CHARS_BY_SCRIPT``)."""
+    """The fewest characters a script needle needs for the one-inserted-letter match. A needle of ONE script group takes that group's minimum
+    (``defaults.TEXTNORM_INSERTION_MIN_CHARS`` for a group not listed in ``TEXTNORM_INSERTION_MIN_CHARS_BY_SCRIPT``). A needle of several groups takes
+    the LARGEST of their minimums (the cautious side: an unmeasured mixture is not matched more loosely than its strictest part), EXCEPT a needle that
+    holds both Han and kana and nothing else (a Japanese name or word): it takes the SMALLEST (Han's), because that mixture was measured on its own
+    (CHANGELOG, order 137 D3) and its false-positive rate at that length stays within the bound of the other scripts."""
     by_script = dict(defaults.TEXTNORM_INSERTION_MIN_CHARS_BY_SCRIPT)
-    return max(
-        by_script.get(group, defaults.TEXTNORM_INSERTION_MIN_CHARS)
-        for group in _scripts_in([needle]) or frozenset({""})
-    )
+    groups = _scripts_in([needle]) or frozenset({""})
+    minimums = [by_script.get(group, defaults.TEXTNORM_INSERTION_MIN_CHARS) for group in groups]
+    return min(minimums) if groups == _JAPANESE_GROUPS else max(minimums)
 
 
 def _one_off(window: str, target: str) -> bool:
@@ -1244,6 +1301,19 @@ def _value_needles(value: str) -> list[tuple[str, str]]:
     return needles
 
 
+def _needles_or_refuse(value: str, scripts: frozenset[str]) -> list[tuple[str, str]]:
+    """``_value_needles`` for a checked value, with ``EmptyView`` in place of ``ViewTooShort`` when the value has no letter or digit at all."""
+    try:
+        return _value_needles(value)
+    except ViewTooShort:
+        if not _has_proof_character(value, scripts):
+            raise EmptyView(
+                f"a protected value of {len(value)} characters has no letter or digit that a scan can rely on: "
+                "it would match every text, so it cannot be scanned for"
+            ) from None
+        raise
+
+
 def scan_holds(text: str, value: str) -> bool:
     """THE DENY SCAN (redaction, blocklist, has-secret): True when ANY view of ``text`` (``scan_views(text, value)``) holds ANY needle of the
     protected ``value`` (``scan_needles`` and the scan keys of the value that reach their minimum), or holds a script needle of the value with
@@ -1253,20 +1323,13 @@ def scan_holds(text: str, value: str) -> bool:
     squeeze or script view of the value reaches its minimum (a Latin value of three letters or fewer, a number of five digits or fewer, a
     value only a spelling view can find). A value in Chinese, Arabic, Hindi or Thai has no squeeze view but a script view, so it IS scanned. The
     caller treats every ``TextnormError`` like any other on a DENY path: REFUSE, and looks for such a value with its own exact search. Both
-    arguments are checked (type, then size) before any work. The views of ONE text are built once and kept for the next call
-    (``_text_bundle``), so scanning a text for hundreds of values costs one text pass, not hundreds."""
+    arguments are checked (type, then size) before any work. Nothing of the text is kept after the call; to scan ONE text for
+    hundreds of values at the cost of one text pass, call this inside ``with scan_cache():``."""
     _checked(text, value)
     scripts = _value_scripts(value)
-    try:
-        needles = _value_needles(value)
-    except ViewTooShort:
-        if not _has_proof_character(value, scripts):
-            raise EmptyView(
-                f"a protected value of {len(value)} characters has no letter or digit that a scan can rely on: "
-                "it would match every text, so it cannot be scanned for"
-            ) from None
-        raise
-    views = [view for view in _all_views(text, scripts) if view]
+    needles = _needles_or_refuse(value, scripts)
+    bundle = _text_bundle(text)
+    views = [view for view in _all_views(text, scripts, bundle) if view]
     if any(needle in view for view in views for _kind, needle in needles):
         return True
     limit = defaults.TEXTNORM_INSERTION_MAX_CHARS
@@ -1277,12 +1340,92 @@ def scan_holds(text: str, value: str) -> bool:
     ]
     if not inserts:
         return False
-    script_views = {
-        _script_view(view, scripts) for marks, view in _text_bundle(text)[0] if marks
-    } - {""}
+    script_views = {_script_view(view, scripts) for marks, view in bundle[0] if marks} - {""}
     return any(
         _holds_with_one_insertion(view, needle) for view in script_views for needle in inserts
     )
+
+
+_LOG = logging.getLogger("hadavin_sdk.guard")
+_FUZZY = "fuzzy"
+_EXACT_ONLY = "exact_only"
+
+
+class Coverage(NamedTuple):
+    """What a scan can do for one registered protected value (``register_value``). ``coverage`` is ``"fuzzy"`` when the value has a script needle in
+    the one-inserted-letter band (the copy of it with one extra letter of its own script is found too) and ``"exact_only"`` when it has not: a Latin
+    or digit value (a separator, an invisible character, a look-alike or a different case is covered by the views, one inserted LETTER is not) or a
+    script value outside the band (shorter than the minimum of its script, longer than ``defaults.TEXTNORM_INSERTION_MAX_CHARS``). ``narrowed`` is
+    True when the value holds ASCII letters or digits but no squeeze needle reaches its minimum (a number of five digits next to a Chinese word):
+    only the script part is searched, so a text with only the ASCII part is not found. ``reason`` says why, in words; ``needles`` counts them.
+    Never the value or a needle."""
+
+    coverage: str
+    reason: str
+    narrowed: bool
+    needles: int
+
+
+class CoverageRefused(TextnormError):
+    """``register_value`` in strict mode found a value that a scan covers only EXACTLY (or only in part): a value we cannot cover loudly is
+    acceptable, a value we cannot cover silently is not. The message says what to do: register the longer form, or register the value with
+    ``strict=False`` and keep its own exact search for the inserted letter."""
+
+
+def register_value(value: str, *, strict: bool | None = None) -> Coverage:
+    """THE REGISTRATION CHECK of a protected value: what ``scan_holds`` can and cannot do for it, said out loud. It raises what ``scan_holds`` raises
+    (``EmptyView``, ``ViewTooShort``: a value that cannot be scanned at all is REFUSED, never ignored), and otherwise returns a ``Coverage`` and logs it
+    on ``hadavin_sdk.guard`` (INFO for ``fuzzy``, WARNING for ``exact_only`` or ``narrowed``; the log holds the length, never the value). With
+    ``strict`` (the default is ``defaults.TEXTNORM_STRICT_COVERAGE``, True: the strict default is the one of the client profile) an ``exact_only``
+    or ``narrowed`` value raises ``CoverageRefused`` instead of being registered. A caller that registers values calls this once per value; the
+    modules of this package call it from no code path yet (the consumers arrive with the redaction package, see the CHANGELOG)."""
+    _checked(value)
+    if strict is None:
+        strict = defaults.TEXTNORM_STRICT_COVERAGE
+    if type(strict) is not bool:
+        raise NotText("strict must be a bool or None")
+    needles = _needles_or_refuse(value, _value_scripts(value))
+    limit = defaults.TEXTNORM_INSERTION_MAX_CHARS
+    script_needles = [needle for kind, needle in needles if kind == "script"]
+    if any(_insertion_minimum(n) <= len(n) <= limit for n in script_needles):
+        coverage, reason = (
+            _FUZZY,
+            "a script needle is in the one-inserted-letter band: one extra letter of its own script is found",
+        )
+    elif script_needles:
+        coverage, reason = (
+            _EXACT_ONLY,
+            (
+                "every script needle is outside the one-inserted-letter band (shorter than the minimum of its script, or longer than "
+                f"{limit}): an inserted letter hides the value"
+            ),
+        )
+    else:
+        coverage, reason = (
+            _EXACT_ONLY,
+            "Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not",
+        )
+    narrowed = any(ch.isascii() and ch.isalnum() for ch in value) and not any(
+        kind == "squeeze" for kind, _needle in needles
+    )
+    result = Coverage(coverage, reason, narrowed, len(needles))
+    level = logging.INFO if coverage == _FUZZY and not narrowed else logging.WARNING
+    _LOG.log(
+        level,
+        "textnorm: protected value of %d characters registered with coverage=%s narrowed=%s (%s)",
+        len(value),
+        coverage,
+        narrowed,
+        reason,
+    )
+    if strict and (coverage == _EXACT_ONLY or narrowed):
+        raise CoverageRefused(
+            f"this protected value ({len(value)} characters) is covered {'only in part' if narrowed else 'only exactly'}: {reason}"
+            f"{'; its ASCII part has no needle of its own, so a text with only that part is not found' if narrowed else ''}. "
+            "A value that cannot be covered is REFUSED in strict mode, never silently accepted. What to do: register the longer form, or "
+            "register it with strict=False and keep your own search for the inserted letter"
+        )
+    return result
 
 
 # The hidden channel: characters that show nothing and can carry text or bits. Exactly two rules: (1) the tag block U+E0000 to U+E007F;

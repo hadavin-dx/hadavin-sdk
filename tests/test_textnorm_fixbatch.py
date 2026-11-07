@@ -27,6 +27,7 @@ from hadavin_sdk.guard.textnorm import (
     scan_keyset,
     scan_needles,
     scan_views,
+    scan_views_no_value,
     value_scripts,
 )
 
@@ -117,7 +118,7 @@ def test_every_mc_and_sk_code_point_hides_nothing_from_the_scan_keys():
 def test_a_spacing_mark_written_instead_of_a_letter_is_still_read_by_the_scan_keys():
     """The union of the two readings (the text as it is, and without the marks): U+0C02 reads as ``o`` and is NOT dropped from the key that reads
     it. Killer: ``keys_only_the_dropped_reading``."""
-    keys = scan_keyset("passwంrd")
+    keys = scan_keyset("passw\u0c02rd")
     assert any("password" in key for key in keys), (
         f"the mark read as a letter is not read: {sorted(keys)}"
     )
@@ -171,7 +172,9 @@ def test_the_decisions_are_in_the_module_docstring_and_li_na_is_not_lina():
     """Items 7 and 2: the digit decision (the ticket's 6, not the earlier 4) and the 'Li Na' reading are written where a reader looks. No mutant: a
     document pin."""
     doc = textnorm.__doc__
-    assert "DIGITS" in doc and "ticket (P1) asked for 6 digits" in doc
+    assert "DIGITS" in doc and "ticket (P1) asked for 6 digits" in doc, (
+        "the module docstring does not state the digit decision"
+    )
     assert "Li Na" in inspect.getdoc(could_be_same_person)
     assert could_be_same_person("Li Na", "Lina") is False, "the docstring says DIFFERENT"
     assert could_be_same_person("Li Na", "li  na") is True
@@ -229,11 +232,8 @@ def test_a_one_ideograph_value_is_too_short_not_empty():
 
 # ---- the views of one text are built once for any number of values ---------------------------------------------------------------
 def test_scanning_one_text_for_many_values_builds_the_text_views_once(monkeypatch):
-    """Killer: ``scan: the views of a text are built again for every value``. 62 values against one text read the text with ``_readings`` no more often
-    than the first value did."""
-    clear = getattr(textnorm._text_bundle, "cache_clear", None)
-    if clear:
-        clear()
+    """Killer: ``cache: the scope never uses its cache``. Inside ``with scan_cache():`` 62 values against one text read the text with ``_readings`` no
+    more often than the first value did."""
     text = (
         "a long log line with several words and a pass\u200bword inside " * 3
         + "\u5bc6\u7801\u4fdd\u62a4"
@@ -247,16 +247,17 @@ def test_scanning_one_text_for_many_values_builds_the_text_views_once(monkeypatc
 
     monkeypatch.setattr(textnorm, "_readings", counting)
     values = [f"secret-value-{i:03d}" for i in range(60)] + ["password", "\u5bc6\u7801\u4fdd\u62a4"]
-    hits = [scan_holds(text, values[0])]
-    once = seen.count(
-        text
-    )  # what ONE build of the views of the text costs (the squeeze views read it again with other options)
-    assert once >= 1, "the text was never read: the counter is broken"
-    hits += [scan_holds(text, v) for v in values[1:]]
-    assert hits[-2:] == [True, True] and not any(hits[:60]), "the scan answers are wrong"
-    assert seen.count(text) == once, (
-        f"the text was read {seen.count(text)} times for {len(values)} values, {once} for the first"
-    )
+    with textnorm.scan_cache():
+        hits = [scan_holds(text, values[0])]
+        once = seen.count(
+            text
+        )  # what ONE build of the views of the text costs (the squeeze views read it again with other options)
+        assert once >= 1, "the text was never read: the counter is broken"
+        hits += [scan_holds(text, v) for v in values[1:]]
+        assert hits[-2:] == [True, True] and not any(hits[:60]), "the scan answers are wrong"
+        assert seen.count(text) == once, (
+            f"the text was read {seen.count(text)} times for {len(values)} values, {once} for the first"
+        )
 
 
 # ---- one choke point: the value decides the scripts ---------------------------------------------------------------------
@@ -284,25 +285,38 @@ def test_fold_views_has_no_default_for_the_scripts():
 
 def test_no_caller_in_the_package_omits_the_value_or_the_scripts():
     """Every call of ``scan_views`` and ``fold_views`` in ``src`` passes the value / the scripts (found by reading the syntax trees). The callers
-    today: ``guard/injection.py`` only (``scan_views(text, None)``: no protected value, said on purpose); ``fold_views`` is called by ``textnorm`` itself. Killer: ``injection:
-    the call names no value``."""
+    today: none of ``scan_views`` (``guard/injection.py`` calls ``scan_views_no_value``: no protected value, said on purpose); ``fold_views`` is called by ``textnorm`` itself.
+    A call that passes the constant ``None`` as the value is refused here too. Killer: ``injection: the call names no value``."""
     calls = []
+    none_values = 0
     for path in sorted(SRC.rglob("*.py")):
         tree = ast.parse(path.read_text(encoding="utf-8"))
         for node in ast.walk(tree):
             if isinstance(node, ast.Call):
                 name = getattr(node.func, "attr", getattr(node.func, "id", ""))
-                if name in ("scan_views", "fold_views"):
+                if name in ("scan_views", "fold_views", "scan_views_no_value"):
                     calls.append((path.name, name, len(node.args), {k.arg for k in node.keywords}))
-    assert calls, "no caller found: the search is broken"
+                    if name == "scan_views":
+                        second = node.args[1] if len(node.args) > 1 else None
+                        second = second or next(
+                            (k.value for k in node.keywords if k.arg == "value"), None
+                        )
+                        if isinstance(second, ast.Constant) and second.value is None:
+                            none_values += 1
+    assert "injection.py" in [c[0] for c in calls], (
+        "the search is broken: injection.py is not found"
+    )
     for file, name, nargs, kws in calls:
-        if name == "scan_views":
+        if name == "scan_views_no_value":
+            assert nargs == 1 and not kws, (
+                f"scan_views_no_value in {file} is called with more than the text"
+            )
+        elif name == "scan_views":
             assert nargs >= 2 or "value" in kws, f"a call of scan_views in {file} names no value"
+            assert none_values == 0, f"a call of scan_views in {file} passes None as the value"
         else:
             assert "scripts" in kws, f"a call of fold_views in {file} names no scripts"
-    assert {f for f, n, *_ in calls if n == "scan_views"} == {"injection.py"}, (
-        "the callers of scan_views changed"
-    )
+    assert not [f for f, n, *_ in calls if n == "scan_views"], "a module of src calls scan_views"
 
 
 def test_a_caller_that_names_only_the_value_cannot_miss_an_inserted_foreign_letter():
@@ -311,7 +325,7 @@ def test_a_caller_that_names_only_the_value_cannot_miss_an_inserted_foreign_lett
     value = "\u5bc6\u7801\u4fdd\u62a4"
     text = "\u5bc6\u7801\u0436\u4fdd\u62a4"
     assert value in scan_views(text, value), "scan_views gives no script view for the value"
-    assert value not in scan_views(text, None), "scan_views gives a script view for no value"
+    assert value not in scan_views_no_value(text), "scan_views gives a script view for no value"
     assert scan_holds(text, value), "scan_holds misses the inserted copy"
 
 
@@ -340,7 +354,7 @@ def test_the_injection_detector_check_method_is_called_by_injection_check_only()
 # ---- the floor and the validation of the numbers --------------------------------------------------------------------------------------
 def test_a_minimum_below_the_floor_or_not_a_plain_int_is_refused():
     """Killer: ``minimum: the floor is one``. A single character is found in nearly every text of its script. A bool, a float, a string and None
-    are refused too (killer ``minimum: a bool is a minimum`` is in the older list)."""
+    are refused too (the mutant "a bool is a minimum" was removed: the floor of 2 refuses a bool anyway, so it was equivalent)."""
     saved = {name: getattr(defaults, name) for name in textnorm._MINIMUM_NAMES}
     try:
         for name in textnorm._MINIMUM_NAMES:
@@ -386,7 +400,7 @@ def _insertions(needle, ch):
 def test_one_inserted_letter_of_the_same_script_is_found_at_every_inner_position():
     """Killers: ``insertion: the match is never made``, ``insertion: the first half is not searched``, ``insertion: the second half is not searched``
     and ``insertion: the minimum is one too high``. Every inner position, and a foreign-script insertion, are found."""
-    m = textnorm._insertion_minimum(han(4))
+    m = _han_minimum()
     needle = han(m)
     extra = chr(0x6A01)
     assert value_scripts(needle) == {"HAN"}
@@ -400,10 +414,14 @@ def test_one_inserted_letter_of_the_same_script_is_found_at_every_inner_position
     )
 
 
-def test_two_inserted_letters_a_missing_letter_and_a_changed_letter_are_not_found():
-    """Killer: ``insertion: a changed letter is a match``. The matcher is ONE inserted letter, no more."""
-    m = textnorm._insertion_minimum(han(4))
-    needle = han(m)
+def _han_minimum():
+    """The insertion minimum of a Han needle, from the table of ``defaults`` (a public constant, read before any private name)."""
+    return dict(defaults.TEXTNORM_INSERTION_MIN_CHARS_BY_SCRIPT)["HAN"]
+
+
+def test_two_inserted_letters_are_not_found():
+    """Killer: ``insertion: the tail past a mismatch is not compared``. The matcher is ONE inserted letter, no more."""
+    needle = han(_han_minimum())
     a, b = chr(0x6A01), chr(0x6A02)
     assert scan_holds(needle[:1] + a + needle[1:2] + b + needle[2:], needle) is False, (
         "two inserted letters are found"
@@ -411,13 +429,25 @@ def test_two_inserted_letters_a_missing_letter_and_a_changed_letter_are_not_foun
     assert scan_holds(needle[:1] + a + a + needle[1:], needle) is False, (
         "two inserted letters in a row are found"
     )
+
+
+def test_a_missing_letter_is_not_found():
+    """Killer: ``insertion: a missing letter is a match``."""
+    needle = han(_han_minimum())
     assert scan_holds(needle[:-1], needle) is False, "a missing letter is found"
+    assert scan_holds(needle[1:], needle) is False, "a missing first letter is found"
+
+
+def test_a_changed_letter_is_not_found():
+    """Killer: ``insertion: a changed letter is a match``. Only the changed letter is asserted here (the missing letter has its own test)."""
+    needle = han(_han_minimum())
+    a = chr(0x6A01)
     assert scan_holds(needle[:1] + a + needle[2:], needle) is False, "a changed letter is found"
 
 
 def test_a_needle_below_the_minimum_of_its_script_is_matched_exactly_only():
     """Killer: ``insertion: the minimum is one too low``. One letter fewer than the minimum: the inserted copy is NOT found; the exact one is."""
-    m = textnorm._insertion_minimum(han(4))
+    m = _han_minimum()
     needle = han(m - 1)
     assert len(needle) >= defaults.TEXTNORM_MIN_IDEOGRAPH_CHARS, (
         "the minimum leaves no room under it"
@@ -569,7 +599,7 @@ def test_the_work_of_the_matcher_is_linear_in_the_view_for_a_text_built_to_defea
 # ---- the records and the documents ----------------------------------------------------------------------------------------------------
 # The digest of the two interpreter-built tables (``_PUNCT``: the dash, quote and slash readings; ``_DIGITS``: every decimal digit of the
 # interpreter read as an ASCII digit) for each Unicode version the suite runs on. 15.0.0 and 15.1.0 give one table: the 15.1 additions are
-# ideographs only. Recorded on both interpreters (CHANGELOG, "Pins").
+# ideographs only. Recorded on both interpreters (CHANGELOG, "Pin").
 PINNED_TABLE_DIGESTS = {
     "15.0.0": "8896f9860278877c9e5f5ab6728c8f63fdb8458ac238add6262929fec42aa8f1",
     "15.1.0": "8896f9860278877c9e5f5ab6728c8f63fdb8458ac238add6262929fec42aa8f1",
@@ -609,15 +639,15 @@ def test_script_of_has_a_two_word_group_for_every_named_letter_family():
 def test_the_hebrew_word_for_password_is_refused_as_too_short():
     """Review nit 10: the table reads samekh as a letter, so the Hebrew 'password' (samekh yod samekh mem he) has too few letters of its own
     script. A stated cost, pinned."""
-    word = "סיסמה"
+    word = "\u05e1\u05d9\u05e1\u05de\u05d4"
     with pytest.raises(ViewTooShort):
         scan_holds("any text", word)
 
 
 def test_the_module_docstring_lists_every_public_name():
-    """Item 8. The 28 names are documented once, in the module docstring; the list in ``tests/test_textnorm.py`` pins the names."""
+    """Item 8. The 33 names are documented once, in the module docstring; the list in ``tests/test_textnorm.py`` pins the names."""
     doc = textnorm.__doc__
-    assert len(textnorm.__all__) == 28
+    assert len(textnorm.__all__) == 33
     for name in textnorm.__all__:
         assert f"``{name}``" in doc, f"{name} is not documented in the module docstring"
 
@@ -642,7 +672,7 @@ def test_the_mixed_value_claim_of_the_changelog_holds():
 
 
 def test_a_short_cyrillic_or_greek_word_is_refused_at_a_measured_cost():
-    """The cost of the minimums for Cyrillic and Greek (CHANGELOG, "Cost of the refusal"): letters the table reads as Latin look-alikes make a
+    """The cost of the minimums for Cyrillic and Greek (CHANGELOG, "The cost for a value in Cyrillic or Greek, measured"): letters the table reads as Latin look-alikes make a
     squeeze view of the same length, the others stay in the script view, and a word is refused when neither view reaches four. Measured on Bible
     translations: Russian words of 5 letters are refused in about a third of the forms, of 6 in about one in seven, of 7 or more never; Greek
     words of 4, 5 and 6 letters in 46, 13 and 2 percent, of 7 or more never. Three examples of each side are pinned. No mutant: a cost pin."""
@@ -669,7 +699,7 @@ def test_the_refusal_names_the_rule_the_length_and_what_to_do_and_never_the_valu
     number = "9" * (d - 1)
     cases = {
         number: ("number", f"{d} digits"),
-        "Земля": ("5 characters", "longer form"),
+        "\u0417\u0435\u043c\u043b\u044f": ("5 characters", "longer form"),
         "ab": ("2 characters", "exact-match only"),
     }
     for value, expected in cases.items():
@@ -701,9 +731,9 @@ def test_the_scan_key_cap_is_sixteen_by_construction_and_the_most_a_text_can_mak
     ASCII letter). Seventeen is impossible; the cap is a fail-closed guard (``TextTooLong``), shown by lowering it. No mutant: a bound pin."""
     cap = textnorm._SCAN_KEY_CAP
     assert cap == 16 == 2 * 4 * 2
-    at_most = "Η" + _tags("xy") + "ంΗq"
+    at_most = "\u0397" + _tags("xy") + "\u0c02\u0397q"
     assert len(scan_keyset(at_most)) == 13, "the measured reachable maximum changed"
-    pool = ["Η", "ం", "ʰ", "˂", _tags("x"), "q"]
+    pool = ["\u0397", "\u0c02", "\u02b0", "\u02c2", _tags("x"), "q"]
     most = 0
     for length in range(1, 6):
         for combo in itertools.product(pool, repeat=length):
@@ -718,12 +748,10 @@ def test_the_scan_key_cap_is_sixteen_by_construction_and_the_most_a_text_can_mak
 
 def test_a_text_that_would_make_more_keys_than_the_cap_is_refused(monkeypatch):
     """The guard is not a truncation: with the cap lowered below the 13 keys of the widest text, the call raises ``TextTooLong`` (and at the cap itself
-    it does not). No mutant: a guard that cannot fire on real input."""
-    wide = "Η" + _tags("xy") + "ంΗq"
-    textnorm._text_bundle.cache_clear()
+    it does not). Killers: the cap guard mutants (see ``tests/test_textnorm_order137.py`` for the cap itself and one over)."""
+    wide = "\u0397" + _tags("xy") + "\u0c02\u0397q"
     monkeypatch.setattr(textnorm, "_SCAN_KEY_CAP", 13)
     assert len(scan_keyset(wide)) == 13
     monkeypatch.setattr(textnorm, "_SCAN_KEY_CAP", 12)
     with pytest.raises(textnorm.TextTooLong):
         scan_keyset(wide)
-    textnorm._text_bundle.cache_clear()

@@ -23,13 +23,13 @@ from tests.test_textnorm_differential import _corpus_rows
 
 SRC = Path(__file__).resolve().parents[1] / "src" / "hadavin_sdk"
 MARKS = [
-    "́",  # combining acute (Mn)
-    "ͅ",  # combining ypogegrammeni (Mn)
+    "\u0301",  # combining acute (Mn)
+    "\u0345",  # combining ypogegrammeni (Mn)
     "\u200b",  # zero-width space (Cf)
-    "­",  # soft hyphen (Cf)
-    "️",  # variation selector 16 (Mn)
-    "ㅤ",  # hangul filler (Lo, a filler letter)
-    "",  # private use (Co)
+    "\u00ad",  # soft hyphen (Cf)
+    "\ufe0f",  # variation selector 16 (Mn)
+    "\u3164",  # hangul filler (Lo, a filler letter)
+    "\ue000",  # private use (Co)
     "\U000e0061",  # tag letter a (Cf)
 ]
 TABLE_SOURCES = [chr(cp) for cp in sorted(_confusables.TABLE)]
@@ -83,7 +83,12 @@ def test_runmap_canonical_and_its_per_character_view_are_the_same_text_on_the_wh
 def test_the_redaction_view_equals_folds_view_only_where_no_mark_or_look_alike_is_involved():
     """Where the two views agree and where they do not, on the corpus. They agree (case aside) on ASCII and on full-width forms, which NFKC
     reads. They differ on every table source that NFKC leaves alone (the look-alikes) and on every mark that the redaction view keeps."""
-    ascii_and_wide = ["Ignore previous", "ＩＰＶ４＿２", "ab\u200bcd", "a­b"]
+    ascii_and_wide = [
+        "Ignore previous",
+        "\uff29\uff30\uff36\uff14\uff3f\uff12",
+        "ab\u200bcd",
+        "a\u00adb",
+    ]
     for text in ascii_and_wide:
         assert runmap.canonical(text).casefold() == fold(text, casefold=True), repr(text)
     kept_by_canonical = [t for t in TABLE_SOURCES if runmap.canonical(t) != fold(t, casefold=True)]
@@ -108,9 +113,9 @@ def test_gap_a_look_alike_marker_is_not_recognised_by_the_redaction_view():
     """KNOWN GAP (not fixed here): ``replace_canonical`` finds a placeholder through NFKC, so a full-width one is found, but a Cyrillic letter
     in it is not folded, so it is not found; ``fold`` would read it. The guard against forged markers therefore rests on other layers."""
     marker = "<IPV4_2>"
-    wide = "＜ＩＰＶ４＿２＞"
+    wide = "\uff1c\uff29\uff30\uff36\uff14\uff3f\uff12\uff1e"
     assert runmap.canonical(wide) == marker
-    cyrillic_i = "<ІPV4_2>"
+    cyrillic_i = "<\u0406PV4_2>"
     assert runmap.canonical(cyrillic_i) == cyrillic_i != marker
     assert identity_key(cyrillic_i) == identity_key(marker), (
         "fold reads the look-alike; the redaction view does not"
@@ -164,7 +169,7 @@ def test_egress_is_not_a_consumer_and_refuses_a_look_alike_host():
     allowed = frozenset({"example.com"})
     assert egress.egress_check("https://example.com/x", allowed) == "example.com"
     assert egress.egress_check("https://EXAMPLE.com./x", allowed) == "example.com"
-    look_alike = "еxample.com"  # Cyrillic e
+    look_alike = "\u0435xample.com"  # Cyrillic e
     with pytest.raises(egress.EgressRefused):
         egress.egress_check(f"https://{look_alike}/x", allowed)
     assert allow_equal("example.com", look_alike) is AllowVerdict.LOOKALIKE

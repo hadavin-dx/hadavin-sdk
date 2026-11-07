@@ -85,15 +85,15 @@ def _functions(path: Path) -> list[str]:
     return [n.name for n in tree.body if isinstance(n, ast.FunctionDef)]
 
 
-def test_a_the_list_has_180_mutants_77_of_p1a_fix4_26_of_p1b_14_of_p1a_fix5_5_of_fix6_31_of_fix7_and_27_of_the_p1b_fix_batch_with_unique_names():
+def test_a_the_list_has_212_mutants_77_of_p1a_fix4_26_of_p1b_14_of_p1a_fix5_5_of_fix6_31_of_fix7_and_59_of_the_p1b_fix_batch_with_unique_names():
     names = [m.name for m in mm.M]
-    assert len(names) == 180 and len(set(names)) == 180, names
+    assert len(names) == 212 and len(set(names)) == 212, names
     assert tuple(names[:28]) == REPOINTED, (
         "the first 28 are the re-pointed mutants, in the order of the placement table"
     )
     assert (
-        len(names[28:]) == 152
-    )  # 12 of the first package, 9 of fold2, 3 of fold3, 16 of fold4, 9 of fix4, 26 of P1b, 14 of fix5, 5 of fix6, 31 of fix7 and 27 of the fix batch
+        len(names[28:]) == 184
+    )  # 12 of the first package, 9 of fold2, 3 of fold3, 16 of fold4, 9 of fix4, 26 of P1b, 14 of fix5, 5 of fix6, 31 of fix7 and 59 of the fix batch (30 of the first batch and 29 of order 137)
     assert names[52:53] == ["fold: case folded before the marks are dropped (the fold2 order)"], (
         "the restored fold2 mutant is the first of the fold4 mutants"
     )
@@ -117,7 +117,9 @@ def test_a_the_list_has_180_mutants_77_of_p1a_fix4_26_of_p1b_14_of_p1a_fix5_5_of
     assert len(names[122:153]) == 31, (
         "the 32 of P1a fix7, less the one that the fix batch removed (a bool as a minimum is refused by the floor of 2 anyway)"
     )
-    assert len(names[153:]) == 27, "the 27 of the P1b fix batch"
+    assert len(names[153:]) == 59, (
+        "the 59 of the P1b fix batch: 30 of the first batch and 29 of order 137"
+    )
     assert all(
         n.split(":")[0]
         in {
@@ -132,6 +134,11 @@ def test_a_the_list_has_180_mutants_77_of_p1a_fix4_26_of_p1b_14_of_p1a_fix5_5_of
             "passes",
             "insertion",
             "tables",
+            "register",
+            "cache",
+            "squeeze",
+            "docs",
+            "refusal",
         }
         for n in names[153:]
     ), "the fix batch mutants"
@@ -159,7 +166,7 @@ def test_a_the_test_list_puts_the_killer_files_first_and_leaves_out_perf_meta_an
     assert mm.TESTS[-1] == mm.D, "the differential and golden file runs last"
     for left_out in ("perf", "meta", "notices"):
         assert not any(left_out in t for t in mm.TESTS), left_out
-    assert {m.test_file for m in mm.M} == {mm.T, mm.G, mm.SC, mm.SB, mm.FB}
+    assert {m.test_file for m in mm.M} == {mm.T, mm.G, mm.SC, mm.SB, mm.FB, mm.O}
 
 
 def test_a_the_moved_tests_and_the_new_killers_exist_once_each():
@@ -184,7 +191,7 @@ def test_a_the_moved_tests_and_the_new_killers_exist_once_each():
 def test_a_print_the_placement_table():
     rows = [f"{m.name} | {m.test_file} | {m.only_test}" for m in mm.M]
     print("\n".join(rows))
-    assert len(rows) == 180
+    assert len(rows) == 212
 
 
 def test_b_every_xfail_of_the_differential_file_is_strict_and_names_assertion_error():

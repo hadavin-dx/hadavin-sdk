@@ -161,8 +161,9 @@ TEXTNORM_MIN_DIGIT_CHARS = 6
 # ONE INSERTED LETTER (guard.textnorm.scan_holds): a script needle (see SCRIPT above) is also looked for in the text with ONE extra letter of the value's own
 # scripts inserted anywhere inside it, so "密码测试" is found in "密的码测试". INSERTION_MIN: the fewest characters such a needle may have, per script group (the first
 # word of the Unicode name, Han and kana grouped; see guard.textnorm); a shorter needle is matched exactly only, because "a?b" matches too many ordinary words.
-# The numbers come from a measurement on running text (CHANGELOG, "One inserted letter"): for each script, the shortest needle for which the
-# extra matches the insertion adds stay near 1% or lower per 10,000 characters of text; a needle holding several groups takes the largest minimum. A
+# The numbers come from a measurement on running text (CHANGELOG, "ONE INSERTED LETTER"): for each script, the shortest needle for which the
+# extra matches the insertion adds stay near 1% or lower per 10,000 characters of text; a needle holding several groups takes the largest minimum, except a needle of Han and kana only (a Japanese word), which takes the Han
+# minimum (measured on its own, CHANGELOG order 137 D3). A
 # script not in the table (not measured) takes the default, the most cautious of the measured Latin-free scripts. INSERTION_MAX: the longest needle
 # the matcher takes (its work grows with the needle length for each hit); a longer needle is matched exactly only.
 TEXTNORM_INSERTION_MIN_CHARS = 8
@@ -178,3 +179,7 @@ TEXTNORM_INSERTION_MIN_CHARS_BY_SCRIPT = (
     ("GREEK", 12),
 )
 TEXTNORM_INSERTION_MAX_CHARS = 64
+# register_value (guard.textnorm): when True, a protected value that a scan covers only exactly (a Latin or digit value, a script value outside the
+# one-inserted-letter band) or only in part (its ASCII part has no needle of its own) is REFUSED with CoverageRefused instead of being registered.
+# True is the default of the client profile: a value we cannot cover loudly is acceptable, one we cannot cover silently is not. A bool.
+TEXTNORM_STRICT_COVERAGE = True

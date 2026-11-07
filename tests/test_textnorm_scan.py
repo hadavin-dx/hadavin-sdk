@@ -34,6 +34,7 @@ from hadavin_sdk.guard.textnorm import (
     scan_holds,
     scan_keyset,
     scan_views,
+    scan_views_no_value,
     value_scripts,
 )
 
@@ -812,10 +813,10 @@ def test_scan_views_has_the_fold_the_squeeze_and_the_scan_keys_and_no_empty_view
         assert v in views or not v, f"scan_views leaves out the view {v!r}"
     for k in scan_keyset(text):
         assert k in views
-    assert scan_views("", "password") == () and scan_views("\u200b", None) == (), (
+    assert scan_views("", "password") == () and scan_views_no_value("\u200b") == (), (
         "an empty or invisible text has views"
     )
-    assert scan_views("!!", None) == ("!!",), (
+    assert scan_views_no_value("!!") == ("!!",), (
         "a text with no letter or digit has more than its fold view"
     )
     refused(NotText, "scan_views accepted bytes", scan_views, b"x", None)
@@ -923,7 +924,7 @@ def test_on_another_unicode_version_identity_keys_are_tagged_and_scan_keys_are_n
     tagged = identity_key("bob")
     assert (
         tagged != pinned_key
-        and tagged.startswith("alg=")
+        and tagged.startswith("\ue000alg=")
         and "ud=9.9.9" in tagged
         and tagged.endswith("bob")
     ), "a key made on another Unicode version carries no tag"
@@ -1001,10 +1002,10 @@ def test_scan_views_takes_the_scripts_of_the_value_and_has_a_script_view_only_wi
     assert "\u5bc6\u7801\u4fdd\u62a4" in with_scripts, (
         "scan_views gives no script view for the scripts of the value"
     )
-    assert "\u5bc6\u7801\u4fdd\u62a4" not in scan_views(text, None), (
+    assert "\u5bc6\u7801\u4fdd\u62a4" not in scan_views_no_value(text), (
         "scan_views makes a script view without a value"
     )
     assert han == {"HAN"}
-    assert len(with_scripts) <= 31 and len(scan_views(text, None)) <= 28, "the view-count bound"
+    assert len(with_scripts) <= 31 and len(scan_views_no_value(text)) <= 28, "the view-count bound"
     refused(NotText, "scan_views accepted a non-str value", scan_views, "x", b"x")
     refused(TypeError, "scan_views has a default for the value", scan_views, "x")

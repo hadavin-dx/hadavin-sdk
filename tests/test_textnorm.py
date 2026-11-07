@@ -1197,12 +1197,14 @@ def test_the_hidden_channel_signal_refuses_what_is_not_text():
 
 
 # ---- names ---------------------------------------------------------------------------------------------------------------------------------
-def test_the_public_names_are_exactly_the_listed_twenty_eight():
+def test_the_public_names_are_exactly_the_listed_thirty_three():
     assert sorted(textnorm.__all__) == sorted(
         [
             "FILLERS",
             "FOLD_VERSION",
             "AllowVerdict",
+            "Coverage",
+            "CoverageRefused",
             "EmptyView",
             "FoldNotConverged",
             "NotText",
@@ -1220,17 +1222,20 @@ def test_the_public_names_are_exactly_the_listed_twenty_eight():
             "identity_keys",
             "key_tag",
             "names_equal",
+            "register_value",
             "require_pinned_unidata",
+            "scan_cache",
             "scan_holds",
             "scan_keyset",
             "scan_needles",
             "scan_views",
+            "scan_views_no_value",
             "squeeze",
             "squeeze_views",
             "value_scripts",
         ]
     )
-    assert len(textnorm.__all__) == len(set(textnorm.__all__)) == 28
+    assert len(textnorm.__all__) == len(set(textnorm.__all__)) == 33
 
 
 def test_every_name_the_module_defines_is_public_and_listed_or_private():
@@ -2063,7 +2068,12 @@ def test_the_minimum_view_length_is_one_number_per_kind_of_view_and_a_short_valu
             textnorm.scan_needles(short)
         except textnorm.ViewTooShort as caught:
             assert isinstance(caught, TextnormError) and not isinstance(caught, ValueError)
-            assert short.strip() == "" or short not in str(caught), "the message holds the value"
+            text = str(caught)
+            # A value of one or two characters ("x", "Li") is a piece of the plain words of the message ("exact-match"): for those the quoted
+            # form is what would show the value; a longer value must not appear at all.
+            assert short.strip() == "" or (
+                repr(short) not in text and (len(short.strip()) < 3 or short not in text)
+            ), "the message holds the value"
         else:
             raise AssertionError(f"scan_needles accepted {short!r}: no view is long enough")
     value = "\u5bc6\u7801\u6d4b\u8bd5abcd"
