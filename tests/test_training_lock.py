@@ -259,6 +259,16 @@ def test_t4_limit_bounds(tmp_path, clock):
         assert _field_error(ei) == (("no_training_max_age_days",), typ)
 
 
+@pytest.mark.parametrize("value", [True, "30", 30.0], ids=["bool", "text", "float"])
+def test_t4_limit_must_be_a_whole_number_not_a_look_alike(tmp_path, clock, value):
+    """StrictInt: lax int would take `true` as 1, "30" as 30 and 30.0 as 30."""
+    clock(FIXED_TODAY)
+    llm = {**SAMPLES["openai_compat"], "no_training": _st("openai_compat", FIXED_TODAY)}
+    with pytest.raises(ConfigError) as ei:
+        _load(tmp_path, "pilot", llm, {"no_training_max_age_days": value})
+    assert _field_error(ei) == (("no_training_max_age_days",), "int_type")
+
+
 def test_t5_future_dates_on_the_function():
     assert _call("pilot", "bedrock", _st("bedrock", FIXED_TODAY + dt.timedelta(days=1))) == []
     msgs = _call("pilot", "bedrock", _st("bedrock", FIXED_TODAY + dt.timedelta(days=2)))
@@ -378,6 +388,25 @@ def test_t7_impossible_dates_give_the_fixed_text_and_no_input(tmp_path, value):
     err = _no_training_error(tmp_path, _with_statement(checked_on=value))
     assert "checked_on must be a date written YYYY-MM-DD" in str(err)
     assert value not in str(err)
+
+
+def test_t7_non_ascii_digits_are_refused_by_the_pattern_not_only_by_the_parser(monkeypatch):
+    """CPython's C `fromisoformat` happens to refuse non-ASCII digits, and the pure-Python one on 3.12 accepts them.
+    The `[0-9]` pattern must refuse them first: swap in a lax parser (`int()` reads any Unicode digit) and see it."""
+    import hadavin_sdk.backends.table as table_mod
+    from hadavin_sdk.backends.table import NoTrainingStatement
+
+    arabic = "\u0662\u0660\u0662\u0666-\u0661\u0661-\u0660\u0665"
+    assert re.fullmatch(r"\d{4}-\d{2}-\d{2}", arabic)  # what a `\d` pattern would let through
+
+    def lax(text):
+        return dt.date(int(text[:4]), int(text[5:7]), int(text[8:10]))
+
+    assert lax(arabic) == dt.date(2026, 11, 5)
+    monkeypatch.setattr(table_mod, "_iso_date_or_none", lax)
+    with pytest.raises(ValidationError) as ei:
+        NoTrainingStatement(**_st("openai_compat", arabic))
+    assert "checked_on must be a date written YYYY-MM-DD" in str(ei.value)
 
 
 @pytest.mark.parametrize("value", ["unknown", "Contract_Terms", ["contract_terms"]])
