@@ -508,3 +508,4 @@ LAPTOP CANDIDATES (pushed heads only): PR85 0b54631 (items 3,4,10), PR72 e6a4220
 - 10:34Z UTC: q337 PR73 batch pushed 2e35f76; evidence cycle queued by builder. Next <= 10:41Z.
 - 10:35Z UTC: ORDER 144 -> 6c builder resumed; PR73 evidence cycle with its builder. Next <= 10:42Z.
 - 10:36Z UTC: wake; PR73 evidence (8 jobs) queued + fresh reviewer started; P1b r6, PR80 running; A9 drafter + 6c running. Unpushed none. Next <= 10:43Z.
+- 10:43Z UTC: q339 plan v4.2 (A18) drafted, round-3 reviewers started; PR73 o141 queued; P1b perf failure investigated. Next <= 10:50Z.
