@@ -16,9 +16,8 @@ CHANGELOG = CHANGELOG_PATH.read_text(encoding="utf-8")
 RUNBOOK = CHANGELOG[
     CHANGELOG.index("### Migration ") :
 ]  # "repair steps" now, "runbook" in older text
-TIMEOUTS = list(
-    RECIPE_TIMEOUTS
-)  # the one constant; a test checks that the runbook text says the same
+# the one constant; a test checks that the runbook text says the same
+TIMEOUTS = list(RECIPE_TIMEOUTS)
 PSQL_ARGS = [
     "psql",
     "-X",
