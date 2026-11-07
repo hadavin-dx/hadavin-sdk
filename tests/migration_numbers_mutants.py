@@ -28,6 +28,7 @@ ROOT = Path(__file__).resolve().parents[1]
 T1 = "tests/test_migration_numbers.py"
 T2 = "tests/test_migration_numbers_guards.py"
 T3 = "tests/test_timing_fixture.py"
+T4 = "tests/test_migration_names.py"
 TIMING = "tests/fixtures/timing.py"
 SRC = "src/hadavin_sdk/store/migration_numbers.py"
 
@@ -250,6 +251,38 @@ M = [
         "('GRANT r TO s', [])",
     ),
     mutant(
+        "order 112: the role rule looks for a standalone ON with the word boundary again (app$on hides a grant)",
+        "(?!.*?{_NAME_START}on{_NAME_END})",
+        r"(?!.*?\bon\b)",
+        T4,
+        "test_every_short_name_over_the_dollar_alphabet_is_refused_in_a_role_grant",
+        "GRANT r TO",
+    ),
+    mutant(
+        "order 112: a name character no longer includes the dollar sign",
+        '_NAME_CHAR = "[A-Za-z0-9_$',
+        '_NAME_CHAR = "[A-Za-z0-9_',
+        T4,
+        "test_the_name_boundary_agrees_with_the_lexer_character_set",
+        "AssertionError: $",
+    ),
+    mutant(
+        "order 112: a name character no longer includes non-ASCII characters",
+        '_NAME_CHAR = "[A-Za-z0-9_$\\u0080-\\U0010ffff]"',
+        '_NAME_CHAR = "[A-Za-z0-9_$]"',
+        T4,
+        "test_the_name_boundary_agrees_with_the_lexer_character_set",
+        "AssertionError: \u00e9",
+    ),
+    mutant(
+        "order 112: SET LOCAL lock_timeout is allowed by the word boundary again",
+        "(?:lock_timeout|statement_timeout){_NAME_END}",
+        "(?:lock_timeout|statement_timeout)\\b",
+        T4,
+        "test_the_word_boundary_is_used_only_where_a_match_refuses",
+        "_SET_ALLOWED",
+    ),
+    mutant(
         "fix1: COPY PROGRAM is not refused",
         "elif _COPY_PROGRAM.match(s):",
         "elif False:",
@@ -300,7 +333,7 @@ M = [
         'MIGRATE_LOCK = int.from_bytes(b"hadvnmig", "big") >> 2',
         T2,
         "test_the_lock_key_and_the_folder_are_the_ones_migrate_uses",
-        "BinOp(left=C",
+        "== (7521403312507021671 >> 1)",  # P3a-2: migrate.py imports the key, so the last assertion of the test fires
     ),
     mutant(
         "o100: MIGRATIONS names another folder than migrate does",
@@ -308,7 +341,7 @@ M = [
         'MIGRATIONS = Path(__file__).parent / "migration"',
         T2,
         "test_the_lock_key_and_the_folder_are_the_ones_migrate_uses",
-        "BinOp(left=A",
+        "/ 'migrations')",  # P3a-2: migrate.py imports the folder, so the last assertion of the test fires
     ),
     mutant(
         "o100: NAME lets any character into a file name",
@@ -366,7 +399,7 @@ if __name__ == "__main__":
     res = run_mutants(
         ROOT,
         M,
-        [T1, T2, T3],
+        [T1, T2, T3, T4],
         extra_dirs=("tests/fixtures",),
         only=only,
         on_result=show,

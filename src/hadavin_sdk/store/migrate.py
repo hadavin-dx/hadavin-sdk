@@ -3,21 +3,60 @@
 Run under a migration role, never by the runtime. Every pending `migrations/NNNN_*.sql` file is applied in one
 transaction under a transaction-scoped advisory lock, so two concurrent runs apply each file once. Pattern
 ported from WARDEN `audit.py:migrate` (main a1e76cbf). Rollback = restore the snapshot taken before migrating.
+
+The file-name rules, the late-file and gone-name refusals and the SQL text rules live in `migration_numbers`
+(no database library there); this module only calls them. Each file is read ONCE; the text that was scanned is
+the text that is executed. After each file, in the same transaction, `migrate` reads back the database user
+names (the current user and the session user), the replication-role setting, the search path, three settings that
+change how SQL text is read, the transaction clock and id, the role memberships (`pg_auth_members`: a role granted to a role inside a function body is
+found here, not by the statement rule) and the state of every trigger in the migration schema,
+and refuses if anything is LEFT changed (it cannot see a change that a file makes and undoes before it ends). Precondition: the migration role is not a superuser (a superuser can change
+what the read-back does not read).
+
+When `migrate` refuses, a database administrator repairs by hand (the full runbook, cases (a) to (g), is the section
+"Migration repair steps" of CHANGELOG.md). Every hand step is a FILE of SQL run with `psql -X -v ON_ERROR_STOP=1 -f <file>`
+and your own connection settings (never typed line by line, never a connection string in a text). The file starts with
+`\\set ON_ERROR_STOP on`, then `SET search_path TO "<the schema migrate uses>";`, `BEGIN;`, the two `SET LOCAL` lines of
+`RECIPE_TIMEOUTS` (`migration_numbers`: a lock limit and a statement limit; `migrate` sets the same two lines itself),
+the advisory lock of `migrate`
+(`SELECT pg_advisory_xact_lock(<MIGRATE_LOCK>);`, only while no `migrate` runs) and ends with `COMMIT;`; after every
+`UPDATE schema_migrations` it holds a `DO` check that raises unless exactly one row with the new version exists and
+none with the old one. A late file: use the recipe in the refusal message. A renamed file or ledger row: change the
+row to the name of the one folder file with the same text after the number. A database newer than the code: run the
+newer release; do not rename, drop or edit the ledger.
 """
 
 from __future__ import annotations
 
+import json
 import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
 
+from psycopg import errors as pg_errors
 from psycopg import sql
 
 from hadavin_sdk.errors import ConfigError
+from hadavin_sdk.store.migration_numbers import (
+    MIGRATE_LOCK,
+    MIGRATIONS,
+    RECIPE_TIMEOUTS,
+    MigrationNumberError,
+    check_ledger,
+    gone_message,
+    lex,
+    list_migration_files,
+    order_problems,
+    read_files,
+    refused_statements,
+    released_problems,
+)
 from hadavin_sdk.store.postgres import connect
 
-MIGRATIONS = Path(__file__).parent / "migrations"
+# `MIGRATIONS` and `check_ledger` are listed on purpose: they live in `migration_numbers` (no database library there)
+# and are re-exported so that existing imports from this module (`cli.py`, the tests) keep working.
+__all__ = ["GRANTS", "MIGRATIONS", "Grant", "check_grants", "check_ledger", "migrate"]
 
 
 @dataclass(frozen=True)
@@ -66,9 +105,7 @@ GRANTS: dict[str, Grant] = {
     "approval_decisions_seq_seq": Grant("sequence", "USAGE"),
     "dead_letters_seq_seq": Grant("sequence", "USAGE"),
 }
-_LOCK = int.from_bytes(b"hadvnmig", "big") >> 1  # one fixed key for every migrate run
 _ROLE = re.compile(r"[a-z_][a-z0-9_]{0,62}")
-_FILE = re.compile(r"(\d{4})_[a-z0-9_]+\.sql")
 _CREATE = re.compile(
     r"CREATE\s+(?:OR\s+REPLACE\s+)?(?:MATERIALIZED\s+)?(TABLE|VIEW)\s+(?:IF\s+NOT\s+EXISTS\s+)?(\w+)",
     re.IGNORECASE,
@@ -91,20 +128,7 @@ _UNREAD = re.compile(
 
 
 def _migration_files(folder: Path = MIGRATIONS) -> list[Path]:
-    return sorted(folder.glob("*.sql"))
-
-
-def check_ledger(paths: list[Path]) -> list[str]:
-    """Problems with the file names: each is `NNNN_<name>.sql` and the numbers run 1, 2, 3 ... with no repeat or gap."""
-    problems = [
-        f"{p.name}: not named NNNN_<name>.sql" for p in paths if not _FILE.fullmatch(p.name)
-    ]
-    numbers = sorted(int(p.name[:4]) for p in paths if _FILE.fullmatch(p.name))
-    for n in sorted({n for n in numbers if numbers.count(n) > 1}):
-        problems.append(f"two migrations are numbered {n:04d}")
-    missing = sorted(set(range(1, max(numbers, default=0) + 1)) - set(numbers))
-    problems += [f"migration {n:04d} is missing" for n in missing]
-    return problems
+    return list_migration_files(folder)
 
 
 def _table_body(text: str, start: int) -> str:
@@ -120,16 +144,27 @@ def _table_body(text: str, start: int) -> str:
     return text[open_at:]
 
 
-def _scan(paths: list[Path]) -> tuple[dict[str, str], list[str]]:
+def _scan(
+    paths: list[Path], texts: dict[Path, str] | None = None
+) -> tuple[dict[str, str], list[str]]:
     """(relation name -> kind, unread statements). Kinds: every table, view and serial-column sequence the
     migrations create. A statement that could create a relation or sequence in a way this scan does not read
     (quoted or schema-qualified name, UNLOGGED/TEMP/FOREIGN tables, CREATE SEQUENCE, IDENTITY, ADD COLUMN ...
-    SERIAL) is returned as a problem, never skipped: the guard fails closed."""
+    SERIAL) is returned as a problem, never skipped: the guard fails closed. With `texts` the scan reads that text
+    (the text `migrate` will execute); without it each file is read. Comments are removed by the single-pass lexer
+    and every quoted part is kept, so a statement inside a string or a `$$` body is still seen."""
     found: dict[str, str] = {}
     unread: list[str] = []
     for path in paths:
-        text = re.sub(r"/\*.*?\*/", "", path.read_text(encoding="utf-8"), flags=re.DOTALL)
-        text = re.sub(r"--[^\n]*", "", text)
+        raw = texts[path] if texts is not None else path.read_text(encoding="utf-8")
+        text, lexer_problem = lex(raw, keep_quoted=True)
+        if lexer_problem:
+            unread.append(f"{path.name}: {lexer_problem}")
+        unread += [
+            f"{path.name}: {reason}"
+            for reason in refused_statements(raw)
+            if reason != lexer_problem
+        ]
         for m in _ANY_CREATE.finditer(text):
             if not _SAFE_CREATE.match(text, m.start()):
                 snippet = " ".join(text[m.start() : m.start() + 40].split())
@@ -147,10 +182,10 @@ def _scan(paths: list[Path]) -> tuple[dict[str, str], list[str]]:
     return found, unread
 
 
-def check_grants(paths: list[Path]) -> list[str]:
+def check_grants(paths: list[Path], texts: dict[Path, str] | None = None) -> list[str]:
     """Problems between the migrations and `GRANTS`: a relation they create with no entry (it would get no grant
     and fail at runtime), an entry for a relation no migration creates, or an entry of the wrong kind."""
-    created, problems = _scan(paths)
+    created, problems = _scan(paths, texts)
     problems += [
         f"{n} ({k}) is created by a migration but is not in GRANTS"
         for n, k in sorted(created.items())
@@ -280,6 +315,162 @@ def _excess_privileges(db, role: str) -> list[str]:
     return extra
 
 
+# SHA-256 of every released migration file (forward-only: a released file is never edited, renumbered or deleted).
+# It ships with the package, so `migrate` itself can refuse a changed file; add a row when a release is cut.
+RELEASED_MANIFEST = MIGRATIONS.parent / "migrations_released.json"
+_SHA256 = re.compile(r"[0-9a-f]{64}")
+
+
+def _no_duplicate_names(pairs: list[tuple[str, object]]) -> dict[str, object]:
+    """json would silently keep the LAST of two equal names: a second, edited hash would hide the first."""
+    names = [k for k, _ in pairs]
+    if len(set(names)) != len(names):
+        raise ValueError(
+            f"the name {next(n for n in names if names.count(n) > 1)!r} is written twice"
+        )
+    return dict(pairs)
+
+
+def _released_manifest() -> dict[str, str]:
+    try:
+        data = json.loads(
+            RELEASED_MANIFEST.read_text(encoding="utf-8"), object_pairs_hook=_no_duplicate_names
+        )
+    except (OSError, ValueError) as e:
+        raise ConfigError(f"the list of released migration files cannot be read: {e}") from e
+    if not isinstance(data, dict) or not all(
+        isinstance(k, str) and isinstance(v, str) for k, v in data.items()
+    ):
+        raise ConfigError("the list of released migration files is not a name -> SHA-256 table")
+    for name, value in data.items():
+        if not _SHA256.fullmatch(value):
+            raise ConfigError(
+                f"the list of released migration files has no SHA-256 (64 hex digits) for {name!r}"
+            )
+    return data
+
+
+# What the read-back reads after each file (module constants: the tests answer them by exact text).
+# The nine values are compared with the values saved before the first file; `transaction_timestamp()` and
+# `txid_current()` are the backstop for a COMMIT the text rules did not see (a COMMIT starts a new transaction).
+_READBACK_VALUES = (
+    "current_user",
+    "session_user",
+    "session_replication_role",
+    "search_path",
+    "standard_conforming_strings",
+    "backslash_quote",
+    "client_encoding",
+    "transaction_timestamp",
+    "txid_current",
+)
+_READBACK_VALUES_SQL = (
+    "SELECT current_user, session_user, current_setting('session_replication_role'), "
+    "current_setting('search_path'), current_setting('standard_conforming_strings'), "
+    "current_setting('backslash_quote'), current_setting('client_encoding'), "
+    "transaction_timestamp(), txid_current()"
+)
+# Role memberships (who is a member of whom, with the grant options): the one thing a `$$` function body can change
+# that no statement-start rule sees (`GRANT r TO s` inside a function, then `SELECT f();`). Names, not OIDs.
+_READBACK_MEMBERS_SQL = (
+    "SELECT m.roleid::regrole::text, m.member::regrole::text, "
+    "(to_jsonb(m) - 'oid' - 'roleid' - 'member')::text FROM pg_auth_members m"
+)
+# Triggers of the migration schema only (the schema `current_schema()` names now); internal ones are skipped.
+_READBACK_TRIGGERS_SQL = (
+    "SELECT t.tgrelid, t.tgname, t.tgenabled, c.relname, n.nspname FROM pg_trigger t "
+    "JOIN pg_class c ON c.oid = t.tgrelid JOIN pg_namespace n ON n.oid = c.relnamespace "
+    "WHERE NOT t.tgisinternal AND n.nspname = current_schema()"
+)
+
+
+@dataclass(frozen=True)
+class _Saved:
+    values: tuple
+    triggers: dict  # (schema, table, tgname) -> (tgenabled, schema, table): a name, so a recreated table is the same trigger
+    members: frozenset = frozenset()  # (role, member, other columns as text)
+
+
+def _read_back(db) -> _Saved:
+    values = tuple(db.execute(_READBACK_VALUES_SQL).fetchone())
+    triggers = {
+        (schema, table, name): (enabled, schema, table)
+        for _relid, name, enabled, table, schema in db.execute(_READBACK_TRIGGERS_SQL).fetchall()
+    }
+    members = frozenset(tuple(r) for r in db.execute(_READBACK_MEMBERS_SQL).fetchall())
+    return _Saved(values, triggers, members)
+
+
+def _refuse_unusual_strings(saved: _Saved) -> None:
+    """The lexer reads strings as `standard_conforming_strings = on` does; any other start value is refused."""
+    value = saved.values[_READBACK_VALUES.index("standard_conforming_strings")]
+    if value != "on":
+        raise ConfigError(
+            f"standard_conforming_strings is {value!r} for this session; migrate needs 'on' "
+            "(the file checks read strings the way 'on' does)"
+        )
+
+
+def _label(*names: str) -> str:
+    """Names of database objects for a message: control characters are written as escapes."""
+    return ".".join(ascii(n)[1:-1] for n in names)
+
+
+def _check_read_back(db, saved: _Saved, file_name: str) -> _Saved:
+    """Read again after `file_name` and compare. The nine values in `_READBACK_VALUES` (seven user and setting
+    values, then the transaction clock and id) must equal the values saved before the first file; a saved trigger must still exist; no trigger may be
+    disabled (`D`) or replica-only (`R`) unless it already was; the set of role memberships must equal the saved set. Refuses with every difference named. Returns the
+    trigger state just read (the base for the next file); the saved values stay those of the start."""
+    now = _read_back(db)
+    problems = [
+        f"{item} was {old!a} and is now {new!a}"
+        for item, old, new in zip(_READBACK_VALUES, saved.values, now.values, strict=True)
+        if old != new
+    ]
+    for key, (_enabled, schema, table) in sorted(saved.triggers.items(), key=lambda kv: str(kv[0])):
+        if key not in now.triggers:
+            problems.append(f"trigger {_label(schema, table, key[2])} no longer exists")
+    for key, (enabled, schema, table) in sorted(now.triggers.items(), key=lambda kv: str(kv[0])):
+        before = saved.triggers.get(key)
+        if enabled in ("D", "R") and (before is None or before[0] != enabled):
+            problems.append(
+                f"trigger {_label(schema, table, key[2])} is now "
+                f"{'disabled' if enabled == 'D' else 'replica-only'}"
+            )
+    problems += [
+        f"role {_label(role)} has a new member {_label(member)} ({_label(rest)})"
+        for role, member, rest in sorted(now.members - saved.members)
+    ]
+    problems += [
+        f"role {_label(role)} lost the member {_label(member)} ({_label(rest)})"
+        for role, member, rest in sorted(saved.members - now.members)
+    ]
+    if problems:
+        raise ConfigError(
+            f"migration {ascii(file_name)[1:-1]} left the database session changed: "
+            + "; ".join(problems)
+        )
+    return _Saved(saved.values, now.triggers, saved.members)
+
+
+def _limit_error(e: Exception, step: str) -> ConfigError | None:
+    """The plain-words error for a lock wait or a statement that ran into the limits of `RECIPE_TIMEOUTS` (None for
+    any other error, which is raised as it is)."""
+    limits = dict(re.findall(r"SET LOCAL (\w+) = '([^']*)'", " ".join(RECIPE_TIMEOUTS)))
+    if isinstance(e, pg_errors.LockNotAvailable):
+        what = f"waited more than {limits.get('lock_timeout')} for a lock (lock_timeout)"
+    elif isinstance(e, pg_errors.QueryCanceled) and "statement timeout" in str(e):
+        what = f"ran more than {limits.get('statement_timeout')} (statement_timeout)"
+    else:
+        return None
+    return ConfigError(
+        f"migrate stopped and kept nothing: while {step}, a statement {what}. Another session holds a lock on a "
+        "table, or the statement is too slow for a live database. Run migrate again when nothing holds the table; "
+        "a migration file that really needs longer is applied by hand with a raised number (CHANGELOG.md, "
+        "Migration repair steps)."
+    )
+
+
 def migrate(
     dsn: str,
     *,
@@ -294,7 +485,27 @@ def migrate(
     """Apply pending migrations; return the versions applied by this call. With `runtime_role`, give it the
     privileges `GRANTS` lists (never TRUNCATE; DELETE only on the outbox and the purged evidence tables). With `portal_role`, SELECT on the
     relations marked `portal` and nothing else. The ledger and the grant map are checked first: a bad file name,
-    a gap, or a relation with no `GRANTS` entry stops the run before it touches the database."""
+    a gap, or a relation with no `GRANTS` entry stops the run before it touches the database. Right after the advisory
+    lock the run sets the two `SET LOCAL` limits of `RECIPE_TIMEOUTS` (a lock limit and a statement limit, the same
+    lines the hand recipe sets; the numbers are in the CHANGELOG, "Migration repair steps"). They cover the rest of
+    the run: reading the ledger, every file, the read-back, and the role checks and grants, so a run with no pending
+    file is covered too (a `GRANT` that waits longer than the lock limit for a busy table fails the run). The lock
+    limit applies to each wait for a lock and the statement limit to each statement (a file with several statements
+    is not timed as a whole; seen on PostgreSQL 16.15). A limit that is reached fails the whole run, keeps nothing and
+    is raised as a `ConfigError` in plain words that names the step and the setting. Order: the hand recipe sets the
+    limits BEFORE the advisory lock (a person must not hang); `migrate` sets them AFTER it, on purpose: a second
+    `migrate` started at the same time waits for the first (that is how two runs apply a file once) and is not
+    limited while it waits. A migration file may itself `SET LOCAL` either limit; the new value then also holds for the
+    files after it in the same run, so the limits are a guarantee only for files that do not set them.
+
+    Role membership: the refusal list of `migration_numbers` is wider than a plain list of the dangerous statements.
+    `GRANT r TO s` and `REVOKE r FROM s` with no `ON` (a role-membership change) are refused in a `.sql` file, because
+    the guard cannot read what they change. A role is chosen by the person running `migrate`, so it cannot be named in
+    a static file: any role-membership change is made by `migrate()`'s own Python step, with the role as an argument,
+    and never by a migration file. (`migrate` makes none today; privileges on tables and sequences are the
+    `GRANT ... ON ...` statements it runs itself.) A `.sql` file that holds `GRANT ... ON ...` is not refused by this rule. The rule reads
+    statements only at the start of a statement; a membership change made some other way (a `GRANT r TO s` inside a `$$`
+    function body that the file then calls) is found by the read-back of `pg_auth_members` after the file and refuses the run."""
     for role in (runtime_role, portal_role, purge_role):
         if role is not None and not _ROLE.fullmatch(role):
             raise ConfigError(f"not a plain database role name: {role!r}")
@@ -302,59 +513,84 @@ def migrate(
     if len(set(named)) != len(named):
         raise ConfigError("the runtime, portal and purge roles must be different roles")
     files = _migration_files()
-    if problems := check_ledger(files) + check_grants(files):
+    if problems := check_ledger(files):
+        raise MigrationNumberError(problems)
+    if problems := released_problems(MIGRATIONS, _released_manifest()):
+        raise MigrationNumberError(
+            problems
+        )  # a released file edited, deleted, or a new file numbered below it
+    texts = read_files(files)  # the only read of each file: the text scanned is the text executed
+    if problems := check_grants(files, texts=texts):
         raise ConfigError("migrations are inconsistent: " + "; ".join(problems))
     applied = []
-    with (
-        connect(
-            dsn, iam_auth=iam_auth, region=region, sslmode=sslmode, sslrootcert=sslrootcert
-        ) as db,
-        db.transaction(),
-    ):
-        db.execute("SELECT pg_advisory_xact_lock(%s)", (_LOCK,))
-        db.execute(
-            "CREATE TABLE IF NOT EXISTS schema_migrations "
-            "(version TEXT PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT now())"
-        )
-        done = {r[0] for r in db.execute("SELECT version FROM schema_migrations").fetchall()}
-        if gone := sorted(done - {p.stem for p in files}):
-            raise ConfigError(
-                f"applied migrations have no file in this release: {', '.join(gone)}. If a migration file was renamed "
-                "and its tables already exist, rename the ledger row by hand (change the version of that row in the "
-                "schema_migrations table to the new file name); if its content changed too, drop what it made and "
-                "run migrate again"
+    step = ["taking the migration lock"]  # what the run is doing, for the error of a limit
+    try:
+        with (
+            connect(
+                dsn, iam_auth=iam_auth, region=region, sslmode=sslmode, sslrootcert=sslrootcert
+            ) as db,
+            db.transaction(),
+        ):
+            db.execute(
+                "SELECT pg_advisory_xact_lock(%s)", (MIGRATE_LOCK,)
+            )  # one key, defined in migration_numbers
+            # the hand recipe's two limits (one constant); `SET LOCAL` ends with this transaction
+            for limit in RECIPE_TIMEOUTS:
+                db.execute(limit)
+            db.execute(
+                "CREATE TABLE IF NOT EXISTS schema_migrations "
+                "(version TEXT PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT now())"
             )
-        for path in files:
-            if path.stem in done:
-                continue
-            db.execute(path.read_text(encoding="utf-8"))  # a file shipped in this package
-            db.execute("INSERT INTO schema_migrations (version) VALUES (%s)", (path.stem,))
-            applied.append(path.stem)
-        q = "SELECT pg_has_role(%s, %s, 'MEMBER')"  # a member keeps the other's rights, whatever we REVOKE
-        for a in named:
-            for b in named:
-                if a != b and db.execute(q, (a, b)).fetchone()[0]:
+            step[0] = "reading the ledger"
+            done = {r[0] for r in db.execute("SELECT version FROM schema_migrations").fetchall()}
+            if gone := gone_message(done, files):
+                raise MigrationNumberError([gone])
+            schema = db.execute("SELECT current_schema()").fetchone()[0] or ""
+            if late := order_problems(done, files, texts, schema):
+                raise MigrationNumberError(late)
+            pending = [p for p in files if p.stem not in done]
+            if pending:
+                saved = _read_back(db)
+                _refuse_unusual_strings(saved)
+            for path in pending:
+                step[0] = f"applying {path.name}"
+                db.execute(texts[path])  # the text that was scanned, never a second read
+                saved = _check_read_back(db, saved, path.name)
+                db.execute("INSERT INTO schema_migrations (version) VALUES (%s)", (path.stem,))
+                applied.append(path.stem)
+            step[0] = "checking and granting the roles"
+            q = "SELECT pg_has_role(%s, %s, 'MEMBER')"  # a member keeps the other's rights, whatever we REVOKE
+            for a in named:
+                for b in named:
+                    if a != b and db.execute(q, (a, b)).fetchone()[0]:
+                        raise ConfigError(
+                            "the runtime, portal and purge roles must not be members of each other"
+                        )
+            if runtime_role:
+                _apply_grants(db, runtime_role, lambda g: g.runtime)
+                if bad := effective_problems(db, runtime_role, lambda g: g.runtime if g else ""):
                     raise ConfigError(
-                        "the runtime, portal and purge roles must not be members of each other"
+                        "the runtime role holds more than the grant map: " + "; ".join(bad[:20])
                     )
-        if runtime_role:
-            _apply_grants(db, runtime_role, lambda g: g.runtime)
-            if bad := effective_problems(db, runtime_role, lambda g: g.runtime if g else ""):
-                raise ConfigError(
-                    "the runtime role holds more than the grant map: " + "; ".join(bad[:20])
-                )
-        if purge_role:
-            _apply_grants(db, purge_role, lambda g: g.purge, lambda g: g.purge_cols)
-            if bad := effective_problems(
-                db, purge_role, lambda g: g.purge if g else "", lambda g: g.purge_cols if g else ()
-            ):
-                raise ConfigError(
-                    "the purge role holds more than the grant map: " + "; ".join(bad[:20])
-                )
-        if portal_role:
-            _apply_grants(db, portal_role, lambda g: "SELECT" if g.portal else "")
-            if extra := _excess_privileges(db, portal_role):
-                raise ConfigError(  # e.g. inherited from another role: REVOKE cannot take those away
-                    f"the portal role holds privileges outside the portal grant map: {', '.join(extra)}"
-                )
+            if purge_role:
+                _apply_grants(db, purge_role, lambda g: g.purge, lambda g: g.purge_cols)
+                if bad := effective_problems(
+                    db,
+                    purge_role,
+                    lambda g: g.purge if g else "",
+                    lambda g: g.purge_cols if g else (),
+                ):
+                    raise ConfigError(
+                        "the purge role holds more than the grant map: " + "; ".join(bad[:20])
+                    )
+            if portal_role:
+                _apply_grants(db, portal_role, lambda g: "SELECT" if g.portal else "")
+                if extra := _excess_privileges(db, portal_role):
+                    raise ConfigError(  # e.g. inherited from another role: REVOKE cannot take those away
+                        f"the portal role holds privileges outside the portal grant map: {', '.join(extra)}"
+                    )
+    except (pg_errors.LockNotAvailable, pg_errors.QueryCanceled) as e:
+        if (plain := _limit_error(e, step[0])) is None:
+            raise
+        raise plain from e
     return applied

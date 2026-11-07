@@ -21,7 +21,13 @@ from tests.fixtures.seeded import Seeded
 
 SEED = 20261106
 CASES = 30000
-MANIFEST = Path(__file__).parent / "fixtures" / "migrations_released.json"
+MANIFEST = (
+    Path(__file__).resolve().parents[1]
+    / "src"
+    / "hadavin_sdk"
+    / "store"
+    / "migrations_released.json"
+)
 
 
 @pytest.fixture
@@ -231,22 +237,17 @@ def _imports_from_numbers(path: Path, name: str) -> bool:
 
 
 def test_the_lock_key_and_the_folder_are_the_ones_migrate_uses(mn):
-    """`migrate.py` keeps its own copies of the lock key (`_LOCK`) and the folder (`MIGRATIONS`) until P3a-2 makes it
-    import them from this module. Until then this test reads that file as text (no import, so no psycopg) and requires
-    the SAME expression for each. After P3a-2, `migrate.py` imports the name from here and the test accepts that."""
+    """`migrate.py` imports the lock key and the folder from this module (read as text, no import, so no psycopg) and
+    has no second copy of either: a second `_LOCK` or `MIGRATIONS` assignment there would let the two drift apart."""
     here = Path(mn.__file__)
     other = here.with_name("migrate.py")
     assert other.is_file()
-    lock_here = ast.dump(_assigned(here, "MIGRATE_LOCK"))
-    lock_there = _assigned(other, "_LOCK")
-    assert lock_there is not None or _imports_from_numbers(other, "MIGRATE_LOCK")
-    if lock_there is not None:
-        assert ast.dump(lock_there) == lock_here
-    folder_there = _assigned(other, "MIGRATIONS")
-    assert folder_there is not None or _imports_from_numbers(other, "MIGRATIONS")
-    if folder_there is not None:
-        assert ast.dump(folder_there) == ast.dump(_assigned(here, "MIGRATIONS"))
-    # the value itself, computed here from the same bytes: a change of the expression in both files is still caught
+    assert _imports_from_numbers(other, "MIGRATE_LOCK")
+    assert _assigned(other, "_LOCK") is None
+    assert _assigned(other, "MIGRATE_LOCK") is None
+    assert _imports_from_numbers(other, "MIGRATIONS")
+    assert _assigned(other, "MIGRATIONS") is None
+    # the value itself, computed here from the same bytes: a change of the expression is still caught
     assert mn.MIGRATE_LOCK == int.from_bytes(b"hadvnmig", "big") >> 1
     assert isinstance(mn.MIGRATE_LOCK, int)
     assert mn.MIGRATIONS == here.parent / "migrations" == other.parent / "migrations"
@@ -360,7 +361,35 @@ def _sha(path: Path) -> str:
 def test_the_real_folder_matches_the_released_manifest(mn):
     manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
     assert mn.released_problems(mn.MIGRATIONS, manifest) == []
-    assert len(manifest) == 5
+    assert len(manifest) >= len(FIRST_FIVE), "a release adds rows after the first five; none may go"
+    assert list(manifest)[: len(FIRST_FIVE)] == list(FIRST_FIVE), "the first five stay, in order"
+
+
+# The SHA-256 of the five files that were on main when the list was made (order 89), typed here by hand from
+# `git show origin/main:<file> | sha256sum`, on purpose NOT read from the json: a person who edits a released file AND
+# recomputes the json must also edit this table, in plain sight of a reviewer. Rows are added after these, never changed.
+FIRST_FIVE = {
+    "0001_core": "d60b37ba5f929c7ae888f53920bd58c6c823b27a80d7ca82074aefdb42832374",
+    "0002_audit_chain": "17325ed9f0a67cb276132d5cc0a42c6997d1191123122ba13491dd0413ac8dc3",
+    "0003_approvals_tick": "f3e2a56cc11ee1b3c009f08dcd1aafc5bb52711dbd28368ad56ac8d06a2fe346",
+    "0004_audit_checkpoint_meta": "1e0a67c9a9d22245dbeb54c65ff6b31e6392927f64c41deb955018595aef76a7",
+    "0005_evidence": "d8a714926a61bc1a6ec45137a9563df20ca44a796f63f01f99d2028d87558ad9",
+}
+
+
+def test_the_first_five_released_files_have_the_pinned_hashes(mn):
+    """M-4. Killed by: mutant MM4 (a byte appended to 0003_approvals_tick.sql AND its json row recomputed: the pinned
+    table is the only thing that fails), MM5 (only the json row of 0003 changed), MM6 (the first row of the table)."""
+    for stem, digest in FIRST_FIVE.items():
+        assert _sha(mn.MIGRATIONS / f"{stem}.sql") == digest, f"{stem}.sql was edited"
+
+
+def test_the_released_json_keeps_the_first_five_hashes_and_is_well_formed(mn):
+    manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    for stem, digest in FIRST_FIVE.items():
+        assert manifest.get(stem) == digest, f"{stem}: the json row was changed"
+    for stem, digest in manifest.items():
+        assert re.fullmatch(r"[0-9a-f]{64}", digest), f"{stem}: not 64 lower-case hex digits"
 
 
 def test_released_problems_catches_an_edit_a_deletion_and_a_low_new_number(mn, tmp_path):
