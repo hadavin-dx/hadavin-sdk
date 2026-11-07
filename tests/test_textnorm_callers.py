@@ -215,6 +215,9 @@ def test_refusal_handlers_has_three_entries_and_the_banned_names_follow_textnorm
         "NotText",
         "UnidataMismatch",
         "FoldNotConverged",
+        "EmptyView",
+        "ViewTooShort",
+        "CoverageRefused",
     }, "a new TextnormError subclass: it is banned automatically; update this list on purpose"
 
 
