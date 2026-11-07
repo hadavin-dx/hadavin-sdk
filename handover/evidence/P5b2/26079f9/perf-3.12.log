@@ -1,0 +1,8 @@
+head=26079f999482ad19e5a6fa78bce3a7795912ef7d+worktree python=3.12 marker='perf'
+Python 3.12.13
+
+T-E8 watchdog: pg_sleep(30) cancelled after 2.01s (watchdog 2.0s; the assertion allows 3.0s: the timer, the cancel round trip to the server and the connection close)
+.................................                                        [100%]
+33 passed, 11905 deselected in 63.02s (0:01:03)
+exit=0
+exit=0

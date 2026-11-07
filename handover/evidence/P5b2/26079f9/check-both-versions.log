@@ -1,0 +1,7 @@
+head=a3fe8fa1c1e7c748408d449e4c67cdc403772e59
+== python 3.12
+rows=203 LITERAL=42 OPERATOR=140 FOREIGN=21 blank=0 locked=19
+check-exit=0
+== python 3.13
+rows=203 LITERAL=42 OPERATOR=140 FOREIGN=21 blank=0 locked=19
+check-exit=0
