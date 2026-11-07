@@ -41,3 +41,4 @@ src/hadavin_sdk/guard/redact.py	"dev",	word list of the redactor (words not swep
 src/hadavin_sdk/guard/redact.py	"stage",	word list of the redactor (words not swept as names), not a stage check
 src/hadavin_sdk/guard/redact.py	"staging",	word list of the redactor (words not swept as names), not a stage check
 tests/contracts/test_sources.py	ks(api, ["prod", "staging"]).probe_scope()	Kubernetes namespace names in a probe test, not a core stage
+src/hadavin_sdk/guard/redact.py	"production",	word list of the redactor (words not swept as names), not a stage check
