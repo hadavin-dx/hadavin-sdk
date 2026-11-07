@@ -100,9 +100,12 @@ def _cells(cur) -> list[str]:
 
 
 def _aimed_at(sql: str, dsn: str) -> str:
-    """The statement as the test server must run it: the self-connection of ``dblink_connect('dbname=postgres')`` names the
-    host (or socket directory), port and user of the DSN under test, so the result does not depend on the environment of the
-    server process. Any other statement is returned unchanged."""
+    """The statement as the test server must run it. The self-connection of ``dblink_connect('dbname=postgres')`` names the host (or
+    socket directory), port and user of the DSN under test, so the result does not depend on the environment of the server
+    process; ``COPY ... TO PROGRAM`` gets a program that reads its input (see below). Any other statement is returned unchanged."""
+    # COPY ... TO PROGRAM: the server pipes the rows into the program's stdin. A program that never reads (`echo`) makes the close
+    # of that pipe a race ("Broken pipe" in some runs), so the demonstration uses one that reads to the end.
+    sql = sql.replace("TO PROGRAM 'echo x'", "TO PROGRAM 'cat > /dev/null'")
     fragment = "'dbname=postgres'"
     if fragment not in sql:
         return sql
@@ -205,5 +208,8 @@ def test_the_dblink_self_connection_names_the_server_under_test():
     aimed = _aimed_at(sql, "user=postgres dbname=x host=/run/pgtest port=55720")
     assert "host=/run/pgtest" in aimed and "port=55720" in aimed and "user=postgres" in aimed
     assert aimed.startswith("SELECT dblink_connect('") and aimed.endswith("')")
+    assert _aimed_at("COPY (SELECT 1) TO PROGRAM 'echo x'", "host=h port=1").endswith(
+        "TO PROGRAM 'cat > /dev/null'"
+    )
     other = "SELECT 1"
     assert _aimed_at(other, "host=h port=1") == other
