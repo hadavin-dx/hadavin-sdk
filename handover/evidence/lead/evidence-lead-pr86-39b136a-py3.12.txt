@@ -1,0 +1,4 @@
+machine LAPTOP; pr 86 branch core/P6b1 head 39b136ab1ce42e0d4ec969c637c5c86940ebbf51; python 3.12; postgres 16 docker port 55511
+== pytest (not live, not perf) with DSN
+10446 passed, 418 skipped, 26 deselected in 1453.40s (0:24:13)
+done 09:37Z
