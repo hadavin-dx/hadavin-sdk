@@ -13,7 +13,7 @@
 ## OWNER DECISIONS still open (order 145 item 3; the lead carries them, nobody decides them here) [AUTHOR]
 - **O3 reconciliation.** Bible rule R368 asks us to compare the messages we received with the sender's own list of ids. v1 does NOT do this (section 4.5). Until the owner answers, no quote promises it, and the quote sentence of section 4.5 applies.
 - **O4 where the door runs in pilot and prod.** In v1 the door runs only in a demo-stage server. Hosting it for pilot or prod is the deferred ticket AK-G16. Until the owner answers, no quote prices the door's hosting ("door stack: NOT PRICED").
-- Seven more owner items (O1, O5-O11) and every lead item are in section 11.
+- Eight more owner items (O1, O5-O11) and every lead item are in section 11.
 
 ## How to read this file (process notes, moved below the summary in v4.3) [AUTHOR]
 - Status: v4.3 = the ONE final author pass of order 145. There is no review round 4; the lead reads it and freezes it (order 145 item 2). Not binding until the lead records it in `studio-notes/amendments.md` and writes a FROZEN line in `LEAD-ORDERS.md` (order 145 item 4).
@@ -87,7 +87,7 @@ Bible rules (owner hard rules; text in `bible-extract-R447-R450.md`):
 - **R369**: one tenant (client organisation) can never read another tenant's data, enforced in the data layer and proven by tests.
 - **R371**: data of one client, one demo or one training set never affects another.
 - **R445, R446**: the client decides whether outside tools touch his data, chooses among listed options, and the choice and its risk are written into the quote (full wording not in the extract: UNVERIFIED).
-- **R447**: the tool ladder: try the client's own tool, then no-code tools, then our core modules, then free standard tools, then tested free libraries, and only then our own new code, which is reserved for the "guarantee-class" steps listed in 0.4.
+- **R447**: the tool ladder: try the client's own tool, then no-code tools, then our core modules, then free standard tools, then tested free libraries, and only then our own new code, which is reserved for the "guarantee-class" parts listed in 0.4.
 - **R448** (CODE LAST): our own new code is allowed only for a guarantee-class part that no higher rung gives; every plan carries a rung table, and a KEEP-CODE verdict must name the guarantee and the one property the tool fails, with a reproduction (a failing test or a doc quote with its URL). Full text: section 16.
 - **R449** (STAGES): the only stage names are DEMO, PILOT and PROD; "dev", "staging" and "test" are never stage names. Full text: section 16.
 - **R450**: every rung decision needs dated research, a cost calculation, a test and a licence check; items used here: (d) licence check before anything ships, (f) contract text keeps "not reviewed by counsel", (j) the meanings of kind, EGM, the lead, guarantee-class, (k) wrap an outside library unmodified, never fork it.
@@ -134,7 +134,7 @@ Owner decision 3 ("do not cut anything that connects to n8n or Make", section 2)
 
 | Status | Meaning |
 |---|---|
-| IN PR | an open pull request exists (section 0.8); work on it continues; merge state UNVERIFIED (not checked on GitHub) |
+| IN PR | an open pull request exists (section 0.9); work on it continues; merge state UNVERIFIED (not checked on GitHub) |
 | TICKET FROZEN, NOT STARTED | the ticket text is frozen; no pull request yet; built in chain order |
 | ACTIVE TICKET | listed as active in `freeze-list.md` (order 59 item 4); may be built when its dependencies merge and its start is released |
 | DEFERRED | frozen ticket, not built. A deferral is LIFTED only by the OWNER (his yes); the lead only records the lift in an order (ruling 9; order 142 item 1). The start condition that makes us ask him is in order 59 item 4: "a client or a chain item names the need" |
@@ -147,7 +147,7 @@ People and process:
 - **EGM** = the studio's review process: fresh reviewer agents (`egm:*` types) read the work and the evidence; the lead resolves (R450(j)).
 - ***EGM-GATE v1** = the marker of preamble rule 13 (owner hard rule 2026-11-01): every plan, design, client text and non-trivial code change goes through EGM in order (brainstorm, draft, review, resolve, build, evidence, result review, drift report); the author never reviews his own work.
 - ***CODE-LAST v1** = the marker of preamble rule 20 (R448): a plan or ticket must carry a rung table before build-start review.
-- ***chain** = the merge order of core packages in plan-v3 section 7 (amended by amendment A15 J3 (a), PAUSED with it). **open chain** = the pull requests of that order that are open now (section 0.8). "Chain order" = that merge order. No other meaning.
+- ***chain** = the merge order of core packages (plan-v3 section 7; amendment A15 J3 (a) quotes it as "order 20 item 4 merge order stands"). **open chain** = the pull requests of that order that are open now (section 0.9). "Chain order" = that merge order. No other meaning.
 - **package** = one plan-v3 work package (P1a, P4b1 ...); **kit** = the Assembly Kit of amendment A10 (AK-* tickets).
 - **work item 9.N** = item N of the order of work (section 9). **build start** = the review that releases a frozen ticket to a builder.
 - ***gate** = a check that must pass before something may go further. Every gate in this file is named with its noun: "outbound gate (AK1b)", "recipient gate (AK-G22)", "live-call gate (P4b1)", "hostile-set gate (T3b)", "owner gate" (an item that waits for the owner's answer). "EGM-GATE v1" is the rule marker above.
@@ -168,7 +168,7 @@ Product and data:
 - **receipt** = one row in `inbound_receipts`: our record that a delivery arrived (key, keyed body hash, state, tries, run id). Not a payment receipt.
 - ***ledger** = the receipt table plus its store methods (AK-G2-a), and nothing else. It remembers every delivery key, so the same message never starts work twice. The meter's day and month counters are the **spend totals**, never a ledger.
 - ***lease** = the limited time (`lease_s`) for which ONE worker holds ONE receipt it has claimed; if the worker crashes, the lease runs out and another worker may claim the receipt (AK-G2 line 24). Nothing else is called a lease (AK-G1's conversation lock is a "hand-off lock").
-- ***run** (noun) = one run of one agent for one message, one row in `runs`; its id is derived from the delivery key and the **generation** (a counter raised only when a person reopens a message). The run row is the commit point (AK-G2 line 107). A single execution of an n8n workflow is an **execution**; a single test is a "test", never a "run".
+- ***run** (noun) = one attempt of one agent at one message, stored as one row in `runs`; its id is derived from the delivery key and the **generation** (a counter raised only when a person reopens a message). The run row is the commit point (AK-G2 line 107). A single execution of an n8n workflow is an **execution**; a single test is a "test", never a "run".
 - **outbound gate (AK1b)** = the one place every outbound text passes, masked first. **recipient gate** = GAPS row G22's gate for messages to people (no ticket yet).
 - **hmac_v0** = our existing request-signing scheme (`approvals/hmac_v0.py`): HMAC-SHA256 over `v0:` + timestamp + `:` + body; `verify` returns one true/false and refuses a timestamp more than 300 s from now in either direction (`hmac_v0.py:47`, VERIFIED (read)).
 - **meter** = the spend meter (P4b1): **reserve** sets money aside before a model call equal to the worst case; **settle** replaces it with the real cost; **release** gives it all back. ***hold** (noun) = one reservation as seen from the code that made it (P4b1 line 6); the verb "holds" keeps its ordinary meaning (contains, keeps). **micro-dollar** = one millionth of a US dollar, the integer unit inside the meter (amendment A9 item B1).
