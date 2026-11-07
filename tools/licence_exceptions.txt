@@ -1,5 +1,15 @@
-# Packages in the locked set that declare a copyleft licence and are allowed to stay until the owner decides. One name
-# per line, then the reason. Adding a line needs the owner's written yes (studio rule); the check fails on any other.
-pglast        # GPL-3.0-or-later; `test` group only, never imported by src/ (the comparison test is skipped without it). On main before this branch.
-psycopg       # LGPL-3.0-only; the `pg` and `askdata` extras, used as a separately installed library, unmodified. On main before this branch.
-psycopg-binary  # LGPL-3.0-only; the compiled part of psycopg[binary]. On main before this branch.
+# Exceptions to tools/licence_check.py. Exact versions: a new version of a package needs a new line, and a line whose
+# package or version is gone, or that is no longer needed, fails the check.
+#
+# `allow` lines name copyleft packages that stay. THE THREE `allow` LINES BELOW WERE NOT APPROVED BY THE OWNER. They
+# record what is already on main, so CI can run, and they AWAIT THE OWNER'S WRITTEN DECISION (studio rule: a
+# non-permissive licence needs it before use in a client deliverable). Options for the owner: accept the LGPL driver
+# as an unmodified, separate dependency in writing; put a permissive driver behind the store kind; drop pglast.
+# `unchecked` lines name packages skipped on Linux by their marker; the licence was read by hand from the package
+# index (PyPI JSON) on 2026-11-07.
+allow pglast==8.7  # GPL-3.0-or-later; `test` group only, not imported by src/ (the comparison test is skipped without it). On main before this branch.
+allow psycopg==3.3.6  # LGPL-3.0-only; the `pg` and `askdata` extras; used as a library, intended to stay unmodified (not verified). On main before this branch.
+allow psycopg-binary==3.3.6  # LGPL-3.0-only; the compiled part of psycopg[binary]. On main before this branch.
+unchecked colorama==0.4.6  # win32 only; BSD License (classifier on PyPI)
+unchecked tzdata==2026.6  # win32 only; Apache-2.0 (PyPI License field)
+unchecked httpx2-jsfetch==1.0  # emscripten only; BSD-3-Clause (PyPI License-Expression)

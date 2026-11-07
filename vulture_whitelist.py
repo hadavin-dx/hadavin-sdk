@@ -7,7 +7,7 @@
 #   - a method of a protocol or a base class (called through the interface, or by tests and demos only), or
 #   - a function that is the public API of the core (used by tests, demos and client builds, not by the core), or
 #   - kept on purpose, NOT in use (see ticket P1d (approvals.channel.clean lets a split key through; base 0dabf1f)): gate._rendered
-#     (with the unflagged gate._views, _ANSI_AS_TEXT, _RENDERED_MARKUP) is the unfinished fix for that open redaction hole and
+#     (with gate._views, which vulture does not flag because runmap.py defines and calls a function of the same name `_views`, and vulture matches by bare name; _ANSI_AS_TEXT, _RENDERED_MARKUP) is the unfinished fix for that open redaction hole and
 #     stays in approvals/gate.py until its own review round wires it in or replaces it; tools.START_MARKER and
 #     tools.MIN_REDACTION_WINDOW are public module names that client builds may import (none inside this repository does),
 #   - a hook another library calls by name (urllib handler methods, __package__ and __path__ on a stub module).

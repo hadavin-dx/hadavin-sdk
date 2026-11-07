@@ -274,14 +274,15 @@ jobs:
         run: vulture
       - name: Every vulture whitelist entry still exists where it says
         run: python tools/vulture_whitelist_check.py
-      - name: No GPL, LGPL or AGPL package in the locked set (reads each package's own metadata)
+      - name: No copyleft package in the locked set, and nothing left unchecked (reads each package's own metadata)
         run: |
-          uv export --locked --all-extras --group test --group lint --no-hashes --no-emit-project \
-            | sed -E 's/ *;.*//' > "$RUNNER_TEMP/locked.txt"
+          uv export --locked --all-extras --group test --group lint --no-hashes --no-emit-project > "$RUNNER_TEMP/locked.txt"
           python tools/licence_check.py "$RUNNER_TEMP/locked.txt" tools/licence_exceptions.txt
       - name: The ruff version in pyproject and in the pre-commit hook agree
         run: |
-          pin=$(grep -oE '"ruff==[0-9.]+"' pyproject.toml | head -1 | tr -dc '0-9.')
+          pins=$(grep -oE '"ruff==[0-9.]+"' pyproject.toml)
+          test "$(printf '%s\n' "$pins" | wc -l)" = 1  # exactly one pin, so no second one is skipped
+          pin=$(printf '%s' "$pins" | tr -dc '0-9.')
           hook=$(grep -oE 'rev: [0-9a-f]{40} +# v[0-9.]+' .pre-commit-config.yaml | grep -oE 'v[0-9.]+$' | tr -d v)
           echo "pyproject ruff=$pin, pre-commit hook=$hook"
           test -n "$pin" && test "$pin" = "$hook"

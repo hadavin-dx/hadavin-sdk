@@ -54,14 +54,20 @@ Not used, and why:
 
 ## Licences of the locked package set
 
-`tools/licence_check.py` (a CI step) reads the metadata of every package in the locked set (95 installed on Linux; 3 more are skipped by platform markers) and fails on GPL, LGPL or AGPL, or on a package with no licence field. Result on 2026-11-07 (raw: `licence-scan.txt`): 89 permissive, 3 copyleft, all three already on `main` and listed in `tools/licence_exceptions.txt` until the owner decides:
+`tools/licence_check.py` (a CI step) reads the metadata of every package in the locked set (the `uv export` output, with exact versions) and fails when:
+- a declared licence matches the copyleft pattern: GPL, LGPL, AGPL in any spelling (GPLv3, GPL-2.0-or-later, LGPL-2.1+, AGPLv3), "GNU", "Affero", "Lesser General Public", "General Public License", SSPL, EUPL, and SPDX `WITH` forms (the whole `License` value is scanned, however long). `tests/test_licence_check.py` holds the spelling table (21 copyleft spellings, 13 permissive ones that must pass) and the failure cases;
+- a package is not installed and not listed as `unchecked` (a wrong environment or a partial sync fails on every package);
+- a package has no licence field, or the installed version differs from the lock;
+- an exception in `tools/licence_exceptions.txt` is stale (package gone, version changed, no longer needed).
+
+Result on 2026-11-07 (raw: `licence-scan.txt`, earlier run): 92 packages read, 3 copyleft, 3 skipped by platform marker (colorama BSD, tzdata Apache-2.0, httpx2-jsfetch BSD-3-Clause; licences read by hand from the package index and entered as `unchecked`). The 3 copyleft packages are already on `main`; their `allow` lines were NOT approved by the owner and await his written decision (studio rule: a non-permissive licence needs it before use in a client deliverable):
 - pglast 8.7: GPL-3.0-or-later. `test` group only; never imported by `src/`.
-- psycopg 3.3.6 and psycopg-binary 3.3.6: LGPL-3.0-only. Runtime extras `pg` and `askdata`.
-Studio rule: a non-permissive licence needs the owner's written yes before it is used in a client deliverable. That is not decided here.
+- psycopg 3.3.6 and psycopg-binary 3.3.6: LGPL-3.0-only. Runtime extras `pg` and `askdata`; intended to stay an unmodified, separate dependency (not verified).
+Options for the owner: (a) accept the LGPL driver in writing as an unmodified separate dependency; (b) a permissive driver behind the store kind; (c) drop pglast from the test group.
 
-Weak copyleft, not caught by the check (it looks for GPL, LGPL and AGPL only): pathspec 1.1.1 is MPL-2.0 (file-level; a dependency of mypy, development only).
+Weak copyleft, not caught by the check: pathspec 1.1.1 (a dependency of mypy, development only) and certifi 2026.10.19 (a dependency of the HTTP stack; shipped with the runtime extras that use it) are both MPL-2.0 (file-level copyleft).
 
-Newly locked by this branch, from each package's own metadata: ast-serialize 0.13.1 MIT; boto3-stubs 1.43.122 MIT; botocore-stubs 1.43.122 MIT; click 8.5.1 BSD-3-Clause; deptry 0.25.1 MIT; grimp 3.19 BSD-2-Clause; import-linter 2.15 BSD-2-Clause; librt 0.16.0 MIT; mypy 2.4.1 MIT; mypy-extensions 1.2.0 MIT; pathspec 1.1.1 MPL-2.0; requirements-parser 0.13.1 Apache-2.0; types-pyyaml 6.0.12.20261030 Apache-2.0; types-s3transfer 0.19.3 MIT; vulture 2.16 MIT. The check reads declared metadata only, which a package can get wrong; licence texts were not read for these.
+Newly locked by this branch, from each package's own metadata: ast-serialize 0.13.1 MIT; boto3-stubs 1.43.122 MIT; botocore-stubs 1.43.122 MIT; click 8.5.1 BSD-3-Clause; deptry 0.25.1 MIT; grimp 3.19 BSD-2-Clause; import-linter 2.15 BSD-2-Clause; librt 0.16.0 MIT; mypy 2.4.1 MIT; mypy-extensions 1.2.0 MIT; pathspec 1.1.1 MPL-2.0; requirements-parser 0.13.1 Apache-2.0; types-pyyaml 6.0.12.20261030 Apache-2.0; types-s3transfer 0.19.3 MIT; vulture 2.16 MIT. The check reads declared metadata only (PEP 639 `License-File` entries are not cross-checked), which a package can get wrong; licence texts were not read.
 
 `uv.lock` was written with uv 0.13.6 (the version CI installs). A different uv (0.11.32 was tried) rewrites the lock format.
 
@@ -98,17 +104,18 @@ Each proof was run on a throwaway copy of the tree, one planted problem at a tim
 
 ## The mypy rollout list
 
-28 modules (79 findings) are listed under `[[tool.mypy.overrides]] ignore_errors = true`. They are still read, so their types help the clean files; only their own findings are not reported. `python tools/mypy_ratchet.py` runs mypy without that override and fails if a listed module is clean or missing, or if an unlisted module has a finding, so the list can only shrink. The list is ordered by risk, highest first: redaction, approvals, executor and tool boxes; then the audit trail, signers and database; then configuration and wiring; last the two files blocked by the boto3 stubs (the stubs give `client()` one overload per service name, and a non-literal name fails). Fixing the first group needs its own review round (money and redaction paths), which is why it was not done inside a lint change.
+28 modules (79 findings) are listed under `[[tool.mypy.overrides]] ignore_errors = true`. They are still read, so their types help the clean files; only their own findings are not reported. `python tools/mypy_ratchet.py` runs mypy without that override (the TOML is parsed; every override block is removed) and compares per file with `tools/mypy_baseline.json`: it fails when a listed module is missing or clean, has more findings than its baseline (growth) or fewer (lower the baseline with `--write`), or when an unlisted module has a finding. The list can only shrink and no listed file can get worse. The list is ordered by risk, highest first: redaction, approvals, executor and tool boxes; then the audit trail, signers and database; then configuration and wiring; last the two files blocked by the boto3 stubs (the stubs give `client()` one overload per service name, and a non-literal name fails). Fixing the first group needs its own review round (money and redaction paths), which is why it was not done inside a lint change.
 
 Why 96 and 79: the trial on `main` (96) ran before the stub packages were installed; 15 of its errors were `import-untyped` (boto3, botocore, yaml). With the stubs installed, `main`'s `src/` gives 79 in 28 files, and so does this branch (no mypy finding was fixed in code here; the code edits were for ruff). The other 2 of the 17 only appear without the stubs (not traced one by one).
 
 ## Vulture whitelist
 
-81 entries, each `name  # kind in file`. vulture matches by bare name, so an entry hides that name in every file; `tools/vulture_whitelist_check.py` ties each entry to the file(s) it names and fails on a stale or duplicate entry. Three entries are kept on purpose and are not in use: `gate._rendered` (with `_views`, `_ANSI_AS_TEXT`, `_RENDERED_MARKUP`, restored after review) is the unfinished fix for the open card-text redaction hole (ticket P1d; base commit 0dabf1f, file `src/hadavin_sdk/approvals/gate.py`); `tools.START_MARKER` and `tools.MIN_REDACTION_WINDOW` are public module names. Names used only by tests, demos or tools count as dead code if nothing in `src/` uses them, unless whitelisted with a reason.
+81 entries, each `name  # kind in file`. vulture matches by bare name, so an entry hides that name in every file; `tools/vulture_whitelist_check.py` ties each entry to the file(s) it names (the file must still DEFINE the name, read with `ast`; a mention in a comment does not count) and fails on a stale or duplicate entry. Three entries are kept on purpose and are not in use: `gate._rendered` (with `_views`, which vulture does not flag because `runmap.py` defines and calls its own `_views` and vulture matches by bare name; `_ANSI_AS_TEXT`, `_RENDERED_MARKUP`, restored after review) is the unfinished fix for the open card-text redaction hole (ticket P1d; base commit 0dabf1f, file `src/hadavin_sdk/approvals/gate.py`); `tools.START_MARKER` and `tools.MIN_REDACTION_WINDOW` are public module names. Names used only by tests, demos or tools count as dead code if nothing in `src/` uses them, unless whitelisted with a reason.
 
 ## Not verified
 
 - The GitHub Actions run itself (this was run locally on Linux only).
+- `bandit -ll` was run on `tools/` once locally (rc 0, no finding); it is not a CI step for that folder.
 - Python 3.13 and the macOS and Windows runners.
 - Licence texts (only declared metadata was read) and the wheel contents of the wrapper packages.
 - lychee and ast-grep (not trialled).
