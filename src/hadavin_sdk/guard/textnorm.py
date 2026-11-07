@@ -325,7 +325,9 @@ class NotText(TextnormError):
 class ViewTooShort(TextnormError):
     """``scan_needles`` found no usable needle for a protected value: no view reaches the minimum of its kind (``defaults.TEXTNORM_MIN_SPELLING_CHARS``,
     ``TEXTNORM_MIN_SQUEEZE_CHARS``, ``TEXTNORM_MIN_SCRIPT_CHARS``, ``TEXTNORM_MIN_IDEOGRAPH_CHARS``), or only a view that keeps separators does (an
-    inserted space would hide the value). Refuse to scan with the value: a needle that short is found in nearly every text."""
+    inserted space would hide the value). Refuse to scan with the value: a needle that short is found in nearly every text. The message says so in
+    plain words (a value that cannot be masked is REFUSED, never ignored) and what to do: register the longer form, or register the value for
+    exact-match only, outside this scan. It never holds the value."""
 
 
 class UnidataMismatch(TextnormError):
@@ -854,10 +856,16 @@ def _needle_pairs(raw: str, *, loose: bool = False) -> list[tuple[str, str]]:
         if needles.get(view, "spelling") == "spelling":
             needles[view] = kind
     if not proof:
+        digits = (
+            " It is a number: a number needs at least {digit_min} digits to be scanned."
+            if raw.isdigit()
+            else ""
+        )
         raise ViewTooShort(
-            "no squeeze view and no script view of the value is long enough "
-            f"(minimums: squeeze {squeeze_min}, digits only {digit_min}, script {script_min}, ideograph {ideograph_min}): "
-            "refuse to scan with it"
+            f"this protected value ({len(raw)} characters) is too short to mask: no squeeze view and no script view of it is long enough "
+            f"(minimums: squeeze {squeeze_min}, digits only {digit_min}, script {script_min}, ideograph {ideograph_min}).{digits.format(digit_min=digit_min)} "
+            "A value that cannot be masked is REFUSED, never ignored. What to do: register the longer form of it (the whole token or the "
+            "whole phrase, not a fragment), or register it for exact-match only (a plain search that does not fold, outside this scan)"
         )
     return [(kind, view) for view, kind in needles.items()]
 
@@ -1059,6 +1067,11 @@ def _pass_b(text: str) -> str:
     return _prepare(text).casefold().translate(_CF_TABLE)
 
 
+_SCAN_KEY_CAP = (
+    16  # 2 spelling variants (the text as it is, the text without Mc/Sk) x 4 tag texts x 2 passes
+)
+
+
 # Cyrillic Ze reads 3 and the table sends stroke look-alikes to l or i: join the classes.
 _CLASS_MAP = str.maketrans("zl", "3i")
 
@@ -1075,7 +1088,8 @@ def scan_keyset(raw: str) -> frozenset[str]:
     """The scan keys of a text: a small set of strings made of letters and digits only. They are one of the views a DENY scan looks through
     (``scan_views``); a caller that scans uses ``scan_holds``, which reads ALL the views. Contract SK-1 to SK-6: the one parameter is
     ``raw``; at most 2 spelling variants x 4 tag texts = 8 keys for a text with no spacing mark (Mc) and no modifier symbol (Sk), 16 for a text
-    with one (the keys of the text as it is and of the text without them), by construction, each at most as long as the weight of ``raw``; a text
+    with one (the keys of the text as it is and of the text without them), by construction (13 is the most a text can reach, because the
+    decoded tags alone are ASCII; a guard raises ``TextTooLong`` above 16, which cannot happen), each at most as long as the weight of ``raw``; a text
     over the size rule raises ``TextTooLong``, a non-``str`` ``NotText``; over-matching is the safe side; there is no clock or deadline;
     the keys hold letters and digits only (spaces, punctuation, ``#``, ``~``, ``@``, ``|`` and U+FFFD are dropped). Invisible-only text
     gives ``frozenset()``, and no key is ever ``""``.
@@ -1105,6 +1119,12 @@ def _scan_keys(raw: str) -> frozenset[str]:
         for step in (_pass_a, _pass_b)
     }
     keys.discard("")
+    if (
+        len(keys) > _SCAN_KEY_CAP
+    ):  # unreachable by construction (2 variants x 4 tag texts x 2 steps); a fail-closed guard, not a truncation
+        raise TextTooLong(
+            f"a text made {len(keys)} scan keys, more than the {_SCAN_KEY_CAP} the construction allows"
+        )
     return frozenset(keys)
 
 

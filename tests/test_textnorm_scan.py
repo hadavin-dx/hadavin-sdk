@@ -966,7 +966,9 @@ def test_scan_holds_reads_the_text_with_the_scripts_of_the_value_so_a_foreign_le
     a hiragana letter or an ASCII letter put inside the ideographs of the value is dropped from the script view of the text."""
     assert value_scripts(MIXED) == frozenset({"HAN"})
     for ch in ("\u0436", "\u03b4", "\u05d0", "\u3042", "q", "-", " "):
-        text = "pw\u5bc6\u7801" + ch + "\u4fdd\u62a4"
+        text = (
+            "pw\u5bc6\u7801" + ch + ch + "\u4fdd\u62a4"
+        )  # two, so the one-inserted-letter match cannot find it
         assert scan_holds("token: " + text + " end", MIXED), (
             f"scan_holds misses the value with {ch!r} inserted: the script view of the text keeps a letter of another script"
         )
