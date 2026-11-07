@@ -2050,7 +2050,8 @@ def test_the_minimum_view_length_is_one_number_per_kind_of_view_and_a_short_valu
         defaults.TEXTNORM_MIN_SQUEEZE_CHARS,
         defaults.TEXTNORM_MIN_SCRIPT_CHARS,
         defaults.TEXTNORM_MIN_IDEOGRAPH_CHARS,
-    ) == (2, 4, 4, 2)
+        defaults.TEXTNORM_MIN_DIGIT_CHARS,
+    ) == (2, 4, 4, 2, 6), "a minimum of defaults is not the pinned one"
     assert not hasattr(defaults, "TEXTNORM_MIN_VIEW_CHARS"), "the one global minimum is back"
     for short in (
         "",
@@ -2067,15 +2068,24 @@ def test_the_minimum_view_length_is_one_number_per_kind_of_view_and_a_short_valu
         try:
             textnorm.scan_needles(short)
         except textnorm.ViewTooShort as caught:
-            assert isinstance(caught, TextnormError) and not isinstance(caught, ValueError)
-            text = str(caught)
-            # A value of one or two characters ("x", "Li") is a piece of the plain words of the message ("exact-match"): for those the quoted
-            # form is what would show the value; a longer value must not appear at all.
-            assert short.strip() == "" or (
-                repr(short) not in text and (len(short.strip()) < 3 or short not in text)
-            ), "the message holds the value"
+            refusal = caught
         else:
             raise AssertionError(f"scan_needles accepted {short!r}: no view is long enough")
+        # asserted outside the handler, so the first failing line is the assertion and not the refusal that was caught
+        assert isinstance(refusal, TextnormError) and not isinstance(refusal, ValueError)
+        text = str(refusal)
+        if short.strip():
+            assert repr(short) not in text, "the message holds the value"
+            if short == "x":
+                # the one value that is a letter of the fixed words ("exact-match"): it must not stand alone as a token (between spaces,
+                # quotes, brackets or at an end), which is how a leaked value would show
+                assert re.search(r"(?<![\w-])x(?![\w-])", text) is None, (
+                    "the message holds the value"
+                )
+            else:
+                assert short not in text and short.strip() not in text, (
+                    "the message holds the value"
+                )
     value = "\u5bc6\u7801\u6d4b\u8bd5abcd"
     families = {
         "spelling view": value.casefold(),
