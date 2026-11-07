@@ -996,7 +996,7 @@ def test_the_limits_migrate_runs_with_are_the_ones_in_the_constant(scratch, monk
     monkeypatch.setattr(
         mig,
         "RECIPE_TIMEOUTS",
-        ("SET LOCAL lock_timeout = '2s';", "SET LOCAL statement_timeout = '3s';"),
+        ("SET LOCAL lock_timeout = '7s';", "SET LOCAL statement_timeout = '9s';"),
     )
     lock_t, stmt_t = (line.split("= ")[1].strip("';") for line in mig.RECIPE_TIMEOUTS)
 
@@ -1006,14 +1006,14 @@ def test_the_limits_migrate_runs_with_are_the_ones_in_the_constant(scratch, monk
             f"AND current_setting('statement_timeout') = '{stmt_t}')::int);\n"
         )
 
-    _with_files(monkeypatch, tmp_path, {PLANTED_NEXT: probe("9s")})
+    _with_files(monkeypatch, tmp_path, {PLANTED_NEXT: probe("99s")})
     with pytest.raises(psycopg.errors.DivisionByZero):
         mig.migrate(dsn)
     monkeypatch.undo()
     monkeypatch.setattr(
         mig,
         "RECIPE_TIMEOUTS",
-        ("SET LOCAL lock_timeout = '2s';", "SET LOCAL statement_timeout = '3s';"),
+        ("SET LOCAL lock_timeout = '7s';", "SET LOCAL statement_timeout = '9s';"),
     )
     _with_files(monkeypatch, tmp_path, {PLANTED_NEXT: probe(lock_t)})
     assert mig.migrate(dsn)[-1] == PLANTED_NEXT[:-4]
