@@ -464,6 +464,7 @@ def run_child(target: Callable[[str], None], arg: str) -> int:
 
 
 CASE = re.compile(r"<testcase\b([^>]*?)(/>|>(.*?)</testcase>)", re.DOTALL)
+SKIPPED = re.compile(r"<skipped\b([^>]*)")
 ATTR = re.compile(r'(\w+)="([^"]*)"')
 
 
@@ -480,7 +481,8 @@ def read_result(path: Path) -> dict[str, list[str]]:
             out["failed"].append(ident)
         if "<error" in body:
             out["error"].append(ident)
-        if "<skipped" in body:
+        # a pinned expected failure (xfail) is written as <skipped type="pytest.xfail">; it is not a skip
+        if any("pytest.xfail" not in attrs for attrs in SKIPPED.findall(body)):
             out["skipped"].append(ident)
     return out
 
