@@ -757,3 +757,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | bd-P3a-2-o103 | Sonnet builder P3a-2 order 103 | 2026-11-06T17:35:00Z | CLOSED: core/P3a-2 63658aa pushed+verified, PR 73 draft; evidence reviews/P3a-2-o103 |
 | bd-P1b-merge6 | Sonnet builder P1b order 102 | 2026-11-06T17:40:00Z | CLOSED: core/P1b 4f14ec8 pushed+verified, PR 70 ready; evidence reviews/P1b/merge6 |
 | bd-P1a-fix7 | Sonnet builder P1a fix7 order 106 | 2026-11-07T04:15Z | RUNNING: expected report ~60-90 min; evidence /home/user/build/P1a-evidence/fix7 |
+| bd-P0t-followup | Sonnet builder core/P0t-followup (p0t4-001/003), port 55436 | 2026-11-07T04:45Z | RUNNING |
+| bd-P6a-1-o107 | Sonnet builder P6a-1 merge main + per-mutant tests, port 55437 | 2026-11-07T04:45Z | RUNNING |
+| bd-P5b1-o107 | Sonnet builder P5b1 merge P5a+main, 43 mutants, port 55438 | 2026-11-07T04:45Z | RUNNING |
+| bd-P1a-fix7 | (update) container restart stopped it at ~04:39Z; resumed 04:42Z | 2026-11-07T04:42Z | RUNNING |

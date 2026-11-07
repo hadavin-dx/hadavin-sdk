@@ -376,3 +376,22 @@ P1b | PR 70 head 4f14ec8 READY (order 102 done; finals green at that SHA, 118 mu
 STOPPED by order 104 at 17:34Z: all agents closed; heads: P1a=2ff0afe P1b=4f14ec8 P3a-2=63658aa P4d=92dbb1e P4d-a2=f8b9056 P5a=21ca680 P2d-1=8b2b716 P4a=4a0976f P4b1=8cc2021 P5b1=b6fb1c2 P2a-1=e323ac7; nothing running (a Postgres on port 55432 from the P4d-a2 builder is still up, needs lead yes to stop, q239)
 PUSHED by order 105 at 18:08Z: 1 commit pushed, 20 files committed (build/P1b-shim snapshot to core/wip-p1b-shim), skipped: none; heads: P1a=2ff0afe P1b=4f14ec8 P3a-2=63658aa P4d=92dbb1e P4d-a2=f8b9056 P5a=21ca680 P2d-1=8b2b716 P4a=4a0976f P4b1=8cc2021 P5b1=b6fb1c2 P2a-1=e323ac7; STOPPED again by order 104
 P1a | fix7 build started by order 106 (MAJOR-A per-script, per-view minimums, docs, rows, perf) | builders running: P1a fix7 | blocked on: none; then P1b merge7, P2d-1/P5a re-merges
+2026-11-07 04:50Z | ORDER 107 dependency table (ticket | depends on | state | builder). Container restarted at ~04:39Z and stopped the fix7 builder; it was resumed.
+ P1a (PR 63) | main | fix7 in progress (uncommitted edits survived) | aabf5587 (RUNNING)
+ P1b (PR 70) | P1a | ready at 4f14ec8; merge7 owed | QUEUED
+ P2d-1 (PR 77 draft) | P1a, P1b | needs re-merge of P1a+P1b | QUEUED
+ P5a (PR 74) | main (holds old P1b a4476b8) | ready 21ca680; re-merge of P1b owed | QUEUED
+ P5b1 (PR 80 draft) | P5a | merge P5a 21ca680+main, 43 mutants, suites (stacks on the predecessor head per order 86) | accda756 (RUNNING)
+ P6a-1 (PR 72) | main | merge main, per-mutant failing tests, suites | a7fee80c (RUNNING)
+ P0t-followup (new draft) | main | p0t4-001/003, CHANGELOG, evidence | a3a24519 (RUNNING)
+ P3a-2 (PR 73 draft) | main | nothing more (order 106) | none
+ P4d-a1 (PR 66) | main | head untouched; lead delta review | none
+ P4d-a2 (PR 75) | PR 66 merge | merge 92dbb1e owed | QUEUED
+ P2a-1 (PR 76), P4a (PR 78), P4b1 (PR 79) | PR 75 (P4d-a2) | need f8b9056/92dbb1e merge | QUEUED
+ P4b1-b, P4c, P4b2, P6b1 | P4a / P4b1 | not started | QUEUED
+ P1c, P2d-2 | P1b merged | not started | QUEUED
+ P5b2.., P5c, P6a-2 | P5b1 / P5a / P5c | not started | QUEUED
+ P0a (PR 71) | main | behind main by 4, no open fix list | none
+ P8a | lead only; P8c | v1 kinds stackable | QUEUED
+QUEUE TRIGGERS: P1b merge7 starts when the fix7 head is pushed to core/P1a. P2d-1 and P5a re-merge start when the P1b merge7 head is pushed. P4 chain (P4d-a2, P2a-1, P4a, P4b1) starts when PR 66 is merged to main (order 106: PR 75 waits for it). P1c and P2d-2 start when PR 70 merges.
+WHY THE P4 CHAIN IS QUEUED, NOT STARTED: it is stacked on PR 75, which the lead has said waits for PR 66, and PR 75/P4b1 also need StoreBusy that PR 75 does not have yet. Say so if you want it started on the predecessor heads anyway.
