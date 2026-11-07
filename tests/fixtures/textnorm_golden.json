@@ -1,5 +1,5 @@
 {
- "note": "One entry, for the current alg (not a history): one section per Unicode data version the supported Pythons carry (3.12: 15.0.0, 3.13: 15.1.0). Replace it, with a hand bump of alg, in the pull request that changes what a key can be. Regenerate each section on the interpreter of its version with: python -c 'import json; from tests.test_textnorm_differential import live_hashes; print(json.dumps(live_hashes()))'. The hashes are of the bare keys and views (the readings joined in their fixed order) and views (the readings joined in their fixed order) and views, without the tag of an unpinned interpreter; the readings of a text are joined in their fixed order by U+001F.",
+ "note": "One entry, for the current alg (not a history): one section per Unicode data version the supported Pythons carry (3.12: 15.0.0, 3.13: 15.1.0). Replace it, with a hand bump of alg, in the pull request that changes what a key can be. Regenerate each section on the interpreter of its version with: python -c 'import json; from tests.test_textnorm_differential import live_hashes; print(json.dumps(live_hashes()))'. The hashes are of the bare keys and views, without the tag of an unpinned interpreter; the readings of a text are joined in their fixed order by U+001F.",
  "alg": "fold5",
  "unidata": "15.1.0",
  "sections": {
