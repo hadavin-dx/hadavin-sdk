@@ -265,7 +265,7 @@ jobs:
       - name: Types (mypy)
         run: mypy
       - name: Import contracts (import-linter)
-        run: lint-imports
+        run: PYTHONPATH=demos/ask-your-data lint-imports
       - name: Declared and imported dependencies agree (deptry)
         run: deptry .
       - name: Dead code (vulture)

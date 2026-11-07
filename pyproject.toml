@@ -109,7 +109,8 @@ markers = [
 # Import contracts. They restate rules that tests/test_repo_rules.py already checks with its own scanner (K5 / M21),
 # now by a maintained graph tool; both stay. Imports under `if TYPE_CHECKING:` do not run, so they are not counted.
 [tool.importlinter]
-root_package = "hadavin_sdk"
+root_packages = ["hadavin_sdk", "askdata"]
+include_external_packages = true
 exclude_type_checking_imports = true
 
 [[tool.importlinter.contracts]]
@@ -155,6 +156,58 @@ forbidden_modules = [
     "hadavin_sdk.app",
     "hadavin_sdk.deferred",
     "hadavin_sdk.registry",
+]
+allow_indirect_imports = false
+
+[[tool.importlinter.contracts]]
+name = "Vendor cloud SDKs are imported only inside their own kind module"
+type = "forbidden"
+source_modules = ["hadavin_sdk"]
+forbidden_modules = ["boto3", "botocore", "anthropic", "google", "azure", "kubernetes"]
+allow_indirect_imports = true
+ignore_imports = [
+    "hadavin_sdk.llm.bedrock -> boto3",
+    "hadavin_sdk.llm.bedrock -> botocore",
+    "hadavin_sdk.actions.secrets_aws -> boto3",
+    "hadavin_sdk.audit.anchor_s3 -> boto3",
+    "hadavin_sdk.audit.anchor_s3 -> botocore",
+    "hadavin_sdk.audit.signer_aws -> boto3",
+    "hadavin_sdk.audit.signer_aws -> botocore",
+    "hadavin_sdk.guard.bedrock_guardrail -> boto3",
+    "hadavin_sdk.guard.bedrock_guardrail -> botocore",
+    "hadavin_sdk.store.auth_aws -> boto3",
+    "hadavin_sdk.llm.anthropic -> anthropic",
+    "hadavin_sdk.llm.anthropic -> google",
+    "hadavin_sdk.actions.secrets_gcp -> google",
+    "hadavin_sdk.audit.anchor_gcs -> google",
+    "hadavin_sdk.audit.signer_gcp -> google",
+    "hadavin_sdk.actions.secrets_azure -> azure",
+    "hadavin_sdk.audit.anchor_azure -> azure",
+    "hadavin_sdk.audit.signer_azure -> azure",
+]
+
+[[tool.importlinter.contracts]]
+name = "The core never imports a demo"
+type = "forbidden"
+source_modules = ["hadavin_sdk"]
+forbidden_modules = ["askdata"]
+allow_indirect_imports = false
+
+[[tool.importlinter.contracts]]
+name = "A demo never reaches the executor or any secret holder"
+type = "forbidden"
+source_modules = ["askdata"]
+forbidden_modules = [
+    "hadavin_sdk.actions.executor",
+    "hadavin_sdk.actions.secrets",
+    "hadavin_sdk.actions.secrets_env",
+    "hadavin_sdk.actions.secrets_aws",
+    "hadavin_sdk.actions.secrets_vault",
+    "hadavin_sdk.actions.secrets_azure",
+    "hadavin_sdk.actions.secrets_gcp",
+    "hadavin_sdk.actions.secrets_file",
+    "hadavin_sdk.actions.secrets_cache",
+    "hadavin_sdk.backends.platform_secrets",
 ]
 allow_indirect_imports = false
 
