@@ -536,3 +536,71 @@ def test_a_bad_hash_in_the_released_list_is_a_config_error_not_a_changed_file(
         monkeypatch.setattr(mig, "RELEASED_MANIFEST", path)
         with pytest.raises(ConfigError, match="no SHA-256 .* for"):
             mig.migrate("postgresql://unused")
+
+
+def test_a_json_name_written_twice_in_the_released_list_is_refused(monkeypatch, tmp_path):
+    """Nit: `json` would keep the last of two equal names, so an edited second hash would hide the first.
+    Killed by: mutant MD1 (the duplicate check removed)."""
+    good = mig._released_manifest()
+    first, digest = next(iter(good.items()))
+    path = tmp_path / "dup.json"
+    path.write_text(
+        '{"' + first + '": "' + digest + '", "' + first + '": "' + "1" * 64 + '"}', encoding="utf-8"
+    )
+    monkeypatch.setattr(mig, "RELEASED_MANIFEST", path)
+    monkeypatch.setattr(mig, "connect", lambda *a, **k: pytest.fail("connected"))
+    with pytest.raises(ConfigError, match="cannot be read: .*written twice"):
+        mig.migrate("postgresql://unused")
+
+
+class _Raises(_Db):
+    """The connection raises `error` when the text of file `trigger` is executed."""
+
+    def __init__(self, error, trigger, *a):
+        super().__init__(*a)
+        self.error, self.trigger = error, trigger
+
+    def execute(self, query, params=None):
+        if str(query) == self.trigger:
+            raise self.error
+        return super().execute(query, params)
+
+
+def _run_raising(monkeypatch, tmp_path, error):
+    files = _files(tmp_path, 2)
+    db = _Raises(error, "SELECT 2;\n", [START] * 3, [[], [], []])
+    monkeypatch.setattr(mig, "_migration_files", lambda: files)
+    monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+    monkeypatch.setattr(mig, "connect", lambda *a, **k: db)
+    mig.migrate("postgresql://unused")
+
+
+def test_a_lock_wait_or_a_slow_statement_is_a_plain_config_error_naming_step_and_setting(
+    monkeypatch, tmp_path
+):
+    """Review A. Killed by: mutants RA1 (not wrapped: the raw psycopg error comes out), RA2 (the step is not named),
+    RA4 (the setting is not named)."""
+    from psycopg import errors as pge
+
+    with pytest.raises(ConfigError, match=r"applying 0002_f2\.sql.*lock_timeout") as got:
+        _run_raising(
+            monkeypatch, tmp_path, pge.LockNotAvailable("canceling statement due to lock timeout")
+        )
+    assert "kept nothing" in str(got.value) and "Migration repair steps" in str(got.value)
+    assert mn.RECIPE_TIMEOUTS[0].split("'")[1] in str(
+        got.value
+    )  # the number comes from the constant
+    with pytest.raises(ConfigError, match=r"applying 0002_f2\.sql.*statement_timeout"):
+        _run_raising(
+            monkeypatch, tmp_path, pge.QueryCanceled("canceling statement due to statement timeout")
+        )
+
+
+def test_a_cancel_that_is_not_the_statement_timeout_is_not_called_one(monkeypatch, tmp_path):
+    """Review A. Killed by: mutant RA5 (every QueryCanceled is called a timeout)."""
+    from psycopg import errors as pge
+
+    with pytest.raises(pge.QueryCanceled):
+        _run_raising(
+            monkeypatch, tmp_path, pge.QueryCanceled("canceling statement due to user request")
+        )

@@ -602,3 +602,27 @@ def test_case_f_says_migrate_has_the_same_limits_as_the_hand_file():
         "`migrate` also sets, for its transaction, the same lock-wait and statement time limits"
         in first
     )
+
+
+def test_the_scope_the_order_and_the_file_own_limits_are_written_down():
+    """Review A, B, nit A, nit B. Killed by: mutants RD1 (the scope sentence of the upgrade bullet), RD2 (the order
+    sentence of case (f)), RD3 (the 'file sets a limit itself' sentence of the docstring), RD4 (the numbers pointer)."""
+    first = _words(
+        CHANGELOG[CHANGELOG.index("- **Migrations: stricter checks") :].split("\n", 1)[0]
+    )
+    assert (
+        "also the role checks and grants, so a normal run with no new file is covered too" in first
+    )
+    assert 'in the paragraph "Rule for every hand step"' in first
+    assert (
+        "The statement limit is for each statement" in first and "seen on PostgreSQL 16.15" in first
+    )
+    f = _words(rb.case("f"))
+    assert (
+        "The order differs on purpose: the hand file sets the limits before the advisory lock" in f
+    )
+    assert "A migration file may `SET LOCAL` either limit itself" in f
+    doc = _words(mig.migrate.__doc__ or "")
+    assert "so a run with no pending file is covered too" in doc
+    assert "sets the limits BEFORE the advisory lock" in doc and "AFTER it, on purpose" in doc
+    assert "a guarantee only for files that do not set them" in doc

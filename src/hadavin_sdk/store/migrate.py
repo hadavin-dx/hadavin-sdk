@@ -34,6 +34,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
 
+from psycopg import errors as pg_errors
 from psycopg import sql
 
 from hadavin_sdk.errors import ConfigError
@@ -320,9 +321,21 @@ RELEASED_MANIFEST = MIGRATIONS.parent / "migrations_released.json"
 _SHA256 = re.compile(r"[0-9a-f]{64}")
 
 
+def _no_duplicate_names(pairs: list[tuple[str, object]]) -> dict[str, object]:
+    """json would silently keep the LAST of two equal names: a second, edited hash would hide the first."""
+    names = [k for k, _ in pairs]
+    if len(set(names)) != len(names):
+        raise ValueError(
+            f"the name {next(n for n in names if names.count(n) > 1)!r} is written twice"
+        )
+    return dict(pairs)
+
+
 def _released_manifest() -> dict[str, str]:
     try:
-        data = json.loads(RELEASED_MANIFEST.read_text(encoding="utf-8"))
+        data = json.loads(
+            RELEASED_MANIFEST.read_text(encoding="utf-8"), object_pairs_hook=_no_duplicate_names
+        )
     except (OSError, ValueError) as e:
         raise ConfigError(f"the list of released migration files cannot be read: {e}") from e
     if not isinstance(data, dict) or not all(
@@ -440,6 +453,24 @@ def _check_read_back(db, saved: _Saved, file_name: str) -> _Saved:
     return _Saved(saved.values, now.triggers, saved.members)
 
 
+def _limit_error(e: Exception, step: str) -> ConfigError | None:
+    """The plain-words error for a lock wait or a statement that ran into the limits of `RECIPE_TIMEOUTS` (None for
+    any other error, which is raised as it is)."""
+    limits = dict(re.findall(r"SET LOCAL (\w+) = '([^']*)'", " ".join(RECIPE_TIMEOUTS)))
+    if isinstance(e, pg_errors.LockNotAvailable):
+        what = f"waited more than {limits.get('lock_timeout')} for a lock (lock_timeout)"
+    elif isinstance(e, pg_errors.QueryCanceled) and "statement timeout" in str(e):
+        what = f"ran more than {limits.get('statement_timeout')} (statement_timeout)"
+    else:
+        return None
+    return ConfigError(
+        f"migrate stopped and kept nothing: while {step}, a statement {what}. Another session holds a lock on a "
+        "table, or the statement is too slow for a live database. Run migrate again when nothing holds the table; "
+        "a migration file that really needs longer is applied by hand with a raised number (CHANGELOG.md, "
+        "Migration repair steps)."
+    )
+
+
 def migrate(
     dsn: str,
     *,
@@ -455,9 +486,17 @@ def migrate(
     privileges `GRANTS` lists (never TRUNCATE; DELETE only on the outbox and the purged evidence tables). With `portal_role`, SELECT on the
     relations marked `portal` and nothing else. The ledger and the grant map are checked first: a bad file name,
     a gap, or a relation with no `GRANTS` entry stops the run before it touches the database. Right after the advisory
-    lock (so a second run still waits for the first) the run sets the two `SET LOCAL` limits of `RECIPE_TIMEOUTS`
-    (a lock limit and a statement limit, the same lines the hand recipe sets): a file that waits for a table lock or
-    runs longer fails the whole run and keeps nothing; apply such a file by hand with a raised number.
+    lock the run sets the two `SET LOCAL` limits of `RECIPE_TIMEOUTS` (a lock limit and a statement limit, the same
+    lines the hand recipe sets; the numbers are in the CHANGELOG, "Migration repair steps"). They cover the rest of
+    the run: reading the ledger, every file, the read-back, and the role checks and grants, so a run with no pending
+    file is covered too (a `GRANT` that waits longer than the lock limit for a busy table fails the run). The lock
+    limit applies to each wait for a lock and the statement limit to each statement (a file with several statements
+    is not timed as a whole; seen on PostgreSQL 16.15). A limit that is reached fails the whole run, keeps nothing and
+    is raised as a `ConfigError` in plain words that names the step and the setting. Order: the hand recipe sets the
+    limits BEFORE the advisory lock (a person must not hang); `migrate` sets them AFTER it, on purpose: a second
+    `migrate` started at the same time waits for the first (that is how two runs apply a file once) and is not
+    limited while it waits. A migration file may itself `SET LOCAL` either limit; the new value then also holds for the
+    files after it in the same run, so the limits are a guarantee only for files that do not set them.
 
     Role membership: the refusal list of `migration_numbers` is wider than a plain list of the dangerous statements.
     `GRANT r TO s` and `REVOKE r FROM s` with no `ON` (a role-membership change) are refused in a `.sql` file, because
@@ -484,62 +523,74 @@ def migrate(
     if problems := check_grants(files, texts=texts):
         raise ConfigError("migrations are inconsistent: " + "; ".join(problems))
     applied = []
-    with (
-        connect(
-            dsn, iam_auth=iam_auth, region=region, sslmode=sslmode, sslrootcert=sslrootcert
-        ) as db,
-        db.transaction(),
-    ):
-        db.execute(
-            "SELECT pg_advisory_xact_lock(%s)", (MIGRATE_LOCK,)
-        )  # one key, defined in migration_numbers
-        # the hand recipe's two limits (one constant); `SET LOCAL` ends with this transaction
-        for limit in RECIPE_TIMEOUTS:
-            db.execute(limit)
-        db.execute(
-            "CREATE TABLE IF NOT EXISTS schema_migrations "
-            "(version TEXT PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT now())"
-        )
-        done = {r[0] for r in db.execute("SELECT version FROM schema_migrations").fetchall()}
-        if gone := gone_message(done, files):
-            raise MigrationNumberError([gone])
-        schema = db.execute("SELECT current_schema()").fetchone()[0] or ""
-        if late := order_problems(done, files, texts, schema):
-            raise MigrationNumberError(late)
-        pending = [p for p in files if p.stem not in done]
-        if pending:
-            saved = _read_back(db)
-            _refuse_unusual_strings(saved)
-        for path in pending:
-            db.execute(texts[path])  # the text that was scanned, never a second read
-            saved = _check_read_back(db, saved, path.name)
-            db.execute("INSERT INTO schema_migrations (version) VALUES (%s)", (path.stem,))
-            applied.append(path.stem)
-        q = "SELECT pg_has_role(%s, %s, 'MEMBER')"  # a member keeps the other's rights, whatever we REVOKE
-        for a in named:
-            for b in named:
-                if a != b and db.execute(q, (a, b)).fetchone()[0]:
+    step = ["taking the migration lock"]  # what the run is doing, for the error of a limit
+    try:
+        with (
+            connect(
+                dsn, iam_auth=iam_auth, region=region, sslmode=sslmode, sslrootcert=sslrootcert
+            ) as db,
+            db.transaction(),
+        ):
+            db.execute(
+                "SELECT pg_advisory_xact_lock(%s)", (MIGRATE_LOCK,)
+            )  # one key, defined in migration_numbers
+            # the hand recipe's two limits (one constant); `SET LOCAL` ends with this transaction
+            for limit in RECIPE_TIMEOUTS:
+                db.execute(limit)
+            db.execute(
+                "CREATE TABLE IF NOT EXISTS schema_migrations "
+                "(version TEXT PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT now())"
+            )
+            step[0] = "reading the ledger"
+            done = {r[0] for r in db.execute("SELECT version FROM schema_migrations").fetchall()}
+            if gone := gone_message(done, files):
+                raise MigrationNumberError([gone])
+            schema = db.execute("SELECT current_schema()").fetchone()[0] or ""
+            if late := order_problems(done, files, texts, schema):
+                raise MigrationNumberError(late)
+            pending = [p for p in files if p.stem not in done]
+            if pending:
+                saved = _read_back(db)
+                _refuse_unusual_strings(saved)
+            for path in pending:
+                step[0] = f"applying {path.name}"
+                db.execute(texts[path])  # the text that was scanned, never a second read
+                saved = _check_read_back(db, saved, path.name)
+                db.execute("INSERT INTO schema_migrations (version) VALUES (%s)", (path.stem,))
+                applied.append(path.stem)
+            step[0] = "checking and granting the roles"
+            q = "SELECT pg_has_role(%s, %s, 'MEMBER')"  # a member keeps the other's rights, whatever we REVOKE
+            for a in named:
+                for b in named:
+                    if a != b and db.execute(q, (a, b)).fetchone()[0]:
+                        raise ConfigError(
+                            "the runtime, portal and purge roles must not be members of each other"
+                        )
+            if runtime_role:
+                _apply_grants(db, runtime_role, lambda g: g.runtime)
+                if bad := effective_problems(db, runtime_role, lambda g: g.runtime if g else ""):
                     raise ConfigError(
-                        "the runtime, portal and purge roles must not be members of each other"
+                        "the runtime role holds more than the grant map: " + "; ".join(bad[:20])
                     )
-        if runtime_role:
-            _apply_grants(db, runtime_role, lambda g: g.runtime)
-            if bad := effective_problems(db, runtime_role, lambda g: g.runtime if g else ""):
-                raise ConfigError(
-                    "the runtime role holds more than the grant map: " + "; ".join(bad[:20])
-                )
-        if purge_role:
-            _apply_grants(db, purge_role, lambda g: g.purge, lambda g: g.purge_cols)
-            if bad := effective_problems(
-                db, purge_role, lambda g: g.purge if g else "", lambda g: g.purge_cols if g else ()
-            ):
-                raise ConfigError(
-                    "the purge role holds more than the grant map: " + "; ".join(bad[:20])
-                )
-        if portal_role:
-            _apply_grants(db, portal_role, lambda g: "SELECT" if g.portal else "")
-            if extra := _excess_privileges(db, portal_role):
-                raise ConfigError(  # e.g. inherited from another role: REVOKE cannot take those away
-                    f"the portal role holds privileges outside the portal grant map: {', '.join(extra)}"
-                )
+            if purge_role:
+                _apply_grants(db, purge_role, lambda g: g.purge, lambda g: g.purge_cols)
+                if bad := effective_problems(
+                    db,
+                    purge_role,
+                    lambda g: g.purge if g else "",
+                    lambda g: g.purge_cols if g else (),
+                ):
+                    raise ConfigError(
+                        "the purge role holds more than the grant map: " + "; ".join(bad[:20])
+                    )
+            if portal_role:
+                _apply_grants(db, portal_role, lambda g: "SELECT" if g.portal else "")
+                if extra := _excess_privileges(db, portal_role):
+                    raise ConfigError(  # e.g. inherited from another role: REVOKE cannot take those away
+                        f"the portal role holds privileges outside the portal grant map: {', '.join(extra)}"
+                    )
+    except (pg_errors.LockNotAvailable, pg_errors.QueryCanceled) as e:
+        if (plain := _limit_error(e, step[0])) is None:
+            raise
+        raise plain from e
     return applied
