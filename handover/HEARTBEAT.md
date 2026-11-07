@@ -423,3 +423,4 @@ ORDER 116: PR 84 core/ci-evidence opened (optional, small). P1b merge7: builder 
 - P6b1 (new, stacked on P4a, no PR yet): core/P6b1 9b153d4 - mine; builder still running.
 - P5b2: no commits yet (head 74ee54f = P5b1 old head), not pushed.
 07:03Z PR 80 P5b1: core/P5b1 b2a65ea pushed (WIP unverified: mutant baseline fixed, _KILL M49-M57 still placeholders, measure job queued) - needs full suite py3.13+3.12 with DSN (laptop). Scans B,C,E in; A,D running; B extended.
+07:05Z market-scan-1.md pushed (q268): ADOPT 9 / WRAP 16 / KEEP 12 / DROP 5; agents running: 4 builders (PR73,72,83,P6b1)+P5b2 shells 1 runner

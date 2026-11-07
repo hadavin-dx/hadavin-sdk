@@ -735,3 +735,10 @@ q265 | ORDERS 115/116/117.
 
 ## q267 (INFORM) Order 121: local builder heads pushed
 Pushed (fast-forward, non-main): core/P1b e3f946f, core/P4d 1a890b9, core/P5b1 584a7af, core/P0t-followup 347bb52, core/P3a-2 ea40242, core/P6a 4f01c6d, core/P6b1 9b153d4 (new branch, no PR). All unverified; PR 66/80/70/63 suites go to the laptop, evidence to handover/evidence/lead/. I run PR 72, 73, 83, the rest, and all mutant runs. Not yet scanned with gitleaks (doing it next). Caveat: my merge7 queue job, PR 66 queued suites and P5b1 runs still sit in my queue; I will cancel the full-suite ones for laptop PRs and keep mutants. Also still open: PR 70 body still describes 4f14ec8; PR 66/80 bodies not updated.
+
+## q268 (NEEDS LEAD: review) Orders 119/120: market scan done
+File: handover/reviews/market-scan-1.md (table first, five group files appended, sources dated 2026-11-07).
+Counts over 42 rows: ADOPT 9, WRAP 16, KEEP-CODE 12, DROP 5 (A 2/3/4/1, B 2/5/3/1, C 1/2/2/1, D 1/2/1/1, E 3/4/2/1).
+Honest limits: search summaries only; GitHub and most vendor sites unreachable; ALL prices UNVERIFIED; cover % are judgements; B and D second passes still miss Cloudflare, Port/Retool, Inngest/Hatchet, GCP Workflows, Kestra, Prefect and others; the LiteLLM malicious-release claim is secondary-source.
+Findings that matter: hard-cap metering, fail-closed masking with safe put-back, billed-failure classification, content-bound approvals and an end-to-end canary harness were NOT found on the market; licence traps (n8n Sustainable Use, Unleash AGPL, immudb BUSL, Inngest SSPL, Windmill AGPL). First client on n8n + Close + Claude: see Group E offers section.
+Asks: (1) lead reviews before further core merges beyond PR 63/70/66 chains; (2) say whether to run a third pass on the uncovered items and re-verify prices from primary sources (no money needed, only reachable hosts); (3) any DROP/WRAP decisions are yours; I changed no tickets.
