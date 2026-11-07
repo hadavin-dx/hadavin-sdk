@@ -16,8 +16,18 @@ from typing import Any
 
 import anthropic  # the extra: a missing install fails at start-up with the hint (backends.make)
 
+from hadavin_sdk.codes import ProviderErrorType
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.llm.common import Answer, NetworkLLM, pinned, reply
+from hadavin_sdk.llm.provider_facts import (
+    TYPE_NAME_MAX,
+    ProviderFacts,
+    clean_request_id,
+    clean_status,
+    safe_attr,
+    status_error_type,
+)
+from hadavin_sdk.llm.retry import default_facts
 from hadavin_sdk.models import Reply, ToolCall
 
 API_BASE_URL = "https://api.anthropic.com"
@@ -77,6 +87,62 @@ def retryable(exc: BaseException) -> bool | None:
     return True if isinstance(exc, google_auth.TransportError) else None
 
 
+# The fact (a closed word) for each ``error.type`` the Claude API documents; any other string is ``other``.
+_TYPE = {
+    "rate_limit_error": ProviderErrorType.rate_limit,
+    "overloaded_error": ProviderErrorType.overloaded,
+    "invalid_request_error": ProviderErrorType.invalid_request,
+    "authentication_error": ProviderErrorType.authentication,
+    "permission_error": ProviderErrorType.permission,
+    "not_found_error": ProviderErrorType.not_found,
+    "api_error": ProviderErrorType.server_error,
+    "timeout_error": ProviderErrorType.timeout,
+    "billing_error": ProviderErrorType.quota,
+}
+
+
+def _body_type(exc: BaseException) -> object | None:
+    """``body["error"]["type"]``, only through exact ``dict`` objects (a ``str`` body or a ``dict`` subclass gives None)."""
+    body = safe_attr(exc, "body")
+    if type(body) is not dict:
+        return None
+    error = body.get("error")
+    return error.get("type") if type(error) is dict else None
+
+
+def _class_type(exc: BaseException) -> ProviderErrorType | None:
+    """The type a library or credential class implies; the timeout test comes before the connection test."""
+    if isinstance(exc, anthropic.APITimeoutError):
+        return ProviderErrorType.timeout
+    if isinstance(exc, anthropic.APIConnectionError):
+        return ProviderErrorType.connection
+    try:  # Vertex refreshes a Google token through google-auth (installed with the vertex extra)
+        from google.auth import exceptions as google_auth
+    except ImportError:
+        return None
+    if isinstance(exc, google_auth.RefreshError):
+        return ProviderErrorType.authentication
+    return ProviderErrorType.connection if isinstance(exc, google_auth.TransportError) else None
+
+
+def facts(exc: BaseException) -> ProviderFacts:
+    """Checked facts from a Claude library error: ``status_code``, ``request_id`` and the type of the decoded JSON body, which is
+    looked up in a closed table. The text of a body (or of a non-JSON body) is never read."""
+    status = clean_status(safe_attr(exc, "status_code"))
+    request_id = clean_request_id(safe_attr(exc, "request_id"), "prefixed")
+    word = _body_type(exc)
+    error_type: ProviderErrorType | None
+    if type(word) is str and len(word) <= TYPE_NAME_MAX:
+        error_type = _TYPE.get(word, ProviderErrorType.other)
+    else:
+        error_type = _class_type(exc) or status_error_type(status)
+        if error_type is None:
+            neutral = default_facts(exc)
+            error_type = neutral.error_type
+            status = status if status is not None else neutral.status
+    return ProviderFacts(status, error_type, request_id)
+
+
 def make(settings: Any, deps: Any) -> AnthropicLLM:
     name = settings.api_key_secret_name if settings.platform != "vertex" else None
     key = (lambda: deps.resolve(name)) if name else None
@@ -91,6 +157,7 @@ def make(settings: Any, deps: Any) -> AnthropicLLM:
 class AnthropicLLM(NetworkLLM):
     label = "anthropic"
     retryable = staticmethod(retryable)
+    facts = staticmethod(facts)
 
     def __init__(
         self,

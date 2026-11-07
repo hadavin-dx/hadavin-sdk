@@ -1,0 +1,13 @@
+{
+  "request_match": {
+    "method": "POST"
+  },
+  "status": 400,
+  "headers": {},
+  "body": {
+    "Error": {
+      "Code": "ValidationException",
+      "Message": "Malformed input request."
+    }
+  }
+}

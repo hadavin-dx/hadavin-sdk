@@ -13,7 +13,9 @@ from hadavin_sdk.guard.diagnostic import diagnose, render, validation_text
 from tests.data import c18a_hostile_corpus as corpus
 from tests.data.c18a_oracle import grammar_ok, leaks
 
-ACTIVE = [r for r in corpus.ROWS if r.status == "active"]
+# Only exception and validation rows are driven by ``diagnose`` alone. ``scenario`` rows are driven by their owning package (the provider-error tests:
+# ``tests/test_provider_errors_wire.py``) and ``source`` rows by the config-error site-table tests.
+ACTIVE = [r for r in corpus.ROWS if r.status == "active" and r.kind in ("exception", "validation")]
 
 
 def _ctx(row: corpus.Row) -> contextlib.AbstractContextManager[None]:
@@ -35,9 +37,9 @@ def _line(row: corpus.Row) -> str:
 
 
 def test_corpus_shape() -> None:
-    assert len(corpus.ROWS) == 161
-    assert len({r.id for r in corpus.ROWS}) == 161
-    assert sum(r.status == "active" for r in corpus.ROWS) == 135
+    assert len(corpus.ROWS) == 170
+    assert len({r.id for r in corpus.ROWS}) == 170
+    assert sum(r.status == "active" for r in corpus.ROWS) == 154
     assert {r.cls for r in corpus.ROWS} == set(corpus.CLASSES)
     for cls, minimum in corpus.MINIMUMS.items():
         assert sum(r.cls == cls for r in corpus.ROWS) >= minimum, cls

@@ -117,3 +117,40 @@ def test_the_evals_gate_is_green_on_the_kinds_fixtures(wire, cfg_dir):
     ]
     run = evals.gate(reg, wire.serve(*answers, routes=cfg.routes), "test-agent")
     assert run.green and run.n == len(answers) == len(wire.requests)
+
+
+# The closed facts every kind reports. Read with getattr so the row fails on an assertion on the old code.
+_REFUSED = {  # kind -> (status, error_type) of its recorded `denied` fixture
+    "anthropic": (401, "authentication"),
+    "openai_compat": (401, "authentication"),
+    "gemini": (400, "invalid_request"),
+    "bedrock": (403, "permission"),
+}
+
+
+def test_a_refused_key_reports_its_status_and_closed_type(wire):
+    llm = wire.serve(wire.scenario("denied"), wire.scenario("text"))
+    with pytest.raises(ProviderError) as err:
+        llm.chat(**CALL)
+    want_status, want_type = _REFUSED[wire.kind_name]
+    got_type = getattr(err.value, "error_type", None)
+    assert (getattr(err.value, "status", None), getattr(got_type, "value", None)) == (
+        want_status,
+        want_type,
+    )
+    assert (getattr(err.value, "retryable", None), getattr(err.value, "retry_count", None)) == (
+        False,
+        1,
+    )
+
+
+def test_three_throttles_report_the_retry_facts(wire):
+    llm = wire.serve(*[wire.scenario("throttle") for _ in range(3)])
+    with pytest.raises(ProviderExhausted) as err:
+        llm.chat(**CALL)
+    got_type = getattr(err.value, "error_type", None)
+    assert getattr(got_type, "value", None) in {"rate_limit", "throttled"}
+    assert (getattr(err.value, "retryable", None), getattr(err.value, "retry_count", None)) == (
+        True,
+        3,
+    )

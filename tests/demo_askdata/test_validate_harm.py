@@ -16,7 +16,7 @@ from collections.abc import Iterator
 import psycopg
 import pytest
 from askdata.validate import Rejected, validate
-from psycopg.conninfo import make_conninfo
+from psycopg.conninfo import conninfo_to_dict, make_conninfo
 
 from tests.demo_askdata.attackrun import outcome
 from tests.demo_askdata.conftest import Db
@@ -99,6 +99,23 @@ def _cells(cur) -> list[str]:
     ]
 
 
+def _aimed_at(sql: str, dsn: str) -> str:
+    """The statement as the test server must run it. The self-connection of ``dblink_connect('dbname=postgres')`` names the host (or
+    socket directory), port and user of the DSN under test, so the result does not depend on the environment of the server
+    process; ``COPY ... TO PROGRAM`` gets a program that reads its input (see below). Any other statement is returned unchanged."""
+    # COPY ... TO PROGRAM: the server pipes the rows into the program's stdin. A program that never reads (`echo`) makes the close
+    # of that pipe a race ("Broken pipe" in some runs), so the demonstration uses one that reads to the end.
+    sql = sql.replace("TO PROGRAM 'echo x'", "TO PROGRAM 'cat > /dev/null'")
+    fragment = "'dbname=postgres'"
+    if fragment not in sql:
+        return sql
+    given = conninfo_to_dict(dsn)
+    parts = {k: given[k] for k in ("host", "hostaddr", "port", "user", "password") if k in given}
+    aimed = make_conninfo("dbname=postgres", **parts)
+    assert "'" not in aimed, "a quote in the connection string would end the SQL literal"
+    return sql.replace(fragment, f"'{aimed}'")
+
+
 def prove_harm(attack: Attack, dsn: str) -> str:
     """Run the attack unvalidated on a privileged session; return a short note of the harm observed, or raise."""
     kind, _, needle = attack.harm.partition(":")
@@ -130,7 +147,7 @@ def prove_harm(attack: Attack, dsn: str) -> str:
         return f"still running when the {TIMEOUT_MS} ms statement_timeout cancelled it"
     if kind in ("leak", "exec"):
         with psycopg.connect(dsn, autocommit=True) as c:
-            cur = c.execute(attack.sql)
+            cur = c.execute(_aimed_at(attack.sql, dsn))
             cells = _cells(cur) if kind == "leak" else []
         if kind == "leak":
             assert any(needle in cell for cell in cells), f"no cell contains {needle!r}"
@@ -184,3 +201,15 @@ def test_the_harm_kinds_are_all_exercised():
     kinds = {a.harm.split(":")[0] for a in HARMFUL}
     assert {"write", "lock", "leak", "exec", "abuse", "pg-refuses"} <= kinds
     assert sum(a.harm.startswith("pg-refuses") for a in HARMFUL) < 0.35 * len(HARMFUL)
+
+
+def test_the_dblink_self_connection_names_the_server_under_test():
+    sql = "SELECT dblink_connect('dbname=postgres')"
+    aimed = _aimed_at(sql, "user=postgres dbname=x host=/run/pgtest port=55720")
+    assert "host=/run/pgtest" in aimed and "port=55720" in aimed and "user=postgres" in aimed
+    assert aimed.startswith("SELECT dblink_connect('") and aimed.endswith("')")
+    assert _aimed_at("COPY (SELECT 1) TO PROGRAM 'echo x'", "host=h port=1").endswith(
+        "TO PROGRAM 'cat > /dev/null'"
+    )
+    other = "SELECT 1"
+    assert _aimed_at(other, "host=h port=1") == other

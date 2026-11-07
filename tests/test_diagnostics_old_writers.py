@@ -2,7 +2,7 @@
 
 Nothing here tests the new code. It records, per row, whether today's writers leak the row's canaries (``leaked``), crash on the row
 (``crashed``) or are clean. Rows that leak or crash are strict xfails that name the later row of the package that wires the writers
-(R3c, P5b3), which turns each into a plain assert. The results on the P5a head equal the results on the branch base: P5a changes no writer.
+(step R3c), which turns each into a plain assert. The results on the P5a head equal the results on the branch base: P5a changes no writer.
 """
 
 from __future__ import annotations
@@ -93,6 +93,8 @@ OLD_WRITER_LEAKS: tuple[str, ...] = (
     "HC-pii_obfuscated-09",
     "HC-pii_obfuscated-10",
     "HC-pii_plain-04",
+    "HC-provider_attrs-04",
+    "HC-provider_attrs-07",
     "HC-pydantic_input-01",
     "HC-pydantic_input-02",
     "HC-pydantic_input-04",
@@ -192,7 +194,7 @@ def _param(row: corpus.Row) -> pytest.param:
             pytest.mark.xfail(
                 strict=True,
                 raises=AssertionError,
-                reason=f"later: R3c (P5b3) wires the writers; outcome={kind}",
+                reason=f"later: step R3c wires the writers; outcome={kind}",
             )
         )
     return pytest.param(row, id=row.id, marks=marks)
