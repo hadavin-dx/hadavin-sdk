@@ -24,7 +24,7 @@ from hadavin_sdk import stats
 from hadavin_sdk.codes import Code
 from hadavin_sdk.errors import ConfigError
 
-CORPUS_STEP: Final = "R3a"  # last redesign step merged; each P5b pull request bumps it
+CORPUS_STEP: Final = "R1P"  # last redesign step merged; each P5b pull request bumps it
 STEPS: Final = (
     "R1",
     "R1P",
@@ -1437,8 +1437,8 @@ for _n, _what in (
     later("writer_wiring", "scenario", "R3c", {"argv": (), "script": _what, "channel": "store", "env": {}},
           f"the writers must use render(): {_what}", "the writers are wired in P5b3 (R3c)", ledger=L(_n), canaries=N_)  # fmt: skip
 for _n, _what in ((5, "sweep table gap"), (33, "ConfigError(f'...{exc}') site")):
-    later("classification", "source", "R3c", {"code": _what, "verdict": "classify", "sink": "any"},
-          f"the site table must list: {_what}", "the site table is checked by tests/test_config_error_sites.py (P5b2); this row's own assertion arrives with P5b3 (R3c)", ledger=L(_n))  # fmt: skip
+    later("classification", "source", "R3a", {"code": _what, "verdict": "classify", "sink": "any"},
+          f"the site table must list: {_what}", "the site table arrives with P5b2 (R3a)", ledger=L(_n))  # fmt: skip
 # P5b1 (R1P): the eight provider_attrs rows run on the real attribute names. Each value is checked; the mapping to the ticket's cases
 # is: status 429 = R18(i); status 99 = R18(ii); a plain-string error_type = R5/R18(ii); a request_id that is not a closed shape
 # (underscored name, e-mail address) = R10/R18(ii); retryable True = R18(i); retryable "yes" = R3 (dropped).
