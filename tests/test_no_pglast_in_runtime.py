@@ -125,6 +125,15 @@ MUTANTS = {
         {"pyproject.toml": PYPROJECT.replace("=[]", '=["pglast==8.7"]', 1)},
         ["dependencies: pglast==8.7"],
     ),
+    "optional extra": (
+        {"pyproject.toml": PYPROJECT + '[project.optional-dependencies]\nfoo=["pglast"]\n'},
+        ["extra foo"],
+    ),
+    "tool.uv sources": (
+        {"pyproject.toml": PYPROJECT + '[tool.uv.sources]\nPGLast={url="https://e.x/p.whl"}\n'},
+        ["tool.uv sources"],
+    ),
+    "uv.lock missing": ({"uv.lock": None}, ["uv.lock missing"]),
     "tool.uv constraint": (
         {"pyproject.toml": PYPROJECT + '[tool.uv]\nconstraint-dependencies=["pglast<9"]\n'},
         ["tool.uv constraint-dependencies"],
