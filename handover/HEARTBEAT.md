@@ -507,3 +507,4 @@ LAPTOP CANDIDATES (pushed heads only): PR85 0b54631 (items 3,4,10), PR72 e6a4220
 - 10:32Z UTC: ORDER 143 read; the 30-finding list passed to the A9 drafter (a29cadb9393ac2003). Cadence 7 min kept. Next <= 10:39Z.
 - 10:34Z UTC: q337 PR73 batch pushed 2e35f76; evidence cycle queued by builder. Next <= 10:41Z.
 - 10:35Z UTC: ORDER 144 -> 6c builder resumed; PR73 evidence cycle with its builder. Next <= 10:42Z.
+- 10:36Z UTC: wake; PR73 evidence (8 jobs) queued + fresh reviewer started; P1b r6, PR80 running; A9 drafter + 6c running. Unpushed none. Next <= 10:43Z.
