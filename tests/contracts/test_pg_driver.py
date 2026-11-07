@@ -1,10 +1,10 @@
 """P4d-a1: the neutral driver namespace `pg_driver()` (tests use it and never import the driver)."""
 
-import os
 from types import ModuleType
 
 import pytest
 
+from tests.contracts.kinds import pg_test_dsn
 from tests.contracts.kinds.store_postgres import pg_driver, pg_schema
 
 NAMES = {
@@ -154,7 +154,7 @@ def test_make_dsn_and_dsn_parts_round_trip(drv):
 # --- order 101 item 4 -------------------------------------------------------------------------------------------
 def _roles_and_schemas(drv):
     """The throw-away roles and schemas the helpers create, as the cluster lists them."""
-    with drv.connect_admin(os.environ["HADAVIN_TEST_PG_DSN"]) as conn:
+    with drv.connect_admin(pg_test_dsn()) as conn:
         roles = drv.execute(
             conn, "SELECT rolname FROM pg_roles WHERE rolname ~ '^(tr|rt|pu)_[0-9a-f]{{12}}$'"
         )
@@ -210,6 +210,16 @@ def test_execute_refuses_a_placeholder_and_identifier_mismatch_with_a_clear_erro
 def test_execute_takes_a_doubled_brace_as_a_literal_brace(drv, runtime_dsn):
     with drv.connect_admin(runtime_dsn) as admin:
         assert drv.execute(admin, "SELECT '{{\"a\": 1}}'::jsonb ->> 'a'") == [("1",)]
+
+
+def test_execute_without_params_takes_a_percent_sign_as_it_is(drv, runtime_dsn):
+    """Bug class: an empty `params=()` made the driver parse a literal `%` as a placeholder. With no parameters the
+    statement is sent as written; with parameters `%` still has to be written `%%` (the driver's rule)."""
+    with drv.connect_admin(runtime_dsn) as admin:
+        assert drv.execute(admin, "SELECT 'abc' LIKE 'a%'") == [(True,)]
+        assert drv.execute(admin, "SELECT 'abc' LIKE 'a%'", params=[]) == [(True,)]
+        assert drv.execute(admin, "SELECT 'abc' LIKE 'a%%' AND %s = 1", params=[1]) == [(True,)]
+        assert drv.execute(admin, "SELECT 'abc' LIKE 'a%' FROM {}", idents=["spend"]) == []
 
 
 class _CursorSpy:

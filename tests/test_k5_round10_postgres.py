@@ -9,6 +9,7 @@ import uuid
 import pytest
 
 from hadavin_sdk.config import ConfigError
+from tests.contracts.kinds import pg_test_dsn
 from tests.contracts.kinds.store_postgres import PURGE_DSN, pg_schema
 
 pytestmark = pytest.mark.skipif(
@@ -92,7 +93,7 @@ def _prepared():
 
     from hadavin_sdk.store.migrate import migrate
 
-    dsn = os.environ["HADAVIN_TEST_PG_DSN"]
+    dsn = pg_test_dsn()
     schema, rt, pu = (f"{p}_{uuid.uuid4().hex[:10]}" for p in ("t", "rt", "pu"))
     with psycopg.connect(dsn, autocommit=True) as db:
         db.execute(sql.SQL("CREATE SCHEMA {}").format(sql.Identifier(schema)))
