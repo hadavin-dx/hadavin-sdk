@@ -129,3 +129,23 @@ K8S_MAX_PAGES = 25  # pages followed per list; past that the answer says it is i
 K8S_JSON_CAP_BYTES = 1024 * 1024  # fetch cap for a JSON list reply
 K8S_LOG_SLACK_BYTES = 8192  # fetch-cap room over `log_bytes` for the line framing
 K8S_LOG_BYTES = 65536  # asked of the API as limitBytes
+
+# --- text folding (guard/textnorm.py) ---
+# The weighted size rule of the fold: a text whose weight W (the sum over its characters of the longest string the fold makes from
+# one character; an ASCII text has W = its length) is above this is refused with TextTooLong. Same number as the redaction cap.
+TEXTNORM_MAX_CHARS = MAX_REDACT_CHARS
+# The Unicode data version the fold's keys were made with; require_pinned_unidata compares the interpreter with it.
+TEXTNORM_PINNED_UNIDATA = "15.1.0"
+# The shortest view of a protected value that a scan may use (guard.textnorm.scan_needles), one number per KIND of view; a shorter view (an
+# empty one above all) is found in nearly every text. Each must be an int of at least 1 (guard.textnorm refuses another value when it is
+# imported and every time a scan takes its needles).
+# SPELLING: a view that keeps separators and punctuation (fold_views, without the script views); it is a needle but never the only one.
+TEXTNORM_MIN_SPELLING_CHARS = 2
+# SQUEEZE: a view of ASCII letters and digits only (squeeze_views): an inserted separator cannot hide it, so it must be long enough not to
+# be found in ordinary text (a 3-letter name is found in many English words).
+TEXTNORM_MIN_SQUEEZE_CHARS = 4
+# SCRIPT: a view of the non-ASCII letters of the value's own scripts (fold_views with the scripts of the value). Letters of an alphabet or a
+# syllabary repeat in every text, so the minimum is the squeeze one.
+TEXTNORM_MIN_SCRIPT_CHARS = 4
+# IDEOGRAPH: the script minimum for a value that is only Han ideographs (no ASCII letter or digit): one ideograph is a word, two are a name.
+TEXTNORM_MIN_IDEOGRAPH_CHARS = 2
