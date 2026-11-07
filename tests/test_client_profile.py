@@ -506,5 +506,6 @@ def test_t7h_a_bool_like_value_is_read_as_for_every_other_bool_field(cfg_dir, va
 def test_t7i_a_value_that_is_not_a_bool_is_refused_at_load(cfg_dir, value):
     """A null or a list is not a yes: the config does not load (mutant 55, `bool | None`, is killed here)."""
     _edit(cfg_dir, lambda d: d.update(made_up_data_only=value))
-    with pytest.raises(ConfigError, match="made_up_data_only"):
+    with pytest.raises(ConfigError, match="made_up_data_only") as err:
         load_config(cfg_dir)
+    assert "valid boolean" in str(err.value)  # a type error, not "extra input" (which the base already says)
