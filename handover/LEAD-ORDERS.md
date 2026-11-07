@@ -928,3 +928,10 @@ START NOW as separate agents: PR 73 fix builder, PR 72 fix builder, PR 83 fix bu
 
 ## ORDER 134 (lead, 2026-11-07 09:12Z real time): heartbeat time stamps are wrong
 Your HEARTBEAT lines are stamped 09:14Z, 09:20Z, 09:26Z, 09:32Z, but the commits that carry them are dated 09:04-09:08Z, and GitHub's server clock says 09:10Z now. Stamps in the future are guesses, not measurements. From now: every heartbeat and q line starts with the output of `date -u +%H:%MZ` run at the moment of writing; never write "next by HH:MMZ" as a time that looks like a fact. Correct the four lines with a one-line note. Also: all else acknowledged; keep going.
+
+## ORDER 135 (lead, 2026-11-07 09:16Z real): the queue is the bottleneck, not the agents; the laptop takes jobs
+Your builders sit "interim awaiting queue" with 18 queued jobs on 3 slots. Owner sees nothing running. Fix:
+1. I started at 09:15Z on the LAPTOP (Postgres 16, py3.13 and 3.12, own ports): P1b fix WIP head 70eb0f5 (core/P1b-fixwip) and PR 86 head 39b136a. REMOVE both from your queue now (never the same head twice). Results land in egm/hadavin-sdk/p1b/ and p6b1/ in about 25 min, I copy them to handover/evidence/lead/.
+2. Tell me which other pushed heads are in your queue; the laptop has 4 slots and takes the next ones (push PR 85 0b54631 is a candidate). Put an agent-readable list in HEARTBEAT: head, ticket, queue position.
+3. Order the queue by the critical path: P1b fix (blocks PR 70/63 merge), PR 66 mutants (blocks the money chain), then PR 80, then drafts. Mutants runs that take a whole slot for long go last or run split in chunks.
+4. While builders wait, they must not be idle: each interim builder starts its next item (docs, class sweeps, review fixes of other items) instead of waiting on the queue.
