@@ -28,3 +28,15 @@ def test_the_changelog_states_what_is_and_is_not_masked_for_pilot_and_demo():
     for sentence in sentences:
         assert sentence in text, sentence
     assert "a demo database" not in text, "one word, one meaning: the stage is called demo-stage"
+
+
+def test_the_changelog_states_the_tenant_id_rule_and_its_limit():
+    text = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
+    for sentence in [
+        "`hadavin_sdk.stages.check_tenant_id` refuses a tenant id that",
+        "`config.TenantId` is the field type that calls it",
+        "no tenant is created or stored on this branch",
+        "a database used by the stage named `demo`",
+        "again one used by the stage named `demo`",
+    ]:
+        assert sentence in text, sentence

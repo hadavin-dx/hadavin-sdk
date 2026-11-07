@@ -13,6 +13,7 @@ from urllib.parse import urlsplit
 
 import yaml
 from pydantic import (
+    AfterValidator,
     BaseModel,
     BeforeValidator,
     ConfigDict,
@@ -27,7 +28,7 @@ from hadavin_sdk import defaults, deferred
 from hadavin_sdk.backends.table import DEFAULTS, DEMO_ONLY, NOT_PROD, TABLE, KindSettings
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.scrub_settings import ScrubSettings
-from hadavin_sdk.stages import STAGES, is_live, is_prod
+from hadavin_sdk.stages import STAGES, check_tenant_id, is_live, is_prod
 
 __all__ = [
     "Backends",
@@ -39,6 +40,7 @@ __all__ = [
     "Route",
     "ScrubSettings",
     "SourceConfig",
+    "TenantId",
     "confined",
     "load_config",
     "load_yaml",
@@ -54,6 +56,10 @@ def _money(v: object) -> object:
 
 
 Money = Annotated[Decimal, BeforeValidator(_money)]
+
+# The type of every config field that holds a tenant id: a spelling that equals a stage name is refused (stages.py). No
+# config field holds a tenant id yet; tests/test_tenant_ids.py fails if a model gets one that does not use this type.
+TenantId = Annotated[str, AfterValidator(check_tenant_id)]
 
 
 class _Strict(BaseModel):

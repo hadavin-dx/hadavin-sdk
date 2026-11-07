@@ -21,6 +21,8 @@ from tools.mutation_runner import Mutant, run_mutants
 ROOT = Path(__file__).resolve().parents[1]
 TEST = "tests/test_stage_names.py"
 PIN = "tests/test_stage_names::"
+TENANT_TEST = "tests/test_tenant_ids.py"
+TENANT_PIN = "tests/test_tenant_ids::"
 CFG = "src/hadavin_sdk/config.py"
 STG = "src/hadavin_sdk/stages.py"
 TBL = "src/hadavin_sdk/backends/table.py"
@@ -40,6 +42,19 @@ RAISE = (
 def mutant(name, file, old, new, killer, expect):
     return Mutant(
         name, file, old, new, expect, test_file=TEST, only_test=killer, pinned=PIN + killer
+    )
+
+
+def tenant(name, file, old, new, killer, expect):
+    return Mutant(
+        name,
+        file,
+        old,
+        new,
+        expect,
+        test_file=TENANT_TEST,
+        only_test=killer,
+        pinned=TENANT_PIN + killer,
     )
 
 
@@ -129,6 +144,34 @@ M = [
         "test_the_redactor_does_not_sweep_the_stage_words_but_still_sweeps_secrets_and_other_names", "demo is swept"),
     mutant("M10c prod dropped from the redactor's common words", REDACT, '        "prod",\n', "",
         "test_the_redactor_does_not_sweep_the_stage_words_but_still_sweeps_secrets_and_other_names", "prod is swept"),
+    tenant("T1 the tenant fold does not case-fold", STG, "kept.casefold().strip()", "kept.strip()",
+        "test_a_tenant_id_spelled_like_a_stage_is_refused", "was not read as a stage name"),
+    tenant("T2 the tenant fold does not cut white space", STG, "kept.casefold().strip()", "kept.casefold()",
+        "test_a_tenant_id_spelled_like_a_stage_is_refused", "was not read as a stage name"),
+    tenant("T3 the tenant fold does not apply NFKC", STG, 'unicodedata.normalize("NFKC", value)', "value",
+        "test_a_tenant_id_spelled_like_a_stage_is_refused", "was not read as a stage name"),
+    tenant("T4 the tenant fold keeps invisible format characters", STG, 'unicodedata.category(c) != "Cf"', "True",
+        "test_a_tenant_id_spelled_like_a_stage_is_refused", "was not read as a stage name"),
+    tenant("T5 pilot is not a stage name for a tenant", STG, "fold_name(value) in STAGES", "fold_name(value) in (STAGES[0], STAGES[2])",
+        "test_a_tenant_id_spelled_like_a_stage_is_refused", "was not read as a stage name"),
+    tenant("T6 the tenant check refuses nothing", STG, "    if is_stage_name(value):\n        raise ValueError(", "    if False:\n        raise ValueError(",
+        "test_a_tenant_id_spelled_like_a_stage_is_refused", "was accepted as a tenant id"),
+    tenant("T7 the tenant check refuses a word that merely contains a stage name", STG, "fold_name(value) in STAGES", "any(s in fold_name(value) for s in STAGES)",
+        "test_a_tenant_id_that_is_not_a_stage_name_is_accepted_unchanged", "was read as a stage name"),
+    tenant("T8 a tenant id that is not a string is accepted", STG, '    if not isinstance(value, str):\n        raise TypeError("a tenant id must be a string")\n',
+        "", "test_a_tenant_id_that_is_not_a_string_is_refused", "although it is not a string"),
+    tenant("T9 the refusal echoes the value", STG, "a tenant id may not be a stage name (", "a tenant id {value} may not be a stage name (",
+        "test_the_refusal_names_the_three_stages_and_the_fold_and_does_not_echo_the_value", "the refusal echoes the value"),
+    tenant("T10 the config type does not call the check", CFG, "AfterValidator(check_tenant_id)", "AfterValidator(lambda v: v)",
+        "test_the_config_type_refuses_a_stage_spelling_with_a_validation_error", "the config type accepted"),
+    tenant("T11 the fold is no longer the redactor's canonical form", STG, 'unicodedata.category(c) != "Cf"', 'unicodedata.category(c) != "Zz"',
+        "test_the_fold_is_the_redactors_canonical_form_then_casefolded", "differs from the redactor"),
+    tenant("T12 the walk accepts a tenant field of any type", TENANT_TEST, '"TenantId" not in ast.unparse(', '"TenantId" in ast.unparse(',
+        "test_the_walk_sees_a_tenant_field_that_skips_the_check", "missed a field of the wrong type"),
+    tenant("T13 the walk ignores function parameters", TENANT_TEST, "if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):", "if False:",
+        "test_the_walk_sees_a_tenant_field_that_skips_the_check", "missed an unchecked parameter"),
+    tenant("T14 a tenant field in src escapes the walk", "src/hadavin_sdk/identity.py", "    id: str\n", "    id: str\n    tenant_id: str = \"\"\n",
+        "test_every_tenant_field_in_the_package_goes_through_the_check", "is not a TenantId"),
 ]  # fmt: skip
 
 
@@ -151,7 +194,7 @@ if __name__ == "__main__":
     res = run_mutants(
         ROOT,
         M,
-        [TEST],
+        [TEST, TENANT_TEST],
         extra_dirs=("tests", "tools", "demos", "docs"),
         only=only,
         on_result=show,
