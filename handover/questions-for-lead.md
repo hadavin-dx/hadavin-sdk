@@ -1093,3 +1093,6 @@ NEEDS LEAD (L10-L17, O10, O11):
 - v4.2 was wrong in four places, corrected in v4.3 section 14.
 - UNVERIFIED: Make scenario export, SQLite lacks SKIP LOCKED/RLS, Postgres max_connections 100, many quote URLs.
 Committed and pushed in the handover branch.
+
+## q351 (11:18Z) PR86 fix batch pushed, evidence queued
+core/P6b1 8f6b032 (ff, 0 0, still draft): README `:latest` wording, CHANGELOG self_hosted sentence, new direct-call row t4b kills M23b (no longer an equivalent), BN-7 weakenings added as mutants W1-W4c (smoke: all killed on 3.13 only). Diff vs real base 4a0976f: 7 files, +1021/-5. Local: test_training_lock 141 passed both Pythons, ruff clean. NOT yet run at this head: full suite, lint, mutants, fail-before (queued, logs /home/user/build/P6b1-evidence/o147/job-py3.1{2,3}.log). No verdict until inner rcs are read.
