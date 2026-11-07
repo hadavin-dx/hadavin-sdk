@@ -158,6 +158,7 @@ PINNED = {
     "hadavin_sdk.errors:ConfigError": "config_invalid",
     "hadavin_sdk.config:_RenamedStage": "config_invalid",
     "hadavin_sdk.k1b.bundle:BundleError": "config_invalid",
+    "hadavin_sdk.store.migration_numbers:SqlReadError": "config_invalid",
     "hadavin_sdk.llm.fake:UnknownRecording": "config_invalid",
     "hadavin_sdk.store.protocol:StoreUnavailable": "store_unavailable",
     "hadavin_sdk.store.protocol:StaleState": "store_conflict",
