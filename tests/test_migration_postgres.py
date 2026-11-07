@@ -9,6 +9,7 @@ from __future__ import annotations
 import os
 import shutil
 import subprocess
+import threading
 import uuid
 from pathlib import Path
 
@@ -936,6 +937,9 @@ def test_case_e_e1_with_one_table_missing_keeps_nothing(scratch, monkeypatch, tm
 # --- migrate() sets the same limits as the hand recipe (order 140, F2 drift), RUN --------------------------------------------
 
 # test-only values, short on purpose; the one that is not under test is long so that it cannot end the run first
+WAIT_LIMIT_S = (
+    20  # the longest this test lets the lock be held; the limit under test is a fraction of it
+)
 SHORT_LOCK = ("SET LOCAL lock_timeout = '1s';", "SET LOCAL statement_timeout = '20s';")
 SHORT_STATEMENT = ("SET LOCAL lock_timeout = '20s';", "SET LOCAL statement_timeout = '1s';")
 
@@ -956,8 +960,15 @@ def test_migrate_gives_up_waiting_for_a_table_lock_and_keeps_nothing(
     )
     with psycopg.connect(dsn) as holder:
         holder.execute("LOCK TABLE tool_calls IN ACCESS EXCLUSIVE MODE")
-        with pytest.raises(psycopg.errors.LockNotAvailable):
-            mig.migrate(dsn)
+        # Without a limit `migrate` would wait for ever: let go of the lock after a while, so that the old code FAILS
+        # this test (the run succeeds, nothing raises) instead of hanging it.
+        let_go = threading.Timer(WAIT_LIMIT_S, holder.rollback)
+        let_go.start()
+        try:
+            with pytest.raises(psycopg.errors.LockNotAvailable):
+                mig.migrate(dsn)
+        finally:
+            let_go.cancel()
     assert _ledger(dsn) == before
     assert ("tool_calls", "p3a_wait") not in _columns(dsn)
 
