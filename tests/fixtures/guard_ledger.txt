@@ -1,4 +1,4 @@
-# The never-raise guards (order 93): every `except Exception` in the three guard files, keyed by FILE, FUNCTION and the SITE NAME
+# The never-raise guards every `except Exception` in the three guard files, keyed by FILE, FUNCTION and the SITE NAME
 # its first call records (`_guard_failed("<site>")` in guard/diagnostic.py, `record(Site.<site>)` elsewhere). No line numbers: tests/test_never_raise_guards.py
 # parses the source (ast) and requires this list and the code to hold exactly the same (file, function, site) rows, so a guard that is
 # swapped, moved to another function, added or removed fails the test. A site "-" records nothing: a conversion, not a guard.

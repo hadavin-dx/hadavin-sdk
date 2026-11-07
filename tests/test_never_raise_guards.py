@@ -1,4 +1,4 @@
-"""The never-raise guards (order 93): each ``except Exception`` in a guard is caught, RECORDED, and does not propagate, while
+"""The never-raise guards each ``except Exception`` in a guard is caught, RECORDED, and does not propagate, while
 ``KeyboardInterrupt`` and ``SystemExit`` (not ``Exception`` subclasses) still propagate. One test per file that holds guards:
 ``guard/diagnostic.py``, ``llm/provider_facts.py``, ``llm/retry.py``. The guards are listed in ``tests/fixtures/guard_ledger.txt``, keyed by
 file, function and site name (no line numbers); ``test_ledger_*`` parses the source and checks that list against the code.

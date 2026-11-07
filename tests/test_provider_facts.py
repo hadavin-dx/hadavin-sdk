@@ -1,4 +1,4 @@
-"""P5b1 new-feature rows: the checked facts and their tables (R3, R4, R15, R19) and the neutral module's imports.
+"""New-feature rows: the checked facts and their tables (R3, R4, R15, R19) and the neutral module's imports.
 
 Not copied to the fail-before worktree: every row here needs a name that does not exist on the base.
 """
@@ -397,7 +397,7 @@ def test_r4c_claude_library_class_with_a_recording_getattribute():
             response=resp,
             body={"error": {"type": "authentication_error", "message": "m"}},
         )
-    except (TypeError, AttributeError, ValueError):  # BN-11 fallback: no __init__
+    except (TypeError, AttributeError, ValueError):  # fallback: no __init__
         exc = Rec.__new__(Rec)
         for k, v in (
             ("status_code", 401),

@@ -1,10 +1,10 @@
-"""R20 (P5b1): a retry decision that crashes keeps the reservation booked.
+"""R20: a retry decision that crashes keeps the reservation booked.
 
 The askdata pipeline books a call's worst case before the request and keeps it booked when the failure is a ``ProviderExhausted``
 (``billed``), releasing it only for a plain ``ProviderError``. A crash inside ``with_retry``'s decision used to escape RAW
-(on the base the reservation also stays booked, because nothing releases it). After P5b1 the crash is a ``ProviderExhausted``, so
+(on the base the reservation also stays booked, because nothing releases it). After the provider-error change the crash is a ``ProviderExhausted``, so
 the pipeline books the worst case and returns an answer. Either way the meter must fall by EXACTLY the call's ``worst``.
-Inputs (1) to (5) are the BN-3 list.
+Inputs (1) to (5) are the five ways a retry decision can crash.
 """
 
 from __future__ import annotations

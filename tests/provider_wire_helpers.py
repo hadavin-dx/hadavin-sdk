@@ -1,4 +1,4 @@
-"""Helpers shared by the P5b1 provider-error tests: build a wire, run one call, rebuild the expected message."""
+"""Helpers shared by the provider-error tests: build a wire, run one call, rebuild the expected message."""
 
 from __future__ import annotations
 

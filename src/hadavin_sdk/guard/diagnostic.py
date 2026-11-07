@@ -9,7 +9,7 @@ from a JSON error only ``pos``; from an operating-system error only ``errno`` an
     <kind>: diag_v=1 code=<code> step=<step> at=<locator> fp=<8 hex>[ key=value ...]
 
 Pure functions: no file contents, network, environment, clock or database access at run time. Nothing in this module is wired into
-the places that write errors today; that is the job of a later step (P5b3).
+the places that write errors today; that is the job of a later step (wiring the writers).
 """
 
 from __future__ import annotations

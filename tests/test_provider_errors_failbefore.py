@@ -1,4 +1,4 @@
-"""P5b1 fail-before rows: R5 (hostile stand-ins end to end), R6 (message grammar), R8 (HTTPError.fp), R9 (hook removal),
+"""Fail-before rows: R5 (hostile stand-ins end to end), R6 (message grammar), R8 (HTTPError.fp), R9 (hook removal),
 R10 (retry_after), R17 (traceback).
 
 This file is copied to the base and run there: it imports only names that exist on the base and reads every new attribute with
@@ -153,7 +153,7 @@ def test_r5_bn1b_a_falsy_hook_result_is_refused_at_once():
 def _anthropic_stand_in(status=403, **extra):
     anthropic = pytest.importorskip("anthropic", reason="needs extra anthropic")
     cls = type("Rec", (anthropic.AuthenticationError,), {})
-    exc = cls.__new__(cls)  # BN-11: no __init__
+    exc = cls.__new__(cls)  # no __init__
     for name, value in {"status_code": status, "request_id": None, "body": None, **extra}.items():
         object.__setattr__(exc, name, value)
     return exc
@@ -323,7 +323,7 @@ def test_r5_bedrock_uuid_with_trailing_newline_is_refused():
 def test_r5_hook_returning_the_wrong_type_or_a_subclass_or_raising_gives_no_facts():
     import importlib
 
-    try:  # a new module: before P5b1 the row fails on the assertion below, not on an import error
+    try:  # a new module: before the provider-error change the row fails on the assertion below, not on an import error
         facts_module = importlib.import_module("hadavin_sdk.llm.provider_facts")
     except ImportError:
         facts_module = None

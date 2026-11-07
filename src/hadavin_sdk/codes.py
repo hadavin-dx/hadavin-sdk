@@ -257,7 +257,7 @@ OWN_CODES: Final[Mapping[str, Code]] = MappingProxyType(
 )
 
 
-# --- provider failure facts (P5b1): how a checked HTTP status and a checked error type choose a code ---------------------------
+# --- provider failure facts: how a checked HTTP status and a checked error type choose a code ---------------------------
 # 408 is an extension of design D6 (a request timeout); 500 to 599 are all server errors.
 STATUS_ERROR_TYPE: Final[Mapping[int, ProviderErrorType]] = MappingProxyType(
     {

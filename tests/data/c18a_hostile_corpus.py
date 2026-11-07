@@ -33,7 +33,7 @@ STEPS: Final = (
     "R3b",
     "R2",
     "R5",
-)  # P5b1=R1P, P5b2=R3a, P5b3=R3c+R3b, P5b4=R2, P5b5=R5
+)  # in order: provider errors (R1P), config-error site table (R3a), writers and code scan (R3c, R3b), logging layer (R2), last step (R5)
 CLASSES: Final = (
     "pii_plain", "pii_obfuscated", "pii_encoded", "ansi_c1", "email_unicode", "secret_shapes", "foreign_driver",
     "builtin_text", "pydantic_input", "json_decode", "hostile_class", "field_forging", "size_time", "config_detail",
@@ -267,7 +267,7 @@ def _retried(
     kind: str = "std",
     **hooks: object,
 ) -> BaseException:
-    """The error ``with_retry`` raises when ``make()`` is raised from ``call`` (the P5b1 rows run the real retry loop)."""
+    """The error ``with_retry`` raises when ``make()`` is raised from ``call`` (the provider-error rows run the real retry loop)."""
     import inspect
 
     from hadavin_sdk.llm.protocol import ProviderError
@@ -277,7 +277,7 @@ def _retried(
     def call() -> None:
         raise make()
 
-    # A hook the loop does not take (``facts`` on the code before P5b1) is left out, so a row fails on an assertion, never on a TypeError.
+    # A hook the loop does not take (``facts`` on the code before the provider-facts change) is left out, so a row fails on an assertion, never on a TypeError.
     accepted = inspect.signature(with_retry).parameters
     given = {k: v for k, v in (kind_hooks(kind) | hooks).items() if k in accepted}
     try:
@@ -308,7 +308,7 @@ def _f_retried_bedrock(code: str, status: int, text: str) -> BaseException:
 def _f_retried_hook(variant: str) -> BaseException:
     import importlib
 
-    try:  # the module does not exist before P5b1: the row then runs without a facts class and fails on its assertions
+    try:  # the module did not exist before the provider-facts change: the row then runs without a facts class and fails on its assertions
         pf = importlib.import_module("hadavin_sdk.llm.provider_facts")
     except ImportError:
         pf = None
@@ -1431,23 +1431,23 @@ for _n, _src in (
     (31, "self.last_error = str(e)"), (32, "_LOG.warning('x', e.errno)"), (48, "audit.emit_outcome('x', error=str(exc))"),
 ):  # fmt: skip
     later("ast_taint", "source", "R3c", {"code": _src, "verdict": "flag" if _n != 32 else "clean", "sink": "log"},
-          f"the code scan must judge `{_src}`", "the code scan arrives with P5b3 (R3c)", ledger=L(_n))  # fmt: skip
+          f"the code scan must judge `{_src}`", "the code scan arrives with the code-scan step (R3c)", ledger=L(_n))  # fmt: skip
 for _n, _what in ((26, "root handler formats exc_info"), (30, "root NullHandler hides records"), (45, "handleError prints raw record"),
                   (46, "third-party record text reaches stderr"), (47, "library warning prints raw")):  # fmt: skip
     later("logging_layer", "scenario", "R2", {"argv": ("tick",), "script": _what, "channel": "stderr", "env": {}},
-          f"the logging layer must not print foreign text: {_what}", "the logging layer arrives with P5b4 (R2)", ledger=L(_n), canaries=N_)  # fmt: skip
+          f"the logging layer must not print foreign text: {_what}", "the logging layer arrives with the logging-layer step (R2)", ledger=L(_n), canaries=N_)  # fmt: skip
 for _n, _what in (
     (6, "tick writes last_error and log from one place"),
     (9, "extract writes DeadLetter.errors"),
     (17, "cli prints"),
 ):
     later("writer_wiring", "scenario", "R3c", {"argv": (), "script": _what, "channel": "store", "env": {}},
-          f"the writers must use render(): {_what}", "the writers are wired in P5b3 (R3c)", ledger=L(_n), canaries=N_)  # fmt: skip
+          f"the writers must use render(): {_what}", "the writers are wired in the writer step (R3c)", ledger=L(_n), canaries=N_)  # fmt: skip
 for _n, _what in ((5, "sweep table gap"), (33, "ConfigError(f'...{exc}') site")):
-    # Active since the corpus step R3a: the rows are driven by the site-table tests of the owning package (P5b2), not by ``diagnose``.
+    # Active since the corpus step R3a: the rows are driven by the site-table tests of the owning step (the config-error site table), not by ``diagnose``.
     _add("classification", "source", "active", "R3a", {"code": _what, "verdict": "classify", "sink": "any", "driver": "p5b2_sites"}, (),
          "no_canary", None, f"the site table must list: {_what}", L(_n))  # fmt: skip
-# P5b1 (R1P): the eight provider_attrs rows run on the real attribute names. Each value is checked; the mapping to the ticket's cases
+# Step R1P: the eight provider_attrs rows run on the real attribute names. Each value is checked; the mapping to the design's cases
 # is: status 429 = R18(i); status 99 = R18(ii); a plain-string error_type = R5/R18(ii); a request_id that is not a closed shape
 # (underscored name, e-mail address) = R10/R18(ii); retryable True = R18(i); retryable "yes" = R3 (dropped).
 _PROV = (("status", 429, "provider_rate_limit", ()), ("status", 99, "provider_http", ()),
@@ -1463,7 +1463,7 @@ for _n in (7, 18):
          None, "a finding about the old branch's own evidence and tests", L(_n),
          "the new package's equivalents are the mutation plan and test_every_active_row_has_teeth")  # fmt: skip
 
-# --- P5b1 (R1P) rows 61-69: the hostile input is raised from ``call`` through the real retry loop ----------------------------------
+# --- Step R1P rows 61-69: the hostile input is raised from ``call`` through the real retry loop ----------------------------------
 _LONG_NAME = (NAME.replace(" ", "_") + "z" * 100)[:100]
 _CODE63 = _p("AccessDenied", "Exception")
 _GOLD63 = r"ProviderError: diag_v=1 code=provider_auth step=model_call at=llm/retry\.py:\d+ fp=[0-9a-f]{8} http_status=403 provider_error_type=permission retryable=false retry_count=1"

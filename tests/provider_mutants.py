@@ -1,4 +1,4 @@
-"""The mutants of the provider error plumbing (P5b1): 54 live mutants, M1 to M57 without the three deleted ones (M26, M34, M36).
+"""The mutants of the provider error plumbing (provider errors): 54 live mutants, M1 to M57 without the three deleted ones (M26, M34, M36).
 
 Each mutant changes ONE thing in a temp copy of the package (``tools.mutation_runner`` does the copy). The test named in ``only_test``
 must fail, it must be the test pinned in ``pinned``, and the first failing line must hold ``expect``: a fragment of the assertion

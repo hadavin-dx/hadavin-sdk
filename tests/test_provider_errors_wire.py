@@ -1,7 +1,7 @@
-"""P5b1 golden table (R1), request-count pins (R2), diagnose end to end (R13), Stubber codes (R16), raw-server rows (R11).
+"""Golden table (R1), request-count pins (R2), diagnose end to end (R13), Stubber codes (R16), raw-server rows (R11).
 
 Real objects: the Claude library, botocore's Stubber and ``urllib`` against the local replay or raw servers. The only stand-ins are
-the rows the ticket names (9, 10, 16, 17, 23, 24, 28, 31) and are marked ``stand-in`` below.
+the rows the design names (9, 10, 16, 17, 23, 24, 28, 31) and are marked ``stand-in`` below.
 """
 
 from __future__ import annotations
@@ -224,7 +224,7 @@ def test_r1_row25_openai_302_is_provider_http_with_status_only():
             wire.close()
 
 
-# ---- stand-ins (named in the ticket) -------------------------------------------------------------------------------
+# ---- stand-ins (named in the design) -------------------------------------------------------------------------------
 
 
 def _anthropic_exc(name):
@@ -328,7 +328,7 @@ def test_r1_row10_vertex_refresh_error_is_authentication():
 
 def test_r1_row28_a_provider_error_raised_in_call_passes_through_unchanged():
     keep = ProviderError("x")
-    keep.status, keep.error_type = 418, T.authentication  # plain assignment, as the ticket says
+    keep.status, keep.error_type = 418, T.authentication  # plain assignment, as the design says
     for kind in ("std", "anthropic", "bedrock"):
         err, calls = run_retry(lambda: keep, kind)
         assert err is keep and calls == 1
@@ -433,7 +433,9 @@ def test_r11a_status_line_text_never_reaches_the_error():
             err = run_chat(wire, build=lambda: wire.build(ROUTES))
             assert raw.requests == 3 and type(err) is X and getattr(err, "status", None) is None
             assert all(CANARY not in text for text in _everywhere(err))
-            assert CANARY in str(getattr(err.__context__, "reason", ""))  # what P5b4 must hide
+            assert CANARY in str(
+                getattr(err.__context__, "reason", "")
+            )  # what the logging layer must hide
         finally:
             wire.close()
 
@@ -641,7 +643,7 @@ def test_r16_every_modelled_converse_code(code, status, etype, retried):
 
 
 def test_r16_bn10_quota_code_at_http_400_is_retried_by_the_code_alone():
-    """Status 400 alone is not retried; only the code table can make this one retried (BN-10)."""
+    """Status 400 alone is not retried; only the code table can make this one retried."""
     wire = make_wire(B)
     try:
         fx = {
@@ -673,7 +675,7 @@ def test_r16_bn10_quota_code_at_http_400_is_retried_by_the_code_alone():
 def test_r16_status_424_has_no_status_table_type_but_the_code_table_gives_one():
     import importlib
 
-    try:  # the module does not exist before P5b1: the test then fails on its assertion, not on an import error
+    try:  # the module did not exist before the provider-facts change: the test then fails on its assertion, not on an import error
         facts = importlib.import_module("hadavin_sdk.llm.provider_facts")
     except ImportError:
         facts = None
@@ -684,7 +686,7 @@ def test_r16_status_424_has_no_status_table_type_but_the_code_table_gives_one():
     assert status_error_type(424) is None
 
 
-# ---- R14: library loggers (a strict expected failure; P5b4 moves this row) ----------------------------------------------------
+# ---- R14: library loggers (a strict expected failure; the logging-layer step moves this row) ----------------------------------------------------
 # Pinned versions: anthropic 2.1.0, httpx2 2.16.0, botocore 1.43.122.
 
 import logging
@@ -697,7 +699,7 @@ def _library_log_text(caplog, logger_prefix):
 @pytest.mark.xfail(
     strict=True,
     raises=AssertionError,
-    reason="library log records hold provider text; P5b4 moves this row to what the process emits",
+    reason="library log records hold provider text; the logging-layer step moves this row to what the process emits",
 )
 def test_r14a_claude_library_debug_log_holds_the_canary(caplog):
     body = b'{"type":"error","error":{"type":"api_error","message":"' + CANARY.encode() + b'"}}'
@@ -718,7 +720,7 @@ def test_r14a_claude_library_debug_log_holds_the_canary(caplog):
         assert raw.requests >= 1 and type(err) is X
         records = _library_log_text(caplog, "anthropic")
         assert records, "no record from the 'anthropic' logger"
-        # the row: no library log record may hold the canary (expected to fail until P5b4)
+        # the row: no library log record may hold the canary (expected to fail until the logging-layer step)
         leaked = [(r.name, r.levelname) for r in caplog.records if CANARY in r.getMessage()]
         assert not leaked, f"canary found in library log records (logger, level): {leaked}"
 
@@ -726,7 +728,7 @@ def test_r14a_claude_library_debug_log_holds_the_canary(caplog):
 @pytest.mark.xfail(
     strict=True,
     raises=AssertionError,
-    reason="library log records hold provider text; P5b4 moves this row to what the process emits",
+    reason="library log records hold provider text; the logging-layer step moves this row to what the process emits",
 )
 def test_r14b_amazon_library_debug_log_holds_the_canary(caplog):
     boto3 = pytest.importorskip("boto3", reason="needs extra aws")
@@ -778,12 +780,12 @@ R1P_SCN = [r for r in corpus.ROWS if r.owner_step == "R1P" and r.kind == "scenar
 
 
 def test_r1p_corpus_rows_are_all_active_and_counted():
-    # P5b2's step: the P5b1 (R1P) rows stay active when the step moves on
+    # the provider-error (R1P) rows stay active when the step moves on
     assert corpus.CORPUS_STEP == "R3a"
     assert [(r.id, r.status) for r in corpus.ROWS if r.owner_step == "R3a"] == [
         ("HC-classification-01", "active"),
         ("HC-classification-02", "active"),
-    ]  # ledger rows 005 and 033, driven by the site-table tests of P5b2
+    ]  # ledger rows 005 and 033, driven by the config-error site-table tests
     assert {r.id for r in R1P_SCN} == {"HC-provider_attrs-65", "HC-size_time-66", "HC-size_time-67"}
     assert len(R1P_EXC) == 8 + 6 and all(r.status == "active" for r in R1P_EXC + R1P_SCN)
 

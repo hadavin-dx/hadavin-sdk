@@ -1,6 +1,6 @@
 """R7: a source tripwire for the common ways provider text could reach a raise, a print or a log call in ``src/hadavin_sdk/llm``.
 
-It is NOT a proof (P5b3's scan is). It walks the ``ast`` of each module with these rules (BN-2):
+It is NOT a proof (the later code scan is). It walks the ``ast`` of each module with these rules:
 
 * tainted values: ``str(e)`` / ``repr(e)`` / ``format(e)`` / ``ascii(e)``, an f-string ``{e}``, the attributes ``args message msg reason
   response body text content __name__ __qualname__`` of an exception-derived name (also through ``getattr(e, "<const>")``), and
@@ -37,7 +37,7 @@ TAINT_ATTRS = {
 STRINGIFIERS = {"str", "repr", "format", "ascii"}
 CTORS = {"ProviderError", "ProviderExhausted"}
 T4_ALLOW = {"retry.describe", "bedrock._code"}
-# The one construction-time entry (removed when P5b3 merges; the test fails once it is stale).
+# The one construction-time entry (removed when the code scan lands; the test fails once it is stale).
 ENTRY = ("anthropic.client", "sink-tainted")
 
 
@@ -215,7 +215,7 @@ def _real_flags() -> list[str]:
 def test_r7_the_llm_sources_have_no_unsanctioned_text_channel():
     flags = _real_flags()
     assert any(f" {ENTRY[0]} {ENTRY[1]}" in f for f in flags), (
-        "the anthropic.client allow-list entry is stale: remove it (P5b3 merged)"
+        "the anthropic.client allow-list entry is stale: remove it (the code scan landed)"
     )
     rest = [f for f in flags if f" {ENTRY[0]} {ENTRY[1]}" not in f]
     assert rest == [], rest

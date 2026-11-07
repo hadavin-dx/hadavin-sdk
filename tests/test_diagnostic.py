@@ -330,7 +330,7 @@ def test_golden_lines_t8_t9_t10() -> None:
                         line_of(corpus._f_json("m", "d", 3)))  # fmt: skip
 
 
-# ---- P5b1 (R18): the provider read side. Instances are built with plain assignment so these rows run on the base too. ----------
+# ---- R18: the provider read side. Instances are built with plain assignment so these rows run on the base too. ----------
 
 _GOOD_REQ = "req_AbCd1234Ef56Gh78"
 

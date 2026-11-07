@@ -503,6 +503,7 @@
   so callers book it like an exhausted call. (Before, the raw exception escaped after the request was sent.)
 - Row 27 and every parse failure of a 200 reply remain a plain `ProviderError` that the askdata pipeline releases; P4b2 owns that.
 - Tests: `tests/test_provider_facts.py`, `tests/test_provider_errors_wire.py`, `tests/test_provider_errors_failbefore.py`,
-  `tests/test_llm_text_channels.py` and `tests/demo_askdata/test_p5b1_booking.py` (new); 45 mutants in `tests/provider_mutants.py`; corpus
-  rows 61 to 69 and the eight `provider_attrs` rows active (`CORPUS_STEP` is `R1P`). The library loggers of the Claude and Amazon clients
+  `tests/test_llm_text_channels.py` and `tests/demo_askdata/test_p5b1_booking.py` (new); 54 mutants in `tests/provider_mutants.py` (M1 to M57 without three deleted ones; M49 to M57 pin the one shared never-raise counter, the
+  retry loop counting only absorbed faults, the repository-defect code of `SqlReadError`, the failed-wait guard, the guard ledger and the `Site` members);
+  corpus rows 61 to 69, the eight `provider_attrs` rows and the two classification rows (ledger 005 and 033) active, 154 active rows in all (`CORPUS_STEP` is `R3a`). The library loggers of the Claude and Amazon clients
   still print reply text at DEBUG level (two strict expected failures, `-k r14`; P5b4 owns the fix).

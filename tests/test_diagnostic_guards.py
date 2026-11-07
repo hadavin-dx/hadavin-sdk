@@ -1,4 +1,4 @@
-"""Order 93: each ``except Exception`` in ``guard/diagnostic.py`` is a never-raise guard.
+"""Each ``except Exception`` in ``guard/diagnostic.py`` is a never-raise guard.
 
 For every guard site: a hostile object that raises an ordinary ``Exception`` is caught, the failure is recorded (a counter
 for the site; nothing about the exception), and a ``KeyboardInterrupt`` or ``SystemExit`` raised at the same place goes through.

@@ -89,7 +89,7 @@ def test_codes_module_imports_only_the_standard_library() -> None:
 
 
 def test_every_code_member_is_reachable_or_reserved() -> None:
-    reachable = set(OWN_CODES.values()) | set(ERROR_TYPE_CODE.values()) | {  # the provider codes are reached by a status or a type (P5b1)
+    reachable = set(OWN_CODES.values()) | set(ERROR_TYPE_CODE.values()) | {  # the provider codes are reached by a status or a type
         Code.validation_failed, Code.os_error, Code.db_error, Code.internal_bug, Code.foreign_exception, Code.timeout,
     }  # fmt: skip
     for code in Code:

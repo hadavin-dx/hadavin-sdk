@@ -119,7 +119,7 @@ def test_the_evals_gate_is_green_on_the_kinds_fixtures(wire, cfg_dir):
     assert run.green and run.n == len(answers) == len(wire.requests)
 
 
-# P5b1 (R12): the closed facts every kind reports. Read with getattr so the row fails on an assertion on the old code.
+# The closed facts every kind reports. Read with getattr so the row fails on an assertion on the old code.
 _REFUSED = {  # kind -> (status, error_type) of its recorded `denied` fixture
     "anthropic": (401, "authentication"),
     "openai_compat": (401, "authentication"),
