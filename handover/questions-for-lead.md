@@ -847,3 +847,6 @@ NEEDS LEAD: (1) made_up_data_only: "yes" and 1 load as True (pydantic lax bool, 
 - Also done: pg_auth_members snapshot (F1), non-superuser owner role test, H1/H4 recipe tests, E1-E3 psql tests, lock/statement timeouts in recipe, F3-F9 text fixes. Gates at 1e6b896: ruff, format, bandit, scan_repo, hygiene all clean.
 - M-2 Postgres 17: NOT possible here (only 16.15 installed, nothing installed). CI on 17.10 is the only 17 evidence. Lead please note.
 - Slips: .venv created twice in the worktree (removed); PG env not exported before pg_ctl start (own servers, no harm).
+
+## q291 (INFORM) ORDER 133 started, 09:10Z
+Item 1 PR86: fix head 39b136a already pushed (q289), evidence queued. Item 2 strict bool sweep: sent to PR72 builder a6aa883; it will change code, requeue final-head runs, end INTERIM (the queued runall.sh at 80f94b8 is now stale). Item 3: operator-notes.md updated (pushed); set -u assigned to PR72 builder. Item 4: dblink test fix builder a160f3d started on new branch core/dblink-test-fix from main; will push the branch only, no PR. PR73 builder ae28b2c interim in q290 (M-4 lock-in is NEEDS LEAD).
