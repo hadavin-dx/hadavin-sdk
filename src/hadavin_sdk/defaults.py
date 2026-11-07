@@ -134,10 +134,50 @@ K8S_LOG_BYTES = 65536  # asked of the API as limitBytes
 # The weighted size rule of the fold: a text whose weight W (the sum over its characters of the longest string the fold makes from
 # one character; an ASCII text has W = its length) is above this is refused with TextTooLong. Same number as the redaction cap.
 TEXTNORM_MAX_CHARS = MAX_REDACT_CHARS
-# The Unicode data version the fold's keys were made with; check_pinned_unidata compares the interpreter with it.
+# The Unicode data version the fold's keys were made with; require_pinned_unidata compares the interpreter with it.
 TEXTNORM_PINNED_UNIDATA = "15.1.0"
-# Passes (the confirming pass included) of a scan-key reading before FoldNotConverged (read by guard/textnorm.py at the call).
+# Passes (the confirming pass included) of a scan-key reading before FoldNotConverged (read by guard/textnorm.py at the call). A whole number
+# of at least 1 (guard.textnorm refuses another value when it is imported and every time a scan key is made).
 TEXTNORM_MAX_PASSES = 3
+
+
+# The shortest view of a protected value that a scan may use (guard.textnorm.scan_needles), one number per KIND of view; a shorter view (an
+# empty one above all) is found in nearly every text. Each must be an int of at least 2, the floor (guard.textnorm refuses another value when it
+# is imported and every time a scan takes its needles): a single character is found in nearly every text of its script.
+# SPELLING: a view that keeps separators and punctuation (fold_views, without the script views); it is a needle but never the only one.
+TEXTNORM_MIN_SPELLING_CHARS = 2
+# SQUEEZE: a view of ASCII letters and digits only (squeeze_views): an inserted separator cannot hide it, so it must be long enough not to
+# be found in ordinary text (a 3-letter name is found in many English words).
+TEXTNORM_MIN_SQUEEZE_CHARS = 4
+# SCRIPT: a view of the non-ASCII letters of the value's own scripts (fold_views with the scripts of the value). Letters of an alphabet or a
+# syllabary repeat in every text, so the minimum is the squeeze one.
+TEXTNORM_MIN_SCRIPT_CHARS = 4
+# IDEOGRAPH: the script minimum for a value that is only Han ideographs (no ASCII letter or digit): one ideograph is a word, two are a name.
+TEXTNORM_MIN_IDEOGRAPH_CHARS = 2
+# DIGITS: the squeeze minimum for a view of ASCII digits only (a PIN, an account number): a short digit string is found in almost every table of
+# numbers (a 4-digit needle is found in 99 of 100 random 50,000-digit tables), so it must be longer than a view that holds a letter.
+TEXTNORM_MIN_DIGIT_CHARS = 6
+
+# ONE INSERTED LETTER (guard.textnorm.scan_holds): a script needle (see SCRIPT above) is also looked for in the text with ONE extra letter of the value's own
+# scripts inserted anywhere inside it, so "密码测试" is found in "密的码测试". INSERTION_MIN: the fewest characters such a needle may have, per script group (the first
+# word of the Unicode name, Han and kana grouped; see guard.textnorm); a shorter needle is matched exactly only, because "a?b" matches too many ordinary words.
+# The numbers come from a measurement on running text (CHANGELOG, "One inserted letter"): for each script, the shortest needle for which the
+# extra matches the insertion adds stay near 1% or lower per 10,000 characters of text; a needle holding several groups takes the largest minimum. A
+# script not in the table (not measured) takes the default, the most cautious of the measured Latin-free scripts. INSERTION_MAX: the longest needle
+# the matcher takes (its work grows with the needle length for each hit); a longer needle is matched exactly only.
+TEXTNORM_INSERTION_MIN_CHARS = 8
+TEXTNORM_INSERTION_MIN_CHARS_BY_SCRIPT = (
+    ("HAN", 4),
+    ("KANA", 7),
+    ("HANGUL", 5),
+    ("THAI", 8),
+    ("ARABIC", 7),
+    ("HEBREW", 7),
+    ("DEVANAGARI", 7),
+    ("CYRILLIC", 10),
+    ("GREEK", 12),
+)
+TEXTNORM_INSERTION_MAX_CHARS = 64
 
 # --- diagnostics (codes.py, guard/diagnostic.py): the safe text that replaces an error message in logs and stored fields ---
 DIAG_VERSION = 1  # the `diag_v=` field of a rendered line

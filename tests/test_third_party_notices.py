@@ -45,7 +45,8 @@ def test_the_notices_file_holds_the_licence_grant_and_names_the_covered_files():
         assert path in text, path
         assert (ROOT / path).is_file(), path
     assert "https://www.unicode.org/license.txt" in text
-    assert "15.1.0" in text and "2023-08-11" in text and "2023-07-28" in text
+    assert "version 15.1.0" in text and "2023-08-11" in text and "2023-07-28" in text
+    assert "18.0.0" not in text, "the notices still name the old data version"
 
 
 def test_the_licence_text_is_the_pinned_one():
@@ -74,4 +75,37 @@ def test_the_data_sha256_in_the_notices_is_the_one_the_generator_pins():
     assert (
         hashlib.sha256((ROOT / "tools" / "data" / "Scripts.txt").read_bytes()).hexdigest()
         == scripts
+    )
+
+
+LEAD_SCRIPTS_SHA = "0eacb65169ae6eb1d399cd70826b3da15fff19f6f586eecf819b70c83b1d9b32"
+SCRIPTS_URL = "https://www.unicode.org/Public/15.1.0/ucd/Scripts.txt"
+
+
+def test_the_scripts_file_hash_and_source_are_recorded_in_the_notices_the_manifest_and_the_generator():
+    """Lead order 73: the Scripts.txt sha256 and its unicode.org source, 'verified by the lead 2026-11-06', in all three places."""
+    notices = NOTICES.read_text(encoding="utf-8")
+    generator = (ROOT / "tools" / "gen_confusables.py").read_text(encoding="utf-8")
+    manifest = json.loads(
+        (Path(__file__).parent / "fixtures" / "textnorm_manifest.json").read_text(encoding="utf-8")
+    )
+    entry = manifest["data_files"]["tools/data/Scripts.txt"]
+    assert entry["sha256"] == LEAD_SCRIPTS_SHA and entry["source"] == SCRIPTS_URL
+    assert "verified by the lead 2026-11-06" in entry["verified"]
+    assert (
+        hashlib.sha256((ROOT / "tools" / "data" / "Scripts.txt").read_bytes()).hexdigest()
+        == LEAD_SCRIPTS_SHA
+    )
+    for text, where in (
+        (notices, "THIRD-PARTY-NOTICES.md"),
+        (generator, "tools/gen_confusables.py"),
+    ):
+        assert LEAD_SCRIPTS_SHA in text, where
+        assert SCRIPTS_URL in text, where
+        assert "verified by the lead" in " ".join(text.split()), where
+    conf = manifest["data_files"]["tools/data/confusables.txt"]
+    assert conf["sha256"] in notices
+    assert (
+        hashlib.sha256((ROOT / "tools" / "data" / "confusables.txt").read_bytes()).hexdigest()
+        == conf["sha256"]
     )
