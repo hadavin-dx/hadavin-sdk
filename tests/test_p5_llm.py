@@ -29,6 +29,7 @@ def _llm(cfg_dir, entry):
     path = cfg_dir / "config.yaml"
     raw = yaml.safe_load(path.read_text(encoding="utf-8"))
     raw["backends"]["llm"] = entry
+    raw["made_up_data_only"] = True  # a real llm kind in demo
     path.write_text(yaml.safe_dump(raw), encoding="utf-8")
     return load_registry(load_config(cfg_dir)).config_hash("test-agent")
 

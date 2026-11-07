@@ -77,7 +77,9 @@ def test_a_live_postgres_deployment_without_a_purge_dsn_does_not_start(tmp_path)
     del data["backends"]["store"]["purge_dsn_secret_name"]
     path.write_text(yaml.safe_dump(data), encoding="utf-8")
     with pytest.raises(ConfigError, match="purge_dsn_secret_name"):
-        app_mod.build(cfg, ["ito-agent"], secrets=SECRETS, llm=ScriptLLM([]))
+        app_mod.build(
+            cfg, ["ito-agent"], secrets=SECRETS, llm=ScriptLLM([]), allow_test_doubles=True
+        )
 
 
 # --- M3: the restored-hash key must be real ------------------------------------------------------------------------------------------

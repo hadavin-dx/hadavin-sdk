@@ -367,7 +367,9 @@ def test_a_live_deployment_without_the_key_does_not_start(tmp_path):
 
     cfg = pilot_cfg(tmp_path, config={"evidence": {}})
     with pytest.raises(ConfigError, match="restored_hash_key_secret_name"):
-        app_mod.build(cfg, ["ito-agent"], secrets=SECRETS, llm=ScriptLLM([]))
+        app_mod.build(
+            cfg, ["ito-agent"], secrets=SECRETS, llm=ScriptLLM([]), allow_test_doubles=True
+        )
 
 
 # --- m8: no credential-bearing header over plain http --------------------------------------------------------------------------------------

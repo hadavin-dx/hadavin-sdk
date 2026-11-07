@@ -223,7 +223,13 @@ def test_m2_plain_callables_are_refused_in_pilot_and_prod(tmp_path):
 
     root = pilot_cfg(tmp_path)
     with pytest.raises(ConfigError, match="plain callables"):
-        app_mod.build(root, ["ito-agent"], secrets=SECRETS_PLUS, tools={"echo": lambda a: "x"})
+        app_mod.build(
+            root,
+            ["ito-agent"],
+            secrets=SECRETS_PLUS,
+            tools={"echo": lambda a: "x"},
+            allow_test_doubles=True,
+        )
 
 
 def test_m2_a_toolbox_without_a_proposal_check_is_refused(tmp_path):
