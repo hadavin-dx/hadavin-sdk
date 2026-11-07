@@ -778,7 +778,8 @@ R1P_SCN = [r for r in corpus.ROWS if r.owner_step == "R1P" and r.kind == "scenar
 
 
 def test_r1p_corpus_rows_are_all_active_and_counted():
-    assert corpus.CORPUS_STEP == "R3a"  # P5b2's step: P5b1 (R1P) rows stay active when the step moves on
+    # P5b2's step: the P5b1 (R1P) rows stay active when the step moves on
+    assert corpus.CORPUS_STEP == "R3a"
     assert [(r.id, r.status) for r in corpus.ROWS if r.owner_step == "R3a"] == [
         ("HC-classification-01", "active"),
         ("HC-classification-02", "active"),
