@@ -87,7 +87,7 @@ def test_an_empty_detector_list_refused(cfg_dir):
 
 
 @pytest.mark.parametrize("env", ["pilot", "prod"])
-def test_dev_only_kinds_refused_outside_dev(cfg_dir, env):
+def test_demo_only_kinds_refused_outside_demo(cfg_dir, env):
     _edit(cfg_dir, lambda d: d.update(environment=env))
     with pytest.raises(ConfigError, match=f"environment {env}: refused: ") as err:
         load_config(cfg_dir)
@@ -103,7 +103,7 @@ def test_dev_only_kinds_refused_outside_dev(cfg_dir, env):
 
 
 def test_unknown_environment_refused(cfg_dir):
-    _edit(cfg_dir, lambda d: d.update(environment="staging"))
+    _edit(cfg_dir, lambda d: d.update(environment="uat"))  # a project label, not a stage
     with pytest.raises(ConfigError, match="environment"):
         load_config(cfg_dir)
 
@@ -134,7 +134,7 @@ def planted(monkeypatch, cfg_dir):
         _edit(
             cfg_dir,
             lambda d: (
-                d.update(made_up_data_only=True),  # a real channel kind in dev (P6a-1)
+                d.update(made_up_data_only=True),  # a real channel kind in demo (P6a-1)
                 d["backends"].update(
                     channel={"kind": "planted", "api_key_secret_name": secret_name, "reads": reads}
                 ),

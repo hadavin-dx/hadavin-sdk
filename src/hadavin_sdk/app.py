@@ -15,7 +15,6 @@ from datetime import datetime
 from pathlib import Path
 from urllib.parse import urlsplit
 
-from hadavin_sdk import deferred
 from hadavin_sdk import sources as sources_mod
 from hadavin_sdk import tools as tools_mod
 from hadavin_sdk.actions.contract import schema_errors
@@ -37,6 +36,7 @@ from hadavin_sdk.runtime import evidence
 from hadavin_sdk.runtime.agent_loop import Hooks, Runtime
 from hadavin_sdk.sources import Source
 from hadavin_sdk.sources.kinds import KINDS
+from hadavin_sdk.stages import is_live
 from hadavin_sdk.store import Store
 from hadavin_sdk.store.protocol import missing_methods
 
@@ -110,7 +110,7 @@ def build(
     # Before any backend is built, so a refusal reads no secret, opens no connection and no folder.
     live_doubles = (
         _test_doubles_given(_BUILD_PARAMS, given)
-        if cfg.environment in deferred.LIVE and not allow_test_doubles
+        if is_live(cfg.environment) and not allow_test_doubles
         else []
     )
     if live_doubles:
@@ -121,7 +121,7 @@ def build(
     reg = load_registry(cfg)
     b = cfg.backends
     secrets = secrets or make("secrets", b.secrets)
-    live = cfg.environment in deferred.LIVE
+    live = is_live(cfg.environment)
     if live and not cfg.evidence.restored_hash_key_secret_name:
         raise ConfigError("evidence.restored_hash_key_secret_name is required in pilot and prod")
     if live and getattr(b.store, "kind", "") == "postgres" and not b.store.purge_dsn_secret_name:

@@ -1,7 +1,7 @@
 """P6a-1: the client-profile check (ticket P6a, revision 3 plus build notes BN-1 to BN-15).
 
-T0 the prod fixture loads; T1 dev-only kinds not covered elsewhere; T2 every TABLE pair is decided; T5 the build
-keywords in a client profile (pilot or prod); T7 a dev config that names a real model, a vendor detector or a
+T0 the prod fixture loads; T1 demo-only kinds not covered elsewhere; T2 every TABLE pair is decided; T5 the build
+keywords in a client profile (pilot or prod); T7 a demo config that names a real model, a vendor detector or a
 real approval channel must say it holds only made-up data.
 
 Import rule (ticket R2-ADV-1): module-level names exist on the base. Names that exist only after P6a-1
@@ -21,7 +21,7 @@ import yaml
 
 from hadavin_sdk import app as app_mod
 from hadavin_sdk.approvals.channel import FakeChannel
-from hadavin_sdk.backends.table import DEV_ONLY, TABLE
+from hadavin_sdk.backends.table import DEMO_ONLY, TABLE
 from hadavin_sdk.config import ConfigError, load_config
 from tests.test_k3_pilot import ScriptedLLM
 from tests.test_k3_pilot_env import pilot_cfg
@@ -179,29 +179,29 @@ CLIENT_REVIEWED: dict[tuple[str, str], str] = {
     ("llm", "gemini"): "a real model; masked text only (P5c); a pilot or prod config names it",
     ("detector", "regex"): "a local check; sends nothing out",
     ("detector", "llm_judge"): "uses the llm kind, so the model rules apply",
-    ("detector", "bedrock_guardrail"): "a vendor screening service; dev needs made_up_data_only",
-    ("channel", "slack"): "the real approval channel; dev needs made_up_data_only",
+    ("detector", "bedrock_guardrail"): "a vendor screening service; demo needs made_up_data_only",
+    ("channel", "slack"): "the real approval channel; demo needs made_up_data_only",
 }
 
 
-def completeness_problems(table, dev_only, reviewed) -> list[str]:
-    """Every pair of `table` is in exactly one of `dev_only` and `reviewed`; each reviewed entry has a reason."""
+def completeness_problems(table, demo_only, reviewed) -> list[str]:
+    """Every pair of `table` is in exactly one of `demo_only` and `reviewed`; each reviewed entry has a reason."""
     pairs = {(cap, kind) for cap, kinds in table.items() for kind in kinds}
     out = [
-        f"{c}/{k}: in neither DEV_ONLY nor CLIENT_REVIEWED"
-        for c, k in sorted(pairs - dev_only - set(reviewed))
+        f"{c}/{k}: in neither DEMO_ONLY nor CLIENT_REVIEWED"
+        for c, k in sorted(pairs - demo_only - set(reviewed))
     ]
     out += [
-        f"{c}/{k}: in both DEV_ONLY and CLIENT_REVIEWED"
-        for c, k in sorted(dev_only & set(reviewed))
+        f"{c}/{k}: in both DEMO_ONLY and CLIENT_REVIEWED"
+        for c, k in sorted(demo_only & set(reviewed))
     ]
     out += [f"{c}/{k}: no reason" for (c, k), why in sorted(reviewed.items()) if not why.strip()]
-    out += [f"{c}/{k}: not in TABLE" for c, k in sorted((dev_only | set(reviewed)) - pairs)]
+    out += [f"{c}/{k}: not in TABLE" for c, k in sorted((demo_only | set(reviewed)) - pairs)]
     return out
 
 
-def test_t2a_dev_only_is_exactly_the_six_pairs():
-    assert DEV_ONLY == {
+def test_t2a_demo_only_is_exactly_the_six_pairs():
+    assert DEMO_ONLY == {
         ("llm", "fake"),
         ("channel", "fake"),
         ("secrets", "fake"),
@@ -212,24 +212,24 @@ def test_t2a_dev_only_is_exactly_the_six_pairs():
 
 
 def test_t2b_every_pair_is_decided_with_a_reason():
-    assert completeness_problems(TABLE, DEV_ONLY, CLIENT_REVIEWED) == []
+    assert completeness_problems(TABLE, DEMO_ONLY, CLIENT_REVIEWED) == []
 
 
 def test_t2c_planted_kind_in_neither_set_is_reported():
     extra = {**TABLE, "llm": {**TABLE["llm"], "madeup": TABLE["llm"]["fake"]}}
-    found = completeness_problems(extra, DEV_ONLY, CLIENT_REVIEWED)
+    found = completeness_problems(extra, DEMO_ONLY, CLIENT_REVIEWED)
     assert any("llm/madeup" in p and "neither" in p for p in found)
 
 
 def test_t2c_planted_pair_in_both_sets_is_reported():
     both = {**CLIENT_REVIEWED, ("llm", "fake"): "planted"}
-    found = completeness_problems(TABLE, DEV_ONLY, both)
+    found = completeness_problems(TABLE, DEMO_ONLY, both)
     assert any("llm/fake" in p and "both" in p for p in found)
 
 
 def test_t2c_planted_empty_reason_is_reported():
     empty = {**CLIENT_REVIEWED, ("llm", "gemini"): "  "}
-    found = completeness_problems(TABLE, DEV_ONLY, empty)
+    found = completeness_problems(TABLE, DEMO_ONLY, empty)
     assert any("llm/gemini" in p and "no reason" in p for p in found)
 
 
@@ -357,7 +357,7 @@ def test_t5p_the_live_hooks_are_exactly_two_parameters_of_build():
     assert set(hooks) <= set(inspect.signature(app_mod.build).parameters)
 
 
-# --- T7: a dev config that sends text out must say it holds only made-up data -------------------------------
+# --- T7: a demo config that sends text out must say it holds only made-up data -------------------------------
 
 LLM_SETTINGS = {
     "anthropic": {"platform": "api", "api_key_secret_name": "madeup-llm-key"},
@@ -377,26 +377,26 @@ SLACK = {
     "signing_secret_name": "madeup-sign",
     "bot_token_secret_name": "madeup-token",
 }
-REAL_LLM_KINDS = sorted(k for k in TABLE["llm"] if ("llm", k) not in DEV_ONLY)
-REAL_CHANNEL_KINDS = sorted(k for k in TABLE["channel"] if ("channel", k) not in DEV_ONLY)
+REAL_LLM_KINDS = sorted(k for k in TABLE["llm"] if ("llm", k) not in DEMO_ONLY)
+REAL_CHANNEL_KINDS = sorted(k for k in TABLE["channel"] if ("channel", k) not in DEMO_ONLY)
 
 
 @pytest.mark.parametrize("kind", REAL_LLM_KINDS)
-def test_t7a_a_real_llm_kind_in_dev_needs_the_field(cfg_dir, kind):
+def test_t7a_a_real_llm_kind_in_demo_needs_the_field(cfg_dir, kind):
     _edit(cfg_dir, lambda d: d["backends"].update(llm={"kind": kind, **LLM_SETTINGS[kind]}))
     with pytest.raises(ConfigError, match="made_up_data_only") as err:
         load_config(cfg_dir)
     assert f"llm: {kind}" in str(err.value)
 
 
-def test_t7a2_the_vendor_detector_in_dev_needs_the_field(cfg_dir):
+def test_t7a2_the_vendor_detector_in_demo_needs_the_field(cfg_dir):
     _edit(cfg_dir, lambda d: d["backends"].update(detector=[GUARDRAIL]))
     with pytest.raises(ConfigError, match="made_up_data_only") as err:
         load_config(cfg_dir)
     assert "detector: bedrock_guardrail" in str(err.value)
 
 
-def test_t7a3_a_real_channel_kind_in_dev_needs_the_field(cfg_dir):
+def test_t7a3_a_real_channel_kind_in_demo_needs_the_field(cfg_dir):
     assert REAL_CHANNEL_KINDS == ["slack"]
     _edit(cfg_dir, lambda d: d["backends"].update(channel=SLACK))
     with pytest.raises(ConfigError, match="made_up_data_only") as err:
@@ -404,7 +404,7 @@ def test_t7a3_a_real_channel_kind_in_dev_needs_the_field(cfg_dir):
     assert "channel: slack" in str(err.value)
 
 
-def test_t7b_with_the_field_a_real_llm_kind_loads_in_dev(cfg_dir):
+def test_t7b_with_the_field_a_real_llm_kind_loads_in_demo(cfg_dir):
     def both(d):
         d["made_up_data_only"] = True
         d["backends"]["llm"] = {"kind": "openai_compat", **LLM_SETTINGS["openai_compat"]}
