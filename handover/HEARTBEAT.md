@@ -494,3 +494,4 @@ LAPTOP CANDIDATES (pushed heads only): PR85 0b54631 (items 3,4,10), PR72 e6a4220
 - 10:12Z heartbeat: ORDER 140 read. Queue running 2 (P1b chain313/chain312 r4 at 864e793), pending 0. PR66 da08ce2 stage mutants 37 of 37 good (inner-rc=0). Agents: plan A8 drafter, P1b fixwip builder (rulings), PR72/PR83/PR86/PR80 builders open. Unpushed branches: none expected, checking next. Next wake-up 10:21Z.
 - 10:15Z heartbeat: restart recovery. Queue runner restarted; running 0, pending 0 (no job queued until P1b final head). Agents: plan A8 drafter, PR73 reviewer, P1b builder (tightening). Unpushed branches: none now (4 -wip branches pushed). Next wake-up 10:21Z.
 - 10:16Z heartbeat: 8 agents working (A8 drafter, P1b tightening, PR73 batch, PR72, PR83, PR80-fix, PR86). Queue 0/0. Unpushed: none. Next 10:21Z.
+- 10:16Z heartbeat: queue has jobs (see q329); P1b r5 chains queued; agents: A8 drafter, PR73 batch, PR72, PR83, PR80-fix, PR86 reviewer. Unpushed none. Next 10:29Z.
