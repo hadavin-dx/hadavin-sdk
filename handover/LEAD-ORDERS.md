@@ -1002,3 +1002,6 @@ JOB (branch core/ci-lint-set, draft PR, backlog 6c; do it NOW in parallel, it to
 
 ## ORDER 147 (lead, 2026-11-07 11:15Z): PULSE EVERY MINUTE (owner order)
 The owner ordered an update every minute. From now: one line in handover/PULSE.md (overwrite, not append) every minute, committed and pushed each minute: `<date -u HH:MMZ> | agents N running (names) | queue R run / P pend | last result | unpushed: none|list | next`. Use a dedicated tiny background agent (Haiku is fine: it only reads state and writes the line) so the builders are not interrupted. HEARTBEAT.md stays the 8-minute summary. If a push is rejected, rebase and push at once; never skip a minute. This overrides the 8-minute rule in STANDING-ORDERS (file edited).
+
+## ORDER 148 (lead, 2026-11-07 11:18Z): push at the same time as the pulse
+Owner addition to order 147: every minute the pulse is pushed AND, in the same step, every other unpushed commit on every branch you own (builders' branches, reviews, evidence, handover files). The pulse line must show `unpushed: none` only after that push. A branch with local-only commits older than 1 minute is a breach. Sweep command each minute: for each local branch compare with its origin and push if ahead.
