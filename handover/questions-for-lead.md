@@ -771,3 +771,6 @@ Behaviour change you asked for: made_up_data_only is refused in every non-demo e
 Slips (builder's own): first cluster SQL_ASCII (fixed); dblink needs PGHOST/PGPORT in the server's environment (fixed); it ran one read-only `select version()` against another builder's server by mistake (no harm, rule: own port only); mutant logs not literally at final head (note prepended); 3 mutant re-runs ran outside the queue.
 NEEDS LEAD: CHANGELOG lines 205 and 298 still say "dev-only ... outside dev" (frozen released history). Reword or leave? My recommendation: leave (released text), but add nothing.
 Not checked: CI, CodeQL, Sonar, CodeRabbit, PG17, uv build, demos end to end. Laptop does not need to run PR 72.
+
+## q273 (INFORM) Orders 123/124: scan 2 addenda
+market-scan-2.md now ends with Addendum A (your order 123 facts, marked VERIFIED by lead, incl. Port price correction and LiteLLM 1.107.0; LiteLLM proxy now HIGH supply-chain risk, data-only) and Addendum B plus pass4.md (order 124: pg-boss WRAP, Graphile Worker WRAP, Procrastinate/DBOS/Restate DROP; none gives permanent dedupe, so the AK-G2 ledger stays KEEP-CODE; claim/lease/retry becomes WRAP). 5 more LEAD-FETCH lines in pass4. The module table above Addendum A is NOT rewritten; read the addenda as overrides. Say if you want the table regenerated.

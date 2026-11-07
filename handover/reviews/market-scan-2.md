@@ -844,3 +844,120 @@ Module level: WRAP 3 (P5c, P4a, P4c), KEEP-CODE 4 (P1/P1c, P4b1, P4b2, plus P2d 
 3. No vendor publishes whether failed or cut-off provider calls are billed, so P4b2 remains KEEP-CODE. Prices: none verified, the vendor hosts are unreachable here.
 
 ---
+
+---
+
+# ADDENDUM A (lead order 123): facts VERIFIED by the lead on 2026-11-07 (read from primary pages on the laptop; not by the cloud session)
+These override any UNVERIFIED line above that says otherwise.
+- n8n licence: Sustainable Use 1.0. Service to clients is NOT permitted; the client owns the account. n8n prices VERIFIED: EUR 20 / 50 / 667 per month billed annually (2.5K / 10K / 40K executions).
+- Unleash AGPLv3; immudb BUSL 1.1; Windmill mostly AGPLv3 plus a commercial licence to resell; Presidio MIT; LiteLLM MIT outside enterprise/ (enterprise text unread); Chatwoot MIT outside enterprise/.
+- Port: USD 30 and 48 per seat per month, free up to 5 seats. Scan 1 was WRONG on Port.
+- Retool: Team builder USD 10-12, internal user 5-7, Business builder 50-65.
+- Cloudflare AI Gateway core is free; spend limits are in USD with a 429, and Cloudflare's own text says a burst of concurrent requests can briefly exceed the limit (this is the overshoot evidence for the P4b1 cap).
+- AWS Step Functions USD 0.000025 per transition; Secrets Manager USD 0.40 per secret per month. Bedrock Guardrails USD 0.10 per 1,000 text units: still to re-check. Close pricing page unreachable from the lead's side too: UNVERIFIED.
+- LiteLLM: versions 1.82.7 and 1.82.8 were malicious (GHSA-92x9-889m-jgmw), now VERIFIED by the lead. Also 1.107.0 was compromised in Oct 2026 (BerriAI/litellm issue 47826), which scans 1 and 2 missed. Verdict change: treat the LiteLLM proxy as HIGH supply-chain risk; use its price map as data only. The WRAP for "LiteLLM budgets" in the table above should be read as "do not adopt the proxy; take data only", unless the lead decides otherwise.
+
+# ADDENDUM B (lead order 124): fourth pass, Postgres queue/lease libraries vs AK-G2 claim/lease
+Source: pass4.md below (cloud session, one agent, 5 searches). Licences (MIT, BUSL) read from raw LICENSE files; release dates from npm/PyPI; docs sites blocked, so prices for Restate and DBOS are UNVERIFIED.
+Verdicts: ADOPT 0, WRAP 2 (pg-boss, Graphile Worker), KEEP-CODE 0, DROP 3 (Procrastinate, DBOS, Restate).
+- None gives "same key, one effect, forever": their dedupe is windowed or ends when the job completes. The AK-G2 delivery-key ledger and the run-row commit stay ours (KEEP-CODE unchanged); a Postgres queue library can only carry claim/lease/retry.
+- Graphile Worker: replace mode can overwrite a message's payload; a same-key job added while one runs makes a second job.
+- Restate: BUSL-1.1 and its own store, not Postgres: DROP.
+Change to the module table: AK-G2 row stays KEEP-CODE for the ledger; the claim/lease/retry part becomes WRAP (pg-boss or Graphile Worker, on the client's Postgres, $0 plus ops).
+
+# PASS 4 (full agent file)
+
+# Market scan, pass 4 (lead ORDER 124): Postgres queue/lease libraries vs AK-G2 claim/lease/retry
+
+Read 2026-11-07. Research only, no code changes, no money. EGM skipped: read-only research (EGM-GATE v1, BRIEF.md). Tickets read: AK-G2 (title, Words: claim / lease, try, run row is the commit point, generation) and AK-G15 headings (durable "needs a person" queue; reopen raises `generation` and gives a new run id).
+
+Need tested (AK-G2): claim ONE receipt with a lease; crash -> lease expiry -> another worker reclaims; counted tries; dedupe on a delivery key (tenant+source+sender id), "same key = one effect, forever"; receipt written in the same transaction as the effect; tenant isolation; separate executor DB role.
+
+## Summary table
+
+| item | licence SPDX | last release (source) | claim+lease | retry/backoff | dedupe key and how long | same-txn enqueue | tenant isol. | exec DB role | cover % | verdict |
+|---|---|---|---|---|---|---|---|---|---|---|
+| pg-boss 12.38.1 | MIT VERIFIED | 2026-11-05 (npm) | SKIP LOCKED; `expireInSeconds` default 15 min; optional heartbeat | yes, `retryLimit/Delay/Backoff/DelayMax`, DLQ | `singletonKey` + queue policy or `singletonSeconds`: WINDOWED (per state / slot; completed jobs deleted after `deleteAfterSeconds`, default 7 d, 0 = keep) | yes, `db` option | none native | UNVERIFIED | claim/retry ~55%; dedupe-forever ~15% | WRAP |
+| Graphile Worker 0.18.0 | MIT VERIFIED | 2026-09-08 (npm) | row lock; dead worker's job locked 4 h then swept | yes, exp. backoff, `max_attempts` 25 | `job_key`: only while pending/failed; "no permanent job_key log"; replace mode overwrites payload | yes, `add_job()` is SQL | none native | UNVERIFIED | ~50%; dedupe-forever 0% | WRAP |
+| Procrastinate 3.10.0 | MIT VERIFIED (LICENSE.md) | 2026-09-23 (PyPI) | FOR UPDATE; heartbeat 10 s; stalled jobs stay stuck until YOUR periodic task retries them | yes, constant/linear/exp | `queueing_lock`: one job in `todo` only: WINDOWED | UNVERIFIED | none native | UNVERIFIED | ~45%; dedupe-forever 0% | DROP |
+| DBOS Transact py 3.4.0 / ts 5.4.0 | MIT VERIFIED (both repos) | 2026-10-28 (PyPI / npm) | workflow recovery; queues | step retries | workflow id as idempotency key and queue `deduplication_id` (source seen); retention UNVERIFIED | UNVERIFIED (secondary blog only) | none native | `run_migrations=False` seen in source | ~60% but replaces our run model | DROP |
+| Restate server 1.8.1 | BUSL-1.1 VERIFIED (flag) | 2026-10-21 server, 2026-11-04 SDK (npm) | own log, not Postgres | yes | retention UNVERIFIED (docs unreachable) | no | n/a | n/a | n/a | DROP |
+
+**Verdict counts: ADOPT 0, WRAP 2 (pg-boss, Graphile Worker), KEEP-CODE 0 as a library verdict, DROP 3 (Procrastinate, DBOS, Restate).** The guarantee itself (permanent same key = one effect, run row as commit point, tenant, executor role) stays KEEP-CODE under every option.
+
+## Key finding
+
+None gives "same key, one effect, forever". Every library dedupes while the job exists or is queued and then forgets: pg-boss by state or time slot and `deleteAfterSeconds`; Graphile on completion (the row is deleted); Procrastinate only in `todo`. AK-G2's receipt row is a permanent ledger and the run row is the commit point; both live in our store. A library could replace only the claim/lease/expiry/retry-count code, the lowest-risk part, and would add a second job table next to the store's compare-and-set convention (tick.py). Honest read: WRAP is worth it only if the lead wants fewer lines of queue code; the risky parts stay ours either way.
+
+## Per-item detail
+
+### pg-boss (WRAP, Node stack)
+- Licence: raw https://raw.githubusercontent.com/timgit/pg-boss/master/LICENSE read 2026-11-07, MIT = VERIFIED. Release 12.38.1, 2026-11-05T15:38Z, https://registry.npmjs.org/pg-boss, read 2026-11-07. Maintained: yes. Node >=22.12.
+- Docs read (raw master, 2026-11-07): `docs/api/jobs.md`, `docs/api/queues.md`, README. pgboss.io returned 403 from the proxy.
+- Lease: SKIP LOCKED; `expireInSeconds` default 15 min (max 24 h); `heartbeatSeconds` >= 10 optional.
+- Retry: `retryLimit`, `retryDelay`, `retryBackoff` (`retryDelay * 2^retryCount` plus jitter), `retryDelayMax`; dead letter queue with redrive.
+- Dedupe: policies `short`, `singleton`, `stately`, `exclusive`, `key_strict_fifo`, each extendable with `singletonKey`; `singletonSeconds` slot. `deleteAfterSeconds` default 7 days ("Set to 0 to never delete completed jobs"); `retentionSeconds` default 14 days. Windowed. My reading: even with 0, policies only cover queued/active states, so a completed key does not block a new send (not tested, UNVERIFIED by run).
+- Transactional enqueue: `db` option; `insert()` "commits or rolls back with your transaction"; ORM adapters for Drizzle, Knex, Kysely, Prisma. Caveat: queue existence is checked at COMMIT when the shared table is used.
+- Tenant isolation: none (queue per tenant or key prefix is ours). Executor role: not documented; the library owns a `pgboss` schema and migrations (CLI exists), so a least-privilege executor needs out-of-band migration. UNVERIFIED.
+- Price: library $0; client's Postgres plus ops. No vendor page read.
+- Test idea for "same key, one effect, forever": fake clock; send M (key K); run to done; advance beyond `deleteAfterSeconds` and `retentionSeconds`, run maintenance; redeliver M and a different-bytes M2 1000 times in random order across 3 workers with random kills (after claim, after effect before complete). Assert fake effect counter == 1, M2 is refused, and our unique index rejects a second receipt. Mutant: set `deleteAfterSeconds` to 1, the test must still pass only because our ledger holds.
+
+### Graphile Worker (WRAP, second choice)
+- Licence: raw https://raw.githubusercontent.com/graphile/worker/main/LICENSE.md, MIT = VERIFIED. 0.18.0, 2026-09-08 (npm), read 2026-11-07. Maintained: yes, slower cadence, single maintainer funded by sponsors (README badge).
+- Docs read raw (2026-11-07): `website/docs/job-key.md`, `sql-add-job.md`, `tasks.md`, `error-handling.md`, `config.md`.
+- Lease: a dead worker's jobs stay locked at least 4 h; sweep every 8-10 min (error-handling.md). Far above AK-G2's computed stuck window (780-2220 s). Tunable (`maxResetLockedInterval` appears in config.md; semantics UNVERIFIED).
+- Retry: exponential backoff; `max_attempts` default 25.
+- Dedupe: `job_key` unique only "whilst the job is pending/failed"; "Jobs that complete successfully are deleted, there is no permanent job_key log"; same key while the job runs creates a second job (unless `unsafe_dedupe`, which the docs call very dangerous); default `replace` mode overwrites an unlocked job's payload, which defeats "same id, different bytes = conflict"; documented race where `add_job` may return null under high contention.
+- Transactional enqueue: `add_job` is a SQL function callable inside the effect's transaction (job-key.md example). Read, not run.
+- Tenant isolation none; executor role UNVERIFIED. Price $0 plus ops.
+- Test idea: as pg-boss, plus "same key while job running with new body" must give no second effect.
+
+### Procrastinate (DROP unless the build is Python and the lead wants a library)
+- Licence: raw `LICENSE.md` MIT = VERIFIED (`LICENSE` is 404; PyPI has only the classifier). 3.10.0, 2026-09-23 (PyPI JSON). Maintained: yes. Postgres 13+.
+- Docs read raw (2026-11-07): `howto/advanced/queueing_locks.md`, `locks.md`, `retry.md`, `howto/production/retry_stalled_jobs.md`, `delete_finished_jobs.md`, `discussions.md`, README.
+- Stalled jobs "will remain in the queue forever" unless your periodic task retries them, so lease expiry is not automatic. `queueing_lock`: one `todo` job only, many in `doing`. `lock` serialises, not dedupe.
+- Same-txn enqueue: no doc page found (UNVERIFIED). Tenant and executor role: none/UNVERIFIED. $0 plus ops.
+- Reason for DROP: lowest cover, manual lease recovery, second scheduler beside tick.py.
+- Test idea: kill -9 a worker mid-job; nothing may rerun until the stalled-job task runs; effect count stays 1.
+
+### DBOS Transact (DROP)
+- Licence MIT, raw LICENSE of `dbos-inc/dbos-transact-py` and `-ts` = VERIFIED. dbos 3.4.0 (2026-10-28, PyPI), @dbos-inc/dbos-sdk 5.4.0 (2026-10-28, npm). Maintained: yes.
+- Read in source (2026-11-07): `deduplication_id` and `SetEnqueueOptions` (`_context.py`), `DBOSQueueDeduplicatedError`, queue partition options (`_queue.py`), `dbos_system_schema` and `run_migrations` for a role that cannot run DDL (`_dbos_config.py`), `delete_workflows` (`_sys_db.py`). Workflow-id idempotency and the in-transaction enqueue come only from search snippets of DBOS/Supabase blogs: UNVERIFIED. docs.dbos.dev unreachable.
+- It is a durable-execution framework: adopting it replaces the run model of AK1/AK-G2. Dedupe lasts as long as workflow rows are kept; deletable. Reason for DROP: lock-in, not a queue to wrap.
+- Hosted price: UNVERIFIED.
+
+### Restate (DROP)
+- Licence BUSL-1.1 (raw LICENSE: production use of own services allowed, no "Public Restate Platform Service"; Change License Apache-2.0 four years after release) = VERIFIED, flagged BUSL. Server 1.8.1 2026-10-21; SDK `@restatedev/restate-sdk` 1.18.3 2026-11-04 (MIT per npm). Maintained: yes.
+- Own journal and store, not the client's Postgres: a second datastore. Idempotency retention and price: UNVERIFIED (docs unreachable).
+
+## Queries run (2026-11-07)
+1. "Restate idempotency key retention default 24 hours invocation" (returned unrelated API vendors; no Restate evidence)
+2. "DBOS workflow idempotency key queue deduplication ID Postgres transaction"
+3. "postgres job queue transactional enqueue same transaction outbox pg-boss graphile worker procrastinate comparison"
+4. "Postgres durable job queue lease idempotency key exactly-once effect open source 2026"
+5. "River queue Go Postgres unique jobs licence"
+6. Registry and raw fetches: npm and PyPI JSON per package; raw LICENSE and docs files; WebFetch of docs.restate.dev failed (DNS).
+GitHub API calls returned "GitHub access not enabled", so release dates come from npm/PyPI only; no stars or commit dates.
+
+## Rejected candidates (dated reasons)
+- River (Go): raw LICENSE read 2026-11-07 starts "Mozilla Public License Version 2.0" (MPL-2.0). Rejected: Go, outside the Python/Node scope; unique-job behaviour known from a search snippet only.
+- jobrun, Awa, pg-node-queue, slonq: seen only in a 2026-11-07 search snippet; early-stage or unfinished, licences and activity not checked. Rejected as unproven for a security-path dependency.
+- BullMQ and other Redis queues: not Postgres, out of brief.
+- Temporal, Inngest, Hatchet: covered in earlier passes, not repeated.
+
+## Not read, not tested
+- No library installed or run; all behaviour is from docs and source text.
+- Separate least-privilege executor role: not documented in anything read, UNVERIFIED for all five.
+- Prices: self-hosted $0 plus ops (lead's rule); hosted prices UNVERIFIED.
+
+## LEAD-FETCH lines
+- LEAD-FETCH: https://docs.restate.dev/ for Restate idempotency key retention
+- LEAD-FETCH: https://restate.dev/pricing/ for Restate cloud price
+- LEAD-FETCH: https://docs.dbos.dev/ for DBOS workflow-id idempotency retention and queue deduplication
+- LEAD-FETCH: https://www.dbos.dev/pricing for DBOS hosted price
+- LEAD-FETCH: https://pgboss.io/api/jobs for pg-boss rendered docs (optional)
+
+## Three findings
+1. No Postgres queue gives permanent "same key, one effect"; all dedupe is windowed, so the delivery-key ledger and run-row commit stay ours.
+2. Graphile `replace` mode and "running job + same key = second job" weaken id-reuse detection; Procrastinate leaves crashed jobs stuck until your own task retries them.
+3. Restate is BUSL-1.1 on its own store; DBOS is MIT but replaces the run model.
