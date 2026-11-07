@@ -6,6 +6,7 @@ Bad config fails at start-up. Cross-file checks (agents, actions, chains) live i
 from __future__ import annotations
 
 import re
+from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
 from typing import Annotated, Any, Literal, get_args
@@ -31,6 +32,7 @@ from hadavin_sdk.backends.table import (
     DEFAULTS,
     DEMO_ONLY,
     LOCAL_DETECTORS,
+    NO_TRAINING_HOST,
     NOT_PROD,
     TABLE,
     KindSettings,
@@ -405,6 +407,10 @@ class Config(_Strict):
     systems: dict[str, System] = {}
     egress_hosts: frozenset[str] = frozenset()
     allow_insecure_loopback: bool = False  # true only in the local test fixture config
+    # P6b1: how old a no-training statement may be at start-up; an operator may shorten it, never lengthen it.
+    no_training_max_age_days: StrictInt = Field(
+        default=defaults.NO_TRAINING_MAX_AGE_DAYS, ge=1, le=defaults.NO_TRAINING_MAX_AGE_CEILING
+    )
     k1b: K1bSettings = K1bSettings()
     # K5: modules a tool manifest's `function` may resolve from (like `check_modules`), the per-call timeout, and
     # retention of evidence.
@@ -498,6 +504,9 @@ class Config(_Strict):
             and not store.stop_credential_ref
         ):
             refused.append("store postgres: stop_credential_ref is required")
+        refused += _no_training_refusals(
+            self.environment, self.backends.llm, self.no_training_max_age_days, _utc_today()
+        )
         if refused:
             tail = (
                 "; a demo config that names a real model, a vendor detector or a real approval channel "
@@ -520,6 +529,70 @@ def _sends_text_out(b: Backends) -> list[str]:
     out += [f"detector: {d.kind}" for d in b.detector if d.kind not in LOCAL_DETECTORS]
     out += [f"channel: {b.channel.kind}"] if ("channel", b.channel.kind) not in DEMO_ONLY else []
     return out
+
+
+def _utc_today() -> date:
+    """The one clock read of the no-training statement check (tests patch it)."""
+    return datetime.now(UTC).date()
+
+
+def _no_training_refusals(
+    environment: str, llm: KindSettings, max_age_days: int, today: date
+) -> list[str]:
+    """P6b1. In pilot and prod a real llm backend needs a valid, current no-training statement for the servers
+    it talks to. At most one message per kind; the first check that fails wins: (a) kind declares no basis,
+    (b) statement missing, (c) basis not allowed, (f) hosts differ from the endpoint, (d) dated in the future,
+    (e) older than the limit. A message never holds the statement's reference. This is a record of an operator's
+    promise: it does not stop a provider from training and the code cannot tell whether it is true."""
+    kind = llm.kind
+    if environment == "demo" or ("llm", kind) in DEMO_ONLY:
+        return []
+    entry = TABLE["llm"][kind]
+    head = f"llm: {kind}: "
+    if not entry.no_training:
+        return [f"{head}declares no no_training basis (cannot run in {environment})"]
+    st = getattr(llm, "no_training", None)
+    if st is None:
+        return [
+            (
+                f"{head}no_training statement missing "
+                "(add backends.llm.no_training: basis, reference, hosts, checked_on)"
+            )
+        ]
+    if st.basis not in entry.no_training:
+        return [
+            (
+                f"{head}no_training basis {st.basis} not allowed "
+                f"(allowed: {' | '.join(sorted(entry.no_training))})"
+            )
+        ]
+    expected = sorted({h.lower() for h in (entry.hosts(llm) if entry.hosts else []) if h})
+    if expected != sorted({h.lower() for h in st.hosts}):
+        shown = (
+            ", ".join(
+                h if NO_TRAINING_HOST.fullmatch(h) else "<host not usable in a statement>"
+                for h in expected
+            )
+            if expected
+            else "none (the endpoint has no host name)"
+        )
+        return [
+            (
+                f"{head}no_training hosts do not match the configured endpoint (expected: {shown}): "
+                "read the terms for that endpoint and update the statement"
+            )
+        ]
+    if st.checked_on > today + timedelta(days=defaults.NO_TRAINING_FUTURE_SLACK_DAYS):
+        return [f"{head}no_training checked_on is in the future"]
+    age = (today - st.checked_on).days
+    if age > max_age_days:
+        return [
+            (
+                f"{head}no_training statement is {age} days old (limit {max_age_days}): "
+                "read the provider's terms again and update checked_on"
+            )
+        ]
+    return []
 
 
 def _anchor_refusals(environment: str, b: Backends) -> list[str]:

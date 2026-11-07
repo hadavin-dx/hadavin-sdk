@@ -1,4 +1,4 @@
-"""The default numbers of the K5 read path, in one place.
+"""The default numbers of the K5 read path, in one place (and the no-training statement limits, P6b1).
 
 Nothing here is a secret, an account id, a region or a host name. Every value is either validated config
 (`Config.evidence`, `Config.retention`, `Config.tool_timeout_s`, the per-agent `max_run_usd`), a validated manifest
@@ -182,3 +182,11 @@ CHARGE_FALLBACK_ATTEMPTS = (
 PROMPT_BYTES_PER_TOKEN = (
     1  # the prompt bound: one token for every byte, the most any tokenizer can use
 )
+
+# --- no-training statement limits (P6b1): one named block. Rebase note: if another package adds a block at the end of
+# this file first, keep both blocks and keep this one whole ------------------------------------------------------------
+NO_TRAINING_MAX_AGE_DAYS = 90  # the studio's "re-verify tool facts within 90 days"
+NO_TRAINING_MAX_AGE_CEILING = (
+    90  # an operator may shorten the limit, never lengthen it (lead order 24, item 32)
+)
+NO_TRAINING_FUTURE_SLACK_DAYS = 1  # an operator in IST can write tomorrow's UTC date

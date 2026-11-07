@@ -8,6 +8,7 @@ import pytest
 import yaml
 
 from hadavin_sdk import app as app_mod
+from hadavin_sdk import config as config_mod
 from hadavin_sdk.actions.secrets import FakeSecretProvider
 from hadavin_sdk.approvals.channel import FakeChannel
 from hadavin_sdk.audit import signer as signer_mod
@@ -59,7 +60,18 @@ def pilot_cfg(tmp_path: Path, *, env="pilot", agent=None, contract=None, config=
             },
             "audit": {"kind": "chain"},
             "signer": {"kind": "ed25519_local", "private_key_path": "audit-key.pem"},
-            "llm": {"kind": "openai_compat", "base_url": "https://llm.example/v1"},
+            "llm": {
+                "kind": "openai_compat",
+                "base_url": "https://llm.example/v1",
+                # P6b1: a pilot or prod llm backend needs a current no-training statement for its hosts. The date
+                # is read from the module's own clock at call time (never a literal), so the config never ages.
+                "no_training": {
+                    "basis": "contract_terms",
+                    "reference": "Example provider API terms v1",
+                    "hosts": ["llm.example"],
+                    "checked_on": config_mod._utc_today(),
+                },
+            },
             "detector": [{"kind": "regex", "threshold": 0.5}],
             "channel": {
                 "kind": "slack",

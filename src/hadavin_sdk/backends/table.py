@@ -10,11 +10,19 @@ from __future__ import annotations
 import re
 from collections.abc import Callable
 from dataclasses import dataclass
+from datetime import date, datetime
 from pathlib import Path
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 from urllib.parse import urlsplit
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import (
+    BaseModel,
+    BeforeValidator,
+    ConfigDict,
+    Field,
+    field_validator,
+    model_validator,
+)
 
 
 class KindSettings(BaseModel):
@@ -23,6 +31,76 @@ class KindSettings(BaseModel):
     # A mistyped key may hold a secret: errors name the field, never its value.
     model_config = ConfigDict(extra="forbid", frozen=True, hide_input_in_errors=True)
     kind: str
+
+
+# --- the no-training statement (P6b1) ----------------------------------------------------------------------------
+# A promise by the operator, written down and dated; it does not stop a provider from training, and the code does
+# not check that it is true. The patterns are matched with `re.fullmatch` (never `match` or `search` with `$`,
+# which would accept a trailing newline). A validator message is a fixed text that holds no part of the input.
+NoTrainingBasis = Literal["contract_terms", "account_setting", "self_hosted"]
+NO_TRAINING_REFERENCE = re.compile(
+    r"[A-Za-z0-9][A-Za-z0-9 ._:/#-]{6,198}[A-Za-z0-9]"
+)  # 8 to 200 characters
+NO_TRAINING_HOST = re.compile(
+    r"[A-Za-z0-9._:-]{1,253}"
+)  # ASCII only; `::1` and short names are legal
+_NO_TRAINING_DATE = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}")  # ASCII digits only (not `\d`)
+_NO_TRAINING_ACCOUNT_RUN = re.compile(
+    r"[0-9]{12}"
+)  # an account id inside an ARN, as `key_label` refuses
+_NO_TRAINING_DATE_TEXT = "checked_on must be a date written YYYY-MM-DD"
+
+
+def _iso_date_or_none(text: str) -> date | None:
+    try:
+        return date.fromisoformat(text)
+    except (
+        ValueError
+    ):  # an impossible date; CPython's own message can differ by build and may echo the input
+        return None
+
+
+def _strict_date(v: Any) -> date:
+    """A real date or a `YYYY-MM-DD` text, nothing else: pydantic's own `date` accepts 0, 86400, 1767225600 and
+    digit strings as epoch seconds."""
+    if isinstance(v, date) and not isinstance(v, datetime):
+        parsed: date | None = v
+    elif isinstance(v, str) and _NO_TRAINING_DATE.fullmatch(v):
+        parsed = _iso_date_or_none(v)
+    else:
+        parsed = None
+    if parsed is None:
+        raise ValueError(_NO_TRAINING_DATE_TEXT)
+    return parsed
+
+
+class NoTrainingStatement(BaseModel):
+    """What the operator read, where, for which servers, and when. Operator-attested, not verified by code."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True, hide_input_in_errors=True)
+    basis: NoTrainingBasis  # contract_terms | account_setting | self_hosted
+    # A document or setting name (title, URL path, version; for a gateway, its terms for its upstreams). It must not
+    # hold a credential, a query string, or a person's or party's name (the last is not checked by code).
+    reference: str
+    hosts: list[str] = Field(min_length=1, max_length=8)  # the server names the statement is about
+    checked_on: Annotated[date, BeforeValidator(_strict_date)]
+
+    @field_validator("reference")
+    @classmethod
+    def _reference(cls, v: str) -> str:
+        if not NO_TRAINING_REFERENCE.fullmatch(v) or _NO_TRAINING_ACCOUNT_RUN.search(v):
+            raise ValueError(
+                "reference must be 8 to 200 characters: letters, digits, spaces and . _ : / # -, "
+                "starting and ending with a letter or digit, with no run of 12 digits"
+            )
+        return v
+
+    @field_validator("hosts")
+    @classmethod
+    def _hosts(cls, v: list[str]) -> list[str]:
+        if not all(NO_TRAINING_HOST.fullmatch(h) for h in v):
+            raise ValueError("each host must be 1 to 253 characters: letters, digits and . _ : -")
+        return v
 
 
 class FakeLLMSettings(KindSettings):
@@ -38,6 +116,8 @@ class _LLMSettings(KindSettings):
         default=60.0, gt=0
     )  # socket timeout, per operation (not a wall clock)
     max_attempts: int = Field(default=3, ge=1, le=10)
+    # Required in pilot and prod (config.py `_no_training_refusals`); `fake` has no such field.
+    no_training: NoTrainingStatement | None = None
 
 
 class AnthropicSettings(_LLMSettings):
@@ -353,6 +433,12 @@ class Entry:
     # Built on an open standard or on self-hostable open source: a client on any cloud or on-prem can run it
     # in prod. `tests/test_lockin_guard.py` needs one per capability (or a dated exception).
     neutral: bool = False
+    # llm kinds: the no-training bases this kind accepts. EMPTY means "declares none", which pilot and prod refuse
+    # (fail closed: a new kind cannot run there until its author declares a set).
+    no_training: frozenset[str] = frozenset()
+
+
+_HOSTED_BASES = frozenset({"contract_terms", "account_setting"})
 
 
 def _aws_host(service: str, region: str) -> str:
@@ -529,6 +615,7 @@ TABLE: dict[str, dict[str, Entry]] = {
             "anthropic",
             status=_UNVERIFIED,
             hosts=_anthropic_hosts,
+            no_training=_HOSTED_BASES,
         ),
         "bedrock": Entry(
             BedrockSettings,
@@ -536,6 +623,7 @@ TABLE: dict[str, dict[str, Entry]] = {
             "aws",
             status=_UNVERIFIED,
             hosts=_aws("bedrock-runtime"),
+            no_training=_HOSTED_BASES,
         ),
         "openai_compat": Entry(
             OpenAICompatSettings,
@@ -543,12 +631,15 @@ TABLE: dict[str, dict[str, Entry]] = {
             status=_UNVERIFIED,
             hosts=lambda s: [urlsplit(s.base_url).hostname or ""],
             neutral=True,
+            no_training=_HOSTED_BASES
+            | {"self_hosted"},  # only this kind can point at a server the client runs
         ),
         "gemini": Entry(
             GeminiSettings,
             "hadavin_sdk.llm.gemini:make",
             status=_UNVERIFIED,
             hosts=lambda s: ["generativelanguage.googleapis.com"],
+            no_training=_HOSTED_BASES,
         ),
     },
     "detector": {
