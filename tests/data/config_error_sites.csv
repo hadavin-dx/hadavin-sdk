@@ -1,0 +1,204 @@
+site,class,reason
+actions/secrets_aws.py::SecretsManagerProvider._fetch::461cf4eb70855ada::1,OPERATOR,secret name (and Vault field) from the operator's settings; the rest is fixed words
+actions/secrets_aws.py::SecretsManagerProvider._fetch::cbb5acc8f0b01001::1,OPERATOR,secret name (and Vault field) from the operator's settings; the rest is fixed words
+actions/secrets_azure.py::AzureKeyVaultProvider._fetch::4741ce5274f9db9e::1,OPERATOR,secret name (and Vault field) from the operator's settings; the rest is fixed words
+actions/secrets_azure.py::AzureKeyVaultProvider._fetch::e20118178f46479f::1,OPERATOR,secret name (and Vault field) from the operator's settings; the rest is fixed words
+actions/secrets_cache.py::CachedSecrets.get::9cd3bb47de9cc583::1,OPERATOR,secret name (and Vault field) from the operator's settings; the rest is fixed words
+actions/secrets_env.py::EnvSecretProvider.get::e99f918f41c115cf::1,OPERATOR,"secret name and the environment variable name derived from it, both from the operator's settings"
+actions/secrets_file.py::MountedFileProvider._fetch::0196cf4f877ae16e::1,OPERATOR,secret name (and Vault field) from the operator's settings; the rest is fixed words
+actions/secrets_file.py::MountedFileProvider._fetch::858b0a3ef93dc107::1,OPERATOR,secret name (and Vault field) from the operator's settings; the rest is fixed words
+actions/secrets_file.py::MountedFileProvider._fetch::a72fee53ea009e02::1,OPERATOR,secret name (and Vault field) from the operator's settings; the rest is fixed words
+actions/secrets_file.py::MountedFileProvider._fetch::fd5427b6fb9f2fec::1,FOREIGN,
+actions/secrets_file.py::MountedFileProvider._fetch::fd5427b6fb9f2fec::2,FOREIGN,
+actions/secrets_file.py::build::5ad3dff654cde283::1,OPERATOR,mounted folder path from the operator's settings
+actions/secrets_gcp.py::GcpSecretManagerProvider._fetch::725499cc45521d79::1,OPERATOR,secret name (and Vault field) from the operator's settings; the rest is fixed words
+actions/secrets_gcp.py::GcpSecretManagerProvider._fetch::eab7219428a2c7e7::1,OPERATOR,secret name (and Vault field) from the operator's settings; the rest is fixed words
+actions/secrets_gcp.py::build::c8128b0eebde935a::1,LITERAL,
+actions/secrets_vault.py::VaultProvider._fetch::0928bfc093b804fa::1,OPERATOR,secret name (and Vault field) from the operator's settings; the rest is fixed words
+actions/secrets_vault.py::VaultProvider._fetch::765377e70b764afb::1,OPERATOR,secret name (and Vault field) from the operator's settings; the rest is fixed words
+actions/secrets_vault.py::VaultProvider._fetch::8f1369fa38123c0e::1,OPERATOR,secret name (and Vault field) from the operator's settings; the rest is fixed words
+actions/secrets_vault.py::VaultProvider._fetch::ee38799d7ade7f77::1,OPERATOR,secret name (and Vault field) from the operator's settings; the rest is fixed words
+actions/secrets_vault.py::_env::ca8c9bda40f4c55b::1,OPERATOR,environment variable name passed by connect(): token_env or secret_id_env from the operator's settings
+actions/secrets_vault.py::_login_with::7ba3895819794509::1,OPERATOR,auth mount from the operator's settings; status is an http status number
+actions/secrets_vault.py::connect.login::e6d62ec569b43b01::1,FOREIGN,
+app.py::_build_source::276e24f0f958e871::1,OPERATOR,source name and URL host from the operator's settings; why is a fixed word from tools.forbidden_host
+app.py::_build_source::ecc2c99342d84462::1,OPERATOR,source name and URL host from the operator's settings; why is a fixed word from tools.forbidden_host
+app.py::_restored_key::bf884a9f8ae05780::1,OPERATOR,our own module constant (an integer); no operator or foreign text
+app.py::_tls_context::5da9c750d3c85ee9::1,OPERATOR,CA file or CA secret name from the operator's settings
+app.py::_tls_context::6aab2b718a2eee4a::1,OPERATOR,CA file or CA secret name from the operator's settings
+app.py::_toolbox::4424acfc8d2dad46::1,OPERATOR,tool name from the tool manifest the operator wrote
+app.py::build::241443c47ff280d7::1,LITERAL,
+app.py::build::44046cf9213d021f::1,FOREIGN,scope_problems pastes resource names from the cluster rules-review answer (a response); only checked to be strings
+app.py::build::44046cf9213d021f::2,OPERATOR,_unprobed_tools: tool names from the manifest plus fixed words
+app.py::build::8cbd8171129655b2::1,LITERAL,
+app.py::build::905c4e1a16d38bf4::1,LITERAL,
+app.py::build::905c4e1a16d38bf4::2,LITERAL,
+app.py::build::9bb9c8e6a1caaf0b::1,LITERAL,
+app.py::build::e42d0675f83a9f27::1,OPERATOR,names of our own Store protocol methods that the custom store lacks
+approvals/slack_channel.py::build::595f596b92742e2e::1,LITERAL,
+audit/anchor_azure.py::probed::8b72df0ba78350bb::1,LITERAL,
+audit/anchor_azure.py::probed::974e91c62e612610::1,FOREIGN,
+audit/anchor_gcs.py::build::73576d5ffe7c23a7::1,LITERAL,
+audit/anchor_gcs.py::probed::84305795be981b14::1,OPERATOR,retention days from the operator's settings
+audit/anchor_gcs.py::probed::87902a9c60623997::1,FOREIGN,
+audit/anchor_gcs.py::probed::a113f5e763b2b0c9::1,LITERAL,
+audit/chain.py::build::079883e40e058883::1,LITERAL,
+audit/chain.py::build::1b31b6de830e6f80::1,LITERAL,
+audit/chain.py::build::e7ac41961968df87::1,FOREIGN,
+audit/chain.py::build::fa88c5f6625355f1::1,FOREIGN,
+audit/signer.py::build_local::86471dc9da00fd8c::1,OPERATOR,key file path from the operator's settings
+audit/signer.py::build_local::f05d37f510cebdc2::1,FOREIGN,
+audit/signer.py::probe::4d105b1b99241454::1,FOREIGN,
+audit/signer.py::probe::ff1ad10bcd58ef30::1,OPERATOR,label is a fixed string passed by the five signer builders (checked at the five callers)
+audit/signer_aws.py::KmsSigner.public_key::a75e0ce015e51f1f::1,OPERATOR,"key id, name or version from the operator's settings"
+audit/signer_azure.py::AzureKeyVaultSigner.public_key::0e0dbba19325cc42::1,OPERATOR,"key id, name or version from the operator's settings"
+audit/signer_azure.py::build::74cd02110fce9893::1,LITERAL,
+audit/signer_gcp.py::GcpKmsSigner.public_key::648b072f4df3ddba::1,OPERATOR,"key id, name or version from the operator's settings"
+audit/signer_gcp.py::build::3153428485cee08e::1,LITERAL,
+audit/signer_vault.py::VaultTransitSigner.public_key::0bf52152ae52016d::1,OPERATOR,"key id, name or version from the operator's settings"
+audit/signer_vault.py::VaultTransitSigner.public_key::66e9805eb56b6276::1,OPERATOR,"key id, name or version from the operator's settings"
+backends/factory.py::make::fe95aa02140b6a90::1,OPERATOR,"capability name, kind name from the operator's settings, pip extra name from our table"
+backends/platform_secrets.py::bound.resolve::14fe2c19d9513421::1,OPERATOR,label of the backend and the secret name requested; both come from settings
+backends/platform_secrets.py::check::595e24f8f5194f36::1,OPERATOR,secret names from the operator's settings
+backends/platform_secrets.py::check::cf365b1fec86fb38::1,OPERATOR,secret names from the operator's settings
+backends/platform_secrets.py::check::f0590a28fbee96b2::1,OPERATOR,secret name from the operator's settings
+cli.py::score_cmd::7a93555b6fc02017::1,LITERAL,
+config.py::_UniqueKeyLoader.construct_mapping::d703cfa0fd19eba4::1,OPERATOR,a key and line number of the operator's own YAML file
+config.py::_one::03c7942d8710d10b::1,OPERATOR,capability and kind names from the operator's settings; required setting names from our models
+config.py::_one::1a04f31ff9bdbc35::1,FOREIGN,
+config.py::_one::64b0eceb0f0a5729::1,OPERATOR,capability and kind names from the operator's settings; required setting names from our models
+config.py::_one::6abc0a0f286948e3::1,OPERATOR,capability and kind names from the operator's settings; required setting names from our models
+config.py::_read_yaml::7364c04a0374ce42::1,OPERATOR,file name of the operator's config file
+config.py::confined::708303dcae0dc4c9::1,FOREIGN,"relative path can come from a bundle manifest or a golden file (data files, not typed config); nothing checks it before this message"
+config.py::load_config::1a223c43d9618608::1,OPERATOR,"key names the operator typed in config.yaml, and our MOVED table"
+config.py::load_config::3bada809a56baae4::1,FOREIGN,
+config.py::load_config::4bd5af26797fce41::1,OPERATOR,"key names the operator typed in config.yaml, and our MOVED table"
+config.py::load_config::a82df3d8bd45ccce::1,FOREIGN,
+config.py::parse_backends::266af45d95674ac2::1,LITERAL,
+config.py::parse_backends::4dc1359295354378::1,LITERAL,
+config.py::parse_backends::b95cafed5316e850::1,OPERATOR,capability names from the operator's settings and our TABLE names
+config.py::parse_backends::ba6c76d33a0f07de::1,LITERAL,
+config.py::parse_backends::fb7cd079acbf3871::1,OPERATOR,capability names from the operator's settings and our TABLE names
+evals.py::gate::033f2080496b925f::1,OPERATOR,gate k is an integer from the command line
+evals.py::gate::3b14557b1b6d1b9a::1,FOREIGN,
+evals.py::gate::f60a57621267ac69::1,LITERAL,
+guard/bedrock_guardrail.py::check_filter::d7e888c741ecb12a::1,FOREIGN,
+guard/bedrock_guardrail.py::check_filter::eab27498622c2963::1,OPERATOR,guardrail id and version from the operator's settings
+hashing.py::hash_files::6a3fb26babc5d80e::1,OPERATOR,"relative file names of files our own run wrote, listed by outputs_files or built from case ids"
+hashing.py::hash_files::a12f87f165412bc5::1,OPERATOR,"relative file names of files our own run wrote, listed by outputs_files or built from case ids"
+hashing.py::hash_files::b22f4a1d110cbffe::1,LITERAL,
+k1b/audit_sink.py::build_audit::d0f0fca5d28c4b8e::1,OPERATOR,audit kind from the operator's settings
+k1b/bundle.py::_fail::4651d2550614fa26::1,OPERATOR,factory; each call is its own row
+k1b/bundle.py::_keys::ad73c4c2eb4e8711::1,OPERATOR,bundle case folder and file names given by the operator; rel is checked against the fixed layout (bundle.py:207-211) and key against ALERT_KEYS (:227) before use; no caller passes exception text
+k1b/bundle.py::_load_json::195c715f39858dfd::1,OPERATOR,bundle case folder and file names given by the operator; rel is checked against the fixed layout (bundle.py:207-211) and key against ALERT_KEYS (:227) before use; no caller passes exception text
+k1b/bundle.py::_no_surrogates::a8ac97eb81721049::1,OPERATOR,bundle case folder and file names given by the operator; rel is checked against the fixed layout (bundle.py:207-211) and key against ALERT_KEYS (:227) before use; no caller passes exception text
+k1b/bundle.py::_scan::41cdaca285881a2d::1,OPERATOR,bundle case folder and file names given by the operator; rel is checked against the fixed layout (bundle.py:207-211) and key against ALERT_KEYS (:227) before use; no caller passes exception text
+k1b/bundle.py::_scan::773c6cca7ef04d13::1,OPERATOR,bundle case folder and file names given by the operator; rel is checked against the fixed layout (bundle.py:207-211) and key against ALERT_KEYS (:227) before use; no caller passes exception text
+k1b/bundle.py::_str::57d638cb0dbbe5b6::1,OPERATOR,bundle case folder and file names given by the operator; rel is checked against the fixed layout (bundle.py:207-211) and key against ALERT_KEYS (:227) before use; no caller passes exception text
+k1b/bundle.py::_text::93ee08b6ab1afba8::1,OPERATOR,bundle case folder and file names given by the operator; rel is checked against the fixed layout (bundle.py:207-211) and key against ALERT_KEYS (:227) before use; no caller passes exception text
+k1b/bundle.py::_ts_before::70b2d21ede371446::1,OPERATOR,bundle case folder and file names given by the operator; rel is checked against the fixed layout (bundle.py:207-211) and key against ALERT_KEYS (:227) before use; no caller passes exception text
+k1b/bundle.py::_ts_before::9cf355246929a6a8::1,OPERATOR,bundle case folder and file names given by the operator; rel is checked against the fixed layout (bundle.py:207-211) and key against ALERT_KEYS (:227) before use; no caller passes exception text
+k1b/bundle.py::load_bundle::22589a15af0a8340::1,OPERATOR,bundle case folder and file names given by the operator; rel is checked against the fixed layout (bundle.py:207-211) and key against ALERT_KEYS (:227) before use; no caller passes exception text
+k1b/bundle.py::load_bundle::25f907cc56df38a9::1,OPERATOR,bundle case folder and file names given by the operator; rel is checked against the fixed layout (bundle.py:207-211) and key against ALERT_KEYS (:227) before use; no caller passes exception text
+k1b/bundle.py::load_bundle::3af6540b0927cfb9::1,OPERATOR,bundle case folder and file names given by the operator; rel is checked against the fixed layout (bundle.py:207-211) and key against ALERT_KEYS (:227) before use; no caller passes exception text
+k1b/bundle.py::load_bundle::3ce88b1034c2c206::1,OPERATOR,bundle case folder and file names given by the operator; rel is checked against the fixed layout (bundle.py:207-211) and key against ALERT_KEYS (:227) before use; no caller passes exception text
+k1b/bundle.py::load_bundle::3d0ec796149eb28b::1,OPERATOR,bundle case folder and file names given by the operator; rel is checked against the fixed layout (bundle.py:207-211) and key against ALERT_KEYS (:227) before use; no caller passes exception text
+k1b/bundle.py::load_bundle::46ed204f42ba69ac::1,OPERATOR,bundle case folder and file names given by the operator; rel is checked against the fixed layout (bundle.py:207-211) and key against ALERT_KEYS (:227) before use; no caller passes exception text
+k1b/bundle.py::load_bundle::7599a335cae3d428::1,OPERATOR,bundle case folder and file names given by the operator; rel is checked against the fixed layout (bundle.py:207-211) and key against ALERT_KEYS (:227) before use; no caller passes exception text
+k1b/bundle.py::load_bundle::7bc916c763ae4f5b::1,OPERATOR,bundle case folder and file names given by the operator; rel is checked against the fixed layout (bundle.py:207-211) and key against ALERT_KEYS (:227) before use; no caller passes exception text
+k1b/bundle.py::load_bundle::86307242b50f6152::1,OPERATOR,bundle case folder and file names given by the operator; rel is checked against the fixed layout (bundle.py:207-211) and key against ALERT_KEYS (:227) before use; no caller passes exception text
+k1b/bundle.py::load_bundle::8d303270f4e1b2f0::1,OPERATOR,bundle case folder and file names given by the operator; rel is checked against the fixed layout (bundle.py:207-211) and key against ALERT_KEYS (:227) before use; no caller passes exception text
+k1b/bundle.py::load_bundle::90f838ad849dbca0::1,OPERATOR,bundle case folder and file names given by the operator; rel is checked against the fixed layout (bundle.py:207-211) and key against ALERT_KEYS (:227) before use; no caller passes exception text
+k1b/bundle.py::load_bundle::9ed5eda2ff31842f::1,OPERATOR,bundle case folder and file names given by the operator; rel is checked against the fixed layout (bundle.py:207-211) and key against ALERT_KEYS (:227) before use; no caller passes exception text
+k1b/bundle.py::load_bundle::b8269aecae4e514f::1,OPERATOR,bundle case folder and file names given by the operator; rel is checked against the fixed layout (bundle.py:207-211) and key against ALERT_KEYS (:227) before use; no caller passes exception text
+k1b/bundle.py::load_bundle::c5448ed8fbf747a1::1,OPERATOR,bundle case folder and file names given by the operator; rel is checked against the fixed layout (bundle.py:207-211) and key against ALERT_KEYS (:227) before use; no caller passes exception text
+k1b/bundle.py::load_bundle::d54b7e7f7b7823cc::1,OPERATOR,bundle case folder and file names given by the operator; rel is checked against the fixed layout (bundle.py:207-211) and key against ALERT_KEYS (:227) before use; no caller passes exception text
+k1b/bundle.py::load_bundle::d627e8fe2949062f::1,OPERATOR,bundle case folder and file names given by the operator; rel is checked against the fixed layout (bundle.py:207-211) and key against ALERT_KEYS (:227) before use; no caller passes exception text
+k1b/bundle.py::load_bundle::d7fe88a63e2cc6ed::1,OPERATOR,bundle case folder and file names given by the operator; rel is checked against the fixed layout (bundle.py:207-211) and key against ALERT_KEYS (:227) before use; no caller passes exception text
+k1b/bundle.py::load_bundle::dd48fe9147c6665c::1,OPERATOR,bundle case folder and file names given by the operator; rel is checked against the fixed layout (bundle.py:207-211) and key against ALERT_KEYS (:227) before use; no caller passes exception text
+k1b/bundle.py::load_bundle::f7de9ac33a8c9d53::1,OPERATOR,bundle case folder and file names given by the operator; rel is checked against the fixed layout (bundle.py:207-211) and key against ALERT_KEYS (:227) before use; no caller passes exception text
+k1b/bundle.py::load_bundle::fdbc28502ba4d493::1,OPERATOR,bundle case folder and file names given by the operator; rel is checked against the fixed layout (bundle.py:207-211) and key against ALERT_KEYS (:227) before use; no caller passes exception text
+k1b/bundle.py::load_bundles::40b6a8ac92fdf154::1,LITERAL,
+k1b/bundle.py::load_bundles::e6db6076df7382ec::1,LITERAL,
+k1b/causelist.py::_inside::38a814b0967b498f::1,OPERATOR,file name is a fixed string passed by load_cause_list
+k1b/causelist.py::_inside::9bafe18e27690433::1,OPERATOR,file name is a fixed string passed by load_cause_list
+k1b/causelist.py::_load::2bad597cab1a4a13::1,OPERATOR,"list name is a fixed string, limits and counts are integers"
+k1b/causelist.py::_load::5ccd068d248a4483::1,OPERATOR,"list name is a fixed string, limits and counts are integers"
+k1b/causelist.py::_load::90cdd3a78a6755dd::1,OPERATOR,"list name is a fixed string, limits and counts are integers"
+k1b/causelist.py::_load::92f2b95dbc6f5c73::1,OPERATOR,"list name is a fixed string, limits and counts are integers"
+k1b/causelist.py::_load::b2642cf6ebb45843::1,OPERATOR,"list name is a fixed string, limits and counts are integers"
+k1b/causelist.py::_load::c9288af7e892a9e7::1,OPERATOR,"list name is a fixed string, limits and counts are integers"
+k1b/causelist.py::load_cause_list::4505da0f6dc284a6::1,LITERAL,
+k1b/causelist.py::load_cause_list::4505da0f6dc284a6::2,LITERAL,
+k1b/replay.py::_refuse_zero_price::f0a9bbc79b9cfca6::1,LITERAL,
+k1b/replay.py::_replay::2ea6e962e2d6937b::1,LITERAL,
+k1b/replay.py::_replay::421ed63b47210c90::1,LITERAL,
+k1b/replay.py::_replay::5f58bf2f1bcb051a::1,OPERATOR,agent id typed on the command line
+k1b/replay.py::_replay::6b5682c0e3f737b3::1,LITERAL,
+k1b/replay.py::_replay::ec89887d2d39a14f::1,LITERAL,
+k1b/score.py::_check_layout::0aa0533b52761ffd::1,OPERATOR,"run number, an integer"
+k1b/score.py::_check_layout::5356622ac4b94358::1,LITERAL,
+k1b/score.py::_check_layout::7a93a496ea8a9eb6::1,LITERAL,
+k1b/score.py::_check_layout::866c8bd7201082a1::1,LITERAL,
+k1b/score.py::_dec::c7c69c9f63a3237a::1,LITERAL,
+k1b/score.py::_dec::c7c69c9f63a3237a::2,LITERAL,
+k1b/score.py::_read_json::9fb0b1bb05c32fdb::1,OPERATOR,what is a fixed string built with an integer by the two callers
+k1b/score.py::_record::eb001efdf50a3794::1,OPERATOR,"ordinal, an integer"
+k1b/score.py::load_answers::14ef28d5ff9de029::1,LITERAL,
+k1b/score.py::load_answers::46d945f63c082d16::1,LITERAL,
+k1b/score.py::load_answers::52bb7c4cda4eede4::1,OPERATOR,"answer ordinal, an integer"
+k1b/score.py::load_answers::a5c6d0d0bf09765b::1,OPERATOR,"answer ordinal, an integer"
+k1b/score.py::load_answers::a5c6d0d0bf09765b::2,OPERATOR,"answer ordinal, an integer"
+k1b/score.py::load_answers::b6d0999197dbc124::1,LITERAL,
+k1b/score.py::load_answers::e57091c71759a047::1,OPERATOR,"answer ordinal, an integer"
+k1b/score.py::score::055461c8d305702a::1,OPERATOR,"run number, metadata key from a fixed tuple, and counts"
+k1b/score.py::score::268b432e5c41d3fb::1,OPERATOR,"run number, metadata key from a fixed tuple, and counts"
+k1b/score.py::score::392cf9952db156fc::1,LITERAL,
+k1b/score.py::score::6a0ed6a5b9e04132::1,OPERATOR,"run number, metadata key from a fixed tuple, and counts"
+k1b/score.py::score::8832caa44769c8f5::1,OPERATOR,"run number, metadata key from a fixed tuple, and counts"
+k1b/score.py::score::f4415acef9271f53::1,OPERATOR,"run number, metadata key from a fixed tuple, and counts"
+llm/anthropic.py::client::f16fb59c422d4d25::1,FOREIGN,
+llm/common.py::pinned::38e6245b9162fced::1,OPERATOR,route name and model id from the operator's settings
+registry.py::_by_id::1184a6b0919516b4::1,OPERATOR,file name is fixed by the callers; id typed in the operator's yaml
+registry.py::_load_tools::32786aa5b3e5bcc6::1,OPERATOR,"pin_problems or problems: tool, action, input and operation names from the operator's yaml, schema_problems and spec_problems output (fixed words plus the operator's values)"
+registry.py::_load_tools::44046cf9213d021f::1,OPERATOR,"pin_problems or problems: tool, action, input and operation names from the operator's yaml, schema_problems and spec_problems output (fixed words plus the operator's values)"
+registry.py::load_registry::3bada809a56baae4::1,FOREIGN,
+registry.py::load_registry::44046cf9213d021f::1,OPERATOR,"early (deferred.key_problems: the operator's yaml keys), _cross_check and deferred.check (ids from the operator's yaml, fixed words)"
+registry.py::load_registry::44046cf9213d021f::2,OPERATOR,"early (deferred.key_problems: the operator's yaml keys), _cross_check and deferred.check (ids from the operator's yaml, fixed words)"
+registry.py::load_registry::4bd5af26797fce41::1,OPERATOR,"early (deferred.key_problems: the operator's yaml keys), _cross_check and deferred.check (ids from the operator's yaml, fixed words)"
+replay_records.py::read_records::0c8aa448491ccf02::1,OPERATOR,file name constant and a line number
+replay_records.py::read_records::2c55d28a45aecba6::1,OPERATOR,file name constant and a line number
+runtime/agent_loop.py::_check_golden_refs::896e0291f6d137b0::1,OPERATOR,golden file name from the operator's settings
+runtime/agent_loop.py::qualified_runs::368048cbf8c2ed62::1,OPERATOR,"line number, an integer"
+store/migrate.py::migrate::1bff9a371d8ad2b3::1,OPERATOR,"role name from the operator's settings; problems come from check_ledger/check_grants (file names, fixed words); catalog names read back from the database"
+store/migrate.py::migrate::1cde22a37a5aaf36::1,OPERATOR,"role name from the operator's settings; problems come from check_ledger/check_grants (file names, fixed words); catalog names read back from the database"
+store/migrate.py::migrate::3fdb0a28a66e9b2f::1,LITERAL,
+store/migrate.py::migrate::40db02b3ad655c40::1,LITERAL,
+store/migrate.py::migrate::5b70a3de6848f7f4::1,OPERATOR,"role name from the operator's settings; problems come from check_ledger/check_grants (file names, fixed words); catalog names read back from the database"
+store/migrate.py::migrate::8572036092447371::1,OPERATOR,"role name from the operator's settings; problems come from check_ledger/check_grants (file names, fixed words); catalog names read back from the database"
+store/migrate.py::migrate::cc384fb69683a0e2::1,OPERATOR,"role name from the operator's settings; problems come from check_ledger/check_grants (file names, fixed words); catalog names read back from the database"
+store/migrate.py::migrate::f53330a8ec02c74f::1,OPERATOR,"role name from the operator's settings; problems come from check_ledger/check_grants (file names, fixed words); catalog names read back from the database"
+store/migration_numbers.py::MigrationNumberError.__init__::3ef18624ada6657e::1,OPERATOR,problems from folder_problems/ledger checks: migration file names escaped by _esc plus fixed words
+store/migration_numbers.py::check_migration_numbers::fc464faa6509b451::1,OPERATOR,problems list: file names escaped by _esc plus fixed words; the class builds its text from it
+store/postgres.py::build::356ecc824f46d20e::1,LITERAL,
+store/postgres.py::build::a590b415f6b4b552::1,FOREIGN,
+store/postgres.py::password_source::8e86b8ac36546e03::1,LITERAL,
+store/postgres.py::tls_mode::c8b038b0d24b4f40::1,OPERATOR,sslmode from the operator's settings
+store/postgres.py::tls_mode::faf4a66ef445157f::1,OPERATOR,sslmode from the operator's settings
+tools.py::_module_files::6740bbd9d8d13900::1,OPERATOR,tool module name from the operator's settings (ruling for registry.py:239: both sites in this chain are named)
+tools.py::_module_files::78ecd84b293f464a::1,OPERATOR,tool module name from the operator's settings (ruling for registry.py:239: both sites in this chain are named)
+tools.py::load_tool_module::434647ff3fd805ff::1,OPERATOR,module name and pin from the operator's settings; problems from _reach_problems name identifiers in the operator's own tool module
+tools.py::load_tool_module::44046cf9213d021f::1,OPERATOR,module name and pin from the operator's settings; problems from _reach_problems name identifiers in the operator's own tool module
+tools.py::load_tool_module::d5460e31f29e6c5d::1,FOREIGN,
+tools.py::load_tool_module::f3a0103a3698c447::1,OPERATOR,module name and pin from the operator's settings; problems from _reach_problems name identifiers in the operator's own tool module
+tools.py::parse_manifest::61d8c730885b2083::1,OPERATOR,"where is a fixed string with the manifest file name; key, phase and tool names from the operator's manifest"
+tools.py::parse_manifest::a625bf4a762bbf6d::1,OPERATOR,"where is a fixed string with the manifest file name; key, phase and tool names from the operator's manifest"
+tools.py::parse_manifest::a8db0131bce484fd::1,OPERATOR,"where is a fixed string with the manifest file name; key, phase and tool names from the operator's manifest"
+tools.py::parse_manifest::acb0402572c0b16c::1,FOREIGN,
+tools.py::read_operations::43f23b59237dca18::1,OPERATOR,operation ids and methods declared by the operator's own tool module
+tools.py::read_operations::a4efabcf9f367ec9::1,OPERATOR,operation ids and methods declared by the operator's own tool module
+tools.py::read_operations::f91d6fa6f8c4812b::1,OPERATOR,operation ids and methods declared by the operator's own tool module
+tools.py::read_operations::f9378719ed153aa8::1,OPERATOR,operation ids and methods declared by the operator's own tool module
+tools.py::resolve_function::3407b987665e493b::1,OPERATOR,tool name and function reference from the operator's manifest
+tools.py::resolve_function::39ac57879232b496::1,OPERATOR,tool name and function reference from the operator's manifest
+tools.py::resolve_function::d45271903d69e462::1,OPERATOR,tool name and function reference from the operator's manifest
