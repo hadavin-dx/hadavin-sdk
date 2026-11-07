@@ -183,10 +183,9 @@ PROMPT_BYTES_PER_TOKEN = (
     1  # the prompt bound: one token for every byte, the most any tokenizer can use
 )
 
-# --- no-training statement limits (P6b1): one named block. Rebase note: if another package adds a block at the end of
-# this file first, keep both blocks and keep this one whole ------------------------------------------------------------
-NO_TRAINING_MAX_AGE_DAYS = 90  # the studio's "re-verify tool facts within 90 days"
+# --- no-training statement limits (P6b1) ---------------------------------------------------------------------------
+NO_TRAINING_MAX_AGE_DAYS = 90  # the default limit: a statement must be this many days old or less
 NO_TRAINING_MAX_AGE_CEILING = (
-    90  # an operator may shorten the limit, never lengthen it (lead order 24, item 32)
+    90  # an operator may shorten the limit, never lengthen it: the setting is 1 to this value
 )
 NO_TRAINING_FUTURE_SLACK_DAYS = 1  # an operator in IST can write tomorrow's UTC date
