@@ -1,0 +1,32 @@
+# Brief for a (new or resumed) CLOUD Claude session. Written by the lead 2026-11-07 ~10:25 UTC / 15:55 IST. Replaces the 2026-11-06 brief (archived).
+A copy lives on the cloud branch as `handover/CLOUD-RESUME-2026-11-07.md`. Read this, then `handover/STANDING-ORDERS.md`, `handover/README.md`, `handover/STUDIO-RULES.md`, `handover/STATUS.md`, the newest `handover/studio-notes/plan-v*.md` (frozen core plan v3 + amendment A8 being written), the last 60 lines of `handover/LEAD-ORDERS.md`.
+
+## 1. Roles
+OWNER Veera Rakesh Kethari (Hadavin, solo studio, India): decides money, secrets, GitHub settings/visibility, history rewrites, branch deletes, client data, production deploys, DNS. You never ask him; the lead does. LEAD = laptop Claude session in `C:\Users\rakes\Downloads\Hadavin`: sends numbered orders, answers questions, runs independent fresh `egm:*` reviews, re-runs evidence, writes the ledger, is the ONLY merger. YOU (cloud): bulk work with many parallel agents; you open PRs; you never merge, never push main, never change branch protection.
+
+## 2. Channel
+Lead -> you: ORDER NNN appended to `handover/LEAD-ORDERS.md` (branch `core/cloud-handover` of `hadavin-dx/hadavin-sdk`) plus a one-line wake-up; READ THE FILE, not only the wake-up line. You -> lead: `## qNNN (<real UTC>) REPORT|INFORM|NEEDS LEAD ...` in `handover/questions-for-lead.md`, one line in `handover/HEARTBEAT.md`, push (rebase first if rejected). Heartbeat at least every 8 minutes by `date -u` (never invent a time); the lead's `tools/cloud_check.py` flags STALE after 12 minutes. Every report entry: CHECKED BY ME (with SHA), builder's words separate from yours, NOT RUN, DECISIONS FOR LEAD (with your recommendation), NEEDS LEAD/OWNER, next step.
+Decide yourself what is yours (design choices inside a ticket, test layout, naming, work order) and write reason + decision. Reserved for the owner: money, live model calls, secrets, deploys, DNS, GitHub settings, merging.
+
+## 3. NEVER IDLE (the owner's repeated complaint; permanent)
+`handover/STANDING-ORDERS.md` applies: never end a turn with work left; schedule your own wake-up in <= 8 minutes with your cron/loop tool; if no order applies take the next BACKLOG item; push every checkpoint (nothing only in the cloud tree; list unpushed branches in each heartbeat, expect none); start a builder/reviewer for every independent item (agents are cheap, heavy test slots are not). Idle with work left is a breach.
+
+## 4. Rules (full text in repo `CLAUDE.md`, `.claude/rules/`, `handover/STUDIO-RULES.md`)
+1. EGM sequence for every task: brainstorm/draft (Opus) for new designs -> EGM review of the plan (egm-review-loop small, egm-review big, then egm-resolve) -> build -> EVIDENCE RUNNER (a different general-purpose agent whose brief says "EVIDENCE RUNNER": runs tests, mutants, hostile inputs, saves raw output, never judges) -> result review by fresh `egm:*` agents reading diff + ticket + evidence (never the author's verdict; snapshot of the head first) -> egm-resolve -> repeat until a fresh pass finds nothing (security/money/redaction: no round cap; others 2) -> drift report before done. Invoke EGM skills through the Skill tool.
+2. Models: set `model` explicitly on every Agent call. Opus 5.5 (`claude-opus-5-5`) ONLY for `egm:egm-brainstorm`, `egm:egm-draft`, `egm:egm-resolve`. Sonnet 5.5 (`claude-sonnet-5-5`) for builders, evidence runners and every reviewer. Haiku 5.5 only for plain lookups (grep/list/count/fetch-and-quote, file moves). Reviews and security/money reasoning never go to Haiku.
+3. Token saving at the same quality: redirect noisy output to files and print counts/tails; agents report short tables; read only needed lines; never re-run an unchanged check; one full run per fix pass at the final head; reviewers read a snapshot, not the repo; do not skip reviews/evidence/fact-checks to save tokens.
+4. Code last / ladder (R447-R450): gate -> no-code -> our core modules -> existing free tools -> tested free libraries -> own new code last; every plan/ticket has a RUNG TABLE (missing = Major). No GPL/AGPL/SSPL/BUSL/unknown licence without the owner's written yes. No single dependency (kind with neutral default + alternative; vendor SDK imports only in the kind module). Least privilege. Stages are demo/pilot/prod only. Core modules are generic. Client text says Hadavin, never Bhovix. Made-up data only.
+5. Fix, do not defer. Honest reports: lead with what failed, what is uncertain, what was not checked. No secrets printed; fake credentials built from parts. Scan for invisible characters after edits.
+6. Supervision: live register `handover/cloud-register.md` (row BEFORE starting, checked at expected end, closed on report, helpers stopped); 60-minute builder time box with checkpoint notes; no unbounded loops; never kill what you did not start.
+7. Machine: 4 cores, ~15 GB, 3 heavy test slots (queue `qrun.sh`/`qsubmit.sh`); Postgres clusters UTF8 with PGHOST/PGPORT/PGUSER exported; per-builder port ranges; wrapper exit codes: read the inner rc.
+8. A stacked PR stays DRAFT until its base merges. Gitleaks ignore entries carry `# EXPIRES 2026-12-31`.
+9. Blocker ledger: propose rows in q-entries; the lead writes `egm/BLOCKER-LEDGER.md`. Done = no BLOCKER/MAJOR OPEN.
+
+## 5. Current work (see `handover/STATUS.md` and the STANDING-ORDERS backlog)
+Open chain: P1b (core/P1b-fixwip), PR 66/75/76/77/78/79 money chain, PR 72, 73, 80, 83, 85, 86, dblink fix; plan A8 (v4.1) + round-2 reviewers; CI lint branch `core/ci-lint-set` (draft; pyright or mypy, import-linter, actionlint, deptry, vulture; SPDX line per tool; no suppressions); T1 own-meter 50-parallel test and T2 ledger replay (fake clock 6 min / 25 h / 31 d). AK-G15/G1/G16 stay DEFERRED (order 57.2) until the owner lifts; JG-3 paused.
+
+## 6. Mistakes already made (do not repeat)
+Heartbeat times ahead of real time; a placeholder job queued as the real mutant run; stray files at `/`; touching another builder's Postgres; `exit=0` hiding `rc=1`; SQL_ASCII clusters; a duplicate-keyword bug in a fix; the unpinned Unicode check on the wrong Python; waiting for the lead while work existed.
+
+## 7. When the owner's weekly limit is near
+The lead will send "PUSH ALL NOW". Commit and push every branch, update `handover/STATUS.md` and `handover/CLOUD-RESUME-2026-11-07.md`, write a final HEARTBEAT line, confirm `git status` clean and no unpushed branch, then stop. A new cloud session starts by reading this file and the last 60 lines of LEAD-ORDERS.md.
