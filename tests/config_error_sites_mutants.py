@@ -561,7 +561,7 @@ def main(argv: list[str]) -> int:
         expected = short(mu.killer)
         flag = (
             ""
-            if any(f == expected for f in failed)
+            if any(f == expected or f.startswith(expected + "[") for f in failed)
             else "  EXPECTED KILLER NOT AMONG THE FAILED TESTS"
         )
         print(f"{mu.ident:5} {result:8} exit={code} failed={len(failed)} {note}{flag}")
