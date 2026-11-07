@@ -407,8 +407,14 @@ def test_both_spellings_of_the_stage_together_refuse_start(cfg_dir):
 _W = r"(?<![A-Za-z0-9])" + OLD + r"(?![A-Za-z0-9])"  # the old word as a whole word
 _ANY = r"(?<![A-Za-z0-9])(?:" + OLD + r"|staging|stage)(?![A-Za-z0-9])"  # the old word or a sibling
 _STAGE = r"(?:pilot|prod|production|demo)"
-# Three more words that name a stage somewhere else (test, development, production). "test" and "production" are common
-# words, so they count only in the value forms below, never as a bare quoted word (`"test"` is pytest's own).
+# Three more words that name a stage somewhere else (test, development, production). Why they are scanned although the
+# stages are demo, pilot and prod (order 132, design review F8): they are the usual names of a stage in other projects'
+# configs, so a config, doc or CLI flag that says `environment: test` or `--env production` would bring back a second
+# stage vocabulary beside the three; `stages.STAGE_WORDS` lists the same six words and an id may not be spelled like
+# any of them (tests/test_tenant_ids.py pins that the two lists agree). Many tests depend on them (NEW_WORDS shapes,
+# pairs and negative cases below), so the scan was not narrowed to production and development. "test" and "production"
+# are common words, so they count only in the value forms below, never as a bare quoted word (`"test"` is pytest's own);
+# the data-split lines of the demo repos that say `"test"` are listed one by one in tests/stage_exemptions.tsv.
 _NEW = r"(?:test|development|production)"
 _NEWQ = r"(?:development|production)"  # the two that are rare enough to count as a quoted literal
 _Q = r"[`'\"]?"  # a quote or backtick around the word
@@ -553,32 +559,35 @@ def _hits(line: str, markdown: bool = True) -> list[str]:
     return names + [n for n, rx in NEW_POSITIONS.items() if rx.search(line)]
 
 
-def _scan_text(rel: str, text: str, exempt: dict | None = None) -> tuple[list[str], set]:
+def _scan_text(
+    rel: str, text: str, exempt: dict | None = None
+) -> tuple[list[str], collections.Counter]:
     """Hits in one file's text; a line that is exactly an exempt line is excused (ONE occurrence per row of the tsv)
-    and its entry is marked used. A second identical line is a hit unless the tsv has a second row for it."""
+    and the number of occurrences excused per entry is counted. A second identical line is a hit unless the tsv has a
+    second row for it."""
     budget = (
         _exemption_budget() if exempt is None else collections.Counter(dict.fromkeys(exempt, 1))
     )
-    out, used = [], set()
+    out, used = [], collections.Counter()
     for number, line in enumerate(text.splitlines(), 1):
         names = _hits(line, rel.endswith(".md"))
         if names and budget[(rel, line.strip())] > 0:
             budget[(rel, line.strip())] -= 1
-            used.add((rel, line.strip()))
+            used[(rel, line.strip())] += 1
             names = []
         if names:
             out.append(f"{rel}:{number} [{', '.join(names)}] {line.strip()[:100]}")
     return out, used
 
 
-def _scan() -> tuple[list[str], set]:
-    """(hits, the exemption entries that matched a line)."""
+def _scan() -> tuple[list[str], collections.Counter]:
+    """(hits, how many occurrences each exemption entry excused)."""
     paths = [p for folder in SCANNED for p in (ROOT / folder).rglob("*")]
     paths += [p for p in ROOT.glob("*") if p.name not in SKIPPED_ROOT]
     paths = [
         p for p in paths if p.suffix in TYPES or p.name.startswith(".git")
     ]  # .gitleaks.toml, .gitignore
-    out, used = [], set()
+    out, used = [], collections.Counter()
     for path in paths:
         if not path.is_file() or path in (SELF, EXEMPT_FILE) or "__pycache__" in path.parts:
             continue
@@ -588,7 +597,7 @@ def _scan() -> tuple[list[str], set]:
             continue
         found, hit_entries = _scan_text(path.relative_to(ROOT).as_posix(), text)
         out += found
-        used |= hit_entries
+        used += hit_entries
     return sorted(set(out)), used
 
 
@@ -597,13 +606,55 @@ def test_the_old_stage_word_is_gone():
     assert not found, "the old stage word is still used as a stage:\n" + "\n".join(found)
 
 
+def _exemption_problems(used: collections.Counter, budget: collections.Counter) -> str:
+    """Empty when the rows and the real occurrences agree in number, else the difference in words."""
+    if used != budget:
+        return (
+            f"rows without an occurrence: {sorted((budget - used).items())}; "
+            f"occurrences without a row: {sorted((used - budget).items())}"
+        )
+    return ""
+
+
 def test_the_exemptions_have_no_stale_entry():
-    """An entry that matches no line is stale and fails; each entry is one exact line of one file, with its reason."""
+    """An entry that matches no line is stale and fails, and so is a row that excuses an occurrence that is not there:
+    the number of rows with the same file and line must equal the number of real occurrences (a third copy of a
+    duplicated line is a hit; a duplicate row for a single line is stale). Each entry is one exact line of one file,
+    with its reason."""
     _, used = _scan()
-    exempt = _exemptions()
-    assert used == set(exempt), f"stale entries: {sorted(set(exempt) - used)}"
-    for (rel, _), why in exempt.items():
+    assert not _exemption_problems(used, _exemption_budget())
+    for (rel, _), why in _exemptions().items():
         assert why.strip() and (ROOT / rel).is_file(), rel
+
+
+def test_the_stale_check_sees_a_spare_duplicate_row_and_a_missing_row():
+    """Kills T27b (the comparison looks at the entries, not the counts). A set comparison cannot see a second row for a
+    line that occurs once."""
+    key = ("x.py", "line")
+    one, two = collections.Counter({key: 1}), collections.Counter({key: 2})
+    assert "rows without an occurrence" in _exemption_problems(one, two), (
+        "a spare duplicate row went unseen"
+    )
+    assert "occurrences without a row" in _exemption_problems(two, one), "a missing row went unseen"
+    assert _exemption_problems(two, two) == ""
+
+
+def test_a_duplicate_row_excuses_exactly_two_real_occurrences():
+    """Kills T27 (the budget collapses duplicate rows). The rows that appear twice
+    in the tsv each match two real lines; a text with only one of them leaves the second row unused."""
+    budget = _exemption_budget()
+    doubled = sorted(key for key, n in budget.items() if n == 2)
+    assert doubled, "no duplicate rows: this test has nothing to pin"
+    assert len(doubled) == 3, "the three duplicate rows of the tsv are not the ones checked here"
+    for rel, line in doubled:
+        text = (ROOT / rel).read_text(encoding="utf-8")
+        real = sum(1 for ln in text.splitlines() if ln.strip() == line)
+        assert real == 2, f"{rel}: {line!r} has {real} real occurrences for 2 rows"
+        _, used = _scan_text(rel, text)
+        assert used[(rel, line)] == 2
+        one = "\n".join(ln for ln in text.splitlines() if ln.strip() != line) + "\n" + line + "\n"
+        _, used_once = _scan_text(rel, one)
+        assert used_once[(rel, line)] == 1, "a single occurrence used the budget of two rows"
 
 
 def test_a_stage_shaped_line_in_a_file_that_holds_an_exempt_line_still_fails():
@@ -619,7 +670,7 @@ def test_a_stage_shaped_line_in_a_file_that_holds_an_exempt_line_still_fails():
     ):
         found, used = _scan_text(rel, text + "\n" + added + "\n")
         assert len(found) == 1 and added in found[0], f"the added line was not found: {added}"
-        assert used == {(rel, line)}
+        assert set(used) == {(rel, line)}
 
 
 def _lookalike(word: str) -> str:
@@ -806,7 +857,7 @@ def test_known_prose_collisions_are_hits_that_need_an_exact_line_exemption(line)
 
 
 def test_a_new_word_stage_value_in_a_scanned_file_fails_unless_its_exact_line_is_exempt():
-    rel = "src/hadavin_sdk/guard/redact.py"
+    rel = "src/hadavin_sdk/commonwords.py"
     text = (ROOT / rel).read_text(encoding="utf-8")
     assert _scan_text(rel, text)[0] == [], "the file as it is should be clean"
     assert (rel, '"production",') in _scan_text(rel, text)[1], "the exempt line was not read"
@@ -820,7 +871,7 @@ def test_a_new_word_stage_value_in_a_scanned_file_fails_unless_its_exact_line_is
 def test_an_exemption_covers_one_occurrence_not_every_identical_line():
     """A row of the tsv excuses ONE occurrence of its exact line. A second identical line (a copy added later in the same
     file) is a hit, and a second row for the same line excuses exactly two."""
-    rel = "src/hadavin_sdk/guard/redact.py"
+    rel = "src/hadavin_sdk/commonwords.py"
     text = (ROOT / rel).read_text(encoding="utf-8")
     assert _scan_text(rel, text)[0] == [], "the file as it is should be clean"
     found, _ = _scan_text(rel, text + '\n    "production",\n')
@@ -838,7 +889,7 @@ def test_two_rows_for_the_same_line_excuse_two_occurrences_and_no_more(tmp_path,
     assert _scan_text("x.py", text)[0] == [], "two rows should excuse two occurrences"
     found, used = _scan_text("x.py", text + "\n" + line)
     assert len(found) == 1 and found[0].startswith("x.py:4"), "a third occurrence must be a hit"
-    assert used == {("x.py", line)}
+    assert set(used) == {("x.py", line)} and used[("x.py", line)] == 2
 
 
 FULLWIDTH = "".join(chr(0xFF00 + ord(c) - 0x20) for c in OLD)

@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import re
 from decimal import Decimal
+from functools import partial
 from pathlib import Path
 from typing import Annotated, Any, Literal, get_args
 from urllib.parse import urlsplit
@@ -28,19 +29,23 @@ from hadavin_sdk import defaults, deferred
 from hadavin_sdk.backends.table import DEFAULTS, DEMO_ONLY, NOT_PROD, TABLE, KindSettings
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.scrub_settings import ScrubSettings
-from hadavin_sdk.stages import STAGES, check_tenant_id, is_live, is_prod
+from hadavin_sdk.stages import STAGES, check_id, check_tenant_id, is_live, is_prod
 
 __all__ = [
+    "AccountId",
     "Backends",
     "Config",
     "ConfigError",
+    "CustomerId",
     "EvidenceSettings",
     "K1bSettings",
+    "OrgId",
     "Retention",
     "Route",
     "ScrubSettings",
     "SourceConfig",
     "TenantId",
+    "UserId",
     "confined",
     "load_config",
     "load_yaml",
@@ -57,9 +62,15 @@ def _money(v: object) -> object:
 
 Money = Annotated[Decimal, BeforeValidator(_money)]
 
-# The type of every config field that holds a tenant id: a spelling that equals a stage name is refused (stages.py). No
-# config field holds a tenant id yet; tests/test_tenant_ids.py fails if a model gets one that does not use this type.
+# The type of every config field that holds a tenant id: a stage word or a common word (stages.check_id) is refused. The
+# other id types are for the ids the redactor's label rule also reads (org, customer, account, user). Use them in a
+# `_Strict` model only: that model hides the input value in errors, a plain BaseModel prints it. No config field holds
+# such an id yet; tests/test_tenant_ids.py fails if a model gets one that does not use these types.
 TenantId = Annotated[str, AfterValidator(check_tenant_id)]
+OrgId = Annotated[str, AfterValidator(partial(check_id, label="an org id"))]
+CustomerId = Annotated[str, AfterValidator(partial(check_id, label="a customer id"))]
+AccountId = Annotated[str, AfterValidator(partial(check_id, label="an account id"))]
+UserId = Annotated[str, AfterValidator(partial(check_id, label="a user id"))]
 
 
 class _Strict(BaseModel):
