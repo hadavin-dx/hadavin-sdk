@@ -663,7 +663,7 @@ M = [
         "test_two_inserted_letters_are_not_found", "two inserted letters are found", test_file=FB),
     mutant("insertion: a window that agrees to the end is not a match", TN,
         "    return window[i + 1 :] == target[i:] if i < n else True\n", "    return window[i + 1 :] == target[i:] if i < n else False\n",
-        "test_one_inserted_letter_of_the_same_script_is_found_at_every_inner_position", "is not found", test_file=FB),
+        "test_the_matcher_takes_a_window_that_agrees_with_the_needle_to_the_end", "is not matched", test_file=O),
     mutant("insertion: the minimum is one too high", TN,
         "if kind == \"script\" and _insertion_minimum(needle) <= len(needle) <= limit", "if kind == \"script\" and _insertion_minimum(needle) < len(needle) <= limit",
         "test_one_inserted_letter_of_the_same_script_is_found_at_every_inner_position", "is not found", test_file=FB),
