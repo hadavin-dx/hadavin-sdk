@@ -49,3 +49,11 @@ def require_backend(name: str, *, dsn: bool = True, module_level: bool = False) 
     if _fail_rule():
         pytest.fail(f"require_backend: {name}: {reason}", pytrace=False)
     pytest.skip(f"require_backend: {name}: {reason}", allow_module_level=module_level)
+
+
+def pg_test_dsn() -> str:
+    """The `HADAVIN_TEST_PG_DSN` of the CI service, for a test that connects. Skips (or fails under the fail rule)
+    when the driver or the variable is missing, so no test dies with a KeyError. This is the only place in the tests
+    that reads the variable by key; `test_pg_dsn_guard.py` fails on any other `environ[...]` read of it."""
+    require_backend("postgres")
+    return os.environ["HADAVIN_TEST_PG_DSN"]

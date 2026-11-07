@@ -3,7 +3,6 @@ laptop (no Docker needed) and fails under the fail rule (`HADAVIN_REQUIRE_PG` or
 Each test gets its own schema, migrated fresh and dropped afterwards, also when the set-up fails half way."""
 
 import contextlib
-import os
 import re
 import string
 import uuid
@@ -13,7 +12,7 @@ from types import SimpleNamespace
 from hadavin_sdk.actions.secrets import FakeSecretProvider
 from hadavin_sdk.backends.factory import make
 from hadavin_sdk.backends.table import PostgresSettings
-from tests.contracts.kinds import kind, require_backend
+from tests.contracts.kinds import kind, pg_test_dsn, require_backend
 
 # runtime DSN -> the DSN of the purge role of the same schema (only for `pg_schema(runtime=True)`)
 PURGE_DSN: dict[str, str] = {}
@@ -27,8 +26,7 @@ def pg_schema(migrated=True, runtime=False):
     suite must pass with only those rights); the role is dropped afterwards. Everything created is dropped in the
     `finally`, also when `migrate` or a role creation fails (a failed set-up must not leave a schema or a role
     behind), and the DSN entries of `OWNER_DSN` and `PURGE_DSN` go with it."""
-    require_backend("postgres")  # fails under HADAVIN_REQUIRE_PG or CI, else skips
-    dsn = os.environ["HADAVIN_TEST_PG_DSN"]
+    dsn = pg_test_dsn()  # fails under HADAVIN_REQUIRE_PG or CI, else skips
     import psycopg
     from psycopg import sql
     from psycopg.conninfo import make_conninfo
@@ -196,12 +194,14 @@ def pg_driver(*, module_level=False):
                     admin.execute(sql.SQL("DROP OWNED BY {}").format(sql.Identifier(role)))
                     admin.execute(sql.SQL("DROP ROLE {}").format(sql.Identifier(role)))
 
-    def execute(conn, template, params=(), idents=()):
+    def execute(conn, template, params=None, idents=()):
         """Run `template` (each `{}` is filled with the next quoted identifier of `idents`; write `{{` and `}}`
         for a literal brace); the rows as a list of tuples, or an empty list for a statement that returns none.
         The number of `{}` must equal the number of `idents` and a `{}` may not be named or numbered: anything
         else is a `ValueError` that says so (the driver's own message for a mismatch is an IndexError that
-        names neither). The cursor is closed before the call returns."""
+        names neither). With no `params` (None or empty) the statement goes to the server as written, so a literal
+        `%` (a LIKE pattern) needs no doubling; with `params` the driver reads `%` as a placeholder start and a
+        literal one is written `%%`. The cursor is closed before the call returns."""
         parsed = [p for p in string.Formatter().parse(template) if p[1] is not None]
         fields = [name for _, name, _, _ in parsed]
         if any(name or spec or conv for _, name, spec, conv in parsed):
@@ -215,7 +215,7 @@ def pg_driver(*, module_level=False):
             )
         query = sql.SQL(template).format(*[sql.Identifier(i) for i in idents])
         with conn.cursor() as cur:
-            cur.execute(query, params)
+            cur.execute(query, params or None)
             return cur.fetchall() if cur.description else []
 
     def sqlstate(exc):
