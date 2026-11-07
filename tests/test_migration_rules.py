@@ -499,14 +499,16 @@ def test_the_hand_file_header_in_the_runbook_has_the_timeouts_and_a_quoted_schem
     """F2, F6. Killed by: mutant R16c (the CHANGELOG rule loses the timeouts), R20 (the unquoted search_path returns)."""
     rule = _words(rb.RUNBOOK[: rb.RUNBOOK.index("- **(a) ")])
     for line in mn.RECIPE_TIMEOUTS:
-        assert f"`{line[:-1]}`" in rule or line in rule, line
+        assert f"`{line}`" in rule, line
     assert rb.TIMEOUTS == list(mn.RECIPE_TIMEOUTS)
+    prose = re.sub(r"`[^`]*`", "", rule)  # the code spans are checked against the constant above
+    assert not re.search(r"\b\d+ ?(seconds?|s)\b", prose), "no second copy of the numbers in prose"
     assert rule.index("`BEGIN;`") < rule.index("lock_timeout") < rule.index("pg_advisory_xact_lock")
     assert 'SET search_path TO "<the schema migrate uses>";' in rule
     assert "SET search_path TO <" not in rb.RUNBOOK and "SET search_path TO <" not in (
         mig.__doc__ or ""
     )
-    assert "lock_timeout" in _words(mig.__doc__ or "")
+    assert "RECIPE_TIMEOUTS" in _words(mig.__doc__ or "")
 
 
 def test_case_e_puts_the_evidence_block_into_e1_and_e3_always():
@@ -547,10 +549,56 @@ def test_the_upgrade_bullet_says_what_migrate_checks_and_does_not_overclaim():
     )
 
 
-def test_migrate_really_calls_the_released_list_check():
-    """The CHANGELOG sentence above is only true while this is: migrate() reads the shipped list and calls the check."""
-    import inspect
+_TIMEOUT = re.compile(r"\w+_timeout = '[^']*'")
 
-    body = inspect.getsource(mig.migrate)
-    assert "released_problems(MIGRATIONS, _released_manifest())" in body
-    assert body.index("released_problems") < body.index("connect(")
+
+def test_every_timeout_value_written_in_the_docs_is_the_constants():
+    """F2 (no hardcoding): the CHANGELOG and both docstrings may write a timeout setting, but only the constant's own.
+    Killed by: mutants R29 (the CHANGELOG rule says 10s), R30 (the migrate docstring says 10s)."""
+    allowed = {m for line in mn.RECIPE_TIMEOUTS for m in _TIMEOUT.findall(line)}
+    assert len(allowed) == 2
+    for name, text in (
+        ("CHANGELOG", CHANGELOG),
+        ("migrate module doc", mig.__doc__ or ""),
+        ("migrate doc", mig.migrate.__doc__ or ""),
+        ("migration_numbers doc", mn.__doc__ or ""),
+    ):
+        assert set(_TIMEOUT.findall(text)) <= allowed, name
+    assert "RECIPE_TIMEOUTS" in _words(mig.__doc__ or "")
+    assert "RECIPE_TIMEOUTS" in _words(mig.migrate.__doc__ or "")
+    assert "RECIPE_TIMEOUTS" in _words(rb.RUNBOOK)
+
+
+def test_no_source_or_test_file_writes_the_timeout_values_a_second_time():
+    """F2 (no hardcoding): the values of the constant (read from it) appear as a quoted literal nowhere else in the
+    store code or the migration tests. Killed by: mutants R31 (migrate.py gets its own copy of a value), R32 (the runbook helper
+    gets its own list)."""
+    values = [v for line in mn.RECIPE_TIMEOUTS for v in re.findall(r"= '([^']*)'", line)]
+    assert values and all(values)
+    root = Path(__file__).resolve().parent
+    files = [
+        *sorted((root.parent / "src" / "hadavin_sdk" / "store").glob("*.py")),
+        *sorted(root.glob("test_migration*.py")),
+        *sorted((root / "fixtures").glob("*.py")),
+    ]
+    assert Path(mn.__file__) in files
+    for path in files:
+        text = path.read_text(encoding="utf-8")
+        for v in values:
+            expected = 1 if path == Path(mn.__file__) else 0
+            assert text.count(f"'{v}'") == expected, f"{path.name}: '{v}'"
+
+
+def test_case_f_says_migrate_has_the_same_limits_as_the_hand_file():
+    """F2 (drift): CHANGELOG case (f) must not say `migrate` has no timeout while it sets them.
+    Killed by: mutant R33 (the old sentence returns)."""
+    f = _words(rb.case("f"))
+    assert "`migrate` sets the same lock and statement limits as the hand file" in f
+    assert "has no timeout in `migrate`" not in f
+    first = _words(
+        CHANGELOG[CHANGELOG.index("- **Migrations: stricter checks") :].split("\n", 1)[0]
+    )
+    assert (
+        "`migrate` also sets, for its transaction, the same lock-wait and statement time limits"
+        in first
+    )

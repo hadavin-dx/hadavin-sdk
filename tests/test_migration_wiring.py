@@ -256,6 +256,23 @@ def test_migrate_takes_the_one_advisory_lock_key_first(monkeypatch, tmp_path):
     assert db.params[0] == ("SELECT pg_advisory_xact_lock(%s)", (mn.MIGRATE_LOCK,))
 
 
+def test_migrate_sets_the_recipe_limits_right_after_its_lock_and_before_any_file(
+    monkeypatch, tmp_path
+):
+    """F2 (drift): `migrate` runs the two `SET LOCAL` lines of `RECIPE_TIMEOUTS`, in order, right after the advisory
+    lock and before the first file; they are the constant's, not copies (a patched constant is what runs).
+    Killed by: mutants R26 (the loop removed), R27 (the limits set before the lock), R28 (the lock-wait line only)."""
+    err, db, _ = _run(monkeypatch, tmp_path, [START] * 3, [[], [], []])
+    assert err is None
+    assert db.params[0] == ("SELECT pg_advisory_xact_lock(%s)", (mn.MIGRATE_LOCK,))
+    assert [t for t, _ in db.params[1:3]] == list(mn.RECIPE_TIMEOUTS)
+    assert db.log.index("SELECT 1;\n") > 2
+    other = ("SET LOCAL lock_timeout = '1ms';", "SET LOCAL statement_timeout = '2ms';")
+    monkeypatch.setattr(mig, "RECIPE_TIMEOUTS", other)
+    err, db, _ = _run(monkeypatch, tmp_path, [START] * 3, [[], [], []])
+    assert err is None and tuple(t for t, _ in db.params[1:3]) == other
+
+
 def test_clean_run_reads_before_each_file_insert(monkeypatch, tmp_path):
     """Cases (i) and (xii): saved values are read BEFORE the first file; each file is followed by both read queries
     and only then by its ledger INSERT (M64, M95)."""
@@ -501,3 +518,21 @@ def test_the_released_list_ships_inside_the_package_and_covers_every_real_file()
     assert mig.RELEASED_MANIFEST.parent == mn.MIGRATIONS.parent
     assert mig.RELEASED_MANIFEST.is_file()
     assert mn.released_problems(mn.MIGRATIONS, mig._released_manifest()) == []
+
+
+def test_a_bad_hash_in_the_released_list_is_a_config_error_not_a_changed_file(
+    monkeypatch, tmp_path
+):
+    """M-4 (minor): a value that is not 64 lower-case hex digits is a broken list (ConfigError, before any connection),
+    not "a released file was changed". Killed by: mutant MM7 (the hex check removed)."""
+    import json
+
+    monkeypatch.setattr(mig, "connect", lambda *a, **k: pytest.fail("connected"))
+    good = dict(mig._released_manifest())
+    first = min(good)
+    for bad in ("xyz", "", "0" * 63, "0" * 65, "A" * 64, "0" * 63 + "g", ("0" * 64) + "\n"):
+        path = tmp_path / "bad.json"
+        path.write_text(json.dumps({**good, first: bad}), encoding="utf-8")
+        monkeypatch.setattr(mig, "RELEASED_MANIFEST", path)
+        with pytest.raises(ConfigError, match="no SHA-256 .* for"):
+            mig.migrate("postgresql://unused")

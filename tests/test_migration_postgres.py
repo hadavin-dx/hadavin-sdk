@@ -812,7 +812,7 @@ def test_the_recipe_and_the_runbook_header_start_with_the_timeouts(scratch):
 @needs_pg
 def test_a_hand_file_waiting_for_a_table_lock_stops_after_the_lock_timeout(scratch, tmp_path):
     """F2, run: another session holds ACCESS EXCLUSIVE on `tool_calls`; the hand file does not queue behind it for
-    ever (and so does not stop every reader of a live table): it fails after 5 seconds and keeps nothing.
+    ever (and so does not stop every reader of a live table): it fails when the lock limit of `RECIPE_TIMEOUTS` runs out and keeps nothing.
     Killed by: mutant R16b (the timeouts left out of the runbook header helper)."""
     dsn, schema = scratch
     mig.migrate(dsn)
@@ -931,3 +931,78 @@ def test_case_e_e1_with_one_table_missing_keeps_nothing(scratch, monkeypatch, tm
     done = _psql(schema, tmp_path, *_case_e_steps("E1", FALSE_ROW))
     assert done.returncode != 0 and "a person must look" in done.stderr
     assert BRANCH_ROW in _ledger(dsn) and FALSE_ROW in _ledger(dsn)
+
+
+# --- migrate() sets the same limits as the hand recipe (order 140, F2 drift), RUN --------------------------------------------
+
+# test-only values, short on purpose; the one that is not under test is long so that it cannot end the run first
+SHORT_LOCK = ("SET LOCAL lock_timeout = '1s';", "SET LOCAL statement_timeout = '20s';")
+SHORT_STATEMENT = ("SET LOCAL lock_timeout = '20s';", "SET LOCAL statement_timeout = '1s';")
+
+
+@needs_pg
+def test_migrate_gives_up_waiting_for_a_table_lock_and_keeps_nothing(
+    scratch, monkeypatch, tmp_path
+):
+    """F2: another session holds ACCESS EXCLUSIVE on `tool_calls`; `migrate` does not queue behind it for ever: the
+    limit of `mig.RECIPE_TIMEOUTS` (patched short here) ends the run, nothing is kept, no ledger row.
+    Killed by: mutants R26 (the limits not set), R28 (the lock-wait line left out)."""
+    dsn, _ = scratch
+    mig.migrate(dsn)
+    before = _ledger(dsn)
+    monkeypatch.setattr(mig, "RECIPE_TIMEOUTS", SHORT_LOCK)
+    _with_files(
+        monkeypatch, tmp_path, {PLANTED_NEXT: "ALTER TABLE tool_calls ADD COLUMN p3a_wait TEXT;\n"}
+    )
+    with psycopg.connect(dsn) as holder:
+        holder.execute("LOCK TABLE tool_calls IN ACCESS EXCLUSIVE MODE")
+        with pytest.raises(psycopg.errors.LockNotAvailable):
+            mig.migrate(dsn)
+    assert _ledger(dsn) == before
+    assert ("tool_calls", "p3a_wait") not in _columns(dsn)
+
+
+@needs_pg
+def test_migrate_stops_a_file_that_runs_past_the_statement_limit(scratch, monkeypatch, tmp_path):
+    """F2: a file whose statement runs longer than the statement limit of `mig.RECIPE_TIMEOUTS` (patched short here)
+    fails the run and keeps nothing. Killed by: mutants R26 (the limits not set), R28 (the statement line left out)."""
+    dsn, _ = scratch
+    mig.migrate(dsn)
+    before = _ledger(dsn)
+    monkeypatch.setattr(mig, "RECIPE_TIMEOUTS", SHORT_STATEMENT)
+    _with_files(monkeypatch, tmp_path, {PLANTED_NEXT: "SELECT pg_sleep(30);\n"})
+    with pytest.raises(psycopg.errors.QueryCanceled):
+        mig.migrate(dsn)
+    assert _ledger(dsn) == before
+
+
+@needs_pg
+def test_the_limits_migrate_runs_with_are_the_ones_in_the_constant(scratch, monkeypatch, tmp_path):
+    """F2: a planted file reads the two settings from the server inside the run (`1/0` when one differs): they are the
+    values of `mig.RECIPE_TIMEOUTS` (patched to values that print back unchanged), and a wrong expectation fails, so
+    the probe can fail. Killed by: mutants R26 (not set), R28 (one line left out), R34 (a literal value in migrate)."""
+    dsn, _ = scratch
+    monkeypatch.setattr(
+        mig,
+        "RECIPE_TIMEOUTS",
+        ("SET LOCAL lock_timeout = '2s';", "SET LOCAL statement_timeout = '3s';"),
+    )
+    lock_t, stmt_t = (line.split("= ")[1].strip("';") for line in mig.RECIPE_TIMEOUTS)
+
+    def probe(lock_expected: str) -> str:
+        return (
+            f"SELECT 1 / ((current_setting('lock_timeout') = '{lock_expected}' "
+            f"AND current_setting('statement_timeout') = '{stmt_t}')::int);\n"
+        )
+
+    _with_files(monkeypatch, tmp_path, {PLANTED_NEXT: probe("9s")})
+    with pytest.raises(psycopg.errors.DivisionByZero):
+        mig.migrate(dsn)
+    monkeypatch.undo()
+    monkeypatch.setattr(
+        mig,
+        "RECIPE_TIMEOUTS",
+        ("SET LOCAL lock_timeout = '2s';", "SET LOCAL statement_timeout = '3s';"),
+    )
+    _with_files(monkeypatch, tmp_path, {PLANTED_NEXT: probe(lock_t)})
+    assert mig.migrate(dsn)[-1] == PLANTED_NEXT[:-4]

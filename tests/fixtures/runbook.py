@@ -9,15 +9,16 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+from hadavin_sdk.store.migration_numbers import RECIPE_TIMEOUTS
+
 CHANGELOG_PATH = Path(__file__).resolve().parents[2] / "CHANGELOG.md"
 CHANGELOG = CHANGELOG_PATH.read_text(encoding="utf-8")
 RUNBOOK = CHANGELOG[
     CHANGELOG.index("### Migration ") :
 ]  # "repair steps" now, "runbook" in older text
-TIMEOUTS = [
-    "SET LOCAL lock_timeout = '5s';",
-    "SET LOCAL statement_timeout = '60s';",
-]  # as the rule says
+TIMEOUTS = list(
+    RECIPE_TIMEOUTS
+)  # the one constant; a test checks that the runbook text says the same
 PSQL_ARGS = [
     "psql",
     "-X",

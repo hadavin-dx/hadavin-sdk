@@ -16,8 +16,9 @@ what the read-back does not read).
 When `migrate` refuses, a database administrator repairs by hand (the full runbook, cases (a) to (g), is the section
 "Migration repair steps" of CHANGELOG.md). Every hand step is a FILE of SQL run with `psql -X -v ON_ERROR_STOP=1 -f <file>`
 and your own connection settings (never typed line by line, never a connection string in a text). The file starts with
-`\\set ON_ERROR_STOP on`, then `SET search_path TO "<the schema migrate uses>";`, `BEGIN;`, `SET LOCAL lock_timeout = '5s';`,
-`SET LOCAL statement_timeout = '60s';`, the advisory lock of `migrate`
+`\\set ON_ERROR_STOP on`, then `SET search_path TO "<the schema migrate uses>";`, `BEGIN;`, the two `SET LOCAL` lines of
+`RECIPE_TIMEOUTS` (`migration_numbers`: a lock limit and a statement limit; `migrate` sets the same two lines itself),
+the advisory lock of `migrate`
 (`SELECT pg_advisory_xact_lock(<MIGRATE_LOCK>);`, only while no `migrate` runs) and ends with `COMMIT;`; after every
 `UPDATE schema_migrations` it holds a `DO` check that raises unless exactly one row with the new version exists and
 none with the old one. A late file: use the recipe in the refusal message. A renamed file or ledger row: change the
@@ -39,6 +40,7 @@ from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.store.migration_numbers import (
     MIGRATE_LOCK,
     MIGRATIONS,
+    RECIPE_TIMEOUTS,
     MigrationNumberError,
     check_ledger,
     gone_message,
@@ -315,6 +317,7 @@ def _excess_privileges(db, role: str) -> list[str]:
 # SHA-256 of every released migration file (forward-only: a released file is never edited, renumbered or deleted).
 # It ships with the package, so `migrate` itself can refuse a changed file; add a row when a release is cut.
 RELEASED_MANIFEST = MIGRATIONS.parent / "migrations_released.json"
+_SHA256 = re.compile(r"[0-9a-f]{64}")
 
 
 def _released_manifest() -> dict[str, str]:
@@ -326,6 +329,11 @@ def _released_manifest() -> dict[str, str]:
         isinstance(k, str) and isinstance(v, str) for k, v in data.items()
     ):
         raise ConfigError("the list of released migration files is not a name -> SHA-256 table")
+    for name, value in data.items():
+        if not _SHA256.fullmatch(value):
+            raise ConfigError(
+                f"the list of released migration files has no SHA-256 (64 hex digits) for {name!r}"
+            )
     return data
 
 
@@ -446,7 +454,10 @@ def migrate(
     """Apply pending migrations; return the versions applied by this call. With `runtime_role`, give it the
     privileges `GRANTS` lists (never TRUNCATE; DELETE only on the outbox and the purged evidence tables). With `portal_role`, SELECT on the
     relations marked `portal` and nothing else. The ledger and the grant map are checked first: a bad file name,
-    a gap, or a relation with no `GRANTS` entry stops the run before it touches the database.
+    a gap, or a relation with no `GRANTS` entry stops the run before it touches the database. Right after the advisory
+    lock (so a second run still waits for the first) the run sets the two `SET LOCAL` limits of `RECIPE_TIMEOUTS`
+    (a lock limit and a statement limit, the same lines the hand recipe sets): a file that waits for a table lock or
+    runs longer fails the whole run and keeps nothing; apply such a file by hand with a raised number.
 
     Role membership: the refusal list of `migration_numbers` is wider than a plain list of the dangerous statements.
     `GRANT r TO s` and `REVOKE r FROM s` with no `ON` (a role-membership change) are refused in a `.sql` file, because
@@ -482,6 +493,9 @@ def migrate(
         db.execute(
             "SELECT pg_advisory_xact_lock(%s)", (MIGRATE_LOCK,)
         )  # one key, defined in migration_numbers
+        # the hand recipe's two limits (one constant); `SET LOCAL` ends with this transaction
+        for limit in RECIPE_TIMEOUTS:
+            db.execute(limit)
         db.execute(
             "CREATE TABLE IF NOT EXISTS schema_migrations "
             "(version TEXT PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT now())"
