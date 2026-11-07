@@ -84,7 +84,8 @@ def _st(kind: str, today, **over) -> dict:
 
 
 def _real_today() -> dt.date:
-    return config_mod._utc_today()
+    """The real UTC day, read here (not through the seam under test, so pins that need no seam also run on the base)."""
+    return dt.datetime.now(dt.UTC).date()
 
 
 def _write_llm(root: Path, llm: dict) -> None:
