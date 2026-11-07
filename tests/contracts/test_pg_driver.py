@@ -279,3 +279,20 @@ def test_pg_schema_drops_what_it_made_when_migrate_fails(drv, monkeypatch, runti
     with pytest.raises(RuntimeError, match="planted migrate failure"):
         next(pg_schema(migrated=not runtime, runtime=runtime))
     assert _roles_and_schemas(drv) == before
+
+
+def test_pg_schema_cleans_up_the_rest_when_one_clean_up_statement_fails(drv):
+    """Bug class: one failing clean-up statement skipped the later role and the schema (a leak in the cluster).
+    The first runtime role is dropped behind its back, so `DROP OWNED BY` it fails (42704); the purge role
+    and the schema must still go, and the failure must still be raised."""
+    before = _roles_and_schemas(drv)
+    gen = pg_schema(runtime=True)
+    dsn = next(gen)
+    role = drv.dsn_parts(dsn)["user"]
+    with drv.connect_admin(pg_test_dsn()) as conn:
+        drv.execute(conn, "DROP OWNED BY {}", idents=[role])
+        drv.execute(conn, "DROP ROLE {}", idents=[role])
+    assert _roles_and_schemas(drv) != before  # the purge role and the schema are still there
+    with drv.expect_sqlstate("42704"):
+        gen.close()
+    assert _roles_and_schemas(drv) == before
