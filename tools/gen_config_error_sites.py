@@ -8,12 +8,27 @@ never stored, so a person who edits the table cannot weaken a lock.
 
 Standard library only. This tool never imports the SDK and never runs repository code: it only parses text.
 
-What the scan does not detect (stated plainly): ``cls(...)`` outside a site class, ``type(x)(...)``,
-``getattr(mod, "ConfigError")(...)``, ``functools.partial(ConfigError, ...)``, a class held in a variable, a raiser helper
-called as a method (``self.f(...)``, ``obj.f(...)``) and a non-exception foreign value (document or model text) passed
-into a raiser helper. Only ``ConfigError`` and its subclasses are in scope; other exception types reach the screen through
-an existing site. Taint does not cross function calls and does not cross into an inner ``def``, ``lambda`` or class body.
-A gap in taint never lets a row pass: it lands in ``unproven-origin`` and needs a person.
+What the table proves, and what it does not (stated plainly). A row's key hashes the construction node only (plus, for
+constructions with identical text in one function, what guards them). So the table proves that every construction CALL SITE
+was seen and given a reviewed class. It does not prove the claim in an OPERATOR or FOREIGN reason about the PRODUCERS of the
+values that reach the site (who builds the string, what it holds): a later edit to a producer, in another function or file, does
+not change the key and does not fail the check. The reasons are a reviewer's statement at the time of review, not a checked
+property; P5b3 must guard the producers (module-wide, not only the constructor arguments).
+
+What the scan does not detect: ``type(x)(...)``, ``getattr(mod, "ConfigError")(...)``, a raiser helper called as a method
+(``self.f(...)``, ``obj.f(...)``), a relay of exception text that is not a construction (``out.append(str(exc))`` where ``exc`` is a
+site class caught in a handler) and a non-exception foreign value (document or model text) passed into a raiser helper. A site
+class used as a value (``kind = ConfigError``, ``raise_as(ConfigError, ...)``, ``functools.partial(ConfigError, ...)``) is refused
+with ``SitesError``: the name may only be called, caught, tested with ``isinstance``/``issubclass``, named as a base or an
+annotation, imported, or raised bare. Only ``ConfigError`` and its subclasses are in scope; other exception types reach the screen
+through an existing site. Taint does not cross function calls, aliases of the ``traceback`` module (``import traceback as tb``) and
+does not cross into an inner ``def``, ``lambda`` or class body. A gap in taint never lets a row pass: it lands in ``unproven-origin``
+and needs a person.
+
+Site classes: the body may hold a docstring, ``pass``, plain class fields, ``__init__`` and ``__reduce__``. ``__init__`` holds only
+assignments to attributes of ``self`` and one ``super().__init__(<expr>)`` statement; any route that rewrites ``args`` (``setattr``,
+``__dict__``, ``vars``, ``add_note``, ``.args``) is refused. ``__reduce__`` must be exactly ``return (type(self), (self.attr, ...))``.
+``__reduce_ex__``, ``__getstate__`` and ``__setstate__`` are refused.
 
 Command line: ``python -m tools.gen_config_error_sites --check|--write|--review [--root PATH] [--csv PATH]``.
 """
@@ -44,8 +59,47 @@ TAINT_CALLS = ("exc_info", "exception", "format_exc", "format_exception", "forma
 TAINT_MODULES = ("sys", "traceback")
 SCOPES = (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda, ast.ClassDef)
 DEFS = (ast.FunctionDef, ast.AsyncFunctionDef)
-# Methods that rebuild an exception for copy and pickle; they cannot change ``str(exc)`` of the live object.
-TEXT_NEUTRAL_DEFS = ("__reduce__", "__reduce_ex__", "__getstate__", "__setstate__")
+# The one method besides ``__init__`` a site class may define: ``__reduce__`` with the single shape ``return (type(self),
+# (self.attr, ...))`` (see ``_check_reduce``). ``__reduce_ex__``, ``__getstate__`` and ``__setstate__`` are refused: they can change
+# what a copy or an unpickled object prints.
+REDUCE_DEF = "__reduce__"
+# Names an ``__init__`` must not use: each is a route to change ``args`` (and so ``str(exc)``) or the instance behind ``super()``.
+INIT_BAD_NAMES = (
+    "setattr",
+    "delattr",
+    "vars",
+    "globals",
+    "locals",
+    "exec",
+    "eval",
+    "compile",
+    "object",
+)
+INIT_BAD_ATTRS = (
+    "args",
+    "__dict__",
+    "__setattr__",
+    "__class__",
+    "add_note",
+    "__notes__",
+    "__reduce__",
+)
+# Class names whose attribute access is not a use of the class as a value, apart from these dunder attributes.
+CLASS_ATTR_OK = ("__name__", "__qualname__", "__module__", "__doc__")
+# Statements and expressions whose header guards what they contain; a duplicated construction is told apart by them.
+GUARD_FIELDS = {
+    "If": ("test",),
+    "While": ("test",),
+    "For": ("target", "iter"),
+    "AsyncFor": ("target", "iter"),
+    "With": ("items",),
+    "AsyncWith": ("items",),
+    "ExceptHandler": ("type", "name"),
+    "IfExp": ("test",),
+    "Match": ("subject",),
+    "match_case": ("pattern", "guard"),
+    "comprehension": ("target", "iter", "ifs"),
+}
 
 
 class SitesError(Exception):
@@ -417,7 +471,17 @@ def _is_super_init(node: ast.AST) -> bool:
     )
 
 
+def _is_self_attr(node: ast.AST) -> bool:
+    return (
+        isinstance(node, ast.Attribute)
+        and isinstance(node.value, ast.Name)
+        and node.value.id == "self"
+    )
+
+
 def _check_init(cls: ast.ClassDef, init: ast.FunctionDef | ast.AsyncFunctionDef) -> None:
+    """BN-8: the body holds one ``super().__init__(<expr>)`` statement and assignments to attributes of ``self``, nothing else
+    (no local, no ``if``, no loop); and no route that rewrites ``args`` or the instance."""
     if isinstance(init, ast.AsyncFunctionDef) or init.decorator_list:
         raise SitesError(f"{cls.name}.__init__ must be a plain def")
     base_calls = [
@@ -432,17 +496,79 @@ def _check_init(cls: ast.ClassDef, init: ast.FunctionDef | ast.AsyncFunctionDef)
         raise SitesError(f"{cls.name}.__init__ must call the base initialiser exactly once")
     if not any(isinstance(stmt, ast.Expr) and stmt.value is supers[0] for stmt in init.body):
         raise SitesError(f"{cls.name}.__init__ must call super().__init__(...) as a statement")
-    for node in ast.walk(init):
-        if (
-            isinstance(node, ast.Attribute)
-            and isinstance(node.ctx, ast.Store)
-            and node.attr == "args"
-            and isinstance(node.value, ast.Name)
-            and node.value.id == "self"
+    for stmt in init.body:
+        if isinstance(stmt, ast.Expr) and (
+            stmt.value is supers[0]
+            or (isinstance(stmt.value, ast.Constant) and isinstance(stmt.value.value, str))
         ):
+            continue
+        if isinstance(stmt, ast.Assign) and all(_is_self_attr(t) for t in stmt.targets):
+            continue
+        if (
+            isinstance(stmt, ast.AnnAssign)
+            and stmt.value is not None
+            and _is_self_attr(stmt.target)
+        ):
+            continue
+        raise SitesError(
+            f"{cls.name}.__init__ may only assign attributes of self and call super().__init__(...)"
+        )
+    for node in ast.walk(init):
+        if isinstance(node, ast.Name) and node.id in INIT_BAD_NAMES:
             raise SitesError(
-                f"{cls.name}.__init__ assigns self.args; the text must go through super()"
+                f"{cls.name}.__init__ uses {node.id}; the text must go through super()"
             )
+        if isinstance(node, ast.Attribute) and node.attr in INIT_BAD_ATTRS:
+            raise SitesError(
+                f"{cls.name}.__init__ uses .{node.attr}; the text must go through super()"
+            )
+
+
+def _check_reduce(cls: ast.ClassDef, fn: ast.FunctionDef | ast.AsyncFunctionDef) -> None:
+    """The only allowed ``__reduce__``: ``def __reduce__(self): return (type(self), (self.a, ...))`` (a docstring may come first)."""
+    a = fn.args
+    plain = (
+        isinstance(fn, ast.FunctionDef)
+        and not fn.decorator_list
+        and fn.returns is None
+        and [x.arg for x in a.args] == ["self"]
+        and not (
+            a.posonlyargs or a.kwonlyargs or a.vararg or a.kwarg or a.defaults or a.kw_defaults
+        )
+    )
+    body = [
+        st
+        for st in fn.body
+        if not (
+            isinstance(st, ast.Expr)
+            and isinstance(st.value, ast.Constant)
+            and isinstance(st.value.value, str)
+        )
+    ]
+    ok = plain and len(body) == 1 and isinstance(body[0], ast.Return)
+    if ok:
+        value = body[0].value
+        ok = (
+            isinstance(value, ast.Tuple)
+            and len(value.elts) == 2
+            and isinstance(value.elts[0], ast.Call)
+            and isinstance(value.elts[0].func, ast.Name)
+            and value.elts[0].func.id == "type"
+            and not value.elts[0].keywords
+            and len(value.elts[0].args) == 1
+            and isinstance(value.elts[0].args[0], ast.Name)
+            and value.elts[0].args[0].id == "self"
+            and isinstance(value.elts[1], ast.Tuple)
+            and bool(value.elts[1].elts)
+            and all(
+                isinstance(e, ast.Attribute) and _is_self_attr(e) and not e.attr.startswith("__")
+                for e in value.elts[1].elts
+            )
+        )
+    if not ok:
+        raise SitesError(
+            f"{cls.name}.__reduce__ must be exactly: return (type(self), (self.attr, ...))"
+        )
 
 
 def _check_site_class(cls: ast.ClassDef, classes: set[str], aliases: dict[str, str]) -> None:
@@ -457,6 +583,7 @@ def _check_site_class(cls: ast.ClassDef, classes: set[str], aliases: dict[str, s
     elif len(names) != 1 or names[0] not in classes:
         raise SitesError(f"site class {cls.name} must have exactly one site class as base")
     inits = 0
+    reduces = 0
     for stmt in cls.body:
         if isinstance(stmt, ast.Pass):
             continue
@@ -476,7 +603,11 @@ def _check_site_class(cls: ast.ClassDef, classes: set[str], aliases: dict[str, s
                 raise SitesError(f"site class {cls.name} defines __init__ twice")
             _check_init(cls, stmt)
             continue
-        if isinstance(stmt, DEFS) and stmt.name in TEXT_NEUTRAL_DEFS and not stmt.decorator_list:
+        if isinstance(stmt, DEFS) and stmt.name == REDUCE_DEF:
+            reduces += 1
+            if reduces > 1:
+                raise SitesError(f"site class {cls.name} defines {REDUCE_DEF} twice")
+            _check_reduce(cls, stmt)
             continue
         raise SitesError(f"site class {cls.name} holds more than a docstring and plain fields")
 
@@ -504,6 +635,61 @@ def _interpolated_params(call: ast.Call, params: list[str]) -> set[str]:
     return found
 
 
+# file, symbol, kind, hash, auto class, auto reason, line, origin hints, column, node
+_Raw = tuple[str, str, str, str, str, str, int, tuple[str, ...], int, ast.AST]
+
+
+def _guard_text(node: ast.AST, parents: dict[int, ast.AST]) -> str:
+    """What guards a construction inside its function: for every enclosing statement or expression up to the ``def``, its kind,
+    the field the construction sits in, and the header (``if`` test, ``for`` iterator, ``except`` type ...). No position."""
+    out: list[str] = []
+    child = node
+    cur = parents.get(id(child))
+    while cur is not None and not isinstance(cur, (*SCOPES, ast.Module)):
+        kind = type(cur).__name__
+        where = ""
+        for name, value in ast.iter_fields(cur):
+            if value is child or (isinstance(value, list) and any(v is child for v in value)):
+                where = name
+                break
+        out.append(f"<{kind}.{where}")
+        for name in GUARD_FIELDS.get(kind, ()):
+            part: list[str] = []
+            _canon(getattr(cur, name, None), part)
+            out.append(" " + name + "=" + "".join(part))
+        out.append(">")
+        child = cur
+        cur = parents.get(id(child))
+    return "".join(out)
+
+
+def guarded_hash(node: ast.AST, guard: str) -> str:
+    """``node_hash`` seeded with the guard text, for a construction whose plain hash is shared by another in the same function."""
+    out: list[str] = []
+    try:
+        _canon(node, out)
+    except RecursionError as exc:
+        raise SitesError("syntax tree too deep to hash") from exc
+    text = "".join(out) + "|guard|" + guard
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()[:HASH_LEN]
+
+
+def _plain_class_attr(attr: str) -> bool:
+    """``ConfigError.attr`` is not a use of the class as a value, unless ``attr`` is a dunder (``__call__``, ``__new__`` ...)."""
+    return not attr.startswith("__") or attr in CLASS_ATTR_OK
+
+
+def _flat_names(expr: ast.AST) -> list[ast.AST]:
+    """``Name``/``Attribute`` nodes of ``expr`` itself or of a tuple or list of them (``except (A, B)``, ``isinstance(x, (A, B))``, ``isinstance(x, A | B)``)."""
+    if isinstance(expr, (ast.Name, ast.Attribute)):
+        return [expr]
+    if isinstance(expr, (ast.Tuple, ast.List)):
+        return [n for e in expr.elts for n in _flat_names(e)]
+    if isinstance(expr, ast.BinOp) and isinstance(expr.op, ast.BitOr):  # A | B
+        return [*_flat_names(expr.left), *_flat_names(expr.right)]
+    return []
+
+
 class _Scanner:
     def __init__(self, package_dir: Path) -> None:
         self.modules = _read_modules(package_dir)
@@ -517,11 +703,64 @@ class _Scanner:
             for node in ast.walk(mod.tree):
                 if isinstance(node, ast.ClassDef) and node.name in self.classes:
                     _check_site_class(node, self.classes, mod.aliases)
+        self.parents: dict[int, ast.AST] = {}
+        for mod in self.modules:
+            for parent in ast.walk(mod.tree):
+                for child in ast.iter_child_nodes(parent):
+                    self.parents[id(child)] = parent
+            self._check_class_values(mod)
         self.taint_cache: dict[int, frozenset[str]] = {}
         self.factories: dict[tuple[str, str], _Helper] = {}
         self.raisers: dict[tuple[str, str], _Helper] = {}
         self.callers: dict[tuple[str, str], list[str]] = {}
         self._find_helpers()
+
+    def _check_class_values(self, mod: _Module) -> None:
+        """A site class may be called, caught, tested with ``isinstance``/``issubclass``, named as a base, an annotation or the
+        target of a bare ``raise``. Any other use of its name makes it a value that could build a site the scan cannot see
+        (``kind = ConfigError; raise kind(...)``, ``raise_as(ConfigError, ...)``) and is refused."""
+        allowed: set[int] = set()
+        for node in ast.walk(mod.tree):
+            if isinstance(node, ast.ExceptHandler) and node.type is not None:
+                allowed.update(id(n) for n in _flat_names(node.type))
+            elif isinstance(node, ast.Call):
+                if isinstance(node.func, (ast.Name, ast.Attribute)):
+                    allowed.add(id(node.func))
+                if (
+                    isinstance(node.func, ast.Name)
+                    and node.func.id in ("isinstance", "issubclass")
+                    and len(node.args) == 2
+                ):
+                    allowed.update(id(n) for n in _flat_names(node.args[1]))
+            elif isinstance(node, ast.ClassDef):
+                allowed.update(id(n) for n in _flat_names(ast.Tuple(elts=node.bases)))
+            elif isinstance(node, ast.Raise) and node.exc is not None:
+                allowed.update(id(n) for n in _flat_names(node.exc))
+            elif (
+                isinstance(node, ast.Attribute)
+                and isinstance(node.value, (ast.Name, ast.Attribute))
+                and _plain_class_attr(node.attr)
+            ):
+                allowed.add(id(node.value))
+            notes: list[ast.AST] = []
+            if isinstance(node, ast.arg) and node.annotation is not None:
+                notes.append(node.annotation)
+            elif isinstance(node, DEFS) and node.returns is not None:
+                notes.append(node.returns)
+            elif isinstance(node, ast.AnnAssign):
+                notes.append(node.annotation)
+            for note in notes:
+                allowed.update(id(n) for n in ast.walk(note))
+        for node in ast.walk(mod.tree):
+            if (
+                isinstance(node, (ast.Name, ast.Attribute))
+                and _canon_name(node, mod.aliases) in self.classes
+                and id(node) not in allowed
+            ):
+                raise SitesError(
+                    f"{mod.file}:{getattr(node, 'lineno', 0)}: a site class is used as a value; "
+                    "call it directly so the scan sees the construction"
+                )
 
     # -- helpers -------------------------------------------------------------------------------------------------
     def is_construction(self, node: ast.AST, mod: _Module) -> str | None:
@@ -666,16 +905,26 @@ class _Scanner:
 
     # -- the walk ------------------------------------------------------------------------------------------------
     def collect(self) -> list[Site]:
-        raw: list[tuple[str, str, str, str, str, str, int, tuple[str, ...], int]] = []
+        raw: list[_Raw] = []
         for mod in self.modules:
             self._walk(mod, mod.tree, [], mod.tree, raw)
-        groups: dict[tuple[str, str, str], list[tuple[int, int, int]]] = {}
+        groups: dict[tuple[str, str, str], list[int]] = {}
         for i, item in enumerate(raw):
-            groups.setdefault((item[0], item[1], item[3]), []).append((item[6], item[8], i))
-        sites: list[Site] = []
+            groups.setdefault((item[0], item[1], item[3]), []).append(i)
+        # Several constructions with the same text in one function: the plain hash cannot tell them apart, so the order of
+        # the source would decide which table row is which, and swapping two blocks would move the labels unseen. Seed the hash
+        # of every member of such a group with what guards it; only members still tied after that are numbered by position.
+        final: dict[tuple[str, str, str], list[tuple[int, int, int]]] = {}
         for members in groups.values():
+            for i in members:
+                f, sym, _kind, h, _ac, _ar, line, _hints, col, node = raw[i]
+                if len(members) > 1:
+                    h = guarded_hash(node, _guard_text(node, self.parents))
+                final.setdefault((f, sym, h), []).append((line, col, i))
+        sites: list[Site] = []
+        for (f, sym, h), members in final.items():
             for k, (_line, _col, i) in enumerate(sorted(members), start=1):
-                f, sym, kind, h, ac, ar, line, hints, _c = raw[i]
+                _f, _sym, kind, _h, ac, ar, line, hints, _c, _n = raw[i]
                 sites.append(Site(f, sym, kind, h, k, ac, ar, line, hints))
         sites.sort(key=lambda s: s.key)
         return self._add_caller_hints(sites)
@@ -702,7 +951,7 @@ class _Scanner:
         node: ast.AST,
         stack: list[str],
         scope: ast.AST,
-        raw: list[tuple[str, str, str, str, str, str, int, tuple[str, ...], int]],
+        raw: list[_Raw],
     ) -> None:
         pending: list[tuple[ast.AST, list[str], ast.AST]] = [(node, stack, scope)]
         while pending:
@@ -741,7 +990,7 @@ class _Scanner:
         node: ast.AST,
         stack: list[str],
         scope: ast.AST,
-        raw: list[tuple[str, str, str, str, str, str, int, tuple[str, ...], int]],
+        raw: list[_Raw],
     ) -> None:
         line = getattr(node, "lineno", 0)
         col = getattr(node, "col_offset", 0)
@@ -762,6 +1011,7 @@ class _Scanner:
                             line,
                             (),
                             col,
+                            node,
                         )
                     )
             return
@@ -772,7 +1022,7 @@ class _Scanner:
         if kind:
             ac, ar = self.classify_construction(node, taint)
             hints = _hints(node, scope, mod)
-            raw.append((mod.file, symbol, kind, node_hash(node), ac, ar, line, hints, col))
+            raw.append((mod.file, symbol, kind, node_hash(node), ac, ar, line, hints, col, node))
             return
         if _is_super_init(node) and isinstance(scope, ast.FunctionDef) and scope.name == "__init__":
             cls_name = stack[-2] if len(stack) >= 2 else ""
@@ -789,6 +1039,7 @@ class _Scanner:
                         line,
                         _hints(node, scope, mod),
                         col,
+                        node,
                     )
                 )
             return
@@ -806,6 +1057,7 @@ class _Scanner:
                     line,
                     _hints(node, scope, mod),
                     col,
+                    node,
                 )
             )
             return
@@ -826,6 +1078,7 @@ class _Scanner:
                     line,
                     _hints(node, scope, mod),
                     col,
+                    node,
                 )
             )
 

@@ -13,7 +13,20 @@ the exit code and the junit file only:
 
 The baseline (the unmutated tree) must run with 0 failures, 0 errors and 0 skips, or the runner exits 2. Exit 0 only when every row is
 KILLED. For every mutant the runner lists the failed test ids and flags a row whose expected killer is not among them (the row is still
-KILLED). The runner uses ``multiprocessing`` with the ``spawn`` start method and no ``subprocess``. Not collected by pytest. Run from the
+KILLED). The runner uses ``multiprocessing`` with the ``spawn`` start method and no ``subprocess``. A child that runs longer than
+``CHILD_TIMEOUT`` seconds is terminated (then killed) and the mutant is a CRASH ("timed out"). The junit file is read with the
+standard ``expat`` parser after a size ceiling and a refusal of any DOCTYPE or ENTITY declaration (the checks of
+``hadavin_sdk.testing.mutation.first_failure_junit``); a refused file is a CRASH.
+
+Why this is not ``tools/mutation_runner.py`` (P1m ``run_mutants``). Written down because a reviewer asked (R-1); I read the P1m runner
+and did NOT try to run these mutants through it. (1) It copies ``src``, the listed test files and ``extra_dirs`` into a temp tree and
+mutates ONE ``old -> new`` pair in ONE file; this runner's mutants change ``tools/gen_config_error_sites.py`` and five of them need two
+edits, which a ``Mutant`` cannot express. (2) It judges a kill by the first ``E`` line of the failing test, so every mutant would need an
+``expect`` fragment of an assertion message, which the tests here do not carry; the verdict used here is "some test of the file fails".
+(3) It runs ``--noconftest`` with an empty ini file, while this file imports ``tests.test_no_hardcoded_values`` and ``tools`` by package
+name. A follow-up (P5b3) can port the single-edit mutants once ``expect`` strings exist; until then this runner has the limits it
+states: timeout, size-capped junit, no tree kill of grandchildren (the child is pytest itself and starts none).
+Not collected by pytest. Run from the
 repository root:
 
     uv run --all-extras --group test python tests/config_error_sites_mutants.py            # all mutants
@@ -29,14 +42,13 @@ from __future__ import annotations
 
 import multiprocessing
 import os
-import re
 import shutil
 import sys
 import tempfile
 from collections.abc import Callable
 from dataclasses import dataclass
-from html import unescape
 from pathlib import Path
+from xml.parsers import expat
 
 ROOT = Path(__file__).resolve().parents[1]
 GENERATOR = "tools/gen_config_error_sites.py"
@@ -356,11 +368,11 @@ MUTANTS: tuple[Mutant, ...] = (
     ),
     m(
         "M27",
-        "the hash depends on the source columns (stand-in for a hash of tokens)",
+        "the hash is taken over the node dumped with its source positions (stand-in for a hash of the source text)",
         "test_unit5_hash_survives_formatting",
         (
-            '        out.append("(" + type(node).__name__)\n',
-            '        out.append("(" + type(node).__name__ + str(getattr(node, "end_col_offset", "")))\n',
+            '    return hashlib.sha256("".join(out).encode("utf-8")).hexdigest()[:HASH_LEN]\n\n\n# ---',
+            '    return hashlib.sha256(ast.dump(node, include_attributes=True).encode("utf-8")).hexdigest()[:HASH_LEN]\n\n\n# ---',
         ),
     ),
     m(
@@ -398,6 +410,97 @@ MUTANTS: tuple[Mutant, ...] = (
             '        if _is_super_init(node) and isinstance(scope, ast.FunctionDef) and scope.name == "__init__":\n',
             '        if False and _is_super_init(node) and isinstance(scope, ast.FunctionDef) and scope.name == "__init__":\n',
         ),
+    ),
+    m(
+        "M32",
+        "identical constructions in one function are keyed by source order only (the hash is not seeded with the guard)",
+        "test_f1_swapping_two_same_text_blocks_keeps_each_key_with_its_guard",
+        (
+            "                if len(members) > 1:\n",
+            "                if False and len(members) > 1:\n",
+        ),
+    ),
+    m(
+        "M33",
+        "a site class used as a value is not refused",
+        "test_f3_a_site_class_used_as_a_value_is_refused",
+        (
+            "            if (\n                isinstance(node, (ast.Name, ast.Attribute))\n",
+            "            if (\n                False\n                and isinstance(node, (ast.Name, ast.Attribute))\n",
+        ),
+    ),
+    m(
+        "M34",
+        "the __init__ body rule (attributes of self and one super call only) is removed",
+        "test_hostile_init_bodies_beyond_attributes_and_super_are_refused[local]",
+        (
+            '        raise SitesError(\n            f"{cls.name}.__init__ may only assign attributes of self and call super().__init__(...)"\n        )\n',
+            "        continue\n",
+        ),
+    ),
+    m(
+        "M35",
+        "the __init__ routes that rewrite args (setattr, vars, __dict__, add_note, .args ...) are not refused; two edits",
+        "test_hostile_init_bodies_beyond_attributes_and_super_are_refused[setattr-in-assign]",
+        (
+            "        if isinstance(node, ast.Name) and node.id in INIT_BAD_NAMES:\n",
+            "        if False and isinstance(node, ast.Name) and node.id in INIT_BAD_NAMES:\n",
+        ),
+        (
+            "        if isinstance(node, ast.Attribute) and node.attr in INIT_BAD_ATTRS:\n",
+            "        if False and isinstance(node, ast.Attribute) and node.attr in INIT_BAD_ATTRS:\n",
+        ),
+    ),
+    m(
+        "M36",
+        "any __reduce__ is accepted (its shape is not checked)",
+        "test_hostile_pickle_helpers_other_than_the_one_exact_reduce_are_refused[helper]",
+        (
+            '    if not ok:\n        raise SitesError(\n            f"{cls.name}.__reduce__',
+            '    if False:\n        raise SitesError(\n            f"{cls.name}.__reduce__',
+        ),
+    ),
+    m(
+        "M37",
+        "__reduce_ex__, __getstate__ and __setstate__ are skipped by name again",
+        "test_hostile_pickle_helpers_other_than_the_one_exact_reduce_are_refused[setstate]",
+        (
+            "        if isinstance(stmt, DEFS) and stmt.name == REDUCE_DEF:\n",
+            '        if isinstance(stmt, DEFS) and stmt.name in ("__reduce_ex__", "__getstate__", "__setstate__"):\n            continue\n        if isinstance(stmt, DEFS) and stmt.name == REDUCE_DEF:\n',
+        ),
+    ),
+    m(
+        "M38",
+        "a dunder attribute of a site class (ConfigError.__call__) is not a use as a value",
+        "test_f3_a_site_class_used_as_a_value_is_refused[dunder-call]",
+        (
+            '    return not attr.startswith("__") or attr in CLASS_ATTR_OK\n',
+            "    return True\n",
+        ),
+    ),
+    m(
+        "M39",
+        "isinstance and issubclass arguments are not exempt from the value check",
+        "test_f3_the_allowed_uses_of_a_site_class_still_scan[isinstance]",
+        (
+            '                    and node.func.id in ("isinstance", "issubclass")\n',
+            '                    and node.func.id in ("isinstance_", "issubclass_")\n',
+        ),
+    ),
+    m(
+        "M40",
+        "the type of an except clause is not exempt from the value check",
+        "test_f3_the_allowed_uses_of_a_site_class_still_scan[except]",
+        (
+            "            if isinstance(node, ast.ExceptHandler) and node.type is not None:\n",
+            "            if isinstance(node, ast.ExceptHandler) and node.type is None:\n",
+        ),
+    ),
+    m(
+        "M41",
+        "the guard text omits the field a construction sits in (if body and else look alike)",
+        "test_f1_guards_tell_apart_branches_loops_handlers_and_withs",
+        ('        out.append(f"<{kind}.{where}")\n', '        out.append(f"<{kind}")\n'),
     ),
 )
 
@@ -455,35 +558,64 @@ def _pytest_child(tmp: str) -> None:
     sys.exit(int(code))
 
 
-def run_child(target: Callable[[str], None], arg: str) -> int:
+CHILD_TIMEOUT = 900.0  # seconds for one pytest child (the whole file takes about 30 seconds)
+TERMINATE_WAIT = 10.0
+TIMED_OUT = -2
+MAX_JUNIT_CHARS = 8_000_000
+
+
+def run_child(target: Callable[[str], None], arg: str, timeout: float = CHILD_TIMEOUT) -> int:
     ctx = multiprocessing.get_context("spawn")
     proc = ctx.Process(target=target, args=(arg,))
     proc.start()
-    proc.join()
+    proc.join(timeout)
+    if proc.is_alive():
+        proc.terminate()
+        proc.join(TERMINATE_WAIT)
+        if proc.is_alive():
+            proc.kill()
+            proc.join()
+        return TIMED_OUT
     return proc.exitcode if proc.exitcode is not None else -1
 
 
-CASE = re.compile(r"<testcase\b([^>]*?)(/>|>(.*?)</testcase>)", re.DOTALL)
-SKIPPED = re.compile(r"<skipped\b([^>]*)")
-ATTR = re.compile(r'(\w+)="([^"]*)"')
-
-
 def read_result(path: Path) -> dict[str, list[str]]:
-    """Failed, errored and skipped test ids from the junit file (read as text; no XML parser)."""
+    """Failed, errored and skipped test ids from the junit file. ``ValueError`` for a file over ``MAX_JUNIT_CHARS``, one with a
+    DOCTYPE or ENTITY declaration, or one that is not well-formed."""
     out: dict[str, list[str]] = {"failed": [], "error": [], "skipped": [], "cases": []}
     text = path.read_text(encoding="utf-8") if path.exists() else ""
-    for match in CASE.finditer(text):
-        attrs = {k: unescape(v) for k, v in ATTR.findall(match.group(1))}
-        ident = attrs.get("classname", "").replace(".", "/") + "::" + attrs.get("name", "")
-        out["cases"].append(ident)
-        body = match.group(3) or ""
-        if "<failure" in body:
-            out["failed"].append(ident)
-        if "<error" in body:
-            out["error"].append(ident)
+    if len(text) > MAX_JUNIT_CHARS:
+        raise ValueError("junit file over the size ceiling")
+    low = text.lower()
+    if "<!doctype" in low or "<!entity" in low:
+        raise ValueError("junit file with a DOCTYPE or ENTITY declaration")
+    current: list[str] = []
+
+    def start(name: str, attrs: dict[str, str]) -> None:
+        if name == "testcase":
+            ident = attrs.get("classname", "").replace(".", "/") + "::" + attrs.get("name", "")
+            current[:] = [ident]
+            out["cases"].append(ident)
+        elif current and name == "failure":
+            out["failed"].append(current[0])
+        elif current and name == "error":
+            out["error"].append(current[0])
         # a pinned expected failure (xfail) is written as <skipped type="pytest.xfail">; it is not a skip
-        if any("pytest.xfail" not in attrs for attrs in SKIPPED.findall(body)):
-            out["skipped"].append(ident)
+        elif current and name == "skipped" and attrs.get("type") != "pytest.xfail":
+            out["skipped"].append(current[0])
+
+    def end(name: str) -> None:
+        if name == "testcase":
+            current.clear()
+
+    parser = expat.ParserCreate()
+    parser.StartElementHandler = start
+    parser.EndElementHandler = end
+    if text:
+        try:
+            parser.Parse(text, True)
+        except expat.ExpatError as exc:
+            raise ValueError("junit file is not well-formed") from exc
     return out
 
 
@@ -534,7 +666,17 @@ def run_one(original: str, mutant: Mutant | None) -> tuple[str, int, dict[str, l
                     "does not import",
                 )
         code = run_child(_pytest_child, str(tmp))
-        res = read_result(tmp / "result.xml")
+        if code == TIMED_OUT:
+            return (
+                "CRASH",
+                code,
+                {"failed": [], "error": [], "skipped": [], "cases": []},
+                "timed out",
+            )
+        try:
+            res = read_result(tmp / "result.xml")
+        except ValueError as exc:
+            return "CRASH", code, {"failed": [], "error": [], "skipped": [], "cases": []}, str(exc)
     return verdict(code, res), code, res, ""
 
 
