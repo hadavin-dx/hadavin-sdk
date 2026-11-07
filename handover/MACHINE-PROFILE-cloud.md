@@ -31,3 +31,6 @@ Updated: 2026-11-07T06:54Z. Update this file whenever a setting below changes. M
 
 ## Machine-specific values found in committed files
 - Sweep done (src, tests, tools, demos, .github on every origin/core/* branch for /home/user, 127.0.0.1:55xxx/56xxx, C:\\): no machine-specific value of this cloud machine is committed. The hits (about 6 per branch) are inherited from main: a documented example port 55432 in demos/ask-your-data/README.md (docker example, CI-style DSN) and Windows-path strings used as test inputs in tests/test_mutation_runner.py and tests/test_provider_errors_failbefore.py. They are examples/fixtures, not this machine's settings. Not changed; the lead may judge the README port.
+
+## Postgres cluster creation (learned 2026-11-07)
+Create every test cluster with `initdb -E UTF8 --locale=C.UTF-8 -A trust -U postgres`. Without those flags the cluster is SQL_ASCII and psycopg returns bytes ("TypeError: expected str instance, bytes found"), which shows up as 100+ false Postgres test failures. Found by the PR 66 builder; the PR 83 builder's first DSN run hit it.
