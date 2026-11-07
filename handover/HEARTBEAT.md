@@ -397,3 +397,4 @@ QUEUE TRIGGERS: P1b merge7 starts when the fix7 head is pushed to core/P1a. P2d-
 WHY THE P4 CHAIN IS QUEUED, NOT STARTED: it is stacked on PR 75, which the lead has said waits for PR 66, and PR 75/P4b1 also need StoreBusy that PR 75 does not have yet. Say so if you want it started on the predecessor heads anyway.
 P0t-followup | DRAFT PR 83 head 72389db, evidence green (10031 x2, 11/11 mutants) | builders running: P1a fix7, P6a-1, P5b1 | blocked on: lead review
 P6a-1 | PR 72 head 3adacac READY (merged main; 36/36 mutants with per-test table; suites 1 failure = dblink-connect, same on main) | builders running: P1a fix7, P5b1 | blocked on: lead review
+P5b1 | PR 80 DRAFT head 74ee54f (merged P5a+main; 45/45 mutants; suites 3.13/3.12 green by builder) | builders running: P1a fix7 | blocked on: lead (SqlReadError code, neverraise surface); P5a re-merge queued behind P1b merge7
