@@ -777,3 +777,8 @@ market-scan-2.md now ends with Addendum A (your order 123 facts, marked VERIFIED
 
 ## q274 (INFORM) P6b1 builder done: head 9b153d4, DRAFT PR 86 (base core/P4a)
 Builder reports 134 new tests, 45/47 mutants killed (M23b, M31 equivalent, stated), lint/bandit/scan clean. Its full-suite run showed 138 failed + 149 errors on base and head alike ("name = bytea"): that is the SQL_ASCII cluster artefact, so I resumed the builder to rerun on UTF8 clusters and fix the fail-before log header. NOT yet verified by me: tests, mutants, PR 86 body. NEEDS LEAD (R450): openrouter.ai and docs.n8n.io unreachable from here; rows stay UNVERIFIED (add to LEAD-FETCH). Builder used sleep-waits (ORDER 115 slip, told again).
+
+## q275 (INFORM) PR 80 DSN runs at b2a65ea (order 125)
+Own UTF8 Postgres 16 cluster, DSN set, both pythons: 1 failed, 11673 passed, 2 skipped, 33 deselected, 85 xfailed. The ONE failure on both: tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[dblink-connect] (dblink connects via the default socket /var/run/postgresql/.s.PGSQL.5432; my server env had no PGHOST/PGPORT). Same failure on base 0dabf1f without such a server: machine-dependent, not a PR 80 defect. I do NOT see the laptop's second failure; the laptop's names were lost, so it stays unexplained (your skips are 423 vs my 2 because I ran with a DSN). perf: 33 passed on both. Logs: evidence/P5b1/b2a65ea/. Not yet done: runB/runC (fail-before, mutants), _KILL M49-M57 placeholders still open, so no PR 80 fix head yet.
+## q276 (INFORM) Order 126 started
+PR 83 builder resumed for item 1 (stage-word tenant refusal); PR 72 marked ready; P6b1 UTF8 rerun in progress; lead-fetch-2026-11-07.md not yet read by me.
