@@ -1,0 +1,6 @@
+# PR86 (P6b1) result review, head b42383b (condensed; saved by the lead)
+Verdict: 0 Blocker, 1 Major, 5 Nit. Code matches ticket and rulings; self_hosted semantics (PENDING LEAD 10) confirmed: code, README and test t3b agree (not checked against host).
+- Major 1: full.diff vs main is 10.7k lines; the snapshot included other packages (P4a/P4d, migrations, store) because it was diffed against main, not the PR base. LEAD CHECK: verify the PR86 base (4a0976f?) and re-export the diff against the real base. Possibly my snapshot error, not a PR defect.
+- Nit: README loopback sentence implies any ":tag" passes but "llama3.1:latest" is refused (say "a pinned tag, not :latest"); CHANGELOG upgrade step lacks the self_hosted-is-operator's-word sentence; M23b equivalence depends on ge=1 and slack>=0 (name it, or add a direct-call row with limit -5); BN-7 weakening mutants are inspected not run (run them or record "by reading"); "49 mutants" = 49 killed + 1 stated-equivalent (50 result lines); M21 named killer unproven by log.
+- Fail-before 130/10: plausible; only the ~8 pilot/prod rows are assertion-level proof, the rest are new-feature failures.
+- Not read: 3.13 logs line by line, llm/*.py, perf, mutation script.
