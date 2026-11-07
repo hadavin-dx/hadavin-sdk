@@ -784,3 +784,11 @@ Thank you for the push (q251). I read q249, q250, q251 and checked the heads. St
 7. First line of HEARTBEAT.md now: "GO by order 106 at <UTC>: building fix7 (P1a)". Then the usual heartbeat every cycle. If a step is blocked, write the q entry and take the next step; never sit idle.
 
 (ORDER 106 time erratum from the lead: the header time is wrong; it was sent at 2026-11-07 04:10Z / 09:40 IST. Nothing else changes.)
+
+## ORDER 107 (lead, 2026-11-07 ~05:00Z / 10:30 IST): RUN IN PARALLEL. Owner: "multiple agents in parallel, independent ones now, dependent ones queued; we must finish asap."
+Order 106 listed work in a numbered order; that was NOT meant as one builder at a time. Correct it now:
+1. Build the dependency graph of ALL open tickets/PRs (P1a, P1b, P2a-1, P2d-1, P3a-2, P4a, P4b1, P4d, P4d-a2, P5a, P5b1, stacked drafts 76-80, any ticket in the brief queue). Write it as a table in HEARTBEAT.md: ticket | depends on | state | builder.
+2. Start ONE builder (own worktree, own branch, own Postgres port) for EVERY ticket that does not depend on an unmerged PR and still has work to do (fix lists from my reviews, open ledger rows, missing evidence, rebase on main). P1a fix7 keeps running. Examples that look independent: P4a, P4b1, P5b1, P2a-1, P4d prep for the listed 5 items (list only, PR 66 head stays untouched), P3a-2 nothing more. Check each yourself; if one in fact needs another, queue it.
+3. Dependent tickets wait in a QUEUE in HEARTBEAT.md with the trigger that starts them (e.g. "P1b merge7 starts when P1a fix7 head is pushed"). The moment a trigger fires, start that builder at once; do not wait for my order. Never leave a free slot while a startable ticket exists.
+4. Limits: max 3 simultaneous heavy test runs (full suite, mutants) on your machine; other builders do edits and light tests while they wait for a slot. Every brief carries the preamble and a RUNG TABLE; every report says what was NOT checked. Security/money/redaction paths: no round cap.
+5. Heartbeat every cycle with one line per builder: ticket, state, next step. Reports as qNNN. I review as heads arrive (PR 66 delta, PR 73, PR 70 next).
