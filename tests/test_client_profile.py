@@ -494,12 +494,14 @@ def test_t7g_the_field_still_loads_in_demo(cfg_dir):
     assert load_config(cfg_dir).made_up_data_only is True
 
 
-@pytest.mark.parametrize("value", ["yes", 1])
-def test_t7h_a_bool_like_value_is_read_as_for_every_other_bool_field(cfg_dir, value):
-    """made_up_data_only follows pydantic's usual bool rules, as `allow_insecure_loopback` does: "yes" and 1 read
-    as True. Pinned so a change to strict reading is a decision (mutant 54 is killed here)."""
+@pytest.mark.parametrize("value", ["yes", 1, "true", "on"])
+def test_t7h_a_loose_yes_does_not_switch_the_field_on(cfg_dir, value):
+    """The field is a strict bool: "yes", 1, "true" and "on" are refused, so a safety switch cannot turn on from
+    loose input (order 133). Mutant 54 (a plain bool again) is killed here."""
     _edit(cfg_dir, lambda d: d.update(made_up_data_only=value))
-    assert load_config(cfg_dir).made_up_data_only is True
+    with pytest.raises(ConfigError, match="made_up_data_only") as err:
+        load_config(cfg_dir)
+    assert "valid boolean" in str(err.value)
 
 
 @pytest.mark.parametrize("value", ["maybe", None, [True]], ids=["word", "null", "list"])

@@ -17,6 +17,7 @@ from pydantic import (
     BeforeValidator,
     ConfigDict,
     Field,
+    StrictBool,
     ValidationError,
     field_validator,
     model_validator,
@@ -186,7 +187,7 @@ class K1bSettings(_Strict):
     max_tool_calls: int = Field(default=20, gt=0)
     case_timeout_s: int = Field(default=300, gt=0)
     # Mask client data before the model sees it. Turning it off needs `replay --i-know-data-is-already-masked`.
-    redact: bool = True
+    redact: StrictBool = True  # strict: "no" or 0 must not turn redaction off
 
 
 HELD_MAPS_CEILING = 400  # days: the audit retention; a config cannot extend it (design 6.3)
@@ -198,7 +199,7 @@ class Retention(_Strict):
     tool_calls_days: int = Field(default=30, gt=0)
     redaction_maps_days: int = Field(default=30, gt=0)
     # Runs labelled wrong, harmful or missed (or demoted) keep their tool calls past `tool_calls_days`.
-    hold_labelled: bool = True
+    hold_labelled: StrictBool = True  # strict: "no" or 0 must not turn the label hold off
     # A held run's redaction map (original identifiers) is purged at this age whatever the hold says.
     held_maps_max_days: int = Field(default=HELD_MAPS_CEILING, gt=0, le=HELD_MAPS_CEILING)
     # Tool calls of held runs are kept past `tool_calls_days`, but not forever.
@@ -341,7 +342,9 @@ class Config(_Strict):
     check_modules: list[str] = []
     systems: dict[str, System] = {}
     egress_hosts: frozenset[str] = frozenset()
-    allow_insecure_loopback: bool = False  # true only in the local test fixture config
+    allow_insecure_loopback: StrictBool = (
+        False  # true only in the local test fixture config; strict
+    )
     k1b: K1bSettings = K1bSettings()
     # K5: modules a tool manifest's `function` may resolve from (like `check_modules`), the per-call timeout, and
     # retention of evidence.
@@ -365,7 +368,7 @@ class Config(_Strict):
     # text to a service outside the process: a vendor, or a model you host). It is not a lock: the code cannot check
     # it. Pilot and prod hold client data, so a config for either (or for any environment that is not `demo`) that
     # sets it is refused.
-    made_up_data_only: bool = False
+    made_up_data_only: StrictBool = False  # strict: "yes" or 1 must not switch it on
     root: Path
 
     @field_validator("environment", mode="before")

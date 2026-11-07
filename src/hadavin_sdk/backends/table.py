@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Any, Literal
 from urllib.parse import urlsplit
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, field_validator, model_validator
 
 
 class KindSettings(BaseModel):
@@ -118,7 +118,7 @@ class PostgresSettings(KindSettings):
     # A second DSN (another database role) for the evidence purge, the only identity that may DELETE
     # `tool_calls` and `redaction_maps` (`hadavin-sdk migrate --purge-role`). None: the runtime's own DSN.
     purge_dsn_secret_name: str | None = None
-    iam_auth: bool = (
+    iam_auth: StrictBool = (
         False  # RDS IAM login: no database password anywhere (needs the `aws` extra too)
     )
     region: str | None = None
@@ -153,7 +153,9 @@ class _AnchorSettings(KindSettings):
 
     mode: Literal["GOVERNANCE", "COMPLIANCE"] = "GOVERNANCE"
     retain_days: int = Field(default=1, ge=1)
-    retention_ack: bool = False
+    retention_ack: StrictBool = (
+        False  # strict: "yes" or 1 must not agree a retention for the client
+    )
 
 
 class S3ObjectLockSettings(_AnchorSettings):
