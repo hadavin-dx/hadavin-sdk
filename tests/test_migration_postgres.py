@@ -568,7 +568,6 @@ def _psql_text(tmp_path: Path, text: str, env_extra: dict | None = None, stop_fl
         "ON_ERROR_STOP=1",
     ]  # the rule of the runbook, written out below
     run = {
-        "check": False,
         "cwd": tmp_path,
         "env": env,
         "capture_output": True,
