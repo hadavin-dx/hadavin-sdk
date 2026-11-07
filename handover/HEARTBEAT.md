@@ -496,3 +496,4 @@ LAPTOP CANDIDATES (pushed heads only): PR85 0b54631 (items 3,4,10), PR72 e6a4220
 - 10:16Z heartbeat: 8 agents working (A8 drafter, P1b tightening, PR73 batch, PR72, PR83, PR80-fix, PR86). Queue 0/0. Unpushed: none. Next 10:21Z.
 - 10:16Z heartbeat: queue has jobs (see q329); P1b r5 chains queued; agents: A8 drafter, PR73 batch, PR72, PR83, PR80-fix, PR86 reviewer. Unpushed none. Next 10:29Z.
 - 10:17Z heartbeat: queue running 3 pending ~5; PR72 done; PR73 batch, A8 drafter, PR72+PR86 reviewers running; PR83 waits failbefore2; PR80 waits 5 evidence jobs. Unpushed none. Next 10:29Z.
+- 10:19Z heartbeat: queue see monitor; PR72 batch, PR73 batch, PR86 evidence o140, PR80 evidence, PR83 fb2, P1b r5 queued; 6c CI-lint and 6d T1/T2 builders and plan A8 drafter running. Unpushed none. Next 10:27Z.
