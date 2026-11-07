@@ -502,3 +502,4 @@ LAPTOP CANDIDATES (pushed heads only): PR85 0b54631 (items 3,4,10), PR72 e6a4220
 - 10:23Z heartbeat: ORDER 141 cross-check reported q334. Waiting: plan v4.1 round 2 design+comprehension, PR72/PR73 batches, 6d, evidence jobs. Unpushed: none. Next 10:29Z.
 - 10:26Z UTC: q335; plan-v4 round-2 reports saved; P1b r5 313 has 1 survivor (builder resumed); 6d/PR72 reports in. Queue 3 running. Next <= 10:33Z.
 - 10:28Z UTC: ORDER 142: PR72 pushed, A9 drafter started, P1b r6 queued, q336. Next <= 10:35Z.
+- 10:29Z UTC: wake; queue 3 running/8 pending; P1b r6 313 running; PR83/PR80/PR86/PR72 evidence queued; A9 drafter running. Unpushed: none. Next <= 10:36Z.
