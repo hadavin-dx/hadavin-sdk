@@ -631,8 +631,9 @@ TABLE: dict[str, dict[str, Entry]] = {
             status=_UNVERIFIED,
             hosts=lambda s: [urlsplit(s.base_url).hostname or ""],
             neutral=True,
-            no_training=_HOSTED_BASES
-            | {"self_hosted"},  # only this kind can point at a server the client runs
+            # `self_hosted` is the operator's own word. The code does NOT check it against the host: a public
+            # https host with `self_hosted` loads too. Refusing that is the job of P6a's client-profile check.
+            no_training=_HOSTED_BASES | {"self_hosted"},
         ),
         "gemini": Entry(
             GeminiSettings,
