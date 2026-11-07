@@ -85,7 +85,7 @@ M = [
         "return self.store.add_spend(agent_id, (now() + __import__('datetime').timedelta(hours=1)).date(), usd)",
         LED,
         "test_every_charge_lands_in_its_own_day_and_month_exactly_once",
-        "charge",
+        "read at",
     ),
     m(
         "L7 blocked reads yesterday's bucket",
