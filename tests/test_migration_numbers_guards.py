@@ -21,7 +21,13 @@ from tests.fixtures.seeded import Seeded
 
 SEED = 20261106
 CASES = 30000
-MANIFEST = Path(__file__).parent / "fixtures" / "migrations_released.json"
+MANIFEST = (
+    Path(__file__).resolve().parents[1]
+    / "src"
+    / "hadavin_sdk"
+    / "store"
+    / "migrations_released.json"
+)
 
 
 @pytest.fixture

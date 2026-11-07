@@ -58,8 +58,11 @@ class _Db:
     """A connection that answers the read-back queries from canned lists (next answer per call) and records every
     statement."""
 
-    def __init__(self, values, triggers, applied=()):
+    def __init__(self, values, triggers, applied=(), members=None):
         self.values, self.triggers = list(values), list(triggers)
+        self.members = (
+            None if members is None else list(members)
+        )  # one answer per read; None = never any member
         self.applied = list(applied)
         self.log: list[str] = []
         self.params: list[tuple] = []  # (statement, parameters) of every statement, in order
@@ -81,6 +84,8 @@ class _Db:
             return _Result([self.values.pop(0)])
         if text == mig._READBACK_TRIGGERS_SQL:
             return _Result(self.triggers.pop(0))
+        if text == mig._READBACK_MEMBERS_SQL:
+            return _Result([] if self.members is None else self.members.pop(0))
         if text == "SELECT current_schema()":
             return _Result([("s",)])
         if text.startswith("SELECT version FROM schema_migrations"):
@@ -97,9 +102,9 @@ def _files(tmp_path: Path, n: int = 2) -> list[Path]:
     return paths
 
 
-def _run(monkeypatch, tmp_path, values, triggers, n=2, applied=()):
+def _run(monkeypatch, tmp_path, values, triggers, n=2, applied=(), members=None):
     files = _files(tmp_path, n)
-    db = _Db(values, triggers, applied)
+    db = _Db(values, triggers, applied, members)
     monkeypatch.setattr(mig, "_migration_files", lambda: files)
     monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
     monkeypatch.setattr(mig, "connect", lambda *a, **k: db)
@@ -375,3 +380,124 @@ def test_trigger_query_reads_only_the_migration_schema():
 def test_the_message_has_no_connection_string_and_escapes_names(monkeypatch, tmp_path):
     err, _, _ = _run(monkeypatch, tmp_path, [START, _values(search_path="a\x1b[31mred")], [[], []])
     assert "\x1b" not in str(err) and "://" not in str(err)
+
+
+# --- role memberships (design F1): a grant made inside a function body is found by the read-back ------------------------
+
+EDGE = ("app_rw", "app_admin", '{"admin_option": false, "grantor": 10}')
+
+
+def test_a_new_role_membership_after_a_file_is_refused(monkeypatch, tmp_path):
+    """Killed by: mutant R1 (membership not compared) and mutant R2 (membership not read after the file)."""
+    err, db, _ = _run(monkeypatch, tmp_path, [START, START], [[], []], members=[[], [EDGE]])
+    assert isinstance(err, ConfigError) and "0001_f1.sql" in str(err), err
+    assert "role app_rw has a new member app_admin" in str(err)
+    assert "SELECT 2;\n" not in db.log, "file 2 never ran"
+
+
+def test_a_removed_role_membership_is_refused(monkeypatch, tmp_path):
+    """Killed by: mutant R3 (a removed membership is not reported)."""
+    err, _, _ = _run(monkeypatch, tmp_path, [START, START], [[], []], members=[[EDGE], []])
+    assert isinstance(err, ConfigError) and "role app_rw lost the member app_admin" in str(err), err
+
+
+def test_a_changed_grant_option_of_a_membership_is_refused(monkeypatch, tmp_path):
+    """Killed by: mutant R4 (only role and member compared, not the other columns)."""
+    other = (*EDGE[:2], '{"admin_option": true, "grantor": 10}')
+    err, _, _ = _run(monkeypatch, tmp_path, [START, START], [[], []], members=[[EDGE], [other]])
+    assert isinstance(err, ConfigError) and "app_rw" in str(err), err
+
+
+def test_memberships_that_were_there_at_the_start_are_not_a_refusal(monkeypatch, tmp_path):
+    err, _, applied = _run(monkeypatch, tmp_path, [START] * 3, [[], [], []], members=[[EDGE]] * 3)
+    assert err is None and applied == ["0001_f1", "0002_f2"], err
+
+
+def test_the_membership_message_escapes_names(monkeypatch, tmp_path):
+    bad = ("r\x1b[31m", "s", "{}")
+    err, _, _ = _run(monkeypatch, tmp_path, [START, START], [[], []], members=[[], [bad]])
+    assert "\x1b" not in str(err) and "\\x1b" in str(err)
+
+
+def test_the_membership_is_read_after_every_file_and_before_its_ledger_row(monkeypatch, tmp_path):
+    """Killed by: mutant R2 (the members query is never sent by the read-back)."""
+    err, db, _ = _run(monkeypatch, tmp_path, [START] * 3, [[], [], []])
+    assert err is None
+    log = db.log
+    assert log.count(mig._READBACK_MEMBERS_SQL) == 3  # the start and one per file
+    inserts = [i for i, s in enumerate(log) if s.startswith("INSERT INTO schema_migrations")]
+    reads = [i for i, s in enumerate(log) if s == mig._READBACK_MEMBERS_SQL]
+    assert reads[1] < inserts[0] < reads[2] < inserts[1]
+
+
+def test_the_membership_query_reads_names_and_every_other_column():
+    assert "pg_auth_members" in mig._READBACK_MEMBERS_SQL
+    assert "::regrole::text" in mig._READBACK_MEMBERS_SQL
+    assert "to_jsonb(m)" in mig._READBACK_MEMBERS_SQL
+
+
+# --- a trigger is the same trigger when its table is dropped and made again (design F9) --------------------------------
+
+
+def test_a_table_made_again_with_its_trigger_is_not_a_false_refusal(monkeypatch, tmp_path):
+    """The table has a new OID after DROP + CREATE; the trigger has the same schema, table and name.
+    Killed by: mutant R5 (triggers keyed by the table OID again)."""
+    err, _, applied = _run(
+        monkeypatch,
+        tmp_path,
+        [START] * 3,
+        [[_trigger(relid=1)], [_trigger(relid=2)], [_trigger(relid=2)]],
+    )
+    assert err is None and applied == ["0001_f1", "0002_f2"], err
+
+
+def test_a_trigger_on_another_table_with_the_same_name_is_another_trigger(monkeypatch, tmp_path):
+    err, _, _ = _run(
+        monkeypatch,
+        tmp_path,
+        [START] * 2,
+        [[_trigger(table="a")], [_trigger(table="b")]],
+    )
+    assert isinstance(err, ConfigError) and "trigger s.a.trg no longer exists" in str(err), err
+
+
+# --- the released-file list is checked by migrate() itself (order 132, M-4) ---------------------------------------------
+
+
+def test_migrate_refuses_a_changed_released_file_before_it_connects(monkeypatch, tmp_path):
+    """Killed by: mutant R6 (the call to released_problems removed from migrate())."""
+    import json
+
+    manifest = dict(mig._released_manifest())
+    first = min(manifest)
+    manifest[first] = "0" * 64
+    path = tmp_path / "released.json"
+    path.write_text(json.dumps(manifest), encoding="utf-8")
+    monkeypatch.setattr(mig, "RELEASED_MANIFEST", path)
+
+    def no_connect(*a, **k):
+        raise AssertionError("migrate connected although a released file changed")
+
+    monkeypatch.setattr(mig, "connect", no_connect)
+    with pytest.raises(mn.MigrationNumberError, match=f"{first}: a released file was changed"):
+        mig.migrate("postgresql://unused")
+
+
+def test_migrate_refuses_when_the_released_list_is_unreadable_or_wrong(monkeypatch, tmp_path):
+    """Killed by: mutant R7 (a missing list is read as empty)."""
+    monkeypatch.setattr(mig, "connect", lambda *a, **k: pytest.fail("connected"))
+    missing = tmp_path / "none.json"
+    monkeypatch.setattr(mig, "RELEASED_MANIFEST", missing)
+    with pytest.raises(ConfigError, match="released migration files cannot be read"):
+        mig.migrate("postgresql://unused")
+    wrong = tmp_path / "wrong.json"
+    wrong.write_text('["0001_core"]', encoding="utf-8")
+    monkeypatch.setattr(mig, "RELEASED_MANIFEST", wrong)
+    with pytest.raises(ConfigError, match="not a name -> SHA-256 table"):
+        mig.migrate("postgresql://unused")
+
+
+def test_the_released_list_ships_inside_the_package_and_covers_every_real_file():
+    assert mig.RELEASED_MANIFEST.parent == mn.MIGRATIONS.parent
+    assert mig.RELEASED_MANIFEST.is_file()
+    assert mn.released_problems(mn.MIGRATIONS, mig._released_manifest()) == []

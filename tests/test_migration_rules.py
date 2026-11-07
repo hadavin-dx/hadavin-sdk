@@ -432,10 +432,10 @@ def test_a_drop_is_advised_in_one_place_only_and_never_for_the_evidence_tables_o
 
 def test_case_c_says_a_released_file_cannot_be_renumbered():
     c = _words(rb.case("c"))
-    assert "NOT listed in `tests/fixtures/migrations_released.json`" in c
+    assert "NOT listed in `src/hadavin_sdk/store/migrations_released.json`" in c
     assert "can never be renumbered" in c
     assert "case (b)" in c  # a database that already applied the renumbered file
-    assert (ROOT / "tests/fixtures/migrations_released.json").is_file()
+    assert (ROOT / "src/hadavin_sdk/store/migrations_released.json").is_file()
 
 
 def test_case_a_failure_wording_and_the_hand_written_fallback():
@@ -483,8 +483,74 @@ def test_the_runbook_carries_the_real_lock_the_command_and_every_case():
     )
     for letter in "abcdefg":
         assert f"**({letter}) " in runbook, letter
-    assert "SELECT current_user;" in runbook
+    assert "current_user <> '<MIGRATION ROLE>'" in rb.block_with(
+        "<MIGRATION ROLE>"
+    )  # case (a) assertion (F7)
     assert "://" not in runbook  # no connection string in a hand step
     assert "recipe" in " ".join((mig.__doc__ or "").split()) and "Migration repair steps" in (
         mig.__doc__ or ""
     )
+
+
+# --- round 2 of PR 73 (order 132): what the CHANGELOG and the docstrings now say ------------------------------------------
+
+
+def test_the_hand_file_header_in_the_runbook_has_the_timeouts_and_a_quoted_schema():
+    """F2, F6. Killed by: mutant R16c (the CHANGELOG rule loses the timeouts), R20 (the unquoted search_path returns)."""
+    rule = _words(rb.RUNBOOK[: rb.RUNBOOK.index("- **(a) ")])
+    for line in mn.RECIPE_TIMEOUTS:
+        assert f"`{line[:-1]}`" in rule or line in rule, line
+    assert rb.TIMEOUTS == list(mn.RECIPE_TIMEOUTS)
+    assert rule.index("`BEGIN;`") < rule.index("lock_timeout") < rule.index("pg_advisory_xact_lock")
+    assert 'SET search_path TO "<the schema migrate uses>";' in rule
+    assert "SET search_path TO <" not in rb.RUNBOOK and "SET search_path TO <" not in (
+        mig.__doc__ or ""
+    )
+    assert "lock_timeout" in _words(mig.__doc__ or "")
+
+
+def test_case_e_puts_the_evidence_block_into_e1_and_e3_always():
+    """F3. Killed by: mutant R18 (the sentence goes back to 'if tool_calls.error is missing')."""
+    e = _words(rb.case("e"))
+    assert "In **E1** and **E3** always put the block of case (g)" in e
+    assert "**E2** does not need it" in e
+    assert "If `tool_calls.error` is missing (an early version of the migration), put" not in e
+    assert "no test in this repository runs case (e)" not in e
+
+
+def test_case_g_says_what_its_last_check_does_not_look_at():
+    """F4. Killed by: mutant R21 (the sentence is removed)."""
+    g = _words(rb.case("g"))
+    assert "compares columns only" in g and "tool_calls_by_run" in g and "primary keys" in g
+    assert "the columns of the evidence tables differ" in rb.evidence_block()
+
+
+def test_case_b_uses_a_plain_placeholder_and_points_at_the_released_list():
+    """F5, F8. Killed by: mutant R22 (the apostrophe placeholder returns)."""
+    b = _words(rb.case("b"))
+    assert "'<file_stem>'" in b and "that file's name without" in b
+    assert "'<that file" not in b
+    assert (
+        "does not compare the text" in b and "src/hadavin_sdk/store/migrations_released.json" in b
+    )
+
+
+def test_the_upgrade_bullet_says_what_migrate_checks_and_does_not_overclaim():
+    """M-4 (wired), F1. Killed by: mutants R6 (the call removed; the wiring test) and R23 (the CHANGELOG sentence goes)."""
+    first = _words(
+        CHANGELOG[CHANGELOG.index("- **Migrations: stricter checks") :].split("\n", 1)[0]
+    )
+    assert "refuses, before it connects, a released file that was edited or deleted" in first
+    assert "the role memberships" in first and "inside a function body" in first
+    assert "pg_auth_members" in _words(mig.__doc__ or "") and "pg_auth_members" in _words(
+        mig.migrate.__doc__ or ""
+    )
+
+
+def test_migrate_really_calls_the_released_list_check():
+    """The CHANGELOG sentence above is only true while this is: migrate() reads the shipped list and calls the check."""
+    import inspect
+
+    body = inspect.getsource(mig.migrate)
+    assert "released_problems(MIGRATIONS, _released_manifest())" in body
+    assert body.index("released_problems") < body.index("connect(")

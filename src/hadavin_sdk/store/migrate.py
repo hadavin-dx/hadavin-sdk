@@ -8,14 +8,16 @@ The file-name rules, the late-file and gone-name refusals and the SQL text rules
 (no database library there); this module only calls them. Each file is read ONCE; the text that was scanned is
 the text that is executed. After each file, in the same transaction, `migrate` reads back the database user
 names (the current user and the session user), the replication-role setting, the search path, three settings that
-change how SQL text is read, the transaction clock and id, and the state of every trigger in the migration schema,
+change how SQL text is read, the transaction clock and id, the role memberships (`pg_auth_members`: a role granted to a role inside a function body is
+found here, not by the statement rule) and the state of every trigger in the migration schema,
 and refuses if anything is LEFT changed (it cannot see a change that a file makes and undoes before it ends). Precondition: the migration role is not a superuser (a superuser can change
 what the read-back does not read).
 
 When `migrate` refuses, a database administrator repairs by hand (the full runbook, cases (a) to (g), is the section
 "Migration repair steps" of CHANGELOG.md). Every hand step is a FILE of SQL run with `psql -X -v ON_ERROR_STOP=1 -f <file>`
 and your own connection settings (never typed line by line, never a connection string in a text). The file starts with
-`\\set ON_ERROR_STOP on`, then `SET search_path TO <the schema migrate uses>;`, `BEGIN;`, the advisory lock of `migrate`
+`\\set ON_ERROR_STOP on`, then `SET search_path TO "<the schema migrate uses>";`, `BEGIN;`, `SET LOCAL lock_timeout = '5s';`,
+`SET LOCAL statement_timeout = '60s';`, the advisory lock of `migrate`
 (`SELECT pg_advisory_xact_lock(<MIGRATE_LOCK>);`, only while no `migrate` runs) and ends with `COMMIT;`; after every
 `UPDATE schema_migrations` it holds a `DO` check that raises unless exactly one row with the new version exists and
 none with the old one. A late file: use the recipe in the refusal message. A renamed file or ledger row: change the
@@ -25,6 +27,7 @@ newer release; do not rename, drop or edit the ledger.
 
 from __future__ import annotations
 
+import json
 import re
 from dataclasses import dataclass
 from pathlib import Path
@@ -44,6 +47,7 @@ from hadavin_sdk.store.migration_numbers import (
     order_problems,
     read_files,
     refused_statements,
+    released_problems,
 )
 from hadavin_sdk.store.postgres import connect
 
@@ -308,6 +312,23 @@ def _excess_privileges(db, role: str) -> list[str]:
     return extra
 
 
+# SHA-256 of every released migration file (forward-only: a released file is never edited, renumbered or deleted).
+# It ships with the package, so `migrate` itself can refuse a changed file; add a row when a release is cut.
+RELEASED_MANIFEST = MIGRATIONS.parent / "migrations_released.json"
+
+
+def _released_manifest() -> dict[str, str]:
+    try:
+        data = json.loads(RELEASED_MANIFEST.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as e:
+        raise ConfigError(f"the list of released migration files cannot be read: {e}") from e
+    if not isinstance(data, dict) or not all(
+        isinstance(k, str) and isinstance(v, str) for k, v in data.items()
+    ):
+        raise ConfigError("the list of released migration files is not a name -> SHA-256 table")
+    return data
+
+
 # What the read-back reads after each file (module constants: the tests answer them by exact text).
 # The nine values are compared with the values saved before the first file; `transaction_timestamp()` and
 # `txid_current()` are the backstop for a COMMIT the text rules did not see (a COMMIT starts a new transaction).
@@ -328,6 +349,12 @@ _READBACK_VALUES_SQL = (
     "current_setting('backslash_quote'), current_setting('client_encoding'), "
     "transaction_timestamp(), txid_current()"
 )
+# Role memberships (who is a member of whom, with the grant options): the one thing a `$$` function body can change
+# that no statement-start rule sees (`GRANT r TO s` inside a function, then `SELECT f();`). Names, not OIDs.
+_READBACK_MEMBERS_SQL = (
+    "SELECT m.roleid::regrole::text, m.member::regrole::text, "
+    "(to_jsonb(m) - 'oid' - 'roleid' - 'member')::text FROM pg_auth_members m"
+)
 # Triggers of the migration schema only (the schema `current_schema()` names now); internal ones are skipped.
 _READBACK_TRIGGERS_SQL = (
     "SELECT t.tgrelid, t.tgname, t.tgenabled, c.relname, n.nspname FROM pg_trigger t "
@@ -339,16 +366,18 @@ _READBACK_TRIGGERS_SQL = (
 @dataclass(frozen=True)
 class _Saved:
     values: tuple
-    triggers: dict  # (tgrelid, tgname) -> (tgenabled, schema, table)
+    triggers: dict  # (schema, table, tgname) -> (tgenabled, schema, table): a name, so a recreated table is the same trigger
+    members: frozenset = frozenset()  # (role, member, other columns as text)
 
 
 def _read_back(db) -> _Saved:
     values = tuple(db.execute(_READBACK_VALUES_SQL).fetchone())
     triggers = {
-        (relid, name): (enabled, schema, table)
-        for relid, name, enabled, table, schema in db.execute(_READBACK_TRIGGERS_SQL).fetchall()
+        (schema, table, name): (enabled, schema, table)
+        for _relid, name, enabled, table, schema in db.execute(_READBACK_TRIGGERS_SQL).fetchall()
     }
-    return _Saved(values, triggers)
+    members = frozenset(tuple(r) for r in db.execute(_READBACK_MEMBERS_SQL).fetchall())
+    return _Saved(values, triggers, members)
 
 
 def _refuse_unusual_strings(saved: _Saved) -> None:
@@ -369,7 +398,7 @@ def _label(*names: str) -> str:
 def _check_read_back(db, saved: _Saved, file_name: str) -> _Saved:
     """Read again after `file_name` and compare. The nine values in `_READBACK_VALUES` (seven user and setting
     values, then the transaction clock and id) must equal the values saved before the first file; a saved trigger must still exist; no trigger may be
-    disabled (`D`) or replica-only (`R`) unless it already was. Refuses with every difference named. Returns the
+    disabled (`D`) or replica-only (`R`) unless it already was; the set of role memberships must equal the saved set. Refuses with every difference named. Returns the
     trigger state just read (the base for the next file); the saved values stay those of the start."""
     now = _read_back(db)
     problems = [
@@ -379,20 +408,28 @@ def _check_read_back(db, saved: _Saved, file_name: str) -> _Saved:
     ]
     for key, (_enabled, schema, table) in sorted(saved.triggers.items(), key=lambda kv: str(kv[0])):
         if key not in now.triggers:
-            problems.append(f"trigger {_label(schema, table, key[1])} no longer exists")
+            problems.append(f"trigger {_label(schema, table, key[2])} no longer exists")
     for key, (enabled, schema, table) in sorted(now.triggers.items(), key=lambda kv: str(kv[0])):
         before = saved.triggers.get(key)
         if enabled in ("D", "R") and (before is None or before[0] != enabled):
             problems.append(
-                f"trigger {_label(schema, table, key[1])} is now "
+                f"trigger {_label(schema, table, key[2])} is now "
                 f"{'disabled' if enabled == 'D' else 'replica-only'}"
             )
+    problems += [
+        f"role {_label(role)} has a new member {_label(member)} ({_label(rest)})"
+        for role, member, rest in sorted(now.members - saved.members)
+    ]
+    problems += [
+        f"role {_label(role)} lost the member {_label(member)} ({_label(rest)})"
+        for role, member, rest in sorted(saved.members - now.members)
+    ]
     if problems:
         raise ConfigError(
             f"migration {ascii(file_name)[1:-1]} left the database session changed: "
             + "; ".join(problems)
         )
-    return _Saved(saved.values, now.triggers)
+    return _Saved(saved.values, now.triggers, saved.members)
 
 
 def migrate(
@@ -416,7 +453,9 @@ def migrate(
     the guard cannot read what they change. A role is chosen by the person running `migrate`, so it cannot be named in
     a static file: any role-membership change is made by `migrate()`'s own Python step, with the role as an argument,
     and never by a migration file. (`migrate` makes none today; privileges on tables and sequences are the
-    `GRANT ... ON ...` statements it runs itself.) A `.sql` file that holds `GRANT ... ON ...` is not refused by this rule."""
+    `GRANT ... ON ...` statements it runs itself.) A `.sql` file that holds `GRANT ... ON ...` is not refused by this rule. The rule reads
+    statements only at the start of a statement; a membership change made some other way (a `GRANT r TO s` inside a `$$`
+    function body that the file then calls) is found by the read-back of `pg_auth_members` after the file and refuses the run."""
     for role in (runtime_role, portal_role, purge_role):
         if role is not None and not _ROLE.fullmatch(role):
             raise ConfigError(f"not a plain database role name: {role!r}")
@@ -426,6 +465,10 @@ def migrate(
     files = _migration_files()
     if problems := check_ledger(files):
         raise MigrationNumberError(problems)
+    if problems := released_problems(MIGRATIONS, _released_manifest()):
+        raise MigrationNumberError(
+            problems
+        )  # a released file edited, deleted, or a new file numbered below it
     texts = read_files(files)  # the only read of each file: the text scanned is the text executed
     if problems := check_grants(files, texts=texts):
         raise ConfigError("migrations are inconsistent: " + "; ".join(problems))

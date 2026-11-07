@@ -14,6 +14,10 @@ CHANGELOG = CHANGELOG_PATH.read_text(encoding="utf-8")
 RUNBOOK = CHANGELOG[
     CHANGELOG.index("### Migration ") :
 ]  # "repair steps" now, "runbook" in older text
+TIMEOUTS = [
+    "SET LOCAL lock_timeout = '5s';",
+    "SET LOCAL statement_timeout = '60s';",
+]  # as the rule says
 PSQL_ARGS = [
     "psql",
     "-X",
@@ -63,6 +67,7 @@ def hand_file(schema: str, *steps: str) -> str:
         "\\set ON_ERROR_STOP on",
         f'SET search_path TO "{schema}";',
         "BEGIN;",
+        *TIMEOUTS,
         f"SELECT pg_advisory_xact_lock({lock_number()});",
     ]
     return "\n".join([*head, *steps, "COMMIT;", ""])
@@ -71,4 +76,4 @@ def hand_file(schema: str, *steps: str) -> str:
 def rename_step(old: str, new: str) -> str:
     """The `UPDATE` of case (b), as printed there, with the two names filled in."""
     update = span_in(case("b"), "UPDATE schema_migrations SET version")
-    return update.replace("<that file's name without .sql>", new).replace("<wrong name>", old)
+    return update.replace("<file_stem>", new).replace("<wrong name>", old)
