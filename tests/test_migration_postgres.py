@@ -8,17 +8,19 @@ from __future__ import annotations
 
 import os
 import shutil
+import subprocess
 import uuid
 from pathlib import Path
 
 import pytest
 
 from hadavin_sdk.errors import ConfigError
+from tests.fixtures import runbook as rb
 from tests.fixtures.dsn_skip import require_module
 
 psycopg = require_module("psycopg")  # with the DSN set a missing driver FAILS (never a skip)
 from psycopg import sql
-from psycopg.conninfo import make_conninfo
+from psycopg.conninfo import conninfo_to_dict, make_conninfo
 
 from hadavin_sdk.store import migrate as mig
 from hadavin_sdk.store.migration_numbers import MigrationNumberError
@@ -340,3 +342,168 @@ def test_an_accepted_change_names_a_real_test():
         assert callable(target) and func.startswith("test_"), (
             f"{key}: {dotted} is not a test function"
         )
+
+
+# --- the runbook of CHANGELOG.md, RUN (cases (b) and (g)) ---------------------------------------------------------------
+# Every statement below is cut out of the runbook text (tests/fixtures/runbook.py); the hand file goes through
+# `psql -X -v ON_ERROR_STOP=1 -f`, as the runbook says. Then `migrate()` must accept the database.
+
+FALSE_ROW = (
+    "0006" + "_evidence"
+)  # the name the older note gave; written in two parts so a search for it finds none
+EVIDENCE = "0005_evidence"
+
+
+def _psql(schema: str, tmp_path: Path, *steps: str):
+    """Run the hand file made from `steps` with psql, return the finished process (never raises on a failed file)."""
+    assert shutil.which("psql"), "psql is needed for the runbook tests (HADAVIN_TEST_PG_DSN is set)"
+    parts = conninfo_to_dict(DSN)
+    env = {k: v for k, v in os.environ.items() if not k.startswith("PG")}
+    for key, var in (
+        ("host", "PGHOST"),
+        ("port", "PGPORT"),
+        ("user", "PGUSER"),
+        ("dbname", "PGDATABASE"),
+        ("password", "PGPASSWORD"),
+    ):
+        if parts.get(key):
+            env[var] = str(parts[key])
+    path = tmp_path / "hand.sql"
+    path.write_text(rb.hand_file(schema, *steps), encoding="utf-8")
+    assert rb.PSQL_ARGS == [
+        "psql",
+        "-X",
+        "-v",
+        "ON_ERROR_STOP=1",
+    ]  # the rule of the runbook, written out below
+    return subprocess.run(
+        ["/usr/bin/env", "psql", "-X", "-v", "ON_ERROR_STOP=1", "-f", "hand.sql"],
+        check=False,
+        cwd=tmp_path,
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+
+
+def _sql(dsn, text: str, params=None):
+    with psycopg.connect(dsn, autocommit=True) as db:
+        cur = db.execute(text, params)
+        return cur.fetchall() if cur.description else None
+
+
+def _has_error_column(dsn) -> bool:
+    query = rb.span_in(rb.case("g"), "SELECT column_name FROM information_schema.columns")
+    return bool(_sql(dsn, query))
+
+
+def _insert_tool_call(dsn, call_id="c1", with_error=False):
+    if with_error:
+        stmt = (
+            "INSERT INTO tool_calls (call_id, run_id, tool, inputs, output, output_sha256, created_at, error) "
+            "VALUES (%s, 'r', 't', '{}', 'o', 'h', now(), TRUE)"
+        )
+    else:
+        stmt = (
+            "INSERT INTO tool_calls (call_id, run_id, tool, inputs, output, output_sha256, created_at) "
+            "VALUES (%s, 'r', 't', '{}', 'o', 'h', now())"
+        )
+    _sql(dsn, stmt, (call_id,))
+
+
+@needs_pg
+def test_runbook_case_b_renames_the_old_notes_row_back_and_migrate_accepts_it(scratch, tmp_path):
+    """A database that followed the older note (ledger row 0006 evidence): refused with a pointer to case (b); the
+    hand file of case (b) (the UPDATE, its DO check, the evidence tables block) puts the row back; migrate accepts."""
+    dsn, schema = scratch
+    mig.migrate(dsn)
+    _sql(dsn, "UPDATE schema_migrations SET version = %s WHERE version = %s", (FALSE_ROW, EVIDENCE))
+    with pytest.raises(ConfigError) as e:
+        mig.migrate(dsn)
+    assert FALSE_ROW in str(e.value) and "Migration repair steps, case (b)" in str(e.value)
+    assert _ledger(dsn) is not None and EVIDENCE not in _ledger(dsn)
+    done = _psql(
+        schema,
+        tmp_path,
+        rb.rename_step(FALSE_ROW, EVIDENCE),
+        rb.do_check(EVIDENCE, FALSE_ROW),
+        rb.evidence_block(),
+    )
+    assert done.returncode == 0, done.stderr
+    assert _ledger(dsn) == REAL
+    assert mig.migrate(dsn) == []
+
+
+@needs_pg
+def test_runbook_case_b_also_repairs_an_early_table_in_the_same_file(scratch, tmp_path):
+    """Row 0006 AND a tool_calls without `error` (both of the old note's victims at once): the rename alone would
+    accept the broken table for good; with the evidence block of case (g) in the file the column comes back."""
+    dsn, schema = scratch
+    mig.migrate(dsn)
+    _insert_tool_call(dsn)
+    _sql(dsn, "ALTER TABLE tool_calls DROP COLUMN error")
+    _sql(dsn, "UPDATE schema_migrations SET version = %s WHERE version = %s", (FALSE_ROW, EVIDENCE))
+    done = _psql(
+        schema,
+        tmp_path,
+        rb.rename_step(FALSE_ROW, EVIDENCE),
+        rb.do_check(EVIDENCE, FALSE_ROW),
+        rb.evidence_block(),
+    )
+    assert done.returncode == 0, done.stderr
+    assert _has_error_column(dsn)
+    assert _ledger(dsn) == REAL
+    assert mig.migrate(dsn) == []
+    _insert_tool_call(dsn, "c2", with_error=True)  # the write the service makes
+    assert _sql(dsn, "SELECT error FROM tool_calls WHERE call_id = 'c1'") == [(False,)]
+
+
+@needs_pg
+def test_runbook_case_b_keeps_nothing_when_an_evidence_table_is_missing(scratch, tmp_path):
+    dsn, schema = scratch
+    mig.migrate(dsn)
+    _sql(dsn, "DROP TABLE redaction_maps")
+    _sql(dsn, "UPDATE schema_migrations SET version = %s WHERE version = %s", (FALSE_ROW, EVIDENCE))
+    done = _psql(
+        schema,
+        tmp_path,
+        rb.rename_step(FALSE_ROW, EVIDENCE),
+        rb.do_check(EVIDENCE, FALSE_ROW),
+        rb.evidence_block(),
+    )
+    assert done.returncode != 0 and "stop, a person must look" in done.stderr
+    assert FALSE_ROW in (_ledger(dsn) or []) and EVIDENCE not in (_ledger(dsn) or [])
+
+
+@needs_pg
+def test_runbook_case_g_adds_the_missing_error_column_and_keeps_every_row(scratch, tmp_path):
+    """Ledger row 0005 evidence over an early tool_calls (no `error`): migrate does not notice; the check query of
+    case (g) does; the repair file adds the column, keeps the rows, changes no ledger row; it can be run twice."""
+    dsn, schema = scratch
+    mig.migrate(dsn)
+    _insert_tool_call(dsn)
+    _sql(dsn, "ALTER TABLE tool_calls DROP COLUMN error")
+    assert not _has_error_column(dsn)
+    before = _ledger(dsn)
+    assert mig.migrate(dsn) == []  # the gap the runbook case is for: no refusal, nothing repaired
+    assert not _has_error_column(dsn)
+    for _ in range(2):  # the second run is safe
+        done = _psql(schema, tmp_path, rb.evidence_block())
+        assert done.returncode == 0, done.stderr
+    assert _has_error_column(dsn)
+    assert _ledger(dsn) == before == REAL
+    assert _sql(dsn, "SELECT error FROM tool_calls WHERE call_id = 'c1'") == [(False,)]
+    assert mig.migrate(dsn) == []
+    _insert_tool_call(dsn, "c2", with_error=True)
+
+
+@needs_pg
+def test_runbook_case_g_keeps_nothing_when_the_tables_differ_in_more_than_error(scratch, tmp_path):
+    dsn, schema = scratch
+    mig.migrate(dsn)
+    _sql(dsn, "ALTER TABLE tool_calls DROP COLUMN error")
+    _sql(dsn, "ALTER TABLE tool_calls DROP COLUMN attempt")
+    done = _psql(schema, tmp_path, rb.evidence_block())
+    assert done.returncode != 0 and "a person must look" in done.stderr
+    assert not _has_error_column(dsn)  # the ALTER was undone with the rest of the file

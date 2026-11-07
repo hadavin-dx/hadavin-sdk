@@ -7,13 +7,13 @@ ported from WARDEN `audit.py:migrate` (main a1e76cbf). Rollback = restore the sn
 The file-name rules, the late-file and gone-name refusals and the SQL text rules live in `migration_numbers`
 (no database library there); this module only calls them. Each file is read ONCE; the text that was scanned is
 the text that is executed. After each file, in the same transaction, `migrate` reads back the database user
-names, three session settings, the text-reading settings, the transaction clock and id, and the state of every
-trigger in the migration schema, and refuses if anything is LEFT changed (it cannot see a change that a file
-makes and undoes before it ends). Precondition: the migration role is not a superuser (a superuser can change
+names (the current user and the session user), the replication-role setting, the search path, three settings that
+change how SQL text is read, the transaction clock and id, and the state of every trigger in the migration schema,
+and refuses if anything is LEFT changed (it cannot see a change that a file makes and undoes before it ends). Precondition: the migration role is not a superuser (a superuser can change
 what the read-back does not read).
 
-When `migrate` refuses, a database administrator repairs by hand (the full runbook, cases (a) to (f), is the section
-"Migration runbook" of CHANGELOG.md). Every hand step is a FILE of SQL run with `psql -X -v ON_ERROR_STOP=1 -f <file>`
+When `migrate` refuses, a database administrator repairs by hand (the full runbook, cases (a) to (g), is the section
+"Migration repair steps" of CHANGELOG.md). Every hand step is a FILE of SQL run with `psql -X -v ON_ERROR_STOP=1 -f <file>`
 and your own connection settings (never typed line by line, never a connection string in a text). The file starts with
 `\\set ON_ERROR_STOP on`, then `SET search_path TO <the schema migrate uses>;`, `BEGIN;`, the advisory lock of `migrate`
 (`SELECT pg_advisory_xact_lock(<MIGRATE_LOCK>);`, only while no `migrate` runs) and ends with `COMMIT;`; after every
@@ -47,6 +47,8 @@ from hadavin_sdk.store.migration_numbers import (
 )
 from hadavin_sdk.store.postgres import connect
 
+# `MIGRATIONS` and `check_ledger` are listed on purpose: they live in `migration_numbers` (no database library there)
+# and are re-exported so that existing imports from this module (`cli.py`, the tests) keep working.
 __all__ = ["GRANTS", "MIGRATIONS", "Grant", "check_grants", "check_ledger", "migrate"]
 
 
@@ -365,8 +367,8 @@ def _label(*names: str) -> str:
 
 
 def _check_read_back(db, saved: _Saved, file_name: str) -> _Saved:
-    """Read again after `file_name` and compare. The seven user and setting values, the transaction clock and id
-    must equal the values saved before the first file; a saved trigger must still exist; no trigger may be
+    """Read again after `file_name` and compare. The nine values in `_READBACK_VALUES` (seven user and setting
+    values, then the transaction clock and id) must equal the values saved before the first file; a saved trigger must still exist; no trigger may be
     disabled (`D`) or replica-only (`R`) unless it already was. Refuses with every difference named. Returns the
     trigger state just read (the base for the next file); the saved values stay those of the start."""
     now = _read_back(db)

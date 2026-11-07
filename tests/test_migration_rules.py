@@ -357,6 +357,135 @@ def test_privileges_on_objects_are_not_refused_as_role_membership(form):
     assert not any(REFUSED in r for r in _reasons(form)), _reasons(form)
 
 
+# Class: a name in PostgreSQL may hold `$` and non-ASCII characters (`app$on`, `on$x`), so the regex word boundary
+# (which breaks at `$`) shows a standalone `on` inside one name. The refusal reads names the way the lexer does.
+def _names_over(alphabet, longest):
+    for n in range(1, longest + 1):
+        for combo in itertools.product(alphabet, repeat=n):
+            name = "".join(combo)
+            if name[0] in (
+                "a",
+                "o",
+                "\u00e9",
+                "_",
+            ):  # a name starts with a letter, `_` or a non-ASCII character
+                yield name
+
+
+DOLLAR_NAMES = list(_names_over(["on", "$", "a", "\u00e9"], 4))
+
+
+def test_the_name_corpus_holds_the_bypass_shapes():
+    for shape in ("a$on", "on$a", "a$on$", "\u00e9$on", "on$\u00e9", "on$on"):
+        assert shape in DOLLAR_NAMES, shape
+
+
+@pytest.mark.parametrize(
+    "name", ["app$on", "on$x", "a$on$b", "x$on$", "\u00e9on", "on\u00e9", "_on$"]
+)
+@pytest.mark.parametrize(
+    "template",
+    [
+        "GRANT pg_write_all_data TO {n}",
+        "GRANT r TO {n}",
+        "GRANT {n} TO s",
+        "REVOKE r FROM {n}",
+        "REVOKE {n} FROM s",
+        "GRANT r\nTO {n}",
+        "/* on */ GRANT r TO {n} -- on",
+        'GRANT r TO {n}, "on"',
+    ],
+)
+def test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant(template, name):
+    sql = template.format(n=name)
+    assert _kind(sql) == "GrantRoleStmt", sql
+    assert any(REFUSED in r for r in _reasons(sql)), sql
+
+
+def test_every_short_name_over_the_dollar_alphabet_is_refused_in_a_role_grant():
+    wrong = []
+    for name in DOLLAR_NAMES:
+        for sql in (f"GRANT r TO {name}", f"REVOKE r FROM {name}"):
+            try:
+                kind = _kind(sql)
+            except pglast.parser.ParseError:
+                continue  # not a statement the server reads either
+            if kind == "GrantRoleStmt" and not any(REFUSED in r for r in _reasons(sql)):
+                wrong.append(sql)
+    assert not wrong, wrong[:5]
+
+
+def test_a_standalone_on_still_lets_a_grant_on_an_object_through_even_to_a_dollar_name():
+    for sql in (
+        "GRANT SELECT ON t TO app$on",
+        "GRANT SELECT ON on$t TO r",
+        "GRANT SELECT ON\nt TO app$on",
+        "REVOKE ALL ON t$on FROM app$on",
+    ):
+        assert _kind(sql) == "GrantStmt", sql
+        assert not any(REFUSED in r for r in _reasons(sql)), sql
+
+
+def test_copy_program_is_refused_across_blanks_and_lines():
+    assert _reasons("COPY t FROM STDIN") == []
+    assert any("PROGRAM" in r for r in _reasons("COPY t FROM PROGRAM 'x'"))
+    assert any("PROGRAM" in r for r in _reasons("COPY t\nTO\nPROGRAM 'x'"))
+
+
+# The only patterns that may keep the word boundary: a match there REFUSES, so an over-match is the safe direction.
+BOUNDARY_ALLOWED_IN = {"_TRANSACTION", "_SET", "_BLIND", "_COPY_PROGRAM", "_ROLE_MEMBERSHIP"}
+
+
+def test_the_word_boundary_is_used_only_where_a_match_refuses():
+    """Class check over every regex of `migration_numbers.py`: `\\w`, `\\W`, `\\B` nowhere; `\\b` only in the patterns
+    above; `\\b` never next to `on` (the look-ahead of the role rule) and never in a pattern whose match lets a statement
+    through (`_SET_ALLOWED`, the name and stem patterns)."""
+    tree = ast.parse(Path(mn.__file__).read_text(encoding="utf-8"))
+    pattern_functions = {
+        "compile",
+        "search",
+        "match",
+        "fullmatch",
+        "sub",
+        "findall",
+        "finditer",
+        "split",
+    }
+    bad = []
+    for (
+        statement
+    ) in tree.body:  # every top-level statement, so a pattern inside a function is read too
+        target = ""
+        if isinstance(statement, ast.Assign) and isinstance(statement.targets[0], ast.Name):
+            target = statement.targets[0].id
+        for node in ast.walk(statement):
+            if not (
+                isinstance(node, ast.Call)
+                and isinstance(node.func, ast.Attribute)
+                and node.func.attr in pattern_functions
+                and isinstance(node.func.value, ast.Name)
+                and node.func.value.id == "re"
+            ):
+                continue
+            for part in ast.walk(node):
+                if not (isinstance(part, ast.Constant) and isinstance(part.value, str)):
+                    continue
+                text = part.value
+                if re.search(r"\\[wWB]", text) or re.search(r"\\bon|on\\b", text):
+                    bad.append((target, text))
+                if re.search(r"\\b", text) and target not in BOUNDARY_ALLOWED_IN:
+                    bad.append((target, text))
+    assert not bad, bad
+    assert "lock_timeout" in mn._SET_ALLOWED.pattern and "\\b" not in mn._SET_ALLOWED.pattern
+
+
+def test_the_name_boundary_agrees_with_the_lexer_character_set():
+    for ch in ("a", "Z", "0", "_", "$", "\u00e9", "\u4e2d"):
+        assert mn._ident_char(ch) and re.fullmatch(mn._NAME_CHAR, ch), ch
+    for ch in (" ", "\n", ";", ",", "(", '"', "'", "-", "/", "."):
+        assert not mn._ident_char(ch) and not re.fullmatch(mn._NAME_CHAR, ch), ch
+
+
 def test_the_corpus_is_able_to_fail():
     """Control: on the view with the quoted parts KEPT, a role grant with a quoted `on` has a standalone `on` and the
     regex lets it through, so the corpus above does contain a case that a view mistake would turn into a failure."""
@@ -367,36 +496,124 @@ def test_the_corpus_is_able_to_fail():
 
 
 # --- 5. the CHANGELOG ---------------------------------------------------------------------------------------------------
+# The wording is read case by case (tests/fixtures/runbook.py cuts the runbook into its cases), not as one string; the
+# repair steps themselves are RUN in tests/test_migration_postgres.py.
 
-CHANGELOG = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
+import re
+
+from tests.fixtures import runbook as rb
+
+CHANGELOG = rb.CHANGELOG
 FALSE_NAME = (
     "0006" + "_evidence"
-)  # the file never had this name; written in two parts so a grep for it finds none
+)  # the name the older note gave; written in two parts so a search for it finds none
 
 
-def test_the_changelog_never_gives_the_false_evidence_name():
-    assert FALSE_NAME not in CHANGELOG
+def _evidence_bullet() -> str:
+    start = CHANGELOG.index("  - **The evidence migration:")
+    return CHANGELOG[start : CHANGELOG.index("\n", start)]
+
+
+def _words(text: str) -> str:
+    return " ".join(text.split())
+
+
+def test_no_advice_tells_anyone_to_rename_a_row_to_the_false_name():
+    """The name may be written (it is the name a person has to recognise); nobody may be told to change TO it."""
+    sentences = re.split(r"(?<=[.;:])\s+|\n", CHANGELOG)
+    for s in sentences:
+        if FALSE_NAME in s:
+            assert not re.search(rf"\b(?:to|as|=)\s*['`]?{FALSE_NAME}", s), s
+            assert not re.search(rf"version\s*=\s*'{FALSE_NAME}'", s), s
     assert "`0005_evidence.sql`" in CHANGELOG
+    assert "version = '<NEW>'" in CHANGELOG  # the runbook step is generic
 
 
-def test_the_changelog_no_longer_advises_dropping_the_evidence_tables():
-    """Open point 2: the drop advice is gone from the repair step; a scratch database is the one place (runbook (e))."""
-    start = CHANGELOG.index("**Databases built from the merged code need no repair.**")
-    step = CHANGELOG[start : CHANGELOG.index("\n", start)]
-    assert "drop `tool_calls`" not in step and "redaction_maps" not in step
-    assert CHANGELOG.count("is the only place a drop is advised") == 1
+def test_the_changelog_names_the_false_name_where_a_person_who_followed_the_old_note_looks():
+    bullet = _words(_evidence_bullet())
+    assert FALSE_NAME in bullet and "back to `0005_evidence`" in bullet and "case (b)" in bullet
+    assert "need no repair" not in CHANGELOG  # the old heading contradicted this case
+    assert FALSE_NAME in rb.case("b") and "goes back to `0005_evidence`" in _words(rb.case("b"))
+
+
+def test_the_changelog_keeps_a_repair_path_for_an_early_evidence_table():
+    bullet = _words(_evidence_bullet())
+    assert "`tool_calls`" in bullet and "no column `error`" in bullet and "case (g)" in bullet
+    assert "does not compare table structure" in bullet
+    g = _words(rb.case("g"))
+    assert "migration role" in g and "owner of the tables" in g  # who may run it
+    assert "never the runtime role or the purge role" in g
+    assert "only the table `tool_calls` gets one column" in g  # which table changes
+    assert "`redaction_maps` and `schema_migrations` are only read" in g
+    assert "**Verify:**" in g and "hadavin-sdk migrate" in g  # how to check it
+    assert "ADD COLUMN IF NOT EXISTS error" in rb.evidence_block()
+    # case (b) for the evidence row carries the same block, case (e) points to it
+    assert "block of case (g)" in rb.case("b") and "block of case (g)" in rb.case("e")
+
+
+def test_a_drop_is_advised_in_one_place_only_and_never_for_the_evidence_tables_of_a_live_database():
+    assert "drop `tool_calls`" not in CHANGELOG.lower()
+    assert "only in case (e)" in _evidence_bullet()
+    assert "dropped as a whole" in rb.case("e") and "scratch database" in rb.case("e")
+    for letter in "abcdfg":
+        assert "dropped as a whole" not in rb.case(letter), letter
+
+
+def test_case_c_says_a_released_file_cannot_be_renumbered():
+    c = _words(rb.case("c"))
+    assert "NOT listed in `tests/fixtures/migrations_released.json`" in c
+    assert "can never be renumbered" in c
+    assert "case (b)" in c  # a database that already applied the renumbered file
+    assert (ROOT / "tests/fixtures/migrations_released.json").is_file()
+
+
+def test_case_a_failure_wording_and_the_hand_written_fallback():
+    a = _words(rb.case("a"))
+    assert "the second run fails, and keeps nothing" in a
+    assert (
+        "at the ledger row" not in a
+    )  # a plain CREATE TABLE fails before the ledger row is reached
+    assert "A person must write the steps by hand" in a
+    for word in ("backslash", "colon", "RECIPE begins", "unusual schema name"):
+        assert word in a, word
+    # the message the fallback describes really says it
+    big = {Path("0002_b.sql"): "SELECT 1; \\echo x"}
+    msg = mn.order_problems({"0003_c"}, list(big), big, "s")[0]
+    assert "A person must write the steps by hand" in msg
+
+
+def test_the_rename_refusal_points_to_the_runbook_case_b(tmp_path):
+    for name in ("0001_a.sql", "0002_b.sql"):
+        (tmp_path / name).write_text("SELECT 1;", encoding="utf-8")
+    msg = mn.gone_message({"0001_a", "0003_b"}, mn.list_migration_files(tmp_path))
+    assert "0003_b" in msg
+    assert "Migration repair steps, case (b)" in msg
+    assert "case (b)" in rb.RUNBOOK and "**(b) " in rb.RUNBOOK
+
+
+def test_the_migrate_docstring_counts_what_it_reads_back():
+    doc = _words(mig.__doc__ or "")
+    assert "three session settings" not in doc
+    assert "current user and the session user" in doc and "search path" in doc
+    assert "three settings that change how SQL text is read" in doc
+    assert "cases (a) to (g)" in doc
+    assert "nine values" in _words(mig._check_read_back.__doc__ or "")
+    assert len(mig._READBACK_VALUES) == 9
 
 
 def test_the_runbook_carries_the_real_lock_the_command_and_every_case():
-    start = CHANGELOG.index("### Migration runbook")
-    runbook = CHANGELOG[start:]
-    assert str(mn.MIGRATE_LOCK) in runbook
+    runbook = rb.RUNBOOK
+    assert str(mn.MIGRATE_LOCK) in runbook and rb.lock_number() == mn.MIGRATE_LOCK
     assert mn.RECIPE_FIRST_LINE in runbook
     assert mn.RECIPE_COMMAND.rsplit(" ", 2)[0] in runbook  # "psql -X -v ON_ERROR_STOP=1"
-    for case in ("(a)", "(b)", "(c)", "(d)", "(e)", "(f)"):
-        assert f"**{case} " in runbook, case
+    assert (
+        rb.PSQL_ARGS == mn.RECIPE_COMMAND.split()[:5]
+        or " ".join(rb.PSQL_ARGS) == (mn.RECIPE_COMMAND.rsplit(" ", 2)[0])
+    )
+    for letter in "abcdefg":
+        assert f"**({letter}) " in runbook, letter
     assert "SELECT current_user;" in runbook
     assert "://" not in runbook  # no connection string in a hand step
-    assert "recipe" in " ".join((mig.__doc__ or "").split()) and "Migration runbook" in (
+    assert "recipe" in " ".join((mig.__doc__ or "").split()) and "Migration repair steps" in (
         mig.__doc__ or ""
     )
