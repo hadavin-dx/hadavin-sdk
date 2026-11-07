@@ -1084,3 +1084,12 @@ NEEDS LEAD (ticket P3a.md is lead-owned): replace BN-P3a-2-c (line 280) with: "B
 
 ## q349 (11:15Z) PR72 and PR86 reviewer results; fix batches ordered
 - PR72 84bc5d5: 0 Blocker, 2 Major (private ids/mutant numbers in public test text; P6a-1 fail-before + Postgres per-test evidence missing from the snapshot), 4 Nit. PR86 b42383b: 0 Blocker, 1 Major (diff scope; PR86 base is 4a0976f, which my snapshot did not use: snapshot error on my side, not a PR defect), 5 Nit incl. README ":latest" wording, CHANGELOG self_hosted sentence, M23b equivalence reason. Reports: reviews/ord147/. Fix batches go to the two builders now; PR83 reviewer redone on the right snapshot (see q348). Times in q346-q348 headers corrected.
+
+## q350 (11:17Z) Plan v4.3 written (one pass, ORDER 145). STOPPED for your freeze; no reviewers started.
+File: studio-notes/plan-v4-3.md, 788 lines. Author step only, no EGM review run on it (per ORDER 145 I stop for your freeze).
+NEEDS LEAD (L10-L17, O10, O11):
+- L10 AK-G2 status: freeze-list.md:48 says ACTIVE, not deferred (conflicts with ruling 9 "lift the deferral"). L11 wording/date of the Postgres-only exception (O11, review_by 2027-01-31). L12 pin LiteLLM version + hashes for price cross-check. L13 wire hostile-set test into pilot/prod check only after P1c and look-alike fix merge; who owns the look-alike rows (order 64 item 2 says P1b, order 70 item 1 + P1c.md:57 say P2d-1). L14 P1c phase v1 or v1.1. L16 the word "refused" in the mandated quote sentence overclaims (door-refused 401/400/409 and AK1 refused invalid_input reach no person). L17 adopt conditional door option only after the T5 trial. L9/O10: P5a codes table: order 70 item 3 says no owner yes is needed; please close.
+- L15 CONTESTED: order 145 calls Presidio "the optional stronger backend"; the only test in the checkout shows it weaker than our redactor (fully masked 14 of 30 hostile inputs vs 24; altered 7 of 14 must-stay-unchanged lines). The drafter kept ruling 8's wording ("optional extra layer after ours"). Your call.
+- v4.2 was wrong in four places, corrected in v4.3 section 14.
+- UNVERIFIED: Make scenario export, SQLite lacks SKIP LOCKED/RLS, Postgres max_connections 100, many quote URLs.
+Committed and pushed in the handover branch.
