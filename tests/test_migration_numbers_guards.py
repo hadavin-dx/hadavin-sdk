@@ -231,22 +231,17 @@ def _imports_from_numbers(path: Path, name: str) -> bool:
 
 
 def test_the_lock_key_and_the_folder_are_the_ones_migrate_uses(mn):
-    """`migrate.py` keeps its own copies of the lock key (`_LOCK`) and the folder (`MIGRATIONS`) until P3a-2 makes it
-    import them from this module. Until then this test reads that file as text (no import, so no psycopg) and requires
-    the SAME expression for each. After P3a-2, `migrate.py` imports the name from here and the test accepts that."""
+    """`migrate.py` imports the lock key and the folder from this module (read as text, no import, so no psycopg) and
+    has no second copy of either: a second `_LOCK` or `MIGRATIONS` assignment there would let the two drift apart."""
     here = Path(mn.__file__)
     other = here.with_name("migrate.py")
     assert other.is_file()
-    lock_here = ast.dump(_assigned(here, "MIGRATE_LOCK"))
-    lock_there = _assigned(other, "_LOCK")
-    assert lock_there is not None or _imports_from_numbers(other, "MIGRATE_LOCK")
-    if lock_there is not None:
-        assert ast.dump(lock_there) == lock_here
-    folder_there = _assigned(other, "MIGRATIONS")
-    assert folder_there is not None or _imports_from_numbers(other, "MIGRATIONS")
-    if folder_there is not None:
-        assert ast.dump(folder_there) == ast.dump(_assigned(here, "MIGRATIONS"))
-    # the value itself, computed here from the same bytes: a change of the expression in both files is still caught
+    assert _imports_from_numbers(other, "MIGRATE_LOCK")
+    assert _assigned(other, "_LOCK") is None
+    assert _assigned(other, "MIGRATE_LOCK") is None
+    assert _imports_from_numbers(other, "MIGRATIONS")
+    assert _assigned(other, "MIGRATIONS") is None
+    # the value itself, computed here from the same bytes: a change of the expression is still caught
     assert mn.MIGRATE_LOCK == int.from_bytes(b"hadvnmig", "big") >> 1
     assert isinstance(mn.MIGRATE_LOCK, int)
     assert mn.MIGRATIONS == here.parent / "migrations" == other.parent / "migrations"

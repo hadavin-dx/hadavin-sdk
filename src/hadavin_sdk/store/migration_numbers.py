@@ -371,7 +371,8 @@ def gone_message(applied: Collection[str], files: Sequence[Path]) -> str:
             f"{_names(cases[1])}: the folder has a file with the same name after the number, so the file was probably "
             "renamed. If it is the same migration and its tables already exist, a database administrator changes "
             "the version of each of these records (table schema_migrations) by hand to the name of that file "
-            "(without .sql), while no migrate command is running."
+            "(without .sql), while no migrate command is running. The steps, with the check that stops an update "
+            "that matches no record and the lock, are in CHANGELOG.md, section Migration repair steps, case (b)."
         )
     if cases[2]:
         lines.append(
@@ -614,11 +615,22 @@ def lex(text: str, keep_quoted: bool = False) -> tuple[str, str]:
 # --- the refusal list --------------------------------------------------------------------------------------------------
 
 _W = f"[{_WS}]+"
+# A name character, exactly as `_ident_char` reads it: ASCII letters and digits, `_`, `$`, and any non-ASCII character.
+# The regex word boundary `\\b` breaks at `$`, so `app$on` and `on$x` (ONE name each in PostgreSQL) show a standalone
+# `on`. Where a match LETS A STATEMENT PASS (the `on` look-ahead of `_ROLE_MEMBERSHIP`, `_SET_ALLOWED`) the boundaries
+# below are used; they agree with the lexer. Where a match REFUSES a statement (the keyword at the start of a statement)
+# `\\b` stays on purpose: it can only over-match, which is the safe direction (`COMMIT` + a no-break space is refused).
+# `tests/test_migration_rules.py` pins both rules (one test lists the only patterns that may hold `\\b`).
+_NAME_CHAR = "[A-Za-z0-9_$\u0080-\U0010ffff]"
+_NAME_END = f"(?!{_NAME_CHAR})"
+_NAME_START = f"(?<!{_NAME_CHAR})"
 _TRANSACTION = re.compile(
     rf"(commit|end|begin|abort|rollback|savepoint|release|start{_W}transaction|prepare{_W}transaction)\b",
     re.IGNORECASE,
 )
-_SET_ALLOWED = re.compile(rf"set{_W}local{_W}(?:lock_timeout|statement_timeout)\b", re.IGNORECASE)
+_SET_ALLOWED = re.compile(
+    rf"set{_W}local{_W}(?:lock_timeout|statement_timeout){_NAME_END}", re.IGNORECASE
+)
 _SET = re.compile(r"(set|reset)\b", re.IGNORECASE)
 _BLIND = re.compile(
     rf"(do|execute|load|discard|alter{_W}role|alter{_W}user|alter{_W}group|alter{_W}system|alter{_W}database"
@@ -627,7 +639,9 @@ _BLIND = re.compile(
 )
 # `COPY ... PROGRAM` runs a shell command; `GRANT r TO s` and `REVOKE r FROM s` (no ON) change role membership.
 _COPY_PROGRAM = re.compile(r"copy\b.*?\bprogram\b", re.IGNORECASE | re.DOTALL)
-_ROLE_MEMBERSHIP = re.compile(r"(grant|revoke)\b(?!.*?\bon\b)", re.IGNORECASE | re.DOTALL)
+_ROLE_MEMBERSHIP = re.compile(
+    rf"(grant|revoke)\b(?!.*?{_NAME_START}on{_NAME_END})", re.IGNORECASE | re.DOTALL
+)
 
 
 def refused_statements(text: str) -> list[str]:
