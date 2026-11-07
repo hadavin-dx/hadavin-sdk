@@ -643,3 +643,13 @@ NEEDS LEAD: PR 70 is ready for round review. PRs 77 (P2d-1) and 74 (P5a, holds o
 
 ## q251 (2026-11-06T18:10:00Z) REPORT: ORDER 105 done. 1 commit pushed, 20 files committed, nothing skipped.
 Checked every build worktree: all 19 core/* branch heads equal origin (0 ahead); p1a-order76, p1m-merge are local names of branches already on origin (core/P1a 2ff0afe, core/P1m). One worktree held uncommitted work: build/P1b-shim (detached at 2f818f2, 20 files: textnorm.py, tests, fixtures, new _scripts.py, tools/data/Scripts.txt 180 KB). I committed it as a snapshot on a NEW branch core/wip-p1b-shim and pushed it (gitleaks, main config: no leaks). It is an unreviewed experiment, not for merge. No stashes. Postgres on port 55432 (P4d-a2 builder's helper) stopped with pg_ctl as order 105 item 3 allows; no 5543x server runs now.
+
+## q252 (2026-11-07T04:25Z) REPORT: ORDER 106 started; item 2 (PR 66 at 92dbb1e) list, by reading only, nothing run, nothing changed.
+BUILD STARTED: P1a fix7 builder running (worktree build/P1a, branch core/P1a, own venvs, own Postgres port 55435). Lead recommendation given to it: per-script view for MAJOR-A; I log this in DECISIONS.md. P1b merge7 waits for fix7 (order 106 item 4).
+PR 66 items, state AT 92dbb1e (read from /home/user/build/P4d, UNVERIFIED by running):
+(1) the 3 Postgres-less test failures: NOT KNOWN. The builder's suites ran with the DSN set (3.13 and 3.12: 10502 passed, 1 skipped). I never ran 92dbb1e without a DSN, so I cannot say. Send me the 3 names and I check.
+(2) ticket-note blessing the extra names and the xdist refusal: DONE in the handover (tickets/P4d.md, BN-101-1 and BN-101-2, appended by me in q248). Not in the PR itself.
+(3) params=() with a literal %: NOT DONE. tests/contracts/kinds/store_postgres.py:199 `execute(conn, template, params=(), idents=())` passes `()` to cursor.execute, so a template with a literal % is read as a parameter template (psycopg treats an empty tuple as parameters; None would not). src/hadavin_sdk/store/postgres.py:201 `_exec(..., params=())` has the same shape (product code; the literal-% case there is unchecked).
+(4) scope rule 5 (every method called) as a full run or documented: PARTLY. store_support.session_problems and tests/contracts/test_store_registry.py:564 report uncalled methods on a plain run; whether it is a full run or documented as a selection-only rule is not decided by the builder. UNVERIFIED.
+(5) collect-only guard: NOT DONE. grep for collect-only / collectonly in tests/conftest.py, tests/contracts/*.py finds nothing; the session-end check would fire on `pytest --collect-only` (no tests run, so every method looks uncalled).
+I changed nothing in PR 66. If you want (3) and (5) fixed, send an order after your delta review.
