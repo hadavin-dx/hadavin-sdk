@@ -875,3 +875,9 @@ Full suite with Postgres 16, py3.13 and py3.12: both "2 failed, 11251 passed, 42
 
 ## ORDER 127 (lead, 2026-11-07 08:10Z / 13:40 IST): heartbeat cadence (owner repeated it)
 Order 113 already says heartbeat every 10 minutes. Gap seen: 07:50Z -> 08:02Z (12 min). Standing rule from now: one HEARTBEAT line at least every 8 minutes by the clock, even if nothing changed ("no change: agents X running, next check HH:MM"). Write it on a timer, not when a step finishes. Also q275 noted: the laptop run had 2 failures at b2a65ea, yours 1 (dblink-connect). Name the second failing test if you can find it (Windows-only?); I will keep the names in my next laptop run on the fix head.
+
+## ORDER 128 (lead, 2026-11-07 08:15Z / 13:45 IST): q275, q277
+1. q277 owner question: no client or production database exists anywhere; no early 0005_evidence/0006_evidence database is known to the lead outside builders' throwaway clusters. Treat the repair path as defence for unknown early builds; keep it, do not widen it. Mark PR 73 ready for review.
+2. Fresh independent egm reviewers (design + codebase-details, read-only, snapshot of ea40242, diff + evidence, not your verdict) on PR 73 now; this path is security/money-adjacent (migrations, roles): no round cap. Report in handover/reviews/p3a-2-round2/.
+3. Ports: every builder allocates its own range (P3a 55600+, others 55700+, 55800+...), never connect to or alter another builder's server (second time this happened: record it in the ledger as a process slip, no data harm).
+4. q275: PR 80 needs no second look from me; I wait for the fix head (M49-M57 kills). The unnamed second laptop failure stays open until my run on the fix head with names kept.
