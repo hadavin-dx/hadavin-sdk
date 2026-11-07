@@ -67,8 +67,8 @@ def test_throttling_waits_and_other_errors_are_failures(wire):
     with pytest.raises(ProviderError) as denied:
         wire.serve(wire.scenario("denied")).chat(**CALL)
     assert not isinstance(denied.value, ProviderExhausted)
-    assert denied.value.status == 403
-    assert denied.value.error_type is ProviderErrorType.permission
+    assert getattr(denied.value, "status", None) == 403
+    assert getattr(denied.value, "error_type", None) is ProviderErrorType.permission
     assert "AccessDeniedException" not in str(denied.value)
     class_text = class_name_of(denied.value.__context__)
     assert class_text in {"foreign_class", "dynamic_class"}

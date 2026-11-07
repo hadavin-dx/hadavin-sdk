@@ -13,8 +13,8 @@ from hadavin_sdk.guard.diagnostic import diagnose, render, validation_text
 from tests.data import c18a_hostile_corpus as corpus
 from tests.data.c18a_oracle import grammar_ok, leaks
 
-# ``scenario`` rows are driven by their owning package (P5b1: ``tests/test_provider_errors_wire.py``), not by ``diagnose`` alone.
-ACTIVE = [r for r in corpus.ROWS if r.status == "active" and r.kind != "scenario"]
+# Rows with the driver ``p5b1_raw`` are driven by their owning package (P5b1: ``tests/test_provider_errors_wire.py``), not by ``diagnose`` alone.
+ACTIVE = [r for r in corpus.ROWS if r.status == "active" and r.spec.get("driver") != "p5b1_raw"]
 
 
 def _ctx(row: corpus.Row) -> contextlib.AbstractContextManager[None]:

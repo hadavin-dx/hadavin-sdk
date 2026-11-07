@@ -268,6 +268,8 @@ def _retried(
     **hooks: object,
 ) -> BaseException:
     """The error ``with_retry`` raises when ``make()`` is raised from ``call`` (the P5b1 rows run the real retry loop)."""
+    import inspect
+
     from hadavin_sdk.llm.protocol import ProviderError
     from hadavin_sdk.llm.retry import with_retry
     from tests.provider_wire_helpers import kind_hooks
@@ -275,10 +277,11 @@ def _retried(
     def call() -> None:
         raise make()
 
+    # A hook the loop does not take (``facts`` on the code before P5b1) is left out, so a row fails on an assertion, never on a TypeError.
+    accepted = inspect.signature(with_retry).parameters
+    given = {k: v for k, v in (kind_hooks(kind) | hooks).items() if k in accepted}
     try:
-        with_retry(
-            call, label=label, max_attempts=3, sleep=lambda _s: None, **(kind_hooks(kind) | hooks)
-        )  # type: ignore[arg-type]
+        with_retry(call, label=label, max_attempts=3, sleep=lambda _s: None, **given)  # type: ignore[arg-type]
     except ProviderError as e:
         return e
     raise RuntimeError("the call did not fail")
@@ -303,8 +306,12 @@ def _f_retried_bedrock(code: str, status: int, text: str) -> BaseException:
 
 
 def _f_retried_hook(variant: str) -> BaseException:
-    from hadavin_sdk.llm import provider_facts as pf
+    import importlib
 
+    try:  # the module does not exist before P5b1: the row then runs without a facts class and fails on its assertions
+        pf = importlib.import_module("hadavin_sdk.llm.provider_facts")
+    except ImportError:
+        pf = None
     facts_cls = getattr(pf, "ProviderFacts", None)
     sub = type("Sub", (facts_cls,), {}) if facts_cls is not None else object
 

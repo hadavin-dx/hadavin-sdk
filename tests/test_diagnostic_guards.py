@@ -12,12 +12,12 @@ from pathlib import Path
 import pytest
 from pydantic import TypeAdapter, ValidationError
 
+from hadavin_sdk import neverraise
 from hadavin_sdk.codes import Code, Where
 from hadavin_sdk.guard import diagnostic as dg
 
 CANARY = "canary-p5a-guard-text"
 SOURCE = Path(dg.__file__)
-SITES_FILE = Path(__file__).parent / "noqa_sites.txt"
 
 
 def _boom(exc_cls: type[BaseException]):
@@ -137,9 +137,14 @@ def test_guard_catches_and_records(
 ) -> None:
     trigger, ok = SITES[site]
     before = dg.guard_failures()
+    shared_before = neverraise.counts()
     result = trigger(monkeypatch, exc_cls)
     after = dg.guard_failures()
+    shared_after = neverraise.counts()
     assert ok(result), (site, result)
+    assert shared_after.get(f"diag_{site}", 0) == shared_before.get(f"diag_{site}", 0) + 1, (
+        "the one shared counter (hadavin_sdk.neverraise) holds the failure, not a second private one"
+    )
     assert after.get(site, 0) == before.get(site, 0) + 1, (
         "the failure is recorded once, at its own site"
     )
@@ -178,25 +183,13 @@ def _noqa_lines() -> list[tuple[int, str]]:
     ]
 
 
-def test_every_blind_except_is_one_listed_guard_with_its_reason_on_its_line() -> None:
-    lines = _noqa_lines()
-    for n, text in lines:
+def test_every_noqa_in_a_guard_file_has_the_guard_form_and_no_suppression_is_used() -> None:
+    # Which guard sits where is checked by ``tests/test_never_raise_guards.py::test_ledger_*`` (by site name, no line numbers).
+    for n, text in _noqa_lines():
         m = re.fullmatch(r"\s*except Exception:  # noqa: BLE001 - \S.*", text)
         assert m, (
             f"line {n}: a guard is `except Exception:  # noqa: BLE001 - <reason>` and nothing else"
         )
-    listed = [
-        ln
-        for ln in SITES_FILE.read_text(encoding="utf-8").splitlines()
-        if ln and not ln.startswith("#")
-    ]
-    rows = [ln.split("\t") for ln in listed]
-    assert sorted(int(r[0]) for r in rows) == [n for n, _ in lines], (
-        "noqa_sites.txt lists exactly the guard lines"
-    )
-    assert sorted(r[2] for r in rows) == sorted(
-        f"test_guard_catches_and_records[{s}]" for s in SITES
-    )
     src = SOURCE.read_text(encoding="utf-8")
     assert "suppress" not in src and "S110" not in src and "S112" not in src
     pyproject = (SOURCE.parents[3] / "pyproject.toml").read_text(encoding="utf-8")

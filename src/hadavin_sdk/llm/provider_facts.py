@@ -1,7 +1,7 @@
 """Checked facts about a failed provider call: a number in a fixed range, a word from a fixed list, a short token of a fixed shape.
 
-A fact is never free text. This module is neutral: it imports only the standard library and ``hadavin_sdk.codes`` and names no
-vendor. Every check lives in one ``clean_*`` function; the error classes (``llm/protocol.py``) and ``ProviderFacts`` both call
+A fact is never free text. This module is neutral: it imports only the standard library, ``hadavin_sdk.codes`` and
+``hadavin_sdk.neverraise`` (itself standard library only) and names no vendor. Every check lives in one ``clean_*`` function; the error classes (``llm/protocol.py``) and ``ProviderFacts`` both call
 them, so no check is written twice. An invalid value is DROPPED to ``None``; nothing here raises on a bad value.
 """
 
