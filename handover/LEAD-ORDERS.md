@@ -884,3 +884,16 @@ Order 113 already says heartbeat every 10 minutes. Gap seen: 07:50Z -> 08:02Z (1
 
 ## ORDER 129 (lead, 2026-11-07 ~08:20Z / 13:50 IST): P5b2 builder, owner asks for a status
 The P5b2 builder has been running about 90 minutes (owner's note). Do now: (1) read its last output, tell me in a HEARTBEAT line: what it is doing, the last commit time and SHA on core/P5b2, whether it is waiting on a queue slot or stuck. (2) If no commit or progress for 20 minutes: stop it, write its checkpoint note to handover/ (done/next/blockers/SHA), and restart a fresh builder from that note. 60-minute time box per builder applies (faster-builds rule): checkpoint at 30, stop at 60. (3) Push whatever head exists to origin/core/P5b2 even if WIP, so I can see it.
+
+## ORDER 130 (lead, 2026-11-07 08:35Z / 14:05 IST): decisions on q278 and q279
+PR 85 (P5b2, 26079f9) :
+1. CORPUS_STEP R3a bump + rows 005/033 + 152->154: owned by the PR 80 (P5b1) fix builder, because the pin and test_diagnostic_hostile.py are P5b1 files. Add to the PR 80 fix list. P5b2 then re-merges the P5b1 fix head (584a7af or later) and rechecks the table.
+2. BN-8 relaxation: NOT accepted as built. A trust scan that allows pickle helpers and locals is a security-path widening. Make MigrationNumberError.__init__ simple enough to pass the original BN-8 (no locals/if, no pickle); if that is truly impossible, allow only the exact named helper by AST identity with a negative test showing a different helper is refused. Report the choice.
+3. The 142 unproven-origin class judgements: part of the independent review of PR 85 (egm-design + egm-codebase-details, snapshot of the final head). The 36 mutants not rerun at the final head: rerun them at the final head before review.
+PR 70 / P1b fix batch :
+4. API breaks (scan_views(raw, value), fold_views keyword scripts): accepted, internal pre-release; list them under CHANGELOG "Changed" and fix every caller in the repo.
+5. Digit minimum 6 (values with 5 digits or fewer): accepted ONLY if it fails loud (clear error at registration, never a silent skip) and the CHANGELOG states the plain-words rule. A short value that cannot be masked must be refused, never ignored.
+6. scan_keyset up to 16 keys: accepted with the cap enforced and a test at 16 and 17.
+7. Cyrillic/Greek refusal cost (4-letter Russian 66.1% refused): accepted as fail-closed, but (a) the refusal message must tell the user what to do (use the longer form or exact-only registration), (b) re-measure false-positive and refusal rates on a modern-register corpus (news/wiki text under a permissive licence, named and dated), not only Bible text; report both, (c) keep the Cyrillic needle minimum at 10 unless the modern corpus says otherwise.
+8. PR 70 is NOT merged by me until the fix batch is verified green AND fresh round-2 reviewers pass. Do not describe it as "about to merge". P1a (PR 63) and P1b merge together only then.
+Reviews now (cloud reviewers, read-only, snapshots, diff + evidence, report in handover/reviews/<ticket>-round2/): PR 72 (4f01c6d), PR 73 (ea40242), PR 83 (e2d8971 after your targeted rerun is green), PR 85 (final head). PR 66 delta waits for its fix head. Security/money/redaction paths: no round cap.
