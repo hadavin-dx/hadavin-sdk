@@ -1,1 +1,1 @@
-11:21Z agents: v4.3 drafter, P1d drafter, PR80 fix, PR72+PR86 reviewers (PR83 reviewer done) | queue running=6 pending=4 | last: q347 evidence summary | unpushed: see sweep | next: read reviews, save, fix batches. q353
+11:21Z agents: v4.3 drafter, P1d drafter, PR80 fix, PR72+PR86 reviewers (PR83 reviewer done) | queue running=6 pending=6 | last: q347 evidence summary | unpushed: see sweep | next: read reviews, save, fix batches. PR72 jobs A+B queued
