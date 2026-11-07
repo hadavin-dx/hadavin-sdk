@@ -1,0 +1,14 @@
+bf955e98af9eda1b895b9a1e347e99f6e1ad5cb3
+DSN port 55435 (server started with PGHOST=localhost PGPORT=55435 so dblink reaches it), python 3.13, HADAVIN_REQUIRE_PINNED_UNIDATA=true
+                    )
+                return cur.execute(query, prepare=prepare)
+            else:
+                return cur.execute(query, params, prepare=prepare)
+        except e._NO_TRACEBACK as ex:
+>           raise ex.with_traceback(None)
+E           psycopg.errors.DuplicateObject: role "askdata_p2_evil" already exists
+
+../P1a-fix7-venv313/lib/python3.13/site-packages/psycopg/connection.py:304: DuplicateObject
+=========================== short test summary info ============================
+FAILED tests/demo_askdata/test_validate_harm.py::test_writing_attack_does_harm_unvalidated_and_is_refused_when_validated[create-role]
+1 failed, 11094 passed, 1 skipped, 10 xfailed in 646.04s (0:10:46)

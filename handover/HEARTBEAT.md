@@ -398,3 +398,4 @@ WHY THE P4 CHAIN IS QUEUED, NOT STARTED: it is stacked on PR 75, which the lead 
 P0t-followup | DRAFT PR 83 head 72389db, evidence green (10031 x2, 11/11 mutants) | builders running: P1a fix7, P6a-1, P5b1 | blocked on: lead review
 P6a-1 | PR 72 head 3adacac READY (merged main; 36/36 mutants with per-test table; suites 1 failure = dblink-connect, same on main) | builders running: P1a fix7, P5b1 | blocked on: lead review
 P5b1 | PR 80 DRAFT head 74ee54f (merged P5a+main; 45/45 mutants; suites 3.13/3.12 green by builder) | builders running: P1a fix7 | blocked on: lead (SqlReadError code, neverraise surface); P5a re-merge queued behind P1b merge7
+ORDER 110 nproc=4 mem=15GB: limit 2 heavy runs (heavy.sh now 2 slots); started: 6 evidence runs (order 108), 12 EGM reviewers (order 109), P1b merge7 builder | fix7 PR 63 head bf955e9 verified, q257 | blocked on: reviewers/evidence, lead

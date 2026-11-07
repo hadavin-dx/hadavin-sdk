@@ -760,6 +760,9 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | bd-P0t-followup | Sonnet builder core/P0t-followup (p0t4-001/003), port 55436 | 2026-11-07T04:45Z | RUNNING |
 | bd-P6a-1-o107 | Sonnet builder P6a-1 merge main + per-mutant tests, port 55437 | 2026-11-07T04:45Z | RUNNING |
 | bd-P5b1-o107 | Sonnet builder P5b1 merge P5a+main, 43 mutants, port 55438 | 2026-11-07T04:45Z | REPORTED q256 head 74ee54f |
-| bd-P1a-fix7 | (update) container restart stopped it at ~04:39Z; resumed 04:42Z | 2026-11-07T04:42Z | RUNNING |
+| bd-P1a-fix7 | (update) container restart stopped it at ~04:39Z; resumed 04:42Z | 2026-11-07T04:42Z | REPORTED q257 head bf955e9 |
 | bd-P0t-followup | (update) | 2026-11-07T05:05Z | REPORTED: core/P0t-followup 72389db pushed+verified, draft PR 83; evidence reviews/P0t-followup |
 | bd-P6a-1-o107 | (update) | 2026-11-07T05:20Z | REPORTED: core/P6a 3adacac pushed+verified, PR 72 ready; evidence reviews/P6a-o107 |
+| bd-P1b-merge7 | Sonnet builder P1b merge7 of P1a fix7 bf955e9, port 55460 | 2026-11-07T06:40Z | RUNNING |
+| ev-108 | evidence runner script evid.sh x6 (PR 66/73/72/70/80/83), ports 56010-56060 | 2026-11-07T06:35Z | RUNNING |
+| rv-109 | 12 EGM reviewers (design+code) for PR 66 delta/73/72/70/80/83 | 2026-11-07T06:50Z | RUNNING |

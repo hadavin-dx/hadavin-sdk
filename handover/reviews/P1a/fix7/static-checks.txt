@@ -1,0 +1,17 @@
+bf955e98af9eda1b895b9a1e347e99f6e1ad5cb3
+== ruff check
+All checks passed!
+== ruff format --check
+295 files already formatted
+== bandit -ll (venv313 of the machine)
+[manager]	WARNING	Test in comment: SafeLoader is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: subclass is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: the is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: pinned is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: bytes is not a test name or id, ignoring
+[tester]	WARNING	nosec encountered (B102), but no failed test on file src/hadavin_sdk/tools.py:389
+[tester]	WARNING	nosec encountered (B102), but no failed test on file src/hadavin_sdk/tools.py:389
+bandit exit 0
+== scan_repo
+
+scan_repo exit 0
