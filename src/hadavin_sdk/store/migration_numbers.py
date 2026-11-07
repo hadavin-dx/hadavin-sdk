@@ -57,7 +57,7 @@ STEM = re.compile(r"[0-9]{4}_[a-z0-9_]+")
 PLAIN_SCHEMA = re.compile(r"[a-z_][a-z0-9_]{0,62}")
 # One hostile name once produced thousands of problem lines: 21 problems show 20 plus "and 1 more".
 MAX_PROBLEMS_SHOWN = 20
-# The one place this command is written (the late-file message uses it; `migrate` and the CHANGELOG runbook will, in P3a-2).
+# The one place this command is written (the late-file message uses it; the CHANGELOG runbook and a test check against it).
 RECIPE_COMMAND = "psql -X -v ON_ERROR_STOP=1 -f recipe.sql"
 # The one generated psql command: with it a run WITHOUT -X still stops at the first error even when a person's startup
 # file says `\set ON_ERROR_STOP off`.
@@ -65,7 +65,7 @@ RECIPE_FIRST_LINE = "\\set ON_ERROR_STOP on"
 # The ONLY place the two limits are written. Right after BEGIN in every hand file, and in `migrate` right after its
 # advisory lock: an ALTER TABLE on a live table waits for a lock that stops every reader.
 RECIPE_TIMEOUTS = ("SET LOCAL lock_timeout = '5s';", "SET LOCAL statement_timeout = '60s';")
-# The advisory-lock key of every migrate run, `migrate._LOCK` (a later change makes that name point here).
+# The advisory-lock key of every migrate run and every hand recipe; `migrate` imports it from here as `MIGRATE_LOCK`.
 MIGRATE_LOCK = int.from_bytes(b"hadvnmig", "big") >> 1
 MIGRATIONS = Path(__file__).parent / "migrations"
 
