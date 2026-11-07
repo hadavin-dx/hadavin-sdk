@@ -965,8 +965,11 @@ def test_migrate_gives_up_waiting_for_a_table_lock_and_keeps_nothing(
         let_go = threading.Timer(WAIT_LIMIT_S, holder.rollback)
         let_go.start()
         try:
-            with pytest.raises(psycopg.errors.LockNotAvailable):
+            with pytest.raises(
+                ConfigError, match=r"applying 0006_p3a_next\.sql.*lock_timeout"
+            ) as got:
                 mig.migrate(dsn)
+            assert isinstance(got.value.__cause__, psycopg.errors.LockNotAvailable)
         finally:
             let_go.cancel()
     assert _ledger(dsn) == before
@@ -982,7 +985,7 @@ def test_migrate_stops_a_file_that_runs_past_the_statement_limit(scratch, monkey
     before = _ledger(dsn)
     monkeypatch.setattr(mig, "RECIPE_TIMEOUTS", SHORT_STATEMENT)
     _with_files(monkeypatch, tmp_path, {PLANTED_NEXT: "SELECT pg_sleep(30);\n"})
-    with pytest.raises(psycopg.errors.QueryCanceled):
+    with pytest.raises(ConfigError, match=r"applying 0006_p3a_next\.sql.*statement_timeout"):
         mig.migrate(dsn)
     assert _ledger(dsn) == before
 
@@ -1017,3 +1020,57 @@ def test_the_limits_migrate_runs_with_are_the_ones_in_the_constant(scratch, monk
     )
     _with_files(monkeypatch, tmp_path, {PLANTED_NEXT: probe(lock_t)})
     assert mig.migrate(dsn)[-1] == PLANTED_NEXT[:-4]
+
+
+@needs_pg
+def test_the_limits_also_cover_the_grant_phase_of_a_run_with_no_pending_file(scratch, monkeypatch):
+    """Review A: nothing is pending, but a role grant waits for another session's uncommitted change of the rights of a table: the run stops
+    after the lock limit, in plain words naming the step and the setting, and keeps nothing.
+    Killed by: mutants R26 (limits not set), RA1 (the error is not wrapped), RA2 (the step is not named)."""
+    dsn, _ = scratch
+    mig.migrate(dsn)
+    before = _ledger(dsn)
+    role = "p3a_rt_" + uuid.uuid4().hex[:8]
+    with psycopg.connect(dsn, autocommit=True) as db:
+        db.execute(sql.SQL("CREATE ROLE {}").format(sql.Identifier(role)))
+    monkeypatch.setattr(mig, "RECIPE_TIMEOUTS", SHORT_LOCK)
+    try:
+        with psycopg.connect(dsn) as holder:
+            # A GRANT takes no table lock; two changes of the rights of one table wait for each other, so the
+            # holder's uncommitted GRANT is what the migrate GRANT/REVOKE queues behind.
+            holder.execute(sql.SQL("GRANT SELECT ON tool_calls TO {}").format(sql.Identifier(role)))
+            let_go = threading.Timer(WAIT_LIMIT_S, holder.rollback)
+            let_go.start()
+            try:
+                with pytest.raises(ConfigError) as got:
+                    mig.migrate(dsn, runtime_role=role)
+            finally:
+                let_go.cancel()
+                holder.rollback()  # the holder's own GRANT is not kept either
+        text = str(got.value)
+        assert "checking and granting the roles" in text and "lock_timeout" in text, text
+        assert "kept nothing" in text and "Migration repair steps" in text
+        assert _ledger(dsn) == before
+        with psycopg.connect(dsn) as db:  # nothing of the grants was kept
+            assert not db.execute(
+                "SELECT has_table_privilege(%s, 'tool_calls', 'SELECT')", (role,)
+            ).fetchone()[0]
+    finally:
+        with psycopg.connect(dsn, autocommit=True) as db:
+            db.execute(sql.SQL("DROP OWNED BY {}").format(sql.Identifier(role)))
+            db.execute(sql.SQL("DROP ROLE {}").format(sql.Identifier(role)))
+
+
+@needs_pg
+def test_a_file_that_sets_a_limit_itself_changes_it_for_the_files_after_it(
+    scratch, monkeypatch, tmp_path
+):
+    """Nit A (documented): a migration file may `SET LOCAL` a limit; the new value holds for the next file of the same
+    run (a probe in the second file reads it back), so the limits are a guarantee only for files that do not set them.
+    Killed by: mutant RA3 (migrate re-sets the constant's limits after every file)."""
+    dsn, _ = scratch
+    monkeypatch.setattr(mig, "RECIPE_TIMEOUTS", SHORT_LOCK)  # statement limit 20s, lock limit 1s
+    own = "SET LOCAL statement_timeout = '11s';\n"
+    probe = "SELECT 1 / ((current_setting('statement_timeout') = '11s')::int);\n"
+    _with_files(monkeypatch, tmp_path, {PLANTED_NEXT: own, "0007_p3a_probe.sql": probe})
+    assert mig.migrate(dsn)[-2:] == ["0006_p3a_next", "0007_p3a_probe"]
