@@ -732,3 +732,6 @@ q265 | ORDERS 115/116/117.
 - Sweep of every origin/core/* branch (src, tests, tools, demos, .github) for /home/user, 127.0.0.1:55xxx/56xxx and C:\ paths: nothing from this machine is committed. Hits come from main: docker example port 55432 in demos/ask-your-data/README.md and Windows-path test inputs. No fix needed; README port is the lead's call.
 - Note: the profile itself lists paths and ports and sits in handover/ of the core/cloud-handover branch (not in src/tests/PR files). If you want it kept out of the repo entirely, say so (NEEDS LEAD, low).
 - Laptop paths in orders are not opened. Lane split accepted: I will not rerun a head that already has green evidence from either machine.
+
+## q267 (INFORM) Order 121: local builder heads pushed
+Pushed (fast-forward, non-main): core/P1b e3f946f, core/P4d 1a890b9, core/P5b1 584a7af, core/P0t-followup 347bb52, core/P3a-2 ea40242, core/P6a 4f01c6d, core/P6b1 9b153d4 (new branch, no PR). All unverified; PR 66/80/70/63 suites go to the laptop, evidence to handover/evidence/lead/. I run PR 72, 73, 83, the rest, and all mutant runs. Not yet scanned with gitleaks (doing it next). Caveat: my merge7 queue job, PR 66 queued suites and P5b1 runs still sit in my queue; I will cancel the full-suite ones for laptop PRs and keep mutants. Also still open: PR 70 body still describes 4f14ec8; PR 66/80 bodies not updated.

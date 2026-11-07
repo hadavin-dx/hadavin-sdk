@@ -412,3 +412,13 @@ ORDER 116: PR 84 core/ci-evidence opened (optional, small). P1b merge7: builder 
 06:50Z PR80 builder stopped at local 584a7af (queue starved); its mutant-measure job moved to prio 1
 06:56Z order 118 done (q266): profile pushed, sweep clean; agents 4 running, queue runner 1; merge7 job still running
 07:00Z orders 119/120: 5 market-scan agents running (A-E, output /home/user/build/market-scan/part*.md); PR66 builder reported PARTIAL (local 1a890b9, runs queued); merge7 run still going; agents running: 4 builders + 5 scan = 9; shells: 1 runner
+07:03Z ORDER 121 pushed heads (all UNVERIFIED unless a report says otherwise; commit subjects are the builders' own, not "WIP unverified"):
+- PR 70 P1b merge7: core/P1b e3f946f - needs full suite py3.13+3.12 with DSN (laptop). Mutants/perf: mine, queued.
+- PR 66 P4d: core/P4d 1a890b9 - needs full suite py3.13+3.12 with DSN (laptop).
+- PR 80 P5b1: core/P5b1 584a7af - needs full suite py3.13+3.12 with DSN (laptop); _KILL M49-M57 fragments are placeholders, builder resumed (mutant baseline failed).
+- PR 63 P1a: bf955e9 already on origin (laptop).
+- PR 83 P0t-followup: core/P0t-followup 347bb52 - mine (3 slots).
+- PR 73 P3a-2: core/P3a-2 ea40242 - mine.
+- PR 72 P6a: core/P6a 4f01c6d - mine.
+- P6b1 (new, stacked on P4a, no PR yet): core/P6b1 9b153d4 - mine; builder still running.
+- P5b2: no commits yet (head 74ee54f = P5b1 old head), not pushed.
