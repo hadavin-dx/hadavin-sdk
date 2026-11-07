@@ -1,1 +1,1 @@
-11:25Z agents: v4.3 drafter, P1d drafter, PR80 fix, PR72+PR86 reviewers (PR83 reviewer done) | queue running=6 pending=8 | last: q347 evidence summary | unpushed: see sweep | next: read reviews, save, fix batches. wake 11:25
+11:26Z agents: v4.3 drafter, P1d drafter, PR80 fix, PR72+PR86 reviewers (PR83 reviewer done) | queue running=6 pending=6 | last: q347 evidence summary | unpushed: see sweep | next: read reviews, save, fix batches. PR80 review saved
