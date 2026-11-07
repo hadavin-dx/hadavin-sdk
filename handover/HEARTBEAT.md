@@ -424,3 +424,4 @@ ORDER 116: PR 84 core/ci-evidence opened (optional, small). P1b merge7: builder 
 - P5b2: no commits yet (head 74ee54f = P5b1 old head), not pushed.
 07:03Z PR 80 P5b1: core/P5b1 b2a65ea pushed (WIP unverified: mutant baseline fixed, _KILL M49-M57 still placeholders, measure job queued) - needs full suite py3.13+3.12 with DSN (laptop). Scans B,C,E in; A,D running; B extended.
 07:05Z market-scan-1.md pushed (q268): ADOPT 9 / WRAP 16 / KEEP 12 / DROP 5; agents running: 4 builders (PR73,72,83,P6b1)+P5b2 shells 1 runner
+07:12Z order 122: 4 pass-3 scan agents running (cloud workflows, engines+n8n comparison, portals+tracing, masking+metering); merge7 pytest312/perf312 still running; PR80/73/72/83/P6b1 builders running
