@@ -18,14 +18,15 @@ from itertools import product
 from pathlib import Path
 
 import pytest
-import yaml
 
 from hadavin_sdk import app as app_mod
 from hadavin_sdk.approvals.channel import FakeChannel
 from hadavin_sdk.backends.table import DEMO_ONLY, TABLE
 from hadavin_sdk.config import ConfigError, load_config
+from tests.k5_support import _edit as _edit_file
 from tests.test_k3_pilot import ScriptedLLM
 from tests.test_k3_pilot_env import pilot_cfg
+from tests.test_stage_names import ANCHOR, KEY_SECRET
 
 REPO = Path(__file__).resolve().parent.parent
 SRC = REPO / "src" / "hadavin_sdk"
@@ -36,27 +37,19 @@ DEMOS = REPO / "demos"
 
 
 def _edit(cfg_dir: Path, fn) -> None:
-    path = cfg_dir / "config.yaml"
-    data = yaml.safe_load(path.read_text(encoding="utf-8"))
-    fn(data)
-    path.write_text(yaml.safe_dump(data), encoding="utf-8")
+    """Edit `<cfg_dir>/config.yaml` in place (the shared helper takes the file, these rows have the folder)."""
+    _edit_file(cfg_dir / "config.yaml", fn)
 
 
 def prod_cfg(tmp_path: Path) -> Path:
     """`pilot_cfg` as prod: a signer whose key comes from the secrets kind, and an anchor whose retention is agreed."""
     root = pilot_cfg(tmp_path, env="prod")
 
-    def prod(d):
-        d["backends"]["signer"] = {
-            "kind": "ed25519_local",
-            "private_key_secret_name": "audit-key",
-        }
-        d["backends"]["anchor"] = {
-            "kind": "s3_object_lock",
-            "bucket": "madeup-bucket",
-            "region": "madeup-region-1",
-            "retention_ack": True,
-        }
+    def prod(
+        d,
+    ):  # the signer and anchor dicts of test_stage_names (prod refuses a key file and an unagreed anchor)
+        d["backends"]["signer"] = dict(KEY_SECRET)
+        d["backends"]["anchor"] = ANCHOR | {"retention_ack": True}
 
     _edit(root, prod)
     return root
@@ -71,7 +64,9 @@ class _Reached(Exception):
 
 
 class _MadeSecrets:
-    """A made-up provider: answers every secret name with a made-up value built from parts."""
+    """A made-up provider that answers EVERY secret name with a made-up value built from parts. Not
+    `FakeSecretProvider`: that one raises KeyError for a name it was not given, and these rows reach `build` with
+    a config whose secret names they do not list (the patched `make` stops the build right after secrets)."""
 
     def get(self, name: str) -> str:
         return "made" + "-up-" + name
@@ -105,7 +100,8 @@ def made(monkeypatch):
     return record
 
 
-# One value per refused build keyword, not equal to its default. A new keyword with no sample fails collection.
+# One value per refused build keyword, not equal to its default. A new keyword with no sample fails
+# test_t5s (and the T5 rows that read SAMPLES), so it gets decided: a sample, or a reviewed `_LIVE_HOOKS` entry.
 SAMPLES = {
     "secrets": _MadeSecrets(),
     "channel": FakeChannel(),
@@ -119,9 +115,6 @@ REFUSED = [
     if p.kind is p.KEYWORD_ONLY
     and n not in {"tools", "sources", "hold_run_ids", "timeout_s", "allow_test_doubles"}
 ]
-assert set(REFUSED) <= set(SAMPLES), (
-    f"build keywords with no sample: {sorted(set(REFUSED) - set(SAMPLES))}"
-)
 
 
 # --- T0 ----------------------------------------------------------------------------------------------------
@@ -141,6 +134,7 @@ def test_t1a_secrets_env_is_refused_in_a_client_profile(tmp_path, env):
     with pytest.raises(ConfigError, match=f"environment {env}: refused") as err:
         load_config(root)
     assert "secrets: env" in str(err.value)
+    assert "made_up_data_only" not in str(err.value)  # the field is refused here: never advise it
 
 
 def test_t1d_a_pilot_config_that_omits_store_is_refused(tmp_path):
@@ -149,6 +143,20 @@ def test_t1d_a_pilot_config_that_omits_store_is_refused(tmp_path):
     with pytest.raises(ConfigError, match="environment pilot: refused") as err:
         load_config(root)
     assert "store: memory" in str(err.value)
+    assert "made_up_data_only" not in str(err.value)
+
+
+def test_t1e_a_demo_anchor_only_failure_does_not_advise_the_field(cfg_dir):
+    """A demo config that fails only on a COMPLIANCE anchor sends no text out: no advice about made-up data."""
+
+    def anchor_only(d):
+        d["backends"]["audit"] = {"kind": "chain"}
+        d["backends"]["anchor"] = ANCHOR | {"mode": "COMPLIANCE"}
+
+    _edit(cfg_dir, anchor_only)
+    with pytest.raises(ConfigError, match="COMPLIANCE") as err:
+        load_config(cfg_dir)
+    assert "made_up_data_only" not in str(err.value)
 
 
 # --- T2: every TABLE pair is decided -----------------------------------------------------------------------
@@ -174,10 +182,13 @@ CLIENT_REVIEWED: dict[tuple[str, str], str] = {
     ("anchor", "gcs_retention_lock"): "write-once storage the client agreed retention for",
     ("store", "postgres"): "the client's own database; the production store",
     ("audit", "chain"): "the tamper-evident audit trail; the production audit kind",
-    ("llm", "anthropic"): "a real model; masked text only; a pilot or prod config names it",
-    ("llm", "bedrock"): "a real model; masked text only; a pilot or prod config names it",
-    ("llm", "openai_compat"): "a real or self-hosted model; masked text only",
-    ("llm", "gemini"): "a real model; masked text only; a pilot or prod config names it",
+    (
+        "llm",
+        "anthropic",
+    ): "a real model; masking is the gate of P5c; a pilot or prod config names it",
+    ("llm", "bedrock"): "a real model; masking is the gate of P5c; a pilot or prod config names it",
+    ("llm", "openai_compat"): "a real or self-hosted model; masking is the gate of P5c",
+    ("llm", "gemini"): "a real model; masking is the gate of P5c; a pilot or prod config names it",
     ("detector", "regex"): "a local check; sends nothing out",
     ("detector", "llm_judge"): "uses the llm kind, so the model rules apply",
     ("detector", "bedrock_guardrail"): "a vendor screening service; demo needs made_up_data_only",
@@ -330,7 +341,9 @@ def test_t5l_a_keyword_added_later_is_refused_by_default():
 
 @pytest.mark.parametrize("environment", ["Demo", "uat", ""])
 def test_t5q_any_environment_that_is_not_demo_is_live(tmp_path, made, monkeypatch, environment):
-    """An environment value that is not a stage is live: the switch is needed there too."""
+    """An environment value that is not a stage is live: the switch is needed there too. `Config.environment` is a
+    Literal, so such a value never comes out of `load_config`; `model_copy` builds it. Defence in depth for a hand-built
+    Config, not a reachable load (mutant 47 is killed only by this synthetic state)."""
     copied = load_config(pilot_cfg(tmp_path)).model_copy(update={"environment": environment})
     monkeypatch.setattr(app_mod, "load_config", lambda _dir: copied)
     with pytest.raises(ConfigError, match="allow_test_doubles") as err:
@@ -375,6 +388,12 @@ def test_t5p_the_live_hooks_are_exactly_two_parameters_of_build():
     hooks = app_mod._LIVE_HOOKS
     assert set(hooks) == {"hold_run_ids", "timeout_s"}
     assert set(hooks) <= set(inspect.signature(app_mod.build).parameters)
+
+
+def test_t5s_every_refused_keyword_has_a_sample():
+    assert set(REFUSED) <= set(SAMPLES), (
+        f"build keywords with no sample: {sorted(set(REFUSED) - set(SAMPLES))}"
+    )
 
 
 # --- T7: a demo config that sends text out must say it holds only made-up data -------------------------------
@@ -438,12 +457,7 @@ def test_t7d_three_refusals_come_in_one_error(cfg_dir):
         d["backends"]["llm"] = {"kind": "openai_compat", **LLM_SETTINGS["openai_compat"]}
         d["backends"]["detector"] = [GUARDRAIL]
         d["backends"]["audit"] = {"kind": "chain"}
-        d["backends"]["anchor"] = {
-            "kind": "s3_object_lock",
-            "bucket": "madeup-bucket",
-            "region": "madeup-region-1",
-            "mode": "COMPLIANCE",
-        }
+        d["backends"]["anchor"] = ANCHOR | {"mode": "COMPLIANCE"}
 
     _edit(cfg_dir, many)
     with pytest.raises(ConfigError, match="made_up_data_only") as err:
@@ -465,7 +479,9 @@ def test_t7e_the_field_is_refused_in_pilot_and_prod(tmp_path):
 
 @pytest.mark.parametrize("environment", ["Demo", "uat", ""])
 def test_t7f_the_field_is_refused_in_any_environment_that_is_not_demo(tmp_path, environment):
-    """A copied config whose environment is not a stage is live, so it may not say it holds made-up data."""
+    """A copied config whose environment is not a stage is live, so it may not say it holds made-up data. Such a value
+    never comes out of `load_config` (Literal); `model_copy` builds it. Defence in depth, not a reachable load (mutant
+    50 is killed only by this synthetic state)."""
     copied = load_config(pilot_cfg(tmp_path)).model_copy(
         update={"environment": environment, "made_up_data_only": True}
     )
@@ -476,3 +492,19 @@ def test_t7f_the_field_is_refused_in_any_environment_that_is_not_demo(tmp_path, 
 def test_t7g_the_field_still_loads_in_demo(cfg_dir):
     _edit(cfg_dir, lambda d: d.update(made_up_data_only=True))
     assert load_config(cfg_dir).made_up_data_only is True
+
+
+@pytest.mark.parametrize("value", ["yes", 1])
+def test_t7h_a_bool_like_value_is_read_as_for_every_other_bool_field(cfg_dir, value):
+    """made_up_data_only follows pydantic's usual bool rules, as `allow_insecure_loopback` does: "yes" and 1 read
+    as True. Pinned so a change to strict reading is a decision (mutant 54 is killed here)."""
+    _edit(cfg_dir, lambda d: d.update(made_up_data_only=value))
+    assert load_config(cfg_dir).made_up_data_only is True
+
+
+@pytest.mark.parametrize("value", ["maybe", None, [True]], ids=["word", "null", "list"])
+def test_t7i_a_value_that_is_not_a_bool_is_refused_at_load(cfg_dir, value):
+    """A null or a list is not a yes: the config does not load (mutant 55, `bool | None`, is killed here)."""
+    _edit(cfg_dir, lambda d: d.update(made_up_data_only=value))
+    with pytest.raises(ConfigError, match="made_up_data_only"):
+        load_config(cfg_dir)

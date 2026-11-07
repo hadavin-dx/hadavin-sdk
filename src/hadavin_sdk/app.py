@@ -105,7 +105,8 @@ def build(
     replace one configured backend (tests) and, except the live hooks, are refused in pilot and prod unless
     allow_test_doubles=True (an accident guard, not a lock); `secrets` replaces the configured provider for both
     the executor and the backends' own secrets. Missing or shared secret names fail here, before the first run."""
-    given = dict(locals())  # the keyword values as passed, before anything below rebinds them
+    # The keyword values as passed. This must stay the FIRST statement: a later one would see rebound names.
+    given = dict(locals())
     cfg = load_config(config_dir)
     live = is_live(cfg.environment)
     # Before any backend is built, so a refusal reads no secret, opens no connection and no folder. Only the
