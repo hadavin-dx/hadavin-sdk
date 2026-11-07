@@ -591,3 +591,18 @@ def test_every_id_field_in_the_package_goes_through_the_check():
             defines_types=path == SRC / "config.py",
         )
     assert not problems, "\n".join(problems)
+
+
+def test_the_refused_words_are_exactly_these_twenty_nine():
+    """A literal list, written out here and not read from the code: a word dropped from or added to commonwords.py or
+    STAGE_WORDS is seen (the other tests walk the code's own lists, so they cannot see it). Kills T28, T28b, T28c.
+    Words the stage scan looks for are built from parts."""
+    expected = {
+        "admin", "api", "app", "db", "debug", "default", "error", "false", "info", "local", "main",
+        "master", "none", "null", "public", "root", "sta" + "ge", "sta" + "ging", "true", "user", "users", "web",
+        "d" + "ev", "de" + "mo", "pi" + "lot", "pr" + "od", *NEW_WORDS,
+    }  # fmt: skip
+    assert len(expected) == 29
+    assert set(REFUSED_ID_WORDS) == expected, (
+        f"the refused words differ from the expected list: {sorted(set(REFUSED_ID_WORDS) ^ expected)}"
+    )

@@ -36,8 +36,14 @@ def test_the_changelog_states_what_is_and_is_not_masked_for_pilot_and_demo():
     ]
     for sentence in sentences:
         assert sentence in text, sentence
-    assert "a demo database" not in text.lower(), (
-        "one word, one meaning: the stage is called demo-stage"
+    # Order 126 worded the repair as "demo-stage database"; order 132 added "databases of the demo repos". The split is
+    # deliberate (the repair entry names both groups); the id entry says "including the databases of the demo repos".
+    # Only the bare phrase that blurs the two groups is refused here, in the repair entry.
+    repair = next(
+        p for p in text.split("\n") if p.lstrip().startswith("- **Repair every demo-stage database")
+    )
+    assert not re.search(r"\b(?:a|the) demo database", repair.lower()), (
+        "say demo-stage database or demo repo database"
     )
 
 
@@ -57,17 +63,14 @@ def test_the_changelog_states_the_id_rule_its_words_and_its_limit():
 
 
 def test_the_changelog_lists_every_refused_word():
-    """The 29 words in the CHANGELOG are the words the code refuses, no more and no fewer. Kills T17b/T19 on the
-    CHANGELOG side (a word added to the list in code and not described)."""
+    """The 29 words in the CHANGELOG are the words the code refuses, no more and no fewer.
+    The stage mutant runner cannot run this file (it does not copy the root CHANGELOG, and tools/mutation_runner.py is a
+    byte copy that the demo repos pin by hash); a dropped word is killed by the literal list in tests/test_tenant_ids.py."""
     from hadavin_sdk.stages import REFUSED_ID_WORDS
 
     text = unreleased()
     entry = next(p for p in text.split("\n") if p.startswith("- **An id may not be a stage word"))
-    listed = set(
-        re.findall(
-            r"`([a-z]+)`", entry.split("compared in any spelling:")[1].split(". They are")[0]
-        )
-    )
+    listed = set(re.findall(r"`([a-z]+)`", entry.split("as an id,")[1].split(". They are")[0]))
     assert listed == set(REFUSED_ID_WORDS)
     assert f"refuses these {len(REFUSED_ID_WORDS)} words" in entry
 
@@ -96,6 +99,7 @@ def test_the_entries_added_by_this_change_are_each_at_most_a_thousand_characters
         "- **Why an id may not be",
         "- **Stage scan:",
         "- **Limits of the id check.",
+        "- **What the id check does not refuse.",
     )
     lines = unreleased().split("\n")
     for prefix in prefixes:
@@ -103,3 +107,26 @@ def test_the_entries_added_by_this_change_are_each_at_most_a_thousand_characters
         assert found, f"no entry starts with {prefix!r}"
         for ln in found:
             assert len(ln) <= 1000, f"{len(ln)} characters: {ln[:60]}"
+
+
+def test_the_changelog_short_and_odd_ids_match_the_code():
+    """The not-refused entry says a 2-character id is refused only if listed (`db`), and that a control character or a
+    space inside an id is not refused. Each claim is checked against check_id."""
+    import pytest
+
+    from hadavin_sdk.stages import check_id
+
+    entry = next(
+        p
+        for p in unreleased().split("\n")
+        if p.startswith("- **What the id check does not refuse.")
+    )
+    assert "`db` is on the list and is refused" in entry
+    assert "An id of 1 or 2 characters that is not on the list (`xy`;" in entry
+    for text in ("category Cc", "`de\\x00mo`, `d emo`"):
+        assert text in entry, text
+    with pytest.raises(ValueError):
+        check_id("db")
+    assert check_id("xy") == "xy"
+    assert check_id("de\x00mo") == "de\x00mo"
+    assert check_id("d emo") == "d emo"
