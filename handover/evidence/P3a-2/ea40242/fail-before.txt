@@ -1,0 +1,52 @@
+HEAD ea402429072e3f1396eb9e7e9258f605d1002930
+FAIL-BEFORE: old code and old CHANGELOG at 63658aa with only these test files copied in from the final head: tests/test_migration_rules.py tests/test_migration_postgres.py tests/test_migration_numbers_guards.py tests/test_migration_names.py tests/fixtures/runbook.py
+import path: <build-dir>/o111/fb/src/hadavin_sdk/__init__.py
+FAILED tests/test_migration_rules.py::test_the_changelog_names_the_false_name_where_a_person_who_followed_the_old_note_looks
+FAILED tests/test_migration_rules.py::test_the_changelog_keeps_a_repair_path_for_an_early_evidence_table
+FAILED tests/test_migration_rules.py::test_a_drop_is_advised_in_one_place_only_and_never_for_the_evidence_tables_of_a_live_database
+FAILED tests/test_migration_rules.py::test_case_c_says_a_released_file_cannot_be_renumbered
+FAILED tests/test_migration_rules.py::test_case_a_failure_wording_and_the_hand_written_fallback
+FAILED tests/test_migration_rules.py::test_the_rename_refusal_points_to_the_runbook_case_b
+FAILED tests/test_migration_rules.py::test_the_migrate_docstring_counts_what_it_reads_back
+FAILED tests/test_migration_rules.py::test_the_runbook_carries_the_real_lock_the_command_and_every_case
+FAILED tests/test_migration_postgres.py::test_runbook_case_b_renames_the_old_notes_row_back_and_migrate_accepts_it
+FAILED tests/test_migration_postgres.py::test_runbook_case_b_also_repairs_an_early_table_in_the_same_file
+FAILED tests/test_migration_postgres.py::test_runbook_case_b_keeps_nothing_when_an_evidence_table_is_missing
+FAILED tests/test_migration_postgres.py::test_runbook_case_g_adds_the_missing_error_column_and_keeps_every_row
+FAILED tests/test_migration_postgres.py::test_runbook_case_g_keeps_nothing_when_the_tables_differ_in_more_than_error
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT pg_write_all_data TO {n}-app$on]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT pg_write_all_data TO {n}-on$x]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT pg_write_all_data TO {n}-a$on$b]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT pg_write_all_data TO {n}-x$on$]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT r TO {n}-app$on]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT r TO {n}-on$x]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT r TO {n}-a$on$b]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT r TO {n}-x$on$]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT {n} TO s-app$on]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT {n} TO s-on$x]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT {n} TO s-a$on$b]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT {n} TO s-x$on$]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[REVOKE r FROM {n}-app$on]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[REVOKE r FROM {n}-on$x]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[REVOKE r FROM {n}-a$on$b]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[REVOKE r FROM {n}-x$on$]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[REVOKE {n} FROM s-app$on]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[REVOKE {n} FROM s-on$x]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[REVOKE {n} FROM s-a$on$b]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[REVOKE {n} FROM s-x$on$]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT r\nTO {n}-app$on]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT r\nTO {n}-on$x]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT r\nTO {n}-a$on$b]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT r\nTO {n}-x$on$]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[/* on */ GRANT r TO {n} -- on-app$on]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[/* on */ GRANT r TO {n} -- on-on$x]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[/* on */ GRANT r TO {n} -- on-a$on$b]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[/* on */ GRANT r TO {n} -- on-x$on$]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT r TO {n}, "on"-app$on]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT r TO {n}, "on"-on$x]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT r TO {n}, "on"-a$on$b]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT r TO {n}, "on"-x$on$]
+FAILED tests/test_migration_names.py::test_every_short_name_over_the_dollar_alphabet_is_refused_in_a_role_grant
+FAILED tests/test_migration_names.py::test_the_word_boundary_is_used_only_where_a_match_refuses
+FAILED tests/test_migration_names.py::test_the_name_boundary_agrees_with_the_lexer_character_set
+48 failed, 175 passed in 3.90s
