@@ -24,7 +24,7 @@ from hadavin_sdk import stats
 from hadavin_sdk.codes import Code
 from hadavin_sdk.errors import ConfigError
 
-CORPUS_STEP: Final = "R3a"  # last redesign step merged; each P5b pull request bumps it
+CORPUS_STEP: Final = "R1P"  # last redesign step merged; each P5b pull request bumps it
 STEPS: Final = (
     "R1",
     "R1P",
