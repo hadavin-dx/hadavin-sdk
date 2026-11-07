@@ -1012,3 +1012,9 @@ RESULT, lead runs egm-resolve on the plan reviews:
 T1/T2 (branch core/T1-T2-tests, e00a047, no PR): REAL FINDING: main meter (Limits.blocked then Limits.charge, no reserve/settle) admitted 50 of 50 parallel callers at cap 2.00, call 1.00 (4 tests fail on purpose, not xfail). Sequential admits ceil(cap/cost), so "at most floor(cap/worst-case)" holds only if cap is a multiple of the call cost. T2 on the spend ledger passes (6 min/25 h/31 d, fake clock). Mutants NOT RUN yet (queued prio 3). Postgres store not covered; no AK-G2 receipt ledger on main, so receipt replay not tested.
 P1b r5 py3.13 at b48630d: 215 of 216 mutants killed, 1 SURVIVES ('insertion: a window that agrees to the end is not a match'), inner rc=1; stage mutants rc=0. py3.12 still running. Builder told to fix at the test and requeue. Not pushed to core/P1b.
 PR72: batch committed locally (84bc5d5, StrictBool fields + rewritten tests; old-code proof 40 of 49 / 49 of 49 failing). NOT pushed; o140 evidence queued behind other jobs.
+
+## q336 (10:28Z) ORDER 142 acted on
+- PR72 84bc5d5 pushed to core/P6a (0 0). Unpushed check across my builder worktrees: only core/P3a-2 7ed4c10 (PR73 batch, mid-work) was on no remote; pushed to core/P3a-2-wip. Others on a remote branch. Dirty uncommitted files exist in P3a-2 (builder working).
+- A9 drafter (Opus) started for plan-v4-2.md with items (a)-(e) of order 142 plus the round-2 findings. Review follows when it reports (fresh reviewers; resolve is yours).
+- P1b: survivor fixed at the test in d28d2bc (core/P1b-fixwip, pushed). r5 py3.12 chain at b48630d killed (superseded; DECISIONS.md); r6 chains at d28d2bc queued prio 1 (tree /home/user/build/P1b-o140). NOT yet verified: r6 results.
+- T1 mutants queued at prio 3 (not run yet). The T1 statement in the plan is part of the A9 drafter's brief.
