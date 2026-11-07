@@ -545,7 +545,7 @@ def _psql(schema: str, tmp_path: Path, *steps: str):
     return _psql_text(tmp_path, rb.hand_file(schema, *steps))
 
 
-def _psql_text(tmp_path: Path, text: str, env_extra: dict | None = None):
+def _psql_text(tmp_path: Path, text: str, env_extra: dict | None = None, stop_flag: bool = True):
     """Run `text` (a whole hand file) with the psql command of the runbook; never raises on a failed file."""
     assert shutil.which("psql"), "psql is needed for the runbook tests (HADAVIN_TEST_PG_DSN is set)"
     parts = conninfo_to_dict(DSN)
@@ -567,14 +567,25 @@ def _psql_text(tmp_path: Path, text: str, env_extra: dict | None = None):
         "-v",
         "ON_ERROR_STOP=1",
     ]  # the rule of the runbook, written out below
+    run = {
+        "check": False,
+        "cwd": tmp_path,
+        "env": env,
+        "capture_output": True,
+        "text": True,
+        "timeout": 60,
+    }
+    if stop_flag:
+        return subprocess.run(
+            ["/usr/bin/env", "psql", "-X", "-v", "ON_ERROR_STOP=1", "-f", "hand.sql"],
+            check=False,
+            **run,
+        )
+    # the person forgot `-v`: only the file's own first line stops psql
     return subprocess.run(
-        ["/usr/bin/env", "psql", "-X", "-v", "ON_ERROR_STOP=1", "-f", "hand.sql"],
+        ["/usr/bin/env", "psql", "-X", "-v", "ON_ERROR_STOP=0", "-f", "hand.sql"],
         check=False,
-        cwd=tmp_path,
-        env=env,
-        capture_output=True,
-        text=True,
-        timeout=60,
+        **run,
     )
 
 
@@ -764,6 +775,28 @@ def test_h4_a_recipe_that_fails_half_way_leaves_nothing(scratch, monkeypatch, tm
     assert done.returncode != 0 and "division by zero" in done.stderr, done.stderr
     assert _ledger(dsn) == [r for r in REAL if r != "0004_audit_checkpoint_meta"]
     assert _sql(dsn, "SELECT count(*) FROM audit_checkpoints WHERE seq = 7") == [(0,)]
+
+
+@needs_pg
+def test_the_recipe_stops_at_the_first_error_even_without_the_stop_flag(
+    scratch, monkeypatch, tmp_path
+):
+    """The recipe's own first line `\\set ON_ERROR_STOP on` does the stopping when the person forgets `-v`: psql exits
+    with an error code instead of 0 (without the line it carries on and exits 0 although a statement failed).
+    Killed by: mutant R15 (the first line removed)."""
+    dsn, _ = scratch
+    _apply_by_hand(dsn, [s for s in REAL if s != "0004_audit_checkpoint_meta"])
+    planted = tmp_path / "0004_p3a_late_fail.sql"
+    planted.write_text("SELECT 1 / 0;\n", encoding="utf-8")
+    files = [p for p in mig._migration_files() if p.stem != "0004_audit_checkpoint_meta"] + [
+        planted
+    ]
+    monkeypatch.setattr(mig, "_migration_files", lambda: files)
+    with pytest.raises(MigrationNumberError) as e:
+        mig.migrate(dsn)
+    done = _psql_text(tmp_path, _recipe_of(str(e.value)), stop_flag=False)
+    assert done.returncode != 0 and "division by zero" in done.stderr, done.stderr
+    assert "0004_p3a_late_fail" not in _ledger(dsn)
 
 
 @needs_pg
