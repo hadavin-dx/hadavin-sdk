@@ -95,7 +95,10 @@ class Rig:
 
 def test_gate_arithmetic_matches_the_amendments():
     th = Thresholds()
-    v = lambda x, n, hz=0: evalrun.verdict_for(x, n, hz, th)
+
+    def v(x, n, hz=0):
+        return evalrun.verdict_for(x, n, hz, th)
+
     assert v(0, 29)[0] == "green" and round(v(0, 29)[1], 4) == 0.0981
     assert v(0, 28)[0] == "amber" and round(v(0, 28)[1], 4) == 0.1015
     assert v(0, 30)[0] == "green" and v(0, 35)[0] == "green"

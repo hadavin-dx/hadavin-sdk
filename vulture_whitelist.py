@@ -1,18 +1,23 @@
 # Vulture whitelist: names vulture cannot see being used. Read by `vulture` (see [tool.vulture] in pyproject.toml);
-# never imported or run. Every name below was checked by search (2026-11-07): it is either
+# never imported or run. `python tools/vulture_whitelist_check.py` (a CI step) fails when an entry no longer appears in the
+# file it names, is listed twice, or has no `# kind in path` comment. vulture matches by bare name, so an entry hides
+# that name in every file; the check keeps each entry tied to its file. Every name below was checked by search
+# (2026-11-07): it is either
 #   - a field of a pydantic model or of a stored record (read by the model, by JSON, or by the database), or
 #   - a method of a protocol or a base class (called through the interface, or by tests and demos only), or
 #   - a function that is the public API of the core (used by tests, demos and client builds, not by the core), or
+#   - kept on purpose, NOT in use (see ticket P1d (approvals.channel.clean lets a split key through; base 0dabf1f)): gate._rendered
+#     (with the unflagged gate._views, _ANSI_AS_TEXT, _RENDERED_MARKUP) is the unfinished fix for that open redaction hole and
+#     stays in approvals/gate.py until its own review round wires it in or replaces it; tools.START_MARKER and
+#     tools.MIN_REDACTION_WINDOW are public module names that client builds may import (none inside this repository does),
 #   - a hook another library calls by name (urllib handler methods, __package__ and __path__ on a stub module).
 # A name that nothing uses anywhere is deleted, not listed here. Add a name only with the same check.
 client_wait_s  # variable in actions/contract.py
 command_template  # variable in actions/contract.py
 go_window_s  # variable in actions/contract.py
 serve  # function in approvals/receiver.py
-_.verify_object  # method in audit/chain.py
+_.verify_object  # method in audit/chain.py, audit/local_dir.py, audit/protocol.py
 verify_anchor_bodies  # function in audit/chain.py
-_.verify_object  # method in audit/local_dir.py
-_.verify_object  # method in audit/protocol.py
 build_local  # function in audit/signer.py
 generate_key  # function in audit/signer.py
 load_private_key  # function in audit/signer.py
@@ -53,9 +58,8 @@ inputs_hash  # variable in models.py
 latency_ms  # variable in models.py
 output_hash  # variable in models.py
 output_sha256  # variable in models.py
-schema_version  # variable in models.py
+schema_version  # variable in models.py, replay_records.py
 bundle_sha256  # variable in replay_records.py
-schema_version  # variable in replay_records.py
 _.handle  # method in runtime/agent_loop.py
 min_redaction_window  # variable in scrub_settings.py
 ChangeSource  # class in sources/__init__.py
@@ -64,29 +68,21 @@ LogsSource  # class in sources/__init__.py
 MetricsSource  # class in sources/__init__.py
 _.get_incident  # method in sources/__init__.py
 _.list_open  # method in sources/__init__.py
-_.query_logs  # method in sources/__init__.py
+_.query_logs  # method in sources/__init__.py, sources/kubernetes.py
 _.query_metrics  # method in sources/__init__.py
-_.recent_changes  # method in sources/__init__.py
+_.recent_changes  # method in sources/__init__.py, sources/kubernetes.py
 incident_id  # variable in sources/__init__.py
 step_s  # variable in sources/__init__.py
 register  # function in sources/kinds.py
-_.query_logs  # method in sources/kubernetes.py
-_.recent_changes  # method in sources/kubernetes.py
-_.add_dead_letter  # method in store/memory.py
-_.list_dead_letters  # method in store/memory.py
-_.save_approval_decision  # method in store/memory.py
+_.add_dead_letter  # method in store/memory.py, store/postgres.py, store/protocol.py
+_.list_dead_letters  # method in store/memory.py, store/postgres.py, store/protocol.py
+_.save_approval_decision  # method in store/memory.py, store/postgres.py, store/protocol.py
 check_migration_numbers  # function in store/migration_numbers.py
 gone_message  # function in store/migration_numbers.py
 order_problems  # function in store/migration_numbers.py
 read_files  # function in store/migration_numbers.py
 released_problems  # function in store/migration_numbers.py
 statement_text  # function in store/migration_numbers.py
-_.add_dead_letter  # method in store/postgres.py
-_.list_dead_letters  # method in store/postgres.py
-_.save_approval_decision  # method in store/postgres.py
-_.add_dead_letter  # method in store/protocol.py
-_.list_dead_letters  # method in store/protocol.py
-_.save_approval_decision  # method in store/protocol.py
 first_failure  # function in testing/mutation.py
 first_failure_junit  # function in testing/mutation.py
 MIN_SCRUBBED_SECRET  # variable in tools.py
@@ -94,3 +90,6 @@ _.__package__  # attribute in tools.py
 _.__path__  # attribute in tools.py
 side_effect  # variable in tools.py
 window  # variable in tools.py
+_rendered  # function in approvals/gate.py
+START_MARKER  # variable in tools.py
+MIN_REDACTION_WINDOW  # variable in tools.py

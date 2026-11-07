@@ -264,12 +264,27 @@ jobs:
         run: uv sync --locked --no-build --all-extras --group test --group lint
       - name: Types (mypy)
         run: mypy
+      - name: The mypy rollout list only shrinks (ratchet)
+        run: python tools/mypy_ratchet.py
       - name: Import contracts (import-linter)
         run: PYTHONPATH=demos/ask-your-data lint-imports
       - name: Declared and imported dependencies agree (deptry)
         run: deptry .
       - name: Dead code (vulture)
         run: vulture
+      - name: Every vulture whitelist entry still exists where it says
+        run: python tools/vulture_whitelist_check.py
+      - name: No GPL, LGPL or AGPL package in the locked set (reads each package's own metadata)
+        run: |
+          uv export --locked --all-extras --group test --group lint --no-hashes --no-emit-project \
+            | sed -E 's/ *;.*//' > "$RUNNER_TEMP/locked.txt"
+          python tools/licence_check.py "$RUNNER_TEMP/locked.txt" tools/licence_exceptions.txt
+      - name: The ruff version in pyproject and in the pre-commit hook agree
+        run: |
+          pin=$(grep -oE '"ruff==[0-9.]+"' pyproject.toml | head -1 | tr -dc '0-9.')
+          hook=$(grep -oE 'rev: [0-9a-f]{40} +# v[0-9.]+' .pre-commit-config.yaml | grep -oE 'v[0-9.]+$' | tr -d v)
+          echo "pyproject ruff=$pin, pre-commit hook=$hook"
+          test -n "$pin" && test "$pin" = "$hook"
       - name: Workflow syntax and expressions (actionlint, checksum-verified binary)
         run: |
           curl -sSfL --proto "=https" --tlsv1.2 -o "$RUNNER_TEMP/actionlint.tgz" \

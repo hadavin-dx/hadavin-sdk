@@ -66,6 +66,7 @@ P13 in the verifier; the report says when it fired.
 
 from __future__ import annotations
 
+import html
 import re
 
 from markdown_it import MarkdownIt
@@ -192,6 +193,8 @@ _INVISIBLE = re.compile(
 _INVISIBLE_IN_NAME = re.compile(
     r"(?<=[A-Za-z0-9_.:/@\-])" + _INVISIBLE.pattern + r"(?=[A-Za-z0-9_.:/@\-])"
 )
+# A terminal escape written out as text - argparse's repr() of an argument: `'\x1b[2JAKIA...'`.
+_ANSI_AS_TEXT = re.compile(r"(?:\\x1[bB]|\\033|\\[eE]|\\u001[bB])\[[0-?]*[ -/]*[@-~]")
 
 
 def normalise(text: str) -> str:
@@ -200,6 +203,27 @@ def normalise(text: str) -> str:
     from link removal and the gate itself then joined it into a live link, and `AKIA<ZWSP>...` passed G5 and
     went out whole (eighth review, 2026-10-01)."""
     return _INVISIBLE_IN_NAME.sub("", strip_controls(strip_ansi(text)))
+
+
+# Emphasis, strike and code markers. Not `_`: a key split by it is whole as written already (`\w` holds it).
+_RENDERED_MARKUP = re.compile(r"[*~`]")
+
+
+def _views(text: str) -> set[str]:
+    """Every way a reader may see `text`: as written; without escape sequences (a space where one glued two words,
+    and also written out as text); without control characters; and without any invisible character. A key split
+    by one of them is whole in some view, and a key the removal glues to a letter is bounded in another (ninth
+    review: checking only the normalised text sent `x<BEL>AKIA...` whole)."""
+    views = {text, strip_ansi(text), _ANSI_AS_TEXT.sub(" ", text)}
+    views |= {strip_controls(v) for v in views}
+    views |= {_INVISIBLE.sub("", v) for v in views}
+    return views
+
+
+def _rendered(views: set[str]) -> set[str]:
+    """As a renderer shows them (register R9-O1): Slack and Markdown consume emphasis, strike and code markers and
+    decode entities, so `AKIA**IOSFODNN7...**` and `AKIA&amp;...` show a key joined that no view held whole."""
+    return {_RENDERED_MARKUP.sub("", html.unescape(v)) for v in views}
 
 
 def _defang_outside_code(line: str) -> str:

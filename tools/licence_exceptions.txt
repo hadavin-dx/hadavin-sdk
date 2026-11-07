@@ -1,0 +1,5 @@
+# Packages in the locked set that declare a copyleft licence and are allowed to stay until the owner decides. One name
+# per line, then the reason. Adding a line needs the owner's written yes (studio rule); the check fails on any other.
+pglast        # GPL-3.0-or-later; `test` group only, never imported by src/ (the comparison test is skipped without it). On main before this branch.
+psycopg       # LGPL-3.0-only; the `pg` and `askdata` extras, used as a separately installed library, unmodified. On main before this branch.
+psycopg-binary  # LGPL-3.0-only; the compiled part of psycopg[binary]. On main before this branch.

@@ -72,30 +72,56 @@ extend-exclude = ["vulture_whitelist.py"]  # not Python to run: names for vultur
 src = ["src", "tests", "demos"]
 
 [tool.ruff.lint]
-# `select` is spelled out (the rules `extend-select` used to add to ruff's default F): with `extend-select` alone ruff 0.17.1 does not
-# report RUF100 for noqa codes of rules that are not enabled (measured: 0 findings against 158 with `select`).
+# `select` is spelled out and restates ruff's own default first (E4, E7, E9, F: syntax and I/O errors, bare except,
+# comparisons to None/True, lambda assignment, ambiguous names, undefined and unused names), then W (whitespace; 0
+# findings, kept so it stays 0). With `extend-select` alone ruff 0.17.1 does not report RUF100 for noqa codes of
+# rules that are not enabled (measured: 0 findings against 158 with `select`), so the whole list is explicit.
 select = [
-    "F",
+    "E4", "E7", "E9", "F", "W",
     "B", "DTZ", "I", "S", "TID", "UP",
     # Order 144 (2026-11-07): bug-finding and simplification rules (38 findings on main in src/), plus unused noqa.
     "C4", "SIM", "PERF", "ASYNC", "RET", "PIE", "LOG", "FURB", "PGH", "RSE", "SLOT", "FLY", "YTT",
     "PLE", "PLW", "PLC", "RUF100",
 ]
-# Off by design, everywhere (a rule switched off, not a per-file ignore):
-# - PLC0415 (import outside top level): 19 in src/ and 430 in tests/ are lazy on purpose: an optional extra imported
-#   inside try/except ImportError (anthropic's google-auth, postgres' aws auth, the re compiler), the cli and config
-#   keeping start-up and the secret-holder boundary small, and imports that break a cycle. Moving them to the top
-#   would make an optional extra required.
-# - SIM112 (capitalized environment variable): Windows names its folder variable `SystemRoot`, and the mutation
-#   runner tests set it under that name on every platform; the uppercase spelling does not find it on Linux.
-ignore = ["PLC0415", "SIM112"]
+# No rule is switched off for the whole repository. The two selected rules that some files must break (PLC0415 and
+# SIM112) are exempted by file name below, each with its reason.
 
 [tool.ruff.lint.flake8-tidy-imports]
 # Absolute imports only: the import rules in tests/ read module names, and a relative import hides one.
 ban-relative-imports = "all"
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["S101"]
+"tests/**" = [
+    "S101",
+    # PLC0415 (import not at top of file): tests import inside the test so one broken module fails one test, not the
+    # whole collection; 430 findings, kept lazy on purpose.
+    "PLC0415",
+]
+# PLC0415 in code under src/ and demos/ is lazy on purpose, file by file: an optional extra imported inside
+# try/except ImportError (anthropic: google-auth; postgres: the aws auth helper; htmlexport/validate: demo extras), a
+# platform module (meter: msvcrt/fcntl), a private stdlib module with a guard (redact: re._compiler), the command line
+# and the config keeping start-up and the secret-holder boundary small (cli, config), and imports that break a cycle
+# (channel, chain, report, tick). Moving them to the top would make an optional extra required or create a cycle.
+"src/hadavin_sdk/approvals/channel.py" = ["PLC0415"]
+"src/hadavin_sdk/audit/chain.py" = ["PLC0415"]
+"src/hadavin_sdk/cli.py" = ["PLC0415"]
+"src/hadavin_sdk/config.py" = ["PLC0415"]
+"src/hadavin_sdk/guard/redact.py" = ["PLC0415"]
+"src/hadavin_sdk/k1b/report.py" = ["PLC0415"]
+"src/hadavin_sdk/llm/anthropic.py" = ["PLC0415"]
+"src/hadavin_sdk/runtime/tick.py" = ["PLC0415"]
+"src/hadavin_sdk/store/postgres.py" = ["PLC0415"]
+"demos/ask-your-data/askdata/cli.py" = ["PLC0415"]
+"demos/ask-your-data/askdata/htmlexport.py" = ["PLC0415"]
+"demos/ask-your-data/askdata/meter.py" = ["PLC0415"]
+"demos/ask-your-data/askdata/validate.py" = ["PLC0415"]
+# SIM112 (capitalized environment variable): Windows names its folder variable `SystemRoot`; the mutation runner and
+# its test set it under that name on every platform, and the uppercase spelling does not find it on Linux.
+"tools/mutation_runner.py" = ["SIM112"]
+"tests/test_mutation_runner.py" = ["SIM112"]
+# S603 (subprocess call): the ratchet runs mypy with a fixed argv (our own interpreter, no shell, a temp config path we
+# wrote). It must not `import mypy`: deptry reads that as a dev dependency used in shipped code (DEP004).
+"tools/mypy_ratchet.py" = ["S603"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -224,41 +250,50 @@ ignore_names = ["model_config", "do_POST", "do_GET", "log_message", "http_open",
 known_first_party = ["hadavin_sdk", "askdata"]
 
 [tool.mypy]
-# Basic mode (mypy's default strictness) on the shipped package, rolled out file by file: the files below still have
-# findings (79 on 2026-11-07, written up as ledger rows in the pull request), so mypy does not check them yet and
-# follow_imports=silent keeps their findings out of the clean files' report. Delete a line when its file is fixed;
-# the list only shrinks. tests, demos and tools are not checked yet.
+# Basic mode (mypy's default strictness) on the shipped package, rolled out module by module. The modules listed in the
+# override at the end still have findings (79 in 28 files on 2026-11-07; counted with the stubs installed, and the
+# same 79 on main's src). They ARE read, so their types help the clean files, but their own findings are not
+# reported. The list is a ratchet: `python tools/mypy_ratchet.py` fails when a listed module is clean or missing
+# (delete its line) and when an unlisted module has a finding. It is ordered by risk, highest first, so the order of
+# work is top to bottom. tests, demos and tools are not checked yet.
 files = ["src"]
 python_version = "3.12"
 plugins = ["pydantic.mypy"]
 follow_imports = "silent"
-exclude = [
-    "^src/hadavin_sdk/actions/executor.py$",
-    "^src/hadavin_sdk/app.py$",
-    "^src/hadavin_sdk/approvals/gate.py$",
-    "^src/hadavin_sdk/approvals/requests.py$",
-    "^src/hadavin_sdk/audit/anchor_gcs.py$",
-    "^src/hadavin_sdk/audit/chain.py$",
-    "^src/hadavin_sdk/audit/signer.py$",
-    "^src/hadavin_sdk/audit/signer_aws.py$",
-    "^src/hadavin_sdk/audit/signer_azure.py$",
-    "^src/hadavin_sdk/audit/signer_gcp.py$",
-    "^src/hadavin_sdk/audit/signer_vault.py$",
-    "^src/hadavin_sdk/config.py$",
-    "^src/hadavin_sdk/evals.py$",
-    "^src/hadavin_sdk/guard/bedrock_guardrail.py$",
-    "^src/hadavin_sdk/guard/judge.py$",
-    "^src/hadavin_sdk/guard/redact.py$",
-    "^src/hadavin_sdk/guard/runmap.py$",
-    "^src/hadavin_sdk/k1b/bundle.py$",
-    "^src/hadavin_sdk/k1b/loop.py$",
-    "^src/hadavin_sdk/k1b/report.py$",
-    "^src/hadavin_sdk/llm/bedrock.py$",
-    "^src/hadavin_sdk/llm/retry.py$",
-    "^src/hadavin_sdk/registry.py$",
-    "^src/hadavin_sdk/runtime/agent_loop.py$",
-    "^src/hadavin_sdk/store/migrate.py$",
-    "^src/hadavin_sdk/store/migration_numbers.py$",
-    "^src/hadavin_sdk/store/postgres.py$",
-    "^src/hadavin_sdk/tools.py$",
+
+[[tool.mypy.overrides]]
+ignore_errors = true
+module = [
+    # 1. Money, redaction, approvals and secrets: fix first.
+    "hadavin_sdk.guard.redact",
+    "hadavin_sdk.guard.runmap",
+    "hadavin_sdk.guard.judge",
+    "hadavin_sdk.guard.bedrock_guardrail",
+    "hadavin_sdk.approvals.gate",
+    "hadavin_sdk.approvals.requests",
+    "hadavin_sdk.actions.executor",
+    "hadavin_sdk.tools",
+    # 2. Audit trail and signers, and the database.
+    "hadavin_sdk.audit.chain",
+    "hadavin_sdk.audit.signer",
+    "hadavin_sdk.audit.signer_aws",
+    "hadavin_sdk.audit.signer_azure",
+    "hadavin_sdk.audit.signer_gcp",
+    "hadavin_sdk.audit.signer_vault",
+    "hadavin_sdk.audit.anchor_gcs",
+    "hadavin_sdk.store.postgres",
+    "hadavin_sdk.store.migrate",
+    "hadavin_sdk.store.migration_numbers",
+    # 3. Configuration, wiring and the rest.
+    "hadavin_sdk.config",
+    "hadavin_sdk.registry",
+    "hadavin_sdk.app",
+    "hadavin_sdk.evals",
+    "hadavin_sdk.runtime.agent_loop",
+    "hadavin_sdk.k1b.bundle",
+    "hadavin_sdk.k1b.loop",
+    "hadavin_sdk.k1b.report",
+    # 4. Blocked by the boto3 stubs (client() has one overload per service name; a non-literal name fails).
+    "hadavin_sdk.llm.bedrock",
+    "hadavin_sdk.llm.retry",
 ]

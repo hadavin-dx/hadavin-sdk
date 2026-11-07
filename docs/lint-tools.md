@@ -8,7 +8,7 @@ This page lists every automatic check the repository runs beyond the unit tests,
 |---|---|---|
 | `ruff check`, `ruff format --check` | job `check` | yes (unchanged name) |
 | `bandit -ll`, `pip-audit`, zizmor | job `security` | yes (unchanged name) |
-| mypy, import-linter, deptry, vulture, actionlint | new job `lint-set` | not yet a required check: making it required is a repository setting, which only the owner changes |
+| mypy, the mypy ratchet, import-linter, deptry, vulture, the whitelist check, the licence check, the ruff-version check, actionlint | new job `lint-set` | not yet a required check: making it required is a repository setting, which only the owner changes |
 | ruff (check and format) on commit | `.pre-commit-config.yaml` | local only |
 
 CI never pushes a commit. The pre-commit hook may fix files on your machine (`ruff check --fix`, `ruff format`); CI only reports. A service such as autofix.ci would let CI push fixes back to a pull request. It is an option for the owner and is not enabled.
@@ -18,10 +18,14 @@ Run the set locally (after `uv sync --all-extras --group test --group lint`):
 ```
 ruff check && ruff format --check
 mypy
+python tools/mypy_ratchet.py
 PYTHONPATH=demos/ask-your-data lint-imports
 deptry .
 vulture
+python tools/vulture_whitelist_check.py
 actionlint -shellcheck=
+# licences: uv export --locked --all-extras --group test --group lint --no-hashes --no-emit-project | sed -E 's/ *;.*//' > /tmp/locked.txt
+#           python tools/licence_check.py /tmp/locked.txt tools/licence_exceptions.txt
 ```
 
 ## Tool table
@@ -30,40 +34,55 @@ SPDX is read from the first lines of the upstream LICENSE file on the default br
 
 | Tool | Version (release date) | SPDX read from LICENSE | First LICENSE line | Pin | Findings on `main` | Fail-before proof |
 |---|---|---|---|---|---|---|
-| ruff | 0.17.1 (2026-10-15) | MIT | "MIT License" | exact in `pyproject.toml`, hashes in `uv.lock` | wide rule set: 574 on src, tests, demos and tools together (see below) | planted unused import: F401, exit 1 |
-| mypy | 2.4.1 (2026-10-28) | MIT | "Mypy (and mypyc) are licensed under the terms of the MIT license" | exact, hashes in `uv.lock` | 96 on `src` (33 files); 284 on everything | planted wrong type: `[assignment]`, exit 1 |
+| ruff | 0.17.1 (2026-10-15) | MIT | "MIT License" | exact in `pyproject.toml`, hashes in `uv.lock` | wide rule set: 574 on src, tests, demos and tools together with the wide set, counted before the fixes (see below) | planted unused import: F401, exit 1 |
+| mypy | 2.4.1 (2026-10-28) | MIT | "Mypy (and mypyc) are licensed under the terms of the MIT license" | exact, hashes in `uv.lock` | 96 on `src` (33 files, measured before the stubs were installed; 15 of them were `import-untyped`); 79 in 28 files once the stubs are installed (the same 79 on `main`'s `src`, checked); 284 on everything (also before the stubs) | planted wrong type: `[assignment]`, exit 1; ratchet: a clean module listed, and a missing module listed, both exit 1 |
 | import-linter | 2.15 (2026-09-04) | BSD-2-Clause | "BSD 2-Clause License" | exact, hashes in `uv.lock` | 0 (contracts written to pass on `main`) | three planted imports, each broke the matching contract, exit 1 |
 | deptry | 0.25.1 (2026-03-18) | MIT | "MIT License" | exact, hashes in `uv.lock` | 396 with default settings; 0 after configuration and one missing pin (botocore) | planted `import requests`: DEP003, exit 1 |
-| vulture | 2.16 (2026-03-25) | MIT | "The MIT License (MIT)" | exact, hashes in `uv.lock` | 221 raw (136 in `src`); 0 after fixes and `vulture_whitelist.py` | planted unused function: exit 3 |
+| vulture | 2.16 (2026-03-25) | MIT | "The MIT License (MIT)" | exact, hashes in `uv.lock` | 221 raw (136 in `src`); 0 after fixes and `vulture_whitelist.py` | planted unused function: exit 3; whitelist check: a gone name and a duplicate line, both exit 1 |
 | actionlint | 1.7.12 (2026-03-31) | MIT | "the MIT License" | release download checked against a SHA-256 in `ci.yml` | 0 | planted `github.evnt_name`: `[expression]`, exit 1 |
 | zizmor | 1.31.1 pinned (2026-10-15); 1.32.0 also run | MIT | "The MIT License (MIT)" | exact, in the `scan` group | 0 findings on `main` and on the branch | already a gate on `main`; not re-proved here |
 | pre-commit | 4.7.0 (2026-10-12) | MIT (licence text read; no SPDX line in the file) | "Copyright (c) 2014 pre-commit dev team" | run with `uvx --from pre-commit==4.7.0` | not a checker | n/a |
-| ruff-pre-commit | v0.17.1, commit pinned by full hash | not read: the raw LICENSE URL returned 404 | not read | full commit hash in `.pre-commit-config.yaml` | n/a | n/a |
+| ruff-pre-commit | v0.17.1, commit 38bfb07c0c64c304f47eb52090f8288150c77730 | MIT and Apache-2.0 (two files, read at the pinned commit) | "MIT License" (LICENSE-MIT) and "Apache License, Version 2.0" (LICENSE-APACHE) | full commit hash in `.pre-commit-config.yaml`; CI checks its version equals the ruff pin | n/a | hook run once: both hooks passed |
 | types-pyyaml | 6.0.12.20261030 (2026-10-30) | Apache-2.0 (typeshed LICENSE, package index) | "The "typeshed" project is licensed under the terms of the Apache license" | exact | type stubs only | n/a |
 | boto3-stubs, botocore-stubs | 1.43.122 (2026-10-29) | MIT | "MIT License" (mypy_boto3_builder) | exact; the newest release was too young for the 7-day wait | type stubs only | n/a |
 
 Not used, and why:
-- **pyright 1.1.414** (MIT) was trialled against mypy on `main` in basic mode: 113 errors on `src` (587 on everything) against 96 (284). mypy was chosen because it has fewer findings to clear, its pydantic plugin understands the settings models, and the stubs for boto3 are built for it. Raw outputs: `pyright-trial-*.txt`, `mypy-trial-*.txt`.
+- **pyright 1.1.414** (MIT; the newest release on 2026-11-07 on both PyPI and npm) was trialled against mypy on `main` in basic mode: 113 errors on `src` (587 on everything) against 96 (284). mypy was chosen because it has fewer findings to clear, its pydantic plugin understands the settings models, and the stubs for boto3 are built for it. Raw outputs: `pyright-trial-*.txt`, `mypy-trial-*.txt`.
 - **shellcheck** and **yamllint** are GPL-3.0 and are not used. actionlint calls shellcheck when it finds it, so CI passes `-shellcheck=` to switch that off.
 - **lychee** and **ast-grep** were not added (no trial was run; see "Not verified"). If ast-grep is added later it must be 0.50.0 or newer, because 0.49 and older have two published advisories.
 - **semgrep** (LGPL-2.1) stays as it was.
 
+## Licences of the locked package set
+
+`tools/licence_check.py` (a CI step) reads the metadata of every package in the locked set (95 installed on Linux; 3 more are skipped by platform markers) and fails on GPL, LGPL or AGPL, or on a package with no licence field. Result on 2026-11-07 (raw: `licence-scan.txt`): 89 permissive, 3 copyleft, all three already on `main` and listed in `tools/licence_exceptions.txt` until the owner decides:
+- pglast 8.7: GPL-3.0-or-later. `test` group only; never imported by `src/`.
+- psycopg 3.3.6 and psycopg-binary 3.3.6: LGPL-3.0-only. Runtime extras `pg` and `askdata`.
+Studio rule: a non-permissive licence needs the owner's written yes before it is used in a client deliverable. That is not decided here.
+
+Weak copyleft, not caught by the check (it looks for GPL, LGPL and AGPL only): pathspec 1.1.1 is MPL-2.0 (file-level; a dependency of mypy, development only).
+
+Newly locked by this branch, from each package's own metadata: ast-serialize 0.13.1 MIT; boto3-stubs 1.43.122 MIT; botocore-stubs 1.43.122 MIT; click 8.5.1 BSD-3-Clause; deptry 0.25.1 MIT; grimp 3.19 BSD-2-Clause; import-linter 2.15 BSD-2-Clause; librt 0.16.0 MIT; mypy 2.4.1 MIT; mypy-extensions 1.2.0 MIT; pathspec 1.1.1 MPL-2.0; requirements-parser 0.13.1 Apache-2.0; types-pyyaml 6.0.12.20261030 Apache-2.0; types-s3transfer 0.19.3 MIT; vulture 2.16 MIT. The check reads declared metadata only, which a package can get wrong; licence texts were not read for these.
+
+`uv.lock` was written with uv 0.13.6 (the version CI installs). A different uv (0.11.32 was tried) rewrites the lock format.
+
 ## The wide ruff rule set
 
-`select` now has: E4, E7, E9, F, W, I, B, C4, SIM, PERF, ASYNC, RET, PIE, LOG, FURB, PGH, RSE, SLOT, FLY, YTT, PLE, PLW, PLC, RUF100 and the rules that were already on. Every finding was fixed in the code. No `noqa` and no per-file ignore was added; the `# noqa` comments that RUF100 found to do nothing were removed (their reason text stays as a plain comment).
+`select` now has: E4, E7, E9, F (ruff's own default, restated), W (0 findings), I, B, DTZ, S, TID, UP and, new in this branch, C4, SIM, PERF, ASYNC, RET, PIE, LOG, FURB, PGH, RSE, SLOT, FLY, YTT, PLE, PLW, PLC and RUF100. Every finding was fixed in the code. No `noqa` was added; the `# noqa` comments that RUF100 found to do nothing were removed (their reason text stays as a plain comment). An earlier version of this branch dropped E4/E7/E9 by mistake (it replaced ruff's default); a review caught it, and restoring them found 5 findings (3 lambda assignments, 2 ambiguous names), fixed in tests.
 
 `select` is used, not `extend-select`: with `extend-select` ruff 0.17.1 reported 0 findings for RUF100 on this tree while an explicit `select` reported 158 (66 once the other rules were counted). That was checked, not assumed.
 
-Rules left off, with the reason:
-- **PLC0415** (import not at top of file): lazy imports are the design here (optional vendor SDKs fail at start with an install hint). 19 in `src`, 430 in `tests`.
-- **SIM112** (environment variable names in capitals): tests set `SystemRoot` on purpose, which is the real Windows name; changing the case breaks them.
-- The wide noisy families (for example ANN, D, PLR, C90, PTH, S, T20, ERA, FBT, TRY, EM, G, N, COM, DTZ) are not on.
+No rule is switched off for the whole repository. Three selected rules are exempted by file name in `[tool.ruff.lint.per-file-ignores]` (a rule setting, not a `noqa`), each with its reason in `pyproject.toml`:
+- **PLC0415** (import not at top of file): all of `tests/**` (430 findings; tests import inside the test so one broken module fails one test), and 9 files in `src/` plus 4 in the demo (27 findings) where the lazy import is the design: optional extras, platform modules, the command line, and cycle breaking.
+- **S603** (subprocess call): `tools/mypy_ratchet.py` only. It runs mypy with a fixed argv and cannot import mypy (deptry would read that as a dev dependency in shipped code).
+- **SIM112** (environment variable names in capitals): `tools/mutation_runner.py` and its test set `SystemRoot` on purpose, which is the real Windows name.
+
+The wide noisy families (for example ANN, D, PLR, C90, PTH, T20, ERA, FBT, TRY, EM, G, N, COM) are not on.
 
 Tests, demos and tools are checked by ruff with the same set (0 findings). They are not checked by mypy or vulture (see ledger rows).
 
 ## Import contracts
 
-Six contracts in `pyproject.toml`, all kept:
+Six contracts in `pyproject.toml` (the root packages are `hadavin_sdk` and `askdata`), all kept:
 1. Packages that must stay free of secrets never reach a secret holder, directly or through other modules.
 2. `tools` never reaches `actions`.
 3. `stages` imports nothing else of the package.
@@ -75,12 +94,23 @@ The repository test `tests/test_lockin_guard.py` is kept. Contract 4 repeats its
 
 ## Fail-before proofs
 
-Each proof was run on a throwaway copy of the tree, one planted problem at a time, with no test run going on the same tree. Raw output: `fail-before-proofs.txt` in the evidence folder. The first actionlint plant turned red for a different reason than planned (a duplicated key), so it was redone with a misspelled context name; both are recorded.
+Each proof was run on a throwaway copy of the tree, one planted problem at a time, with no test run going on the same tree. Raw output: `fail-before-proofs.txt` and `fail-before-proofs-2.txt` in the evidence folder (round 2 adds PLW, SIM, RUF100 and E722 plants, the mypy ratchet, the whitelist check, the ruff-version check and the licence check). The first actionlint plant turned red for a different reason than planned (a duplicated key), so it was redone with a misspelled context name; both are recorded.
+
+## The mypy rollout list
+
+28 modules (79 findings) are listed under `[[tool.mypy.overrides]] ignore_errors = true`. They are still read, so their types help the clean files; only their own findings are not reported. `python tools/mypy_ratchet.py` runs mypy without that override and fails if a listed module is clean or missing, or if an unlisted module has a finding, so the list can only shrink. The list is ordered by risk, highest first: redaction, approvals, executor and tool boxes; then the audit trail, signers and database; then configuration and wiring; last the two files blocked by the boto3 stubs (the stubs give `client()` one overload per service name, and a non-literal name fails). Fixing the first group needs its own review round (money and redaction paths), which is why it was not done inside a lint change.
+
+Why 96 and 79: the trial on `main` (96) ran before the stub packages were installed; 15 of its errors were `import-untyped` (boto3, botocore, yaml). With the stubs installed, `main`'s `src/` gives 79 in 28 files, and so does this branch (no mypy finding was fixed in code here; the code edits were for ruff). The other 2 of the 17 only appear without the stubs (not traced one by one).
+
+## Vulture whitelist
+
+81 entries, each `name  # kind in file`. vulture matches by bare name, so an entry hides that name in every file; `tools/vulture_whitelist_check.py` ties each entry to the file(s) it names and fails on a stale or duplicate entry. Three entries are kept on purpose and are not in use: `gate._rendered` (with `_views`, `_ANSI_AS_TEXT`, `_RENDERED_MARKUP`, restored after review) is the unfinished fix for the open card-text redaction hole (ticket P1d; base commit 0dabf1f, file `src/hadavin_sdk/approvals/gate.py`); `tools.START_MARKER` and `tools.MIN_REDACTION_WINDOW` are public module names. Names used only by tests, demos or tools count as dead code if nothing in `src/` uses them, unless whitelisted with a reason.
 
 ## Not verified
 
 - The GitHub Actions run itself (this was run locally on Linux only).
 - Python 3.13 and the macOS and Windows runners.
-- The licences of the tools' own dependencies, the wheel contents of the wrapper packages, and the ruff-pre-commit LICENSE.
-- lychee and ast-grep.
+- Licence texts (only declared metadata was read) and the wheel contents of the wrapper packages.
+- lychee and ast-grep (not trialled).
+- The full test suite and `stage_mutants` at the final head (queued).
 - Whether `lint-set` should be a required check (owner decision).

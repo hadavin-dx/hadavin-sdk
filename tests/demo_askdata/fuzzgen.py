@@ -96,7 +96,10 @@ class Gen:
         leaf = d >= 2 or self.chance(0.35)
         if leaf:
             return self.col(scope, kind) if self.chance(0.75) else self.lit(kind)
-        e = lambda k=kind: self.expr(scope, k, d + 1)
+
+        def e(k=kind):
+            return self.expr(scope, k, d + 1)
+
         if kind == "num":
             return self.pick(
                 [

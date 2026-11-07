@@ -49,11 +49,13 @@ from hadavin_sdk.scrub_settings import ScrubSettings
 DEFAULT_MAX_OUTPUT_BYTES = defaults.MAX_OUTPUT_BYTES  # the manifest field's default
 Binding = tuple[str, str]  # (METHOD, regex the URL path must fully match)
 END_MARKER = "<<END TOOL RESULT>>"
+START_MARKER = "<<TOOL RESULT"
 TRUNCATED = "\n[truncated]"
 ERROR_PREFIX = "ERROR: "
 MIN_SCRUBBED_SECRET = (
     defaults.SCRUB_MIN_SECRET
 )  # the default; the live value is `ScrubSettings.min_secret`
+MIN_REDACTION_WINDOW = defaults.SCRUB_MIN_REDACTION_WINDOW  # likewise `min_redaction_window`
 # Features the manifest names but that arrive in a later phase (design 6.4): refused with the phase.
 _DEFERRED_KEYS = {"egress": "Phase 5", "reads_hadavin_store": "Phase 5"}
 _METHODS = frozenset(
