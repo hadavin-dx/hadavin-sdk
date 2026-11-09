@@ -794,3 +794,4 @@ rv-P1d-r3-zoomout closed 05:29Z
 rv-P1d-r3-readiness closed 05:29Z
 rv-P1d-r3-design closed 05:32Z
 | r4-design, r4-readiness, r4-zoomout | P1d rev 4 plan review round 4 | 05:39Z | +20 min | - | running | collect, save round4-*.md, resolve |
+| ev-P1b-r2 | EVIDENCE RUNNER P1b at 2034512 | 06:06Z | +60 min | - | running | read evidence file, start round-2 reviewers on snapshot |
