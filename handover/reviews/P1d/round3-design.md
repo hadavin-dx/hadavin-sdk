@@ -1,0 +1,16 @@
+# P1d plan review round 3 - design (egm-design, Sonnet), ticket rev 3 (condensed)
+Verdict: not clean. 1 Blocker, 9 Majors, 7 Nits. Reviewer did not read source or designs/lookalike-leak.md.
+Blocker:
+- B1 Lines 138-140 contradict H32/H33 and the mutant table: learning runs on squeezed/case-folded views but the residue test does not use them; deleting views keep '.' and '&'. Unless scan_holds already ignores non-alphanumerics (V6 suggests; scan key = isalnum chars), H33 is not withheld; if it does, deleting '*', '_', '~', backtick, controls, line breaks changes nothing and mutants M4/M6 are equivalent. State exactly what scan_holds normalises; rewrite 138-140 and M3-M9 killers; add to BS-0 with a stop rule; say whether the learned value is the view substring or the original.
+Majors:
+- M1 Digit rule: ~3.6% of real AKIA keys have no digit (missed when lower-cased/inserted char) so "exact" is false; still over-learns ("Asia 2024 Q3", "Eurasia 2025"). Restrict trailing class to [A-Z2-7] + digit requirement; state all-letter keys outside guarantee; add fixtures.
+- M2 Fail-closed incomplete: InputTooLarge/TooDeep/TextnormError in default mode unspecified; no reason=error; no catch-all (RecursionError, MemoryError, bug). Wrap whole check, return WITHHELD_NOTICE reason=error, log class name only; inject-failure test.
+- M3 Judge/guardrail/evals callers (S14, S15) missing from caller table; a notice could be read as "safe" by a judge (fail open inside a guard). Name all callers; notice = refuse/escalate for guards; negative test. Also evidence.grounded and JSON tool results.
+- M4 S13 (_sweep in redact_text) is on the choke point and covered by the residue rule: keep in P1d with a row; split ledger 005 to S6 only.
+- M5 Operator route not named; card without buttons may leave no deny path, only expiry; approve path may live in receiver.py (said untouched); re-run mechanism vs in-memory display_withheld differ. Name the route or make it a BS-0 return-to-review condition; define terminal state.
+- M6 Short values: P1d never calls register_value so strict mode never triggers; F19 pins nothing; fallback case rule undefined vs boundary rows; floor 8 not tied to TN_MIN.
+- M7 Text checked != text returned: _neutralise then clean's joined pass and defang; final string never checked. Run _finish on the returned string or prove later steps only add separators; byte test.
+- M8 H27 vacuous (defang already hides db01.corp on base); assert placeholder / no '[.]'.
+- M9 Cost 7-11x on every redact_text call, no fast path/latency target; cap chosen from machine timing contradicts "deterministic"; cap withholds long documents (regression). Add fast path, target, minimum cap that must hold.
+- M10 "Exact" overstated: single ordered pass misses nesting/double encodings (%252A, &a**mp;); no delete-before-decode rows. Downgrade label or add rows + bounded second pass.
+Nits: N1 P1D_MAX_VIEWS/X03 unreachable; N2 put-back formula only paraphrased; N3 dropped-form test maybe redundant (decide); N4 AKIA shape could mask instead of withhold; N5 P1D_APPLIED always True cannot detect; N6 M13 killer is a measurement, alert path undefined, source empty on model path, ledger MAJOR rows, BS-1 0-withhold bound ~0.6% at 95%; N7 rung table inconsistencies, wording (dropped form, KV, fb/pb/ow before use; card text gives no next step).
