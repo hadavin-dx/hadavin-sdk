@@ -1,14 +1,15 @@
-"""P4d-b, B4b (c): a lone caller on a fresh `MemoryStore` finishes each reservation method (no self-deadlock on the
-store's lock, also on the path that calls a lock-taking helper: the run pre-check)."""
+"""P4d-b, B4b (c): a lone caller on a fresh `MemoryStore` finishes each reservation method. The store's lock is a
+plain lock (ticket N9): no method may call a lock-taking method while holding it, so any future nesting shows here as
+a hang. Today `reserve_spend` reads the run row and the kill switch (`_kill_on`) through helpers that do not lock."""
 
 import threading
 from decimal import Decimal
 
 import pytest
 
-from hadavin_sdk.models import Run
+from hadavin_sdk.models import KillSwitch, Run
 from hadavin_sdk.store.memory import MemoryStore
-from hadavin_sdk.store.protocol import Store
+from hadavin_sdk.store.protocol import KillSwitchOn, Store
 from tests.contracts.store_support import utc_today
 
 D = Decimal
@@ -47,7 +48,7 @@ def test_a_lone_caller_finishes_every_reservation_method(method):
     calls = {
         "reserve_spend": lambda: _reserve(
             store, run
-        ),  # with a run: takes the run pre-check helper's lock
+        ),  # with a run: reads the run row under the held lock
         "settle_spend": lambda: (_reserve(store, run), store.settle_spend("lone-1", D("0.5"))),
         "release_spend": lambda: (_reserve(store, run), store.release_spend("lone-1")),
         "sweep_spend_reservations": lambda: store.sweep_spend_reservations(60),
@@ -62,3 +63,31 @@ def test_a_lone_caller_finishes_every_reservation_method(method):
     thread.start()
     thread.join(timeout=10)
     assert done.is_set(), f"{method} did not finish within 10 s for a lone caller"
+
+
+def test_reserve_and_get_kill_switch_read_the_switch_through_the_one_helper(monkeypatch):
+    """Both reads go through `MemoryStore._kill_on`: replacing it moves both (a second, direct read of `_kill`
+    would leave one of them behind)."""
+    store = MemoryStore()
+    monkeypatch.setattr(MemoryStore, "_kill_on", lambda self: KillSwitch(on=True, by="user:test"))
+    assert store.get_kill_switch().on is True
+    with pytest.raises(KillSwitchOn):
+        store.reserve_spend(
+            "ks-1", "ag", utc_today(store), D(1), day_cap=None, month_cap=None, run_cap=None
+        )
+
+
+def test_a_failure_while_building_the_row_leaves_no_counter_moved(monkeypatch):
+    """The reservation row is built before any counter changes: if building it fails, nothing is half-booked."""
+    store = MemoryStore()
+    run = Run(agent_id="ag", principal_id="p", trigger_kind="event", trigger_ref="t")
+    store.create_run(run)
+
+    def boom(**kwargs):
+        raise RuntimeError("row could not be built")
+
+    monkeypatch.setattr("hadavin_sdk.store.memory.SpendReservation", boom)
+    with pytest.raises(RuntimeError):
+        _reserve(store, run)
+    assert store.spend_totals("ag", utc_today(store)) == (0, 0)
+    assert store.get_run(run.run_id).cost_usd == 0

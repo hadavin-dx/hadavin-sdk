@@ -257,12 +257,19 @@ def test_a_golden_input_over_the_cap_is_a_config_error_naming_it(live_cfg_dir):
 # --- merge condition 4: a database that applied the old file name is refused, not silently migrated ---------------------------------------
 
 
-# A renamed copy of the tree: each renamed file and the real file it copies (a name not listed copies itself).
-_RENAMED_SOURCE = {
-    "0005_reservations.sql": "0005_evidence.sql",  # its body is replaced by "-- empty" below
-    "0006_evidence.sql": "0005_evidence.sql",
-    "0007_spend_reservations.sql": "0006_spend_reservations.sql",
-}
+def _renamed_tree(real: list[str]) -> tuple[list[str], dict[str, str]]:
+    """The tree as #49 left it: a stand-in `<n>_reservations.sql` takes the number of the evidence file, the evidence
+    file and every file after it move up by one. Files are found by NAME (`*_evidence.sql`), never by a number written
+    here. Returns the renamed file names and, for each renamed name, the real file it copies."""
+    at = next(i for i, n in enumerate(real) if n.endswith("_evidence.sql"))
+    first = int(real[at][:4])
+    names = [*real[:at], f"{first:04d}_reservations.sql"]
+    source = {names[-1]: real[at]}  # its body is replaced by "-- empty" in `_folder`
+    for n in real[at:]:
+        moved = f"{int(n[:4]) + 1:04d}{n[4:]}"
+        names.append(moved)
+        source[moved] = n
+    return names, source
 
 
 def _folder(tmp_path, names):
@@ -272,24 +279,23 @@ def _folder(tmp_path, names):
     folder.mkdir(parents=True)
     for n in names:
         real = mig.MIGRATIONS / _RENAMED_SOURCE.get(n, n)
-        body = "-- empty" if n == "0005_reservations.sql" else real.read_text(encoding="utf-8")
+        body = "-- empty" if n == _STAND_IN else real.read_text(encoding="utf-8")
         (folder / n).write_text(body, encoding="utf-8")
     return mig._migration_files(folder)
 
 
 _REAL = sorted(p.name for p in mig.MIGRATIONS.glob("*.sql"))
-RENAMED = [
-    *_REAL[:4],
-    "0005_reservations.sql",
-    "0006_evidence.sql",
-    "0007_spend_reservations.sql",
-]
+RENAMED, _RENAMED_SOURCE = _renamed_tree(_REAL)
+_STAND_IN = next(n for n in RENAMED if n.endswith("_reservations.sql") and "spend" not in n)
+_EVIDENCE_OLD = next(n for n in _REAL if n.endswith("_evidence.sql"))[:-4]
+_EVIDENCE_NEW = next(n for n in RENAMED if n.endswith("_evidence.sql"))[:-4]
 
 
 def test_the_renamed_tree_is_a_valid_ledger_and_two_files_with_one_number_are_not(tmp_path):
     assert mig.check_ledger(_folder(tmp_path, RENAMED)) == []
-    clash = _folder(tmp_path / "x", [*RENAMED[:4], "0005_reservations.sql", "0005_evidence.sql"])
-    assert mig.check_ledger(clash) == ["two migrations are numbered 0005"]
+    at = RENAMED.index(_STAND_IN)
+    clash = _folder(tmp_path / "x", [*RENAMED[:at], _STAND_IN, _EVIDENCE_OLD + ".sql"])
+    assert mig.check_ledger(clash) == [f"two migrations are numbered {_STAND_IN[:4]}"]
 
 
 def test_a_database_that_applied_the_old_name_is_refused_and_nothing_is_applied(
@@ -309,14 +315,14 @@ def test_a_database_that_applied_the_old_name_is_refused_and_nothing_is_applied(
                 "CREATE TABLE schema_migrations "
                 "(version TEXT PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT now())"
             )
-            db.execute("INSERT INTO schema_migrations (version) VALUES ('0005_evidence')")
+            db.execute("INSERT INTO schema_migrations (version) VALUES (%s)", (_EVIDENCE_OLD,))
         monkeypatch.setattr(mig, "_migration_files", lambda: files)
-        with pytest.raises(ConfigError, match="0005_evidence") as err:
+        with pytest.raises(ConfigError, match=_EVIDENCE_OLD) as err:
             mig.migrate(dsn)
         assert "by hand" in str(err.value)  # the repair path is in the message
-        assert "0006_evidence" not in str(err.value)  # generic: no file name of ours is hard-coded
+        assert _EVIDENCE_NEW not in str(err.value)  # generic: no file name of ours is hard-coded
         with psycopg.connect(dsn) as db:
             rows = [r[0] for r in db.execute("SELECT version FROM schema_migrations").fetchall()]
-        assert rows == ["0005_evidence"]  # the refusal applied nothing
+        assert rows == [_EVIDENCE_OLD]  # the refusal applied nothing
     finally:
         gen.close()

@@ -151,6 +151,8 @@ def check_meta(meta: object) -> dict[str, str | int | bool] | None:
         return None
     if not isinstance(meta, Mapping) or len(meta) > 20:
         raise ValueError("meta must be a mapping of at most 20 keys")
+    # NUL and a lone surrogate: the same refusal as the Postgres write wrapper, on both stores
+    check_text(meta)
     for k, v in meta.items():
         if type(k) is not str or _META_KEY.match(k) is None:
             raise ValueError("meta keys must match [a-z_]{1,40}")
