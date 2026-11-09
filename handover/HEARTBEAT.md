@@ -553,3 +553,4 @@ LAPTOP CANDIDATES (pushed heads only): PR85 0b54631 (items 3,4,10), PR72 e6a4220
 05:58Z HB(auto):  agents 2 running (gen_evidence-P6a-pg-rerun,bd-P1b-fix1) | heavy slots busy 0/3 | last: started, none yet 
 06:03Z HB(auto):  agents 2 running (gen_evidence-P6a-pg-rerun,bd-P1b-fix1) | heavy slots busy 1/3 | last: started, none yet 
 06:06Z P1b fix batch 2034512 pushed (core/P1b-fixwip); BN-22 added; evidence runner starting; P1d round-4 resolved (round4-resolve.md), rev 5 next
+06:08Z HB(auto):  agents 3 running (gen_evidence-P6a-pg-rerun,bd-P1b-fix1,ev-P1b-r2) | heavy slots busy 2/3 | last: started, none yet 
