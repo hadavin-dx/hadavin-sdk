@@ -1,9 +1,9 @@
 diff --git a/demo_only/portal_demo.py b/demo_only/portal_demo.py
 new file mode 100644
-index 0000000..ccd5d30
+index 0000000..fb0007d
 --- /dev/null
 +++ b/demo_only/portal_demo.py
-@@ -0,0 +1,450 @@
+@@ -0,0 +1,513 @@
 +"""Demo extension of the portal: the "Demo controls" panel and its three calls. Demo-only code.
 +
 +The desk reaches this module only through lead_desk.loader (load_demo_portal -> make). Deleting demo_only/ must
@@ -22,14 +22,17 @@ index 0000000..ccd5d30
 +
 +import http.client
 +import json
++import math
 +import os
 +import re
++import tempfile
 +import threading
 +import time
 +import urllib.error
 +import urllib.request
 +from pathlib import Path
 +from typing import Any, Final
++from urllib.parse import urlsplit
 +
 +from demo_only.fakes import RecordedQualifier
 +from lead_desk.adapters import HttpCrm, HttpOutbox
@@ -84,7 +87,19 @@ index 0000000..ccd5d30
 +STATE_DEADLINE_SECONDS: Final = 5.0  # the three sender reads of one `state` call share this
 +FIELD_MAX: Final = 200  # longest text taken from a sender or CRM row
 +RECORD_KEYS_MAX: Final = 10
-+LOOPBACK_HOSTS: Final = frozenset({"127.0.0.1", "localhost", "[::1]"})
++LOOPBACK_HOSTS: Final = frozenset({"127.0.0.1", "localhost", "[::1]"})  # as Config.fakes_host spells them
++LOOPBACK_NAMES: Final = frozenset({"127.0.0.1", "localhost", "::1"})  # as urllib's .hostname spells them
++ERR_URL_NOT_LOCAL: Final = "desk_url_not_local"
++ARMED_READ_MAX: Final = 16  # bytes read from the flag file: the longest point name is 2
++INFO_PATH: Final = "/fake/info"
++OUTBOX_PATH: Final = "/fake/outbox"
++CRM_PATH: Final = "/fake/crm"
++KEY_MESSAGES: Final = "messages"
++KEY_ROWS: Final = "rows"
++KEY_COUNT: Final = "count"
++KEY_CRM_CAPABILITY: Final = "crm_capability"
++FLAG_TEMP_PREFIX: Final = ".crash-"
++FLAG_TEMP_SUFFIX: Final = ".tmp"
 +CRM_MODES: Final = ("keyed", "blind")
 +CRM_CAPABILITY_UNKNOWN: Final = "unknown"  # /fake/info of an older fakes server does not name the CRM mode
 +CANNED_FILE: Final = "canned_leads.json"
@@ -146,7 +161,9 @@ index 0000000..ccd5d30
 +    """Text cut to FIELD_MAX; numbers, booleans and None unchanged; anything else (nested) dropped."""
 +    if isinstance(v, str):
 +        return v[:FIELD_MAX]
-+    return v if v is None or isinstance(v, (bool, int, float)) else None
++    if isinstance(v, float):
++        return v if math.isfinite(v) else None  # NaN and Infinity are not valid JSON for the page
++    return v if v is None or isinstance(v, (bool, int)) else None
 +
 +
 +def _clip_record(rec: Any) -> dict[str, Any]:
@@ -188,7 +205,7 @@ index 0000000..ccd5d30
 +        self._people: list[dict[str, Any]] = people
 +        self.desk_url = desk_url if desk_url is not None else self._url_from_config()
 +        self._burst_lock = threading.Lock()
-+        self._last_burst_end: float | None = None
++        self._next_burst_at = 0.0  # time.monotonic() before which no new burst starts
 +
 +    @staticmethod
 +    def _person_ok(p: Any) -> bool:
@@ -209,7 +226,30 @@ index 0000000..ccd5d30
 +            and isinstance(d.outbox, HttpOutbox)
 +            and isinstance(d.qualifier, RecordedQualifier)
 +            and d.config.fakes_host in LOOPBACK_HOSTS
++            and self._adapter_points_at(d.crm, d.config.fakes_url)
++            and self._adapter_points_at(d.outbox, d.config.fakes_url)
 +        )
++
++    @staticmethod
++    def _adapter_points_at(adapter: Any, fakes_url: str) -> bool:
++        """The adapter's own base address (public `base_url` if the adapter has one, else its private `_base`) is the
++        configured made-up sender and a loopback name: an adapter aimed at a real service is not wired."""
++        base = getattr(adapter, "base_url", None) or getattr(adapter, "_base", None)
++        if not isinstance(base, str) or base.rstrip("/") != fakes_url.rstrip("/"):
++            return False
++        try:
++            return urlsplit(base).hostname in LOOPBACK_NAMES
++        except ValueError:
++            return False
++
++    def _desk_url_is_local(self, url: str) -> bool:
++        """Only the desk itself may be the burst target: a loopback name or the host the desk is bound to."""
++        try:
++            host = urlsplit(url).hostname
++        except ValueError:
++            return False
++        bound = self._desk.config.bind.strip("[]")
++        return host in LOOPBACK_NAMES or (host is not None and host == bound)
 +
 +    def _url_from_config(self) -> str | None:
 +        """The desk's own address from Config; None when the port is 0 (ephemeral): then the server (or a test) must
@@ -244,14 +284,18 @@ index 0000000..ccd5d30
 +        if hooks is None:
 +            return None
 +        try:
-+            text = hooks.flag_path.read_text(encoding="utf-8").strip()
++            with open(hooks.flag_path, "rb") as f:  # noqa: PTH123
++                raw = f.read(ARMED_READ_MAX + 1)
++            if len(raw) > ARMED_READ_MAX:  # longer than any point: not a flag this module wrote
++                return None
++            text = raw.decode("utf-8").strip()
 +        except (OSError, ValueError):
 +            return None
 +        return text if text in HOOK_POINTS else None
 +
 +    def _crm_mode(self, info: dict[str, Any]) -> str:
 +        """The sender's own answer if it names the CRM mode, else what the desk's CRM adapter has learned."""
-+        named = info.get("crm_capability")
++        named = info.get(KEY_CRM_CAPABILITY)
 +        if named in CRM_MODES:
 +            return str(named)
 +        learned = getattr(self._desk.crm, "capability", None)
@@ -261,13 +305,13 @@ index 0000000..ccd5d30
 +        cfg = self._desk.config
 +        end = time.monotonic() + STATE_DEADLINE_SECONDS
 +        got: list[dict[str, Any] | None] = []
-+        for path in ("/fake/info", "/fake/outbox", "/fake/crm"):
++        for path in (INFO_PATH, OUTBOX_PATH, CRM_PATH):
 +            wait = min(cfg.send_timeout_seconds, end - time.monotonic())
 +            got.append(_fetch_json(cfg.fakes_url + path, wait) if wait > 0 else None)
 +        info, outbox, crm = got
 +        if info is None or outbox is None or crm is None:
 +            return {"reachable": False, "error": ERROR_UNREACHABLE}
-+        messages, rows = outbox.get("messages"), crm.get("rows")
++        messages, rows = outbox.get(KEY_MESSAGES), crm.get(KEY_ROWS)
 +        if not isinstance(messages, list) or not isinstance(rows, list):
 +            return {"reachable": False, "error": ERROR_UNREACHABLE}
 +        return {
@@ -275,15 +319,15 @@ index 0000000..ccd5d30
 +            "outbox_mode": str(info.get("mode", outbox.get("mode", CRM_CAPABILITY_UNKNOWN)))[:FIELD_MAX],
 +            "crm_mode": self._crm_mode(info),
 +            "outbox": {
-+                "count": outbox["count"] if _is_int(outbox.get("count")) else len(messages),
++                "count": outbox[KEY_COUNT] if _is_int(outbox.get(KEY_COUNT)) else len(messages),
 +                "messages": [
-+                    {"to": str(_clip(m.get("to"))), "subject": str(_clip(m.get("subject")))}
++                    {"to": str(_clip(m.get("to")) or ""), "subject": str(_clip(m.get("subject")) or "")}
 +                    for m in messages[:ROWS_MAX]
 +                    if isinstance(m, dict)
 +                ],
 +            },
 +            "crm": {
-+                "count": crm["count"] if _is_int(crm.get("count")) else len(rows),
++                "count": crm[KEY_COUNT] if _is_int(crm.get(KEY_COUNT)) else len(rows),
 +                "rows": [
 +                    {"lead_id": _clip(r.get("lead_id")), "record": _clip_record(r.get("record"))}
 +                    for r in rows[:ROWS_MAX]
@@ -333,12 +377,23 @@ index 0000000..ccd5d30
 +            if point == CLEAR_POINT:
 +                hooks.flag_path.unlink(missing_ok=True)
 +            else:  # the path is the launcher's, never the request's; replace() keeps a reader from seeing half a file
-+                tmp = hooks.flag_path.with_name(hooks.flag_path.name + ".tmp")
-+                tmp.write_text(point, encoding="utf-8")
-+                os.replace(tmp, hooks.flag_path)
++                self._write_flag(hooks.flag_path, point)
 +        except OSError:
 +            return HTTP_CONFLICT, {"error": ERR_CRASH_UNAVAILABLE}
 +        return HTTP_OK, {"armed": None if point == CLEAR_POINT else point}
++
++    @staticmethod
++    def _write_flag(path: Path, point: str) -> None:
++        """A private temporary file in the same folder (a fresh name, never a guessable one, never a symlink), then an
++        atomic replace; the temporary file is removed if anything fails."""
++        fd, name = tempfile.mkstemp(dir=path.parent, prefix=FLAG_TEMP_PREFIX, suffix=FLAG_TEMP_SUFFIX)
++        try:
++            with os.fdopen(fd, "w", encoding="utf-8") as f:
++                f.write(point)
++            os.replace(name, path)
++        except BaseException:
++            Path(name).unlink(missing_ok=True)
++            raise
 +
 +    # -- burst
 +    def _burst(self, body: bytes) -> tuple[int, dict[str, Any]]:
@@ -357,15 +412,21 @@ index 0000000..ccd5d30
 +            return _bad_body()
 +        if self.desk_url is None:
 +            return HTTP_CONFLICT, {"error": ERR_NO_URL}
++        if not self._desk_url_is_local(self.desk_url):
++            return HTTP_CONFLICT, {"error": ERR_URL_NOT_LOCAL}
 +        if not self._burst_lock.acquire(blocking=False):  # one burst at a time: the load stays bounded
 +            return HTTP_TOO_MANY_REQUESTS, {"error": ERR_IN_PROGRESS}
 +        try:
-+            last = self._last_burst_end
-+            if last is not None and time.monotonic() - last < BURST_COOLDOWN_SECONDS:
++            if time.monotonic() < self._next_burst_at:
 +                return HTTP_TOO_MANY_REQUESTS, {"error": ERR_TOO_SOON}
 +            ref_prefix = prefix if prefix is not None else f"{REF_AUTO_PREFIX}{int(time.time() * MS_PER_SECOND)}"
 +            out = self._fire(self.desk_url + LEADS_PATH, n, self._people[person - 1], door, ref_prefix)
-+            self._last_burst_end = time.monotonic()
++            # A request still in flight when the deadline ran out (status "timeout") cannot be stopped, only waited
++            # for: it ends by itself within REQUEST_TIMEOUT_SECONDS and does not retry. No new burst starts before.
++            stragglers = any(a["status"] == STATUS_TIMEOUT for a in out["answers"])
++            self._next_burst_at = (
++                time.monotonic() + BURST_COOLDOWN_SECONDS + (REQUEST_TIMEOUT_SECONDS if stragglers else 0)
++            )
 +            return HTTP_OK, out
 +        finally:
 +            self._burst_lock.release()
@@ -444,10 +505,12 @@ index 0000000..ccd5d30
 +        for t in started:
 +            t.join(max(0.0, end - time.monotonic()))
 +        stop.set()
-+        final = list(answers)
-+        for i, t in enumerate(threads):
-+            if t in started and t.is_alive():
-+                final[i] = {"ref": refs[i], "status": STATUS_TIMEOUT, "verdict": None, "replayed": False}
++        final = [
++            {"ref": refs[i], "status": STATUS_TIMEOUT, "verdict": None, "replayed": False}
++            if (t in started and t.is_alive())
++            else answers[i]
++            for i, t in enumerate(threads)
++        ]
 +        return {"n": n, "ref_prefix": ref_prefix, "answers": final, "busy_retries": sum(busy)}
 +
 +
@@ -863,10 +926,10 @@ index 0000000..c58a2b1
 +}
 diff --git a/tests/test_portal_demo.py b/tests/test_portal_demo.py
 new file mode 100644
-index 0000000..7730447
+index 0000000..89a121b
 --- /dev/null
 +++ b/tests/test_portal_demo.py
-@@ -0,0 +1,906 @@
+@@ -0,0 +1,1073 @@
 +"""Tests of the demo extension of the portal (demo_only/portal_demo.py). Made-up data only.
 +
 +Open until the product work package that builds lead_desk.loader.load_demo_portal and the server routes is merged
@@ -995,10 +1058,13 @@ index 0000000..7730447
 +    """A started desk on the made-up CRM, sender and recorded AI over HTTP: what the demo loader builds.
 +    `config_url` aims the extension's reads at another server than the one the adapters use."""
 +    r = env.rig(start=False, **fakes_config(config_url or furl), **cfg)
++    crm, outbox = crm_cls(furl, FAKES_TIMEOUT), HttpOutbox(furl, FAKES_TIMEOUT)
++    if config_url:  # the guard compares the adapters' base with the config: make a test's stand-in agree
++        crm._base = outbox._base = config_url
 +    desk = Desk(
 +        r.config,
-+        crm_cls(furl, FAKES_TIMEOUT),
-+        HttpOutbox(furl, FAKES_TIMEOUT),
++        crm,
++        outbox,
 +        qual_cls(r.replies_path),
 +        hooks=hooks,
 +        now=r.clock,
@@ -1157,10 +1223,13 @@ index 0000000..7730447
 +
 +# ---- the demo is wired to made-up systems, or it says so and does nothing
 +def stand_in(**over: Any) -> Any:
++    cfg = over.get("config") or Config(fakes_port=PORT_SAMPLE)
++    outbox = HttpOutbox.__new__(HttpOutbox)
++    outbox._base = cfg.fakes_url
 +    base = {
-+        "config": Config(fakes_port=PORT_SAMPLE),
-+        "crm": HttpCrm("http://127.0.0.1:1", 1.0),
-+        "outbox": HttpOutbox.__new__(HttpOutbox),
++        "config": cfg,
++        "crm": HttpCrm(cfg.fakes_url, 1.0),
++        "outbox": outbox,
 +        "qualifier": RecordedQualifier(REPO / "demo_only" / "replies.json"),
 +        "hooks": FlagFileHooks(Path("flag")),
 +    }
@@ -1514,7 +1583,7 @@ index 0000000..7730447
 +    assert demo.handle(POST, "burst", body({"n": 1}))[0] == HTTP_OK
 +    assert demo.handle(POST, "burst", body({"n": 1})) == (HTTP_TOO_MANY_REQUESTS, {"error": "burst_too_soon"})
 +    assert rig.query("SELECT count(*) FROM receipts")[0][0] == 1  # the refused one sent nothing
-+    monkeypatch.setattr(portal_demo, "BURST_COOLDOWN_SECONDS", 0.0)
++    demo._next_burst_at = 0.0  # the wait is over
 +    assert demo.handle(POST, "burst", body({"n": 1}))[0] == HTTP_OK
 +
 +
@@ -1773,3 +1842,164 @@ index 0000000..7730447
 +        "kpi-ai-calls": "AI calls (pre-written replies, no live AI)",
 +    }
 +    assert labels == fixture("demo-state.json")["labels"]
++
++
++# ---- review round 2
++def test_adapter_aimed_elsewhere_not_wired(env: Env) -> None:
++    _, furl = env.fakes()
++    for base in ("http://remote.example.test", "http://127.0.0.1:1"):  # a remote name; a loopback port that differs
++        desk = wired(env, furl).desk
++        assert make(desk).wired is True
++        desk.crm._base = base  # type: ignore[attr-defined]
++        demo = make(desk)
++        assert demo.wired is False
++        assert demo.handle(POST, "burst", body({"n": 1})) == (HTTP_CONFLICT, {"error": "demo_not_wired"})
++        assert demo.handle(POST, "crash", body({"point": "A"})) == (HTTP_CONFLICT, {"error": "demo_not_wired"})
++    desk = wired(env, furl).desk
++    desk.outbox._base = "http://remote.example.test"  # type: ignore[attr-defined]
++    assert make(desk).wired is False
++
++
++def test_crash_concurrent_posts(env: Env, tmp_path: Path) -> None:
++    _, furl = env.fakes()
++    flag = flag_in_own_folder(tmp_path)
++    demo = make(wired(env, furl, hooks=FlagFileHooks(flag)).desk)
++    results: list[tuple[int, Any]] = []
++    lock = threading.Lock()
++    go = threading.Barrier(8)
++
++    def post(point: str) -> None:
++        go.wait(timeout=FAKES_TIMEOUT)
++        r = demo.handle(POST, "crash", body({"point": point}))
++        with lock:
++            results.append(r)
++
++    threads = [threading.Thread(target=post, args=(HOOK_POINTS[i % len(HOOK_POINTS)],)) for i in range(8)]
++    for t in threads:
++        t.start()
++    for t in threads:
++        t.join(HARD_STOP)
++    assert [s for s, _ in results] == [HTTP_OK] * 8
++    assert flag.read_text(encoding="utf-8") in HOOK_POINTS
++    assert [p.name for p in flag.parent.iterdir()] == ["crash.flag"]
++
++
++def test_crash_temp_name_is_not_guessable(env: Env, tmp_path: Path) -> None:
++    _, furl = env.fakes()
++    flag = flag_in_own_folder(tmp_path)
++    victim = tmp_path / "victim.txt"
++    victim.write_text("keep", encoding="utf-8")
++    for guess in ("crash.flag.tmp", "crash.flag.new", ".crash.flag.tmp"):
++        (flag.parent / guess).symlink_to(victim)
++    demo = make(wired(env, furl, hooks=FlagFileHooks(flag)).desk)
++    assert demo.handle(POST, "crash", body({"point": "B"})) == (HTTP_OK, {"armed": "B"})
++    assert victim.read_text(encoding="utf-8") == "keep"
++    assert flag.read_text(encoding="utf-8") == "B"
++
++
++def test_crash_failed_replace_cleans_up(env: Env, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
++    _, furl = env.fakes()
++    flag = flag_in_own_folder(tmp_path)
++    demo = make(wired(env, furl, hooks=FlagFileHooks(flag)).desk)
++
++    def broken(src: Any, dst: Any) -> None:
++        raise OSError("replace failed")
++
++    monkeypatch.setattr(portal_demo.os, "replace", broken)
++    assert demo.handle(POST, "crash", body({"point": "A"})) == (HTTP_CONFLICT, {"error": "crash_unavailable"})
++    assert list(flag.parent.iterdir()) == []  # no temporary file left behind
++
++
++def test_straggler_extends_cooldown(env: Env, stub: Callable[..., Stub], monkeypatch: pytest.MonkeyPatch) -> None:
++    monkeypatch.setattr(portal_demo, "BURST_DEADLINE_SECONDS", SHORT_DEADLINE)
++
++    def slow(h: BaseHTTPRequestHandler, key: str, data: bytes, n: int) -> None:
++        time.sleep(SLOW_REPLY)
++        send(h, HTTP_CREATED, {})
++
++    demo = burst_demo(env, stub(slow))
++    assert demo.handle(POST, "burst", body({"n": 2}))[1]["answers"][0]["status"] == "timeout"
++    assert demo.handle(POST, "burst", body({"n": 1})) == (HTTP_TOO_MANY_REQUESTS, {"error": "burst_too_soon"})
++
++
++def test_burst_desk_url_must_be_local(env: Env) -> None:
++    _, furl = env.fakes()
++    demo = make(wired(env, furl).desk)
++    demo.desk_url = "http://remote.example.test:80"
++    assert demo.handle(POST, "burst", body({"n": 1})) == (HTTP_CONFLICT, {"error": "desk_url_not_local"})
++    assert demo._desk_url_is_local("http://[::1]:5") and demo._desk_url_is_local("http://127.0.0.1:5")
++    assert not demo._desk_url_is_local("http://remote.example.test:5") and not demo._desk_url_is_local("http://[")
++    bound = make(stand_in(config=Config(bind="desk.example.test", fakes_port=PORT_SAMPLE)))
++    assert bound._desk_url_is_local("http://desk.example.test:5")
++    assert not bound._desk_url_is_local("http://other.example.test:5")
++
++
++def test_state_nan_and_none_fields(env: Env) -> None:
++    assert portal_demo._clip(float("nan")) is None
++    assert portal_demo._clip(float("inf")) is None
++    assert portal_demo._clip(1.5) == 1.5
++    srv, furl = env.fakes("blind", "keyed")
++    with srv.state.lock:
++        srv.state.outbox.append({"key": "k2", "to": None, "subject": None})
++    obj = make(wired(env, furl, crm_cls=KeyedCrm).desk).handle(GET, "state", b"")[1]
++    row = obj["fakes"]["outbox"]["messages"][0]
++    assert row["to"] == "" and row["subject"] == ""
++    json.dumps(obj, allow_nan=False)  # valid JSON for the page
++
++
++def garbage_status(h: BaseHTTPRequestHandler) -> None:
++    h.wfile.write(b"garbage not http\r\n\r\n")
++    h.close_connection = True
++
++
++def cut_chunked(h: BaseHTTPRequestHandler) -> None:
++    h.wfile.write(b"HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n10\r\n{")
++    h.close_connection = True
++
++
++@pytest.mark.parametrize(("bad", "word"), [(garbage_status, "BadStatusLine"), (cut_chunked, "IncompleteRead")])
++def test_burst_http_protocol_errors(env: Env, stub: Callable[..., Stub], bad: Callable[..., None], word: str) -> None:
++    demo = burst_demo(env, stub(lambda h, key, data, n: bad(h)))
++    status, obj = demo.handle(POST, "burst", body({"n": 2}))
++    assert status == HTTP_OK
++    assert [a["status"] for a in obj["answers"]] == [word, word]
++
++
++@pytest.mark.parametrize("bad", [garbage_status, cut_chunked])
++def test_state_http_protocol_errors(env: Env, stub: Callable[..., Stub], bad: Callable[..., None]) -> None:
++    def script(h: BaseHTTPRequestHandler, key: str, data: bytes, n: int) -> None:
++        if key == "GET /fake/info":
++            bad(h)
++        else:
++            info_ok(h, key)
++
++    reads_offline(env, stub, script)
++
++
++def test_barrier_abort_when_thread_fails(env: Env, stub: Callable[..., Stub], monkeypatch: pytest.MonkeyPatch) -> None:
++    demo = burst_demo(env, stub(lambda h, key, data, n: send(h, HTTP_CREATED, {})))
++    real_start, made = threading.Thread.start, [0]
++
++    def start(self: threading.Thread) -> None:
++        if getattr(self._target, "__name__", "") == "one":  # type: ignore[attr-defined]
++            made[0] += 1
++            if made[0] > 2:
++                raise RuntimeError("can't start new thread")
++        real_start(self)
++
++    monkeypatch.setattr(threading.Thread, "start", start)
++    t0 = time.monotonic()
++    status, obj = demo.handle(POST, "burst", body({"n": 4}))
++    assert status == HTTP_OK and time.monotonic() - t0 < SLOW_REPLY  # the two waiting ones were let go at once
++    assert [a["status"] for a in obj["answers"]] == [HTTP_CREATED, HTTP_CREATED, "error", "error"]
++
++
++def test_armed_read_is_bounded(env: Env, tmp_path: Path) -> None:
++    _, furl = env.fakes()
++    flag = flag_in_own_folder(tmp_path)
++    hooks = FlagFileHooks(flag)
++    demo = make(wired(env, furl, hooks=hooks).desk)
++    flag.write_bytes(b"A" + b" " * 64 + b"x" * 100_000)
++    assert demo._armed(hooks) is None  # only the first bytes are read; the rest is not a point
++    flag.write_bytes(b"D2\n")
++    assert demo._armed(hooks) == "D2"
