@@ -519,7 +519,7 @@ def test_relative_imports_are_banned_by_ruff():
     cfg = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["tool"]["ruff"][
         "lint"
     ]
-    assert "TID" in cfg["extend-select"]
+    assert "TID" in cfg["select"]
     assert cfg["flake8-tidy-imports"]["ban-relative-imports"] == "all"
 
 

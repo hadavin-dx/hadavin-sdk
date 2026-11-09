@@ -30,7 +30,7 @@ actionlint -shellcheck=
 
 ## Tool table
 
-SPDX is read from the first lines of the upstream LICENSE file on the default branch (raw text saved in the evidence folder, `licences-raw.txt`), and compared with the package index metadata.
+SPDX is read from the first lines of the upstream LICENSE file on the default branch (raw text saved in `handover/evidence/cilint/licences-raw.txt`), and compared with the package index metadata.
 
 | Tool | Version (release date) | SPDX read from LICENSE | First LICENSE line | Pin | Findings on `main` | Fail-before proof |
 |---|---|---|---|---|---|---|
@@ -60,7 +60,7 @@ Not used, and why:
 - a package has no licence field, or the installed version differs from the lock;
 - an exception in `tools/licence_exceptions.txt` is stale (package gone, version changed, no longer needed).
 
-Result on 2026-11-07 (raw: `licence-scan.txt`, earlier run): 92 packages read, 3 copyleft, 3 skipped by platform marker (colorama BSD, tzdata Apache-2.0, httpx2-jsfetch BSD-3-Clause; licences read by hand from the package index and entered as `unchecked`). The 3 copyleft packages are already on `main`; their `allow` lines were NOT approved by the owner and await his written decision (studio rule: a non-permissive licence needs it before use in a client deliverable):
+Result on 2026-11-07 (raw: `handover/evidence/cilint/licence-scan.txt`, re-run on the final head of the batch-3 fixes): 92 packages read, 3 copyleft, 3 skipped by platform marker (colorama BSD, tzdata Apache-2.0, httpx2-jsfetch BSD-3-Clause; licences read by hand from the package index and entered as `unchecked`). The 3 copyleft packages are already on `main`; their `allow` lines were NOT approved by the owner and await his written decision (studio rule: a non-permissive licence needs it before use in a client deliverable):
 - pglast 8.7: GPL-3.0-or-later. `test` group only; never imported by `src/`.
 - psycopg 3.3.6 and psycopg-binary 3.3.6: LGPL-3.0-only. Runtime extras `pg` and `askdata`; intended to stay an unmodified, separate dependency (not verified).
 Options for the owner: (a) accept the LGPL driver in writing as an unmodified separate dependency; (b) a permissive driver behind the store kind; (c) drop pglast from the test group.
@@ -100,7 +100,7 @@ The repository test `tests/test_lockin_guard.py` is kept. Contract 4 repeats its
 
 ## Fail-before proofs
 
-Each proof was run on a throwaway copy of the tree, one planted problem at a time, with no test run going on the same tree. Raw output: `fail-before-proofs.txt` and `fail-before-proofs-2.txt` in the evidence folder (round 2 adds PLW, SIM, RUF100 and E722 plants, the mypy ratchet, the whitelist check, the ruff-version check and the licence check). The first actionlint plant turned red for a different reason than planned (a duplicated key), so it was redone with a misspelled context name; both are recorded.
+Each proof was run on a throwaway copy of the tree, one planted problem at a time, with no test run going on the same tree. Raw output: `handover/evidence/cilint/fail-before-proofs.txt` and `handover/evidence/cilint/fail-before-proofs-2.txt` (round 2 adds PLW, SIM, RUF100 and E722 plants, the mypy ratchet, the whitelist check, the ruff-version check and the licence check). The first actionlint plant turned red for a different reason than planned (a duplicated key), so it was redone with a misspelled context name; both are recorded.
 
 ## The mypy rollout list
 
