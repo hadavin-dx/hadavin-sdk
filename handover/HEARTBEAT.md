@@ -561,3 +561,4 @@ LAPTOP CANDIDATES (pushed heads only): PR85 0b54631 (items 3,4,10), PR72 e6a4220
 06:23Z HB(auto):  agents 7 running (gen_evidence-P6a-pg-rerun,bd-P1b-fix1,ev-P1b-r2,R72-design,R72-code,R73-design,R73-code) | heavy slots busy 3/3 | last: started, none yet 
 06:25Z PULSE cloud: R72 codebase + R73 design reports saved; R73-code, ev-P1b-r2, ev-pr66/75/74 running; next: PR66/75 reviewers when evidence lands
 06:25Z PULSE cloud: agents running 4 (P1d-r6-draft a50c1431, R73-code ab02cb83, ev-P1b-r2 a30689c6, plus shells ev-pr66/75/74 evid.sh + P6a pg rerun); lanes: PR66/75 reviewers wait for evidence (pytest running), PR80/83/84/85/86 evidence queued (3 heavy slots busy), 76-79 not ready; READY: none
+06:26Z PR73 round1: design 0B/4M/7N + codebase 1B/4M/8N saved; resolve needed (fix by builder on core/P3a-2); lead decisions: P3a-3 merge order, manifest location
