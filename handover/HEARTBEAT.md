@@ -688,3 +688,4 @@ PULSE 10:27Z agents: a8aff4ab bd-dpld-fix (A, running pytest on its own tests; 2
 - 10:57Z PULSE: agents: af10ecd0 bd-dpld-fix3 (A3, running 1m, round-2 fixes M1-M4) | shells: pytest run 3 of 3 on /tmp/dpld4 (runs 1,2: 7 failed known, 164 passed) | then patched matrix
 - 11:02Z PULSE: agents: af10ecd0 bd-dpld-fix3 (A3, running 5m) | shells: matrix.sh on /tmp/dpld4 (hostile then load), conc50 done: 3 of 4 concurrency tests pass 50/50, test_retry_twice_concurrent fails 50/50 (known, intended F6 change, lead edits it)
 - 11:07Z PULSE: agents: af10ecd0 bd-dpld-fix3 (A3, running 10m: source+18 tests written, gating) | shells: none | pushed: hostile-linux-2/3, linux-load-3/4, cloud-review-1/2 | next: gate fix5, patch-cloud-1.diff, cloud-fix-1.md
+PULSE 11:12Z agents: a3e0c390 A4 builder dpld fix6 (running); shells: full-pytest x3 on dpld5 (monitor bdidmas3w); core idle NOT yet written (freeze ORDER 198); saved cloud-review-3.md
