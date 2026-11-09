@@ -1,0 +1,375 @@
+.F.FF.FFF....FFFFFFF.FFF                                                 [100%]
+=================================== FAILURES ===================================
+_____________________ test_real_touch_lock_gives_try_back ______________________
+
+env = <conftest.Env object at 0x7f403da30410>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f403d6d4050>
+
+    def test_real_touch_lock_gives_try_back(env, monkeypatch) -> None:
+        """The lock comes from the real `_touch` write (through `_locked_retry`), five drives in a row."""
+        rig = env.rig()
+        lid = new_lead(rig, "g2")
+        real = rig.desk._locked_retry
+    
+        def retry(fn: Any) -> Any:
+            if "_touch" in fn.__qualname__:
+                raise sqlite3.OperationalError(LOCKED)
+            return real(fn)
+    
+        monkeypatch.setattr(rig.desk, "_locked_retry", retry)
+        for _ in range(SEND_MAX_ATTEMPTS):
+            rig.desk.run_followup(lid)
+>           assert follow(rig, lid, "state, auto_attempts") == ("pending", 0)
+E           AssertionError: assert ('sending', 1) == ('pending', 0)
+E             
+E             At index 0 diff: 'sending' != 'pending'
+E             Use -v to get more diff
+
+tests/test_loss_path_s1g.py:77: AssertionError
+------------------------------ Captured log call -------------------------------
+WARNING  lead_desk:desk.py:1016 sending row not refreshed: database stayed locked
+WARNING  lead_desk:desk.py:1061 follow-up skipped: it is no longer ours
+____________________ test_stamp_before_send_lock_gives_back ____________________
+
+env = <conftest.Env object at 0x7f403d6d5220>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f403dbe3ce0>
+
+    def test_stamp_before_send_lock_gives_back(env, monkeypatch) -> None:
+        """Sibling: a real lock on the second stamp, the one that also writes the send mark. The CRM row is made, the
+        email is not, and the try comes back."""
+        rig = env.rig()
+        lid = new_lead(rig, "g4")
+        real = rig.desk._locked_retry
+        stamps = {"n": 0}
+    
+        def retry(fn: Any) -> Any:
+            if "_touch" in fn.__qualname__:
+                stamps["n"] += 1
+                if stamps["n"] == 2:
+                    raise sqlite3.OperationalError(LOCKED)
+            return real(fn)
+    
+        monkeypatch.setattr(rig.desk, "_locked_retry", retry)
+        rig.desk.run_followup(lid)
+>       assert follow(rig, lid, "state, auto_attempts, send_started, crm_done") == ("pending", 0, 0, 1)
+E       AssertionError: assert ('sending', 1, 0, 1) == ('pending', 0, 0, 1)
+E         
+E         At index 0 diff: 'sending' != 'pending'
+E         Use -v to get more diff
+
+tests/test_loss_path_s1g.py:110: AssertionError
+------------------------------ Captured log call -------------------------------
+WARNING  lead_desk:desk.py:1016 sending row not refreshed: database stayed locked
+WARNING  lead_desk:desk.py:1196 send skipped: the follow-up is no longer ours
+_______________________ test_touch_lock_raises_not_false _______________________
+
+env = <conftest.Env object at 0x7f403d6d5cd0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f403d83c050>
+
+    def test_touch_lock_raises_not_false(env, monkeypatch) -> None:
+        rig = env.rig()
+        lid = new_lead(rig, "g5")
+        set_follow(rig, lid, state="sending", attempts=1)
+    
+        def busy(fn: Any) -> Any:
+            raise sqlite3.OperationalError(LOCKED)
+    
+        monkeypatch.setattr(rig.desk, "_locked_retry", busy)
+>       with pytest.raises(sqlite3.OperationalError) as info:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE OperationalError
+
+tests/test_loss_path_s1g.py:126: Failed
+------------------------------ Captured log call -------------------------------
+WARNING  lead_desk:desk.py:1016 sending row not refreshed: database stayed locked
+_____________________ test_give_back_retries_after_a_lock ______________________
+
+env = <conftest.Env object at 0x7f403d83c380>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f403d6e0d50>
+
+    def test_give_back_retries_after_a_lock(env, monkeypatch) -> None:
+        rig = env.rig(outbox=NoHandleOutbox())
+        lid = new_lead(rig, "g7")
+        real_write = rig.desk._write
+        state = {"locked_once": False}
+    
+        @contextmanager
+        def write(conn: sqlite3.Connection) -> Any:
+            if rig.outbox.armed and not state["locked_once"]:  # the first write after the failed send is the give-back
+                state["locked_once"] = True
+                raise sqlite3.OperationalError(LOCKED)
+            with real_write(conn):
+                yield
+    
+        monkeypatch.setattr(rig.desk, "_write", write)
+        rig.desk.run_followup(lid)
+        assert state["locked_once"]
+>       assert follow(rig, lid, "state, auto_attempts, send_started, last_error") == ("pending", 0, 0, "no_descriptors")
+E       AssertionError: assert ('sending', 1, 1, None) == ('pending', 0..._descriptors')
+E         
+E         At index 0 diff: 'sending' != 'pending'
+E         Use -v to get more diff
+
+tests/test_loss_path_s1g.py:177: AssertionError
+------------------------------ Captured log call -------------------------------
+WARNING  lead_desk:desk.py:1217 send not made: no file handle left; the follow-up waits
+WARNING  lead_desk:desk.py:1097 claim not given back: database stayed locked; the reaper puts the row back
+_____________________ test_crm_no_handle_is_nothing_stored _____________________
+
+a = ('http://127.0.0.1:1/fake/crm', {'lead_id': 'L000000000001', 'record': {'a': 'b'}}, 1.0)
+k = {}
+
+    def refuse(*a: Any, **k: Any) -> Any:
+>       raise urllib.error.URLError(OSError(errno.EMFILE, "x"))
+E       urllib.error.URLError: <urlopen error [Errno 24] x>
+
+tests/test_loss_path_s1g.py:182: URLError
+
+The above exception was the direct cause of the following exception:
+
+env = <conftest.Env object at 0x7f403d83d150>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f403d8015e0>
+
+    def test_crm_no_handle_is_nothing_stored(env, monkeypatch) -> None:
+        def refuse(*a: Any, **k: Any) -> Any:
+            raise urllib.error.URLError(OSError(errno.EMFILE, "x"))
+    
+        monkeypatch.setattr(adapters, "_exchange", refuse)
+        with pytest.raises(CrmNothingStored):
+>           HttpCrm(f"http://{HOST}:1", 1.0).put("L000000000001", {"a": "b"})
+
+tests/test_loss_path_s1g.py:186: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <lead_desk.adapters.HttpCrm object at 0x7f403da38440>
+lead_id = 'L000000000001', record = {'a': 'b'}
+
+    def put(self, lead_id: str, record: Mapping[str, str]) -> Literal["PUT", "ALREADY_PRESENT"]:
+        try:
+            reply = _exchange(self._url, {"lead_id": lead_id, "record": dict(record)}, self._timeout)
+        except urllib.error.HTTPError as e:
+            code = e.code
+            e.close()
+            if code != HTTP_REQUEST_TIMEOUT and HTTP_BAD_REQUEST <= code < HTTP_INTERNAL_ERROR:
+                raise CrmNothingStored(f"http {code}") from e
+            raise CrmError(f"http {code}") from e
+        except urllib.error.URLError as e:
+            if isinstance(e.reason, (ConnectionRefusedError, socket.gaierror)):
+                raise CrmNothingStored(type(e.reason).__name__) from e
+>           raise CrmError(type(e.reason).__name__) from e
+E           lead_desk.adapters.CrmError: OSError
+
+../dpld-a4r4/src/lead_desk/adapters.py:112: CrmError
+______________________ test_crm_no_handle_gives_try_back _______________________
+
+env = <conftest.Env object at 0x7f403d6e1b50>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f403d8024e0>
+
+    def test_crm_no_handle_gives_try_back(env, monkeypatch) -> None:
+        rig = env.rig()
+        rig.desk.crm = HttpCrm(f"http://{HOST}:1", 1.0)  # no capability read: counts as not keyed
+    
+        def refuse(*a: Any, **k: Any) -> Any:
+            raise urllib.error.URLError(OSError(errno.EMFILE, "x"))
+    
+        monkeypatch.setattr(adapters, "_exchange", refuse)
+        lid = new_lead(rig, "g8")
+        rig.desk.run_followup(lid)
+>       assert follow(rig, lid, "state, auto_attempts, crm_done, last_error") == ("pending", 0, 0, None)
+E       AssertionError: assert ('unknown', 1..._unconfirmed') == ('pending', 0, 0, None)
+E         
+E         At index 0 diff: 'unknown' != 'pending'
+E         Use -v to get more diff
+
+tests/test_loss_path_s1g.py:199: AssertionError
+------------------------------ Captured log call -------------------------------
+WARNING  lead_desk:desk.py:961 crm put ended unclear on a CRM that is not keyed: CrmError
+__________________________ test_defer_pending_is_gone __________________________
+
+    def test_defer_pending_is_gone() -> None:
+>       assert not hasattr(Desk, "_defer_pending")
+E       AssertionError: assert not True
+E        +  where True = hasattr(Desk, '_defer_pending')
+
+tests/test_loss_path_s1g.py:258: AssertionError
+___________________ test_model_slower_than_grace_asked_twice ___________________
+
+env = <conftest.Env object at 0x7f403d7618d0>
+caplog = <_pytest.logging.LogCaptureFixture object at 0x7f403da382f0>
+
+    def test_model_slower_than_grace_asked_twice(env, caplog) -> None:
+        """Pins the limit: a model call that outlasts the stuck grace is asked a SECOND time. The CRM row and the email
+        stay once, because every later write checks the claim's token."""
+        holder: dict[str, Any] = {}
+        rig = env.rig()
+        slow = SlowQualifier(rig.replies_path, holder)
+        rig.desk.qualifier = slow
+        holder["rig"] = rig
+        lid = new_lead(rig, "g13")
+        with caplog.at_level(logging.WARNING, logger="lead_desk"):
+            rig.desk.run_followup(lid)
+>       assert slow.calls == 2
+E       assert 1 == 2
+E        +  where 1 = <test_loss_path_s1g.SlowQualifier object at 0x7f403da38ec0>.calls
+
+tests/test_loss_path_s1g.py:293: AssertionError
+------------------------------ Captured log call -------------------------------
+WARNING  lead_desk:desk.py:1067 follow-up steps 1-2 failed after the claim: AttributeError
+______________________ test_model_within_grace_asked_once ______________________
+
+env = <conftest.Env object at 0x7f403d8801f0>
+
+    def test_model_within_grace_asked_once(env) -> None:
+        rig = env.rig()
+        lid = new_lead(rig, "g14")
+    
+        class Quick(RecordedQualifier):
+            def qualify(self, lead_id: str, email_key: str) -> Any:
+                rig.clock.advance(int(constants.MODEL_CALL_BUDGET_SECONDS))
+                rig.desk.reap_once()  # a pass while the call runs: the row is not stuck yet
+                return super().qualify(lead_id, email_key)
+    
+        quick = Quick(rig.replies_path)
+        rig.desk.qualifier = quick
+        rig.desk.run_followup(lid)
+>       assert quick.calls == 1 and rig.state(lid)[0] == "sent"
+E       assert (0 == 1)
+E        +  where 0 = <test_loss_path_s1g.test_model_within_grace_asked_once.<locals>.Quick object at 0x7f403d97fe00>.calls
+
+tests/test_loss_path_s1g.py:312: AssertionError
+------------------------------ Captured log call -------------------------------
+WARNING  lead_desk:desk.py:1067 follow-up steps 1-2 failed after the claim: AttributeError
+____________________ test_declared_model_timeout_is_checked ____________________
+
+env = <conftest.Env object at 0x7f403d983410>
+
+    def test_declared_model_timeout_is_checked(env) -> None:
+        rig = env.rig()
+>       grace = rig.desk.stuck_grace_seconds
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Desk' object has no attribute 'stuck_grace_seconds'
+
+tests/test_loss_path_s1g.py:317: AttributeError
+________________________ test_model_budget_is_validated ________________________
+
+    def test_model_budget_is_validated() -> None:
+>       constants.validate_model_budget(15, 5, 20)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'lead_desk.constants' has no attribute 'validate_model_budget'
+
+tests/test_loss_path_s1g.py:333: AttributeError
+_____________________ test_default_config_fits_the_budget ______________________
+
+    def test_default_config_fits_the_budget() -> None:
+        config = Config()
+        grace = int(config.send_timeout_seconds + 4 * constants.BUSY_WAIT_SECONDS)
+>       assert constants.MODEL_CALL_BUDGET_SECONDS + constants.MODEL_GRACE_MARGIN_SECONDS <= grace
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'lead_desk.constants' has no attribute 'MODEL_CALL_BUDGET_SECONDS'
+
+tests/test_loss_path_s1g.py:343: AttributeError
+_____________________ test_accept_pauses_on_no_file_handle _____________________
+
+env = <conftest.Env object at 0x7f403d9816d0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f403da46b30>
+
+    def test_accept_pauses_on_no_file_handle(env, monkeypatch) -> None:
+        rig = env.rig()
+        srv = server.make_server(rig.desk, replace(rig.desk.config, port=0))
+        calls = {"n": 0}
+    
+        def refuse(self: Any) -> Any:
+            calls["n"] += 1
+            raise OSError(errno.EMFILE, "too many open files")
+    
+        monkeypatch.setattr("socketserver.TCPServer.get_request", refuse)
+        host, port = srv.server_address[0], srv.server_address[1]
+        thread = threading.Thread(target=srv.serve_forever, daemon=True)
+        thread.start()
+        try:
+            client = socket.create_connection((str(host), int(port)), timeout=5)  # stays in the listen queue, unaccepted
+            time.sleep(0.5)
+            client.close()
+        finally:
+            srv.shutdown()
+            srv.server_close()
+            thread.join(timeout=5)
+>       assert 1 <= calls["n"] <= 25, calls  # a spinning loop makes thousands of calls in half a second
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: {'n': 397068}
+E       assert 397068 <= 25
+
+tests/test_loss_path_s1g.py:370: AssertionError
+______________________ test_accept_pause_is_the_constant _______________________
+
+env = <conftest.Env object at 0x7f403d805390>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f403d8802c0>
+
+    def test_accept_pause_is_the_constant(env, monkeypatch) -> None:
+        srv = server.make_server(env.rig().desk, replace(Config(), port=0))
+        slept = _accept_error(monkeypatch, errno.ENFILE)
+        try:
+            with pytest.raises(OSError):
+                srv.get_request()
+        finally:
+            srv.server_close()
+>       assert slept == [constants.ACCEPT_PAUSE_SECONDS]
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'lead_desk.constants' has no attribute 'ACCEPT_PAUSE_SECONDS'
+
+tests/test_loss_path_s1g.py:403: AttributeError
+________________ test_unlimited_hard_limit_names_a_real_number _________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f403d758890>
+
+    def test_unlimited_hard_limit_names_a_real_number(monkeypatch) -> None:
+        res = _Res()
+        monkeypatch.setattr(res, "getrlimit", lambda which: (256, -1))
+        with pytest.raises(server.DescriptorBudgetError) as info:
+            server.ensure_descriptor_budget(1000, res)
+        text = str(info.value)
+>       assert "to 64 or less" in text and " to 0 " not in text
+E       AssertionError: assert ('to 64 or less' in 'MAX_HANDLER_THREADS=1000 needs about 3064 open files (3 per thread plus 64), but the limit on this computer is 256 (hard -1). Lower MAX_HANDLER_THREADS in constants.py to 0 or less, or raise the open-file limit (ulimit -n).')
+
+tests/test_loss_path_s1g.py:426: AssertionError
+_____________________ test_no_allowed_setting_fits_says_so _____________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f403d758650>
+
+    def test_no_allowed_setting_fits_says_so(monkeypatch) -> None:
+        res = _Res()
+        monkeypatch.setattr(res, "getrlimit", lambda which: (40, -1))
+        with pytest.raises(server.DescriptorBudgetError) as info:
+            server.ensure_descriptor_budget(1000, res)
+        text = str(info.value)
+>       assert "Lower MAX_HANDLER_THREADS" not in text and "to 0" not in text and "ulimit -n" in text
+E       AssertionError: assert ('Lower MAX_HANDLER_THREADS' not in 'MAX_HANDLER...(ulimit -n).'
+E         
+E         'Lower MAX_HANDLER_THREADS' is contained here:
+E           hard -1). Lower MAX_HANDLER_THREADS in constants.py to 0 or less, or raise the open-file limit (ulimit -n).
+E         ?           +++++++++++++++++++++++++)
+
+tests/test_loss_path_s1g.py:435: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_loss_path_s1g.py::test_real_touch_lock_gives_try_back - Ass...
+FAILED tests/test_loss_path_s1g.py::test_stamp_before_send_lock_gives_back - ...
+FAILED tests/test_loss_path_s1g.py::test_touch_lock_raises_not_false - Failed...
+FAILED tests/test_loss_path_s1g.py::test_give_back_retries_after_a_lock - Ass...
+FAILED tests/test_loss_path_s1g.py::test_crm_no_handle_is_nothing_stored - le...
+FAILED tests/test_loss_path_s1g.py::test_crm_no_handle_gives_try_back - Asser...
+FAILED tests/test_loss_path_s1g.py::test_defer_pending_is_gone - AssertionErr...
+FAILED tests/test_loss_path_s1g.py::test_model_slower_than_grace_asked_twice
+FAILED tests/test_loss_path_s1g.py::test_model_within_grace_asked_once - asse...
+FAILED tests/test_loss_path_s1g.py::test_declared_model_timeout_is_checked - ...
+FAILED tests/test_loss_path_s1g.py::test_model_budget_is_validated - Attribut...
+FAILED tests/test_loss_path_s1g.py::test_default_config_fits_the_budget - Att...
+FAILED tests/test_loss_path_s1g.py::test_accept_pauses_on_no_file_handle - As...
+FAILED tests/test_loss_path_s1g.py::test_accept_pause_is_the_constant - Attri...
+FAILED tests/test_loss_path_s1g.py::test_unlimited_hard_limit_names_a_real_number
+FAILED tests/test_loss_path_s1g.py::test_no_allowed_setting_fits_says_so - As...
+16 failed, 8 passed in 0.85s
+=== sigterm + repointed tests against OLD src
+FAILED tests/test_stall_eviction.py::test_sigterm_handler_comes_before_listening
+FAILED tests/test_stall_eviction.py::test_second_signal_during_shutdown_is_harmless
+FAILED tests/test_hardening_cloud_d.py::test_f7_a_touch_that_hit_a_lock_is_not
+3 failed, 148 passed, 1 warning in 8.50s
