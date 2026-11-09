@@ -1,0 +1,26 @@
+# Mutation sample: lead_desk desk.py, db.py, schema.sql, identity.py
+
+Evidence runner output (records, does not judge). Private scratch tree /tmp/ag/mut, pristine copy /tmp/ag/mut-pristine, driver /tmp/ag/mut_run.py, mutant list /tmp/ag/mutants.py, raw results /tmp/ag/mut_results.json.
+
+Counts so far: attempted 12, valid 12, killed 9, survived 3, invalid 0, timeout 0.
+
+| n | label | class | file:line | mutation | tests run | result | first failing test | seconds |
+|---|---|---|---|---|---|---|---|---|
+| 1 | dedupe lookup by raw email instead of email_key | dedupe-key | src/lead_desk/desk.py:583 | `"SELECT lead_id FROM leads WHERE email_key=?"` -> `"SELECT lead_id FROM leads WHERE email=?"` | fast selection (11 files, minus known-red and 3 slow load tests), -x | KILLED | tests/test_flow.py::test_cross_source_dupe | 0.8 |
+| 2 | email_key normalisation drops lower-casing | dedupe-key | src/lead_desk/identity.py:39 | `return s.strip().lower()` -> `return s.strip()` | fast selection (11 files, minus known-red and 3 slow load tests), -x | KILLED | tests/test_flow.py::test_cross_source_dupe | 0.4 |
+| 3 | email_key normalisation drops strip | dedupe-key | src/lead_desk/identity.py:39 | `return s.strip().lower()` -> `return s.lower()` | fast selection (11 files, minus known-red and 3 slow load tests), -x | KILLED | tests/test_flow.py::test_cross_source_dupe | 0.4 |
+| 4 | unique index on email_key made non-unique | unique-constraint | src/lead_desk/schema.sql:41 | `CREATE UNIQUE INDEX IF NOT EXISTS leads_email_key_uq` -> `CREATE INDEX IF NOT EXISTS leads_email_key_uq` | fast selection (11 files, minus known-red and 3 slow load tests), -x | SURVIVED |  | 92.7 |
+| 5 | outcome-once trigger never fires | trigger-write-once | src/lead_desk/schema.sql:24 | `WHEN OLD.outcome IS NOT NULL   BEGIN SELECT RAISE(ABORT,'a verdict is ` -> `WHEN OLD.outcome IS NULL AND 0   BEGIN SELECT RAISE(ABORT,'a verdict i` | fast selection (11 files, minus known-red and 3 slow load tests), -x | KILLED | tests/test_flow.py::test_write_once_triggers | 1.0 |
+| 6 | receipt-immutable trigger no longer guards payload | trigger-immutable | src/lead_desk/schema.sql:20 | `received_at, payload ON receipts` -> `received_at ON receipts` | fast selection (11 files, minus known-red and 3 slow load tests), -x | KILLED | tests/test_flow.py::test_write_once_triggers | 1.0 |
+| 7 | receipts no-delete trigger disabled | trigger-immutable | src/lead_desk/schema.sql:27 | `BEFORE DELETE ON receipts   BEGIN` -> `BEFORE DELETE ON receipts WHEN 0   BEGIN` | fast selection (11 files, minus known-red and 3 slow load tests), -x | KILLED | tests/test_flow.py::test_write_once_triggers | 1.1 |
+| 8 | sent-final trigger disabled | trigger-write-once | src/lead_desk/schema.sql:62 | `WHEN OLD.state = 'sent'   BEGIN` -> `WHEN OLD.state = 'sentx'   BEGIN` | fast selection (11 files, minus known-red and 3 slow load tests), -x | KILLED | tests/test_flow.py::test_write_once_triggers | 1.1 |
+| 9 | leads no-update trigger disabled | trigger-immutable | src/lead_desk/schema.sql:43 | `BEFORE UPDATE ON leads   BEGIN` -> `BEFORE UPDATE ON leads WHEN 0   BEGIN` | fast selection (11 files, minus known-red and 3 slow load tests), -x | KILLED | tests/test_flow.py::test_write_once_triggers | 1.1 |
+| 10 | receipt uniqueness ignores source | unique-constraint | src/lead_desk/schema.sql:17 | `UNIQUE (source, source_ref)` -> `UNIQUE (source_ref)` | fast selection (11 files, minus known-red and 3 slow load tests), -x | KILLED | tests/test_flow.py::test_cross_source_dupe | 0.4 |
+| 11 | schema source_ref length bound 128 -> 127 | boundary | src/lead_desk/schema.sql:7 | `CHECK (length(source_ref) BETWEEN 1 AND 128)` -> `CHECK (length(source_ref) BETWEEN 1 AND 127)` | fast selection (11 files, minus known-red and 3 slow load tests), -x | SURVIVED |  | 92.9 |
+| 12 | envelope min length boundary <= -> < | boundary | src/lead_desk/desk.py:719 | `SOURCE_REF_MIN <= len(source_ref) <= SOURCE_REF_MAX` -> `SOURCE_REF_MIN < len(source_ref) <= SOURCE_REF_MAX` | fast selection (11 files, minus known-red and 3 slow load tests), -x | SURVIVED |  | 92.9 |
+
+## Survivors
+
+- #4 unique index on email_key made non-unique (src/lead_desk/schema.sql:41, class unique-constraint). Full-suite confirmation: not yet run.
+- #11 schema source_ref length bound 128 -> 127 (src/lead_desk/schema.sql:7, class boundary). Full-suite confirmation: not yet run.
+- #12 envelope min length boundary <= -> < (src/lead_desk/desk.py:719, class boundary). Full-suite confirmation: not yet run.

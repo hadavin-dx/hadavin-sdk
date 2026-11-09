@@ -10,7 +10,8 @@
       "company",
       "message"
     ],
-    "mode": "recorded"
+    "mode": "recorded",
+    "note": "lists the inputs the step is given, derived from its signature; it does not prove what a live step looks up by id"
   },
   "stored": [
     {
@@ -72,6 +73,11 @@
   "access": {
     "bind": "127.0.0.1",
     "portal_read_only": true,
+    "portal_actions": [
+      "retry",
+      "resolve",
+      "demo_controls"
+    ],
     "host_check": true,
     "origin_check": true,
     "login": false,
