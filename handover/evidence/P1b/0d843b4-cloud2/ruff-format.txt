@@ -1,0 +1,4 @@
+HEAD 0d843b4183becafaca8ddef74e529a93d0e3e398
+$ <venv>/bin/ruff format --check .
+338 files already formatted
+exit=0
