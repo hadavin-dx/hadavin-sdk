@@ -93,7 +93,7 @@ ATTACKS: list[Attack] = [
     A("create-role", "CREATE ROLE askdata_p2_evil LOGIN SUPERUSER", "V03", "writes", "write"),
     A("alter-table", "ALTER TABLE shop.orders ADD COLUMN x integer", "V03", "writes", "write"),
     A("grant", "GRANT ALL ON ALL TABLES IN SCHEMA shop TO PUBLIC", "V03", "writes", "write"),
-    A("copy-program", "COPY (SELECT 1) TO PROGRAM 'echo x'", "V03", "writes", "exec"),
+    A("copy-program", "COPY (SELECT 1) TO PROGRAM 'cat > /dev/null'", "V03", "writes", "exec"),
     A("copy-to-file", "COPY shop.customers TO '/tmp/askdata_p2_copy.csv'", "V03", "writes", "exec"),
     A("call", "CALL shop.purge()", "V03", "writes", "write"),
     A("do-block", "DO 'BEGIN DELETE FROM shop.order_items; END'", "V03", "writes", "write"),
