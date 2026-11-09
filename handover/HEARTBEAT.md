@@ -754,3 +754,4 @@ PULSE 14:05Z agents: A a5e33f7e4aa487492 (WP-A fix pass 3, box 14:40Z). R3AS/R3A
 PULSE 14:03Z agents: A a5e33f7e4aa487492 (WP-A fix pass 3, box 14:40Z). F closed d2728a2. shells: pulse_refresh2.sh pid 10898 (to 15:55Z). core frozen (ORDER 198).
 PULSE 14:08Z agents: A a5e33f7e4aa487492 (WP-A fix pass 3, box 14:40Z). F closed d2728a2. shells: pulse_refresh2.sh pid 10898 (to 15:55Z). core frozen (ORDER 198).
 PULSE 14:13Z agents: A a5e33f7e4aa487492 (WP-A fix pass 3, box 14:40Z; review.json fixture edited in progress). F closed d2728a2. shells: pulse_refresh2.sh pid 10898 (to 15:55Z). core frozen (ORDER 198).
+PULSE 14:17Z agents: none running (A pass 3 handed back, closed; F closed). shells: pulse_refresh2.sh; pytest pid 31760 (A's full run on pass-3 tree, watched by bounded Monitor). I finish patch copy + report after the run. core frozen.
