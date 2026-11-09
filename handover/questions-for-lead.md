@@ -1339,9 +1339,14 @@ Drafter open questions: (1) H28a-b (e-mail split by ** or escape code) cannot be
 - Q-L3 (NEW): a scan (P1b scan_holds / PR77 redact) misses a protected value with one letter replaced by an unassigned/private-use char. Recommend P1b scan_holds fails closed (a person must look). Which package carries it?
 - P4a r2: codebase 1B (FakeLLM max_attempts facts differ between PR78 and PR79) + 3M; design 4M; all go into rev 3.
 - P1d-a r1 readiness: 3B/7M (base SHA, no hypothesis dependency, test defn). Waiting on design report, then Opus resolve.
-- PR84: head cbcf868, round 3 clean; evidence run started 07:37Z (one run). Vault token `root` in ci.yml still your decision.
+- PR84: head cbcf868, round 3 clean; evidence run started 07:37Z (one run). Vault token `root` in ci.yml: FIXED in PR84 head de18d59 (per-run random token), no decision needed.
 
 ## q394 (07:43Z) PR84 head 0cc446a, PR87 head a909459, AK-G2 rev 6
 - PR84: per-run random Vault token done (ORDER 180) at 0cc446a; ci.yml has never run on GitHub (docker step, port publish, vault wait, GITHUB_ENV untested). Evidence run + 2 reviewers started on 0cc446a. READY only after clean + green.
 - PR87: peel builder pushed a909459 (BN-47 rule, D0/D2b/D2c/D2d, race test, 17/17 mutants killed by hand). BL-core-peel-003 still OPEN: tools/mutation_runner.py forces --noconftest and drops HADAVIN_TEST_PG_DSN. Independent evidence + 2 reviewers started. DECISION FOR LEAD: two flaky askdata tests ([copy-program] fails 2/25 on base, 3/25 on head: `TO PROGRAM 'echo x'` closed pipe). Builder proposes corpus.py:96 `TO PROGRAM 'cat > /dev/null'` (0 failures in 40 runs) as its own small PR. Yes?
 - AK-G2 rev 6 written (79 rows, 143 mutants). DECISION FOR LEAD (M3, mutation runner): R1 = small core PR adding opt-in keywords conftest / pass_env (only HADAVIN_TEST_PG_DSN) / forbid_skips to run_mutants (also closes BL-core-peel-003, recommended) vs R2 second runner (not recommended). Confirm defaults: key_name built now; D2b/D2c ordinary rows (4 fail-before rows); V13 before any pilot. Plan review r6 started.
+
+## q395 (07:49:40 UTC) PR75 B-1 and AK-G2 r6
+- PR75 (P4d-a2, head 39ff5ef): builder asks: accept the "b" money SQL inside the a2 PR (retitle PR + CHANGELOG), or split after P3a? Builder built B8 on a 12-line local schema builder because tests/migration_schemas.py comes with P3a (unmerged). Not built yet: B4(ii) 50-repeat race, second-handle kill switch, fill-the-cap, B5 model-based property test. Evidence run on 39ff5ef queued; reviewers follow (money, uncapped).
+- AK-G2 rev 6: design 0B/1M/9N, readiness 1B(Done-gate, now answered by ORDER 181 R1)/7M/9N. Resolver rev 7 started. R1 runner PR builder started (depends: both AK-G2 sub-PRs).
+- ORDER 181 started: askdata flaky PR builder, R1 builder. PR84: after clean r5 + evidence I will push for a real GitHub CI run (draft PR) and report before READY.
