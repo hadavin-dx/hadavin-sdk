@@ -2,7 +2,7 @@
 
 Evidence runner output (records, does not judge). Private scratch tree /tmp/ag/mut, pristine copy /tmp/ag/mut-pristine, driver /tmp/ag/mut_run.py, mutant list /tmp/ag/mutants.py, raw results /tmp/ag/mut_results.json.
 
-Counts so far: attempted 30, valid 30, killed 23, survived 7, invalid 0, timeout 0.
+Counts (final):  attempted 30, valid 30, killed 23, survived 7, invalid 0, timeout 0.
 
 | n | label | class | file:line | mutation | tests run | result | first failing test | seconds |
 |---|---|---|---|---|---|---|---|---|
@@ -40,9 +40,25 @@ Counts so far: attempted 30, valid 30, killed 23, survived 7, invalid 0, timeout
 ## Survivors
 
 - #4 unique index on email_key made non-unique (src/lead_desk/schema.sql:41, class unique-constraint). Full-suite confirmation: SURVIVED the rest of the suite (fast selection passed, plus the remaining files, 3 slow tests and the 6 known-red: failure set equals baseline, 10 failures) in 285 s.
+  - Behaviour changed and test idea (idea only): A test with two threads inserting the same email_key straight into the table (bypassing _lookup_email_key) and expecting IntegrityError. Today only the lookup stops duplicates; test_mutant_no_unique_key removes the lookup too, but not the index alone.
 - #11 schema source_ref length bound 128 -> 127 (src/lead_desk/schema.sql:7, class boundary). Full-suite confirmation: SURVIVED the rest of the suite (fast selection passed, plus the remaining files, 3 slow tests and the 6 known-red: failure set equals baseline, 10 failures) in 279 s.
+  - Behaviour changed and test idea (idea only): A test that stores a 128-character source_ref directly through SQL (or via Desk.process with a 128-character id) and expects it to be stored; today the Python envelope check hides the schema bound.
 - #12 envelope min length boundary <= -> < (src/lead_desk/desk.py:719, class boundary). Full-suite confirmation: SURVIVED the rest of the suite (fast selection passed, plus the remaining files, 3 slow tests and the 6 known-red: failure set equals baseline, 10 failures) in 280 s.
-- #13 automatic claim no longer clears send_started (src/lead_desk/desk.py:97, class claim-lease). Full-suite confirmation: not yet run.
-- #20 reaper requeue age boundary <= -> < (src/lead_desk/desk.py:383, class boundary). Full-suite confirmation: not yet run.
-- #21 reaper stalled-receipt boundary <= -> < (src/lead_desk/desk.py:479, class boundary). Full-suite confirmation: not yet run.
-- #26 reaper ignores receipts stamped in the future (src/lead_desk/desk.py:482, class reaper). Full-suite confirmation: not yet run.
+  - Behaviour changed and test idea (idea only): A test that sends a 1-character source_ref and expects a receipt (and a 0-character one expecting 400 bad_envelope).
+- #13 automatic claim no longer clears send_started (src/lead_desk/desk.py:97, class claim-lease). Full-suite confirmation: SURVIVED the rest of the suite (fast selection passed, plus the remaining files, 3 slow tests and the 6 known-red: failure set equals baseline, 9 failures) in 282 s.
+  - Behaviour changed and test idea (idea only): A test that sets send_started=1 on a row, claims it by the automatic path, and reads send_started back as 0.
+- #20 reaper requeue age boundary <= -> < (src/lead_desk/desk.py:383, class boundary). Full-suite confirmation: SURVIVED the rest of the suite (fast selection passed, plus the remaining files, 3 slow tests and the 6 known-red: failure set equals baseline, 10 failures) in 281 s.
+  - Behaviour changed and test idea (idea only): A test with a `sending` row whose updated_at equals the cut-off exactly, calling reap_once, expecting it requeued.
+- #21 reaper stalled-receipt boundary <= -> < (src/lead_desk/desk.py:479, class boundary). Full-suite confirmation: SURVIVED the rest of the suite (fast selection passed, plus the remaining files, 3 slow tests and the 6 known-red: failure set equals baseline, 10 failures) in 281 s.
+  - Behaviour changed and test idea (idea only): A test with an open receipt whose received_at equals now - stall_seconds exactly, calling reap_once, expecting a verdict.
+- #26 reaper ignores receipts stamped in the future (src/lead_desk/desk.py:482, class reaper). Full-suite confirmation: SURVIVED the rest of the suite (fast selection passed, plus the remaining files, 3 slow tests and the 6 known-red: failure set equals baseline, 10 failures) in 281 s.
+  - Behaviour changed and test idea (idea only): A test that stamps an open receipt in the future (clock set back), runs reap_once twice with the clock moved past stall_seconds, and expects a verdict; no existing test reaches _stalled_by_own_clock's result.
+
+## How the runner decided (method and limits)
+
+- Clean baseline, selected tests (11 files): 6 failed, 290 passed, 1 skipped, 154 s: test_failed_retry, test_retry_twice_concurrent, test_mutant_no_claim, test_f14_lock_file_unopenable, test_reply_write_fails_after_commit_followup_still_runs, test_demo_adapters (/tmp/ag/baseline2.log). Clean baseline, whole tests dir: 9 failed, 642 passed, 1 skipped, 2 xfailed, 374 s; the failures are the same list minus test_reply_write_fails_after_commit_followup_still_runs (it passed in the whole-dir run, so it is order or load dependent) plus 4 test_hygiene tests (the tree has no .git; test_hygiene_scan_public and test_hygiene_wordlist are on the brief's known-red list) (/tmp/ag/baseline_full.log).
+- Phase 1 per mutant: restore the file from /tmp/ag/mut-pristine, apply one replacement (old text asserted to occur exactly once), compile / SQL-parse / import check, then pytest -x on the fast selection with the 6 known-red tests and 3 slow load tests (test_f9_burst_distinct_emails, test_f13_startup_50_pending, test_f13_startup_fast_reaper_sends) deselected, 300 s timeout. KILLED = pytest exit 1 on a test that is not deselected, so a known-red test could not count; this also means a mutant that only changes HOW a known-red test fails is invisible in phase 1.
+- Phase 2 for the 7 survivors: the remaining test files (portal, hygiene, infra leftovers), the 3 slow tests and the 6 known-red tests, compared with the clean whole-dir failure set plus the brief's known-red list. Together with phase 1 this covers the whole tests dir, but it is NOT one single whole-dir run per survivor (test interaction effects are not covered). The first phase-2 attempt was thrown away because it counted the order-dependent test_reply_write_fails... as a new failure; the driver was changed and phase 2 re-run for all 7.
+- Not done: I stopped phase 1 after 30 of the 67 prepared mutants (list /tmp/ag/mutants.py, numbers 31-67 were never run) because each surviving mutant costs about 95 s and a late-ordered killer about 90 s with -x, and the time box (60 min) was already past; total elapsed was well over it because of phase 2 (7 x about 280 s). Mutants 1-30 cover: dedupe key, unique index, the four triggers, claim SQL, requeue, reaper boundaries, and BEGIN IMMEDIATE/COMMIT. The status-code, ambiguous-send, retry, resolve, reconcile, db pragma and migration mutants (31-67) did not run.
+- Mutant 31 was in flight when I stopped the driver; its result was not recorded; all four source files were then restored and `diff -r -x __pycache__ /tmp/ag/mut /tmp/ag/mut-pristine` printed nothing.
+- No other agent's tree was touched; other pytest runs on the machine (not mine) were going on at the same time, so the seconds column may be inflated.
