@@ -1,2 +1,2 @@
-17:53Z | agents: RUNNING: a65859643ee6d5dc9 S1 slow-sender builder (17:48Z-18:35Z); af4943d600b0e7700 mutation sample (end 18:35Z). Shells: linux_ev.sh tree B, pulse scripts
-RUNNING (added 17:52Z): abbd25ff4a24c6996 L2-a smtp_outbox+catcher (end +60min); a55ec9b317b5e83ac L2-b invariants+driver+fake model (end +60min) | evid shells: none | unpushed: none | refreshed every 60 s by a bounded script (ends 20:03Z); detail in HEARTBEAT.md
+17:54Z | agents: RUNNING: a65859643ee6d5dc9 S1 slow-sender builder (17:48Z-18:35Z); af4943d600b0e7700 mutation sample (end 18:35Z). Shells: linux_ev.sh tree B, pulse scripts
+RUNNING (added 17:52Z): abbd25ff4a24c6996 L2-a smtp_outbox+catcher (end +60min); a55ec9b317b5e83ac L2-b invariants+driver+fake model (end +60min) | evid shells: none | unpushed: none | refreshed every 60 s by a bounded script (ends 20:04Z); detail in HEARTBEAT.md
