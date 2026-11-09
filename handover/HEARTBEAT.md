@@ -664,3 +664,4 @@ PULSE 2026-11-09T09:41Z CORE FREEZE agents(1): ab1b2c64 PR89 fixes. Shells: evid
 PULSE 09:46Z agents: none live (bF89 closed); shells: evid63b, evid91, pulse_refresh | PR89 6706e67 pushed (q415) | CORE FREEZE
 PULSE 09:47Z agents: none live; shells: evid63b (3.12 suite running), evid86 (3.13 running, started earlier by lead/other), pulse_refresh | PR91 evidence done: 1 failed on both Pythons (see q) | CORE FREEZE, no new work
 PULSE 09:52Z agents: none live; shells: evid63b (3.12 suite finishing, 3.13 stale log from run 1 not trusted), evid80 just started by another session, pulse_refresh | CORE FREEZE
+PULSE 09:55Z agents: none live | PR89 6706e67 GitHub checks: 8 listed, 7 success (SonarCloud, CodeQL, tests-py312, security, check, Analyze x2), CodeRabbit skipped; this is NOT READY (no independent evidence, no fresh round, no Linux mutants); CORE FREEZE
