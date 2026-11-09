@@ -1,5 +1,5 @@
 diff --git a/contract.md b/contract.md
-index ca80f8b..5bdbf47 100644
+index ca80f8b..ba37f37 100644
 --- a/contract.md
 +++ b/contract.md
 @@ -59,7 +59,7 @@ One private method `Desk._send_claimed(lead_id)` does the send and the recording
@@ -15,7 +15,7 @@ index ca80f8b..5bdbf47 100644
  | `GET /api/ui/leads/{lead_id}` | 200 | `{now, lead{...}, followup{...}, first_receipt{...}, duplicates[...] (at most 50), duplicates_total, review_items[...]}` |
  | | 404 | `{"error":"not_found"}` (also when `lead_id` is not `L` plus 12 lower-case hex characters) |
  | `GET /api/ui/review` (actions: failed card `retry`; each UNKNOWN card `retry` first, then its resolve choices. Retry on an UNKNOWN card is answered by the desk with 409 `unknown_needs_person` and changes nothing; the page shows the desk's words. This amends design 2.3, which listed no Retry for UNKNOWN) | 200 | `{now, items[{...the /review fields, lead_name, tab, title, reason_text, actions[{id,label,endpoint,body,confirm}]}], tabs{action,waiting,info}}` |
-+| `GET /api/ui/log?limit=&before=` | 200 | `{items[{request_id,received_at,door,result,lead_id,lead_name,followup_state}], next, total}`: the desk's request record, one line per request the desk received, newest first (ties on `received_at` are ordered by receipt number, highest first). `door` is `form` or `webhook` (the same words as `summary.doors[].source`; the page shows them as "Web form" and "Email message"). `result` is `new`, `duplicate`, `review` or `open` (`open` = no verdict yet). `lead_id`, `lead_name` and `followup_state` (`pending`, `sending`, `sent`, `failed`, `unknown`) are filled for `new` and `duplicate` and are `null` for `review` and `open`. `total` counts every request in the book and comes from the same read as the page. `next` is a cursor `<received_at>:<receipt number>` to pass as `before` for the next page, or `null` on the last page. `limit` is 1..200 (default 100); `before` is two whole numbers joined by a colon. The log holds the lead's display name and nothing else about the person: never email, phone, company or message. A value the desk's tables should never hold is shown as `review` (result), `unknown` (door, follow-up state), never as the stored text. This is the desk's request record, not a full audit log: it keeps the latest follow-up state, not every step. |
++| `GET /api/ui/log?limit=&before=` | 200 | `{items[{request_id,received_at,door,result,lead_id,lead_name,followup_state}], next, total}`: the desk's request record, one line per request the desk received, newest first (ties on `received_at` are ordered by receipt number, highest first). `door` is `form` or `webhook` (the same words as `summary.doors[].source`; the page shows them as "Web form" and "Email message"). `result` is `new`, `duplicate`, `review` or `open` (`open` = no verdict yet). `lead_id`, `lead_name` and `followup_state` (`pending`, `sending`, `sent`, `failed`, `unknown`) are filled when the request names a lead (every `new` and `duplicate`) and are `null` otherwise (a `review` or `open` request names none; a lead or follow-up row that is missing also gives `null`). `total` counts every request in the book and comes from the same read as the page. `next` is a cursor `<received_at>:<receipt number>` to pass as `before` for the next page, or `null` on the last page. `limit` is 1..200 (default 100); `before` is two whole numbers joined by a colon, each at most 18 digits (longer, or zero-padded past 18 characters: 400 `bad_query`; the same rule applies to every whole-number parameter). `request_id` and `lead_name` are shown exactly as the sender wrote them: a sender can type anything there, so the log keeps back email, phone, company and message but cannot vouch for those two free-text fields. The log holds the lead's display name and nothing else about the person: never email, phone, company or message. A value the desk's tables should never hold is shown as `review` (result), `unknown` (door, follow-up state), never as the stored text. This is the desk's request record, not a full audit log: it keeps the latest follow-up state, not every step. |
 +| | 400 | `{"error":"bad_query","field":"limit\|before\|<name>"}` (a limit outside 1..200, a `before` that is not two whole numbers joined by a colon, an unknown or repeated parameter) |
 +| `GET /api/ui/data-map` | 200 | `{ai_step{receives[],never_receives[],mode},stored[{field,where,purpose}],access{bind,portal_read_only,host_check,origin_check,login,encryption_at_rest,masking}}`: facts the desk builds from its own code and settings, no database read and no parameters. `receives` is the list of parameter names of `Qualifier.qualify`, read when the request arrives (`lead_id`, `email_key`); `never_receives` is the lead's fields (`lead_id`, `name`, `email`, `phone`, `company`, `message`) minus the ones those parameters carry (`email_key` is the lower-case email address). `mode` is `recorded` when the loaded AI step's class says so, otherwise `live` (a step that does not say is not called recorded). `stored` lists the fields the desk keeps, all in the lead book (one local database file). `access.bind` is the configured listen address; `host_check` and `origin_check` are always `true`; `portal_read_only` is `true`; `login`, `encryption_at_rest` and `masking` are `false`: the desk has none of the three. If the AI step takes an input that is not in the documented list, or the loaded step takes other inputs than the contract, the reply is 500 `{"error":"internal"}` instead of a guess. |
  | any `/api/ui/*` | 503 | `{"error":"busy"}` (the read hit a lock that outlasted the wait) or `{"error":"unavailable"}` (the read-only open failed or a table is missing: a request before start-up finished, a database path that is not a file, a deleted file) |
@@ -55,8 +55,21 @@ index 7678765..1be2b6c 100644
  SERIES_BUCKETS: Final = 60
  SERIES_BUCKET_SECONDS: Final = 5
  DEMO_BODY_MAX: Final = 4096  # longest request body handed to the demo extension
+diff --git a/src/lead_desk/db.py b/src/lead_desk/db.py
+index d90467d..a825652 100644
+--- a/src/lead_desk/db.py
++++ b/src/lead_desk/db.py
+@@ -43,7 +43,7 @@ _BACKFILL: dict[str, str] = {
+     # (the safe side); the mark is cleared by every claim, so no other row needs it
+     "send_started": "UPDATE followups SET send_started = 1 WHERE state = 'sending' AND crm_done = 1",
+ }
+-_VIEW_AND_INDEXES = ("review_items", "receipts_open_ix", "followups_active_ix")
++_VIEW_AND_INDEXES = ("review_items", "receipts_open_ix", "receipts_time_ix", "followups_active_ix")
+ _MIGRATE_TRIES = 3
+ 
+ 
 diff --git a/src/lead_desk/portal_api.py b/src/lead_desk/portal_api.py
-index 5ca6e03..5bd1b8a 100644
+index 5ca6e03..0dbac41 100644
 --- a/src/lead_desk/portal_api.py
 +++ b/src/lead_desk/portal_api.py
 @@ -5,10 +5,14 @@ transaction, runs fixed SQL with parameters, and closes. So every number of one
@@ -108,6 +121,15 @@ index 5ca6e03..5bd1b8a 100644
  from lead_desk.desk import HINT_INTERNAL_ERROR, HINTS, Desk, review_rows
  
  log = logging.getLogger("lead_desk")
+@@ -105,7 +116,7 @@ def _snapshot(desk: Desk) -> Iterator[tuple[sqlite3.Connection, int]]:
+ 
+ # -- query strings
+ def _digits(raw: str, low: int, high: int) -> int | None:
+-    if not (raw.isascii() and raw.isdecimal()) or len(raw.lstrip("0")) > MAX_DIGITS:
++    if not (raw.isascii() and raw.isdecimal()) or len(raw) > MAX_DIGITS:
+         return None
+     n = int(raw)
+     return n if low <= n <= high else None
 @@ -165,6 +176,11 @@ def _handle(desk: Desk, endpoint: str, query: str, started_at: int) -> tuple[int
          case ["review"]:
              _, bad = _params(query, ())
@@ -241,7 +263,19 @@ index 5ca6e03..5bd1b8a 100644
 +            "masking": False,
 +        },
 +    }
-diff --git a/b/tests/portal_fixtures/data-map.json b/tests/portal_fixtures/data-map.json
+diff --git a/src/lead_desk/schema.sql b/src/lead_desk/schema.sql
+index e31cf28..cd330f1 100644
+--- a/src/lead_desk/schema.sql
++++ b/src/lead_desk/schema.sql
+@@ -63,6 +63,7 @@ CREATE TRIGGER IF NOT EXISTS followups_sent_final BEFORE UPDATE ON followups
+   BEGIN SELECT RAISE(ABORT,'a sent follow-up is final'); END;
+ 
+ CREATE INDEX IF NOT EXISTS receipts_open_ix ON receipts(received_at) WHERE outcome IS NULL;
++CREATE INDEX IF NOT EXISTS receipts_time_ix ON receipts(received_at DESC, receipt_id DESC);
+ CREATE INDEX IF NOT EXISTS followups_active_ix ON followups(updated_at) WHERE state IN ('pending','sending');
+ 
+ DROP VIEW IF EXISTS review_items;
+diff --git a/tests/portal_fixtures/data-map.json b/tests/portal_fixtures/data-map.json
 new file mode 100644
 index 0000000..735e6de
 --- /dev/null
@@ -328,7 +362,7 @@ index 0000000..735e6de
 +    "masking": false
 +  }
 +}
-diff --git a/b/tests/portal_fixtures/log-empty.json b/tests/portal_fixtures/log-empty.json
+diff --git a/tests/portal_fixtures/log-empty.json b/tests/portal_fixtures/log-empty.json
 new file mode 100644
 index 0000000..fb380f3
 --- /dev/null
@@ -339,7 +373,7 @@ index 0000000..fb380f3
 +  "next": null,
 +  "total": 0
 +}
-diff --git a/b/tests/portal_fixtures/log.json b/tests/portal_fixtures/log.json
+diff --git a/tests/portal_fixtures/log.json b/tests/portal_fixtures/log.json
 new file mode 100644
 index 0000000..9245b29
 --- /dev/null
@@ -399,12 +433,12 @@ index cd282d1..68037b4 100644
      ):
          t0 = time.monotonic()
          status, out = get(base, path)
-diff --git a/b/tests/test_portal_log.py b/tests/test_portal_log.py
+diff --git a/tests/test_portal_log.py b/tests/test_portal_log.py
 new file mode 100644
-index 0000000..4f8706b
+index 0000000..54bdab0
 --- /dev/null
 +++ b/tests/test_portal_log.py
-@@ -0,0 +1,363 @@
+@@ -0,0 +1,413 @@
 +"""Tests of GET /api/ui/log (the request record) and GET /api/ui/data-map (what the AI step can read). Made-up data
 +only. Shapes are checked against tests/portal_fixtures/log*.json and data-map.json."""
 +
@@ -526,6 +560,8 @@ index 0000000..4f8706b
 +        ("/api/ui/log?limit=", "limit"),
 +        ("/api/ui/log?limit=x", "limit"),
 +        ("/api/ui/log?limit=" + "9" * 40, "limit"),
++        ("/api/ui/log?limit=" + "0" * 5000, "limit"),  # leading zeros must not reach int()
++        ("/api/ui/log?before=" + "0" * 5000 + ":1", "before"),
 +        ("/api/ui/log?limit=1&limit=2", "limit"),
 +        ("/api/ui/log?before=", "before"),
 +        ("/api/ui/log?before=abc", "before"),
@@ -768,3 +804,51 @@ index 0000000..4f8706b
 +
 +    monkeypatch.setattr(portal_api, "connect_readonly", boom)
 +    assert get(base, "/api/ui/data-map")[0] == 200
++
++
++def test_log_query_uses_the_time_index() -> None:
++    """Both the first page and a page after a cursor read the index in order: no sort of the whole book."""
++    from pathlib import Path
++
++    import lead_desk
++
++    con = sqlite3.connect(":memory:")
++    con.executescript((Path(lead_desk.__file__).parent / "schema.sql").read_text())
++    for first, at, rid in ((1, 0, 0), (0, 5, 5)):
++        plan = " ".join(
++            str(r[3])
++            for r in con.execute(
++                "EXPLAIN QUERY PLAN " + portal_api._LOG_ROWS, {"first": first, "at": at, "id": rid, "n": 101}
++            )
++        )
++        assert "receipts_time_ix" in plan and "TEMP B-TREE" not in plan, plan
++
++
++def test_log_values_match_the_book(env) -> None:
++    """Door, time and follow-up state of every row equal what the book holds (read here by separate, plain queries)."""
++    rig, base = fresh(env)
++    seed(rig)
++    _, out = get(base, "/api/ui/log")
++    got = {i["request_id"]: i for i in out["items"]}
++    for source_ref, source, at, lead_id in rig.query(
++        "SELECT source_ref, source, received_at, outcome_lead_id FROM receipts"
++    ):
++        row = got[source_ref]
++        assert (row["door"], row["received_at"]) == (source, at)
++        want = rig.query("SELECT state FROM followups WHERE lead_id = ?", (lead_id,)) if lead_id else []
++        assert row["followup_state"] == (want[0][0] if want else None), source_ref
++    assert got["ui-2"]["door"] == "webhook" and got["ui-1"]["door"] == "form"
++    states = {i["followup_state"] for i in out["items"]}
++    assert {"failed", "unknown", "sending"} <= states  # the seed really covers the odd states
++    assert got["ui-g-5"]["followup_state"] == got["ui-g-0"]["followup_state"]  # a repeat shows its lead's state
++
++
++def test_stored_list_names_every_field(env) -> None:
++    """Every lead field the desk keeps, and the request fields, appear in the page's stored list."""
++    rig, _ = fresh(env)
++    listed = {r["field"] for r in portal_api._data_map(rig.desk)["stored"]}
++    wanted = set(LEAD_CONTENT_FIELDS) - {"lead_id"}
++    wanted |= {"request_payload", "request_id", "door", "times", "follow_up_state", "ai_label"}
++    assert listed == wanted
++    receipt_cols = {r[1] for r in rig.query("PRAGMA table_info(receipts)")}
++    assert {"source", "source_ref", "received_at", "payload"} <= receipt_cols  # the columns the entries stand for
