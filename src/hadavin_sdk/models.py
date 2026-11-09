@@ -377,3 +377,15 @@ class SpendReservation(Shape):
     closed_at: datetime | None = None
     expired_at: datetime | None = None
     meta: dict[str, Any] | None = None
+
+
+class GuardReport(BaseModel):
+    """What the catalog says about the kill switch guard, for the named roles (never the connected one). `problems`
+    fail the start-up probe in every stage; `dev_tolerated` fail it in pilot and prod only (for example a function
+    owned by a superuser, which is what a test database built as `postgres` has)."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+    problems: tuple[str, ...] = ()
+    dev_tolerated: tuple[str, ...] = ()
+    runtime_connection_limit: int | None = None
+    stop_connection_limit: int | None = None

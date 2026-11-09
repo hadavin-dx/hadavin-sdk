@@ -16,6 +16,7 @@ from hadavin_sdk.models import (
     ApprovalStatus,
     DeadLetter,
     GateDecision,
+    GuardReport,
     KillSwitch,
     Plan,
     Run,
@@ -487,6 +488,12 @@ class MemoryStore:
         with self._lock:
             self._stops.append((ks.by, now()))
             return self._state()
+
+    def guard_report(
+        self, runtime_role: str | None, stop_role: str | None, reset_group: str | None
+    ) -> GuardReport:
+        """A memory store has no database guard; the report is empty (the probe reads that as nothing to flag)."""
+        return GuardReport()
 
     def reset_kill_switch(self, by: str, expected_version: int, expected_open: int) -> StopState:
         if not is_label(by):

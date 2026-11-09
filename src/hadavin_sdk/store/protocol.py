@@ -18,6 +18,7 @@ from hadavin_sdk.models import (
     ApprovalStatus,
     DeadLetter,
     GateDecision,
+    GuardReport,
     KillSwitch,
     Plan,
     Run,
@@ -171,7 +172,12 @@ def is_connectivity_error(exc: BaseException) -> bool:
     """True for "the store cannot be reached" (a refused or dropped connection, a timeout), false for an error
     from a store that answered: a missing table, a missing grant. No driver import: psycopg's connection
     errors are recognised by class name along the MRO."""
-    if getattr(exc, "sqlstate", None) in ("40001", "40P01", "55P03", "57014"):
+    if isinstance(exc, StoreBusy) or getattr(exc, "sqlstate", None) in (
+        "40001",
+        "40P01",
+        "55P03",
+        "57014",
+    ):
         return False
     if isinstance(exc, StoreUnavailable | OSError):
         return True
@@ -200,6 +206,12 @@ class SwitchRowMissing(RuntimeError):
 
 class NotMigrated(RuntimeError):
     """The stop or reset function does not exist (SQLSTATE 42883): the database is not migrated."""
+
+
+class StoreBusy(RuntimeError):
+    """The database answered "busy" (lock timeout 55P03, statement timeout 57014, deadlock victim 40P01, too many
+    connections for the role 53300): the call was NOT done and may be retried. Not a connectivity error: the
+    store is reachable (`is_connectivity_error` is false for it)."""
 
 
 class StoreUnavailable(ConfigError):
@@ -371,6 +383,13 @@ class Store(Protocol):
     def reset_kill_switch(self, by: str, expected_version: int, expected_open: int) -> StopState:
         """Clear exactly the stops that the pair (version, open count) named when the operator read it.
         `StaleCount` when either changed or there was nothing to clear."""
+        ...
+
+    def guard_report(
+        self, runtime_role: str | None, stop_role: str | None, reset_group: str | None
+    ) -> GuardReport:
+        """Catalog reads only (no writes, no locks that queue a stop) about the guard for the NAMED roles. A busy
+        database raises `StoreBusy`, which the probe treats as inconclusive."""
         ...
 
     def get_tick_state(self, step: str) -> TickState | None: ...

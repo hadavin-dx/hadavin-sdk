@@ -104,11 +104,22 @@ jobs:
   # 3.13 in how argparse treats a word after "--" (a mutation-runner test failed there only), which is why this job exists.
   tests-py312:
     if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    # The matrix is on this job and not on "check": a matrix would rename the required check "check". The stop state
+    # (a database guard) is written for PostgreSQL 16 and 17, so both run here; "check" runs 17.10 as before.
+    name: tests-py312 (postgres ${{ matrix.pg.major }})
     runs-on: ubuntu-24.04
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        pg:
+          - major: "16"
+            image: postgres:16.15@sha256:f9a7b9ebf6f56201f949db745e47bc423c0f0f8294bafe991cc10bf74b029657
+          - major: "17"
+            image: postgres:17.10@sha256:7958605b474b3d264a969cb3a123d6aa00ad1e1fe9da8a69984dabb704d93317
     services:
       postgres:
-        image: postgres:17.10@sha256:7958605b474b3d264a969cb3a123d6aa00ad1e1fe9da8a69984dabb704d93317
+        image: ${{ matrix.pg.image }}
         env:
           POSTGRES_HOST_AUTH_METHOD: trust
         ports:

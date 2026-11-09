@@ -17,7 +17,7 @@ from psycopg import sql
 
 from hadavin_sdk import defaults
 from hadavin_sdk.errors import ConfigError
-from hadavin_sdk.store.postgres import connect
+from hadavin_sdk.store.postgres import connect, table_privileges
 
 MIGRATIONS = Path(__file__).parent / "migrations"
 
@@ -179,6 +179,12 @@ _GUARD_TRIGGERS = (  # (table, trigger): must stay ENABLE ALWAYS
 )
 _STOP_SIG = "hadavin_kill_switch_stop(text)"
 _RESET_SIG = "hadavin_kill_switch_reset(text, bigint, integer)"
+_GUARD_SIG = "hadavin_kill_switch_guard()"  # a trigger function: no role is meant to call it
+
+
+def _set_lock_timeout(db, ms: int) -> None:
+    """The one place the migration's own table-lock bound is set (transaction-local, milliseconds as text)."""
+    db.execute("SELECT set_config('lock_timeout', %s, true)", (str(ms),))
 
 
 def _install_kill_switch(db, schema: str, group: str, cap: int) -> None:
@@ -196,7 +202,7 @@ def _install_kill_switch(db, schema: str, group: str, cap: int) -> None:
                 LABEL=sql.SQL(_LABEL_RE),
             )
         )
-    for sig in (_STOP_SIG, _RESET_SIG):
+    for sig in (_STOP_SIG, _RESET_SIG, _GUARD_SIG):
         db.execute(sql.SQL("REVOKE ALL ON FUNCTION {}.{} FROM PUBLIC").format(s, sql.SQL(sig)))
     for table, trigger in _GUARD_TRIGGERS:
         state = db.execute(
@@ -398,6 +404,7 @@ def effective_problems(db, role: str, expected_table, expected_cols=None) -> lis
             f"{role}: is a superuser or can create roles or databases or bypass row security"
         )
     schema = db.execute("SELECT current_schema()").fetchone()[0]
+    privs = table_privileges(db)
     if db.execute("SELECT has_schema_privilege(%s, %s, 'CREATE')", (role, schema)).fetchone()[0]:
         problems.append(f"{role}: can CREATE in schema {schema}")
     rels = db.execute(
@@ -428,7 +435,7 @@ def effective_problems(db, role: str, expected_table, expected_cols=None) -> lis
             {p.strip() for p in expected_table(grant).split(",") if p.strip()} if grant else set()
         )
         allowed_cols = set(expected_cols(grant)) if (grant and expected_cols) else set()
-        for p in _TABLE_PRIVS:
+        for p in privs:
             if (
                 p not in allowed
                 and db.execute("SELECT has_table_privilege(%s, %s, %s)", (role, oid, p)).fetchone()[
@@ -539,7 +546,7 @@ def migrate(
             raise ConfigError(
                 "another session holds the migration lock; see the runbook (pg_locks, locktype advisory)"
             ) from exc
-        db.execute("SELECT set_config('lock_timeout', %s, true)", (str(lock_timeout_ms),))
+        _set_lock_timeout(db, lock_timeout_ms)
         db.execute(
             "CREATE TABLE IF NOT EXISTS schema_migrations "
             "(version TEXT PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT now())"
@@ -556,6 +563,9 @@ def migrate(
             if path.stem in done:
                 continue
             db.execute(path.read_text(encoding="utf-8"))  # a file shipped in this package
+            # A file may SET LOCAL its own (longer) lock_timeout, and that would stay for every later file and for
+            # the role and function steps. The configured bound is put back after every file.
+            _set_lock_timeout(db, lock_timeout_ms)
             db.execute("INSERT INTO schema_migrations (version) VALUES (%s)", (path.stem,))
             applied.append(path.stem)
         q = "SELECT pg_has_role(%s, %s, 'MEMBER')"  # a member keeps the other's rights, whatever we REVOKE

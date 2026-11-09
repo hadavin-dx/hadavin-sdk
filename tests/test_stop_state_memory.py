@@ -5,6 +5,7 @@ from __future__ import annotations
 import pytest
 
 from hadavin_sdk.audit.labelkey import NOKEY_LABEL
+from hadavin_sdk.audit.protocol import AuditUnavailable
 from hadavin_sdk.limits import Limits, StopNotConfirmed, StopNotPermitted, SwitchChanged
 from hadavin_sdk.models import KillSwitch
 from hadavin_sdk.store.memory import MemoryStore
@@ -18,7 +19,7 @@ class Audit:
 
     def write_intent(self, event):
         if self.down:
-            raise RuntimeError("audit down")
+            raise AuditUnavailable("audit down")
         self.events.append(("intent", event.operation))
         return "i"
 
@@ -30,7 +31,7 @@ def make(**kw) -> Limits:
     kw.setdefault("reset_names", {RESET_NAME})
     store = MemoryStore()
     kw.setdefault("reset_store", store)
-    return Limits(store, Audit(), None, environment="demo", label_key=KEY, **kw)
+    return Limits(store, Audit(), None, environment="dev", label_key=KEY, **kw)
 
 
 def test_stop_is_a_request_and_state_reads_on():
@@ -76,7 +77,7 @@ def test_reset_with_listed_name_refused_when_audit_down():
     lim = make()
     lim.stop("user:a")
     lim.audit.down = True
-    with pytest.raises(RuntimeError):
+    with pytest.raises(AuditUnavailable):
         lim.reset(RESET_NAME, **expect(lim))
     assert lim.status().on
 
@@ -93,7 +94,7 @@ def test_reset_rejects_out_of_range_counts(bad):
 
 def test_stop_survives_a_short_key_with_the_nokey_label():
     store = MemoryStore()
-    lim = Limits(store, Audit(), None, environment="demo", label_key=b"short")
+    lim = Limits(store, Audit(), None, environment="dev", label_key=b"short")
     s = lim.stop("user:a")
     assert s.on and s.by == NOKEY_LABEL
     with pytest.raises(StopNotPermitted):
@@ -122,7 +123,7 @@ def test_memory_store_refused_outside_demo_stage_and_key_required():
     with pytest.raises(ValueError):
         Limits(object(), Audit(), None, environment="pilot")
     with pytest.raises(ValueError):
-        Limits(MemoryStore(), Audit(), None, environment="demo", label_key=KEY, key_id="bad id")
+        Limits(MemoryStore(), Audit(), None, environment="dev", label_key=KEY, key_id="bad id")
 
 
 def test_confirmation_failure_is_loud():
@@ -130,7 +131,7 @@ def test_confirmation_failure_is_loud():
         def set_kill_switch(self, ks):
             return super().get_kill_switch()
 
-    lim = Limits(Lying(), Audit(), None, environment="demo", label_key=KEY)
+    lim = Limits(Lying(), Audit(), None, environment="dev", label_key=KEY)
     with pytest.raises(StopNotConfirmed):
         lim.stop("user:a")
 

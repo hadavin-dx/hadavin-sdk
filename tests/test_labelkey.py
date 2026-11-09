@@ -70,4 +70,18 @@ def test_exhaustive_distinct_text_distinct_label_and_grammar():
         lab = lk.mask_principal(t, KEY, "k1")
         assert lk.is_label(lab)
         assert seen.setdefault(lab, t or lk.UNIDENTIFIED) == (t or lk.UNIDENTIFIED)
-        assert lk.is_label(t) == (re.fullmatch(lk.LABEL_PATTERN, t) is not None)
+        assert lk.is_label(t) == (
+            re.fullmatch(r"id:[A-Za-z0-9_-]{1,32}:[0-9a-f]{32}", t) is not None
+        )  # independent literal
+
+
+def test_the_python_and_the_sql_label_grammar_are_the_same_text():
+    """One grammar in three places (labelkey, the functions in migrate, migration 0007): they must not drift."""
+    from pathlib import Path
+
+    from hadavin_sdk.store import migrate
+
+    sql_form = migrate._LABEL_RE.strip("'")
+    assert sql_form == "^" + lk.LABEL_PATTERN + "$" or sql_form == lk.LABEL_PATTERN
+    text = (Path(migrate.__file__).parent / "migrations" / "0007_kill_switch_guard.sql").read_text()
+    assert sql_form.lstrip("^").rstrip("$") in text.replace("^", "").replace("$'", "'")

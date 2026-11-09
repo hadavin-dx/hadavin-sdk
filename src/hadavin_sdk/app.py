@@ -86,6 +86,27 @@ def _test_doubles_given(
     ]
 
 
+def _check_stop_guard(store, cfg) -> None:
+    """Start-up probe of the kill switch guard: a finding refuses the start; a busy database is only logged."""
+    from hadavin_sdk.runtime import stop_state
+
+    result = stop_state.probe(
+        store,
+        environment=cfg.environment,
+        runtime_role=cfg.limits.runtime_role,
+        stop_role=cfg.limits.stop_role,
+        reset_group=cfg.limits.reset_group,
+    )
+    if result.status == stop_state.FAILED:
+        raise ConfigError(
+            "the kill switch guard is not in place: " + "; ".join(result.problems[:10])
+        )
+    if result.status == stop_state.INCONCLUSIVE:
+        _LOG.warning(
+            "kill switch guard probe: the database was busy; the tick probe will try again"
+        )
+
+
 def build(
     config_dir: Path | None,
     agents: list[str],
@@ -136,6 +157,12 @@ def build(
         raise ConfigError("backends.store.purge_dsn_secret_name is required in pilot and prod")
     if live and not cfg.limits.label_key_secret_name:
         raise ConfigError("limits.label_key_secret_name is required in pilot and prod")
+    postgres_live = live and getattr(b.store, "kind", "") == "postgres"
+    if postgres_live and not (cfg.limits.runtime_role and cfg.limits.reset_group):
+        raise ConfigError(
+            "limits.runtime_role and limits.reset_group are required in pilot and prod with a postgres store "
+            "(the start-up probe checks the kill switch guard for those roles)"
+        )
     if sources and live:
         # A source handed in as an object would replace a configured, probed one; live deployments use Config.sources.
         raise ConfigError("sources= is for tests; configure Config.sources in pilot and prod")
@@ -232,6 +259,8 @@ def build(
         label_key=label_key,
         key_id=cfg.limits.key_id,
     )
+    if postgres_live:
+        _check_stop_guard(store, cfg)
     executor = (
         None if live else Executor(reg, secrets, timeout_s=timeout_s or cfg.executor_timeout_s)
     )

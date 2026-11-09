@@ -361,6 +361,9 @@ class LimitsSettings(_Strict):
     )  # raw login names allowed to run `limits reset` (a typo guard)
     reset_group: str | None = None  # the NOLOGIN database role whose members may reset
     label_key_secret_name: str | None = None
+    # The database roles the probe checks by NAME (never the connected one): the runtime login and the stop login.
+    runtime_role: str | None = None
+    stop_role: str | None = None
     key_id: str = "k1"
     max_open_stop_requests: StrictInt = Field(
         default=defaults.KILL_SWITCH_MAX_OPEN_STOP_REQUESTS, ge=1
@@ -368,6 +371,13 @@ class LimitsSettings(_Strict):
     migrate_lock_timeout_ms: StrictInt = Field(
         default=defaults.KILL_SWITCH_MIGRATE_LOCK_TIMEOUT_MS, ge=1
     )  # 0 would mean "no timeout" to PostgreSQL
+
+    @field_validator("runtime_role", "stop_role", "reset_group")
+    @classmethod
+    def _role(cls, v: str | None) -> str | None:
+        if v is not None and not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]{0,62}", v):
+            raise ValueError("a plain database role name: letters, digits, underscore")
+        return v
 
     @field_validator("key_id")
     @classmethod

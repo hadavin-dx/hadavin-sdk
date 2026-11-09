@@ -46,6 +46,7 @@ from hadavin_sdk.models import (
     ApprovalStatus,
     DeadLetter,
     GateDecision,
+    GuardReport,
     KillSwitch,
     Plan,
     Run,
@@ -97,10 +98,38 @@ _SWITCH_ERRORS: dict[str, type[Exception]] = {
     "42883": NotMigrated,
     "42704": ResetRefused,
 }
+# "busy" answers: NOT done, retry later. 55P03 lock timeout, 57014 statement timeout, 40P01 deadlock victim,
+# 53300 too many connections for the role.
+_BUSY = frozenset({"55P03", "57014", "40P01", "53300"})
 _SWITCH_TEXT = {
     "42883": "database not migrated; use the DBA stop recipe",
     "42704": "reset group role missing",
 }
+
+
+_TABLE_PRIVS = ("SELECT", "INSERT", "UPDATE", "DELETE", "TRUNCATE", "REFERENCES", "TRIGGER")
+_KS_RELATIONS = (
+    "kill_switch",
+    "kill_switch_stop_requests",
+    "kill_switch_resets",
+    "kill_switch_login_labels",
+)
+# The only direct table rights the grant map gives these roles on the guarded relations (migrate.GRANTS): the runtime
+# may read the reset history.
+_ALLOWED = {("runtime", "kill_switch_resets"): ("SELECT",)}
+_KS_FUNCTIONS = (
+    "hadavin_kill_switch_stop(text)",
+    "hadavin_kill_switch_reset(text, bigint, integer)",
+    "hadavin_kill_switch_guard()",
+)
+
+
+def table_privileges(db) -> tuple[str, ...]:
+    """Every table privilege this server knows. MAINTAIN exists from PostgreSQL 17; asking `has_table_privilege`
+    for it on 16 raises 22023, so the list comes from `server_version_num`. One list for the probe and for
+    `effective_problems`."""
+    n = int(db.execute("SHOW server_version_num").fetchone()[0])
+    return _TABLE_PRIVS + (("MAINTAIN",) if n >= 170000 else ())
 
 
 _VERIFIED_TLS = frozenset({"verify-ca", "verify-full"})
@@ -227,10 +256,31 @@ def build(settings, deps) -> PostgresStore:
         raise StoreUnavailable(
             f"store postgres: cannot connect ({exc.__class__.__name__})"
         ) from None
+
+    def short_connect() -> psycopg.Connection:
+        """A fresh autocommit connection for one stop or probe call: its own timeouts, no use of the store's
+        in-process lock, so a stop never waits behind another thread's query. The caller closes it."""
+        c = connect(
+            dsn,
+            iam_auth=settings.iam_auth,
+            region=settings.region,
+            sslmode=settings.sslmode,
+            sslrootcert=ca_file(settings, deps.resolve),
+        )
+        c.execute(
+            "SELECT set_config('statement_timeout', %s, false), set_config('lock_timeout', %s, false)",
+            (
+                str(defaults.KILL_SWITCH_CALL_BUDGET_MS),
+                str(defaults.KILL_SWITCH_CALL_LOCK_TIMEOUT_MS),
+            ),
+        )
+        return c
+
     return PostgresStore(
         conn,
         lock_timeout_ms=getattr(settings, "lock_timeout_ms", 1000),
         call_budget_ms=getattr(settings, "call_budget_ms", 5000),
+        short_connect=short_connect,
     )
 
 
@@ -304,6 +354,141 @@ def _checked_ms(name: str, value: object) -> int:
     return value
 
 
+def _guard_report(db, runtime_role, stop_role, reset_group) -> GuardReport:
+    problems: list[str] = []
+    tolerated: list[str] = []
+    schema = db.execute("SELECT current_schema()").fetchone()[0]
+    privs = table_privileges(db)
+    table_owner = db.execute(
+        "SELECT pg_get_userbyid(c.relowner) FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace "
+        "WHERE n.nspname = %s AND c.relname = 'kill_switch'",
+        (schema,),
+    ).fetchone()
+    if table_owner is None:
+        return GuardReport(
+            problems=("the kill_switch table does not exist: run hadavin-sdk migrate",)
+        )
+    for table, trigger in (
+        ("kill_switch", "kill_switch_guard"),
+        ("kill_switch_stop_requests", "kill_switch_stop_requests_update"),
+        ("kill_switch_stop_requests", "kill_switch_stop_requests_delete"),
+        ("kill_switch_stop_requests", "kill_switch_stop_requests_no_truncate"),
+        ("kill_switch_resets", "kill_switch_resets_append_only"),
+        ("kill_switch_resets", "kill_switch_resets_no_truncate"),
+    ):
+        row = db.execute(
+            "SELECT t.tgenabled FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid "
+            "JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = %s AND c.relname = %s AND t.tgname = %s",
+            (schema, table, trigger),
+        ).fetchone()
+        if row is None:
+            problems.append(f"trigger {trigger} is missing")
+        elif row[0] != "A":
+            problems.append(f"trigger {trigger} is not ENABLE ALWAYS")
+    for sig in _KS_FUNCTIONS:
+        row = db.execute(
+            "SELECT p.prosecdef, p.proconfig, pg_get_userbyid(p.proowner), "
+            "(SELECT rolsuper FROM pg_roles WHERE oid = p.proowner), p.prosrc "
+            "FROM pg_proc p WHERE p.oid = to_regprocedure(%s)",
+            (f"{schema}.{sig}",),
+        ).fetchone()
+        name = sig.split("(")[0]
+        if row is None:
+            problems.append(f"function {name} is missing")
+            continue
+        secdef, config, owner, owner_super, src = row
+        if not secdef:
+            problems.append(f"function {name} is not SECURITY DEFINER")
+        if not any(c.startswith("search_path=pg_catalog") for c in (config or [])):
+            problems.append(f"function {name} has no pinned search_path")
+        if owner != table_owner[0]:
+            problems.append(f"function {name} is owned by {owner}, not by the table owner")
+        if owner_super:
+            tolerated.append(f"function {name} is owned by a superuser")
+        if name.endswith("guard") and reset_group:
+            exact = db.execute(
+                "SELECT strpos(%s, quote_literal(%s) || '::text') > 0", (src, reset_group)
+            ).fetchone()[0]
+            if not exact:
+                problems.append("the guard function does not name the configured reset group")
+    group_exists = bool(
+        reset_group
+        and db.execute("SELECT 1 FROM pg_roles WHERE rolname = %s", (reset_group,)).fetchone()
+    )
+    if reset_group and not group_exists:
+        problems.append("the reset group role does not exist")
+    for role, label in ((runtime_role, "runtime"), (stop_role, "stop")):
+        if not role:
+            continue
+        if db.execute("SELECT 1 FROM pg_roles WHERE rolname = %s", (role,)).fetchone() is None:
+            problems.append(f"the {label} role does not exist")
+            continue
+        for rel in _KS_RELATIONS + ("kill_switch_stop_requests_id_seq",):
+            kind = "sequence" if rel.endswith("_seq") else "table"
+            held = (
+                [
+                    p
+                    for p in ("USAGE", "SELECT", "UPDATE")
+                    if db.execute(
+                        "SELECT has_sequence_privilege(%s, to_regclass(%s), %s)",
+                        (role, f"{schema}.{rel}", p),
+                    ).fetchone()[0]
+                ]
+                if kind == "sequence"
+                else [
+                    p
+                    for p in privs
+                    if (p in _ALLOWED.get((label, rel), ())) is False
+                    and db.execute(
+                        "SELECT has_table_privilege(%s, to_regclass(%s), %s)",
+                        (role, f"{schema}.{rel}", p),
+                    ).fetchone()[0]
+                ]
+            )
+            if held:
+                problems.append(f"the {label} role can {', '.join(held)} on {rel}")
+        if not db.execute(
+            "SELECT has_table_privilege(%s, to_regclass(%s), 'SELECT')",
+            (role, f"{schema}.kill_switch_state"),
+        ).fetchone()[0]:
+            problems.append(f"the {label} role cannot read kill_switch_state")
+        if not db.execute(
+            "SELECT has_function_privilege(%s, to_regprocedure(%s), 'EXECUTE')",
+            (role, f"{schema}.{_KS_FUNCTIONS[0]}"),
+        ).fetchone()[0]:
+            problems.append(f"the {label} role cannot execute the stop function")
+        for fn in _KS_FUNCTIONS[1:]:
+            if db.execute(
+                "SELECT has_function_privilege(%s, to_regprocedure(%s), 'EXECUTE')",
+                (role, f"{schema}.{fn}"),
+            ).fetchone()[0]:
+                problems.append(f"the {label} role can execute {fn.split('(')[0]}")
+        if (
+            reset_group
+            and group_exists
+            and db.execute("SELECT pg_has_role(%s, %s, 'MEMBER')", (role, reset_group)).fetchone()[
+                0
+            ]
+        ):
+            problems.append(f"the {label} role is a member of the reset group")
+        if db.execute("SELECT pg_has_role(%s, %s, 'MEMBER')", (role, table_owner[0])).fetchone()[0]:
+            problems.append(f"the {label} role is a member of the table owner")
+    limits = {}
+    for role in (runtime_role, stop_role):
+        row = (
+            db.execute("SELECT rolconnlimit FROM pg_roles WHERE rolname = %s", (role,)).fetchone()
+            if role
+            else None
+        )
+        limits[role] = row[0] if row else None
+    return GuardReport(
+        problems=tuple(problems),
+        dev_tolerated=tuple(tolerated),
+        runtime_connection_limit=limits.get(runtime_role),
+        stop_connection_limit=limits.get(stop_role),
+    )
+
+
 class PostgresStore:
     # ponytail: one connection behind one lock per process; a pool (psycopg_pool) when throughput matters.
     # A dropped connection fails the call (the run ends safely); reconnect-on-error arrives with S11 hosting.
@@ -314,6 +499,7 @@ class PostgresStore:
         on_retry: Callable[[str, int], None] | None = None,
         lock_timeout_ms: int = 1000,
         call_budget_ms: int = 5000,
+        short_connect: Callable[[], psycopg.Connection] | None = None,
     ) -> None:
         # Settings ranges are the PostgresSettings ranges (one place): a value outside them is refused, so a
         # budget of 0 can never build a store that refuses every write.
@@ -323,6 +509,8 @@ class PostgresStore:
         # Re-entrant: the write wrapper holds it for a whole transaction and the helpers take it again inside.
         self._lock = threading.RLock()
         self._on_retry = on_retry
+        # Without it (tests that build `PostgresStore(conn)`) the stop and the probe use the main connection.
+        self._short_connect = short_connect
         self._deadline: float | None = None  # monotonic; set only by the thread that holds the lock
 
     def _write(self, fn, retry: bool, args: tuple, kwargs: dict):
@@ -917,33 +1105,61 @@ class PostgresStore:
         "FROM hadavin_kill_switch_reset(%s, %s::bigint, %s::int)"
     )
 
+    def _on_short(self, fn):
+        """Run `fn(db)` on a fresh short connection (closed after), or on the main one behind the lock."""
+        if self._short_connect is None:
+            with self._lock:
+                return fn(self._db)
+        db = self._short_connect()
+        try:
+            return fn(db)
+        finally:
+            db.close()
+
     def _call_switch(self, query: str, params: tuple) -> StopState:
         """Run one of the two kill-switch functions and map its SQLSTATE to a typed error (never by message
-        text). The functions run as their owner; the caller needs EXECUTE only."""
+        text). The functions run as their owner; the caller needs EXECUTE only. A busy answer (lock or statement
+        timeout, deadlock, connection limit) is `StoreBusy`: NOT done."""
         try:
-            with self._lock:
-                row = self._exec(query, params).fetchone()
+            row = self._on_short(
+                lambda db: db.cursor(row_factory=dict_row).execute(query, params).fetchone()
+            )
         except psycopg.Error as exc:
-            code = getattr(exc, "sqlstate", None)
-            mapped = _SWITCH_ERRORS.get(code or "")
+            code = getattr(exc, "sqlstate", None) or ""
+            if code in _BUSY:
+                raise StoreBusy(f"the store is busy ({code}); the call was not done") from exc
+            mapped = _SWITCH_ERRORS.get(code)
             if mapped is None:
                 raise
-            raise mapped(_SWITCH_TEXT.get(code or "", str(code))) from exc
+            raise mapped(_SWITCH_TEXT.get(code, str(code))) from exc
         return StopState.model_validate(row)
 
-    @_writes()
     def set_kill_switch(self, ks: KillSwitch) -> StopState:
         """A stop: one INSERT through `hadavin_kill_switch_stop`. The runtime has no right on the tables."""
         if ks.on is not True:
             raise ValueError("set_kill_switch only stops; a reset goes through reset_kill_switch")
         return self._call_switch(self._STOP_QUERY, (ks.by,))
 
-    @_writes()
     def reset_kill_switch(self, by: str, expected_version: int, expected_open: int) -> StopState:
         for n, top in ((expected_version, 2**63 - 1), (expected_open, 2**31 - 1)):
             if isinstance(n, bool) or not isinstance(n, int) or not 0 <= n <= top:
                 raise ValueError("reset: version and open count must be in range")
         return self._call_switch(self._RESET_QUERY, (by, expected_version, expected_open))
+
+    def guard_report(
+        self, runtime_role: str | None, stop_role: str | None, reset_group: str | None
+    ) -> GuardReport:
+        """Catalog reads about the guard for the NAMED roles (never the connected one, so the runtime, the stop
+        login and a reset login all see the same report). A busy answer is `StoreBusy`."""
+        try:
+            return self._on_short(
+                lambda db: _guard_report(db, runtime_role, stop_role, reset_group)
+            )
+        except psycopg.Error as exc:
+            code = getattr(exc, "sqlstate", None) or ""
+            if code in _BUSY:
+                raise StoreBusy(f"the store is busy ({code}); the probe is inconclusive") from exc
+            raise
 
     def get_tick_state(self, step: str) -> TickState | None:
         found = self._select(TickState, "tick_state", "step = %s", (step,))

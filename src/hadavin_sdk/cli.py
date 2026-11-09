@@ -43,7 +43,12 @@ from hadavin_sdk.guard.injection import combine
 from hadavin_sdk.limits import Limits, StopNotPermitted, SwitchChanged
 from hadavin_sdk.models import new_id
 from hadavin_sdk.registry import load_registry
-from hadavin_sdk.store.protocol import NotMigrated, StoreUnavailable, is_connectivity_error
+from hadavin_sdk.store.protocol import (
+    NotMigrated,
+    StoreBusy,
+    StoreUnavailable,
+    is_connectivity_error,
+)
 
 
 def _num(x: float | None, places: int = 2) -> str:
@@ -91,7 +96,7 @@ def _main(argv: list[str] | None = None) -> int:
     g.add_argument("agent")
     g.add_argument("--k", type=_positive, default=1, help="runs per golden item (pass^k)")
     lim = sub.add_parser("limits", help="kill switch")
-    lim.add_argument("action", choices=["stop", "reset", "status", "whois"])
+    lim.add_argument("action", choices=["stop", "reset", "status", "whois", "check"])
     lim.add_argument("name", nargs="?", help="whois: the name to turn into its label")
     lim.add_argument("--by", help="stop and reset: who is acting (stored only as a keyed label)")
     lim.add_argument(
@@ -246,6 +251,10 @@ def _limits(cfg, reg, secrets, store, audit, args) -> int:
             label_key = secrets.get(lim.label_key_secret_name).encode("utf-8")
         except Exception:  # noqa: BLE001 - a stop must work without the key (it falls back to a fixed label)
             label_key = b""
+    elif cfg.environment != "dev":
+        # No key name configured outside dev: the stop still works (fixed "actor not identified" label); reset and
+        # whois refuse because the key is unusable. `Limits` would otherwise raise here, outside the exit codes.
+        label_key = b""
 
     def on_login(ref: str):
         return make("store", b.store.model_copy(update={"dsn_secret_name": ref}), secrets)
@@ -260,7 +269,7 @@ def _limits(cfg, reg, secrets, store, audit, args) -> int:
                     "warning: store.stop_credential_ref is not set; stopping through the runtime login",
                     file=sys.stderr,
                 )
-        elif args.action == "reset" and b.store.reset_credential_ref:
+        elif args.action in ("reset", "check") and b.store.reset_credential_ref:
             reset_store = on_login(b.store.reset_credential_ref)
     except StoreUnavailable as exc:
         return _kill_switch_store_down(args.action, exc)
@@ -275,6 +284,8 @@ def _limits(cfg, reg, secrets, store, audit, args) -> int:
         label_key=label_key,
         key_id=lim.key_id,
     )
+    if args.action == "check":
+        return _limits_check(cfg, reset_store)
     return kill_switch(
         limits,
         args.action,
@@ -282,6 +293,40 @@ def _limits(cfg, reg, secrets, store, audit, args) -> int:
         expect_version=args.expect_version,
         expect_open=args.expect_open,
     )
+
+
+def _limits_check(cfg, store) -> int:
+    """`limits check`: the full guard report for the configured roles, read through the reset login. Exit 0 no
+    findings, 10 findings, 7 the database was busy (nothing known)."""
+    from hadavin_sdk.runtime import stop_state
+
+    if store is None:
+        print(
+            "check needs store.reset_credential_ref (the operator's reset login)", file=sys.stderr
+        )
+        return 2
+    lim = cfg.limits
+    result = stop_state.probe(
+        store,
+        environment=cfg.environment,
+        runtime_role=lim.runtime_role,
+        stop_role=lim.stop_role,
+        reset_group=lim.reset_group,
+    )
+    if result.status == stop_state.INCONCLUSIVE:
+        print(
+            "check inconclusive: the store is busy. Nothing is known; run it again.",
+            file=sys.stderr,
+        )
+        return 7
+    for problem in result.problems:
+        print(f"problem: {problem}")
+    print(
+        "guard OK"
+        if result.status == stop_state.OK
+        else f"guard FAILED: {len(result.problems)} problem(s)"
+    )
+    return 0 if result.status == stop_state.OK else 10
 
 
 def _k1b(cfg, reg, args) -> int:
@@ -460,7 +505,17 @@ def audit_verify(audit) -> int:
 
 
 def _kill_switch_store_down(what: str, exc: BaseException) -> int:
-    """4 when the store cannot be reached; 2 when it answers but is not ready (missing table or grant)."""
+    """4 when the store cannot be reached; 7 when it is busy (NOT done, retry); 2 when it answers but is not ready
+    (missing table or grant)."""
+    if isinstance(exc, StoreBusy):
+        verb = {"set": "stop", "reset": "reset"}.get(what, what)
+        print(
+            f"{verb} NOT done: the store is busy (a lock or statement timeout, a deadlock or the connection limit). "
+            "Nothing was changed. Run the same command again; if it keeps failing, use the database "
+            "administrator recipe in docs/stop-state-runbook.md.",
+            file=sys.stderr,
+        )
+        return 7
     if is_connectivity_error(exc):
         print(
             f"kill switch NOT {what}: the store is unreachable. Nothing was changed. "
@@ -494,7 +549,7 @@ def kill_switch(
     """Run stop/reset/status/whois for a caller (the CLI once a shared store exists, or an in-process admin hook).
 
     Exit codes: 0 done; 2 usage; 3 reset refused because the audit store is unavailable (the switch stays ON);
-    4 the store is unreachable (the switch was NOT changed); 5 not permitted (the name, the credential or the
+    4 the store is unreachable (the switch was NOT changed); 7 the store is busy (NOT done); 10 `check` found problems; 5 not permitted (the name, the credential or the
     database refused); 6 the stops changed since they were read, or the switch row is missing; 9 the database is
     not migrated.
     """
