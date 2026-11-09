@@ -138,13 +138,37 @@ def _run(
 
 
 def _trigger(
-    name="trg", enabled="O", schema="s", table="t", definition=None, src="BEGIN END", secdef=False
+    name="trg",
+    enabled="O",
+    schema="s",
+    table="t",
+    definition=None,
+    src="BEGIN END",
+    secdef=False,
+    owner="owner_a",
+    relid=None,
 ):
+    """One answer row of `_READBACK_TRIGGERS_SQL`. `src` is the function text; the query returns its md5."""
+    import hashlib
+    import zlib
+
     definition = (
         definition
         or f"CREATE TRIGGER {name} BEFORE UPDATE ON {schema}.{table} EXECUTE FUNCTION {schema}.f()"
     )
-    return (name, enabled, table, schema, definition, src, secdef, None)
+    relid = zlib.crc32(f"{schema}.{table}".encode()) if relid is None else relid  # one id per table
+    return (
+        name,
+        enabled,
+        table,
+        schema,
+        relid,
+        definition,
+        hashlib.md5(src.encode()).hexdigest(),  # noqa: S324 - the same digest the query takes; not a security use
+        secdef,
+        owner,
+        None,
+    )
 
 
 # --- the old checks are replaced, not doubled -------------------------------------------------------------------
@@ -288,8 +312,7 @@ def test_migrate_sets_the_recipe_limits_right_after_its_lock_and_before_any_file
     monkeypatch, tmp_path
 ):
     """F2 (drift): `migrate` runs the two `SET LOCAL` lines of `RECIPE_TIMEOUTS`, in order, right after the advisory
-    lock and before the first file; they are the constant's, not copies (a patched constant is what runs).
-    Killed by: mutants R26 (the loop removed), R27 (the limits set before the lock), R28 (the lock-wait line only)."""
+    lock and before the first file; they are the constant's, not copies (a patched constant is what runs)."""
     err, db, _ = _run(monkeypatch, tmp_path, [START] * 3, [[], [], []])
     assert err is None
     assert db.params[0] == ("SELECT pg_advisory_xact_lock(%s)", (mn.MIGRATE_LOCK,))
@@ -418,13 +441,14 @@ def test_a_trigger_created_disabled_is_refused_and_one_created_enabled_is_not(
 
 def test_a_trigger_recreated_with_another_definition_or_function_is_refused(monkeypatch, tmp_path):
     """Round-1 M1 (same-name recreate): the trigger keeps its name, enabled state and table but not what it does.
-    Killed by: mutants T2 (definition not compared), T3 (function text not compared), T4 (security mode not compared)."""
+    Killed by: mutants T1..T5 and T7 of tests/migrate_mutants.py (one part of the saved trigger not compared)."""
     changes = {
         "definition": {
             "definition": "CREATE TRIGGER trg AFTER INSERT ON s.t EXECUTE FUNCTION s.g()"
         },
         "function text": {"src": "BEGIN RETURN NULL; END"},
         "function security mode": {"secdef": True},
+        "function owner": {"owner": "owner_b"},
     }
     for part, change in changes.items():
         err, _, _ = _run(
@@ -438,7 +462,8 @@ def test_a_trigger_recreated_with_another_definition_or_function_is_refused(monk
 
 def test_the_trigger_query_reads_definition_function_text_and_security_mode():
     q = mig._READBACK_TRIGGERS_SQL
-    assert "pg_get_triggerdef(t.oid)" in q and "p.prosrc" in q and "p.prosecdef" in q
+    assert "pg_get_triggerdef(t.oid)" in q and "md5(p.prosrc)" in q and "p.prosecdef" in q
+    assert "pg_get_userbyid(p.proowner)" in q and "p.proconfig" in q
     assert "pg_proc" in q
 
 
@@ -459,6 +484,106 @@ def test_a_new_trigger_is_not_a_refusal_and_is_watched_from_then_on(monkeypatch,
     err, _, _ = _run(monkeypatch, tmp_path, [START] * 3, [[], [_trigger(name="new")], []])
     assert isinstance(err, ConfigError) and "0002_f2.sql" in str(err), err
     assert "trigger s.t.new no longer exists" in str(err)
+
+
+def test_a_trigger_change_is_not_reported_as_a_changed_session(monkeypatch, tmp_path):
+    """Order 186: the message names the trigger, what changed and the way to allow it; it does not say the database
+    session changed. Killed by: mutant T8 (a trigger change goes into the session list again)."""
+    err, _, _ = _run(
+        monkeypatch,
+        tmp_path,
+        [START, START],
+        [[_trigger()], [_trigger(src="BEGIN RETURN NULL; END")]],
+    )
+    msg = str(err)
+    assert "0001_f1.sql changed a trigger: trigger s.t.trg changed: function text" in msg, msg
+    assert "migrations_trigger_changes.json" in msg
+    assert "session" not in msg, msg
+    # a session change and a trigger change together are both named
+    err, _, _ = _run(
+        monkeypatch,
+        tmp_path,
+        [START, _values(search_path="public")],
+        [[_trigger()], [_trigger(src="x")]],
+    )
+    assert "left the database session changed: search_path" in str(err)
+    assert "changed a trigger: trigger s.t.trg changed" in str(err)
+
+
+def test_a_renamed_table_with_a_trigger_is_reported_as_a_renamed_table(monkeypatch, tmp_path):
+    """Decision (report of PR 73): the audit trigger stays on the same table id when the table is renamed, but code that
+    names the table and a new table made under the old name would not have the trigger, so a rename is refused, and the
+    message says "renamed", not "no longer exists". Killed by: mutant T9 (a renamed table reads as a vanished trigger)."""
+    old = _trigger(table="t", relid=77)
+    new = _trigger(table="t2", relid=77)
+    err, _, _ = _run(monkeypatch, tmp_path, [START, START], [[old], [new]])
+    msg = str(err)
+    assert "its table was renamed from t to t2" in msg, msg
+    assert "no longer exists" not in msg
+    # a table dropped and made again under ANOTHER name (new id) is not a rename
+    err, _, _ = _run(
+        monkeypatch, tmp_path, [START, START], [[old], [_trigger(table="t2", relid=78)]]
+    )
+    assert "trigger s.t.trg no longer exists" in str(err)
+
+
+def test_an_allowed_trigger_change_passes_only_for_that_trigger_and_file(monkeypatch, tmp_path):
+    """The reviewed list names (migration, trigger); it allows a change, never a disappearance, and no other trigger or
+    file. Killed by: mutant T10 (any trigger is allowed once any entry exists) and T11 (a disappearance is allowed)."""
+    changed = [_trigger(src="BEGIN RETURN NULL; END")]
+    monkeypatch.setattr(mig, "_trigger_changes", lambda: frozenset({("0001_f1", "trg")}))
+    err, _, applied = _run(monkeypatch, tmp_path, [START] * 3, [[_trigger()], changed, changed])
+    assert err is None and applied == ["0001_f1", "0002_f2"], err
+    # same trigger, another file: refused
+    err, _, _ = _run(monkeypatch, tmp_path, [START] * 3, [[_trigger()], [_trigger()], changed])
+    assert isinstance(err, ConfigError) and "0002_f2.sql" in str(err), err
+    # same file, another trigger: refused
+    other = [_trigger(), _trigger(name="other")]
+    err, _, _ = _run(
+        monkeypatch,
+        tmp_path,
+        [START, START],
+        [other, [_trigger(), _trigger(name="other", src="x")]],
+    )
+    assert "trigger s.t.other changed" in str(err), err
+    # the allowed trigger vanishes: refused
+    err, _, _ = _run(monkeypatch, tmp_path, [START, START], [[_trigger()], []])
+    assert "trigger s.t.trg no longer exists" in str(err), err
+
+
+def test_the_list_of_allowed_trigger_changes_is_empty_today_and_strictly_read(
+    monkeypatch, tmp_path
+):
+    """The shipped list is empty. A bad list is a ConfigError (never "allow"). Killed by: mutant T12 (the loader ignores
+    a bad shape)."""
+    assert mig._trigger_changes() == frozenset()
+    good = {"migration": "0007_x", "trigger": "trg", "reason": "replaces the function, same rule"}
+
+    def load(text):
+        f = tmp_path / "list.json"
+        f.write_text(text, encoding="utf-8")
+        monkeypatch.setattr(mig, "TRIGGER_CHANGES", f)
+        return mig._trigger_changes()
+
+    import json
+
+    assert load(json.dumps([good])) == frozenset({("0007_x", "trg")})
+    for bad in (
+        "{}",
+        "not json",
+        json.dumps([{**good, "extra": "x"}]),
+        json.dumps([{"migration": "0007_x", "trigger": "trg"}]),
+        json.dumps([{**good, "reason": " "}]),
+        json.dumps([{**good, "reason": "a\nb"}]),
+        json.dumps([{**good, "migration": "7_x"}]),
+        json.dumps([{**good, "trigger": 5}]),
+        json.dumps([good, good]),
+    ):
+        with pytest.raises(ConfigError, match="allowed trigger changes"):
+            load(bad)
+    monkeypatch.setattr(mig, "TRIGGER_CHANGES", tmp_path / "missing.json")
+    with pytest.raises(ConfigError, match="cannot be read"):
+        mig._trigger_changes()
 
 
 def test_trigger_query_reads_only_the_migration_schema():
@@ -530,8 +655,7 @@ def test_the_membership_query_reads_names_and_every_other_column():
 
 
 def test_a_table_made_again_with_its_trigger_is_not_a_false_refusal(monkeypatch, tmp_path):
-    """The table has a new OID after DROP + CREATE; the trigger has the same schema, table and name.
-    Killed by: mutant R5 (triggers keyed by the table OID again)."""
+    """The table has a new OID after DROP + CREATE; the trigger has the same schema, table and name."""
     err, _, applied = _run(
         monkeypatch,
         tmp_path,
@@ -567,7 +691,7 @@ def test_a_privileged_migration_role_is_refused_before_any_file_runs(monkeypatch
     monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
     monkeypatch.setattr(mig, "connect", lambda *a, **k: db)
     with pytest.raises(ConfigError, match=f"it holds: {flag}"):
-        mig.migrate("postgresql://unused", allow_privileged_role_for_tests=False)
+        mig.migrate("postgresql://unused")
     assert "SELECT 1;\n" not in db.log
     assert not any(s.startswith("CREATE TABLE IF NOT EXISTS schema_migrations") for s in db.log)
 
@@ -578,27 +702,28 @@ def test_the_role_flags_are_read_from_the_current_user():
         assert flag in mig._ROLE_FLAGS_SQL
 
 
-@pytest.mark.real_role_check
-def test_the_named_test_override_runs_and_writes_a_warning(monkeypatch, tmp_path, caplog):
-    """Killed by: mutant S6 (the override is silent) and S7 (the override is the default)."""
-    import logging
+def test_there_is_no_switch_that_turns_the_role_check_off():
+    """Round-1 G73-5 (order 186): no argument, setting or module name can switch the check off."""
+    import inspect
 
+    assert "allow_privileged_role_for_tests" not in inspect.signature(mig.migrate).parameters
+    assert not any("privileged" in name for name in dir(mig) if name != "_refuse_privileged_role")
+    assert "allow_privileged_role_for_tests" not in inspect.getsource(mig)
+
+
+def test_the_refusal_says_how_to_make_a_plain_migration_role(monkeypatch, tmp_path):
+    """The message names the flags held and gives one SQL example with no password or other secret."""
     files = _files(tmp_path, 1)
-    db = _Db([START] * 2, [[], []], flags=(True, True, True, True))
+    db = _Db([START], [[]], flags=(True, False, False, False))
     monkeypatch.setattr(mig, "_migration_files", lambda: files)
     monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
     monkeypatch.setattr(mig, "connect", lambda *a, **k: db)
-    with caplog.at_level(logging.WARNING, logger=mig.__name__):
-        assert mig.migrate("postgresql://unused", allow_privileged_role_for_tests=True) == [
-            "0001_f1"
-        ]
-    assert "allow_privileged_role_for_tests" in caplog.text
-    import inspect
-
-    assert (
-        inspect.signature(mig.migrate).parameters["allow_privileged_role_for_tests"].default
-        is False
-    )
+    with pytest.raises(ConfigError) as e:
+        mig.migrate("postgresql://unused")
+    msg = str(e.value)
+    assert "it holds: rolsuper" in msg and mig.PLAIN_MIGRATION_ROLE_SQL in msg
+    assert "NOSUPERUSER NOCREATEROLE NOCREATEDB NOBYPASSRLS" in msg
+    assert "password" not in msg.lower()
 
 
 # --- settings saved per database or role (round-1 N5) and the two time limits (N10) ---------------------------------
@@ -606,7 +731,7 @@ def test_the_named_test_override_runs_and_writes_a_warning(monkeypatch, tmp_path
 
 def test_a_new_saved_setting_for_a_role_is_refused(monkeypatch, tmp_path):
     """`ALTER ROLE x SET search_path = ...` changes the NEXT session, not this one: only pg_db_role_setting shows it.
-    Killed by: mutant P1 (settings not read), P2 (not compared)."""
+    Killed by: mutants PS1 (settings not read), PS2 (not compared)."""
     saved = ("mydb", "app_rw", "{search_path=evil}")
     err, _db, _ = _run(monkeypatch, tmp_path, [START, START], [[], []], settings=[[], [saved]])
     assert isinstance(err, ConfigError) and "0001_f1.sql" in str(err), err
@@ -653,7 +778,7 @@ def test_migrate_refuses_a_changed_released_file_before_it_connects(monkeypatch,
 
 
 def test_migrate_refuses_when_the_released_list_is_unreadable_or_wrong(monkeypatch, tmp_path):
-    """Killed by: mutant R7 (a missing list is read as empty)."""
+    """An unreadable or wrongly shaped list of released files is a ConfigError before any connection."""
     monkeypatch.setattr(mig, "connect", lambda *a, **k: pytest.fail("connected"))
     missing = tmp_path / "none.json"
     monkeypatch.setattr(mig, "RELEASED_MANIFEST", missing)
@@ -676,7 +801,7 @@ def test_a_bad_hash_in_the_released_list_is_a_config_error_not_a_changed_file(
     monkeypatch, tmp_path
 ):
     """M-4 (minor): a value that is not 64 lower-case hex digits is a broken list (ConfigError, before any connection),
-    not "a released file was changed". Killed by: mutant MM7 (the hex check removed)."""
+    not "a released file was changed"."""
     import json
 
     monkeypatch.setattr(mig, "connect", lambda *a, **k: pytest.fail("connected"))
@@ -691,8 +816,7 @@ def test_a_bad_hash_in_the_released_list_is_a_config_error_not_a_changed_file(
 
 
 def test_a_json_name_written_twice_in_the_released_list_is_refused(monkeypatch, tmp_path):
-    """Nit: `json` would keep the last of two equal names, so an edited second hash would hide the first.
-    Killed by: mutant MD1 (the duplicate check removed)."""
+    """Nit: `json` would keep the last of two equal names, so an edited second hash would hide the first."""
     good = mig._released_manifest()
     first, digest = next(iter(good.items()))
     path = tmp_path / "dup.json"
@@ -730,8 +854,7 @@ def _run_raising(monkeypatch, tmp_path, error):
 def test_a_lock_wait_or_a_slow_statement_is_a_plain_config_error_naming_step_and_setting(
     monkeypatch, tmp_path
 ):
-    """Review A. Killed by: mutants RA1 (not wrapped: the raw psycopg error comes out), RA2 (the step is not named),
-    RA4 (the setting is not named)."""
+    """Review A."""
     from psycopg import errors as pge
 
     with pytest.raises(ConfigError, match=r"applying 0002_f2\.sql.*lock_timeout") as got:
@@ -750,7 +873,7 @@ def test_a_lock_wait_or_a_slow_statement_is_a_plain_config_error_naming_step_and
 
 def test_the_statement_limit_is_found_by_the_error_code_not_by_the_words(monkeypatch, tmp_path):
     """Round-1 N8: the server words follow `lc_messages` (a German server says "wegen Zeitüberschreitung"); the code
-    57014 does not. Killed by: mutant Q1 (the words are matched again), Q2 (every other error is called a timeout)."""
+    57014 does not."""
     from psycopg import errors as pge
 
     with pytest.raises(ConfigError, match=r"applying 0002_f2\.sql.*statement_timeout"):

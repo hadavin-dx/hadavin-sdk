@@ -275,12 +275,12 @@ M = [
         "AssertionError: \u00e9",
     ),
     mutant(
-        "order 112: SET LOCAL lock_timeout is allowed by the word boundary again",
-        "(?:lock_timeout|statement_timeout){_NAME_END}",
-        "(?:lock_timeout|statement_timeout)\\b",
-        T4,
-        "test_the_word_boundary_is_used_only_where_a_match_refuses",
-        "_SET_ALLOWED",
+        "SET LOCAL lock_timeout/statement_timeout is allowed in the text scan again",
+        "elif m := _SET.match(s):",
+        "elif (m := _SET.match(s)) and not re.match(r'set\\s+local\\s+(?:lock|statement)_timeout', s, re.I):",
+        T1,
+        "test_the_two_time_limits_are_refused_in_the_text_scan_not_only_by_the_read_back",
+        "AssertionError",
     ),
     mutant(
         "fix1: COPY PROGRAM is not refused",

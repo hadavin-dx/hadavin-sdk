@@ -70,6 +70,11 @@ RECIPE_TIMEOUTS = ("SET LOCAL lock_timeout = '5s';", "SET LOCAL statement_timeou
 # The advisory-lock key of every migrate run and every hand recipe; `migrate` imports it from here as `MIGRATE_LOCK`.
 MIGRATE_LOCK = int.from_bytes(b"hadvnmig", "big") >> 1
 MIGRATIONS = Path(__file__).parent / "migrations"
+# The two reviewed lists that ship in the package folder next to `migrations/` (read by `migrate()` at run time; one
+# path each, shared by the product and the tests): the SHA-256 of every released file, and the (file, trigger) pairs
+# whose file may change a trigger.
+RELEASED_MANIFEST = MIGRATIONS.parent / "migrations_released.json"
+TRIGGER_CHANGES = MIGRATIONS.parent / "migrations_trigger_changes.json"
 
 # The recipe's ledger line (text for a person to run, never executed here). Filled with `replace` after the stem passed
 # STEM, so no quote can occur; not an f-string, which the SQL-injection scanner would flag.
@@ -633,7 +638,7 @@ def lex(text: str, keep_quoted: bool = False) -> tuple[str, str]:
 _W = f"[{_WS}]+"
 # A name character, exactly as `_ident_char` reads it: ASCII letters and digits, `_`, `$`, and any non-ASCII character.
 # The regex word boundary `\\b` breaks at `$`, so `app$on` and `on$x` (ONE name each in PostgreSQL) show a standalone
-# `on`. Where a match LETS A STATEMENT PASS (the `on` look-ahead of `_ROLE_MEMBERSHIP`, `_SET_ALLOWED`) the boundaries
+# `on`. Where a match LETS A STATEMENT PASS (the `on` look-ahead of `_ROLE_MEMBERSHIP`) the boundaries
 # below are used; they agree with the lexer. Where a match REFUSES a statement (the keyword at the start of a statement)
 # `\\b` stays on purpose: it can only over-match, which is the safe direction (`COMMIT` + a no-break space is refused).
 # `tests/test_migration_rules.py` pins both rules (one test lists the only patterns that may hold `\\b`).
@@ -643,9 +648,6 @@ _NAME_START = f"(?<!{_NAME_CHAR})"
 _TRANSACTION = re.compile(
     rf"(commit|end|begin|abort|rollback|savepoint|release|start{_W}transaction|prepare{_W}transaction)\b",
     re.IGNORECASE,
-)
-_SET_ALLOWED = re.compile(
-    rf"set{_W}local{_W}(?:lock_timeout|statement_timeout){_NAME_END}", re.IGNORECASE
 )
 _SET = re.compile(r"(set|reset)\b", re.IGNORECASE)
 _BLIND = re.compile(
@@ -662,7 +664,8 @@ _ROLE_MEMBERSHIP = re.compile(
 
 def refused_statements(text: str) -> list[str]:
     """Reasons a file must be refused, from `lex` (the emptied view) and the list: a lexer problem;
-    transaction control; every `SET` and `RESET` except `SET LOCAL lock_timeout` and `SET LOCAL statement_timeout`;
+    transaction control; every `SET` and `RESET`, with no exception (`SET LOCAL lock_timeout` and `SET LOCAL statement_timeout` included: `migrate` sets
+    the two limits itself and the read-back would refuse a file that changes them, so the text scan says so first);
     `DO`, `EXECUTE`, `LOAD`, `DISCARD`, `COPY ... PROGRAM`, `ALTER ROLE|USER|GROUP|SYSTEM|DATABASE`,
     `CREATE ROLE|USER|GROUP|EXTENSION`, `GRANT` and `REVOKE` without `ON` (role membership), `DROP OWNED`,
     `REASSIGN OWNED`; hidden characters (`hidden_character`) come first. A rule matches at the START of a
@@ -687,10 +690,10 @@ def refused_statements(text: str) -> list[str]:
                 f"{word}: transaction control is not allowed (the run is one transaction){hint}"
             )
         elif m := _SET.match(s):
-            if not _SET_ALLOWED.match(s):
-                reasons.append(
-                    f"{m.group(1).upper()}: a session or role setting may not be changed by a migration"
-                )
+            reasons.append(
+                f"{m.group(1).upper()}: a session or role setting may not be changed by a migration "
+                "(the two time limits of `migrate` included: it sets them itself)"
+            )
         elif m := _BLIND.match(s):
             word = " ".join(m.group(1).upper().split())
             reasons.append(f"{word}: the guard cannot read what this statement does or changes")

@@ -108,7 +108,7 @@ BOUNDARY_ALLOWED_IN = {"_TRANSACTION", "_SET", "_BLIND", "_COPY_PROGRAM", "_ROLE
 def test_the_word_boundary_is_used_only_where_a_match_refuses():
     """Class check over every regex of `migration_numbers.py`: `\\w`, `\\W`, `\\B` nowhere; `\\b` only in the patterns
     above; `\\b` never next to `on` (the look-ahead of the role rule) and never in a pattern whose match lets a statement
-    through (`_SET_ALLOWED`, the name and stem patterns)."""
+    through (the role-membership look-ahead, the name and stem patterns)."""
     tree = ast.parse(Path(mn.__file__).read_text(encoding="utf-8"))
     pattern_functions = {
         "compile",
@@ -145,7 +145,6 @@ def test_the_word_boundary_is_used_only_where_a_match_refuses():
                 if re.search(r"\\b", text) and target not in BOUNDARY_ALLOWED_IN:
                     bad.append((target, text))
     assert not bad, bad
-    assert "lock_timeout" in mn._SET_ALLOWED.pattern and "\\b" not in mn._SET_ALLOWED.pattern
 
 
 def test_the_name_boundary_agrees_with_the_lexer_character_set():
