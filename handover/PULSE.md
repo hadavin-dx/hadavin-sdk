@@ -1,1 +1,1 @@
-12:10Z | agents: none; shell: final_gate.sh full on fix7 (dpld) | evid shells: none | unpushed: none | refreshed every 60 s by a bounded script (ends 13:20Z); detail in HEARTBEAT.md
+12:11Z | agents: none; shell: final_gate.sh full on fix7 (dpld) | evid shells: none | unpushed: none | refreshed every 60 s by a bounded script (ends 13:21Z); detail in HEARTBEAT.md
