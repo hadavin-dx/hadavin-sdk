@@ -21,7 +21,7 @@ DENIED = [
     "SELECT email FROM shop.customers",
     "SELECT * FROM pg_shadow",
     "SELECT pg_read_file('postgresql.conf')",
-    "COPY (SELECT 1) TO PROGRAM 'echo x'",
+    "COPY (SELECT 1) TO PROGRAM 'cat > /dev/null'",
     "INSERT INTO analytics.orders_v VALUES (9999, 1, DATE '2026-01-01', 'paid', 1)",
     "UPDATE analytics.orders_v SET status = 'x'",
     "DROP VIEW analytics.orders_v",
