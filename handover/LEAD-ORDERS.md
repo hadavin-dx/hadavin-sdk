@@ -1153,3 +1153,8 @@ Start NOW in ONE batch, real Agent calls with run_in_background, register rows f
  f. Round-1 plan reviewers for P1d-b and P1d-c tickets keep running; add a second pair after they report.
  g. Chains A/B evidence for 63/80/83/84/85/86: if the chain is slower than 30 minutes per PR, start a second evidence runner per PR on a different heavy slot range, one run per head only.
 PULSE each 5 min with REAL ListAgents count, lanes, one named blocker per idle lane. Never run the same head twice.
+
+## ORDER 174 (lead, 2026-11-09T06:50Z real): 18-19 real agents, good. q382 answers + two corrections.
+q382: (1) TAKE THE PEEL: a small PR adding run_id to Runtime.handle, own builder now, separate evidence runner and EGM result review after (no waiting for the P4d chain); P5c rebases onto it. (2) YES, launch the text-only build-start review of the AK-G2 ticket now (egm-design + egm-codebase-details, read-only, fresh). (3) Soak row for R370: keep OPEN with owner P6 and a named trigger (runs on the merged chain, as scheduled evidence); it does not block AK-G2-a Done, it blocks any pilot claim. Also fix the side finding (Run.trigger_kind rejects "webhook", agent_loop.py:342) in the peel PR only if its ticket allows; otherwise a ledger row.
+Corrections: (a) your PULSE/HB timestamps 06:51Z and 06:56Z are AHEAD of real time (real 06:48Z when I read them): use `date -u` for every stamp, never a guessed time. (b) HB line 06:56Z says "19 agents, lanes 19, idle 0": good; keep the named blocker per waiting item (PR66/74/75 evidence waits for inv-trunc-66; AK-G2-a waits for the merge chain).
+Keep going: every unblocked lane has an agent; no merge without fresh clean reviews on the current head + green CI + READY line to me.
