@@ -1,0 +1,71 @@
+[keyed] kill-9 round 1 n=200: n=200 status={201: 200} 5xx=0 client_errors={} max_latency_s=2.08
+   desk_counts={'received': 200, 'new': 200, 'duplicate': 0, 'review': 0, 'open': 0, 'rejected_envelopes': 0, 'pending_followups': 0, 'expected_match': None, 'ok': None}
+   followup_states= {'sent': 200} open_receipts= 0
+   received=200 vs new+dup+review+rejected=200 (failed/unknown shown in open/pending) lost_receipt=0
+   crm_rows=200 distinct_leads_in_crm=200 max_rows_per_lead=1; emails=200 distinct_recipients=200 max_emails_per_lead=1; expected_leads=200
+   acked_2xx=200 of 200; acked_but_no_receipt_id=0; retries_total=408
+--- done kill keyed 1 11:04:16
+[keyed] kill-9 round 2 n=200: n=200 status={201: 200} 5xx=0 client_errors={} max_latency_s=2.32
+   desk_counts={'received': 200, 'new': 200, 'duplicate': 0, 'review': 0, 'open': 0, 'rejected_envelopes': 0, 'pending_followups': 0, 'expected_match': None, 'ok': None}
+   followup_states= {'sent': 200} open_receipts= 0
+   received=200 vs new+dup+review+rejected=200 (failed/unknown shown in open/pending) lost_receipt=0
+   crm_rows=200 distinct_leads_in_crm=200 max_rows_per_lead=1; emails=200 distinct_recipients=200 max_emails_per_lead=1; expected_leads=200
+   acked_2xx=200 of 200; acked_but_no_receipt_id=0; retries_total=462
+--- done kill keyed 2 11:04:23
+[keyed] kill-9 round 3 n=200: n=200 status={201: 200} 5xx=0 client_errors={} max_latency_s=2.20
+   desk_counts={'received': 200, 'new': 200, 'duplicate': 0, 'review': 0, 'open': 0, 'rejected_envelopes': 0, 'pending_followups': 0, 'expected_match': None, 'ok': None}
+   followup_states= {'sent': 200} open_receipts= 0
+   received=200 vs new+dup+review+rejected=200 (failed/unknown shown in open/pending) lost_receipt=0
+   crm_rows=200 distinct_leads_in_crm=200 max_rows_per_lead=1; emails=200 distinct_recipients=200 max_emails_per_lead=1; expected_leads=200
+   acked_2xx=200 of 200; acked_but_no_receipt_id=0; retries_total=399
+--- done kill keyed 3 11:04:31
+[keyed] kill-9 round 4 n=200: n=200 status={201: 200} 5xx=0 client_errors={} max_latency_s=2.18
+   desk_counts={'received': 200, 'new': 200, 'duplicate': 0, 'review': 0, 'open': 0, 'rejected_envelopes': 0, 'pending_followups': 0, 'expected_match': None, 'ok': None}
+   followup_states= {'sent': 200} open_receipts= 0
+   received=200 vs new+dup+review+rejected=200 (failed/unknown shown in open/pending) lost_receipt=0
+   crm_rows=200 distinct_leads_in_crm=200 max_rows_per_lead=1; emails=200 distinct_recipients=200 max_emails_per_lead=1; expected_leads=200
+   acked_2xx=200 of 200; acked_but_no_receipt_id=0; retries_total=450
+--- done kill keyed 4 11:04:38
+[keyed] kill-9 round 5 n=200: n=200 status={201: 200} 5xx=0 client_errors={} max_latency_s=2.14
+   desk_counts={'received': 200, 'new': 200, 'duplicate': 0, 'review': 0, 'open': 0, 'rejected_envelopes': 0, 'pending_followups': 0, 'expected_match': None, 'ok': None}
+   followup_states= {'sent': 200} open_receipts= 0
+   received=200 vs new+dup+review+rejected=200 (failed/unknown shown in open/pending) lost_receipt=0
+   crm_rows=200 distinct_leads_in_crm=200 max_rows_per_lead=1; emails=200 distinct_recipients=200 max_emails_per_lead=1; expected_leads=200
+   acked_2xx=200 of 200; acked_but_no_receipt_id=0; retries_total=417
+--- done kill keyed 5 11:04:46
+[blind] kill-9 round 1 n=200: n=200 status={201: 200} 5xx=0 client_errors={} max_latency_s=2.20
+   desk_counts={'received': 200, 'new': 200, 'duplicate': 0, 'review': 0, 'open': 0, 'rejected_envelopes': 0, 'pending_followups': 0, 'expected_match': None, 'ok': None}
+   followup_states= {'sent': 194, 'unknown': 6} open_receipts= 0
+   received=200 vs new+dup+review+rejected=200 (failed/unknown shown in open/pending) lost_receipt=0
+   crm_rows=200 distinct_leads_in_crm=200 max_rows_per_lead=1; emails=200 distinct_recipients=200 max_emails_per_lead=1; expected_leads=200
+   acked_2xx=200 of 200; acked_but_no_receipt_id=0; retries_total=447
+--- done kill blind 1 11:04:53
+[blind] kill-9 round 2 n=200: n=200 status={201: 200} 5xx=0 client_errors={} max_latency_s=2.06
+   desk_counts={'received': 200, 'new': 200, 'duplicate': 0, 'review': 0, 'open': 0, 'rejected_envelopes': 0, 'pending_followups': 0, 'expected_match': None, 'ok': None}
+   followup_states= {'sent': 194, 'unknown': 6} open_receipts= 0
+   received=200 vs new+dup+review+rejected=200 (failed/unknown shown in open/pending) lost_receipt=0
+   crm_rows=200 distinct_leads_in_crm=200 max_rows_per_lead=1; emails=200 distinct_recipients=200 max_emails_per_lead=1; expected_leads=200
+   acked_2xx=200 of 200; acked_but_no_receipt_id=0; retries_total=438
+--- done kill blind 2 11:05:01
+[blind] kill-9 round 3 n=200: n=200 status={201: 200} 5xx=0 client_errors={} max_latency_s=2.18
+   desk_counts={'received': 200, 'new': 200, 'duplicate': 0, 'review': 0, 'open': 0, 'rejected_envelopes': 0, 'pending_followups': 0, 'expected_match': None, 'ok': None}
+   followup_states= {'sent': 189, 'unknown': 11} open_receipts= 0
+   received=200 vs new+dup+review+rejected=200 (failed/unknown shown in open/pending) lost_receipt=0
+   crm_rows=200 distinct_leads_in_crm=200 max_rows_per_lead=1; emails=199 distinct_recipients=199 max_emails_per_lead=1; expected_leads=200
+   acked_2xx=200 of 200; acked_but_no_receipt_id=0; retries_total=402
+--- done kill blind 3 11:05:08
+[blind] kill-9 round 4 n=200: n=200 status={201: 200} 5xx=0 client_errors={} max_latency_s=2.36
+   desk_counts={'received': 200, 'new': 200, 'duplicate': 0, 'review': 0, 'open': 0, 'rejected_envelopes': 0, 'pending_followups': 0, 'expected_match': None, 'ok': None}
+   followup_states= {'sent': 190, 'unknown': 10} open_receipts= 0
+   received=200 vs new+dup+review+rejected=200 (failed/unknown shown in open/pending) lost_receipt=0
+   crm_rows=200 distinct_leads_in_crm=200 max_rows_per_lead=1; emails=199 distinct_recipients=199 max_emails_per_lead=1; expected_leads=200
+   acked_2xx=200 of 200; acked_but_no_receipt_id=0; retries_total=465
+--- done kill blind 4 11:05:16
+[blind] kill-9 round 5 n=200: n=200 status={201: 200} 5xx=0 client_errors={} max_latency_s=2.14
+   desk_counts={'received': 200, 'new': 200, 'duplicate': 0, 'review': 0, 'open': 0, 'rejected_envelopes': 0, 'pending_followups': 0, 'expected_match': None, 'ok': None}
+   followup_states= {'sent': 191, 'unknown': 9} open_receipts= 0
+   received=200 vs new+dup+review+rejected=200 (failed/unknown shown in open/pending) lost_receipt=0
+   crm_rows=200 distinct_leads_in_crm=200 max_rows_per_lead=1; emails=200 distinct_recipients=200 max_emails_per_lead=1; expected_leads=200
+   acked_2xx=200 of 200; acked_but_no_receipt_id=0; retries_total=447
+--- done kill blind 5 11:05:23
+ALLDONE
