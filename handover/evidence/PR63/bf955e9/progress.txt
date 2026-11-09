@@ -1,6 +1,6 @@
-ruff-check exit=0 06:34:08
-ruff-format exit=0 06:34:09
-bandit exit=0 06:34:10
-full-312 ................................................exit=1 06:45:13
-full-313 ........................................exit=1 06:53:33
+ruff-check exit=0 08:06:41
+ruff-format exit=0 08:06:41
+bandit exit=0 08:06:43
+full-312 SUMMARY tests=11069 failed=0 errors=0 skipped=11 passed=11058 pytest_exit=0 08:19:17
+full-313 SUMMARY tests=11069 failed=0 errors=0 skipped=11 passed=11058 pytest_exit=0 08:27:33
 ALLDONE
