@@ -10,3 +10,9 @@ ALLDONE
 full-312 SUMMARY tests=11083 failed=2 errors=3 skipped=10 passed=11068 pytest_exit=1 09:18:16
 full-313 SUMMARY tests=11083 failed=20 errors=434 skipped=10 passed=10619 pytest_exit=1 09:26:07
 ALLDONE
+ruff-check exit=0 09:42:41
+ruff-format exit=0 09:42:42
+bandit exit=0 09:42:44
+full-312 SUMMARY tests=11083 failed=1 errors=0 skipped=10 passed=11072 pytest_exit=1 09:55:15
+full-313 SUMMARY tests=11083 failed=0 errors=0 skipped=10 passed=11073 pytest_exit=0 10:03:41
+ALLDONE

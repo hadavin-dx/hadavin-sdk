@@ -39,3 +39,9 @@ New tests for F1, F2, F3, F4, F5, F7, F8 must fail on current code and pass on f
 
 ## Confirmation runs by the cloud session
 (see below; added after the load runs finish)
+
+### Confirmation (cloud session, 10:06Z, fresh desk + keyed fakes, nothing edited; script /tmp/dpld-out/load.py helpers)
+- F1 CONFIRMED: name "\u0000Ada" -> 500 {"error":"internal","receipt_id":1}; same request again -> 500 again; source_ref "\u0000x" -> 500 {"error":"internal","receipt_id":null}. /counts afterwards: received=2, open=1 (the receipt stays open).
+- F8 CONFIRMED (all three give 500 {"error": "internal"}): Content-Length of 5000 digits; request target "http://[/"; POST /review/R99999999999999999999/retry.
+- F11 CONFIRMED: o'brien@example.test -> 202 verdict review, reason invalid_email.
+- Not confirmed by running (still reading-only): F2, F3, F4, F5, F6, F7, F9 (the load run below covers part of F9), F10 (see load report: unknown follow-ups are not shown in /counts), F12-F15.
