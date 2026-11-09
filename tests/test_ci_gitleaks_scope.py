@@ -7,8 +7,11 @@ so a neutered scan (`|| true`, `--exit-code=0`, another config, `continue-on-err
 """
 
 import copy
+import json
 import re
 import shlex
+import sys
+import tomllib
 from pathlib import Path
 
 import pytest
@@ -42,7 +45,11 @@ CURL_FLAGS = [
     "--retry-all-errors",
     "--retry-delay",
     "5",
+    "--connect-timeout",
+    "30",
     "--proto",
+    '"=https"',
+    "--proto-redir",
     '"=https"',
     "--tlsv1.2",
     "-o",
@@ -77,7 +84,7 @@ SECURITY_STEP_NAMES = [
 GOLDEN_COMMANDS = {
     "Secrets in the history": [
         (
-            'curl -sSfL --retry 5 --retry-all-errors --retry-delay 5 --proto "=https" --tlsv1.2 -o "$RUNNER_TEMP/gitleaks.tgz"'
+            'curl -sSfL --retry 5 --retry-all-errors --retry-delay 5 --connect-timeout 30 --proto "=https" --proto-redir "=https" --tlsv1.2 -o "$RUNNER_TEMP/gitleaks.tgz"'
             '  "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"'
         ),
         'echo "${GITLEAKS_SHA256}  $RUNNER_TEMP/gitleaks.tgz" | sha256sum -c -',
@@ -95,7 +102,7 @@ GOLDEN_COMMANDS = {
     ],
     "Trivy": [
         (
-            'curl -sSfL --retry 5 --retry-all-errors --retry-delay 5 --proto "=https" --tlsv1.2 -o "$RUNNER_TEMP/trivy.tgz"'
+            'curl -sSfL --retry 5 --retry-all-errors --retry-delay 5 --connect-timeout 30 --proto "=https" --proto-redir "=https" --tlsv1.2 -o "$RUNNER_TEMP/trivy.tgz"'
             '  "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz"'
         ),
         'echo "${TRIVY_SHA256}  $RUNNER_TEMP/trivy.tgz" | sha256sum -c -',
@@ -105,7 +112,55 @@ GOLDEN_COMMANDS = {
 }
 
 
+GOLDEN_FILE = Path(__file__).parent / "fixtures" / "ci_security_golden.json"
+
+
+def check_golden(workflow):
+    """The whole security job (every step, raw run text included, so a comment that ends in a backslash cannot hide a
+    command), the workflow-level triggers, permissions, concurrency and env, and the id, name, runner and timeout of every job
+    must equal the stored golden. An intended change to any of them means regenerating the golden in the same PR."""
+    golden = json.loads(GOLDEN_FILE.read_text())
+    top = {
+        ("on" if k is True else k): workflow.get(k)
+        for k in ("name", True, "permissions", "concurrency", "env")
+    }
+    assert top == golden["workflow"], (
+        "workflow name/on/permissions/concurrency/env differ from the golden"
+    )
+    jobs = {
+        jid: {k: j.get(k) for k in ("name", "runs-on", "timeout-minutes", "if")}
+        for jid, j in workflow["jobs"].items()
+    }
+    assert jobs == golden["jobs"], "job ids, names, runners or timeouts differ from the golden"
+    assert workflow["jobs"]["security"] == golden["security_job"], (
+        "the security job differs from the golden"
+    )
+
+
+def check_gitleaks_config():
+    """The scan reads .gitleaks.toml from the PR's own tree: it must keep the default rules and may only allow narrow paths."""
+    cfg = tomllib.loads((CI.parents[2] / ".gitleaks.toml").read_text())
+    assert set(cfg) <= {"extend", "allowlists"}, f"unexpected top-level keys: {sorted(cfg)}"
+    assert cfg["extend"] == {"useDefault": True}
+    probes = [
+        "src/hadavin_sdk/store/migrate.py",
+        "tests/test_x.py",
+        ".github/workflows/ci.yml",
+        "pyproject.toml",
+    ]
+    for al in cfg["allowlists"]:
+        assert al.get("condition") == "AND" and al.get("paths"), (
+            f"allowlist must be path-scoped: {al.get('description')}"
+        )
+        assert not al.get("commits") and not al.get("stopwords"), "no commit or stopword allowlists"
+        for pat in al["paths"]:
+            assert not any(re.search(pat, probe) for probe in probes), (
+                f"allowlist path {pat!r} reaches source or CI files"
+            )
+
+
 def check_structure(workflow):
+    check_golden(workflow)
     """Everything around the two steps: job keys, defaults, env, checkout, step order, and every command of both steps."""
     assert set(workflow) == {"name", True, "permissions", "concurrency", "env", "jobs"}, (
         "unexpected workflow keys"
@@ -208,12 +263,40 @@ def check_downloads(workflow):
     return len(DOWNLOADS)
 
 
+class _StrictLoader(yaml.SafeLoader):
+    """SafeLoader that refuses a duplicate mapping key (PyYAML would silently keep the last one)."""
+
+
+def _no_duplicates(loader, node, deep=False):
+    keys = [loader.construct_object(k, deep=deep) for k, _ in node.value]
+    dup = {k for k in keys if keys.count(k) > 1}
+    if dup:
+        raise AssertionError(f"duplicate YAML keys: {sorted(map(str, dup))}")
+    return yaml.SafeLoader.construct_mapping(loader, node, deep=deep)
+
+
+_StrictLoader.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, _no_duplicates)
+
+
 def _load():
-    return yaml.safe_load(CI.read_text())
+    return yaml.load(CI.read_text(), Loader=_StrictLoader)  # noqa: S506 (SafeLoader subclass)
 
 
 def test_real_ci_scan_is_limited_to_head_and_blocks():
     check_scan(_load())
+
+
+def test_the_gitleaks_config_has_only_narrow_path_allowlists():
+    check_gitleaks_config()
+
+
+def test_the_gitleaks_config_pin_rejects_a_blanket_allowlist(tmp_path, monkeypatch):
+    (tmp_path / ".github" / "workflows").mkdir(parents=True)
+    bad = "[extend]\nuseDefault = true\n[[allowlists]]\ncondition = \"AND\"\npaths = ['''.*''']\n"
+    (tmp_path / ".gitleaks.toml").write_text(bad)
+    monkeypatch.setattr(sys.modules[__name__], "CI", tmp_path / ".github" / "workflows" / "ci.yml")
+    with pytest.raises(AssertionError):
+        check_gitleaks_config()
 
 
 def test_every_pinned_download_retries_and_keeps_its_checksum():
@@ -333,6 +416,23 @@ STRUCTURE_BAD = {
     ),
     "trivy or true": lambda w: _step(w, "Trivy").update(
         {"run": _step(w, "Trivy")["run"].rstrip("\n") + " || true\n"}
+    ),
+    "comment backslash hides a command": lambda w: _step(w, GL).update(
+        {"run": _step(w, GL)["run"].replace("# ", "# x \\\ntrap 'exit 0' EXIT\n# ", 1)}
+    ),
+    "setup-uv replaced": lambda w: _security_steps(w)[1].update(
+        {"run": "echo bad >> $GITHUB_PATH"}
+    ),
+    "pip-audit neutered": lambda w: _step(w, "Dependencies with known").update(
+        {"run": _step(w, "Dependencies with known")["run"].rstrip("\n") + " || true\n"}
+    ),
+    "stale-ignore skipped": lambda w: _step(w, "Stale gitleaks").update(
+        {"continue-on-error": True}
+    ),
+    "trigger dropped": lambda w: w.pop(True),
+    "runner changed": lambda w: w["jobs"]["security"].update({"runs-on": "self-hosted"}),
+    "second security-named job": lambda w: w["jobs"].update(
+        {"x": {"name": "security", "runs-on": "ubuntu-24.04"}}
     ),
     "other url": lambda w: _step(w, GL).update(
         {"run": _step(w, GL)["run"].replace("github.com/gitleaks", "example.invalid/gitleaks")}
