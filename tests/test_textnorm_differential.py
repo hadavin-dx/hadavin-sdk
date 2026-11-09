@@ -76,12 +76,24 @@ def test_the_identity_key_agrees_with_the_stated_principle(row):
         assert not same, f"{row['class']}: {row['source']}"
 
 
+# Rows that the single check name (``identity_key``) still separates but the DENY check now passes, because it fails closed on a character this
+# Python cannot name (F6-5): r085 is a code point unassigned in Unicode 15.1 that a newer table maps to a letter. The row stays a strict expected
+# failure for ``identity_key`` (its test above) and is asserted for ``could_be_same_person``.
+DENY_FAILS_CLOSED = frozenset({"r085"})
+
+
 @pytest.mark.parametrize(
-    "row", [_param(r, expected_failure=True) for r in CORPUS if r["relation"] == "equal"]
+    "row",
+    [
+        _param(r, expected_failure=r["id"] not in DENY_FAILS_CLOSED)
+        for r in CORPUS
+        if r["relation"] == "equal"
+    ],
 )
 def test_could_be_same_person_agrees_with_the_stated_principle_for_every_equal_row(row):
     """The DENY comparator, row by row. The p1b rows (r114 to r117, punctuation) are strict expected failures: they are
-    the documented limit in its docstring, and if one starts to pass the row must move to ``current``."""
+    the documented limit in its docstring, and if one starts to pass the row must move to ``current``. The rows in
+    ``DENY_FAILS_CLOSED`` are asserted here (F6-5)."""
     a, b = expand(row["a"]), expand(row["b"])
     assert could_be_same_person(a, b), f"{row['class']}: {row['source']}"
 
@@ -201,9 +213,49 @@ def test_the_golden_hashes_equal_the_live_ones():
         pytest.skip(message)
     live = live_hashes()
     for name in HASHED:
-        assert live[name] == section["hashes"][name], (
-            f"{name}: the behaviour of the fold changed on Unicode {unicodedata.unidata_version} (bump alg and replace the entry)"
+        # The alg id changes when identity_key, fold, squeeze, fold_views or squeeze_views change; a change of identity_keys ALONE keeps it,
+        # because nothing may store or index an identity_keys result (rule D4 of the ticket; tests/test_textnorm_meta.py enforces the "nothing").
+        action = (
+            "replace the entry; the alg id stays (rule D4: identity_keys is never stored)"
+            if name == "identity_keys"
+            else "bump alg and replace the entry"
         )
+        assert live[name] == section["hashes"][name], (
+            f"{name}: the behaviour of the fold changed on Unicode {unicodedata.unidata_version} ({action})"
+        )
+
+
+# The five hashes that did NOT move when the DENY check began to read the marks-dropped text (F6-1, ORDER 177): copied from the golden file
+# of the head before that change. A change of the alg id is for these; identity_keys alone may change without one (rule D4).
+UNMOVED_BY_F6_1 = {
+    "15.0.0": {
+        "identity_key": "a701e40f85a2d37b5da895001e934cbede2d3098fe11a287c5aac1294d97bc4f",
+        "squeeze": "7368c4692417bc861672268b6392667d340b1a556863c3058822e1478aa861d9",
+        "squeeze_loose": "03c32c9f58eb4defcf78629ef559c20c1677a0ca20183610ae8c53bce3d2462d",
+        "fold_views": "2ce9debaabc84b8763cbfca937e13419cba535bf0245edbc13aa0ec1659a3bb1",
+        "squeeze_views": "c4a2f83f2dca99c40dae2f7f5b2a34c99baff4d4bbfe08e8a439bc42a11eb511",
+    },
+    "15.1.0": {
+        "identity_key": "e1e91426b47dee0ed37059a650fd691a5a87fea5bac9cf5ec3ca3625bdfeb6b2",
+        "squeeze": "7368c4692417bc861672268b6392667d340b1a556863c3058822e1478aa861d9",
+        "squeeze_loose": "03c32c9f58eb4defcf78629ef559c20c1677a0ca20183610ae8c53bce3d2462d",
+        "fold_views": "58382278973c699354830fb37c7cd83e9b8b9f48a07c0708c01c61a42176fd41",
+        "squeeze_views": "c4a2f83f2dca99c40dae2f7f5b2a34c99baff4d4bbfe08e8a439bc42a11eb511",
+    },
+}
+
+
+def test_only_the_identity_keys_hash_moved_when_the_deny_check_began_to_drop_the_spacing_marks():
+    """F6-1 changes ``identity_keys`` and nothing else: the other five golden hashes of both sections are the ones of the head before the
+    change, so the alg id stays ``fold4`` (rule D4), and ``identity_keys`` is the one entry that is NOT among them."""
+    assert set(GOLDEN["sections"]) == set(UNMOVED_BY_F6_1)
+    for version, section in GOLDEN["sections"].items():
+        for name, digest in UNMOVED_BY_F6_1[version].items():
+            assert section["hashes"][name] == digest, f"{version} {name}: this hash moved, bump alg"
+        assert set(section["hashes"]) - set(UNMOVED_BY_F6_1[version]) == {"identity_keys"}
+    assert FOLD_VERSION.startswith("alg=fold4|"), (
+        "the alg id changed: that is for the five hashes above, not for identity_keys alone"
+    )
 
 
 _TRUE = frozenset({"1", "true", "yes"})

@@ -1416,7 +1416,9 @@ def test_identity_keys_is_a_small_fixed_set_that_holds_the_single_key():
     ]
     for text in cases:
         keys = textnorm.identity_keys(text)
-        assert type(keys) is tuple and 1 <= len(keys) <= 3, (
+        # at most three spelling variants; a text with a spacing mark, modifier letter or modifier symbol also has those of its marks-dropped text
+        limit = 6 if any(unicodedata.category(ch) in ("Mc", "Lm", "Sk") for ch in text) else 3
+        assert type(keys) is tuple and 1 <= len(keys) <= limit, (
             f"{len(keys)} readings for {_show([text])}"
         )
         assert len(set(keys)) == len(keys), "a reading is listed twice"
@@ -1426,7 +1428,7 @@ def test_identity_keys_is_a_small_fixed_set_that_holds_the_single_key():
             assert key == bare(key) or key.startswith(key_tag())
     assert set(map(bare, textnorm.identity_keys("\u03b1\u0345dmin"))) == {"admin", "aidmin"}
     assert set(map(bare, textnorm.identity_keys(ETA + "oward"))) == {"noward", "howard"}
-    # the number of readings does not grow with the text: a text with every kind of ambiguity still has three at most
+    # the number of readings does not grow with the text: a text with every kind of ambiguity but no spacing mark still has three at most
     assert len(textnorm.identity_keys(ETA + YPOGEGRAMMENI + "oward")) <= 3, (
         "more than three readings"
     )
@@ -1714,7 +1716,8 @@ def test_squeeze_views_removes_every_character_that_reads_as_no_ascii_letter_or_
 def test_the_marks_dropped_views_are_at_most_six_for_squeeze_and_nine_for_fold_and_keep_every_script_and_letter():
     """``squeeze_views`` returns the spelling variants (at most three) and the same spelling variants of the text without its Mc, Lm and Sk
     characters: at most six, none repeated. ``fold_views`` adds the script view of each marks-dropped variant: at most nine. A text without
-    such a mark has no extra view; ``identity_keys`` is unchanged (at most three)."""
+    such a mark has no extra view. ``identity_keys`` also holds at most six (F6-1): for each text with a spacing mark it holds the check name of
+    the marks-dropped text, and a text without one has at most three."""
     eta = "\u0397"
     for text in (
         "pass\u0c02word",
@@ -1732,9 +1735,19 @@ def test_the_marks_dropped_views_are_at_most_six_for_squeeze_and_nine_for_fold_a
             assert 1 <= len(views) <= limit and len(set(views)) == len(views), (
                 f"a view is repeated or there are more than the limit {limit}: {views}"
             )
-        assert 1 <= len(textnorm.identity_keys(text)) <= 3, (
-            "identity_keys grew with the marks-dropped views"
+        keys = textnorm.identity_keys(text)
+        assert 1 <= len(keys) <= 6, "identity_keys grew past six check names"
+        has_mark = any(unicodedata.category(ch) in ("Mc", "Lm", "Sk") for ch in text)
+        assert len(keys) <= (6 if has_mark else 3), (
+            "a text with no spacing mark has more than three"
         )
+        if has_mark:
+            dropped = "".join(
+                ch for ch in text if unicodedata.category(ch) not in ("Mc", "Lm", "Sk")
+            )
+            assert identity_key(dropped) in keys, (
+                "identity_keys does not hold the check name of the marks-dropped text"
+            )
     assert len(textnorm.fold_views("plain", casefold=True)) == 1, (
         "a text with no mark has an extra view"
     )
@@ -1763,10 +1776,11 @@ def test_the_marks_dropped_views_are_never_longer_than_the_weight_of_the_text():
             )
 
 
-def test_the_spelling_variants_keep_a_spacing_combining_mark_while_the_scan_views_find_the_secret():
-    """Decision: Mc is KEPT by the spelling variants (``fold``, ``identity_key``, ``could_be_same_person``): a Hindi or Thai spacing vowel
-    sign changes a name, so two names that differ only by one are different keys. The scan is not affected: for EVERY Mc code point
-    ``fold_views`` holds the secret in its marks-dropped views, so the module docstring's rule (scan both views) is the whole contract."""
+def test_identity_key_keeps_a_spacing_mark_while_the_deny_check_and_the_scan_views_drop_it():
+    """Decision: Mc is KEPT by the spelling variants (``fold``, ``identity_key``): a Hindi or Thai spacing vowel sign changes the single check
+    name. This is REVERSED for the DENY check only (F6-1, ORDER 177): for EVERY Mc code point ``could_be_same_person`` is True for the text with the
+    mark and the text without it (a person must look), the pin of the reversal of ORDER 79 item 3. The scan is not affected: for EVERY Mc code
+    point ``fold_views`` holds the secret in its marks-dropped views, so the module docstring's rule (scan both views) is the whole contract."""
     marks = _code_points_of("Mc")
     assert marks
     for ch in marks:
@@ -1777,8 +1791,8 @@ def test_the_spelling_variants_keep_a_spacing_combining_mark_while_the_scan_view
         assert identity_key(text) != identity_key("password"), (
             f"identity_key dropped the spacing mark U+{ord(ch):04X}"
         )
-        assert not could_be_same_person(text, "password"), (
-            f"could_be_same_person dropped the spacing mark U+{ord(ch):04X}"
+        assert could_be_same_person(text, "password"), (
+            f"could_be_same_person does not see through the spacing mark U+{ord(ch):04X}"
         )
         assert "password" in textnorm.fold_views(text, casefold=True), (
             f"fold_views does not hold the secret hidden with the spacing mark U+{ord(ch):04X}"
@@ -1791,6 +1805,9 @@ def test_the_spelling_variants_keep_a_spacing_combining_mark_while_the_scan_view
         assert false_claim not in doc, f"the module docstring claims again: {false_claim}"
     assert "KEEPS the spacing" in doc and "Mc" in doc, (
         "the docstring does not say that spacing marks are kept"
+    )
+    assert "DENY check" in doc and "DROPS those three kinds" in doc, (
+        "the docstring does not say that the DENY check drops the spacing marks"
     )
 
 
@@ -2879,6 +2896,280 @@ def test_a_text_over_the_weight_is_refused_before_any_fold_work(monkeypatch):
     must_refuse("could_be_same_person", could_be_same_person, "a", text)
     must_refuse("allow_equal", allow_equal, text, "a")
     must_refuse("names_equal", names_equal, text, "a")
+
+
+# ---- P1a fix8: the DENY check sees through spacing marks, fails closed on unnamed characters, and the mixed-script signal ----------------
+SPACING_CATEGORIES = ("Mc", "Lm", "Sk")
+
+
+def test_a_spacing_mark_inserted_into_a_name_is_still_the_same_person():
+    """F6-1 (ORDER 177): for EVERY Mc, Lm and Sk code point of the interpreter, "alice" and "ali" + c + "ce" are "could be the same person" and
+    ``allow_equal`` says LOOKALIKE. NO exemption list (ORDER 90 item 2). The reversal of ORDER 79 item 3 for the DENY check."""
+    marks = _code_points_of(*SPACING_CATEGORIES)
+    assert len(marks) > 500, "too few spacing marks were found"
+    for c in marks:
+        text = "ali" + c + "ce"
+        assert could_be_same_person("alice", text), (
+            f"could_be_same_person does not see through the spacing mark U+{ord(c):04X}"
+        )
+        assert could_be_same_person(text, "alice"), (
+            f"could_be_same_person is not symmetric for the spacing mark U+{ord(c):04X}"
+        )
+        assert allow_equal("alice", text) is AllowVerdict.LOOKALIKE, (
+            f"allow_equal does not report the spacing mark U+{ord(c):04X} as a look-alike"
+        )
+
+
+def _name_pairs(names):
+    return [
+        (a, b) for i, a in enumerate(names) for b in names[i + 1 :] if could_be_same_person(a, b)
+    ]
+
+
+HINDI_PAIRS = [
+    ("\u0926\u0940\u092a\u0915", "\u0926\u0940\u092a\u093f\u0915\u093e"),
+    ("\u0938\u094d\u0935\u093e\u0924\u093f", "\u0938\u0935\u093f\u0924\u093e"),
+]
+THAI_PAIRS = [("\u0e19\u0e34\u0e20\u0e32", "\u0e19\u0e20\u0e32")]
+THAI_CHOSEN_PAIRS = [
+    ("\u0e28\u0e23\u0e35", "\u0e28\u0e23"),
+    ("\u0e2a\u0e34\u0e19", "\u0e2a\u0e19"),
+    ("\u0e1b\u0e34\u0e15\u0e34", "\u0e1b\u0e35\u0e15\u0e34"),
+    ("\u0e19\u0e32", "\u0e19\u0e49\u0e32"),
+    ("\u0e19\u0e32", "\u0e19\u0e48\u0e32"),
+    ("\u0e19\u0e49\u0e32", "\u0e19\u0e48\u0e32"),
+    ("\u0e44\u0e02\u0e48", "\u0e44\u0e02"),
+    ("\u0e40\u0e2a\u0e37\u0e2d", "\u0e40\u0e2a\u0e37\u0e49\u0e2d"),
+]
+
+
+def test_the_deny_check_false_matches_on_the_names_lists_are_exactly_the_listed_pairs():
+    """F6-1 cost, measured on the hand-made lists (not a sample of a real population): the pairs of different names that the DENY check now
+    calls "could be the same person" are exactly the ones listed (Hindi 2 of 4,371 pairs, 0 before; Thai 1 of 2,016, unchanged; the Thai
+    pairs chosen to collide 8 of 105, unchanged), plus one example each for the other scripts that write with Mc or Lm."""
+    lists = json.loads((FIX / "textnorm_names.json").read_text(encoding="utf-8"))
+    assert _name_pairs(lists["hindi"]) == HINDI_PAIRS, "the Hindi false matches changed"
+    assert _name_pairs(lists["thai"]) == THAI_PAIRS, "the Thai false matches changed"
+    assert _name_pairs(lists["thai_chosen_pairs"]) == THAI_CHOSEN_PAIRS, (
+        "the chosen Thai false matches changed"
+    )
+    for a, b in (
+        ("\u4f50\u3005\u6728", "\u4f50\u6728"),  # the Japanese iteration mark (Lm)
+        ("\u30b3\u30fc\u30d2\u30fc", "\u30b3\u30d2"),  # the prolonged sound mark (Lm)
+        ("\u0645\u062d\u0640\u0645\u062f", "\u0645\u062d\u0645\u062f"),  # the Arabic tatweel (Lm)
+        ("\u0e14\u0e35\u0e46", "\u0e14\u0e35"),  # the Thai repetition mark (Lm)
+    ):
+        assert could_be_same_person(a, b), f"{_show([a, b])} do not match"
+    # a text made only of spacing marks has the empty check name from its marks-dropped text: it matches any other text whose check name is empty
+    assert "" in textnorm.identity_keys("\u0903") and "" in textnorm.identity_keys("\u200b")
+    assert could_be_same_person("\u0903", "\u200b"), "the empty check names do not match"
+    assert not could_be_same_person("\u0903", "a"), "the empty check name matches a letter"
+
+
+def test_a_character_this_python_cannot_name_makes_the_deny_check_fail_closed():
+    """F6-5: the fold DROPS an unassigned (Cn), private-use (Co) or surrogate (Cs) character, so one that REPLACES a letter would read "alce". The
+    DENY check answers True when either text holds one; ``allow_equal`` follows (LOOKALIKE); identical strings stay EQUAL."""
+    unassigned = "\u0378"
+    assert unicodedata.category(unassigned) == "Cn", "U+0378 is assigned on this Python"
+    for c in (unassigned, "\ue000", "\ud800"):
+        for text in ("al" + c + "ce", "ali" + c + "ce"):
+            assert could_be_same_person("alice", text), (
+                f"the DENY check misses U+{ord(c):04X} in {len(text)} characters"
+            )
+            assert could_be_same_person(text, "alice")
+            assert allow_equal("alice", text) is AllowVerdict.LOOKALIKE, (
+                f"allow_equal misses U+{ord(c):04X}"
+            )
+        assert allow_equal("al" + c + "ce", "al" + c + "ce") is AllowVerdict.EQUAL
+    # the stated cost: such a name is "could be the same person" with every other name
+    assert could_be_same_person("bob", "al\ue000ce")
+    assert not could_be_same_person("bob", "alice")
+    # a tag of THIS interpreter (private use U+E000 at the start) is taken off first, as the check names do, so it is not an unnamed character
+    tag = key_tag()
+    if tag:
+        assert could_be_same_person(tag + "bob", "bob") and not could_be_same_person(
+            tag + "bob", "alice"
+        )
+
+
+def test_the_deny_check_skips_the_marks_dropped_reading_only_when_it_changes_nothing():
+    """F6-1b: ``_keys`` makes the marks-dropped reading only when the raw text or its NFKD text holds a spacing mark. For EVERY code point alone, and
+    for every name of the names lists, that gated result equals the ungated one (so skipping it loses no check name). 61 code points on Unicode
+    15.1 (for example U+0149 and U+1B06) hold no spacing mark themselves but decompose into one: a gate on the raw text alone would miss them.
+    A Chinese, Hindi and Thai text without a mark still gets its script view in ``fold_views``: the gate lives in ``_keys`` only."""
+
+    def ungated(raw):
+        return tuple(
+            key_tag() + view
+            for view in textnorm._views(raw, casefold=True, collapse_ws=True, marks_dropped=True)
+        )
+
+    differ = [ch for ch in _non_surrogates() if textnorm._keys(ch) != ungated(ch)]
+    assert not differ, (
+        f"the gate drops a check name for {len(differ)} code points, first {_show(differ)}"
+    )
+    lists = json.loads((FIX / "textnorm_names.json").read_text(encoding="utf-8"))
+    names = [n for key in ("hindi", "thai", "thai_chosen_pairs") for n in lists[key]]
+    assert all(textnorm._keys(n) == ungated(n) for n in names), (
+        "the gate drops a check name of a name"
+    )
+    assert (
+        textnorm._keys("\u0149")
+        == ungated("\u0149")
+        != tuple(key_tag() + v for v in textnorm._views("\u0149", casefold=True, collapse_ws=True))
+    ), "the NFKD case is not the case that needs the marks-dropped reading"
+    for text in (
+        "\u5bc6 a \u7801",  # Han with an ASCII letter inserted
+        "\u0928 - \u092e - \u0938",  # Devanagari letters, no vowel sign
+        "\u0e01 x \u0e02 x \u0e04",  # Thai consonants, no vowel sign
+    ):
+        assert textnorm._without_spacing_marks(text) == text, "the text holds a spacing mark"
+        letters = "".join(ch for ch in text if not ch.isascii() and ch.isalpha())
+        views = textnorm.fold_views(text, casefold=True, scripts=textnorm.value_scripts(text))
+        assert letters in views, "a text without a mark lost its script view"
+        assert letters != text
+
+
+def test_a_spacing_mark_or_symbol_cannot_hide_a_mixed_word_and_a_mark_of_the_words_own_script_does_not_flag():
+    """F6-2: ``has_mixed_script`` removes Sk before the word split, a spacing mark (Mc) does not split a word, and a Latin letter with an Mc of
+    another script that no letter of the word owns is mixed (rule b)."""
+    for text in (
+        "ali\u0903ce",
+        "iPhone\u093e",
+        "\u0440\u0430^ypal",  # Cyrillic ra, a circumflex, Latin ypal
+        "\u0440\u0430\u00b4ypal",  # the same with the acute accent (Sk, a space under NFKC)
+    ):
+        assert has_mixed_script(text), f"the mixed word {_show([text])} is not flagged"
+    mcs = _code_points_of("Mc")
+    assert len(mcs) > 400
+    missed = [c for c in mcs if not has_mixed_script("ali" + c + "ce")]
+    assert not missed, (
+        f"a spacing mark hides a mixed word for {len(missed)} code points, first {_show(missed)}"
+    )
+    for text in (
+        "\u0930\u093e\u092e",  # a Devanagari word alone
+        "cafe\u0301",
+        "caf\u00e9",
+        "na\u00efve",
+        "ok\ufe0f",
+        "Ramesh\u091c\u0940",  # Latin, then a Devanagari syllable with its own sign
+        "al\u02b0ice",  # a modifier letter: NFKC makes it a Latin h
+        "ali^ce",
+        "x^y",
+        "\u0903",
+    ):
+        assert not has_mixed_script(text), f"{_show([text])} is flagged"
+    # a mark next to a letter of its own script group does not flag: with a Latin letter in front, the result is the one of the letters alone
+    own_letter = {}
+    for cp in range(sys.maxunicode + 1):
+        ch = chr(cp)
+        if ch.isalpha() and not ch.isascii():
+            own_letter.setdefault(textnorm._script_of(ch), ch)
+    checked = 0
+    for c in mcs:
+        letter = own_letter.get(textnorm._script_of(c))
+        if letter is None:
+            continue  # no letter of the mark's group (two groups): the mark alone decides, and it flags inside a Latin word
+        checked += 1
+        assert not has_mixed_script(letter + c), f"{_show([letter + c])} is flagged"
+        assert has_mixed_script("a" + letter + c) == has_mixed_script("a" + letter), (
+            f"a mark of the word's own script group flags {_show(['a' + letter + c])}"
+        )
+    assert checked > 350, "too few marks were checked against a letter of their own group"
+
+
+def test_the_pin_message_and_the_pin_constants_come_from_defaults(monkeypatch):
+    """F-R5: the Python version in the ``require_pinned_unidata`` message is ``defaults.TEXTNORM_PINNED_PYTHON``, the Unicode version is
+    ``defaults.TEXTNORM_PINNED_UNIDATA`` (no second copy in the module), and a pin that is not a non-empty ``str`` fails closed."""
+    monkeypatch.setattr(unicodedata, "unidata_version", "14.0.0")
+    monkeypatch.setattr(defaults, "TEXTNORM_PINNED_UNIDATA", "99.1.0")
+    monkeypatch.setattr(defaults, "TEXTNORM_PINNED_PYTHON", "9.99")
+    with pytest.raises(UnidataMismatch) as info:
+        require_pinned_unidata()
+    assert str(info.value) == (
+        "this Python uses Unicode 14.0.0; run Python 9.99 (Unicode 99.1.0) for pilot or prod"
+    ), "the message does not follow the two constants of defaults"
+    with pytest.raises(UnidataMismatch) as info:
+        require_pinned_unidata("98.0.0")
+    assert "run a Python with Unicode 98.0.0" in str(info.value)
+    for name in ("TEXTNORM_PINNED_PYTHON", "TEXTNORM_PINNED_UNIDATA"):
+        for bad in ("", None, 3.13):
+            with monkeypatch.context() as patch:
+                patch.setattr(defaults, name, bad)
+                refused(TextnormError, f"{name} of {bad!r} was accepted", require_pinned_unidata)
+    source = (ROOT / "src/hadavin_sdk/guard/textnorm.py").read_text(encoding="utf-8")
+    assert '"3.13"' not in source and '"15.1.0"' not in source, (
+        "a literal copy of the pin is back in the module"
+    )
+
+
+def test_the_docstrings_state_the_new_behaviour_and_the_corrected_wording():
+    """F6-3, F-R2, F-R3 and F-R9: the words that the review found wrong are gone, and the sentences that were asked for stand."""
+    assert "ONE reading, not a scan" in _squash(textnorm.squeeze.__doc__ or ""), (
+        "the squeeze docstring still calls itself a check name for a scan"
+    )
+    assert "Check name for a scan" not in (textnorm.squeeze.__doc__ or "")
+    assert "NFKC" not in (names_equal.__doc__ or ""), "the names_equal docstring says NFKC again"
+    source = (ROOT / "src/hadavin_sdk/guard/textnorm.py").read_text(encoding="utf-8")
+    variant_line = next(ln for ln in source.splitlines() if ln.lstrip().startswith("VARIANT ="))
+    assert "NFKC" not in variant_line, "the VARIANT comment says NFKC again"
+    canon = textnorm._canon.__doc__ or ""
+    assert "eight code points" in canon and "nine" not in canon, (
+        "the _canon docstring does not say eight code points"
+    )
+    module_doc = _squash(textnorm.__doc__ or "")
+    assert (
+        "checked first, once" not in module_doc and "TextTooLong``, checked first" not in module_doc
+    ), "the size cap is again said to be checked first, once"
+    assert "checked before any fold work" in module_doc
+    wired = "wired into NO approval check"
+    assert wired in module_doc and wired in _squash(could_be_same_person.__doc__ or ""), (
+        "the docstrings do not say where could_be_same_person is used"
+    )
+    assert "no approval compares people's names" in module_doc
+    changelog = _squash((ROOT / "CHANGELOG.md").read_text(encoding="utf-8"))
+    assert wired in changelog and "behaviour change" in changelog, (
+        "the CHANGELOG does not state the F-R9 sentence and the behaviour change"
+    )
+    for sentence in ("UNNAMED CHARACTERS", "fails closed"):
+        assert sentence in module_doc or sentence.lower() in module_doc.lower()
+
+
+def test_no_approval_code_names_the_deny_check():
+    """F-R9 (ORDER 179): ``could_be_same_person`` is wired into NO approval check. A use in an approval is a new ticket with its own plan review."""
+    approvals = ROOT / "src" / "hadavin_sdk" / "approvals"
+    files = sorted(approvals.rglob("*.py"))
+    assert files, "the approvals package was not found"
+    for path in files:
+        text = path.read_text(encoding="utf-8")
+        for name in ("could_be_same_person", "allow_equal", "identity_key", "textnorm"):
+            assert name not in text, f"{path.name} names {name}"
+
+
+def test_every_key_and_view_of_seeded_multi_character_texts_is_within_the_weight():
+    """F-R6: the weight bound on texts of SEVERAL expanding characters (the single-code-point tests cannot see a sum), with spacing marks among
+    them so the marks-dropped check names are made too. Seeded; integer arithmetic only."""
+    pool = [chr(cp) for cp in range(0, 0x110000, 61) if not 0xD800 <= cp <= 0xDFFF]
+    pool += [FDFA, SSS, "\u1fb3", "\u0345", "\u0903", "\u02b0", "^", "\u0397", "\u00df", "\ufb03"]
+    nxt = _numbers(20260109)
+    for n in range(400):
+        text = "".join(pool[next(nxt) % len(pool)] for _ in range(2 + next(nxt) % 40))
+        weight = textnorm._weight(text)
+        keys = textnorm.identity_keys(text)
+        assert 1 <= len(keys) <= 6 and len(set(keys)) == len(keys), (
+            f"text {n}: {len(keys)} check names"
+        )
+        views = (
+            *keys,
+            *textnorm.fold_views(text, casefold=True, collapse_ws=True),
+            *textnorm.squeeze_views(text, loose=True),
+        )
+        assert all(len(bare(v)) <= weight for v in views), (
+            f"text {n}: a check name or view is longer than the weight"
+        )
+        assert could_be_same_person(text, text), (
+            f"text {n}: a text is not the same person as itself"
+        )
 
 
 # last on purpose: a mutation of a pinned file must be judged by the test aimed at it, not by this hash pin

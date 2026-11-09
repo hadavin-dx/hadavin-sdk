@@ -9,7 +9,7 @@ pytest. Run from the repo root:
     uv run python tests/textnorm_mutants.py            # all mutants; exit 1 if any is not good
     uv run python tests/textnorm_mutants.py squeeze    # only mutants whose name contains the text
 
-128 mutants: 28 are the re-pointed mutants of the earlier text-fold list (the killers moved with their tests), 12 are new (one of the 13 went with the deleted ``check_pinned_unidata``), 9 are the mutants of fold2 (order 44), 3 are the mutants of fold3 (order 49, U+0345) and 16 are the mutants of fold4 (fix3, review 3: the spelling variants, the length check, the caseless form; the first of the 16 is the fold2 mutant "no case fold before the marks are dropped" that fold3 removed and that is restored here: it changes only the single key, and the U+0345 test kills it) and 9 are the mutants of fix4 (order 79: the 15.1.0 data pin, the marks, the plain-words messages, the weight pre-check) and 14 are the mutants of fix5 (the marks-dropped views, the letter and digit name rules, the pin constant), 5 are the mutants of fix6 (the script views, the minimum view length, the supplement merge) and 32 are the mutants of fix7 (the script view per script, the minimum per kind of view, the checks of the minimums, the proof rule, what loose loosens). The dead branch of the old script view is an equivalent mutant (it could not change a result), so it has no entry. Tests with no
+138 mutants: 28 are the re-pointed mutants of the earlier text-fold list (the killers moved with their tests), 12 are new (one of the 13 went with the deleted ``check_pinned_unidata``), 9 are the mutants of fold2 (order 44), 3 are the mutants of fold3 (order 49, U+0345) and 16 are the mutants of fold4 (fix3, review 3: the spelling variants, the length check, the caseless form; the first of the 16 is the fold2 mutant "no case fold before the marks are dropped" that fold3 removed and that is restored here: it changes only the single key, and the U+0345 test kills it) and 9 are the mutants of fix4 (order 79: the 15.1.0 data pin, the marks, the plain-words messages, the weight pre-check) and 14 are the mutants of fix5 (the marks-dropped views, the letter and digit name rules, the pin constant), 5 are the mutants of fix6 (the script views, the minimum view length, the supplement merge) and 32 are the mutants of fix7 (the script view per script, the minimum per kind of view, the checks of the minimums, the proof rule, what loose loosens) and 10 are the mutants of fix8 (the marks-dropped check name and its gate, the mixed-script rules, the unnamed characters, the pin message, two wordings). The dead branch of the old script view is an equivalent mutant (it could not change a result), so it has no entry. Tests with no
 mutant: the golden test, the differential rows, the manifest test, the notices test, the perf rows (they are outside every test list below:
 the runner copies no ``pyproject.toml`` or notices file) and the meta-tests.
 
@@ -55,9 +55,7 @@ LOOSE = "test_squeeze_loose_reads_the_digit_like_letters_as_digits"
 SQUEEZE = "test_squeeze_keeps_upper_case_letters_and_digits_only"
 TABLE = "test_the_table_is_generated_from_the_unicode_data_and_every_value_is_ascii"
 GENERATOR = "test_the_generator_refuses_an_unpinned_file_and_is_deterministic"
-MCKEPT = (
-    "test_the_spelling_variants_keep_a_spacing_combining_mark_while_the_scan_views_find_the_secret"
-)
+MCKEPT = "test_identity_key_keeps_a_spacing_mark_while_the_deny_check_and_the_scan_views_drop_it"
 MCSQUEEZE = "test_squeeze_views_finds_a_secret_hidden_with_every_spacing_mark_modifier_letter_or_modifier_symbol"
 NONALNUM = "test_squeeze_views_removes_every_character_that_reads_as_no_ascii_letter_or_digit"
 SIXVIEWS = "test_the_marks_dropped_views_are_at_most_six_for_squeeze_and_nine_for_fold_and_keep_every_script_and_letter"
@@ -114,6 +112,12 @@ GREEKLOOK = "test_a_greek_look_alike_with_ypogegrammeni_is_the_latin_word_for_co
 TAGKEYS = "test_a_key_made_on_another_unicode_version_carries_the_tag_on_every_reading"
 CHEAP = "test_the_cheap_length_check_runs_before_any_per_character_work"
 NAMESSYM = "test_names_equal_and_the_canonical_form_are_case_symmetric_for_every_code_point"
+KEEPSAME = "test_a_spacing_mark_inserted_into_a_name_is_still_the_same_person"
+GATE = "test_the_deny_check_skips_the_marks_dropped_reading_only_when_it_changes_nothing"
+UNNAMED = "test_a_character_this_python_cannot_name_makes_the_deny_check_fail_closed"
+MIXED2 = "test_a_spacing_mark_or_symbol_cannot_hide_a_mixed_word_and_a_mark_of_the_words_own_script_does_not_flag"
+PINMSG = "test_the_pin_message_and_the_pin_constants_come_from_defaults"
+DOCS = "test_the_docstrings_state_the_new_behaviour_and_the_corrected_wording"
 U0345 = "test_u0345_is_an_iota_after_a_greek_letter_and_is_removed_everywhere_else"
 CFTABLE = (
     "test_the_case_fold_table_is_on_the_case_fold_image_and_its_conflicts_are_the_known_eleven"
@@ -147,8 +151,8 @@ M = [
         "        return AllowVerdict.LOOKALIKE", "        return AllowVerdict.DIFFERENT",
         ALLOW, "a look-alike is not reported as one"),
     mutant("fold: mixed script never true", TN,
-        "            if latin and other:\n                return True",
-        "            if False:\n                return True", MIXED, "is not flagged"),
+        "        if latin and other:\n            return True",
+        "        if False:\n            return True", MIXED, "is not flagged"),
     mutant("allow: equality is normalised", TN,
         "    if a == b:\n        return AllowVerdict.EQUAL",
         "    if _canon(a) == _canon(b):\n        return AllowVerdict.EQUAL", ALLOW, "gave EQUAL, wanted VARIANT"),
@@ -156,7 +160,7 @@ M = [
         "    return AllowVerdict.DIFFERENT", "    return AllowVerdict.LOOKALIKE",
         ALLOW, "an ordinary mismatch is not DIFFERENT"),
     mutant("mixed: invisible characters not removed first", TN,
-        "            ch not in _UNIT_SYMBOLS\n            and ch not in FILLERS\n            and unicodedata.category(ch) not in _DROP_CATEGORIES\n",
+        "            ch not in _UNIT_SYMBOLS\n            and ch not in FILLERS\n            and unicodedata.category(ch) not in _MIXED_REMOVED\n",
         "            ch not in _UNIT_SYMBOLS\n", INVISIBLE, "splits a mixed word"),
     mutant("mixed: the micro sign is flagged", TN,
         "            ch not in _UNIT_SYMBOLS\n", "            True\n", MICRO, "a micro or ohm sign is flagged"),
@@ -290,8 +294,8 @@ M = [
         "    for view in _views(raw, casefold=True, collapse_ws=False, marks_dropped=True):", "    for view in (_fold(raw, casefold=True),):",
         GREEKLOOK, "squeeze_views has no view that reads ADMIN"),
     mutant("tag: a reading of identity_keys has no tag", TN,
-        "    return tuple(tag + view for view in _views(raw, casefold=True, collapse_ws=True))",
-        "    return tuple(view for view in _views(raw, casefold=True, collapse_ws=True))",
+        "    return tuple(\n        tag + view\n        for view in _views(raw, casefold=True, collapse_ws=True, marks_dropped=marks_dropped)\n    )\n",
+        "    return tuple(\n        view\n        for view in _views(raw, casefold=True, collapse_ws=True, marks_dropped=marks_dropped)\n    )\n",
         TAGKEYS, "a reading has no tag"),
     mutant("size: the length check before the weight is missing", TN,
         '        if len(text) > defaults.TEXTNORM_MAX_CHARS:\n            raise TextTooLong(\n                f"the text is too long: {len(text)} of {defaults.TEXTNORM_MAX_CHARS} allowed"\n            )\n',
@@ -494,7 +498,76 @@ M = [
     mutant("words: the docstring does not say what loose loosens", TN,
         "``loose=True`` loosens only the squeeze half", "``loose=True`` loosens the views",
         LOOSEHALF, "the docstring does not say what loose loosens"),
+    # ---- the mutants of fix8 (ORDER 177/179: the marks-dropped check name, the mixed-script rules, the unnamed characters, the pin, two wordings) ----
+    mutant("deny: the check names have no marks-dropped reading", TN,
+        '    marks_dropped = _holds_spacing(raw) or _holds_spacing(unicodedata.normalize("NFKD", raw))\n',
+        "    marks_dropped = False\n", KEEPSAME, "does not see through"),
+    mutant("deny: the marks-dropped gate is turned round", TN,
+        '    marks_dropped = _holds_spacing(raw) or _holds_spacing(unicodedata.normalize("NFKD", raw))\n',
+        '    marks_dropped = not (_holds_spacing(raw) or _holds_spacing(unicodedata.normalize("NFKD", raw)))\n',
+        KEEPSAME, "does not see through"),
+    mutant("mixed: rule (b) is never true", TN,
+        '    return any(group != "LATIN" and group not in own for group in map(_script_of, marks))\n',
+        "    return False\n", MIXED2, "is not flagged"),
+    mutant("mixed: a modifier symbol is not removed before the split", TN,
+        '_MIXED_REMOVED = _DROP_CATEGORIES | {"Sk"}', "_MIXED_REMOVED = _DROP_CATEGORIES",
+        MIXED2, "is not flagged"),
+    mutant("mixed: a mark of the word's own script flags", TN,
+        '    return any(group != "LATIN" and group not in own for group in map(_script_of, marks))\n',
+        '    return any(group != "LATIN" for group in map(_script_of, marks))\n',
+        MIXED2, "is flagged"),
+    mutant("mixed: a spacing mark splits the word", TN,
+        '        if ch.isalnum() or ch == "_" or unicodedata.category(ch) == "Mc":\n',
+        '        if ch.isalnum() or ch == "_":\n', MIXED2, "is not flagged"),
+    mutant("pin: the Python version of the message is a literal", TN,
+        "run Python {defaults.TEXTNORM_PINNED_PYTHON} (Unicode", "run Python 3.13 (Unicode",
+        PINMSG, "does not follow the two constants"),
+    mutant("deny: an unnamed character does not fail closed", TN,
+        "    if _holds_unnamed(_untagged(a)) or _holds_unnamed(_untagged(b)):\n", "    if False:\n",
+        UNNAMED, "the DENY check misses"),
+    mutant("words: the squeeze docstring calls itself a check name for a scan", TN,
+        '"""ONE reading, not a scan: a scan uses', '"""Check name for a scan: a scan uses',
+        DOCS, "still calls itself"),
+    mutant("words: the names_equal docstring says NFKC", TN,
+        "caseless equality (NFKD, case fold, NFKD, case fold), whitespace insensitive. NOT an ALLOW",
+        "NFKC caseless equality (NFKD, case fold, NFKD, case fold), whitespace insensitive. NOT an ALLOW",
+        DOCS, "says NFKC again"),
 ]  # fmt: skip
+
+
+def is_wording_only(mutant_) -> bool:
+    """True when the mutated module's syntax tree equals the original after the docstrings and the message arguments of every ``raise`` are
+    removed. Such a mutant changes only words, not behaviour (ORDER 177 Q4: the split is derived, not typed)."""
+    import ast
+
+    def plain(source: str) -> str:
+        tree = ast.parse(source)
+        for node in ast.walk(tree):
+            if isinstance(node, (ast.Module, ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                body = node.body
+                if (
+                    body
+                    and isinstance(body[0], ast.Expr)
+                    and isinstance(body[0].value, ast.Constant)
+                    and isinstance(body[0].value.value, str)
+                ):
+                    body[0] = ast.Pass()
+            if isinstance(node, ast.Raise) and isinstance(node.exc, ast.Call):
+                node.exc.args = []
+                node.exc.keywords = []
+        return ast.dump(tree)
+
+    if not mutant_.file.endswith(".py"):
+        return False  # a data file: its words are its data
+    text = (ROOT / mutant_.file).read_text(encoding="utf-8")
+    assert text.count(mutant_.old) == 1, mutant_.name
+    return plain(text) == plain(text.replace(mutant_.old, mutant_.new))
+
+
+def split_counts() -> tuple[int, int]:
+    """(behaviour, wording-only) over the whole list."""
+    wording = sum(is_wording_only(m) for m in M)
+    return len(M) - wording, wording
 
 
 if __name__ == "__main__":
@@ -503,6 +576,8 @@ if __name__ == "__main__":
         print(f"no mutant name contains any of {only}; nothing was run", file=sys.stderr)
         sys.exit(2)
 
+    behaviour, wording = split_counts()
+    print(f"{len(M)} mutants: {behaviour} change behaviour, {wording} change only words")
     first_lines = {}
 
     def show(

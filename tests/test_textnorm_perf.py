@@ -145,6 +145,21 @@ def test_a_text_at_the_cap_with_spacing_marks_is_scanned_in_linear_time_with_the
     assert _seconds(lambda t: textnorm.squeeze_views(t, loose=True), text) < 5.0
 
 
+def test_the_deny_check_of_a_text_at_the_cap_with_spacing_marks_stays_within_its_ceiling_and_a_text_without_marks_is_not_slower():
+    """F6-1 and F6-1b: the check names read the marks-dropped text too, but only when the text (or its NFKD text) holds a spacing mark. A text
+    at the cap WITH marks stays under the ceiling of 8 s; the same-size text WITHOUT marks is no more than 2.5 times the time of the one with
+    them (it makes fewer readings, so a gate that did all the work twice for every text would break this on a slow day only by chance: the
+    wall-clock ceiling is the real guard, this ratio is a sanity bound)."""
+    unit = "pass" + chr(0x0903) + chr(0x02C6) + chr(0x02C2) + "word " + chr(0x430)
+    marked = unit * (CAP // textnorm._weight(unit))
+    plain = ("password " + chr(0x430)) * (CAP // textnorm._weight("password " + chr(0x430)))
+    assert textnorm._weight(marked) <= CAP and textnorm._weight(plain) <= CAP
+    with_marks = _seconds(textnorm.could_be_same_person, marked, marked[::-1])
+    without = _seconds(textnorm.could_be_same_person, plain, plain[::-1])
+    assert with_marks < 8.0, with_marks
+    assert without < 8.0 and without <= 2.5 * with_marks + 0.05, (without, with_marks)
+
+
 def test_scan_needles_and_the_script_views_of_a_text_at_the_cap_are_built_in_linear_time():
     """fix7 (round 7): the cost of a scan at the cap with the script views really built. The unit (an ideograph, a Latin t with a stroke, a Greek
     capital Nu, U+0345 and a spacing mark) makes SEVEN views of ``fold_views`` with the scripts of the value (three spelling variants, the same
