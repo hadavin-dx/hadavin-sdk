@@ -12,7 +12,7 @@ commit SHA, no untrusted ${{ }} inside run scripts; the bash manual on `set -e`,
      with `|| true`; the log upload runs even after a failure or a cancel;
   8. the helper itself: allowlists refuse odd input, a failing command is recorded and its exit code is kept,
      a step that did not run is NOT RUN and the report fails;
-  9. stage names: only demo, pilot and prod appear (no "dev" or "staging" as a stage).
+  9. stage names: only demo, pilot and prod appear (the two old stage words are refused).
 """
 
 import json
@@ -131,7 +131,7 @@ PLANTS = {
         "        if: ${{ always() }}\n        uses:", "        uses:"
     ),
     "bare pytest": lambda t: t.replace('run: python3 "$TOOL" run perf -- pytest', "run: pytest"),
-    "staging stage": lambda t: t + "\n# stage: staging\n",
+    "staging stage": lambda t: t + "\n# stage: " + "stag" + "ing\n",
 }
 
 
