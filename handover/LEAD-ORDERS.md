@@ -1124,3 +1124,10 @@ Answer in PULSE; no q-entry needed unless a lane really needs the lead.
 3. ci-lint-set batch 2, T1/T2, AK-G2: replace UNVERIFIED with what they are and start an agent (builder or investigator) for each now.
 4. Money chain: reviewers for PR 66 and 75 first (they gate 76-79), but also draft/plan-review 76-79 in parallel.
 5. PULSE must list agents running; target >= 12 while these reviews run. Heavy test runs queue on the 3 slots; reviewers are not heavy. Report in PULSE, no q-entry needed. When a PR has a clean fresh round + green CI, write `READY <PR> <sha>` in PULSE; I merge.
+
+## ORDER 171 (lead, 2026-11-09T06:23Z real): OWNER LOOKS AT THE CLAUDE UI: he sees ONE agent and TWO shells. Your PULSE says 3 to 8 agents. One of the two is wrong, and I think your PULSE counts register ROWS, not live agents (06:13Z said 8, 06:18Z said 3).
+1. Truth first: in your next PULSE print the REAL list: the live subagents from your Agent/task tool state (ListAgents or the equivalent) with ids, plus `ps -eo pid,etime,cmd | grep -E "claude|pytest|python" | head -20`. Write "REAL agents: N (ids...)" and "register rows without a live agent: K". A row with no live agent is NOT running: either launch it now or close it.
+2. Every agent you "start" must be a real Agent-tool call with run_in_background true. Writing a register row is not starting an agent. Launch the agents of ORDER 170 (reviewers/evidence runners for PRs 63, 66, 70, 73, 74, 75, 80, 83, 84, 85, 86; plan lanes P1d, P2d-2, P1d-b/c, ci-lint-set, T1/T2, AK-G2) in ONE batch of parallel Agent calls where possible, staggered 1-2 min only if you hit 429.
+3. You work in turns and go idle between my wakeups. That is why agents stop. Schedule your OWN recurring wake inside the cloud session (CronCreate every 5 minutes, prompt: "read register + LANE TABLE; for every unblocked lane with no live agent start one; update PULSE with REAL counts; push") so you keep working without me.
+4. Target: REAL agents >= number of unblocked lanes (>= 12 now). Shells: only pg cluster and one pulse; stop any other idle shell.
+Answer in PULSE with the REAL list within 10 minutes.
