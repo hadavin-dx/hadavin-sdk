@@ -433,7 +433,7 @@ Rows 011 (MAJOR) and 012 (BLOCKER) belong to P1d-b. The split of 001 into 001a/0
 Build iterations: only the new test files and the touched files (1-2 minutes). Final head, once: full suite on 3.12 and 3.13 (2 slots), the mutant run (1 slot), BS-4 (1 slot, alone). Real clock (estimate): BS-0 2-3 hours, build 10-12 hours, evidence 1-2 hours, each review round 1-2 hours. P1d-a (2-3 hours) runs first and in parallel with BS-0's reads. P2d-2, P5c also edit `channel.py` and `requests.py` (rebase conflict, no slot conflict).
 
 ## UNVERIFIED (not read or run in revision 9)
-Every V number; FR1 after `2034512`; SA-1 and AGG-1 (hand-traced); `TN_MIN`, `fold`, `delete_noise` and the needle functions on merged P1b; `undo`'s depth; the `tools.py` byte cuts; every inv row; the put-back formula; the finders' latency; `max_work`; all BS results; standard section numbers; Python 3.12; line numbers after P1a/P1b merge; P1d-c's final command syntax; the folded sweep (hand-designed, not prototyped).
+Every V number; FR1 after `2034512`; SA-1 and AGG-1 (hand-traced); `TN_MIN`, `fold`, `delete_noise` and the needle functions on merged P1b; `undo`'s depth; the `tools.py` byte cuts; every inv row; the put-back formula; the finders' latency; `max_work`; all BS results; standard section numbers; Python 3.12; line numbers after P1a/P1b merge; P1d-c's final command syntax; the folded sweep (hand-designed, not prototyped); the card raw family and H29b-m (hand-traced, rev 11).
 
 ## Rules cited
 R233, R337, R363, R371, R374, R447, R448, R449, R450; studio preamble rules 3, 5, 6, 7, 12, 13, 14, 17, 19, 20, 21.
