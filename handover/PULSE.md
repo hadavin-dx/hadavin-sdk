@@ -1,1 +1,1 @@
-05:22Z | agents 7 running (gen_evidence-P6a-run,bd-P1b-fix1,05:13Z,05:14Z,05:14Z,05:14Z,gen_evidence) | heavy slots busy 0/3 | last: started, none yet | unpushed: none | next: see agents
+05:22Z | agents 2 running (gen_evidence-P6a-pg-rerun,bd-P1b-fix1) | heavy slots busy 0/3 | last: started, none yet | unpushed: none | next: see agents
