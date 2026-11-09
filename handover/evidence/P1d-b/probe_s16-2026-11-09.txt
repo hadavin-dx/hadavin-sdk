@@ -1,0 +1,8 @@
+status 404
+status2 404
+"POST /slack/actions?t=AKIAIOSFODNN7EXAMPLE HTTP/1.1" 404 -
+"POST /x HTTP/1.1" 404 -
+code 400, message Bad request version ('HTTP/9')
+"GARBAGE AKIAIOSFODNN7EXAMPLE HTTP/9" 400 -
+
+KEY IN LOG: True count 2

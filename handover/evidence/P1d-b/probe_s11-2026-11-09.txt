@@ -1,0 +1,17 @@
+Using CPython 3.13.18 interpreter at: /usr/local/bin/python3
+Creating virtual environment at: .venv
+plain db_password  sensitive=True
+zero-width         sensitive=False
+cyrillic dze       sensitive=False
+markers            sensitive=False
+cyrillic a         sensitive=False
+soft hyphen        sensitive=False
+fullwidth          sensitive=False
+combining          sensitive=False
+tag char           sensitive=False
+nbsp boundary      sensitive=True
+ascii dbpassword   sensitive=False
+ascii passenger    sensitive=False
+pair multiword: '<SECRET_1> horse battery staple'
+walk Secret cyr kind: {'kind': 'Secrеt', 'data': {'x': 'aHVudGVyMnh5eg=='}}
+walk env cyr value key: {'name': 'DB_PASSWORD', 'vаlue': 'hunter2xyz'}
