@@ -888,3 +888,4 @@ PR72 0ae044b: builder done; evidence run waits for evid.sh fix (inv-trunc-66), t
 | ae773123 | PR87 peel builder | | REPORTED a909459 (17/17 mutants by hand; BL-peel-003 OPEN); CLOSED 07:42Z | evid.sh 87 a909459 + reviewers r2 started |
 | a5a77e0b | AK-G2 resolve r5 / rev 6 | | REPORTED rev 6; CLOSED 07:42Z | plan review r6 started |
 | rv-84d/c-r4, rv-87d/c-r2, rv-akg2d/c-r6 | egm reviewers (6) | 07:42Z | +25m | start |
+| a365f22b | PR84 r4 codebase | | REPORTED 0B/1M/4N (stale comment + silent root fallback in secrets_neutral.py:5,45); saved reviews/PR84/round4-codebase.md; CLOSED 07:44Z | wait design r4, then one builder fix batch |
