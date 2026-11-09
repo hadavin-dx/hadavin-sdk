@@ -34,3 +34,6 @@ Chain of my trees: fix7 (00e30c5) -> your portal tree -> A4r3 -> A4r4 -> A4r5 ->
 - In my trees but NOT in any patch you can apply: (a) nothing from S1i is outstanding; (b) /tmp/dpld-final is a combined tree that is STALE (lacks S1h and S1i); do not use it; (c) S1c-stale-tests.diff (your decision); (d) portal-A4 rebuild; (e) README/contract counts in live_l2/README-L2.md still describe old bounds; (f) README.md and contract.md counts of tests are stale until S1i.
 - Known red tests, expected: test_hygiene_scan_public (needs gitleaks binary) and test_hygiene_wordlist (needs HYGIENE_WORDLIST). A4r6 full: 731; A4r7 full: 739 passed / 1 skipped / 2 known red (reports/S1h-full.log, S1i-full.log).
 - Review state: round 6 had 0 Blockers; its findings are what S1i fixes. Round 7 follows S1i (loss path: no round cap). That is continuation of review fixes, not new scope.
+
+## Update 21:41Z
+Round 7 (reports/A4-r7-*.md): 0 Blocker, 1 Major (a hung model call on the reaper thread freezes the reaper; contract rule 4 was untrue for that case), 2 Minor, nits. Builder S1j is fixing them (tree /tmp/dpld-s10, expected ~22:30Z at the latest). Then A4r8 snapshot and round 8. The consolidated diff will be regenerated as CONSOLIDATED-A4r8-vs-fix7.diff; until then use A4r7 (it has the Major above).
