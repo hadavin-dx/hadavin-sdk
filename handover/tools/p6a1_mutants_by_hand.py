@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 """P6a-1 hand mutants for PR 72 (branch core/P6a), RECONSTRUCTED. Made-up code only, no model calls, no spend.
 
+CORRECTION 2026-11-09 (cloud session, after ORDER 165): the lead's wording "56 original + 17 new" is not what the
+records support. Recorded as 45 of 62: 41 mutants (1-35, 46-51) with patches from the records (re-fitted to d15e53a)
+and 4 (52-55) read from a one-line description. 17 (56-72) are invented. Say "45 from records + 17 invented = 62";
+never call 62/62 the original number. The lead keeps the 17 new ones (ORDER 165).
+
 STATUS OF THIS FILE: the original script (p6a1_mutants_by_hand.py) was never saved; EVERYTHING below is
 RECONSTRUCTED from the records, none of it is a copy of the lost script.
 
