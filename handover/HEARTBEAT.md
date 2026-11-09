@@ -700,3 +700,4 @@ PULSE 11:37Z agents: a699ad44 A5 builder fix7 src (8m of 40), a12f5728 A6 builde
 PULSE 11:41Z agents: a699ad44 A5 builder fix7 src (13m of 40; full suite + CONTRACT-DELTA + commit next), a12f5728 A6 builder fix6t tests (13m of 30; ruff, mutation runs, commit next); no commits yet from either; core idle not written
 PULSE 11:46Z agents: a699ad44 A5 builder fix7 src (18m of 40, uncommitted, full suite running); A6 done (fix6t 35a2dd2 saved); shells: A5's own pytest; core idle not written
 PULSE 11:51Z agents: a699ad44 A5 builder fix7 src (23m of 40, no commit yet, last checkpoint 3); shells: none of mine; core idle not written
+PULSE 11:55Z A5 done (fix7 7dbeebe), merged with A6 -> fix7 00e30c5 (gate: ruff/format/mypy/bandit/schema clean); patch-cloud-3.diff pushed; agents: none; shells: gate7.sh pytest x3 on /tmp/dpld7 (then conc50, load, hostile, kill); core idle not written
