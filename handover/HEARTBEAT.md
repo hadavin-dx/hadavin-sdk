@@ -526,3 +526,4 @@ LAPTOP CANDIDATES (pushed heads only): PR85 0b54631 (items 3,4,10), PR72 e6a4220
 03:33Z HB(auto):  agents 3 running (ev-P1b-r7,ev-P3a2-73,egm-child-drift) | heavy slots busy 2/3 | last: started, none yet 
 03:38Z HB(auto):  agents 2 running (ev-P1b-r7,egm-child-drift) | heavy slots busy 1/3 | last: started, none yet 
 03:43Z HB(auto):  agents 0 running (none) | heavy slots busy 0/3 | last: started, none yet 
+2026-11-09T03:48Z | q370 checklist: EGM not loadable here (install denied), tooling missing, PR heads match; rebuilding tooling
