@@ -91,21 +91,16 @@ def live_cfg_dir(tmp_path: Path, fake_system) -> Path:
 
 
 @pytest.fixture(autouse=True)
-def _test_database_login_may_be_privileged(request):
+def _migrate_runs_as_a_plain_role(request, monkeypatch):
     """The test databases are reached with a superuser login (the CI service and a laptop cluster), which `migrate()`
-    refuses. For every test, the default of the named argument `allow_privileged_role_for_tests` is True (`migrate`
-    writes a warning to the log each time). A test that proves the refusal passes False itself, or carries the marker
-    `real_role_check` to see the real default (False)."""
+    always refuses (there is no switch). For every test, `store.migrate.connect` is swapped for a wrapper that runs
+    `SET ROLE` to a plain role when the login is a superuser (`tests/fixtures/migration_role.py`); `migrate()` itself is
+    called exactly as in production. A test that proves the refusal carries the marker `real_connect`."""
     try:
         from hadavin_sdk.store import migrate as mig
-    except ImportError:  # the pg extra is not installed: no migrate, nothing to switch
-        yield
+    except ImportError:  # the pg extra is not installed: no migrate, nothing to swap
         return
-    name = "allow_privileged_role_for_tests"
-    original = mig.migrate.__kwdefaults__[name]
-    if request.node.get_closest_marker("real_role_check") is None:
-        mig.migrate.__kwdefaults__[name] = True
-    try:
-        yield
-    finally:
-        mig.migrate.__kwdefaults__[name] = original
+    if request.node.get_closest_marker("real_connect") is None:
+        from tests.fixtures.migration_role import plain_role_connect
+
+        monkeypatch.setattr(mig, "connect", plain_role_connect(mig.connect))

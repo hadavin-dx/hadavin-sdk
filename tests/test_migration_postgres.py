@@ -6,6 +6,7 @@ A skip is a failed evidence run (with the DSN set none can happen: `tests/test_m
 
 from __future__ import annotations
 
+import contextlib
 import os
 import shutil
 import subprocess
@@ -18,6 +19,7 @@ import pytest
 from hadavin_sdk.errors import ConfigError
 from tests.fixtures import runbook as rb
 from tests.fixtures.dsn_skip import require_module
+from tests.fixtures.migration_role import PLAIN_ROLE, ensure_plain_role
 
 psycopg = require_module("psycopg")  # with the DSN set a missing driver FAILS (never a skip)
 from psycopg import sql
@@ -99,7 +101,8 @@ def _with_files(monkeypatch, tmp_path: Path, planted: dict[str, str]):
 
 
 def _apply_by_hand(dsn, stems):
-    with psycopg.connect(dsn, autocommit=True) as db:
+    """Apply the files by hand as the same plain role `migrate()` runs as (`mig.connect`), so it owns what they make."""
+    with mig.connect(dsn) as db:
         db.execute(
             "CREATE TABLE schema_migrations (version TEXT PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT now())"
         )
@@ -161,6 +164,36 @@ PLANTS = {
         "ALTER TABLE audit_entries ENABLE REPLICA TRIGGER audit_entries_no_truncate;\n",
         "audit_entries_no_truncate",
     ),
+    "trigger_always": (
+        "ALTER TABLE audit_entries ENABLE ALWAYS TRIGGER audit_entries_no_truncate;\n",
+        "audit_entries_no_truncate changed: enabled state",
+    ),
+    "trigger_definition": (
+        (
+            "CREATE OR REPLACE TRIGGER audit_entries_no_truncate AFTER TRUNCATE ON audit_entries\n"
+            "FOR EACH STATEMENT EXECUTE FUNCTION hadavin_audit_append_only();\n"
+        ),
+        "audit_entries_no_truncate changed: definition",
+    ),
+    "function_body": (
+        (
+            "CREATE OR REPLACE FUNCTION hadavin_audit_append_only() RETURNS trigger LANGUAGE plpgsql AS\n"
+            "$$ BEGIN RETURN NULL; END $$;\n"
+        ),
+        "audit_entries_no_truncate changed: function text",
+    ),
+    "function_security_mode": (
+        "ALTER FUNCTION hadavin_audit_append_only() SECURITY DEFINER;\n",
+        "audit_entries_no_truncate changed: function security mode",
+    ),
+    "function_settings": (
+        "ALTER FUNCTION hadavin_audit_append_only() SET work_mem = '1MB';\n",
+        "audit_entries_no_truncate changed: function settings",
+    ),
+    "table_renamed": (
+        "ALTER TABLE audit_entries RENAME TO audit_entries_moved;\n",
+        "its table was renamed from audit_entries to audit_entries_moved",
+    ),
     "replication_role": (
         _FLIP + "SELECT p3a_flip('session_replication_role', 'replica');\n",
         "session_replication_role",
@@ -175,12 +208,36 @@ PLANTS = {
 }
 
 
+@contextlib.contextmanager
+def _plain_role_may_set(parameter: str | None):
+    """Only a superuser may set some server parameters (session_replication_role); the plain role `migrate()` runs as
+    gets exactly that one right for the length of a plant test (PostgreSQL 15 and later)."""
+    if parameter is None:
+        yield
+        return
+    role = sql.Identifier(PLAIN_ROLE)
+    param = sql.SQL(parameter)
+    with psycopg.connect(DSN, autocommit=True) as db:
+        ensure_plain_role(db)
+        db.execute(sql.SQL("GRANT SET ON PARAMETER {} TO {}").format(param, role))
+    try:
+        yield
+    finally:
+        with psycopg.connect(DSN, autocommit=True) as db:
+            db.execute(sql.SQL("REVOKE SET ON PARAMETER {} FROM {}").format(param, role))
+
+
 @needs_pg
 @pytest.mark.parametrize("plant", sorted(PLANTS))
 def test_h11_the_read_back_refuses_a_planted_file(scratch, monkeypatch, tmp_path, plant):
     dsn, _ = scratch
     mig.migrate(dsn)  # call 1: the real folder
     body, item = PLANTS[plant]
+    with _plain_role_may_set("session_replication_role" if plant == "replication_role" else None):
+        _run_plant(dsn, monkeypatch, tmp_path, body, item)
+
+
+def _run_plant(dsn, monkeypatch, tmp_path, body, item):
     _with_files(monkeypatch, tmp_path, {"0006_p3a_plant.sql": body})
     with pytest.raises(ConfigError) as e:  # call 2: real folder plus the planted file
         mig.migrate(dsn)
@@ -188,6 +245,8 @@ def test_h11_the_read_back_refuses_a_planted_file(scratch, monkeypatch, tmp_path
     assert not str(e.value).startswith("migrations are inconsistent"), (
         "it is the read-back, not the scan"
     )
+    if "audit_entries" in item or "trigger" in item or "table" in item:
+        assert "changed a trigger" in str(e.value) and "session" not in str(e.value), str(e.value)
     assert _ledger(dsn) == REAL, "the ledger holds the five real stems and no planted stem"
     with psycopg.connect(
         dsn, autocommit=True
@@ -196,6 +255,68 @@ def test_h11_the_read_back_refuses_a_planted_file(scratch, monkeypatch, tmp_path
             "SELECT tgenabled FROM pg_trigger WHERE tgname = 'audit_entries_no_truncate'"
         ).fetchone()
     assert row == ("O",)
+
+
+@needs_pg
+def test_h11_a_function_owner_change_is_refused(scratch, monkeypatch, tmp_path):
+    """The owner of the trigger function is read back: handing it to another role is a trigger change. Killed by: mutant T7
+    (function owner not compared) of tests/migrate_mutants.py."""
+    dsn, schema = scratch
+    other = "p3a_fo_" + uuid.uuid4().hex[:8]
+    _create_roles(other)
+    with psycopg.connect(DSN, autocommit=True) as db:
+        db.execute(
+            sql.SQL("GRANT CREATE ON SCHEMA {} TO {}").format(
+                sql.Identifier(schema), sql.Identifier(other)
+            )
+        )
+    _let_the_plain_role_grant(
+        other
+    )  # the plain role may give an object to a role it is a member of
+    try:
+        mig.migrate(dsn)
+        body = f"ALTER FUNCTION hadavin_audit_append_only() OWNER TO {other};\n"
+        _with_files(monkeypatch, tmp_path, {"0006_p3a_owner.sql": body})
+        with pytest.raises(
+            ConfigError, match="audit_entries_no_truncate changed: function owner"
+        ) as e:
+            mig.migrate(dsn)
+        assert "changed a trigger" in str(e.value) and _ledger(dsn) == REAL
+    finally:
+        _drop_roles(other)
+
+
+@needs_pg
+def test_h11_a_listed_trigger_change_passes_for_that_file_and_trigger_only(
+    scratch, monkeypatch, tmp_path
+):
+    """The reviewed list (`migrations_trigger_changes.json`) is the only way to change a trigger. Here a fake list names
+    the file and the trigger: the replaced definition is kept, and the same text under another file name is refused.
+    Killed by: mutants T10 and T11 (wiring tests) and T13 (the list is not passed to the read-back)."""
+    dsn, _ = scratch
+    mig.migrate(dsn)
+    body = PLANTS["trigger_definition"][0]
+    real_files = mig._migration_files
+    monkeypatch.setattr(
+        mig,
+        "_trigger_changes",
+        lambda: frozenset({("0006_p3a_listed", "audit_entries_no_truncate")}),
+    )
+    _with_files(monkeypatch, tmp_path, {"0006_p3a_other.sql": body})
+    with pytest.raises(ConfigError, match="changed a trigger"):
+        mig.migrate(dsn)
+    assert _ledger(dsn) == REAL
+    monkeypatch.setattr(
+        mig, "_migration_files", real_files
+    )  # (not `monkeypatch.undo()`: it undoes the plain-role connect)
+    _with_files(monkeypatch, tmp_path, {"0006_p3a_listed.sql": body})
+    assert mig.migrate(dsn) == ["0006_p3a_listed"]
+    with psycopg.connect(dsn, autocommit=True) as db:
+        (definition,) = db.execute(
+            "SELECT pg_get_triggerdef(oid) FROM pg_trigger WHERE tgname = 'audit_entries_no_truncate' "
+            "AND tgrelid = 'audit_entries'::regclass"
+        ).fetchone()
+    assert "AFTER TRUNCATE" in definition
 
 
 @needs_pg
@@ -233,6 +354,18 @@ def _create_roles(*roles: str, login_password: str | None = None) -> None:
                 db.execute(sql.SQL("CREATE ROLE {}").format(sql.Identifier(role)))
 
 
+def _let_the_plain_role_grant(role: str) -> None:
+    """The plain role `migrate()` runs as holds `role` with the ADMIN option (before migrate starts, so it is part of the
+    baseline): without it a `GRANT role TO x` in a planted function would fail for lack of rights, not reach the read-back."""
+    with psycopg.connect(DSN, autocommit=True) as db:
+        ensure_plain_role(db)
+        db.execute(
+            sql.SQL("GRANT {} TO {} WITH ADMIN OPTION").format(
+                sql.Identifier(role), sql.Identifier(PLAIN_ROLE)
+            )
+        )
+
+
 def _drop_roles(*roles: str) -> None:
     with psycopg.connect(DSN, autocommit=True) as db:
         for role in roles:
@@ -254,6 +387,7 @@ def test_h11_a_role_grant_hidden_in_a_function_body_is_refused(scratch, monkeypa
         f"BEGIN GRANT {a} TO {b}{option}; END $$;\nSELECT p3a_grant();\n"
     )
     _create_roles(a, b)
+    _let_the_plain_role_grant(a)
     try:
         mig.migrate(dsn)
         _with_files(monkeypatch, tmp_path, {"0006_p3a_grant.sql": body})
@@ -407,6 +541,19 @@ def test_triggers_of_another_schema_are_not_read(scratch, monkeypatch, tmp_path)
                 "CREATE TRIGGER trg BEFORE INSERT ON {0}.t FOR EACH ROW EXECUTE FUNCTION {0}.f()"
             ).format(sql.Identifier(other))
         )
+        ensure_plain_role(
+            db
+        )  # the plain role `migrate()` runs as may use and own the other schema's table
+        db.execute(
+            sql.SQL("GRANT USAGE ON SCHEMA {} TO {}").format(
+                sql.Identifier(other), sql.Identifier(PLAIN_ROLE)
+            )
+        )
+        db.execute(
+            sql.SQL("ALTER TABLE {}.t OWNER TO {}").format(
+                sql.Identifier(other), sql.Identifier(PLAIN_ROLE)
+            )
+        )
     try:
         mig.migrate(dsn)
         body = f'ALTER TABLE "{other}".t DISABLE TRIGGER trg;\n'
@@ -469,7 +616,11 @@ def test_the_previous_release_columns_survive_the_newest_migrations(scratch, mon
     after it (the real ones, and one planted additive file, so the test is never empty): every old column is still
     there with the same type and nullability, and the old code's reads still run (a new column may be added; an old
     one may not go, change type or become NOT NULL without a named exception).
-    Killed by: mutant R11 (the planted file is not added: the test would apply nothing and say nothing)."""
+
+    Honest limit (round-1 nit): today no real migration follows `PREVIOUS_RELEASE_LAST`, so this test compares the
+    previous release's columns with themselves plus the one planted file. It is tautological for the real files until
+    the first real migration after the release lands; the comparison itself is proven by
+    `test_the_comparison_catches_a_dropped_or_retyped_old_column`."""
     dsn, _ = scratch
     old, new = _old_and_new_columns(
         dsn, monkeypatch, tmp_path, "ALTER TABLE audit_checkpoints ADD COLUMN p3a_note TEXT;\n"
@@ -500,8 +651,7 @@ def test_the_previous_release_columns_survive_the_newest_migrations(scratch, mon
 def test_the_comparison_catches_a_dropped_or_retyped_old_column(
     scratch, monkeypatch, tmp_path, planted, lost_key, changed_key
 ):
-    """The comparison above is a real check: a newer file that drops or retypes an old column is reported.
-    Killed by: mutant R10a (`lost` always empty) for the drop, R10b (`changed` always empty) for the retype."""
+    """The comparison above is a real check: a newer file that drops or retypes an old column is reported."""
     dsn, _ = scratch
     old, new = _old_and_new_columns(dsn, monkeypatch, tmp_path, planted)
     lost, changed = _problems(old, new)
@@ -510,8 +660,7 @@ def test_the_comparison_catches_a_dropped_or_retyped_old_column(
 
 def test_the_constant_is_the_last_migration_on_main():
     """Order 89 (q195): there is no release tag, so the last migration on main is the released base. A newer real file
-    arriving in the folder does not move it; the lead does, when the first tag exists.
-    Killed by: mutant R9 (the constant set back to 0004_audit_checkpoint_meta)."""
+    arriving in the folder does not move it; the lead does, when the first tag exists."""
     assert PREVIOUS_RELEASE_LAST == "0005_evidence"
     assert PREVIOUS_RELEASE_LAST in REAL
 
@@ -731,8 +880,7 @@ def _recipe_of(message: str) -> str:
 @needs_pg
 def test_h1_hand_recipe_works(scratch, tmp_path):
     """H1: the lines between the two RECIPE lines of the refusal message, saved to a file and run with
-    `psql -X -v ON_ERROR_STOP=1 -f`, apply the late file and its ledger row; `migrate()` then has nothing to do.
-    Killed by: mutant R12 (hand_recipe leaves out the ledger INSERT) and R13 (the recipe leaves out the file's SQL)."""
+    `psql -X -v ON_ERROR_STOP=1 -f`, apply the late file and its ledger row; `migrate()` then has nothing to do."""
     dsn, _ = scratch
     message = _late_0004_message(dsn)
     assert "0004_audit_checkpoint_meta" not in _ledger(dsn)
@@ -758,8 +906,7 @@ def test_h4_a_second_run_of_the_recipe_fails_and_keeps_nothing(scratch, tmp_path
 
 @needs_pg
 def test_h4_a_recipe_that_fails_half_way_leaves_nothing(scratch, monkeypatch, tmp_path):
-    """H4: a late file whose second statement fails: the first statement, the ledger row and the lock are all undone.
-    Killed by: mutant R14 (the recipe has no BEGIN) and R15 (the recipe's first line `\\set ON_ERROR_STOP on` removed)."""
+    """H4: a late file whose second statement fails: the first statement, the ledger row and the lock are all undone."""
     dsn, _ = scratch
     _apply_by_hand(dsn, [s for s in REAL if s != "0004_audit_checkpoint_meta"])
     body = "INSERT INTO audit_checkpoints (seq, hash, signature) VALUES (7, 'a', 'b');\nSELECT 1 / 0;\n"
@@ -782,8 +929,7 @@ def test_the_recipe_stops_at_the_first_error_even_without_the_stop_flag(
     scratch, monkeypatch, tmp_path
 ):
     """The recipe's own first line `\\set ON_ERROR_STOP on` does the stopping when the person forgets `-v`: psql exits
-    with an error code instead of 0 (without the line it carries on and exits 0 although a statement failed).
-    Killed by: mutant R15 (the first line removed)."""
+    with an error code instead of 0 (without the line it carries on and exits 0 although a statement failed)."""
     dsn, _ = scratch
     _apply_by_hand(dsn, [s for s in REAL if s != "0004_audit_checkpoint_meta"])
     planted = tmp_path / "0004_p3a_late_fail.sql"
@@ -801,8 +947,7 @@ def test_the_recipe_stops_at_the_first_error_even_without_the_stop_flag(
 
 @needs_pg
 def test_the_recipe_and_the_runbook_header_start_with_the_timeouts(scratch):
-    """F2: both headers carry the two SET LOCAL lines right after BEGIN and before the lock.
-    Killed by: mutant R16 (the recipe has no timeouts)."""
+    """F2: both headers carry the two SET LOCAL lines right after BEGIN and before the lock."""
     dsn, _ = scratch
     lines = _recipe_of(_late_0004_message(dsn)).splitlines()
     at = lines.index("BEGIN;")
@@ -813,8 +958,7 @@ def test_the_recipe_and_the_runbook_header_start_with_the_timeouts(scratch):
 @needs_pg
 def test_a_hand_file_waiting_for_a_table_lock_stops_after_the_lock_timeout(scratch, tmp_path):
     """F2, run: another session holds ACCESS EXCLUSIVE on `tool_calls`; the hand file does not queue behind it for
-    ever (and so does not stop every reader of a live table): it fails when the lock limit of `RECIPE_TIMEOUTS` runs out and keeps nothing.
-    Killed by: mutant R16b (the timeouts left out of the runbook header helper)."""
+    ever (and so does not stop every reader of a live table): it fails when the lock limit of `RECIPE_TIMEOUTS` runs out and keeps nothing."""
     dsn, schema = scratch
     mig.migrate(dsn)
     with psycopg.connect(dsn) as holder:
@@ -826,8 +970,7 @@ def test_a_hand_file_waiting_for_a_table_lock_stops_after_the_lock_timeout(scrat
 
 @needs_pg
 def test_case_a_current_user_assertion_stops_the_file_for_the_wrong_role(scratch, tmp_path):
-    """F7: the DO block of case (a) raises unless current_user is the named migration role.
-    Killed by: mutant R17 (the block's comparison reversed)."""
+    """F7: the DO block of case (a) raises unless current_user is the named migration role."""
     dsn, schema = scratch
     block = rb.block_with("<MIGRATION ROLE>")
     with psycopg.connect(dsn) as db:
@@ -900,7 +1043,7 @@ def _refused_then_repaired(dsn, schema, tmp_path, monkeypatch, variant, wrong=No
 def test_case_e_e1_the_evidence_row_has_another_number_and_both_tables_exist(
     scratch, monkeypatch, tmp_path, error_column
 ):
-    """E1. Killed by: mutant R18 (case (e) loses 'always put the block of case (g)': the error_missing run keeps the broken table) via the text pin, and by mutant R19 (E1's UPDATE names the wrong row)."""
+    """E1."""
     dsn, schema = scratch
     _branch_database(dsn, evidence_row=FALSE_ROW, tables=True, error_column=error_column)
     _refused_then_repaired(dsn, schema, tmp_path, monkeypatch, "E1", FALSE_ROW)
@@ -949,8 +1092,7 @@ def test_migrate_gives_up_waiting_for_a_table_lock_and_keeps_nothing(
     scratch, monkeypatch, tmp_path
 ):
     """F2: another session holds ACCESS EXCLUSIVE on `tool_calls`; `migrate` does not queue behind it for ever: the
-    limit of `mig.RECIPE_TIMEOUTS` (patched short here) ends the run, nothing is kept, no ledger row.
-    Killed by: mutants R26 (the limits not set), R28 (the lock-wait line left out)."""
+    limit of `mig.RECIPE_TIMEOUTS` (patched short here) ends the run, nothing is kept, no ledger row."""
     dsn, _ = scratch
     mig.migrate(dsn)
     before = _ledger(dsn)
@@ -979,7 +1121,7 @@ def test_migrate_gives_up_waiting_for_a_table_lock_and_keeps_nothing(
 @needs_pg
 def test_migrate_stops_a_file_that_runs_past_the_statement_limit(scratch, monkeypatch, tmp_path):
     """F2: a file whose statement runs longer than the statement limit of `mig.RECIPE_TIMEOUTS` (patched short here)
-    fails the run and keeps nothing. Killed by: mutants R26 (the limits not set), R28 (the statement line left out)."""
+    fails the run and keeps nothing."""
     dsn, _ = scratch
     mig.migrate(dsn)
     before = _ledger(dsn)
@@ -994,7 +1136,7 @@ def test_migrate_stops_a_file_that_runs_past_the_statement_limit(scratch, monkey
 def test_the_limits_migrate_runs_with_are_the_ones_in_the_constant(scratch, monkeypatch, tmp_path):
     """F2: a planted file reads the two settings from the server inside the run (`1/0` when one differs): they are the
     values of `mig.RECIPE_TIMEOUTS` (patched to values that print back unchanged), and a wrong expectation fails, so
-    the probe can fail. Killed by: mutants R26 (not set), R28 (one line left out), R34 (a literal value in migrate)."""
+    the probe can fail."""
     dsn, _ = scratch
     monkeypatch.setattr(
         mig,
@@ -1009,15 +1151,12 @@ def test_the_limits_migrate_runs_with_are_the_ones_in_the_constant(scratch, monk
             f"AND current_setting('statement_timeout') = '{stmt_t}')::int);\n"
         )
 
+    real_files = mig._migration_files
     _with_files(monkeypatch, tmp_path, {PLANTED_NEXT: probe("99s")})
     with pytest.raises(psycopg.errors.DivisionByZero):
         mig.migrate(dsn)
-    monkeypatch.undo()
-    monkeypatch.setattr(
-        mig,
-        "RECIPE_TIMEOUTS",
-        ("SET LOCAL lock_timeout = '7s';", "SET LOCAL statement_timeout = '9s';"),
-    )
+    # (no `monkeypatch.undo()` here: it would also undo the test-only plain-role connect of conftest)
+    monkeypatch.setattr(mig, "_migration_files", real_files)
     _with_files(monkeypatch, tmp_path, {PLANTED_NEXT: probe(lock_t)})
     assert mig.migrate(dsn)[-1] == PLANTED_NEXT[:-4]
 
@@ -1025,8 +1164,7 @@ def test_the_limits_migrate_runs_with_are_the_ones_in_the_constant(scratch, monk
 @needs_pg
 def test_the_limits_also_cover_the_grant_phase_of_a_run_with_no_pending_file(scratch, monkeypatch):
     """Review A: nothing is pending, but a role grant waits for another session's uncommitted change of the rights of a table: the run stops
-    after the lock limit, in plain words naming the step and the setting, and keeps nothing.
-    Killed by: mutants R26 (limits not set), RA1 (the error is not wrapped), RA2 (the step is not named)."""
+    after the lock limit, in plain words naming the step and the setting, and keeps nothing."""
     dsn, _ = scratch
     mig.migrate(dsn)
     before = _ledger(dsn)
@@ -1069,7 +1207,13 @@ def test_a_file_that_changes_a_limit_itself_is_refused_by_the_read_back(
     every file), and nothing of the run is kept. Killed by: mutant L1 (the limits are not in the read-back)."""
     dsn, _ = scratch
     monkeypatch.setattr(mig, "RECIPE_TIMEOUTS", SHORT_LOCK)  # statement limit 20s, lock limit 1s
-    _with_files(monkeypatch, tmp_path, {PLANTED_NEXT: "SET LOCAL statement_timeout = '11s';\n"})
+    # the text scan refuses a `SET LOCAL` of a limit (test_migration_numbers); a function can still change it, so the
+    # read-back is the guard that this test exercises
+    _with_files(
+        monkeypatch,
+        tmp_path,
+        {PLANTED_NEXT: _FLIP + "SELECT p3a_flip('statement_timeout', '11s');\n"},
+    )
     with pytest.raises(
         ConfigError, match=r"0006_p3a_next\.sql.*statement_timeout was '20s' and is now '11s'"
     ):
@@ -1107,6 +1251,7 @@ def plain_role(scratch):
 
 
 @needs_pg
+@pytest.mark.real_connect
 @pytest.mark.parametrize("flag", ["SUPERUSER", "CREATEROLE", "CREATEDB", "BYPASSRLS"])
 def test_a_migration_role_with_a_privilege_flag_is_refused_by_a_real_server(plain_role, flag):
     """Killed by: mutants S1..S5 (no check, or one flag not read), on a real server."""
@@ -1114,18 +1259,23 @@ def test_a_migration_role_with_a_privilege_flag_is_refused_by_a_real_server(plai
     with psycopg.connect(DSN, autocommit=True) as db:
         db.execute(sql.SQL(f"ALTER ROLE {{}} {flag}").format(sql.Identifier(role)))
     with pytest.raises(ConfigError, match="must not be a superuser") as e:
-        mig.migrate(dsn, allow_privileged_role_for_tests=False)
+        mig.migrate(dsn)
     assert {
         "SUPERUSER": "rolsuper",
         "CREATEROLE": "rolcreaterole",
         "CREATEDB": "rolcreatedb",
         "BYPASSRLS": "rolbypassrls",
     }[flag] in str(e.value)
+    assert "CREATE ROLE migration_role LOGIN NOSUPERUSER" in str(e.value), (
+        "the message says how to make a plain role"
+    )
     assert _ledger(dsn) is None, "nothing was created"
 
 
 @needs_pg
-def test_a_plain_migration_role_runs_without_the_override(plain_role):
+@pytest.mark.real_connect
+def test_a_plain_migration_role_runs_with_the_real_connect(plain_role):
+    """There is no override: a login role with none of the four flags runs `migrate()` with the real `connect`."""
     dsn, _ = plain_role
-    assert mig.migrate(dsn, allow_privileged_role_for_tests=False) == REAL
-    assert mig.migrate(dsn, allow_privileged_role_for_tests=False) == []
+    assert mig.migrate(dsn) == REAL
+    assert mig.migrate(dsn) == []

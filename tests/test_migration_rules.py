@@ -378,6 +378,7 @@ CHANGELOG = rb.CHANGELOG
 FALSE_NAME = (
     "0006" + "_evidence"
 )  # the name the older note gave; written in two parts so a search for it finds none
+FALSE_PHRASE = "numbered 0006 with the name `evidence`"  # how the CHANGELOG says it, so that no search finds the literal
 
 
 def _evidence_bullet() -> str:
@@ -396,15 +397,20 @@ def test_no_advice_tells_anyone_to_rename_a_row_to_the_false_name():
         if FALSE_NAME in s:
             assert not re.search(rf"\b(?:to|as|=)\s*['`]?{FALSE_NAME}", s), s
             assert not re.search(rf"version\s*=\s*'{FALSE_NAME}'", s), s
+    assert (
+        FALSE_NAME not in CHANGELOG
+    )  # the literal is not written at all: a search for it must find nothing
     assert "`0005_evidence.sql`" in CHANGELOG
     assert "version = '<NEW>'" in CHANGELOG  # the runbook step is generic
 
 
 def test_the_changelog_names_the_false_name_where_a_person_who_followed_the_old_note_looks():
     bullet = _words(_evidence_bullet())
-    assert FALSE_NAME in bullet and "back to `0005_evidence`" in bullet and "case (b)" in bullet
+    assert FALSE_PHRASE in bullet and "back to `0005_evidence`" in bullet and "case (b)" in bullet
     assert "need no repair" not in CHANGELOG  # the old heading contradicted this case
-    assert FALSE_NAME in rb.case("b") and "goes back to `0005_evidence`" in _words(rb.case("b"))
+    assert FALSE_PHRASE in _words(rb.case("b")) and "goes back to `0005_evidence`" in _words(
+        rb.case("b")
+    )
 
 
 def test_the_changelog_keeps_a_repair_path_for_an_early_evidence_table():
@@ -496,7 +502,7 @@ def test_the_runbook_carries_the_real_lock_the_command_and_every_case():
 
 
 def test_the_hand_file_header_in_the_runbook_has_the_timeouts_and_a_quoted_schema():
-    """F2, F6. Killed by: mutant R16c (the CHANGELOG rule loses the timeouts), R20 (the unquoted search_path returns)."""
+    """F2, F6."""
     rule = _words(rb.RUNBOOK[: rb.RUNBOOK.index("- **(a) ")])
     for line in mn.RECIPE_TIMEOUTS:
         assert f"`{line}`" in rule, line
@@ -512,7 +518,7 @@ def test_the_hand_file_header_in_the_runbook_has_the_timeouts_and_a_quoted_schem
 
 
 def test_case_e_puts_the_evidence_block_into_e1_and_e3_always():
-    """F3. Killed by: mutant R18 (the sentence goes back to 'if tool_calls.error is missing')."""
+    """F3."""
     e = _words(rb.case("e"))
     assert "In **E1** and **E3** always put the block of case (g)" in e
     assert "**E2** does not need it" in e
@@ -521,14 +527,14 @@ def test_case_e_puts_the_evidence_block_into_e1_and_e3_always():
 
 
 def test_case_g_says_what_its_last_check_does_not_look_at():
-    """F4. Killed by: mutant R21 (the sentence is removed)."""
+    """F4."""
     g = _words(rb.case("g"))
     assert "compares columns only" in g and "tool_calls_by_run" in g and "primary keys" in g
     assert "the columns of the evidence tables differ" in rb.evidence_block()
 
 
 def test_case_b_uses_a_plain_placeholder_and_points_at_the_released_list():
-    """F5, F8. Killed by: mutant R22 (the apostrophe placeholder returns)."""
+    """F5, F8."""
     b = _words(rb.case("b"))
     assert "'<file_stem>'" in b and "that file's name without" in b
     assert "'<that file" not in b
@@ -537,13 +543,17 @@ def test_case_b_uses_a_plain_placeholder_and_points_at_the_released_list():
     )
 
 
+def _upgrade_bullet() -> str:
+    """The whole first CHANGELOG bullet (its numbered sub-steps included), up to the next top-level bullet."""
+    start = CHANGELOG.index("- **Migrations: stricter checks")
+    return CHANGELOG[start : CHANGELOG.index("\n- **", start)]
+
+
 def test_the_upgrade_bullet_says_what_migrate_checks_and_does_not_overclaim():
     """M-4 (wired), F1. Killed by: mutants R6 (the call removed; the wiring test) and R23 (the CHANGELOG sentence goes)."""
-    first = _words(
-        CHANGELOG[CHANGELOG.index("- **Migrations: stricter checks") :].split("\n", 1)[0]
-    )
+    first = _words(_upgrade_bullet())
     assert "refuses, before it connects, a released file that was edited or deleted" in first
-    assert "not tested on PostgreSQL 17" in first
+    assert "PostgreSQL 17: not run on the build machine" in first
     assert "the tests read the same file" in first
     assert "the role memberships" in first and "inside a function body" in first
     assert "pg_auth_members" in _words(mig.__doc__ or "") and "pg_auth_members" in _words(
@@ -555,8 +565,7 @@ _TIMEOUT = re.compile(r"\w+_timeout = '[^']*'")
 
 
 def test_every_timeout_value_written_in_the_docs_is_the_constants():
-    """F2 (no hardcoding): the CHANGELOG and both docstrings may write a timeout setting, but only the constant's own.
-    Killed by: mutants R29 (the CHANGELOG rule says 10s), R30 (the migrate docstring says 10s)."""
+    """F2 (no hardcoding): the CHANGELOG and both docstrings may write a timeout setting, but only the constant's own."""
     allowed = {m for line in mn.RECIPE_TIMEOUTS for m in _TIMEOUT.findall(line)}
     assert len(allowed) == 2
     for name, text in (
@@ -573,8 +582,7 @@ def test_every_timeout_value_written_in_the_docs_is_the_constants():
 
 def test_no_source_or_test_file_writes_the_timeout_values_a_second_time():
     """F2 (no hardcoding): the values of the constant (read from it) appear as a quoted literal nowhere else in the
-    store code or the migration tests. Killed by: mutants R31 (migrate.py gets its own copy of a value), R32 (the runbook helper
-    gets its own list)."""
+    store code or the migration tests."""
     values = [v for line in mn.RECIPE_TIMEOUTS for v in re.findall(r"= '([^']*)'", line)]
     assert values and all(values)
     root = Path(__file__).resolve().parent
@@ -592,14 +600,11 @@ def test_no_source_or_test_file_writes_the_timeout_values_a_second_time():
 
 
 def test_case_f_says_migrate_has_the_same_limits_as_the_hand_file():
-    """F2 (drift): CHANGELOG case (f) must not say `migrate` has no timeout while it sets them.
-    Killed by: mutant R33 (the old sentence returns)."""
+    """F2 (drift): CHANGELOG case (f) must not say `migrate` has no timeout while it sets them."""
     f = _words(rb.case("f"))
     assert "`migrate` sets the same lock and statement limits as the hand file" in f
     assert "has no timeout in `migrate`" not in f
-    first = _words(
-        CHANGELOG[CHANGELOG.index("- **Migrations: stricter checks") :].split("\n", 1)[0]
-    )
+    first = _words(_upgrade_bullet())
     assert (
         "`migrate` also sets, for its transaction, the same lock-wait and statement time limits"
         in first
@@ -607,11 +612,8 @@ def test_case_f_says_migrate_has_the_same_limits_as_the_hand_file():
 
 
 def test_the_scope_the_order_and_the_file_own_limits_are_written_down():
-    """Review A, B, nit A, nit B. Killed by: mutants RD1 (the scope sentence of the upgrade bullet), RD2 (the order
-    sentence of case (f)), RD3 (the 'file sets a limit itself' sentence of the docstring), RD4 (the numbers pointer)."""
-    first = _words(
-        CHANGELOG[CHANGELOG.index("- **Migrations: stricter checks") :].split("\n", 1)[0]
-    )
+    """Review A, B, nit A, nit B."""
+    first = _words(_upgrade_bullet())
     assert (
         "also the role checks and grants, so a normal run with no new file is covered too" in first
     )
@@ -628,3 +630,47 @@ def test_the_scope_the_order_and_the_file_own_limits_are_written_down():
     assert "so a run with no pending file is covered too" in doc
     assert "sets the limits BEFORE the advisory lock" in doc and "AFTER it, on purpose" in doc
     assert "A migration file may not change either limit" in doc
+
+
+# --- 6. both JSON lists are inside the built package (order 186, G73-4) -------------------------------------------------
+
+PACKAGED_JSON = ("migrations_released.json", "migrations_trigger_changes.json")
+
+
+def test_the_built_wheel_holds_both_migration_lists(tmp_path):
+    """`migrate()` reads both lists at run time from the folder of the package, so an installed copy must have them.
+    The wheel is built into a temporary folder (`uv build`) and its file list is read; each file in it must equal the
+    file in the source tree."""
+    import shutil
+    import subprocess
+    import zipfile
+
+    uv = shutil.which("uv")
+    assert uv is not None, "uv is needed to build the wheel (it runs the whole test suite)"
+    out = tmp_path / "wheel"
+    done = subprocess.run(  # noqa: S603 - fixed argument list, no shell
+        [uv, "build", "--wheel", "--out-dir", str(out), str(ROOT)],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        check=False,
+    )
+    assert done.returncode == 0, done.stderr[-2000:]
+    (wheel,) = out.glob("*.whl")
+    with zipfile.ZipFile(wheel) as z:
+        names = set(z.namelist())
+        for name in PACKAGED_JSON:
+            member = f"hadavin_sdk/store/{name}"
+            assert member in names, f"{member} is not in the wheel"
+            source = (ROOT / "src" / "hadavin_sdk" / "store" / name).read_bytes()
+            assert z.read(member) == source
+        assert any(n.startswith("hadavin_sdk/store/migrations/0001_") for n in names)
+
+
+def test_every_migrate_mutant_still_applies_to_the_source():
+    """The list of mutants in `tests/migrate_mutants.py` cannot rot: each `old` text is in its file exactly once and each
+    killer test exists (the run itself needs a database and is documented at the top of that file)."""
+    from tests import migrate_mutants
+
+    assert migrate_mutants.problems_with_the_list() == []
+    assert len(migrate_mutants.M) >= 80

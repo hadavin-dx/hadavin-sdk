@@ -291,7 +291,7 @@ def test_a_database_that_applied_the_old_name_is_refused_and_nothing_is_applied(
     try:
         import psycopg
 
-        with psycopg.connect(dsn, autocommit=True) as db:
+        with mig.connect(dsn) as db:  # as the plain role migrate() runs as
             db.execute(
                 "CREATE TABLE schema_migrations "
                 "(version TEXT PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT now())"

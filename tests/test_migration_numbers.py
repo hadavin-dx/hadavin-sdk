@@ -2,7 +2,7 @@
 written recipe, the ledger-without-file message, the one-pass lexer and the refusal list. No database, no psycopg.
 
 The module is imported inside each test (the `mn` fixture), so on a tree without the module every test is one error
-and not a collection error. Planted names and SQL are made up. Postgres-side tests live in a later change."""
+and not a collection error. Planted names and SQL are made up. Postgres-side tests live in tests/test_migration_postgres.py."""
 
 from __future__ import annotations
 
@@ -737,6 +737,9 @@ def test_each_transaction_word_is_refused(mn, stmt):
         "SET session_replication_role = replica",
         "RESET ALL",
         "set x to 1",
+        "SET LOCAL lock_timeout = '10s'",
+        "set  local  statement_timeout TO 0",
+        "SET LOCAL statement_timeout = '1h'",
     ],
 )
 def test_each_set_form_is_refused(mn, stmt):
@@ -744,11 +747,14 @@ def test_each_set_form_is_refused(mn, stmt):
     assert len(got) == 1 and "may not be changed" in got[0], stmt
 
 
-@pytest.mark.parametrize(
-    "stmt", ["SET LOCAL lock_timeout = '10s'", "set  local  statement_timeout TO 0"]
-)
-def test_the_two_allowed_set_forms_pass(mn, stmt):
-    assert mn.refused_statements(f"{stmt};") == []
+def test_the_two_time_limits_are_refused_in_the_text_scan_not_only_by_the_read_back(mn):
+    """Round 1 nit: the scan and the read-back must agree. The read-back refuses a file that changes either limit, so
+    the scan refuses the `SET LOCAL` text too, with a message that names the limits. Killed by: the mutant "SET LOCAL
+    lock_timeout/statement_timeout is allowed in the text scan again" of tests/migration_numbers_mutants.py."""
+    for name in ("lock_timeout", "statement_timeout"):
+        got = mn.refused_statements(f"SET LOCAL {name} = '1s';")
+        assert len(got) == 1 and "time limits" in got[0], got
+    assert not hasattr(mn, "_SET_ALLOWED")
 
 
 @pytest.mark.parametrize(

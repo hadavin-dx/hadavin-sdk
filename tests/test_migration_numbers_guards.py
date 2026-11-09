@@ -17,18 +17,15 @@ from pathlib import Path
 
 import pytest
 
+import hadavin_sdk.store.migration_numbers as mn_module
 from tests.fixtures.dsn_skip import require_test_module
 from tests.fixtures.seeded import Seeded
 
 SEED = 20261106
 CASES = 30000
 MANIFEST = (
-    Path(__file__).resolve().parents[1]
-    / "src"
-    / "hadavin_sdk"
-    / "store"
-    / "migrations_released.json"
-)  # the one list
+    mn_module.RELEASED_MANIFEST
+)  # the one list, the path `migrate()` reads (not a second copy of it)
 
 
 @pytest.fixture
@@ -379,8 +376,7 @@ FIRST_FIVE = {
 
 
 def test_the_first_five_released_files_have_the_pinned_hashes(mn):
-    """M-4. Killed by: mutant MM4 (a byte appended to 0003_approvals_tick.sql AND its json row recomputed: the pinned
-    table is the only thing that fails), MM5 (only the json row of 0003 changed), MM6 (the first row of the table)."""
+    """M-4."""
     for stem, digest in FIRST_FIVE.items():
         assert _sha(mn.MIGRATIONS / f"{stem}.sql") == digest, f"{stem}.sql was edited"
 
@@ -594,7 +590,7 @@ def test_every_mutant_still_applies_to_the_source():
 
 def test_released_problems_hashes_the_text_that_is_executed_not_a_second_read(mn, tmp_path):
     """Round-1 M4: with `texts`, the hash is of `texts[p]`. A file changed on disk after `read_files` is not the text that
-    runs, so a changed disk copy must not fail the check and a changed text must. Killed by: mutant H1 (read_bytes again)."""
+    runs, so a changed disk copy must not fail the check and a changed text must."""
     f = tmp_path / "0001_a.sql"
     f.write_bytes(b"SELECT 1;\r\nSELECT 2;\n")
     texts = mn.read_files([f])
@@ -617,7 +613,7 @@ def test_a_lone_carriage_return_hashes_like_the_text_that_runs(mn, tmp_path):
 
 
 def test_a_missing_test_only_module_is_a_failure_in_ci_and_a_skip_elsewhere():
-    """Round-1 N9. Killed by: mutant G1 (importorskip again)."""
+    """Round-1 N9."""
     with pytest.raises(pytest.fail.Exception, match="CI is set"):
         require_test_module("no_such_module_xyz", {"CI": "true"})
     with pytest.raises(pytest.skip.Exception, match="not installed"):
