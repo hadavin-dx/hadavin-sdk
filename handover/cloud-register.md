@@ -784,3 +784,4 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | rv-P1d-ready | egm-implementation-readiness plan review r1 of tickets/P1d.md | 2026-11-09T03:53Z | CLOSED 2026-11-09T03:58Z |
 | rv-P1b-design | egm-design result review P1b 0d843b4 | closed 2026-11-09 04:0x UTC | report saved handover/reviews/P1b/round1-design.md (6 MAJOR, 8 MINOR) | - |
 | rv-P1b-code | egm-codebase-details result review P1b 0d843b4 | closed 2026-11-09 | report saved handover/reviews/P1b/round1-codedetails.md (5 MAJOR, 11 MINOR); F1,F2 checked by me | - |
+| bd-recon-P6a1 | rebuild P6a-1 mutant script | closed 2026-11-09 | handover/tools/p6a1_mutants_by_hand.py; 62/62 killed on d15e53a copy but only 45 from records, 17 invented (56-72) | - |
