@@ -1,0 +1,6 @@
+# PR87 head 84abdf6 round 1, egm-codebase-details: 0B 0M 3N (reviewer did not weigh BN-47; see design review B1)
+N1 t8 (tests/test_peel_run_id.py:218-219) passes on base (getattr fallback compares ORACLE with ORACLE): make it fail on base e.g. assert hasattr(models, "RUN_ID_PATTERN").
+N2 t2 only memory store; Postgres create_run raises StaleState (postgres.py:242) and tests/contracts/test_store.py:65 covers duplicate create_run, but no handle(run_id=...) test on Postgres and no race test of two handle calls with same id.
+N3 Unqualified raised before InvalidRunId (agent_loop.py:354-357): pin order in docstring/test.
+Checked: only def handle is Runtime.handle; no .handle( callers in src/demos/tools; all test callers positional, new param keyword-only default None. Sole run id mint is models.py:91 new_id("run"); no sibling. InvalidRunId follows convention (Unqualified also not exported from runtime package). Pattern run-[0-9a-f]{32} fullmatch OK. Writes order OK.
+Askdata failures: diff cannot cause them (touches models.py, handle, new test file); differ per python version (3.12 copy-program+dblink, 3.13 dblink only): environment/ordering. Not proven: no base run. NOT CHECKED: reruns, CI gates, sibling demo repos.
