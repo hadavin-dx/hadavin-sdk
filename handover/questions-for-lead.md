@@ -1463,3 +1463,9 @@ CORRECTION: round 7's resolve said P3a-2 had no allow list. That was wrong: c727
 NOT RUN: round 9 plan review (design + readiness, money path, no cap).
 DECISIONS FOR LEAD (defaults if no answer in 30 min; money path, so default = do not merge, keep waiting): (1) PENDING LEAD 80: have PR73's builder write BN-P3a-2-g and fix P3a.md limit (b)/V-g before PR73 merges; default: P4b1-a does not merge until main has the check, the allow list and the matching P3a.md text. (2) PENDING LEAD 81: tell PR76's builder to run migrate() twice on one fresh database with P3a-2's check on and add P2a-1's own allow-list entry if refused; default: PR76 does not merge with a refused run.
 NEXT: after "GO core": round 9 reviewers on rev 9.
+
+## q412 (09:34Z) PR87 follow-up builder done: branch pushed, PR NOT opened (ORDER 198)
+CHECKED BY ME: builder report saved at handover/reports/PR87-followup-builder-report.md; branch core/peel-run-id-followup at e96f4af pushed (git ls-remote shows it). I ran nothing myself on it.
+NOT RUN: py3.12, independent evidence at the merged head, fresh reviewers, ledger row (ORDER 194 (A)5).
+DECISION FOR LEAD: open the PR now (it is finished work from a builder started before the freeze) or wait for "GO core". DEFAULT if no answer in 30 min: wait, no PR; reason: ORDER 198 says start no new PRs on core and the change touches run identity (security path), so it should not move without the lead.
+NEXT: after "GO core": open PR, evidence runner (py3.12 + 3.13, Postgres), correctness + adversarial reviewers, ledger rows.
