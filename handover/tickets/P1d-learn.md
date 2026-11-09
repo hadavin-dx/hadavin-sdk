@@ -15,7 +15,7 @@ P1d stops a value that is ALREADY KNOWN (masked earlier in the same text or run)
 - **Why blank prior values and not filter (round-9 B1):** rev 2 dropped any candidate containing a known value, so a planted copy of a known value glued to an unknown key (`password=` + PV, then `AKIA**IOSFODNN7EXAMPLE**` + PV) switched learning off. A blanked view never shows a prior value, so a glued tail cannot form. **Why not blank this call's values (round-10 B-1):** pass one masks the head of `ghp_Ab1Cd2Ef3Gh4**Ab1...` (16 characters) on its own; blanking it left the 24-character tail unlearned.
 - **AWS-style rule** = the regex and checks in "Design". **Gap set** = `&`, `.`, backslash.
 - **False learn** = a learned value in a made-up text that holds no secret. **HELD** = this package does not merge; the exact count and the failing shapes go to the lead.
-- Legend, property loops and fail-before harness as P1d rev 10 (fb, pb, inv, ow, measure, new-surface; entry card / summary / model; `tests/p1d_api.py`, `tools/p1d_fail_before.py`). **Row ids** are prefixed `L-` in tests and fixtures (`L-H11`, `L-SUM-1`), because P1d uses some of the same short ids with other inputs; the table below keeps the short ids.
+- Legend, property loops and fail-before harness as P1d rev 11 (fb, pb, inv, ow, measure; failure prefixes `LEAK:`, `NEW_SURFACE:`, `NO_REFUSAL:`; entry card / summary / model; `tests/p1d_api.py`, `tools/p1d_fail_before.py`). **Row ids** are prefixed `L-` in tests and fixtures (`L-H11`, `L-SUM-1`), because P1d uses some of the same short ids with other inputs; the table below keeps the short ids.
 
 ## Design
 ```
