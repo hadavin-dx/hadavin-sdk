@@ -1,1 +1,14 @@
 203451264e72d872d23d80b4d63d35e7b5df4460
+ok  KILLED       app: build skips require_pinned_unidata  [test_m10_app_build_calls_require_pinned_unidata_for_live_sta]
+BAD WRONG_REASON evidence: the comparison does not compose  [test_m1_a_decomposed_text_finds_a_precomposed_identifier_and]
+      first line: E       AssertionError: assert False is True
+ok  KILLED       evidence: grounded accepts a decomposed identifier  [test_m1_grounded_takes_a_precomposed_identifier_seen_decompo]
+ok  KILLED       runmap: the canonical view normalises every character  [test_m1_the_canonical_view_normalises_once_per_non_ascii_cha]
+ok  KILLED       cache: the scope has no lock  [test_m8_a_thread_waits_while_the_scope_lock_is_held]
+ok  KILLED       register: an ordinary ASCII secret is refused in strict mode  [test_m3_the_corpus_of_made_up_ascii_secrets_is_never_refused]
+ok  KILLED       injection: the pieces do not overlap  [test_m4_a_steering_phrase_anywhere_in_a_text_over_the_size_r]
+ok  KILLED       injection: a text over the size rule is flagged whole again  [test_m4_a_clean_text_over_the_size_rule_is_not_flagged]
+ok  KILLED       mixed script: a spacing mark splits the word  [test_m16_a_spacing_mark_or_modifier_symbol_does_not_split_a_]
+ok  KILLED       tables: the lazy tables are never kept  [test_m14_the_lazy_tables_are_built_once_and_still_reachable_]
+9 of 10 good; problems: ['evidence: the comparison does not compose']
+exit=1
