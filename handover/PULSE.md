@@ -1,1 +1,1 @@
-16:32Z | agents: none. shells: pulse_refresh2.sh; linux_ev.sh (ORDER 212 evidence chain, tree A then B, start 16:15Z, end ~18:00Z) | evid shells: none | unpushed: none | refreshed every 60 s by a bounded script (ends 18:42Z); detail in HEARTBEAT.md
+17:07Z | agents: none. shells: pulse_refresh2.sh; linux_ev.sh (ORDER 212 evidence chain, tree A then B, start 16:15Z, end ~18:00Z) | evid shells: none | unpushed: none | refreshed every 60 s by a bounded script (ends 19:17Z); detail in HEARTBEAT.md
