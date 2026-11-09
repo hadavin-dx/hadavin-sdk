@@ -1,1 +1,1 @@
-12:16Z | agents: agents: A a5e33f7e4aa487492 (WP-A), F a5c3680f4da8b8825 (WP-F), both live since 12:18Z, end 13:48Z; shell: final_gate.sh full (stage 3 running) | evid shells: none | unpushed: none | refreshed every 60 s by a bounded script (ends 13:26Z); detail in HEARTBEAT.md
+12:17Z | agents: agents: A a5e33f7e4aa487492 (WP-A), F a5c3680f4da8b8825 (WP-F), both live since 12:18Z, end 13:48Z; shell: final_gate.sh full (stage 3 running) | evid shells: none | unpushed: none | refreshed every 60 s by a bounded script (ends 13:27Z); detail in HEARTBEAT.md
