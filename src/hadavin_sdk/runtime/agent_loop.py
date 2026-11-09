@@ -29,6 +29,7 @@ from hadavin_sdk.identity import Principal
 from hadavin_sdk.limits import Limits
 from hadavin_sdk.llm.protocol import LLM, ProviderError, ProviderExhausted
 from hadavin_sdk.models import (
+    RUN_ID_PATTERN,
     AuditEvent,
     GateDecision,
     GateRun,
@@ -96,6 +97,16 @@ def _digest(value: Any) -> str:
 
 class Unqualified(RuntimeError):
     """The agent has no green gate run for its current model, prompt and config."""
+
+
+class InvalidRunId(ValueError):
+    """A caller-chosen run id is not `run-` and 32 lower-case hex characters."""
+
+
+def _checked_run_id(run_id: object) -> str:
+    if not isinstance(run_id, str) or not RUN_ID_PATTERN.fullmatch(run_id):
+        raise InvalidRunId("run_id must be 'run-' and 32 lower-case hex characters")
+    return run_id
 
 
 def qualified_runs(registry: Registry) -> list[GateRun]:
@@ -330,8 +341,12 @@ class Runtime:
         trigger_kind: str = "event",
         trigger_ref: str = "-",
         mapping: dict[str, str] | None = None,
+        *,
+        run_id: str | None = None,
     ) -> Run:
-        """`document` must be the RAW bytes (never text already redacted). `mapping` is the run's starting
+        """`run_id`, if given, is the new run's id (`run-` and 32 lower-case hex characters, else `InvalidRunId`); a
+        run with that id already there raises `StaleState` before anything else is written. `None` makes a fresh id.
+        `document` must be the RAW bytes (never text already redacted). `mapping` is the run's starting
         redaction map: the map of that same raw document (K4 passes the intake map) or None for an empty one. A map
         built from a different document would restore the wrong values, so it is the caller's to get right. The
         document and every tool result are redacted with this one map, which grows through the run and is saved
@@ -339,11 +354,13 @@ class Runtime:
         if agent_id not in self.agents:
             raise Unqualified(agent_id)
         agent = self.registry.agents[agent_id]
+        extra = {} if run_id is None else {"run_id": _checked_run_id(run_id)}
         run = Run(
             agent_id=agent_id,
             principal_id=principal_id,
             trigger_kind=trigger_kind,
             trigger_ref=trigger_ref,
+            **extra,
         )
         self.store.create_run(run)
         self._note(run, "run", "received", inputs_hash=sha256_hex(document.hex()))
