@@ -196,9 +196,13 @@ TEXTNORM_STRICT_COVERAGE = True
 
 # The injection check (guard.injection) reads a text over TEXTNORM_MAX_CHARS in overlapping pieces instead of refusing it whole. CHUNK: the
 # characters of one piece (a piece whose weight is still over the cap is halved until it fits). OVERLAP: the characters two neighbouring pieces
-# share, so a steering phrase cut by a boundary is whole in one piece (the longest phrase pattern reads about 120 characters; the overlap is wider by
-# a factor of 8 for the invisible characters a writer may put between its letters). MAX: the longest text read in pieces (a case bundle's cap); a text
-# longer than that is still flagged as guard_unavailable. Measured 2026-11-09: a 262,144-character text costs 0.5 s (ASCII) to 1.2 s (Cyrillic).
+# share at least (a new piece also starts far enough back to hold enough letters, see OVERLAP_MAX), so a steering phrase cut by a boundary is whole
+# in one piece. MAX: the longest text read in pieces (a case bundle's cap); a text
+# longer than that is still flagged as guard_unavailable. The time is in tests/test_textnorm_round2.py (printed with -s) and the CHANGELOG.
 TEXTNORM_INJECTION_CHUNK_CHARS = 32_768
 TEXTNORM_INJECTION_OVERLAP_CHARS = 1_024
+# OVERLAP_MAX: the farthest back a new piece may start to find enough letters (see guard.injection._start_of_next); a boundary with too few letters
+# within it is refused (fail closed). PHRASE: the characters the longest steering-phrase pattern reads (about 120).
+TEXTNORM_INJECTION_OVERLAP_MAX_CHARS = 8_192
+TEXTNORM_INJECTION_PHRASE_CHARS = 120
 TEXTNORM_INJECTION_MAX_CHARS = MAX_BUNDLE_CHARS

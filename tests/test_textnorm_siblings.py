@@ -3,11 +3,12 @@
 Several places read untrusted text: ``runmap.canonical`` / ``_canonical_view`` (redaction maps), the grounding check of ``runtime/evidence.py``,
 ``guard/injection.py`` and ``guard/egress.py``. What each does now, pinned here so a later change shows up as a failing test that someone reads:
 (1) ``runmap.canonical`` and ``_canonical_view`` are one text (FIXED in P1b); (2) the injection detector reads every ``scan_views`` view (FIXED in
-P1b; it is the only sibling that imports ``textnorm``); (3) the evidence grounding key stays exact on purpose (an ALLOW comparison); (4) egress is
+P1b; ``guard/injection.py`` and ``app.py`` (the pinned-Unicode guard) are the only modules that import ``textnorm``); (3) the evidence grounding key stays exact on purpose (an ALLOW comparison) and now uses ``runmap.composed``, the one composed form; (4) egress is
 an ALLOW comparison that refuses a look-alike host (its IDNA question belongs to V1.1 item V11-1); (5) ``runmap.canonical`` and the grounding key
 do NOT find a secret hidden with an Mc, Lm or Sk code point (a KNOWN GAP, recorded, with the count). The look-alike placeholder marker belongs to P1c.
 """
 
+import ast
 import re
 import unicodedata
 from pathlib import Path
@@ -278,3 +279,45 @@ def test_the_counts_of_mc_lm_and_sk_are_the_ones_the_notes_measured():
         pytest.skip(
             f"counts are only pinned for 15.0.0 and 15.1.0, not {unicodedata.unidata_version}"
         )
+
+
+# The code (not the docstrings) of src/ that normalises or case-folds text, outside the fold itself: file -> (what it does, why it is not the fold).
+RECORDED_SIBLINGS = {
+    "guard/runmap.py": "the redaction views (canonical, composed): the choke point of every redaction; NFKC on purpose, positions stay exact",
+    "guard/egress.py": "host names: NFKC + IDNA, an ALLOW comparison that refuses a look-alike (tested above)",
+    "runtime/evidence.py": "the grounding key: runmap.composed + case fold, an ALLOW comparison (tested above)",
+    "k1b/causelist.py": "NFC of a court case-list value for display and exact matching; not a scan for a protected value",
+    "config.py": "one retired stage name compared case-insensitively; not text from a tool or a person",
+}
+# Docstrings that mention NFKC without calling it (they describe runmap): tools.py (lines of _first_decoded, _strip_fragment, redact_layered)
+# and k1b/redaction.py (its module docstring and redact_untrusted). Both reach the text only through ``runmap`` (``undo``, ``redact_text``,
+# ``redact_untrusted``), so one change of ``runmap`` changes them too; pinned below.
+
+
+def test_every_place_in_src_that_normalises_or_case_folds_text_is_recorded():
+    """Round 1 left five places unlisted (tools.py, k1b/redaction.py, guard/egress.py, runtime/evidence.py) and the header wrong. The set of source
+    files that call ``normalize(`` or ``.casefold()`` (outside the fold and its table) is pinned to ``RECORDED_SIBLINGS``: a new one fails here and
+    must be added with its reason. ``tools.py`` and ``k1b/redaction.py`` name NFKC only in docstrings and call ``runmap`` for the work."""
+    found = set()
+    for path in SRC.rglob("*.py"):
+        rel = path.relative_to(SRC).as_posix()
+        if rel in ("guard/textnorm.py",) or path.name.startswith("_"):
+            continue
+        for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
+            if isinstance(node, ast.Call) and getattr(node.func, "attr", "") in (
+                "normalize",
+                "casefold",
+            ):
+                found.add(rel)
+    assert found == set(RECORDED_SIBLINGS), sorted(found ^ set(RECORDED_SIBLINGS))
+    for rel in ("tools.py", "k1b/redaction.py"):
+        text = (SRC / rel).read_text(encoding="utf-8")
+        assert "runmap" in text and "unicodedata.normalize" not in text, rel
+
+
+def test_tools_and_k1b_redaction_reach_the_text_through_runmap_only():
+    """``tools._decoded`` is ``runmap.undo`` and ``k1b.redaction`` redacts with ``runmap.redact_untrusted``: so the fix of the redaction views
+    (round 1 M1, the ASCII fast path) is the fix for both, and neither has a second NFKC to keep in step."""
+    tools_src = (SRC / "tools.py").read_text(encoding="utf-8")
+    assert "def _decoded(text: str) -> str:\n    return undo(text)" in tools_src
+    assert "runmap.redact_untrusted(" in (SRC / "k1b" / "redaction.py").read_text(encoding="utf-8")

@@ -9,7 +9,7 @@ pytest. Run from the repo root:
     uv run python tests/textnorm_mutants.py            # all mutants; exit 1 if any is not good
     uv run python tests/textnorm_mutants.py squeeze    # only mutants whose name contains the text
 
-226 mutants, in the order of the list: 28 re-pointed mutants of the earlier text-fold list (the killers moved with their tests), 12 new ones of the first package, 9 of fold2, 3 of fold3 (U+0345), 16 of fold4 (the spelling variants, the length check, the caseless form; the first of them is the fold2 mutant "no case fold before the marks are dropped" that fold3 removed and that is restored here), 9 of fix4 (the 15.1.0 data pin, the marks, the plain-words messages, the weight pre-check), 27 of P1b (the scan keys, the scan, the callers), 14 of fix5 (the marks-dropped views, the letter and digit name rules, the pin constant), 5 of fix6 (the script views, the minimum view length, the supplement merge), 30 of fix7 (the script view per script, the minimum per kind of view, the checks of the minimums, the proof rule, what loose loosens) and 27 of the P1b fix batch (the composed view of the redactor, the Mc and Sk keys, the digit and key minimums, the proof rule of EmptyView, the cache, the one required value of scan_views, the floor, the one-inserted-letter match and its limits). Two mutants of fix7 are gone: "a bool is a minimum" (the floor of 2 refuses a bool anyway, so it cannot change a result: equivalent) and "scan_views: the scripts are not checked" (scan_views no longer takes scripts). The dead branch of the old script view is an equivalent mutant (it could not change a result), so it has no entry. Tests with no
+231 mutants, in the order of the list: 28 re-pointed mutants of the earlier text-fold list (the killers moved with their tests), 12 new ones of the first package, 9 of fold2, 3 of fold3 (U+0345), 16 of fold4 (the spelling variants, the length check, the caseless form; the first of them is the fold2 mutant "no case fold before the marks are dropped" that fold3 removed and that is restored here), 9 of fix4 (the 15.1.0 data pin, the marks, the plain-words messages, the weight pre-check), 27 of P1b (the scan keys, the scan, the callers), 14 of fix5 (the marks-dropped views, the letter and digit name rules, the pin constant), 5 of fix6 (the script views, the minimum view length, the supplement merge), 30 of fix7 (the script view per script, the minimum per kind of view, the checks of the minimums, the proof rule, what loose loosens) and 27 of the P1b fix batch (the composed view of the redactor, the Mc and Sk keys, the digit and key minimums, the proof rule of EmptyView, the cache, the one required value of scan_views, the floor, the one-inserted-letter match and its limits). Two mutants of fix7 are gone: "a bool is a minimum" (the floor of 2 refuses a bool anyway, so it cannot change a result: equivalent) and "scan_views: the scripts are not checked" (scan_views no longer takes scripts). The dead branch of the old script view is an equivalent mutant (it could not change a result), so it has no entry. Tests with no
 mutant: the golden test, the differential rows, the manifest test, the notices test, the perf rows (they are outside every test list below:
 the runner copies no ``pyproject.toml`` or notices file) and the meta-tests.
 
@@ -33,9 +33,10 @@ SC = "tests/test_textnorm_scan.py"  # the killers of the DENY keys (P1b)
 SB = "tests/test_textnorm_siblings.py"  # the Mc, Lm and Sk code points on every scan path (P1b)
 FB = "tests/test_textnorm_fixbatch.py"  # the killers of the fix batch: the composed view, the Mc and Sk keys, the minimums, the cache, the choke point, the insertion match
 O = "tests/test_textnorm_order137.py"  # the killers of order 137: the strict scan_views, the registration check, the cache scope, the cap, the Japanese minimum, the Russian word
+R2 = "tests/test_textnorm_round2.py"  # the killers of the round 2 fix: the padded boundary, the settings check, the composed-form equivalence
 RO = "tests/test_textnorm_round1.py"  # the killers of the round 1 fix batch: the composed evidence view, the strict register, the chunked tripwire, the cache lock
 D = "tests/test_textnorm_differential.py"  # the differential rows and the golden test: they have no mutant, they run in the baseline
-TESTS = [T, G, SC, SB, FB, O, RO, D]  # killer files first; golden, differential last
+TESTS = [T, G, SC, SB, FB, O, RO, R2, D]  # killer files first; golden, differential last
 S = "src/hadavin_sdk/guard/"
 TN, CF, GEN = S + "textnorm.py", S + "_confusables.py", "tools/gen_confusables.py"
 RM, INJ = S + "runmap.py", S + "injection.py"
@@ -787,12 +788,15 @@ M = [
     mutant("app: build skips require_pinned_unidata", "src/hadavin_sdk/app.py",
         "        textnorm.require_pinned_unidata()\n", "        pass\n",
         "test_m10_app_build_calls_require_pinned_unidata_for_live_stages", "does not call require_pinned_unidata", test_file=RO),
-    mutant("evidence: the comparison does not compose", "src/hadavin_sdk/runtime/evidence.py",
-        "    return canon if canon.isascii() else unicodedata.normalize(\"NFC\", canon)\n", "    return canon\n",
-        "test_m1_a_decomposed_text_finds_a_precomposed_identifier_and_the_reverse", "0x903", test_file=RO),
+    mutant("evidence: contains does not compose the text", "src/hadavin_sdk/runtime/evidence.py",
+        "    hay = runmap.composed(text)\n", "    hay = runmap.canonical(text)\n",
+        "test_m1_a_decomposed_text_finds_a_precomposed_identifier_and_the_reverse", "COMPOSE-1", test_file=RO),
+    mutant("evidence: normalise does not compose", "src/hadavin_sdk/runtime/evidence.py",
+        "    return runmap.composed(text).casefold().strip()\n", "    return runmap.canonical(text).casefold().strip()\n",
+        "test_m1_a_decomposed_text_finds_a_precomposed_identifier_and_the_reverse", "COMPOSE-6", test_file=RO),
     mutant("evidence: grounded accepts a decomposed identifier", "src/hadavin_sdk/runtime/evidence.py",
-        "            _composed(value) != value\n", "            runmap.canonical(value).strip() == \"\"\n",
-        "test_m1_grounded_takes_a_precomposed_identifier_seen_decomposed_and_refuses_a_decomposed_one_as_p1a_did", "a decomposed identifier was accepted", test_file=RO),
+        "            runmap.composed(value) != value\n", "            runmap.canonical(value).strip() == \"\"\n",
+        "test_m1_grounded_takes_a_precomposed_identifier_seen_decomposed_and_refuses_a_decomposed_one_as_p1a_did", "GROUNDED-2", test_file=RO),
     mutant("runmap: the canonical view normalises every character", RM,
         "        if piece.isascii():", "        if False:",
         "test_m1_the_canonical_view_normalises_once_per_non_ascii_character_not_once_per_character", "NFKC calls", test_file=RO),
@@ -803,14 +807,26 @@ M = [
         "(narrowed or (coverage == _EXACT_ONLY and script_needles and not has_squeeze))", "(narrowed or coverage == _EXACT_ONLY)",
         "test_m3_the_corpus_of_made_up_ascii_secrets_is_never_refused_by_the_strict_default", "ordinary secrets were refused", test_file=RO),
     mutant("injection: the pieces do not overlap", INJ,
-        "        step = size - defaults.TEXTNORM_INJECTION_OVERLAP_CHARS\n", "        step = size\n",
+        "        if back >= low and _holds(text[end - back : end], need_kept, need_letters):\n", "        if back >= 1:\n",
         "test_m4_a_steering_phrase_anywhere_in_a_text_over_the_size_rule_is_found", "boundary", test_file=RO),
     mutant("injection: a text over the size rule is flagged whole again", INJ,
         "        size = defaults.TEXTNORM_INJECTION_CHUNK_CHARS\n", "        raise textnorm.TextTooLong(\"over\")\n        size = defaults.TEXTNORM_INJECTION_CHUNK_CHARS\n",
-        "test_m4_a_clean_text_over_the_size_rule_is_not_flagged", "True is False", test_file=RO),
+        "test_m4_a_clean_text_over_the_size_rule_is_not_flagged", "OVERCAP-CLEAN", test_file=RO),
+    mutant("injection: the new piece ignores the letters it holds", INJ,
+        "        if back >= low and _holds(text[end - back : end], need_kept, need_letters):\n", "        if back >= low:\n",
+        "test_a_phrase_padded_across_a_piece_boundary_is_found_whatever_the_padding", "HOSTILE-PAD", test_file=R2),
+    mutant("injection: a boundary with too few letters passes", INJ,
+        "    raise textnorm.TextTooLong(\n        f\"the {back} characters before a piece boundary", "    return end - low\n    raise textnorm.TextTooLong(\n        f\"the {back} characters before a piece boundary",
+        "test_a_pad_longer_than_the_largest_overlap_is_flagged_never_passed", "HOSTILE-LONG-PAD", test_file=R2),
+    mutant("injection: the settings are not checked", INJ,
+        "        _check_geometry()\n", "        pass\n",
+        "test_the_settings_of_the_chunked_read_are_checked", "GEOMETRY-UNCHECKED", test_file=R2),
+    mutant("injection: the second half of a halved piece starts at the halfway point", INJ,
+        "            yield from RegexDetector._fit(piece[second:])\n", "            yield from RegexDetector._fit(piece[cut:])\n",
+        "test_a_phrase_padded_across_the_halving_point_of_a_heavy_piece_is_found", "HOSTILE-HALVING", test_file=R2),
     mutant("mixed script: a spacing mark splits the word", TN,
         "            and unicodedata.category(ch) not in _WORD_JOINING\n", "",
-        "test_m16_a_spacing_mark_or_modifier_symbol_does_not_split_a_mixed_script_word", "0x903", test_file=RO),
+        "test_m16_a_spacing_mark_or_modifier_symbol_does_not_split_a_mixed_script_word", "MIXED-SCRIPT-MARK", test_file=RO),
     mutant("tables: the lazy tables are never kept", TN,
         "                _LAZY_TABLES = tables\n", "                pass\n",
         "test_m14_the_lazy_tables_are_built_once_and_still_reachable_by_their_old_names", "the lazy tables are never kept", test_file=RO),
