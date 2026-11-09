@@ -47,7 +47,7 @@ SPDX is read from the first lines of the upstream LICENSE file on the default br
 | boto3-stubs, botocore-stubs | 1.43.122 (2026-10-29) | MIT | "MIT License" (mypy_boto3_builder) | exact; the newest release was too young for the 7-day wait | type stubs only | n/a |
 
 Not used, and why:
-- **pyright 1.1.414** (MIT; the newest release on 2026-11-07 on both PyPI and npm) was trialled against mypy on `main` in basic mode: 113 errors on `src` (587 on everything) against 96 (284). mypy was chosen because it has fewer findings to clear, its pydantic plugin understands the settings models, and the stubs for boto3 are built for it. Raw outputs: `pyright-trial-*.txt`, `mypy-trial-*.txt`.
+- **pyright 1.1.414** (MIT; the newest release on 2026-11-07 on both PyPI and npm) was trialled against mypy on `main` in basic mode: 113 errors on `src` (587 on everything) against 96 (284). mypy was chosen because it has fewer findings to clear, its pydantic plugin understands the settings models, and the stubs for boto3 are built for it. The first trial's raw files were not kept; it was repeated on 2026-11-09 on `main` 0dabf1f with the stub packages installed and mypy without the pydantic plugin: pyright 117 errors, mypy 85 (the earlier 113 and 96 were counted before the stubs were installed, so the two sets are not the same measurement; the order, mypy with fewer, is unchanged). Raw outputs: `handover/evidence/cilint/pyright-trial-src.txt`, `handover/evidence/cilint/mypy-trial-src.txt` (src only; the 587 and 284 figures for everything were not repeated).
 - **shellcheck** and **yamllint** are GPL-3.0 and are not used. actionlint calls shellcheck when it finds it, so CI passes `-shellcheck=` to switch that off.
 - **lychee** and **ast-grep** were not added (no trial was run; see "Not verified"). If ast-grep is added later it must be 0.50.0 or newer, because 0.49 and older have two published advisories.
 - **semgrep** (LGPL-2.1) stays as it was.
@@ -116,8 +116,8 @@ Why 96 and 79: the trial on `main` (96) ran before the stub packages were instal
 
 - The GitHub Actions run itself (this was run locally on Linux only).
 - `bandit -ll` was run on `tools/` once locally (rc 0, no finding); it is not a CI step for that folder.
-- Python 3.13 and the macOS and Windows runners.
+- The macOS and Windows runners.
 - Licence texts (only declared metadata was read) and the wheel contents of the wrapper packages.
 - lychee and ast-grep (not trialled).
-- The full test suite and `stage_mutants` at the final head (queued).
+- `stage_mutants` and the perf tests at the final head (queued). The full test suite on Python 3.13 and 3.12 and the lint-set commands are recorded in `handover/evidence/cilint/gates.txt`.
 - Whether `lint-set` should be a required check (owner decision).
