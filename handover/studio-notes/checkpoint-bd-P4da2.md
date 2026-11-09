@@ -1,5 +1,3 @@
-# Checkpoint bd-P4da2 (builder, PR75 round-1 fixes)
-
-Done (uncommitted in worktree /home/user/build/B-P4da2 until the full suite ends): M1 constructor validation, M2 one kill-switch helper, M4 back-off pins (multiplier is valid in tenacity 9.2.1), M5 batched purge, M6 unweakened tests, agent-loop rounding rows, lock-order/SELECT-only/race proofs file, ceiling rows, suppressions removed (TRY004, type-ignore, S608, DTZ001, S106), uv.lock back to revision 5.
-Next: one full suite on PG16, commit, push, report.
-Blockers: none. Stray processes: pg cluster bpa2 (port 56175), stopped at the end.
+# Checkpoint bd-P4da2 pass 2 (30 min)
+Done (uncommitted in /home/user/build/B-P4da2): vii-a/b/c lock rows, 8-process spawn, SIGKILL blocked and after-commit, 50-repeat settle race and deadlock stress with on_retry, floor(cap/amount) count, N6 T4 (5000/2500/6000), B7 db-clock c1/c2 (both patched clocks), B5 10,000 pairs, e1-e3, r1-r4. 23 proofs-file tests and 44 contract rows pass on PG16.
+Next: B4b(c) memory lone caller, B8 rows (tests/migration_schemas.py is created by P3a, not merged: rows built against explicit SQL files), mutants (b15 + i/w/b), M3/M5/M6 fail-before, bandit, commit, push, report.
