@@ -1,9 +1,10 @@
 # bd-P1a-fix7 report (builder, Sonnet 5.5), PR 63 branch core/P1a
 
-New head: c9fa644 (pushed normally to origin/core/P1a; was bf955e9). Evidence files: handover/evidence/PR63/c9fa644/builder-*.txt (not committed).
+New head: 27ae996 (pushed normally to origin/core/P1a; was bf955e9; c9fa644 is the commit the full suite ran on, 27ae996 only changes one test so the mutation copy passes). Evidence files: handover/evidence/PR63/c9fa644/builder-*.txt (not committed).
 
 ## FAILED / UNCERTAIN / NOT RUN (first)
-- NOT RUN: the 10 new mutants and the 3 re-pointed ones were NOT yet run against their killers. The mutant job sat in the heavy-slot queue (all 3 slots held by other suites) from 07:55 to the end of my time box. Command: `python tests/textnorm_mutants.py "deny:" "mixed:" "pin:" "words:" "tag:" "fold: mixed script"` through heavy.sh, log /home/user/build/b-P1a-fix7/mut-new.txt (if it exists when you read this, read it; it may still be running). I derived the killers by reading the assertions, not by seeing them kill. Treat the 8+2 kill claim as UNVERIFIED. The evidence runner must run the full `tests/textnorm_mutants.py` once.
+- NOT RUN: NO mutant has been run on the new list. Attempt 1 was killed by its own 1500 s timeout while waiting for a heavy slot. Attempt 2 (08:27) failed in the baseline with "the unmutated copy does not pass its tests": my new docstring test read CHANGELOG.md, which the mutation copy lacks. Fixed in 27ae996 (verified only by running the three test files in a hand-made copy of that shape: 658 passed, 9 xfailed). The mutant run itself was not repeated (4 min baseline plus mutants, past my time box). The killers are derived by reading assertions, not seen killing: the 8+2 kill claim is UNVERIFIED. Evidence runner: run `python tests/textnorm_mutants.py` (all 138) once.
+- Full suite (10620 passed) ran on c9fa644, not on 27ae996 (one test file changed after; that file ran: the docstring test passes, ruff clean).
 - NOT RUN: perf rows (`-m perf`, must run alone), including the new row and the before/after ratio against bf955e9. Not done.
 - NOT RUN: py3.12 full suite. Run on 3.12: only tests/test_textnorm_differential.py (536 passed, 9 xfailed; golden 15.0.0 section is genuine, made on system Python 3.12.3). 3.12 packages were installed with `uv pip install --target` outside the repo.
 - IMPOSSIBLE NOW (F-R8, third party): the Unicode 18.0.0 look-alike counts need unicode.org, which the proxy refuses (403); no newer Python. Next step: someone with access runs the count and fills the CHANGELOG line (recorded there).
@@ -30,4 +31,4 @@ The handover branch; no GitHub setting changed; nothing merged; no spend.
 
 R-numbers: followed R448 rung rule only as the ticket states it (ban is config, glue only); least privilege / no new identity; cited from the ticket, not re-read from the bible (bible file not opened by me: NOT CHECKED).
 
-Agents/shells: started 1 queued heavy job (mutant run) still waiting for a slot; I leave it, it is mine; it stops itself or via the 1500 s timeout.
+Agents/shells: none left running (queued mutant job timed out; the failed attempt exited).
