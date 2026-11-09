@@ -1,0 +1,9 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+Resolved 101 packages in 1ms
+   Building hadavin-sdk @ file:///home/user/build/EV-PR73
+      Built hadavin-sdk @ file:///home/user/build/EV-PR73
+Prepared 1 package in 139ms
+Uninstalled 1 package in 1ms
+Installed 1 package in 2ms
+ ~ hadavin-sdk==0.1.0 (from file:///home/user/build/EV-PR73)
+exit=0

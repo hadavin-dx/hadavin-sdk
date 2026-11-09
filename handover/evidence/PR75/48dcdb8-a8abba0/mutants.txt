@@ -1,0 +1,105 @@
+== b15 lock order inverted (run last), vii-a+vii-b+vii-c: KILLED (rc=1)
+   FAILED tests/contracts/test_store_reserve_proofs_pg.py::test_vii_a_a_reserve_stopped_at_the_run_row_has_not_touched_the_counter_rows
+   1 failed, 34 deselected in 0.49s
+== b15-vii-b only: KILLED (rc=1)
+   FAILED tests/contracts/test_store_reserve_proofs_pg.py::test_vii_b_a_reserve_stopped_at_the_day_row_already_holds_the_run_row
+   1 failed, 36 deselected in 0.48s
+== b15-vii-a only: KILLED (rc=1)
+   FAILED tests/contracts/test_store_reserve_proofs_pg.py::test_vii_a_a_reserve_stopped_at_the_run_row_has_not_touched_the_counter_rows
+   1 failed, 36 deselected in 0.49s
+== b15-settle/release order inverted (vii-c): KILLED (rc=1)
+   FAILED tests/contracts/test_store_reserve_proofs_pg.py::test_vii_c_a_settle_stopped_at_the_run_row_holds_only_its_reservation_row
+   1 failed, 36 deselected in 0.48s
+== b11c release/settle guard dropped (counter may go negative): KILLED (rc=1)
+   FAILED tests/contracts/test_store_reserve.py::test_r1_to_r4_a_release_with_a_damaged_counter_changes_nothing_and_works_after_repair[postgres-run-open]
+   1 failed, 8 passed, 85 deselected in 5.16s
+== b11d missing/damaged counter on close not an error: KILLED (rc=1)
+   FAILED tests/contracts/test_store_reserve.py::test_a_damaged_counter_refuses_a_lowering_and_leaves_the_row_as_it_was[postgres]
+   1 failed, 1 passed, 81 deselected in 0.51s
+== b28b ceiling applied to a settle's excess: KILLED (rc=1)
+   FAILED tests/contracts/test_store_reserve.py::test_e3_after_a_settle_past_the_ceiling_only_lowering_writes_still_work[postgres-run]
+   1 failed, 3 passed, 95 deselected in 0.47s
+== b28c per-call excess bound restored (max(reserved,1)): KILLED (rc=1)
+   FAILED tests/contracts/test_store_reserve.py::test_e1_e2_a_settle_above_the_reserved_amount_books_the_full_excess_on_all_three_counters[postgres-0.5-5.0-open]
+   1 failed, 10 passed, 81 deselected in 0.45s
+== b17 kill-switch read takes FOR SHARE: KILLED (rc=1)
+   FAILED tests/contracts/test_store_reserve_proofs_pg.py::test_reserve_settle_and_release_work_on_a_login_with_select_only_on_the_kill_switch
+   1 failed, 36 deselected in 0.40s
+== b18c deadline check removed from _exec: KILLED (rc=1)
+   FAILED tests/contracts/test_store_reserve_proofs_pg.py::test_t4_a_reserve_that_waits_at_two_rows_runs_out_of_budget_before_the_month_statement
+   1 failed, 36 deselected in 6.43s
+== b13 kill switch not checked (postgres): KILLED (rc=1)
+   FAILED tests/contracts/test_store_reserve.py::test_the_kill_switch_refuses_a_new_reserve_and_a_replay_but_not_settle_or_release[postgres]
+   1 failed, 1 passed, 99 deselected in 0.48s
+== b13m kill switch not checked (memory): KILLED (rc=1)
+   FAILED tests/contracts/test_store_reserve.py::test_the_kill_switch_refuses_a_new_reserve_and_a_replay_but_not_settle_or_release[memory]
+   1 failed, 99 deselected in 0.08s
+== b16 sweep age uses the Python clock: KILLED (rc=1)
+   FAILED tests/contracts/test_store_reserve_proofs_pg.py::test_the_sweep_and_the_day_bound_follow_the_database_clock_not_the_python_clock[clock-ahead]
+   1 failed, 35 deselected in 0.43s
+== b16b sweep without ORDER BY: KILLED (rc=1)
+   FAILED tests/contracts/test_store_reserve_proofs_pg.py::test_the_sweep_takes_the_oldest_first_and_breaks_ties_by_id
+   1 failed, 36 deselected in 0.53s
+== b16c sweep result not sorted (RETURNING order): KILLED (rc=1)
+   FAILED tests/contracts/test_store_reserve_proofs_pg.py::test_the_sweep_takes_the_oldest_first_and_breaks_ties_by_id
+   1 failed, 6 passed, 131 deselected in 24.50s
+== b22 day bound from the Python clock: KILLED (rc=1)
+   FAILED tests/contracts/test_store_reserve_proofs_pg.py::test_the_sweep_and_the_day_bound_follow_the_database_clock_not_the_python_clock[clock-ahead]
+   1 failed, 35 deselected in 0.39s
+== M5 purge unbatched: KILLED (rc=1)
+   FAILED tests/contracts/test_store_writes_pg.py::test_M5_the_statements_are_batches_of_the_configured_size
+   1 failed, 1 passed, 94 deselected in 0.68s
+== r2-c meta text not scanned (old: memory accepts NUL/surrogate): KILLED (rc=1)
+   FAILED tests/contracts/test_store_reserve.py::test_meta_text_is_refused_the_same_way_on_both_stores[memory-nul]
+   1 failed, 97 deselected in 0.13s
+== r2-a reserve reads self._kill.on directly (old: no single helper): KILLED (rc=1)
+   FAILED tests/contracts/test_memory_lone_caller.py::test_reserve_and_get_kill_switch_read_the_switch_through_the_one_helper
+   1 failed, 6 deselected in 0.08s
+== r2-e memory counters move before the row is built (old): KILLED (rc=1)
+   FAILED tests/contracts/test_memory_lone_caller.py::test_a_failure_while_building_the_row_leaves_no_counter_moved
+   1 failed, 6 deselected in 0.06s
+== r2-d price_cost catches InvalidOperation only (old): KILLED (rc=1)
+   FAILED tests/contracts/test_cost_rounding.py::test_price_cost_translates_every_decimal_error_to_value_error
+   1 failed, 34 deselected in 0.06s
+== r2-d2 fake model prices inline, not through price_cost (old): KILLED (rc=1)
+   FAILED tests/contracts/test_cost_rounding.py::test_the_fake_model_prices_through_price_cost_and_refuses_a_bad_price
+   1 failed, 35 deselected in 0.06s
+== r2-e trigger lets open->settled carry expired_at (old): KILLED (rc=1)
+   FAILED tests/contracts/test_store_reserve_pg.py::test_open_to_settled_or_released_keeps_expired_at_null[settled]
+   1 failed, 77 deselected in 0.41s
+== r2-e sweep claims rows without status guard / skip locked removed: SURVIVED (rc=0)
+   3 passed, 34 deselected in 0.70s
+== i10a no rounding: KILLED (rc=1)
+   FAILED tests/contracts/test_cost_rounding.py::test_reply_rounds_the_cost_up[a1]
+   1 failed in 0.07s
+== i10b ROUND_DOWN: KILLED (rc=1)
+   FAILED tests/contracts/test_cost_rounding.py::test_reply_rounds_the_cost_up[a1]
+   1 failed in 0.08s
+== i10c ROUND_HALF_UP: KILLED (rc=1)
+   FAILED tests/contracts/test_cost_rounding.py::test_reply_rounds_the_cost_up[a1]
+   1 failed in 0.08s
+== i10d ROUND_HALF_EVEN: KILLED (rc=1)
+   FAILED tests/contracts/test_cost_rounding.py::test_reply_rounds_the_cost_up[a1]
+   1 failed in 0.07s
+== i10e ROUND_HALF_DOWN: KILLED (rc=1)
+   FAILED tests/contracts/test_cost_rounding.py::test_reply_rounds_the_cost_up[a1]
+   1 failed in 0.12s
+== i10f ROUND_UP then always add one unit: KILLED (rc=1)
+   FAILED tests/contracts/test_cost_rounding.py::test_reply_rounds_the_cost_up[a1]
+   1 failed in 0.10s
+== i10g quantize at 7 decimals: KILLED (rc=1)
+   FAILED tests/contracts/test_cost_rounding.py::test_reply_rounds_the_cost_up[a1]
+   1 failed in 0.06s
+== i10g2 quantize at 9 decimals: KILLED (rc=1)
+   FAILED tests/contracts/test_cost_rounding.py::test_reply_rounds_the_cost_up[a1]
+   1 failed in 0.07s
+== i10h tiny nonzero cost rounds to zero: KILLED (rc=1)
+   FAILED tests/contracts/test_cost_rounding.py::test_reply_rounds_the_cost_up[a7]
+   1 failed, 6 passed in 0.11s
+== i10i ROUND_05UP: KILLED (rc=1)
+   FAILED tests/contracts/test_cost_rounding.py::test_reply_rounds_the_cost_up[a1]
+   1 failed in 0.08s
+== i10j value passes the context before quantize: KILLED (rc=1)
+   FAILED tests/contracts/test_cost_rounding.py::test_helper_keeps_the_last_digit_of_a_29_digit_value
+   1 failed, 16 passed in 0.09s
+done rc=0

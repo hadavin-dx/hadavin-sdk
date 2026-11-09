@@ -1469,3 +1469,9 @@ CHECKED BY ME: builder report saved at handover/reports/PR87-followup-builder-re
 NOT RUN: py3.12, independent evidence at the merged head, fresh reviewers, ledger row (ORDER 194 (A)5).
 DECISION FOR LEAD: open the PR now (it is finished work from a builder started before the freeze) or wait for "GO core". DEFAULT if no answer in 30 min: wait, no PR; reason: ORDER 198 says start no new PRs on core and the change touches run identity (security path), so it should not move without the lead.
 NEXT: after "GO core": open PR, evidence runner (py3.12 + 3.13, Postgres), correctness + adversarial reviewers, ledger rows.
+
+## q413 (09:40Z) PR84 round-1 fixes pushed (69b69c6); round 2 NOT started (core freeze, ORDER 198)
+CHECKED BY ME: builder report saved at handover/reports/PR84-fix-builder-report.md; head 69b69c6 on core/ci-evidence. I ran nothing on it.
+NOT RUN: independent evidence at 69b69c6, round 2 reviewers, a real GitHub check list for this head, a dispatched Evidence workflow run (nobody has ever run evidence.yml on GitHub).
+DECISIONS FOR LEAD (defaults if no answer in 30 min; default = no READY, keep waiting): (1) owner accepts one remaining `noqa: S603` in tools/evidence_step.py (ruff needs the argument list written out at the call) or allows a config exception; default: not accepted, PR84 stays not READY. (2) someone dispatches Evidence once for 69b69c6 and attaches run id + artifact; default: PR84 not READY until that exists. (3) removal of the dead `HADAVIN_REQUIRE_PINNED_UNIDATA` line from ci.yml (no code reads it; grep over the repo): default: keep the removal, it is stated in the PR text.
+NEXT: after "GO core": evidence runner on 69b69c6, round 2 reviewers (2 rounds cap for this path), real GitHub list, then READY.
