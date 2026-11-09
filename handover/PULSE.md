@@ -1,1 +1,1 @@
-09:55Z | agents: ORDER 199 demo-only Linux runs in /tmp/dpld | core freeze stays | evid 63 rerun finishing | evid shells: 63,80, | unpushed: none | refreshed every 60 s by a bounded script (ends 11:05Z); detail in HEARTBEAT.md
+09:56Z | agents: ORDER 199 demo-only Linux runs in /tmp/dpld | core freeze stays | evid 63 rerun finishing | evid shells: 63,80, | unpushed: none | refreshed every 60 s by a bounded script (ends 11:06Z); detail in HEARTBEAT.md
