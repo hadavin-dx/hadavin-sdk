@@ -772,3 +772,4 @@ PULSE 2026-11-09T14:59:53Z agents: none running (ListAgents: none). shells: puls
 PULSE 2026-11-09T15:05:10Z agents: none running (ListAgents: none). shells: pulse_refresh2.sh. A+F integration done: fixture overlap (3 differ, F newer) reported, A test assuming no demo_only fixed, patch regenerated.
 PULSE 2026-11-09T15:05:42Z agents: 1 running (a158bb33303dbe217 egm-design, WP-A pass-5 delta review r6, started 15:05:42Z, expect ~15:20Z). shells: pulse_refresh2.sh.
 PULSE 2026-11-09T15:09:24Z agents: none running (a158bb33303dbe217 r6 reviewer handed back 0 Blocker/0 Major/3 Nit, report saved, closed). shells: pulse_refresh2.sh. ORDER 209 done: patch-portal-A2.diff + README-A2.md pushed (full vs fix7, apply-check OK).
+PULSE 2026-11-09T15:10:17Z agents: none running (ListAgents: none). shells: pulse_refresh2.sh pid 10898; full pytest A8 on the final A2 tree (mine, started 15:10:17Z). No new lead orders after 209.
