@@ -841,3 +841,6 @@ PR72 0ae044b: builder done; evidence run waits for evid.sh fix (inv-trunc-66), t
 | a02b9142 | P1d plan review r7 egm-design | 07:00Z | +20m | running | save report, resolve |
 | a4aa6e54 | P1d plan review r7 implementation-readiness | 07:00Z | +20m | running | save report |
 | ab279cf6 | P1d plan review r7 zoom-out | 07:00Z | +20m | running | save report |
+| a6a48de0 | P1-rev2 plan review egm-design | 07:03Z | +20m | running | save report |
+| a49dacef | P1-rev2 plan review egm-codebase-details | 07:03Z | +20m | running | save report |
+| (closed) | a52bfc66 cilint b3 done, ab279cf6 zoom-out done, a3a8a618 P1 drafter done, af81872a P1d rev7 done | 07:03Z | | | |
