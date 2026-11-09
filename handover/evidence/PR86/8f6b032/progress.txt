@@ -1,3 +1,4 @@
 ruff-check exit=0 06:44:50
 ruff-format exit=0 06:44:50
 bandit exit=0 06:44:52
+full-312 ..exit=1 06:51:15
