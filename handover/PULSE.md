@@ -1,1 +1,1 @@
-11:56Z | agents: none (dpld gate shell gate7.sh running); core frozen | evid shells: none | unpushed: none | refreshed every 60 s by a bounded script (ends 13:06Z); detail in HEARTBEAT.md
+11:57Z | agents: af7603ec GF builder final_gate.sh (ORDER 204 part 2); gate7.sh pytest x3 shell; core frozen | evid shells: none | unpushed: none | refreshed every 60 s by a bounded script (ends 13:07Z); detail in HEARTBEAT.md
