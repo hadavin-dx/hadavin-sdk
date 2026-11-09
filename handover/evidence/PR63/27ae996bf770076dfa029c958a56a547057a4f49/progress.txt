@@ -1,0 +1,9 @@
+ruff-check exit=0 08:47:56
+ruff-format exit=0 08:47:56
+bandit exit=0 08:47:58
+full-312 SUMMARY tests=11083 failed=1 errors=0 skipped=10 passed=11072 pytest_exit=1 09:01:29
+ruff-check exit=0 09:05:45
+ruff-format exit=0 09:05:45
+bandit exit=0 09:05:48
+full-313 SUMMARY tests=11083 failed=0 errors=0 skipped=10 passed=11073 pytest_exit=0 09:10:18
+ALLDONE

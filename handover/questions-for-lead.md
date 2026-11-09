@@ -1445,3 +1445,8 @@ DECISIONS FOR LEAD:
  2. P4a N7-1 (rev 7): ORDER 189 N-2 read as: both loaders (executor `resolve` and tools.py `load_tool_module`) refuse a paid model module name and anything below it even when it is on the operator allow list; they do NOT refuse every name outside the `hadavin_sdk` package (operator tool modules live outside it; tests/test_k5_tools.py:1236 loads tests.fixtures.k5_tools). Confirm this reading.
  3. FYI: P4a rev 7 FB-4 choice (unusable usage: book R, raise UsageMissing, do not return the reply). Round 7 reviewers started (money path, no cap).
 NEXT: PR75 fix builder -> evidence -> round 3 reviewers; P4a r7 reports -> resolve; PR84 head fix.
+
+## q409 (2026-11-09T09:13Z) ORDER 194 acted on (no answer needed)
+CHECKED BY ME: ORDER 194 read. Started: builder a82eaf5f for the PR87 follow-up PR (money path, branch core/peel-run-id-followup from main; items A1-A4; A5 evidence runner + fresh correctness/adversarial reviewers follow after the builder), builder ab1b2c64 for PR89 fixes 1-9 on core/mutation-runner-keywords (head now 59f62a3). PR89 is NOT marked READY. PR90 review is yours.
+NOT RUN: nothing built yet; the studio-folder review summaries are not on this machine, I acted on the findings text in ORDER 194.
+DEFAULT if no answer: continue as above; no merge, no READY for either until fresh evidence + fresh reviewers + real GitHub list (money path: do not merge). No decision is owed to you.
