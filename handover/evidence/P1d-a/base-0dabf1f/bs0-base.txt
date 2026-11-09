@@ -38,6 +38,9 @@ Q16	card	"?password=<SECRET_1>&cd34\"x=1 y"	FIT
 Q16	model	"?password=<SECRET_1>&cd34\"x=1 y"	FIT
 Q17	model	"?password=<SECRET_1>&amp;cd34\"x=1 y"	FIT
 KV1	model	"password=<SECRET_1>&cd34ef56gh78ij and later <SECRET_1>&cd34ef56gh78ij"	FIT
+K41	card	"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaapassword=hunter22 x"	FIT
+K41	model	"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaapassword=hunter22 x"	FIT
+K41q	model	"?aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaapassword=ab&cd34ef56 x"	FIT
 D3a	defang	"NEW_SURFACE: defang_text"	FIT
 D3b	defang	"NEW_SURFACE: defang_text"	FIT
 D3c	defang	"NEW_SURFACE: defang_text"	FIT

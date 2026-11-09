@@ -1,6 +1,6 @@
 base 2742c1bfe510bfb13cfac5d3424bac3d8d6324c5
-FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF............................ [ 77%]
-..F.....FFFFFFFFFFFFF                                                    [100%]
+FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF......................... [ 75%]
+.....F.....FFFFFFFFFFFFF                                                 [100%]
 =================================== FAILURES ===================================
 ______________________________ test_row_H26_card _______________________________
 
@@ -597,6 +597,51 @@ E             - password=<SECRET_1> and later <SECRET_1>
 E             + password=<SECRET_1>&cd34ef56gh78ij and later <SECRET_1>&cd34ef56gh78ij
 
 tests/test_p1d_a_rows.py:50: AssertionError
+______________________________ test_row_K41_card _______________________________
+
+    def test():
+        out, ctx = C.run_entry(row.id, entry, row.input)
+        want = expected_after(row, entry)
+        if want is not None:
+>           assert out == want, f"ROW {row.id} {entry}: expected {want!r}, got {out!r}"
+E           AssertionError: ROW K41 card: expected 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaapassword=<SECRET_1> x', got 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaapassword=hunter22 x'
+E           assert 'aaaaaaaaaaaa...rd=hunter22 x' == 'aaaaaaaaaaaa...=<SECRET_1> x'
+E             
+E             Skipping 40 identical leading characters in diff, use -v to show
+E             - apassword=<SECRET_1> x
+E             + apassword=hunter22 x
+
+tests/test_p1d_a_rows.py:50: AssertionError
+______________________________ test_row_K41_model ______________________________
+
+    def test():
+        out, ctx = C.run_entry(row.id, entry, row.input)
+        want = expected_after(row, entry)
+        if want is not None:
+>           assert out == want, f"ROW {row.id} {entry}: expected {want!r}, got {out!r}"
+E           AssertionError: ROW K41 model: expected 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaapassword=<SECRET_1> x', got 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaapassword=hunter22 x'
+E           assert 'aaaaaaaaaaaa...rd=hunter22 x' == 'aaaaaaaaaaaa...=<SECRET_1> x'
+E             
+E             Skipping 40 identical leading characters in diff, use -v to show
+E             - apassword=<SECRET_1> x
+E             + apassword=hunter22 x
+
+tests/test_p1d_a_rows.py:50: AssertionError
+_____________________________ test_row_K41q_model ______________________________
+
+    def test():
+        out, ctx = C.run_entry(row.id, entry, row.input)
+        want = expected_after(row, entry)
+        if want is not None:
+>           assert out == want, f"ROW {row.id} {entry}: expected {want!r}, got {out!r}"
+E           AssertionError: ROW K41q model: expected '?aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaapassword=<SECRET_1> x', got '?aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaapassword=ab&cd34ef56 x'
+E           assert '?aaaaaaaaaaa...ab&cd34ef56 x' == '?aaaaaaaaaaa...=<SECRET_1> x'
+E             
+E             Skipping 41 identical leading characters in diff, use -v to show
+E             - apassword=<SECRET_1> x
+E             + apassword=ab&cd34ef56 x
+
+tests/test_p1d_a_rows.py:50: AssertionError
 _____________________________ test_row_D3a_defang ______________________________
 
     def test():
@@ -792,7 +837,7 @@ _______________________________ test_row_T1_card _______________________________
 
 tests/test_p1d_a_rows.py:51: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-tests/fixtures/p1d_cases.py:592: in check_extra
+tests/fixtures/p1d_cases.py:609: in check_extra
     want = new_surface(gate, "defang_text")(returns[1])
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
@@ -967,16 +1012,6 @@ E                 ?     + +
 
 tests/test_p1d_a_rows.py:140: AssertionError
 ==================================== PASSES ====================================
-============================== slowest durations ===============================
-0.37s call     tests/test_p1d_a_rows.py::test_stored_card_round_trip
-0.18s call     tests/test_p1d_a_rows.py::test_pre_redaction_differential
-0.17s call     tests/test_p1d_a_rows.py::test_defang_text_only_rewrites_dots
-0.17s call     tests/test_p1d_a_rows.py::test_defang_text_idempotent
-0.10s call     tests/test_p1d_a_rows.py::test_card_masks_what_model_masks
-0.02s call     tests/test_p1d_a_rows.py::test_sanitise_text_default_unchanged
-0.01s call     tests/test_p1d_a_rows.py::test_row_L9_slack
-
-(272 durations < 0.005s hidden.  Use -vv to show these durations.)
 =========================== short test summary info ============================
 PASSED tests/test_p1d_a_rows.py::test_row_Q1_model
 PASSED tests/test_p1d_a_rows.py::test_row_Q2_card
@@ -1051,6 +1086,9 @@ FAILED tests/test_p1d_a_rows.py::test_row_Q16_card - AssertionError: ROW Q16 ...
 FAILED tests/test_p1d_a_rows.py::test_row_Q16_model - AssertionError: ROW Q16...
 FAILED tests/test_p1d_a_rows.py::test_row_Q17_model - AssertionError: ROW Q17...
 FAILED tests/test_p1d_a_rows.py::test_row_KV1_model - AssertionError: ROW KV1...
+FAILED tests/test_p1d_a_rows.py::test_row_K41_card - AssertionError: ROW K41 ...
+FAILED tests/test_p1d_a_rows.py::test_row_K41_model - AssertionError: ROW K41...
+FAILED tests/test_p1d_a_rows.py::test_row_K41q_model - AssertionError: ROW K4...
 FAILED tests/test_p1d_a_rows.py::test_row_D3a_defang - tests.fixtures.p1d_cas...
 FAILED tests/test_p1d_a_rows.py::test_row_D3b_defang - tests.fixtures.p1d_cas...
 FAILED tests/test_p1d_a_rows.py::test_row_D3c_defang - tests.fixtures.p1d_cas...
@@ -1071,4 +1109,4 @@ FAILED tests/test_p1d_a_rows.py::test_pre_redaction_differential - AttributeE...
 FAILED tests/test_p1d_a_rows.py::test_no_link_outside_code_on_card - Attribut...
 FAILED tests/test_p1d_a_rows.py::test_card_masks_what_model_masks - Assertion...
 FAILED tests/test_p1d_a_rows.py::test_stored_card_round_trip - AssertionError...
-58 failed, 35 passed in 1.58s
+61 failed, 35 passed in 1.37s
