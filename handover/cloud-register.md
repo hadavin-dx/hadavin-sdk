@@ -832,3 +832,4 @@ rv-P1d-r3-design closed 05:32Z
 | 06:41Z | builder ci-lint-set batch 3 (sonnet) | worktree /home/user/build/B-cilint-b3 | 90 min box | running |
 | 06:46Z | ORDER 173 batch | a: inv-trunc-66 (PR66 + truncated pytest logs 66/74/75); b: bd-P4da2 (PR75 2B/6M); d: inv-AKG2-repro | exp 40-60 min | starting |
 | 06:52Z | rv-63r2-d/c, rv-76/77/78/79 (d+c) | result reviewers on snapshots /home/user/build/snap/{63-bf955e9,76-e323ac7,77-8b2b716,78-4a0976f,79-8cc2021} | exp 20 min | starting |
+| 06:52Z | aa93d0e7602ac5cc2 | Drafter: P1d-b/P1d-c revision per q381 (opus) | exp 40 min | running |
