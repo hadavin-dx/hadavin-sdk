@@ -1,0 +1,50 @@
+BASELINE tree 494244e start 10:14:52 cores=4 Mem:           16086        1319        2380          93       13050       14766
+[keyed] same n=500: n=500 status={201: 1, 200: 484, 'ConnectionResetError': 15} 5xx=0 client_errors={'ConnectionResetError': 15} max_latency_s=2.62
+   desk_counts={'received': 485, 'new': 1, 'duplicate': 484, 'review': 0, 'open': 0, 'rejected_envelopes': 0, 'pending_followups': 0, 'expected_match': None, 'ok': None}
+   followup_states= {'sent': 1} open_receipts= 0
+   received=485 vs new+dup+review+rejected=485 (failed/unknown shown in open/pending) lost_receipt=0
+   crm_rows=1 distinct_leads_in_crm=1 max_rows_per_lead=1; emails=1 distinct_recipients=1 max_emails_per_lead=1; expected_leads=1
+--- done keyed same 500 10:14:58
+[keyed] same n=1000: n=1000 status={201: 1, 200: 725, 'ConnectionResetError': 274} 5xx=0 client_errors={'ConnectionResetError': 274} max_latency_s=3.22
+   desk_counts={'received': 726, 'new': 1, 'duplicate': 725, 'review': 0, 'open': 0, 'rejected_envelopes': 0, 'pending_followups': 0, 'expected_match': None, 'ok': None}
+   followup_states= {'sent': 1} open_receipts= 0
+   received=726 vs new+dup+review+rejected=726 (failed/unknown shown in open/pending) lost_receipt=0
+   crm_rows=1 distinct_leads_in_crm=1 max_rows_per_lead=1; emails=1 distinct_recipients=1 max_emails_per_lead=1; expected_leads=1
+--- done keyed same 1000 10:15:05
+[keyed] diff n=500: n=500 status={201: 460, 'ConnectionResetError': 40} 5xx=0 client_errors={'ConnectionResetError': 40} max_latency_s=2.89
+   desk_counts={'received': 460, 'new': 460, 'duplicate': 0, 'review': 0, 'open': 0, 'rejected_envelopes': 0, 'pending_followups': 0, 'expected_match': None, 'ok': None}
+   followup_states= {'sent': 460} open_receipts= 0
+   received=460 vs new+dup+review+rejected=460 (failed/unknown shown in open/pending) lost_receipt=0
+   crm_rows=460 distinct_leads_in_crm=460 max_rows_per_lead=1; emails=460 distinct_recipients=460 max_emails_per_lead=1; expected_leads=500
+--- done keyed diff 500 10:15:11
+[keyed] diff n=1000: n=1000 status={201: 828, 'ConnectionResetError': 172} 5xx=0 client_errors={'ConnectionResetError': 172} max_latency_s=4.63
+   desk_counts={'received': 828, 'new': 828, 'duplicate': 0, 'review': 0, 'open': 0, 'rejected_envelopes': 0, 'pending_followups': 0, 'expected_match': None, 'ok': None}
+   followup_states= {'sent': 828} open_receipts= 0
+   received=828 vs new+dup+review+rejected=828 (failed/unknown shown in open/pending) lost_receipt=0
+   crm_rows=828 distinct_leads_in_crm=828 max_rows_per_lead=1; emails=828 distinct_recipients=828 max_emails_per_lead=1; expected_leads=1000
+--- done keyed diff 1000 10:15:19
+[blind] same n=500: n=500 status={200: 435, 201: 1, 'ConnectionResetError': 64} 5xx=0 client_errors={'ConnectionResetError': 64} max_latency_s=2.40
+   desk_counts={'received': 436, 'new': 1, 'duplicate': 435, 'review': 0, 'open': 0, 'rejected_envelopes': 0, 'pending_followups': 0, 'expected_match': None, 'ok': None}
+   followup_states= {'sent': 1} open_receipts= 0
+   received=436 vs new+dup+review+rejected=436 (failed/unknown shown in open/pending) lost_receipt=0
+   crm_rows=1 distinct_leads_in_crm=1 max_rows_per_lead=1; emails=1 distinct_recipients=1 max_emails_per_lead=1; expected_leads=1
+--- done blind same 500 10:15:25
+[blind] same n=1000: n=1000 status={201: 1, 200: 854, 'ConnectionResetError': 145} 5xx=0 client_errors={'ConnectionResetError': 145} max_latency_s=2.93
+   desk_counts={'received': 855, 'new': 1, 'duplicate': 854, 'review': 0, 'open': 0, 'rejected_envelopes': 0, 'pending_followups': 0, 'expected_match': None, 'ok': None}
+   followup_states= {'sent': 1} open_receipts= 0
+   received=855 vs new+dup+review+rejected=855 (failed/unknown shown in open/pending) lost_receipt=0
+   crm_rows=1 distinct_leads_in_crm=1 max_rows_per_lead=1; emails=1 distinct_recipients=1 max_emails_per_lead=1; expected_leads=1
+--- done blind same 1000 10:15:31
+[blind] diff n=500: n=500 status={201: 447, 'ConnectionResetError': 53} 5xx=0 client_errors={'ConnectionResetError': 53} max_latency_s=2.94
+   desk_counts={'received': 447, 'new': 447, 'duplicate': 0, 'review': 0, 'open': 0, 'rejected_envelopes': 0, 'pending_followups': 0, 'expected_match': None, 'ok': None}
+   followup_states= {'sent': 447} open_receipts= 0
+   received=447 vs new+dup+review+rejected=447 (failed/unknown shown in open/pending) lost_receipt=0
+   crm_rows=447 distinct_leads_in_crm=447 max_rows_per_lead=1; emails=447 distinct_recipients=447 max_emails_per_lead=1; expected_leads=500
+--- done blind diff 500 10:15:37
+[blind] diff n=1000: n=1000 status={201: 781, 'ConnectionResetError': 219} 5xx=0 client_errors={'ConnectionResetError': 219} max_latency_s=4.29
+   desk_counts={'received': 781, 'new': 781, 'duplicate': 0, 'review': 0, 'open': 0, 'rejected_envelopes': 0, 'pending_followups': 0, 'expected_match': None, 'ok': None}
+   followup_states= {'sent': 781} open_receipts= 0
+   received=781 vs new+dup+review+rejected=781 (failed/unknown shown in open/pending) lost_receipt=0
+   crm_rows=781 distinct_leads_in_crm=781 max_rows_per_lead=1; emails=781 distinct_recipients=781 max_emails_per_lead=1; expected_leads=1000
+--- done blind diff 1000 10:15:45
+ALLDONE
