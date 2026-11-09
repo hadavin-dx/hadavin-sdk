@@ -1,35 +1,43 @@
 name: Evidence
 
-# Manual runs only. For one git ref and a list of Python versions this runs the same test selection as CI (the
-# "check" job in ci.yml), the stage-rename mutants and, optionally, named mutant scripts, each Python version on its
-# own runner with a throwaway Postgres and a throwaway Vault development server. The test selection is the same as in
-# CI, but the run is not identical. Differences from the "check" job: (1) the pytest report flag is -rfEs here (the
-# report needs the failures and errors listed too), -rs there; (2) COLUMNS=300 and PYTHONUNBUFFERED=1 are set for the
-# whole job, so long lines stay in one piece and the log keeps its order; (3) the variable that makes the text-folding
-# tables mandatory (HADAVIN_REQUIRE_PINNED_UNIDATA) is written by a step on the Python 3.13 leg only, where CI sets it in
-# the step's env block; (4) each check or test step runs through the helper that keeps its raw log and exit code; (5) the
-# Vault token is made in a step and written to the environment of every later step of the job, as the check job does.
-# It deploys nothing, uses no stored secrets and reads the repository only. Every step writes its raw log and its exit code to a folder
-# under the runner's temp directory (outside the checkout, so no log can become part of the tested files). A last
-# step fails the run unless every step has exit=0 (a step that never ran counts as NOT RUN, not as a pass). The steps
-# that run a check or a test (the token check, the install, the postgres client check, the tests, the performance
-# tests, the mutants) go through that helper; the steps that set the run up or take it down do not.
-# All typed input is checked by tools/evidence_step.py (allowlists) in the "plan" job before any runner starts;
-# no run: script contains a ${{ }} expression (a guard test enforces it).
-# The tested ref must itself read the per-run Vault token from HADAVIN_TEST_VAULT_TOKEN
-# (tests/contracts/kinds/secrets_neutral.py). The step "vault-token-reader" runs right after the checkout and fails
-# the run at once, with the reason in its log, if that file has no code line reading it: an older ref would send its
-# built-in token to a server that has a random one and its Vault tests would fail with a 403. The helper removes the token's value, and any
-# piece of it of 8 or more characters taken from its start or end, from every saved log and from the summary (best
-# effort for plain text; a value split by a line break in the middle is not recognised). A skipped test whose reason
-# names a HADAVIN_TEST_ variable also fails the run (the report counts skips). The token is in the environment of
-# every step after the Vault step, including the steps that run the tested code: that code can read it, and it is
-# worthless once the container is removed. The Vault step runs right before the tests, so the install does not see
-# the token. The tested code runs as the same user in the same job as the helper, so it could write a passing row
-# itself: the verdict catches mistakes (a step that did not run, a failing exit code, a hidden skip), it is not proof
-# against code written to forge it. Refs of the form pull/N/head are refused by the plan job; pass the branch name
-# or the commit SHA. The static checks in tests/test_evidence_workflow_guard.py are best effort: they catch the usual
-# ways to print or publish the token, not every possible way.
+# Manual runs only. For one git ref and a list of Python versions this runs the test selection of the "check" job in
+# ci.yml, the stage-rename mutants and, optionally, named mutant scripts. Each Python version runs on its own runner
+# with a throwaway Postgres and a throwaway Vault development server. Nothing is deployed, no stored secret is used,
+# the repository is only read.
+#
+# Differences from the "check" job in ci.yml:
+#   1. pytest reports with -rfEs here (the verdict needs failures and errors listed), with -rs there.
+#   2. COLUMNS=300 and PYTHONUNBUFFERED=1 are set for the whole job, so long lines stay in one piece and the log
+#      keeps its order.
+#   3. Every check or test step runs through tools/evidence_step.py, which keeps the raw log and the exit code.
+#   4. HADAVIN_TEST_PG_DSN and HADAVIN_TEST_VAULT_ADDR are set on the test and performance steps only, as in ci.yml.
+#      The mutant steps see neither. The Vault token is in the environment of every step after the Vault step, as in ci.yml.
+#   5. The Vault start step is recorded in the verdict (step vault-start); ci.yml has no verdict.
+#
+# What the verdict checks (it fails unless every step has exit=0): a step that never ran counts as NOT RUN; a test
+# skipped for a reason that is not on ALLOWED_SKIPS in the helper fails; a test step that ran fewer tests than FLOORS
+# in the helper fails. The tested code runs as the same user in the same job as the helper, so it could write a passing
+# row itself: the verdict catches mistakes, not code written to forge it.
+#
+# Where the workflow comes from: a manual run uses the workflow file and the helper of the branch it was started from.
+# The helper writes that branch, its commit and the default branch into every log and into the summary, and says so
+# in the verdict when the branch is not the default one. It does not refuse such a run, because a change to this
+# workflow can only be tried from its own branch before it is merged.
+#
+# Typed input: tools/evidence_step.py (the "plan" job) checks it against allowlists before any runner starts. No run:
+# script contains a ${{ }} expression (a guard test enforces it). Refs of the form pull/N/head are refused; pass the
+# branch name or the commit SHA.
+#
+# The tested ref must read the per-run Vault token from HADAVIN_TEST_VAULT_TOKEN
+# (tests/contracts/kinds/secrets_neutral.py). Step vault-token-reader fails the run at once, with the reason in its
+# log, if that file has no code line reading it: an older ref would send a built-in token to a server that has a
+# random one and its Vault tests would fail with a 403.
+#
+# The Vault token: made in a step, masked in the Actions log, removed from the saved files by the helper (the whole
+# value and any piece of 8 or more characters from its start or end; a value split by a line break is not recognised).
+# It is in the environment of every later step, including the tested code, and is worthless once the container is
+# removed. The Vault step runs right before the tests, so the install does not see it. The static checks in
+# tests/test_evidence_workflow_guard.py catch the usual ways to print or publish the token, not every possible way.
 on:
   workflow_dispatch:
     inputs:
@@ -63,6 +71,8 @@ jobs:
     timeout-minutes: 15  # the step timeouts below add up to 11 minutes
     permissions:
       contents: read
+    env:
+      DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
     outputs:
       pythons: ${{ steps.check.outputs.pythons }}
       mutants: ${{ steps.check.outputs.mutants }}
@@ -122,8 +132,7 @@ jobs:
           --health-timeout 5s
           --health-retries 10
     env:
-      HADAVIN_TEST_PG_DSN: postgresql://postgres@localhost:5432/postgres
-      HADAVIN_TEST_VAULT_ADDR: http://127.0.0.1:8200
+      DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
       PYTHONUNBUFFERED: "1"
       REF: ${{ needs.plan.outputs.ref }}
       SHA: ${{ needs.plan.outputs.sha }}
@@ -168,18 +177,11 @@ jobs:
         timeout-minutes: 5
       - name: Runner facts
         timeout-minutes: 2
-        run: |
-          { git rev-parse HEAD; python --version; nproc; } | tee "$EVIDENCE_DIR/env.txt"
+        run: python3 "$TOOL" facts
       - name: Install (locked)
         id: install
         timeout-minutes: 15
         run: python3 "$TOOL" run install -- uv sync --locked --no-build --all-extras --group test
-      # The text-folding tables are built for Unicode 15.1.0 (Python 3.13), as in ci.yml. The variable exists only on that
-      # leg (an unset variable and an empty one can mean different things to a reader), so it is written by a step.
-      - name: Require the pinned text-folding tables (Python 3.13 only)
-        if: ${{ matrix.python == '3.13' }}
-        timeout-minutes: 2
-        run: echo "HADAVIN_REQUIRE_PINNED_UNIDATA=1" >> "$GITHUB_ENV"
       - name: The postgres client the database tests shell out to is present (else they would skip silently)
         timeout-minutes: 2
         run: python3 "$TOOL" run psql-present -- psql --version
@@ -187,6 +189,7 @@ jobs:
       # It is masked in the Actions log, removed from the saved files by the helper, and in the environment of every
       # later step. The server listens on this runner's loopback address only and is removed in the last step.
       - name: Start a throwaway Vault development server
+        id: vault
         if: ${{ !cancelled() && steps.install.outcome == 'success' }}
         timeout-minutes: 5
         run: |
@@ -213,13 +216,27 @@ jobs:
           docker ps -a
           docker logs vault-ci 2>&1 | grep -viE 'unseal key|root token' | sed "s/$token/***/g"
           exit 1
+      # The Vault step is not run through the helper (it writes the token to the job environment), so its outcome is
+      # recorded here and the verdict lists it. A skipped or failed Vault step gives exit=1.
+      - name: Record whether the Vault step succeeded
+        if: ${{ !cancelled() }}
+        timeout-minutes: 2
+        env:
+          OUTCOME: ${{ steps.vault.outcome }}
+        run: python3 "$TOOL" outcome vault-start
       - name: Tests (the CI command)
         if: ${{ !cancelled() && steps.install.outcome == 'success' }}
         timeout-minutes: 45
+        env:
+          HADAVIN_TEST_PG_DSN: postgresql://postgres@localhost:5432/postgres
+          HADAVIN_TEST_VAULT_ADDR: http://127.0.0.1:8200
         run: python3 "$TOOL" run pytest -- pytest -q -m "not live and not perf" -rfEs
       - name: Performance tests
         if: ${{ !cancelled() && steps.install.outcome == 'success' }}
         timeout-minutes: 20
+        env:
+          HADAVIN_TEST_PG_DSN: postgresql://postgres@localhost:5432/postgres
+          HADAVIN_TEST_VAULT_ADDR: http://127.0.0.1:8200
         run: python3 "$TOOL" run perf -- pytest -q -m perf -rfEs
       - name: Stage-rename mutants
         if: ${{ !cancelled() && steps.install.outcome == 'success' }}
@@ -242,7 +259,7 @@ jobs:
           extra=""
           for s in $MUTANTS; do extra="$extra extra-$(basename "$s" .py | tr _ -)"; done
           # $extra holds only names the plan job accepted, so word splitting is safe.
-          python3 "$TOOL" report install psql-present vault-token-reader pytest perf stage-mutants $extra
+          python3 "$TOOL" report install psql-present vault-token-reader vault-start pytest perf stage-mutants $extra
       - name: Remove the Vault development server
         if: ${{ always() }}
         timeout-minutes: 2

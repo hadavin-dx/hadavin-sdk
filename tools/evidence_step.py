@@ -1,29 +1,36 @@
 """Helper for the manual Evidence workflow (.github/workflows/evidence.yml). Standard library only.
 
-Four commands, so that the workflow YAML holds no shell logic that cannot be tested:
+Commands, so that the workflow YAML holds no shell logic that cannot be tested:
 
 * ``plan``   reads INPUT_REF, INPUT_PYTHONS and INPUT_MUTANTS from the environment, refuses anything outside the
              allowlists below and writes the checked values to $GITHUB_OUTPUT. Typed input never reaches a shell.
-* ``run NAME -- CMD ...``  runs CMD, copies its output to the console and to $EVIDENCE_DIR/NAME.txt (first line:
-             the commit under test), appends ``NAME<TAB>exit=<code>`` to $EVIDENCE_DIR/status.txt and exits with
-             CMD's own code. A command that does not exist is recorded as exit=127 and one that exists but cannot be
-             started (not executable, wrong format) as exit=126, the same two codes a shell uses.
-* ``report NAME ...``  prints a Markdown summary (with skipped-test counts) and exits 1 unless every NAME has exactly
-             one row, that row is exit=0, and no test was skipped for a reason that names a HADAVIN_TEST_ variable or says HADAVIN_REQUIRE_PINNED_UNIDATA is required but not set. A NAME with
-             no row is shown as NOT RUN (skipped, timed out or cancelled steps cannot pass); a repeated row fails. A row
-             for a step that is not in the NAME list is shown too, and it fails the report unless it is exit=0.
+* ``run NAME -- CMD ...``  runs CMD, copies its output to the console and to $EVIDENCE_DIR/NAME.txt (first lines: the
+             commit under test, where the workflow file came from, and which test settings are present), appends
+             ``NAME<TAB>exit=<code>`` to $EVIDENCE_DIR/status.txt and exits with CMD's own code. A command that does
+             not exist is recorded as exit=127 and one that exists but cannot be started (not executable, wrong
+             format) as exit=126, the same two codes a shell uses.
+* ``outcome NAME``  records a step that is not run through ``run`` (the Vault start): exit=0 if $OUTCOME is
+             ``success``, otherwise exit=1.
+* ``facts``  writes the runner facts (commit, Python, CPU count, workflow origin, which test settings are present) to
+             $EVIDENCE_DIR/env.txt through the masking.
+* ``report NAME ...``  prints a Markdown summary (passed, skipped and deselected test counts) and exits 1 unless every
+             NAME has exactly one row, that row is exit=0, no test was skipped for a reason that is not on
+             ALLOWED_SKIPS, and a test step ran at least as many tests as FLOORS says. A NAME with no row is shown as
+             NOT RUN (skipped, timed out or cancelled steps cannot pass); a repeated row fails. A row for a step that
+             is not in the NAME list is shown too, and it fails the report unless it is exit=0.
 * ``token-reader FILE``  exits 0 only if FILE has a code line (not a comment) that reads HADAVIN_TEST_VAULT_TOKEN from
              the environment; otherwise it prints the reason and exits 1.
 
 The status file is written by the same user and in the same job as the tested code, so tested code could write a
-passing row itself: the report catches mistakes (a step that did not run, a failing exit code, a hidden skip), it is not
-proof against code that sets out to forge it.
+passing row itself: the report catches mistakes (a step that did not run, a failing exit code, a skip, a shrunken
+run), it is not proof against code that sets out to forge it. The same holds for this helper when the workflow is
+started from a branch: GitHub attributes the run to that branch and commit, and the helper records both (see
+provenance) so that a reader can see the run did not come from the default branch.
 
-Allowlists: a Python version is 3.12, 3.13 or 3.14 (the lowest is the pyproject requires-python; widen PY_RE when
-the CI test matrix gains a version); a git ref is letters, digits and . _ / - only (git's own check-ref-format also bans
-'..', '//', a trailing '.' or '/', and any part between slashes that starts with '.' or ends with '.lock'; this helper
-also refuses a last part that is the name of a GitHub commits endpoint, see API_WORDS); a runner is
-tests/<lowercase_name>_mutants.py.
+Allowlists: a Python version is one of PYTHONS (the lowest is the pyproject requires-python, a test checks it); a git
+ref is letters, digits and . _ / - only (git's own check-ref-format also bans '..', '//', a trailing '.' or '/', and
+any part between slashes that starts with '.' or ends with '.lock'; this helper also refuses a last part that is the
+name of a GitHub commits endpoint, see API_WORDS); a runner is tests/<lowercase_name>_mutants.py.
 """
 
 from __future__ import annotations
@@ -36,6 +43,7 @@ import re
 import shutil
 import subprocess
 import sys
+from collections.abc import Callable, Sequence
 from pathlib import Path
 
 # The workflow sets EVIDENCE_DIR to a folder under the runner temp directory, outside the checkout, so that no log can
@@ -45,7 +53,8 @@ STATUS = "status.txt"
 MAX_PYTHONS = 4
 MAX_MUTANTS = 8
 REF_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9._/-]{0,199}")
-PY_RE = re.compile(r"3\.1[2-4]")  # 3.12 to 3.14: the lowest is pyproject requires-python
+PYTHONS = ("3.12", "3.13", "3.14")  # the lowest is pyproject requires-python (a test compares them)
+PY_RE = re.compile("|".join(re.escape(v) for v in PYTHONS))
 MUTANT_RE = re.compile(r"tests/[a-z0-9_]{1,40}_mutants\.py")  # step name extra-<stem> fits NAME_RE
 NAME_RE = re.compile(r"[a-z0-9][a-z0-9_-]{0,60}")
 # A step called "status" would write its log to status.txt, the file of the result rows, and wipe them.
@@ -61,6 +70,38 @@ API_WORDS = {
     "branches-where-head",
     "pulls",
 }
+
+
+def _checked_argv(argv: Sequence[str]) -> list[str]:
+    if (
+        isinstance(argv, str)
+        or not argv
+        or not all(isinstance(a, str) and "\0" not in a for a in argv)
+        or not argv[0]
+    ):
+        raise ValueError("a command is a non-empty list of strings whose first item is not empty")
+    return list(argv)
+
+
+def start_fixed(argv: Sequence[str], **options: object) -> subprocess.Popen[str]:
+    """Start a process from an argument list. This is the only place in the repository that starts one for a list
+    that is not written out in full at the call: the list is checked here (never a shell string, no NUL, a program
+    name), and no shell is involved. The one suppression below stands for every caller; a test counts it."""
+    return subprocess.Popen(_checked_argv(argv), text=True, **options)  # noqa: S603  # checked list, no shell: see the docstring
+
+
+def run_fixed(
+    argv: Sequence[str],
+    *,
+    cwd: str | os.PathLike[str] | None = None,
+    env: dict[str, str] | None = None,
+) -> subprocess.CompletedProcess[str]:
+    """Run a command to its end and return its exit code and its captured output (text)."""
+    with start_fixed(
+        argv, cwd=cwd, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+    ) as proc:
+        out, err = proc.communicate()
+    return subprocess.CompletedProcess(list(argv), proc.returncode, out, err)
 
 
 SECRET_ENV = (
@@ -166,6 +207,10 @@ def cmd_plan(env: dict[str, str]) -> int:
             fh.write(text)
     else:
         sys.stdout.write(text)
+    summary = env.get("GITHUB_STEP_SUMMARY")
+    if summary:
+        with open(summary, "a", encoding="utf-8") as fh:
+            fh.write(f"{provenance()}\n\n")
     return 0
 
 
@@ -174,11 +219,50 @@ def _head() -> str:
     if git is None:
         return "no-git"
     try:
-        argv = [git, "rev-parse", "HEAD"]
-        done = subprocess.run(argv, capture_output=True, text=True, check=False)  # noqa: S603  # fixed argv, no shell
+        done = run_fixed([git, "rev-parse", "HEAD"])
     except OSError:
         return "no-git"
     return done.stdout.strip() or "no-commit"
+
+
+# Settings whose presence decides what the tests do (a test that needs one skips or uses an in-process fake when it is
+# missing). The log records only set or unset, never a value.
+RECORDED_ENV = (
+    "HADAVIN_TEST_PG_DSN",
+    "HADAVIN_TEST_VAULT_ADDR",
+    "HADAVIN_TEST_VAULT_TOKEN",
+    "COLUMNS",
+    "PYTHONUNBUFFERED",
+)
+
+
+def env_facts() -> str:
+    flags = ", ".join(f"{n}={'set' if os.environ.get(n) else 'unset'}" for n in RECORDED_ENV)
+    return f"settings: {flags}; python {sys.version.split()[0]} on {sys.platform}"
+
+
+def provenance() -> str:
+    """Where the workflow file and this helper came from. A manual run executes the workflow file of the branch it was
+    started from, so a run started from a feature branch used that branch's workflow and helper, not the default
+    branch's. GitHub fills GITHUB_REF and GITHUB_SHA (the branch and its latest commit at the start); the workflow
+    passes DEFAULT_BRANCH. The text is written into every step log, the runner facts and the summary."""
+    ref = os.environ.get("GITHUB_REF", "")
+    sha = os.environ.get("GITHUB_SHA", "")
+    default = os.environ.get("DEFAULT_BRANCH", "")
+    if not (ref and sha and default):
+        return "workflow origin: not recorded (not run by GitHub Actions)"
+    where = (
+        "the default branch"
+        if ref == f"refs/heads/{default}"
+        else f"NOT the default branch ({default}): this run used that branch's workflow and helper"
+    )
+    return f"workflow origin: {ref} at commit {sha}, {where}"
+
+
+def from_other_branch() -> bool:
+    """True only when GitHub's values are present and the workflow did not come from the default branch."""
+    ref, default = os.environ.get("GITHUB_REF", ""), os.environ.get("DEFAULT_BRANCH", "")
+    return bool(ref and default and os.environ.get("GITHUB_SHA") and ref != f"refs/heads/{default}")
 
 
 def _record(name: str, status: str) -> None:
@@ -186,9 +270,10 @@ def _record(name: str, status: str) -> None:
         fh.write(f"{name}\t{status}\n")
 
 
-def cmd_run(name: str, command: list[str]) -> int:
-    if not NAME_RE.fullmatch(name) or not command:
-        raise Refused("run needs a lowercase step name and a command")
+def _open_step(name: str) -> Path:
+    """Check a step name (lowercase, not reserved, not used before in this run) and return the path of its log."""
+    if not NAME_RE.fullmatch(name):
+        raise Refused("a step needs a lowercase name")
     if name in RESERVED_NAMES:
         raise Refused(f"step name {name!r} is reserved (its log would be the result file)")
     LOG_DIR.mkdir(parents=True, exist_ok=True)
@@ -200,8 +285,15 @@ def cmd_run(name: str, command: list[str]) -> int:
         raise Refused(
             f"step name {name!r} was already used in this run (a log would be overwritten)"
         )
+    return LOG_DIR / f"{name}.txt"
+
+
+def cmd_run(name: str, command: list[str]) -> int:
+    if not command or not command[0]:
+        raise Refused("run needs a command")
+    log = _open_step(name)
     code = 127  # a command that does not exist (a shell says 127)
-    with (LOG_DIR / f"{name}.txt").open("w", encoding="utf-8") as fh:
+    with log.open("w", encoding="utf-8") as fh:
 
         def emit(text: str) -> None:
             text = mask(text)
@@ -210,14 +302,10 @@ def cmd_run(name: str, command: list[str]) -> int:
             sys.stdout.write(text)
             sys.stdout.flush()
 
-        emit(f"{_head()}\n")
+        emit(f"{_head()}\n{provenance()}\n{env_facts()}\n")
         try:
-            proc = subprocess.Popen(  # noqa: S603  # list argv, no shell
-                command,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                text=True,
-                errors="replace",
+            proc = start_fixed(
+                command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, errors="replace"
             )
         except OSError as exc:
             if not isinstance(exc, FileNotFoundError):
@@ -234,7 +322,33 @@ def cmd_run(name: str, command: list[str]) -> int:
     return code
 
 
+def cmd_outcome(name: str, env: dict[str, str]) -> int:
+    """Record a step that does not run through ``run`` (the Vault start): exit=0 only if $OUTCOME is ``success``. A
+    step that failed, was skipped or was cancelled has another outcome and gets exit=1, so the verdict shows it."""
+    log = _open_step(name)
+    outcome = env.get("OUTCOME", "")
+    code = 0 if outcome == "success" else 1
+    text = mask(f"{provenance()}\noutcome={outcome or 'missing'}\nexit={code}\n")
+    log.write_text(text, encoding="utf-8")
+    sys.stdout.write(text)
+    _record(name, f"exit={code}")
+    return code
+
+
+def cmd_facts() -> int:
+    """Write the runner facts to env.txt (through the masking) and to the console."""
+    LOG_DIR.mkdir(parents=True, exist_ok=True)
+    text = mask(f"{_head()}\n{provenance()}\n{env_facts()}\ncpus {os.cpu_count()}\n")
+    (LOG_DIR / "env.txt").write_text(text, encoding="utf-8")
+    sys.stdout.write(text)
+    return 0
+
+
 READ_VAR = "HADAVIN_TEST_VAULT_TOKEN"
+# The exact ways to read one variable: `pop`, `setdefault`, `get` on another mapping or a call that merely has
+# "environ" in its name are not reads of the process environment.
+READ_CALLS = {"os.environ.get", "os.getenv", "environ.get", "getenv"}
+READ_MAPS = {"os.environ", "environ"}
 READER_RE = re.compile(
     r"^[^#]*(environ|getenv)[^#]*" + READ_VAR
 )  # fallback for a file that does not parse
@@ -249,20 +363,34 @@ def _reads_token(source: str) -> bool:
     except (SyntaxError, ValueError):
         return any(READER_RE.match(line) for line in source.splitlines())
 
+    # A module or function can name the variable once and read it by that name: NAME = "HADAVIN_TEST_VAULT_TOKEN".
+    names = {
+        t.id
+        for node in ast.walk(tree)
+        if isinstance(node, (ast.Assign, ast.AnnAssign))
+        and isinstance(node.value, ast.Constant)
+        and node.value.value == READ_VAR
+        for t in (node.targets if isinstance(node, ast.Assign) else [node.target])
+        if isinstance(t, ast.Name)
+    }
+
     def is_name(node: ast.AST) -> bool:
-        return isinstance(node, ast.Constant) and node.value == READ_VAR
+        return (isinstance(node, ast.Constant) and node.value == READ_VAR) or (
+            isinstance(node, ast.Name) and node.id in names
+        )
 
     for node in ast.walk(tree):
         if (
             isinstance(node, ast.Call)
-            and any(is_name(a) for a in node.args)
-            and re.search(r"environ|getenv", ast.unparse(node.func))
+            and node.args
+            and is_name(node.args[0])
+            and ast.unparse(node.func) in READ_CALLS
         ):
             return True
         if (
             isinstance(node, ast.Subscript)
             and is_name(node.slice)
-            and "environ" in ast.unparse(node.value)
+            and ast.unparse(node.value) in READ_MAPS
         ):
             return True
     return False
@@ -288,25 +416,111 @@ def cmd_token_reader(path: str) -> int:
 
 
 SKIP_RE = re.compile(r"SKIPPED \[(\d+)\] (.*)")
-# A skip whose reason names a HADAVIN_TEST_ variable is a missing setting, not an ordinary skip: the run fails.
-HIDDEN_SKIP_WORDS = ("HADAVIN_TEST_",)
-# HADAVIN_REQUIRE_PINNED_UNIDATA is set on the Python 3.13 leg only and deliberately unset on the others, where a
-# test may skip and name it. Only this exact sentence (the variable is required but not set) fails the run.
-PINNED_SKIP_TEXT = "HADAVIN_REQUIRE_PINNED_UNIDATA is required but not set"
+SKIP_WHERE_RE = re.compile(r"(?P<path>[^:]+):\d+: (?P<reason>.*)", re.DOTALL)
 NEVER = "NOT RUN (never finished: skipped, timed out or cancelled)"
 
 
-def _skips(log: Path) -> tuple[int, int]:
-    """(all skipped tests, skipped tests whose reason names one of HIDDEN_SKIP_WORDS)."""
-    total = hidden = 0
+def _always() -> bool:
+    return True
+
+
+def _on_windows() -> bool:
+    return os.name == "nt"
+
+
+def _without_bash() -> bool:
+    return shutil.which("bash") is None
+
+
+# The skips that may appear in the pytest and performance logs: (test file, exact reason, when it may happen, how many).
+# Every other skip fails the run: a missing HADAVIN_TEST_ setting, a missing program (psql, docker), a missing extra
+# (importorskip), a changed marker. The first entry is the whole baseline on the evidence runner (one test, run for the
+# Bedrock kind only); the other three are the guard tests that cannot run on Windows or without bash, so on the
+# Linux runner they never skip and a skip there fails the run.
+ALLOWED_SKIPS: tuple[tuple[str, str, Callable[[], bool], int], ...] = (
+    (
+        "tests/contracts/test_llm.py",
+        "Stubber refuses a malformed Converse shape before the kind sees it",
+        _always,
+        1,
+    ),
+    (
+        "tests/test_evidence_workflow_guard.py",
+        "the execute bit is a POSIX notion",
+        _on_windows,
+        1,
+    ),
+    (
+        "tests/test_evidence_workflow_guard.py",
+        "bash needed for the exit-code check",
+        _without_bash,
+        1,
+    ),
+    (
+        "tests/test_evidence_workflow_guard.py",
+        "bash needed for the exit-code lesson",
+        _without_bash,
+        1,
+    ),
+)
+# The fewest tests (passed, failed, errored and skipped, not deselected) a test step must run. A run that selects
+# fewer (a changed addopts, a --deselect, a marker edit, a deleted test) fails. The numbers are the count at the head
+# the workflow was last checked at (`pytest --collect-only -q` with the step's own -m); raise them when tests are
+# added, lower them only for tests that were deliberately removed. This is the only place that holds them.
+FLOORS = {"pytest": 10907, "perf": 28}
+SUMMARY_RE = re.compile(r"^(?:=+ )?((?:\d+ [a-z]+(?:, )?)+) in \d+(?:\.\d+)?s\b")
+COUNT_NAMES = {"error": "errors", "warning": "warnings"}
+SKIP_FAIL = "skipped for a reason that is not on the allowed list"
+FLOOR_FAIL = "fewer tests ran than the recorded floor"
+NO_SUMMARY = "no pytest summary line to count the tests from"
+
+
+def _skip_problems(log: Path) -> tuple[int, list[str]]:
+    """(all skipped tests, descriptions of the skips that are not allowed). A line that does not parse as
+    ``path:line: reason`` is not allowed either."""
+    seen: dict[tuple[str, str], int] = {}
+    total = 0
+    bad: list[str] = []
     for line in log.read_text(encoding="utf-8", errors="replace").splitlines():
         m = SKIP_RE.match(line)
+        if not m:
+            continue
+        count = int(m.group(1))
+        total += count
+        where = SKIP_WHERE_RE.fullmatch(m.group(2))
+        if not where:
+            bad.append(f"{count} x unreadable skip line: {m.group(2)[:60]}")
+            continue
+        key = (where["path"].replace("\\", "/"), where["reason"].strip())
+        seen[key] = seen.get(key, 0) + count
+    for (path, reason), count in seen.items():
+        allowed = [
+            limit for p, r, when, limit in ALLOWED_SKIPS if (p, r) == (path, reason) and when()
+        ]
+        if not allowed or count > max(allowed):
+            bad.append(f"{count} x {path}: {reason[:60]}")
+    return total, bad
+
+
+def parse_summary(text: str) -> dict[str, int] | None:
+    """The counts of pytest's last summary line ("10838 passed, 1 skipped, 28 deselected in 388.62s"), also for a run
+    with only skips or only errors ("3 skipped in 0.1s", "1 error in 0.2s"); None if there is no such line."""
+    found: dict[str, int] | None = None
+    for line in text.splitlines():
+        m = SUMMARY_RE.match(line)
         if m:
-            total += int(m.group(1))
-            reason = m.group(2)
-            if any(word in reason for word in HIDDEN_SKIP_WORDS) or PINNED_SKIP_TEXT in reason:
-                hidden += int(m.group(1))
-    return total, hidden
+            found = {}
+            for part in m.group(1).split(", "):
+                number, _, word = part.partition(" ")
+                word = COUNT_NAMES.get(word, word)
+                found[word] = found.get(word, 0) + int(number)
+    return found
+
+
+def selected(counts: dict[str, int]) -> int:
+    return sum(
+        counts.get(k, 0) for k in ("passed", "failed", "errors", "skipped", "xfailed", "xpassed")
+    )
 
 
 def cmd_report(expected: list[str]) -> int:
@@ -318,10 +532,15 @@ def cmd_report(expected: list[str]) -> int:
             rows.setdefault(name, []).append(status)
     names = list(dict.fromkeys([*expected, *rows]))
     bad = 0
-    out = ["| step | result | skipped tests |", "|---|---|---|"]
+    out = [
+        provenance(),
+        "",
+        "| step | result | passed | skipped | deselected |",
+        "|---|---|---|---|---|",
+    ]
     for name in names:
         found = rows.get(name, [])
-        skipped = "-"
+        passed = skipped = deselected = "-"
         if not found:
             result = NEVER
         elif len(found) > 1:
@@ -330,13 +549,24 @@ def cmd_report(expected: list[str]) -> int:
             result = found[0]
         log = LOG_DIR / f"{name}.txt"
         if log.is_file():
-            total, hidden = _skips(log)
-            skipped = str(total)
-            if hidden and result == "exit=0":
-                result = f"FAIL: {hidden} test(s) skipped for a reason that names a HADAVIN_TEST_ variable or says HADAVIN_REQUIRE_PINNED_UNIDATA is required but not set"
+            total, problems = _skip_problems(log)
+            counts = parse_summary(log.read_text(encoding="utf-8", errors="replace"))
+            if counts is not None:
+                passed = str(counts.get("passed", 0))
+                deselected = str(counts.get("deselected", 0))
+                skipped = str(counts.get("skipped", 0))
+            elif total:
+                skipped = str(total)
+            if problems and result == "exit=0":
+                result = f"FAIL: {SKIP_FAIL}: " + "; ".join(problems[:3])
+            if name in FLOORS and result == "exit=0":
+                if counts is None:
+                    result = f"FAIL: {NO_SUMMARY}"
+                elif selected(counts) < FLOORS[name]:
+                    result = f"FAIL: {FLOOR_FAIL}: {selected(counts)} ran, floor {FLOORS[name]}"
         if result != "exit=0":
             bad += 1
-        out.append(f"| {name} | {result} | {skipped} |")
+        out.append(f"| {name} | {result} | {passed} | {skipped} | {deselected} |")
     out.append("")
     for name in names:
         log = LOG_DIR / f"{name}.txt"
@@ -345,10 +575,15 @@ def cmd_report(expected: list[str]) -> int:
         pick = [
             ln
             for ln in log.read_text(encoding="utf-8", errors="replace").splitlines()
-            if re.match(r"(FAILED|ERROR) |\d+ (passed|failed)|exit=", ln)
+            if re.match(r"(FAILED|ERROR) |\d+ [a-z]+(, \d+ [a-z]+)* in |exit=", ln)
         ]
         out += [f"#### {name}", "```", *pick[-40:], "```"]
     out.append("RESULT: " + (f"FAIL, {bad} step(s) not green" if bad else "all steps exit=0"))
+    if from_other_branch():
+        out.append(
+            "NOTE: this run did not use the default branch's workflow and helper (see the first line); it shows what "
+            "that branch's workflow did, not what the default branch's would do."
+        )
     text = mask("\n".join(out) + "\n")
     sys.stdout.write(text)
     summary = os.environ.get("GITHUB_STEP_SUMMARY")
@@ -364,6 +599,10 @@ def main(argv: list[str]) -> int:
             return cmd_plan(dict(os.environ))
         if argv[:1] == ["run"] and len(argv) >= 4 and argv[2] == "--":
             return cmd_run(argv[1], argv[3:])
+        if argv[:1] == ["outcome"] and len(argv) == 2:
+            return cmd_outcome(argv[1], dict(os.environ))
+        if argv[:1] == ["facts"] and len(argv) == 1:
+            return cmd_facts()
         if argv[:1] == ["report"]:
             return cmd_report(argv[1:])
         if argv[:1] == ["token-reader"] and len(argv) == 2:
@@ -372,7 +611,7 @@ def main(argv: list[str]) -> int:
         sys.stderr.write(f"refused: {exc}\n")
         return 2
     sys.stderr.write(
-        "usage: evidence_step.py plan | run NAME -- CMD... | report NAME... | token-reader FILE\n"
+        "usage: evidence_step.py plan | run NAME -- CMD... | outcome NAME | facts | report NAME... | token-reader FILE\n"
     )
     return 2
 

@@ -29,7 +29,12 @@ commit SHA, no untrusted ${{ }} inside run scripts; the bash manual on `set -e`,
      `fail-fast: false` and the Python matrix (so no run can be switched off or widened);
   13. the verdict step is pinned to its exact text (VERDICT_GOLDEN): nothing can be added around the `report` command
      that would let a failing report pass (`; true`, `exit 0`, a pipe, `|| echo`, a trap, `set +o errexit`);
-  14. HADAVIN_REQUIRE_PINNED_UNIDATA is written by one step on the Python 3.13 leg only, never set in an env block.
+  14. the Vault start step has an id and its outcome is recorded in the verdict (step vault-start), so a failed Vault
+     start cannot end in "all steps exit=0";
+  15. the plan and evidence jobs get DEFAULT_BRANCH, so every log and the summary say whether the workflow came from
+     the default branch;
+  16. HADAVIN_TEST_PG_DSN and HADAVIN_TEST_VAULT_ADDR are set on the test and performance steps only (as in ci.yml),
+     never in a job or workflow env block, so the mutant steps do not see the real services.
 
 Each rule has an id in square brackets at the start of its message, and every planted violation below names the id
 that must fire, so a plant that trips some other rule does not count.
@@ -72,12 +77,13 @@ LINE_SCOPED_HIDING = {"ci.yml"}
 VERDICT_GOLDEN = [
     'extra=""',
     'for s in $MUTANTS; do extra="$extra extra-$(basename "$s" .py | tr _ -)"; done',
-    'python3 "$TOOL" report install psql-present vault-token-reader pytest perf stage-mutants $extra',
+    'python3 "$TOOL" report install psql-present vault-token-reader vault-start pytest perf stage-mutants $extra',
 ]
 VERDICT_KEYS = {"name", "if", "timeout-minutes", "run"}
-PINNED_VAR = "HADAVIN_REQUIRE_PINNED_UNIDATA"
-PINNED_IF = "${{ matrix.python == '3.13' }}"
-PINNED_RUN = f'echo "{PINNED_VAR}=1" >> "$GITHUB_ENV"'
+SERVICE_ENV = {"HADAVIN_TEST_PG_DSN", "HADAVIN_TEST_VAULT_ADDR"}
+OUTCOME_RUN = 'python3 "$TOOL" outcome vault-start'
+OUTCOME_IF = "${{ !cancelled() }}"
+DEFAULT_BRANCH_EXPR = "${{ github.event.repository.default_branch }}"
 MATRIX_EXPR = "${{ fromJSON(needs.plan.outputs.pythons) }}"
 OVERRIDE_ENV = {
     "TOOL",
@@ -290,27 +296,51 @@ def evidence_problems(text: str) -> list[str]:
         blocks += [st.get("env") or {} for st in job.get("steps", [])]
     if any(OVERRIDE_ENV & set(b) for b in blocks):
         add(out, "override-env", f"an env block sets one of {sorted(OVERRIDE_ENV)}")
-    if any(PINNED_VAR in b for b in blocks):
-        add(
-            out,
-            "pinned-unidata",
-            f"{PINNED_VAR} must not be set in an env block (an empty value on the other legs is still a set value)",
-        )
-    writers = [
-        st
-        for job in wf["jobs"].values()
-        for st in job.get("steps", [])
-        if PINNED_VAR in str(st.get("run", ""))
-    ]
-    if (
-        len(writers) != 1
-        or writers[0].get("if") != PINNED_IF
-        or logical_lines(writers[0]["run"]) != [PINNED_RUN]
+    if any(
+        SERVICE_ENV & set(b)
+        for b in [wf.get("env") or {}, *(j.get("env") or {} for j in wf["jobs"].values())]
     ):
         add(
             out,
-            "pinned-unidata",
-            f"exactly one step, with if {PINNED_IF!r}, must run exactly: {PINNED_RUN}",
+            "service-env-scope",
+            f"{sorted(SERVICE_ENV)} must be set on the test and performance steps only, not in a workflow or job env block",
+        )
+    for jname, job in wf["jobs"].items():
+        if (job.get("env") or {}).get("DEFAULT_BRANCH") != DEFAULT_BRANCH_EXPR:
+            add(
+                out,
+                "provenance-env",
+                f"job {jname}: env DEFAULT_BRANCH must be {DEFAULT_BRANCH_EXPR} (the logs say where the workflow came from)",
+            )
+    vault_steps = [
+        st
+        for job in wf["jobs"].values()
+        for st in job.get("steps", [])
+        if docker_run_lines(st.get("run", ""))
+    ]
+    recorders = [
+        st
+        for job in wf["jobs"].values()
+        for st in job.get("steps", [])
+        if "outcome vault-start" in str(st.get("run", ""))
+    ]
+    want_outcome = (
+        f"${{{{ steps.{vault_steps[0].get('id')}.outcome }}}}"
+        if len(vault_steps) == 1 and vault_steps[0].get("id")
+        else None
+    )
+    if (
+        want_outcome is None
+        or len(recorders) != 1
+        or recorders[0].get("if") != OUTCOME_IF
+        or logical_lines(recorders[0]["run"]) != [OUTCOME_RUN]
+        or (recorders[0].get("env") or {}).get("OUTCOME") != want_outcome
+    ):
+        add(
+            out,
+            "vault-outcome",
+            f"the Vault step needs an id, and exactly one step with if {OUTCOME_IF!r} and env OUTCOME set to that "
+            f"step's outcome must run exactly: {OUTCOME_RUN}",
         )
     conc = wf.get("concurrency") or {}
     if conc.get("cancel-in-progress") is not False:
@@ -687,22 +717,22 @@ PLANTS = {
     ),
     "tests not waiting for install": (
         lambda t: t.replace(
-            "        if: ${{ !cancelled() && steps.install.outcome == 'success' }}\n        timeout-minutes: 20\n        run: python3 \"$TOOL\" run perf",
-            '        if: ${{ !cancelled() }}\n        timeout-minutes: 20\n        run: python3 "$TOOL" run perf',
+            "        if: ${{ !cancelled() && steps.install.outcome == 'success' }}\n        timeout-minutes: 20\n        env:\n          HADAVIN_TEST_PG_DSN: postgresql://postgres@localhost:5432/postgres\n          HADAVIN_TEST_VAULT_ADDR: http://127.0.0.1:8200\n        run: python3 \"$TOOL\" run perf",
+            '        if: ${{ !cancelled() }}\n        timeout-minutes: 20\n        env:\n          HADAVIN_TEST_PG_DSN: postgresql://postgres@localhost:5432/postgres\n          HADAVIN_TEST_VAULT_ADDR: http://127.0.0.1:8200\n        run: python3 "$TOOL" run perf',
         ),
         "test-if",
     ),
     "tests switched off by an extra clause": (
         lambda t: t.replace(
-            "        if: ${{ !cancelled() && steps.install.outcome == 'success' }}\n        timeout-minutes: 20\n        run: python3 \"$TOOL\" run perf",
-            "        if: ${{ !cancelled() && steps.install.outcome == 'success' && 1 == 2 }}\n        timeout-minutes: 20\n        run: python3 \"$TOOL\" run perf",
+            "        if: ${{ !cancelled() && steps.install.outcome == 'success' }}\n        timeout-minutes: 20\n        env:\n          HADAVIN_TEST_PG_DSN: postgresql://postgres@localhost:5432/postgres\n          HADAVIN_TEST_VAULT_ADDR: http://127.0.0.1:8200\n        run: python3 \"$TOOL\" run perf",
+            "        if: ${{ !cancelled() && steps.install.outcome == 'success' && 1 == 2 }}\n        timeout-minutes: 20\n        env:\n          HADAVIN_TEST_PG_DSN: postgresql://postgres@localhost:5432/postgres\n          HADAVIN_TEST_VAULT_ADDR: http://127.0.0.1:8200\n        run: python3 \"$TOOL\" run perf",
         ),
         "test-if",
     ),
     "report forgets a step": (
         lambda t: t.replace(
-            "report install psql-present vault-token-reader pytest perf",
-            "report install psql-present vault-token-reader pytest",
+            "report install psql-present vault-token-reader vault-start pytest perf",
+            "report install psql-present vault-token-reader vault-start pytest",
         ),
         "verdict-lists",
     ),
@@ -956,8 +986,8 @@ PLANTS = {
     ),
     "helper path overridden for one step": (
         lambda t: t.replace(
-            "      - name: Performance tests\n",
-            "      - name: Performance tests\n        env:\n          TOOL: /bin/true\n",
+            "      - name: Stage-rename mutants\n",
+            "      - name: Stage-rename mutants\n        env:\n          TOOL: /bin/true\n",
         ),
         "override-env",
     ),
@@ -968,29 +998,41 @@ PLANTS = {
         ),
         "override-env",
     ),
-    "pinned tables variable in the job env": (
+    "service address in the job env": (
         lambda t: t.replace(
             "      PY: ${{ matrix.python }}",
-            "      PY: ${{ matrix.python }}\n      HADAVIN_REQUIRE_PINNED_UNIDATA: ${{ matrix.python == '3.13' && '1' || '' }}",
+            "      PY: ${{ matrix.python }}\n      HADAVIN_TEST_PG_DSN: postgresql://postgres@localhost:5432/postgres",
         ),
-        "pinned-unidata",
+        "service-env-scope",
     ),
-    "pinned tables step on every leg": (
-        lambda t: t.replace(
-            "        if: ${{ matrix.python == '3.13' }}\n", "        if: ${{ always() }}\n"
-        ),
-        "pinned-unidata",
+    "vault outcome never recorded": (
+        lambda t: t.replace('run: python3 "$TOOL" outcome vault-start', "run: echo nothing"),
+        "vault-outcome",
     ),
-    "pinned tables step missing": (
+    "vault outcome taken from another step": (
         lambda t: t.replace(
-            'echo "HADAVIN_REQUIRE_PINNED_UNIDATA=1" >> "$GITHUB_ENV"', "echo nothing"
+            "OUTCOME: ${{ steps.vault.outcome }}", "OUTCOME: ${{ steps.install.outcome }}"
         ),
-        "pinned-unidata",
+        "vault-outcome",
+    ),
+    "vault step without an id": (
+        lambda t: t.replace("        id: vault\n", ""),
+        "vault-outcome",
+    ),
+    "default branch not passed to a job": (
+        lambda t: t.replace(
+            "      DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}\n", "", 1
+        ),
+        "provenance-env",
+    ),
+    "verdict forgets the vault start": (
+        lambda t: t.replace("vault-token-reader vault-start pytest", "vault-token-reader pytest"),
+        "verdict-golden",
     ),
     "step-level empty server address": (
         lambda t: t.replace(
-            "      - name: Performance tests\n",
-            '      - name: Performance tests\n        env:\n          HADAVIN_TEST_VAULT_ADDR: ""\n',
+            'timeout-minutes: 20\n        env:\n          HADAVIN_TEST_PG_DSN: postgresql://postgres@localhost:5432/postgres\n          HADAVIN_TEST_VAULT_ADDR: http://127.0.0.1:8200\n        run: python3 "$TOOL" run perf',
+            'timeout-minutes: 20\n        env:\n          HADAVIN_TEST_VAULT_ADDR: ""\n        run: python3 "$TOOL" run perf',
         ),
         "addr-missing",
     ),
@@ -1011,8 +1053,8 @@ PLANTS = {
     ),
     "debug logging by step env": (
         lambda t: t.replace(
-            "      - name: Performance tests\n",
-            '      - name: Performance tests\n        env:\n          ACTIONS_STEP_DEBUG: "true"\n',
+            "      - name: Stage-rename mutants\n",
+            '      - name: Stage-rename mutants\n        env:\n          ACTIONS_STEP_DEBUG: "true"\n',
         ),
         "trace-env",
     ),
@@ -1217,13 +1259,8 @@ def helper(cwd: Path, *args: str, env: dict | None = None) -> subprocess.Complet
     # test: a guard test would append fake tables to the real job summary and use the real token.
     inherited = {k: v for k, v in os.environ.items() if k not in RUNNER_ONLY}
     full = {**inherited, **(env or {})}
-    return subprocess.run(  # noqa: S603  # our own interpreter and a file of this repository, no shell
-        [sys.executable, str(ROOT / "tools" / "evidence_step.py"), *args],
-        cwd=cwd,
-        capture_output=True,
-        text=True,
-        env=full,
-        check=False,
+    return es.run_fixed(
+        [sys.executable, str(ROOT / "tools" / "evidence_step.py"), *args], cwd=cwd, env=full
     )
 
 
@@ -1283,9 +1320,7 @@ def test_the_helper_keeps_the_exit_code_when_run_under_bash_e(tmp_path):
     bash = shutil.which("bash")
     script = f'set -e; "{sys.executable}" "{ROOT / "tools" / "evidence_step.py"}" run bad -- false; echo after'
     env = {k: v for k, v in os.environ.items() if k not in RUNNER_ONLY}
-    done = subprocess.run(  # noqa: S603  # fixed argv, no shell
-        [bash, "-c", script], cwd=tmp_path, capture_output=True, text=True, env=env, check=False
-    )
+    done = es.run_fixed([bash, "-c", script], cwd=tmp_path, env=env)
     assert done.returncode == 1 and "after" not in done.stdout
     assert "bad\texit=1" in (tmp_path / "evidence-logs" / "status.txt").read_text()
 
@@ -1319,7 +1354,7 @@ def test_bash_demo_the_old_pattern_lost_the_exit_code_under_bash_e():
     """Not a check of this repo: a demonstration of why the helper exists. Under `bash -e` the old `cmd; rc=$?` never recorded exit= for a failing command."""
     old = "set -e; { false; rc=$?; echo exit=$rc; exit $rc; } | cat"
     bash = shutil.which("bash")
-    done = subprocess.run([bash, "-c", old], capture_output=True, text=True, check=False)  # noqa: S603  # fixed argv
+    done = es.run_fixed([bash, "-c", old])
     assert "exit=" not in done.stdout
 
 
@@ -1346,26 +1381,59 @@ def test_the_report_fails_on_repeated_rows_even_when_the_last_one_is_green(tmp_p
     assert done.returncode == 1 and "DUPLICATE" in done.stdout
 
 
-def test_the_report_shows_skip_counts_and_fails_on_a_missing_test_variable(tmp_path):
-    helper(
-        tmp_path,
-        "run",
-        "pytest",
-        "--",
-        sys.executable,
-        "-c",
-        "print('SKIPPED [2] tests/x.py:1: slow')",
-    )
-    ok = helper(tmp_path, "report", "pytest")
-    assert ok.returncode == 0 and "| pytest | exit=0 | 2 |" in ok.stdout
-    code = "print('SKIPPED [3] tests/x.py:1: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)')"
-    helper(tmp_path, "run", "perf", "--", sys.executable, "-c", code)
-    bad = helper(tmp_path, "report", "pytest", "perf")
-    assert (
-        bad.returncode == 1
-        and "3 test(s) skipped for a reason that names a HADAVIN_TEST_ variable or says HADAVIN_REQUIRE_PINNED_UNIDATA is required but not set"
-        in bad.stdout
-    )
+LLM_SKIP = "SKIPPED [1] tests/contracts/test_llm.py:95: Stubber refuses a malformed Converse shape before the kind sees it"
+
+
+def test_the_report_shows_counts_and_passes_the_one_allowed_skip(tmp_path):
+    code = f"print({LLM_SKIP!r}); print('9 passed, 1 skipped, 28 deselected in 1.20s')"
+    helper(tmp_path, "run", "probe", "--", sys.executable, "-c", code)
+    ok = helper(tmp_path, "report", "probe")
+    assert ok.returncode == 0, ok.stdout
+    assert "| step | result | passed | skipped | deselected |" in ok.stdout
+    assert "| probe | exit=0 | 9 | 1 | 28 |" in ok.stdout
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "SKIPPED [2] tests/x.py:1: slow",
+        "SKIPPED [3] tests/x.py:1: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)",
+        "SKIPPED [1] tests/x.py:7: could not import 'psycopg': No module named 'psycopg'",
+        "SKIPPED [1] tests/x.py:7: psql not found",
+        "SKIPPED [1] tests/x.py:1: HADAVIN_REQUIRE_PINNED_UNIDATA is required but not set",
+        "SKIPPED [2] tests/contracts/test_llm.py:95: Stubber refuses a malformed Converse shape before the kind sees it",
+        "SKIPPED [1] tests/other/test_llm.py:95: Stubber refuses a malformed Converse shape before the kind sees it",
+        "SKIPPED [1] tests/contracts/test_llm.py:95: another reason",
+        "SKIPPED [1] unreadable",
+    ],
+)
+def test_any_skip_that_is_not_on_the_allowed_list_fails_the_report(tmp_path, line):
+    helper(tmp_path, "run", "probe", "--", sys.executable, "-c", f"print({line!r})")
+    bad = helper(tmp_path, "report", "probe")
+    assert bad.returncode == 1 and es.SKIP_FAIL in bad.stdout, bad.stdout
+
+
+@pytest.mark.parametrize(
+    ("path", "reason", "applies"),
+    [(p, r, when) for p, r, when, _ in es.ALLOWED_SKIPS],
+)
+def test_every_allowed_skip_is_allowed_exactly_when_it_may_happen(tmp_path, path, reason, applies):
+    line = f"SKIPPED [1] {path}:5: {reason}"
+    helper(tmp_path, "run", "probe", "--", sys.executable, "-c", f"print({line!r})")
+    done = helper(tmp_path, "report", "probe")
+    assert (done.returncode == 0) == applies(), done.stdout
+
+
+def test_the_allowed_skips_name_real_tests():
+    """Each entry must still match a skip written in the named file, so a renamed reason cannot leave a dead entry."""
+    for path, reason, _, _ in es.ALLOWED_SKIPS:
+        assert reason in (ROOT / path).read_text(encoding="utf-8"), (path, reason)
+
+
+def test_the_baseline_has_one_skip_that_runs_everywhere():
+    assert [(p, l) for p, _, w, l in es.ALLOWED_SKIPS if w is es._always] == [
+        ("tests/contracts/test_llm.py", 1)
+    ]
 
 
 def test_a_step_that_never_finished_says_so(tmp_path):
@@ -1435,6 +1503,9 @@ TEST_ENV = "HADAVIN_TEST_VAULT_ADDR"
 IS_TEST = re.compile(
     r"^(uv run )?(python3? -m )?pytest\b|\$TOOL\"? run (pytest|perf|stage-mutants|\"\$name\")\b"
 )
+# The steps that get the server address: the tests and the performance tests. The mutant runners do not (ci.yml gives
+# its mutants step neither), so they use the in-process fake.
+NEEDS_ADDR = re.compile(r"^(uv run )?(python3? -m )?pytest\b|\$TOOL\"? run (pytest|perf)\b")
 CMD_POS = r"(^|[;&|({]\s*|\bdo\s+|\bthen\s+)"  # where a command word can stand in a shell line
 RUN_RE = re.compile(
     r"\b(docker|podman)\s+(container\s+)?run\b|\bdocker[- ]compose\b|\bdocker\s+compose\b"
@@ -1443,10 +1514,10 @@ INSTALLS = re.compile(r"\buv\s+sync\b|\bpip3?\s+install\b|\buv\s+pip\s+install\b
 
 CURL_CMD_RE = re.compile(
     CMD_POS
-    + r"(?:\w+=\S*\s+)*(?:(?:sudo|timeout\s+\S+|env|command|exec|nohup)\s+)*curl\s+(?P<args>[^;&|]*)"
+    + r"(?:\w+=\S*\s+)*(?:(?:sudo|timeout\s+\S+|env|command|exec|nohup|xargs(?:\s+-\S+)*)\s+)*curl\s+(?P<args>[^;&|]*)"
 )
 # short options that take a value: the rest of the word is the value
-CURL_VALUE_FLAGS = frozenset("oHdKmuAebcwxXTErCyYzFDQ")
+CURL_VALUE_FLAGS = frozenset("oHdKmuAebcwxXTErCyYzFDQUPt")
 
 
 def curl_is_verbose(line: str) -> bool:
@@ -1461,7 +1532,8 @@ def curl_is_verbose(line: str) -> bool:
         except ValueError:
             words = m.group("args").split()
         for w in words:
-            if w == "--verbose" or w.startswith("--trace"):
+            # curl accepts any unambiguous start of a long option: --verb is --verbose, --trac is --trace
+            if (len(w) >= 6 and "--verbose".startswith(w)) or w.startswith("--trac"):
                 return True
             if w.startswith("-") and not w.startswith("--") and len(w) > 1:
                 for ch in w[1:]:
@@ -1695,6 +1767,8 @@ def vault_problems(text: str) -> list[str]:
         for i, st in enumerate(steps):
             if any(IS_TEST.search(ln) for ln in logical_lines(st.get("run", ""))):
                 test_steps.append(i)
+                if not any(NEEDS_ADDR.search(ln) for ln in logical_lines(st.get("run", ""))):
+                    continue
                 merged = {
                     **(wf.get("env") or {}),
                     **(job.get("env") or {}),
@@ -2045,7 +2119,9 @@ VAULT_PLANTS = {
     "probe cannot succeed": (lambda t: t.replace(" && exit 0", ""), "probe"),
     "no exit 1 after the loop": (
         lambda t: re.sub(
-            r"(Start a throwaway Vault development server[\s\S]*?)exit 1\n(?=\s+- )", r"\1true\n", t
+            r"(Start a throwaway Vault development server[\s\S]*?)exit 1\n(?=\s+(?:- |#))",
+            r"\1true\n",
+            t,
         ),
         "exit-1",
     ),
@@ -2326,26 +2402,6 @@ def test_vault_target_without_an_address_is_the_local_fake(monkeypatch):
     assert address.startswith("http://127.0.0.1:") and token
 
 
-def test_a_skip_that_names_the_pinned_tables_variable_fails_the_report(tmp_path):
-    code = (
-        "print('SKIPPED [1] tests/x.py:1: HADAVIN_REQUIRE_PINNED_UNIDATA is required but not set')"
-    )
-    helper(tmp_path, "run", "pytest", "--", sys.executable, "-c", code)
-    bad = helper(tmp_path, "report", "pytest")
-    assert bad.returncode == 1 and "is required but not set" in bad.stdout
-
-
-def test_a_python_312_skip_that_names_the_pinned_tables_variable_passes(tmp_path):
-    """The variable is deliberately unset on Python 3.12 and 3.14: a skip that only names it is an ordinary skip."""
-    code = (
-        "print('SKIPPED [2] tests/x.py:1: text-folding tables are built for Python 3.13 "
-        "(HADAVIN_REQUIRE_PINNED_UNIDATA is unset on 3.12)')"
-    )
-    helper(tmp_path, "run", "pytest", "--", sys.executable, "-c", code)
-    ok = helper(tmp_path, "report", "pytest")
-    assert ok.returncode == 0 and "| pytest | exit=0 | 2 |" in ok.stdout
-
-
 def test_a_step_called_status_is_refused_and_the_result_rows_survive(tmp_path):
     helper(tmp_path, "run", "ok", "--", sys.executable, "-c", "pass")
     done = helper(tmp_path, "run", "status", "--", sys.executable, "-c", "pass")
@@ -2467,6 +2523,13 @@ def test_the_skip_pattern_sees_every_way_to_skip(line):
         "sudo curl -v http://x",
         "x=1 curl -sv http://x",
         "cmd && curl -o /dev/null -v http://x",
+        "echo http://x | xargs curl -v",
+        "echo http://x | xargs -n1 -I{} curl -fsSv {}",
+        "curl --verb http://x",
+        "curl --verbo http://x",
+        "curl --trac out http://x",
+        "curl -U user:pw -v http://x",
+        "curl -P - -t X=1 -v http://x",
     ],
 )
 def test_curl_verbose_forms_are_caught(line):
@@ -2485,7 +2548,322 @@ def test_curl_verbose_forms_are_caught(line):
         "command -v curl",
         "curl -H 'X-Note: verbose' http://x",
         "curl -ovx http://x",
+        "curl -Uv:pw http://x",
+        "curl -tv=1 http://x",
+        "curl --version",
+        "curl --ver http://x",
+        "echo http://x | xargs curl -fsS",
     ],
 )
 def test_curl_flags_that_only_contain_v_are_not_verbose(line):
     assert not curl_is_verbose(line)
+
+
+# --- the rest of the review round: what the helper really does under a real pytest, and ties between files ------
+
+
+def real_pytest(tmp_path: Path, body: str, *flags: str) -> subprocess.CompletedProcess:
+    """Write a test file and run it through `run pytest` with the CI flags (-rfEs) in a folder of its own."""
+    work = tmp_path / "work"
+    work.mkdir()
+    (work / "test_probe.py").write_text(body, encoding="utf-8")
+    env = {"PYTEST_ADDOPTS": "", "PYTEST_PLUGINS": ""}
+    return helper(
+        work,
+        "run",
+        "probe",
+        "--",
+        sys.executable,
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "-rfEs",
+        *flags,
+        "test_probe.py",
+        env=env,
+    )
+
+
+def test_a_real_pytest_skip_that_names_a_test_variable_fails_the_report(tmp_path):
+    """The whole path with the real tool: pytest prints its -rs line, the helper logs it, the report reads it."""
+    body = (
+        "import pytest\n"
+        "def test_a():\n    pass\n"
+        "def test_b():\n    pytest.skip('HADAVIN_TEST_X not set')\n"
+    )
+    ran = real_pytest(tmp_path, body)
+    assert ran.returncode == 0, (
+        ran.stdout
+    )  # pytest itself is green: only the report catches the skip
+    work = tmp_path / "work"
+    assert "SKIPPED [1] test_probe.py:5: HADAVIN_TEST_X not set" in ran.stdout
+    done = helper(work, "report", "probe")
+    assert done.returncode == 1 and es.SKIP_FAIL in done.stdout
+    assert "| probe | FAIL" in done.stdout and "| 1 | 1 | 0 |" in done.stdout
+
+
+def test_a_real_pytest_run_with_nothing_skipped_is_counted_and_passes(tmp_path):
+    ran = real_pytest(tmp_path, "def test_a():\n    pass\ndef test_b():\n    pass\n")
+    assert ran.returncode == 0, ran.stdout
+    done = helper(tmp_path / "work", "report", "probe")
+    assert done.returncode == 0 and "| probe | exit=0 | 2 | 0 | 0 |" in done.stdout, done.stdout
+
+
+def test_a_real_pytest_deselect_is_counted(tmp_path):
+    body = "import pytest\n@pytest.mark.slow\ndef test_a():\n    pass\ndef test_b():\n    pass\n"
+    ran = real_pytest(tmp_path, body, "-m", "not slow", "-W", "ignore")
+    assert ran.returncode == 0, ran.stdout
+    done = helper(tmp_path / "work", "report", "probe")
+    assert "| probe | exit=0 | 1 | 0 | 1 |" in done.stdout, done.stdout
+
+
+@pytest.mark.parametrize(
+    ("line", "counts"),
+    [
+        ("10838 passed, 1 skipped, 28 deselected in 388.62s (0:06:28)", (10838, 1, 28)),
+        ("3 skipped in 0.10s", (0, 3, 0)),
+        ("1 error in 0.20s", (0, 0, 0)),
+        ("2 passed, 1 warning in 0.01s", (2, 0, 0)),
+        ("=== 4 passed, 2 deselected in 1.00s ===", (4, 0, 2)),
+    ],
+)
+def test_the_summary_line_is_read_in_every_shape(line, counts):
+    got = es.parse_summary("noise\n" + line + "\nexit=0")
+    assert got is not None
+    assert (got.get("passed", 0), got.get("skipped", 0), got.get("deselected", 0)) == counts
+
+
+def test_no_summary_line_is_none():
+    assert es.parse_summary("exit=0\n") is None
+
+
+def test_a_test_step_below_its_floor_fails_and_one_without_a_summary_fails(
+    tmp_path, monkeypatch, capsys
+):
+    # The helper runs in a subprocess, so the floor is checked on the function the report calls.
+    log = tmp_path / "pytest.txt"
+    log.write_text("2 passed in 0.1s\nexit=0\n", encoding="utf-8")
+    monkeypatch.setattr(es, "LOG_DIR", tmp_path)
+    (tmp_path / "status.txt").write_text("pytest\texit=0\n", encoding="utf-8")
+    monkeypatch.setattr(es, "FLOORS", {"pytest": 3})
+    assert es.cmd_report(["pytest"]) == 1
+    monkeypatch.setattr(es, "FLOORS", {"pytest": 2})
+    assert es.cmd_report(["pytest"]) == 0
+    log.write_text("exit=0\n", encoding="utf-8")
+    assert es.cmd_report(["pytest"]) == 1
+
+
+def test_a_real_run_far_below_the_recorded_floor_fails(tmp_path):
+    """The recorded floors are in the helper itself: a real two-test run under the step name pytest is far below."""
+    work = tmp_path / "work"
+    work.mkdir()
+    (work / "test_probe.py").write_text("def test_a():\n    pass\n", encoding="utf-8")
+    done = helper(
+        work,
+        "run",
+        "pytest",
+        "--",
+        sys.executable,
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "-rfEs",
+        "test_probe.py",
+        env={"PYTEST_ADDOPTS": ""},
+    )
+    assert done.returncode == 0
+    bad = helper(work, "report", "pytest")
+    assert bad.returncode == 1 and es.FLOOR_FAIL in bad.stdout, bad.stdout
+
+
+def test_the_floors_name_the_test_steps_of_the_workflow_and_are_real_numbers():
+    steps = set(re.findall(r'\$TOOL" run ([a-z0-9-]+) --', WORKFLOW.read_text(encoding="utf-8")))
+    assert set(es.FLOORS) <= steps
+    assert all(isinstance(v, int) and v >= 20 for v in es.FLOORS.values()), es.FLOORS
+
+
+def test_the_log_of_a_step_says_where_the_workflow_came_from_and_which_settings_exist(tmp_path):
+    env = {
+        "GITHUB_REF": "refs/heads/feature-x",
+        "GITHUB_SHA": "a" * 40,
+        "DEFAULT_BRANCH": "main",
+        "HADAVIN_TEST_PG_DSN": "postgresql://u:p@h/db",
+    }
+    helper(tmp_path, "run", "probe", "--", sys.executable, "-c", "pass", env=env)
+    log = (tmp_path / "evidence-logs" / "probe.txt").read_text(encoding="utf-8")
+    assert (
+        f"workflow origin: refs/heads/feature-x at commit {'a' * 40}, NOT the default branch (main)"
+        in log
+    )
+    assert "HADAVIN_TEST_PG_DSN=set" in log and "HADAVIN_TEST_VAULT_ADDR=unset" in log
+    assert "u:p@h" not in log  # only set or unset is written, never a value
+
+
+def test_the_report_and_summary_name_the_branch_and_warn_when_it_is_not_the_default(tmp_path):
+    other = {"GITHUB_REF": "refs/heads/feature-x", "GITHUB_SHA": "b" * 40, "DEFAULT_BRANCH": "main"}
+    helper(tmp_path, "run", "ok", "--", sys.executable, "-c", "pass", env=other)
+    done = helper(tmp_path, "report", "ok", env=other)
+    assert (
+        done.returncode == 0
+    )  # a branch run is allowed: it is how a workflow change is tried before it is merged
+    assert (
+        "NOT the default branch" in done.stdout
+        and "NOTE: this run did not use the default" in done.stdout
+    )
+    main = {"GITHUB_REF": "refs/heads/main", "GITHUB_SHA": "c" * 40, "DEFAULT_BRANCH": "main"}
+    again = helper(tmp_path, "report", "ok", env=main)
+    assert "the default branch" in again.stdout and "NOTE:" not in again.stdout
+    bare = helper(tmp_path, "report", "ok")
+    assert "not recorded" in bare.stdout and "NOTE:" not in bare.stdout
+
+
+def test_the_plan_job_summary_gets_the_origin(tmp_path):
+    summary = tmp_path / "summary.md"
+    env = {
+        "INPUT_REF": "main",
+        "INPUT_PYTHONS": '["3.13"]',
+        "INPUT_MUTANTS": "",
+        "GITHUB_REF": "refs/heads/z",
+        "GITHUB_SHA": "d" * 40,
+        "DEFAULT_BRANCH": "main",
+        "GITHUB_STEP_SUMMARY": str(summary),
+        "GITHUB_OUTPUT": str(tmp_path / "out.txt"),
+    }
+    inherited = {k: v for k, v in os.environ.items() if k not in RUNNER_ONLY}
+    done = es.run_fixed(
+        [sys.executable, str(ROOT / "tools" / "evidence_step.py"), "plan"],
+        cwd=tmp_path,
+        env={**inherited, **env},
+    )
+    assert done.returncode == 0, done.stderr
+    assert "NOT the default branch" in summary.read_text(encoding="utf-8")
+
+
+@pytest.mark.parametrize(
+    ("outcome", "code"), [("success", 0), ("failure", 1), ("skipped", 1), ("cancelled", 1), ("", 1)]
+)
+def test_the_outcome_of_an_unwrapped_step_becomes_a_row(tmp_path, outcome, code):
+    done = helper(tmp_path, "outcome", "vault-start", env={"OUTCOME": outcome})
+    assert done.returncode == code
+    assert f"vault-start\texit={code}" in (tmp_path / "evidence-logs" / "status.txt").read_text()
+    report = helper(tmp_path, "report", "vault-start")
+    assert report.returncode == code
+
+
+def test_a_failed_vault_start_cannot_end_in_all_steps_green(tmp_path):
+    helper(tmp_path, "run", "pytest", "--", sys.executable, "-c", "pass")
+    helper(tmp_path, "outcome", "vault-start", env={"OUTCOME": "failure"})
+    done = helper(tmp_path, "report", "vault-start", "pytest")
+    assert "all steps exit=0" not in done.stdout and done.returncode == 1
+
+
+def test_the_outcome_command_refuses_a_second_row_for_the_same_name(tmp_path):
+    assert helper(tmp_path, "outcome", "vault-start", env={"OUTCOME": "success"}).returncode == 0
+    assert helper(tmp_path, "outcome", "vault-start", env={"OUTCOME": "success"}).returncode == 2
+
+
+def test_the_runner_facts_are_written_through_the_masking(tmp_path):
+    token = "tok" + "-" + "facts0value1234"
+    done = helper(tmp_path, "facts", env={"HADAVIN_TEST_VAULT_TOKEN": token})
+    assert done.returncode == 0
+    text = (tmp_path / "evidence-logs" / "env.txt").read_text(encoding="utf-8")
+    assert "HADAVIN_TEST_VAULT_TOKEN=set" in text and token not in text and "cpus " in text
+
+
+def test_run_fixed_refuses_a_shell_string_and_an_empty_command():
+    for bad in ("echo hi", [], [""], ["echo", 1], ["a\0b"]):
+        with pytest.raises(ValueError):
+            es.run_fixed(bad)  # type: ignore[arg-type]
+
+
+def test_run_fixed_returns_exit_code_and_both_streams():
+    done = es.run_fixed(
+        [sys.executable, "-c", "import sys; print('o'); print('e', file=sys.stderr); sys.exit(4)"]
+    )
+    assert (done.returncode, done.stdout.strip(), done.stderr.strip()) == (4, "o", "e")
+
+
+def test_the_helper_and_this_file_hold_exactly_one_s603_suppression():
+    """Five were reduced to the one in start_fixed. A new one in these two files is a new way past the rule and fails
+    here. (Other files of the repository have their own, from before; this test does not touch them.)"""
+    needle = "no" + "qa: S603"
+    counts = {
+        name: (ROOT / name).read_text(encoding="utf-8").count(needle)
+        for name in ("tools/evidence_step.py", "tests/test_evidence_workflow_guard.py")
+    }
+    assert counts == {"tools/evidence_step.py": 1, "tests/test_evidence_workflow_guard.py": 0}, (
+        counts
+    )
+
+
+def test_only_start_fixed_starts_a_process_in_the_helper_and_this_file_starts_none():
+    pattern = re.compile(r"\bsubprocess\.(?:run|Popen|call|check_output|check_call)\(")
+    assert (
+        len(pattern.findall((ROOT / "tools" / "evidence_step.py").read_text(encoding="utf-8"))) == 1
+    )
+    assert pattern.findall(Path(__file__).read_text(encoding="utf-8")) == []
+
+
+def test_the_lowest_allowed_python_is_the_lowest_the_project_supports():
+    import tomllib
+
+    spec = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["project"][
+        "requires-python"
+    ]
+    assert spec.replace(" ", "").startswith(">=" + es.PYTHONS[0]), (spec, es.PYTHONS)
+    assert list(es.PYTHONS) == sorted(es.PYTHONS, key=lambda v: tuple(map(int, v.split("."))))
+
+
+def test_the_copied_pins_in_evidence_yml_equal_the_ones_in_ci_yml():
+    """evidence.yml repeats the Postgres image, the Vault image and the uv version and checksum of ci.yml."""
+    ci = (WORKFLOW_DIR / "ci.yml").read_text(encoding="utf-8")
+    ev = WORKFLOW.read_text(encoding="utf-8")
+    for pattern in (
+        r"image: (postgres:[0-9.]+@sha256:[0-9a-f]{64})",
+        r"VAULT_IMAGE: (hashicorp/vault:[0-9.]+@sha256:[0-9a-f]{64})",
+        r"version: \"([0-9.]+)\"",
+        r"checksum: \"([0-9a-f]{64})\"",
+    ):
+        in_ci, in_ev = set(re.findall(pattern, ci)), set(re.findall(pattern, ev))
+        assert in_ev and in_ev <= in_ci, (pattern, in_ci, in_ev)
+
+
+@pytest.mark.parametrize("name", ["ci.yml", "evidence.yml"])
+def test_the_postgres_service_listens_on_the_loopback_address_only(name):
+    wf = load((WORKFLOW_DIR / name).read_text(encoding="utf-8"))
+    seen = 0
+    for job in wf["jobs"].values():
+        for svc in (job.get("services") or {}).values():
+            if "postgres" in str(svc.get("image", "")):
+                seen += 1
+                assert svc.get("ports") == ["127.0.0.1:5432:5432"], (name, svc.get("ports"))
+    assert seen >= 1
+
+
+def test_a_workflow_cannot_run_the_tests_without_the_ci_selection():
+    """The evidence run uses the selection of ci.yml's check job (-m "not live and not perf" and -m perf)."""
+    ci = (WORKFLOW_DIR / "ci.yml").read_text(encoding="utf-8")
+    ev = WORKFLOW.read_text(encoding="utf-8")
+    for selection in ('-m "not live and not perf"', "-m perf"):
+        assert selection in ci and selection in ev, selection
+
+
+@pytest.mark.parametrize(
+    ("source", "reads"),
+    [
+        ('import os\nos.environ.pop("HADAVIN_TEST_VAULT_TOKEN", None)\n', False),
+        ('import os\nos.environ.setdefault("HADAVIN_TEST_VAULT_TOKEN", "x")\n', False),
+        ('import os\nmy_environ_helper("HADAVIN_TEST_VAULT_TOKEN")\n', False),
+        ('import os\nother.get("HADAVIN_TEST_VAULT_TOKEN")\n', False),
+        ('import os\nNAME = "HADAVIN_TEST_VAULT_TOKEN"\nx = os.environ.get(NAME)\n', True),
+        ('import os\nNAME: str = "HADAVIN_TEST_VAULT_TOKEN"\nx = os.environ[NAME]\n', True),
+        ('import os\nNAME = "OTHER"\nx = os.environ.get(NAME)\n', False),
+        ('from os import getenv\nx = getenv("HADAVIN_TEST_VAULT_TOKEN")\n', True),
+    ],
+)
+def test_the_token_reader_knows_a_read_from_other_calls(source, reads):
+    assert es._reads_token(source) is reads
