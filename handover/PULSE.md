@@ -1,1 +1,1 @@
-21:48Z | agents: RUNNING S1j a37744c2b879327e1 (round 7 fixes, started 21:41:20Z) | evid shells: none | unpushed: none | refreshed every 60 s by a bounded script (ends 23:58Z); detail in HEARTBEAT.md
+21:49Z | agents: RUNNING S1j a37744c2b879327e1 (round 7 fixes); MUT7 a1ff992440850841f (mutation round on A4r7, evidence); shell run7.sh campaign (model-slow, model-timeout, catcher-slow on /tmp/dpld-camp7) | evid shells: none | unpushed: none | refreshed every 60 s by a bounded script (ends 23:59Z); detail in HEARTBEAT.md
