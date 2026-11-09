@@ -2,21 +2,22 @@
 
 import inspect
 import re
+import threading
+from datetime import timedelta
 
 import pytest
 
 from hadavin_sdk import models
-from hadavin_sdk.models import RunState
+from hadavin_sdk.models import Run, RunState, now
 from hadavin_sdk.runtime import agent_loop
 from hadavin_sdk.runtime.agent_loop import Runtime
 from hadavin_sdk.store.protocol import NotFound, StaleState
 from tests.test_s5_runtime import _doc, build
 
-# Looked up by name so that on the base commit (which has neither) the tests FAIL by assertion or TypeError,
-# not by a collection error.
 # ORACLE is written out here on purpose: the tests must not use the pattern under test to judge itself.
+# `InvalidRunId` is looked up by name so that on the base commit (which has none) the tests FAIL when they run,
+# not at collection.
 ORACLE = re.compile(r"run-[0-9a-f]{32}")
-RUN_ID_PATTERN = getattr(models, "RUN_ID_PATTERN", ORACLE)
 InvalidRunId = getattr(agent_loop, "InvalidRunId", type("InvalidRunId", (ValueError,), {}))
 
 AGENT, PRINCIPAL = "test-agent", "svc:test-agent"
@@ -36,17 +37,199 @@ def test_t1_given_id_is_the_run_id(cfg_dir):
     assert rt.store.get_run(GOOD).run_id == GOOD
 
 
-def test_t2_same_id_twice_is_refused_and_nothing_else_happens(cfg_dir):
+class SpyStore:
+    """Forwards every call to the real store and records the method names, in order."""
+
+    def __init__(self, inner):
+        self._inner, self.calls = inner, []
+
+    def __getattr__(self, name):
+        attr = getattr(self._inner, name)
+        if not callable(attr):
+            return attr
+
+        def call(*args, **kwargs):
+            self.calls.append(name)
+            return attr(*args, **kwargs)
+
+        return call
+
+
+class SpyLimits:
+    """Counts the budget and kill-switch calls (the base has no fake meter, so this stands for the meter hold)."""
+
+    def __init__(self, inner):
+        self._inner, self.calls = inner, []
+
+    def __getattr__(self, name):
+        attr = getattr(self._inner, name)
+        if not callable(attr):
+            return attr
+
+        def call(*args, **kwargs):
+            self.calls.append(name)
+            return attr(*args, **kwargs)
+
+        return call
+
+
+def _all_runs(store):
+    """Every run in the store, through the public listing, whatever its state."""
+    later = now() + timedelta(days=1)
+    return [r for st in RunState for r in store.list_runs(st, later, limit=1000)]
+
+
+def _foreign(rt, **diff):
+    """Store a run with id GOOD that differs from the call (AGENT, PRINCIPAL, trigger_ref 'm-1') in `diff`."""
+    kw = {
+        "agent_id": AGENT,
+        "principal_id": PRINCIPAL,
+        "trigger_kind": "event",
+        "trigger_ref": "m-1",
+    }
+    kw.update(diff)
+    run = Run(run_id=GOOD, **kw)
+    rt.store.create_run(run)
+    return run
+
+
+def test_d0_one_run_per_message_at_the_choke_point(cfg_dir):
+    """Fails BY ASSERTION on the base commit (no `run_id` parameter there: the call is made without it, so two run
+    rows exist) and on 84abdf6 (the second call raised StaleState). `run_id` is passed only when the parameter
+    exists. The document stops before the model, so the result does not depend on the recording."""
+    rt, cfg = build(cfg_dir)
+    doc = _doc(cfg, "injected.txt")
+    kw = {"run_id": GOOD} if "run_id" in inspect.signature(Runtime.handle).parameters else {}
+    first = rt.handle(AGENT, PRINCIPAL, doc, trigger_ref="m-1", **kw)
+    second, refused = None, None
+    try:
+        second = rt.handle(AGENT, PRINCIPAL, doc, trigger_ref="m-1", **kw)
+    except StaleState as exc:  # turned into an assertion below, so the row fails by assertion
+        refused = exc
+    assert refused is None, f"the second call for the same message raised {type(refused).__name__}"
+    assert len(_all_runs(rt.store)) == 1  # the base has two
+    assert isinstance(second, Run) and second.run_id == first.run_id
+
+
+def test_d2_same_message_twice_returns_the_existing_run(cfg_dir):
     rt, cfg = build(cfg_dir)
     doc = _doc(cfg, "chat.txt")
-    rt.handle(AGENT, PRINCIPAL, doc, trigger_ref="m-1", run_id=GOOD)
+    first = rt.handle(AGENT, PRINCIPAL, doc, trigger_ref="m-1", run_id=GOOD)
+    assert first.run_id == GOOD and first.state == RunState.NO_ACTION
     calls, notes = len(rt.llm.calls), _count_rows(rt)
     assert calls == 1 and notes > 0
-    with pytest.raises(StaleState):
-        rt.handle(AGENT, PRINCIPAL, doc, trigger_ref="m-1", run_id=GOOD)
+    rt.store, rt.limits = SpyStore(rt.store), SpyLimits(rt.limits)
+    second = rt.handle(AGENT, PRINCIPAL, doc, trigger_ref="m-1", run_id=GOOD)
+    assert isinstance(second, Run) and ORACLE.fullmatch(second.run_id)
+    assert second.run_id == GOOD
+    assert second.state == RunState.NO_ACTION  # the stored run, not a new one
     assert len(rt.llm.calls) == calls  # no second model call, so no second spend
     assert _count_rows(rt) == notes  # no second "received" note
-    assert rt.store.get_run(GOOD).state == RunState.NO_ACTION  # the first run is untouched
+    assert rt.limits.calls == []  # no limits check, no meter hold
+    assert rt.store.calls == ["create_run", "get_run"]  # nothing written but the refused create
+    assert len(_all_runs(rt.store)) == 1
+
+
+@pytest.mark.parametrize(
+    "diff",
+    [
+        {"agent_id": "other-agent"},
+        {"principal_id": "svc:other"},
+        {"trigger_ref": "m-2"},
+    ],
+    ids=["foreign-agent", "foreign-principal", "foreign-trigger-ref"],
+)
+def test_d2b_direct_a_foreign_run_is_never_returned(cfg_dir, diff):
+    rt, cfg = build(cfg_dir)
+    stored = _foreign(rt, **diff)
+    rt.store, rt.limits = SpyStore(rt.store), SpyLimits(rt.limits)
+    with pytest.raises(StaleState):
+        rt.handle(AGENT, PRINCIPAL, _doc(cfg, "chat.txt"), trigger_ref="m-1", run_id=GOOD)
+    assert rt.llm.calls == []
+    assert rt.audit.events() == []  # no note of any run
+    assert rt.limits.calls == []
+    assert rt.store.calls == ["create_run", "get_run"]
+    assert rt.store.get_run(GOOD) == stored  # untouched
+    assert len(_all_runs(rt.store)) == 1
+
+
+def test_d2c_direct_a_foreign_run_created_inside_create_run(cfg_dir):
+    """Another writer stores a run with this id after the caller built its own and just before `create_run` runs:
+    `create_run` refuses, the stored run is not the caller's, so `StaleState` and nothing else is written."""
+    rt, cfg = build(cfg_dir)
+
+    class RacingStore(SpyStore):
+        def create_run(self, run):
+            self.calls.append("create_run")
+            self._inner.create_run(run.model_copy(update={"agent_id": "other-agent"}))
+            return self._inner.create_run(run)
+
+    rt.store, rt.limits = RacingStore(rt.store), SpyLimits(rt.limits)
+    with pytest.raises(StaleState):
+        rt.handle(AGENT, PRINCIPAL, _doc(cfg, "chat.txt"), trigger_ref="m-1", run_id=GOOD)
+    assert rt.llm.calls == []
+    assert rt.audit.events() == []
+    assert rt.limits.calls == []
+    assert rt.store.calls == ["create_run", "get_run"]
+    assert rt.store.get_run(GOOD).agent_id == "other-agent"
+    assert rt.store.get_run(GOOD).state == RunState.RECEIVED
+    assert len(_all_runs(rt.store)) == 1
+
+
+def test_d2d_direct_the_existing_run_vanished_is_still_stale(cfg_dir):
+    """`create_run` says the id exists but `get_run` finds nothing (it was removed in between): the typed refusal
+    `StaleState` is raised, not `NotFound`, and nothing else is written."""
+    rt, cfg = build(cfg_dir)
+
+    class VanishingStore(SpyStore):
+        def create_run(self, run):
+            self.calls.append("create_run")
+            raise StaleState(f"run exists: {run.run_id}")
+
+    rt.store = VanishingStore(rt.store)
+    with pytest.raises(StaleState):
+        rt.handle(AGENT, PRINCIPAL, _doc(cfg, "chat.txt"), trigger_ref="m-1", run_id=GOOD)
+    assert rt.llm.calls == [] and rt.audit.events() == []
+    assert rt.store.calls == ["create_run", "get_run"]
+
+
+def _race_once(cfg_dir, rid):
+    """Two threads handle one message with one id; both reach `create_run` together. Returns what they got."""
+    rt, cfg = build(cfg_dir)
+    doc = _doc(cfg, "chat.txt")
+    gate = threading.Barrier(2)
+
+    class GatedStore(SpyStore):
+        def create_run(self, run):
+            gate.wait(timeout=10)
+            return self._inner.create_run(run)
+
+    rt.store = GatedStore(rt.store)
+    got, errors = [], []
+
+    def go():
+        try:
+            got.append(rt.handle(AGENT, PRINCIPAL, doc, trigger_ref="m-1", run_id=rid))
+        except Exception as exc:  # noqa: BLE001 - reported by the caller's assertion
+            errors.append(exc)
+
+    threads = [threading.Thread(target=go) for _ in range(2)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join(timeout=30)
+    return rt, got, errors
+
+
+def test_race_two_threads_same_message_one_run(cfg_dir):
+    """One thread creates the run and works, the other gets the same run back: one run, one model call, no error."""
+    for n in range(10):
+        rid = "run-" + format(n, "032x")
+        rt, got, errors = _race_once(cfg_dir, rid)
+        assert not errors, errors
+        assert [r.run_id for r in got] == [rid, rid]
+        assert len(_all_runs(rt.store)) == 1
+        assert len(rt.llm.calls) == 1
 
 
 def test_t3_without_run_id_ids_are_fresh_and_well_formed(cfg_dir):
@@ -130,4 +313,17 @@ def test_t7_run_id_is_keyword_only_with_default_none():
 
 
 def test_t8_model_pattern_is_the_written_out_oracle():
-    assert RUN_ID_PATTERN.pattern == ORACLE.pattern
+    assert hasattr(models, "RUN_ID_PATTERN")  # fails by assertion on the base
+    assert models.RUN_ID_PATTERN.pattern == ORACLE.pattern
+
+
+def test_t9_order_unqualified_first_then_invalid_run_id(cfg_dir):
+    rt, cfg = build(cfg_dir)
+    doc = _doc(cfg, "chat.txt")
+    with pytest.raises(
+        agent_loop.Unqualified
+    ):  # unknown agent AND a bad id: the agent is judged first
+        rt.handle("no-such-agent", PRINCIPAL, doc, run_id="bad")
+    with pytest.raises(InvalidRunId):  # known agent, bad id
+        rt.handle(AGENT, PRINCIPAL, doc, run_id="bad")
+    assert not issubclass(agent_loop.Unqualified, ValueError)  # so the two are told apart by type

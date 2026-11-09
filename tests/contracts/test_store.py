@@ -363,3 +363,54 @@ def test_purge_redaction_maps_ages_a_finished_run_from_when_it_finished(store):
     before_run_ended = done.updated_at - timedelta(seconds=1)
     assert store.purge_redaction_maps(before_run_ended, keep_run_ids=frozenset()) == 0
     assert store.purge_redaction_maps(now() + timedelta(days=1), keep_run_ids=frozenset()) == 1
+
+
+def test_duplicate_run_id_is_stale_and_changes_nothing(store):
+    """A second `create_run` with an id already stored raises `StaleState` and leaves the first run as it was
+    (`Runtime.handle(run_id=...)` relies on this to tell "already started" from "new")."""
+    first = Run(agent_id="a", principal_id="p", trigger_kind="event", trigger_ref="t-1")
+    store.create_run(first)
+    other = Run(
+        run_id=first.run_id, agent_id="b", principal_id="q", trigger_kind="user", trigger_ref="t-2"
+    )
+    with pytest.raises(StaleState):
+        store.create_run(other)
+    with pytest.raises(StaleState):
+        store.create_run(first)  # the very same run, again
+    got = store.get_run(first.run_id)
+    assert (got.agent_id, got.principal_id, got.trigger_kind, got.trigger_ref) == (
+        "a",
+        "p",
+        "event",
+        "t-1",
+    )
+
+
+_RUN_KW = {"agent_id": "a", "principal_id": "p", "trigger_kind": "event"}
+
+
+def test_concurrent_create_run_with_one_id_has_one_winner(store):
+    """Eight threads create a run with the same id at the same moment: one succeeds, seven get `StaleState`."""
+    shared_id = Run(**_RUN_KW, trigger_ref="-").run_id
+    gate = threading.Barrier(8)
+    won, stale, other = [], [], []
+
+    def go(i):
+        run = Run(run_id=shared_id, **{**_RUN_KW, "trigger_ref": f"t-{i}"})
+        gate.wait()
+        try:
+            store.create_run(run)
+            won.append(i)
+        except StaleState:
+            stale.append(i)
+        except Exception as exc:  # noqa: BLE001 - anything else is a failure, reported below
+            other.append(exc)
+
+    threads = [threading.Thread(target=go, args=(i,)) for i in range(8)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    assert not other
+    assert len(won) == 1 and len(stale) == 7
+    assert store.get_run(shared_id).trigger_ref == f"t-{won[0]}"
