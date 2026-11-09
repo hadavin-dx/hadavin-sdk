@@ -557,3 +557,181 @@ def test_a_settle_above_the_reserved_amount_is_never_refused_by_the_ceiling(stor
     out = store.settle_spend(rid, D("5"))
     assert out.applied is True and out.reservation.settled_usd == D(5)
     assert store.spend_totals(agent, utc_today(store))[0] == ceiling - MICRO + D("4.999999") + MICRO
+
+
+# --- B3 (e1, e2, e3): a settle never refuses an excess ------------------------------------------------------------
+
+EXCESS_VALUES = [
+    ("0.5", "5.0"),
+    ("10", "20"),
+    ("10", "20.000001"),
+    ("0.5", "1.5"),
+    ("0.5", "1.500001"),
+]
+
+
+def _counters(store, agent, run):
+    day = utc_today(store)
+    d, m = store.spend_totals(agent, day)
+    return {"run": store.get_run(run.run_id).cost_usd, "day": d, "month": m}
+
+
+def _nothing_below_zero(store, agent, run):
+    assert all(v >= 0 for v in _counters(store, agent, run).values())
+
+
+@pytest.mark.parametrize("closed_by", ["open", "expired"])
+@pytest.mark.parametrize(("reserved", "actual"), EXCESS_VALUES)
+def test_e1_e2_a_settle_above_the_reserved_amount_books_the_full_excess_on_all_three_counters(
+    store, reserved, actual, closed_by
+):
+    agent = f"rs-e12-{closed_by}-{reserved}-{actual}"
+    run = _run(store, agent)
+    rid = _reserve(store, agent, reserved, run=run).reservation.reservation_id
+    if closed_by == "expired":
+        _age(store, rid, 120)
+        assert [
+            r.reservation_id
+            for r in store.sweep_spend_reservations(60, limit=1000)
+            if r.agent_id == agent
+        ] == [rid]
+    out = store.settle_spend(rid, D(actual))
+    assert out.applied is True and out.reservation.status == "settled"
+    assert out.reservation.settled_usd == D(actual)
+    assert _counters(store, agent, run) == {"run": D(actual), "day": D(actual), "month": D(actual)}
+    _nothing_below_zero(store, agent, run)
+
+
+@pytest.mark.parametrize("which", ["run", "day", "month"])
+def test_e3_after_a_settle_past_the_ceiling_only_lowering_writes_still_work(store, which):
+    ceiling = D(10**15)
+    agent = f"rs-e3-{which}"
+    run = _run(store, agent)
+    day = utc_today(store)
+    _set_counter(store, which, agent, run, ceiling - 1)
+    first = _reserve(store, agent, "0.5", run=run).reservation.reservation_id
+    out = store.settle_spend(
+        first, D("1.000001")
+    )  # excess 0.500001: the counter ends above the ceiling
+    assert out.applied is True
+    before = _counters(store, agent, run)
+    assert before[which] == ceiling + MICRO
+    with pytest.raises(ValueError):
+        _reserve(store, agent, "0.000001", run=run)
+    if which == "run":
+        with pytest.raises(ValueError):
+            store.add_cost(run.run_id, MICRO)
+    else:
+        with pytest.raises(ValueError):
+            store.add_spend(agent, day, MICRO)
+    assert _counters(store, agent, run) == before  # nothing moved in any counter
+    # a second setup: a lowering write still works at that level
+    agent2 = f"rs-e3b-{which}"
+    run2 = _run(store, agent2)
+    _set_counter(store, which, agent2, run2, ceiling - 1)
+    a = _reserve(store, agent2, "0.5", run=run2).reservation.reservation_id
+    b = _reserve(store, agent2, "0.25", run=run2).reservation.reservation_id
+    store.settle_spend(a, D("1.000001"))
+    assert _counters(store, agent2, run2)[which] == ceiling + D("0.250001")
+    released = store.release_spend(b)
+    assert released.applied is True and released.reservation.status == "released"
+    assert _counters(store, agent2, run2)[which] == ceiling + MICRO
+
+
+# --- B3 release guard (r1 to r4) ----------------------------------------------------------------------------------
+
+
+def _lower(store, which, agent, run, value):
+    day = utc_today(store)
+    if store.backend == "postgres":
+        sql = {
+            "run": ("UPDATE runs SET cost_usd = %s WHERE run_id = %s", (value, run.run_id)),
+            "day": ("UPDATE spend SET usd = %s WHERE agent_id = %s", (value, agent)),
+            "month": ("UPDATE spend_month SET usd = %s WHERE agent_id = %s", (value, agent)),
+        }[which]
+        _admin(store, *sql)
+    elif which == "run":
+        inner = store._inner
+        inner._runs[run.run_id] = inner._runs[run.run_id].model_copy(update={"cost_usd": value})
+    else:  # memory's month is the sum of its days, so lowering the day lowers both
+        store._inner._spend[(agent, day)] = value
+
+
+def _remove_month_counter(store, agent):
+    if store.backend == "postgres":
+        _admin(store, "DELETE FROM spend_month WHERE agent_id = %s", (agent,))
+    else:
+        del store._inner._spend[(agent, utc_today(store))]
+
+
+def _snapshot(store, rid, agent, run):
+    row = store.get_spend_reservation(rid)
+    return (row.status, row.settled_usd, row.closed_at), _counters(store, agent, run)
+
+
+@pytest.mark.parametrize("closed_by", ["open", "expired"])
+@pytest.mark.parametrize("which", ["run", "day", "month", "missing-month-row"])
+def test_r1_to_r4_a_release_with_a_damaged_counter_changes_nothing_and_works_after_repair(
+    store, which, closed_by
+):
+    agent = f"rs-r-{which}-{closed_by}"
+    run = _run(store, agent)
+    rid = _reserve(store, agent, "2", run=run).reservation.reservation_id
+    if closed_by == "expired":
+        _age(store, rid, 120)
+        store.sweep_spend_reservations(60, limit=1000)
+    if which == "missing-month-row":
+        _remove_month_counter(store, agent)
+    else:
+        _lower(store, which, agent, run, D("0.5"))
+    before = _snapshot(store, rid, agent, run)
+    with pytest.raises(CounterDamaged):
+        store.release_spend(rid)
+    assert _snapshot(store, rid, agent, run) == before  # the row was not left half-closed
+    # repair by hand: every counter back to the reserved amount, then the release succeeds (r4)
+    day = utc_today(store)
+    for w in ("run", "day", "month"):
+        if which == "missing-month-row" and w in ("day", "month"):
+            if store.backend == "postgres":
+                _admin(
+                    store,
+                    "INSERT INTO spend_month (agent_id, month, usd) VALUES (%s, %s, 2) "
+                    "ON CONFLICT (agent_id, month) DO UPDATE SET usd = 2",
+                    (agent, day.replace(day=1)),
+                )
+            else:
+                store._inner._spend[(agent, day)] = D(2)
+            break
+        _lower(store, w, agent, run, D(2))
+        if store.backend == "memory" and w == "day":
+            break
+    out = store.release_spend(rid)
+    assert out.applied is True and out.reservation.status == "released"
+    _nothing_below_zero(store, agent, run)
+
+
+# --- B5: 10,000 tiny pairs equal the exact sum --------------------------------------------------------------------
+
+
+def test_b5_ten_thousand_reserve_settle_pairs_equal_the_exact_decimal_sum(store):
+    agent = "rs-b5"
+    run = _run(store, agent)
+    expected = D(0)
+    for i in range(10_000):
+        micro = (i * 7919) % 999_983 + 1  # six decimals, never zero
+        reserved = D(micro) / D(10**6)
+        settled = D(micro * 3 // 4) / D(10**6)
+        rid = f"b5-{i}-{store.backend}"
+        store.reserve_spend(
+            rid,
+            agent,
+            utc_today(store),
+            reserved,
+            day_cap=None,
+            month_cap=None,
+            run_id=run.run_id,
+            run_cap=None,
+        )
+        store.settle_spend(rid, settled)
+        expected += settled
+    assert _counters(store, agent, run) == {"run": expected, "day": expected, "month": expected}
