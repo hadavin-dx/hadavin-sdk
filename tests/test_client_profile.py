@@ -16,13 +16,14 @@ import ast
 import inspect
 from itertools import product
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
 from hadavin_sdk import app as app_mod
 from hadavin_sdk.approvals.channel import FakeChannel
-from hadavin_sdk.backends.table import DEMO_ONLY, TABLE
-from hadavin_sdk.config import ConfigError, load_config
+from hadavin_sdk.backends.table import DEMO_ONLY, LOCAL_DETECTORS, TABLE
+from hadavin_sdk.config import ConfigError, _sends_text_out, load_config
 from tests.k5_support import _edit as _edit_file
 from tests.test_k3_pilot import ScriptedLLM
 from tests.test_k3_pilot_env import pilot_cfg
@@ -310,6 +311,7 @@ def _door_problems(root: Path) -> list[str]:
 def test_t5g_no_door_in_src_or_demos():
     assert _door_problems(SRC) == []
     assert _door_problems(DEMOS) == []
+    assert _door_problems(REPO / "tools") == []
 
 
 @pytest.mark.parametrize(
@@ -445,6 +447,27 @@ def test_t7a2_the_vendor_detector_in_demo_needs_the_field(cfg_dir):
     with pytest.raises(ConfigError, match="made_up_data_only") as err:
         load_config(cfg_dir)
     assert "detector: bedrock_guardrail" in str(err.value)
+
+
+def test_t7a4_every_detector_kind_is_local_or_refused_in_demo():
+    for kind in sorted(TABLE["detector"]):
+        backends = SimpleNamespace(
+            llm=SimpleNamespace(kind="fake"),
+            channel=SimpleNamespace(kind="fake"),
+            detector=[SimpleNamespace(kind=kind)],
+        )
+        listed = f"detector: {kind}" in _sends_text_out(backends)
+        assert listed is (kind not in LOCAL_DETECTORS), kind
+    assert LOCAL_DETECTORS <= set(TABLE["detector"])
+
+
+def test_t7a5_a_detector_kind_nobody_reviewed_is_treated_as_sending_text_out():
+    backends = SimpleNamespace(
+        llm=SimpleNamespace(kind="fake"),
+        channel=SimpleNamespace(kind="fake"),
+        detector=[SimpleNamespace(kind="madeup_vendor")],
+    )
+    assert _sends_text_out(backends) == ["detector: madeup_vendor"]
 
 
 def test_t7a3_a_real_channel_kind_in_demo_needs_the_field(cfg_dir):

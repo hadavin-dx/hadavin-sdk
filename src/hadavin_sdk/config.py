@@ -25,7 +25,14 @@ from pydantic import (
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from hadavin_sdk import defaults, deferred
-from hadavin_sdk.backends.table import DEFAULTS, DEMO_ONLY, NOT_PROD, TABLE, KindSettings
+from hadavin_sdk.backends.table import (
+    DEFAULTS,
+    DEMO_ONLY,
+    LOCAL_DETECTORS,
+    NOT_PROD,
+    TABLE,
+    KindSettings,
+)
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.scrub_settings import ScrubSettings
 from hadavin_sdk.stages import STAGES, is_live, is_prod
@@ -429,10 +436,11 @@ class Config(_Strict):
 def _sends_text_out(b: Backends) -> list[str]:
     """Kinds that may send case text to a service outside the process (a vendor, or a model you host; the check is by
     kind, so a self-hosted `openai_compat` counts): any llm or channel kind that is not demo-only (so a kind added
-    later is refused too, until its package decides otherwise) and the `bedrock_guardrail` detector (it sends text
-    outside the llm kind; an `llm_judge` detector uses the llm kind, which is covered above)."""
+    later is refused too, until its package decides otherwise) and every detector kind not in the local allow-list
+    `LOCAL_DETECTORS` (a vendor detector such as `bedrock_guardrail` sends text outside the llm kind; `llm_judge`
+    uses the llm kind, which is covered above)."""
     out = [f"llm: {b.llm.kind}"] if ("llm", b.llm.kind) not in DEMO_ONLY else []
-    out += ["detector: bedrock_guardrail" for d in b.detector if d.kind == "bedrock_guardrail"]
+    out += [f"detector: {d.kind}" for d in b.detector if d.kind not in LOCAL_DETECTORS]
     out += [f"channel: {b.channel.kind}"] if ("channel", b.channel.kind) not in DEMO_ONLY else []
     return out
 
