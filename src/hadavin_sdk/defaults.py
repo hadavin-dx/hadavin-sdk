@@ -135,3 +135,11 @@ MAX_USD = 10**12  # the most one amount of money (one booking, one cost, one act
 # The most one model price may be, in USD per million tokens. 10**6 is one dollar per token, far above any list price
 # known to the author; it is not read from a provider's price list (UNVERIFIED), so a lead may lower it.
 MAX_ROUTE_PRICE_USD_PER_MTOK = 10**6
+
+# --- store purges (P4d-a2 fix, review round 1 M5) ------------------------------------------------------------------------
+STORE_PURGE_BATCH_ROWS = (
+    1000  # rows one purge statement may delete; a bigger backlog takes several statements
+)
+STORE_PURGE_MIN_LEFT_MS = (
+    250  # a purge starts no new batch when less than this is left of the call budget
+)
