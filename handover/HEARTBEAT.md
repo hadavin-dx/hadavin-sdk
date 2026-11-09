@@ -533,3 +533,4 @@ LAPTOP CANDIDATES (pushed heads only): PR85 0b54631 (items 3,4,10), PR72 e6a4220
 04:01Z HB(auto):  agents 2 running (bd-recon-P6a1,bd-recon-P3a2) | heavy slots busy 0/3 | last: started, none yet 
 04:06Z HB(auto):  agents 1 running (bd-recon-P3a2) | heavy slots busy 0/3 | last: started, none yet 
 05:02Z HB(auto):  agents 1 running (bd-recon-P3a2) | heavy slots busy 0/3 | last: started, none yet 
+05:02Z HB: limit reset handled; pulse restarted pid 227; bd-recon-P3a2 resumed; q376
