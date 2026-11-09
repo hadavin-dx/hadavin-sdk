@@ -39,6 +39,9 @@ if [ ! -f "$WORK/done-0" ]; then
   python3 -I "$FG/patch_hooks.py" "$TREE" > "$WORK/raw-patch.txt" 2>&1; PRC=$?
   STEP 0 patch-server-hooks 60 -- cat "$WORK/raw-patch.txt"
   [ $PRC = 0 ] || { echo "PATCH FAILED (stop): $(cat "$WORK/raw-patch.txt")" >&2; exit 72; }
+  # the tests that call git (hygiene scan, sh blobs) need a repository: make a throw-away one inside the unpacked copy
+  ( cd "$TREE" && git init -q . && git add -A && git -c user.name=gate -c user.email=gate@example.test commit -q -m "unpacked copy" ) > "$WORK/raw-gitinit.txt" 2>&1 || echo "git init of the unpacked copy failed" >&2
+  echo "the unpacked copy was made a throw-away git repository so the git-based hygiene tests can run" >> "$WORK/venv-note.txt"
   touch "$WORK/done-0"
 fi
 TREE="$(cat "$WORK/tree.txt")"; PY="$WORK/venv/bin/python"; BIN="$WORK/venv/bin"
