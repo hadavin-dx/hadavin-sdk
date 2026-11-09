@@ -1,6 +1,6 @@
 """Store suite: the public Store Protocol only, over every registered store kind (P2 adds postgres)."""
 
-import random
+import hashlib
 import threading
 import time
 from datetime import date, timedelta
@@ -455,6 +455,24 @@ SEEDS = range(200)
 STEPS = 30
 
 
+class _SeededChoices:
+    """A fixed sequence of pseudo-random picks per seed (hash of seed and step), so a failure names its seed."""
+
+    def __init__(self, seed):
+        self._seed, self._step = seed, 0
+
+    def _next(self):
+        self._step += 1
+        digest = hashlib.sha256(f"{self._seed}:{self._step}".encode()).digest()
+        return int.from_bytes(digest[:8], "big")
+
+    def choice(self, seq):
+        return seq[self._next() % len(seq)]
+
+    def randrange(self, low, high):
+        return low + self._next() % (high - low)
+
+
 def _month_key(day):
     """The reference model keys months by integer arithmetic, independent of the code's `day.replace(day=1)`."""
     return day.year * 12 + day.month
@@ -466,7 +484,7 @@ def test_spend_and_cost_counters_match_a_plain_python_ledger(store):
     today = utc_today(store)
     days = [today + timedelta(days=k) for k in range(-45, 3)]  # spans two or three calendar months
     for seed in SEEDS:
-        rng = random.Random(seed)  # noqa: S311 - a seeded test generator, not a secret
+        rng = _SeededChoices(seed)
         agent = f"agent-{seed}"
         runs = [_run(store) for _ in range(2)]
         day_total: dict = {}

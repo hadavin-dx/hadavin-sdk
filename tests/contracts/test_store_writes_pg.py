@@ -276,7 +276,10 @@ def test_build_passes_the_settings_to_the_store(dsn):
 
 
 def test_a_spent_budget_is_store_busy_before_anything_is_sent():
-    store = _stub(call_budget_ms=0)
+    store = _stub()
+    store._call_budget_ms = (
+        0  # the constructor refuses 0 (BN N5); a budget spent in time looks the same
+    )
     plan, state = _fail_times("40P01", 0)
     with pytest.raises(StoreBusy):
         store.op(plan)
@@ -674,3 +677,200 @@ def test_a_lone_caller_finishes_for_every_write_method(make, name):
     assert error is None or (name.startswith("purge_") and drv.sqlstate(error) == "42501"), repr(
         error
     )
+
+
+# --- review round 1 fixes (PR 75) ------------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("name", "bad"),
+    [
+        *[("lock_timeout_ms", v) for v in (0, 99, 60001)],
+        *[("call_budget_ms", v) for v in (0, 499, 60001)],
+        *[
+            (n, v)
+            for n in ("lock_timeout_ms", "call_budget_ms")
+            for v in (-1, True, False, 1.5, "1000", None)
+        ],
+    ],
+    ids=repr,
+)
+def test_M1_the_constructor_refuses_a_timeout_outside_the_settings_ranges(name, bad):
+    """Class: a setting validated at one entry (the settings model) and not at the other (the constructor)."""
+    with pytest.raises(ValueError, match=name):
+        PostgresStore(_Conn(), **{name: bad})
+
+
+@pytest.mark.parametrize(
+    ("kw", "want"),
+    [
+        ({}, (1000, 5000)),
+        ({"lock_timeout_ms": 100, "call_budget_ms": 500}, (100, 500)),
+        ({"lock_timeout_ms": 60000, "call_budget_ms": 60000}, (60000, 60000)),
+    ],
+    ids=["defaults", "lowest", "highest"],
+)
+def test_M1_the_edges_of_the_ranges_build(kw, want):
+    store = PostgresStore(_Conn(), **kw)
+    assert (store._lock_timeout_ms, store._call_budget_ms) == want
+
+
+def test_M4_the_back_off_is_20_ms_times_2_to_the_n_plus_at_most_20_ms_of_jitter(monkeypatch):
+    """Class: a tuning constant nobody pins (tenacity's `wait_exponential_jitter(multiplier=0.02, jitter=0.02)`
+    is valid in 9.2.1; a mistaken unit or name would show here). Two sleeps: 0.02 + [0, 0.02] and 0.04 + [0, 0.02]."""
+    slept = []
+    monkeypatch.setattr(time, "sleep", slept.append)
+    for _ in range(
+        40
+    ):  # the jitter is random: 40 runs cover both ends well enough to catch a wrong constant
+        store = _stub()
+        plan, _ = _fail_times("40P01", 2)
+        assert store.op(plan) == "ok"
+    first, second = slept[0::2], slept[1::2]
+    assert len(first) == len(second) == 40
+    assert all(0.02 <= x <= 0.04 for x in first), (min(first), max(first))
+    assert all(0.04 <= x <= 0.06 for x in second), (min(second), max(second))
+    assert max(first) - min(first) > 0.002  # a jitter exists (not a fixed delay)
+
+
+# M2: the kill switch is read in ONE place (get_kill_switch); reserve_spend uses it.
+
+
+def test_M2_reserve_spend_reads_the_kill_switch_through_get_kill_switch(make):
+    class Switched(PostgresStore):
+        def get_kill_switch(self):
+            return KillSwitch(on=True, by="user:test")
+
+    from hadavin_sdk.store.protocol import KillSwitchOn
+
+    store = make(Switched)
+    with pytest.raises(KillSwitchOn):
+        store.reserve_spend(
+            "res-ks",
+            "a",
+            utc_today(store),
+            Decimal(1),
+            day_cap=Decimal(10),
+            month_cap=Decimal(10),
+            run_cap=None,
+        )
+    assert store.spend_totals("a", utc_today(store)) == (0, 0)
+
+
+def test_M2_only_get_kill_switch_and_set_kill_switch_name_the_table():
+    """The sibling check: no third place may read or write the kill switch row."""
+    _, methods = _class_methods()
+    naming = {
+        m.name
+        for m in methods
+        for node in ast.walk(m)
+        if isinstance(node, ast.Constant)
+        and isinstance(node.value, str)
+        and "kill_switch" in node.value
+        and m.name not in {"_select"}
+    }
+    assert naming == {"get_kill_switch", "set_kill_switch"}
+    # and the old second reader is gone
+    assert "_kill_switch_row" not in {m.name for m in methods}
+
+
+# M5: a purge deletes in batches, so one large purge is not one long statement under the 5 s budget.
+
+
+@pytest.fixture
+def purger(dsn):
+    """A store on the purge login of the fixture schema (the runtime login cannot delete)."""
+    from tests.contracts.kinds.store_postgres import PURGE_DSN
+
+    with drv.connect_admin(
+        PURGE_DSN[dsn], autocommit=True
+    ) as conn:  # PURGE_DSN is not an owner DSN: used as is
+        yield conn
+
+
+def _old_tool_calls(admin, n):
+    admin.execute(
+        "INSERT INTO tool_calls (call_id, run_id, tool, inputs, output, output_sha256, created_at) "
+        "SELECT 'c' || g, 'run-' || (g %% 7), 't', '{}'::jsonb, 'o', repeat('a', 64), now() - interval '2 days' "
+        "FROM generate_series(1, %s) g",
+        (n,),
+    )
+    admin.commit()
+
+
+def test_M5_a_purge_larger_than_one_batch_deletes_all_of_it(dsn, admin, purger):
+    from hadavin_sdk import defaults
+
+    n = defaults.STORE_PURGE_BATCH_ROWS * 2 + 345
+    _old_tool_calls(admin, n)
+    store = PostgresStore(purger)
+    assert store.purge_tool_calls(now(), keep_run_ids=frozenset({"run-3"})) == n - len(
+        range(3, n + 1, 7)
+    )
+    left = admin.execute("SELECT count(*), min(run_id), max(run_id) FROM tool_calls").fetchone()
+    assert left[1:] == ("run-3", "run-3")
+
+
+def test_M5_the_statements_are_batches_of_the_configured_size(dsn, admin, purger, monkeypatch):
+    from hadavin_sdk import defaults
+
+    n = defaults.STORE_PURGE_BATCH_ROWS * 2 + 5
+    _old_tool_calls(admin, n)
+    seen = []
+    real = PostgresStore._exec
+
+    def spy(self, query, params=()):
+        seen.append(params[-1] if params else None)
+        return real(self, query, params)
+
+    monkeypatch.setattr(PostgresStore, "_exec", spy)
+    store = PostgresStore(purger)
+    assert store.purge_tool_calls(now(), keep_run_ids=frozenset()) == n
+    batches = [x for x in seen if x == defaults.STORE_PURGE_BATCH_ROWS]
+    assert len(batches) == 3  # 1000 + 1000 + 5 (the short batch ends the loop)
+
+
+def test_M5_a_nearly_spent_budget_stops_between_batches_and_keeps_what_was_deleted(
+    dsn, admin, purger, monkeypatch
+):
+    from hadavin_sdk import defaults
+
+    n = defaults.STORE_PURGE_BATCH_ROWS * 3
+    _old_tool_calls(admin, n)
+    store = PostgresStore(purger, call_budget_ms=5000)
+    real = PostgresStore._exec
+    calls = {"n": 0}
+
+    def slow_second(self, query, params=()):
+        calls["n"] += 1
+        out = real(self, query, params)
+        if params and params[-1] == defaults.STORE_PURGE_BATCH_ROWS:
+            # pretend the first batch used the whole budget
+            self._deadline = time.monotonic() + 0.001
+        return out
+
+    monkeypatch.setattr(PostgresStore, "_exec", slow_second)
+    got = store.purge_tool_calls(now(), keep_run_ids=frozenset())
+    assert got == defaults.STORE_PURGE_BATCH_ROWS  # one batch, then it stopped
+    left = admin.execute("SELECT count(*) FROM tool_calls").fetchone()[0]
+    assert left == n - got  # the finished batch was committed, not rolled back
+    monkeypatch.undo()
+    assert (
+        store.purge_tool_calls(now(), keep_run_ids=frozenset()) == left
+    )  # a second call finishes it
+
+
+def test_M5_the_redaction_map_purge_batches_too(dsn, admin, purger):
+    from hadavin_sdk import defaults
+
+    n = defaults.STORE_PURGE_BATCH_ROWS + 50
+    admin.execute(
+        "INSERT INTO redaction_maps (run_id, mapping, updated_at) "
+        "SELECT 'r' || g, '{}'::jsonb, now() - interval '3 days' FROM generate_series(1, %s) g",
+        (n,),
+    )
+    admin.commit()
+    store = PostgresStore(purger)
+    assert store.purge_redaction_maps(now(), keep_run_ids=frozenset({"r1"})) == n - 1
+    assert admin.execute("SELECT run_id FROM redaction_maps").fetchall() == [("r1",)]
+    assert store.purge_redaction_maps(now(), keep_run_ids=frozenset(), keep_open=False) == 1

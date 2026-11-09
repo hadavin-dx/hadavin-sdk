@@ -12,7 +12,7 @@ import uuid
 from datetime import UTC, date, datetime
 from decimal import ROUND_UP, Decimal
 from enum import StrEnum
-from typing import Any, ClassVar, Literal
+from typing import Any, ClassVar, Literal, cast
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -31,15 +31,16 @@ def round_cost_up(x: Decimal) -> Decimal:
     refuse after a paid call: a non-finite value (checked FIRST: `quantize` of a quiet NaN returns NaN without an
     error), a negative or minus-zero value, and one above `defaults.MAX_USD`. The value is not passed through the
     arithmetic context before `quantize`, so a 29-digit value keeps its last digit."""
-    if not isinstance(x, Decimal):
-        raise ValueError("cost must be a Decimal")  # noqa: TRY004 - a bad value
+    if type(x) is not Decimal:  # an exact Decimal, as `check_usd` requires
+        raise ValueError("cost must be a Decimal")
     if not x.is_finite():
         raise ValueError("cost must be a finite number")
     if x.is_signed():
         raise ValueError("cost must not be negative")
     if x > defaults.MAX_USD:
         raise ValueError(f"cost must be at most {defaults.MAX_USD}")
-    if x.as_tuple().exponent >= -8:  # type: ignore[operator]  # already exact at 8 decimals: keep its form
+    # `exponent` is an int for a finite value; at most 8 decimals already: keep the value as it is
+    if cast(int, x.as_tuple().exponent) >= -8:
         return x
     return x.quantize(_COST_UNIT, rounding=ROUND_UP)
 

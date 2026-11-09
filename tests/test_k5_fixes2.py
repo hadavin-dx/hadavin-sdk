@@ -257,18 +257,21 @@ def test_a_golden_input_over_the_cap_is_a_config_error_naming_it(live_cfg_dir):
 # --- merge condition 4: a database that applied the old file name is refused, not silently migrated ---------------------------------------
 
 
+# A renamed copy of the tree: each renamed file and the real file it copies (a name not listed copies itself).
+_RENAMED_SOURCE = {
+    "0005_reservations.sql": "0005_evidence.sql",  # its body is replaced by "-- empty" below
+    "0006_evidence.sql": "0005_evidence.sql",
+    "0007_spend_reservations.sql": "0006_spend_reservations.sql",
+}
+
+
 def _folder(tmp_path, names):
     """The real migrations' SQL (so the grant map still matches the tables) under the renamed file names:
     0005_reservations stands in for #49's file (empty), 0006_evidence is today's 0005_evidence."""
     folder = tmp_path / "migrations"
     folder.mkdir(parents=True)
     for n in names:
-        if n.endswith("_spend_reservations.sql"):
-            real = (
-                mig.MIGRATIONS / "0006_spend_reservations.sql"
-            )  # P4d-b's table, renumbered like the rest
-        else:
-            real = mig.MIGRATIONS / (n if n[:4] <= "0004" else "0005_evidence.sql")
+        real = mig.MIGRATIONS / _RENAMED_SOURCE.get(n, n)
         body = "-- empty" if n == "0005_reservations.sql" else real.read_text(encoding="utf-8")
         (folder / n).write_text(body, encoding="utf-8")
     return mig._migration_files(folder)

@@ -479,3 +479,81 @@ def test_the_day_must_be_within_one_day_of_the_store_date(store):
     for d in (today - timedelta(days=2), today + timedelta(days=2)):
         with pytest.raises(ValueError):
             _reserve(store, agent, "1", day=d)
+
+
+MICRO = D("0.000001")
+
+
+def _set_counter(store, which, agent, run, value):
+    """Put one counter at `value` through the back door of each store."""
+    day = utc_today(store)
+    if store.backend == "postgres":
+        if which == "run":
+            _admin(store, "UPDATE runs SET cost_usd = %s WHERE run_id = %s", (value, run.run_id))
+        elif which == "day":
+            _admin(
+                store,
+                "INSERT INTO spend (agent_id, day, usd) VALUES (%s, %s, %s) "
+                "ON CONFLICT (agent_id, day) DO UPDATE SET usd = EXCLUDED.usd",
+                (agent, day, value),
+            )
+        else:
+            _admin(
+                store,
+                "INSERT INTO spend_month (agent_id, month, usd) VALUES (%s, %s, %s) "
+                "ON CONFLICT (agent_id, month) DO UPDATE SET usd = EXCLUDED.usd",
+                (agent, day.replace(day=1), value),
+            )
+        return
+    inner = store._inner
+    if which == "run":
+        inner._runs[run.run_id] = inner._runs[run.run_id].model_copy(update={"cost_usd": value})
+    elif which == "day":
+        inner._spend[(agent, day)] = value
+    else:  # memory keeps days only: the month total is their sum, so use another day of the same month
+        other = day.replace(day=15 if day.day != 15 else 16)
+        inner._spend[(agent, other)] = value
+
+
+@pytest.mark.parametrize("which", ["run", "day", "month"])
+def test_the_ceiling_is_exact_for_each_counter_and_lowering_reopens_room(store, which):
+    """Class: a ceiling off by one unit. A counter one micro-dollar below the ceiling accepts a reserve of one
+    micro-dollar (it lands ON the ceiling), refuses the next one, and refuses a reserve of two at once; a release
+    makes room again. Nothing is booked by a refused call."""
+    ceiling = D(10**15)
+    agent = f"rs-ceil-{which}"
+    run = _run(store, agent)
+    _set_counter(store, which, agent, run, ceiling - MICRO)
+    day = utc_today(store)
+    before_run = store.get_run(run.run_id).cost_usd
+
+    first = _reserve(store, agent, "0.000001", run=run)
+    assert first.applied is True
+    with pytest.raises(ValueError):
+        _reserve(store, agent, "0.000001", run=run)  # +1 micro over the ceiling
+    with pytest.raises(ValueError):
+        _reserve(store, agent, "0.000002", run=run)  # +2 micro over
+    after = {
+        "run": store.get_run(run.run_id).cost_usd,
+        "day": store.spend_totals(agent, day)[0],
+        "month": store.spend_totals(agent, day)[1],
+    }
+    assert after[which] == ceiling  # only the first reserve was booked
+    assert (after["run"] - before_run) == MICRO  # the run counter moved by that one reserve only
+    # the other direction: giving the first back makes room for exactly one micro-dollar again
+    assert store.release_spend(first.reservation.reservation_id).applied is True
+    assert _reserve(store, agent, "0.000001", run=run).applied is True
+    with pytest.raises(ValueError):
+        _reserve(store, agent, "0.000001", run=run)
+
+
+def test_a_settle_above_the_reserved_amount_is_never_refused_by_the_ceiling(store):
+    """[PL10]: settle books what was spent, even past the ceiling (the money is gone); nothing is refused."""
+    agent = "rs-ceil-settle"
+    ceiling = D(10**15)
+    run = _run(store, agent)
+    _set_counter(store, "day", agent, run, ceiling - MICRO)
+    rid = _reserve(store, agent, "0.000001", run=run).reservation.reservation_id
+    out = store.settle_spend(rid, D("5"))
+    assert out.applied is True and out.reservation.settled_usd == D(5)
+    assert store.spend_totals(agent, utc_today(store))[0] == ceiling - MICRO + D("4.999999") + MICRO

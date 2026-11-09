@@ -289,8 +289,11 @@ def test_audit_checkpoints_migration_adds_alg_and_label_and_old_rows_get_default
         for path in old:
             db.execute("INSERT INTO schema_migrations (version) VALUES (%s)", (path.stem,))
         db.execute("INSERT INTO audit_checkpoints (seq, hash, signature) VALUES (1, 'h', 's')")
+    # Pinned by name, not read from the folder: a folder-built list would pass for any set of files.
     assert migrate(fresh_dsn) == [
-        p.stem for p in sorted(MIGRATIONS.glob("*.sql")) if p.stem >= "0004"
+        "0004_audit_checkpoint_meta",
+        "0005_evidence",
+        "0006_spend_reservations",
     ]
     with psycopg.connect(fresh_dsn, autocommit=True) as db:
         assert db.execute("SELECT seq, alg, key_label FROM audit_checkpoints").fetchall() == [

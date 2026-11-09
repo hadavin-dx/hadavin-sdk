@@ -36,6 +36,8 @@ from tenacity import (
     wait_exponential_jitter,
 )
 
+from hadavin_sdk import defaults
+from hadavin_sdk.backends.table import PostgresSettings
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.models import (
     OPEN_STATES,
@@ -74,6 +76,10 @@ from hadavin_sdk.store.protocol import (
 )
 
 _LOG = logging.getLogger("hadavin_sdk.store")
+
+# A purge deletes in batches so no one statement is long enough to hit the call budget's statement timeout.
+PURGE_BATCH_ROWS = defaults.STORE_PURGE_BATCH_ROWS
+PURGE_MIN_LEFT_MS = defaults.STORE_PURGE_MIN_LEFT_MS
 
 
 _VERIFIED_TLS = frozenset({"verify-ca", "verify-full"})
@@ -266,6 +272,17 @@ def _writes(retry: bool = True):
     return deco
 
 
+def _checked_ms(name: str, value: object) -> int:
+    """`value` must be a whole number of milliseconds inside the range the settings model declares for `name`
+    (BN N5). A bool is refused (it is an int in Python)."""
+    meta = PostgresSettings.model_fields[name].metadata
+    low = next(m.ge for m in meta if hasattr(m, "ge"))
+    high = next(m.le for m in meta if hasattr(m, "le"))
+    if isinstance(value, bool) or not isinstance(value, int) or not low <= value <= high:
+        raise ValueError(f"{name} must be a whole number from {low} to {high}")
+    return value
+
+
 class PostgresStore:
     # ponytail: one connection behind one lock per process; a pool (psycopg_pool) when throughput matters.
     # A dropped connection fails the call (the run ends safely); reconnect-on-error arrives with S11 hosting.
@@ -277,12 +294,14 @@ class PostgresStore:
         lock_timeout_ms: int = 1000,
         call_budget_ms: int = 5000,
     ) -> None:
+        # Settings ranges are the PostgresSettings ranges (one place): a value outside them is refused, so a
+        # budget of 0 can never build a store that refuses every write.
+        self._lock_timeout_ms = _checked_ms("lock_timeout_ms", lock_timeout_ms)
+        self._call_budget_ms = _checked_ms("call_budget_ms", call_budget_ms)
         self._db = conn
         # Re-entrant: the write wrapper holds it for a whole transaction and the helpers take it again inside.
         self._lock = threading.RLock()
         self._on_retry = on_retry
-        self._lock_timeout_ms = lock_timeout_ms
-        self._call_budget_ms = call_budget_ms
         self._deadline: float | None = None  # monotonic; set only by the thread that holds the lock
 
     def _write(self, fn, retry: bool, args: tuple, kwargs: dict):
@@ -607,11 +626,6 @@ class PostgresStore:
                 row[k] = Decimal(row[k]).quantize(micro)
         return SpendReservation.model_validate(row)
 
-    def _kill_switch_row(self) -> bool:
-        """True when the switch is on or its row is missing (fail closed). A plain SELECT: no locking clause."""
-        row = self._exec('SELECT "on" FROM kill_switch WHERE id = 1').fetchone()
-        return True if row is None else bool(row["on"])
-
     def _stored_reservation(self, reservation_id: str) -> SpendReservation | None:
         row = self._exec(
             "SELECT * FROM spend_reservations WHERE reservation_id = %s", (reservation_id,)
@@ -648,7 +662,7 @@ class PostgresStore:
         )
         month = day.replace(day=1)
         with self._lock, self._db.transaction():
-            if self._kill_switch_row():
+            if self.get_kill_switch().on:  # the one kill switch read (fails closed)
                 raise KillSwitchOn("the kill switch is on")
             if run_id is not None:
                 run = self._exec(
@@ -911,16 +925,33 @@ class PostgresStore:
             ToolCallRecord, "tool_calls", "run_id = %s", (run_id,), " ORDER BY created_at, call_id"
         )
 
-    def _purge(self, table: str, column: str, before: datetime, keep: frozenset[str]) -> int:
-        query = sql.SQL("DELETE FROM {} WHERE {} < %s AND NOT (run_id = ANY(%s))").format(
-            sql.Identifier(table), sql.Identifier(column)
-        )
-        with self._lock:
-            return self._exec(query, (before, sorted(keep))).rowcount
+    def _purge_in_batches(self, query: str, params: tuple) -> int:
+        """Delete in batches of `PURGE_BATCH_ROWS` rows (class: one unbounded statement under a call budget). `query`
+        is a DELETE whose last `%s` is the batch size. Stops when a batch is short or the call budget is nearly spent;
+        what the finished batches deleted stays deleted and is returned (a purge is safe to run again, so a caller
+        that needs every row gone calls until the answer is smaller than the batch size)."""
+        total = 0
+        while True:
+            deadline = self._deadline
+            if (
+                total
+                and deadline is not None
+                and (deadline - time.monotonic()) * 1000 < PURGE_MIN_LEFT_MS
+            ):  # a first batch always goes to `_exec`, which raises StoreBusy when the budget is spent
+                return total
+            deleted = self._exec(query, (*params, PURGE_BATCH_ROWS)).rowcount
+            total += deleted
+            if deleted < PURGE_BATCH_ROWS:
+                return total
 
     @_writes()
     def purge_tool_calls(self, before: datetime, *, keep_run_ids: frozenset[str]) -> int:
-        return self._purge("tool_calls", "created_at", before, keep_run_ids)
+        with self._lock:
+            return self._purge_in_batches(
+                "DELETE FROM tool_calls WHERE call_id IN (SELECT call_id FROM tool_calls "
+                "WHERE created_at < %s AND NOT (run_id = ANY(%s)) ORDER BY call_id LIMIT %s)",
+                (before, sorted(keep_run_ids)),
+            )
 
     @_writes()
     def put_redaction_map(self, run_id: str, mapping: dict[str, str]) -> None:
@@ -949,16 +980,18 @@ class PostgresStore:
         with self._lock:
             if keep_open:
                 open_states = sorted(s.value for s in OPEN_STATES)
-                return self._exec(
-                    "DELETE FROM redaction_maps m WHERE NOT (m.run_id = ANY(%s)) AND "
-                    "COALESCE((SELECT r.updated_at FROM runs r WHERE r.run_id = m.run_id), "
-                    "m.updated_at) < %s AND NOT EXISTS (SELECT 1 FROM runs r "
-                    "WHERE r.run_id = m.run_id AND r.state = ANY(%s))",
+                return self._purge_in_batches(
+                    "DELETE FROM redaction_maps WHERE run_id IN (SELECT m.run_id FROM redaction_maps m "
+                    "WHERE NOT (m.run_id = ANY(%s)) AND "
+                    "COALESCE((SELECT r.updated_at FROM runs r WHERE r.run_id = m.run_id), m.updated_at) < %s "
+                    "AND NOT EXISTS (SELECT 1 FROM runs r WHERE r.run_id = m.run_id AND r.state = ANY(%s)) "
+                    "ORDER BY m.run_id LIMIT %s)",
                     (sorted(keep_run_ids), before, open_states),
-                ).rowcount
-            return self._exec(
-                "DELETE FROM redaction_maps m WHERE NOT (m.run_id = ANY(%s)) AND "
-                "COALESCE((SELECT r.updated_at FROM runs r WHERE r.run_id = m.run_id), "
-                "m.updated_at) < %s",
+                )
+            return self._purge_in_batches(
+                "DELETE FROM redaction_maps WHERE run_id IN (SELECT m.run_id FROM redaction_maps m "
+                "WHERE NOT (m.run_id = ANY(%s)) AND "
+                "COALESCE((SELECT r.updated_at FROM runs r WHERE r.run_id = m.run_id), m.updated_at) < %s "
+                "ORDER BY m.run_id LIMIT %s)",
                 (sorted(keep_run_ids), before),
-            ).rowcount
+            )

@@ -14,6 +14,7 @@ from hadavin_sdk.backends.factory import make
 from hadavin_sdk.backends.table import PostgresSettings
 from tests.contracts.kinds import kind, pg_test_dsn, require_backend
 
+DSN_NAME = "pg-dsn"  # the NAME the secrets kind looks up, not a secret
 # runtime DSN -> the DSN of the purge role of the same schema (only for `pg_schema(runtime=True)`)
 PURGE_DSN: dict[str, str] = {}
 # runtime DSN -> the DSN of the owner login of the same schema (what `connect_admin` uses for a runtime DSN)
@@ -109,9 +110,9 @@ class _SplitStore:
 
 
 def _open_split(dsn):
-    settings = PostgresSettings(kind="postgres", dsn_secret_name="pg-dsn")  # noqa: S106 - a name
-    store = make("store", settings, FakeSecretProvider({"pg-dsn": dsn}))
-    purge_store = make("store", settings, FakeSecretProvider({"pg-dsn": PURGE_DSN[dsn]}))
+    settings = PostgresSettings(kind="postgres", dsn_secret_name=DSN_NAME)
+    store = make("store", settings, FakeSecretProvider({DSN_NAME: dsn}))
+    purge_store = make("store", settings, FakeSecretProvider({DSN_NAME: PURGE_DSN[dsn]}))
     return _SplitStore(store, purge_store, dsn)
 
 

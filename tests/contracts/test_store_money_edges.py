@@ -89,7 +89,7 @@ def test_add_spend_refuses_a_datetime_and_a_day_out_of_range(store):
     from datetime import datetime
 
     for bad in (
-        datetime(2026, 1, 1, 0, 0),  # noqa: DTZ001 - a naive datetime is the bad value
+        datetime.fromisoformat("2026-01-01T00:00:00"),  # naive on purpose: it is the bad value
         date(1999, 12, 31),
         date(2101, 1, 1),
         "2026-01-01",

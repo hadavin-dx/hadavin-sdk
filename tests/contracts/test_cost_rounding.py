@@ -130,18 +130,65 @@ def test_the_model_rounds_up_at_construction(cls):
             cls(cost_usd=bad, **kw)
 
 
-def test_a_loop_run_books_the_rounded_cost_and_nothing_escapes():
-    """v3/d2: a reply with a 9-decimal cost, run through the memory store the way the loop books it."""
+class _PricedLLM:
+    """Plays one 'nothing to do' reply through `llm.common.reply` (the producer all real models use), or hands
+    back a reply built directly. The agent loop is the real `Runtime`, wired as `app.build` wires it."""
+
+    def __init__(self, *, route=None, tokens=None, direct=None):
+        self.route, self.tokens, self.direct = route, tokens, direct
+
+    def chat(self, messages, *, system, route, tools=None, documents=None, output_schema=None):
+        if self.direct is not None:
+            return self.direct
+        from hadavin_sdk.llm.common import reply
+
+        return reply(
+            self.route,
+            text="Nothing to do.",
+            calls=[],
+            tokens=self.tokens,
+            stop="end_turn",
+            started=0.0,
+            sent="s",
+        )
+
+
+def _run_through_the_loop(tmp_path, llm):
     from datetime import UTC, datetime
 
-    from hadavin_sdk.models import Run
     from hadavin_sdk.store.memory import MemoryStore
+    from tests.k5_support import build_runtime, handle, k5_cfg
 
     store = MemoryStore()
-    run = Run(agent_id="a", principal_id="p", trigger_kind="event", trigger_ref="t")
-    store.create_run(run)
-    r = Reply(model_id="m", cost_usd=D("0.123456789"))
-    store.add_cost(run.run_id, r.cost_usd)
-    store.add_spend("a", datetime.now(UTC).date(), r.cost_usd)
-    assert store.get_run(run.run_id).cost_usd == D("0.12345679")
-    assert store.spend_totals("a", datetime.now(UTC).date())[0] == D("0.12345679")
+    rt, _cards = build_runtime(k5_cfg(tmp_path), llm, store=store)
+    result = handle(rt)  # an exception that escapes the loop fails the test here
+    run = store.get_run(result.run_id)
+    return run.cost_usd, store.spend_totals("test-agent", datetime.now(UTC).date())[0]
+
+
+def test_d_the_loop_books_the_producer_rounded_cost(tmp_path):
+    """Row (d): the route of a5 (1235 tokens at 0.075) costs exactly 0.000092625. Run counter and day counter both
+    equal the round-up 0.00009263. On the old code the loop booked 0.000092625."""
+    llm = _PricedLLM(route=_route("0.075"), tokens=(1235, 5))
+    assert _run_through_the_loop(tmp_path, llm) == (D("0.00009263"), D("0.00009263"))
+
+
+def test_d2_an_unrounded_producer_cannot_raise_inside_the_loop(tmp_path):
+    """Row (d2): the same run ends without an exception (the stores refuse 9 decimals, so a producer that did not
+    round would raise after the paid call). Killed together with a1-a5 by the 'no rounding anywhere' mutant."""
+    llm = _PricedLLM(route=_route("0.075"), tokens=(1235, 5))
+    cost, day = _run_through_the_loop(tmp_path, llm)
+    assert cost.as_tuple().exponent >= -8 and day.as_tuple().exponent >= -8
+
+
+def test_v3_a_reply_with_a_nine_decimal_cost_is_booked_rounded_up(tmp_path):
+    """Row (v3): a stub reply built directly with cost 0.123456789: the run completes and both counters equal
+    0.12345679 (the old code booked 0.123456789)."""
+    llm = _PricedLLM(direct=Reply(model_id="m", cost_usd=D("0.123456789")))
+    assert _run_through_the_loop(tmp_path, llm) == (D("0.12345679"), D("0.12345679"))
+
+
+def test_v4_a_reply_with_a_nan_cost_fails_before_the_loop_starts():
+    """Row (v4): the object cannot be built, so no loop ever sees it."""
+    with pytest.raises(ValidationError):
+        Reply(model_id="m", cost_usd=D("NaN"))

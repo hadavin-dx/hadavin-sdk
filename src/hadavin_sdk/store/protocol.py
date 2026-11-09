@@ -8,7 +8,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Protocol
+from typing import Protocol, cast
 
 from hadavin_sdk.defaults import MAX_USD
 from hadavin_sdk.errors import ConfigError
@@ -85,8 +85,9 @@ def check_usd(x: object, *, positive: bool = False, max_decimals: int | None = N
         raise ValueError("an amount must be greater than zero")
     if max_decimals is not None and x != 0:
         _sign, digits, exponent = x.as_tuple()
+        exponent = cast(int, exponent)  # an int for a finite value (checked above)
         trailing = len(digits) - len("".join(map(str, digits)).rstrip("0"))
-        if exponent + trailing < -max_decimals:  # type: ignore[operator]
+        if exponent + trailing < -max_decimals:
             raise ValueError(f"an amount may have at most {max_decimals} decimal places")
     return x
 
@@ -352,7 +353,9 @@ class Store(Protocol):
         ...
 
     def purge_tool_calls(self, before: datetime, *, keep_run_ids: frozenset[str]) -> int:
-        """Delete calls created before `before`, except those of `keep_run_ids`; returns the count."""
+        """Delete calls created before `before`, except those of `keep_run_ids`; returns the count.
+        The Postgres store deletes in batches (`defaults.STORE_PURGE_BATCH_ROWS`) and stops early when the call
+        budget is nearly spent, keeping what it deleted: call again until the count is below the batch size."""
         ...
 
     def put_redaction_map(self, run_id: str, mapping: dict[str, str]) -> None:
@@ -369,7 +372,7 @@ class Store(Protocol):
         """Delete maps whose run ended before `before` (the run's last state change; the map's own time when
         the run is unknown), except those of `keep_run_ids`. With `keep_open` (default) the map of a run that can
         still move (OPEN_STATES: received, working, plan ready, awaiting approval, executing, verifying) is kept,
-        because restoring its inputs needs it (NEEDS_PERSON cannot move, so its map ages normally); the 400-day ceiling passes `keep_open=False`. Returns the count."""
+        because restoring its inputs needs it (NEEDS_PERSON cannot move, so its map ages normally); the 400-day ceiling passes `keep_open=False`. Returns the count. Batching as for `purge_tool_calls`."""
         ...
 
 
