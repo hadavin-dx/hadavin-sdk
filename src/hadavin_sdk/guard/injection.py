@@ -7,9 +7,11 @@ from __future__ import annotations
 
 import logging
 import re
+from collections.abc import Iterator
 from decimal import Decimal
 from typing import Protocol
 
+from hadavin_sdk import defaults
 from hadavin_sdk.guard import textnorm
 from hadavin_sdk.guard.runmap import safe_head
 from hadavin_sdk.models import Verdict
@@ -42,16 +44,53 @@ class RegexDetector:
     def __init__(self, threshold: float) -> None:
         self.threshold = threshold
 
+    @staticmethod
+    def _read(text: str) -> Iterator[tuple[str, tuple[str, ...]]]:
+        """``(piece, its scan views)``: the text whole when the fold takes it; otherwise (over the size rule) overlapping pieces of
+        ``defaults.TEXTNORM_INJECTION_CHUNK_CHARS`` characters that share ``defaults.TEXTNORM_INJECTION_OVERLAP_CHARS``, each halved until the fold
+        takes it, so a long document is READ, not flagged. CEILING: a text longer than ``defaults.TEXTNORM_INJECTION_MAX_CHARS`` raises
+        ``TextTooLong`` (flagged as guard_unavailable), and a phrase whose letters are spread over more than the overlap across a piece boundary is
+        not seen (a tripwire, not a gate)."""
+        if len(text) > defaults.TEXTNORM_INJECTION_MAX_CHARS:
+            raise textnorm.TextTooLong(
+                f"a text of {len(text)} characters is over the injection check's limit of {defaults.TEXTNORM_INJECTION_MAX_CHARS}"
+            )
+        try:
+            yield text, textnorm.scan_views_no_value(text)
+            return
+        except textnorm.TextTooLong:
+            pass
+        size = defaults.TEXTNORM_INJECTION_CHUNK_CHARS
+        step = size - defaults.TEXTNORM_INJECTION_OVERLAP_CHARS
+        for start in range(0, len(text), step):
+            yield from RegexDetector._fit(text[start : start + size])
+            if start + size >= len(text):
+                break
+
+    @staticmethod
+    def _fit(piece: str) -> Iterator[tuple[str, tuple[str, ...]]]:
+        try:
+            yield piece, textnorm.scan_views_no_value(piece)
+        except textnorm.TextTooLong:
+            half = len(piece) // 2
+            if half == 0:
+                raise
+            overlap = defaults.TEXTNORM_INJECTION_OVERLAP_CHARS
+            yield from RegexDetector._fit(piece[: half + overlap])
+            yield from RegexDetector._fit(piece[half:])
+
     def _score(self, text: str) -> float:
         """1.0 when the raw text OR any view of it (``textnorm.scan_views_no_value``: the look-alike fold, the squeeze, the scan keys; there is no protected value here) holds a
-        steering phrase, so a Cyrillic o or an inserted mark does not hide it. A text the fold refuses (over the size rule) raises
-        ``TextnormError``, which ``injection_check`` turns into a flag (fail closed)."""
-        for view in (text, *textnorm.scan_views_no_value(text)):
-            if _RX.search(view):
-                return 1.0
-            squashed = _SQUASH.sub("", view.lower())
-            if any(s in squashed for s in _SQUASHED):
-                return 1.0
+        steering phrase, so a Cyrillic o or an inserted mark does not hide it. A text over the size rule of the fold is read in overlapping pieces
+        (``_read``); a text over ``defaults.TEXTNORM_INJECTION_MAX_CHARS`` raises ``TextnormError``, which ``injection_check`` turns into a flag
+        (fail closed)."""
+        for piece, views in self._read(text):
+            for view in (piece, *views):
+                if _RX.search(view):
+                    return 1.0
+                squashed = _SQUASH.sub("", view.lower())
+                if any(s in squashed for s in _SQUASHED):
+                    return 1.0
         return 0.0
 
     def check(self, text: str, source: str) -> Verdict:

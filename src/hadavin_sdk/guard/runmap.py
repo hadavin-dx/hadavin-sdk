@@ -285,16 +285,24 @@ def canonical(text: str) -> str:
     return _canonical_view(text)[0]
 
 
+_ASCII_OR_ONE = re.compile(r"[\x00-\x7f]+|[^\x00-\x7f]")  # a run of ASCII, or one other character
+
+
 def _canonical_view(text: str) -> tuple[str, list[int]]:
     """The canonical form of `text` (NFKC, invisible format characters removed) and, for each canonical
     character, the index of the original character it came from."""
     chars: list[str] = []
     index: list[int] = []
-    for i, c in enumerate(text):
-        for d in unicodedata.normalize("NFKC", c):
+    for run in _ASCII_OR_ONE.finditer(text):
+        piece = run.group()
+        if piece.isascii():  # NFKC changes no ASCII character and ASCII has no format character (Cf): the run is copied whole
+            chars.append(piece)
+            index.extend(range(run.start(), run.end()))
+            continue
+        for d in unicodedata.normalize("NFKC", piece):
             if unicodedata.category(d) != "Cf":
                 chars.append(d)
-                index.append(i)
+                index.append(run.start())
     return "".join(chars), index
 
 

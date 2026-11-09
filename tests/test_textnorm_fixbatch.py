@@ -139,8 +139,8 @@ def test_a_digit_string_needs_the_digit_minimum_and_a_letter_string_the_squeeze_
         ViewTooShort,
         "a digit string under the digit minimum is scanned",
         scan_holds,
-        "any " + short + " text",
-        short,
+        text="any " + short + " text",
+        value=short,
     )
     refused(
         ViewTooShort,
@@ -148,11 +148,13 @@ def test_a_digit_string_needs_the_digit_minimum_and_a_letter_string_the_squeeze_
         scan_needles,
         short,
     )
-    assert scan_holds("any " + enough + " text", enough), (
+    assert scan_holds(text="any " + enough + " text", value=enough), (
         "a digit string at the minimum is not found"
     )
-    assert scan_holds("pin 1 2 3 4 5 6", enough), "an inserted space hides the digits"
-    assert scan_holds("x ab12 y", "ab12"), "a view that holds a letter keeps the squeeze minimum"
+    assert scan_holds(text="pin 1 2 3 4 5 6", value=enough), "an inserted space hides the digits"
+    assert scan_holds(text="x ab12 y", value="ab12"), (
+        "a view that holds a letter keeps the squeeze minimum"
+    )
 
 
 def test_a_scan_key_shorter_than_its_minimum_is_not_a_needle():
@@ -165,7 +167,9 @@ def test_a_scan_key_shorter_than_its_minimum_is_not_a_needle():
     assert not any(n.isdigit() and len(n) < defaults.TEXTNORM_MIN_DIGIT_CHARS for n in needles), (
         "a key of digits is a needle under the digit minimum"
     )
-    assert scan_holds("x 3399 y", "zz99") is False, "a short digit key is found in a text"
+    assert scan_holds(text="x 3399 y", value="zz99") is False, (
+        "a short digit key is found in a text"
+    )
 
 
 def test_the_decisions_are_in_the_module_docstring_and_li_na_is_not_lina():
@@ -194,15 +198,17 @@ def test_a_script_value_is_scanned_and_found_with_a_separator_inserted():
     """Killer: ``scan: a value with no squeeze view is EmptyView``. Chinese, Arabic, Thai and Hindi values are scanned (the ticket asks for the script views)."""
     for value in SCRIPT_VALUES:
         try:
-            exact = scan_holds("x " + value + " y", value)
+            exact = scan_holds(text="x " + value + " y", value=value)
         except TextnormError as refusal:
             raise AssertionError(
                 f"{value!r} is not found (or is refused): {type(refusal).__name__}"
             ) from None
         assert exact is True, f"{value!r} is not found (or is refused)"
         spaced = " ".join(value.replace(" ", ""))
-        assert scan_holds("x " + spaced + " y", value) is True, f"an inserted space hides {value!r}"
-        assert scan_holds("an unrelated english sentence", value) is False, (
+        assert scan_holds(text="x " + spaced + " y", value=value) is True, (
+            f"an inserted space hides {value!r}"
+        )
+        assert scan_holds(text="an unrelated english sentence", value=value) is False, (
             f"{value!r} is found in english"
         )
 
@@ -214,16 +220,22 @@ def test_a_value_with_nothing_to_rely_on_is_still_empty_view():
             EmptyView,
             f"scan_holds does not refuse the empty value {value!r} with EmptyView",
             scan_holds,
-            "any text",
-            value,
+            text="any text",
+            value=value,
         )
 
 
 def test_a_one_ideograph_value_is_too_short_not_empty():
     """One ideograph has a script view, so the refusal is ViewTooShort, not EmptyView. Killer: ``scan: EmptyView for every short value``."""
-    refused(ViewTooShort, "one ideograph is not ViewTooShort", scan_holds, "any text", "\u4e2d")
+    refused(
+        ViewTooShort,
+        "one ideograph is not ViewTooShort",
+        scan_holds,
+        text="any text",
+        value="\u4e2d",
+    )
     try:
-        scan_holds("any text", "\u4e2d")
+        scan_holds(text="any text", value="\u4e2d")
     except EmptyView:
         raise AssertionError("one ideograph is EmptyView") from None
     except ViewTooShort:
@@ -248,12 +260,12 @@ def test_scanning_one_text_for_many_values_builds_the_text_views_once(monkeypatc
     monkeypatch.setattr(textnorm, "_readings", counting)
     values = [f"secret-value-{i:03d}" for i in range(60)] + ["password", "\u5bc6\u7801\u4fdd\u62a4"]
     with textnorm.scan_cache():
-        hits = [scan_holds(text, values[0])]
+        hits = [scan_holds(text=text, value=values[0])]
         once = seen.count(
             text
         )  # what ONE build of the views of the text costs (the squeeze views read it again with other options)
         assert once >= 1, "the text was never read: the counter is broken"
-        hits += [scan_holds(text, v) for v in values[1:]]
+        hits += [scan_holds(text=text, value=v) for v in values[1:]]
         assert hits[-2:] == [True, True] and not any(hits[:60]), "the scan answers are wrong"
         assert seen.count(text) == once, (
             f"the text was read {seen.count(text)} times for {len(values)} values, {once} for the first"
@@ -326,15 +338,15 @@ def test_a_caller_that_names_only_the_value_cannot_miss_an_inserted_foreign_lett
     text = "\u5bc6\u7801\u0436\u4fdd\u62a4"
     assert value in scan_views(text, value), "scan_views gives no script view for the value"
     assert value not in scan_views_no_value(text), "scan_views gives a script view for no value"
-    assert scan_holds(text, value), "scan_holds misses the inserted copy"
+    assert scan_holds(text=text, value=value), "scan_holds misses the inserted copy"
 
 
 def test_the_injection_detector_check_method_is_called_by_injection_check_only():
-    """Design review m1. ``RegexDetector.check`` called directly lets ``TextnormError`` out for a text over the cap; ``injection_check`` turns it
+    """Design review m1. ``RegexDetector.check`` called directly lets ``TextnormError`` out for a text over the injection ceiling (round 1, M4: a text over the fold cap but under the ceiling is read in pieces); ``injection_check`` turns it
     into a flag (fail closed). No module of ``src`` calls ``.check(`` on a detector except ``injection.py``. No mutant: a structure pin."""
     from hadavin_sdk.guard import injection
 
-    text = "a" * (defaults.TEXTNORM_MAX_CHARS + 1)
+    text = "a" * (defaults.TEXTNORM_INJECTION_MAX_CHARS + 1)
     detector = injection.RegexDetector(0.5)
     refused(TextnormError, "the detector accepted a text over the cap", detector.check, text, "src")
     assert injection.injection_check(detector, text, "src").flagged is True, (
@@ -370,8 +382,8 @@ def test_a_minimum_below_the_floor_or_not_a_plain_int_is_refused():
                     TextnormError,
                     f"{name}={bad!r} is accepted by scan_holds",
                     scan_holds,
-                    "any text",
-                    "password-with-many-letters",
+                    text="any text",
+                    value="password-with-many-letters",
                 )
                 setattr(defaults, name, saved[name])
     finally:
@@ -405,11 +417,11 @@ def test_one_inserted_letter_of_the_same_script_is_found_at_every_inner_position
     extra = chr(0x6A01)
     assert value_scripts(needle) == {"HAN"}
     for i, text in enumerate(_insertions(needle, extra), 1):
-        assert scan_holds("x" + text + "y", needle), (
+        assert scan_holds(text="x" + text + "y", value=needle), (
             f"an inserted letter after character {i} of {m} is not found"
         )
-    assert scan_holds(needle, needle), "the exact needle is not found"
-    assert scan_holds(needle[:2] + chr(0x0436) + needle[2:], needle), (
+    assert scan_holds(text=needle, value=needle), "the exact needle is not found"
+    assert scan_holds(text=needle[:2] + chr(0x0436) + needle[2:], value=needle), (
         "a foreign-script letter is not dropped by the script view"
     )
 
@@ -423,10 +435,10 @@ def test_two_inserted_letters_are_not_found():
     """Killer: ``insertion: the tail past a mismatch is not compared``. The matcher is ONE inserted letter, no more."""
     needle = han(_han_minimum())
     a, b = chr(0x6A01), chr(0x6A02)
-    assert scan_holds(needle[:1] + a + needle[1:2] + b + needle[2:], needle) is False, (
+    assert scan_holds(text=needle[:1] + a + needle[1:2] + b + needle[2:], value=needle) is False, (
         "two inserted letters are found"
     )
-    assert scan_holds(needle[:1] + a + a + needle[1:], needle) is False, (
+    assert scan_holds(text=needle[:1] + a + a + needle[1:], value=needle) is False, (
         "two inserted letters in a row are found"
     )
 
@@ -434,15 +446,17 @@ def test_two_inserted_letters_are_not_found():
 def test_a_missing_letter_is_not_found():
     """Killer: ``insertion: a missing letter is a match``."""
     needle = han(_han_minimum())
-    assert scan_holds(needle[:-1], needle) is False, "a missing letter is found"
-    assert scan_holds(needle[1:], needle) is False, "a missing first letter is found"
+    assert scan_holds(text=needle[:-1], value=needle) is False, "a missing letter is found"
+    assert scan_holds(text=needle[1:], value=needle) is False, "a missing first letter is found"
 
 
 def test_a_changed_letter_is_not_found():
     """Killer: ``insertion: a changed letter is a match``. Only the changed letter is asserted here (the missing letter has its own test)."""
     needle = han(_han_minimum())
     a = chr(0x6A01)
-    assert scan_holds(needle[:1] + a + needle[2:], needle) is False, "a changed letter is found"
+    assert scan_holds(text=needle[:1] + a + needle[2:], value=needle) is False, (
+        "a changed letter is found"
+    )
 
 
 def test_a_needle_below_the_minimum_of_its_script_is_matched_exactly_only():
@@ -452,10 +466,12 @@ def test_a_needle_below_the_minimum_of_its_script_is_matched_exactly_only():
     assert len(needle) >= defaults.TEXTNORM_MIN_IDEOGRAPH_CHARS, (
         "the minimum leaves no room under it"
     )
-    assert scan_holds("x" + needle + "y", needle) is True, "the exact short needle is not found"
-    assert scan_holds("x" + needle[:1] + chr(0x6A01) + needle[1:] + "y", needle) is False, (
-        "a needle under the minimum is matched with an insertion"
+    assert scan_holds(text="x" + needle + "y", value=needle) is True, (
+        "the exact short needle is not found"
     )
+    assert (
+        scan_holds(text="x" + needle[:1] + chr(0x6A01) + needle[1:] + "y", value=needle) is False
+    ), "a needle under the minimum is matched with an insertion"
 
 
 def test_each_script_has_its_own_minimum():
@@ -510,7 +526,7 @@ def test_each_script_has_its_own_minimum():
         needle = make(m)
         ins = extra[group]
         assert ins not in needle
-        assert scan_holds(needle[:2] + ins + needle[2:], needle) is True, (
+        assert scan_holds(text=needle[:2] + ins + needle[2:], value=needle) is True, (
             f"{group}: an insertion into a needle at its minimum is not found"
         )
         short = make(m - 1)
@@ -518,18 +534,18 @@ def test_each_script_has_its_own_minimum():
         # Cyrillic and Greek: the table reads some of their letters as Latin look-alikes, so the script view holds only FRAGMENTS of the needle
         # (CHANGELOG, fragmentation); a fragment of the needle is found exactly, so the negative check below is made only where the view is whole.
         if len(short) >= defaults.TEXTNORM_MIN_SCRIPT_CHARS and whole:
-            assert scan_holds(short[:2] + ins + short[2:], short) is False, (
+            assert scan_holds(text=short[:2] + ins + short[2:], value=short) is False, (
                 f"{group}: an insertion into a needle under its minimum is found"
             )
 
 
 def test_a_script_that_was_not_measured_takes_the_cautious_default():
-    """Killer: ``insertion: the minimum ignores the script``. Armenian is not in the table: its minimum is the default, 8: the largest minimum of the
-    measured scripts that have no Latin look-alike letters (Thai)."""
+    """Killer: ``insertion: the minimum ignores the script``. Armenian is not in the table: its minimum is the default, 12: the largest minimum measured for
+    any script (Greek, 12; Cyrillic 10). The default was 8 before the P1b fix batch (round 1 M7: 8 was not the most cautious measured value)."""
     armenian = "".join(chr(0x0531 + i) for i in range(10))
     assert value_scripts(armenian) == {"ARMENIAN"}
     assert "ARMENIAN" not in dict(defaults.TEXTNORM_INSERTION_MIN_CHARS_BY_SCRIPT)
-    assert textnorm._insertion_minimum(armenian) == defaults.TEXTNORM_INSERTION_MIN_CHARS == 8
+    assert textnorm._insertion_minimum(armenian) == defaults.TEXTNORM_INSERTION_MIN_CHARS == 12
     mixed = han(4) + hangul(1)
     assert textnorm._insertion_minimum(mixed) == 5, (
         "a needle with two scripts takes the larger minimum"
@@ -542,11 +558,11 @@ def test_a_needle_longer_than_the_maximum_is_matched_exactly_only():
     extra = chr(0x6A01)
     at = han(top)
     over = han(top + 1)
-    assert scan_holds(at[:5] + extra + at[5:], at) is True, (
+    assert scan_holds(text=at[:5] + extra + at[5:], value=at) is True, (
         "a needle at the maximum is not matched with an insertion"
     )
-    assert scan_holds(over, over) is True, "the exact long needle is not found"
-    assert scan_holds(over[:5] + extra + over[5:], over) is False, (
+    assert scan_holds(text=over, value=over) is True, "the exact long needle is not found"
+    assert scan_holds(text=over[:5] + extra + over[5:], value=over) is False, (
         "a needle over the maximum is matched with an insertion"
     )
 
@@ -554,7 +570,9 @@ def test_a_needle_longer_than_the_maximum_is_matched_exactly_only():
 def test_a_latin_value_is_not_covered_by_the_one_inserted_letter_match():
     """A stated LIMIT (CHANGELOG): the squeeze view of an ASCII value is exact, so a letter inserted into it ("pasxsword") is a different word. No
     mutant: a limit pin."""
-    assert scan_holds("pasxsword", "password") is False, "the limit moved: update the CHANGELOG"
+    assert scan_holds(text="pasxsword", value="password") is False, (
+        "the limit moved: update the CHANGELOG"
+    )
 
 
 def _brute(view, needle, alphabet):
@@ -641,7 +659,7 @@ def test_the_hebrew_word_for_password_is_refused_as_too_short():
     script. A stated cost, pinned."""
     word = "\u05e1\u05d9\u05e1\u05de\u05d4"
     with pytest.raises(ViewTooShort):
-        scan_holds("any text", word)
+        scan_holds(text="any text", value=word)
 
 
 def test_the_module_docstring_lists_every_public_name():
@@ -656,18 +674,18 @@ def test_the_mixed_value_claim_of_the_changelog_holds():
     """The CHANGELOG says a value with ASCII letters and a script part ("pw" plus four ideographs) has the script part as a needle of its own, so a
     text with the script part and without the ASCII part is flagged; with a script part of three ideographs it is refused. No mutant: the
     claim has its own pin since the review found none."""
-    assert scan_holds("x \u4e2d\u6587\u6d4b\u8bd5 y", "pw\u4e2d\u6587\u6d4b\u8bd5") is True, (
-        "the script part alone is not found"
-    )
-    assert scan_holds("x pw y", "pw\u4e2d\u6587\u6d4b\u8bd5") is False, (
+    assert (
+        scan_holds(text="x \u4e2d\u6587\u6d4b\u8bd5 y", value="pw\u4e2d\u6587\u6d4b\u8bd5") is True
+    ), "the script part alone is not found"
+    assert scan_holds(text="x pw y", value="pw\u4e2d\u6587\u6d4b\u8bd5") is False, (
         "the ASCII part alone is found"
     )
     refused(
         ViewTooShort,
         "a script part of three ideographs next to ASCII is scanned",
         scan_holds,
-        "x",
-        "pw\u4e2d\u6587\u6d4b",
+        text="x",
+        value="pw\u4e2d\u6587\u6d4b",
     )
 
 
@@ -729,7 +747,7 @@ def test_the_scan_key_cap_is_sixteen_by_construction_and_the_most_a_text_can_mak
     passes read alike, so a text makes at most 13 distinct keys: shown here with a text at 13, and by trying every text of up to five characters
     from a pool that holds every kind of character that splits a key (capital Eta, spacing mark, modifier letter, modifier symbol, tag letter,
     ASCII letter). Seventeen is impossible; the cap is a fail-closed guard (``TextTooLong``), shown by lowering it. No mutant: a bound pin."""
-    cap = textnorm._SCAN_KEY_CAP
+    cap = defaults.TEXTNORM_SCAN_KEY_CAP
     assert cap == 16 == 2 * 4 * 2
     at_most = "\u0397" + _tags("xy") + "\u0c02\u0397q"
     assert len(scan_keyset(at_most)) == 13, "the measured reachable maximum changed"
@@ -750,8 +768,8 @@ def test_a_text_that_would_make_more_keys_than_the_cap_is_refused(monkeypatch):
     """The guard is not a truncation: with the cap lowered below the 13 keys of the widest text, the call raises ``TextTooLong`` (and at the cap itself
     it does not). Killers: the cap guard mutants (see ``tests/test_textnorm_order137.py`` for the cap itself and one over)."""
     wide = "\u0397" + _tags("xy") + "\u0c02\u0397q"
-    monkeypatch.setattr(textnorm, "_SCAN_KEY_CAP", 13)
+    monkeypatch.setattr(defaults, "TEXTNORM_SCAN_KEY_CAP", 13)
     assert len(scan_keyset(wide)) == 13
-    monkeypatch.setattr(textnorm, "_SCAN_KEY_CAP", 12)
+    monkeypatch.setattr(defaults, "TEXTNORM_SCAN_KEY_CAP", 12)
     with pytest.raises(textnorm.TextTooLong):
         scan_keyset(wide)

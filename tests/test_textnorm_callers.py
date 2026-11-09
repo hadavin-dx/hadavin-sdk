@@ -30,6 +30,10 @@ REFUSAL_HANDLERS = frozenset(
         "guard/redact.py::check_lookalike",
         "guard/redact.py::_withhold",
         "runtime/closed_codes.py::textnorm_code",
+        # round 1, M4: the injection reader takes a text over the fold cap in pieces; a piece the fold still refuses is cut in halves and a piece
+        # that cannot be cut re-raises, so no refusal is swallowed (tests/test_textnorm_round1.py pins the ceiling)
+        "guard/injection.py::_read",
+        "guard/injection.py::_fit",
     }
 )
 BROAD = frozenset({"Exception", "BaseException", "ValueError", "TypeError", "AttributeError"})
@@ -207,8 +211,10 @@ def test_the_nine_rows_are_eight_reported_and_one_allowed():
     assert len(ROWS) == 9 and sum(r[2] for r in ROWS) == 8
 
 
-def test_refusal_handlers_has_three_entries_and_the_banned_names_follow_textnorm():
-    assert len(REFUSAL_HANDLERS) == 3
+def test_refusal_handlers_has_five_entries_and_the_banned_names_follow_textnorm():
+    assert (
+        len(REFUSAL_HANDLERS) == 5
+    )  # the three of P2d/P5a and the two readers of the injection check (round 1, M4)
     assert BANNED == {
         "TextnormError",
         "TextTooLong",

@@ -139,6 +139,15 @@ TEXTNORM_PINNED_UNIDATA = "15.1.0"
 # Passes (the confirming pass included) of a scan-key reading before FoldNotConverged (read by guard/textnorm.py at the call). A whole number
 # of at least 1 (guard.textnorm refuses another value when it is imported and every time a scan key is made).
 TEXTNORM_MAX_PASSES = 3
+# The Python minor version that carries the pinned Unicode data (TEXTNORM_PINNED_UNIDATA); only used in the message of UnidataMismatch.
+TEXTNORM_PINNED_PYTHON = "3.13"
+# The most scan keys one text may make (scan_keyset): 2 variants (the text as it is, the text without Mc/Sk) x 4 tag texts x 2 passes = 16 by
+# construction; 13 is the most a real text reaches. More than this is refused (TextTooLong), never cut off.
+TEXTNORM_SCAN_KEY_CAP = 16
+# The most texts a scan_cache() scope keeps at once (the views of the last texts scanned; the scope empties them when it ends).
+TEXTNORM_SCAN_CACHE_TEXTS = 2
+# The floor of every minimum below: a needle of one character is found in nearly every text of its script, so no minimum under this is accepted.
+TEXTNORM_MINIMUM_FLOOR = 2
 
 
 # The shortest view of a protected value that a scan may use (guard.textnorm.scan_needles), one number per KIND of view; a shorter view (an
@@ -164,9 +173,9 @@ TEXTNORM_MIN_DIGIT_CHARS = 6
 # The numbers come from a measurement on running text (CHANGELOG, "ONE INSERTED LETTER"): for each script, the shortest needle for which the
 # extra matches the insertion adds stay near 1% or lower per 10,000 characters of text; a needle holding several groups takes the largest minimum, except a needle of Han and kana only (a Japanese word), which takes the Han
 # minimum (measured on its own, CHANGELOG order 137 D3). A
-# script not in the table (not measured) takes the default, the most cautious of the measured Latin-free scripts. INSERTION_MAX: the longest needle
+# script not in the table (Armenian, Georgian, ... : not measured) takes the default, 12: the LARGEST minimum measured for any script (Greek, 12; Cyrillic 10), the safe side for a script nobody measured. INSERTION_MAX: the longest needle
 # the matcher takes (its work grows with the needle length for each hit); a longer needle is matched exactly only.
-TEXTNORM_INSERTION_MIN_CHARS = 8
+TEXTNORM_INSERTION_MIN_CHARS = 12
 TEXTNORM_INSERTION_MIN_CHARS_BY_SCRIPT = (
     ("HAN", 4),
     ("KANA", 7),
@@ -179,7 +188,17 @@ TEXTNORM_INSERTION_MIN_CHARS_BY_SCRIPT = (
     ("GREEK", 12),
 )
 TEXTNORM_INSERTION_MAX_CHARS = 64
-# register_value (guard.textnorm): when True, a protected value that a scan covers only exactly (a Latin or digit value, a script value outside the
-# one-inserted-letter band) or only in part (its ASCII part has no needle of its own) is REFUSED with CoverageRefused instead of being registered.
-# True is the default of the client profile: a value we cannot cover loudly is acceptable, one we cannot cover silently is not. A bool.
+# register_value (guard.textnorm): when True, a protected value that a scan finds only in part (its ASCII part has no needle of its own) or that is
+# a script value alone with every script needle outside the one-inserted-letter band is REFUSED with CoverageRefused instead of being registered.
+# An ordinary ASCII value (a password, an API key) has an exact view and is registered even when True (lead ruling, order 165 M3). True is the
+# default of the client profile: a value we cannot cover loudly is acceptable, one we cannot cover silently is not. A bool.
 TEXTNORM_STRICT_COVERAGE = True
+
+# The injection check (guard.injection) reads a text over TEXTNORM_MAX_CHARS in overlapping pieces instead of refusing it whole. CHUNK: the
+# characters of one piece (a piece whose weight is still over the cap is halved until it fits). OVERLAP: the characters two neighbouring pieces
+# share, so a steering phrase cut by a boundary is whole in one piece (the longest phrase pattern reads about 120 characters; the overlap is wider by
+# a factor of 8 for the invisible characters a writer may put between its letters). MAX: the longest text read in pieces (a case bundle's cap); a text
+# longer than that is still flagged as guard_unavailable. Measured 2026-11-09: a 262,144-character text costs 0.5 s (ASCII) to 1.2 s (Cyrillic).
+TEXTNORM_INJECTION_CHUNK_CHARS = 32_768
+TEXTNORM_INJECTION_OVERLAP_CHARS = 1_024
+TEXTNORM_INJECTION_MAX_CHARS = MAX_BUNDLE_CHARS

@@ -9,7 +9,7 @@ pytest. Run from the repo root:
     uv run python tests/textnorm_mutants.py            # all mutants; exit 1 if any is not good
     uv run python tests/textnorm_mutants.py squeeze    # only mutants whose name contains the text
 
-180 mutants, in the order of the list: 28 re-pointed mutants of the earlier text-fold list (the killers moved with their tests), 12 new ones of the first package, 9 of fold2, 3 of fold3 (U+0345), 16 of fold4 (the spelling variants, the length check, the caseless form; the first of them is the fold2 mutant "no case fold before the marks are dropped" that fold3 removed and that is restored here), 9 of fix4 (the 15.1.0 data pin, the marks, the plain-words messages, the weight pre-check), 27 of P1b (the scan keys, the scan, the callers), 14 of fix5 (the marks-dropped views, the letter and digit name rules, the pin constant), 5 of fix6 (the script views, the minimum view length, the supplement merge), 30 of fix7 (the script view per script, the minimum per kind of view, the checks of the minimums, the proof rule, what loose loosens) and 27 of the P1b fix batch (the composed view of the redactor, the Mc and Sk keys, the digit and key minimums, the proof rule of EmptyView, the cache, the one required value of scan_views, the floor, the one-inserted-letter match and its limits). Two mutants of fix7 are gone: "a bool is a minimum" (the floor of 2 refuses a bool anyway, so it cannot change a result: equivalent) and "scan_views: the scripts are not checked" (scan_views no longer takes scripts). The dead branch of the old script view is an equivalent mutant (it could not change a result), so it has no entry. Tests with no
+226 mutants, in the order of the list: 28 re-pointed mutants of the earlier text-fold list (the killers moved with their tests), 12 new ones of the first package, 9 of fold2, 3 of fold3 (U+0345), 16 of fold4 (the spelling variants, the length check, the caseless form; the first of them is the fold2 mutant "no case fold before the marks are dropped" that fold3 removed and that is restored here), 9 of fix4 (the 15.1.0 data pin, the marks, the plain-words messages, the weight pre-check), 27 of P1b (the scan keys, the scan, the callers), 14 of fix5 (the marks-dropped views, the letter and digit name rules, the pin constant), 5 of fix6 (the script views, the minimum view length, the supplement merge), 30 of fix7 (the script view per script, the minimum per kind of view, the checks of the minimums, the proof rule, what loose loosens) and 27 of the P1b fix batch (the composed view of the redactor, the Mc and Sk keys, the digit and key minimums, the proof rule of EmptyView, the cache, the one required value of scan_views, the floor, the one-inserted-letter match and its limits). Two mutants of fix7 are gone: "a bool is a minimum" (the floor of 2 refuses a bool anyway, so it cannot change a result: equivalent) and "scan_views: the scripts are not checked" (scan_views no longer takes scripts). The dead branch of the old script view is an equivalent mutant (it could not change a result), so it has no entry. Tests with no
 mutant: the golden test, the differential rows, the manifest test, the notices test, the perf rows (they are outside every test list below:
 the runner copies no ``pyproject.toml`` or notices file) and the meta-tests.
 
@@ -33,8 +33,9 @@ SC = "tests/test_textnorm_scan.py"  # the killers of the DENY keys (P1b)
 SB = "tests/test_textnorm_siblings.py"  # the Mc, Lm and Sk code points on every scan path (P1b)
 FB = "tests/test_textnorm_fixbatch.py"  # the killers of the fix batch: the composed view, the Mc and Sk keys, the minimums, the cache, the choke point, the insertion match
 O = "tests/test_textnorm_order137.py"  # the killers of order 137: the strict scan_views, the registration check, the cache scope, the cap, the Japanese minimum, the Russian word
+RO = "tests/test_textnorm_round1.py"  # the killers of the round 1 fix batch: the composed evidence view, the strict register, the chunked tripwire, the cache lock
 D = "tests/test_textnorm_differential.py"  # the differential rows and the golden test: they have no mutant, they run in the baseline
-TESTS = [T, G, SC, SB, FB, O, D]  # killer files first; golden, differential last
+TESTS = [T, G, SC, SB, FB, O, RO, D]  # killer files first; golden, differential last
 S = "src/hadavin_sdk/guard/"
 TN, CF, GEN = S + "textnorm.py", S + "_confusables.py", "tools/gen_confusables.py"
 RM, INJ = S + "runmap.py", S + "injection.py"
@@ -124,7 +125,7 @@ U0345 = "test_u0345_is_an_iota_after_a_greek_letter_and_is_removed_everywhere_el
 ETA = "test_capital_and_small_eta_read_h_and_n_in_both_directions_and_both_readings"
 SIGMA = "test_sigma_needs_two_changing_passes_and_the_bound_is_exact"
 SK1 = "test_sk1_scan_keyset_has_exactly_one_parameter_named_raw"
-SK2 = "test_sk2_at_most_eight_keys_none_longer_than_the_weight_and_the_input_rules_hold"
+SK2 = "test_sk2_at_most_eight_keys_without_a_spacing_mark_or_modifier_symbol_sixteen_with_one_none_longer_than_the_weight_and_the_input_rules_hold"
 SK3 = "test_sk3_the_az3x9_rows_ze_reads_as_three_and_z"
 SK6 = "test_sk6_hash_tilde_at_pipe_and_the_replacement_character_are_dropped"
 TAG0 = "test_tag_t0_the_text_without_its_tag_characters"
@@ -161,10 +162,10 @@ M = [
         "    if not casefold:\n        s = s.translate(_TABLE)\n    elif table_first:\n        s = s.translate(_TABLE).casefold().translate(_CF_TABLE)\n    else:\n        s = s.casefold().translate(_CF_TABLE)\n",
         "    s = s.casefold() if casefold else s\n", LOOKS, "look-alike U+0405 is not folded"),
     mutant("fold: other digits not folded", TN,
-        "    return s.translate(_DIGITS).translate(_PUNCT)", "    return s.translate(_PUNCT)",
+        "    digits, punct = _lazy_tables()\n    return s.translate(digits).translate(punct)", "    digits, punct = _lazy_tables()\n    return s.translate(punct)",
         LOOKS, "other-script digits are not folded"),
     mutant("fold: the digit table is empty", TN,
-        "_DIGITS = types.MappingProxyType(\n    _build_digit_table()\n)", "_DIGITS = {}",
+        "                    types.MappingProxyType(_build_digit_table()),\n", "                    {},\n",
         LOOKS, "other-script digits are not folded"),
     mutant("fold: fillers kept", TN, "    if ch in FILLERS or ch == _REPLACEMENT:\n        return False", "    if ch == _REPLACEMENT:\n        return False",
         MARKS, "U+3164 changes the fold"),
@@ -384,8 +385,8 @@ M = [
         "def scan_keyset(raw: str, clock=None) -> frozenset[str]:", SK1, "a clock or a deadline was added", test_file=SC),
     mutant("scan_keyset: a text over the size rule does not raise", TN,
         "    _checked(raw)\n    return _scan_keys(raw)", "    return _scan_keys(raw)", SK2, "accepted a text over the size rule", test_file=SC),
-    mutant("gap 4: the dash, slash and quote map removed", TN, "    return s.translate(_DIGITS).translate(_PUNCT)",
-        "    return s.translate(_DIGITS)", GAP4, "gap 4 map", test_file=SC),
+    mutant("gap 4: the dash, slash and quote map removed", TN, "    digits, punct = _lazy_tables()\n    return s.translate(digits).translate(punct)",
+        "    digits, punct = _lazy_tables()\n    return s.translate(digits)", GAP4, "gap 4 map", test_file=SC),
     mutant("fold: U+FFFD kept in step S2", TN, "    if ch in FILLERS or ch == _REPLACEMENT:", "    if ch in FILLERS:",
         SK6, "U+FFFD is kept by the fold", test_file=SC),
     mutant("scan: class map l to i removed", TN, '_CLASS_MAP = str.maketrans("zl", "3i")', '_CLASS_MAP = str.maketrans("z", "3")',
@@ -410,7 +411,7 @@ M = [
         "    for view in (*(v for _kind, v in _pairs_from(readings, scripts)),):\n",
         SCANVIEWS, "scan_views leaves out the view", test_file=SC),
     mutant("injection: the scan views are not read", "src/hadavin_sdk/guard/injection.py",
-        "        for view in (text, *textnorm.scan_views_no_value(text)):", "        for view in (text,):",
+        "            for view in (piece, *views):", "            for view in (piece,):",
         INJVIEWS, "the injection detector misses", test_file=SB),
     mutant("runmap: canonical normalises the whole text again", "src/hadavin_sdk/guard/runmap.py",
         "    return _canonical_view(text)[0]\n",
@@ -550,7 +551,7 @@ M = [
         "    spelling_min, squeeze_min, script_min, ideograph_min, digit_min = (\n        defaults.TEXTNORM_MIN_SPELLING_CHARS,\n        defaults.TEXTNORM_MIN_SQUEEZE_CHARS,\n        defaults.TEXTNORM_MIN_SCRIPT_CHARS,\n        defaults.TEXTNORM_MIN_IDEOGRAPH_CHARS,\n        defaults.TEXTNORM_MIN_DIGIT_CHARS,\n    )\n",
         MINCONST, "scan_needles accepted"),
     mutant("minimum: zero is a minimum", TN,
-        "_MINIMUM_FLOOR = 2  #", "_MINIMUM_FLOOR = 0  #",
+        "    out = tuple(_whole_number(name, floor) for name in _MINIMUM_NAMES)", "    out = tuple(_whole_number(name, 0) for name in _MINIMUM_NAMES)",
         MINCONST, "accepted TEXTNORM_MIN_SPELLING_CHARS = 0"),
     mutant("minimum: the message does not name the constant", TN,
         'f"defaults.{name} must be a whole number', 'f"a minimum must be a whole number',
@@ -620,7 +621,7 @@ M = [
         "        if not _has_proof_character(value, scripts):\n", "        if True:\n",
         "test_a_one_ideograph_value_is_too_short_not_empty", "one ideograph is not ViewTooShort", test_file=FB),
     mutant("cache: the scope never uses its cache", TN,
-        "        hit = cache.get(key)\n", "        hit = None\n",
+        "            hit = scope.bundles.get(key)\n", "            hit = None\n",
         "test_scanning_one_text_for_many_values_builds_the_text_views_once", "the text was read", test_file=FB),
     mutant("scan_views: the value has a default", TN,
         "def scan_views(raw: str, value: str) -> tuple[str, ...]:", "def scan_views(raw: str, value: str | None = None) -> tuple[str, ...]:",
@@ -635,7 +636,7 @@ M = [
         "textnorm.scan_views_no_value(text)", "textnorm.scan_views(text)",
         "test_no_caller_in_the_package_omits_the_value_or_the_scripts", "names no value", test_file=FB),
     mutant("minimum: the floor is one", TN,
-        "_MINIMUM_FLOOR = 2  #", "_MINIMUM_FLOOR = 1  #",
+        "    out = tuple(_whole_number(name, floor) for name in _MINIMUM_NAMES)", "    out = tuple(_whole_number(name, 1) for name in _MINIMUM_NAMES)",
         "test_a_minimum_below_the_floor_or_not_a_plain_int_is_refused", "is accepted by scan_needles", test_file=FB),
     mutant("passes: the number of passes is not checked", TN,
         '    return _whole_number("TEXTNORM_MAX_PASSES", 1)\n', '    return defaults.TEXTNORM_MAX_PASSES\n',
@@ -699,12 +700,12 @@ M = [
         "test_the_band_edges_of_a_script_value", "65 Han letters: fuzzy, not exact_only", test_file=O),
     mutant("register: strict is not the default", TN,
         "        strict = defaults.TEXTNORM_STRICT_COVERAGE\n", "        strict = False\n",
-        "test_a_latin_value_is_exact_only_and_strict_refuses_it_by_default", "raised nothing, not CoverageRefused", test_file=O),
+        "test_strict_refuses_a_script_value_with_no_needle_in_the_band_by_default_and_the_message_holds_no_value", "raised nothing, not CoverageRefused", test_file=O),
     mutant("register: the default of strict ignores the constant", TN,
         "        strict = defaults.TEXTNORM_STRICT_COVERAGE\n", "        strict = True\n",
         "test_the_default_of_strict_is_the_constant_in_defaults", "where a value was expected", test_file=O),
     mutant("register: a narrowed value is accepted in strict mode", TN,
-        "    if strict and (coverage == _EXACT_ONLY or narrowed):", "    if strict and coverage == _EXACT_ONLY:",
+        "    if strict and (narrowed or (coverage == _EXACT_ONLY and script_needles and not has_squeeze)):", "    if strict and (coverage == _EXACT_ONLY and script_needles and not has_squeeze):",
         "test_a_value_with_a_script_part_and_an_ascii_part_that_has_no_needle_is_narrowed", "raised nothing, not CoverageRefused", test_file=O),
     mutant("register: the refusal does not name the setting", TN,
         "(the setting defaults.TEXTNORM_STRICT_COVERAGE, True by default, or strict=True), ", "",
@@ -714,7 +715,7 @@ M = [
         "test_the_minimum_view_length_is_one_number_per_kind_of_view_and_a_short_value_is_refused", "the message holds the value", test_file=T),
     mutant("refusal: the value is in the CoverageRefused message", TN,
         "f\"this protected value ({len(value)} characters) is covered", "f\"this protected value {value} ({len(value)} characters) is covered",
-        "test_a_latin_value_is_exact_only_and_strict_refuses_it_by_default", "the message holds the value", test_file=O),
+        "test_strict_refuses_a_script_value_with_no_needle_in_the_band_by_default_and_the_message_holds_no_value", "the message holds the value", test_file=O),
     mutant("digits: the default minimum is five", DEF,
         "TEXTNORM_MIN_DIGIT_CHARS = 6\n", "TEXTNORM_MIN_DIGIT_CHARS = 5\n",
         "test_the_minimum_view_length_is_one_number_per_kind_of_view_and_a_short_value_is_refused", "is not the pinned one", test_file=T),
@@ -726,19 +727,19 @@ M = [
         "    level = logging.INFO if coverage == _FUZZY and not narrowed else logging.WARNING\n", "    level = logging.INFO\n",
         "test_registration_is_logged_with_the_coverage_and_never_the_value", "instead of INFO then WARNING", test_file=O),
     mutant("injection: a module builds its own views", INJ,
-        "for view in (text, *textnorm.scan_views_no_value(text)):", "for view in (text, *textnorm.scan_keyset(text)):",
+        "            yield text, textnorm.scan_views_no_value(text)\n", "            yield text, textnorm.scan_keyset(text)\n",
         "test_no_module_outside_textnorm_builds_its_own_views", "a module builds its own views", test_file=O),
     mutant("cache: the views are kept outside a scope", TN,
-        "\"hadavin_textnorm_scan_cache\", default=None", "\"hadavin_textnorm_scan_cache\", default={}",
+        "\"hadavin_textnorm_scan_cache\", default=None", "\"hadavin_textnorm_scan_cache\", default=_CacheScope()",
         "test_nothing_of_a_text_is_kept_between_calls_outside_a_scope", "kept between two calls", test_file=O),
     mutant("cache: the key is the text", TN,
         "        key = hashlib.sha256(raw.encode(\"utf-8\", \"surrogatepass\")).hexdigest()\n", "        key = raw\n",
         "test_the_scope_keeps_digests_not_texts_at_most_two_and_empties_itself", "a key is not a digest", test_file=O),
     mutant("cache: the scope is not emptied", TN,
-        "        if cache is not None:\n            cache.clear()\n", "        if cache is not None:\n            pass\n",
+        "        with scope.lock:\n            scope.bundles.clear()\n", "        with scope.lock:\n            pass\n",
         "test_the_scope_keeps_digests_not_texts_at_most_two_and_empties_itself", "did not empty the cache", test_file=O),
-    mutant("cache: more than two texts are kept", TN,
-        "_SCAN_CACHE_TEXTS = 2\n", "_SCAN_CACHE_TEXTS = 3\n",
+    mutant("cache: more than two texts are kept", DEF,
+        "TEXTNORM_SCAN_CACHE_TEXTS = 2\n", "TEXTNORM_SCAN_CACHE_TEXTS = 3\n",
         "test_the_scope_keeps_digests_not_texts_at_most_two_and_empties_itself", "texts kept, two allowed", test_file=O),
     mutant("squeeze: the minimum is five", DEF,
         "TEXTNORM_MIN_SQUEEZE_CHARS = 4\n", "TEXTNORM_MIN_SQUEEZE_CHARS = 5\n",
@@ -753,13 +754,13 @@ M = [
         "    return min(minimums) if groups == _JAPANESE_GROUPS else max(minimums)\n", "    return min(minimums)\n",
         "test_a_japanese_needle_of_han_and_kana_takes_the_han_minimum_and_other_mixtures_the_largest", "three groups do not take the largest", test_file=O),
     mutant("keys: the cap guard refuses the cap itself", TN,
-        "    if len(keys) > _SCAN_KEY_CAP:\n", "    if len(keys) >= _SCAN_KEY_CAP:\n",
+        "    if len(keys) > defaults.TEXTNORM_SCAN_KEY_CAP:\n", "    if len(keys) >= defaults.TEXTNORM_SCAN_KEY_CAP:\n",
         "test_exactly_the_cap_in_scan_keys_is_allowed_and_one_over_is_refused", "scan_keyset raised TextTooLong", test_file=O),
     mutant("keys: the cap guard is gone", TN,
-        "    if len(keys) > _SCAN_KEY_CAP:\n", "    if False:\n",
+        "    if len(keys) > defaults.TEXTNORM_SCAN_KEY_CAP:\n", "    if False:\n",
         "test_exactly_the_cap_in_scan_keys_is_allowed_and_one_over_is_refused", "raised nothing, not TextTooLong", test_file=O),
-    mutant("keys: the cap is fifteen", TN,
-        "_SCAN_KEY_CAP = 16\n", "_SCAN_KEY_CAP = 15\n",
+    mutant("keys: the cap is fifteen", DEF,
+        "TEXTNORM_SCAN_KEY_CAP = 16\n", "TEXTNORM_SCAN_KEY_CAP = 15\n",
         "test_the_scan_key_cap_is_sixteen_by_construction_and_the_most_a_text_can_make_is_thirteen", "15 == 16", test_file=FB),
     mutant("tables: the digit table drops the Thai five", TN,
         "if chr(cp).isdecimal() and not (\"0\" <= chr(cp) <= \"9\")", "if chr(cp).isdecimal() and not (\"0\" <= chr(cp) <= \"9\") and cp != 0x0E55",
@@ -782,6 +783,37 @@ M = [
     mutant("refusal: the plain words say skipped", TN,
         "A value that cannot be masked is REFUSED, never ignored. What to do:", "A value that cannot be masked is skipped. What to do:",
         "test_the_refusal_names_the_rule_the_length_and_what_to_do_and_never_the_value", "is not in the refusal for a value of", test_file=FB),
+    # ---- the fix batch of round 1 (M3, M1, M4, M8, M10, M16): each has a named killer in tests/test_textnorm_round1.py or the app test -----------
+    mutant("app: build skips require_pinned_unidata", "src/hadavin_sdk/app.py",
+        "        textnorm.require_pinned_unidata()\n", "        pass\n",
+        "test_m10_app_build_calls_require_pinned_unidata_for_live_stages", "does not call require_pinned_unidata", test_file=RO),
+    mutant("evidence: the comparison does not compose", "src/hadavin_sdk/runtime/evidence.py",
+        "    return canon if canon.isascii() else unicodedata.normalize(\"NFC\", canon)\n", "    return canon\n",
+        "test_m1_a_decomposed_text_finds_a_precomposed_identifier_and_the_reverse", "0x903", test_file=RO),
+    mutant("evidence: grounded accepts a decomposed identifier", "src/hadavin_sdk/runtime/evidence.py",
+        "            _composed(value) != value\n", "            runmap.canonical(value).strip() == \"\"\n",
+        "test_m1_grounded_takes_a_precomposed_identifier_seen_decomposed_and_refuses_a_decomposed_one_as_p1a_did", "a decomposed identifier was accepted", test_file=RO),
+    mutant("runmap: the canonical view normalises every character", RM,
+        "        if piece.isascii():", "        if False:",
+        "test_m1_the_canonical_view_normalises_once_per_non_ascii_character_not_once_per_character", "NFKC calls", test_file=RO),
+    mutant("cache: the scope has no lock", TN,
+        "        self.lock = threading.Lock()\n", "        self.lock = contextlib.nullcontext()\n",
+        "test_m8_a_thread_waits_while_the_scope_lock_is_held", "no real lock", test_file=RO),
+    mutant("register: an ordinary ASCII secret is refused in strict mode", TN,
+        "(narrowed or (coverage == _EXACT_ONLY and script_needles and not has_squeeze))", "(narrowed or coverage == _EXACT_ONLY)",
+        "test_m3_the_corpus_of_made_up_ascii_secrets_is_never_refused_by_the_strict_default", "ordinary secrets were refused", test_file=RO),
+    mutant("injection: the pieces do not overlap", INJ,
+        "        step = size - defaults.TEXTNORM_INJECTION_OVERLAP_CHARS\n", "        step = size\n",
+        "test_m4_a_steering_phrase_anywhere_in_a_text_over_the_size_rule_is_found", "boundary", test_file=RO),
+    mutant("injection: a text over the size rule is flagged whole again", INJ,
+        "        size = defaults.TEXTNORM_INJECTION_CHUNK_CHARS\n", "        raise textnorm.TextTooLong(\"over\")\n        size = defaults.TEXTNORM_INJECTION_CHUNK_CHARS\n",
+        "test_m4_a_clean_text_over_the_size_rule_is_not_flagged", "True is False", test_file=RO),
+    mutant("mixed script: a spacing mark splits the word", TN,
+        "            and unicodedata.category(ch) not in _WORD_JOINING\n", "",
+        "test_m16_a_spacing_mark_or_modifier_symbol_does_not_split_a_mixed_script_word", "0x903", test_file=RO),
+    mutant("tables: the lazy tables are never kept", TN,
+        "                _LAZY_TABLES = tables\n", "                pass\n",
+        "test_m14_the_lazy_tables_are_built_once_and_still_reachable_by_their_old_names", "the lazy tables are never kept", test_file=RO),
 ]  # fmt: skip
 
 

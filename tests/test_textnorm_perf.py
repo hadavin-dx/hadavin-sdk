@@ -250,9 +250,14 @@ def test_scan_views_of_a_text_at_the_cap_is_built_in_linear_time():
 def test_scan_holds_of_a_text_at_the_cap_for_a_latin_and_for_a_script_value():
     """The exact scan (no hit) for a Latin value and for a Chinese value, at the cap."""
     text = _cap_text("pass\u0903word \u5bc6\u7801 ")
-    assert textnorm.scan_holds(text, "password")
-    assert _seconds(lambda t: textnorm.scan_holds(t, "no-such-value"), text) < 10.0
-    assert _seconds(lambda t: textnorm.scan_holds(t, "\u4e2d\u6587\u6d4b\u8bd5\u4fdd"), text) < 10.0
+    assert textnorm.scan_holds(text=text, value="password")
+    assert _seconds(lambda t: textnorm.scan_holds(text=t, value="no-such-value"), text) < 10.0
+    assert (
+        _seconds(
+            lambda t: textnorm.scan_holds(text=t, value="\u4e2d\u6587\u6d4b\u8bd5\u4fdd"), text
+        )
+        < 10.0
+    )
 
 
 def test_the_one_inserted_letter_match_is_linear_for_a_text_built_to_defeat_it():
@@ -262,14 +267,18 @@ def test_the_one_inserted_letter_match_is_linear_for_a_text_built_to_defeat_it()
     first = chr(0x5000) * (
         top // 2
     )  # one repeated letter: the intact half is a hit at EVERY position of the text
-    second = chr(0x6000) * (top - top // 2)
+    # the second half agrees with the text for all but its LAST letter (A^31 + B), so every hit of the first half is compared almost to the end
+    # before it fails: the real worst case (a second half that fails at its first letter costs one comparison per hit; round 1 M18 / C13)
+    second = chr(0x5000) * (top - top // 2 - 1) + chr(0x6000)
     needle = first + second
     text = chr(0x5000) * CAP
     assert len(text) <= CAP
-    assert textnorm.scan_holds(text, needle) is False
-    assert _seconds(lambda t: textnorm.scan_holds(t, needle), text) < 20.0
+    assert textnorm.scan_holds(text=text, value=needle) is False
+    assert _seconds(lambda t: textnorm.scan_holds(text=t, value=needle), text) < 20.0
     assert (
-        _seconds(lambda t: textnorm.scan_holds(t, first[:1] + chr(0x4FFF) + needle[1:]), text)
+        _seconds(
+            lambda t: textnorm.scan_holds(text=t, value=first[:1] + chr(0x4FFF) + needle[1:]), text
+        )
         < 20.0
     )
 
@@ -281,10 +290,10 @@ def test_a_hundred_values_against_one_text_at_the_cap_cost_one_text_pass():
     # The views are shared only inside ``scan_cache()``: outside a scope nothing is kept between calls, by design (the views are as sensitive as the
     # text), and every call costs a full text pass. The scope is the documented way to scan one text for many values.
     with textnorm.scan_cache():
-        first = _seconds(lambda t: textnorm.scan_holds(t, "value-000-none"), text)
+        first = _seconds(lambda t: textnorm.scan_holds(text=t, value="value-000-none"), text)
         start = time.perf_counter()
         for i in range(1, 100):
-            textnorm.scan_holds(text, f"value-{i:03d}-none")
+            textnorm.scan_holds(text=text, value=f"value-{i:03d}-none")
         took = time.perf_counter() - start
     _record("scan_holds 99 more values", took)
     assert took < 10 * max(first, 0.05) + 5.0, (

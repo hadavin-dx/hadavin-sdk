@@ -111,8 +111,8 @@ than 2 changing passes plus the confirming one (capital Sigma on variant A; a te
 THE DENY SCANS (P1b). ``scan_holds(text, value)`` is the one scan; its views are in ``scan_views(text, value)``: ``fold_views`` (case folded,
 whitespace collapsed, with the script views of the VALUE), ``squeeze_views`` and ``scan_keyset``. It is True when ANY view of the text holds ANY
 needle of the value (or a script needle with one extra letter of its own script, see "ONE INSERTED LETTER"), so a secret hidden with a spacing
-mark is found through the squeezed views and the scan keys, which ``fold_views`` alone misses. ``scan_keyset`` (at most 16 keys: 2 spelling variants
-x the tag texts T0 to T3, x2 for a text that holds a spacing mark (Mc) or a modifier symbol (Sk)) is made of letters and digits only, with the class maps
+mark is found through the squeezed views and the scan keys, which ``fold_views`` alone misses. ``scan_keyset`` (at most 16 keys: 2 spelling variants (A and B)
+x the tag texts T0 to T3, x2 marks variants (the text as it is, the text without Mc and Sk) for a text that holds a spacing mark (Mc) or a modifier symbol (Sk)) is made of letters and digits only, with the class maps
 ``z`` to ``3`` (Cyrillic Ze) and ``l`` to ``i``, modifier letters (Lm) removed from the raw text, and no escape decoder; a text that holds an Mc or an Sk
 has the keys of the text as it is AND of the text without them (a few of them are look-alike letters: U+0C02 reads ``o``). ``could_be_same_person``
 is NOT widened by the scan keys (the spelling variants of P1a are the whole name test; the ticket's erratum BN-20 says "not widened in P1b").
@@ -268,6 +268,7 @@ import hashlib
 import logging
 import re
 import sys
+import threading
 import types
 import unicodedata
 from collections import Counter
@@ -355,7 +356,6 @@ class EmptyView(TextnormError):
     The message holds the length of the value, never the value."""
 
 
-_PINNED_PYTHON = "3.13"  # the Python minor version that carries Unicode 15.1.0 (the pin); only used in the message
 _DROP_CATEGORIES = frozenset({"Cc", "Cf", "Mn", "Me", "Zl", "Zp", "Co", "Cs", "Cn"})
 _SPACING_CATEGORIES = frozenset(
     {"Mc", "Lm", "Sk"}
@@ -430,10 +430,37 @@ def _build_punct_table() -> dict[int, str]:
     return table
 
 
-_PUNCT = types.MappingProxyType(_build_punct_table())
-_DIGITS = types.MappingProxyType(
-    _build_digit_table()
-)  # built once at import: no lazy fill, so no thread can see a half-filled table
+# The two tables above loop over every code point (about 110 ms together at import, measured 2026-11-09 with ``python -X importtime``), so they are
+# built on first use, once, under a lock, and published with ONE assignment of a finished pair: no thread can see a half-filled table. The names
+# ``_DIGITS`` and ``_PUNCT`` still work as module attributes (module ``__getattr__``).
+_LAZY_TABLES: tuple[types.MappingProxyType[int, str], types.MappingProxyType[int, str]] | None = (
+    None
+)
+_LAZY_LOCK = threading.Lock()
+
+
+def _lazy_tables() -> tuple[types.MappingProxyType[int, str], types.MappingProxyType[int, str]]:
+    """``(digits, punct)``: ``_DIGITS`` and ``_PUNCT`` built on first use."""
+    global _LAZY_TABLES
+    tables = _LAZY_TABLES
+    if tables is None:
+        with _LAZY_LOCK:
+            tables = _LAZY_TABLES
+            if tables is None:
+                tables = (
+                    types.MappingProxyType(_build_digit_table()),
+                    types.MappingProxyType(_build_punct_table()),
+                )
+                _LAZY_TABLES = tables
+    return tables
+
+
+def __getattr__(name: str):
+    if name == "_DIGITS":
+        return _lazy_tables()[0]
+    if name == "_PUNCT":
+        return _lazy_tables()[1]
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
 def _char_weight(c: str) -> int:
@@ -449,7 +476,7 @@ def _pass_weight(c: str) -> int:
     the bound is checked on the finished keys, for every code point, by ``test_identity_keys_and_could_be_same_person_hold_for_every_code_point_*``."""
     nfkd = unicodedata.normalize("NFKD", c)
     nfkc = unicodedata.normalize("NFKC", nfkd)
-    digits = nfkc.translate(_DIGITS)
+    digits = nfkc.translate(_lazy_tables()[0])
     mapped = digits.translate(_TABLE)
     cased = digits.casefold()
     return max(
@@ -606,7 +633,8 @@ def _prefix(nfkd: str, *, iota: bool, marks: bool = False) -> str:
         if _kept(ch) and not (marks and unicodedata.category(ch) in _SPACING_CATEGORIES)
     )
     s = unicodedata.normalize("NFKC", s)
-    return s.translate(_DIGITS).translate(_PUNCT)
+    digits, punct = _lazy_tables()
+    return s.translate(digits).translate(punct)
 
 
 def _finish(s: str, *, casefold: bool, table_first: bool, collapse_ws: bool) -> str:
@@ -803,7 +831,6 @@ _MINIMUM_NAMES = (
     "TEXTNORM_MIN_IDEOGRAPH_CHARS",
     "TEXTNORM_MIN_DIGIT_CHARS",
 )
-_MINIMUM_FLOOR = 2  # a needle of one character is found in nearly every text of its script: no minimum below this is accepted
 
 
 def _whole_number(name: str, floor: int) -> int:
@@ -820,9 +847,12 @@ def _whole_number(name: str, floor: int) -> int:
 
 def _validated_minimums() -> tuple[int, int, int, int, int]:
     """The five minimum lengths of ``defaults`` (spelling, squeeze, script, ideograph, digits), each a plain ``int`` of at least
-    ``_MINIMUM_FLOOR`` (2; ``bool`` is refused). Run when the module is imported and again whenever ``scan_needles`` runs, so a wrong
+    ``defaults.TEXTNORM_MINIMUM_FLOOR`` (2; ``bool`` is refused). Run when the module is imported and again whenever ``scan_needles`` runs, so a wrong
     value fails closed in both places."""
-    out = tuple(_whole_number(name, _MINIMUM_FLOOR) for name in _MINIMUM_NAMES)
+    floor = _whole_number(
+        "TEXTNORM_MINIMUM_FLOOR", 2
+    )  # the floor itself may not be lowered below 2
+    out = tuple(_whole_number(name, floor) for name in _MINIMUM_NAMES)
     return out[0], out[1], out[2], out[3], out[4]
 
 
@@ -982,6 +1012,10 @@ def could_be_same_person(a: str, b: str) -> bool:
     Look-alike letters, case, width, ligatures, non-spacing and enclosing marks (Mn, Me) and invisible characters compare equal, which is the safe side
     for a DENY. Dashes, the minus sign, the division slashes and the typographic quotes are read as ``-``, ``/``, ``'`` and ``"`` (gap 4, since
     P1b): "O'Brien" and "O" + U+2019 + "Brien" are the same person here, and so are a Unicode hyphen (U+2010) and "-" (corpus rows r114 to r117).
+    LIMIT (round 1 M16, pinned by a test): five other characters people type as an apostrophe are NOT read as one here: U+02BC (modifier
+    letter apostrophe), U+02B9, U+2032 (prime), U+0060 (grave accent) and U+00B4 (acute accent, which NFKD turns into a space). So "O'Brien" and "O" +
+    U+02BC + "Brien" are DIFFERENT names here (the scan views find a protected name written either way: ``squeeze`` drops both). Adding them changes
+    the check names of every text with one of them and so needs the golden hashes and the table digests re-made on both Unicode versions.
     NOT equal: a spacing mark (Mc), modifier letter (Lm) or modifier symbol (Sk) inserted into a name makes it "different" (a scan uses
     ``scan_holds``, whose views remove them). Not widened by the scan keys: "Li Na" and "Lina" are DIFFERENT here (``allow_equal`` says so too) and
     share a scan key (``scan_keyset``). Not transitive. NEVER an ALLOW."""
@@ -1075,10 +1109,9 @@ def _pass_b(text: str) -> str:
     return _prepare(text).casefold().translate(_CF_TABLE)
 
 
-# The bound on the number of scan keys: 2 spelling variants (the text as it is, the text without Mc/Sk) x 4 tag texts x 2 passes = 16. The most a
-# real text reaches is 2 x 6 + 1 = 13: the fourth tag text (the decoded tags alone) is ASCII and does not depend on the variant, and both passes
+# The bound on the number of scan keys: 2 marks variants (the text as it is, the text without Mc/Sk) x 4 tag texts x 2 spelling variants (A and B) = 16. The most a
+# real text reaches is 2 x 6 + 1 = 13: the fourth tag text (the decoded tags alone) is ASCII and does not depend on the marks variant, and both spelling variants
 # read ASCII alike, so it makes ONE key, not four.
-_SCAN_KEY_CAP = 16
 
 
 # Cyrillic Ze reads 3 and the table sends stroke look-alikes to l or i: join the classes.
@@ -1086,7 +1119,7 @@ _CLASS_MAP = str.maketrans("zl", "3i")
 
 
 def _scan_key(text: str, step) -> str:
-    """One scan key of one spelling variant of one tag text: the spelling variant to its fixed point, the class maps ``z`` to ``3`` and ``l``
+    """One scan key of one marks variant of one tag text, read by one spelling variant (A or B): the text to its fixed point, the class maps ``z`` to ``3`` and ``l``
     to ``i``, then only letters and digits (every character for which ``str.isalnum()`` is False, and every modifier letter (category
     Lm), is removed)."""
     s = _converge(text, step).translate(_CLASS_MAP)
@@ -1096,7 +1129,7 @@ def _scan_key(text: str, step) -> str:
 def scan_keyset(raw: str) -> frozenset[str]:
     """The scan keys of a text: a small set of strings made of letters and digits only. They are one of the views a DENY scan looks through
     (``scan_views``); a caller that scans uses ``scan_holds``, which reads ALL the views. Contract SK-1 to SK-6: the one parameter is
-    ``raw``; at most 2 spelling variants x 4 tag texts = 8 keys for a text with no spacing mark (Mc) and no modifier symbol (Sk), 16 for a text
+    ``raw``; at most 2 spelling variants (A and B) x 4 tag texts = 8 keys for a text with no spacing mark (Mc) and no modifier symbol (Sk), 16 for a text
     with one (the keys of the text as it is and of the text without them), by construction (13 is the most a text can reach, because the
     decoded tags alone are ASCII; a guard raises ``TextTooLong`` above 16, which cannot happen), each at most as long as the weight of ``raw``; a text
     over the size rule raises ``TextTooLong``, a non-``str`` ``NotText``; over-matching is the safe side; there is no clock or deadline;
@@ -1129,40 +1162,54 @@ def _scan_keys(raw: str) -> frozenset[str]:
     }
     keys.discard("")
     # A fail-closed guard against a change of the construction above, not a truncation: more keys than the bound are refused, never cut off.
-    if len(keys) > _SCAN_KEY_CAP:
+    if len(keys) > defaults.TEXTNORM_SCAN_KEY_CAP:
         raise TextTooLong(
-            f"a text made {len(keys)} scan keys, more than the {_SCAN_KEY_CAP} the construction allows"
+            f"a text made {len(keys)} scan keys, more than the {defaults.TEXTNORM_SCAN_KEY_CAP} the construction allows"
         )
     return frozenset(keys)
 
 
 _Bundle = tuple[tuple[tuple[bool, str], ...], tuple[str, ...], tuple[str, ...]]
 
+
+class _CacheScope:
+    """The views kept by one ``scan_cache()`` scope, with the lock that guards them: a task that copies the context (``asyncio.to_thread``) shares
+    the same scope object, so threads read and evict at the same time (round 1 M8: an unguarded dict raised ``KeyError`` and ``RuntimeError``)."""
+
+    __slots__ = ("bundles", "lock")
+
+    def __init__(self) -> None:
+        self.bundles: dict[str, _Bundle] = {}
+        self.lock = threading.Lock()
+
+
 # The views of one text, kept ONLY inside ``with scan_cache():`` (the variable is None everywhere else, so nothing is kept between calls). The
-# key is the SHA-256 digest of the text, never the text; the scope keeps at most two texts and is emptied when it ends, also on an exception.
-_SCAN_CACHE: contextvars.ContextVar[dict[str, _Bundle] | None] = contextvars.ContextVar(
+# key is the SHA-256 digest of the text, never the text; the scope keeps at most ``defaults.TEXTNORM_SCAN_CACHE_TEXTS`` texts and is emptied when it
+# ends, also on an exception.
+_SCAN_CACHE: contextvars.ContextVar[_CacheScope | None] = contextvars.ContextVar(
     "hadavin_textnorm_scan_cache", default=None
 )
-_SCAN_CACHE_TEXTS = 2
 
 
 @contextlib.contextmanager
 def scan_cache() -> Iterator[None]:
     """A SCOPE in which the views of the texts being scanned are built once and shared: ``with scan_cache(): [scan_holds(text, v) for v in values]``
     costs one text pass for the shared part, not one per value. Outside a scope NOTHING is kept between calls, so a text that may hold a secret
-    is not retained after the call that read it (the views are folded copies of the text, so they are as sensitive as it is). Inside the scope at most the last two texts are kept,
+    is not retained after the call that read it (the views are folded copies of the text, so they are as sensitive as it is). Inside the scope at most the last
+    ``defaults.TEXTNORM_SCAN_CACHE_TEXTS`` (two) texts are kept,
     under the SHA-256 digest of the text as the key (the key holds no text); the scope empties the cache when it ends, also when an exception
-    ends it. A scope inside a scope shares the outer cache. The scope is per task and per thread (a ``contextvars`` variable)."""
+    ends it. A scope inside a scope shares the outer cache. The scope is per task (a ``contextvars`` variable); threads started with a copy of the
+    context (``asyncio.to_thread``) share it, and a lock guards every read and write of it."""
     if _SCAN_CACHE.get() is not None:
         yield
         return
-    token = _SCAN_CACHE.set({})
+    scope = _CacheScope()
+    token = _SCAN_CACHE.set(scope)
     try:
         yield
     finally:
-        cache = _SCAN_CACHE.get()
-        if cache is not None:
-            cache.clear()
+        with scope.lock:
+            scope.bundles.clear()
         _SCAN_CACHE.reset(token)
 
 
@@ -1171,11 +1218,12 @@ def _text_bundle(raw: str) -> _Bundle:
     with the marks-dropped ones), the squeeze views and the sorted scan keys. Built once per ``scan_cache`` scope (see there) and again for every
     call outside one; only the script views depend on the value, and they are cut from the marks-dropped readings in a pass over each. All
     tuples of ``str``, so nothing it returns can be changed. The text must be checked before."""
-    cache = _SCAN_CACHE.get()
+    scope = _SCAN_CACHE.get()
     key = ""
-    if cache is not None:
+    if scope is not None:
         key = hashlib.sha256(raw.encode("utf-8", "surrogatepass")).hexdigest()
-        hit = cache.get(key)
+        with scope.lock:
+            hit = scope.bundles.get(key)
         if hit is not None:
             return hit
     bundle: _Bundle = (
@@ -1183,10 +1231,14 @@ def _text_bundle(raw: str) -> _Bundle:
         _squeezed(raw),
         tuple(sorted(_scan_keys(raw))),
     )
-    if cache is not None:
-        if len(cache) >= _SCAN_CACHE_TEXTS:
-            del cache[next(iter(cache))]
-        cache[key] = bundle
+    if scope is not None:
+        with scope.lock:
+            if (
+                key not in scope.bundles
+                and len(scope.bundles) >= defaults.TEXTNORM_SCAN_CACHE_TEXTS
+            ):
+                del scope.bundles[next(iter(scope.bundles))]
+            scope.bundles[key] = bundle
     return bundle
 
 
@@ -1314,7 +1366,7 @@ def _needles_or_refuse(value: str, scripts: frozenset[str]) -> list[tuple[str, s
         raise
 
 
-def scan_holds(text: str, value: str) -> bool:
+def scan_holds(*, text: str, value: str) -> bool:
     """THE DENY SCAN (redaction, blocklist, has-secret): True when ANY view of ``text`` (``scan_views(text, value)``) holds ANY needle of the
     protected ``value`` (``scan_needles`` and the scan keys of the value that reach their minimum), or holds a script needle of the value with
     one extra letter of the value's own scripts inserted (see "ONE INSERTED LETTER"). Over-matching is the safe side. REFUSES, and never answers
@@ -1323,7 +1375,8 @@ def scan_holds(text: str, value: str) -> bool:
     squeeze or script view of the value reaches its minimum (a Latin value of three letters or fewer, a number of five digits or fewer, a
     value only a spelling view can find). A value in Chinese, Arabic, Hindi or Thai has no squeeze view but a script view, so it IS scanned. The
     caller treats every ``TextnormError`` like any other on a DENY path: REFUSE, and looks for such a value with its own exact search. Both
-    arguments are checked (type, then size) before any work. Nothing of the text is kept after the call; to scan ONE text for
+    arguments are checked (type, then size) before any work. Both are KEYWORD-ONLY (``scan_holds(text=..., value=...)``): two plain strings in a
+    row are easy to swap, and a swap would scan the value for the text. Nothing of the text is kept after the call; to scan ONE text for
     hundreds of values at the cost of one text pass, call this inside ``with scan_cache():``."""
     _checked(text, value)
     scripts = _value_scripts(value)
@@ -1376,8 +1429,10 @@ def register_value(value: str, *, strict: bool | None = None) -> Coverage:
     """THE REGISTRATION CHECK of a protected value: what ``scan_holds`` can and cannot do for it, said out loud. It raises what ``scan_holds`` raises
     (``EmptyView``, ``ViewTooShort``: a value that cannot be scanned at all is REFUSED, never ignored), and otherwise returns a ``Coverage`` and logs it
     on ``hadavin_sdk.guard`` (INFO for ``fuzzy``, WARNING for ``exact_only`` or ``narrowed``; the log holds the length, never the value). With
-    ``strict`` (the default is ``defaults.TEXTNORM_STRICT_COVERAGE``, True: the strict default is the one of the client profile) an ``exact_only``
-    or ``narrowed`` value raises ``CoverageRefused`` instead of being registered. A caller that registers values calls this once per value; the
+    ``strict`` (the default is ``defaults.TEXTNORM_STRICT_COVERAGE``, True: the strict default is the one of the client profile) a ``narrowed``
+    value, and a value of a script alone whose script needles are all outside the one-inserted-letter band, raise ``CoverageRefused`` instead of
+    being registered. A value with an ASCII squeeze needle (an ordinary password or API key) is NOT refused although its coverage is ``exact_only``:
+    its exact view is the best a scan can have (measured on 200 made-up ASCII secrets: 200 refused before, 0 after; CHANGELOG, order 165 M3). A caller that registers values calls this once per value; the
     modules of this package call it from no code path yet (the consumers arrive with the redaction package, see the CHANGELOG)."""
     _checked(value)
     if strict is None:
@@ -1405,9 +1460,8 @@ def register_value(value: str, *, strict: bool | None = None) -> Coverage:
             _EXACT_ONLY,
             "Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not",
         )
-    narrowed = any(ch.isascii() and ch.isalnum() for ch in value) and not any(
-        kind == "squeeze" for kind, _needle in needles
-    )
+    has_squeeze = any(kind == "squeeze" for kind, _needle in needles)
+    narrowed = any(ch.isascii() and ch.isalnum() for ch in value) and not has_squeeze
     result = Coverage(coverage, reason, narrowed, len(needles))
     level = logging.INFO if coverage == _FUZZY and not narrowed else logging.WARNING
     _LOG.log(
@@ -1418,7 +1472,11 @@ def register_value(value: str, *, strict: bool | None = None) -> Coverage:
         narrowed,
         reason,
     )
-    if strict and (coverage == _EXACT_ONLY or narrowed):
+    # Strict refuses only a shape with no usable exact view of an ASCII kind: a value with an ASCII squeeze needle (an ordinary password or key,
+    # a separator, an invisible character, a look-alike or another case are all covered) is found as exactly as a scan can find anything, so it is
+    # registered (lead ruling, order 165 M3). What is still refused: a value found only in part (``narrowed``), and a value of a script
+    # alone whose script needles are all outside the one-inserted-letter band (an inserted letter of its script hides it).
+    if strict and (narrowed or (coverage == _EXACT_ONLY and script_needles and not has_squeeze)):
         raise CoverageRefused(
             f"this protected value ({len(value)} characters) is covered {'only in part' if narrowed else 'only exactly'}: {reason}"
             f"{'; its ASCII part has no needle of its own, so a text with only that part is not found' if narrowed else ''}. "
@@ -1455,7 +1513,7 @@ def require_pinned_unidata(expected: str | None = None) -> None:
         expected = defaults.TEXTNORM_PINNED_UNIDATA
     if unicodedata.unidata_version != expected:
         fix = (
-            f"run Python {_PINNED_PYTHON} (Unicode {expected})"
+            f"run Python {defaults.TEXTNORM_PINNED_PYTHON} (Unicode {expected})"
             if expected == "15.1.0"
             else f"run a Python with Unicode {expected}"
         )
@@ -1470,6 +1528,9 @@ _SCRIPT_NAMES = _scripts.SCRIPT_NAMES
 # other script in the Unicode data (Common and Inherited are neutral) next to Latin is a deny signal.
 _EXEMPT_WITH_LATIN = frozenset({"Han", "Hiragana", "Katakana", "Hangul", "Bopomofo"})
 _WORD = re.compile(r"\w+", re.UNICODE)
+# A spacing mark (Mc) or a modifier symbol (Sk) between two letters does not end the word (the fold and the scan keys treat them the same way): it is
+# removed before the words are cut, so Latin and Cyrillic letters joined by one are still read as ONE word (round 1 M16 / C11).
+_WORD_JOINING = frozenset({"Mc", "Sk"})
 _UNIT_SYMBOLS = frozenset(
     map(chr, (0xB5, 0x2126))
 )  # micro sign, ohm sign: unit symbols (5 us, 50 kOhm) that NFKC turns into Greek letters
@@ -1492,7 +1553,7 @@ def has_mixed_script(text: str) -> bool:
     allows those with Latin). The script of a letter comes from the generated data of the pinned Unicode version
     (``guard/_scripts.py``, made by ``tools/gen_confusables.py`` from ``Scripts.txt``), so every script the data names is covered: Cyrillic,
     Greek, Armenian, Cherokee, Coptic, Georgian, Hebrew, Lisu, Runic, Tamil and the rest. Invisible and combining characters are removed
-    first (a zero-width space inside a word does not split it). The micro sign and the ohm sign are exempt (unit symbols); a Greek mu or omega
+    first (a zero-width space inside a word does not split it), and so are spacing marks (Mc) and modifier symbols (Sk), which do not split a word either. The micro sign and the ohm sign are exempt (unit symbols); a Greek mu or omega
     typed as a Greek letter next to Latin letters is flagged. The micro and ohm signs are removed BEFORE the analysis, so a word that holds
     only such a sign plus a look-alike letter (micro sign + Cyrillic a) is not flagged by this function; the fold and the table still see the
     Cyrillic letter. A fail-closed deny signal that does not depend on the look-alike table. Digits and punctuation are script-neutral.
@@ -1510,6 +1571,7 @@ def has_mixed_script(text: str) -> bool:
             ch not in _UNIT_SYMBOLS
             and ch not in FILLERS
             and unicodedata.category(ch) not in _DROP_CATEGORIES
+            and unicodedata.category(ch) not in _WORD_JOINING
         )
     )
     for word in _WORD.findall(unicodedata.normalize("NFKC", kept)):

@@ -6,6 +6,7 @@ that pins a fact and not a behaviour says so ("fact pin"). Behaviour is asserted
 """
 
 import ast
+import hashlib
 import logging
 from pathlib import Path
 
@@ -103,9 +104,9 @@ def test_a_value_in_the_insertion_band_is_registered_as_fuzzy_and_strict_accepts
     assert isinstance(result, Coverage)
     assert result.coverage == "fuzzy" and result.narrowed is False, result
     assert result.needles >= 1 and result.reason
-    assert scan_holds("x " + value[:2] + chr(0x6A01) + value[2:] + " y", value) is True, (
-        "fuzzy but the inserted copy is not found"
-    )
+    assert (
+        scan_holds(text="x " + value[:2] + chr(0x6A01) + value[2:] + " y", value=value) is True
+    ), "fuzzy but the inserted copy is not found"
 
 
 def test_the_band_edges_of_a_script_value():
@@ -117,25 +118,87 @@ def test_the_band_edges_of_a_script_value():
         assert got.coverage == want, f"{count} Han letters: {got.coverage}, not {want}"
 
 
-def test_a_latin_value_is_exact_only_and_strict_refuses_it_by_default():
-    """Killer: ``register: strict is not the default``. A value we cannot cover loudly is acceptable, one we cannot cover silently is not. The message
-    says what to do and never holds the value."""
-    value = "Pass" + "word" + "17"
+class _Det:
+    def __init__(self, seed: int) -> None:
+        self._seed = str(seed).encode()
+        self._n = 0
+
+    def _next(self) -> int:
+        self._n += 1
+        return int.from_bytes(
+            hashlib.sha256(self._seed + b":" + str(self._n).encode()).digest()[:8], "big"
+        )
+
+    def randint(self, low: int, high: int) -> int:
+        return low + self._next() % (high - low + 1)
+
+    def choice(self, items):
+        return items[self._next() % len(items)]
+
+    def choices(self, items, k: int):
+        return [self.choice(items) for _ in range(k)]
+
+
+def _made_up_ascii_secrets(count):
+    """Made-up ordinary ASCII secrets (passwords, API-key shapes), built from parts, seeded: nothing real."""
+    import string
+
+    rng = _Det(20261109)
+    words = ["maple", "river", "orange", "winter", "cobalt", "tiger", "lantern", "meadow"]
+    out = []
+    for i in range(count):
+        if i % 3 == 0:
+            out.append(
+                rng.choice(words).capitalize() + str(rng.randint(10, 9999)) + rng.choice("!@#-_")
+            )
+        elif i % 3 == 1:
+            out.append(
+                "sk_"
+                + rng.choice(["live", "test"])
+                + "_"
+                + "".join(rng.choices(string.ascii_letters + string.digits, k=20))
+            )
+        else:
+            out.append(
+                "".join(rng.choices(string.ascii_letters + string.digits, k=rng.randint(8, 16)))
+            )
+    return out
+
+
+def test_an_ordinary_ascii_secret_is_registered_in_strict_mode_with_exact_only_coverage():
+    """Order 165 (M3). Killer: ``register: an ASCII secret with an exact view is refused``. Before the P1b fix batch every plain ASCII secret raised
+    ``CoverageRefused`` under the strict default (200 of 200 made-up secrets); the ceiling now is 0 of them. The coverage stays honest: ``exact_only``."""
+    assert defaults.TEXTNORM_STRICT_COVERAGE is True
+    values = _made_up_ascii_secrets(150) + ["Pass" + "word" + "17"]
+    refused = []
+    for value in values:
+        got = _value(register_value, value)
+        assert got.coverage == "exact_only" and got.narrowed is False, got
+        if scan_holds(text="x " + value + " y", value=value) is not True:
+            refused.append(value)
+    assert refused == [], (
+        f"{len(refused)} registered values are not found in a text that holds them"
+    )
+
+
+def test_strict_refuses_a_script_value_with_no_needle_in_the_band_by_default_and_the_message_holds_no_value():
+    """Killers: ``register: strict is not the default``, ``refusal: the value is in the CoverageRefused message``. A value we cannot cover loudly is
+    acceptable, one we cannot cover silently is not: three Han letters have a script view but no needle in the one-inserted-letter band and no
+    ASCII view. The message says what to do and never holds the value."""
+    value = han(3)
     assert defaults.TEXTNORM_STRICT_COVERAGE is True
     caught = _raises(CoverageRefused, register_value, value)
     message = str(caught)
-    assert value not in message and value.lower() not in message.lower(), (
-        "the message holds the value"
-    )
+    assert value not in message, "the message holds the value"
     for part in ("REFUSED", "longer form", "strict=False", f"{len(value)} characters"):
         assert part in message, f"{part!r} is not in the refusal: {message}"
     loose = _value(register_value, value, strict=False)
-    assert loose.coverage == "exact_only" and "Latin" in loose.reason, loose
+    assert loose.coverage == "exact_only", loose
 
 
 def test_the_default_of_strict_is_the_constant_in_defaults(monkeypatch):
     """Killer: ``register: strict is not the default``. The constant is read when the function runs."""
-    value = "Pass" + "word" + "17"
+    value = han(3)
     _raises(CoverageRefused, register_value, value)
     monkeypatch.setattr(defaults, "TEXTNORM_STRICT_COVERAGE", False)
     assert _value(register_value, value).coverage == "exact_only", (
@@ -265,6 +328,7 @@ def test_no_module_outside_textnorm_builds_its_own_views():
         "register_value",
         "scan_cache",
         "require_pinned_unidata",
+        "TextTooLong",
     }
     assert seen <= allowed, f"a module of src uses {sorted(seen - allowed)} of textnorm"
 
@@ -286,10 +350,10 @@ def test_nothing_of_a_text_is_kept_between_calls_outside_a_scope(monkeypatch):
     """Killer: ``cache: the views are kept outside a scope``. Two scans of one text outside ``scan_cache`` read it twice as often as one."""
     text = "a log line that may hold a secret pass\u200bword inside it " * 2
     seen = _counting_readings(monkeypatch)
-    assert scan_holds(text, "password") is True
+    assert scan_holds(text=text, value="password") is True
     once = seen.count(text)
     assert once >= 1
-    assert scan_holds(text, "password") is True
+    assert scan_holds(text=text, value="password") is True
     assert seen.count(text) == 2 * once, "the views of the text were kept between two calls"
     assert textnorm._SCAN_CACHE.get() is None, "a cache exists outside a scope"
 
@@ -301,8 +365,9 @@ def test_the_scope_keeps_digests_not_texts_at_most_two_and_empties_itself(monkey
     holder = {}
     with scan_cache():
         for t in texts:
-            assert scan_holds(t, "password") is True
-        cache = textnorm._SCAN_CACHE.get()
+            assert scan_holds(text=t, value="password") is True
+        scope = textnorm._SCAN_CACHE.get()
+        cache = scope.bundles if scope is not None else None
         holder["cache"] = cache
         assert cache is not None and len(cache) == 2, f"{len(cache)} texts kept, two allowed"
         assert all(len(k) == 64 and set(k) <= set("0123456789abcdef") for k in cache), (
@@ -310,16 +375,16 @@ def test_the_scope_keeps_digests_not_texts_at_most_two_and_empties_itself(monkey
         )
         assert not any(t in cache for t in texts), "a text is a key"
         with scan_cache():
-            assert textnorm._SCAN_CACHE.get() is cache, (
+            assert textnorm._SCAN_CACHE.get() is scope, (
                 "an inner scope does not share the outer cache"
             )
-        assert textnorm._SCAN_CACHE.get() is cache
+        assert textnorm._SCAN_CACHE.get() is scope
     assert holder["cache"] == {} and textnorm._SCAN_CACHE.get() is None, (
         "the scope did not empty the cache"
     )
     with pytest.raises(RuntimeError), scan_cache():
-        scan_holds(texts[0], "password")
-        holder["again"] = textnorm._SCAN_CACHE.get()
+        scan_holds(text=texts[0], value="password")
+        holder["again"] = textnorm._SCAN_CACHE.get().bundles
         raise RuntimeError("stop")
     assert holder["again"] == {} and textnorm._SCAN_CACHE.get() is None, (
         "an exception left the cache full"
@@ -334,18 +399,18 @@ def test_the_russian_word_for_password_is_accepted_at_the_pinned_outcome():
     script_needle = chr(0x43F) + "apo" + chr(0x43B) + "b"
     needles = _value(scan_needles, word)
     assert set(needles) == {script_needle, "APOB"}, f"the needles of the word are {sorted(needles)}"
-    assert scan_holds("x " + word + " y", word) is True
-    assert scan_holds("x " + " ".join(word) + " y", word) is True, (
+    assert scan_holds(text="x " + word + " y", value=word) is True
+    assert scan_holds(text="x " + " ".join(word) + " y", value=word) is True, (
         "a space between the letters hides the word"
     )
-    assert scan_holds("an unrelated english sentence", word) is False
+    assert scan_holds(text="an unrelated english sentence", value=word) is False
     assert _value(register_value, word, strict=False).coverage == "exact_only"
 
 
 def test_the_strict_refusal_names_the_setting_that_makes_it_strict():
-    """Order 140 (1). The message of ``CoverageRefused`` names ``TEXTNORM_STRICT_COVERAGE`` and ``strict=False``, for a Latin value and for a narrowed one.
+    """Order 140 (1). The message of ``CoverageRefused`` names ``TEXTNORM_STRICT_COVERAGE`` and ``strict=False``, for a script value outside the band and for a narrowed one.
     Killer: ``register: the refusal does not name the setting``."""
-    for value in ("Pass" + "word" + "17", han(4) + "1234"):
+    for value in (han(3), han(4) + "1234"):
         message = str(_raises(CoverageRefused, register_value, value))
         assert "TEXTNORM_STRICT_COVERAGE" in message, (
             f"the refusal does not name the setting: {message}"
@@ -389,14 +454,14 @@ def test_a_japanese_needle_of_han_and_kana_takes_the_han_minimum_and_other_mixtu
     mixed = han(han_min - 1) + kana(1)
     assert value_scripts(mixed) == {"HAN", "KANA"}
     extra = chr(0x6A01)
-    assert _value(scan_holds, "x" + mixed[:2] + extra + mixed[2:] + "y", mixed) is True, (
-        "a mixed needle at the Han minimum is not matched with an insertion"
-    )
+    assert (
+        _value(scan_holds, text="x" + mixed[:2] + extra + mixed[2:] + "y", value=mixed) is True
+    ), "a mixed needle at the Han minimum is not matched with an insertion"
     assert _value(register_value, mixed).coverage == "fuzzy", (
         "a mixed Han and kana needle at the Han minimum is not fuzzy"
     )
     pure = kana(han_min)
-    assert scan_holds("x" + pure[:2] + chr(0x3092) + pure[2:] + "y", pure) is False, (
+    assert scan_holds(text="x" + pure[:2] + chr(0x3092) + pure[2:] + "y", value=pure) is False, (
         "a pure kana needle took the Han minimum"
     )
     three = han(han_min - 1) + kana(1) + hangul(1)
@@ -437,4 +502,4 @@ def test_exactly_the_cap_in_scan_keys_is_allowed_and_one_over_is_refused(monkeyp
     _raises(TextTooLong, scan_keyset, text)
     text = _stub_keys(monkeypatch, (5, 4))
     _raises(TextTooLong, scan_keyset, text)
-    assert textnorm._SCAN_KEY_CAP == 16
+    assert defaults.TEXTNORM_SCAN_KEY_CAP == 16
