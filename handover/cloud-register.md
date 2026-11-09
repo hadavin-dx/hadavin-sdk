@@ -857,3 +857,5 @@ PR72 0ae044b: builder done; evidence run waits for evid.sh fix (inv-trunc-66), t
 | a629a5d0 | PR84 5a78d59 round-2 review design | 07:23Z | +20m | running | save report |
 | a6f15e9a | PR84 5a78d59 round-2 review codebase | 07:23Z | +20m | closed 07:27Z | saved round2-codebase.md |
 | evid.sh 84 5a78d59 (shell) | PR84 evidence on new head | 07:23Z | ~40m | queued | read SUMMARY lines |
+| rv-rev2-d | P1-rev2 plan review r2 egm-design | 07:27Z | +20m | starting | save report |
+| rv-rev2-c | P1-rev2 plan review r2 egm-codebase-details | 07:27Z | +20m | starting | save report |
