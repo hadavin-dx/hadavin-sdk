@@ -1,0 +1,81 @@
+{
+  "ai_step": {
+    "receives": [
+      "lead_id",
+      "email_key"
+    ],
+    "never_receives": [
+      "name",
+      "phone",
+      "company",
+      "message"
+    ],
+    "mode": "recorded"
+  },
+  "stored": [
+    {
+      "field": "name",
+      "where": "lead book",
+      "purpose": "show who the lead is"
+    },
+    {
+      "field": "email",
+      "where": "lead book",
+      "purpose": "identify the lead and send the follow-up"
+    },
+    {
+      "field": "phone",
+      "where": "lead book",
+      "purpose": "contact the lead (kept when given)"
+    },
+    {
+      "field": "company",
+      "where": "lead book",
+      "purpose": "show who the lead works for (kept when given)"
+    },
+    {
+      "field": "message",
+      "where": "lead book",
+      "purpose": "keep what the lead wrote (kept when given)"
+    },
+    {
+      "field": "request_payload",
+      "where": "lead book",
+      "purpose": "keep the whole request as it arrived, to show what a repeat changed"
+    },
+    {
+      "field": "request_id",
+      "where": "lead book",
+      "purpose": "recognise a request that arrives again"
+    },
+    {
+      "field": "door",
+      "where": "lead book",
+      "purpose": "show which door the request came through"
+    },
+    {
+      "field": "times",
+      "where": "lead book",
+      "purpose": "order the request record"
+    },
+    {
+      "field": "follow_up_state",
+      "where": "lead book",
+      "purpose": "show whether the follow-up went out"
+    },
+    {
+      "field": "ai_label",
+      "where": "lead book",
+      "purpose": "keep the AI step's answer: hot, warm or cold"
+    }
+  ],
+  "access": {
+    "bind": "127.0.0.1",
+    "portal_read_only": true,
+    "host_check": true,
+    "origin_check": true,
+    "login": false,
+    "encryption_at_rest": false,
+    "masking": false
+  }
+}

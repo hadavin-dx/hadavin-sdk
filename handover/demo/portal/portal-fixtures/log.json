@@ -1,0 +1,42 @@
+{
+  "items": [
+    {
+      "request_id": "ui-1794239950000-3",
+      "received_at": 1794239950,
+      "door": "webhook",
+      "result": "open",
+      "lead_id": null,
+      "lead_name": null,
+      "followup_state": null
+    },
+    {
+      "request_id": "ui-1794239940000-2",
+      "received_at": 1794239940,
+      "door": "form",
+      "result": "review",
+      "lead_id": null,
+      "lead_name": null,
+      "followup_state": null
+    },
+    {
+      "request_id": "ui-1794239905000-2",
+      "received_at": 1794239905,
+      "door": "webhook",
+      "result": "duplicate",
+      "lead_id": "L0c4d8e2f6a19",
+      "lead_name": "Linus Demo",
+      "followup_state": "unknown"
+    },
+    {
+      "request_id": "ui-1794239905000-1",
+      "received_at": 1794239905,
+      "door": "form",
+      "result": "new",
+      "lead_id": "L0c4d8e2f6a19",
+      "lead_name": "Linus Demo",
+      "followup_state": "sent"
+    }
+  ],
+  "next": "1794239905:41",
+  "total": 57
+}
