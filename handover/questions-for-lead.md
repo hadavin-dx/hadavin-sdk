@@ -1450,3 +1450,9 @@ NEXT: PR75 fix builder -> evidence -> round 3 reviewers; P4a r7 reports -> resol
 CHECKED BY ME: ORDER 194 read. Started: builder a82eaf5f for the PR87 follow-up PR (money path, branch core/peel-run-id-followup from main; items A1-A4; A5 evidence runner + fresh correctness/adversarial reviewers follow after the builder), builder ab1b2c64 for PR89 fixes 1-9 on core/mutation-runner-keywords (head now 59f62a3). PR89 is NOT marked READY. PR90 review is yours.
 NOT RUN: nothing built yet; the studio-folder review summaries are not on this machine, I acted on the findings text in ORDER 194.
 DEFAULT if no answer: continue as above; no merge, no READY for either until fresh evidence + fresh reviewers + real GitHub list (money path: do not merge). No decision is owed to you.
+
+## q410 (09:30Z) P1d-a build finished, NOT reviewed; core freeze (ORDER 198) so nothing new is started
+CHECKED BY ME: builder report saved at handover/reports/P1d-a-builder-report.md; head 6875f27 pushed to core/P1d-a. I ran nothing myself on it.
+NOT RUN: mutants (50), independent evidence, result reviewers (redaction path, no cap), Python 3.12 run, BS-1 passes only partly (2 of 268 over-mask by one ';').
+DECISIONS FOR LEAD (each with a default if no answer in 30 min; redaction path, so default = do not merge, keep waiting): (1) two builder properties fail on the build (e-mail pattern not idempotent: 29/2000; backtick/CommonMark gap: 35/2000), both worse on base. Default: record them as P1d-b/P1d-c work, do not fold into P1d-a. (2) Typed [.] read as . in clean(): ORDER 192 item 3 already asks for it; default: accept. (3) Ticket alphabet counts are 72/66, not 63/57: default: correct the ticket text at the next revision.
+NEXT: after "GO core": evidence runner on 6875f27, mutants, redaction result reviewers.
