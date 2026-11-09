@@ -24,7 +24,7 @@ deptry .
 vulture
 python tools/vulture_whitelist_check.py
 actionlint -shellcheck=
-# licences: uv export --locked --all-extras --group test --group lint --no-hashes --no-emit-project | sed -E 's/ *;.*//' > /tmp/locked.txt
+# licences: uv export --locked --all-extras --group test --group lint --no-hashes --no-emit-project > /tmp/locked.txt
 #           python tools/licence_check.py /tmp/locked.txt tools/licence_exceptions.txt
 ```
 
