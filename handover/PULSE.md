@@ -1,1 +1,1 @@
-22:43Z | agents: RUNNING S1k a21deacf30aa39137 (box ends 23:38Z) | evid shells: none | unpushed: none | refreshed every 60 s by a bounded script (ends 00:53Z); detail in HEARTBEAT.md
+22:44Z | agents: RUNNING round9 security ac7e2fccc8cb52450, round9 code/tests a12c7eee15f1e5df7 (read-only, A4r9); shell run9.sh campaign on /tmp/dpld-camp9 (A4r9+live tools); mutation round waits for campaign | evid shells: none | unpushed: none | refreshed every 60 s by a bounded script (ends 00:54Z); detail in HEARTBEAT.md
