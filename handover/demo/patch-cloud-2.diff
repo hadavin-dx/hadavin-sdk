@@ -1,0 +1,603 @@
+diff --git a/src/lead_desk/adapters.py b/src/lead_desk/adapters.py
+index 12e0a0e..f77bdb1 100644
+--- a/src/lead_desk/adapters.py
++++ b/src/lead_desk/adapters.py
+@@ -63,11 +63,15 @@ class HttpCrm:
+             info = _exchange(self._base + "/fake/info", None, self._timeout)
+             cap = info["crm_capability"]
+         except Exception as e:
++            self._capability = None  # an old answer is not kept: the mode is unknown until it is read again
+             raise CrmError(type(e).__name__) from e
+         if cap not in ("keyed", "blind"):
+             raise CrmError("unexpected /fake/info")
+         self._capability = "keyed" if cap == "keyed" else "blind"
+ 
++    def forget_capability(self) -> None:
++        self._capability = None
++
+     @property
+     def capability(self) -> Literal["keyed", "blind"] | None:
+         """The CRM's mode as named in its last good answer; None until it has answered once (the desk then treats
+diff --git a/src/lead_desk/db.py b/src/lead_desk/db.py
+index 8119649..d7546c2 100644
+--- a/src/lead_desk/db.py
++++ b/src/lead_desk/db.py
+@@ -22,12 +22,16 @@ _ADDED_COLUMNS: tuple[tuple[str, str, str], ...] = (
+ _BACKFILL: dict[str, str] = {
+     # The first release claimed first and asked the CRM later on a Retry, so "tried" does not prove "CRM asked".
+     # `sending`: unknowable -> 2 (a put may have started; the safe path decides). A row that failed or waits with an
+-    # internal error (the CRM or AI step broke): the CRM did not finish -> stays 0 (asked on the next try). Failed
+-    # after a send error: the CRM came first -> 1. Any other row that was tried (pending or unknown, no internal
+-    # error): unknowable -> 2.
++    # error that came from the send (refused, unreachable, ambiguous, crash): the CRM came first -> 1. An error that
++    # provably happened before the CRM put (a CRM that stored nothing, or the AI step's lookup and value errors):
++    # stays 0. Any other internal error (for example CrmError, an unclear put) and any other tried row: unknowable
++    # -> 2 (a person decides on a blind CRM).
+     "crm_done": "UPDATE followups SET crm_done = CASE"
+     " WHEN state = 'sending' THEN 2"
+-    " WHEN COALESCE(last_error, '') LIKE 'internal:%' THEN 0"
++    " WHEN last_error IN ('refused', 'unreachable', 'ambiguous', 'crash_while_sending') THEN 1"
++    " WHEN last_error IN ('internal:CrmNothingStored', 'internal:KeyError', 'internal:ValueError',"
++    " 'internal:LookupError') THEN 0"
++    " WHEN COALESCE(last_error, '') LIKE 'internal:%' THEN 2"
+     " WHEN state = 'failed' AND ai_label IS NOT NULL THEN 1"
+     " ELSE 2 END"
+     " WHERE state <> 'sent' AND (attempts > 0 OR state = 'sending')",
+diff --git a/src/lead_desk/desk.py b/src/lead_desk/desk.py
+index 8caebfc..cc69823 100644
+--- a/src/lead_desk/desk.py
++++ b/src/lead_desk/desk.py
+@@ -32,6 +32,7 @@ from lead_desk.constants import (
+     LEAD_ID_HEX_CHARS,
+     LEAD_ID_PREFIX,
+     LOCK_RETRIES,
++    MAX_DIGITS,
+     SOURCE_REF_MAX,
+     SOURCE_REF_MIN,
+     SOURCES,
+@@ -99,6 +100,10 @@ HINTS = {
+     "D": "Informational only, no action needed.",
+     "O": "Send the same request id again, or restart the desk.",
+ }
++HINT_INTERNAL_ERROR = (
++    "The desk itself could not decide this receipt (a fault on the desk side, not in the request). A person must "
++    "look at the desk log. Sending a new request id is not the fix."
++)
+ HINT_NOT_UNKNOWN = "Only a follow-up in state unknown can be resolved."
+ HINT_CRM_UNCONFIRMED = (
+     "The CRM may or may not hold this lead. Look in the CRM, then answer crm_present (the row is there: Retry goes "
+@@ -190,6 +195,8 @@ class Desk:
+         self._gate = gate_for(self._db_path)  # one write line per lead book (not re-entrant, see gate.py)
+         self._decide_failures: dict[int, int] = {}  # receipt id -> consecutive non-busy decide failures (in memory)
+         self._decide_lock = threading.Lock()
++        self._crm_refresh_failed = False
++        self._poked: set[int] = set()  # receipts left open by a busy answer: the reaper decides them at its next pass
+         self._refreshed_at: int | None = None  # clock time of the last capability read
+         self._used = (
+             False  # set by the first call that serves, drives, claims, retries or resolves; startup() refuses after it
+@@ -280,12 +287,24 @@ class Desk:
+         try:
+             refresh()
+         except Exception as e:
+-            log.warning("crm capability not re-read: %s", type(e).__name__)
++            if not self._crm_refresh_failed:  # said once per change of state, not on every pass
++                log.warning("crm capability not re-read: %s", type(e).__name__)
++            self._crm_refresh_failed = True
++            self._forget_crm_capability()
++        else:
++            self._crm_refresh_failed = False
++
++    def _forget_crm_capability(self) -> None:
++        """A failed re-read must not leave an old "keyed" in force: the adapter drops it (None counts as not keyed)."""
++        forget = getattr(self.crm, "forget_capability", None)
++        if forget is not None:
++            forget()
+ 
+     def _requeue_sending(self, older_than: int | None) -> None:
+         """The two `sending` rows of the transition table: keyed -> pending, blind -> unknown (a blind sender cannot
+-        say whether the email left). older_than=None: every `sending` row (start-up); else only rows not touched
+-        since that time (the reaper)."""
++        say whether the email left). A row whose CRM step is not finished (crm_done not 1) never reached the send, so
++        it goes back to pending (or failed at the cap) whatever the sender is: the CRM rule decides at the next drive.
++        older_than=None: every `sending` row (start-up); else only rows not touched since that time (the reaper)."""
+         keyed = self.outbox.capability == "keyed"
+         conn = self._conn()
+ 
+@@ -294,11 +313,14 @@ class Desk:
+                 # a row that has used up its automatic tries is not put back for ever: keyed -> failed (a person's
+                 # Retry can still start it again), blind -> unknown as before
+                 conn.execute(
+-                    "UPDATE followups SET state=CASE WHEN NOT ? THEN 'unknown'"
+-                    " WHEN auto_attempts >= ? THEN 'failed' ELSE 'pending' END,"
+-                    " last_error='crash_while_sending', ambiguous_prior=1, updated_at=?"
++                    "UPDATE followups SET state=CASE"
++                    " WHEN crm_done <> 1 AND auto_attempts >= ? THEN 'failed' WHEN crm_done <> 1 THEN 'pending'"
++                    " WHEN NOT ? THEN 'unknown' WHEN auto_attempts >= ? THEN 'failed' ELSE 'pending' END,"
++                    " last_error='crash_while_sending',"
++                    " ambiguous_prior=CASE WHEN crm_done = 1 THEN 1 ELSE ambiguous_prior END,"
++                    " updated_at=?"
+                     " WHERE state='sending' AND (? IS NULL OR updated_at <= ?)",
+-                    (int(keyed), SEND_MAX_ATTEMPTS, self._now(), older_than, older_than),
++                    (SEND_MAX_ATTEMPTS, int(keyed), SEND_MAX_ATTEMPTS, self._now(), older_than, older_than),
+                 )
+ 
+         self._locked_retry(attempt)
+@@ -378,10 +400,16 @@ class Desk:
+         conn = self._conn()
+         done = {"receipts": 0, "requeued": 0, "driven": 0, "unknown": 0}
+         now = self._now()
+-        for (rid,) in conn.execute(
+-            "SELECT receipt_id FROM receipts WHERE outcome IS NULL AND received_at <= ? ORDER BY receipt_id",
+-            (now - self.config.stall_seconds,),
+-        ).fetchall():
++        with self._decide_lock:
++            poked = sorted(self._poked)  # a busy answer left these open: they do not wait for stall_seconds
++        stalled = [
++            int(r[0])
++            for r in conn.execute(
++                "SELECT receipt_id FROM receipts WHERE outcome IS NULL AND received_at <= ? ORDER BY receipt_id",
++                (now - self.config.stall_seconds,),
++            ).fetchall()
++        ]
++        for rid in sorted(set(poked) | set(stalled)):
+             try:
+                 _, here = self._decide(int(rid))
+                 done["receipts"] += int(here)
+@@ -460,7 +488,7 @@ class Desk:
+             result = self._locked_retry(lambda: self._decide_once(receipt_id))
+         except _UNSTORABLE as e:
+             log.warning("payload could not be stored: %s", type(e).__name__)
+-            return self._locked_retry(lambda: self._decide_unstorable(receipt_id))
++            result = self._locked_retry(lambda: self._decide_unstorable(receipt_id))
+         except Exception as e:
+             if db.is_busy(e):
+                 raise  # a lock is not the receipt's fault: it keeps being tried
+@@ -476,6 +504,7 @@ class Desk:
+             result = self._locked_retry(lambda: self._decide_unstorable(receipt_id, "internal_error"))
+         with self._decide_lock:
+             self._decide_failures.pop(receipt_id, None)
++            self._poked.discard(receipt_id)
+         return result
+ 
+     def _decide_unstorable(self, receipt_id: int, reason: str = "internal_unstorable") -> tuple[dict[str, Any], bool]:
+@@ -657,6 +686,11 @@ class Desk:
+             self.hooks.crash_point("B", conn)
+             return self._verdict_reply(rec, False, None)
+         except Exception as e:
++            if rid is not None and db.is_busy(e):
++                with (
++                    self._decide_lock
++                ):  # the 503 is final for this client, but the receipt must not wait for stall_seconds
++                    self._poked.add(rid)
+             return self._error_reply(e, rid)
+ 
+     def _note_payload_conflict(self, receipt_id: int) -> None:
+@@ -837,14 +871,19 @@ class Desk:
+         `pending` is left alone (nothing to drive). D1 and D2 live in `_send_claimed`."""
+         self._used = True
+         try:
+-            if self._followup_state(lead_id) != "pending":
++            state0 = (
++                self._conn()
++                .execute("SELECT state, auto_attempts FROM followups WHERE lead_id=?", (lead_id,))
++                .fetchone()
++            )
++            if state0 is None or state0[0] != "pending":
+                 return
+             try:
+                 self._label_step(lead_id)
+             except Exception as e:
+                 log.warning("follow-up step 1 failed: %s", type(e).__name__)
+                 if not db.is_busy(e):
+-                    self._defer_pending(lead_id, f"internal:{type(e).__name__}")
++                    self._defer_pending(lead_id, f"internal:{type(e).__name__}", int(state0[1]))
+                 return
+             if self._claim(None, lead_id, ("pending",)):
+                 self._after_claim(lead_id, auto=True)
+@@ -983,10 +1022,12 @@ class Desk:
+         self.hooks.crash_point("D2", None)
+         self._record_send_result(lead_id, state, token, err, ambiguous=err == "ambiguous")
+ 
+-    def _defer_pending(self, lead_id: str, last_error: str) -> None:
++    def _defer_pending(self, lead_id: str, last_error: str, token: int) -> None:
+         """Internal writer for a `pending` row whose step 1 failed (nothing was sent): one more automatic try is
+         used up, the row stays `pending` (the reaper tries again after a backoff) and becomes `failed` only when the
+-        cap is reached: UPDATE ... WHERE lead_id=? AND state='pending'; a row count of 0 is logged and ignored."""
++        cap is reached: UPDATE ... WHERE lead_id=? AND state='pending' AND auto_attempts=<token>
++        (the automatic-try count read when this drive started, so a second drive that also failed step 1 cannot add
++        a second try); a row count of 0 is logged and ignored."""
+         conn = self._conn()
+ 
+         def attempt() -> int:
+@@ -994,8 +1035,8 @@ class Desk:
+                 return conn.execute(
+                     "UPDATE followups SET auto_attempts=auto_attempts+1, last_error=?, updated_at=?,"
+                     " state=CASE WHEN auto_attempts+1 >= ? THEN 'failed' ELSE 'pending' END"
+-                    " WHERE lead_id=? AND state='pending'",
+-                    (last_error, self._now(), SEND_MAX_ATTEMPTS, lead_id),
++                    " WHERE lead_id=? AND state='pending' AND auto_attempts=?",
++                    (last_error, self._now(), SEND_MAX_ATTEMPTS, lead_id, token),
+                 ).rowcount
+ 
+         self._finish_update(attempt, "defer_pending")
+@@ -1051,18 +1092,25 @@ class Desk:
+         if not item_id[1:] or item_id[0] not in "FRDO":
+             return None
+         kind, ref = item_id[0], item_id[1:]
++        if not identity.encodable(ref) or identity.has_control_char(ref):
++            return None
+         conn = self._conn()
+         if kind == "F":
+             found = conn.execute("SELECT 1 FROM followups WHERE lead_id=?", (ref,)).fetchone()
+-        elif not (ref.isascii() and ref.isdecimal()):
+-            return None
++        elif not (ref.isascii() and ref.isdecimal()) or len(ref.lstrip("0")) > MAX_DIGITS:
++            return None  # not a number, or one no receipt id can reach (also keeps int() clear of its digit limit)
+         else:
+             found = conn.execute(_ITEM_EXISTS[kind], (int(ref),)).fetchone()
+         return kind if found else None
+ 
+-    @staticmethod
+-    def _not_actionable(kind: str) -> Reply:
+-        return Reply(HTTP_CONFLICT, {"error": "not_actionable", "hint": HINTS[kind]})
++    def _not_actionable(self, kind: str, item_id: str = "") -> Reply:
++        hint = HINTS[kind]
++        if kind == "R" and item_id[1:].isdecimal():
++            row = self._conn().execute("SELECT outcome_reason FROM receipts WHERE receipt_id=?", (int(item_id[1:]),))
++            found = row.fetchone()
++            if found is not None and found[0] == "internal_error":
++                hint = HINT_INTERNAL_ERROR
++        return Reply(HTTP_CONFLICT, {"error": "not_actionable", "hint": hint})
+ 
+     def retry(self, item_id: str) -> Reply:
+         """Check order: item id grammar and existence (404), then the 409 rows of contract.md. Reads no state
+@@ -1078,7 +1126,7 @@ class Desk:
+             if kind is None:
+                 return Reply(HTTP_NOT_FOUND, {"error": "not_found"})
+             if kind != "F":
+-                return self._not_actionable(kind)
++                return self._not_actionable(kind, item_id)
+             lead_id = item_id[1:]
+             if self._claim(None, lead_id, ("pending", "failed")):  # a failed row: the automatic count starts again
+                 self._after_claim(lead_id, auto=True)  # a Retry gets a fresh automatic count
+@@ -1114,7 +1162,7 @@ class Desk:
+             if kind is None:
+                 return Reply(HTTP_NOT_FOUND, {"error": "not_found"})
+             if kind != "F":
+-                return self._not_actionable(kind)
++                return self._not_actionable(kind, item_id)
+             if decision not in _RESOLVE_DECISIONS:
+                 return Reply(HTTP_BAD_REQUEST, {"error": "bad_decision"})
+             lead_id = item_id[1:]
+@@ -1135,7 +1183,8 @@ class Desk:
+                     return conn.execute(
+                         "UPDATE followups SET state=?, last_error=?, updated_at=?, sent_at=?,"
+                         " ambiguous_prior=CASE WHEN ? THEN 0 ELSE ambiguous_prior END,"
+-                        " crm_done=CASE WHEN ? AND crm_done=2 THEN 0 WHEN ? THEN 1 ELSE crm_done END"
++                        " crm_done=CASE WHEN ? AND crm_done=2 AND last_error IS 'crm_unconfirmed' THEN 0"
++                        " WHEN ? THEN 1 ELSE crm_done END"
+                         " WHERE lead_id=? AND state='unknown'"
+                         " AND (? = 0 OR last_error IS 'crm_unconfirmed')"
+                         " AND (? = 0 OR last_error IS NOT 'crm_unconfirmed')",
+@@ -1166,7 +1215,13 @@ class Desk:
+         before = self._now() - self.config.stall_seconds
+         rows = self._conn().execute(_REVIEW_SQL, {"before": before}).fetchall()
+         keys = ("item_id", "item_type", "kind", "reason", "lead_id", "since", "source")
+-        return Reply(HTTP_OK, [dict(zip(keys, r, strict=True)) for r in rows])
++        items = [dict(zip(keys, r, strict=True)) for r in rows]
++        for item in items:  # a hint only where the person needs one (keeps the item shape of the other rows)
++            if item["kind"] == "unknown" and item["reason"] == "crm_unconfirmed":
++                item["hint"] = HINT_CRM_UNCONFIRMED + " not_sent: an extra CRM row may need deleting by hand."
++            elif item["item_type"] == "receipt" and item["reason"] == "internal_error":
++                item["hint"] = HINT_INTERNAL_ERROR
++        return Reply(HTTP_OK, items)
+ 
+     def lead(self, lead_id: str) -> Reply:
+         conn = self._conn()
+diff --git a/tests/test_hardening_cloud.py b/tests/test_hardening_cloud.py
+index 55a5811..1acdf93 100644
+--- a/tests/test_hardening_cloud.py
++++ b/tests/test_hardening_cloud.py
+@@ -323,7 +323,9 @@ def test_f4_startup_reads_capability_again(env, tmp_path: Path) -> None:
+     lid = desk.process("form", "mm-2", lead(email="mm2@example.test")).body["lead_id"]  # not driven
+     desk.close()
+     con = sqlite3.connect(tmp_path / "desk.sqlite3", isolation_level=None)
+-    con.execute("UPDATE followups SET state='sending' WHERE lead_id=?", (lid,))  # as if the desk was killed mid-send
++    con.execute(
++        "UPDATE followups SET state='sending', crm_done=1 WHERE lead_id=?", (lid,)
++    )  # as if killed mid-send, CRM done
+     con.close()
+     srv.state.outbox_mode = "blind"
+     host, port = url.rsplit("://", 1)[1].rsplit(":", 1)
+diff --git a/tests/test_hardening_cloud_b.py b/tests/test_hardening_cloud_b.py
+index 6048499..53657f6 100644
+--- a/tests/test_hardening_cloud_b.py
++++ b/tests/test_hardening_cloud_b.py
+@@ -165,7 +165,7 @@ def test_f3_reaper_makes_stuck_sending_u_02(env, bg) -> None:
+     lid = new_lead(rig)
+     sql_exec(
+         rig.db_path,
+-        "UPDATE followups SET state='sending', attempts=1, updated_at=? WHERE lead_id=?",
++        "UPDATE followups SET state='sending', crm_done=1, attempts=1, updated_at=? WHERE lead_id=?",
+         (rig.clock.t, lid),
+     )
+     rig.clock.advance(3600)
+@@ -931,7 +931,11 @@ def test_g7_stage_times_move_updated_at(env) -> None:
+ def test_g8_earlier_unclear_send_is_never_resent_blind(env) -> None:
+     rig = env.rig(outbox=FlakyOutbox(1, SendRefused))
+     lid = new_lead(rig, "g8-1")
+-    sql_exec(rig.db_path, "UPDATE followups SET state='sending', attempts=1, updated_at=? WHERE lead_id=?", (1, lid))
++    sql_exec(
++        rig.db_path,
++        "UPDATE followups SET state='sending', crm_done=1, attempts=1, updated_at=? WHERE lead_id=?",
++        (1, lid),
++    )
+     run_passes(rig, 1)  # stuck sending -> pending (crash_while_sending)
+     assert rig.state(lid) == ("pending", "crash_while_sending")
+     run_passes(rig, 1)  # the keyed sender refuses: the message text is overwritten
+@@ -1184,11 +1188,17 @@ def test_h1_failed_internal_row_gets_crm(tmp_path: Path) -> None:
+     desk = mk_desk_at(tmp_path, crm=crm)
+     desk.startup()
+     marks = dict(sqlite3.connect(path).execute("SELECT lead_id, crm_done FROM followups"))
+-    assert marks[failed_id] == 0, "the CRM never finished for this row: the mark must stay 0"
+-    assert marks[waiting_id] == 2, "a tried row of unknown origin must take the safe path (intent mark)"
++    # round 3 (M3, m3): internal:CrmError is an unclear put, so the safe mark 2; a send failure ('refused')
++    # had its CRM step first, so 1
++    assert marks[failed_id] == 2, "an unclear CRM put may have stored the row: the intent mark"
++    assert marks[waiting_id] == 1, "a row that failed in the send had its CRM step first"
++    r = desk.retry(f"F{failed_id}")
++    assert r.status == 200 and r.body["state"] == "unknown"
++    assert crm.rows == [], "a blind CRM is not asked again without a person"
++    assert desk.resolve(f"F{failed_id}", "not_sent").status == 200
+     r = desk.retry(f"F{failed_id}")
+     assert (r.status, r.body["state"]) == (200, "sent")
+-    assert crm.rows == [failed_id], "after the person's Retry the CRM row must be created, once"
++    assert crm.rows == [failed_id], "after the person's answer the CRM row must be created, once"
+ 
+ 
+ class GateCrm(BlindCrm):
+diff --git a/tests/test_hardening_cloud_c.py b/tests/test_hardening_cloud_c.py
+new file mode 100644
+index 0000000..b2f6ea4
+--- /dev/null
++++ b/tests/test_hardening_cloud_c.py
+@@ -0,0 +1,239 @@
++"""Failing-first tests for the round-3 findings (M1-M4, m1-m5) and the order-202 desk-side items (a), (b).
++Made-up data only."""
++
++from __future__ import annotations
++
++import logging
++import sqlite3
++from typing import Any
++
++import pytest
++from support import lead
++
++from lead_desk import db
++from lead_desk.adapters import HttpCrm
++from lead_desk.desk import Desk
++
++
++def new_lead(rig: Any, ref: str = "c1") -> str:
++    reply = rig.desk.process("form", ref, lead())
++    assert reply.status == 201, reply.body
++    return str(reply.body["lead_id"])
++
++
++def set_row(rig: Any, lid: str, **cols: Any) -> None:
++    sets = ", ".join(f"{k}=?" for k in cols)
++    con = sqlite3.connect(rig.db_path, timeout=10)
++    try:
++        con.execute(f"UPDATE followups SET {sets} WHERE lead_id=?", (*cols.values(), lid))  # noqa: S608
++        con.commit()
++    finally:
++        con.close()
++
++
++def crm_done(rig: Any) -> int:
++    return int(rig.query("SELECT crm_done FROM followups")[0][0])
++
++
++# =====
++# M1 requeue of a sending row whose CRM step is not finished
++# =====
++def test_m1_blind_sending_row_without_crm_mark_is_not_unknown(env) -> None:
++    rig = env.rig(outbox="blind")
++    lid = new_lead(rig)
++    set_row(rig, lid, state="sending", crm_done=0, attempts=1, auto_attempts=1)
++    rig.desk._requeue_sending(None)
++    assert rig.state(lid)[0] == "pending", "a row that never reached the send must not be offered as `sent`"
++    rig.desk.run_followup(lid)
++    assert rig.state(lid)[0] == "sent" and rig.outbox.count == 1
++
++
++def test_m1_blind_sending_row_with_unfinished_put_asks_a_person_about_the_crm(env) -> None:
++    rig = env.rig(outbox="blind")
++    lid = new_lead(rig, "c2")
++    set_row(rig, lid, state="sending", crm_done=2, attempts=1, auto_attempts=1)
++    rig.desk._requeue_sending(None)
++    assert rig.state(lid)[0] == "pending"
++    rig.desk.run_followup(lid)
++    assert rig.state(lid) == ("unknown", "crm_unconfirmed") and rig.outbox.count == 0
++
++
++# =====
++# M2 not_sent clears the CRM mark only for a CRM question
++# =====
++def test_m2_not_sent_keeps_crm_mark_for_an_email_question(env) -> None:
++    rig = env.rig(outbox="blind")
++    lid = new_lead(rig, "c3")
++    set_row(rig, lid, state="unknown", last_error="ambiguous", crm_done=2, attempts=1, auto_attempts=1)
++    assert rig.desk.resolve(f"F{lid}", "not_sent").status == 200
++    assert crm_done(rig) == 2, "the person answered about the email; the CRM question stays open"
++
++
++def test_m2_not_sent_clears_crm_mark_for_a_crm_question(env) -> None:
++    rig = env.rig(outbox="blind")
++    lid = new_lead(rig, "c4")
++    set_row(rig, lid, state="unknown", last_error="crm_unconfirmed", crm_done=2, attempts=1, auto_attempts=1)
++    assert rig.desk.resolve(f"F{lid}", "not_sent").status == 200
++    assert crm_done(rig) == 0
++
++
++# =====
++# M3 / m3 backfill
++# =====
++@pytest.mark.parametrize(
++    ("state", "err", "label", "want"),
++    [
++        ("pending", "internal:CrmError", None, 2),
++        ("failed", "internal:CrmError", "hot", 2),
++        ("pending", "internal:CrmNothingStored", None, 0),
++        ("pending", "internal:KeyError", None, 0),
++        ("pending", "refused", "hot", 1),
++        ("unknown", "crash_while_sending", "hot", 1),
++        ("unknown", "ambiguous", None, 1),
++        ("pending", "unreachable", None, 1),
++        ("sending", None, None, 2),
++    ],
++)
++def test_m3_backfill_classes(env, state: str, err: str | None, label: str | None, want: int) -> None:
++    rig = env.rig()
++    lid = new_lead(rig, "c5")
++    set_row(rig, lid, state=state, last_error=err, ai_label=label, attempts=1, crm_done=0)
++    con = sqlite3.connect(rig.db_path, timeout=10)
++    try:
++        con.execute(db._BACKFILL["crm_done"])
++        con.commit()
++    finally:
++        con.close()
++    assert crm_done(rig) == want
++
++
++# =====
++# M4 poison payload
++# =====
++def test_m4_internal_error_item_says_a_person_must_look(env) -> None:
++    rig = env.rig()
++    rig.desk.process("form", "c7", lead())
++    con = sqlite3.connect(rig.db_path, timeout=10)
++    try:
++        con.execute("INSERT INTO receipts(source, source_ref, received_at, payload) VALUES('form','c7b',1,'{}')")
++        con.execute(
++            "UPDATE receipts SET outcome='review', outcome_reason='internal_error', decided_at=2 WHERE source_ref='c7b'"
++        )
++        con.commit()
++        rid = con.execute("SELECT receipt_id FROM receipts WHERE source_ref='c7b'").fetchone()[0]
++    finally:
++        con.close()
++    body = rig.desk.retry(f"R{rid}").body
++    assert "person must look" in body["hint"] and "NEW request id" not in body["hint"]
++    item = next(i for i in rig.desk.review().body if i["item_id"] == f"R{rid}")
++    assert "person must look" in item["hint"]
++
++
++# =====
++# m1 failure count is cleared when the receipt ends as unstorable
++# =====
++def test_m1_failure_count_cleared_after_unstorable(env, monkeypatch: pytest.MonkeyPatch) -> None:
++    rig = env.rig()
++    real = Desk._decide_once
++    calls = [0]
++
++    def flaky(self: Desk, rid: int) -> Any:
++        calls[0] += 1
++        if calls[0] == 1:
++            raise RuntimeError("plain")
++        raise sqlite3.IntegrityError("cannot store")
++
++    monkeypatch.setattr(Desk, "_decide_once", flaky)
++    assert rig.desk.process("form", "c8", lead()).status == 500
++    assert rig.desk.process("form", "c8", lead()).status == 202
++    monkeypatch.setattr(Desk, "_decide_once", real)
++    assert rig.desk._decide_failures == {}
++
++
++# =====
++# m2 a failed re-read drops an old "keyed"; the warning is said once
++# =====
++def test_m2_failed_refresh_forgets_keyed() -> None:
++    crm = HttpCrm("http://127.0.0.1:1", 0.2)
++    crm._capability = "keyed"
++    with pytest.raises(Exception):  # noqa: B017, PT011
++        crm.refresh()
++    assert crm.capability is None
++
++
++def test_m2_refresh_failure_logged_once(env, caplog: pytest.LogCaptureFixture) -> None:
++    rig = env.rig()
++    rig.desk.crm = HttpCrm("http://127.0.0.1:1", 0.2)
++    rig.desk.crm._capability = "keyed"
++    with caplog.at_level(logging.WARNING, logger="lead_desk"):
++        for _ in range(3):
++            rig.desk._refresh_crm()
++    assert len([r for r in caplog.records if "crm capability not re-read" in r.getMessage()]) == 1
++    assert rig.desk.crm.capability is None
++
++
++# =====
++# m4 review list hint
++# =====
++def test_m4_review_list_hint_for_crm_unconfirmed(env) -> None:
++    rig = env.rig(outbox="blind")
++    lid = new_lead(rig, "c9")
++    set_row(rig, lid, state="unknown", last_error="crm_unconfirmed", crm_done=2, attempts=1)
++    item = next(i for i in rig.desk.review().body if i["item_id"] == f"F{lid}")
++    assert "Look in the CRM" in item["hint"] and "deleting by hand" in item["hint"]
++
++
++# =====
++# m5 a second drive that failed step 1 cannot add a second automatic try
++# =====
++def test_m5_stale_defer_changes_nothing(env) -> None:
++    rig = env.rig()
++    lid = new_lead(rig, "c10")
++    set_row(rig, lid, state="pending", auto_attempts=1)
++    rig.desk._defer_pending(lid, "internal:X", 0)  # a drive that read the count before another drive moved it
++    assert rig.query("SELECT auto_attempts FROM followups")[0][0] == 1
++    rig.desk._defer_pending(lid, "internal:X", 1)
++    assert rig.query("SELECT auto_attempts FROM followups")[0][0] == 2
++
++
++# =====
++# (a) very long item numbers are a clean 404
++# =====
++@pytest.mark.parametrize("ref", ["9" * 19, "1" * 5000, "0" * 5000 + "1", "9" * 4301])
++@pytest.mark.parametrize("kind", ["R", "D", "O"])
++def test_a_long_item_refs_are_not_found(env, kind: str, ref: str) -> None:
++    rig = env.rig()
++    for call in (rig.desk.retry, lambda i: rig.desk.resolve(i, "sent")):
++        r = call(kind + ref)
++        expect = 404 if len(ref.lstrip("0")) > 18 else None
++        if expect:
++            assert (r.status, r.body) == (404, {"error": "not_found"})
++
++
++def test_a_lead_ref_with_lone_surrogate_is_not_found(env) -> None:
++    rig = env.rig()
++    assert rig.desk.retry("F\ud800x").status == 404
++    assert rig.desk.resolve("F\x00x", "sent").status == 404
++
++
++# =====
++# (b) a busy answer leaves no receipt waiting for stall_seconds
++# =====
++def test_b_busy_answer_receipt_is_decided_by_next_reaper_pass(env, monkeypatch: pytest.MonkeyPatch) -> None:
++    rig = env.rig()
++    real = Desk._decide_once
++    left = [3]  # LOCK_RETRIES tries of one decision
++
++    def locked(self: Desk, rid: int) -> Any:
++        if left[0] > 0:
++            left[0] -= 1
++            raise sqlite3.OperationalError("database is locked")
++        return real(self, rid)
++
++    monkeypatch.setattr(Desk, "_decide_once", locked)
++    r = rig.desk.process("form", "c11", lead())
++    assert r.status == 503
++    assert rig.query("SELECT count(*) FROM receipts WHERE outcome IS NULL")[0][0] == 1  # open at this instant
++    rig.desk.reap_once()  # no clock advance: stall_seconds has NOT passed
++    assert rig.query("SELECT count(*) FROM receipts WHERE outcome IS NULL")[0][0] == 0
++    assert rig.leads() == 1
