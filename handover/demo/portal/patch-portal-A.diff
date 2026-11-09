@@ -3259,10 +3259,10 @@ index 73c7f7e..634d60d 100644
      patterns, exceptions, toml = REPO / "patterns.txt", REPO / "exceptions.txt", REPO / ".gitleaks.toml"
 diff --git a/tests/test_portal_api.py b/tests/test_portal_api.py
 new file mode 100644
-index 0000000..4e9858a
+index 0000000..659d100
 --- /dev/null
 +++ b/tests/test_portal_api.py
-@@ -0,0 +1,1625 @@
+@@ -0,0 +1,1628 @@
 +"""Portal tests: the read-only JSON under /api/ui, the fixed files under /ui, and the Host and Origin gate.
 +Made-up data only. The response shapes are checked against tests/portal_fixtures/*.json (copied from the design)."""
 +
@@ -4418,7 +4418,10 @@ index 0000000..4e9858a
 +        return 200, {"ok": True}
 +
 +
-+def test_no_demo_extension_means_404(env) -> None:
++def test_no_demo_extension_means_404(env, monkeypatch) -> None:
++    """A desk without the demo extension (the folder deleted for a client) answers 404 on every demo path; the loader
++    is forced to find none, so the test holds whether or not `demo_only/` is present in the tree."""
++    monkeypatch.setattr(server, "load_demo_portal", lambda desk: None)
 +    _, base = fresh(env)
 +    assert call(base, "GET", "/api/demo/state") == (404, {"error": "not_found"})
 +    assert call(base, "POST", "/api/demo/burst", body={"n": 1}) == (404, {"error": "not_found"})
