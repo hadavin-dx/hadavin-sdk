@@ -827,3 +827,4 @@ rv-P1d-r3-design closed 05:32Z
 | ci-lint-set | branch core/ci-lint-set | lint fix batch 2 (restore gate._views helpers, E4/E7/E9) per order 142 | none | not started: next |
 | T1/T2 | - | T1 = meter admitted 50 of 50 at cap 2.00 (order 142, accepted finding for P4b1); T2 not found in orders: asking lead | T2 unknown | none |
 | AK-G2 | ticket rev 3 frozen | 3 review rounds done; next EGM step = build-start | none | not started: next |
+| 172 batch | 06:28Z | started: bd-R72, bd-R73, 12 result reviewers (PR63,83,84,80,85,86 d+c), dr-P1db, pr-2a2d, pr-4a4b, inv-cilint2, inv-T1T2, inv-AKG2 | see agents.txt |
