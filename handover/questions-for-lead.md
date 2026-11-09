@@ -1323,3 +1323,6 @@ DECISIONS FOR LEAD (AK-G2 drafter): (1) which PR renames first stage dev -> demo
 DECISION FOR LEAD (P4a): BN-18 as written means NO pilot/prod config can load (llm has no default, fake is dev-only) so migrate, audit verify, kill-switch commands and tick are also refused there; confirm or narrow the gate to where the llm backend is built (drafter will present both).
 DECISION FOR LEAD (P1d-b/c): P1d rev 7 card says "or deny it" but saves no request; drop phrase or point to approvals show <run id>? Row 012 severity set BLOCKER.
 NEXT: collect 4 reviews, resolve, rev 3 plan reviews, PR76 second builder pass.
+
+## q390 (07:33Z) P1-rev2 rev 3 drafted; plan review r2 running (aaf6af32 design, a4d8729b codebase)
+Open for lead, from drafter: Q-L1 no code in src compares people's names for approval (approvals/requests.py:158 compares ids exactly): which package, if any, wires could_be_same_person into an approval check? Q-L2 should separate demo repos get the same TID251 ban table at the re-pin sweep after P1a merges? Also: T6-5 uses `# noqa: S603` (as tests/test_mutation_runner_meta.py:170 does): lead may prefer no new suppression. Not run: full suite, mutation, bandit, 3.12 golden, ICU; F6-2 only prototyped.
