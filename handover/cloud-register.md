@@ -878,3 +878,6 @@ PR72 0ae044b: builder done; evidence run waits for evid.sh fix (inv-trunc-66), t
 | a67a8c8f rs-p4a-r2 | Opus resolve P4a r2, write rev 3 | 07:38Z | +25m | start |
 | a9a2600a bd-P1a-fix7 | Sonnet builder PR63 (P1a) per P1-rev2 rev 4 | 07:38Z | +60m, ckpt 30m | start |
 | ab902412 | P1d-a plan r1 readiness | 07:34Z | REPORTED 3B/7M/6N; saved reviews/P1d-a/round1-readiness.md; CLOSED 07:39Z | wait ace78643 design, then resolve |
+| ace78643 | P1d-a plan r1 design | 07:34Z | REPORTED 0B/9M/8N; saved reviews/P1d-a/round1-design.md; CLOSED 07:42Z | resolver rs-p1da-r1 started |
+| bbbb0003 | Opus resolve P1d-a r1, rev 2 | 07:42Z | +25m | start |
+| acc61df1 | P1d rev8 plan r8 readiness | 07:34Z | REPORTED 0B/7M/9N; saved reviews/P1d/round8-readiness.md; CLOSED 07:44Z | waiting abd49f95 design, then Opus resolve |
