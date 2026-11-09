@@ -171,8 +171,29 @@ jobs:
       - name: Install the scanners (locked)
         run: uv sync --locked --no-build --only-group scan
       - name: System tools resolve outside the workspace
+        # .venv/bin comes first on PATH (activate-environment), and a locked package can ship a program with a system tool's name.
+        # Pass 1 uses only shell builtins (nothing from PATH runs before it is checked). Pass 2 follows every link with the
+        # now-checked readlink. python3, uv and uvx may sit in .venv/bin by design, but then must be links to a file outside the workspace.
         run: |
-          for c in sha256sum tar curl git grep date tr cut sort head mktemp rm touch; do p=$(command -v "$c") || exit 1; case "$p" in /*) ;; *) echo "$c is not a file: $p"; exit 1;; esac; case "$p" in "$GITHUB_WORKSPACE"/*) echo "$c resolves inside the workspace: $p"; exit 1;; esac; done
+          sys_tools="readlink sha256sum tar curl git grep date tr cut sort head mktemp rm touch"
+          venv_tools="python3 uv uvx"
+          [ -n "$GITHUB_WORKSPACE" ] || { echo "GITHUB_WORKSPACE is empty"; exit 1; }
+          for c in $sys_tools $venv_tools; do
+            p=$(command -v "$c") || { echo "$c not found"; exit 1; }
+            case "$p" in /*) ;; *) echo "$c is not a file: $p"; exit 1;; esac
+            venv_ok=0
+            case " $venv_tools " in *" $c "*) case "$p" in "$GITHUB_WORKSPACE"/.venv/bin/*) venv_ok=1;; esac;; esac
+            case "$p" in "$GITHUB_WORKSPACE"/*) [ "$venv_ok" = 1 ] || { echo "$c resolves inside the workspace: $p"; exit 1; };; esac
+          done
+          wr=$(readlink -f -- "$GITHUB_WORKSPACE") || exit 1
+          case "$wr" in /*) ;; *) echo "cannot resolve the workspace: $wr"; exit 1;; esac
+          for c in $sys_tools $venv_tools; do
+            p=$(command -v "$c") || exit 1
+            r=$(readlink -f -- "$p") || { echo "cannot resolve $c: $p"; exit 1; }
+            case "$r" in /*) ;; *) echo "cannot resolve $c: $p"; exit 1;; esac
+            case "$r" in "$GITHUB_WORKSPACE"/*|"$wr"/*) echo "$c is a link into the workspace: $p -> $r"; exit 1;; esac
+          done
+          [ -z "$(git ls-files -- .venv)" ] || { echo "files under .venv are tracked"; exit 1; }
       - name: Dependencies with known vulnerabilities (every locked package, hashes required)
         run: |
           uv export --locked --all-extras --all-groups --no-emit-project --format requirements-txt -o "$RUNNER_TEMP/locked.txt"

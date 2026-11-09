@@ -1,0 +1,65 @@
+# Reviewed list of scanner suppressions and scanner-config files. One file, one place a reviewer reads. Format: path:rule:value:reason
+#   value = the exact number of markers of that rule in that file; for scanner-config-file it is the sha256 of the file's bytes.
+#   A marker or config file that is not listed here, or whose count or hash differs, fails tools/scan_repo.py (the `check` job).
+# BASELINE (main 2742c1b, 2026-11-09): the lines below were taken mechanically from the files as they were; they were NOT reviewed one
+#   by one (each marker keeps its own inline reason in the code). Every line added or changed after the baseline must be reviewed in its PR.
+# Real enforcement of who may edit this file needs CODEOWNERS or a ruleset: owner-only GitHub settings, not done here.
+.gitleaks.toml:scanner-config-file:d031388c39cccffbc6e84a369fc3eb5fb3897b9e55702d043187ad0d0d69f06e:gitleaks configuration; any change is a reviewed edit of this line
+.gitleaksignore:scanner-config-file:691f447cec6b4070fa36d3dc863b8b6e7c3c610bcb826a58b261501eb08cde52:gitleaks configuration; any change is a reviewed edit of this line
+demos/ask-your-data/askdata/cli.py:suppress-noqa-security:2:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+demos/ask-your-data/askdata/cli.py:suppress-nosemgrep:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+demos/ask-your-data/askdata/evalset.py:suppress-noqa-security:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+demos/ask-your-data/db/build_verify.py:suppress-noqa-security:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+demos/ask-your-data/db/build_verify.py:suppress-nosec:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+demos/ask-your-data/db/lumen.py:suppress-noqa-security:2:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+demos/ask-your-data/db/lumen.py:suppress-nosec:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+demos/ask-your-data/db/seed.py:suppress-nosec:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+src/hadavin_sdk/actions/executor.py:suppress-noqa-security:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+src/hadavin_sdk/actions/executor.py:suppress-nosec:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+src/hadavin_sdk/actions/secrets_vault.py:suppress-noqa-security:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+src/hadavin_sdk/audit/local_dir.py:suppress-noqa-security:2:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+src/hadavin_sdk/backends/table.py:suppress-noqa-security:2:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+src/hadavin_sdk/config.py:suppress-noqa-security:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+src/hadavin_sdk/config.py:suppress-nosec:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+src/hadavin_sdk/llm/common.py:suppress-noqa-security:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+src/hadavin_sdk/llm/common.py:suppress-nosec:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+src/hadavin_sdk/llm/retry.py:suppress-noqa-security:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+src/hadavin_sdk/runtime/tick.py:suppress-noqa-security:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+src/hadavin_sdk/testing/mutation.py:suppress-noqa-security:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+src/hadavin_sdk/testing/mutation.py:suppress-nosec:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+src/hadavin_sdk/tools.py:suppress-noqa-security:2:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+src/hadavin_sdk/tools.py:suppress-nosec:2:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+tests/contracts/kinds/audit_chain.py:suppress-noqa-security:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+tests/contracts/kinds/builtin.py:suppress-noqa-security:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+tests/contracts/kinds/store_postgres.py:suppress-noqa-security:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+tests/demo_askdata/conftest.py:suppress-noqa-security:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+tests/demo_askdata/gold_runner.py:suppress-noqa-security:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+tests/demo_askdata/lumen_standin.py:suppress-noqa-security:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+tests/demo_askdata/test_meter.py:suppress-noqa-security:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+tests/demo_askdata/test_roles.py:suppress-noqa-security:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+tests/demo_askdata/test_safe_text.py:suppress-noqa-security:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+tests/demo_askdata/test_seed.py:suppress-noqa-security:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+tests/demo_askdata/test_validate_fuzz.py:suppress-noqa-security:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+tests/test_ci_gitleaks_scope.py:suppress-noqa-security:6:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+tests/test_http_metadata.py:suppress-noqa-security:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+tests/test_k1b_score.py:suppress-noqa-security:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+tests/test_k5_classes.py:suppress-noqa-security:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+tests/test_k5_layers.py:suppress-noqa-security:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+tests/test_k5_postgres.py:suppress-noqa-security:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+tests/test_k5_round12_fuzz.py:suppress-noqa-security:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+tests/test_mutation_runner.py:suppress-noqa-security:3:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+tests/test_mutation_runner_meta.py:suppress-noqa-security:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+tests/test_p2_postgres.py:suppress-noqa-security:2:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+tests/test_p3b_neutral_audit.py:suppress-noqa-security:3:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+tests/test_p4_secrets.py:suppress-noqa-security:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+tests/test_p5_llm.py:suppress-noqa-security:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+tests/test_p5p6_followups.py:suppress-noqa-security:7:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+tests/test_p7_store.py:suppress-noqa-security:8:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+tests/test_p7_tick.py:suppress-noqa-security:6:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+tests/test_repo_rules.py:suppress-noqa-security:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+tests/test_runmap_partial_escape.py:suppress-noqa-security:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+tests/test_scan_repo.py:suppress-noqa-security:5:added by the scan-config guard PR: tests that run fixed argument lists (git, bash, this script) without a shell; S603/S607 only
+tests/warden_port/test_audit_chain.py:suppress-noqa-security:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+tests/warden_port/test_providers.py:suppress-noqa-security:3:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+tools/mutation_runner.py:suppress-noqa-security:2:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+tools/scan_repo.py:suppress-noqa-security:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
