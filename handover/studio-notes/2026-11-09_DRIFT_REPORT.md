@@ -2,7 +2,7 @@
 Branch core/cloud-handover at 455cb65. Source tree: src/hadavin_sdk on this branch. Where a document describes code that lives only on an open PR branch the item says "on <branch>, not on this branch" and is NOT counted as drift. HOW THIS WAS DONE (honest limit): a file-path and named-symbol check of every backticked path in the 5 documents against this branch and against origin/{core/P1a, P1b-fixwip, P4d, P4b1, T1-T2-tests, ci-lint-set, P5a, P2a-1, main}, plus direct greps of J5, A17 and AK-G2 symbols. I did NOT read all 1117 lines of the five documents against code line by line. Items not listed were not checked, not "clean".
 
 ## plan-v4-3.md (A18, FROZEN by order 150)
-- Not built yet (expected, AK-G2 is sequenced after the P1b and P4d merges): triggers/webhook.py, tests/test_inbound_ledger.py, hmac_v0 / inbound ledger symbols (grep of src finds none). Reported as "not built", not as drift.
+- Not built yet (expected, AK-G2 is sequenced after the P1b and P4d merges): triggers/webhook.py, tests/test_inbound_ledger.py and any inbound-ledger symbol (grep InboundLedger/inbound_ledger in src finds none). CORRECTION of my first draft: hmac_v0 DOES exist (src/hadavin_sdk/approvals/hmac_v0.py is imported by approvals/channel.py and slack.py); what is not built is the door and its ledger. Reported as "not built", not as drift.
 - On core/T1-T2-tests, not on this branch: tests/test_t1_meter_cap.py, tests/test_t1_meter_parallel.py, tests/meter_mutants.py; tests/meter_support.py also on core/P4b1.
 - test_redactor_accepted_properties.py (named without a folder): not located on any checked branch. DRIFT candidate (name or location unknown).
 
