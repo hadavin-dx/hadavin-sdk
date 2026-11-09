@@ -26,3 +26,8 @@ Plain wording: "base" = main before this work. "Property" = a test over 2,000 ge
 - Step 7 of BS-0 (read the two fuzz tests of P1d V8) and the WHATWG reading (step 8; citation stays UNVERIFIED per ORDER 192): not done. BS-0 step 6 grep for other callers: not recorded in bs0-base.txt (only the full test run shows no caller broke).
 - LIT collected only 18 strings (direct literal arguments); the differential and default-unchanged properties are weaker than the ticket intended for that reason.
 - Evidence snapshot worktree, Python 3.12 run, perf run on 3.12, pip-audit, semgrep, zizmor, gitleaks, Trivy: not run. No pull request opened.
+
+## Final run status (2026-11-09)
+- Full suite (log scratchpad full.log, head 6875f27): `10174 passed, 454 skipped, 28 deselected in 259.45s`. The log has no `exit=` line (the runner process was cut); the pytest summary line is the only evidence.
+- Mutant run (50 mutants incl. A15, A44, A45): NOT RUN. It was queued behind the 3 shared heavy slots for over 30 minutes and never got one (other agents held all three). I removed my queued job so nothing mutates src unsupervised. Verdicts for A15/A44/A45 are therefore unknown. Lead: run `python tests/p1d_a_mutants.py` via heavy.sh on head 6875f27.
+- Base worktree WT-P1da-base removed with `git worktree remove`.
