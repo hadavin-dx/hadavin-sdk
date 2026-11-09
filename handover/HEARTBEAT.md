@@ -528,3 +528,4 @@ LAPTOP CANDIDATES (pushed heads only): PR85 0b54631 (items 3,4,10), PR72 e6a4220
 03:43Z HB(auto):  agents 0 running (none) | heavy slots busy 0/3 | last: started, none yet 
 2026-11-09T03:48Z | q370 checklist: EGM not loadable here (install denied), tooling missing, PR heads match; rebuilding tooling
 03:51Z HB(auto):  agents 0 running (none) | heavy slots busy 0/3 | last: started, none yet 
+2026-11-09T03:52Z | standby, replaced by session 716j, unpushed none; pulse.sh stopped. My rebuilt tools (other container, copy if useful): /home/user/build/heavy.sh, pgstart.sh, pgstop.sh, pulse.sh (recreate from CLOUD-RESUME-2026-11-09 text otherwise)
