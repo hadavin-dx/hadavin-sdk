@@ -764,3 +764,4 @@ PULSE 2026-11-09T14:36:24Z agents: 1 running (a4bc9c257afe5ae57 egm-design, WP-A
 PULSE 2026-11-09T14:42:06Z agents: none running (a4bc9c257afe5ae57 portal-A r4 reviewer handed back 2 Major/8 Nit, report saved, closed). shells: pulse_refresh2.sh, full pytest A6 (mine, 14:41Z). Fixing M1 drain deadline + M2 person-card wording in the A tree.
 PULSE 2026-11-09T14:42:29Z agents: none running (ListAgents: none). shells: pulse_refresh2.sh pid 10898; full pytest A6 pid 11418 (started 14:41Z, running). Next: compare failures with known-red set, regenerate patch-portal-A.diff.
 PULSE 2026-11-09T14:47:04Z agents: none running (ListAgents: none). shells: pulse_refresh2.sh. WP-A pass 4 done: review r4 Majors M1/M2 fixed, full run = 8 known-red only, patch regenerated.
+PULSE 2026-11-09T14:47:47Z agents: 1 running (a641d75b5aa739eaf egm-design, WP-A pass-4 delta review r5, started 14:47:47Z, expect ~15:05Z). shells: pulse_refresh2.sh.
