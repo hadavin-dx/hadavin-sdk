@@ -666,3 +666,4 @@ PULSE 09:47Z agents: none live; shells: evid63b (3.12 suite running), evid86 (3.
 PULSE 09:52Z agents: none live; shells: evid63b (3.12 suite finishing, 3.13 stale log from run 1 not trusted), evid80 just started by another session, pulse_refresh | CORE FREEZE
 PULSE 09:55Z agents: none live | PR89 6706e67 GitHub checks: 8 listed, 7 success (SonarCloud, CodeQL, tests-py312, security, check, Analyze x2), CodeRabbit skipped; this is NOT READY (no independent evidence, no fresh round, no Linux mutants); CORE FREEZE
 PULSE 09:58Z agents: a62a46b6 rv-dpld (read-only review ORDER 199); shells: dpld-step1 (pytest x3 + concurrency x50, /tmp/dpld-out), evid63b, pulse_refresh | ORDER 199 started 09:56Z, box until 11:26Z | core otherwise frozen
+PULSE 09:59Z agents: a62a46b6 rv-dpld (ORDER 199 review, read-only); shells: dpld-step1 (concurrency x50 running), evid63b (3.13 suite running; 3.12 done: 1 failed, 11072 passed), pulse_refresh | CORE FREEZE for core
