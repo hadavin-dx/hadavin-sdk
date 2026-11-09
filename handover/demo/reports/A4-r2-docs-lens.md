@@ -12,4 +12,4 @@ Read-only review of snapshot A4r2 (README.md, contract.md, CONTRACT-DELTA.md). F
 12,13 README 247 list, "first reply byte" wording. FIXED.
 14 Nit test counts stale. FIXED from the A4 full run (590 cases, 583 passed, 7 known-red).
 Reader aids added to README "Words used here": Reaper, 503 busy, Door. Not done: HTTP status list in README:24 (H), data-map `mode` note (I), B/E wording items.
-OPEN: contract.md:53 still names `_fail_pending` and the pre-delta `_record_send_result` signature (CONTRACT-DELTA lines 49-53 replacement not applied); the data-map `mode: live` note.
+OPEN: none for docs except H, I, B, E wording items.
