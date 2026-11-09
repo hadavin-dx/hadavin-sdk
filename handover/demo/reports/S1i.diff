@@ -1,0 +1,714 @@
+diff -ruN -x __pycache__ -x .pytest_cache -x .mypy_cache -x .ruff_cache -x .git -x '*.pyc' a/README.md b/README.md
+--- a/README.md	2026-11-09 21:16:08.558256785 +0000
++++ b/README.md	2026-11-09 21:37:05.744195227 +0000
+@@ -56,8 +56,8 @@
+   The desk cannot stop a model call that is running. If one takes longer, the background job puts the follow-up back, the next drive asks
+   the AI step again, and the AI step is asked a second time (the CRM row and the email stay once: every later write checks the claim).
+   The row is stamped again right after the model answers and before the label is written, so the grace counts from that stamp for the label write.
+-  Guards: `MODEL_CALL_BUDGET_SECONDS` (10 s, a slower call is logged); `MODEL_GRACE_MARGIN_SECONDS` (10 s) is the time that stamp may take to be written, and the desk refuses to start if the numbers do not fit the grace; an AI adapter that declares a `timeout_seconds` above the grace minus
+-  the margin is refused when the desk starts (exit code 4); the test `test_slow_model_is_asked_twice` shows the limit.
++  Guards: `MODEL_CALL_BUDGET_SECONDS` (9 s, a slower call is logged); `MODEL_GRACE_MARGIN_SECONDS` (10 s) is the time that stamp may take to be written. The budget plus the margin must be strictly below the grace (an equal sum is refused too, because the clocks count whole seconds). This check runs when the program's files are loaded, so a constant edited to a value that does not fit ends with a Python error message (a traceback), not with an exit code. An AI adapter that declares a `timeout_seconds` that is not below the grace minus the margin (15 s with the defaults: 15 is refused, 14 is accepted) is refused when the desk starts (exit code 4; no other start-up error gets that code); the test `test_slow_model_is_asked_twice` shows the limit. `timeout_seconds` is a true wall-clock limit only if the adapter enforces a total deadline; a per-connection-step timeout (as Python's `urllib` has) can be exceeded by a server that sends its answer slowly, byte by byte.
++  If the database is locked when the row is stamped after the model answered, the answer is thrown away, the try is given back and the next drive asks the AI step again. The 5-try limit does not cover this (a give-back does not count as a try); it needs the database to stay locked about 10 s at that moment, each time.
+ * A stopped desk does not wait for its handler threads or for a follow-up that is still running: that is the crash case (the stuck row is
+   put back at the next start; the crash points A to D2 cover it). A client that sends one byte every 1.9 seconds can hold a connection
+   place for the whole header and body deadlines; this costs availability only (nothing is stored) and is deliberate.
+@@ -68,7 +68,7 @@
+ * n8n crashing before the request reaches the desk. Other n8n versions or set-ups: the n8n measurements are one pattern, one laptop, made-up data, measured by an AI agent.
+ * A person answering "not sent" wrongly for an UNKNOWN follow-up on a mail system that cannot recognise repeats (then a second email can go).
+   UNKNOWN items stay unseen unless someone opens the review list.
+-* A follow-up stuck in `sending` because the database stayed locked through all retries is put back by the desk's background job (the "reaper", started by `main`, one pass every second) after about 25 seconds (the 5 s send timeout plus 4 database waits of 5 s): to `pending` on a keyed mail system, to `unknown` on a blind one, when the send may have started. Exceptions: a follow-up that never sent anything (the CRM step was not finished, or the send mark was not written) goes to `pending` on either kind of mail system; one that has used all 5 automatic tries (`SEND_MAX_ATTEMPTS`) goes to `failed` on a keyed system (a person's Retry starts it again). The put-back does not give the automatic try back, so a follow-up for which the AI step was slow, or the database stayed locked, five times in a row ends `failed` although nothing was asked or sent. Restarting the desk does the same at once.
++* A follow-up stuck in `sending` because the database stayed locked through all retries is put back by the desk's background job (the "reaper", started by `main`, one pass every second) when it has been stuck for more than 25 seconds (the 5 s send timeout plus 4 database waits of 5 s): to `pending` on a keyed mail system, to `unknown` on a blind one, when the send may have started. Exceptions, case by case: a follow-up that never sent anything (the CRM step was not finished, or the send mark was not written) goes to `pending` on either kind of mail system, or to `failed` on either kind when it has already used all 5 automatic tries (`SEND_MAX_ATTEMPTS`); a follow-up whose send may have started goes to `pending` (or `failed` at the cap) on a keyed system and to `unknown` on a blind one. A person's Retry starts a `failed` follow-up again. The put-back does not give the automatic try back, so a follow-up for which the AI step was slow, or the database stayed locked, five times in a row ends `failed` although no email was sent and the CRM was not written (the AI step may have been asked). Restarting the desk does the same at once.
+ * No penetration test of the desk was done.
+ 
+ This is a demo with made-up data and fake systems only. No real customer data, no secrets and no live model calls are used.
+@@ -82,7 +82,7 @@
+ 
+ ## What each promise rests on
+ 
+-734 test cases in 23 test files (cloud container, Linux, Python 3.13.18, 2026-11-09, after the round-5 fixes): 731 passed, 1 skipped, 2 failed. The two failures are `test_hygiene_scan_public` (no gitleaks program in this container) and `test_hygiene_wordlist` (private word list not present).
++742 test cases in 24 test files (cloud container, Linux, Python 3.13.18, 2026-11-09, after the round-6 fixes): 739 passed, 1 skipped, 2 failed. The two failures are `test_hygiene_scan_public` (no gitleaks program in this container) and `test_hygiene_wordlist` (private word list not present).
+ Result column: from the runs described under "What has been run".
+ 
+ | # | Promise, in plain words | Tests | Result |
+@@ -110,7 +110,7 @@
+   the final runs, on the state described here, passed every test case except `test_hygiene_wordlist`, which needs a private word list that is
+   not published (it fails on purpose instead of skipping, and was run separately with the list in place). gitleaks 8.30.1 ran on this computer
+   inside `test_hygiene_scan_public`, on the tracked files and the history.
+-* **Cloud container (Linux, Python 3.13.18), 2026-11-09, after the round-5 fixes:** ruff check, ruff format check and mypy --strict on the changed files of `src/` were clean; bandit was not installed there and was not run. The full suite gave 731 passed, 1 skipped, 2 failed; the two failures are `test_hygiene_scan_public` (no gitleaks program) and `test_hygiene_wordlist` (no private word list). The Windows runs listed above were made before these fixes and have not been repeated on the new state.
++* **Cloud container (Linux, Python 3.13.18), 2026-11-09, after the round-6 fixes:** ruff check, ruff format check and mypy --strict on the changed files of `src/` were clean; bandit was not installed there and was not run. The full suite gave 739 passed, 1 skipped, 2 failed (742 test cases); the two failures are `test_hygiene_scan_public` (no gitleaks program) and `test_hygiene_wordlist` (no private word list). The Windows runs listed above were made before these fixes and have not been repeated on the new state.
+ * Earlier, on a state before the last round of fixes: the four concurrency tests (`test_concurrent_same_source_ref`,
+   `test_retry_twice_concurrent`, `test_ten_parallel`, `test_reconcile_counts`) were repeated 10 times each on Windows and passed every time,
+   and the full suite was run in a Linux container (`python:3.12-slim`, Python 3.12.16) where 35 of 37 test cases passed (the two failures:
+@@ -242,8 +242,8 @@
+ 
+ * Portal: `/api/ui` answers at most 8 requests at once; more get 503 `busy`. The count "refused at the door" on the Overview page (requests the Host and Origin check turned away; not the same as the `door` of a lead, `form` or `webhook`) is kept in memory and starts again at 0 when the desk restarts: read it as "since desk start (HH:MM)".
+ * Threads: the desk serves each connection on its own thread. Writing a reply has a total limit of `REPLY_WRITE_TIMEOUT_SECONDS` (5 s): a client that does not read its reply loses the thread after that.
+-* Open files: at start-up the desk checks that the open-file limit of this computer covers `MAX_HANDLER_THREADS` (4 files per thread plus 64 for everything else; contract.md lists what the 4 and the 64 are made of). It raises the soft limit to exactly what is needed when the hard limit is unlimited or at least that, and otherwise refuses to start (exit code 3). The message tells you either to lower `MAX_HANDLER_THREADS` to a number it names (only when a setting of 8 or more fits the limit in force) or, when no allowed setting fits, to raise the open-file limit (`ulimit -n`).
+-* Exit codes: 1 the sender cannot be reached; 2 another desk holds the lock file or the port cannot be bound; 3 the open-file limit is too low; 4 the desk refuses a setting when it is built (an AI adapter whose `timeout_seconds` is above the stuck grace minus its margin; the message says so).
++* Open files: at start-up the desk checks that the open-file limit of this computer covers `MAX_HANDLER_THREADS` (4 files per thread plus 64 for everything else; contract.md lists what the 4 and the 64 are made of). With the default 1024 threads that is 4160 open files. A computer whose hard limit is lower than that now makes the desk exit with code 3; 4096 is a common default inside containers, so there raise the limit (for example `ulimit -n 8192`, or the container's own open-file setting) or lower `MAX_HANDLER_THREADS`. The count is arithmetic, checked by measuring a database connection and the portal's connections; DNS lookups and the temporary files SQLite makes are covered by the 64 only roughly (not measured, not itemised). It raises the soft limit to exactly what is needed when the hard limit is unlimited or at least that, and otherwise refuses to start (exit code 3). The message tells you either to lower `MAX_HANDLER_THREADS` to a number it names (only when a setting of 8 or more fits the limit in force) or, when no allowed setting fits, to raise the open-file limit (`ulimit -n`).
++* Exit codes: 1 the sender cannot be reached; 2 another desk holds the lock file or the port cannot be bound; 3 the open-file limit is too low; 4 the desk refuses a setting when it is built (an AI adapter whose `timeout_seconds` is not below the stuck grace minus its margin; the message says so; no other error at that step gets code 4, and a constant edited to a value that does not fit is a Python traceback, not an exit code).
+ * Stopping: Ctrl+C or SIGTERM stop the background job first and then give the lock file back. A second signal while that runs is ignored on purpose, so it cannot cut a step short. If the desk is still there after about 10 seconds, end it with SIGKILL (on Windows, end the process); the lock is dropped and the next start puts every unfinished follow-up back.
+ * Two limits apply. (1) At most `MAX_CONNECTIONS` (256) connections can be in their reading phase (request line, headers, body) at one time; a connection stops counting when the desk starts writing its reply, so a thread that is still finishing a follow-up does not count here. (2) At most `MAX_HANDLER_THREADS` (1024) handler threads exist in total: a thread counts from the moment it gets a connection until it ends, so the reply write, the draining and the follow-up count too. When either limit is reached and nothing can be closed to make room, the new connection gets 503 `busy` and nothing is stored.
+ * Deadlines: request line plus headers must arrive within `HEADER_READ_DEADLINE_SECONDS` and the body within `BODY_READ_DEADLINE_SECONDS` (10 s each, measured in real time from the start of that phase, however slowly the bytes trickle in); a stalled sender gets 408 `{"error":"request_timeout","receipt_id":null}`, and nothing was stored, so the same request id can be sent again.
+diff -ruN -x __pycache__ -x .pytest_cache -x .mypy_cache -x .ruff_cache -x .git -x '*.pyc' a/contract.md b/contract.md
+--- a/contract.md	2026-11-09 21:16:08.559089024 +0000
++++ b/contract.md	2026-11-09 21:37:05.744997651 +0000
+@@ -1,6 +1,6 @@
+ # contract.md
+ 
+-This file is the single reference for the replies the desk and the fake servers give and the rules the tests check. Where code and this file disagree, this file is right and the code is fixed. Tests: 734 test cases in 23 test files; in the cloud container after the round-5 fixes 731 passed, 1 skipped, 2 failed (gitleaks program and private word list missing there). CI runs every test except `test_hygiene_wordlist` (it needs a private word list that is never committed).
++This file is the single reference for the replies the desk and the fake servers give and the rules the tests check. Where code and this file disagree, this file is right and the code is fixed. Tests: 742 test cases in 24 test files; in the cloud container after the round-6 fixes 739 passed, 1 skipped, 2 failed (gitleaks program and private word list missing there). CI runs every test except `test_hygiene_wordlist` (it needs a private word list that is never committed).
+ 
+ ## Reply rows that are easy to miss (all already in the table below; repeated here as a checklist)
+ 
+@@ -19,7 +19,7 @@
+ 
+ State once: only the POST /leads rows carry `receipt_id`. The 409 and `bad_decision` rows never carry it. A 503 from a lock wait, and 500, carry the receipt number, or `null` if the receipt was not yet written. 400 `bad_envelope` and 413 `too_large` carry `null`.
+ 
+-Input rules (each has a test in `tests/test_hardening.py`): (1) JSON nested so deeply that the parser gives up is a 400 `bad_envelope` (counted in `rejected_envelopes`), not a 500; for `/resolve` it is a 400 `bad_decision`. (2) The stored copy of the payload escapes every non-ASCII character (`ensure_ascii`), so a JSON escape for half a character (a lone surrogate) is stored as text; a name, email, phone, company or message that contains one cannot be stored and gives verdict `review` with reason `bad_field:<field>`. (3) An email whose lower-case form is longer than 254 characters (some letters become two when lower-cased) gives verdict `review`, reason `invalid_email`, not a 500. (4) Only the thread that won the claim asks the AI step, the CRM or the sender, so two requests that drive the same new lead at the same moment, or a request and the reaper, ask the AI step once (the claim comes first; the reaper only drives `pending` rows, and a claimed row is `sending`); a CRM row can be put again only after a leftover intent mark, and then only on a keyed CRM, see the CRM row above. A failed AI step after the claim is one automatic try (`internal:<class>`; the row goes back to `pending` with a backoff through `_abort_unsent`, and to `failed` only when the cap is already reached; after a person's Retry the count starts at 1, so the row is `pending`). A lock on any write after the claim, the first stage stamp included, gives the try back instead (see the line on locks below). The model step is asked once PROVIDED the model answers within the stuck grace (send timeout + 4 busy waits, 25 s with the defaults): the desk cannot stop a call that runs, so a longer call is overtaken by the reaper and the model is asked a second time (the CRM row and the email stay once, every write checks the claim's token). `MODEL_CALL_BUDGET_SECONDS` (10 s) is the answer time the desk expects (a slower call is logged). The row is stamped again right after the model answers and before the label is written, so the grace counts from that stamp for the label write; `MODEL_GRACE_MARGIN_SECONDS` (10 s) is the time that stamp may take to be written (it equals the write deadline) and the desk refuses to start if the budget plus the margin is over the smallest grace (20 s), if the margin is below the write deadline, or if a label write after the stamp (write deadline plus one busy wait) does not fit in the grace. A qualifier that declares `timeout_seconds` above the grace minus the margin (15 s with the defaults) is refused when the `Desk` is built; if the row is no longer ours when the model has answered, the label is not stored and the drive ends; `test_slow_model_is_asked_twice` pins the limit and `test_model_answer_is_stamped_again` the stamp. (5) A follow-up stuck in `sending` is put back by the reaper after send timeout + 4 busy waits (5 s + 4 x 5 s = 25 s with the defaults) without a restart; a restart does the same at once. The rule has exceptions, in this order. (a) A row that never sent anything (the CRM step not finished, `crm_done` not 1, or no send mark, `send_started` 0) goes back to `pending` whatever the sender's mode, or to `failed` when it has already used its automatic tries (`SEND_MAX_ATTEMPTS`, 5; a person's Retry still starts it); it needs no capability read. (b) Only a row whose send may have started follows the sender's mode: keyed -> `pending` (`failed` at the cap), blind -> `unknown`; while the sender's capability cannot be read such a row is left as it is. A put-back does not give the automatic try back: a row that nothing was asked or sent for, because the AI step was slow or the database stayed locked five times in a row, therefore ends `failed` with last_error `crash_while_sending`, and a person's Retry starts it again. The desk cannot tell "the model was never asked" from "the model was asked and overtaken" (no column records it), and giving the try back would ask a hung model again without end; `test_unsent_row_at_cap_fails_visibly` pins this.
++Input rules (the tests are in `tests/test_hardening*.py` and `tests/test_loss_path_s1g.py`, `_s1h.py` and `_s1i.py`): (1) JSON nested so deeply that the parser gives up is a 400 `bad_envelope` (counted in `rejected_envelopes`), not a 500; for `/resolve` it is a 400 `bad_decision`. (2) The stored copy of the payload escapes every non-ASCII character (`ensure_ascii`), so a JSON escape for half a character (a lone surrogate) is stored as text; a name, email, phone, company or message that contains one cannot be stored and gives verdict `review` with reason `bad_field:<field>`. (3) An email whose lower-case form is longer than 254 characters (some letters become two when lower-cased) gives verdict `review`, reason `invalid_email`, not a 500. (4) Only the thread that won the claim asks the AI step, the CRM or the sender, so two requests that drive the same new lead at the same moment, or a request and the reaper, ask the AI step once (the claim comes first; the reaper only drives `pending` rows, and a claimed row is `sending`); a CRM row can be put again only after a leftover intent mark, and then only on a keyed CRM, see the CRM row above. A failed AI step after the claim is one automatic try (`internal:<class>`; the row goes back to `pending` with a backoff through `_abort_unsent`, and to `failed` only when the cap is already reached; after a person's Retry the count starts at 1, so the row is `pending`). A lock on any write after the claim, the first stage stamp included, gives the try back instead (see the line on locks below). The model step is asked once PROVIDED the model answers within the stuck grace (send timeout + 4 busy waits, 25 s with the defaults): the desk cannot stop a call that runs, so a longer call is overtaken by the reaper and the model is asked a second time (the CRM row and the email stay once, every write checks the claim's token). `MODEL_CALL_BUDGET_SECONDS` (9 s) is the answer time the desk expects (a slower call is logged). The row is stamped again right after the model answers and before the label is written, so the grace counts from that stamp for the label write; `MODEL_GRACE_MARGIN_SECONDS` (10 s) is the time that stamp may take to be written (it equals the write deadline) and the desk refuses to start if the budget plus the margin is not below the smallest grace (20 s; an equal sum is refused, because the clocks count whole seconds), if the margin is below the write deadline, or if a label write after the stamp (write deadline plus one busy wait) is not below the grace; these checks run when `constants.py` and `desk.py` are imported, so an edited constant that does not fit ends with a Python traceback (exit code 1), not with exit 4. A qualifier that declares `timeout_seconds` not below the grace minus the margin (15 s with the defaults: 15 is refused, 14 accepted) is refused when the `Desk` is built (`DeskSettingRefused`, the only error that gives exit 4). `timeout_seconds` is an honest wall-clock bound only if the adapter enforces a TOTAL deadline; a per-socket-operation timeout (urllib) is not one. The reaper takes a `sending` row only when it is strictly older than the grace (`updated_at < now - grace`, whole seconds), so a call that fits cannot be overtaken on a tie; `test_reaper_needs_age_above_grace` pins it. If the row is no longer ours when the model has answered, the label is not stored and the drive ends; the label write itself is guarded by `state='sending' AND attempts=<token>`, so a drive that lost its claim stores nothing (`test_label_store_needs_the_claim`). A lock on the stamp after the model answered discards the answer, gives the try back and the next drive asks the AI step again; this repeats for as long as the lock hits that stamp, and the 5-try cap does not bound it (a give-back does not count as a try), but it needs the database to stay locked about 10 s each time and the row stays visible as `pending`; `test_slow_model_is_asked_twice` pins the limit and `test_model_answer_is_stamped_again` the stamp. (5) A follow-up stuck in `sending` is put back by the reaper once it is older than send timeout + 4 busy waits (5 s + 4 x 5 s = 25 s with the defaults; strictly older, in whole seconds) without a restart; a restart does the same at once. The rule has exceptions, in this order. (a) A row that never sent anything (the CRM step not finished, `crm_done` not 1, or no send mark, `send_started` 0) goes back to `pending` whatever the sender's mode, or to `failed` when it has already used its automatic tries (`SEND_MAX_ATTEMPTS`, 5; a person's Retry still starts it); it needs no capability read. (b) Only a row whose send may have started follows the sender's mode: keyed -> `pending` (`failed` at the cap), blind -> `unknown`; while the sender's capability cannot be read such a row is left as it is. A put-back does not give the automatic try back: a row for which no email was sent and the CRM was not written, because the AI step was slow (the AI step may have been asked) or the database stayed locked five times in a row, therefore ends `failed` with last_error `crash_while_sending`, and a person's Retry starts it again. The desk cannot tell "the model was never asked" from "the model was asked and overtaken" (no column records it), and giving the try back would ask a hung model again without end; `test_unsent_row_at_cap_fails_visibly` pins this.
+ 
+ ## Resolve check order (`POST /review/{item_id}/resolve`)
+ 1. Body parse layer: `server.py` parses the JSON; `Desk.resolve(item_id, decision)` receives an already parsed `decision`. A body that is not JSON, or has no `decision`, or a `decision` that is not a string: 400 `{"error":"bad_decision"}` with NO item lookup (so even an unknown item id gives 400 here).
+@@ -69,7 +69,7 @@
+ * A held lead-book lock raises `OSError` from `lockfile.acquire`. A `RecordedQualifier` label that is not `hot`, `warm` or `cold` raises a `KeyError` that names the label, from `qualify` (a follow-up then ends `failed` with `internal:KeyError`).
+ * Fakes server flag `--crm keyed|blind` (default `keyed`) selects the CRM's mode; `--outbox` is unchanged.
+ * `python -m lead_desk.server` prints one line `desk listening on http://<host>:<port>` when it accepts requests. The port in it is the real one, so `DESK_PORT=0` (ephemeral) works; the subprocess tests still pick a free port themselves.
+-  * Start-up order: (1) the open-file check: exit 3 if `MAX_HANDLER_THREADS` needs more open files than this computer allows. A handler thread is counted at `FDS_PER_HANDLER_THREAD` = 4 files: its connection socket, its database file, the `-wal` file of that database and the one adapter socket of the call it is making (a drive asks the AI step, the CRM and the sender one after the other, so it holds one adapter socket at a time). The need is `FDS_PER_HANDLER_THREAD` x `MAX_HANDLER_THREADS` + `FD_RESERVE` (64). The reserve covers, item by item (`FD_RESERVE_ITEMS`): the listening socket, the lock file, the standard streams and log handler, the one `-shm` file all connections share, the reaper's database connection, the portal's read-only database connections (8 at once, 2 files each) and the reaper's adapter socket; the desk refuses to start if those items add up to more than `FD_RESERVE`. The soft limit is raised to exactly the need, not to the hard limit, when the hard limit is unlimited or at least that. The refusal names a number to lower `MAX_HANDLER_THREADS` to only when a setting of 8 or more fits the limit that is really in force; otherwise it says to raise the open-file limit. (2) The lock file (exit 2, "another desk is using this database"). (3) The adapters (exit 1 if `/fake/info` cannot be read). (4) `Desk` is built (exit 4, `EXIT_DESK_SETTING_REFUSED`, if the desk refuses a setting: an AI adapter that declares a `timeout_seconds` above the stuck grace minus its margin; the message is printed and nothing is served; this code differs from exit 1 on purpose). (5) The bind (exit 2 on any `OSError`). (6) The SIGTERM and SIGINT handler is installed, after the bind and before `desk.start_background()`, inside the `try` that holds the shutdown steps. (7) `desk.start_background()` (starts the reaper). (8) `Desk.startup()` (schema and sweep). (9) The listening line, then serve. When the accept loop gets no file handle (EMFILE or ENFILE) it pauses `ACCEPT_PAUSE_SECONDS` (0.05 s) instead of spinning.
++  * Start-up order: (1) the open-file check: exit 3 if `MAX_HANDLER_THREADS` needs more open files than this computer allows. A handler thread is counted at `FDS_PER_HANDLER_THREAD` = 4 files: its connection socket, its database file, the `-wal` file of that database and the one adapter socket of the call it is making (a drive asks the AI step, the CRM and the sender one after the other, so it holds one adapter socket at a time). The need is `FDS_PER_HANDLER_THREAD` x `MAX_HANDLER_THREADS` + `FD_RESERVE` (64). The reserve covers, item by item (`FD_RESERVE_ITEMS`): the listening socket, the lock file, the standard streams and log handler, the one `-shm` file all connections share, the reaper's database connection, the portal's read-only database connections (8 at once, 2 files each) and the reaper's adapter socket; the desk refuses to start if those items add up to more than `FD_RESERVE`. With the defaults the need is 4 x 1024 + 64 = 4160 open files: a computer whose hard limit is below that exits 3 (4096 is a common container default; raise it, for example `ulimit -n 8192` or the container's own setting, or lower `MAX_HANDLER_THREADS`). The 4 and the 64 are arithmetic, partly measured (`test_connection_holds_counted_files` for one connection, `test_reserve_covers_its_items` for the portal's connections; the other items are read from the code); DNS lookups and the temporary files SQLite makes are covered by the reserve only roughly. The soft limit is raised to exactly the need, not to the hard limit, when the hard limit is unlimited or at least that. The refusal names a number to lower `MAX_HANDLER_THREADS` to only when a setting of 8 or more fits the limit that is really in force; otherwise it says to raise the open-file limit. (2) The lock file (exit 2, "another desk is using this database"). (3) The adapters (exit 1 if `/fake/info` cannot be read). (4) `Desk` is built (exit 4, `EXIT_DESK_SETTING_REFUSED`, if the desk refuses a setting: an AI adapter that declares a `timeout_seconds` not below the stuck grace minus its margin; the message is printed and nothing is served; this code differs from exit 1 on purpose). (5) The bind (exit 2 on any `OSError`). (6) The SIGTERM and SIGINT handler is installed, after the bind and before `desk.start_background()`, inside the `try` that holds the shutdown steps. (7) `desk.start_background()` (starts the reaper). (8) `Desk.startup()` (schema and sweep). (9) The listening line, then serve. When the accept loop gets no file handle (EMFILE or ENFILE) it pauses `ACCEPT_PAUSE_SECONDS` (0.05 s) instead of spinning.
+   * Signals and shutdown: the first SIGTERM or SIGINT stops the desk like Ctrl+C: the serve loop ends, `desk.stop_background()` runs before the socket is closed (the reaper join waits up to 10 s), then the socket and the database connection are closed and the lock file is given back (a warning is logged if the reaper did not end in time). A second signal while these steps run is ignored on purpose, so it cannot cut a step short. What the operator does: wait about 10 s; if the process is still there, end it with SIGKILL (on Windows, end the process); the operating system drops the lock, and the next start puts every `sending` row back. A signal that arrives after the lock file is taken and before the handler is installed is not caught and ends the process at once, as it always did.
+ * `Desk.run_followup` leaves a follow-up that is not `pending` alone (a second drive of a `sent` follow-up changes nothing). An exception in steps 1-2 after Retry's own claim goes through `_abort_unsent`: the claim started the automatic count at 1, so the row is `pending` with `internal:<class>` and a backoff (not `failed`), and the reply is 200 with `state` `pending` (a test runs it: `test_retry_step_error_is_pending`). A database that stayed locked gives the try back instead.
+ * Item existence for 404: `F<lead_id>` needs a follow-up row; `R<n>` a receipt with verdict `review`; `D<n>` a receipt with verdict `duplicate` and a non-empty `differing_fields`; `O<n>` an open receipt (any age). Anything else is 404.
+@@ -147,10 +147,10 @@
+ - Email: an apostrophe is allowed before the @ (o'brien@example.test); every other exclusion stays.
+ - Start-up: `Desk.startup()` raises RuntimeError when called twice or after the desk served/drove anything. With `start_background()` called first, start-up no longer drives pending follow-ups (the reaper does), so serving starts at once.
+ - Schema (user_version stays 1): receipts.payload_conflict, followups.crm_done, followups.auto_attempts, followups.ambiguous_prior; view review_items changed; two partial indexes (`receipts_open_ix` on open receipts, `followups_active_ix` on pending/sending follow-ups). A lead book made by the first release gets the four columns, their backfills, the view and the indexes in ONE transaction at start-up (db._migrate): a crash in the middle changes nothing, and a book that has the columns but lost the view or an index is repaired at the next start. Backfills: `crm_done=1` for every row (not `sent`) with attempts > 0 and a label (the first release asked the CRM before the first send, so a blind CRM is not asked again); `ambiguous_prior=1` for a `pending` row whose last_error is `crash_while_sending`.
+-- CRM: the CRM put runs only after a won claim. `followups.crm_done` is an intent mark: 0 not asked, 2 a put was started (written BEFORE the put, together with a fresh `updated_at`), 1 the put came back. A leftover 2 (the desk died, or the write of 1 failed) means the put may have reached the CRM. A CRM that is keyed (a `capability` attribute equal to `keyed`) is simply asked again (harmless). Any other CRM, and a CRM with no `capability` attribute (the desk cannot know), is not asked again: the follow-up becomes `unknown`, last_error `crm_unconfirmed`, and a person looks in the CRM. The same happens at once when a put of such a CRM ends unclear (timeout, reset, 5xx, odd answer). A put that provably stored nothing (the exception has `nothing_stored` true: refused with a 4xx answer, or not reached) resets the mark to 0 and the follow-up is tried again after the backoff. The person answers `not_sent` (resolve) and then Retry: `not_sent` clears the leftover mark and `ambiguous_prior`, so the next try asks the CRM again (check the CRM first: an extra row may need deleting by hand). The window that is left: none for a keyed CRM; for a CRM that is not keyed no second put is ever made without a person's decision. `HttpCrm` also raises `CrmNothingStored` when no file handle was left for the connection (EMFILE or ENFILE: no request was made), so a CRM that is not keyed gives the try back instead of ending `unknown`. `HttpCrm` now has `capability` (the mode named in its last answer, `None` before the first answer, which counts as not keyed) and raises `CrmNothingStored` for the proven-nothing cases. The in-process demo `FakeCrm` has no `capability` attribute, so it counts as not keyed.
++- CRM: the CRM put runs only after a won claim. `followups.crm_done` is an intent mark: 0 not asked, 2 a put was started (written BEFORE the put, together with a fresh `updated_at`), 1 the put came back. A leftover 2 (the desk died, or the write of 1 failed) means the put may have reached the CRM. When the desk cannot read the CRM's mode at all for a leftover 2 (the CRM is down; nothing is asked in that try), it does not judge: the try is used up with a backoff (`internal:SendUnreachable`; no file handle left gives the try back instead), the mark stays 2, and the cap ends it `failed`, which a person's Retry starts again; the next readable mode then decides (keyed: asked again, otherwise `unknown`). A CRM that is keyed (a `capability` attribute equal to `keyed`) is simply asked again (harmless). Any other CRM, and a CRM with no `capability` attribute (the desk cannot know), is not asked again: the follow-up becomes `unknown`, last_error `crm_unconfirmed`, and a person looks in the CRM. The same happens at once when a put of such a CRM ends unclear (timeout, reset, 5xx, odd answer). A put that provably stored nothing (the exception has `nothing_stored` true: refused with a 4xx answer, or not reached) resets the mark to 0 and the follow-up is tried again after the backoff. The person answers `not_sent` (resolve) and then Retry: `not_sent` clears the leftover mark and `ambiguous_prior`, so the next try asks the CRM again (check the CRM first: an extra row may need deleting by hand). The window that is left: none for a keyed CRM; for a CRM that is not keyed no second put is ever made without a person's decision. `HttpCrm` also raises `CrmNothingStored` when no file handle was left for the connection (EMFILE or ENFILE: no request was made), so a CRM that is not keyed gives the try back instead of ending `unknown`. `HttpCrm` now has `capability` (the mode named in its last answer, `None` before the first answer, which counts as not keyed) and raises `CrmNothingStored` for the proven-nothing cases. The in-process demo `FakeCrm` has no `capability` attribute, so it counts as not keyed (as does any CRM with no `capability`).
+ - Follow-up `ambiguous_prior` (new column): set when an email may have left (a start-up or reaper requeue of a `sending` row, an unclear end of a keyed send); a row with it is never sent by a BLIND sender: it becomes `unknown`, last_error `ambiguous_prior` (the reaper does this without a claim, `_send_claimed` does it as the last check before sending). Resolve `not_sent` clears it.
+ - Claims: `Desk._claim(conn, lead_id, from_states)`; run_followup, the reaper and the start-up sweep claim only `('pending',)`; only a person's Retry claims `('pending','failed')` (and starts the automatic count at 1). Any other state list raises ValueError.
+-- Stage times: `updated_at` of a `sending` row is moved to now before the CRM put (the intent mark) and before the send, so the reaper's 25 s (send timeout 5 s + 4 busy waits of 5 s) counts from the last stage. If the row is no longer `sending` at that moment (the reaper took it back), the stage is not run.
++- Stage times: `updated_at` of a `sending` row is moved to now before the CRM put (the intent mark) and before the send, so the reaper's grace (send timeout 5 s + 4 busy waits of 5 s = 25 s; a row is taken only when strictly older) counts from the last stage. If the row is no longer `sending` at that moment (the reaper took it back), the stage is not run.
+ - Reaper: reads the sender's capability again only when a `sending` row is stuck, after a wrong-mode reply, or at most every 30 s (`gate.OUTBOX_REFRESH_SECONDS`); no requeue decision is made when the capability could not be read (start-up leaves such rows `sending` for the reaper).
+ - Decision safety net: also RecursionError, `sqlite3.DataError`, a stored payload that is not readable JSON, and a lone surrogate (UnicodeError) give verdict `review` / `internal_unstorable`. A plain ValueError is no longer caught: it is a 500 `internal` and the receipt stays open (the reaper and a restart try again). A payload nested so deeply that it cannot be written down in `Desk.process` is 400 `bad_envelope` (counted in `rejected_envelopes`), as at the HTTP layer.
+ - Write gate: one per resolved lead-book path (`gate.gate_for`), so desks on different books do not wait for each other. It is not re-entrant: nothing may ask for it while holding it (`Desk._write` is never nested).
+@@ -168,7 +168,7 @@
+ - A `sending` row that is put back (start-up or reaper) with `auto_attempts` already at the cap goes to `failed` (keyed sender; a person's Retry still works) instead of `pending`; a blind sender still gives `unknown`. Exceptions (see rule (5) in the checklist at the top): a row that never sent anything (`crm_done` not 1, or `send_started` 0) goes to `pending`, or to `failed` at the cap, on a blind sender too; `unknown` is only for a row whose send may have started.
+ - Before a row with `ambiguous_prior=1` is sent, the sender's mode is read again (`_refresh_outbox`); if it is blind now the row becomes `unknown` / `ambiguous_prior`.
+ - A client replay of a `new` request drives the follow-up only if it is due: no automatic try yet, or its backoff is over. Replays can no longer use up the 5 tries.
+-- `crm_done=1` is written in a retried transaction. If it still cannot be written, the drive does NOT go on to the send: the row stays `sending`, and the reaper puts it back flagged `ambiguous_prior` (the leftover 2 then follows the keyed / not-keyed rule). Tests changed for this in fix5: `test_g2_blind_crm_not_asked_twice` and `test_g2_keyed_crm_may_be_asked_again` (tests/test_hardening_cloud_b.py) now expect the row to be `sending` right after the lost mark (not `pending`/`refused`) and run 3 and 4 reaper passes. `test_g2_unclear_put_on_blind_crm_is_unk` and `test_g2_person_can_go_on_after_not_sent` were NOT changed.
++- `crm_done=1` is written in a retried transaction. If it still cannot be written, the drive does NOT go on to the send: the row stays `sending`, and the reaper puts it back flagged `ambiguous_prior` (the leftover 2 then follows the keyed / not-keyed rule). Tests changed for this in fix5: `test_g2_blind_crm_not_asked_twice` and `test_g2_keyed_crm_may_be_asked_again` (tests/test_hardening_cloud_b.py) now expect the row to be `sending` right after the lost mark (not `pending`/`refused`) and run 3 and 4 reaper passes. `test_g2_unclear_put_blind_unknown` and `test_g2_person_can_go_on_after_not_sent` were NOT changed.
+ - The lead-book path is resolved once in `Desk.__init__` (`Desk._db_path`) and used for the connections and the write gate, so a later chdir cannot send a new thread to another file.
+ - Reaper pass: `gate.REAPER_DRIVE_BATCH` (20 follow-ups) is replaced by `gate.REAPER_PASS_SECONDS` (10 real seconds): the pass stops driving when the time is used up; the rest is still due and comes first next pass. New `gate.DECIDE_FAIL_LIMIT = 3`.
+ 
+diff -ruN -x __pycache__ -x .pytest_cache -x .mypy_cache -x .ruff_cache -x .git -x '*.pyc' a/src/lead_desk/constants.py b/src/lead_desk/constants.py
+--- a/src/lead_desk/constants.py	2026-11-09 21:05:13.672389809 +0000
++++ b/src/lead_desk/constants.py	2026-11-09 21:30:54.568431087 +0000
+@@ -56,10 +56,14 @@
+ # that outlasts the grace is overtaken: the model is asked a second time (the CRM and the send stay once, every write
+ # is checked against the claim's token). So the model step is asked once ONLY when the model answers within the grace.
+ # MODEL_CALL_BUDGET_SECONDS is the answer time the desk expects (a slower call is logged); an adapter that declares a
+-# `timeout_seconds` longer than the grace minus MODEL_GRACE_MARGIN_SECONDS is refused when the desk is built.
++# `timeout_seconds` that is not shorter than the grace minus MODEL_GRACE_MARGIN_SECONDS is refused when the desk is
++# built (15 s is refused, below 15 s is accepted, with the defaults). The reaper takes a row only when it is strictly
++# older than the grace, and the sums are checked strictly (an equal sum is refused), so a call that fits cannot be
++# overtaken on a whole-second tie. `timeout_seconds` is an honest wall-clock bound only if the adapter enforces a
++# TOTAL deadline (a per-socket-operation timeout, as urllib has, can be exceeded many times over by a slow trickle).
+ # The margin is the time the stamp after the model answer may take to be written (one write: WRITE_DEADLINE_SECONDS in
+ # gate.py, 10 s); the label write that follows the stamp starts a new grace. validate_model_budget checks both.
+-MODEL_CALL_BUDGET_SECONDS: Final = 10.0
++MODEL_CALL_BUDGET_SECONDS: Final = 9.0
+ MODEL_GRACE_MARGIN_SECONDS: Final = 10.0
+ 
+ # Burst script retries
+@@ -261,8 +265,8 @@
+ ) -> None:
+     """The model step is stamped again after the model answers and before its label is written (Desk._label_step).
+     So two things must hold, or a call within budget could still be overtaken by the reaper:
+-    (1) budget + margin <= the smallest stuck grace there can be (the busy waits alone; the send timeout only makes
+-        the real grace longer), and
++    (1) budget + margin < the smallest stuck grace there can be (the busy waits alone; the send timeout only makes
++        the real grace longer); an equal sum is refused too, because the clocks count whole seconds, and
+     (2) the margin covers the write window of that stamp (`write_deadline`), and the label write that follows the
+         stamp (`write_deadline` plus one more busy wait for a lock held by another process) fits in the grace."""
+     for name, value in (
+@@ -274,9 +278,9 @@
+     ):
+         if isinstance(value, bool) or not isinstance(value, int | float) or not math.isfinite(value) or value <= 0:
+             raise ValueError(f"{name} must be a number of seconds above 0, got {value!r}")
+-    if budget + margin > grace_floor:  # type: ignore[operator]
++    if budget + margin >= grace_floor:  # type: ignore[operator]
+         raise ValueError(
+-            "MODEL_CALL_BUDGET_SECONDS plus MODEL_GRACE_MARGIN_SECONDS must not exceed the stuck grace "
++            "MODEL_CALL_BUDGET_SECONDS plus MODEL_GRACE_MARGIN_SECONDS must be below the stuck grace "
+             f"({grace_floor!r} s at least), got {budget!r} + {margin!r}"
+         )
+     if margin < write_deadline:  # type: ignore[operator]
+@@ -284,9 +288,9 @@
+             "MODEL_GRACE_MARGIN_SECONDS must cover the write of the stamp after the model answer "
+             f"(the write deadline, {write_deadline!r} s), got {margin!r}"
+         )
+-    if write_deadline + busy_wait > grace_floor:  # type: ignore[operator]
++    if write_deadline + busy_wait >= grace_floor:  # type: ignore[operator]
+         raise ValueError(
+-            "the label write after the stamp (write deadline plus one busy wait) must fit inside the stuck grace "
++            "the label write after the stamp (write deadline plus one busy wait) must be below the stuck grace "
+             f"({grace_floor!r} s at least)"
+         )
+ 
+diff -ruN -x __pycache__ -x .pytest_cache -x .mypy_cache -x .ruff_cache -x .git -x '*.pyc' a/src/lead_desk/desk.py b/src/lead_desk/desk.py
+--- a/src/lead_desk/desk.py	2026-11-09 21:05:20.068635383 +0000
++++ b/src/lead_desk/desk.py	2026-11-09 21:24:23.920550788 +0000
+@@ -89,6 +89,11 @@
+     it is NOT tried again at once: a retry would queue at the tail of the line and wait just as long again."""
+ 
+ 
++class DeskSettingRefused(ValueError):
++    """The Desk refuses to be built with a setting that would break its once-only guarantee (the AI adapter declares a
++    time limit that does not fit the stuck grace). The launcher turns exactly this one into exit code 4."""
++
++
+ class _IncompleteCheck(Exception):
+     """A payload that passed identity.check_payload came back without a required field."""
+ 
+@@ -230,11 +235,11 @@
+         if (
+             isinstance(declared, int | float)
+             and not isinstance(declared, bool)
+-            and declared > self.stuck_grace_seconds - MODEL_GRACE_MARGIN_SECONDS
++            and declared >= self.stuck_grace_seconds - MODEL_GRACE_MARGIN_SECONDS
+         ):
+-            raise ValueError(
+-                "the AI adapter's timeout_seconds is longer than the stuck grace minus its margin: a slow call would"
+-                " be overtaken by the reaper and the model asked twice"
++            raise DeskSettingRefused(
++                "the AI adapter's timeout_seconds is not shorter than the stuck grace minus its margin: a slow call "
++                "could be overtaken by the reaper and the model asked twice"
+             )
+         self._local = threading.local()
+         self._rejected = 0
+@@ -371,12 +376,14 @@
+     def _refresh_crm(self) -> None:
+         """Read the CRM's mode again when the adapter can (HttpCrm.refresh). A failure keeps the cached value."""
+         self._local.crm_refresh_no_fd = False
++        self._local.crm_refresh_failed = False
+         refresh = getattr(self.crm, "refresh", None)
+         if refresh is None:
+             return
+         try:
+             refresh()
+         except Exception as e:
++            self._local.crm_refresh_failed = True
+             self._local.crm_refresh_no_fd = is_fd_exhaustion(
+                 e
+             )  # the read could not even be made: says nothing of the CRM
+@@ -416,7 +423,7 @@
+                     " last_error='crash_while_sending',"
+                     " ambiguous_prior=CASE WHEN crm_done = 1 AND send_started = 1 THEN 1 ELSE ambiguous_prior END,"
+                     " updated_at=?"
+-                    " WHERE state='sending' AND (? IS NULL OR updated_at <= ?)"
++                    " WHERE state='sending' AND (? IS NULL OR updated_at < ?)"
+                     " AND (? OR crm_done <> 1 OR send_started = 0)",
+                     (
+                         SEND_MAX_ATTEMPTS,
+@@ -557,9 +564,11 @@
+                 done["receipts"] += int(here)
+             except Exception as e:
+                 log.warning("reaper: receipt left open: %s", type(e).__name__)
++        # strictly older than the grace: the clocks count whole seconds (truncated), so a difference equal to the grace
++        # can be a real age just over grace - 1 s; "older than" is then a real age above the grace
+         stuck_before = now - self.stuck_grace_seconds
+         n_sending = conn.execute(
+-            "SELECT count(*) FROM followups WHERE state='sending' AND updated_at <= ?",
++            "SELECT count(*) FROM followups WHERE state='sending' AND updated_at < ?",
+             (stuck_before,),
+         ).fetchone()[0]
+         refreshed = True
+@@ -936,11 +945,18 @@
+             def store() -> None:
+                 with self._write(conn):
+                     conn.execute(
+-                        "UPDATE followups SET ai_label=? WHERE lead_id=? AND ai_label IS NULL", (label, lead_id)
++                        "UPDATE followups SET ai_label=? WHERE lead_id=? AND ai_label IS NULL"
++                        " AND state='sending' AND attempts=?",
++                        (label, lead_id, token),
+                     )
+ 
+             self._locked_retry(store)
+-            label = conn.execute("SELECT ai_label FROM followups WHERE lead_id=?", (lead_id,)).fetchone()[0]
++            stored = conn.execute(
++                "SELECT ai_label, state='sending' AND attempts=? FROM followups WHERE lead_id=?", (token, lead_id)
++            ).fetchone()
++            if not stored[1]:  # the row was put back or claimed again meanwhile: the write above changed nothing
++                return None
++            label = stored[0]
+             if label not in AI_LABELS:
+                 raise LookupError("label not stored")
+         return str(label)
+@@ -973,6 +989,11 @@
+                 # no file handle to read the CRM's mode: nothing was asked, nothing can be judged. Not "not keyed" (that
+                 # would end `unknown` and send a person to look for nothing): the try is given back, the mark stays 2
+                 raise SendNoDescriptors("crm capability read")
++            if getattr(self._local, "crm_refresh_failed", False):
++                # the CRM's mode could not be read (it is down): the desk asked nothing in this try, so it must not
++                # judge the leftover mark by a forgotten mode and send a person to look. The try is used up with a
++                # backoff (bounded by SEND_MAX_ATTEMPTS, then `failed`, which a person's Retry starts again)
++                raise SendUnreachable("crm capability read")
+         keyed = getattr(self.crm, "capability", None) == "keyed"
+         if crm_done == CRM_STARTED and not keyed:
+             self._record_send_result(lead_id, "unknown", token, "crm_unconfirmed")
+@@ -1145,9 +1166,10 @@
+             with self._write(conn):
+                 conn.execute(
+                     "UPDATE followups SET state='pending', auto_attempts=MAX(auto_attempts-1, 0), send_started=0,"
+-                    " last_error=COALESCE(?, last_error), updated_at=?"
++                    " last_error=CASE WHEN ? IS NOT NULL THEN ? WHEN last_error=? THEN NULL ELSE last_error END,"
++                    " updated_at=?"
+                     " WHERE state='sending' AND lead_id=? AND attempts=?",
+-                    (last_error, self._now(), lead_id, token),
++                    (last_error, last_error, NO_DESCRIPTORS_ERROR, self._now(), lead_id, token),
+                 )
+ 
+         try:
+diff -ruN -x __pycache__ -x .pytest_cache -x .mypy_cache -x .ruff_cache -x .git -x '*.pyc' a/src/lead_desk/server.py b/src/lead_desk/server.py
+--- a/src/lead_desk/server.py	2026-11-09 21:05:20.024093986 +0000
++++ b/src/lead_desk/server.py	2026-11-09 21:22:01.640028919 +0000
+@@ -79,7 +79,7 @@
+     validate_descriptor_budget,
+ )
+ from lead_desk.contract import is_fd_exhaustion
+-from lead_desk.desk import Desk, Reply
++from lead_desk.desk import Desk, DeskSettingRefused, Reply
+ from lead_desk.hooks import Hooks
+ from lead_desk.loader import DemoPortal, load_demo_adapters, load_demo_portal
+ 
+@@ -969,8 +969,10 @@
+     """python -m lead_desk.server: open-file check, lock file, adapters, desk, bind, reaper, startup (schema and
+     sweep), serve. Exit code 2 if another desk holds the lock or the port is taken (OSError, not only EADDRINUSE);
+     exit code 1 if the sender cannot be reached; exit code 3 if MAX_HANDLER_THREADS does not fit the open-file limit;
+-    exit code 4 if the desk refuses a setting when it is built (the AI adapter declares a `timeout_seconds` above
+-    the stuck grace minus its margin): the message is printed, nothing is served.
++    exit code 4 if the desk refuses a setting when it is built (the AI adapter declares a `timeout_seconds` not below
++    the stuck grace minus its margin; `DeskSettingRefused`, no other error is turned into 4): the message is printed,
++    nothing is served. The checks of the constants themselves run when the modules are imported, so an edited constant
++    that does not fit ends with a Python traceback (exit code 1) before `main` runs.
+     SIGTERM stops it like Ctrl+C: the reaper is stopped, then the lock is given back. `hooks` goes to the Desk
+     (tests/crash_launcher.py and scripts/video_crash.py pass `FlagFileHooks(path)`)."""
+     try:
+@@ -995,9 +997,7 @@
+         sys.exit(EXIT_ADAPTERS_UNREACHABLE)
+     try:
+         desk = Desk(config, crm, outbox, qualifier, hooks=hooks)
+-    except (
+-        ValueError
+-    ) as e:  # the desk refuses a setting (an AI adapter whose time limit is longer than the stuck grace)
++    except DeskSettingRefused as e:  # an AI adapter whose time limit does not fit the stuck grace (no other error)
+         print(f"the desk refuses to start: {e}", flush=True)
+         sys.exit(EXIT_DESK_SETTING_REFUSED)
+     try:
+@@ -1029,12 +1029,24 @@
+     except KeyboardInterrupt:
+         pass
+     finally:
+-        desk.stop_background()
+-        if desk.reaper_running():  # the lock is given back all the same; say so
+-            log.warning("the reaper did not end in time; the lock file is released while its last pass may still run")
+-        server.server_close()
+-        desk.close()
+-        lock.close()
++        # every step runs even if an earlier one raises: the socket, the database and the lock are always released
++        try:
++            try:
++                desk.stop_background()
++            except Exception as e:
++                log.warning("the reaper could not be stopped cleanly: %s", type(e).__name__)
++            if desk.reaper_running():  # the lock is given back all the same; say so
++                log.warning(
++                    "the reaper did not end in time; the lock file is released while its last pass may still run"
++                )
++        finally:
++            try:
++                server.server_close()
++            finally:
++                try:
++                    desk.close()
++                finally:
++                    lock.close()
+ 
+ 
+ if __name__ == "__main__":
+diff -ruN -x __pycache__ -x .pytest_cache -x .mypy_cache -x .ruff_cache -x .git -x '*.pyc' a/tests/test_loss_path_s1g.py b/tests/test_loss_path_s1g.py
+--- a/tests/test_loss_path_s1g.py	2026-11-09 21:08:08.073013108 +0000
++++ b/tests/test_loss_path_s1g.py	2026-11-09 21:23:23.770802778 +0000
+@@ -318,17 +318,18 @@
+             super().__init__(path)
+             self.timeout_seconds = timeout
+ 
+-    Desk(rig.config, rig.crm, rig.outbox, Declares(rig.replies_path, limit)).close()  # exactly at the limit: fine
+-    with pytest.raises(ValueError, match="timeout_seconds"):
+-        Desk(rig.config, rig.crm, rig.outbox, Declares(rig.replies_path, limit + 1))
++    Desk(rig.config, rig.crm, rig.outbox, Declares(rig.replies_path, limit - 1)).close()  # below the limit: fine
++    with pytest.raises(ValueError, match="timeout_seconds"):  # at the limit: refused (a tie on whole-second clocks)
++        Desk(rig.config, rig.crm, rig.outbox, Declares(rig.replies_path, limit))
+     longer = replace(rig.config, send_timeout_seconds=rig.config.send_timeout_seconds + 10)
+     Desk(longer, rig.crm, rig.outbox, Declares(rig.replies_path, limit + 1)).close()  # a longer grace allows more
+ 
+ 
+ def test_model_budget_is_validated() -> None:
+     # arguments: budget, margin, smallest grace, write deadline, busy wait
+-    constants.validate_model_budget(10, 10, 20, 10, 5)
++    constants.validate_model_budget(9, 10, 20, 10, 5)
+     bad_values = (
++        (10, 10, 20, 10, 5),  # budget plus margin equal to the grace
+         (11, 10, 20, 10, 5),  # budget plus margin over the grace
+         (0, 10, 20, 10, 5),
+         (float("nan"), 10, 20, 10, 5),
+@@ -350,7 +351,7 @@
+ def test_default_config_fits_the_budget() -> None:
+     config = Config()
+     grace = int(config.send_timeout_seconds + 4 * constants.BUSY_WAIT_SECONDS)
+-    assert constants.MODEL_CALL_BUDGET_SECONDS + constants.MODEL_GRACE_MARGIN_SECONDS <= grace
++    assert constants.MODEL_CALL_BUDGET_SECONDS + constants.MODEL_GRACE_MARGIN_SECONDS < grace
+ 
+ 
+ # =====
+diff -ruN -x __pycache__ -x .pytest_cache -x .mypy_cache -x .ruff_cache -x .git -x '*.pyc' a/tests/test_loss_path_s1h.py b/tests/test_loss_path_s1h.py
+--- a/tests/test_loss_path_s1h.py	2026-11-09 21:07:38.645156075 +0000
++++ b/tests/test_loss_path_s1h.py	2026-11-09 21:23:23.771053410 +0000
+@@ -15,7 +15,7 @@
+ from support import lead, sql_exec
+ 
+ from demo_only.fakes import FakeCrm, KeyedOutbox, RecordedQualifier
+-from lead_desk import constants, db, gate, server
++from lead_desk import constants, db, gate, portal_api, server
+ from lead_desk.adapters import FakesUnreachable, HttpCrm
+ from lead_desk.gate import SEND_MAX_ATTEMPTS
+ 
+@@ -96,19 +96,28 @@
+     rig = env.rig()
+     lid = new_lead(rig, "h3")
+     real = rig.desk._locked_retry
+-    stamps = {"n": 0}
++
++    class Answers(RecordedQualifier):
++        answered = False
++
++        def qualify(self, lead_id: str, email_key: str) -> Any:
++            label = super().qualify(lead_id, email_key)
++            self.answered = True  # from now on a stamp is the one after the AI step
++            return label
++
++    qualifier = Answers(rig.replies_path)
++    rig.desk.qualifier = qualifier
+ 
+     def retry(fn: Any) -> Any:
+-        if "_touch" in fn.__qualname__:
+-            stamps["n"] += 1
+-            if stamps["n"] == 2:  # the stamp after the AI step
+-                raise sqlite3.OperationalError("database is locked")
++        if "_touch" in fn.__qualname__ and qualifier.answered:
++            raise sqlite3.OperationalError("database is locked")
+         return real(fn)
+ 
+     monkeypatch.setattr(rig.desk, "_locked_retry", retry)
+     rig.desk.run_followup(lid)
+     assert follow(rig, lid, "state, auto_attempts, ai_label, crm_done") == ("pending", 0, None, 0)
+     assert rig.crm.count == 0 and rig.outbox.count == 0
++    assert qualifier.calls == 1  # the answer is discarded with the label; the next drive asks again
+ 
+ 
+ # =====
+@@ -212,23 +221,48 @@
+     assert crm.count == 0 and rig.outbox.count == 0
+ 
+ 
+-def test_crm_read_other_error_is_unknown(env) -> None:
++def test_crm_read_down_spends_a_try(env) -> None:
++    """Round 6: a leftover crm_done=2 and a CRM mode read that fails for another reason (the CRM is down) is no longer
++    `unknown`: nothing was asked, so the try is used up with a backoff and the mark stays 2."""
+     crm = RereadCrm(FakesUnreachable("URLError"))
+     rig = env.rig()
+     rig.desk.crm = crm
+     lid = new_lead(rig, "h9")
+     set_follow(rig, lid, crm_done=2, ai_label="warm")
+     rig.desk.run_followup(lid)
+-    assert follow(rig, lid, "state, last_error") == ("unknown", "crm_unconfirmed")
++    assert follow(rig, lid, "state, auto_attempts, crm_done, last_error") == (
++        "pending",
++        1,
++        2,
++        "internal:SendUnreachable",
++    )
++    assert crm.count == 0 and rig.outbox.count == 0
+ 
+ 
+ # =====
+ # Security 5: the open-file arithmetic
+ # =====
+-def test_reserve_covers_its_items() -> None:
++@pytest.mark.skipif(not os.path.isdir("/proc/self/fd"), reason="counts open files through /proc")
++def test_reserve_covers_its_items(tmp_path: Path) -> None:
++    """The portal item of the reserve is measured, not only added up: PORTAL_MAX_INFLIGHT read-only connections that
++    each ran a query hold FD_PORTAL_ITEM files together. The other items are counted by reading the code (the
++    listening socket, the lock file, the streams and the reaper's connection: not measured here)."""
+     assert constants.FDS_PER_HANDLER_THREAD >= constants.FDS_PER_THREAD_MINIMUM
+     assert sum(n for _, n in constants.FD_RESERVE_ITEMS) <= constants.FD_RESERVE
+-    assert dict(constants.FD_RESERVE_ITEMS)[constants.FD_PORTAL_ITEM] >= 2 * constants.PORTAL_MAX_INFLIGHT
++    path = tmp_path / "portal.sqlite3"
++    writer = db.connect(path)
++    writer.execute("CREATE TABLE t (a)")
++    writer.execute("INSERT INTO t VALUES (1)")
++    before = len(os.listdir("/proc/self/fd"))
++    readers = [portal_api.connect_readonly(path) for _ in range(constants.PORTAL_MAX_INFLIGHT)]
++    for reader in readers:
++        reader.execute("SELECT a FROM t").fetchall()
++    held = len(os.listdir("/proc/self/fd")) - before
++    for reader in readers:
++        reader.close()
++    writer.close()
++    assert held <= dict(constants.FD_RESERVE_ITEMS)[constants.FD_PORTAL_ITEM]
++    assert held >= constants.PORTAL_MAX_INFLIGHT  # at least the database file of each (the -shm file is shared)
+ 
+ 
+ def test_descriptor_arithmetic_is_validated() -> None:
+diff -ruN -x __pycache__ -x .pytest_cache -x .mypy_cache -x .ruff_cache -x .git -x '*.pyc' a/tests/test_loss_path_s1i.py b/tests/test_loss_path_s1i.py
+--- a/tests/test_loss_path_s1i.py	1970-01-01 00:00:00.000000000 +0000
++++ b/tests/test_loss_path_s1i.py	2026-11-09 21:24:23.932703378 +0000
+@@ -0,0 +1,192 @@
++"""Round 6 review of A4r6: the whole-second tie at the stuck grace, the label write checks the claim, a CRM that cannot
++be read, the clean-up chain at exit and the narrow exit code 4. Made-up data only; the test clock is explicit."""
++
++from __future__ import annotations
++
++import threading
++from typing import Any
++
++import pytest
++from support import lead, sql_exec
++
++from demo_only.fakes import FakeCrm, RecordedQualifier
++from lead_desk import constants, lockfile, server
++from lead_desk.desk import Desk, DeskSettingRefused
++from lead_desk.gate import NO_DESCRIPTORS_ERROR
++
++
++def new_lead(rig: Any, ref: str) -> str:
++    reply = rig.desk.process("form", ref, lead(email=f"{ref}@example.test"))
++    assert reply.status == 201, reply.body
++    return str(reply.body["lead_id"])
++
++
++def set_follow(rig: Any, lid: str, **cols: Any) -> None:
++    names = ", ".join(f"{k}=?" for k in cols)
++    sql_exec(rig.db_path, f"UPDATE followups SET {names} WHERE lead_id=?", (*cols.values(), lid))  # noqa: S608
++
++
++def row(rig: Any, lid: str, cols: str) -> tuple[Any, ...]:
++    return rig.query(f"SELECT {cols} FROM followups WHERE lead_id=?", (lid,))[0]  # noqa: S608 (fixed column text)
++
++
++# =====
++# Security 1: a row exactly as old as the grace is not taken
++# =====
++def test_reaper_needs_age_above_grace(env) -> None:
++    """The clocks count whole seconds, so a difference equal to the grace can be a real age just over 24 s. The reaper
++    takes a row only when it is strictly older than the grace."""
++    rig = env.rig()
++    lid = new_lead(rig, "i1")
++    grace = rig.desk.stuck_grace_seconds
++    set_follow(rig, lid, state="sending", crm_done=0, send_started=0, updated_at=rig.clock() - grace)
++    assert rig.desk.reap_once()["requeued"] == 0
++    assert row(rig, lid, "state")[0] == "sending"
++    rig.clock.advance(1)  # now one second older than the grace
++    assert rig.desk.reap_once()["requeued"] == 1
++    assert row(rig, lid, "state")[0] == "pending"
++
++
++def test_equal_budget_sum_is_refused() -> None:
++    # arguments: budget, margin, smallest grace, write deadline, busy wait
++    constants.validate_model_budget(9, 10, 20, 10, 5)
++    with pytest.raises(ValueError, match="below the stuck grace"):
++        constants.validate_model_budget(10, 10, 20, 10, 5)  # equal sum: a tie on whole-second clocks
++    with pytest.raises(ValueError, match="label write"):
++        constants.validate_model_budget(1, 15, 20, 15, 5)  # write deadline plus busy wait equals the grace
++    assert constants.MODEL_CALL_BUDGET_SECONDS + constants.MODEL_GRACE_MARGIN_SECONDS < 20
++
++
++def test_declared_timeout_at_limit_refused(env) -> None:
++    rig = env.rig()
++    limit = rig.desk.stuck_grace_seconds - constants.MODEL_GRACE_MARGIN_SECONDS
++
++    class Declares(RecordedQualifier):
++        def __init__(self, path: Any, timeout: float) -> None:
++            super().__init__(path)
++            self.timeout_seconds = timeout
++
++    with pytest.raises(DeskSettingRefused, match="timeout_seconds"):
++        Desk(rig.config, rig.crm, rig.outbox, Declares(rig.replies_path, limit))
++    Desk(rig.config, rig.crm, rig.outbox, Declares(rig.replies_path, limit - 0.5)).close()
++
++
++# =====
++# Security 2: the label write checks the claim
++# =====
++def test_label_store_needs_the_claim(env, monkeypatch) -> None:
++    """The row is put back and claimed again between the stamp and the label write: the stale drive stores nothing
++    and goes no further."""
++    rig = env.rig()
++    lid = new_lead(rig, "i2")
++    real = rig.desk._locked_retry
++
++    def retry(fn: Any) -> Any:
++        if "store" in fn.__qualname__:
++            set_follow(rig, lid, attempts=99)  # a new claim happened first
++        return real(fn)
++
++    monkeypatch.setattr(rig.desk, "_locked_retry", retry)
++    rig.desk.run_followup(lid)
++    assert row(rig, lid, "ai_label, state, crm_done, attempts") == (None, "sending", 0, 99)
++    assert rig.crm.count == 0 and rig.outbox.count == 0
++
++
++# =====
++# Security 3: a CRM whose mode cannot be read is not judged
++# =====
++class DownCrm(FakeCrm):
++    capability = "keyed"
++
++    def refresh(self) -> None:
++        raise OSError("down")
++
++    def forget_capability(self) -> None:
++        self.capability = None  # type: ignore[assignment]  # as HttpCrm does
++
++
++def test_crm_down_leftover_mark_not_unknown(env) -> None:
++    """A leftover crm_done=2 and a CRM that is down: nothing was asked in this try, so no person is sent to look. The
++    try is used up with a backoff (the cap then ends it `failed`, which Retry starts again) and nothing is put."""
++    crm = DownCrm()
++    rig = env.rig()
++    rig.desk.crm = crm
++    lid = new_lead(rig, "i3")
++    set_follow(rig, lid, crm_done=2, ai_label="warm")
++    rig.desk.run_followup(lid)
++    state, last_error, crm_done = row(rig, lid, "state, last_error, crm_done")
++    assert (state, crm_done) == ("pending", 2) and str(last_error).startswith("internal:")
++    assert crm.count == 0 and rig.outbox.count == 0
++
++
++# =====
++# Security 5: every exit step runs; only the one refusal is exit 4
++# =====
++def test_exit_steps_run_when_one_raises(env, monkeypatch, tmp_path) -> None:
++    rig = env.rig()
++    seen: dict[str, Any] = {"closed": False, "socket": False}
++
++    class Stub:
++        server_address = ("127.0.0.1", 0)
++
++        def serve_forever(self) -> None:
++            raise KeyboardInterrupt
++
++        def server_close(self) -> None:
++            seen["socket"] = True
++
++    class Failing(Desk):
++        def stop_background(self, *a: Any, **k: Any) -> None:
++            raise RuntimeError("cannot stop")
++
++        def close(self) -> None:
++            seen["closed"] = True
++            super().close()
++
++    monkeypatch.setenv("DESK_DB_PATH", str(tmp_path / "exit.sqlite3"))
++    monkeypatch.setenv("DESK_PORT", "0")
++    monkeypatch.setattr(server, "Desk", Failing)
++    monkeypatch.setattr(server, "load_demo_adapters", lambda cfg: (rig.desk.crm, rig.desk.outbox, rig.desk.qualifier))
++    monkeypatch.setattr(server, "make_server", lambda desk, cfg: Stub())
++    errors: list[BaseException] = []
++
++    def run() -> None:
++        try:
++            server.main()
++        except BaseException as e:  # noqa: BLE001 (the test reports it)
++            errors.append(e)
++
++    t = threading.Thread(target=run, daemon=True)
++    t.start()
++    t.join(timeout=20)
++    assert not t.is_alive() and not errors
++    assert seen == {"closed": True, "socket": True}
++    lockfile.acquire(tmp_path / "exit.sqlite3").close()  # the lock was given back
++
++
++def test_other_value_error_is_not_exit_4(env, monkeypatch, tmp_path) -> None:
++    rig = env.rig()
++    monkeypatch.setenv("DESK_DB_PATH", str(tmp_path / "other.sqlite3"))
++    monkeypatch.setenv("DESK_PORT", "0")
++    monkeypatch.setattr(server, "load_demo_adapters", lambda cfg: (rig.desk.crm, rig.desk.outbox, rig.desk.qualifier))
++
++    def broken(*a: Any, **k: Any) -> Any:
++        raise ValueError("some other problem")
++
++    monkeypatch.setattr(server, "Desk", broken)
++    with pytest.raises(ValueError, match="some other problem"):  # a traceback, not a refusal
++        server.main()
++
++
++# =====
++# Security 6: a later lock give-back replaces the "no file handle" marker
++# =====
++def test_give_back_replaces_stale_marker(env) -> None:
++    rig = env.rig()
++    lid = new_lead(rig, "i6")
++    set_follow(rig, lid, state="sending", attempts=3, auto_attempts=1, last_error=NO_DESCRIPTORS_ERROR)
++    rig.desk._give_back(lid, 3, None)  # a lock give-back
++    assert row(rig, lid, "state, last_error") == ("pending", None)
++    set_follow(rig, lid, state="sending", attempts=4, auto_attempts=1, last_error="unreachable")
++    rig.desk._give_back(lid, 4, None)
++    assert row(rig, lid, "last_error")[0] == "unreachable"  # a real earlier error is kept
+diff -ruN -x __pycache__ -x .pytest_cache -x .mypy_cache -x .ruff_cache -x .git -x '*.pyc' a/tests/test_mutation_guards.py b/tests/test_mutation_guards.py
+--- a/tests/test_mutation_guards.py	2026-11-09 20:45:53.482693671 +0000
++++ b/tests/test_mutation_guards.py	2026-11-09 21:30:54.567855646 +0000
+@@ -184,29 +184,30 @@
+ 
+ 
+ def test_requeue_age_boundary_direct(env) -> None:
+-    """desk.py _requeue_sending: updated_at <= older_than. A row exactly on the line is requeued, one second newer
+-    is not."""
++    """desk.py _requeue_sending: updated_at < older_than (round 6: strictly older). A row exactly on the line is left,
++    one second older is requeued."""
+     rig = env.rig()
+-    on, newer = new_lead(rig, "b1"), new_lead(rig, "b2")
++    on, older = new_lead(rig, "b1"), new_lead(rig, "b2")
+     line = rig.clock.t - 100
+     set_follow(rig, on, state="sending", attempts=1, auto_attempts=1, updated_at=line)
+-    set_follow(rig, newer, state="sending", attempts=1, auto_attempts=1, updated_at=line + 1)
++    set_follow(rig, older, state="sending", attempts=1, auto_attempts=1, updated_at=line - 1)
+     rig.desk._requeue_sending(line)
+-    assert follow(rig, on, "state, last_error") == ("pending", "crash_while_sending")
+-    assert follow(rig, newer, "state") == ("sending",)
++    assert follow(rig, older, "state, last_error") == ("pending", "crash_while_sending")
++    assert follow(rig, on, "state") == ("sending",)
+ 
+ 
+ def test_requeue_age_boundary_in_reaper(env) -> None:
+-    """The reaper pass: a sending row exactly send timeout + grace old is put back; one second younger is not."""
++    """The reaper pass: a sending row exactly send timeout + grace old is left (the clocks count whole seconds, so a tie
++    can be a real age just under the grace); one second older is put back."""
+     rig = env.rig()
+     age = stuck_age(rig)
+     assert age == 25, "default send timeout 5 s plus 4 busy waits of 5 s"
+-    on, younger = new_lead(rig, "b3"), new_lead(rig, "b4")
++    on, older = new_lead(rig, "b3"), new_lead(rig, "b4")
+     set_follow(rig, on, state="sending", attempts=1, auto_attempts=1, updated_at=rig.clock.t - age)
+-    set_follow(rig, younger, state="sending", attempts=1, auto_attempts=1, updated_at=rig.clock.t - age + 1)
++    set_follow(rig, older, state="sending", attempts=1, auto_attempts=1, updated_at=rig.clock.t - age - 1)
+     rig.desk.reap_once()
+-    assert follow(rig, on, "state, last_error") == ("pending", "crash_while_sending")
+-    assert follow(rig, younger, "state") == ("sending",)
++    assert follow(rig, older, "state, last_error") == ("pending", "crash_while_sending")
++    assert follow(rig, on, "state") == ("sending",)
+ 
+ 
+ def open_receipt(rig: Rig, ref: str, at: int) -> None:
