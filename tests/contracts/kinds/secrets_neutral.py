@@ -2,7 +2,8 @@
 `mounted_file`. Each registers under `secrets` (the shared suite) and `secrets_ttl` (provider, change, advance,
 ttl_s), like `secrets_cloud.py`.
 
-* `vault`: a real `vault server -dev` when HADAVIN_TEST_VAULT_ADDR is set (the CI service container), else the
+* `vault`: a real `vault server -dev` when HADAVIN_TEST_VAULT_ADDR is set (a throwaway container the CI job starts with a
+  per-run random token in HADAVIN_TEST_VAULT_TOKEN), else the
   local fake in `tests/contracts/vault_fake.py`.
 * `azure_key_vault`, `gcp_secret_manager`: the real SDK clients over `tests/contracts/http_fake.py`.
 """
@@ -40,9 +41,19 @@ def _clock():
 
 
 def vault_target() -> tuple[str, str]:
-    """(address, admin token): the CI dev server, or the local fake."""
+    """(address, admin token): the CI dev server, or the local fake (whose own admin token is ROOT).
+
+    A real server needs its token from HADAVIN_TEST_VAULT_TOKEN. There is no fallback to ROOT: the CI server's token
+    is random per run, so a missing variable must stop the run with a clear message and not fail later with a 403.
+    A connection or sign-in failure is an error in the test that calls the server; nothing here skips."""
     if address := os.environ.get("HADAVIN_TEST_VAULT_ADDR"):
-        return address, os.environ.get("HADAVIN_TEST_VAULT_TOKEN", ROOT)
+        token = os.environ.get("HADAVIN_TEST_VAULT_TOKEN")
+        if not token:
+            raise RuntimeError(
+                "HADAVIN_TEST_VAULT_ADDR is set but HADAVIN_TEST_VAULT_TOKEN is not: start the Vault development "
+                "server with a random token and export it as HADAVIN_TEST_VAULT_TOKEN (see .github/workflows/ci.yml)"
+            )
+        return address, token
     return fake_vault().address, ROOT
 
 

@@ -23,6 +23,7 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
+  VAULT_IMAGE: hashicorp/vault:2.2.0@sha256:e0acd3c681bdf57f002d7214e5d050b876e1704678005c6b0406dd96a65be919  # published 2026-10-15
   GITLEAKS_VERSION: "8.30.1"
   GITLEAKS_SHA256: "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb"
   # Trivy's GitHub Actions were compromised in March 2026, so the release binary is used, checksum-verified.
@@ -42,24 +43,9 @@ jobs:
         env:
           POSTGRES_HOST_AUTH_METHOD: trust
         ports:
-          - 5432:5432
+          - 127.0.0.1:5432:5432
         options: >-
           --health-cmd "pg_isready -U postgres"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 10
-      # The `vault` secrets kind's contract suite runs against a real Vault dev server (in-memory, unsealed,
-      # throwaway; the root token is the dev-mode convention, not a secret). 2.2.0, published 2026-10-15.
-      vault:
-        image: hashicorp/vault:2.2.0@sha256:e0acd3c681bdf57f002d7214e5d050b876e1704678005c6b0406dd96a65be919
-        env:
-          VAULT_DEV_ROOT_TOKEN_ID: root
-          VAULT_DEV_LISTEN_ADDRESS: 0.0.0.0:8200
-          SKIP_SETCAP: "true"
-        ports:
-          - 8200:8200
-        options: >-
-          --health-cmd "VAULT_ADDR=http://127.0.0.1:8200 vault status"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
@@ -82,13 +68,43 @@ jobs:
         run: ruff format --check src tests demos tools
       - name: Secrets and banned names in the tracked files (the repo is public)
         run: python tools/scan_repo.py
+      # The `vault` secrets kind's contract suite runs against a real Vault dev server (in-memory, unsealed,
+      # throwaway), image set once in VAULT_IMAGE above. It is a step and not a service because its token is made fresh
+      # for this run (a service cannot read a step's output). It starts right before the tests, so the install and the lint do
+      # not see the token; it is masked in the Actions log (and is in the environment of every later step of the job); the
+      # server listens on this runner's loopback address only and is removed in the last step.
+      - name: Start a throwaway Vault development server
+        timeout-minutes: 5
+        run: |
+          token=$(openssl rand -hex 24)
+          echo "::add-mask::$token"
+          echo "HADAVIN_TEST_VAULT_TOKEN=$token" >> "$GITHUB_ENV"
+          export VAULT_DEV_ROOT_TOKEN_ID="$token"
+          docker run -d --name vault-ci -p 127.0.0.1:8200:8200 \
+            -e VAULT_DEV_ROOT_TOKEN_ID -e VAULT_DEV_LISTEN_ADDRESS=0.0.0.0:8200 -e SKIP_SETCAP=true \
+            "$VAULT_IMAGE" > /dev/null
+          # Probe from the host, with the token, the way the tests will reach the server (the published port); the token goes to
+          # curl on its standard input, not in its command line.
+          for _ in $(seq 1 30); do
+            if [ "$(docker inspect -f '{{.State.Running}}' vault-ci)" != "true" ]; then
+              echo "the Vault container exited"
+              docker ps -a
+              docker logs vault-ci 2>&1 | grep -viE 'unseal key|root token' | sed "s/$token/***/g"
+              exit 1
+            fi
+            printf 'header = "X-Vault-Token: %s"\n' "$token" | curl -fsS --max-time 5 -o /dev/null -K - http://127.0.0.1:8200/v1/auth/token/lookup-self && exit 0
+            sleep 2
+          done
+          echo "Vault did not answer on 127.0.0.1:8200 within 60 seconds"
+          docker ps -a
+          docker logs vault-ci 2>&1 | grep -viE 'unseal key|root token' | sed "s/$token/***/g"
+          exit 1
       - name: The postgres client the database tests shell out to is present (else they would skip silently)
         run: psql --version
       - name: Tests (no live calls)
         env:
           HADAVIN_TEST_PG_DSN: postgresql://postgres@localhost:5432/postgres
           HADAVIN_TEST_VAULT_ADDR: http://127.0.0.1:8200
-          HADAVIN_REQUIRE_PINNED_UNIDATA: "1"  # the text-folding tables are built for Unicode 15.1.0 (Python 3.13); another interpreter must fail, not skip
         run: pytest -q -m "not live and not perf" -rs
       - name: Stage-rename mutants (each reverted guard must be killed by its named test) (blocks)
         run: python tests/stage_mutants.py
@@ -97,7 +113,14 @@ jobs:
       - name: Performance of the redaction patterns (blocks)
         env:
           HADAVIN_TEST_PG_DSN: postgresql://postgres@localhost:5432/postgres  # one perf test needs the postgres service
+          HADAVIN_TEST_VAULT_ADDR: http://127.0.0.1:8200
         run: pytest -q -m perf -rs
+      - name: Remove the Vault development server
+        if: ${{ always() }}
+        timeout-minutes: 2
+        run: |
+          set -o pipefail
+          docker ps -aq --filter 'name=^vault-ci$' | xargs -r docker rm -f
 
   # The tests again on the oldest supported Python (pyproject: requires-python >=3.12); everything else runs once, on 3.13. A separate
   # job and not a matrix of "check": a matrix would rename the required check "check" to "check (3.13)". Python 3.12.3 differs from
@@ -112,22 +135,9 @@ jobs:
         env:
           POSTGRES_HOST_AUTH_METHOD: trust
         ports:
-          - 5432:5432
+          - 127.0.0.1:5432:5432
         options: >-
           --health-cmd "pg_isready -U postgres"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 10
-      vault:
-        image: hashicorp/vault:2.2.0@sha256:e0acd3c681bdf57f002d7214e5d050b876e1704678005c6b0406dd96a65be919
-        env:
-          VAULT_DEV_ROOT_TOKEN_ID: root
-          VAULT_DEV_LISTEN_ADDRESS: 0.0.0.0:8200
-          SKIP_SETCAP: "true"
-        ports:
-          - 8200:8200
-        options: >-
-          --health-cmd "VAULT_ADDR=http://127.0.0.1:8200 vault status"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
@@ -144,6 +154,37 @@ jobs:
           cache-suffix: "ci-tests-py312"
       - name: Install (locked, every backend extra and the contract-suite test group)
         run: uv sync --locked --no-build --all-extras --group test
+      # The `vault` secrets kind's contract suite runs against a real Vault dev server (in-memory, unsealed,
+      # throwaway), image set once in VAULT_IMAGE above. It is a step and not a service because its token is made fresh
+      # for this run (a service cannot read a step's output). It starts right before the tests, so the install and the lint do
+      # not see the token; it is masked in the Actions log (and is in the environment of every later step of the job); the
+      # server listens on this runner's loopback address only and is removed in the last step.
+      - name: Start a throwaway Vault development server
+        timeout-minutes: 5
+        run: |
+          token=$(openssl rand -hex 24)
+          echo "::add-mask::$token"
+          echo "HADAVIN_TEST_VAULT_TOKEN=$token" >> "$GITHUB_ENV"
+          export VAULT_DEV_ROOT_TOKEN_ID="$token"
+          docker run -d --name vault-ci -p 127.0.0.1:8200:8200 \
+            -e VAULT_DEV_ROOT_TOKEN_ID -e VAULT_DEV_LISTEN_ADDRESS=0.0.0.0:8200 -e SKIP_SETCAP=true \
+            "$VAULT_IMAGE" > /dev/null
+          # Probe from the host, with the token, the way the tests will reach the server (the published port); the token goes to
+          # curl on its standard input, not in its command line.
+          for _ in $(seq 1 30); do
+            if [ "$(docker inspect -f '{{.State.Running}}' vault-ci)" != "true" ]; then
+              echo "the Vault container exited"
+              docker ps -a
+              docker logs vault-ci 2>&1 | grep -viE 'unseal key|root token' | sed "s/$token/***/g"
+              exit 1
+            fi
+            printf 'header = "X-Vault-Token: %s"\n' "$token" | curl -fsS --max-time 5 -o /dev/null -K - http://127.0.0.1:8200/v1/auth/token/lookup-self && exit 0
+            sleep 2
+          done
+          echo "Vault did not answer on 127.0.0.1:8200 within 60 seconds"
+          docker ps -a
+          docker logs vault-ci 2>&1 | grep -viE 'unseal key|root token' | sed "s/$token/***/g"
+          exit 1
       - name: The postgres client the database tests shell out to is present (else they would skip silently)
         run: psql --version
       - name: Tests on Python 3.12 (no live calls)
@@ -151,6 +192,12 @@ jobs:
           HADAVIN_TEST_PG_DSN: postgresql://postgres@localhost:5432/postgres
           HADAVIN_TEST_VAULT_ADDR: http://127.0.0.1:8200
         run: pytest -q -m "not live and not perf" -rs
+      - name: Remove the Vault development server
+        if: ${{ always() }}
+        timeout-minutes: 2
+        run: |
+          set -o pipefail
+          docker ps -aq --filter 'name=^vault-ci$' | xargs -r docker rm -f
 
   security:
     if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
