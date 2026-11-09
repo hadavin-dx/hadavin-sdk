@@ -1,1 +1,1 @@
-10:28Z | agents: a8aff4ab bd-dpld-fix (A) | C hostile baseline done | core frozen | evid shells: none | unpushed: none | refreshed every 60 s by a bounded script (ends 11:38Z); detail in HEARTBEAT.md
+10:29Z | agents: C hostile baseline done | A finished | verifying patch | core frozen | evid shells: none | unpushed: none | refreshed every 60 s by a bounded script (ends 11:39Z); detail in HEARTBEAT.md
