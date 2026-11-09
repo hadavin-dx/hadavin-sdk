@@ -2,9 +2,14 @@ name: Evidence
 
 # Manual runs only. For one git ref and a list of Python versions this runs the same test selection as CI (the
 # "check" job in ci.yml), the stage-rename mutants and, optionally, named mutant scripts, each Python version on its
-# own runner with a throwaway Postgres and a throwaway Vault development server. The one difference from CI is the
-# pytest report flag: -rfEs here (the report needs the failures and errors listed too), -rs there. It deploys nothing,
-# uses no stored secrets and reads the repository only. Every step writes its raw log and its exit code to a folder
+# own runner with a throwaway Postgres and a throwaway Vault development server. The test selection is the same as in
+# CI, but the run is not identical. Differences from the "check" job: (1) the pytest report flag is -rfEs here (the
+# report needs the failures and errors listed too), -rs there; (2) COLUMNS=300 and PYTHONUNBUFFERED=1 are set for the
+# whole job, so long lines stay in one piece and the log keeps its order; (3) the variable that makes the text-folding
+# tables mandatory (HADAVIN_REQUIRE_PINNED_UNIDATA) is written by a step on the Python 3.13 leg only, where CI sets it in
+# the step's env block; (4) each check or test step runs through the helper that keeps its raw log and exit code; (5) the
+# Vault token is made in a step and written to the environment of every later step of the job, as the check job does.
+# It deploys nothing, uses no stored secrets and reads the repository only. Every step writes its raw log and its exit code to a folder
 # under the runner's temp directory (outside the checkout, so no log can become part of the tested files). A last
 # step fails the run unless every step has exit=0 (a step that never ran counts as NOT RUN, not as a pass). The steps
 # that run a check or a test (the token check, the install, the postgres client check, the tests, the performance

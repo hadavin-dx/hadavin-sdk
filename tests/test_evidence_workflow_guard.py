@@ -43,6 +43,7 @@ every change to the workflow files.
 import json
 import os
 import re
+import shlex
 import shutil
 import subprocess
 import sys
@@ -1362,7 +1363,7 @@ def test_the_report_shows_skip_counts_and_fails_on_a_missing_test_variable(tmp_p
     bad = helper(tmp_path, "report", "pytest", "perf")
     assert (
         bad.returncode == 1
-        and "3 test(s) skipped for a reason that names a HADAVIN_TEST_ or HADAVIN_REQUIRE_PINNED_UNIDATA variable"
+        and "3 test(s) skipped for a reason that names a HADAVIN_TEST_ variable or says HADAVIN_REQUIRE_PINNED_UNIDATA is required but not set"
         in bad.stdout
     )
 
@@ -1440,6 +1441,36 @@ RUN_RE = re.compile(
 )
 INSTALLS = re.compile(r"\buv\s+sync\b|\bpip3?\s+install\b|\buv\s+pip\s+install\b")
 
+CURL_CMD_RE = re.compile(
+    CMD_POS
+    + r"(?:\w+=\S*\s+)*(?:(?:sudo|timeout\s+\S+|env|command|exec|nohup)\s+)*curl\s+(?P<args>[^;&|]*)"
+)
+# short options that take a value: the rest of the word is the value
+CURL_VALUE_FLAGS = frozenset("oHdKmuAebcwxXTErCyYzFDQ")
+
+
+def curl_is_verbose(line: str) -> bool:
+    """True if a curl command (curl standing where a command can stand, so `command -v curl` or a word list that
+    only names curl is not one) is given a flag that makes it print the request headers, so the Vault token header would
+    reach the log: -v, --verbose, a short-flag word that contains v before any value-taking letter (-vv, -sSv, -fsSv), or
+    --trace, --trace-ascii, --trace-time and the like. Other flags that merely contain the letter v or t in their name
+    (--tlsv1.2, --retry-all-errors, --proto-redir) are not verbose flags."""
+    for m in CURL_CMD_RE.finditer(line):
+        try:
+            words = shlex.split(m.group("args"))
+        except ValueError:
+            words = m.group("args").split()
+        for w in words:
+            if w == "--verbose" or w.startswith("--trace"):
+                return True
+            if w.startswith("-") and not w.startswith("--") and len(w) > 1:
+                for ch in w[1:]:
+                    if ch == "v":
+                        return True
+                    if ch in CURL_VALUE_FLAGS:
+                        break
+    return False
+
 
 def docker_run_lines(script: str) -> list[str]:
     """Each `docker run ...` (or podman run, docker container run, docker compose) command of a script, from the words docker run to the end of its logical line (line
@@ -1513,9 +1544,7 @@ def vault_problems(text: str) -> list[str]:
                         "extra-rights",
                         f"job {jname}: sudo, docker exec, docker.sock or extra rights: {line[:40]}",
                     )
-                if re.search(r"\bcurl\s", line) and re.search(
-                    r"\s(-[a-zA-Z]*v[a-zA-Z]*|--verbose|--trace\S*|--dump-header)\b", line
-                ):
+                if curl_is_verbose(line):
                     add(
                         out,
                         "curl-verbose",
@@ -2298,10 +2327,23 @@ def test_vault_target_without_an_address_is_the_local_fake(monkeypatch):
 
 
 def test_a_skip_that_names_the_pinned_tables_variable_fails_the_report(tmp_path):
-    code = "print('SKIPPED [1] tests/x.py:1: HADAVIN_REQUIRE_PINNED_UNIDATA is not set')"
+    code = (
+        "print('SKIPPED [1] tests/x.py:1: HADAVIN_REQUIRE_PINNED_UNIDATA is required but not set')"
+    )
     helper(tmp_path, "run", "pytest", "--", sys.executable, "-c", code)
     bad = helper(tmp_path, "report", "pytest")
-    assert bad.returncode == 1 and "HADAVIN_REQUIRE_PINNED_UNIDATA variable" in bad.stdout
+    assert bad.returncode == 1 and "is required but not set" in bad.stdout
+
+
+def test_a_python_312_skip_that_names_the_pinned_tables_variable_passes(tmp_path):
+    """The variable is deliberately unset on Python 3.12 and 3.14: a skip that only names it is an ordinary skip."""
+    code = (
+        "print('SKIPPED [2] tests/x.py:1: text-folding tables are built for Python 3.13 "
+        "(HADAVIN_REQUIRE_PINNED_UNIDATA is unset on 3.12)')"
+    )
+    helper(tmp_path, "run", "pytest", "--", sys.executable, "-c", code)
+    ok = helper(tmp_path, "report", "pytest")
+    assert ok.returncode == 0 and "| pytest | exit=0 | 2 |" in ok.stdout
 
 
 def test_a_step_called_status_is_refused_and_the_result_rows_survive(tmp_path):
@@ -2409,3 +2451,41 @@ def test_the_vault_test_files_do_not_skip_on_a_connection_failure():
 )
 def test_the_skip_pattern_sees_every_way_to_skip(line):
     assert SKIP_RE.search(line)
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "curl -v http://x",
+        "curl -fsSv http://x",
+        "curl -vv http://x",
+        "curl -sS --verbose http://x",
+        "curl --trace out http://x",
+        "curl --trace-ascii - http://x",
+        "curl --trace-time --trace t http://x",
+        "echo a | curl -fsS -v -K - http://x",
+        "sudo curl -v http://x",
+        "x=1 curl -sv http://x",
+        "cmd && curl -o /dev/null -v http://x",
+    ],
+)
+def test_curl_verbose_forms_are_caught(line):
+    assert curl_is_verbose(line)
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        (
+            'curl -sSfL --retry 5 --retry-all-errors --retry-delay 5 --connect-timeout 30 --proto "=https" '
+            '--proto-redir "=https" --tlsv1.2 -o "$RUNNER_TEMP/x.tgz" "https://example.invalid/v1/x"'
+        ),
+        "curl -fsS --max-time 5 -o /dev/null -K - http://127.0.0.1:8200/v1/auth/token/lookup-self",
+        'for c in sha256sum tar curl git; do p=$(command -v "$c") || exit 1; done',
+        "command -v curl",
+        "curl -H 'X-Note: verbose' http://x",
+        "curl -ovx http://x",
+    ],
+)
+def test_curl_flags_that_only_contain_v_are_not_verbose(line):
+    assert not curl_is_verbose(line)

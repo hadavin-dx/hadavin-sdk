@@ -9,7 +9,7 @@ Four commands, so that the workflow YAML holds no shell logic that cannot be tes
              CMD's own code. A command that does not exist is recorded as exit=127 and one that exists but cannot be
              started (not executable, wrong format) as exit=126, the same two codes a shell uses.
 * ``report NAME ...``  prints a Markdown summary (with skipped-test counts) and exits 1 unless every NAME has exactly
-             one row, that row is exit=0, and no test was skipped for a reason that names a HADAVIN_TEST_ or HADAVIN_REQUIRE_PINNED_UNIDATA variable. A NAME with
+             one row, that row is exit=0, and no test was skipped for a reason that names a HADAVIN_TEST_ variable or says HADAVIN_REQUIRE_PINNED_UNIDATA is required but not set. A NAME with
              no row is shown as NOT RUN (skipped, timed out or cancelled steps cannot pass); a repeated row fails. A row
              for a step that is not in the NAME list is shown too, and it fails the report unless it is exit=0.
 * ``token-reader FILE``  exits 0 only if FILE has a code line (not a comment) that reads HADAVIN_TEST_VAULT_TOKEN from
@@ -288,8 +288,11 @@ def cmd_token_reader(path: str) -> int:
 
 
 SKIP_RE = re.compile(r"SKIPPED \[(\d+)\] (.*)")
-# A skip whose reason names one of these is a missing setting, not an ordinary skip: the run fails.
-HIDDEN_SKIP_WORDS = ("HADAVIN_TEST_", "HADAVIN_REQUIRE_PINNED_UNIDATA")
+# A skip whose reason names a HADAVIN_TEST_ variable is a missing setting, not an ordinary skip: the run fails.
+HIDDEN_SKIP_WORDS = ("HADAVIN_TEST_",)
+# HADAVIN_REQUIRE_PINNED_UNIDATA is set on the Python 3.13 leg only and deliberately unset on the others, where a
+# test may skip and name it. Only this exact sentence (the variable is required but not set) fails the run.
+PINNED_SKIP_TEXT = "HADAVIN_REQUIRE_PINNED_UNIDATA is required but not set"
 NEVER = "NOT RUN (never finished: skipped, timed out or cancelled)"
 
 
@@ -300,7 +303,8 @@ def _skips(log: Path) -> tuple[int, int]:
         m = SKIP_RE.match(line)
         if m:
             total += int(m.group(1))
-            if any(word in m.group(2) for word in HIDDEN_SKIP_WORDS):
+            reason = m.group(2)
+            if any(word in reason for word in HIDDEN_SKIP_WORDS) or PINNED_SKIP_TEXT in reason:
                 hidden += int(m.group(1))
     return total, hidden
 
@@ -329,7 +333,7 @@ def cmd_report(expected: list[str]) -> int:
             total, hidden = _skips(log)
             skipped = str(total)
             if hidden and result == "exit=0":
-                result = f"FAIL: {hidden} test(s) skipped for a reason that names a HADAVIN_TEST_ or HADAVIN_REQUIRE_PINNED_UNIDATA variable"
+                result = f"FAIL: {hidden} test(s) skipped for a reason that names a HADAVIN_TEST_ variable or says HADAVIN_REQUIRE_PINNED_UNIDATA is required but not set"
         if result != "exit=0":
             bad += 1
         out.append(f"| {name} | {result} | {skipped} |")
