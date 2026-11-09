@@ -1,6 +1,8 @@
 # bd-R76 builder report: PR76 core/P2a-1 (kill switch stop state)
 
 ## NOT done or uncertain (first)
+- NOT RUN: the full suite at the final head d1855a9. The machine was overloaded: one full run reached 19% in 15 min with one failure (F at about 13%, test not identified, log /tmp/r76-full.log) and was stopped; a second, narrower run (60 files that mention pilot/postgres/limits/cli/tick, plus tests/contracts) never got a slot and was stopped. The existing pilot/postgres app tests are therefore NOT confirmed against the new app.py requirement (limits.runtime_role / reset_group and the start-up probe). Treat that as a likely failure area.
+- Run locally and green: tests/test_stop_state_{db,probe,cli,loop,rollback,limits,memory,config}.py on PG16 (59 passed, 1 skipped before the rollback test was added), ruff check, ruff format --check.
 - NOT done: tests/stop_state_mutants.py (mutation plan file) was not written. The ticket's mutant rows are unbuilt, so no mutation run exists for this package.
 - NOT done: ACCEPTED_CHANGES entry for the rollback (P3a's dictionary not checked at this base); only a rollback test exists.
 - NOT done: `effective_problems` owner-role membership check for the NOINHERIT case.
