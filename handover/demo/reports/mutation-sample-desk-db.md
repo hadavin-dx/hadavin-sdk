@@ -2,7 +2,7 @@
 
 Evidence runner output (records, does not judge). Private scratch tree /tmp/ag/mut, pristine copy /tmp/ag/mut-pristine, driver /tmp/ag/mut_run.py, mutant list /tmp/ag/mutants.py, raw results /tmp/ag/mut_results.json.
 
-Counts so far: attempted 13, valid 13, killed 9, survived 4, invalid 0, timeout 0.
+Counts so far: attempted 19, valid 19, killed 15, survived 4, invalid 0, timeout 0.
 
 | n | label | class | file:line | mutation | tests run | result | first failing test | seconds |
 |---|---|---|---|---|---|---|---|---|
@@ -19,6 +19,12 @@ Counts so far: attempted 13, valid 13, killed 9, survived 4, invalid 0, timeout 
 | 11 | schema source_ref length bound 128 -> 127 | boundary | src/lead_desk/schema.sql:7 | `CHECK (length(source_ref) BETWEEN 1 AND 128)` -> `CHECK (length(source_ref) BETWEEN 1 AND 127)` | fast selection (11 files, minus known-red and 3 slow load tests), -x | SURVIVED |  | 92.9 |
 | 12 | envelope min length boundary <= -> < | boundary | src/lead_desk/desk.py:719 | `SOURCE_REF_MIN <= len(source_ref) <= SOURCE_REF_MAX` -> `SOURCE_REF_MIN < len(source_ref) <= SOURCE_REF_MAX` | fast selection (11 files, minus known-red and 3 slow load tests), -x | SURVIVED |  | 92.9 |
 | 13 | automatic claim no longer clears send_started | claim-lease | src/lead_desk/desk.py:97 | `("pending",): (         "UPDATE followups SET state='sending', attempt` -> `("pending",): (         "UPDATE followups SET state='sending', attempt` | fast selection (11 files, minus known-red and 3 slow load tests), -x | SURVIVED |  | 93.7 |
+| 14 | automatic claim has no state precondition | claim-lease | src/lead_desk/desk.py:100 | `" WHERE lead_id=? AND state = 'pending'"` -> `" WHERE lead_id=?"` | fast selection (11 files, minus known-red and 3 slow load tests), -x | KILLED | tests/test_hardening_cloud_b.py::test_g4_auto_driver_skips_failed | 88.6 |
+| 15 | Retry claim also takes unknown rows | claim-lease | src/lead_desk/desk.py:105 | `AND state IN ('pending','failed')"` -> `AND state IN ('pending','failed','unknown')"` | fast selection (11 files, minus known-red and 3 slow load tests), -x | KILLED | tests/test_flow.py::test_unknown_blind | 1.5 |
+| 16 | Retry of a failed row no longer restarts the auto count | retry-rule | src/lead_desk/desk.py:104 | `THEN 1 ELSE auto_attempts+1 END, updated_at=?"         " WHERE lead_id` -> `THEN auto_attempts+1 ELSE auto_attempts+1 END, updated_at=?"         "` | fast selection (11 files, minus known-red and 3 slow load tests), -x | KILLED | tests/test_hardening_cloud.py::test_f6_failed_only_after_cap | 49.2 |
+| 17 | requeue cap boundary >= -> > | boundary | src/lead_desk/desk.py:377 | `(crm_done <> 1 OR send_started = 0) AND auto_attempts >= ? THEN 'faile` -> `(crm_done <> 1 OR send_started = 0) AND auto_attempts > ? THEN 'failed` | fast selection (11 files, minus known-red and 3 slow load tests), -x | KILLED | tests/test_hardening_cloud_b.py::test_h7_requeue_at_the_cap_fails | 90.3 |
+| 18 | requeue no longer sets ambiguous_prior | ambiguous-mark | src/lead_desk/desk.py:381 | `AND send_started = 1 THEN 1 ELSE ambiguous_prior END` -> `AND send_started = 1 THEN 0 ELSE ambiguous_prior END` | fast selection (11 files, minus known-red and 3 slow load tests), -x | KILLED | tests/test_hardening_cloud_b.py::test_g8_unclear_send_not_resent | 89.8 |
+| 19 | requeue keyed/blind decision inverted | requeue-rule | src/lead_desk/desk.py:379 | `WHEN NOT ? THEN 'unknown' WHEN auto_attempts` -> `WHEN ? THEN 'unknown' WHEN auto_attempts` | fast selection (11 files, minus known-red and 3 slow load tests), -x | KILLED | tests/test_flow.py::test_crash_resume_each_point[D2-keyed] | 1.5 |
 
 ## Survivors
 
