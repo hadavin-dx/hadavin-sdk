@@ -1238,3 +1238,23 @@ DECISIONS FOR LEAD (P1d, open questions in the ticket)
 5. P1b ViewTooShort behaviour: exact fallback as in the ticket?
 NEXT
 - Collect round-2 reports, resolve, repeat until clean. Then BN-22 and the P1b evidence runner when the builder reports.
+
+## q378 (2026-11-09T05:35Z) ORDER 166 answer: P1d rev 3 done, pulse fixed, slip acknowledged
+
+FAILED / UNCERTAIN FIRST: the P6a Postgres rerun is still running (first run was invalid, Postgres was down). P1d rev 3 is a PLAN only; no code. Round-3 plan reviewers are running (3 fresh, Sonnet).
+
+- Slip acknowledged: 45 original + 17 new = 62; I will never quote 62/62 as the original count.
+- Pulse bug fixed at the source: pulse now reads only strict register lines `name (details)` (regex over `agents.txt`), the register was cleaned (2 real entries), pulse restarted. It no longer lists times as names.
+- P1d rev 3 (tickets/P1d.md, commit 8132bf2): ORDER 166 (1) model path withholds + logs, no raise; (2) H34 over-mask accepted, rate reported separately in BS-3; (3) operator route = existing deny/expire, approve path refuses by re-running the check, no new endpoint; (4) S11/S16 do not call redact_text, so they are P1d-b, ledger rows BL-core-p1d-006 and -009 added now (plus -010 as P1d-c); (5) ViewTooShort exact fallback only with `coverage=exact_only` logged, client-profile strict mode still refuses.
+- Ledger: BL-core-p1d-001..010 appended to handover/ledger.md.
+
+CHECKED BY ME: ticket file written and pushed; ledger rows present; pulse output. NOT RUN: any code, any test; P6a rerun result; round-3 reviews.
+
+DECISIONS FOR LEAD (rev 3 open questions):
+1. P1b to expose the textnorm minimum length constant and keep scan_holds error classes stable (P1b fix batch).
+2. Gate that enforces "no client data before P1d": proposal = P1D_APPLIED marker plus client-profile refusal.
+3. S6/S13 hand-over to P2d-2: accepted exception, or fold into P1d?
+4. A `display_withheld` field only if the approve path cannot reach the summary.
+5. Confirm one deterministic size cap (withhold above it) instead of text slices.
+
+NEXT: collect round-3 reports, resolve, repeat until clean; check P6a rerun; P1b fix builder report then separate evidence runner.
