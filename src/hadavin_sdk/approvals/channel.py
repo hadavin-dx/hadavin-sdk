@@ -7,7 +7,7 @@ from collections.abc import Mapping
 from typing import TYPE_CHECKING, Protocol
 
 from hadavin_sdk.approvals import hmac_v0
-from hadavin_sdk.approvals.gate import sanitise_text, withhold_commands
+from hadavin_sdk.approvals.gate import defang_text, sanitise_text, withhold_commands
 from hadavin_sdk.guard import runmap
 from hadavin_sdk.models import ApprovalDecision, ApprovalRequest
 
@@ -22,7 +22,7 @@ def clean(text: str) -> str:
     # The neutralising hook (sanitise, then withhold commands) runs on the text AND on every decoded view the redactor
     # tries (`redact_text(..., neutralise=)`): a view that replaces the text (because it found a secret only the decoding
     # shows) is sanitised too, so `%72m -rf /`, `%3Cimg%3E`, `&lt;!channel&gt;` cannot come back as a command, an image
-    # or a mention. Nothing transforms the text after its final redaction. Placeholders already in the text
+    # or a mention. After the final redaction only `defang_text` runs: it writes `.` as `[.]` and wide dots as `.`. Placeholders already in the text
     # (`<IPV4_1>`) survive sanitising (tested) and are seeded into the map so a new one never reuses their number.
     text = text.replace("\x00", "")
     mapping = _seeded(text)
@@ -35,8 +35,8 @@ def clean(text: str) -> str:
         joined_map = _seeded(joined)
         alt = runmap.redact_text(joined, joined_map, neutralise=_neutralise)
         if _assignment_originals(joined_map) - _assignment_originals(mapping):
-            return alt
-    return out
+            return defang_text(alt)
+    return defang_text(out)
 
 
 # A tag, but never a real placeholder (`<IPV4_1>`), and only the spaces and tabs after it (never a line break).
@@ -45,7 +45,7 @@ _ASSIGNMENT_KINDS = {"SECRET", "APIKEY", "BEARER", "BASIC", "URLCRED"}
 
 
 def _neutralise(text: str) -> str:
-    return withhold_commands(sanitise_text(text))
+    return withhold_commands(sanitise_text(text, defang=False))
 
 
 def _seeded(text: str) -> runmap.RunMap:

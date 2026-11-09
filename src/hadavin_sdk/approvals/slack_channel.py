@@ -17,7 +17,7 @@ from typing import Any
 from hadavin_sdk.approvals import slack
 from hadavin_sdk.approvals.cards import Card, Delivery
 from hadavin_sdk.approvals.channel import _neutralise, clean
-from hadavin_sdk.approvals.gate import withhold_commands
+from hadavin_sdk.approvals.gate import defang_text, undefang_text, withhold_commands
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.guard import runmap
 from hadavin_sdk.llm.common import post_json
@@ -71,14 +71,15 @@ class SlackChannel:
         # withholding commands can join what it removed around: redact once more through the choke point
         # The map is seeded with the placeholders the summary already holds (a fake original that never occurs in text),
         # so a placeholder this pass adds never reuses one of their numbers.
-        withheld = withhold_commands(req.summary)
+        # Summaries stored by the old code hold defanged, unmasked addresses: undo that `[.]` first, redact, defang last.
+        withheld = withhold_commands(undefang_text(req.summary))
         seeded = runmap.RunMap(
             {
                 ph: "\0seed" + ph
                 for ph in (m.group(0) for m in runmap.PLACEHOLDER.finditer(withheld))
             }
         )
-        shown = runmap.redact_text(withheld, seeded, neutralise=_neutralise)
+        shown = defang_text(runmap.redact_text(withheld, seeded, neutralise=_neutralise))
         if len(shown) > self.max_card_chars:
             shown = "(the summary is too long to show here; open the full request in the console)"
         blocks: list[dict[str, Any]] = [

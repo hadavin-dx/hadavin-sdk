@@ -68,6 +68,7 @@ from __future__ import annotations
 
 import html
 import re
+from collections.abc import Callable
 
 from markdown_it import MarkdownIt
 
@@ -226,19 +227,56 @@ def _rendered(views: set[str]) -> set[str]:
     return {_RENDERED_MARKUP.sub("", html.unescape(v)) for v in views}
 
 
+# A placeholder (`<HOSTNAME_1>`) followed by a dot and a name character: the redactor masks only the internal part of
+# a host, so what follows the dot (`example.com`) would stay linkable. Written `[.]` (P1d-a, D3).
+_PLACEHOLDER_DOT = re.compile(r"(<[A-Z][A-Z0-9]*_[0-9]+>)\.(?=[\w-])")
+# The `[.]` the old gate wrote: between two name characters only (P1d-a, `undefang_text`).
+_LEGACY_DOT = re.compile(r"(?<=[\w-])\[\.\](?=[\w-])")
+
+
+def _defang_plain(part: str) -> str:
+    return _DOMAIN.sub(_defang, _NON_ASCII_HOST.sub(_defang, _WIDE_DOTS.sub(".", part)))
+
+
+def _defang_prose(part: str) -> str:
+    # Already-written `[.]` between name characters is read as `.` first, so defanging twice gives the text of once:
+    # `_NON_ASCII_HOST` does not look behind `]`, so a second pass defanged `e[.]rg\u2039.f` further (property run).
+    part = _LEGACY_DOT.sub(".", part)
+    part = _WIDE_DOTS.sub(".", part)
+    part = _PLACEHOLDER_DOT.sub(r"\1[.]", part)
+    return _defang_plain(part)
+
+
+def _per_part(line: str, fix: Callable[[str], str]) -> str:
+    parts = [line] if "``" in line else _INLINE_CODE.split(line)
+    return "".join(part if i % 2 else fix(part) for i, part in enumerate(parts))
+
+
 def _defang_outside_code(line: str) -> str:
     """Domains are defanged except inside inline code, where no renderer makes a link. Only when the
     line's backticks are unambiguous (no double run) - otherwise everything is defanged."""
-    parts = [line] if "``" in line else _INLINE_CODE.split(line)
-    return "".join(
-        part
-        if i % 2
-        else _DOMAIN.sub(_defang, _NON_ASCII_HOST.sub(_defang, _WIDE_DOTS.sub(".", part)))
-        for i, part in enumerate(parts)
+    return _per_part(line, _defang_plain)
+
+
+def _outside_code(text: str, fix: Callable[[str], str]) -> str:
+    """`fix` on every prose part of `text`; the body lines of a closed backtick fence stay as they are."""
+    body = {i for s, e, ch in _closed_fences(text) if ch == "`" for i in range(s + 1, e)}
+    return "\n".join(
+        line if i in body else _per_part(line, fix) for i, line in enumerate(text.split("\n"))
     )
 
 
-def _clean_line(line: str) -> str:
+def defang_text(text: str) -> str:
+    """Write each dot of a domain or host as `[.]` in the FINAL text a renderer reads (after redaction)."""
+    return _outside_code(text, _defang_prose)
+
+
+def undefang_text(text: str) -> str:
+    """Undo the `[.]` the old gate wrote between two name characters in prose (requests stored before P1d-a)."""
+    return _outside_code(text, lambda part: _LEGACY_DOT.sub(".", part))
+
+
+def _clean_line(line: str, defang: bool) -> str:
     # ⛔ Nothing here decodes: the gate writes out exactly the text it checked (second review,
     # 2026-09-30). A reference is neutralised below instead, so `h&#116;tps://` is never a link and
     # `&#96;&#96;&#96;` never a fence, in any renderer.
@@ -261,21 +299,24 @@ def _clean_line(line: str) -> str:
     line = _ENTITY.sub(r"&amp;\1", line)
     line = _break_runs(line.replace("]:", "]\u200b:"))
     line = _MENTION.sub(r"at-\1", line)  # not `(at)`: after `[link removed]` that is a link
-    return _defang_outside_code(line)
+    return _defang_outside_code(line) if defang else line
 
 
-def _clean_prose(lines: list[str]) -> list[str]:
+def _clean_prose(lines: list[str], defang: bool) -> list[str]:
     """One run of non-code lines: tags that span lines go first, then each line."""
     if not lines:
         return []
     joined = _HTML.sub("", "\n".join(lines)).split("\n")
-    out = [_clean_line(line) for line in joined]
+    out = [_clean_line(line, defang) for line in joined]
     # A line cleaning changed starts no block: the gate did not write that structure, the input did not
     # have it. (A tag across lines shifts the lines: then every line counts as changed.)
     same = len(joined) == len(lines)
+    # Without defang the block test reads the line as it would be after defang, so a ZWSP is added exactly where
+    # it is added today (the later `defang_text` changes no line start).
+    seen = out if defang else [_defang_outside_code(c) for c in out]
     out = [
-        "\u200b" + c if _ANY_BLOCK.match(c) and not (same and c == lines[i]) else c
-        for i, c in enumerate(out)
+        "\u200b" + c if _ANY_BLOCK.match(d) and not (same and d == lines[i]) else c
+        for i, (c, d) in enumerate(zip(out, seen, strict=True))
     ]
     # A setext underline turns the line above it into a heading.
     return [
@@ -305,11 +346,11 @@ def _closed_fences(text: str) -> list[tuple[int, int, str]]:
     return spans
 
 
-def _all_prose(lines: list[str]) -> str:
-    return "\n".join(_clean_prose(lines))
+def _all_prose(lines: list[str], defang: bool) -> str:
+    return "\n".join(_clean_prose(lines, defang))
 
 
-def sanitise_text(text: str) -> str:
+def sanitise_text(text: str, *, defang: bool = True) -> str:
     """G3 over markdown. Only the body of a CLOSED backtick fence stays verbatim - CommonMark shows it
     as code and Slack toggles code on its ``` lines. A closed `~~~` fence stays a fence with its body
     cleaned (Slack has no `~~~`); everything else, indented code included, is cleaned as prose. The code regions come from a CommonMark parser, and the output is
@@ -324,30 +365,30 @@ def sanitise_text(text: str) -> str:
     for start, last, char in _closed_fences("\n".join(lines)):
         opener, closer = _FENCE_LINE.match(lines[start]), _FENCE_LINE.match(lines[last])
         if not opener or not closer:
-            return _all_prose(lines)
-        out += _clean_prose(lines[pos:start])
+            return _all_prose(lines, defang)
+        out += _clean_prose(lines[pos:start], defang)
         begin = len(out)
         # Markers normalised to three: the body holds no run, so three close it as the original marker
         # did. The info string is cleaned (Slack shows it).
-        out.append(opener.group(1) + char * 3 + _clean_line(opener.group(3)))
+        out.append(opener.group(1) + char * 3 + _clean_line(opener.group(3), defang))
         body = lines[start + 1 : last]
         # A backtick body is code in both readers (Slack closes code at ``` anywhere, so runs are broken;
         # a control could hide one). Slack has no ~~~: that body is prose to it and is cleaned.
         out += (
             [_break_runs(strip_controls(line)) for line in body]
             if char == "`"
-            else [_clean_line(line) for line in body]
+            else [_clean_line(line, defang) for line in body]
         )
         out.append(closer.group(1) + char * 3)
         kept.append((begin, len(out) - 1, char))
         pos = last + 1
-    out += _clean_prose(lines[pos:])
+    out += _clean_prose(lines[pos:], defang)
     result = "\n".join(out)
     markers = {i for k in kept for i in k[:2]}
     if _closed_fences(result) != kept or _RUN.search(
         "\n".join(line for i, line in enumerate(out) if i not in markers)
     ):
-        return _all_prose(lines)
+        return _all_prose(lines, defang)
     return result
 
 
