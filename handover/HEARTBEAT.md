@@ -696,3 +696,4 @@ PULSE 11:23Z agents: a3e0c390 A4 builder fix6; lens reviewers a2b9a9b0 L1, a0e7e
 PULSE 11:25Z A4 done: fix6 f86d5bf; patch-cloud-2.diff (fix5->fix6) + patch-cloud-1-full-fix6.diff (303127b->fix6) pushed; lens1+lens3 saved; waiting lens2 a0e7ea08, lens4 a15cf586 then ONE fix pass (A5) for all lens findings + fix6 gate/measure; core idle not written
 PULSE 11:28Z all 4 lens reports saved (lens1-4 .md); agents: a699ad44 A5 builder fix7 src +40m, a12f5728 A6 builder tests fix6t +30m; shells: pulse_refresh only; core idle not written
 PULSE 11:32Z agents: a699ad44 A5 builder fix7 src (4m, checkpoint 1: baseline fix6 keyed 229x503 on load, editing src), a12f5728 A6 builder fix6t tests (4m, renames done); shells: builders' own load/pytest; core idle not written
+PULSE 11:37Z agents: a699ad44 A5 builder fix7 src (8m of 40), a12f5728 A6 builder fix6t tests (8m of 30); no orders newer than 203; core idle not written
