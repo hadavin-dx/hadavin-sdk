@@ -1,15 +1,23 @@
 """Helper for the manual Evidence workflow (.github/workflows/evidence.yml). Standard library only.
 
-Three commands, so that the workflow YAML holds no shell logic that cannot be tested:
+Four commands, so that the workflow YAML holds no shell logic that cannot be tested:
 
 * ``plan``   reads INPUT_REF, INPUT_PYTHONS and INPUT_MUTANTS from the environment, refuses anything outside the
              allowlists below and writes the checked values to $GITHUB_OUTPUT. Typed input never reaches a shell.
 * ``run NAME -- CMD ...``  runs CMD, copies its output to the console and to $EVIDENCE_DIR/NAME.txt (first line:
              the commit under test), appends ``NAME<TAB>exit=<code>`` to $EVIDENCE_DIR/status.txt and exits with
-             CMD's own code. A command that cannot start is recorded as exit=127 (same as a shell).
+             CMD's own code. A command that does not exist is recorded as exit=127 and one that exists but cannot be
+             started (not executable, wrong format) as exit=126, the same two codes a shell uses.
 * ``report NAME ...``  prints a Markdown summary (with skipped-test counts) and exits 1 unless every NAME has exactly
              one row, that row is exit=0, and no test was skipped for a reason that names a HADAVIN_TEST_ variable. A NAME with
-             no row is shown as NOT RUN (skipped, timed out or cancelled steps cannot pass); a repeated row fails.
+             no row is shown as NOT RUN (skipped, timed out or cancelled steps cannot pass); a repeated row fails. A row
+             for a step that is not in the NAME list is shown too, and it fails the report unless it is exit=0.
+* ``token-reader FILE``  exits 0 only if FILE has a code line (not a comment) that reads HADAVIN_TEST_VAULT_TOKEN from
+             the environment; otherwise it prints the reason and exits 1.
+
+The status file is written by the same user and in the same job as the tested code, so tested code could write a
+passing row itself: the report catches mistakes (a step that did not run, a failing exit code, a hidden skip), it is not
+proof against code that sets out to forge it.
 
 Allowlists: a Python version is 3.12, 3.13 or 3.14 (the oldest is pyproject requires-python, the newest was the latest release when written); a
 git ref is letters, digits and . _ / - only (git's own check-ref-format also bans '..', '//', a trailing '.' or '/'
@@ -18,6 +26,7 @@ and '.lock'); a runner is tests/<lowercase_name>_mutants.py.
 
 from __future__ import annotations
 
+import functools
 import json
 import os
 import re
@@ -47,6 +56,16 @@ MASK = "***"
 MIN_PIECE = 8
 
 
+@functools.lru_cache(maxsize=8)
+def _pattern(value: str) -> re.Pattern[str]:
+    """One compiled pattern per secret value (the longest piece first), built once and not for every output line."""
+    pieces = {value}
+    for size in range(MIN_PIECE, len(value)):
+        pieces.add(value[:size])
+        pieces.add(value[-size:])
+    return re.compile("|".join(re.escape(p) for p in sorted(pieces, key=len, reverse=True)))
+
+
 def mask(text: str) -> str:
     """Replace the value of every secret environment variable, and every piece of it of at least 8 characters taken
     from its start or its end, with ***.
@@ -59,13 +78,7 @@ def mask(text: str) -> str:
         value = os.environ.get(name, "")
         if len(value) < MIN_PIECE:
             continue
-        pieces = {value}
-        for size in range(MIN_PIECE, len(value)):
-            pieces.add(value[:size])
-            pieces.add(value[-size:])
-        text = re.sub(
-            "|".join(re.escape(p) for p in sorted(pieces, key=len, reverse=True)), MASK, text
-        )
+        text = _pattern(value).sub(MASK, text)
     return text
 
 
@@ -73,7 +86,14 @@ class Refused(ValueError):
     """An input is outside the allowlist."""
 
 
+PULL_REF_RE = re.compile(r"(refs/)?pull/.*")
+
+
 def check_ref(ref: str) -> str:
+    if PULL_REF_RE.fullmatch(ref):
+        raise Refused(
+            "ref refused: pull/N/head (and refs/pull/...) is not supported, pass the branch name or the commit SHA"
+        )
     if not REF_RE.fullmatch(ref) or ".." in ref or "//" in ref or ref.endswith((".", "/", ".lock")):
         raise Refused(
             f"ref refused (letters, digits, . _ / - only, no '..'; pull/N/head is not supported, pass the branch or commit): {ref[:60]!r}"
@@ -153,7 +173,7 @@ def cmd_run(name: str, command: list[str]) -> int:
         raise Refused(
             f"step name {name!r} was already used in this run (a log would be overwritten)"
         )
-    code = 127
+    code = 127  # a command that does not exist (a shell says 127)
     with (LOG_DIR / f"{name}.txt").open("w", encoding="utf-8") as fh:
 
         def emit(text: str) -> None:
@@ -173,6 +193,8 @@ def cmd_run(name: str, command: list[str]) -> int:
                 errors="replace",
             )
         except OSError as exc:
+            if not isinstance(exc, FileNotFoundError):
+                code = 126  # found but cannot be started: not executable, wrong format (a shell says 126)
             emit(f"cannot start {command[0]!r}: {exc}\n")
         else:
             for line in proc.stdout or ():
@@ -183,6 +205,28 @@ def cmd_run(name: str, command: list[str]) -> int:
         emit(f"exit={code}\n")
     _record(name, f"exit={code}")
     return code
+
+
+READER_RE = re.compile(r"^[^#]*(environ|getenv)[^#]*HADAVIN_TEST_VAULT_TOKEN")
+
+
+def cmd_token_reader(path: str) -> int:
+    """Exit 0 only if the file has a code line that reads the per-run Vault token. Prints the reason when it has not,
+    so the saved log of the step says why the run stopped."""
+    try:
+        lines = Path(path).read_text(encoding="utf-8", errors="replace").splitlines()
+    except OSError as exc:
+        sys.stdout.write(f"cannot read {path}: {exc}\n")
+        return 1
+    if any(READER_RE.match(line) for line in lines):
+        sys.stdout.write(f"{path} reads HADAVIN_TEST_VAULT_TOKEN\n")
+        return 0
+    sys.stdout.write(
+        f"{path} has no code line that reads HADAVIN_TEST_VAULT_TOKEN from the environment: the tested ref is older "
+        "than this workflow and would send a fixed token to a server that has a random one (its Vault tests would "
+        "fail with a 403). Test a newer ref.\n"
+    )
+    return 1
 
 
 SKIP_RE = re.compile(r"SKIPPED \[(\d+)\] (.*)")
@@ -258,10 +302,14 @@ def main(argv: list[str]) -> int:
             return cmd_run(argv[1], argv[3:])
         if argv[:1] == ["report"]:
             return cmd_report(argv[1:])
+        if argv[:1] == ["token-reader"] and len(argv) == 2:
+            return cmd_token_reader(argv[1])
     except Refused as exc:
         sys.stderr.write(f"refused: {exc}\n")
         return 2
-    sys.stderr.write("usage: evidence_step.py plan | run NAME -- CMD... | report NAME...\n")
+    sys.stderr.write(
+        "usage: evidence_step.py plan | run NAME -- CMD... | report NAME... | token-reader FILE\n"
+    )
     return 2
 
 

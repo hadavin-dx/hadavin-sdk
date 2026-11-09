@@ -2,24 +2,37 @@
 
 Classes guarded (sources: GitHub Actions security hardening guide: least-privilege GITHUB_TOKEN, pin actions to a full
 commit SHA, no untrusted ${{ }} inside run scripts; the bash manual on `set -e`, pipelines and `$?`):
-  1. permissions: read-only at the top and in every job;
+  General rules, run on EVERY file in .github/workflows (a new workflow file is covered the day it is added):
+  1. permissions: read-only at the top, and read-only if a job sets its own;
   2. every `uses:` is a full 40-hex commit SHA;
   3. no `${{ }}` expression inside any `run:` script (script injection);
-  4. concurrency never cancels a running evidence run, and the group carries the inputs;
-  5. every job and every `run:` step has a timeout (the upload step is a `uses:` step and has none);
-  6. no fixed Vault token, no Vault service container (the token is made fresh per run);
-  7. every test/mutant step goes through the helper that records its exit code, and nothing hides a failure
-     with `|| true`; the log upload runs even after a failure or a cancel;
-  8. the helper itself: allowlists refuse odd input, a failing command is recorded and its exit code is kept,
-     a step that did not run is NOT RUN and the report fails;
-  9. stage names: only demo, pilot and prod appear; the check refuses the two old stage words in the workflow
-     (a bare use of the old test-stage word elsewhere is not caught; none appears in the workflow today).
-  10. names: extra runners are prefixed extra-, a repeated step name is refused, the verdict lists every step.
-  11. the logs and the helper live under the runner temp directory (outside the checkout), never in the tested tree.
+  4. every job has a timeout and its steps' timeouts add up to no more than it; every `run:` step has a timeout
+     (ci.yml is the one file excused from per-step timeouts: its jobs are bounded by their own timeouts);
+  5. nothing hides a failure: no `continue-on-error`, no `|| true`, `|| :`, `|| exit 0` or `set +e` on a line that
+     runs tests (in evidence.yml on any line), no step condition that is literally false;
+  6. no shell tracing: not in a script, not in `shell:` / `defaults.run.shell`, not through SHELLOPTS,
+     BASH_XTRACEFD, PS4, BASH_ENV or the Actions debug switches in any env block.
+  Rules for the Vault development server (ci.yml and evidence.yml, see vault_problems):
+  7. one random token made in a step, masked before it is used anywhere, never printed, never in a command line;
+     the container is published on loopback only, removed by name after the last test step, one pinned image;
+     every test step of a job that starts Vault has HADAVIN_TEST_VAULT_ADDR; Vault starts after the install.
+  Rules for the Evidence workflow only (evidence_problems):
+  8. concurrency never cancels a running evidence run, and the group carries the inputs;
+  9. every test/mutant step goes through the helper that records its exit code, under an exact `if`; the verdict
+     step is the only one, lists every step and runs after a failure; the log upload runs after a failure or a cancel,
+     from exactly ${{ runner.temp }}/evidence-logs/, under a name that is set in the first step;
+  10. the helper itself (further down): allowlists refuse odd input, a failing command is recorded and its exit code
+     is kept, a step that did not run is NOT RUN and the report fails;
+  11. stage names: the check refuses the two old stage words in the workflow (a bare use of the old test-stage word
+     elsewhere is not caught; none appears in the workflow today).
 
-This is a best-effort text check of the workflow, not a proof: it catches the known ways the rules above get broken
-(and each rule has a planted violation that proves it fires), but it cannot prove that no other way exists. The real
-protection is the review of every change to the workflow files.
+Each rule has an id in square brackets at the start of its message, and every planted violation below names the id
+that must fire, so a plant that trips some other rule does not count.
+
+This is a best-effort text check of the workflow, not a proof: it catches the known ways the rules above get broken,
+but it cannot prove that no other way exists. The tested code runs as the same user in the same job as the helper, so
+it can forge a passing row; the report catches mistakes, not a hostile test. The real protection is the review of
+every change to the workflow files.
 """
 
 import json
@@ -35,150 +48,341 @@ import yaml
 from tools import evidence_step as es
 
 ROOT = Path(__file__).resolve().parents[1]
-WORKFLOW = ROOT / ".github" / "workflows" / "evidence.yml"
+WORKFLOW_DIR = ROOT / ".github" / "workflows"
+WORKFLOW = WORKFLOW_DIR / "evidence.yml"
 SHA40 = re.compile(r"^[0-9a-f]{40}$")
+
+# ci.yml is excused from two rules, each for a written reason; every other file gets all rules.
+EXCUSED = {
+    # its jobs have their own timeouts (15 to 30 minutes), which bound a hanging step just as well
+    "ci.yml": {"step-timeout"},
+}
+# ci.yml keeps `|| true` in two grep counters of the security job (they must not fail the step); there the hiding
+# patterns are refused on lines that run tests, and in every other file on every line.
+LINE_SCOPED_HIDING = {"ci.yml"}
+
+HIDING = re.compile(r"\|\|\s*(true|:|exit\s+0)(\s|$|;|\))")
+SET_PLUS_E = re.compile(r"\bset\s+\+e\b")
+RUNS_TESTS = re.compile(r"\bpytest\b|\bpython3?\s+(-m\b|tests/|\"?\$s\b)|\buv\s+run\b|\$TOOL")
+TRACE_ENV = {
+    "SHELLOPTS",
+    "BASH_XTRACEFD",
+    "PS4",
+    "BASH_ENV",
+    "ACTIONS_STEP_DEBUG",
+    "ACTIONS_RUNNER_DEBUG",
+    "RUNNER_DEBUG",
+}
+TRACING = re.compile(r"(^|\s)set\s+-\w*x|xtrace|\b(ba|da|z)?sh\s+-\w*x")
+TEST_IFS = {
+    "${{ !cancelled() && steps.install.outcome == 'success' }}",
+    "${{ !cancelled() && steps.install.outcome == 'success' && needs.plan.outputs.mutants != '' }}",
+}
+VERDICT_IFS = {"${{ !cancelled() }}", "${{ always() }}"}
+UPLOAD_PATH = "${{ runner.temp }}/evidence-logs/"
 
 
 def load(text: str | None = None) -> dict:
     return yaml.safe_load(text if text is not None else WORKFLOW.read_text(encoding="utf-8"))
 
 
-def problems(text: str) -> list[str]:
-    """Every rule broken by this workflow text (empty list = clean). The plant tests feed it bad text."""
+def add(out: list[str], rule: str, message: str) -> None:
+    out.append(f"[{rule}] {message}")
+
+
+def logical_lines(script: str) -> list[str]:
+    """The code lines of a script: continuation lines joined, blank lines and comment lines dropped."""
+    joined = re.sub(r"\\\n\s*", " ", script)
+    return [
+        ln.strip() for ln in joined.splitlines() if ln.strip() and not ln.lstrip().startswith("#")
+    ]
+
+
+def keys_named(node: object, name: str) -> bool:
+    """True if a mapping anywhere inside node has the key `name`."""
+    if isinstance(node, dict):
+        return name in node or any(keys_named(v, name) for v in node.values())
+    if isinstance(node, list):
+        return any(keys_named(v, name) for v in node)
+    return False
+
+
+def workflow_problems(text: str, name: str) -> list[str]:
+    """The general rules (1 to 6 in the module docstring) for one workflow file. `name` is the file name."""
     wf = load(text)
+    excused = EXCUSED.get(name, set())
     out: list[str] = []
     if wf.get("permissions") != {"contents": "read"}:
-        out.append("top-level permissions must be exactly contents: read")
-    conc = wf.get("concurrency") or {}
-    if conc.get("cancel-in-progress") is not False:
-        out.append("concurrency must set cancel-in-progress: false")
-    for needed in ("inputs.ref", "inputs.pythons", "inputs.mutant_scripts"):
-        if needed not in str(conc.get("group")):
-            out.append(f"concurrency group must carry {needed}")
+        add(out, "top-permissions", "top-level permissions must be exactly contents: read")
+    if keys_named(wf, "continue-on-error"):
+        add(out, "continue-on-error", "continue-on-error lets a failing step pass")
+    if (wf.get("defaults") or {}).get("run", {}).get("shell"):
+        add(out, "shell-override", "defaults.run.shell changes how every script is run")
+    if TRACE_ENV & set(wf.get("env") or {}):
+        add(out, "trace-env", "a workflow env name that switches on shell tracing or debug logging")
     for jname, job in wf["jobs"].items():
-        if job.get("permissions") != {"contents": "read"}:
-            out.append(f"job {jname}: own permissions must be exactly contents: read")
+        if "permissions" in job and job["permissions"] != {"contents": "read"}:
+            add(
+                out,
+                "job-permissions",
+                f"job {jname}: own permissions must be exactly contents: read",
+            )
         if "timeout-minutes" not in job:
-            out.append(f"job {jname}: no timeout")
-        if "vault" in (job.get("services") or {}):
-            out.append(
-                f"job {jname}: Vault must be a step with a random token, not a service with a fixed one"
+            add(out, "job-timeout", f"job {jname}: no timeout")
+        if (job.get("defaults") or {}).get("run", {}).get("shell"):
+            add(
+                out,
+                "shell-override",
+                f"job {jname}: defaults.run.shell changes how scripts are run",
+            )
+        if TRACE_ENV & set(job.get("env") or {}):
+            add(
+                out,
+                "trace-env",
+                f"job {jname}: an env name that switches on shell tracing or debug",
+            )
+        total = sum(st.get("timeout-minutes", 0) for st in job["steps"])
+        if "timeout-minutes" in job and total > job["timeout-minutes"]:
+            add(
+                out,
+                "step-sum",
+                f"job {jname}: the step timeouts add up to more than the job timeout",
             )
         for i, step in enumerate(job["steps"]):
             label = f"job {jname} step {i} ({step.get('name', step.get('uses'))})"
             if "uses" in step and not SHA40.match(step["uses"].split("@", 1)[1]):
-                out.append(f"{label}: action not pinned to a full commit SHA")
-            if "run" in step:
-                if "${{" in step["run"]:
-                    out.append(
-                        f"{label}: ${{{{ }}}} expression inside a run script (script injection)"
-                    )
-                if "timeout-minutes" not in step:
-                    out.append(f"{label}: no step timeout")
-                if re.search(r"\|\|\s*true\b", step["run"]):
-                    out.append(f"{label}: '|| true' hides a failure")
-                for line in step["run"].splitlines():
-                    runs_tests = re.search(
-                        r"\bpytest\b|\bpython3?\s+(-m\b|tests/|\"?\$s\b)|\buv\s+run\b", line
-                    )
-                    if runs_tests and "evidence_step.py" not in line and "$TOOL" not in line:
-                        out.append(
-                            f"{label}: runs tests without the helper that records the exit code"
-                        )
-                if (
-                    "docker" in step["run"]
-                    and " rm " in step["run"]
-                    and step.get("if") != "${{ always() }}"
-                ):
-                    out.append(f"{label}: the Vault removal must run with always()")
-                if re.search(r"\$TOOL\"? report\b", step["run"]):
-                    cond = str(step.get("if"))
-                    if "!cancelled()" not in cond and "always()" not in cond:
-                        out.append(
-                            f"{label}: the verdict must run after a failed step (!cancelled() or always())"
-                        )
-                waits = re.search(
-                    r"\$TOOL\"? run (pytest|perf|stage-mutants)\b|run \"\$name\"", step["run"]
+                add(out, "unpinned", f"{label}: action not pinned to a full commit SHA")
+            if step.get("shell"):
+                add(
+                    out,
+                    "shell-override",
+                    f"{label}: a shell: override changes how the script is run",
                 )
-                if waits and "steps.install.outcome == 'success'" not in str(step.get("if")):
-                    out.append(
-                        f"{label}: must wait for a successful install (steps.install.outcome)"
+            if TRACE_ENV & set(step.get("env") or {}):
+                add(
+                    out,
+                    "trace-env",
+                    f"{label}: an env name that switches on shell tracing or debug",
+                )
+            if re.search(r"\bfalse\b", str(step.get("if", ""))):
+                add(
+                    out,
+                    "if-false",
+                    f"{label}: the step condition mentions false (the step could be switched off)",
+                )
+            if "run" not in step:
+                continue
+            run = step["run"]
+            if "${{" in run:
+                add(
+                    out,
+                    "injection",
+                    f"{label}: ${{{{ }}}} expression inside a run script (script injection)",
+                )
+            if "timeout-minutes" not in step and "step-timeout" not in excused:
+                add(out, "step-timeout", f"{label}: no step timeout")
+            if TRACING.search(run):
+                add(
+                    out,
+                    "shell-trace",
+                    f"{label}: shell tracing would print every command and value",
+                )
+            for line in logical_lines(run):
+                if SET_PLUS_E.search(line) or (
+                    HIDING.search(line)
+                    and (name not in LINE_SCOPED_HIDING or RUNS_TESTS.search(line))
+                ):
+                    add(out, "hiding", f"{label}: '{line[:40]}' hides a failure")
+    return out
+
+
+def problems(text: str) -> list[str]:
+    """Every rule broken by the Evidence workflow text (empty list = clean): general rules, the Vault rules and the
+    rules for this file only. The plant tests feed it bad text."""
+    return [
+        *workflow_problems(text, "evidence.yml"),
+        *vault_problems(text),
+        *evidence_problems(text),
+    ]
+
+
+def evidence_problems(text: str) -> list[str]:
+    wf = load(text)
+    out: list[str] = []
+    conc = wf.get("concurrency") or {}
+    if conc.get("cancel-in-progress") is not False:
+        add(out, "cancel", "concurrency must set cancel-in-progress: false")
+    for needed in ("inputs.ref", "inputs.pythons", "inputs.mutant_scripts"):
+        if needed not in str(conc.get("group")):
+            add(out, "concurrency-group", f"concurrency group must carry {needed}")
+    for jname, job in wf["jobs"].items():
+        if job.get("permissions") != {"contents": "read"}:
+            add(
+                out,
+                "job-permissions-own",
+                f"job {jname}: must set its own permissions: exactly contents: read",
+            )
+        if "vault" in (job.get("services") or {}):
+            add(
+                out,
+                "vault-service",
+                f"job {jname}: Vault must be a step with a random token, not a service",
+            )
+        if jname != "plan" and re.search(r"inputs\s*[.\[]", json.dumps(job)):
+            add(out, "raw-input", f"job {jname}: reads a raw input; use needs.plan.outputs")
+        total = sum(st.get("timeout-minutes", 0) for st in job["steps"])
+        if f"add up to {total} minutes" not in text:
+            add(
+                out,
+                "timeout-comment",
+                f"the comment on job {jname} must say 'add up to {total} minutes'",
+            )
+        for i, step in enumerate(job["steps"]):
+            label = f"job {jname} step {i} ({step.get('name', step.get('uses'))})"
+            if "uses" in step and "timeout-minutes" not in step:
+                add(out, "uses-timeout", f"{label}: a uses: step needs a timeout too")
+            if "run" in step:
+                run = step["run"]
+                for line in logical_lines(run):
+                    if (
+                        RUNS_TESTS.search(line)
+                        and "evidence_step.py" not in line
+                        and "$TOOL" not in line
+                    ):
+                        add(
+                            out,
+                            "bare-test",
+                            f"{label}: runs tests without the helper that records the exit code",
+                        )
+                is_verdict = re.search(r"\$TOOL\"? report\b", run)
+                if is_verdict and step.get("if") not in VERDICT_IFS:
+                    add(
+                        out,
+                        "verdict-if",
+                        f"{label}: the verdict's if must be exactly !cancelled() or always()",
                     )
-            if (
-                str(step.get("uses", "")).startswith("actions/upload-artifact")
-                and step.get("if") != "${{ always() }}"
-            ):
-                out.append(f"{label}: the upload must run with always()")
+                runs_test_step = re.search(
+                    r"\$TOOL\"? run (pytest|perf|stage-mutants)\b|run \"\$name\"", run
+                )
+                if runs_test_step and step.get("if") not in TEST_IFS:
+                    add(
+                        out,
+                        "test-if",
+                        f"{label}: the if must be one of the two exact forms that wait for the install",
+                    )
+            if str(step.get("uses", "")).startswith("actions/upload-artifact"):
+                if step.get("if") != "${{ always() }}":
+                    add(out, "upload-always", f"{label}: the upload must run with always()")
+                path = str((step.get("with") or {}).get("path", ""))
+                if path != UPLOAD_PATH:
+                    add(
+                        out,
+                        "upload-path",
+                        f"{label}: the upload path must be exactly {UPLOAD_PATH}",
+                    )
+                art = str((step.get("with") or {}).get("name", ""))
+                if "env.ART" not in art or "matrix.python" not in art:
+                    add(
+                        out,
+                        "upload-name",
+                        f"{label}: the name must be env.ART with a fallback that holds matrix.python",
+                    )
+            if str(step.get("uses", "")).startswith("actions/checkout") and (
+                step.get("with") or {}
+            ).get("path"):
+                add(
+                    out,
+                    "second-checkout",
+                    f"job {jname}: a second checkout inside the workspace is not allowed",
+                )
     steps = [st for job in wf["jobs"].values() for st in job["steps"] if "run" in st]
     literal = [m for st in steps for m in re.findall(r'\$TOOL" run ([a-z0-9-]+) --', st["run"])]
     reports = [st["run"] for st in steps if re.search(r'\$TOOL" report\b', st["run"])]
     if len(reports) != 1:
-        out.append("exactly one verdict (report) step is needed")
+        add(out, "one-verdict", "exactly one verdict (report) step is needed")
     else:
         for name in literal:
             if name not in reports[0]:
-                out.append(
-                    f"the verdict does not list the step {name!r}, so it could not fail on NOT RUN"
+                add(
+                    out,
+                    "verdict-lists",
+                    f"the verdict does not list the step {name!r}, so it could not fail on NOT RUN",
                 )
         if "extra-$(basename" not in reports[0]:
-            out.append("the verdict must list the extra runners under the extra- prefix")
+            add(
+                out, "verdict-extra", "the verdict must build the extra- names of the extra runners"
+            )
+        if not re.search(r'\$TOOL" report [^\n]*\$extra\b', reports[0]):
+            add(out, "verdict-extra-arg", "the verdict's report command must be given $extra")
     for st in steps:
         if 'run "$name"' in st["run"] and "name=extra-$(basename" not in st["run"]:
-            out.append(
-                "extra runner step names must start with extra- (no clash with built-in steps)"
+            add(
+                out,
+                "extra-prefix",
+                "extra runner step names must start with extra- (no clash with built-in steps)",
             )
     if "vault-token-reader" not in literal:
-        out.append(
-            "the tested ref must be checked for the HADAVIN_TEST_VAULT_TOKEN reader (step vault-token-reader)"
+        add(
+            out,
+            "token-reader-missing",
+            "the tested ref must be checked for the token reader (step vault-token-reader)",
         )
     for st in steps:
         if "docker ps" in st["run"] and "xargs" in st["run"] and "name=^vault-ci$" not in st["run"]:
-            out.append("the docker name filter must be an exact match ('name=^vault-ci$')")
-        if "run vault-token-reader" in st["run"] and "[^#]*(environ|getenv)" not in st["run"]:
-            out.append("vault-token-reader must look for a code line, not a comment")
+            add(
+                out,
+                "docker-filter",
+                "the docker name filter must be an exact match ('name=^vault-ci$')",
+            )
+        if (
+            "run vault-token-reader" in st["run"]
+            and "token-reader tests/contracts/kinds/secrets_neutral.py" not in st["run"]
+        ):
+            add(
+                out,
+                "token-reader-command",
+                "vault-token-reader must run the helper's token-reader on secrets_neutral.py",
+            )
     tr_form = 'extra-$(basename "$s" .py | tr _ -)'
     for st in steps:
         if "extra-$(basename" in st["run"] and st["run"].count(tr_form) != st["run"].count(
             "extra-$(basename"
         ):
-            out.append(
-                "the extra- name must be built the same way (with tr _ -) in the loop and in the verdict"
+            add(
+                out,
+                "tr-form",
+                "the extra- name must be built the same way (with tr _ -) in the loop and in the verdict",
             )
-    job = wf["jobs"]["evidence"]
-    total = sum(st.get("timeout-minutes", 0) for st in job["steps"])
-    if f"{total} minutes" not in text:
-        out.append(
-            f"the comment on the job timeout must say {total} minutes (the sum of the step timeouts)"
-        )
-    if total > job["timeout-minutes"]:
-        out.append("the step timeouts add up to more than the job timeout")
-    text_all = text
-    if re.search(r"VAULT_DEV_ROOT_TOKEN_ID:\s*root\b", text_all) or re.search(
-        r"\btoken\W+root\b", text_all
+    if re.search(r"VAULT_DEV_ROOT_TOKEN_ID:\s*root\b", text) or re.search(
+        r"\btoken\W+root\b", text
     ):
-        out.append("fixed Vault token 'root'")
-    if re.search(r"\b(staging)\b|\bstage\W+dev\b", text_all, re.IGNORECASE):
-        out.append("a stage name other than demo, pilot or prod")
-    for jname, jb in wf["jobs"].items():
-        for st in jb["steps"]:
-            if str(st.get("uses", "")).startswith("actions/upload-artifact"):
-                path = str((st.get("with") or {}).get("path", ""))
-                if not path.startswith("${{ runner.temp }}/"):
-                    out.append(
-                        f"job {jname}: the upload path must be under runner.temp, not the checkout"
-                    )
-            if str(st.get("uses", "")).startswith("actions/checkout") and (
-                st.get("with") or {}
-            ).get("path"):
-                out.append(f"job {jname}: a second checkout inside the workspace is not allowed")
-    if ".evidence-tools" in text_all:
-        out.append("the helper must not live inside the checkout (.evidence-tools)")
-    if "EVIDENCE_DIR=$RUNNER_TEMP/" not in text_all:
-        out.append("EVIDENCE_DIR must be set to a folder under $RUNNER_TEMP")
+        add(out, "fixed-token", "fixed Vault token 'root'")
+    if re.search(r"\b(staging)\b|\bstage\W+dev\b", text, re.IGNORECASE):
+        add(out, "stage-name", "a stage name other than demo, pilot or prod")
+    if ".evidence-tools" in text:
+        add(out, "helper-inside", "the helper must not live inside the checkout (.evidence-tools)")
+    if "EVIDENCE_DIR=$RUNNER_TEMP/evidence-logs" not in text:
+        add(out, "evidence-dir", "EVIDENCE_DIR must be set to $RUNNER_TEMP/evidence-logs")
     cols = str((wf["jobs"]["evidence"].get("env") or {}).get("COLUMNS", ""))
     if not cols.isdigit() or int(cols) < 200:
-        out.append(
-            "COLUMNS must be wide (at least 200) so that pytest does not cut a printed value"
+        add(
+            out,
+            "columns",
+            "COLUMNS must be wide (at least 200) so that pytest does not cut a printed value",
+        )
+    first = wf["jobs"]["evidence"]["steps"][0]
+    art_lines = [ln for st in steps for ln in st["run"].splitlines() if re.search(r"\bART=", ln)]
+    if (
+        len(art_lines) != 1
+        or "ART=" not in first.get("run", "")
+        or "${SHA:0:8}" not in first.get("run", "")
+        or "${PY}" not in first.get("run", "")
+        or "needs.plan.outputs.sha" not in json.dumps(wf["jobs"]["evidence"].get("env", {}))
+    ):
+        add(
+            out,
+            "art-first",
+            "ART must be set once, in the first step, from the plan job's sha and the Python version",
         )
     return out
 
@@ -187,114 +391,476 @@ def test_the_current_workflow_breaks_no_rule():
     assert problems(WORKFLOW.read_text(encoding="utf-8")) == []
 
 
-def test_extra_runner_names_and_pythons_reach_the_jobs_only_through_the_plan_job():
-    wf = load()
-    text = WORKFLOW.read_text(encoding="utf-8")
-    for jname, job in wf["jobs"].items():
-        if jname == "plan":
-            continue
-        blob = json.dumps(job)
-        assert "inputs." not in blob, f"job {jname} reads a raw input; use needs.plan.outputs"
-    assert "needs.plan.outputs.pythons" in text
-    assert "inputs.ref" not in json.dumps(wf["jobs"]["evidence"])
+def workflow_files(folder: Path) -> list[Path]:
+    """Every workflow file of a folder: GitHub reads both .yml and .yaml."""
+    return sorted([*folder.glob("*.yml"), *folder.glob("*.yaml")])
 
 
+WORKFLOWS = workflow_files(WORKFLOW_DIR)
+
+
+@pytest.mark.parametrize("path", WORKFLOWS, ids=lambda p: p.name)
+def test_every_workflow_file_meets_the_general_rules(path):
+    assert workflow_problems(path.read_text(encoding="utf-8"), path.name) == []
+
+
+def test_a_new_workflow_file_gets_every_general_rule():
+    bad = (
+        "name: New\non: push\njobs:\n  j:\n    runs-on: ubuntu-24.04\n    steps:\n"
+        "      - uses: actions/checkout@v4\n      - run: echo ${{ github.event.head_commit.message }} || true\n"
+    )
+    found = workflow_problems(bad, "new.yml")
+    for rule in (
+        "top-permissions",
+        "job-timeout",
+        "unpinned",
+        "injection",
+        "step-timeout",
+        "hiding",
+    ):
+        assert any(p.startswith(f"[{rule}]") for p in found), (rule, found)
+
+
+def test_the_two_excused_rules_are_the_only_exceptions():
+    assert EXCUSED == {"ci.yml": {"step-timeout"}} and LINE_SCOPED_HIDING == {"ci.yml"}
+    assert all((WORKFLOW_DIR / name).is_file() for name in EXCUSED)
+
+
+# A plant is (how to break the text, id of the rule that must fire). The rule is looked for by id, so a plant that
+# happens to trip some other rule does not count.
 PLANTS = {
-    "write permission": lambda t: t.replace(
-        "permissions:\n  contents: read", "permissions:\n  contents: write", 1
+    "write permission": (
+        lambda t: t.replace("permissions:\n  contents: read", "permissions:\n  contents: write", 1),
+        "top-permissions",
     ),
-    "cancel in progress": lambda t: t.replace(
-        "cancel-in-progress: false", "cancel-in-progress: true"
+    "job write permission": (
+        lambda t: t.replace(
+            "    timeout-minutes: 170  # the step timeouts below add up to 164 minutes; the rest is for starting the job\n    permissions:\n      contents: read",
+            "    timeout-minutes: 170  # the step timeouts below add up to 164 minutes; the rest is for starting the job\n    permissions:\n      contents: write",
+        ),
+        "job-permissions",
     ),
-    "unpinned action": lambda t: re.sub(r"(actions/upload-artifact)@[0-9a-f]{40}", r"\1@v7", t),
-    "injection": lambda t: t.replace(
-        "run: docker ps -aq --filter 'name=^vault-ci$' | xargs -r docker rm -f",
-        "run: echo ${{ inputs.ref }}",
+    "job without own permissions": (
+        lambda t: t.replace(
+            "the rest is for starting the job\n    permissions:\n      contents: read\n",
+            "the rest is for starting the job\n",
+        ),
+        "job-permissions-own",
     ),
-    "no step timeout": lambda t: t.replace(
-        "        timeout-minutes: 2\n        run: docker ps -aq", "        run: docker ps -aq"
+    "cancel in progress": (
+        lambda t: t.replace("cancel-in-progress: false", "cancel-in-progress: true"),
+        "cancel",
     ),
-    "fixed vault token": lambda t: t.replace(
-        "token=$(openssl rand -hex 24)", "token=root\n          # token root"
+    "unpinned action": (
+        lambda t: re.sub(r"(actions/upload-artifact)@[0-9a-f]{40}", r"\1@v7", t),
+        "unpinned",
     ),
-    "or true": lambda t: t.replace("exit $fail", "exit $fail || true"),
-    "upload without always": lambda t: t.replace(
-        "        if: ${{ always() }}\n        uses:", "        uses:"
+    "injection": (
+        lambda t: t.replace(
+            'run: python3 "$TOOL" run psql-present -- psql --version',
+            "run: echo ${{ inputs.ref }}",
+        ),
+        "injection",
     ),
-    "bare pytest": lambda t: t.replace('run: python3 "$TOOL" run perf -- pytest', "run: pytest"),
-    "verdict only on success": lambda t: t.replace(
-        "      - name: Verdict (fails unless every step has exit=0; a step that did not run is NOT RUN)\n        if: ${{ !cancelled() }}",
-        "      - name: Verdict (fails unless every step has exit=0; a step that did not run is NOT RUN)\n        if: ${{ success() }}",
+    "no step timeout": (
+        lambda t: t.replace(
+            '        timeout-minutes: 2\n        run: python3 "$TOOL" run psql-present',
+            '        run: python3 "$TOOL" run psql-present',
+        ),
+        "step-timeout",
     ),
-    "vault removal without always": lambda t: t.replace(
-        "      - name: Remove the Vault development server\n        if: ${{ always() }}",
-        "      - name: Remove the Vault development server\n        if: ${{ success() }}",
+    "no job timeout": (
+        lambda t: re.sub(r"    timeout-minutes: 170[^\n]*\n", "", t),
+        "job-timeout",
     ),
-    "tests not waiting for install": lambda t: t.replace(
-        "        if: ${{ !cancelled() && steps.install.outcome == 'success' }}\n        timeout-minutes: 20\n        run: python3 \"$TOOL\" run perf",
-        '        if: ${{ !cancelled() }}\n        timeout-minutes: 20\n        run: python3 "$TOOL" run perf',
+    "step timeouts above the job timeout": (
+        lambda t: t.replace("timeout-minutes: 170", "timeout-minutes: 100"),
+        "step-sum",
     ),
-    "report forgets a step": lambda t: t.replace(
-        "report install psql-present vault-token-reader pytest perf",
-        "report install psql-present vault-token-reader pytest",
+    "timeout comment wrong": (lambda t: t.replace("164 minutes", "135 minutes"), "timeout-comment"),
+    "plan timeout comment wrong": (
+        lambda t: t.replace("add up to 11 minutes", "add up to 9 minutes"),
+        "timeout-comment",
     ),
-    "uv run bare": lambda t: t.replace(
-        'run: python3 "$TOOL" run pytest -- pytest -q -m "not live and not perf" -rfEs',
-        "run: uv run ruff check",
+    "fixed vault token": (
+        lambda t: t.replace("token=$(openssl rand -hex 24)", "token=root\n          # token root"),
+        "fixed-token",
     ),
-    "python -m bare": lambda t: t.replace(
-        'run: python3 "$TOOL" run perf -- pytest -q -m perf -rfEs', "run: python -m json.tool x"
+    "or true": (lambda t: t.replace("exit $fail", "exit $fail || true"), "hiding"),
+    "or colon": (lambda t: t.replace("exit $fail", "exit $fail || :"), "hiding"),
+    "or exit 0": (lambda t: t.replace("exit $fail", "exit $fail || exit 0"), "hiding"),
+    "set +e": (
+        lambda t: t.replace("          fail=0\n", "          set +e\n          fail=0\n"),
+        "hiding",
     ),
-    "python tests path bare": lambda t: t.replace(
-        'run: python3 "$TOOL" run stage-mutants -- python tests/stage_mutants.py',
-        "run: python tests/stage_mutants.py",
+    "continue on error in a step": (
+        lambda t: t.replace(
+            "      - name: Performance tests\n",
+            "      - name: Performance tests\n        continue-on-error: true\n",
+        ),
+        "continue-on-error",
     ),
-    "python runner variable bare": lambda t: t.replace(
-        "          exit $fail", '          python "$s"\n          exit $fail'
+    "continue on error in the job": (
+        lambda t: t.replace("    needs: plan\n", "    needs: plan\n    continue-on-error: true\n"),
+        "continue-on-error",
     ),
-    "tr changed on one side": lambda t: t.replace(
-        'extra="$extra extra-$(basename "$s" .py | tr _ -)"',
-        'extra="$extra extra-$(basename "$s" .py)"',
+    "verdict switched off": (
+        lambda t: t.replace(
+            "        if: ${{ !cancelled() }}\n        timeout-minutes: 2\n        run: |\n          extra=",
+            "        if: ${{ !cancelled() && false }}\n        timeout-minutes: 2\n        run: |\n          extra=",
+        ),
+        "verdict-if",
     ),
-    "token reader matches a comment": lambda t: t.replace(
-        "grep -Eq '^[^#]*(environ|getenv)[^#]*HADAVIN_TEST_VAULT_TOKEN'",
-        "grep -q HADAVIN_TEST_VAULT_TOKEN",
+    "verdict switched off, step condition false": (
+        lambda t: t.replace(
+            "        if: ${{ !cancelled() }}\n        timeout-minutes: 2\n        run: |\n          extra=",
+            "        if: ${{ !cancelled() && false }}\n        timeout-minutes: 2\n        run: |\n          extra=",
+        ),
+        "if-false",
     ),
-    "docker filter substring": lambda t: t.replace("'name=^vault-ci$'", "name=vault-ci"),
-    "timeout comment wrong": lambda t: t.replace("147 minutes", "135 minutes"),
-    "concurrency without runners": lambda t: t.replace(
-        "-${{ inputs.mutant_scripts }}\n  cancel", "\n  cancel"
+    "upload without always": (
+        lambda t: t.replace(
+            "        if: ${{ always() }}\n        timeout-minutes: 5\n        uses:",
+            "        timeout-minutes: 5\n        uses:",
+        ),
+        "upload-always",
     ),
-    "extra runner without prefix": lambda t: t.replace("name=extra-$(basename", "name=$(basename"),
-    "no token reader check": lambda t: t.replace(
-        "run vault-token-reader --", "run vault-token-reader-x --"
+    "upload path wider than the logs": (
+        lambda t: t.replace("path: ${{ runner.temp }}/evidence-logs/", "path: ${{ runner.temp }}/"),
+        "upload-path",
     ),
-    "staging stage": lambda t: t + "\n# stage: " + "stag" + "ing\n",
-    "logs inside the checkout": lambda t: t.replace(
-        "path: ${{ runner.temp }}/evidence-logs/", "path: evidence-logs/"
+    "upload path in the checkout": (
+        lambda t: t.replace("path: ${{ runner.temp }}/evidence-logs/", "path: evidence-logs/"),
+        "upload-path",
     ),
-    "evidence dir not under runner temp": lambda t: t.replace(
-        "EVIDENCE_DIR=$RUNNER_TEMP/evidence-logs", "EVIDENCE_DIR=evidence-logs"
+    "upload name without a fallback": (
+        lambda t: t.replace(
+            "env.ART || format('evidence-{0}-{1}', matrix.python, github.run_attempt)", "env.ART"
+        ),
+        "upload-name",
     ),
-    "helper inside the checkout": lambda t: t + "\n# path: .evidence-tools\n",
-    "narrow terminal": lambda t: t.replace('COLUMNS: "300"', 'COLUMNS: "80"'),
-    "second checkout in the workspace": lambda t: t.replace(
-        "      - name: Artifact name and runner facts",
-        "      - uses: actions/checkout@"
-        + "0" * 40
-        + "\n        with:\n          path: .evidence-x\n"
-        "      - name: Artifact name and runner facts",
-        1,
+    "name set late": (
+        lambda t: t.replace(
+            '          echo "ART=evidence-${safe}-${SHA:0:8}-${PY}-${GITHUB_RUN_ATTEMPT}" >> "$GITHUB_ENV"\n',
+            "          true\n",
+        ).replace(
+            "      - name: Runner facts\n        timeout-minutes: 2\n        run: |\n",
+            '      - name: Runner facts\n        timeout-minutes: 2\n        run: |\n          echo "ART=evidence-late" >> "$GITHUB_ENV"\n',
+        ),
+        "art-first",
+    ),
+    "bare pytest": (
+        lambda t: t.replace('run: python3 "$TOOL" run perf -- pytest', "run: pytest"),
+        "bare-test",
+    ),
+    "no timeout on a uses step": (
+        lambda t: t.replace(
+            'cache-suffix: "evidence"\n        timeout-minutes: 5\n', 'cache-suffix: "evidence"\n'
+        ),
+        "uses-timeout",
+    ),
+    "verdict only on success": (
+        lambda t: t.replace(
+            "a step that did not run is NOT RUN)\n        if: ${{ !cancelled() }}",
+            "a step that did not run is NOT RUN)\n        if: ${{ success() }}",
+        ),
+        "verdict-if",
+    ),
+    "vault removal without always": (
+        lambda t: t.replace(
+            "      - name: Remove the Vault development server\n        if: ${{ always() }}",
+            "      - name: Remove the Vault development server\n        if: ${{ success() }}",
+        ),
+        "removal-always",
+    ),
+    "tests not waiting for install": (
+        lambda t: t.replace(
+            "        if: ${{ !cancelled() && steps.install.outcome == 'success' }}\n        timeout-minutes: 20\n        run: python3 \"$TOOL\" run perf",
+            '        if: ${{ !cancelled() }}\n        timeout-minutes: 20\n        run: python3 "$TOOL" run perf',
+        ),
+        "test-if",
+    ),
+    "tests switched off by an extra clause": (
+        lambda t: t.replace(
+            "        if: ${{ !cancelled() && steps.install.outcome == 'success' }}\n        timeout-minutes: 20\n        run: python3 \"$TOOL\" run perf",
+            "        if: ${{ !cancelled() && steps.install.outcome == 'success' && 1 == 2 }}\n        timeout-minutes: 20\n        run: python3 \"$TOOL\" run perf",
+        ),
+        "test-if",
+    ),
+    "report forgets a step": (
+        lambda t: t.replace(
+            "report install psql-present vault-token-reader pytest perf",
+            "report install psql-present vault-token-reader pytest",
+        ),
+        "verdict-lists",
+    ),
+    "report forgets the extra runners": (
+        lambda t: t.replace("stage-mutants $extra", "stage-mutants"),
+        "verdict-extra-arg",
+    ),
+    "two verdict steps": (
+        lambda t: t.replace(
+            "      - name: Remove the Vault development server\n",
+            '      - name: Second verdict\n        timeout-minutes: 2\n        run: python3 "$TOOL" report install\n'
+            "      - name: Remove the Vault development server\n",
+            1,
+        ),
+        "one-verdict",
+    ),
+    "verdict without the extra names": (
+        lambda t: t.replace(
+            'extra="$extra extra-$(basename "$s" .py | tr _ -)"',
+            'extra="$extra $(basename "$s" .py | tr _ -)"',
+        ),
+        "verdict-extra",
+    ),
+    "uv run bare": (
+        lambda t: t.replace(
+            'run: python3 "$TOOL" run pytest -- pytest -q -m "not live and not perf" -rfEs',
+            "run: uv run ruff check",
+        ),
+        "bare-test",
+    ),
+    "python -m bare": (
+        lambda t: t.replace(
+            'run: python3 "$TOOL" run perf -- pytest -q -m perf -rfEs', "run: python -m json.tool x"
+        ),
+        "bare-test",
+    ),
+    "python tests path bare": (
+        lambda t: t.replace(
+            'run: python3 "$TOOL" run stage-mutants -- python tests/stage_mutants.py',
+            "run: python tests/stage_mutants.py",
+        ),
+        "bare-test",
+    ),
+    "python runner variable bare": (
+        lambda t: t.replace("          exit $fail", '          python "$s"\n          exit $fail'),
+        "bare-test",
+    ),
+    "tr changed on one side": (
+        lambda t: t.replace(
+            'extra="$extra extra-$(basename "$s" .py | tr _ -)"',
+            'extra="$extra extra-$(basename "$s" .py)"',
+        ),
+        "tr-form",
+    ),
+    "token reader command replaced": (
+        lambda t: t.replace(
+            'python3 "$TOOL" token-reader tests/contracts/kinds/secrets_neutral.py', "true"
+        ),
+        "token-reader-command",
+    ),
+    "docker filter substring": (
+        lambda t: t.replace("'name=^vault-ci$'", "name=vault-ci"),
+        "docker-filter",
+    ),
+    "concurrency without runners": (
+        lambda t: t.replace("-${{ inputs.mutant_scripts }}\n  cancel", "\n  cancel"),
+        "concurrency-group",
+    ),
+    "extra runner without prefix": (
+        lambda t: t.replace("name=extra-$(basename", "name=$(basename"),
+        "extra-prefix",
+    ),
+    "no token reader check": (
+        lambda t: t.replace("run vault-token-reader --", "run vault-token-reader-x --"),
+        "token-reader-missing",
+    ),
+    "vault as a service": (
+        lambda t: t.replace(
+            "    services:\n      postgres:",
+            "    services:\n      vault:\n        image: x\n      postgres:",
+        ),
+        "vault-service",
+    ),
+    "staging stage": (lambda t: t + "\n# stage: " + "stag" + "ing\n", "stage-name"),
+    "stage dev": (lambda t: t + "\n# stage: " + "de" + "v\n", "stage-name"),
+    "evidence dir not under runner temp": (
+        lambda t: t.replace(
+            "EVIDENCE_DIR=$RUNNER_TEMP/evidence-logs", "EVIDENCE_DIR=evidence-logs"
+        ),
+        "evidence-dir",
+    ),
+    "helper inside the checkout": (lambda t: t + "\n# path: .evidence-tools\n", "helper-inside"),
+    "narrow terminal": (lambda t: t.replace('COLUMNS: "300"', 'COLUMNS: "80"'), "columns"),
+    "second checkout in the workspace": (
+        lambda t: t.replace(
+            "      - name: Runner facts",
+            "      - uses: actions/checkout@"
+            + "0" * 40
+            + "\n        timeout-minutes: 5\n        with:\n          path: .evidence-x\n"
+            "      - name: Runner facts",
+            1,
+        ),
+        "second-checkout",
+    ),
+    "raw input in the evidence job": (
+        lambda t: t.replace(
+            "      PY: ${{ matrix.python }}",
+            "      PY: ${{ matrix.python }}\n      X: ${{ github.event.inputs.ref }}",
+        ),
+        "raw-input",
+    ),
+    "raw input by index": (
+        lambda t: t.replace(
+            "      PY: ${{ matrix.python }}",
+            "      PY: ${{ matrix.python }}\n      X: ${{ inputs['ref'] }}",
+        ),
+        "raw-input",
+    ),
+    "tracing in a script": (
+        lambda t: t.replace("          fail=0\n", "          set -x\n          fail=0\n"),
+        "shell-trace",
+    ),
+    "tracing by shell flag": (
+        lambda t: t.replace("          fail=0\n", "          bash -x ./x\n          fail=0\n"),
+        "shell-trace",
+    ),
+    "tracing by default shell": (
+        lambda t: t.replace(
+            "jobs:\n  plan:", "defaults:\n  run:\n    shell: bash -x {0}\n\njobs:\n  plan:"
+        ),
+        "shell-override",
+    ),
+    "tracing by job default shell": (
+        lambda t: t.replace(
+            "    needs: plan\n",
+            "    needs: plan\n    defaults:\n      run:\n        shell: bash -x {0}\n",
+        ),
+        "shell-override",
+    ),
+    "tracing by shellopts": (
+        lambda t: t.replace(
+            "      PYTHONUNBUFFERED:", "      SHELLOPTS: xtrace\n      PYTHONUNBUFFERED:"
+        ),
+        "trace-env",
+    ),
+    "tracing by xtracefd in the workflow": (
+        lambda t: t.replace(
+            "permissions:\n  contents: read\n\n# A second",
+            'permissions:\n  contents: read\n\nenv:\n  BASH_XTRACEFD: "1"\n\n# A second',
+            1,
+        ),
+        "trace-env",
+    ),
+    "debug logging by step env": (
+        lambda t: t.replace(
+            "      - name: Performance tests\n",
+            '      - name: Performance tests\n        env:\n          ACTIONS_STEP_DEBUG: "true"\n',
+        ),
+        "trace-env",
     ),
 }
 
 
 @pytest.mark.parametrize("name", sorted(PLANTS))
 def test_each_rule_fails_on_a_planted_violation(name):
+    plant, rule = PLANTS[name]
     text = WORKFLOW.read_text(encoding="utf-8")
-    planted = PLANTS[name](text)
+    planted = plant(text)
     assert planted != text, f"plant {name} did not change the text"
-    assert problems(planted), f"plant {name} was not caught"
+    found = problems(planted)
+    assert any(p.startswith(f"[{rule}]") for p in found), (name, rule, found)
+
+
+def test_every_evidence_rule_has_a_plant():
+    source = Path(__file__).read_text(encoding="utf-8")
+    ids = set(re.findall(r'\badd\(\s*out,\s*"([a-z0-9-]+)"', source))
+    planted = {rule for _, rule in PLANTS.values()} | {rule for _, rule in VAULT_PLANTS.values()}
+    planted |= {rule for _, rule in GENERAL_PLANTS.values()}
+    assert not ids - planted, f"rules without a planted violation: {sorted(ids - planted)}"
+
+
+# General-rule plants against every other workflow file (ci.yml today, any new file tomorrow).
+GENERAL_PLANTS = {
+    "unpinned action": (
+        lambda t: re.sub(r"(actions/checkout)@[0-9a-f]{40}", r"\1@v7", t, count=1),
+        "unpinned",
+    ),
+    "write permission": (
+        lambda t: t.replace("permissions:\n  contents: read", "permissions:\n  contents: write", 1),
+        "top-permissions",
+    ),
+    "job write permission": (
+        lambda t: re.sub(
+            r"(\n    timeout-minutes: \d+\n)",
+            r"\1    permissions:\n      contents: write\n",
+            t,
+            count=1,
+        ),
+        "job-permissions",
+    ),
+    "no job timeout": (
+        lambda t: re.sub(r"\n    timeout-minutes: \d+", "", t, count=1),
+        "job-timeout",
+    ),
+    "continue on error": (
+        lambda t: re.sub(
+            r"(\n    runs-on: ubuntu-24\.04\n)", r"\1    continue-on-error: true\n", t, count=1
+        ),
+        "continue-on-error",
+    ),
+    "or true on a test line": (
+        lambda t: t.replace("run: pytest -q -m perf -rs", "run: pytest -q -m perf -rs || true"),
+        "hiding",
+    ),
+    "set +e": (
+        lambda t: t.replace(
+            "run: python tools/scan_repo.py", "run: set +e; python tools/scan_repo.py"
+        ),
+        "hiding",
+    ),
+    "injection": (
+        lambda t: t.replace("run: psql --version", "run: echo ${{ github.head_ref }}"),
+        "injection",
+    ),
+    "step switched off": (
+        lambda t: t.replace(
+            "      - name: Lint\n", "      - name: Lint\n        if: ${{ false }}\n"
+        ),
+        "if-false",
+    ),
+    "tracing by shellopts": (
+        lambda t: t.replace("  GITLEAKS_VERSION:", "  SHELLOPTS: xtrace\n  GITLEAKS_VERSION:", 1),
+        "trace-env",
+    ),
+    "tracing by default shell": (
+        lambda t: t.replace(
+            "jobs:\n  check:", "defaults:\n  run:\n    shell: bash -x {0}\n\njobs:\n  check:"
+        ),
+        "shell-override",
+    ),
+}
+
+
+@pytest.mark.parametrize("name", sorted(GENERAL_PLANTS))
+def test_each_general_rule_fires_on_ci_yml_too(name):
+    plant, rule = GENERAL_PLANTS[name]
+    text = (WORKFLOW_DIR / "ci.yml").read_text(encoding="utf-8")
+    planted = plant(text)
+    assert planted != text, f"plant {name} did not change ci.yml"
+    found = workflow_problems(planted, "ci.yml")
+    assert any(p.startswith(f"[{rule}]") for p in found), (name, rule, found)
+
+
+def test_ci_yml_keeps_its_two_grep_counters_but_not_a_hidden_test_failure():
+    text = (WORKFLOW_DIR / "ci.yml").read_text(encoding="utf-8")
+    assert "|| true" in text and workflow_problems(text, "ci.yml") == []
+    planted = text.replace("run: python tools/scan_repo.py", "run: pytest -q || exit 0")
+    assert any(p.startswith("[hiding]") for p in workflow_problems(planted, "ci.yml"))
+
+
+def test_a_command_split_over_two_lines_is_not_taken_for_a_bare_test():
+    text = WORKFLOW.read_text(encoding="utf-8")
+    split = text.replace(
+        'run: python3 "$TOOL" run perf -- pytest -q -m perf -rfEs',
+        'run: |\n          python3 "$TOOL" run perf -- \\\n            pytest -q -m perf -rfEs',
+    )
+    assert split != text and not [p for p in problems(split) if p.startswith("[bare-test]")]
+
+
+# --- the helper --------------------------------------------------------------------------------------
 
 
 # --- the helper --------------------------------------------------------------------------------------
@@ -335,8 +901,21 @@ def test_allowlists_refuse_odd_input():
     ]
 
 
+RUNNER_ONLY = {
+    "EVIDENCE_DIR",
+    "GITHUB_STEP_SUMMARY",
+    "GITHUB_OUTPUT",
+    "GITHUB_ENV",
+    "GITHUB_PATH",
+    "GITHUB_STATE",
+    "HADAVIN_TEST_VAULT_TOKEN",
+}
+
+
 def helper(cwd: Path, *args: str, env: dict | None = None) -> subprocess.CompletedProcess:
-    inherited = {k: v for k, v in os.environ.items() if k != "EVIDENCE_DIR"}
+    # The runner's own files (job summary, step outputs, the per-run Vault token) must never reach the helper under
+    # test: a guard test would append fake tables to the real job summary and use the real token.
+    inherited = {k: v for k, v in os.environ.items() if k not in RUNNER_ONLY}
     full = {**inherited, **(env or {})}
     return subprocess.run(  # noqa: S603  # our own interpreter and a file of this repository, no shell
         [sys.executable, str(ROOT / "tools" / "evidence_step.py"), *args],
@@ -361,10 +940,48 @@ def test_a_failing_command_keeps_its_exit_code_and_a_later_step_still_runs(tmp_p
     assert "boom" in log and log[-1] == "exit=3"
 
 
-def test_a_command_that_cannot_start_is_recorded_as_127(tmp_path):
+def test_a_command_that_does_not_exist_is_recorded_as_127(tmp_path):
     done = helper(tmp_path, "run", "gone", "--", "no-such-program-xyz")
     assert done.returncode == 127
     assert "gone\texit=127" in (tmp_path / "evidence-logs" / "status.txt").read_text()
+
+
+@pytest.mark.skipif(os.name == "nt", reason="the execute bit is a POSIX notion")
+def test_a_command_that_exists_but_cannot_be_started_is_recorded_as_126(tmp_path):
+    script = tmp_path / "not-executable.sh"
+    script.write_text("#!/bin/sh\nexit 0\n")
+    script.chmod(0o644)
+    done = helper(tmp_path, "run", "denied", "--", str(script))
+    assert done.returncode == 126
+    assert "denied\texit=126" in (tmp_path / "evidence-logs" / "status.txt").read_text()
+
+
+def test_the_runner_files_do_not_reach_the_helper_under_test(tmp_path, monkeypatch):
+    summary = tmp_path / "real-summary.md"
+    monkeypatch.setenv("GITHUB_STEP_SUMMARY", str(summary))
+    monkeypatch.setenv("GITHUB_OUTPUT", str(tmp_path / "real-output.txt"))
+    monkeypatch.setenv("HADAVIN_TEST_VAULT_TOKEN", "tok" + "-" + "real0value1234")
+    work = tmp_path / "work"
+    work.mkdir()
+    helper(work, "run", "x", "--", sys.executable, "-c", "print('tok-real0value1234')")
+    helper(work, "report", "x")
+    assert not summary.exists() and not (tmp_path / "real-output.txt").exists()
+    assert (
+        "tok-real0value1234" in (work / "evidence-logs" / "x.txt").read_text()
+    )  # not masked: the token was not inherited
+
+
+@pytest.mark.skipif(shutil.which("bash") is None, reason="bash needed for the exit-code check")
+def test_the_helper_keeps_the_exit_code_when_run_under_bash_e(tmp_path):
+    """The workflow's default shell is `bash -e`: the failing command must still be recorded and its code returned."""
+    bash = shutil.which("bash")
+    script = f'set -e; "{sys.executable}" "{ROOT / "tools" / "evidence_step.py"}" run bad -- false; echo after'
+    env = {k: v for k, v in os.environ.items() if k not in RUNNER_ONLY}
+    done = subprocess.run(  # noqa: S603  # fixed argv, no shell
+        [bash, "-c", script], cwd=tmp_path, capture_output=True, text=True, env=env, check=False
+    )
+    assert done.returncode == 1 and "after" not in done.stdout
+    assert "bad\texit=1" in (tmp_path / "evidence-logs" / "status.txt").read_text()
 
 
 def test_the_report_fails_on_a_non_zero_exit_and_on_a_step_that_never_ran(tmp_path):
@@ -466,6 +1083,13 @@ def test_odd_versions_and_long_runner_names_are_refused_with_exit_2():
         es.check_ref("bad ref")
 
 
+@pytest.mark.parametrize("ref", ["pull/84/head", "pull/84/merge", "refs/pull/84/head", "pull/x"])
+def test_a_pull_request_ref_is_refused_with_the_reason(ref):
+    with pytest.raises(es.Refused, match="pull/N/head"):
+        es.check_ref(ref)
+    assert es.check_ref("core/pull-fix") == "core/pull-fix"
+
+
 @pytest.mark.parametrize(
     "reason",
     [
@@ -488,182 +1112,296 @@ def test_every_wording_of_a_missing_test_variable_fails_the_report(tmp_path, rea
 # --- the Vault development server in every workflow (ci.yml and evidence.yml) ---------------------------------
 
 
-def workflow_files(folder: Path) -> list[Path]:
-    """Every workflow file of a folder: GitHub reads both .yml and .yaml."""
-    return sorted([*folder.glob("*.yml"), *folder.glob("*.yaml")])
-
-
-WORKFLOWS = workflow_files(ROOT / ".github" / "workflows")
 IMAGE_RE = re.compile(r"hashicorp/vault:[0-9.]+@sha256:[0-9a-f]{64}")
+IMAGE_VAR = r"\$\{?VAULT_IMAGE\}?"
 VALUE_REF_RE = r"\$\{?(token|HADAVIN_TEST_VAULT_TOKEN|VAULT_DEV_ROOT_TOKEN_ID)\b"
 MASK_LINE = 'echo "::add-mask::$token"'
 ENV_LINE = 'echo "HADAVIN_TEST_VAULT_TOKEN=$token" >> "$GITHUB_ENV"'
+PROBE_LINE = (
+    'printf \'header = "X-Vault-Token: %s"\\n\' "$token" | curl -fsS -o /dev/null -K - '
+    "http://127.0.0.1:8200/v1/auth/token/lookup-self && exit 0"
+)
+LOGS_FILTER = "grep -viE 'unseal key|root token' | sed \"s/$token/***/g\""
 TEST_ENV = "HADAVIN_TEST_VAULT_ADDR"
+IS_TEST = re.compile(r"\bpytest\b|\$TOOL\"? run (perf|stage-mutants|\"\$name\")")
+INSTALLS = re.compile(r"\buv\s+sync\b|\bpip3?\s+install\b|\buv\s+pip\s+install\b")
 
 
 def docker_run_lines(script: str) -> list[str]:
-    """Each `docker run ...` command of a script as one string (line continuations joined)."""
-    joined = re.sub(r"\\\n\s*", " ", script)
-    return [
-        ln.strip() for ln in joined.splitlines() if re.match(r"\s*(sudo\s+)?docker\s+run\b", ln)
-    ]
+    """Each `docker run ...` command of a script, from the words docker run to the end of its logical line (line
+    continuations joined). It is found anywhere on a line, so `sudo docker run`, `timeout 5 docker run` and
+    `cmd && docker run` are found too."""
+    found = []
+    for line in logical_lines(script):
+        m = re.search(r"\bdocker\s+run\b", line)
+        if m:
+            found.append(line[m.start() :])
+    return found
 
 
 def vault_problems(text: str) -> list[str]:
     """Rules for any workflow job that uses a Vault server: one random value, made in a step, masked before it is
-    written anywhere, handed to the container and to the tests, never printed and never a literal; the container is
-    published on loopback only, removed by name after the last test step, and the image is one pinned digest.
-    A service cannot read a step's output, so there is no `vault` service."""
+    written anywhere, handed to the container and to the tests, never printed, never in a command line and never a
+    literal; the container is published on loopback only, removed by name after the last test step, and the image is
+    one pinned digest. A service cannot read a step's output, so there is no Vault service. Every `docker run` in a
+    job is treated as the Vault start and must meet all of this."""
     wf = load(text)
     out: list[str] = []
     if re.search(r"VAULT_DEV_ROOT_TOKEN_ID:\s*\S", text) or re.search(
         r"HADAVIN_TEST_VAULT_TOKEN:\s*\S", text
     ):
-        out.append("a literal Vault token is set in an env block")
+        add(out, "literal-token", "a literal Vault token is set in an env block")
     if re.search(r"\btoken\W+root\b", text):
-        out.append("the literal token 'root' appears")
+        add(out, "token-root", "the literal token 'root' appears")
     digests = set(IMAGE_RE.findall(text))
     if len(digests) > 1:
-        out.append(f"more than one Vault image digest in one workflow: {sorted(digests)}")
+        add(
+            out,
+            "two-digests",
+            f"more than one Vault image digest in one workflow: {sorted(digests)}",
+        )
     for jname, job in wf["jobs"].items():
         steps = job["steps"]
-        if "vault" in (job.get("services") or {}):
-            out.append(f"job {jname}: Vault is a service (its token cannot be generated)")
+        for sname, svc in (job.get("services") or {}).items():
+            blob = json.dumps(svc).lower() + sname.lower()
+            if "vault" in blob:
+                add(
+                    out,
+                    "vault-as-service",
+                    f"job {jname}: service {sname!r} is a Vault server (its token cannot be generated)",
+                )
         for st in steps:
             run = st.get("run", "")
-            if re.search(r"(^|\s)set\s+-\w*x|xtrace|bash\s+-\w*x", run):
-                out.append(f"job {jname}: shell tracing (set -x) would print the token")
-            if st.get("shell"):
-                out.append(f"job {jname}: a shell: override changes how the script is run")
-            code_lines = [ln for ln in run.splitlines() if not ln.lstrip().startswith("#")]
-            for line in code_lines:
+            for line in logical_lines(run):
                 if re.match(
-                    r"\s*(env|printenv|export\s*(-p)?\s*$|set\s*$|declare\s+-x|cat|tee)\b", line
+                    r"(env|printenv|export\s*(-p)?\s*$|set\s*$|declare\s+-x|cat|tee)\b", line
                 ):
-                    out.append(
-                        f"job {jname}: a line could print the environment or the token: {line.strip()[:40]}"
+                    add(
+                        out,
+                        "prints-env",
+                        f"job {jname}: a line could print the environment or the token: {line[:40]}",
                     )
                 if "<<<" in line and re.search(VALUE_REF_RE, line):
-                    out.append(f"job {jname}: a here-string passes the token to a command")
+                    add(
+                        out,
+                        "here-string",
+                        f"job {jname}: a here-string passes the token to a command",
+                    )
                 if re.search(
                     r"\bsudo\b|docker\s+exec\b|docker\.sock|--pid[= ]host|--ipc[= ]host|--cap-add",
                     line,
                 ):
-                    out.append(
-                        f"job {jname}: sudo, docker exec, docker.sock or extra rights: {line.strip()[:40]}"
+                    add(
+                        out,
+                        "extra-rights",
+                        f"job {jname}: sudo, docker exec, docker.sock or extra rights: {line[:40]}",
                     )
-                if re.match(r"\s*curl\b", line) and re.search(
+                if re.search(r"\bcurl\s", line) and re.search(
                     r"\s(-[a-zA-Z]*v[a-zA-Z]*|--verbose|--trace\S*|--dump-header)\b", line
                 ):
-                    out.append(f"job {jname}: curl in verbose mode would print the token header")
-            for line in run.splitlines():
+                    add(
+                        out,
+                        "curl-verbose",
+                        f"job {jname}: curl in verbose mode would print the token header",
+                    )
                 if (
-                    re.match(r"\s*(echo|printf)\b", line)
-                    and re.search(VALUE_REF_RE, line)
-                    and line.strip() not in (MASK_LINE, ENV_LINE)
+                    re.search(r"\bcurl\s", line)
+                    and (re.search(VALUE_REF_RE, line) or "X-Vault-Token" in line)
+                    and line != PROBE_LINE
                 ):
-                    out.append(f"job {jname}: a line prints the token: {line.strip()[:50]}")
-        uses_server = TEST_ENV in json.dumps(job)
-        starts = [
-            i
-            for i, st in enumerate(steps)
-            if docker_run_lines(st.get("run", ""))
-            and ("hashicorp/vault" in st["run"] or "$VAULT_IMAGE" in st["run"])
-        ]
-        if uses_server and not starts:
-            out.append(f"job {jname}: the tests use a Vault server but no step starts one")
+                    add(
+                        out,
+                        "token-in-argv",
+                        f"job {jname}: curl gets the token in its command line: {line[:50]}",
+                    )
+                if (
+                    re.match(r"(echo|printf)\b", line)
+                    and re.search(VALUE_REF_RE, line)
+                    and line not in (MASK_LINE, ENV_LINE)
+                    and not line.startswith(PROBE_LINE.split(" | ")[0])
+                ):
+                    add(out, "prints-token", f"job {jname}: a line prints the token: {line[:50]}")
+                if "docker logs" in line and LOGS_FILTER not in line:
+                    add(
+                        out,
+                        "logs-filter",
+                        f"job {jname}: docker logs must be filtered for the unseal key, root token and token",
+                    )
+        starts = [i for i, st in enumerate(steps) if docker_run_lines(st.get("run", ""))]
+        env_text = json.dumps(wf.get("env", {})) + json.dumps(job)
+        if TEST_ENV in env_text and not starts:
+            add(
+                out, "no-start", f"job {jname}: the tests use a Vault server but no step starts one"
+            )
         if not starts:
             continue
-        job_text = json.dumps(wf.get("env", {})) + json.dumps(job.get("env", {}))
-        if any("$VAULT_IMAGE" in steps[i]["run"] for i in starts) and not IMAGE_RE.search(job_text):
-            out.append(f"job {jname}: $VAULT_IMAGE is not defined as a pinned digest in env")
+        merged_env = {**(wf.get("env") or {}), **(job.get("env") or {})}
+        if any(re.search(IMAGE_VAR, steps[i]["run"]) for i in starts) and not IMAGE_RE.fullmatch(
+            str(merged_env.get("VAULT_IMAGE", ""))
+        ):
+            add(
+                out,
+                "image-undefined",
+                f"job {jname}: $VAULT_IMAGE is not defined as a pinned digest in env",
+            )
         for i in starts:
             script = steps[i]["run"]
             label = f"job {jname} step {i}"
+            code = logical_lines(script)
             if "openssl rand" not in script:
-                out.append(f"{label}: the Vault token is not generated with openssl rand")
+                add(
+                    out,
+                    "no-openssl",
+                    f"{label}: the Vault token is not generated with openssl rand",
+                )
             if MASK_LINE not in script or ENV_LINE not in script:
-                out.append(
-                    f"{label}: missing the mask line or the line that hands the token to the tests"
+                add(
+                    out,
+                    "mask-lines",
+                    f"{label}: missing the mask line or the line that hands the token to the tests",
                 )
             elif script.index(MASK_LINE) > script.index(ENV_LINE):
-                out.append(
-                    f"{label}: the mask line must come before the token is written to GITHUB_ENV"
+                add(
+                    out,
+                    "mask-order",
+                    f"{label}: the mask line must come before the token is written to GITHUB_ENV",
                 )
+            if MASK_LINE in code:
+                before = code[: code.index(MASK_LINE)]
+                for ln in before:
+                    if re.search(VALUE_REF_RE, ln) and not ln.startswith("token="):
+                        add(
+                            out,
+                            "token-before-mask",
+                            f"{label}: the token is used before it is masked: {ln[:50]}",
+                        )
             if 'export VAULT_DEV_ROOT_TOKEN_ID="$token"' not in script:
-                out.append(f"{label}: the container does not get the same $token")
+                add(out, "same-token", f"{label}: the container does not get the same $token")
             if script.count("token=") != 1:
-                out.append(f"{label}: more than one token value")
+                add(out, "one-token", f"{label}: more than one token value")
             for cmd in docker_run_lines(script):
                 if re.search(r"VAULT_DEV_ROOT_TOKEN_ID=|--env\b|--env-file", cmd):
-                    out.append(
-                        f"{label}: the container gets its token by value or by file, not by -e NAME"
+                    add(
+                        out,
+                        "token-by-value",
+                        f"{label}: the container gets its token by value or by file, not by -e NAME",
                     )
                 if (
                     len(re.findall(r"(?:^|\s)(?:-p|--publish)(?:\s|=)", cmd)) != 1
                     or "-p 127.0.0.1:8200:8200 " not in cmd + " "
                 ):
-                    out.append(f"{label}: exactly one port, -p 127.0.0.1:8200:8200, is allowed")
+                    add(
+                        out,
+                        "port",
+                        f"{label}: exactly one port, -p 127.0.0.1:8200:8200, is allowed",
+                    )
                 if re.search(
                     r"(?:^|\s)(-P|--publish-all|--privileged|--network[= ]host|--net[= ]host)(?:\s|$)",
                     cmd,
                 ):
-                    out.append(f"{label}: -P, --privileged or host networking is not allowed")
+                    add(
+                        out,
+                        "host-network",
+                        f"{label}: -P, --privileged or host networking is not allowed",
+                    )
                 if "-e VAULT_DEV_ROOT_TOKEN_ID " not in cmd:
-                    out.append(
-                        f"{label}: the container must get -e VAULT_DEV_ROOT_TOKEN_ID (no value)"
+                    add(
+                        out,
+                        "e-name",
+                        f"{label}: the container must get -e VAULT_DEV_ROOT_TOKEN_ID (no value)",
                     )
                 if re.search(
                     r"--security-opt\s+\S*(unconfined|seccomp|apparmor)|--cap-add|--device|(^|\s)(-v|--volume|--mount)\b|--user\s+0|--pid|--ipc",
                     cmd,
                 ):
-                    out.append(f"{label}: extra container rights or mounts are not allowed")
-                if '"$VAULT_IMAGE"' not in cmd:
-                    out.append(f'{label}: the image must be given as "$VAULT_IMAGE"')
+                    add(
+                        out,
+                        "container-rights",
+                        f"{label}: extra container rights or mounts are not allowed",
+                    )
+                if not re.search(rf'"{IMAGE_VAR}"', cmd):
+                    add(out, "image-var", f'{label}: the image must be given as "$VAULT_IMAGE"')
                 if "--name vault-ci " not in cmd:
-                    out.append(f"{label}: the container must be named vault-ci")
-            code = [ln.strip() for ln in script.splitlines() if not ln.lstrip().startswith("#")]
-            if not any(
-                ln.startswith("curl ")
-                and "X-Vault-Token" in ln
-                and "127.0.0.1:8200" in ln
-                and ln.endswith("&& exit 0")
-                for ln in code
-            ):
-                out.append(
-                    f"{label}: no readiness probe from the host with the token (as a code line)"
+                    add(out, "container-name", f"{label}: the container must be named vault-ci")
+            if PROBE_LINE not in code:
+                add(
+                    out,
+                    "probe",
+                    f"{label}: no readiness probe from the host with the token on curl's standard input",
                 )
             if [ln for ln in code if ln][-1:] != ["exit 1"]:
-                out.append(
-                    f"{label}: the step must end with exit 1 after the waiting loop times out"
+                add(
+                    out,
+                    "exit-1",
+                    f"{label}: the step must end with exit 1 after the waiting loop times out",
                 )
             if re.search(r"hashicorp/vault", "\n".join(code)):
-                out.append(
-                    f"{label}: the image must come from $VAULT_IMAGE, not a literal in the script"
+                add(
+                    out,
+                    "literal-image",
+                    f"{label}: the image must come from $VAULT_IMAGE, not a literal in the script",
                 )
             if "docker logs" not in script or "docker ps" not in script:
-                out.append(f"{label}: no container diagnostics on failure")
+                add(out, "diagnostics", f"{label}: no container diagnostics on failure")
             if "docker inspect" not in script:
-                out.append(f"{label}: no fast failure when the container has exited")
-        is_test = re.compile(r"\bpytest\b|\$TOOL\"? run (perf|stage-mutants|\"\$name\")")
-        test_steps = [i for i, st in enumerate(steps) if is_test.search(st.get("run", ""))]
+                add(out, "inspect", f"{label}: no fast failure when the container has exited")
+        test_steps = []
+        for i, st in enumerate(steps):
+            if IS_TEST.search(st.get("run", "")):
+                test_steps.append(i)
+                merged = {
+                    **(wf.get("env") or {}),
+                    **(job.get("env") or {}),
+                    **(st.get("env") or {}),
+                }
+                if TEST_ENV not in merged:
+                    add(
+                        out,
+                        "addr-missing",
+                        f"job {jname} step {i}: a test step without {TEST_ENV} would use the in-process fake",
+                    )
         last_test = max(test_steps or [-1])
         first_test = min(test_steps or [10**6])
         if first_test < starts[0]:
-            out.append(f"job {jname}: a test step runs before the Vault step")
+            add(out, "test-before-vault", f"job {jname}: a test step runs before the Vault step")
+        for i, st in enumerate(steps):
+            if i > starts[0] and INSTALLS.search(st.get("run", "")):
+                add(
+                    out,
+                    "install-after-vault",
+                    f"job {jname}: an install step runs after the token exists",
+                )
         removal = [
             i for i, st in enumerate(steps) if "docker" in st.get("run", "") and " rm " in st["run"]
         ]
         if not removal:
-            out.append(f"job {jname}: the Vault container is never removed")
+            add(out, "no-removal", f"job {jname}: the Vault container is never removed")
         for i in removal:
             if steps[i].get("if") != "${{ always() }}":
-                out.append(f"job {jname}: the Vault removal must run with always()")
+                add(out, "removal-always", f"job {jname}: the Vault removal must run with always()")
             if "name=^vault-ci$" not in steps[i]["run"]:
-                out.append(f"job {jname}: the Vault removal must target name=^vault-ci$")
+                add(
+                    out,
+                    "removal-name",
+                    f"job {jname}: the Vault removal must target name=^vault-ci$",
+                )
+            if "xargs" in steps[i]["run"] and "set -o pipefail" not in steps[i]["run"]:
+                add(
+                    out,
+                    "removal-pipefail",
+                    f"job {jname}: the removal pipes into xargs without set -o pipefail",
+                )
             if i < last_test:
-                out.append(f"job {jname}: the Vault removal comes before the last test step")
+                add(
+                    out,
+                    "removal-early",
+                    f"job {jname}: the Vault removal comes before the last test step",
+                )
     return out
+
+
+def all_vault_problems(text: str, name: str) -> list[str]:
+    return [*workflow_problems(text, name), *vault_problems(text)]
 
 
 def test_all_vault_image_digests_are_equal_across_workflows():
@@ -676,8 +1414,27 @@ def test_every_workflow_makes_its_vault_token_fresh(path):
     assert vault_problems(path.read_text(encoding="utf-8")) == []
 
 
+def vault_start_scripts() -> dict[str, str]:
+    """The code lines of every Vault start step in every workflow, keyed by 'file:job'."""
+    found = {}
+    for path in WORKFLOWS:
+        for jname, job in load(path.read_text(encoding="utf-8"))["jobs"].items():
+            for st in job["steps"]:
+                if docker_run_lines(st.get("run", "")):
+                    found[f"{path.name}:{jname}"] = "\n".join(logical_lines(st["run"]))
+    return found
+
+
+def test_the_vault_start_script_is_the_same_in_every_workflow_and_job():
+    scripts = vault_start_scripts()
+    assert len(scripts) >= 3, sorted(scripts)
+    assert len(set(scripts.values())) == 1, (
+        "the copies of the Vault start script differ: " + ", ".join(sorted(scripts))
+    )
+
+
 def test_ci_workflow_starts_vault_in_both_test_jobs():
-    wf = load((ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8"))
+    wf = load((WORKFLOW_DIR / "ci.yml").read_text(encoding="utf-8"))
     for jname in ("check", "tests-py312"):
         names = [st.get("name", "") for st in wf["jobs"][jname]["steps"]]
         assert names.count("Start a throwaway Vault development server") == 1, jname
@@ -685,108 +1442,305 @@ def test_ci_workflow_starts_vault_in_both_test_jobs():
 
 
 VAULT_PLANTS = {
-    "literal token in a service": lambda t: t.replace(
-        "    steps:\n",
-        "    services:\n      vault:\n        image: x\n        env:\n          VAULT_DEV_ROOT_TOKEN_ID: abc\n    steps:\n",
-        1,
+    "literal token in a service": (
+        lambda t: t.replace(
+            "    steps:\n",
+            "    services:\n      vault:\n        image: x\n        env:\n          VAULT_DEV_ROOT_TOKEN_ID: abc\n    steps:\n",
+            1,
+        ),
+        "literal-token",
     ),
-    "vault service alone": lambda t: t.replace(
-        "    steps:\n", "    services:\n      vault:\n        image: x\n    steps:\n", 1
+    "vault service alone": (
+        lambda t: t.replace(
+            "    steps:\n", "    services:\n      vault:\n        image: x\n    steps:\n", 1
+        ),
+        "vault-as-service",
     ),
-    "literal env token": lambda t: t.replace(
-        "    steps:\n", "    env:\n      HADAVIN_TEST_VAULT_TOKEN: abc\n    steps:\n", 1
+    "vault service under another name": (
+        lambda t: t.replace(
+            "    steps:\n",
+            "    services:\n      kv:\n        image: hashicorp/vault:2.2.0\n        options: -e VAULT_DEV_ROOT_TOKEN_ID\n    steps:\n",
+            1,
+        ),
+        "vault-as-service",
     ),
-    "fixed value instead of openssl": lambda t: t.replace(
-        "token=$(openssl rand -hex 24)", "token=abc123"
+    "literal env token": (
+        lambda t: t.replace(
+            "    steps:\n", "    env:\n      HADAVIN_TEST_VAULT_TOKEN: abc\n    steps:\n", 1
+        ),
+        "literal-token",
     ),
-    "no mask line": lambda t: t.replace('          echo "::add-mask::$token"\n', ""),
-    "mask after env write": lambda t: t.replace(
-        MASK_LINE + "\n          " + ENV_LINE, ENV_LINE + "\n          " + MASK_LINE
+    "fixed value instead of openssl": (
+        lambda t: t.replace("token=$(openssl rand -hex 24)", "token=abc123"),
+        "no-openssl",
     ),
-    "tests not given the token": lambda t: t.replace(
-        'echo "HADAVIN_TEST_VAULT_TOKEN=$token"', 'echo "OTHER=$token"'
+    "token is the word root": (
+        lambda t: t.replace("token=$(openssl rand -hex 24)", "token=root"),
+        "token-root",
     ),
-    "container not given the same value": lambda t: t.replace(
-        'export VAULT_DEV_ROOT_TOKEN_ID="$token"',
-        'export VAULT_DEV_ROOT_TOKEN_ID="$(openssl rand -hex 8)"',
+    "no mask line": (
+        lambda t: t.replace('          echo "::add-mask::$token"\n', ""),
+        "mask-lines",
     ),
-    "second value": lambda t: t.replace(
-        MASK_LINE, "token=$(openssl rand -hex 4)\n          " + MASK_LINE
+    "mask after env write": (
+        lambda t: t.replace(
+            MASK_LINE + "\n          " + ENV_LINE, ENV_LINE + "\n          " + MASK_LINE
+        ),
+        "mask-order",
     ),
-    "token printed by echo": lambda t: t.replace(MASK_LINE, "echo $token\n          " + MASK_LINE),
-    "token printed by printf": lambda t: t.replace(
-        MASK_LINE, 'printf "%s\\n" "$token"\n          ' + MASK_LINE
+    "token used before the mask": (
+        lambda t: t.replace(
+            MASK_LINE, 'curl -s "https://example.invalid/?t=$token"\n          ' + MASK_LINE
+        ),
+        "token-before-mask",
     ),
-    "token printed in text": lambda t: t.replace(
-        MASK_LINE, 'echo "t=$token"\n          ' + MASK_LINE
+    "token sent by curl in the command line": (
+        lambda t: t.replace(
+            MASK_LINE,
+            MASK_LINE + '\n          curl -s -H "X-Vault-Token: $token" http://127.0.0.1:8200/',
+        ),
+        "token-in-argv",
     ),
-    "token printed with braces": lambda t: t.replace(
-        MASK_LINE, 'echo "${token}"\n          ' + MASK_LINE
+    "probe back in the command line": (
+        lambda t: t.replace(
+            PROBE_LINE,
+            'curl -fsS -o /dev/null -H "X-Vault-Token: $token" http://127.0.0.1:8200/v1/auth/token/lookup-self && exit 0',
+        ),
+        "token-in-argv",
     ),
-    "shell tracing": lambda t: t.replace(
-        "          token=$(openssl", "          set -x\n          token=$(openssl"
+    "tests not given the token": (
+        lambda t: t.replace('echo "HADAVIN_TEST_VAULT_TOKEN=$token"', 'echo "OTHER=$token"'),
+        "mask-lines",
     ),
-    "port on all interfaces": lambda t: t.replace("-p 127.0.0.1:8200:8200", "-p 8200:8200"),
-    "second port": lambda t: t.replace(
-        "-p 127.0.0.1:8200:8200", "-p 127.0.0.1:8200:8200 -p 8201:8201"
+    "container not given the same value": (
+        lambda t: t.replace(
+            'export VAULT_DEV_ROOT_TOKEN_ID="$token"',
+            'export VAULT_DEV_ROOT_TOKEN_ID="$(openssl rand -hex 8)"',
+        ),
+        "same-token",
     ),
-    "publish all": lambda t: t.replace("-p 127.0.0.1:8200:8200", "-p 127.0.0.1:8200:8200 -P"),
-    "host network": lambda t: t.replace(
-        "-p 127.0.0.1:8200:8200", "-p 127.0.0.1:8200:8200 --network host"
+    "second value": (
+        lambda t: t.replace(MASK_LINE, "token=$(openssl rand -hex 4)\n          " + MASK_LINE),
+        "one-token",
     ),
-    "token by value": lambda t: t.replace(
-        "-e VAULT_DEV_ROOT_TOKEN_ID -e", "-e VAULT_DEV_ROOT_TOKEN_ID=$token -e"
+    "token printed by echo": (
+        lambda t: t.replace(MASK_LINE, "echo $token\n          " + MASK_LINE),
+        "prints-token",
     ),
-    "container renamed": lambda t: t.replace("--name vault-ci", "--name vault-x"),
-    "no host probe": lambda t: t.replace("curl -fsS", "echo -fsS"),
-    "no diagnostics": lambda t: t.replace("docker logs", "docker version #"),
-    "no exit check": lambda t: t.replace("docker inspect", "docker version #"),
-    "image digest differs": lambda t: t + "\n# hashicorp/vault:2.2.0@sha256:" + "0" * 64,
-    "no removal": lambda t: re.sub(
-        r"(Remove the Vault development server\n\s+)if: \$\{\{ always\(\) \}\}",
-        r"\1if: ${{ success() }}",
-        t,
+    "token printed by printf": (
+        lambda t: t.replace(MASK_LINE, 'printf "%s\\n" "$token"\n          ' + MASK_LINE),
+        "prints-token",
     ),
-    "removal by substring": lambda t: t.replace("'name=^vault-ci$'", "name=vault"),
-    "docker exec": lambda t: t.replace(
-        MASK_LINE, MASK_LINE + "\n          docker exec vault-ci env"
+    "token printed in text": (
+        lambda t: t.replace(MASK_LINE, 'echo "t=$token"\n          ' + MASK_LINE),
+        "prints-token",
     ),
-    "environment printed": lambda t: t.replace(MASK_LINE, MASK_LINE + "\n          env"),
-    "printenv": lambda t: t.replace(MASK_LINE, MASK_LINE + "\n          printenv"),
-    "curl verbose": lambda t: t.replace("curl -fsS", "curl -v -fsS"),
-    "curl long verbose": lambda t: t.replace("curl -fsS", "curl --verbose -fsS"),
-    "shell override": lambda t: t.replace(
-        "      - name: Start a throwaway Vault development server\n",
-        "      - name: Start a throwaway Vault development server\n        shell: bash -x {0}\n",
+    "token printed with braces": (
+        lambda t: t.replace(MASK_LINE, 'echo "${token}"\n          ' + MASK_LINE),
+        "prints-token",
     ),
-    "docker run with two spaces": lambda t: t.replace(
-        "docker run -d --name vault-ci", "docker  run -d --name vault-x -p 8200:8200"
+    "shell tracing": (
+        lambda t: t.replace(
+            "          token=$(openssl", "          set -x\n          token=$(openssl"
+        ),
+        "shell-trace",
     ),
-    "sudo docker": lambda t: t.replace("docker run -d", "sudo docker run -d"),
-    "literal image": lambda t: t.replace(
-        '"$VAULT_IMAGE" > /dev/null', "hashicorp/vault:2.2.0 > /dev/null"
+    "port on all interfaces": (
+        lambda t: t.replace("-p 127.0.0.1:8200:8200", "-p 8200:8200"),
+        "port",
     ),
-    "docker socket": lambda t: t.replace(
-        "-e SKIP_SETCAP=true", "-e SKIP_SETCAP=true -v /var/run/docker.sock:/var/run/docker.sock"
+    "second port": (
+        lambda t: t.replace("-p 127.0.0.1:8200:8200", "-p 127.0.0.1:8200:8200 -p 8201:8201"),
+        "port",
     ),
-    "host pid": lambda t: t.replace("-e SKIP_SETCAP=true", "-e SKIP_SETCAP=true --pid=host"),
-    "added capability": lambda t: t.replace(
-        "-e SKIP_SETCAP=true", "-e SKIP_SETCAP=true --cap-add SYS_ADMIN"
+    "publish all": (
+        lambda t: t.replace("-p 127.0.0.1:8200:8200", "-p 127.0.0.1:8200:8200 -P"),
+        "host-network",
     ),
-    "probe only in a comment": lambda t: t.replace(
-        'curl -fsS -o /dev/null -H "X-Vault-Token: $token"',
-        '# curl -fsS -H "X-Vault-Token: $token"\n            true "$token"',
+    "host network": (
+        lambda t: t.replace("-p 127.0.0.1:8200:8200", "-p 127.0.0.1:8200:8200 --network host"),
+        "host-network",
     ),
-    "probe cannot succeed": lambda t: t.replace(" && exit 0", ""),
-    "no exit 1 after the loop": lambda t: re.sub(
-        r"(Start a throwaway Vault development server[\s\S]*?)exit 1\n(?=\s+- )", r"\1true\n", t
+    "container not given the token name": (
+        lambda t: t.replace(
+            "-e VAULT_DEV_ROOT_TOKEN_ID -e VAULT_DEV_LISTEN_ADDRESS", "-e VAULT_DEV_LISTEN_ADDRESS"
+        ),
+        "e-name",
     ),
-    "cat prints the token": lambda t: t.replace(
-        MASK_LINE, 'cat <<< "$token"\n          ' + MASK_LINE
+    "image variable not defined as a pinned digest": (
+        lambda t: t.replace("VAULT_IMAGE: hashicorp", "VAULT_IMAGE_X: hashicorp"),
+        "image-undefined",
     ),
-    "here-string": lambda t: t.replace(MASK_LINE, 'tr a b <<< "$token"\n          ' + MASK_LINE),
-    "never removed": lambda t: re.sub(
-        r"      - name: Remove the Vault development server\n(?:        .*\n){3}", "", t
+    "tests use Vault but nothing starts it": (
+        lambda t: t.replace("docker run -d --name vault-ci", "echo "),
+        "no-start",
+    ),
+    "removal step before the last test": (
+        lambda t: t.replace(
+            "      - name: The postgres client the database tests",
+            "      - name: Early removal\n        if: ${{ always() }}\n        timeout-minutes: 2\n"
+            "        run: |\n          set -o pipefail\n"
+            "          docker ps -aq --filter 'name=^vault-ci$' | xargs -r docker rm -f\n"
+            "      - name: The postgres client the database tests",
+            1,
+        ),
+        "removal-early",
+    ),
+    "token by value": (
+        lambda t: t.replace(
+            "-e VAULT_DEV_ROOT_TOKEN_ID -e", "-e VAULT_DEV_ROOT_TOKEN_ID=$token -e"
+        ),
+        "token-by-value",
+    ),
+    "container renamed": (
+        lambda t: t.replace("--name vault-ci", "--name vault-x"),
+        "container-name",
+    ),
+    "no host probe": (lambda t: t.replace("curl -fsS", "echo -fsS"), "probe"),
+    "no diagnostics": (
+        lambda t: t.replace("docker logs vault-ci 2>&1 | " + LOGS_FILTER, "docker version #"),
+        "diagnostics",
+    ),
+    "logs not filtered": (
+        lambda t: t.replace("grep -viE 'unseal key|root token' | ", ""),
+        "logs-filter",
+    ),
+    "no exit check": (lambda t: t.replace("docker inspect", "docker version #"), "inspect"),
+    "image digest differs": (
+        lambda t: t + "\n# hashicorp/vault:2.2.0@sha256:" + "0" * 64,
+        "two-digests",
+    ),
+    "no removal": (
+        lambda t: re.sub(
+            r"(Remove the Vault development server\n\s+)if: \$\{\{ always\(\) \}\}",
+            r"\1if: ${{ success() }}",
+            t,
+        ),
+        "removal-always",
+    ),
+    "removal by substring": (
+        lambda t: t.replace("'name=^vault-ci$'", "name=vault"),
+        "removal-name",
+    ),
+    "removal without pipefail": (
+        lambda t: t.replace("          set -o pipefail\n", ""),
+        "removal-pipefail",
+    ),
+    "docker exec": (
+        lambda t: t.replace(MASK_LINE, MASK_LINE + "\n          docker exec vault-ci env"),
+        "extra-rights",
+    ),
+    "environment printed": (
+        lambda t: t.replace(MASK_LINE, MASK_LINE + "\n          env"),
+        "prints-env",
+    ),
+    "printenv": (lambda t: t.replace(MASK_LINE, MASK_LINE + "\n          printenv"), "prints-env"),
+    "curl verbose": (lambda t: t.replace("curl -fsS", "curl -v -fsS"), "curl-verbose"),
+    "curl long verbose": (lambda t: t.replace("curl -fsS", "curl --verbose -fsS"), "curl-verbose"),
+    "shell override": (
+        lambda t: t.replace(
+            "      - name: Start a throwaway Vault development server\n",
+            "      - name: Start a throwaway Vault development server\n        shell: bash -x {0}\n",
+        ),
+        "shell-override",
+    ),
+    "docker run with two spaces": (
+        lambda t: t.replace(
+            "docker run -d --name vault-ci", "docker  run -d --name vault-x -p 8200:8200"
+        ),
+        "port",
+    ),
+    "sudo docker": (lambda t: t.replace("docker run -d", "sudo docker run -d"), "extra-rights"),
+    "docker run after a timeout prefix": (
+        lambda t: t.replace(
+            "docker run -d --name vault-ci -p 127.0.0.1:8200:8200",
+            "timeout 5 docker run -d --name vault-ci -p 8200:8200",
+        ),
+        "port",
+    ),
+    "docker run after &&": (
+        lambda t: t.replace(
+            "docker run -d --name vault-ci -p 127.0.0.1:8200:8200",
+            "true && docker run -d --name vault-ci -p 8200:8200",
+        ),
+        "port",
+    ),
+    "literal image": (
+        lambda t: t.replace('"$VAULT_IMAGE" > /dev/null', "hashicorp/vault:2.2.0 > /dev/null"),
+        "literal-image",
+    ),
+    "image not from the variable": (
+        lambda t: t.replace('"$VAULT_IMAGE" > /dev/null', "vault-x > /dev/null"),
+        "image-var",
+    ),
+    "docker socket": (
+        lambda t: t.replace(
+            "-e SKIP_SETCAP=true",
+            "-e SKIP_SETCAP=true -v /var/run/docker.sock:/var/run/docker.sock",
+        ),
+        "extra-rights",
+    ),
+    "volume mount": (
+        lambda t: t.replace("-e SKIP_SETCAP=true", "-e SKIP_SETCAP=true -v /tmp:/data"),
+        "container-rights",
+    ),
+    "host pid": (
+        lambda t: t.replace("-e SKIP_SETCAP=true", "-e SKIP_SETCAP=true --pid=host"),
+        "extra-rights",
+    ),
+    "added capability": (
+        lambda t: t.replace("-e SKIP_SETCAP=true", "-e SKIP_SETCAP=true --cap-add SYS_ADMIN"),
+        "extra-rights",
+    ),
+    "probe only in a comment": (
+        lambda t: t.replace(PROBE_LINE, "# " + PROBE_LINE + '\n            true "$token"'),
+        "probe",
+    ),
+    "probe cannot succeed": (lambda t: t.replace(" && exit 0", ""), "probe"),
+    "no exit 1 after the loop": (
+        lambda t: re.sub(
+            r"(Start a throwaway Vault development server[\s\S]*?)exit 1\n(?=\s+- )", r"\1true\n", t
+        ),
+        "exit-1",
+    ),
+    "cat prints the token": (
+        lambda t: t.replace(MASK_LINE, 'cat <<< "$token"\n          ' + MASK_LINE),
+        "prints-env",
+    ),
+    "here-string": (
+        lambda t: t.replace(MASK_LINE, 'tr a b <<< "$token"\n          ' + MASK_LINE),
+        "here-string",
+    ),
+    "never removed": (
+        lambda t: re.sub(
+            r"      - name: Remove the Vault development server\n(?:        .*\n){3,5}", "", t
+        ),
+        "no-removal",
+    ),
+    "tests not given the server address": (
+        lambda t: t.replace(
+            "HADAVIN_TEST_VAULT_ADDR: http://127.0.0.1:8200\n",
+            "HADAVIN_TEST_VAULT_ADDR_X: http://127.0.0.1:8200\n",
+        ),
+        "addr-missing",
+    ),
+    "install after the token exists": (
+        lambda t: re.sub(
+            r"(      - name: (?:Tests \(the CI command\)|Tests \(no live calls\)|Tests on Python 3\.12 \(no live calls\))\n)",
+            r"      - name: Late install\n        timeout-minutes: 2\n        run: uv sync\n\1",
+            t,
+            count=1,
+        ),
+        "install-after-vault",
+    ),
+    "test before the Vault step": (
+        lambda t: re.sub(
+            r"(      - name: Start a throwaway Vault development server\n)",
+            "      - name: Early test\n        timeout-minutes: 2\n        env:\n          HADAVIN_TEST_VAULT_ADDR: http://127.0.0.1:8200\n        run: pytest -q\n\\1",
+            t,
+            count=1,
+        ),
+        "test-before-vault",
     ),
 }
 
@@ -794,14 +1748,22 @@ VAULT_PLANTS = {
 @pytest.mark.parametrize("path", WORKFLOWS, ids=lambda p: p.name)
 @pytest.mark.parametrize("name", sorted(VAULT_PLANTS))
 def test_each_vault_rule_fails_on_a_planted_violation(path, name):
+    plant, rule = VAULT_PLANTS[name]
     text = path.read_text(encoding="utf-8")
-    planted = VAULT_PLANTS[name](text)
+    planted = plant(text)
     assert planted != text, f"plant {name} changed nothing in {path.name}"
-    assert vault_problems(planted), f"plant {name} was not caught in {path.name}"
+    found = all_vault_problems(planted, path.name)
+    assert any(p.startswith(f"[{rule}]") for p in found), (name, path.name, rule, found)
+
+
+def test_the_braced_image_variable_is_accepted():
+    text = WORKFLOW.read_text(encoding="utf-8")
+    braced = text.replace('"$VAULT_IMAGE" > /dev/null', '"${VAULT_IMAGE}" > /dev/null')
+    assert braced != text and vault_problems(braced) == []
 
 
 def test_a_second_docker_run_step_is_inspected_too():
-    text = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+    text = (WORKFLOW_DIR / "ci.yml").read_text(encoding="utf-8")
     extra = (
         "      - name: Another server\n        timeout-minutes: 2\n        run: |\n"
         "          docker run -d --name vault-ci -p 8200:8200 $VAULT_IMAGE\n"
@@ -809,27 +1771,27 @@ def test_a_second_docker_run_step_is_inspected_too():
     planted = text.replace(
         "      - uses: astral-sh/setup-uv@", extra + "      - uses: astral-sh/setup-uv@", 1
     )
-    assert planted != text and vault_problems(planted)
+    assert planted != text and any(p.startswith("[port]") for p in vault_problems(planted))
 
 
 def test_a_removal_step_before_the_last_test_step_is_caught():
-    text = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+    text = (WORKFLOW_DIR / "ci.yml").read_text(encoding="utf-8")
     removal = (
         "      - name: Remove the Vault development server\n        if: ${{ always() }}\n        timeout-minutes: 2\n"
-        "        run: docker ps -aq --filter 'name=^vault-ci$' | xargs -r docker rm -f\n"
+        "        run: |\n          set -o pipefail\n          docker ps -aq --filter 'name=^vault-ci$' | xargs -r docker rm -f\n"
     )
     assert removal in text
     planted = text.replace(removal, "", 1).replace(
         "      - uses: astral-sh/setup-uv@", removal + "      - uses: astral-sh/setup-uv@", 1
     )
-    assert vault_problems(planted)
+    assert any(p.startswith("[removal-early]") for p in vault_problems(planted))
 
 
 def test_a_job_that_uses_vault_without_starting_one_is_caught():
-    text = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+    text = (WORKFLOW_DIR / "ci.yml").read_text(encoding="utf-8")
     planted = text.replace("Start a throwaway Vault development server", "Something else", 1)
     planted = planted.replace("docker run -d --name vault-ci", "echo", 1)
-    assert vault_problems(planted)
+    assert any(p.startswith("[no-start]") for p in vault_problems(planted))
 
 
 def test_the_file_search_covers_yaml_files_too(tmp_path):
@@ -892,9 +1854,63 @@ def test_the_folder_comes_from_evidence_dir_when_it_is_set(tmp_path):
     assert not (tmp_path / "evidence-logs").exists()
 
 
-def test_the_helper_source_masks_in_emit_and_in_the_report():
-    src = (ROOT / "tools" / "evidence_step.py").read_text(encoding="utf-8")
-    assert "text = mask(text)" in src and 'mask("\\n".join(out)' in src
+def test_the_token_is_removed_from_the_message_of_a_command_that_cannot_start(tmp_path):
+    token = "tok" + "-" + "q1w2e3r4t5y6"
+    env = {"HADAVIN_TEST_VAULT_TOKEN": token}
+    done = helper(tmp_path, "run", "x", "--", f"no-such-{token}", env=env)
+    assert done.returncode == 127
+    assert (
+        token not in done.stdout and token not in (tmp_path / "evidence-logs" / "x.txt").read_text()
+    )
+    assert "cannot start" in (tmp_path / "evidence-logs" / "x.txt").read_text()
+
+
+def test_the_mask_pattern_is_built_once_per_value():
+    es._pattern.cache_clear()
+    os.environ["HADAVIN_TEST_VAULT_TOKEN"] = "tok" + "-" + "z9y8x7w6v5u4"
+    try:
+        for _ in range(50):
+            es.mask("a line")
+        assert es._pattern.cache_info().misses == 1
+    finally:
+        del os.environ["HADAVIN_TEST_VAULT_TOKEN"]
+
+
+# --- the token-reader command (what the step "vault-token-reader" runs) ---------------------------------------
+
+
+def test_the_token_reader_accepts_a_code_line_and_refuses_a_comment_with_a_reason(tmp_path):
+    good = tmp_path / "good.py"
+    good.write_text('import os\nT = os.environ.get("HADAVIN_TEST_VAULT_TOKEN")\n')
+    assert helper(tmp_path, "token-reader", str(good)).returncode == 0
+    for body in ("# os.environ HADAVIN_TEST_VAULT_TOKEN\n", "x = 1\n", ""):
+        bad = tmp_path / "bad.py"
+        bad.write_text(body)
+        done = helper(tmp_path, "token-reader", str(bad))
+        assert (
+            done.returncode == 1
+            and "has no code line that reads HADAVIN_TEST_VAULT_TOKEN" in done.stdout
+        )
+    missing = helper(tmp_path, "token-reader", str(tmp_path / "gone.py"))
+    assert missing.returncode == 1 and "cannot read" in missing.stdout
+
+
+def test_the_token_reader_reason_reaches_the_saved_log(tmp_path):
+    bad = tmp_path / "old.py"
+    bad.write_text("x = 1\n")
+    tool = str(ROOT / "tools" / "evidence_step.py")
+    done = helper(
+        tmp_path, "run", "vault-token-reader", "--", sys.executable, tool, "token-reader", str(bad)
+    )
+    assert done.returncode == 1
+    log = (tmp_path / "evidence-logs" / "vault-token-reader.txt").read_text()
+    assert "Test a newer ref" in log and log.splitlines()[-1] == "exit=1"
+
+
+def test_the_current_test_file_passes_the_token_reader():
+    assert (
+        es.cmd_token_reader(str(ROOT / "tests" / "contracts" / "kinds" / "secrets_neutral.py")) == 0
+    )
 
 
 # --- the test-side Vault target never falls back to a fixed token ---------------------------------------------
@@ -919,10 +1935,40 @@ def test_vault_target_without_an_address_is_the_local_fake(monkeypatch):
     assert address.startswith("http://127.0.0.1:") and token
 
 
+SKIP_RE = re.compile(
+    r"pytest\.skip|skipif|importorskip|mark\.skip|xfail|SkipTest|unittest\.skip|skip\("
+)
+
+
+def vault_test_files() -> list[Path]:
+    """Every test file or test helper that names the Vault server variables (found by content, so a new helper is
+    covered); this guard file itself is left out."""
+    me = Path(__file__).resolve()
+    return [
+        p
+        for p in sorted((ROOT / "tests").rglob("*.py"))
+        if p.resolve() != me
+        and re.search(r"HADAVIN_TEST_VAULT|vault_target", p.read_text(encoding="utf-8"))
+    ]
+
+
 def test_the_vault_test_files_do_not_skip_on_a_connection_failure():
-    for rel in (
-        "tests/contracts/kinds/secrets_neutral.py",
-        "tests/contracts/kinds/audit_neutral.py",
-    ):
-        src = (ROOT / rel).read_text(encoding="utf-8")
-        assert "pytest.skip" not in src and "skipif" not in src, rel
+    files = vault_test_files()
+    assert {p.name for p in files} >= {"secrets_neutral.py", "audit_neutral.py"}, files
+    for path in files:
+        assert not SKIP_RE.search(path.read_text(encoding="utf-8")), path
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        'pytest.importorskip("hvac")',
+        "@pytest.mark.skip",
+        "@pytest.mark.xfail",
+        "pytest.xfail('x')",
+        "raise unittest.SkipTest('x')",
+        "@pytest.mark.skipif(True, reason='x')",
+    ],
+)
+def test_the_skip_pattern_sees_every_way_to_skip(line):
+    assert SKIP_RE.search(line)

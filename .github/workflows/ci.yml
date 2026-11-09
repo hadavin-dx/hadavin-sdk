@@ -53,35 +53,6 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           persist-credentials: false
-      # The `vault` secrets kind's contract suite runs against a real Vault dev server (in-memory, unsealed,
-      # throwaway), image set once in VAULT_IMAGE above. It is a step and not a service because its token is made fresh
-      # for this run (a service cannot read a step's output); masked in the Actions log (the token is in the environment of every later step of the job); the server listens
-      # on this runner's loopback address only and is removed in the last step.
-      - name: Start a throwaway Vault development server
-        timeout-minutes: 5
-        run: |
-          token=$(openssl rand -hex 24)
-          echo "::add-mask::$token"
-          echo "HADAVIN_TEST_VAULT_TOKEN=$token" >> "$GITHUB_ENV"
-          export VAULT_DEV_ROOT_TOKEN_ID="$token"
-          docker run -d --name vault-ci -p 127.0.0.1:8200:8200 \
-            -e VAULT_DEV_ROOT_TOKEN_ID -e VAULT_DEV_LISTEN_ADDRESS=0.0.0.0:8200 -e SKIP_SETCAP=true \
-            "$VAULT_IMAGE" > /dev/null
-          # Probe from the host, with the token, the way the tests will reach the server (the published port).
-          for _ in $(seq 1 30); do
-            if [ "$(docker inspect -f '{{.State.Running}}' vault-ci)" != "true" ]; then
-              echo "the Vault container exited"
-              docker ps -a
-              docker logs vault-ci 2>&1 | sed "s/$token/***/g"
-              exit 1
-            fi
-            curl -fsS -o /dev/null -H "X-Vault-Token: $token" http://127.0.0.1:8200/v1/auth/token/lookup-self && exit 0
-            sleep 2
-          done
-          echo "Vault did not answer on 127.0.0.1:8200 within 60 seconds"
-          docker ps -a
-          docker logs vault-ci 2>&1 | sed "s/$token/***/g"
-          exit 1
       - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2  # v10.3.3
         with:
           version: "0.13.6"
@@ -97,6 +68,37 @@ jobs:
         run: ruff format --check src tests demos tools
       - name: Secrets and banned names in the tracked files (the repo is public)
         run: python tools/scan_repo.py
+      # The `vault` secrets kind's contract suite runs against a real Vault dev server (in-memory, unsealed,
+      # throwaway), image set once in VAULT_IMAGE above. It is a step and not a service because its token is made fresh
+      # for this run (a service cannot read a step's output). It starts right before the tests, so the install and the lint do
+      # not see the token; it is masked in the Actions log (and is in the environment of every later step of the job); the
+      # server listens on this runner's loopback address only and is removed in the last step.
+      - name: Start a throwaway Vault development server
+        timeout-minutes: 5
+        run: |
+          token=$(openssl rand -hex 24)
+          echo "::add-mask::$token"
+          echo "HADAVIN_TEST_VAULT_TOKEN=$token" >> "$GITHUB_ENV"
+          export VAULT_DEV_ROOT_TOKEN_ID="$token"
+          docker run -d --name vault-ci -p 127.0.0.1:8200:8200 \
+            -e VAULT_DEV_ROOT_TOKEN_ID -e VAULT_DEV_LISTEN_ADDRESS=0.0.0.0:8200 -e SKIP_SETCAP=true \
+            "$VAULT_IMAGE" > /dev/null
+          # Probe from the host, with the token, the way the tests will reach the server (the published port); the token goes to
+          # curl on its standard input, not in its command line.
+          for _ in $(seq 1 30); do
+            if [ "$(docker inspect -f '{{.State.Running}}' vault-ci)" != "true" ]; then
+              echo "the Vault container exited"
+              docker ps -a
+              docker logs vault-ci 2>&1 | grep -viE 'unseal key|root token' | sed "s/$token/***/g"
+              exit 1
+            fi
+            printf 'header = "X-Vault-Token: %s"\n' "$token" | curl -fsS -o /dev/null -K - http://127.0.0.1:8200/v1/auth/token/lookup-self && exit 0
+            sleep 2
+          done
+          echo "Vault did not answer on 127.0.0.1:8200 within 60 seconds"
+          docker ps -a
+          docker logs vault-ci 2>&1 | grep -viE 'unseal key|root token' | sed "s/$token/***/g"
+          exit 1
       - name: The postgres client the database tests shell out to is present (else they would skip silently)
         run: psql --version
       - name: Tests (no live calls)
@@ -112,11 +114,14 @@ jobs:
       - name: Performance of the redaction patterns (blocks)
         env:
           HADAVIN_TEST_PG_DSN: postgresql://postgres@localhost:5432/postgres  # one perf test needs the postgres service
+          HADAVIN_TEST_VAULT_ADDR: http://127.0.0.1:8200
         run: pytest -q -m perf -rs
       - name: Remove the Vault development server
         if: ${{ always() }}
         timeout-minutes: 2
-        run: docker ps -aq --filter 'name=^vault-ci$' | xargs -r docker rm -f
+        run: |
+          set -o pipefail
+          docker ps -aq --filter 'name=^vault-ci$' | xargs -r docker rm -f
 
   # The tests again on the oldest supported Python (pyproject: requires-python >=3.12); everything else runs once, on 3.13. A separate
   # job and not a matrix of "check": a matrix would rename the required check "check" to "check (3.13)". Python 3.12.3 differs from
@@ -141,10 +146,20 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           persist-credentials: false
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2  # v10.3.3
+        with:
+          version: "0.13.6"
+          checksum: "f29c3e94ffabd7e6f3ba521dba169a9b7ec12100bf3257087f0f24f6123f3645"
+          python-version: "3.12"
+          activate-environment: true
+          cache-suffix: "ci-tests-py312"
+      - name: Install (locked, every backend extra and the contract-suite test group)
+        run: uv sync --locked --no-build --all-extras --group test
       # The `vault` secrets kind's contract suite runs against a real Vault dev server (in-memory, unsealed,
       # throwaway), image set once in VAULT_IMAGE above. It is a step and not a service because its token is made fresh
-      # for this run (a service cannot read a step's output); masked in the Actions log (the token is in the environment of every later step of the job); the server listens
-      # on this runner's loopback address only and is removed in the last step.
+      # for this run (a service cannot read a step's output). It starts right before the tests, so the install and the lint do
+      # not see the token; it is masked in the Actions log (and is in the environment of every later step of the job); the
+      # server listens on this runner's loopback address only and is removed in the last step.
       - name: Start a throwaway Vault development server
         timeout-minutes: 5
         run: |
@@ -155,30 +170,22 @@ jobs:
           docker run -d --name vault-ci -p 127.0.0.1:8200:8200 \
             -e VAULT_DEV_ROOT_TOKEN_ID -e VAULT_DEV_LISTEN_ADDRESS=0.0.0.0:8200 -e SKIP_SETCAP=true \
             "$VAULT_IMAGE" > /dev/null
-          # Probe from the host, with the token, the way the tests will reach the server (the published port).
+          # Probe from the host, with the token, the way the tests will reach the server (the published port); the token goes to
+          # curl on its standard input, not in its command line.
           for _ in $(seq 1 30); do
             if [ "$(docker inspect -f '{{.State.Running}}' vault-ci)" != "true" ]; then
               echo "the Vault container exited"
               docker ps -a
-              docker logs vault-ci 2>&1 | sed "s/$token/***/g"
+              docker logs vault-ci 2>&1 | grep -viE 'unseal key|root token' | sed "s/$token/***/g"
               exit 1
             fi
-            curl -fsS -o /dev/null -H "X-Vault-Token: $token" http://127.0.0.1:8200/v1/auth/token/lookup-self && exit 0
+            printf 'header = "X-Vault-Token: %s"\n' "$token" | curl -fsS -o /dev/null -K - http://127.0.0.1:8200/v1/auth/token/lookup-self && exit 0
             sleep 2
           done
           echo "Vault did not answer on 127.0.0.1:8200 within 60 seconds"
           docker ps -a
-          docker logs vault-ci 2>&1 | sed "s/$token/***/g"
+          docker logs vault-ci 2>&1 | grep -viE 'unseal key|root token' | sed "s/$token/***/g"
           exit 1
-      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2  # v10.3.3
-        with:
-          version: "0.13.6"
-          checksum: "f29c3e94ffabd7e6f3ba521dba169a9b7ec12100bf3257087f0f24f6123f3645"
-          python-version: "3.12"
-          activate-environment: true
-          cache-suffix: "ci-tests-py312"
-      - name: Install (locked, every backend extra and the contract-suite test group)
-        run: uv sync --locked --no-build --all-extras --group test
       - name: The postgres client the database tests shell out to is present (else they would skip silently)
         run: psql --version
       - name: Tests on Python 3.12 (no live calls)
@@ -189,7 +196,9 @@ jobs:
       - name: Remove the Vault development server
         if: ${{ always() }}
         timeout-minutes: 2
-        run: docker ps -aq --filter 'name=^vault-ci$' | xargs -r docker rm -f
+        run: |
+          set -o pipefail
+          docker ps -aq --filter 'name=^vault-ci$' | xargs -r docker rm -f
 
   security:
     if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
