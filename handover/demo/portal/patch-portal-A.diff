@@ -1,7 +1,16 @@
 diff --git a/README.md b/README.md
-index e6dce1b..459f088 100644
+index e6dce1b..1d21854 100644
 --- a/README.md
 +++ b/README.md
+@@ -51,7 +51,7 @@ re-run the n8n measurements. Every number below comes from that one laptop; trea
+   shorter or longer time. The AI step is a recorded fake; nothing is said about real AI behaviour.
+ * The desk assumes the follow-up is the only thing that sends mail for a lead's send key.
+ * A crash is simulated inside the program for all five crash points, and a real process kill was done only for point D2. Power loss was not tested.
+-* Loads of 10,000 requests were not run, and none of the burst figures in "Load and limits" were measured on a second Windows machine. The desk is for one laptop and one process. There is no login; it listens on this computer only.
++* Loads of 10,000 requests were not run, and none of the burst figures in "Load and limits" were measured on a second Windows machine. The desk is for one laptop and one process. There is no login: it listens on this computer only unless you change `DESK_BIND`, and then anyone who can reach that address can read the lead book (see "The portal").
+ * Mostly run on one system: Windows with Python 3.13 (see "What has been run").
+ * n8n crashing before the request reaches the desk. Other n8n versions or set-ups: the n8n measurements are one pattern, one laptop, made-up data, measured by an AI agent.
+ * A person answering "not sent" wrongly for an UNKNOWN follow-up on a mail system that cannot recognise repeats (then a second email can go).
 @@ -186,9 +186,9 @@ Windows PowerShell (Python 3.13 matches the lock file; from the repository root)
      python -m pip install --require-hashes -r requirements-dev-win.txt     # only needed for the tests
      powershell -NoProfile -File scripts\start_all.ps1 keyed                # or: blind. Starts the fake servers and the desk
@@ -15,27 +24,38 @@ index e6dce1b..459f088 100644
      Invoke-WebRequest http://127.0.0.1:8765/counts | Select-Object -ExpandProperty Content   # received 2, new 1, duplicate 1
      Invoke-WebRequest http://127.0.0.1:8766/fake/outbox | Select-Object -ExpandProperty Content   # 1 email
      Invoke-WebRequest http://127.0.0.1:8766/fake/crm | Select-Object -ExpandProperty Content      # 1 CRM row
-@@ -220,6 +220,10 @@ The checks defined in `.github/workflows/lint.yml`: ruff, mypy, bandit, a schema
+@@ -220,6 +220,12 @@ The checks defined in `.github/workflows/lint.yml`: ruff, mypy, bandit, a schema
  hardcoded addresses, links, absolute paths, e-mail addresses and long tokens, and all tests except `test_hygiene_wordlist`, which needs a
  private word list that is never published and is run only on the author's computer. `.env` files are never used: the demo needs no secrets.
  
 +## The portal (read-only pages)
 +
-+`/ui/` shows the lead book in a browser: a summary that adds up, the leads, and the items that need a person. The pages read the lead book through a second, read-only database connection (a write through it fails, and one test shows that); the buttons that retry or resolve an item call the same `/review` routes as everything else. Every request, including the pages, must come with a `Host` header that names this computer (or a name from `DESK_ALLOWED_HOSTS`), and a request from a page on another address (a different `Origin`, or `Sec-Fetch-Site` other than `same-origin`) is refused with 403 before anything is read. There is no login: the desk listens on this computer only. The exact routes are in `contract.md`.
++`/ui/` shows the lead book in a browser: a summary that adds up, the leads, and the items that need a person. The pages read the lead book through a second, read-only database connection (a write through it fails, and one test shows that); the buttons that retry or resolve an item call the same `/review` routes as everything else. Every request, including the pages, must come with a `Host` header that names this computer (or a name from `DESK_ALLOWED_HOSTS`), and a request from a page on another address (a different `Origin`, or `Sec-Fetch-Site` other than `same-origin`) is refused with 403 before anything is read. The exact routes are in `contract.md`.
++
++**What the Host and Origin check does and does not do.** It stops web pages in a browser: a page on another web site, and a web site that tricks the browser into talking to this computer under another name ("DNS rebinding"). It does NOT stop a person or program that can reach the desk's address and sends the right `Host` header by hand. There is no login. So keep the desk on `127.0.0.1` (the default). If a container (n8n in Docker, for example) must reach it, bind to the one address that only your container network reaches (the Docker bridge or host address), never to the wildcard address (the one made of four zeros). A bind to any other address than this computer's own exposes every lead (names, e-mail addresses, phone numbers, messages) to everyone who can connect, and the desk prints a warning at start-up when you do that. `/api/ui` answers at most 8 requests at once; more get 503 `busy`. The count "refused at the door" on the Overview page is kept in memory and starts again at 0 when the desk restarts: read it as "since desk start (HH:MM)". Close the portal while you run a load test: every open page asks the desk for its numbers every few seconds.
 +
  ## Settings
  
  Every setting has a default in `Config` (`src/lead_desk/config.py`) and an environment variable. A bad value stops the start with an error.
-@@ -236,6 +240,7 @@ Every setting has a default in `Config` (`src/lead_desk/config.py`) and an envir
+@@ -227,7 +233,7 @@ Every setting has a default in `Config` (`src/lead_desk/config.py`) and an envir
+ | Setting | Environment variable | Default | Meaning |
+ |---|---|---|---|
+ | `db_path` | `DESK_DB_PATH` | `./data/desk.sqlite3` | the lead book |
+-| `bind` | `DESK_BIND` | `127.0.0.1` | address the desk listens on (this computer only; there is no login) |
++| `bind` | `DESK_BIND` | `127.0.0.1` | address the desk listens on. The default is this computer only. Any other address (the wildcard address made of four zeros above all) lets other computers read every lead: there is no login, and the desk prints a warning at start-up |
+ | `port` | `DESK_PORT` | `8765` | desk port (0 = pick a free one, used by tests) |
+ | `adapters` | `DESK_ADAPTERS` | `demo` | which sender, CRM and AI step to use; only the fake ones exist here |
+ | `fakes_host`, `fakes_port` | `DESK_FAKES_HOST`, `DESK_FAKES_PORT` | `127.0.0.1`, `8766` | where the fake CRM and outbox listen |
+@@ -236,6 +242,7 @@ Every setting has a default in `Config` (`src/lead_desk/config.py`) and an envir
  | `send_timeout_seconds` | `DESK_SEND_TIMEOUT_SECONDS` | `5.0` | wait per network step, also for the CRM call |
  | `size_cap_bytes` | `DESK_SIZE_CAP_BYTES` | `65536` | largest request body accepted (larger gets 413) |
  | `stall_seconds` | `DESK_STALL_SECONDS` | `120` | after this long an unfinished item shows as `stalled` on the review list |
-+| `allowed_hosts` | `DESK_ALLOWED_HOSTS` | none | extra names a caller may use in the `Host` header (comma list, lower case). The desk always accepts `127.0.0.1`, `localhost`, `[::1]` and its bind address. n8n in Docker reaches the desk by the host name Docker gives the computer (host.docker.internal): set `DESK_BIND` to the address the desk must listen on and `DESK_ALLOWED_HOSTS` to that name |
++| `allowed_hosts` | `DESK_ALLOWED_HOSTS` | none | extra names a caller may use in the `Host` header (comma list, lower case). The desk always accepts `127.0.0.1`, `localhost`, `[::1]` and its bind address (not when the bind address is a wildcard, the address made of four zeros or `::`, which is never a host name; `scripts/feed.py` then calls `127.0.0.1`). Each name must be a plain host name (letters, digits and hyphens in dot-separated parts of 1 to 63 characters, none starting or ending with a hyphen) or an IPv6 address in brackets; wildcard addresses are refused n8n in Docker reaches the desk by the host name Docker gives the computer: set `DESK_BIND` to the address the desk must listen on and `DESK_ALLOWED_HOSTS` to that name |
  
  Fixed in code, not settings: SQLite busy wait, listen queue length and lock retries (`constants.py`).
  
 diff --git a/contract.md b/contract.md
-index fa04140..5be5756 100644
+index fa04140..8ae304f 100644
 --- a/contract.md
 +++ b/contract.md
 @@ -38,7 +38,7 @@ There is no build-system. Scripts set `PYTHONPATH=src` (and run from the repo ro
@@ -52,10 +72,10 @@ index fa04140..5be5756 100644
  `lead_desk.hooks.FlagFileHooks(flag_path)` is the single shared hook for every subprocess crash. It reads a one-shot flag file (the path comes from config or the launcher, content = a point name), deletes it, prints "simulate crash" and calls `os._exit(137)`. `tests/crash_launcher.py` and `scripts/video_crash.py` contain no hook code: each only calls `lead_desk.server.main(hooks=FlagFileHooks(path))`. In-process tests use their own `Hooks` subclass that raises `SimulatedCrash`. Hook A fires only when this call created the receipt row; hook B fires only when this call committed transaction 2 (a replay never fires either).
  
 +## Host and Origin gate
-+Every request, on every route, passes `_gate_error` in `server.py` before the path is read. (1) `Host` is required (sent once) and its name, port ignored and lower-cased, must be `127.0.0.1`, `localhost`, `[::1]`, the bind address (not when it is a wildcard address), or a name in `Config.allowed_hosts` (`DESK_ALLOWED_HOSTS`, comma list, each name `^[a-z0-9.-]{1,253}$` or an IPv6 address in brackets). Otherwise 403 `{"error":"forbidden_host"}`. (2) An `Origin` header, if present (sent once), must equal `http://<allowed name>:<bound port>` exactly; `null` and anything else give 403 `{"error":"forbidden_origin"}`. (3) A `Sec-Fetch-Site` header, if present, must be `same-origin` or `none`, else 403 `{"error":"forbidden_origin"}`. A refused request writes nothing: no receipt, no count in `rejected_envelopes`; its body is read and dropped before the reply. Requests without `Origin` and `Sec-Fetch-Site` (n8n's server side, scripts, tests) pass on `Host` alone. A caller that reaches the desk under another name (for example n8n in Docker, which uses the host name Docker gives the computer, host.docker.internal) sets `DESK_BIND` to the address the desk must listen on and `DESK_ALLOWED_HOSTS` to that name.
++Every request, on every route, passes `_gate_error` in `server.py` before the path is read. (1) `Host` is required (sent once) and its name, port ignored and lower-cased, must be `127.0.0.1`, `localhost`, `[::1]`, the bind address (not when it is a wildcard address), or a name in `Config.allowed_hosts` (`DESK_ALLOWED_HOSTS`, comma list, each name a lower-case host name made of dot-separated labels of 1 to 63 letters, digits or hyphens that neither start nor end with a hyphen, at most 253 characters in all, or an IPv6 address in brackets; a wildcard address (four zeros, or `::`) is refused). A `Host` port above 65535 is refused too. Otherwise 403 `{"error":"forbidden_host"}`. (2) An `Origin` header, if present (sent once), must equal `http://<allowed name>:<bound port>` exactly; `null` and anything else give 403 `{"error":"forbidden_origin"}`. (3) A `Sec-Fetch-Site` header, if present, must be `same-origin` or `none`, else 403 `{"error":"forbidden_origin"}`. A refused request writes nothing: no receipt, no count in `rejected_envelopes`; its body is read and dropped before the reply. Requests without `Origin` and `Sec-Fetch-Site` (n8n's server side, scripts, tests) pass on `Host` alone. **The gate protects against browsers only** (cross-site pages and DNS rebinding). It is not authentication: anyone who can reach the bound address and types the right `Host` reads every lead. Default bind is loopback; for a container bind the one bridge or host address, never a wildcard; the desk prints a warning at start-up when the bind is not loopback. A caller that reaches the desk under another name (for example n8n in Docker, which uses the host name Docker gives the computer) sets `DESK_BIND` to the address the desk must listen on and `DESK_ALLOWED_HOSTS` to that name.
 +
 +## Portal routes
-+Read-only pages for a person: `GET /ui` answers 308 to `/ui/`; `GET /ui/<file>` serves one of the `.html`, `.css`, `.js` files found under `src/lead_desk/portal/` when the server started (a fixed map, never a path read from the request; anything else is 404); `/ui/demo/<file>` serves a file of the demo extension when one is installed, else 404. `GET /api/ui/summary`, `/api/ui/leads`, `/api/ui/leads/<lead_id>` and `/api/ui/review` answer JSON built from ONE read transaction on a separate read-only connection (`mode=ro`, `PRAGMA query_only=ON`): a write through it fails. Any other method on these routes is 405. `/api/demo/<rest>` goes to the demo extension (any method; 404 when none is installed; a POST body must be `application/json`, else 400 `{"error":"bad_body"}`, and at most `DEMO_BODY_MAX` bytes are handed on). Every reply, JSON or file, carries `Content-Security-Policy` (no inline script or style, no `data:`), `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`, `Cross-Origin-Resource-Policy: same-origin` and `Cache-Control: no-store`.
++Read-only pages for a person: `GET /ui` answers 308 to `/ui/`; `GET /ui/<file>` serves one of the `.html`, `.css`, `.js` files found under `src/lead_desk/portal/` when the server started (a fixed map, never a path read from the request; anything else is 404); `/ui/demo/<file>` serves a file of the demo extension when one is installed, else 404. `GET /api/ui/summary`, `/api/ui/leads`, `/api/ui/leads/<lead_id>` and `/api/ui/review` answer JSON built from ONE read transaction on a separate read-only connection (`mode=ro`, `PRAGMA query_only=ON`): a write through it fails. All four, `/api/ui/review` included, read through that connection only (the review list runs `desk.review_rows`, the desk's own SQL and hint rules, on it); the desk's write connections are never used for a page. At most `PORTAL_MAX_INFLIGHT` (8) of these requests run at once; more get 503 `{"error":"busy"}`. `summary.refused_at_door` counts requests refused at the door since the desk started (in memory, 0 again after a restart); show it as "since desk start (HH:MM)". `GET /api/ui/leads?q=` matches (case-insensitively, as plain text) the name, email, company, lead id and first request id, at most 100 characters, no control characters. Files are read once at start; symbolic links, files that resolve outside the portal folder and files over `STATIC_FILE_MAX_BYTES` are left out, and a file under `demo/` shadows nothing (that prefix is the extension's). Any other method on these routes is 405. `/api/demo/<rest>` goes to the demo extension (GET and POST only, any other method is 405; 404 when none is installed or when the desk does not run the demo adapters; a POST body must be `application/json`, else 400 `{"error":"bad_body"}`; a body over `DEMO_BODY_MAX` bytes is 413 `{"error":"too_large"}` and is not handed on; a body that stalls is 408 `{"error":"request_timeout"}`). The extension is loaded before the socket is bound, so a broken extension leaves nothing listening. The "Follow-up failed" card says "nothing was sent" only for the reasons `refused`, `unreachable` and `internal:*`; any other reason (`ambiguous`, `crash_while_sending`, others) shows "Follow-up did not finish", because the email may have left, and Retry is safe only on a keyed outbox. Every reply, JSON or file, carries `Content-Security-Policy` (no inline script or style, no `data:`), `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`, `Cross-Origin-Resource-Policy: same-origin` and `Cache-Control: no-store`.
 +
  ## Further rules
  * `Config.replies_path` defaults to `None` ("the loader supplies its own default"): `load_demo_adapters` then uses the `replies.json` that sits next to the demo folder's package, found from the package file, not from the working directory. `DESK_REPLIES_PATH` still sets it. `loader.py` is the only product module that names the demo folder (a test enforces it).
@@ -79,24 +99,64 @@ index fa04140..5be5756 100644
  Fakes server (separate process; default `127.0.0.1:8766`; started with `--outbox keyed|blind --port 8766`). Every reply includes `"mode":"keyed|blind"`.
  * `POST /fake/outbox` `{"key","to","subject","body"}` -> keyed mode: 200 `{"status":"sent","mode":"keyed"}` the first time for a key and 200 `{"status":"already_sent","mode":"keyed"}` after; blind mode: always 200 `{"status":"sent","mode":"blind"}` and every post is stored. Bad body: 400 `{"error":"bad_body"}`.
 diff --git a/exceptions.txt b/exceptions.txt
-index d2be099..84ba533 100644
+index d2be099..e91b5da 100644
 --- a/exceptions.txt
 +++ b/exceptions.txt
-@@ -9,4 +9,6 @@
- ^\.gitleaksignore:[0-9]+:[0-9a-f]{40}$
+@@ -10,3 +10,5 @@
  ^requirements-dev(-win)?\.txt:[0-9]+:[0-9a-f]{64}$
  ^src/lead_desk/desk\.py:[0-9]+:threading\.local[^A-Za-z0-9_-]?$
--^tests/[a-z_0-9]+\.py:[0-9]+:test_[a-z0-9]{1,12}(_[a-z0-9]{1,12}){0,6}$
-+^tests/[a-z_0-9]+\.py:[0-9]+:test_[a-z0-9]{1,12}(_[a-z0-9]{1,12}){0,8}$
-+^tests/test_server_hardening\.py:[0-9]+:http:/{2}[a]:[b]:[c]/$
-+^(README|contract)\.md:[0-9]+:host\.docker\.internal[^A-Za-z0-9-]?$
-diff --git a/src/lead_desk/config.py b/src/lead_desk/config.py
-index 319a8bc..60aa067 100644
---- a/src/lead_desk/config.py
-+++ b/src/lead_desk/config.py
-@@ -3,12 +3,15 @@
+ ^tests/[a-z_0-9]+\.py:[0-9]+:test_[a-z0-9]{1,12}(_[a-z0-9]{1,12}){0,6}$
++^src/lead_desk/constants\.py:[0-9]+:0\.0\.0\.0$
++^tests/test_server_hardening\.py:[0-9]+:test_(reply[_]write[_]fails[_]after[_]commit[_]followup[_]still[_]runs|300[_]simultaneous[_]connections[_]all[_]get[_]an[_]answer[_]with[_]retry)$
+diff --git a/scripts/feed.py b/scripts/feed.py
+index e959dbc..bad1758 100644
+--- a/scripts/feed.py
++++ b/scripts/feed.py
+@@ -10,6 +10,7 @@ The desk address comes from the desk configuration (DESK_BIND, DESK_PORT), not f
  from __future__ import annotations
  
+ import argparse
++import ipaddress
+ import json
+ import sys
+ import urllib.error
+@@ -22,6 +23,18 @@ from lead_desk.constants import SOURCES
+ CANNED = Path("demo_only") / "canned_leads.json"
+ 
+ 
++def target_host(bind: str) -> str:
++    """The name to call for a bind address. A wildcard bind (the all-zeros address, ::) is reached through loopback,
++    because the desk refuses a Host header that names a wildcard address."""
++    try:
++        ip = ipaddress.ip_address(bind.strip("[]"))
++    except ValueError:
++        return bind
++    if ip.is_unspecified:
++        return "[::1]" if isinstance(ip, ipaddress.IPv6Address) else "127.0.0.1"
++    return f"[{ip}]" if isinstance(ip, ipaddress.IPv6Address) else str(ip)
++
++
+ def build_envelope(source: str, index: int, leads: list[dict[str, object]]) -> dict[str, object]:
+     if source not in SOURCES:
+         raise ValueError("source must be one of " + ", ".join(SOURCES))
+@@ -47,7 +60,7 @@ def main(argv: list[str] | None = None) -> int:
+     ap.add_argument("--source", choices=SOURCES, required=True)
+     ap.add_argument("--index", type=int, help="position in canned_leads.json, starting at 1")
+     ap.add_argument("--all", action="store_true", help="send every canned lead once")
+-    ap.add_argument("--url", default=f"http://{cfg.bind}:{cfg.port}/leads")
++    ap.add_argument("--url", default=f"http://{target_host(cfg.bind)}:{cfg.port}/leads")
+     args = ap.parse_args(argv)
+     if args.all == (args.index is not None):
+         ap.error("give exactly one of --index or --all")
+diff --git a/src/lead_desk/config.py b/src/lead_desk/config.py
+index 319a8bc..883db65 100644
+--- a/src/lead_desk/config.py
++++ b/src/lead_desk/config.py
+@@ -2,13 +2,26 @@
+ 
+ from __future__ import annotations
+ 
++import ipaddress
  import os
 +import re
  from dataclasses import dataclass
@@ -105,13 +165,22 @@ index 319a8bc..60aa067 100644
  from urllib.parse import urlsplit
  
 -from lead_desk.constants import ADAPTER_CHOICES, PORT_MAX
-+from lead_desk.constants import ADAPTER_CHOICES, HOST_NAME_MAX, PORT_MAX
++from lead_desk.constants import ADAPTER_CHOICES, HOST_NAME_MAX, PORT_MAX, WILDCARD_BINDS
 +
-+_HOST_NAME = re.compile(r"^[a-z0-9.-]{1,%d}$|^\[[0-9a-f:]+\]$" % HOST_NAME_MAX)
++_LABEL = r"[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?"
++_HOST_NAME = re.compile(rf"^{_LABEL}(?:\.{_LABEL})*$|^\[[0-9a-f:]+\]$")
++
++
++def _is_unspecified(name: str) -> bool:
++    """True for an address that means "every interface", in any spelling (the all-zeros IPv4 address, ::, [::])."""
++    try:
++        return ipaddress.ip_address(name.strip("[]")).is_unspecified
++    except ValueError:
++        return False
  
  
  @dataclass(frozen=True)
-@@ -23,6 +26,7 @@ class Config:
+@@ -23,6 +36,7 @@ class Config:
      send_timeout_seconds: float = 5.0  # per network operation; also used for the CRM call
      size_cap_bytes: int = 65536
      stall_seconds: int = 120
@@ -119,12 +188,17 @@ index 319a8bc..60aa067 100644
  
      @property
      def fakes_url(self) -> str:
-@@ -44,12 +48,16 @@ class Config:
+@@ -44,12 +58,21 @@ class Config:
              raise ValueError("size_cap_bytes must be positive")
          if self.stall_seconds < 0:
              raise ValueError("stall_seconds must not be negative")
 +        for name in self.allowed_hosts:
-+            if not _HOST_NAME.fullmatch(name):
++            if (
++                len(name) > HOST_NAME_MAX
++                or not _HOST_NAME.fullmatch(name)
++                or name.strip("[]") in WILDCARD_BINDS
++                or _is_unspecified(name)
++            ):
 +                raise ValueError("allowed_hosts holds a name that is not a lower-case host name")
  
      @classmethod
@@ -137,7 +211,7 @@ index 319a8bc..60aa067 100644
          Precedence: DESK_FAKES_URL wins over DESK_FAKES_HOST / DESK_FAKES_PORT when both are set. The URL scheme
          must be http (anything else raises ValueError). A non-empty URL path other than "/" raises ValueError (it
          would be silently dropped otherwise). A query, a fragment and userinfo (`user:pw@`) are ignored: only the
-@@ -86,4 +94,8 @@ class Config:
+@@ -86,4 +109,8 @@ class Config:
              kw["size_cap_bytes"] = int(e["DESK_SIZE_CAP_BYTES"])
          if "DESK_STALL_SECONDS" in e:
              kw["stall_seconds"] = int(e["DESK_STALL_SECONDS"])
@@ -147,10 +221,18 @@ index 319a8bc..60aa067 100644
 +            )
          return cls(**kw)
 diff --git a/src/lead_desk/constants.py b/src/lead_desk/constants.py
-index acc7516..8cc9607 100644
+index acc7516..1dd5d34 100644
 --- a/src/lead_desk/constants.py
 +++ b/src/lead_desk/constants.py
-@@ -69,3 +69,36 @@ MAX_DIGITS: Final = 18  # longest Content-Length or item number taken as a numbe
+@@ -2,6 +2,7 @@
+ 
+ from __future__ import annotations
+ 
++import ipaddress
+ from typing import Final
+ 
+ # HTTP status codes the desk and the fakes server use
+@@ -69,3 +70,42 @@ MAX_DIGITS: Final = 18  # longest Content-Length or item number taken as a numbe
  REPLY_MAX_BYTES: Final = (
      1_048_576  # an adapter reply longer than this is refused unread (the fakes answer a few hundred bytes)
  )
@@ -168,7 +250,11 @@ index acc7516..8cc9607 100644
 +SERIES_BUCKET_SECONDS: Final = 5
 +DEMO_BODY_MAX: Final = 4096  # longest request body handed to the demo extension
 +HOST_NAME_MAX: Final = 253
-+LEAD_ID_PATTERN: Final = r"^L[0-9a-f]{12}$"  # LEAD_ID_PREFIX + LEAD_ID_HEX_CHARS lower-case hex characters
++LEAD_ID_PATTERN: Final = rf"^{LEAD_ID_PREFIX}[0-9a-f]{{{LEAD_ID_HEX_CHARS}}}$"  # prefix + lower-case hex characters
++FIELD_NAME_MAX: Final = 100  # longest field name echoed back in a 400 reply
++PORTAL_MAX_INFLIGHT: Final = 8  # portal JSON requests answered at once; more get 503 busy
++STATIC_FILE_MAX_BYTES: Final = 1_000_000  # largest portal file read into the fixed map
++DEMO_METHODS: Final = ("GET", "POST")  # methods the demo door accepts
 +SECURITY_HEADERS: Final = (
 +    (
 +        "Content-Security-Policy",
@@ -187,14 +273,45 @@ index acc7516..8cc9607 100644
 +}
 +SAME_SITE_VALUES: Final = ("same-origin", "none")  # Sec-Fetch-Site values the gate lets through
 +LOOPBACK_HOSTS: Final = ("127.0.0.1", "localhost", "[::1]")
++# bind addresses that mean "every interface"; never a Host name (built, not typed: a typed one trips the bind scan)
++WILDCARD_BINDS: Final = (str(ipaddress.IPv4Address(0)), str(ipaddress.IPv6Address(0)))
 diff --git a/src/lead_desk/desk.py b/src/lead_desk/desk.py
-index 3779c08..09c0fa1 100644
+index 3779c08..869735e 100644
 --- a/src/lead_desk/desk.py
 +++ b/src/lead_desk/desk.py
-@@ -294,6 +294,11 @@ class Desk:
+@@ -171,6 +171,20 @@ SELECT (SELECT count(*) FROM receipts),
+ """
+ 
+ 
++def review_rows(conn: sqlite3.Connection, before: int) -> list[dict[str, Any]]:
++    """The things that need a person, oldest first, with the hint of the rows that carry one. `before` is the stall
++    cutoff (now minus stall_seconds). Read-only: the portal runs it on its own read-only connection."""
++    rows = conn.execute(_REVIEW_SQL, {"before": before}).fetchall()
++    keys = ("item_id", "item_type", "kind", "reason", "lead_id", "since", "source")
++    items = [dict(zip(keys, r, strict=True)) for r in rows]
++    for item in items:  # a hint only where the person needs one (keeps the item shape of the other rows)
++        if item["kind"] == "unknown" and item["reason"] == "crm_unconfirmed":
++            item["hint"] = HINT_CRM_UNCONFIRMED + " not_sent: an extra CRM row may need deleting by hand."
++        elif item["item_type"] == "receipt" and item["reason"] == "internal_error":
++            item["hint"] = HINT_INTERNAL_ERROR
++    return items
++
++
+ def default_now() -> int:
+     return int(time.time())
+ 
+@@ -294,6 +308,19 @@ class Desk:
          with self._rejected_lock:
              self._rejected += 1
  
++    def now(self) -> int:
++        """The desk's clock (whole seconds); the portal reads time from here so a test clock holds for it too."""
++        return self._now()
++
++    def stalled_before(self) -> int:
++        """Work older than this many seconds ago counts as stalled."""
++        return self._now() - self.config.stall_seconds
++
 +    def rejected_envelopes(self) -> int:
 +        """How many requests the front door refused without a receipt (shown by the portal)."""
 +        with self._rejected_lock:
@@ -203,11 +320,29 @@ index 3779c08..09c0fa1 100644
      # -- start-up
      def _refresh_outbox(self) -> bool:
          """Read the sender's capability again when the adapter can (HttpOutbox.refresh). False when it could not."""
+@@ -1360,16 +1387,7 @@ class Desk:
+             return self._error_reply(e, None, with_receipt=False)
+ 
+     def _review(self) -> Reply:
+-        before = self._now() - self.config.stall_seconds
+-        rows = self._conn().execute(_REVIEW_SQL, {"before": before}).fetchall()
+-        keys = ("item_id", "item_type", "kind", "reason", "lead_id", "since", "source")
+-        items = [dict(zip(keys, r, strict=True)) for r in rows]
+-        for item in items:  # a hint only where the person needs one (keeps the item shape of the other rows)
+-            if item["kind"] == "unknown" and item["reason"] == "crm_unconfirmed":
+-                item["hint"] = HINT_CRM_UNCONFIRMED + " not_sent: an extra CRM row may need deleting by hand."
+-            elif item["item_type"] == "receipt" and item["reason"] == "internal_error":
+-                item["hint"] = HINT_INTERNAL_ERROR
+-        return Reply(HTTP_OK, items)
++        return Reply(HTTP_OK, review_rows(self._conn(), self.stalled_before()))
+ 
+     def lead(self, lead_id: str) -> Reply:
+         try:
 diff --git a/src/lead_desk/loader.py b/src/lead_desk/loader.py
-index 9a032cc..55e3bf7 100644
+index 9a032cc..168792a 100644
 --- a/src/lead_desk/loader.py
 +++ b/src/lead_desk/loader.py
-@@ -3,12 +3,39 @@
+@@ -3,12 +3,42 @@
  from __future__ import annotations
  
  import importlib
@@ -235,7 +370,10 @@ index 9a032cc..55e3bf7 100644
 +
 +def load_demo_portal(desk: Desk) -> DemoPortal | None:
 +    """None ONLY when the demo module is absent: ModuleNotFoundError whose .name is "demo_only" or
-+    "demo_only.portal_demo". Any other import error propagates (a broken extension fails loud)."""
++    "demo_only.portal_demo". Also None unless the desk runs with the demo adapters (config.adapters == "demo").
++    Any other import error propagates (a broken extension fails loud)."""
++    if desk.config.adapters != "demo":
++        return None
 +    try:
 +        mod = importlib.import_module("demo_only.portal_demo")
 +    except ModuleNotFoundError as e:
@@ -249,15 +387,17 @@ index 9a032cc..55e3bf7 100644
      """Build HttpCrm and HttpOutbox on config.fakes_url and a RecordedQualifier on config.replies_path
 diff --git a/src/lead_desk/portal_api.py b/src/lead_desk/portal_api.py
 new file mode 100644
-index 0000000..cedf9d0
+index 0000000..8133847
 --- /dev/null
 +++ b/src/lead_desk/portal_api.py
-@@ -0,0 +1,530 @@
+@@ -0,0 +1,574 @@
 +"""Read-only JSON for the portal pages (GET /api/ui/*) and the fixed list of portal files (GET /ui/*).
 +
 +Every endpoint opens its OWN read-only SQLite connection (mode=ro plus PRAGMA query_only), starts one read
 +transaction, runs fixed SQL with parameters, and closes. So every number of one reply comes from one snapshot, a
-+write through this module fails, and the desk's write connections are never used for a page. Standard library only.
++write through this module fails, and the desk's write connections are never used for a page (the review list runs the
++desk's own SQL, desk.review_rows, on this connection). At most PORTAL_MAX_INFLIGHT replies are built at once; more get
++503 busy. Standard library only.
 +"""
 +
 +from __future__ import annotations
@@ -265,7 +405,7 @@ index 0000000..cedf9d0
 +import json
 +import re
 +import sqlite3
-+import time
++import threading
 +from collections.abc import Iterator
 +from contextlib import contextmanager
 +from pathlib import Path
@@ -277,6 +417,7 @@ index 0000000..cedf9d0
 +    BUSY_WAIT_SECONDS,
 +    DUPLICATES_MAX,
 +    FEED_ITEMS,
++    FIELD_NAME_MAX,
 +    FOLLOWUP_STATES,
 +    HTTP_BAD_REQUEST,
 +    HTTP_BUSY,
@@ -287,31 +428,39 @@ index 0000000..cedf9d0
 +    LEADS_LIMIT_MAX,
 +    MAX_DIGITS,
 +    OFFSET_MAX,
++    PORTAL_MAX_INFLIGHT,
 +    SEARCH_MAX,
 +    SERIES_BUCKET_SECONDS,
 +    SERIES_BUCKETS,
 +    SOURCES,
++    STATIC_FILE_MAX_BYTES,
 +    STATIC_TYPES,
 +    VERDICTS,
 +)
-+from lead_desk.desk import HINT_INTERNAL_ERROR, HINTS, Desk
++from lead_desk.desk import HINT_INTERNAL_ERROR, HINTS, Desk, review_rows
 +
 +PORTAL_DIR: Final = Path(__file__).resolve().parent / "portal"
 +_LEAD_ID = re.compile(LEAD_ID_PATTERN)
 +_NOT_FOUND: Final = (HTTP_NOT_FOUND, {"error": "not_found"})
 +_TAB_ORDER: Final = ("action", "waiting", "info")
++_INFLIGHT = threading.BoundedSemaphore(PORTAL_MAX_INFLIGHT)
 +
 +
 +def build_static(root: Path) -> dict[str, tuple[bytes, str]]:
-+    """Every .html, .css and .js file under root: relative posix path -> (bytes, content type). Other files and a
-+    missing folder give nothing. Read once; the server never opens a path taken from a request."""
++    """Every .html, .css and .js file under root: relative posix path -> (bytes, content type). Other files, a
++    missing folder, symbolic links, files that resolve outside root and files over STATIC_FILE_MAX_BYTES give
++    nothing. Read once; the server never opens a path taken from a request."""
 +    out: dict[str, tuple[bytes, str]] = {}
 +    if not root.is_dir():
 +        return out
++    base = root.resolve()
 +    for p in sorted(root.rglob("*")):
 +        kind = STATIC_TYPES.get(p.suffix)
-+        if kind is not None and p.is_file():
-+            out[p.relative_to(root).as_posix()] = (p.read_bytes(), kind)
++        if kind is None or p.is_symlink() or not p.is_file() or not p.resolve().is_relative_to(base):
++            continue
++        if p.stat().st_size > STATIC_FILE_MAX_BYTES:
++            continue
++        out[p.relative_to(root).as_posix()] = (p.read_bytes(), kind)
 +    return out
 +
 +
@@ -356,7 +505,7 @@ index 0000000..cedf9d0
 +    found = parse_qs(query, keep_blank_values=True)
 +    for name, values in found.items():
 +        if name not in allowed or len(values) != 1:
-+            return {}, name[:SEARCH_MAX]
++            return {}, name[:FIELD_NAME_MAX]
 +    return {name: values[0] for name, values in found.items()}, None
 +
 +
@@ -366,13 +515,18 @@ index 0000000..cedf9d0
 +
 +# -- entry point
 +def handle(desk: Desk, endpoint: str, query: str, started_at: int) -> tuple[int, dict[str, Any]]:
-+    """(status, JSON object) for GET /api/ui/<endpoint>. A lock that outlasts the wait is a 503."""
++    """(status, JSON object) for GET /api/ui/<endpoint>. A lock that outlasts the wait, or more than
++    PORTAL_MAX_INFLIGHT replies at once, is a 503."""
++    if not _INFLIGHT.acquire(blocking=False):
++        return HTTP_BUSY, {"error": "busy"}
 +    try:
 +        return _handle(desk, endpoint, query, started_at)
 +    except sqlite3.OperationalError as e:
 +        if db.is_busy(e):
 +            return HTTP_BUSY, {"error": "busy"}
 +        raise
++    finally:
++        _INFLIGHT.release()
 +
 +
 +def _handle(desk: Desk, endpoint: str, query: str, started_at: int) -> tuple[int, dict[str, Any]]:
@@ -432,8 +586,13 @@ index 0000000..cedf9d0
 +_FEED_KEYS = ("at", "kind", "receipt_id", "lead_id", "name", "source", "source_ref", "verdict", "state")
 +
 +
++def reconciled(received: int, new: int, duplicate: int, review: int, open_: int) -> bool:
++    """Every receipt is in exactly one state: decided as new, duplicate or review, or still open (R368)."""
++    return received == new + duplicate + review + open_
++
++
 +def _summary(desk: Desk, started_at: int) -> dict[str, Any]:
-+    now = int(time.time())
++    now = desk.now()
 +    before = now - desk.config.stall_seconds
 +    step = SERIES_BUCKET_SECONDS
 +    last_bucket = (now // step) * step
@@ -448,7 +607,7 @@ index 0000000..cedf9d0
 +        "now": now,
 +        "desk_started_at": started_at,
 +        "counts": {"received": received, "new": new, "duplicate": dup, "review": review, "open": open_},
-+        "reconciled": received == new + dup + review + open_,
++        "reconciled": reconciled(received, new, dup, review, open_),
 +        "refused_at_door": desk.rejected_envelopes(),
 +        "needs_action": needs,
 +        "waiting": waiting,
@@ -477,13 +636,16 @@ index 0000000..cedf9d0
 +_LEADS_ROWS = """
 +SELECT l.lead_id, l.name, l.email, l.company, l.source, r.source_ref, l.created_at, f.state, f.ai_label,
 +       f.attempts, r.attempts,
-+       (SELECT count(*) FROM receipts d WHERE d.outcome = 'duplicate' AND d.outcome_lead_id = l.lead_id),
 +       f.updated_at
 +  FROM leads l JOIN followups f USING (lead_id) JOIN receipts r ON r.receipt_id = l.receipt_id
 + WHERE (:state = '' OR f.state = :state)
 +   AND (:q = '' OR l.name LIKE :pat ESCAPE '\\' OR l.email LIKE :pat ESCAPE '\\' OR l.company LIKE :pat ESCAPE '\\'
 +        OR l.lead_id LIKE :pat ESCAPE '\\' OR r.source_ref LIKE :pat ESCAPE '\\')
 + ORDER BY l.created_at DESC, l.lead_id DESC LIMIT :limit OFFSET :offset
++"""
++_REPEATS = """
++SELECT outcome_lead_id, count(*) FROM receipts
++ WHERE outcome = 'duplicate' AND outcome_lead_id IN (SELECT value FROM json_each(?)) GROUP BY outcome_lead_id
 +"""
 +_LEADS_TOTAL = """
 +SELECT count(*)
@@ -504,7 +666,6 @@ index 0000000..cedf9d0
 +    "ai_label",
 +    "attempts",
 +    "arrivals",
-+    "repeats",
 +    "updated_at",
 +)
 +
@@ -530,12 +691,20 @@ index 0000000..cedf9d0
 +    if limit is None:
 +        return _bad_query("limit")
 +    args = {"q": q, "pat": _like(q), "state": state, "limit": limit, "offset": offset}
++    now = desk.now()
 +    with _snapshot(desk) as conn:
 +        rows = conn.execute(_LEADS_ROWS, args).fetchall()
 +        total = conn.execute(_LEADS_TOTAL, {k: args[k] for k in ("q", "pat", "state")}).fetchone()[0]
++        ids = json.dumps([r[0] for r in rows])
++        repeats = dict(conn.execute(_REPEATS, (ids,)).fetchall()) if rows else {}  # one pass, page rows only
++    out = []
++    for r in rows:
++        row = dict(zip(_LEAD_KEYS, r, strict=True))
++        row["repeats"] = int(repeats.get(row["lead_id"], 0))
++        out.append(row)
 +    return HTTP_OK, {
-+        "now": int(time.time()),
-+        "rows": [dict(zip(_LEAD_KEYS, r, strict=True)) for r in rows],
++        "now": now,
++        "rows": out,
 +        "total": total,
 +        "offset": offset,
 +        "limit": limit,
@@ -599,7 +768,8 @@ index 0000000..cedf9d0
 +
 +
 +def _lead_detail(desk: Desk, lead_id: str) -> tuple[int, dict[str, Any]]:
-+    before = int(time.time()) - desk.config.stall_seconds
++    now = desk.now()
++    before = now - desk.config.stall_seconds
 +    with _snapshot(desk) as conn:
 +        lead = conn.execute(_LEAD_ROW, (lead_id,)).fetchone()
 +        followup = conn.execute(_FOLLOWUP_ROW, (lead_id,)).fetchone()
@@ -609,10 +779,11 @@ index 0000000..cedf9d0
 +        dups = conn.execute(_DUPLICATES, (lead_id, DUPLICATES_MAX)).fetchall()
 +        total = conn.execute(_DUPLICATES_TOTAL, (lead_id,)).fetchone()[0]
 +        items = [r[0] for r in conn.execute(_LEAD_ITEMS, (before, lead_id))]
++    lead_row = dict(zip(_LEAD_FIELDS, lead, strict=True))
 +    first_payload = _object(first[7])
 +    return HTTP_OK, {
-+        "now": int(time.time()),
-+        "lead": dict(zip(_LEAD_FIELDS, lead, strict=True)),
++        "now": now,
++        "lead": lead_row,
 +        "followup": dict(zip(_FOLLOWUP_KEYS, followup, strict=True)),
 +        "first_receipt": {
 +            "receipt_id": first[0],
@@ -631,7 +802,12 @@ index 0000000..cedf9d0
 +                "received_at": d[3],
 +                "decided_at": d[4],
 +                "differing": [
-+                    {"field": f, "first": first_payload.get(f), "this": _object(d[6]).get(f)} for f in _names(d[5])
++                    {
++                        "field": f,
++                        "first": lead_row[f] if f in lead_row else first_payload.get(f),
++                        "this": _object(d[6]).get(f),
++                    }
++                    for f in _names(d[5])
 +                ],
 +            }
 +            for d in dups
@@ -668,11 +844,15 @@ index 0000000..cedf9d0
 +    "body": "Retry will ask the CRM again; if a row was there, delete the extra one by hand.",
 +    "verb": "Mark as missing",
 +}
-+_FAILED_TEXT = {
++_NOTHING_SENT_TEXT = {
 +    "refused": "The mail system refused; nothing was sent.",
 +    "unreachable": "The mail system could not be reached; nothing was sent.",
 +}
-+_FAILED_DEFAULT = "The follow-up did not finish, and the desk has no confirmation that an email was sent."
++_NOTHING_SENT_INTERNAL = "The desk hit a fault before it tried to send; nothing was sent."
++_DID_NOT_FINISH_TEXT = (
++    "The follow-up did not finish and the desk has no confirmation. The email may have left. Retry is safe only "
++    "when the mail system keeps a key for repeats (a keyed outbox); otherwise check the mail system first."
++)
 +_UNKNOWN_TEXT = {
 +    "ambiguous_prior": "An earlier send may have left after a stop; the desk will not send again blind.",
 +    "ambiguous": "The send ended unclearly, so the email may have left; the desk will not send again blind.",
@@ -696,7 +876,11 @@ index 0000000..cedf9d0
 +    kind, reason, item_id = str(item["kind"]), str(item["reason"] or ""), str(item["item_id"])
 +    tab, actions = "action", []
 +    if kind == "failed":
-+        title, text = "Follow-up failed; nothing was sent", _FAILED_TEXT.get(reason, _FAILED_DEFAULT)
++        if reason in _NOTHING_SENT_TEXT or reason.startswith("internal"):
++            title = "Follow-up failed; nothing was sent"
++            text = _NOTHING_SENT_TEXT.get(reason, _NOTHING_SENT_INTERNAL)
++        else:  # ambiguous, crash_while_sending, anything else: the email may have left
++            title, text = "Follow-up did not finish", _DID_NOT_FINISH_TEXT
 +        actions = [_action(_RETRY, item_id, "retry")]
 +    elif kind == "unknown" and reason == "crm_unconfirmed":
 +        title, text = "UNKNOWN: the CRM may or may not hold this lead", _UNKNOWN_TEXT[reason]
@@ -766,12 +950,10 @@ index 0000000..cedf9d0
 +
 +
 +def _review(desk: Desk) -> tuple[int, dict[str, Any]]:
-+    reply = desk.review()  # the desk's own list, hints and stall rule
-+    if reply.status != HTTP_OK:
-+        return reply.status, reply.body
-+    items: list[dict[str, Any]] = list(reply.body)
-+    ids = sorted({str(i["lead_id"]) for i in items if i["lead_id"]})
-+    with _snapshot(desk) as conn:
++    now = desk.now()
++    with _snapshot(desk) as conn:  # the desk's own list, hints and stall rule, on the read-only connection
++        items = review_rows(conn, now - desk.config.stall_seconds)
++        ids = sorted({str(i["lead_id"]) for i in items if i["lead_id"]})
 +        names = dict(conn.execute(_NAMES, (json.dumps(ids),)).fetchall())
 +    out = []
 +    for item in items:
@@ -779,12 +961,12 @@ index 0000000..cedf9d0
 +        out.append(full)
 +    out.sort(key=lambda i: _TAB_ORDER.index(i["tab"]))  # stable: the desk's order (oldest first) holds inside a tab
 +    return HTTP_OK, {
-+        "now": int(time.time()),
++        "now": now,
 +        "items": out,
 +        "tabs": {t: sum(1 for i in out if i["tab"] == t) for t in _TAB_ORDER},
 +    }
 diff --git a/src/lead_desk/server.py b/src/lead_desk/server.py
-index 5104f37..8770d92 100644
+index 5104f37..ccb54d5 100644
 --- a/src/lead_desk/server.py
 +++ b/src/lead_desk/server.py
 @@ -7,12 +7,15 @@ from that line."""
@@ -803,7 +985,7 @@ index 5104f37..8770d92 100644
  from collections.abc import Callable
  from dataclasses import replace
  from http import HTTPStatus
-@@ -20,39 +23,51 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+@@ -20,39 +23,54 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
  from typing import Any, cast
  from urllib.parse import parse_qs, unquote, urlsplit
  
@@ -813,6 +995,7 @@ index 5104f37..8770d92 100644
  from lead_desk.config import Config
  from lead_desk.constants import (
 +    DEMO_BODY_MAX,
++    DEMO_METHODS,
      DRAIN_MAX_BYTES,
      EXIT_ADAPTERS_UNREACHABLE,
      EXIT_ANOTHER_DESK,
@@ -835,6 +1018,7 @@ index 5104f37..8770d92 100644
      SOURCE_REF_MAX,
      SOURCE_REF_MIN,
      SOURCES,
++    WILDCARD_BINDS,
  )
  from lead_desk.desk import Desk, Reply
  from lead_desk.hooks import Hooks
@@ -843,7 +1027,8 @@ index 5104f37..8770d92 100644
  
  log = logging.getLogger("lead_desk")
  
-+_HOST_HEADER = re.compile(r"^(?P<host>\[[0-9A-Fa-f:]+\]|[^:\[\]]+)(?::[0-9]{1,5})?$")
++_HOST_HEADER = re.compile(r"^(?P<host>\[[0-9A-Fa-f:]+\]|[^:\[\]]+)(?::(?P<port>[0-9]{1,5}))?$")
++_PORT_MAX = 65535
 +
  
  class _Server(ThreadingHTTPServer):
@@ -857,7 +1042,7 @@ index 5104f37..8770d92 100644
  
      def server_bind(self) -> None:
          if sys.platform == "win32":
-@@ -60,6 +75,20 @@ class _Server(ThreadingHTTPServer):
+@@ -60,6 +78,30 @@ class _Server(ThreadingHTTPServer):
          super().server_bind()
  
  
@@ -870,15 +1055,25 @@ index 5104f37..8770d92 100644
 +    except ValueError:
 +        names.add(config.bind.lower())  # a host name
 +    else:
-+        if not ip.is_unspecified:
++        if not ip.is_unspecified and str(ip) not in WILDCARD_BINDS:
 +            names.add(f"[{ip}]" if isinstance(ip, ipaddress.IPv6Address) else str(ip))
 +    return frozenset(names)
++
++
++def _is_loopback_bind(bind: str) -> bool:
++    """True for localhost and for a loopback address; a wildcard or any other address is reachable from outside."""
++    if bind.lower() == "localhost":
++        return True
++    try:
++        return ipaddress.ip_address(bind.strip("[]")).is_loopback
++    except ValueError:
++        return False
 +
 +
  def _route(method: str, path: str) -> tuple[str, str | None] | int:
      """(route name, path argument) for a known route and method; else 405 or 404 (a status int)."""
      parts = [unquote(p) for p in path.strip("/").split("/")] if path != "/" else []
-@@ -74,6 +103,14 @@ def _route(method: str, path: str) -> tuple[str, str | None] | int:
+@@ -74,6 +116,14 @@ def _route(method: str, path: str) -> tuple[str, str | None] | int:
              name, arg, allowed = action, item, "POST"
          case ["counts"]:
              name, arg, allowed = "counts", None, "GET"
@@ -893,7 +1088,7 @@ index 5104f37..8770d92 100644
          case _:
              return HTTP_NOT_FOUND
      if arg and name in ("retry", "resolve") and arg[1:].isascii() and arg[1:].isdecimal() and len(arg[1:]) > MAX_DIGITS:
-@@ -95,14 +132,19 @@ class _Handler(BaseHTTPRequestHandler):
+@@ -95,14 +145,19 @@ class _Handler(BaseHTTPRequestHandler):
  
      # -- reply helpers
      def _send(self, status: int, obj: Any) -> None:
@@ -917,7 +1112,7 @@ index 5104f37..8770d92 100644
          self.close_connection = True
  
      def send_error(self, code: int, message: str | None = None, explain: str | None = None) -> None:
-@@ -147,11 +189,39 @@ class _Handler(BaseHTTPRequestHandler):
+@@ -147,11 +202,41 @@ class _Handler(BaseHTTPRequestHandler):
          digits = raw.lstrip("0")
          return 10**MAX_DIGITS if len(digits) > MAX_DIGITS else int(digits or "0")
  
@@ -933,6 +1128,8 @@ index 5104f37..8770d92 100644
 +        hosts = self.headers.get_all("Host", [])
 +        match = _HOST_HEADER.fullmatch(hosts[0].strip()) if len(hosts) == 1 else None
 +        if match is None or match.group("host").lower() not in server.allowed_hosts:
++            return "forbidden_host"
++        if match.group("port") is not None and int(match.group("port")) > _PORT_MAX:
 +            return "forbidden_host"
 +        origins = self.headers.get_all("Origin", [])
 +        if origins:
@@ -957,7 +1154,7 @@ index 5104f37..8770d92 100644
              try:
                  parts = urlsplit(self.path)
              except ValueError:  # e.g. the target "http://[/"
-@@ -174,6 +244,8 @@ class _Handler(BaseHTTPRequestHandler):
+@@ -174,6 +259,8 @@ class _Handler(BaseHTTPRequestHandler):
              elif name == "retry":
                  self._skip_body()
                  self._send_reply(desk.retry(str(arg)))
@@ -966,7 +1163,7 @@ index 5104f37..8770d92 100644
              else:
                  self._resolve(str(arg))
              self._flush_and_half_close()
-@@ -194,6 +266,39 @@ class _Handler(BaseHTTPRequestHandler):
+@@ -194,6 +281,53 @@ class _Handler(BaseHTTPRequestHandler):
                      log.warning("follow-up failed: %s", type(e).__name__)
              desk.close()  # this request thread's connection
  
@@ -989,6 +1186,9 @@ index 5104f37..8770d92 100644
 +        elif server.demo is None:
 +            self._skip_body()
 +            self._send(HTTP_NOT_FOUND, {"error": "not_found"})
++        elif method not in DEMO_METHODS:
++            self._skip_body()
++            self._send(HTTP_METHOD_NOT_ALLOWED, {"error": "method_not_allowed"})
 +        else:
 +            body = b""
 +            if method == "POST":
@@ -997,8 +1197,19 @@ index 5104f37..8770d92 100644
 +                    self._send(HTTP_BAD_REQUEST, {"error": "bad_body"})
 +                    return
 +                n = self._content_length() or 0
-+                body = self.rfile.read(min(n, DEMO_BODY_MAX))
-+                self._drain(n - len(body))
++                if n > DEMO_BODY_MAX:
++                    self._send(HTTP_TOO_LARGE, {"error": "too_large"})
++                    self._flush_and_half_close()
++                    self._drain(n)
++                    return
++                try:
++                    body = self.rfile.read(n)
++                except TimeoutError:  # fewer bytes than announced and the socket stayed open
++                    self._send(HTTP_REQUEST_TIMEOUT, {"error": "request_timeout"})
++                    return
++                if len(body) < n:
++                    self._send(HTTP_BAD_REQUEST, {"error": "bad_body"})
++                    return
 +            else:
 +                self._skip_body()
 +            self._send(*server.demo.handle(method, arg, body))
@@ -1006,16 +1217,35 @@ index 5104f37..8770d92 100644
      def _send_reply(self, reply: Reply) -> None:
          self._send(reply.status, reply.body)
  
-@@ -307,6 +412,9 @@ def make_server(desk: Desk, config: Config) -> ThreadingHTTPServer:
+@@ -305,8 +439,12 @@ def make_server(desk: Desk, config: Config) -> ThreadingHTTPServer:
+     Windows limit (not checked on a second machine): a restart on the same fixed port may fail while the
+     old connections sit in TIME_WAIT, and the conflicting bind may raise PermissionError instead of
      EADDRINUSE; both are OSError, which callers catch broadly."""
++    demo = load_demo_portal(desk)  # before the bind: a broken extension must not leave a bound socket behind
      server = _Server((config.bind, config.port), _Handler)
      server.desk, server.config = desk, config
 +    server.started_at = int(time.time())
 +    server.allowed_hosts = _allowed_hosts(config)
-+    server.demo = load_demo_portal(desk)
++    server.demo = demo
      return server
  
  
+@@ -351,6 +489,15 @@ def main(hooks: Hooks | None = None) -> None:
+         sys.exit(EXIT_ANOTHER_DESK)
+     try:
+         desk.startup()
++        if not _is_loopback_bind(config.bind):
++            print(
++                f"warning: the desk is bound to {config.bind}, which other computers can reach. The portal shows every "
++                "lead (names, e-mail addresses, phone numbers, messages) to anyone who can connect; the Host and "
++                "Origin check stops browsers on other sites only. Bind to 127.0.0.1, or to the one address that only "
++                "your container network reaches.",
++                file=sys.stderr,
++                flush=True,
++            )
+         host, port = server.server_address[0], server.server_address[1]
+         print(f"desk listening on http://{host!s}:{port}", flush=True)
+         server.serve_forever()
 diff --git a/tests/portal_fixtures/demo-burst-replay.json b/tests/portal_fixtures/demo-burst-replay.json
 new file mode 100644
 index 0000000..b247380
@@ -2831,26 +3061,42 @@ index 73c7f7e..634d60d 100644
      patterns, exceptions, toml = REPO / "patterns.txt", REPO / "exceptions.txt", REPO / ".gitleaks.toml"
 diff --git a/tests/test_portal_api.py b/tests/test_portal_api.py
 new file mode 100644
-index 0000000..a9f64b2
+index 0000000..e52d33b
 --- /dev/null
 +++ b/tests/test_portal_api.py
-@@ -0,0 +1,843 @@
+@@ -0,0 +1,1358 @@
 +"""Portal tests: the read-only JSON under /api/ui, the fixed files under /ui, and the Host and Origin gate.
 +Made-up data only. The response shapes are checked against tests/portal_fixtures/*.json (copied from the design)."""
 +
 +from __future__ import annotations
 +
++import importlib
++import ipaddress
 +import json
 +import socket
 +import sqlite3
++import sys
 +import threading
 +import time
 +import types
 +from pathlib import Path
 +from typing import Any
++from urllib.parse import quote
 +
 +import pytest
-+from support import HOST, Rig, call, free_port, lead, raw_exchange, run_threads, wait_until
++from support import (
++    HOST,
++    Rig,
++    call,
++    child_env,
++    free_port,
++    lead,
++    raw_exchange,
++    run_threads,
++    start_proc,
++    stop_proc,
++    wait_until,
++)
 +
 +from lead_desk import loader, portal_api, server
 +from lead_desk.config import Config
@@ -2858,16 +3104,23 @@ index 0000000..a9f64b2
 +    DEMO_BODY_MAX,
 +    DUPLICATES_MAX,
 +    FEED_ITEMS,
++    LEAD_ID_HEX_CHARS,
++    LEAD_ID_PREFIX,
 +    LEADS_LIMIT_DEFAULT,
++    PORTAL_MAX_INFLIGHT,
 +    SECURITY_HEADERS,
 +    SERIES_BUCKET_SECONDS,
 +    SERIES_BUCKETS,
++    STATIC_FILE_MAX_BYTES,
 +)
 +from lead_desk.server import make_server
 +
 +FIXTURES = Path(__file__).resolve().parent / "portal_fixtures"
 +STALE = 1000  # seconds: far older than stall_seconds
 +RESTARTS = 20
++READY_SECONDS = 30.0
++BIG_LEADS = 3000
++PERF_LIMIT_SECONDS = 10.0
 +BURST = 10
 +PLACEHOLDER = b"<!doctype html><title>placeholder</title>"
 +NEW_OUTSIDE = {"form": "ui-1", "webhook": "ui-2"}
@@ -2987,9 +3240,15 @@ index 0000000..a9f64b2
 +def test_every_reply_comes_from_one_transaction(env, monkeypatch) -> None:
 +    """The reads of one reply share one BEGIN ... COMMIT on one connection, and the connection is closed after."""
 +    rig, base = fresh(env)
-+    seed(rig)
++    ids = seed(rig)
 +    seen: list[list[str]] = []
 +    real = portal_api.connect_readonly
++
++    def boom(*_a: Any, **_k: Any) -> Any:
++        raise AssertionError("a portal reply used the desk's own (write-capable) connection")
++
++    monkeypatch.setattr(rig.desk, "_conn", boom)
++    monkeypatch.setattr(rig.desk, "review", boom)
 +
 +    class Spy:
 +        def __init__(self, conn: sqlite3.Connection) -> None:
@@ -3005,9 +3264,17 @@ index 0000000..a9f64b2
 +            self.conn.close()
 +
 +    monkeypatch.setattr(portal_api, "connect_readonly", lambda p: Spy(real(p)))
-+    for path in ("/api/ui/summary", "/api/ui/leads", "/api/ui/review"):
++    for path in (
++        "/api/ui/summary",
++        "/api/ui/leads",
++        "/api/ui/leads?q=ada",
++        f"/api/ui/leads/{ids['ada']}",
++        f"/api/ui/leads/{ids['alan']}",
++        "/api/ui/review",
++    ):
 +        seen.clear()
 +        assert get(base, path)[0] == 200
++        assert len(seen) == 1, (path, "more than one connection for one reply")
 +        log = seen[-1]
 +        assert log[0] == "BEGIN" and log[-2:] == ["COMMIT", "CLOSE"], (path, log)
 +        assert log.count("BEGIN") == 1 and log.count("COMMIT") == 1
@@ -3024,6 +3291,8 @@ index 0000000..a9f64b2
 +    c = out["counts"]
 +    assert c == {"received": 20, "new": 7, "duplicate": 10, "review": 2, "open": 1}
 +    assert out["reconciled"] is True
++    assert sum(d["received"] for d in out["doors"]) == c["received"]  # the doors query agrees with the counts query
++    assert sum(out["followups"].values()) == c["new"]  # one follow-up per new lead, read by another statement
 +    assert out["needs_action"] == 5  # R (incomplete), R (fault), failed, unknown, unknown (CRM)
 +    assert out["waiting"] == 3  # one open receipt, one pending and one sending follow-up, all older than stall
 +    assert out["followups"]["unknown"] == 2 and out["followups"]["failed"] == 1
@@ -3057,7 +3326,7 @@ index 0000000..a9f64b2
 +    assert len(hit) == 1 and hit[0]["new"] == 1 and hit[0]["duplicate"] == 0
 +
 +
-+def test_open_receipts_are_counted_and_young_ones_not_listed(env) -> None:
++def test_open_receipts_counted_young_not_listed(env) -> None:
 +    """R368: an open receipt is never hidden. Young: only in counts.open. Old: also in Needs (waiting)."""
 +    rig, base = fresh(env)
 +    sql(
@@ -3073,6 +3342,49 @@ index 0000000..a9f64b2
 +    assert out["counts"]["open"] == 2 and out["waiting"] == 1
 +    items = get(base, "/api/ui/review")[1]["items"]
 +    assert [i["item_id"][0] for i in items] == ["O"] and items[0]["tab"] == "waiting"
++
++
++def test_young_followups_are_not_stalled(env) -> None:
++    """The age rule for follow-ups: a pending or sending row younger than stall_seconds is neither waiting nor listed;
++    one second past the limit it is both."""
++    rig, base = fresh(env)
++    mark = "UPDATE followups SET state=?, updated_at=? WHERE lead_id=?"
++    a = rig.desk.process("form", "y-1", lead(email="y1@example.test")).body["lead_id"]
++    b = rig.desk.process("form", "y-2", lead(email="y2@example.test")).body["lead_id"]
++    stall = rig.desk.config.stall_seconds
++    sql(rig, mark, ("pending", rig.clock.t - stall + 5, a))
++    sql(rig, mark, ("sending", rig.clock.t - stall + 5, b))
++    out = get(base, "/api/ui/summary")[1]
++    assert out["waiting"] == 0 and out["needs_action"] == 0
++    assert get(base, "/api/ui/review")[1]["items"] == []
++    assert get(base, f"/api/ui/leads/{a}")[1]["review_items"] == []
++    sql(rig, mark, ("pending", rig.clock.t - stall - 1, a))
++    sql(rig, mark, ("sending", rig.clock.t - stall - 1, b))
++    assert get(base, "/api/ui/summary")[1]["waiting"] == 2
++    assert sorted(i["item_id"] for i in get(base, "/api/ui/review")[1]["items"]) == sorted(["F" + a, "F" + b])
++    assert get(base, f"/api/ui/leads/{a}")[1]["review_items"] == ["F" + a]
++
++
++def test_reconciled_formula_with_injected_counts() -> None:
++    assert portal_api.reconciled(5, 2, 1, 1, 1) is True
++    assert portal_api.reconciled(0, 0, 0, 0, 0) is True
++    assert portal_api.reconciled(6, 2, 1, 1, 1) is False  # a receipt with no state
++    assert portal_api.reconciled(5, 2, 2, 1, 1) is False  # a receipt counted twice
++
++
++def test_search_treats_like_characters_as_text(env) -> None:
++    """The three LIKE characters are text: a lead whose name holds all of them is found by that text, and by nothing
++    that only matches as a wildcard."""
++    rig, base = fresh(env)
++    rig.desk.process("form", "w-1", lead(name="Half 50%_off\\ Deal", email="half@example.test"))
++    rig.desk.process("form", "w-2", lead(name="Half 50xyoffz Deal", email="other@example.test"))
++    found = get(base, "/api/ui/leads?q=" + quote("50%_off\\"))[1]
++    assert found["total"] == 1 and found["rows"][0]["name"] == "Half 50%_off\\ Deal"
++    assert get(base, "/api/ui/leads?q=%25")[1]["total"] == 1  # only the lead that holds a percent sign
++    assert get(base, "/api/ui/leads?q=_")[1]["total"] == 1
++    assert get(base, "/api/ui/leads?q=" + quote("50%off"))[1]["total"] == 0  # not a wildcard
++    assert get(base, "/api/ui/leads?q=" + quote("50_off"))[1]["total"] == 0
++    assert get(base, "/api/ui/leads?q=%5C")[1]["total"] == 1
 +
 +
 +def test_refused_at_door_counts_envelopes_without_receipt(env) -> None:
@@ -3143,6 +3455,31 @@ index 0000000..a9f64b2
 +    assert received == sorted(received, reverse=True)
 +
 +
++def test_lead_id_grammar_checked_before_db(env, monkeypatch) -> None:
++    """The regex itself: a real id passes, every near miss is a 404 that never opens the database."""
++    rig, base = fresh(env)
++    real = rig.desk.process("form", "g-1", lead()).body["lead_id"]
++    assert portal_api._LEAD_ID.fullmatch(real)
++    assert portal_api.LEAD_ID_PATTERN == rf"^{LEAD_ID_PREFIX}[0-9a-f]{{{LEAD_ID_HEX_CHARS}}}$"
++    assert get(base, f"/api/ui/leads/{real}")[0] == 200
++    opened: list[str] = []
++    real_connect = portal_api.connect_readonly
++    monkeypatch.setattr(portal_api, "connect_readonly", lambda p: opened.append("x") or real_connect(p))
++    for bad in (
++        real.upper(),
++        real[:-1],
++        real + "0",
++        real + "%0A",
++        "l" + real[1:],
++        real[:-1] + "g",
++        real.replace("L", "M", 1),
++        "%20" + real,
++        real + "%20",
++    ):
++        assert get(base, "/api/ui/leads/" + bad) == (404, {"error": "not_found"}), bad
++    assert opened == []
++
++
 +def test_lead_id_grammar_and_not_found(env) -> None:
 +    rig, base = fresh(env)
 +    seed(rig)
@@ -3200,6 +3537,32 @@ index 0000000..a9f64b2
 +    assert next(i for i in info if i["kind"] == "duplicate_with_new_info")["title"] == "Repeat with new details: phone"
 +    assert all(i["lead_name"] == "Ada Example" for i in info)
 +    assert {i["item_id"] for i in out["items"]} == set(items)
++
++
++@pytest.mark.parametrize(
++    ("reason", "nothing_sent"),
++    [
++        ("refused", True),
++        ("unreachable", True),
++        ("internal:KeyError", True),
++        ("ambiguous", False),
++        ("crash_while_sending", False),
++        ("something_new", False),
++    ],
++)
++def test_failed_card_honest_about_sending(env, reason: str, nothing_sent: bool) -> None:
++    rig, base = fresh(env)
++    lid = rig.desk.process("form", "fc-1", lead()).body["lead_id"]
++    sql(rig, "UPDATE followups SET state='failed', last_error=?, updated_at=? WHERE lead_id=?", (reason, 5, lid))
++    card = next(i for i in get(base, "/api/ui/review")[1]["items"] if i["item_id"] == "F" + lid)
++    assert [a["id"] for a in card["actions"]] == ["retry"] and card["tab"] == "action"
++    said = card["title"] + " " + card["reason_text"]
++    if nothing_sent:
++        assert card["title"] == "Follow-up failed; nothing was sent" and "nothing was sent" in card["reason_text"]
++    else:
++        assert card["title"] == "Follow-up did not finish"
++        assert "nothing was sent" not in said.lower()
++        assert "may have left" in said and "keyed outbox" in said
 +
 +
 +def test_review_empty(env) -> None:
@@ -3261,8 +3624,6 @@ index 0000000..a9f64b2
 +    ],
 +)
 +def test_injection_strings_in_q_and_state(env, text: str) -> None:
-+    from urllib.parse import quote
-+
 +    rig, base = fresh(env)
 +    seed(rig)
 +    before = rig.query("SELECT (SELECT count(*) FROM leads), (SELECT count(*) FROM receipts)")
@@ -3351,6 +3712,25 @@ index 0000000..a9f64b2
 +        assert json.loads(body) == {"error": "not_found"}, target
 +
 +
++def test_static_map_skips_links_and_big_files(tmp_path) -> None:
++    root, outside = tmp_path / "portal", tmp_path / "outside"
++    root.mkdir()
++    outside.mkdir()
++    (root / "ok.js").write_bytes(b"void 0;")
++    (outside / "secret.js").write_bytes(b"secret")
++    (outside / "dir").mkdir()
++    (outside / "dir" / "deep.css").write_bytes(b"x")
++    (root / "big.js").write_bytes(b"x" * (STATIC_FILE_MAX_BYTES + 1))
++    (root / "edge.js").write_bytes(b"x" * STATIC_FILE_MAX_BYTES)
++    try:
++        (root / "link.js").symlink_to(outside / "secret.js")
++        (root / "inside.js").symlink_to(root / "ok.js")  # a link to a file inside is still a link: skipped
++        (root / "dirlink").symlink_to(outside / "dir", target_is_directory=True)
++    except (OSError, NotImplementedError):
++        pytest.skip("this platform cannot make symbolic links here")
++    assert sorted(portal_api.build_static(root)) == ["edge.js", "ok.js"]
++
++
 +def test_security_headers_on_every_kind_of_reply(env, monkeypatch) -> None:
 +    monkeypatch.setattr(portal_api, "STATIC", {"index.html": (PLACEHOLDER, "text/html; charset=utf-8")})
 +    rig, base = fresh(env)
@@ -3382,6 +3762,19 @@ index 0000000..a9f64b2
 +
 +
 +# -- the Host and Origin gate
++def wire(base: str, head: str, body: bytes = b"") -> tuple[int, dict[str, str], bytes]:
++    """One request as typed bytes; (status, lower-cased headers, body)."""
++    host, port = base.removeprefix("http://").split(":")
++    with socket.create_connection((host, int(port)), timeout=10) as s:
++        s.sendall(head.encode("latin-1") + b"\r\n\r\n" + body)
++        data = b""
++        while chunk := s.recv(65536):
++            data += chunk
++    top, _, rest = data.partition(b"\r\n\r\n")
++    lines = top.decode("latin-1").split("\r\n")
++    return int(lines[0].split(" ")[1]), {k.lower(): v for k, _, v in (ln.partition(": ") for ln in lines[1:])}, rest
++
++
 +def raw(base: str, request_line: str, *headers: str, body: bytes = b"") -> tuple[int, Any]:
 +    head = "\r\n".join([request_line, *headers, "Connection: close", ""])
 +    return raw_exchange(base, head.encode() + b"\r\n" + body)
@@ -3392,6 +3785,111 @@ index 0000000..a9f64b2
 +
 +
 +EVIL = "evil.example"
++LOCAL = "localhost"
++WILDCARD4 = str(ipaddress.IPv4Address(0))  # built, not typed: a typed one trips the hard-coded address scan
++LOOP6_SHORT = ":".join(["0"] * 7 + ["1"])
++LOOP6_FULL = ipaddress.IPv6Address(1).exploded
++
++
++def test_headers_and_no_cors_on_error_replies(env) -> None:
++    """403, 308, 405, 404 and the replies of the standard library's own error path (bad request line, unknown method,
++    over-long line) carry every fixed header and never an Access-Control header."""
++    _, base = fresh(env)
++    ok = f"Host: {HOST}"
++    cases = {
++        "403 host": (f"GET /api/ui/summary HTTP/1.1\r\nHost: {EVIL}", 403),
++        "403 origin": (f"GET /api/ui/summary HTTP/1.1\r\n{ok}\r\nOrigin: http://{EVIL}", 403),
++        "308": (f"GET /ui HTTP/1.1\r\n{ok}", 308),
++        "405": (f"POST /api/ui/summary HTTP/1.1\r\n{ok}\r\nContent-Length: 0", 405),
++        "404": (f"GET /api/ui/nothing HTTP/1.1\r\n{ok}", 404),
++        "unknown method": (f"BREW /ui/ HTTP/1.1\r\n{ok}", 501),
++        "bad request line": ("GET\r\nHost: x", 400),
++        "long line": (f"GET /{'a' * 70000} HTTP/1.1\r\n{ok}", 414),
++    }
++    for name, (head, status) in cases.items():
++        got, headers, body = wire(base, head)
++        assert got == status, (name, got)
++        for key, value in SECURITY_HEADERS:
++            assert headers.get(key.lower()) == value, (name, key)
++        assert not any(k.startswith("access-control-") for k in headers), name
++        if body:
++            assert isinstance(json.loads(body), dict), name  # JSON, never an HTML error page
++
++
++@pytest.mark.parametrize(
++    "extra",
++    [
++        [f"Origin: http://{EVIL}"],
++        ["Origin: null"],
++        ["Sec-Fetch-Site: cross-site"],
++        ["Sec-Fetch-Site: same-site"],
++    ],
++)
++@pytest.mark.parametrize("kind", ["summary", "ui", "lead", "post"])
++def test_foreign_origin_refused_on_get_and_post(env, kind: str, extra: list[str]) -> None:
++    rig, base = fresh(env)
++    body = json.dumps({"source": "form", "source_ref": "g1", "payload": lead()}).encode()
++    line, more, payload = {
++        "summary": ("GET /api/ui/summary HTTP/1.1", [], b""),
++        "ui": ("GET /ui/ HTTP/1.1", [], b""),
++        "lead": ("GET /api/ui/leads/Lffffffffffff HTTP/1.1", [], b""),
++        "post": ("POST /leads HTTP/1.1", [f"Content-Length: {len(body)}"], body),
++    }[kind]
++    status, out = raw(base, line, f"Host: {HOST}", *extra, *more, body=payload)
++    assert (status, out) == (403, {"error": "forbidden_origin"})
++    assert rig.query("SELECT count(*) FROM receipts")[0][0] == 0
++
++
++@pytest.mark.parametrize("method", ["HEAD", "OPTIONS"])
++@pytest.mark.parametrize(
++    "extra",
++    [[f"Host: {EVIL}"], [f"Host: {HOST}", f"Origin: http://{EVIL}"], [f"Host: {HOST}", "Sec-Fetch-Site: cross-site"]],
++)
++@pytest.mark.parametrize("path", ["/api/ui/summary", "/ui/", "/leads", "/nothing"])
++def test_head_options_foreign_headers_403_no_cors(env, method: str, extra: list[str], path: str) -> None:
++    _, base = fresh(env)
++    status, headers, body = wire(base, "\r\n".join([f"{method} {path} HTTP/1.1", *extra, "Connection: close"]))
++    assert status == 403
++    assert not any(k.startswith("access-control-") for k in headers)
++    assert "allow" not in headers
++    if method == "HEAD":
++        assert body == b""
++
++
++@pytest.mark.parametrize("method", ["HEAD", "OPTIONS"])
++def test_head_options_this_host_no_cors(env, method: str) -> None:
++    _, base = fresh(env)
++    status, headers, _ = wire(base, f"{method} /api/ui/summary HTTP/1.1\r\nHost: {HOST}\r\nConnection: close")
++    assert status == 405
++    assert not any(k.startswith("access-control-") for k in headers)
++
++
++@pytest.mark.parametrize(
++    ("host", "status"),
++    [
++        ("localhost.", 403),  # trailing dot is another name
++        ("LOCALHOST", 200),  # names are not case sensitive
++        (f"[{LOOP6_SHORT}]", 403),  # expanded IPv6 is another spelling: refused
++        (f"[{LOOP6_FULL}]", 403),
++        ("[::1]", 200),
++        ("[::1", 403),
++        ("localhost:99999", 403),  # not a port
++        ("localhost:65536", 403),
++        ("localhost:65535", 200),
++        ("localhost:0", 200),
++        ("local\x01host", 403),
++        ("localhost\x00", 403),
++        ("localhost\t", 200),  # surrounding blanks are not part of the name
++        ("localhost:", 403),
++        ("localhost:1:2", 403),
++        ("127.1", 403),
++        ("2130706433", 403),
++        (WILDCARD4, 403),  # a Host header, never bound
++    ],
++)
++def test_host_variants(env, host: str, status: int) -> None:
++    _, base = fresh(env)
++    assert wire(base, f"GET /counts HTTP/1.1\r\nHost: {host}\r\nConnection: close")[0] == status
 +
 +
 +def test_foreign_host_is_refused_on_every_route(env, monkeypatch) -> None:
@@ -3421,6 +3919,18 @@ index 0000000..a9f64b2
 +    assert rig.desk.rejected_envelopes() == 0
 +
 +
++def test_error_bodies_match_design_fixtures(env) -> None:
++    """The two error bodies the pages show are the ones in the fixtures (error-forbidden, error-retry-409)."""
++    rig, base = fresh(env)
++    ids = seed(rig)
++    assert raw(base, "GET /api/ui/summary HTTP/1.1", f"Host: {HOST}", "Origin: null") == (
++        403,
++        fixture("error-forbidden"),
++    )
++    status, out = call(base, "POST", f"/review/F{ids['linus']}/retry", body={})
++    assert (status, out) == (409, fixture("error-retry-409"))
++
++
 +def test_missing_and_repeated_host_header(env) -> None:
 +    _, base = fresh(env)
 +    assert raw(base, "GET /counts HTTP/1.0") == (403, {"error": "forbidden_host"})
@@ -3434,7 +3944,7 @@ index 0000000..a9f64b2
 +    assert raw(base, "GET /counts HTTP/1.1", f"Host: {host}")[0] == 200
 +
 +
-+def test_foreign_origin_is_refused_and_the_book_is_unchanged(env) -> None:
++def test_foreign_origin_refused_book_unchanged(env) -> None:
 +    rig, base = fresh(env)
 +    port = port_of(base)
 +    body = json.dumps({"source": "form", "source_ref": "o1", "payload": lead()}).encode()
@@ -3448,7 +3958,7 @@ index 0000000..a9f64b2
 +        f"http://{HOST}",
 +        f"http://{HOST}:{int(port) + 1}",
 +        f"http://{HOST}:{port}/",
-+        f"http://localhost.{EVIL}:{port}",
++        f"http://{LOCAL}.{EVIL}:{port}",
 +    ):
 +        got = raw(base, "POST /leads HTTP/1.1", f"Host: {HOST}", f"Origin: {origin}", cl, body=body)
 +        assert got == (403, {"error": "forbidden_origin"}), origin
@@ -3461,7 +3971,7 @@ index 0000000..a9f64b2
 +
 +
 +@pytest.mark.parametrize("site", ["cross-site", "same-site", "bogus", ""])
-+def test_sec_fetch_site_other_than_same_origin_is_refused(env, site: str) -> None:
++def test_sec_fetch_site_other_is_refused(env, site: str) -> None:
 +    rig, base = fresh(env)
 +    body = json.dumps({"source": "form", "source_ref": "s1", "payload": lead()}).encode()
 +    got = raw(
@@ -3504,10 +4014,10 @@ index 0000000..a9f64b2
 +    assert raw(plain, "GET /counts HTTP/1.1", f"Host: {name}")[0] == 403
 +
 +
-+def test_bind_address_is_allowed_and_wildcard_is_not() -> None:
++def test_bind_allowed_wildcard_is_not() -> None:
 +    assert "[::1]" in server._allowed_hosts(Config(bind="::1"))
 +    assert "192.0.2.7" in server._allowed_hosts(Config(bind="192.0.2.7"))
-+    for wildcard in ("0.0.0.0", "::"):  # noqa: S104 (compared with, never bound to)
++    for wildcard in (WILDCARD4, "::"):
 +        names = server._allowed_hosts(Config(bind=wildcard))
 +        assert names == {"127.0.0.1", "localhost", "[::1]"}
 +
@@ -3516,11 +4026,43 @@ index 0000000..a9f64b2
 +    cfg = Config.from_env({"DESK_ALLOWED_HOSTS": "dock.example, [fe80::1] ,a-b.c"})
 +    assert cfg.allowed_hosts == ("dock.example", "[fe80::1]", "a-b.c")
 +    assert Config.from_env({}).allowed_hosts == () and Config.from_env({"DESK_ALLOWED_HOSTS": " "}).allowed_hosts == ()
-+    for bad in ("Dock.Example", "a b", "a,,b", "a_b", "x/y", "http://a", "a:80", "*", "a" * 254, "[zz]", "[]"):
++    wildcards = (WILDCARD4, "[::]", "::", "[" + ":".join(["0"] * 8) + "]")
++    for bad in (
++        "Dock.Example",
++        "a b",
++        "a,,b",
++        "a_b",
++        "x/y",
++        "http:" + "//a",
++        "a:80",
++        "*",
++        "a" * 254,
++        "[zz]",
++        "[]",
++        ".",
++        "-",
++        "--",
++        "a..b",
++        ".a",
++        "a.",
++        "-a",
++        "a-",
++        "a.-b.c",
++        "a" * 64,
++        *wildcards,
++    ):
 +        with pytest.raises(ValueError, match="allowed_hosts"):
 +            Config.from_env({"DESK_ALLOWED_HOSTS": bad})
 +    with pytest.raises(ValueError, match="allowed_hosts"):
 +        Config(allowed_hosts=("UPPER",))
++    assert Config(allowed_hosts=("a" * 63, "192.0.2.7", "x-y.z9")).allowed_hosts[0] == "a" * 63
++
++
++def test_startup_warning_non_loopback_bind() -> None:
++    for quiet in ("127.0.0.1", "localhost", "::1", "[::1]"):
++        assert server._is_loopback_bind(quiet), quiet
++    for loud in (WILDCARD4, "::", "192.0.2.7", "198.51.100.4", "desk.example"):
++        assert not server._is_loopback_bind(loud), loud
 +
 +
 +# -- the demo extension door
@@ -3543,18 +4085,25 @@ index 0000000..a9f64b2
 +    assert get(base, "/api/demo/")[0] == 404
 +
 +
-+def test_demo_extension_gets_method_path_and_a_capped_body(env, monkeypatch) -> None:
++def test_demo_extension_gets_capped_body(env, monkeypatch) -> None:
 +    demo = FakeDemo()
 +    monkeypatch.setattr(server, "load_demo_portal", lambda desk: demo)
 +    _, base = fresh(env)
 +    assert call(base, "GET", "/api/demo/state") == (200, {"ok": True})
 +    assert call(base, "POST", "/api/demo/burst", body={"n": 1}) == (200, {"ok": True})
-+    assert call(base, "DELETE", "/api/demo/x/y") == (200, {"ok": True})
-+    assert [(m, p) for m, p, _ in demo.calls] == [("GET", "state"), ("POST", "burst"), ("DELETE", "x/y")]
++    for method in ("PUT", "PATCH", "DELETE", "OPTIONS"):  # only GET and POST reach the extension
++        assert call(base, method, "/api/demo/x/y", body={"a": 1} if method != "OPTIONS" else None) == (
++            405,
++            {"error": "method_not_allowed"},
++        ), method
++    assert [(m, p) for m, p, _ in demo.calls] == [("GET", "state"), ("POST", "burst")]
 +    assert demo.calls[1][2] == b'{"n": 1}' and demo.calls[0][2] == b""
++    exact = json.dumps({"pad": "x" * (DEMO_BODY_MAX - len('{"pad": ""}'))}).encode()
++    assert len(exact) == DEMO_BODY_MAX
++    assert call(base, "POST", "/api/demo/burst", raw=exact)[0] == 200 and demo.calls[-1][2] == exact
 +    big = json.dumps({"pad": "x" * (DEMO_BODY_MAX * 2)}).encode()
-+    call(base, "POST", "/api/demo/burst", raw=big)
-+    assert len(demo.calls[-1][2]) == DEMO_BODY_MAX
++    assert call(base, "POST", "/api/demo/burst", raw=big) == (413, {"error": "too_large"})
++    assert len(demo.calls) == 3  # the over-long body never reached the extension
 +    status, out = raw(
 +        base,
 +        "POST /api/demo/burst HTTP/1.1",
@@ -3564,7 +4113,26 @@ index 0000000..a9f64b2
 +        body=b"{}",
 +    )
 +    assert (status, out) == (400, {"error": "bad_body"})
-+    assert len(demo.calls) == 4  # the refused call never reached the extension
++    assert len(demo.calls) == 3  # the refused call never reached the extension
++
++
++def test_demo_door_408_when_body_stalls(env, monkeypatch) -> None:
++    demo = FakeDemo()
++    monkeypatch.setattr(server, "load_demo_portal", lambda desk: demo)
++    monkeypatch.setattr(server._Handler, "timeout", 1)
++    _, base = fresh(env)
++    host, port = base.removeprefix("http://").split(":")
++    head = (
++        f"POST /api/demo/burst HTTP/1.1\r\nHost: {HOST}\r\nContent-Type: application/json\r\n"
++        "Content-Length: 50\r\nConnection: close\r\n\r\n{"
++    )
++    with socket.create_connection((host, int(port)), timeout=10) as s:
++        s.sendall(head.encode())  # 1 of 50 announced bytes, then silence
++        data = b""
++        while chunk := s.recv(65536):
++            data += chunk
++    assert data.split(b" ", 2)[1] == b"408" and b"request_timeout" in data
++    assert demo.calls == []
 +
 +
 +def test_demo_asset_is_served_from_the_extension(env, monkeypatch) -> None:
@@ -3583,8 +4151,8 @@ index 0000000..a9f64b2
 +
 +
 +# -- the loader
-+def test_loader_returns_none_only_when_the_module_is_absent(monkeypatch) -> None:
-+    rig_desk = object()
++def test_loader_none_only_when_module_absent(monkeypatch) -> None:
++    rig_desk = types.SimpleNamespace(config=types.SimpleNamespace(adapters="demo"))
 +    for absent in ("demo_only", "demo_only.portal_demo"):
 +
 +        def gone(name: str, _a: str = absent) -> Any:
@@ -3610,6 +4178,89 @@ index 0000000..a9f64b2
 +    marker = types.SimpleNamespace(make=lambda desk: ("made", desk))
 +    monkeypatch.setattr(loader.importlib, "import_module", lambda name: marker)
 +    assert loader.load_demo_portal(rig_desk) == ("made", rig_desk)  # type: ignore[arg-type]
++    other_adapters = types.SimpleNamespace(config=types.SimpleNamespace(adapters="live"))
++    assert loader.load_demo_portal(other_adapters) is None  # type: ignore[arg-type]  # no demo door off the demo adapters
++
++
++# -- load: many rows, many readers
++def test_over_the_cap_gets_503_busy(env, monkeypatch) -> None:
++    _, base = fresh(env)
++    monkeypatch.setattr(portal_api, "_INFLIGHT", threading.BoundedSemaphore(PORTAL_MAX_INFLIGHT))
++    gate, inside = threading.Event(), threading.Semaphore(0)
++    real = portal_api._summary
++
++    def slow(desk: Any, started_at: int) -> Any:
++        inside.release()
++        gate.wait(timeout=30)
++        return real(desk, started_at)
++
++    monkeypatch.setattr(portal_api, "_summary", slow)
++    results: list[tuple[int, Any]] = []
++    held = [
++        threading.Thread(target=lambda: results.append(get(base, "/api/ui/summary")), daemon=True)
++        for _ in range(PORTAL_MAX_INFLIGHT)
++    ]
++    for t in held:
++        t.start()
++    for _ in range(PORTAL_MAX_INFLIGHT):
++        assert inside.acquire(timeout=30), "the replies did not all start"
++    try:
++        assert get(base, "/api/ui/summary") == (503, fixture("error-busy"))  # one over the cap
++        assert get(base, "/counts")[0] == 200  # the desk's own routes are not capped
++    finally:
++        gate.set()
++        for t in held:
++            t.join(timeout=30)
++    assert [status for status, _ in results] == [200] * PORTAL_MAX_INFLIGHT
++    assert get(base, "/api/ui/summary")[0] == 200  # the slots came back
++
++
++def test_big_book_is_fast_and_cheap(env, monkeypatch) -> None:
++    """3 000 leads with 2 repeats each (9 000 receipts). Timings are printed for the report; the bound is generous
++    so a slow machine does not fail it, but a per-row scan of all receipts (the old repeats column) does."""
++    rig, base = fresh(env)
++    for i in range(BIG_LEADS):
++        rig.desk.process("form", f"big-{i}", lead(name=f"Person {i:05d}", email=f"p{i}@example.test"))
++    for i in range(BIG_LEADS):
++        for door in ("webhook", "form"):
++            rig.desk.process(door, f"big-{i}-{door}-r", lead(name=f"Person {i:05d}", email=f"p{i}@example.test"))
++    assert rig.query("SELECT count(*) FROM receipts")[0][0] == 3 * BIG_LEADS
++    ids = [r[0] for r in rig.query("SELECT lead_id FROM leads ORDER BY created_at, lead_id LIMIT 3")]
++    seen: list[int] = []
++    real = portal_api.connect_readonly
++
++    class Count:
++        def __init__(self, conn: sqlite3.Connection) -> None:
++            self.conn, self.n = conn, 0
++            seen.append(0)
++
++        def execute(self, text: str, *a: Any) -> Any:
++            seen[-1] += 1
++            return self.conn.execute(text, *a)
++
++        def close(self) -> None:
++            self.conn.close()
++
++    monkeypatch.setattr(portal_api, "connect_readonly", lambda p: Count(real(p)))
++    timings: dict[str, float] = {}
++    for name, path, budget in (
++        ("summary", "/api/ui/summary", 8),
++        ("leads", "/api/ui/leads", 6),
++        ("leads?limit=100", "/api/ui/leads?limit=100", 6),
++        ("leads?q=Person 0100", "/api/ui/leads?q=Person%200100", 6),
++        ("leads?state=sent", "/api/ui/leads?state=sent&limit=100&offset=2000", 6),
++        ("lead detail", f"/api/ui/leads/{ids[0]}", 8),
++        ("review", "/api/ui/review", 5),
++    ):
++        t0 = time.monotonic()
++        status, out = get(base, path)
++        timings[name] = time.monotonic() - t0
++        assert status == 200, (name, out)
++        assert seen[-1] <= budget, (name, seen[-1], "statements incl. BEGIN and COMMIT")
++        assert timings[name] < PERF_LIMIT_SECONDS, (name, timings[name])
++    page = get(base, "/api/ui/leads?limit=100")[1]
++    assert page["total"] == BIG_LEADS and all(r["repeats"] == 2 for r in page["rows"])
++    print("big book timings (s): " + ", ".join(f"{k}={v:.3f}" for k, v in timings.items()))
 +
 +
 +# -- concurrency and restarts
@@ -3654,7 +4305,9 @@ index 0000000..a9f64b2
 +    assert final["reconciled"] is True
 +
 +
-+def test_restart_on_the_same_port_with_the_portal_open(env) -> None:
++@pytest.mark.skipif(sys.platform == "win32", reason="in-process variant; the real-process restart runs everywhere")
++@pytest.mark.skipif(sys.platform == "win32", reason="the real-process restart below is the check that runs everywhere")
++def test_restart_same_port_portal_open(env) -> None:
 +    """20 stops and starts on one fixed port while a page keeps polling. Every bind must succeed at once."""
 +    rig, _ = fresh(env)
 +    rig.desk.handle("form", "r-1", lead())
@@ -3678,8 +4331,100 @@ index 0000000..a9f64b2
 +            thread.join(timeout=30)
 +    print(f"restart x{RESTARTS}: bind seconds max={max(seconds):.4f} mean={sum(seconds) / len(seconds):.4f}")
 +    assert max(seconds) < server.REQUEST_TIMEOUT_SECONDS
++
++
++def _desk_env(db: Path, port: int, fakes_url: str, replies: Path, bind: str = HOST) -> dict[str, str]:
++    return child_env(
++        DESK_DB_PATH=str(db),
++        DESK_BIND=bind,
++        DESK_PORT=str(port),
++        DESK_FAKES_URL=fakes_url,
++        DESK_REPLIES_PATH=str(replies),
++    )
++
++
++def _wait_for_summary(proc: Any, port: int) -> float:
++    """Seconds until GET /api/ui/summary answers 200 (the desk is bound and serving)."""
++    t0 = time.monotonic()
++    while time.monotonic() - t0 < READY_SECONDS:
++        if proc.poll() is not None:
++            raise AssertionError("the desk exited before it served: " + str(proc.returncode))
++        try:
++            if call(f"http://{HOST}:{port}", "GET", "/api/ui/summary", timeout=2)[0] == 200:
++                return time.monotonic() - t0
++        except OSError:
++            time.sleep(0.01)
++    raise AssertionError("the desk did not serve in time")
++
++
++def test_real_process_restart_x20(env, tmp_path) -> None:
++    """The real `python -m lead_desk.server` process, started and stopped 20 times on one fixed port while the page
++    polls. Every start must bind and serve; the seconds from start to the first good answer are printed."""
++    _, fakes_url = env.fakes("keyed")
++    replies = tmp_path / "replies.json"
++    replies.write_text("{}", encoding="utf-8")
++    db, port = tmp_path / "desk.sqlite3", free_port()
++    ready: list[float] = []
++    for n in range(RESTARTS):
++        proc = start_proc(["-m", "lead_desk.server"], _desk_env(db, port, fakes_url, replies))
++        try:
++            ready.append(_wait_for_summary(proc, port))
++            for _poll in range(3):  # the open page: connections that end in TIME_WAIT on this port
++                assert call(f"http://{HOST}:{port}", "GET", "/api/ui/review")[0] == 200
++        finally:
++            out = stop_proc(proc)
++        assert b"cannot bind" not in out, (n, out.decode(errors="replace")[-300:])
++        assert b"warning:" not in out  # a loopback bind prints no exposure warning
++    print(
++        f"real-process restart x{RESTARTS}: ready seconds "
++        + " ".join(f"{x:.3f}" for x in ready)
++        + f" | max={max(ready):.3f} mean={sum(ready) / len(ready):.3f}"
++    )
++    assert max(ready) < READY_SECONDS
++
++
++def test_real_process_warns_when_bound_beyond_loopback(env, tmp_path) -> None:
++    _, fakes_url = env.fakes("keyed")
++    replies = tmp_path / "replies.json"
++    replies.write_text("{}", encoding="utf-8")
++    port = free_port()
++    wildcard = str(ipaddress.IPv4Address(0))
++    proc = start_proc(
++        ["-m", "lead_desk.server"], _desk_env(tmp_path / "desk.sqlite3", port, fakes_url, replies, wildcard)
++    )
++    try:
++        _wait_for_summary(proc, port)  # reached by loopback, which the gate allows even for a wildcard bind
++        foreign = raw(f"http://{HOST}:{port}", "GET /api/ui/summary HTTP/1.1", f"Host: {WILDCARD4}")
++        assert foreign == (403, {"error": "forbidden_host"})  # a wildcard is never a Host name
++    finally:
++        out = stop_proc(proc).decode(errors="replace")
++    assert "warning: the desk is bound to" in out and "every lead" in out and "Docker" not in out
++
++
++def test_broken_extension_leaves_no_socket(env, monkeypatch) -> None:
++    rig, _ = fresh(env)
++    port = free_port()
++
++    def broken(_desk: Any) -> Any:
++        raise ImportError("broken extension")
++
++    monkeypatch.setattr(server, "load_demo_portal", broken)
++    cfg = Config(db_path=rig.db_path, port=port, replies_path=rig.replies_path)
++    with pytest.raises(ImportError):
++        make_server(rig.desk, cfg)
++    with socket.socket() as probe:  # the port is free: nothing was left listening
++        probe.bind((HOST, port))
++
++
++def test_feed_calls_loopback_for_wildcard() -> None:
++    feed = importlib.import_module("scripts.feed")
++    assert feed.target_host(str(ipaddress.IPv4Address(0))) == "127.0.0.1"
++    assert feed.target_host("::") == "[::1]"
++    assert feed.target_host("127.0.0.1") == "127.0.0.1"
++    assert feed.target_host("::1") == "[::1]"
++    assert feed.target_host("desk.example") == "desk.example"
 diff --git a/tests/test_server_hardening.py b/tests/test_server_hardening.py
-index 0617558..e9437ee 100644
+index 0617558..0ee882a 100644
 --- a/tests/test_server_hardening.py
 +++ b/tests/test_server_hardening.py
 @@ -11,7 +11,7 @@ import threading
@@ -3700,8 +4445,14 @@ index 0617558..e9437ee 100644
  
  
  def test_short_body_socket_held_open_is_408(env, monkeypatch) -> None:
-@@ -89,7 +89,7 @@ def test_conflicting_content_length_is_400(env) -> None:
- @pytest.mark.parametrize("target", ["http://[/", "//[", "http://[::1/x", "/leads/%ff%fe/../[", "http://a:b:c/"])
+@@ -86,10 +86,12 @@ def test_conflicting_content_length_is_400(env) -> None:
+     assert call(base, "GET", "/counts")[1]["received"] == 0
+ 
+ 
+-@pytest.mark.parametrize("target", ["http://[/", "//[", "http://[::1/x", "/leads/%ff%fe/../[", "http://a:b:c/"])
++@pytest.mark.parametrize(
++    "target", ["http://[/", "//[", "http://[::1/x", "/leads/%ff%fe/../[", "http://" + ":".join("abc") + "/"]
++)
  def test_unparsable_target_is_json_400_or_404(env, target) -> None:
      base = env.serve(env.rig())
 -    status, body = raw_exchange(base, f"GET {target} HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n".encode())
