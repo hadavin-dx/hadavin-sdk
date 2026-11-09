@@ -772,3 +772,4 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | pulse.sh | bash loop (5-min cadence per order 157), 40 iterations max, /home/user/build/pulse.sh | 2026-11-09T03:20Z | RUNNING |
 | ev-P6a-72 | EVIDENCE RUNNER Sonnet, cloud, PR72 core/P6a d15e53a, ports 55420-55429 | 2026-11-09T03:05Z | CLOSED 2026-11-09T03:24Z |
 | ev-P3a2-73 | EVIDENCE RUNNER Sonnet, cloud, PR73 core/P3a-2 2b0941b, ports 55430-55439 | 2026-11-09T03:05Z | RUNNING |
+| egm-child-drift | child claude -p Sonnet, egm-drift-report on handover/studio-notes, out /home/user/build/reviews/drift-notes.txt, timeout 900 | 2026-11-09T03:28Z | RUNNING |
