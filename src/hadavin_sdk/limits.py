@@ -25,14 +25,13 @@ from hadavin_sdk.store.protocol import (
     ResetRefused,
     StaleCount,
     Store,
+    StoreBusy,
     SwitchRowMissing,
 )
 
 _LOG = logging.getLogger(__name__)
 MIN_KEY_BYTES = 16  # the same minimum as a restored audit key
-_DEMO_STAGES = frozenset(
-    {"dev", "demo"}
-)  # the only stage that may use a memory store or a random label key
+_STAGES = frozenset({"dev", "pilot", "prod"})  # exactly what Config.environment accepts; no alias
 _MISSING_ROW = "the kill_switch row is missing; a database administrator must re-seed it"
 
 
@@ -65,15 +64,17 @@ class Limits:
     ) -> None:
         if not valid_key_id(key_id):
             raise ValueError("key_id must match [A-Za-z0-9_-]{1,32}")
-        demo = environment in _DEMO_STAGES
-        if not demo and isinstance(store, MemoryStore):
-            raise ValueError("a memory store is allowed only in the demo stage")
+        if environment not in _STAGES:  # no alias: "demo" is not "dev" (Config.environment decides)
+            raise ValueError(f"environment must be one of {sorted(_STAGES)}, not {environment!r}")
+        dev = environment == "dev"
+        if not dev and isinstance(store, MemoryStore):
+            raise ValueError("a memory store is allowed only when environment is dev")
         if label_key is None:
-            if not demo:
-                raise ValueError("a label key is required outside the demo stage")
+            if not dev:
+                raise ValueError("a label key is required when environment is not dev")
             label_key = secrets.token_bytes(32)
             _LOG.warning(
-                "limits: no label key given; using a per-process random key (demo stage only)"
+                "limits: no label key given; using a per-process random key (environment dev only)"
             )
         self.store, self.audit, self.registry = store, audit, registry
         self.environment = environment
@@ -137,7 +138,12 @@ class Limits:
             _LOG.error(
                 "limits: label key unavailable; the stop is recorded as actor not identified"
             )
-        state = self.stop_store.set_kill_switch(KillSwitch(on=True, by=label))
+        try:
+            state = self.stop_store.set_kill_switch(KillSwitch(on=True, by=label))
+        except StoreBusy:
+            # The busy call rolled back, so a second try cannot double a row. Once, on a fresh short connection.
+            _LOG.error("limits: the store was busy for the stop; trying once more")
+            state = self.stop_store.set_kill_switch(KillSwitch(on=True, by=label))
         if state.on is not True:
             raise StopNotConfirmed("the stop returned a row that does not read ON")
         self.audit.write_outcome(

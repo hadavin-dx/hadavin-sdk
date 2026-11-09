@@ -240,6 +240,26 @@ def reprobe_sources(ctx: TickContext) -> None:
         raise RuntimeError("source scope: " + "; ".join(found))
 
 
+def stop_guard_probe(ctx: TickContext) -> None:
+    """Re-check the kill switch guard for the configured roles. A finding fails the step (exit 1 of the tick); a busy
+    database is inconclusive and only logged: it says nothing about the grants."""
+    from hadavin_sdk.runtime.stop_state import FAILED as PROBE_FAILED
+    from hadavin_sdk.runtime.stop_state import INCONCLUSIVE, probe
+
+    cfg = ctx.app.config
+    result = probe(
+        ctx.app.store,
+        environment=cfg.environment,
+        runtime_role=cfg.limits.runtime_role,
+        stop_role=cfg.limits.stop_role,
+        reset_group=cfg.limits.reset_group,
+    )
+    if result.status == INCONCLUSIVE:
+        _LOG.warning("stop_guard_probe: the database was busy; nothing is known about the guard")
+    elif result.status == PROBE_FAILED:
+        raise RuntimeError("kill switch guard: " + "; ".join(result.problems[:10]))
+
+
 def heartbeat(ctx: TickContext) -> None:
     """After the steps (not a step): one line with this tick's outcome."""
     failed = sorted(n for n, r in ctx.results.items() if r == FAILED)
@@ -263,6 +283,7 @@ STEPS: list[TickStep] = [
         reprobe_sources,
         interval=lambda ctx: ctx.app.config.evidence.source_reprobe_s,
     ),
+    TickStep("stop_guard_probe", 0, stop_guard_probe),
 ]
 STORE_UNREACHABLE = 4
 STORE_NOT_READY = (

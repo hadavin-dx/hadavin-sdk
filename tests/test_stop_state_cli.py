@@ -29,7 +29,7 @@ def make(store=None, **kw) -> Limits:
         store,
         Audit(),
         None,
-        environment="demo",
+        environment="dev",
         label_key=KEY,
         reset_store=kw.pop("reset_store", store),
         reset_names={RESET_NAME},
@@ -45,7 +45,7 @@ def test_whois_prints_the_label_not_the_name(capsys):
 
 
 def test_whois_with_a_short_key_is_refused_with_5(capsys):
-    lim = Limits(MemoryStore(), Audit(), None, environment="demo", label_key=b"short")
+    lim = Limits(MemoryStore(), Audit(), None, environment="dev", label_key=b"short")
     assert cli.kill_switch(lim, "whois", "user:a") == 5
 
 
@@ -116,3 +116,79 @@ def test_unreachable_store_exit_4_and_says_not_set(capsys):
 
     assert cli.kill_switch(make(Down()), "stop", "user:a") == 4
     assert "NOT set" in capsys.readouterr().err
+
+
+def test_stop_busy_store_exit_7_and_says_not_done(capsys):
+    from hadavin_sdk.store.protocol import StoreBusy
+
+    class Busy(MemoryStore):
+        def set_kill_switch(self, ks):
+            raise StoreBusy("55P03")
+
+    assert cli.kill_switch(make(Busy()), "stop", "user:a") == 7
+    assert "NOT" in capsys.readouterr().err
+
+
+def test_not_migrated_message_points_at_a_runbook_that_exists(capsys):
+    import re
+    from pathlib import Path
+
+    src = Path(cli.__file__).read_text(encoding="utf-8")
+    paths = set(re.findall(r"docs/[A-Za-z0-9_.-]+\.md", src))
+    assert "docs/stop-state-runbook.md" in paths
+    root = Path(cli.__file__).resolve().parents[2]
+    for p in paths:
+        assert (root / p).is_file(), p
+
+
+class _Cfg:
+    environment = "pilot"
+
+    class limits:
+        runtime_role = "rt"
+        stop_role = "sp"
+        reset_group = "rg"
+
+
+def _checker(report=None, busy=False):
+    from hadavin_sdk.models import GuardReport
+    from hadavin_sdk.store.protocol import StoreBusy
+
+    class S(MemoryStore):
+        def guard_report(self, *a):
+            if busy:
+                raise StoreBusy("57014")
+            return report or GuardReport(runtime_connection_limit=5)
+
+    return S()
+
+
+def test_limits_check_exit_0_10_7_and_2(capsys):
+    from hadavin_sdk.models import GuardReport
+
+    assert cli._limits_check(_Cfg, _checker()) == 0
+    assert "guard OK" in capsys.readouterr().out
+    bad = GuardReport(problems=("the runtime role can execute x",), runtime_connection_limit=5)
+    assert cli._limits_check(_Cfg, _checker(bad)) == 10
+    assert "problem: the runtime role can execute x" in capsys.readouterr().out
+    assert cli._limits_check(_Cfg, _checker(busy=True)) == 7
+    assert cli._limits_check(_Cfg, None) == 2
+
+
+def test_stop_on_pilot_without_a_label_key_name_works_not_a_traceback(capsys):
+    from types import SimpleNamespace as NS
+
+    cfg = NS(
+        environment="pilot",
+        backends=NS(store=NS(stop_credential_ref=None, reset_credential_ref=None)),
+        limits=NS(label_key_secret_name=None, reset_names=set(), key_id="k1"),
+    )
+    inner = MemoryStore()
+
+    class NotMemory:  # Limits refuses a MemoryStore outside dev; this stands in for a database store
+        def __getattr__(self, name):
+            return getattr(inner, name)
+
+    args = NS(action="stop", by="user:a", name="", expect_version=None, expect_open=None)
+    assert cli._limits(cfg, None, None, NotMemory(), Audit(), args) == 0
+    assert "kill switch ON" in capsys.readouterr().out

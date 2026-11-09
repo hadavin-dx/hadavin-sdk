@@ -86,6 +86,7 @@ def test_steps_order_and_summary_line_is_not_a_step(app, caplog):
         "checkpoint",
         "purge_evidence",
         "reprobe_sources",
+        "stop_guard_probe",
     ]
     caplog.set_level("INFO", logger="hadavin_sdk.tick")
     assert run_tick(app) == 0
