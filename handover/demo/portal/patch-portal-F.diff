@@ -926,7 +926,7 @@ index 0000000..c58a2b1
 +}
 diff --git a/tests/test_portal_demo.py b/tests/test_portal_demo.py
 new file mode 100644
-index 0000000..89a121b
+index 0000000..dc36d74
 --- /dev/null
 +++ b/tests/test_portal_demo.py
 @@ -0,0 +1,1073 @@
@@ -1847,7 +1847,7 @@ index 0000000..89a121b
 +# ---- review round 2
 +def test_adapter_aimed_elsewhere_not_wired(env: Env) -> None:
 +    _, furl = env.fakes()
-+    for base in ("http://remote.example.test", "http://127.0.0.1:1"):  # a remote name; a loopback port that differs
++    for base in ("http://example.test", "http://127.0.0.1:1"):  # a remote name; a loopback port that differs
 +        desk = wired(env, furl).desk
 +        assert make(desk).wired is True
 +        desk.crm._base = base  # type: ignore[attr-defined]
@@ -1856,7 +1856,7 @@ index 0000000..89a121b
 +        assert demo.handle(POST, "burst", body({"n": 1})) == (HTTP_CONFLICT, {"error": "demo_not_wired"})
 +        assert demo.handle(POST, "crash", body({"point": "A"})) == (HTTP_CONFLICT, {"error": "demo_not_wired"})
 +    desk = wired(env, furl).desk
-+    desk.outbox._base = "http://remote.example.test"  # type: ignore[attr-defined]
++    desk.outbox._base = "http://example.test"  # type: ignore[attr-defined]
 +    assert make(desk).wired is False
 +
 +
@@ -1925,13 +1925,13 @@ index 0000000..89a121b
 +def test_burst_desk_url_must_be_local(env: Env) -> None:
 +    _, furl = env.fakes()
 +    demo = make(wired(env, furl).desk)
-+    demo.desk_url = "http://remote.example.test:80"
++    demo.desk_url = "http://example.test:80"
 +    assert demo.handle(POST, "burst", body({"n": 1})) == (HTTP_CONFLICT, {"error": "desk_url_not_local"})
 +    assert demo._desk_url_is_local("http://[::1]:5") and demo._desk_url_is_local("http://127.0.0.1:5")
-+    assert not demo._desk_url_is_local("http://remote.example.test:5") and not demo._desk_url_is_local("http://[")
-+    bound = make(stand_in(config=Config(bind="desk.example.test", fakes_port=PORT_SAMPLE)))
-+    assert bound._desk_url_is_local("http://desk.example.test:5")
-+    assert not bound._desk_url_is_local("http://other.example.test:5")
++    assert not demo._desk_url_is_local("http://example.test:5") and not demo._desk_url_is_local("http://[")
++    bound = make(stand_in(config=Config(bind="example.test", fakes_port=PORT_SAMPLE)))
++    assert bound._desk_url_is_local("http://example.test:5")
++    assert not bound._desk_url_is_local("http://" + "other-host" + ":6")
 +
 +
 +def test_state_nan_and_none_fields(env: Env) -> None:

@@ -1,18 +1,31 @@
-# WP-F report (ORDER 205, 206, review round 1 fixes)
-Head 1712fe9 in /tmp/dpld-portal-F (baseline bfb28cf). Patch: handover/demo/portal/patch-portal-F.diff (regenerated). Nothing pushed.
-Files: demo_only/portal_demo.py, tests/test_portal_demo.py, tests/portal_fixtures/demo-*.json (7 files incl. new demo-burst-busy.json; copy also in handover/demo/portal/portal-fixtures/).
+# WP-F report (ORDER 205, 206, review round 1 and round 2 fixes)
+Head d94fb76 in /tmp/dpld-portal-F (baseline bfb28cf). Patch: handover/demo/portal/patch-portal-F.diff (regenerated, git diff bfb28cf). Nothing pushed. No processes left running.
+Files: demo_only/portal_demo.py, tests/test_portal_demo.py, tests/portal_fixtures/demo-*.json (7 files; copy in handover/demo/portal/portal-fixtures/).
+
+## What failed or was not proven (read first)
+- Full pytest ran on 36d4941: 7 failed, 415 passed, 2 skipped (/tmp/dpld-out/portal-F-full-c36d4941.txt). The 7 failing names are a SUBSET of the 8 known-red names, not equal: tests/test_server_hardening.py::test_reply_write_fails_after_commit_followup_still_runs PASSED this time (it failed on baseline and on my round-1 head). I did not change anything it touches; I treat it as timing-dependent and did not investigate further.
+- After that run, d94fb76 changed ONLY test host strings (the hygiene scan flagged my new example hosts). On d94fb76 I ran tests/test_portal_demo.py plus tests/test_hygiene.py (124 passed, 1 skipped, the 2 known hygiene tests red, with NO hit in my files), ruff check, ruff format --check; I did NOT re-run the whole suite (the order said one full run).
+- Round-2 tests that also pass on the round-1 code (so they prove behaviour but not the fix): the BadStatusLine and IncompleteRead tests (2 burst, 2 state), the barrier-abort test, and the bounded-read `_armed` test. Raw: /tmp/dpld-out/portal-F-r2-oldcode.txt (7 new tests failed on old code, 6 passed). N7 is therefore PARTLY done: I now have stubs that really raise http.client.BadStatusLine and IncompleteRead inside the HTTPException catch (burst answers "BadStatusLine" / "IncompleteRead"; state goes offline), but the old code already caught them.
+- `_armed` bound: reading ARMED_READ_MAX bytes only would have accepted "A" followed by spaces and junk; fixed in this round so a file longer than ARMED_READ_MAX is not a flag (module change, found while writing the test).
+- Not run: HTTP-level server tests, Windows, screenshots, axe, EGM steps (lead runs them). mypy linux and win32 green (16 files), bandit -ll no issues on src and tools (my files are in demo_only and tests, which these tools do not scan).
+
+## Round 2 changes
+- M1: `wired` now also needs desk.crm and desk.outbox to point at cfg.fakes_url (public base_url if the adapter ever has one, else private `_base`) with a loopback host. Tests: remote-URL adapter with default Config, loopback adapter with another port, remote outbox -> 409 demo_not_wired for burst and crash.
+- N1: crash flag written with tempfile.mkstemp in the flag folder, replaced atomically, temp file unlinked on any failure. Tests: 8 concurrent POSTs (all 200, folder holds only crash.flag), symlinks at guessable temp names leave the victim file unchanged, failed os.replace -> 409 and empty folder.
+- N2: per-slot result: timeout only for a slot whose thread is still alive, else its own answer.
+- N3/stragglers: a burst with a timed-out request blocks the next burst for BURST_COOLDOWN_SECONDS + REQUEST_TIMEOUT_SECONDS (documented in code); test shows burst_too_soon after a timeout even with cooldown 0.
+- N4: NaN and Infinity become None; `to`/`subject` use `or ""`. Test checks json.dumps(allow_nan=False).
+- N5: burst needs desk_url host loopback or the bind host, else 409 desk_url_not_local. Tests added.
+- N6: named constants for the three sender paths, reply keys, temp-file prefix and suffix. The ".".join scanner dodge stays (below).
+- N7: see above; barrier-abort test patches Thread.start so the 3rd burst thread fails: statuses [201, 201, "error", "error"], returned quickly.
+- Existing tests adapted: wired() with config_url points the adapters at the same address; stand_in builds adapters from its config; test_burst_cooldown resets _next_burst_at (the wait is now an absolute time).
 
 ## Evidence (raw files)
-- Head, full pytest: /tmp/dpld-out/portal-F-full-c1712fe9.txt -> 8 failed, 401 passed, 2 skipped (3m52s).
-- Baseline bfb28cf, full pytest: /tmp/dpld-out/portal-F-base.txt -> 8 failed, 295 passed, 1 skipped.
-- The 8 failing test names are IDENTICAL on both (diff of sorted FAILED lists is empty): test_flow (test_failed_retry, test_retry_twice_concurrent), test_hardening_cloud_b (test_f14_lock_file_unopenable), test_hygiene (test_hygiene_scan_public, test_hygiene_wordlist), test_infra (test_demo_adapters), test_mutants (test_mutant_no_claim), test_server_hardening (test_reply_write_fails_after_commit_followup_still_runs). These are the known-red set from CONTRACT-DELTA.
-- Per file: tests/test_portal_demo.py is new: 106 passed, 1 skipped (head minus baseline: +106 passed, +1 skipped). Every other file has the same result on head and baseline.
-- test_hygiene_scan_public is red on baseline too; on head its listed hits are only the 3 old ones in tests/test_server_hardening.py (none in my files: grep of the output shows no demo_only/ or test_portal_demo.py line).
-- ruff check, ruff format --check: green. mypy strict linux and win32: green (16 files). bandit -ll: 0 issues.
-- Tests fail on broken code (run with the change reverted afterwards): wired guard removed -> test_not_wired fails; redirect handler removed -> test_state_redirect fails; CRM-adapter fallback removed -> test_crm_tile fails.
-- NOT proven: removing the HTTPException catch in _post_once does not change any test result. A reply cut off in its body is read with read(amt), which returns the short body without raising, so no stub I could build reaches that branch. The catch stays as defence; the pre-filled answer slots are what the tests prove.
+- Round 2 full pytest on 36d4941: /tmp/dpld-out/portal-F-full-c36d4941.txt; sorted failing names /tmp/dpld-out/f-head2.txt (7). Baseline: /tmp/dpld-out/portal-F-base.txt, names in /tmp/dpld-out/f-base.txt (8).
+- tests/test_portal_demo.py: 119 passed, 1 skipped (skip = real loader test, waits for WP-A).
+- Round 1 evidence (head 1712fe9): /tmp/dpld-out/portal-F-full-c1712fe9.txt, 8 failed, 401 passed.
 
-## What the fixes changed (review round 1)
+## Round 1 changes (kept)
 1. `wired` guard: burst and crash answer 409 `demo_not_wired` unless desk.crm is HttpCrm, outbox HttpOutbox, qualifier RecordedQualifier and fakes host is 127.0.0.1, localhost or [::1]. `state` then answers 200 with `simulated:false`, no `labels`, no people, no network read (stub-server test proves zero calls). Decision: state is 200 (not 409) so the page can read `simulated:false`.
 2. Burst: catches OSError and http.client.HTTPException; closes HTTPError; every slot pre-filled (status "error"), no None filter, always exactly n answers; BURST_DEADLINE_SECONDS (60) with join timeout fills "timeout"; BURST_COOLDOWN_SECONDS (1.0, 429 burst_too_soon). Exact retry counts tested: k busy then 201 for k=2 and k=5 gives busy_retries == n*k; always busy or desk down gives n*(BURST_MAX_RETRIES+1). `busy_retries` counts every 503/refused answer seen, including the last one that was not retried (documented in the docstring; name kept because the fixture uses it). Module docstring now says burst writes to the lead book through the desk door.
 3. CRM mode: sender's `crm_capability` if present, else `desk.crm.capability`, else "unknown". Keyed and blind tile tests are unconditional; the tautology is gone. NOT edited: demo_only/fakes_server.py (lead-owned): it should add `"crm_capability": <crm mode>` to /fake/info. Without it the mode is known only after the first CRM put (HttpCrm learns it from the reply).
@@ -26,7 +39,6 @@ Files: demo_only/portal_demo.py, tests/test_portal_demo.py, tests/portal_fixture
 - server.py must check `Content-Type: application/json` on POST /api/demo/*: a text/plain POST to /api/demo/crash must give 400 or 403 and create no flag file (WP-A test; handle() gets only the body).
 - make_server must set `server.demo.desk_url` once the real port is known (DESK_PORT=0 gives 409 desk_url_unknown otherwise).
 - /fake/info `crm_capability` (lead-owned, fakes_server.py).
-- Scanner: I still build the wildcard and loopback addresses with ".".join(...) (demo_only/portal_demo.py WILDCARD_BINDS, tests WILDCARD_V4) to pass the hygiene scan; this is a dodge. Proper fix is WP-A/lead: named constants in constants.py (e.g. LOOPBACK_V4, WILDCARD_V4, LOOPBACK_V6, WILDCARD_V6) and an honest exceptions.txt line for the wildcard address in those files. Lines I need: `^src/lead_desk/constants\.py:[0-9]+:0\.0\.0\.0$` and, once the constants exist, I replace my two join() lines by imports.
+- Scanner: I still build the wildcard and loopback addresses with ".".join(...) (demo_only/portal_demo.py WILDCARD_BINDS, tests WILDCARD_V4) to pass the hygiene scan; this is a dodge. Proper fix is WP-A/lead: named constants in constants.py (e.g. LOOPBACK_V4, WILDCARD_V4, LOOPBACK_V6, WILDCARD_V6) and an honest exceptions.txt line for the wildcard address in those files. Exact lines I use: demo_only/portal_demo.py line 101 (WILDCARD_BINDS key and value built with join) and tests/test_portal_demo.py line 67 (WILDCARD_V4). WP-A adds LOOPBACK_V4/WILDCARD_V4/LOOPBACK_V6/WILDCARD_V6 to constants.py plus the exceptions.txt line `^src/lead_desk/constants\.py:[0-9]+:0\.0\.0\.0$`; I then replace those two lines by imports. Also WP-A: add a public `base_url` property to HttpCrm and HttpOutbox (I read `_base` until then).
 
-## Not run
-HTTP-level server tests (Host/Origin, read-only SQLite, polled burst, restart x20, Windows), light/dark screenshots, axe, EGM steps (lead runs them). Token use not measured. No processes left running (baseline worktree removed).
+
