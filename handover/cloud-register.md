@@ -776,3 +776,7 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | pulse.sh | shell | cloud-container /home/user/build | started 2026-11-09T03:49Z, 5-min loop, pid in pulse.pid | open |
 | pg-def5432 | Postgres 16 cluster on /var/run/postgresql:5432 for dblink re-run (order 161), /home/user/build/pg/def5432 | 2026-11-09T03:52Z | RUNNING |
 | pulse.sh | shell | cloud-container /home/user/build | started 2026-11-09T03:49Z, 5-min loop, pid in pulse.pid | CLOSED (stopped by order 163) |
+| rv-P1b-design | egm:egm-design fresh reviewer (Sonnet) on snapshot /home/user/build/snap/P1b-0d843b4 | 2026-11-09T03:53Z | RUNNING |
+| rv-P1b-code | egm:egm-codebase-details fresh reviewer (Sonnet) same snapshot | 2026-11-09T03:53Z | RUNNING |
+| bd-recon-P6a1 | Sonnet builder: reconstruct p6a1_mutants_by_hand.py, work dir /home/user/build/recon/p6a1 | 2026-11-09T03:53Z | RUNNING |
+| bd-recon-P3a2 | Sonnet builder: reconstruct P3a-2 66-mutant runner + gen_evidence, work dir /home/user/build/recon/p3a2 | 2026-11-09T03:53Z | RUNNING |
