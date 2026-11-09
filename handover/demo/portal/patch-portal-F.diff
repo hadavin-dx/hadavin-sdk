@@ -1,9 +1,9 @@
 diff --git a/demo_only/portal_demo.py b/demo_only/portal_demo.py
 new file mode 100644
-index 0000000..e304898
+index 0000000..84bdc67
 --- /dev/null
 +++ b/demo_only/portal_demo.py
-@@ -0,0 +1,541 @@
+@@ -0,0 +1,551 @@
 +"""Demo extension of the portal: the "Demo controls" panel and its three calls. Demo-only code.
 +
 +The desk reaches this module only through lead_desk.loader (load_demo_portal -> make). Deleting demo_only/ must
@@ -80,7 +80,8 @@ index 0000000..e304898
 +ERR_TOO_SOON: Final = "burst_too_soon"
 +ERR_BUDGET: Final = "burst_budget_used"
 +DESK_SCHEME: Final = "http"
-+# Most requests one process may send through `burst` in its lifetime: the lead book grows by at most this many rows.
++# Most requests (counted by slots) one PortalDemo instance may send through `burst` in its lifetime:
++# the lead book grows by at most this many rows.
 +BURST_BUDGET_REQUESTS: Final = 500
 +ERR_NO_URL: Final = "desk_url_unknown"
 +STATUS_ERROR: Final = "error"  # a burst slot whose request failed in a way that gave no HTTP status
@@ -210,7 +211,7 @@ index 0000000..e304898
 +        self._people: list[dict[str, Any]] = people
 +        self.desk_url = desk_url if desk_url is not None else self._url_from_config()
 +        self._burst_lock = threading.Lock()
-+        self._sent = 0  # requests sent by `burst` so far (against BURST_BUDGET_REQUESTS)
++        self._sent = 0  # requests sent by `burst` so far (against BURST_BUDGET_REQUESTS; per instance)
 +        self._next_burst_at = 0.0  # time.monotonic() before which no new burst starts
 +
 +    @staticmethod
@@ -239,12 +240,14 @@ index 0000000..e304898
 +    @staticmethod
 +    def _adapter_points_at(adapter: Any, fakes_url: str) -> bool:
 +        """The adapter's own base address (public `base_url` if the adapter has one, else its private `_base`) is the
-+        configured made-up sender and a loopback name: an adapter aimed at a real service is not wired."""
++        configured made-up sender, plain http, and a loopback name: an adapter aimed at a real service (or at file:,
++        ftp:, data:) is not wired."""
 +        base = getattr(adapter, "base_url", None) or getattr(adapter, "_base", None)
 +        if not isinstance(base, str) or base.rstrip("/") != fakes_url.rstrip("/"):
 +            return False
 +        try:
-+            return urlsplit(base).hostname in LOOPBACK_NAMES
++            parts = urlsplit(base)
++            return parts.scheme == DESK_SCHEME and parts.hostname in LOOPBACK_NAMES
 +        except ValueError:
 +            return False
 +
@@ -257,7 +260,14 @@ index 0000000..e304898
 +            return False
 +        if parts.scheme != DESK_SCHEME:  # the opener also speaks file:, ftp: and data:
 +            return False
-+        bound = self._desk.config.bind.strip("[]")
++        cfg = self._desk.config
++        try:
++            port = parts.port
++        except ValueError:
++            return False
++        if cfg.port != 0 and port != cfg.port:  # port 0 = chosen by the system: the server sets desk_url itself
++            return False
++        bound = cfg.bind.strip("[]")
 +        return host in LOOPBACK_NAMES or (host is not None and host == bound)
 +
 +    def _url_from_config(self) -> str | None:
@@ -954,10 +964,10 @@ index 0000000..c58a2b1
 +}
 diff --git a/tests/test_portal_demo.py b/tests/test_portal_demo.py
 new file mode 100644
-index 0000000..8022a8f
+index 0000000..28a4405
 --- /dev/null
 +++ b/tests/test_portal_demo.py
-@@ -0,0 +1,1122 @@
+@@ -0,0 +1,1170 @@
 +"""Tests of the demo extension of the portal (demo_only/portal_demo.py). Made-up data only.
 +
 +Open until the product work package that builds lead_desk.loader.load_demo_portal and the server routes is merged
@@ -1004,8 +1014,20 @@ index 0000000..8022a8f
 +from lead_desk.desk import Desk
 +from lead_desk.hooks import HOOK_POINTS, FlagFileHooks, Hooks
 +
-+portal_demo = pytest.importorskip("demo_only.portal_demo")  # no demo_only/ folder: this file is skipped, not broken
-+RecordedQualifier = pytest.importorskip("demo_only.fakes").RecordedQualifier
++
++def _demo_module(name: str) -> Any:
++    """Import a demo_only module. Only a missing demo_only package skips this file (the folder was deleted for a
++    client hand-over); any other import failure, a renamed product module for example, is a real error."""
++    try:
++        return importlib.import_module(name)
++    except ModuleNotFoundError as e:
++        if e.name is not None and e.name.split(".")[0] == "demo_only":
++            pytest.skip(f"{e.name} is not there: demo_only/ was removed", allow_module_level=True)
++        raise
++
++
++portal_demo = _demo_module("demo_only.portal_demo")
++RecordedQualifier = _demo_module("demo_only.fakes").RecordedQualifier
 +BURST_MAX, FIELD_MAX, GET, POST = portal_demo.BURST_MAX, portal_demo.FIELD_MAX, portal_demo.GET, portal_demo.POST
 +REF_PREFIX_RE, ROWS_MAX, PortalDemo, make = (
 +    portal_demo.REF_PREFIX_RE,
@@ -1956,7 +1978,7 @@ index 0000000..8022a8f
 +    assert demo.handle(POST, "burst", body({"n": 1})) == (HTTP_CONFLICT, {"error": "desk_url_not_local"})
 +    assert demo._desk_url_is_local("http://[::1]:5") and demo._desk_url_is_local("http://127.0.0.1:5")
 +    assert not demo._desk_url_is_local("http://example.test:5") and not demo._desk_url_is_local("http://[")
-+    bound = make(stand_in(config=Config(bind="example.test", fakes_port=PORT_SAMPLE)))
++    bound = make(stand_in(config=Config(bind="example.test", port=0, fakes_port=PORT_SAMPLE)))
 +    assert bound._desk_url_is_local("http://example.test:5")
 +    assert not bound._desk_url_is_local("http://" + "other-host" + ":6")
 +
@@ -2061,22 +2083,58 @@ index 0000000..8022a8f
 +    old, fresh, other = flag.parent / ".crash-old.tmp", flag.parent / ".crash-new.tmp", flag.parent / "keep.txt"
 +    for f in (old, fresh, other):
 +        f.write_text("x", encoding="utf-8")
++    victim = tmp_path / "victim.txt"
++    victim.write_text("keep", encoding="utf-8")
++    link, folder = flag.parent / ".crash-link.tmp", flag.parent / ".crash-dir.tmp"
++    link.symlink_to(victim)
++    folder.mkdir()
++    (folder / "inner.txt").write_text("keep", encoding="utf-8")
 +    long_ago = time.time() - portal_demo.FLAG_TEMP_MAX_AGE_SECONDS - 60
-+    os.utime(old, (long_ago, long_ago))
++    for f in (old, folder):
++        os.utime(f, (long_ago, long_ago))
++    os.utime(link, (long_ago, long_ago), follow_symlinks=False)
++    os.utime(victim, (long_ago, long_ago))
 +    demo = make(wired(env, furl, hooks=FlagFileHooks(flag)).desk)
 +    assert demo.handle(POST, "crash", body({"point": "A"})) == (HTTP_OK, {"armed": "A"})
-+    assert sorted(p.name for p in flag.parent.iterdir()) == [".crash-new.tmp", "crash.flag", "keep.txt"]
++    assert sorted(p.name for p in flag.parent.iterdir()) == [
++        ".crash-dir.tmp",
++        ".crash-link.tmp",
++        ".crash-new.tmp",
++        "crash.flag",
++        "keep.txt",
++    ]  # only the old plain file went
++    assert victim.read_text(encoding="utf-8") == "keep" and (folder / "inner.txt").is_file()
 +
 +
 +# ---- WP-A / WP-G gate tests (round 3, item 1): need the server routes, NOT run here and not claimed as run
-+@pytest.mark.skip(reason="needs WP-A server routes: text/plain POST to /api/demo/crash gives 400 or 403, no flag file")
++@pytest.mark.xfail(
++    strict=True,
++    reason="MERGE-BLOCKER, needs WP-A server routes: text/plain POST to /api/demo/crash gives 400 or 403, no flag file",
++)
 +def test_server_rejects_text_plain_crash() -> None:
 +    raise AssertionError("to be written with the server routes (WP-A / WP-G)")
 +
 +
-+@pytest.mark.skip(
-+    reason="needs WP-A server routes: foreign Origin, Origin null, Sec-Fetch-Site cross-site POST to burst and crash "
-+    "gives 403, lead book and flag file unchanged"
++@pytest.mark.xfail(
++    strict=True,
++    reason="MERGE-BLOCKER, needs WP-A server routes: foreign Origin, Origin null, Sec-Fetch-Site cross-site POST "
++    "to burst and crash gives 403, lead book and flag file unchanged",
 +)
 +def test_server_rejects_cross_origin_posts() -> None:
 +    raise AssertionError("to be written with the server routes (WP-A / WP-G)")
++
++
++def test_adapter_base_must_be_http() -> None:
++    for url in ("file://localhost", "ftp://127.0.0.1"):
++        adapter = SimpleNamespace(_base=url)
++        assert portal_demo.PortalDemo._adapter_points_at(adapter, url) is False
++    assert portal_demo.PortalDemo._adapter_points_at(SimpleNamespace(_base="http://localhost:5"), "http://localhost:5")
++
++
++def test_desk_url_port_must_match_config() -> None:
++    fixed = make(stand_in(config=Config(port=PORT_SAMPLE, fakes_port=PORT_SAMPLE + 1)))
++    assert fixed._desk_url_is_local(f"http://127.0.0.1:{PORT_SAMPLE}")
++    assert not fixed._desk_url_is_local(f"http://127.0.0.1:{PORT_SAMPLE + 2}")
++    assert not fixed._desk_url_is_local("http://127.0.0.1")
++    system_chosen = make(stand_in(config=Config(port=0, fakes_port=PORT_SAMPLE)))
++    assert system_chosen._desk_url_is_local(f"http://127.0.0.1:{PORT_SAMPLE + 2}")

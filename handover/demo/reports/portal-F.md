@@ -51,3 +51,18 @@ Changes:
 - Item 4: comment on the Windows PermissionError (reported as crash_unavailable, caller retries) and a sweep of `.crash-*.tmp` files older than FLAG_TEMP_MAX_AGE_SECONDS (3600) when arming; test keeps a fresh temp and an unrelated file. Not tested on Windows.
 - Item 5: tests/test_portal_demo.py uses pytest.importorskip for demo_only.portal_demo and demo_only.fakes (file skips if demo_only/ is deleted). Not run with demo_only actually deleted. The HTTP deletion test is still WP-G.
 - Item 1 (WP-A / WP-G gate): test_server_rejects_text_plain_crash and test_server_rejects_cross_origin_posts exist as SKIPPED with the reason; they assert nothing and were not run.
+
+## Round 4 (head d2728a2, fix pass after the round 4 security review)
+Evidence on the FINAL head d2728a2: full pytest /tmp/dpld-out/portal-F-full-cd2728a2.txt -> 8 failed, 422 passed, 2 skipped, 2 xfailed; failing names (/tmp/dpld-out/f-head4.txt) identical to baseline bfb28cf (diff empty; the flaky test_reply_write_fails... failed again). ruff check, ruff format --check, mypy linux and win32, bandit -ll: green. Hygiene tests still red as on baseline, no hit in my files. HYGIENE_WORDLIST scan not run (lead).
+- Nit 1: `_adapter_points_at` requires scheme http. Test test_adapter_base_must_be_http (file://localhost, ftp://127.0.0.1) FAILS on old code.
+- Nit 2: `_desk_url_is_local` requires the port to equal config.port when that is nonzero (port 0: the server sets desk_url, any port). test_desk_url_port_must_match_config FAILS on old code.
+- Nit 3: wording is now "per PortalDemo instance"; number 500 kept; counted by slots. The page must handle 429 burst_budget_used (WP-A/G).
+- Nit 4: sweep test now has a symlink and a directory with old times; both survive, only the old plain file goes. This test also passes on the old code (the sweep already existed): it is a regression test, not fix proof.
+- Nit 5: importorskip replaced by `_demo_module`: skips only when the missing module name starts with demo_only, otherwise the error is raised. Shown for real in a scratch copy outside the tree: missing demo_only -> "1 skipped"; missing other module -> collection ERROR (/tmp scratch removed). BUT: the real test tree cannot survive deleting demo_only/ anyway, because tests/conftest.py line 12 and tests/support.py line 21 (lead-owned) import demo_only at top; removing the folder fails collection before my file is read (seen in a scratch run). To make deletion clean those two files need the same treatment (WP-G / lead).
+- Nit 6: the two WP-A gate tests are xfail(strict=True) with reason "MERGE-BLOCKER, needs WP-A server routes ...": suite stays green; if they ever pass unexpectedly they fail. They assert nothing and are not coverage; round-3 Major (Origin / Content-Type) remains an open WP-A/WP-G gate.
+
+## Cloud session note (13:25Z): open items for WP-G / lead after fix pass 4 (d2728a2)
+- Deleting demo_only/ still breaks collection: tests/conftest.py:12 and tests/support.py:21 (lead-owned) import demo_only at top level; need the same narrow skip. HTTP deletion test (/ui/ 200, /api/demo/state 404) still missing.
+- Two WP-A gate tests (text/plain crash, cross-origin POST) are xfail(strict) MERGE-BLOCKER placeholders, not coverage; real tests needed with WP-A.
+- Sweep test is a regression test only (sweep already existed). Private HYGIENE_WORDLIST scan not run on F files. Page must handle 429 burst_budget_used.
+- Security rounds: r1 fixed, r2 fixed, r3 no Blocker (Major = WP-A gate), r4 no Blocker/Major, nits fixed in pass 4 without a further review round (nits only).
