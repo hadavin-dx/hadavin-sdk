@@ -1414,3 +1414,15 @@ READY PR90 051a18d2e77c0d8bea6ae0abf38579eb20b10710
 - ORDER 185 answer: class fix done (both curl downloads carry retry/proto/TLS flags, pinned by test). Sweep: only two curl downloads exist; non-curl fetches (semgrep rules, trivy DB, pip-audit, uv) have no retry flags of their own; not changed here.
 - Follow-up scan-config guard PR (ORDER 187) carries the round-8 nits; I start it only after you merge PR90. After merge I rebase #87/#88/#89/#84.
 - Also in this pulse: PR84 round 8 on 7e14096: 0 Blocker, 1 conditional Major (HIDDEN_SKIP_WORDS counts HADAVIN_REQUIRE_PINNED_UNIDATA on legs where it is unset; no reader of that variable exists in src/tests on origin/main, so unproven) + nits; both reviewers read only part of the diff, so round 8 is not counted clean. Builder fix next, then evidence. P4a rev 6 round 6: 0B/5M; resolver writing rev 7 (money path, no cap).
+
+## q406 (2026-11-09 ~08:55Z) DECISIONS FOR LEAD: P1d family and P1d-a (redaction, no builder before clean plan review)
+P1d rev 11 / P1d-learn rev 4 / P1d-gate rev 4 (round-11 plan reviewers running). Written by the resolver, nothing run, all rows hand-traced only:
+1. Merge order P1d-a, then P1d, then P1d-learn, then P1d-gate: default kept, please confirm.
+2. NEW rule written by me/the resolver to carry out ORDER 188 (a): "line-join rule" (a value masked in the same call is dropped from learning only when a line break alone joins it to the rest). Residual limits N9 (head masked in an earlier message) and N10 (head masked here, rest on next line) stated as measured limits and counted in BS-2 (--kind split), not claimed covered. Tell me if you want it changed; round 11 reviews it.
+3. Ledger row BL-core-p1d-001 split into 001a/001b is only in ticket text; handover/ledger.md not edited (lead owns).
+P1d-a rev 5 (round 5 plan reviewers starting). Open, none answered up to ORDER 189:
+1. BS-1 limits (exact equality; leak 0 for ordinary secrets; over-masking only on S3, S6, R6, R14): accept? Until answered the builder runs BS-1 with these and opens no PR.
+2. Full-width-dot host names unrecognised (non-goal N5) and INFO-K41 (password key with >40 key characters in front not masked): ledger rows for P1d? My view: CLAUDE.md says fix, not defer; INFO-K41 should be fixed inside P1d-a unless you say it needs another package.
+3. Typed "[.]" between name characters read as "." before redacting: saved requests show "version 1.5" for "1[.]5"; saved "//evil[.]com/p" becomes "[link removed]". Accept?
+4. Mutant A15 (query-key lookbehind removed) survives every row because it only changes text where INFO-K41 applies. Equivalence note, or fix INFO-K41 in P1d-a (then A15 gets a killer row)? Recommend fixing (answers 2 and 4 together).
+Probe P6 evidence: handover/evidence/P1d-a/probes-r4/ (read-only probes of the rev-5 password rules: 30 real corpus lines, 0 mismatches). WHATWG URL section 5.1 citation unverified (proxy 403).
