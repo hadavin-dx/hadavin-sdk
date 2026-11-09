@@ -3,6 +3,8 @@
 import re
 from pathlib import Path
 
+import pytest
+
 CI = Path(__file__).resolve().parents[1] / ".github" / "workflows" / "ci.yml"
 START = '"$RUNNER_TEMP/gitleaks" git '
 
@@ -72,3 +74,50 @@ def test_the_pin_rejects_wrong_scopes_and_neutered_scans():
         except AssertionError:
             continue
         raise AssertionError("a wrong or neutered scan command passed the pin")
+
+
+def _curl_commands(text):
+    """Every `curl ...` command in the workflow, with its continuation lines joined."""
+    out, cur = [], None
+    for line in text.splitlines():
+        s = line.strip()
+        if cur is None and re.match(r"curl\s", s):
+            cur = s
+        elif cur is not None:
+            cur += " " + s
+        if cur is not None and not cur.endswith("\\"):
+            out.append(cur.replace("\\", " "))
+            cur = None
+        elif cur is not None:
+            cur = cur[:-1]
+    return out
+
+
+def check_curl_retries(text):
+    cmds = _curl_commands(text)
+    assert cmds, "no curl download found: the pin would check nothing"
+    for cmd in cmds:
+        for flag in ("--retry 5", "--retry-all-errors", "--retry-delay 5", "-f"):
+            assert re.search(rf"(^|\s){re.escape(flag)}(\s|$)", cmd) or (
+                flag == "-f" and re.search(r"\s-\w*f\w*\s", cmd)
+            ), f"curl without {flag}: {cmd}"
+    return len(cmds)
+
+
+def test_every_curl_download_retries_transient_errors():
+    # A 504 from the release host must not fail a pull request (class fix).
+    assert check_curl_retries(CI.read_text()) == 2
+
+
+def test_the_curl_pin_rejects_a_download_without_retry():
+    text = CI.read_text()
+    for old, new in (
+        ("--retry 5 ", ""),
+        ("--retry-all-errors ", ""),
+        ("--retry-delay 5 ", ""),
+        ("curl -sSfL", "curl -sSL"),
+    ):
+        bad = text.replace(old, new, 1)
+        assert bad != text
+        with pytest.raises(AssertionError):
+            check_curl_retries(bad)
