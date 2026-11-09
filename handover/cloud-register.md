@@ -782,3 +782,4 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | bd-recon-P3a2 | Sonnet builder: reconstruct P3a-2 66-mutant runner + gen_evidence, work dir /home/user/build/recon/p3a2 | 2026-11-09T03:53Z | RUNNING |
 | rv-P1d-design | egm-design plan review r1 of tickets/P1d.md (direct dispatch) | 2026-11-09T03:53Z | CLOSED 2026-11-09T03:57Z |
 | rv-P1d-ready | egm-implementation-readiness plan review r1 of tickets/P1d.md | 2026-11-09T03:53Z | CLOSED 2026-11-09T03:58Z |
+| rv-P1b-design | egm-design result review P1b 0d843b4 | closed 2026-11-09 04:0x UTC | report saved handover/reviews/P1b/round1-design.md (6 MAJOR, 8 MINOR) | - |
