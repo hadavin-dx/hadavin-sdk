@@ -808,3 +808,5 @@ rv-P1d-r3-design closed 05:32Z
 | money chain PR 66, 75, 76, 77, 78, 79 | open (66, 75 ready; 76-79 draft) | wait for merges in order 66 then 75 | UNVERIFIED current review state; next step is result reviewers on a snapshot |
 | PR 73 P3a-2, PR 74 P5a, PR 80 P5b1, PR 85 P5b2, PR 86 P6b1, PR 83 P0t-followup, PR 84 ci-evidence | open | wait for lead merge | next step is fresh result reviewers on a snapshot |
 | ci-lint-set batch 2, T1/T2, AK-G2 | UNVERIFIED | UNVERIFIED | none yet |
+| r5-design, r5-readiness, r5-zoomout | P1d rev 5 plan review round 5 | 06:40Z | +20 min | running | save round5-*.md, resolve |
+| r1-P2d-design, r1-P2d-readiness | P2d-2 plan review round 1 | 06:42Z | +20 min | running | save handover/reviews/P2d/round1-*.md |

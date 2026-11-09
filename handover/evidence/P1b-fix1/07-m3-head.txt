@@ -1,0 +1,6 @@
+203451264e72d872d23d80b4d63d35e7b5df4460
+/home/user/build/B-P1b/src/hadavin_sdk/__init__.py
+ascii: n=200 refused=0 (0.0%) kinds={} false_abstain=0 (0.0%)  [false abstain = refused although scan_holds finds the value in a text that holds it]
+script: n=10 refused=0 (0.0%) kinds={} false_abstain=0 (0.0%)  [false abstain = refused although scan_holds finds the value in a text that holds it]
+rc=0
+NOTE: head run used a copy of m3_corpus.py with the one call changed to keyword form scan_holds(text=..., value=...) because scan_holds is keyword-only at head (M13); copy at /tmp/claude-0/m3_head.py

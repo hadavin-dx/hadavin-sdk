@@ -1,0 +1,16 @@
+203451264e72d872d23d80b4d63d35e7b5df4460
+TEXTNORM_MAX_CHARS 262144 INJECTION_MAX_CHARS 2097152 CHUNK 32768 OVERLAP 1024
+filler	mult	chars	flagged	reason	seconds
+ascii	1x	262144	False	None	0.63
+ascii	2x	524288	False	None	0.94
+ascii	4x	1048576	False	None	1.70
+ascii	8x	2097152	False	None	3.64
+detector RegexDetector failed, run flagged: TextTooLong: a text of 2359296 characters is over the injection check's limit of 2097152
+ascii	9x	2359296	True	guard_unavailable	0.00
+cyrillic	1x	262144	False	None	1.37
+cyrillic	2x	524288	False	None	3.04
+cyrillic	4x	1048576	False	None	6.05
+cyrillic	8x	2097152	False	None	11.14
+detector RegexDetector failed, run flagged: TextTooLong: a text of 2359296 characters is over the injection check's limit of 2097152
+cyrillic	9x	2359296	True	guard_unavailable	0.00
+rc=0

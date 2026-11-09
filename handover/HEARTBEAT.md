@@ -554,3 +554,4 @@ LAPTOP CANDIDATES (pushed heads only): PR85 0b54631 (items 3,4,10), PR72 e6a4220
 06:03Z HB(auto):  agents 2 running (gen_evidence-P6a-pg-rerun,bd-P1b-fix1) | heavy slots busy 1/3 | last: started, none yet 
 06:06Z P1b fix batch 2034512 pushed (core/P1b-fixwip); BN-22 added; evidence runner starting; P1d round-4 resolved (round4-resolve.md), rev 5 next
 06:08Z HB(auto):  agents 3 running (gen_evidence-P6a-pg-rerun,bd-P1b-fix1,ev-P1b-r2) | heavy slots busy 2/3 | last: started, none yet 
+2026-11-09T06:12:18Z PULSE ORDER 169: agents running 8 (ev-P1b-r2, P6a-pg-rerun, P1d r5 x3, P2d-2 r1 x2), lanes total 14, lanes idle 5: PR 63/70 wait for lead merge; money chain 66/75-79 wait for merge order (result reviewers on snapshot next); PR 73/74/80/85/86/83/84 wait for lead merge (reviewers next); ci-lint-set/T1/T2/AK-G2 state UNVERIFIED (checking); P1b fixer waits for ev-P1b-r2 evidence.

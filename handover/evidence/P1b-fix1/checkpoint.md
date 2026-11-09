@@ -1,0 +1,1 @@
+Checkpoint 1 (06:11Z): head 203451264e72. Done: items 3,5,7,8,9 raw files. Running detached via heavy.sh: item 1 (py3.12), item 2 (py3.13) suites. Next: item 4 perf alone, item 6 mutants (28 changed/new first, then full 226), SUMMARY.md. Blockers: none. Note: bandit is in uv group scan, not test.
