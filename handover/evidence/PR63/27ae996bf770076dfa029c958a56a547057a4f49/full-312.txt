@@ -127,26 +127,7 @@ $ pytest -q -rA --tb=short --junitxml=/home/user/build/evid-out/PR63/27ae996bf77
 ........................................................................ [ 81%]
 ........................................................................ [ 82%]
 ........................................................................ [ 83%]
-.............................Traceback (most recent call last):
-  File "/usr/lib/python3.12/socketserver.py", line 692, in process_request_thread
-    self.finish_request(request, client_address)
-  File "/usr/lib/python3.12/socketserver.py", line 362, in finish_request
-    self.RequestHandlerClass(request, client_address, self)
-  File "/usr/lib/python3.12/socketserver.py", line 761, in __init__
-    self.handle()
-  File "/usr/lib/python3.12/http/server.py", line 436, in handle
-    self.handle_one_request()
-  File "/usr/lib/python3.12/http/server.py", line 424, in handle_one_request
-    method()
-  File "/home/user/build/EV-PR63/tests/fixtures/fake_system.py", line 100, in do_POST
-    self._send(201, {"id": rec_id})
-  File "/home/user/build/EV-PR63/tests/fixtures/fake_system.py", line 51, in _send
-    self.wfile.write(raw)
-  File "/usr/lib/python3.12/socketserver.py", line 840, in write
-    self._sock.sendall(b)
-BrokenPipeError: [Errno 32] Broken pipe
-----------------------------------------
-........................................... [ 83%]
+........................................................................ [ 83%]
 ........................................................................ [ 84%]
 ........................................................................ [ 85%]
 ........................................................................ [ 85%]
@@ -166,58 +147,19 @@ BrokenPipeError: [Errno 32] Broken pipe
 ........................................................................ [ 94%]
 ........................................................................ [ 95%]
 ........................................................................ [ 96%]
-......................EEF............................................... [ 96%]
+........................................................................ [ 96%]
 ........................................................................ [ 97%]
 ........................................................................ [ 98%]
 ........................................................................ [ 98%]
 ........................................................................ [ 99%]
-...................................................................E     [100%]
-==================================== ERRORS ====================================
-_ ERROR at setup of test_postgres_chain_appends_verifies_and_refuses_update_delete_truncate _
-tests/warden_port/test_audit_chain.py:601: in pg_chain
-    for dsn in pg_schema():
-tests/contracts/kinds/store_postgres.py:32: in pg_schema
-    with psycopg.connect(dsn, autocommit=True) as db:
-         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-../venv-pr63-312/lib/python3.12/site-packages/psycopg/connection.py:126: in connect
-    raise last_ex.with_traceback(None)
-E   psycopg.OperationalError: connection failed: connection to server at "127.0.0.1", port 56063 failed: Connection refused
-E   	Is the server running on that host and accepting TCP/IP connections?
-_ ERROR at setup of test_postgres_appends_from_many_threads_keep_one_whole_chain _
-tests/warden_port/test_audit_chain.py:601: in pg_chain
-    for dsn in pg_schema():
-tests/contracts/kinds/store_postgres.py:32: in pg_schema
-    with psycopg.connect(dsn, autocommit=True) as db:
-         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-../venv-pr63-312/lib/python3.12/site-packages/psycopg/connection.py:126: in connect
-    raise last_ex.with_traceback(None)
-E   psycopg.OperationalError: connection failed: connection to server at "127.0.0.1", port 56063 failed: Connection refused
-E   	Is the server running on that host and accepting TCP/IP connections?
-_ ERROR at teardown of test_a_secret_inside_a_compound_value_is_swept_alone_too[password=1f2e3d4c-5b6a-4789-a0b1-c2d3e4f5a6b7.Zq8wPx2mLkVb7YtR3nQs] _
-tests/demo_askdata/conftest.py:156: in make_db
-    with psycopg.connect(maint, autocommit=True) as c:
-         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-../venv-pr63-312/lib/python3.12/site-packages/psycopg/connection.py:126: in connect
-    raise last_ex.with_traceback(None)
-E   psycopg.OperationalError: connection failed: connection to server at "127.0.0.1", port 56063 failed: Connection refused
-E   	Is the server running on that host and accepting TCP/IP connections?
+...................................................................      [100%]
 =================================== FAILURES ===================================
 _ test_the_deny_check_false_matches_on_the_names_lists_are_exactly_the_listed_pairs _
 tests/test_textnorm.py:2964: in test_the_deny_check_false_matches_on_the_names_lists_are_exactly_the_listed_pairs
     assert "" in textnorm.identity_keys("\u0903") and "" in textnorm.identity_keys("\u200b")
 E   AssertionError: assert ('' in ('\ue000alg=fold4|ud=15.0.0\ue000ः', '\ue000alg=fold4|ud=15.0.0\ue000'))
-E    +  where ('\ue000alg=fold4|ud=15.0.0\ue000ः', '\ue000alg=fold4|ud=15.0.0\ue000') = <function identity_keys at 0x7f1413d0c4a0>('ः')
-E    +    where <function identity_keys at 0x7f1413d0c4a0> = textnorm.identity_keys
-____ test_the_runtime_role_writes_and_reads_the_chain_but_cannot_rewrite_it ____
-tests/warden_port/test_audit_chain.py:654: in test_the_runtime_role_writes_and_reads_the_chain_but_cannot_rewrite_it
-    for dsn in pg_schema(migrated=False):
-tests/contracts/kinds/store_postgres.py:32: in pg_schema
-    with psycopg.connect(dsn, autocommit=True) as db:
-         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-../venv-pr63-312/lib/python3.12/site-packages/psycopg/connection.py:126: in connect
-    raise last_ex.with_traceback(None)
-E   psycopg.OperationalError: connection failed: connection to server at "127.0.0.1", port 56063 failed: Connection refused
-E   	Is the server running on that host and accepting TCP/IP connections?
+E    +  where ('\ue000alg=fold4|ud=15.0.0\ue000ः', '\ue000alg=fold4|ud=15.0.0\ue000') = <function identity_keys at 0x7fdc45f084a0>('ः')
+E    +    where <function identity_keys at 0x7fdc45f084a0> = textnorm.identity_keys
 ==================================== PASSES ====================================
 __________ test_a_detector_backend_error_is_a_flag[bedrock_guardrail] __________
 ------------------------------ Captured log call -------------------------------
@@ -227,25 +169,25 @@ ______________ test_a_detector_backend_error_is_a_flag[llm_judge] ______________
 WARNING  hadavin_sdk.guard:injection.py:92 detector JudgeDetector failed, run flagged: ProviderExhausted: judge: throttled after retries
 _ test_a_missing_name_is_a_config_error_at_the_start_up_probe[aws_secrets_manager] _
 ------------------------------ Captured log call -------------------------------
-DEBUG    botocore.hooks:hooks.py:238 Event before-parameter-build.secrets-manager.GetSecretValue: calling handler <function stub_client.<locals>.keep at 0x7f1412c000e0>
-DEBUG    botocore.hooks:hooks.py:238 Event before-parameter-build.secrets-manager.GetSecretValue: calling handler <function generate_idempotent_uuid at 0x7f141d0f42c0>
-DEBUG    botocore.hooks:hooks.py:238 Event before-parameter-build.secrets-manager.GetSecretValue: calling handler <function _handle_request_validation_mode_member at 0x7f141d0f6fc0>
+DEBUG    botocore.hooks:hooks.py:238 Event before-parameter-build.secrets-manager.GetSecretValue: calling handler <function stub_client.<locals>.keep at 0x7fdc3fad5e40>
+DEBUG    botocore.hooks:hooks.py:238 Event before-parameter-build.secrets-manager.GetSecretValue: calling handler <function generate_idempotent_uuid at 0x7fdc4f3242c0>
+DEBUG    botocore.hooks:hooks.py:238 Event before-parameter-build.secrets-manager.GetSecretValue: calling handler <function _handle_request_validation_mode_member at 0x7fdc4f326fc0>
 DEBUG    botocore.regions:regions.py:522 Calling endpoint provider with parameters: {'Region': 'af-south-1', 'UseDualStack': False, 'UseFIPS': False}
 DEBUG    botocore.regions:regions.py:537 Endpoint provider result: https://secretsmanager.af-south-1.amazonaws.com
-DEBUG    botocore.hooks:hooks.py:238 Event before-call.secrets-manager.GetSecretValue: calling handler <function stub_client.<locals>.respond at 0x7f1412c00720>
-DEBUG    botocore.hooks:hooks.py:238 Event before-parameter-build.secrets-manager.GetSecretValue: calling handler <function stub_client.<locals>.keep at 0x7f1412c000e0>
-DEBUG    botocore.hooks:hooks.py:238 Event before-parameter-build.secrets-manager.GetSecretValue: calling handler <function generate_idempotent_uuid at 0x7f141d0f42c0>
-DEBUG    botocore.hooks:hooks.py:238 Event before-parameter-build.secrets-manager.GetSecretValue: calling handler <function _handle_request_validation_mode_member at 0x7f141d0f6fc0>
+DEBUG    botocore.hooks:hooks.py:238 Event before-call.secrets-manager.GetSecretValue: calling handler <function stub_client.<locals>.respond at 0x7fdc3f9f82c0>
+DEBUG    botocore.hooks:hooks.py:238 Event before-parameter-build.secrets-manager.GetSecretValue: calling handler <function stub_client.<locals>.keep at 0x7fdc3fad5e40>
+DEBUG    botocore.hooks:hooks.py:238 Event before-parameter-build.secrets-manager.GetSecretValue: calling handler <function generate_idempotent_uuid at 0x7fdc4f3242c0>
+DEBUG    botocore.hooks:hooks.py:238 Event before-parameter-build.secrets-manager.GetSecretValue: calling handler <function _handle_request_validation_mode_member at 0x7fdc4f326fc0>
 DEBUG    botocore.regions:regions.py:522 Calling endpoint provider with parameters: {'Region': 'af-south-1', 'UseDualStack': False, 'UseFIPS': False}
 DEBUG    botocore.regions:regions.py:537 Endpoint provider result: https://secretsmanager.af-south-1.amazonaws.com
-DEBUG    botocore.hooks:hooks.py:238 Event before-call.secrets-manager.GetSecretValue: calling handler <function stub_client.<locals>.respond at 0x7f1412c00720>
+DEBUG    botocore.hooks:hooks.py:238 Event before-call.secrets-manager.GetSecretValue: calling handler <function stub_client.<locals>.respond at 0x7fdc3f9f82c0>
 _ test_a_missing_name_is_a_config_error_at_the_start_up_probe[azure_key_vault] _
 ------------------------------ Captured log call -------------------------------
 INFO     azure.core.pipeline.policies.http_logging_policy:_universal.py:535 Request URL: 'https://contract-kv.vault.azure.net/secrets/known/?api-version=2026-04-01'
 Request method: 'GET'
 Request headers:
     'Accept': 'application/json'
-    'x-ms-client-request-id': 'c5e68fac-dc1c-11f1-85f7-052f47b6799f'
+    'x-ms-client-request-id': 'eec526e3-dc21-11f1-83d9-4dfc4b6cc9a9'
     'User-Agent': 'azsdk-python-keyvault-secrets/4.12.0 Python/3.12.3 (Linux-6.18.44-fc-v310-x86_64-with-glibc2.39)'
     'Authorization': 'REDACTED'
 No body was attached to the request
@@ -256,7 +198,7 @@ INFO     azure.core.pipeline.policies.http_logging_policy:_universal.py:535 Requ
 Request method: 'GET'
 Request headers:
     'Accept': 'application/json'
-    'x-ms-client-request-id': 'c5e6d572-dc1c-11f1-923a-052f47b6799f'
+    'x-ms-client-request-id': 'eec5601c-dc21-11f1-a7d9-4dfc4b6cc9a9'
     'User-Agent': 'azsdk-python-keyvault-secrets/4.12.0 Python/3.12.3 (Linux-6.18.44-fc-v310-x86_64-with-glibc2.39)'
     'Authorization': 'REDACTED'
 No body was attached to the request
@@ -318,17 +260,17 @@ A smoke result on a small held-out set of synthetic data. It is not the accuracy
 - Abstention precision None, recall None
 - Adversarial: 1 of 1 passed; failed: []
 - Mechanics: {"alarms": {}, "execution_error_rate": 0.0, "retry_rate": 0.0, "schema_violation_rate": 0.0, "validator_rejects_by_rule": {}}
-- Cost 0.012 USD (0.004 per question); latency p50 4 ms, p95 4 ms
+- Cost 0.012 USD (0.004 per question); latency p50 5 ms, p95 6 ms
 - Sampling: provider default: the model call has no temperature or seed parameter
 - Model fake-model-1; prompt f3d16238f0ac; config f151f82b0f65; golden 8bfe7523cac0
 
-run folder: /tmp/pytest-of-root/pytest-1057/test_the_sealed_run_counts_at_0/runs/20261109T090604065806Z-second-look
+run folder: /tmp/pytest-of-root/pytest-1103/test_the_sealed_run_counts_at_0/runs/20261109T094300417646Z-second-look
 __________ test_a_sealed_run_is_refused_when_the_budget_left_is_small __________
 ----------------------------- Captured stdout call -----------------------------
 refused: the sealed run needs at least 3.00 remaining, 2.00 left
 _____________________ test_report_and_compare_through_main _____________________
 ----------------------------- Captured stdout call -----------------------------
-report: /tmp/pytest-of-root/pytest-1057/test_report_and_compare_throug0/runs is not a run folder
+report: /tmp/pytest-of-root/pytest-1103/test_report_and_compare_throug0/runs is not a run folder
 {
   "confident_wrong": [
     0,
@@ -365,14 +307,14 @@ usage: askdata eval [-h] [--config CONFIG] {run,report,compare} ...
 askdata eval: error: the following arguments are required: cmd
 ____________________________ test_eval_report_html _____________________________
 ----------------------------- Captured stdout call -----------------------------
-report: /tmp/pytest-of-root/pytest-1057/test_eval_report_html0/nope is not a run folder
+report: /tmp/pytest-of-root/pytest-1103/test_eval_report_html0/nope is not a run folder
 ________________ test_cuj4_gate_green_red_and_unqualified_start ________________
 ----------------------------- Captured stdout call -----------------------------
 test-agent: 9/10 = 0.90 (threshold 1.00) -> RED, pass^k=-, abstain=0.00, bound=0.394
 ____________________ test_cuj6_lookup_fails_needs_a_person _____________________
 ----------------------------- Captured stderr call -----------------------------
 ----------------------------------------
-Exception occurred during processing of request from ('127.0.0.1', 40110)
+Exception occurred during processing of request from ('127.0.0.1', 52164)
 Traceback (most recent call last):
   File "/usr/lib/python3.12/socketserver.py", line 692, in process_request_thread
     self.finish_request(request, client_address)
@@ -394,7 +336,7 @@ BrokenPipeError: [Errno 32] Broken pipe
 ----------------------------------------
 --------------------------- Captured stderr teardown ---------------------------
 ----------------------------------------
-Exception occurred during processing of request from ('127.0.0.1', 44700)
+Exception occurred during processing of request from ('127.0.0.1', 59768)
 Traceback (most recent call last):
   File "/usr/lib/python3.12/socketserver.py", line 692, in process_request_thread
     self.finish_request(request, client_address)
@@ -417,7 +359,7 @@ BrokenPipeError: [Errno 32] Broken pipe
 ___________________ test_timeout_and_lookup_fails_is_unknown ___________________
 ----------------------------- Captured stderr call -----------------------------
 ----------------------------------------
-Exception occurred during processing of request from ('127.0.0.1', 49338)
+Exception occurred during processing of request from ('127.0.0.1', 43358)
 Traceback (most recent call last):
   File "/usr/lib/python3.12/socketserver.py", line 692, in process_request_thread
     self.finish_request(request, client_address)
@@ -439,7 +381,7 @@ BrokenPipeError: [Errno 32] Broken pipe
 ----------------------------------------
 --------------------------- Captured stderr teardown ---------------------------
 ----------------------------------------
-Exception occurred during processing of request from ('127.0.0.1', 34746)
+Exception occurred during processing of request from ('127.0.0.1', 45086)
 Traceback (most recent call last):
   File "/usr/lib/python3.12/socketserver.py", line 692, in process_request_thread
     self.finish_request(request, client_address)
@@ -468,8 +410,8 @@ ___________________ test_old_lines_parse_and_torn_line_warns ___________________
 WARNING  hadavin_sdk.runtime:agent_loop.py:114 qualified.jsonl line 2 is not valid JSON (torn append): skipped
 ______ test_score_again_is_refused_because_the_report_folder_is_not_empty ______
 ----------------------------- Captured stdout call -----------------------------
-replay complete: outputs in /tmp/pytest-of-root/pytest-1057/test_score_again_is_refused_be0/out (see replay-report.md)
-score report written: /tmp/pytest-of-root/pytest-1057/test_score_again_is_refused_be0/out/score/score-report.md
+replay complete: outputs in /tmp/pytest-of-root/pytest-1103/test_score_again_is_refused_be0/out (see replay-report.md)
+score report written: /tmp/pytest-of-root/pytest-1103/test_score_again_is_refused_be0/out/score/score-report.md
 ----------------------------- Captured stderr call -----------------------------
 refused: score report folder exists and is not empty
 ________________ test_replay_into_a_non_empty_folder_is_refused ________________
@@ -477,8 +419,8 @@ ________________ test_replay_into_a_non_empty_folder_is_refused ________________
 refused: replay output folder exists and is not empty
 ______________ test_usd_cap_exits_1_and_report_shows_capped_cases ______________
 ----------------------------- Captured stdout call -----------------------------
-replay capped: outputs in /tmp/pytest-of-root/pytest-1057/test_usd_cap_exits_1_and_repor0/out (see replay-report.md)
-score report written: /tmp/pytest-of-root/pytest-1057/test_usd_cap_exits_1_and_repor0/out/score/score-report.md
+replay capped: outputs in /tmp/pytest-of-root/pytest-1103/test_usd_cap_exits_1_and_repor0/out (see replay-report.md)
+score report written: /tmp/pytest-of-root/pytest-1103/test_usd_cap_exits_1_and_repor0/out/score/score-report.md
 _________________________________ test_k2_runs _________________________________
 ----------------------------- Captured stderr call -----------------------------
 failed: UnknownRecording (set HADAVIN_DEBUG=1 for the traceback)
@@ -506,7 +448,7 @@ usage: hadavin-sdk replay [-h] --bundles BUNDLES --cause-list CAUSE_LIST
 hadavin-sdk replay: error: argument --max-usd: must be a finite number above zero
 _____________ test_audit_failure_exits_3_and_score_prints_nothing ______________
 ----------------------------- Captured stdout call -----------------------------
-replay complete: outputs in /tmp/pytest-of-root/pytest-1057/test_audit_failure_exits_3_and0/out (see replay-report.md)
+replay complete: outputs in /tmp/pytest-of-root/pytest-1103/test_audit_failure_exits_3_and0/out (see replay-report.md)
 ----------------------------- Captured stderr call -----------------------------
 failed: AuditUnavailable (set HADAVIN_DEBUG=1 for the traceback)
 ______________________ test_main_missing_config_is_exit_2 ______________________
@@ -514,37 +456,37 @@ ______________________ test_main_missing_config_is_exit_2 ______________________
 refused: backends: audit, llm must be set
 ____ test_report_write_failure_leaves_started_then_failed_and_no_score_run _____
 ----------------------------- Captured stdout call -----------------------------
-replay complete: outputs in /tmp/pytest-of-root/pytest-1057/test_report_write_failure_leav0/out (see replay-report.md)
+replay complete: outputs in /tmp/pytest-of-root/pytest-1103/test_report_write_failure_leav0/out (see replay-report.md)
 ----------------------------- Captured stderr call -----------------------------
 failed: OSError (set HADAVIN_DEBUG=1 for the traceback)
 ______________ test_score_run_events_come_after_the_report_exists ______________
 ----------------------------- Captured stdout call -----------------------------
-replay complete: outputs in /tmp/pytest-of-root/pytest-1057/test_score_run_events_come_aft0/out (see replay-report.md)
-score report written: /tmp/pytest-of-root/pytest-1057/test_score_run_events_come_aft0/out/score/score-report.md
+replay complete: outputs in /tmp/pytest-of-root/pytest-1103/test_score_run_events_come_aft0/out (see replay-report.md)
+score report written: /tmp/pytest-of-root/pytest-1103/test_score_run_events_come_aft0/out/score/score-report.md
 ___________ test_score_and_replay_reports_name_the_cases_to_inspect ____________
 ----------------------------- Captured stdout call -----------------------------
-replay complete: outputs in /tmp/pytest-of-root/pytest-1057/test_score_and_replay_reports_0/out (see replay-report.md)
-score report written: /tmp/pytest-of-root/pytest-1057/test_score_and_replay_reports_0/out/score/score-report.md
+replay complete: outputs in /tmp/pytest-of-root/pytest-1103/test_score_and_replay_reports_0/out (see replay-report.md)
+score report written: /tmp/pytest-of-root/pytest-1103/test_score_and_replay_reports_0/out/score/score-report.md
 ___ test_score_refuses_a_run_json_whose_issue_cases_disagree_with_the_files ____
 ----------------------------- Captured stdout call -----------------------------
-replay complete: outputs in /tmp/pytest-of-root/pytest-1057/test_score_refuses_a_run_json_0/out (see replay-report.md)
+replay complete: outputs in /tmp/pytest-of-root/pytest-1103/test_score_refuses_a_run_json_0/out (see replay-report.md)
 ----------------------------- Captured stderr call -----------------------------
 refused: run1/run.json issue_cases disagree with the incident files
 ______ test_cli_refuses_redact_false_without_the_flag_and_records_it_with ______
 ----------------------------- Captured stdout call -----------------------------
-replay complete: outputs in /tmp/pytest-of-root/pytest-1057/test_cli_refuses_redact_false_0/out (see replay-report.md)
+replay complete: outputs in /tmp/pytest-of-root/pytest-1103/test_cli_refuses_redact_false_0/out (see replay-report.md)
 ______ test_score_carries_redaction_into_its_meta_and_refuses_mixed_modes ______
 ----------------------------- Captured stdout call -----------------------------
-replay complete: outputs in /tmp/pytest-of-root/pytest-1057/test_score_carries_redaction_i0/out (see replay-report.md)
+replay complete: outputs in /tmp/pytest-of-root/pytest-1103/test_score_carries_redaction_i0/out (see replay-report.md)
 ___________________ test_cli_migrate_passes_the_portal_role ____________________
 ----------------------------- Captured stdout call -----------------------------
 applied: nothing (up to date)
 _______________ test_k3_audit_failure_after_card_does_not_escape _______________
 ------------------------------ Captured log call -------------------------------
-WARNING  hadavin_sdk.runtime:agent_loop.py:237 run run-6df7ba62a5e44860b24623d8471e876b: audit write for card shadow failed
+WARNING  hadavin_sdk.runtime:agent_loop.py:237 run run-a8b5a16b720c4d189c0ec3f020659e0e: audit write for card shadow failed
 _____________ test_k3_failed_approval_send_is_retried_not_terminal _____________
 ------------------------------ Captured log call -------------------------------
-WARNING  hadavin_sdk.approvals:requests.py:118 approval apr-be24f883984a45dd9b441a3da6fc04ca: channel send failed (OSError); tick will resend
+WARNING  hadavin_sdk.approvals:requests.py:118 approval apr-d0c29ba6ae9c4af58d804edfd44ebcda: channel send failed (OSError); tick will resend
 _________________________ test_k3_replay_record_reader _________________________
 ------------------------------ Captured log call -------------------------------
 WARNING  hadavin_sdk.replay_records:replay_records.py:62 replay-records.jsonl line 3 is not valid JSON (torn append): skipped
@@ -658,7 +600,26 @@ score
 _______________ test_config_error_never_echoes_a_mistyped_value ________________
 ----------------------------- Captured stderr call -----------------------------
 ----------------------------------------
-Exception occurred during processing of request from 
+Exception occurred during processing of request from ('127.0.0.1', 48358)
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/socketserver.py", line 692, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/usr/lib/python3.12/socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+  File "/usr/lib/python3.12/socketserver.py", line 761, in __init__
+    self.handle()
+  File "/usr/lib/python3.12/http/server.py", line 436, in handle
+    self.handle_one_request()
+  File "/usr/lib/python3.12/http/server.py", line 424, in handle_one_request
+    method()
+  File "/home/user/build/EV-PR63/tests/fixtures/fake_system.py", line 100, in do_POST
+    self._send(201, {"id": rec_id})
+  File "/home/user/build/EV-PR63/tests/fixtures/fake_system.py", line 51, in _send
+    self.wfile.write(raw)
+  File "/usr/lib/python3.12/socketserver.py", line 840, in write
+    self._sock.sendall(b)
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
 __________________ test_cli_kill_switch_reaches_every_process __________________
 ----------------------------- Captured stdout call -----------------------------
 kill switch ON (by user:a)
@@ -697,7 +658,7 @@ ________________ test_store_unreachable_exits_4_before_any_step ________________
 ERROR    hadavin_sdk.tick:tick.py:276 step=- error_kind=OSError message=store unreachable
 ______________________ test_failed_send_is_resent_by_tick ______________________
 ------------------------------ Captured log call -------------------------------
-WARNING  hadavin_sdk.approvals:requests.py:118 approval apr-354f061cfecf4915b3aa2302ec3d1753: channel send failed (ConnectionError); tick will resend
+WARNING  hadavin_sdk.approvals:requests.py:118 approval apr-0dfb1437c9e34882aca7f6d318cf1b0f: channel send failed (ConnectionError); tick will resend
 ___________________ test_cli_tick_store_unreachable_exits_4 ____________________
 ----------------------------- Captured stderr call -----------------------------
 tick: store postgres: cannot connect (OperationalError)
@@ -709,9 +670,9 @@ ___________ test_driver_errors_keep_their_details_out_of_tick_state ____________
 ERROR    hadavin_sdk.tick:tick.py:317 step=net error_kind=URLError message=(driver error; details withheld)
 ________________ test_one_channel_error_does_not_stop_the_sweep ________________
 ------------------------------ Captured log call -------------------------------
-WARNING  hadavin_sdk.approvals:requests.py:187 approval apr-c3c876562b8e42f792c55d2df89c8cd1: channel update failed (ConnectionError)
-WARNING  hadavin_sdk.approvals:requests.py:225 approval apr-c3c876562b8e42f792c55d2df89c8cd1: expiry follow-up failed (ConnectionError)
-WARNING  hadavin_sdk.approvals:requests.py:187 approval apr-c3c876562b8e42f792c55d2df89c8cd1: channel update failed (ConnectionError)
+WARNING  hadavin_sdk.approvals:requests.py:187 approval apr-40ccfc2484c742af9ae96ff680d2fd7e: channel update failed (ConnectionError)
+WARNING  hadavin_sdk.approvals:requests.py:225 approval apr-40ccfc2484c742af9ae96ff680d2fd7e: expiry follow-up failed (ConnectionError)
+WARNING  hadavin_sdk.approvals:requests.py:187 approval apr-40ccfc2484c742af9ae96ff680d2fd7e: channel update failed (ConnectionError)
 ______________ test_cli_tick_unexpected_start_up_failure_exits_2 _______________
 ----------------------------- Captured stderr call -----------------------------
 tick: config error: RuntimeError
@@ -10733,24 +10694,24 @@ PASSED tests/test_s1_foundation.py::test_hash_ignores_key_order
 PASSED tests/test_s1_foundation.py::test_hash_refuses_floats
 PASSED tests/test_s1_foundation.py::test_plan_hash_changes_with_inputs
 PASSED tests/test_s1_foundation.py::test_schema_version_round_trip
-PASSED tests/test_s1_foundation.py::test_every_legal_transition[RECEIVED-WORKING]
 PASSED tests/test_s1_foundation.py::test_every_legal_transition[RECEIVED-NEEDS_PERSON]
-PASSED tests/test_s1_foundation.py::test_every_legal_transition[WORKING-NO_ACTION]
+PASSED tests/test_s1_foundation.py::test_every_legal_transition[RECEIVED-WORKING]
 PASSED tests/test_s1_foundation.py::test_every_legal_transition[WORKING-PLAN_READY]
 PASSED tests/test_s1_foundation.py::test_every_legal_transition[WORKING-NEEDS_PERSON]
+PASSED tests/test_s1_foundation.py::test_every_legal_transition[WORKING-NO_ACTION]
 PASSED tests/test_s1_foundation.py::test_every_legal_transition[PLAN_READY-WAITING_FOR_APPROVAL]
-PASSED tests/test_s1_foundation.py::test_every_legal_transition[PLAN_READY-NO_ACTION]
-PASSED tests/test_s1_foundation.py::test_every_legal_transition[PLAN_READY-EXECUTING]
 PASSED tests/test_s1_foundation.py::test_every_legal_transition[PLAN_READY-NEEDS_PERSON]
+PASSED tests/test_s1_foundation.py::test_every_legal_transition[PLAN_READY-NO_ACTION]
 PASSED tests/test_s1_foundation.py::test_every_legal_transition[PLAN_READY-DENIED]
-PASSED tests/test_s1_foundation.py::test_every_legal_transition[WAITING_FOR_APPROVAL-EXECUTING]
-PASSED tests/test_s1_foundation.py::test_every_legal_transition[WAITING_FOR_APPROVAL-EXPIRED]
+PASSED tests/test_s1_foundation.py::test_every_legal_transition[PLAN_READY-EXECUTING]
 PASSED tests/test_s1_foundation.py::test_every_legal_transition[WAITING_FOR_APPROVAL-NEEDS_PERSON]
+PASSED tests/test_s1_foundation.py::test_every_legal_transition[WAITING_FOR_APPROVAL-EXPIRED]
 PASSED tests/test_s1_foundation.py::test_every_legal_transition[WAITING_FOR_APPROVAL-REJECTED]
-PASSED tests/test_s1_foundation.py::test_every_legal_transition[EXECUTING-VERIFYING]
+PASSED tests/test_s1_foundation.py::test_every_legal_transition[WAITING_FOR_APPROVAL-EXECUTING]
 PASSED tests/test_s1_foundation.py::test_every_legal_transition[EXECUTING-NEEDS_PERSON]
-PASSED tests/test_s1_foundation.py::test_every_legal_transition[VERIFYING-ROLLED_BACK]
+PASSED tests/test_s1_foundation.py::test_every_legal_transition[EXECUTING-VERIFYING]
 PASSED tests/test_s1_foundation.py::test_every_legal_transition[VERIFYING-NEEDS_PERSON]
+PASSED tests/test_s1_foundation.py::test_every_legal_transition[VERIFYING-ROLLED_BACK]
 PASSED tests/test_s1_foundation.py::test_every_legal_transition[VERIFYING-SUCCEEDED]
 PASSED tests/test_s1_foundation.py::test_any_non_final_can_stop
 PASSED tests/test_s1_foundation.py::test_illegal_transition_raises[RECEIVED-EXECUTING]
@@ -11702,6 +11663,9 @@ PASSED tests/warden_port/test_audit_chain.py::test_the_environment_table_rules_f
 PASSED tests/warden_port/test_audit_chain.py::test_an_anchor_needs_the_chain_audit
 PASSED tests/warden_port/test_audit_chain.py::test_an_unknown_anchor_kind_or_mode_or_two_key_sources_is_a_config_error
 PASSED tests/warden_port/test_audit_chain.py::test_the_app_builds_the_chain_audit_from_config
+PASSED tests/warden_port/test_audit_chain.py::test_postgres_chain_appends_verifies_and_refuses_update_delete_truncate
+PASSED tests/warden_port/test_audit_chain.py::test_postgres_appends_from_many_threads_keep_one_whole_chain
+PASSED tests/warden_port/test_audit_chain.py::test_the_runtime_role_writes_and_reads_the_chain_but_cannot_rewrite_it
 PASSED tests/warden_port/test_bedrock_provider_r16.py::test_the_answer_is_forced_through_one_tool_whose_schema_is_the_answer_schema
 PASSED tests/warden_port/test_bedrock_provider_r16.py::test_throttling_waits_and_other_errors_are_failures
 PASSED tests/warden_port/test_bedrock_provider_r16.py::test_a_model_must_be_named_exactly
@@ -12114,11 +12078,7 @@ XFAIL tests/test_textnorm_differential.py::test_could_be_same_person_agrees_with
 XFAIL tests/test_textnorm_differential.py::test_could_be_same_person_agrees_with_the_stated_principle_for_every_equal_row[r115] - DENY view: the minus sign reads as the hyphen-minus (gap 4)
 XFAIL tests/test_textnorm_differential.py::test_could_be_same_person_agrees_with_the_stated_principle_for_every_equal_row[r116] - DENY view: the division slash reads as the slash (gap 4)
 XFAIL tests/test_textnorm_differential.py::test_could_be_same_person_agrees_with_the_stated_principle_for_every_equal_row[r117] - DENY view: a curly apostrophe reads as the apostrophe (gap 4)
-ERROR tests/warden_port/test_audit_chain.py::test_postgres_chain_appends_verifies_and_refuses_update_delete_truncate
-ERROR tests/warden_port/test_audit_chain.py::test_postgres_appends_from_many_threads_keep_one_whole_chain
-ERROR tests/warden_port/test_redaction_review9.py::test_a_secret_inside_a_compound_value_is_swept_alone_too[password=1f2e3d4c-5b6a-4789-a0b1-c2d3e4f5a6b7.Zq8wPx2mLkVb7YtR3nQs]
 FAILED tests/test_textnorm.py::test_the_deny_check_false_matches_on_the_names_lists_are_exactly_the_listed_pairs
-FAILED tests/warden_port/test_audit_chain.py::test_the_runtime_role_writes_and_reads_the_chain_but_cannot_rewrite_it
-2 failed, 11069 passed, 1 skipped, 38 deselected, 9 xfailed, 3 errors in 746.25s (0:12:26)
+1 failed, 11072 passed, 1 skipped, 38 deselected, 9 xfailed in 749.66s (0:12:29)
 exit=1
-SUMMARY tests=11083 failed=2 errors=3 skipped=10 passed=11068 pytest_exit=1
+SUMMARY tests=11083 failed=1 errors=0 skipped=10 passed=11072 pytest_exit=1
