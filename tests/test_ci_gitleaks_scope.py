@@ -143,14 +143,16 @@ def check_golden(workflow):
 GITLEAKS_GOLDEN = Path(__file__).parent / "fixtures" / "gitleaks_config_golden.json"
 
 
-def check_gitleaks_config(root=None):
+def check_gitleaks_config(root=None, golden_path=None):
     """The scan reads .gitleaks.toml from the PR's own tree. The parsed file must equal the stored golden, every allowlist
     must be path-scoped with condition AND, and its paths may match tracked files only in the places the golden allows."""
     root = root or CI.parents[2]
     cfg = tomllib.loads((root / ".gitleaks.toml").read_text())
-    assert cfg == json.loads(GITLEAKS_GOLDEN.read_text()), ".gitleaks.toml differs from the golden"
+    assert cfg == json.loads((golden_path or GITLEAKS_GOLDEN).read_text()), (
+        ".gitleaks.toml differs from the golden"
+    )
     assert set(cfg) <= {"extend", "allowlists"}, f"unexpected top-level keys: {sorted(cfg)}"
-    assert cfg["extend"] == {"useDefault": True}
+    assert cfg.get("extend") == {"useDefault": True}, "must extend the default rules"
     tracked = subprocess.run(  # noqa: S603 (fixed argv, no shell)
         [shutil.which("git") or "git", "ls-files"],
         cwd=root,
@@ -169,7 +171,7 @@ def check_gitleaks_config(root=None):
             ), f"allowlist path {pat!r} reaches {[f for f in hit if f not in ALLOWED_HITS][:3]}"
 
 
-ALLOWED_HITS = {"tests/demo_askdata/test_demo_literals.py"}
+ALLOWED_HITS = {"tests/demo_askdata/test_demo_literals.py", "tests/fixtures/textnorm_golden.json"}
 
 
 def check_other_workflows():
@@ -193,10 +195,12 @@ def check_other_workflows():
 REQUIRED_NAMES = {"security", "check", "tests-py312"}
 
 
-def check_structure(workflow):
-    check_golden(workflow)
+def check_structure(workflow, golden=True):
+    """Everything around the two steps: job keys, defaults, env, checkout, step order, and every command of both steps.
+    golden=False skips the golden compare so the negative tests can prove the checks below it can fail on their own."""
+    if golden:
+        check_golden(workflow)
     check_other_workflows()
-    """Everything around the two steps: job keys, defaults, env, checkout, step order, and every command of both steps."""
     assert set(workflow) == {"name", True, "permissions", "concurrency", "env", "jobs"}, (
         "unexpected workflow keys"
     )
@@ -214,10 +218,10 @@ def check_structure(workflow):
         "checkout inputs changed"
     )
     assert set(steps[0]) == {"uses", "with"}
-    for fragment, golden in GOLDEN_COMMANDS.items():
+    for fragment, pinned in GOLDEN_COMMANDS.items():
         step = _step(workflow, fragment)
         assert set(step) == {"name", "run"}, f"step {fragment!r} has extra keys"
-        assert _commands(step["run"]) == golden, (
+        assert _commands(step["run"]) == pinned, (
             f"commands of the {fragment!r} step differ from the pinned list"
         )
 
@@ -249,8 +253,8 @@ def _check_step_is_plain(step):
         assert key not in step, f"step {step.get('name')!r} must not set {key}"
 
 
-def check_scan(workflow):
-    check_structure(workflow)
+def check_scan(workflow, golden=True):
+    check_structure(workflow, golden)
     step = _step(workflow, GL)
     _check_step_is_plain(step)
     cmds = _commands(step["run"])
@@ -271,8 +275,8 @@ def check_scan(workflow):
     assert checkout["with"]["fetch-depth"] == 0, "the ignore-list checks need the full history"
 
 
-def check_downloads(workflow):
-    check_structure(workflow)
+def check_downloads(workflow, golden=True):
+    check_structure(workflow, golden)
     for fragment, (archive, sha_var) in DOWNLOADS.items():
         step = _step(workflow, fragment)
         _check_step_is_plain(step)
@@ -317,6 +321,34 @@ def _load():
     return yaml.load(CI.read_text(), Loader=_StrictLoader)  # noqa: S506 (SafeLoader subclass)
 
 
+def regenerate_goldens():
+    """After an INTENDED change to ci.yml or .gitleaks.toml: `python tests/test_ci_gitleaks_scope.py`, then review the diff of
+    tests/fixtures/*golden.json in the same PR (the reviewer reads that diff, not the test)."""
+    w = _load()
+    keep = {
+        ("on" if k is True else k): w.get(k)
+        for k in ("name", True, "permissions", "concurrency", "env")
+    }
+    jobs = {
+        jid: {k: j.get(k) for k in ("name", "runs-on", "timeout-minutes", "if")}
+        for jid, j in w["jobs"].items()
+    }
+    GOLDEN_FILE.write_text(
+        json.dumps(
+            {"workflow": keep, "jobs": jobs, "security_job": w["jobs"]["security"]},
+            indent=1,
+            sort_keys=True,
+        )
+        + "\n"
+    )
+    cfg = tomllib.loads((CI.parents[2] / ".gitleaks.toml").read_text())
+    GITLEAKS_GOLDEN.write_text(json.dumps(cfg, indent=1, sort_keys=True) + "\n")
+
+
+if __name__ == "__main__":
+    regenerate_goldens()
+
+
 def test_real_ci_scan_is_limited_to_head_and_blocks():
     check_scan(_load())
 
@@ -329,19 +361,46 @@ BAD_TOML = {
     "blanket": "[extend]\nuseDefault = true\n[[allowlists]]\ncondition = \"AND\"\npaths = ['''.*''']\n",
     "demos": "[extend]\nuseDefault = true\n[[allowlists]]\ncondition = \"AND\"\npaths = ['''^demos/''']\n",
     "no extend": "[[allowlists]]\ncondition = \"AND\"\npaths = ['''^handover/''']\n",
-    "extra key": "[extend]\nuseDefault = true\n[allowlist]\npaths = ['''x''']\n",
+    "extra key": "[extend]\nuseDefault = true\n[allowlist]\npaths = ['x']\n",
+    "or condition": "[extend]\nuseDefault = true\n[[allowlists]]\ncondition = \"OR\"\npaths = ['''^handover/x\\.md$''']\n",
+    "commit allowlist": "[extend]\nuseDefault = true\n[[allowlists]]\ncondition = \"AND\"\ncommits = [\"abc\"]\npaths = ['''^handover/x\\.md$''']\n",
+    "stopwords": "[extend]\nuseDefault = true\n[[allowlists]]\ncondition = \"AND\"\nstopwords = [\"x\"]\npaths = ['''^handover/x\\.md$''']\n",
 }
+
+
+def _tracked_repo(tmp_path, toml):
+    subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)  # noqa: S603, S607
+    (tmp_path / ".gitleaks.toml").write_text(toml)
+    (tmp_path / "demos").mkdir()
+    (tmp_path / "demos" / "a.py").write_text("x = 1\n")
+    subprocess.run(["git", "-C", str(tmp_path), "add", "-A"], check=True)  # noqa: S603, S607
+    # a golden equal to this config, so only the checks after the golden compare can fail
+    golden = tmp_path / "golden.json"
+    golden.write_text(json.dumps(tomllib.loads(toml)))
+    return golden
 
 
 @pytest.mark.parametrize("name", sorted(BAD_TOML))
 def test_the_gitleaks_config_pin_rejects_a_widened_config(name, tmp_path):
-    subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)  # noqa: S603, S607
-    (tmp_path / ".gitleaks.toml").write_text(BAD_TOML[name])
-    (tmp_path / "demos").mkdir()
-    (tmp_path / "demos" / "a.py").write_text("x = 1\n")
-    subprocess.run(["git", "-C", str(tmp_path), "add", "-A"], check=True)  # noqa: S603, S607
+    golden = _tracked_repo(tmp_path, BAD_TOML[name])
     with pytest.raises(AssertionError):
-        check_gitleaks_config(tmp_path)
+        check_gitleaks_config(tmp_path, golden)
+
+
+def test_the_gitleaks_config_pin_reaches_the_tracked_file_check(tmp_path):
+    ok = "[extend]\nuseDefault = true\n[[allowlists]]\ncondition = \"AND\"\npaths = ['''^demos/a\\.py$''']\n"
+    golden = _tracked_repo(tmp_path, ok)
+    with pytest.raises(AssertionError, match="reaches"):
+        check_gitleaks_config(tmp_path, golden)  # a tracked file outside the allowed set is refused
+
+
+def test_the_gitleaks_config_pin_accepts_an_allowed_tracked_file(tmp_path):
+    ok = "[extend]\nuseDefault = true\n[[allowlists]]\ncondition = \"AND\"\npaths = ['''^tests/demo_askdata/test_demo_literals\\.py$''']\n"
+    golden = _tracked_repo(tmp_path, ok)
+    (tmp_path / "tests" / "demo_askdata").mkdir(parents=True)
+    (tmp_path / "tests" / "demo_askdata" / "test_demo_literals.py").write_text("x = 1\n")
+    subprocess.run(["git", "-C", str(tmp_path), "add", "-A"], check=True)  # noqa: S603, S607
+    check_gitleaks_config(tmp_path, golden)  # positive control
 
 
 def test_another_workflow_cannot_reuse_a_required_check_name(tmp_path, monkeypatch):
@@ -399,7 +458,7 @@ SCAN_BAD = [
 def test_the_scan_pin_rejects_a_neutered_scan(old, new):
     bad = _mutate_run(_load(), GL, old, new)
     with pytest.raises(AssertionError):
-        check_scan(bad)
+        check_scan(bad, golden=False)
 
 
 @pytest.mark.parametrize(
@@ -408,14 +467,14 @@ def test_the_scan_pin_rejects_a_neutered_scan(old, new):
 def test_the_scan_pin_rejects_a_step_that_can_be_skipped_or_ignored(extra):
     bad = _mutate_step(_load(), GL, **extra)
     with pytest.raises(AssertionError):
-        check_scan(bad)
+        check_scan(bad, golden=False)
 
 
 def test_the_scan_pin_needs_the_full_history():
     w = _load()
     _security_steps(w)[0]["with"]["fetch-depth"] = 1
     with pytest.raises(AssertionError):
-        check_scan(w)
+        check_scan(w, golden=False)
 
 
 CURL_BAD = [
@@ -440,7 +499,7 @@ CURL_BAD = [
 def test_the_download_pin_rejects_a_neutered_download(fragment, old, new):
     bad = _mutate_run(_load(), fragment, old, new)
     with pytest.raises(AssertionError):
-        check_downloads(bad)
+        check_downloads(bad, golden=False)
 
 
 @pytest.mark.parametrize("fragment", [GL, "Trivy"])
@@ -449,7 +508,7 @@ def test_the_download_pin_needs_the_checksum_line(fragment):
     step = _step(w, fragment)
     step["run"] = "\n".join(ln for ln in step["run"].splitlines() if "sha256sum" not in ln) + "\n"
     with pytest.raises(AssertionError):
-        check_downloads(w)
+        check_downloads(w, golden=False)
 
 
 def _edit(fn):
@@ -506,3 +565,27 @@ def test_the_structure_pin_rejects_a_bypass(name):
         check_scan(bad)
     with pytest.raises(AssertionError):
         check_downloads(bad)
+
+
+# These edits touch parts that only the golden pins (steps other than the two pinned commands, the runner, job names).
+GOLDEN_ONLY = {
+    "comment backslash hides a command",
+    "pip-audit neutered",
+    "runner changed",
+    "second security-named job",
+    "setup-uv replaced",
+    "stale-ignore skipped",
+}
+
+
+@pytest.mark.parametrize("name", sorted(set(STRUCTURE_BAD) - GOLDEN_ONLY))
+def test_the_structure_checks_reject_a_bypass_without_the_golden(name):
+    bad = _edit(STRUCTURE_BAD[name])
+    with pytest.raises(AssertionError):
+        check_scan(bad, golden=False)
+    with pytest.raises(AssertionError):
+        check_downloads(bad, golden=False)
+
+
+def test_the_golden_only_list_names_real_cases():
+    assert GOLDEN_ONLY <= set(STRUCTURE_BAD)
