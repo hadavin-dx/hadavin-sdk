@@ -2,7 +2,8 @@
 anchors under `anchor` (tests/contracts/test_anchor.py), each returning a fresh anchor (a generator may clean
 up after it).
 
-* `vault_transit`: a real `vault server -dev` when HADAVIN_TEST_VAULT_ADDR is set (CI), else the local fake.
+* `vault_transit`: a real `vault server -dev` when HADAVIN_TEST_VAULT_ADDR is set (CI: a container started by a workflow step, token in
+  HADAVIN_TEST_VAULT_TOKEN), else the local fake.
 * `azure_key_vault_key`, `gcp_kms`, `azure_immutable_blob`, `gcs_retention_lock`: the real SDK clients over the
   in-process HTTP fakes in tests/contracts/http_fake.py.
 * `s3_object_lock`: moto (an Object Lock bucket).

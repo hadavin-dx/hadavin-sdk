@@ -38,6 +38,24 @@ MUTANT_RE = re.compile(r"tests/[a-z0-9_]{1,40}_mutants\.py")  # step name extra-
 NAME_RE = re.compile(r"[a-z0-9][a-z0-9_-]{0,60}")
 
 
+SECRET_ENV = (
+    "HADAVIN_TEST_VAULT_TOKEN",
+)  # values that must never reach a log file, the artifact or the summary
+MASK = "***"
+
+
+def mask(text: str) -> str:
+    """Replace the value of every secret environment variable (at least 8 characters) with ***.
+
+    `::add-mask::` hides a value only in the live Actions log; the files in evidence-logs/ are uploaded as an
+    artifact and the summary is a separate page, so the helper must remove the value itself."""
+    for name in SECRET_ENV:
+        value = os.environ.get(name, "")
+        if len(value) >= 8:
+            text = text.replace(value, MASK)
+    return text
+
+
 class Refused(ValueError):
     """An input is outside the allowlist."""
 
@@ -126,6 +144,7 @@ def cmd_run(name: str, command: list[str]) -> int:
     with (LOG_DIR / f"{name}.txt").open("w", encoding="utf-8") as fh:
 
         def emit(text: str) -> None:
+            text = mask(text)
             fh.write(text)
             fh.flush()
             sys.stdout.write(text)
@@ -213,7 +232,7 @@ def cmd_report(expected: list[str]) -> int:
         ]
         out += [f"#### {name}", "```", *pick[-40:], "```"]
     out.append("RESULT: " + (f"FAIL, {bad} step(s) not green" if bad else "all steps exit=0"))
-    text = "\n".join(out) + "\n"
+    text = mask("\n".join(out) + "\n")
     sys.stdout.write(text)
     summary = os.environ.get("GITHUB_STEP_SUMMARY")
     if summary:

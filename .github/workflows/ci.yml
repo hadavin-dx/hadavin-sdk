@@ -23,6 +23,7 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
+  VAULT_IMAGE: hashicorp/vault:2.2.0@sha256:e0acd3c681bdf57f002d7214e5d050b876e1704678005c6b0406dd96a65be919  # published 2026-10-15
   GITLEAKS_VERSION: "8.30.1"
   GITLEAKS_SHA256: "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb"
   # Trivy's GitHub Actions were compromised in March 2026, so the release binary is used, checksum-verified.
@@ -42,7 +43,7 @@ jobs:
         env:
           POSTGRES_HOST_AUTH_METHOD: trust
         ports:
-          - 5432:5432
+          - 127.0.0.1:5432:5432
         options: >-
           --health-cmd "pg_isready -U postgres"
           --health-interval 5s
@@ -53,8 +54,8 @@ jobs:
         with:
           persist-credentials: false
       # The `vault` secrets kind's contract suite runs against a real Vault dev server (in-memory, unsealed,
-      # throwaway), 2.2.0 published 2026-10-15. It is a step and not a service because its token is made fresh
-      # for this run (a service cannot read a step's output); masked in the logs, never stored; the server listens
+      # throwaway), image set once in VAULT_IMAGE above. It is a step and not a service because its token is made fresh
+      # for this run (a service cannot read a step's output); masked in the Actions log and removed from the files by the evidence helper where one is used; the server listens
       # on this runner's loopback address only and is removed in the last step.
       - name: Start a throwaway Vault development server
         timeout-minutes: 5
@@ -65,12 +66,21 @@ jobs:
           export VAULT_DEV_ROOT_TOKEN_ID="$token"
           docker run -d --name vault-ci -p 127.0.0.1:8200:8200 \
             -e VAULT_DEV_ROOT_TOKEN_ID -e VAULT_DEV_LISTEN_ADDRESS=0.0.0.0:8200 -e SKIP_SETCAP=true \
-            hashicorp/vault:2.2.0@sha256:e0acd3c681bdf57f002d7214e5d050b876e1704678005c6b0406dd96a65be919 > /dev/null
+            "$VAULT_IMAGE" > /dev/null
+          # Probe from the host, with the token, the way the tests will reach the server (the published port).
           for _ in $(seq 1 30); do
-            docker exec -e VAULT_ADDR=http://127.0.0.1:8200 vault-ci vault status > /dev/null 2>&1 && exit 0
+            if [ "$(docker inspect -f '{{.State.Running}}' vault-ci)" != "true" ]; then
+              echo "the Vault container exited"
+              docker ps -a
+              docker logs vault-ci 2>&1 | sed "s/$token/***/g"
+              exit 1
+            fi
+            curl -fsS -o /dev/null -H "X-Vault-Token: $token" http://127.0.0.1:8200/v1/auth/token/lookup-self && exit 0
             sleep 2
           done
-          echo "vault did not become ready in 60 seconds"
+          echo "Vault did not answer on 127.0.0.1:8200 within 60 seconds"
+          docker ps -a
+          docker logs vault-ci 2>&1 | sed "s/$token/***/g"
           exit 1
       - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2  # v10.3.3
         with:
@@ -121,7 +131,7 @@ jobs:
         env:
           POSTGRES_HOST_AUTH_METHOD: trust
         ports:
-          - 5432:5432
+          - 127.0.0.1:5432:5432
         options: >-
           --health-cmd "pg_isready -U postgres"
           --health-interval 5s
@@ -132,8 +142,8 @@ jobs:
         with:
           persist-credentials: false
       # The `vault` secrets kind's contract suite runs against a real Vault dev server (in-memory, unsealed,
-      # throwaway), 2.2.0 published 2026-10-15. It is a step and not a service because its token is made fresh
-      # for this run (a service cannot read a step's output); masked in the logs, never stored; the server listens
+      # throwaway), image set once in VAULT_IMAGE above. It is a step and not a service because its token is made fresh
+      # for this run (a service cannot read a step's output); masked in the Actions log and removed from the files by the evidence helper where one is used; the server listens
       # on this runner's loopback address only and is removed in the last step.
       - name: Start a throwaway Vault development server
         timeout-minutes: 5
@@ -144,12 +154,21 @@ jobs:
           export VAULT_DEV_ROOT_TOKEN_ID="$token"
           docker run -d --name vault-ci -p 127.0.0.1:8200:8200 \
             -e VAULT_DEV_ROOT_TOKEN_ID -e VAULT_DEV_LISTEN_ADDRESS=0.0.0.0:8200 -e SKIP_SETCAP=true \
-            hashicorp/vault:2.2.0@sha256:e0acd3c681bdf57f002d7214e5d050b876e1704678005c6b0406dd96a65be919 > /dev/null
+            "$VAULT_IMAGE" > /dev/null
+          # Probe from the host, with the token, the way the tests will reach the server (the published port).
           for _ in $(seq 1 30); do
-            docker exec -e VAULT_ADDR=http://127.0.0.1:8200 vault-ci vault status > /dev/null 2>&1 && exit 0
+            if [ "$(docker inspect -f '{{.State.Running}}' vault-ci)" != "true" ]; then
+              echo "the Vault container exited"
+              docker ps -a
+              docker logs vault-ci 2>&1 | sed "s/$token/***/g"
+              exit 1
+            fi
+            curl -fsS -o /dev/null -H "X-Vault-Token: $token" http://127.0.0.1:8200/v1/auth/token/lookup-self && exit 0
             sleep 2
           done
-          echo "vault did not become ready in 60 seconds"
+          echo "Vault did not answer on 127.0.0.1:8200 within 60 seconds"
+          docker ps -a
+          docker logs vault-ci 2>&1 | sed "s/$token/***/g"
           exit 1
       - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2  # v10.3.3
         with:
