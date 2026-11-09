@@ -115,11 +115,13 @@ GOLDEN_COMMANDS = {
 }
 
 
+# job id -> key in the golden file; every job that carries a required check is pinned whole
+PINNED_JOBS = {"security": "security_job", "check": "check_job", "tests-py312": "tests_py312_job"}
 GOLDEN_FILE = Path(__file__).parent / "fixtures" / "ci_security_golden.json"
 
 
 def check_golden(workflow):
-    """The whole security job (every step, raw run text included, so a comment that ends in a backslash cannot hide a
+    """The whole security, check and tests-py312 jobs (every step, raw run text included, so a comment that ends in a backslash cannot hide a
     command), the workflow-level triggers, permissions, concurrency and env, and the id, name, runner and timeout of every job
     must equal the stored golden. An intended change to any of them means regenerating the golden in the same PR."""
     golden = json.loads(GOLDEN_FILE.read_text())
@@ -135,9 +137,8 @@ def check_golden(workflow):
         for jid, j in workflow["jobs"].items()
     }
     assert jobs == golden["jobs"], "job ids, names, runners or timeouts differ from the golden"
-    assert workflow["jobs"]["security"] == golden["security_job"], (
-        "the security job differs from the golden"
-    )
+    for job_id, key in PINNED_JOBS.items():
+        assert workflow["jobs"][job_id] == golden[key], f"the {job_id} job differs from the golden"
 
 
 GITLEAKS_GOLDEN = Path(__file__).parent / "fixtures" / "gitleaks_config_golden.json"
@@ -336,7 +337,8 @@ def regenerate_goldens():
     }
     GOLDEN_FILE.write_text(
         json.dumps(
-            {"workflow": keep, "jobs": jobs, "security_job": w["jobs"]["security"]},
+            {"workflow": keep, "jobs": jobs}
+            | {key: w["jobs"][jid] for jid, key in PINNED_JOBS.items()},
             indent=1,
             sort_keys=True,
         )
@@ -590,6 +592,174 @@ def test_the_structure_checks_reject_a_bypass_without_the_golden(name):
 
 def test_the_golden_only_list_names_real_cases():
     assert GOLDEN_ONLY <= set(STRUCTURE_BAD)
+
+
+# ---- the check and tests-py312 jobs (lint, repo scan, tests): pinned whole by the golden, plus word-level checks ----
+def _job_step(workflow, job, fragment):
+    found = [s for s in workflow["jobs"][job]["steps"] if fragment in s.get("name", "")]
+    assert len(found) == 1, f"expected exactly one {job} step naming {fragment!r}"
+    return found[0]
+
+
+def check_check_job(workflow, golden=True):
+    """The repo scan step runs exactly `python tools/scan_repo.py` and nothing can skip it or ignore its result; the same for the
+    lint, format and test steps of both jobs (no continue-on-error, no `if`, no shell override, no `|| true`)."""
+    if golden:
+        check_golden(workflow)
+    scan = _job_step(workflow, "check", "Secrets and banned names")
+    assert scan["run"].strip() == "python tools/scan_repo.py", "the repo scan command changed"
+    for job, steps in (
+        ("check", ("Lint", "Format", "Tests (no live", "Secrets and banned")),
+        ("tests-py312", ("Tests on Python 3.12",)),
+    ):
+        for frag in steps:
+            step = _job_step(workflow, job, frag)
+            # the test steps carry env (pinned by the golden); every other step key that can skip or ignore a step is refused
+            for key in ("continue-on-error", "if", "shell", "working-directory"):
+                assert key not in step, f"{job}/{frag}: must not set {key}"
+            assert not re.search(r"\|\||;\s*true|\bexit\s+0\b|set\s+\+e", step["run"]), (
+                f"{job}/{frag}: result ignored"
+            )
+    assert workflow["jobs"]["check"]["steps"][3]["run"] == "ruff check src tests demos tools"
+    assert "continue-on-error" not in workflow["jobs"]["check"]
+    assert "continue-on-error" not in workflow["jobs"]["tests-py312"]
+    assert (
+        workflow["jobs"]["check"]["if"] == workflow["jobs"]["tests-py312"]["if"] == SECURITY_JOB_IF
+    )
+    return True
+
+
+def test_real_check_jobs_are_plain_and_pinned():
+    assert check_check_job(_load())
+
+
+def _set_run(job, fragment, fn):
+    def edit(w):
+        step = _job_step(w, job, fragment)
+        step["run"] = fn(step["run"])
+
+    return edit
+
+
+CHECK_JOB_BAD = {
+    "scan or true": _set_run("check", "Secrets and banned", lambda r: r.strip() + " || true\n"),
+    "scan other command": _set_run(
+        "check", "Secrets and banned", lambda r: "python tools/scan_repo.py --allowlist /dev/null"
+    ),
+    "scan removed": lambda w: w["jobs"]["check"]["steps"].pop(5),
+    "scan continue-on-error": lambda w: _job_step(w, "check", "Secrets and banned").update(
+        {"continue-on-error": True}
+    ),
+    "scan if false": lambda w: _job_step(w, "check", "Secrets and banned").update({"if": "false"}),
+    "lint narrowed": _set_run("check", "Lint", lambda r: "ruff check src"),
+    "lint or true": _set_run("check", "Lint", lambda r: r.strip() + " || true"),
+    "format removed": lambda w: w["jobs"]["check"]["steps"].pop(4),
+    "tests deselect widened": _set_run(
+        "check",
+        "Tests (no live",
+        lambda r: r.replace("not live and not perf", "not live and not perf and not redaction"),
+    ),
+    "tests or true": _set_run("check", "Tests (no live", lambda r: r.strip() + " || true"),
+    "tests continue-on-error": lambda w: _job_step(w, "check", "Tests (no live").update(
+        {"continue-on-error": True}
+    ),
+    "py312 tests or true": _set_run(
+        "tests-py312", "Tests on Python 3.12", lambda r: r.strip() + " || true"
+    ),
+    "py312 python version": lambda w: w["jobs"]["tests-py312"]["steps"][1]["with"].update(
+        {"python-version": "3.13"}
+    ),
+    "py312 tests removed": lambda w: w["jobs"]["tests-py312"]["steps"].pop(4),
+    "py312 job continue-on-error": lambda w: w["jobs"]["tests-py312"].update(
+        {"continue-on-error": True}
+    ),
+    "check job continue-on-error": lambda w: w["jobs"]["check"].update({"continue-on-error": True}),
+    "check job if": lambda w: w["jobs"]["check"].update({"if": "false"}),
+    "check service image": lambda w: w["jobs"]["check"]["services"]["postgres"].update(
+        {"image": "postgres:latest"}
+    ),
+    "check timeout": lambda w: w["jobs"]["check"].update({"timeout-minutes": 1}),
+    "check env added": lambda w: w["jobs"]["check"].update(
+        {"env": {"PYTEST_ADDOPTS": "--deselect tests"}}
+    ),
+}
+
+
+@pytest.mark.parametrize("name", sorted(CHECK_JOB_BAD))
+def test_the_check_job_pins_reject_a_bypass(name):
+    bad = _edit(CHECK_JOB_BAD[name])
+    with pytest.raises(AssertionError):
+        check_check_job(bad)
+
+
+# what the word-level checks alone (without the golden) must already catch
+CHECK_JOB_WORD_LEVEL = {
+    "scan or true",
+    "scan other command",
+    "scan removed",
+    "scan continue-on-error",
+    "scan if false",
+    "lint narrowed",
+    "lint or true",
+    "format removed",
+    "tests or true",
+    "tests continue-on-error",
+    "py312 tests or true",
+    "py312 tests removed",
+    "py312 job continue-on-error",
+    "check job continue-on-error",
+    "check job if",
+}
+
+
+@pytest.mark.parametrize("name", sorted(CHECK_JOB_WORD_LEVEL))
+def test_the_check_job_word_level_checks_reject_a_bypass_without_the_golden(name):
+    bad = _edit(CHECK_JOB_BAD[name])
+    with pytest.raises((AssertionError, IndexError, KeyError)):
+        check_check_job(bad, golden=False)
+
+
+def test_the_word_level_list_names_real_cases():
+    assert CHECK_JOB_WORD_LEVEL <= set(CHECK_JOB_BAD)
+
+
+# ---- suppression settings kept in pyproject.toml are pinned too (ruff ignores, bandit section) ----
+PYPROJECT = CI.parents[2] / "pyproject.toml"
+
+
+def check_pyproject_suppressions(text):
+    tool = tomllib.loads(text).get("tool", {})
+    lint = tool.get("ruff", {}).get("lint", {})
+    assert set(lint) <= {"extend-select", "flake8-tidy-imports", "per-file-ignores"}, (
+        f"unexpected ruff lint keys: {sorted(lint)}"
+    )
+    assert lint.get("per-file-ignores") == {"tests/**": ["S101"]}, "ruff per-file-ignores changed"
+    assert "ignore" not in tool.get("ruff", {}), "ruff top-level ignore"
+    assert "S" in lint.get("extend-select", []), "ruff security rules (S) must stay selected"
+    assert "bandit" not in tool, "a bandit section can skip tests"
+    assert "semgrep" not in tool
+
+
+def test_pyproject_carries_no_new_scanner_suppression():
+    check_pyproject_suppressions(PYPROJECT.read_text())
+
+
+@pytest.mark.parametrize(
+    "edit",
+    [
+        lambda t: t.replace('"tests/**" = ["S101"]', '"tests/**" = ["S101", "S603"]'),
+        lambda t: t + '\n[tool.bandit]\nskips = ["B101"]\n',
+        lambda t: t.replace("[tool.ruff.lint]\n", '[tool.ruff.lint]\nignore = ["S"]\n'),
+        lambda t: t.replace(
+            "[tool.ruff.lint.per-file-ignores]\n",
+            '[tool.ruff.lint.per-file-ignores]\n"src/**" = ["S"]\n',
+        ),
+        lambda t: t.replace('"I", "S"', '"I"').replace('"S", "TID"', '"TID"'),
+    ],
+)
+def test_pyproject_pin_rejects_a_new_suppression(edit):
+    with pytest.raises(AssertionError):
+        check_pyproject_suppressions(edit(PYPROJECT.read_text()))
 
 
 if __name__ == "__main__":

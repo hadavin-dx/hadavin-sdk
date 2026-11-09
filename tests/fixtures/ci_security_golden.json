@@ -1,4 +1,91 @@
 {
+ "check_job": {
+  "if": "github.event_name != 'pull_request' || github.event.pull_request.draft == false",
+  "runs-on": "ubuntu-24.04",
+  "services": {
+   "postgres": {
+    "env": {
+     "POSTGRES_HOST_AUTH_METHOD": "trust"
+    },
+    "image": "postgres:17.10@sha256:7958605b474b3d264a969cb3a123d6aa00ad1e1fe9da8a69984dabb704d93317",
+    "options": "--health-cmd \"pg_isready -U postgres\" --health-interval 5s --health-timeout 5s --health-retries 10",
+    "ports": [
+     "5432:5432"
+    ]
+   },
+   "vault": {
+    "env": {
+     "SKIP_SETCAP": "true",
+     "VAULT_DEV_LISTEN_ADDRESS": "0.0.0.0:8200",
+     "VAULT_DEV_ROOT_TOKEN_ID": "root"
+    },
+    "image": "hashicorp/vault:2.2.0@sha256:e0acd3c681bdf57f002d7214e5d050b876e1704678005c6b0406dd96a65be919",
+    "options": "--health-cmd \"VAULT_ADDR=http://127.0.0.1:8200 vault status\" --health-interval 5s --health-timeout 5s --health-retries 10",
+    "ports": [
+     "8200:8200"
+    ]
+   }
+  },
+  "steps": [
+   {
+    "uses": "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+    "with": {
+     "persist-credentials": false
+    }
+   },
+   {
+    "uses": "astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2",
+    "with": {
+     "activate-environment": true,
+     "cache-suffix": "ci-check",
+     "checksum": "f29c3e94ffabd7e6f3ba521dba169a9b7ec12100bf3257087f0f24f6123f3645",
+     "python-version": "3.13",
+     "version": "0.13.6"
+    }
+   },
+   {
+    "name": "Install (locked, every backend extra and the contract-suite test group)",
+    "run": "uv sync --locked --no-build --all-extras --group test"
+   },
+   {
+    "name": "Lint",
+    "run": "ruff check src tests demos tools"
+   },
+   {
+    "name": "Format",
+    "run": "ruff format --check src tests demos tools"
+   },
+   {
+    "name": "Secrets and banned names in the tracked files (the repo is public)",
+    "run": "python tools/scan_repo.py"
+   },
+   {
+    "name": "The postgres client the database tests shell out to is present (else they would skip silently)",
+    "run": "psql --version"
+   },
+   {
+    "env": {
+     "HADAVIN_REQUIRE_PINNED_UNIDATA": "1",
+     "HADAVIN_TEST_PG_DSN": "postgresql://postgres@localhost:5432/postgres",
+     "HADAVIN_TEST_VAULT_ADDR": "http://127.0.0.1:8200"
+    },
+    "name": "Tests (no live calls)",
+    "run": "pytest -q -m \"not live and not perf\" -rs"
+   },
+   {
+    "name": "Stage-rename mutants (each reverted guard must be killed by its named test) (blocks)",
+    "run": "python tests/stage_mutants.py"
+   },
+   {
+    "env": {
+     "HADAVIN_TEST_PG_DSN": "postgresql://postgres@localhost:5432/postgres"
+    },
+    "name": "Performance of the redaction patterns (blocks)",
+    "run": "pytest -q -m perf -rs"
+   }
+  ],
+  "timeout-minutes": 30
+ },
  "jobs": {
   "check": {
    "if": "github.event_name != 'pull_request' || github.event.pull_request.draft == false",
@@ -46,7 +133,7 @@
    },
    {
     "name": "System tools resolve outside the workspace",
-    "run": "for c in sha256sum tar curl git grep date tr cut sort head mktemp rm touch; do p=$(command -v \"$c\") || exit 1; case \"$p\" in /*) ;; *) echo \"$c is not a file: $p\"; exit 1;; esac; case \"$p\" in \"$GITHUB_WORKSPACE\"/*) echo \"$c resolves inside the workspace: $p\"; exit 1;; esac; done\n"
+    "run": "sys_tools=\"readlink sha256sum tar curl git grep date tr cut sort head mktemp rm touch\"\nvenv_tools=\"python3 uv uvx\"\n[ -n \"$GITHUB_WORKSPACE\" ] || { echo \"GITHUB_WORKSPACE is empty\"; exit 1; }\nfor c in $sys_tools $venv_tools; do\n  p=$(command -v \"$c\") || { echo \"$c not found\"; exit 1; }\n  case \"$p\" in /*) ;; *) echo \"$c is not a file: $p\"; exit 1;; esac\n  venv_ok=0\n  case \" $venv_tools \" in *\" $c \"*) case \"$p\" in \"$GITHUB_WORKSPACE\"/.venv/bin/*) venv_ok=1;; esac;; esac\n  case \"$p\" in \"$GITHUB_WORKSPACE\"/*) [ \"$venv_ok\" = 1 ] || { echo \"$c resolves inside the workspace: $p\"; exit 1; };; esac\ndone\nwr=$(readlink -f -- \"$GITHUB_WORKSPACE\") || exit 1\ncase \"$wr\" in /*) ;; *) echo \"cannot resolve the workspace: $wr\"; exit 1;; esac\nfor c in $sys_tools $venv_tools; do\n  p=$(command -v \"$c\") || exit 1\n  r=$(readlink -f -- \"$p\") || { echo \"cannot resolve $c: $p\"; exit 1; }\n  case \"$r\" in /*) ;; *) echo \"cannot resolve $c: $p\"; exit 1;; esac\n  case \"$r\" in \"$GITHUB_WORKSPACE\"/*|\"$wr\"/*) echo \"$c is a link into the workspace: $p -> $r\"; exit 1;; esac\ndone\n[ -z \"$(git ls-files -- .venv)\" ] || { echo \"files under .venv are tracked\"; exit 1; }\n"
    },
    {
     "name": "Dependencies with known vulnerabilities (every locked package, hashes required)",
@@ -78,6 +165,69 @@
    }
   ],
   "timeout-minutes": 15
+ },
+ "tests_py312_job": {
+  "if": "github.event_name != 'pull_request' || github.event.pull_request.draft == false",
+  "runs-on": "ubuntu-24.04",
+  "services": {
+   "postgres": {
+    "env": {
+     "POSTGRES_HOST_AUTH_METHOD": "trust"
+    },
+    "image": "postgres:17.10@sha256:7958605b474b3d264a969cb3a123d6aa00ad1e1fe9da8a69984dabb704d93317",
+    "options": "--health-cmd \"pg_isready -U postgres\" --health-interval 5s --health-timeout 5s --health-retries 10",
+    "ports": [
+     "5432:5432"
+    ]
+   },
+   "vault": {
+    "env": {
+     "SKIP_SETCAP": "true",
+     "VAULT_DEV_LISTEN_ADDRESS": "0.0.0.0:8200",
+     "VAULT_DEV_ROOT_TOKEN_ID": "root"
+    },
+    "image": "hashicorp/vault:2.2.0@sha256:e0acd3c681bdf57f002d7214e5d050b876e1704678005c6b0406dd96a65be919",
+    "options": "--health-cmd \"VAULT_ADDR=http://127.0.0.1:8200 vault status\" --health-interval 5s --health-timeout 5s --health-retries 10",
+    "ports": [
+     "8200:8200"
+    ]
+   }
+  },
+  "steps": [
+   {
+    "uses": "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+    "with": {
+     "persist-credentials": false
+    }
+   },
+   {
+    "uses": "astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2",
+    "with": {
+     "activate-environment": true,
+     "cache-suffix": "ci-tests-py312",
+     "checksum": "f29c3e94ffabd7e6f3ba521dba169a9b7ec12100bf3257087f0f24f6123f3645",
+     "python-version": "3.12",
+     "version": "0.13.6"
+    }
+   },
+   {
+    "name": "Install (locked, every backend extra and the contract-suite test group)",
+    "run": "uv sync --locked --no-build --all-extras --group test"
+   },
+   {
+    "name": "The postgres client the database tests shell out to is present (else they would skip silently)",
+    "run": "psql --version"
+   },
+   {
+    "env": {
+     "HADAVIN_TEST_PG_DSN": "postgresql://postgres@localhost:5432/postgres",
+     "HADAVIN_TEST_VAULT_ADDR": "http://127.0.0.1:8200"
+    },
+    "name": "Tests on Python 3.12 (no live calls)",
+    "run": "pytest -q -m \"not live and not perf\" -rs"
+   }
+  ],
+  "timeout-minutes": 30
  },
  "workflow": {
   "concurrency": {

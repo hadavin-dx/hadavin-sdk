@@ -2,6 +2,7 @@
 Fake secrets are built from parts so this file itself never holds one. The real tools/*.txt files are never rewritten:
 the script takes --allowlist/--extra/--banned-src."""
 
+import hashlib
 import subprocess
 import sys
 from pathlib import Path
@@ -51,11 +52,12 @@ def _repo(tmp_path, files):
     return tmp_path
 
 
-def _scan(repo, allow="", extra="", banned_src=None):
+def _scan(repo, allow="", extra="", banned_src=None, suppress=""):
     """Run the script on `repo` with temporary list files (never the real ones)."""
     work = repo.parent / (repo.name + "-lists")
     work.mkdir(exist_ok=True)
-    allow_f, extra_f = work / "allow.txt", work / "extra.txt"
+    allow_f, extra_f, supp_f = work / "allow.txt", work / "extra.txt", work / "supp.txt"
+    supp_f.write_text(suppress, encoding="utf-8", newline="\n")
     allow_f.write_text(allow, encoding="utf-8", newline="\n")
     extra_f.write_text(extra, encoding="utf-8", newline="\n")
     cmd = [
@@ -67,6 +69,8 @@ def _scan(repo, allow="", extra="", banned_src=None):
         str(allow_f),
         "--extra",
         str(extra_f),
+        "--suppressions",
+        str(supp_f),
     ]
     if banned_src is not None:
         cmd += ["--banned-src", str(banned_src)]
@@ -182,3 +186,147 @@ def test_long_word_runs_do_not_hang_the_password_rule(tmp_path):
     start = time.monotonic()
     rc, _ = _scan(repo)
     assert rc == 0 and time.monotonic() - start < 20
+
+
+# ---- suppression markers and scanner-config files (built from parts so this file holds no live marker) ----
+H = "#" + " "
+MARKERS = {
+    "suppress-nosec": "x = f(1)  " + H + "nos" + "ec B310",
+    "suppress-nosemgrep": "x = f(1)  " + H + "nosem" + "grep: some.rule",
+    "suppress-gitleaks-allow": "x = 'abc'  " + H + "gitleaks:" + "allow",
+    "suppress-trivy-ignore": H + "trivy:" + "ignore:AVD-DS-0002",
+    "suppress-noqa-security": "x = f(1)  " + H + "no" + "qa: S603",
+}
+MORE_MARKERS = {
+    "suppress-nosec": ["x = f(1)  //nos" + "ec", "x = 1 -- nos" + "ec"],
+    "suppress-noqa-security": [
+        "x = 1  " + H + "no" + "qa",
+        "x = 1  " + H + "no" + "qa: BLE001, S112",
+        "x = 1  " + H + "no" + "qa:S603 reason",
+        "x = 1  #no" + "qa : S101",
+    ],
+}
+NOT_MARKERS = [
+    "the word nos" + "ec in prose",
+    "we do not use nosem" + "grep here",
+    "x = 1  " + H + "no" + "qa: BLE001",
+    "x = 1  " + H + "no" + "qa: F401, E501",
+    "x = 1  " + H + "noqafoo",
+    "x = 'S603'  " + H + "plain comment",
+]
+
+
+def _supp_line(path, rule, value, reason="reviewed for the test"):
+    return f"{path}:{rule}:{value}:{reason}\n"
+
+
+@pytest.mark.parametrize("rule", MARKERS)
+def test_each_suppression_marker_hits_unlisted_and_prints_no_text(tmp_path, rule):
+    rc, out = _scan(_repo(tmp_path, {"a/x.py": "ok\n" + MARKERS[rule] + "\n"}))
+    assert rc == 1 and out.strip() == f"a/x.py:2: {rule}"
+
+
+@pytest.mark.parametrize(("rule", "line"), [(r, m) for r, ms in MORE_MARKERS.items() for m in ms])
+def test_other_shapes_of_a_suppression_marker_hit(tmp_path, rule, line):
+    rc, out = _scan(_repo(tmp_path, {"a.py": line + "\n"}))
+    assert rc == 1 and f"a.py:1: {rule}" in out
+
+
+@pytest.mark.parametrize("line", NOT_MARKERS)
+def test_prose_and_style_codes_are_not_suppression_hits(tmp_path, line):
+    assert _scan(_repo(tmp_path, {"a.py": line + "\n"}))[0] == 0
+
+
+@pytest.mark.parametrize("rule", MARKERS)
+def test_a_listed_marker_with_the_exact_count_passes(tmp_path, rule):
+    repo = _repo(tmp_path, {"a.py": MARKERS[rule] + "\nx = 2\n" + MARKERS[rule] + "\n"})
+    assert _scan(repo, suppress=_supp_line("a.py", rule, 2)) == (0, "\n")
+
+
+@pytest.mark.parametrize("rule", MARKERS)
+@pytest.mark.parametrize("listed", [1, 3])
+def test_a_count_that_differs_from_the_list_fails_both_ways(tmp_path, rule, listed):
+    repo = _repo(tmp_path, {"a.py": MARKERS[rule] + "\n" + MARKERS[rule] + "\n"})
+    rc, out = _scan(repo, suppress=_supp_line("a.py", rule, listed))
+    assert rc == 1 and "suppression-list count is 2" in out
+
+
+def test_a_list_entry_covers_only_its_own_file_and_rule(tmp_path):
+    files = {"a.py": MARKERS["suppress-nosec"], "b.py": MARKERS["suppress-nosec"]}
+    rc, out = _scan(_repo(tmp_path, files), suppress=_supp_line("a.py", "suppress-nosec", 1))
+    assert rc == 1 and "b.py:1: suppress-nosec" in out and "a.py" not in out
+    both = MARKERS["suppress-nosec"] + "\n" + MARKERS["suppress-noqa-security"]
+    rc, out = _scan(
+        _repo(tmp_path / "r2", {"a.py": both}), suppress=_supp_line("a.py", "suppress-nosec", 1)
+    )
+    assert rc == 1 and "a.py:2: suppress-noqa-security" in out
+
+
+def test_a_file_the_allowlist_skips_is_still_checked_for_markers(tmp_path):
+    repo = _repo(tmp_path, {"a.py": MARKERS["suppress-nosec"]})
+    rc, out = _scan(repo, allow="a.py:*:test fixture\n")
+    assert rc == 1 and "a.py:1: suppress-nosec" in out
+
+
+@pytest.mark.parametrize(
+    ("entry", "message"),
+    [
+        ("gone.py:suppress-nosec:1:reason\n", "stale entry, gone.py suppress-nosec not tracked"),
+        ("a.py:suppress-nosec:1:reason\n", "stale entry, a.py suppress-nosec has no such marker"),
+        ("a.py:suppress-nosec:1:\n", "malformed"),
+        ("a.py:suppress-nosec:1\n", "malformed"),
+        ("a.py:suppress-everything:1:reason\n", "unknown rule"),
+        ("a.py:suppress-nosec:many:reason\n", "positive count"),
+        ("a.py:suppress-nosec:0:reason\n", "positive count"),
+        ("a.py:scanner-config-file:abc:reason\n", "sha256"),
+        ("a.py:suppress-nosec:1:r\na.py:suppress-nosec:1:again\n", "duplicate"),
+    ],
+)
+def test_a_bad_list_line_is_itself_a_hit(tmp_path, entry, message):
+    repo = _repo(tmp_path, {"a.py": "x = 1\n"})
+    rc, out = _scan(repo, suppress=entry)
+    assert rc == 1 and message in out
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        ".gitleaksignore",
+        ".gitleaks.toml",
+        ".semgrepignore",
+        ".trivyignore",
+        "sub/dir/.trivyignore",
+        "zizmor.yml",
+    ],
+)
+def test_a_scanner_config_file_hits_unless_listed_with_its_hash(tmp_path, name):
+    content = "anything\n"
+    repo = _repo(tmp_path, {name: content})
+    rc, out = _scan(repo)
+    assert rc == 1 and f"{name}:1: scanner-config-file" in out
+    sha = hashlib.sha256(content.encode()).hexdigest()
+    assert _scan(repo, suppress=_supp_line(name, "scanner-config-file", sha)) == (0, "\n")
+    rc, out = _scan(repo, suppress=_supp_line(name, "scanner-config-file", "0" * 64))
+    assert rc == 1 and "hash differs" in out
+
+
+def test_changing_a_listed_scanner_config_file_fails_until_the_list_changes(tmp_path):
+    repo = _repo(tmp_path, {".gitleaksignore": "one\n"})
+    sha = hashlib.sha256(b"one\n").hexdigest()
+    supp = _supp_line(".gitleaksignore", "scanner-config-file", sha)
+    assert _scan(repo, suppress=supp)[0] == 0
+    (repo / ".gitleaksignore").write_text("one\ntwo\n")
+    subprocess.run(["git", "-C", str(repo), "add", "-A"], check=True)  # noqa: S603, S607
+    assert _scan(repo, suppress=supp)[0] == 1
+
+
+def test_the_real_repo_passes_with_its_own_list():
+    root = SCRIPT.parents[1]
+    cmd = [sys.executable, str(SCRIPT), "--root", str(root)]
+    r = subprocess.run(cmd, capture_output=True, text=True, check=False)  # noqa: S603
+    assert r.returncode == 0, r.stdout[-2000:]
+
+
+def test_the_real_list_says_the_baseline_was_not_reviewed_line_by_line():
+    text = (SCRIPT.parent / "scan_suppressions.txt").read_text()
+    assert "NOT reviewed one" in text and "CODEOWNERS" in text
