@@ -900,3 +900,6 @@ PR72 0ae044b: builder done; evidence run waits for evid.sh fix (inv-trunc-66), t
 - 07:48:52 builder askdata-flaky (new PR, ORDER 181 q394-1) and builder R1 mutation-runner keywords (q394-2) being registered; expected end 60 min
 - 07:49:23 ae773123 (PR87 nits, head 5520a67), a954ec79 (PR75 pass 2, head 39ff5ef), af3568bb (AK-G2 r6 readiness) REPORTED/CLOSED; my evid.sh 87 on a909459 stopped (head changed)
 - 07:49:50 a5e7452c AK-G2 resolver, af553813 askdata builder, a56f6d4c R1 builder STARTED (exp end 60 min); evid 87@5520a67 and 75@39ff5ef STARTED
+- 07:50:24 aa89841a, a5a3316c (P1d-a r2) and a24028ed (P4a r3 design) REPORTED/CLOSED, reports saved
+- 07:50:31 ab6c7e80 PR84 fix REPORTED/CLOSED head de18d590f06c56dc61b0de9a8ec43dbd9aaf863e; snapshot /home/user/build/snap/84-de18d59; evid.sh 84 started
+- 07:50:53 a25637c4 + ac36fa89 PR84 r5 reviewers STARTED; a52cf487 P1d-a resolver STARTED

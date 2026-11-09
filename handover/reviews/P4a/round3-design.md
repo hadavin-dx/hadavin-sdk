@@ -1,0 +1,8 @@
+# P4a rev 3 plan review r3, egm-design (a24028ed), money path
+Verdict 0B/4M/7N. All round-2 findings closed in text. Nothing run.
+N-1 Major: refusal at 3-4 call sites, not a choke point (app.py:165,168, cli.py:177,296-297). Add AST repo guard: no make("llm"/"detector") outside named functions or without live_llm_refusal earlier; own mutant (new call site without gate).
+N-2 Major: "never wrap the stand-in" is a cross-ticket duty (P4c-2 SG-T6b) with no loud backstop. Add constructor-time refusal in P4b1-b wrapper (raise if inner is RefusedLLM), test row + mutant; make lead relay into P4c.md a numbered action.
+N-3 Major: FB-9 no row/mutant for attempts>1, valid usage, no field, answered>R (must book answered, measured=True, on_overshoot); add FB-T9 sub-row + FB-M9d; FB-T5c needs mutant FB-M5c (repair settles at R).
+N-4 Major: SG-T6c spy "0 calls" impossible: same llm object feeds detector (app.py:165-168). Assert run ends before run-path call, reason guard_unavailable not provider_error, stand-in chat count == judge checks.
+Nits: N-5 FB-T5b grep matches semaphore .release( in guard/http.py; use AST on settle_spend/release_spend. N-6 migrations_released.json absent in snapshots; make checkable. N-7 FB-T6b needs real Postgres; name WARNING source. N-8 FB-T7d call replay() directly or demo stage. N-9 RefusedLLM not a model kind; add FB-T1 sub-row best-effort release fails. N-10 approval flag only warns, say so. N-11 FB-8 mutants include SG-M9; add RefusedDetector.check clean-verdict mutant.
+Counts re-derived OK (16 tests, 25 mutants, 12 SG rows, 11 SG mutants, W=27,360, R=164,160).
