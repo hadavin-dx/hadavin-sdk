@@ -25,8 +25,8 @@ import pytest
 from hadavin_sdk import models
 from hadavin_sdk.models import KillSwitch, Run
 from hadavin_sdk.store.postgres import PostgresStore
-from hadavin_sdk.store.protocol import SpendCapExceeded, SpendOutcome, StoreBusy
-from tests.contracts import reserve_workers
+from hadavin_sdk.store.protocol import NotFound, SpendCapExceeded, SpendOutcome, StoreBusy
+from tests.contracts import pg_owner, reserve_workers
 from tests.contracts.kinds.store_postgres import pg_driver, pg_schema
 from tests.contracts.store_support import utc_today
 
@@ -805,14 +805,9 @@ def test_the_sweep_and_the_day_bound_follow_the_database_clock_not_the_python_cl
 
     for module in (models, __import__("hadavin_sdk.store.postgres", fromlist=["now"])):
         monkeypatch.setattr(module, "now", fake)
-    _reserve(store, "old", "1", day=day)
+    # c1: an old row made by the owner fixture (insert trigger off, one transaction); the counters carry it
+    pg_owner.insert_aged(dsn, "old", AGENT, day, D(1), 40)
     _reserve(store, "fresh", "1", day=day)
-    drv.execute(admin, "SET session_replication_role = replica")
-    drv.execute(
-        admin,
-        "UPDATE spend_reservations SET created_at = created_at - make_interval(secs => 40) WHERE reservation_id = 'old'",
-    )
-    admin.commit()
     swept = [r.reservation_id for r in store.sweep_spend_reservations(30)]
     assert swept == ["old"]  # 40 s old by the database clock; the fresh row is untouched
     assert store.get_spend_reservation("fresh").status == "open"
@@ -820,3 +815,290 @@ def test_the_sweep_and_the_day_bound_follow_the_database_clock_not_the_python_cl
     assert _reserve(store, "today", "1", day=day).applied is True
     with pytest.raises(ValueError):
         _reserve(store, "far", "1", day=day + timedelta(days=2))
+
+
+# --- 9. the owner fixture itself (B7): owner only, one trigger, always switched on again --------------------------
+
+
+def test_the_owner_fixture_switches_one_trigger_off_and_always_on_again(dsn, make):
+    states = pg_owner.trigger_states(dsn)
+    assert set(states.values()) == {"O"} and len(states) == 2  # both enabled to begin with
+    store = make()
+    day = utc_today(store)
+    pg_owner.insert_aged(dsn, "aged", AGENT, day, D(2), 100)
+    assert pg_owner.trigger_states(dsn) == states
+    row = store.get_spend_reservation("aged")
+    assert row.status == "open" and (row.reserved_usd, row.agent_id) == (D(2), AGENT)
+    assert store.spend_totals(AGENT, day) == (D(2), D(2))
+    with (
+        pytest.raises(RuntimeError, match="boom"),
+        pg_owner.trigger_off(dsn, "spend_reservations_update"),
+    ):
+        raise RuntimeError("boom")  # an error inside the block rolls the DISABLE back
+    assert pg_owner.trigger_states(dsn) == states
+    with pytest.raises(ValueError), pg_owner.trigger_off(dsn, "no_such_trigger"):
+        pass
+
+
+def test_the_runtime_login_cannot_switch_a_trigger_off(dsn, make):
+    """Negative test: the right to disable a trigger belongs to the table owner only."""
+    conn = drv.connect_runtime(dsn)
+    try:
+        with pytest.raises(Exception) as caught:
+            drv.execute(
+                conn, "ALTER TABLE spend_reservations DISABLE TRIGGER spend_reservations_insert"
+            )
+        assert drv.sqlstate(caught.value) == "42501"
+    finally:
+        conn.close()
+    assert set(pg_owner.trigger_states(dsn).values()) == {"O"}
+
+
+# --- 10. B4 (ii) at 50 repeats; the kill switch during a held lock; T1-T3 for reserve; fill-the-cap variants -------
+
+
+def test_b4_ii_eight_stores_reserving_the_same_id_book_it_once_fifty_times_without_a_retry(
+    dsn, make
+):
+    build, retries = _counting(make)
+    base = make()
+    day = utc_today(base)
+    run = _run(base)
+    stores = [build() for _ in range(8)]
+    for n in range(50):
+        results = _in_parallel(
+            [lambda s=s, n=n: _reserve(s, f"same-{n}", "1", run=run, day=day) for s in stores]
+        )
+        assert sorted(r.applied for r in results) == [False] * 7 + [True], n
+        assert {r.reservation.reservation_id for r in results} == {f"same-{n}"}
+    assert retries == []
+    assert base.spend_totals(AGENT, day) == (D(50), D(50))
+    assert base.get_run(run.run_id).cost_usd == D(50)
+    assert len(base.list_open_reservations(AGENT, limit=1000)) == 50
+
+
+def test_set_kill_switch_from_a_second_handle_completes_while_a_reserve_waits_at_a_counter(
+    dsn, make, admin
+):
+    """The reserve reads the switch WITHOUT a lock (ticket P4d, kill-switch read), so a stop request is never queued
+    behind a reserve that is itself waiting for a counter row."""
+    from hadavin_sdk.store.protocol import KillSwitchOn
+
+    _, day, _ = _seeded(make)
+    waiting, other = make(), make()
+    drv.execute(
+        admin,
+        "SELECT 1 FROM spend WHERE agent_id = %s AND day = %s FOR NO KEY UPDATE",
+        (AGENT, day),
+    )
+    thread, result = _start(lambda: _reserve(waiting, "ks-wait", "1", day=day))
+    assert _wait_for_head(dsn, HEAD_DAY) is not None, "the reserve never waited at its spend UPDATE"
+    stopper, _ = _start(lambda: other.set_kill_switch(KillSwitch(on=True, by="user:test")))
+    stopper.join(10)
+    finished = not stopper.is_alive()
+    admin.rollback()  # let the waiting reserve go on in any case
+    thread.join(30)
+    assert finished, "set_kill_switch was held up by the waiting reserve"
+    assert result["out"].applied is True  # it had read the switch (off) before it waited
+    assert other.get_kill_switch().on is True
+    with pytest.raises(KillSwitchOn):
+        _reserve(waiting, "ks-after", "1", day=day)
+
+
+def _hold_day_row(admin, day):
+    drv.execute(
+        admin,
+        "SELECT 1 FROM spend WHERE agent_id = %s AND day = %s FOR NO KEY UPDATE",
+        (AGENT, day),
+    )
+
+
+@pytest.mark.parametrize(
+    ("settings", "low", "high"),
+    [
+        ({"lock_timeout_ms": 100, "call_budget_ms": 60000}, 0.09, 5),
+        ({"lock_timeout_ms": 60000, "call_budget_ms": 500}, 0.45, 5),
+    ],
+    ids=["T1-lock-timeout-100", "T2-budget-500"],
+)
+def test_t1_t2_a_counter_row_that_is_never_released_gives_store_busy_within_the_limit(
+    dsn, admin, settings, low, high
+):
+    conn = drv.connect_runtime(dsn)
+    try:
+        store = PostgresStore(conn, **settings)
+        day = utc_today(store)
+        _reserve(store, "t-seed", "1", day=day)
+        _hold_day_row(admin, day)
+        thread, result = _start(lambda: _try(lambda: _reserve(store, "t-busy", "1", day=day)))
+        started = time.monotonic()
+        thread.join(
+            20
+        )  # a missing limit would wait for the other 60 s limit: the join is the ceiling
+        elapsed = time.monotonic() - started
+        stuck = thread.is_alive()
+        admin.rollback()
+        thread.join(70)
+        assert not stuck, "the wait was not cut by the limit"
+        assert isinstance(result["out"], StoreBusy), result
+        assert low <= elapsed < high, elapsed
+        assert store.spend_totals(AGENT, day) == (D(1), D(1))
+        assert [r.reservation_id for r in store.list_open_reservations(AGENT)] == ["t-seed"]
+    finally:
+        conn.close()
+
+
+class _SeesSettings(PostgresStore):
+    """Records the two timeouts as they stand when the first statement of `reserve_spend` is sent."""
+
+    seen: list
+
+    def _exec(self, query, params=None):
+        if str(query).startswith("INSERT INTO spend_reservations"):
+            row = (
+                super()
+                ._exec(
+                    "SELECT current_setting('lock_timeout') AS l, current_setting('statement_timeout') AS s"
+                )
+                .fetchone()
+            )
+            self.seen.append((_ms(row["l"]), _ms(row["s"])))
+        return super()._exec(query, params)
+
+
+def _ms(text):
+    found = re.fullmatch(r"(\d+)(ms|s|min)?", text)
+    return int(found.group(1)) * {"ms": 1, "s": 1000, "min": 60000, None: 1}[found.group(2)]
+
+
+def test_t3_reserve_sets_both_timeouts_from_the_settings_and_the_remaining_budget(dsn):
+    conn = drv.connect_runtime(dsn)
+    try:
+        store = _SeesSettings(conn, lock_timeout_ms=100, call_budget_ms=60000)
+        store.seen = []
+        _reserve(store, "t3-a", "1")
+        (lock, stmt) = store.seen[0]
+        assert lock == 100 and 0 < stmt <= 60000
+        store = _SeesSettings(conn, lock_timeout_ms=60000, call_budget_ms=500)
+        store.seen = []
+        _reserve(store, "t3-b", "1")
+        (lock, stmt) = store.seen[0]
+        assert 0 < lock <= 500 and 0 < stmt <= 500  # the lock wait is cut to the budget
+    finally:
+        conn.close()
+
+
+def test_fill_the_cap_a_reserve_that_waited_re_checks_the_cap_against_the_booking_that_won(
+    dsn, make, admin
+):
+    """The cap test runs in the SAME statement as the write (`UPDATE ... WHERE usd + amount <= cap`), so after the
+    lock wait it sees the committed booking. A check made in Python BEFORE the write (mutant b4) would pass."""
+    base, day, _ = _seeded(make)  # the day counter is 1
+    store = make()
+    _hold_day_row(admin, day)
+    thread, result = _start(
+        lambda: _try(
+            lambda: store.reserve_spend(
+                "fill",
+                AGENT,
+                day,
+                D(1),
+                day_cap=D(3),
+                month_cap=None,
+                run_id=None,
+                run_cap=None,
+            )
+        )
+    )
+    assert _wait_for_head(dsn, HEAD_DAY) is not None
+    # the winner: a booking that brings the day (and month) counter to the cap, committed while the reserve waits
+    drv.execute(admin, "UPDATE spend SET usd = 3 WHERE agent_id = %s AND day = %s", (AGENT, day))
+    drv.execute(
+        admin,
+        "UPDATE spend_month SET usd = 3 WHERE agent_id = %s AND month = %s",
+        (AGENT, _month_of(day)),
+    )
+    admin.commit()
+    thread.join(30)
+    refusal = result["out"]
+    assert isinstance(refusal, SpendCapExceeded) and refusal.which == "day", refusal
+    assert (refusal.cap, refusal.current, refusal.requested) == (D(3), D(3), D(1))
+    assert base.spend_totals(AGENT, day) == (D(3), D(3))  # nothing was added by the refused call
+    with pytest.raises(NotFound):
+        base.get_spend_reservation("fill")
+
+
+def test_fill_the_cap_a_settle_that_waited_returns_the_first_result_when_another_settle_won(
+    dsn, make, admin
+):
+    base, day, _ = _seeded(make)
+    _reserve(base, "late", "1", day=day)  # the day counter is 2
+    store = make()
+    drv.execute(
+        admin,
+        "SELECT 1 FROM spend_reservations WHERE reservation_id = %s FOR UPDATE",
+        ("late",),
+    )
+    thread, result = _start(lambda: store.settle_spend("late", D("0.7")))
+    assert _wait_for_head(dsn, "UPDATE spend_reservations SET") is not None
+    # the winner settles the same reservation at 0.2 and lowers the counters by 0.8, then commits
+    drv.execute(
+        admin,
+        "UPDATE spend_reservations SET status = 'settled', settled_usd = 0.2, closed_at = clock_timestamp() "
+        "WHERE reservation_id = %s",
+        ("late",),
+    )
+    drv.execute(admin, "UPDATE spend SET usd = usd - 0.8 WHERE agent_id = %s", (AGENT,))
+    drv.execute(admin, "UPDATE spend_month SET usd = usd - 0.8 WHERE agent_id = %s", (AGENT,))
+    admin.commit()
+    thread.join(30)
+    out = result["out"]
+    assert out.applied is False and out.reservation.settled_usd == D("0.2")
+    assert base.spend_totals(AGENT, day) == (
+        D("1.2"),
+        D("1.2"),
+    )  # the waiting settle booked nothing
+
+
+# --- 11. rows the database clock would never let a test make: other months, and equal creation times --------------
+
+
+@pytest.mark.parametrize(
+    "far_day",
+    [date(2020, 12, 31), date(2021, 1, 1), date(2024, 2, 29), date(2023, 12, 31)],
+    ids=["year-end", "year-start", "leap-day", "year-end-2023"],
+)
+def test_settle_and_release_lower_the_reservations_own_day_and_month_not_todays(dsn, make, far_day):
+    """The day bound keeps `reserve_spend` within a day of today, so a row of another month comes from the owner
+    fixture. A settle that took the month from today (mutant b10) would find no counter row and fail."""
+    store = make()
+    pg_owner.insert_aged(dsn, ["far-a", "far-b"], AGENT, far_day, D(2), 100)
+    assert store.spend_totals(AGENT, far_day) == (D(4), D(4))
+    first = store.settle_spend("far-a", D("0.5"))
+    assert first.applied is True
+    assert store.spend_totals(AGENT, far_day) == (D("2.5"), D("2.5"))
+    other = store.release_spend("far-b")
+    assert other.applied is True and other.reservation.settled_usd is None
+    assert store.spend_totals(AGENT, far_day) == (D("0.5"), D("0.5"))
+
+
+def test_the_sweep_takes_the_oldest_first_and_breaks_ties_by_id(dsn, make):
+    store = make()
+    day = utc_today(store)
+    # inserted newest first, so that an unordered scan returns them in the wrong order
+    pg_owner.insert_aged(dsn, ["t-c", "t-a", "t-b"], AGENT, day, D(1), 100)  # one creation time
+    pg_owner.insert_aged(dsn, "y-mid", AGENT, day, D(1), 200)
+    pg_owner.insert_aged(dsn, "z-old", AGENT, day, D(1), 300)
+    # without the ORDER BY the planner would still walk the partial index in order; a plain scan shows the truth
+    drv.execute(store._db, "SET enable_indexscan = off")
+    drv.execute(store._db, "SET enable_bitmapscan = off")
+    first = store.sweep_spend_reservations(30, limit=2)
+    assert [r.reservation_id for r in first] == ["z-old", "y-mid"]  # oldest first, whatever the ids
+    second = store.sweep_spend_reservations(30, limit=2)
+    assert [r.reservation_id for r in second] == ["t-a", "t-b"]  # equal times: by id
+    third = store.sweep_spend_reservations(30, limit=2)
+    assert [r.reservation_id for r in third] == ["t-c"]
+    assert (
+        store.sweep_spend_reservations(30, limit=2) == []
+    )  # a loop of sweeps ends with an empty list
+    assert store.spend_totals(AGENT, day) == (D(5), D(5))  # no counter moved

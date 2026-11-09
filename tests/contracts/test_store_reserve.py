@@ -64,17 +64,9 @@ def _age(store, rid, seconds):
             update={"created_at": row.created_at - timedelta(seconds=seconds)}
         )
         return
-    from tests.contracts.kinds.store_postgres import pg_driver
+    from tests.contracts import pg_owner
 
-    drv = pg_driver()
-    with drv.connect_admin(store.runtime_dsn) as conn:
-        drv.execute(conn, "SET session_replication_role = replica")
-        drv.execute(
-            conn,
-            "UPDATE spend_reservations SET created_at = created_at - make_interval(secs => %s) "
-            "WHERE reservation_id = %s",
-            (seconds, rid),
-        )
+    pg_owner.age(store.runtime_dsn, rid, seconds)
 
 
 def test_reserve_books_the_three_counters_and_returns_the_row(store):
@@ -735,3 +727,236 @@ def test_b5_ten_thousand_reserve_settle_pairs_equal_the_exact_decimal_sum(store)
         store.settle_spend(rid, settled)
         expected += settled
     assert _counters(store, agent, run) == {"run": expected, "day": expected, "month": expected}
+
+
+# --- B5: the model-based property test (200 fixed seeds x 30 steps, both stores) -----------------------------------
+
+MODEL_SEEDS = range(200)
+MODEL_STEPS = 30
+
+
+def _month_key(day):
+    """Integer months, independent of the code's `day.replace(day=1)`."""
+    return day.year * 12 + day.month
+
+
+class _Ledger:
+    """The model's three counters: run cost, per day, per month."""
+
+    def __init__(self):
+        self.run, self.day, self.month = D(0), {}, {}
+
+    def move(self, row, delta):
+        self.run += delta if row["run"] else 0
+        self.day[row["day"]] = self.day.get(row["day"], D(0)) + delta
+        key = _month_key(row["day"])
+        self.month[key] = self.month.get(key, D(0)) + delta
+
+
+def _micro(rng, high):
+    return D(rng.randrange(1, high)) / D(10**6)
+
+
+def test_b5_model_reserve_settle_release_and_sweep_match_a_plain_python_ledger(store):
+    """Each seed has its own agent and run, so one store serves all seeds (the runtime role cannot truncate).
+    The model is a dict of reservations and three counters. Memory also runs `sweep_spend_reservations`, aging
+    the chosen open rows first; Postgres runs the same sequences without sweeps (its sweep is proved in B7 with
+    the owner fixture, because the database clock and the insert trigger make aging impossible here)."""
+    from tests.contracts.test_store import _SeededChoices
+
+    today = utc_today(store)
+    days = [today + timedelta(days=k) for k in (-1, 0, 1)]
+    counts = {
+        "granted": 0,
+        "refused": 0,
+        "settled": 0,
+        "released": 0,
+        "expired": 0,
+        "closed_replay": 0,
+    }
+    ops = ["reserve", "reserve", "reserve", "settle", "settle", "release", "replay", "check"]
+    if store.backend == "memory":
+        ops.append("sweep")
+    for seed in MODEL_SEEDS:
+        rng = _SeededChoices(seed)
+        agent = f"pm-{seed}-{store.backend}"
+        run = _run(store, agent)
+        res: dict[str, dict] = {}
+        ledger = _Ledger()
+        day_tot, month_tot = ledger.day, ledger.month
+        for step in range(MODEL_STEPS):
+            where = (seed, step)
+            op = rng.choice(ops)
+            open_ids = [r for r, v in sorted(res.items()) if v["status"] in ("open", "expired")]
+            if op == "reserve":
+                rid = f"pm-{seed}-{step}-{store.backend}"
+                row = {
+                    "amount": _micro(rng, 2_000_000),
+                    "day": rng.choice(days),
+                    "run": rng.choice([True, False]),
+                    "status": "open",
+                    "settled": None,
+                }
+                caps = [
+                    rng.choice([None, _micro(rng, 8_000_000)]) for _ in range(3)
+                ]  # day, month, run
+                if not row["run"]:
+                    caps[2] = None  # a run cap needs a run
+                refused = None
+                for which, total, cap in (
+                    ("run", ledger.run if row["run"] else None, caps[2]),
+                    ("day", day_tot.get(row["day"], D(0)), caps[0]),
+                    ("month", month_tot.get(_month_key(row["day"]), D(0)), caps[1]),
+                ):
+                    if cap is not None and total is not None and total + row["amount"] > cap:
+                        refused = which
+                        break
+                try:
+                    out = _reserve(
+                        store,
+                        agent,
+                        row["amount"],
+                        rid=rid,
+                        day=row["day"],
+                        run=run if row["run"] else None,
+                        caps=tuple(caps),
+                    )
+                except SpendCapExceeded as exc:
+                    assert refused == exc.which, where
+                    with pytest.raises(NotFound):
+                        store.get_spend_reservation(rid)
+                    counts["refused"] += 1
+                else:
+                    assert refused is None and out.applied is True, where
+                    res[rid] = row
+                    ledger.move(row, row["amount"])
+                    counts["granted"] += 1
+            elif op == "replay" and res:
+                rid = rng.choice(sorted(res))
+                row = res[rid]
+                same = {
+                    "day": row["day"],
+                    "run": run if row["run"] else None,
+                    "rid": rid,
+                    "caps": (None, None, None),
+                }
+                if rng.choice([True, False]):  # the same content
+                    if row["status"] == "open":
+                        out = _reserve(store, agent, row["amount"], **same)
+                        assert out.applied is False and out.reservation.status == "open", where
+                    else:
+                        with pytest.raises(StaleState):
+                            _reserve(store, agent, row["amount"], **same)
+                        counts["closed_replay"] += 1
+                else:  # other content: conflict whatever the status
+                    with pytest.raises(ReservationConflict):
+                        _reserve(store, agent, row["amount"] + D("0.000001"), **same)
+            elif op in ("settle", "release") and res:
+                rid = rng.choice(sorted(res))
+                row = res[rid]
+                actual = _micro(rng, 3_000_000) if op == "settle" else None
+                out = (
+                    store.settle_spend(rid, actual) if op == "settle" else store.release_spend(rid)
+                )
+                if row["status"] in ("open", "expired"):
+                    assert out.applied is True, where
+                    ledger.move(row, (actual if actual is not None else D(0)) - row["amount"])
+                    row["status"] = "settled" if op == "settle" else "released"
+                    row["settled"] = actual
+                    counts["settled" if op == "settle" else "released"] += 1
+                else:
+                    assert out.applied is False, where
+                assert out.reservation.status == row["status"], where
+                assert out.reservation.settled_usd == row["settled"], where
+            elif op == "sweep":
+                aged = [
+                    r for r in open_ids if res[r]["status"] == "open" and rng.choice([True, False])
+                ]
+                for rid in aged:
+                    _age(store, rid, 600)
+                swept = [
+                    r.reservation_id
+                    for r in store.sweep_spend_reservations(60, limit=1000)
+                    if r.agent_id == agent
+                ]
+                assert swept == sorted(
+                    swept, key=lambda r: (store.get_spend_reservation(r).created_at, r)
+                )
+                assert sorted(swept) == sorted(aged), where
+                for rid in aged:
+                    res[rid]["status"], res[rid]["settled"] = "expired", res[rid]["amount"]
+                    counts["expired"] += 1
+            # after every step: counters, run cost, each row and the open list equal the model
+            for d in days:
+                assert store.spend_totals(agent, d) == (
+                    day_tot.get(d, D(0)),
+                    month_tot.get(_month_key(d), D(0)),
+                ), where
+            assert store.get_run(run.run_id).cost_usd == ledger.run, where
+            for rid, row in res.items():
+                got = store.get_spend_reservation(rid)
+                assert (got.status, got.settled_usd, got.reserved_usd) == (
+                    row["status"],
+                    row["settled"],
+                    row["amount"],
+                ), (where, rid)
+            assert {
+                r.reservation_id for r in store.list_open_reservations(agent_id=agent, limit=1000)
+            } == {r for r, v in res.items() if v["status"] == "open"}, where
+    # the sequences really reached every branch (a model that never refuses or settles proves nothing)
+    assert counts["granted"] > 800 and counts["refused"] > 300, counts
+    assert counts["settled"] > 300 and counts["released"] > 100 and counts["closed_replay"] > 50, (
+        counts
+    )
+    if store.backend == "memory":
+        assert counts["expired"] > 100, counts
+
+
+def test_b12_memory_the_lock_covers_the_cap_check_and_the_write():
+    """Memory store only (the hook exists there only). The first thread is held between its cap check and its write
+    while a second thread reserves; with the lock the second waits and is refused, so exactly one is granted. Without
+    the lock both pass the cap check, every time (no luck of the interpreter lock)."""
+    import threading
+
+    from hadavin_sdk.store.memory import MemoryStore
+
+    entered, release = threading.Event(), threading.Event()
+    calls = []
+
+    def hook(name):
+        calls.append(name)
+        if len(calls) == 1:
+            entered.set()
+            release.wait(5)
+
+    store = MemoryStore(_checkpoint=hook)
+    day = utc_today(store)
+    results = []
+
+    def go(rid):
+        try:
+            store.reserve_spend(
+                rid,
+                "rs-b12",
+                day,
+                D(1),
+                day_cap=D("1.5"),
+                month_cap=None,
+                run_id=None,
+                run_cap=None,
+            )
+            results.append("ok")
+        except SpendCapExceeded:
+            results.append("cap")
+
+    first = threading.Thread(target=go, args=("b12-1",), daemon=True)
+    first.start()
+    assert entered.wait(5)
+    second = threading.Thread(target=go, args=("b12-2",), daemon=True)
+    second.start()
+    second.join(0.3)  # with the lock the second thread is still waiting for it here
+    release.set()
+    first.join(10)
+    second.join(10)
+    assert sorted(results) == ["cap", "ok"]
+    assert store.spend_totals("rs-b12", day) == (D(1), D(1))
