@@ -795,3 +795,16 @@ rv-P1d-r3-readiness closed 05:29Z
 rv-P1d-r3-design closed 05:32Z
 | r4-design, r4-readiness, r4-zoomout | P1d rev 4 plan review round 4 | 05:39Z | +20 min | - | running | collect, save round4-*.md, resolve |
 | ev-P1b-r2 | EVIDENCE RUNNER P1b at 2034512 | 06:06Z | +60 min | - | running | read evidence file, start round-2 reviewers on snapshot |
+
+## LANE TABLE (ORDER 169, 2026-11-09 ~06:35Z). States from the PR list and register; anything not re-checked today is marked UNVERIFIED.
+| lane | state | blocker | agent |
+|---|---|---|---|
+| P1d plan | ticket rev 5 pushed fd110fd | none | r5-design, r5-readiness, r5-zoomout (new) |
+| P1b result | fix batch 2034512 pushed; evidence running | none for fixer; round-2 reviewers wait for evidence | ev-P1b-r2 running; fix2-P1b builder (new: M12 script, M16 apostrophe, M4 measurement) |
+| P2d-2 (S6, S13 hand-out secrets) | ticket tickets/P2d.md exists; plan review not done today UNVERIFIED | hard dependency on P1d markers only for merge, not for plan review | r1-P2d plan reviewer (new) |
+| P1d-b / P1d-c (S11, S16) | no ticket yet | none for drafting | draft-P1db builder-drafter (new) |
+| P6a PR 72 | evidence rerun running | none | gen_evidence-P6a-pg-rerun running |
+| PR 63 P1a, PR 70 P1b | open, not draft | waits for lead merge | none (P1b via lane above) |
+| money chain PR 66, 75, 76, 77, 78, 79 | open (66, 75 ready; 76-79 draft) | wait for merges in order 66 then 75 | UNVERIFIED current review state; next step is result reviewers on a snapshot |
+| PR 73 P3a-2, PR 74 P5a, PR 80 P5b1, PR 85 P5b2, PR 86 P6b1, PR 83 P0t-followup, PR 84 ci-evidence | open | wait for lead merge | next step is fresh result reviewers on a snapshot |
+| ci-lint-set batch 2, T1/T2, AK-G2 | UNVERIFIED | UNVERIFIED | none yet |
