@@ -547,3 +547,4 @@ LAPTOP CANDIDATES (pushed heads only): PR85 0b54631 (items 3,4,10), PR72 e6a4220
 05:38Z HB(auto):  agents 2 running (gen_evidence-P6a-pg-rerun,bd-P1b-fix1) | heavy slots busy 0/3 | last: started, none yet 
 05:39Z P1d rev4 committed; round 4 reviewers starting; q379
 05:42Z ORDER 168 read (floor=config w/ validated range+source; rows 005/006/009/010 own topics; BS-2 fail = HOLD). r4 zoomout+design saved; readiness pending
+05:43Z HB(auto):  agents 3 running (gen_evidence-P6a-pg-rerun,bd-P1b-fix1,r4-readiness) | heavy slots busy 2/3 | last: started, none yet 
