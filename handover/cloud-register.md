@@ -770,5 +770,5 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | PR 66 builder a81e7ac5 | cloud | local 1a890b9, evidence queued, not pushed |
 | ev-P1b-r7 | EVIDENCE RUNNER Sonnet, cloud machine, P1b head 0d843b4 (worktree /home/user/build/EV-P1b-0d843b4), ports 55410-55419, both Pythons | 2026-11-09T03:05Z | RUNNING |
 | pulse.sh | bash loop (5-min cadence per order 157), 40 iterations max, /home/user/build/pulse.sh | 2026-11-09T03:20Z | RUNNING |
-| ev-P6a-72 | EVIDENCE RUNNER Sonnet, cloud, PR72 core/P6a d15e53a, ports 55420-55429 | 2026-11-09T03:05Z | RUNNING |
+| ev-P6a-72 | EVIDENCE RUNNER Sonnet, cloud, PR72 core/P6a d15e53a, ports 55420-55429 | 2026-11-09T03:05Z | CLOSED 2026-11-09T03:24Z |
 | ev-P3a2-73 | EVIDENCE RUNNER Sonnet, cloud, PR73 core/P3a-2 2b0941b, ports 55430-55439 | 2026-11-09T03:05Z | RUNNING |
