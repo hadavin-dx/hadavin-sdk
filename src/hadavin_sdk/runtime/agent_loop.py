@@ -45,7 +45,7 @@ from hadavin_sdk.registry import Registry
 from hadavin_sdk.runtime.evidence import Validator, identifier_inputs, with_evidence
 from hadavin_sdk.runtime.plan import build_plan
 from hadavin_sdk.runtime.runs import advance
-from hadavin_sdk.store.protocol import Store
+from hadavin_sdk.store.protocol import NotFound, StaleState, Store
 from hadavin_sdk.tools import (
     END_MARKER,
     ERROR_PREFIX,
@@ -332,6 +332,21 @@ class Runtime:
         self._note(run, "run", "state", result=new.value, error_code=reason)
         return run
 
+    def _same_message_run(self, asked: Run, exists: StaleState) -> Run:
+        """The run already stored under `asked.run_id` if it is for the same agent, principal and `trigger_ref`;
+        else the `StaleState` again (a foreign run is never returned)."""
+        try:
+            found = self.store.get_run(asked.run_id)
+        except NotFound:
+            raise exists from None
+        if (
+            found.agent_id != asked.agent_id
+            or found.principal_id != asked.principal_id
+            or found.trigger_ref != asked.trigger_ref
+        ):
+            raise exists
+        return found
+
     # --- the loop ------------------------------------------------------------------------------
     def handle(
         self,
@@ -344,8 +359,12 @@ class Runtime:
         *,
         run_id: str | None = None,
     ) -> Run:
-        """`run_id`, if given, is the new run's id (`run-` and 32 lower-case hex characters, else `InvalidRunId`); a
-        run with that id already there raises `StaleState` before anything else is written. `None` makes a fresh id.
+        """`run_id`, if given, is the id of the run this call starts. A caller uses it to make one message start at
+        most one run: it gives the same id every time it handles that message. The id is `run-` followed by 32
+        characters from 0-9 and a-f, else `InvalidRunId` (checked after the `Unqualified` check, before any write).
+        If a run with that id already exists and its `agent_id`, `principal_id` and `trigger_ref` equal this call's,
+        that run is returned at once: no note, no redaction, no limits check, no model call, no meter hold. If any of
+        the three differs, `StaleState` is raised and nothing is written. `None` makes a fresh id.
         `document` must be the RAW bytes (never text already redacted). `mapping` is the run's starting
         redaction map: the map of that same raw document (K4 passes the intake map) or None for an empty one. A map
         built from a different document would restore the wrong values, so it is the caller's to get right. The
@@ -362,7 +381,12 @@ class Runtime:
             trigger_ref=trigger_ref,
             **extra,
         )
-        self.store.create_run(run)
+        try:
+            self.store.create_run(run)
+        except StaleState as exists:
+            if run_id is None:
+                raise
+            return self._same_message_run(run, exists)
         self._note(run, "run", "received", inputs_hash=sha256_hex(document.hex()))
         run = self._to(run, S.WORKING)
         cited: list[str] = []  # call ids of the read-tool calls made so far
