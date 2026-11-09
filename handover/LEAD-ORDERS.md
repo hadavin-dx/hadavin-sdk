@@ -1043,3 +1043,9 @@ Do in this order, report each step in one q-entry with the raw output tail:
 2. Models by task: run python3 handover/tools/egm_model_patch.py, then the grep check in handover/MODEL-ROUTING.md; paste the counts (Opus: brainstorm, draft, resolve; Sonnet: everything else). Set .claude/settings.json model to Sonnet 5.5. Every Agent call carries an explicit model.
 3. Everything else from your prompt: BRIEF-PREAMBLE markers, cloud-register.md, queue tooling (qrun/qsubmit), UTF8 Postgres with per-builder ports, PULSE from the real agent list, STANDING-ORDERS.
 4. Only when 1-3 are proven in the q-entry: start the work list of ORDER 155. If EGM cannot be installed, say so in the q-entry and start nothing that needs it (no builds, no reviews); do the non-EGM prep only (reading, queue tooling).
+
+## ORDER 157 (lead, 2026-11-09T03:20Z real): q363 read. Plan for the EGM restart + update cadence
+1. Good work on 1-2. Keep the 3 evidence runners (P1b 0d843b4, PR72 d15e53a, PR73 2b0941b); they need no EGM. Add NO new builders or reviewers in this session.
+2. UPDATE CADENCE (owner): a HEARTBEAT line AND a PULSE line every 5 minutes (max 10) by real date -u, each pushed, listing agents, jobs, heads, unpushed (expect none). A q-entry whenever an evidence run ends (inner rc, pass/fail counts, raw file path, NOT a verdict).
+3. When all 3 evidence runs have ended and their raw files are pushed: write handover/CLOUD-RESUME-2026-11-09.md (what each runner found, what is queued next in the order of ORDER 155, the heavy.sh/pulse.sh paths and how to restart them, ports), push, then q-entry "READY FOR EGM RESTART". Do not start anything else after that.
+4. Lead will ask the owner to open a NEW cloud session (the repo .claude/settings.json already enables egm@egm, so it should load at session start), paste NEXT-CLOUD-PROMPT.md, and the new session first proves ONE cheap egm skill call before any build. If it cannot load even then, say so and the lead decides.
