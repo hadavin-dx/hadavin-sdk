@@ -1258,3 +1258,10 @@ DECISIONS FOR LEAD (rev 3 open questions):
 5. Confirm one deterministic size cap (withhold above it) instead of text slices.
 
 NEXT: collect round-3 reports, resolve, repeat until clean; check P6a rerun; P1b fix builder report then separate evidence runner.
+
+## q379 (P1d rev 4 committed; ORDER 167 applied)
+FAILED/OPEN: nothing failed. Round 4 plan review is starting now.
+DONE: ticket rev 4 (marker plus client-profile refusal with negative test and mutant; S13 in P1d, S6 to P2d-2 with the same hard dependency; display_withheld only if BS-0 shows the approve path reaches the summary; one size cap, withhold above it). Ledger rows 001/004/005 reworded.
+CHECKED BY ME: ticket written and committed. NOT RUN: no code, no BS probes yet.
+DECISIONS FOR LEAD: (1) Is a 30000-character floor for the model-path size cap acceptable? (2) May hand-over rows 005/006/009/010 stay OPEN with an owner and the hard-dependency note without blocking P1d Done? (3) If BS-2 cannot reach 0 false learns, accept best effort for H31-H33/H35, or hold P1d?
+NEXT: round-4 reviewers, resolve, repeat; P1b evidence runner after the fix builder reports.

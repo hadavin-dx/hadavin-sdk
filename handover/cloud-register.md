@@ -793,3 +793,4 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 rv-P1d-r3-zoomout closed 05:29Z
 rv-P1d-r3-readiness closed 05:29Z
 rv-P1d-r3-design closed 05:32Z
+| r4-design, r4-readiness, r4-zoomout | P1d rev 4 plan review round 4 | 05:39Z | +20 min | - | running | collect, save round4-*.md, resolve |
