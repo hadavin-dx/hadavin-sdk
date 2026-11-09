@@ -796,7 +796,7 @@ rv-P1d-r3-design closed 05:32Z
 | r4-design, r4-readiness, r4-zoomout | P1d rev 4 plan review round 4 | 05:39Z | +20 min | - | running | collect, save round4-*.md, resolve |
 | ev-P1b-r2 | EVIDENCE RUNNER P1b at 2034512 | 06:06Z | +60 min | - | running | read evidence file, start round-2 reviewers on snapshot |
 
-## LANE TABLE (ORDER 169, 2026-11-09 ~06:35Z). States from the PR list and register; anything not re-checked today is marked UNVERIFIED.
+## LANE TABLE (ORDER 169, 2026-11-09 06:21Z). States from the PR list and register; anything not re-checked today is marked UNVERIFIED.
 | lane | state | blocker | agent |
 |---|---|---|---|
 | P1d plan | ticket rev 5 pushed fd110fd | none | r5-design, r5-readiness, r5-zoomout (new) |
@@ -808,5 +808,22 @@ rv-P1d-r3-design closed 05:32Z
 | money chain PR 66, 75, 76, 77, 78, 79 | open (66, 75 ready; 76-79 draft) | wait for merges in order 66 then 75 | UNVERIFIED current review state; next step is result reviewers on a snapshot |
 | PR 73 P3a-2, PR 74 P5a, PR 80 P5b1, PR 85 P5b2, PR 86 P6b1, PR 83 P0t-followup, PR 84 ci-evidence | open | wait for lead merge | next step is fresh result reviewers on a snapshot |
 | ci-lint-set batch 2, T1/T2, AK-G2 | UNVERIFIED | UNVERIFIED | none yet |
-| r5-design, r5-readiness, r5-zoomout | P1d rev 5 plan review round 5 | 06:40Z | +20 min | running | save round5-*.md, resolve |
-| r1-P2d-design, r1-P2d-readiness | P2d-2 plan review round 1 | 06:42Z | +20 min | running | save handover/reviews/P2d/round1-*.md |
+| r5-design, r5-readiness, r5-zoomout | P1d rev 5 plan review round 5 | 06:21Z | +20 min | running | save round5-*.md, resolve |
+| r1-P2d-design, r1-P2d-readiness | P2d-2 plan review round 1 | 06:21Z | +20 min | running | save handover/reviews/P2d/round1-*.md |
+
+## LANE TABLE v2 (ORDER 170/171, real time 2026-11-09T06:23:11Z; heads from the PR list read today 06:1xZ; CI status NOT re-read)
+| lane | head | state (replaces UNVERIFIED) | blocker | agent now |
+|---|---|---|---|---|
+| PR 72 P6a | d15e53a | evidence on file (reviews/P6a-o107, evidence/P6a/d15e53a-cloud2); no fresh review | none | R72-design, R72-code (Agent) |
+| PR 73 P3a-2 | 2b0941b | evidence on file (reconstructed scripts, evidence/P3a-2/recon-2026-11-09); no fresh review | none | R73-design, R73-code (Agent) |
+| PR 66 P4d-a1 | da08ce2 | no evidence file for this head | none | evid.sh shell ev-pr66 |
+| PR 75 P4d-a2 | f8b9056 | no evidence file for this head | merge after 66 | evid.sh shell ev-pr75 |
+| PR 74 P5a | 21ca680 | no evidence file for this head | none | evid.sh shell ev-pr74 |
+| PR 63 P1a / PR 70 P1b | bf955e9 / e3f946f | P1b fix batch 2034512 on core/P1b-fixwip, evidence ev-P1b-r2 running | merge together | ev-P1b-r2 (Agent) |
+| PR 80 P5b1, 85 P5b2, 86 P6b1, 83 P0t-followup, 84 ci-evidence | 4003672 / 4b1b3f9 / 8f6b032 / 7f24178 / 8a677ad | no evidence file for these heads | stacked (80 on P5a, 85 on 80, 86 on P4a); 83 and 84 none | evidence shells start next (3 heavy slots in use) |
+| PR 76-79 | e323ac7 / 8b2b716 / 4a0976f / 8cc2021 | draft, stacked on 75/P1a/P2a-1/P4d-a2; no evidence | wait for 66 then 75 | plan review next |
+| P1d | ticket rev 5 | round 5 resolved; rev 6 to draft | none | drafting rev 6 next |
+| P2d-2 | P2d.md rev 6 frozen | round 1 done: 4 blockers | lead unfreeze (q) | none until lead answers |
+| ci-lint-set | branch core/ci-lint-set | lint fix batch 2 (restore gate._views helpers, E4/E7/E9) per order 142 | none | not started: next |
+| T1/T2 | - | T1 = meter admitted 50 of 50 at cap 2.00 (order 142, accepted finding for P4b1); T2 not found in orders: asking lead | T2 unknown | none |
+| AK-G2 | ticket rev 3 frozen | 3 review rounds done; next EGM step = build-start | none | not started: next |

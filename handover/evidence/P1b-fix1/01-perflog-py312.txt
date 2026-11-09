@@ -21,3 +21,12 @@ squeeze_views 0.297266
 scan_needles 1.283946
 value_scripts 0.208312
 <lambda> 2.194506
+<lambda> 2.700664
+<lambda> 1.237100
+<lambda> 1.407543
+<lambda> 2.335591
+<lambda> 1.313755
+<lambda> 1.233518
+scan_holds 99 more values 1.092449
+<lambda> 0.392192
+<lambda> 1.445763
