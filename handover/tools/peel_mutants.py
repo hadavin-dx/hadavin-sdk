@@ -35,13 +35,27 @@ def m(name, file, old, new, test, expect, crash=False):
     return (name, file, old, new, test, expect, crash)
 
 
+D2B = "test_d2b_direct_a_foreign_run_is_never_returned"
+D2 = "test_d2_same_message_twice_returns_the_existing_run"
+SAME = "            return self._same_message_run(run, exists)\n"
+GUARD = "        if agent_id not in self.agents:\n            raise Unqualified(agent_id)\n        agent = self.registry.agents[agent_id]\n"
+EXTRA = '        extra = {} if run_id is None else {"run_id": _checked_run_id(run_id)}\n'
+
 MUTANTS = [
-    m("MP1 given run_id ignored (fresh id)", AL, "            **extra,\n", "", "test_t1_given_id_is_the_run_id", "assert"),
+    m("PM-1 (MP1) given run_id ignored (fresh id)", AL, "            **extra,\n", "", "test_t1_given_id_is_the_run_id", "assert"),
+    m("PM-2 on a matching existing run the loop runs again", AL, SAME, "            pass\n", D2, "Error"),
+    m("PM-3 foreign run returned although its agent differs", AL, "found.agent_id != asked.agent_id", "False", D2B + "[foreign-agent]", "StaleState"),
+    m("PM-4 foreign run returned although its principal differs", AL, "found.principal_id != asked.principal_id", "False", D2B + "[foreign-principal]", "StaleState"),
+    m("PM-5 foreign run returned although its trigger_ref differs", AL, "found.trigger_ref != asked.trigger_ref", "False", D2B + "[foreign-trigger-ref]", "StaleState"),
+    m("PM-6 any existing run returned (no comparison result used)", AL, "            raise exists\n        return found", "            return found\n        return found", D2B + "[foreign-agent]", "StaleState"),
+    m("PM-7 run id checked before the agent (order swapped)", AL, GUARD + EXTRA, EXTRA + GUARD, "test_t9_order_unqualified_first_then_invalid_run_id", "Unqualified"),
+    m("PM-8 limits checked on the same-message path", AL, "        try:\n            found = self.store.get_run(asked.run_id)", "        self.limits.blocked(asked.agent_id)\n        try:\n            found = self.store.get_run(asked.run_id)", D2, "assert"),
+    m("PM-9 a second received note on the same-message path", AL, "        return found\n\n    # --- the loop", "        self._note(found, 'run', 'received')\n        return found\n\n    # --- the loop", D2, "assert"),
+    m("PM-10 vanished run raises NotFound, not StaleState", AL, "            raise exists from None", "            raise", "test_d2d_direct_the_existing_run_vanished_is_still_stale", "NotFound"),
     m("MP2 validation removed", AL, "    if not isinstance(run_id, str) or not RUN_ID_PATTERN.fullmatch(run_id):", "    if False:", T5, RAISE),
     m("MP3 pattern length loosened", MD, "[0-9a-f]{32}", "[0-9a-f]{1,64}", T5, RAISE),
     m("MP4 fullmatch -> match", AL, "RUN_ID_PATTERN.fullmatch(run_id)", "RUN_ID_PATTERN.match(run_id)", T4, RAISE),
     m("MP5 upper-case hex allowed", MD, 'r"run-[0-9a-f]{32}"', 'r"run-[0-9a-fA-F]{32}"', T4, RAISE),
-    m("MP6 duplicate swallowed (a fresh run is made)", AL, "        self.store.create_run(run)\n        self._note(run, \"run\", \"received\"", "        try:\n            self.store.create_run(run)\n        except Exception:\n            from hadavin_sdk.models import new_id\n            run = run.model_copy(update={\"run_id\": new_id(\"run\")})\n            self.store.create_run(run)\n        self._note(run, \"run\", \"received\"", "test_t2_same_id_twice_is_refused_and_nothing_else_happens", "UnknownRecording"),
     m("MP7 non-string accepted", AL, "not isinstance(run_id, str) or ", "", T4, "TypeError", crash=True),
     m("MP9 keyword made positional", AL, "        *,\n        run_id: str | None = None,", "        run_id: str | None = None,", "test_t7_run_id_is_keyword_only_with_default_none", "assert"),
     m("MP10 default id shape changed", MD, 'return f"{prefix}-{uuid.uuid4().hex}"', 'return f"{prefix}-{uuid.uuid4().hex[:31]}"', "test_t3_without_run_id_ids_are_fresh_and_well_formed", "assert"),
@@ -64,9 +78,9 @@ def run_one(mut):
         xml = Path(tmp) / "r.xml"
         env = {k: v for k, v in os.environ.items() if "DSN" not in k and "TOKEN" not in k}
         env["PYTHONPATH"] = str(Path(tmp) / "src")
-        rc = subprocess.run(
+        rc = subprocess.run(  # noqa: S603 - fixed argv, our own pytest
             [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", f"--junitxml={xml}", f"{T}::{test}"],
-            cwd=tmp, env=env, capture_output=True, text=True, timeout=300, check=False,  # noqa: S603 - fixed argv, our own pytest
+            cwd=tmp, env=env, capture_output=True, text=True, timeout=300, check=False,
         ).returncode
         first = ""
         if xml.exists():
