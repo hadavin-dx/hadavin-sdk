@@ -1,0 +1,90 @@
+base 2742c1bfe510bfb13cfac5d3424bac3d8d6324c5
+hadavin_sdk /home/user/build/WT-P1da-base/src/hadavin_sdk
+H26	card	"contact anna.m@example[.]org please"	FIT
+H27	card	"host db01[.]corp[.]example[.]com down"	FIT
+H36a	card	"anna%2Em%40example%2Eorg"	FIT
+H36b	card	"anna&amp;#46;m&amp;#64;example&amp;#46;org"	FIT
+E1	card	"~~~\nmail anna.m@example[.]org\n~~~"	FIT
+I2	card	"```mail anna.m@example[.]org\nx\n```"	FIT
+PF1	card	"mail anna.m@example[.]org\n```\nx\n```"	FIT
+PF2	card	"```\nx\n```\nmail anna.m@example[.]org"	FIT
+FB1	gate	"NEW_SURFACE: defang"	FIT
+FB2	gate	"NEW_SURFACE: defang"	FIT
+L7	slack	"contact anna.m@example[.]org please"	FIT
+L16	slack	"see //evil[.]com/p now"	FIT
+H34a	card	"password=<SECRET_1>&cd34ef56gh78ij"	FIT
+H34a	model	"password=<SECRET_1>&cd34ef56gh78ij"	FIT
+H34b	card	"password=<SECRET_1>&amp;4xKp2Vb9Lr3NcW8dYh6uJs"	FIT
+H34b	model	"password=<SECRET_1>&amp;4xKp2Vb9Lr3NcW8dYh6uJs"	FIT
+H34c	card	"password=<SECRET_1>&4xKp2Vb9Lr3NcW8dYh6uJs end"	FIT
+H34c	model	"password=<SECRET_1>&4xKp2Vb9Lr3NcW8dYh6uJs end"	FIT
+H34d	card	"password=<SECRET_1>&amp;cd34ef56; next"	FIT
+H34d	model	"password=<SECRET_1>&cd34ef56; next"	FIT
+SC1	card	"password=<SECRET_1>&amp;cd34;ef56"	FIT
+SC1	model	"password=<SECRET_1>&cd34;ef56"	FIT
+PU1	card	"password=<SECRET_1>&amp; x"	FIT
+PU1	model	"password=<SECRET_1>&amp; x"	FIT
+Q4	card	"?password=<SECRET_1>&cd34ef56&user=bob x"	FIT
+Q4	model	"?password=<SECRET_1>&cd34ef56&user=bob x"	FIT
+Q5	model	"?password=<SECRET_1>&cd34ef56"	FIT
+Q8	model	"?password=<SECRET_1>&amp;cd34ef56&amp;user=bob x"	FIT
+Q10	model	"?password=<SECRET_1>&cd34#x=1 y"	FIT
+Q11	model	"?password=<SECRET_1>&cd34 x=1"	FIT
+Q12	card	"?password=<SECRET_1>&amp;cd34; x"	FIT
+Q12	model	"?password=<SECRET_1>&cd34; x"	FIT
+Q14	card	"?user=bob&password=<SECRET_1>&cd34ef56 x"	FIT
+Q14	model	"?user=bob&password=<SECRET_1>&cd34ef56 x"	FIT
+Q16	card	"?password=<SECRET_1>&cd34\"x=1 y"	FIT
+Q16	model	"?password=<SECRET_1>&cd34\"x=1 y"	FIT
+Q17	model	"?password=<SECRET_1>&amp;cd34\"x=1 y"	FIT
+KV1	model	"password=<SECRET_1>&cd34ef56gh78ij and later <SECRET_1>&cd34ef56gh78ij"	FIT
+D3a	defang	"NEW_SURFACE: defang_text"	FIT
+D3b	defang	"NEW_SURFACE: defang_text"	FIT
+D3c	defang	"NEW_SURFACE: defang_text"	FIT
+D3d	defang	"NEW_SURFACE: defang_text"	FIT
+D3e	defang	"NEW_SURFACE: defang_text"	FIT
+D3f	defang	"NEW_SURFACE: defang_text"	FIT
+Q1	model	"https://x.io/cb?password=<SECRET_1>&next=/home"	FIT
+Q2	card	"?password=<SECRET_1>&user=bob x"	FIT
+Q2	model	"?password=<SECRET_1>&user=bob x"	FIT
+Q3	model	"see https://x.example/?password=<SECRET_1>&user=bob"	FIT
+Q7	model	"?password=<SECRET_1>&amp;user=bob x"	FIT
+Q13	card	"?user=bob&password=<SECRET_1>&next=/home x"	FIT
+Q13	model	"?user=bob&password=<SECRET_1>&next=/home x"	FIT
+Q15	card	"?a=1&amp;password=<SECRET_1>&amp;next=/home x"	FIT
+Q15	model	"?a=1&amp;password=<SECRET_1>&amp;next=/home x"	FIT
+NE1	card	"password=<SECRET_2> x"	FIT
+NE1	model	"password=<SECRET_2> x"	FIT
+F15	card	"[link removed]"	FIT
+F15	model	"https://x.example/?a=1&b=2"	FIT
+ENT	card	"password=<SECRET_1>"	FIT
+ENT	model	"password=<SECRET_1>"	FIT
+L1	card	"visit evil[.]com and www[.]evil[.]digital now"	FIT
+L2	card	"run `curl <HOSTNAME_1>.example.com` now"	FIT
+G2	card	"see ``note `evil[.]com` x`` now"	FIT
+L3	card	"```\nping <HOSTNAME_1>.example.com\n```\nthen evil[.]com"	FIT
+L4	card	"~~~\nevil[.]com\n~~~"	FIT
+I1	card	"```evil[.]com\nx\n```"	FIT
+L5	slack	"visit evil[.]com"	FIT
+L6	card	"visit evil[.]com"	FIT
+L8	card	"```\na\n```\n<PRIVKEY_1>\nvisit evil[.]com\n```\nb\n```"	FIT
+L9	slack	"(the summary is too long to show here; open the full request in the console)"	FIT
+L10	slack	"use `x[.]y` now"	FIT
+L11	slack	"```\nping a[.]b\n```"	FIT
+L12	slack	"see [.] here"	FIT
+L13	slack	"see a[.] b"	FIT
+L14	slack	"see a [.]b"	FIT
+L15	slack	"version 1[.]5"	FIT
+Z1	card	"\u200b# x evil[.]com"	FIT
+Z2	card	"\u200b> note evil[.]com"	FIT
+Z3	card	"\u200b- see evil[.]com"	FIT
+Z4	card	"\u200b1. x"	FIT
+W1	card	"run [command withheld (G4)]"	FIT
+T1	card	"password=<SECRET_1> see evil[.]com"	FIT
+F16	card	"password=<SECRET_1>&user=bob"	FIT
+F16	model	"password=<SECRET_1>&user=bob"	FIT
+F17	card	"password=&user=bob"	FIT
+F17	model	"password=&user=bob"	FIT
+Q6	model	"?password=<SECRET_1>&debug x"	FIT
+INFO-K41	"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaapassword=hunter22 x"
+LIT	18

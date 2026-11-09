@@ -1,0 +1,1074 @@
+base 2742c1bfe510bfb13cfac5d3424bac3d8d6324c5
+FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF............................ [ 77%]
+..F.....FFFFFFFFFFFFF                                                    [100%]
+=================================== FAILURES ===================================
+______________________________ test_row_H26_card _______________________________
+
+    def test():
+        out, ctx = C.run_entry(row.id, entry, row.input)
+        want = expected_after(row, entry)
+        if want is not None:
+>           assert out == want, f"ROW {row.id} {entry}: expected {want!r}, got {out!r}"
+E           AssertionError: ROW H26 card: expected 'contact <EMAIL_1> please', got 'contact anna.m@example[.]org please'
+E           assert 'contact anna...[.]org please' == 'contact <EMAIL_1> please'
+E             
+E             - contact <EMAIL_1> please
+E             + contact anna.m@example[.]org please
+
+tests/test_p1d_a_rows.py:50: AssertionError
+______________________________ test_row_H27_card _______________________________
+
+    def test():
+        out, ctx = C.run_entry(row.id, entry, row.input)
+        want = expected_after(row, entry)
+        if want is not None:
+>           assert out == want, f"ROW {row.id} {entry}: expected {want!r}, got {out!r}"
+E           AssertionError: ROW H27 card: expected 'host <HOSTNAME_1>[.]example[.]com down', got 'host db01[.]corp[.]example[.]com down'
+E           assert 'host db01[.]...le[.]com down' == 'host <HOSTNA...le[.]com down'
+E             
+E             - host <HOSTNAME_1>[.]example[.]com down
+E             + host db01[.]corp[.]example[.]com down
+
+tests/test_p1d_a_rows.py:50: AssertionError
+______________________________ test_row_H36a_card ______________________________
+
+    def test():
+        out, ctx = C.run_entry(row.id, entry, row.input)
+        want = expected_after(row, entry)
+        if want is not None:
+>           assert out == want, f"ROW {row.id} {entry}: expected {want!r}, got {out!r}"
+E           AssertionError: ROW H36a card: expected '<EMAIL_1>', got 'anna%2Em%40example%2Eorg'
+E           assert 'anna%2Em%40example%2Eorg' == '<EMAIL_1>'
+E             
+E             - <EMAIL_1>
+E             + anna%2Em%40example%2Eorg
+
+tests/test_p1d_a_rows.py:50: AssertionError
+______________________________ test_row_H36b_card ______________________________
+
+    def test():
+        out, ctx = C.run_entry(row.id, entry, row.input)
+        want = expected_after(row, entry)
+        if want is not None:
+>           assert out == want, f"ROW {row.id} {entry}: expected {want!r}, got {out!r}"
+E           AssertionError: ROW H36b card: expected '<EMAIL_1>', got 'anna&amp;#46;m&amp;#64;example&amp;#46;org'
+E           assert 'anna&amp;#46...e&amp;#46;org' == '<EMAIL_1>'
+E             
+E             - <EMAIL_1>
+E             + anna&amp;#46;m&amp;#64;example&amp;#46;org
+
+tests/test_p1d_a_rows.py:50: AssertionError
+_______________________________ test_row_E1_card _______________________________
+
+    def test():
+        out, ctx = C.run_entry(row.id, entry, row.input)
+        want = expected_after(row, entry)
+        if want is not None:
+>           assert out == want, f"ROW {row.id} {entry}: expected {want!r}, got {out!r}"
+E           AssertionError: ROW E1 card: expected '~~~\nmail <EMAIL_1>\n~~~', got '~~~\nmail anna.m@example[.]org\n~~~'
+E           assert '~~~\nmail an...le[.]org\n~~~' == '~~~\nmail <EMAIL_1>\n~~~'
+E             
+E               ~~~
+E             - mail <EMAIL_1>
+E             + mail anna.m@example[.]org
+E               ~~~
+
+tests/test_p1d_a_rows.py:50: AssertionError
+_______________________________ test_row_I2_card _______________________________
+
+    def test():
+        out, ctx = C.run_entry(row.id, entry, row.input)
+        want = expected_after(row, entry)
+        if want is not None:
+>           assert out == want, f"ROW {row.id} {entry}: expected {want!r}, got {out!r}"
+E           AssertionError: ROW I2 card: expected '```mail <EMAIL_1>\nx\n```', got '```mail anna.m@example[.]org\nx\n```'
+E           assert '```mail anna....]org\nx\n```' == '```mail <EMAIL_1>\nx\n```'
+E             
+E             - ```mail <EMAIL_1>
+E             + ```mail anna.m@example[.]org
+E               x
+E               ```
+
+tests/test_p1d_a_rows.py:50: AssertionError
+______________________________ test_row_PF1_card _______________________________
+
+    def test():
+        out, ctx = C.run_entry(row.id, entry, row.input)
+        want = expected_after(row, entry)
+        if want is not None:
+>           assert out == want, f"ROW {row.id} {entry}: expected {want!r}, got {out!r}"
+E           AssertionError: ROW PF1 card: expected 'mail <EMAIL_1>\n```\nx\n```', got 'mail anna.m@example[.]org\n```\nx\n```'
+E           assert 'mail anna.m@...\n```\nx\n```' == 'mail <EMAIL_1>\n```\nx\n```'
+E             
+E             - mail <EMAIL_1>
+E             + mail anna.m@example[.]org
+E               ```
+E               x
+E               ```
+
+tests/test_p1d_a_rows.py:50: AssertionError
+______________________________ test_row_PF2_card _______________________________
+
+    def test():
+        out, ctx = C.run_entry(row.id, entry, row.input)
+        want = expected_after(row, entry)
+        if want is not None:
+>           assert out == want, f"ROW {row.id} {entry}: expected {want!r}, got {out!r}"
+E           AssertionError: ROW PF2 card: expected '```\nx\n```\nmail <EMAIL_1>', got '```\nx\n```\nmail anna.m@example[.]org'
+E           assert '```\nx\n```\...example[.]org' == '```\nx\n```\nmail <EMAIL_1>'
+E             
+E               ```
+E               x
+E               ```
+E             - mail <EMAIL_1>
+E             + mail anna.m@example[.]org
+
+tests/test_p1d_a_rows.py:50: AssertionError
+______________________________ test_row_FB1_gate _______________________________
+
+    def test():
+>       out, ctx = C.run_entry(row.id, entry, row.input)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_p1d_a_rows.py:47: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/fixtures/p1d_cases.py:293: in run_entry
+    out = fn(x, ctx) if fn else ENTRIES[entry](x)
+          ^^^^^^^^^^
+tests/fixtures/p1d_cases.py:285: in <lambda>
+    ("FB1", "gate"): lambda x, ctx: _fb1(x),
+                                    ^^^^^^^
+tests/fixtures/p1d_cases.py:233: in _fb1
+    return e_gate(x)
+           ^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+x = 'mail evil.com\nx'
+
+    def e_gate(x: str) -> str:
+        _, gate, *_ = _mods()
+        try:
+            return gate.sanitise_text(x, defang=False)
+        except TypeError:
+>           raise NewSurface("NEW_SURFACE: defang") from None
+E           tests.fixtures.p1d_cases.NewSurface: NEW_SURFACE: defang
+
+tests/fixtures/p1d_cases.py:224: NewSurface
+______________________________ test_row_FB2_gate _______________________________
+
+    def test():
+>       out, ctx = C.run_entry(row.id, entry, row.input)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_p1d_a_rows.py:47: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/fixtures/p1d_cases.py:293: in run_entry
+    out = fn(x, ctx) if fn else ENTRIES[entry](x)
+          ^^^^^^^^^^
+tests/fixtures/p1d_cases.py:286: in <lambda>
+    ("FB2", "gate"): lambda x, ctx: _fb2(x),
+                                    ^^^^^^^
+tests/fixtures/p1d_cases.py:246: in _fb2
+    return e_gate(x)
+           ^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+x = '```\nmail evil.com\n```'
+
+    def e_gate(x: str) -> str:
+        _, gate, *_ = _mods()
+        try:
+            return gate.sanitise_text(x, defang=False)
+        except TypeError:
+>           raise NewSurface("NEW_SURFACE: defang") from None
+E           tests.fixtures.p1d_cases.NewSurface: NEW_SURFACE: defang
+
+tests/fixtures/p1d_cases.py:224: NewSurface
+______________________________ test_row_L7_slack _______________________________
+
+    def test():
+        out, ctx = C.run_entry(row.id, entry, row.input)
+        want = expected_after(row, entry)
+        if want is not None:
+>           assert out == want, f"ROW {row.id} {entry}: expected {want!r}, got {out!r}"
+E           AssertionError: ROW L7 slack: expected 'contact <EMAIL_1> please', got 'contact anna.m@example[.]org please'
+E           assert 'contact anna...[.]org please' == 'contact <EMAIL_1> please'
+E             
+E             - contact <EMAIL_1> please
+E             + contact anna.m@example[.]org please
+
+tests/test_p1d_a_rows.py:50: AssertionError
+______________________________ test_row_L16_slack ______________________________
+
+    def test():
+        out, ctx = C.run_entry(row.id, entry, row.input)
+        want = expected_after(row, entry)
+        if want is not None:
+>           assert out == want, f"ROW {row.id} {entry}: expected {want!r}, got {out!r}"
+E           AssertionError: ROW L16 slack: expected 'see [link removed] now', got 'see //evil[.]com/p now'
+E           assert 'see //evil[.]com/p now' == 'see [link removed] now'
+E             
+E             - see [link removed] now
+E             + see //evil[.]com/p now
+
+tests/test_p1d_a_rows.py:50: AssertionError
+______________________________ test_row_H34a_card ______________________________
+
+    def test():
+        out, ctx = C.run_entry(row.id, entry, row.input)
+        want = expected_after(row, entry)
+        if want is not None:
+>           assert out == want, f"ROW {row.id} {entry}: expected {want!r}, got {out!r}"
+E           AssertionError: ROW H34a card: expected 'password=<SECRET_1>', got 'password=<SECRET_1>&cd34ef56gh78ij'
+E           assert 'password=<SE...d34ef56gh78ij' == 'password=<SECRET_1>'
+E             
+E             - password=<SECRET_1>
+E             + password=<SECRET_1>&cd34ef56gh78ij
+
+tests/test_p1d_a_rows.py:50: AssertionError
+_____________________________ test_row_H34a_model ______________________________
+
+    def test():
+        out, ctx = C.run_entry(row.id, entry, row.input)
+        want = expected_after(row, entry)
+        if want is not None:
+>           assert out == want, f"ROW {row.id} {entry}: expected {want!r}, got {out!r}"
+E           AssertionError: ROW H34a model: expected 'password=<SECRET_1>', got 'password=<SECRET_1>&cd34ef56gh78ij'
+E           assert 'password=<SE...d34ef56gh78ij' == 'password=<SECRET_1>'
+E             
+E             - password=<SECRET_1>
+E             + password=<SECRET_1>&cd34ef56gh78ij
+
+tests/test_p1d_a_rows.py:50: AssertionError
+______________________________ test_row_H34b_card ______________________________
+
+    def test():
+        out, ctx = C.run_entry(row.id, entry, row.input)
+        want = expected_after(row, entry)
+        if want is not None:
+>           assert out == want, f"ROW {row.id} {entry}: expected {want!r}, got {out!r}"
+E           AssertionError: ROW H34b card: expected 'password=<SECRET_1>', got 'password=<SECRET_1>&amp;4xKp2Vb9Lr3NcW8dYh6uJs'
+E           assert 'password=<SE...r3NcW8dYh6uJs' == 'password=<SECRET_1>'
+E             
+E             - password=<SECRET_1>
+E             + password=<SECRET_1>&amp;4xKp2Vb9Lr3NcW8dYh6uJs
+
+tests/test_p1d_a_rows.py:50: AssertionError
+_____________________________ test_row_H34b_model ______________________________
+
+    def test():
+        out, ctx = C.run_entry(row.id, entry, row.input)
+        want = expected_after(row, entry)
+        if want is not None:
+>           assert out == want, f"ROW {row.id} {entry}: expected {want!r}, got {out!r}"
+E           AssertionError: ROW H34b model: expected 'password=<SECRET_1>', got 'password=<SECRET_1>&amp;4xKp2Vb9Lr3NcW8dYh6uJs'
+E           assert 'password=<SE...r3NcW8dYh6uJs' == 'password=<SECRET_1>'
+E             
+E             - password=<SECRET_1>
+E             + password=<SECRET_1>&amp;4xKp2Vb9Lr3NcW8dYh6uJs
+
+tests/test_p1d_a_rows.py:50: AssertionError
+______________________________ test_row_H34c_card ______________________________
+
+    def test():
+        out, ctx = C.run_entry(row.id, entry, row.input)
+        want = expected_after(row, entry)
+        if want is not None:
+>           assert out == want, f"ROW {row.id} {entry}: expected {want!r}, got {out!r}"
+E           AssertionError: ROW H34c card: expected 'password=<SECRET_1> end', got 'password=<SECRET_1>&4xKp2Vb9Lr3NcW8dYh6uJs end'
+E           assert 'password=<SE...W8dYh6uJs end' == 'password=<SECRET_1> end'
+E             
+E             - password=<SECRET_1> end
+E             + password=<SECRET_1>&4xKp2Vb9Lr3NcW8dYh6uJs end
+
+tests/test_p1d_a_rows.py:50: AssertionError
+_____________________________ test_row_H34c_model ______________________________
+
+    def test():
+        out, ctx = C.run_entry(row.id, entry, row.input)
+        want = expected_after(row, entry)
+        if want is not None:
+>           assert out == want, f"ROW {row.id} {entry}: expected {want!r}, got {out!r}"
+E           AssertionError: ROW H34c model: expected 'password=<SECRET_1> end', got 'password=<SECRET_1>&4xKp2Vb9Lr3NcW8dYh6uJs end'
+E           assert 'password=<SE...W8dYh6uJs end' == 'password=<SECRET_1> end'
+E             
+E             - password=<SECRET_1> end
+E             + password=<SECRET_1>&4xKp2Vb9Lr3NcW8dYh6uJs end
+
+tests/test_p1d_a_rows.py:50: AssertionError
+______________________________ test_row_H34d_card ______________________________
+
+    def test():
+        out, ctx = C.run_entry(row.id, entry, row.input)
+        want = expected_after(row, entry)
+        if want is not None:
+>           assert out == want, f"ROW {row.id} {entry}: expected {want!r}, got {out!r}"
+E           AssertionError: ROW H34d card: expected 'password=<SECRET_1>; next', got 'password=<SECRET_1>&amp;cd34ef56; next'
+E           assert 'password=<SE...d34ef56; next' == 'password=<SECRET_1>; next'
+E             
+E             - password=<SECRET_1>; next
+E             + password=<SECRET_1>&amp;cd34ef56; next
+E             ?                    ++++ +++++++++
+
+tests/test_p1d_a_rows.py:50: AssertionError
+_____________________________ test_row_H34d_model ______________________________
+
+    def test():
+        out, ctx = C.run_entry(row.id, entry, row.input)
+        want = expected_after(row, entry)
+        if want is not None:
+>           assert out == want, f"ROW {row.id} {entry}: expected {want!r}, got {out!r}"
+E           AssertionError: ROW H34d model: expected 'password=<SECRET_1>; next', got 'password=<SECRET_1>&cd34ef56; next'
+E           assert 'password=<SE...d34ef56; next' == 'password=<SECRET_1>; next'
+E             
+E             - password=<SECRET_1>; next
+E             + password=<SECRET_1>&cd34ef56; next
+E             ?                    +++++++++
+
+tests/test_p1d_a_rows.py:50: AssertionError
+______________________________ test_row_SC1_card _______________________________
+
+    def test():
+        out, ctx = C.run_entry(row.id, entry, row.input)
+        want = expected_after(row, entry)
+        if want is not None:
+>           assert out == want, f"ROW {row.id} {entry}: expected {want!r}, got {out!r}"
+E           AssertionError: ROW SC1 card: expected 'password=<SECRET_1>;ef56', got 'password=<SECRET_1>&amp;cd34;ef56'
+E           assert 'password=<SE...amp;cd34;ef56' == 'password=<SECRET_1>;ef56'
+E             
+E             - password=<SECRET_1>;ef56
+E             + password=<SECRET_1>&amp;cd34;ef56
+E             ?                    +++++++++
+
+tests/test_p1d_a_rows.py:50: AssertionError
+______________________________ test_row_SC1_model ______________________________
+
+    def test():
+        out, ctx = C.run_entry(row.id, entry, row.input)
+        want = expected_after(row, entry)
+        if want is not None:
+>           assert out == want, f"ROW {row.id} {entry}: expected {want!r}, got {out!r}"
+E           AssertionError: ROW SC1 model: expected 'password=<SECRET_1>;ef56', got 'password=<SECRET_1>&cd34;ef56'
+E           assert 'password=<SE..._1>&cd34;ef56' == 'password=<SECRET_1>;ef56'
+E             
+E             - password=<SECRET_1>;ef56
+E             + password=<SECRET_1>&cd34;ef56
+E             ?                    +++++
+
+tests/test_p1d_a_rows.py:50: AssertionError
+______________________________ test_row_PU1_card _______________________________
+
+    def test():
+        out, ctx = C.run_entry(row.id, entry, row.input)
+        want = expected_after(row, entry)
+        if want is not None:
+>           assert out == want, f"ROW {row.id} {entry}: expected {want!r}, got {out!r}"
+E           AssertionError: ROW PU1 card: expected 'password=<SECRET_2> x', got 'password=<SECRET_1>&amp; x'
+E           assert 'password=<SECRET_1>&amp; x' == 'password=<SECRET_2> x'
+E             
+E             - password=<SECRET_2> x
+E             ?                  ^
+E             + password=<SECRET_1>&amp; x
+E             ?                  ^ +++++
+
+tests/test_p1d_a_rows.py:50: AssertionError
+______________________________ test_row_PU1_model ______________________________
+
+    def test():
+        out, ctx = C.run_entry(row.id, entry, row.input)
+        want = expected_after(row, entry)
+        if want is not None:
+>           assert out == want, f"ROW {row.id} {entry}: expected {want!r}, got {out!r}"
+E           AssertionError: ROW PU1 model: expected 'password=<SECRET_2> x', got 'password=<SECRET_1>&amp; x'
+E           assert 'password=<SECRET_1>&amp; x' == 'password=<SECRET_2> x'
+E             
+E             - password=<SECRET_2> x
+E             ?                  ^
+E             + password=<SECRET_1>&amp; x
+E             ?                  ^ +++++
+
+tests/test_p1d_a_rows.py:50: AssertionError
+_______________________________ test_row_Q4_card _______________________________
+
+    def test():
+        out, ctx = C.run_entry(row.id, entry, row.input)
+        want = expected_after(row, entry)
+        if want is not None:
+>           assert out == want, f"ROW {row.id} {entry}: expected {want!r}, got {out!r}"
+E           AssertionError: ROW Q4 card: expected '?password=<SECRET_1>&user=bob x', got '?password=<SECRET_1>&cd34ef56&user=bob x'
+E           assert '?password=<S...56&user=bob x' == '?password=<S...1>&user=bob x'
+E             
+E             - ?password=<SECRET_1>&user=bob x
+E             + ?password=<SECRET_1>&cd34ef56&user=bob x
+E             ?                      +++++++++
+
+tests/test_p1d_a_rows.py:50: AssertionError
+______________________________ test_row_Q4_model _______________________________
+
+    def test():
+        out, ctx = C.run_entry(row.id, entry, row.input)
+        want = expected_after(row, entry)
+        if want is not None:
+>           assert out == want, f"ROW {row.id} {entry}: expected {want!r}, got {out!r}"
+E           AssertionError: ROW Q4 model: expected '?password=<SECRET_1>&user=bob x', got '?password=<SECRET_1>&cd34ef56&user=bob x'
+E           assert '?password=<S...56&user=bob x' == '?password=<S...1>&user=bob x'
+E             
+E             - ?password=<SECRET_1>&user=bob x
+E             + ?password=<SECRET_1>&cd34ef56&user=bob x
+E             ?                      +++++++++
+
+tests/test_p1d_a_rows.py:50: AssertionError
+______________________________ test_row_Q5_model _______________________________
+
+    def test():
+        out, ctx = C.run_entry(row.id, entry, row.input)
+        want = expected_after(row, entry)
+        if want is not None:
+>           assert out == want, f"ROW {row.id} {entry}: expected {want!r}, got {out!r}"
+E           AssertionError: ROW Q5 model: expected '?password=<SECRET_1>', got '?password=<SECRET_1>&cd34ef56'
+E           assert '?password=<S...T_1>&cd34ef56' == '?password=<SECRET_1>'
+E             
+E             - ?password=<SECRET_1>
+E             + ?password=<SECRET_1>&cd34ef56
+E             ?                     +++++++++
+
+tests/test_p1d_a_rows.py:50: AssertionError
+______________________________ test_row_Q8_model _______________________________
+
+    def test():
+        out, ctx = C.run_entry(row.id, entry, row.input)
+        want = expected_after(row, entry)
+        if want is not None:
+>           assert out == want, f"ROW {row.id} {entry}: expected {want!r}, got {out!r}"
+E           AssertionError: ROW Q8 model: expected '?password=<SECRET_1>&amp;user=bob x', got '?password=<SECRET_1>&amp;cd34ef56&amp;user=bob x'
+E           assert '?password=<S...mp;user=bob x' == '?password=<S...mp;user=bob x'
+E             
+E             - ?password=<SECRET_1>&amp;user=bob x
+E             + ?password=<SECRET_1>&amp;cd34ef56&amp;user=bob x
+E             ?                          +++++++++++++
+
+tests/test_p1d_a_rows.py:50: AssertionError
+______________________________ test_row_Q10_model ______________________________
+
+    def test():
+        out, ctx = C.run_entry(row.id, entry, row.input)
+        want = expected_after(row, entry)
+        if want is not None:
+>           assert out == want, f"ROW {row.id} {entry}: expected {want!r}, got {out!r}"
+E           AssertionError: ROW Q10 model: expected '?password=<SECRET_1> y', got '?password=<SECRET_1>&cd34#x=1 y'
+E           assert '?password=<S...1>&cd34#x=1 y' == '?password=<SECRET_1> y'
+E             
+E             - ?password=<SECRET_1> y
+E             + ?password=<SECRET_1>&cd34#x=1 y
+E             ?                     +++++++++
+
+tests/test_p1d_a_rows.py:50: AssertionError
+______________________________ test_row_Q11_model ______________________________
+
+    def test():
+        out, ctx = C.run_entry(row.id, entry, row.input)
+        want = expected_after(row, entry)
+        if want is not None:
+>           assert out == want, f"ROW {row.id} {entry}: expected {want!r}, got {out!r}"
+E           AssertionError: ROW Q11 model: expected '?password=<SECRET_1> x=1', got '?password=<SECRET_1>&cd34 x=1'
+E           assert '?password=<S...T_1>&cd34 x=1' == '?password=<SECRET_1> x=1'
+E             
+E             - ?password=<SECRET_1> x=1
+E             + ?password=<SECRET_1>&cd34 x=1
+E             ?                     +++++
+
+tests/test_p1d_a_rows.py:50: AssertionError
+______________________________ test_row_Q12_card _______________________________
+
+    def test():
+        out, ctx = C.run_entry(row.id, entry, row.input)
+        want = expected_after(row, entry)
+        if want is not None:
+>           assert out == want, f"ROW {row.id} {entry}: expected {want!r}, got {out!r}"
+E           AssertionError: ROW Q12 card: expected '?password=<SECRET_1>; x', got '?password=<SECRET_1>&amp;cd34; x'
+E           assert '?password=<S...>&amp;cd34; x' == '?password=<SECRET_1>; x'
+E             
+E             - ?password=<SECRET_1>; x
+E             + ?password=<SECRET_1>&amp;cd34; x
+E             ?                     ++++ +++++
+
+tests/test_p1d_a_rows.py:50: AssertionError
+______________________________ test_row_Q12_model ______________________________
+
+    def test():
+        out, ctx = C.run_entry(row.id, entry, row.input)
+        want = expected_after(row, entry)
+        if want is not None:
+>           assert out == want, f"ROW {row.id} {entry}: expected {want!r}, got {out!r}"
+E           AssertionError: ROW Q12 model: expected '?password=<SECRET_1>; x', got '?password=<SECRET_1>&cd34; x'
+E           assert '?password=<SECRET_1>&cd34; x' == '?password=<SECRET_1>; x'
+E             
+E             - ?password=<SECRET_1>; x
+E             + ?password=<SECRET_1>&cd34; x
+E             ?                     +++++
+
+tests/test_p1d_a_rows.py:50: AssertionError
+______________________________ test_row_Q14_card _______________________________
+
+    def test():
+        out, ctx = C.run_entry(row.id, entry, row.input)
+        want = expected_after(row, entry)
+        if want is not None:
+>           assert out == want, f"ROW {row.id} {entry}: expected {want!r}, got {out!r}"
+E           AssertionError: ROW Q14 card: expected '?user=bob&password=<SECRET_1> x', got '?user=bob&password=<SECRET_1>&cd34ef56 x'
+E           assert '?user=bob&pa...1>&cd34ef56 x' == '?user=bob&pa...=<SECRET_1> x'
+E             
+E             - ?user=bob&password=<SECRET_1> x
+E             + ?user=bob&password=<SECRET_1>&cd34ef56 x
+E             ?                              +++++++++
+
+tests/test_p1d_a_rows.py:50: AssertionError
+______________________________ test_row_Q14_model ______________________________
+
+    def test():
+        out, ctx = C.run_entry(row.id, entry, row.input)
+        want = expected_after(row, entry)
+        if want is not None:
+>           assert out == want, f"ROW {row.id} {entry}: expected {want!r}, got {out!r}"
+E           AssertionError: ROW Q14 model: expected '?user=bob&password=<SECRET_1> x', got '?user=bob&password=<SECRET_1>&cd34ef56 x'
+E           assert '?user=bob&pa...1>&cd34ef56 x' == '?user=bob&pa...=<SECRET_1> x'
+E             
+E             - ?user=bob&password=<SECRET_1> x
+E             + ?user=bob&password=<SECRET_1>&cd34ef56 x
+E             ?                              +++++++++
+
+tests/test_p1d_a_rows.py:50: AssertionError
+______________________________ test_row_Q16_card _______________________________
+
+    def test():
+        out, ctx = C.run_entry(row.id, entry, row.input)
+        want = expected_after(row, entry)
+        if want is not None:
+>           assert out == want, f"ROW {row.id} {entry}: expected {want!r}, got {out!r}"
+E           AssertionError: ROW Q16 card: expected '?password=<SECRET_1>"x=1 y', got '?password=<SECRET_1>&cd34"x=1 y'
+E           assert '?password=<S...1>&cd34"x=1 y' == '?password=<SECRET_1>"x=1 y'
+E             
+E             - ?password=<SECRET_1>"x=1 y
+E             + ?password=<SECRET_1>&cd34"x=1 y
+E             ?                     +++++
+
+tests/test_p1d_a_rows.py:50: AssertionError
+______________________________ test_row_Q16_model ______________________________
+
+    def test():
+        out, ctx = C.run_entry(row.id, entry, row.input)
+        want = expected_after(row, entry)
+        if want is not None:
+>           assert out == want, f"ROW {row.id} {entry}: expected {want!r}, got {out!r}"
+E           AssertionError: ROW Q16 model: expected '?password=<SECRET_1>"x=1 y', got '?password=<SECRET_1>&cd34"x=1 y'
+E           assert '?password=<S...1>&cd34"x=1 y' == '?password=<SECRET_1>"x=1 y'
+E             
+E             - ?password=<SECRET_1>"x=1 y
+E             + ?password=<SECRET_1>&cd34"x=1 y
+E             ?                     +++++
+
+tests/test_p1d_a_rows.py:50: AssertionError
+______________________________ test_row_Q17_model ______________________________
+
+    def test():
+        out, ctx = C.run_entry(row.id, entry, row.input)
+        want = expected_after(row, entry)
+        if want is not None:
+>           assert out == want, f"ROW {row.id} {entry}: expected {want!r}, got {out!r}"
+E           AssertionError: ROW Q17 model: expected '?password=<SECRET_1>"x=1 y', got '?password=<SECRET_1>&amp;cd34"x=1 y'
+E           assert '?password=<S...mp;cd34"x=1 y' == '?password=<SECRET_1>"x=1 y'
+E             
+E             - ?password=<SECRET_1>"x=1 y
+E             + ?password=<SECRET_1>&amp;cd34"x=1 y
+E             ?                     +++++++++
+
+tests/test_p1d_a_rows.py:50: AssertionError
+______________________________ test_row_KV1_model ______________________________
+
+    def test():
+        out, ctx = C.run_entry(row.id, entry, row.input)
+        want = expected_after(row, entry)
+        if want is not None:
+>           assert out == want, f"ROW {row.id} {entry}: expected {want!r}, got {out!r}"
+E           AssertionError: ROW KV1 model: expected 'password=<SECRET_1> and later <SECRET_1>', got 'password=<SECRET_1>&cd34ef56gh78ij and later <SECRET_1>&cd34ef56gh78ij'
+E           assert 'password=<SE...d34ef56gh78ij' == 'password=<SE...er <SECRET_1>'
+E             
+E             - password=<SECRET_1> and later <SECRET_1>
+E             + password=<SECRET_1>&cd34ef56gh78ij and later <SECRET_1>&cd34ef56gh78ij
+
+tests/test_p1d_a_rows.py:50: AssertionError
+_____________________________ test_row_D3a_defang ______________________________
+
+    def test():
+>       out, ctx = C.run_entry(row.id, entry, row.input)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_p1d_a_rows.py:47: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/fixtures/p1d_cases.py:293: in run_entry
+    out = fn(x, ctx) if fn else ENTRIES[entry](x)
+                                ^^^^^^^^^^^^^^^^^
+tests/fixtures/p1d_cases.py:216: in e_defang
+    return new_surface(gate, "defang_text")(x)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+module = <module 'hadavin_sdk.approvals.gate' from '/home/user/build/WT-P1da-base/src/hadavin_sdk/approvals/gate.py'>
+name = 'defang_text'
+
+    def new_surface(module, name: str):
+        """The attribute `name` of `module`, or a failure that says which new name is missing."""
+        try:
+            return getattr(module, name)
+        except AttributeError:
+>           raise NewSurface(f"NEW_SURFACE: {name}") from None
+E           tests.fixtures.p1d_cases.NewSurface: NEW_SURFACE: defang_text
+
+tests/fixtures/p1d_cases.py:42: NewSurface
+_____________________________ test_row_D3b_defang ______________________________
+
+    def test():
+>       out, ctx = C.run_entry(row.id, entry, row.input)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_p1d_a_rows.py:47: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/fixtures/p1d_cases.py:293: in run_entry
+    out = fn(x, ctx) if fn else ENTRIES[entry](x)
+                                ^^^^^^^^^^^^^^^^^
+tests/fixtures/p1d_cases.py:216: in e_defang
+    return new_surface(gate, "defang_text")(x)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+module = <module 'hadavin_sdk.approvals.gate' from '/home/user/build/WT-P1da-base/src/hadavin_sdk/approvals/gate.py'>
+name = 'defang_text'
+
+    def new_surface(module, name: str):
+        """The attribute `name` of `module`, or a failure that says which new name is missing."""
+        try:
+            return getattr(module, name)
+        except AttributeError:
+>           raise NewSurface(f"NEW_SURFACE: {name}") from None
+E           tests.fixtures.p1d_cases.NewSurface: NEW_SURFACE: defang_text
+
+tests/fixtures/p1d_cases.py:42: NewSurface
+_____________________________ test_row_D3c_defang ______________________________
+
+    def test():
+>       out, ctx = C.run_entry(row.id, entry, row.input)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_p1d_a_rows.py:47: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/fixtures/p1d_cases.py:293: in run_entry
+    out = fn(x, ctx) if fn else ENTRIES[entry](x)
+                                ^^^^^^^^^^^^^^^^^
+tests/fixtures/p1d_cases.py:216: in e_defang
+    return new_surface(gate, "defang_text")(x)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+module = <module 'hadavin_sdk.approvals.gate' from '/home/user/build/WT-P1da-base/src/hadavin_sdk/approvals/gate.py'>
+name = 'defang_text'
+
+    def new_surface(module, name: str):
+        """The attribute `name` of `module`, or a failure that says which new name is missing."""
+        try:
+            return getattr(module, name)
+        except AttributeError:
+>           raise NewSurface(f"NEW_SURFACE: {name}") from None
+E           tests.fixtures.p1d_cases.NewSurface: NEW_SURFACE: defang_text
+
+tests/fixtures/p1d_cases.py:42: NewSurface
+_____________________________ test_row_D3d_defang ______________________________
+
+    def test():
+>       out, ctx = C.run_entry(row.id, entry, row.input)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_p1d_a_rows.py:47: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/fixtures/p1d_cases.py:293: in run_entry
+    out = fn(x, ctx) if fn else ENTRIES[entry](x)
+                                ^^^^^^^^^^^^^^^^^
+tests/fixtures/p1d_cases.py:216: in e_defang
+    return new_surface(gate, "defang_text")(x)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+module = <module 'hadavin_sdk.approvals.gate' from '/home/user/build/WT-P1da-base/src/hadavin_sdk/approvals/gate.py'>
+name = 'defang_text'
+
+    def new_surface(module, name: str):
+        """The attribute `name` of `module`, or a failure that says which new name is missing."""
+        try:
+            return getattr(module, name)
+        except AttributeError:
+>           raise NewSurface(f"NEW_SURFACE: {name}") from None
+E           tests.fixtures.p1d_cases.NewSurface: NEW_SURFACE: defang_text
+
+tests/fixtures/p1d_cases.py:42: NewSurface
+_____________________________ test_row_D3e_defang ______________________________
+
+    def test():
+>       out, ctx = C.run_entry(row.id, entry, row.input)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_p1d_a_rows.py:47: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/fixtures/p1d_cases.py:293: in run_entry
+    out = fn(x, ctx) if fn else ENTRIES[entry](x)
+                                ^^^^^^^^^^^^^^^^^
+tests/fixtures/p1d_cases.py:216: in e_defang
+    return new_surface(gate, "defang_text")(x)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+module = <module 'hadavin_sdk.approvals.gate' from '/home/user/build/WT-P1da-base/src/hadavin_sdk/approvals/gate.py'>
+name = 'defang_text'
+
+    def new_surface(module, name: str):
+        """The attribute `name` of `module`, or a failure that says which new name is missing."""
+        try:
+            return getattr(module, name)
+        except AttributeError:
+>           raise NewSurface(f"NEW_SURFACE: {name}") from None
+E           tests.fixtures.p1d_cases.NewSurface: NEW_SURFACE: defang_text
+
+tests/fixtures/p1d_cases.py:42: NewSurface
+_____________________________ test_row_D3f_defang ______________________________
+
+    def test():
+>       out, ctx = C.run_entry(row.id, entry, row.input)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_p1d_a_rows.py:47: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/fixtures/p1d_cases.py:293: in run_entry
+    out = fn(x, ctx) if fn else ENTRIES[entry](x)
+                                ^^^^^^^^^^^^^^^^^
+tests/fixtures/p1d_cases.py:216: in e_defang
+    return new_surface(gate, "defang_text")(x)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+module = <module 'hadavin_sdk.approvals.gate' from '/home/user/build/WT-P1da-base/src/hadavin_sdk/approvals/gate.py'>
+name = 'defang_text'
+
+    def new_surface(module, name: str):
+        """The attribute `name` of `module`, or a failure that says which new name is missing."""
+        try:
+            return getattr(module, name)
+        except AttributeError:
+>           raise NewSurface(f"NEW_SURFACE: {name}") from None
+E           tests.fixtures.p1d_cases.NewSurface: NEW_SURFACE: defang_text
+
+tests/fixtures/p1d_cases.py:42: NewSurface
+______________________________ test_row_L15_slack ______________________________
+
+    def test():
+        out, ctx = C.run_entry(row.id, entry, row.input)
+        want = expected_after(row, entry)
+        if want is not None:
+>           assert out == want, f"ROW {row.id} {entry}: expected {want!r}, got {out!r}"
+E           AssertionError: ROW L15 slack: expected 'version 1.5', got 'version 1[.]5'
+E           assert 'version 1[.]5' == 'version 1.5'
+E             
+E             - version 1.5
+E             + version 1[.]5
+E             ?          + +
+
+tests/test_p1d_a_rows.py:50: AssertionError
+_______________________________ test_row_T1_card _______________________________
+
+    def test():
+        out, ctx = C.run_entry(row.id, entry, row.input)
+        want = expected_after(row, entry)
+        if want is not None:
+            assert out == want, f"ROW {row.id} {entry}: expected {want!r}, got {out!r}"
+>       extra = C.check_extra(row.id, entry, out, ctx, after=True)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_p1d_a_rows.py:51: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/fixtures/p1d_cases.py:592: in check_extra
+    want = new_surface(gate, "defang_text")(returns[1])
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+module = <module 'hadavin_sdk.approvals.gate' from '/home/user/build/WT-P1da-base/src/hadavin_sdk/approvals/gate.py'>
+name = 'defang_text'
+
+    def new_surface(module, name: str):
+        """The attribute `name` of `module`, or a failure that says which new name is missing."""
+        try:
+            return getattr(module, name)
+        except AttributeError:
+>           raise NewSurface(f"NEW_SURFACE: {name}") from None
+E           tests.fixtures.p1d_cases.NewSurface: NEW_SURFACE: defang_text
+
+tests/fixtures/p1d_cases.py:42: NewSurface
+______________________________ test_row_F16_card _______________________________
+
+    def test():
+        out, ctx = C.run_entry(row.id, entry, row.input)
+        want = expected_after(row, entry)
+        if want is not None:
+>           assert out == want, f"ROW {row.id} {entry}: expected {want!r}, got {out!r}"
+E           AssertionError: ROW F16 card: expected 'password=<SECRET_1>', got 'password=<SECRET_1>&user=bob'
+E           assert 'password=<SECRET_1>&user=bob' == 'password=<SECRET_1>'
+E             
+E             - password=<SECRET_1>
+E             + password=<SECRET_1>&user=bob
+E             ?                    +++++++++
+
+tests/test_p1d_a_rows.py:50: AssertionError
+______________________________ test_row_F16_model ______________________________
+
+    def test():
+        out, ctx = C.run_entry(row.id, entry, row.input)
+        want = expected_after(row, entry)
+        if want is not None:
+>           assert out == want, f"ROW {row.id} {entry}: expected {want!r}, got {out!r}"
+E           AssertionError: ROW F16 model: expected 'password=<SECRET_1>', got 'password=<SECRET_1>&user=bob'
+E           assert 'password=<SECRET_1>&user=bob' == 'password=<SECRET_1>'
+E             
+E             - password=<SECRET_1>
+E             + password=<SECRET_1>&user=bob
+E             ?                    +++++++++
+
+tests/test_p1d_a_rows.py:50: AssertionError
+______________________________ test_row_F17_card _______________________________
+
+    def test():
+        out, ctx = C.run_entry(row.id, entry, row.input)
+        want = expected_after(row, entry)
+        if want is not None:
+>           assert out == want, f"ROW {row.id} {entry}: expected {want!r}, got {out!r}"
+E           AssertionError: ROW F17 card: expected 'password=<SECRET_1>', got 'password=&user=bob'
+E           assert 'password=&user=bob' == 'password=<SECRET_1>'
+E             
+E             - password=<SECRET_1>
+E             + password=&user=bob
+
+tests/test_p1d_a_rows.py:50: AssertionError
+______________________________ test_row_F17_model ______________________________
+
+    def test():
+        out, ctx = C.run_entry(row.id, entry, row.input)
+        want = expected_after(row, entry)
+        if want is not None:
+>           assert out == want, f"ROW {row.id} {entry}: expected {want!r}, got {out!r}"
+E           AssertionError: ROW F17 model: expected 'password=<SECRET_1>', got 'password=&user=bob'
+E           assert 'password=&user=bob' == 'password=<SECRET_1>'
+E             
+E             - password=<SECRET_1>
+E             + password=&user=bob
+
+tests/test_p1d_a_rows.py:50: AssertionError
+______________________________ test_row_Q6_model _______________________________
+
+    def test():
+        out, ctx = C.run_entry(row.id, entry, row.input)
+        want = expected_after(row, entry)
+        if want is not None:
+>           assert out == want, f"ROW {row.id} {entry}: expected {want!r}, got {out!r}"
+E           AssertionError: ROW Q6 model: expected '?password=<SECRET_1> x', got '?password=<SECRET_1>&debug x'
+E           assert '?password=<SECRET_1>&debug x' == '?password=<SECRET_1> x'
+E             
+E             - ?password=<SECRET_1> x
+E             + ?password=<SECRET_1>&debug x
+E             ?                     ++++++
+
+tests/test_p1d_a_rows.py:50: AssertionError
+_________________________ test_defang_text_idempotent __________________________
+
+    def test_defang_text_idempotent():
+        for x in C.texts("TXT-A"):
+>           once = gate.defang_text(x)
+                   ^^^^^^^^^^^^^^^^
+E           AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_text'
+
+tests/test_p1d_a_rows.py:69: AttributeError
+_____________________ test_defang_text_only_rewrites_dots ______________________
+
+    def test_defang_text_only_rewrites_dots():
+        for x in C.texts("TXT-B"):
+>           assert gate.defang_text(x).replace("[.]", ".") == x, f"DOTS ONLY: {x!r}"
+                   ^^^^^^^^^^^^^^^^
+E           AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_text'
+
+tests/test_p1d_a_rows.py:75: AttributeError
+_____________________ test_sanitise_text_default_unchanged _____________________
+
+    def test_sanitise_text_default_unchanged():
+        frozen = _gate_base()
+        lit = C.lit_strings()
+        assert set(lit) == set(frozen), "DEFAULT CHANGED: the collected literals differ from the frozen set"
+        for x in lit:
+>           a, b = gate.sanitise_text(x), gate.sanitise_text(x, defang=True)
+                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           TypeError: sanitise_text() got an unexpected keyword argument 'defang'
+
+tests/test_p1d_a_rows.py:83: TypeError
+_______________________ test_pre_redaction_differential ________________________
+
+    def test_pre_redaction_differential():
+        for x in [*C.lit_strings(), *C.texts("TXT-A")]:
+>           left = gate.defang_text(gate.withhold_commands(gate.sanitise_text(x, defang=False)))
+                   ^^^^^^^^^^^^^^^^
+E           AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_text'
+
+tests/test_p1d_a_rows.py:102: AttributeError
+______________________ test_no_link_outside_code_on_card _______________________
+
+    def test_no_link_outside_code_on_card():
+>       bad = (gate._DOMAIN, gate._NON_ASCII_HOST, gate._PLACEHOLDER_DOT, gate._WIDE_DOTS)
+                                                   ^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute '_PLACEHOLDER_DOT'
+
+tests/test_p1d_a_rows.py:116: AttributeError
+_______________________ test_card_masks_what_model_masks _______________________
+
+    def test_card_masks_what_model_masks():
+        for x in C.texts("EH"):
+            mapping = runmap.RunMap()
+            runmap.redact_text(x, mapping)
+            shown = channel.clean(x).replace("[.]", ".")
+            for ph, original in mapping.items():
+                m = runmap.PLACEHOLDER.fullmatch(ph)
+                if m and m.group(1) in ("EMAIL", "HOSTNAME"):
+>                   assert original not in shown, f"CARD LEAK: {original!r} in {shown!r} for {x!r}"
+E                   AssertionError: CARD LEAK: 'htjqopbe.g@example.org' in 'db63.corp.example.com htjqopbe.g@example.org dhd.j@example.org ryl\ndb83.corp.example.com qfef p\nfp mzt sqokc' for 'db63.corp.example.com htjqopbe.g@example.org dhd.j@example.org ryl\ndb83.corp.example.com qfef p\nfp mzt sqokc'
+E                   assert 'htjqopbe.g@example.org' not in 'db63.corp.e...fp mzt sqokc'
+E                     
+E                     'htjqopbe.g@example.org' is contained here:
+E                       db63.corp.example.com htjqopbe.g@example.org dhd.j@example.org ryl
+E                     ?                       ++++++++++++++++++++++
+E                       db83.corp.example.com qfef p
+E                       fp mzt sqokc
+
+tests/test_p1d_a_rows.py:132: AssertionError
+_________________________ test_stored_card_round_trip __________________________
+
+    def test_stored_card_round_trip():
+        # G-TXT-B: a typed `[.]` between name characters is read as `.` by design (row L15), so it is not drawn.
+        for x in C.texts("TXT-B"):
+            stored = channel.clean(x)
+            if len(stored) <= 2900:
+>               assert C.e_slack(stored) == stored, f"ROUND TRIP: {x!r}: {stored!r}"
+E               AssertionError: ROUND TRIP: 'evil.comd-----BEGIN PRIVATE KEY-----evil.com例password=-----BEGIN PRIVATE KEY-----*f<HOSTNAME_1>=1fd&4xKp2Vb9Lr3NcW8dYh6uJsn~~~3\nwww.evil.digital<HOSTNAME_1>éihpd7mu?password=<HOSTNAME_1>sq.9vezqepassword=4&.```4éz&v1eh/ <d@#.26**`~~~2jz<例o_>1evil.com:anna.m@example.org8g6@db01.corp.example.com```0*0~~~-----BEGIN PRIVATE KEY-----t```0rikw#v8?password=z=ye9~~~v<j\n` :r=dels#=d例4xKp2Vb9Lr3NcW8dYh6uJs568r8/4wut4evil.com*4xKp2Vb9Lr3NcW8dYh6uJsnpbz4anna.m@example.org53>k#2\na`l`jne2>5例c': 'evil.comd<PRIVKEY_1>'
+E               assert 'evil[.]comd<PRIVKEY_1>' == 'evil.comd<PRIVKEY_1>'
+E                 
+E                 - evil.comd<PRIVKEY_1>
+E                 + evil[.]comd<PRIVKEY_1>
+E                 ?     + +
+
+tests/test_p1d_a_rows.py:140: AssertionError
+==================================== PASSES ====================================
+============================== slowest durations ===============================
+0.37s call     tests/test_p1d_a_rows.py::test_stored_card_round_trip
+0.18s call     tests/test_p1d_a_rows.py::test_pre_redaction_differential
+0.17s call     tests/test_p1d_a_rows.py::test_defang_text_only_rewrites_dots
+0.17s call     tests/test_p1d_a_rows.py::test_defang_text_idempotent
+0.10s call     tests/test_p1d_a_rows.py::test_card_masks_what_model_masks
+0.02s call     tests/test_p1d_a_rows.py::test_sanitise_text_default_unchanged
+0.01s call     tests/test_p1d_a_rows.py::test_row_L9_slack
+
+(272 durations < 0.005s hidden.  Use -vv to show these durations.)
+=========================== short test summary info ============================
+PASSED tests/test_p1d_a_rows.py::test_row_Q1_model
+PASSED tests/test_p1d_a_rows.py::test_row_Q2_card
+PASSED tests/test_p1d_a_rows.py::test_row_Q2_model
+PASSED tests/test_p1d_a_rows.py::test_row_Q3_model
+PASSED tests/test_p1d_a_rows.py::test_row_Q7_model
+PASSED tests/test_p1d_a_rows.py::test_row_Q13_card
+PASSED tests/test_p1d_a_rows.py::test_row_Q13_model
+PASSED tests/test_p1d_a_rows.py::test_row_Q15_card
+PASSED tests/test_p1d_a_rows.py::test_row_Q15_model
+PASSED tests/test_p1d_a_rows.py::test_row_NE1_card
+PASSED tests/test_p1d_a_rows.py::test_row_NE1_model
+PASSED tests/test_p1d_a_rows.py::test_row_F15_card
+PASSED tests/test_p1d_a_rows.py::test_row_F15_model
+PASSED tests/test_p1d_a_rows.py::test_row_ENT_card
+PASSED tests/test_p1d_a_rows.py::test_row_ENT_model
+PASSED tests/test_p1d_a_rows.py::test_row_L1_card
+PASSED tests/test_p1d_a_rows.py::test_row_L2_card
+PASSED tests/test_p1d_a_rows.py::test_row_G2_card
+PASSED tests/test_p1d_a_rows.py::test_row_L3_card
+PASSED tests/test_p1d_a_rows.py::test_row_L4_card
+PASSED tests/test_p1d_a_rows.py::test_row_I1_card
+PASSED tests/test_p1d_a_rows.py::test_row_L5_slack
+PASSED tests/test_p1d_a_rows.py::test_row_L6_card
+PASSED tests/test_p1d_a_rows.py::test_row_L8_card
+PASSED tests/test_p1d_a_rows.py::test_row_L9_slack
+PASSED tests/test_p1d_a_rows.py::test_row_L10_slack
+PASSED tests/test_p1d_a_rows.py::test_row_L11_slack
+PASSED tests/test_p1d_a_rows.py::test_row_L12_slack
+PASSED tests/test_p1d_a_rows.py::test_row_L13_slack
+PASSED tests/test_p1d_a_rows.py::test_row_L14_slack
+PASSED tests/test_p1d_a_rows.py::test_row_Z1_card
+PASSED tests/test_p1d_a_rows.py::test_row_Z2_card
+PASSED tests/test_p1d_a_rows.py::test_row_Z3_card
+PASSED tests/test_p1d_a_rows.py::test_row_Z4_card
+PASSED tests/test_p1d_a_rows.py::test_row_W1_card
+FAILED tests/test_p1d_a_rows.py::test_row_H26_card - AssertionError: ROW H26 ...
+FAILED tests/test_p1d_a_rows.py::test_row_H27_card - AssertionError: ROW H27 ...
+FAILED tests/test_p1d_a_rows.py::test_row_H36a_card - AssertionError: ROW H36...
+FAILED tests/test_p1d_a_rows.py::test_row_H36b_card - AssertionError: ROW H36...
+FAILED tests/test_p1d_a_rows.py::test_row_E1_card - AssertionError: ROW E1 ca...
+FAILED tests/test_p1d_a_rows.py::test_row_I2_card - AssertionError: ROW I2 ca...
+FAILED tests/test_p1d_a_rows.py::test_row_PF1_card - AssertionError: ROW PF1 ...
+FAILED tests/test_p1d_a_rows.py::test_row_PF2_card - AssertionError: ROW PF2 ...
+FAILED tests/test_p1d_a_rows.py::test_row_FB1_gate - tests.fixtures.p1d_cases...
+FAILED tests/test_p1d_a_rows.py::test_row_FB2_gate - tests.fixtures.p1d_cases...
+FAILED tests/test_p1d_a_rows.py::test_row_L7_slack - AssertionError: ROW L7 s...
+FAILED tests/test_p1d_a_rows.py::test_row_L16_slack - AssertionError: ROW L16...
+FAILED tests/test_p1d_a_rows.py::test_row_H34a_card - AssertionError: ROW H34...
+FAILED tests/test_p1d_a_rows.py::test_row_H34a_model - AssertionError: ROW H3...
+FAILED tests/test_p1d_a_rows.py::test_row_H34b_card - AssertionError: ROW H34...
+FAILED tests/test_p1d_a_rows.py::test_row_H34b_model - AssertionError: ROW H3...
+FAILED tests/test_p1d_a_rows.py::test_row_H34c_card - AssertionError: ROW H34...
+FAILED tests/test_p1d_a_rows.py::test_row_H34c_model - AssertionError: ROW H3...
+FAILED tests/test_p1d_a_rows.py::test_row_H34d_card - AssertionError: ROW H34...
+FAILED tests/test_p1d_a_rows.py::test_row_H34d_model - AssertionError: ROW H3...
+FAILED tests/test_p1d_a_rows.py::test_row_SC1_card - AssertionError: ROW SC1 ...
+FAILED tests/test_p1d_a_rows.py::test_row_SC1_model - AssertionError: ROW SC1...
+FAILED tests/test_p1d_a_rows.py::test_row_PU1_card - AssertionError: ROW PU1 ...
+FAILED tests/test_p1d_a_rows.py::test_row_PU1_model - AssertionError: ROW PU1...
+FAILED tests/test_p1d_a_rows.py::test_row_Q4_card - AssertionError: ROW Q4 ca...
+FAILED tests/test_p1d_a_rows.py::test_row_Q4_model - AssertionError: ROW Q4 m...
+FAILED tests/test_p1d_a_rows.py::test_row_Q5_model - AssertionError: ROW Q5 m...
+FAILED tests/test_p1d_a_rows.py::test_row_Q8_model - AssertionError: ROW Q8 m...
+FAILED tests/test_p1d_a_rows.py::test_row_Q10_model - AssertionError: ROW Q10...
+FAILED tests/test_p1d_a_rows.py::test_row_Q11_model - AssertionError: ROW Q11...
+FAILED tests/test_p1d_a_rows.py::test_row_Q12_card - AssertionError: ROW Q12 ...
+FAILED tests/test_p1d_a_rows.py::test_row_Q12_model - AssertionError: ROW Q12...
+FAILED tests/test_p1d_a_rows.py::test_row_Q14_card - AssertionError: ROW Q14 ...
+FAILED tests/test_p1d_a_rows.py::test_row_Q14_model - AssertionError: ROW Q14...
+FAILED tests/test_p1d_a_rows.py::test_row_Q16_card - AssertionError: ROW Q16 ...
+FAILED tests/test_p1d_a_rows.py::test_row_Q16_model - AssertionError: ROW Q16...
+FAILED tests/test_p1d_a_rows.py::test_row_Q17_model - AssertionError: ROW Q17...
+FAILED tests/test_p1d_a_rows.py::test_row_KV1_model - AssertionError: ROW KV1...
+FAILED tests/test_p1d_a_rows.py::test_row_D3a_defang - tests.fixtures.p1d_cas...
+FAILED tests/test_p1d_a_rows.py::test_row_D3b_defang - tests.fixtures.p1d_cas...
+FAILED tests/test_p1d_a_rows.py::test_row_D3c_defang - tests.fixtures.p1d_cas...
+FAILED tests/test_p1d_a_rows.py::test_row_D3d_defang - tests.fixtures.p1d_cas...
+FAILED tests/test_p1d_a_rows.py::test_row_D3e_defang - tests.fixtures.p1d_cas...
+FAILED tests/test_p1d_a_rows.py::test_row_D3f_defang - tests.fixtures.p1d_cas...
+FAILED tests/test_p1d_a_rows.py::test_row_L15_slack - AssertionError: ROW L15...
+FAILED tests/test_p1d_a_rows.py::test_row_T1_card - tests.fixtures.p1d_cases....
+FAILED tests/test_p1d_a_rows.py::test_row_F16_card - AssertionError: ROW F16 ...
+FAILED tests/test_p1d_a_rows.py::test_row_F16_model - AssertionError: ROW F16...
+FAILED tests/test_p1d_a_rows.py::test_row_F17_card - AssertionError: ROW F17 ...
+FAILED tests/test_p1d_a_rows.py::test_row_F17_model - AssertionError: ROW F17...
+FAILED tests/test_p1d_a_rows.py::test_row_Q6_model - AssertionError: ROW Q6 m...
+FAILED tests/test_p1d_a_rows.py::test_defang_text_idempotent - AttributeError...
+FAILED tests/test_p1d_a_rows.py::test_defang_text_only_rewrites_dots - Attrib...
+FAILED tests/test_p1d_a_rows.py::test_sanitise_text_default_unchanged - TypeE...
+FAILED tests/test_p1d_a_rows.py::test_pre_redaction_differential - AttributeE...
+FAILED tests/test_p1d_a_rows.py::test_no_link_outside_code_on_card - Attribut...
+FAILED tests/test_p1d_a_rows.py::test_card_masks_what_model_masks - Assertion...
+FAILED tests/test_p1d_a_rows.py::test_stored_card_round_trip - AssertionError...
+58 failed, 35 passed in 1.58s
