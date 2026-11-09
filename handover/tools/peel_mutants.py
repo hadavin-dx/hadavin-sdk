@@ -43,12 +43,12 @@ EXTRA = '        extra = {} if run_id is None else {"run_id": _checked_run_id(ru
 
 MUTANTS = [
     m("PM-1 (MP1) given run_id ignored (fresh id)", AL, "            **extra,\n", "", "test_t1_given_id_is_the_run_id", "assert"),
-    m("PM-2 on a matching existing run the loop runs again", AL, SAME, "            pass\n", D2, "Error"),
+    m("PM-2 on a matching existing run the loop runs again", AL, SAME, "            pass\n", D2, "IllegalTransition"),
     m("PM-3 foreign run returned although its agent differs", AL, "found.agent_id != asked.agent_id", "False", D2B + "[foreign-agent]", "StaleState"),
     m("PM-4 foreign run returned although its principal differs", AL, "found.principal_id != asked.principal_id", "False", D2B + "[foreign-principal]", "StaleState"),
     m("PM-5 foreign run returned although its trigger_ref differs", AL, "found.trigger_ref != asked.trigger_ref", "False", D2B + "[foreign-trigger-ref]", "StaleState"),
     m("PM-6 any existing run returned (no comparison result used)", AL, "            raise exists\n        return found", "            return found\n        return found", D2B + "[foreign-agent]", "StaleState"),
-    m("PM-7 run id checked before the agent (order swapped)", AL, GUARD + EXTRA, EXTRA + GUARD, "test_t9_order_unqualified_first_then_invalid_run_id", "Unqualified"),
+    m("PM-7 run id checked before the agent (order swapped)", AL, GUARD + EXTRA, EXTRA + GUARD, "test_t9_order_unqualified_first_then_invalid_run_id", "InvalidRunId"),
     m("PM-8 limits checked on the same-message path", AL, "        try:\n            found = self.store.get_run(asked.run_id)", "        self.limits.blocked(asked.agent_id)\n        try:\n            found = self.store.get_run(asked.run_id)", D2, "assert"),
     m("PM-9 a second received note on the same-message path", AL, "        return found\n\n    # --- the loop", "        self._note(found, 'run', 'received')\n        return found\n\n    # --- the loop", D2, "assert"),
     m("PM-10 vanished run raises NotFound, not StaleState", AL, "            raise exists from None", "            raise", "test_d2d_direct_the_existing_run_vanished_is_still_stale", "NotFound"),

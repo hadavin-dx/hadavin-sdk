@@ -1333,3 +1333,10 @@ PR75: B-1 (money SQL under an a2 label) still a lead decision; builder is buildi
 
 ## q392 (2026-11-09 07:34Z) P1d split drafted (P1d rev 8 + P1d-a, P1d-learn, P1d-gate); plan reviews running
 Drafter open questions: (1) H28a-b (e-mail split by ** or escape code) cannot be fixed by the defang move alone: kept in P1d, not P1d-a as ORDER 177 listed; confirm. (2) P1d's own learning pass has BS-2 ceiling 0 but no HELD gate: should it carry HELD too? (3) "every learned value withholds" is stricter than rev 7: confirm. (4) channel send(..., withheld=True) keyword is a small Protocol change: confirm. (5) card text copies P1d-c's --by WHO syntax. (6) URL-query handling of & in P1d-a (value ends at & only right after ? or &) avoids changing pinned test_query_param_credentials_are_masked: confirm. Ledger rows 002/007/008 topics moved to P1d-a/P1d-learn (done). EGM draft skill was applied directly, not via Skill: plan reviews now running count as the EGM check.
+
+## q393 (07:40Z) PR63 rev 4, P4a r2, P1d-a r1, PR84
+- PR63/P1a rev 4 frozen; builder a9a2600a started 07:38Z (PR63 fixer started). PR78/PR79 fixers wait for P4a rev 3 (resolver a67a8c8f).
+- Q-L3 (NEW): a scan (P1b scan_holds / PR77 redact) misses a protected value with one letter replaced by an unassigned/private-use char. Recommend P1b scan_holds fails closed (a person must look). Which package carries it?
+- P4a r2: codebase 1B (FakeLLM max_attempts facts differ between PR78 and PR79) + 3M; design 4M; all go into rev 3.
+- P1d-a r1 readiness: 3B/7M (base SHA, no hypothesis dependency, test defn). Waiting on design report, then Opus resolve.
+- PR84: head cbcf868, round 3 clean; evidence run started 07:37Z (one run). Vault token `root` in ci.yml still your decision.

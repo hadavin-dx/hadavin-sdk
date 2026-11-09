@@ -756,11 +756,11 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | bd-P4d-a1-o101 | Sonnet builder P4d-a1 order 101 | 2026-11-06T17:15:00Z | REPORTED: core/P4d 92dbb1e pushed+verified, PR 66 ready; evidence reviews/P4d-a1-o101 |
 | bd-P3a-2-o103 | Sonnet builder P3a-2 order 103 | 2026-11-06T17:35:00Z | CLOSED: core/P3a-2 63658aa pushed+verified, PR 73 draft; evidence reviews/P3a-2-o103 |
 | bd-P1b-merge6 | Sonnet builder P1b order 102 | 2026-11-06T17:40:00Z | CLOSED: core/P1b 4f14ec8 pushed+verified, PR 70 ready; evidence reviews/P1b/merge6 |
-| bd-P1a-fix7 | Sonnet builder P1a fix7 order 106 | 2026-11-07T04:15Z | RUNNING: expected report ~60-90 min; evidence /home/user/build/P1a-evidence/fix7 |
+| a9a2600a bd-P1a-fix7 | Sonnet builder P1a fix7 order 106 | 2026-11-07T04:15Z | RUNNING: expected report ~60-90 min; evidence /home/user/build/P1a-evidence/fix7 |
 | bd-P0t-followup | Sonnet builder core/P0t-followup (p0t4-001/003), port 55436 | 2026-11-07T04:45Z | RUNNING |
 | bd-P6a-1-o107 | Sonnet builder P6a-1 merge main + per-mutant tests, port 55437 | 2026-11-07T04:45Z | RUNNING |
 | bd-P5b1-o107 | Sonnet builder P5b1 merge P5a+main, 43 mutants, port 55438 | 2026-11-07T04:45Z | REPORTED q256 head 74ee54f |
-| bd-P1a-fix7 | (update) container restart stopped it at ~04:39Z; resumed 04:42Z | 2026-11-07T04:42Z | REPORTED q257 head bf955e9 |
+| a9a2600a bd-P1a-fix7 | (update) container restart stopped it at ~04:39Z; resumed 04:42Z | 2026-11-07T04:42Z | REPORTED q257 head bf955e9 |
 | bd-P0t-followup | (update) | 2026-11-07T05:05Z | REPORTED: core/P0t-followup 72389db pushed+verified, draft PR 83; evidence reviews/P0t-followup |
 | bd-P6a-1-o107 | (update) | 2026-11-07T05:20Z | REPORTED: core/P6a 3adacac pushed+verified, PR 72 ready; evidence reviews/P6a-o107 |
 | bd-P1b-merge7 | Sonnet builder P1b merge7 of P1a fix7 bf955e9, port 55460 | 2026-11-07T06:40Z | RUNNING |
@@ -872,3 +872,9 @@ PR72 0ae044b: builder done; evidence run waits for evid.sh fix (inv-trunc-66), t
 | ab6c7e80 | PR84 builder nits push (round 3 nits + run test_stage_names) | 07:33Z | +20m | resumed | read report; then restart evidence |
 | a5a77e0b | AK-G2 resolve r5 + rev 6 (opus) | 07:33Z | +45m | starting | read report |
 | rv-p1da-d/r, rv-p1d8-d/r | P1d split plan review: P1d-a (design+readiness); P1d rev8 + P1d-learn + P1d-gate (design+readiness), redaction uncapped | 07:34Z | +25m | starting | save |
+| ab6c7e80 | PR84 nits builder | 07:33Z | REPORTED cbcf868; CLOSED 07:37Z | evid.sh 84 on cbcf868 started 07:37Z (one run) |
+| adca2e48, af138a33 | P4a rev2 plan review r2 (design, codebase) | 07:30Z | REPORTED 0B(design)/1B(codebase) 4M+3M; saved reviews/P4a/round2-*.md; CLOSED 07:37Z | resolver P4a r2 started |
+| ad8074bd | P1-rev2 resolve r2 + rev 4 | 07:20Z | REPORTED rev 4 frozen; CLOSED 07:37Z | PR63 builder started |
+| a67a8c8f rs-p4a-r2 | Opus resolve P4a r2, write rev 3 | 07:38Z | +25m | start |
+| a9a2600a bd-P1a-fix7 | Sonnet builder PR63 (P1a) per P1-rev2 rev 4 | 07:38Z | +60m, ckpt 30m | start |
+| ab902412 | P1d-a plan r1 readiness | 07:34Z | REPORTED 3B/7M/6N; saved reviews/P1d-a/round1-readiness.md; CLOSED 07:39Z | wait ace78643 design, then resolve |
