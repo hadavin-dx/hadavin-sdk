@@ -1,9 +1,9 @@
 diff --git a/demo_only/portal_demo.py b/demo_only/portal_demo.py
 new file mode 100644
-index 0000000..fb0007d
+index 0000000..e304898
 --- /dev/null
 +++ b/demo_only/portal_demo.py
-@@ -0,0 +1,513 @@
+@@ -0,0 +1,541 @@
 +"""Demo extension of the portal: the "Demo controls" panel and its three calls. Demo-only code.
 +
 +The desk reaches this module only through lead_desk.loader (load_demo_portal -> make). Deleting demo_only/ must
@@ -78,6 +78,10 @@ index 0000000..fb0007d
 +ERR_CRASH_UNAVAILABLE: Final = "crash_unavailable"
 +ERR_IN_PROGRESS: Final = "burst_in_progress"
 +ERR_TOO_SOON: Final = "burst_too_soon"
++ERR_BUDGET: Final = "burst_budget_used"
++DESK_SCHEME: Final = "http"
++# Most requests one process may send through `burst` in its lifetime: the lead book grows by at most this many rows.
++BURST_BUDGET_REQUESTS: Final = 500
 +ERR_NO_URL: Final = "desk_url_unknown"
 +STATUS_ERROR: Final = "error"  # a burst slot whose request failed in a way that gave no HTTP status
 +STATUS_TIMEOUT: Final = "timeout"  # a burst slot still running when BURST_DEADLINE_SECONDS ran out
@@ -100,6 +104,7 @@ index 0000000..fb0007d
 +KEY_CRM_CAPABILITY: Final = "crm_capability"
 +FLAG_TEMP_PREFIX: Final = ".crash-"
 +FLAG_TEMP_SUFFIX: Final = ".tmp"
++FLAG_TEMP_MAX_AGE_SECONDS: Final = 3600.0  # a temporary flag file older than this is a leftover of a killed process
 +CRM_MODES: Final = ("keyed", "blind")
 +CRM_CAPABILITY_UNKNOWN: Final = "unknown"  # /fake/info of an older fakes server does not name the CRM mode
 +CANNED_FILE: Final = "canned_leads.json"
@@ -205,6 +210,7 @@ index 0000000..fb0007d
 +        self._people: list[dict[str, Any]] = people
 +        self.desk_url = desk_url if desk_url is not None else self._url_from_config()
 +        self._burst_lock = threading.Lock()
++        self._sent = 0  # requests sent by `burst` so far (against BURST_BUDGET_REQUESTS)
 +        self._next_burst_at = 0.0  # time.monotonic() before which no new burst starts
 +
 +    @staticmethod
@@ -245,8 +251,11 @@ index 0000000..fb0007d
 +    def _desk_url_is_local(self, url: str) -> bool:
 +        """Only the desk itself may be the burst target: a loopback name or the host the desk is bound to."""
 +        try:
-+            host = urlsplit(url).hostname
++            parts = urlsplit(url)
++            host = parts.hostname
 +        except ValueError:
++            return False
++        if parts.scheme != DESK_SCHEME:  # the opener also speaks file:, ftp: and data:
 +            return False
 +        bound = self._desk.config.bind.strip("[]")
 +        return host in LOOPBACK_NAMES or (host is not None and host == bound)
@@ -385,7 +394,10 @@ index 0000000..fb0007d
 +    @staticmethod
 +    def _write_flag(path: Path, point: str) -> None:
 +        """A private temporary file in the same folder (a fresh name, never a guessable one, never a symlink), then an
-+        atomic replace; the temporary file is removed if anything fails."""
++        atomic replace; the temporary file is removed if anything fails. Leftovers of a process killed between the two
++        steps are swept when a flag is next armed. On Windows os.replace can fail with PermissionError while the hook
++        has the flag open: that is reported as crash_unavailable and the caller may try again."""
++        PortalDemo._sweep_stale_temps(path.parent)
 +        fd, name = tempfile.mkstemp(dir=path.parent, prefix=FLAG_TEMP_PREFIX, suffix=FLAG_TEMP_SUFFIX)
 +        try:
 +            with os.fdopen(fd, "w", encoding="utf-8") as f:
@@ -394,6 +406,19 @@ index 0000000..fb0007d
 +        except BaseException:
 +            Path(name).unlink(missing_ok=True)
 +            raise
++
++    @staticmethod
++    def _sweep_stale_temps(folder: Path) -> None:
++        cutoff = time.time() - FLAG_TEMP_MAX_AGE_SECONDS
++        try:
++            for f in folder.glob(f"{FLAG_TEMP_PREFIX}*{FLAG_TEMP_SUFFIX}"):
++                try:
++                    if f.is_file() and not f.is_symlink() and f.stat().st_mtime < cutoff:
++                        f.unlink(missing_ok=True)
++                except OSError:
++                    continue
++        except OSError:
++            return
 +
 +    # -- burst
 +    def _burst(self, body: bytes) -> tuple[int, dict[str, Any]]:
@@ -419,6 +444,9 @@ index 0000000..fb0007d
 +        try:
 +            if time.monotonic() < self._next_burst_at:
 +                return HTTP_TOO_MANY_REQUESTS, {"error": ERR_TOO_SOON}
++            if self._sent + n > BURST_BUDGET_REQUESTS:
++                return HTTP_TOO_MANY_REQUESTS, {"error": ERR_BUDGET}
++            self._sent += n
 +            ref_prefix = prefix if prefix is not None else f"{REF_AUTO_PREFIX}{int(time.time() * MS_PER_SECOND)}"
 +            out = self._fire(self.desk_url + LEADS_PATH, n, self._people[person - 1], door, ref_prefix)
 +            # A request still in flight when the deadline ran out (status "timeout") cannot be stopped, only waited
@@ -926,10 +954,10 @@ index 0000000..c58a2b1
 +}
 diff --git a/tests/test_portal_demo.py b/tests/test_portal_demo.py
 new file mode 100644
-index 0000000..dc36d74
+index 0000000..8022a8f
 --- /dev/null
 +++ b/tests/test_portal_demo.py
-@@ -0,0 +1,1073 @@
+@@ -0,0 +1,1122 @@
 +"""Tests of the demo extension of the portal (demo_only/portal_demo.py). Made-up data only.
 +
 +Open until the product work package that builds lead_desk.loader.load_demo_portal and the server routes is merged
@@ -943,6 +971,7 @@ index 0000000..dc36d74
 +
 +import importlib
 +import json
++import os
 +import random
 +import sys
 +import threading
@@ -958,18 +987,6 @@ index 0000000..dc36d74
 +from conftest import Env
 +from support import HOST, REPO, Rig, free_port, wait_until
 +
-+from demo_only import portal_demo
-+from demo_only.fakes import RecordedQualifier
-+from demo_only.portal_demo import (
-+    BURST_MAX,
-+    FIELD_MAX,
-+    GET,
-+    POST,
-+    REF_PREFIX_RE,
-+    ROWS_MAX,
-+    PortalDemo,
-+    make,
-+)
 +from lead_desk.adapters import HttpCrm, HttpOutbox
 +from lead_desk.config import Config
 +from lead_desk.constants import (
@@ -986,6 +1003,16 @@ index 0000000..dc36d74
 +)
 +from lead_desk.desk import Desk
 +from lead_desk.hooks import HOOK_POINTS, FlagFileHooks, Hooks
++
++portal_demo = pytest.importorskip("demo_only.portal_demo")  # no demo_only/ folder: this file is skipped, not broken
++RecordedQualifier = pytest.importorskip("demo_only.fakes").RecordedQualifier
++BURST_MAX, FIELD_MAX, GET, POST = portal_demo.BURST_MAX, portal_demo.FIELD_MAX, portal_demo.GET, portal_demo.POST
++REF_PREFIX_RE, ROWS_MAX, PortalDemo, make = (
++    portal_demo.REF_PREFIX_RE,
++    portal_demo.ROWS_MAX,
++    portal_demo.PortalDemo,
++    portal_demo.make,
++)
 +
 +FIXTURES = REPO / "tests" / "portal_fixtures"
 +SERVER_ERROR_MIN = 500
@@ -2003,3 +2030,53 @@ index 0000000..dc36d74
 +    assert demo._armed(hooks) is None  # only the first bytes are read; the rest is not a point
 +    flag.write_bytes(b"D2\n")
 +    assert demo._armed(hooks) == "D2"
++
++
++# ---- review round 3
++@pytest.mark.parametrize(
++    "url", ["file://localhost/leads", "ftp://127.0.0.1/leads", "data://localhost/x", "//localhost"]
++)
++def test_desk_url_needs_http(env: Env, url: str) -> None:
++    _, furl = env.fakes()
++    demo = make(wired(env, furl).desk)
++    assert not demo._desk_url_is_local(url)
++    demo.desk_url = url
++    assert demo.handle(POST, "burst", body({"n": 1})) == (HTTP_CONFLICT, {"error": "desk_url_not_local"})
++
++
++def test_burst_budget(env: Env, stub: Callable[..., Stub], monkeypatch: pytest.MonkeyPatch) -> None:
++    monkeypatch.setattr(portal_demo, "BURST_BUDGET_REQUESTS", 5)
++    desk = stub(lambda h, key, data, c: send(h, HTTP_CREATED, {}))
++    demo = burst_demo(env, desk)
++    assert demo.handle(POST, "burst", body({"n": 3}))[0] == HTTP_OK
++    assert demo.handle(POST, "burst", body({"n": 3})) == (HTTP_TOO_MANY_REQUESTS, {"error": "burst_budget_used"})
++    assert demo.handle(POST, "burst", body({"n": 2}))[0] == HTTP_OK  # exactly what is left
++    assert demo.handle(POST, "burst", body({"n": 1}))[1] == {"error": "burst_budget_used"}
++    assert sum(desk.calls.values()) == 5  # the refused bursts sent nothing
++
++
++def test_crash_sweeps_old_temp_files(env: Env, tmp_path: Path) -> None:
++    _, furl = env.fakes()
++    flag = flag_in_own_folder(tmp_path)
++    old, fresh, other = flag.parent / ".crash-old.tmp", flag.parent / ".crash-new.tmp", flag.parent / "keep.txt"
++    for f in (old, fresh, other):
++        f.write_text("x", encoding="utf-8")
++    long_ago = time.time() - portal_demo.FLAG_TEMP_MAX_AGE_SECONDS - 60
++    os.utime(old, (long_ago, long_ago))
++    demo = make(wired(env, furl, hooks=FlagFileHooks(flag)).desk)
++    assert demo.handle(POST, "crash", body({"point": "A"})) == (HTTP_OK, {"armed": "A"})
++    assert sorted(p.name for p in flag.parent.iterdir()) == [".crash-new.tmp", "crash.flag", "keep.txt"]
++
++
++# ---- WP-A / WP-G gate tests (round 3, item 1): need the server routes, NOT run here and not claimed as run
++@pytest.mark.skip(reason="needs WP-A server routes: text/plain POST to /api/demo/crash gives 400 or 403, no flag file")
++def test_server_rejects_text_plain_crash() -> None:
++    raise AssertionError("to be written with the server routes (WP-A / WP-G)")
++
++
++@pytest.mark.skip(
++    reason="needs WP-A server routes: foreign Origin, Origin null, Sec-Fetch-Site cross-site POST to burst and crash "
++    "gives 403, lead book and flag file unchanged"
++)
++def test_server_rejects_cross_origin_posts() -> None:
++    raise AssertionError("to be written with the server routes (WP-A / WP-G)")

@@ -732,3 +732,4 @@ PULSE 13:12Z agents: A a5e33f7e4aa487492 (WP-A fix pass 1, box 13:55Z); R3F a17a
 PULSE 13:13Z agents: A a5e33f7e4aa487492 (WP-A fix pass 1, box 13:55Z); R3F a17a47aab61a9fda1 (WP-F round-3 security review, to 13:35Z). shells: pulse_refresh.sh pid 29978. core frozen (ORDER 198).
 PULSE 13:12Z agents: A a5e33f7e4aa487492 (WP-A fix pass 1, box 13:55Z); F a5c3680f4da8b8825 (WP-F fix pass 3 from round-3 nits, box 13:42Z). R3F closed (no Blocker, 1 cross-WP Major = WP-G gate tests). shells: pulse_refresh.sh. core frozen.
 PULSE 13:14Z agents: A a5e33f7e4aa487492 (WP-A fix pass 1, box 13:55Z); F a5c3680f4da8b8825 (WP-F fix pass 3, box 13:42Z). shells: pulse_refresh.sh pid 29978. core frozen (ORDER 198).
+PULSE 13:19Z agents: A a5e33f7e4aa487492 (WP-A fix pass 1, box 13:55Z); R4F a8c86b1f677166544 (WP-F round-4 security review of 77e27d1, to 13:40Z). F closed at 77e27d1 (full pytest 8 failed = baseline names). shells: pulse_refresh.sh. core frozen.
