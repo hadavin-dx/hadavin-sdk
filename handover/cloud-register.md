@@ -789,3 +789,4 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | bd-recon-P3a2 | P3a-2 mutants + gen_evidence | closed 2026-11-09 (report read) | handover/tools/p3a2_mutants.py (66/66 killed, text reconstructed), gen_evidence.py (whole script reconstructed); P6a gen_evidence run (pid 490, started by builder, mine to watch) still in full-3.13 | - |
 | bd-P1b-fix1 | builder, P1b fix batch (round1-resolve M1,M4,M5-prep,M7-M18 + lead rulings M2/M3/M6) | 05:07Z | expected end +60 min, checkpoint every 30 | worktree /home/user/build/B-P1b branch core/P1b-fixwip, commit local only | running |
 | P1d-r2-design/readiness/zoomout | plan review round 2 | 05:14Z | +20min | - | running | save reports to handover/reviews/P1d/round2-*.md |
+| P1d-r3-design/readiness/zoomout | plan review round 3 of tickets/P1d.md rev 3 (sonnet egm-*) | 05:28Z | +20min | - | running | save to handover/reviews/P1d/round3-*.md |
