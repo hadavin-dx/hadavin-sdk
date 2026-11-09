@@ -334,7 +334,8 @@ class Runtime:
 
     def _same_message_run(self, asked: Run, exists: StaleState) -> Run:
         """The run already stored under `asked.run_id` if it is for the same agent, principal and `trigger_ref`;
-        else the `StaleState` again (a foreign run is never returned)."""
+        else the `StaleState` again (a foreign run is never returned). The stored run is returned as it is now: it
+        may still be in progress, and the repeat call's document, mapping and trigger_kind play no part."""
         try:
             found = self.store.get_run(asked.run_id)
         except NotFound:
@@ -364,7 +365,10 @@ class Runtime:
         characters from 0-9 and a-f, else `InvalidRunId` (checked after the `Unqualified` check, before any write).
         If a run with that id already exists and its `agent_id`, `principal_id` and `trigger_ref` equal this call's,
         that run is returned at once: no note, no redaction, no limits check, no model call, no meter hold. If any of
-        the three differs, `StaleState` is raised and nothing is written. `None` makes a fresh id.
+        the three differs, `StaleState` is raised and nothing is written. `None` makes a fresh id. Two calls are the
+        same message when `agent_id`, `principal_id` and `trigger_ref` are equal; the repeat call's `document`,
+        `mapping` and `trigger_kind` are ignored. The returned run may still be in progress (the first call can be
+        running in another thread or have been cut off), so the caller must check its `state`.
         `document` must be the RAW bytes (never text already redacted). `mapping` is the run's starting
         redaction map: the map of that same raw document (K4 passes the intake map) or None for an empty one. A map
         built from a different document would restore the wrong values, so it is the caller's to get right. The

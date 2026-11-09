@@ -26,8 +26,8 @@ GOOD = "run-" + "0123456789abcdef" * 2
 AK_G2_SHAPE = "run-" + "a1b2c3d" * 4 + format(7, "04x")
 
 
-def _count_rows(rt):
-    return len(rt.audit.events(GOOD))
+def _count_rows(rt, run_id):
+    return len(rt.audit.events(run_id))
 
 
 def test_t1_given_id_is_the_run_id(cfg_dir):
@@ -94,8 +94,8 @@ def _foreign(rt, **diff):
 
 
 def test_d0_one_run_per_message_at_the_choke_point(cfg_dir):
-    """Fails BY ASSERTION on the base commit (no `run_id` parameter there: the call is made without it, so two run
-    rows exist) and on 84abdf6 (the second call raised StaleState). `run_id` is passed only when the parameter
+    """Fails BY ASSERTION on the base (no `run_id` parameter there: the call is made without it, so two run rows
+    exist) and on the first peel head (the second call raised StaleState). `run_id` is passed only when the parameter
     exists. The document stops before the model, so the result does not depend on the recording."""
     rt, cfg = build(cfg_dir)
     doc = _doc(cfg, "injected.txt")
@@ -116,7 +116,7 @@ def test_d2_same_message_twice_returns_the_existing_run(cfg_dir):
     doc = _doc(cfg, "chat.txt")
     first = rt.handle(AGENT, PRINCIPAL, doc, trigger_ref="m-1", run_id=GOOD)
     assert first.run_id == GOOD and first.state == RunState.NO_ACTION
-    calls, notes = len(rt.llm.calls), _count_rows(rt)
+    calls, notes = len(rt.llm.calls), _count_rows(rt, GOOD)
     assert calls == 1 and notes > 0
     rt.store, rt.limits = SpyStore(rt.store), SpyLimits(rt.limits)
     second = rt.handle(AGENT, PRINCIPAL, doc, trigger_ref="m-1", run_id=GOOD)
@@ -124,7 +124,7 @@ def test_d2_same_message_twice_returns_the_existing_run(cfg_dir):
     assert second.run_id == GOOD
     assert second.state == RunState.NO_ACTION  # the stored run, not a new one
     assert len(rt.llm.calls) == calls  # no second model call, so no second spend
-    assert _count_rows(rt) == notes  # no second "received" note
+    assert _count_rows(rt, GOOD) == notes  # no second "received" note
     assert rt.limits.calls == []  # no limits check, no meter hold
     assert rt.store.calls == ["create_run", "get_run"]  # nothing written but the refused create
     assert len(_all_runs(rt.store)) == 1
@@ -227,7 +227,9 @@ def test_race_two_threads_same_message_one_run(cfg_dir):
         rid = "run-" + format(n, "032x")
         rt, got, errors = _race_once(cfg_dir, rid)
         assert not errors, errors
-        assert [r.run_id for r in got] == [rid, rid]
+        assert [r.run_id for r in got] == [rid, rid]  # the loser's run id is the winner's
+        assert all(r.state in set(RunState) for r in got)  # a valid state, maybe still in progress
+        assert rt.store.get_run(rid).state == RunState.NO_ACTION
         assert len(_all_runs(rt.store)) == 1
         assert len(rt.llm.calls) == 1
 
@@ -327,3 +329,33 @@ def test_t9_order_unqualified_first_then_invalid_run_id(cfg_dir):
     with pytest.raises(InvalidRunId):  # known agent, bad id
         rt.handle(AGENT, PRINCIPAL, doc, run_id="bad")
     assert not issubclass(agent_loop.Unqualified, ValueError)  # so the two are told apart by type
+
+
+@pytest.fixture
+def pg_store(tmp_path):
+    """The Postgres store kind (skips without HADAVIN_TEST_PG_DSN)."""
+    from tests.contracts.kinds import (
+        KINDS,
+        store_postgres,  # noqa: F401 - registers the kind
+    )
+
+    made = KINDS["store"]["postgres"](tmp_path)
+    store = next(made)
+    yield store
+    next(made, None)
+
+
+def test_d2_on_postgres_same_message_twice_returns_the_existing_run(cfg_dir, pg_store):
+    rt, cfg = build(cfg_dir)
+    rt.store = pg_store  # the runs live in the database; limits keep their own memory store
+    doc = _doc(cfg, "chat.txt")
+    first = rt.handle(AGENT, PRINCIPAL, doc, trigger_ref="m-1", run_id=GOOD)
+    calls, notes = len(rt.llm.calls), _count_rows(rt, GOOD)
+    second = rt.handle(AGENT, PRINCIPAL, doc, trigger_ref="m-1", run_id=GOOD)
+    assert second.run_id == first.run_id == GOOD and second.state == RunState.NO_ACTION
+    assert len(rt.llm.calls) == calls and _count_rows(rt, GOOD) == notes
+    _foreign_args = {"agent_id": AGENT, "principal_id": PRINCIPAL, "trigger_ref": "m-2"}
+    assert {k: getattr(rt.store.get_run(GOOD), k) for k in _foreign_args} != _foreign_args
+    with pytest.raises(StaleState):  # same id, another message
+        rt.handle(AGENT, PRINCIPAL, doc, trigger_ref="m-2", run_id=GOOD)
+    assert len(rt.llm.calls) == calls
