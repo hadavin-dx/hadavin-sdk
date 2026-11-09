@@ -7,8 +7,9 @@ Three commands, so that the workflow YAML holds no shell logic that cannot be te
 * ``run NAME -- CMD ...``  runs CMD, copies its output to the console and to evidence-logs/NAME.txt (first line:
              the commit under test), appends ``NAME<TAB>exit=<code>`` to evidence-logs/status.txt and exits with
              CMD's own code. A command that cannot start is recorded as exit=127 (same as a shell).
-* ``report NAME ...``  prints a Markdown summary and exits 1 unless every NAME has a row with exit=0. A NAME with
-             no row is shown as NOT RUN (a skipped or never-reached step cannot pass).
+* ``report NAME ...``  prints a Markdown summary (with skipped-test counts) and exits 1 unless every NAME has exactly
+             one row, that row is exit=0, and no test was skipped for a missing HADAVIN_TEST_ variable. A NAME with
+             no row is shown as NOT RUN (skipped, timed out or cancelled steps cannot pass); a repeated row fails.
 
 Allowlists: a Python version is dotted numbers 3.<minor> with minor at least 12 (pyproject requires-python); a
 git ref is letters, digits and . _ / - only (git's own check-ref-format also bans '..', '//', a trailing '.' or '/'
@@ -31,8 +32,8 @@ MAX_PYTHONS = 4
 MAX_MUTANTS = 8
 MIN_MINOR = 12  # pyproject: requires-python >= 3.12
 REF_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9._/-]{0,199}")
-PY_RE = re.compile(r"3\.[0-9]+")
-MUTANT_RE = re.compile(r"tests/[a-z0-9_]+_mutants\.py")
+PY_RE = re.compile(r"3\.(1[2-9]|[2-9][0-9])")  # 3.12 to 3.99, no leading zeros
+MUTANT_RE = re.compile(r"tests/[a-z0-9_]{1,40}_mutants\.py")  # step name extra-<stem> fits NAME_RE
 NAME_RE = re.compile(r"[a-z0-9][a-z0-9_-]{0,60}")
 
 
@@ -42,7 +43,9 @@ class Refused(ValueError):
 
 def check_ref(ref: str) -> str:
     if not REF_RE.fullmatch(ref) or ".." in ref or "//" in ref or ref.endswith((".", "/", ".lock")):
-        raise Refused(f"ref refused (letters, digits, . _ / - only, no '..'): {ref[:60]!r}")
+        raise Refused(
+            f"ref refused (letters, digits, . _ / - only, no '..'; pull/N/head is not supported, pass the branch or commit): {ref[:60]!r}"
+        )
     return ref
 
 
@@ -55,11 +58,7 @@ def check_pythons(raw: str) -> list[str]:
         raise Refused(f"pythons must be a list of 1 to {MAX_PYTHONS} version strings")
     out: list[str] = []
     for item in value:
-        if (
-            not isinstance(item, str)
-            or not PY_RE.fullmatch(item)
-            or int(item.split(".")[1]) < MIN_MINOR
-        ):
+        if not isinstance(item, str) or not PY_RE.fullmatch(item):
             raise Refused(
                 f"python version refused (need 3.{MIN_MINOR} or newer, like 3.13): {str(item)[:20]!r}"
             )
@@ -114,6 +113,14 @@ def cmd_run(name: str, command: list[str]) -> int:
     if not NAME_RE.fullmatch(name) or not command:
         raise Refused("run needs a lowercase step name and a command")
     LOG_DIR.mkdir(exist_ok=True)
+    status_file = LOG_DIR / STATUS
+    if status_file.is_file() and any(
+        line.partition("\t")[0] == name
+        for line in status_file.read_text(encoding="utf-8").splitlines()
+    ):
+        raise Refused(
+            f"step name {name!r} was already used in this run (a log would be overwritten)"
+        )
     code = 127
     with (LOG_DIR / f"{name}.txt").open("w", encoding="utf-8") as fh:
 
@@ -145,21 +152,52 @@ def cmd_run(name: str, command: list[str]) -> int:
     return code
 
 
+SKIP_RE = re.compile(r"SKIPPED \[(\d+)\] (.*)")
+NEVER = "NOT RUN (never finished: skipped, timed out or cancelled)"
+
+
+def _skips(log: Path) -> tuple[int, int]:
+    """(all skipped tests, skipped tests whose reason says a HADAVIN_TEST_ variable is not set)."""
+    total = hidden = 0
+    for line in log.read_text(encoding="utf-8", errors="replace").splitlines():
+        m = SKIP_RE.match(line)
+        if m:
+            total += int(m.group(1))
+            if "HADAVIN_TEST_" in m.group(2) and "not set" in m.group(2):
+                hidden += int(m.group(1))
+    return total, hidden
+
+
 def cmd_report(expected: list[str]) -> int:
-    rows: dict[str, str] = {}
+    rows: dict[str, list[str]] = {}
     path = LOG_DIR / STATUS
     if path.is_file():
         for line in path.read_text(encoding="utf-8").splitlines():
             name, _, status = line.partition("\t")
-            rows[name] = status
+            rows.setdefault(name, []).append(status)
     names = list(dict.fromkeys([*expected, *rows]))
     bad = 0
-    out = ["| step | result |", "|---|---|"]
+    out = ["| step | result | skipped tests |", "|---|---|---|"]
     for name in names:
-        status = rows.get(name, "NOT RUN")
-        if status != "exit=0":
+        found = rows.get(name, [])
+        skipped = "-"
+        if not found:
+            result = NEVER
+        elif len(found) > 1:
+            result = "DUPLICATE rows: " + ", ".join(found)
+        else:
+            result = found[0]
+        log = LOG_DIR / f"{name}.txt"
+        if log.is_file():
+            total, hidden = _skips(log)
+            skipped = str(total)
+            if hidden and result == "exit=0":
+                result = (
+                    f"FAIL: {hidden} test(s) skipped because a HADAVIN_TEST_ variable was not set"
+                )
+        if result != "exit=0":
             bad += 1
-        out.append(f"| {name} | {status} |")
+        out.append(f"| {name} | {result} | {skipped} |")
     out.append("")
     for name in names:
         log = LOG_DIR / f"{name}.txt"

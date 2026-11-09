@@ -1,12 +1,17 @@
 name: Evidence
 
-# Manual runs only. For one git ref and a list of Python versions this runs the same test command as CI (the
-# "check" job in ci.yml), the stage-rename mutants and, optionally, named mutant scripts, each on its own runner
+# Manual runs only. For one git ref and a list of Python versions this runs the same test selection as CI (the
+# "check" job in ci.yml; the report flag differs: -rfEs here, -rs there), the stage-rename mutants and, optionally, named mutant scripts, each on its own runner
 # with a throwaway Postgres and a throwaway Vault development server. It deploys nothing, uses no stored secrets
 # and reads the repository only. Every step writes its raw log and its exit code to evidence-logs/, and a last
 # step fails the run unless every step has exit=0 (a step that never ran counts as NOT RUN, not as a pass).
 # All typed input is checked by tools/evidence_step.py (allowlists) in the "plan" job before any runner starts;
 # no run: script contains a ${{ }} expression (a guard test enforces it).
+# The tested ref must itself contain the reader of HADAVIN_TEST_VAULT_TOKEN (tests/contracts/kinds/secrets_neutral.py);
+# the step "vault-token-reader" fails the run if it does not, because the Vault tests would then use the fixed
+# development default and fail against this run's random one. A skipped test whose reason says a HADAVIN_TEST_ variable
+# is "not set" also fails the run (the report counts skips and refuses that reason). Refs of the form pull/N/head
+# are not supported; pass the branch name or the commit SHA.
 on:
   workflow_dispatch:
     inputs:
@@ -28,7 +33,8 @@ on:
 permissions:
   contents: read
 
-# A second run for the same ref and inputs waits for the first; it never cancels it (a cancelled run loses its evidence).
+# A second run for the same ref and inputs waits for the first; it never cancels a running one (a cancelled run
+# loses its evidence). GitHub keeps one waiting run per group: a third request replaces the waiting second one.
 concurrency:
   group: evidence-${{ inputs.ref }}-${{ inputs.pythons }}-${{ inputs.mutant_scripts }}
   cancel-in-progress: false
@@ -72,7 +78,7 @@ jobs:
   evidence:
     needs: plan
     runs-on: ubuntu-24.04
-    timeout-minutes: 90
+    timeout-minutes: 150  # the step timeouts below add up to about 135 minutes
     permissions:
       contents: read
     strategy:
@@ -85,7 +91,7 @@ jobs:
         env:
           POSTGRES_HOST_AUTH_METHOD: trust
         ports:
-          - 5432:5432
+          - 127.0.0.1:5432:5432
         options: >-
           --health-cmd "pg_isready -U postgres"
           --health-interval 5s
@@ -96,7 +102,7 @@ jobs:
       HADAVIN_TEST_VAULT_ADDR: http://127.0.0.1:8200
       # The text-folding tables are built for Unicode 15.1.0 (Python 3.13), as in ci.yml; other versions must not set it.
       HADAVIN_REQUIRE_PINNED_UNIDATA: ${{ matrix.python == '3.13' && '1' || '' }}
-      SHA: ${{ needs.plan.outputs.sha }}
+      PYTHONUNBUFFERED: "1"
       REF: ${{ needs.plan.outputs.ref }}
       MUTANTS: ${{ needs.plan.outputs.mutants }}
       PY: ${{ matrix.python }}
@@ -154,6 +160,9 @@ jobs:
       - name: The postgres client the database tests shell out to is present (else they would skip silently)
         timeout-minutes: 2
         run: python3 "$TOOL" run psql-present -- psql --version
+      - name: The tested ref reads the per-run Vault token (else the Vault tests would use the fixed token and fail)
+        timeout-minutes: 2
+        run: python3 "$TOOL" run vault-token-reader -- grep -q HADAVIN_TEST_VAULT_TOKEN tests/contracts/kinds/secrets_neutral.py
       - name: Tests (the CI command)
         if: ${{ !cancelled() && steps.install.outcome == 'success' }}
         timeout-minutes: 45
@@ -172,7 +181,7 @@ jobs:
         run: |
           fail=0
           for s in $MUTANTS; do
-            name=$(basename "$s" .py | tr _ -)
+            name=extra-$(basename "$s" .py | tr _ -)
             python3 "$TOOL" run "$name" -- python "$s" || fail=1
           done
           exit $fail
@@ -181,13 +190,13 @@ jobs:
         timeout-minutes: 2
         run: |
           extra=""
-          for s in $MUTANTS; do extra="$extra $(basename "$s" .py | tr _ -)"; done
+          for s in $MUTANTS; do extra="$extra extra-$(basename "$s" .py | tr _ -)"; done
           # $extra holds only names the plan job accepted, so word splitting is safe.
-          python3 "$TOOL" report install psql-present pytest perf stage-mutants $extra
+          python3 "$TOOL" report install psql-present vault-token-reader pytest perf stage-mutants $extra
       - name: Remove the Vault development server
         if: ${{ always() }}
         timeout-minutes: 2
-        run: docker rm -f vault-evidence
+        run: docker ps -aq --filter name=vault-evidence | xargs -r docker rm -f
       - name: Upload the raw logs
         if: ${{ always() }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
