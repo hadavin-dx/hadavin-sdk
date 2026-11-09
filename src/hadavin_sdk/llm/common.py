@@ -11,7 +11,7 @@ import time
 import urllib.request
 from collections.abc import Callable
 from dataclasses import dataclass
-from decimal import Decimal, InvalidOperation
+from decimal import Decimal, DecimalException
 from typing import Any
 from urllib.parse import urlsplit
 
@@ -151,13 +151,14 @@ def stop_reason(raw: str | None, calls: list[ToolCall]) -> str:
 
 def price_cost(route: Any, tokens_in: int, tokens_out: int) -> Decimal:
     """The exact cost of a call from the route's prices, rounded UP to 8 decimals (`models.round_cost_up`).
-    A route that skipped validation (`model_copy(update=...)`) with a bad price gives `ValueError`."""
+    A route that skipped validation (`model_copy(update=...)`) with a bad price gives `ValueError`: every decimal
+    arithmetic error (`InvalidOperation`, `Overflow`, ...) is translated here, the one choke point of all callers."""
     try:
         cost = (
             Decimal(tokens_in) * route.input_usd_per_mtok
             + Decimal(tokens_out) * route.output_usd_per_mtok
         ) / Decimal(1_000_000)
-    except InvalidOperation as exc:
+    except DecimalException as exc:
         raise ValueError("the route's price is not a usable number") from exc
     return round_cost_up(cost)
 

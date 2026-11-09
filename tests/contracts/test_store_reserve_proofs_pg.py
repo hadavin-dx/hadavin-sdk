@@ -10,7 +10,6 @@ login with exact rights.
 3. Races on two or more real connections: the same id, the same settle, and a mixed load with no deadlock.
 """
 
-import contextlib
 import multiprocessing
 import queue as queue_module
 import re
@@ -378,8 +377,8 @@ def test_a_held_counter_row_makes_a_reserve_store_busy_and_books_nothing(dsn, ad
             _reserve(store, "res-busy", "1", day=day)
         admin.rollback()
         assert store.spend_totals(AGENT, day) == (D(1), D(1))
-        assert store.list_open_reservations(AGENT) != []
-        with contextlib.suppress(Exception):
+        assert [r.reservation_id for r in store.list_open_reservations(AGENT)] == ["seed"]
+        with pytest.raises(NotFound):  # the refused call left no row behind
             store.get_spend_reservation("res-busy")
     finally:
         conn.close()

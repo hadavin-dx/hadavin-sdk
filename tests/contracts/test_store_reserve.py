@@ -154,6 +154,17 @@ def test_validation_comes_first_and_changes_nothing(store):
     assert store.spend_totals(agent, utc_today(store)) == (0, 0)
 
 
+@pytest.mark.parametrize("bad", ["a\x00b", "a\ud800b"], ids=["nul", "lone_surrogate"])
+def test_meta_text_is_refused_the_same_way_on_both_stores(store, bad):
+    """Postgres cannot store NUL or a lone surrogate in text; memory must refuse them as well (parity), and a
+    refused call books nothing."""
+    agent = "rs-meta-text"
+    with pytest.raises(ValueError):
+        _reserve(store, agent, "1", meta={"team": bad})
+    assert store.spend_totals(agent, utc_today(store)) == (0, 0)
+    assert store.list_open_reservations(agent_id=agent) == []
+
+
 def _meta_of_size(target, *, wide=False):
     """A valid meta whose json.dumps (the ticket's separators) is exactly `target` UTF-8 bytes; with `wide` one
     character is a two-byte `e` with an accent."""

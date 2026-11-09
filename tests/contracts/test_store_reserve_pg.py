@@ -224,6 +224,20 @@ def test_expired_to_settled_or_released_cannot_change_expired_at(rt, target):
     assert REFUSED_MESSAGE in _refused(rt, statement, (f"x-{target}",))
 
 
+@pytest.mark.parametrize("target", ["settled", "released"])
+def test_open_to_settled_or_released_keeps_expired_at_null(rt, target):
+    """A reservation that never expired has no expiry time: setting one while closing it is refused."""
+    _make(rt, f"o-{target}", "open")
+    statement = (
+        "UPDATE spend_reservations SET status = 'settled', settled_usd = 1, closed_at = now(), "
+        "expired_at = now() WHERE reservation_id = %s"
+        if target == "settled"
+        else "UPDATE spend_reservations SET status = 'released', settled_usd = NULL, closed_at = now(), "
+        "expired_at = now() WHERE reservation_id = %s"
+    )
+    assert REFUSED_MESSAGE in _refused(rt, statement, (f"o-{target}",))
+
+
 @pytest.mark.parametrize(
     ("statement", "params", "code"),
     [

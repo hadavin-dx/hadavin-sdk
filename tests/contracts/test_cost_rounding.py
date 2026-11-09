@@ -159,11 +159,16 @@ def _run_through_the_loop(tmp_path, llm):
     from hadavin_sdk.store.memory import MemoryStore
     from tests.k5_support import build_runtime, handle, k5_cfg
 
+    # One fixed clock for the meter (`limits.now`) and for the read below: a run that crosses midnight UTC cannot
+    # book on one day and be read on the next.
+    fixed = datetime.now(UTC)
     store = MemoryStore()
-    rt, _cards = build_runtime(k5_cfg(tmp_path), llm, store=store)
-    result = handle(rt)  # an exception that escapes the loop fails the test here
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setattr("hadavin_sdk.limits.now", lambda: fixed)
+        rt, _cards = build_runtime(k5_cfg(tmp_path), llm, store=store)
+        result = handle(rt)  # an exception that escapes the loop fails the test here
     run = store.get_run(result.run_id)
-    return run.cost_usd, store.spend_totals("test-agent", datetime.now(UTC).date())[0]
+    return run.cost_usd, store.spend_totals("test-agent", fixed.date())[0]
 
 
 def test_d_the_loop_books_the_producer_rounded_cost(tmp_path):
@@ -192,3 +197,31 @@ def test_v4_a_reply_with_a_nan_cost_fails_before_the_loop_starts():
     """Row (v4): the object cannot be built, so no loop ever sees it."""
     with pytest.raises(ValidationError):
         Reply(model_id="m", cost_usd=D("NaN"))
+
+
+def test_price_cost_translates_every_decimal_error_to_value_error():
+    """A route that skipped validation (`model_copy(update=...)`) can carry a price that overflows or is not a
+    number: `price_cost` (the one choke point of `reply` and the fake model) answers `ValueError`, never
+    `decimal.Overflow`. The old code translated `InvalidOperation` only."""
+    from hadavin_sdk.llm.common import price_cost
+
+    for bad in (D("1E+999999"), D("NaN"), D("sNaN"), D("Infinity")):
+        route = _route("1").model_copy(update={"input_usd_per_mtok": bad})
+        with pytest.raises(ValueError):
+            price_cost(route, 10, 5)
+
+
+def test_the_fake_model_prices_through_price_cost_and_refuses_a_bad_price(tmp_path):
+    import hashlib
+    import json
+
+    from hadavin_sdk.llm.fake import FakeLLM
+
+    messages = [{"role": "user", "content": "bad-price"}]
+    digest = hashlib.sha256(json.dumps(messages, sort_keys=True).encode("utf-8")).hexdigest()
+    (tmp_path / f"{digest}-1.json").write_text(
+        json.dumps({"text": "x", "input_tokens": 10, "output_tokens": 5}), encoding="utf-8"
+    )
+    route = _route("1").model_copy(update={"input_usd_per_mtok": D("1E+999999")})
+    with pytest.raises(ValueError):
+        FakeLLM(tmp_path, {"r": route}).chat(messages, system="", route="r")

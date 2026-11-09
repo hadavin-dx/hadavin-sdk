@@ -290,7 +290,7 @@ class MemoryStore:
             reservation_id, agent_id, day, amount_usd, day_cap, month_cap, run_id, run_cap, meta
         )
         with self._lock:
-            if self._kill.on:
+            if self._kill_on().on:
                 raise KillSwitchOn("the kill switch is on")
             run = None
             if run_id is not None:
@@ -327,10 +327,7 @@ class MemoryStore:
                     raise SpendCapExceeded(which, cap, cur, amount)
             if any(n is not None and n > MAX_COUNTER_USD for n in (new_run, new_day, new_month)):
                 raise ValueError("a spend counter would pass its ceiling")
-            self._checkpoint("reserve:before_counters")
-            if run is not None:
-                self._runs[run_id] = run.model_copy(update={"cost_usd": new_run})
-            self._spend[(agent_id, day)] = new_day
+            # built BEFORE any counter moves: a failure here leaves nothing half-booked
             row = SpendReservation(
                 reservation_id=reservation_id,
                 agent_id=agent_id,
@@ -340,6 +337,10 @@ class MemoryStore:
                 created_at=stamp,
                 meta=dict(meta_ok) if meta_ok is not None else None,
             )
+            self._checkpoint("reserve:before_counters")
+            if run is not None:
+                self._runs[run_id] = run.model_copy(update={"cost_usd": new_run})
+            self._spend[(agent_id, day)] = new_day
             self._res[reservation_id] = row
             return SpendOutcome(row.model_copy(deep=True), True)
 
@@ -451,9 +452,13 @@ class MemoryStore:
             )
             return self._spend.get((agent_id, day), Decimal(0)), month
 
+    def _kill_on(self) -> KillSwitch:
+        """The ONE read of the kill switch (the caller holds `self._lock`, a plain lock: this does not take it)."""
+        return self._kill.model_copy(deep=True)
+
     def get_kill_switch(self) -> KillSwitch:
         with self._lock:
-            return self._kill.model_copy(deep=True)
+            return self._kill_on()
 
     def set_kill_switch(self, ks: KillSwitch) -> None:
         check_text(ks)

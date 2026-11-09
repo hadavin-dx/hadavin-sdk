@@ -851,22 +851,18 @@ class PostgresStore:
         check_int(older_than_s, MIN_SWEEP_AGE_S, 10**7)
         check_int(limit, 1, 1000)
         with self._lock, self._db.transaction():
-            ids = self._exec(
-                "SELECT reservation_id FROM spend_reservations WHERE status = 'open' "
-                "AND clock_timestamp() - created_at > make_interval(secs => %s) "
-                "ORDER BY created_at, reservation_id LIMIT %s FOR UPDATE SKIP LOCKED",
+            # ONE statement: the rows another transaction holds are skipped, the rest expire together
+            rows = self._exec(
+                "UPDATE spend_reservations SET status = 'expired', settled_usd = reserved_usd, "
+                "closed_at = clock_timestamp(), expired_at = clock_timestamp() "
+                "WHERE reservation_id IN (SELECT reservation_id FROM spend_reservations "
+                "WHERE status = 'open' AND clock_timestamp() - created_at > make_interval(secs => %s) "
+                "ORDER BY created_at, reservation_id LIMIT %s FOR UPDATE SKIP LOCKED) "
+                "AND status = 'open' RETURNING *",
                 (older_than_s, limit),
             ).fetchall()
-            out = []
-            for r in ids:
-                row = self._exec(
-                    "UPDATE spend_reservations SET status = 'expired', settled_usd = reserved_usd, "
-                    "closed_at = clock_timestamp(), expired_at = clock_timestamp() "
-                    "WHERE reservation_id = %s AND status = 'open' RETURNING *",
-                    (r["reservation_id"],),
-                ).fetchone()
-                if row is not None:
-                    out.append(self._reservation(row))
+            out = [self._reservation(r) for r in rows]
+            out.sort(key=lambda r: (r.created_at, r.reservation_id))  # RETURNING has no order
             return out
 
     def spend_totals(self, agent_id: str, day: date) -> tuple[Decimal, Decimal]:
