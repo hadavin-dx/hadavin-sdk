@@ -1,1 +1,1 @@
-2026-11-09T03:49Z | agents: none | jobs: 0 | pg clusters: 0 | last: setup + checklist q370 | unpushed: none | next: await lead on EGM install
+03:51Z | agents 0 running (none) | heavy slots busy 0/3 | last: started, none yet | unpushed: none | next: see agents
