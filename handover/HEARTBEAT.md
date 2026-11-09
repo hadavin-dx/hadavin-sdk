@@ -669,3 +669,4 @@ PULSE 09:58Z agents: a62a46b6 rv-dpld (read-only review ORDER 199); shells: dpld
 PULSE 09:59Z agents: a62a46b6 rv-dpld (ORDER 199 review, read-only); shells: dpld-step1 (concurrency x50 running), evid63b (3.13 suite running; 3.12 done: 1 failed, 11072 passed), pulse_refresh | CORE FREEZE for core
 PULSE 10:04Z agents: none live (rv-dpld closed, report saved); shells: dpld-step2 (kill-9 round 5/5 blind), evid63b (3.13 suite running), pulse_refresh | ORDER 199: evidence + review saved, load report next
 PULSE 10:08Z agents: none live; shells: evid63b (3.13), pulse_refresh | ORDER 199 reports pushed: evidence, load, review (F1 Blocker confirmed by run) | next: wait lead
+PULSE 10:10Z agents: a8aff4ab bd-dpld-fix (ORDER 200 demo fixes, started 10:09Z, box to 11:09Z); shells: evid63b, pulse_refresh | ORDER 200 box ends 11:35Z; core frozen
