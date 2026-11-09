@@ -1,0 +1,3 @@
+ruff-check exit=0 06:25:30
+ruff-format exit=0 06:25:30
+bandit exit=0 06:25:32
