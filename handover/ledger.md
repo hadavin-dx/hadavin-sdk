@@ -2095,11 +2095,11 @@
 | R3-AK-G1-COR-1 | AK-G1 | MAJOR | tests/test_p7_tick.py:82-89 asserts the exact tick.STEPS name list, so appending sweep_conversations fails it, contradicting the 'none expected' claim about existing tests breaking and the file is not listed under CHANGE. | OPEN | none yet | 42368a3 |
 | R3-AK-G1-COR-2 | AK-G1 | MAJOR | The ticket states as fact (and as a Done item) that Postgres contract rows FAIL rather than skip with no database address, but tests/contracts/kinds/store_postgres.py:22-24 does pytest.skip when HADAVIN_TEST_PG_DSN is unset and no listed file changes pg_schema. | OPEN | none yet | 42368a3 |
 | R3-AK-G1-COR-3 | AK-G1 | MAJOR | _SplitStore (store_postgres.py:59-73) routes only purge_tool_calls and purge_redaction_maps to the purge connection, so purge_conversations and forget_user run as the runtime role without DELETE and tests A8/A9/A20/A21 on Postgres fail with permission denied. | OPEN | none yet | 42368a3 |
-| BL-core-p1d-001 | P1d | BLOCKER | `clean` and `redact_text` show a key split by markers, escapes, controls, accents, look-alikes (H01-H25) | OPEN | | - | 8132bf2 |
+| BL-core-p1d-001 | P1d | BLOCKER | `clean` and `redact_text` show a key split by markers, escapes, controls, accents, look-alikes (H01-H25); known-value sweep S13 folded in (rev 4) | OPEN | | - | 8132bf2 |
 | BL-core-p1d-002 | P1d | BLOCKER | `clean` never masks e-mail and internal hosts (defang before redaction, H26-H28) | OPEN | | - | 8132bf2 |
 | BL-core-p1d-003 | P1d | MAJOR | `SlackChannel._blocks` second `redact_text` outside the check (H30) | OPEN | | - | 8132bf2 |
-| BL-core-p1d-004 | P1d | BLOCKER | the same split key passes every model producer (S1-S5) | OPEN | | - | 8132bf2 |
-| BL-core-p1d-005 | P2d-2 | MAJOR | handed-out secret echoed in another case or with markers (S6, S13); P2d-2 promotes the views. Lead acceptance of this hand-over: NEEDS-LEAD 3 | OPEN | | - | 8132bf2 |
+| BL-core-p1d-004 | P1d | BLOCKER | the same split key passes every model producer (S1-S5, S7, S13); model path withholds, never raises (ORDER 165/166) | OPEN | | - | 8132bf2 |
+| BL-core-p1d-005 | P2d-2 | MAJOR | handed-out secret echoed in another case or with markers (S6 only; S13 moved into P1d). Owner P2d-2; same hard dependency as P1d: no client data before both land (ORDER 167 item 3) | OPEN | | - | 8132bf2 |
 | BL-core-p1d-006 | P1d-b | MAJOR | `k1b.redaction.sensitive` misses disguised key names (S11); own package P1d-b, not on the `redact_text` path (ORDER 166 item 4) | OPEN | | - | 8132bf2 |
 | BL-core-p1d-007 | P1d | MAJOR | SECRET value ends at `&` (H34) | OPEN | | - | 8132bf2 |
 | BL-core-p1d-008 | P1d | MAJOR | glued, dotted or `&`-inserted key passes (H33, H35) | OPEN | | - | 8132bf2 |
