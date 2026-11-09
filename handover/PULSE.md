@@ -1,1 +1,1 @@
-11:54Z | agents: a699ad44 A5 builder fix7 src (dpld); core frozen | evid shells: none | unpushed: none | refreshed every 60 s by a bounded script (ends 13:04Z); detail in HEARTBEAT.md
+11:55Z | agents: gate7.sh pytest x3 on /tmp/dpld7 (my shell), then concurrency x50, load, hostile, kill rounds; no agents | evid shells: none | unpushed: none | refreshed every 60 s by a bounded script (ends 13:05Z); detail in HEARTBEAT.md
