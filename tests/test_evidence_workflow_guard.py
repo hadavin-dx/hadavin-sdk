@@ -24,7 +24,12 @@ commit SHA, no untrusted ${{ }} inside run scripts; the bash manual on `set -e`,
   10. the helper itself (further down): allowlists refuse odd input, a failing command is recorded and its exit code
      is kept, a step that did not run is NOT RUN and the report fails;
   11. stage names: the check refuses the two old stage words in the workflow (a bare use of the old test-stage word
-     elsewhere is not caught; none appears in the workflow today).
+     elsewhere is not caught; none appears in the workflow today);
+  12. the trigger is workflow_dispatch and nothing else, no job has an `if`, and the strategy holds only
+     `fail-fast: false` and the Python matrix (so no run can be switched off or widened);
+  13. the verdict step is pinned to its exact text (VERDICT_GOLDEN): nothing can be added around the `report` command
+     that would let a failing report pass (`; true`, `exit 0`, a pipe, `|| echo`, a trap, `set +o errexit`);
+  14. HADAVIN_REQUIRE_PINNED_UNIDATA is written by one step on the Python 3.13 leg only, never set in an env block.
 
 Each rule has an id in square brackets at the start of its message, and every planted violation below names the id
 that must fire, so a plant that trips some other rule does not count.
@@ -61,6 +66,27 @@ EXCUSED = {
 # patterns are refused on lines that run tests, and in every other file on every line.
 LINE_SCOPED_HIDING = {"ci.yml"}
 
+# The verdict step, code lines only (comments dropped). It must be exactly this: the last command is the report and
+# nothing around it can change the exit code the report returns.
+VERDICT_GOLDEN = [
+    'extra=""',
+    'for s in $MUTANTS; do extra="$extra extra-$(basename "$s" .py | tr _ -)"; done',
+    'python3 "$TOOL" report install psql-present vault-token-reader pytest perf stage-mutants $extra',
+]
+VERDICT_KEYS = {"name", "if", "timeout-minutes", "run"}
+PINNED_VAR = "HADAVIN_REQUIRE_PINNED_UNIDATA"
+PINNED_IF = "${{ matrix.python == '3.13' }}"
+PINNED_RUN = f'echo "{PINNED_VAR}=1" >> "$GITHUB_ENV"'
+MATRIX_EXPR = "${{ fromJSON(needs.plan.outputs.pythons) }}"
+OVERRIDE_ENV = {
+    "TOOL",
+    "EVIDENCE_DIR",
+    "PATH",
+}  # names the evidence steps rely on; no env block may set them
+# A condition that switches a step off: a bare false, `&& false`, `false &&`, `&& 0`, `&& !true`. A comparison such as
+# `draft == false` and a word that only contains "false" are ordinary conditions.
+FALSE_RE = re.compile(r"(^|&&|\()\s*(false|0|!true)\b|\b(false|0)\s*&&")
+
 HIDING = re.compile(r"\|\|\s*(true|:|exit\s+0)(\s|$|;|\))")
 SET_PLUS_E = re.compile(r"\bset\s+\+e\b")
 RUNS_TESTS = re.compile(r"\bpytest\b|\bpython3?\s+(-m\b|tests/|\"?\$s\b)|\buv\s+run\b|\$TOOL")
@@ -73,7 +99,9 @@ TRACE_ENV = {
     "ACTIONS_RUNNER_DEBUG",
     "RUNNER_DEBUG",
 }
-TRACING = re.compile(r"(^|\s)set\s+-\w*x|xtrace|\b(ba|da|z)?sh\s+-\w*x")
+TRACING = re.compile(
+    r"(^|\s)set\s+-\w*x|xtrace|\b(ba|da|z)?sh\s+-\w*x|\b(SHELLOPTS|BASH_XTRACEFD|PS4|BASH_ENV)\s*="
+)
 TEST_IFS = {
     "${{ !cancelled() && steps.install.outcome == 'success' }}",
     "${{ !cancelled() && steps.install.outcome == 'success' && needs.plan.outputs.mutants != '' }}",
@@ -96,6 +124,13 @@ def logical_lines(script: str) -> list[str]:
     return [
         ln.strip() for ln in joined.splitlines() if ln.strip() and not ln.lstrip().startswith("#")
     ]
+
+
+def minutes(step: dict) -> int:
+    """The step timeout as a number; an expression or a missing value counts as 0 (the first is reported by its own
+    rule)."""
+    value = step.get("timeout-minutes", 0)
+    return value if isinstance(value, int) else 0
 
 
 def keys_named(node: object, name: str) -> bool:
@@ -121,6 +156,13 @@ def workflow_problems(text: str, name: str) -> list[str]:
     if TRACE_ENV & set(wf.get("env") or {}):
         add(out, "trace-env", "a workflow env name that switches on shell tracing or debug logging")
     for jname, job in wf["jobs"].items():
+        if "steps" not in job:
+            add(
+                out,
+                "no-steps",
+                f"job {jname}: no steps (a reusable workflow or an empty job is not checked by this guard)",
+            )
+            continue
         if "permissions" in job and job["permissions"] != {"contents": "read"}:
             add(
                 out,
@@ -129,6 +171,8 @@ def workflow_problems(text: str, name: str) -> list[str]:
             )
         if "timeout-minutes" not in job:
             add(out, "job-timeout", f"job {jname}: no timeout")
+        elif not isinstance(job["timeout-minutes"], int):
+            add(out, "expression-timeout", f"job {jname}: the timeout must be a plain number")
         if (job.get("defaults") or {}).get("run", {}).get("shell"):
             add(
                 out,
@@ -141,8 +185,8 @@ def workflow_problems(text: str, name: str) -> list[str]:
                 "trace-env",
                 f"job {jname}: an env name that switches on shell tracing or debug",
             )
-        total = sum(st.get("timeout-minutes", 0) for st in job["steps"])
-        if "timeout-minutes" in job and total > job["timeout-minutes"]:
+        total = sum(minutes(st) for st in job["steps"])
+        if isinstance(job.get("timeout-minutes"), int) and total > job["timeout-minutes"]:
             add(
                 out,
                 "step-sum",
@@ -150,7 +194,15 @@ def workflow_problems(text: str, name: str) -> list[str]:
             )
         for i, step in enumerate(job["steps"]):
             label = f"job {jname} step {i} ({step.get('name', step.get('uses'))})"
-            if "uses" in step and not SHA40.match(step["uses"].split("@", 1)[1]):
+            if "timeout-minutes" in step and not isinstance(step["timeout-minutes"], int):
+                add(out, "expression-timeout", f"{label}: the timeout must be a plain number")
+            if "uses" in step and "@" not in str(step["uses"]):
+                add(
+                    out,
+                    "local-action",
+                    f"{label}: {step['uses']!r} is a local or docker action; the guard cannot see what it runs",
+                )
+            elif "uses" in step and not SHA40.match(step["uses"].split("@", 1)[1]):
                 add(out, "unpinned", f"{label}: action not pinned to a full commit SHA")
             if step.get("shell"):
                 add(
@@ -164,11 +216,11 @@ def workflow_problems(text: str, name: str) -> list[str]:
                     "trace-env",
                     f"{label}: an env name that switches on shell tracing or debug",
                 )
-            if re.search(r"\bfalse\b", str(step.get("if", ""))):
+            if FALSE_RE.search(re.sub(r"\$\{\{|\}\}", "", str(step.get("if", ""))).strip().lower()):
                 add(
                     out,
                     "if-false",
-                    f"{label}: the step condition mentions false (the step could be switched off)",
+                    f"{label}: the step condition is a bare false (the step is switched off)",
                 )
             if "run" not in step:
                 continue
@@ -209,6 +261,56 @@ def problems(text: str) -> list[str]:
 def evidence_problems(text: str) -> list[str]:
     wf = load(text)
     out: list[str] = []
+    on = wf.get("on", wf.get(True))  # YAML 1.1 reads the key `on` as the boolean True
+    if not isinstance(on, dict) or set(on) != {"workflow_dispatch"}:
+        add(
+            out,
+            "trigger",
+            "the only trigger must be workflow_dispatch (a manual run), nothing else",
+        )
+    for jname, job in wf["jobs"].items():
+        if "if" in job:
+            add(out, "job-if", f"job {jname}: a job-level if could switch the whole job off")
+        want = (
+            {"fail-fast": False, "matrix": {"python": MATRIX_EXPR}} if jname == "evidence" else None
+        )
+        if job.get("strategy") != want:
+            add(
+                out,
+                "strategy",
+                f"job {jname}: the strategy must be exactly fail-fast: false and the Python matrix "
+                "(no include, exclude, max-parallel or other key)"
+                if want
+                else f"job {jname}: no strategy",
+            )
+    blocks = [wf.get("env") or {}]
+    for job in wf["jobs"].values():
+        blocks.append(job.get("env") or {})
+        blocks += [st.get("env") or {} for st in job.get("steps", [])]
+    if any(OVERRIDE_ENV & set(b) for b in blocks):
+        add(out, "override-env", f"an env block sets one of {sorted(OVERRIDE_ENV)}")
+    if any(PINNED_VAR in b for b in blocks):
+        add(
+            out,
+            "pinned-unidata",
+            f"{PINNED_VAR} must not be set in an env block (an empty value on the other legs is still a set value)",
+        )
+    writers = [
+        st
+        for job in wf["jobs"].values()
+        for st in job.get("steps", [])
+        if PINNED_VAR in str(st.get("run", ""))
+    ]
+    if (
+        len(writers) != 1
+        or writers[0].get("if") != PINNED_IF
+        or logical_lines(writers[0]["run"]) != [PINNED_RUN]
+    ):
+        add(
+            out,
+            "pinned-unidata",
+            f"exactly one step, with if {PINNED_IF!r}, must run exactly: {PINNED_RUN}",
+        )
     conc = wf.get("concurrency") or {}
     if conc.get("cancel-in-progress") is not False:
         add(out, "cancel", "concurrency must set cancel-in-progress: false")
@@ -230,14 +332,14 @@ def evidence_problems(text: str) -> list[str]:
             )
         if jname != "plan" and re.search(r"inputs\s*[.\[]", json.dumps(job)):
             add(out, "raw-input", f"job {jname}: reads a raw input; use needs.plan.outputs")
-        total = sum(st.get("timeout-minutes", 0) for st in job["steps"])
+        total = sum(minutes(st) for st in job["steps"])
         if f"add up to {total} minutes" not in text:
             add(
                 out,
                 "timeout-comment",
                 f"the comment on job {jname} must say 'add up to {total} minutes'",
             )
-        for i, step in enumerate(job["steps"]):
+        for i, step in enumerate(job.get("steps", [])):
             label = f"job {jname} step {i} ({step.get('name', step.get('uses'))})"
             if "uses" in step and "timeout-minutes" not in step:
                 add(out, "uses-timeout", f"{label}: a uses: step needs a timeout too")
@@ -255,6 +357,15 @@ def evidence_problems(text: str) -> list[str]:
                             f"{label}: runs tests without the helper that records the exit code",
                         )
                 is_verdict = re.search(r"\$TOOL\"? report\b", run)
+                if is_verdict and (
+                    logical_lines(run) != VERDICT_GOLDEN or set(step) - VERDICT_KEYS
+                ):
+                    add(
+                        out,
+                        "verdict-golden",
+                        f"{label}: the verdict step must be exactly the pinned text, with only the keys "
+                        f"{sorted(VERDICT_KEYS)}",
+                    )
                 if is_verdict and step.get("if") not in VERDICT_IFS:
                     add(
                         out,
@@ -295,7 +406,7 @@ def evidence_problems(text: str) -> list[str]:
                     "second-checkout",
                     f"job {jname}: a second checkout inside the workspace is not allowed",
                 )
-    steps = [st for job in wf["jobs"].values() for st in job["steps"] if "run" in st]
+    steps = [st for job in wf["jobs"].values() for st in job.get("steps", []) if "run" in st]
     literal = [m for st in steps for m in re.findall(r'\$TOOL" run ([a-z0-9-]+) --', st["run"])]
     reports = [st["run"] for st in steps if re.search(r'\$TOOL" report\b', st["run"])]
     if len(reports) != 1:
@@ -435,8 +546,8 @@ PLANTS = {
     ),
     "job write permission": (
         lambda t: t.replace(
-            "    timeout-minutes: 170  # the step timeouts below add up to 164 minutes; the rest is for starting the job\n    permissions:\n      contents: read",
-            "    timeout-minutes: 170  # the step timeouts below add up to 164 minutes; the rest is for starting the job\n    permissions:\n      contents: write",
+            "    timeout-minutes: 170  # the step timeouts below add up to 166 minutes; the rest is for starting the job\n    permissions:\n      contents: read",
+            "    timeout-minutes: 170  # the step timeouts below add up to 166 minutes; the rest is for starting the job\n    permissions:\n      contents: write",
         ),
         "job-permissions",
     ),
@@ -477,7 +588,7 @@ PLANTS = {
         lambda t: t.replace("timeout-minutes: 170", "timeout-minutes: 100"),
         "step-sum",
     ),
-    "timeout comment wrong": (lambda t: t.replace("164 minutes", "135 minutes"), "timeout-comment"),
+    "timeout comment wrong": (lambda t: t.replace("166 minutes", "135 minutes"), "timeout-comment"),
     "plan timeout comment wrong": (
         lambda t: t.replace("add up to 11 minutes", "add up to 9 minutes"),
         "timeout-comment",
@@ -736,6 +847,159 @@ PLANTS = {
         ),
         "trace-env",
     ),
+    "verdict ends with true": (
+        lambda t: t.replace("stage-mutants $extra", "stage-mutants $extra; true"),
+        "verdict-golden",
+    ),
+    "verdict then exit 0": (
+        lambda t: t.replace("stage-mutants $extra", "stage-mutants $extra\n          exit 0"),
+        "verdict-golden",
+    ),
+    "verdict piped to tee": (
+        lambda t: t.replace("stage-mutants $extra", "stage-mutants $extra | tee /dev/null"),
+        "verdict-golden",
+    ),
+    "verdict or echo": (
+        lambda t: t.replace("stage-mutants $extra", "stage-mutants $extra || echo ignored"),
+        "verdict-golden",
+    ),
+    "verdict with a trap": (
+        lambda t: t.replace(
+            '          python3 "$TOOL" report install',
+            "          trap 'exit 0' EXIT\n" + '          python3 "$TOOL" report install',
+        ),
+        "verdict-golden",
+    ),
+    "verdict with errexit off": (
+        lambda t: t.replace(
+            '          python3 "$TOOL" report install',
+            "          set +o errexit\n" + '          python3 "$TOOL" report install',
+        ),
+        "verdict-golden",
+    ),
+    "verdict in the background": (
+        lambda t: t.replace("stage-mutants $extra", "stage-mutants $extra &"),
+        "verdict-golden",
+    ),
+    "verdict and then more": (
+        lambda t: t.replace("stage-mutants $extra", "stage-mutants $extra && echo done"),
+        "verdict-golden",
+    ),
+    "verdict with its own env": (
+        lambda t: t.replace(
+            "      - name: Verdict (fails unless every step has exit=0; a step that did not run is NOT RUN)\n",
+            "      - name: Verdict (fails unless every step has exit=0; a step that did not run is NOT RUN)\n"
+            "        env:\n          X: y\n",
+        ),
+        "verdict-golden",
+    ),
+    "verdict with its own shell": (
+        lambda t: t.replace(
+            "      - name: Verdict (fails unless every step has exit=0; a step that did not run is NOT RUN)\n",
+            "      - name: Verdict (fails unless every step has exit=0; a step that did not run is NOT RUN)\n"
+            "        shell: bash {0}\n",
+        ),
+        "verdict-golden",
+    ),
+    "extra trigger push": (
+        lambda t: t.replace("on:\n  workflow_dispatch:", "on:\n  push:\n  workflow_dispatch:"),
+        "trigger",
+    ),
+    "extra trigger pull_request_target": (
+        lambda t: t.replace(
+            "on:\n  workflow_dispatch:", "on:\n  pull_request_target:\n  workflow_dispatch:"
+        ),
+        "trigger",
+    ),
+    "job switched off": (
+        lambda t: t.replace("    needs: plan\n", "    needs: plan\n    if: ${{ false }}\n"),
+        "job-if",
+    ),
+    "plan job with a condition": (
+        lambda t: t.replace(
+            "  plan:\n    runs-on: ubuntu-24.04\n",
+            "  plan:\n    if: ${{ github.actor != 'x' }}\n    runs-on: ubuntu-24.04\n",
+        ),
+        "job-if",
+    ),
+    "matrix include": (
+        lambda t: t.replace(
+            "        python: ${{ fromJSON(needs.plan.outputs.pythons) }}\n",
+            "        python: ${{ fromJSON(needs.plan.outputs.pythons) }}\n        include:\n          - python: '3.9'\n",
+        ),
+        "strategy",
+    ),
+    "matrix exclude": (
+        lambda t: t.replace(
+            "        python: ${{ fromJSON(needs.plan.outputs.pythons) }}\n",
+            "        python: ${{ fromJSON(needs.plan.outputs.pythons) }}\n        exclude:\n          - python: '3.13'\n",
+        ),
+        "strategy",
+    ),
+    "fail-fast on": (
+        lambda t: t.replace("      fail-fast: false\n", "      fail-fast: true\n"),
+        "strategy",
+    ),
+    "max-parallel": (
+        lambda t: t.replace(
+            "      fail-fast: false\n", "      fail-fast: false\n      max-parallel: 1\n"
+        ),
+        "strategy",
+    ),
+    "strategy on the plan job": (
+        lambda t: t.replace(
+            "  plan:\n    runs-on: ubuntu-24.04\n",
+            "  plan:\n    strategy:\n      fail-fast: false\n    runs-on: ubuntu-24.04\n",
+        ),
+        "strategy",
+    ),
+    "helper path overridden for one step": (
+        lambda t: t.replace(
+            "      - name: Performance tests\n",
+            "      - name: Performance tests\n        env:\n          TOOL: /bin/true\n",
+        ),
+        "override-env",
+    ),
+    "log folder overridden in the job": (
+        lambda t: t.replace(
+            "      PY: ${{ matrix.python }}",
+            "      PY: ${{ matrix.python }}\n      EVIDENCE_DIR: /tmp/x",
+        ),
+        "override-env",
+    ),
+    "pinned tables variable in the job env": (
+        lambda t: t.replace(
+            "      PY: ${{ matrix.python }}",
+            "      PY: ${{ matrix.python }}\n      HADAVIN_REQUIRE_PINNED_UNIDATA: ${{ matrix.python == '3.13' && '1' || '' }}",
+        ),
+        "pinned-unidata",
+    ),
+    "pinned tables step on every leg": (
+        lambda t: t.replace(
+            "        if: ${{ matrix.python == '3.13' }}\n", "        if: ${{ always() }}\n"
+        ),
+        "pinned-unidata",
+    ),
+    "pinned tables step missing": (
+        lambda t: t.replace(
+            'echo "HADAVIN_REQUIRE_PINNED_UNIDATA=1" >> "$GITHUB_ENV"', "echo nothing"
+        ),
+        "pinned-unidata",
+    ),
+    "step-level empty server address": (
+        lambda t: t.replace(
+            "      - name: Performance tests\n",
+            '      - name: Performance tests\n        env:\n          HADAVIN_TEST_VAULT_ADDR: ""\n',
+        ),
+        "addr-missing",
+    ),
+    "tracing switched on through the environment file": (
+        lambda t: t.replace(
+            '          echo "ART=evidence-',
+            '          echo "SHELLOPTS=xtrace" >> "$GITHUB_ENV"\n          echo "ART=evidence-',
+        ),
+        "shell-trace",
+    ),
     "tracing by xtracefd in the workflow": (
         lambda t: t.replace(
             "permissions:\n  contents: read\n\n# A second",
@@ -821,6 +1085,44 @@ GENERAL_PLANTS = {
         ),
         "if-false",
     ),
+    "local action": (
+        lambda t: re.sub(
+            r"uses: actions/checkout@[0-9a-f]{40}", "uses: ./.github/actions/x", t, count=1
+        ),
+        "local-action",
+    ),
+    "job without steps": (
+        lambda t: t.replace("    steps:\n", "    xsteps:\n", 1),
+        "no-steps",
+    ),
+    "timeout as an expression": (
+        lambda t: re.sub(
+            r"\n    timeout-minutes: \d+", "\n    timeout-minutes: ${{ 30 }}", t, count=1
+        ),
+        "expression-timeout",
+    ),
+    "step timeout as an expression": (
+        lambda t: t.replace(
+            "        timeout-minutes: 5\n", "        timeout-minutes: ${{ 5 }}\n", 1
+        ),
+        "expression-timeout",
+    ),
+    "step switched off by a bare false": (
+        lambda t: t.replace("      - name: Lint\n", "      - name: Lint\n        if: false\n"),
+        "if-false",
+    ),
+    "step switched off by and-false": (
+        lambda t: t.replace(
+            "      - name: Lint\n", "      - name: Lint\n        if: ${{ success() && false }}\n"
+        ),
+        "if-false",
+    ),
+    "tracing through the environment file": (
+        lambda t: t.replace(
+            "run: python tools/scan_repo.py", 'run: echo "BASH_ENV=x" >> "$GITHUB_ENV"'
+        ),
+        "shell-trace",
+    ),
     "tracing by shellopts": (
         lambda t: t.replace("  GITLEAKS_VERSION:", "  SHELLOPTS: xtrace\n  GITLEAKS_VERSION:", 1),
         "trace-env",
@@ -863,9 +1165,6 @@ def test_a_command_split_over_two_lines_is_not_taken_for_a_bare_test():
 # --- the helper --------------------------------------------------------------------------------------
 
 
-# --- the helper --------------------------------------------------------------------------------------
-
-
 def test_allowlists_refuse_odd_input():
     for bad in ("", "-x", "a b", "a..b", "a;rm", "x$(id)", "a" * 201, "a/", "a.lock"):
         with pytest.raises(es.Refused):
@@ -875,7 +1174,7 @@ def test_allowlists_refuse_odd_input():
         "not json",
         "{}",
         "[]",
-        '["3.13","3.13","3.12","3.14","3.15"]',
+        '["3.12","3.13","3.14","3.12","3.13"]',  # five versions the pattern accepts: only the count refuses
         '["3.11"]',
         '["3.13; id"]',
         "[3.13]",
@@ -965,6 +1264,12 @@ def test_the_runner_files_do_not_reach_the_helper_under_test(tmp_path, monkeypat
     work.mkdir()
     helper(work, "run", "x", "--", sys.executable, "-c", "print('tok-real0value1234')")
     helper(work, "report", "x")
+    planned = helper(
+        work, "plan", env={"INPUT_REF": "main", "INPUT_PYTHONS": '["3.13"]', "INPUT_MUTANTS": ""}
+    )
+    assert (
+        planned.returncode == 0 and "ref=main" in planned.stdout
+    )  # went to stdout, not to the real file
     assert not summary.exists() and not (tmp_path / "real-output.txt").exists()
     assert (
         "tok-real0value1234" in (work / "evidence-logs" / "x.txt").read_text()
@@ -1057,7 +1362,8 @@ def test_the_report_shows_skip_counts_and_fails_on_a_missing_test_variable(tmp_p
     bad = helper(tmp_path, "report", "pytest", "perf")
     assert (
         bad.returncode == 1
-        and "3 test(s) skipped for a reason that names a HADAVIN_TEST_ variable" in bad.stdout
+        and "3 test(s) skipped for a reason that names a HADAVIN_TEST_ or HADAVIN_REQUIRE_PINNED_UNIDATA variable"
+        in bad.stdout
     )
 
 
@@ -1079,7 +1385,7 @@ def test_odd_versions_and_long_runner_names_are_refused_with_exit_2():
             es.check_pythons(bad)
     with pytest.raises(es.Refused):
         es.check_mutants("tests/" + "a" * 41 + "_mutants.py")
-    with pytest.raises(es.Refused, match="pull/N/head"):
+    with pytest.raises(es.Refused, match="letters, digits"):
         es.check_ref("bad ref")
 
 
@@ -1118,22 +1424,30 @@ VALUE_REF_RE = r"\$\{?(token|HADAVIN_TEST_VAULT_TOKEN|VAULT_DEV_ROOT_TOKEN_ID)\b
 MASK_LINE = 'echo "::add-mask::$token"'
 ENV_LINE = 'echo "HADAVIN_TEST_VAULT_TOKEN=$token" >> "$GITHUB_ENV"'
 PROBE_LINE = (
-    'printf \'header = "X-Vault-Token: %s"\\n\' "$token" | curl -fsS -o /dev/null -K - '
+    'printf \'header = "X-Vault-Token: %s"\\n\' "$token" | curl -fsS --max-time 5 -o /dev/null -K - '
     "http://127.0.0.1:8200/v1/auth/token/lookup-self && exit 0"
 )
 LOGS_FILTER = "grep -viE 'unseal key|root token' | sed \"s/$token/***/g\""
 TEST_ENV = "HADAVIN_TEST_VAULT_ADDR"
-IS_TEST = re.compile(r"\bpytest\b|\$TOOL\"? run (perf|stage-mutants|\"\$name\")")
+# A test command: a line that starts with pytest (also after `uv run` or `python -m`), or a helper call that runs a
+# test step. The word pytest inside another command (the verdict's list of step names) does not count.
+IS_TEST = re.compile(
+    r"^(uv run )?(python3? -m )?pytest\b|\$TOOL\"? run (pytest|perf|stage-mutants|\"\$name\")\b"
+)
+CMD_POS = r"(^|[;&|({]\s*|\bdo\s+|\bthen\s+)"  # where a command word can stand in a shell line
+RUN_RE = re.compile(
+    r"\b(docker|podman)\s+(container\s+)?run\b|\bdocker[- ]compose\b|\bdocker\s+compose\b"
+)
 INSTALLS = re.compile(r"\buv\s+sync\b|\bpip3?\s+install\b|\buv\s+pip\s+install\b")
 
 
 def docker_run_lines(script: str) -> list[str]:
-    """Each `docker run ...` command of a script, from the words docker run to the end of its logical line (line
+    """Each `docker run ...` (or podman run, docker container run, docker compose) command of a script, from the words docker run to the end of its logical line (line
     continuations joined). It is found anywhere on a line, so `sudo docker run`, `timeout 5 docker run` and
     `cmd && docker run` are found too."""
     found = []
     for line in logical_lines(script):
-        m = re.search(r"\bdocker\s+run\b", line)
+        m = RUN_RE.search(line)
         if m:
             found.append(line[m.start() :])
     return found
@@ -1173,8 +1487,11 @@ def vault_problems(text: str) -> list[str]:
         for st in steps:
             run = st.get("run", "")
             for line in logical_lines(run):
-                if re.match(
-                    r"(env|printenv|export\s*(-p)?\s*$|set\s*$|declare\s+-x|cat|tee)\b", line
+                if re.search(
+                    CMD_POS + r"(?:(?:env|printenv|declare\s+-x)\b|(?:export(?:\s+-p)?|set)\s*$)",
+                    line,
+                ) or (
+                    re.search(CMD_POS + r"(?:cat|tee)\b", line) and re.search(VALUE_REF_RE, line)
                 ):
                     add(
                         out,
@@ -1215,7 +1532,7 @@ def vault_problems(text: str) -> list[str]:
                         f"job {jname}: curl gets the token in its command line: {line[:50]}",
                     )
                 if (
-                    re.match(r"(echo|printf)\b", line)
+                    re.search(CMD_POS + r"(echo|printf)\b", line)
                     and re.search(VALUE_REF_RE, line)
                     and line not in (MASK_LINE, ENV_LINE)
                     and not line.startswith(PROBE_LINE.split(" | ")[0])
@@ -1347,18 +1664,18 @@ def vault_problems(text: str) -> list[str]:
                 add(out, "inspect", f"{label}: no fast failure when the container has exited")
         test_steps = []
         for i, st in enumerate(steps):
-            if IS_TEST.search(st.get("run", "")):
+            if any(IS_TEST.search(ln) for ln in logical_lines(st.get("run", ""))):
                 test_steps.append(i)
                 merged = {
                     **(wf.get("env") or {}),
                     **(job.get("env") or {}),
                     **(st.get("env") or {}),
                 }
-                if TEST_ENV not in merged:
+                if not str(merged.get(TEST_ENV) or "").strip():
                     add(
                         out,
                         "addr-missing",
-                        f"job {jname} step {i}: a test step without {TEST_ENV} would use the in-process fake",
+                        f"job {jname} step {i}: a test step without a non-empty {TEST_ENV} would use the in-process fake",
                     )
         last_test = max(test_steps or [-1])
         first_test = min(test_steps or [10**6])
@@ -1717,6 +2034,49 @@ VAULT_PLANTS = {
         ),
         "no-removal",
     ),
+    "docker container run": (
+        lambda t: t.replace(
+            "docker run -d --name vault-ci -p 127.0.0.1:8200:8200",
+            "docker container run -d --name vault-ci -p 8200:8200",
+        ),
+        "port",
+    ),
+    "podman run": (
+        lambda t: t.replace(
+            "docker run -d --name vault-ci -p 127.0.0.1:8200:8200",
+            "podman run -d --name vault-ci -p 8200:8200",
+        ),
+        "port",
+    ),
+    "docker compose": (
+        lambda t: t.replace(
+            "docker run -d --name vault-ci -p 127.0.0.1:8200:8200", "docker compose up -d"
+        ),
+        "port",
+    ),
+    "token printed after a semicolon": (
+        lambda t: t.replace(MASK_LINE, 'true; echo "$token"\n          ' + MASK_LINE),
+        "prints-token",
+    ),
+    "bare export prints the environment": (
+        lambda t: t.replace(MASK_LINE, MASK_LINE + "\n          export"),
+        "prints-env",
+    ),
+    "bare set prints the environment": (
+        lambda t: t.replace(MASK_LINE, MASK_LINE + "\n          set"),
+        "prints-env",
+    ),
+    "env after a pipe": (
+        lambda t: t.replace(MASK_LINE, MASK_LINE + "\n          true | env"),
+        "prints-env",
+    ),
+    "empty server address": (
+        lambda t: t.replace(
+            "HADAVIN_TEST_VAULT_ADDR: http://127.0.0.1:8200", 'HADAVIN_TEST_VAULT_ADDR: ""'
+        ),
+        "addr-missing",
+    ),
+    "probe without a time limit": (lambda t: t.replace(" --max-time 5", ""), "probe"),
     "tests not given the server address": (
         lambda t: t.replace(
             "HADAVIN_TEST_VAULT_ADDR: http://127.0.0.1:8200\n",
@@ -1865,15 +2225,17 @@ def test_the_token_is_removed_from_the_message_of_a_command_that_cannot_start(tm
     assert "cannot start" in (tmp_path / "evidence-logs" / "x.txt").read_text()
 
 
-def test_the_mask_pattern_is_built_once_per_value():
+def test_the_mask_pattern_is_built_once_per_value(monkeypatch):
+    """monkeypatch restores the real per-run token (if any) afterwards; the cached pattern of the fake value is
+    dropped so that no later test sees it."""
     es._pattern.cache_clear()
-    os.environ["HADAVIN_TEST_VAULT_TOKEN"] = "tok" + "-" + "z9y8x7w6v5u4"
+    monkeypatch.setenv("HADAVIN_TEST_VAULT_TOKEN", "tok" + "-" + "z9y8x7w6v5u4")
     try:
         for _ in range(50):
             es.mask("a line")
         assert es._pattern.cache_info().misses == 1
     finally:
-        del os.environ["HADAVIN_TEST_VAULT_TOKEN"]
+        es._pattern.cache_clear()
 
 
 # --- the token-reader command (what the step "vault-token-reader" runs) ---------------------------------------
@@ -1933,6 +2295,81 @@ def test_vault_target_without_an_address_is_the_local_fake(monkeypatch):
     monkeypatch.delenv("HADAVIN_TEST_VAULT_ADDR", raising=False)
     address, token = vault_target()
     assert address.startswith("http://127.0.0.1:") and token
+
+
+def test_a_skip_that_names_the_pinned_tables_variable_fails_the_report(tmp_path):
+    code = "print('SKIPPED [1] tests/x.py:1: HADAVIN_REQUIRE_PINNED_UNIDATA is not set')"
+    helper(tmp_path, "run", "pytest", "--", sys.executable, "-c", code)
+    bad = helper(tmp_path, "report", "pytest")
+    assert bad.returncode == 1 and "HADAVIN_REQUIRE_PINNED_UNIDATA variable" in bad.stdout
+
+
+def test_a_step_called_status_is_refused_and_the_result_rows_survive(tmp_path):
+    helper(tmp_path, "run", "ok", "--", sys.executable, "-c", "pass")
+    done = helper(tmp_path, "run", "status", "--", sys.executable, "-c", "pass")
+    assert done.returncode == 2 and "reserved" in done.stderr
+    assert (tmp_path / "evidence-logs" / "status.txt").read_text() == "ok\texit=0\n"
+
+
+@pytest.mark.parametrize(
+    "ref",
+    ["main/status", "feature/statuses", "a/check-runs", "a/check-suites", "x/comments", "x/pulls"]
+    + ["a/.hidden", ".hidden", "a.lock/b", "a/b.lock", "a/"],
+)
+def test_a_ref_that_reaches_another_github_endpoint_or_breaks_git_naming_is_refused(ref):
+    with pytest.raises(es.Refused):
+        es.check_ref(ref)
+
+
+def test_refs_that_look_like_endpoint_words_but_are_not_are_accepted():
+    for ref in ("status", "feature/status-page", "release/1.2.3", "a.lockfile/b", "x/pulls-up"):
+        assert es.check_ref(ref) == ref
+
+
+@pytest.mark.parametrize(
+    ("source", "reads"),
+    [
+        ('import os\nT = os.environ.get("HADAVIN_TEST_VAULT_TOKEN")\n', True),
+        ('import os\nT = os.environ["HADAVIN_TEST_VAULT_TOKEN"]\n', True),
+        ('import os\nT = os.getenv(\n    "HADAVIN_TEST_VAULT_TOKEN",\n)\n', True),
+        ('import os\nT = os.environ.get(\n    "HADAVIN_TEST_VAULT_TOKEN"\n)\n', True),
+        ('"""reads os.environ HADAVIN_TEST_VAULT_TOKEN"""\n', False),
+        ('X = "os.environ HADAVIN_TEST_VAULT_TOKEN"\n', False),
+        ("# os.environ.get('HADAVIN_TEST_VAULT_TOKEN')\n", False),
+        ('import os\nT = os.environ.get("OTHER")\n', False),
+        ("", False),
+        ('import os\nT = os.environ.get("HADAVIN_TEST_VAULT_TOKEN")\nthis is not python\n', True),
+        ("# os.environ.get('HADAVIN_TEST_VAULT_TOKEN')\nthis is not python\n", False),
+    ],
+)
+def test_the_token_reader_sees_a_call_over_several_lines_but_not_a_string_or_comment(source, reads):
+    assert es._reads_token(source) is reads
+
+
+def test_if_false_ignores_ordinary_conditions_and_catches_switched_off_steps():
+    def run(cond: str) -> list[str]:
+        text = (
+            "name: X\npermissions:\n  contents: read\non: push\njobs:\n  j:\n    runs-on: ubuntu-24.04\n"
+            "    timeout-minutes: 5\n    steps:\n      - run: echo hi\n        timeout-minutes: 1\n"
+            f"        if: {cond}\n"
+        )
+        return [p for p in workflow_problems(text, "x.yml") if p.startswith("[if-false]")]
+
+    for fine in (
+        "github.ref != 'refs/heads/false-start'",
+        "contains(github.event.head_commit.message, 'false')",
+        "github.event.pull_request.draft == false",
+        "${{ steps.a.outputs.falsey == 'x' }}",
+    ):
+        assert run(fine) == [], fine
+    for off in (
+        "false",
+        "${{ false }}",
+        "${{ success() && false }}",
+        "${{ false && success() }}",
+        "${{ 0 }}",
+    ):
+        assert run(off), off
 
 
 SKIP_RE = re.compile(

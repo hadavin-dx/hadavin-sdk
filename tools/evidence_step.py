@@ -9,7 +9,7 @@ Four commands, so that the workflow YAML holds no shell logic that cannot be tes
              CMD's own code. A command that does not exist is recorded as exit=127 and one that exists but cannot be
              started (not executable, wrong format) as exit=126, the same two codes a shell uses.
 * ``report NAME ...``  prints a Markdown summary (with skipped-test counts) and exits 1 unless every NAME has exactly
-             one row, that row is exit=0, and no test was skipped for a reason that names a HADAVIN_TEST_ variable. A NAME with
+             one row, that row is exit=0, and no test was skipped for a reason that names a HADAVIN_TEST_ or HADAVIN_REQUIRE_PINNED_UNIDATA variable. A NAME with
              no row is shown as NOT RUN (skipped, timed out or cancelled steps cannot pass); a repeated row fails. A row
              for a step that is not in the NAME list is shown too, and it fails the report unless it is exit=0.
 * ``token-reader FILE``  exits 0 only if FILE has a code line (not a comment) that reads HADAVIN_TEST_VAULT_TOKEN from
@@ -19,13 +19,16 @@ The status file is written by the same user and in the same job as the tested co
 passing row itself: the report catches mistakes (a step that did not run, a failing exit code, a hidden skip), it is not
 proof against code that sets out to forge it.
 
-Allowlists: a Python version is 3.12, 3.13 or 3.14 (the oldest is pyproject requires-python, the newest was the latest release when written); a
-git ref is letters, digits and . _ / - only (git's own check-ref-format also bans '..', '//', a trailing '.' or '/'
-and '.lock'); a runner is tests/<lowercase_name>_mutants.py.
+Allowlists: a Python version is 3.12, 3.13 or 3.14 (the lowest is the pyproject requires-python; widen PY_RE when
+the CI test matrix gains a version); a git ref is letters, digits and . _ / - only (git's own check-ref-format also bans
+'..', '//', a trailing '.' or '/', and any part between slashes that starts with '.' or ends with '.lock'; this helper
+also refuses a last part that is the name of a GitHub commits endpoint, see API_WORDS); a runner is
+tests/<lowercase_name>_mutants.py.
 """
 
 from __future__ import annotations
 
+import ast
 import functools
 import json
 import os
@@ -42,11 +45,22 @@ STATUS = "status.txt"
 MAX_PYTHONS = 4
 MAX_MUTANTS = 8
 REF_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9._/-]{0,199}")
-PY_RE = re.compile(
-    r"3\.1[2-4]"
-)  # 3.12 to 3.14: oldest = pyproject requires-python, newest = latest release when written
+PY_RE = re.compile(r"3\.1[2-4]")  # 3.12 to 3.14: the lowest is pyproject requires-python
 MUTANT_RE = re.compile(r"tests/[a-z0-9_]{1,40}_mutants\.py")  # step name extra-<stem> fits NAME_RE
 NAME_RE = re.compile(r"[a-z0-9][a-z0-9_-]{0,60}")
+# A step called "status" would write its log to status.txt, the file of the result rows, and wipe them.
+RESERVED_NAMES = {STATUS.removesuffix(".txt")}
+# The workflow asks GitHub for repos/<repo>/commits/<ref>. A ref that ends in one of these words would instead reach
+# another endpoint under the commit (for example commits/main/status, which also answers with a sha).
+API_WORDS = {
+    "status",
+    "statuses",
+    "check-runs",
+    "check-suites",
+    "comments",
+    "branches-where-head",
+    "pulls",
+}
 
 
 SECRET_ENV = (
@@ -94,9 +108,20 @@ def check_ref(ref: str) -> str:
         raise Refused(
             "ref refused: pull/N/head (and refs/pull/...) is not supported, pass the branch name or the commit SHA"
         )
-    if not REF_RE.fullmatch(ref) or ".." in ref or "//" in ref or ref.endswith((".", "/", ".lock")):
+    parts = ref.split("/")
+    if (
+        not REF_RE.fullmatch(ref)
+        or ".." in ref
+        or "//" in ref
+        or ref.endswith((".", "/"))
+        or any(p.startswith(".") or p.endswith(".lock") for p in parts)
+    ):
         raise Refused(
             f"ref refused (letters, digits, . _ / - only, no '..'; pull/N/head is not supported, pass the branch or commit): {ref[:60]!r}"
+        )
+    if parts[-1] in API_WORDS and len(parts) > 1:
+        raise Refused(
+            f"ref refused: its last part {parts[-1]!r} is the name of a GitHub commits endpoint; pass the commit SHA"
         )
     return ref
 
@@ -164,6 +189,8 @@ def _record(name: str, status: str) -> None:
 def cmd_run(name: str, command: list[str]) -> int:
     if not NAME_RE.fullmatch(name) or not command:
         raise Refused("run needs a lowercase step name and a command")
+    if name in RESERVED_NAMES:
+        raise Refused(f"step name {name!r} is reserved (its log would be the result file)")
     LOG_DIR.mkdir(parents=True, exist_ok=True)
     status_file = LOG_DIR / STATUS
     if status_file.is_file() and any(
@@ -207,18 +234,49 @@ def cmd_run(name: str, command: list[str]) -> int:
     return code
 
 
-READER_RE = re.compile(r"^[^#]*(environ|getenv)[^#]*HADAVIN_TEST_VAULT_TOKEN")
+READ_VAR = "HADAVIN_TEST_VAULT_TOKEN"
+READER_RE = re.compile(
+    r"^[^#]*(environ|getenv)[^#]*" + READ_VAR
+)  # fallback for a file that does not parse
+
+
+def _reads_token(source: str) -> bool:
+    """True if the code reads the token from the environment: a call such as os.environ.get("NAME") or
+    os.getenv("NAME"), or os.environ["NAME"], written on one line or several. Comments, docstrings and other strings
+    do not count. A file that does not parse falls back to a one-line text match."""
+    try:
+        tree = ast.parse(source)
+    except (SyntaxError, ValueError):
+        return any(READER_RE.match(line) for line in source.splitlines())
+
+    def is_name(node: ast.AST) -> bool:
+        return isinstance(node, ast.Constant) and node.value == READ_VAR
+
+    for node in ast.walk(tree):
+        if (
+            isinstance(node, ast.Call)
+            and any(is_name(a) for a in node.args)
+            and re.search(r"environ|getenv", ast.unparse(node.func))
+        ):
+            return True
+        if (
+            isinstance(node, ast.Subscript)
+            and is_name(node.slice)
+            and "environ" in ast.unparse(node.value)
+        ):
+            return True
+    return False
 
 
 def cmd_token_reader(path: str) -> int:
     """Exit 0 only if the file has a code line that reads the per-run Vault token. Prints the reason when it has not,
     so the saved log of the step says why the run stopped."""
     try:
-        lines = Path(path).read_text(encoding="utf-8", errors="replace").splitlines()
+        source = Path(path).read_text(encoding="utf-8", errors="replace")
     except OSError as exc:
         sys.stdout.write(f"cannot read {path}: {exc}\n")
         return 1
-    if any(READER_RE.match(line) for line in lines):
+    if _reads_token(source):
         sys.stdout.write(f"{path} reads HADAVIN_TEST_VAULT_TOKEN\n")
         return 0
     sys.stdout.write(
@@ -230,17 +288,19 @@ def cmd_token_reader(path: str) -> int:
 
 
 SKIP_RE = re.compile(r"SKIPPED \[(\d+)\] (.*)")
+# A skip whose reason names one of these is a missing setting, not an ordinary skip: the run fails.
+HIDDEN_SKIP_WORDS = ("HADAVIN_TEST_", "HADAVIN_REQUIRE_PINNED_UNIDATA")
 NEVER = "NOT RUN (never finished: skipped, timed out or cancelled)"
 
 
 def _skips(log: Path) -> tuple[int, int]:
-    """(all skipped tests, skipped tests whose reason names a HADAVIN_TEST_ variable)."""
+    """(all skipped tests, skipped tests whose reason names one of HIDDEN_SKIP_WORDS)."""
     total = hidden = 0
     for line in log.read_text(encoding="utf-8", errors="replace").splitlines():
         m = SKIP_RE.match(line)
         if m:
             total += int(m.group(1))
-            if "HADAVIN_TEST_" in m.group(2):
+            if any(word in m.group(2) for word in HIDDEN_SKIP_WORDS):
                 hidden += int(m.group(1))
     return total, hidden
 
@@ -269,7 +329,7 @@ def cmd_report(expected: list[str]) -> int:
             total, hidden = _skips(log)
             skipped = str(total)
             if hidden and result == "exit=0":
-                result = f"FAIL: {hidden} test(s) skipped for a reason that names a HADAVIN_TEST_ variable"
+                result = f"FAIL: {hidden} test(s) skipped for a reason that names a HADAVIN_TEST_ or HADAVIN_REQUIRE_PINNED_UNIDATA variable"
         if result != "exit=0":
             bad += 1
         out.append(f"| {name} | {result} | {skipped} |")

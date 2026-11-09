@@ -92,7 +92,7 @@ jobs:
               docker logs vault-ci 2>&1 | grep -viE 'unseal key|root token' | sed "s/$token/***/g"
               exit 1
             fi
-            printf 'header = "X-Vault-Token: %s"\n' "$token" | curl -fsS -o /dev/null -K - http://127.0.0.1:8200/v1/auth/token/lookup-self && exit 0
+            printf 'header = "X-Vault-Token: %s"\n' "$token" | curl -fsS --max-time 5 -o /dev/null -K - http://127.0.0.1:8200/v1/auth/token/lookup-self && exit 0
             sleep 2
           done
           echo "Vault did not answer on 127.0.0.1:8200 within 60 seconds"
@@ -179,7 +179,7 @@ jobs:
               docker logs vault-ci 2>&1 | grep -viE 'unseal key|root token' | sed "s/$token/***/g"
               exit 1
             fi
-            printf 'header = "X-Vault-Token: %s"\n' "$token" | curl -fsS -o /dev/null -K - http://127.0.0.1:8200/v1/auth/token/lookup-self && exit 0
+            printf 'header = "X-Vault-Token: %s"\n' "$token" | curl -fsS --max-time 5 -o /dev/null -K - http://127.0.0.1:8200/v1/auth/token/lookup-self && exit 0
             sleep 2
           done
           echo "Vault did not answer on 127.0.0.1:8200 within 60 seconds"
