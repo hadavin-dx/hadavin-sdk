@@ -30,9 +30,10 @@ LOG_DIR = Path("evidence-logs")
 STATUS = "status.txt"
 MAX_PYTHONS = 4
 MAX_MUTANTS = 8
-MIN_MINOR = 12  # pyproject: requires-python >= 3.12
 REF_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9._/-]{0,199}")
-PY_RE = re.compile(r"3\.(1[2-9]|[2-9][0-9])")  # 3.12 to 3.99, no leading zeros
+PY_RE = re.compile(
+    r"3\.1[2-4]"
+)  # 3.12 to 3.14: oldest = pyproject requires-python, newest = latest release when written
 MUTANT_RE = re.compile(r"tests/[a-z0-9_]{1,40}_mutants\.py")  # step name extra-<stem> fits NAME_RE
 NAME_RE = re.compile(r"[a-z0-9][a-z0-9_-]{0,60}")
 
@@ -60,7 +61,7 @@ def check_pythons(raw: str) -> list[str]:
     for item in value:
         if not isinstance(item, str) or not PY_RE.fullmatch(item):
             raise Refused(
-                f"python version refused (need 3.{MIN_MINOR} or newer, like 3.13): {str(item)[:20]!r}"
+                f"python version refused (only 3.12 to 3.14, like 3.13): {str(item)[:20]!r}"
             )
         if item not in out:
             out.append(item)
@@ -163,7 +164,9 @@ def _skips(log: Path) -> tuple[int, int]:
         m = SKIP_RE.match(line)
         if m:
             total += int(m.group(1))
-            if "HADAVIN_TEST_" in m.group(2) and "not set" in m.group(2):
+            if "HADAVIN_TEST_" in m.group(2) and re.search(
+                r"not set|unset|missing|not defined|empty", m.group(2)
+            ):
                 hidden += int(m.group(1))
     return total, hidden
 

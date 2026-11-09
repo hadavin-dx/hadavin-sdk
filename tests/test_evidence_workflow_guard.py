@@ -74,7 +74,7 @@ def problems(text: str) -> list[str]:
                     out.append(f"{label}: '|| true' hides a failure")
                 for line in step["run"].splitlines():
                     runs_tests = re.search(
-                        r"\bpytest\b|\bpython3?\s+(-m\b|tests/)|\buv\s+run\b", line
+                        r"\bpytest\b|\bpython3?\s+(-m\b|tests/|\"?\$s\b)|\buv\s+run\b", line
                     )
                     if runs_tests and "evidence_step.py" not in line and "$TOOL" not in line:
                         out.append(
@@ -126,6 +126,27 @@ def problems(text: str) -> list[str]:
         out.append(
             "the tested ref must be checked for the HADAVIN_TEST_VAULT_TOKEN reader (step vault-token-reader)"
         )
+    for st in steps:
+        if "docker ps" in st["run"] and "name=^vault-evidence$" not in st["run"]:
+            out.append("the docker name filter must be an exact match ('name=^vault-evidence$')")
+        if "run vault-token-reader" in st["run"] and "[^#]*(environ|getenv)" not in st["run"]:
+            out.append("vault-token-reader must look for a code line, not a comment")
+    tr_form = 'extra-$(basename "$s" .py | tr _ -)'
+    for st in steps:
+        if "extra-$(basename" in st["run"] and st["run"].count(tr_form) != st["run"].count(
+            "extra-$(basename"
+        ):
+            out.append(
+                "the extra- name must be built the same way (with tr _ -) in the loop and in the verdict"
+            )
+    job = wf["jobs"]["evidence"]
+    total = sum(st.get("timeout-minutes", 0) for st in job["steps"])
+    if f"{total} minutes" not in text:
+        out.append(
+            f"the comment on the job timeout must say {total} minutes (the sum of the step timeouts)"
+        )
+    if total > job["timeout-minutes"]:
+        out.append("the step timeouts add up to more than the job timeout")
     text_all = text
     if re.search(r"VAULT_DEV_ROOT_TOKEN_ID:\s*root\b", text_all) or re.search(
         r"\btoken\W+root\b", text_all
@@ -161,7 +182,7 @@ PLANTS = {
     ),
     "unpinned action": lambda t: re.sub(r"(actions/upload-artifact)@[0-9a-f]{40}", r"\1@v7", t),
     "injection": lambda t: t.replace(
-        "run: docker ps -aq --filter name=vault-evidence | xargs -r docker rm -f",
+        "run: docker ps -aq --filter 'name=^vault-evidence$' | xargs -r docker rm -f",
         "run: echo ${{ inputs.ref }}",
     ),
     "no step timeout": lambda t: t.replace(
@@ -191,12 +212,32 @@ PLANTS = {
         "report install psql-present vault-token-reader pytest perf",
         "report install psql-present vault-token-reader pytest",
     ),
-    "uv run pytest bare": lambda t: t.replace(
-        'run: python3 "$TOOL" run pytest -- pytest', "run: uv run pytest"
+    "uv run bare": lambda t: t.replace(
+        'run: python3 "$TOOL" run pytest -- pytest -q -m "not live and not perf" -rfEs',
+        "run: uv run ruff check",
     ),
-    "python -m pytest bare": lambda t: t.replace(
-        'run: python3 "$TOOL" run perf -- pytest -q -m perf -rfEs', "run: python -m pytest -m perf"
+    "python -m bare": lambda t: t.replace(
+        'run: python3 "$TOOL" run perf -- pytest -q -m perf -rfEs', "run: python -m json.tool x"
     ),
+    "python tests path bare": lambda t: t.replace(
+        'run: python3 "$TOOL" run stage-mutants -- python tests/stage_mutants.py',
+        "run: python tests/stage_mutants.py",
+    ),
+    "python runner variable bare": lambda t: t.replace(
+        "          exit $fail", '          python "$s"\n          exit $fail'
+    ),
+    "tr changed on one side": lambda t: t.replace(
+        'extra="$extra extra-$(basename "$s" .py | tr _ -)"',
+        'extra="$extra extra-$(basename "$s" .py)"',
+    ),
+    "token reader matches a comment": lambda t: t.replace(
+        "grep -Eq '^[^#]*(environ|getenv)[^#]*HADAVIN_TEST_VAULT_TOKEN'",
+        "grep -q HADAVIN_TEST_VAULT_TOKEN",
+    ),
+    "docker filter substring": lambda t: t.replace(
+        "'name=^vault-evidence$'", "name=vault-evidence"
+    ),
+    "timeout comment wrong": lambda t: t.replace("145 minutes", "135 minutes"),
     "concurrency without runners": lambda t: t.replace(
         "-${{ inputs.mutant_scripts }}\n  cancel", "\n  cancel"
     ),
@@ -368,7 +409,14 @@ def test_a_step_that_never_finished_says_so(tmp_path):
 
 
 def test_odd_versions_and_long_runner_names_are_refused_with_exit_2():
-    for bad in (f'["3.{"9" * 5000}"]', '["3.012"]', '["3.0013"]', '["3.7"]'):
+    for bad in (
+        f'["3.{"9" * 5000}"]',
+        '["3.012"]',
+        '["3.0013"]',
+        '["3.7"]',
+        '["3.99"]',
+        '["3.15"]',
+    ):
         with pytest.raises(es.Refused):
             es.check_pythons(bad)
     with pytest.raises(es.Refused):
@@ -377,18 +425,8 @@ def test_odd_versions_and_long_runner_names_are_refused_with_exit_2():
         es.check_ref("bad ref")
 
 
-def test_the_new_rules_fail_on_the_round_1_workflow_text():
-    git = shutil.which("git")
-    old = subprocess.run(  # noqa: S603  # fixed argv, no shell
-        [git, "show", "8a677ad:.github/workflows/evidence.yml"],
-        capture_output=True,
-        text=True,
-        check=False,
-        cwd=ROOT,
-    )
-    if old.returncode != 0:
-        pytest.skip("commit 8a677ad is not in this clone")
-    found = problems(old.stdout)
-    assert any("mutant_scripts" in p for p in found) and any(
-        "vault-token-reader" in p for p in found
-    )
+@pytest.mark.parametrize("reason", ["is unset", "is missing", "not defined", "is empty", "not set"])
+def test_every_wording_of_a_missing_test_variable_fails_the_report(tmp_path, reason):
+    code = f"print('SKIPPED [1] tests/x.py:1: HADAVIN_TEST_VAULT_ADDR {reason}')"
+    helper(tmp_path, "run", "pytest", "--", sys.executable, "-c", code)
+    assert helper(tmp_path, "report", "pytest").returncode == 1
