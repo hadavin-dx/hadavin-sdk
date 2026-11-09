@@ -1,1 +1,1 @@
-23:10Z | agents: RUNNING shell run9.sh campaign A4r9 (restarted 23:06:58Z after container restart; model-slow first); no review agents running | evid shells: none | unpushed: none | refreshed every 60 s by a bounded script (ends 01:20Z); detail in HEARTBEAT.md
+23:11Z | agents: RUNNING shell run9.sh campaign A4r9 (restarted 23:06:58Z after container restart; model-slow first); no review agents running | evid shells: none | unpushed: none | refreshed every 60 s by a bounded script (ends 01:21Z); detail in HEARTBEAT.md
