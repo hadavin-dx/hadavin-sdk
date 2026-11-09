@@ -1,1 +1,1 @@
-09:44Z | agents: ab1b2c64 PR89 fixes | CORE FREEZE (ORDER 198): nothing new; evid 63 rerun (queued/starting), 91 running | evid shells: 63,86,91,source, | unpushed: none | refreshed every 60 s by a bounded script (ends 10:54Z); detail in HEARTBEAT.md
+09:45Z | agents: no subagents running | CORE FREEZE (ORDER 198) | evid 63 rerun, 91 running | evid shells: 63,86, | unpushed: none | refreshed every 60 s by a bounded script (ends 10:55Z); detail in HEARTBEAT.md
