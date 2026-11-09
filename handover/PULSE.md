@@ -1,1 +1,1 @@
-10:10Z | agents: a8aff4ab bd-dpld-fix (ORDER 200 builder) | evid 63 done | core frozen | evid shells: 80, | unpushed: none | refreshed every 60 s by a bounded script (ends 11:20Z); detail in HEARTBEAT.md
+10:11Z | agents: a8aff4ab bd-dpld-fix (ORDER 200 builder) | evid 63 done | core frozen | evid shells: none | unpushed: none | refreshed every 60 s by a bounded script (ends 11:21Z); detail in HEARTBEAT.md
