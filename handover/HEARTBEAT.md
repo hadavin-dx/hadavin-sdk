@@ -737,3 +737,4 @@ PULSE 13:20Z agents: A a5e33f7e4aa487492 (WP-A fix pass 1, box 13:55Z); R4F a8c8
 PULSE 13:22Z agents: A a5e33f7e4aa487492 (WP-A fix pass 1, box 13:55Z); F a5c3680f4da8b8825 (WP-F fix pass 4, round-4 nits, box 13:47Z). R4F closed: no Blocker/Major. shells: pulse_refresh.sh. core frozen.
 PULSE 13:23Z agents: A a5e33f7e4aa487492 (WP-A fix pass 1, box 13:55Z); F a5c3680f4da8b8825 (WP-F fix pass 4, box 13:47Z). shells: pulse_refresh.sh pid 29978. core frozen (ORDER 198).
 PULSE 13:25Z agents: A a5e33f7e4aa487492 (WP-A fix pass 1, box 13:55Z). F closed at d2728a2 (full pytest 8 failed = baseline names; waits for WP-A constants hand-off). shells: pulse_refresh.sh. core frozen.
+PULSE 13:28Z agents: A a5e33f7e4aa487492 (WP-A fix pass 1, box 13:55Z; F closed at d2728a2 waiting for A's constants hand-off). shells: pulse_refresh.sh pid 29978. core frozen (ORDER 198).
