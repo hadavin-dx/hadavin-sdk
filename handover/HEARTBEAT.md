@@ -692,3 +692,4 @@ PULSE 11:12Z agents: a3e0c390 A4 builder dpld fix6 (running); shells: full-pytes
 PULSE 11:13Z agents: a3e0c390 A4 builder dpld fix6 (running, box 25m); shells: pytest run3 on dpld5 (pid 16208); core idle not yet written (freeze ORDER 198)
 PULSE 11:17Z agents: a3e0c390 A4 builder dpld fix6 (running 5m, checkpoint written, full pytest in progress); no other shells of mine; core idle not yet written (freeze ORDER 198)
 PULSE 11:22Z ORDER 203: patch-cloud-1.diff (fix5) + KNOWN-OPEN pushed cb18bc1; agents: a3e0c390 A4 builder fix6; lens reviewers a2b9a9b0 L1conc, a0e7ea08 L2crash, aabe8aeb L3ident, a2805e29 L4tests (all 535c43e, +20m); core idle not written
+PULSE 11:23Z agents: a3e0c390 A4 builder fix6; lens reviewers a2b9a9b0 L1, a0e7ea08 L2, aabe8aeb L3, a15cf586 L4 (L4 relaunched: first run had no test files in snapshot, my slip, fixed); pulse_refresh.sh had died at 10:43Z, restarted (ends +70min); core idle not written
