@@ -1,0 +1,52 @@
+{
+  "simulated": true,
+  "desk_started_at": 1794239400,
+  "fakes": {
+    "reachable": false,
+    "error": "unreachable"
+  },
+  "ai_calls": 3,
+  "crash": {
+    "available": true,
+    "armed": null,
+    "points": [
+      "A",
+      "A2",
+      "B",
+      "D1",
+      "D2"
+    ]
+  },
+  "people": [
+    {
+      "person": 1,
+      "name": "Ada Example",
+      "company": "Example Ltd"
+    },
+    {
+      "person": 2,
+      "name": "Grace Sample",
+      "company": "Sample Works"
+    },
+    {
+      "person": 3,
+      "name": "Linus Demo",
+      "company": "Demo Systems"
+    },
+    {
+      "person": 4,
+      "name": "Margaret Test",
+      "company": null
+    },
+    {
+      "person": 5,
+      "name": "Alan Invented",
+      "company": "Invented Co"
+    },
+    {
+      "person": 6,
+      "name": "Edsger Made-Up",
+      "company": null
+    }
+  ]
+}

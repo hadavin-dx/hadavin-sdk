@@ -1,0 +1,92 @@
+{
+  "simulated": true,
+  "desk_started_at": 1794239400,
+  "fakes": {
+    "reachable": true,
+    "outbox_mode": "blind",
+    "crm_mode": "keyed",
+    "outbox": {
+      "count": 2,
+      "messages": [
+        {
+          "to": "Ada@Example.test",
+          "subject": "Thanks for your message"
+        },
+        {
+          "to": "grace@example.test",
+          "subject": "Thanks for your message"
+        }
+      ]
+    },
+    "crm": {
+      "count": 3,
+      "rows": [
+        {
+          "lead_id": "L3f9a1c2b4d5e",
+          "record": {
+            "name": "Ada Example",
+            "email": "Ada@Example.test"
+          }
+        },
+        {
+          "lead_id": "L7b2e9d0c1a34",
+          "record": {
+            "name": "Grace Sample",
+            "email": "grace@example.test"
+          }
+        },
+        {
+          "lead_id": "L0c4d8e2f6a19",
+          "record": {
+            "name": "Linus Demo",
+            "email": "linus@example.test"
+          }
+        }
+      ]
+    }
+  },
+  "ai_calls": 3,
+  "crash": {
+    "available": true,
+    "armed": null,
+    "points": [
+      "A",
+      "A2",
+      "B",
+      "D1",
+      "D2"
+    ]
+  },
+  "people": [
+    {
+      "person": 1,
+      "name": "Ada Example",
+      "company": "Example Ltd"
+    },
+    {
+      "person": 2,
+      "name": "Grace Sample",
+      "company": "Sample Works"
+    },
+    {
+      "person": 3,
+      "name": "Linus Demo",
+      "company": "Demo Systems"
+    },
+    {
+      "person": 4,
+      "name": "Margaret Test",
+      "company": null
+    },
+    {
+      "person": 5,
+      "name": "Alan Invented",
+      "company": "Invented Co"
+    },
+    {
+      "person": 6,
+      "name": "Edsger Made-Up",
+      "company": null
+    }
+  ]
+}

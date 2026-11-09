@@ -1,0 +1,67 @@
+{
+  "n": 10,
+  "ref_prefix": "ui-1794239700000",
+  "answers": [
+    {
+      "ref": "ui-1794239700000-1",
+      "status": 201,
+      "verdict": "new",
+      "replayed": false
+    },
+    {
+      "ref": "ui-1794239700000-2",
+      "status": 200,
+      "verdict": "duplicate",
+      "replayed": false
+    },
+    {
+      "ref": "ui-1794239700000-3",
+      "status": 200,
+      "verdict": "duplicate",
+      "replayed": false
+    },
+    {
+      "ref": "ui-1794239700000-4",
+      "status": 200,
+      "verdict": "duplicate",
+      "replayed": false
+    },
+    {
+      "ref": "ui-1794239700000-5",
+      "status": 200,
+      "verdict": "duplicate",
+      "replayed": false
+    },
+    {
+      "ref": "ui-1794239700000-6",
+      "status": 200,
+      "verdict": "duplicate",
+      "replayed": false
+    },
+    {
+      "ref": "ui-1794239700000-7",
+      "status": 200,
+      "verdict": "duplicate",
+      "replayed": false
+    },
+    {
+      "ref": "ui-1794239700000-8",
+      "status": 200,
+      "verdict": "duplicate",
+      "replayed": false
+    },
+    {
+      "ref": "ui-1794239700000-9",
+      "status": 200,
+      "verdict": "duplicate",
+      "replayed": false
+    },
+    {
+      "ref": "ui-1794239700000-10",
+      "status": 200,
+      "verdict": "duplicate",
+      "replayed": false
+    }
+  ],
+  "busy_retries": 0
+}
