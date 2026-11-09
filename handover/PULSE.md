@@ -1,1 +1,1 @@
-08:40Z | agents 8 running (gen_evidence-P6a-pg-rerun,ev-P1b-r2,P1d-r6-draft,R72R73-resolve,bd-R72,bd-R73,dr-P1db,evid-chainA) | heavy slots busy 3/3 | last: started, none yet | unpushed: none | next: see agents
+09:28Z | agents: adf1316c P1d-a build, a24b7053 PR75 r2 fix, a82eaf5f PR87 follow-up, ab1b2c64 PR89 fixes, abadac6e P4a r8 resolver, af4e3666 PR84 fix | evid shells: 63,73,86,91,source, | unpushed: none | refreshed every 60 s by a bounded script (ends 10:38Z); detail in HEARTBEAT.md
