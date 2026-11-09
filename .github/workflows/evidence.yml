@@ -1,9 +1,12 @@
 name: Evidence
 
-# Manual runs only. For one git ref and a list of Python versions this runs the same test command as CI, the
-# stage-rename mutants and, optionally, named mutant scripts, each on its own runner with a throwaway Postgres.
-# It deploys nothing, uses no secrets and reads the repository only. Raw logs are uploaded as artifacts so that
-# a reviewer reads the files and not a summary.
+# Manual runs only. For one git ref and a list of Python versions this runs the same test command as CI (the
+# "check" job in ci.yml), the stage-rename mutants and, optionally, named mutant scripts, each on its own runner
+# with a throwaway Postgres and a throwaway Vault development server. It deploys nothing, uses no stored secrets
+# and reads the repository only. Every step writes its raw log and its exit code to evidence-logs/, and a last
+# step fails the run unless every step has exit=0 (a step that never ran counts as NOT RUN, not as a pass).
+# All typed input is checked by tools/evidence_step.py (allowlists) in the "plan" job before any runner starts;
+# no run: script contains a ${{ }} expression (a guard test enforces it).
 on:
   workflow_dispatch:
     inputs:
@@ -12,12 +15,12 @@ on:
         required: true
         type: string
       pythons:
-        description: 'JSON list of Python versions, for example ["3.13","3.12"]'
+        description: 'JSON list of 1 to 4 Python versions, 3.12 or newer, for example ["3.13","3.12"]'
         required: false
         default: '["3.13","3.12"]'
         type: string
       mutant_scripts:
-        description: "Optional extra mutant runners, space separated, each tests/<name>_mutants.py (for example tests/textnorm_mutants.py)"
+        description: "Optional extra mutant runners, space separated, at most 8, each tests/<name>_mutants.py (for example tests/mutation_runner_mutants.py)"
         required: false
         default: ""
         type: string
@@ -25,18 +28,57 @@ on:
 permissions:
   contents: read
 
+# A second run for the same ref and inputs waits for the first; it never cancels it (a cancelled run loses its evidence).
 concurrency:
-  group: evidence-${{ inputs.ref }}
-  cancel-in-progress: true
+  group: evidence-${{ inputs.ref }}-${{ inputs.pythons }}-${{ inputs.mutant_scripts }}
+  cancel-in-progress: false
 
 jobs:
+  plan:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      pythons: ${{ steps.check.outputs.pythons }}
+      mutants: ${{ steps.check.outputs.mutants }}
+      ref: ${{ steps.check.outputs.ref }}
+      sha: ${{ steps.resolve.outputs.sha }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: tools/evidence_step.py
+          sparse-checkout-cone-mode: false
+      - name: Check the typed inputs (allowlists)
+        id: check
+        env:
+          INPUT_REF: ${{ inputs.ref }}
+          INPUT_PYTHONS: ${{ inputs.pythons }}
+          INPUT_MUTANTS: ${{ inputs.mutant_scripts }}
+        timeout-minutes: 2
+        run: python3 tools/evidence_step.py plan
+      - name: Resolve the ref to one commit (every Python version tests the same commit)
+        id: resolve
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REF: ${{ steps.check.outputs.ref }}
+        timeout-minutes: 2
+        run: |
+          sha=$(gh api "repos/${GITHUB_REPOSITORY}/commits/${REF}" --jq .sha)
+          [[ "$sha" =~ ^[0-9a-f]{40}$ ]] || { echo "ref did not resolve to a commit"; exit 2; }
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+
   evidence:
+    needs: plan
     runs-on: ubuntu-24.04
     timeout-minutes: 90
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
-        python: ${{ fromJSON(inputs.pythons) }}
+        python: ${{ fromJSON(needs.plan.outputs.pythons) }}
     services:
       postgres:
         image: postgres:17.10@sha256:7958605b474b3d264a969cb3a123d6aa00ad1e1fe9da8a69984dabb704d93317
@@ -49,30 +91,29 @@ jobs:
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
-      vault:
-        image: hashicorp/vault:2.2.0@sha256:e0acd3c681bdf57f002d7214e5d050b876e1704678005c6b0406dd96a65be919
-        env:
-          VAULT_DEV_ROOT_TOKEN_ID: root
-          VAULT_DEV_LISTEN_ADDRESS: 0.0.0.0:8200
-          SKIP_SETCAP: "true"
-        ports:
-          - 8200:8200
-        options: >-
-          --health-cmd "VAULT_ADDR=http://127.0.0.1:8200 vault status"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 10
     env:
       HADAVIN_TEST_PG_DSN: postgresql://postgres@localhost:5432/postgres
       HADAVIN_TEST_VAULT_ADDR: http://127.0.0.1:8200
-      INPUT_REF: ${{ inputs.ref }}
-      INPUT_MUTANTS: ${{ inputs.mutant_scripts }}
+      # The text-folding tables are built for Unicode 15.1.0 (Python 3.13), as in ci.yml; other versions must not set it.
+      HADAVIN_REQUIRE_PINNED_UNIDATA: ${{ matrix.python == '3.13' && '1' || '' }}
+      SHA: ${{ needs.plan.outputs.sha }}
+      REF: ${{ needs.plan.outputs.ref }}
+      MUTANTS: ${{ needs.plan.outputs.mutants }}
       PY: ${{ matrix.python }}
+      TOOL: .evidence-tools/tools/evidence_step.py
+      VAULT_IMAGE: hashicorp/vault:2.2.0@sha256:e0acd3c681bdf57f002d7214e5d050b876e1704678005c6b0406dd96a65be919
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
-          ref: ${{ inputs.ref }}
+          ref: ${{ needs.plan.outputs.sha }}
           persist-credentials: false
+      # The helper comes from the commit that holds this workflow, so that a ref without it can still be tested.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          path: .evidence-tools
+          persist-credentials: false
+          sparse-checkout: tools/evidence_step.py
+          sparse-checkout-cone-mode: false
       - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2  # v10.3.3
         with:
           version: "0.13.6"
@@ -80,59 +121,78 @@ jobs:
           python-version: ${{ matrix.python }}
           activate-environment: true
           cache-suffix: "evidence"
-      - name: Head and runner (first line of every log)
+      - name: Artifact name and runner facts
+        timeout-minutes: 2
         run: |
           mkdir -p evidence-logs
           sha=$(git rev-parse HEAD)
-          echo "$sha" > evidence-logs/head.txt
-          safe=$(printf '%s' "$INPUT_REF" | tr -c 'A-Za-z0-9._-' '-')
+          safe=$(printf '%s' "$REF" | tr -c 'A-Za-z0-9._-' '-')
           echo "ART=evidence-${safe}-${sha:0:8}-${PY}" >> "$GITHUB_ENV"
-          { echo "$sha"; python --version; nproc; psql --version; } | tee evidence-logs/env.txt
-      - name: Install (locked)
-        run: uv sync --locked --no-build --all-extras --group test
-      - name: Tests (the CI command)
+          { echo "$sha"; python --version; nproc; } | tee evidence-logs/env.txt
+      # A fresh random token for this run only; masked in the logs and never stored. The server listens on this
+      # runner's loopback address only and is removed in the last step.
+      - name: Start a throwaway Vault development server
+        timeout-minutes: 5
         run: |
-          set -o pipefail
-          { git rev-parse HEAD; pytest -q -m "not live and not perf" -rfEs; } 2>&1 | tee evidence-logs/pytest.txt
-      - name: Performance tests
-        if: ${{ !cancelled() }}
-        run: |
-          set -o pipefail
-          { git rev-parse HEAD; pytest -q -m perf -rfEs; } 2>&1 | tee evidence-logs/perf.txt
-      - name: Stage-rename mutants
-        if: ${{ !cancelled() && hashFiles('tests/stage_mutants.py') != '' }}
-        run: |
-          set -o pipefail
-          { git rev-parse HEAD; python tests/stage_mutants.py; rc=$?; echo "exit=$rc"; exit $rc; } 2>&1 | tee evidence-logs/stage-mutants.txt
-      - name: Extra mutant runners (names checked, never run as free text)
-        if: ${{ !cancelled() && inputs.mutant_scripts != '' }}
-        run: |
-          set -o pipefail
-          for s in $INPUT_MUTANTS; do
-            case "$s" in
-              tests/[a-z0-9_]*_mutants.py) ;;
-              *) echo "refused runner name: $s"; exit 2 ;;
-            esac
-            [ -f "$s" ] || { echo "no such runner: $s"; exit 2; }
-            { git rev-parse HEAD; python "$s"; rc=$?; echo "exit=$rc"; exit $rc; } 2>&1 | tee "evidence-logs/$(basename "$s" .py).txt"
+          token=$(openssl rand -hex 24)
+          echo "::add-mask::$token"
+          echo "HADAVIN_TEST_VAULT_TOKEN=$token" >> "$GITHUB_ENV"
+          export VAULT_DEV_ROOT_TOKEN_ID="$token"
+          docker run -d --name vault-evidence -p 127.0.0.1:8200:8200 \
+            -e VAULT_DEV_ROOT_TOKEN_ID -e VAULT_DEV_LISTEN_ADDRESS=0.0.0.0:8200 -e SKIP_SETCAP=true \
+            "$VAULT_IMAGE" > /dev/null
+          for _ in $(seq 1 30); do
+            docker exec -e VAULT_ADDR=http://127.0.0.1:8200 vault-evidence vault status > /dev/null 2>&1 && exit 0
+            sleep 2
           done
-      - name: Failing test names in the summary
-        if: ${{ !cancelled() }}
+          echo "vault did not become ready in 60 seconds"
+          exit 1
+      - name: Install (locked)
+        id: install
+        timeout-minutes: 15
+        run: python3 "$TOOL" run install -- uv sync --locked --no-build --all-extras --group test
+      - name: The postgres client the database tests shell out to is present (else they would skip silently)
+        timeout-minutes: 2
+        run: python3 "$TOOL" run psql-present -- psql --version
+      - name: Tests (the CI command)
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        timeout-minutes: 45
+        run: python3 "$TOOL" run pytest -- pytest -q -m "not live and not perf" -rfEs
+      - name: Performance tests
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        timeout-minutes: 20
+        run: python3 "$TOOL" run perf -- pytest -q -m perf -rfEs
+      - name: Stage-rename mutants
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        timeout-minutes: 20
+        run: python3 "$TOOL" run stage-mutants -- python tests/stage_mutants.py
+      - name: Extra mutant runners (names checked by the plan job, never run as free text)
+        if: ${{ !cancelled() && steps.install.outcome == 'success' && needs.plan.outputs.mutants != '' }}
+        timeout-minutes: 30
         run: |
-          {
-            echo "### $ART"
-            echo "head: $(cat evidence-logs/head.txt) python: $PY"
-            for f in evidence-logs/*.txt; do
-              echo "#### $(basename "$f")"
-              echo '```'
-              grep -E '^(FAILED|ERROR) |passed|failed|exit=' "$f" | tail -40 || true
-              echo '```'
-            done
-          } >> "$GITHUB_STEP_SUMMARY"
-      - name: Upload the raw logs
+          fail=0
+          for s in $MUTANTS; do
+            name=$(basename "$s" .py | tr _ -)
+            python3 "$TOOL" run "$name" -- python "$s" || fail=1
+          done
+          exit $fail
+      - name: Verdict (fails unless every step has exit=0; a step that did not run is NOT RUN)
         if: ${{ !cancelled() }}
+        timeout-minutes: 2
+        run: |
+          extra=""
+          for s in $MUTANTS; do extra="$extra $(basename "$s" .py | tr _ -)"; done
+          # $extra holds only names the plan job accepted, so word splitting is safe.
+          python3 "$TOOL" report install psql-present pytest perf stage-mutants $extra
+      - name: Remove the Vault development server
+        if: ${{ always() }}
+        timeout-minutes: 2
+        run: docker rm -f vault-evidence
+      - name: Upload the raw logs
+        if: ${{ always() }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
         with:
           name: ${{ env.ART }}
           path: evidence-logs/
+          if-no-files-found: error
           retention-days: 30
