@@ -5,10 +5,12 @@ here instead of keeping its own table.
 Do not use ``fold`` to display or store text: it drops the non-spacing marks (category Mn: the breve of Cyrillic short i, accents, the
 Hindi and Thai vowel signs that sit above or below a letter) and so over-collides, which is the safe side for a DENY. It KEEPS the spacing
 marks (Mc: the Hindi vowel signs aa and i, visarga), the modifier letters (Lm) and the modifier symbols (Sk); see "MARKS AND SCANS" below.
+The DENY check (``identity_keys``, ``could_be_same_person``) DROPS those three kinds in one of its readings, so it still matches two names that differ
+only by such a mark.
 
 WORDS (one word, one meaning). A SPELLING VARIANT is one of the at most three ways one text is read (see "SPELLING VARIANTS" below). A CHECK
-NAME is the comparison text made from one spelling variant; the function names say "key" (``identity_key``, ``key_tag``) and mean the
-check name. A VIEW is a text returned by ``fold_views`` or ``squeeze_views`` for a scan: a spelling variant, or the same spelling variant
+NAME is the comparison text made from one spelling variant of the raw text or of the raw text with its spacing marks, modifier letters and modifier
+symbols removed (see "MARKS AND SCANS"); the function names say "key" (``identity_key``, ``key_tag``) and mean the check name. A VIEW is a text returned by ``fold_views`` or ``squeeze_views`` for a scan: a spelling variant, or the same spelling variant
 with the spacing marks, modifier letters and modifier symbols dropped (see "MARKS AND SCANS"). "Same person" in ``could_be_same_person`` means
 the DENY test returns True: the texts may be one person or a look-alike name, which is the safe side.
 Nothing in v1 stores a check name: a package that must keep a person or an id for a later
@@ -22,7 +24,8 @@ address equals the verified address", an allowlist): folding there lets a look-a
     means the strings differ but fold to the same text through homoglyphs or invisible characters (a spoof attempt: refuse and audit it
     as such); DIFFERENT is an ordinary mismatch (refuse). The caller that wants
     case-insensitive domains lowercases the domain itself BEFORE comparing and uses the lowered text afterwards.
-  * DENY decision: ``could_be_same_person(a, b)`` (built on ``identity_keys``, the SPELLING VARIANTS below). A scan for a protected value (a
+  * DENY decision: ``could_be_same_person(a, b)`` (built on ``identity_keys``, the SPELLING VARIANTS below, read with and without the spacing marks; it
+    also answers True when either text holds a character this Python cannot name, see "UNNAMED CHARACTERS"). A scan for a protected value (a
     redaction, a blocklist) looks through every view of the text, BOTH ``fold_views`` AND ``squeeze_views`` (see "MARKS AND SCANS"). ``identity_key``, ``fold`` and ``squeeze`` give ONE
     spelling variant and are NOT DENY comparators or scans: one spelling variant is enough to be stable and to index, never to refuse. ``names_equal`` is
     neither: Unicode compatibility caseless equality for people's names in prose, no look-alikes.
@@ -45,17 +48,20 @@ a check name. What is NOT read as an ASCII letter or digit is listed in ``tests/
 SPELLING VARIANTS. One spelling variant is not enough for a DENY: the same text can LOOK like two different words. A Greek
 capital Eta looks like the Latin H, but the case-symmetric check name reads it as the small eta, which looks like n; a Greek letter followed by
 U+0345 looks like the letter, but the iota rule reads it as the letter plus ``i``. So a text has a small FIXED SET of spelling variants (at most
-three, never more; the number does not grow with the text), ``identity_keys(raw)``, in this order:
+three, never more; the number does not grow with the text), in this order:
   (a) the lower-side spelling variant: case folded first, the look-alike table of the case-fold image, U+0345 ALWAYS dropped;
   (b) the iota spelling variant: as (a), but U+0345 becomes an iota after a Greek letter. This is ``identity_key`` and ``fold``: it is what makes the
       precomposed Greek letters with ypogegrammeni case symmetric (see U+0345);
   (c) the upper-side (table-first) spelling variant: the look-alike table runs on the letter as written (capital Eta reads H, capital Mu M, capital Nu
       N, capital Upsilon Y), then case is folded, then the table of the case-fold image; U+0345 dropped.
-``could_be_same_person`` and ``allow_equal`` (LOOKALIKE) compare spelling variants: two texts match when ANY spelling variant of one equals ANY
-spelling variant of the other. A scan holds a protected value when ANY view of the text (``fold_views``, ``squeeze_views``) holds ANY view of the
+``identity_keys(raw)`` gives the check names of these spelling variants of the raw text and, when the text holds a spacing mark, modifier letter or
+modifier symbol, of the raw text with those removed (at most six check names, no repeats). ``could_be_same_person`` and ``allow_equal`` (LOOKALIKE)
+compare check names: two texts match when ANY check name of one equals ANY check name of the other. A scan holds a protected value when ANY view of the text (``fold_views``, ``squeeze_views``) holds ANY view of the
 value. The spelling variants only add matches to (b), so the relation is never narrower than ``identity_key`` equality; it is NOT transitive (capital Eta + "oward"
 matches "howard" through (c) and "noward" through (a), and those two do not match each other), so it is never a unique index, a dedupe or a
-group-by: use ``identity_key`` equality there. The size cap is checked first, once, for every spelling variant and view.
+group-by: use ``identity_key`` equality there, and outside tests only through an exemption (the ban table in ``pyproject.toml`` and the exemption list of
+``tests/test_textnorm_meta.py``). The size cap is checked before any fold work; a public function that calls another checks again, which costs one more
+length pass and changes no result.
 
 IDEMPOTENT AND CASE-SYMMETRIC BY CONSTRUCTION (``identity_key``, ``could_be_same_person``, ``squeeze``; the spelling variants (a) and (b)). Running the look-alike table
 first and then ``casefold`` with a table keyed by lower-case letters is neither: ``identity_key("Ø")`` would keep the capital and ``identity_key("ø")``
@@ -120,8 +126,11 @@ whose Unicode version is not the pin and cannot be changed.
 
 MARKS AND SCANS. Three categories are NOT dropped by the spelling variants of ``fold``, on purpose, and a caller must know it:
   * Mc (spacing combining marks, 452 code points in Unicode 15.1.0, for example the Devanagari vowel signs aa and i): a spacing vowel sign
-    changes a name, so the spelling variants keep it. "ad" + U+0903 + "min" is NOT the check name of "admin", and the spelling-variant views of
-    ``fold_views`` of "pass" + U+093E + "word" do NOT hold "password".
+    changes a name, so the spelling variants and ``fold`` keep it. "ad" + U+0903 + "min" is NOT the spelling-variant check name of "admin" and the
+    spelling-variant views of ``fold_views`` of "pass" + U+093E + "word" do NOT hold "password"; but the DENY check IS true for "ad" + U+0903 + "min" and
+    "admin" (``identity_keys`` also holds the check name of the text with the mark removed), so a person must look. This is the cost of the
+    ORDER 177 decision (a reversal of the earlier rule that a spacing vowel sign changes a name): on made-up Hindi names (94 names, 4,371 pairs) two
+    pairs are now "could be the same person" (0 before) and on Thai names one (unchanged); the rate on a real population is not known.
   * Lm (modifier letters): a look-alike of the letter (superscript h reads as h), kept or read as that letter.
   * Sk (modifier symbols): a compatibility Sk (NFKD gives a space plus a mark: the diaeresis U+00A8, the small tilde U+02DC) becomes a space in
     the spelling-variant views; every other Sk (the grave accent U+0060, the circumflex U+005E, the arrow head U+02C2) is kept as the symbol. ``squeeze_views`` removes both.
@@ -140,7 +149,7 @@ MARKS AND SCANS. Three categories are NOT dropped by the spelling variants of ``
   ``fold_views`` (its default is ``False`` for the display and comparison uses that keep case: a scan built without it misses a value that
   differs from the text by case alone, "Secret" against "SECRET"), PASS ``scripts=value_scripts(value)`` when the text is read for a value (see "SCRIPT VIEWS"),
   and take the needles of the value with ``scan_needles``, which refuses a value without a long enough squeeze or script view (see
-  "MINIMUM VIEW LENGTH"). ``tests/test_textnorm.py`` pins the insertion rule for EVERY Mc, Lm and Sk code point of the interpreter.
+  "MINIMUM VIEW LENGTH"). ``tests/test_textnorm.py`` pins the insertion rule for EVERY Mc, Lm and Sk code point of the interpreter, for the scan views AND for the DENY check.
   WHAT A SCAN RELIES ON: A value with NO ASCII letter or digit (Chinese, Arabic, Hindi, Thai) is found by the script views of ``fold_views`` (the non-ASCII letters of the value's own scripts, with whitespace, punctuation, symbols, ASCII characters and the letters of every other script removed), so an inserted space, hyphen, line break, ASCII letter, mark or foreign-script letter does not hide it; a letter of the SAME script inserted, or a respelling of it, is not covered.
   SCRIPT VIEWS (``fold_views`` with ``scripts``). The ASCII-only ``squeeze_views`` is ``""`` for a value in a script with no ASCII letter or digit, so
   ``fold_views`` also returns, for the marks-dropped spelling variants, the SCRIPT VIEW: the view with every character removed that is not a non-ASCII
@@ -172,17 +181,31 @@ MARKS AND SCANS. Three categories are NOT dropped by the spelling variants of ``
   package takes its needles from it and does not repeat the numbers). The match positions of the original text are lost by the drops: a caller that
   must cut the original text needs its own map.
 
+WHERE ``could_be_same_person`` IS USED. It is a library primitive for the deny and check-name path only. It is wired into NO approval check, and no
+approval compares people's names (``approvals/requests.py`` compares ids exactly). A use in an approval later is a new ticket with its own plan review
+(a money and permission path, no round cap).
+
 INPUT RULES (every public function): the argument must be a plain ``str`` (``type(x) is str``; a ``str`` subclass or an enum member is
-refused with ``NotText``), its LENGTH must be within ``defaults.TEXTNORM_MAX_CHARS`` (``TextTooLong``, checked first: every weight is at
-least the length, so a longer text is refused before any per-character work), and its WEIGHT W must be within the same cap. W is the sum, over the
+refused with ``NotText``), its LENGTH must be within ``defaults.TEXTNORM_MAX_CHARS`` (``TextTooLong``, checked before any fold work: every weight is at
+least the length, so a longer text is refused before any per-character work; a public function that calls another checks again, which costs one
+more length pass and changes no result), and its WEIGHT W must be within the same cap. W is the sum, over the
 characters of the text, of the longest string the pipeline makes from that one character (an ASCII text has W = its length). No check name
 or view of any spelling variant is longer than W of its text (plus ``len(key_tag())`` on an unpinned interpreter), because every step acts per
 character or only joins or drops. Messages hold lengths and constants, never the input.
 Any ``TextnormError`` on a DENY or ALLOW path means REFUSE.
 
+UNNAMED CHARACTERS (F6-5). The fold drops a code point of category Cn (unassigned on this Python), Co (private use) or Cs (surrogate). Dropped when
+INSERTED into a name this over-matches (the safe side). When it REPLACES a letter ("al" + U+E000 + "ce" reads ``alce``) it would be a MISS: a
+look-alike letter assigned after Unicode 15.1, or a private-use character drawn as a letter by a font, would hide the name. So ``could_be_same_person``
+answers True when either text holds such a code point, and ``allow_equal`` follows (LOOKALIKE; identical strings stay EQUAL). Cost, stated plainly: a
+name that holds an emoji newer than Unicode 15.1, or a private-use character, is "could be the same person" with EVERY other name, so a person must
+look. The scan side (``fold_views``, ``squeeze_views``) has the same miss and is NOT changed here; it belongs to the packages that scan (the
+redaction package and the hold check of P1b).
+
 Honest limits: a letter in neither the data nor the supplement nor a name rule is not folded (the known cases are listed in ``tests/test_textnorm.py``). Dropping unassigned code points (Cn) depends on the
 Python build's Unicode version (``require_pinned_unidata``): a look-alike letter assigned after Unicode 15.1 is DROPPED, not folded, on the
-pinned interpreter. PUNCTUATION is not folded: the Unicode hyphen (U+2010) and the other dashes, the minus sign
+pinned interpreter (the DENY check fails closed on it, see above). The table is the data of Unicode 15.1.0, so look-alike pairs that Unicode added in
+later versions are not in it; the size of that loss has not been counted (it needs the later data file). PUNCTUATION is not folded: the Unicode hyphen (U+2010) and the other dashes, the minus sign
 (U+2212), the division slash (U+2215) and the right single quotation mark (U+2019) are not read as the hyphen-minus, the slash and the
 apostrophe, so "INV-2026" and "INV" + U+2212 + "2026" are different, and so are "O'Brien" and "O" + U+2019 + "Brien" in ``could_be_same_person``
 (corpus rows r114 to r117, strict expected failures). ``has_mixed_script`` is the fail-closed backstop: a word that mixes Latin
@@ -191,7 +214,8 @@ table knows. Property: ``fold(x + mark) == fold(x) == fold(mark + x)`` for any n
 private-use, surrogate or unassigned character (the nine dropped categories), with the one exception above (U+0345 after a Greek letter, for
 the single spelling variant (b) only); for the spelling variants, any such mark, U+0345 included, leaves a shared spelling variant
 (``could_be_same_person(x + mark, x)``). The property does NOT hold for a spacing mark (Mc), a modifier letter (Lm) or a modifier symbol (Sk) in the
-spelling variants; the marks-dropped views of ``fold_views`` and ``squeeze_views`` hold it for those.
+spelling variants of ``fold``; the marks-dropped views of ``fold_views`` and ``squeeze_views`` hold it for those, and so does
+``could_be_same_person`` (through the marks-dropped check names of ``identity_keys``).
 """
 
 from __future__ import annotations
@@ -259,11 +283,13 @@ class UnidataMismatch(TextnormError):
     """The interpreter's Unicode data is not the version the check names were pinned to (``require_pinned_unidata()``). Fail closed: the caller must refuse to run, not fall back."""
 
 
-_PINNED_PYTHON = "3.13"  # the Python minor version that carries Unicode 15.1.0 (the pin); only used in the message
 _DROP_CATEGORIES = frozenset({"Cc", "Cf", "Mn", "Me", "Zl", "Zp", "Co", "Cs", "Cn"})
 _SPACING_CATEGORIES = frozenset(
     {"Mc", "Lm", "Sk"}
 )  # kept by the spelling variants, removed by the marks-dropped views of a scan
+# Categories of a code point this Python cannot name: unassigned (Cn), private use (Co), surrogate (Cs). The fold DROPS them, so one that
+# REPLACES a letter would make a miss; ``could_be_same_person`` fails closed on them (see "UNNAMED CHARACTERS" in the module docstring).
+_UNNAMED_CATEGORIES = frozenset({"Cn", "Co", "Cs"})
 FILLERS = frozenset(
     map(chr, (0x3164, 0x115F, 0x1160, 0x2800, 0xFFA0, 0x13441, 0x13442))
 )  # invisible letters/symbols used to glue or split words (the last two: Egyptian hieroglyph full blank and half blank)
@@ -322,7 +348,12 @@ _DIGITS = types.MappingProxyType(
 
 
 def _char_weight(c: str) -> int:
-    """The weight of ``c``: the larger of the single-pass weight of ``c`` and of its case fold (the case-folding path folds case first)."""
+    """The weight of ``c``: the larger of the single-pass weight of ``c`` and of its case fold (the case-folding path folds case first).
+
+    Why this is not ``guard.runmap._nfkd_len``: that function counts only the NFKD length of one character, which bounds a text that is normalised and
+    nothing else. This fold also expands through the digit table, the look-alike table, the case fold and the table of the case-fold image, any of
+    which can be longer than NFKD (a bound by NFKD alone would let a text through that makes a longer check name). ``runmap`` is a sibling module
+    with its own owner (P1b); importing it would couple the two folds, so each keeps its own bound."""
     return max(_pass_weight(c), _pass_weight(c.casefold()))
 
 
@@ -516,8 +547,8 @@ def _view_pairs(
 ) -> list[tuple[str, str]]:
     """Every view of ``raw`` as ``(kind, view)``, kind ``"spelling"`` or ``"script"``, in the order of ``_READINGS``; a pair is not repeated (the
     same text may be both kinds). Without ``casefold`` there is no upper side (the table already runs on the letter as written), so only (a)
-    and (b) remain. With ``marks_dropped`` the same spelling variants of the text WITHOUT its Mc, Lm and Sk characters follow (a scan wants them;
-    the DENY check names do not use them); with ``marks_only`` only those are made. With ``scripts`` (not empty) the SCRIPT VIEW of each
+    and (b) remain. With ``marks_dropped`` the same spelling variants of the text WITHOUT its Mc, Lm and Sk characters follow (a scan wants them; the
+    DENY check names use them too, through ``_keys``, which asks for them only when the text can differ); with ``marks_only`` only those are made. With ``scripts`` (not empty) the SCRIPT VIEW of each
     marks-dropped view follows it (``_script_view``; left out when empty)."""
     texts = [raw]
     if marks_dropped:
@@ -558,7 +589,7 @@ def _views(
     scripts: frozenset[str] = frozenset(),
 ) -> tuple[str, ...]:
     """Every view of ``raw`` as a string, without repeats (``_view_pairs`` without the kinds): at most three spelling variants, twice as many with
-    ``marks_dropped``, three times as many with ``scripts``."""
+    ``marks_dropped`` (the check names of ``identity_keys`` are these, at most six), three times as many with ``scripts``."""
     out: list[str] = []
     for _kind, view in _view_pairs(
         raw,
@@ -655,7 +686,19 @@ def _validated_minimums() -> tuple[int, int, int, int]:
     return out[0], out[1], out[2], out[3]
 
 
+def _validated_pins() -> None:
+    """The two pin constants of ``defaults`` (the Unicode data version and the Python minor version that carries it) must be non-empty ``str``.
+    Run at import and by ``require_pinned_unidata``: a wrong value fails closed in both places. The message names the constant, never the value."""
+    for name in ("TEXTNORM_PINNED_UNIDATA", "TEXTNORM_PINNED_PYTHON"):
+        value = getattr(defaults, name, None)
+        if type(value) is not str or not value:
+            raise TextnormError(
+                f"defaults.{name} must be a non-empty str, not of type {type(value).__name__}"
+            )
+
+
 _validated_minimums()  # fail closed at import
+_validated_pins()
 
 
 def scan_needles(raw: str, *, loose: bool = False) -> tuple[str, ...]:
@@ -701,7 +744,7 @@ def scan_needles(raw: str, *, loose: bool = False) -> tuple[str, ...]:
 
 
 def squeeze(raw: str, *, loose: bool = False) -> str:
-    """Check name for a scan on letters and digits: folded, upper-case letters and digits only; ``loose`` also treats the digit-like letters O I L S B Z G Q as the
+    """ONE reading, not a scan: a scan uses ``squeeze_views`` and ``scan_needles``. Folded, upper-case letters and digits only; ``loose`` also treats the digit-like letters O I L S B Z G Q as the
     digits 0 1 1 5 8 2 6 9. The result is ``""`` for a text without an ASCII letter or digit after the fold (a name in Chinese or Hindi, for
     example): an empty needle matches every text, so a caller must REFUSE an empty result, never scan with it."""
     _checked(raw)
@@ -744,14 +787,15 @@ def _canon(s: str) -> str:
     """Unicode compatibility caseless matching: NFKD, case fold, NFKD, case fold; a case fold of a composed letter can leave a
     sequence that normalises again, which is why Unicode writes it with two folds. The second fold is kept because the standard has it; on
     Unicode 15.0 and 15.1 it changes no result for any single code point (checked), so no test can tell it from a single fold. What the
-    tests do pin is the NFKD step against the old NFKC (nine code points were not case symmetric). Whitespace is collapsed."""
+    tests do pin is the NFKD step against the old NFKC (eight code points were not case symmetric). Whitespace is collapsed."""
     folded = unicodedata.normalize("NFKD", unicodedata.normalize("NFKD", s).casefold()).casefold()
     return " ".join(unicodedata.normalize("NFKD", folded).split())
 
 
 def identity_key(raw: str) -> str:
     """ONE spelling variant of ``raw``, NOT a DENY comparator: ``fold`` with case folded and whitespace collapsed (the iota spelling variant, see the module
-    docstring). Stable and idempotent, so it stays the check name to keep and to index; but a DENY decision compares ``identity_keys`` (``could_be_same_person``).
+    docstring). Stable and idempotent, so it stays the check name to keep and to index (outside tests only through an exemption: the ban table in ``pyproject.toml``
+    and the exemption list of ``tests/test_textnorm_meta.py``); but a DENY decision compares ``identity_keys`` (``could_be_same_person``).
     The empty string and invisible-only text give ``""`` on the pinned Unicode version (never a value to store or index). On another version
     the check name starts with ``key_tag()``."""
     _checked(raw)
@@ -762,28 +806,60 @@ def identity_key(raw: str) -> str:
     return tag + _fold(raw, casefold=True, collapse_ws=True)
 
 
+def _untagged(raw: str) -> str:
+    """``raw`` without the tag of THIS interpreter at its start (``key_tag()``; nothing to remove on the pinned version)."""
+    tag = key_tag()
+    return raw[len(tag) :] if tag and raw.startswith(tag) else raw
+
+
 def _keys(raw: str) -> tuple[str, ...]:
     tag = key_tag()
-    if tag and raw.startswith(tag):
-        raw = raw[len(tag) :]
-    return tuple(tag + view for view in _views(raw, casefold=True, collapse_ws=True))
+    raw = _untagged(raw)
+    # The marks-dropped reading is made only when it can differ from the plain one: the raw text holds a spacing mark, modifier letter or modifier
+    # symbol, OR its NFKD text does (61 code points, for example U+0149 and U+1B06, decompose into one although the raw text holds none). This gate
+    # lives HERE and not in ``_view_pairs``: there the script views are made in the marks-dropped pass (F6-1b).
+    marks_dropped = _holds_spacing(raw) or _holds_spacing(unicodedata.normalize("NFKD", raw))
+    return tuple(
+        tag + view
+        for view in _views(raw, casefold=True, collapse_ws=True, marks_dropped=marks_dropped)
+    )
+
+
+def _holds_spacing(text: str) -> bool:
+    """True when ``text`` holds an Mc, Lm or Sk character."""
+    return any(unicodedata.category(ch) in _SPACING_CATEGORIES for ch in set(text))
+
+
+def _holds_unnamed(text: str) -> bool:
+    """True when ``text`` holds a code point of category Cn (unassigned), Co (private use) or Cs (surrogate) on this interpreter."""
+    return any(unicodedata.category(ch) in _UNNAMED_CATEGORIES for ch in set(text))
 
 
 def identity_keys(raw: str) -> tuple[str, ...]:
-    """The check names of ``raw`` for a DENY decision: one per spelling variant (at most three, no repeats, a fixed order: (a), (b), (c) of the module
-    docstring). ``identity_key(raw)`` is one of them. Two texts match when ANY key of one equals ANY key of the other
-    (``could_be_same_person``). Not transitive, so never a unique index or a group-by: use ``identity_key`` for those."""
+    """The check names of ``raw`` for a DENY decision, at most SIX, no repeats, in a fixed order: one per spelling variant of the raw text ((a), (b), (c) of
+    the module docstring; ``identity_key(raw)`` is one of them), then the same for the raw text with every spacing mark (Mc), modifier letter (Lm) and
+    modifier symbol (Sk) removed, which is made only when the text holds one (or its NFKD text does). Two texts match when ANY check name of one equals ANY
+    check name of the other (``could_be_same_person``). Not transitive, so NEVER a unique index, a group-by or anything stored: use ``identity_key`` for those
+    (through an exemption)."""
     _checked(raw)
     return _keys(raw)
 
 
 def could_be_same_person(a: str, b: str) -> bool:
-    """DENY comparator (separation of duties, a blocklist): True when ANY spelling variant of ``a`` equals ANY spelling variant of ``b`` (``identity_keys``).
-    Look-alike letters, case, width, ligatures, non-spacing and enclosing marks (Mn, Me) and invisible characters compare equal, which is the safe side
-    for a DENY. NOT equal: a spacing mark (Mc), modifier letter (Lm) or modifier symbol (Sk) inserted into a name makes it "different" (a scan
-    uses ``fold_views`` and ``squeeze_views``, which do remove them), and PUNCTUATION is not folded: "O'Brien" against "O" + U+2019 + "Brien", and a
-    Unicode hyphen (U+2010) against "-", compare as different (strict expected failures, corpus rows r114 to r117). Not transitive. NEVER an ALLOW."""
+    """DENY comparator (separation of duties, a blocklist): True when ANY check name of ``a`` equals ANY check name of ``b`` (``identity_keys``).
+    Look-alike letters, case, width, ligatures, non-spacing and enclosing marks (Mn, Me), invisible characters AND spacing marks (Mc), modifier letters
+    (Lm) and modifier symbols (Sk) compare equal, which is the safe side for a DENY: two names that differ only by such marks are "could be the same
+    person", so a person must look ("ali" + U+0903 + "ce" against "alice"; on made-up Hindi names two pairs in 4,371, see the module docstring).
+    It is also True when either text holds a character this Python cannot name (unassigned Cn, private use Co or surrogate Cs: the fold drops such a
+    character, so one that replaces a letter would hide a name): a name with an emoji newer than Unicode 15.1 is "could be the same person" with every
+    other name. PUNCTUATION is not folded: "O'Brien" against "O" + U+2019 + "Brien", and a
+    Unicode hyphen (U+2010) against "-", compare as different (strict expected failures, corpus rows r114 to r117). Not transitive. NEVER an ALLOW.
+
+    Where it is used: a library primitive for the deny and check-name path only. It is wired into NO approval check, and no approval compares people's
+    names (``approvals/requests.py`` compares ids exactly). A use in an approval later is a new ticket with its own plan review."""
     _checked(a, b)
+    if _holds_unnamed(_untagged(a)) or _holds_unnamed(_untagged(b)):
+        return True  # fail closed (F6-5): the fold drops such a character, so one that replaces a letter would hide a name
     return not set(_keys(a)).isdisjoint(_keys(b))
 
 
@@ -793,8 +869,8 @@ class AllowVerdict(Enum):
 
     EQUAL = "EQUAL"  # identical strings: the only verdict that allows
     DIFFERENT = "DIFFERENT"  # an ordinary mismatch: refuse
-    VARIANT = "VARIANT"  # differs only in case, width, ligature or whitespace (NFKC + casefold equal): refuse, a plain mistake or a variant
-    LOOKALIKE = "LOOKALIKE"  # differs but folds equal through homoglyphs, invisible characters or marks: refuse and audit as a spoof
+    VARIANT = "VARIANT"  # differs only in case, width, ligature or whitespace (NFKD + casefold equal): refuse, a plain mistake or a variant
+    LOOKALIKE = "LOOKALIKE"  # differs but folds equal through homoglyphs, invisible characters or (spacing) marks, or holds a character Python cannot name: refuse and audit as a spoof
 
     def __bool__(self) -> bool:
         raise TypeError("an AllowVerdict has no truth value: compare with 'is AllowVerdict.EQUAL'")
@@ -815,7 +891,7 @@ def allow_equal(a: str, b: str) -> AllowVerdict:
 
 
 def names_equal(a: str, b: str) -> bool:
-    """People's names in prose: NFKC, case and whitespace insensitive. NOT an ALLOW decision (``allow_equal``) and NOT a DENY decision
+    """People's names in prose: Unicode compatibility caseless equality (NFKD, case fold, NFKD, case fold), whitespace insensitive. NOT an ALLOW decision (``allow_equal``) and NOT a DENY decision
     either (``could_be_same_person``: this one does not fold look-alikes, so a Cyrillic-a name is a different name here). Never stored, never a check name."""
     _checked(a, b)
     return _canon(a) == _canon(b)
@@ -844,12 +920,13 @@ def require_pinned_unidata(expected: str | None = None) -> None:
     version is ``expected`` (default ``defaults.TEXTNORM_PINNED_UNIDATA``, read when the function runs, so a patched constant is seen).
     Fail closed: it never warns and never returns on a mismatch. A demo run or a CI run may use another version; their keys carry
     ``key_tag()``. The message says what to do: for the pin it names Python 3.13."""
+    _validated_pins()
     if expected is None:
         expected = defaults.TEXTNORM_PINNED_UNIDATA
     if unicodedata.unidata_version != expected:
         fix = (
-            f"run Python {_PINNED_PYTHON} (Unicode {expected})"
-            if expected == "15.1.0"
+            f"run Python {defaults.TEXTNORM_PINNED_PYTHON} (Unicode {expected})"
+            if expected == defaults.TEXTNORM_PINNED_UNIDATA
             else f"run a Python with Unicode {expected}"
         )
         raise UnidataMismatch(
@@ -861,7 +938,9 @@ _NON_LATIN_SCRIPTS = (
     "CYRILLIC", "GREEK", "ARMENIAN", "CHEROKEE", "COPTIC", "GEORGIAN", "HEBREW", "LISU", "CANADIAN", "OSAGE", "VAI", "NKO",
     "TIFINAGH", "BAMUM", "WARANG", "DESERET", "MIAO", "ELBASAN", "CARIAN", "LYCIAN", "LYDIAN", "OLD ",
 )  # fmt: skip
-_WORD = re.compile(r"\w+", re.UNICODE)
+# What has_mixed_script removes before it splits words: the dropped categories and the modifier symbols (Sk). A symbol has no script, so removing it
+# joins the two halves of a word it split, the same rule that applies to invisible characters.
+_MIXED_REMOVED = _DROP_CATEGORIES | {"Sk"}
 _UNIT_SYMBOLS = frozenset(
     map(chr, (0xB5, 0x2126))
 )  # micro sign, ohm sign: unit symbols (5 us, 50 kOhm) that NFKC turns into Greek letters
@@ -869,11 +948,18 @@ _UNIT_SYMBOLS = frozenset(
 
 def has_mixed_script(text: str) -> bool:
     """True if any word mixes Latin letters with Cyrillic, Greek, Armenian, Cherokee, Coptic, Georgian, Hebrew, Lisu or another
-    look-alike-rich script (UTS #39 style). Invisible and combining characters are removed first (a zero-width space inside a word does
-    not split it). The micro sign and the ohm sign are exempt (unit symbols); a Greek mu or omega typed as a Greek letter next to Latin
+    look-alike-rich script (UTS #39 style), or a Latin letter with a spacing mark of another script that no letter of the word owns. Invisible
+    characters, non-spacing marks and modifier symbols (Sk) are removed first (a zero-width space or a ``^`` inside a word does not split it).
+    A word is a run of letters, digits, ``_`` and spacing marks (Mc). The micro sign and the ohm sign are exempt (unit symbols); a Greek mu or omega typed as a Greek letter next to Latin
     letters is flagged. The micro and ohm signs are removed BEFORE the analysis, so a word that holds only such a sign plus a
     look-alike letter (micro sign + Cyrillic a) is not flagged by this function; the fold and the table still see the Cyrillic letter. A
     fail-closed deny signal that does not depend on the look-alike table. Digits and punctuation are script-neutral.
+
+    Two rules: (a) a Latin letter and a letter of a look-alike script in one word; (b) a Latin letter and a spacing mark (Mc) whose script group
+    is not Latin and is the group of no letter in the word ("ali" + U+0903 + "ce" and "iPhone" + U+093E are flagged; "Ramesh" + a Devanagari
+    syllable with its own sign is not). A modifier letter (Lm) is a letter: NFKC turns most into their Latin letter, so it never flags by itself;
+    the DENY check catches an inserted one. A non-spacing sign (Mn) of another script inserted into a Latin word is not flagged here (it is
+    removed first; the fold drops it, so the DENY check catches it).
 
     Honest limits: the script list is a curated prefix list of Unicode character names, NOT the UTS #39 script-extension data (Runic, Tamil,
     Bopomofo and others are not on it and are neither folded nor flagged; each added script is a new false-positive source, and the fold
@@ -887,19 +973,46 @@ def has_mixed_script(text: str) -> bool:
         or (
             ch not in _UNIT_SYMBOLS
             and ch not in FILLERS
-            and unicodedata.category(ch) not in _DROP_CATEGORIES
+            and unicodedata.category(ch) not in _MIXED_REMOVED
         )
     )
-    for word in _WORD.findall(unicodedata.normalize("NFKC", kept)):
-        latin = other = False
-        for ch in word:
-            if not ch.isalpha():
-                continue
-            name = unicodedata.name(ch, "")
-            if name.startswith("LATIN"):
-                latin = True
-            elif name.startswith(_NON_LATIN_SCRIPTS):
-                other = True
-            if latin and other:
-                return True
-    return False
+    return any(_word_is_mixed(word) for word in _words(unicodedata.normalize("NFKC", kept)))
+
+
+def _words(text: str) -> list[str]:
+    """The words of ``text``: maximal runs of alphanumeric characters, ``_`` and spacing combining marks (Mc), so a spacing mark does not split a word."""
+    words: list[str] = []
+    start = -1
+    for i, ch in enumerate(text):
+        if ch.isalnum() or ch == "_" or unicodedata.category(ch) == "Mc":
+            if start < 0:
+                start = i
+        elif start >= 0:
+            words.append(text[start:i])
+            start = -1
+    if start >= 0:
+        words.append(text[start:])
+    return words
+
+
+def _word_is_mixed(word: str) -> bool:
+    """Rule (a): a Latin letter and a letter of a look-alike script (``_NON_LATIN_SCRIPTS``) in one word. Rule (b): a Latin letter and a spacing
+    mark (Mc) whose script group is not Latin and is the group of no letter of the word."""
+    latin = other = False
+    marks: list[str] = []
+    for ch in word:
+        if not ch.isalpha():
+            if unicodedata.category(ch) == "Mc":
+                marks.append(ch)
+            continue
+        name = unicodedata.name(ch, "")
+        if name.startswith("LATIN"):
+            latin = True
+        elif name.startswith(_NON_LATIN_SCRIPTS):
+            other = True
+        if latin and other:
+            return True
+    if not (latin and marks):
+        return False
+    own = {_script_of(ch) for ch in word if ch.isalpha()}
+    return any(group != "LATIN" and group not in own for group in map(_script_of, marks))

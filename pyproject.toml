@@ -77,8 +77,16 @@ extend-select = ["B", "DTZ", "I", "S", "TID", "UP"]
 # Absolute imports only: the import rules in tests/ read module names, and a relative import hides one.
 ban-relative-imports = "all"
 
+# One reading of a text is not a match or a scan (guard/textnorm.py, "THE RULE"): a name or a protected value hides in the readings that the
+# single one does not make. tests/** may call them (the tests compare the single readings on purpose); a code row that must keep one is an
+# exemption: a per-file-ignores entry below with its reason, a row in the exemption list of tests/test_textnorm_meta.py, and a lead order.
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"hadavin_sdk.guard.textnorm.fold".msg = "a match or scan reads every view: use fold_views + squeeze_views (scan_needles) or identity_keys"
+"hadavin_sdk.guard.textnorm.squeeze".msg = "a match or scan reads every view: use fold_views + squeeze_views (scan_needles) or identity_keys"
+"hadavin_sdk.guard.textnorm.identity_key".msg = "identity_key is ONE reading: only for a unique index or dedupe, through an exemption row; a match uses identity_keys or could_be_same_person"
+
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["S101"]
+"tests/**" = ["S101", "TID251"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

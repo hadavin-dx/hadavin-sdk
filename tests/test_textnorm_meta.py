@@ -8,6 +8,8 @@ of a later package).
 
 import ast
 import json
+import re
+import tomllib
 from collections import Counter
 from pathlib import Path
 
@@ -85,15 +87,15 @@ def _functions(path: Path) -> list[str]:
     return [n.name for n in tree.body if isinstance(n, ast.FunctionDef)]
 
 
-def test_a_the_list_has_128_mutants_28_repointed_12_new_9_of_fold2_3_of_fold3_16_of_fold4_9_of_fix4_14_of_fix5_5_of_fix6_and_32_of_fix7_with_unique_names():
+def test_a_the_list_has_138_mutants_28_repointed_12_new_9_of_fold2_3_of_fold3_16_of_fold4_9_of_fix4_14_of_fix5_5_of_fix6_32_of_fix7_and_10_of_fix8_with_unique_names():
     names = [m.name for m in mm.M]
-    assert len(names) == 128 and len(set(names)) == 128, names
+    assert len(names) == 138 and len(set(names)) == 138, names
     assert tuple(names[:28]) == REPOINTED, (
         "the first 28 are the re-pointed mutants, in the order of the placement table"
     )
     assert (
-        len(names[28:]) == 100
-    )  # 12 of the first package, 9 of fold2, 3 of fold3, 16 of fold4, 9 of fix4, 14 of fix5, 5 of fix6 and 32 of fix7
+        len(names[28:]) == 110
+    )  # 12 of the first package, 9 of fold2, 3 of fold3, 16 of fold4, 9 of fix4, 14 of fix5, 5 of fix6, 32 of fix7 and 10 of fix8
     assert names[52:53] == ["fold: case folded before the marks are dropped (the fold2 order)"], (
         "the restored fold2 mutant is the first of the fold4 mutants"
     )
@@ -155,7 +157,7 @@ def test_a_the_moved_tests_and_the_new_killers_exist_once_each():
 def test_a_print_the_placement_table():
     rows = [f"{m.name} | {m.test_file} | {m.only_test}" for m in mm.M]
     print("\n".join(rows))
-    assert len(rows) == 128
+    assert len(rows) == 138
 
 
 def test_b_every_xfail_of_the_differential_file_is_strict_and_names_assertion_error():
@@ -237,3 +239,86 @@ def test_the_changelog_marks_the_two_stale_notes_as_superseded_and_states_the_li
     )
     assert "loosens only the squeeze" in text, "the loose=True note is missing"
     assert "MAX_VALUE_LEN" in text
+
+
+# --- T6-5: the ban on the single readings is durable (no subprocess here: the two ruff runs are CI steps A and B) ------------------
+
+BAN_TABLE = "hadavin_sdk.guard.textnorm."
+BANNED = ("fold", "squeeze", "identity_key")
+# rows of code (not tests) that may keep a single reading: path of the file, with its reason. Empty in P1a; PR 77 adds its own row.
+EXEMPTIONS: dict[str, str] = {}
+CI = ROOT / ".github" / "workflows" / "ci.yml"
+STEP_A = "ruff check --select TID251 --ignore-noqa src demos tools"
+STEP_B = (
+    "out=$(ruff check --select TID251 --ignore-noqa --config 'lint.per-file-ignores = {}' "
+    "--output-format concise tests/fixtures/tid251_forms || true)\n"
+    "test \"$(printf '%s\\n' \"$out\" | grep -c ' TID251 ')\" -eq 6"
+)
+
+
+def _code_files():
+    for top in ("src", "demos", "tools"):
+        yield from (ROOT / top).rglob("*.py")
+
+
+def test_the_ruff_config_bans_the_single_readings_outside_the_tests():
+    cfg = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["tool"]["ruff"][
+        "lint"
+    ]
+    assert "TID" in cfg["extend-select"]
+    banned = cfg["flake8-tidy-imports"]["banned-api"]
+    assert set(banned) == {BAN_TABLE + n for n in BANNED}
+    for name in BANNED:
+        msg = banned[BAN_TABLE + name]["msg"]
+        assert msg.strip()
+        assert ("identity_keys" in msg) or ("fold_views" in msg), name
+    ignores = cfg["per-file-ignores"]
+    assert ignores["tests/**"] == ["S101", "TID251"]
+    for path, rules in ignores.items():
+        if "TID251" in rules and path != "tests/**":
+            assert path in EXEMPTIONS, f"{path}: an exemption without a row and a reason"
+    for path in EXEMPTIONS:
+        assert "TID251" in ignores.get(path, []), path
+
+
+def test_no_code_file_hides_the_ban_with_a_comment_or_uses_the_key_list_outside_textnorm():
+    hide = re.compile(
+        r"#\s*noqa(?!\s*:)|#\s*noqa\s*:[^\n]*TID251|#\s*ruff\s*:\s*noqa", re.IGNORECASE
+    )
+    seen = 0
+    for path in _code_files():
+        rel = path.relative_to(ROOT).as_posix()
+        text = path.read_text(encoding="utf-8")
+        seen += 1
+        assert not hide.search(text), f"{rel}: a comment that switches the ban off"
+        if rel != "src/hadavin_sdk/guard/textnorm.py":
+            assert "identity_keys" not in text, f"{rel}: names identity_keys (never a unique index)"
+    assert seen > 50, seen
+
+
+def test_the_ci_lint_job_holds_the_two_ban_steps_word_for_word():
+    text = CI.read_text(encoding="utf-8")
+    assert f"run: {STEP_A}\n" in text
+    indented = STEP_B.replace("\n", "\n          ")
+    assert f"run: |\n          {indented}\n" in text
+    assert (
+        text.index("ruff check src tests demos tools")
+        < text.index(STEP_A)
+        < text.index("ruff format --check")
+    )
+    forms = sorted(p.name for p in (TESTS / "fixtures" / "tid251_forms").glob("*.py"))
+    assert len(forms) == 6 and not any(n.startswith("test_") for n in forms), forms
+
+
+def test_the_split_of_the_mutants_into_behaviour_and_wording_only_is_derived_from_the_syntax_trees():
+    behaviour, wording = mm.split_counts()
+    assert behaviour + wording == len(mm.M) == 138
+    new = mm.M[128:]
+    assert len(new) == 10
+    assert [m.name for m in new if mm.is_wording_only(m)] == [
+        "words: the squeeze docstring calls itself a check name for a scan",
+        "words: the names_equal docstring says NFKC",
+    ], "the wording-only mutants of fix8 are exactly these two"
+    assert sum(not mm.is_wording_only(m) for m in new) == 8
+    print(f"{behaviour} mutants change behaviour, {wording} change only words")
+    assert wording >= 2 and behaviour > wording

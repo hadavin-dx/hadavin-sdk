@@ -136,6 +136,9 @@ K8S_LOG_BYTES = 65536  # asked of the API as limitBytes
 TEXTNORM_MAX_CHARS = MAX_REDACT_CHARS
 # The Unicode data version the fold's keys were made with; require_pinned_unidata compares the interpreter with it.
 TEXTNORM_PINNED_UNIDATA = "15.1.0"
+# The Python minor version that carries that Unicode data; require_pinned_unidata names it in its message (the only other place that said it was a
+# second copy inside guard.textnorm). guard.textnorm refuses a value that is not a non-empty str when it is imported.
+TEXTNORM_PINNED_PYTHON = "3.13"
 # The shortest view of a protected value that a scan may use (guard.textnorm.scan_needles), one number per KIND of view; a shorter view (an
 # empty one above all) is found in nearly every text. Each must be an int of at least 1 (guard.textnorm refuses another value when it is
 # imported and every time a scan takes its needles).
