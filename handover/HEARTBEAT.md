@@ -670,3 +670,4 @@ PULSE 09:59Z agents: a62a46b6 rv-dpld (ORDER 199 review, read-only); shells: dpl
 PULSE 10:04Z agents: none live (rv-dpld closed, report saved); shells: dpld-step2 (kill-9 round 5/5 blind), evid63b (3.13 suite running), pulse_refresh | ORDER 199: evidence + review saved, load report next
 PULSE 10:08Z agents: none live; shells: evid63b (3.13), pulse_refresh | ORDER 199 reports pushed: evidence, load, review (F1 Blocker confirmed by run) | next: wait lead
 PULSE 10:10Z agents: a8aff4ab bd-dpld-fix (ORDER 200 demo fixes, started 10:09Z, box to 11:09Z); shells: evid63b, pulse_refresh | ORDER 200 box ends 11:35Z; core frozen
+PULSE 10:08Z agents: a8aff4ab bd-dpld-fix (ORDER 200 builder, 1 live); shells: pulse_refresh | PR63 evidence DONE at 27ae996: py3.13 11073 passed 0 failed; py3.12 1 failed (tests/test_textnorm.py deny-check false-match test; Python-version dependent) | core frozen
