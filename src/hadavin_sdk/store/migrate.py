@@ -33,6 +33,7 @@ newer release; do not rename, drop or edit the ledger.
 
 from __future__ import annotations
 
+import json
 import logging
 import re
 from dataclasses import dataclass
@@ -55,6 +56,7 @@ from hadavin_sdk.store.migration_numbers import (
     order_problems,
     read_files,
     refused_statements,
+    released_problems,
 )
 from hadavin_sdk.store.postgres import connect
 
@@ -321,6 +323,41 @@ def _excess_privileges(db, role: str) -> list[str]:
     return extra
 
 
+# SHA-256 of every released migration file (forward-only: a released file is never edited, renumbered or deleted).
+# It ships with the package, so `migrate` itself can refuse a changed file; add a row when a release is cut.
+RELEASED_MANIFEST = MIGRATIONS.parent / "migrations_released.json"
+_SHA256 = re.compile(r"[0-9a-f]{64}")
+
+
+def _no_duplicate_names(pairs: list[tuple[str, object]]) -> dict[str, object]:
+    """json would silently keep the LAST of two equal names: a second, edited hash would hide the first."""
+    names = [k for k, _ in pairs]
+    if len(set(names)) != len(names):
+        raise ValueError(
+            f"the name {next(n for n in names if names.count(n) > 1)!r} is written twice"
+        )
+    return dict(pairs)
+
+
+def _released_manifest() -> dict[str, str]:
+    try:
+        data = json.loads(
+            RELEASED_MANIFEST.read_text(encoding="utf-8"), object_pairs_hook=_no_duplicate_names
+        )
+    except (OSError, ValueError) as e:
+        raise ConfigError(f"the list of released migration files cannot be read: {e}") from e
+    if not isinstance(data, dict) or not all(
+        isinstance(k, str) and isinstance(v, str) for k, v in data.items()
+    ):
+        raise ConfigError("the list of released migration files is not a name -> SHA-256 table")
+    for name, value in data.items():
+        if not _SHA256.fullmatch(value):
+            raise ConfigError(
+                f"the list of released migration files has no SHA-256 (64 hex digits) for {name!r}"
+            )
+    return data
+
+
 # What the read-back reads after each file (module constants: the tests answer them by exact text).
 # The nine values are compared with the values saved before the first file; `transaction_timestamp()` and
 # `txid_current()` DETECT a COMMIT the text rules did not see (a COMMIT starts a new transaction). They cannot undo it:
@@ -550,6 +587,9 @@ def migrate(
     if problems := check_ledger(files):
         raise MigrationNumberError(problems)
     texts = read_files(files)  # the only read of each file: the text scanned is the text executed
+    if problems := released_problems(MIGRATIONS, _released_manifest(), texts):
+        # a released file edited, deleted, or a new file numbered below it; hashed from the text that will run
+        raise MigrationNumberError(problems)
     if problems := check_grants(files, texts=texts):
         raise ConfigError("migrations are inconsistent: " + "; ".join(problems))
     applied = []
