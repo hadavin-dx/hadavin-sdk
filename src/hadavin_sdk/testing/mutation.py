@@ -58,6 +58,8 @@ def judge(
         return Verdict.NO_TESTS
     if rc != 1:
         return Verdict.ERROR
+    if not test_id:  # a failing run with no failing test id (empty or unreadable JUnit, a collection error) names no test that killed
+        return Verdict.ERROR
     if expect and expect not in first_line:
         return Verdict.WRONG_REASON
     if pinned is not None and pinned != test_id:
@@ -122,4 +124,17 @@ def skipped_tests(xml_text: str) -> list[str]:
         f"{case.get('classname', '').replace('.', '/')}::{case.get('name', '')}"
         for case in root.iter("testcase")
         if case.find("skipped") is not None
+    ]
+
+
+def fixture_errors(xml_text: str) -> list[str]:
+    """The ids (same form as ``first_failure_junit``) of the test cases whose ``error`` record is a setup or teardown failure of a fixture
+    (pytest writes ``failed on setup with ...`` / ``failed on teardown with ...``). Such a test never ran as written, so a runner counts the
+    mutant run as an error and not as a kill, even when the fixture failed with an ``AssertionError``. Same refusals as ``first_failure_junit``."""
+    root = _parse_junit(xml_text)
+    return [
+        f"{case.get('classname', '').replace('.', '/')}::{case.get('name', '')}"
+        for case in root.iter("testcase")
+        for err in case.findall("error")
+        if (err.get("message") or "").startswith(("failed on setup", "failed on teardown"))
     ]

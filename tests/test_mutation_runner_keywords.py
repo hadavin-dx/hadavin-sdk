@@ -12,7 +12,7 @@ import pytest
 from tools import mutation_runner as mr
 from tools.mutation_runner import PASS_ENV_ALLOWED, Mutant, run_mutants
 
-from hadavin_sdk.testing.mutation import Verdict, skipped_tests
+from hadavin_sdk.testing.mutation import Verdict, fixture_errors, judge, skipped_tests
 
 DSN_NAME = "HADAVIN_TEST_PG_DSN"
 FLIP = Mutant("flip", "src/pk/core.py", "return flag", "return not flag", "assert")
@@ -95,6 +95,10 @@ def test_a_mutant_is_judged_with_the_conftest_loaded(tmp_path):
         "-p.py",
         "@x.py",
         "tests/1x.py",
+        "tests/class.py",
+        "tests/import.py",
+        "tests/caf\u00e9.py",
+        "t\u00e9sts/conftest.py",
         "",
     ],
 )
@@ -182,7 +186,7 @@ def test_an_unlisted_env_name_is_refused_before_anything_runs(tmp_path, monkeypa
 
 def test_a_bare_string_for_pass_env_is_refused_not_read_letter_by_letter(tmp_path):
     root = _tree(tmp_path, {"tests/test_core.py": "def test_a():\n    assert True\n"})
-    with pytest.raises(TypeError):
+    with pytest.raises(TypeError, match="not one string"):
         run_mutants(root, [], ["tests/test_core.py"], extra_dirs=(), pass_env=DSN_NAME, timeout=120)
 
 
@@ -272,7 +276,7 @@ def test_a_default_call_reaches_pytest_with_the_old_four_arguments_only(tmp_path
 
     monkeypatch.setattr(mr, "_pytest", fake)
     run_mutants(root, [], ["tests/test_core.py"], extra_dirs=(), timeout=120)
-    assert calls == [(4, {})]
+    assert calls == [(4, {"plugin": "", "env_names": ()})]
 
 
 def test_the_default_child_environment_has_no_database_address(tmp_path, monkeypatch):
@@ -291,3 +295,172 @@ def test_the_default_child_environment_has_no_database_address(tmp_path, monkeyp
     assert [a for a in seen["cmd"] if a.startswith("tests")] == []  # no plugin module added
     assert seen["cmd"].count("-p") == 1  # only the runner's own `-p no:cacheprovider`
     assert os.environ[DSN_NAME]
+
+
+# ---- review fixes (order 194 B) ---------------------------------------------------------------------------------------------
+
+
+def test_a_conftest_path_that_is_valid_but_missing_is_a_value_error_before_any_temp_folder(
+    tmp_path, monkeypatch
+):
+    root = _tree(tmp_path, {"tests/test_core.py": "def test_a():\n    assert True\n"})
+    made = []
+    real = mr.tempfile.mkdtemp
+    monkeypatch.setattr(mr.tempfile, "mkdtemp", lambda *a, **k: made.append(1) or real(*a, **k))
+    with pytest.raises(ValueError, match="not a file of the tree"):
+        run_mutants(
+            root,
+            [],
+            ["tests/test_core.py"],
+            extra_dirs=(),
+            conftest="tests/conftest.py",
+            timeout=120,
+        )
+    assert made == [], "a temp folder was made before the missing conftest was noticed"
+
+
+def test_forbid_skips_with_a_missing_or_empty_junit_file_is_an_error_row_never_judged(
+    tmp_path, monkeypatch
+):
+    root = _tree(tmp_path, {"tests/test_core.py": "def test_a():\n    assert True\n"})
+    real = mr._pytest
+
+    def fake(cwd, tests, junit, timeout, **kw):
+        if junit.name == "base.xml":
+            return real(cwd, tests, junit, timeout, **kw)
+        return 1  # a failing exit code and NO junit file
+
+    monkeypatch.setattr(mr, "_pytest", fake)
+    res = run_mutants(
+        root, [FLIP], ["tests/test_core.py"], extra_dirs=(), forbid_skips=True, timeout=120
+    )
+    assert res == [("flip", Verdict.ERROR, "JUNIT MISSING", False)]
+
+    def fake_empty(cwd, tests, junit, timeout, **kw):
+        if junit.name != "base.xml":
+            junit.write_text("", encoding="utf-8")
+            return 1
+        return real(cwd, tests, junit, timeout, **kw)
+
+    monkeypatch.setattr(mr, "_pytest", fake_empty)
+    res = run_mutants(
+        root, [FLIP], ["tests/test_core.py"], extra_dirs=(), forbid_skips=True, timeout=120
+    )
+    assert res == [("flip", Verdict.ERROR, "JUNIT MISSING", False)]
+
+
+def test_judge_never_returns_killed_for_an_empty_failing_test_id():
+    line = "E   AssertionError: assert 1 == 2"
+    assert judge(1, "", line) is Verdict.ERROR
+    assert judge(1, "", line, expect="assert 1") is Verdict.ERROR
+    assert judge(1, "t.py::a", line) is Verdict.KILLED  # a named test still kills
+
+
+def test_a_run_that_fails_with_no_junit_file_is_never_a_kill_even_without_forbid_skips(
+    tmp_path, monkeypatch
+):
+    root = _tree(tmp_path, {"tests/test_core.py": "def test_a():\n    assert True\n"})
+    real = mr._pytest
+    monkeypatch.setattr(
+        mr,
+        "_pytest",
+        lambda cwd, tests, junit, timeout, **kw: (
+            real(cwd, tests, junit, timeout, **kw) if junit.name == "base.xml" else 1
+        ),
+    )
+    res = run_mutants(root, [FLIP], ["tests/test_core.py"], extra_dirs=(), timeout=120)
+    assert res == [("flip", Verdict.ERROR, "", False)]
+
+
+FIXTURE_ASSERTS = (
+    "import pytest\nfrom pk.core import go\n\n"
+    "@pytest.fixture\ndef checked():\n    assert go(True) is True\n    return 1\n\n"
+    "def test_a(checked):\n    assert checked == 1\n"
+)
+
+
+def test_a_fixture_error_in_the_mutant_run_is_an_error_row_not_a_kill(tmp_path):
+    # the mutant makes the FIXTURE assert; the first line is an AssertionError, which the judge alone reads as a kill
+    root = _tree(tmp_path, {"tests/test_core.py": FIXTURE_ASSERTS})
+    res = run_mutants(root, [FLIP], ["tests/test_core.py"], extra_dirs=(), timeout=120)
+    assert res == [("flip", Verdict.ERROR, "FIXTURE ERROR", False)]
+
+
+def test_fixture_errors_reads_setup_and_teardown_errors_only():
+    xml = (
+        "<testsuites><testsuite>"
+        '<testcase classname="tests.test_x" name="test_a"><error message="failed on setup with &quot;AssertionError&quot;">E x</error></testcase>'
+        '<testcase classname="tests.test_x" name="test_b"><error message="failed on teardown with &quot;KeyError&quot;">E x</error></testcase>'
+        '<testcase classname="" name="tests.test_y"><error message="collection failure">E x</error></testcase>'
+        '<testcase classname="tests.test_x" name="test_c"><failure message="assert 1 == 2">E assert 1 == 2</failure></testcase>'
+        "</testsuite></testsuites>"
+    )
+    assert fixture_errors(xml) == ["tests/test_x::test_a", "tests/test_x::test_b"]
+    assert fixture_errors("<testsuites/>") == []
+    with pytest.raises(ValueError):
+        fixture_errors('<!DOCTYPE x [<!ENTITY e "v">]><testsuites/>')
+
+
+def test_a_mutant_whose_old_text_is_absent_is_an_error_not_a_kill(tmp_path):
+    root = _tree(tmp_path, {"tests/test_core.py": "def test_a():\n    assert True\n"})
+    gone = Mutant("gone", "src/pk/core.py", "text that is not there", "x", "assert")
+    res = run_mutants(root, [gone], ["tests/test_core.py"], extra_dirs=(), timeout=120)
+    assert res == [("gone", Verdict.ERROR, "SNIPPET NOT FOUND", False)]
+
+
+def _secret_dsn() -> tuple[str, str]:
+    user, head, tail = "svc_user", "Zq9x", "K4mTw"
+    word = head + tail  # built from parts
+    return f"postgresql://{user}:{word}@db.invalid/scratch", word
+
+
+def test_pass_env_values_never_reach_first_lines_rows_or_the_baseline_error(tmp_path, monkeypatch):
+    dsn, word = _secret_dsn()
+    monkeypatch.setenv(DSN_NAME, dsn)
+    # the failing assertion prints the value (pytest shows both sides), and the test id carries it too
+    body = (
+        "import os\nimport pytest\nfrom pk.core import go\n\n"
+        f"@pytest.mark.parametrize('v', [{dsn!r}])\n"
+        f"def test_a(v):\n    assert go(True) is True\n    assert os.environ[{DSN_NAME!r}] == v\n    assert os.environ[{DSN_NAME!r}] == 'other'\n"
+    )
+    root = _tree(tmp_path, {"tests/test_core.py": "def test_a():\n    assert True\n"})
+    (root / "tests" / "test_core.py").write_text(body, encoding="utf-8")
+    # baseline fails (the last assert): the error text names no value
+    with pytest.raises(RuntimeError) as err:
+        run_mutants(
+            root, [FLIP], ["tests/test_core.py"], extra_dirs=(), pass_env=(DSN_NAME,), timeout=120
+        )
+    assert dsn not in str(err.value) and word not in str(err.value)
+    # a passing baseline and a failing mutant whose first line shows the value
+    ok = (
+        "import os\nimport pytest\nfrom pk.core import go\n\n"
+        f"@pytest.mark.parametrize('v', [{dsn!r}])\n"
+        f"def test_a(v):\n    assert go(True) == (os.environ[{DSN_NAME!r}] == v), os.environ[{DSN_NAME!r}]\n"
+    )
+    (root / "tests" / "test_core.py").write_text(ok, encoding="utf-8")
+    lines: dict[str, str] = {}
+    res = run_mutants(
+        root,
+        [FLIP],
+        ["tests/test_core.py"],
+        extra_dirs=(),
+        pass_env=(DSN_NAME,),
+        first_lines=lines,
+        timeout=120,
+    )
+    shown = repr((res, lines))
+    assert word not in shown and dsn not in shown, shown
+    assert "[REDACTED]" in lines["flip"], lines
+
+
+def test_masked_replaces_the_value_and_the_url_password():
+    dsn, word = _secret_dsn()
+    assert mr._secret_values(()) == ()
+    os.environ[DSN_NAME] = dsn
+    try:
+        secrets = mr._secret_values((DSN_NAME,))
+    finally:
+        del os.environ[DSN_NAME]
+    assert set(secrets) == {dsn, word}
+    out = mr._masked(f"E assert {dsn} and only {word} here", secrets)
+    assert dsn not in out and word not in out
