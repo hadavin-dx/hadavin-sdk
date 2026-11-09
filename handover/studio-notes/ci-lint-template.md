@@ -6,6 +6,12 @@ Source: branch core/ci-lint-set of the core repo. Written 2026-11-07. Not commit
 1. `.pre-commit-config.yaml` (ruff check --fix and ruff format; the ruff-pre-commit commit is pinned by full hash; keep it equal to the ruff version in pyproject).
 2. `.github/workflows/ci.yml`: add the job `lint-set` (do not rename existing jobs; it is not a required check). Keep `ACTIONLINT_VERSION` and `ACTIONLINT_SHA256` together; the step passes `-shellcheck=` because shellcheck is GPL.
 3. `docs/lint-tools.md`: edit the counts and the contract list for the repo.
+3a. The ratchet and licence tools and their tests, unchanged (edit only the paths inside `tools/mypy_ratchet.py` and `tools/vulture_whitelist_check.py` if the package folder is not `src/hadavin_sdk`):
+   - `tools/mypy_ratchet.py` and `tools/mypy_baseline.json` (regenerate the baseline for the repo with `python tools/mypy_ratchet.py --write`; do not copy core's numbers)
+   - `tools/vulture_whitelist_check.py`
+   - `tools/licence_check.py` and `tools/licence_exceptions.txt` (the exceptions list is per repo: copy the file, then keep only the packages that repo really locks)
+   - `tests/test_licence_check.py`, `tests/test_mypy_ratchet.py`, `tests/test_vulture_whitelist_check.py`
+   - the CI steps that call them (`python tools/mypy_ratchet.py`, `python tools/vulture_whitelist_check.py`, and the `uv export` plus `python tools/licence_check.py` step in the job `lint-set`).
 
 ## Edit per repo
 4. `pyproject.toml`

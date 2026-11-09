@@ -830,3 +830,5 @@ rv-P1d-r3-design closed 05:32Z
 | 172 batch | 06:28Z | started: bd-R72, bd-R73, 12 result reviewers (PR63,83,84,80,85,86 d+c), dr-P1db, pr-2a2d, pr-4a4b, inv-cilint2, inv-T1T2, inv-AKG2 | see agents.txt |
 | 06:41Z | ab34b22a654034230 | Resolve P1d plan review r6 (opus) | exp 15 min | running |
 | 06:41Z | builder ci-lint-set batch 3 (sonnet) | worktree /home/user/build/B-cilint-b3 | 90 min box | running |
+| 06:46Z | ORDER 173 batch | a: inv-trunc-66 (PR66 + truncated pytest logs 66/74/75); b: bd-P4da2 (PR75 2B/6M); d: inv-AKG2-repro | exp 40-60 min | starting |
+| 06:52Z | rv-63r2-d/c, rv-76/77/78/79 (d+c) | result reviewers on snapshots /home/user/build/snap/{63-bf955e9,76-e323ac7,77-8b2b716,78-4a0976f,79-8cc2021} | exp 20 min | starting |

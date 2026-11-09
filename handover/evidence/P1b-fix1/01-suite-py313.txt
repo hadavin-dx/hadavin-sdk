@@ -228,4 +228,4 @@ failed: OSError (set HADAVIN_DEBUG=1 for the traceback)
 score report written: /tmp/pytest-of-root/pytest-525/test_score_run_events_come_aft0/out/score/score-report.md
 ...replay complete: outputs in /tmp/pytest-of-root/pytest-525/test_score_and_replay_reports_0/out (see replay-report.md)
 score report written: /tmp/pytest-of-root/pytest-525/test_score_and_replay_reports_0/out/score/score-report.md
-.
+.exit=0

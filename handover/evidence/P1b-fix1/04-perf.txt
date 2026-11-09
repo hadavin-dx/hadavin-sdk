@@ -1,1 +1,43 @@
 203451264e72d872d23d80b4d63d35e7b5df4460
+loadavg at start: 3.43 3.33 2.95 5/188 6823
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+..perf identity_key: 0.0966 s
+perf squeeze: 0.1039 s
+perf has_hidden_channel: 0.0120 s
+..perf scan_keyset: 0.4723 s
+S_call eta: 0.472 s
+perf scan_keyset: 0.4656 s
+S_call ze: 0.466 s
+perf scan_keyset: 0.2896 s
+S_call tags: 0.290 s
+.SK-5: 1000 calls in 0.065 s
+..perf identity_key: 0.5412 s
+perf identity_keys: 0.5436 s
+perf fold_views: 0.9066 s
+perf squeeze_views: 0.9347 s
+perf could_be_same_person: 0.9911 s
+.perf identity_key: 0.1538 s
+perf identity_keys: 0.2478 s
+perf fold_views: 0.6239 s
+perf squeeze_views: 0.6516 s
+perf could_be_same_person: 0.5590 s
+.perf <lambda>: 0.2499 s
+perf squeeze_views: 0.2410 s
+perf <lambda>: 0.3227 s
+.perf <lambda>: 0.6735 s
+perf scan_needles: 1.6152 s
+perf value_scripts: 0.3399 s
+.perf <lambda>: 2.3542 s
+perf <lambda>: 2.3543 s
+.perf <lambda>: 1.3301 s
+perf <lambda>: 1.3446 s
+.perf <lambda>: 2.0111 s
+perf <lambda>: 1.1246 s
+.perf <lambda>: 1.2854 s
+perf scan_holds 99 more values: 1.2354 s
+.perf <lambda>: 0.6134 s
+perf <lambda>: 1.2211 s
+.
+16 passed in 36.64s
+loadavg at end: 3.65 3.41 2.99 3/193 8114
+exit=0
