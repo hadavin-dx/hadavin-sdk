@@ -787,7 +787,7 @@ PLANTS = {
         "vault-service",
     ),
     "staging stage": (lambda t: t + "\n# stage: " + "stag" + "ing\n", "stage-name"),
-    "stage dev": (lambda t: t + "\n# stage: " + "de" + "v\n", "stage-name"),
+    "retired stage name": (lambda t: t + "\n# stage: " + "de" + "v\n", "stage-name"),
     "evidence dir not under runner temp": (
         lambda t: t.replace(
             "EVIDENCE_DIR=$RUNNER_TEMP/evidence-logs", "EVIDENCE_DIR=evidence-logs"
