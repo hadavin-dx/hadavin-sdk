@@ -522,3 +522,4 @@ LAPTOP CANDIDATES (pushed heads only): PR85 0b54631 (items 3,4,10), PR72 e6a4220
 03:00Z HB: new cloud session READY, waiting for GO (newest order 154). Agents 0, jobs 0. Unpushed: none after this push.
 03:04Z HB: ORDER 155 GO; heads verified; rebuilding queue tooling. Agents 0.
 03:07Z HB: q363 EGM installed+patched (12 opus/112 sonnet), not loadable until new session; 3 evidence runners running; 0 builders/reviewers.
+03:28Z HB(auto):  agents 2 running (ev-P1b-r7,ev-P3a2-73) | heavy slots busy 2/3 | last: started, none yet 
