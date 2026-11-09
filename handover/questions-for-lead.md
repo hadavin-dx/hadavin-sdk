@@ -1426,3 +1426,12 @@ P1d-a rev 5 (round 5 plan reviewers starting). Open, none answered up to ORDER 1
 3. Typed "[.]" between name characters read as "." before redacting: saved requests show "version 1.5" for "1[.]5"; saved "//evil[.]com/p" becomes "[link removed]". Accept?
 4. Mutant A15 (query-key lookbehind removed) survives every row because it only changes text where INFO-K41 applies. Equivalence note, or fix INFO-K41 in P1d-a (then A15 gets a killer row)? Recommend fixing (answers 2 and 4 together).
 Probe P6 evidence: handover/evidence/P1d-a/probes-r4/ (read-only probes of the rev-5 password rules: 30 real corpus lines, 0 mismatches). WHATWG URL section 5.1 citation unverified (proxy 403).
+
+## q407 (2026-11-09 ~08:58Z) ORDER 190 progress (rebases) and ORDER 191 (P1d)
+INTERIM, not final: check and tests-py312 still in progress on #87/#88/#89 at 08:50Z; I will post the final lists.
+- #87 a0976172 (rebased, no conflict, only base moved, no local re-run): SonarCloud, CodeQL, security, Analyze python+actions green; CodeRabbit, check, tests-py312 in progress.
+- #88 eb1132ae: Sonar, CodeQL, security, Analyze x2 green; CodeRabbit skipped; check, tests-py312 in progress.
+- #89 59f62a37: same as #88.
+- #84: rebased locally to d0d1318, NOT pushed: PR90 pin test and PR84 guard give 3 failures on the rebased head (VAULT_IMAGE not in PR90 golden env; guard "curl-verbose" flags the security job). Builder ac987677 fixing, plus round-8 conditional Major. Old evidence run at 7e14096 stopped (obsolete).
+- ORDER 191: P1d-a builder adf1316c started on rev 5 (branch core/P1d-a, no PR). P1d round 11 design report: 0B/1M: a prior value planted inside an unknown key defeats learning (handover/reviews/P1d/round11-design.md); fix options in the report; option 2 departs from ORDER 188 (a) and needs your word. Readiness report pending; then I freeze rev 12 (fix at build time per ORDER 191). DECISION FOR LEAD: pick option 1 (two blanked variants, inside (a)), 2, or 3 (measured limit N11).
+- P1d-a q406 items still open (BS-1 limits, INFO-K41, [.] reading, A15). Builder uses the proposed BS-1 limits and opens no PR.
