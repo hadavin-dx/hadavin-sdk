@@ -1,0 +1,17 @@
+#  result  check
+-  ------  -----
+1  PASS    every request id has a receipt; the request log is complete; the book holds only this run's requests
+            300 log lines (intended 300), 300 distinct request ids, 300 receipts in book, 0 without a receipt, 0 with a wrong receipt number, 0 receipts the log does not know, 0 outside the id prefix, 0 without this run's marker
+2  PASS    follow-up states add up to the leads submitted (one per request id); every verdict has its lead; nothing open
+            pending 0 + sending 0 + sent 300 + failed 0 + unknown 0 = 300; leads 300; distinct request ids 300; 0 receipts without a verdict; 0 new verdicts without a lead; 0 review verdicts; 0 leads missing or not from this run
+3  PASS    one message at most per key and recipient; unknown and failed only with a reason, within the ceiling
+            300 messages; 0 keys more than once, 0 recipients more than once, 0 sent without a message, 0 failed with a message and no fitting reason, 0 failed with a message and a reason that fits, 0 keys of no lead; unknown 0 (0 with a message, 0 without; ceiling 0; 0 without a fitting reason); failed 0 (ceiling 0)
+4  PASS    CRM rows match the leads marked done, plus the listed unknowns
+            300 CRM rows; allowed 300 to 300 (done 300 + up to 0 unknown); 0 missing, 0 not allowed, 0 twice
+5  PASS    model calls per lead are within the bound
+            300 calls for 300 leads; most for one lead 1; bound 1
+6  PASS    503 rate reported (fails only above a set ceiling)
+            0 of 300 attempts got 503 (rate 0.0000); 0 of 300 requests saw one; 0 ended on 503; ceiling none (report only)
+7  FAIL    drain time within the ceiling
+            673.23 s from the last intended send to drained (ceiling 120.0 s; marker); 0 pending, 0 sending, 0 receipts without a verdict
+AT LEAST ONE CHECK FAILED
