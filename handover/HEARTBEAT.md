@@ -559,3 +559,4 @@ LAPTOP CANDIDATES (pushed heads only): PR85 0b54631 (items 3,4,10), PR72 e6a4220
 06:18Z HB(auto):  agents 3 running (gen_evidence-P6a-pg-rerun,bd-P1b-fix1,ev-P1b-r2) | heavy slots busy 1/3 | last: started, none yet 
 2026-11-09T06:23:11Z PULSE ORDER 171 REAL LIST: Agents running (Agent tool): ev-P1b-r2 (a30689c6), R72-design, R72-code, R73-design, R73-code = 5. Shells: evid.sh PR66, PR75, PR74; P6a pg rerun. Lanes 17. Queued: evidence PR80/83/84/85/86, ci-lint-set, AK-G2, rev 6 P1d. Cron wake every 5 min (21bc64eb).
 06:23Z HB(auto):  agents 7 running (gen_evidence-P6a-pg-rerun,bd-P1b-fix1,ev-P1b-r2,R72-design,R72-code,R73-design,R73-code) | heavy slots busy 3/3 | last: started, none yet 
+06:25Z PULSE cloud: R72 codebase + R73 design reports saved; R73-code, ev-P1b-r2, ev-pr66/75/74 running; next: PR66/75 reviewers when evidence lands
