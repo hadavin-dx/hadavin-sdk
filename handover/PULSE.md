@@ -1,1 +1,1 @@
-21:37Z | agents: RUNNING S1i ab08f4a6e32a3994d (round 6 fixes) | evid shells: none | unpushed: none | refreshed every 60 s by a bounded script (ends 23:47Z); detail in HEARTBEAT.md
+21:38Z | agents: RUNNING none (S1i done; round 7 reviewers about to start) | evid shells: none | unpushed: none | refreshed every 60 s by a bounded script (ends 23:48Z); detail in HEARTBEAT.md
