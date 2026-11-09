@@ -69,7 +69,7 @@ index d90467d..a825652 100644
  
  
 diff --git a/src/lead_desk/portal_api.py b/src/lead_desk/portal_api.py
-index 5ca6e03..0dbac41 100644
+index 5ca6e03..55b41ea 100644
 --- a/src/lead_desk/portal_api.py
 +++ b/src/lead_desk/portal_api.py
 @@ -5,10 +5,14 @@ transaction, runs fixed SQL with parameters, and closes. So every number of one
@@ -154,7 +154,7 @@ index 5ca6e03..0dbac41 100644
 +  FROM receipts r
 +  LEFT JOIN leads l ON l.lead_id = r.outcome_lead_id
 +  LEFT JOIN followups f ON f.lead_id = l.lead_id
-+ WHERE (:first = 1 OR r.received_at < :at OR (r.received_at = :at AND r.receipt_id < :id))
++ WHERE (r.received_at, r.receipt_id) < (:at, :id)
 + ORDER BY r.received_at DESC, r.receipt_id DESC LIMIT :n
 +"""
 +_LOG_TOTAL = "SELECT count(*) FROM receipts"
@@ -187,10 +187,10 @@ index 5ca6e03..0dbac41 100644
 +    limit = LOG_LIMIT_DEFAULT if "limit" not in values else _digits(values["limit"], 1, LOG_LIMIT_MAX)
 +    if limit is None:
 +        return _bad_query("limit")
-+    after = (0, 0) if "before" not in values else _cursor(values["before"])
++    after = (_CURSOR_MAX + 1, _CURSOR_MAX + 1) if "before" not in values else _cursor(values["before"])
 +    if after is None:
 +        return _bad_query("before")
-+    args = {"first": 0 if "before" in values else 1, "at": after[0], "id": after[1], "n": limit + 1}
++    args = {"at": after[0], "id": after[1], "n": limit + 1}
 +    with _snapshot(desk) as (conn, _now):
 +        rows = conn.execute(_LOG_ROWS, args).fetchall()
 +        total = conn.execute(_LOG_TOTAL).fetchone()[0]
@@ -435,10 +435,10 @@ index cd282d1..68037b4 100644
          status, out = get(base, path)
 diff --git a/tests/test_portal_log.py b/tests/test_portal_log.py
 new file mode 100644
-index 0000000..54bdab0
+index 0000000..5c1437d
 --- /dev/null
 +++ b/tests/test_portal_log.py
-@@ -0,0 +1,413 @@
+@@ -0,0 +1,412 @@
 +"""Tests of GET /api/ui/log (the request record) and GET /api/ui/data-map (what the AI step can read). Made-up data
 +only. Shapes are checked against tests/portal_fixtures/log*.json and data-map.json."""
 +
@@ -814,14 +814,13 @@ index 0000000..54bdab0
 +
 +    con = sqlite3.connect(":memory:")
 +    con.executescript((Path(lead_desk.__file__).parent / "schema.sql").read_text())
-+    for first, at, rid in ((1, 0, 0), (0, 5, 5)):
++    for at, rid in ((10**18, 10**18), (5, 5)):
 +        plan = " ".join(
 +            str(r[3])
-+            for r in con.execute(
-+                "EXPLAIN QUERY PLAN " + portal_api._LOG_ROWS, {"first": first, "at": at, "id": rid, "n": 101}
-+            )
++            for r in con.execute("EXPLAIN QUERY PLAN " + portal_api._LOG_ROWS, {"at": at, "id": rid, "n": 101})
 +        )
-+        assert "receipts_time_ix" in plan and "TEMP B-TREE" not in plan, plan
++        # a SEARCH on the index (a seek to the cursor), not a scan that tests every row
++        assert "SEARCH r USING INDEX receipts_time_ix" in plan and "TEMP B-TREE" not in plan, plan
 +
 +
 +def test_log_values_match_the_book(env) -> None:
