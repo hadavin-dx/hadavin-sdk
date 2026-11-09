@@ -3127,10 +3127,12 @@ def test_the_docstrings_state_the_new_behaviour_and_the_corrected_wording():
         "the docstrings do not say where could_be_same_person is used"
     )
     assert "no approval compares people's names" in module_doc
-    changelog = _squash((ROOT / "CHANGELOG.md").read_text(encoding="utf-8"))
-    assert wired in changelog and "behaviour change" in changelog, (
-        "the CHANGELOG does not state the F-R9 sentence and the behaviour change"
-    )
+    log = ROOT / "CHANGELOG.md"
+    if log.exists():  # the mutation copies do not carry it
+        changelog = _squash(log.read_text(encoding="utf-8"))
+        assert wired in changelog and "behaviour change" in changelog, (
+            "the CHANGELOG does not state the F-R9 sentence and the behaviour change"
+        )
     for sentence in ("UNNAMED CHARACTERS", "fails closed"):
         assert sentence in module_doc or sentence.lower() in module_doc.lower()
 
