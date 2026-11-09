@@ -1,1 +1,1 @@
-07:29Z | agents 8 running (gen_evidence-P6a-pg-rerun,ev-P1b-r2,P1d-r6-draft,R72R73-resolve,bd-R72,bd-R73,dr-P1db,evid-chainA) | heavy slots busy 3/3 | last: started, none yet | unpushed: none | next: see agents
+07:34Z | agents 8 running (gen_evidence-P6a-pg-rerun,ev-P1b-r2,P1d-r6-draft,R72R73-resolve,bd-R72,bd-R73,dr-P1db,evid-chainA) | heavy slots busy 2/3 | last: started, none yet | unpushed: none | next: see agents
