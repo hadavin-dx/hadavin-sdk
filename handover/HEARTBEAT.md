@@ -680,3 +680,4 @@ PULSE 10:24Z agents: a8aff4ab bd-dpld-fix (A) only; C closed: hostile-linux-1.md
 PULSE 10:27Z agents: a8aff4ab bd-dpld-fix (A, running pytest on its own tests; 20 min in); C a897e78b completed, no stray hostile/fakes/desk processes left; shells: pulse_refresh | review E waits for A | core frozen
 - 10:37Z PULSE: agents: ad73c789 bd-dpld-fix2 (A2) | me: baseline fix3 hostile+load | core frozen | ORDER 202: fix3 rebased in /tmp/dpld3, review E saved, A2 fixing 6 majors, baseline fix3 hostile+load running
 - 10:38Z PULSE: agents: ad73c789 bd-dpld-fix2 (A2, running) | shells: matrix.sh fix3 (hostile BH running, then A, then load) | ORDER 202 in progress | core frozen, core idle not yet written
+- 10:43Z PULSE: agents: ad73c789 bd-dpld-fix2 (A2, running) | shells: none | fix3 unpatched hostile-linux-2 + linux-load-3-fix3 pushed; patched run waits for A2
