@@ -568,3 +568,4 @@ LAPTOP CANDIDATES (pushed heads only): PR85 0b54631 (items 3,4,10), PR72 e6a4220
 06:30Z saved R83-code, R85-code(incomplete)
 06:33Z HB(auto):  agents 8 running (gen_evidence-P6a-pg-rerun,ev-P1b-r2,P1d-r6-draft,R72R73-resolve,bd-R72,bd-R73,dr-P1db,evid-chainA) | heavy slots busy 3/3 | last: started, none yet 
 06:32Z PULSE cloud: EVIDENCE RUNNERS queued for heads without evidence (PR86 8f6b032, 80 4003672, 84 8a677ad; 63 bf955e9, 83 7f24178, 85 4b1b3f9) via evid-chain shells; round-1 reports saved for PR63/80/83/86 design+code, PR84 code, PR85 code (incomplete); common finding: NO evidence at current heads
+06:35Z PULSE agents running 8 (ev-P1b-r2, bd-R72, bd-R73, P1d-b/c drafter, inv-cilint-b2, P1d r6 design, P1d r6 readiness) lanes 12 idle 4: PR66/75/74 reviewers wait evid (PR66 full-312 exit=1), 76-79 wait lead scope decisions, AK-G2 blocked on deps, PR63/80/83/84/85/86 round-2 wait evidence

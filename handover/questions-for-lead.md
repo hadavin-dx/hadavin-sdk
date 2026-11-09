@@ -1265,3 +1265,15 @@ DONE: ticket rev 4 (marker plus client-profile refusal with negative test and mu
 CHECKED BY ME: ticket written and committed. NOT RUN: no code, no BS probes yet.
 DECISIONS FOR LEAD: (1) Is a 30000-character floor for the model-path size cap acceptable? (2) May hand-over rows 005/006/009/010 stay OPEN with an owner and the hard-dependency note without blocking P1d Done? (3) If BS-2 cannot reach 0 false learns, accept best effort for H31-H33/H35, or hold P1d?
 NEXT: round-4 reviewers, resolve, repeat; P1b evidence runner after the fix builder reports.
+
+## q380 (06:35Z) P1d ticket rev 6 written; PR72/PR73 round-1 resolve; plan reviews 76-79 saved
+FAILED/UNCERTAIN: P1d rev 6 (handover/tickets/P1d.md, 376 lines) not yet plan-reviewed (round 6 running). Drafter found the resolve's D1 rule contradicts its own rows (AKIAIOSFODNN7EXAMPLE has one digit 2-7; whole keys are one piece); applied default: deciding rows use made-up key K2, no-whitespace spans pass the pieces test; about 17 percent of real keys would not be learned (estimate, unmeasured). Nothing run. PR63 round-1 codebase text was lost at context compaction; re-review needed after evidence.
+CHECKED BY ME: saved round-1 reviews PR63/72/73/80/83/84/85/86 and plan reviews 76+77, 78+79 under handover/reviews/.
+NOT RUN: evidence for PR63/80/83/84/85/86 still in chains A/B; PR66/75/74 full-312 ended exit=1 on PR66 (check).
+DECISIONS FOR LEAD:
+ 1. Unfreeze handover/tickets/P2d.md for the P1d/P2d-2 interface (default: P1d first).
+ 2. PR73 G73-4: ORDER 172(1) puts the manifest in tests/fixtures but migrate() reads it at run time and the wheel packages only src/hadavin_sdk. Default: keep one file at src/hadavin_sdk/store/migrations_released.json. Overrule?
+ 3. PR73 G73-5: migrate refuses superuser/bypass-RLS roles (default yes). G73-2c: refuse changed trigger body unless on reviewed list (default yes). G73-6: no release tag between P3a-2 and P3a-3 merges (confirm).
+ 4. PR72 G72-5: made_up_data_only also covers systems/tool hosts (default yes).
+ 5. PR76 scope (partial slice), ci.yml PG16+17 matrix, "demo" treated like "dev", PR80/86 scope wider than ticket, PR84 workflow findings (7 Major).
+NEXT: P1d round-6 reviewers; builders R72/R73 continue; investigations T1/T2/AK-G2 saved (inv-T1T2-AKG2.md; AK-G2 not unblocked).

@@ -196,4 +196,36 @@ hadavin-sdk gate: error: argument --k: must be at least 1
 score report written: /tmp/pytest-of-root/pytest-525/test_score_again_is_refused_be0/out/score/score-report.md
 refused: score report folder exists and is not empty
 ..refused: replay output folder exists and is not empty
+.replay capped: outputs in /tmp/pytest-of-root/pytest-525/test_usd_cap_exits_1_and_repor0/out (see replay-report.md)
+score report written: /tmp/pytest-of-root/pytest-525/test_usd_cap_exits_1_and_repor0/out/score/score-report.md
+.failed: UnknownRecording (set HADAVIN_DEBUG=1 for the traceback)
+.usage: hadavin-sdk replay [-h] --bundles BUNDLES --cause-list CAUSE_LIST
+                          [--k K] --max-usd MAX_USD --out OUT
+                          [--i-know-data-is-already-masked]
+                          agent
+hadavin-sdk replay: error: argument --max-usd: must be a finite number above zero
+usage: hadavin-sdk replay [-h] --bundles BUNDLES --cause-list CAUSE_LIST
+                          [--k K] --max-usd MAX_USD --out OUT
+                          [--i-know-data-is-already-masked]
+                          agent
+hadavin-sdk replay: error: argument --max-usd: must be a decimal number
+usage: hadavin-sdk replay [-h] --bundles BUNDLES --cause-list CAUSE_LIST
+                          [--k K] --max-usd MAX_USD --out OUT
+                          [--i-know-data-is-already-masked]
+                          agent
+hadavin-sdk replay: error: argument --max-usd: must be a finite number above zero
+usage: hadavin-sdk replay [-h] --bundles BUNDLES --cause-list CAUSE_LIST
+                          [--k K] --max-usd MAX_USD --out OUT
+                          [--i-know-data-is-already-masked]
+                          agent
+hadavin-sdk replay: error: argument --max-usd: must be a finite number above zero
+.replay complete: outputs in /tmp/pytest-of-root/pytest-525/test_audit_failure_exits_3_and0/out (see replay-report.md)
+failed: AuditUnavailable (set HADAVIN_DEBUG=1 for the traceback)
+...refused: backends: audit, llm must be set
+....replay complete: outputs in /tmp/pytest-of-root/pytest-525/test_report_write_failure_leav0/out (see replay-report.md)
+failed: OSError (set HADAVIN_DEBUG=1 for the traceback)
+.replay complete: outputs in /tmp/pytest-of-root/pytest-525/test_score_run_events_come_aft0/out (see replay-report.md)
+score report written: /tmp/pytest-of-root/pytest-525/test_score_run_events_come_aft0/out/score/score-report.md
+...replay complete: outputs in /tmp/pytest-of-root/pytest-525/test_score_and_replay_reports_0/out (see replay-report.md)
+score report written: /tmp/pytest-of-root/pytest-525/test_score_and_replay_reports_0/out/score/score-report.md
 .
