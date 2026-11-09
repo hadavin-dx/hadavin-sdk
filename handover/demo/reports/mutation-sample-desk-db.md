@@ -2,7 +2,7 @@
 
 Evidence runner output (records, does not judge). Private scratch tree /tmp/ag/mut, pristine copy /tmp/ag/mut-pristine, driver /tmp/ag/mut_run.py, mutant list /tmp/ag/mutants.py, raw results /tmp/ag/mut_results.json.
 
-Counts so far: attempted 21, valid 21, killed 15, survived 6, invalid 0, timeout 0.
+Counts so far: attempted 30, valid 30, killed 23, survived 7, invalid 0, timeout 0.
 
 | n | label | class | file:line | mutation | tests run | result | first failing test | seconds |
 |---|---|---|---|---|---|---|---|---|
@@ -27,6 +27,15 @@ Counts so far: attempted 21, valid 21, killed 15, survived 6, invalid 0, timeout
 | 19 | requeue keyed/blind decision inverted | requeue-rule | src/lead_desk/desk.py:379 | `WHEN NOT ? THEN 'unknown' WHEN auto_attempts` -> `WHEN ? THEN 'unknown' WHEN auto_attempts` | fast selection (11 files, minus known-red and 3 slow load tests), -x | KILLED | tests/test_flow.py::test_crash_resume_each_point[D2-keyed] | 1.5 |
 | 20 | reaper requeue age boundary <= -> < | boundary | src/lead_desk/desk.py:383 | `WHERE state='sending' AND (? IS NULL OR updated_at <= ?)` -> `WHERE state='sending' AND (? IS NULL OR updated_at < ?)` | fast selection (11 files, minus known-red and 3 slow load tests), -x | SURVIVED |  | 95.4 |
 | 21 | reaper stalled-receipt boundary <= -> < | boundary | src/lead_desk/desk.py:479 | `"SELECT receipt_id FROM receipts WHERE outcome IS NULL AND received_at` -> `"SELECT receipt_id FROM receipts WHERE outcome IS NULL AND received_at` | fast selection (11 files, minus known-red and 3 slow load tests), -x | SURVIVED |  | 97.6 |
+| 22 | reaper stuck-sending grace dropped | reaper | src/lead_desk/desk.py:489 | `stuck_before = now - int(self.config.send_timeout_seconds + SENDING_GR` -> `stuck_before = now - int(self.config.send_timeout_seconds + 0 * BUSY_W` | fast selection (11 files, minus known-red and 3 slow load tests), -x | KILLED | tests/test_hardening_cloud_b.py::test_f3_reaper_requeues_keyed_sending | 57.0 |
+| 23 | reaper due-time boundary <= -> < | boundary | src/lead_desk/desk.py:511 | `if updated_at + wait <= now:` -> `if updated_at + wait < now:` | fast selection (11 files, minus known-red and 3 slow load tests), -x | KILLED | tests/test_hardening_cloud.py::test_f6_backoff_is_waited | 48.6 |
+| 24 | reaper backoff skipped after first retry | reaper | src/lead_desk/desk.py:510 | `wait = PENDING_GRACE_SECONDS if tries == 0 else backoff_after(int(trie` -> `wait = PENDING_GRACE_SECONDS if tries <= 1 else backoff_after(int(trie` | fast selection (11 files, minus known-red and 3 slow load tests), -x | KILLED | tests/test_hardening_cloud.py::test_f6_backoff_is_waited | 48.2 |
+| 25 | reaper blind/keyed check for ambiguous_prior inverted | ambiguous-mark | src/lead_desk/desk.py:517 | `if ambiguous_prior and self.outbox.capability == "blind":` -> `if ambiguous_prior and self.outbox.capability == "keyed":` | fast selection (11 files, minus known-red and 3 slow load tests), -x | KILLED | tests/test_hardening_cloud.py::test_f3_stuck_sending_keyed_resent | 47.0 |
+| 26 | reaper ignores receipts stamped in the future | reaper | src/lead_desk/desk.py:482 | `] + self._stalled_by_own_clock(conn, now)` -> `]` | fast selection (11 files, minus known-red and 3 slow load tests), -x | SURVIVED |  | 93.1 |
+| 27 | write transaction BEGIN IMMEDIATE -> deferred BEGIN | transaction | src/lead_desk/desk.py:262 | `conn.execute("BEGIN IMMEDIATE")` -> `conn.execute("BEGIN")` | fast selection (11 files, minus known-red and 3 slow load tests), -x | KILLED | tests/test_hardening_cloud_b.py::test_f3_decision_write_retries_7s | 67.0 |
+| 28 | write transaction never commits | transaction | src/lead_desk/desk.py:265 | `conn.execute("COMMIT")` -> `pass` | fast selection (11 files, minus known-red and 3 slow load tests), -x | KILLED | tests/test_flow.py::test_cross_source_dupe | 0.4 |
+| 29 | duplicate diff ignores the phone field | differing-fields | src/lead_desk/desk.py:656 | `"phone": chk.phone, "company"` -> `"phone": None, "company"` | fast selection (11 files, minus known-red and 3 slow load tests), -x | KILLED | tests/test_flow.py::test_cross_source_dupe | 0.4 |
+| 30 | payload_matches inverted | idempotency | src/lead_desk/desk.py:786 | `matches = rec["payload"] == canon` -> `matches = rec["payload"] != canon` | fast selection (11 files, minus known-red and 3 slow load tests), -x | KILLED | tests/test_flow.py::test_replay_same_source_ref | 0.5 |
 
 ## Survivors
 
@@ -36,3 +45,4 @@ Counts so far: attempted 21, valid 21, killed 15, survived 6, invalid 0, timeout
 - #13 automatic claim no longer clears send_started (src/lead_desk/desk.py:97, class claim-lease). Full-suite confirmation: not yet run.
 - #20 reaper requeue age boundary <= -> < (src/lead_desk/desk.py:383, class boundary). Full-suite confirmation: not yet run.
 - #21 reaper stalled-receipt boundary <= -> < (src/lead_desk/desk.py:479, class boundary). Full-suite confirmation: not yet run.
+- #26 reaper ignores receipts stamped in the future (src/lead_desk/desk.py:482, class reaper). Full-suite confirmation: not yet run.

@@ -1,0 +1,11 @@
+MUTANT 1 lost receipt: exit=1 -> >       assert failed(result) == [check_id] | FAILED tests/test_live_l2_tools.py::test_planted_fault_fails_one_check[fault_lost_receipt-1-form:r-gone]
+MUTANT 3 duplicate message: exit=1 -> >       assert failed(result) == [check_id] | FAILED tests/test_live_l2_tools.py::test_planted_fault_fails_one_check[fault_double_mail-3-L1]
+MUTANT 3 unknown with message: exit=1 -> >       assert failed(result) == [check_id] | FAILED tests/test_live_l2_tools.py::test_planted_fault_fails_one_check[fault_unknown_with_mail-3-L6]
+MUTANT 4 CRM row missing: exit=1 -> >       assert failed(result) == [check_id] | FAILED tests/test_live_l2_tools.py::test_planted_fault_fails_one_check[fault_crm_missing-4-L3]
+MUTANT 5 five model calls: exit=1 -> >       assert failed(result) == [check_id] | FAILED tests/test_live_l2_tools.py::test_planted_fault_fails_one_check[fault_five_model_calls-5-L4]
+MUTANT 2 pending left over: exit=1 -> >       assert failed(result) == [check_id] | FAILED tests/test_live_l2_tools.py::test_planted_fault_fails_one_check[fault_pending_left-2-L4]
+MUTANT 7 drain ceiling: exit=1 ->         assert failed(run_world(tmp_path, w, max_503_rate=0.01)) == [6]  # 1 of 8 attempts |         assert failed(run_world(tmp_path, w, max_503_rate=0.5)) == []
+MUTANT 6 503 ceiling: exit=1 -> >       assert failed(run_world(tmp_path, w, max_503_rate=0.01)) == [6]  # 1 of 8 attempts | FAILED tests/test_live_l2_tools.py::test_503_ceiling_and_drain_ceiling - asse...
+MUTANT driver 503 retry: exit=1 -> FAILED tests/test_live_l2_tools.py::test_retry_503_then_ok - assert [503] == ... | 1 failed, 18 passed in 0.96s
+MUTANT fake model bad label: exit=1 -> FAILED tests/test_live_l2_tools.py::test_bad_modes_raise_their_error[malformed_label-QualifierBadReply] | 1 failed, 24 passed in 5.95s
+MUTANT qualifier refusal: exit=1 -> FAILED tests/test_live_l2_tools.py::test_bad_modes_raise_their_error[refusal-QualifierRefused] | 1 failed, 25 passed in 6.35s

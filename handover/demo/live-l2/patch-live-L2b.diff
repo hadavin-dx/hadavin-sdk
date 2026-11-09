@@ -1,0 +1,1602 @@
+diff --git a/live_l2/README-L2.md b/live_l2/README-L2.md
+new file mode 100644
+index 0000000..82fe64c
+--- /dev/null
++++ b/live_l2/README-L2.md
+@@ -0,0 +1,111 @@
++# live_l2: live-proof tools for the lead desk (lane L2)
++
++Everything here uses made-up data and loopback addresses only. No real model, mail or CRM service is ever called.
++Run every tool from the repository root with `PYTHONPATH=src:.` (the same as the other run commands in contract.md).
++
++| File | What it does |
++|---|---|
++| `load_driver.py` | Sends requests to the desk's `POST /leads` on a fixed schedule and writes the **request log**. |
++| `fake_model.py` | A fake model endpoint over HTTP, with modes you can switch while it runs. Writes the **model call log**. |
++| `http_qualifier.py` | `HttpQualifier`: a desk Qualifier (`qualify(lead_id, email_key)`) that calls the fake model over HTTP. |
++| `check_invariants.py` | The seven checks, run after a scenario has drained. Exit code 0 only if all seven hold. |
++
++## Input and output formats (the contract between the tools)
++
++All times are epoch seconds as floating point numbers (`time.time()` on the same machine). One JSON object per line
++in every `.jsonl` file.
++
++### Request log (written by `load_driver.py`, read by check 1, 6, 7)
++One line per INTENDED request, sorted by `intended_ts`:
++
++| Field | Meaning |
++|---|---|
++| `request_id` | The `source_ref` sent to the desk. |
++| `door` | `form` or `webhook` (the envelope's `source`). A desk receipt is identified by (`door`, `request_id`). |
++| `intended_ts` | The moment the schedule said to send (fixed before the run; open loop). |
++| `sent_ts` | When the first try really went out. `lag_s` = `sent_ts - intended_ts` (a large lag means the driver fell behind). |
++| `done_ts` | When the request was finished (last reply or last failure). |
++| `attempts` | List, one entry per try: `ts`, `code` (HTTP status, or `null`), `error` (class name of the network error, or `null`), `latency_s`. |
++| `codes` | The same as a flat list: the HTTP status, or the error class name for a try with no reply. |
++| `final_status` | Status of the last try (a number), or the error class name (text) if the last try had no reply. |
++| `receipt_id`, `verdict` | From the last reply body (`null` if none). |
++| `scenario`, `kind`, `worker` | `kind` is `first`, `repeat_later` or `other_door_same_moment`. |
++
++Retry policy (same as `demo_only/burst.py`, numbers read from `lead_desk.constants`): a 503 or a network error
++(refused, reset, timeout) is retried up to 5 times after the first try, `BURST_BACKOFF_SECONDS` apart, and no new
++try starts more than 60 s after the first. Other codes (200, 201, 202, 4xx, 500) end the request.
++
++Machine facts are written once at the start to `<log>.facts.json`: `time_wait_count`, `ulimit_n`, `somaxconn`,
++`nproc` (cpu count and `ulimit -u`), `memory` (kB), `python`, `platform`, plus the scenario, worker and thread counts.
++`max_in_flight` = workers x threads: a burst larger than that is not fully at one moment.
++
++### Desk book (the desk's SQLite file; opened read-only)
++Tables used: `receipts(source, source_ref, receipt_id)`, `leads(lead_id)`, `followups(lead_id, state, crm_done, updated_at)`.
++
++### SMTP catcher log (written by the catcher of lane part (b), read by check 3)
++One line per accepted message: `{ts, send_key, message_id, to, subject, body_sha256, mode}`. `send_key` equals the
++follow-up's `lead_id` (contract.md, "Follow-up drive"). Only `send_key` is read.
++
++### CRM dump (read by check 4)
++JSON: either the fakes server reply of `GET /fake/crm` (`{"count": n, "rows": [{"lead_id", "record"}]}`) or a bare list
++of such rows. Only `lead_id` is read.
++
++### Model call log (written by `fake_model.py`, read by check 5)
++One line per call to `/v1/qualify`: `{ts, lead_id, mode, status}`. `mode` is the mode in force for the call, `status`
++the HTTP status sent (`499` = the client had gone before the answer was written; only in `timeout` mode).
++
++### Drain marker (optional; written by the campaign runner, read by check 7)
++JSON `{"drained_ts": <epoch seconds>}`: the first moment the runner saw `pending = sending = 0` in the book (or
++`null` if it never did). Without it check 7 falls back to the newest `followups.updated_at`, which has whole-second
++resolution.
++
++## The seven checks (`python -m live_l2.check_invariants --help`)
++
++1. **Receipts.** Every distinct (`door`, `request_id`) of the request log has a receipt in the book. A request with no
++   receipt (whatever its retries) is lost. Also listed: a receipt number the client was given that differs from the book.
++2. **States add up.** `pending + sending + sent + failed + unknown = number of leads`, every lead has one follow-up
++   row, and `pending = sending = 0`.
++3. **Messages.** At most one catcher message per `send_key`; no key that belongs to no lead; every settled follow-up
++   (`sent`, `failed`, `unknown`) with zero messages must be exactly one in state `failed` or `unknown`, and every
++   `failed`/`unknown` one must have zero. (An unknown that really did send is reported here, on purpose: a person
++   must look.) Follow-ups still `pending`/`sending` are left to check 2.
++4. **CRM.** Allowed rows = the leads with `crm_done = 1` (each must be there) plus the "listed unknowns": leads with
++   `crm_done = 2` (a put was started, its end unknown) or a follow-up in state `unknown` (each may or may not be there).
++   Fails on a missing `crm_done = 1` row, a row for any other lead, a lead twice, or a row for a lead the book does not hold.
++5. **Model calls per lead** are at most `--model-bound` (default 3), not "exactly one".
++6. **503 rate** = responses with code 503 / all tries, plus how many requests saw a 503 and how many ended on one.
++   Reported always; it fails only above `--max-503-rate` (default: no ceiling).
++7. **Drain time** = drain moment minus the last `intended_ts`; fails above `--max-drain-seconds` (default 120).
++
++Each check lists its first 10 offending ids (check 1: `door:request_id`; others: lead ids). Output: a plain-text
++table, then the JSON result (or `--json PATH`). Exit code: 0 all hold, 1 a check failed, 2 an input file is missing or
++not in the formats above.
++
++## Scenarios (`load_driver.py --scenario ...`)
++
++* `burst:N` N requests all intended at the same moment, doors alternating.
++* `rate:R:D` R requests per second for D seconds (intended times 1/R apart).
++* `dupmix:TOTAL:FRACTION[:RATE]` TOTAL requests at RATE per second (default 200); FRACTION of them are repeats of an
++  earlier request id: half through the OTHER door at the same intended moment, half later (up to 2 s) through the same door.
++
++Use a new `--id-prefix` for every run against the same desk book.
++
++## Fake model modes (`fake_model.py`)
++
++Switch with `POST /__mode {"mode": "..."}` (read with `GET /__mode`), or a control file (`--control-file`: one mode
++word or `{"mode": ...}`, read on every call, wins over `POST /__mode`).
++
++| Mode | The fake server does | `HttpQualifier` raises |
++|---|---|---|
++| `ok` | 200 `{"label": hot|warm|cold}` (the label depends only on `email_key`) | (returns the label) |
++| `slow` | waits 3 s, then as `ok` | (returns; `QualifierTimeout` if the client timeout is shorter) |
++| `timeout` | holds the call 15 s | `QualifierTimeout` |
++| `rate_limit` | 429 with `Retry-After: 1` | `QualifierRateLimited` (`.retry_after`) |
++| `malformed_json` | 200 with a cut-off JSON text | `QualifierBadReply` |
++| `malformed_label` | 200 `{"label": "lukewarm"}` | `QualifierBadReply` |
++| `refusal` | 200 `{"refusal": "..."}`, no label | `QualifierRefused` |
++| `server_error` | 503 | `QualifierServerError` |
++
++All error classes derive from `QualifierError` (a `RuntimeError`). The desk catches any exception from `qualify`
++and records `internal:<class name>` on the follow-up (back to `pending`, `failed` at the retry cap).
++Wire it in a campaign launcher with `HttpQualifier("http://127.0.0.1:<port>", timeout)` in place of `RecordedQualifier`.
+diff --git a/live_l2/__init__.py b/live_l2/__init__.py
+new file mode 100644
+index 0000000..d8ab387
+--- /dev/null
++++ b/live_l2/__init__.py
+@@ -0,0 +1 @@
++"""Live-proof lane L2 tools (made-up data, loopback only). See README-L2.md."""
+diff --git a/live_l2/check_invariants.py b/live_l2/check_invariants.py
+new file mode 100644
+index 0000000..159bbd9
+--- /dev/null
++++ b/live_l2/check_invariants.py
+@@ -0,0 +1,370 @@
++"""The seven checks run after a campaign scenario has drained. Formats: live_l2/README-L2.md.
++
++Run: python -m live_l2.check_invariants --requests req.jsonl --book desk.sqlite3 --catcher mail.jsonl
++         --crm crm.json --model-log model.jsonl [--drain drain.json] [--json out.json]
++Exit code 0 only when all seven checks hold; 1 when a check fails; 2 when an input file cannot be read."""
++
++from __future__ import annotations
++
++import argparse
++import json
++import sqlite3
++import sys
++from collections import Counter
++from collections.abc import Iterable, Mapping
++from pathlib import Path
++from typing import Any
++
++# ---- config block (the only place for numbers and words) ----
++FIRST_N = 10  # offending ids listed per check
++DEFAULT_MODEL_CALL_BOUND = 3  # check 5: most model calls allowed for one lead
++DEFAULT_MAX_DRAIN_SECONDS = 120.0  # check 7: ceiling from the last intended send to "nothing pending or sending"
++ACK_CODES = (200, 201, 202)  # reply codes that carry a receipt number (contract.md, HTTP table)
++BUSY_CODE = 503
++OPEN_STATES = ("pending", "sending")
++STATES = ("pending", "sending", "sent", "failed", "unknown")
++MESSAGE_FREE_STATES = ("failed", "unknown")  # follow-ups allowed (and required) to have no message
++CRM_INTENT_MARK = 2  # followups.crm_done: a put was started and its end is not known
++CRM_DONE = 1
++EXIT_OK, EXIT_FAIL, EXIT_INPUT = 0, 1, 2
++CHECK_NAMES = {
++    1: "every request id has a receipt",
++    2: "follow-up states add up and nothing is left pending",
++    3: "at most one message per send key; no message only for failed or unknown",
++    4: "CRM rows match the leads marked done, plus the listed unknowns",
++    5: "model calls per lead are within the bound",
++    6: "503 rate reported (fails only above a set ceiling)",
++    7: "drain time within the ceiling",
++}
++
++
++class InputError(Exception):
++    """An input file is missing or not in the documented format."""
++
++
++def read_jsonl(path: Path) -> list[dict[str, Any]]:
++    rows: list[dict[str, Any]] = []
++    try:
++        text = path.read_text(encoding="utf-8")
++    except OSError as e:
++        raise InputError(f"cannot read {path}: {e}") from e
++    for n, line in enumerate(text.splitlines(), 1):
++        if not line.strip():
++            continue
++        try:
++            obj = json.loads(line)
++        except ValueError as e:
++            raise InputError(f"{path} line {n}: not JSON") from e
++        if not isinstance(obj, dict):
++            raise InputError(f"{path} line {n}: not a JSON object")
++        rows.append(obj)
++    return rows
++
++
++def read_crm(path: Path) -> list[dict[str, Any]]:
++    """Accepts the fakes server reply {"count", "rows": [...]} or a bare list of rows (each has lead_id)."""
++    try:
++        obj = json.loads(path.read_text(encoding="utf-8"))
++    except (OSError, ValueError) as e:
++        raise InputError(f"cannot read CRM dump {path}: {e}") from e
++    rows = obj.get("rows") if isinstance(obj, dict) else obj
++    if not isinstance(rows, list) or not all(isinstance(r, dict) and "lead_id" in r for r in rows):
++        raise InputError(f"{path}: expected a list of rows or an object with a rows list; each row needs lead_id")
++    return rows
++
++
++def read_book(path: Path) -> dict[str, Any]:
++    """Read-only look at the desk's SQLite book."""
++    if not path.is_file():
++        raise InputError(f"no such book: {path}")
++    try:
++        conn = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
++        try:
++            receipts = {
++                (s, r): int(i) for i, s, r in conn.execute("SELECT receipt_id, source, source_ref FROM receipts")
++            }
++            leads = [r[0] for r in conn.execute("SELECT lead_id FROM leads")]
++            followups = {
++                lid: (state, int(done), int(upd))
++                for lid, state, done, upd in conn.execute("SELECT lead_id, state, crm_done, updated_at FROM followups")
++            }
++        finally:
++            conn.close()
++    except sqlite3.Error as e:
++        raise InputError(f"cannot read book {path}: {e}") from e
++    return {"receipts": receipts, "leads": leads, "followups": followups}
++
++
++def _result(n: int, ok: bool, detail: str, offenders: Iterable[str], values: Mapping[str, Any]) -> dict[str, Any]:
++    bad = sorted(set(offenders))
++    return {
++        "id": n,
++        "name": CHECK_NAMES[n],
++        "ok": ok,
++        "detail": detail,
++        "offender_count": len(bad),
++        "offenders": bad[:FIRST_N],
++        "values": dict(values),
++    }
++
++
++def _rid(line: Mapping[str, Any]) -> str:
++    return f"{line.get('door')}:{line.get('request_id')}"
++
++
++def check_receipts(reqs: list[dict[str, Any]], book: Mapping[str, Any]) -> dict[str, Any]:
++    receipts: Mapping[tuple[str, str], int] = book["receipts"]
++    lost: list[str] = []
++    mismatch: list[str] = []
++    unacked_stored = 0
++    unique = {(str(r.get("door")), str(r.get("request_id"))) for r in reqs}
++    for door, ref in unique:
++        if (door, ref) not in receipts:
++            lost.append(f"{door}:{ref}")
++    for r in reqs:
++        key = (str(r.get("door")), str(r.get("request_id")))
++        acked = r.get("final_status") in ACK_CODES
++        if key in receipts and not acked:
++            unacked_stored += 1
++        if acked and key in receipts and r.get("receipt_id") is not None and r["receipt_id"] != receipts[key]:
++            mismatch.append(_rid(r))
++    bad = lost + mismatch
++    detail = (
++        f"{len(unique)} distinct request ids, {len(lost)} without a receipt, "
++        f"{len(mismatch)} with a wrong receipt number"
++    )
++    return _result(
++        1,
++        not bad,
++        detail,
++        bad,
++        {
++            "distinct_requests": len(unique),
++            "lines": len(reqs),
++            "lost": len(lost),
++            "stored_but_client_unacked": unacked_stored,
++        },
++    )
++
++
++def check_partition(book: Mapping[str, Any]) -> dict[str, Any]:
++    followups: Mapping[str, tuple[str, int, int]] = book["followups"]
++    leads: list[str] = book["leads"]
++    counts = Counter(state for state, _, _ in followups.values())
++    total = sum(counts[s] for s in STATES)
++    no_row = [lid for lid in leads if lid not in followups]
++    open_ids = [lid for lid, (state, _, _) in followups.items() if state in OPEN_STATES]
++    ok = total == len(leads) and len(followups) == len(leads) and not open_ids
++    values = {s: counts[s] for s in STATES} | {"leads": len(leads), "sum": total, "followup_rows": len(followups)}
++    detail = " + ".join(f"{s} {counts[s]}" for s in STATES) + f" = {total}; leads {len(leads)}"
++    return _result(2, ok, detail, no_row + open_ids, values)
++
++
++def check_messages(book: Mapping[str, Any], mail: list[dict[str, Any]]) -> dict[str, Any]:
++    followups: Mapping[str, tuple[str, int, int]] = book["followups"]
++    per_key = Counter(str(m.get("send_key")) for m in mail)
++    doubled = [k for k, n in per_key.items() if n > 1]
++    stray = [k for k in per_key if k not in followups]
++    settled = {lid for lid, (state, _, _) in followups.items() if state not in OPEN_STATES}
++    silent = {lid for lid in settled if per_key.get(lid, 0) == 0}
++    must_be_silent = {lid for lid in settled if followups[lid][0] in MESSAGE_FREE_STATES}
++    lost_mail = sorted(silent - must_be_silent)  # sent, but no message at the catcher
++    unexpected = sorted(must_be_silent - silent)  # failed or unknown, yet a message arrived
++    bad = doubled + stray + lost_mail + unexpected
++    detail = (
++        f"{len(mail)} messages; {len(doubled)} keys more than once, {len(lost_mail)} sent without a message, "
++        f"{len(unexpected)} failed/unknown with a message, {len(stray)} keys of no lead"
++    )
++    values = {
++        "messages": len(mail),
++        "keys": len(per_key),
++        "max_per_key": max(per_key.values(), default=0),
++        "silent_followups": len(silent),
++        "failed_or_unknown": len(must_be_silent),
++    }
++    return _result(3, not bad, detail, bad, values)
++
++
++def check_crm(book: Mapping[str, Any], crm_rows: list[dict[str, Any]]) -> dict[str, Any]:
++    """Expected = leads with crm_done=1 (must be present) plus unknowns (may be present): leads with crm_done=2
++    (a put was started, its end unknown) or a follow-up in state unknown. A row for any other lead, a lead_id twice,
++    or a missing crm_done=1 row fails."""
++    followups: Mapping[str, tuple[str, int, int]] = book["followups"]
++    leads = set(book["leads"])
++    done = {lid for lid, (_, d, _) in followups.items() if d == CRM_DONE}
++    unknown = {lid for lid, (s, d, _) in followups.items() if d == CRM_INTENT_MARK or s == "unknown"} - done
++    ids = Counter(str(r["lead_id"]) for r in crm_rows)
++    present = set(ids)
++    missing = sorted(done - present)
++    extra = sorted(present - done - unknown)
++    twice = sorted(k for k, n in ids.items() if n > 1)
++    not_leads = sorted(present - leads)
++    bad = missing + extra + twice + not_leads
++    lo, hi = len(done), len(done) + len(unknown)
++    detail = (
++        f"{len(crm_rows)} CRM rows; allowed {lo} to {hi} (done {lo} + up to {len(unknown)} unknown); "
++        f"{len(missing)} missing, {len(extra)} not allowed, {len(twice)} twice"
++    )
++    values = {
++        "crm_rows": len(crm_rows),
++        "leads_crm_done": lo,
++        "listed_unknowns": len(unknown),
++        "unknowns_present": len(present & unknown),
++        "missing": len(missing),
++        "extra": len(extra),
++        "twice": len(twice),
++    }
++    return _result(4, not bad, detail, bad, values)
++
++
++def check_model_calls(model_rows: list[dict[str, Any]], bound: int) -> dict[str, Any]:
++    per_lead = Counter(str(r.get("lead_id")) for r in model_rows)
++    over = [lid for lid, n in per_lead.items() if n > bound]
++    by_status = Counter(str(r.get("status")) for r in model_rows)
++    values = {
++        "bound": bound,
++        "calls": len(model_rows),
++        "leads_called": len(per_lead),
++        "max_calls_one_lead": max(per_lead.values(), default=0),
++        "calls_by_status": dict(by_status),
++    }
++    most = values["max_calls_one_lead"]
++    detail = f"{len(model_rows)} calls for {len(per_lead)} leads; most for one lead {most}; bound {bound}"
++    return _result(5, not over, detail, over, values)
++
++
++def check_rate_503(reqs: list[dict[str, Any]], ceiling: float | None) -> dict[str, Any]:
++    attempts = [a for r in reqs for a in (r.get("attempts") or [])]
++    n503 = sum(1 for a in attempts if a.get("code") == BUSY_CODE)
++    rate = n503 / len(attempts) if attempts else 0.0
++    saw = [_rid(r) for r in reqs if any(a.get("code") == BUSY_CODE for a in (r.get("attempts") or []))]
++    final = [_rid(r) for r in reqs if r.get("final_status") == BUSY_CODE]
++    ok = ceiling is None or rate <= ceiling
++    values = {
++        "attempts": len(attempts),
++        "responses_503": n503,
++        "rate": round(rate, 6),
++        "requests": len(reqs),
++        "requests_that_saw_503": len(saw),
++        "requests_ending_on_503": len(final),
++        "ceiling": ceiling,
++    }
++    detail = (
++        f"{n503} of {len(attempts)} attempts got 503 (rate {rate:.4f}); {len(saw)} of {len(reqs)} requests saw one; "
++        f"{len(final)} ended on 503; ceiling {'none (report only)' if ceiling is None else ceiling}"
++    )
++    return _result(6, ok, detail, [] if ok else final or saw, values)
++
++
++def check_drain(
++    reqs: list[dict[str, Any]], book: Mapping[str, Any], drained_ts: float | None, ceiling: float
++) -> dict[str, Any]:
++    intended = [float(r["intended_ts"]) for r in reqs if r.get("intended_ts") is not None]
++    last_send = max(intended, default=None)
++    source = "marker"
++    if drained_ts is None:  # fall back to the book: whole-second times, so only as exact as one second
++        updates = [u for _, _, u in book["followups"].values()]
++        drained_ts = float(max(updates)) if updates else None
++        source = "book updated_at (whole seconds)"
++    if last_send is None or drained_ts is None:
++        return _result(7, False, "no intended send time or no drain moment", [], {"source": source})
++    seconds = max(0.0, drained_ts - last_send)
++    ok = seconds <= ceiling
++    values = {
++        "drain_seconds": round(seconds, 3),
++        "ceiling_seconds": ceiling,
++        "last_intended_send_ts": last_send,
++        "drained_ts": drained_ts,
++        "source": source,
++    }
++    return _result(
++        7, ok, f"{seconds:.2f} s from the last intended send to drained (ceiling {ceiling} s; {source})", [], values
++    )
++
++
++def run_checks(
++    reqs: list[dict[str, Any]],
++    book: Mapping[str, Any],
++    mail: list[dict[str, Any]],
++    crm_rows: list[dict[str, Any]],
++    model_rows: list[dict[str, Any]],
++    drained_ts: float | None = None,
++    model_bound: int = DEFAULT_MODEL_CALL_BOUND,
++    max_503_rate: float | None = None,
++    max_drain_seconds: float = DEFAULT_MAX_DRAIN_SECONDS,
++) -> dict[str, Any]:
++    checks = [
++        check_receipts(reqs, book),
++        check_partition(book),
++        check_messages(book, mail),
++        check_crm(book, crm_rows),
++        check_model_calls(model_rows, model_bound),
++        check_rate_503(reqs, max_503_rate),
++        check_drain(reqs, book, drained_ts, max_drain_seconds),
++    ]
++    return {"ok": all(c["ok"] for c in checks), "checks": checks}
++
++
++def render_table(result: Mapping[str, Any]) -> str:
++    lines = ["#  result  check", "-  ------  -----"]
++    for c in result["checks"]:
++        lines.append(f"{c['id']}  {'PASS' if c['ok'] else 'FAIL':<6}  {c['name']}")
++        lines.append(f"            {c['detail']}")
++        if c["offender_count"]:
++            lines.append(
++                f"            first {len(c['offenders'])} of {c['offender_count']}: {', '.join(c['offenders'])}"
++            )
++    lines.append("ALL 7 CHECKS HOLD" if result["ok"] else "AT LEAST ONE CHECK FAILED")
++    return "\n".join(lines)
++
++
++def _drain_marker(path: Path | None) -> float | None:
++    if path is None:
++        return None
++    try:
++        obj = json.loads(path.read_text(encoding="utf-8"))
++        value = obj.get("drained_ts")
++    except (OSError, ValueError, AttributeError) as e:
++        raise InputError(f"cannot read drain marker {path}: {e}") from e
++    return None if value is None else float(value)
++
++
++def main(argv: list[str] | None = None) -> int:
++    ap = argparse.ArgumentParser(prog="live_l2.check_invariants")
++    ap.add_argument("--requests", type=Path, required=True, help="client request log (JSONL)")
++    ap.add_argument("--book", type=Path, required=True, help="desk SQLite file (opened read-only)")
++    ap.add_argument("--catcher", type=Path, required=True, help="SMTP catcher log (JSONL)")
++    ap.add_argument("--crm", type=Path, required=True, help="CRM dump (JSON)")
++    ap.add_argument("--model-log", type=Path, required=True, help="fake model call log (JSONL)")
++    ap.add_argument("--drain", type=Path, help='drain marker JSON {"drained_ts": epoch seconds}')
++    ap.add_argument("--model-bound", type=int, default=DEFAULT_MODEL_CALL_BOUND)
++    ap.add_argument("--max-503-rate", type=float, default=None)
++    ap.add_argument("--max-drain-seconds", type=float, default=DEFAULT_MAX_DRAIN_SECONDS)
++    ap.add_argument("--json", type=Path, help="write the JSON result here (default: print it after the table)")
++    a = ap.parse_args(argv)
++    try:
++        result = run_checks(
++            read_jsonl(a.requests),
++            read_book(a.book),
++            read_jsonl(a.catcher),
++            read_crm(a.crm),
++            read_jsonl(a.model_log),
++            _drain_marker(a.drain),
++            a.model_bound,
++            a.max_503_rate,
++            a.max_drain_seconds,
++        )
++    except InputError as e:
++        print(f"INPUT ERROR: {e}", file=sys.stderr)
++        return EXIT_INPUT
++    print(render_table(result))
++    text = json.dumps(result, indent=2, sort_keys=True)
++    if a.json:
++        a.json.write_text(text + "\n", encoding="utf-8")
++    else:
++        print(text)
++    return EXIT_OK if result["ok"] else EXIT_FAIL
++
++
++if __name__ == "__main__":
++    sys.exit(main())
+diff --git a/live_l2/fake_model.py b/live_l2/fake_model.py
+new file mode 100644
+index 0000000..5e8cacb
+--- /dev/null
++++ b/live_l2/fake_model.py
+@@ -0,0 +1,197 @@
++"""A fake model endpoint for the campaign. Standard library only, loopback only, never a real model.
++Run: python -m live_l2.fake_model --port 8767 --call-log model.jsonl [--control-file mode.txt] [--mode ok]
++Routes: POST /v1/qualify {"lead_id","email_key"} -> {"label": ...}; GET /__mode; POST /__mode {"mode": "slow"}.
++A control file (one mode word, or {"mode": ...}) is read on every call and wins over POST /__mode when it exists."""
++
++from __future__ import annotations
++
++import argparse
++import hashlib
++import json
++import threading
++import time
++from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
++from pathlib import Path
++from typing import Any
++
++# ---- config block ----
++MODES = ("ok", "slow", "timeout", "rate_limit", "malformed_json", "malformed_label", "refusal", "server_error")
++DEFAULT_PORT = 8767
++BIND = "127.0.0.1"
++SLOW_SECONDS = 3.0  # "slow" mode delay before an ok answer
++TIMEOUT_HOLD_SECONDS = 15.0  # "timeout" mode holds the call this long (longer than any client timeout)
++RETRY_AFTER_SECONDS = 1
++LABELS = ("hot", "warm", "cold")
++QUALIFY_PATH = "/v1/qualify"
++MODE_PATH = "/__mode"
++MAX_BODY_BYTES = 65536
++STATUS_CLIENT_GONE = 499  # logged when the client left before the answer was written
++STATUS_OK, STATUS_BAD_REQUEST, STATUS_NOT_FOUND, STATUS_RATE, STATUS_SERVER = 200, 400, 404, 429, 503
++
++
++def label_for(email_key: str) -> str:
++    """Same key, same label: a fixed spread over the three labels."""
++    return LABELS[hashlib.sha256(email_key.encode()).digest()[0] % len(LABELS)]
++
++
++class FakeModel:
++    def __init__(
++        self,
++        call_log: Path,
++        control_file: Path | None = None,
++        mode: str = "ok",
++        slow_seconds: float = SLOW_SECONDS,
++        hold_seconds: float = TIMEOUT_HOLD_SECONDS,
++    ) -> None:
++        if mode not in MODES:
++            raise ValueError(f"unknown mode {mode!r}")
++        self.call_log = call_log
++        self.control_file = control_file
++        self._mode = mode
++        self.slow_seconds = slow_seconds
++        self.hold_seconds = hold_seconds
++        self.stop = threading.Event()
++        self._lock = threading.Lock()
++
++    @property
++    def mode(self) -> str:
++        if self.control_file is not None:
++            try:
++                text = self.control_file.read_text(encoding="utf-8").strip()
++                word = json.loads(text).get("mode") if text.startswith("{") else text
++                if word in MODES:
++                    return str(word)
++            except (OSError, ValueError, AttributeError):
++                pass
++        return self._mode
++
++    def set_mode(self, mode: str) -> None:
++        if mode not in MODES:
++            raise ValueError(f"unknown mode {mode!r}")
++        self._mode = mode
++
++    def log(self, lead_id: str, mode: str, status: int) -> None:
++        line = json.dumps({"ts": time.time(), "lead_id": lead_id, "mode": mode, "status": status})
++        with self._lock, self.call_log.open("a", encoding="utf-8") as f:
++            f.write(line + "\n")
++
++
++def make_handler(model: FakeModel) -> type[BaseHTTPRequestHandler]:
++    class Handler(BaseHTTPRequestHandler):
++        protocol_version = "HTTP/1.1"
++
++        def log_message(self, format: str, *args: Any) -> None:  # noqa: A002
++            return
++
++        def _reply(self, status: int, body: bytes, headers: dict[str, str] | None = None) -> int:
++            try:
++                self.send_response(status)
++                self.send_header("Content-Type", "application/json")
++                self.send_header("Content-Length", str(len(body)))
++                self.send_header("Connection", "close")
++                for k, v in (headers or {}).items():
++                    self.send_header(k, v)
++                self.end_headers()
++                self.wfile.write(body)
++                self.wfile.flush()
++            except OSError:
++                return STATUS_CLIENT_GONE
++            return status
++
++        def _json(self, status: int, obj: Any, headers: dict[str, str] | None = None) -> int:
++            return self._reply(status, json.dumps(obj).encode(), headers)
++
++        def _read(self) -> dict[str, Any] | None:
++            try:
++                n = int(self.headers.get("Content-Length", "0"))
++                obj = json.loads(self.rfile.read(min(n, MAX_BODY_BYTES)) or b"{}")
++            except (ValueError, OSError):
++                return None
++            return obj if isinstance(obj, dict) else None
++
++        def do_GET(self) -> None:  # noqa: N802
++            if self.path == MODE_PATH:
++                self._json(STATUS_OK, {"mode": model.mode, "modes": list(MODES)})
++            else:
++                self._json(STATUS_NOT_FOUND, {"error": "not_found"})
++
++        def do_POST(self) -> None:  # noqa: N802
++            body = self._read()
++            if self.path == MODE_PATH:
++                mode = body.get("mode") if body else None
++                if mode not in MODES:
++                    self._json(STATUS_BAD_REQUEST, {"error": "bad_mode", "modes": list(MODES)})
++                    return
++                model.set_mode(str(mode))
++                self._json(STATUS_OK, {"mode": mode})
++            elif self.path == QUALIFY_PATH:
++                self._qualify(body)
++            else:
++                self._json(STATUS_NOT_FOUND, {"error": "not_found"})
++
++        def _qualify(self, body: dict[str, Any] | None) -> None:
++            """Plan the answer, write the log line, then answer, so a client that has its answer can already find its
++            line. Only "timeout" logs after the write (the client has gone by then: status 499)."""
++            lead_id = str((body or {}).get("lead_id", ""))
++            email_key = str((body or {}).get("email_key", ""))
++            mode = model.mode
++            headers: dict[str, str] = {}
++            raw: bytes
++            if body is None or not lead_id:
++                status, raw = STATUS_BAD_REQUEST, json.dumps({"error": "bad_request"}).encode()
++            elif mode == "rate_limit":
++                status, raw = STATUS_RATE, json.dumps({"error": "rate_limited"}).encode()
++                headers = {"Retry-After": str(RETRY_AFTER_SECONDS)}
++            elif mode == "server_error":
++                status, raw = STATUS_SERVER, json.dumps({"error": "unavailable"}).encode()
++            elif mode == "malformed_json":
++                status, raw = STATUS_OK, b'{"label": "ho'
++            elif mode == "malformed_label":
++                status, raw = STATUS_OK, json.dumps({"label": "lukewarm"}).encode()
++            elif mode == "refusal":
++                status, raw = STATUS_OK, json.dumps({"refusal": "I can not help with that request."}).encode()
++            else:  # ok, slow, timeout: the label answer, after a wait in the last two
++                status, raw = STATUS_OK, json.dumps({"label": label_for(email_key)}).encode()
++                if mode in ("slow", "timeout"):
++                    model.stop.wait(model.slow_seconds if mode == "slow" else model.hold_seconds)
++            if mode == "timeout":
++                model.log(lead_id, mode, self._reply(status, raw, headers))
++            else:
++                model.log(lead_id, mode, status)
++                self._reply(status, raw, headers)
++
++    return Handler
++
++
++class _Server(ThreadingHTTPServer):
++    daemon_threads = True
++    request_queue_size = 1024
++
++
++def serve(model: FakeModel, port: int = DEFAULT_PORT) -> _Server:
++    """Bind (port 0 = any free port) and return the server; the caller runs serve_forever."""
++    return _Server((BIND, port), make_handler(model))
++
++
++def main(argv: list[str] | None = None) -> int:
++    ap = argparse.ArgumentParser(prog="live_l2.fake_model")
++    ap.add_argument("--port", type=int, default=DEFAULT_PORT)
++    ap.add_argument("--call-log", type=Path, required=True)
++    ap.add_argument("--control-file", type=Path)
++    ap.add_argument("--mode", choices=MODES, default="ok")
++    a = ap.parse_args(argv)
++    model = FakeModel(a.call_log, a.control_file, a.mode)
++    server = serve(model, a.port)
++    print(f"fake model listening on http://{BIND}:{server.server_address[1]}", flush=True)
++    try:
++        server.serve_forever()
++    except KeyboardInterrupt:
++        pass
++    finally:
++        model.stop.set()
++        server.server_close()
++    return 0
++
++
++if __name__ == "__main__":
++    raise SystemExit(main())
+diff --git a/live_l2/http_qualifier.py b/live_l2/http_qualifier.py
+new file mode 100644
+index 0000000..a3cbf43
+--- /dev/null
++++ b/live_l2/http_qualifier.py
+@@ -0,0 +1,100 @@
++"""A Qualifier (contract.py) that asks a model endpoint over HTTP. Standard library only. Loopback fake in tests:
++live_l2/fake_model.py. The desk catches any Exception from qualify and puts the follow-up back to pending with
++`internal:<class name>` (desk.py, _label_step callers), so each failure below has its own class name."""
++
++from __future__ import annotations
++
++import json
++import socket
++import urllib.error
++import urllib.request
++from typing import Any, Literal
++
++# ---- config block ----
++DEFAULT_TIMEOUT_SECONDS = 5.0  # the client timeout for one call
++QUALIFY_PATH = "/v1/qualify"
++LABELS = ("hot", "warm", "cold")
++REPLY_MAX_BYTES = 65536
++HTTP_RATE_LIMITED = 429
++HTTP_SERVER_ERROR_FROM = 500
++
++
++class QualifierError(RuntimeError):
++    """Base class: the model step gave no usable label."""
++
++
++class QualifierTimeout(QualifierError):
++    """No answer within the client timeout (or the connection failed)."""
++
++
++class QualifierRateLimited(QualifierError):
++    """HTTP 429. retry_after is the Retry-After header in seconds, or None."""
++
++    def __init__(self, message: str, retry_after: float | None) -> None:
++        super().__init__(message)
++        self.retry_after = retry_after
++
++
++class QualifierServerError(QualifierError):
++    """HTTP 5xx."""
++
++
++class QualifierBadReply(QualifierError):
++    """The reply is not JSON, not an object, or its label is not hot, warm or cold."""
++
++
++class QualifierRefused(QualifierError):
++    """The model declined: the reply has a refusal and no label."""
++
++
++class HttpQualifier:
++    mode = "http"  # read by the portal data map, like RecordedQualifier.mode
++
++    def __init__(self, base_url: str, timeout: float = DEFAULT_TIMEOUT_SECONDS) -> None:
++        self._url = base_url.rstrip("/") + QUALIFY_PATH
++        self._timeout = timeout
++        self._opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
++
++    def qualify(self, lead_id: str, email_key: str) -> Literal["hot", "warm", "cold"]:
++        body = json.dumps({"lead_id": lead_id, "email_key": email_key}).encode()
++        req = urllib.request.Request(self._url, body, {"Content-Type": "application/json"})  # noqa: S310 (loopback)
++        try:
++            with self._opener.open(req, timeout=self._timeout) as r:  # noqa: S310
++                raw = r.read(REPLY_MAX_BYTES + 1)
++        except urllib.error.HTTPError as e:
++            if e.code == HTTP_RATE_LIMITED:
++                raise QualifierRateLimited("model answered 429", _retry_after(e.headers.get("Retry-After"))) from e
++            if e.code >= HTTP_SERVER_ERROR_FROM:
++                raise QualifierServerError(f"model answered {e.code}") from e
++            raise QualifierBadReply(f"model answered {e.code}") from e
++        except (TimeoutError, socket.timeout, urllib.error.URLError, OSError) as e:
++            raise QualifierTimeout(f"no answer: {type(e).__name__}") from e
++        return _label(raw)
++
++
++def _retry_after(value: str | None) -> float | None:
++    try:
++        return None if value is None else float(value)
++    except ValueError:
++        return None
++
++
++def _label(raw: bytes) -> Literal["hot", "warm", "cold"]:
++    if len(raw) > REPLY_MAX_BYTES:
++        raise QualifierBadReply("reply too long")
++    try:
++        obj: Any = json.loads(raw.decode("utf-8"))
++    except ValueError as e:
++        raise QualifierBadReply("reply is not JSON") from e
++    if not isinstance(obj, dict):
++        raise QualifierBadReply("reply is not a JSON object")
++    label = obj.get("label")
++    if label is None and obj.get("refusal"):
++        raise QualifierRefused("model refused")
++    if label == "hot":
++        return "hot"
++    if label == "warm":
++        return "warm"
++    if label == "cold":
++        return "cold"
++    raise QualifierBadReply("label is not hot, warm or cold")
+diff --git a/live_l2/load_driver.py b/live_l2/load_driver.py
+new file mode 100644
+index 0000000..3f7ff17
+--- /dev/null
++++ b/live_l2/load_driver.py
+@@ -0,0 +1,316 @@
++"""Open-loop load driver for the desk's POST /leads. Standard library only. Formats: live_l2/README-L2.md.
++
++Run: python -m live_l2.load_driver --base-url http://127.0.0.1:8765 --scenario burst:200 --log req.jsonl
++     scenarios: burst:N (N at one moment) | rate:R:D (R requests/s for D seconds) |
++                dupmix:TOTAL:FRACTION (a share of the requests are repeats, some through both doors at once)
++Open loop: each request has an INTENDED send time fixed before the run; a slow reply never moves a later request.
++The actual send time and the lag are logged, so a driver that could not keep up shows in the log."""
++
++from __future__ import annotations
++
++import argparse
++import json
++import multiprocessing
++import os
++import platform
++import queue
++import random
++import resource
++import sys
++import threading
++import time
++import urllib.error
++import urllib.request
++from collections import Counter
++from pathlib import Path
++from typing import Any
++
++_retries: int
++_backoff: float
++try:  # one source of truth for the retry policy of the burst script (contract.md "Burst script")
++    from lead_desk import constants as _constants
++
++    _retries, _backoff = _constants.BURST_MAX_RETRIES, _constants.BURST_BACKOFF_SECONDS
++except ImportError:  # run without src on the path: same values
++    _retries, _backoff = 5, 0.1
++
++# ---- config block ----
++DOORS = ("form", "webhook")
++MAX_RETRIES = _retries  # retries after the first try (so up to 6 tries)
++BACKOFF_SECONDS = _backoff
++ATTEMPT_TIMEOUT_SECONDS = 20.0  # one try
++REQUEST_DEADLINE_SECONDS = 60.0  # no new try after this long since the first try (the loss rule of check 1)
++START_LEAD_SECONDS = 1.5  # time to start the workers before the first intended send
++DEFAULT_WORKERS = 4
++DEFAULT_THREADS = 64
++DUP_BOTH_DOORS_SHARE = 0.5  # of the repeats: this share go through the other door at the same moment
++DUP_LATER_MAX_SECONDS = 2.0  # the other repeats come this much later at most
++DUPMIX_DEFAULT_RATE = 200.0  # requests per second for dupmix
++RETRY_CODES = (503,)  # plus every network error and timeout
++ACK_CODES = (200, 201, 202)
++ID_PREFIX = "ld"
++EMAIL_DOMAIN = "example.test"
++TCP_STATE_TIME_WAIT = "06"
++MIN_TCP_LINE_FIELDS = 4
++DUPMIX_RATE_INDEX = 2
++
++
++def _post(url: str, body: bytes) -> tuple[int | None, str | None, dict[str, Any]]:
++    """One try. Returns (code, error class name, parsed reply). A 4xx/5xx reply is a code, not an error."""
++    req = urllib.request.Request(url, body, {"Content-Type": "application/json"})  # noqa: S310 (loopback, from args)
++    opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
++
++    def parse(raw: bytes) -> dict[str, Any]:
++        try:
++            obj = json.loads(raw or b"{}")
++        except ValueError:
++            return {}
++        return obj if isinstance(obj, dict) else {}
++
++    try:
++        with opener.open(req, timeout=ATTEMPT_TIMEOUT_SECONDS) as r:  # noqa: S310
++            return int(r.status), None, parse(r.read())
++    except urllib.error.HTTPError as e:
++        return int(e.code), None, parse(e.read())
++    except urllib.error.URLError as e:
++        return None, type(e.reason).__name__, {}
++    except (OSError, ValueError) as e:  # connection reset, timeout, half-read reply
++        return None, type(e).__name__, {}
++
++
++def send_with_retries(url: str, item: dict[str, Any]) -> dict[str, Any]:
++    """Send one intended request; retry 503 and network errors up to MAX_RETRIES within the deadline.
++    Returns the log line (format in README-L2.md)."""
++    body = json.dumps(item["envelope"]).encode()
++    attempts: list[dict[str, Any]] = []
++    first = time.time()
++    reply: dict[str, Any] = {}
++    for n in range(MAX_RETRIES + 1):
++        t0 = time.time()
++        code, error, reply = _post(url, body)
++        attempts.append({"ts": t0, "code": code, "error": error, "latency_s": round(time.time() - t0, 4)})
++        retry = code in RETRY_CODES or code is None
++        if not retry or n == MAX_RETRIES or time.time() - first + BACKOFF_SECONDS > REQUEST_DEADLINE_SECONDS:
++            break
++        time.sleep(BACKOFF_SECONDS)
++    last = attempts[-1]
++    final = last["code"] if last["code"] is not None else last["error"]
++    return {
++        "request_id": item["request_id"],
++        "door": item["door"],
++        "intended_ts": item["intended_ts"],
++        "sent_ts": first,
++        "lag_s": round(first - item["intended_ts"], 4),
++        "done_ts": time.time(),
++        "scenario": item["scenario"],
++        "kind": item["kind"],
++        "attempts": attempts,
++        "codes": [a["code"] if a["code"] is not None else a["error"] for a in attempts],
++        "final_status": final,
++        "receipt_id": reply.get("receipt_id"),
++        "verdict": reply.get("verdict"),
++    }
++
++
++def _envelope(door: str, ref: str, email: str) -> dict[str, Any]:
++    payload = {"name": f"Load {ref}", "email": email, "phone": "555 0100", "message": "Please call me."}
++    return {"source": door, "source_ref": ref, "payload": payload}
++
++
++def _item(door: str, ref: str, ts: float, scenario: str, kind: str) -> dict[str, Any]:
++    email = f"{ref}@{EMAIL_DOMAIN}"
++    return {
++        "request_id": ref,
++        "door": door,
++        "intended_ts": ts,
++        "scenario": scenario,
++        "kind": kind,
++        "envelope": _envelope(door, ref, email),
++    }
++
++
++def parse_scenario(text: str) -> tuple[str, list[float]]:
++    """burst:N | rate:R:D | dupmix:TOTAL:FRACTION[:RATE]. Returns (name, numbers); raises ValueError."""
++    parts = text.split(":")
++    name, nums = parts[0], [float(p) for p in parts[1:]]
++    want = {"burst": (1, 1), "rate": (2, 2), "dupmix": (2, 3)}
++    if name not in want or not want[name][0] <= len(nums) <= want[name][1]:
++        raise ValueError(f"bad scenario {text!r}: use burst:N, rate:R:D or dupmix:TOTAL:FRACTION[:RATE]")
++    if any(x <= 0 for x in nums[:2]) or (name == "dupmix" and not 0 <= nums[1] <= 1):
++        raise ValueError(f"bad scenario {text!r}: numbers must be positive (a fraction is 0 to 1)")
++    return name, nums
++
++
++def build_schedule(scenario: str, t0: float, prefix: str, seed: int) -> list[dict[str, Any]]:
++    """The whole open-loop schedule, fixed before anything is sent. Sorted by intended time."""
++    name, nums = parse_scenario(scenario)
++    rng = random.Random(seed)  # noqa: S311 (not for security: spreads made-up requests)
++    items: list[dict[str, Any]] = []
++    if name == "burst":
++        for i in range(int(nums[0])):
++            items.append(_item(DOORS[i % len(DOORS)], f"{prefix}-{i}", t0, scenario, "first"))
++    elif name == "rate":
++        rate, seconds = nums
++        for i in range(int(rate * seconds)):
++            items.append(_item(DOORS[i % len(DOORS)], f"{prefix}-{i}", t0 + i / rate, scenario, "first"))
++    else:
++        total = int(nums[0])
++        repeats = round(total * nums[1])
++        rate = nums[DUPMIX_RATE_INDEX] if len(nums) > DUPMIX_RATE_INDEX else DUPMIX_DEFAULT_RATE
++        firsts = total - repeats
++        for i in range(firsts):
++            items.append(_item(DOORS[i % len(DOORS)], f"{prefix}-{i}", t0 + i / rate, scenario, "first"))
++        for j in range(repeats):
++            base = items[rng.randrange(firsts)] if firsts else items[0]
++            if rng.random() < DUP_BOTH_DOORS_SHARE:
++                other = DOORS[1 - DOORS.index(base["door"])]
++                items.append(_item(other, base["request_id"], base["intended_ts"], scenario, "other_door_same_moment"))
++            else:
++                later = base["intended_ts"] + rng.uniform(0, DUP_LATER_MAX_SECONDS)
++                items.append(_item(base["door"], base["request_id"], later, scenario, "repeat_later"))
++    items.sort(key=lambda it: (it["intended_ts"], it["door"], it["request_id"]))
++    return items
++
++
++def _worker(args: tuple[int, str, list[dict[str, Any]], int, Path]) -> None:
++    """One worker process: threads take its items in intended-time order, wait until the intended moment, send."""
++    index, url, items, threads, part = args
++    work: queue.Queue[dict[str, Any]] = queue.Queue()
++    for it in items:
++        work.put(it)
++    lock = threading.Lock()
++    out = part.open("w", encoding="utf-8")
++
++    def run() -> None:
++        while True:
++            try:
++                it = work.get_nowait()
++            except queue.Empty:
++                return
++            wait = it["intended_ts"] - time.time()
++            if wait > 0:
++                time.sleep(wait)
++            line = send_with_retries(url, it)
++            line["worker"] = index
++            with lock:
++                out.write(json.dumps(line) + "\n")
++                out.flush()
++
++    pool = [threading.Thread(target=run) for _ in range(max(1, min(threads, len(items))))]
++    for t in pool:
++        t.start()
++    for t in pool:
++        t.join()
++    out.close()
++
++
++def _count_time_wait() -> int | None:
++    total = 0
++    found = False
++    for name in ("/proc/net/tcp", "/proc/net/tcp6"):
++        try:
++            lines = Path(name).read_text(encoding="utf-8").splitlines()[1:]
++        except OSError:
++            continue
++        found = True
++        total += sum(
++            1 for ln in lines if len(ln.split()) >= MIN_TCP_LINE_FIELDS and ln.split()[3] == TCP_STATE_TIME_WAIT
++        )
++    return total if found else None
++
++
++def _read_int(path: str) -> int | None:
++    try:
++        return int(Path(path).read_text(encoding="utf-8").strip())
++    except (OSError, ValueError):
++        return None
++
++
++def machine_facts() -> dict[str, Any]:
++    """Facts that explain a result: recorded once at the start of a run."""
++    mem: dict[str, int] = {}
++    try:
++        for ln in Path("/proc/meminfo").read_text(encoding="utf-8").splitlines():
++            key, _, rest = ln.partition(":")
++            if key in ("MemTotal", "MemAvailable"):
++                mem[key + "_kb"] = int(rest.split()[0])
++    except (OSError, ValueError, IndexError):
++        pass
++    soft, hard = resource.getrlimit(resource.RLIMIT_NOFILE)
++    nproc_soft, nproc_hard = resource.getrlimit(resource.RLIMIT_NPROC)
++    return {
++        "ts": time.time(),
++        "time_wait_count": _count_time_wait(),
++        "ulimit_n": {"soft": soft, "hard": hard},
++        "somaxconn": _read_int("/proc/sys/net/core/somaxconn"),
++        "nproc": {"cpus": os.cpu_count(), "ulimit_u_soft": nproc_soft, "ulimit_u_hard": nproc_hard},
++        "memory": mem,
++        "python": sys.version.split()[0],
++        "platform": platform.platform(),
++    }
++
++
++def run(
++    base_url: str, scenario: str, log: Path, facts_path: Path, workers: int, threads: int, seed: int, prefix: str
++) -> dict[str, Any]:
++    facts = machine_facts()
++    t0 = time.time() + START_LEAD_SECONDS
++    schedule = build_schedule(scenario, t0, prefix, seed)
++    url = base_url.rstrip("/") + "/leads"
++    workers = max(1, min(workers, len(schedule) or 1))
++    parts = [log.with_name(f"{log.name}.part{k}") for k in range(workers)]
++    jobs = [(k, url, schedule[k::workers], threads, parts[k]) for k in range(workers)]
++    facts.update(
++        scenario=scenario,
++        workers=workers,
++        threads_per_worker=threads,
++        intended_requests=len(schedule),
++        max_in_flight=workers * threads,
++        first_intended_ts=t0,
++        seed=seed,
++    )
++    facts_path.write_text(json.dumps(facts, indent=2, sort_keys=True) + "\n", encoding="utf-8")
++    ctx = multiprocessing.get_context("spawn")
++    with ctx.Pool(workers) as pool:
++        pool.map(_worker, jobs, chunksize=1)
++    lines: list[dict[str, Any]] = []
++    for p in parts:
++        lines += [json.loads(x) for x in p.read_text(encoding="utf-8").splitlines() if x.strip()]
++        p.unlink()
++    lines.sort(key=lambda d: (d["intended_ts"], d["door"], d["request_id"]))
++    log.write_text("".join(json.dumps(d) + "\n" for d in lines), encoding="utf-8")
++    finals = Counter(str(d["final_status"]) for d in lines)
++    lag = max((d["lag_s"] for d in lines), default=0.0)
++    return {
++        "intended": len(schedule),
++        "logged": len(lines),
++        "final_status": dict(finals),
++        "max_lag_s": lag,
++        "last_intended_ts": max((d["intended_ts"] for d in lines), default=None),
++    }
++
++
++def main(argv: list[str] | None = None) -> int:
++    ap = argparse.ArgumentParser(prog="live_l2.load_driver")
++    ap.add_argument("--base-url", required=True, help="desk base URL, e.g. http://127.0.0.1:8765")
++    ap.add_argument("--scenario", required=True, help="burst:N | rate:R:D | dupmix:TOTAL:FRACTION[:RATE]")
++    ap.add_argument("--log", type=Path, required=True, help="request log (JSONL), one line per intended request")
++    ap.add_argument("--facts", type=Path, help="machine facts JSON (default: <log>.facts.json)")
++    ap.add_argument("--workers", type=int, default=DEFAULT_WORKERS)
++    ap.add_argument("--threads", type=int, default=DEFAULT_THREADS, help="threads in each worker process")
++    ap.add_argument("--seed", type=int, default=1)
++    ap.add_argument("--id-prefix", default=ID_PREFIX, help="request ids are <prefix>-<n>; change it for every run")
++    a = ap.parse_args(argv)
++    try:
++        parse_scenario(a.scenario)
++    except ValueError as e:
++        print(f"ERROR: {e}", file=sys.stderr)
++        return 2
++    facts = a.facts or a.log.with_name(a.log.name + ".facts.json")
++    summary = run(a.base_url, a.scenario, a.log, facts, a.workers, a.threads, a.seed, a.id_prefix)
++    print(json.dumps(summary, sort_keys=True))
++    return 0
++
++
++if __name__ == "__main__":
++    sys.exit(main())
+diff --git a/tests/test_live_l2_tools.py b/tests/test_live_l2_tools.py
+new file mode 100644
+index 0000000..22685c2
+--- /dev/null
++++ b/tests/test_live_l2_tools.py
+@@ -0,0 +1,465 @@
++"""Tests for live_l2: the seven checks, the load driver, the fake model and its HTTP qualifier.
++Made-up data, loopback only, no real model."""
++
++from __future__ import annotations
++
++import json
++import sqlite3
++import threading
++import time
++from copy import deepcopy
++from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
++from pathlib import Path
++from typing import Any
++
++import pytest
++
++from live_l2 import check_invariants as ci
++from live_l2 import fake_model, http_qualifier, load_driver
++
++SCHEMA = Path(__file__).resolve().parent.parent / "src" / "lead_desk" / "schema.sql"
++T0 = 1_000_000.0
++RATE_20_FOR_3 = "rate:" + "20" + ":3"  # parts: the joined text looks like an IPv6 address to the hygiene scan
++RATE_10_FOR_3 = "rate:" + "10" + ":3"
++
++# ---------- check_invariants: hand-built fixture ----------
++# leads L1..L4 sent (mail + CRM), L5 failed (CRM done, no mail), L6 unknown (CRM intent only, no mail, no CRM row)
++LEADS = {
++    "L1": ("sent", 1),
++    "L2": ("sent", 1),
++    "L3": ("sent", 1),
++    "L4": ("sent", 1),
++    "L5": ("failed", 1),
++    "L6": ("unknown", 2),
++}
++
++
++def make_book(path: Path, leads: dict[str, tuple[str, int]], updated: int = int(T0) + 5) -> None:
++    conn = sqlite3.connect(path)
++    conn.executescript(SCHEMA.read_text(encoding="utf-8"))
++    for n, (lid, (state, done)) in enumerate(leads.items(), 1):
++        conn.execute(
++            "INSERT INTO receipts(source, source_ref, received_at, payload, outcome, outcome_lead_id, decided_at)"
++            " VALUES ('form', ?, ?, '{}', 'new', ?, ?)",
++            (f"r-{lid}", int(T0), lid, int(T0)),
++        )
++        conn.execute(
++            "INSERT INTO leads(lead_id, receipt_id, source, name, email, email_key, created_at)"
++            " VALUES (?, ?, 'form', 'Ada', ?, ?, ?)",
++            (lid, n, f"{lid}@example.test", f"{lid}@example.test".lower(), int(T0)),
++        )
++        conn.execute(
++            "INSERT INTO followups(lead_id, state, crm_done, updated_at) VALUES (?, ?, ?, ?)",
++            (lid, state, done, updated),
++        )
++    # a repeat of request r-L1 through the other door: a second receipt, a duplicate verdict, no lead
++    conn.execute(
++        "INSERT INTO receipts(source, source_ref, received_at, payload, outcome, outcome_lead_id, differing_fields,"
++        " decided_at) VALUES ('webhook', 'r-L1', ?, '{}', 'duplicate', 'L1', '[]', ?)",
++        (int(T0), int(T0)),
++    )
++    conn.commit()
++    conn.close()
++
++
++def make_world() -> dict[str, Any]:
++    reqs: list[dict[str, Any]] = []
++    for n, lid in enumerate(LEADS):
++        reqs.append(
++            {
++                "request_id": f"r-{lid}",
++                "door": "form",
++                "intended_ts": T0 + n,
++                "final_status": 201,
++                "receipt_id": n + 1,
++                "attempts": [{"ts": T0 + n, "code": 201, "error": None}],
++            }
++        )
++    reqs.append(
++        {
++            "request_id": "r-L1",
++            "door": "webhook",
++            "intended_ts": T0,
++            "final_status": 200,
++            "receipt_id": len(LEADS) + 1,
++            "attempts": [{"ts": T0, "code": 503, "error": None}, {"ts": T0 + 0.1, "code": 200, "error": None}],
++        }
++    )
++    mail = [
++        {
++            "ts": T0,
++            "send_key": k,
++            "message_id": f"m-{k}",
++            "to": "x",
++            "subject": "s",
++            "body_sha256": "b",
++            "mode": "keyed",
++        }
++        for k in ("L1", "L2", "L3", "L4")
++    ]
++    crm = [{"lead_id": k, "record": {}} for k in ("L1", "L2", "L3", "L4", "L5")]
++    model = [{"ts": T0, "lead_id": k, "mode": "ok", "status": 200} for k in LEADS]
++    model.append({"ts": T0, "lead_id": "L2", "mode": "rate_limit", "status": 429})
++    return {"reqs": reqs, "mail": mail, "crm": crm, "model": model, "leads": dict(LEADS), "drained_ts": T0 + 8.0}
++
++
++def run_world(tmp_path: Path, w: dict[str, Any], **kw: Any) -> dict[str, Any]:
++    db = tmp_path / "desk.sqlite3"
++    if db.exists():
++        db.unlink()
++    make_book(db, w["leads"])
++    book = ci.read_book(db)
++    return ci.run_checks(w["reqs"], book, w["mail"], w["crm"], w["model"], w["drained_ts"], **kw)
++
++
++def failed(result: dict[str, Any]) -> list[int]:
++    return [c["id"] for c in result["checks"] if not c["ok"]]
++
++
++def test_clean_case_passes(tmp_path: Path) -> None:
++    result = run_world(tmp_path, make_world())
++    assert failed(result) == []
++    assert result["ok"] is True
++    assert [c["id"] for c in result["checks"]] == [1, 2, 3, 4, 5, 6, 7]
++    assert result["checks"][5]["values"]["responses_503"] == 1
++
++
++def fault_lost_receipt(w: dict[str, Any]) -> None:
++    w["reqs"].append({"request_id": "r-gone", "door": "form", "intended_ts": T0, "final_status": 503, "attempts": []})
++
++
++def fault_double_mail(w: dict[str, Any]) -> None:
++    w["mail"].append(dict(w["mail"][0], message_id="m-again"))
++
++
++def fault_unknown_with_mail(w: dict[str, Any]) -> None:
++    w["mail"].append(dict(w["mail"][0], send_key="L6", message_id="m-L6"))
++
++
++def fault_crm_missing(w: dict[str, Any]) -> None:
++    w["crm"] = [r for r in w["crm"] if r["lead_id"] != "L3"]
++
++
++def fault_five_model_calls(w: dict[str, Any]) -> None:
++    w["model"] += [{"ts": T0, "lead_id": "L4", "mode": "ok", "status": 200}] * 4
++
++
++def fault_pending_left(w: dict[str, Any]) -> None:
++    w["leads"]["L4"] = ("pending", 1)
++    w["mail"] = [m for m in w["mail"] if m["send_key"] != "L4"]
++
++
++def fault_sent_without_mail(w: dict[str, Any]) -> None:
++    w["mail"] = [m for m in w["mail"] if m["send_key"] != "L2"]
++
++
++def fault_crm_extra(w: dict[str, Any]) -> None:
++    w["crm"].append({"lead_id": "L5-ghost", "record": {}})
++
++
++@pytest.mark.parametrize(
++    ("fault", "check_id", "offender"),
++    [
++        (fault_lost_receipt, 1, "form:r-gone"),
++        (fault_double_mail, 3, "L1"),
++        (fault_unknown_with_mail, 3, "L6"),
++        (fault_sent_without_mail, 3, "L2"),
++        (fault_crm_missing, 4, "L3"),
++        (fault_crm_extra, 4, "L5-ghost"),
++        (fault_five_model_calls, 5, "L4"),
++        (fault_pending_left, 2, "L4"),
++    ],
++)
++def test_planted_fault_fails_one_check(tmp_path: Path, fault: Any, check_id: int, offender: str) -> None:
++    w = make_world()
++    fault(w)
++    result = run_world(tmp_path, w)
++    assert failed(result) == [check_id]
++    assert offender in result["checks"][check_id - 1]["offenders"]
++    assert result["ok"] is False
++
++
++def test_unknown_row_present_is_allowed(tmp_path: Path) -> None:
++    w = make_world()
++    w["crm"].append({"lead_id": "L6", "record": {}})  # the put may have landed: a listed unknown
++    assert failed(run_world(tmp_path, w)) == []
++
++
++def test_503_ceiling_and_drain_ceiling(tmp_path: Path) -> None:
++    w = make_world()
++    assert failed(run_world(tmp_path, w, max_503_rate=0.01)) == [6]  # 1 of 8 attempts
++    assert failed(run_world(tmp_path, w, max_503_rate=0.5)) == []
++    assert failed(run_world(tmp_path, w, max_drain_seconds=1.0)) == [7]  # last intended send T0+5, drained T0+8
++
++
++def test_drain_falls_back_to_the_book(tmp_path: Path) -> None:
++    w = make_world()
++    w["drained_ts"] = None
++    result = run_world(tmp_path, w)
++    assert result["checks"][6]["values"]["source"].startswith("book")
++    assert failed(result) == []
++
++
++def test_offenders_capped_at_ten(tmp_path: Path) -> None:
++    w = make_world()
++    w["reqs"] += [{"request_id": f"x{i}", "door": "form", "intended_ts": T0, "final_status": 503} for i in range(25)]
++    c = run_world(tmp_path, w)["checks"][0]
++    assert c["offender_count"] == 25
++    assert len(c["offenders"]) == ci.FIRST_N
++
++
++def test_cli_exit_codes(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
++    w = make_world()
++    make_book(tmp_path / "desk.sqlite3", w["leads"])
++
++    def write(name: str, rows: list[dict[str, Any]]) -> Path:
++        p = tmp_path / name
++        p.write_text("".join(json.dumps(r) + "\n" for r in rows), encoding="utf-8")
++        return p
++
++    crm = tmp_path / "crm.json"
++    crm.write_text(json.dumps({"count": len(w["crm"]), "rows": w["crm"]}), encoding="utf-8")
++    drain = tmp_path / "drain.json"
++    drain.write_text(json.dumps({"drained_ts": w["drained_ts"]}), encoding="utf-8")
++    argv = [
++        "--requests", str(write("req.jsonl", w["reqs"])),
++        "--book", str(tmp_path / "desk.sqlite3"),
++        "--catcher", str(write("mail.jsonl", w["mail"])),
++        "--crm", str(crm),
++        "--model-log", str(write("model.jsonl", w["model"])),
++        "--drain", str(drain),
++        "--json", str(tmp_path / "out.json"),
++    ]  # fmt: skip
++    assert ci.main(argv) == ci.EXIT_OK
++    assert "ALL 7 CHECKS HOLD" in capsys.readouterr().out
++    assert json.loads((tmp_path / "out.json").read_text(encoding="utf-8"))["ok"] is True
++    bad = deepcopy(argv)
++    bad[bad.index("--catcher") + 1] = str(write("mail2.jsonl", w["mail"] + [w["mail"][0]]))
++    assert ci.main(bad) == ci.EXIT_FAIL
++    bad[bad.index("--catcher") + 1] = str(tmp_path / "missing.jsonl")
++    assert ci.main(bad) == ci.EXIT_INPUT
++
++
++def test_book_is_opened_read_only(tmp_path: Path) -> None:
++    make_book(tmp_path / "d.sqlite3", LEADS)
++    before = (tmp_path / "d.sqlite3").read_bytes()
++    ci.read_book(tmp_path / "d.sqlite3")
++    assert (tmp_path / "d.sqlite3").read_bytes() == before
++    with pytest.raises(ci.InputError):
++        ci.read_book(tmp_path / "none.sqlite3")
++
++
++# ---------- load_driver ----------
++class _Desk(BaseHTTPRequestHandler):
++    """Stand-in for the desk: 201 for a new id, 503 for the first two tries of ids that start with busy-."""
++
++    seen: dict[str, int] = {}  # noqa: RUF012 (test double)
++    lock = threading.Lock()
++
++    def log_message(self, format: str, *args: Any) -> None:  # noqa: A002
++        return
++
++    def do_POST(self) -> None:  # noqa: N802
++        env = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
++        key = f"{env['source']}:{env['source_ref']}"
++        with self.lock:
++            n = self.seen[key] = self.seen.get(key, 0) + 1
++        busy = env["source_ref"].startswith("busy-") and n <= 2
++        body = json.dumps(
++            {"error": "busy", "receipt_id": None} if busy else {"receipt_id": 7, "verdict": "new"}
++        ).encode()
++        self.send_response(503 if busy else 201)
++        self.send_header("Content-Length", str(len(body)))
++        self.send_header("Connection", "close")
++        self.end_headers()
++        self.wfile.write(body)
++
++
++@pytest.fixture
++def desk_url() -> Any:
++    _Desk.seen = {}
++    srv = ThreadingHTTPServer(("127.0.0.1", 0), _Desk)
++    threading.Thread(target=srv.serve_forever, daemon=True).start()
++    yield f"http://127.0.0.1:{srv.server_address[1]}"
++    srv.shutdown()
++    srv.server_close()
++
++
++def test_scenario_parsing() -> None:
++    assert load_driver.parse_scenario("burst:50") == ("burst", [50.0])
++    assert load_driver.parse_scenario(RATE_20_FOR_3) == ("rate", [20.0, 3.0])
++    assert load_driver.parse_scenario("dupmix:100:0.3")[0] == "dupmix"
++    for bad in ("burst", "rate:5", "dupmix:10:1.5", "flood:3", "burst:0"):
++        with pytest.raises(ValueError):
++            load_driver.parse_scenario(bad)
++
++
++def test_schedule_is_open_loop_and_fixed() -> None:
++    burst = load_driver.build_schedule("burst:40", T0, "p", 1)
++    assert len(burst) == 40
++    assert {it["intended_ts"] for it in burst} == {T0}
++    rate = load_driver.build_schedule(RATE_10_FOR_3, T0, "p", 1)
++    assert len(rate) == 30
++    assert rate[-1]["intended_ts"] == pytest.approx(T0 + 2.9)
++    assert load_driver.build_schedule(RATE_10_FOR_3, T0, "p", 1) == rate  # same seed, same schedule
++
++
++def test_dupmix_shares_and_both_doors() -> None:
++    items = load_driver.build_schedule("dupmix:400:0.3", T0, "p", 1)
++    assert len(items) == 400
++    firsts = [i for i in items if i["kind"] == "first"]
++    assert len(firsts) == 280
++    both = [i for i in items if i["kind"] == "other_door_same_moment"]
++    later = [i for i in items if i["kind"] == "repeat_later"]
++    assert len(both) + len(later) == 120
++    assert both
++    assert later
++    by_key = {(i["door"], i["request_id"]): i for i in firsts}
++    for b in both:
++        twin = next(i for i in firsts if i["request_id"] == b["request_id"])
++        assert twin["door"] != b["door"]
++        assert twin["intended_ts"] == b["intended_ts"]
++    for lt in later:
++        assert (lt["door"], lt["request_id"]) in by_key
++
++
++def test_retry_503_then_ok(desk_url: str) -> None:
++    item = load_driver.build_schedule("burst:1", time.time(), "busy", 1)[0]
++    line = load_driver.send_with_retries(desk_url + "/leads", item)
++    assert line["codes"] == [503, 503, 201]
++    assert line["final_status"] == 201
++    assert line["receipt_id"] == 7
++
++
++def test_retry_gives_up_after_five(monkeypatch: pytest.MonkeyPatch) -> None:
++    monkeypatch.setattr(load_driver, "BACKOFF_SECONDS", 0.0)
++    item = load_driver.build_schedule("burst:1", time.time(), "p", 1)[0]
++    line = load_driver.send_with_retries("http://127.0.0.1:1/leads", item)  # nothing listens on port 1
++    assert len(line["attempts"]) == load_driver.MAX_RETRIES + 1
++    assert line["final_status"] == "ConnectionRefusedError"
++
++
++def test_burst_run_logs_every_request(desk_url: str, tmp_path: Path) -> None:
++    log = tmp_path / "req.jsonl"
++    summary = load_driver.run(desk_url, "burst:30", log, tmp_path / "f.json", 2, 16, 1, "t")
++    lines = [json.loads(x) for x in log.read_text(encoding="utf-8").splitlines()]
++    assert summary["logged"] == len(lines) == 30
++    assert {ln["final_status"] for ln in lines} == {201}
++    assert all(ln["sent_ts"] >= ln["intended_ts"] - 0.05 for ln in lines)
++    assert not list(tmp_path.glob("*.part*"))
++    facts = json.loads((tmp_path / "f.json").read_text(encoding="utf-8"))
++    for key in ("time_wait_count", "ulimit_n", "somaxconn", "nproc", "memory", "python"):
++        assert key in facts
++    assert facts["ulimit_n"]["soft"] > 0
++
++
++# ---------- fake_model and HttpQualifier ----------
++@pytest.fixture
++def model(tmp_path: Path) -> Any:
++    fm = fake_model.FakeModel(tmp_path / "calls.jsonl", slow_seconds=0.4, hold_seconds=3.0)
++    srv = fake_model.serve(fm, 0)
++    threading.Thread(target=srv.serve_forever, daemon=True).start()
++    fm.url = f"http://127.0.0.1:{srv.server_address[1]}"  # type: ignore[attr-defined]
++    yield fm
++    fm.stop.set()
++    srv.shutdown()
++    srv.server_close()
++
++
++def calls(fm: Any) -> list[dict[str, Any]]:
++    return [json.loads(x) for x in fm.call_log.read_text(encoding="utf-8").splitlines()]
++
++
++def test_mode_ok_gives_a_label(model: Any) -> None:
++    q = http_qualifier.HttpQualifier(model.url, 2.0)
++    assert q.qualify("L1", "a@example.test") in ("hot", "warm", "cold")
++    assert q.qualify("L1", "a@example.test") == q.qualify("L1", "a@example.test")  # same key, same label
++    assert [c["status"] for c in calls(model)] == [200, 200, 200]
++    assert calls(model)[0]["lead_id"] == "L1"
++    assert calls(model)[0]["mode"] == "ok"
++
++
++@pytest.mark.parametrize(
++    ("mode", "error"),
++    [
++        ("rate_limit", http_qualifier.QualifierRateLimited),
++        ("malformed_json", http_qualifier.QualifierBadReply),
++        ("malformed_label", http_qualifier.QualifierBadReply),
++        ("refusal", http_qualifier.QualifierRefused),
++        ("server_error", http_qualifier.QualifierServerError),
++    ],
++)
++def test_bad_modes_raise_their_error(model: Any, mode: str, error: type[Exception]) -> None:
++    model.set_mode(mode)
++    with pytest.raises(error):
++        http_qualifier.HttpQualifier(model.url, 2.0).qualify("L2", "b@example.test")
++    row = calls(model)[-1]
++    assert (row["mode"], row["lead_id"]) == (mode, "L2")
++    assert row["status"] in (200, 429, 503)
++
++
++def test_rate_limit_carries_retry_after(model: Any) -> None:
++    model.set_mode("rate_limit")
++    with pytest.raises(http_qualifier.QualifierRateLimited) as info:
++        http_qualifier.HttpQualifier(model.url, 2.0).qualify("L3", "c@example.test")
++    assert info.value.retry_after == fake_model.RETRY_AFTER_SECONDS
++
++
++def test_slow_is_slow_but_answers(model: Any) -> None:
++    model.set_mode("slow")
++    t0 = time.monotonic()
++    assert http_qualifier.HttpQualifier(model.url, 3.0).qualify("L4", "d@example.test") in fake_model.LABELS
++    assert time.monotonic() - t0 >= 0.4
++    with pytest.raises(http_qualifier.QualifierTimeout):
++        http_qualifier.HttpQualifier(model.url, 0.1).qualify("L4", "d@example.test")
++
++
++def test_timeout_mode_never_answers_in_time(model: Any) -> None:
++    model.set_mode("timeout")
++    with pytest.raises(http_qualifier.QualifierTimeout):
++        http_qualifier.HttpQualifier(model.url, 0.3).qualify("L5", "e@example.test")
++    model.stop.set()  # release the held call: the client is gone, so the line says 499
++    deadline = time.monotonic() + 3
++    while time.monotonic() < deadline and not (model.call_log.exists() and calls(model)):
++        time.sleep(0.05)
++    assert [(c["mode"], c["lead_id"], c["status"]) for c in calls(model)] == [("timeout", "L5", 499)]
++
++
++def test_mode_switch_over_http_and_file(model: Any, tmp_path: Path) -> None:
++    import urllib.request
++
++    req = urllib.request.Request(  # noqa: S310
++        model.url + "/__mode", b'{"mode": "refusal"}', {"Content-Type": "application/json"}
++    )
++    with urllib.request.urlopen(req, timeout=2) as r:  # noqa: S310
++        assert json.loads(r.read())["mode"] == "refusal"
++    with pytest.raises(http_qualifier.QualifierRefused):
++        http_qualifier.HttpQualifier(model.url, 2.0).qualify("L6", "f@example.test")
++    ctl = tmp_path / "mode.txt"
++    ctl.write_text("server_error", encoding="utf-8")
++    model.control_file = ctl
++    with pytest.raises(http_qualifier.QualifierServerError):
++        http_qualifier.HttpQualifier(model.url, 2.0).qualify("L6", "f@example.test")
++    ctl.write_text(json.dumps({"mode": "ok"}), encoding="utf-8")
++    assert http_qualifier.HttpQualifier(model.url, 2.0).qualify("L6", "f@example.test") in fake_model.LABELS
++
++
++def test_unreachable_model_timeout_class() -> None:
++    with pytest.raises(http_qualifier.QualifierTimeout):
++        http_qualifier.HttpQualifier("http://127.0.0.1:1", 0.5).qualify("L7", "g@example.test")
++
++
++def test_unknown_mode_refused(model: Any) -> None:
++    with pytest.raises(ValueError):
++        model.set_mode("loud")
++    with pytest.raises(ValueError):
++        fake_model.FakeModel(Path("x.jsonl"), mode="loud")
++
++
++def test_model_log_feeds_check_5(model: Any, tmp_path: Path) -> None:
++    q = http_qualifier.HttpQualifier(model.url, 2.0)
++    for _ in range(5):
++        q.qualify("L8", "h@example.test")
++    result = ci.check_model_calls(ci.read_jsonl(model.call_log), 3)
++    assert result["ok"] is False
++    assert result["offenders"] == ["L8"]
