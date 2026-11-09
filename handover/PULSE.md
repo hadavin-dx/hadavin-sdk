@@ -1,1 +1,1 @@
-19:35Z | agents: RUNNING S1d a78a13490f7495a6d (90 min box); mutation abe9c1e4b702e9553 | evid shells: none | unpushed: none | refreshed every 60 s by a bounded script (ends 21:45Z); detail in HEARTBEAT.md
+19:36Z | agents: RUNNING S1e a79f92b7ec51489cd; L2d a3bc3479deca4ea1c; mutation abe9c1e4b702e9553. S1d done (diff applies clean on A4r3) | evid shells: none | unpushed: none | refreshed every 60 s by a bounded script (ends 21:46Z); detail in HEARTBEAT.md
