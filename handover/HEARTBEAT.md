@@ -745,3 +745,4 @@ PULSE 13:39Z agents: A a5e33f7e4aa487492 (WP-A fix pass 2, box 14:20Z). RAC clos
 PULSE 13:39Z agents: A a5e33f7e4aa487492 (WP-A fix pass 2, box 14:20Z). F closed d2728a2 (waits for A's constants). shells: pulse_refresh.sh pid 29978 (ends ~14:04Z). core frozen (ORDER 198).
 PULSE 13:43Z agents: A a5e33f7e4aa487492 (WP-A fix pass 2, box 14:20Z). F closed d2728a2. shells: pulse_refresh.sh pid 29978 (ends ~14:04Z). core frozen (ORDER 198).
 PULSE 13:50Z agents: A a5e33f7e4aa487492 (WP-A fix pass 2 + ORDER 208 Retry on unknown, box 14:20Z). F closed d2728a2; patch-portal-F2.diff pushed. shells: pulse_refresh2.sh (restarted, to 15:55Z). core frozen.
+PULSE 13:49Z agents: A a5e33f7e4aa487492 (WP-A fix pass 2 + ORDER 208, box 14:20Z). F closed d2728a2. shells: pulse_refresh2.sh pid 10898 (to 15:55Z). core frozen (ORDER 198).
