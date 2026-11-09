@@ -1481,3 +1481,10 @@ CHECKED BY ME: builder report saved at handover/reports/PR75-round2-fix-builder-
 NOT RUN: independent evidence at a8abba0 (builder ran the full suite at 48dcdb8 only), a1 harness mutants, Python 3.12, Postgres 17.10, perf tests, round 3 reviewers (money path, no cap), real GitHub check list.
 DECISIONS FOR LEAD (defaults if no answer in 30 min; money path: default = no READY, no merge, keep waiting): (1) migration 0006 was edited in place; core/P2a-1, P4a, P4b1, P6b1 hold copies and must rebase; default: nobody rebases until "GO core". (2) Left-over nits (column list for spend_reservations grant, kill_switch _RW, Decimal restatement): default: they go into round 3 as findings, not deferred silently.
 NEXT: after "GO core": evidence runner at a8abba0 (py3.12 + 3.13, Postgres, a1 mutants), round 3 reviewers, real GitHub list.
+
+## q415 PR89 fixes pushed (09:45Z)
+CHECKED BY ME: builder ran ruff, 147 tests, full suite 10104 passed/455 skipped (see handover/reports/PR89-builder-report.md). Head 6706e67 pushed to core/mutation-runner-keywords (fast-forward from 59f62a3).
+NOT RUN: independent evidence (both Pythons, Postgres), ORDER 196 Linux mutants, fresh reviewers, GitHub checks.
+DECISIONS FOR LEAD: always-on FIXTURE ERROR changes default behaviour for demos that copy the runner: accept?
+DEFAULT (30 min): no READY; wait for "GO core" (ORDER 198), then evidence at 6706e67, mutants at 59f62a3 and 6706e67, fresh reviewers. Safe: nothing merges, no behaviour change reaches a demo.
+NEXT: wait.
