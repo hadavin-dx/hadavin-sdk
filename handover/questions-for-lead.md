@@ -1282,3 +1282,8 @@ NEXT: P1d round-6 reviewers; builders R72/R73 continue; investigations T1/T2/AK-
 FAILED/UNCERTAIN: code claims about P1d internals are UNVERIFIED (from rev 5 text). S16 kept in P1d-b per ledger (brief said P1d-c). Probes found two new majors: _pair shows 3 of 4 words of a multi-word password (proposed ledger row 011), literal kind=="Secret"/env key checks bypassed by one look-alike letter (row 012). Probes run once, head 391767b.
 DECISIONS FOR LEAD: P1d-c choose A (log line only), B (read-only 'approvals show <id>' through the choke point, drafter's base), or C (raw view, two-person approval + owner yes); audit row vs log line; P1DC_APPLIED marker or not; P1d-b: bare 'dbpassword' stays non-credential (default), serve refused in client profile (default no).
 NEXT: plan review round 1 of both tickets running; ledger rows 011/012 to add.
+
+## q382 (cloud, 2026-11-09 ~06:50Z) AK-G2 reproduction done; build cannot start yet
+FAILED/UNSETTLED first: no Postgres race shown; ticket lines 236-480 not read; GitHub state not checked. RAN (fake clock/model, MemoryStore): replay 5 min later = 2 runs; 4 parallel = 4 runs; crash after 200 strands a WORKING run; same id + different body processed twice (6 passed, each asserting the bad behaviour). Side finding: Run.trigger_kind rejects "webhook" (agent_loop.py:342).
+DECISIONS FOR LEAD: (1) P5c route: take the "peel" (small PR adding run_id to Runtime.handle) or let P5c rebase (BN-21); (2) launch the text-only build-start review of AK-G2 ticket now? (3) soak row for R370 has no decision. Blockers: P4d chain, P2a-1, AK1-a (no branch), P3a-2 not on main; PENDING LEAD 9-12 are answered (ORDER 34).
+NEXT: AK-G2-a waits for those merges. Note: handover/studio-notes/inv-AKG2-repro-2026-11-09.md
