@@ -1,0 +1,4 @@
+HEAD 2b0941b7092e09a209c9808dcc8aab20b109869f; py 313; ruff format --check src tests demos tools
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+322 files already formatted
+exit=0
