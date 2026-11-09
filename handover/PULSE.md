@@ -1,1 +1,1 @@
-20:39Z | agents: RUNNING S1f a09c6dbe1df88ed49; slow-scenarios-long-drain a937c4040177747bb | evid shells: none | unpushed: none | refreshed every 60 s by a bounded script (ends 22:49Z); detail in HEARTBEAT.md
+20:40Z | agents: RUNNING S1f a09c6dbe1df88ed49; slow-scenarios-long-drain a937c4040177747bb | evid shells: none | unpushed: none | refreshed every 60 s by a bounded script (ends 22:50Z); detail in HEARTBEAT.md
