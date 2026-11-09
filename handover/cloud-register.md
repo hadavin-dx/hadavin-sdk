@@ -780,3 +780,5 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | rv-P1b-code | egm:egm-codebase-details fresh reviewer (Sonnet) same snapshot | 2026-11-09T03:53Z | RUNNING |
 | bd-recon-P6a1 | Sonnet builder: reconstruct p6a1_mutants_by_hand.py, work dir /home/user/build/recon/p6a1 | 2026-11-09T03:53Z | RUNNING |
 | bd-recon-P3a2 | Sonnet builder: reconstruct P3a-2 66-mutant runner + gen_evidence, work dir /home/user/build/recon/p3a2 | 2026-11-09T03:53Z | RUNNING |
+| rv-P1d-design | egm-design plan review r1 of tickets/P1d.md (direct dispatch) | 2026-11-09T03:53Z | RUNNING |
+| rv-P1d-ready | egm-implementation-readiness plan review r1 of tickets/P1d.md | 2026-11-09T03:53Z | RUNNING |
