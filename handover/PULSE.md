@@ -1,1 +1,1 @@
-21:38Z | agents: RUNNING none (S1i done; round 7 reviewers about to start) | evid shells: none | unpushed: none | refreshed every 60 s by a bounded script (ends 23:48Z); detail in HEARTBEAT.md
+21:39Z | agents: RUNNING round7-security a6b3204c6bc25e3ae, round7-code-tests aedd81322aedd62b7 (read-only reviews of A4r7) | evid shells: none | unpushed: none | refreshed every 60 s by a bounded script (ends 23:49Z); detail in HEARTBEAT.md
