@@ -690,3 +690,4 @@ PULSE 10:27Z agents: a8aff4ab bd-dpld-fix (A, running pytest on its own tests; 2
 - 11:07Z PULSE: agents: af10ecd0 bd-dpld-fix3 (A3, running 10m: source+18 tests written, gating) | shells: none | pushed: hostile-linux-2/3, linux-load-3/4, cloud-review-1/2 | next: gate fix5, patch-cloud-1.diff, cloud-fix-1.md
 PULSE 11:12Z agents: a3e0c390 A4 builder dpld fix6 (running); shells: full-pytest x3 on dpld5 (monitor bdidmas3w); core idle NOT yet written (freeze ORDER 198); saved cloud-review-3.md
 PULSE 11:13Z agents: a3e0c390 A4 builder dpld fix6 (running, box 25m); shells: pytest run3 on dpld5 (pid 16208); core idle not yet written (freeze ORDER 198)
+PULSE 11:17Z agents: a3e0c390 A4 builder dpld fix6 (running 5m, checkpoint written, full pytest in progress); no other shells of mine; core idle not yet written (freeze ORDER 198)
