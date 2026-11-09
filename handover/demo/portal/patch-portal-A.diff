@@ -1,0 +1,3711 @@
+diff --git a/README.md b/README.md
+index e6dce1b..459f088 100644
+--- a/README.md
++++ b/README.md
+@@ -186,9 +186,9 @@ Windows PowerShell (Python 3.13 matches the lock file; from the repository root)
+     python -m pip install --require-hashes -r requirements-dev-win.txt     # only needed for the tests
+     powershell -NoProfile -File scripts\start_all.ps1 keyed                # or: blind. Starts the fake servers and the desk
+     $env:PYTHONPATH = "src"
+-    python scriptseed.py --source form --index 1       # a web-form lead: verdict new
+-    python scriptseed.py --source form --index 1       # the same request id again: replayed true, nothing changes
+-    python scriptseed.py --source webhook --index 1    # the same person through the email door: verdict duplicate
++    python scripts\feed.py --source form --index 1       # a web-form lead: verdict new
++    python scripts\feed.py --source form --index 1       # the same request id again: replayed true, nothing changes
++    python scripts\feed.py --source webhook --index 1    # the same person through the email door: verdict duplicate
+     Invoke-WebRequest http://127.0.0.1:8765/counts | Select-Object -ExpandProperty Content   # received 2, new 1, duplicate 1
+     Invoke-WebRequest http://127.0.0.1:8766/fake/outbox | Select-Object -ExpandProperty Content   # 1 email
+     Invoke-WebRequest http://127.0.0.1:8766/fake/crm | Select-Object -ExpandProperty Content      # 1 CRM row
+@@ -220,6 +220,10 @@ The checks defined in `.github/workflows/lint.yml`: ruff, mypy, bandit, a schema
+ hardcoded addresses, links, absolute paths, e-mail addresses and long tokens, and all tests except `test_hygiene_wordlist`, which needs a
+ private word list that is never published and is run only on the author's computer. `.env` files are never used: the demo needs no secrets.
+ 
++## The portal (read-only pages)
++
++`/ui/` shows the lead book in a browser: a summary that adds up, the leads, and the items that need a person. The pages read the lead book through a second, read-only database connection (a write through it fails, and one test shows that); the buttons that retry or resolve an item call the same `/review` routes as everything else. Every request, including the pages, must come with a `Host` header that names this computer (or a name from `DESK_ALLOWED_HOSTS`), and a request from a page on another address (a different `Origin`, or `Sec-Fetch-Site` other than `same-origin`) is refused with 403 before anything is read. There is no login: the desk listens on this computer only. The exact routes are in `contract.md`.
++
+ ## Settings
+ 
+ Every setting has a default in `Config` (`src/lead_desk/config.py`) and an environment variable. A bad value stops the start with an error.
+@@ -236,6 +240,7 @@ Every setting has a default in `Config` (`src/lead_desk/config.py`) and an envir
+ | `send_timeout_seconds` | `DESK_SEND_TIMEOUT_SECONDS` | `5.0` | wait per network step, also for the CRM call |
+ | `size_cap_bytes` | `DESK_SIZE_CAP_BYTES` | `65536` | largest request body accepted (larger gets 413) |
+ | `stall_seconds` | `DESK_STALL_SECONDS` | `120` | after this long an unfinished item shows as `stalled` on the review list |
++| `allowed_hosts` | `DESK_ALLOWED_HOSTS` | none | extra names a caller may use in the `Host` header (comma list, lower case). The desk always accepts `127.0.0.1`, `localhost`, `[::1]` and its bind address. n8n in Docker reaches the desk by the host name Docker gives the computer (host.docker.internal): set `DESK_BIND` to the address the desk must listen on and `DESK_ALLOWED_HOSTS` to that name |
+ 
+ Fixed in code, not settings: SQLite busy wait, listen queue length and lock retries (`constants.py`).
+ 
+diff --git a/contract.md b/contract.md
+index fa04140..5be5756 100644
+--- a/contract.md
++++ b/contract.md
+@@ -38,7 +38,7 @@ There is no build-system. Scripts set `PYTHONPATH=src` (and run from the repo ro
+ `requirements-dev.txt` is the authority: Linux x86_64, Python 3.12 (CI and containers). `requirements-dev-win.txt` is the Windows lock for the author's laptop (Python 3.13, made with `uv pip compile requirements-dev.in --generate-hashes --python-version 3.13 --python-platform windows --no-strip-extras`); it has the same pins plus `colorama`. Install with `pip install --require-hashes -r <that file>`. Both files are regenerated together when `requirements-dev.in` changes. Quality commands (all must pass): `ruff check .`, `ruff format --check .`, `mypy --platform linux`, `mypy --platform win32`, `bandit -ll -r src tools -c pyproject.toml`, `python scripts/check_schema.py`.
+ 
+ ## Config environment names
+-`Config.fakes_url` is a read-only property built from `fakes_host` and `fakes_port`. Env names: `DESK_DB_PATH, DESK_BIND, DESK_PORT, DESK_ADAPTERS, DESK_FAKES_URL, DESK_FAKES_HOST, DESK_FAKES_PORT, DESK_REPLIES_PATH, DESK_SEND_TIMEOUT_SECONDS, DESK_SIZE_CAP_BYTES, DESK_STALL_SECONDS`. `DESK_FAKES_URL` wins over `DESK_FAKES_HOST` / `DESK_FAKES_PORT`; its scheme must be `http` (anything else raises `ValueError`), a path other than empty or `/` raises `ValueError`, a query, fragment and userinfo are ignored (only host and port are taken); an IPv6 host keeps its brackets.
++`Config.fakes_url` is a read-only property built from `fakes_host` and `fakes_port`. Env names: `DESK_DB_PATH, DESK_BIND, DESK_PORT, DESK_ADAPTERS, DESK_FAKES_URL, DESK_FAKES_HOST, DESK_FAKES_PORT, DESK_REPLIES_PATH, DESK_SEND_TIMEOUT_SECONDS, DESK_SIZE_CAP_BYTES, DESK_STALL_SECONDS, DESK_ALLOWED_HOSTS`. `DESK_FAKES_URL` wins over `DESK_FAKES_HOST` / `DESK_FAKES_PORT`; its scheme must be `http` (anything else raises `ValueError`), a path other than empty or `/` raises `ValueError`, a query, fragment and userinfo are ignored (only host and port are taken); an IPv6 host keeps its brackets.
+ 
+ ## Demo files
+ `demo_only/replies.json`: one JSON object, key = the normalised email key of a canned lead, value = `"hot"`, `"warm"` or `"cold"`. The canned leads file is `demo_only/canned_leads.json`: a JSON array of lead payloads (the payload shape of the HTTP table, made-up data), one per canned person. `test_demo_adapters` checks every canned lead email has a `replies.json` entry. `canned_leads.json` entries are payloads only: they carry NO `source` / `source_ref`; the scripts and tests that post them build the envelope with `source` = `form` or `webhook` (the envelope values of the HTTP table) and `source_ref` = `canned-<i>` where `<i>` is the position in the array (starting at 1). `RecordedQualifier` loading rules (fail loud): a missing `replies.json` or malformed JSON makes the constructor raise (never a silent empty mapping); a key with no entry answers `warm`; an entry whose value is not `hot`, `warm` or `cold` raises a `KeyError`-class error that names the bad label. `demo_only/fakes.py`, `fakes_server.py` and `burst.py` hold the fake CRM, the fake outbox, the recorded AI step, the fake servers and the burst script.
+@@ -55,6 +55,12 @@ One private method `Desk._send_claimed(lead_id)` does the send and the recording
+ ## Crash hook ownership
+ `lead_desk.hooks.FlagFileHooks(flag_path)` is the single shared hook for every subprocess crash. It reads a one-shot flag file (the path comes from config or the launcher, content = a point name), deletes it, prints "simulate crash" and calls `os._exit(137)`. `tests/crash_launcher.py` and `scripts/video_crash.py` contain no hook code: each only calls `lead_desk.server.main(hooks=FlagFileHooks(path))`. In-process tests use their own `Hooks` subclass that raises `SimulatedCrash`. Hook A fires only when this call created the receipt row; hook B fires only when this call committed transaction 2 (a replay never fires either).
+ 
++## Host and Origin gate
++Every request, on every route, passes `_gate_error` in `server.py` before the path is read. (1) `Host` is required (sent once) and its name, port ignored and lower-cased, must be `127.0.0.1`, `localhost`, `[::1]`, the bind address (not when it is a wildcard address), or a name in `Config.allowed_hosts` (`DESK_ALLOWED_HOSTS`, comma list, each name `^[a-z0-9.-]{1,253}$` or an IPv6 address in brackets). Otherwise 403 `{"error":"forbidden_host"}`. (2) An `Origin` header, if present (sent once), must equal `http://<allowed name>:<bound port>` exactly; `null` and anything else give 403 `{"error":"forbidden_origin"}`. (3) A `Sec-Fetch-Site` header, if present, must be `same-origin` or `none`, else 403 `{"error":"forbidden_origin"}`. A refused request writes nothing: no receipt, no count in `rejected_envelopes`; its body is read and dropped before the reply. Requests without `Origin` and `Sec-Fetch-Site` (n8n's server side, scripts, tests) pass on `Host` alone. A caller that reaches the desk under another name (for example n8n in Docker, which uses the host name Docker gives the computer, host.docker.internal) sets `DESK_BIND` to the address the desk must listen on and `DESK_ALLOWED_HOSTS` to that name.
++
++## Portal routes
++Read-only pages for a person: `GET /ui` answers 308 to `/ui/`; `GET /ui/<file>` serves one of the `.html`, `.css`, `.js` files found under `src/lead_desk/portal/` when the server started (a fixed map, never a path read from the request; anything else is 404); `/ui/demo/<file>` serves a file of the demo extension when one is installed, else 404. `GET /api/ui/summary`, `/api/ui/leads`, `/api/ui/leads/<lead_id>` and `/api/ui/review` answer JSON built from ONE read transaction on a separate read-only connection (`mode=ro`, `PRAGMA query_only=ON`): a write through it fails. Any other method on these routes is 405. `/api/demo/<rest>` goes to the demo extension (any method; 404 when none is installed; a POST body must be `application/json`, else 400 `{"error":"bad_body"}`, and at most `DEMO_BODY_MAX` bytes are handed on). Every reply, JSON or file, carries `Content-Security-Policy` (no inline script or style, no `data:`), `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`, `Cross-Origin-Resource-Policy: same-origin` and `Cache-Control: no-store`.
++
+ ## Further rules
+ * `Config.replies_path` defaults to `None` ("the loader supplies its own default"): `load_demo_adapters` then uses the `replies.json` that sits next to the demo folder's package, found from the package file, not from the working directory. `DESK_REPLIES_PATH` still sets it. `loader.py` is the only product module that names the demo folder (a test enforces it).
+ * A submission with no email (a phone-only lead) has no lead key: verdict `review`, reason `incomplete:email` (or `incomplete:name,email` when the name is also missing); it is never merged and never dropped.
+@@ -96,6 +102,17 @@ All desk replies are JSON with `Content-Length` and `Connection: close`. `receip
+ | | 409 | `{"error":"not_unknown\|not_actionable","hint":"..."}` |
+ | `GET /counts?expected=N` | 200 | `{"received","new","duplicate","review","open","rejected_envelopes","pending_followups","expected_match":true\|false\|null,"ok":true\|false\|null}` |
+ | | 400 | `{"error":"bad_expected"}` (not an integer, or negative) |
++| `GET /ui` | 308 | `Location: /ui/`, empty body |
++| `GET /ui/`, `GET /ui/<file>` | 200 | the portal file (`text/html`, `text/css` or `text/javascript`, UTF-8) |
++| | 404 | `{"error":"not_found"}` (no such file, `..`, a second slash, or a file type that is not served) |
++| `GET /api/ui/summary` | 200 | `{now, desk_started_at, counts{received,new,duplicate,review,open}, reconciled, refused_at_door, needs_action, waiting, followups{pending,sending,sent,failed,unknown}, doors[{source,received,last_seen}], series{bucket_seconds,time_field,buckets[{t,new,duplicate,review}]}, recent[{at,kind,receipt_id,lead_id,name,source,source_ref,verdict,state}]}` (times are epoch seconds; `reconciled` = received equals new + duplicate + review + open) |
++| `GET /api/ui/leads?q=&state=&offset=&limit=` | 200 | `{now, rows[{lead_id,name,email,company,source,first_request_id,created_at,state,ai_label,attempts,arrivals,repeats,updated_at}], total, offset, limit}` (`q` at most 100 characters and no control character; `state` a follow-up state or empty; `offset` 0..100000; `limit` 1..100, default 50) |
++| | 400 | `{"error":"bad_query","field":"<name>"}` (unknown, repeated or out-of-range parameter; also on the other `/api/ui` routes for any parameter) |
++| `GET /api/ui/leads/{lead_id}` | 200 | `{now, lead{...}, followup{...}, first_receipt{...}, duplicates[...] (at most 50), duplicates_total, review_items[...]}` |
++| | 404 | `{"error":"not_found"}` (also when `lead_id` is not `L` plus 12 lower-case hex characters) |
++| `GET /api/ui/review` | 200 | `{now, items[{...the /review fields, lead_name, tab, title, reason_text, actions[{id,label,endpoint,body,confirm}]}], tabs{action,waiting,info}}` |
++| any `/api/ui/*` | 503 | `{"error":"busy"}` (the read hit a lock that outlasted the wait) |
++| any request | 403 | `{"error":"forbidden_host"}` (Host missing, repeated or not allowed) or `{"error":"forbidden_origin"}` (Origin or Sec-Fetch-Site not from this server); see "Host and Origin gate" |
+ 
+ Fakes server (separate process; default `127.0.0.1:8766`; started with `--outbox keyed|blind --port 8766`). Every reply includes `"mode":"keyed|blind"`.
+ * `POST /fake/outbox` `{"key","to","subject","body"}` -> keyed mode: 200 `{"status":"sent","mode":"keyed"}` the first time for a key and 200 `{"status":"already_sent","mode":"keyed"}` after; blind mode: always 200 `{"status":"sent","mode":"blind"}` and every post is stored. Bad body: 400 `{"error":"bad_body"}`.
+diff --git a/exceptions.txt b/exceptions.txt
+index d2be099..84ba533 100644
+--- a/exceptions.txt
++++ b/exceptions.txt
+@@ -9,4 +9,6 @@
+ ^\.gitleaksignore:[0-9]+:[0-9a-f]{40}$
+ ^requirements-dev(-win)?\.txt:[0-9]+:[0-9a-f]{64}$
+ ^src/lead_desk/desk\.py:[0-9]+:threading\.local[^A-Za-z0-9_-]?$
+-^tests/[a-z_0-9]+\.py:[0-9]+:test_[a-z0-9]{1,12}(_[a-z0-9]{1,12}){0,6}$
++^tests/[a-z_0-9]+\.py:[0-9]+:test_[a-z0-9]{1,12}(_[a-z0-9]{1,12}){0,8}$
++^tests/test_server_hardening\.py:[0-9]+:http:/{2}[a]:[b]:[c]/$
++^(README|contract)\.md:[0-9]+:host\.docker\.internal[^A-Za-z0-9-]?$
+diff --git a/src/lead_desk/config.py b/src/lead_desk/config.py
+index 319a8bc..60aa067 100644
+--- a/src/lead_desk/config.py
++++ b/src/lead_desk/config.py
+@@ -3,12 +3,15 @@
+ from __future__ import annotations
+ 
+ import os
++import re
+ from dataclasses import dataclass
+ from pathlib import Path
+ from typing import Any, Mapping
+ from urllib.parse import urlsplit
+ 
+-from lead_desk.constants import ADAPTER_CHOICES, PORT_MAX
++from lead_desk.constants import ADAPTER_CHOICES, HOST_NAME_MAX, PORT_MAX
++
++_HOST_NAME = re.compile(r"^[a-z0-9.-]{1,%d}$|^\[[0-9a-f:]+\]$" % HOST_NAME_MAX)
+ 
+ 
+ @dataclass(frozen=True)
+@@ -23,6 +26,7 @@ class Config:
+     send_timeout_seconds: float = 5.0  # per network operation; also used for the CRM call
+     size_cap_bytes: int = 65536
+     stall_seconds: int = 120
++    allowed_hosts: tuple[str, ...] = ()  # extra Host names the portal gate accepts (for example a Docker host name)
+ 
+     @property
+     def fakes_url(self) -> str:
+@@ -44,12 +48,16 @@ class Config:
+             raise ValueError("size_cap_bytes must be positive")
+         if self.stall_seconds < 0:
+             raise ValueError("stall_seconds must not be negative")
++        for name in self.allowed_hosts:
++            if not _HOST_NAME.fullmatch(name):
++                raise ValueError("allowed_hosts holds a name that is not a lower-case host name")
+ 
+     @classmethod
+     def from_env(cls, env: Mapping[str, str] | None = None) -> Config:
+         """Read DESK_DB_PATH, DESK_BIND, DESK_PORT, DESK_ADAPTERS, DESK_FAKES_URL (split into host and port),
+         DESK_FAKES_HOST, DESK_FAKES_PORT, DESK_REPLIES_PATH, DESK_SEND_TIMEOUT_SECONDS, DESK_SIZE_CAP_BYTES,
+-        DESK_STALL_SECONDS. Missing names keep the defaults above. Bad values raise ValueError.
++        DESK_STALL_SECONDS, DESK_ALLOWED_HOSTS (comma list of extra Host names). Missing names keep the defaults
++        above. Bad values raise ValueError.
+         Precedence: DESK_FAKES_URL wins over DESK_FAKES_HOST / DESK_FAKES_PORT when both are set. The URL scheme
+         must be http (anything else raises ValueError). A non-empty URL path other than "/" raises ValueError (it
+         would be silently dropped otherwise). A query, a fragment and userinfo (`user:pw@`) are ignored: only the
+@@ -86,4 +94,8 @@ class Config:
+             kw["size_cap_bytes"] = int(e["DESK_SIZE_CAP_BYTES"])
+         if "DESK_STALL_SECONDS" in e:
+             kw["stall_seconds"] = int(e["DESK_STALL_SECONDS"])
++        if "DESK_ALLOWED_HOSTS" in e:
++            kw["allowed_hosts"] = (
++                tuple(n.strip() for n in e["DESK_ALLOWED_HOSTS"].split(",")) if e["DESK_ALLOWED_HOSTS"].strip() else ()
++            )
+         return cls(**kw)
+diff --git a/src/lead_desk/constants.py b/src/lead_desk/constants.py
+index acc7516..8cc9607 100644
+--- a/src/lead_desk/constants.py
++++ b/src/lead_desk/constants.py
+@@ -69,3 +69,36 @@ MAX_DIGITS: Final = 18  # longest Content-Length or item number taken as a numbe
+ REPLY_MAX_BYTES: Final = (
+     1_048_576  # an adapter reply longer than this is refused unread (the fakes answer a few hundred bytes)
+ )
++
++# Portal (read-only pages and JSON under /ui and /api/ui)
++HTTP_FORBIDDEN: Final = 403
++HTTP_PERMANENT_REDIRECT: Final = 308
++SEARCH_MAX: Final = 100  # longest `q` of /api/ui/leads, in characters
++OFFSET_MAX: Final = 100_000
++LEADS_LIMIT_MAX: Final = 100
++LEADS_LIMIT_DEFAULT: Final = 50
++DUPLICATES_MAX: Final = 50  # repeats listed for one lead (the total is always given)
++FEED_ITEMS: Final = 12  # newest events in the Overview feed
++SERIES_BUCKETS: Final = 60
++SERIES_BUCKET_SECONDS: Final = 5
++DEMO_BODY_MAX: Final = 4096  # longest request body handed to the demo extension
++HOST_NAME_MAX: Final = 253
++LEAD_ID_PATTERN: Final = r"^L[0-9a-f]{12}$"  # LEAD_ID_PREFIX + LEAD_ID_HEX_CHARS lower-case hex characters
++SECURITY_HEADERS: Final = (
++    (
++        "Content-Security-Policy",
++        "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; "
++        "base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
++    ),
++    ("X-Content-Type-Options", "nosniff"),
++    ("Referrer-Policy", "no-referrer"),
++    ("Cross-Origin-Resource-Policy", "same-origin"),
++    ("Cache-Control", "no-store"),
++)
++STATIC_TYPES: Final = {
++    ".html": "text/html; charset=utf-8",
++    ".css": "text/css; charset=utf-8",
++    ".js": "text/javascript; charset=utf-8",
++}
++SAME_SITE_VALUES: Final = ("same-origin", "none")  # Sec-Fetch-Site values the gate lets through
++LOOPBACK_HOSTS: Final = ("127.0.0.1", "localhost", "[::1]")
+diff --git a/src/lead_desk/desk.py b/src/lead_desk/desk.py
+index 3779c08..09c0fa1 100644
+--- a/src/lead_desk/desk.py
++++ b/src/lead_desk/desk.py
+@@ -294,6 +294,11 @@ class Desk:
+         with self._rejected_lock:
+             self._rejected += 1
+ 
++    def rejected_envelopes(self) -> int:
++        """How many requests the front door refused without a receipt (shown by the portal)."""
++        with self._rejected_lock:
++            return self._rejected
++
+     # -- start-up
+     def _refresh_outbox(self) -> bool:
+         """Read the sender's capability again when the adapter can (HttpOutbox.refresh). False when it could not."""
+diff --git a/src/lead_desk/loader.py b/src/lead_desk/loader.py
+index 9a032cc..55e3bf7 100644
+--- a/src/lead_desk/loader.py
++++ b/src/lead_desk/loader.py
+@@ -3,12 +3,39 @@
+ from __future__ import annotations
+ 
+ import importlib
++from collections.abc import Mapping
+ from pathlib import Path
++from typing import TYPE_CHECKING, Any, Protocol, cast
+ 
+ from lead_desk.adapters import HttpCrm, HttpOutbox
+ from lead_desk.config import Config
+ from lead_desk.contract import Crm, Outbox, Qualifier
+ 
++if TYPE_CHECKING:
++    from lead_desk.desk import Desk
++
++_DEMO_MODULES = ("demo_only", "demo_only.portal_demo")
++
++
++class DemoPortal(Protocol):
++    """What the portal needs from the demo extension (demo_only/portal_demo.py)."""
++
++    assets: Mapping[str, tuple[bytes, str]]  # "portal_demo.js" -> (bytes, "text/javascript; charset=utf-8")
++
++    def handle(self, method: str, path: str, body: bytes) -> tuple[int, Any]: ...
++
++
++def load_demo_portal(desk: Desk) -> DemoPortal | None:
++    """None ONLY when the demo module is absent: ModuleNotFoundError whose .name is "demo_only" or
++    "demo_only.portal_demo". Any other import error propagates (a broken extension fails loud)."""
++    try:
++        mod = importlib.import_module("demo_only.portal_demo")
++    except ModuleNotFoundError as e:
++        if e.name in _DEMO_MODULES:
++            return None
++        raise
++    return cast(DemoPortal, mod.make(desk))
++
+ 
+ def load_demo_adapters(config: Config) -> tuple[Crm, Outbox, Qualifier]:
+     """Build HttpCrm and HttpOutbox on config.fakes_url and a RecordedQualifier on config.replies_path
+diff --git a/src/lead_desk/portal_api.py b/src/lead_desk/portal_api.py
+new file mode 100644
+index 0000000..cedf9d0
+--- /dev/null
++++ b/src/lead_desk/portal_api.py
+@@ -0,0 +1,530 @@
++"""Read-only JSON for the portal pages (GET /api/ui/*) and the fixed list of portal files (GET /ui/*).
++
++Every endpoint opens its OWN read-only SQLite connection (mode=ro plus PRAGMA query_only), starts one read
++transaction, runs fixed SQL with parameters, and closes. So every number of one reply comes from one snapshot, a
++write through this module fails, and the desk's write connections are never used for a page. Standard library only.
++"""
++
++from __future__ import annotations
++
++import json
++import re
++import sqlite3
++import time
++from collections.abc import Iterator
++from contextlib import contextmanager
++from pathlib import Path
++from typing import Any, Final
++from urllib.parse import parse_qs
++
++from lead_desk import db, identity
++from lead_desk.constants import (
++    BUSY_WAIT_SECONDS,
++    DUPLICATES_MAX,
++    FEED_ITEMS,
++    FOLLOWUP_STATES,
++    HTTP_BAD_REQUEST,
++    HTTP_BUSY,
++    HTTP_NOT_FOUND,
++    HTTP_OK,
++    LEAD_ID_PATTERN,
++    LEADS_LIMIT_DEFAULT,
++    LEADS_LIMIT_MAX,
++    MAX_DIGITS,
++    OFFSET_MAX,
++    SEARCH_MAX,
++    SERIES_BUCKET_SECONDS,
++    SERIES_BUCKETS,
++    SOURCES,
++    STATIC_TYPES,
++    VERDICTS,
++)
++from lead_desk.desk import HINT_INTERNAL_ERROR, HINTS, Desk
++
++PORTAL_DIR: Final = Path(__file__).resolve().parent / "portal"
++_LEAD_ID = re.compile(LEAD_ID_PATTERN)
++_NOT_FOUND: Final = (HTTP_NOT_FOUND, {"error": "not_found"})
++_TAB_ORDER: Final = ("action", "waiting", "info")
++
++
++def build_static(root: Path) -> dict[str, tuple[bytes, str]]:
++    """Every .html, .css and .js file under root: relative posix path -> (bytes, content type). Other files and a
++    missing folder give nothing. Read once; the server never opens a path taken from a request."""
++    out: dict[str, tuple[bytes, str]] = {}
++    if not root.is_dir():
++        return out
++    for p in sorted(root.rglob("*")):
++        kind = STATIC_TYPES.get(p.suffix)
++        if kind is not None and p.is_file():
++            out[p.relative_to(root).as_posix()] = (p.read_bytes(), kind)
++    return out
++
++
++STATIC: Final[dict[str, tuple[bytes, str]]] = build_static(PORTAL_DIR)
++
++
++# -- the read-only connection
++def connect_readonly(db_path: Path | str) -> sqlite3.Connection:
++    """A connection that cannot write: the file is opened mode=ro and PRAGMA query_only is on."""
++    uri = Path(db_path).resolve().as_uri() + "?mode=ro"
++    conn = sqlite3.connect(uri, uri=True, timeout=BUSY_WAIT_SECONDS, isolation_level=None)
++    try:
++        conn.execute("PRAGMA query_only=ON")
++    except BaseException:
++        conn.close()
++        raise
++    return conn
++
++
++@contextmanager
++def _snapshot(desk: Desk) -> Iterator[sqlite3.Connection]:
++    """One read transaction: every SELECT inside sees the same committed state."""
++    conn = connect_readonly(desk.config.db_path)
++    try:
++        conn.execute("BEGIN")
++        yield conn
++        conn.execute("COMMIT")
++    finally:
++        conn.close()
++
++
++# -- query strings
++def _digits(raw: str, low: int, high: int) -> int | None:
++    if not (raw.isascii() and raw.isdecimal()) or len(raw.lstrip("0")) > MAX_DIGITS:
++        return None
++    n = int(raw)
++    return n if low <= n <= high else None
++
++
++def _params(query: str, allowed: tuple[str, ...]) -> tuple[dict[str, str], str | None]:
++    """(values, bad field name). An unknown name or a repeated name is a bad field."""
++    found = parse_qs(query, keep_blank_values=True)
++    for name, values in found.items():
++        if name not in allowed or len(values) != 1:
++            return {}, name[:SEARCH_MAX]
++    return {name: values[0] for name, values in found.items()}, None
++
++
++def _bad_query(field: str) -> tuple[int, dict[str, Any]]:
++    return HTTP_BAD_REQUEST, {"error": "bad_query", "field": field}
++
++
++# -- entry point
++def handle(desk: Desk, endpoint: str, query: str, started_at: int) -> tuple[int, dict[str, Any]]:
++    """(status, JSON object) for GET /api/ui/<endpoint>. A lock that outlasts the wait is a 503."""
++    try:
++        return _handle(desk, endpoint, query, started_at)
++    except sqlite3.OperationalError as e:
++        if db.is_busy(e):
++            return HTTP_BUSY, {"error": "busy"}
++        raise
++
++
++def _handle(desk: Desk, endpoint: str, query: str, started_at: int) -> tuple[int, dict[str, Any]]:
++    parts = endpoint.split("/")
++    match parts:
++        case ["summary"]:
++            _, bad = _params(query, ())
++            return _bad_query(bad) if bad is not None else (HTTP_OK, _summary(desk, started_at))
++        case ["leads"]:
++            return _leads(desk, query)
++        case ["leads", lead_id]:
++            _, bad = _params(query, ())
++            if bad is not None:
++                return _bad_query(bad)
++            return _lead_detail(desk, lead_id) if _LEAD_ID.fullmatch(lead_id) else _NOT_FOUND
++        case ["review"]:
++            _, bad = _params(query, ())
++            return _bad_query(bad) if bad is not None else _review(desk)
++        case _:
++            return _NOT_FOUND
++
++
++# -- summary
++_COUNTS = """
++SELECT (SELECT count(*) FROM receipts),
++       (SELECT count(*) FROM receipts WHERE outcome = 'new'),
++       (SELECT count(*) FROM receipts WHERE outcome = 'duplicate'),
++       (SELECT count(*) FROM receipts WHERE outcome = 'review'),
++       (SELECT count(*) FROM receipts WHERE outcome IS NULL),
++       (SELECT count(*) FROM review_items WHERE kind IN ('review','failed','unknown')),
++       (SELECT count(*) FROM receipts WHERE outcome IS NULL AND received_at < ?)
++     + (SELECT count(*) FROM followups WHERE state IN ('pending','sending') AND updated_at < ?)
++"""
++_FOLLOWUP_COUNTS = "SELECT state, count(*) FROM followups GROUP BY state"
++_DOORS = "SELECT source, count(*), max(received_at) FROM receipts GROUP BY source"
++_SERIES = """
++SELECT outcome, (decided_at / ?) * ? AS bucket, count(*) FROM receipts
++WHERE outcome IS NOT NULL AND decided_at >= ? AND decided_at < ? GROUP BY outcome, bucket
++"""
++_RECENT = """
++SELECT e.at, e.kind, e.receipt_id, e.lead_id, n.name, e.source, e.source_ref, e.verdict, e.state FROM (
++  SELECT * FROM (
++    SELECT received_at AS at, 'received' AS kind, receipt_id, outcome_lead_id AS lead_id, source, source_ref,
++           NULL AS verdict, NULL AS state, 1 AS rank
++      FROM receipts ORDER BY received_at DESC, receipt_id DESC LIMIT :n)
++  UNION ALL
++  SELECT * FROM (
++    SELECT decided_at, 'decided', receipt_id, outcome_lead_id, source, source_ref, outcome, NULL, 2
++      FROM receipts WHERE outcome IS NOT NULL ORDER BY decided_at DESC, receipt_id DESC LIMIT :n)
++  UNION ALL
++  SELECT * FROM (
++    SELECT f.updated_at, 'followup', l.receipt_id, f.lead_id, l.source, NULL, NULL, f.state, 3
++      FROM followups f JOIN leads l USING (lead_id) ORDER BY f.updated_at DESC, l.receipt_id DESC LIMIT :n)
++) e LEFT JOIN leads n ON n.lead_id = e.lead_id
++ORDER BY e.at DESC, e.receipt_id DESC, e.rank DESC LIMIT :n
++"""
++_FEED_KEYS = ("at", "kind", "receipt_id", "lead_id", "name", "source", "source_ref", "verdict", "state")
++
++
++def _summary(desk: Desk, started_at: int) -> dict[str, Any]:
++    now = int(time.time())
++    before = now - desk.config.stall_seconds
++    step = SERIES_BUCKET_SECONDS
++    last_bucket = (now // step) * step
++    first_bucket = last_bucket - (SERIES_BUCKETS - 1) * step
++    with _snapshot(desk) as conn:
++        received, new, dup, review, open_, needs, waiting = conn.execute(_COUNTS, (before, before)).fetchone()
++        by_state = dict(conn.execute(_FOLLOWUP_COUNTS).fetchall())
++        door_rows = {r[0]: r for r in conn.execute(_DOORS)}
++        cells = {(r[0], r[1]): r[2] for r in conn.execute(_SERIES, (step, step, first_bucket, last_bucket + step))}
++        feed = conn.execute(_RECENT, {"n": FEED_ITEMS}).fetchall()
++    return {
++        "now": now,
++        "desk_started_at": started_at,
++        "counts": {"received": received, "new": new, "duplicate": dup, "review": review, "open": open_},
++        "reconciled": received == new + dup + review + open_,
++        "refused_at_door": desk.rejected_envelopes(),
++        "needs_action": needs,
++        "waiting": waiting,
++        "followups": {s: int(by_state.get(s, 0)) for s in FOLLOWUP_STATES},
++        "doors": [
++            {
++                "source": s,
++                "received": door_rows[s][1] if s in door_rows else 0,
++                "last_seen": door_rows[s][2] if s in door_rows else None,
++            }
++            for s in SOURCES
++        ],
++        "series": {
++            "bucket_seconds": step,
++            "time_field": "decided_at",
++            "buckets": [
++                {"t": t, **{v: int(cells.get((v, t), 0)) for v in VERDICTS}}
++                for t in range(first_bucket, last_bucket + step, step)
++            ],
++        },
++        "recent": [dict(zip(_FEED_KEYS, r, strict=True)) for r in feed],
++    }
++
++
++# -- leads
++_LEADS_ROWS = """
++SELECT l.lead_id, l.name, l.email, l.company, l.source, r.source_ref, l.created_at, f.state, f.ai_label,
++       f.attempts, r.attempts,
++       (SELECT count(*) FROM receipts d WHERE d.outcome = 'duplicate' AND d.outcome_lead_id = l.lead_id),
++       f.updated_at
++  FROM leads l JOIN followups f USING (lead_id) JOIN receipts r ON r.receipt_id = l.receipt_id
++ WHERE (:state = '' OR f.state = :state)
++   AND (:q = '' OR l.name LIKE :pat ESCAPE '\\' OR l.email LIKE :pat ESCAPE '\\' OR l.company LIKE :pat ESCAPE '\\'
++        OR l.lead_id LIKE :pat ESCAPE '\\' OR r.source_ref LIKE :pat ESCAPE '\\')
++ ORDER BY l.created_at DESC, l.lead_id DESC LIMIT :limit OFFSET :offset
++"""
++_LEADS_TOTAL = """
++SELECT count(*)
++  FROM leads l JOIN followups f USING (lead_id) JOIN receipts r ON r.receipt_id = l.receipt_id
++ WHERE (:state = '' OR f.state = :state)
++   AND (:q = '' OR l.name LIKE :pat ESCAPE '\\' OR l.email LIKE :pat ESCAPE '\\' OR l.company LIKE :pat ESCAPE '\\'
++        OR l.lead_id LIKE :pat ESCAPE '\\' OR r.source_ref LIKE :pat ESCAPE '\\')
++"""
++_LEAD_KEYS = (
++    "lead_id",
++    "name",
++    "email",
++    "company",
++    "source",
++    "first_request_id",
++    "created_at",
++    "state",
++    "ai_label",
++    "attempts",
++    "arrivals",
++    "repeats",
++    "updated_at",
++)
++
++
++def _like(text: str) -> str:
++    """A LIKE pattern that matches `text` anywhere, with the three special characters taken literally."""
++    return "%" + text.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
++
++
++def _leads(desk: Desk, query: str) -> tuple[int, dict[str, Any]]:
++    values, bad = _params(query, ("q", "state", "offset", "limit"))
++    if bad is not None:
++        return _bad_query(bad)
++    q, state = values.get("q", ""), values.get("state", "")
++    if len(q) > SEARCH_MAX or identity.has_control_char(q):  # a NUL would cut the LIKE pattern short
++        return _bad_query("q")
++    if state and state not in FOLLOWUP_STATES:
++        return _bad_query("state")
++    offset = 0 if "offset" not in values else _digits(values["offset"], 0, OFFSET_MAX)
++    limit = LEADS_LIMIT_DEFAULT if "limit" not in values else _digits(values["limit"], 1, LEADS_LIMIT_MAX)
++    if offset is None:
++        return _bad_query("offset")
++    if limit is None:
++        return _bad_query("limit")
++    args = {"q": q, "pat": _like(q), "state": state, "limit": limit, "offset": offset}
++    with _snapshot(desk) as conn:
++        rows = conn.execute(_LEADS_ROWS, args).fetchall()
++        total = conn.execute(_LEADS_TOTAL, {k: args[k] for k in ("q", "pat", "state")}).fetchone()[0]
++    return HTTP_OK, {
++        "now": int(time.time()),
++        "rows": [dict(zip(_LEAD_KEYS, r, strict=True)) for r in rows],
++        "total": total,
++        "offset": offset,
++        "limit": limit,
++    }
++
++
++# -- one lead
++_LEAD_ROW = """
++SELECT lead_id, receipt_id, source, name, email, phone, company, message, created_at FROM leads WHERE lead_id = ?
++"""
++_FOLLOWUP_ROW = """
++SELECT state, ai_label, attempts, auto_attempts, last_error, updated_at, sent_at, crm_done, ambiguous_prior
++  FROM followups WHERE lead_id = ?
++"""
++_RECEIPT_ROW = """
++SELECT receipt_id, source, source_ref, received_at, decided_at, attempts, payload_conflict, payload
++  FROM receipts WHERE receipt_id = ?
++"""
++_DUPLICATES = """
++SELECT receipt_id, source, source_ref, received_at, decided_at, differing_fields, payload FROM receipts
++ WHERE outcome = 'duplicate' AND outcome_lead_id = ? ORDER BY received_at DESC, receipt_id DESC LIMIT ?
++"""
++_DUPLICATES_TOTAL = "SELECT count(*) FROM receipts WHERE outcome = 'duplicate' AND outcome_lead_id = ?"
++_LEAD_ITEMS = """
++SELECT item_id FROM (
++  SELECT item_id, since, lead_id FROM review_items
++  UNION ALL
++  SELECT 'F' || f.lead_id, f.updated_at, f.lead_id FROM followups f
++   WHERE f.state IN ('pending','sending') AND f.updated_at < ?
++) WHERE lead_id = ? ORDER BY since, item_id
++"""
++_FOLLOWUP_KEYS = (
++    "state",
++    "ai_label",
++    "attempts",
++    "auto_attempts",
++    "last_error",
++    "updated_at",
++    "sent_at",
++    "crm_done",
++    "ambiguous_prior",
++)
++_LEAD_FIELDS = ("lead_id", "receipt_id", "source", "name", "email", "phone", "company", "message", "created_at")
++
++
++def _object(text: str) -> dict[str, Any]:
++    """The stored payload as a dict ({} when it is not one; the desk only stores objects)."""
++    try:
++        obj = json.loads(text)
++    except ValueError:
++        return {}
++    return obj if isinstance(obj, dict) else {}
++
++
++def _names(text: str | None) -> list[str]:
++    try:
++        obj = json.loads(text or "[]")
++    except ValueError:
++        return []
++    return [x for x in obj if isinstance(x, str)] if isinstance(obj, list) else []
++
++
++def _lead_detail(desk: Desk, lead_id: str) -> tuple[int, dict[str, Any]]:
++    before = int(time.time()) - desk.config.stall_seconds
++    with _snapshot(desk) as conn:
++        lead = conn.execute(_LEAD_ROW, (lead_id,)).fetchone()
++        followup = conn.execute(_FOLLOWUP_ROW, (lead_id,)).fetchone()
++        if lead is None or followup is None:
++            return _NOT_FOUND
++        first = conn.execute(_RECEIPT_ROW, (lead[1],)).fetchone()
++        dups = conn.execute(_DUPLICATES, (lead_id, DUPLICATES_MAX)).fetchall()
++        total = conn.execute(_DUPLICATES_TOTAL, (lead_id,)).fetchone()[0]
++        items = [r[0] for r in conn.execute(_LEAD_ITEMS, (before, lead_id))]
++    first_payload = _object(first[7])
++    return HTTP_OK, {
++        "now": int(time.time()),
++        "lead": dict(zip(_LEAD_FIELDS, lead, strict=True)),
++        "followup": dict(zip(_FOLLOWUP_KEYS, followup, strict=True)),
++        "first_receipt": {
++            "receipt_id": first[0],
++            "source": first[1],
++            "source_ref": first[2],
++            "received_at": first[3],
++            "decided_at": first[4],
++            "arrivals": first[5],
++            "payload_conflict": first[6],
++        },
++        "duplicates": [
++            {
++                "receipt_id": d[0],
++                "source": d[1],
++                "source_ref": d[2],
++                "received_at": d[3],
++                "decided_at": d[4],
++                "differing": [
++                    {"field": f, "first": first_payload.get(f), "this": _object(d[6]).get(f)} for f in _names(d[5])
++                ],
++            }
++            for d in dups
++        ],
++        "duplicates_total": total,
++        "review_items": items,
++    }
++
++
++# -- the list of things that need a person
++_NAMES = "SELECT lead_id, name FROM leads WHERE lead_id IN (SELECT value FROM json_each(?))"
++
++_RETRY = {"id": "retry", "label": "Retry", "body": None, "confirm": None}
++_SENT_CONFIRM = {
++    "title": "Mark the email as sent?",
++    "body": "This cannot be undone. The desk will never send this follow-up again.",
++    "verb": "Mark as sent",
++}
++_NOT_SENT_CONFIRM = {
++    "title": "Mark the email as not sent?",
++    "body": (
++        "If the email did go out and the mail system cannot recognise repeats, a Retry will send a second email. "
++        "Check the mail system first."
++    ),
++    "verb": "Mark as not sent",
++}
++_CRM_PRESENT_CONFIRM = {
++    "title": "Confirm the CRM row is there?",
++    "body": "Retry will then go straight to the email.",
++    "verb": "Confirm",
++}
++_CRM_MISSING_CONFIRM = {
++    "title": "Mark the CRM row as missing?",
++    "body": "Retry will ask the CRM again; if a row was there, delete the extra one by hand.",
++    "verb": "Mark as missing",
++}
++_FAILED_TEXT = {
++    "refused": "The mail system refused; nothing was sent.",
++    "unreachable": "The mail system could not be reached; nothing was sent.",
++}
++_FAILED_DEFAULT = "The follow-up did not finish, and the desk has no confirmation that an email was sent."
++_UNKNOWN_TEXT = {
++    "ambiguous_prior": "An earlier send may have left after a stop; the desk will not send again blind.",
++    "ambiguous": "The send ended unclearly, so the email may have left; the desk will not send again blind.",
++    "mode_mismatch": "The mail system stored the email in a different mode than the desk expected; a person must look.",
++    "crm_unconfirmed": "The CRM may or may not hold this lead.",
++}
++_UNKNOWN_DEFAULT = "The desk cannot tell whether the email left; a person must look."
++_UNSTORABLE_TEXT = "The desk could not store this request's data. Send a corrected submission with a NEW request id."
++
++
++def _list_words(names: list[str]) -> str:
++    return names[0] if len(names) == 1 else ", ".join(names[:-1]) + " and " + names[-1] if names else ""
++
++
++def _action(spec: dict[str, Any], item_id: str, verb: str, **over: Any) -> dict[str, Any]:
++    return {**spec, "endpoint": f"/review/{item_id}/{verb}", **over}
++
++
++def _describe(item: dict[str, Any], stall_seconds: int) -> dict[str, Any]:
++    """tab, title, reason_text and actions of one item, from the fixed table in the design (section 2.3)."""
++    kind, reason, item_id = str(item["kind"]), str(item["reason"] or ""), str(item["item_id"])
++    tab, actions = "action", []
++    if kind == "failed":
++        title, text = "Follow-up failed; nothing was sent", _FAILED_TEXT.get(reason, _FAILED_DEFAULT)
++        actions = [_action(_RETRY, item_id, "retry")]
++    elif kind == "unknown" and reason == "crm_unconfirmed":
++        title, text = "UNKNOWN: the CRM may or may not hold this lead", _UNKNOWN_TEXT[reason]
++        actions = [
++            _action(
++                {"id": "resolve_crm_present", "label": "The CRM row is there", "confirm": _CRM_PRESENT_CONFIRM},
++                item_id,
++                "resolve",
++                body={"decision": "crm_present"},
++            ),
++            _action(
++                {"id": "resolve_not_sent", "label": "The CRM row is not there", "confirm": _CRM_MISSING_CONFIRM},
++                item_id,
++                "resolve",
++                body={"decision": "not_sent"},
++            ),
++        ]
++    elif kind == "unknown":
++        title, text = "UNKNOWN: the email may or may not have gone out", _UNKNOWN_TEXT.get(reason, _UNKNOWN_DEFAULT)
++        actions = [
++            _action(
++                {"id": "resolve_sent", "label": "I checked: it was sent", "confirm": _SENT_CONFIRM},
++                item_id,
++                "resolve",
++                body={"decision": "sent"},
++            ),
++            _action(
++                {"id": "resolve_not_sent", "label": "I checked: it was not sent", "confirm": _NOT_SENT_CONFIRM},
++                item_id,
++                "resolve",
++                body={"decision": "not_sent"},
++            ),
++        ]
++    elif kind == "review":
++        text = HINTS["R"]
++        if reason.startswith("incomplete:"):
++            fields = [f for f in reason.partition(":")[2].split(",") if f]
++            title = f"Incomplete request: {_list_words(fields)} {'is' if len(fields) == 1 else 'are'} missing"
++        elif reason == "invalid_email":
++            title = "Incomplete request: the email address is not valid"
++        elif reason.startswith("bad_field:"):
++            title = f"Incomplete request: {reason.partition(':')[2]} has a value the desk cannot accept"
++        elif reason == "internal_unstorable":
++            title, text = "The desk could not store this request", _UNSTORABLE_TEXT
++        else:
++            title, text = "The desk could not decide this request", HINT_INTERNAL_ERROR
++    elif kind == "stalled":
++        tab = "waiting"
++        if reason == "pending":
++            title, text = f"Queued longer than {stall_seconds} s", "The desk retries by itself; Retry starts it now."
++            actions = [_action(_RETRY, item_id, "retry")]
++        elif reason == "sending":
++            title, text = (
++                f"Sending longer than {stall_seconds} s",
++                "The desk puts it back by itself after the send timeout.",
++            )
++        else:
++            title = f"Request received, no verdict for longer than {stall_seconds} s"
++            text = HINTS["O"]
++    elif kind == "duplicate_with_new_info":
++        tab, text = "info", HINTS["D"]
++        title = "Repeat with new details: " + ", ".join(_names(reason))
++    else:
++        tab, text = "info", HINTS["D"]
++        title = "Same request id sent again with different data; the first answer stands"
++    return {"tab": tab, "title": title, "reason_text": text, "actions": actions}
++
++
++def _review(desk: Desk) -> tuple[int, dict[str, Any]]:
++    reply = desk.review()  # the desk's own list, hints and stall rule
++    if reply.status != HTTP_OK:
++        return reply.status, reply.body
++    items: list[dict[str, Any]] = list(reply.body)
++    ids = sorted({str(i["lead_id"]) for i in items if i["lead_id"]})
++    with _snapshot(desk) as conn:
++        names = dict(conn.execute(_NAMES, (json.dumps(ids),)).fetchall())
++    out = []
++    for item in items:
++        full = {**item, "lead_name": names.get(item["lead_id"]), **_describe(item, desk.config.stall_seconds)}
++        out.append(full)
++    out.sort(key=lambda i: _TAB_ORDER.index(i["tab"]))  # stable: the desk's order (oldest first) holds inside a tab
++    return HTTP_OK, {
++        "now": int(time.time()),
++        "items": out,
++        "tabs": {t: sum(1 for i in out if i["tab"] == t) for t in _TAB_ORDER},
++    }
+diff --git a/src/lead_desk/server.py b/src/lead_desk/server.py
+index 5104f37..8770d92 100644
+--- a/src/lead_desk/server.py
++++ b/src/lead_desk/server.py
+@@ -7,12 +7,15 @@ from that line."""
+ 
+ from __future__ import annotations
+ 
++import ipaddress
+ import json
+ import logging
+ import os
++import re
+ import socket
+ import sys
+ import threading
++import time
+ from collections.abc import Callable
+ from dataclasses import replace
+ from http import HTTPStatus
+@@ -20,39 +23,51 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+ from typing import Any, cast
+ from urllib.parse import parse_qs, unquote, urlsplit
+ 
+-from lead_desk import db, lockfile
++from lead_desk import db, lockfile, portal_api
+ from lead_desk.adapters import FakesUnreachable
+ from lead_desk.config import Config
+ from lead_desk.constants import (
++    DEMO_BODY_MAX,
+     DRAIN_MAX_BYTES,
+     EXIT_ADAPTERS_UNREACHABLE,
+     EXIT_ANOTHER_DESK,
+     HTTP_BAD_REQUEST,
+     HTTP_BUSY,
++    HTTP_FORBIDDEN,
+     HTTP_INTERNAL_ERROR,
+     HTTP_METHOD_NOT_ALLOWED,
+     HTTP_NOT_FOUND,
++    HTTP_OK,
++    HTTP_PERMANENT_REDIRECT,
+     HTTP_REQUEST_TIMEOUT,
+     HTTP_TOO_LARGE,
+     LISTEN_QUEUE,
++    LOOPBACK_HOSTS,
+     MAX_DIGITS,
+     REQUEST_TIMEOUT_SECONDS,
++    SAME_SITE_VALUES,
++    SECURITY_HEADERS,
+     SOURCE_REF_MAX,
+     SOURCE_REF_MIN,
+     SOURCES,
+ )
+ from lead_desk.desk import Desk, Reply
+ from lead_desk.hooks import Hooks
+-from lead_desk.loader import load_demo_adapters
++from lead_desk.loader import DemoPortal, load_demo_adapters, load_demo_portal
+ 
+ log = logging.getLogger("lead_desk")
+ 
++_HOST_HEADER = re.compile(r"^(?P<host>\[[0-9A-Fa-f:]+\]|[^:\[\]]+)(?::[0-9]{1,5})?$")
++
+ 
+ class _Server(ThreadingHTTPServer):
+     allow_reuse_address = os.name != "nt"  # on Windows SO_REUSEADDR would allow a second listener on the same port
+     request_queue_size = LISTEN_QUEUE
+     desk: Desk
+     config: Config
++    started_at: int
++    demo: DemoPortal | None
++    allowed_hosts: frozenset[str]
+ 
+     def server_bind(self) -> None:
+         if sys.platform == "win32":
+@@ -60,6 +75,20 @@ class _Server(ThreadingHTTPServer):
+         super().server_bind()
+ 
+ 
++def _allowed_hosts(config: Config) -> frozenset[str]:
++    """Host names the portal gate accepts: loopback, the bind address (unless it is a wildcard), and the extra
++    names from DESK_ALLOWED_HOSTS. The port is not compared: rebinding attacks are about the name."""
++    names = {*LOOPBACK_HOSTS, *config.allowed_hosts}
++    try:
++        ip = ipaddress.ip_address(config.bind.strip("[]"))
++    except ValueError:
++        names.add(config.bind.lower())  # a host name
++    else:
++        if not ip.is_unspecified:
++            names.add(f"[{ip}]" if isinstance(ip, ipaddress.IPv6Address) else str(ip))
++    return frozenset(names)
++
++
+ def _route(method: str, path: str) -> tuple[str, str | None] | int:
+     """(route name, path argument) for a known route and method; else 405 or 404 (a status int)."""
+     parts = [unquote(p) for p in path.strip("/").split("/")] if path != "/" else []
+@@ -74,6 +103,14 @@ def _route(method: str, path: str) -> tuple[str, str | None] | int:
+             name, arg, allowed = action, item, "POST"
+         case ["counts"]:
+             name, arg, allowed = "counts", None, "GET"
++        case ["ui"] if path == "/ui":
++            name, arg, allowed = "ui_redirect", None, "GET"
++        case ["ui", *rest]:
++            name, arg, allowed = "ui_static", "/".join(rest) or "index.html", "GET"
++        case ["api", "ui", *rest] if rest:
++            name, arg, allowed = "ui_api", "/".join(rest), "GET"
++        case ["api", "demo", *rest] if rest:
++            return ("demo", "/".join(rest))  # any method; the extension answers 405 itself
+         case _:
+             return HTTP_NOT_FOUND
+     if arg and name in ("retry", "resolve") and arg[1:].isascii() and arg[1:].isdecimal() and len(arg[1:]) > MAX_DIGITS:
+@@ -95,14 +132,19 @@ class _Handler(BaseHTTPRequestHandler):
+ 
+     # -- reply helpers
+     def _send(self, status: int, obj: Any) -> None:
+-        raw = json.dumps(obj).encode("utf-8")
++        self._send_bytes(status, json.dumps(obj).encode("utf-8"), "application/json")
++
++    def _send_bytes(self, status: int, body: bytes, content_type: str, extra: tuple[tuple[str, str], ...] = ()) -> None:
++        """One writer for every reply: Content-Length, Connection: close and the fixed security headers."""
+         self.send_response(status)
+-        self.send_header("Content-Type", "application/json")
+-        self.send_header("Content-Length", str(len(raw)))
++        self.send_header("Content-Type", content_type)
++        self.send_header("Content-Length", str(len(body)))
+         self.send_header("Connection", "close")
++        for key, value in (*SECURITY_HEADERS, *extra):
++            self.send_header(key, value)
+         self.end_headers()
+         if getattr(self, "command", None) != "HEAD":
+-            self.wfile.write(raw)
++            self.wfile.write(body)
+         self.close_connection = True
+ 
+     def send_error(self, code: int, message: str | None = None, explain: str | None = None) -> None:
+@@ -147,11 +189,39 @@ class _Handler(BaseHTTPRequestHandler):
+         digits = raw.lstrip("0")
+         return 10**MAX_DIGITS if len(digits) > MAX_DIGITS else int(digits or "0")
+ 
++    # -- the Host and Origin gate
++    def _gate_error(self) -> str | None:
++        """None when the request may go on; else the error word of the 403. Runs for every route, before the path
++        is read. Host is required and its name (port ignored) must be allowed: a page on another name that points at
++        this address (DNS rebinding) is refused. A present Origin must be exactly one of this server's own origins;
++        `null` is refused. A present Sec-Fetch-Site must be same-origin or none (a page on another local port, for
++        example an n8n editor tab, sends same-site). Calls without these headers (n8n's server side, scripts) pass
++        on Host alone."""
++        server = cast(_Server, self.server)
++        hosts = self.headers.get_all("Host", [])
++        match = _HOST_HEADER.fullmatch(hosts[0].strip()) if len(hosts) == 1 else None
++        if match is None or match.group("host").lower() not in server.allowed_hosts:
++            return "forbidden_host"
++        origins = self.headers.get_all("Origin", [])
++        if origins:
++            port = server.server_address[1]
++            if len(origins) != 1 or origins[0] not in {f"http://{h}:{port}" for h in server.allowed_hosts}:
++                return "forbidden_origin"
++        fetch_site = self.headers.get_all("Sec-Fetch-Site", [])
++        if fetch_site and (len(fetch_site) != 1 or fetch_site[0].strip().lower() not in SAME_SITE_VALUES):
++            return "forbidden_origin"
++        return None
++
+     # -- dispatch
+     def _dispatch(self, method: str) -> None:
+         desk = self._desk
+         self._follow = None
+         try:
++            denied = self._gate_error()
++            if denied is not None:
++                self._skip_body()
++                self._send(HTTP_FORBIDDEN, {"error": denied})
++                return
+             try:
+                 parts = urlsplit(self.path)
+             except ValueError:  # e.g. the target "http://[/"
+@@ -174,6 +244,8 @@ class _Handler(BaseHTTPRequestHandler):
+             elif name == "retry":
+                 self._skip_body()
+                 self._send_reply(desk.retry(str(arg)))
++            elif name.startswith("ui") or name == "demo":
++                self._portal(name, str(arg), parts.query, method)
+             else:
+                 self._resolve(str(arg))
+             self._flush_and_half_close()
+@@ -194,6 +266,39 @@ class _Handler(BaseHTTPRequestHandler):
+                     log.warning("follow-up failed: %s", type(e).__name__)
+             desk.close()  # this request thread's connection
+ 
++    def _portal(self, name: str, arg: str, query: str, method: str) -> None:
++        """The portal routes: the redirect, the fixed files, the read-only JSON and the demo extension."""
++        server = cast(_Server, self.server)
++        if name == "ui_redirect":
++            self._send_bytes(HTTP_PERMANENT_REDIRECT, b"", "text/plain", (("Location", "/ui/"),))
++        elif name == "ui_static":
++            if arg.startswith("demo/"):
++                asset = server.demo.assets.get(arg[len("demo/") :]) if server.demo is not None else None
++            else:
++                asset = portal_api.STATIC.get(arg)
++            if asset is None:
++                self._send(HTTP_NOT_FOUND, {"error": "not_found"})
++            else:
++                self._send_bytes(HTTP_OK, asset[0], asset[1])
++        elif name == "ui_api":
++            self._send(*portal_api.handle(self._desk, arg, query, server.started_at))
++        elif server.demo is None:
++            self._skip_body()
++            self._send(HTTP_NOT_FOUND, {"error": "not_found"})
++        else:
++            body = b""
++            if method == "POST":
++                if self.headers.get("Content-Type", "").split(";")[0].strip().lower() != "application/json":
++                    self._skip_body()
++                    self._send(HTTP_BAD_REQUEST, {"error": "bad_body"})
++                    return
++                n = self._content_length() or 0
++                body = self.rfile.read(min(n, DEMO_BODY_MAX))
++                self._drain(n - len(body))
++            else:
++                self._skip_body()
++            self._send(*server.demo.handle(method, arg, body))
++
+     def _send_reply(self, reply: Reply) -> None:
+         self._send(reply.status, reply.body)
+ 
+@@ -307,6 +412,9 @@ def make_server(desk: Desk, config: Config) -> ThreadingHTTPServer:
+     EADDRINUSE; both are OSError, which callers catch broadly."""
+     server = _Server((config.bind, config.port), _Handler)
+     server.desk, server.config = desk, config
++    server.started_at = int(time.time())
++    server.allowed_hosts = _allowed_hosts(config)
++    server.demo = load_demo_portal(desk)
+     return server
+ 
+ 
+diff --git a/tests/portal_fixtures/demo-burst-replay.json b/tests/portal_fixtures/demo-burst-replay.json
+new file mode 100644
+index 0000000..b247380
+--- /dev/null
++++ b/tests/portal_fixtures/demo-burst-replay.json
+@@ -0,0 +1,13 @@
++{
++  "n": 1,
++  "ref_prefix": "ui-1794239720000",
++  "answers": [
++    {
++      "ref": "ui-1794239720000-1",
++      "status": 201,
++      "verdict": "new",
++      "replayed": true
++    }
++  ],
++  "busy_retries": 0
++}
+diff --git a/tests/portal_fixtures/demo-burst.json b/tests/portal_fixtures/demo-burst.json
+new file mode 100644
+index 0000000..19ec39b
+--- /dev/null
++++ b/tests/portal_fixtures/demo-burst.json
+@@ -0,0 +1,67 @@
++{
++  "n": 10,
++  "ref_prefix": "ui-1794239700000",
++  "answers": [
++    {
++      "ref": "ui-1794239700000-1",
++      "status": 201,
++      "verdict": "new",
++      "replayed": false
++    },
++    {
++      "ref": "ui-1794239700000-2",
++      "status": 200,
++      "verdict": "duplicate",
++      "replayed": false
++    },
++    {
++      "ref": "ui-1794239700000-3",
++      "status": 200,
++      "verdict": "duplicate",
++      "replayed": false
++    },
++    {
++      "ref": "ui-1794239700000-4",
++      "status": 200,
++      "verdict": "duplicate",
++      "replayed": false
++    },
++    {
++      "ref": "ui-1794239700000-5",
++      "status": 200,
++      "verdict": "duplicate",
++      "replayed": false
++    },
++    {
++      "ref": "ui-1794239700000-6",
++      "status": 200,
++      "verdict": "duplicate",
++      "replayed": false
++    },
++    {
++      "ref": "ui-1794239700000-7",
++      "status": 200,
++      "verdict": "duplicate",
++      "replayed": false
++    },
++    {
++      "ref": "ui-1794239700000-8",
++      "status": 200,
++      "verdict": "duplicate",
++      "replayed": false
++    },
++    {
++      "ref": "ui-1794239700000-9",
++      "status": 200,
++      "verdict": "duplicate",
++      "replayed": false
++    },
++    {
++      "ref": "ui-1794239700000-10",
++      "status": 200,
++      "verdict": "duplicate",
++      "replayed": false
++    }
++  ],
++  "busy_retries": 0
++}
+diff --git a/tests/portal_fixtures/demo-crash.json b/tests/portal_fixtures/demo-crash.json
+new file mode 100644
+index 0000000..a2254d8
+--- /dev/null
++++ b/tests/portal_fixtures/demo-crash.json
+@@ -0,0 +1,3 @@
++{
++  "armed": "D1"
++}
+diff --git a/tests/portal_fixtures/demo-state-fakes-offline.json b/tests/portal_fixtures/demo-state-fakes-offline.json
+new file mode 100644
+index 0000000..665ed09
+--- /dev/null
++++ b/tests/portal_fixtures/demo-state-fakes-offline.json
+@@ -0,0 +1,52 @@
++{
++  "simulated": true,
++  "desk_started_at": 1794239400,
++  "fakes": {
++    "reachable": false,
++    "error": "unreachable"
++  },
++  "ai_calls": 3,
++  "crash": {
++    "available": true,
++    "armed": null,
++    "points": [
++      "A",
++      "A2",
++      "B",
++      "D1",
++      "D2"
++    ]
++  },
++  "people": [
++    {
++      "person": 1,
++      "name": "Ada Example",
++      "company": "Example Ltd"
++    },
++    {
++      "person": 2,
++      "name": "Grace Sample",
++      "company": "Sample Works"
++    },
++    {
++      "person": 3,
++      "name": "Linus Demo",
++      "company": "Demo Systems"
++    },
++    {
++      "person": 4,
++      "name": "Margaret Test",
++      "company": null
++    },
++    {
++      "person": 5,
++      "name": "Alan Invented",
++      "company": "Invented Co"
++    },
++    {
++      "person": 6,
++      "name": "Edsger Made-Up",
++      "company": null
++    }
++  ]
++}
+diff --git a/tests/portal_fixtures/demo-state-no-crash.json b/tests/portal_fixtures/demo-state-no-crash.json
+new file mode 100644
+index 0000000..fc33ddc
+--- /dev/null
++++ b/tests/portal_fixtures/demo-state-no-crash.json
+@@ -0,0 +1,92 @@
++{
++  "simulated": true,
++  "desk_started_at": 1794239400,
++  "fakes": {
++    "reachable": true,
++    "outbox_mode": "blind",
++    "crm_mode": "keyed",
++    "outbox": {
++      "count": 2,
++      "messages": [
++        {
++          "to": "Ada@Example.test",
++          "subject": "Thanks for your message"
++        },
++        {
++          "to": "grace@example.test",
++          "subject": "Thanks for your message"
++        }
++      ]
++    },
++    "crm": {
++      "count": 3,
++      "rows": [
++        {
++          "lead_id": "L3f9a1c2b4d5e",
++          "record": {
++            "name": "Ada Example",
++            "email": "Ada@Example.test"
++          }
++        },
++        {
++          "lead_id": "L7b2e9d0c1a34",
++          "record": {
++            "name": "Grace Sample",
++            "email": "grace@example.test"
++          }
++        },
++        {
++          "lead_id": "L0c4d8e2f6a19",
++          "record": {
++            "name": "Linus Demo",
++            "email": "linus@example.test"
++          }
++        }
++      ]
++    }
++  },
++  "ai_calls": 3,
++  "crash": {
++    "available": false,
++    "armed": null,
++    "points": [
++      "A",
++      "A2",
++      "B",
++      "D1",
++      "D2"
++    ]
++  },
++  "people": [
++    {
++      "person": 1,
++      "name": "Ada Example",
++      "company": "Example Ltd"
++    },
++    {
++      "person": 2,
++      "name": "Grace Sample",
++      "company": "Sample Works"
++    },
++    {
++      "person": 3,
++      "name": "Linus Demo",
++      "company": "Demo Systems"
++    },
++    {
++      "person": 4,
++      "name": "Margaret Test",
++      "company": null
++    },
++    {
++      "person": 5,
++      "name": "Alan Invented",
++      "company": "Invented Co"
++    },
++    {
++      "person": 6,
++      "name": "Edsger Made-Up",
++      "company": null
++    }
++  ]
++}
+diff --git a/tests/portal_fixtures/demo-state.json b/tests/portal_fixtures/demo-state.json
+new file mode 100644
+index 0000000..f1f5d82
+--- /dev/null
++++ b/tests/portal_fixtures/demo-state.json
+@@ -0,0 +1,92 @@
++{
++  "simulated": true,
++  "desk_started_at": 1794239400,
++  "fakes": {
++    "reachable": true,
++    "outbox_mode": "blind",
++    "crm_mode": "keyed",
++    "outbox": {
++      "count": 2,
++      "messages": [
++        {
++          "to": "Ada@Example.test",
++          "subject": "Thanks for your message"
++        },
++        {
++          "to": "grace@example.test",
++          "subject": "Thanks for your message"
++        }
++      ]
++    },
++    "crm": {
++      "count": 3,
++      "rows": [
++        {
++          "lead_id": "L3f9a1c2b4d5e",
++          "record": {
++            "name": "Ada Example",
++            "email": "Ada@Example.test"
++          }
++        },
++        {
++          "lead_id": "L7b2e9d0c1a34",
++          "record": {
++            "name": "Grace Sample",
++            "email": "grace@example.test"
++          }
++        },
++        {
++          "lead_id": "L0c4d8e2f6a19",
++          "record": {
++            "name": "Linus Demo",
++            "email": "linus@example.test"
++          }
++        }
++      ]
++    }
++  },
++  "ai_calls": 3,
++  "crash": {
++    "available": true,
++    "armed": null,
++    "points": [
++      "A",
++      "A2",
++      "B",
++      "D1",
++      "D2"
++    ]
++  },
++  "people": [
++    {
++      "person": 1,
++      "name": "Ada Example",
++      "company": "Example Ltd"
++    },
++    {
++      "person": 2,
++      "name": "Grace Sample",
++      "company": "Sample Works"
++    },
++    {
++      "person": 3,
++      "name": "Linus Demo",
++      "company": "Demo Systems"
++    },
++    {
++      "person": 4,
++      "name": "Margaret Test",
++      "company": null
++    },
++    {
++      "person": 5,
++      "name": "Alan Invented",
++      "company": "Invented Co"
++    },
++    {
++      "person": 6,
++      "name": "Edsger Made-Up",
++      "company": null
++    }
++  ]
++}
+diff --git a/tests/portal_fixtures/error-busy.json b/tests/portal_fixtures/error-busy.json
+new file mode 100644
+index 0000000..62021a7
+--- /dev/null
++++ b/tests/portal_fixtures/error-busy.json
+@@ -0,0 +1,3 @@
++{
++  "error": "busy"
++}
+diff --git a/tests/portal_fixtures/error-envelope.json b/tests/portal_fixtures/error-envelope.json
+new file mode 100644
+index 0000000..7b391e2
+--- /dev/null
++++ b/tests/portal_fixtures/error-envelope.json
+@@ -0,0 +1,4 @@
++{
++  "error": "bad_query",
++  "field": "limit"
++}
+diff --git a/tests/portal_fixtures/error-forbidden.json b/tests/portal_fixtures/error-forbidden.json
+new file mode 100644
+index 0000000..2b59042
+--- /dev/null
++++ b/tests/portal_fixtures/error-forbidden.json
+@@ -0,0 +1,3 @@
++{
++  "error": "forbidden_origin"
++}
+diff --git a/tests/portal_fixtures/error-retry-409.json b/tests/portal_fixtures/error-retry-409.json
+new file mode 100644
+index 0000000..8af5011
+--- /dev/null
++++ b/tests/portal_fixtures/error-retry-409.json
+@@ -0,0 +1,3 @@
++{
++  "error": "unknown_needs_person"
++}
+diff --git a/tests/portal_fixtures/lead-detail-not-found.json b/tests/portal_fixtures/lead-detail-not-found.json
+new file mode 100644
+index 0000000..37d76b1
+--- /dev/null
++++ b/tests/portal_fixtures/lead-detail-not-found.json
+@@ -0,0 +1,3 @@
++{
++  "error": "not_found"
++}
+diff --git a/tests/portal_fixtures/lead-detail.json b/tests/portal_fixtures/lead-detail.json
+new file mode 100644
+index 0000000..64e20ea
+--- /dev/null
++++ b/tests/portal_fixtures/lead-detail.json
+@@ -0,0 +1,54 @@
++{
++  "now": 1794240000,
++  "lead": {
++    "lead_id": "L3f9a1c2b4d5e",
++    "receipt_id": 1,
++    "source": "form",
++    "name": "Ada Example",
++    "email": "Ada@Example.test",
++    "phone": "555 0100",
++    "company": "Example Ltd",
++    "message": "Please call me.",
++    "created_at": 1794239720
++  },
++  "followup": {
++    "state": "sent",
++    "ai_label": "hot",
++    "attempts": 1,
++    "auto_attempts": 0,
++    "last_error": null,
++    "updated_at": 1794239721,
++    "sent_at": 1794239721,
++    "crm_done": 1,
++    "ambiguous_prior": 0
++  },
++  "first_receipt": {
++    "receipt_id": 1,
++    "source": "form",
++    "source_ref": "ui-1794239720000-1",
++    "received_at": 1794239720,
++    "decided_at": 1794239720,
++    "arrivals": 2,
++    "payload_conflict": 0
++  },
++  "duplicates": [
++    {
++      "receipt_id": 2,
++      "source": "webhook",
++      "source_ref": "ui-1794239750000-1",
++      "received_at": 1794239750,
++      "decided_at": 1794239750,
++      "differing": [
++        {
++          "field": "phone",
++          "first": "555 0100",
++          "this": "555 0199"
++        }
++      ]
++    }
++  ],
++  "duplicates_total": 1,
++  "review_items": [
++    "D2"
++  ]
++}
+diff --git a/tests/portal_fixtures/leads-empty.json b/tests/portal_fixtures/leads-empty.json
+new file mode 100644
+index 0000000..66e03a0
+--- /dev/null
++++ b/tests/portal_fixtures/leads-empty.json
+@@ -0,0 +1,7 @@
++{
++  "now": 1794240000,
++  "rows": [],
++  "total": 0,
++  "offset": 0,
++  "limit": 50
++}
+diff --git a/tests/portal_fixtures/leads.json b/tests/portal_fixtures/leads.json
+new file mode 100644
+index 0000000..a9e0fcb
+--- /dev/null
++++ b/tests/portal_fixtures/leads.json
+@@ -0,0 +1,53 @@
++{
++  "now": 1794240000,
++  "rows": [
++    {
++      "lead_id": "L0c4d8e2f6a19",
++      "name": "Linus Demo",
++      "email": "linus@example.test",
++      "company": "Demo Systems",
++      "source": "form",
++      "first_request_id": "ui-1794239905000-1",
++      "created_at": 1794239905,
++      "state": "unknown",
++      "ai_label": "cold",
++      "attempts": 1,
++      "arrivals": 1,
++      "repeats": 0,
++      "updated_at": 1794239907
++    },
++    {
++      "lead_id": "L7b2e9d0c1a34",
++      "name": "Grace Sample",
++      "email": "grace@example.test",
++      "company": "Sample Works",
++      "source": "form",
++      "first_request_id": "ui-1794239700000-1",
++      "created_at": 1794239800,
++      "state": "sent",
++      "ai_label": "warm",
++      "attempts": 1,
++      "arrivals": 1,
++      "repeats": 9,
++      "updated_at": 1794239801
++    },
++    {
++      "lead_id": "L3f9a1c2b4d5e",
++      "name": "Ada Example",
++      "email": "Ada@Example.test",
++      "company": "Example Ltd",
++      "source": "form",
++      "first_request_id": "ui-1794239720000-1",
++      "created_at": 1794239720,
++      "state": "sent",
++      "ai_label": "hot",
++      "attempts": 1,
++      "arrivals": 2,
++      "repeats": 1,
++      "updated_at": 1794239721
++    }
++  ],
++  "total": 3,
++  "offset": 0,
++  "limit": 50
++}
+diff --git a/tests/portal_fixtures/review-empty.json b/tests/portal_fixtures/review-empty.json
+new file mode 100644
+index 0000000..401978c
+--- /dev/null
++++ b/tests/portal_fixtures/review-empty.json
+@@ -0,0 +1,9 @@
++{
++  "now": 1794240000,
++  "items": [],
++  "tabs": {
++    "action": 0,
++    "waiting": 0,
++    "info": 0
++  }
++}
+diff --git a/tests/portal_fixtures/review.json b/tests/portal_fixtures/review.json
+new file mode 100644
+index 0000000..93b3070
+--- /dev/null
++++ b/tests/portal_fixtures/review.json
+@@ -0,0 +1,222 @@
++{
++  "now": 1794240000,
++  "items": [
++    {
++      "item_id": "FL7b2e9d0c1a34",
++      "item_type": "followup",
++      "kind": "failed",
++      "reason": "refused",
++      "lead_id": "L7b2e9d0c1a34",
++      "since": 1794239600,
++      "source": "form",
++      "lead_name": "Grace Sample",
++      "tab": "action",
++      "title": "Follow-up failed; nothing was sent",
++      "reason_text": "The mail system refused; nothing was sent.",
++      "actions": [
++        {
++          "id": "retry",
++          "label": "Retry",
++          "endpoint": "/review/FL7b2e9d0c1a34/retry",
++          "body": null,
++          "confirm": null
++        }
++      ]
++    },
++    {
++      "item_id": "FL0c4d8e2f6a19",
++      "item_type": "followup",
++      "kind": "unknown",
++      "reason": "ambiguous_prior",
++      "lead_id": "L0c4d8e2f6a19",
++      "since": 1794239610,
++      "source": "form",
++      "lead_name": "Linus Demo",
++      "tab": "action",
++      "title": "UNKNOWN: the email may or may not have gone out",
++      "reason_text": "An earlier send may have left after a stop; the desk will not send again blind.",
++      "actions": [
++        {
++          "id": "resolve_sent",
++          "label": "I checked: it was sent",
++          "endpoint": "/review/FL0c4d8e2f6a19/resolve",
++          "body": {
++            "decision": "sent"
++          },
++          "confirm": {
++            "title": "Mark the email as sent?",
++            "body": "This cannot be undone. The desk will never send this follow-up again.",
++            "verb": "Mark as sent"
++          }
++        },
++        {
++          "id": "resolve_not_sent",
++          "label": "I checked: it was not sent",
++          "endpoint": "/review/FL0c4d8e2f6a19/resolve",
++          "body": {
++            "decision": "not_sent"
++          },
++          "confirm": {
++            "title": "Mark the email as not sent?",
++            "body": "If the email did go out and the mail system cannot recognise repeats, a Retry will send a second email. Check the mail system first.",
++            "verb": "Mark as not sent"
++          }
++        }
++      ]
++    },
++    {
++      "item_id": "FL3f9a1c2b4d5e",
++      "item_type": "followup",
++      "kind": "unknown",
++      "reason": "crm_unconfirmed",
++      "lead_id": "L3f9a1c2b4d5e",
++      "since": 1794239620,
++      "source": "webhook",
++      "hint": "The CRM may or may not hold this lead. Look in the CRM, then answer crm_present (the row is there: Retry goes straight to the email) or not_sent (the row is not there: Retry asks the CRM again). sent is refused here: no email was ever tried. not_sent: an extra CRM row may need deleting by hand.",
++      "lead_name": "Ada Example",
++      "tab": "action",
++      "title": "UNKNOWN: the CRM may or may not hold this lead",
++      "reason_text": "The CRM may or may not hold this lead.",
++      "actions": [
++        {
++          "id": "resolve_crm_present",
++          "label": "The CRM row is there",
++          "endpoint": "/review/FL3f9a1c2b4d5e/resolve",
++          "body": {
++            "decision": "crm_present"
++          },
++          "confirm": {
++            "title": "Confirm the CRM row is there?",
++            "body": "Retry will then go straight to the email.",
++            "verb": "Confirm"
++          }
++        },
++        {
++          "id": "resolve_not_sent",
++          "label": "The CRM row is not there",
++          "endpoint": "/review/FL3f9a1c2b4d5e/resolve",
++          "body": {
++            "decision": "not_sent"
++          },
++          "confirm": {
++            "title": "Mark the CRM row as missing?",
++            "body": "Retry will ask the CRM again; if a row was there, delete the extra one by hand.",
++            "verb": "Mark as missing"
++          }
++        }
++      ]
++    },
++    {
++      "item_id": "R13",
++      "item_type": "receipt",
++      "kind": "review",
++      "reason": "incomplete:email",
++      "lead_id": null,
++      "since": 1794239630,
++      "source": "form",
++      "lead_name": null,
++      "tab": "action",
++      "title": "Incomplete request: email is missing",
++      "reason_text": "Send a corrected submission with a NEW request id.",
++      "actions": []
++    },
++    {
++      "item_id": "R15",
++      "item_type": "receipt",
++      "kind": "review",
++      "reason": "internal_error",
++      "lead_id": null,
++      "since": 1794239635,
++      "source": "webhook",
++      "hint": "The desk itself could not decide this receipt (a fault on the desk side, not in the request). A person must look at the desk log. Sending a new request id is not the fix.",
++      "lead_name": null,
++      "tab": "action",
++      "title": "The desk could not decide this request",
++      "reason_text": "The desk itself could not decide this receipt (a fault on the desk side, not in the request). A person must look at the desk log. Sending a new request id is not the fix.",
++      "actions": []
++    },
++    {
++      "item_id": "FL5a6b7c8d9e0f",
++      "item_type": "followup",
++      "kind": "stalled",
++      "reason": "pending",
++      "lead_id": "L5a6b7c8d9e0f",
++      "since": 1794239300,
++      "source": "form",
++      "lead_name": "Alan Invented",
++      "tab": "waiting",
++      "title": "Queued longer than 120 s",
++      "reason_text": "The desk retries by itself; Retry starts it now.",
++      "actions": [
++        {
++          "id": "retry",
++          "label": "Retry",
++          "endpoint": "/review/FL5a6b7c8d9e0f/retry",
++          "body": null,
++          "confirm": null
++        }
++      ]
++    },
++    {
++      "item_id": "FL1b2c3d4e5f60",
++      "item_type": "followup",
++      "kind": "stalled",
++      "reason": "sending",
++      "lead_id": "L1b2c3d4e5f60",
++      "since": 1794239310,
++      "source": "form",
++      "lead_name": "Edsger Made-Up",
++      "tab": "waiting",
++      "title": "Sending longer than 120 s",
++      "reason_text": "The desk puts it back by itself after the send timeout.",
++      "actions": []
++    },
++    {
++      "item_id": "O16",
++      "item_type": "receipt",
++      "kind": "stalled",
++      "reason": "open receipt",
++      "lead_id": null,
++      "since": 1794239320,
++      "source": "webhook",
++      "lead_name": null,
++      "tab": "waiting",
++      "title": "Request received, no verdict for longer than 120 s",
++      "reason_text": "Send the same request id again, or restart the desk.",
++      "actions": []
++    },
++    {
++      "item_id": "D2",
++      "item_type": "receipt",
++      "kind": "duplicate_with_new_info",
++      "reason": "[\"phone\"]",
++      "lead_id": "L3f9a1c2b4d5e",
++      "since": 1794239640,
++      "source": "webhook",
++      "lead_name": "Ada Example",
++      "tab": "info",
++      "title": "Repeat with new details: phone",
++      "reason_text": "Informational only, no action needed.",
++      "actions": []
++    },
++    {
++      "item_id": "D17",
++      "item_type": "receipt",
++      "kind": "replay_payload_differs",
++      "reason": "same request id, different payload",
++      "lead_id": "L7b2e9d0c1a34",
++      "since": 1794239650,
++      "source": "form",
++      "lead_name": "Grace Sample",
++      "tab": "info",
++      "title": "Same request id sent again with different data; the first answer stands",
++      "reason_text": "Informational only, no action needed.",
++      "actions": []
++    }
++  ],
++  "tabs": {
++    "action": 5,
++    "waiting": 3,
++    "info": 2
++  }
++}
+diff --git a/tests/portal_fixtures/summary-empty.json b/tests/portal_fixtures/summary-empty.json
+new file mode 100644
+index 0000000..69a5fd3
+--- /dev/null
++++ b/tests/portal_fixtures/summary-empty.json
+@@ -0,0 +1,401 @@
++{
++  "now": 1794240000,
++  "desk_started_at": 1794239400,
++  "counts": {
++    "received": 0,
++    "new": 0,
++    "duplicate": 0,
++    "review": 0,
++    "open": 0
++  },
++  "reconciled": true,
++  "refused_at_door": 0,
++  "needs_action": 0,
++  "waiting": 0,
++  "followups": {
++    "pending": 0,
++    "sending": 0,
++    "sent": 0,
++    "failed": 0,
++    "unknown": 0
++  },
++  "doors": [
++    {
++      "source": "form",
++      "received": 0,
++      "last_seen": null
++    },
++    {
++      "source": "webhook",
++      "received": 0,
++      "last_seen": null
++    }
++  ],
++  "series": {
++    "bucket_seconds": 5,
++    "time_field": "decided_at",
++    "buckets": [
++      {
++        "t": 1794239705,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239710,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239715,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239720,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239725,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239730,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239735,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239740,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239745,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239750,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239755,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239760,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239765,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239770,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239775,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239780,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239785,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239790,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239795,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239800,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239805,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239810,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239815,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239820,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239825,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239830,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239835,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239840,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239845,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239850,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239855,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239860,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239865,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239870,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239875,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239880,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239885,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239890,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239895,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239900,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239905,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239910,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239915,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239920,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239925,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239930,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239935,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239940,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239945,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239950,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239955,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239960,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239965,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239970,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239975,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239980,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239985,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239990,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239995,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794240000,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      }
++    ]
++  },
++  "recent": []
++}
+diff --git a/tests/portal_fixtures/summary.json b/tests/portal_fixtures/summary.json
+new file mode 100644
+index 0000000..b775496
+--- /dev/null
++++ b/tests/portal_fixtures/summary.json
+@@ -0,0 +1,534 @@
++{
++  "now": 1794240000,
++  "desk_started_at": 1794239400,
++  "counts": {
++    "received": 14,
++    "new": 3,
++    "duplicate": 10,
++    "review": 1,
++    "open": 0
++  },
++  "reconciled": true,
++  "refused_at_door": 0,
++  "needs_action": 2,
++  "waiting": 0,
++  "followups": {
++    "pending": 0,
++    "sending": 0,
++    "sent": 2,
++    "failed": 0,
++    "unknown": 1
++  },
++  "doors": [
++    {
++      "source": "form",
++      "received": 13,
++      "last_seen": 1794239905
++    },
++    {
++      "source": "webhook",
++      "received": 1,
++      "last_seen": 1794239750
++    }
++  ],
++  "series": {
++    "bucket_seconds": 5,
++    "time_field": "decided_at",
++    "buckets": [
++      {
++        "t": 1794239705,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239710,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239715,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239720,
++        "new": 1,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239725,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239730,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239735,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239740,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239745,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239750,
++        "new": 0,
++        "duplicate": 1,
++        "review": 0
++      },
++      {
++        "t": 1794239755,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239760,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239765,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239770,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239775,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239780,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239785,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239790,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239795,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239800,
++        "new": 1,
++        "duplicate": 9,
++        "review": 0
++      },
++      {
++        "t": 1794239805,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239810,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239815,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239820,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239825,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239830,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239835,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239840,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239845,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239850,
++        "new": 0,
++        "duplicate": 0,
++        "review": 1
++      },
++      {
++        "t": 1794239855,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239860,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239865,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239870,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239875,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239880,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239885,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239890,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239895,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239900,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239905,
++        "new": 1,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239910,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239915,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239920,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239925,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239930,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239935,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239940,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239945,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239950,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239955,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239960,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239965,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239970,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239975,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239980,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239985,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239990,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794239995,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      },
++      {
++        "t": 1794240000,
++        "new": 0,
++        "duplicate": 0,
++        "review": 0
++      }
++    ]
++  },
++  "recent": [
++    {
++      "at": 1794239907,
++      "kind": "followup",
++      "receipt_id": 14,
++      "lead_id": "L0c4d8e2f6a19",
++      "name": "Linus Demo",
++      "source": "form",
++      "source_ref": null,
++      "verdict": null,
++      "state": "unknown"
++    },
++    {
++      "at": 1794239905,
++      "kind": "decided",
++      "receipt_id": 14,
++      "lead_id": "L0c4d8e2f6a19",
++      "name": "Linus Demo",
++      "source": "form",
++      "source_ref": "ui-1794239905000-1",
++      "verdict": "new",
++      "state": null
++    },
++    {
++      "at": 1794239905,
++      "kind": "received",
++      "receipt_id": 14,
++      "lead_id": "L0c4d8e2f6a19",
++      "name": "Linus Demo",
++      "source": "form",
++      "source_ref": "ui-1794239905000-1",
++      "verdict": null,
++      "state": null
++    },
++    {
++      "at": 1794239850,
++      "kind": "decided",
++      "receipt_id": 13,
++      "lead_id": null,
++      "name": null,
++      "source": "form",
++      "source_ref": "ui-1794239850000-1",
++      "verdict": "review",
++      "state": null
++    },
++    {
++      "at": 1794239850,
++      "kind": "received",
++      "receipt_id": 13,
++      "lead_id": null,
++      "name": null,
++      "source": "form",
++      "source_ref": "ui-1794239850000-1",
++      "verdict": null,
++      "state": null
++    },
++    {
++      "at": 1794239801,
++      "kind": "followup",
++      "receipt_id": 3,
++      "lead_id": "L7b2e9d0c1a34",
++      "name": "Grace Sample",
++      "source": "form",
++      "source_ref": null,
++      "verdict": null,
++      "state": "sent"
++    },
++    {
++      "at": 1794239800,
++      "kind": "decided",
++      "receipt_id": 12,
++      "lead_id": "L7b2e9d0c1a34",
++      "name": "Grace Sample",
++      "source": "form",
++      "source_ref": "ui-1794239700000-10",
++      "verdict": "duplicate",
++      "state": null
++    },
++    {
++      "at": 1794239800,
++      "kind": "decided",
++      "receipt_id": 11,
++      "lead_id": "L7b2e9d0c1a34",
++      "name": "Grace Sample",
++      "source": "form",
++      "source_ref": "ui-1794239700000-9",
++      "verdict": "duplicate",
++      "state": null
++    },
++    {
++      "at": 1794239800,
++      "kind": "decided",
++      "receipt_id": 10,
++      "lead_id": "L7b2e9d0c1a34",
++      "name": "Grace Sample",
++      "source": "form",
++      "source_ref": "ui-1794239700000-8",
++      "verdict": "duplicate",
++      "state": null
++    },
++    {
++      "at": 1794239800,
++      "kind": "decided",
++      "receipt_id": 9,
++      "lead_id": "L7b2e9d0c1a34",
++      "name": "Grace Sample",
++      "source": "form",
++      "source_ref": "ui-1794239700000-7",
++      "verdict": "duplicate",
++      "state": null
++    },
++    {
++      "at": 1794239800,
++      "kind": "decided",
++      "receipt_id": 8,
++      "lead_id": "L7b2e9d0c1a34",
++      "name": "Grace Sample",
++      "source": "form",
++      "source_ref": "ui-1794239700000-6",
++      "verdict": "duplicate",
++      "state": null
++    },
++    {
++      "at": 1794239800,
++      "kind": "decided",
++      "receipt_id": 7,
++      "lead_id": "L7b2e9d0c1a34",
++      "name": "Grace Sample",
++      "source": "form",
++      "source_ref": "ui-1794239700000-5",
++      "verdict": "duplicate",
++      "state": null
++    }
++  ]
++}
+diff --git a/tests/test_hardening.py b/tests/test_hardening.py
+index 24a4544..5be45ce 100644
+--- a/tests/test_hardening.py
++++ b/tests/test_hardening.py
+@@ -3,7 +3,7 @@ Made-up data only. Each test here fails on the code before the matching fix."""
+ 
+ from __future__ import annotations
+ 
+-from support import call, lead, post_lead, raw_exchange, run_threads
++from support import HOST, call, lead, post_lead, raw_exchange, run_threads
+ 
+ 
+ def test_lone_surrogate_is_review(env) -> None:
+@@ -41,9 +41,11 @@ def test_deeply_nested_json_is_bad_envelope(env) -> None:
+ def test_head_options_and_malformed_requests_get_json(env) -> None:
+     rig = env.rig()
+     base = env.serve(rig)
+-    status, out = raw_exchange(base, b"OPTIONS /leads HTTP/1.1\r\nHost: x\r\n\r\n")
++    status, out = raw_exchange(base, f"OPTIONS /leads HTTP/1.1\r\nHost: {HOST}\r\n\r\n".encode())
+     assert (status, out) == (405, {"error": "method_not_allowed"})
+-    status, out = raw_exchange(base, b"HEAD /counts HTTP/1.1\r\nHost: x\r\n\r\n")  # a HEAD reply has no body
++    status, out = raw_exchange(
++        base, f"HEAD /counts HTTP/1.1\r\nHost: {HOST}\r\n\r\n".encode()
++    )  # a HEAD reply has no body
+     assert (status, out) == (405, None)
+     status, out = raw_exchange(base, b"TRACE / HTTP/1.1\r\nHost: x\r\n\r\n")  # a method the server does not know
+     assert (status, out) == (501, {"error": "not_implemented"})
+diff --git a/tests/test_hygiene.py b/tests/test_hygiene.py
+index 73c7f7e..634d60d 100644
+--- a/tests/test_hygiene.py
++++ b/tests/test_hygiene.py
+@@ -10,6 +10,7 @@ import re
+ import shutil
+ import subprocess
+ import tomllib
++import unicodedata
+ from pathlib import Path
+ 
+ from support import REPO
+@@ -49,6 +50,50 @@ def test_no_demo_only_outside_loader() -> None:
+     assert "demo_only" in (SRC / "lead_desk" / "loader.py").read_text(encoding="utf-8")  # the rule is not vacuous
+ 
+ 
++# Words the product portal files must not hold: they belong to the demo extension (demo_only/portal_demo.*). The
++# portal is judged on what it SAYS about its own data source, so the product files stay free of demo vocabulary,
++# of absolute links (the page loads nothing from outside) and of inline data URLs or XML namespaces.
++PORTAL_BANNED = ("fake", "simulated", "made-up", "recorded", "canned", "demo_only", "http:", "https:", "data:", "xmlns")
++PORTAL_PRODUCT_API = SRC / "lead_desk" / "portal_api.py"
++PORTAL_DIR = SRC / "lead_desk" / "portal"
++
++
++def _portal_offenders(texts: dict[str, str]) -> list[str]:
++    return sorted(f"{where}: {word}" for where, text in texts.items() for word in PORTAL_BANNED if word in text.lower())
++
++
++def test_portal_product_files_hold_no_demo_words() -> None:
++    """Deleting demo_only/ must leave an honest product portal: its files name no fake system, no recorded reply,
++    no outside link. (The page files come from the front-end package; the JSON module is checked here too.)"""
++    files = [PORTAL_PRODUCT_API, *(p for p in sorted(PORTAL_DIR.rglob("*")) if p.is_file())]
++    texts = {str(p.relative_to(REPO)): p.read_text(encoding="utf-8") for p in files}
++    assert str(PORTAL_PRODUCT_API.relative_to(REPO)) in texts  # the check is not vacuous
++    assert not _portal_offenders(texts), f"demo words in product portal files: {_portal_offenders(texts)}"
++    planted = {"x.js": " ".join(w.upper() for w in PORTAL_BANNED)}  # each word, in capitals: all must be found
++    assert [o.split(": ")[1] for o in _portal_offenders(planted)] == sorted(PORTAL_BANNED)
++
++
++def _control_chars(text: str) -> list[str]:
++    """Control characters (Unicode category Cc) other than tab, line feed and carriage return, as code points."""
++    return [f"U+{ord(c):04X}" for c in text if c not in "\t\n\r" and unicodedata.category(c) == "Cc"]
++
++
++def test_no_control_characters_in_markdown() -> None:
++    """A stray backspace or escape in a .md file (for example from a backslash escape that was read as a control
++    code) hides text. Tracked Markdown may hold tab, line feed and carriage return only."""
++    names = [n for n in _git(REPO, "ls-files", "*.md").splitlines() if n and (REPO / n).is_file()]
++    assert names, "no Markdown files found: the test would prove nothing"
++    found = {n: _control_chars((REPO / n).read_text(encoding="utf-8")) for n in names}
++    bad = {n: c for n, c in found.items() if c}
++    assert not bad, f"control characters in Markdown files: {bad}"
++    assert _control_chars("a\tb\r\nc") == [] and _control_chars("a\x08b\x1b\x00\x7f") == [
++        "U+0008",
++        "U+001B",
++        "U+0000",
++        "U+007F",
++    ]
++
++
+ def test_hygiene_scan_public(tmp_path: Path) -> None:
+     """Patterns + exceptions pipeline with one canary per rule, on the tree; gitleaks on tree and history (--redact)."""
+     patterns, exceptions, toml = REPO / "patterns.txt", REPO / "exceptions.txt", REPO / ".gitleaks.toml"
+diff --git a/tests/test_portal_api.py b/tests/test_portal_api.py
+new file mode 100644
+index 0000000..a9f64b2
+--- /dev/null
++++ b/tests/test_portal_api.py
+@@ -0,0 +1,843 @@
++"""Portal tests: the read-only JSON under /api/ui, the fixed files under /ui, and the Host and Origin gate.
++Made-up data only. The response shapes are checked against tests/portal_fixtures/*.json (copied from the design)."""
++
++from __future__ import annotations
++
++import json
++import socket
++import sqlite3
++import threading
++import time
++import types
++from pathlib import Path
++from typing import Any
++
++import pytest
++from support import HOST, Rig, call, free_port, lead, raw_exchange, run_threads, wait_until
++
++from lead_desk import loader, portal_api, server
++from lead_desk.config import Config
++from lead_desk.constants import (
++    DEMO_BODY_MAX,
++    DUPLICATES_MAX,
++    FEED_ITEMS,
++    LEADS_LIMIT_DEFAULT,
++    SECURITY_HEADERS,
++    SERIES_BUCKET_SECONDS,
++    SERIES_BUCKETS,
++)
++from lead_desk.server import make_server
++
++FIXTURES = Path(__file__).resolve().parent / "portal_fixtures"
++STALE = 1000  # seconds: far older than stall_seconds
++RESTARTS = 20
++BURST = 10
++PLACEHOLDER = b"<!doctype html><title>placeholder</title>"
++NEW_OUTSIDE = {"form": "ui-1", "webhook": "ui-2"}
++
++
++def fixture(name: str) -> Any:
++    return json.loads((FIXTURES / f"{name}.json").read_text(encoding="utf-8"))
++
++
++# -- shape comparison: keys and types, recursive; null matches any type (a nullable field)
++def _fits(a: Any, b: Any) -> bool:
++    if a is None or b is None:
++        return True
++    if isinstance(a, dict) and isinstance(b, dict):
++        return set(a) == set(b) and all(_fits(a[k], b[k]) for k in a)
++    if isinstance(a, list) and isinstance(b, list):
++        return all(any(_fits(x, y) for y in b) for x in a)
++    return isinstance(a, bool) == isinstance(b, bool) and (type(a) is type(b))
++
++
++def same_shape(mine: Any, fix: Any) -> bool:
++    """Every part of mine fits a part of the fixture, and every list element shape of the fixture is met by mine."""
++    return _fits(mine, fix) and _covers(mine, fix)
++
++
++def _covers(mine: Any, fix: Any) -> bool:
++    if isinstance(mine, dict) and isinstance(fix, dict):
++        return all(_covers(mine[k], fix[k]) for k in fix if k in mine)
++    if isinstance(mine, list) and isinstance(fix, list):
++        return all(any(_fits(x, y) and _covers(x, y) for x in mine) for y in fix)
++    return True
++
++
++# -- state
++def sql(rig: Rig, text: str, args: tuple[Any, ...] = ()) -> None:
++    con = sqlite3.connect(rig.db_path, timeout=10)
++    try:
++        con.execute(text, args)
++        con.commit()
++    finally:
++        con.close()
++
++
++def fresh(env: Any, **over: Any) -> tuple[Rig, str]:
++    rig = env.rig(**over)
++    rig.clock.t = int(time.time())
++    return rig, env.serve(rig)
++
++
++def get(base: str, path: str) -> tuple[int, Any]:
++    return call(base, "GET", path)  # type: ignore[no-any-return]
++
++
++def stale_receipt(rig: Rig, ref: str, outcome: str | None, reason: str | None = None) -> None:
++    at = rig.clock.t - STALE
++    sql(
++        rig,
++        "INSERT INTO receipts(source, source_ref, received_at, payload, outcome, outcome_reason, decided_at)"
++        " VALUES ('webhook', ?, ?, '{}', ?, ?, ?)",
++        (ref, at, outcome, reason, None if outcome is None else at),
++    )
++
++
++def seed(rig: Rig) -> dict[str, str]:
++    """A lead book with every kind of item: sent, duplicates (with and without new details), a replay with other
++    data, an incomplete request, a desk fault, a failed follow-up, both kinds of UNKNOWN, and stalled work."""
++    d = rig.desk
++    ids: dict[str, str] = {}
++    ids["ada"] = d.handle("form", "ui-1", lead()).body["lead_id"]
++    d.handle("webhook", "ui-2", lead(phone="555 0199"))  # same person, new phone: duplicate with new details
++    d.handle("form", "ui-1", lead(phone="555 0000"))  # same request id, other data: first answer stands
++    ids["grace"] = d.handle("form", "ui-g-0", lead(name="Grace Sample", email="grace@example.test")).body["lead_id"]
++    for i in range(1, 10):
++        d.handle("form", f"ui-g-{i}", lead(name="Grace Sample", email="grace@example.test"))
++    d.handle("form", "ui-bad", lead(email=None))  # incomplete: no email
++    for key, name in (("linus", "Linus Demo"), ("alan", "Alan Invented"), ("grete", "Grete Made-Up")):
++        ids[key] = d.process("form", f"ui-{key}", lead(name=name, email=f"{key}@example.test")).body["lead_id"]
++    for key, name in (("edsger", "Edsger Made-Up"), ("kurt", "Kurt Sample")):
++        ids[key] = d.process("form", f"ui-{key}", lead(name=name, email=f"{key}@example.test")).body["lead_id"]
++    old = rig.clock.t - STALE
++    mark = "UPDATE followups SET state=?, last_error=?, updated_at=? WHERE lead_id=?"
++    sql(rig, mark, ("unknown", "ambiguous_prior", old, ids["linus"]))
++    sql(rig, mark, ("failed", "refused", old, ids["alan"]))
++    sql(rig, mark, ("unknown", "crm_unconfirmed", old, ids["grete"]))
++    sql(rig, mark, ("pending", None, old, ids["edsger"]))
++    sql(rig, mark, ("sending", None, old, ids["kurt"]))
++    stale_receipt(rig, "ui-fault", "review", "internal_error")
++    stale_receipt(rig, "ui-open", None)
++    return ids
++
++
++# -- the read-only connection
++def test_read_connection_cannot_write(env) -> None:
++    rig, _ = fresh(env)
++    seed(rig)
++    conn = portal_api.connect_readonly(rig.db_path)
++    try:
++        assert conn.execute("SELECT count(*) FROM leads").fetchone()[0] > 0
++        assert conn.execute("PRAGMA query_only").fetchone()[0] == 1  # second lock, on top of mode=ro
++        for stmt in (
++            "INSERT INTO leads(lead_id, receipt_id, source, name, email, email_key, created_at)"
++            " VALUES ('Lffffffffffff', 1, 'form', 'x', 'x@example.test', 'x@example.test', 1)",
++            "UPDATE followups SET state = 'failed'",
++            "DELETE FROM followups",
++            "CREATE TABLE t(a)",
++        ):
++            with pytest.raises(sqlite3.OperationalError, match="readonly"):
++                conn.execute(stmt)
++        with pytest.raises(sqlite3.OperationalError):  # switching query_only off does not reopen the file for writing
++            conn.execute("PRAGMA query_only=OFF")
++            conn.execute("UPDATE followups SET state = 'failed'")
++    finally:
++        conn.close()
++    assert rig.query("SELECT count(*) FROM followups WHERE state = 'failed'")[0][0] == 1  # only the seeded one
++
++
++def test_every_reply_comes_from_one_transaction(env, monkeypatch) -> None:
++    """The reads of one reply share one BEGIN ... COMMIT on one connection, and the connection is closed after."""
++    rig, base = fresh(env)
++    seed(rig)
++    seen: list[list[str]] = []
++    real = portal_api.connect_readonly
++
++    class Spy:
++        def __init__(self, conn: sqlite3.Connection) -> None:
++            self.conn, self.log = conn, []
++            seen.append(self.log)
++
++        def execute(self, text: str, *a: Any) -> Any:
++            self.log.append(text.split()[0])
++            return self.conn.execute(text, *a)
++
++        def close(self) -> None:
++            self.log.append("CLOSE")
++            self.conn.close()
++
++    monkeypatch.setattr(portal_api, "connect_readonly", lambda p: Spy(real(p)))
++    for path in ("/api/ui/summary", "/api/ui/leads", "/api/ui/review"):
++        seen.clear()
++        assert get(base, path)[0] == 200
++        log = seen[-1]
++        assert log[0] == "BEGIN" and log[-2:] == ["COMMIT", "CLOSE"], (path, log)
++        assert log.count("BEGIN") == 1 and log.count("COMMIT") == 1
++        assert {s for s in log[1:-2]} <= {"SELECT"}
++
++
++# -- shapes
++def test_summary_shape_and_numbers(env) -> None:
++    rig, base = fresh(env)
++    seed(rig)
++    status, out = get(base, "/api/ui/summary")
++    assert status == 200
++    assert same_shape(out, fixture("summary")), "summary differs from the fixture shape"
++    c = out["counts"]
++    assert c == {"received": 20, "new": 7, "duplicate": 10, "review": 2, "open": 1}
++    assert out["reconciled"] is True
++    assert out["needs_action"] == 5  # R (incomplete), R (fault), failed, unknown, unknown (CRM)
++    assert out["waiting"] == 3  # one open receipt, one pending and one sending follow-up, all older than stall
++    assert out["followups"]["unknown"] == 2 and out["followups"]["failed"] == 1
++    assert [d["source"] for d in out["doors"]] == ["form", "webhook"]
++    assert out["series"]["bucket_seconds"] == SERIES_BUCKET_SECONDS
++    ts = [b["t"] for b in out["series"]["buckets"]]
++    assert len(ts) == SERIES_BUCKETS and ts == sorted(ts) and ts[-1] <= out["now"] < ts[-1] + SERIES_BUCKET_SECONDS
++    assert all(b - a == SERIES_BUCKET_SECONDS for a, b in zip(ts, ts[1:], strict=False))
++    in_series = sum(sum(b[k] for k in ("new", "duplicate", "review")) for b in out["series"]["buckets"])
++    assert in_series == c["new"] + c["duplicate"] + c["review"] - 1  # the stale desk-fault receipt was decided long ago
++    assert len(out["recent"]) == FEED_ITEMS
++    ats = [(e["at"], e["receipt_id"]) for e in out["recent"]]
++    assert ats == sorted(ats, reverse=True)
++
++
++def test_summary_empty_and_started_at(env) -> None:
++    _, base = fresh(env)
++    status, out = get(base, "/api/ui/summary")
++    assert status == 200 and same_shape(out, fixture("summary-empty"))
++    assert out["counts"] == {"received": 0, "new": 0, "duplicate": 0, "review": 0, "open": 0}
++    assert out["doors"][0]["last_seen"] is None and out["recent"] == [] and out["reconciled"] is True
++    assert abs(out["desk_started_at"] - int(time.time())) < 60
++
++
++def test_series_bucket_holds_the_decided_time(env) -> None:
++    rig, base = fresh(env)
++    rig.desk.handle("form", "ui-1", lead())
++    decided = int(rig.query("SELECT decided_at FROM receipts")[0][0])
++    out = get(base, "/api/ui/summary")[1]
++    hit = [b for b in out["series"]["buckets"] if b["t"] == (decided // SERIES_BUCKET_SECONDS) * SERIES_BUCKET_SECONDS]
++    assert len(hit) == 1 and hit[0]["new"] == 1 and hit[0]["duplicate"] == 0
++
++
++def test_open_receipts_are_counted_and_young_ones_not_listed(env) -> None:
++    """R368: an open receipt is never hidden. Young: only in counts.open. Old: also in Needs (waiting)."""
++    rig, base = fresh(env)
++    sql(
++        rig,
++        "INSERT INTO receipts(source, source_ref, received_at, payload) VALUES ('form', 'young', ?, '{}')",
++        (rig.clock.t,),
++    )
++    out = get(base, "/api/ui/summary")[1]
++    assert out["counts"]["open"] == 1 and out["waiting"] == 0 and out["reconciled"] is True
++    assert get(base, "/api/ui/review")[1]["items"] == []
++    stale_receipt(rig, "old", None)
++    out = get(base, "/api/ui/summary")[1]
++    assert out["counts"]["open"] == 2 and out["waiting"] == 1
++    items = get(base, "/api/ui/review")[1]["items"]
++    assert [i["item_id"][0] for i in items] == ["O"] and items[0]["tab"] == "waiting"
++
++
++def test_refused_at_door_counts_envelopes_without_receipt(env) -> None:
++    rig, base = fresh(env)
++    assert call(base, "POST", "/leads", raw=b"not json")[0] == 400
++    out = get(base, "/api/ui/summary")[1]
++    assert out["refused_at_door"] == 1 == rig.desk.rejected_envelopes() == get(base, "/counts")[1]["rejected_envelopes"]
++    assert out["counts"]["received"] == 0
++
++
++def test_leads_shape_search_filter_and_paging(env) -> None:
++    rig, base = fresh(env)
++    ids = seed(rig)
++    status, out = get(base, "/api/ui/leads")
++    assert status == 200 and same_shape(out, fixture("leads"))
++    assert out["total"] == 7 and out["limit"] == LEADS_LIMIT_DEFAULT and out["offset"] == 0
++    created = [r["created_at"] for r in out["rows"]]
++    assert created == sorted(created, reverse=True)
++    grace = next(r for r in out["rows"] if r["lead_id"] == ids["grace"])
++    assert (grace["repeats"], grace["arrivals"], grace["first_request_id"]) == (9, 1, "ui-g-0")
++    ada = next(r for r in out["rows"] if r["lead_id"] == ids["ada"])
++    assert (ada["repeats"], ada["arrivals"]) == (1, 2)  # one repeat from the other door; the form id came twice
++    assert [r["lead_id"] for r in get(base, "/api/ui/leads?q=GRACE")[1]["rows"]] == [ids["grace"]]
++    assert [r["lead_id"] for r in get(base, f"/api/ui/leads?q={ids['ada'][1:7]}")[1]["rows"]] == [ids["ada"]]
++    assert [r["lead_id"] for r in get(base, "/api/ui/leads?q=ui-g-0")[1]["rows"]] == [ids["grace"]]
++    assert get(base, "/api/ui/leads?q=%25")[1]["total"] == 0  # a percent sign is text, not a wildcard
++    assert get(base, "/api/ui/leads?q=_")[1]["total"] == 0
++    assert get(base, "/api/ui/leads?q=%5C")[1]["total"] == 0
++    assert [r["lead_id"] for r in get(base, "/api/ui/leads?state=failed")[1]["rows"]] == [ids["alan"]]
++    both = get(base, "/api/ui/leads?state=unknown&q=linus")[1]
++    assert both["total"] == 1 and both["rows"][0]["lead_id"] == ids["linus"]
++    page1, page2 = get(base, "/api/ui/leads?limit=3")[1], get(base, "/api/ui/leads?limit=3&offset=3")[1]
++    assert len(page1["rows"]) == 3 and len(page2["rows"]) == 3 and page1["total"] == page2["total"] == 7
++    assert not {r["lead_id"] for r in page1["rows"]} & {r["lead_id"] for r in page2["rows"]}
++    assert get(base, "/api/ui/leads?offset=100000")[1]["rows"] == []
++
++
++def test_leads_empty(env) -> None:
++    _, base = fresh(env)
++    status, out = get(base, "/api/ui/leads")
++    assert status == 200 and same_shape(out, fixture("leads-empty")) and out["rows"] == [] and out["total"] == 0
++
++
++def test_lead_detail_shape_and_differences(env) -> None:
++    rig, base = fresh(env)
++    ids = seed(rig)
++    status, out = get(base, f"/api/ui/leads/{ids['ada']}")
++    assert status == 200 and same_shape(out, fixture("lead-detail"))
++    assert out["lead"]["name"] == "Ada Example" and out["followup"]["state"] == "sent"
++    assert out["first_receipt"]["source_ref"] == "ui-1" and out["first_receipt"]["arrivals"] == 2
++    assert out["first_receipt"]["payload_conflict"] == 1
++    assert out["duplicates_total"] == 1 and len(out["duplicates"]) == 1
++    assert out["duplicates"][0]["differing"] == [{"field": "phone", "first": "555 0100", "this": "555 0199"}]
++    assert [i[0] for i in out["review_items"]] == ["D", "D"]  # the repeat with new details, the changed replay
++    # the stalled and failed work of other leads is listed on their own lead
++    assert get(base, f"/api/ui/leads/{ids['edsger']}")[1]["review_items"] == ["F" + ids["edsger"]]
++    assert get(base, f"/api/ui/leads/{ids['alan']}")[1]["review_items"] == ["F" + ids["alan"]]
++
++
++def test_lead_detail_lists_at_most_the_cap(env) -> None:
++    rig, base = fresh(env)
++    first = rig.desk.handle("form", "ui-0", lead()).body["lead_id"]
++    for i in range(DUPLICATES_MAX + 3):
++        rig.desk.handle("webhook", f"ui-w-{i}", lead())
++    out = get(base, f"/api/ui/leads/{first}")[1]
++    assert out["duplicates_total"] == DUPLICATES_MAX + 3 and len(out["duplicates"]) == DUPLICATES_MAX
++    received = [d["received_at"] for d in out["duplicates"]]
++    assert received == sorted(received, reverse=True)
++
++
++def test_lead_id_grammar_and_not_found(env) -> None:
++    rig, base = fresh(env)
++    seed(rig)
++    status, out = get(base, "/api/ui/leads/Lffffffffffff")  # well formed, no such lead
++    assert (status, out) == (404, fixture("lead-detail-not-found"))
++    for bad in (
++        "L123",
++        "l0c4d8e2f6a19",
++        "L0C4D8E2F6A19",
++        "L0c4d8e2f6a1",
++        "L0c4d8e2f6a19x",
++        "..",
++        "%27%20OR%201%3D1",
++        "L",
++    ):
++        assert get(base, "/api/ui/leads/" + bad) == (404, {"error": "not_found"}), bad
++    assert get(base, "/api/ui/leads/Lffffffffffff/extra")[0] == 404
++    assert get(base, "/api/ui/nothing")[0] == 404
++    assert get(base, "/api/ui/")[0] == 404
++
++
++def test_review_shape_kinds_tabs_and_actions(env) -> None:
++    rig, base = fresh(env)
++    ids = seed(rig)
++    status, out = get(base, "/api/ui/review")
++    assert status == 200 and same_shape(out, fixture("review")), "review differs from the fixture shape"
++    items = {i["item_id"]: i for i in out["items"]}
++    assert out["tabs"] == {"action": 5, "waiting": 3, "info": 2}
++    tabs = [i["tab"] for i in out["items"]]
++    assert tabs == sorted(tabs, key=("action", "waiting", "info").index)
++    alan = items["F" + ids["alan"]]
++    assert (alan["title"], alan["lead_name"], [a["id"] for a in alan["actions"]]) == (
++        "Follow-up failed; nothing was sent",
++        "Alan Invented",
++        ["retry"],
++    )
++    assert alan["actions"][0]["endpoint"] == f"/review/F{ids['alan']}/retry" and alan["actions"][0]["confirm"] is None
++    linus = items["F" + ids["linus"]]
++    assert [a["id"] for a in linus["actions"]] == ["resolve_sent", "resolve_not_sent"]
++    assert [a["body"] for a in linus["actions"]] == [{"decision": "sent"}, {"decision": "not_sent"}]
++    assert all(a["confirm"] and a["confirm"]["verb"] for a in linus["actions"])
++    grete = items["F" + ids["grete"]]
++    assert [a["id"] for a in grete["actions"]] == ["resolve_crm_present", "resolve_not_sent"]  # `sent` never offered
++    assert "hint" in grete and grete["title"].startswith("UNKNOWN: the CRM")
++    r_incomplete = next(i for i in out["items"] if i["reason"].startswith("incomplete:"))
++    assert (r_incomplete["title"], r_incomplete["actions"]) == ("Incomplete request: email is missing", [])
++    fault = next(i for i in out["items"] if i["reason"] == "internal_error")
++    assert fault["title"] == "The desk could not decide this request" and fault["actions"] == []
++    assert items["F" + ids["edsger"]]["title"] == "Queued longer than 120 s"
++    assert [a["id"] for a in items["F" + ids["edsger"]]["actions"]] == ["retry"]
++    assert items["F" + ids["kurt"]]["actions"] == [] and items["F" + ids["kurt"]]["title"].startswith("Sending longer")
++    assert next(i for i in out["items"] if i["item_id"][0] == "O")["tab"] == "waiting"
++    info = [i for i in out["items"] if i["tab"] == "info"]
++    assert sorted(i["kind"] for i in info) == ["duplicate_with_new_info", "replay_payload_differs"]
++    assert next(i for i in info if i["kind"] == "duplicate_with_new_info")["title"] == "Repeat with new details: phone"
++    assert all(i["lead_name"] == "Ada Example" for i in info)
++    assert {i["item_id"] for i in out["items"]} == set(items)
++
++
++def test_review_empty(env) -> None:
++    _, base = fresh(env)
++    status, out = get(base, "/api/ui/review")
++    assert status == 200 and same_shape(out, fixture("review-empty")) and out["items"] == []
++
++
++# -- bad queries
++@pytest.mark.parametrize(
++    ("path", "field"),
++    [
++        ("/api/ui/leads?limit=101", "limit"),
++        ("/api/ui/leads?limit=0", "limit"),
++        ("/api/ui/leads?limit=abc", "limit"),
++        ("/api/ui/leads?limit=", "limit"),
++        ("/api/ui/leads?limit=-1", "limit"),
++        ("/api/ui/leads?limit=" + "9" * 40, "limit"),
++        ("/api/ui/leads?offset=100001", "offset"),
++        ("/api/ui/leads?offset=x", "offset"),
++        ("/api/ui/leads?q=" + "a" * 101, "q"),
++        ("/api/ui/leads?state=bogus", "state"),
++        ("/api/ui/leads?q=a%00b", "q"),
++        ("/api/ui/leads?q=%0A", "q"),
++        ("/api/ui/leads?sort=name", "sort"),
++        ("/api/ui/leads?limit=1&limit=2", "limit"),
++        ("/api/ui/leads?q=a&q=b", "q"),
++        ("/api/ui/summary?x=1", "x"),
++        ("/api/ui/review?limit=1", "limit"),
++        ("/api/ui/leads/Lffffffffffff?x=1", "x"),
++    ],
++)
++def test_bad_query_is_400_with_field(env, path: str, field: str) -> None:
++    _, base = fresh(env)
++    assert get(base, path) == (400, {"error": "bad_query", "field": field})
++
++
++def test_error_envelope_matches_fixture(env) -> None:
++    _, base = fresh(env)
++    assert get(base, "/api/ui/leads?limit=101") == (400, fixture("error-envelope"))
++
++
++def test_limit_and_search_edges_are_accepted(env) -> None:
++    _, base = fresh(env)
++    assert get(base, "/api/ui/leads?limit=100&offset=100000&q=" + "a" * 100)[0] == 200
++    assert get(base, "/api/ui/leads?limit=1")[0] == 200
++
++
++@pytest.mark.parametrize(
++    "text",
++    [
++        "'; DROP TABLE leads; --",
++        "' OR '1'='1",
++        '" OR 1=1 --',
++        "%27%3B%20DELETE%20FROM%20receipts",
++        "\\",
++        "a\x00b",
++        "é€😀",
++    ],
++)
++def test_injection_strings_in_q_and_state(env, text: str) -> None:
++    from urllib.parse import quote
++
++    rig, base = fresh(env)
++    seed(rig)
++    before = rig.query("SELECT (SELECT count(*) FROM leads), (SELECT count(*) FROM receipts)")
++    for field in ("q", "state"):
++        status, out = get(base, f"/api/ui/leads?{field}={quote(text)}")
++        assert status in (200, 400) and ("rows" in out or out["error"] == "bad_query")
++        if status == 200:
++            assert out["rows"] == []
++        else:
++            assert out["field"] == field
++    assert rig.query("SELECT (SELECT count(*) FROM leads), (SELECT count(*) FROM receipts)") == before
++
++
++def test_busy_lock_is_503(env, monkeypatch) -> None:
++    _, base = fresh(env)
++
++    def locked(_: Any) -> Any:
++        raise sqlite3.OperationalError("database is locked")
++
++    monkeypatch.setattr(portal_api, "connect_readonly", locked)
++    assert get(base, "/api/ui/summary") == (503, fixture("error-busy"))
++
++
++def test_only_get_on_ui_routes(env) -> None:
++    _, base = fresh(env)
++    for method in ("POST", "PUT", "DELETE", "PATCH"):
++        for path in ("/api/ui/summary", "/ui/", "/ui"):
++            status, body = call(base, method, path, body={})
++            assert (status, body) == (405, {"error": "method_not_allowed"}), (method, path)
++
++
++# -- static files and headers
++def test_static_files_and_redirect(env, monkeypatch, tmp_path) -> None:
++    root = tmp_path / "portal"
++    (root / "pages").mkdir(parents=True)
++    (root / "index.html").write_bytes(PLACEHOLDER)
++    (root / "app.css").write_bytes(b"body{}")
++    (root / "pages" / "x.js").write_bytes(b"void 0;")
++    (root / "notes.txt").write_bytes(b"skipped")
++    (root / "font.woff2").write_bytes(b"skipped")
++    static = portal_api.build_static(root)
++    assert sorted(static) == ["app.css", "index.html", "pages/x.js"]
++    monkeypatch.setattr(portal_api, "STATIC", static)
++    _, base = fresh(env)
++
++    def fetch(target: str) -> tuple[int, dict[str, str], bytes]:
++        host, port = base.removeprefix("http://").split(":")
++        with socket.create_connection((host, int(port)), timeout=10) as s:
++            s.sendall(f"GET {target} HTTP/1.1\r\nHost: {HOST}\r\nConnection: close\r\n\r\n".encode())
++            data = b""
++            while chunk := s.recv(65536):
++                data += chunk
++        head, _, body = data.partition(b"\r\n\r\n")
++        lines = head.decode("latin-1").split("\r\n")
++        headers = {k.lower(): v for k, _, v in (ln.partition(": ") for ln in lines[1:])}
++        return int(lines[0].split(" ")[1]), headers, body
++
++    for target in ("/ui/", "/ui/index.html"):
++        status, headers, body = fetch(target)
++        assert (status, body) == (200, PLACEHOLDER) and headers["content-type"] == "text/html; charset=utf-8"
++    assert fetch("/ui/app.css")[1]["content-type"] == "text/css; charset=utf-8"
++    status, headers, body = fetch("/ui/pages/x.js")
++    assert (status, body) == (200, b"void 0;") and headers["content-type"] == "text/javascript; charset=utf-8"
++    status, headers, body = fetch("/ui")
++    assert (status, headers["location"], body) == (308, "/ui/", b"")
++    for target in (
++        "/ui/../README.md",
++        "/ui/%2e%2e/README.md",
++        "/ui/%2E%2E%2Fpyproject.toml",
++        "/ui/pages/../../README.md",
++        "/ui/%5cwindows",
++        "/ui/..%5c..%5cx",
++        "/ui//etc/passwd",
++        "/ui/%2fetc/passwd",
++        "/ui/notes.txt",
++        "/ui/font.woff2",
++        "/ui/missing.js",
++        "/ui/pages/",
++        "/ui/pages",
++        "/ui/index.html%00.js",
++        "/ui/demo/portal_demo.js",
++        "/ui/demo/",
++    ):
++        status, headers, body = fetch(target)
++        assert status == 404, target
++        assert json.loads(body) == {"error": "not_found"}, target
++
++
++def test_security_headers_on_every_kind_of_reply(env, monkeypatch) -> None:
++    monkeypatch.setattr(portal_api, "STATIC", {"index.html": (PLACEHOLDER, "text/html; charset=utf-8")})
++    rig, base = fresh(env)
++    seed(rig)
++    import urllib.request
++
++    opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
++    csp = dict(SECURITY_HEADERS)["Content-Security-Policy"]
++    for needle in ("default-src 'none'", "script-src 'self'", "style-src 'self'", "frame-ancestors 'none'"):
++        assert needle in csp
++    assert "data:" not in csp and "unsafe" not in csp
++    for method, path, data in (
++        ("GET", "/api/ui/summary", None),
++        ("GET", "/api/ui/leads?limit=999", None),
++        ("GET", "/ui/", None),
++        ("GET", "/ui/missing.js", None),
++        ("GET", "/counts", None),
++        ("GET", "/nothing", None),
++        ("POST", "/leads", b"{}"),
++    ):
++        req = urllib.request.Request(base + path, data=data, method=method)  # noqa: S310
++        try:
++            resp = opener.open(req, timeout=10)  # noqa: S310
++        except urllib.error.HTTPError as e:
++            resp = e
++        for key, value in SECURITY_HEADERS:
++            assert resp.headers.get(key) == value, (path, key)
++        resp.close()
++
++
++# -- the Host and Origin gate
++def raw(base: str, request_line: str, *headers: str, body: bytes = b"") -> tuple[int, Any]:
++    head = "\r\n".join([request_line, *headers, "Connection: close", ""])
++    return raw_exchange(base, head.encode() + b"\r\n" + body)
++
++
++def port_of(base: str) -> str:
++    return base.rsplit(":", 1)[1]
++
++
++EVIL = "evil.example"
++
++
++def test_foreign_host_is_refused_on_every_route(env, monkeypatch) -> None:
++    monkeypatch.setattr(portal_api, "STATIC", {"index.html": (PLACEHOLDER, "text/html; charset=utf-8")})
++    rig, base = fresh(env)
++    body = json.dumps({"source": "form", "source_ref": "x1", "payload": lead()}).encode()
++    cl = f"Content-Length: {len(body)}"
++    for line, extra, payload in (
++        ("POST /leads HTTP/1.1", [cl], body),
++        ("POST /review/Fx/retry HTTP/1.1", [], b""),
++        ("POST /review/Fx/resolve HTTP/1.1", ["Content-Length: 2"], b"{}"),
++        ("GET /ui/ HTTP/1.1", [], b""),
++        ("GET /ui HTTP/1.1", [], b""),
++        ("GET /api/ui/summary HTTP/1.1", [], b""),
++        ("GET /api/demo/state HTTP/1.1", [], b""),
++        ("GET /counts HTTP/1.1", [], b""),
++        ("GET /review HTTP/1.1", [], b""),
++        ("GET /nothing HTTP/1.1", [], b""),  # the gate runs before the route is known
++        ("DELETE /leads HTTP/1.1", [], b""),
++    ):
++        for host in (EVIL, f"{EVIL}:{port_of(base)}", f"127.0.0.1.{EVIL}", f"user@{HOST}", "", f"{HOST}:abc"):
++            assert raw(base, line, f"Host: {host}", *extra, body=payload) == (403, {"error": "forbidden_host"}), (
++                line,
++                host,
++            )
++    assert rig.query("SELECT count(*) FROM receipts")[0][0] == 0, "a refused request wrote a receipt"
++    assert rig.desk.rejected_envelopes() == 0
++
++
++def test_missing_and_repeated_host_header(env) -> None:
++    _, base = fresh(env)
++    assert raw(base, "GET /counts HTTP/1.0") == (403, {"error": "forbidden_host"})
++    two = raw(base, "GET /counts HTTP/1.1", f"Host: {HOST}", f"Host: {EVIL}")
++    assert two == (403, {"error": "forbidden_host"})
++
++
++@pytest.mark.parametrize("host", ["127.0.0.1", "localhost", "LOCALHOST", "[::1]", "127.0.0.1:1", "[::1]:9"])
++def test_allowed_hosts_pass(env, host: str) -> None:
++    _, base = fresh(env)
++    assert raw(base, "GET /counts HTTP/1.1", f"Host: {host}")[0] == 200
++
++
++def test_foreign_origin_is_refused_and_the_book_is_unchanged(env) -> None:
++    rig, base = fresh(env)
++    port = port_of(base)
++    body = json.dumps({"source": "form", "source_ref": "o1", "payload": lead()}).encode()
++    cl = f"Content-Length: {len(body)}"
++    for origin in (
++        f"http://{EVIL}",
++        f"http://{EVIL}:{port}",
++        "null",
++        "",
++        f"https://{HOST}:{port}",
++        f"http://{HOST}",
++        f"http://{HOST}:{int(port) + 1}",
++        f"http://{HOST}:{port}/",
++        f"http://localhost.{EVIL}:{port}",
++    ):
++        got = raw(base, "POST /leads HTTP/1.1", f"Host: {HOST}", f"Origin: {origin}", cl, body=body)
++        assert got == (403, {"error": "forbidden_origin"}), origin
++    two = raw(
++        base, "POST /leads HTTP/1.1", f"Host: {HOST}", f"Origin: http://{HOST}:{port}", "Origin: null", cl, body=body
++    )
++    assert two == (403, {"error": "forbidden_origin"})
++    assert rig.query("SELECT count(*) FROM receipts")[0][0] == 0
++    assert rig.desk.rejected_envelopes() == 0
++
++
++@pytest.mark.parametrize("site", ["cross-site", "same-site", "bogus", ""])
++def test_sec_fetch_site_other_than_same_origin_is_refused(env, site: str) -> None:
++    rig, base = fresh(env)
++    body = json.dumps({"source": "form", "source_ref": "s1", "payload": lead()}).encode()
++    got = raw(
++        base,
++        "POST /leads HTTP/1.1",
++        f"Host: {HOST}",
++        f"Sec-Fetch-Site: {site}",
++        f"Content-Length: {len(body)}",
++        body=body,
++    )
++    assert got == (403, {"error": "forbidden_origin"})
++    assert rig.query("SELECT count(*) FROM receipts")[0][0] == 0
++
++
++def test_same_origin_and_no_origin_pass(env) -> None:
++    rig, base = fresh(env)
++    port = port_of(base)
++    body = json.dumps({"source": "form", "source_ref": "p1", "payload": lead()}).encode()
++    cl = f"Content-Length: {len(body)}"
++    ok = raw(base, "POST /leads HTTP/1.1", f"Host: {HOST}", cl, body=body)  # n8n, scripts: no browser headers
++    assert ok[0] == 201
++    for extra in (
++        [f"Origin: http://{HOST}:{port}", "Sec-Fetch-Site: same-origin"],
++        [f"Origin: http://localhost:{port}"],
++        ["Sec-Fetch-Site: none"],
++    ):
++        again = raw(base, "POST /leads HTTP/1.1", f"Host: {HOST}", *extra, cl, body=body)
++        assert again[0] in (200, 201), extra  # a replay of the same request id is fine
++    assert raw(base, "GET /api/ui/summary HTTP/1.1", f"Host: {HOST}", f"Origin: http://{HOST}:{port}")[0] == 200
++
++
++def test_extra_allowed_host_from_config(env) -> None:
++    name = "dock.example"
++    rig, base = fresh(env, allowed_hosts=(name,))
++    assert raw(base, "GET /counts HTTP/1.1", f"Host: {name}:{port_of(base)}")[0] == 200
++    assert raw(base, "GET /counts HTTP/1.1", f"Host: {name}x")[0] == 403
++    port = port_of(base)
++    assert raw(base, "GET /counts HTTP/1.1", f"Host: {name}", f"Origin: http://{name}:{port}")[0] == 200
++    _, plain = fresh(env)
++    assert raw(plain, "GET /counts HTTP/1.1", f"Host: {name}")[0] == 403
++
++
++def test_bind_address_is_allowed_and_wildcard_is_not() -> None:
++    assert "[::1]" in server._allowed_hosts(Config(bind="::1"))
++    assert "192.0.2.7" in server._allowed_hosts(Config(bind="192.0.2.7"))
++    for wildcard in ("0.0.0.0", "::"):  # noqa: S104 (compared with, never bound to)
++        names = server._allowed_hosts(Config(bind=wildcard))
++        assert names == {"127.0.0.1", "localhost", "[::1]"}
++
++
++def test_allowed_hosts_setting_is_validated() -> None:
++    cfg = Config.from_env({"DESK_ALLOWED_HOSTS": "dock.example, [fe80::1] ,a-b.c"})
++    assert cfg.allowed_hosts == ("dock.example", "[fe80::1]", "a-b.c")
++    assert Config.from_env({}).allowed_hosts == () and Config.from_env({"DESK_ALLOWED_HOSTS": " "}).allowed_hosts == ()
++    for bad in ("Dock.Example", "a b", "a,,b", "a_b", "x/y", "http://a", "a:80", "*", "a" * 254, "[zz]", "[]"):
++        with pytest.raises(ValueError, match="allowed_hosts"):
++            Config.from_env({"DESK_ALLOWED_HOSTS": bad})
++    with pytest.raises(ValueError, match="allowed_hosts"):
++        Config(allowed_hosts=("UPPER",))
++
++
++# -- the demo extension door
++class FakeDemo:
++    assets = {"portal_demo.js": (b"/*x*/", "text/javascript; charset=utf-8")}
++
++    def __init__(self) -> None:
++        self.calls: list[tuple[str, str, bytes]] = []
++
++    def handle(self, method: str, path: str, body: bytes) -> tuple[int, Any]:
++        self.calls.append((method, path, body))
++        return 200, {"ok": True}
++
++
++def test_no_demo_extension_means_404(env) -> None:
++    _, base = fresh(env)
++    assert call(base, "GET", "/api/demo/state") == (404, {"error": "not_found"})
++    assert call(base, "POST", "/api/demo/burst", body={"n": 1}) == (404, {"error": "not_found"})
++    assert get(base, "/ui/demo/portal_demo.js") == (404, {"error": "not_found"})
++    assert get(base, "/api/demo/")[0] == 404
++
++
++def test_demo_extension_gets_method_path_and_a_capped_body(env, monkeypatch) -> None:
++    demo = FakeDemo()
++    monkeypatch.setattr(server, "load_demo_portal", lambda desk: demo)
++    _, base = fresh(env)
++    assert call(base, "GET", "/api/demo/state") == (200, {"ok": True})
++    assert call(base, "POST", "/api/demo/burst", body={"n": 1}) == (200, {"ok": True})
++    assert call(base, "DELETE", "/api/demo/x/y") == (200, {"ok": True})
++    assert [(m, p) for m, p, _ in demo.calls] == [("GET", "state"), ("POST", "burst"), ("DELETE", "x/y")]
++    assert demo.calls[1][2] == b'{"n": 1}' and demo.calls[0][2] == b""
++    big = json.dumps({"pad": "x" * (DEMO_BODY_MAX * 2)}).encode()
++    call(base, "POST", "/api/demo/burst", raw=big)
++    assert len(demo.calls[-1][2]) == DEMO_BODY_MAX
++    status, out = raw(
++        base,
++        "POST /api/demo/burst HTTP/1.1",
++        f"Host: {HOST}",
++        "Content-Type: text/plain",
++        "Content-Length: 2",
++        body=b"{}",
++    )
++    assert (status, out) == (400, {"error": "bad_body"})
++    assert len(demo.calls) == 4  # the refused call never reached the extension
++
++
++def test_demo_asset_is_served_from_the_extension(env, monkeypatch) -> None:
++    monkeypatch.setattr(server, "load_demo_portal", lambda desk: FakeDemo())
++    _, base = fresh(env)
++    host, port = base.removeprefix("http://").split(":")
++    with socket.create_connection((host, int(port)), timeout=10) as s:
++        s.sendall(f"GET /ui/demo/portal_demo.js HTTP/1.1\r\nHost: {HOST}\r\n\r\n".encode())
++        data = b""
++        while chunk := s.recv(65536):
++            data += chunk
++    head, _, body = data.partition(b"\r\n\r\n")
++    assert b" 200 " in head.split(b"\r\n")[0] and body == b"/*x*/"
++    assert b"text/javascript; charset=utf-8" in head and b"nosniff" in head
++    assert raw(base, "GET /ui/demo/other.js HTTP/1.1", f"Host: {HOST}") == (404, {"error": "not_found"})
++
++
++# -- the loader
++def test_loader_returns_none_only_when_the_module_is_absent(monkeypatch) -> None:
++    rig_desk = object()
++    for absent in ("demo_only", "demo_only.portal_demo"):
++
++        def gone(name: str, _a: str = absent) -> Any:
++            raise ModuleNotFoundError("no module", name=_a)
++
++        monkeypatch.setattr(loader.importlib, "import_module", gone)
++        assert loader.load_demo_portal(rig_desk) is None  # type: ignore[arg-type]
++
++    def other(name: str) -> Any:
++        raise ModuleNotFoundError("no module", name="somewhere_else")
++
++    monkeypatch.setattr(loader.importlib, "import_module", other)
++    with pytest.raises(ModuleNotFoundError):
++        loader.load_demo_portal(rig_desk)  # type: ignore[arg-type]
++
++    def broken(name: str) -> Any:
++        raise ImportError("broken extension")
++
++    monkeypatch.setattr(loader.importlib, "import_module", broken)
++    with pytest.raises(ImportError, match="broken"):
++        loader.load_demo_portal(rig_desk)  # type: ignore[arg-type]
++
++    marker = types.SimpleNamespace(make=lambda desk: ("made", desk))
++    monkeypatch.setattr(loader.importlib, "import_module", lambda name: marker)
++    assert loader.load_demo_portal(rig_desk) == ("made", rig_desk)  # type: ignore[arg-type]
++
++
++# -- concurrency and restarts
++def test_burst_while_summary_is_polled(env) -> None:
++    """10 simultaneous leads while Overview polls: no 5xx anywhere, and every poll adds up."""
++    rig, base = fresh(env)
++    stop = threading.Event()
++    polls: list[tuple[int, Any]] = []
++
++    def poll() -> None:
++        while not stop.is_set():
++            polls.append(get(base, "/api/ui/summary"))
++            polls.append(get(base, "/api/ui/review"))
++
++    poller = threading.Thread(target=poll, daemon=True)
++    poller.start()
++    try:
++        fns = [
++            (lambda i=i: call(base, "POST", "/leads", {"source": "form", "source_ref": f"b-{i}", "payload": lead()}))
++            for i in range(BURST)
++        ]
++        results = run_threads(fns)
++    finally:
++        wait_until(lambda: len(polls) > 2, what="the poller to run")
++        stop.set()
++        poller.join(timeout=30)
++    assert not poller.is_alive()
++    statuses = [r[0] for r in results]
++    assert all(s < 500 for s in statuses) and sorted(set(statuses)) == [200, 201], statuses
++    assert all(status < 500 for status, _ in polls), [s for s, _ in polls if s >= 500]
++    summaries = [body for status, body in polls if "counts" in body]
++    assert summaries and all(s["reconciled"] is True for s in summaries)
++    for s in summaries:
++        c = s["counts"]
++        assert c["received"] == c["new"] + c["duplicate"] + c["review"] + c["open"]
++    final = get(base, "/api/ui/summary")[1]
++    assert (
++        final["counts"]["received"] == BURST
++        and final["counts"]["new"] == 1
++        and final["counts"]["duplicate"] == BURST - 1
++    )
++    assert final["reconciled"] is True
++
++
++def test_restart_on_the_same_port_with_the_portal_open(env) -> None:
++    """20 stops and starts on one fixed port while a page keeps polling. Every bind must succeed at once."""
++    rig, _ = fresh(env)
++    rig.desk.handle("form", "r-1", lead())
++    port = free_port()
++    cfg = Config(db_path=rig.db_path, port=port, replies_path=rig.replies_path)
++    seconds: list[float] = []
++    for _ in range(RESTARTS):
++        t0 = time.monotonic()
++        srv = make_server(rig.desk, cfg)  # raises OSError when the port cannot be bound
++        seconds.append(time.monotonic() - t0)
++        thread = threading.Thread(target=srv.serve_forever, daemon=True)
++        thread.start()
++        url = f"http://{HOST}:{port}"
++        try:
++            for _poll in range(3):  # the open page: connections that end in TIME_WAIT on this port
++                status, out = get(url, "/api/ui/summary")
++                assert status == 200 and out["counts"]["received"] == 1
++        finally:
++            srv.shutdown()
++            srv.server_close()
++            thread.join(timeout=30)
++    print(f"restart x{RESTARTS}: bind seconds max={max(seconds):.4f} mean={sum(seconds) / len(seconds):.4f}")
++    assert max(seconds) < server.REQUEST_TIMEOUT_SECONDS
+diff --git a/tests/test_server_hardening.py b/tests/test_server_hardening.py
+index 0617558..e9437ee 100644
+--- a/tests/test_server_hardening.py
++++ b/tests/test_server_hardening.py
+@@ -11,7 +11,7 @@ import threading
+ import time
+ 
+ import pytest
+-from support import BlockAt, call, lead, raw_exchange, run_threads, wait_until
++from support import HOST, BlockAt, call, lead, raw_exchange, run_threads, wait_until
+ 
+ from lead_desk import server
+ from lead_desk.constants import LISTEN_QUEUE
+@@ -29,7 +29,7 @@ def rejected(base: str) -> int:
+ 
+ def head(extra: str, length: str | None = None) -> bytes:
+     cl = f"Content-Length: {length}\r\n" if length is not None else ""
+-    return f"POST /leads HTTP/1.1\r\nHost: x\r\n{cl}{extra}Connection: close\r\n\r\n".encode()
++    return f"POST /leads HTTP/1.1\r\nHost: {HOST}\r\n{cl}{extra}Connection: close\r\n\r\n".encode()
+ 
+ 
+ def test_short_body_socket_held_open_is_408(env, monkeypatch) -> None:
+@@ -89,7 +89,7 @@ def test_conflicting_content_length_is_400(env) -> None:
+ @pytest.mark.parametrize("target", ["http://[/", "//[", "http://[::1/x", "/leads/%ff%fe/../[", "http://a:b:c/"])
+ def test_unparsable_target_is_json_400_or_404(env, target) -> None:
+     base = env.serve(env.rig())
+-    status, body = raw_exchange(base, f"GET {target} HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n".encode())
++    status, body = raw_exchange(base, f"GET {target} HTTP/1.1\r\nHost: {HOST}\r\nConnection: close\r\n\r\n".encode())
+     assert status in (400, 404), status
+     assert isinstance(body, dict) and "error" in body
+ 
