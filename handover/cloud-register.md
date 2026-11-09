@@ -893,3 +893,6 @@ PR72 0ae044b: builder done; evidence run waits for evid.sh fix (inv-trunc-66), t
 | a67a8c8f | P4a r2 resolve / rev 3 | | REPORTED rev 3 (13 groups all applied; 16 test ids, 25 mutants); CLOSED 07:45Z | plan review r3 (money, uncapped) started |
 | rv-p4a-d-r3, rv-p4a-c-r3 | egm reviewers P4a rev 3 | 07:45Z | +25m | start |
 | a755b1de | PR87 r2 design | | REPORTED 0B/0M/5N; saved reviews/PR87/round2-design.md; CLOSED | ae773123 resumed for nit batch (one push); evid.sh 87 a909459 continues, delta run after |
+| a79ebd1d | PR84 r4 design | | REPORTED 0B/3M/6N (+codebase 0B/1M/4N); saved reviews/PR84/round4-design.md; CLOSED; my evid.sh 84 on 0cc446a stopped (head will change) | ab6c7e80 resumed for round-4 fix batch |
+| bbbb0003/ac3c161d | P1d-a resolve r1 / rev 2 | | REPORTED rev 2 (33 findings, all applied); CLOSED 07:46Z | plan review r2 started |
+| rv-p1da-d-r2, rv-p1da-r-r2 | egm reviewers P1d-a rev 2 | 07:46Z | +25m | start |
