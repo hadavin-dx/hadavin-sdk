@@ -1,0 +1,2149 @@
+{
+ "burst-10": {
+  "s": "burst-10",
+  "verdict": "1P 2P 3P 4P 5P 6P 7P ",
+  "failing": [],
+  "requests": 10,
+  "c1": {
+   "distinct_requests": 10,
+   "foreign_ids": 0,
+   "intended": 10,
+   "lines": 10,
+   "lost": 0,
+   "marker_checked": true,
+   "receipts_in_book": 10,
+   "receipts_without_run_marker": 0,
+   "stale_receipts": 0,
+   "stored_but_client_unacked": 0
+  },
+  "c2": {
+   "distinct_request_ids": 10,
+   "expected_leads_missing_or_foreign": 0,
+   "failed": 0,
+   "followup_rows": 10,
+   "leads": 10,
+   "new_receipts_without_lead": 0,
+   "pending": 0,
+   "receipts_without_verdict": 0,
+   "review_verdicts": 0,
+   "sending": 0,
+   "sent": 10,
+   "sum": 10,
+   "unknown": 0
+  },
+  "c3": {
+   "failed": 0,
+   "failed_or_unknown": 0,
+   "failed_with_message_and_reason": 0,
+   "keys": 10,
+   "max_failed": 0,
+   "max_per_key": 1,
+   "max_per_recipient": 1,
+   "max_unknown": 0,
+   "messages": 10,
+   "silent_followups": 0,
+   "unknown": 0,
+   "unknown_with_message": 0,
+   "unknown_without_fitting_reason": 0,
+   "unknown_without_message": 0
+  },
+  "c4": {
+   "crm_rows": 10,
+   "extra": 0,
+   "leads_crm_done": 10,
+   "listed_unknowns": 0,
+   "missing": 0,
+   "twice": 0,
+   "unknowns_present": 0
+  },
+  "c5": {
+   "bound": 1,
+   "calls": 10,
+   "calls_by_status": {
+    "200": 10
+   },
+   "counted_from": "arrival lines",
+   "leads_called": 10,
+   "max_calls_one_lead": 1
+  },
+  "c6": {
+   "attempts": 10,
+   "ceiling": null,
+   "rate": 0.0,
+   "requests": 10,
+   "requests_ending_on_503": 0,
+   "requests_that_saw_503": 0,
+   "responses_503": 0
+  },
+  "msgs": 10,
+  "recips": 10,
+  "maxrecip": 1,
+  "restarts": [],
+  "codes": {
+   "201": 10
+  },
+  "final": {
+   "201": 10
+  },
+  "lat": {
+   "p50": 0.044,
+   "p95": 0.05,
+   "max": 0.05
+  },
+  "drain": 0.81,
+  "faults": [],
+  "up0": "0.65, 0.69, 0.54",
+  "up1": "0.65, 0.69, 0.54",
+  "peak": {
+   "rss_kb": 37208,
+   "threads": 2,
+   "fds": 20
+  },
+  "load_s": 1.66,
+  "requests_with_retry": 0
+ },
+ "burst-200": {
+  "s": "burst-200",
+  "verdict": "1P 2P 3P 4P 5P 6P 7P ",
+  "failing": [],
+  "requests": 200,
+  "c1": {
+   "distinct_requests": 200,
+   "foreign_ids": 0,
+   "intended": 200,
+   "lines": 200,
+   "lost": 0,
+   "marker_checked": true,
+   "receipts_in_book": 200,
+   "receipts_without_run_marker": 0,
+   "stale_receipts": 0,
+   "stored_but_client_unacked": 0
+  },
+  "c2": {
+   "distinct_request_ids": 200,
+   "expected_leads_missing_or_foreign": 0,
+   "failed": 0,
+   "followup_rows": 200,
+   "leads": 200,
+   "new_receipts_without_lead": 0,
+   "pending": 0,
+   "receipts_without_verdict": 0,
+   "review_verdicts": 0,
+   "sending": 0,
+   "sent": 200,
+   "sum": 200,
+   "unknown": 0
+  },
+  "c3": {
+   "failed": 0,
+   "failed_or_unknown": 0,
+   "failed_with_message_and_reason": 0,
+   "keys": 200,
+   "max_failed": 0,
+   "max_per_key": 1,
+   "max_per_recipient": 1,
+   "max_unknown": 0,
+   "messages": 200,
+   "silent_followups": 0,
+   "unknown": 0,
+   "unknown_with_message": 0,
+   "unknown_without_fitting_reason": 0,
+   "unknown_without_message": 0
+  },
+  "c4": {
+   "crm_rows": 200,
+   "extra": 0,
+   "leads_crm_done": 200,
+   "listed_unknowns": 0,
+   "missing": 0,
+   "twice": 0,
+   "unknowns_present": 0
+  },
+  "c5": {
+   "bound": 1,
+   "calls": 200,
+   "calls_by_status": {
+    "200": 200
+   },
+   "counted_from": "arrival lines",
+   "leads_called": 200,
+   "max_calls_one_lead": 1
+  },
+  "c6": {
+   "attempts": 200,
+   "ceiling": null,
+   "rate": 0.0,
+   "requests": 200,
+   "requests_ending_on_503": 0,
+   "requests_that_saw_503": 0,
+   "responses_503": 0
+  },
+  "msgs": 200,
+  "recips": 200,
+  "maxrecip": 1,
+  "restarts": [],
+  "codes": {
+   "201": 200
+  },
+  "final": {
+   "201": 200
+  },
+  "lat": {
+   "p50": 0.608,
+   "p95": 0.86,
+   "max": 0.962
+  },
+  "drain": 1.8,
+  "faults": [],
+  "up0": "0.65, 0.69, 0.54",
+  "up1": "0.60, 0.68, 0.54",
+  "peak": {
+   "rss_kb": 92308,
+   "threads": 132,
+   "fds": 472
+  },
+  "load_s": 2.6,
+  "requests_with_retry": 0
+ },
+ "burst-1000": {
+  "s": "burst-1000",
+  "verdict": "1P 2P 3P 4P 5P 6P 7P ",
+  "failing": [],
+  "requests": 1000,
+  "c1": {
+   "distinct_requests": 1000,
+   "foreign_ids": 0,
+   "intended": 1000,
+   "lines": 1000,
+   "lost": 0,
+   "marker_checked": true,
+   "receipts_in_book": 1000,
+   "receipts_without_run_marker": 0,
+   "stale_receipts": 0,
+   "stored_but_client_unacked": 0
+  },
+  "c2": {
+   "distinct_request_ids": 1000,
+   "expected_leads_missing_or_foreign": 0,
+   "failed": 0,
+   "followup_rows": 1000,
+   "leads": 1000,
+   "new_receipts_without_lead": 0,
+   "pending": 0,
+   "receipts_without_verdict": 0,
+   "review_verdicts": 0,
+   "sending": 0,
+   "sent": 1000,
+   "sum": 1000,
+   "unknown": 0
+  },
+  "c3": {
+   "failed": 0,
+   "failed_or_unknown": 0,
+   "failed_with_message_and_reason": 0,
+   "keys": 1000,
+   "max_failed": 0,
+   "max_per_key": 1,
+   "max_per_recipient": 1,
+   "max_unknown": 0,
+   "messages": 1000,
+   "silent_followups": 0,
+   "unknown": 0,
+   "unknown_with_message": 0,
+   "unknown_without_fitting_reason": 0,
+   "unknown_without_message": 0
+  },
+  "c4": {
+   "crm_rows": 1000,
+   "extra": 0,
+   "leads_crm_done": 1000,
+   "listed_unknowns": 0,
+   "missing": 0,
+   "twice": 0,
+   "unknowns_present": 0
+  },
+  "c5": {
+   "bound": 1,
+   "calls": 1000,
+   "calls_by_status": {
+    "200": 1000
+   },
+   "counted_from": "arrival lines",
+   "leads_called": 1000,
+   "max_calls_one_lead": 1
+  },
+  "c6": {
+   "attempts": 1000,
+   "ceiling": null,
+   "rate": 0.0,
+   "requests": 1000,
+   "requests_ending_on_503": 0,
+   "requests_that_saw_503": 0,
+   "responses_503": 0
+  },
+  "msgs": 1000,
+  "recips": 1000,
+  "maxrecip": 1,
+  "restarts": [],
+  "codes": {
+   "201": 1000
+  },
+  "final": {
+   "201": 1000
+  },
+  "lat": {
+   "p50": 0.98,
+   "p95": 1.222,
+   "max": 1.716
+  },
+  "drain": 8.22,
+  "faults": [],
+  "up0": "0.60, 0.68, 0.54",
+  "up1": "0.61, 0.68, 0.54",
+  "peak": {
+   "rss_kb": 305772,
+   "threads": 977,
+   "fds": 2962
+  },
+  "load_s": 5.91,
+  "requests_with_retry": 0
+ },
+ "rate-20x60": {
+  "s": "rate-20x60",
+  "verdict": "1P 2P 3P 4P 5P 6P 7P ",
+  "failing": [],
+  "requests": 1200,
+  "c1": {
+   "distinct_requests": 1200,
+   "foreign_ids": 0,
+   "intended": 1200,
+   "lines": 1200,
+   "lost": 0,
+   "marker_checked": true,
+   "receipts_in_book": 1200,
+   "receipts_without_run_marker": 0,
+   "stale_receipts": 0,
+   "stored_but_client_unacked": 0
+  },
+  "c2": {
+   "distinct_request_ids": 1200,
+   "expected_leads_missing_or_foreign": 0,
+   "failed": 0,
+   "followup_rows": 1200,
+   "leads": 1200,
+   "new_receipts_without_lead": 0,
+   "pending": 0,
+   "receipts_without_verdict": 0,
+   "review_verdicts": 0,
+   "sending": 0,
+   "sent": 1200,
+   "sum": 1200,
+   "unknown": 0
+  },
+  "c3": {
+   "failed": 0,
+   "failed_or_unknown": 0,
+   "failed_with_message_and_reason": 0,
+   "keys": 1200,
+   "max_failed": 0,
+   "max_per_key": 1,
+   "max_per_recipient": 1,
+   "max_unknown": 0,
+   "messages": 1200,
+   "silent_followups": 0,
+   "unknown": 0,
+   "unknown_with_message": 0,
+   "unknown_without_fitting_reason": 0,
+   "unknown_without_message": 0
+  },
+  "c4": {
+   "crm_rows": 1200,
+   "extra": 0,
+   "leads_crm_done": 1200,
+   "listed_unknowns": 0,
+   "missing": 0,
+   "twice": 0,
+   "unknowns_present": 0
+  },
+  "c5": {
+   "bound": 1,
+   "calls": 1200,
+   "calls_by_status": {
+    "200": 1200
+   },
+   "counted_from": "arrival lines",
+   "leads_called": 1200,
+   "max_calls_one_lead": 1
+  },
+  "c6": {
+   "attempts": 1200,
+   "ceiling": null,
+   "rate": 0.0,
+   "requests": 1200,
+   "requests_ending_on_503": 0,
+   "requests_that_saw_503": 0,
+   "responses_503": 0
+  },
+  "msgs": 1200,
+  "recips": 1200,
+  "maxrecip": 1,
+  "restarts": [],
+  "codes": {
+   "201": 1200
+  },
+  "final": {
+   "201": 1200
+  },
+  "lat": {
+   "p50": 0.01,
+   "p95": 0.014,
+   "max": 0.053
+  },
+  "drain": 0.41,
+  "faults": [],
+  "up0": "0.61, 0.68, 0.54",
+  "up1": "0.66, 0.68, 0.55",
+  "peak": {
+   "rss_kb": 35852,
+   "threads": 3,
+   "fds": 15
+  },
+  "load_s": 61.59,
+  "requests_with_retry": 0
+ },
+ "dupmix-30pct": {
+  "s": "dupmix-30pct",
+  "verdict": "1P 2P 3P 4P 5P 6P 7P ",
+  "failing": [],
+  "requests": 1200,
+  "c1": {
+   "distinct_requests": 1007,
+   "foreign_ids": 0,
+   "intended": 1200,
+   "lines": 1200,
+   "lost": 0,
+   "marker_checked": true,
+   "receipts_in_book": 1007,
+   "receipts_without_run_marker": 0,
+   "stale_receipts": 0,
+   "stored_but_client_unacked": 0
+  },
+  "c2": {
+   "distinct_request_ids": 840,
+   "expected_leads_missing_or_foreign": 0,
+   "failed": 0,
+   "followup_rows": 840,
+   "leads": 840,
+   "new_receipts_without_lead": 0,
+   "pending": 0,
+   "receipts_without_verdict": 0,
+   "review_verdicts": 0,
+   "sending": 0,
+   "sent": 840,
+   "sum": 840,
+   "unknown": 0
+  },
+  "c3": {
+   "failed": 0,
+   "failed_or_unknown": 0,
+   "failed_with_message_and_reason": 0,
+   "keys": 840,
+   "max_failed": 0,
+   "max_per_key": 1,
+   "max_per_recipient": 1,
+   "max_unknown": 0,
+   "messages": 840,
+   "silent_followups": 0,
+   "unknown": 0,
+   "unknown_with_message": 0,
+   "unknown_without_fitting_reason": 0,
+   "unknown_without_message": 0
+  },
+  "c4": {
+   "crm_rows": 840,
+   "extra": 0,
+   "leads_crm_done": 840,
+   "listed_unknowns": 0,
+   "missing": 0,
+   "twice": 0,
+   "unknowns_present": 0
+  },
+  "c5": {
+   "bound": 1,
+   "calls": 840,
+   "calls_by_status": {
+    "200": 840
+   },
+   "counted_from": "arrival lines",
+   "leads_called": 840,
+   "max_calls_one_lead": 1
+  },
+  "c6": {
+   "attempts": 1200,
+   "ceiling": null,
+   "rate": 0.0,
+   "requests": 1200,
+   "requests_ending_on_503": 0,
+   "requests_that_saw_503": 0,
+   "responses_503": 0
+  },
+  "msgs": 840,
+  "recips": 840,
+  "maxrecip": 1,
+  "restarts": [],
+  "codes": {
+   "201": 1012,
+   "200": 188
+  },
+  "final": {
+   "201": 1012,
+   "200": 188
+  },
+  "lat": {
+   "p50": 0.011,
+   "p95": 0.015,
+   "max": 0.052
+  },
+  "drain": 0.21,
+  "faults": [],
+  "up0": "0.66, 0.68, 0.55",
+  "up1": "0.73, 0.70, 0.56",
+  "peak": {
+   "rss_kb": 36256,
+   "threads": 3,
+   "fds": 16
+  },
+  "load_s": 44.81,
+  "requests_with_retry": 0
+ },
+ "crash-A": {
+  "s": "crash-A",
+  "verdict": "1P 2P 3P 4P 5P 6P 7P ",
+  "failing": [],
+  "requests": 400,
+  "c1": {
+   "distinct_requests": 400,
+   "foreign_ids": 0,
+   "intended": 400,
+   "lines": 400,
+   "lost": 0,
+   "marker_checked": true,
+   "receipts_in_book": 400,
+   "receipts_without_run_marker": 0,
+   "stale_receipts": 0,
+   "stored_but_client_unacked": 0
+  },
+  "c2": {
+   "distinct_request_ids": 400,
+   "expected_leads_missing_or_foreign": 0,
+   "failed": 0,
+   "followup_rows": 400,
+   "leads": 400,
+   "new_receipts_without_lead": 0,
+   "pending": 0,
+   "receipts_without_verdict": 0,
+   "review_verdicts": 0,
+   "sending": 0,
+   "sent": 400,
+   "sum": 400,
+   "unknown": 0
+  },
+  "c3": {
+   "failed": 0,
+   "failed_or_unknown": 0,
+   "failed_with_message_and_reason": 0,
+   "keys": 400,
+   "max_failed": 0,
+   "max_per_key": 1,
+   "max_per_recipient": 1,
+   "max_unknown": 8,
+   "messages": 400,
+   "silent_followups": 0,
+   "unknown": 0,
+   "unknown_with_message": 0,
+   "unknown_without_fitting_reason": 0,
+   "unknown_without_message": 0
+  },
+  "c4": {
+   "crm_rows": 400,
+   "extra": 0,
+   "leads_crm_done": 400,
+   "listed_unknowns": 0,
+   "missing": 0,
+   "twice": 0,
+   "unknowns_present": 0
+  },
+  "c5": {
+   "bound": 2,
+   "calls": 400,
+   "calls_by_status": {
+    "200": 400
+   },
+   "counted_from": "arrival lines",
+   "leads_called": 400,
+   "max_calls_one_lead": 1
+  },
+  "c6": {
+   "attempts": 425,
+   "ceiling": null,
+   "rate": 0.0,
+   "requests": 400,
+   "requests_ending_on_503": 0,
+   "requests_that_saw_503": 0,
+   "responses_503": 0
+  },
+  "msgs": 400,
+  "recips": 400,
+  "maxrecip": 1,
+  "restarts": [
+   {
+    "ts": 1794254165.0806456,
+    "exit_code": 137
+   }
+  ],
+  "codes": {
+   "201": 400,
+   "RemoteDisconnected": 1,
+   "ConnectionRefusedError": 24
+  },
+  "final": {
+   "201": 400
+  },
+  "lat": {
+   "p50": 0.01,
+   "p95": 0.013,
+   "max": 0.04
+  },
+  "drain": 0.3,
+  "faults": [],
+  "up0": "0.73, 0.70, 0.56",
+  "up1": "0.59, 0.67, 0.55",
+  "peak": {
+   "rss_kb": 35236,
+   "threads": 3,
+   "fds": 18
+  },
+  "load_s": 21.59,
+  "requests_with_retry": 9
+ },
+ "crash-A2": {
+  "s": "crash-A2",
+  "verdict": "1P 2P 3P 4P 5P 6P 7P ",
+  "failing": [],
+  "requests": 400,
+  "c1": {
+   "distinct_requests": 400,
+   "foreign_ids": 0,
+   "intended": 400,
+   "lines": 400,
+   "lost": 0,
+   "marker_checked": true,
+   "receipts_in_book": 400,
+   "receipts_without_run_marker": 0,
+   "stale_receipts": 0,
+   "stored_but_client_unacked": 0
+  },
+  "c2": {
+   "distinct_request_ids": 400,
+   "expected_leads_missing_or_foreign": 0,
+   "failed": 0,
+   "followup_rows": 400,
+   "leads": 400,
+   "new_receipts_without_lead": 0,
+   "pending": 0,
+   "receipts_without_verdict": 0,
+   "review_verdicts": 0,
+   "sending": 0,
+   "sent": 400,
+   "sum": 400,
+   "unknown": 0
+  },
+  "c3": {
+   "failed": 0,
+   "failed_or_unknown": 0,
+   "failed_with_message_and_reason": 0,
+   "keys": 400,
+   "max_failed": 0,
+   "max_per_key": 1,
+   "max_per_recipient": 1,
+   "max_unknown": 8,
+   "messages": 400,
+   "silent_followups": 0,
+   "unknown": 0,
+   "unknown_with_message": 0,
+   "unknown_without_fitting_reason": 0,
+   "unknown_without_message": 0
+  },
+  "c4": {
+   "crm_rows": 400,
+   "extra": 0,
+   "leads_crm_done": 400,
+   "listed_unknowns": 0,
+   "missing": 0,
+   "twice": 0,
+   "unknowns_present": 0
+  },
+  "c5": {
+   "bound": 2,
+   "calls": 400,
+   "calls_by_status": {
+    "200": 400
+   },
+   "counted_from": "arrival lines",
+   "leads_called": 400,
+   "max_calls_one_lead": 1
+  },
+  "c6": {
+   "attempts": 425,
+   "ceiling": null,
+   "rate": 0.0,
+   "requests": 400,
+   "requests_ending_on_503": 0,
+   "requests_that_saw_503": 0,
+   "responses_503": 0
+  },
+  "msgs": 400,
+  "recips": 400,
+  "maxrecip": 1,
+  "restarts": [
+   {
+    "ts": 1794254187.2494838,
+    "exit_code": 137
+   }
+  ],
+  "codes": {
+   "201": 400,
+   "RemoteDisconnected": 1,
+   "ConnectionRefusedError": 24
+  },
+  "final": {
+   "201": 400
+  },
+  "lat": {
+   "p50": 0.01,
+   "p95": 0.014,
+   "max": 0.051
+  },
+  "drain": 0.31,
+  "faults": [],
+  "up0": "0.59, 0.67, 0.55",
+  "up1": "0.46, 0.63, 0.54",
+  "peak": {
+   "rss_kb": 35816,
+   "threads": 3,
+   "fds": 18
+  },
+  "load_s": 21.59,
+  "requests_with_retry": 9
+ },
+ "crash-B": {
+  "s": "crash-B",
+  "verdict": "1P 2P 3P 4P 5P 6P 7P ",
+  "failing": [],
+  "requests": 400,
+  "c1": {
+   "distinct_requests": 400,
+   "foreign_ids": 0,
+   "intended": 400,
+   "lines": 400,
+   "lost": 0,
+   "marker_checked": true,
+   "receipts_in_book": 400,
+   "receipts_without_run_marker": 0,
+   "stale_receipts": 0,
+   "stored_but_client_unacked": 0
+  },
+  "c2": {
+   "distinct_request_ids": 400,
+   "expected_leads_missing_or_foreign": 0,
+   "failed": 0,
+   "followup_rows": 400,
+   "leads": 400,
+   "new_receipts_without_lead": 0,
+   "pending": 0,
+   "receipts_without_verdict": 0,
+   "review_verdicts": 0,
+   "sending": 0,
+   "sent": 400,
+   "sum": 400,
+   "unknown": 0
+  },
+  "c3": {
+   "failed": 0,
+   "failed_or_unknown": 0,
+   "failed_with_message_and_reason": 0,
+   "keys": 400,
+   "max_failed": 0,
+   "max_per_key": 1,
+   "max_per_recipient": 1,
+   "max_unknown": 8,
+   "messages": 400,
+   "silent_followups": 0,
+   "unknown": 0,
+   "unknown_with_message": 0,
+   "unknown_without_fitting_reason": 0,
+   "unknown_without_message": 0
+  },
+  "c4": {
+   "crm_rows": 400,
+   "extra": 0,
+   "leads_crm_done": 400,
+   "listed_unknowns": 0,
+   "missing": 0,
+   "twice": 0,
+   "unknowns_present": 0
+  },
+  "c5": {
+   "bound": 2,
+   "calls": 400,
+   "calls_by_status": {
+    "200": 400
+   },
+   "counted_from": "arrival lines",
+   "leads_called": 400,
+   "max_calls_one_lead": 1
+  },
+  "c6": {
+   "attempts": 424,
+   "ceiling": null,
+   "rate": 0.0,
+   "requests": 400,
+   "requests_ending_on_503": 0,
+   "requests_that_saw_503": 0,
+   "responses_503": 0
+  },
+  "msgs": 400,
+  "recips": 400,
+  "maxrecip": 1,
+  "restarts": [
+   {
+    "ts": 1794254209.462565,
+    "exit_code": 137
+   }
+  ],
+  "codes": {
+   "201": 400,
+   "RemoteDisconnected": 1,
+   "ConnectionRefusedError": 23
+  },
+  "final": {
+   "201": 400
+  },
+  "lat": {
+   "p50": 0.01,
+   "p95": 0.015,
+   "max": 0.05
+  },
+  "drain": 0.31,
+  "faults": [],
+  "up0": "0.46, 0.63, 0.54",
+  "up1": "0.58, 0.65, 0.55",
+  "peak": {
+   "rss_kb": 36184,
+   "threads": 3,
+   "fds": 19
+  },
+  "load_s": 21.58,
+  "requests_with_retry": 9
+ },
+ "crash-D1": {
+  "s": "crash-D1",
+  "verdict": "1P 2P 3P 4P 5P 6P 7P ",
+  "failing": [],
+  "requests": 400,
+  "c1": {
+   "distinct_requests": 400,
+   "foreign_ids": 0,
+   "intended": 400,
+   "lines": 400,
+   "lost": 0,
+   "marker_checked": true,
+   "receipts_in_book": 400,
+   "receipts_without_run_marker": 0,
+   "stale_receipts": 0,
+   "stored_but_client_unacked": 0
+  },
+  "c2": {
+   "distinct_request_ids": 400,
+   "expected_leads_missing_or_foreign": 0,
+   "failed": 0,
+   "followup_rows": 400,
+   "leads": 400,
+   "new_receipts_without_lead": 0,
+   "pending": 0,
+   "receipts_without_verdict": 0,
+   "review_verdicts": 0,
+   "sending": 0,
+   "sent": 400,
+   "sum": 400,
+   "unknown": 0
+  },
+  "c3": {
+   "failed": 0,
+   "failed_or_unknown": 0,
+   "failed_with_message_and_reason": 0,
+   "keys": 400,
+   "max_failed": 0,
+   "max_per_key": 1,
+   "max_per_recipient": 1,
+   "max_unknown": 8,
+   "messages": 400,
+   "silent_followups": 0,
+   "unknown": 0,
+   "unknown_with_message": 0,
+   "unknown_without_fitting_reason": 0,
+   "unknown_without_message": 0
+  },
+  "c4": {
+   "crm_rows": 400,
+   "extra": 0,
+   "leads_crm_done": 400,
+   "listed_unknowns": 0,
+   "missing": 0,
+   "twice": 0,
+   "unknowns_present": 0
+  },
+  "c5": {
+   "bound": 2,
+   "calls": 400,
+   "calls_by_status": {
+    "200": 400
+   },
+   "counted_from": "arrival lines",
+   "leads_called": 400,
+   "max_calls_one_lead": 1
+  },
+  "c6": {
+   "attempts": 420,
+   "ceiling": null,
+   "rate": 0.0,
+   "requests": 400,
+   "requests_ending_on_503": 0,
+   "requests_that_saw_503": 0,
+   "responses_503": 0
+  },
+  "msgs": 400,
+  "recips": 400,
+  "maxrecip": 1,
+  "restarts": [
+   {
+    "ts": 1794254231.6288946,
+    "exit_code": 137
+   }
+  ],
+  "codes": {
+   "201": 400,
+   "ConnectionRefusedError": 20
+  },
+  "final": {
+   "201": 400
+  },
+  "lat": {
+   "p50": 0.009,
+   "p95": 0.014,
+   "max": 0.038
+  },
+  "drain": 0.31,
+  "faults": [],
+  "up0": "0.58, 0.65, 0.55",
+  "up1": "0.57, 0.64, 0.55",
+  "peak": {
+   "rss_kb": 35760,
+   "threads": 3,
+   "fds": 21
+  },
+  "load_s": 21.58,
+  "requests_with_retry": 8
+ },
+ "crash-D2": {
+  "s": "crash-D2",
+  "verdict": "1P 2P 3P 4P 5P 6P 7P ",
+  "failing": [],
+  "requests": 400,
+  "c1": {
+   "distinct_requests": 400,
+   "foreign_ids": 0,
+   "intended": 400,
+   "lines": 400,
+   "lost": 0,
+   "marker_checked": true,
+   "receipts_in_book": 400,
+   "receipts_without_run_marker": 0,
+   "stale_receipts": 0,
+   "stored_but_client_unacked": 0
+  },
+  "c2": {
+   "distinct_request_ids": 400,
+   "expected_leads_missing_or_foreign": 0,
+   "failed": 0,
+   "followup_rows": 400,
+   "leads": 400,
+   "new_receipts_without_lead": 0,
+   "pending": 0,
+   "receipts_without_verdict": 0,
+   "review_verdicts": 0,
+   "sending": 0,
+   "sent": 399,
+   "sum": 400,
+   "unknown": 1
+  },
+  "c3": {
+   "failed": 0,
+   "failed_or_unknown": 1,
+   "failed_with_message_and_reason": 0,
+   "keys": 400,
+   "max_failed": 0,
+   "max_per_key": 1,
+   "max_per_recipient": 1,
+   "max_unknown": 8,
+   "messages": 400,
+   "silent_followups": 0,
+   "unknown": 1,
+   "unknown_with_message": 1,
+   "unknown_without_fitting_reason": 0,
+   "unknown_without_message": 0
+  },
+  "c4": {
+   "crm_rows": 400,
+   "extra": 0,
+   "leads_crm_done": 400,
+   "listed_unknowns": 0,
+   "missing": 0,
+   "twice": 0,
+   "unknowns_present": 0
+  },
+  "c5": {
+   "bound": 2,
+   "calls": 400,
+   "calls_by_status": {
+    "200": 400
+   },
+   "counted_from": "arrival lines",
+   "leads_called": 400,
+   "max_calls_one_lead": 1
+  },
+  "c6": {
+   "attempts": 420,
+   "ceiling": null,
+   "rate": 0.0,
+   "requests": 400,
+   "requests_ending_on_503": 0,
+   "requests_that_saw_503": 0,
+   "responses_503": 0
+  },
+  "msgs": 400,
+  "recips": 400,
+  "maxrecip": 1,
+  "restarts": [
+   {
+    "ts": 1794254253.719446,
+    "exit_code": 137
+   }
+  ],
+  "codes": {
+   "201": 400,
+   "ConnectionRefusedError": 20
+  },
+  "final": {
+   "201": 400
+  },
+  "lat": {
+   "p50": 0.01,
+   "p95": 0.013,
+   "max": 0.05
+  },
+  "drain": 0.21,
+  "faults": [],
+  "up0": "0.57, 0.64, 0.55",
+  "up1": "0.51, 0.62, 0.55",
+  "peak": {
+   "rss_kb": 35476,
+   "threads": 3,
+   "fds": 19
+  },
+  "load_s": 21.59,
+  "requests_with_retry": 8
+ },
+ "model-slow": {
+  "s": "model-slow",
+  "verdict": "1P 2F 3P 4F 5P 6P 7F ",
+  "failing": [
+   [
+    2,
+    "pending 132 + sending 0 + sent 168 + failed 0 + unknown 0 = 300; leads 300; distinct request ids 300; 0 receipts without a verdict; 0 new verdicts without a lead; 0 review verdicts; 0 leads missing or",
+    [
+     "L02de70e49281",
+     "L03b91d80106c",
+     "L04fbd5770338"
+    ]
+   ],
+   [
+    4,
+    "167 CRM rows; allowed 168 to 168 (done 168 + up to 0 unknown); 1 missing, 0 not allowed, 0 twice",
+    [
+     "L96160012c970"
+    ]
+   ],
+   [
+    7,
+    "the runner never saw the desk drain (marker is null); 132 items still open",
+    [
+     "never-drained"
+    ]
+   ]
+  ],
+  "requests": 300,
+  "c1": {
+   "distinct_requests": 300,
+   "foreign_ids": 0,
+   "intended": 300,
+   "lines": 300,
+   "lost": 0,
+   "marker_checked": true,
+   "receipts_in_book": 300,
+   "receipts_without_run_marker": 0,
+   "stale_receipts": 0,
+   "stored_but_client_unacked": 0
+  },
+  "c2": {
+   "distinct_request_ids": 300,
+   "expected_leads_missing_or_foreign": 0,
+   "failed": 0,
+   "followup_rows": 300,
+   "leads": 300,
+   "new_receipts_without_lead": 0,
+   "pending": 132,
+   "receipts_without_verdict": 0,
+   "review_verdicts": 0,
+   "sending": 0,
+   "sent": 168,
+   "sum": 300,
+   "unknown": 0
+  },
+  "c3": {
+   "failed": 0,
+   "failed_or_unknown": 0,
+   "failed_with_message_and_reason": 0,
+   "keys": 168,
+   "max_failed": 0,
+   "max_per_key": 1,
+   "max_per_recipient": 1,
+   "max_unknown": 0,
+   "messages": 168,
+   "silent_followups": 0,
+   "unknown": 0,
+   "unknown_with_message": 0,
+   "unknown_without_fitting_reason": 0,
+   "unknown_without_message": 0
+  },
+  "c4": {
+   "crm_rows": 167,
+   "extra": 0,
+   "leads_crm_done": 168,
+   "listed_unknowns": 0,
+   "missing": 1,
+   "twice": 0,
+   "unknowns_present": 0
+  },
+  "c5": {
+   "bound": 1,
+   "calls": 168,
+   "calls_by_status": {
+    "200": 168
+   },
+   "counted_from": "arrival lines",
+   "leads_called": 168,
+   "max_calls_one_lead": 1
+  },
+  "c6": {
+   "attempts": 300,
+   "ceiling": null,
+   "rate": 0.0,
+   "requests": 300,
+   "requests_ending_on_503": 0,
+   "requests_that_saw_503": 0,
+   "responses_503": 0
+  },
+  "msgs": 168,
+  "recips": 168,
+  "maxrecip": 1,
+  "restarts": [],
+  "codes": {
+   "201": 300
+  },
+  "final": {
+   "201": 300
+  },
+  "lat": {
+   "p50": 0.01,
+   "p95": 0.014,
+   "max": 0.03
+  },
+  "drain": null,
+  "faults": [
+   "the desk never drained"
+  ],
+  "up0": "0.51, 0.62, 0.55",
+  "up1": "0.95, 0.58, 0.53",
+  "peak": {
+   "rss_kb": 64208,
+   "threads": 60,
+   "fds": 193
+  },
+  "load_s": 31.53,
+  "requests_with_retry": 0
+ },
+ "model-timeout": {
+  "s": "model-timeout",
+  "verdict": "1P 2F 3P 4P 5P 6P 7F ",
+  "failing": [
+   [
+    2,
+    "pending 200 + sending 0 + sent 0 + failed 0 + unknown 0 = 200; leads 200; distinct request ids 200; 0 receipts without a verdict; 0 new verdicts without a lead; 0 review verdicts; 0 leads missing or n",
+    [
+     "L03db064632d1",
+     "L06c0db2aa978",
+     "L07219c014d24"
+    ]
+   ],
+   [
+    7,
+    "the runner never saw the desk drain (marker is null); 200 items still open",
+    [
+     "never-drained"
+    ]
+   ]
+  ],
+  "requests": 200,
+  "c1": {
+   "distinct_requests": 200,
+   "foreign_ids": 0,
+   "intended": 200,
+   "lines": 200,
+   "lost": 0,
+   "marker_checked": true,
+   "receipts_in_book": 200,
+   "receipts_without_run_marker": 0,
+   "stale_receipts": 0,
+   "stored_but_client_unacked": 0
+  },
+  "c2": {
+   "distinct_request_ids": 200,
+   "expected_leads_missing_or_foreign": 0,
+   "failed": 0,
+   "followup_rows": 200,
+   "leads": 200,
+   "new_receipts_without_lead": 0,
+   "pending": 200,
+   "receipts_without_verdict": 0,
+   "review_verdicts": 0,
+   "sending": 0,
+   "sent": 0,
+   "sum": 200,
+   "unknown": 0
+  },
+  "c3": {
+   "failed": 0,
+   "failed_or_unknown": 0,
+   "failed_with_message_and_reason": 0,
+   "keys": 0,
+   "max_failed": null,
+   "max_per_key": 0,
+   "max_per_recipient": 0,
+   "max_unknown": 0,
+   "messages": 0,
+   "silent_followups": 0,
+   "unknown": 0,
+   "unknown_with_message": 0,
+   "unknown_without_fitting_reason": 0,
+   "unknown_without_message": 0
+  },
+  "c4": {
+   "crm_rows": 0,
+   "extra": 0,
+   "leads_crm_done": 0,
+   "listed_unknowns": 0,
+   "missing": 0,
+   "twice": 0,
+   "unknowns_present": 0
+  },
+  "c5": {
+   "bound": 6,
+   "calls": 210,
+   "calls_by_status": {
+    "499": 204
+   },
+   "counted_from": "arrival lines",
+   "leads_called": 162,
+   "max_calls_one_lead": 3
+  },
+  "c6": {
+   "attempts": 200,
+   "ceiling": null,
+   "rate": 0.0,
+   "requests": 200,
+   "requests_ending_on_503": 0,
+   "requests_that_saw_503": 0,
+   "responses_503": 0
+  },
+  "msgs": 0,
+  "recips": 0,
+  "maxrecip": 0,
+  "restarts": [],
+  "codes": {
+   "201": 200
+  },
+  "final": {
+   "201": 200
+  },
+  "lat": {
+   "p50": 0.01,
+   "p95": 0.013,
+   "max": 0.03
+  },
+  "drain": null,
+  "faults": [
+   "the desk never drained"
+  ],
+  "up0": "0.95, 0.58, 0.53",
+  "up1": "0.51, 0.47, 0.49",
+  "peak": {
+   "rss_kb": 63248,
+   "threads": 61,
+   "fds": 194
+  },
+  "load_s": 21.52,
+  "requests_with_retry": 0
+ },
+ "model-429": {
+  "s": "model-429",
+  "verdict": "1P 2P 3P 4P 5P 6P 7P ",
+  "failing": [],
+  "requests": 200,
+  "c1": {
+   "distinct_requests": 200,
+   "foreign_ids": 0,
+   "intended": 200,
+   "lines": 200,
+   "lost": 0,
+   "marker_checked": true,
+   "receipts_in_book": 200,
+   "receipts_without_run_marker": 0,
+   "stale_receipts": 0,
+   "stored_but_client_unacked": 0
+  },
+  "c2": {
+   "distinct_request_ids": 200,
+   "expected_leads_missing_or_foreign": 0,
+   "failed": 200,
+   "followup_rows": 200,
+   "leads": 200,
+   "new_receipts_without_lead": 0,
+   "pending": 0,
+   "receipts_without_verdict": 0,
+   "review_verdicts": 0,
+   "sending": 0,
+   "sent": 0,
+   "sum": 200,
+   "unknown": 0
+  },
+  "c3": {
+   "failed": 200,
+   "failed_or_unknown": 200,
+   "failed_with_message_and_reason": 0,
+   "keys": 0,
+   "max_failed": null,
+   "max_per_key": 0,
+   "max_per_recipient": 0,
+   "max_unknown": 0,
+   "messages": 0,
+   "silent_followups": 200,
+   "unknown": 0,
+   "unknown_with_message": 0,
+   "unknown_without_fitting_reason": 0,
+   "unknown_without_message": 0
+  },
+  "c4": {
+   "crm_rows": 0,
+   "extra": 0,
+   "leads_crm_done": 0,
+   "listed_unknowns": 0,
+   "missing": 0,
+   "twice": 0,
+   "unknowns_present": 0
+  },
+  "c5": {
+   "bound": 6,
+   "calls": 1000,
+   "calls_by_status": {
+    "429": 1000
+   },
+   "counted_from": "arrival lines",
+   "leads_called": 200,
+   "max_calls_one_lead": 5
+  },
+  "c6": {
+   "attempts": 200,
+   "ceiling": null,
+   "rate": 0.0,
+   "requests": 200,
+   "requests_ending_on_503": 0,
+   "requests_that_saw_503": 0,
+   "responses_503": 0
+  },
+  "msgs": 0,
+  "recips": 0,
+  "maxrecip": 0,
+  "restarts": [],
+  "codes": {
+   "201": 200
+  },
+  "final": {
+   "201": 200
+  },
+  "lat": {
+   "p50": 0.01,
+   "p95": 0.016,
+   "max": 0.035
+  },
+  "drain": 15.73,
+  "faults": [],
+  "up0": "0.51, 0.47, 0.49",
+  "up1": "0.60, 0.50, 0.50",
+  "peak": {
+   "rss_kb": 33036,
+   "threads": 3,
+   "fds": 15
+  },
+  "load_s": 21.54,
+  "requests_with_retry": 0
+ },
+ "model-malformed": {
+  "s": "model-malformed",
+  "verdict": "1P 2P 3P 4P 5P 6P 7P ",
+  "failing": [],
+  "requests": 200,
+  "c1": {
+   "distinct_requests": 200,
+   "foreign_ids": 0,
+   "intended": 200,
+   "lines": 200,
+   "lost": 0,
+   "marker_checked": true,
+   "receipts_in_book": 200,
+   "receipts_without_run_marker": 0,
+   "stale_receipts": 0,
+   "stored_but_client_unacked": 0
+  },
+  "c2": {
+   "distinct_request_ids": 200,
+   "expected_leads_missing_or_foreign": 0,
+   "failed": 200,
+   "followup_rows": 200,
+   "leads": 200,
+   "new_receipts_without_lead": 0,
+   "pending": 0,
+   "receipts_without_verdict": 0,
+   "review_verdicts": 0,
+   "sending": 0,
+   "sent": 0,
+   "sum": 200,
+   "unknown": 0
+  },
+  "c3": {
+   "failed": 200,
+   "failed_or_unknown": 200,
+   "failed_with_message_and_reason": 0,
+   "keys": 0,
+   "max_failed": null,
+   "max_per_key": 0,
+   "max_per_recipient": 0,
+   "max_unknown": 0,
+   "messages": 0,
+   "silent_followups": 200,
+   "unknown": 0,
+   "unknown_with_message": 0,
+   "unknown_without_fitting_reason": 0,
+   "unknown_without_message": 0
+  },
+  "c4": {
+   "crm_rows": 0,
+   "extra": 0,
+   "leads_crm_done": 0,
+   "listed_unknowns": 0,
+   "missing": 0,
+   "twice": 0,
+   "unknowns_present": 0
+  },
+  "c5": {
+   "bound": 6,
+   "calls": 1000,
+   "calls_by_status": {
+    "200": 1000
+   },
+   "counted_from": "arrival lines",
+   "leads_called": 200,
+   "max_calls_one_lead": 5
+  },
+  "c6": {
+   "attempts": 200,
+   "ceiling": null,
+   "rate": 0.0,
+   "requests": 200,
+   "requests_ending_on_503": 0,
+   "requests_that_saw_503": 0,
+   "responses_503": 0
+  },
+  "msgs": 0,
+  "recips": 0,
+  "maxrecip": 0,
+  "restarts": [],
+  "codes": {
+   "201": 200
+  },
+  "final": {
+   "201": 200
+  },
+  "lat": {
+   "p50": 0.01,
+   "p95": 0.014,
+   "max": 0.04
+  },
+  "drain": 15.73,
+  "faults": [],
+  "up0": "0.60, 0.50, 0.50",
+  "up1": "0.68, 0.54, 0.52",
+  "peak": {
+   "rss_kb": 33068,
+   "threads": 3,
+   "fds": 13
+  },
+  "load_s": 21.53,
+  "requests_with_retry": 0
+ },
+ "model-refusal": {
+  "s": "model-refusal",
+  "verdict": "1P 2P 3P 4P 5P 6P 7P ",
+  "failing": [],
+  "requests": 200,
+  "c1": {
+   "distinct_requests": 200,
+   "foreign_ids": 0,
+   "intended": 200,
+   "lines": 200,
+   "lost": 0,
+   "marker_checked": true,
+   "receipts_in_book": 200,
+   "receipts_without_run_marker": 0,
+   "stale_receipts": 0,
+   "stored_but_client_unacked": 0
+  },
+  "c2": {
+   "distinct_request_ids": 200,
+   "expected_leads_missing_or_foreign": 0,
+   "failed": 200,
+   "followup_rows": 200,
+   "leads": 200,
+   "new_receipts_without_lead": 0,
+   "pending": 0,
+   "receipts_without_verdict": 0,
+   "review_verdicts": 0,
+   "sending": 0,
+   "sent": 0,
+   "sum": 200,
+   "unknown": 0
+  },
+  "c3": {
+   "failed": 200,
+   "failed_or_unknown": 200,
+   "failed_with_message_and_reason": 0,
+   "keys": 0,
+   "max_failed": null,
+   "max_per_key": 0,
+   "max_per_recipient": 0,
+   "max_unknown": 0,
+   "messages": 0,
+   "silent_followups": 200,
+   "unknown": 0,
+   "unknown_with_message": 0,
+   "unknown_without_fitting_reason": 0,
+   "unknown_without_message": 0
+  },
+  "c4": {
+   "crm_rows": 0,
+   "extra": 0,
+   "leads_crm_done": 0,
+   "listed_unknowns": 0,
+   "missing": 0,
+   "twice": 0,
+   "unknowns_present": 0
+  },
+  "c5": {
+   "bound": 6,
+   "calls": 1000,
+   "calls_by_status": {
+    "200": 1000
+   },
+   "counted_from": "arrival lines",
+   "leads_called": 200,
+   "max_calls_one_lead": 5
+  },
+  "c6": {
+   "attempts": 200,
+   "ceiling": null,
+   "rate": 0.0,
+   "requests": 200,
+   "requests_ending_on_503": 0,
+   "requests_that_saw_503": 0,
+   "responses_503": 0
+  },
+  "msgs": 0,
+  "recips": 0,
+  "maxrecip": 0,
+  "restarts": [],
+  "codes": {
+   "201": 200
+  },
+  "final": {
+   "201": 200
+  },
+  "lat": {
+   "p50": 0.01,
+   "p95": 0.013,
+   "max": 0.033
+  },
+  "drain": 14.93,
+  "faults": [],
+  "up0": "0.68, 0.54, 0.52",
+  "up1": "0.89, 0.61, 0.54",
+  "peak": {
+   "rss_kb": 32924,
+   "threads": 2,
+   "fds": 12
+  },
+  "load_s": 21.54,
+  "requests_with_retry": 0
+ },
+ "model-5xx": {
+  "s": "model-5xx",
+  "verdict": "1P 2P 3P 4P 5P 6P 7P ",
+  "failing": [],
+  "requests": 200,
+  "c1": {
+   "distinct_requests": 200,
+   "foreign_ids": 0,
+   "intended": 200,
+   "lines": 200,
+   "lost": 0,
+   "marker_checked": true,
+   "receipts_in_book": 200,
+   "receipts_without_run_marker": 0,
+   "stale_receipts": 0,
+   "stored_but_client_unacked": 0
+  },
+  "c2": {
+   "distinct_request_ids": 200,
+   "expected_leads_missing_or_foreign": 0,
+   "failed": 200,
+   "followup_rows": 200,
+   "leads": 200,
+   "new_receipts_without_lead": 0,
+   "pending": 0,
+   "receipts_without_verdict": 0,
+   "review_verdicts": 0,
+   "sending": 0,
+   "sent": 0,
+   "sum": 200,
+   "unknown": 0
+  },
+  "c3": {
+   "failed": 200,
+   "failed_or_unknown": 200,
+   "failed_with_message_and_reason": 0,
+   "keys": 0,
+   "max_failed": null,
+   "max_per_key": 0,
+   "max_per_recipient": 0,
+   "max_unknown": 0,
+   "messages": 0,
+   "silent_followups": 200,
+   "unknown": 0,
+   "unknown_with_message": 0,
+   "unknown_without_fitting_reason": 0,
+   "unknown_without_message": 0
+  },
+  "c4": {
+   "crm_rows": 0,
+   "extra": 0,
+   "leads_crm_done": 0,
+   "listed_unknowns": 0,
+   "missing": 0,
+   "twice": 0,
+   "unknowns_present": 0
+  },
+  "c5": {
+   "bound": 6,
+   "calls": 1000,
+   "calls_by_status": {
+    "503": 1000
+   },
+   "counted_from": "arrival lines",
+   "leads_called": 200,
+   "max_calls_one_lead": 5
+  },
+  "c6": {
+   "attempts": 200,
+   "ceiling": null,
+   "rate": 0.0,
+   "requests": 200,
+   "requests_ending_on_503": 0,
+   "requests_that_saw_503": 0,
+   "responses_503": 0
+  },
+  "msgs": 0,
+  "recips": 0,
+  "maxrecip": 0,
+  "restarts": [],
+  "codes": {
+   "201": 200
+  },
+  "final": {
+   "201": 200
+  },
+  "lat": {
+   "p50": 0.01,
+   "p95": 0.014,
+   "max": 0.041
+  },
+  "drain": 15.83,
+  "faults": [],
+  "up0": "0.89, 0.61, 0.54",
+  "up1": "0.73, 0.60, 0.54",
+  "peak": {
+   "rss_kb": 32960,
+   "threads": 3,
+   "fds": 13
+  },
+  "load_s": 21.52,
+  "requests_with_retry": 0
+ },
+ "model-flaps": {
+  "s": "model-flaps",
+  "verdict": "1P 2P 3P 4P 5P 6P 7P ",
+  "failing": [],
+  "requests": 300,
+  "c1": {
+   "distinct_requests": 300,
+   "foreign_ids": 0,
+   "intended": 300,
+   "lines": 300,
+   "lost": 0,
+   "marker_checked": true,
+   "receipts_in_book": 300,
+   "receipts_without_run_marker": 0,
+   "stale_receipts": 0,
+   "stored_but_client_unacked": 0
+  },
+  "c2": {
+   "distinct_request_ids": 300,
+   "expected_leads_missing_or_foreign": 0,
+   "failed": 2,
+   "followup_rows": 300,
+   "leads": 300,
+   "new_receipts_without_lead": 0,
+   "pending": 0,
+   "receipts_without_verdict": 0,
+   "review_verdicts": 0,
+   "sending": 0,
+   "sent": 298,
+   "sum": 300,
+   "unknown": 0
+  },
+  "c3": {
+   "failed": 2,
+   "failed_or_unknown": 2,
+   "failed_with_message_and_reason": 0,
+   "keys": 298,
+   "max_failed": null,
+   "max_per_key": 1,
+   "max_per_recipient": 1,
+   "max_unknown": 0,
+   "messages": 298,
+   "silent_followups": 2,
+   "unknown": 0,
+   "unknown_with_message": 0,
+   "unknown_without_fitting_reason": 0,
+   "unknown_without_message": 0
+  },
+  "c4": {
+   "crm_rows": 298,
+   "extra": 0,
+   "leads_crm_done": 298,
+   "listed_unknowns": 0,
+   "missing": 0,
+   "twice": 0,
+   "unknowns_present": 0
+  },
+  "c5": {
+   "bound": 6,
+   "calls": 594,
+   "calls_by_status": {
+    "200": 298,
+    "503": 272
+   },
+   "counted_from": "arrival lines",
+   "leads_called": 300,
+   "max_calls_one_lead": 5
+  },
+  "c6": {
+   "attempts": 300,
+   "ceiling": null,
+   "rate": 0.0,
+   "requests": 300,
+   "requests_ending_on_503": 0,
+   "requests_that_saw_503": 0,
+   "responses_503": 0
+  },
+  "msgs": 298,
+  "recips": 298,
+  "maxrecip": 1,
+  "restarts": [],
+  "codes": {
+   "201": 300
+  },
+  "final": {
+   "201": 300
+  },
+  "lat": {
+   "p50": 0.01,
+   "p95": 0.013,
+   "max": 0.036
+  },
+  "drain": 0.2,
+  "faults": [],
+  "up0": "0.73, 0.60, 0.54",
+  "up1": "0.57, 0.57, 0.54",
+  "peak": {
+   "rss_kb": 52512,
+   "threads": 47,
+   "fds": 154
+  },
+  "load_s": 31.52,
+  "requests_with_retry": 0
+ },
+ "catcher-down": {
+  "s": "catcher-down",
+  "verdict": "1P 2P 3P 4P 5P 6P 7P ",
+  "failing": [],
+  "requests": 300,
+  "c1": {
+   "distinct_requests": 300,
+   "foreign_ids": 0,
+   "intended": 300,
+   "lines": 300,
+   "lost": 0,
+   "marker_checked": true,
+   "receipts_in_book": 300,
+   "receipts_without_run_marker": 0,
+   "stale_receipts": 0,
+   "stored_but_client_unacked": 0
+  },
+  "c2": {
+   "distinct_request_ids": 300,
+   "expected_leads_missing_or_foreign": 0,
+   "failed": 4,
+   "followup_rows": 300,
+   "leads": 300,
+   "new_receipts_without_lead": 0,
+   "pending": 0,
+   "receipts_without_verdict": 0,
+   "review_verdicts": 0,
+   "sending": 0,
+   "sent": 296,
+   "sum": 300,
+   "unknown": 0
+  },
+  "c3": {
+   "failed": 4,
+   "failed_or_unknown": 4,
+   "failed_with_message_and_reason": 0,
+   "keys": 296,
+   "max_failed": null,
+   "max_per_key": 1,
+   "max_per_recipient": 1,
+   "max_unknown": 0,
+   "messages": 296,
+   "silent_followups": 4,
+   "unknown": 0,
+   "unknown_with_message": 0,
+   "unknown_without_fitting_reason": 0,
+   "unknown_without_message": 0
+  },
+  "c4": {
+   "crm_rows": 300,
+   "extra": 0,
+   "leads_crm_done": 300,
+   "listed_unknowns": 0,
+   "missing": 0,
+   "twice": 0,
+   "unknowns_present": 0
+  },
+  "c5": {
+   "bound": 1,
+   "calls": 300,
+   "calls_by_status": {
+    "200": 300
+   },
+   "counted_from": "arrival lines",
+   "leads_called": 300,
+   "max_calls_one_lead": 1
+  },
+  "c6": {
+   "attempts": 300,
+   "ceiling": null,
+   "rate": 0.0,
+   "requests": 300,
+   "requests_ending_on_503": 0,
+   "requests_that_saw_503": 0,
+   "responses_503": 0
+  },
+  "msgs": 296,
+  "recips": 296,
+  "maxrecip": 1,
+  "restarts": [],
+  "codes": {
+   "201": 300
+  },
+  "final": {
+   "201": 300
+  },
+  "lat": {
+   "p50": 0.009,
+   "p95": 0.015,
+   "max": 0.025
+  },
+  "drain": 0.2,
+  "faults": [],
+  "up0": "0.57, 0.57, 0.54",
+  "up1": "0.56, 0.57, 0.53",
+  "peak": {
+   "rss_kb": 35268,
+   "threads": 3,
+   "fds": 13
+  },
+  "load_s": 31.52,
+  "requests_with_retry": 0
+ },
+ "catcher-drop-after-data": {
+  "s": "catcher-drop-after-data",
+  "verdict": "1P 2P 3P 4P 5P 6P 7P ",
+  "failing": [],
+  "requests": 200,
+  "c1": {
+   "distinct_requests": 200,
+   "foreign_ids": 0,
+   "intended": 200,
+   "lines": 200,
+   "lost": 0,
+   "marker_checked": true,
+   "receipts_in_book": 200,
+   "receipts_without_run_marker": 0,
+   "stale_receipts": 0,
+   "stored_but_client_unacked": 0
+  },
+  "c2": {
+   "distinct_request_ids": 200,
+   "expected_leads_missing_or_foreign": 0,
+   "failed": 0,
+   "followup_rows": 200,
+   "leads": 200,
+   "new_receipts_without_lead": 0,
+   "pending": 0,
+   "receipts_without_verdict": 0,
+   "review_verdicts": 0,
+   "sending": 0,
+   "sent": 0,
+   "sum": 200,
+   "unknown": 200
+  },
+  "c3": {
+   "failed": 0,
+   "failed_or_unknown": 200,
+   "failed_with_message_and_reason": 0,
+   "keys": 200,
+   "max_failed": 0,
+   "max_per_key": 1,
+   "max_per_recipient": 1,
+   "max_unknown": null,
+   "messages": 200,
+   "silent_followups": 0,
+   "unknown": 200,
+   "unknown_with_message": 200,
+   "unknown_without_fitting_reason": 0,
+   "unknown_without_message": 0
+  },
+  "c4": {
+   "crm_rows": 200,
+   "extra": 0,
+   "leads_crm_done": 200,
+   "listed_unknowns": 0,
+   "missing": 0,
+   "twice": 0,
+   "unknowns_present": 0
+  },
+  "c5": {
+   "bound": 1,
+   "calls": 200,
+   "calls_by_status": {
+    "200": 200
+   },
+   "counted_from": "arrival lines",
+   "leads_called": 200,
+   "max_calls_one_lead": 1
+  },
+  "c6": {
+   "attempts": 200,
+   "ceiling": null,
+   "rate": 0.0,
+   "requests": 200,
+   "requests_ending_on_503": 0,
+   "requests_that_saw_503": 0,
+   "responses_503": 0
+  },
+  "msgs": 200,
+  "recips": 200,
+  "maxrecip": 1,
+  "restarts": [],
+  "codes": {
+   "201": 200
+  },
+  "final": {
+   "201": 200
+  },
+  "lat": {
+   "p50": 0.009,
+   "p95": 0.012,
+   "max": 0.028
+  },
+  "drain": 0.2,
+  "faults": [],
+  "up0": "0.56, 0.57, 0.53",
+  "up1": "0.54, 0.57, 0.54",
+  "peak": {
+   "rss_kb": 33796,
+   "threads": 2,
+   "fds": 11
+  },
+  "load_s": 21.52,
+  "requests_with_retry": 0
+ },
+ "catcher-slow": {
+  "s": "catcher-slow",
+  "verdict": "1P 2P 3P 4P 5P 6P 7F ",
+  "failing": [
+   [
+    7,
+    "218.40 s from the last intended send to drained (ceiling 120.0 s; marker); 0 pending, 0 sending, 0 receipts without a verdict",
+    []
+   ]
+  ],
+  "requests": 200,
+  "c1": {
+   "distinct_requests": 200,
+   "foreign_ids": 0,
+   "intended": 200,
+   "lines": 200,
+   "lost": 0,
+   "marker_checked": true,
+   "receipts_in_book": 200,
+   "receipts_without_run_marker": 0,
+   "stale_receipts": 0,
+   "stored_but_client_unacked": 0
+  },
+  "c2": {
+   "distinct_request_ids": 200,
+   "expected_leads_missing_or_foreign": 0,
+   "failed": 0,
+   "followup_rows": 200,
+   "leads": 200,
+   "new_receipts_without_lead": 0,
+   "pending": 0,
+   "receipts_without_verdict": 0,
+   "review_verdicts": 0,
+   "sending": 0,
+   "sent": 0,
+   "sum": 200,
+   "unknown": 200
+  },
+  "c3": {
+   "failed": 0,
+   "failed_or_unknown": 200,
+   "failed_with_message_and_reason": 0,
+   "keys": 200,
+   "max_failed": 0,
+   "max_per_key": 1,
+   "max_per_recipient": 1,
+   "max_unknown": null,
+   "messages": 200,
+   "silent_followups": 0,
+   "unknown": 200,
+   "unknown_with_message": 200,
+   "unknown_without_fitting_reason": 0,
+   "unknown_without_message": 0
+  },
+  "c4": {
+   "crm_rows": 200,
+   "extra": 0,
+   "leads_crm_done": 200,
+   "listed_unknowns": 0,
+   "missing": 0,
+   "twice": 0,
+   "unknowns_present": 0
+  },
+  "c5": {
+   "bound": 1,
+   "calls": 200,
+   "calls_by_status": {
+    "200": 200
+   },
+   "counted_from": "arrival lines",
+   "leads_called": 200,
+   "max_calls_one_lead": 1
+  },
+  "c6": {
+   "attempts": 200,
+   "ceiling": null,
+   "rate": 0.0,
+   "requests": 200,
+   "requests_ending_on_503": 0,
+   "requests_that_saw_503": 0,
+   "responses_503": 0
+  },
+  "msgs": 200,
+  "recips": 200,
+  "maxrecip": 1,
+  "restarts": [],
+  "codes": {
+   "201": 200
+  },
+  "final": {
+   "201": 200
+  },
+  "lat": {
+   "p50": 0.009,
+   "p95": 0.016,
+   "max": 0.037
+  },
+  "drain": 218.56,
+  "faults": [],
+  "up0": "0.54, 0.57, 0.54",
+  "up1": "0.30, 0.44, 0.49",
+  "peak": {
+   "rss_kb": 65892,
+   "threads": 60,
+   "fds": 194
+  },
+  "load_s": 21.51,
+  "requests_with_retry": 0
+ }
+}
