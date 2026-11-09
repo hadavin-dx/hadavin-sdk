@@ -871,3 +871,4 @@ PR72 0ae044b: builder done; evidence run waits for evid.sh fix (inv-trunc-66), t
 | rv-p4a-d, rv-p4a-c | P4a BN-17/18/19 rev 2 plan review r2 (money, uncapped) design+codebase | 07:32Z | +25m | starting | save |
 | ab6c7e80 | PR84 builder nits push (round 3 nits + run test_stage_names) | 07:33Z | +20m | resumed | read report; then restart evidence |
 | a5a77e0b | AK-G2 resolve r5 + rev 6 (opus) | 07:33Z | +45m | starting | read report |
+| rv-p1da-d/r, rv-p1d8-d/r | P1d split plan review: P1d-a (design+readiness); P1d rev8 + P1d-learn + P1d-gate (design+readiness), redaction uncapped | 07:34Z | +25m | starting | save |
