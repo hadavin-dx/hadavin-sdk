@@ -1055,3 +1055,6 @@ Plugins load when a claude process starts. So start a CHILD process in your cont
 - If the child sees the egm skills: use children as the EGM runner. Each EGM step = one `claude -p` run with the skill in the prompt, model set (Opus for brainstorm/draft/resolve, Sonnet for review), reading the snapshot/diff/evidence from files, writing its report to a file you then read and push. Reviewers must still be fresh children that are not shown the author's verdict. Write the exact command pattern into handover/EGM-CHILD-HOWTO.md and tell me.
 - If it cannot see them: say so with the output, and only then I ask the owner for a new cloud session.
 Evidence runners keep running meanwhile; heartbeat+pulse every 5 min as in ORDER 157.
+
+## ORDER 159 (lead, 2026-11-09T03:25Z real): owner OKs any restart route. Ladder for loading EGM (try in this order, stop at the first that works, report each result in a q-entry):
+1. child `claude -p` (ORDER 158). 2. `/reload-plugins` in your session if accepted. 3. After the 3 evidence runners have ended and their raw files + CLOUD-RESUME-2026-11-09.md are PUSHED: resume or restart your own session (compact does not reload plugins), then prove one cheap egm skill call. Never restart while a runner is live (it may die). 4. Only if 1-3 fail: tell me and I ask the owner for a new cloud session.
