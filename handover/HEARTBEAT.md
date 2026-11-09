@@ -742,3 +742,4 @@ PULSE 13:34Z agents: RAS a57877a37569fdabc (WP-A r2 security review, to 13:55Z);
 PULSE 13:34Z agents: RAS a57877a37569fdabc (WP-A r2 security review, to 13:55Z); RAC a1f0ab40981397ce1 (WP-A r2 correctness review, to 13:55Z). builders A and F closed. shells: pulse_refresh.sh pid 29978. core frozen (ORDER 198).
 PULSE 13:36Z agents: RAC a1f0ab40981397ce1 (WP-A r2 correctness review, to 13:55Z). RAS closed: no Blocker/Major, 6 nits (fix pass 2 after RAC). builders A and F closed. shells: pulse_refresh.sh. core frozen.
 PULSE 13:39Z agents: A a5e33f7e4aa487492 (WP-A fix pass 2, box 14:20Z). RAC closed: 1 Major (failed card ignores ambiguous_prior) + nits, sent to A. F closed d2728a2. shells: pulse_refresh.sh. core frozen.
+PULSE 13:39Z agents: A a5e33f7e4aa487492 (WP-A fix pass 2, box 14:20Z). F closed d2728a2 (waits for A's constants). shells: pulse_refresh.sh pid 29978 (ends ~14:04Z). core frozen (ORDER 198).
