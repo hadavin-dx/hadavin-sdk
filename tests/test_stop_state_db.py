@@ -417,3 +417,16 @@ def test_the_trigger_old_by_is_null_when_the_flag_was_never_named(w):
     w.reset(w.member, 0, 1)
     with w.admin() as db:
         assert db.execute("SELECT old_by FROM kill_switch_resets").fetchall() == [(None,)]
+
+
+def test_a_noinherit_member_of_the_owner_role_is_refused_by_migrate(w):
+    """A NOINHERIT member holds no rights by inheritance, yet can SET ROLE to the owner: the check is membership."""
+    with w.admin() as db:
+        owner = db.execute("SELECT current_user").fetchone()[0]
+        db.execute(
+            sql.SQL("GRANT {} TO {} WITH INHERIT FALSE, SET TRUE").format(
+                sql.Identifier(owner), sql.Identifier(w.runtime)
+            )
+        )
+    with pytest.raises(ConfigError, match="is a member of"):
+        w.migrate()

@@ -69,7 +69,7 @@ def _age(store, rid, seconds):
     from tests.contracts.kinds.store_postgres import pg_driver
 
     drv = pg_driver()
-    with drv.connect_admin(store.runtime_dsn) as conn:
+    with drv.connect_superuser(store.runtime_dsn) as conn:
         drv.execute(conn, "SET session_replication_role = replica")
         drv.execute(
             conn,

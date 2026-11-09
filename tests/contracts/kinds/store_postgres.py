@@ -36,10 +36,23 @@ def pg_schema(migrated=True, runtime=False):
     from hadavin_sdk.store.migrate import migrate
 
     schema = f"t_{uuid.uuid4().hex[:12]}"
+    migrator = None
     with psycopg.connect(dsn, autocommit=True) as db:
-        db.execute(sql.SQL("CREATE SCHEMA {}").format(sql.Identifier(schema)))
+        if runtime:
+            # A migrator that is NOT a superuser (design M2): it owns the schema and may administer only the
+            # roles created below, so the kill switch functions it builds are not superuser-owned, as in a pilot.
+            migrator = "mg_" + uuid.uuid4().hex[:12]
+            db.execute(sql.SQL("CREATE ROLE {} LOGIN CREATEROLE").format(sql.Identifier(migrator)))
+            db.execute(
+                sql.SQL("CREATE SCHEMA {} AUTHORIZATION {}").format(
+                    sql.Identifier(schema), sql.Identifier(migrator)
+                )
+            )
+        else:
+            db.execute(sql.SQL("CREATE SCHEMA {}").format(sql.Identifier(schema)))
     scoped = make_conninfo(dsn, options=f"-c search_path={schema}")
-    if migrated:
+    owner_scoped = make_conninfo(scoped, user=migrator) if migrator else scoped
+    if migrated and not runtime:
         migrate(scoped, reset_role=RESET_GROUP)
     role = purge = resetter = None
     try:
@@ -48,15 +61,25 @@ def pg_schema(migrated=True, runtime=False):
             with psycopg.connect(dsn, autocommit=True) as db:
                 for r in (role, purge, resetter):
                     db.execute(sql.SQL("CREATE ROLE {} LOGIN").format(sql.Identifier(r)))
+                    db.execute(
+                        sql.SQL("GRANT {} TO {} WITH ADMIN OPTION").format(
+                            sql.Identifier(r), sql.Identifier(migrator)
+                        )
+                    )
+                db.execute(
+                    sql.SQL("GRANT {} TO {} WITH ADMIN OPTION").format(
+                        sql.Identifier(RESET_GROUP), sql.Identifier(migrator)
+                    )
+                )
                 db.execute(
                     sql.SQL("GRANT {} TO {}").format(
                         sql.Identifier(RESET_GROUP), sql.Identifier(resetter)
                     )
                 )
-            migrate(scoped, runtime_role=role, purge_role=purge, reset_role=RESET_GROUP)
+            migrate(owner_scoped, runtime_role=role, purge_role=purge, reset_role=RESET_GROUP)
             runtime_dsn = make_conninfo(scoped, user=role)
             with psycopg.connect(
-                scoped, autocommit=True
+                owner_scoped, autocommit=True
             ) as db:  # a person's login, registered with a label
                 db.execute(
                     "INSERT INTO kill_switch_login_labels (login_name, label) VALUES (%s, %s)",
@@ -64,7 +87,7 @@ def pg_schema(migrated=True, runtime=False):
                 )
             RESET_DSN[runtime_dsn] = make_conninfo(scoped, user=resetter)
             PURGE_DSN[runtime_dsn] = make_conninfo(scoped, user=purge)
-            OWNER_DSN[runtime_dsn] = scoped
+            OWNER_DSN[runtime_dsn] = owner_scoped
             yield runtime_dsn
         else:
             yield scoped
@@ -75,6 +98,9 @@ def pg_schema(migrated=True, runtime=False):
                     db.execute(sql.SQL("DROP OWNED BY {}").format(sql.Identifier(r)))
                     db.execute(sql.SQL("DROP ROLE {}").format(sql.Identifier(r)))
             db.execute(sql.SQL("DROP SCHEMA {} CASCADE").format(sql.Identifier(schema)))
+            if migrator:
+                db.execute(sql.SQL("DROP OWNED BY {}").format(sql.Identifier(migrator)))
+                db.execute(sql.SQL("DROP ROLE {}").format(sql.Identifier(migrator)))
 
 
 class _SplitStore:
@@ -152,6 +178,14 @@ def pg_driver(*, module_level=False):
         of the same schema; any other DSN is used as it is."""
         return psycopg.connect(OWNER_DSN.get(dsn, dsn), autocommit=autocommit)
 
+    def connect_superuser(dsn, *, autocommit=True):
+        """The cluster administrator on the schema of a fixture DSN: only for a test that must switch triggers off
+        to plant damage (`session_replication_role`); everything else uses the non-superuser owner."""
+        owner = conninfo_to_dict(OWNER_DSN.get(dsn, dsn))
+        admin = conninfo_to_dict(os.environ["HADAVIN_TEST_PG_DSN"])
+        admin["options"] = owner.get("options", "")
+        return psycopg.connect(make_conninfo(**admin), autocommit=autocommit)
+
     def connect_runtime(dsn, *, autocommit=True):
         """The runtime login of a fixture schema. `dsn` must be the one `pg_schema(runtime=True)` yielded."""
         if dsn not in OWNER_DSN:
@@ -191,7 +225,8 @@ def pg_driver(*, module_level=False):
             yield conn
         finally:
             conn.close()
-            with psycopg.connect(owner, autocommit=True) as admin:
+            # The cluster administrator drops it: the (non-superuser) migrator has only ADMIN on a role it made.
+            with psycopg.connect(os.environ["HADAVIN_TEST_PG_DSN"], autocommit=True) as admin:
                 admin.execute(sql.SQL("DROP OWNED BY {}").format(sql.Identifier(role)))
                 admin.execute(sql.SQL("DROP ROLE {}").format(sql.Identifier(role)))
 
@@ -238,6 +273,7 @@ def pg_driver(*, module_level=False):
 
     return SimpleNamespace(
         connect_admin=connect_admin,
+        connect_superuser=connect_superuser,
         connect_runtime=connect_runtime,
         connect_role=connect_role,
         execute=execute,

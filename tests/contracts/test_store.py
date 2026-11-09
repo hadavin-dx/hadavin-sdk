@@ -482,3 +482,12 @@ def test_reset_clears_exactly_the_stops_the_pair_names(store):
         StaleCount
     ):  # nothing is stopped: a second reset is stale, not a silent success
         store.reset_kill_switch(who, cleared.version, 0)
+
+
+def test_guard_report_is_a_report_for_every_backend(store):
+    """Both backends answer `guard_report` with a `GuardReport`; with no role named, nothing is found."""
+    from hadavin_sdk.models import GuardReport
+
+    report = store.guard_report(None, None, None)
+    assert isinstance(report, GuardReport)
+    assert report.problems == ()
