@@ -697,3 +697,4 @@ PULSE 11:25Z A4 done: fix6 f86d5bf; patch-cloud-2.diff (fix5->fix6) + patch-clou
 PULSE 11:28Z all 4 lens reports saved (lens1-4 .md); agents: a699ad44 A5 builder fix7 src +40m, a12f5728 A6 builder tests fix6t +30m; shells: pulse_refresh only; core idle not written
 PULSE 11:32Z agents: a699ad44 A5 builder fix7 src (4m, checkpoint 1: baseline fix6 keyed 229x503 on load, editing src), a12f5728 A6 builder fix6t tests (4m, renames done); shells: builders' own load/pytest; core idle not written
 PULSE 11:37Z agents: a699ad44 A5 builder fix7 src (8m of 40), a12f5728 A6 builder fix6t tests (8m of 30); no orders newer than 203; core idle not written
+PULSE 11:41Z agents: a699ad44 A5 builder fix7 src (13m of 40; full suite + CONTRACT-DELTA + commit next), a12f5728 A6 builder fix6t tests (13m of 30; ruff, mutation runs, commit next); no commits yet from either; core idle not written
