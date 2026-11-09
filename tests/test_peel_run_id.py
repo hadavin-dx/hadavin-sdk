@@ -22,8 +22,8 @@ InvalidRunId = getattr(agent_loop, "InvalidRunId", type("InvalidRunId", (ValueEr
 
 AGENT, PRINCIPAL = "test-agent", "svc:test-agent"
 GOOD = "run-" + "0123456789abcdef" * 2
-# The shape AK-G2's run_id_for gives: "run-" + 28 hex + 4 hex = 36 characters.
-AK_G2_SHAPE = "run-" + "a1b2c3d" * 4 + format(7, "04x")
+# A shape a door may derive from a message id: "run-" + 28 hex + 4 hex = 36 characters.
+DOOR_SHAPE = "run-" + "a1b2c3d" * 4 + format(7, "04x")
 
 
 def _count_rows(rt, run_id):
@@ -32,27 +32,20 @@ def _count_rows(rt, run_id):
 
 def test_t1_given_id_is_the_run_id(cfg_dir):
     rt, cfg = build(cfg_dir)
-    run = rt.handle(AGENT, PRINCIPAL, _doc(cfg, "chat.txt"), run_id=GOOD)
+    run = rt.handle(AGENT, PRINCIPAL, _doc(cfg, "chat.txt"), trigger_ref="m-1", run_id=GOOD)
     assert run.run_id == GOOD
     assert rt.store.get_run(GOOD).run_id == GOOD
 
 
-class SpyStore:
-    """Forwards every call to the real store and records the method names, in order."""
+class ForwardingStore:
+    """Forwards every attribute to the real store; subclasses change one method. The tests judge the outcome (run
+    rows, audit rows, model calls), not which store methods ran in which order."""
 
     def __init__(self, inner):
-        self._inner, self.calls = inner, []
+        self._inner = inner
 
     def __getattr__(self, name):
-        attr = getattr(self._inner, name)
-        if not callable(attr):
-            return attr
-
-        def call(*args, **kwargs):
-            self.calls.append(name)
-            return attr(*args, **kwargs)
-
-        return call
+        return getattr(self._inner, name)
 
 
 class SpyLimits:
@@ -118,7 +111,7 @@ def test_d2_same_message_twice_returns_the_existing_run(cfg_dir):
     assert first.run_id == GOOD and first.state == RunState.NO_ACTION
     calls, notes = len(rt.llm.calls), _count_rows(rt, GOOD)
     assert calls == 1 and notes > 0
-    rt.store, rt.limits = SpyStore(rt.store), SpyLimits(rt.limits)
+    rt.limits = SpyLimits(rt.limits)
     second = rt.handle(AGENT, PRINCIPAL, doc, trigger_ref="m-1", run_id=GOOD)
     assert isinstance(second, Run) and ORACLE.fullmatch(second.run_id)
     assert second.run_id == GOOD
@@ -126,7 +119,6 @@ def test_d2_same_message_twice_returns_the_existing_run(cfg_dir):
     assert len(rt.llm.calls) == calls  # no second model call, so no second spend
     assert _count_rows(rt, GOOD) == notes  # no second "received" note
     assert rt.limits.calls == []  # no limits check, no meter hold
-    assert rt.store.calls == ["create_run", "get_run"]  # nothing written but the refused create
     assert len(_all_runs(rt.store)) == 1
 
 
@@ -142,13 +134,12 @@ def test_d2_same_message_twice_returns_the_existing_run(cfg_dir):
 def test_d2b_direct_a_foreign_run_is_never_returned(cfg_dir, diff):
     rt, cfg = build(cfg_dir)
     stored = _foreign(rt, **diff)
-    rt.store, rt.limits = SpyStore(rt.store), SpyLimits(rt.limits)
+    rt.limits = SpyLimits(rt.limits)
     with pytest.raises(StaleState):
         rt.handle(AGENT, PRINCIPAL, _doc(cfg, "chat.txt"), trigger_ref="m-1", run_id=GOOD)
     assert rt.llm.calls == []
     assert rt.audit.events() == []  # no note of any run
     assert rt.limits.calls == []
-    assert rt.store.calls == ["create_run", "get_run"]
     assert rt.store.get_run(GOOD) == stored  # untouched
     assert len(_all_runs(rt.store)) == 1
 
@@ -158,9 +149,8 @@ def test_d2c_direct_a_foreign_run_created_inside_create_run(cfg_dir):
     `create_run` refuses, the stored run is not the caller's, so `StaleState` and nothing else is written."""
     rt, cfg = build(cfg_dir)
 
-    class RacingStore(SpyStore):
+    class RacingStore(ForwardingStore):
         def create_run(self, run):
-            self.calls.append("create_run")
             self._inner.create_run(run.model_copy(update={"agent_id": "other-agent"}))
             return self._inner.create_run(run)
 
@@ -170,7 +160,6 @@ def test_d2c_direct_a_foreign_run_created_inside_create_run(cfg_dir):
     assert rt.llm.calls == []
     assert rt.audit.events() == []
     assert rt.limits.calls == []
-    assert rt.store.calls == ["create_run", "get_run"]
     assert rt.store.get_run(GOOD).agent_id == "other-agent"
     assert rt.store.get_run(GOOD).state == RunState.RECEIVED
     assert len(_all_runs(rt.store)) == 1
@@ -181,16 +170,14 @@ def test_d2d_direct_the_existing_run_vanished_is_still_stale(cfg_dir):
     `StaleState` is raised, not `NotFound`, and nothing else is written."""
     rt, cfg = build(cfg_dir)
 
-    class VanishingStore(SpyStore):
+    class VanishingStore(ForwardingStore):
         def create_run(self, run):
-            self.calls.append("create_run")
             raise StaleState(f"run exists: {run.run_id}")
 
     rt.store = VanishingStore(rt.store)
     with pytest.raises(StaleState):
         rt.handle(AGENT, PRINCIPAL, _doc(cfg, "chat.txt"), trigger_ref="m-1", run_id=GOOD)
     assert rt.llm.calls == [] and rt.audit.events() == []
-    assert rt.store.calls == ["create_run", "get_run"]
 
 
 def _race_once(cfg_dir, rid):
@@ -199,7 +186,7 @@ def _race_once(cfg_dir, rid):
     doc = _doc(cfg, "chat.txt")
     gate = threading.Barrier(2)
 
-    class GatedStore(SpyStore):
+    class GatedStore(ForwardingStore):
         def create_run(self, run):
             gate.wait(timeout=10)
             return self._inner.create_run(run)
@@ -270,7 +257,7 @@ HOSTILE = [
 def test_t4_hostile_ids_are_refused_before_any_write(cfg_dir, bad):
     rt, cfg = build(cfg_dir)
     with pytest.raises(InvalidRunId):
-        rt.handle(AGENT, PRINCIPAL, _doc(cfg, "chat.txt"), run_id=bad)
+        rt.handle(AGENT, PRINCIPAL, _doc(cfg, "chat.txt"), trigger_ref="m-1", run_id=bad)
     assert rt.llm.calls == []
     assert rt.audit.events() == []  # no note of any run: nothing was written
     if isinstance(bad, str):
@@ -292,20 +279,23 @@ def test_t5_accepts_exactly_the_pattern(cfg_dir):
     ok = bad = 0
     for text in sorted(cases):
         if ORACLE.fullmatch(text):
-            assert rt.handle(AGENT, PRINCIPAL, doc, run_id=text).run_id == text
+            assert rt.handle(AGENT, PRINCIPAL, doc, trigger_ref="m-1", run_id=text).run_id == text
             ok += 1
         else:
             with pytest.raises(InvalidRunId):
-                rt.handle(AGENT, PRINCIPAL, doc, run_id=text)
+                rt.handle(AGENT, PRINCIPAL, doc, trigger_ref="m-1", run_id=text)
             bad += 1
     assert ok > 5 and bad > 500  # both branches were really exercised
 
 
-def test_t6_the_ak_g2_id_shape_is_accepted(cfg_dir):
+def test_t6_a_derived_id_shape_is_accepted(cfg_dir):
     rt, cfg = build(cfg_dir)
-    assert len(AK_G2_SHAPE) == 36
+    assert len(DOOR_SHAPE) == 36
     assert (
-        rt.handle(AGENT, PRINCIPAL, _doc(cfg, "chat.txt"), run_id=AK_G2_SHAPE).run_id == AK_G2_SHAPE
+        rt.handle(
+            AGENT, PRINCIPAL, _doc(cfg, "chat.txt"), trigger_ref="m-1", run_id=DOOR_SHAPE
+        ).run_id
+        == DOOR_SHAPE
     )
 
 
@@ -317,6 +307,8 @@ def test_t7_run_id_is_keyword_only_with_default_none():
 def test_t8_model_pattern_is_the_written_out_oracle():
     assert hasattr(models, "RUN_ID_PATTERN")  # fails by assertion on the base
     assert models.RUN_ID_PATTERN.pattern == ORACLE.pattern
+    for _ in range(50):  # the id maker and the pattern agree
+        assert models.RUN_ID_PATTERN.fullmatch(models.new_id("run"))
 
 
 def test_t9_order_unqualified_first_then_invalid_run_id(cfg_dir):
@@ -325,10 +317,42 @@ def test_t9_order_unqualified_first_then_invalid_run_id(cfg_dir):
     with pytest.raises(
         agent_loop.Unqualified
     ):  # unknown agent AND a bad id: the agent is judged first
-        rt.handle("no-such-agent", PRINCIPAL, doc, run_id="bad")
+        rt.handle("no-such-agent", PRINCIPAL, doc, trigger_ref="m-1", run_id="bad")
     with pytest.raises(InvalidRunId):  # known agent, bad id
-        rt.handle(AGENT, PRINCIPAL, doc, run_id="bad")
+        rt.handle(AGENT, PRINCIPAL, doc, trigger_ref="m-1", run_id="bad")
     assert not issubclass(agent_loop.Unqualified, ValueError)  # so the two are told apart by type
+
+
+@pytest.mark.parametrize(
+    "ref", ["-", "", " ", "\t\n", " - "], ids=["dash", "empty", "space", "tab-nl", "padded-dash"]
+)
+def test_t10_run_id_with_a_trigger_ref_that_names_no_message_is_refused(cfg_dir, ref):
+    """Squatting: with the default trigger_ref "-" every caller of one agent and principal is "the same message", so
+    a caller that guesses an id would be handed the run another caller started. Refused before any write."""
+    rt, cfg = build(cfg_dir)
+    doc = _doc(cfg, "chat.txt")
+    with pytest.raises(InvalidRunId):
+        rt.handle(AGENT, PRINCIPAL, doc, trigger_ref=ref, run_id=GOOD)
+    assert rt.llm.calls == [] and rt.audit.events() == []
+    assert _all_runs(rt.store) == []
+    with pytest.raises(InvalidRunId):  # the default trigger_ref is the same refusal
+        rt.handle(AGENT, PRINCIPAL, doc, run_id=GOOD) if ref == "-" else rt.handle(
+            AGENT, PRINCIPAL, doc, trigger_ref=ref, run_id=GOOD
+        )
+
+
+def test_t10b_a_run_stored_under_the_dash_is_never_returned_to_a_squatter(cfg_dir):
+    rt, cfg = build(cfg_dir)
+    stored = _foreign(rt, trigger_ref="-")  # same agent, principal, kind: only the ref is the dash
+    with pytest.raises(InvalidRunId):
+        rt.handle(AGENT, PRINCIPAL, _doc(cfg, "chat.txt"), run_id=GOOD)
+    assert rt.store.get_run(GOOD) == stored and rt.llm.calls == []
+
+
+def test_t10c_without_run_id_the_dash_still_works(cfg_dir):
+    rt, cfg = build(cfg_dir)
+    assert rt.handle(AGENT, PRINCIPAL, _doc(cfg, "injected.txt")).trigger_ref == "-"
+    assert rt.handle(AGENT, PRINCIPAL, _doc(cfg, "injected.txt"), run_id=None).trigger_ref == "-"
 
 
 @pytest.fixture

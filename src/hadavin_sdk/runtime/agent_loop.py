@@ -103,6 +103,11 @@ class InvalidRunId(ValueError):
     """A caller-chosen run id is not `run-` and 32 lower-case hex characters."""
 
 
+# `trigger_ref` values that name no message: with a caller-chosen run_id they would make every such caller "the same
+# message", so a repeat call could be handed another caller's run (the id and the three identity fields all match).
+_NO_MESSAGE_ID = frozenset({"", "-"})
+
+
 def _checked_run_id(run_id: object) -> str:
     if not isinstance(run_id, str) or not RUN_ID_PATTERN.fullmatch(run_id):
         raise InvalidRunId("run_id must be 'run-' and 32 lower-case hex characters")
@@ -363,6 +368,9 @@ class Runtime:
         """`run_id`, if given, is the id of the run this call starts. A caller uses it to make one message start at
         most one run: it gives the same id every time it handles that message. The id is `run-` followed by 32
         characters from 0-9 and a-f, else `InvalidRunId` (checked after the `Unqualified` check, before any write).
+        A given `run_id` also needs a `trigger_ref` that names the message: the default "-" (or an empty or blank
+        one) names no message, so any caller could then read back any other caller's run by guessing its id;
+        `InvalidRunId` is raised for it too, before any write.
         If a run with that id already exists and its `agent_id`, `principal_id` and `trigger_ref` equal this call's,
         that run is returned at once: no note, no redaction, no limits check, no model call, no meter hold. If any of
         the three differs, `StaleState` is raised and nothing is written. `None` makes a fresh id. Two calls are the
@@ -378,6 +386,14 @@ class Runtime:
             raise Unqualified(agent_id)
         agent = self.registry.agents[agent_id]
         extra = {} if run_id is None else {"run_id": _checked_run_id(run_id)}
+        if (
+            run_id is not None
+            and isinstance(trigger_ref, str)
+            and trigger_ref.strip() in _NO_MESSAGE_ID
+        ):
+            raise InvalidRunId(
+                "run_id needs a trigger_ref that names the message (not empty and not '-')"
+            )
         run = Run(
             agent_id=agent_id,
             principal_id=principal_id,
