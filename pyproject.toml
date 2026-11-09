@@ -83,6 +83,7 @@ testpaths = ["tests"]
 # Repo root on sys.path so fixture check modules (tests.fixtures.checks) resolve by name.
 pythonpath = ["."]
 markers = [
+    "real_role_check: sees the real default of migrate(allow_privileged_role_for_tests), which is False",
     "live: calls a real paid or cloud service; CI deselects it, run only on the owner's yes",
     "perf: timing tests (redaction patterns, end to end with views); CI runs them in their own step, which blocks a merge",
 ]

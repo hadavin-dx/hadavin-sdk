@@ -432,10 +432,10 @@ def test_a_drop_is_advised_in_one_place_only_and_never_for_the_evidence_tables_o
 
 def test_case_c_says_a_released_file_cannot_be_renumbered():
     c = _words(rb.case("c"))
-    assert "NOT listed in `src/hadavin_sdk/store/migrations_released.json`" in c
+    assert "NOT listed in `tests/fixtures/migrations_released.json`" in c
     assert "can never be renumbered" in c
     assert "case (b)" in c  # a database that already applied the renumbered file
-    assert (ROOT / "src/hadavin_sdk/store/migrations_released.json").is_file()
+    assert (ROOT / "tests/fixtures/migrations_released.json").is_file()
 
 
 def test_case_a_failure_wording_and_the_hand_written_fallback():
@@ -468,8 +468,8 @@ def test_the_migrate_docstring_counts_what_it_reads_back():
     assert "current user and the session user" in doc and "search path" in doc
     assert "three settings that change how SQL text is read" in doc
     assert "cases (a) to (g)" in doc
-    assert "nine values" in _words(mig._check_read_back.__doc__ or "")
-    assert len(mig._READBACK_VALUES) == 9
+    assert "eleven values" in _words(mig._check_read_back.__doc__ or "")
+    assert len(mig._READBACK_VALUES) == 11
 
 
 def test_the_runbook_carries_the_real_lock_the_command_and_every_case():
@@ -532,9 +532,7 @@ def test_case_b_uses_a_plain_placeholder_and_points_at_the_released_list():
     b = _words(rb.case("b"))
     assert "'<file_stem>'" in b and "that file's name without" in b
     assert "'<that file" not in b
-    assert (
-        "does not compare the text" in b and "src/hadavin_sdk/store/migrations_released.json" in b
-    )
+    assert "does not compare the text" in b and "tests/fixtures/migrations_released.json" in b
 
 
 def test_the_upgrade_bullet_says_what_migrate_checks_and_does_not_overclaim():
@@ -542,7 +540,9 @@ def test_the_upgrade_bullet_says_what_migrate_checks_and_does_not_overclaim():
     first = _words(
         CHANGELOG[CHANGELOG.index("- **Migrations: stricter checks") :].split("\n", 1)[0]
     )
-    assert "refuses, before it connects, a released file that was edited or deleted" in first
+    assert "tests refuse a released file that was edited or deleted" in first
+    assert "not tested on PostgreSQL 17" in first
+    assert "does not read it" in first
     assert "the role memberships" in first and "inside a function body" in first
     assert "pg_auth_members" in _words(mig.__doc__ or "") and "pg_auth_members" in _words(
         mig.migrate.__doc__ or ""
@@ -621,8 +621,8 @@ def test_the_scope_the_order_and_the_file_own_limits_are_written_down():
     assert (
         "The order differs on purpose: the hand file sets the limits before the advisory lock" in f
     )
-    assert "A migration file may `SET LOCAL` either limit itself" in f
+    assert "A migration file may not change either limit" in f
     doc = _words(mig.migrate.__doc__ or "")
     assert "so a run with no pending file is covered too" in doc
     assert "sets the limits BEFORE the advisory lock" in doc and "AFTER it, on purpose" in doc
-    assert "a guarantee only for files that do not set them" in doc
+    assert "A migration file may not change either limit" in doc

@@ -2,17 +2,20 @@
 a late file, the ledger-without-file message, the one-pass SQL lexer with the refusal list, and the check that a released
 file never changes.
 
-`store/migrate.py` calls these before it connects (a later change, P3a-2: until it merges, NOTHING calls them and none of
-the rules here is in force). Nothing here opens a connection; the only file access is `list_migration_files`,
-`check_migration_numbers`, `released_problems` (directory listings and one read per released file) and `read_files`.
+`store/migrate.py` calls these before it connects (`check_ledger`, `read_files`, `order_problems`, `gone_message`, the lexer
+through `check_grants`). `released_problems` is NOT called by `migrate`: the list of released files is a test fixture
+(`tests/fixtures/migrations_released.json`, the one list) and a built package has no tests folder; the tests and the
+release check call it. Nothing here opens a connection; the only file access is `list_migration_files`,
+`check_migration_numbers`, `released_problems` (directory listings and one read per released file, none when the text
+is passed in) and `read_files`.
 
 Why a lexer of our own (R448 rung decision, 2026-11-06). The text rules do exactly two jobs the database cannot do for us:
 (a) hand `migrate._scan` a view of the file without comments, so it can refuse a `CREATE TABLE` that has no exact grants;
 (b) refuse transaction control (`COMMIT`, `END`, `ROLLBACK`, `SAVEPOINT` ...) before the run, because a hidden `COMMIT`
 ends the one migration transaction. The other refusals (`SET`, `RESET`, `ALTER ROLE`, `DO`, `EXECUTE` ...) are a tripwire
 against accidents and a help to the reviewer: the guard that cannot be blinded by spelling is the read-back in `migrate()`
-after each file (a later change), which compares the role, `search_path`, `standard_conforming_strings`,
-`backslash_quote`, `client_encoding` and the trigger state. A higher rung was looked at: the SQL tokenizer of sqlglot
+after each file (`migrate._check_read_back`), which compares the role, `search_path`, `standard_conforming_strings`,
+`backslash_quote`, `client_encoding`, the two time limits, the role memberships, the saved per-role settings and the trigger state. A higher rung was looked at: the SQL tokenizer of sqlglot
 (MIT, already pinned in the `askdata` extra). It was NOT adopted, for design reasons, not for a measured score: in the one check made (2026-11-06,
 not kept here) it did not refuse a psql meta-command (`SELECT 1 \\g` comes out as tokens), and it is a dependency
 upgrade on a safety path whose behaviour could change without a test here failing. No number about sqlglot is claimed in this file,
@@ -165,7 +168,8 @@ def read_files(files: Sequence[Path]) -> dict[Path, str]:
     """Each file ONCE, as UTF-8 text. The same text is scanned and later executed, so a file changed on disk between
     the scan and the run is not run in its new form. An unreadable file raises the original error. `read_text` in text
     mode translates CRLF and a lone CR to LF, so the text the lexer sees (and the server later gets) has only LF; the
-    hash in `released_problems` reads bytes and does the same translation for CRLF by hand. A byte order mark is NOT
+    hash in `released_problems` hashes the text given to it (the same text that is executed) and, when only a folder is
+    given, reads bytes and does the same translation for CRLF and a lone CR by hand. A byte order mark is NOT
     removed here: `hidden_character` names it and the file is refused."""
     return {p: p.read_text(encoding="utf-8") for p in files}
 
@@ -317,9 +321,18 @@ def _names(names: Sequence[str]) -> str:
 # --- a released file never changes -------------------------------------------------------------------------------------
 
 
-def released_problems(folder: Path, manifest: Mapping[str, str]) -> list[str]:
-    """Forward-only: `manifest` maps the stem of every RELEASED file to the SHA-256 of its bytes (Windows line endings
-    read as Unix ones). A released file that is missing or changed is a problem, and so is a file that is not in the
+def _digest(p: Path, texts: Mapping[Path, str] | None) -> str:
+    if texts is not None and p in texts:
+        return hashlib.sha256(texts[p].encode("utf-8")).hexdigest()
+    return hashlib.sha256(p.read_bytes().replace(b"\r\n", b"\n").replace(b"\r", b"\n")).hexdigest()
+
+
+def released_problems(
+    folder: Path, manifest: Mapping[str, str], texts: Mapping[Path, str] | None = None
+) -> list[str]:
+    """Forward-only: `manifest` maps the stem of every RELEASED file to the SHA-256 of its text (line endings read as
+    Unix ones). With `texts` (the result of `read_files`), a file in it is hashed from that text, so the text that is
+    hashed is the text that is executed; any other file is read from disk. A released file that is missing or changed is a problem, and so is a file that is not in the
     manifest but is numbered at or below the highest released one. Add a row to the manifest when a release is cut."""
     files = {p.name[:-4]: p for p in list_migration_files(folder) if NAME.fullmatch(p.name)}
     problems: list[str] = []
@@ -327,7 +340,7 @@ def released_problems(folder: Path, manifest: Mapping[str, str]) -> list[str]:
         p = files.get(stem)
         if p is None or not p.is_file():
             problems.append(f"{_esc(stem)}: a released file is missing")
-        elif hashlib.sha256(p.read_bytes().replace(b"\r\n", b"\n")).hexdigest() != manifest[stem]:
+        elif _digest(p, texts) != manifest[stem]:
             problems.append(f"{_esc(stem)}: a released file was changed")
     released = [s for s in manifest if STEM.fullmatch(s)]
     if released:

@@ -17,17 +17,12 @@ from pathlib import Path
 
 import pytest
 
+from tests.fixtures.dsn_skip import require_test_module
 from tests.fixtures.seeded import Seeded
 
 SEED = 20261106
 CASES = 30000
-MANIFEST = (
-    Path(__file__).resolve().parents[1]
-    / "src"
-    / "hadavin_sdk"
-    / "store"
-    / "migrations_released.json"
-)
+MANIFEST = Path(__file__).resolve().parent / "fixtures" / "migrations_released.json"  # the one list
 
 
 @pytest.fixture
@@ -502,7 +497,7 @@ def _differential(mn, pieces, cases, longest):
 
 
 def test_lexer_agrees_with_the_postgresql_scanner_on_statement_starts(mn):
-    pytest.importorskip("pglast")
+    require_test_module("pglast")
     agreed, refused_by_us, server_refused = _differential(mn, PIECES, CASES, 12)
     assert agreed > CASES // 4, (agreed, refused_by_us, server_refused)
     agreed2, _, _ = _differential(mn, ALPHABET, CASES, 30)
@@ -526,7 +521,7 @@ def test_lexer_agrees_with_the_postgresql_scanner_on_statement_starts(mn):
     ],
 )
 def test_probe_cases_agree_with_the_scanner(mn, sql):
-    pytest.importorskip("pglast")
+    require_test_module("pglast")
     theirs = _server_statement_starts(sql)
     ours = _our_statement_starts(mn, sql)
     assert theirs is not None
@@ -589,3 +584,36 @@ def test_every_mutant_still_applies_to_the_source():
         test_path, _, test_id = m.pinned.partition("::")
         function = test_id.split("[")[0]
         assert f"def {function}(" in (ROOT / f"{test_path}.py").read_text(encoding="utf-8"), m.name
+
+
+def test_released_problems_hashes_the_text_that_is_executed_not_a_second_read(mn, tmp_path):
+    """Round-1 M4: with `texts`, the hash is of `texts[p]`. A file changed on disk after `read_files` is not the text that
+    runs, so a changed disk copy must not fail the check and a changed text must. Killed by: mutant H1 (read_bytes again)."""
+    f = tmp_path / "0001_a.sql"
+    f.write_bytes(b"SELECT 1;\r\nSELECT 2;\n")
+    texts = mn.read_files([f])
+    good = {"0001_a": hashlib.sha256(texts[f].encode("utf-8")).hexdigest()}
+    assert mn.released_problems(tmp_path, good, texts) == []
+    f.write_bytes(b"SELECT 99;\n")  # edited on disk after the one read
+    assert mn.released_problems(tmp_path, good, texts) == []  # the executed text is what counts
+    assert mn.released_problems(tmp_path, good) == ["0001_a: a released file was changed"]
+    assert mn.released_problems(tmp_path, good, {f: "SELECT 100;\n"}) == [
+        "0001_a: a released file was changed"
+    ]
+
+
+def test_a_lone_carriage_return_hashes_like_the_text_that_runs(mn, tmp_path):
+    f = tmp_path / "0001_a.sql"
+    f.write_bytes(b"SELECT 1;\rSELECT 2;\r\nSELECT 3;\n")
+    good = {"0001_a": hashlib.sha256(mn.read_files([f])[f].encode("utf-8")).hexdigest()}
+    assert mn.released_problems(tmp_path, good) == []
+    assert mn.released_problems(tmp_path, good, mn.read_files([f])) == []
+
+
+def test_a_missing_test_only_module_is_a_failure_in_ci_and_a_skip_elsewhere():
+    """Round-1 N9. Killed by: mutant G1 (importorskip again)."""
+    with pytest.raises(pytest.fail.Exception, match="CI is set"):
+        require_test_module("no_such_module_xyz", {"CI": "true"})
+    with pytest.raises(pytest.skip.Exception, match="not installed"):
+        require_test_module("no_such_module_xyz", {})
+    assert require_test_module("json", {"CI": "true"}) is json

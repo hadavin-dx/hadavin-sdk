@@ -292,7 +292,7 @@ M = [
     ),
     mutant(
         "fix1: a changed released file is not found",
-        'elif hashlib.sha256(p.read_bytes().replace(b"\\r\\n", b"\\n")).hexdigest() != manifest[stem]:',
+        "elif _digest(p, texts) != manifest[stem]:",
         "elif False:",
         T2,
         "test_released_problems_catches_an_edit_a_deletion_and_a_low_new_number",

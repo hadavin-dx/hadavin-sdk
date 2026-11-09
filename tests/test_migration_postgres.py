@@ -1062,15 +1062,70 @@ def test_the_limits_also_cover_the_grant_phase_of_a_run_with_no_pending_file(scr
 
 
 @needs_pg
-def test_a_file_that_sets_a_limit_itself_changes_it_for_the_files_after_it(
+def test_a_file_that_changes_a_limit_itself_is_refused_by_the_read_back(
     scratch, monkeypatch, tmp_path
 ):
-    """Nit A (documented): a migration file may `SET LOCAL` a limit; the new value holds for the next file of the same
-    run (a probe in the second file reads it back), so the limits are a guarantee only for files that do not set them.
-    Killed by: mutant RA3 (migrate re-sets the constant's limits after every file)."""
+    """Round-1 N10: a migration file that `SET LOCAL`s a limit is refused after that file (the limits are a guarantee for
+    every file), and nothing of the run is kept. Killed by: mutant L1 (the limits are not in the read-back)."""
     dsn, _ = scratch
     monkeypatch.setattr(mig, "RECIPE_TIMEOUTS", SHORT_LOCK)  # statement limit 20s, lock limit 1s
-    own = "SET LOCAL statement_timeout = '11s';\n"
-    probe = "SELECT 1 / ((current_setting('statement_timeout') = '11s')::int);\n"
-    _with_files(monkeypatch, tmp_path, {PLANTED_NEXT: own, "0007_p3a_probe.sql": probe})
-    assert mig.migrate(dsn)[-2:] == ["0006_p3a_next", "0007_p3a_probe"]
+    _with_files(monkeypatch, tmp_path, {PLANTED_NEXT: "SET LOCAL statement_timeout = '11s';\n"})
+    with pytest.raises(
+        ConfigError, match=r"0006_p3a_next\.sql.*statement_timeout was '20s' and is now '11s'"
+    ):
+        mig.migrate(dsn)
+    assert _ledger(dsn) in (None, [])
+
+
+# --- the migration role is checked against a real server (round-1 M2) ------------------------------------------------
+
+
+@pytest.fixture
+def plain_role(scratch):
+    """(dsn of a login role with none of the four flags, schema); the role is dropped afterwards."""
+    dsn, schema = scratch
+    role = f"mig_{uuid.uuid4().hex[:10]}"
+    with psycopg.connect(DSN, autocommit=True) as db:
+        db.execute(sql.SQL("CREATE ROLE {} LOGIN").format(sql.Identifier(role)))
+        db.execute(
+            sql.SQL("GRANT ALL ON SCHEMA {} TO {}").format(
+                sql.Identifier(schema), sql.Identifier(role)
+            )
+        )
+        db.execute(
+            sql.SQL("GRANT CREATE ON DATABASE {} TO {}").format(
+                sql.Identifier(db.execute("SELECT current_database()").fetchone()[0]),
+                sql.Identifier(role),
+            )
+        )
+    try:
+        yield make_conninfo(dsn, user=role), role
+    finally:
+        with psycopg.connect(DSN, autocommit=True) as db:
+            db.execute(sql.SQL("DROP OWNED BY {}").format(sql.Identifier(role)))
+            db.execute(sql.SQL("DROP ROLE {}").format(sql.Identifier(role)))
+
+
+@needs_pg
+@pytest.mark.parametrize("flag", ["SUPERUSER", "CREATEROLE", "CREATEDB", "BYPASSRLS"])
+def test_a_migration_role_with_a_privilege_flag_is_refused_by_a_real_server(plain_role, flag):
+    """Killed by: mutants S1..S5 (no check, or one flag not read), on a real server."""
+    dsn, role = plain_role
+    with psycopg.connect(DSN, autocommit=True) as db:
+        db.execute(sql.SQL(f"ALTER ROLE {{}} {flag}").format(sql.Identifier(role)))
+    with pytest.raises(ConfigError, match="must not be a superuser") as e:
+        mig.migrate(dsn, allow_privileged_role_for_tests=False)
+    assert {
+        "SUPERUSER": "rolsuper",
+        "CREATEROLE": "rolcreaterole",
+        "CREATEDB": "rolcreatedb",
+        "BYPASSRLS": "rolbypassrls",
+    }[flag] in str(e.value)
+    assert _ledger(dsn) is None, "nothing was created"
+
+
+@needs_pg
+def test_a_plain_migration_role_runs_without_the_override(plain_role):
+    dsn, _ = plain_role
+    assert mig.migrate(dsn, allow_privileged_role_for_tests=False) == REAL
+    assert mig.migrate(dsn, allow_privileged_role_for_tests=False) == []

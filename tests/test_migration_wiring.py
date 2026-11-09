@@ -21,7 +21,19 @@ from hadavin_sdk.store import migrate as mig
 from hadavin_sdk.store import migration_numbers as mn
 
 T0, T1 = "2026-11-06T00:00:00+00:00", "2026-11-06T00:00:01+00:00"
-START = ("mig", "mig", "origin", '"$user", public', "on", "safe_encoding", "UTF8", T0, 700)
+START = (
+    "mig",
+    "mig",
+    "origin",
+    '"$user", public',
+    "on",
+    "safe_encoding",
+    "UTF8",
+    "5s",
+    "60s",
+    T0,
+    700,
+)
 # the item names in the order of `START`
 ITEMS = (
     "current_user",
@@ -31,6 +43,8 @@ ITEMS = (
     "standard_conforming_strings",
     "backslash_quote",
     "client_encoding",
+    "lock_timeout",
+    "statement_timeout",
     "transaction_timestamp",
     "txid_current",
 )
@@ -58,8 +72,10 @@ class _Db:
     """A connection that answers the read-back queries from canned lists (next answer per call) and records every
     statement."""
 
-    def __init__(self, values, triggers, applied=(), members=None):
+    def __init__(self, values, triggers, applied=(), members=None, flags=None, settings=None):
         self.values, self.triggers = list(values), list(triggers)
+        self.flags = (False, False, False, False) if flags is None else flags  # the role flags
+        self.settings = None if settings is None else list(settings)  # one answer per read
         self.members = (
             None if members is None else list(members)
         )  # one answer per read; None = never any member
@@ -86,6 +102,10 @@ class _Db:
             return _Result(self.triggers.pop(0))
         if text == mig._READBACK_MEMBERS_SQL:
             return _Result([] if self.members is None else self.members.pop(0))
+        if text == mig._ROLE_FLAGS_SQL:
+            return _Result([self.flags])
+        if text == mig._READBACK_SETTINGS_SQL:
+            return _Result([] if self.settings is None else self.settings.pop(0))
         if text == "SELECT current_schema()":
             return _Result([("s",)])
         if text.startswith("SELECT version FROM schema_migrations"):
@@ -102,21 +122,29 @@ def _files(tmp_path: Path, n: int = 2) -> list[Path]:
     return paths
 
 
-def _run(monkeypatch, tmp_path, values, triggers, n=2, applied=(), members=None):
+def _run(
+    monkeypatch, tmp_path, values, triggers, n=2, applied=(), members=None, settings=None, **kw
+):
     files = _files(tmp_path, n)
-    db = _Db(values, triggers, applied, members)
+    db = _Db(values, triggers, applied, members, settings=settings)
     monkeypatch.setattr(mig, "_migration_files", lambda: files)
     monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
     monkeypatch.setattr(mig, "connect", lambda *a, **k: db)
     try:
-        applied_now = mig.migrate("postgresql://unused")
+        applied_now = mig.migrate("postgresql://unused", **kw)
         return None, db, applied_now
     except ConfigError as e:
         return e, db, None
 
 
-def _trigger(name="trg", enabled="O", relid=1, schema="s", table="t"):
-    return (relid, name, enabled, table, schema)
+def _trigger(
+    name="trg", enabled="O", schema="s", table="t", definition=None, src="BEGIN END", secdef=False
+):
+    definition = (
+        definition
+        or f"CREATE TRIGGER {name} BEFORE UPDATE ON {schema}.{table} EXECUTE FUNCTION {schema}.f()"
+    )
+    return (name, enabled, table, schema, definition, src, secdef, None)
 
 
 # --- the old checks are replaced, not doubled -------------------------------------------------------------------
@@ -317,6 +345,8 @@ def test_each_value_is_compared_with_its_own_saved_value(monkeypatch, tmp_path, 
         "standard_conforming_strings": "off",
         "backslash_quote": "on",
         "client_encoding": "LATIN1",
+        "lock_timeout": "0",
+        "statement_timeout": "0",
         "transaction_timestamp": T1,
         "txid_current": 701,
     }[item]
@@ -352,21 +382,64 @@ def test_start_value_of_standard_conforming_strings_must_be_on(monkeypatch, tmp_
 
 
 def test_a_disabled_trigger_is_refused(monkeypatch, tmp_path):
-    """Cases (vii), M88: state D or R that was not there before; A and O pass."""
-    for state in ("D", "R"):
+    """Cases (vii), M88, and round-1 M1: ANY change of the enabled state of a trigger that existed before the file is
+    refused (O to A too: a blacklist of D and R let it pass). Killed by: mutant T1 (back to a D/R-only check)."""
+    for state in ("D", "R", "A"):
         err, _, _ = _run(
             monkeypatch, tmp_path, [START, START], [[_trigger()], [_trigger(enabled=state)]]
         )
         assert isinstance(err, ConfigError) and "0001_f1.sql" in str(err)
-        assert "trigger s.t.trg" in str(err), err
-    for state in ("A", "O"):
-        err, _, _applied = _run(
+        assert "trigger s.t.trg changed: enabled state" in str(err), err
+    for was, now in (("A", "O"), ("D", "O"), ("R", "A")):
+        err, _, _ = _run(
+            monkeypatch,
+            tmp_path,
+            [START, START],
+            [[_trigger(enabled=was)], [_trigger(enabled=now)]],
+        )
+        assert isinstance(err, ConfigError), (was, now)
+
+
+def test_a_trigger_created_disabled_is_refused_and_one_created_enabled_is_not(
+    monkeypatch, tmp_path
+):
+    for state in ("D", "R"):
+        err, _, _ = _run(monkeypatch, tmp_path, [START, START], [[], [_trigger(enabled=state)]])
+        assert isinstance(err, ConfigError) and "is created" in str(err), err
+    for state in ("O", "A"):
+        err, _, _ = _run(
             monkeypatch,
             tmp_path,
             [START] * 3,
-            [[_trigger()], [_trigger(enabled=state)], [_trigger(enabled=state)]],
+            [[], [_trigger(enabled=state)], [_trigger(enabled=state)]],
         )
         assert err is None, err
+
+
+def test_a_trigger_recreated_with_another_definition_or_function_is_refused(monkeypatch, tmp_path):
+    """Round-1 M1 (same-name recreate): the trigger keeps its name, enabled state and table but not what it does.
+    Killed by: mutants T2 (definition not compared), T3 (function text not compared), T4 (security mode not compared)."""
+    changes = {
+        "definition": {
+            "definition": "CREATE TRIGGER trg AFTER INSERT ON s.t EXECUTE FUNCTION s.g()"
+        },
+        "function text": {"src": "BEGIN RETURN NULL; END"},
+        "function security mode": {"secdef": True},
+    }
+    for part, change in changes.items():
+        err, _, _ = _run(
+            monkeypatch, tmp_path, [START, START], [[_trigger()], [_trigger(**change)]]
+        )
+        assert isinstance(err, ConfigError) and f"trigger s.t.trg changed: {part}" in str(err), (
+            part,
+            err,
+        )
+
+
+def test_the_trigger_query_reads_definition_function_text_and_security_mode():
+    q = mig._READBACK_TRIGGERS_SQL
+    assert "pg_get_triggerdef(t.oid)" in q and "p.prosrc" in q and "p.prosecdef" in q
+    assert "pg_proc" in q
 
 
 def test_a_trigger_that_was_disabled_at_the_start_is_not_a_refusal(monkeypatch, tmp_path):
@@ -463,7 +536,7 @@ def test_a_table_made_again_with_its_trigger_is_not_a_false_refusal(monkeypatch,
         monkeypatch,
         tmp_path,
         [START] * 3,
-        [[_trigger(relid=1)], [_trigger(relid=2)], [_trigger(relid=2)]],
+        [[_trigger()], [_trigger()], [_trigger()]],
     )
     assert err is None and applied == ["0001_f1", "0002_f2"], err
 
@@ -478,79 +551,99 @@ def test_a_trigger_on_another_table_with_the_same_name_is_another_trigger(monkey
     assert isinstance(err, ConfigError) and "trigger s.a.trg no longer exists" in str(err), err
 
 
-# --- the released-file list is checked by migrate() itself (order 132, M-4) ---------------------------------------------
+# --- the migration role is not a superuser (round-1 M2) ----------------------------------------------------------------
 
 
-def test_migrate_refuses_a_changed_released_file_before_it_connects(monkeypatch, tmp_path):
-    """Killed by: mutant R6 (the call to released_problems removed from migrate())."""
-    import json
-
-    manifest = dict(mig._released_manifest())
-    first = min(manifest)
-    manifest[first] = "0" * 64
-    path = tmp_path / "released.json"
-    path.write_text(json.dumps(manifest), encoding="utf-8")
-    monkeypatch.setattr(mig, "RELEASED_MANIFEST", path)
-
-    def no_connect(*a, **k):
-        raise AssertionError("migrate connected although a released file changed")
-
-    monkeypatch.setattr(mig, "connect", no_connect)
-    with pytest.raises(mn.MigrationNumberError, match=f"{first}: a released file was changed"):
-        mig.migrate("postgresql://unused")
+FLAGS = ("rolsuper", "rolcreaterole", "rolcreatedb", "rolbypassrls")
 
 
-def test_migrate_refuses_when_the_released_list_is_unreadable_or_wrong(monkeypatch, tmp_path):
-    """Killed by: mutant R7 (a missing list is read as empty)."""
-    monkeypatch.setattr(mig, "connect", lambda *a, **k: pytest.fail("connected"))
-    missing = tmp_path / "none.json"
-    monkeypatch.setattr(mig, "RELEASED_MANIFEST", missing)
-    with pytest.raises(ConfigError, match="released migration files cannot be read"):
-        mig.migrate("postgresql://unused")
-    wrong = tmp_path / "wrong.json"
-    wrong.write_text('["0001_core"]', encoding="utf-8")
-    monkeypatch.setattr(mig, "RELEASED_MANIFEST", wrong)
-    with pytest.raises(ConfigError, match="not a name -> SHA-256 table"):
-        mig.migrate("postgresql://unused")
+@pytest.mark.parametrize("flag", FLAGS)
+def test_a_privileged_migration_role_is_refused_before_any_file_runs(monkeypatch, tmp_path, flag):
+    """Killed by: mutants S1 (no check), S2..S5 (one flag not read)."""
+    files = _files(tmp_path, 2)
+    flags = tuple(f == flag for f in FLAGS)
+    db = _Db([START] * 3, [[], [], []], flags=flags)
+    monkeypatch.setattr(mig, "_migration_files", lambda: files)
+    monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+    monkeypatch.setattr(mig, "connect", lambda *a, **k: db)
+    with pytest.raises(ConfigError, match=f"it holds: {flag}"):
+        mig.migrate("postgresql://unused", allow_privileged_role_for_tests=False)
+    assert "SELECT 1;\n" not in db.log
+    assert not any(s.startswith("CREATE TABLE IF NOT EXISTS schema_migrations") for s in db.log)
 
 
-def test_the_released_list_ships_inside_the_package_and_covers_every_real_file():
-    assert mig.RELEASED_MANIFEST.parent == mn.MIGRATIONS.parent
-    assert mig.RELEASED_MANIFEST.is_file()
-    assert mn.released_problems(mn.MIGRATIONS, mig._released_manifest()) == []
+def test_the_role_flags_are_read_from_the_current_user():
+    assert "current_user" in mig._ROLE_FLAGS_SQL and "pg_roles" in mig._ROLE_FLAGS_SQL
+    for flag in ("rolsuper", "rolcreaterole", "rolcreatedb", "rolbypassrls"):
+        assert flag in mig._ROLE_FLAGS_SQL
 
 
-def test_a_bad_hash_in_the_released_list_is_a_config_error_not_a_changed_file(
-    monkeypatch, tmp_path
-):
-    """M-4 (minor): a value that is not 64 lower-case hex digits is a broken list (ConfigError, before any connection),
-    not "a released file was changed". Killed by: mutant MM7 (the hex check removed)."""
-    import json
+@pytest.mark.real_role_check
+def test_the_named_test_override_runs_and_writes_a_warning(monkeypatch, tmp_path, caplog):
+    """Killed by: mutant S6 (the override is silent) and S7 (the override is the default)."""
+    import logging
 
-    monkeypatch.setattr(mig, "connect", lambda *a, **k: pytest.fail("connected"))
-    good = dict(mig._released_manifest())
-    first = min(good)
-    for bad in ("xyz", "", "0" * 63, "0" * 65, "A" * 64, "0" * 63 + "g", ("0" * 64) + "\n"):
-        path = tmp_path / "bad.json"
-        path.write_text(json.dumps({**good, first: bad}), encoding="utf-8")
-        monkeypatch.setattr(mig, "RELEASED_MANIFEST", path)
-        with pytest.raises(ConfigError, match="no SHA-256 .* for"):
-            mig.migrate("postgresql://unused")
+    files = _files(tmp_path, 1)
+    db = _Db([START] * 2, [[], []], flags=(True, True, True, True))
+    monkeypatch.setattr(mig, "_migration_files", lambda: files)
+    monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+    monkeypatch.setattr(mig, "connect", lambda *a, **k: db)
+    with caplog.at_level(logging.WARNING, logger=mig.__name__):
+        assert mig.migrate("postgresql://unused", allow_privileged_role_for_tests=True) == [
+            "0001_f1"
+        ]
+    assert "allow_privileged_role_for_tests" in caplog.text
+    import inspect
 
-
-def test_a_json_name_written_twice_in_the_released_list_is_refused(monkeypatch, tmp_path):
-    """Nit: `json` would keep the last of two equal names, so an edited second hash would hide the first.
-    Killed by: mutant MD1 (the duplicate check removed)."""
-    good = mig._released_manifest()
-    first, digest = next(iter(good.items()))
-    path = tmp_path / "dup.json"
-    path.write_text(
-        '{"' + first + '": "' + digest + '", "' + first + '": "' + "1" * 64 + '"}', encoding="utf-8"
+    assert (
+        inspect.signature(mig.migrate).parameters["allow_privileged_role_for_tests"].default
+        is False
     )
-    monkeypatch.setattr(mig, "RELEASED_MANIFEST", path)
-    monkeypatch.setattr(mig, "connect", lambda *a, **k: pytest.fail("connected"))
-    with pytest.raises(ConfigError, match="cannot be read: .*written twice"):
-        mig.migrate("postgresql://unused")
+
+
+# --- settings saved per database or role (round-1 N5) and the two time limits (N10) ---------------------------------
+
+
+def test_a_new_saved_setting_for_a_role_is_refused(monkeypatch, tmp_path):
+    """`ALTER ROLE x SET search_path = ...` changes the NEXT session, not this one: only pg_db_role_setting shows it.
+    Killed by: mutant P1 (settings not read), P2 (not compared)."""
+    saved = ("mydb", "app_rw", "{search_path=evil}")
+    err, _db, _ = _run(monkeypatch, tmp_path, [START, START], [[], []], settings=[[], [saved]])
+    assert isinstance(err, ConfigError) and "0001_f1.sql" in str(err), err
+    assert "saved setting for database mydb role app_rw is new" in str(err)
+    err, _, _ = _run(monkeypatch, tmp_path, [START, START], [[], []], settings=[[saved], []])
+    assert isinstance(err, ConfigError) and "is gone" in str(err), err
+    err, _, applied = _run(monkeypatch, tmp_path, [START] * 3, [[], [], []], settings=[[saved]] * 3)
+    assert err is None and applied == ["0001_f1", "0002_f2"]
+
+
+@pytest.mark.parametrize("item", ["lock_timeout", "statement_timeout"])
+def test_a_file_that_changes_a_time_limit_is_refused(monkeypatch, tmp_path, item):
+    """Killed by: mutant L1 (the limits are not in the read-back)."""
+    err, _, _ = _run(monkeypatch, tmp_path, [START, _values(**{item: "0"})], [[], []])
+    assert isinstance(err, ConfigError) and f"{item} was '" in str(err), err
+
+
+def test_the_membership_message_says_it_reads_the_whole_server():
+    import inspect
+
+    assert "whole database server" in inspect.getsource(mig._check_read_back)
+
+
+# --- the one list of released files (round-1 M1 of the code review) ---------------------------------------------------
+
+LIST = Path(__file__).parent / "fixtures" / "migrations_released.json"
+
+
+def test_there_is_one_list_of_released_files_and_migrate_does_not_ship_a_second():
+    import json
+
+    assert LIST.is_file()
+    assert not (Path(mn.MIGRATIONS).parent / "migrations_released.json").exists()
+    assert not hasattr(mig, "RELEASED_MANIFEST") and not hasattr(mig, "_released_manifest")
+    names = [p for p in Path(mn.MIGRATIONS).parent.rglob("*released*.json")]
+    assert names == [], names
+    assert mn.released_problems(mn.MIGRATIONS, json.loads(LIST.read_text(encoding="utf-8"))) == []
 
 
 class _Raises(_Db):
@@ -596,11 +689,16 @@ def test_a_lock_wait_or_a_slow_statement_is_a_plain_config_error_naming_step_and
         )
 
 
-def test_a_cancel_that_is_not_the_statement_timeout_is_not_called_one(monkeypatch, tmp_path):
-    """Review A. Killed by: mutant RA5 (every QueryCanceled is called a timeout)."""
+def test_the_statement_limit_is_found_by_the_error_code_not_by_the_words(monkeypatch, tmp_path):
+    """Round-1 N8: the server words follow `lc_messages` (a German server says "wegen Zeitüberschreitung"); the code
+    57014 does not. Killed by: mutant Q1 (the words are matched again), Q2 (every other error is called a timeout)."""
     from psycopg import errors as pge
 
-    with pytest.raises(pge.QueryCanceled):
+    with pytest.raises(ConfigError, match=r"applying 0002_f2\.sql.*statement_timeout"):
         _run_raising(
-            monkeypatch, tmp_path, pge.QueryCanceled("canceling statement due to user request")
+            monkeypatch,
+            tmp_path,
+            pge.QueryCanceled("Anweisung wurde wegen Zeitüberschreitung abgebrochen"),
         )
+    with pytest.raises(pge.DeadlockDetected):
+        _run_raising(monkeypatch, tmp_path, pge.DeadlockDetected("statement timeout"))
