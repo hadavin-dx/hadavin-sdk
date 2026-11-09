@@ -1,1 +1,1 @@
-19:44Z | agents: RUNNING S1e a79f92b7ec51489cd; L2d a3bc3479deca4ea1c; mutation abe9c1e4b702e9553. S1d done (diff applies clean on A4r3) | evid shells: none | unpushed: none | refreshed every 60 s by a bounded script (ends 21:54Z); detail in HEARTBEAT.md
+19:45Z | agents: RUNNING L2d a3bc3479deca4ea1c; S1f a09c6dbe1df88ed49; mutation abe9c1e4b702e9553. A4r4 = A4r3+S1d+S1e at /tmp/dpld-a4r4 (full suite running, /tmp/a4r4-full.log) | evid shells: none | unpushed: none | refreshed every 60 s by a bounded script (ends 21:55Z); detail in HEARTBEAT.md
