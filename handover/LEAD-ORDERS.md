@@ -1299,3 +1299,5 @@ Keep going (order 12).
 213 (16:27Z): PULSE stale since 16:03Z. Restart pulse script, write one PULSE line, confirm you started order 212 (Linux evidence). If you cannot, write q-entry why.
 
 214 (17:07Z): PULSE stale since 16:32Z again. Restart pulse_refresh2.sh NOW with a watchdog (nohup setsid loop, rewrite PULSE every 60 s, restart itself if its pid file is stale); report evidence-chain progress in one PULSE line.
+
+215 (17:12Z): FYI A3 tests/test_portal_log.py had strings "secret-door" that trip gitleaks generic-api-key; lead renamed to "stray-*" in final-7. Use neutral strings in any future tests. A3 is merged into lead final-7 (Windows 663 pass). No new job beyond order 212 chain + pulse (order 214).
