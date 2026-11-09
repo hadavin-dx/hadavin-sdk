@@ -88,3 +88,24 @@ def fake_system():
 @pytest.fixture
 def live_cfg_dir(tmp_path: Path, fake_system) -> Path:
     return make_cfg(tmp_path, port=fake_system.port)
+
+
+@pytest.fixture(autouse=True)
+def _test_database_login_may_be_privileged(request):
+    """The test databases are reached with a superuser login (the CI service and a laptop cluster), which `migrate()`
+    refuses. For every test, the default of the named argument `allow_privileged_role_for_tests` is True (`migrate`
+    writes a warning to the log each time). A test that proves the refusal passes False itself, or carries the marker
+    `real_role_check` to see the real default (False)."""
+    try:
+        from hadavin_sdk.store import migrate as mig
+    except ImportError:  # the pg extra is not installed: no migrate, nothing to switch
+        yield
+        return
+    name = "allow_privileged_role_for_tests"
+    original = mig.migrate.__kwdefaults__[name]
+    if request.node.get_closest_marker("real_role_check") is None:
+        mig.migrate.__kwdefaults__[name] = True
+    try:
+        yield
+    finally:
+        mig.migrate.__kwdefaults__[name] = original

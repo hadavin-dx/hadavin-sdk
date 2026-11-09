@@ -33,3 +33,18 @@ def require_module(
             f"{name} is not installed (the pg extra) and {DSN_NAME} is not set",
             allow_module_level=True,
         )
+
+
+def require_test_module(name: str, environ: Mapping[str, str] | None = None) -> ModuleType:
+    """A test-only module (pglast): outside CI a missing module skips the test with a reason; when `CI` is set it is a
+    FAILURE, so a differential test cannot be skipped without anyone noticing."""
+    env = os.environ if environ is None else environ
+    try:
+        return importlib.import_module(name)
+    except ImportError:
+        if env.get("CI"):
+            pytest.fail(
+                f"{name} cannot be imported but CI is set: this is a failure, not a skip",
+                pytrace=False,
+            )
+        pytest.skip(f"{name} is not installed (test-only dependency; CI is not set)")
