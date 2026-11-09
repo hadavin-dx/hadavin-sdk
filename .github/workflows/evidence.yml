@@ -3,17 +3,22 @@ name: Evidence
 # Manual runs only. For one git ref and a list of Python versions this runs the same test selection as CI (the
 # "check" job in ci.yml; the report flag differs: -rfEs here, -rs there), the stage-rename mutants and, optionally, named mutant scripts, each on its own runner
 # with a throwaway Postgres and a throwaway Vault development server. It deploys nothing, uses no stored secrets
-# and reads the repository only. Every step writes its raw log and its exit code to evidence-logs/, and a last
+# and reads the repository only. Every step writes its raw log and its exit code to a folder under the runner's temp directory (outside the checkout, so no log can become part of the tested files),
+# and a last
 # step fails the run unless every step has exit=0 (a step that never ran counts as NOT RUN, not as a pass).
 # All typed input is checked by tools/evidence_step.py (allowlists) in the "plan" job before any runner starts;
 # no run: script contains a ${{ }} expression (a guard test enforces it).
 # The tested ref must itself read the per-run Vault token from HADAVIN_TEST_VAULT_TOKEN
 # (tests/contracts/kinds/secrets_neutral.py). The step "vault-token-reader" runs right after the checkout and fails
 # the run at once if that file has no code line reading it: an older ref would send its built-in token to a server
-# that has a random one and its Vault tests would fail with a 403. The helper removes the token's value from every
-# log file and from the summary; a skipped test whose reason says a HADAVIN_TEST_ variable is not set also fails
-# the run (the report counts skips). Refs of the form pull/N/head are not supported; pass the branch name or the
-# commit SHA.
+# that has a random one and its Vault tests would fail with a 403. The helper removes the token's value, and any
+# piece of it of 8 or more characters taken from its start or end, from every saved log and from the summary (best
+# effort for plain text; a value split by a line break in the middle is not recognised). A skipped test whose reason
+# names a HADAVIN_TEST_ variable also fails the run (the report counts skips). The token is in the environment of
+# every step after the Vault step, including the steps that run the tested code: that code can read it, and it is
+# worthless once the container is removed. Refs of the form pull/N/head are not supported; pass the branch name or
+# the commit SHA. The static checks in tests/test_evidence_workflow_guard.py are best effort: they catch the usual
+# ways to print or publish the token, not every possible way.
 on:
   workflow_dispatch:
     inputs:
@@ -22,7 +27,7 @@ on:
         required: true
         type: string
       pythons:
-        description: 'JSON list of 1 to 4 Python versions, 3.12 or newer, for example ["3.13","3.12"]'
+        description: 'JSON list of 1 to 4 Python versions, each 3.12, 3.13 or 3.14, for example ["3.13","3.12"]'
         required: false
         default: '["3.13","3.12"]'
         type: string
@@ -51,6 +56,7 @@ jobs:
       pythons: ${{ steps.check.outputs.pythons }}
       mutants: ${{ steps.check.outputs.mutants }}
       ref: ${{ steps.check.outputs.ref }}
+      tool: ${{ steps.export.outputs.tool }}
       sha: ${{ steps.resolve.outputs.sha }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
@@ -66,6 +72,10 @@ jobs:
           INPUT_MUTANTS: ${{ inputs.mutant_scripts }}
         timeout-minutes: 2
         run: python3 tools/evidence_step.py plan
+      - name: Hand the helper to the evidence jobs (from the commit that holds this workflow)
+        id: export
+        timeout-minutes: 2
+        run: echo "tool=$(base64 -w0 tools/evidence_step.py)" >> "$GITHUB_OUTPUT"
       - name: Resolve the ref to one commit (every Python version tests the same commit)
         id: resolve
         env:
@@ -80,7 +90,7 @@ jobs:
   evidence:
     needs: plan
     runs-on: ubuntu-24.04
-    timeout-minutes: 150  # the step timeouts below add up to 145 minutes
+    timeout-minutes: 150  # the step timeouts below add up to 147 minutes
     permissions:
       contents: read
     strategy:
@@ -108,20 +118,24 @@ jobs:
       REF: ${{ needs.plan.outputs.ref }}
       MUTANTS: ${{ needs.plan.outputs.mutants }}
       PY: ${{ matrix.python }}
-      TOOL: .evidence-tools/tools/evidence_step.py
+      COLUMNS: "300"  # pytest cuts long lines at the terminal width; a wide width keeps a printed value in one piece
       VAULT_IMAGE: hashicorp/vault:2.2.0@sha256:e0acd3c681bdf57f002d7214e5d050b876e1704678005c6b0406dd96a65be919
     steps:
+      # The helper comes from the commit that holds this workflow (so a ref without it can still be tested) and, with
+      # the logs, lives under the runner temp directory, outside the checkout.
+      - name: Put the helper and the evidence folder outside the checkout
+        timeout-minutes: 2
+        env:
+          TOOL_B64: ${{ needs.plan.outputs.tool }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/evidence-logs"
+          printf '%s' "$TOOL_B64" | base64 -d > "$RUNNER_TEMP/evidence_step.py"
+          echo "EVIDENCE_DIR=$RUNNER_TEMP/evidence-logs" >> "$GITHUB_ENV"
+          echo "TOOL=$RUNNER_TEMP/evidence_step.py" >> "$GITHUB_ENV"
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           ref: ${{ needs.plan.outputs.sha }}
           persist-credentials: false
-      # The helper comes from the commit that holds this workflow, so that a ref without it can still be tested.
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
-        with:
-          path: .evidence-tools
-          persist-credentials: false
-          sparse-checkout: tools/evidence_step.py
-          sparse-checkout-cone-mode: false
       - name: The tested ref reads the per-run Vault token (else the Vault tests would use the fixed token and fail)
         timeout-minutes: 2
         run: |
@@ -136,12 +150,11 @@ jobs:
       - name: Artifact name and runner facts
         timeout-minutes: 2
         run: |
-          mkdir -p evidence-logs
           sha=$(git rev-parse HEAD)
           safe=$(printf '%s' "$REF" | tr -c 'A-Za-z0-9._-' '-')
           echo "ART=evidence-${safe}-${sha:0:8}-${PY}-${GITHUB_RUN_ATTEMPT}" >> "$GITHUB_ENV"
-          { echo "$sha"; python --version; nproc; } | tee evidence-logs/env.txt
-      # A fresh random token for this run only; masked in the Actions log, removed from the saved files by the helper. The server listens on this
+          { echo "$sha"; python --version; nproc; } | tee "$EVIDENCE_DIR/env.txt"
+      # A fresh random token for this run only; masked in the Actions log, removed from the saved files by the helper, and in the environment of every later step. The server listens on this
       # runner's loopback address only and is removed in the last step.
       - name: Start a throwaway Vault development server
         timeout-minutes: 5
@@ -214,6 +227,6 @@ jobs:
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
         with:
           name: ${{ env.ART }}
-          path: evidence-logs/
+          path: ${{ runner.temp }}/evidence-logs/
           if-no-files-found: error
           retention-days: 30

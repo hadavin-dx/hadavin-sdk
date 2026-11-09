@@ -55,7 +55,7 @@ jobs:
           persist-credentials: false
       # The `vault` secrets kind's contract suite runs against a real Vault dev server (in-memory, unsealed,
       # throwaway), image set once in VAULT_IMAGE above. It is a step and not a service because its token is made fresh
-      # for this run (a service cannot read a step's output); masked in the Actions log and removed from the files by the evidence helper where one is used; the server listens
+      # for this run (a service cannot read a step's output); masked in the Actions log (the token is in the environment of every later step of the job); the server listens
       # on this runner's loopback address only and is removed in the last step.
       - name: Start a throwaway Vault development server
         timeout-minutes: 5
@@ -143,7 +143,7 @@ jobs:
           persist-credentials: false
       # The `vault` secrets kind's contract suite runs against a real Vault dev server (in-memory, unsealed,
       # throwaway), image set once in VAULT_IMAGE above. It is a step and not a service because its token is made fresh
-      # for this run (a service cannot read a step's output); masked in the Actions log and removed from the files by the evidence helper where one is used; the server listens
+      # for this run (a service cannot read a step's output); masked in the Actions log (the token is in the environment of every later step of the job); the server listens
       # on this runner's loopback address only and is removed in the last step.
       - name: Start a throwaway Vault development server
         timeout-minutes: 5

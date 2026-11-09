@@ -4,14 +4,14 @@ Three commands, so that the workflow YAML holds no shell logic that cannot be te
 
 * ``plan``   reads INPUT_REF, INPUT_PYTHONS and INPUT_MUTANTS from the environment, refuses anything outside the
              allowlists below and writes the checked values to $GITHUB_OUTPUT. Typed input never reaches a shell.
-* ``run NAME -- CMD ...``  runs CMD, copies its output to the console and to evidence-logs/NAME.txt (first line:
-             the commit under test), appends ``NAME<TAB>exit=<code>`` to evidence-logs/status.txt and exits with
+* ``run NAME -- CMD ...``  runs CMD, copies its output to the console and to $EVIDENCE_DIR/NAME.txt (first line:
+             the commit under test), appends ``NAME<TAB>exit=<code>`` to $EVIDENCE_DIR/status.txt and exits with
              CMD's own code. A command that cannot start is recorded as exit=127 (same as a shell).
 * ``report NAME ...``  prints a Markdown summary (with skipped-test counts) and exits 1 unless every NAME has exactly
-             one row, that row is exit=0, and no test was skipped for a missing HADAVIN_TEST_ variable. A NAME with
+             one row, that row is exit=0, and no test was skipped for a reason that names a HADAVIN_TEST_ variable. A NAME with
              no row is shown as NOT RUN (skipped, timed out or cancelled steps cannot pass); a repeated row fails.
 
-Allowlists: a Python version is dotted numbers 3.<minor> with minor at least 12 (pyproject requires-python); a
+Allowlists: a Python version is 3.12, 3.13 or 3.14 (the oldest is pyproject requires-python, the newest was the latest release when written); a
 git ref is letters, digits and . _ / - only (git's own check-ref-format also bans '..', '//', a trailing '.' or '/'
 and '.lock'); a runner is tests/<lowercase_name>_mutants.py.
 """
@@ -26,7 +26,9 @@ import subprocess
 import sys
 from pathlib import Path
 
-LOG_DIR = Path("evidence-logs")
+# The workflow sets EVIDENCE_DIR to a folder under the runner temp directory, outside the checkout, so that no log can
+# become part of the tested tree. Without it (tests, a laptop) the folder is evidence-logs/ in the current directory.
+LOG_DIR = Path(os.environ.get("EVIDENCE_DIR") or "evidence-logs")
 STATUS = "status.txt"
 MAX_PYTHONS = 4
 MAX_MUTANTS = 8
@@ -42,17 +44,28 @@ SECRET_ENV = (
     "HADAVIN_TEST_VAULT_TOKEN",
 )  # values that must never reach a log file, the artifact or the summary
 MASK = "***"
+MIN_PIECE = 8
 
 
 def mask(text: str) -> str:
-    """Replace the value of every secret environment variable (at least 8 characters) with ***.
+    """Replace the value of every secret environment variable, and every piece of it of at least 8 characters taken
+    from its start or its end, with ***.
 
-    `::add-mask::` hides a value only in the live Actions log; the files in evidence-logs/ are uploaded as an
-    artifact and the summary is a separate page, so the helper must remove the value itself."""
+    `::add-mask::` hides a value only in the live Actions log; the files in the evidence folder are uploaded as an
+    artifact and the summary is a separate page, so the helper must remove the value itself. Pieces cover a value
+    that a tool cut off at a line width. A value split by a line break in the middle, or changed (for example
+    encoded), is NOT recognised: this is best effort for plain text, which is what a test run prints."""
     for name in SECRET_ENV:
         value = os.environ.get(name, "")
-        if len(value) >= 8:
-            text = text.replace(value, MASK)
+        if len(value) < MIN_PIECE:
+            continue
+        pieces = {value}
+        for size in range(MIN_PIECE, len(value)):
+            pieces.add(value[:size])
+            pieces.add(value[-size:])
+        text = re.sub(
+            "|".join(re.escape(p) for p in sorted(pieces, key=len, reverse=True)), MASK, text
+        )
     return text
 
 
@@ -131,7 +144,7 @@ def _record(name: str, status: str) -> None:
 def cmd_run(name: str, command: list[str]) -> int:
     if not NAME_RE.fullmatch(name) or not command:
         raise Refused("run needs a lowercase step name and a command")
-    LOG_DIR.mkdir(exist_ok=True)
+    LOG_DIR.mkdir(parents=True, exist_ok=True)
     status_file = LOG_DIR / STATUS
     if status_file.is_file() and any(
         line.partition("\t")[0] == name
@@ -177,15 +190,13 @@ NEVER = "NOT RUN (never finished: skipped, timed out or cancelled)"
 
 
 def _skips(log: Path) -> tuple[int, int]:
-    """(all skipped tests, skipped tests whose reason says a HADAVIN_TEST_ variable is not set)."""
+    """(all skipped tests, skipped tests whose reason names a HADAVIN_TEST_ variable)."""
     total = hidden = 0
     for line in log.read_text(encoding="utf-8", errors="replace").splitlines():
         m = SKIP_RE.match(line)
         if m:
             total += int(m.group(1))
-            if "HADAVIN_TEST_" in m.group(2) and re.search(
-                r"not set|unset|missing|not defined|empty", m.group(2)
-            ):
+            if "HADAVIN_TEST_" in m.group(2):
                 hidden += int(m.group(1))
     return total, hidden
 
@@ -214,9 +225,7 @@ def cmd_report(expected: list[str]) -> int:
             total, hidden = _skips(log)
             skipped = str(total)
             if hidden and result == "exit=0":
-                result = (
-                    f"FAIL: {hidden} test(s) skipped because a HADAVIN_TEST_ variable was not set"
-                )
+                result = f"FAIL: {hidden} test(s) skipped for a reason that names a HADAVIN_TEST_ variable"
         if result != "exit=0":
             bad += 1
         out.append(f"| {name} | {result} | {skipped} |")

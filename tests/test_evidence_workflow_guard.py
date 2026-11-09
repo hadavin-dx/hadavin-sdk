@@ -15,6 +15,11 @@ commit SHA, no untrusted ${{ }} inside run scripts; the bash manual on `set -e`,
   9. stage names: only demo, pilot and prod appear; the check refuses the two old stage words in the workflow
      (a bare use of the old test-stage word elsewhere is not caught; none appears in the workflow today).
   10. names: extra runners are prefixed extra-, a repeated step name is refused, the verdict lists every step.
+  11. the logs and the helper live under the runner temp directory (outside the checkout), never in the tested tree.
+
+This is a best-effort text check of the workflow, not a proof: it catches the known ways the rules above get broken
+(and each rule has a planted violation that proves it fires), but it cannot prove that no other way exists. The real
+protection is the review of every change to the workflow files.
 """
 
 import json
@@ -154,6 +159,27 @@ def problems(text: str) -> list[str]:
         out.append("fixed Vault token 'root'")
     if re.search(r"\b(staging)\b|\bstage\W+dev\b", text_all, re.IGNORECASE):
         out.append("a stage name other than demo, pilot or prod")
+    for jname, jb in wf["jobs"].items():
+        for st in jb["steps"]:
+            if str(st.get("uses", "")).startswith("actions/upload-artifact"):
+                path = str((st.get("with") or {}).get("path", ""))
+                if not path.startswith("${{ runner.temp }}/"):
+                    out.append(
+                        f"job {jname}: the upload path must be under runner.temp, not the checkout"
+                    )
+            if str(st.get("uses", "")).startswith("actions/checkout") and (
+                st.get("with") or {}
+            ).get("path"):
+                out.append(f"job {jname}: a second checkout inside the workspace is not allowed")
+    if ".evidence-tools" in text_all:
+        out.append("the helper must not live inside the checkout (.evidence-tools)")
+    if "EVIDENCE_DIR=$RUNNER_TEMP/" not in text_all:
+        out.append("EVIDENCE_DIR must be set to a folder under $RUNNER_TEMP")
+    cols = str((wf["jobs"]["evidence"].get("env") or {}).get("COLUMNS", ""))
+    if not cols.isdigit() or int(cols) < 200:
+        out.append(
+            "COLUMNS must be wide (at least 200) so that pytest does not cut a printed value"
+        )
     return out
 
 
@@ -235,7 +261,7 @@ PLANTS = {
         "grep -q HADAVIN_TEST_VAULT_TOKEN",
     ),
     "docker filter substring": lambda t: t.replace("'name=^vault-ci$'", "name=vault-ci"),
-    "timeout comment wrong": lambda t: t.replace("145 minutes", "135 minutes"),
+    "timeout comment wrong": lambda t: t.replace("147 minutes", "135 minutes"),
     "concurrency without runners": lambda t: t.replace(
         "-${{ inputs.mutant_scripts }}\n  cancel", "\n  cancel"
     ),
@@ -244,6 +270,22 @@ PLANTS = {
         "run vault-token-reader --", "run vault-token-reader-x --"
     ),
     "staging stage": lambda t: t + "\n# stage: " + "stag" + "ing\n",
+    "logs inside the checkout": lambda t: t.replace(
+        "path: ${{ runner.temp }}/evidence-logs/", "path: evidence-logs/"
+    ),
+    "evidence dir not under runner temp": lambda t: t.replace(
+        "EVIDENCE_DIR=$RUNNER_TEMP/evidence-logs", "EVIDENCE_DIR=evidence-logs"
+    ),
+    "helper inside the checkout": lambda t: t + "\n# path: .evidence-tools\n",
+    "narrow terminal": lambda t: t.replace('COLUMNS: "300"', 'COLUMNS: "80"'),
+    "second checkout in the workspace": lambda t: t.replace(
+        "      - name: Artifact name and runner facts",
+        "      - uses: actions/checkout@"
+        + "0" * 40
+        + "\n        with:\n          path: .evidence-x\n"
+        "      - name: Artifact name and runner facts",
+        1,
+    ),
 }
 
 
@@ -294,7 +336,8 @@ def test_allowlists_refuse_odd_input():
 
 
 def helper(cwd: Path, *args: str, env: dict | None = None) -> subprocess.CompletedProcess:
-    full = {**os.environ, **(env or {})}
+    inherited = {k: v for k, v in os.environ.items() if k != "EVIDENCE_DIR"}
+    full = {**inherited, **(env or {})}
     return subprocess.run(  # noqa: S603  # our own interpreter and a file of this repository, no shell
         [sys.executable, str(ROOT / "tools" / "evidence_step.py"), *args],
         cwd=cwd,
@@ -397,7 +440,7 @@ def test_the_report_shows_skip_counts_and_fails_on_a_missing_test_variable(tmp_p
     bad = helper(tmp_path, "report", "pytest", "perf")
     assert (
         bad.returncode == 1
-        and "3 test(s) skipped because a HADAVIN_TEST_ variable was not set" in bad.stdout
+        and "3 test(s) skipped for a reason that names a HADAVIN_TEST_ variable" in bad.stdout
     )
 
 
@@ -423,7 +466,19 @@ def test_odd_versions_and_long_runner_names_are_refused_with_exit_2():
         es.check_ref("bad ref")
 
 
-@pytest.mark.parametrize("reason", ["is unset", "is missing", "not defined", "is empty", "not set"])
+@pytest.mark.parametrize(
+    "reason",
+    [
+        "is unset",
+        "is missing",
+        "not defined",
+        "is empty",
+        "not set",
+        "cannot connect",
+        "needs it",
+        "",
+    ],
+)
 def test_every_wording_of_a_missing_test_variable_fails_the_report(tmp_path, reason):
     code = f"print('SKIPPED [1] tests/x.py:1: HADAVIN_TEST_VAULT_ADDR {reason}')"
     helper(tmp_path, "run", "pytest", "--", sys.executable, "-c", code)
@@ -432,12 +487,13 @@ def test_every_wording_of_a_missing_test_variable_fails_the_report(tmp_path, rea
 
 # --- the Vault development server in every workflow (ci.yml and evidence.yml) ---------------------------------
 
-WORKFLOWS = sorted(
-    [
-        *(ROOT / ".github" / "workflows").glob("*.yml"),
-        *(ROOT / ".github" / "workflows").glob("*.yaml"),
-    ]
-)
+
+def workflow_files(folder: Path) -> list[Path]:
+    """Every workflow file of a folder: GitHub reads both .yml and .yaml."""
+    return sorted([*folder.glob("*.yml"), *folder.glob("*.yaml")])
+
+
+WORKFLOWS = workflow_files(ROOT / ".github" / "workflows")
 IMAGE_RE = re.compile(r"hashicorp/vault:[0-9.]+@sha256:[0-9a-f]{64}")
 VALUE_REF_RE = r"\$\{?(token|HADAVIN_TEST_VAULT_TOKEN|VAULT_DEV_ROOT_TOKEN_ID)\b"
 MASK_LINE = 'echo "::add-mask::$token"'
@@ -448,7 +504,9 @@ TEST_ENV = "HADAVIN_TEST_VAULT_ADDR"
 def docker_run_lines(script: str) -> list[str]:
     """Each `docker run ...` command of a script as one string (line continuations joined)."""
     joined = re.sub(r"\\\n\s*", " ", script)
-    return [ln.strip() for ln in joined.splitlines() if re.match(r"\s*docker run\b", ln)]
+    return [
+        ln.strip() for ln in joined.splitlines() if re.match(r"\s*(sudo\s+)?docker\s+run\b", ln)
+    ]
 
 
 def vault_problems(text: str) -> list[str]:
@@ -475,6 +533,29 @@ def vault_problems(text: str) -> list[str]:
             run = st.get("run", "")
             if re.search(r"(^|\s)set\s+-\w*x|xtrace|bash\s+-\w*x", run):
                 out.append(f"job {jname}: shell tracing (set -x) would print the token")
+            if st.get("shell"):
+                out.append(f"job {jname}: a shell: override changes how the script is run")
+            code_lines = [ln for ln in run.splitlines() if not ln.lstrip().startswith("#")]
+            for line in code_lines:
+                if re.match(
+                    r"\s*(env|printenv|export\s*(-p)?\s*$|set\s*$|declare\s+-x|cat|tee)\b", line
+                ):
+                    out.append(
+                        f"job {jname}: a line could print the environment or the token: {line.strip()[:40]}"
+                    )
+                if "<<<" in line and re.search(VALUE_REF_RE, line):
+                    out.append(f"job {jname}: a here-string passes the token to a command")
+                if re.search(
+                    r"\bsudo\b|docker\s+exec\b|docker\.sock|--pid[= ]host|--ipc[= ]host|--cap-add",
+                    line,
+                ):
+                    out.append(
+                        f"job {jname}: sudo, docker exec, docker.sock or extra rights: {line.strip()[:40]}"
+                    )
+                if re.match(r"\s*curl\b", line) and re.search(
+                    r"\s(-[a-zA-Z]*v[a-zA-Z]*|--verbose|--trace\S*|--dump-header)\b", line
+                ):
+                    out.append(f"job {jname}: curl in verbose mode would print the token header")
             for line in run.splitlines():
                 if (
                     re.match(r"\s*(echo|printf)\b", line)
@@ -532,25 +613,42 @@ def vault_problems(text: str) -> list[str]:
                     out.append(
                         f"{label}: the container must get -e VAULT_DEV_ROOT_TOKEN_ID (no value)"
                     )
+                if re.search(
+                    r"--security-opt\s+\S*(unconfined|seccomp|apparmor)|--cap-add|--device|(^|\s)(-v|--volume|--mount)\b|--user\s+0|--pid|--ipc",
+                    cmd,
+                ):
+                    out.append(f"{label}: extra container rights or mounts are not allowed")
+                if '"$VAULT_IMAGE"' not in cmd:
+                    out.append(f'{label}: the image must be given as "$VAULT_IMAGE"')
                 if "--name vault-ci " not in cmd:
                     out.append(f"{label}: the container must be named vault-ci")
-            if (
-                "curl" not in script
-                or "X-Vault-Token" not in script
-                or "127.0.0.1:8200" not in script
+            code = [ln.strip() for ln in script.splitlines() if not ln.lstrip().startswith("#")]
+            if not any(
+                ln.startswith("curl ")
+                and "X-Vault-Token" in ln
+                and "127.0.0.1:8200" in ln
+                and ln.endswith("&& exit 0")
+                for ln in code
             ):
-                out.append(f"{label}: no readiness probe from the host with the token")
+                out.append(
+                    f"{label}: no readiness probe from the host with the token (as a code line)"
+                )
+            if [ln for ln in code if ln][-1:] != ["exit 1"]:
+                out.append(
+                    f"{label}: the step must end with exit 1 after the waiting loop times out"
+                )
+            if re.search(r"hashicorp/vault", "\n".join(code)):
+                out.append(
+                    f"{label}: the image must come from $VAULT_IMAGE, not a literal in the script"
+                )
             if "docker logs" not in script or "docker ps" not in script:
                 out.append(f"{label}: no container diagnostics on failure")
             if "docker inspect" not in script:
                 out.append(f"{label}: no fast failure when the container has exited")
-        last_test = max(
-            [i for i, st in enumerate(steps) if re.search(r"\bpytest\b", st.get("run", ""))] or [-1]
-        )
-        first_test = min(
-            [i for i, st in enumerate(steps) if re.search(r"\bpytest\b", st.get("run", ""))]
-            or [10**6]
-        )
+        is_test = re.compile(r"\bpytest\b|\$TOOL\"? run (perf|stage-mutants|\"\$name\")")
+        test_steps = [i for i, st in enumerate(steps) if is_test.search(st.get("run", ""))]
+        last_test = max(test_steps or [-1])
+        first_test = min(test_steps or [10**6])
         if first_test < starts[0]:
             out.append(f"job {jname}: a test step runs before the Vault step")
         removal = [
@@ -650,6 +748,46 @@ VAULT_PLANTS = {
         t,
     ),
     "removal by substring": lambda t: t.replace("'name=^vault-ci$'", "name=vault"),
+    "docker exec": lambda t: t.replace(
+        MASK_LINE, MASK_LINE + "\n          docker exec vault-ci env"
+    ),
+    "environment printed": lambda t: t.replace(MASK_LINE, MASK_LINE + "\n          env"),
+    "printenv": lambda t: t.replace(MASK_LINE, MASK_LINE + "\n          printenv"),
+    "curl verbose": lambda t: t.replace("curl -fsS", "curl -v -fsS"),
+    "curl long verbose": lambda t: t.replace("curl -fsS", "curl --verbose -fsS"),
+    "shell override": lambda t: t.replace(
+        "      - name: Start a throwaway Vault development server\n",
+        "      - name: Start a throwaway Vault development server\n        shell: bash -x {0}\n",
+    ),
+    "docker run with two spaces": lambda t: t.replace(
+        "docker run -d --name vault-ci", "docker  run -d --name vault-x -p 8200:8200"
+    ),
+    "sudo docker": lambda t: t.replace("docker run -d", "sudo docker run -d"),
+    "literal image": lambda t: t.replace(
+        '"$VAULT_IMAGE" > /dev/null', "hashicorp/vault:2.2.0 > /dev/null"
+    ),
+    "docker socket": lambda t: t.replace(
+        "-e SKIP_SETCAP=true", "-e SKIP_SETCAP=true -v /var/run/docker.sock:/var/run/docker.sock"
+    ),
+    "host pid": lambda t: t.replace("-e SKIP_SETCAP=true", "-e SKIP_SETCAP=true --pid=host"),
+    "added capability": lambda t: t.replace(
+        "-e SKIP_SETCAP=true", "-e SKIP_SETCAP=true --cap-add SYS_ADMIN"
+    ),
+    "probe only in a comment": lambda t: t.replace(
+        'curl -fsS -o /dev/null -H "X-Vault-Token: $token"',
+        '# curl -fsS -H "X-Vault-Token: $token"\n            true "$token"',
+    ),
+    "probe cannot succeed": lambda t: t.replace(" && exit 0", ""),
+    "no exit 1 after the loop": lambda t: re.sub(
+        r"(Start a throwaway Vault development server[\s\S]*?)exit 1\n(?=\s+- )", r"\1true\n", t
+    ),
+    "cat prints the token": lambda t: t.replace(
+        MASK_LINE, 'cat <<< "$token"\n          ' + MASK_LINE
+    ),
+    "here-string": lambda t: t.replace(MASK_LINE, 'tr a b <<< "$token"\n          ' + MASK_LINE),
+    "never removed": lambda t: re.sub(
+        r"      - name: Remove the Vault development server\n(?:        .*\n){3}", "", t
+    ),
 }
 
 
@@ -694,10 +832,12 @@ def test_a_job_that_uses_vault_without_starting_one_is_caught():
     assert vault_problems(planted)
 
 
-def test_the_glob_covers_yaml_files_too():
-    assert any(p.suffix in (".yml", ".yaml") for p in WORKFLOWS)
-    src = Path(__file__).read_text(encoding="utf-8")
-    assert '.glob("*.yaml")' in src
+def test_the_file_search_covers_yaml_files_too(tmp_path):
+    (tmp_path / "a.yml").write_text("x: 1\n")
+    (tmp_path / "b.yaml").write_text("x: 1\n")
+    (tmp_path / "c.txt").write_text("x\n")
+    assert [p.name for p in workflow_files(tmp_path)] == ["a.yml", "b.yaml"]
+    assert WORKFLOWS, "no workflow file found"
 
 
 # --- the helper removes the token from files and from the summary -----------------------------------------
@@ -724,6 +864,32 @@ def test_a_short_value_is_not_masked_so_that_ordinary_words_survive(tmp_path):
     env = {"HADAVIN_TEST_VAULT_TOKEN": "abc"}
     helper(tmp_path, "run", "x", "--", sys.executable, "-c", "print('abc def')", env=env)
     assert "abc def" in (tmp_path / "evidence-logs" / "x.txt").read_text()
+
+
+def test_a_cut_off_piece_of_the_value_is_masked_too(tmp_path):
+    token = "tok" + "-" + "a1b2c3d4e5f6a7b8c9d0"
+    env = {"HADAVIN_TEST_VAULT_TOKEN": token}
+    code = f"print('cut: {token[:12]}'); print('tail: {token[-9:]}'); print('short: {token[:5]}')"
+    helper(tmp_path, "run", "x", "--", sys.executable, "-c", code, env=env)
+    saved = (tmp_path / "evidence-logs" / "x.txt").read_text()
+    assert token[:12] not in saved and token[-9:] not in saved
+    assert "short: " + token[:5] in saved
+
+
+def test_the_folder_comes_from_evidence_dir_when_it_is_set(tmp_path):
+    target = tmp_path / "elsewhere" / "logs"
+    helper(
+        tmp_path,
+        "run",
+        "x",
+        "--",
+        sys.executable,
+        "-c",
+        "print(1)",
+        env={"EVIDENCE_DIR": str(target)},
+    )
+    assert (target / "x.txt").exists() and (target / "status.txt").exists()
+    assert not (tmp_path / "evidence-logs").exists()
 
 
 def test_the_helper_source_masks_in_emit_and_in_the_report():
