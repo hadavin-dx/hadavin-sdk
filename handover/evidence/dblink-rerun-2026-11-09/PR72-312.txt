@@ -1,0 +1,12 @@
+d15e53a
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.2.0, pluggy-1.7.0
+rootdir: /home/user/build/EV-P6a-d15e53a
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collected 253 items / 252 deselected / 1 selected
+
+tests/demo_askdata/test_validate_harm.py .                               [100%]
+
+====================== 1 passed, 252 deselected in 0.43s =======================
+inner rc=0

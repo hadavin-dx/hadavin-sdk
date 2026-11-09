@@ -774,3 +774,4 @@ Running: P4d round 3 correctness a57b3c2ac560f8313, P4d round 3 adversarial acec
 | ev-P3a2-73 | EVIDENCE RUNNER Sonnet, cloud, PR73 core/P3a-2 2b0941b, ports 55430-55439 | 2026-11-09T03:05Z | CLOSED 2026-11-09T03:35Z |
 | egm-child-drift | child claude -p Sonnet, egm-drift-report on handover/studio-notes, out /home/user/build/reviews/drift-notes.txt, timeout 900 | 2026-11-09T03:28Z | CLOSED 2026-11-09T03:40Z |
 | pulse.sh | shell | cloud-container /home/user/build | started 2026-11-09T03:49Z, 5-min loop, pid in pulse.pid | open |
+| pg-def5432 | Postgres 16 cluster on /var/run/postgresql:5432 for dblink re-run (order 161), /home/user/build/pg/def5432 | 2026-11-09T03:52Z | RUNNING |
