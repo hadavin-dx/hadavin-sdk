@@ -765,3 +765,4 @@ PULSE 2026-11-09T14:42:06Z agents: none running (a4bc9c257afe5ae57 portal-A r4 r
 PULSE 2026-11-09T14:42:29Z agents: none running (ListAgents: none). shells: pulse_refresh2.sh pid 10898; full pytest A6 pid 11418 (started 14:41Z, running). Next: compare failures with known-red set, regenerate patch-portal-A.diff.
 PULSE 2026-11-09T14:47:04Z agents: none running (ListAgents: none). shells: pulse_refresh2.sh. WP-A pass 4 done: review r4 Majors M1/M2 fixed, full run = 8 known-red only, patch regenerated.
 PULSE 2026-11-09T14:47:47Z agents: 1 running (a641d75b5aa739eaf egm-design, WP-A pass-4 delta review r5, started 14:47:47Z, expect ~15:05Z). shells: pulse_refresh2.sh.
+PULSE 2026-11-09T14:51:35Z agents: none running (a641d75b5aa739eaf portal-A r5 reviewer handed back 0 Blocker/1 Major, report saved, closed). shells: pulse_refresh2.sh, full pytest A7 (mine, 14:51Z). Major (one person-card text for two questions) fixed in A tree, awaiting full run.

@@ -55,8 +55,8 @@
       "source": "form",
       "lead_name": "Linus Demo",
       "tab": "action",
-      "title": "Follow-up failed; a person marked it as not done",
-      "reason_text": "A person marked this follow-up as not done. Retry runs the steps that are still open. If you are not sure the email did not go out, check the mail system first.",
+      "title": "Follow-up failed; a person marked the email as not sent",
+      "reason_text": "A person checked and marked that the email was not sent. Retry sends it now. If you are not sure it did not go out, check the mail system first.",
       "actions": [
         {
           "id": "retry",
