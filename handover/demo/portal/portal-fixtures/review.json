@@ -55,8 +55,8 @@
       "source": "form",
       "lead_name": "Linus Demo",
       "tab": "action",
-      "title": "Follow-up failed; a person recorded it as not sent",
-      "reason_text": "A person checked and recorded that the email was not sent. Retry sends it now.",
+      "title": "Follow-up failed; a person marked it as not sent",
+      "reason_text": "A person checked and marked that the email was not sent. Retry sends it now.",
       "actions": [
         {
           "id": "retry",

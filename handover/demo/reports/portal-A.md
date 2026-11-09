@@ -93,3 +93,17 @@ Started 13:37 UTC. Tree /tmp/dpld-portal, nothing committed or pushed, no sub-ag
 ## Files changed since the round-1 patch (for an incremental apply)
 Compared the tree to bfb28cf + the previous patch (/tmp/dpld-out/patch-portal-A.prev-r1.diff, the file I delivered after round 1; I could not check it against the id 6dd3999 you named):
 README.md, contract.md, exceptions.txt, src/lead_desk/config.py, src/lead_desk/portal_api.py, src/lead_desk/server.py, tests/portal_fixtures/review.json, tests/test_portal_api.py. Also changed outside the repo: handover/demo/portal/portal-fixtures/review.json. Not changed since round 1: desk.py, constants.py, loader.py, scripts/feed.py, tests/test_server_hardening.py, test_hygiene.py, test_hardening.py, the other fixtures.
+
+## Pass 3 (fix pass 3)
+
+Not done or not proven, first:
+- No old-code proof for the `finish()` drain (N3-1) or for the flaky `test_headers_and_no_cors_on_error_replies`: the mutant that removes `finish` survived. The root cause of the headless reply seen once in the lead's full run was not found. It passed 30/30 alone, 90/90 under load, and in my own full runs. The drain is a hypothesis-based hardening only.
+- `_NOT_READY_MESSAGES` has a third message, "disk I/O error" (a folder as the database path), beyond the two named.
+- The reviewer's claim "README has no thread-cap line" is wrong (README.md:227).
+- No index on `receipts.outcome_lead_id`; one scan per request, 0.8 ms on 9000 receipts.
+- The first full run of the final tree found one new failure (the word "recorded" in portal_api.py, test_portal_product_files_hold_no_demo_words). I reworded it to "marked" (code, fixture x2, contract, test) and re-ran only the hygiene/portal subset (6 passed). The full suite has NOT been re-run after that edit.
+
+Done: F1 (own cards for `person: not sent` / `person: crm row present`, ambiguous_prior card, both review.json copies identical, contract sentence), F2, F3 (503 only for not-ready messages), F4, F5, F6, N3-2, N3-3.
+Evidence: lint/mypy/bandit/check_schema in /tmp/dpld-out/portal-A4-lint.txt; stability in portal-A4-stress-final.txt (30/30 alone; 3 x 162 passed); full run portal-A4-full.txt: 8 failed / 459 passed / 1 skipped = the 7 known-red names plus the "recorded" hit now fixed; mutants in portal-A4-fail-before.txt (M1, M2, M4, M5 killed, M3 survived).
+Patch: patch-portal-A.diff rewritten vs bfb28cf, `git apply --check` on a clean bfb28cf worktree passed.
+Changed since pass 2: portal_api.py, server.py, config.py, constants.py, tests/test_portal_api.py, tests/portal_fixtures/review.json (+ handover copy), contract.md.

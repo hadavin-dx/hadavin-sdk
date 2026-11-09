@@ -55,7 +55,7 @@ index e6dce1b..6b4a11e 100644
  Fixed in code, not settings: SQLite busy wait, listen queue length and lock retries (`constants.py`).
  
 diff --git a/contract.md b/contract.md
-index fa04140..1708051 100644
+index fa04140..8c6f367 100644
 --- a/contract.md
 +++ b/contract.md
 @@ -38,7 +38,7 @@ There is no build-system. Scripts set `PYTHONPATH=src` (and run from the repo ro
@@ -75,11 +75,20 @@ index fa04140..1708051 100644
 +Every request, on every route, passes `_gate_error` in `server.py` before the path is read. (1) `Host` is required (sent once) and its name, port ignored and lower-cased, must be `127.0.0.1`, `localhost`, `[::1]`, the bind address (not when it is a wildcard address), or a name in `Config.allowed_hosts` (`DESK_ALLOWED_HOSTS`, comma list, each name a lower-case host name made of dot-separated labels of 1 to 63 letters, digits or hyphens that neither start nor end with a hyphen, at most 253 characters in all, or an IPv6 address in brackets; a wildcard address (four zeros, or `::`) is refused). A `Host` port above 65535 is refused too. Otherwise 403 `{"error":"forbidden_host"}`. (2) An `Origin` header, if present (sent once), must equal `http://<allowed name>:<bound port>` exactly; `null` and anything else give 403 `{"error":"forbidden_origin"}`. (3) A `Sec-Fetch-Site` header, if present, must be `same-origin` or `none`, else 403 `{"error":"forbidden_origin"}`. A refused request writes nothing: no receipt, no count in `rejected_envelopes`; its body is read and dropped before the reply (the desk answers as HTTP/1.0 and never sends `100 Continue`; for a request with `Expect: 100-continue` the body is not waited for, so the refusal is immediate). Requests without `Origin` and `Sec-Fetch-Site` (n8n's server side, scripts, tests) pass on `Host` alone. **The gate protects against browsers only** (cross-site pages and DNS rebinding). It is not authentication: anyone who can reach the bound address and types the right `Host` reads every lead. Default bind is loopback; for a container bind the one bridge or host address, never a wildcard; the desk prints a warning at start-up when the bind is not loopback. A caller that reaches the desk under another name (for example n8n in Docker, which uses the host name Docker gives the computer) sets `DESK_BIND` to the address the desk must listen on and `DESK_ALLOWED_HOSTS` to that name.
 +
 +## Portal routes
-+Read-only pages for a person: `GET /ui` answers 308 to `/ui/`; `GET /ui/<file>` serves one of the `.html`, `.css`, `.js` files found under `src/lead_desk/portal/` when the server started (a fixed map, never a path read from the request; anything else is 404); `/ui/demo/<file>` serves a file of the demo extension when one is installed, else 404. `GET /api/ui/summary`, `/api/ui/leads`, `/api/ui/leads/<lead_id>` and `/api/ui/review` answer JSON built from ONE read transaction on a separate read-only connection (`mode=ro`, `PRAGMA query_only=ON`): a write through it fails. All four, `/api/ui/review` included, read through that connection only (the review list runs `desk.review_rows`, the desk's own SQL and hint rules, on it); the desk's write connections are never used for a page. At most `PORTAL_MAX_INFLIGHT` (8) of these requests run at once; more get 503 `{"error":"busy"}`. `summary.refused_at_door` counts requests refused at the door since the desk started (in memory, 0 again after a restart); show it as "since desk start (HH:MM)". `GET /api/ui/leads?q=` matches (as plain text; case is ignored for ASCII letters only) the name, email, company, lead id and first request id, at most 100 characters, no control characters. Files are read once, when `portal_api` is first imported; symbolic links, files that resolve outside the portal folder and files over `STATIC_FILE_MAX_BYTES` are left out, and the folder name `demo/` is reserved for the extension: a file of the portal folder under that name is never served. Any other method on these routes is 405. `/api/demo/<rest>` goes to the demo extension (GET and POST only, any other method is 405; 404 when none is installed or when the desk does not run the demo adapters; a POST body must be `application/json`, else 400 `{"error":"bad_body"}`; a body over `DEMO_BODY_MAX` bytes is 413 `{"error":"too_large"}` and is not handed on; a body that stalls is 408 `{"error":"request_timeout"}`). The extension is loaded before the socket is bound, so a broken extension leaves nothing listening. The "Follow-up failed" card says "nothing was sent" only for the reasons `refused`, `unreachable` and `internal:*`; any other reason (`ambiguous`, `crash_while_sending`, others), and any failed follow-up whose row carries `ambiguous_prior` (an earlier send may have left), shows "Follow-up did not finish", because the email may have left, and Retry is safe only on a keyed outbox. Every reply, JSON or file, carries `Content-Security-Policy` (no inline script or style, no `data:`), `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`, `Cross-Origin-Resource-Policy: same-origin` and `Cache-Control: no-store`.
++Read-only pages for a person: `GET /ui` answers 308 to `/ui/`; `GET /ui/<file>` serves one of the `.html`, `.css`, `.js` files found under `src/lead_desk/portal/` when the server started (a fixed map, never a path read from the request; anything else is 404); `/ui/demo/<file>` serves a file of the demo extension when one is installed, else 404. `GET /api/ui/summary`, `/api/ui/leads`, `/api/ui/leads/<lead_id>` and `/api/ui/review` answer JSON built from ONE read transaction on a separate read-only connection (`mode=ro`, `PRAGMA query_only=ON`): a write through it fails. All four, `/api/ui/review` included, read through that connection only (the review list runs `desk.review_rows`, the desk's own SQL and hint rules, on it); the desk's write connections are never used for a page. At most `PORTAL_MAX_INFLIGHT` (8) of these requests run at once; more get 503 `{"error":"busy"}`. `summary.refused_at_door` counts requests refused at the door since the desk started (in memory, 0 again after a restart); show it as "since desk start (HH:MM)". `GET /api/ui/leads?q=` matches (as plain text; case is ignored for ASCII letters only) the name, email, company, lead id and first request id, at most 100 characters, no control characters. Files are read once, when `portal_api` is first imported; symbolic links, files that resolve outside the portal folder and files over `STATIC_FILE_MAX_BYTES` are left out, and the folder name `demo/` is reserved for the extension: a file of the portal folder under that name is never served. Any other method on these routes is 405. `/api/demo/<rest>` goes to the demo extension (GET and POST only, any other method is 405; 404 when none is installed or when the desk does not run the demo adapters; a POST body must be `application/json`, else 400 `{"error":"bad_body"}`; a body over `DEMO_BODY_MAX` bytes is 413 `{"error":"too_large"}` and is not handed on; a body that stalls is 408 `{"error":"request_timeout"}`). The extension is loaded before the socket is bound, so a broken extension leaves nothing listening. The "Follow-up failed" card says "nothing was sent" only for the reasons `refused`, `unreachable` and `internal:*`; the reasons a person's own choice leaves (`person: not sent`: "Follow-up failed; a person marked it as not sent", Retry sends it now; `person: crm row present`: "Follow-up not finished; the CRM row is confirmed", the email has not been tried yet, Retry goes straight to the email) have their own words and never say the email may have left; any other reason (`ambiguous`, `crash_while_sending`, others), and any other failed follow-up whose row carries `ambiguous_prior` (an earlier send may have left), shows "Follow-up did not finish", because the email may have left, and Retry is safe only on a keyed outbox. Every reply, JSON or file, carries `Content-Security-Policy` (no inline script or style, no `data:`), `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`, `Cross-Origin-Resource-Policy: same-origin` and `Cache-Control: no-store`.
 +
  ## Further rules
  * `Config.replies_path` defaults to `None` ("the loader supplies its own default"): `load_demo_adapters` then uses the `replies.json` that sits next to the demo folder's package, found from the package file, not from the working directory. `DESK_REPLIES_PATH` still sets it. `loader.py` is the only product module that names the demo folder (a test enforces it).
  * A submission with no email (a phone-only lead) has no lead key: verdict `review`, reason `incomplete:email` (or `incomplete:name,email` when the name is also missing); it is never merged and never dropped.
+@@ -65,7 +71,7 @@ One private method `Desk._send_claimed(lead_id)` does the send and the recording
+ * Item existence for 404: `F<lead_id>` needs a follow-up row; `R<n>` a receipt with verdict `review`; `D<n>` a receipt with verdict `duplicate` and a non-empty `differing_fields`; `O<n>` an open receipt (any age). Anything else is 404.
+ * On `GET /review` the `reason` of a `duplicate_with_new_info` item is the JSON text of `differing_fields` (a string such as `["phone"]`), exactly what the view returns. The list is ordered by `since`, then `item_id`.
+ * Retry when the claim fails and the row is still `pending` or `failed` (the database stayed locked through the claim retries): 503 `{"error":"busy"}`.
+-* Lock-wait errors in the read and retry/resolve routes follow the same rule as `POST /leads`: busy gives 503 `{"error":"busy"}`, any other error 500 `{"error":"internal"}` (without `receipt_id` outside `POST /leads`).
++* Lock-wait errors in the read and retry/resolve routes follow the same rule as `POST /leads`: busy gives 503 `{"error":"busy"}`, any other error 500 (except `/api/ui/*`, where the two "not ready" faults, "unable to open database file"/"no such table"/"disk I/O error", give 503 `{"error":"unavailable"}`) `{"error":"internal"}` (without `receipt_id` outside `POST /leads`).
+ * The server reads at most `size_cap_bytes + 1` bytes of a body; after an early reply (413) it drops up to `DRAIN_MAX_BYTES` unread request bytes so the reply is not lost to a connection reset. Each handler thread has a socket timeout of `REQUEST_TIMEOUT_SECONDS`. Content-Length rules: a missing, non-numeric or conflicting (two different values) header is 400 `bad_envelope`; a value over the cap is answered 413 at once, before any body byte is read, whatever its length (a 4301-digit number included; more than 18 significant digits is treated as over every limit); a body shorter than announced is 408 `request_timeout` after `REQUEST_TIMEOUT_SECONDS` if the connection stays open, or 400 `bad_envelope` if the sender closes it. Rows 400, 408 and 413 on `POST /leads` count in `rejected_envelopes`. A request target the standard library cannot split (for example `http://[/`) is 400 `{"error":"bad_request"}`. A review item id whose number has more than 18 digits is 404 `not_found` (no item can have one). The follow-up id of a new lead is taken before the reply is written and the follow-up runs in a `finally`: if the reply cannot be written (the sender reset the connection) the follow-up still runs. The listen backlog is `LISTEN_QUEUE` (1024); the operating system may cap it lower.
+ * Adapter timeouts: on Windows a refused connect to a closed local port reports only after about 2 seconds (measured 2.03 s, 2026-11-09). A shorter send timeout turns "refused" into a connect timeout, which the table classes as ambiguous. The default `send_timeout_seconds` is 5.0, so the default is unaffected.
+ 
 @@ -96,6 +102,17 @@ All desk replies are JSON with `Content-Length` and `Connection: close`. `receip
  | | 409 | `{"error":"not_unknown\|not_actionable","hint":"..."}` |
  | `GET /counts?expected=N` | 200 | `{"received","new","duplicate","review","open","rejected_envelopes","pending_followups","expected_match":true\|false\|null,"ok":true\|false\|null}` |
@@ -148,7 +157,7 @@ index e959dbc..bad1758 100644
      if args.all == (args.index is not None):
          ap.error("give exactly one of --index or --all")
 diff --git a/src/lead_desk/config.py b/src/lead_desk/config.py
-index 319a8bc..0bd1e98 100644
+index 319a8bc..58e7f06 100644
 --- a/src/lead_desk/config.py
 +++ b/src/lead_desk/config.py
 @@ -2,13 +2,33 @@
@@ -181,7 +190,7 @@ index 319a8bc..0bd1e98 100644
 +        pass
 +    try:
 +        return socket.inet_aton(bare) == bytes(4)
-+    except OSError:
++    except (OSError, ValueError):  # a name the system resolver cannot read (embedded NUL, lone surrogate)
 +        return False
  
  
@@ -227,7 +236,7 @@ index 319a8bc..0bd1e98 100644
 +            )
          return cls(**kw)
 diff --git a/src/lead_desk/constants.py b/src/lead_desk/constants.py
-index acc7516..1dd5d34 100644
+index acc7516..5b2e7e9 100644
 --- a/src/lead_desk/constants.py
 +++ b/src/lead_desk/constants.py
 @@ -2,6 +2,7 @@
@@ -238,7 +247,15 @@ index acc7516..1dd5d34 100644
  from typing import Final
  
  # HTTP status codes the desk and the fakes server use
-@@ -69,3 +70,42 @@ MAX_DIGITS: Final = 18  # longest Content-Length or item number taken as a numbe
+@@ -61,6 +62,7 @@ ADAPTER_CHOICES: Final = ("demo",)
+ 
+ # HTTP layer
+ REQUEST_TIMEOUT_SECONDS: Final = 30.0  # socket timeout of one request handler; frees a thread held by a stalled client
++QUIET_DRAIN_SECONDS: Final = 0.05  # how long a finished connection waits for request bytes still on their way
+ DRAIN_MAX_BYTES: Final = (
+     1_048_576  # unread request bytes read and dropped after an early reply, so the reply is not lost to a reset
+ )
+@@ -69,3 +71,42 @@ MAX_DIGITS: Final = 18  # longest Content-Length or item number taken as a numbe
  REPLY_MAX_BYTES: Final = (
      1_048_576  # an adapter reply longer than this is refused unread (the fakes answer a few hundred bytes)
  )
@@ -393,10 +410,10 @@ index 9a032cc..168792a 100644
      """Build HttpCrm and HttpOutbox on config.fakes_url and a RecordedQualifier on config.replies_path
 diff --git a/src/lead_desk/portal_api.py b/src/lead_desk/portal_api.py
 new file mode 100644
-index 0000000..0745805
+index 0000000..0c6a6fd
 --- /dev/null
 +++ b/src/lead_desk/portal_api.py
-@@ -0,0 +1,586 @@
+@@ -0,0 +1,606 @@
 +"""Read-only JSON for the portal pages (GET /api/ui/*) and the fixed list of portal files (GET /ui/*).
 +
 +Every endpoint opens its OWN read-only SQLite connection (mode=ro plus PRAGMA query_only), starts one read
@@ -523,6 +540,9 @@ index 0000000..0745805
 +    return HTTP_BAD_REQUEST, {"error": "bad_query", "field": field}
 +
 +
++_NOT_READY_MESSAGES = ("unable to open database file", "no such table", "disk I/O error")  # last: a folder as path
++
++
 +# -- entry point
 +def handle(desk: Desk, endpoint: str, query: str, started_at: int) -> tuple[int, dict[str, Any]]:
 +    """(status, JSON object) for GET /api/ui/<endpoint>. A lock that outlasts the wait, or more than
@@ -534,10 +554,13 @@ index 0000000..0745805
 +    except sqlite3.OperationalError as e:
 +        if db.is_busy(e):
 +            return HTTP_BUSY, {"error": "busy"}
-+        # The read-only open failed or a table is missing (a request before desk.startup(), a db_path that is not a
-+        # file such as ":memory:", a file that is gone): a fixed reply, no detail.
-+        log.warning("portal read failed: %s", e)
-+        return HTTP_BUSY, {"error": "unavailable"}
++        # Only the two "not ready" faults get the fixed 503: the read-only open failed or a table is missing (a request
++        # before desk.startup(), a db_path that is not a file such as ":memory:", a file that is gone). Any other
++        # database error is a bug and stays a 500 (the server logs the class name only).
++        if any(m in str(e) for m in _NOT_READY_MESSAGES):
++            log.warning("portal read failed: %s", e)
++            return HTTP_BUSY, {"error": "unavailable"}
++        raise
 +    finally:
 +        _INFLIGHT.release()
 +
@@ -861,6 +884,18 @@ index 0000000..0745805
 +    "refused": "The mail system refused; nothing was sent.",
 +    "unreachable": "The mail system could not be reached; nothing was sent.",
 +}
++# Failed rows a person made by choosing in the review list (Desk.resolve writes these words as last_error).
++_PERSON_TEXT = {
++    "person: not sent": (
++        "Follow-up failed; a person marked it as not sent",
++        "A person checked and marked that the email was not sent. Retry sends it now.",
++    ),
++    "person: crm row present": (
++        "Follow-up not finished; the CRM row is confirmed",
++        "A person confirmed that the CRM row is there. The email has not been tried yet. "
++        "Retry goes straight to the email.",
++    ),
++}
 +_NOTHING_SENT_INTERNAL = "The desk hit a fault before it tried to send; nothing was sent."
 +_DID_NOT_FINISH_TEXT = (
 +    "The follow-up did not finish and the desk has no confirmation. The email may have left. Retry is safe only "
@@ -889,8 +924,10 @@ index 0000000..0745805
 +    kind, reason, item_id = str(item["kind"]), str(item["reason"] or ""), str(item["item_id"])
 +    tab, actions = "action", []
 +    if kind == "failed":
++        if reason in _PERSON_TEXT:  # the words of the person's own decision come first
++            title, text = _PERSON_TEXT[reason]
 +        # "nothing was sent" only when the reason says so AND no earlier send may have left (ambiguous_prior)
-+        if not maybe_sent and (reason in _NOTHING_SENT_TEXT or reason.startswith("internal")):
++        elif not maybe_sent and (reason in _NOTHING_SENT_TEXT or reason.startswith("internal")):
 +            title = "Follow-up failed; nothing was sent"
 +            text = _NOTHING_SENT_TEXT.get(reason, _NOTHING_SENT_INTERNAL)
 +        else:  # ambiguous, crash_while_sending, anything else: the email may have left
@@ -984,7 +1021,7 @@ index 0000000..0745805
 +        "tabs": {t: sum(1 for i in out if i["tab"] == t) for t in _TAB_ORDER},
 +    }
 diff --git a/src/lead_desk/server.py b/src/lead_desk/server.py
-index 5104f37..0489be6 100644
+index 5104f37..fd2d94a 100644
 --- a/src/lead_desk/server.py
 +++ b/src/lead_desk/server.py
 @@ -7,9 +7,11 @@ from that line."""
@@ -999,7 +1036,7 @@ index 5104f37..0489be6 100644
  import socket
  import sys
  import threading
-@@ -20,39 +22,54 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+@@ -20,39 +22,55 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
  from typing import Any, cast
  from urllib.parse import parse_qs, unquote, urlsplit
  
@@ -1028,6 +1065,7 @@ index 5104f37..0489be6 100644
 +    LOOPBACK_HOSTS,
      MAX_DIGITS,
 +    PORT_MAX,
++    QUIET_DRAIN_SECONDS,
      REQUEST_TIMEOUT_SECONDS,
 +    SAME_SITE_VALUES,
 +    SECURITY_HEADERS,
@@ -1057,7 +1095,7 @@ index 5104f37..0489be6 100644
  
      def server_bind(self) -> None:
          if sys.platform == "win32":
-@@ -60,6 +77,32 @@ class _Server(ThreadingHTTPServer):
+@@ -60,6 +78,32 @@ class _Server(ThreadingHTTPServer):
          super().server_bind()
  
  
@@ -1090,7 +1128,7 @@ index 5104f37..0489be6 100644
  def _route(method: str, path: str) -> tuple[str, str | None] | int:
      """(route name, path argument) for a known route and method; else 405 or 404 (a status int)."""
      parts = [unquote(p) for p in path.strip("/").split("/")] if path != "/" else []
-@@ -74,6 +117,14 @@ def _route(method: str, path: str) -> tuple[str, str | None] | int:
+@@ -74,6 +118,14 @@ def _route(method: str, path: str) -> tuple[str, str | None] | int:
              name, arg, allowed = action, item, "POST"
          case ["counts"]:
              name, arg, allowed = "counts", None, "GET"
@@ -1105,7 +1143,7 @@ index 5104f37..0489be6 100644
          case _:
              return HTTP_NOT_FOUND
      if arg and name in ("retry", "resolve") and arg[1:].isascii() and arg[1:].isdecimal() and len(arg[1:]) > MAX_DIGITS:
-@@ -95,14 +146,19 @@ class _Handler(BaseHTTPRequestHandler):
+@@ -95,14 +147,19 @@ class _Handler(BaseHTTPRequestHandler):
  
      # -- reply helpers
      def _send(self, status: int, obj: Any) -> None:
@@ -1129,7 +1167,32 @@ index 5104f37..0489be6 100644
          self.close_connection = True
  
      def send_error(self, code: int, message: str | None = None, explain: str | None = None) -> None:
-@@ -147,11 +203,41 @@ class _Handler(BaseHTTPRequestHandler):
+@@ -134,6 +191,24 @@ class _Handler(BaseHTTPRequestHandler):
+         except OSError:
+             pass
+ 
++    def finish(self) -> None:
++        """The one place every connection ends, whatever path answered it (a gate refusal, the standard library's own
++        error replies, a 413). The reply is flushed and the write side closed, then request bytes the desk never read
++        are dropped for a moment: closing a socket that still holds unread bytes sends a reset, and a reset can
++        destroy a reply the client has not read yet."""
++        self._flush_and_half_close()
++        try:
++            self.connection.settimeout(QUIET_DRAIN_SECONDS)
++            left = DRAIN_MAX_BYTES
++            while left > 0:
++                chunk = self.connection.recv(min(left, 65536))  # noqa: PLR2004
++                if not chunk:
++                    break
++                left -= len(chunk)
++        except OSError:  # includes the timeout: nothing more is arriving
++            pass
++        super().finish()
++
+     def _content_length(self) -> int | None:
+         """The body size, or None when the header is missing, not a plain number, or repeated with different values.
+         A number longer than MAX_DIGITS (after leading zeros) is returned as 10**MAX_DIGITS: far over any cap, and
+@@ -147,11 +222,41 @@ class _Handler(BaseHTTPRequestHandler):
          digits = raw.lstrip("0")
          return 10**MAX_DIGITS if len(digits) > MAX_DIGITS else int(digits or "0")
  
@@ -1171,7 +1234,7 @@ index 5104f37..0489be6 100644
              try:
                  parts = urlsplit(self.path)
              except ValueError:  # e.g. the target "http://[/"
-@@ -174,6 +260,8 @@ class _Handler(BaseHTTPRequestHandler):
+@@ -174,6 +279,8 @@ class _Handler(BaseHTTPRequestHandler):
              elif name == "retry":
                  self._skip_body()
                  self._send_reply(desk.retry(str(arg)))
@@ -1180,7 +1243,7 @@ index 5104f37..0489be6 100644
              else:
                  self._resolve(str(arg))
              self._flush_and_half_close()
-@@ -194,10 +282,61 @@ class _Handler(BaseHTTPRequestHandler):
+@@ -194,10 +301,61 @@ class _Handler(BaseHTTPRequestHandler):
                      log.warning("follow-up failed: %s", type(e).__name__)
              desk.close()  # this request thread's connection
  
@@ -1242,7 +1305,7 @@ index 5104f37..0489be6 100644
          n = self._content_length()
          if n:
              self._drain(n)
-@@ -305,8 +444,12 @@ def make_server(desk: Desk, config: Config) -> ThreadingHTTPServer:
+@@ -305,8 +463,12 @@ def make_server(desk: Desk, config: Config) -> ThreadingHTTPServer:
      Windows limit (not checked on a second machine): a restart on the same fixed port may fail while the
      old connections sit in TIME_WAIT, and the conflicting bind may raise PermissionError instead of
      EADDRINUSE; both are OSError, which callers catch broadly."""
@@ -1255,7 +1318,7 @@ index 5104f37..0489be6 100644
      return server
  
  
-@@ -351,6 +494,15 @@ def main(hooks: Hooks | None = None) -> None:
+@@ -351,6 +513,15 @@ def main(hooks: Hooks | None = None) -> None:
          sys.exit(EXIT_ANOTHER_DESK)
      try:
          desk.startup()
@@ -1821,10 +1884,10 @@ index 0000000..401978c
 +}
 diff --git a/tests/portal_fixtures/review.json b/tests/portal_fixtures/review.json
 new file mode 100644
-index 0000000..4f4af68
+index 0000000..2931e83
 --- /dev/null
 +++ b/tests/portal_fixtures/review.json
-@@ -0,0 +1,236 @@
+@@ -0,0 +1,280 @@
 +{
 +  "now": 1794240000,
 +  "items": [
@@ -1845,6 +1908,50 @@ index 0000000..4f4af68
 +          "id": "retry",
 +          "label": "Retry",
 +          "endpoint": "/review/FL7b2e9d0c1a34/retry",
++          "body": null,
++          "confirm": null
++        }
++      ]
++    },
++    {
++      "item_id": "FLc3a1f08e7d52",
++      "item_type": "followup",
++      "kind": "failed",
++      "reason": "refused",
++      "lead_id": "Lc3a1f08e7d52",
++      "since": 1794239650,
++      "source": "form",
++      "lead_name": "Ada Example",
++      "tab": "action",
++      "title": "Follow-up did not finish",
++      "reason_text": "The follow-up did not finish and the desk has no confirmation. The email may have left. Retry is safe only when the mail system keeps a key for repeats (a keyed outbox); otherwise check the mail system first.",
++      "actions": [
++        {
++          "id": "retry",
++          "label": "Retry",
++          "endpoint": "/review/FLc3a1f08e7d52/retry",
++          "body": null,
++          "confirm": null
++        }
++      ]
++    },
++    {
++      "item_id": "FLd41b9e6a0c37",
++      "item_type": "followup",
++      "kind": "failed",
++      "reason": "person: not sent",
++      "lead_id": "Ld41b9e6a0c37",
++      "since": 1794239700,
++      "source": "form",
++      "lead_name": "Linus Demo",
++      "tab": "action",
++      "title": "Follow-up failed; a person marked it as not sent",
++      "reason_text": "A person checked and marked that the email was not sent. Retry sends it now.",
++      "actions": [
++        {
++          "id": "retry",
++          "label": "Retry",
++          "endpoint": "/review/FLd41b9e6a0c37/retry",
 +          "body": null,
 +          "confirm": null
 +        }
@@ -2056,7 +2163,7 @@ index 0000000..4f4af68
 +    }
 +  ],
 +  "tabs": {
-+    "action": 5,
++    "action": 7,
 +    "waiting": 3,
 +    "info": 2
 +  }
@@ -3100,10 +3207,10 @@ index 73c7f7e..634d60d 100644
      patterns, exceptions, toml = REPO / "patterns.txt", REPO / "exceptions.txt", REPO / ".gitleaks.toml"
 diff --git a/tests/test_portal_api.py b/tests/test_portal_api.py
 new file mode 100644
-index 0000000..049a851
+index 0000000..75a67b6
 --- /dev/null
 +++ b/tests/test_portal_api.py
-@@ -0,0 +1,1499 @@
+@@ -0,0 +1,1556 @@
 +"""Portal tests: the read-only JSON under /api/ui, the fixed files under /ui, and the Host and Origin gate.
 +Made-up data only. The response shapes are checked against tests/portal_fixtures/*.json (copied from the design)."""
 +
@@ -3118,6 +3225,7 @@ index 0000000..049a851
 +import threading
 +import time
 +import types
++from dataclasses import replace
 +from pathlib import Path
 +from typing import Any
 +from urllib.parse import quote
@@ -3138,7 +3246,7 @@ index 0000000..049a851
 +)
 +
 +from lead_desk import loader, portal_api, server
-+from lead_desk.config import Config
++from lead_desk.config import Config, is_unspecified
 +from lead_desk.constants import (
 +    DEMO_BODY_MAX,
 +    DUPLICATES_MAX,
@@ -3625,7 +3733,7 @@ index 0000000..049a851
 +        assert get(base, path)[0] == 200
 +        assert at == [2], (path, at)  # BEGIN and the first read came first
 +    rig.clock.t = 1_000_000
-+    server_obj = make_server(rig.desk, rig.config)
++    server_obj = make_server(rig.desk, replace(rig.config, port=free_port()))
 +    try:
 +        assert server_obj.started_at == 1_000_000
 +    finally:
@@ -3642,11 +3750,46 @@ index 0000000..049a851
 +    assert get(base, "/api/ui/review") == (503, {"error": "unavailable"})
 +    rig.desk.startup()
 +    assert get(base, "/api/ui/summary")[0] == 200
++    (tmp_path / "y").mkdir()
++    other = build_rig(tmp_path / "y", start=True)
++    other_base = env.serve(other)
 +    for path in (":memory:", ""):
-+        (tmp_path / "y").mkdir(exist_ok=True)
-+        other = build_rig(tmp_path / "y", start=True)
 +        object.__setattr__(other.desk.config, "db_path", Path(path))
-+        assert get(env.serve(other), "/api/ui/summary") == (503, {"error": "unavailable"}), path
++        assert get(other_base, "/api/ui/summary") == (503, {"error": "unavailable"}), path
++
++
++def test_other_database_errors_stay_500(env, monkeypatch) -> None:
++    """Only the "not ready" faults are a 503; a bad column or any other database error is a bug and stays a 500."""
++    _, base = fresh(env)
++
++    def broken(desk: Any, started_at: int) -> Any:
++        raise sqlite3.OperationalError("no such column: nope")
++
++    monkeypatch.setattr(portal_api, "_summary", broken)
++    assert get(base, "/api/ui/summary") == (500, {"error": "internal"})
++
++
++@pytest.mark.parametrize(
++    ("note", "title", "said"),
++    [
++        (
++            "person: not sent",
++            "Follow-up failed; a person marked it as not sent",
++            "marked that the email was not sent",
++        ),
++        ("person: crm row present", "Follow-up not finished; the CRM row is confirmed", "has not been tried yet"),
++    ],
++)
++def test_failed_card_after_a_person_decides(env, note: str, title: str, said: str) -> None:
++    """The reason of the card is the follow-up's last_error (review_items), which Desk.resolve sets for a person's
++    choice; the card says what the person marked, never that the email may have left."""
++    rig, base = fresh(env)
++    lid = rig.desk.process("form", "pd-1", lead()).body["lead_id"]
++    sql(rig, "UPDATE followups SET state='failed', last_error=?, updated_at=? WHERE lead_id=?", (note, 5, lid))
++    assert rig.query("SELECT reason FROM review_items WHERE lead_id=?", (lid,)) == [(note,)]
++    card = next(i for i in get(base, "/api/ui/review")[1]["items"] if i["item_id"] == "F" + lid)
++    assert card["title"] == title and said in card["reason_text"] and "may have left" not in card["reason_text"]
++    assert [a["id"] for a in card["actions"]] == ["retry"] and "Retry" in card["reason_text"]
 +
 +
 +@pytest.mark.parametrize(
@@ -4336,6 +4479,7 @@ index 0000000..049a851
 +            rig.desk.process(door, f"big-{i}-{door}-r", lead(name=f"Person {i:05d}", email=f"p{i}@example.test"))
 +    assert rig.query("SELECT count(*) FROM receipts")[0][0] == 3 * BIG_LEADS
 +    ids = [r[0] for r in rig.query("SELECT lead_id FROM leads ORDER BY created_at, lead_id LIMIT 3")]
++    sql(rig, "UPDATE followups SET state='failed', last_error='refused', updated_at=? WHERE lead_id=?", (5, ids[2]))
 +    seen: list[int] = []
 +    real = portal_api.connect_readonly
 +
@@ -4354,13 +4498,13 @@ index 0000000..049a851
 +    monkeypatch.setattr(portal_api, "connect_readonly", lambda p: Count(real(p)))
 +    timings: dict[str, float] = {}
 +    for name, path, budget in (
-+        ("summary", "/api/ui/summary", 9),
-+        ("leads", "/api/ui/leads", 7),
-+        ("leads?limit=100", "/api/ui/leads?limit=100", 7),
-+        ("leads?q=Person 0100", "/api/ui/leads?q=Person%200100", 7),
-+        ("leads?state=sent", "/api/ui/leads?state=sent&limit=100&offset=2000", 7),
++        ("summary", "/api/ui/summary", 8),
++        ("leads", "/api/ui/leads", 6),
++        ("leads?limit=100", "/api/ui/leads?limit=100", 6),
++        ("leads?q=Person 0100", "/api/ui/leads?q=Person%200100", 6),
++        ("leads?state=sent", "/api/ui/leads?state=sent&limit=100&offset=2000", 6),
 +        ("lead detail", f"/api/ui/leads/{ids[0]}", 9),
-+        ("review", "/api/ui/review", 7),
++        ("review", "/api/ui/review", 6),
 +    ):
 +        t0 = time.monotonic()
 +        status, out = get(base, path)
@@ -4536,7 +4680,10 @@ index 0000000..049a851
 +
 +def test_all_digit_bind_is_wildcard() -> None:
 +    assert server._allowed_hosts(Config(bind="0")) == {"127.0.0.1", "localhost", "[::1]"}
-+    assert "0" not in server._allowed_hosts(Config(bind="0.0"))
++    for short in ("0.0", "00", "0x0", "0.0.0"):
++        assert server._allowed_hosts(Config(bind=short)) == {"127.0.0.1", "localhost", "[::1]"}, short
++    assert is_unspecified("0") and is_unspecified("0x0") and not is_unspecified("127.1")
++    assert not is_unspecified("a\x00b") and not is_unspecified("a\udc80b")  # unreadable names: no traceback
 +    assert server._allowed_hosts(Config(bind="host.example")) >= {"host.example"}
 +    with pytest.raises(ValueError):
 +        Config(allowed_hosts=("0",))
@@ -4545,23 +4692,39 @@ index 0000000..049a851
 +def test_expect_refusal_does_not_wait(env) -> None:
 +    """The desk answers as HTTP/1.0 and never sends 100. A refused request that announced a body with Expect gets
 +    its 403 at once (the old code waited for the body the client was holding back)."""
-+    rig, base = fresh(env)
++    _, base = fresh(env)
 +    host, port = base.removeprefix("http://").split(":")
-+    for host_header, status in (("evil.example", b" 403 "),):
++    head = (
++        "POST /leads HTTP/1.1\r\nHost: evil.example\r\nExpect: 100-continue\r\n"
++        "Content-Type: application/json\r\nContent-Length: 50\r\nConnection: close\r\n\r\n"
++    )
++    t0 = time.monotonic()
++    with socket.create_connection((host, int(port)), timeout=10) as s:
++        s.sendall(head.encode())
++        data = b""
++        while chunk := s.recv(65536):
++            data += chunk
++    first = data.split(b"\r\n", 1)[0]
++    assert b" 403 " in first and b" 100 " not in first, first
++    assert b"forbidden_host" in data and time.monotonic() - t0 < 3.0
++
++
++def test_refusal_survives_a_body_sent_anyway(env) -> None:
++    """A client that sends its body although it was refused still reads the whole 403 (no reset destroys it)."""
++    _, base = fresh(env)
++    host, port = base.removeprefix("http://").split(":")
++    body = b"x" * 200_000
++    for _ in range(20):
 +        head = (
-+            f"POST /leads HTTP/1.1\r\nHost: {host_header}\r\nExpect: 100-continue\r\n"
-+            "Content-Type: application/json\r\nContent-Length: 50\r\nConnection: close\r\n\r\n"
++            f"POST /leads HTTP/1.1\r\nHost: evil.example\r\nExpect: 100-continue\r\n"
++            f"Content-Length: {len(body)}\r\nConnection: close\r\n\r\n"
 +        )
-+        t0 = time.monotonic()
 +        with socket.create_connection((host, int(port)), timeout=10) as s:
-+            s.sendall(head.encode())
++            s.sendall(head.encode() + body)
 +            data = b""
 +            while chunk := s.recv(65536):
 +                data += chunk
-+        first = data.split(b"\r\n", 1)[0]
-+        assert status in first and b" 100 " not in first, first
-+        assert time.monotonic() - t0 < 3.0
-+    assert b"forbidden_host" in data or b"error" in data
++        assert data.startswith(b"HTTP/1.0 403 ") and data.endswith(b'"forbidden_host"}'), data[-80:]
 +
 +
 +def test_stored_nan_never_reaches_the_page(env) -> None:
@@ -4598,11 +4761,12 @@ index 0000000..049a851
 +        card = next(i for i in get(base, "/api/ui/review")[1]["items"] if i["item_id"] == "F" + ids[key])
 +        retry = card["actions"][0]
 +        assert retry["id"] == "retry" and retry["endpoint"] == f"/review/F{ids[key]}/retry"
-+        before = call(base, "GET", f"/leads/{ids[key]}")[1]["followup"]
++        row = "SELECT * FROM followups WHERE lead_id=?"
++        before, sent_before = rig.query(row, (ids[key],)), rig.outbox.count
 +        status, out = call(base, "POST", retry["endpoint"])
 +        assert status == 409 and out["error"] == "unknown_needs_person"
-+        assert call(base, "GET", f"/leads/{ids[key]}")[1]["followup"] == before
-+        assert before["state"] == "unknown"
++        assert rig.query(row, (ids[key],)) == before and rig.outbox.count == sent_before
++        assert before[0][1] == "unknown"
 diff --git a/tests/test_server_hardening.py b/tests/test_server_hardening.py
 index 0617558..0ee882a 100644
 --- a/tests/test_server_hardening.py
