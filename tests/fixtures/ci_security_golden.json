@@ -46,7 +46,7 @@
    },
    {
     "name": "System tools resolve outside the workspace",
-    "run": "for c in sha256sum tar curl git grep date tr cut sort head mktemp rm; do p=$(command -v \"$c\") || exit 1; case \"$p\" in /*) ;; *) echo \"$c is not a file: $p\"; exit 1;; esac; case \"$p\" in \"$GITHUB_WORKSPACE\"/*) echo \"$c resolves inside the workspace: $p\"; exit 1;; esac; done\n"
+    "run": "for c in sha256sum tar curl git grep date tr cut sort head mktemp rm touch; do p=$(command -v \"$c\") || exit 1; case \"$p\" in /*) ;; *) echo \"$c is not a file: $p\"; exit 1;; esac; case \"$p\" in \"$GITHUB_WORKSPACE\"/*) echo \"$c resolves inside the workspace: $p\"; exit 1;; esac; done\n"
    },
    {
     "name": "Dependencies with known vulnerabilities (every locked package, hashes required)",
