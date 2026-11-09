@@ -85,7 +85,8 @@ Findings: `reviews/P4a/round5-design.md` (0 Blockers, 2 Majors, 6 Nits numbered 
 ## Tally
 PROPOSE FIX 13 groups (G5-1 to G5-13, with G5-7 partly CONTEST and G5-12 partly DECLINE), CONTEST 1 part (G5-7 CHANGELOG half), DECLINE 2 (G5-12 FB-10 part, G5-14), ESCALATE 0. Remaining unaddressed: 0 findings; the NEEDS LEAD items below are decisions, not open defects.
 
-## Recount after editing (by reading the edited text)
+## Recount after editing
+Method: a read-only `python3 -I` script that only reads `tickets/P4a.md` and collects the distinct ids in the BN-17 and BN-18 sections with a regular expression. Its output: 35 FB-M ids (FB-M1a ... FB-M9i), 22 FB-T ids of which 5 are FB-T1 sub-rows (FB-T1a to FB-T1e), so 17 row ids; 19 SG-M ids (SG-M1 to SG-M19); 15 SG-T ids. `git diff` against the commit before the lead's WIP commit 71b9c38 shows the only hunk above the build notes is line 3 (revision log); the BN-17, BN-18 and BN-19 headings are now on lines 606, 679 and 727.
 - BN-17 test row ids: FB-T1 to FB-T10 (10) + FB-T5b, FB-T5c, FB-T6b, FB-T7b, FB-T7c, FB-T7d, FB-T9b (7) = 17, unchanged (revision 6 adds sub-rows only: FB-T1 cause rows, FB-T1e required, FB-T6b allow-list sub-row, FB-T9 non-network and two `measured` sub-rows, FB-T9b worker-thread and guard sub-rows).
 - BN-17 mutant ids: 35 = previous 32 + FB-M9g, FB-M9h, FB-M9i; renamed 2 (FB-M2a, FB-M2b), so 33 new. Per package: P4b1-b 21 ids (FB-M1a to M1e = 5, M2a to M2h = 8, M3, M4 = 2, M9a to M9d = 4, M9h, M9i = 2; 19 new); P4b1-a 7 (FB-M5, M5b, M5c, M6, M6b, M6c, M6d; 7 new); P4a-2 7 (FB-M7a to M7d = 4, FB-M9e, M9f, M9g = 3; 7 new). 21 + 7 + 7 = 35; 19 + 7 + 7 = 33.
 - BN-18: 15 SG test row ids (unchanged); 19 SG mutant ids = SG-M1 to SG-M19; P4a-2 holds 17 (SG-M1 to M7, M9 to M12, M14 to M19), P4c-2 1 (SG-M8), P4b1-b 1 (SG-M13). 17 + 1 + 1 = 19.
