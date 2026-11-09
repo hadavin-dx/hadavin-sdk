@@ -10,6 +10,8 @@ import copy
 import json
 import re
 import shlex
+import shutil
+import subprocess
 import sys
 import tomllib
 from pathlib import Path
@@ -73,6 +75,7 @@ SECURITY_STEP_NAMES = [
     None,  # actions/checkout
     None,  # astral-sh/setup-uv
     "Install the scanners (locked)",
+    "System tools resolve outside the workspace",
     "Dependencies with known vulnerabilities (every locked package, hashes required)",
     "Python security lint",
     "Static analysis (Semgrep community rules)",
@@ -137,30 +140,62 @@ def check_golden(workflow):
     )
 
 
-def check_gitleaks_config():
-    """The scan reads .gitleaks.toml from the PR's own tree: it must keep the default rules and may only allow narrow paths."""
-    cfg = tomllib.loads((CI.parents[2] / ".gitleaks.toml").read_text())
+GITLEAKS_GOLDEN = Path(__file__).parent / "fixtures" / "gitleaks_config_golden.json"
+
+
+def check_gitleaks_config(root=None):
+    """The scan reads .gitleaks.toml from the PR's own tree. The parsed file must equal the stored golden, every allowlist
+    must be path-scoped with condition AND, and its paths may match tracked files only in the places the golden allows."""
+    root = root or CI.parents[2]
+    cfg = tomllib.loads((root / ".gitleaks.toml").read_text())
+    assert cfg == json.loads(GITLEAKS_GOLDEN.read_text()), ".gitleaks.toml differs from the golden"
     assert set(cfg) <= {"extend", "allowlists"}, f"unexpected top-level keys: {sorted(cfg)}"
     assert cfg["extend"] == {"useDefault": True}
-    probes = [
-        "src/hadavin_sdk/store/migrate.py",
-        "tests/test_x.py",
-        ".github/workflows/ci.yml",
-        "pyproject.toml",
-    ]
+    tracked = subprocess.run(  # noqa: S603 (fixed argv, no shell)
+        [shutil.which("git") or "git", "ls-files"],
+        cwd=root,
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout.splitlines()
     for al in cfg["allowlists"]:
-        assert al.get("condition") == "AND" and al.get("paths"), (
-            f"allowlist must be path-scoped: {al.get('description')}"
-        )
+        assert al.get("condition") == "AND" and al.get("paths"), "allowlist must be path-scoped"
         assert not al.get("commits") and not al.get("stopwords"), "no commit or stopword allowlists"
         for pat in al["paths"]:
-            assert not any(re.search(pat, probe) for probe in probes), (
-                f"allowlist path {pat!r} reaches source or CI files"
+            hit = [f for f in tracked if re.search(pat, f)]
+            assert all(
+                f in ALLOWED_HITS or re.match(r"handover/(reviews|tickets|evidence)/[^/]+\.md$", f)
+                for f in hit
+            ), f"allowlist path {pat!r} reaches {[f for f in hit if f not in ALLOWED_HITS][:3]}"
+
+
+ALLOWED_HITS = {"tests/demo_askdata/test_demo_literals.py"}
+
+
+def check_other_workflows():
+    """No other workflow file may carry a job that could stand in for a required check, or run with write power on forks."""
+    wf_dir = CI.parent
+    for f in sorted(wf_dir.glob("*.y*ml")):
+        if f.name == CI.name:
+            continue
+        w = yaml.load(f.read_text(), Loader=_StrictLoader)  # noqa: S506 (SafeLoader subclass)
+        trig = w.get(True) or w.get("on") or {}
+        names = set(trig if isinstance(trig, (dict, list)) else [trig])
+        assert "pull_request_target" not in names and "workflow_run" not in names, (
+            f"{f.name}: unsafe trigger"
+        )
+        for jid, job in (w.get("jobs") or {}).items():
+            assert jid not in REQUIRED_NAMES and job.get("name") not in REQUIRED_NAMES, (
+                f"{f.name}: job {jid!r} reuses a required check name"
             )
+
+
+REQUIRED_NAMES = {"security", "check", "tests-py312"}
 
 
 def check_structure(workflow):
     check_golden(workflow)
+    check_other_workflows()
     """Everything around the two steps: job keys, defaults, env, checkout, step order, and every command of both steps."""
     assert set(workflow) == {"name", True, "permissions", "concurrency", "env", "jobs"}, (
         "unexpected workflow keys"
@@ -290,13 +325,36 @@ def test_the_gitleaks_config_has_only_narrow_path_allowlists():
     check_gitleaks_config()
 
 
-def test_the_gitleaks_config_pin_rejects_a_blanket_allowlist(tmp_path, monkeypatch):
-    (tmp_path / ".github" / "workflows").mkdir(parents=True)
-    bad = "[extend]\nuseDefault = true\n[[allowlists]]\ncondition = \"AND\"\npaths = ['''.*''']\n"
-    (tmp_path / ".gitleaks.toml").write_text(bad)
-    monkeypatch.setattr(sys.modules[__name__], "CI", tmp_path / ".github" / "workflows" / "ci.yml")
+BAD_TOML = {
+    "blanket": "[extend]\nuseDefault = true\n[[allowlists]]\ncondition = \"AND\"\npaths = ['''.*''']\n",
+    "demos": "[extend]\nuseDefault = true\n[[allowlists]]\ncondition = \"AND\"\npaths = ['''^demos/''']\n",
+    "no extend": "[[allowlists]]\ncondition = \"AND\"\npaths = ['''^handover/''']\n",
+    "extra key": "[extend]\nuseDefault = true\n[allowlist]\npaths = ['''x''']\n",
+}
+
+
+@pytest.mark.parametrize("name", sorted(BAD_TOML))
+def test_the_gitleaks_config_pin_rejects_a_widened_config(name, tmp_path):
+    subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)  # noqa: S603, S607
+    (tmp_path / ".gitleaks.toml").write_text(BAD_TOML[name])
+    (tmp_path / "demos").mkdir()
+    (tmp_path / "demos" / "a.py").write_text("x = 1\n")
+    subprocess.run(["git", "-C", str(tmp_path), "add", "-A"], check=True)  # noqa: S603, S607
     with pytest.raises(AssertionError):
-        check_gitleaks_config()
+        check_gitleaks_config(tmp_path)
+
+
+def test_another_workflow_cannot_reuse_a_required_check_name(tmp_path, monkeypatch):
+    wf = tmp_path / ".github" / "workflows"
+    wf.mkdir(parents=True)
+    (wf / "ci.yml").write_text("name: x\n")
+    (wf / "other.yml").write_text("name: o\non: push\njobs:\n  security:\n    runs-on: x\n")
+    monkeypatch.setattr(sys.modules[__name__], "CI", wf / "ci.yml")
+    with pytest.raises(AssertionError):
+        check_other_workflows()
+    (wf / "other.yml").write_text("name: o\non: pull_request_target\njobs:\n  a:\n    runs-on: x\n")
+    with pytest.raises(AssertionError):
+        check_other_workflows()
 
 
 def test_every_pinned_download_retries_and_keeps_its_checksum():
@@ -434,6 +492,7 @@ STRUCTURE_BAD = {
     "second security-named job": lambda w: w["jobs"].update(
         {"x": {"name": "security", "runs-on": "ubuntu-24.04"}}
     ),
+    "tool shadow check dropped": lambda w: _security_steps(w).pop(3),
     "other url": lambda w: _step(w, GL).update(
         {"run": _step(w, GL)["run"].replace("github.com/gitleaks", "example.invalid/gitleaks")}
     ),

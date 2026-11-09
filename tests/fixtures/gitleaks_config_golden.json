@@ -1,0 +1,43 @@
+{
+ "allowlists": [
+  {
+   "condition": "AND",
+   "description": "tests/demo_askdata/test_demo_literals.py is a scanner test: it plants fake literals to prove its own scan catches them. Allowed: a finding that is ONLY PEM header lines (no key body), or exactly the placeholder abcdefgh12345678",
+   "paths": [
+    "^tests/demo_askdata/test_demo_literals\\.py$"
+   ],
+   "regexTarget": "secret",
+   "regexes": [
+    "^(?:-----BEGIN [A-Z ]*PRIVATE KEY-----\",\\s*\"){0,2}-----BEGIN [A-Z ]*PRIVATE KEY-----$",
+    "^abcdefgh12345678$"
+   ]
+  },
+  {
+   "condition": "AND",
+   "description": "temporary: entropy heuristic only, markdown notes of the handover branch",
+   "paths": [
+    "^handover/(reviews|tickets|evidence)/[^/]+\\.md$"
+   ],
+   "targetRules": [
+    "generic-api-key"
+   ]
+  },
+  {
+   "condition": "AND",
+   "description": "textnorm golden fixture: sha256 digests under identity_key (entropy heuristic only, exact 64-hex shape, one path)",
+   "paths": [
+    "^tests/fixtures/textnorm_golden\\.json$"
+   ],
+   "regexTarget": "secret",
+   "regexes": [
+    "^[0-9a-f]{64}$"
+   ],
+   "targetRules": [
+    "generic-api-key"
+   ]
+  }
+ ],
+ "extend": {
+  "useDefault": true
+ }
+}
