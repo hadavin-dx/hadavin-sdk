@@ -2,7 +2,7 @@
 
 Evidence runner output (records, does not judge). Private scratch tree /tmp/ag/mut, pristine copy /tmp/ag/mut-pristine, driver /tmp/ag/mut_run.py, mutant list /tmp/ag/mutants.py, raw results /tmp/ag/mut_results.json.
 
-Counts so far: attempted 12, valid 12, killed 9, survived 3, invalid 0, timeout 0.
+Counts so far: attempted 13, valid 13, killed 9, survived 4, invalid 0, timeout 0.
 
 | n | label | class | file:line | mutation | tests run | result | first failing test | seconds |
 |---|---|---|---|---|---|---|---|---|
@@ -18,9 +18,11 @@ Counts so far: attempted 12, valid 12, killed 9, survived 3, invalid 0, timeout 
 | 10 | receipt uniqueness ignores source | unique-constraint | src/lead_desk/schema.sql:17 | `UNIQUE (source, source_ref)` -> `UNIQUE (source_ref)` | fast selection (11 files, minus known-red and 3 slow load tests), -x | KILLED | tests/test_flow.py::test_cross_source_dupe | 0.4 |
 | 11 | schema source_ref length bound 128 -> 127 | boundary | src/lead_desk/schema.sql:7 | `CHECK (length(source_ref) BETWEEN 1 AND 128)` -> `CHECK (length(source_ref) BETWEEN 1 AND 127)` | fast selection (11 files, minus known-red and 3 slow load tests), -x | SURVIVED |  | 92.9 |
 | 12 | envelope min length boundary <= -> < | boundary | src/lead_desk/desk.py:719 | `SOURCE_REF_MIN <= len(source_ref) <= SOURCE_REF_MAX` -> `SOURCE_REF_MIN < len(source_ref) <= SOURCE_REF_MAX` | fast selection (11 files, minus known-red and 3 slow load tests), -x | SURVIVED |  | 92.9 |
+| 13 | automatic claim no longer clears send_started | claim-lease | src/lead_desk/desk.py:97 | `("pending",): (         "UPDATE followups SET state='sending', attempt` -> `("pending",): (         "UPDATE followups SET state='sending', attempt` | fast selection (11 files, minus known-red and 3 slow load tests), -x | SURVIVED |  | 93.7 |
 
 ## Survivors
 
 - #4 unique index on email_key made non-unique (src/lead_desk/schema.sql:41, class unique-constraint). Full-suite confirmation: not yet run.
 - #11 schema source_ref length bound 128 -> 127 (src/lead_desk/schema.sql:7, class boundary). Full-suite confirmation: not yet run.
 - #12 envelope min length boundary <= -> < (src/lead_desk/desk.py:719, class boundary). Full-suite confirmation: not yet run.
+- #13 automatic claim no longer clears send_started (src/lead_desk/desk.py:97, class claim-lease). Full-suite confirmation: not yet run.
