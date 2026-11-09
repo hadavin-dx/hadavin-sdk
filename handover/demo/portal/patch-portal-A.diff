@@ -1,5 +1,5 @@
 diff --git a/README.md b/README.md
-index e6dce1b..1d21854 100644
+index e6dce1b..6b4a11e 100644
 --- a/README.md
 +++ b/README.md
 @@ -51,7 +51,7 @@ re-run the n8n measurements. Every number below comes from that one laptop; trea
@@ -32,7 +32,7 @@ index e6dce1b..1d21854 100644
 +
 +`/ui/` shows the lead book in a browser: a summary that adds up, the leads, and the items that need a person. The pages read the lead book through a second, read-only database connection (a write through it fails, and one test shows that); the buttons that retry or resolve an item call the same `/review` routes as everything else. Every request, including the pages, must come with a `Host` header that names this computer (or a name from `DESK_ALLOWED_HOSTS`), and a request from a page on another address (a different `Origin`, or `Sec-Fetch-Site` other than `same-origin`) is refused with 403 before anything is read. The exact routes are in `contract.md`.
 +
-+**What the Host and Origin check does and does not do.** It stops web pages in a browser: a page on another web site, and a web site that tricks the browser into talking to this computer under another name ("DNS rebinding"). It does NOT stop a person or program that can reach the desk's address and sends the right `Host` header by hand. There is no login. So keep the desk on `127.0.0.1` (the default). If a container (n8n in Docker, for example) must reach it, bind to the one address that only your container network reaches (the Docker bridge or host address), never to the wildcard address (the one made of four zeros). A bind to any other address than this computer's own exposes every lead (names, e-mail addresses, phone numbers, messages) to everyone who can connect, and the desk prints a warning at start-up when you do that. `/api/ui` answers at most 8 requests at once; more get 503 `busy`. The count "refused at the door" on the Overview page is kept in memory and starts again at 0 when the desk restarts: read it as "since desk start (HH:MM)". Close the portal while you run a load test: every open page asks the desk for its numbers every few seconds.
++**What the Host and Origin check does and does not do.** It stops web pages in a browser: a page on another web site, and a web site that tricks the browser into talking to this computer under another name ("DNS rebinding"). It does NOT stop a person or program that can reach the desk's address and sends the right `Host` header by hand. There is no login. So keep the desk on `127.0.0.1` (the default). If a container (n8n in Docker, for example) must reach it, bind to the one address that only your container network reaches (the Docker bridge or host address), never to the wildcard address (the one made of four zeros). A bind to any other address than this computer's own exposes every lead (names, e-mail addresses, phone numbers, messages) to everyone who can connect, and the desk prints a warning at start-up when you do that. `/api/ui` answers at most 8 requests at once; more get 503 `busy`. The count "refused at the door" on the Overview page is kept in memory and starts again at 0 when the desk restarts: read it as "since desk start (HH:MM)". The desk serves each connection on its own thread and sets no limit on the number of threads: a client that holds many connections open (slow bytes) holds that many threads, so keep the desk off networks you do not trust. A bind written as a short all-zeros form (for example the single digit 0) is treated as a wildcard. Close the portal while you run a load test: every open page asks the desk for its numbers every few seconds.
 +
  ## Settings
  
@@ -50,12 +50,12 @@ index e6dce1b..1d21854 100644
  | `send_timeout_seconds` | `DESK_SEND_TIMEOUT_SECONDS` | `5.0` | wait per network step, also for the CRM call |
  | `size_cap_bytes` | `DESK_SIZE_CAP_BYTES` | `65536` | largest request body accepted (larger gets 413) |
  | `stall_seconds` | `DESK_STALL_SECONDS` | `120` | after this long an unfinished item shows as `stalled` on the review list |
-+| `allowed_hosts` | `DESK_ALLOWED_HOSTS` | none | extra names a caller may use in the `Host` header (comma list, lower case). The desk always accepts `127.0.0.1`, `localhost`, `[::1]` and its bind address (not when the bind address is a wildcard, the address made of four zeros or `::`, which is never a host name; `scripts/feed.py` then calls `127.0.0.1`). Each name must be a plain host name (letters, digits and hyphens in dot-separated parts of 1 to 63 characters, none starting or ending with a hyphen) or an IPv6 address in brackets; wildcard addresses are refused n8n in Docker reaches the desk by the host name Docker gives the computer: set `DESK_BIND` to the address the desk must listen on and `DESK_ALLOWED_HOSTS` to that name |
++| `allowed_hosts` | `DESK_ALLOWED_HOSTS` | none | extra names a caller may use in the `Host` header (comma list, lower case). The desk always accepts `127.0.0.1`, `localhost`, `[::1]` and its bind address (not when the bind address is a wildcard, the address made of four zeros or `::`, which is never a host name; `scripts/feed.py` then calls `127.0.0.1`). Each name must be a plain host name (letters, digits and hyphens in dot-separated parts of 1 to 63 characters, none starting or ending with a hyphen) or an IPv6 address in brackets; wildcard addresses are refused. n8n in Docker reaches the desk by the host name Docker gives the computer: set `DESK_BIND` to the address the desk must listen on and `DESK_ALLOWED_HOSTS` to that name |
  
  Fixed in code, not settings: SQLite busy wait, listen queue length and lock retries (`constants.py`).
  
 diff --git a/contract.md b/contract.md
-index fa04140..8ae304f 100644
+index fa04140..1708051 100644
 --- a/contract.md
 +++ b/contract.md
 @@ -38,7 +38,7 @@ There is no build-system. Scripts set `PYTHONPATH=src` (and run from the repo ro
@@ -72,10 +72,10 @@ index fa04140..8ae304f 100644
  `lead_desk.hooks.FlagFileHooks(flag_path)` is the single shared hook for every subprocess crash. It reads a one-shot flag file (the path comes from config or the launcher, content = a point name), deletes it, prints "simulate crash" and calls `os._exit(137)`. `tests/crash_launcher.py` and `scripts/video_crash.py` contain no hook code: each only calls `lead_desk.server.main(hooks=FlagFileHooks(path))`. In-process tests use their own `Hooks` subclass that raises `SimulatedCrash`. Hook A fires only when this call created the receipt row; hook B fires only when this call committed transaction 2 (a replay never fires either).
  
 +## Host and Origin gate
-+Every request, on every route, passes `_gate_error` in `server.py` before the path is read. (1) `Host` is required (sent once) and its name, port ignored and lower-cased, must be `127.0.0.1`, `localhost`, `[::1]`, the bind address (not when it is a wildcard address), or a name in `Config.allowed_hosts` (`DESK_ALLOWED_HOSTS`, comma list, each name a lower-case host name made of dot-separated labels of 1 to 63 letters, digits or hyphens that neither start nor end with a hyphen, at most 253 characters in all, or an IPv6 address in brackets; a wildcard address (four zeros, or `::`) is refused). A `Host` port above 65535 is refused too. Otherwise 403 `{"error":"forbidden_host"}`. (2) An `Origin` header, if present (sent once), must equal `http://<allowed name>:<bound port>` exactly; `null` and anything else give 403 `{"error":"forbidden_origin"}`. (3) A `Sec-Fetch-Site` header, if present, must be `same-origin` or `none`, else 403 `{"error":"forbidden_origin"}`. A refused request writes nothing: no receipt, no count in `rejected_envelopes`; its body is read and dropped before the reply. Requests without `Origin` and `Sec-Fetch-Site` (n8n's server side, scripts, tests) pass on `Host` alone. **The gate protects against browsers only** (cross-site pages and DNS rebinding). It is not authentication: anyone who can reach the bound address and types the right `Host` reads every lead. Default bind is loopback; for a container bind the one bridge or host address, never a wildcard; the desk prints a warning at start-up when the bind is not loopback. A caller that reaches the desk under another name (for example n8n in Docker, which uses the host name Docker gives the computer) sets `DESK_BIND` to the address the desk must listen on and `DESK_ALLOWED_HOSTS` to that name.
++Every request, on every route, passes `_gate_error` in `server.py` before the path is read. (1) `Host` is required (sent once) and its name, port ignored and lower-cased, must be `127.0.0.1`, `localhost`, `[::1]`, the bind address (not when it is a wildcard address), or a name in `Config.allowed_hosts` (`DESK_ALLOWED_HOSTS`, comma list, each name a lower-case host name made of dot-separated labels of 1 to 63 letters, digits or hyphens that neither start nor end with a hyphen, at most 253 characters in all, or an IPv6 address in brackets; a wildcard address (four zeros, or `::`) is refused). A `Host` port above 65535 is refused too. Otherwise 403 `{"error":"forbidden_host"}`. (2) An `Origin` header, if present (sent once), must equal `http://<allowed name>:<bound port>` exactly; `null` and anything else give 403 `{"error":"forbidden_origin"}`. (3) A `Sec-Fetch-Site` header, if present, must be `same-origin` or `none`, else 403 `{"error":"forbidden_origin"}`. A refused request writes nothing: no receipt, no count in `rejected_envelopes`; its body is read and dropped before the reply (the desk answers as HTTP/1.0 and never sends `100 Continue`; for a request with `Expect: 100-continue` the body is not waited for, so the refusal is immediate). Requests without `Origin` and `Sec-Fetch-Site` (n8n's server side, scripts, tests) pass on `Host` alone. **The gate protects against browsers only** (cross-site pages and DNS rebinding). It is not authentication: anyone who can reach the bound address and types the right `Host` reads every lead. Default bind is loopback; for a container bind the one bridge or host address, never a wildcard; the desk prints a warning at start-up when the bind is not loopback. A caller that reaches the desk under another name (for example n8n in Docker, which uses the host name Docker gives the computer) sets `DESK_BIND` to the address the desk must listen on and `DESK_ALLOWED_HOSTS` to that name.
 +
 +## Portal routes
-+Read-only pages for a person: `GET /ui` answers 308 to `/ui/`; `GET /ui/<file>` serves one of the `.html`, `.css`, `.js` files found under `src/lead_desk/portal/` when the server started (a fixed map, never a path read from the request; anything else is 404); `/ui/demo/<file>` serves a file of the demo extension when one is installed, else 404. `GET /api/ui/summary`, `/api/ui/leads`, `/api/ui/leads/<lead_id>` and `/api/ui/review` answer JSON built from ONE read transaction on a separate read-only connection (`mode=ro`, `PRAGMA query_only=ON`): a write through it fails. All four, `/api/ui/review` included, read through that connection only (the review list runs `desk.review_rows`, the desk's own SQL and hint rules, on it); the desk's write connections are never used for a page. At most `PORTAL_MAX_INFLIGHT` (8) of these requests run at once; more get 503 `{"error":"busy"}`. `summary.refused_at_door` counts requests refused at the door since the desk started (in memory, 0 again after a restart); show it as "since desk start (HH:MM)". `GET /api/ui/leads?q=` matches (case-insensitively, as plain text) the name, email, company, lead id and first request id, at most 100 characters, no control characters. Files are read once at start; symbolic links, files that resolve outside the portal folder and files over `STATIC_FILE_MAX_BYTES` are left out, and a file under `demo/` shadows nothing (that prefix is the extension's). Any other method on these routes is 405. `/api/demo/<rest>` goes to the demo extension (GET and POST only, any other method is 405; 404 when none is installed or when the desk does not run the demo adapters; a POST body must be `application/json`, else 400 `{"error":"bad_body"}`; a body over `DEMO_BODY_MAX` bytes is 413 `{"error":"too_large"}` and is not handed on; a body that stalls is 408 `{"error":"request_timeout"}`). The extension is loaded before the socket is bound, so a broken extension leaves nothing listening. The "Follow-up failed" card says "nothing was sent" only for the reasons `refused`, `unreachable` and `internal:*`; any other reason (`ambiguous`, `crash_while_sending`, others) shows "Follow-up did not finish", because the email may have left, and Retry is safe only on a keyed outbox. Every reply, JSON or file, carries `Content-Security-Policy` (no inline script or style, no `data:`), `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`, `Cross-Origin-Resource-Policy: same-origin` and `Cache-Control: no-store`.
++Read-only pages for a person: `GET /ui` answers 308 to `/ui/`; `GET /ui/<file>` serves one of the `.html`, `.css`, `.js` files found under `src/lead_desk/portal/` when the server started (a fixed map, never a path read from the request; anything else is 404); `/ui/demo/<file>` serves a file of the demo extension when one is installed, else 404. `GET /api/ui/summary`, `/api/ui/leads`, `/api/ui/leads/<lead_id>` and `/api/ui/review` answer JSON built from ONE read transaction on a separate read-only connection (`mode=ro`, `PRAGMA query_only=ON`): a write through it fails. All four, `/api/ui/review` included, read through that connection only (the review list runs `desk.review_rows`, the desk's own SQL and hint rules, on it); the desk's write connections are never used for a page. At most `PORTAL_MAX_INFLIGHT` (8) of these requests run at once; more get 503 `{"error":"busy"}`. `summary.refused_at_door` counts requests refused at the door since the desk started (in memory, 0 again after a restart); show it as "since desk start (HH:MM)". `GET /api/ui/leads?q=` matches (as plain text; case is ignored for ASCII letters only) the name, email, company, lead id and first request id, at most 100 characters, no control characters. Files are read once, when `portal_api` is first imported; symbolic links, files that resolve outside the portal folder and files over `STATIC_FILE_MAX_BYTES` are left out, and the folder name `demo/` is reserved for the extension: a file of the portal folder under that name is never served. Any other method on these routes is 405. `/api/demo/<rest>` goes to the demo extension (GET and POST only, any other method is 405; 404 when none is installed or when the desk does not run the demo adapters; a POST body must be `application/json`, else 400 `{"error":"bad_body"}`; a body over `DEMO_BODY_MAX` bytes is 413 `{"error":"too_large"}` and is not handed on; a body that stalls is 408 `{"error":"request_timeout"}`). The extension is loaded before the socket is bound, so a broken extension leaves nothing listening. The "Follow-up failed" card says "nothing was sent" only for the reasons `refused`, `unreachable` and `internal:*`; any other reason (`ambiguous`, `crash_while_sending`, others), and any failed follow-up whose row carries `ambiguous_prior` (an earlier send may have left), shows "Follow-up did not finish", because the email may have left, and Retry is safe only on a keyed outbox. Every reply, JSON or file, carries `Content-Security-Policy` (no inline script or style, no `data:`), `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`, `Cross-Origin-Resource-Policy: same-origin` and `Cache-Control: no-store`.
 +
  ## Further rules
  * `Config.replies_path` defaults to `None` ("the loader supplies its own default"): `load_demo_adapters` then uses the `replies.json` that sits next to the demo folder's package, found from the package file, not from the working directory. `DESK_REPLIES_PATH` still sets it. `loader.py` is the only product module that names the demo folder (a test enforces it).
@@ -92,21 +92,20 @@ index fa04140..8ae304f 100644
 +| | 400 | `{"error":"bad_query","field":"<name>"}` (unknown, repeated or out-of-range parameter; also on the other `/api/ui` routes for any parameter) |
 +| `GET /api/ui/leads/{lead_id}` | 200 | `{now, lead{...}, followup{...}, first_receipt{...}, duplicates[...] (at most 50), duplicates_total, review_items[...]}` |
 +| | 404 | `{"error":"not_found"}` (also when `lead_id` is not `L` plus 12 lower-case hex characters) |
-+| `GET /api/ui/review` | 200 | `{now, items[{...the /review fields, lead_name, tab, title, reason_text, actions[{id,label,endpoint,body,confirm}]}], tabs{action,waiting,info}}` |
-+| any `/api/ui/*` | 503 | `{"error":"busy"}` (the read hit a lock that outlasted the wait) |
++| `GET /api/ui/review` (actions: failed card `retry`; each UNKNOWN card `retry` first, then its resolve choices. Retry on an UNKNOWN card is answered by the desk with 409 `unknown_needs_person` and changes nothing; the page shows the desk's words. This amends design 2.3, which listed no Retry for UNKNOWN) | 200 | `{now, items[{...the /review fields, lead_name, tab, title, reason_text, actions[{id,label,endpoint,body,confirm}]}], tabs{action,waiting,info}}` |
++| any `/api/ui/*` | 503 | `{"error":"busy"}` (the read hit a lock that outlasted the wait) or `{"error":"unavailable"}` (the read-only open failed or a table is missing: a request before start-up finished, a database path that is not a file, a deleted file) |
 +| any request | 403 | `{"error":"forbidden_host"}` (Host missing, repeated or not allowed) or `{"error":"forbidden_origin"}` (Origin or Sec-Fetch-Site not from this server); see "Host and Origin gate" |
  
  Fakes server (separate process; default `127.0.0.1:8766`; started with `--outbox keyed|blind --port 8766`). Every reply includes `"mode":"keyed|blind"`.
  * `POST /fake/outbox` `{"key","to","subject","body"}` -> keyed mode: 200 `{"status":"sent","mode":"keyed"}` the first time for a key and 200 `{"status":"already_sent","mode":"keyed"}` after; blind mode: always 200 `{"status":"sent","mode":"blind"}` and every post is stored. Bad body: 400 `{"error":"bad_body"}`.
 diff --git a/exceptions.txt b/exceptions.txt
-index d2be099..e91b5da 100644
+index d2be099..d9200ec 100644
 --- a/exceptions.txt
 +++ b/exceptions.txt
-@@ -10,3 +10,5 @@
+@@ -10,3 +10,4 @@
  ^requirements-dev(-win)?\.txt:[0-9]+:[0-9a-f]{64}$
  ^src/lead_desk/desk\.py:[0-9]+:threading\.local[^A-Za-z0-9_-]?$
  ^tests/[a-z_0-9]+\.py:[0-9]+:test_[a-z0-9]{1,12}(_[a-z0-9]{1,12}){0,6}$
-+^src/lead_desk/constants\.py:[0-9]+:0\.0\.0\.0$
 +^tests/test_server_hardening\.py:[0-9]+:test_(reply[_]write[_]fails[_]after[_]commit[_]followup[_]still[_]runs|300[_]simultaneous[_]connections[_]all[_]get[_]an[_]answer[_]with[_]retry)$
 diff --git a/scripts/feed.py b/scripts/feed.py
 index e959dbc..bad1758 100644
@@ -149,16 +148,17 @@ index e959dbc..bad1758 100644
      if args.all == (args.index is not None):
          ap.error("give exactly one of --index or --all")
 diff --git a/src/lead_desk/config.py b/src/lead_desk/config.py
-index 319a8bc..883db65 100644
+index 319a8bc..0bd1e98 100644
 --- a/src/lead_desk/config.py
 +++ b/src/lead_desk/config.py
-@@ -2,13 +2,26 @@
+@@ -2,13 +2,33 @@
  
  from __future__ import annotations
  
 +import ipaddress
  import os
 +import re
++import socket
  from dataclasses import dataclass
  from pathlib import Path
  from typing import Any, Mapping
@@ -171,16 +171,22 @@ index 319a8bc..883db65 100644
 +_HOST_NAME = re.compile(rf"^{_LABEL}(?:\.{_LABEL})*$|^\[[0-9a-f:]+\]$")
 +
 +
-+def _is_unspecified(name: str) -> bool:
-+    """True for an address that means "every interface", in any spelling (the all-zeros IPv4 address, ::, [::])."""
++def is_unspecified(name: str) -> bool:
++    """True for a bind name that means "every interface", in any spelling: the all-zeros IPv4 address, ::, [::], and
++    the short forms the system resolver reads as all zeros (a lone digit string such as the single character 0)."""
++    bare = name.strip("[]")
 +    try:
-+        return ipaddress.ip_address(name.strip("[]")).is_unspecified
++        return ipaddress.ip_address(bare).is_unspecified
 +    except ValueError:
++        pass
++    try:
++        return socket.inet_aton(bare) == bytes(4)
++    except OSError:
 +        return False
  
  
  @dataclass(frozen=True)
-@@ -23,6 +36,7 @@ class Config:
+@@ -23,6 +43,7 @@ class Config:
      send_timeout_seconds: float = 5.0  # per network operation; also used for the CRM call
      size_cap_bytes: int = 65536
      stall_seconds: int = 120
@@ -188,7 +194,7 @@ index 319a8bc..883db65 100644
  
      @property
      def fakes_url(self) -> str:
-@@ -44,12 +58,21 @@ class Config:
+@@ -44,12 +65,21 @@ class Config:
              raise ValueError("size_cap_bytes must be positive")
          if self.stall_seconds < 0:
              raise ValueError("stall_seconds must not be negative")
@@ -197,7 +203,7 @@ index 319a8bc..883db65 100644
 +                len(name) > HOST_NAME_MAX
 +                or not _HOST_NAME.fullmatch(name)
 +                or name.strip("[]") in WILDCARD_BINDS
-+                or _is_unspecified(name)
++                or is_unspecified(name)
 +            ):
 +                raise ValueError("allowed_hosts holds a name that is not a lower-case host name")
  
@@ -211,7 +217,7 @@ index 319a8bc..883db65 100644
          Precedence: DESK_FAKES_URL wins over DESK_FAKES_HOST / DESK_FAKES_PORT when both are set. The URL scheme
          must be http (anything else raises ValueError). A non-empty URL path other than "/" raises ValueError (it
          would be silently dropped otherwise). A query, a fragment and userinfo (`user:pw@`) are ignored: only the
-@@ -86,4 +109,8 @@ class Config:
+@@ -86,4 +116,8 @@ class Config:
              kw["size_cap_bytes"] = int(e["DESK_SIZE_CAP_BYTES"])
          if "DESK_STALL_SECONDS" in e:
              kw["stall_seconds"] = int(e["DESK_STALL_SECONDS"])
@@ -387,10 +393,10 @@ index 9a032cc..168792a 100644
      """Build HttpCrm and HttpOutbox on config.fakes_url and a RecordedQualifier on config.replies_path
 diff --git a/src/lead_desk/portal_api.py b/src/lead_desk/portal_api.py
 new file mode 100644
-index 0000000..8133847
+index 0000000..0745805
 --- /dev/null
 +++ b/src/lead_desk/portal_api.py
-@@ -0,0 +1,574 @@
+@@ -0,0 +1,586 @@
 +"""Read-only JSON for the portal pages (GET /api/ui/*) and the fixed list of portal files (GET /ui/*).
 +
 +Every endpoint opens its OWN read-only SQLite connection (mode=ro plus PRAGMA query_only), starts one read
@@ -403,6 +409,7 @@ index 0000000..8133847
 +from __future__ import annotations
 +
 +import json
++import logging
 +import re
 +import sqlite3
 +import threading
@@ -439,6 +446,7 @@ index 0000000..8133847
 +)
 +from lead_desk.desk import HINT_INTERNAL_ERROR, HINTS, Desk, review_rows
 +
++log = logging.getLogger("lead_desk")
 +PORTAL_DIR: Final = Path(__file__).resolve().parent / "portal"
 +_LEAD_ID = re.compile(LEAD_ID_PATTERN)
 +_NOT_FOUND: Final = (HTTP_NOT_FOUND, {"error": "not_found"})
@@ -481,12 +489,14 @@ index 0000000..8133847
 +
 +
 +@contextmanager
-+def _snapshot(desk: Desk) -> Iterator[sqlite3.Connection]:
-+    """One read transaction: every SELECT inside sees the same committed state."""
++def _snapshot(desk: Desk) -> Iterator[tuple[sqlite3.Connection, int]]:
++    """One read transaction: every SELECT inside sees the same committed state. Yields (connection, now). The clock
++    is read after the first read has fixed the snapshot, so no row in the snapshot is newer than `now`."""
 +    conn = connect_readonly(desk.config.db_path)
 +    try:
 +        conn.execute("BEGIN")
-+        yield conn
++        conn.execute("SELECT 1 FROM sqlite_master LIMIT 1").fetchall()  # the snapshot starts at the first read
++        yield conn, desk.now()
 +        conn.execute("COMMIT")
 +    finally:
 +        conn.close()
@@ -524,7 +534,10 @@ index 0000000..8133847
 +    except sqlite3.OperationalError as e:
 +        if db.is_busy(e):
 +            return HTTP_BUSY, {"error": "busy"}
-+        raise
++        # The read-only open failed or a table is missing (a request before desk.startup(), a db_path that is not a
++        # file such as ":memory:", a file that is gone): a fixed reply, no detail.
++        log.warning("portal read failed: %s", e)
++        return HTTP_BUSY, {"error": "unavailable"}
 +    finally:
 +        _INFLIGHT.release()
 +
@@ -592,12 +605,11 @@ index 0000000..8133847
 +
 +
 +def _summary(desk: Desk, started_at: int) -> dict[str, Any]:
-+    now = desk.now()
-+    before = now - desk.config.stall_seconds
 +    step = SERIES_BUCKET_SECONDS
-+    last_bucket = (now // step) * step
-+    first_bucket = last_bucket - (SERIES_BUCKETS - 1) * step
-+    with _snapshot(desk) as conn:
++    with _snapshot(desk) as (conn, now):
++        before = now - desk.config.stall_seconds
++        last_bucket = (now // step) * step
++        first_bucket = last_bucket - (SERIES_BUCKETS - 1) * step
 +        received, new, dup, review, open_, needs, waiting = conn.execute(_COUNTS, (before, before)).fetchone()
 +        by_state = dict(conn.execute(_FOLLOWUP_COUNTS).fetchall())
 +        door_rows = {r[0]: r for r in conn.execute(_DOORS)}
@@ -691,8 +703,7 @@ index 0000000..8133847
 +    if limit is None:
 +        return _bad_query("limit")
 +    args = {"q": q, "pat": _like(q), "state": state, "limit": limit, "offset": offset}
-+    now = desk.now()
-+    with _snapshot(desk) as conn:
++    with _snapshot(desk) as (conn, now):
 +        rows = conn.execute(_LEADS_ROWS, args).fetchall()
 +        total = conn.execute(_LEADS_TOTAL, {k: args[k] for k in ("q", "pat", "state")}).fetchone()[0]
 +        ids = json.dumps([r[0] for r in rows])
@@ -753,7 +764,7 @@ index 0000000..8133847
 +def _object(text: str) -> dict[str, Any]:
 +    """The stored payload as a dict ({} when it is not one; the desk only stores objects)."""
 +    try:
-+        obj = json.loads(text)
++        obj = json.loads(text, parse_constant=lambda _name: None)  # NaN and Infinity become null (not valid JSON)
 +    except ValueError:
 +        return {}
 +    return obj if isinstance(obj, dict) else {}
@@ -768,9 +779,8 @@ index 0000000..8133847
 +
 +
 +def _lead_detail(desk: Desk, lead_id: str) -> tuple[int, dict[str, Any]]:
-+    now = desk.now()
-+    before = now - desk.config.stall_seconds
-+    with _snapshot(desk) as conn:
++    with _snapshot(desk) as (conn, now):
++        before = now - desk.config.stall_seconds
 +        lead = conn.execute(_LEAD_ROW, (lead_id,)).fetchone()
 +        followup = conn.execute(_FOLLOWUP_ROW, (lead_id,)).fetchone()
 +        if lead is None or followup is None:
@@ -781,6 +791,7 @@ index 0000000..8133847
 +        items = [r[0] for r in conn.execute(_LEAD_ITEMS, (before, lead_id))]
 +    lead_row = dict(zip(_LEAD_FIELDS, lead, strict=True))
 +    first_payload = _object(first[7])
++    this_payloads = [_object(d[6]) for d in dups]  # parsed once per duplicate, not once per differing field
 +    return HTTP_OK, {
 +        "now": now,
 +        "lead": lead_row,
@@ -805,12 +816,12 @@ index 0000000..8133847
 +                    {
 +                        "field": f,
 +                        "first": lead_row[f] if f in lead_row else first_payload.get(f),
-+                        "this": _object(d[6]).get(f),
++                        "this": this_payloads[n].get(f),
 +                    }
 +                    for f in _names(d[5])
 +                ],
 +            }
-+            for d in dups
++            for n, d in enumerate(dups)
 +        ],
 +        "duplicates_total": total,
 +        "review_items": items,
@@ -819,6 +830,8 @@ index 0000000..8133847
 +
 +# -- the list of things that need a person
 +_NAMES = "SELECT lead_id, name FROM leads WHERE lead_id IN (SELECT value FROM json_each(?))"
++# Follow-ups for which an earlier send may have left (set once and kept until a person clears it).
++_PRIOR = "SELECT lead_id FROM followups WHERE ambiguous_prior = 1 AND lead_id IN (SELECT value FROM json_each(?))"
 +
 +_RETRY = {"id": "retry", "label": "Retry", "body": None, "confirm": None}
 +_SENT_CONFIRM = {
@@ -871,12 +884,13 @@ index 0000000..8133847
 +    return {**spec, "endpoint": f"/review/{item_id}/{verb}", **over}
 +
 +
-+def _describe(item: dict[str, Any], stall_seconds: int) -> dict[str, Any]:
++def _describe(item: dict[str, Any], stall_seconds: int, maybe_sent: bool = False) -> dict[str, Any]:
 +    """tab, title, reason_text and actions of one item, from the fixed table in the design (section 2.3)."""
 +    kind, reason, item_id = str(item["kind"]), str(item["reason"] or ""), str(item["item_id"])
 +    tab, actions = "action", []
 +    if kind == "failed":
-+        if reason in _NOTHING_SENT_TEXT or reason.startswith("internal"):
++        # "nothing was sent" only when the reason says so AND no earlier send may have left (ambiguous_prior)
++        if not maybe_sent and (reason in _NOTHING_SENT_TEXT or reason.startswith("internal")):
 +            title = "Follow-up failed; nothing was sent"
 +            text = _NOTHING_SENT_TEXT.get(reason, _NOTHING_SENT_INTERNAL)
 +        else:  # ambiguous, crash_while_sending, anything else: the email may have left
@@ -885,6 +899,7 @@ index 0000000..8133847
 +    elif kind == "unknown" and reason == "crm_unconfirmed":
 +        title, text = "UNKNOWN: the CRM may or may not hold this lead", _UNKNOWN_TEXT[reason]
 +        actions = [
++            _action(_RETRY, item_id, "retry"),  # the desk answers 409 unknown_needs_person; the page shows its words
 +            _action(
 +                {"id": "resolve_crm_present", "label": "The CRM row is there", "confirm": _CRM_PRESENT_CONFIRM},
 +                item_id,
@@ -901,6 +916,7 @@ index 0000000..8133847
 +    elif kind == "unknown":
 +        title, text = "UNKNOWN: the email may or may not have gone out", _UNKNOWN_TEXT.get(reason, _UNKNOWN_DEFAULT)
 +        actions = [
++            _action(_RETRY, item_id, "retry"),  # the desk answers 409 unknown_needs_person; the page shows its words
 +            _action(
 +                {"id": "resolve_sent", "label": "I checked: it was sent", "confirm": _SENT_CONFIRM},
 +                item_id,
@@ -950,14 +966,16 @@ index 0000000..8133847
 +
 +
 +def _review(desk: Desk) -> tuple[int, dict[str, Any]]:
-+    now = desk.now()
-+    with _snapshot(desk) as conn:  # the desk's own list, hints and stall rule, on the read-only connection
++    with _snapshot(desk) as (conn, now):  # the desk's own list, hints and stall rule, on the read-only connection
 +        items = review_rows(conn, now - desk.config.stall_seconds)
 +        ids = sorted({str(i["lead_id"]) for i in items if i["lead_id"]})
 +        names = dict(conn.execute(_NAMES, (json.dumps(ids),)).fetchall())
++        failed_ids = sorted({str(i["lead_id"]) for i in items if i["kind"] == "failed" and i["lead_id"]})
++        prior = {r[0] for r in conn.execute(_PRIOR, (json.dumps(failed_ids),))} if failed_ids else set()
 +    out = []
 +    for item in items:
-+        full = {**item, "lead_name": names.get(item["lead_id"]), **_describe(item, desk.config.stall_seconds)}
++        sent = item["kind"] == "failed" and item["lead_id"] in prior
++        full = {**item, "lead_name": names.get(item["lead_id"]), **_describe(item, desk.config.stall_seconds, sent)}
 +        out.append(full)
 +    out.sort(key=lambda i: _TAB_ORDER.index(i["tab"]))  # stable: the desk's order (oldest first) holds inside a tab
 +    return HTTP_OK, {
@@ -966,10 +984,10 @@ index 0000000..8133847
 +        "tabs": {t: sum(1 for i in out if i["tab"] == t) for t in _TAB_ORDER},
 +    }
 diff --git a/src/lead_desk/server.py b/src/lead_desk/server.py
-index 5104f37..ccb54d5 100644
+index 5104f37..0489be6 100644
 --- a/src/lead_desk/server.py
 +++ b/src/lead_desk/server.py
-@@ -7,12 +7,15 @@ from that line."""
+@@ -7,9 +7,11 @@ from that line."""
  
  from __future__ import annotations
  
@@ -981,18 +999,15 @@ index 5104f37..ccb54d5 100644
  import socket
  import sys
  import threading
-+import time
- from collections.abc import Callable
- from dataclasses import replace
- from http import HTTPStatus
-@@ -20,39 +23,54 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+@@ -20,39 +22,54 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
  from typing import Any, cast
  from urllib.parse import parse_qs, unquote, urlsplit
  
 -from lead_desk import db, lockfile
 +from lead_desk import db, lockfile, portal_api
  from lead_desk.adapters import FakesUnreachable
- from lead_desk.config import Config
+-from lead_desk.config import Config
++from lead_desk.config import Config, is_unspecified
  from lead_desk.constants import (
 +    DEMO_BODY_MAX,
 +    DEMO_METHODS,
@@ -1012,6 +1027,7 @@ index 5104f37..ccb54d5 100644
      LISTEN_QUEUE,
 +    LOOPBACK_HOSTS,
      MAX_DIGITS,
++    PORT_MAX,
      REQUEST_TIMEOUT_SECONDS,
 +    SAME_SITE_VALUES,
 +    SECURITY_HEADERS,
@@ -1028,7 +1044,6 @@ index 5104f37..ccb54d5 100644
  log = logging.getLogger("lead_desk")
  
 +_HOST_HEADER = re.compile(r"^(?P<host>\[[0-9A-Fa-f:]+\]|[^:\[\]]+)(?::(?P<port>[0-9]{1,5}))?$")
-+_PORT_MAX = 65535
 +
  
  class _Server(ThreadingHTTPServer):
@@ -1042,7 +1057,7 @@ index 5104f37..ccb54d5 100644
  
      def server_bind(self) -> None:
          if sys.platform == "win32":
-@@ -60,6 +78,30 @@ class _Server(ThreadingHTTPServer):
+@@ -60,6 +77,32 @@ class _Server(ThreadingHTTPServer):
          super().server_bind()
  
  
@@ -1050,6 +1065,8 @@ index 5104f37..ccb54d5 100644
 +    """Host names the portal gate accepts: loopback, the bind address (unless it is a wildcard), and the extra
 +    names from DESK_ALLOWED_HOSTS. The port is not compared: rebinding attacks are about the name."""
 +    names = {*LOOPBACK_HOSTS, *config.allowed_hosts}
++    if is_unspecified(config.bind):
++        return frozenset(names)  # every interface: no single name belongs to the bind
 +    try:
 +        ip = ipaddress.ip_address(config.bind.strip("[]"))
 +    except ValueError:
@@ -1073,7 +1090,7 @@ index 5104f37..ccb54d5 100644
  def _route(method: str, path: str) -> tuple[str, str | None] | int:
      """(route name, path argument) for a known route and method; else 405 or 404 (a status int)."""
      parts = [unquote(p) for p in path.strip("/").split("/")] if path != "/" else []
-@@ -74,6 +116,14 @@ def _route(method: str, path: str) -> tuple[str, str | None] | int:
+@@ -74,6 +117,14 @@ def _route(method: str, path: str) -> tuple[str, str | None] | int:
              name, arg, allowed = action, item, "POST"
          case ["counts"]:
              name, arg, allowed = "counts", None, "GET"
@@ -1088,12 +1105,12 @@ index 5104f37..ccb54d5 100644
          case _:
              return HTTP_NOT_FOUND
      if arg and name in ("retry", "resolve") and arg[1:].isascii() and arg[1:].isdecimal() and len(arg[1:]) > MAX_DIGITS:
-@@ -95,14 +145,19 @@ class _Handler(BaseHTTPRequestHandler):
+@@ -95,14 +146,19 @@ class _Handler(BaseHTTPRequestHandler):
  
      # -- reply helpers
      def _send(self, status: int, obj: Any) -> None:
 -        raw = json.dumps(obj).encode("utf-8")
-+        self._send_bytes(status, json.dumps(obj).encode("utf-8"), "application/json")
++        self._send_bytes(status, json.dumps(obj, allow_nan=False).encode("utf-8"), "application/json")
 +
 +    def _send_bytes(self, status: int, body: bytes, content_type: str, extra: tuple[tuple[str, str], ...] = ()) -> None:
 +        """One writer for every reply: Content-Length, Connection: close and the fixed security headers."""
@@ -1112,7 +1129,7 @@ index 5104f37..ccb54d5 100644
          self.close_connection = True
  
      def send_error(self, code: int, message: str | None = None, explain: str | None = None) -> None:
-@@ -147,11 +202,41 @@ class _Handler(BaseHTTPRequestHandler):
+@@ -147,11 +203,41 @@ class _Handler(BaseHTTPRequestHandler):
          digits = raw.lstrip("0")
          return 10**MAX_DIGITS if len(digits) > MAX_DIGITS else int(digits or "0")
  
@@ -1129,7 +1146,7 @@ index 5104f37..ccb54d5 100644
 +        match = _HOST_HEADER.fullmatch(hosts[0].strip()) if len(hosts) == 1 else None
 +        if match is None or match.group("host").lower() not in server.allowed_hosts:
 +            return "forbidden_host"
-+        if match.group("port") is not None and int(match.group("port")) > _PORT_MAX:
++        if match.group("port") is not None and int(match.group("port")) > PORT_MAX:
 +            return "forbidden_host"
 +        origins = self.headers.get_all("Origin", [])
 +        if origins:
@@ -1154,7 +1171,7 @@ index 5104f37..ccb54d5 100644
              try:
                  parts = urlsplit(self.path)
              except ValueError:  # e.g. the target "http://[/"
-@@ -174,6 +259,8 @@ class _Handler(BaseHTTPRequestHandler):
+@@ -174,6 +260,8 @@ class _Handler(BaseHTTPRequestHandler):
              elif name == "retry":
                  self._skip_body()
                  self._send_reply(desk.retry(str(arg)))
@@ -1163,7 +1180,7 @@ index 5104f37..ccb54d5 100644
              else:
                  self._resolve(str(arg))
              self._flush_and_half_close()
-@@ -194,6 +281,53 @@ class _Handler(BaseHTTPRequestHandler):
+@@ -194,10 +282,61 @@ class _Handler(BaseHTTPRequestHandler):
                      log.warning("follow-up failed: %s", type(e).__name__)
              desk.close()  # this request thread's connection
  
@@ -1217,20 +1234,28 @@ index 5104f37..ccb54d5 100644
      def _send_reply(self, reply: Reply) -> None:
          self._send(reply.status, reply.body)
  
-@@ -305,8 +439,12 @@ def make_server(desk: Desk, config: Config) -> ThreadingHTTPServer:
+     def _skip_body(self) -> None:
++        """Drop the request body of an early reply. The desk answers as HTTP/1.0 and never sends `100 Continue`, so
++        a client that sent `Expect: 100-continue` has not sent its body yet: waiting for it would hold the thread."""
++        if self.headers.get("Expect", "").strip().lower() == "100-continue":
++            return
+         n = self._content_length()
+         if n:
+             self._drain(n)
+@@ -305,8 +444,12 @@ def make_server(desk: Desk, config: Config) -> ThreadingHTTPServer:
      Windows limit (not checked on a second machine): a restart on the same fixed port may fail while the
      old connections sit in TIME_WAIT, and the conflicting bind may raise PermissionError instead of
      EADDRINUSE; both are OSError, which callers catch broadly."""
 +    demo = load_demo_portal(desk)  # before the bind: a broken extension must not leave a bound socket behind
      server = _Server((config.bind, config.port), _Handler)
      server.desk, server.config = desk, config
-+    server.started_at = int(time.time())
++    server.started_at = desk.now()  # the desk's clock, like every other time the portal shows
 +    server.allowed_hosts = _allowed_hosts(config)
 +    server.demo = demo
      return server
  
  
-@@ -351,6 +489,15 @@ def main(hooks: Hooks | None = None) -> None:
+@@ -351,6 +494,15 @@ def main(hooks: Hooks | None = None) -> None:
          sys.exit(EXIT_ANOTHER_DESK)
      try:
          desk.startup()
@@ -1796,10 +1821,10 @@ index 0000000..401978c
 +}
 diff --git a/tests/portal_fixtures/review.json b/tests/portal_fixtures/review.json
 new file mode 100644
-index 0000000..93b3070
+index 0000000..4f4af68
 --- /dev/null
 +++ b/tests/portal_fixtures/review.json
-@@ -0,0 +1,222 @@
+@@ -0,0 +1,236 @@
 +{
 +  "now": 1794240000,
 +  "items": [
@@ -1838,6 +1863,13 @@ index 0000000..93b3070
 +      "title": "UNKNOWN: the email may or may not have gone out",
 +      "reason_text": "An earlier send may have left after a stop; the desk will not send again blind.",
 +      "actions": [
++        {
++          "id": "retry",
++          "label": "Retry",
++          "endpoint": "/review/FL0c4d8e2f6a19/retry",
++          "body": null,
++          "confirm": null
++        },
 +        {
 +          "id": "resolve_sent",
 +          "label": "I checked: it was sent",
@@ -1880,6 +1912,13 @@ index 0000000..93b3070
 +      "title": "UNKNOWN: the CRM may or may not hold this lead",
 +      "reason_text": "The CRM may or may not hold this lead.",
 +      "actions": [
++        {
++          "id": "retry",
++          "label": "Retry",
++          "endpoint": "/review/FL3f9a1c2b4d5e/retry",
++          "body": null,
++          "confirm": null
++        },
 +        {
 +          "id": "resolve_crm_present",
 +          "label": "The CRM row is there",
@@ -3061,10 +3100,10 @@ index 73c7f7e..634d60d 100644
      patterns, exceptions, toml = REPO / "patterns.txt", REPO / "exceptions.txt", REPO / ".gitleaks.toml"
 diff --git a/tests/test_portal_api.py b/tests/test_portal_api.py
 new file mode 100644
-index 0000000..e52d33b
+index 0000000..049a851
 --- /dev/null
 +++ b/tests/test_portal_api.py
-@@ -0,0 +1,1358 @@
+@@ -0,0 +1,1499 @@
 +"""Portal tests: the read-only JSON under /api/ui, the fixed files under /ui, and the Host and Origin gate.
 +Made-up data only. The response shapes are checked against tests/portal_fixtures/*.json (copied from the design)."""
 +
@@ -3518,11 +3557,16 @@ index 0000000..e52d33b
 +    )
 +    assert alan["actions"][0]["endpoint"] == f"/review/F{ids['alan']}/retry" and alan["actions"][0]["confirm"] is None
 +    linus = items["F" + ids["linus"]]
-+    assert [a["id"] for a in linus["actions"]] == ["resolve_sent", "resolve_not_sent"]
-+    assert [a["body"] for a in linus["actions"]] == [{"decision": "sent"}, {"decision": "not_sent"}]
-+    assert all(a["confirm"] and a["confirm"]["verb"] for a in linus["actions"])
++    assert [a["id"] for a in linus["actions"]] == ["retry", "resolve_sent", "resolve_not_sent"]
++    assert [a["body"] for a in linus["actions"]] == [None, {"decision": "sent"}, {"decision": "not_sent"}]
++    assert linus["actions"][0]["confirm"] is None
++    assert all(a["confirm"] and a["confirm"]["verb"] for a in linus["actions"][1:])
 +    grete = items["F" + ids["grete"]]
-+    assert [a["id"] for a in grete["actions"]] == ["resolve_crm_present", "resolve_not_sent"]  # `sent` never offered
++    assert [a["id"] for a in grete["actions"]] == [
++        "retry",
++        "resolve_crm_present",
++        "resolve_not_sent",
++    ]  # `sent` never offered
 +    assert "hint" in grete and grete["title"].startswith("UNKNOWN: the CRM")
 +    r_incomplete = next(i for i in out["items"] if i["reason"].startswith("incomplete:"))
 +    assert (r_incomplete["title"], r_incomplete["actions"]) == ("Incomplete request: email is missing", [])
@@ -3537,6 +3581,72 @@ index 0000000..e52d33b
 +    assert next(i for i in info if i["kind"] == "duplicate_with_new_info")["title"] == "Repeat with new details: phone"
 +    assert all(i["lead_name"] == "Ada Example" for i in info)
 +    assert {i["item_id"] for i in out["items"]} == set(items)
++
++
++@pytest.mark.parametrize("reason", ["refused", "unreachable", "internal:KeyError"])
++def test_failed_card_after_maybe_sent(env, reason: str) -> None:
++    """A follow-up that may have sent once (ambiguous_prior) and then ended refused, unreachable or internal."""
++    rig, base = fresh(env)
++    lid = rig.desk.process("form", "fp-1", lead()).body["lead_id"]
++    sql(
++        rig,
++        "UPDATE followups SET state='failed', last_error=?, ambiguous_prior=1, updated_at=? WHERE lead_id=?",
++        (reason, 5, lid),
++    )
++    card = next(i for i in get(base, "/api/ui/review")[1]["items"] if i["item_id"] == "F" + lid)
++    said = card["title"] + " " + card["reason_text"]
++    assert card["title"] == "Follow-up did not finish" and "nothing was sent" not in said.lower()
++    assert "may have left" in said and [a["id"] for a in card["actions"]] == ["retry"]
++
++
++def test_clock_read_inside_snapshot(env, monkeypatch) -> None:
++    rig, base = fresh(env)
++    seen: list[int] = [0]
++    real = portal_api.connect_readonly
++
++    class Count:
++        def __init__(self, conn: sqlite3.Connection) -> None:
++            self.conn = conn
++
++        def execute(self, text: str, *a: Any) -> Any:
++            seen[0] += 1
++            return self.conn.execute(text, *a)
++
++        def close(self) -> None:
++            self.conn.close()
++
++    monkeypatch.setattr(portal_api, "connect_readonly", lambda p: Count(real(p)))
++    at: list[int] = []
++    clock_now = rig.desk.now
++    monkeypatch.setattr(rig.desk, "now", lambda: (at.append(seen[0]), clock_now())[1])
++    for path in ("/api/ui/summary", "/api/ui/leads", "/api/ui/review"):
++        at.clear()
++        seen[0] = 0
++        assert get(base, path)[0] == 200
++        assert at == [2], (path, at)  # BEGIN and the first read came first
++    rig.clock.t = 1_000_000
++    server_obj = make_server(rig.desk, rig.config)
++    try:
++        assert server_obj.started_at == 1_000_000
++    finally:
++        server_obj.server_close()
++
++
++def test_unready_db_gives_fixed_503(env, tmp_path) -> None:
++    from support import build_rig
++
++    (tmp_path / "x").mkdir()
++    rig = build_rig(tmp_path / "x", start=False)  # the desk has not run startup yet
++    base = env.serve(rig)
++    assert get(base, "/api/ui/summary") == (503, {"error": "unavailable"})
++    assert get(base, "/api/ui/review") == (503, {"error": "unavailable"})
++    rig.desk.startup()
++    assert get(base, "/api/ui/summary")[0] == 200
++    for path in (":memory:", ""):
++        (tmp_path / "y").mkdir(exist_ok=True)
++        other = build_rig(tmp_path / "y", start=True)
++        object.__setattr__(other.desk.config, "db_path", Path(path))
++        assert get(env.serve(other), "/api/ui/summary") == (503, {"error": "unavailable"}), path
 +
 +
 +@pytest.mark.parametrize(
@@ -4244,13 +4354,13 @@ index 0000000..e52d33b
 +    monkeypatch.setattr(portal_api, "connect_readonly", lambda p: Count(real(p)))
 +    timings: dict[str, float] = {}
 +    for name, path, budget in (
-+        ("summary", "/api/ui/summary", 8),
-+        ("leads", "/api/ui/leads", 6),
-+        ("leads?limit=100", "/api/ui/leads?limit=100", 6),
-+        ("leads?q=Person 0100", "/api/ui/leads?q=Person%200100", 6),
-+        ("leads?state=sent", "/api/ui/leads?state=sent&limit=100&offset=2000", 6),
-+        ("lead detail", f"/api/ui/leads/{ids[0]}", 8),
-+        ("review", "/api/ui/review", 5),
++        ("summary", "/api/ui/summary", 9),
++        ("leads", "/api/ui/leads", 7),
++        ("leads?limit=100", "/api/ui/leads?limit=100", 7),
++        ("leads?q=Person 0100", "/api/ui/leads?q=Person%200100", 7),
++        ("leads?state=sent", "/api/ui/leads?state=sent&limit=100&offset=2000", 7),
++        ("lead detail", f"/api/ui/leads/{ids[0]}", 9),
++        ("review", "/api/ui/review", 7),
 +    ):
 +        t0 = time.monotonic()
 +        status, out = get(base, path)
@@ -4306,7 +4416,6 @@ index 0000000..e52d33b
 +
 +
 +@pytest.mark.skipif(sys.platform == "win32", reason="in-process variant; the real-process restart runs everywhere")
-+@pytest.mark.skipif(sys.platform == "win32", reason="the real-process restart below is the check that runs everywhere")
 +def test_restart_same_port_portal_open(env) -> None:
 +    """20 stops and starts on one fixed port while a page keeps polling. Every bind must succeed at once."""
 +    rig, _ = fresh(env)
@@ -4423,6 +4532,77 @@ index 0000000..e52d33b
 +    assert feed.target_host("127.0.0.1") == "127.0.0.1"
 +    assert feed.target_host("::1") == "[::1]"
 +    assert feed.target_host("desk.example") == "desk.example"
++
++
++def test_all_digit_bind_is_wildcard() -> None:
++    assert server._allowed_hosts(Config(bind="0")) == {"127.0.0.1", "localhost", "[::1]"}
++    assert "0" not in server._allowed_hosts(Config(bind="0.0"))
++    assert server._allowed_hosts(Config(bind="host.example")) >= {"host.example"}
++    with pytest.raises(ValueError):
++        Config(allowed_hosts=("0",))
++
++
++def test_expect_refusal_does_not_wait(env) -> None:
++    """The desk answers as HTTP/1.0 and never sends 100. A refused request that announced a body with Expect gets
++    its 403 at once (the old code waited for the body the client was holding back)."""
++    rig, base = fresh(env)
++    host, port = base.removeprefix("http://").split(":")
++    for host_header, status in (("evil.example", b" 403 "),):
++        head = (
++            f"POST /leads HTTP/1.1\r\nHost: {host_header}\r\nExpect: 100-continue\r\n"
++            "Content-Type: application/json\r\nContent-Length: 50\r\nConnection: close\r\n\r\n"
++        )
++        t0 = time.monotonic()
++        with socket.create_connection((host, int(port)), timeout=10) as s:
++            s.sendall(head.encode())
++            data = b""
++            while chunk := s.recv(65536):
++                data += chunk
++        first = data.split(b"\r\n", 1)[0]
++        assert status in first and b" 100 " not in first, first
++        assert time.monotonic() - t0 < 3.0
++    assert b"forbidden_host" in data or b"error" in data
++
++
++def test_stored_nan_never_reaches_the_page(env) -> None:
++    """The door stores a bare NaN token (Python's JSON reader accepts it); the page must stay strict JSON."""
++    rig, base = fresh(env)
++    ids = seed(rig)
++    assert rig.desk.handle("webhook", "nan-1", {**lead(), "phone": float("nan")}).body["verdict"] == "review"
++    port = base.rsplit(":", 1)[1]
++    for path in (f"/api/ui/leads/{ids['ada']}", "/api/ui/review", "/api/ui/summary", "/api/ui/leads"):
++        status, body = raw_exchange_text(
++            base, f"GET {path} HTTP/1.1\r\nHost: {HOST}:{port}\r\nConnection: close\r\n\r\n"
++        )
++        assert status == 200 and "NaN" not in body and "Infinity" not in body
++        json.loads(body, parse_constant=lambda c: pytest.fail(f"bare {c}"))
++    assert portal_api._object('{"a": NaN, "b": -Infinity, "c": 1}') == {"a": None, "b": None, "c": 1}
++
++
++def raw_exchange_text(base: str, request: str) -> tuple[int, str]:
++    host, port = base.removeprefix("http://").split(":")
++    with socket.create_connection((host, int(port)), timeout=10) as s:
++        s.sendall(request.encode())
++        data = b""
++        while chunk := s.recv(65536):
++            data += chunk
++    head, _, body = data.partition(b"\r\n\r\n")
++    return int(head.split(b" ", 2)[1]), body.decode()
++
++
++def test_retry_on_unknown_is_409(env) -> None:
++    """The UNKNOWN card offers Retry; the desk answers 409 unknown_needs_person and leaves the row as it was."""
++    rig, base = fresh(env)
++    ids = seed(rig)
++    for key in ("linus", "grete"):
++        card = next(i for i in get(base, "/api/ui/review")[1]["items"] if i["item_id"] == "F" + ids[key])
++        retry = card["actions"][0]
++        assert retry["id"] == "retry" and retry["endpoint"] == f"/review/F{ids[key]}/retry"
++        before = call(base, "GET", f"/leads/{ids[key]}")[1]["followup"]
++        status, out = call(base, "POST", retry["endpoint"])
++        assert status == 409 and out["error"] == "unknown_needs_person"
++        assert call(base, "GET", f"/leads/{ids[key]}")[1]["followup"] == before
++        assert before["state"] == "unknown"
 diff --git a/tests/test_server_hardening.py b/tests/test_server_hardening.py
 index 0617558..0ee882a 100644
 --- a/tests/test_server_hardening.py
