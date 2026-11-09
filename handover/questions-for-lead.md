@@ -1405,3 +1405,12 @@ Drafter open questions: (1) H28a-b (e-mail split by ** or escape code) cannot be
 - N-2: executor `resolve` and tools.py loader import modules named in operator config, invisible to the import guard. Recommend treat like the operator-written stage value (accepted, documented). Alternative: one-line refusal in both loaders, built in P4a-2 with test and mutant. Pick.
 - N-3: confirm new migration 0008_spend_reservations_expired_guard.sql goes on P3a-2's trigger allow list (ORDER 186 G73-2(c)), added by whichever PR merges second (recommended yes).
 - Merge order now fixed in the ticket: PR75 (P4d-a2), PR76 (P2a-1, owns 0007), PR78 (P4a), PR79 (P4b1-a), then P4b1-b. Plan review round 6 (money, no cap) started on rev 6.
+
+## q405 (2026-11-09 ~08:55Z) READY PR90 051a18d2e77c0d8bea6ae0abf38579eb20b10710
+READY PR90 051a18d2e77c0d8bea6ae0abf38579eb20b10710
+- Round-8 reviewer (handover/reviews/PR90/round8-security.md): no Blocker/Major against the three purposes; round-7 tool-path Major fixed. Reviewer read only, ran nothing.
+- CHECKED BY ME: GitHub check runs on 051a18d via the API at ~08:45Z: CodeQL, tests-py312, security, check, Analyze (python), Analyze (actions) all completed/success. Local run earlier: 88 pin tests pass; 47 fail against origin/main ci.yml (so they bite).
+- NOT CHECKED: Sonar and CodeRabbit did not appear in the check-run list (not seen, so not claimed green); CI behaviour beyond what the check runs show.
+- ORDER 185 answer: class fix done (both curl downloads carry retry/proto/TLS flags, pinned by test). Sweep: only two curl downloads exist; non-curl fetches (semgrep rules, trivy DB, pip-audit, uv) have no retry flags of their own; not changed here.
+- Follow-up scan-config guard PR (ORDER 187) carries the round-8 nits; I start it only after you merge PR90. After merge I rebase #87/#88/#89/#84.
+- Also in this pulse: PR84 round 8 on 7e14096: 0 Blocker, 1 conditional Major (HIDDEN_SKIP_WORDS counts HADAVIN_REQUIRE_PINNED_UNIDATA on legs where it is unset; no reader of that variable exists in src/tests on origin/main, so unproven) + nits; both reviewers read only part of the diff, so round 8 is not counted clean. Builder fix next, then evidence. P4a rev 6 round 6: 0B/5M; resolver writing rev 7 (money path, no cap).
