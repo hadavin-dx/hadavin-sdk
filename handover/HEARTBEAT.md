@@ -672,3 +672,4 @@ PULSE 10:08Z agents: none live; shells: evid63b (3.13), pulse_refresh | ORDER 19
 PULSE 10:10Z agents: a8aff4ab bd-dpld-fix (ORDER 200 demo fixes, started 10:09Z, box to 11:09Z); shells: evid63b, pulse_refresh | ORDER 200 box ends 11:35Z; core frozen
 PULSE 10:08Z agents: a8aff4ab bd-dpld-fix (ORDER 200 builder, 1 live); shells: pulse_refresh | PR63 evidence DONE at 27ae996: py3.13 11073 passed 0 failed; py3.12 1 failed (tests/test_textnorm.py deny-check false-match test; Python-version dependent) | core frozen
 PULSE 10:13Z agents: a8aff4ab bd-dpld-fix (ORDER 200 builder, 6 min in, edits in 6 files + new gate.py, running its own pytest); shells: pulse_refresh | core frozen
+PULSE 10:15Z agents: a8aff4ab bd-dpld-fix (A impl), ad8bced4 tests-first B, a897e78b hostile-run C; shell: dpld-step3 baseline load D, pulse_refresh | ORDER 201 started; E (final review) waits for A | core frozen
