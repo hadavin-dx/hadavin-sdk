@@ -1350,3 +1350,8 @@ Drafter open questions: (1) H28a-b (e-mail split by ** or escape code) cannot be
 - PR75 (P4d-a2, head 39ff5ef): builder asks: accept the "b" money SQL inside the a2 PR (retitle PR + CHANGELOG), or split after P3a? Builder built B8 on a 12-line local schema builder because tests/migration_schemas.py comes with P3a (unmerged). Not built yet: B4(ii) 50-repeat race, second-handle kill switch, fill-the-cap, B5 model-based property test. Evidence run on 39ff5ef queued; reviewers follow (money, uncapped).
 - AK-G2 rev 6: design 0B/1M/9N, readiness 1B(Done-gate, now answered by ORDER 181 R1)/7M/9N. Resolver rev 7 started. R1 runner PR builder started (depends: both AK-G2 sub-PRs).
 - ORDER 181 started: askdata flaky PR builder, R1 builder. PR84: after clean r5 + evidence I will push for a real GitHub CI run (draft PR) and report before READY.
+
+## q396 (07:55:02 UTC) askdata PR and PR76
+- Askdata flaky tests: PR #88 (https://github.com/hadavin-dx/hadavin-sdk/pull/88, head 7456e696) changes TO PROGRAM 'echo x' to 'cat > /dev/null' in tests/demo_askdata/corpus.py:96 and test_roles.py:24. Old line 8 of 40 runs failed (broken pipe), new line 0 of 60; tests/demo_askdata 1214 passed; sweep of other pipe uses found no sibling. EGM skipped: one-line mechanical test edit, proven by repeated runs. CI not yet seen. Your merge call.
+- PR76 (P2a-1, head 7f323491f91910ed3af03d6fae0cbabd1e23f6bc): builder pass 2 done, full suite PG16 10441 passed/2 skipped; PG17 not run (CI owes); mutation runner cannot give mutants a DB address (R1 PR fixes this); evidence run started, reviewers follow.
+- PR84 r5 not clean (1B/3M design, 0B/4M codebase); one fix batch running.
