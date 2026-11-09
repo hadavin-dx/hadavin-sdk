@@ -1,1 +1,1 @@
-22:05Z | agents: RUNNING MUT7 a1ff992440850841f; round8 sec a5a8aa64b3d61cae3, round8 code aa0a48d3e77956acb; shell run7.sh campaign | evid shells: none | unpushed: none | refreshed every 60 s by a bounded script (ends 00:15Z); detail in HEARTBEAT.md
+22:27Z | agents: RUNNING S1k a21deacf30aa39137 (round 8 fixes, started 22:08:24Z, box 90 min); MUT7 a1ff992440850841f; shell run7.sh campaign A4r7 | evid shells: none | unpushed: none | refreshed every 60 s by a bounded script (ends 00:37Z); detail in HEARTBEAT.md
