@@ -1,1 +1,1 @@
-20:58Z | agents: RUNNING security-r5 aa1fcff4d5fad4c16; code-tests-r5 a183fa151328b779c; my job: full suite on /tmp/dpld-final (A4r5 + L2d + L2e) log /home/user/build/final-full.log | evid shells: none | unpushed: none | refreshed every 60 s by a bounded script (ends 23:08Z); detail in HEARTBEAT.md
+20:59Z | agents: RUNNING security-r5 aa1fcff4d5fad4c16; my job: full suite /tmp/dpld-final log /home/user/build/final-full.log | evid shells: none | unpushed: none | refreshed every 60 s by a bounded script (ends 23:09Z); detail in HEARTBEAT.md
