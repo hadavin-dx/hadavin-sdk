@@ -851,3 +851,4 @@ PR72 0ae044b: builder done; evidence run waits for evid.sh fix (inv-trunc-66), t
 | a1546a20 | AK-G2 rev4 text review codebase | 07:09Z | +20m | running | save report | 
 | ac4fe288 | P1-rev2 rev3 drafter (opus) | 07:09Z | +40m | running | plan review round 2 | 
 | adbfa09c | P4a BN-17/18/19 fix drafter (opus) | 07:09Z | +40m | running | plan review round 2 | 
+| ad64f4a5 | P1b fix round 2 builder (sonnet) | 07:12Z | +60m | running | evidence runner, fresh reviewers | 
