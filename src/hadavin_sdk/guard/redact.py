@@ -595,7 +595,7 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
             # the .npmrc form (//registry/:_authToken=) are caught — ubiquitous in access/CI logs.
             # The key starts where the previous character is not a key character (any separator, ASCII or
             # Unicode): an allowlist of key characters, not a list of delimiters (K5 review rounds 1-3).
-            r"(?i)(?<![\w.\-])[\w.\-]{0,40}"
+            r"(?i)(?<![\w.\-?&])(?<!&amp;)[\w.\-]*"
             r"(?:password|passwd|pwd|secret|access[_\-]?key|account[_\-]?key|shared[_\-]?access[_\-]?key"
             r"|private[_\-]?key|api[_\-]?key|apikey|auth[_\-]?token|access[_\-]?token|sas[_\-]?token"
             # kubeconfig secrets: client-key-data (the private key), certificate-data.
@@ -607,11 +607,30 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
             # optional closing quote after the key so a JSON credential ("password": "x") is matched too
             r"[\"']?\s*[:=]\s*[\"']?"
             # The value: any non-separator char, OR a comma that does NOT begin a new key=value pair
-            # (so a comma-bearing secret is masked WHOLE, but `k=v,k2=v2` is not gobbled). `&` stops a
-            # URL query-param value at the next parameter. Char-by-char, so no catastrophic backtracking.
-            # A numeric HTML entity (`&#59;`, `&amp;#59;` once escaped, `&#x3b;`) is ONE character of the value, not the `&` of a query separator:
-            # an entity-encoded `;` or `&` must not end the value early and leave its tail shown.
-            r"((?:&(?:amp;)?#[0-9]{1,7};|&(?:amp;)?#[xX][0-9a-fA-F]{1,6};|[^\s\"';,&]|,(?!\s*[\w.\-]+\s*[:=]))+)"
+            # (so a comma-bearing secret is masked WHOLE, but `k=v,k2=v2` is not gobbled).
+            # Plain form: `&` is part of the value. Query form (key right after `?`, `&` or `&amp;`): `&` ends the value only
+            # before a `name=value` segment, as in application/x-www-form-urlencoded. `&amp;` is one character of the value
+            # in both: the approval gate writes `&name;` as `&amp;name;` before redaction.
+            # The key prefix is unbounded (P1d-a): a bound let a key behind 41 or more name characters show its value.
+            # A numeric HTML entity (`&#59;`, `&amp;#59;` once escaped, `&#x3b;`) is ONE character of the value, not the `&` of a query separator.
+            r"((?:&(?:amp;)?#[0-9]{1,7};|&(?:amp;)?#[xX][0-9a-fA-F]{1,6};|&amp;|[^\s\"';,]|,(?!\s*[\w.\-]+\s*[:=]))+)"
+        ),
+    ),
+    (
+        "SECRET",
+        re.compile(
+            r"(?i)(?:(?<=[?&])|(?<=&amp;))[\w.\-]*"
+            r"(?:password|passwd|pwd|secret|access[_\-]?key|account[_\-]?key|shared[_\-]?access[_\-]?key"
+            r"|private[_\-]?key|api[_\-]?key|apikey|auth[_\-]?token|access[_\-]?token|sas[_\-]?token"
+            # kubeconfig secrets: client-key-data (the private key), certificate-data.
+            r"|key[_\-]?data|cert(?:ificate)?[_\-]?data"
+            # session cookies are live bearer credentials: sessionid, JSESSIONID, PHPSESSID, connect.sid.
+            r"|session[_\-]?id|jsessionid|phpsessid|sessid|connect\.sid"
+            r"|client[_\-]?secret|credential|token|pass(?=[\"']?\s*[:=])|auth(?=[\"']?\s*[:=])"
+            r"|session(?=[\"']?\s*[:=]))[\w.\-]{0,20}"
+            # optional closing quote after the key so a JSON credential ("password": "x") is matched too
+            r"[\"']?\s*[:=]\s*[\"']?"
+            r"((?:&(?:amp;)?#[0-9]{1,7};|&(?:amp;)?#[xX][0-9a-fA-F]{1,6};|&amp;(?![^\s&#\"'=]*=)|[^\s\"';,&]|,(?!\s*[\w.\-]+\s*[:=])|&(?![^\s&#\"'=]*=))+)"
         ),
     ),
     # A hex key under a credential's name no pattern above lists - `ENCRYPTION_KEY=`, `hmac_key=`,
