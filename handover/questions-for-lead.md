@@ -1340,3 +1340,8 @@ Drafter open questions: (1) H28a-b (e-mail split by ** or escape code) cannot be
 - P4a r2: codebase 1B (FakeLLM max_attempts facts differ between PR78 and PR79) + 3M; design 4M; all go into rev 3.
 - P1d-a r1 readiness: 3B/7M (base SHA, no hypothesis dependency, test defn). Waiting on design report, then Opus resolve.
 - PR84: head cbcf868, round 3 clean; evidence run started 07:37Z (one run). Vault token `root` in ci.yml still your decision.
+
+## q394 (07:43Z) PR84 head 0cc446a, PR87 head a909459, AK-G2 rev 6
+- PR84: per-run random Vault token done (ORDER 180) at 0cc446a; ci.yml has never run on GitHub (docker step, port publish, vault wait, GITHUB_ENV untested). Evidence run + 2 reviewers started on 0cc446a. READY only after clean + green.
+- PR87: peel builder pushed a909459 (BN-47 rule, D0/D2b/D2c/D2d, race test, 17/17 mutants killed by hand). BL-core-peel-003 still OPEN: tools/mutation_runner.py forces --noconftest and drops HADAVIN_TEST_PG_DSN. Independent evidence + 2 reviewers started. DECISION FOR LEAD: two flaky askdata tests ([copy-program] fails 2/25 on base, 3/25 on head: `TO PROGRAM 'echo x'` closed pipe). Builder proposes corpus.py:96 `TO PROGRAM 'cat > /dev/null'` (0 failures in 40 runs) as its own small PR. Yes?
+- AK-G2 rev 6 written (79 rows, 143 mutants). DECISION FOR LEAD (M3, mutation runner): R1 = small core PR adding opt-in keywords conftest / pass_env (only HADAVIN_TEST_PG_DSN) / forbid_skips to run_mutants (also closes BL-core-peel-003, recommended) vs R2 second runner (not recommended). Confirm defaults: key_name built now; D2b/D2c ordinary rows (4 fail-before rows); V13 before any pilot. Plan review r6 started.
