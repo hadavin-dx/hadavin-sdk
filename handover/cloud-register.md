@@ -867,3 +867,4 @@ PR72 0ae044b: builder done; evidence run waits for evid.sh fix (inv-trunc-66), t
 | ae773123 | PR87 builder: BN-47 items | 07:30Z | +45m | starting | read report |
 | a954ec79 | PR75 builder pass 2 (remaining B-2 rows) | 07:30Z | +45m | resumed | read report |
 | rv-84d-r3, rv-84c-r3 | PR84 round 3 (majors-only pass) design+codebase on snap 84-5bb3d92 | 07:30Z | +20m | starting | save |
+| ao-rev2-res | P1-rev2 resolve r2 + rev 4 (opus) | 07:31Z | +40m | starting | read report |
