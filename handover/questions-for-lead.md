@@ -1372,3 +1372,8 @@ Drafter open questions: (1) H28a-b (e-mail split by ** or escape code) cannot be
 - Real checks, PR77/78/79/85/86/76: only SonarCloud ok + CodeRabbit skipped; no CI workflow ran at all (so "check/security/tests" are absent, not green). PR83: Analyze ok, CodeQL ok, Sonar ok, check/security/tests-py312 skipped.
 - PR84 old head de18d59: check ok, tests-py312 ok (docker step ran), Analyze ok, CodeQL ok, Sonar ok, security FAIL (gitleaks scope, same cause).
 - Idle lanes: none by choice. Not started: PR78/79 fixers (wait for P4a rev 4 review), P1b superseding revision (waits P1b round 2), AK-G2 rev 7 plan review (resolver a5e7452c still writing), evid.sh gitleaks run (binary 504).
+
+## q400 (08:03Z) PR #90 round 1 result, decision for you
+- Reviewer (fresh, snapshot fc48b9e): no Blocker. Fixed in head 1652b90: the pin test is now exact (joined command, exactly one --log-opts equal to HEAD, rejects --all/--branches/--remotes/--tags; fails on old ci.yml and on a HEAD~1000 variant, outputs shown in my run) and step labels no longer say "whole history". Round 2 reviewer running on 1652b90.
+- DECISION FOR YOU (Major 1): with the HEAD scope nothing scans a secret committed only on a branch without a PR / draft PR / force-pushed-away commit. Options: (a) accept, and confirm GitHub native secret scanning + push protection are ON for the repo (I cannot see settings); (b) add a non-blocking weekly all-refs gitleaks job that only reports. I recommend (a)+(b-later). Also: who owns core/cloud-handover, handover-src/c1a-8460813, core/P2d-1 scanning? I will not change settings.
+- Still unverified: the real gitleaks run with --log-opts=HEAD passed on GitHub for fc48b9e (security job green); the behaviour for HEAD~ variants is by the test only.
