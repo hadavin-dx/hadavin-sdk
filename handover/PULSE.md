@@ -1,1 +1,1 @@
-09:40Z | agents: a24b7053 PR75 r2 fix, ab1b2c64 PR89 fixes, af4e3666 PR84 fix | CORE FREEZE (ORDER 198): nothing new; evid 63 rerun, 73, 91 running | evid shells: 63,86,91,source, | unpushed: none | refreshed every 60 s by a bounded script (ends 10:50Z); detail in HEARTBEAT.md
+09:41Z | agents: a24b7053 PR75 r2 fix, ab1b2c64 PR89 fixes | CORE FREEZE (ORDER 198): nothing new; evid 63 rerun, 73, 91 running | evid shells: 63,86,91,source, | unpushed: none | refreshed every 60 s by a bounded script (ends 10:51Z); detail in HEARTBEAT.md
