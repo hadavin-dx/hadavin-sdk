@@ -1456,3 +1456,10 @@ CHECKED BY ME: builder report saved at handover/reports/P1d-a-builder-report.md;
 NOT RUN: mutants (50), independent evidence, result reviewers (redaction path, no cap), Python 3.12 run, BS-1 passes only partly (2 of 268 over-mask by one ';').
 DECISIONS FOR LEAD (each with a default if no answer in 30 min; redaction path, so default = do not merge, keep waiting): (1) two builder properties fail on the build (e-mail pattern not idempotent: 29/2000; backtick/CommonMark gap: 35/2000), both worse on base. Default: record them as P1d-b/P1d-c work, do not fold into P1d-a. (2) Typed [.] read as . in clean(): ORDER 192 item 3 already asks for it; default: accept. (3) Ticket alphabet counts are 72/66, not 63/57: default: correct the ticket text at the next revision.
 NEXT: after "GO core": evidence runner on 6875f27, mutants, redaction result reviewers.
+
+## q411 (09:33Z) P4a revision 9 written (resolver done); round 9 reviewers NOT started (core freeze, ORDER 198)
+CHECKED BY ME: resolver report received; files handover/tickets/P4a.md (rev 9, 826 lines), handover/tickets/P4b1.md, handover/reviews/P4a/round8-resolve.md. Nothing was run by anyone (read-only plan work).
+CORRECTION: round 7's resolve said P3a-2 had no allow list. That was wrong: c727453 (PR73 fix, 08:48 UTC) has store/migrations_trigger_changes.json. It is not on main (main holds migrations 0001-0005), and P3a.md still says a changed trigger function is not caught and has no BN-P3a-2-g.
+NOT RUN: round 9 plan review (design + readiness, money path, no cap).
+DECISIONS FOR LEAD (defaults if no answer in 30 min; money path, so default = do not merge, keep waiting): (1) PENDING LEAD 80: have PR73's builder write BN-P3a-2-g and fix P3a.md limit (b)/V-g before PR73 merges; default: P4b1-a does not merge until main has the check, the allow list and the matching P3a.md text. (2) PENDING LEAD 81: tell PR76's builder to run migrate() twice on one fresh database with P3a-2's check on and add P2a-1's own allow-list entry if refused; default: PR76 does not merge with a refused run.
+NEXT: after "GO core": round 9 reviewers on rev 9.
