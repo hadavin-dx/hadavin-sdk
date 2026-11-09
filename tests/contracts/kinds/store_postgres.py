@@ -20,6 +20,9 @@ DSN_NAME = "pg-dsn"  # the NAME the secrets kind looks up, not a secret
 PURGE_DSN: dict[str, str] = {}
 # runtime DSN -> the DSN of the owner login of the same schema (what `connect_admin` uses for a runtime DSN)
 OWNER_DSN: dict[str, str] = {}
+# runtime DSN -> the DSN of a registered member of the reset group of the same schema
+RESET_DSN: dict[str, str] = {}
+RESET_LABEL = "id:k1:" + "e" * 32
 
 
 def pg_schema(migrated=True, runtime=False):
@@ -40,21 +43,61 @@ def pg_schema(migrated=True, runtime=False):
     scoped = make_conninfo(dsn, options=f"-c search_path={schema}")
     created_roles: list[str] = []
     runtime_dsn = None
+    migrator = None
+    owner_scoped = scoped
+    role = purge = resetter = None
     try:
         with psycopg.connect(dsn, autocommit=True) as db:
-            db.execute(sql.SQL("CREATE SCHEMA {}").format(sql.Identifier(schema)))
-        if migrated:
+            if runtime:
+                # A migrator that is NOT a superuser (design M2): it owns the schema and may administer only the
+                # roles created below, so the kill switch functions it builds are not superuser-owned, as in a pilot.
+                migrator = "mg_" + uuid.uuid4().hex[:12]
+                db.execute(
+                    sql.SQL("CREATE ROLE {} LOGIN CREATEROLE").format(sql.Identifier(migrator))
+                )
+                db.execute(
+                    sql.SQL("CREATE SCHEMA {} AUTHORIZATION {}").format(
+                        sql.Identifier(schema), sql.Identifier(migrator)
+                    )
+                )
+            else:
+                db.execute(sql.SQL("CREATE SCHEMA {}").format(sql.Identifier(schema)))
+        owner_scoped = make_conninfo(scoped, user=migrator) if migrator else scoped
+        if migrated and not runtime:
             migrate(scoped, reset_role=RESET_GROUP)
         if runtime:
-            role, purge = "rt_" + uuid.uuid4().hex[:12], "pu_" + uuid.uuid4().hex[:12]
+            role, purge, resetter = (p + uuid.uuid4().hex[:12] for p in ("rt_", "pu_", "rs_"))
             with psycopg.connect(dsn, autocommit=True) as db:
-                for r in (role, purge):
+                for r in (role, purge, resetter):
                     db.execute(sql.SQL("CREATE ROLE {} LOGIN").format(sql.Identifier(r)))
                     created_roles.append(r)
-            migrate(scoped, runtime_role=role, purge_role=purge, reset_role=RESET_GROUP)
+                    db.execute(
+                        sql.SQL("GRANT {} TO {} WITH ADMIN OPTION").format(
+                            sql.Identifier(r), sql.Identifier(migrator)
+                        )
+                    )
+                db.execute(
+                    sql.SQL("GRANT {} TO {} WITH ADMIN OPTION").format(
+                        sql.Identifier(RESET_GROUP), sql.Identifier(migrator)
+                    )
+                )
+                db.execute(
+                    sql.SQL("GRANT {} TO {}").format(
+                        sql.Identifier(RESET_GROUP), sql.Identifier(resetter)
+                    )
+                )
+            migrate(owner_scoped, runtime_role=role, purge_role=purge, reset_role=RESET_GROUP)
             runtime_dsn = make_conninfo(scoped, user=role)
+            with psycopg.connect(
+                owner_scoped, autocommit=True
+            ) as db:  # a person's login, registered with a label
+                db.execute(
+                    "INSERT INTO kill_switch_login_labels (login_name, label) VALUES (%s, %s)",
+                    (resetter, RESET_LABEL),
+                )
+            RESET_DSN[runtime_dsn] = make_conninfo(scoped, user=resetter)
             PURGE_DSN[runtime_dsn] = make_conninfo(scoped, user=purge)
-            OWNER_DSN[runtime_dsn] = scoped
+            OWNER_DSN[runtime_dsn] = owner_scoped
             yield runtime_dsn
         else:
             yield scoped
@@ -62,6 +105,7 @@ def pg_schema(migrated=True, runtime=False):
         if runtime_dsn is not None:
             PURGE_DSN.pop(runtime_dsn, None)
             OWNER_DSN.pop(runtime_dsn, None)
+            RESET_DSN.pop(runtime_dsn, None)
         failures: list[psycopg.Error] = []
 
         def drop(db, template, name):
@@ -77,6 +121,9 @@ def pg_schema(migrated=True, runtime=False):
                     drop(db, "DROP OWNED BY {}", r)
                     drop(db, "DROP ROLE {}", r)
                 drop(db, "DROP SCHEMA IF EXISTS {} CASCADE", schema)
+                if migrator:
+                    drop(db, "DROP OWNED BY {}", migrator)
+                    drop(db, "DROP ROLE {}", migrator)
         except psycopg.Error as exc:  # the connection itself failed or would not close
             failures.append(exc)
         if failures:
@@ -162,6 +209,14 @@ def pg_driver(*, module_level=False):
         of the same schema; any other DSN is used as it is."""
         return psycopg.connect(OWNER_DSN.get(dsn, dsn), autocommit=autocommit)
 
+    def connect_superuser(dsn, *, autocommit=True):
+        """The cluster administrator on the schema of a fixture DSN: only for a test that must switch triggers off
+        to plant damage (`session_replication_role`); everything else uses the non-superuser owner."""
+        owner = conninfo_to_dict(OWNER_DSN.get(dsn, dsn))
+        admin = conninfo_to_dict(os.environ["HADAVIN_TEST_PG_DSN"])
+        admin["options"] = owner.get("options", "")
+        return psycopg.connect(make_conninfo(**admin), autocommit=autocommit)
+
     def connect_runtime(dsn, *, autocommit=True):
         """The runtime login of a fixture schema. `dsn` must be the one `pg_schema(runtime=True)` yielded."""
         if dsn not in OWNER_DSN:
@@ -207,7 +262,8 @@ def pg_driver(*, module_level=False):
             if conn is not None:
                 conn.close()
             if created:
-                with psycopg.connect(owner, autocommit=True) as admin:
+                # The cluster administrator drops it: the (non-superuser) migrator has only ADMIN on a role it made.
+                with psycopg.connect(pg_test_dsn(), autocommit=True) as admin:
                     admin.execute(sql.SQL("DROP OWNED BY {}").format(sql.Identifier(role)))
                     admin.execute(sql.SQL("DROP ROLE {}").format(sql.Identifier(role)))
 
@@ -271,6 +327,7 @@ def pg_driver(*, module_level=False):
 
     return SimpleNamespace(
         connect_admin=connect_admin,
+        connect_superuser=connect_superuser,
         connect_runtime=connect_runtime,
         connect_role=connect_role,
         execute=execute,

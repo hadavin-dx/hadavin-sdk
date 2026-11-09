@@ -100,7 +100,19 @@ def test_the_group_check_is_exact_not_a_substring(w):
         w, group=RESET_GROUP + "2"
     ).problems  # the guard names RESET_GROUP, not RESET_GROUP + "2"
     assert any("reset group" in p for p in _report(w, group=RESET_GROUP + "2").problems)
-    assert _report(w, group=RESET_GROUP[:-1]).problems  # a prefix does not match either
+    prefix = RESET_GROUP[
+        :-1
+    ]  # a REAL role whose name is a prefix of the named one: only the exact match tells
+    with w.admin() as db:
+        db.execute(sql.SQL("CREATE ROLE {} NOLOGIN").format(sql.Identifier(prefix)))
+    try:
+        assert any(
+            "does not name the configured reset group" in p
+            for p in _report(w, group=prefix).problems
+        )
+    finally:
+        with w.admin() as db:
+            db.execute(sql.SQL("DROP ROLE {}").format(sql.Identifier(prefix)))
 
 
 def test_a_runtime_that_is_a_member_of_the_reset_group_is_a_problem(w):

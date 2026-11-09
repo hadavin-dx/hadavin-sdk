@@ -9,6 +9,7 @@ from tests.contracts.kinds.store_postgres import pg_driver, pg_schema
 
 NAMES = {
     "connect_admin",
+    "connect_superuser",
     "connect_runtime",
     "connect_role",
     "execute",

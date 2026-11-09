@@ -531,3 +531,33 @@ def test_store_pair_gives_two_handles_on_the_same_data(store_pair):
     else:
         # Postgres only (memory has no connection): the four server processes are four different ones
         assert all(x != y for x, y in zip(a.connection_id, b.connection_id, strict=True))
+
+
+def test_reset_clears_exactly_the_stops_the_pair_names(store):
+    """A reset names (version, open count); a stop that lands after the status was read makes it stale."""
+    from hadavin_sdk.store.protocol import StaleCount
+
+    a, b, who = "id:k1:" + "a" * 32, "id:k1:" + "b" * 32, "id:k1:" + "e" * 32
+    first = store.set_kill_switch(KillSwitch(on=True, by=a))
+    store.set_kill_switch(KillSwitch(on=True, by=b))
+    with pytest.raises(StaleCount):
+        store.reset_kill_switch(
+            who, first.version, first.open_requests
+        )  # read before the second stop
+    assert store.get_kill_switch().on is True
+    now_state = store.get_kill_switch()
+    cleared = store.reset_kill_switch(who, now_state.version, now_state.open_requests)
+    assert (cleared.on, cleared.open_requests, cleared.version) == (False, 0, now_state.version + 1)
+    with pytest.raises(
+        StaleCount
+    ):  # nothing is stopped: a second reset is stale, not a silent success
+        store.reset_kill_switch(who, cleared.version, 0)
+
+
+def test_guard_report_is_a_report_for_every_backend(store):
+    """Both backends answer `guard_report` with a `GuardReport`; with no role named, nothing is found."""
+    from hadavin_sdk.models import GuardReport
+
+    report = store.guard_report(None, None, None)
+    assert isinstance(report, GuardReport)
+    assert report.problems == ()

@@ -412,6 +412,10 @@ def effective_problems(db, role: str, expected_table, expected_cols=None) -> lis
         "JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = %s AND c.relkind IN ('r','p','v','m','S')",
         (schema,),
     ).fetchall()
+    for owner in sorted({o for _, _, _, o in rels if o != role}):
+        # Membership, not inherited rights: a NOINHERIT member holds no rights today and can still SET ROLE to the owner.
+        if db.execute("SELECT pg_has_role(%s, %s, 'MEMBER')", (role, owner)).fetchone()[0]:
+            problems.append(f"{role}: is a member of {owner}, the owner of relations in {schema}")
     for oid, name, kind, owner in rels:
         if owner == role:
             problems.append(f"{role}: owns {name}")

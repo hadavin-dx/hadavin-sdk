@@ -71,7 +71,11 @@ def pilot_cfg(tmp_path: Path, *, env="pilot", agent=None, contract=None, config=
         "golden_dir": "golden",
         "inputs_dir": "inputs",
         "evidence": {"restored_hash_key_secret_name": "restored-key"},
-        "limits": {"label_key_secret_name": "label-key", "reset_group": "hadavin_reset"},
+        "limits": {
+            "label_key_secret_name": "label-key",
+            "reset_group": "hadavin_reset",
+            "runtime_role": "hadavin_runtime",
+        },
         **(config or {}),
     }
     contract = {**NONE_CONTRACT, **(contract or {})}
@@ -174,12 +178,26 @@ def _spy(dsn: str, resolved: list[str]) -> FakeSecretProvider:
     return Spy(values)
 
 
+def name_guard_roles(cfg: Path, runtime_dsn: str) -> None:
+    """Point `limits` at the real roles of a fixture schema, so the start-up probe checks the right ones."""
+    from psycopg.conninfo import conninfo_to_dict
+
+    from tests.stop_state_helpers import RESET_GROUP
+
+    path = cfg / "config.yaml"
+    data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    data["limits"]["runtime_role"] = conninfo_to_dict(runtime_dsn)["user"]
+    data["limits"]["reset_group"] = RESET_GROUP
+    path.write_text(yaml.safe_dump(data), encoding="utf-8")
+
+
 def test_k3_pilot_app_has_no_executor(tmp_path):
     """A pilot App has no Executor and resolves no client-system secret; shadow and abstain cards are posted."""
     from tests.contracts.kinds.store_postgres import pg_schema
 
-    for dsn in pg_schema():
+    for dsn in pg_schema(runtime=True):
         cfg = pilot_cfg(tmp_path)
+        name_guard_roles(cfg, dsn)
         qualify(load_registry(load_config(cfg)), "ito-agent")
         resolved: list[str] = []
         spy = _spy(dsn, resolved)

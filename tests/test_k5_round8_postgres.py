@@ -15,7 +15,7 @@ from hadavin_sdk.registry import load_registry
 from hadavin_sdk.runtime import tick as tick_mod
 from tests.conftest import qualify
 from tests.contracts.kinds.store_postgres import PURGE_DSN, pg_schema
-from tests.test_k3_pilot_env import FakeChannel, ScriptedLLM, pilot_cfg
+from tests.test_k3_pilot_env import FakeChannel, ScriptedLLM, name_guard_roles, pilot_cfg
 
 
 def test_the_app_deletes_evidence_only_through_the_purge_identity(tmp_path):
@@ -27,6 +27,7 @@ def test_the_app_deletes_evidence_only_through_the_purge_identity(tmp_path):
         data = yaml.safe_load(path.read_text(encoding="utf-8"))
         data["backends"]["store"]["purge_dsn_secret_name"] = "pg-" + "purge"
         path.write_text(yaml.safe_dump(data), encoding="utf-8")
+        name_guard_roles(cfg, dsn)
         qualify(load_registry(load_config(cfg)), "ito-agent")
         secrets = FakeSecretProvider(
             {
