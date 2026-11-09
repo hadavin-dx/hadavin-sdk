@@ -1,1 +1,1 @@
-10:06Z | agents: no subagents running | ORDER 199 load runs finishing; evid 63 3.13 running | core otherwise frozen | evid shells: 80, | unpushed: none | refreshed every 60 s by a bounded script (ends 11:16Z); detail in HEARTBEAT.md
+10:07Z | agents: a8aff4ab bd-dpld-fix (ORDER 200 builder, F1-F15) | evid63b 3.13 | core frozen | evid shells: 80, | unpushed: none | refreshed every 60 s by a bounded script (ends 11:17Z); detail in HEARTBEAT.md
