@@ -37,6 +37,13 @@
       "reason_text": "An earlier send may have left after a stop; the desk will not send again blind.",
       "actions": [
         {
+          "id": "retry",
+          "label": "Retry",
+          "endpoint": "/review/FL0c4d8e2f6a19/retry",
+          "body": null,
+          "confirm": null
+        },
+        {
           "id": "resolve_sent",
           "label": "I checked: it was sent",
           "endpoint": "/review/FL0c4d8e2f6a19/resolve",
@@ -78,6 +85,13 @@
       "title": "UNKNOWN: the CRM may or may not hold this lead",
       "reason_text": "The CRM may or may not hold this lead.",
       "actions": [
+        {
+          "id": "retry",
+          "label": "Retry",
+          "endpoint": "/review/FL3f9a1c2b4d5e/retry",
+          "body": null,
+          "confirm": null
+        },
         {
           "id": "resolve_crm_present",
           "label": "The CRM row is there",
