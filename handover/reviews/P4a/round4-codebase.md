@@ -1,0 +1,5 @@
+# P4a rev4 plan review round 4, codebase-details: 0 Blocker, 2 Major, 5 Nit
+M1 P4b1.md lines 27, 52, 76 still say "no store file, no migration"; BN-35 supersede list omits them. Add them and name P4d as owner overridden.
+M2 Editing 0006 in place does not reach databases that already applied it (migrate skips applied stems, no checksum). Make "new migration" (CREATE OR REPLACE trigger fn + re-issue _close guard) the only path, numbered after last on merge base; keep in-place only if lead states no DB applied 0006.
+N1 FB-T7 duplicates test_usage_classes c13b/c/d/d2 exact-equality tests; add only KeyError and KeyboardInterrupt classes. N2 two copies of worst-case W (k1b/loop.py worst_case_usd vs new worst_case_micro): add relating test or reuse. N3 no P4a-2 test-row total (17 more). N4 except BaseException booking may itself raise; original exception must win; add sub-row. N5 second 78-only fixture file unnamed (test_stop_state_memory.py).
+Verified: W=27,360, R=164,160, caps, mutant counts (27 ids/25 new), build-site lines, code cites.
