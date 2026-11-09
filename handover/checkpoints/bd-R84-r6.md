@@ -1,1 +1,2 @@
 bd-R84-r6 start 2026-11-09T08:13:35Z: read all files, plan fixed; editing workflow, helper, guard.
+bd-R84-r6 2026-11-09T08:15:29Z: done: helper (126/127, token-reader, pull refs, mask cache), evidence.yml + ci.yml edits (ART first, timeouts, Vault moved late, probe via stdin, logs filter, pipefail). Next: rewrite guard test (rule ids, plants, general rules over all workflows), then gate + fail-before + push. Not run yet: any test.
