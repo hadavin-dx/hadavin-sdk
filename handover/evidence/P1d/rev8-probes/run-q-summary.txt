@@ -1,0 +1,3 @@
+# pytest subset (25 files) on prototype run-q, PYTHONPATH=prototype src, branch core/cloud-handover 6d8699a, 2026-11-09
+FAILED tests/test_k5_round11.py::test_the_gitleaks_header_chain_regex_matches_the_three_planted_headers_and_nothing_longer
+1 failed, 3259 passed, 4 skipped, 6 deselected in 116.64s (0:01:56)
