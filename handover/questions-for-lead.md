@@ -1277,3 +1277,8 @@ DECISIONS FOR LEAD:
  4. PR72 G72-5: made_up_data_only also covers systems/tool hosts (default yes).
  5. PR76 scope (partial slice), ci.yml PG16+17 matrix, "demo" treated like "dev", PR80/86 scope wider than ticket, PR84 workflow findings (7 Major).
 NEXT: P1d round-6 reviewers; builders R72/R73 continue; investigations T1/T2/AK-G2 saved (inv-T1T2-AKG2.md; AK-G2 not unblocked).
+
+## q381 (06:35Z) P1d-b and P1d-c tickets drafted (rows 005/006/009/010 topics)
+FAILED/UNCERTAIN: code claims about P1d internals are UNVERIFIED (from rev 5 text). S16 kept in P1d-b per ledger (brief said P1d-c). Probes found two new majors: _pair shows 3 of 4 words of a multi-word password (proposed ledger row 011), literal kind=="Secret"/env key checks bypassed by one look-alike letter (row 012). Probes run once, head 391767b.
+DECISIONS FOR LEAD: P1d-c choose A (log line only), B (read-only 'approvals show <id>' through the choke point, drafter's base), or C (raw view, two-person approval + owner yes); audit row vs log line; P1DC_APPLIED marker or not; P1d-b: bare 'dbpassword' stays non-credential (default), serve refused in client profile (default no).
+NEXT: plan review round 1 of both tickets running; ledger rows 011/012 to add.
