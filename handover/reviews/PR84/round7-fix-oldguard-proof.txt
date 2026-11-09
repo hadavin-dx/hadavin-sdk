@@ -1,0 +1,55 @@
+old guard on the NEW workflow text: ['[token-in-argv] job evidence: curl gets the token in its command line: printf \'header = "X-Vault-Token: %s"\\n\' "$token" |', "[probe] job evidence step 9: no readiness probe from the host with the token on curl's standard input"]
+old guard on the NEW ci.yml: ['[token-in-argv] job check: curl gets the token in its command line: printf \'header = "X-Vault-Token: %s"\\n\' "$token" |', "[probe] job check step 6: no readiness probe from the host with the token on curl's standard input", '[token-in-argv] job tests-py312: curl gets the token in its command line: printf \'header = "X-Vault-Token: %s"\\n\' "$token" |', "[probe] job tests-py312 step 3: no readiness probe from the host with the token on curl's standard input"]
+file         plant                                               rule              new-fires old-guard
+evidence.yml verdict ends with true                              verdict-golden    True      BLIND
+evidence.yml verdict then exit 0                                 verdict-golden    True      BLIND
+evidence.yml verdict piped to tee                                verdict-golden    True      BLIND
+evidence.yml verdict or echo                                     verdict-golden    True      BLIND
+evidence.yml verdict with a trap                                 verdict-golden    True      BLIND
+evidence.yml verdict with errexit off                            verdict-golden    True      BLIND
+evidence.yml verdict in the background                           verdict-golden    True      BLIND
+evidence.yml verdict and then more                               verdict-golden    True      BLIND
+evidence.yml verdict with its own env                            verdict-golden    True      BLIND
+evidence.yml verdict with its own shell                          verdict-golden    True      caught-other
+evidence.yml extra trigger push                                  trigger           True      BLIND
+evidence.yml extra trigger pull_request_target                   trigger           True      BLIND
+evidence.yml job switched off                                    job-if            True      BLIND
+evidence.yml plan job with a condition                           job-if            True      BLIND
+evidence.yml matrix include                                      strategy          True      BLIND
+evidence.yml matrix exclude                                      strategy          True      BLIND
+evidence.yml fail-fast on                                        strategy          True      BLIND
+evidence.yml max-parallel                                        strategy          True      BLIND
+evidence.yml strategy on the plan job                            strategy          True      BLIND
+evidence.yml helper path overridden for one step                 override-env      True      BLIND
+evidence.yml log folder overridden in the job                    override-env      True      BLIND
+evidence.yml pinned tables variable in the job env               pinned-unidata    True      BLIND
+evidence.yml pinned tables step on every leg                     pinned-unidata    True      BLIND
+evidence.yml pinned tables step missing                          pinned-unidata    True      BLIND
+evidence.yml step-level empty server address                     addr-missing      True      BLIND
+evidence.yml tracing switched on through the environment file    shell-trace       True      caught-other
+ci.yml       docker container run                                port              True      caught-other
+evidence.yml docker container run                                port              True      caught-other
+ci.yml       podman run                                          port              True      caught-other
+evidence.yml podman run                                          port              True      caught-other
+ci.yml       docker compose                                      port              True      caught-other
+evidence.yml docker compose                                      port              True      caught-other
+ci.yml       token printed after a semicolon                     prints-token      True      caught-other
+evidence.yml token printed after a semicolon                     prints-token      True      caught-other
+ci.yml       bare export prints the environment                  prints-env        True      caught-other
+evidence.yml bare export prints the environment                  prints-env        True      caught-other
+ci.yml       bare set prints the environment                     prints-env        True      caught-other
+evidence.yml bare set prints the environment                     prints-env        True      caught-other
+ci.yml       env after a pipe                                    prints-env        True      BLIND
+evidence.yml env after a pipe                                    prints-env        True      BLIND
+ci.yml       empty server address                                addr-missing      True      BLIND
+evidence.yml empty server address                                addr-missing      True      BLIND
+ci.yml       probe without a time limit                          probe             True      BLIND
+evidence.yml probe without a time limit                          probe             True      BLIND
+ci.yml       local action                                        local-action      True      CRASH IndexError
+ci.yml       job without steps                                   no-steps          True      CRASH KeyError
+ci.yml       timeout as an expression                            expression-timeoutTrue      CRASH TypeError
+ci.yml       step timeout as an expression                       expression-timeoutTrue      CRASH TypeError
+ci.yml       step switched off by a bare false                   if-false          True      BLIND
+ci.yml       step switched off by and-false                      if-false          True      caught-other
+ci.yml       tracing through the environment file                shell-trace       True      BLIND
+rows 51 problem rows (new did not fire or old guard caught it by another rule): 15
