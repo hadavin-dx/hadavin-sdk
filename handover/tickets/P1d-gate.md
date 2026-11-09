@@ -43,7 +43,7 @@ Rung 1 and 3 closed: a start-up refusal of our own process has no external tool.
 - `test_foreign_markers_false_on_this_branch`: `P2D2_APPLIED`, `P1DB_APPLIED`, `P1DC_APPLIED` are absent or `False` in a fresh import. pb (true on the base too).
 - `test_client_profile_refuses_floor_above_8` (9 refused, 8 starts). fb.
 - `test_client_profile_refuses_when_canary_leaks`, once per canary id, with the check it targets patched off: C-KNOWN `runmap._finish` returns `shown` unchanged; C-CARD `channel.clean` returns its input; C-LEARN `runmap.find_matches` returns `[]` (P1d-learn imports it by name; `runmap.redact` is the function, `runmap.py:25`); C-AWS `runmap._learn_aws` returns `[]`; the message names the id and holds no part of the key. fb. `test_canary_fails_on_error_withhold`: `runmap._finish` patched to raise, so C-KNOWN is withheld with reason `error`: the start is refused naming C-KNOWN. fb.
-- `test_client_profile_starts_with_all_markers` (pb: the base has no gate, so it starts); `test_demo_stage_starts_without_markers` (pb); `test_canaries_touch_no_store_or_channel` (spy target `app.make`: a wrapper records each kind built; when `_startup_canaries` runs, neither `store` nor `channel` is in the record; fb, new surface); `test_canary_withhold_logged_at_info` (fb).
+- `test_client_profile_starts_with_all_markers` (pb: the base has no gate, so it starts); `test_demo_stage_starts_without_markers` (pb); `test_canaries_touch_no_store_or_channel` (spy target `app.make`: a wrapper records each kind built; when `_startup_canaries` runs, neither `store` nor `channel` is in the record; fb, new surface); `test_canary_withhold_logged_at_info` (fb); `test_app_makes_no_redact_text_call` (AST: no `ast.Call` of `redact_text` in `app.py`; pb on the base, it guards the rev-5 placement); **must stay green unchanged:** `tests/test_k5_round11.py::test_every_redact_text_call_that_feeds_a_card_passes_the_neutralise_hook`.
 - Fail-before: P1d's harness (`tests/p1d_api.py`, `tests/p1d_classes.py`, `tools/p1d_fail_before.py`); base = main after P1d-learn merges; every fb test calls `app.build` through `p1d_api.refused(...)`, so on the base (no refusal exists) it fails with `NO_REFUSAL:`, not pytest's "DID NOT RAISE"; every patch of a name absent on the base goes through `p1d_api.api_patch` (`NEW_SURFACE:`); the pb tests pass there. Marker `p1d(cls=...)` as P1d.
 
 ## Mutation plan (`tests/p1d_gate_mutants.py`; numbers kept from P1d rev 7; all required)
@@ -56,12 +56,16 @@ Rung 1 and 3 closed: a start-up refusal of our own process has no external tool.
 | M48 | floor compared with `>=` | the "8 starts" case |
 | M49 | canaries run after the store is built | `test_canaries_touch_no_store_or_channel` |
 | M80 | a canary passes on any withhold (reason not checked) | `test_canary_fails_on_error_withhold` |
+| M84 | `canary_run` uses one `RunMap` per text (C-KNOWN's second call no longer sees the first call's value) [`runmap.canary_run`] | `test_client_profile_starts_with_all_markers` (C-KNOWN then fails on a correct build: the start is refused) |
 
 ## Template fields
 - **Package id and name:** P1d-gate (DEFAULT PENDING LEAD 4), "client-profile start gate for the redaction packages". Branch `core/P1d-gate`. **Path class:** security; result rounds uncapped.
-- **Depends on:** P1d and P1d-learn merged (`LookalikeCopy`, `is_withheld`, `apply_settings`, `source=`, `_learn_unknown`, `_learn_aws`). **Order: P1d-a, P1d, P1d-learn, P1d-gate** (round-8 M5: on a branch without P1d-learn, C-LEARN and C-AWS cannot run; NEEDS LEAD confirm, it changes DEFAULT 4). Until P2d-2, P1d-b and P1d-c merge, the client profile refuses to start, which is the intended state.
-- **Files:** change `src/hadavin_sdk/app.py` (`REQUIRED_MARKERS`, the three checks, `_startup_canaries`), `CHANGELOG.md`; create `tests/test_p1d_gate.py`, `tests/p1d_gate_mutants.py`.
-- **Interface:** `app.REQUIRED_MARKERS: tuple[str, ...]`; private `app._startup_canaries() -> None`.
+- **Depends on:** P1d and P1d-learn merged (`LookalikeCopy`, `is_withheld`, `apply_settings`, `source=`, `_learn_unknown`, `_learn_aws`). **Order: P1d-a, P1d, P1d-learn, P1d-gate** (round-8 M5: on a branch without P1d-learn, C-LEARN and C-AWS cannot run; confirmed by ORDER 192). Until P2d-2, P1d-b and P1d-c merge, the client profile refuses to start, which is the intended state.
+- **Files:** change `src/hadavin_sdk/app.py` (`REQUIRED_MARKERS`, the three checks, `_startup_canaries`), `src/hadavin_sdk/guard/runmap.py` (`canary_run` only), `CHANGELOG.md`; create `tests/test_p1d_gate.py`, `tests/p1d_gate_mutants.py`.
+- **Interface:** `app.REQUIRED_MARKERS: tuple[str, ...]`; private `app._startup_canaries() -> None`; `runmap.canary_run(texts) -> tuple[bool, tuple[str, str] | None]` (used only by `app`).
+- **Source of the code:** our own code only. **Neutral default / alternative:** no vendor or external tool; a start refusal of our own process has no external alternative (rung table).
+- **Existing core code reused:** the `ConfigError` refusals of `app.build`, `deferred.LIVE`, `runmap.redact_text`, `RunMap`, `is_withheld`, `last_withhold`, `channel.clean`.
+- **Race / process tests:** none needed: the gate runs once, in the starting thread, before any store or channel exists; `last_withhold` is thread-local.
 - **Security and least-privilege notes:** no identity, right or secret; canary inputs are built from parts; refusal messages carry names and ids only.
 - **Rollback:** tag `pre-P1d-gate`; removing the gate re-opens the client profile, so a rollback needs the lead's yes.
 - **Reviewers:** fresh `egm-design` + `egm-codebase-details`; the reviewer checks the class-to-canary table (ORDER 177).
@@ -74,10 +78,15 @@ As P1d-a's list (copied from `ci.yml`), with `tests/p1d_gate_mutants.py`; raw ou
 CHANGELOG: "The software no longer starts for a client (pilot or production stage) until all five redaction fixes have landed, and it checks at start, on four made-up texts, that the hiding of split keys really works. The demo stage is unchanged."
 
 ## DEFAULT PENDING LEAD
-(4) the name, the fifth marker `P1DL_APPLIED` (kept), and the order P1d-a, P1d, P1d-learn, P1d-gate (changed in rev 2).
+(4) the name and the fifth marker `P1DL_APPLIED` (kept). The order P1d-a, P1d, P1d-learn, P1d-gate is CONFIRMED by ORDER 192 (q406 (1)); no longer pending.
+
+## Build-time corrections (ORDER 191)
+This ticket is frozen. A fail-before test, expected message or mutant killer that turns out wrong when the builder runs it is corrected AT BUILD: the builder keeps the run output, fixes the test or killer (or adds one), and logs each correction below as one line (test or mutant id, what the run showed, the change, the evidence file). It does not go back to plan review. Not a build-time correction (goes to the lead): a change to the markers, the floor, the class-to-canary table's classes or the merge order.
+**Build notes:** (none yet)
 
 ## Revision log
 Rev 1 (2026-11-09): split from P1d rev 7 (precondition 5, M22, M28, M31; ORDER 177); round-7 G10 applied (canaries mandatory, one per class, `request_approval` canary dropped, pure helper before store and channel, `test_foreign_markers_false_on_this_branch`); C-LEARN added for the fifth marker; M47-M49 added.
 **Rev 2 (2026-11-09):** `round8-resolve.md` applied: order P1d-learn before P1d-gate (M5); C-MODEL replaced by C-KNOWN (known-value residue, two calls) and C-CARD on `KVS` (P1d has no learning since ORDER 180 (2)); C-LEARN split into C-LEARN (pattern pass) and C-AWS (AWS rule); patch targets named; canary placement after `app.py:84-98`; test config named; fail-before classes corrected (N-9); canary withholds at INFO (N8); 80-percent line (N7).
 **Rev 3 (2026-11-09):** `round9-resolve.md` G15 and G17 applied: canaries pass only on reason `residue` (`runmap.last_withhold()`), `test_canary_fails_on_error_withhold`, M80; per-view coverage stated as not a canary class; placement after `app.py:93-97`; spy target `app.make`; `pilot_cfg` needs no extra key; C-LEARN's one-digit isolation stated; harness and base named.
 **Rev 4 (2026-11-09):** `round10-resolve.md` G9, G10 applied: C-LEARN patch target `runmap.find_matches`; fb tests through `refused` (`NO_REFUSAL:`) and `api_patch`; references to P1d rev 11 and P1d-learn rev 4.
+**Rev 5 (2026-11-09), FROZEN:** `round11-resolve.md` G2 and G7 applied: model-entry canaries run through `runmap.canary_run` (the hook test refuses a hookless `redact_text` call in `app.py`), `test_app_makes_no_redact_text_call`, M84, the hook test listed as must stay green; template fields (source, neutral default, reused code, race tests); merge order confirmed by ORDER 192; "Build-time corrections" section (ORDER 191).
