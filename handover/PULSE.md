@@ -1,1 +1,1 @@
-10:22Z | agents: a8aff4ab bd-dpld-fix (A) | a897e78b hostile-run (C) | B tests-first done (23 cases fail on baseline) | core frozen | evid shells: none | unpushed: none | refreshed every 60 s by a bounded script (ends 11:32Z); detail in HEARTBEAT.md
+10:23Z | agents: a8aff4ab bd-dpld-fix (A) | a897e78b hostile-run (C) | core frozen | evid shells: none | unpushed: none | refreshed every 60 s by a bounded script (ends 11:33Z); detail in HEARTBEAT.md
