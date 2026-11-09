@@ -881,3 +881,6 @@ PR72 0ae044b: builder done; evidence run waits for evid.sh fix (inv-trunc-66), t
 | ace78643 | P1d-a plan r1 design | 07:34Z | REPORTED 0B/9M/8N; saved reviews/P1d-a/round1-design.md; CLOSED 07:38Z | resolver rs-p1da-r1 started |
 | bbbb0003 | Opus resolve P1d-a r1, rev 2 | 07:38Z | +25m | start |
 | acc61df1 | P1d rev8 plan r8 readiness | 07:34Z | REPORTED 0B/7M/9N; saved reviews/P1d/round8-readiness.md; CLOSED 07:38Z | waiting abd49f95 design, then Opus resolve |
+| abd49f95 | P1d rev8 plan r8 design | 07:34Z | REPORTED 0B/6M/8N; saved reviews/P1d/round8-design.md; CLOSED 07:41Z |  |
+| ae4c8a95 | Opus resolve P1d r8, write rev 9 (+learn, gate) | 07:41Z | +30m | start |
+| ab6c7e80 | PR84 Vault per-run random token (ORDER 180); my evid 84 on cbcf868 stopped (head will change) | 07:41Z | +30m | resumed |
