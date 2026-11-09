@@ -475,3 +475,9 @@ Build only; the freeze is not reopened.
 
 ## Build note S6-pilot-prod (added 2026-11-07, lead order 150, from the PR72 fix batch q352)
 In a pilot or prod config, `made_up_data_only: true` is refused, and it is also refused when the demo-only kinds (a real model, a vendor detector, a real approval channel) are present. The refusal names the kind and does not advise setting the field. S6 therefore has an effect in demo only; the line "In pilot and prod the field has no effect" above is superseded by order 132. The field must be a real YAML true or false: "yes", 1, "true", "on", null and a list are refused at load. Mutant 16 is killed by t5j and t5q (not t5m).
+
+## Errata (cloud session, 2026-11-09, from builder report on core/P6a head 0ae044b)
+- P6a-1 as built: 67 tests collected (ticket says 42 rows + BN-1), 63 mutants (ticket line 233 says 35 for P6a-1). Mutants 52-73 and rows t5q, t5r, t7e-t7i, t7a4, t7a5 are not listed above. Origin of the 63: 45 from records + 18 new, so "63 of 63 killed" does not prove the original 62 were killed. Mutants 52-55 were written from a one-line description.
+- The word "dev" for DEV_ONLY: code has Config.environment dev/pilot/prod while ORDER 173 says stages are demo/pilot/prod only (conflict, with lead, see q383/q385 list).
+- Detector rule as built: every detector kind not in LOCAL_DETECTORS={regex, llm_judge} (backends/table.py) counts as sending text out.
+- tools/p6a1_mutants.py is outside the CI lint scope (src tests demos): lint tools/ or move under tests/ (open, owner: P6a builder round 2).

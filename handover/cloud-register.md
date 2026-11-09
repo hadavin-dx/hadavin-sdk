@@ -836,3 +836,4 @@ rv-P1d-r3-design closed 05:32Z
 | af81872a | P1d rev7 drafter (opus) | 06:55Z | +45m | running | then plan review round 7 |
 | a3a8a618 | P1 superseding ticket drafter (opus), ORDER175.1+6 | 06:55Z | +45m | running | then plan review egm-design+codebase |
 | ad18ffc9 | P4a failure-booking table + PR78 B1 ticket edit (opus), ORDER175.4+5 | 06:55Z | +40m | running | then plan review |
+PR72 0ae044b: builder done; evidence run waits for evid.sh fix (inv-trunc-66), then different evidence runner + fresh reviewers
