@@ -432,10 +432,10 @@ def test_a_drop_is_advised_in_one_place_only_and_never_for_the_evidence_tables_o
 
 def test_case_c_says_a_released_file_cannot_be_renumbered():
     c = _words(rb.case("c"))
-    assert "NOT listed in `tests/fixtures/migrations_released.json`" in c
+    assert "NOT listed in `src/hadavin_sdk/store/migrations_released.json`" in c
     assert "can never be renumbered" in c
     assert "case (b)" in c  # a database that already applied the renumbered file
-    assert (ROOT / "tests/fixtures/migrations_released.json").is_file()
+    assert (ROOT / "src/hadavin_sdk/store/migrations_released.json").is_file()
 
 
 def test_case_a_failure_wording_and_the_hand_written_fallback():
@@ -532,7 +532,9 @@ def test_case_b_uses_a_plain_placeholder_and_points_at_the_released_list():
     b = _words(rb.case("b"))
     assert "'<file_stem>'" in b and "that file's name without" in b
     assert "'<that file" not in b
-    assert "does not compare the text" in b and "tests/fixtures/migrations_released.json" in b
+    assert (
+        "does not compare the text" in b and "src/hadavin_sdk/store/migrations_released.json" in b
+    )
 
 
 def test_the_upgrade_bullet_says_what_migrate_checks_and_does_not_overclaim():
@@ -540,9 +542,9 @@ def test_the_upgrade_bullet_says_what_migrate_checks_and_does_not_overclaim():
     first = _words(
         CHANGELOG[CHANGELOG.index("- **Migrations: stricter checks") :].split("\n", 1)[0]
     )
-    assert "tests refuse a released file that was edited or deleted" in first
+    assert "refuses, before it connects, a released file that was edited or deleted" in first
     assert "not tested on PostgreSQL 17" in first
-    assert "does not read it" in first
+    assert "the tests read the same file" in first
     assert "the role memberships" in first and "inside a function body" in first
     assert "pg_auth_members" in _words(mig.__doc__ or "") and "pg_auth_members" in _words(
         mig.migrate.__doc__ or ""

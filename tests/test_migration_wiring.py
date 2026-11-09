@@ -630,20 +630,79 @@ def test_the_membership_message_says_it_reads_the_whole_server():
     assert "whole database server" in inspect.getsource(mig._check_read_back)
 
 
-# --- the one list of released files (round-1 M1 of the code review) ---------------------------------------------------
-
-LIST = Path(__file__).parent / "fixtures" / "migrations_released.json"
+# --- the released-file list is checked by migrate() itself (order 132, M-4) ---------------------------------------------
 
 
-def test_there_is_one_list_of_released_files_and_migrate_does_not_ship_a_second():
+def test_migrate_refuses_a_changed_released_file_before_it_connects(monkeypatch, tmp_path):
+    """Killed by: mutant R6 (the call to released_problems removed from migrate())."""
     import json
 
-    assert LIST.is_file()
-    assert not (Path(mn.MIGRATIONS).parent / "migrations_released.json").exists()
-    assert not hasattr(mig, "RELEASED_MANIFEST") and not hasattr(mig, "_released_manifest")
-    names = [p for p in Path(mn.MIGRATIONS).parent.rglob("*released*.json")]
-    assert names == [], names
-    assert mn.released_problems(mn.MIGRATIONS, json.loads(LIST.read_text(encoding="utf-8"))) == []
+    manifest = dict(mig._released_manifest())
+    first = min(manifest)
+    manifest[first] = "0" * 64
+    path = tmp_path / "released.json"
+    path.write_text(json.dumps(manifest), encoding="utf-8")
+    monkeypatch.setattr(mig, "RELEASED_MANIFEST", path)
+
+    def no_connect(*a, **k):
+        raise AssertionError("migrate connected although a released file changed")
+
+    monkeypatch.setattr(mig, "connect", no_connect)
+    with pytest.raises(mn.MigrationNumberError, match=f"{first}: a released file was changed"):
+        mig.migrate("postgresql://unused")
+
+
+def test_migrate_refuses_when_the_released_list_is_unreadable_or_wrong(monkeypatch, tmp_path):
+    """Killed by: mutant R7 (a missing list is read as empty)."""
+    monkeypatch.setattr(mig, "connect", lambda *a, **k: pytest.fail("connected"))
+    missing = tmp_path / "none.json"
+    monkeypatch.setattr(mig, "RELEASED_MANIFEST", missing)
+    with pytest.raises(ConfigError, match="released migration files cannot be read"):
+        mig.migrate("postgresql://unused")
+    wrong = tmp_path / "wrong.json"
+    wrong.write_text('["0001_core"]', encoding="utf-8")
+    monkeypatch.setattr(mig, "RELEASED_MANIFEST", wrong)
+    with pytest.raises(ConfigError, match="not a name -> SHA-256 table"):
+        mig.migrate("postgresql://unused")
+
+
+def test_the_released_list_ships_inside_the_package_and_covers_every_real_file():
+    assert mig.RELEASED_MANIFEST.parent == mn.MIGRATIONS.parent
+    assert mig.RELEASED_MANIFEST.is_file()
+    assert mn.released_problems(mn.MIGRATIONS, mig._released_manifest()) == []
+
+
+def test_a_bad_hash_in_the_released_list_is_a_config_error_not_a_changed_file(
+    monkeypatch, tmp_path
+):
+    """M-4 (minor): a value that is not 64 lower-case hex digits is a broken list (ConfigError, before any connection),
+    not "a released file was changed". Killed by: mutant MM7 (the hex check removed)."""
+    import json
+
+    monkeypatch.setattr(mig, "connect", lambda *a, **k: pytest.fail("connected"))
+    good = dict(mig._released_manifest())
+    first = min(good)
+    for bad in ("xyz", "", "0" * 63, "0" * 65, "A" * 64, "0" * 63 + "g", ("0" * 64) + "\n"):
+        path = tmp_path / "bad.json"
+        path.write_text(json.dumps({**good, first: bad}), encoding="utf-8")
+        monkeypatch.setattr(mig, "RELEASED_MANIFEST", path)
+        with pytest.raises(ConfigError, match="no SHA-256 .* for"):
+            mig.migrate("postgresql://unused")
+
+
+def test_a_json_name_written_twice_in_the_released_list_is_refused(monkeypatch, tmp_path):
+    """Nit: `json` would keep the last of two equal names, so an edited second hash would hide the first.
+    Killed by: mutant MD1 (the duplicate check removed)."""
+    good = mig._released_manifest()
+    first, digest = next(iter(good.items()))
+    path = tmp_path / "dup.json"
+    path.write_text(
+        '{"' + first + '": "' + digest + '", "' + first + '": "' + "1" * 64 + '"}', encoding="utf-8"
+    )
+    monkeypatch.setattr(mig, "RELEASED_MANIFEST", path)
+    monkeypatch.setattr(mig, "connect", lambda *a, **k: pytest.fail("connected"))
+    with pytest.raises(ConfigError, match="cannot be read: .*written twice"):
+        mig.migrate("postgresql://unused")
 
 
 class _Raises(_Db):

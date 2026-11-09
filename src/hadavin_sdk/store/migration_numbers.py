@@ -3,9 +3,8 @@ a late file, the ledger-without-file message, the one-pass SQL lexer with the re
 file never changes.
 
 `store/migrate.py` calls these before it connects (`check_ledger`, `read_files`, `order_problems`, `gone_message`, the lexer
-through `check_grants`). `released_problems` is NOT called by `migrate`: the list of released files is a test fixture
-(`tests/fixtures/migrations_released.json`, the one list) and a built package has no tests folder; the tests and the
-release check call it. Nothing here opens a connection; the only file access is `list_migration_files`,
+through `check_grants`). `released_problems` is called by `migrate` with the texts it read; the list of released files is
+`store/migrations_released.json` (the one list, shipped in the package; the tests read the same file). Nothing here opens a connection; the only file access is `list_migration_files`,
 `check_migration_numbers`, `released_problems` (directory listings and one read per released file, none when the text
 is passed in) and `read_files`.
 
