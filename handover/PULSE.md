@@ -1,1 +1,1 @@
-10:39Z | agents: ad73c789 bd-dpld-fix2 (A2) | me: baseline fix3 hostile+load | core frozen | evid shells: none | unpushed: none | refreshed every 60 s by a bounded script (ends 11:49Z); detail in HEARTBEAT.md
+10:40Z | agents: ad73c789 bd-dpld-fix2 (A2) | me: baseline fix3 hostile+load | core frozen | evid shells: none | unpushed: none | refreshed every 60 s by a bounded script (ends 11:50Z); detail in HEARTBEAT.md
