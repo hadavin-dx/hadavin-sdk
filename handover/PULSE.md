@@ -1,1 +1,1 @@
-21:19Z | agents: RUNNING security-r6 a73a09664e2f0e65d; code-tests-r6 a74eb33ce9e746472 | evid shells: none | unpushed: none | refreshed every 60 s by a bounded script (ends 23:29Z); detail in HEARTBEAT.md
+21:20Z | agents: RUNNING (none: starting S1i) | evid shells: none | unpushed: none | refreshed every 60 s by a bounded script (ends 23:30Z); detail in HEARTBEAT.md
