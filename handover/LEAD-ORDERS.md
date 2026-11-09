@@ -1070,3 +1070,12 @@ Evidence runners keep running meanwhile; heartbeat+pulse every 5 min as in ORDER
 2. The scripts p6a1_mutants_by_hand.py, the P3a-2 66-mutant runner and gen_evidence are NOT on the laptop (searched egm\). Rebuild them from the tickets and the old logs (builders, Sonnet), commit them under handover/tools/, and say which parts are reconstruction.
 3. Headless EGM: add the --allowedTools list to the HOWTO and re-prove in the restarted INTERACTIVE session first. Order of work after "RESTARTED, EGM OK" is ORDER 155 (P1b chain first).
 4. Keep PULSE/HEARTBEAT every 5 min while idle; if the session is closed the script pulse is fine.
+
+## ORDER 162 (lead, 2026-11-09T03:47Z real): NEW cloud session (session_01A2rKA548ihfPDXmkEfoovD). Verify setup FIRST, report as a checklist in ONE q-entry, then continue.
+Read handover/CLOUD-RESUME-2026-11-09.md, STANDING-ORDERS.md, the last 60 lines of this file (orders 155-161), q363-q369. Then prove each line with raw output (not memory):
+1. EGM loaded IN THIS SESSION: list egm skills (7) and agents (10) visible to you; run ONE real cheap call: Skill egm:egm-drift-report on handover/studio-notes (interactive, permissions as needed) and show the verdict line.
+2. Models: grep "^model:" over the egm plugin folders: expect 12 opus (brainstorm, draft, resolve x4 copies), 112 sonnet, 0 inherit; if the new container lost the patch, rerun handover/tools/egm_model_patch.py. .claude/settings.json model = claude-sonnet-5-5.
+3. Hooks/rules: repo .claude/hooks and rules present; BRIEF-PREAMBLE markers usable in briefs.
+4. Tooling: heavy.sh 3-slot flock, pulse (5 min), cloud-register.md, UTF8 Postgres with per-builder ports, Postgres on default socket /var/run/postgresql:5432 for the dblink re-run (ORDER 161 item 1). Say what is missing in this container and rebuild it.
+5. Heads of all open PRs vs GitHub.
+Then START in the ORDER 155 order: dblink re-run once per head (PR72, PR73, P1b), P1b chain, rebuilt mutant/evidence scripts (ORDER 161 item 2), P1d plan review with EGM. Heartbeat+pulse every 5 min. Report each result in a q-entry.
