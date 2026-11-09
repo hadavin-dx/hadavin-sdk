@@ -15,3 +15,6 @@ ok  KILLED       cache: the views are kept outside a scope  [test_nothing_of_a_t
 ok  KILLED       cache: the scope is not emptied  [test_the_scope_keeps_digests_not_texts_at_most_two_and_empti]
 ok  KILLED       cache: more than two texts are kept  [test_the_scope_keeps_digests_not_texts_at_most_two_and_empti]
 ok  KILLED       keys: the cap guard refuses the cap itself  [test_exactly_the_cap_in_scan_keys_is_allowed_and_one_over_is]
+ok  KILLED       keys: the cap guard is gone  [test_exactly_the_cap_in_scan_keys_is_allowed_and_one_over_is]
+ok  KILLED       keys: the cap is fifteen  [test_the_scan_key_cap_is_sixteen_by_construction_and_the_mos]
+exit=1
