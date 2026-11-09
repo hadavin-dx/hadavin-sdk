@@ -1,0 +1,4 @@
+2b0941b7092e09a209c9808dcc8aab20b109869f
+$ /home/user/build/venv-p3a2-313/bin/python tools/scan_repo.py
+
+exit=0

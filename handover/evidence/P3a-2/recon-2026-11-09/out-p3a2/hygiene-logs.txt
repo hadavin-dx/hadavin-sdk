@@ -1,0 +1,4 @@
+2b0941b7092e09a209c9808dcc8aab20b109869f
+$ PATTERNS of tools/scan_repo.py over out-p3a2/*.txt
+
+exit=0
