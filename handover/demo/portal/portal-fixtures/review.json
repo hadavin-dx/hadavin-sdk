@@ -24,6 +24,50 @@
       ]
     },
     {
+      "item_id": "FLc3a1f08e7d52",
+      "item_type": "followup",
+      "kind": "failed",
+      "reason": "refused",
+      "lead_id": "Lc3a1f08e7d52",
+      "since": 1794239650,
+      "source": "form",
+      "lead_name": "Ada Example",
+      "tab": "action",
+      "title": "Follow-up did not finish",
+      "reason_text": "The follow-up did not finish and the desk has no confirmation. The email may have left. Retry is safe only when the mail system keeps a key for repeats (a keyed outbox); otherwise check the mail system first.",
+      "actions": [
+        {
+          "id": "retry",
+          "label": "Retry",
+          "endpoint": "/review/FLc3a1f08e7d52/retry",
+          "body": null,
+          "confirm": null
+        }
+      ]
+    },
+    {
+      "item_id": "FLd41b9e6a0c37",
+      "item_type": "followup",
+      "kind": "failed",
+      "reason": "person: not sent",
+      "lead_id": "Ld41b9e6a0c37",
+      "since": 1794239700,
+      "source": "form",
+      "lead_name": "Linus Demo",
+      "tab": "action",
+      "title": "Follow-up failed; a person recorded it as not sent",
+      "reason_text": "A person checked and recorded that the email was not sent. Retry sends it now.",
+      "actions": [
+        {
+          "id": "retry",
+          "label": "Retry",
+          "endpoint": "/review/FLd41b9e6a0c37/retry",
+          "body": null,
+          "confirm": null
+        }
+      ]
+    },
+    {
       "item_id": "FL0c4d8e2f6a19",
       "item_type": "followup",
       "kind": "unknown",
@@ -229,7 +273,7 @@
     }
   ],
   "tabs": {
-    "action": 5,
+    "action": 7,
     "waiting": 3,
     "info": 2
   }
