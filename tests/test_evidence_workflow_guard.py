@@ -430,3 +430,125 @@ def test_every_wording_of_a_missing_test_variable_fails_the_report(tmp_path, rea
     code = f"print('SKIPPED [1] tests/x.py:1: HADAVIN_TEST_VAULT_ADDR {reason}')"
     helper(tmp_path, "run", "pytest", "--", sys.executable, "-c", code)
     assert helper(tmp_path, "report", "pytest").returncode == 1
+
+
+# --- the Vault development server in every workflow (ci.yml and evidence.yml) ---------------------------------
+
+WORKFLOWS = sorted((ROOT / ".github" / "workflows").glob("*.yml"))
+
+
+def vault_problems(text: str) -> list[str]:
+    """Rules for any workflow job that starts a Vault server: one random value, made in a step, masked, handed to the
+    container and to the tests, never written as a literal. Services cannot read step output, so no `vault` service."""
+    wf = load(text)
+    out: list[str] = []
+    if re.search(r"VAULT_DEV_ROOT_TOKEN_ID:\s*\S", text) or re.search(
+        r"HADAVIN_TEST_VAULT_TOKEN:\s*\S", text
+    ):
+        out.append("a literal Vault token is set in an env block")
+    if re.search(r"\btoken\W+root\b", text):
+        out.append("the literal token 'root' appears")
+    for jname, job in wf["jobs"].items():
+        if "vault" in (job.get("services") or {}):
+            out.append(f"job {jname}: Vault is a service (its token cannot be generated)")
+        steps = job["steps"]
+        starts = [
+            i
+            for i, st in enumerate(steps)
+            if "docker run" in st.get("run", "")
+            and "hashicorp/vault" in st["run"] + str(job.get("env", ""))
+        ]
+        if not starts:
+            continue
+        script = steps[starts[0]]["run"]
+        if "openssl rand" not in script:
+            out.append(f"job {jname}: the Vault token is not generated with openssl rand")
+        if not re.search(r'echo "::add-mask::\$token"', script):
+            out.append(f"job {jname}: the Vault token is not masked (::add-mask::)")
+        if not re.search(r'echo "HADAVIN_TEST_VAULT_TOKEN=\$token" >> "\$GITHUB_ENV"', script):
+            out.append(
+                f"job {jname}: the tests do not receive the token as HADAVIN_TEST_VAULT_TOKEN"
+            )
+        if (
+            'export VAULT_DEV_ROOT_TOKEN_ID="$token"' not in script
+            or "-e VAULT_DEV_ROOT_TOKEN_ID " not in script
+        ):
+            out.append(
+                f"job {jname}: the container does not get the same $token (export + -e without a value)"
+            )
+        if script.count("token=") != 1 or "echo $token" in script or 'echo "$token"' in script:
+            out.append(f"job {jname}: more than one token value, or the token is printed")
+        if "127.0.0.1:8200:8200" not in script:
+            out.append(f"job {jname}: the Vault port must be published on loopback only")
+        runs_tests = [
+            i for i, st in enumerate(steps) if re.search(r"\bpytest\b", st.get("run", ""))
+        ]
+        if any(i < starts[0] for i in runs_tests):
+            out.append(f"job {jname}: a test step runs before the Vault step")
+        if not any(
+            "docker" in st.get("run", "")
+            and " rm " in st["run"]
+            and st.get("if") == "${{ always() }}"
+            for st in steps
+        ):
+            out.append(f"job {jname}: the Vault container is not removed with always()")
+    return out
+
+
+@pytest.mark.parametrize("path", WORKFLOWS, ids=lambda p: p.name)
+def test_every_workflow_makes_its_vault_token_fresh(path):
+    assert vault_problems(path.read_text(encoding="utf-8")) == []
+
+
+def test_ci_workflow_starts_vault_in_both_test_jobs():
+    text = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+    assert text.count("Start a throwaway Vault development server") == 2
+    assert (
+        "services" in load(text)["jobs"]["check"]
+        and "vault" not in load(text)["jobs"]["check"]["services"]
+    )
+
+
+VAULT_PLANTS = {
+    "literal token in a service": lambda t: t.replace(
+        "    steps:\n",
+        "    services:\n      vault:\n        image: x\n        env:\n          VAULT_DEV_ROOT_TOKEN_ID: abc\n    steps:\n",
+        1,
+    ),
+    "literal env token": lambda t: t.replace(
+        "    steps:\n", "    env:\n      HADAVIN_TEST_VAULT_TOKEN: abc\n    steps:\n", 1
+    ),
+    "fixed value instead of openssl": lambda t: t.replace(
+        "token=$(openssl rand -hex 24)", "token=abc123"
+    ),
+    "no mask line": lambda t: t.replace('          echo "::add-mask::$token"\n', ""),
+    "tests not given the token": lambda t: t.replace(
+        'echo "HADAVIN_TEST_VAULT_TOKEN=$token"', 'echo "OTHER=$token"'
+    ),
+    "container not given the same value": lambda t: t.replace(
+        'export VAULT_DEV_ROOT_TOKEN_ID="$token"',
+        'export VAULT_DEV_ROOT_TOKEN_ID="$(openssl rand -hex 8)"',
+    ),
+    "second value": lambda t: t.replace(
+        'echo "::add-mask::$token"',
+        'token=$(openssl rand -hex 4)\n          echo "::add-mask::$token"',
+    ),
+    "token printed": lambda t: t.replace(
+        'echo "::add-mask::$token"', 'echo $token\n          echo "::add-mask::$token"'
+    ),
+    "port on all interfaces": lambda t: t.replace("-p 127.0.0.1:8200:8200", "-p 8200:8200"),
+    "no removal": lambda t: re.sub(
+        r"(Remove the Vault development server\n\s+)if: \$\{\{ always\(\) \}\}",
+        r"\1if: ${{ success() }}",
+        t,
+    ),
+}
+
+
+@pytest.mark.parametrize("path", WORKFLOWS, ids=lambda p: p.name)
+@pytest.mark.parametrize("name", sorted(VAULT_PLANTS))
+def test_each_vault_rule_fails_on_a_planted_violation(path, name):
+    text = path.read_text(encoding="utf-8")
+    planted = VAULT_PLANTS[name](text)
+    assert planted != text, f"plant {name} changed nothing in {path.name}"
+    assert vault_problems(planted), f"plant {name} was not caught in {path.name}"
