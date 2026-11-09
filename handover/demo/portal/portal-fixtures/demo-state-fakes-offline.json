@@ -1,5 +1,16 @@
 {
   "simulated": true,
+  "labels": {
+    "top_line": "Demo: made-up leads. CRM and email are fake. AI replies are pre-written. Nothing here is sent to real customers or real systems.",
+    "scene_one_caption": "Made-up leads. Fake CRM, fake email, pre-written AI replies. Nothing reaches real customers.",
+    "tiles": {
+      "kpi-leads": "Leads in the lead book",
+      "kpi-outbox": "Emails in the fake outbox",
+      "kpi-duplicates": "Duplicates caught (made-up leads)",
+      "kpi-crm": "Leads in the fake CRM",
+      "kpi-ai-calls": "AI calls (pre-written replies, no live AI)"
+    }
+  },
   "desk_started_at": 1794239400,
   "fakes": {
     "reachable": false,
