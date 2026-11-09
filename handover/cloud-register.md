@@ -864,3 +864,6 @@ PR72 0ae044b: builder done; evidence run waits for evid.sh fix (inv-trunc-66), t
 | a8dbaafa | AK-G2 rev5 plan review r5 egm-design | 07:28Z | +20m | running | save report |
 | a478f331 | AK-G2 rev5 plan review r5 egm-codebase | 07:28Z | +20m | running | save report |
 | evid84-5bb3d92 | EVIDENCE RUNNER PR84 5bb3d92 (evid.sh shell) | 07:29Z | +35m | running | read SUMMARY lines |
+| ae773123 | PR87 builder: BN-47 items | 07:30Z | +45m | starting | read report |
+| a954ec79 | PR75 builder pass 2 (remaining B-2 rows) | 07:30Z | +45m | resumed | read report |
+| rv-84d-r3, rv-84c-r3 | PR84 round 3 (majors-only pass) design+codebase on snap 84-5bb3d92 | 07:30Z | +20m | starting | save |
