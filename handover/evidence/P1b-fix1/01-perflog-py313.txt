@@ -23,3 +23,10 @@ value_scripts 0.263518
 <lambda> 2.352453
 <lambda> 2.339525
 <lambda> 1.174519
+<lambda> 1.593530
+<lambda> 2.012072
+<lambda> 1.444255
+<lambda> 1.419333
+scan_holds 99 more values 1.068737
+<lambda> 0.505670
+<lambda> 1.324263
