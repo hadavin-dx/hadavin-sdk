@@ -1,1 +1,1 @@
-10:41Z | agents: ad73c789 bd-dpld-fix2 (A2) | me: baseline fix3 hostile+load | core frozen | evid shells: none | unpushed: none | refreshed every 60 s by a bounded script (ends 11:51Z); detail in HEARTBEAT.md
+11:23Z | agents: a3e0c390 A4 builder fix6; lens a2b9a9b0 L1conc, a0e7ea08 L2crash, aabe8aeb L3ident, a15cf586 L4tests (dpld demo-only); core frozen | evid shells: none | unpushed: none | refreshed every 60 s by a bounded script (ends 12:33Z); detail in HEARTBEAT.md
