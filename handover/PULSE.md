@@ -1,1 +1,1 @@
-10:17Z | agents: a8aff4ab bd-dpld-fix (A impl) | ad8bced4 bB-tests (B) | a897e78b bC-hostile (C) | dpld-step3 baseline load (D) | core frozen | evid shells: none | unpushed: none | refreshed every 60 s by a bounded script (ends 11:27Z); detail in HEARTBEAT.md
+10:18Z | agents: a8aff4ab bd-dpld-fix (A) | ad8bced4 tests-first (B) | a897e78b hostile-run (C) | D baseline load done | core frozen | evid shells: none | unpushed: none | refreshed every 60 s by a bounded script (ends 11:28Z); detail in HEARTBEAT.md
