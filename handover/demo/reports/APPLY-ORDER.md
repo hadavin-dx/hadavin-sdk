@@ -5,7 +5,7 @@
 - Final-14 (b37e7e1) changed portal files only and no python, according to your order. My patches touch python under src/lead_desk and tests/. Overlap is only possible in portal_api.py, tests/test_portal_*.py and tests/portal_fixtures (my A4r6 tree carries your portal work from the fix7 -> portal tree). I could not diff against b37e7e1 here. If a hunk conflicts, take YOUR portal file and re-run tests/test_portal_api.py.
 
 ## Safest way: ONE consolidated diff (recommended)
-1. `CONSOLIDATED-A4r7-vs-fix7.diff` (this folder). Base = tarball `handover/demo/dpld-fix7-00e30c5.tar.gz` (extract; directory dpld-fix7-00e30c5). 61+ files (see diff header count). Applied with `patch -p1` on a fresh copy of the base; result byte-identical to my tree /tmp/dpld-s9 = A4r7 (checked with diff -rq, excluding caches/db files).
+1. `CONSOLIDATED-A4r8-vs-fix7.diff` (this folder). Base = tarball `handover/demo/dpld-fix7-00e30c5.tar.gz` (extract; directory dpld-fix7-00e30c5). 61+ files (see diff header count). Applied with `patch -p1` on a fresh copy of the base; result byte-identical to my tree /tmp/dpld-s9 = A4r7 (checked with diff -rq, excluding caches/db files).
    It contains S1 .. S1i, T1, T2, desk M2, A4 remainder, mutation tests (all listed below). It does NOT contain the live tooling (item 13). The A4r6-only file was replaced by this one.
 2. S1i has landed (item 12): the consolidated diff now includes it.
 
@@ -37,3 +37,6 @@ Chain of my trees: fix7 (00e30c5) -> your portal tree -> A4r3 -> A4r4 -> A4r5 ->
 
 ## Update 21:41Z
 Round 7 (reports/A4-r7-*.md): 0 Blocker, 1 Major (a hung model call on the reaper thread freezes the reaper; contract rule 4 was untrue for that case), 2 Minor, nits. Builder S1j is fixing them (tree /tmp/dpld-s10, expected ~22:30Z at the latest). Then A4r8 snapshot and round 8. The consolidated diff will be regenerated as CONSOLIDATED-A4r8-vs-fix7.diff; until then use A4r7 (it has the Major above).
+
+## Update 22:00Z
+S1j landed (reports/S1j.diff, S1j-report.md, S1j-failbefore.txt, S1j-full.log): 13 files, apply-checked on a fresh copy of A4r7, identical to A4r8. Full suite 761 passed / 1 skipped / 2 known red. It fixes the round 7 Major (desk now bounds the model call itself) and carries your S1i item 2 ruling (spend the try after a lock post-answer, `internal:ModelAnswerLost`). Numbers changed: SENDING_GRACE_BUSY_WAITS 5 (grace 30 s, floor 25 s), margin 15 s, budget 9 s, adapter limit 15 s (14.9 accepted). The consolidated diff is now CONSOLIDATED-A4r8-vs-fix7.diff (63 files, apply-checked, identical to /tmp/dpld-s10). Item 12 table row for S1i still applies; add item 12b = S1j (base A4r7). Round 8 reviews running on snapshot A4r8. The mutation round and the 3 campaign scenarios you asked for run on A4r7 (before S1j); I will say in each report which numbers S1j may change.
