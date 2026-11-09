@@ -1,1 +1,1 @@
-14:41Z | agents: a4bc9c257afe5ae57 egm-design reviewer, portal-A pass-3 delta security review r4, started 14:36:24Z, expected end ~14:55Z, state running, next: save report to reports/portal-A-review-4-security.md. shells: pulse_refresh2.sh | evid shells: none | unpushed: none | refreshed every 60 s by a bounded script (ends 16:51Z); detail in HEARTBEAT.md
+14:43Z | agents: none running. shells: pulse_refresh2.sh; pytest A6 pid 11418 | evid shells: none | unpushed: none | refreshed every 60 s by a bounded script (ends 16:53Z); detail in HEARTBEAT.md
