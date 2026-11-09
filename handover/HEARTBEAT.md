@@ -681,3 +681,4 @@ PULSE 10:27Z agents: a8aff4ab bd-dpld-fix (A, running pytest on its own tests; 2
 - 10:37Z PULSE: agents: ad73c789 bd-dpld-fix2 (A2) | me: baseline fix3 hostile+load | core frozen | ORDER 202: fix3 rebased in /tmp/dpld3, review E saved, A2 fixing 6 majors, baseline fix3 hostile+load running
 - 10:38Z PULSE: agents: ad73c789 bd-dpld-fix2 (A2, running) | shells: matrix.sh fix3 (hostile BH running, then A, then load) | ORDER 202 in progress | core frozen, core idle not yet written
 - 10:43Z PULSE: agents: ad73c789 bd-dpld-fix2 (A2, running) | shells: none | fix3 unpatched hostile-linux-2 + linux-load-3-fix3 pushed; patched run waits for A2
+- 10:43Z PULSE: agents: ad73c789 bd-dpld-fix2 (A2, running, source done, tests/delta next) | shells: A2's own pytest only | ORDER 202: patched hostile/load wait for A2
