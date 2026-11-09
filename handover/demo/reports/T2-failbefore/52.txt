@@ -1,0 +1,47 @@
+mutant 52: 'return Reply(HTTP_BUSY, {"error": "busy"})' -> 'return Reply(HTTP_CONFLICT, {"error": "busy"})' in src/lead_desk/desk.py
+........FF............                                                   [100%]
+=================================== FAILURES ===================================
+_______________________ test_retry_busy_is_503[pending] ________________________
+
+env = <conftest.Env object at 0x7f83172bf130>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f83172e1810>
+start = 'pending'
+
+    @pytest.mark.parametrize("start", ["pending", "failed"])
+    def test_retry_busy_is_503(env, monkeypatch: pytest.MonkeyPatch, start: str) -> None:
+        rig = env.rig()
+        lid = _new_lead(rig)
+        sql_exec(rig.db_path, "UPDATE followups SET state=? WHERE lead_id=?", (start, lid))
+        monkeypatch.setattr(Desk, "_claim", lambda *a, **k: False)  # the database stayed locked: no claim
+        reply = rig.desk.retry("F" + lid)
+>       assert (reply.status, reply.body) == (503, {"error": "busy"})
+E       AssertionError: assert (409, {'error': 'busy'}) == (503, {'error': 'busy'})
+E         
+E         At index 0 diff: 409 != 503
+E         Use -v to get more diff
+
+tests/test_mutants_round2.py:113: AssertionError
+________________________ test_retry_busy_is_503[failed] ________________________
+
+env = <conftest.Env object at 0x7f8317210450>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f83172e1cd0>
+start = 'failed'
+
+    @pytest.mark.parametrize("start", ["pending", "failed"])
+    def test_retry_busy_is_503(env, monkeypatch: pytest.MonkeyPatch, start: str) -> None:
+        rig = env.rig()
+        lid = _new_lead(rig)
+        sql_exec(rig.db_path, "UPDATE followups SET state=? WHERE lead_id=?", (start, lid))
+        monkeypatch.setattr(Desk, "_claim", lambda *a, **k: False)  # the database stayed locked: no claim
+        reply = rig.desk.retry("F" + lid)
+>       assert (reply.status, reply.body) == (503, {"error": "busy"})
+E       AssertionError: assert (409, {'error': 'busy'}) == (503, {'error': 'busy'})
+E         
+E         At index 0 diff: 409 != 503
+E         Use -v to get more diff
+
+tests/test_mutants_round2.py:113: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_mutants_round2.py::test_retry_busy_is_503[pending] - Assert...
+FAILED tests/test_mutants_round2.py::test_retry_busy_is_503[failed] - Asserti...
+2 failed, 20 passed in 0.18s

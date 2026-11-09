@@ -806,3 +806,4 @@ PULSE 19:59Z (01:29 IST): L2 tools review: checker NOT yet trustworthy (F1 Block
 PULSE 20:06Z agents: S1f a09c6dbe, S1g a1e0962a, L2e a0eb5734, campaign-run2 ab25b5bc running; mutation round 2 done (11/81 survived, report pushed); next: tests-only builder T2 for 11 survivors
 PULSE 20:07Z ORDER 222 read: T2 a918959e (11 survivors), S1f, S1g, L2e, campaign-run2 running; next after T2: 20 new mutants + re-run 81, patch-tests-mutation-2.diff, APPLY-ORDER.md, run-2 on fixed checker incl total-loss book
 PULSE 20:11Z S1g done (apply-check OK on A4r4; full 692 passed, 2 known hygiene red); running: S1f, L2e, campaign-run2, T2; next: merge S1g+S1f into A4r5, security round 5
+PULSE 20:16Z T2 done: 9 of 11 survivors killed (22 tests pass; apply-check OK on S1g tree), #48 equivalent (verified: sent path always err=None), #41 n/a on A4r4. running: S1f, L2e, campaign-run2

@@ -1,0 +1,45 @@
+mutant 58: 'WHERE lead_id=? AND state=\'unknown\'"\n                        " AND (? = 0' -> 'WHERE lead_id=? AND state IN (\'unknown\',\'failed\')"\n                        " AND (? = 0' in src/lead_desk/desk.py
+...........FF.........                                                   [100%]
+=================================== FAILURES ===================================
+__________________ test_resolve_ignores_failed_row[not_sent] ___________________
+
+env = <conftest.Env object at 0x7fa9d4bfc410>, decision = 'not_sent'
+
+    @pytest.mark.parametrize("decision", ["sent", "not_sent", "crm_present"])
+    def test_resolve_ignores_failed_row(env, decision: str) -> None:
+        rig = env.rig()
+        lid = _new_lead(rig)
+        sql_exec(
+            rig.db_path, "UPDATE followups SET state='failed', last_error='refused', crm_done=2 WHERE lead_id=?", (lid,)
+        )
+        before = rig.query("SELECT * FROM followups WHERE lead_id=?", (lid,))
+        reply = rig.desk.resolve("F" + lid, decision)
+>       assert reply.status == 409 and reply.body["error"] == "not_unknown", reply.body
+E       AssertionError: {'item_id': 'FLffaaaaa5d5ef', 'state': 'failed'}
+E       assert (200 == 409)
+E        +  where 200 = Reply(status=200, body={'item_id': 'FLffaaaaa5d5ef', 'state': 'failed'}, drive_lead_id=None).status
+
+tests/test_mutants_round2.py:127: AssertionError
+_________________ test_resolve_ignores_failed_row[crm_present] _________________
+
+env = <conftest.Env object at 0x7fa9d4bfc5f0>, decision = 'crm_present'
+
+    @pytest.mark.parametrize("decision", ["sent", "not_sent", "crm_present"])
+    def test_resolve_ignores_failed_row(env, decision: str) -> None:
+        rig = env.rig()
+        lid = _new_lead(rig)
+        sql_exec(
+            rig.db_path, "UPDATE followups SET state='failed', last_error='refused', crm_done=2 WHERE lead_id=?", (lid,)
+        )
+        before = rig.query("SELECT * FROM followups WHERE lead_id=?", (lid,))
+        reply = rig.desk.resolve("F" + lid, decision)
+>       assert reply.status == 409 and reply.body["error"] == "not_unknown", reply.body
+E       AssertionError: {'item_id': 'FL85bf9ed77426', 'state': 'failed'}
+E       assert (200 == 409)
+E        +  where 200 = Reply(status=200, body={'item_id': 'FL85bf9ed77426', 'state': 'failed'}, drive_lead_id=None).status
+
+tests/test_mutants_round2.py:127: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_mutants_round2.py::test_resolve_ignores_failed_row[not_sent]
+FAILED tests/test_mutants_round2.py::test_resolve_ignores_failed_row[crm_present]
+2 failed, 20 passed in 0.20s

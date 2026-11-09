@@ -1,0 +1,20 @@
+mutant 67: 'if version not in (0, SCHEMA_VERSION):' -> 'if version not in (0, SCHEMA_VERSION, 2):' in src/lead_desk/db.py
+...................F..                                                   [100%]
+=================================== FAILURES ===================================
+________________________ test_schema_version_refused[2] ________________________
+
+version = 2
+
+    @pytest.mark.parametrize("version", [2, 3, 7])
+    def test_schema_version_refused(version: int) -> None:
+        con = sqlite3.connect(":memory:", isolation_level=None)
+        try:
+            con.execute(f"PRAGMA user_version={version}")
+>           with pytest.raises(RuntimeError, match="unsupported schema version"):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE RuntimeError
+
+tests/test_mutants_round2.py:165: Failed
+=========================== short test summary info ============================
+FAILED tests/test_mutants_round2.py::test_schema_version_refused[2] - Failed:...
+1 failed, 21 passed in 0.20s

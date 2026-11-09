@@ -1,0 +1,30 @@
+mutant 35: 'return bool(row[1] == 0 or row[2] + backoff_after(int(row[1])) <= self._now())' -> 'return bool(row[1] == 0 or row[2] + backoff_after(int(row[1])) < self._now())' in src/lead_desk/desk.py
+.F....................                                                   [100%]
+=================================== FAILURES ===================================
+_____________________ test_replay_due_exactly_at_pause_end _____________________
+
+env = <conftest.Env object at 0x7fc8a392fe00>
+
+    def test_replay_due_exactly_at_pause_end(env) -> None:
+        rig = env.rig()
+        lid = _new_lead(rig)
+        sql_exec(
+            rig.db_path,
+            "UPDATE followups SET auto_attempts=1, updated_at=? WHERE lead_id=?",
+            (rig.clock.t, lid),
+        )  # one automatic try was made just now: the pause after it is 1 s
+        assert rig.desk.process("form", "r1", lead()).drive_lead_id is None  # 0 s later: not due
+        rig.clock.advance(1)
+>       assert rig.desk.process("form", "r1", lead()).drive_lead_id == lid  # exactly 1 s later: due
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: assert None == 'L2b33034aaac2'
+E        +  where None = Reply(status=201, body={'receipt_id': 1, 'verdict': 'new', 'lead_id': 'L2b33034aaac2', 'replayed': True, 'payload_matches': True}, drive_lead_id=None).drive_lead_id
+E        +    where Reply(status=201, body={'receipt_id': 1, 'verdict': 'new', 'lead_id': 'L2b33034aaac2', 'replayed': True, 'payload_matches': True}, drive_lead_id=None) = process('form', 'r1', {'name': 'Ada Example', 'email': 'Ada@Example.test', 'phone': '555 0100', 'company': 'Example Ltd', ...})
+E        +      where process = <lead_desk.desk.Desk object at 0x7fc8a38a4590>.process
+E        +        where <lead_desk.desk.Desk object at 0x7fc8a38a4590> = Rig(desk=<lead_desk.desk.Desk object at 0x7fc8a38a4590>, config=Config(db_path=PosixPath('/tmp/pytest-of-root/pytest-3...ytest-3242/test_replay_due_exactly_at_pau0/rig1/replies.json'), desks=[<lead_desk.desk.Desk object at 0x7fc8a38a4590>]).desk
+E        +      and   {'name': 'Ada Example', 'email': 'Ada@Example.test', 'phone': '555 0100', 'company': 'Example Ltd', ...} = lead()
+
+tests/test_mutants_round2.py:46: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_mutants_round2.py::test_replay_due_exactly_at_pause_end - A...
+1 failed, 21 passed in 0.19s

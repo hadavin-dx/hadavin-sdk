@@ -1,0 +1,35 @@
+mutant 65: 'in (SQLITE_BUSY, SQLITE_LOCKED)' -> 'in (SQLITE_BUSY,)' in src/lead_desk/db.py
+...............F.F....                                                   [100%]
+=================================== FAILURES ===================================
+____________________ test_is_busy_takes_both_lock_codes[6] _____________________
+
+code = 6
+
+    @pytest.mark.parametrize("code", [5, 6, 261, 262])
+    def test_is_busy_takes_both_lock_codes(code: int) -> None:
+        exc = sqlite3.OperationalError("some neutral text")
+        exc.sqlite_errorcode = code  # type: ignore[attr-defined]
+>       assert db.is_busy(exc) is True
+E       AssertionError: assert False is True
+E        +  where False = <function is_busy at 0x7f8f0afd3a60>(OperationalError('some neutral text'))
+E        +    where <function is_busy at 0x7f8f0afd3a60> = db.is_busy
+
+tests/test_mutants_round2.py:149: AssertionError
+___________________ test_is_busy_takes_both_lock_codes[262] ____________________
+
+code = 262
+
+    @pytest.mark.parametrize("code", [5, 6, 261, 262])
+    def test_is_busy_takes_both_lock_codes(code: int) -> None:
+        exc = sqlite3.OperationalError("some neutral text")
+        exc.sqlite_errorcode = code  # type: ignore[attr-defined]
+>       assert db.is_busy(exc) is True
+E       AssertionError: assert False is True
+E        +  where False = <function is_busy at 0x7f8f0afd3a60>(OperationalError('some neutral text'))
+E        +    where <function is_busy at 0x7f8f0afd3a60> = db.is_busy
+
+tests/test_mutants_round2.py:149: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_mutants_round2.py::test_is_busy_takes_both_lock_codes[6] - ...
+FAILED tests/test_mutants_round2.py::test_is_busy_takes_both_lock_codes[262]
+2 failed, 20 passed in 0.19s
