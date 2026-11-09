@@ -896,3 +896,4 @@ PR72 0ae044b: builder done; evidence run waits for evid.sh fix (inv-trunc-66), t
 | a79ebd1d | PR84 r4 design | | REPORTED 0B/3M/6N (+codebase 0B/1M/4N); saved reviews/PR84/round4-design.md; CLOSED; my evid.sh 84 on 0cc446a stopped (head will change) | ab6c7e80 resumed for round-4 fix batch |
 | bbbb0003/ac3c161d | P1d-a resolve r1 / rev 2 | | REPORTED rev 2 (33 findings, all applied); CLOSED 07:46Z | plan review r2 started |
 | rv-p1da-d-r2, rv-p1da-r-r2 | egm reviewers P1d-a rev 2 | 07:46Z | +25m | start |
+- aea1c4e8 (PR73 builder) REPORTED/CLOSED 07:48:03 head 6f2493ae; a69dd4c7 (AK-G2 r6 design) REPORTED/CLOSED 07:48:03
