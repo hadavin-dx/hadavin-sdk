@@ -1,3 +1,56 @@
+# bd-P4da2 report, PASS 3 (new head 6cdf67a; pass 2 head 39ff5ef follows below)
+
+NOT DONE / UNCERTAIN (first):
+- Only the affected tests were run, not the full suite (ordered): 865 passed, 1 skipped (tests/contracts/, test_p4d_missing_methods, test_lockin_guard, test_p2_postgres, test_k5_fixes2, test_k2_migrations) on PostgreSQL 16 only (not 17). Log: /home/user/build/B-P4da2-out/affected.log. CI, CodeQL, SonarCloud, CodeRabbit not run. 39ff5ef was not sent for evidence or review (order 3).
+- src is unchanged in pass 3; every new test passes on the existing src, so there is NO "fails on old code" for them; each one has a planted mutant that makes it fail (below). Mutants were applied by text edit, tests run with -x, file restored with `git checkout --` (git status clean after every run).
+- NOT run: the other b/w/i mutants. Run this pass: 10 + 13 + 3 (the list below). Not run: b1, b4 (the Python-side form is N2), b5, b7, b9, b11, b11b, b14 (per-edge matrix, 8+11+4 mutants), b17, b18c (run last pass), b19, b21, b23, b24, b26a-f split forms (only the combined ceiling form b26 was run), b28/b28b/b28c, b30, w1-w13, i1-i9. b29 moot (as pass 2). Reason: each needs its own planted edit; I ran the ones whose test I built or touched.
+- Plan of the ticket not built: the T4 number difference (5000 vs 2000) of the older test; B8(c) (evidence runner's step). The sweep-on-Postgres model test does not exist (by the ticket's N8: Postgres runs without sweep ops; the sweep is proved by B7 rows).
+- The 200x30 model test took 19 s for both stores on Postgres 16 (CI limit in N8 is 180 s).
+- Survivor found and fixed in this pass: b10 (month key from today) and b16 ordering mutants first SURVIVED the pass-2 tests; I added tests (far-month rows via the owner fixture; sweep order and tie rows with the planner's index scan switched off) and re-ran them: all killed. b16-no-order only dies with the index scan off (the partial index returns index order otherwise); that is a property of the test environment, stated here.
+- bandit: `uvx bandit -q -r src demos tools -ll` rc 0 (warnings only: nosec comments in src/hadavin_sdk/tools.py:389, pre-existing). Tests are not scanned by the gate.
+
+LEAD ORDER 182 (1): ACCEPTED. PR 75 retitled "P4d-a2-i and P4d-b ... with P4d-a2-ii ..." and body rewritten with scope, the builder note and the standard footer (GitHub update_pull_request, returned id 5188269901). The CHANGELOG entry was already titled "P4d-a2-i and P4d-b" (CHANGELOG.md line 6), so no file change. The 12-line builder stays only with the new test `test_the_local_schema_builder_gives_the_same_catalog_as_the_real_migration` (tests/contracts/test_store_reserve_schema_pg.py): it builds a schema from all six migration files with `_apply` and one with the real `migrate()`, snapshots columns, constraints, indexes, triggers and function bodies (schema name masked; `schema_migrations` excluded as bookkeeping written by migrate itself) and asserts equal; `test_the_catalog_comparison_notices_a_missing_migration_file` shows a builder with the newest file left out differs.
+REMOVAL NOTE (not a TODO in code beyond the marked comment block): when P3a merges, `_apply`, `ALL_STEMS`, `_catalog` and the two equality tests in test_store_reserve_schema_pg.py are replaced by `tests/migration_schemas.py` in the same rebase of PR 75; the equality test is then replaced by whatever P3a ships for its own helper. The marker "REMOVAL NOTE" in that file names this.
+
+BUILT THIS PASS (tests only; new file tests/contracts/pg_owner.py):
+- B4 (ii) at 50 repeats: `test_b4_ii_eight_stores_reserving_the_same_id_book_it_once_fifty_times_without_a_retry` (8 stores, 50 ids, applied == 7 False + 1 True each time, zero retries, totals 50, run cost 50, 50 open rows).
+- set_kill_switch from a second handle while a reserve waits at the day counter (HEAD_DAY lock wait seen in pg_stat_activity): `test_set_kill_switch_from_a_second_handle_completes_while_a_reserve_waits_at_a_counter`; afterwards the held reserve completes and the next reserve is KillSwitchOn.
+- T1/T2/T3 for reserve_spend: `test_t1_t2_a_counter_row_that_is_never_released_gives_store_busy_within_the_limit` (lock_timeout 100 / budget 500; StoreBusy, elapsed in [0.09 or 0.45, 5) s, nothing booked) and `test_t3_reserve_sets_both_timeouts_from_the_settings_and_the_remaining_budget` (reads current_setting for lock_timeout and statement_timeout at the first statement of reserve_spend). The existing StoreBusy row is kept.
+- Deterministic fill-the-cap: reserve (admin holds the day row; admin commits a booking that fills the cap; the waiting reserve raises SpendCapExceeded("day") with cap 3, current 3, requested 1, nothing booked, no row) and the same for settle on the reservation row (admin settles it first; the waiting settle returns the first result, applied False, counters unchanged).
+- Owner fixture: `pg_owner.trigger_off/insert_aged/age/trigger_states`. Uses `ALTER TABLE spend_reservations DISABLE/ENABLE TRIGGER` inside one owner transaction (allowlist of the two trigger names; an error rolls the DISABLE back). Replaces `SET session_replication_role = replica` in the database-clock row c1 (now INSERTs an aged row, counters bumped) and in `_age` of test_store_reserve.py. Tests: both triggers enabled before and after, rollback on error, unknown name refused, and the negative test that the runtime login gets 42501 on the ALTER.
+- New rows from survivors: settle/release lower the reservation's own day and month for 2020-12-31, 2021-01-01, 2024-02-29, 2023-12-31; sweep takes the oldest first and breaks ties by id (limit 2, three batches, then empty list; index scan off).
+- b12 memory: `test_b12_memory_the_lock_covers_the_cap_check_and_the_write` (checkpoint hook holds thread 1 between cap check and write; thread 2 must be refused). This row did not exist in pass 2.
+- B5 model test: `test_b5_model_reserve_settle_release_and_sweep_match_a_plain_python_ledger` (both stores; 200 seeds x 30 steps; own agent and run per seed; ops reserve with random caps (run/day/month, order run, day, month), replay same content (open: applied False; closed: StaleState), replay other content (ReservationConflict), settle (below and above reserved), release, memory only sweep with aged rows; after every step the day and month totals for three days, run cost, every row (status, settled, reserved) and the open list equal the model; counts assert the branches were reached: memory/postgres granted > 800, refused > 300, settled > 300, released > 100, closed replays > 50, expired > 100 on memory). Finding on the way: my first draft passed a run cap with no run (ValueError "run_cap needs a run_id"); fixed in the test.
+
+MUTANTS this pass (raw: /home/user/build/B-P4da2-out/mutants-pass3.log, mutants-pass3b.log, mutants-pass3c.log; runner mut.py in the session scratchpad):
+| mutant | result | killer (first failure) |
+| N1 reserve's kill-switch read takes FOR UPDATE (b17-like) | KILLED | set_kill_switch row ("held up by the waiting reserve") |
+| N2 b4 day cap moved to a Python read before the write | KILLED | fill-the-cap reserve (the reserve was granted) |
+| N3 b6 settle claim without the status condition | KILLED | fill-the-cap settle (trigger refusal "change refused") |
+| N4 b18a lock timeout not capped at the setting | KILLED | T1 (stuck 20 s join) |
+| N5 b18b budget ignored | KILLED | T2 |
+| N5a lock timeout ignores the remaining budget | KILLED | T3 |
+| N6 same-id read-then-insert, no ON CONFLICT | KILLED | 50-repeat same-id row (not checked whether the old single 8-thread row also dies) |
+| M-pg1 closed same-content replay not StaleState | KILLED | model test [postgres] |
+| M-mem1 sweep leaves settled_usd empty | KILLED | model test [memory] |
+| M-mem2 an expired row cannot be closed | KILLED | model test [memory] |
+| b12 memory lock removed | KILLED | b12 row ("assert ['ok','ok'] == ['cap','ok']") |
+| b2 day cap ignored; b3 `<=` to `<` | KILLED (each) | test_a_cap_is_exact_at_the_boundary... |
+| b8 settle applies actual, not actual minus reserved | KILLED | test_settle_below_equal_above_and_the_replays |
+| b10 month key from today | SURVIVED the 170 older rows; KILLED after the far-month rows (CounterDamaged) | far-month row [year-end] |
+| b13 kill switch not checked | KILLED | test_the_kill_switch_refuses... |
+| b20 list ignores the run filter | KILLED | test_list_open_orders_by_creation_and_filters |
+| b22 day bound dropped; b25 run agent not compared; b27 closed row other content is Stale; b26 (combined ceiling) removed | KILLED (each) | the B1/B2 rows |
+| b16 sweep floor removed | KILLED | sweep row |
+| b16 sweep order changed (created_at DESC) and tie-break by id DESC | SURVIVED the older rows; KILLED after the new order row | sweep-order row |
+| b16 sweep with no ORDER BY | SURVIVED until the index scan was switched off in the row; then KILLED | sweep-order row |
+| planted fault in the owner fixture (ENABLE line removed) | KILLED | owner-fixture row (insert trigger left 'D') |
+
+GATES (exact commands in /home/user/build/B-P4da2-out): `uv run --all-extras --group test ruff check` rc 0 "All checks passed!"; `ruff format --check` rc 0 "329 files already formatted"; `uvx bandit -q -r src demos tools -ll` rc 0; pytest affected (above) rc 0, `865 passed, 1 skipped in 196.00s`. No noqa and no type-ignore added. PostgreSQL 16 cluster bpa2c (port 56181) started with pgstart.sh and stopped at the end.
+R-numbers: studio bible not on this machine, none read (same as pass 1 and 2).
+Commit 6cdf67a783a3771692d2d6f1828dd4e46a6e84f7 pushed to origin core/P4d-a2 (normal push, base 39ff5ef).
+
+---- PASS 2 REPORT (head 39ff5ef) ----
 # bd-P4da2 report, PASS 2 (head 39ff5ef; pass 1 head ff1a8c8 follows below)
 
 NOT DONE / UNCERTAIN (first):
