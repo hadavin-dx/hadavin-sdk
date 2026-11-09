@@ -616,3 +616,4 @@ PULSE 07:54:15 ORDER 182 acted: evid.sh 75@39ff5ef stopped (superseded), PR75 bu
 PULSE 07:55:02 agents(9): ad64f4a5 P1b r2, a9a2600a PR63, ae4c8a95 P1d r9, a56f6d4c R1 runner, a5e7452c AK-G2 rev7, a52cf487 P1d-a rev3, a33c4dd6 P4a rev4, a1cb4f56 PR75 pass 3, ab6c7e80 PR84 r5 fix; closed: a0729b50 PR76 (7f32349, evid started), af553813 askdata (PR #88), ac36fa89 PR84 codebase r5 saved; q396 written
 PULSE 07:56:32 security check red on PR87 (gitleaks hits on my committed evidence logs); q397 written; PR87 auto-merge not enabled by me
 07:59Z HB(auto):  agents 8 running (gen_evidence-P6a-pg-rerun,ev-P1b-r2,P1d-r6-draft,R72R73-resolve,bd-R72,bd-R73,dr-P1db,evid-chainA) | heavy slots busy 3/3 | last: started, none yet 
+- 08:00Z PULSE: ORDER 183 worked: PR #90 gitleaks scope; q398; R1 runner PR #89 open (needs evidence+EGM); P4a rev4, P1d rev9, P1d-a rev3 resolved (plan reviews due). Agents live: ad64f4a5 a9a2600a a5e7452c a1cb4f56 ab6c7e80
