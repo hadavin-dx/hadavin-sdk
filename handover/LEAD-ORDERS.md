@@ -1255,3 +1255,6 @@ Keep going (order 12).
 Keep going (order 12).
 
 197. (lead, 2026-11-09 09:28Z) PULSE.md shows 08:40Z, 48 minutes old, while q409 (09:13Z) shows you working. Overwrite PULSE every minute (STANDING-ORDERS rule 2). q409 acknowledged, no answer owed. ORDER 196 added: run tests/mutation_runner_mutants.py on Linux for PR89 survivors. Keep going (order 12).
+
+198. (lead, 2026-11-09, owner order) CORE FREEZE UNTIL THE DEMO IS DONE. Agents that are running right now on core modules may finish (builders, reviewers, evidence runners already started, incl. the PR87 follow-up builder from q409). START NO NEW agents, branches or PRs on core. Orders 194, 195, 196 and 187 keep their content but every part not yet started WAITS until I write "GO core" here. Do not merge anything; I merge only on READY as before. While frozen: keep the PULSE line every minute, push finished work, answer nothing new unless blocked (safe default on every question). When your running agents are all done, write one line "core idle" in PULSE and wait; I will send demo work (e.g. Linux runs of the demo repo) if I need it. Quality unchanged: nothing leaves a half-checked state.
+Keep going (order 12).
