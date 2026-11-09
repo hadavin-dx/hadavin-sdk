@@ -1,0 +1,14 @@
+{
+ "tarball": "/home/user/hadavin-sdk/handover/demo/dpld-fix7-00e30c5.tar.gz",
+ "tarball_name": "dpld-fix7-00e30c5.tar.gz",
+ "tarball_sha256": "658d1ef47868d59223eaae88a4034ebc9d317881303e445925f21917d0cff283",
+ "tree": "/tmp/final-gate-full-fix7/src/dpld-fix7-00e30c5",
+ "workdir": "/tmp/final-gate-full-fix7",
+ "host": "Linux-6.18.44-fc-v310-x86_64-with-glibc2.39",
+ "cores": 4,
+ "python": "Python 3.12.3",
+ "venv": "/tmp/final-gate-full-fix7/venv (the unpacked copy was made a throw-away git repository so the git-based hygiene tests can run)",
+ "started_utc": "2026-11-09 12:08:01",
+ "mode": "full",
+ "server_py_hooks": "PATCHED hooks 1 and 2 in /tmp/final-gate-full-fix7/src/dpld-fix7-00e30c5/src/lead_desk/server.py | hook 3: constants.LISTEN_QUEUE = 1024"
+}

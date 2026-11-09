@@ -1,0 +1,801 @@
+=== run 1 exit=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________________________ test_retry_twice_concurrent __________________________
+tests/test_flow.py:424: in test_retry_twice_concurrent
+    retry_twice_body(env.rig(outbox="blind"))
+tests/test_flow.py:409: in retry_twice_body
+    assert rig.state(lid) == ("failed", "refused")
+E   AssertionError: assert ('pending', 'refused') == ('failed', 'refused')
+E     
+E     At index 0 diff: 'pending' != 'failed'
+E     Use -v to get more diff
+=========================== short test summary info ============================
+FAILED tests/test_flow.py::test_retry_twice_concurrent - AssertionError: asse...
+1 failed, 303 deselected in 0.48s
+
+=== run 2 exit=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________________________ test_retry_twice_concurrent __________________________
+tests/test_flow.py:424: in test_retry_twice_concurrent
+    retry_twice_body(env.rig(outbox="blind"))
+tests/test_flow.py:409: in retry_twice_body
+    assert rig.state(lid) == ("failed", "refused")
+E   AssertionError: assert ('pending', 'refused') == ('failed', 'refused')
+E     
+E     At index 0 diff: 'pending' != 'failed'
+E     Use -v to get more diff
+=========================== short test summary info ============================
+FAILED tests/test_flow.py::test_retry_twice_concurrent - AssertionError: asse...
+1 failed, 303 deselected in 0.42s
+
+=== run 3 exit=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________________________ test_retry_twice_concurrent __________________________
+tests/test_flow.py:424: in test_retry_twice_concurrent
+    retry_twice_body(env.rig(outbox="blind"))
+tests/test_flow.py:409: in retry_twice_body
+    assert rig.state(lid) == ("failed", "refused")
+E   AssertionError: assert ('pending', 'refused') == ('failed', 'refused')
+E     
+E     At index 0 diff: 'pending' != 'failed'
+E     Use -v to get more diff
+=========================== short test summary info ============================
+FAILED tests/test_flow.py::test_retry_twice_concurrent - AssertionError: asse...
+1 failed, 303 deselected in 0.47s
+
+=== run 4 exit=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________________________ test_retry_twice_concurrent __________________________
+tests/test_flow.py:424: in test_retry_twice_concurrent
+    retry_twice_body(env.rig(outbox="blind"))
+tests/test_flow.py:409: in retry_twice_body
+    assert rig.state(lid) == ("failed", "refused")
+E   AssertionError: assert ('pending', 'refused') == ('failed', 'refused')
+E     
+E     At index 0 diff: 'pending' != 'failed'
+E     Use -v to get more diff
+=========================== short test summary info ============================
+FAILED tests/test_flow.py::test_retry_twice_concurrent - AssertionError: asse...
+1 failed, 303 deselected in 0.47s
+
+=== run 5 exit=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________________________ test_retry_twice_concurrent __________________________
+tests/test_flow.py:424: in test_retry_twice_concurrent
+    retry_twice_body(env.rig(outbox="blind"))
+tests/test_flow.py:409: in retry_twice_body
+    assert rig.state(lid) == ("failed", "refused")
+E   AssertionError: assert ('pending', 'refused') == ('failed', 'refused')
+E     
+E     At index 0 diff: 'pending' != 'failed'
+E     Use -v to get more diff
+=========================== short test summary info ============================
+FAILED tests/test_flow.py::test_retry_twice_concurrent - AssertionError: asse...
+1 failed, 303 deselected in 0.48s
+
+=== run 6 exit=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________________________ test_retry_twice_concurrent __________________________
+tests/test_flow.py:424: in test_retry_twice_concurrent
+    retry_twice_body(env.rig(outbox="blind"))
+tests/test_flow.py:409: in retry_twice_body
+    assert rig.state(lid) == ("failed", "refused")
+E   AssertionError: assert ('pending', 'refused') == ('failed', 'refused')
+E     
+E     At index 0 diff: 'pending' != 'failed'
+E     Use -v to get more diff
+=========================== short test summary info ============================
+FAILED tests/test_flow.py::test_retry_twice_concurrent - AssertionError: asse...
+1 failed, 303 deselected in 0.45s
+
+=== run 7 exit=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________________________ test_retry_twice_concurrent __________________________
+tests/test_flow.py:424: in test_retry_twice_concurrent
+    retry_twice_body(env.rig(outbox="blind"))
+tests/test_flow.py:409: in retry_twice_body
+    assert rig.state(lid) == ("failed", "refused")
+E   AssertionError: assert ('pending', 'refused') == ('failed', 'refused')
+E     
+E     At index 0 diff: 'pending' != 'failed'
+E     Use -v to get more diff
+=========================== short test summary info ============================
+FAILED tests/test_flow.py::test_retry_twice_concurrent - AssertionError: asse...
+1 failed, 303 deselected in 0.50s
+
+=== run 8 exit=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________________________ test_retry_twice_concurrent __________________________
+tests/test_flow.py:424: in test_retry_twice_concurrent
+    retry_twice_body(env.rig(outbox="blind"))
+tests/test_flow.py:409: in retry_twice_body
+    assert rig.state(lid) == ("failed", "refused")
+E   AssertionError: assert ('pending', 'refused') == ('failed', 'refused')
+E     
+E     At index 0 diff: 'pending' != 'failed'
+E     Use -v to get more diff
+=========================== short test summary info ============================
+FAILED tests/test_flow.py::test_retry_twice_concurrent - AssertionError: asse...
+1 failed, 303 deselected in 0.43s
+
+=== run 9 exit=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________________________ test_retry_twice_concurrent __________________________
+tests/test_flow.py:424: in test_retry_twice_concurrent
+    retry_twice_body(env.rig(outbox="blind"))
+tests/test_flow.py:409: in retry_twice_body
+    assert rig.state(lid) == ("failed", "refused")
+E   AssertionError: assert ('pending', 'refused') == ('failed', 'refused')
+E     
+E     At index 0 diff: 'pending' != 'failed'
+E     Use -v to get more diff
+=========================== short test summary info ============================
+FAILED tests/test_flow.py::test_retry_twice_concurrent - AssertionError: asse...
+1 failed, 303 deselected in 0.47s
+
+=== run 10 exit=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________________________ test_retry_twice_concurrent __________________________
+tests/test_flow.py:424: in test_retry_twice_concurrent
+    retry_twice_body(env.rig(outbox="blind"))
+tests/test_flow.py:409: in retry_twice_body
+    assert rig.state(lid) == ("failed", "refused")
+E   AssertionError: assert ('pending', 'refused') == ('failed', 'refused')
+E     
+E     At index 0 diff: 'pending' != 'failed'
+E     Use -v to get more diff
+=========================== short test summary info ============================
+FAILED tests/test_flow.py::test_retry_twice_concurrent - AssertionError: asse...
+1 failed, 303 deselected in 0.56s
+
+=== run 11 exit=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________________________ test_retry_twice_concurrent __________________________
+tests/test_flow.py:424: in test_retry_twice_concurrent
+    retry_twice_body(env.rig(outbox="blind"))
+tests/test_flow.py:409: in retry_twice_body
+    assert rig.state(lid) == ("failed", "refused")
+E   AssertionError: assert ('pending', 'refused') == ('failed', 'refused')
+E     
+E     At index 0 diff: 'pending' != 'failed'
+E     Use -v to get more diff
+=========================== short test summary info ============================
+FAILED tests/test_flow.py::test_retry_twice_concurrent - AssertionError: asse...
+1 failed, 303 deselected in 0.45s
+
+=== run 12 exit=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________________________ test_retry_twice_concurrent __________________________
+tests/test_flow.py:424: in test_retry_twice_concurrent
+    retry_twice_body(env.rig(outbox="blind"))
+tests/test_flow.py:409: in retry_twice_body
+    assert rig.state(lid) == ("failed", "refused")
+E   AssertionError: assert ('pending', 'refused') == ('failed', 'refused')
+E     
+E     At index 0 diff: 'pending' != 'failed'
+E     Use -v to get more diff
+=========================== short test summary info ============================
+FAILED tests/test_flow.py::test_retry_twice_concurrent - AssertionError: asse...
+1 failed, 303 deselected in 0.50s
+
+=== run 13 exit=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________________________ test_retry_twice_concurrent __________________________
+tests/test_flow.py:424: in test_retry_twice_concurrent
+    retry_twice_body(env.rig(outbox="blind"))
+tests/test_flow.py:409: in retry_twice_body
+    assert rig.state(lid) == ("failed", "refused")
+E   AssertionError: assert ('pending', 'refused') == ('failed', 'refused')
+E     
+E     At index 0 diff: 'pending' != 'failed'
+E     Use -v to get more diff
+=========================== short test summary info ============================
+FAILED tests/test_flow.py::test_retry_twice_concurrent - AssertionError: asse...
+1 failed, 303 deselected in 0.58s
+
+=== run 14 exit=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________________________ test_retry_twice_concurrent __________________________
+tests/test_flow.py:424: in test_retry_twice_concurrent
+    retry_twice_body(env.rig(outbox="blind"))
+tests/test_flow.py:409: in retry_twice_body
+    assert rig.state(lid) == ("failed", "refused")
+E   AssertionError: assert ('pending', 'refused') == ('failed', 'refused')
+E     
+E     At index 0 diff: 'pending' != 'failed'
+E     Use -v to get more diff
+=========================== short test summary info ============================
+FAILED tests/test_flow.py::test_retry_twice_concurrent - AssertionError: asse...
+1 failed, 303 deselected in 0.42s
+
+=== run 15 exit=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________________________ test_retry_twice_concurrent __________________________
+tests/test_flow.py:424: in test_retry_twice_concurrent
+    retry_twice_body(env.rig(outbox="blind"))
+tests/test_flow.py:409: in retry_twice_body
+    assert rig.state(lid) == ("failed", "refused")
+E   AssertionError: assert ('pending', 'refused') == ('failed', 'refused')
+E     
+E     At index 0 diff: 'pending' != 'failed'
+E     Use -v to get more diff
+=========================== short test summary info ============================
+FAILED tests/test_flow.py::test_retry_twice_concurrent - AssertionError: asse...
+1 failed, 303 deselected in 0.46s
+
+=== run 16 exit=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________________________ test_retry_twice_concurrent __________________________
+tests/test_flow.py:424: in test_retry_twice_concurrent
+    retry_twice_body(env.rig(outbox="blind"))
+tests/test_flow.py:409: in retry_twice_body
+    assert rig.state(lid) == ("failed", "refused")
+E   AssertionError: assert ('pending', 'refused') == ('failed', 'refused')
+E     
+E     At index 0 diff: 'pending' != 'failed'
+E     Use -v to get more diff
+=========================== short test summary info ============================
+FAILED tests/test_flow.py::test_retry_twice_concurrent - AssertionError: asse...
+1 failed, 303 deselected in 0.47s
+
+=== run 17 exit=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________________________ test_retry_twice_concurrent __________________________
+tests/test_flow.py:424: in test_retry_twice_concurrent
+    retry_twice_body(env.rig(outbox="blind"))
+tests/test_flow.py:409: in retry_twice_body
+    assert rig.state(lid) == ("failed", "refused")
+E   AssertionError: assert ('pending', 'refused') == ('failed', 'refused')
+E     
+E     At index 0 diff: 'pending' != 'failed'
+E     Use -v to get more diff
+=========================== short test summary info ============================
+FAILED tests/test_flow.py::test_retry_twice_concurrent - AssertionError: asse...
+1 failed, 303 deselected in 0.46s
+
+=== run 18 exit=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________________________ test_retry_twice_concurrent __________________________
+tests/test_flow.py:424: in test_retry_twice_concurrent
+    retry_twice_body(env.rig(outbox="blind"))
+tests/test_flow.py:409: in retry_twice_body
+    assert rig.state(lid) == ("failed", "refused")
+E   AssertionError: assert ('pending', 'refused') == ('failed', 'refused')
+E     
+E     At index 0 diff: 'pending' != 'failed'
+E     Use -v to get more diff
+=========================== short test summary info ============================
+FAILED tests/test_flow.py::test_retry_twice_concurrent - AssertionError: asse...
+1 failed, 303 deselected in 0.43s
+
+=== run 19 exit=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________________________ test_retry_twice_concurrent __________________________
+tests/test_flow.py:424: in test_retry_twice_concurrent
+    retry_twice_body(env.rig(outbox="blind"))
+tests/test_flow.py:409: in retry_twice_body
+    assert rig.state(lid) == ("failed", "refused")
+E   AssertionError: assert ('pending', 'refused') == ('failed', 'refused')
+E     
+E     At index 0 diff: 'pending' != 'failed'
+E     Use -v to get more diff
+=========================== short test summary info ============================
+FAILED tests/test_flow.py::test_retry_twice_concurrent - AssertionError: asse...
+1 failed, 303 deselected in 0.49s
+
+=== run 20 exit=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________________________ test_retry_twice_concurrent __________________________
+tests/test_flow.py:424: in test_retry_twice_concurrent
+    retry_twice_body(env.rig(outbox="blind"))
+tests/test_flow.py:409: in retry_twice_body
+    assert rig.state(lid) == ("failed", "refused")
+E   AssertionError: assert ('pending', 'refused') == ('failed', 'refused')
+E     
+E     At index 0 diff: 'pending' != 'failed'
+E     Use -v to get more diff
+=========================== short test summary info ============================
+FAILED tests/test_flow.py::test_retry_twice_concurrent - AssertionError: asse...
+1 failed, 303 deselected in 0.41s
+
+=== run 21 exit=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________________________ test_retry_twice_concurrent __________________________
+tests/test_flow.py:424: in test_retry_twice_concurrent
+    retry_twice_body(env.rig(outbox="blind"))
+tests/test_flow.py:409: in retry_twice_body
+    assert rig.state(lid) == ("failed", "refused")
+E   AssertionError: assert ('pending', 'refused') == ('failed', 'refused')
+E     
+E     At index 0 diff: 'pending' != 'failed'
+E     Use -v to get more diff
+=========================== short test summary info ============================
+FAILED tests/test_flow.py::test_retry_twice_concurrent - AssertionError: asse...
+1 failed, 303 deselected in 0.47s
+
+=== run 22 exit=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________________________ test_retry_twice_concurrent __________________________
+tests/test_flow.py:424: in test_retry_twice_concurrent
+    retry_twice_body(env.rig(outbox="blind"))
+tests/test_flow.py:409: in retry_twice_body
+    assert rig.state(lid) == ("failed", "refused")
+E   AssertionError: assert ('pending', 'refused') == ('failed', 'refused')
+E     
+E     At index 0 diff: 'pending' != 'failed'
+E     Use -v to get more diff
+=========================== short test summary info ============================
+FAILED tests/test_flow.py::test_retry_twice_concurrent - AssertionError: asse...
+1 failed, 303 deselected in 0.46s
+
+=== run 23 exit=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________________________ test_retry_twice_concurrent __________________________
+tests/test_flow.py:424: in test_retry_twice_concurrent
+    retry_twice_body(env.rig(outbox="blind"))
+tests/test_flow.py:409: in retry_twice_body
+    assert rig.state(lid) == ("failed", "refused")
+E   AssertionError: assert ('pending', 'refused') == ('failed', 'refused')
+E     
+E     At index 0 diff: 'pending' != 'failed'
+E     Use -v to get more diff
+=========================== short test summary info ============================
+FAILED tests/test_flow.py::test_retry_twice_concurrent - AssertionError: asse...
+1 failed, 303 deselected in 0.47s
+
+=== run 24 exit=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________________________ test_retry_twice_concurrent __________________________
+tests/test_flow.py:424: in test_retry_twice_concurrent
+    retry_twice_body(env.rig(outbox="blind"))
+tests/test_flow.py:409: in retry_twice_body
+    assert rig.state(lid) == ("failed", "refused")
+E   AssertionError: assert ('pending', 'refused') == ('failed', 'refused')
+E     
+E     At index 0 diff: 'pending' != 'failed'
+E     Use -v to get more diff
+=========================== short test summary info ============================
+FAILED tests/test_flow.py::test_retry_twice_concurrent - AssertionError: asse...
+1 failed, 303 deselected in 0.62s
+
+=== run 25 exit=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________________________ test_retry_twice_concurrent __________________________
+tests/test_flow.py:424: in test_retry_twice_concurrent
+    retry_twice_body(env.rig(outbox="blind"))
+tests/test_flow.py:409: in retry_twice_body
+    assert rig.state(lid) == ("failed", "refused")
+E   AssertionError: assert ('pending', 'refused') == ('failed', 'refused')
+E     
+E     At index 0 diff: 'pending' != 'failed'
+E     Use -v to get more diff
+=========================== short test summary info ============================
+FAILED tests/test_flow.py::test_retry_twice_concurrent - AssertionError: asse...
+1 failed, 303 deselected in 0.54s
+
+=== run 26 exit=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________________________ test_retry_twice_concurrent __________________________
+tests/test_flow.py:424: in test_retry_twice_concurrent
+    retry_twice_body(env.rig(outbox="blind"))
+tests/test_flow.py:409: in retry_twice_body
+    assert rig.state(lid) == ("failed", "refused")
+E   AssertionError: assert ('pending', 'refused') == ('failed', 'refused')
+E     
+E     At index 0 diff: 'pending' != 'failed'
+E     Use -v to get more diff
+=========================== short test summary info ============================
+FAILED tests/test_flow.py::test_retry_twice_concurrent - AssertionError: asse...
+1 failed, 303 deselected in 0.51s
+
+=== run 27 exit=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________________________ test_retry_twice_concurrent __________________________
+tests/test_flow.py:424: in test_retry_twice_concurrent
+    retry_twice_body(env.rig(outbox="blind"))
+tests/test_flow.py:409: in retry_twice_body
+    assert rig.state(lid) == ("failed", "refused")
+E   AssertionError: assert ('pending', 'refused') == ('failed', 'refused')
+E     
+E     At index 0 diff: 'pending' != 'failed'
+E     Use -v to get more diff
+=========================== short test summary info ============================
+FAILED tests/test_flow.py::test_retry_twice_concurrent - AssertionError: asse...
+1 failed, 303 deselected in 0.43s
+
+=== run 28 exit=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________________________ test_retry_twice_concurrent __________________________
+tests/test_flow.py:424: in test_retry_twice_concurrent
+    retry_twice_body(env.rig(outbox="blind"))
+tests/test_flow.py:409: in retry_twice_body
+    assert rig.state(lid) == ("failed", "refused")
+E   AssertionError: assert ('pending', 'refused') == ('failed', 'refused')
+E     
+E     At index 0 diff: 'pending' != 'failed'
+E     Use -v to get more diff
+=========================== short test summary info ============================
+FAILED tests/test_flow.py::test_retry_twice_concurrent - AssertionError: asse...
+1 failed, 303 deselected in 0.52s
+
+=== run 29 exit=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________________________ test_retry_twice_concurrent __________________________
+tests/test_flow.py:424: in test_retry_twice_concurrent
+    retry_twice_body(env.rig(outbox="blind"))
+tests/test_flow.py:409: in retry_twice_body
+    assert rig.state(lid) == ("failed", "refused")
+E   AssertionError: assert ('pending', 'refused') == ('failed', 'refused')
+E     
+E     At index 0 diff: 'pending' != 'failed'
+E     Use -v to get more diff
+=========================== short test summary info ============================
+FAILED tests/test_flow.py::test_retry_twice_concurrent - AssertionError: asse...
+1 failed, 303 deselected in 0.46s
+
+=== run 30 exit=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________________________ test_retry_twice_concurrent __________________________
+tests/test_flow.py:424: in test_retry_twice_concurrent
+    retry_twice_body(env.rig(outbox="blind"))
+tests/test_flow.py:409: in retry_twice_body
+    assert rig.state(lid) == ("failed", "refused")
+E   AssertionError: assert ('pending', 'refused') == ('failed', 'refused')
+E     
+E     At index 0 diff: 'pending' != 'failed'
+E     Use -v to get more diff
+=========================== short test summary info ============================
+FAILED tests/test_flow.py::test_retry_twice_concurrent - AssertionError: asse...
+1 failed, 303 deselected in 0.69s
+
+=== run 31 exit=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________________________ test_retry_twice_concurrent __________________________
+tests/test_flow.py:424: in test_retry_twice_concurrent
+    retry_twice_body(env.rig(outbox="blind"))
+tests/test_flow.py:409: in retry_twice_body
+    assert rig.state(lid) == ("failed", "refused")
+E   AssertionError: assert ('pending', 'refused') == ('failed', 'refused')
+E     
+E     At index 0 diff: 'pending' != 'failed'
+E     Use -v to get more diff
+=========================== short test summary info ============================
+FAILED tests/test_flow.py::test_retry_twice_concurrent - AssertionError: asse...
+1 failed, 303 deselected in 0.57s
+
+=== run 32 exit=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________________________ test_retry_twice_concurrent __________________________
+tests/test_flow.py:424: in test_retry_twice_concurrent
+    retry_twice_body(env.rig(outbox="blind"))
+tests/test_flow.py:409: in retry_twice_body
+    assert rig.state(lid) == ("failed", "refused")
+E   AssertionError: assert ('pending', 'refused') == ('failed', 'refused')
+E     
+E     At index 0 diff: 'pending' != 'failed'
+E     Use -v to get more diff
+=========================== short test summary info ============================
+FAILED tests/test_flow.py::test_retry_twice_concurrent - AssertionError: asse...
+1 failed, 303 deselected in 0.47s
+
+=== run 33 exit=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________________________ test_retry_twice_concurrent __________________________
+tests/test_flow.py:424: in test_retry_twice_concurrent
+    retry_twice_body(env.rig(outbox="blind"))
+tests/test_flow.py:409: in retry_twice_body
+    assert rig.state(lid) == ("failed", "refused")
+E   AssertionError: assert ('pending', 'refused') == ('failed', 'refused')
+E     
+E     At index 0 diff: 'pending' != 'failed'
+E     Use -v to get more diff
+=========================== short test summary info ============================
+FAILED tests/test_flow.py::test_retry_twice_concurrent - AssertionError: asse...
+1 failed, 303 deselected in 0.49s
+
+=== run 34 exit=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________________________ test_retry_twice_concurrent __________________________
+tests/test_flow.py:424: in test_retry_twice_concurrent
+    retry_twice_body(env.rig(outbox="blind"))
+tests/test_flow.py:409: in retry_twice_body
+    assert rig.state(lid) == ("failed", "refused")
+E   AssertionError: assert ('pending', 'refused') == ('failed', 'refused')
+E     
+E     At index 0 diff: 'pending' != 'failed'
+E     Use -v to get more diff
+=========================== short test summary info ============================
+FAILED tests/test_flow.py::test_retry_twice_concurrent - AssertionError: asse...
+1 failed, 303 deselected in 0.53s
+
+=== run 35 exit=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________________________ test_retry_twice_concurrent __________________________
+tests/test_flow.py:424: in test_retry_twice_concurrent
+    retry_twice_body(env.rig(outbox="blind"))
+tests/test_flow.py:409: in retry_twice_body
+    assert rig.state(lid) == ("failed", "refused")
+E   AssertionError: assert ('pending', 'refused') == ('failed', 'refused')
+E     
+E     At index 0 diff: 'pending' != 'failed'
+E     Use -v to get more diff
+=========================== short test summary info ============================
+FAILED tests/test_flow.py::test_retry_twice_concurrent - AssertionError: asse...
+1 failed, 303 deselected in 0.48s
+
+=== run 36 exit=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________________________ test_retry_twice_concurrent __________________________
+tests/test_flow.py:424: in test_retry_twice_concurrent
+    retry_twice_body(env.rig(outbox="blind"))
+tests/test_flow.py:409: in retry_twice_body
+    assert rig.state(lid) == ("failed", "refused")
+E   AssertionError: assert ('pending', 'refused') == ('failed', 'refused')
+E     
+E     At index 0 diff: 'pending' != 'failed'
+E     Use -v to get more diff
+=========================== short test summary info ============================
+FAILED tests/test_flow.py::test_retry_twice_concurrent - AssertionError: asse...
+1 failed, 303 deselected in 0.43s
+
+=== run 37 exit=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________________________ test_retry_twice_concurrent __________________________
+tests/test_flow.py:424: in test_retry_twice_concurrent
+    retry_twice_body(env.rig(outbox="blind"))
+tests/test_flow.py:409: in retry_twice_body
+    assert rig.state(lid) == ("failed", "refused")
+E   AssertionError: assert ('pending', 'refused') == ('failed', 'refused')
+E     
+E     At index 0 diff: 'pending' != 'failed'
+E     Use -v to get more diff
+=========================== short test summary info ============================
+FAILED tests/test_flow.py::test_retry_twice_concurrent - AssertionError: asse...
+1 failed, 303 deselected in 0.50s
+
+=== run 38 exit=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________________________ test_retry_twice_concurrent __________________________
+tests/test_flow.py:424: in test_retry_twice_concurrent
+    retry_twice_body(env.rig(outbox="blind"))
+tests/test_flow.py:409: in retry_twice_body
+    assert rig.state(lid) == ("failed", "refused")
+E   AssertionError: assert ('pending', 'refused') == ('failed', 'refused')
+E     
+E     At index 0 diff: 'pending' != 'failed'
+E     Use -v to get more diff
+=========================== short test summary info ============================
+FAILED tests/test_flow.py::test_retry_twice_concurrent - AssertionError: asse...
+1 failed, 303 deselected in 0.41s
+
+=== run 39 exit=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________________________ test_retry_twice_concurrent __________________________
+tests/test_flow.py:424: in test_retry_twice_concurrent
+    retry_twice_body(env.rig(outbox="blind"))
+tests/test_flow.py:409: in retry_twice_body
+    assert rig.state(lid) == ("failed", "refused")
+E   AssertionError: assert ('pending', 'refused') == ('failed', 'refused')
+E     
+E     At index 0 diff: 'pending' != 'failed'
+E     Use -v to get more diff
+=========================== short test summary info ============================
+FAILED tests/test_flow.py::test_retry_twice_concurrent - AssertionError: asse...
+1 failed, 303 deselected in 0.49s
+
+=== run 40 exit=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________________________ test_retry_twice_concurrent __________________________
+tests/test_flow.py:424: in test_retry_twice_concurrent
+    retry_twice_body(env.rig(outbox="blind"))
+tests/test_flow.py:409: in retry_twice_body
+    assert rig.state(lid) == ("failed", "refused")
+E   AssertionError: assert ('pending', 'refused') == ('failed', 'refused')
+E     
+E     At index 0 diff: 'pending' != 'failed'
+E     Use -v to get more diff
+=========================== short test summary info ============================
+FAILED tests/test_flow.py::test_retry_twice_concurrent - AssertionError: asse...
+1 failed, 303 deselected in 0.46s
+
+=== run 41 exit=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________________________ test_retry_twice_concurrent __________________________
+tests/test_flow.py:424: in test_retry_twice_concurrent
+    retry_twice_body(env.rig(outbox="blind"))
+tests/test_flow.py:409: in retry_twice_body
+    assert rig.state(lid) == ("failed", "refused")
+E   AssertionError: assert ('pending', 'refused') == ('failed', 'refused')
+E     
+E     At index 0 diff: 'pending' != 'failed'
+E     Use -v to get more diff
+=========================== short test summary info ============================
+FAILED tests/test_flow.py::test_retry_twice_concurrent - AssertionError: asse...
+1 failed, 303 deselected in 0.56s
+
+=== run 42 exit=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________________________ test_retry_twice_concurrent __________________________
+tests/test_flow.py:424: in test_retry_twice_concurrent
+    retry_twice_body(env.rig(outbox="blind"))
+tests/test_flow.py:409: in retry_twice_body
+    assert rig.state(lid) == ("failed", "refused")
+E   AssertionError: assert ('pending', 'refused') == ('failed', 'refused')
+E     
+E     At index 0 diff: 'pending' != 'failed'
+E     Use -v to get more diff
+=========================== short test summary info ============================
+FAILED tests/test_flow.py::test_retry_twice_concurrent - AssertionError: asse...
+1 failed, 303 deselected in 0.48s
+
+=== run 43 exit=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________________________ test_retry_twice_concurrent __________________________
+tests/test_flow.py:424: in test_retry_twice_concurrent
+    retry_twice_body(env.rig(outbox="blind"))
+tests/test_flow.py:409: in retry_twice_body
+    assert rig.state(lid) == ("failed", "refused")
+E   AssertionError: assert ('pending', 'refused') == ('failed', 'refused')
+E     
+E     At index 0 diff: 'pending' != 'failed'
+E     Use -v to get more diff
+=========================== short test summary info ============================
+FAILED tests/test_flow.py::test_retry_twice_concurrent - AssertionError: asse...
+1 failed, 303 deselected in 0.48s
+
+=== run 44 exit=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________________________ test_retry_twice_concurrent __________________________
+tests/test_flow.py:424: in test_retry_twice_concurrent
+    retry_twice_body(env.rig(outbox="blind"))
+tests/test_flow.py:409: in retry_twice_body
+    assert rig.state(lid) == ("failed", "refused")
+E   AssertionError: assert ('pending', 'refused') == ('failed', 'refused')
+E     
+E     At index 0 diff: 'pending' != 'failed'
+E     Use -v to get more diff
+=========================== short test summary info ============================
+FAILED tests/test_flow.py::test_retry_twice_concurrent - AssertionError: asse...
+1 failed, 303 deselected in 0.49s
+
+=== run 45 exit=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________________________ test_retry_twice_concurrent __________________________
+tests/test_flow.py:424: in test_retry_twice_concurrent
+    retry_twice_body(env.rig(outbox="blind"))
+tests/test_flow.py:409: in retry_twice_body
+    assert rig.state(lid) == ("failed", "refused")
+E   AssertionError: assert ('pending', 'refused') == ('failed', 'refused')
+E     
+E     At index 0 diff: 'pending' != 'failed'
+E     Use -v to get more diff
+=========================== short test summary info ============================
+FAILED tests/test_flow.py::test_retry_twice_concurrent - AssertionError: asse...
+1 failed, 303 deselected in 0.39s
+
+=== run 46 exit=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________________________ test_retry_twice_concurrent __________________________
+tests/test_flow.py:424: in test_retry_twice_concurrent
+    retry_twice_body(env.rig(outbox="blind"))
+tests/test_flow.py:409: in retry_twice_body
+    assert rig.state(lid) == ("failed", "refused")
+E   AssertionError: assert ('pending', 'refused') == ('failed', 'refused')
+E     
+E     At index 0 diff: 'pending' != 'failed'
+E     Use -v to get more diff
+=========================== short test summary info ============================
+FAILED tests/test_flow.py::test_retry_twice_concurrent - AssertionError: asse...
+1 failed, 303 deselected in 0.40s
+
+=== run 47 exit=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________________________ test_retry_twice_concurrent __________________________
+tests/test_flow.py:424: in test_retry_twice_concurrent
+    retry_twice_body(env.rig(outbox="blind"))
+tests/test_flow.py:409: in retry_twice_body
+    assert rig.state(lid) == ("failed", "refused")
+E   AssertionError: assert ('pending', 'refused') == ('failed', 'refused')
+E     
+E     At index 0 diff: 'pending' != 'failed'
+E     Use -v to get more diff
+=========================== short test summary info ============================
+FAILED tests/test_flow.py::test_retry_twice_concurrent - AssertionError: asse...
+1 failed, 303 deselected in 0.48s
+
+=== run 48 exit=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________________________ test_retry_twice_concurrent __________________________
+tests/test_flow.py:424: in test_retry_twice_concurrent
+    retry_twice_body(env.rig(outbox="blind"))
+tests/test_flow.py:409: in retry_twice_body
+    assert rig.state(lid) == ("failed", "refused")
+E   AssertionError: assert ('pending', 'refused') == ('failed', 'refused')
+E     
+E     At index 0 diff: 'pending' != 'failed'
+E     Use -v to get more diff
+=========================== short test summary info ============================
+FAILED tests/test_flow.py::test_retry_twice_concurrent - AssertionError: asse...
+1 failed, 303 deselected in 0.48s
+
+=== run 49 exit=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________________________ test_retry_twice_concurrent __________________________
+tests/test_flow.py:424: in test_retry_twice_concurrent
+    retry_twice_body(env.rig(outbox="blind"))
+tests/test_flow.py:409: in retry_twice_body
+    assert rig.state(lid) == ("failed", "refused")
+E   AssertionError: assert ('pending', 'refused') == ('failed', 'refused')
+E     
+E     At index 0 diff: 'pending' != 'failed'
+E     Use -v to get more diff
+=========================== short test summary info ============================
+FAILED tests/test_flow.py::test_retry_twice_concurrent - AssertionError: asse...
+1 failed, 303 deselected in 0.47s
+
+=== run 50 exit=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________________________ test_retry_twice_concurrent __________________________
+tests/test_flow.py:424: in test_retry_twice_concurrent
+    retry_twice_body(env.rig(outbox="blind"))
+tests/test_flow.py:409: in retry_twice_body
+    assert rig.state(lid) == ("failed", "refused")
+E   AssertionError: assert ('pending', 'refused') == ('failed', 'refused')
+E     
+E     At index 0 diff: 'pending' != 'failed'
+E     Use -v to get more diff
+=========================== short test summary info ============================
+FAILED tests/test_flow.py::test_retry_twice_concurrent - AssertionError: asse...
+1 failed, 303 deselected in 0.47s
+
+COUNTS test_retry_twice_concurrent: exit0=0 nonzero=50 (of which timeout=0) of 50; last run summary line: 1 failed, 303 deselected in 0.47s

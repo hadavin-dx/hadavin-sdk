@@ -1,0 +1,5 @@
+[blind] diff n=1000: n=1000 status={201: 1000} 5xx=0 client_errors={} max_latency_s=3.26
+   desk_counts={'received': 1000, 'new': 1000, 'duplicate': 0, 'review': 0, 'open': 0, 'rejected_envelopes': 0, 'pending_followups': 433, 'failed_followups': 0, 'unknown_followups': 0, 'sending_followups': 1, 'expected_match': None, 'ok': None}
+   followup_states= {'pending': 427, 'sending': 5, 'sent': 568} open_receipts= 0
+   received=1000 vs new+dup+review+rejected=1000 (failed/unknown shown in open/pending) lost_receipt=0
+   crm_rows=568 distinct_leads_in_crm=568 max_rows_per_lead=1; emails=568 distinct_recipients=568 max_emails_per_lead=1; expected_leads=1000
