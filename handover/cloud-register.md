@@ -905,3 +905,4 @@ PR72 0ae044b: builder done; evidence run waits for evid.sh fix (inv-trunc-66), t
 - 07:50:53 a25637c4 + ac36fa89 PR84 r5 reviewers STARTED; a52cf487 P1d-a resolver STARTED
 - 07:52:14 ac86d239 (P4a r3 codebase) REPORTED/CLOSED, saved; P4a resolver started
 - 07:52:21 a33c4dd6 P4a resolver (rev 4) STARTED
+- 07:52:41 a25637c4 (PR84 r5 design) REPORTED/CLOSED, saved: 1B/3M/9N; waiting ac36fa89 codebase
