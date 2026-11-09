@@ -853,3 +853,4 @@ PR72 0ae044b: builder done; evidence run waits for evid.sh fix (inv-trunc-66), t
 | adbfa09c | P4a BN-17/18/19 fix drafter (opus) | 07:09Z | +40m | running | plan review round 2 | 
 | ad64f4a5 | P1b fix round 2 builder (sonnet) | 07:12Z | +60m | running | evidence runner, fresh reviewers | 
 | aefed843 | AK-G2 rev 5 drafter (opus) | 07:14Z | +40m | running | plan review round 2 |
+| evid-chainC (shell) | evid.sh fixed runner chain PR72,74,63,83,86,80 | 07:16Z | ~3h | running | read SUMMARY lines, then reviewers |
