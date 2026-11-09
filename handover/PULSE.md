@@ -1,1 +1,1 @@
-19:15Z | agents: RUNNING campaign a2708dcde10b13eee; mutation abe9c1e4b702e9553; security-r3 a66e1bb775ed5a0ff; code-tests-r3 a95a0d43a02d8f148 | evid shells: none | unpushed: none | refreshed every 60 s by a bounded script (ends 21:25Z); detail in HEARTBEAT.md
+19:16Z | agents: RUNNING campaign a2708dcde10b13eee; mutation abe9c1e4b702e9553; security-r3 a66e1bb775ed5a0ff; code-tests-r3 a95a0d43a02d8f148 | evid shells: none | unpushed: none | refreshed every 60 s by a bounded script (ends 21:26Z); detail in HEARTBEAT.md
