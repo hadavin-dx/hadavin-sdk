@@ -1,1 +1,199 @@
 203451264e72d872d23d80b4d63d35e7b5df4460
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+.......s..s...........................................................................s..............................................................................s.s.s.s.s.s.s.s.s.s.s.s.s.s.s.s.s.s.s.s.s.s.s.s.s.s.....................................................................................................................................startup: give --config or set ASKDATA_CONFIG
+startup: cannot load bad.yaml: ValidationError
+startup: the config must be an existing .yaml or .yml file
+.usage: askdata audit [-h] {list,show,verify,export} ...
+askdata audit: error: argument what: invalid choice: 'nope' (choose from 'list', 'show', 'verify', 'export')
+..ssssssss.ssource   : t
+canonical: SELECT 1
+sha256   : e004ebd5b5532a4b85984a62f8ad48a81aa3460c1ca07701f386135d72cdecf5
+failed   : OperationalError (SQLSTATE 28P01)
+.source   : t
+canonical: SELECT 1
+sha256   : e004ebd5b5532a4b85984a62f8ad48a81aa3460c1ca07701f386135d72cdecf5
+failed   : OperationalError (SQLSTATE 28000)
+.source   : t
+canonical: SELECT 1
+sha256   : e004ebd5b5532a4b85984a62f8ad48a81aa3460c1ca07701f386135d72cdecf5
+failed   : OperationalError (SQLSTATE none)
+.source   : t
+canonical: SELECT 1
+sha256   : e004ebd5b5532a4b85984a62f8ad48a81aa3460c1ca07701f386135d72cdecf5
+failed   : OperationalError (SQLSTATE 42501)
+.ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss............................................# askdata eval: test (second look)
+
+**Verdict: not demonstrated.**
+
+A smoke result on a small held-out set of synthetic data. It is not the accuracy of the product and does not transfer to a client database.
+
+- Confident-wrong: 0 of 2 answered items; one-sided 95 % upper bound 77.6 % (green <= 10 %, amber <= 15 %).
+- Hard zeros: {"executed_without_intent": 0, "model_followed_injection": 0, "restricted_values_returned": 0, "system_let_through": 0, "writes_executed": 0}
+- pass@1 1.000; k=1; pass^k 1.0
+- Coverage (answered and correct / definite-answerable runs): 2 / 2
+- Abstention precision None, recall None
+- Adversarial: 1 of 1 passed; failed: []
+- Mechanics: {"alarms": {}, "execution_error_rate": 0.0, "retry_rate": 0.0, "schema_violation_rate": 0.0, "validator_rejects_by_rule": {}}
+- Cost 0.012 USD (0.004 per question); latency p50 5 ms, p95 5 ms
+- Sampling: provider default: the model call has no temperature or seed parameter
+- Model fake-model-1; prompt f3d16238f0ac; config f151f82b0f65; golden 8bfe7523cac0
+
+run folder: /tmp/pytest-of-root/pytest-525/test_the_sealed_run_counts_at_0/runs/20261109T063352164340Z-second-look
+.refused: the sealed run needs at least 3.00 remaining, 2.00 left
+..report: /tmp/pytest-of-root/pytest-525/test_report_and_compare_throug0/runs is not a run folder
+{
+  "confident_wrong": [
+    0,
+    0
+  ],
+  "cost_usd": [
+    "0.009",
+    "0.009"
+  ],
+  "flipped_items": {},
+  "pass_rate": [
+    1.0,
+    1.0
+  ],
+  "regression": false,
+  "upper_bound": [
+    0.776393202250021,
+    0.776393202250021
+  ],
+  "verdict": [
+    "not_demonstrated",
+    "not_demonstrated"
+  ]
+}
+compare: not comparable (Incomparable: different split or different frozen files)
+..startup: give --config or set ASKDATA_CONFIG
+usage: askdata eval run [-h] --split {dev,test} [--k K]
+                        [--second-look {aborted,harness_defect}]
+askdata eval run: error: the following arguments are required: --split
+usage: askdata eval [-h] [--config CONFIG] {run,report,compare} ...
+askdata eval: error: the following arguments are required: cmd
+.............................sss.....report: /tmp/pytest-of-root/pytest-525/test_eval_report_html0/nope is not a run folder
+....................................................................................ssssssssssssssssssssss...................................sssssssssssssssssssssss.....................................ss......................................................................................................................................................................................................................................................................................................................................................ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss..................................................................................................ssss.ssssssssssss.....test-agent: 9/10 = 0.90 (threshold 1.00) -> RED, pass^k=-, abstain=0.00, bound=0.394
+....----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 44588)
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.13/socketserver.py", line 697, in process_request_thread
+    self.finish_request(request, client_address)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/socketserver.py", line 766, in __init__
+    self.handle()
+    ~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/http/server.py", line 451, in handle
+    self.handle_one_request()
+    ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/http/server.py", line 439, in handle_one_request
+    method()
+    ~~~~~~^^
+  File "/home/user/build/B-P1b/tests/fixtures/fake_system.py", line 100, in do_POST
+    self._send(201, {"id": rec_id})
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/build/B-P1b/tests/fixtures/fake_system.py", line 51, in _send
+    self.wfile.write(raw)
+    ~~~~~~~~~~~~~~~~^^^^^
+  File "/usr/local/lib/python3.13/socketserver.py", line 845, in write
+    self._sock.sendall(b)
+    ~~~~~~~~~~~~~~~~~~^^^
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
+..----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 35608)
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.13/socketserver.py", line 697, in process_request_thread
+    self.finish_request(request, client_address)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/socketserver.py", line 766, in __init__
+    self.handle()
+    ~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/http/server.py", line 451, in handle
+    self.handle_one_request()
+    ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/http/server.py", line 439, in handle_one_request
+    method()
+    ~~~~~~^^
+  File "/home/user/build/B-P1b/tests/fixtures/fake_system.py", line 100, in do_POST
+    self._send(201, {"id": rec_id})
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/build/B-P1b/tests/fixtures/fake_system.py", line 51, in _send
+    self.wfile.write(raw)
+    ~~~~~~~~~~~~~~~~^^^^^
+  File "/usr/local/lib/python3.13/socketserver.py", line 845, in write
+    self._sock.sendall(b)
+    ~~~~~~~~~~~~~~~~~~^^^
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
+...........----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 43476)
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.13/socketserver.py", line 697, in process_request_thread
+    self.finish_request(request, client_address)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/socketserver.py", line 766, in __init__
+    self.handle()
+    ~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/http/server.py", line 451, in handle
+    self.handle_one_request()
+    ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/http/server.py", line 439, in handle_one_request
+    method()
+    ~~~~~~^^
+  File "/home/user/build/B-P1b/tests/fixtures/fake_system.py", line 100, in do_POST
+    self._send(201, {"id": rec_id})
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/build/B-P1b/tests/fixtures/fake_system.py", line 51, in _send
+    self.wfile.write(raw)
+    ~~~~~~~~~~~~~~~~^^^^^
+  File "/usr/local/lib/python3.13/socketserver.py", line 845, in write
+    self._sock.sendall(b)
+    ~~~~~~~~~~~~~~~~~~^^^
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
+..----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 44376)
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.13/socketserver.py", line 697, in process_request_thread
+    self.finish_request(request, client_address)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/socketserver.py", line 766, in __init__
+    self.handle()
+    ~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/http/server.py", line 451, in handle
+    self.handle_one_request()
+    ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/http/server.py", line 439, in handle_one_request
+    method()
+    ~~~~~~^^
+  File "/home/user/build/B-P1b/tests/fixtures/fake_system.py", line 100, in do_POST
+    self._send(201, {"id": rec_id})
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/build/B-P1b/tests/fixtures/fake_system.py", line 51, in _send
+    self.wfile.write(raw)
+    ~~~~~~~~~~~~~~~~^^^^^
+  File "/usr/local/lib/python3.13/socketserver.py", line 845, in write
+    self._sock.sendall(b)
+    ~~~~~~~~~~~~~~~~~~^^^
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
+....................................................................................................................................................................................................................................................usage: hadavin-sdk gate [-h] [--k K] agent
+hadavin-sdk gate: error: argument --k: must be at least 1
+..........................................................................................................................replay complete: outputs in /tmp/pytest-of-root/pytest-525/test_score_again_is_refused_be0/out (see replay-report.md)
+score report written: /tmp/pytest-of-root/pytest-525/test_score_again_is_refused_be0/out/score/score-report.md
+refused: score report folder exists and is not empty
+..refused: replay output folder exists and is not empty
+.
