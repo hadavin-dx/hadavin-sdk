@@ -1218,3 +1218,23 @@ CHECKED BY ME: pulse process alive (ps), HEARTBEAT last auto line 04:06Z before 
 NOT RUN: P1d resolve/rev 2 (waiting on your answers to q375); P1b fix batch (waiting on q-answers M2/M3/M6 in round1-resolve.md).
 DECISIONS FOR LEAD: (1) P1b M2 which orders authorise the 16-key/33-name surface; (2) M3 strict-coverage default (my rec: measure first, then strict only for uncovered shapes); (3) M6 P1d wires redaction to the scan, hard dependency, no client data before. (4) P6a-1 mutants 56-72: keep invented ones and call evidence "reconstructed" (my rec) unless someone can name the originals.
 NEXT: collect P3a-2, commit under handover/tools, then ORDER 155 chain (PR 63+70 etc.).
+
+## q377 ORDER 165 report (05:14Z 2026-11-09)
+
+FAILED / UNCERTAIN FIRST
+- ORDER 165 says 56 original P6a-1 mutants. The records support 45; I added 17 invented ones (45 + 17 = 62). The header of handover/tools/p6a1_mutants_by_hand.py says so. Please do not quote 62/62 as the original number.
+- P6a gen_evidence at d15e53a: first run had 434 errors because Postgres on 5432 was down (connection refused), so those cells say nothing about the code. I restarted Postgres and am rerunning into out-p6a-pg; not yet finished.
+- P3a-2 mutants (66/66) and gen_evidence.py are RECONSTRUCTED, not the originals; headers say so. The "hygiene regex fix" was not reconstructed.
+
+CHECKED BY ME
+- P1.md BN-21 added (orders 137/140/165, M3 ruling, M6 hard dependency). P6a-1 header corrected. P3a-2 tools and evidence collected under handover/. P1d ticket revision 2 written via egm-draft and pushed (78061c7 before rebase).
+NOT RUN
+- P1b fix batch (builder still running, no push yet); evidence runner and round-2 reviews of P1b not started. P1d resolve and round-2 plan review are running now (design, readiness, zoom-out).
+DECISIONS FOR LEAD (P1d, open questions in the ticket)
+1. Model path: withhold the text by default when residue is found (my proposal) or raise?
+2. Accept the over-mask in H34 (a harmless look-alike gets masked)?
+3. Operator console route for withheld requests: which one?
+4. Scope of S11/S16 sibling rows: in P1d or later?
+5. P1b ViewTooShort behaviour: exact fallback as in the ticket?
+NEXT
+- Collect round-2 reports, resolve, repeat until clean. Then BN-22 and the P1b evidence runner when the builder reports.
