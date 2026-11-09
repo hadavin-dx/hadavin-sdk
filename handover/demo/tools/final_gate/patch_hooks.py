@@ -25,10 +25,10 @@ rep('''    except OSError:
 # hook 1: start_background before startup, stop_background first in finally
 rep('''    try:
         desk.startup()
-        host, port''', '''    try:
+''', '''    try:
         desk.start_background()
         desk.startup()
-        host, port''')
+''')   # anchor shortened (ORDER 212): the portal patch adds a start-up warning between startup() and the host line
 rep('''    finally:
         server.server_close()
         desk.close()
