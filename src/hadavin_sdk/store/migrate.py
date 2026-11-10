@@ -1,25 +1,31 @@
 """Forward-only schema migrations for the Postgres store (`hadavin-sdk migrate`).
 
 Run under a migration role, never by the runtime. Every pending `migrations/NNNN_*.sql` file is applied in one
-transaction under a transaction-scoped advisory lock, so two concurrent runs apply each file once. Pattern
-ported from WARDEN `audit.py:migrate` (main a1e76cbf). Rollback = restore the snapshot taken before migrating.
+transaction under a transaction-scoped advisory lock, so two concurrent runs apply each file once. Rollback =
+restore the snapshot taken before migrating.
 
 The file-name rules, the late-file and gone-name refusals and the SQL text rules live in `migration_numbers`
 (no database library there); this module only calls them. Each file is read ONCE; the text that was scanned is
 the text that is executed. After each file, in the same transaction, `migrate` reads back the database user
 names (the current user and the session user), the replication-role setting, the search path, three settings that
-change how SQL text is read, the two time limits, the transaction clock and id, the role memberships (`pg_auth_members`: a role granted to a role inside a function body is
-found here, not by the statement rule), the settings saved per database or per role (`pg_db_role_setting`) and every
-trigger in the migration schema (its enabled state, its definition and the text of its function),
-and refuses if anything is LEFT changed (it cannot see a change that a file makes and undoes before it ends, and it cannot undo what a hidden
-`COMMIT` or a second connection (`dblink_exec` runs outside this transaction) already kept). The
-migration role must NOT be a superuser and must not hold `CREATEROLE`, `CREATEDB` or `BYPASSRLS`: `migrate` reads these four
-flags of the current user right after it takes its lock and refuses the run if any is set (a superuser can change what
-the read-back does not read). There is no switch to turn this check off.
-Right after that, `migrate` refuses a schema that holds a table, view, sequence or function owned by a role the migration
-role cannot act as (a database first built with a superuser login): it names the objects and prints the `ALTER ... OWNER TO`
-lines that hand them over (runbook case (h)). Without that, a later `ALTER TABLE` fails with "must be owner" and the
-`GRANT` lines do nothing without an error.
+change how SQL text is read, the two time limits, the transaction clock and id, the role memberships of the migration
+roles (`pg_auth_members`: a role granted to a role inside a function body is found here, not by the statement rule),
+the settings saved per database or per role (`pg_db_role_setting`) and every trigger in the migration schema (its
+enabled state, its definition and the text of its function), and refuses if anything is LEFT changed (it cannot see a
+change that a file makes and undoes before it ends, and it cannot undo what a hidden `COMMIT` or a second connection
+(`dblink_exec` runs outside this transaction) already kept). The memberships and saved settings it compares are those
+of the current user, the session user, the runtime, portal and purge roles and every role the two users are a member
+of; a change to any other role (for example by another session on the same server) is not compared. Then it asks the
+role questions below again, so a file cannot leave the migration role holding what the first check refused.
+The migration role must NOT be a superuser and must not hold `CREATEROLE`, `CREATEDB` or `BYPASSRLS`: `migrate` reads
+these four flags of the current user and of the session user right after it takes its lock and refuses the run if any
+is set (a superuser can change what the read-back does not read). The `REPLICATION` attribute is not checked. There is
+no switch to turn this check off.
+Right after that, `migrate` refuses a schema in which a table, view, sequence or function THIS PACKAGE manages (a
+relation in `GRANTS`, `schema_migrations`, or a function a migration file creates) is owned by a role the migration role
+cannot act as (a database first built with a superuser login): it names the objects and prints the `ALTER ... OWNER TO`
+lines that hand them over (runbook case (h)). Objects of another application in the same schema are never listed. Without
+that, a later `ALTER TABLE` fails with "must be owner" and the `GRANT` lines do nothing without an error.
 
 When `migrate` refuses, a database administrator repairs by hand (the full runbook, cases (a) to (h), is the section
 "Migration repair steps" of CHANGELOG.md). Every hand step is a FILE of SQL run with `psql -X -v ON_ERROR_STOP=1 -f <file>`
@@ -92,7 +98,7 @@ _RW = "SELECT, INSERT, UPDATE"
 _APPEND = "SELECT, INSERT"  # written once, never changed
 # The one grant map. Audit rows and checkpoints are read and appended only (their triggers also refuse UPDATE,
 # DELETE and TRUNCATE to any role); reconcile deletes an outbox row once it is in the chain. A later PR adds its
-# relations here (K5-core `redaction_maps`, K6 labels and reports, ...); the portal list never holds
+# relations here (`redaction_maps`, labels and reports, ...); the portal list never holds
 # `redaction_maps`, `events`, `tick_state.detail` or secrets.
 GRANTS: dict[str, Grant] = {
     "runs": Grant("table", _RW, portal=True, purge_cols=("run_id", "state", "updated_at")),
@@ -108,7 +114,7 @@ GRANTS: dict[str, Grant] = {
     "audit_entries": Grant("table", _APPEND, portal=True),
     "audit_checkpoints": Grant("table", _APPEND, portal=True),
     "audit_outbox": Grant("table", "SELECT, INSERT, DELETE"),
-    # K5-core: append and purge only (no UPDATE); `redaction_maps` is never portal-readable.
+    # Append and purge only (no UPDATE); `redaction_maps` is never portal-readable.
     # The runtime role appends and reads evidence; only the purge role (its own identity) deletes it.
     "tool_calls": Grant(
         "table", _APPEND, purge="DELETE", purge_cols=("call_id", "run_id", "created_at")
@@ -235,6 +241,15 @@ def _apply_grants(db, role_name: str, privileges, columns=None) -> None:
 
 
 _TABLE_PRIVS = ("SELECT", "INSERT", "UPDATE", "DELETE", "TRUNCATE", "REFERENCES", "TRIGGER")
+# PostgreSQL 17 added the table privilege MAINTAIN (VACUUM, ANALYZE, REINDEX, CLUSTER, REFRESH MATERIALIZED VIEW,
+# LOCK TABLE). PostgreSQL 16 refuses the name ("unrecognized privilege type"), so it is asked about only from 17.
+_SERVER_VERSION_SQL = "SELECT current_setting('server_version_num')::int"
+_MAINTAIN_FROM = 170000
+
+
+def _table_privs(db) -> tuple[str, ...]:
+    row = db.execute(_SERVER_VERSION_SQL).fetchone()
+    return _TABLE_PRIVS + (("MAINTAIN",) if row and row[0] >= _MAINTAIN_FROM else ())
 
 
 def effective_problems(db, role: str, expected_table, expected_cols=None) -> list[str]:
@@ -255,6 +270,7 @@ def effective_problems(db, role: str, expected_table, expected_cols=None) -> lis
             f"{role}: is a superuser or can create roles or databases or bypass row security"
         )
     schema = db.execute("SELECT current_schema()").fetchone()[0]
+    table_privs = _table_privs(db)
     if db.execute("SELECT has_schema_privilege(%s, %s, 'CREATE')", (role, schema)).fetchone()[0]:
         problems.append(f"{role}: can CREATE in schema {schema}")
     rels = db.execute(
@@ -285,7 +301,7 @@ def effective_problems(db, role: str, expected_table, expected_cols=None) -> lis
             {p.strip() for p in expected_table(grant).split(",") if p.strip()} if grant else set()
         )
         allowed_cols = set(expected_cols(grant)) if (grant and expected_cols) else set()
-        for p in _TABLE_PRIVS:
+        for p in table_privs:
             if (
                 p not in allowed
                 and db.execute("SELECT has_table_privilege(%s, %s, %s)", (role, oid, p)).fetchone()[
@@ -312,11 +328,14 @@ def effective_problems(db, role: str, expected_table, expected_cols=None) -> lis
 def _excess_privileges(db, role: str) -> list[str]:
     """Effective privileges (inherited ones too) the role holds beyond SELECT on the `portal` relations."""
     extra = []
+    table_privs = _table_privs(db)
     for name, grant in GRANTS.items():
         if grant.kind == "sequence":
             privs, q = ("USAGE", "SELECT", "UPDATE"), "SELECT has_sequence_privilege(%s, %s, %s)"
         else:
-            privs = ("SELECT", "INSERT", "UPDATE", "DELETE", "TRUNCATE")
+            privs = ("SELECT", "INSERT", "UPDATE", "DELETE", "TRUNCATE") + (
+                ("MAINTAIN",) if "MAINTAIN" in table_privs else ()
+            )
             q = "SELECT has_table_privilege(%s, %s, %s)"
         allowed = {"SELECT"} if grant.portal else set()
         extra += [
@@ -393,18 +412,32 @@ _ROLE_FLAGS_SQL = (
     "SELECT rolsuper, rolcreaterole, rolcreatedb, rolbypassrls FROM pg_roles "
     "WHERE rolname IN (current_user, session_user)"
 )
+# The roles whose memberships and saved settings the read-back compares: `own` = the current user, the session user and
+# the named runtime, portal and purge roles (parameter 1: their names); `closure` = every role the current user or the
+# session user is a member of, directly or through other roles (`pg_has_role ... 'MEMBER'`). The query list is
+# server-wide (`pg_auth_members` and `pg_db_role_setting` hold every role of the server), so rows about other roles are
+# left out: another session changing an unrelated role while a file runs must not stop the run.
 # Settings saved per database or per role (`ALTER ROLE ... SET`, `ALTER DATABASE ... SET`): they apply to NEW sessions,
 # so a file that changes them changes what the next connection runs with.
 _READBACK_SETTINGS_SQL = (
+    "WITH scope AS (SELECT r.oid, (r.rolname IN (current_user, session_user) OR r.rolname = ANY(%s::text[])) AS own, "
+    "(pg_has_role(current_user, r.oid, 'MEMBER') OR pg_has_role(session_user, r.oid, 'MEMBER')) AS closure "
+    "FROM pg_roles r) "
     "SELECT coalesce(d.datname, ''), coalesce(r.rolname, ''), s.setconfig::text FROM pg_db_role_setting s "
     "LEFT JOIN pg_database d ON d.oid = s.setdatabase LEFT JOIN pg_roles r ON r.oid = s.setrole "
-    "WHERE s.setdatabase IN (0, (SELECT oid FROM pg_database WHERE datname = current_database()))"
+    "WHERE s.setdatabase IN (0, (SELECT oid FROM pg_database WHERE datname = current_database())) "
+    "AND (s.setrole = 0 OR s.setrole IN (SELECT oid FROM scope WHERE own OR closure))"
 )
 # Role memberships (who is a member of whom, with the grant options): the one thing a `$$` function body can change
-# that no statement-start rule sees (`GRANT r TO s` inside a function, then `SELECT f();`). Names, not OIDs.
+# that no statement-start rule sees (`GRANT r TO s` inside a function, then `SELECT f();`). Names, not OIDs. Only the
+# memberships of the roles in scope (what each of them is a member of) and the members of the `own` roles.
 _READBACK_MEMBERS_SQL = (
+    "WITH scope AS (SELECT r.oid, (r.rolname IN (current_user, session_user) OR r.rolname = ANY(%s::text[])) AS own, "
+    "(pg_has_role(current_user, r.oid, 'MEMBER') OR pg_has_role(session_user, r.oid, 'MEMBER')) AS closure "
+    "FROM pg_roles r) "
     "SELECT m.roleid::regrole::text, m.member::regrole::text, "
-    "(to_jsonb(m) - 'oid' - 'roleid' - 'member')::text FROM pg_auth_members m"
+    "(to_jsonb(m) - 'oid' - 'roleid' - 'member')::text FROM pg_auth_members m "
+    "WHERE m.member IN (SELECT oid FROM scope WHERE own OR closure) OR m.roleid IN (SELECT oid FROM scope WHERE own)"
 )
 # Triggers of the migration schema only (the schema `current_schema()` names now); internal ones are skipped. Per
 # trigger: its table's id (only to tell a renamed table from a new one), its enabled state, its full definition and
@@ -512,7 +545,7 @@ def _listed(changes: frozenset[TriggerChange], key: tuple[str, str, str]) -> Tri
 @dataclass(frozen=True)
 class _Saved:
     values: tuple
-    triggers: dict  # (schema, table, tgname) -> (tgenabled, definition, function text md5, security mode, owner, settings)
+    triggers: dict  # (schema, table, tgname) -> (tgenabled, definition, function text, security mode, owner, settings)
     members: frozenset = frozenset()  # (role, member, other columns as text)
     settings: frozenset = frozenset()  # (database, role, settings as text) from pg_db_role_setting
     relids: dict = field(
@@ -520,7 +553,7 @@ class _Saved:
     )  # the same keys -> the table's id (tells a renamed table from a new one)
 
 
-def _read_back(db) -> _Saved:
+def _read_back(db, named=()) -> _Saved:
     values = tuple(db.execute(_READBACK_VALUES_SQL).fetchone())
     triggers, relids = {}, {}
     for name, enabled, table, schema, relid, *detail in db.execute(
@@ -528,8 +561,9 @@ def _read_back(db) -> _Saved:
     ).fetchall():
         triggers[(schema, table, name)] = (enabled, *detail)
         relids[(schema, table, name)] = relid
-    members = frozenset(tuple(r) for r in db.execute(_READBACK_MEMBERS_SQL).fetchall())
-    settings = frozenset(tuple(r) for r in db.execute(_READBACK_SETTINGS_SQL).fetchall())
+    scope = (list(named),)
+    members = frozenset(tuple(r) for r in db.execute(_READBACK_MEMBERS_SQL, scope).fetchall())
+    settings = frozenset(tuple(r) for r in db.execute(_READBACK_SETTINGS_SQL, scope).fetchall())
     return _Saved(values, triggers, members, settings, relids)
 
 
@@ -537,7 +571,8 @@ def _read_back(db) -> _Saved:
 # fits the database). `<schema>` is the schema `migrate` works in.
 PLAIN_MIGRATION_ROLE_SQL = (
     "CREATE ROLE migration_role LOGIN NOSUPERUSER NOCREATEROLE NOCREATEDB NOBYPASSRLS; "
-    "GRANT USAGE, CREATE ON SCHEMA <schema> TO migration_role WITH GRANT OPTION;"
+    "GRANT CREATE ON SCHEMA <schema> TO migration_role; "
+    "GRANT USAGE ON SCHEMA <schema> TO migration_role WITH GRANT OPTION;"
 )
 
 
@@ -556,11 +591,14 @@ _BORROWED_ROLES_SQL = (
 # Rights to change server settings (PostgreSQL 15 and later keep them in `pg_parameter_acl`): a grant such as
 # `GRANT SET ON PARAMETER session_replication_role` lets a file change what the checks rely on.
 _PARAMETER_TABLE_SQL = "SELECT to_regclass('pg_parameter_acl') IS NOT NULL"
+# Asked of the current user, the session user and every role either is a member of (a role that does not inherit still
+# lets its member `SET ROLE` to it).
 _PARAMETER_GRANTS_SQL = (
-    "SELECT parname FROM pg_parameter_acl WHERE has_parameter_privilege(current_user, parname, 'SET') "
-    "OR has_parameter_privilege(current_user, parname, 'ALTER SYSTEM') "
-    "OR has_parameter_privilege(session_user, parname, 'SET') "
-    "OR has_parameter_privilege(session_user, parname, 'ALTER SYSTEM') ORDER BY parname"
+    "SELECT DISTINCT a.parname FROM pg_parameter_acl a, pg_roles r "
+    "WHERE (r.rolname IN (current_user, session_user) OR pg_has_role(current_user, r.oid, 'MEMBER') "
+    "OR pg_has_role(session_user, r.oid, 'MEMBER')) "
+    "AND (has_parameter_privilege(r.oid, a.parname, 'SET') OR has_parameter_privilege(r.oid, a.parname, 'ALTER SYSTEM')) "
+    "ORDER BY 1"
 )
 
 
@@ -593,8 +631,10 @@ def _refuse_privileged_role(db) -> None:
         )
 
 
-# Objects of the migration schema that the migration role cannot change because another role owns them (it is not that
-# role and is not a member of it that inherits its rights: `pg_has_role(..., 'USAGE')`). Such an object makes a later
+# Objects THIS PACKAGE manages in the migration schema (the relations in `GRANTS`, `schema_migrations`, and the functions
+# the migration files create: `_managed_names`; parameters 1 and 2) that the migration role cannot change because another
+# role owns them (it is not that role and is not a member of it that inherits its rights: `pg_has_role(..., 'USAGE')`).
+# Tables and functions of another application in the same schema are not looked at. Such an object makes a later
 # `ALTER TABLE` or `CREATE OR REPLACE FUNCTION` fail with "must be owner of ...", and makes the `GRANT` and `REVOKE` of
 # `migrate` do nothing without an error. A database first built by a superuser login (the usual start of a demo) is in
 # this state. Objects that belong to an installed extension are skipped (the owner of those is the extension's
@@ -604,7 +644,8 @@ def _refuse_privileged_role(db) -> None:
 _FOREIGN_OWNED_SQL = (
     "SELECT 'r', c.relkind::text, c.relname, pg_get_userbyid(c.relowner), '' FROM pg_class c "
     "JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = current_schema() "
-    "AND c.relkind IN ('r','p','v','m','S','f') AND NOT pg_has_role(current_user, c.relowner, 'USAGE') "
+    "AND c.relkind IN ('r','p','v','m','S','f') AND c.relname = ANY(%s::text[]) "
+    "AND NOT pg_has_role(current_user, c.relowner, 'USAGE') "
     "AND NOT EXISTS (SELECT 1 FROM pg_depend d WHERE d.classid = 'pg_class'::regclass AND d.objid = c.oid "
     "AND d.deptype = 'e') "
     "AND (c.relkind <> 'S' OR NOT EXISTS (SELECT 1 FROM pg_depend d WHERE d.classid = 'pg_class'::regclass "
@@ -612,7 +653,7 @@ _FOREIGN_OWNED_SQL = (
     "UNION ALL SELECT 'f', p.prokind::text, p.proname, pg_get_userbyid(p.proowner), "
     "pg_get_function_identity_arguments(p.oid) FROM pg_proc p "
     "JOIN pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = current_schema() "
-    "AND NOT pg_has_role(current_user, p.proowner, 'USAGE') "
+    "AND p.proname = ANY(%s::text[]) AND NOT pg_has_role(current_user, p.proowner, 'USAGE') "
     "AND NOT EXISTS (SELECT 1 FROM pg_depend d WHERE d.classid = 'pg_proc'::regclass AND d.objid = p.oid "
     "AND d.deptype = 'e') ORDER BY 1, 3, 5"
 )
@@ -629,13 +670,31 @@ _SCHEMA_USAGE_SQL = "SELECT has_schema_privilege(%s, current_schema(), 'USAGE')"
 _FOREIGN_OWNED_SHOWN = 20  # names in the message; every statement is printed
 
 
-def _refuse_foreign_owned(db) -> None:
-    """Refuse a run whose migration role cannot change what is already in the schema (see `_FOREIGN_OWNED_SQL`). The
+_FUNCTION_CREATE = re.compile(
+    r"CREATE\s+(?:OR\s+REPLACE\s+)?FUNCTION\s+(?:\"?\w+\"?\s*\.\s*)?\"?(\w+)\"?", re.IGNORECASE
+)
+
+
+def _managed_names(texts) -> list[str]:
+    """The names this package manages in its schema: every relation in `GRANTS` (`check_grants` makes these exactly the
+    relations the migration files create), `schema_migrations`, and every function a migration file creates or
+    replaces (a file can create no type or domain: the guard refuses `CREATE TYPE` and `CREATE DOMAIN`). `texts` are the
+    file texts `migrate` executes. Sorted, lower case where the server folds the name."""
+    names = set(GRANTS) | {"schema_migrations"}
+    for raw in texts:
+        text, _problem = lex(raw, keep_quoted=True)
+        names.update(m.group(1) for m in _FUNCTION_CREATE.finditer(text))
+    return sorted(names)
+
+
+def _refuse_foreign_owned(db, managed) -> None:
+    """Refuse a run whose migration role cannot change what this package manages in the schema (`managed`, see
+    `_managed_names`; the objects of another application in the schema are not looked at; see `_FOREIGN_OWNED_SQL`). The
     message names the objects (at most `_FOREIGN_OWNED_SHOWN`), their owners, and prints the SQL that hands every one
     of them to the migration role. A statement is printed only when every name in it is plain: another role owns the
     object and chose its name, so a name with a control or unusual character is not copied into a line that a person
     runs; for such an object the message says a person must write the statement by hand."""
-    rows = db.execute(_FOREIGN_OWNED_SQL).fetchall()
+    rows = db.execute(_FOREIGN_OWNED_SQL, (list(managed), list(managed))).fetchall()
     if not rows:
         return
     schema = db.execute("SELECT current_schema()").fetchone()[0]
@@ -665,11 +724,12 @@ def _refuse_foreign_owned(db) -> None:
         else ""
     )
     raise ConfigError(
-        f"the migration role {_label(me)} cannot change {len(rows)} object(s) in schema {_label(schema)} that "
-        f"another role owns: {'; '.join(names)}{f'; and {more} more' if more > 0 else ''}. A later migration "
+        f"the migration role {_label(me)} cannot change {len(rows)} object(s) of this package in schema {_label(schema)} "
+        f"that another role owns: {'; '.join(names)}{f'; and {more} more' if more > 0 else ''}. A later migration "
         "that alters one of them would fail with 'must be owner', and the grants of migrate would do nothing without "
         "an error. Nothing was changed. A database administrator hands the objects to the migration role once, "
-        "connected as a superuser or as a role that is a member of both the old owner and the migration role, "
+        "connected as a superuser or as a role that is a member of both the old owner and the migration role (objects of "
+        "other applications in the schema are not listed and need no change), "
         "with a file of SQL run as in CHANGELOG.md, Migration repair steps, case (h): "
         + " ".join(statements)
         + hand
@@ -692,7 +752,11 @@ def _label(*names: str) -> str:
 
 
 def _check_read_back(
-    db, saved: _Saved, file_name: str, allowed_triggers: frozenset[TriggerChange] = frozenset()
+    db,
+    saved: _Saved,
+    file_name: str,
+    allowed_triggers: frozenset[TriggerChange] = frozenset(),
+    named=(),
 ) -> _Saved:
     """Read again after `file_name` and compare. The eleven values in `_READBACK_VALUES` (the user names and settings,
     the two time limits, then the transaction clock and id) must equal the values saved before the first file. A trigger
@@ -702,9 +766,11 @@ def _check_read_back(
     list `migrations_trigger_changes.json`, an entry for this file, this table and this trigger) may change; it may still
     not disappear, and it may not be left disabled (`D`) or replica-only (`R`) unless the entry names that state. The set of
     role memberships and the saved per-database and per-role settings must equal the saved ones. Refuses with every
-    difference named: a trigger change is reported as a trigger change, not as a changed session. Returns the trigger
+    difference named: a trigger change is reported as a trigger change, not as a changed session. `named` are the runtime, portal and purge roles: with the current user, the session user and
+    the roles they are members of they are the only roles whose memberships and saved settings are compared (the server
+    holds every role, and another session may change an unrelated one while the file runs). Returns the trigger
     state just read (the base for the next file); the saved values stay those of the start."""
-    now = _read_back(db)
+    now = _read_back(db, named)
     session = [
         f"{item} was {old!a} and is now {new!a}"
         for item, old, new in zip(_READBACK_VALUES, saved.values, now.values, strict=True)
@@ -749,13 +815,13 @@ def _check_read_back(
                 f"trigger {_label(key[0], key[1], key[2])} is created "
                 f"{'disabled' if enabled == 'D' else 'replica-only'}"
             )
-    # pg_auth_members is read for the whole database server, not only this database: a role change made by another
-    # session while the file runs is also reported here (a false refusal; run migrate again).
-    session += [
+    # Only the memberships in scope (the `scope` part of the two queries) are compared. One of them changed by another session while the
+    # file runs is still reported here (a false refusal; run migrate again), hence the wording.
+    members = [
         f"role {_label(role)} has a new member {_label(member)} ({_label(rest)})"
         for role, member, rest in sorted(now.members - saved.members)
     ]
-    session += [
+    members += [
         f"role {_label(role)} lost the member {_label(member)} ({_label(rest)})"
         for role, member, rest in sorted(saved.members - now.members)
     ]
@@ -767,10 +833,15 @@ def _check_read_back(
         f"saved setting for database {_label(db_name)} role {_label(role)} is gone ({_label(conf)})"
         for db_name, role, conf in sorted(saved.settings - now.settings)
     ]
-    if session or triggers:
+    if session or triggers or members:
         parts = []
         if session:
             parts.append("left the database session changed: " + "; ".join(session))
+        if members:
+            parts.append(
+                "a role membership changed while the file ran (it may be another session; run migrate again): "
+                + "; ".join(members)
+            )
         if triggers:
             parts.append(
                 "changed a trigger: "
@@ -780,6 +851,27 @@ def _check_read_back(
             )
         raise ConfigError(f"migration {escape_name(file_name)} " + ". It also ".join(parts))
     return _Saved(saved.values, now.triggers, saved.members, saved.settings, now.relids)
+
+
+def _members_of_each_other(db, named) -> bool:
+    """True when two of the named roles are members of each other's rights (a member keeps the other's rights, whatever
+    migrate REVOKEs)."""
+    q = "SELECT pg_has_role(%s, %s, 'MEMBER')"
+    return any(a != b and db.execute(q, (a, b)).fetchone()[0] for a in named for b in named)
+
+
+def _recheck_roles(db, named, file_name: str) -> None:
+    """After a file: ask the role questions of the start again (the flags, borrowed roles and parameter grants of the
+    migration user, and the named roles' memberships of each other). The first answer was taken before the file ran, and
+    a file may have changed it in a way the lists in the read-back do not show."""
+    try:
+        _refuse_privileged_role(db)
+        if _members_of_each_other(db, named):
+            raise ConfigError(
+                "the runtime, portal and purge roles must not be members of each other"
+            )
+    except ConfigError as e:
+        raise ConfigError(f"migration {escape_name(file_name)} left the roles changed: {e}") from e
 
 
 def _limit_error(e: Exception, step: str) -> ConfigError | None:
@@ -830,7 +922,8 @@ def migrate(
     if `lock_timeout` or `statement_timeout` differs from the value the run set.
 
     The migration role must not be a superuser and must not hold CREATEROLE, CREATEDB or BYPASSRLS: the run reads these
-    flags of the current user right after the limits and refuses if any is set. There is no argument or setting that
+    flags of the current user and of the session user right after the limits and refuses if any is set (the
+    `REPLICATION` attribute is not checked). There is no argument or setting that
     switches the check off: a database administrator who only has a superuser login creates a plain migration role
     once (the refusal message gives the SQL) and runs `migrate` as that role.
 
@@ -875,7 +968,7 @@ def migrate(
                 db.execute(limit)
             step[0] = "checking the migration role"
             _refuse_privileged_role(db)
-            _refuse_foreign_owned(db)
+            _refuse_foreign_owned(db, _managed_names(texts.values()))
             db.execute(
                 "CREATE TABLE IF NOT EXISTS schema_migrations "
                 "(version TEXT PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT now())"
@@ -889,7 +982,7 @@ def migrate(
                 raise MigrationNumberError(late)
             pending = [p for p in files if p.stem not in done]
             if pending:
-                saved = _read_back(db)
+                saved = _read_back(db, named)
                 _refuse_unusual_strings(saved)
             for path in pending:
                 step[0] = f"applying {path.name}"
@@ -899,17 +992,16 @@ def migrate(
                     saved,
                     path.name,
                     frozenset(c for c in allowed_changes if c.migration == path.stem),
+                    named,
                 )
+                _recheck_roles(db, named, path.name)
                 db.execute("INSERT INTO schema_migrations (version) VALUES (%s)", (path.stem,))
                 applied.append(path.stem)
             step[0] = "checking and granting the roles"
-            q = "SELECT pg_has_role(%s, %s, 'MEMBER')"  # a member keeps the other's rights, whatever we REVOKE
-            for a in named:
-                for b in named:
-                    if a != b and db.execute(q, (a, b)).fetchone()[0]:
-                        raise ConfigError(
-                            "the runtime, portal and purge roles must not be members of each other"
-                        )
+            if _members_of_each_other(db, named):
+                raise ConfigError(
+                    "the runtime, portal and purge roles must not be members of each other"
+                )
             if runtime_role:
                 _apply_grants(db, runtime_role, lambda g: g.runtime)
                 if bad := effective_problems(db, runtime_role, lambda g: g.runtime if g else ""):
@@ -939,7 +1031,7 @@ def migrate(
                     raise ConfigError(
                         f"the role {_label(role)} cannot use the schema {_label(schema)} after the grants: the migration "
                         "role may not pass USAGE on the schema on. Give it the grant option "
-                        f"(GRANT USAGE, CREATE ON SCHEMA <schema> TO <the migration role> WITH GRANT OPTION), "
+                        f"(GRANT USAGE ON SCHEMA <schema> TO <the migration role> WITH GRANT OPTION; CREATE needs no grant option), "
                         "or make it the owner of the schema."
                     )
     except (pg_errors.LockNotAvailable, pg_errors.QueryCanceled) as e:

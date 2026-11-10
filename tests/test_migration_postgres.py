@@ -11,6 +11,7 @@ import os
 import shutil
 import subprocess
 import threading
+import time
 import uuid
 from pathlib import Path
 
@@ -386,6 +387,16 @@ def _let_the_plain_role_grant(role: str) -> None:
         )
 
 
+def _let_the_plain_role_belong_to(role: str) -> None:
+    """The migration user is a member of `role` (so `role` is in the set of roles whose memberships `migrate` compares; a
+    role that the migration user has nothing to do with is not)."""
+    with psycopg.connect(DSN, autocommit=True) as db:
+        ensure_plain_role(db)
+        db.execute(
+            sql.SQL("GRANT {} TO {}").format(sql.Identifier(role), sql.Identifier(PLAIN_ROLE))
+        )
+
+
 def _drop_roles(*roles: str) -> None:
     with psycopg.connect(DSN, autocommit=True) as db:
         for role in roles:
@@ -408,6 +419,7 @@ def test_h11_a_role_grant_hidden_in_a_function_body_is_refused(scratch, monkeypa
     )
     _create_roles(a, b)
     _let_the_plain_role_grant(a)
+    _let_the_plain_role_belong_to(b)  # `b` is a role the migration user belongs to: it is compared
     try:
         mig.migrate(dsn)
         _with_files(monkeypatch, tmp_path, {"0006_grant.sql": body})
@@ -415,6 +427,7 @@ def test_h11_a_role_grant_hidden_in_a_function_body_is_refused(scratch, monkeypa
             mig.migrate(dsn)
         msg = str(e.value)
         assert "0006_grant.sql" in msg and f"role {a} has a new member {b}" in msg, msg
+        assert "a role membership changed while the file ran" in msg, msg
         assert not msg.startswith("migrations are inconsistent"), "the read-back, not the scan"
         assert _ledger(dsn) == REAL
         with psycopg.connect(DSN, autocommit=True) as db:
@@ -437,6 +450,7 @@ def test_h11_a_changed_grant_option_of_an_existing_membership_is_refused(
     a, b = "hadavin_test_oa_" + uuid.uuid4().hex[:8], "hadavin_test_ob_" + uuid.uuid4().hex[:8]
     _create_roles(a, b)
     _let_the_plain_role_grant(a)
+    _let_the_plain_role_belong_to(b)
     try:
         with psycopg.connect(DSN, autocommit=True) as db:
             if granted_before_by == "the_plain_role":
@@ -473,6 +487,7 @@ def test_h11_a_grant_of_a_role_that_was_a_member_before_is_not_a_refusal(
     dsn, _ = scratch
     a, b = "hadavin_test_ma_" + uuid.uuid4().hex[:8], "hadavin_test_mb_" + uuid.uuid4().hex[:8]
     _create_roles(a, b)
+    _let_the_plain_role_belong_to(b)
     try:
         with psycopg.connect(DSN, autocommit=True) as db:
             db.execute(sql.SQL("GRANT {} TO {}").format(sql.Identifier(a), sql.Identifier(b)))
@@ -1432,7 +1447,7 @@ def test_tables_owned_by_another_role_are_refused_with_the_sql_that_hands_them_o
     """The tables belong to the old superuser login. Without this check the plain migration role would run a later
     `ALTER TABLE` into 'must be owner of table' (and its grants would do nothing without an error). `migrate` refuses
     first, names the objects and their owner, and prints the `ALTER ... OWNER TO` lines; after an administrator runs
-    them, a file that alters a table applies. Killed by: mutant O1 (the ownership check is not called)."""
+    them, a file that alters a table applies. Killed by: mutant O1 (the ownership check is not called) and OA5 (the ledger table is not a managed name)."""
     dsn, role = plain_role
     super_dsn, _ = scratch  # the same schema, reached with the superuser login
     _build_as_the_superuser(super_dsn)
@@ -1449,6 +1464,9 @@ def test_tables_owned_by_another_role_are_refused_with_the_sql_that_hands_them_o
     with psycopg.connect(DSN, autocommit=True) as db:
         login = db.execute("SELECT current_user").fetchone()[0]
     assert "ALTER TABLE" in msg and "audit_entries" in msg and f"owner {login}" in msg, msg
+    assert "schema_migrations" in msg, (
+        "the ledger table is one of the package's own objects: " + msg
+    )
     assert _ledger(super_dsn) == REAL, "nothing was changed"
     # the administrator runs the printed lines (as the superuser login, in one transaction)
     statements = [
@@ -1471,12 +1489,13 @@ def test_tables_owned_by_another_role_are_refused_with_the_sql_that_hands_them_o
 @needs_pg
 @pytest.mark.real_connect
 def test_one_table_owned_by_another_role_is_enough_to_refuse_and_a_function_is_named(
-    scratch, plain_role
+    scratch, plain_role, monkeypatch
 ):
     """A database the plain role built, except one table and one function that the superuser login made: both are named
     and the `ALTER` lines say TABLE and FUNCTION; objects the role owns are not listed."""
     dsn, _role = plain_role
     super_dsn, _ = scratch
+    _manage(monkeypatch, "hadavin_test_foreign", "hadavin_test_foreign_fn")
     assert mig.migrate(dsn) == REAL
     with psycopg.connect(super_dsn, autocommit=True) as db:
         db.execute("CREATE TABLE hadavin_test_foreign (id INT)")
@@ -1661,6 +1680,13 @@ def test_a_role_without_the_grant_option_is_refused_when_its_grants_would_do_not
 # --- objects another role owns: kinds, partitions, names, cap, safe owners, extensions -----------------------------------
 
 
+def _manage(monkeypatch, *names: str) -> None:
+    """Make the package also manage these made-up names: the ownership check looks only at what the package manages
+    (`_managed_names`), and these tests make foreign objects with names the package never uses."""
+    real = mig._managed_names
+    monkeypatch.setattr(mig, "_managed_names", lambda texts: sorted({*real(texts), *names}))
+
+
 def _hand_over(super_dsn, tmp_path, msg: str):
     """Run the printed statements as the administrator (the superuser login) and return the finished psql process."""
     statements = [
@@ -1675,12 +1701,13 @@ def _hand_over(super_dsn, tmp_path, msg: str):
 @needs_pg
 @pytest.mark.real_connect
 def test_a_procedure_and_an_aggregate_get_their_own_words_and_the_printed_lines_run(
-    scratch, plain_role, tmp_path
+    scratch, plain_role, tmp_path, monkeypatch
 ):
     """`ALTER FUNCTION` fails on a procedure or an aggregate; the line says PROCEDURE or AGGREGATE, and a function that
     takes arguments keeps them. Killed by: mutant FO1 (every routine is printed as FUNCTION)."""
     dsn, _role = plain_role
     super_dsn, _ = scratch
+    _manage(monkeypatch, "hadavin_test_proc", "hadavin_test_agg", "hadavin_test_fn")
     assert mig.migrate(dsn) == REAL
     with psycopg.connect(super_dsn, autocommit=True) as db:
         db.execute("CREATE PROCEDURE hadavin_test_proc(a int) LANGUAGE sql AS 'SELECT 1'")
@@ -1704,11 +1731,12 @@ def test_a_procedure_and_an_aggregate_get_their_own_words_and_the_printed_lines_
 
 @needs_pg
 @pytest.mark.real_connect
-def test_a_partition_owned_by_another_role_is_listed(scratch, plain_role):
+def test_a_partition_owned_by_another_role_is_listed(scratch, plain_role, monkeypatch):
     """A partition has an automatic dependency on its parent, but it is a table of its own that the plain role cannot
     change. Killed by: mutant FO2 (the dependency test hides it)."""
     dsn, role = plain_role
     super_dsn, _ = scratch
+    _manage(monkeypatch, "hadavin_test_part", "hadavin_test_parent")
     assert mig.migrate(dsn) == REAL
     with psycopg.connect(super_dsn, autocommit=True) as db:
         db.execute("CREATE TABLE hadavin_test_parent (id int) PARTITION BY RANGE (id)")
@@ -1727,11 +1755,14 @@ def test_a_partition_owned_by_another_role_is_listed(scratch, plain_role):
 
 @needs_pg
 @pytest.mark.real_connect
-def test_a_name_with_a_newline_is_never_copied_into_a_printed_statement(scratch, plain_role):
+def test_a_name_with_a_newline_is_never_copied_into_a_printed_statement(
+    scratch, plain_role, monkeypatch
+):
     """The other role chose the table's name. The list shows it escaped; no statement is printed for it, and the message
     says a person must write that one by hand. Killed by: mutant FO3 (every name is printed)."""
     dsn, _role = plain_role
     super_dsn, _ = scratch
+    _manage(monkeypatch, "hadavin_test_bad\nname", "hadavin_test_fine")
     assert mig.migrate(dsn) == REAL
     with psycopg.connect(super_dsn, autocommit=True) as db:
         db.execute('CREATE TABLE "hadavin_test_bad\nname" (id int)')
@@ -1747,11 +1778,12 @@ def test_a_name_with_a_newline_is_never_copied_into_a_printed_statement(scratch,
 @needs_pg
 @pytest.mark.real_connect
 def test_every_statement_is_printed_when_more_than_the_shown_names_are_foreign(
-    scratch, plain_role, tmp_path
+    scratch, plain_role, tmp_path, monkeypatch
 ):
     """The cap is for the names in the list only; a person needs every `ALTER` line. Killed by: mutant FO4."""
     dsn, _role = plain_role
     super_dsn, _ = scratch
+    _manage(monkeypatch, *[f"hadavin_test_many_{i:02d}" for i in range(25)])
     assert mig.migrate(dsn) == REAL
     with psycopg.connect(super_dsn, autocommit=True) as db:
         for i in range(25):
@@ -1801,12 +1833,14 @@ def test_an_owner_the_migration_role_belongs_to_is_safe_only_when_it_inherits(
 
 @needs_pg
 @pytest.mark.real_connect
-def test_objects_of_an_installed_extension_are_not_listed(scratch, plain_role):
+def test_objects_of_an_installed_extension_are_not_listed(scratch, plain_role, monkeypatch):
     """An extension installed by the superuser puts functions and types of its own into the schema; they belong to the
     extension, and one that puts a view into the schema covers the table half. Killed by: mutants EX1 (the extension
     test is gone from the function half) and EX2 (gone from the table half)."""
     dsn, _role = plain_role
     super_dsn, _ = scratch
+    # names the extensions really create, made managed here so that only the extension test can hide them
+    _manage(monkeypatch, "citext_cmp", "pg_stat_statements", "pg_stat_statements_info")
     assert mig.migrate(dsn) == REAL
     with psycopg.connect(super_dsn, autocommit=True) as db:
         db.execute(
@@ -1824,12 +1858,373 @@ def test_objects_of_an_installed_extension_are_not_listed(scratch, plain_role):
 
 @needs_pg
 @pytest.mark.real_connect
-def test_the_function_half_of_the_ownership_check_finds_a_function_alone(scratch, plain_role):
+def test_the_function_half_of_the_ownership_check_finds_a_function_alone(
+    scratch, plain_role, monkeypatch
+):
     """Only a function is foreign (no table). Killed by: mutant OW2 (the function half finds nothing)."""
     dsn, _role = plain_role
     super_dsn, _ = scratch
+    _manage(monkeypatch, "hadavin_test_only_fn")
     assert mig.migrate(dsn) == REAL
     with psycopg.connect(super_dsn, autocommit=True) as db:
         db.execute("CREATE FUNCTION hadavin_test_only_fn() RETURNS int LANGUAGE sql AS 'SELECT 1'")
     with pytest.raises(ConfigError, match=r"cannot change 1 object"):
         mig.migrate(dsn)
+
+
+@needs_pg
+@pytest.mark.real_connect
+def test_tables_and_functions_of_another_application_in_the_schema_are_never_refused_or_listed(
+    scratch, plain_role
+):
+    """A schema that another application shares: its tables, views, sequences and functions are owned by a login the
+    migration role cannot act as, and are none of this package's business. No refusal, and (with one package table also
+    foreign) the message and the printed lines name the package table only. Killed by: mutants OA1 (the table half
+    lists every relation) and OA2 (the function half lists every function)."""
+    dsn, _role = plain_role
+    super_dsn, _ = scratch
+    assert mig.migrate(dsn) == REAL
+    with psycopg.connect(super_dsn, autocommit=True) as db:
+        db.execute("CREATE TABLE hadavin_test_other_app (id serial PRIMARY KEY)")
+        db.execute("CREATE VIEW hadavin_test_other_view AS SELECT 1 AS one")
+        db.execute("CREATE FUNCTION hadavin_test_other_fn() RETURNS int LANGUAGE sql AS 'SELECT 1'")
+    assert mig.migrate(dsn) == [], "another application's objects must not stop the run"
+    with psycopg.connect(super_dsn, autocommit=True) as db:
+        db.execute("ALTER TABLE dead_letters OWNER TO CURRENT_USER")
+        db.execute("ALTER TABLE spend OWNER TO CURRENT_USER")
+    with pytest.raises(ConfigError) as e:
+        mig.migrate(dsn)
+    msg = str(e.value)
+    assert "cannot change" in msg and "of this package" in msg, msg
+    assert "dead_letters" in msg or "spend" in msg, msg
+    assert "hadavin_test_other" not in msg, msg
+
+
+@needs_pg
+@pytest.mark.real_connect
+def test_a_function_a_migration_file_creates_counts_as_managed(scratch, plain_role, tmp_path):
+    """The function the real files create is managed by name: when the superuser login owns it, the run is refused.
+    Killed by: mutant OA3 (functions are never added to the managed names)."""
+    dsn, _role = plain_role
+    super_dsn, _ = scratch
+    assert mig.migrate(dsn) == REAL
+    with psycopg.connect(super_dsn, autocommit=True) as db:
+        names = [
+            r[0]
+            for r in db.execute(
+                "SELECT p.proname FROM pg_proc p WHERE p.pronamespace = current_schema()::regnamespace"
+            ).fetchall()
+        ]
+        assert names, "the real files create at least one function"
+        for fn in names:
+            for (args,) in db.execute(
+                "SELECT pg_get_function_identity_arguments(p.oid) FROM pg_proc p "
+                "WHERE p.proname = %s AND p.pronamespace = current_schema()::regnamespace",
+                (fn,),
+            ).fetchall():
+                db.execute(
+                    sql.SQL("ALTER FUNCTION {}({}) OWNER TO CURRENT_USER").format(
+                        sql.Identifier(fn), sql.SQL(args)
+                    )
+                )
+    with pytest.raises(ConfigError, match=r"cannot change \d+ object"):
+        mig.migrate(dsn)
+
+
+# --- role changes made by ANOTHER session while a file runs ---------------------------------------------------------
+
+
+def _after_the_file_starts(marker: str, statements: list[str]):
+    """A second session (the superuser login) that waits until a backend is running a statement with `marker`, then runs
+    `statements`. Returns (thread, done event, errors)."""
+    done, errors = threading.Event(), []
+
+    def work():
+        try:
+            with psycopg.connect(DSN, autocommit=True) as db:
+                for _ in range(300):
+                    if db.execute(
+                        "SELECT count(*) FROM pg_stat_activity WHERE state = 'active' AND query LIKE %s "
+                        "AND pid <> pg_backend_pid()",
+                        (f"%{marker}%",),
+                    ).fetchone()[0]:
+                        break
+                    time.sleep(0.05)
+                else:
+                    raise AssertionError("the file never started")
+                for statement in statements:
+                    db.execute(statement)
+        except (psycopg.Error, AssertionError) as e:  # reported by the test
+            errors.append(e)
+        finally:
+            done.set()
+
+    thread = threading.Thread(target=work, daemon=True)
+    thread.start()
+    return thread, done, errors
+
+
+def _slow_file(monkeypatch, tmp_path) -> str:
+    marker = "marker_" + uuid.uuid4().hex
+    _with_files(monkeypatch, tmp_path, {"0006_slow.sql": f"SELECT pg_sleep(2); -- {marker}\n"})
+    return marker
+
+
+@needs_pg
+def test_another_session_changing_unrelated_roles_does_not_stop_the_run(
+    scratch, monkeypatch, tmp_path
+):
+    """The server holds every role: while the file runs, another session makes roles, grants one to the other and saves a
+    setting for a role that has nothing to do with the migration user. That is not a change to the migration user's
+    rights, so the run goes on. Killed by: mutants SC1 (the members query reads the whole server) and SC2 (the settings
+    query reads the whole server)."""
+    dsn, _ = scratch
+    x, y = "hadavin_test_ux_" + uuid.uuid4().hex[:8], "hadavin_test_uy_" + uuid.uuid4().hex[:8]
+    mig.migrate(dsn)
+    marker = _slow_file(monkeypatch, tmp_path)
+    thread, done, errors = _after_the_file_starts(
+        marker,
+        [
+            f'CREATE ROLE "{x}"',
+            f'CREATE ROLE "{y}"',
+            f'GRANT "{x}" TO "{y}"',
+            f"ALTER ROLE \"{x}\" SET work_mem = '5MB'",
+        ],
+    )
+    try:
+        assert mig.migrate(dsn) == ["0006_slow"]
+        assert done.wait(10) and not errors, errors
+        with psycopg.connect(
+            DSN, autocommit=True
+        ) as db:  # the other session really did change the roles
+            assert db.execute("SELECT pg_has_role(%s, %s, 'MEMBER')", (y, x)).fetchone() == (True,)
+    finally:
+        thread.join(10)
+        _drop_roles(*[r for r in (y, x) if _role_exists(r)])
+
+
+def _role_exists(role: str) -> bool:
+    with psycopg.connect(DSN, autocommit=True) as db:
+        return (
+            db.execute("SELECT 1 FROM pg_roles WHERE rolname = %s", (role,)).fetchone() is not None
+        )
+
+
+@needs_pg
+@pytest.mark.parametrize("what", ["membership", "saved_setting"])
+def test_another_session_changing_the_migration_users_own_roles_stops_the_run(
+    scratch, monkeypatch, tmp_path, what
+):
+    """A change to the migration user's own membership or saved settings while the file runs is refused, with the words
+    that it may be another session; nothing is kept. Killed by: mutants SC3 (the scope is empty) and SC4 (the new
+    message is gone)."""
+    dsn, _ = scratch
+    a = "hadavin_test_sa_" + uuid.uuid4().hex[:8]
+    _create_roles(a)
+    mig.migrate(dsn)
+    marker = _slow_file(monkeypatch, tmp_path)
+    statement = (
+        f'GRANT "{a}" TO "{PLAIN_ROLE}"'
+        if what == "membership"
+        else f"ALTER ROLE \"{PLAIN_ROLE}\" SET work_mem = '5MB'"
+    )
+    thread, done, errors = _after_the_file_starts(marker, [statement])
+    try:
+        with pytest.raises(ConfigError) as e:
+            mig.migrate(dsn)
+        msg = str(e.value)
+        assert done.wait(10) and not errors, errors
+        assert "0006_slow.sql" in msg, msg
+        if what == "membership":
+            assert (
+                "a role membership changed while the file ran (it may be another session; run migrate again)"
+                in msg
+            ), msg
+            assert f"role {a} has a new member {PLAIN_ROLE}" in msg, msg
+        else:
+            assert f"saved setting for database  role {PLAIN_ROLE} is new" in msg, msg
+        assert _ledger(dsn) == REAL, "nothing of the run was kept"
+    finally:
+        thread.join(10)
+        with psycopg.connect(DSN, autocommit=True) as db:
+            db.execute(sql.SQL("ALTER ROLE {} RESET work_mem").format(sql.Identifier(PLAIN_ROLE)))
+        _drop_roles(a)
+
+
+# --- parameter grants held through a role the migration user belongs to ----------------------------------------------
+
+
+@needs_pg
+@pytest.mark.real_connect
+@pytest.mark.parametrize("privilege", ["SET", "ALTER SYSTEM"])
+@pytest.mark.parametrize("via", ["direct", "session_user", "member_inherit", "member_noinherit"])
+def test_a_parameter_grant_is_refused_however_the_migration_user_holds_it(
+    plain_role, scratch, privilege, via
+):
+    """The grant sits on the migration user, on the session user (the login that switched to another role), on a role it
+    belongs to and inherits, or on a role it belongs to WITHOUT inheriting (it can still `SET ROLE` to it). Killed by:
+    mutants PA2 (the ALTER SYSTEM half is gone), PA3 (the session user is not asked) and PA4 (only the user itself)."""
+    dsn, role = plain_role
+    super_dsn, _ = scratch
+    holder = role
+    other = role + "_g"
+    with psycopg.connect(DSN, autocommit=True) as db:
+        db.execute(sql.SQL("CREATE ROLE {}").format(sql.Identifier(other)))
+        if via.startswith("member"):
+            holder = other
+            db.execute(
+                sql.SQL(
+                    f"GRANT {{}} TO {{}} WITH INHERIT {'TRUE' if via.endswith('_inherit') else 'FALSE'}"
+                ).format(sql.Identifier(other), sql.Identifier(role))
+            )
+        if via == "session_user":
+            db.execute(
+                sql.SQL("GRANT {} TO {}").format(sql.Identifier(other), sql.Identifier(role))
+            )
+            dsn = make_conninfo(
+                super_dsn,
+                user=role,
+                options=conninfo_to_dict(super_dsn)["options"] + f" -c role={other}",
+            )
+        db.execute(
+            sql.SQL(f"GRANT {privilege} ON PARAMETER work_mem TO {{}}").format(
+                sql.Identifier(holder)
+            )
+        )
+    try:
+        with pytest.raises(ConfigError, match="server settings it must not change") as e:
+            mig.migrate(dsn)
+        assert "work_mem" in str(e.value)
+        assert _ledger(dsn) is None, "nothing was created"
+    finally:
+        with psycopg.connect(DSN, autocommit=True) as db:
+            db.execute(
+                sql.SQL(f"REVOKE {privilege} ON PARAMETER work_mem FROM {{}}").format(
+                    sql.Identifier(holder)
+                )
+            )
+            db.execute(sql.SQL("DROP OWNED BY {}").format(sql.Identifier(other)))
+            db.execute(sql.SQL("DROP ROLE {}").format(sql.Identifier(other)))
+
+
+# --- the exemption for the database owner role, zero-argument aggregates and owned sequences --------------------------
+
+
+@needs_pg
+@pytest.mark.real_connect
+def test_the_owner_of_a_database_belongs_to_pg_database_owner_and_is_not_refused(scratch):
+    """The one built-in role that is allowed: the owner of a database is implicitly a member of `pg_database_owner`.
+    Killed by: mutant DO1 (the exemption is gone)."""
+    super_dsn, _ = scratch
+    suffix = uuid.uuid4().hex[:8]
+    role, database = f"hadavin_test_dbo_{suffix}", f"hadavin_test_db_{suffix}"
+    with psycopg.connect(DSN, autocommit=True) as db:
+        db.execute(sql.SQL("CREATE ROLE {} LOGIN").format(sql.Identifier(role)))
+        db.execute(
+            sql.SQL("CREATE DATABASE {} OWNER {}").format(
+                sql.Identifier(database), sql.Identifier(role)
+            )
+        )
+    try:
+        dsn = make_conninfo(super_dsn, user=role, dbname=database, options="")
+        assert mig.migrate(dsn) == REAL
+    finally:
+        with psycopg.connect(DSN, autocommit=True) as db:
+            db.execute(sql.SQL("DROP DATABASE {} WITH (FORCE)").format(sql.Identifier(database)))
+            db.execute(sql.SQL("DROP ROLE {}").format(sql.Identifier(role)))
+
+
+@needs_pg
+@pytest.mark.real_connect
+def test_an_aggregate_with_no_arguments_is_printed_with_a_star(
+    scratch, plain_role, monkeypatch, tmp_path
+):
+    """`ALTER AGGREGATE name()` is a syntax error; a zero-argument aggregate is written `name(*)`. Killed by: mutant FO5."""
+    dsn, _role = plain_role
+    super_dsn, _ = scratch
+    _manage(monkeypatch, "hadavin_test_zero_agg")
+    assert mig.migrate(dsn) == REAL
+    with psycopg.connect(super_dsn, autocommit=True) as db:
+        db.execute(
+            "CREATE AGGREGATE hadavin_test_zero_agg(*) (sfunc = int8inc, stype = int8, initcond = '0')"
+        )
+    with pytest.raises(ConfigError) as e:
+        mig.migrate(dsn)
+    statements, done = _hand_over(super_dsn, tmp_path, str(e.value))
+    assert len(statements) == 1 and statements[0].startswith("ALTER AGGREGATE"), statements
+    assert "(*)" in statements[0], statements
+    assert done.returncode == 0, done.stderr
+    assert mig.migrate(dsn) == []
+
+
+@needs_pg
+@pytest.mark.real_connect
+def test_a_sequence_that_belongs_to_a_table_column_is_not_listed_on_its_own(scratch, plain_role):
+    """The tables belong to the old login and so do their serial sequences; the sequences go with their tables, so only the
+    tables are listed (one `ALTER TABLE ... OWNER TO` moves a column's sequence too). Killed by: mutant OS1."""
+    dsn, _role = plain_role
+    super_dsn, _ = scratch
+    _build_as_the_superuser(super_dsn)
+    with pytest.raises(ConfigError) as e:
+        mig.migrate(dsn)
+    msg = str(e.value)
+    assert "approval_decisions" in msg and "ALTER TABLE" in msg, msg
+    assert "approval_decisions_seq_seq" not in msg and "ALTER SEQUENCE" not in msg, msg
+
+
+# --- the SQL the refusal prints: CREATE needs no grant option ----------------------------------------------------------
+
+
+@needs_pg
+@pytest.mark.real_connect
+def test_the_printed_role_may_pass_usage_on_but_not_create(scratch):
+    """The migration role passes USAGE on to the runtime and portal roles, so only USAGE carries the grant option; CREATE
+    is held without it (a role that can pass CREATE on could let another role make objects in the schema). Killed by:
+    mutant PR1 (the grant option is on both)."""
+    _dsn, schema = scratch
+    role, rt, pt = _role_from_the_printed_sql(schema, grant_option=True)
+    try:
+        with psycopg.connect(DSN, autocommit=True) as db:
+            q = "SELECT has_schema_privilege(%s, %s, %s)"
+            assert db.execute(q, (role, schema, "USAGE WITH GRANT OPTION")).fetchone() == (True,)
+            assert db.execute(q, (role, schema, "CREATE")).fetchone() == (True,)
+            assert db.execute(q, (role, schema, "CREATE WITH GRANT OPTION")).fetchone() == (False,)
+    finally:
+        _drop_all(role, rt, pt)
+
+
+# --- the test role of a process is gone when the process ends -------------------------------------------------------------
+
+
+@needs_pg
+def test_the_plain_test_role_and_what_it_owns_are_dropped_when_the_process_exits():
+    """A child process makes the role (the way `plain_role_connect` does), lets it own a schema with a table, and exits
+    normally; the exit hook takes the role off the server. Killed by: mutant TR1 (the hook does nothing)."""
+    import multiprocessing
+
+    from tests.fixtures.role_child import make_the_role_and_own_a_schema
+
+    schema = f"hadavin_test_exit_{uuid.uuid4().hex[:8]}"
+    context = multiprocessing.get_context(
+        "spawn"
+    )  # a fresh interpreter that ends normally, so its exit hooks run
+    names = context.Queue()
+    child = context.Process(target=make_the_role_and_own_a_schema, args=(DSN, schema, names))
+    child.start()
+    role = names.get(timeout=60)
+    child.join(60)
+    assert child.exitcode == 0, child.exitcode
+    try:
+        assert role.startswith("hadavin_test_migrator_")
+        assert not _role_exists(role), "the role is still on the server"
+        with psycopg.connect(DSN, autocommit=True) as db:
+            assert (
+                db.execute("SELECT 1 FROM pg_namespace WHERE nspname = %s", (schema,)).fetchone()
+                is None
+            ), "what the role owned is still there"
+    finally:
+        with psycopg.connect(DSN, autocommit=True) as db:
+            db.execute(sql.SQL("DROP SCHEMA IF EXISTS {} CASCADE").format(sql.Identifier(schema)))
+            if _role_exists(role):
+                db.execute(sql.SQL("DROP OWNED BY {}").format(sql.Identifier(role)))
+                db.execute(sql.SQL("DROP ROLE {}").format(sql.Identifier(role)))

@@ -47,8 +47,8 @@ def make_cfg(tmp_path: Path, port: int = 0) -> Path:
 def qualify(
     registry, agent_id: str = "test-agent", green: bool = True, k: int | None = None
 ) -> None:
-    """Write a gate run for the agent's current model, prompt and config (tests before S8's evals gate).
-    A tooled agent needs a k >= 3 record that passed pass^k (K3, B1), so it gets k = 3 by default."""
+    """Write a gate run for the agent's current model, prompt and config (tests before the evals gate).
+    A tooled agent needs a k >= 3 record that passed pass^k, so it gets k = 3 by default."""
     agent = registry.agents[agent_id]
     k = k or (3 if agent.tools_allowed else 1)
     run = GateRun(
@@ -93,8 +93,8 @@ def live_cfg_dir(tmp_path: Path, fake_system) -> Path:
 @pytest.fixture(autouse=True)
 def _migrate_runs_as_a_plain_role(request, monkeypatch):
     """The test databases are reached with a superuser login (the CI service and a laptop cluster), which `migrate()`
-    always refuses (there is no switch). For every test, `store.migrate.connect` is swapped for a wrapper that runs
-    `SET ROLE` to a plain role when the login is a superuser (`tests/fixtures/migration_role.py`); `migrate()` itself is
+    always refuses (there is no switch). For every test, `store.migrate.connect` is swapped for a wrapper that connects
+    as a plain login role when the login is a superuser (`tests/fixtures/migration_role.py`); `migrate()` itself is
     called exactly as in production. A test that proves the refusal carries the marker `real_connect`."""
     try:
         from hadavin_sdk.store import migrate as mig

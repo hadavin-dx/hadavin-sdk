@@ -132,6 +132,8 @@ class _Db:
             return _Result([] if self.settings is None else self.settings.pop(0))
         if text == "SELECT current_schema()":
             return _Result([("s",)])
+        if text.startswith("SELECT pg_has_role("):  # no named role is a member of another
+            return _Result([(False,)])
         if text.startswith("SELECT version FROM schema_migrations"):
             return _Result([(v,) for v in self.applied])
         return _Result([])
@@ -153,9 +155,6 @@ def _run(
     db = _Db(values, triggers, applied, members, settings=settings)
     monkeypatch.setattr(mig, "_migration_files", lambda: files)
     monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
-    made_up_files_are_not_released(
-        monkeypatch
-    )  # these made-up file names are not the released ones
     made_up_files_are_not_released(
         monkeypatch
     )  # these made-up file names are not the released ones
@@ -860,7 +859,7 @@ def test_the_membership_check_reads_both_user_names_all_four_flags_and_the_built
 
 
 def test_the_role_flags_are_read_for_the_current_user_and_the_session_user():
-    """A pin on the query text. Killed by: mutant SU1 together with the real-server test."""
+    """A pin on the query text. Killed by: mutant SU1 (the query then no longer names `session_user`), alone."""
     assert "current_user" in mig._ROLE_FLAGS_SQL and "session_user" in mig._ROLE_FLAGS_SQL
     assert "pg_roles" in mig._ROLE_FLAGS_SQL
     for flag in ("rolsuper", "rolcreaterole", "rolcreatedb", "rolbypassrls"):
@@ -971,10 +970,140 @@ def test_a_file_that_changes_a_time_limit_is_refused(monkeypatch, tmp_path, item
     assert isinstance(err, ConfigError) and f"{item} was '" in str(err), err
 
 
-def test_the_membership_message_says_it_reads_the_whole_server():
-    import inspect
+def test_the_membership_message_says_it_may_be_another_session(monkeypatch, tmp_path):
+    """A role membership of the migration roles that changed while the file ran is reported in words that say another
+    session may have done it. Killed by: mutant SC4 (the old wording)."""
+    row = ("role_a", "role_b", '{"admin_option": false}')
+    err, _db, _ = _run(monkeypatch, tmp_path, [START] * 2, [[], []], members=[[], [row]])
+    assert isinstance(err, ConfigError), err
+    assert (
+        "a role membership changed while the file ran (it may be another session; run migrate again)"
+        in str(err)
+    )
+    assert "role role_a has a new member role_b" in str(err)
+    assert "left the database session changed" not in str(err)
 
-    assert "whole database server" in inspect.getsource(mig._check_read_back)
+
+def test_the_named_roles_reach_the_two_scoped_read_back_queries(monkeypatch, tmp_path):
+    """The names of the runtime, portal and purge roles are the one parameter of the members query and of the settings
+    query, at the start and after each file. Killed by: mutants SC5 (the names are not passed) and SC3."""
+    err, db, _ = _run(
+        monkeypatch,
+        tmp_path,
+        [START] * 3,
+        [[], [], []],
+        runtime_role="rt_role",
+        portal_role="pt_role",
+    )
+    # the run ends at the grant checks (the stub has no such roles); the read-backs came before that
+    assert err is not None and "does not exist" in str(err), err
+    for query in (mig._READBACK_MEMBERS_SQL, mig._READBACK_SETTINGS_SQL):
+        given = [p for t, p in db.params if t == query]
+        assert given == [(["rt_role", "pt_role"],)] * 3, given
+
+
+def test_the_ownership_query_gets_the_managed_names(monkeypatch, tmp_path):
+    """Killed by: mutant OA4 (the managed names are not passed to the query)."""
+    err, db, _ = _run(monkeypatch, tmp_path, [START] * 3, [[], [], []])
+    assert err is None, err
+    given = [p for t, p in db.params if t == mig._FOREIGN_OWNED_SQL]
+    assert len(given) == 1 and given[0][0] == given[0][1], given
+    assert "spend" in given[0][0] and "schema_migrations" in given[0][0], given
+
+
+def test_the_managed_names_are_the_grant_map_the_ledger_and_the_functions_the_files_create():
+    """Killed by: mutants OA3 (functions are not added) and OA5 (the ledger table is not named)."""
+    texts = [
+        "CREATE OR REPLACE FUNCTION audit_guard() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END $$;",
+        "create function \"Quoted_Fn\"(a int) returns int language sql as 'select 1';",
+        "CREATE FUNCTION some_schema.qualified_fn() RETURNS int LANGUAGE sql AS 'SELECT 1';",
+        "-- CREATE FUNCTION in_a_comment() RETURNS int\nSELECT 1;",
+    ]
+    names = mig._managed_names(texts)
+    assert names == sorted(set(names))
+    assert set(mig.GRANTS) <= set(names) and "schema_migrations" in names
+    assert {"audit_guard", "Quoted_Fn", "qualified_fn"} <= set(names)
+    assert "in_a_comment" not in names and "some_schema" not in names
+
+
+def test_the_roles_are_asked_again_after_every_file(monkeypatch, tmp_path):
+    """The flags, the borrowed roles and the parameter grants are asked at the start and again after each file; a file
+    that left the migration user a member of a powerful role is refused by name of the file. Killed by: mutant RC1 (the
+    questions are not asked again)."""
+
+    class _Borrows(_Db):
+        def execute(self, query, params=None):
+            if str(query) == mig._BORROWED_ROLES_SQL:
+                self.log.append(str(query))
+                asked = self.log.count(mig._BORROWED_ROLES_SQL)
+                return _Result([("boss_role",)] if asked >= 2 else [])
+            return super().execute(query, params)
+
+    files = _files(tmp_path, 1)
+    db = _Borrows([START] * 2, [[], []])
+    monkeypatch.setattr(mig, "_migration_files", lambda: files)
+    monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+    made_up_files_are_not_released(monkeypatch)
+    monkeypatch.setattr(mig, "connect", lambda *a, **k: db)
+    with pytest.raises(ConfigError, match=r"migration 0001_f1\.sql left the roles changed") as e:
+        mig.migrate("postgresql://unused")
+    assert "boss_role" in str(e.value)
+    assert not any(s.startswith("INSERT INTO schema_migrations") for s in db.log)
+
+
+class _Privileges:
+    """A connection for `effective_problems` and `_excess_privileges`: a server of one version, one table in the map, and
+    a record of every privilege name it is asked about."""
+
+    def __init__(self, version: int):
+        self.version, self.asked = version, []
+
+    def execute(self, query, params=None):
+        text = str(query)
+        if "server_version_num" in text:
+            return _Result([(self.version,)])
+        if "FROM pg_roles WHERE rolname" in text:
+            return _Result([(False, False, False, False)])
+        if text == "SELECT current_schema()":
+            return _Result([("s",)])
+        if "has_schema_privilege" in text:
+            return _Result([(False,)])
+        if "FROM pg_class" in text:
+            return _Result([(1, "spend", "r", "someone_else")])
+        if "has_table_privilege" in text:
+            self.asked.append(params[2])
+            return _Result([(False,)])
+        if "has_sequence_privilege" in text:
+            return _Result([(False,)])
+        return _Result([])
+
+
+@pytest.mark.parametrize("version, asked", [(160015, False), (170010, True)])
+def test_the_maintain_privilege_is_asked_about_from_postgresql_17_only(version, asked):
+    """PostgreSQL 17 added the table privilege MAINTAIN and 16 refuses the name. Killed by: mutants MT1 (never asked), MT2
+    (always asked) and MT3 (`_excess_privileges` does not ask)."""
+    db = _Privileges(version)
+    assert mig.effective_problems(db, "rt_role", lambda g: g.runtime if g else "") == []
+    assert ("MAINTAIN" in db.asked) is asked, db.asked
+    db = _Privileges(version)
+    assert mig._excess_privileges(db, "pt_role") == []
+    assert ("MAINTAIN" in db.asked) is asked, db.asked
+
+
+def test_a_maintain_grant_is_a_problem_on_postgresql_17():
+    class _Maintains(_Privileges):
+        def execute(self, query, params=None):
+            if "has_table_privilege" in str(query) and params[2] == "MAINTAIN":
+                self.asked.append("MAINTAIN")
+                return _Result([(True,)])
+            return super().execute(query, params)
+
+    db = _Maintains(170010)
+    assert any(
+        "can MAINTAIN spend" in p
+        for p in mig.effective_problems(db, "rt_role", lambda g: g.runtime if g else "")
+    )
+    assert "spend:MAINTAIN" in mig._excess_privileges(_Maintains(170010), "pt_role")
 
 
 # --- the released-file list is checked by migrate() itself ---------------------------------------------
@@ -1099,9 +1228,6 @@ def _run_raising(monkeypatch, tmp_path, error):
     made_up_files_are_not_released(
         monkeypatch
     )  # these made-up file names are not the released ones
-    made_up_files_are_not_released(
-        monkeypatch
-    )  # these made-up file names are not the released ones
     monkeypatch.setattr(mig, "connect", lambda *a, **k: db)
     mig.migrate("postgresql://unused")
 
@@ -1139,3 +1265,77 @@ def test_the_statement_limit_is_found_by_the_error_code_not_by_the_words(monkeyp
         )
     with pytest.raises(pge.DeadlockDetected):
         _run_raising(monkeypatch, tmp_path, pge.DeadlockDetected("statement timeout"))
+
+
+# --- the test role helper: one CREATE ROLE, and the password is never in a statement ---------------------------------------
+
+
+class _Roles:
+    """A connection for `ensure_plain_role`: `exists` answers the `pg_roles` look-up; every statement is recorded."""
+
+    def __init__(self, exists: bool):
+        self.exists, self.log = exists, []
+        self.pgconn = self
+
+    def encrypt_password(self, password, user, algorithm):
+        self.encrypted = (password, user, algorithm)
+        return b"SCRAM-SHA-256$4096:made-up-salt$made-up-keys"
+
+    def execute(self, query, params=None):
+        text = query if isinstance(query, str) else query.as_string()
+        self.log.append(text)
+        return _Result([(1,)] if "FROM pg_roles" in text and self.exists else [])
+
+
+def test_the_test_role_is_looked_up_first_and_not_made_a_second_time():
+    """A repeated `CREATE ROLE ... PASSWORD` fails on the server and the server logs the failed statement. Killed by:
+    mutant TR2 (the role is created without the look-up)."""
+    from tests.fixtures import migration_role as mr
+
+    db = _Roles(exists=True)
+    mr.ensure_plain_role(db)
+    assert len(db.log) == 1 and "FROM pg_roles" in db.log[0], db.log
+
+
+def test_the_test_role_password_is_sent_only_as_a_hash():
+    """The raw password is in no statement: the statement holds the SCRAM hash made on this side. Killed by: mutant TR3."""
+    from tests.fixtures import migration_role as mr
+
+    db = _Roles(exists=False)
+    mr.ensure_plain_role(db)
+    created = [s for s in db.log if s.startswith("CREATE ROLE")]
+    assert len(created) == 1, db.log
+    assert mr._PASSWORD not in " ".join(db.log)
+    assert "SCRAM-SHA-256$4096:made-up-salt" in created[0] and "ALTER ROLE" not in " ".join(db.log)
+    assert db.encrypted[2] == b"scram-sha-256"
+
+
+def test_only_a_schema_with_the_test_prefix_is_a_scratch_schema():
+    """A schema called `t_...` is not one (a real application could call a schema that). Killed by: mutant TR4."""
+    from tests.fixtures import migration_role as mr
+
+    assert mr._is_scratch("hadavin_test_abc") and not mr._is_scratch("t_abc")
+    assert not mr._is_scratch("") and not mr._is_scratch(None) and not mr._is_scratch("public")
+
+
+def test_the_named_roles_are_checked_against_each_other_after_every_file(monkeypatch, tmp_path):
+    """Two of the runtime, portal and purge roles that are members of each other are refused right after the first file,
+    by name of the file, not only at the end of the run. Killed by: mutant RC2."""
+
+    class _Members(_Db):
+        def execute(self, query, params=None):
+            if str(query).startswith("SELECT pg_has_role("):
+                self.log.append(str(query))
+                return _Result([(True,)])
+            return super().execute(query, params)
+
+    files = _files(tmp_path, 2)
+    db = _Members([START] * 3, [[], [], []])
+    monkeypatch.setattr(mig, "_migration_files", lambda: files)
+    monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+    made_up_files_are_not_released(monkeypatch)
+    monkeypatch.setattr(mig, "connect", lambda *a, **k: db)
+    with pytest.raises(ConfigError, match=r"migration 0001_f1\.sql left the roles changed") as e:
+        mig.migrate("postgresql://unused", runtime_role="rt_role", portal_role="pt_role")
+    assert "must not be members of each other" in str(e.value)
+    assert not any(s.startswith("INSERT INTO schema_migrations") for s in db.log)

@@ -17,7 +17,7 @@ PURGE_DSN: dict[str, str] = {}
 
 def pg_schema(migrated=True, runtime=False):
     """Yield a DSN whose search_path is a fresh (migrated) schema; drop the schema afterwards. With `runtime`,
-    yield instead the DSN of a new non-owner login role that `migrate` granted its runtime rights (K2: the store
+    yield instead the DSN of a new non-owner login role that `migrate` granted its runtime rights (the store
     suite must pass with only those rights); the role is dropped afterwards."""
     dsn = os.environ.get("HADAVIN_TEST_PG_DSN")
     if not dsn:
@@ -28,7 +28,7 @@ def pg_schema(migrated=True, runtime=False):
 
     from hadavin_sdk.store.migrate import migrate
 
-    schema = f"t_{uuid.uuid4().hex[:12]}"
+    schema = f"hadavin_test_{uuid.uuid4().hex[:12]}"
     with psycopg.connect(dsn, autocommit=True) as db:
         db.execute(sql.SQL("CREATE SCHEMA {}").format(sql.Identifier(schema)))
     scoped = make_conninfo(dsn, options=f"-c search_path={schema}")

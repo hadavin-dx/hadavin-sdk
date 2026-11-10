@@ -310,17 +310,17 @@ M = [
     ),
     # --- the second fix
     mutant(
-        "o100: statement_text returns the bare text, not the pair",
+        "statement_text returns the bare text, not the pair",
         "    return lex(text, keep_quoted)\n",
         "    return lex(text, keep_quoted)[0]\n",
         T2,
-        "test_statement_text_called_the_ticket_way_returns_the_pair",
+        "test_statement_text_called_with_a_plain_text_returns_the_pair",
         "too many values to unpack",
         allow_crash=True,
         crash_type="ValueError",
     ),
     mutant(
-        "o100: the error is not rebuilt from its problems on copy",
+        "the error is not rebuilt from its problems on copy",
         "    def __reduce__(self):",
         "    def _not_reduce(self):",
         T2,
@@ -328,7 +328,7 @@ M = [
         "and 13 more",
     ),
     mutant(
-        "o100: MIGRATE_LOCK differs from the key migrate uses",
+        "MIGRATE_LOCK differs from the key migrate uses",
         'MIGRATE_LOCK = int.from_bytes(b"hadvnmig", "big") >> 1',
         'MIGRATE_LOCK = int.from_bytes(b"hadvnmig", "big") >> 2',
         T2,
@@ -336,7 +336,7 @@ M = [
         "== (7521403312507021671 >> 1)",  # migrate.py imports the key, so the last assertion of the test fires
     ),
     mutant(
-        "o100: MIGRATIONS names another folder than migrate does",
+        "MIGRATIONS names another folder than migrate does",
         'MIGRATIONS = Path(__file__).parent / "migrations"',
         'MIGRATIONS = Path(__file__).parent / "migration"',
         T2,
@@ -344,7 +344,7 @@ M = [
         "/ 'migrations')",  # migrate.py imports the folder, so the last assertion of the test fires
     ),
     mutant(
-        "o100: NAME lets any character into a file name",
+        "NAME lets any character into a file name",
         'NAME = re.compile(r"[0-9]{4}_[a-z0-9_]+\\.sql")',
         'NAME = re.compile(r"[0-9]{4}_.+\\.sql")',
         T1,
@@ -352,7 +352,7 @@ M = [
         "== []",
     ),
     mutant(
-        "o100: the timing limit is not a ratio (everything passes)",
+        "the timing limit is not a ratio (everything passes)",
         "PER_SIZE, MIN_SMALL_S = 3.0, 0.004",
         "PER_SIZE, MIN_SMALL_S = 1000.0, 0.004",
         T3,
@@ -361,7 +361,7 @@ M = [
         src=TIMING,
     ),
     mutant(
-        "o100: the timing limit is too tight (everything is flagged)",
+        "the timing limit is too tight (everything is flagged)",
         "PER_SIZE, MIN_SMALL_S = 3.0, 0.004",
         "PER_SIZE, MIN_SMALL_S = 0.001, 0.004",
         T3,
@@ -370,7 +370,7 @@ M = [
         src=TIMING,
     ),
     mutant(
-        "o100: the small run is not floored",
+        "the small run is not floored",
         "max(t_small, MIN_SMALL_S)",
         "t_small",
         T3,

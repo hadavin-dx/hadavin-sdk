@@ -145,7 +145,7 @@ def test_checked_statement_text_raises_instead_of_returning_a_cut_text(mn):
     assert mn.checked_statement_text("SELECT 'a' /* c */;", keep_quoted=True) == "SELECT 'a'  ;"
 
 
-def test_statement_text_called_the_ticket_way_returns_the_pair(mn):
+def test_statement_text_called_with_a_plain_text_returns_the_pair(mn):
     """`statement_text(text, keep_quoted=False) -> tuple[str, str]`. `migrate` builds `_scan` from it,
     so these are the calls it writes. A function that returned a bare `str` would make `[0]` one character and
     the unpacking either fail or split a two-character text: both are tested."""
