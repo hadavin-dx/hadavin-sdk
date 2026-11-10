@@ -14,6 +14,8 @@ does not start with the scratch prefix (`SCRATCH_PREFIXES`), because that is not
 
 from __future__ import annotations
 
+import atexit
+import os
 import secrets
 from collections.abc import Callable
 
@@ -21,7 +23,11 @@ from psycopg import errors as pg_errors
 from psycopg import sql
 from psycopg.conninfo import make_conninfo
 
-PLAIN_ROLE = "hadavin_test_migrator"
+PLAIN_ROLE = "hadavin_test_migrator_" + secrets.token_hex(
+    4
+)  # one per test process: a role and its grants belong to the
+# whole server, so two test processes at once on one server (two Python versions, a mutant run) must not share one
+_USED_DSNS: set[str] = set()
 SCRATCH_PREFIXES = (
     "hadavin_test_",
     "t_",
@@ -34,6 +40,29 @@ _PASSWORD = secrets.token_hex(
 
 class NotAScratchSchema(RuntimeError):
     """The test connection would take over a schema that is not a scratch schema of a test."""
+
+
+def _drop_the_role_at_exit() -> None:
+    """Best effort: take the role of this process off every server it was made on (its grants go with it)."""
+    import psycopg
+
+    env_dsn = os.environ.get("HADAVIN_TEST_PG_DSN")
+    for dsn in _USED_DSNS | ({env_dsn} if env_dsn else set()):
+        try:
+            with psycopg.connect(dsn, autocommit=True) as db:
+                if not db.execute(
+                    "SELECT 1 FROM pg_roles WHERE rolname = %s", (PLAIN_ROLE,)
+                ).fetchone():
+                    continue  # this server never saw the role
+                db.execute(sql.SQL("DROP OWNED BY {}").format(sql.Identifier(PLAIN_ROLE)))
+                db.execute(sql.SQL("DROP ROLE IF EXISTS {}").format(sql.Identifier(PLAIN_ROLE)))
+        except (
+            psycopg.Error
+        ) as e:  # a server that is gone or a role in use must not fail the test run
+            print(f"test role {PLAIN_ROLE} was not dropped: {type(e).__name__}")
+
+
+atexit.register(_drop_the_role_at_exit)
 
 
 def _is_scratch(schema) -> bool:
@@ -81,6 +110,7 @@ def plain_role_connect(real_connect: Callable) -> Callable:
                         f"so it only runs on a scratch schema of a test (its name starts with one of {SCRATCH_PREFIXES!r})"
                     )
                 ensure_plain_role(db)
+                _USED_DSNS.add(dsn)
                 db.execute(
                     sql.SQL("ALTER SCHEMA {} OWNER TO {}").format(
                         sql.Identifier(schema), sql.Identifier(PLAIN_ROLE)
