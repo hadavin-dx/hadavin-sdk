@@ -43,24 +43,43 @@ path the group is NOT killed (its leader's pid may belong to another process by 
 
 pytest runs with ``--noconftest`` and with an empty ini file on purpose (a planted file in a parent folder is never read), so a
 ``pyproject.toml`` / ``pytest.ini`` is never read and, by default, no ``conftest.py`` is loaded. Three opt-in keywords of ``run_mutants``
-(all off by default: without them the runner behaves exactly as before) cover tests that need more:
+(all off by default) cover tests that need more:
 
 - ``conftest="tests/conftest.py"``: a file of the tree (copied like a test file) that every pytest run loads as a plugin (``-p``), named
-  by a path of identifier parts that ends in ``.py``. It replaces ``--noconftest`` for that one file only; no other conftest is read.
+  by a path of plain ASCII identifier parts that ends in ``.py`` and is either called ``conftest.py`` or lies in a folder called ``tests``
+  (any other tree file, such as ``src/pk/core.py``, is refused). It replaces ``--noconftest`` for that one file only; no other conftest is read.
 - ``pass_env=("HADAVIN_TEST_PG_DSN",)``: names of caller environment variables the pytest child also sees (baseline and mutants). Only
   names in ``PASS_ENV_ALLOWED`` are accepted (``ValueError`` for any other name, before anything runs): a token or any other secret of the
-  caller still never reaches the child. A name that is not set in the caller is simply not passed. The value of a passed name (and the password
-  inside it, when it is a URL) is replaced by ``[REDACTED]`` in ``first_lines``, in the failing test id of a row and in the baseline error text.
+  caller still never reaches the child. A name that is not set in the caller is simply not passed. To allow one more name, add it to
+  ``PASS_ENV_ALLOWED``, re-copy the file and update its pin (see the CHANGELOG); do that only for the ADDRESS of a throwaway test resource
+  that a demo's tests need (a second database, for example), never for a token or a key.
+  Masking: the value of a passed name (and the password inside it when it is a URL, also its percent-decoded form) is replaced by
+  ``[REDACTED]`` in ``first_lines``, in the failing test id of a row, in the ``FIXTURE ERROR`` and ``SKIPPED TESTS`` messages and in the
+  baseline skip message; for a value longer than ``LONG_VALUE`` characters (pytest shortens such a text in its assertion lines, so only
+  pieces of it show) every piece of ``PIECE`` characters or more is masked too. What stays open, stated plainly: a test that prints a changed
+  form of the value (only the host, only the user name, a re-encoded copy) is not masked, and text of a failure that the runner never reads
+  (the child's own console output is discarded) cannot leak through it.
   SAFETY: the address must point at a THROWAWAY database, and its login must be able to touch only that database (never a shared or
   production one): every mutant run executes the tests against it, and a mutant can make those tests write, drop or fill tables with
   anything. Two runs at once that share one database collide (the same tables and rows), so give each parallel run its own database.
+  The runner checks one thing in code: after EVERY mutant run it runs the unmutated copy again on that same database (the canary run), and
+  when that no longer passes it stops with ``RuntimeError`` naming the mutant, because what the mutant left behind would make the verdicts
+  of the later mutants unreliable (a false kill). The cost is one extra pytest run per mutant while a ``pass_env`` value is set.
 - ``forbid_skips=True``: a run in which any selected test is skipped (or an expected failure) proves nothing, so it is an ERROR row
   ``SKIPPED TESTS`` (never a kill), and an unmutated baseline with a skipped test raises ``RuntimeError``. This closes the false kill where
   a mutant "dies" because the tests could not run (for example no database was reachable). A mutant run with no JUnit file or an empty one
   is the ERROR row ``JUNIT MISSING`` under this keyword.
 
-Always on (no keyword): a run whose first failure is an error in a FIXTURE (setup or teardown) is the ERROR row ``FIXTURE ERROR`` and never
-a kill (a fixture that asserts looked like a failing test), and the judge never calls a run KILLED when no failing test id is known.
+Always on (no keyword), two changes of behaviour: (1) a run whose FIRST failing test case failed in a fixture, at setup or at teardown
+(``testing.mutation.fixture_errors``), is the ERROR row ``FIXTURE ERROR`` and never a kill; before, such a run was a kill when the fixture
+failed with an ``AssertionError`` and a crash otherwise. A test whose body failed and whose teardown failed afterwards is judged by the failure
+(the test ran as written). (2) ``testing.mutation.judge`` returns ``ERROR`` when the run failed (exit 1) and no failing test id is known (an empty or
+unreadable JUnit file), where it used to return ``CRASH`` or ``KILLED``; so a mutant can no longer count as killed when its tests could not run as written.
+
+Result rows. A row is ``(name, verdict, test id, good)``. The test id column holds the failing test id, or one of these texts for an ERROR row
+that has no verdict from the judge: ``SETUP FAILED: <error class>``, ``SNIPPET NOT FOUND``, ``TIMEOUT``, ``REAPED ELSEWHERE``, ``JUNIT REFUSED``,
+``JUNIT MISSING`` (``forbid_skips``), ``FIXTURE ERROR`` and ``SKIPPED TESTS`` (``forbid_skips``). ``first_lines`` holds the first ``E`` line (masked)
+of the rows that have one, and for ``FIXTURE ERROR`` and ``SKIPPED TESTS`` the masked message that says why.
 
 Dev-tool constants: ``MAX_JUNIT_CHARS`` (in ``testing.mutation``), ``SETUP_TRIES``, ``SETUP_WAIT``, ``WAIT_POLL``, ``TREE_KILL_TIMEOUT``,
 ``TIMED_OUT``, ``REAPED_ELSEWHERE``, ``CHILD_ENV``, ``CHILD_FIXED_ENV``, ``JUNIT_REFUSED`` and the default run timeout (``DEFAULT_TIMEOUT``, 900.0 seconds) are module constants here and NOT in ``defaults.py``:
@@ -71,6 +90,7 @@ that ships in no wheel, has no config surface and is copied byte for byte into d
 from __future__ import annotations
 
 import contextlib
+import functools
 import keyword
 import os
 import re
@@ -84,14 +104,14 @@ import time
 from collections.abc import Callable, Iterable, Iterator, Sequence
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath, PureWindowsPath
-from urllib.parse import urlsplit
+from urllib.parse import unquote, urlsplit
 
 from hadavin_sdk.testing.mutation import (
     MAX_JUNIT_CHARS,
+    JunitReport,
     Verdict,
-    first_failure_junit,
-    fixture_errors,
     judge,
+    read_junit,
     skipped_tests,
 )
 
@@ -172,9 +192,13 @@ CHILD_ENV = (
     "PATH", "PATHEXT", "SYSTEMROOT", "SYSTEMDRIVE", "WINDIR", "COMSPEC", "TEMP", "TMP", "TMPDIR", "HOME", "USERPROFILE",
     "LANG", "LC_ALL", "PYTHONHASHSEED", "PYTHONUTF8", "PYTHONIOENCODING",
 )  # fmt: skip  # the only variables a mutant run inherits
-PASS_ENV_ALLOWED = (
-    "HADAVIN_TEST_PG_DSN",
-)  # the ONLY names ``pass_env`` may add to the child's environment (a test database address; never a token or key)
+# the ONLY names ``pass_env`` may add to the child's environment: the address of a throwaway test resource, never a token or a key.
+# To widen it: add the name here, re-copy this file and update its pin (CHANGELOG list and tests/fixtures/mutation_manifest.json); the
+# trigger is a demo's tests needing the address of another throwaway test resource, and each name gets the same review.
+PASS_ENV_ALLOWED = ("HADAVIN_TEST_PG_DSN",)
+MASK = "[REDACTED]"
+LONG_VALUE = 200  # a passed value longer than this is also masked piece by piece (pytest shortens long texts in its assertion lines)
+PIECE = 16  # length of the pieces of a long value that are masked
 CHILD_FIXED_ENV = {
     "PYTHONNOUSERSITE": "1"
 }  # set, not inherited: the child never imports from the caller's user site-packages
@@ -236,6 +260,10 @@ def _plugin_module(conftest: str) -> str:
         raise ValueError(
             f"conftest must be a .py file whose path parts are plain ASCII names that are not Python keywords: {conftest!r}"
         )
+    if parts[-1] != "conftest.py" and "tests" not in parts[:-1]:
+        raise ValueError(
+            f"conftest must be called conftest.py or lie in a folder called tests: {conftest!r}"
+        )
     return ".".join([*parts[:-1], parts[-1][:-3]])
 
 
@@ -251,7 +279,7 @@ def _checked_env_names(names: Iterable[str]) -> tuple[str, ...]:
 
 
 def _secret_values(names: Iterable[str]) -> tuple[str, ...]:
-    """The values of the passed environment variables, and the password inside a URL-shaped value, longest first: text that may show them is run through ``_masked``."""
+    """The values of the passed environment variables, and the password inside a URL-shaped value (as written and percent-decoded), longest first: text that may show them is run through ``_masked``."""
     found: set[str] = set()
     for name in names:
         value = os.environ.get(name, "")
@@ -263,15 +291,41 @@ def _secret_values(names: Iterable[str]) -> tuple[str, ...]:
         except ValueError:
             password = None
         if password:
-            found.add(password)
+            found.update((password, unquote(password)))
     return tuple(sorted(found, key=len, reverse=True))
 
 
+@functools.lru_cache(maxsize=8)
+def _pieces(secrets: tuple[str, ...]) -> frozenset[str]:
+    """Every ``PIECE``-character piece of each secret longer than ``LONG_VALUE``."""
+    return frozenset(
+        value[i : i + PIECE]
+        for value in secrets
+        if len(value) > LONG_VALUE
+        for i in range(len(value) - PIECE + 1)
+    )
+
+
 def _masked(text: str, secrets: Sequence[str]) -> str:
-    """``text`` with every secret value replaced by a marker (pass_env values must never reach ``first_lines``, a result row or an error message)."""
-    for value in secrets:
-        text = text.replace(value, "[REDACTED]")
-    return text
+    """``text`` with every secret value replaced by a marker (pass_env values must never reach ``first_lines``, a result row or an error message).
+    A long secret that pytest shortened is masked piece by piece: every run of ``PIECE`` or more characters of it is replaced."""
+    chosen = tuple(secrets)
+    for value in chosen:
+        text = text.replace(value, MASK)
+    pieces = _pieces(chosen)
+    if not pieces:
+        return text
+    hit = [False] * len(text)
+    for i in range(len(text) - PIECE + 1):
+        if text[i : i + PIECE] in pieces:
+            hit[i : i + PIECE] = [True] * PIECE
+    out: list[str] = []
+    for ch, bad in zip(text, hit, strict=True):
+        if not bad:
+            out.append(ch)
+        elif not out or out[-1] != MASK:
+            out.append(MASK)
+    return "".join(out)
 
 
 def _pytest(
@@ -301,7 +355,11 @@ def _pytest(
             ini_dir = Path(tempfile.mkdtemp(prefix="mutant_ini_"))
         ini = ini_dir / "mutant_run.ini"
         ini.write_text("", encoding="utf-8")
-        cmd = [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", "--noconftest", *load, "-x", "-c", str(ini), f"--rootdir={cwd}", f"--junitxml={junit}", *tests]  # fmt: skip
+        cmd = [
+            sys.executable,
+            *("-m", "pytest", "-q", "-p", "no:cacheprovider", "--noconftest", *load),
+            *("-x", "-c", str(ini), f"--rootdir={cwd}", f"--junitxml={junit}", *tests),
+        ]
         # own process group (POSIX session / Windows group): on a timeout the whole tree dies, not only pytest (a test may have started psql or a server)
         own = (
             {"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP}
@@ -545,6 +603,57 @@ def _refuse_skips_in_baseline(junit: Path, secrets: Sequence[str] = ()) -> None:
         )
 
 
+def _row(
+    m: Mutant,
+    rc: int,
+    junit: Path,
+    forbid_skips: bool,
+    secrets: Sequence[str],
+    first_lines: dict[str, str],
+) -> tuple[str, Verdict, str, bool]:
+    """The result row of one mutant run: its exit code ``rc`` and its JUnit file, judged once (one parse of the file)."""
+    if rc == TIMED_OUT:
+        return (m.name, Verdict.ERROR, "TIMEOUT", False)
+    # the exit status is lost: an error row, never a pass or a kill
+    if rc == REAPED_ELSEWHERE:
+        return (m.name, Verdict.ERROR, "REAPED ELSEWHERE", False)
+    try:
+        too_big = (
+            junit.exists() and junit.stat().st_size > MAX_JUNIT_CHARS
+        )  # looked at BEFORE the file is read
+        if too_big:
+            raise ValueError("junit file over the ceiling")
+        xml_text = junit.read_text(encoding="utf-8") if junit.exists() else ""
+        report = read_junit(xml_text) if xml_text else JunitReport("", "", [], [], False)
+    except JUNIT_REFUSED:
+        return (m.name, Verdict.ERROR, "JUNIT REFUSED", False)
+    if (
+        forbid_skips and not xml_text
+    ):  # no record of what ran cannot prove nothing was skipped: never judged
+        return (m.name, Verdict.ERROR, "JUNIT MISSING", False)
+    if report.fixture_failed:  # a fixture that failed in setup or teardown means the test never ran as written: never a kill
+        first_lines[m.name] = _masked(report.first_line, secrets)
+        return (m.name, Verdict.ERROR, "FIXTURE ERROR", False)
+    if (
+        forbid_skips and report.skipped
+    ):  # a skipped test proves nothing: never a kill, whatever else failed in the same run
+        why = report.first_line or f"skipped: {', '.join(report.skipped[:3])}"
+        first_lines[m.name] = _masked(why, secrets)
+        return (m.name, Verdict.ERROR, "SKIPPED TESTS", False)
+    v = judge(
+        rc,
+        report.test_id,
+        report.first_line,
+        expect=m.expect,
+        pinned=m.pinned or None,
+        crash_markers=m.crash_markers,
+    )
+    first_lines[m.name] = _masked(report.first_line, secrets)
+    declared = _leading_class(report.first_line) == m.crash_type
+    crash_ok = v is Verdict.CRASH and m.allow_crash and declared
+    return (m.name, v, _masked(report.test_id, secrets), v is Verdict.KILLED or crash_ok)
+
+
 def _run_mutants(
     root: Path,
     mutants: Iterable[Mutant],
@@ -642,9 +751,10 @@ def _run_mutants(
                 )
         _refuse_links_out(snap)
         fresh()
+        base_timeout = timeout if baseline_timeout is None else baseline_timeout
         base_rc = _pytest(
-            tmp, tests, tmp / "base.xml", timeout if baseline_timeout is None else baseline_timeout, plugin=conftest, env_names=env_names
-        )  # fmt: skip
+            tmp, tests, tmp / "base.xml", base_timeout, plugin=conftest, env_names=env_names
+        )
         if base_rc == REAPED_ELSEWHERE:
             raise RuntimeError(
                 "the baseline run was reaped by someone else: its exit status is unknown"
@@ -673,51 +783,25 @@ def _run_mutants(
             else:
                 operands = [f"{tests[0]}::{m.only_test}", *tests[1:]] if m.only_test else tests
             rc = _pytest(tmp, operands, junit, timeout, plugin=conftest, env_names=env_names)
-            if rc == TIMED_OUT:
-                emit((m.name, Verdict.ERROR, "TIMEOUT", False))
-                continue
-            # the exit status is lost: an error row, never a pass or a kill
-            if rc == REAPED_ELSEWHERE:
-                emit((m.name, Verdict.ERROR, "REAPED ELSEWHERE", False))
-                continue
-            try:
-                too_big = (
-                    junit.exists() and junit.stat().st_size > MAX_JUNIT_CHARS
-                )  # looked at BEFORE the file is read
-                if too_big:
-                    raise ValueError("junit file over the ceiling")
-                xml_text = junit.read_text(encoding="utf-8") if junit.exists() else ""
-                test_id, first = first_failure_junit(xml_text) if xml_text else ("", "")
-                skipped = skipped_tests(xml_text) if forbid_skips and xml_text else []
-                broken = fixture_errors(xml_text) if xml_text else []
-            except JUNIT_REFUSED:
-                emit((m.name, Verdict.ERROR, "JUNIT REFUSED", False))
-                continue
-            if (
-                forbid_skips and not xml_text
-            ):  # no record of what ran cannot prove nothing was skipped: never judged
-                emit((m.name, Verdict.ERROR, "JUNIT MISSING", False))
-                continue
-            if broken:  # a fixture that failed in setup or teardown means the test never ran as written: never a kill
-                emit((m.name, Verdict.ERROR, "FIXTURE ERROR", False))
-                continue
-            if (
-                skipped
-            ):  # a skipped test proves nothing: never a kill, whatever else failed in the same run
-                emit((m.name, Verdict.ERROR, "SKIPPED TESTS", False))
-                continue
-            v = judge(
-                rc,
-                test_id,
-                first,
-                expect=m.expect,
-                pinned=m.pinned or None,
-                crash_markers=m.crash_markers,
-            )
-            first_lines[m.name] = _masked(first, secrets)
-            declared = _leading_class(first) == m.crash_type
-            crash_ok = v is Verdict.CRASH and m.allow_crash and declared
-            emit((m.name, v, _masked(test_id, secrets), v is Verdict.KILLED or crash_ok))
+            emit(_row(m, rc, junit, forbid_skips, secrets, first_lines))
+            if secrets:  # the passed database is shared by the baseline and every mutant run: prove the unmutated copy still passes on what this one left
+                fresh()
+                again = _pytest(
+                    tmp,
+                    tests,
+                    tmp / "again.xml",
+                    base_timeout,
+                    plugin=conftest,
+                    env_names=env_names,
+                )
+                if again != 0:
+                    raise RuntimeError(
+                        _masked(
+                            f"the unmutated copy no longer passes its tests after mutant {m.name!r} (exit code {again}): the shared test database holds what the"
+                            " mutant left behind, so the verdicts of the later mutants would not be reliable",
+                            secrets,
+                        )
+                    )
     finally:
         with _signals_held():  # a signal is raised after the removal
             for folder in made:

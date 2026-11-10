@@ -27,6 +27,13 @@ Which mutants need what on Windows (this list is run on Linux and on Windows; th
 - Every other killer runs on both systems (the tree-kill killers use ``taskkill /T`` on Windows; the Windows branch after a normal
   exit is run on any system with the Windows flag faked).
 
+Keyword tests (``tests/test_mutation_runner_keywords.py``): 35 mutants there (conftest, ``pass_env``, masking, canary, ``forbid_skips``,
+fixture errors). Tests of that file with no mutant: the guard test of the database address (it protects the tests, not the runner),
+the check that the old text is gone, the default-call tests (a default call passes no plugin and no name), the percent-encoded password
+case (an equivalent mutant: ``unquote`` of a value with no ``%`` is the value), and the narrowing test for a failing body plus a failing
+teardown (the old behaviour already judged by the failure). "A missing conftest is noticed only at the copy" stands for "move the check
+after ``mkdtemp``": one replacement cannot move a line, so the mutant turns the early check off and the error comes late.
+
 Tests with no mutant (the guard is checked by the test only; names as in ``tests/test_mutation_runner.py``):
 - ``test_run_mutants_refuses_test_and_fixture_paths_that_leave_the_tree``: the list-based path checks of ``run_mutants`` for tests
   and fixtures (each is also checked again by ``_inside``, so a mutant that removes the first check is equivalent). The same holds
@@ -55,12 +62,21 @@ TEST = "tests/test_mutation_runner.py"  # the file that holds every killer
 PIN = "tests/test_mutation_runner::"  # the id prefix of a test in the JUnit file
 MU = "src/hadavin_sdk/testing/mutation.py"
 MR = "tools/mutation_runner.py"
+KW = "tests/test_mutation_runner_keywords.py"  # the killers of the keyword mutants
+KWPIN = "tests/test_mutation_runner_keywords::"
 
 
 def mutant(name, file, old, new, killer, expect, **kw):
     """One mutant: ``killer`` is the test that must fail first, with a line holding ``expect``."""
     return Mutant(
         name, file, old, new, expect, test_file=TEST, only_test=killer, pinned=PIN + killer, **kw
+    )
+
+
+def kmutant(name, file, old, new, killer, expect, **kw):
+    """One mutant whose killer is a test of the keyword test file (``tests/test_mutation_runner_keywords.py``)."""
+    return Mutant(
+        name, file, old, new, expect, test_file=KW, only_test=killer, pinned=KWPIN + killer, **kw
     )
 
 
@@ -130,7 +146,7 @@ M = [
         "test_a_child_reaped_by_someone_else_is_an_error_result_not_exit_code_zero",
         "a child reaped by someone else was read as exit code 0"),
     mutant("runner: a reaped mutant run is not an error row", MR,
-        "            if rc == REAPED_ELSEWHERE:", "            if False:",
+        "    if rc == REAPED_ELSEWHERE:", "    if False:",
         "test_a_reaped_child_is_an_error_row_for_a_mutant",
         "a mutant run reaped by someone else was not an error row"),
     mutant("runner: a junction under src is copied", MR,
@@ -269,7 +285,7 @@ M = [
         "timeout if baseline_timeout is None else baseline_timeout", "baseline_timeout or timeout",
         "test_a_baseline_timeout_of_zero_is_not_unset", "a baseline_timeout of 0 was treated as unset"),
     mutant("runner: a crash class is matched as a substring", MR,
-        "declared = _leading_class(first) == m.crash_type", "declared = m.crash_type in first",
+        "declared = _leading_class(report.first_line) == m.crash_type", "declared = m.crash_type in report.first_line",
         CRASHROW, "a crash row was good for a lookalike class name"),
     mutant("runner: a stream name is accepted", MR, '    if ":" in rel:', "    if False:",
         "test_a_mutant_path_with_a_stream_name_is_refused", "a mutant path with a stream name"),
@@ -303,6 +319,42 @@ M = [
         "                shutil.rmtree(ini_dir, ignore_errors=True)", "                pass",
         "test_the_pytest_run_writes_no_file_into_its_working_folder_and_leaves_no_temp_folder",
         "was left behind"),
+    # ---- keyword tests (conftest, pass_env, forbid_skips, fixture errors): killers in tests/test_mutation_runner_keywords.py
+    kmutant('runner: a mutant run does not load the conftest', MR, '            rc = _pytest(tmp, operands, junit, timeout, plugin=conftest, env_names=env_names)', '            rc = _pytest(tmp, operands, junit, timeout, env_names=env_names)', 'test_a_mutant_is_judged_with_the_conftest_loaded', 'was not judged with the conftest loaded'),
+    kmutant('runner: a mutant run does not get the passed variables', MR, '            rc = _pytest(tmp, operands, junit, timeout, plugin=conftest, env_names=env_names)', '            rc = _pytest(tmp, operands, junit, timeout, plugin=conftest)', 'test_a_mutant_run_sees_the_passed_variable', 'did not see the passed variable'),
+    kmutant('runner: the shared name check accepts any name', MR, '        if name not in PASS_ENV_ALLOWED:', '        if False:', 'test_an_unlisted_env_name_is_refused_before_anything_runs', 'an unlisted pass_env name was accepted'),
+    kmutant('runner: the pytest step passes any name it is given', MR, '    env.update({k: os.environ[k] for k in _checked_env_names(env_names) if k in os.environ})', '    env.update({k: os.environ[k] for k in env_names if k in os.environ})', 'test_the_pytest_step_refuses_an_unlisted_env_name_by_itself', 'the pytest step passed an unlisted name'),
+    kmutant('runner: run_mutants does not check the names before it starts', MR, '    env_names = _checked_env_names(\n        pass_env\n    )  # before anything runs: an unlisted name is refused, never passed', '    env_names = tuple(pass_env)  # (mutant)', 'test_an_unlisted_env_name_is_refused_before_anything_runs', 'an unlisted pass_env name was accepted'),
+    kmutant('runner: a conftest path with a keyword part is accepted', MR, 'p.isascii() and p.isidentifier() and not keyword.iskeyword(p) for p in names', 'p.isascii() and p.isidentifier() for p in names', 'test_a_conftest_with_a_python_keyword_part_is_refused', 'a keyword part in'),
+    kmutant('runner: a conftest path with a non-ASCII part is accepted', MR, 'p.isascii() and p.isidentifier() and not keyword.iskeyword(p) for p in names', 'p.isidentifier() and not keyword.iskeyword(p) for p in names', 'test_a_conftest_with_a_non_ascii_part_is_refused', 'a non-ascii part in'),
+    kmutant('runner: a conftest path that does not end in .py is accepted', MR, '    if not parts[-1].endswith(".py") or not all(', '    if not all(', 'test_a_conftest_that_does_not_end_in_py_is_refused', 'a conftest without the .py ending'),
+    kmutant('runner: any tree file is accepted as a conftest', MR, '    if parts[-1] != "conftest.py" and "tests" not in parts[:-1]:', '    if False:', 'test_a_conftest_must_be_called_conftest_or_lie_in_a_tests_folder', 'a tree file that is no conftest and no test helper'),
+    kmutant('runner: the conftest is not copied into the run', MR, '    copied = (*tests, conftest) if conftest and conftest not in tests else tuple(tests)', '    copied = tuple(tests)', 'test_conftest_loads_the_given_file_as_a_plugin_and_without_it_nothing_is_loaded', 'the conftest was not loaded for the baseline'),
+    kmutant('runner: a missing conftest is noticed only at the copy', MR, '            not _inside(root, conftest).is_file()\n', '            False\n', 'test_a_conftest_path_that_is_valid_but_missing_is_a_value_error_before_any_temp_folder', 'a missing conftest was noticed late'),
+    kmutant('judge: a failing run with no test id can be a kill', MU, '    if not test_id:  # a failing run', '    if False:  # a failing run', 'test_judge_never_returns_killed_for_an_empty_failing_test_id', 'an empty failing test id was judged as a kill'),
+    kmutant('runner: a baseline that skips is accepted', MR, '        if forbid_skips:\n            _refuse_skips_in_baseline(tmp / "base.xml", secrets)\n', '        if False:\n            _refuse_skips_in_baseline(tmp / "base.xml", secrets)\n', 'test_forbid_skips_refuses_a_baseline_that_skips', 'a baseline that skips was accepted'),
+    kmutant('runner: a baseline that has an expected failure is accepted', MR, '        if forbid_skips:\n            _refuse_skips_in_baseline(tmp / "base.xml", secrets)\n', '        if False:\n            _refuse_skips_in_baseline(tmp / "base.xml", secrets)\n', 'test_forbid_skips_counts_an_expected_failure_as_a_skip', 'an expected failure was not counted as a skip'),
+    kmutant('runner: the baseline skip message shows the passed value', MR, '            _masked(\n                f"the unmutated copy skipped {len(skipped)} selected test(s): {skipped[:3]}",\n                secrets,\n            )\n', '            f"the unmutated copy skipped {len(skipped)} selected test(s): {skipped[:3]}"\n', 'test_the_baseline_skip_message_never_holds_the_passed_value', 'the baseline skip message held the passed value'),
+    kmutant('runner: a skip is an error without forbid_skips', MR, '        forbid_skips and report.skipped\n', '        report.skipped\n', 'test_default_counts_a_run_with_a_skipped_test_as_before', 'a skipped test changed the result of a run without forbid_skips'),
+    kmutant('runner: a skipped run is judged as a kill', MR, '        forbid_skips and report.skipped\n', '        False\n', 'test_forbid_skips_makes_a_mutant_run_with_a_skipped_test_an_error_not_a_kill', 'a skipped test was counted as a kill under forbid_skips'),
+    kmutant('runner: no JUnit file is judged under forbid_skips', MR, '        forbid_skips and not xml_text\n', '        False\n', 'test_forbid_skips_with_a_missing_or_empty_junit_file_is_an_error_row_never_judged', 'was not the JUNIT MISSING row'),
+    kmutant('runner: no JUnit file is JUNIT MISSING without forbid_skips', MR, '        forbid_skips and not xml_text\n', '        forbid_skips or not xml_text\n', 'test_a_run_that_fails_with_no_junit_file_is_never_a_kill_even_without_forbid_skips', 'was not the plain empty ERROR row'),
+    kmutant('runner: a fixture error is judged like a failure', MR, '    if report.fixture_failed:', '    if False:', 'test_a_fixture_error_in_the_mutant_run_is_an_error_row_not_a_kill', 'a fixture that failed at setup was not the FIXTURE ERROR row'),
+    kmutant('runner: a skip is judged before a fixture error', MR, '    if report.fixture_failed:', '    if report.fixture_failed and not (forbid_skips and report.skipped):', 'test_a_fixture_error_and_a_skipped_test_in_one_run_are_a_fixture_error', 'a skip was judged before a fixture error'),
+    kmutant('runner: the FIXTURE ERROR row keeps no message', MR, '        first_lines[m.name] = _masked(report.first_line, secrets)\n        return (m.name, Verdict.ERROR, "FIXTURE ERROR", False)', '        return (m.name, Verdict.ERROR, "FIXTURE ERROR", False)', 'test_a_fixture_error_in_the_mutant_run_is_an_error_row_not_a_kill', 'the FIXTURE ERROR row kept no message'),
+    kmutant('runner: the SKIPPED TESTS row keeps no message', MR, '        first_lines[m.name] = _masked(why, secrets)\n', '', 'test_a_skipped_tests_row_without_a_failure_says_which_tests_were_skipped', 'the SKIPPED TESTS row did not say which tests were skipped'),
+    kmutant('runner: the SKIPPED TESTS message shows the passed value', MR, '        first_lines[m.name] = _masked(why, secrets)', '        first_lines[m.name] = why', 'test_the_skipped_tests_row_keeps_a_masked_message', 'the SKIPPED TESTS message held the passed value'),
+    kmutant('runner: first_lines shows the passed value', MR, '    first_lines[m.name] = _masked(report.first_line, secrets)\n    declared', '    first_lines[m.name] = report.first_line\n    declared', 'test_pass_env_values_never_reach_first_lines', 'the passed value reached first_lines'),
+    kmutant('runner: the row id shows the passed value', MR, '_masked(report.test_id, secrets)', 'report.test_id', 'test_pass_env_values_never_reach_the_failing_test_id_of_a_row', 'the passed value reached the test id of a row'),
+    kmutant('runner: a percent-decoded password is not masked', MR, '            found.update((password, unquote(password)))', '            found.add(password)', 'test_a_percent_encoded_password_is_masked_in_both_forms', 'the decoded password was not a secret'),
+    kmutant('runner: the password of a URL is not a secret', MR, '        if password:\n', '        if False:\n', 'test_masked_replaces_the_value_and_the_url_password', 'the secrets were not the value and its password'),
+    kmutant('runner: a long value is not masked piece by piece', MR, '        if len(value) > LONG_VALUE\n', '        if False\n', 'test_a_long_value_is_masked_piece_by_piece', 'a piece of the long value survived the masking'),
+    kmutant('runner: the database is not checked again after a mutant', MR, '            if secrets:  # the passed database', '            if False:  # the passed database', 'test_a_database_that_a_mutant_left_dirty_stops_the_run_after_that_mutant', 'a dirty database did not stop the run'),
+    kmutant('runner: the result of the database check is ignored', MR, '                if again != 0:', '                if False:', 'test_a_database_that_a_mutant_left_dirty_stops_the_run_after_that_mutant', 'a dirty database did not stop the run'),
+    kmutant('runner: the database is checked again without a passed value too', MR, '            if secrets:  # the passed database', '            if True:  # the passed database', 'test_without_a_passed_value_there_is_no_extra_run', 'a run with no passed value made an extra run'),
+    kmutant('mutation: a teardown error is not a fixture error', MU, '    "failed on teardown",\n', '', 'test_a_teardown_error_of_a_fixture_is_an_error_row_not_a_kill', 'a fixture that failed at teardown was not the FIXTURE ERROR row'),
+    kmutant('mutation: a setup error is not a fixture error', MU, '    "failed on setup",\n', '', 'test_a_fixture_error_in_the_mutant_run_is_an_error_row_not_a_kill', 'a fixture that failed at setup was not the FIXTURE ERROR row'),
+    kmutant('mutation: any fixture error of the file decides, not the first failure', MU, '_skipped(root), _fixture_errors(root), fixture)', '_skipped(root), _fixture_errors(root), bool(_fixture_errors(root)))', 'test_a_failing_body_and_a_failing_teardown_are_judged_by_the_failure', 'a test body that failed was hidden behind its failing teardown'),
 ]  # fmt: skip
 
 
@@ -327,7 +379,7 @@ if __name__ == "__main__":
     res = run_mutants(
         ROOT,
         M,
-        [TEST],
+        [TEST, KW],
         extra_dirs=("tests/fixtures", "tools"),
         only=only,
         on_result=show,
