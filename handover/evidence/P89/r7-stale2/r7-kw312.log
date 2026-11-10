@@ -1,0 +1,48 @@
+........................................................................ [ 68%]
+............................F.FF.                                        [100%]
+=================================== FAILURES ===================================
+_______ test_a_there_are_the_listed_number_of_mutants_with_unique_names ________
+
+    def test_a_there_are_the_listed_number_of_mutants_with_unique_names():
+        names = [m.name for m in mm.M]
+>       assert len(names) == EXPECTED_MUTANTS and len(set(names)) == EXPECTED_MUTANTS, names
+E       AssertionError: ['judge: an exception line counts as a kill', 'judge: crash markers ignored', 'judge: short expect accepted', 'runner: crash counts as good', 'runner: an absolute path is accepted', 'runner: a dotdot part is accepted', ...]
+E       assert (162 == 161)
+E        +  where 162 = len(['judge: an exception line counts as a kill', 'judge: crash markers ignored', 'judge: short expect accepted', 'runner: crash counts as good', 'runner: an absolute path is accepted', 'runner: a dotdot part is accepted', ...])
+
+tests/test_mutation_runner_meta.py:111: AssertionError
+_ test_a_the_three_crash_mutants_declare_their_exception_class_and_the_others_do_not _
+
+    def test_a_the_three_crash_mutants_declare_their_exception_class_and_the_others_do_not():
+        crash = {m.name: m.crash_type for m in mm.M if m.allow_crash}
+        assert crash == {
+            "runner: a failing tree kill is not caught": "PermissionError",
+            "b2: a refused junit stops the run": "ValueError",
+            "runner: a truncated junit stops the run": "ParseError",
+        }
+>       assert sum(not m.allow_crash and not m.crash_type for m in mm.M) == EXPECTED_MUTANTS - 3
+E       assert 159 == (161 - 3)
+E        +  where 159 = sum(<generator object test_a_the_three_crash_mutants_declare_their_exception_class_and_the_others_do_not.<locals>.<genexpr> at 0x7f645211a810>)
+
+tests/test_mutation_runner_meta.py:161: AssertionError
+____ test_g_every_search_string_occurs_exactly_once_in_the_file_it_targets _____
+
+    def test_g_every_search_string_occurs_exactly_once_in_the_file_it_targets():
+        lines = []
+        for m in mm.M:
+            text = (ROOT / m.file).read_text(encoding="utf-8")
+            count = text.count(m.old)
+            assert count == 1, f"{m.name}: the search string occurs {count} times in {m.file}"
+            assert m.new != m.old, m.name
+            lines.append(f"{m.name}: occurs once in {m.file}")
+>       assert len(lines) == EXPECTED_MUTANTS
+E       AssertionError: assert 162 == 161
+E        +  where 162 = len(['judge: an exception line counts as a kill: occurs once in src/hadavin_sdk/testing/mutation.py', 'judge: crash marker...s once in tools/mutation_runner.py', 'runner: a dotdot part is accepted: occurs once in tools/mutation_runner.py', ...])
+
+tests/test_mutation_runner_meta.py:172: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_mutation_runner_meta.py::test_a_there_are_the_listed_number_of_mutants_with_unique_names
+FAILED tests/test_mutation_runner_meta.py::test_a_the_three_crash_mutants_declare_their_exception_class_and_the_others_do_not
+FAILED tests/test_mutation_runner_meta.py::test_g_every_search_string_occurs_exactly_once_in_the_file_it_targets
+3 failed, 102 passed in 36.84s
+exit=1
