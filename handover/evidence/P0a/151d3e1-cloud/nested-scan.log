@@ -1,0 +1,7 @@
+HEAD 151d3e1de43c217f5eca7485cd4695c4c3188351
+TREES: 12:TREES = ("src", "demos", "tools")
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+Using CPython 3.13.18 interpreter at: /usr/local/bin/python3
+Creating virtual environment at: .venv
+Installed 76 packages in 82ms
+['src: .venv/lib/a.py imports pglast', 'demos: node_modules/pkg/b.py imports pglast']
