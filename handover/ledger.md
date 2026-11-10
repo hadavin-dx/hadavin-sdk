@@ -2178,3 +2178,6 @@
 | BL-core-p1da-r5-03 | P1d-a plan rev 7 | MAJOR | N8/K42d pin a leak; linear unbounded form not probed | OPEN | round5-design M3 | UNCAPPED |
 | BL-core-p1da-r5-04 | P1d-a plan rev 7 | MAJOR | BTK1/N7: un-paired code span makes mentions/links live; mrkdwn notify exit | OPEN | round5-design M4 | UNCAPPED |
 | BL-core-p1da-r5-05 | P1d-a plan rev 7 | MAJOR | card-exit safety by enumeration, not one helper; hook renamed | OPEN | round5-design M5 | UNCAPPED |
+| BL-core-p1da-r5-06 | P1d-a plan rev 7 | BLOCKER | ALPHABET-A count 72 not 63; ALPHABET-B 66 not 57 | OPEN | round5-readiness B1 | UNCAPPED |
+| BL-core-p1da-r5-07 | P1d-a plan rev 7 | BLOCKER | BTK1 card expected string wrong (base turns the link into [link removed]) | OPEN | round5-readiness B2 | UNCAPPED |
+| BL-core-p1da-r5-08 | P1d-a plan rev 7 | MAJOR | mutants A13 killer, A29 old text, nine non-literal olds; HL1/A15/A52 timeout mechanism; cilint-001 and A4 order not reconciled | OPEN | round5-readiness M3-M7 | UNCAPPED |
