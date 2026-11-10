@@ -1567,3 +1567,10 @@ NOT RUN: no reviewer was started on 8b2b716 (a redaction-path review of a void h
 DECISIONS FOR LEAD: (1) may the cloud merge current core/P1a (27ae996) into core/P2d-1, run ruff format, push a new head and re-run evidence, or does the PR77 builder (yours) do that?
 DEFAULT: wait for the new head if you or the builder push one; if you say nothing, I will NOT touch core/P2d-1; the evidence stays void and A11a reviewers wait.
 NEXT: when a head containing 27ae996 exists, run the evidence runner once on it, then egm-design and egm-codebase-details (redaction path, uncapped).
+
+## q-P89-gitleaks-history (2026-11-10 UTC): PR89 CI security job fails on one commit in history
+CHECKED BY ME: builder ran gitleaks 8.30.1 with .gitleaks.toml on origin/core/mutation-runner-keywords f4301d5: `--log-opts=HEAD` finds 1 leak, `386875c..HEAD` finds none; `git log -S` shows only commit 386875c ever held the literal (tests/test_mutation_runner_keywords.py:675); the head file no longer contains it. Head tree sha 0af1b26e8873dc54fcc597afc8a3cdfa632ded5b.
+NOT RUN: CI on f4301d5 (it will still fail the security job until 386875c is rewritten); no history was rewritten and no allowlist or ignore entry was added.
+DECISIONS FOR LEAD: may the PR89 branch be rewritten (drop the literal from commit 386875c with a fixup, then force-with-lease push)? The final tree stays byte-identical, so the independent evidence now running on f4301d5 stays valid for the new head (checked by tree sha). Only commits of ours are on the branch.
+DEFAULT: the cloud does NOT force-push; the lead (or you, by saying yes) rewrites; the evidence is tied to tree 0af1b26 so a rewrite does not need a re-run.
+NEXT: evidence runner and redaction reviewer are running on f4301d5; fix any finding in one push; wait for your answer on the rewrite.
