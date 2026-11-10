@@ -1,0 +1,333 @@
+HEAD=1a7d2029013deff2054c4c18f73663f21aaa7c3c py=3.12 dsn=setpostgresql://postgres@127.0.0.1:55433/head312 CI=unset
+unset: AWS_ ANTHROPIC_ AZURE_ GOOGLE_ GCP_ VAULT_ OPENAI_ GEMINI_ CLOUDSDK_ CI GH_TOKEN GITHUB_TOKEN HADAVIN_TEST_PG_DSN (then set DSN if given)
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+........................................................................ [ 26%]
+........................................................................ [ 53%]
+..F..................................................................... [ 79%]
+.......................................................                  [100%]
+=================================== FAILURES ===================================
+_ test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[dblink-connect] _
+
+attack = Attack(name='dblink-connect', sql="SELECT dblink_connect('dbname=postgres')", rule='V06', category='public-functions', harm='exec')
+shared = 'user=postgres dbname=askdata_h_511c4319 host=127.0.0.1 port=55433'
+
+    @pytest.mark.parametrize("attack", READERS, ids=[a.name for a in READERS])
+    def test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated(attack, shared):
+>       assert prove_harm(attack, shared)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/demo_askdata/test_validate_harm.py:179: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/demo_askdata/test_validate_harm.py:133: in prove_harm
+    cur = c.execute(attack.sql)
+          ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <psycopg.Connection [BAD] at 0x7fc9c25dc950>
+query = "SELECT dblink_connect('dbname=postgres')", params = None
+prepare = None, binary = False
+
+    def execute(
+        self,
+        query: Query,
+        params: Params | None = None,
+        *,
+        prepare: bool | None = None,
+        binary: bool = False,
+    ) -> Cursor[Row]:
+        """Execute a query and return a cursor to read its results."""
+        try:
+            cur = self.cursor()
+            if binary:
+                cur.format = BINARY
+    
+            if isinstance(query, Template):
+                if params is not None:
+                    raise TypeError(
+                        "'execute()' with string template query doesn't support parameters"
+                    )
+                return cur.execute(query, prepare=prepare)
+            else:
+                return cur.execute(query, params, prepare=prepare)
+        except e._NO_TRACEBACK as ex:
+>           raise ex.with_traceback(None)
+E           psycopg.errors.SqlclientUnableToEstablishSqlconnection: could not establish connection
+E           DETAIL:  connection to server on socket "/var/run/postgresql/.s.PGSQL.5432" failed: No such file or directory
+E           	Is the server running locally and accepting connections on that socket?
+
+.venv-3.12/lib/python3.12/site-packages/psycopg/connection.py:304: SqlclientUnableToEstablishSqlconnection
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/demo_askdata/test_validate_harm.py::test_writing_attack_does_harm_unvalidated_and_is_refused_when_validated[stacked-delete]
+PASSED tests/demo_askdata/test_validate_harm.py::test_writing_attack_does_harm_unvalidated_and_is_refused_when_validated[stacked-after-comment]
+PASSED tests/demo_askdata/test_validate_harm.py::test_writing_attack_does_harm_unvalidated_and_is_refused_when_validated[stacked-after-line-comment]
+PASSED tests/demo_askdata/test_validate_harm.py::test_writing_attack_does_harm_unvalidated_and_is_refused_when_validated[stacked-leading-semicolon]
+PASSED tests/demo_askdata/test_validate_harm.py::test_writing_attack_does_harm_unvalidated_and_is_refused_when_validated[stacked-commit-then-write]
+PASSED tests/demo_askdata/test_validate_harm.py::test_writing_attack_does_harm_unvalidated_and_is_refused_when_validated[stacked-comment-with-quote]
+PASSED tests/demo_askdata/test_validate_harm.py::test_writing_attack_does_harm_unvalidated_and_is_refused_when_validated[stacked-after-nested-comment]
+PASSED tests/demo_askdata/test_validate_harm.py::test_writing_attack_does_harm_unvalidated_and_is_refused_when_validated[insert]
+PASSED tests/demo_askdata/test_validate_harm.py::test_writing_attack_does_harm_unvalidated_and_is_refused_when_validated[update]
+PASSED tests/demo_askdata/test_validate_harm.py::test_writing_attack_does_harm_unvalidated_and_is_refused_when_validated[delete]
+PASSED tests/demo_askdata/test_validate_harm.py::test_writing_attack_does_harm_unvalidated_and_is_refused_when_validated[merge]
+PASSED tests/demo_askdata/test_validate_harm.py::test_writing_attack_does_harm_unvalidated_and_is_refused_when_validated[drop]
+PASSED tests/demo_askdata/test_validate_harm.py::test_writing_attack_does_harm_unvalidated_and_is_refused_when_validated[truncate]
+PASSED tests/demo_askdata/test_validate_harm.py::test_writing_attack_does_harm_unvalidated_and_is_refused_when_validated[create-table]
+PASSED tests/demo_askdata/test_validate_harm.py::test_writing_attack_does_harm_unvalidated_and_is_refused_when_validated[create-role]
+PASSED tests/demo_askdata/test_validate_harm.py::test_writing_attack_does_harm_unvalidated_and_is_refused_when_validated[alter-table]
+PASSED tests/demo_askdata/test_validate_harm.py::test_writing_attack_does_harm_unvalidated_and_is_refused_when_validated[grant]
+PASSED tests/demo_askdata/test_validate_harm.py::test_writing_attack_does_harm_unvalidated_and_is_refused_when_validated[call]
+PASSED tests/demo_askdata/test_validate_harm.py::test_writing_attack_does_harm_unvalidated_and_is_refused_when_validated[do-block]
+PASSED tests/demo_askdata/test_validate_harm.py::test_writing_attack_does_harm_unvalidated_and_is_refused_when_validated[explain-analyze-delete]
+PASSED tests/demo_askdata/test_validate_harm.py::test_writing_attack_does_harm_unvalidated_and_is_refused_when_validated[select-into]
+PASSED tests/demo_askdata/test_validate_harm.py::test_writing_attack_does_harm_unvalidated_and_is_refused_when_validated[select-into-from-base]
+PASSED tests/demo_askdata/test_validate_harm.py::test_writing_attack_does_harm_unvalidated_and_is_refused_when_validated[for-update]
+PASSED tests/demo_askdata/test_validate_harm.py::test_writing_attack_does_harm_unvalidated_and_is_refused_when_validated[for-share]
+PASSED tests/demo_askdata/test_validate_harm.py::test_writing_attack_does_harm_unvalidated_and_is_refused_when_validated[for-no-key-update-nowait]
+PASSED tests/demo_askdata/test_validate_harm.py::test_writing_attack_does_harm_unvalidated_and_is_refused_when_validated[for-update-skip-locked]
+PASSED tests/demo_askdata/test_validate_harm.py::test_writing_attack_does_harm_unvalidated_and_is_refused_when_validated[for-update-in-subquery]
+PASSED tests/demo_askdata/test_validate_harm.py::test_writing_attack_does_harm_unvalidated_and_is_refused_when_validated[data-modifying-cte]
+PASSED tests/demo_askdata/test_validate_harm.py::test_writing_attack_does_harm_unvalidated_and_is_refused_when_validated[data-modifying-cte-insert]
+PASSED tests/demo_askdata/test_validate_harm.py::test_writing_attack_does_harm_unvalidated_and_is_refused_when_validated[data-modifying-cte-update]
+PASSED tests/demo_askdata/test_validate_harm.py::test_writing_attack_does_harm_unvalidated_and_is_refused_when_validated[with-over-insert]
+PASSED tests/demo_askdata/test_validate_harm.py::test_writing_attack_does_harm_unvalidated_and_is_refused_when_validated[lo-import]
+PASSED tests/demo_askdata/test_validate_harm.py::test_writing_attack_does_harm_unvalidated_and_is_refused_when_validated[lo-from-bytea]
+PASSED tests/demo_askdata/test_validate_harm.py::test_writing_attack_does_harm_unvalidated_and_is_refused_when_validated[carriage-return]
+PASSED tests/demo_askdata/test_validate_harm.py::test_writing_attack_does_harm_unvalidated_and_is_refused_when_validated[form-feed]
+PASSED tests/demo_askdata/test_validate_harm.py::test_writing_attack_does_harm_unvalidated_and_is_refused_when_validated[backslash-quote-differential]
+PASSED tests/demo_askdata/test_validate_harm.py::test_writing_attack_does_harm_unvalidated_and_is_refused_when_validated[backslash-in-comment]
+PASSED tests/demo_askdata/test_validate_harm.py::test_writing_attack_does_harm_unvalidated_and_is_refused_when_validated[backslash-in-qident]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[stacked-two-selects]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[nested-comment-unbalanced-close]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[unterminated-comment]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[unterminated-string]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[unterminated-qident]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[stacked-before-parse-error]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[copy-program]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[copy-to-file]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[set-role]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[set-readwrite]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[set-statement-timeout]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[transaction-commit]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[transaction-begin-readwrite]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[show]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[prepare]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[explain-analyze]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[explain-plain]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[values-root]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[table-shorthand]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[select-into-temp]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[data-modifying-cte-nested]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[base-table]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[base-table-email-join]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[catalog-table]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[catalog-qualified]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[information-schema]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[quoted-catalog-table]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[three-part-name]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[unqualified-view]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[subquery-over-base]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[scalar-subquery-catalog]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[exists-subquery-catalog]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[union-catalog]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[table-function]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[table-function-count-huge]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[table-function-unnest]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[table-function-rows-from]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[table-function-lateral]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[table-function-query-to-xml]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[table-function-pg-ls-dir]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[table-function-json-each]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[table-function-after-join]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[tablesample]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[lateral-subquery]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[cte-shadows-catalog]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[cte-forward-ref-catalog]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[cte-forward-ref]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[cte-sibling-in-subquery]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[cte-nested-shadow-leak]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[cte-self-read]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[cte-named-like-exposed-view]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[cte-named-information-schema]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[cte-reads-later-sibling-in-body]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[cte-name-leaks-out-of-subquery]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[cte-in-second-union-leg]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[restricted-column]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[restricted-column-upper]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[restricted-column-qualified]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[restricted-column-schema-qualified]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[restricted-column-in-where]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[restricted-column-in-order-by]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[restricted-column-in-subquery]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[restricted-column-in-having]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[restricted-column-bare-in-having]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[keyword-as-column-in-having]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[unknown-column-in-subquery-in-order-by]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[join-on-one-column-only]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[join-on-same-column]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[join-on-joined-relation-only]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[join-on-earlier-relation-only]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[join-on-third-relation-skips-the-joined-one]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[arity-count-two-args]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[arity-age-no-args]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[arity-length-two-args]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[arity-ceil-two-args]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[arity-row-number-with-arg]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[arity-ntile-no-args]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[arity-make-date-two-args]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[arity-replace-two-args]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[arity-percentile-two-args]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[named-window-clause]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[wrong-view-column]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[whole-row-alias]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[whole-row-relation-name]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[whole-row-in-function]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[whole-row-of-subquery]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[whole-row-to-json]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[whole-row-row-to-json]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[whole-row-is-null]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[row-constructor]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[star-over-unknown-relation]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[pg-sleep]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[pg-sleep-qualified]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[pg-sleep-upper]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[pg-sleep-quoted]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[pg-sleep-quoted-upper]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[pg-sleep-in-where]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[pg-sleep-in-subquery]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[pg-sleep-for]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[generate-series-select-list]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[repeat-large]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[lpad-large]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[version]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[current-database]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[current-setting]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[set-config]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[query-to-xml]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[table-to-xml]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[pg-ls-dir]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[pg-read-file]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[pg-terminate-backend]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[pg-advisory-lock]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[nextval]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[pg-notify]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[pg-get-viewdef]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[current-date]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[now]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[current-timestamp]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[clock-timestamp]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[random]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[current-user]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[session-user]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[schema-qualified-allowed-function]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[schema-qualified-user-function]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[function-in-filter-clause]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[function-in-order-by]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[function-in-join-on]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[function-in-case]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[function-in-window-order]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[regclass-cast]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[regclass-cast-function-form]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[regproc-cast]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[regclass-then-oid]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[oid-cast]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[xml-cast]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[json-cast]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[bytea-cast]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[name-cast]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[array-cast]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[interval-cast]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[qualified-type-cast]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[cast-type-parameter-is-a-column]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[typed-literal-regclass]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[cast-of-column-to-regclass]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[with-recursive]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[cross-join]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[comma-join]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[natural-join]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[join-on-true]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[join-on-one-equals-one]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[nul-byte]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[terminal-escape]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[c1-control-in-literal]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[backslash-literal]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[dollar-quote]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[dollar-tag-hides-stack]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[dollar-quote-in-where]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[dollar-in-identifier-position]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[escape-prefix]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[escape-prefix-lower]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[escape-string-quote-differential]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[unicode-escape-string]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[unicode-escape-identifier]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[bit-string-prefix]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[hex-string-prefix]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[national-prefix]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[parameter]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[parameter-cast]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[placeholder-percent-s]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[placeholder-percent-named]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[placeholder-colon-name]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[placeholder-question-mark]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[unicode-lookalike-identifier]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[unicode-greek-question-mark]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[unicode-fullwidth-keyword]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[unicode-nbsp-between-tokens]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[unicode-zero-width-in-identifier]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[unicode-bidi-override]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[unicode-byte-order-mark]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[unicode-in-quoted-identifier]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[oversize-text]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[frame-rows]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[frame-range]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[regex-operator-on-call]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[regex-operator-redos]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[regex-operator-insensitive]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[containment-operator-on-call]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[json-arrow-operator]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[json-text-operator]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[operator-syntax]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[collate]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[subscript]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[array-constructor]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[similar-to]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[at-time-zone-column]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[interval-huge]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[interval-unit-seconds]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[filter-on-non-aggregate]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[within-group-non-percentile]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[deep-nesting]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[too-many-joins]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[too-many-ctes]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[too-many-nodes]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[long-literal]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[deep-parentheses]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[upper-quoted-view]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[upper-quoted-schema]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[upper-quoted-column]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[quoted-identifier-with-space]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[quoted-identifier-trailing-space]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[quoted-identifier-with-semicolon]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[quoted-identifier-doubled-quote]
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[quoted-upper-alias]
+PASSED tests/demo_askdata/test_validate_harm.py::test_the_harm_kinds_are_all_exercised
+PASSED tests/demo_askdata/test_verify_readonly.py::test_wrapper_is_current
+PASSED tests/demo_askdata/test_verify_readonly.py::test_checks_name_exactly_the_allowlisted_views_and_columns
+PASSED tests/demo_askdata/test_verify_readonly.py::test_green_for_the_real_login
+PASSED tests/demo_askdata/test_verify_readonly.py::test_psql_rows_equal_pgsource_rows
+PASSED tests/demo_askdata/test_verify_readonly.py::test_over_privileged_login_turns_the_script_red
+PASSED tests/demo_askdata/test_verify_readonly.py::test_connection_failure_is_a_pgerror_without_the_password
+PASSED tests/demo_askdata/test_verify_readonly.py::test_script_files_are_ascii_and_lf
+PASSED tests/demo_askdata/test_verify_readonly.py::test_column_sequence_and_function_grants_turn_the_script_red[UPDATE (total_amount) ON analytics.orders_v]
+PASSED tests/demo_askdata/test_verify_readonly.py::test_column_sequence_and_function_grants_turn_the_script_red[INSERT (status) ON analytics.orders_v]
+PASSED tests/demo_askdata/test_verify_readonly.py::test_column_sequence_and_function_grants_turn_the_script_red[SELECT (customer_id) ON shop.customers]
+PASSED tests/demo_askdata/test_verify_readonly.py::test_column_sequence_and_function_grants_turn_the_script_red[UPDATE ON SEQUENCE scratch.sq]
+PASSED tests/demo_askdata/test_verify_readonly.py::test_column_sequence_and_function_grants_turn_the_script_red[EXECUTE ON FUNCTION scratch.fn()]
+PASSED tests/demo_askdata/test_verify_readonly.py::test_column_sequence_and_function_grants_turn_the_script_red[EXECUTE ON FUNCTION pg_read_file(text)]
+PASSED tests/demo_askdata/test_verify_readonly.py::test_column_sequence_and_function_grants_turn_the_script_red[EXECUTE ON FUNCTION pg_ls_dir(text)]
+PASSED tests/demo_askdata/test_verify_readonly.py::test_column_sequence_and_function_grants_turn_the_script_red[EXECUTE ON FUNCTION lo_import(text)]
+PASSED tests/demo_askdata/test_verify_readonly.py::test_column_sequence_and_function_grants_turn_the_script_red[EXECUTE ON FUNCTION lo_export(oid, text)]
+PASSED tests/demo_askdata/test_verify_readonly.py::test_file_and_network_extension_turns_the_script_red
+PASSED tests/demo_askdata/test_verify_readonly.py::test_default_transaction_read_only_is_informational_only
+FAILED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[dblink-connect]
+1 failed, 270 passed in 23.72s
+exit=1

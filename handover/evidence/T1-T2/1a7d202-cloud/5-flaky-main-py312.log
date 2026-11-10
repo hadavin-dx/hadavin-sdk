@@ -1,0 +1,14 @@
+HEAD=2a8c2aac89f83dd0a45af0412563b59ff4fe5632 py=3.12 dsn=unset CI=unset
+unset: AWS_ ANTHROPIC_ AZURE_ GOOGLE_ GCP_ VAULT_ OPENAI_ GEMINI_ CLOUDSDK_ CI GH_TOKEN GITHUB_TOKEN HADAVIN_TEST_PG_DSN (then set DSN if given)
+label=main HEAD=2a8c2aac89f83dd0a45af0412563b59ff4fe5632
+run 1 exit=0 PASSED tests/test_mutation_runner.py::test_the_runner_wires_pinned_so_another_failing_test_is_other_test | 1 passed in 1.23s
+run 2 exit=0 PASSED tests/test_mutation_runner.py::test_the_runner_wires_pinned_so_another_failing_test_is_other_test | 1 passed in 1.02s
+run 3 exit=0 PASSED tests/test_mutation_runner.py::test_the_runner_wires_pinned_so_another_failing_test_is_other_test | 1 passed in 1.11s
+run 4 exit=0 PASSED tests/test_mutation_runner.py::test_the_runner_wires_pinned_so_another_failing_test_is_other_test | 1 passed in 1.43s
+run 5 exit=0 PASSED tests/test_mutation_runner.py::test_the_runner_wires_pinned_so_another_failing_test_is_other_test | 1 passed in 0.96s
+run 6 exit=0 PASSED tests/test_mutation_runner.py::test_the_runner_wires_pinned_so_another_failing_test_is_other_test | 1 passed in 1.01s
+run 7 exit=0 PASSED tests/test_mutation_runner.py::test_the_runner_wires_pinned_so_another_failing_test_is_other_test | 1 passed in 0.97s
+run 8 exit=0 PASSED tests/test_mutation_runner.py::test_the_runner_wires_pinned_so_another_failing_test_is_other_test | 1 passed in 1.11s
+run 9 exit=0 PASSED tests/test_mutation_runner.py::test_the_runner_wires_pinned_so_another_failing_test_is_other_test | 1 passed in 0.98s
+run 10 exit=0 PASSED tests/test_mutation_runner.py::test_the_runner_wires_pinned_so_another_failing_test_is_other_test | 1 passed in 0.95s
+exit=1

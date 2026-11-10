@@ -1,0 +1,406 @@
+HEAD=1a7d2029013deff2054c4c18f73663f21aaa7c3c py=3.13 dsn=unset CI=unset
+unset: AWS_ ANTHROPIC_ AZURE_ GOOGLE_ GCP_ VAULT_ OPENAI_ GEMINI_ CLOUDSDK_ CI GH_TOKEN GITHUB_TOKEN HADAVIN_TEST_PG_DSN (then set DSN if given)
+== 4a CI=true no DSN (HADAVIN_TEST_PG_DSN unset): tests/test_pg_dsn_guard.py tests/contracts
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+...........E..E......................................................... [ 17%]
+..................s..................................................... [ 34%]
+.........................E.E.E.E.E.E.E.E.E.E.E.E.E.E.E.E.E.E.E.E.E.E.E.E [ 51%]
+.E.E.............................................EEEEEEEEEEEEEEEEEEEEEEE [ 69%]
+EEEEEEEEEEEEEEEEEEEEEE...............EEEEEEEEEEEEEEE.E.E.E.E.E.E.E.E.E.E [ 86%]
+.E.E.E.E.E.E.E.E.E.E.E......EEEEEE.E.E.E.E..EE...EEE.E.E                 [100%]
+==================================== ERRORS ====================================
+__ ERROR at setup of test_audit_write_once_read_back_in_order[chain_postgres] __
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_audit_intent_failure_raises_audit_unavailable[chain_postgres] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+__ ERROR at setup of test_runs_are_copies_and_unknown_is_not_found[postgres] ___
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+________ ERROR at setup of test_transition_is_compare_and_set[postgres] ________
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_add_cost_accumulates_and_unknown_run_is_not_found[postgres] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+___ ERROR at setup of test_touch_moves_updated_at_and_keeps_state[postgres] ____
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+______ ERROR at setup of test_list_runs_by_state_age_and_limit[postgres] _______
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_approval_request_update_is_compare_and_set[postgres] __
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+____ ERROR at setup of test_due_approvals_are_pending_and_expired[postgres] ____
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_get_approval_decision_returns_latest_or_none[postgres] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+________ ERROR at setup of test_gate_decision_is_written_once[postgres] ________
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+____________ ERROR at setup of test_tick_state_round_trip[postgres] ____________
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_____ ERROR at setup of test_sent_at_and_channel_ref_round_trip[postgres] ______
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+__________ ERROR at setup of test_list_approvals_by_status[postgres] ___________
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_________ ERROR at setup of test_spend_day_and_month_totals[postgres] __________
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+__ ERROR at setup of test_month_total_spans_days_and_money_is_exact[postgres] __
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+________ ERROR at setup of test_dead_letters_and_kill_switch[postgres] _________
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_two_threads_racing_one_cas_exactly_one_wins[postgres] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+__________ ERROR at setup of test_record_decision_is_atomic[postgres] __________
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_tool_calls_round_trip_in_order_and_refuse_a_duplicate[postgres] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_purge_tool_calls_keeps_held_runs_and_recent_rows[postgres] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_redaction_map_upserts_and_a_missing_map_is_none[postgres] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+____ ERROR at setup of test_purge_redaction_maps_keeps_held_runs[postgres] _____
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_tool_calls_with_the_same_time_list_in_a_fixed_order[postgres] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+______ ERROR at setup of test_tool_call_error_flag_round_trips[postgres] _______
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_purge_redaction_maps_keeps_the_map_of_an_open_run_until_the_ceiling[postgres] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_purge_redaction_maps_ages_a_run_parked_in_needs_person_like_a_finished_one[postgres] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_purge_redaction_maps_ages_a_finished_run_from_when_it_finished[postgres] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-6min-window0-2026-03-10T12:00:00+00:00] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-6min-window0-2026-03-10T23:57:00+00:00] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-6min-window0-2026-03-10T23:59:59+00:00] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-6min-window0-2026-03-10T00:00:00+00:00] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-6min-window0-2026-03-31T23:57:00+00:00] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-6min-window0-2026-12-31T23:57:00+00:00] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-6min-window0-2026-02-28T23:30:00+00:00] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-6min-window0-2024-02-28T23:30:00+00:00] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-6min-window0-2026-01-01T00:00:00+00:00] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-6min-window0-2024-02-29T23:57:00+00:00] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-6min-window0-2026-04-30T23:57:00+00:00] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-6min-window0-2026-01-31T23:57:00+00:00] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-6min-window0-2026-02-01T00:00:00+00:00] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-6min-window0-2026-02-20T08:00:00+00:00] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-6min-window0-2026-03-10T23:59:59.999999+00:00] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-25h-window1-2026-03-10T12:00:00+00:00] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-25h-window1-2026-03-10T23:57:00+00:00] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-25h-window1-2026-03-10T23:59:59+00:00] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-25h-window1-2026-03-10T00:00:00+00:00] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-25h-window1-2026-03-31T23:57:00+00:00] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-25h-window1-2026-12-31T23:57:00+00:00] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-25h-window1-2026-02-28T23:30:00+00:00] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-25h-window1-2024-02-28T23:30:00+00:00] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-25h-window1-2026-01-01T00:00:00+00:00] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-25h-window1-2024-02-29T23:57:00+00:00] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-25h-window1-2026-04-30T23:57:00+00:00] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-25h-window1-2026-01-31T23:57:00+00:00] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-25h-window1-2026-02-01T00:00:00+00:00] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-25h-window1-2026-02-20T08:00:00+00:00] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-25h-window1-2026-03-10T23:59:59.999999+00:00] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-31d-window2-2026-03-10T12:00:00+00:00] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-31d-window2-2026-03-10T23:57:00+00:00] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-31d-window2-2026-03-10T23:59:59+00:00] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-31d-window2-2026-03-10T00:00:00+00:00] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-31d-window2-2026-03-31T23:57:00+00:00] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-31d-window2-2026-12-31T23:57:00+00:00] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-31d-window2-2026-02-28T23:30:00+00:00] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-31d-window2-2024-02-28T23:30:00+00:00] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-31d-window2-2026-01-01T00:00:00+00:00] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-31d-window2-2024-02-29T23:57:00+00:00] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-31d-window2-2026-04-30T23:57:00+00:00] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-31d-window2-2026-01-31T23:57:00+00:00] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-31d-window2-2026-02-01T00:00:00+00:00] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-31d-window2-2026-02-20T08:00:00+00:00] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-31d-window2-2026-03-10T23:59:59.999999+00:00] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_reads_never_change_a_total[postgres-2026-03-10T12:00:00+00:00] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_reads_never_change_a_total[postgres-2026-03-10T23:57:00+00:00] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_reads_never_change_a_total[postgres-2026-03-10T23:59:59+00:00] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_reads_never_change_a_total[postgres-2026-03-10T00:00:00+00:00] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_reads_never_change_a_total[postgres-2026-03-31T23:57:00+00:00] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_reads_never_change_a_total[postgres-2026-12-31T23:57:00+00:00] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_reads_never_change_a_total[postgres-2026-02-28T23:30:00+00:00] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_reads_never_change_a_total[postgres-2024-02-28T23:30:00+00:00] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_reads_never_change_a_total[postgres-2026-01-01T00:00:00+00:00] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_reads_never_change_a_total[postgres-2024-02-29T23:57:00+00:00] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_reads_never_change_a_total[postgres-2026-04-30T23:57:00+00:00] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_reads_never_change_a_total[postgres-2026-01-31T23:57:00+00:00] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_reads_never_change_a_total[postgres-2026-02-01T00:00:00+00:00] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_reads_never_change_a_total[postgres-2026-02-20T08:00:00+00:00] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_reads_never_change_a_total[postgres-2026-03-10T23:59:59.999999+00:00] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+________ ERROR at setup of test_two_charges_on_one_day_add_up[postgres] ________
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_a_charge_at_23_30_utc_is_booked_on_its_own_day[postgres] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_a_day_total_is_the_sum_of_its_own_charges_only_across_25_hours[postgres] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+__ ERROR at setup of test_a_month_total_does_not_carry_over_31_days[postgres] __
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_31_days_from_the_start_of_a_31_day_month_is_the_next_month_but_30_days_is_not[postgres] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_the_same_month_of_another_year_is_a_different_month[postgres] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_a_charge_on_a_past_date_is_booked_on_that_date[postgres] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_a_charge_smaller_than_a_cent_is_neither_rounded_nor_lost[postgres] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_the_order_the_events_arrive_in_does_not_change_the_totals[postgres] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_a_charge_every_6_minutes_for_two_days_blocks_and_frees_the_daily_budget_exactly[postgres] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_31_days_of_daily_charges_never_leak_across_the_month_boundary[postgres] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_the_daily_budget_frees_at_utc_midnight_and_is_not_a_rolling_25_hour_window[postgres] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_the_monthly_budget_stops_at_the_cap_and_frees_at_the_month_boundary[postgres] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_the_monthly_budget_frees_on_1_march_after_a_28_day_february[postgres] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_a_charge_at_exactly_the_cap_blocks_the_next_call_and_one_cent_under_does_not[postgres] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_the_daily_budget_is_read_for_today_not_yesterday[postgres] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+__ ERROR at setup of test_one_agent_never_sees_another_agents_spend[postgres] __
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_a_charge_returns_only_its_own_agents_month_total[postgres] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_a_charge_returns_the_total_of_its_own_month_only[postgres] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_the_real_now_is_aware_utc_and_books_23_00_utc_on_the_10th_on_a_machine_in_ist[postgres] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_one_microsecond_decides_the_day_and_a_leap_february_has_a_29th[postgres] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_one_caller_at_a_time_admits_ceil_cap_over_cost_and_overshoots_by_less_than_one_call[postgres-2.00-1.00] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_one_caller_at_a_time_admits_ceil_cap_over_cost_and_overshoots_by_less_than_one_call[postgres-2.50-1.00] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_one_caller_at_a_time_admits_ceil_cap_over_cost_and_overshoots_by_less_than_one_call[postgres-1.50-1.00] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_one_caller_at_a_time_admits_ceil_cap_over_cost_and_overshoots_by_less_than_one_call[postgres-0.50-1.00] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_one_caller_at_a_time_admits_ceil_cap_over_cost_and_overshoots_by_less_than_one_call[postgres-1.00-0.60] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_one_caller_at_a_time_admits_ceil_cap_over_cost_and_overshoots_by_less_than_one_call[postgres-1.00-0.30] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_a_cap_that_is_a_multiple_of_the_cost_is_never_overshot_when_one_at_a_time[postgres] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_the_monthly_cap_binds_when_it_is_lower_than_the_daily_cap[postgres] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_____ ERROR at setup of test_a_charge_is_recorded_in_the_ledger[postgres] ______
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_both_budgets_over_their_caps_are_both_named[postgres] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_a_budget_of_zero_blocks_the_first_call[postgres-daily] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_a_budget_of_zero_blocks_the_first_call[postgres-monthly] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_pin_today_a_negative_or_infinite_charge_is_booked_as_it_is[postgres--1-totals0-blocked0] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_pin_today_a_negative_or_infinite_charge_is_booked_as_it_is[postgres-Infinity-totals1-blocked1] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_pin_today_a_negative_or_infinite_charge_is_booked_as_it_is[postgres--Infinity-totals2-blocked2] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_pin_today_a_nan_charge_is_booked_and_then_every_check_raises[postgres] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_the_harness_passes_a_meter_that_reserves_before_the_call[postgres] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+=========================== short test summary info ============================
+ERROR tests/contracts/test_capabilities.py::test_audit_write_once_read_back_in_order[chain_postgres] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_capabilities.py::test_audit_intent_failure_raises_audit_unavailable[chain_postgres] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store.py::test_runs_are_copies_and_unknown_is_not_found[postgres] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store.py::test_transition_is_compare_and_set[postgres] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store.py::test_add_cost_accumulates_and_unknown_run_is_not_found[postgres] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store.py::test_touch_moves_updated_at_and_keeps_state[postgres] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store.py::test_list_runs_by_state_age_and_limit[postgres] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store.py::test_approval_request_update_is_compare_and_set[postgres] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store.py::test_due_approvals_are_pending_and_expired[postgres] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store.py::test_get_approval_decision_returns_latest_or_none[postgres] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store.py::test_gate_decision_is_written_once[postgres] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store.py::test_tick_state_round_trip[postgres] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store.py::test_sent_at_and_channel_ref_round_trip[postgres] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store.py::test_list_approvals_by_status[postgres] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store.py::test_spend_day_and_month_totals[postgres] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store.py::test_month_total_spans_days_and_money_is_exact[postgres] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store.py::test_dead_letters_and_kill_switch[postgres] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store.py::test_two_threads_racing_one_cas_exactly_one_wins[postgres] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store.py::test_record_decision_is_atomic[postgres] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store.py::test_tool_calls_round_trip_in_order_and_refuse_a_duplicate[postgres] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store.py::test_purge_tool_calls_keeps_held_runs_and_recent_rows[postgres] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store.py::test_redaction_map_upserts_and_a_missing_map_is_none[postgres] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store.py::test_purge_redaction_maps_keeps_held_runs[postgres] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store.py::test_tool_calls_with_the_same_time_list_in_a_fixed_order[postgres] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store.py::test_tool_call_error_flag_round_trips[postgres] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store.py::test_purge_redaction_maps_keeps_the_map_of_an_open_run_until_the_ceiling[postgres] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store.py::test_purge_redaction_maps_ages_a_run_parked_in_needs_person_like_a_finished_one[postgres] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store.py::test_purge_redaction_maps_ages_a_finished_run_from_when_it_finished[postgres] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-6min-window0-2026-03-10T12:00:00+00:00] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-6min-window0-2026-03-10T23:57:00+00:00] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-6min-window0-2026-03-10T23:59:59+00:00] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-6min-window0-2026-03-10T00:00:00+00:00] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-6min-window0-2026-03-31T23:57:00+00:00] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-6min-window0-2026-12-31T23:57:00+00:00] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-6min-window0-2026-02-28T23:30:00+00:00] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-6min-window0-2024-02-28T23:30:00+00:00] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-6min-window0-2026-01-01T00:00:00+00:00] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-6min-window0-2024-02-29T23:57:00+00:00] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-6min-window0-2026-04-30T23:57:00+00:00] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-6min-window0-2026-01-31T23:57:00+00:00] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-6min-window0-2026-02-01T00:00:00+00:00] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-6min-window0-2026-02-20T08:00:00+00:00] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-6min-window0-2026-03-10T23:59:59.999999+00:00] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-25h-window1-2026-03-10T12:00:00+00:00] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-25h-window1-2026-03-10T23:57:00+00:00] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-25h-window1-2026-03-10T23:59:59+00:00] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-25h-window1-2026-03-10T00:00:00+00:00] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-25h-window1-2026-03-31T23:57:00+00:00] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-25h-window1-2026-12-31T23:57:00+00:00] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-25h-window1-2026-02-28T23:30:00+00:00] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-25h-window1-2024-02-28T23:30:00+00:00] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-25h-window1-2026-01-01T00:00:00+00:00] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-25h-window1-2024-02-29T23:57:00+00:00] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-25h-window1-2026-04-30T23:57:00+00:00] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-25h-window1-2026-01-31T23:57:00+00:00] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-25h-window1-2026-02-01T00:00:00+00:00] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-25h-window1-2026-02-20T08:00:00+00:00] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-25h-window1-2026-03-10T23:59:59.999999+00:00] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-31d-window2-2026-03-10T12:00:00+00:00] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-31d-window2-2026-03-10T23:57:00+00:00] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-31d-window2-2026-03-10T23:59:59+00:00] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-31d-window2-2026-03-10T00:00:00+00:00] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-31d-window2-2026-03-31T23:57:00+00:00] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-31d-window2-2026-12-31T23:57:00+00:00] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-31d-window2-2026-02-28T23:30:00+00:00] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-31d-window2-2024-02-28T23:30:00+00:00] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-31d-window2-2026-01-01T00:00:00+00:00] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-31d-window2-2024-02-29T23:57:00+00:00] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-31d-window2-2026-04-30T23:57:00+00:00] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-31d-window2-2026-01-31T23:57:00+00:00] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-31d-window2-2026-02-01T00:00:00+00:00] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-31d-window2-2026-02-20T08:00:00+00:00] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-31d-window2-2026-03-10T23:59:59.999999+00:00] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_reads_never_change_a_total[postgres-2026-03-10T12:00:00+00:00] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_reads_never_change_a_total[postgres-2026-03-10T23:57:00+00:00] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_reads_never_change_a_total[postgres-2026-03-10T23:59:59+00:00] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_reads_never_change_a_total[postgres-2026-03-10T00:00:00+00:00] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_reads_never_change_a_total[postgres-2026-03-31T23:57:00+00:00] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_reads_never_change_a_total[postgres-2026-12-31T23:57:00+00:00] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_reads_never_change_a_total[postgres-2026-02-28T23:30:00+00:00] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_reads_never_change_a_total[postgres-2024-02-28T23:30:00+00:00] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_reads_never_change_a_total[postgres-2026-01-01T00:00:00+00:00] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_reads_never_change_a_total[postgres-2024-02-29T23:57:00+00:00] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_reads_never_change_a_total[postgres-2026-04-30T23:57:00+00:00] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_reads_never_change_a_total[postgres-2026-01-31T23:57:00+00:00] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_reads_never_change_a_total[postgres-2026-02-01T00:00:00+00:00] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_reads_never_change_a_total[postgres-2026-02-20T08:00:00+00:00] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_reads_never_change_a_total[postgres-2026-03-10T23:59:59.999999+00:00] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_two_charges_on_one_day_add_up[postgres] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_a_charge_at_23_30_utc_is_booked_on_its_own_day[postgres] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_a_day_total_is_the_sum_of_its_own_charges_only_across_25_hours[postgres] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_a_month_total_does_not_carry_over_31_days[postgres] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_31_days_from_the_start_of_a_31_day_month_is_the_next_month_but_30_days_is_not[postgres] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_the_same_month_of_another_year_is_a_different_month[postgres] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_a_charge_on_a_past_date_is_booked_on_that_date[postgres] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_a_charge_smaller_than_a_cent_is_neither_rounded_nor_lost[postgres] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_the_order_the_events_arrive_in_does_not_change_the_totals[postgres] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_a_charge_every_6_minutes_for_two_days_blocks_and_frees_the_daily_budget_exactly[postgres] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_31_days_of_daily_charges_never_leak_across_the_month_boundary[postgres] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_the_daily_budget_frees_at_utc_midnight_and_is_not_a_rolling_25_hour_window[postgres] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_the_monthly_budget_stops_at_the_cap_and_frees_at_the_month_boundary[postgres] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_the_monthly_budget_frees_on_1_march_after_a_28_day_february[postgres] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_a_charge_at_exactly_the_cap_blocks_the_next_call_and_one_cent_under_does_not[postgres] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_the_daily_budget_is_read_for_today_not_yesterday[postgres] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_one_agent_never_sees_another_agents_spend[postgres] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_a_charge_returns_only_its_own_agents_month_total[postgres] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_a_charge_returns_the_total_of_its_own_month_only[postgres] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_the_real_now_is_aware_utc_and_books_23_00_utc_on_the_10th_on_a_machine_in_ist[postgres] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_store_time_rules.py::test_one_microsecond_decides_the_day_and_a_leap_february_has_a_29th[postgres] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_t1_meter_cap.py::test_one_caller_at_a_time_admits_ceil_cap_over_cost_and_overshoots_by_less_than_one_call[postgres-2.00-1.00] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_t1_meter_cap.py::test_one_caller_at_a_time_admits_ceil_cap_over_cost_and_overshoots_by_less_than_one_call[postgres-2.50-1.00] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_t1_meter_cap.py::test_one_caller_at_a_time_admits_ceil_cap_over_cost_and_overshoots_by_less_than_one_call[postgres-1.50-1.00] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_t1_meter_cap.py::test_one_caller_at_a_time_admits_ceil_cap_over_cost_and_overshoots_by_less_than_one_call[postgres-0.50-1.00] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_t1_meter_cap.py::test_one_caller_at_a_time_admits_ceil_cap_over_cost_and_overshoots_by_less_than_one_call[postgres-1.00-0.60] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_t1_meter_cap.py::test_one_caller_at_a_time_admits_ceil_cap_over_cost_and_overshoots_by_less_than_one_call[postgres-1.00-0.30] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_t1_meter_cap.py::test_a_cap_that_is_a_multiple_of_the_cost_is_never_overshot_when_one_at_a_time[postgres] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_t1_meter_cap.py::test_the_monthly_cap_binds_when_it_is_lower_than_the_daily_cap[postgres] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_t1_meter_cap.py::test_a_charge_is_recorded_in_the_ledger[postgres] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_t1_meter_cap.py::test_both_budgets_over_their_caps_are_both_named[postgres] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_t1_meter_cap.py::test_a_budget_of_zero_blocks_the_first_call[postgres-daily] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_t1_meter_cap.py::test_a_budget_of_zero_blocks_the_first_call[postgres-monthly] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_t1_meter_cap.py::test_pin_today_a_negative_or_infinite_charge_is_booked_as_it_is[postgres--1-totals0-blocked0] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_t1_meter_cap.py::test_pin_today_a_negative_or_infinite_charge_is_booked_as_it_is[postgres-Infinity-totals1-blocked1] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_t1_meter_cap.py::test_pin_today_a_negative_or_infinite_charge_is_booked_as_it_is[postgres--Infinity-totals2-blocked2] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_t1_meter_cap.py::test_pin_today_a_nan_charge_is_booked_and_then_every_check_raises[postgres] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+ERROR tests/contracts/test_t1_meter_cap.py::test_the_harness_passes_a_meter_that_reserves_before_the_call[postgres] - Failed: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_llm.py:95: Stubber refuses a malformed Converse shape before the kind sees it
+289 passed, 1 skipped, 126 errors in 13.69s
+guard_ci_nodsn_exit=1
+== 4b CI=true with DSN
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+........................................................................ [ 17%]
+..................s..................................................... [ 34%]
+........................................................................ [ 51%]
+........................................................................ [ 69%]
+........................................................................ [ 86%]
+........................................................                 [100%]
+=========================== short test summary info ============================
+SKIPPED [1] tests/contracts/test_llm.py:95: Stubber refuses a malformed Converse shape before the kind sees it
+415 passed, 1 skipped in 29.86s
+guard_ci_dsn_exit=0
+exit=0

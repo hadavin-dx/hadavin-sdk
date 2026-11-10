@@ -1016,3 +1016,4 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | PR73 builder aea5c3b208 | done 21:55 UTC: head ffe896e pushed on core/P3a-2; its 3.13 full suite never clean (1 failed+1 error when run beside 3.12 on one server; 3.12 alone 1 env failure on default port); mutants 115/115 and 40/40 at 0354512; not run: PG 17, CI, EGM | closed |
 | PR73 evidence runner aade658247 (ffe896e) | started 21:56 UTC, expected end ~23:15 UTC; suites one after the other, PGHOST/PGPORT set | running |
 | PR73 reviewers a133672f7e (design/security) and aa5d50b676 (codebase), round 3 | started 21:56 UTC, expected ~22:15 UTC | running |
+| A21a evidence runner a69be70301 (1a7d202) | done 21:58 UTC: all green, see TABLE.md; cluster stopped | closed |
