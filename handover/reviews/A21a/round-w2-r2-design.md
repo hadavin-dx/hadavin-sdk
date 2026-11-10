@@ -1,0 +1,13 @@
+# A21a round 2, egm-design (money path), snapshot head 98a3ed9. Saved by the cloud session from the reviewer's inline report (read-only reviewer, ran nothing).
+Verdict: no Blocker. Round-1 B1-B2 and M3-M5 closed; M6 closed except NaN/negative/Infinity (A21b) and "counter skipped" half covered.
+Proves: ledger arithmetic and time rules on memory and Postgres; the cap for ONE caller at a time. Does NOT prove "never over cap" for concurrent callers (A21b); no test of Limits.stop / Limits.reset.
+MAJOR 1: CI guard (tests/contracts/kinds/store_postgres.py:25-27, tests/test_pg_dsn_guard.py) is a repo-wide behaviour change; CI=true with no DSN now fails every pg_schema test; nothing shows a green CI run with it; rule copied from tests/demo_askdata/conftest.py not shared; beyond plan row A21a. Fix: list every pytest step in ci.yml with its DSN source in the PR body; independent run + green CI on the pushed head; say in the PR that a shared test helper changes; optionally one shared helper for both conftests. (Codebase reviewer saw both pytest steps in ci.yml lines 86 and 93 export the DSN.)
+MAJOR 2: the known concurrent-caller race has no test in the repo; its seed lived outside git (/home/user/build/A21b-seed). Fix: commit the seed to a real place (cloud copied it to handover/seeds/A21b/), cite the path in ledger rows, PR sentence "50-caller cap NOT proven here; failing proof at <path>".
+MINOR 1: name BL-core-p4d-r1-adv-A7 and C5 in seed-01 so the choke point (store vs Limits) is decided once; test_a_charge_smaller_than_a_cent... (test_store_time_rules.py:176-185) may need to follow P4a/P4d cent rounding.
+MINOR 2: public-repo wording: private plan references and internal codes at meter_support.py:8, test_t1_meter_cap.py:8-9 and :104, meter_mutants.py:11; reword title at test_t1_meter_cap.py:1 to "the cap, one caller at a time, on every store kind".
+MINOR 3: P7/P8 same kill as P1/P2; no mutant leaves the day/month counter unwritten; add P12 (remove month INSERT) or state P7/P8 are the intended ones.
+MINOR 4: postgres_mutants.py:238 splitlines()[-1] IndexError on empty output; add test name to judge output at :218.
+MINOR 5: cite only mutants-postgres-direct.log (the -all-final log stops after P6); TABLE.md names tests/test_mutation_runner.py while ledger w2-18 says tools/test_mutation_runner.py: fix one.
+MINOR 6: 3.13 full suite red from the flaky mutation-runner test (w2-18); owner must decide fix or merge with it.
+Coupling: mutant tables depend on test names and message texts; add one line at the top of each contract test file saying so.
+Not checked: src, ci.yml, real conftest, any run; independent evidence unread.
