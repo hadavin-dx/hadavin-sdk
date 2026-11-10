@@ -1,0 +1,14 @@
+# PR72 core/P6a head d392200, design review, round 2 (least privilege, uncapped)
+Read-only, ran nothing. Verdict: no Blocker in the P6a-1 code (S1, S2, S6); 3 Major, 7 Nit.
+- M1 Major: the strict-bool sweep (models.py, replay_records.py, tools.py, actions/contract.py, backends/table.py, config.py fields other than made_up_data_only, tests/test_strict_flags.py) should be its own pull request with its own review. Not in the ticket; no order covers it; breaking change (quoted or numeric values stop loading for allow_insecure_loopback, k1b.redact, retention.hold_labelled, retention_ack, iam_auth, cluster_http, targets_production, changes_spend); changes how records are read back (GateRun.green, ReplayRecord.green, KillSwitch.on, Verdict.flagged, RunResult.retryable, ToolCallRecord.error); a rollback would also revert S2 and S6. Unquoted YAML yes/on still loads true, so value is narrow. Reviewer view: split it out, keep only made_up_data_only strict here.
+- M2 Major: the sweep's runtime paths are unverified: Postgres rows skipped (including test_k5_round8_postgres.py and test_k3_pilot_env.py:185), 3.12 not run, no mutant for any strict field other than made_up_data_only. Needs the independent run with Postgres on 3.12 and 3.13, plus one mutant per model family, or drop the sweep.
+- M3 Major: no ruff/format/bandit at d392200 (independent run to supply).
+- N4 tools/p6a1_mutants.py run_tests passes os.environ whole; scrub AWS_*, AZURE_*, GOOGLE_* etc. in the tool and refuse to start if set.
+- N5 mutant id 47 collides with the id the ticket reserves for the second pull request's scanner mutant; renumber or reserve. Loose killer regexes (p1b|demo_only_is_exactly) mean "some listed test failed". 63 = 41+4+18 is honest.
+- N6 private ids remain: file name p6a1, env vars P6A1_*, temp prefix, header text, [later] tags.
+- N7 S6 covers llm, detector and channel only; systems with a real base_url, egress_hosts, http tools and sources also leave the process and need no made_up_data_only. State in the CHANGELOG limit or decide later.
+- N8 S2 leaves no trace when a live app is started with allow_test_doubles=True; one log line naming the keywords would be cheap (lead decides).
+- N9 given = dict(locals()) must be first but no row enforces position; consider an explicit dict.
+- N10 CHANGELOG entry long and jargon-heavy ("defence in depth", "YAML 1.1", "hand-built Config"); shorten or give the strict-bool paragraph its own entry.
+Sound (by reading): S2 placement, identity comparison, only True accepted, hook exemptions; S6 single ValueError, fail closed on llm/channel/detector kinds; S1 31 pairs with checked reasons; fail-before 48 FAIL / 21 pin; no new dependency; no secrets; no loosened tests.
+Not checked: callers of build() outside the snapshot, constructor calls of strict models, Postgres-gated rows, ruff/bandit/CodeQL/Sonar/CodeRabbit, walk_packages side effects, wheel contents.
