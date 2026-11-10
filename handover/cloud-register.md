@@ -914,5 +914,5 @@ PR72 0ae044b: builder done; evidence run waits for evid.sh fix (inv-trunc-66), t
 ## 2026-11-10 order 231/232 register (MODEL column added per ORDER 232)
 | agent id | role | subagent_type | model | package | EGM step | started | expected end | state |
 |---|---|---|---|---|---|---|---|---|
-| ab6b98e1f67bbe453 | plan reviewer (implementation readiness) | egm:egm-implementation-readiness | sonnet (claude-sonnet-5-5) | parallel-plan | plan review round 1 | 16:29:51 | +20 min | RUNNING |
+| ab6b98e1f67bbe453 | plan reviewer (implementation readiness) | egm:egm-implementation-readiness | sonnet (claude-sonnet-5-5) | parallel-plan | plan review round 1 | 16:29:51 | +20 min | REPORTED/CLOSED, saved egm/parallel-plan/round1-readiness.md (0B/9M/7N) |
 | a78ededfc2df48e1a | plan reviewer (zoom out) | egm:egm-zoom-out | sonnet (claude-sonnet-5-5) | parallel-plan | plan review round 1 | 16:29:51 | +20 min | RUNNING |
