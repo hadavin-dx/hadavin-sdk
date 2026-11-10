@@ -54,15 +54,15 @@ pytest runs with ``--noconftest`` and with an empty ini file on purpose (a plant
   ``PASS_ENV_ALLOWED``, re-copy the file and update its pin (see the CHANGELOG); do that only for the ADDRESS of a throwaway test resource
   that a demo's tests need (a second database, for example), never for a token or a key.
   Masking: the value of a passed name (and the password inside it: the one of a URL, the one after ``password=``, ``passwd=`` or ``pwd=`` in a
-  key=value text or a URL query, a quoted one included; each also percent-decoded, and each also as ``repr``, ``unicode_escape``, JSON (with and without ``\\u`` escapes) and the ``repr`` of its UTF-8 bytes print it, so a backslash, a quote or a non-ASCII letter is covered) is replaced by ``[REDACTED]`` in ``first_lines``, in the failing test id of a row,
+  key=value text or a URL query, a quoted one included; each also percent-decoded, a backslash escape of libpq (``password='it\\'s'``, ``password=ab\\ cd``) read both ways, a URL password with an unencoded ``/``, ``?``, ``#`` or ``@`` read by trying every ``@`` as the end of the login, and each also as ``repr``, ``unicode_escape``, JSON (with and without ``\\u`` escapes) and the ``repr`` of its UTF-8 bytes print it, with each quote mark escaped or not (a ``repr`` of a larger text picks its quote from the whole text), so a backslash, a quote or a non-ASCII letter is covered) is replaced by ``[REDACTED]`` in ``first_lines``, in the failing test id of a row,
   in the ``COLLECTION ERROR``, ``FIXTURE ERROR`` and ``SKIPPED TESTS`` messages and in the baseline skip message. Checked with a real run: pytest
   shortens a long text in the first ``E`` line of a comparison to about its first 12 and last 13 characters around ``...``. Observed with
   pytest 9.2.0 (one 69-character value): the text is still shortened with ``-q``, with ``-q -vv`` and by default; it is printed in full only with
   ``-vv`` without ``-q`` and with ``-o verbosity_assertions=2``. The runner keeps ``-q`` and adds no such option, so the ``first_lines`` of every
   caller stay as they were,
-  so every start of a secret that ends right before ``...`` and every end that starts right after ``...`` of ``FRAGMENT_MIN`` characters or more is masked too (all pieces are found in the original text and cut out at once; a text with more than ``MAX_FRAGMENT_HITS`` ``...`` is replaced as a whole).
+  so every start of a secret that ends right before ``...`` and every end that starts right after ``...`` of ``FRAGMENT_MIN`` characters or more is masked too (all pieces are found in the original text and cut out at once; a text with more than ``MAX_FRAGMENT_HITS`` ``...`` or more than ``MAX_MATCHES`` matches of the secrets is replaced as a whole).
   What stays open, stated plainly: a test that prints a changed form of the value (only the host, only the user name, a re-encoded copy, a
-  piece cut out of the middle, a fragment shorter than ``FRAGMENT_MIN`` characters, another encoding such as base64, hex or HTML escapes) is not masked; neither is a password that holds a quote, a ``;`` or an ``&`` and is written without quotes (only the part before that character is read as the password; the whole value is still masked) nor a password word glued to a letter or digit in front (``dbpassword=``); a password that has no ``password=`` word
+  piece cut out of the middle, a fragment shorter than ``FRAGMENT_MIN`` characters, a head or tail piece that does not stand next to a plain-ASCII ``...`` (pprint line wrapping, a Unicode ellipsis), another encoding such as base64, hex or HTML escapes) is not masked; neither is a password that holds a quote, a ``;`` or an ``&`` and is written without quotes (only the part before that character is read as the password; the whole value is still masked; a quoted password with a backslash escape is read as libpq reads it, anything else odd is masked only inside the whole value) nor a password word glued to a letter or digit in front (``dbpassword=``); a password that has no ``password=`` word
   in front of it and is not the password of a URL is masked only as part of the whole value; and text of a failure that the runner never
   reads (the child's own console output is discarded) cannot leak through it.
   SAFETY: the address must point at a THROWAWAY database, and its login must be able to touch only that database (never a shared or
@@ -87,7 +87,7 @@ that has no verdict from the judge: ``SETUP FAILED: <error class>``, ``SNIPPET N
 ``JUNIT MISSING`` (``forbid_skips``), ``COLLECTION ERROR``, ``FIXTURE ERROR``, ``SKIPPED TESTS`` (``forbid_skips``) and ``NO FAILING TEST NAMED`` (the run failed, the JUnit file names no failing test). ``first_lines`` holds the first ``E`` line (masked)
 of the rows that have one, and for ``COLLECTION ERROR``, ``FIXTURE ERROR`` and ``SKIPPED TESTS`` the masked message that says why.
 
-Dev-tool constants: ``MAX_JUNIT_CHARS`` (in ``testing.mutation``), ``PASS_ENV_ALLOWED``, ``MASK``, ``FRAGMENT_MIN``, ``MAX_FRAGMENT_HITS``, ``NO_TEST_NAMED``, ``SETUP_TRIES``, ``SETUP_WAIT``, ``WAIT_POLL``, ``TREE_KILL_TIMEOUT``,
+Dev-tool constants: ``MAX_JUNIT_CHARS`` (in ``testing.mutation``), ``PASS_ENV_ALLOWED``, ``MASK``, ``FRAGMENT_MIN``, ``MAX_FRAGMENT_HITS``, ``MAX_MATCHES``, ``NO_TEST_NAMED``, ``SETUP_TRIES``, ``SETUP_WAIT``, ``WAIT_POLL``, ``TREE_KILL_TIMEOUT``,
 ``TIMED_OUT``, ``REAPED_ELSEWHERE``, ``CHILD_ENV``, ``CHILD_FIXED_ENV``, ``JUNIT_REFUSED`` and the default run timeout (``DEFAULT_TIMEOUT``, 900.0 seconds) are module constants here and NOT in ``defaults.py``:
 the no-hardcoding rule is about product behaviour (names, regions, prices, thresholds a deployment tunes), and this is a developer tool
 that ships in no wheel, has no config surface and is copied byte for byte into demos. A caller changes the timeouts by argument.
@@ -105,6 +105,7 @@ import os
 import re
 import shutil
 import signal
+import stat
 import subprocess
 import sys
 import tempfile
@@ -208,6 +209,7 @@ PASS_ENV_ALLOWED = ("HADAVIN_TEST_PG_DSN",)
 MASK = "[REDACTED]"
 NO_TEST_NAMED = "NO FAILING TEST NAMED"  # the id column of an ERROR row for a failed run whose JUnit file names no failing test
 FRAGMENT_MIN = 6  # pytest shortens a long text in an assertion line to ``head...tail``: a head or tail fragment of a secret this long (or longer) next to ``...`` is masked
+MAX_MATCHES = 100_000  # more matches of the secrets than this in one text is no honest line either: the whole text is replaced (a 1-character secret on a huge line stays fast)
 MAX_FRAGMENT_HITS = 10_000  # more ``...`` than this in one text is no honest line: the whole text is replaced, and the scan stays short
 CHILD_FIXED_ENV = {
     "PYTHONNOUSERSITE": "1"
@@ -289,8 +291,9 @@ def _checked_env_names(names: Iterable[str]) -> tuple[str, ...]:
 
 
 _PASSWORD_WORD = re.compile(
-    r"(?i)(?<![A-Za-z0-9])(?:password|passwd|pwd)\s*=\s*(?:'([^']*)'|\"([^\"]*)\"|([^\s&;'\"]+))"
-)  # ``password=...`` of a key=value DSN or a URL query; a quoted value may hold spaces
+    r"(?i)(?<![A-Za-z0-9])(?:password|passwd|pwd)\s*=\s*(?:'((?:[^'\\]|\\.)*)'|\"((?:[^\"\\]|\\.)*)\"|((?:[^\s&;'\"\\]|\\.)+))"
+)  # ``password=...`` of a key=value DSN or a URL query; a quoted value may hold spaces, and a backslash escapes the next character (libpq)
+_BACKSLASH_ESCAPE = re.compile(r"\\(.)", re.DOTALL)
 
 
 def _written_forms(text: str) -> set[str]:
@@ -299,13 +302,36 @@ def _written_forms(text: str) -> set[str]:
     shows up escaped in an assertion line or a log line). Empty forms are dropped."""
     forms = {
         text,
-        repr(text)[1:-1],
         text.encode("unicode_escape").decode("ascii"),
         json.dumps(text)[1:-1],
         json.dumps(text, ensure_ascii=False)[1:-1],
         repr(text.encode("utf-8", "backslashreplace"))[2:-1],
     }
+    # a Python ``repr`` of a LARGER text picks its quote from the whole text, so the quote marks of this value come out escaped or not
+    # whatever it holds itself: every mix of the two (a quote mark written with a backslash, or as it is)
+    plain = "".join(c if c in "'\"" else repr(c)[1:-1] for c in text)
+    for single in (False, True):
+        for double in (False, True):
+            swap = {"'": "\\'" if single else "'", '"': '\\"' if double else '"'}
+            forms.add("".join(swap.get(c, c) for c in plain))
     return {f for f in forms if f}
+
+
+def _url_passwords(value: str) -> list[str]:
+    """The password of a URL as ``urlsplit`` reads it, and every text between the first ``:`` after ``://`` and an ``@`` after it: a password that
+    holds an unencoded ``/``, ``?``, ``#`` or ``@`` is not read right by ``urlsplit`` (it takes the first of them as the end of the address), so
+    every ``@`` is tried as the end of the login (more than needed is masked, never less)."""
+    found: list[str] = []
+    with contextlib.suppress(ValueError):  # not URL-shaped: only the key=value scan applies
+        found.append(urlsplit(value).password or "")
+    if "://" in value:
+        rest = value.split("://", 1)[1]
+        colon = rest.find(":")
+        at = rest.find("@", colon + 1) if colon != -1 else -1
+        while at != -1:
+            found.append(rest[colon + 1 : at])
+            at = rest.find("@", at + 1)
+    return found
 
 
 def _secret_values(names: Iterable[str]) -> tuple[str, ...]:
@@ -320,8 +346,10 @@ def _secret_values(names: Iterable[str]) -> tuple[str, ...]:
         passwords = [
             next(g for g in m.groups() if g is not None) for m in _PASSWORD_WORD.finditer(value)
         ]
-        with contextlib.suppress(ValueError):  # not URL-shaped: only the key=value scan applies
-            passwords.append(urlsplit(value).password or "")
+        passwords += [
+            _BACKSLASH_ESCAPE.sub(r"\1", word) for word in passwords
+        ]  # libpq: a backslash escapes the next character
+        passwords += _url_passwords(value)
         for password in passwords:
             if password:
                 for form in (password, unquote(password)):
@@ -330,7 +358,8 @@ def _secret_values(names: Iterable[str]) -> tuple[str, ...]:
 
 
 class _TooManyHits(Exception):
-    """A line holds more ``...`` than ``MAX_FRAGMENT_HITS``: no honest line does, so ``_masked`` replaces the whole line."""
+    """A line holds more ``...`` than ``MAX_FRAGMENT_HITS`` (or more matches of the secrets than ``MAX_MATCHES``): no honest line does, so
+    ``_masked`` replaces the whole line. ``args`` is ``(limit, what was counted)``."""
 
 
 def _fragment_spans(text: str, secret: str) -> list[tuple[int, int]]:
@@ -343,7 +372,7 @@ def _fragment_spans(text: str, secret: str) -> list[tuple[int, int]]:
     head, tail = secret[:FRAGMENT_MIN], secret[-FRAGMENT_MIN:]
     hits = list(itertools.islice(re.finditer(r"\.\.\.", text), MAX_FRAGMENT_HITS + 1))
     if len(hits) > MAX_FRAGMENT_HITS:
-        raise _TooManyHits
+        raise _TooManyHits(MAX_FRAGMENT_HITS, "'...'")
     for hit in hits:
         start, end = hit.start(), hit.end()
         i = text.find(head, max(0, start - top), start)  # the leftmost start gives the longest head
@@ -366,20 +395,28 @@ def _fragment_spans(text: str, secret: str) -> list[tuple[int, int]]:
 def _masked(text: str, secrets: Sequence[str]) -> str:
     """``text`` with every secret value replaced by a marker (pass_env values must never reach ``first_lines``, a result row or an error message).
     A secret that pytest shortened to ``head...tail`` is masked by its fragments too (see ``_fragment_spans``). Every span is found in the
-    ORIGINAL text and then all are cut out at once, so a short secret that sits inside a longer one cannot break the match of the longer one."""
+    ORIGINAL text and then all are cut out at once, so a short secret that sits inside a longer one cannot break the match of the longer one.
+    More than ``MAX_MATCHES`` matches (a 1-character secret on a huge line) or ``MAX_FRAGMENT_HITS`` ``...`` replace the whole text."""
     chosen = tuple(v for v in secrets if v)
-    hit = [False] * len(text)
+    if not chosen:
+        return text
+    hit = bytearray(len(text))
+    matches = 0
     try:
         for value in chosen:
             at = text.find(value)
             while at != -1:
-                hit[at : at + len(value)] = [True] * len(value)
+                matches += 1
+                if matches > MAX_MATCHES:
+                    raise _TooManyHits(MAX_MATCHES, "matches of a secret")
+                hit[at : at + len(value)] = b"\x01" * len(value)
                 at = text.find(value, at + 1)
             if len(value) > FRAGMENT_MIN:
                 for lo, hi in _fragment_spans(text, value):
-                    hit[lo:hi] = [True] * (hi - lo)
-    except _TooManyHits:
-        return f"{MASK} (line with more than {MAX_FRAGMENT_HITS} '...' replaced: it cannot be checked for pieces of a value)"
+                    hit[lo:hi] = b"\x01" * (hi - lo)
+    except _TooManyHits as many:
+        limit, what = many.args
+        return f"{MASK} (line with more than {limit} {what} replaced: it cannot be checked for pieces of a value)"
     out: list[str] = []
     for ch, bad in zip(text, hit, strict=True):
         if not bad:
@@ -417,24 +454,46 @@ def _lock_dir() -> Path:
     return Path(tempfile.gettempdir())
 
 
+def _check_lock_file(fd: int) -> None:
+    """Refuse (``RuntimeError``) a lock file that is not a regular file of the current user with a mode no wider than 0600 (not on Windows, whose
+    mode bits mean nothing): a file left by an older version or made by hand with wider rights could be written by another user of the temp folder."""
+    if _IS_WINDOWS:
+        return
+    info = os.fstat(fd)
+    if (
+        not stat.S_ISREG(info.st_mode)
+        or info.st_uid != os.getuid()
+        or stat.S_IMODE(info.st_mode) & 0o177
+    ):
+        raise RuntimeError(
+            "the lock file of this run is not a regular file of this user with mode 0600 or narrower (delete it by hand when no run is going), so the run cannot be proven alone on its database"
+        )
+
+
 @contextlib.contextmanager
 def _one_run_per_database(values: Sequence[str]) -> Iterator[None]:
     """Hold an exclusive lock named by a hash of the passed values (never the values) in the temp folder for the whole run: a second runner that
     uses the same temp folder (same machine and account, or the same ``TMPDIR``) with the same passed value is refused (``RuntimeError``) instead
     of sharing the database and its tables. It does not see a runner with another temp folder or on another machine; that stays the caller's
-    job (a database of its own per run). The file is opened without following a symbolic link and with mode 0600, and is never deleted (one empty file per value). The file name holds the first 16 hex digits of a SHA-256 of the values: not the values, but readable by
+    job (a database of its own per run). The file is opened without following a symbolic link and with mode 0600, and is never deleted (one empty file per value; it stays in the temp folder, and a left-behind file of another user, a wider mode or another kind than a regular file is refused with a clear message, to be deleted by hand when no run is going). The file name holds the first 16 hex digits of a SHA-256 of the values: not the values, but readable by
     other users of the temp folder. A lock file that cannot be opened (another user's file) or locked for a reason other than "held by another
     run" is a ``RuntimeError`` with its own message."""
     digest = hashlib.sha256("\0".join(sorted(values)).encode()).hexdigest()[:16]
     path = _lock_dir() / f"hadavin_mutation_{digest}.lock"
     flags = os.O_RDWR | os.O_CREAT | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_BINARY", 0)
     try:
-        handle = os.fdopen(os.open(path, flags, 0o600), "r+b")
+        fd = os.open(path, flags, 0o600)
+        try:
+            handle = os.fdopen(fd, "r+b")
+        except OSError:
+            os.close(fd)  # no file object took the descriptor over
+            raise
     except OSError as exc:
         raise RuntimeError(
             f"the lock file of this run could not be opened ({type(exc).__name__}): {'it is a symbolic link' if exc.errno == errno.ELOOP else 'it may belong to another user of the temp folder'}, so the run cannot be proven alone on its database"
         ) from None
     with handle:
+        _check_lock_file(handle.fileno())
         try:
             if _IS_WINDOWS:
                 import msvcrt

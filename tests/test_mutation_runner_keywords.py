@@ -15,6 +15,7 @@ import errno
 import hashlib
 import json
 import os
+import stat
 import time
 from pathlib import Path
 
@@ -617,8 +618,8 @@ def _printed_forms(value: str) -> dict[str, str]:
 
 
 JSON_VALUE = (
-    "host=db.invalid user=svc password=" + 'Ab3"' + chr(233) + "Xy9Zq1"
-)  # both a quote and a non-ASCII letter
+    "host=db.invalid user=svc password=" + 'Ab3"' + chr(1) + chr(233) + "Xy9Zq1"
+)  # a quote, a control character and a non-ASCII letter: only the UTF-8 JSON form writes the control character as \\u0001 and the letter as it is
 
 
 def test_a_value_is_masked_as_json_writes_it(monkeypatch):
@@ -656,6 +657,15 @@ def test_masking_removes_a_random_value_in_every_printed_form_whole_or_shortened
         value = f"host=db.invalid user=svc password={pad}{core}"
         monkeypatch.setenv(DSN_NAME, value)
         secrets = mr._secret_values((DSN_NAME,))
+        for extra in (
+            "'",
+            '"',
+        ):  # the same value inside a larger text that holds the other quote kind: repr picks its quote from the whole text
+            larger = repr(extra + value + extra)[1:-1]
+            inside = mr._masked(f"E   assert {larger} == 1", secrets)
+            assert core not in inside, (
+                f"case {n}: a value inside a larger text with {extra} survived: {inside!r}"
+            )
         for name, printed in _printed_forms(value).items():
             whole = mr._masked(f"E   AssertionError: assert '{printed}' == 'other'", secrets)
             assert core not in whole and printed not in whole, (
@@ -671,10 +681,10 @@ def test_masking_removes_a_random_value_in_every_printed_form_whole_or_shortened
 
 
 def test_a_short_secret_inside_a_shortened_long_one_does_not_hide_the_long_one():
-    # found by the property test: cutting the short secret out first changed the text, and the tail of the long one no longer matched
-    secret = "north-river-stone-bridge-glacier-delta"  # readable words: 38 characters, more than the 12 + 13 shown
-    shown = f"E   assert '{secret[:12]}...{secret[-13:]}' == 'other'"
-    out = mr._masked(shown, (secret, "ta"))
+    # found by the property test: cutting the short long_value out first changed the text, and the tail of the long one no longer matched
+    long_value = "north-river-stone-bridge-glacier-delta"  # readable words: 38 characters, more than the 12 + 13 shown
+    shown = f"E   assert '{long_value[:12]}...{long_value[-13:]}' == 'other'"
+    out = mr._masked(shown, (long_value, "ta"))
     assert "glacier" not in out and "north-" not in out, (
         f"a short secret inside the tail hid the shortened long secret: {out}"
     )
@@ -965,8 +975,11 @@ def test_a_lock_file_that_is_a_symbolic_link_is_refused_and_the_file_has_mode_06
     assert isinstance(caught, RuntimeError) and "symbolic link" in str(caught), (
         f"a planted symbolic link was followed or refused otherwise: {caught!r}"
     )
-    with mr._one_run_per_database(["y"]):
-        pass
+    try:
+        with mr._one_run_per_database(["y"]):
+            pass
+    except RuntimeError as exc:
+        raise AssertionError(f"the lock file was not private: {exc}") from None
     mode = (tmp_path / _lock_name("y")).stat().st_mode & 0o777
     assert mode == 0o600, f"the lock file was not private: {oct(mode)}"
 
@@ -1375,3 +1388,152 @@ def test_a_mutant_whose_old_text_is_absent_is_an_error_not_a_kill(tmp_path):
     gone = Mutant("gone", "src/pk/core.py", "text that is not there", "x", "assert")
     rows = _run(root, [gone])
     assert rows == [("gone", Verdict.ERROR, "SNIPPET NOT FOUND", False)]
+
+
+def test_a_value_with_one_quote_kind_is_masked_inside_a_text_that_holds_the_other_kind(monkeypatch):
+    # repr of the larger text uses single quotes and escapes the single quote of the value: a form that repr of the value alone never writes
+    value = "host=db.invalid user=svc password=Ab3'Xy9Zq1"
+    monkeypatch.setenv(DSN_NAME, value)
+    secrets = mr._secret_values((DSN_NAME,))
+    larger = repr(value + '"')
+    assert "\\'" in larger and "\\'" not in repr(value), (
+        "the control is wrong: the larger text must escape the quote"
+    )
+    out = mr._masked(f"E   assert {larger} == 1", secrets)
+    assert "Xy9Zq1" not in out, f"a single-quote-escaped form survived the masking: {out}"
+    value = "host=db.invalid user=svc password=Ab3'Xy9" + chr(34) + "Zq1"
+    monkeypatch.setenv(DSN_NAME, value)
+    c_style = value.replace(chr(39), "\\" + chr(39)).replace(
+        chr(34), "\\" + chr(34)
+    )  # a C or JavaScript string literal: both quote marks escaped
+    out = mr._masked(
+        "E   char *dsn = " + chr(34) + c_style + chr(34) + ";", mr._secret_values((DSN_NAME,))
+    )
+    assert "Zq1" not in out, f"a form with both quote marks escaped survived the masking: {out}"
+
+
+def test_libpq_backslash_escapes_in_a_password_are_read(monkeypatch):
+    monkeypatch.setenv(DSN_NAME, "host=db.invalid password='Ab3\\'Xy9Zq1' user=svc")
+    assert "Xy9Zq1" not in mr._masked("E   Ab3'Xy9Zq1", mr._secret_values((DSN_NAME,))), (
+        "the unescaped password of a quoted libpq value survived the masking"
+    )
+    monkeypatch.setenv(DSN_NAME, "host=db.invalid password=Ab3\\ Xy9Zq1 user=svc")
+    assert "Xy9Zq1" not in mr._masked("E   Ab3 Xy9Zq1", mr._secret_values((DSN_NAME,))), (
+        "the unescaped password after a backslash and a space survived the masking"
+    )
+
+
+def test_a_url_password_with_unencoded_separators_is_masked(monkeypatch):
+    monkeypatch.setenv(DSN_NAME, "postgresql://svc:Ab3/Xy9@Zq1#Wm2@db.invalid/app")
+    secrets = mr._secret_values((DSN_NAME,))
+    out = mr._masked("E   password was Ab3/Xy9@Zq1#Wm2 here", secrets)
+    assert "Zq1#Wm2" not in out and "Ab3/Xy9" not in out, (
+        f"a URL password with an unencoded slash or hash survived the masking: {out}"
+    )
+    monkeypatch.setenv(DSN_NAME, "postgresql://svc:Ab3/Xy9Zq1?Wm2#Kd7@db.invalid/app")
+    out = mr._masked("E   Ab3/Xy9Zq1?Wm2#Kd7", mr._secret_values((DSN_NAME,)))
+    assert "Wm2#Kd7" not in out, f"a URL password with an unencoded question mark survived: {out}"
+
+
+def test_a_one_character_secret_on_a_huge_line_is_replaced_fast_and_a_normal_line_is_not():
+    start = time.monotonic()
+    out = mr._masked("E   " + "a" * 3_000_000 + "b", ("a", "ta"))
+    took = time.monotonic() - start
+    assert "more than" in out and "aaaa" not in out, (
+        f"a huge line with millions of matches was not replaced as a whole: {out[:80]!r}"
+    )
+    assert took < 5, f"the check of a huge line took {took:.1f} seconds"
+    assert (
+        mr._masked("E   a banana", ("a",)) == "E   [REDACTED] b[REDACTED]n[REDACTED]n[REDACTED]"
+    ), "a normal line with a few matches was replaced as a whole or not masked"
+
+
+def test_nothing_is_rebuilt_when_no_secret_is_set():
+    text = "E   assert 1 == 2"
+    assert mr._masked(text, ()) is text and mr._masked(text, ("",)) is text, (
+        "a text with no secret was rebuilt"
+    )
+
+
+def _own_lock_file(tmp_path, name):
+    path = tmp_path / _lock_name(name)
+    path.write_bytes(b"")
+    return path
+
+
+def _refusal(value):
+    try:
+        with mr._one_run_per_database([value]):
+            pass
+    except RuntimeError as exc:
+        return exc
+    return None
+
+
+def test_a_lock_file_with_a_wider_mode_is_refused(tmp_path):
+    if os.name == "nt":
+        pytest.skip("file modes are POSIX here")
+    path = _own_lock_file(tmp_path, "wide")
+    path.chmod(0o666)
+    caught = _refusal("wide")
+    assert caught is not None and "mode 0600 or narrower" in str(caught), (
+        f"a lock file with a wide mode was accepted: {caught!r}"
+    )
+    path.chmod(0o400)  # narrower is fine
+    assert _refusal("wide") is None
+
+
+def test_a_lock_file_of_another_user_is_refused(tmp_path):
+    if os.name == "nt" or os.getuid() != 0:
+        pytest.skip("needs root to hand a file to another user while still being able to open it")
+    path = _own_lock_file(tmp_path, "other")
+    path.chmod(0o600)  # only the owner differs, so the owner check alone must refuse it
+    os.chown(path, 12345, -1)
+    caught = _refusal("other")
+    assert caught is not None and "regular file of this user" in str(caught), (
+        f"a lock file of another user was accepted: {caught!r}"
+    )
+
+
+def test_a_lock_file_that_is_not_a_regular_file_is_refused(tmp_path, monkeypatch):
+    if os.name == "nt":
+        pytest.skip("file modes are POSIX here")
+    real = os.fstat
+
+    def a_directory(fd):
+        info = real(fd)
+        return os.stat_result((stat.S_IFDIR | 0o600, *tuple(info)[1:]))
+
+    monkeypatch.setattr(os, "fstat", a_directory)
+    caught = _refusal("pipe")
+    assert caught is not None and "regular file of this user" in str(caught), (
+        f"a lock file that is not a regular file was accepted: {caught!r}"
+    )
+
+
+def test_the_descriptor_is_closed_when_no_file_object_can_take_it(tmp_path, monkeypatch):
+    opened: list[int] = []
+    real_open = os.open
+
+    def spy(*a, **k):
+        fd = real_open(*a, **k)
+        opened.append(fd)
+        return fd
+
+    def refuse(*a, **k):
+        raise OSError(errno.EMFILE, "no file object")
+
+    monkeypatch.setattr(os, "open", spy)
+    monkeypatch.setattr(os, "fdopen", refuse)
+    with (
+        pytest.raises(RuntimeError, match="could not be opened"),
+        mr._one_run_per_database(["leak"]),
+    ):
+        pass
+    assert len(opened) == 1
+    try:
+        os.fstat(opened[0])
+        still_open = True
+    except OSError:
+        still_open = False
+    assert not still_open, "the descriptor stayed open"
