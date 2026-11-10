@@ -22,6 +22,7 @@ mutant (tests/stage_mutants.py) that it kills.
 import ast
 import importlib
 import re
+import unicodedata
 from pathlib import Path
 
 import pytest
@@ -33,6 +34,7 @@ from hadavin_sdk.config import AccountId, CustomerId, OrgId, TenantId, UserId, _
 from hadavin_sdk.guard.redact import redact
 from hadavin_sdk.guard.runmap import canonical, redact_text
 from hadavin_sdk.stages import (
+    _READABLE_ID,
     REFUSED_ID_WORDS,
     STAGE_WORDS,
     STAGES,
@@ -103,8 +105,8 @@ ACCEPTED = [
     "devops",
     "abc",
     "acme-7_b",
-    fullwidth("acme"),
     "123456",
+    "Acme-Corp_7",
 ]
 
 
@@ -209,15 +211,22 @@ def test_the_refusal_names_the_stage_words_and_the_fold_and_does_not_echo_the_va
         )
 
 
-def test_the_fold_is_the_redactors_canonical_form_then_casefolded_then_cut():
-    """The redactor's `runmap.canonical` (NFKC, then Cf characters removed) is the first half of the fold; the case
-    fold and the cut of white space are added by `stages.fold_name`. Kills T11 (the Cf step differs from the
-    redactor's)."""
-    for value in [*REFUSED, *REFUSED_STAGE_WORDS, *ACCEPTED]:
-        want = canonical(value).casefold().strip()
-        assert fold_name(value) == want, (
-            f"{value!a}: the fold differs from the redactor's canonical form"
-        )
+def test_the_fold_is_the_spelling_the_redactor_leaves_bare():
+    """Against the redactor's real behaviour (not a copy of the fold's own formula): next to a label every spelling of
+    a stage word is masked, and (for a word on the common-word list) the bare folded word elsewhere in the text stays
+    readable, because the redactor does not sweep that word. So `fold_name` of a spelling is the word the redactor would leave in clear, which is why the check
+    compares it. Kills T1-T4 and T11."""
+    for value in [*REFUSED, *REFUSED_STAGE_WORDS]:
+        folded = fold_name(value)
+        assert folded in REFUSED_ID_WORDS, f"{value!a}: the fold {folded!a} is not a refused word"
+        out = redact_text(f"tenant_id={value} then {folded} later", {})
+        assert "<TENANT_" in out, f"{value!a}: the labelled copy was not masked: {out!a}"
+        if folded in commonwords.COMMON_WORDS:  # the words the redactor does not sweep
+            assert f" then {folded} later" in out, (
+                f"{value!a}: the redactor masked the bare folded word {folded!a}: {out!a}"
+            )
+    for value in ACCEPTED:
+        assert fold_name(value) not in REFUSED_ID_WORDS or _refusal(check_id, value) is not None
 
 
 # --- the shared list ------------------------------------------------------------------------------------------
@@ -654,14 +663,54 @@ ODD_IDS = [
     "acm" + chr(0x0435),  # Cyrillic ie that looks Latin
     "Ünïcode-Tenant",  # accented letters: the label rule reads only ASCII letters
     chr(0x131) + "d123",  # dotless i
+    # Review A19 round 2, B1: the case fold turns these into ASCII, the redactor does not fold, so only the part before
+    # them is masked.
+    "acme" + chr(0xDF) + "corp7",  # sharp s (folds to ss)
+    chr(0xDF) + "corp-tenant9",  # sharp s first
+    "acme" + chr(0x1E9E) + "corp7",  # capital sharp s (folds to ss)
+    "acme" + chr(0x17F) + "corp7",  # long s (Unicode ignore-case would match s)
+    "acme" + chr(0x212A) + "corp7",  # Kelvin sign (folds to k)
+    # An invisible format character (Cf) inside a long id: the id is not what the redactor reads.
+    "tenant-abcdefgh" + chr(0x200B) + "ijklmnop99",
+    "tenant-abcd" + chr(0xAD) + "efgh99",
+    "tenant-abcd" + chr(0x2060) + "efgh99",
+    "tenant-abcd" + chr(0xFEFF) + "efgh99",
+    fullwidth("acmecorp"),  # NFKC turns it into ASCII; the id as written is not
+    "acme" + chr(0xFF10) + "corp",  # full-width digit zero
+    "acme\n",  # trailing newline
 ]
 
 
+def _masked_shape(out: str, template: str) -> bool:
+    """True when `out` is `template` with every {} replaced by one placeholder of any kind and nothing else changed:
+    no part of the id is left in clear."""
+    pattern = re.escape(template).replace(re.escape("{}"), r"<[A-Z0-9_]+>")
+    return re.fullmatch(pattern, out) is not None
+
+
+# Positions: the id beside its label, a bare copy after it, a bare copy before it, a copy in quotes, a copy after
+# punctuation.
+LEAK_TEMPLATES = [
+    "customer_id={} then {} later",
+    "{} first, then customer_id={}",
+    "customer_id={}\n{}",
+    '{"user_id": "{}", "note": "{}"}',
+    "customer_id={} ({}) and [{}]",
+]
+
+
+def _fill(template: str, value: str) -> str:
+    return template.replace("{}", value)
+
+
 def _leaks(value: str) -> bool:
-    """True when a copy of `value` (or its invisible-character-free form) survives redact_text next to a label."""
-    out = redact_text(f"customer_id={value} then {value} later", {})
-    plain = "".join(c for c in value if c.isprintable())
-    return value in out or (len(plain) > 0 and plain in out)
+    """True when any part of `value` survives redact_text in any of the positions above. The test is the shape of the
+    output: only placeholders may stand where the id stood (a partial mask, `<TENANT_1>` followed by the tail of the id,
+    fails it too)."""
+    return any(
+        not _masked_shape(redact_text(_fill(template, value), {}), template)
+        for template in LEAK_TEMPLATES
+    )
 
 
 def test_an_id_shorter_than_the_redactors_minimum_is_refused():
@@ -690,8 +739,8 @@ def test_all_digit_ids_are_refused_below_the_redactors_digit_minimum():
         assert refused == (n < SWEEP_MIN_DIGITS), f"{n} digits: refused={refused}"
         if not refused:
             assert not _leaks(value), f"{value!a} is accepted and leaks"
-        full = _refusal(check_id, fullwidth(value)) is not None
-        assert full == (n < SWEEP_MIN_DIGITS), f"{n} full-width digits: refused={full}"
+        # Full-width digits are refused at every length: the id is read as written, and the redactor reads ASCII digits.
+        assert _refusal(check_id, fullwidth(value)) is not None, f"{n} full-width digits accepted"
 
 
 def test_the_redactor_really_leaks_a_short_digit_id_the_control():
@@ -709,7 +758,7 @@ def test_a_control_character_or_look_alike_id_is_refused_or_swept(value):
 
 
 def test_the_odd_ids_are_in_fact_refused():
-    """Kills T32 (the character refusal is off)."""
+    """Kills T32 (the character refusal is off), T32b (the check reads the fold) and T34 (the ASCII-only flag is lost)."""
     for value in ODD_IDS:
         message = _refusal(check_id, value)
         assert message is not None, f"{value!a} was accepted"
@@ -722,9 +771,102 @@ def test_every_accepted_id_is_swept_in_every_copy(value):
 
 
 def test_the_label_rule_class_is_the_one_the_check_allows():
-    """The characters check_id allows are the class of the redactor's TENANT rule."""
+    """The class body of the redactor's TENANT rule and the one in `stages._READABLE_ID` are equal (not a substring
+    check), and the check reads it as ASCII with the case ignored, like the rule's `(?i)`. Kills T34."""
     rule = next(rx for name, rx in redact_mod.PATTERNS if name == "TENANT")
-    assert "[a-z0-9_\\-]{" + str(SWEEP_MIN_LENGTH) + ",}" in rule.pattern
+    found = re.findall(r"\[a-z0-9_\\-\]\{" + str(SWEEP_MIN_LENGTH) + r",\}", rule.pattern)
+    assert len(found) == 1, f"the TENANT rule holds {len(found)} value classes"
+    rule_class = found[0].split("{")[0]
+    assert _READABLE_ID.pattern == rule_class + "+", (
+        f"the id class {_READABLE_ID.pattern!r} differs from the rule's {rule_class!r}"
+    )
+    assert _READABLE_ID.flags & re.ASCII and _READABLE_ID.flags & re.IGNORECASE
+    assert rule.flags & re.IGNORECASE
+
+
+def _wide_candidates():
+    """Every code point whose NFKC form, case fold or Cf-stripped form is plain ASCII letters, digits, hyphen or
+    underscore, or empty (a Cf character): the characters a fold-based check could let in. The ASCII class itself is
+    included."""
+    ok = set("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-")
+    out = []
+    for cp in range(0x110000):
+        if 0xD800 <= cp <= 0xDFFF:
+            continue
+        c = chr(cp)
+        forms = {
+            c.casefold(),
+            canonical(c),
+            canonical(c).casefold(),
+            unicodedata.normalize("NFKC", c),
+        }
+        if any(f == "" or set(f) <= ok for f in forms):
+            out.append(c)
+    return out
+
+
+def test_no_accepted_id_leaks_over_a_sweep_of_every_code_point_the_fold_could_read_as_ascii():
+    """Class: the check validated a form (the fold) other than the one it returns and the redactor reads. For every
+    code point whose casefold, NFKC form or Cf-stripped form is ASCII (or empty), in the middle, at the start and at
+    the end of an id and inside a long id: if check_id accepts the id, it is ASCII and every copy of it is masked in
+    every position (`_leaks`). Kills T32b (the check reads the fold)."""
+    candidates = _wide_candidates()
+    non_ascii = [c for c in candidates if not c.isascii()]
+    assert len(non_ascii) > 1000, f"the sweep is too small: {len(non_ascii)} non-ASCII code points"
+    for needed in (0xDF, 0x1E9E, 0x17F, 0x212A, 0x200B, 0xAD, 0xFF41):
+        assert chr(needed) in non_ascii, f"U+{needed:04X} is missing from the sweep"
+    accepted_non_ascii = []
+    accepted = []
+    for c in candidates:
+        for value in (
+            "acme" + c + "corp7",
+            c + "corp-tenant9",
+            "tenant-corp9" + c,
+            "tenant-abcdefgh" + c + "ijklmnop99",
+        ):
+            if _refusal(check_id, value) is None:
+                accepted.append(value)
+                if not value.isascii():
+                    accepted_non_ascii.append(value)
+    assert not accepted_non_ascii, (
+        f"{len(accepted_non_ascii)} non-ASCII ids accepted, first {accepted_non_ascii[0]!a}"
+    )
+    leaking = [v for v in accepted if _leaks(v)]
+    assert not leaking, f"{len(leaking)} accepted ids leak, first {leaking[0]!a}"
+
+
+@pytest.mark.parametrize("value", ["---", "___", "-_-", "----", "______", "_-_-_-"])
+def test_an_id_of_punctuation_only_is_masked_in_every_position(value):
+    """Review A19 round 2, M2: the redactor's class holds hyphen and underscore, so such an id is accepted. Run through
+    the same helper as every other id: every copy beside a label is masked and no part stays in clear. (Over-masking a
+    separator such as `-----` in other text is the redactor's standing behaviour for every id; a tenant that picks such
+    an id accepts it.)"""
+    assert _refusal(check_id, value) is None
+    assert not _leaks(value), f"{value!a} is accepted and a copy stays in clear"
+
+
+def test_stages_py_imports_only_the_leaf_modules():
+    """Class: a module every guard imports at the top of its file must stay a leaf. An AST walk of src/hadavin_sdk/
+    stages.py: the only imports are `re` and `__future__` from the standard library and the two leaf modules
+    `hadavin_sdk.commonwords` and `hadavin_sdk.textfold`, and those two import nothing of the package. Kills T35."""
+    leaf_modules = {"hadavin_sdk.commonwords", "hadavin_sdk.textfold"}
+
+    def imports(path: Path) -> set[str]:
+        found: set[str] = set()
+        for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
+            if isinstance(node, ast.Import):
+                found.update(a.name for a in node.names)
+            elif isinstance(node, ast.ImportFrom):
+                assert node.level == 0, f"{path.name}: a relative import"
+                found.add(node.module or "")
+        return found
+
+    assert imports(SRC / "stages.py") == {"__future__", "re", *leaf_modules}, (
+        "stages.py imports something besides the leaf modules"
+    )
+    for leaf in ("commonwords.py", "textfold.py"):
+        package = {m for m in imports(SRC / leaf) if m.split(".")[0] == "hadavin_sdk"}
+        assert not package, f"{leaf} is not a leaf: it imports {sorted(package)}"
 
 
 def test_the_redactor_sweep_uses_the_shared_limits():

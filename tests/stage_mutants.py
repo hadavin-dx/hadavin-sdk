@@ -31,6 +31,7 @@ REGISTRY = "src/hadavin_sdk/registry.py"
 APP = "src/hadavin_sdk/app.py"
 REDACT = "src/hadavin_sdk/guard/redact.py"
 RUNMAP = "src/hadavin_sdk/guard/runmap.py"
+TEXTFOLD = "src/hadavin_sdk/textfold.py"
 CANON_OLD = (
     '    return "".join(\n'
     '        c for c in unicodedata.normalize("NFKC", text) if unicodedata.category(c) != "Cf"\n'
@@ -165,7 +166,7 @@ M = [
         "test_an_id_spelled_like_a_stage_is_refused", "was not read as a stage name"),
     tenant("T3 the id fold does not apply NFKC", STG, "canonical(value).casefold().strip()", "value.casefold().strip()",
         "test_an_id_spelled_like_a_stage_is_refused", "was not read as a stage name"),
-    tenant("T4 the redactor's canonical form keeps invisible format characters", RUNMAP, CANON_OLD, CANON_OLD.replace('!= "Cf"', '!= "Zz"'),
+    tenant("T4 the redactor's canonical form keeps invisible format characters", TEXTFOLD, CANON_OLD, CANON_OLD.replace('!= "Cf"', '!= "Zz"'),
         "test_an_id_spelled_like_a_stage_is_refused", "was not read as a stage name"),
     tenant("T5 pilot is not a stage word for an id", STG, "    if folded in STAGE_WORDS:\n", "    if folded in (*STAGE_WORDS[:1], *STAGE_WORDS[2:]):\n",
         "test_an_id_spelled_like_a_stage_is_refused", "without the stage-word sentence"),
@@ -226,8 +227,14 @@ M = [
         "test_an_id_shorter_than_the_redactors_minimum_is_refused", "another sentence"),
     tenant("T31 the id check no longer refuses an all-digit id below the digit minimum", STG, "s.isdigit() and len(s) < SWEEP_MIN_DIGITS for s in (value, folded)", "False for s in (value, folded)",
         "test_all_digit_ids_are_refused_below_the_redactors_digit_minimum", "digits: refused=False"),
-    tenant("T32 the id check no longer refuses a character the label rule does not read", STG, "    if not _READABLE_ID.fullmatch(folded):\n", "    if False:\n",
+    tenant("T32 the id check no longer refuses a character the label rule does not read", STG, "    if not _READABLE_ID.fullmatch(value):\n", "    if False:\n",
         "test_the_odd_ids_are_in_fact_refused", "was accepted"),
+    tenant("T32b the id check reads the folded id, not the id as written (review A19 round 2, B1)", STG, "    if not _READABLE_ID.fullmatch(value):\n", "    if not _READABLE_ID.fullmatch(folded):\n",
+        "test_the_odd_ids_are_in_fact_refused", "was accepted"),
+    tenant("T34 the id class loses the ASCII-only case match (a long s and the Kelvin sign get in)", STG, 're.compile(r"[a-z0-9_\\-]+", re.ASCII | re.IGNORECASE)', 're.compile(r"[a-z0-9_\\-]+", re.IGNORECASE)',
+        "test_the_odd_ids_are_in_fact_refused", "was accepted"),
+    tenant("T35 stages.py imports the text fold from the guard package again (it is no longer a leaf)", STG, "from hadavin_sdk.textfold import canonical\n", "from hadavin_sdk.guard.runmap import canonical\n",
+        "test_stages_py_imports_only_the_leaf_modules", "besides the leaf modules"),
     tenant("T33 the redactor's sweep has its own length limit again", REDACT, "    if len(original) < SWEEP_MIN_LENGTH:\n", "    if len(original) < 3:\n",
         "test_the_redactor_sweep_uses_the_shared_limits", "a second copy of the limit"),
     tenant("T23 the walk accepts a check on another parameter", TENANT_TEST, "isinstance(a, ast.Name) and a.id == param for a in args", "isinstance(a, ast.Name) for a in args",

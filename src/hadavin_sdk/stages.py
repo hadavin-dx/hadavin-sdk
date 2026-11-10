@@ -1,13 +1,14 @@
 """The stages, and the two questions every guard asks about one. It imports only the word list and limits in
-`commonwords` and the redactor's text fold `guard.runmap.canonical` (nothing from config, deferred, registry or app), so
-those can all use it at the top of the file; tests/test_tenant_ids.py pins that import list."""
+`commonwords` and the text fold in `textfold` (both leaf modules: nothing from the guard package, config, deferred,
+registry or app), so those can all use it at the top of the file; tests/test_tenant_ids.py pins that import list by an
+AST walk."""
 
 from __future__ import annotations
 
 import re
 
 from hadavin_sdk.commonwords import COMMON_WORDS, SWEEP_MIN_DIGITS, SWEEP_MIN_LENGTH
-from hadavin_sdk.guard.runmap import canonical
+from hadavin_sdk.textfold import canonical
 
 # The stages, in order, and nothing else. A project's own labels map to one of these in the project's config; core
 # tests the stage, never a label. The first stage had another name until the rename: config refuses that name at load.
@@ -36,7 +37,7 @@ def is_prod(environment: object) -> bool:
 
 
 def fold_name(value: str) -> str:
-    """The spelling a name is compared by: the redactor's canonical form (`guard.runmap.canonical`: Unicode NFKC, then
+    """The spelling a name is compared by: the redactor's canonical form (`textfold.canonical`, which `guard.runmap` uses: Unicode NFKC, then
     invisible format characters, category Cf, removed), then case folded, then surrounding white space cut. The
     redactor stops after the Cf step; the case fold and the cut are added here. In plain words: NFKC turns look-alike
     forms (a full-width `prod`, a roman-numeral letter) into plain letters; Cf characters are invisible (zero-width
@@ -45,7 +46,7 @@ def fold_name(value: str) -> str:
     second NFKC after the case fold: no single code point whose fold is made of stage letters changes under it.) Not
     covered: other invisible or look-alike characters (variation selectors, Cyrillic letters that look Latin); the
     stage scan in tests/test_stage_names.py maps some of those, this function does not (`check_id` refuses them
-    instead)."""
+    instead: it reads the id itself, not its fold)."""
     return canonical(value).casefold().strip()
 
 
@@ -54,15 +55,19 @@ REFUSED_ID_WORDS = frozenset(STAGE_WORDS) | COMMON_WORDS
 
 
 # What the redactor's label rule reads after tenant_id, org_id, customer_id, ...: ASCII letters, digits, hyphen and
-# underscore (guard/redact.py, the TENANT pattern; tests/test_tenant_ids.py pins that the two agree).
-_READABLE_ID = re.compile(r"[a-z0-9_\-]+")
+# underscore, upper or lower case (guard/redact.py, the TENANT pattern; tests/test_tenant_ids.py pins that the two
+# class bodies are equal). `re.ASCII` keeps the case match to A-Z: under the default Unicode rules `re.IGNORECASE` would
+# also let the long s and the Kelvin sign through. The id is matched as written, never as folded: the redactor reads the
+# characters it is given, and an id whose fold is ASCII (a sharp s folds to `ss`) is masked only up to that character.
+_READABLE_ID = re.compile(r"[a-z0-9_\-]+", re.ASCII | re.IGNORECASE)
 
 
 def check_id(value: object, label: str = "an id") -> str:
     """Return an id unchanged; raise ValueError when it is not a string, when it is spelled like a stage word (STAGE_WORDS:
     the three stages and three more), when it is a word on the redactor's common-word list
     (`commonwords.COMMON_WORDS`), when it is too short for the redactor to sweep, or when it has a character the
-    redactor's label rule does not read. Each is compared by `fold_name`. `label` is the phrase the error starts with
+    redactor's label rule does not read (that last test reads the id as written, not its fold). The stage and
+    common-word tests compare `fold_name`. `label` is the phrase the error starts with
     ("a tenant id", "a customer id"). It covers the ids the redactor's label rule reads: tenant, org, organisation,
     organization, customer, account and user (guard/redact.py, the TENANT pattern).
     Why: the redactor masks the value after such a label (`tenant_id=prod`), and sweeps its other copies, only when
@@ -92,10 +97,10 @@ def check_id(value: object, label: str = "an id") -> str:
                 f"{label} is too short for the redactor to sweep (at least {SWEEP_MIN_LENGTH} characters, "
                 f"and at least {SWEEP_MIN_DIGITS} when it is all digits)"
             )
-        if not _READABLE_ID.fullmatch(folded):
+        if not _READABLE_ID.fullmatch(value):
             raise ValueError(
                 f"{label} may only use letters a to z, digits, hyphen and underscore, "
-                "the characters the redactor's label rule reads (compared after NFKC and case folding)"
+                "the characters the redactor's label rule reads (the id is read as written, not folded)"
             )
         return value
     raise ValueError(f"{label} must be a string")

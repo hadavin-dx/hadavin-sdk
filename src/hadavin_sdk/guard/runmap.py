@@ -23,6 +23,7 @@ from urllib.parse import unquote
 
 from hadavin_sdk import defaults
 from hadavin_sdk.guard.redact import ARN_TAIL, PATTERNS, SECRET_KINDS, kind_of, redact
+from hadavin_sdk.textfold import canonical
 
 # Identifier kinds a fix or a read may need back (M14): the spec list plus the other identifier kinds the
 # redactor emits (IPV6 beside IPV4, hostnames, UUIDs, GCP and Azure resource ids). Anything not listed (every
@@ -271,15 +272,6 @@ def storable(mapping: dict[str, str], kinds: frozenset[str] | None = None) -> di
         for p, v in mapping.items()
         if kind_of(p) in allowed and storable_original(kind_of(p), v)
     }
-
-
-def canonical(text: str) -> str:
-    """Untrusted text in one canonical form before it is escaped, redacted or compared: Unicode NFKC (a
-    full-width `＜ＩＰＶ４＿２＞` becomes `<IPV4_2>`) with the invisible format characters removed (a zero-width
-    space inside a token no longer hides it)."""
-    return "".join(
-        c for c in unicodedata.normalize("NFKC", text) if unicodedata.category(c) != "Cf"
-    )
 
 
 def _canonical_view(text: str) -> tuple[str, list[int]]:
