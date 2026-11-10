@@ -1,0 +1,82 @@
+HEAD ef2adc75c1a8086c0cd3fd0f389c0676f10d5cdd
+python Python 3.13.18
+copy of the repository: /tmp/migrate-mutants-2azfaa1z/repo
+import path: /tmp/migrate-mutants-2azfaa1z/repo/src/hadavin_sdk/__init__.py
+BASELINE rc=1 5 passed, 1 error in 6.68s (8.1s, 75 killer ids)
+.....E
+==================================== ERRORS ====================================
+_ ERROR at setup of test_a_plain_role_that_is_a_member_of_a_privileged_role_is_refused_by_a_real_server[TRUE] _
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_375f4274691e'", 'p3a_375f4274691e')
+
+    @pytest.fixture
+    def plain_role(scratch):
+        """(dsn of a login role with none of the four flags, schema); the role is dropped afterwards."""
+        dsn, schema = scratch
+        role = f"mig_{uuid.uuid4().hex[:10]}"
+        with psycopg.connect(DSN, autocommit=True) as db:
+            db.execute(sql.SQL("CREATE ROLE {} LOGIN").format(sql.Identifier(role)))
+            db.execute(
+                sql.SQL("GRANT ALL ON SCHEMA {} TO {}").format(
+                    sql.Identifier(schema), sql.Identifier(role)
+                )
+            )
+            db.execute(
+                sql.SQL("GRANT CREATE ON DATABASE {} TO {}").format(
+>                   sql.Identifier(db.execute("SELECT current_database()").fetchone()[0]),
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                    sql.Identifier(role),
+                )
+            )
+
+tests/test_migration_postgres.py:1309: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = Identifier(b'postgres'), strings = (b'postgres',)
+
+    def __init__(self, *strings: str):
+        # init super() now to make the __repr__ not explode in case of error
+        super().__init__(strings)
+    
+        if not strings:
+            raise TypeError("Identifier cannot be empty")
+    
+        for s in strings:
+            if not isinstance(s, str):
+>               raise TypeError(
+                    f"SQL identifier parts must be strings, got {s!r} instead"
+                )
+E               TypeError: SQL identifier parts must be strings, got b'postgres' instead
+
+/home/user/build/EV-P73-ef2adc7/venv3.13/lib/python3.13/site-packages/psycopg/sql.py:390: TypeError
+=========================== short test summary info ============================
+ERROR tests/test_migration_postgres.py::test_a_plain_role_that_is_a_member_of_a_privileged_role_is_refused_by_a_real_server[TRUE]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+5 passed, 1 error in 6.68s
+
+STOP: baseline not green
+migrate_mutants_rc=2
+git_status_after_migrate_mutants_lines=0
+ok  KILLED       lexer: no -- comment rule  [test_apostrophe_in_a_comment_does_not_hide_a_statement]
+ok  KILLED       lexer: block comments are not nested  [test_apostrophe_in_a_comment_does_not_hide_a_statement]
+ok  KILLED       lexer: no '' escape in a string  [test_statement_text_exact_output]
+ok  KILLED       lexer: no E backslash rule  [test_e_string_and_dollar_cases]
+ok  KILLED       lexer: no "" escape in a name  [test_statement_text_exact_output]
+ok  KILLED       lexer: no dollar-quote rule  [test_non_ascii_dollar_tag]
+ok  KILLED       lexer: $1 opens a tag  [test_parameters_are_left_alone]
+ok  KILLED       lexer: an unclosed string is not refused  [test_lex_returns_the_text_and_the_problem]
+ok  KILLED       lexer: statement-start anchor removed  [test_statement_start_anchor]
+ok  KILLED       lexer: tag characters are ASCII only  [test_non_ascii_dollar_tag]
+ok  KILLED       lexer: a -- comment ends at LF only  [test_comment_ends_at_cr]
+ok  KILLED       lexer: the blank set lacks CR, FF, VT  [test_comment_ends_at_cr]
+ok  KILLED       lexer: dollar tags compared without case  [test_e_string_and_dollar_cases]
+ok  KILLED       lexer: a body ends at the first $  [test_e_string_and_dollar_cases]
+ok  KILLED       lexer: a $ after a name opens a tag  [test_dollar_after_identifier_is_not_a_tag]
+ok  KILLED       lexer: E after a name char is a prefix  [test_e_after_identifier_is_not_a_prefix]
+ok  KILLED       lexer: CRLF counts as two lines  [test_crlf_counts_as_one_line]
+ok  KILLED       fix1: only Cc is a hidden character  [test_hidden_characters_are_refused_in_a_file_and_in_a_late_file[U+202E]
+ok  KILLED       fix1: a byte order mark is not named  [test_a_byte_order_mark_at_the_start_is_named]
+ok  KILLED       fix1: a late file skips the refusal list  [test_a_late_file_with_transaction_control_or_a_setting_gets_no_recipe[]
+ok  KILLED       fix1: a $ after a $ in a name opens a tag  [test_a_dollar_right_after_a_dollar_inside_a_name]
+ok  KILLED       fix1: a $ after a number is part of a name  [test_dollar_tag_right_after_a_number]
+ok  KILLED       fix1: checked_statement_text returns a cut text  [test_checked_statement_text_raises_instead_of_returning_a_cut_text]
