@@ -481,7 +481,7 @@
   the P1a test files. 18 new mutants (71 in `tests/textnorm_mutants.py`). Golden test: about 27 s per interpreter.
 - Every repository that keeps a byte copy of these files re-copies the five of them in one commit and updates its pins to the
   sha256 values below (also pinned in `tests/fixtures/textnorm_manifest.json`):
-  - `src/hadavin_sdk/guard/textnorm.py`: `6ed476df74ddd152380ba4ffc9478ade076be3499daaca8e0dd74bb6588ec296`
+  - `src/hadavin_sdk/guard/textnorm.py`: `c24e100d7707dd0f4c91bd7e5ef61eeed5f0e4e544fc888ea60e8d514e5b324c`
   - `src/hadavin_sdk/guard/_confusables.py`: `506a6a02ac51ad9f60e8164ac6693dfe7f3610204b75a822ea01fa9c5274754a`
   - `src/hadavin_sdk/guard/_scripts.py`: `5c59f80ddfeea13b7cabc6b41e09dc12a1954045c944d65f4e62cbd51b06cc67`
   - `tests/fixtures/textnorm_vectors.json`: `1a1944708f7d1737588d7b02666620ceb308b0fe4a71ce2a312c4dc29113d349`

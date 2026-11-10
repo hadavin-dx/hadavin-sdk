@@ -461,3 +461,46 @@ def test_safe_token_mint_is_private_to_the_module() -> None:
         tok, "value", "forged"
     )  # the documented bypass of a determined caller in the same process
     assert tok.value == "forged"
+
+
+def test_group_message_and_str_are_never_read() -> None:
+    """The message of an exception group is text the group's author wrote; ``diagnose`` never reads it (nor ``str`` or ``repr``)."""
+    reads: list[str] = []
+
+    class Spy(ExceptionGroup):
+        @property
+        def message(self) -> str:  # type: ignore[override]
+            reads.append("message")
+            return "Quentin"
+
+        def __str__(self) -> str:
+            reads.append("__str__")
+            return "Quentin"
+
+        def __repr__(self) -> str:
+            reads.append("__repr__")
+            return "Quentin"
+
+    diagnose(Spy("m", [TimeoutError("y")]), step=STEP)
+    assert reads == [], reads
+
+
+def test_a_non_str_module_is_refused_without_a_guard_failure() -> None:
+    """A class whose ``__module__`` is not a ``str`` is refused by the type check itself, not by the net under it: no guard fires."""
+    from hadavin_sdk.guard import diagnostic
+
+    cls = type("Odd", (OSError,), {"__module__": []})
+    before = diagnostic.guard_failures()
+    out = line_of(cls(2, "x"))
+    assert "code=os_error " in out and out.startswith("dynamic_class: "), out
+    assert diagnostic.guard_failures() == before, (
+        "the type check was skipped and a guard caught the TypeError instead"
+    )
+
+
+def test_safe_token_holds_the_member_not_the_callers_object() -> None:
+    member = "".join(["ab", "cd", "ef"])
+    caller = "".join(["ab", "cd", "ef"])
+    assert member == caller and member is not caller
+    tok = SafeToken.of(caller, frozenset({member}))
+    assert tok is not None and tok.value is member

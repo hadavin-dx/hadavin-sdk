@@ -7,7 +7,9 @@ exact copies of the formatted source. Not collected by pytest. Run from the repo
     uv run python tests/diagnostic_mutants.py            # all mutants; exit 1 if any is not good
     uv run python tests/diagnostic_mutants.py frame      # only mutants whose name contains the text
 
-Equivalent, stated and not run: removing ``type(frame.f_code.co_filename) is str`` from frame rule (c): no frame with a non-``str``
+Equivalent, stated and not run: removing ``type(mod) is not str or type(qual) is not str`` from ``_own_code`` (the f-string takes any
+object and the table lookup then misses, so nothing else changes; the test ``test_a_non_str_module_is_refused_without_a_guard_failure``
+pins the behaviour, no mutant can). Also: removing ``type(frame.f_code.co_filename) is str`` from frame rule (c): no frame with a non-``str``
 ``co_filename`` can be built (``code.replace`` raises ``TypeError``), so the check stays as cheap defence.
 """
 
@@ -28,7 +30,8 @@ TD, TC, TV = (
     "tests/test_diagnostic_codes.py",
     "tests/test_diagnostic_validation.py",
 )
-TESTS = [TD, TC, TV]
+TH = "tests/test_diagnostics_hostile.py"
+TESTS = [TD, TC, TV, TH]
 
 
 def mutant(name, file, old, new, test_file, killer, expect, **kw):
@@ -210,7 +213,7 @@ M = [
         "    except Exception:  # noqa: BLE001 - a hostile exception object may raise any Exception: the fixed fallback",
         "    except BaseException:  # noqa: BLE001",
         TD,
-        "test_baseexception_from_hostile_getattr_propagates",
+        "test_baseexception_from_hostile_attribute_propagates",
         "DID NOT RAISE",
     ),
     mutant(
@@ -328,7 +331,7 @@ M = [
     mutant(
         "the +N more tail is wrong",
         D,
-        'text += f"; +{count - defaults.DIAG_MAX_ERRORS} more"',
+        'text += f"; +{shown - defaults.DIAG_MAX_ERRORS} more"',
         'text += f"; +{count} more"',
         TV,
         "test_more_than_5_errors_gives_plus_n_more",
@@ -342,6 +345,123 @@ M = [
         TV,
         "test_a_type_outside_the_closed_list_prints_other",
         "outside the closed list",
+    ),
+    mutant(
+        "a reserved code loses its package row",
+        C,
+        '        "session_closed": "P5c",\n',
+        "",
+        TC,
+        "test_every_code_member_is_reachable_or_reserved",
+        "AssertionError: session_closed",
+    ),
+    mutant(
+        "two fact keys swap places in the priority list",
+        C,
+        "    FactKey.type,\n    FactKey.key,\n    FactKey.http_status,",
+        "    FactKey.key,\n    FactKey.type,\n    FactKey.http_status,",
+        TC,
+        "test_fact_priority_order_is_the_d9_literal",
+        "assert",
+    ),
+    mutant(
+        "a safe token keeps the caller's object",
+        D,
+        "                return SafeToken(member, _MINT)",
+        "                return SafeToken(value, _MINT)",
+        TD,
+        "test_safe_token_holds_the_member_not_the_callers_object",
+        "assert",
+    ),
+    mutant(
+        "table: ProviderExhausted row removed",
+        C,
+        '        _P + "llm.protocol:ProviderExhausted": Code.provider_exhausted,\n',
+        "",
+        TC,
+        "test_pinned_code_per_class",
+        "differs from the pinned rows",
+    ),
+    mutant(
+        "the fingerprint takes the line",
+        D,
+        "fp=_fingerprint(kind, code.value, function, relpath),",
+        "fp=_fingerprint(kind, code.value, function, locator),",
+        TD,
+        "test_locator_and_fp",
+        "assert",
+    ),
+    mutant(
+        "the group message is read",
+        D,
+        "            first_member = exc.exceptions[0]  # type: ignore[attr-defined]",
+        "            _ = exc.message  # type: ignore[attr-defined]\n            first_member = exc.exceptions[0]  # type: ignore[attr-defined]",
+        TD,
+        "test_group_message_and_str_are_never_read",
+        "AssertionError: ['message']",
+    ),
+    mutant(
+        "the kind identity check is removed",
+        D,
+        '        if not _is_the_named_class(tp):\n            return "dynamic_class"\n        mod, qual',
+        "        mod, qual",
+        TD,
+        "test_kind_identity_rule",
+        "assert",
+    ),
+    mutant(
+        "pydantic errors are read outside the helper",
+        D,
+        "            count, types = _error_types(exc)  # type: ignore[arg-type]",
+        "            _ = exc.errors()  # type: ignore[attr-defined]\n            count, types = _error_types(exc)  # type: ignore[arg-type]",
+        TV,
+        "test_pydantic_error_reads_are_closed_ast",
+        "assert",
+    ),
+    mutant(
+        "a KeyboardInterrupt gets internal_bug",
+        D,
+        "    if not issubclass(tp, Exception):\n        return Code.foreign_exception, {}",
+        "    if not issubclass(tp, Exception):\n        return Code.internal_bug, {}",
+        TD,
+        "test_non_exception_baseexception_passed_in_is_foreign",
+        "assert",
+    ),
+    mutant(
+        "oracle: leaks() is blind",
+        "tests/data/c18a_oracle.py",
+        "            if any(w in k for w in wanted for k in keys):",
+        "            if False:",
+        TH,
+        "test_reverse_check_fails_90_percent",
+        "0 of 124; not caught",
+    ),
+    mutant(
+        "oracle: the canary keys are not folded",
+        "tests/data/c18a_oracle.py",
+        "        wanted = [k for c in canaries for k in scan_keyset(c)]",
+        "        wanted = list(canaries)",
+        TH,
+        "test_reverse_check_fails_90_percent",
+        "3 of 124; not caught",
+    ),
+    mutant(
+        "corpus: the ledger range grows by one id",
+        "tests/data/c18a_hostile_corpus.py",
+        "for n in range(1, 52))",
+        "for n in range(1, 53))",
+        TH,
+        "test_every_ledger_id_is_covered",
+        "BL-core-c18a-052",
+    ),
+    mutant(
+        "corpus: the step moves past a later row",
+        "tests/data/c18a_hostile_corpus.py",
+        'CORPUS_STEP: Final = "R1"',
+        'CORPUS_STEP: Final = "R5"',
+        TH,
+        "test_later_rows_are_not_overdue",
+        "AssertionError: HC-ast_taint-01",
     ),
 ]
 

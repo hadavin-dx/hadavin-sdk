@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import contextlib
 import logging
+import re
 
 import pytest
 
@@ -225,3 +226,18 @@ def test_old_writers(row: corpus.Row, app, caplog) -> None:
     if got == "no_path":
         pytest.fail(f"{row.id}: no path through today's writers; the row or the adapter is wrong")
     assert got == "clean", f"{row.id}: today's writers: {got} {crash_type}"
+
+
+def test_old_writer_marks_follow_their_later_row() -> None:
+    """Equality, not a subset: the ids listed in the old-writer ledger are exactly the rows that carry an xfail mark, each mark names a
+    ``later`` ``writer_wiring`` row of the corpus, and the lists neither repeat an id nor share one."""
+    assert len(set(OLD_WRITER_LEAKS)) == len(OLD_WRITER_LEAKS)
+    assert not set(OLD_WRITER_LEAKS) & set(OLD_WRITER_CRASHES)
+    listed = set(OLD_WRITER_LEAKS) | set(OLD_WRITER_CRASHES)
+    reasons = marked_reasons()
+    assert set(reasons) == listed, sorted(set(reasons) ^ listed)
+    wiring = {r.id: r for r in corpus.ROWS if r.cls == "writer_wiring"}
+    assert wiring and all(r.status == "later" for r in wiring.values())
+    for row_id, reason in reasons.items():
+        named = re.fullmatch(r"later: (\S+) wires the writer; outcome=(leaked|crashed)", reason)
+        assert named is not None and named.group(1) in wiring, (row_id, reason)
