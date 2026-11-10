@@ -15,4 +15,8 @@ tests/test_k5_fixes3.py::test_the_decoded_view_is_computed_once_not_once_per_sec
 tests/test_k5_fixes3.py::test_a_secret_behind_an_encoding_layer_is_still_scrubbed PASSED [  0%]
 tests/test_k5_fixes3.py::test_a_nested_identifier_flag_on_an_untooled_agents_action_is_refused PASSED [  0%]
 tests/test_k5_fixes3.py::test_a_nested_identifier_flag_on_an_action_no_agent_uses_is_refused PASSED [  0%]
-tests/test_k5_fixes3.py::test_redact_value_counts_the_expansion_of_all_strings_together 
+tests/test_k5_fixes3.py::test_redact_value_counts_the_expansion_of_all_strings_together PASSED [  0%]
+tests/test_k5_fixes3.py::test_a_card_text_over_the_cap_is_refused_not_cut PASSED [  0%]
+tests/test_k5_fixes3.py::test_a_tick_error_message_is_redacted_then_cut_and_the_work_is_bounded PASSED [  0%]
+tests/test_k5_fixes4.py::test_a_large_output_cut_at_the_window_is_not_refused_for_its_marker exit=1
+end=2026-11-10T20:13:35Z

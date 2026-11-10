@@ -3,3 +3,4 @@ CMD env -u CI -u AWS_ACCESS_KEY_ID -u AWS_SECRET_ACCESS_KEY -u AWS_CA_BUNDLE -u 
 baseline rc=0 :: 92 passed, 92 deselected in 14.14s
 ok  P1 day counter replaced instead of added
       /tmp/pgmut_1_1b0hrt/tests/contracts/test_store_time_rules.py:88: AssertionError: the day total of two charges on one day did not add up: 0.70
+exit=0
