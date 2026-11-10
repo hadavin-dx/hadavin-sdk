@@ -3,7 +3,6 @@
 from pathlib import Path
 
 import pytest
-import yaml
 
 from hadavin_sdk.actions.secrets import FakeSecretProvider
 from hadavin_sdk.app import build
@@ -11,15 +10,9 @@ from hadavin_sdk.backends.factory import Deps, make
 from hadavin_sdk.backends.table import ALLOWED, TABLE, Entry, KindSettings
 from hadavin_sdk.config import MOVED, ConfigError, load_config
 from tests.conftest import qualify
+from tests.k5_support import edit_config as _edit
 
 TOKEN = "tok" + "-p1b"  # built from parts: not a real-looking credential
-
-
-def _edit(cfg_dir, fn):
-    path = cfg_dir / "config.yaml"
-    data = yaml.safe_load(path.read_text(encoding="utf-8"))
-    fn(data)
-    path.write_text(yaml.safe_dump(data), encoding="utf-8")
 
 
 def _build(cfg_dir, **kw):

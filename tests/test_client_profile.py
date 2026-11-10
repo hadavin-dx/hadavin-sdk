@@ -13,6 +13,7 @@ row fails alone.
 from __future__ import annotations
 
 import ast
+import importlib.util
 import inspect
 from itertools import product
 from pathlib import Path
@@ -24,7 +25,7 @@ from hadavin_sdk import app as app_mod
 from hadavin_sdk.approvals.channel import FakeChannel
 from hadavin_sdk.backends.table import DEMO_ONLY, NOT_PROD, TABLE
 from hadavin_sdk.config import ConfigError, load_config
-from tests.k5_support import _edit as _edit_file
+from tests.k5_support import edit_config as _edit
 from tests.test_k3_pilot import ScriptedLLM
 from tests.test_k3_pilot_env import pilot_cfg
 from tests.test_stage_names import ANCHOR, KEY_SECRET
@@ -35,11 +36,6 @@ DEMOS = REPO / "demos"
 
 
 # --- shared helpers ----------------------------------------------------------------------------------------
-
-
-def _edit(cfg_dir: Path, fn) -> None:
-    """Edit `<cfg_dir>/config.yaml` in place (the shared helper takes the file, these rows have the folder)."""
-    _edit_file(cfg_dir / "config.yaml", fn)
 
 
 def prod_cfg(tmp_path: Path) -> Path:
@@ -442,6 +438,43 @@ def test_the_switch_lets_a_test_double_through(tmp_path, made):
     assert "secrets" in made
 
 
+def test_the_switch_leaves_a_log_line_naming_the_keywords(tmp_path, made, caplog):
+    root = pilot_cfg(tmp_path)
+    with caplog.at_level("WARNING", logger="hadavin_sdk.app"), pytest.raises(_Reached):
+        app_mod.build(
+            root, ["ito-agent"], llm=ScriptedLLM(), channel=FakeChannel(), allow_test_doubles=True
+        )
+    lines = [r.getMessage() for r in caplog.records if r.name == "hadavin_sdk.app"]
+    assert len(lines) == 1
+    assert "allow_test_doubles=True" in lines[0] and "pilot" in lines[0]
+    assert lines[0].endswith("channel, llm")
+
+
+def test_the_switch_with_no_test_double_leaves_no_log_line(tmp_path, made, caplog):
+    root = pilot_cfg(tmp_path)
+    with caplog.at_level("WARNING", logger="hadavin_sdk.app"), pytest.raises(_Reached):
+        app_mod.build(root, ["ito-agent"], allow_test_doubles=True)
+    assert [r for r in caplog.records if r.name == "hadavin_sdk.app"] == []
+
+
+def test_the_keyword_snapshot_is_the_first_statement_of_build():
+    """`given = dict(locals())` sees the keyword values only while no name has been rebound, so it must come first."""
+    fn = ast.parse(inspect.getsource(app_mod.build).lstrip()).body[0]
+    body = [
+        s
+        for s in fn.body
+        if not (
+            isinstance(s, ast.Expr)
+            and isinstance(s.value, ast.Constant)
+            and isinstance(s.value.value, str)
+        )
+    ]
+    first = body[0]
+    assert isinstance(first, ast.Assign)
+    assert [t.id for t in first.targets] == ["given"]
+    assert ast.unparse(first.value) == "dict(locals())"
+
+
 @pytest.mark.parametrize(
     "hook", [{"hold_run_ids": lambda: set()}, {"timeout_s": 1.0}], ids=["hold_run_ids", "timeout_s"]
 )
@@ -625,3 +658,49 @@ def test_an_unquoted_yes_in_the_file_is_the_yaml_true(cfg_dir):
         path.read_text(encoding="utf-8") + "\nmade_up_data_only: yes\n", encoding="utf-8"
     )
     assert load_config(cfg_dir).made_up_data_only is True
+
+
+# --- the mutant runner keeps cloud settings away from the tests --------------------------------------------
+
+
+def _runner():
+    spec = importlib.util.spec_from_file_location(
+        "client_profile_mutants", REPO / "tools" / "client_profile_mutants.py"
+    )
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        "AWS_ACCESS_KEY_ID",
+        "azure_client_id",
+        "GOOGLE_APPLICATION_CREDENTIALS",
+        "ANTHROPIC_BASE_URL",
+    ],
+)
+def test_the_mutant_runner_refuses_to_start_with_a_cloud_setting(monkeypatch, capsys, name):
+    runner = _runner()
+    for other in runner.cloud_variables():  # the test setup may already hold some
+        monkeypatch.delenv(other)
+    monkeypatch.setenv(name, "made-up")
+    assert runner.cloud_variables() == [name]
+    assert runner.main() == 3
+    out = capsys.readouterr().out
+    assert name in out and "made-up" not in out
+
+
+def test_the_mutant_runner_gives_the_tests_only_plain_variables(monkeypatch):
+    runner = _runner()
+    for name in ["AWS_SECRET_ACCESS_KEY", "HTTPS_PROXY", "HADAVIN_TEST_PG_DSN", "PATH"]:
+        monkeypatch.setenv(name, "made-up")
+    env = runner.clean_env(PYTHONPATH="/x")
+    assert set(env) <= {*runner.PLAIN_ENV, "PYTHONPATH"}
+    assert env["PATH"] == "made-up" and env["PYTHONPATH"] == "/x"
+
+
+def test_the_mutant_numbers_are_one_to_n_without_gaps_or_repeats():
+    numbers = [row[0] for row in _runner().DEF]
+    assert numbers == list(range(1, len(numbers) + 1))

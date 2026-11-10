@@ -105,16 +105,22 @@ def build(
     replace one configured backend (tests) and, except the live hooks, are refused in pilot and prod unless
     allow_test_doubles=True (an accident guard, not a lock); `secrets` replaces the configured provider for both
     the executor and the backends' own secrets. Missing or shared secret names fail here, before the first run."""
-    # The keyword values as passed. This must stay the FIRST statement: a later one would see rebound names.
+    # The keyword values as passed, read before any name is rebound (`secrets` is rebound below). This must stay the
+    # first statement; a test reads the function and fails if another statement comes before it.
     given = dict(locals())
     cfg = load_config(config_dir)
     live = is_live(cfg.environment)
     # Before any backend is built, so a refusal reads no secret, opens no connection and no folder. Only the
     # value True is the switch (a string or a number is not).
-    live_doubles = (
-        _test_doubles_given(_BUILD_PARAMS, given) if live and allow_test_doubles is not True else []
-    )
-    if live_doubles:
+    live_doubles = _test_doubles_given(_BUILD_PARAMS, given) if live else []
+    if live_doubles and allow_test_doubles is True:
+        # A client app that starts with test objects must leave a trace in the log (names only, no values).
+        _LOG.warning(
+            "allow_test_doubles=True in %s: test objects replace configured parts: %s",
+            cfg.environment,
+            ", ".join(live_doubles),
+        )
+    elif live_doubles:
         raise ConfigError(
             f"{', '.join(f'{n}=' for n in live_doubles)} replace configured parts and are for tests; "
             "in pilot and prod pass allow_test_doubles=True only from a test"

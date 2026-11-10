@@ -13,7 +13,7 @@ from decimal import Decimal
 from enum import StrEnum
 from typing import Any, ClassVar, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, StrictBool, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 def now() -> datetime:
@@ -245,11 +245,11 @@ class ToolCallRecord(BaseModel):
     created_at: datetime = Field(default_factory=now)
     duration_ms: int | None = None
     attempt: int | None = None
-    error: StrictBool = False  # the tool failed: the row is kept but is never evidence
+    error: bool = False  # the tool failed: the row is kept but is never evidence
 
 
 class KillSwitch(Shape):
-    on: StrictBool = False
+    on: bool = False
     by: str | None = None
     ts: datetime = Field(default_factory=now)
 
@@ -264,7 +264,7 @@ class GateRun(Shape):
     passed: int  # items that passed (k == 1) or passed all k runs (k > 1)
     pass_rate: float  # pass@1: passing (item, run) pairs / (n * k)
     threshold: float
-    green: StrictBool
+    green: bool
     ts: datetime = Field(default_factory=now)
     # K1a: defaults keep lines written before pass^k parseable.
     k: int = 1
@@ -298,7 +298,7 @@ class Reply(Shape):
 
 
 class Verdict(Shape):
-    flagged: StrictBool
+    flagged: bool
     score: float = Field(ge=0.0, le=1.0)
     backend: str
     reason_code: str | None = None
@@ -311,4 +311,4 @@ class RunResult(Shape):
     outcome: Literal["succeeded", "failed", "unknown"]
     external_ref: str | None = None
     error_code: str | None = None
-    retryable: StrictBool = False
+    retryable: bool = False

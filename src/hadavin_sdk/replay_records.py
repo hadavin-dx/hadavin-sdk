@@ -14,7 +14,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from pydantic import BaseModel, ConfigDict, StrictBool, ValidationError
+from pydantic import BaseModel, ConfigDict, ValidationError
 
 from hadavin_sdk.errors import ConfigError
 
@@ -39,7 +39,7 @@ class ReplayRecord(BaseModel):
     pass_rate: float
     upper_error_bound: float | None = None
     threshold: float
-    green: StrictBool  # pass_k >= threshold
+    green: bool  # pass_k >= threshold
     ts: datetime
 
 

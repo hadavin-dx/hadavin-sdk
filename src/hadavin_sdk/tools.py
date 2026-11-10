@@ -37,7 +37,7 @@ from pathlib import Path
 from typing import Any, Literal
 from urllib.parse import quote, quote_plus, urlsplit, urlunsplit
 
-from pydantic import BaseModel, ConfigDict, Field, StrictBool, ValidationError
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from hadavin_sdk import defaults
 from hadavin_sdk.errors import ConfigError
@@ -85,7 +85,7 @@ class ToolSpec(BaseModel):
     max_output_bytes: int = Field(
         default=DEFAULT_MAX_OUTPUT_BYTES, gt=0, le=defaults.MAX_REDACT_CHARS
     )
-    cluster_http: StrictBool = False
+    cluster_http: bool = False
     # Settings the tool's own code reads (validated there, e.g. a source's `KubernetesSettings`): endpoints and
     # limits belong here, never in the tool module.
     options: dict[str, Any] = {}

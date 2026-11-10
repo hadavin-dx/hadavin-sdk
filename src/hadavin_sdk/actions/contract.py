@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, StrictBool, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from hadavin_sdk.models import RiskClass
 
@@ -51,8 +51,8 @@ class ActionContract(BaseModel):
     description: str
     input_schema: dict[str, Any]
     risk_class: RiskClass
-    targets_production: StrictBool
-    changes_spend: StrictBool
+    targets_production: bool
+    changes_spend: bool
     # http: a key of config.systems. none and manual: a plain label, never looked up.
     target_system: str
     executor: ExecutorSpec

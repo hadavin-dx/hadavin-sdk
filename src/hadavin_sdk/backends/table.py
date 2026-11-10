@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Any, Literal
 from urllib.parse import urlsplit
 
-from pydantic import BaseModel, ConfigDict, Field, StrictBool, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 class KindSettings(BaseModel):
@@ -72,7 +72,7 @@ class OpenAICompatSettings(_LLMSettings):
     base_url: str
     api_key_secret_name: str | None = None  # a local Ollama needs none
     # OpenAI reasoning models refuse `max_tokens` and want `max_completion_tokens`.
-    max_completion_tokens: StrictBool = False
+    max_completion_tokens: bool = False
 
     @model_validator(mode="after")
     def _https_or_keyless_loopback(self) -> OpenAICompatSettings:
@@ -118,7 +118,7 @@ class PostgresSettings(KindSettings):
     # A second DSN (another database role) for the evidence purge, the only identity that may DELETE
     # `tool_calls` and `redaction_maps` (`hadavin-sdk migrate --purge-role`). None: the runtime's own DSN.
     purge_dsn_secret_name: str | None = None
-    iam_auth: StrictBool = (
+    iam_auth: bool = (
         False  # RDS IAM login: no database password anywhere (needs the `aws` extra too)
     )
     region: str | None = None
@@ -153,9 +153,7 @@ class _AnchorSettings(KindSettings):
 
     mode: Literal["GOVERNANCE", "COMPLIANCE"] = "GOVERNANCE"
     retain_days: int = Field(default=1, ge=1)
-    retention_ack: StrictBool = (
-        False  # strict: "yes" or 1 must not agree a retention for the client
-    )
+    retention_ack: bool = False
 
 
 class S3ObjectLockSettings(_AnchorSettings):
