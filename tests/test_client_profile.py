@@ -5,8 +5,8 @@ keywords are checked in a client profile (pilot or prod); a demo config that nam
 or a real approval channel must say it holds only made-up data.
 
 Import rule: module-level names must exist before the check was added, so that a missing name fails one row and
-not the whole file. Names that exist only with the check (`_test_doubles_given`, `_LIVE_HOOKS`, the keyword
-`allow_test_doubles`, the config key `made_up_data_only`) are read inside row bodies, so without the check each
+not the whole file. Names that exist only with the check (`_test_doubles_given`, `_LIVE_HOOKS`, `LOCAL_DETECTORS`,
+`_sends_text_out`, the keyword `allow_test_doubles`, the config key `made_up_data_only`) are read inside row bodies, so without the check each
 row fails alone.
 """
 
@@ -22,8 +22,8 @@ import pytest
 
 from hadavin_sdk import app as app_mod
 from hadavin_sdk.approvals.channel import FakeChannel
-from hadavin_sdk.backends.table import DEMO_ONLY, LOCAL_DETECTORS, TABLE
-from hadavin_sdk.config import ConfigError, _sends_text_out, load_config
+from hadavin_sdk.backends.table import DEMO_ONLY, NOT_PROD, TABLE
+from hadavin_sdk.config import ConfigError, load_config
 from tests.k5_support import _edit as _edit_file
 from tests.test_k3_pilot import ScriptedLLM
 from tests.test_k3_pilot_env import pilot_cfg
@@ -101,14 +101,8 @@ def made(monkeypatch):
     return record
 
 
-def test_the_stub_detector_fails_loudly_if_a_row_ever_runs_it():
-    """The stub only names a detector in a config; if a row ran it, the row would be wrong, so it must not pass."""
-    with pytest.raises(AssertionError, match="never run"):
-        _StubDetector().check("text", "source")
-
-
 # One value per refused build keyword, not equal to its default. A new keyword with no sample fails
-# test_t5s (and the rows that read SAMPLES), so it gets decided: a sample, or a reviewed `_LIVE_HOOKS` entry.
+# test_every_refused_keyword_has_a_sample (and the rows that read SAMPLES), so it gets decided: a sample, or a reviewed `_LIVE_HOOKS` entry.
 SAMPLES = {
     "secrets": _MadeSecrets(),
     "channel": FakeChannel(),
@@ -124,18 +118,18 @@ REFUSED = [
 ]
 
 
-# --- T0 ----------------------------------------------------------------------------------------------------
+# --- the prod fixture --------------------------------------------------------------------------------------
 
 
-def test_t0_the_prod_fixture_loads(tmp_path):
+def test_the_prod_fixture_loads(tmp_path):
     assert load_config(prod_cfg(tmp_path)).environment == "prod"
 
 
-# --- T1 ----------------------------------------------------------------------------------------------------
+# --- demo-only kinds refused in a client profile -----------------------------------------------------------
 
 
 @pytest.mark.parametrize("env", ["pilot", "prod"])
-def test_t1a_secrets_env_is_refused_in_a_client_profile(tmp_path, env):
+def test_secrets_env_is_refused_in_a_client_profile(tmp_path, env):
     root = _cfg_for(tmp_path, env)
     _edit(root, lambda d: d["backends"].update(secrets={"kind": "env"}))
     with pytest.raises(ConfigError, match=f"environment {env}: refused") as err:
@@ -144,7 +138,7 @@ def test_t1a_secrets_env_is_refused_in_a_client_profile(tmp_path, env):
     assert "made_up_data_only" not in str(err.value)  # the field is refused here: never advise it
 
 
-def test_t1d_a_pilot_config_that_omits_store_is_refused(tmp_path):
+def test_a_pilot_config_that_omits_store_is_refused(tmp_path):
     root = pilot_cfg(tmp_path)
     _edit(root, lambda d: d["backends"].pop("store"))
     with pytest.raises(ConfigError, match="environment pilot: refused") as err:
@@ -153,7 +147,7 @@ def test_t1d_a_pilot_config_that_omits_store_is_refused(tmp_path):
     assert "made_up_data_only" not in str(err.value)
 
 
-def test_t1e_a_demo_anchor_only_failure_does_not_advise_the_field(cfg_dir):
+def test_a_demo_anchor_only_failure_does_not_advise_the_field(cfg_dir):
     """A demo config that fails only on a COMPLIANCE anchor sends no text out: no advice about made-up data."""
 
     def anchor_only(d):
@@ -166,46 +160,82 @@ def test_t1e_a_demo_anchor_only_failure_does_not_advise_the_field(cfg_dir):
     assert "made_up_data_only" not in str(err.value)
 
 
-# --- T2: every TABLE pair is decided -----------------------------------------------------------------------
+# --- every TABLE pair is decided ---------------------------------------------------------------------------
 
+# One reason per pair: who runs the kind, and what the check does about it. Three kinds of statement are checked
+# against the code by `test_the_facts_stated_in_the_reasons_are_true`: "refused in prod by NOT_PROD", "sends text out"
+# and "sends no text out". The rest says who runs it and what it can and cannot do.
 CLIENT_REVIEWED: dict[tuple[str, str], str] = {
-    ("secrets", "aws_secrets_manager"): "a managed secret store the client runs; no test double",
-    ("secrets", "vault"): "a self-hostable secret store; the client runs it",
-    ("secrets", "azure_key_vault"): "a managed secret store the client runs; no test double",
-    ("secrets", "gcp_secret_manager"): "a managed secret store the client runs; no test double",
+    (
+        "secrets",
+        "aws_secrets_manager",
+    ): "the client's managed secret store; read by name, no value in config",
+    (
+        "secrets",
+        "vault",
+    ): "a self-hostable secret store the client runs; read by name, no value in config",
+    (
+        "secrets",
+        "azure_key_vault",
+    ): "the client's managed secret store; read by name, no value in config",
+    (
+        "secrets",
+        "gcp_secret_manager",
+    ): "the client's managed secret store; read by name, no value in config",
     (
         "secrets",
         "mounted_file",
-    ): "secrets mounted as files by the platform; read-only by the process",
-    ("signer", "none"): "allowed in pilot, refused in prod by `NOT_PROD`",
-    ("signer", "ed25519_local"): "a local key from the secrets kind; prod refuses a key file",
-    ("signer", "aws_kms"): "a managed key service; signs digests only",
-    ("signer", "azure_key_vault_key"): "a managed key service; signs digests only",
-    ("signer", "gcp_kms"): "a managed key service; signs digests only",
-    ("signer", "vault_transit"): "a self-hostable signing service; signs digests only",
-    ("anchor", "none"): "allowed in pilot, refused in prod by `NOT_PROD`",
-    ("anchor", "s3_object_lock"): "write-once storage the client agreed retention for",
-    ("anchor", "azure_immutable_blob"): "write-once storage the client agreed retention for",
-    ("anchor", "gcs_retention_lock"): "write-once storage the client agreed retention for",
+    ): "files the platform mounts for the process; read by name, never written",
+    ("signer", "none"): "no signature; allowed in pilot, refused in prod by `NOT_PROD`",
+    (
+        "signer",
+        "ed25519_local",
+    ): "a local key from the secrets kind; prod refuses a key file in the image",
+    (
+        "signer",
+        "aws_kms",
+    ): "the client's managed key service; it signs digests and never exports the key",
+    ("signer", "azure_key_vault_key"): "the client's managed key service; it signs digests only",
+    (
+        "signer",
+        "gcp_kms",
+    ): "the client's managed key service; it signs digests and never exports the key",
+    (
+        "signer",
+        "vault_transit",
+    ): "a self-hostable signing service the client runs; it signs digests only",
+    ("anchor", "none"): "no outside anchor; allowed in pilot, refused in prod by `NOT_PROD`",
+    ("anchor", "s3_object_lock"): "write-once storage; prod needs the client's retention agreement",
+    (
+        "anchor",
+        "azure_immutable_blob",
+    ): "write-once storage; prod needs the client's retention agreement",
+    (
+        "anchor",
+        "gcs_retention_lock",
+    ): "write-once storage; prod needs the client's retention agreement",
     ("store", "postgres"): "the client's own database; the production store",
     ("audit", "chain"): "the tamper-evident audit trail; the production audit kind",
+    ("llm", "anthropic"): "a real model that sends text out; a demo config needs made_up_data_only",
+    ("llm", "bedrock"): "a real model that sends text out; a demo config needs made_up_data_only",
     (
         "llm",
-        "anthropic",
-    ): "a real model; masking is a separate, later check; a pilot or prod config names it",
+        "openai_compat",
+    ): "a real or self-hosted model that sends text out; a demo config needs made_up_data_only",
+    ("llm", "gemini"): "a real model that sends text out; a demo config needs made_up_data_only",
+    ("detector", "regex"): "a local check that sends no text out",
     (
-        "llm",
-        "bedrock",
-    ): "a real model; masking is a separate, later check; a pilot or prod config names it",
-    ("llm", "openai_compat"): "a real or self-hosted model; masking is a separate, later check",
+        "detector",
+        "llm_judge",
+    ): "sends no text out itself; it calls the llm kind, so the model rules apply",
     (
-        "llm",
-        "gemini",
-    ): "a real model; masking is a separate, later check; a pilot or prod config names it",
-    ("detector", "regex"): "a local check; sends nothing out",
-    ("detector", "llm_judge"): "uses the llm kind, so the model rules apply",
-    ("detector", "bedrock_guardrail"): "a vendor screening service; demo needs made_up_data_only",
-    ("channel", "slack"): "the real approval channel; demo needs made_up_data_only",
+        "detector",
+        "bedrock_guardrail",
+    ): "a vendor screening service that sends text out; a demo config needs made_up_data_only",
+    (
+        "channel",
+        "slack",
+    ): "the real approval channel; it sends text out; a demo config needs made_up_data_only",
 }
 
 
@@ -225,7 +255,7 @@ def completeness_problems(table, demo_only, reviewed) -> list[str]:
     return out
 
 
-def test_t2a_demo_only_is_exactly_the_six_pairs():
+def test_demo_only_is_exactly_the_six_pairs():
     assert DEMO_ONLY == {
         ("llm", "fake"),
         ("channel", "fake"),
@@ -236,54 +266,77 @@ def test_t2a_demo_only_is_exactly_the_six_pairs():
     }
 
 
-def test_t2b_every_pair_is_decided_with_a_reason():
+def test_every_pair_is_decided_with_a_reason():
     assert completeness_problems(TABLE, DEMO_ONLY, CLIENT_REVIEWED) == []
 
 
-def test_t2c_planted_kind_in_neither_set_is_reported():
+def test_the_facts_stated_in_the_reasons_are_true():
+    """A reason that says `NOT_PROD`, "sends text out" or "sends no text out" is checked against the code, both
+    ways: the claim must be true, and a pair the code treats that way must say so."""
+    from hadavin_sdk.config import _sends_text_out
+
+    def listed(cap: str, kind: str) -> bool:
+        backends = SimpleNamespace(
+            llm=SimpleNamespace(kind=kind if cap == "llm" else "fake"),
+            channel=SimpleNamespace(kind=kind if cap == "channel" else "fake"),
+            detector=[SimpleNamespace(kind=kind)] if cap == "detector" else [],
+        )
+        return f"{cap}: {kind}" in _sends_text_out(backends)
+
+    for (cap, kind), why in CLIENT_REVIEWED.items():
+        assert ("refused in prod by `NOT_PROD`" in why) == ((cap, kind) in NOT_PROD), (cap, kind)
+        if cap in {"llm", "detector", "channel"}:
+            says_out, says_none = "sends text out" in why, "sends no text out" in why
+            assert says_out != says_none, f"{cap}/{kind}: must say one of the two"
+            assert says_out == listed(cap, kind), (
+                f"{cap}/{kind}: the reason disagrees with the code"
+            )
+
+
+def test_planted_kind_in_neither_set_is_reported():
     extra = {**TABLE, "llm": {**TABLE["llm"], "madeup": TABLE["llm"]["fake"]}}
     found = completeness_problems(extra, DEMO_ONLY, CLIENT_REVIEWED)
     assert any("llm/madeup" in p and "neither" in p for p in found)
 
 
-def test_t2c_planted_pair_in_both_sets_is_reported():
+def test_planted_pair_in_both_sets_is_reported():
     both = {**CLIENT_REVIEWED, ("llm", "fake"): "planted"}
     found = completeness_problems(TABLE, DEMO_ONLY, both)
     assert any("llm/fake" in p and "both" in p for p in found)
 
 
-def test_t2c_planted_empty_reason_is_reported():
+def test_planted_empty_reason_is_reported():
     empty = {**CLIENT_REVIEWED, ("llm", "gemini"): "  "}
     found = completeness_problems(TABLE, DEMO_ONLY, empty)
     assert any("llm/gemini" in p and "no reason" in p for p in found)
 
 
-# --- T5: build keywords in a client profile ----------------------------------------------------------------
+# --- build keywords in a client profile --------------------------------------------------------------------
 
 
 @pytest.mark.parametrize(("keyword", "env"), list(product(REFUSED, ["pilot", "prod"])))
-def test_t5b_each_test_double_is_refused_alone(tmp_path, made, keyword, env):
+def test_each_test_double_is_refused_alone(tmp_path, made, keyword, env):
     root = _cfg_for(tmp_path, env)
     with pytest.raises(ConfigError, match="allow_test_doubles") as err:
         app_mod.build(root, ["ito-agent"], **{keyword: SAMPLES[keyword]})
     assert f"{keyword}=" in str(err.value)
 
 
-def test_t5c_all_at_once_names_all_in_signature_order(tmp_path, made):
+def test_all_at_once_names_all_in_signature_order(tmp_path, made):
     root = pilot_cfg(tmp_path)
     with pytest.raises(ConfigError, match="allow_test_doubles") as err:
         app_mod.build(root, ["ito-agent"], **{k: SAMPLES[k] for k in REFUSED})
     assert ", ".join(f"{k}=" for k in REFUSED) in str(err.value)
 
 
-def test_t5f_sources_keeps_its_own_refusal(tmp_path, made):
+def test_sources_keeps_its_own_refusal(tmp_path, made):
     root = pilot_cfg(tmp_path)
     with pytest.raises(ConfigError, match="configure Config.sources") as err:
         app_mod.build(root, ["ito-agent"], sources={"k8s": object()})
     assert "allow_test_doubles" not in str(err.value)
 
 
-def test_t5h_tools_keeps_its_own_refusal(tmp_path, made):
+def test_tools_keeps_its_own_refusal(tmp_path, made):
     root = pilot_cfg(tmp_path)
     with pytest.raises(ConfigError, match="plain callables") as err:
         app_mod.build(root, ["ito-agent"], tools={"echo": lambda a: "x"})
@@ -308,7 +361,7 @@ def _door_problems(root: Path) -> list[str]:
     return out
 
 
-def test_t5g_no_door_in_src_or_demos():
+def test_no_door_in_src_or_demos():
     assert _door_problems(SRC) == []
     assert _door_problems(DEMOS) == []
     assert _door_problems(REPO / "tools") == []
@@ -323,26 +376,26 @@ def test_t5g_no_door_in_src_or_demos():
     ],
     ids=["direct", "partial", "double_star"],
 )
-def test_t5g_planted_doors_are_reported(tmp_path, code):
+def test_planted_doors_are_reported(tmp_path, code):
     (tmp_path / "planted.py").write_text(code, encoding="utf-8")
     assert len(_door_problems(tmp_path)) == 1
 
 
-def test_t5i_a_falsy_double_is_refused(tmp_path, made):
+def test_a_falsy_double_is_refused(tmp_path, made):
     root = pilot_cfg(tmp_path)
     with pytest.raises(ConfigError, match="allow_test_doubles") as err:
         app_mod.build(root, ["ito-agent"], channel=_FalsyChannel())
     assert "channel=" in str(err.value)
 
 
-def test_t5j_a_refusal_builds_nothing_first(tmp_path, made):
+def test_a_refusal_builds_nothing_first(tmp_path, made):
     root = pilot_cfg(tmp_path)
     with pytest.raises(ConfigError, match="allow_test_doubles"):
         app_mod.build(root, ["ito-agent"], llm=ScriptedLLM())
     assert made == []
 
 
-def test_t5l_a_keyword_added_later_is_refused_by_default():
+def test_a_keyword_added_later_is_refused_by_default():
     helper = app_mod._test_doubles_given
 
     def stub(*, secrets=None, extra=None, allow_test_doubles=False, sources=None):
@@ -354,7 +407,7 @@ def test_t5l_a_keyword_added_later_is_refused_by_default():
 
 
 @pytest.mark.parametrize("environment", ["Demo", "uat", ""])
-def test_t5q_any_environment_that_is_not_demo_is_live(tmp_path, made, monkeypatch, environment):
+def test_any_environment_that_is_not_demo_is_live(tmp_path, made, monkeypatch, environment):
     """An environment value that is not a stage is live: the switch is needed there too. `Config.environment` is a
     Literal, so such a value never comes out of `load_config`; `model_copy` builds it. Defence in depth for a hand-built
     Config, not a reachable load (only this synthetic state reaches that branch)."""
@@ -367,7 +420,7 @@ def test_t5q_any_environment_that_is_not_demo_is_live(tmp_path, made, monkeypatc
 
 
 @pytest.mark.parametrize("switch", ["no", "yes", 1, [True]], ids=["no", "yes", "one", "list"])
-def test_t5r_only_the_value_true_is_the_switch(tmp_path, made, switch):
+def test_only_the_value_true_is_the_switch(tmp_path, made, switch):
     root = pilot_cfg(tmp_path)
     with pytest.raises(ConfigError, match="allow_test_doubles") as err:
         app_mod.build(root, ["ito-agent"], llm=ScriptedLLM(), allow_test_doubles=switch)
@@ -375,14 +428,14 @@ def test_t5r_only_the_value_true_is_the_switch(tmp_path, made, switch):
 
 
 @pytest.mark.parametrize("env", ["pilot", "prod"])
-def test_t5m_no_override_passes_the_check(tmp_path, made, env):
+def test_no_override_passes_the_check(tmp_path, made, env):
     root = _cfg_for(tmp_path, env)
     with pytest.raises(_Reached):
         app_mod.build(root, ["ito-agent"])
     assert made[0] == "secrets"
 
 
-def test_t5n_the_switch_lets_a_test_double_through(tmp_path, made):
+def test_the_switch_lets_a_test_double_through(tmp_path, made):
     root = pilot_cfg(tmp_path)
     with pytest.raises(_Reached):
         app_mod.build(root, ["ito-agent"], llm=ScriptedLLM(), allow_test_doubles=True)
@@ -392,25 +445,25 @@ def test_t5n_the_switch_lets_a_test_double_through(tmp_path, made):
 @pytest.mark.parametrize(
     "hook", [{"hold_run_ids": lambda: set()}, {"timeout_s": 1.0}], ids=["hold_run_ids", "timeout_s"]
 )
-def test_t5o_the_live_hooks_need_no_switch(tmp_path, made, hook):
+def test_the_live_hooks_need_no_switch(tmp_path, made, hook):
     root = pilot_cfg(tmp_path)
     with pytest.raises(_Reached):
         app_mod.build(root, ["ito-agent"], **hook)
 
 
-def test_t5p_the_live_hooks_are_exactly_two_parameters_of_build():
+def test_the_live_hooks_are_exactly_two_parameters_of_build():
     hooks = app_mod._LIVE_HOOKS
     assert set(hooks) == {"hold_run_ids", "timeout_s"}
     assert set(hooks) <= set(inspect.signature(app_mod.build).parameters)
 
 
-def test_t5s_every_refused_keyword_has_a_sample():
+def test_every_refused_keyword_has_a_sample():
     assert set(REFUSED) <= set(SAMPLES), (
         f"build keywords with no sample: {sorted(set(REFUSED) - set(SAMPLES))}"
     )
 
 
-# --- T7: a demo config that sends text out must say it holds only made-up data -------------------------------
+# --- a demo config that sends text out must say it holds only made-up data --------------------------------
 
 LLM_SETTINGS = {
     "anthropic": {"platform": "api", "api_key_secret_name": "madeup-llm-key"},
@@ -435,21 +488,24 @@ REAL_CHANNEL_KINDS = sorted(k for k in TABLE["channel"] if ("channel", k) not in
 
 
 @pytest.mark.parametrize("kind", REAL_LLM_KINDS)
-def test_t7a_a_real_llm_kind_in_demo_needs_the_field(cfg_dir, kind):
+def test_a_real_llm_kind_in_demo_needs_the_field(cfg_dir, kind):
     _edit(cfg_dir, lambda d: d["backends"].update(llm={"kind": kind, **LLM_SETTINGS[kind]}))
     with pytest.raises(ConfigError, match="made_up_data_only") as err:
         load_config(cfg_dir)
     assert f"llm: {kind}" in str(err.value)
 
 
-def test_t7a2_the_vendor_detector_in_demo_needs_the_field(cfg_dir):
+def test_the_vendor_detector_in_demo_needs_the_field(cfg_dir):
     _edit(cfg_dir, lambda d: d["backends"].update(detector=[GUARDRAIL]))
     with pytest.raises(ConfigError, match="made_up_data_only") as err:
         load_config(cfg_dir)
     assert "detector: bedrock_guardrail" in str(err.value)
 
 
-def test_t7a4_every_detector_kind_is_local_or_refused_in_demo():
+def test_every_detector_kind_is_local_or_refused_in_demo():
+    from hadavin_sdk.backends.table import LOCAL_DETECTORS
+    from hadavin_sdk.config import _sends_text_out
+
     for kind in sorted(TABLE["detector"]):
         backends = SimpleNamespace(
             llm=SimpleNamespace(kind="fake"),
@@ -461,7 +517,9 @@ def test_t7a4_every_detector_kind_is_local_or_refused_in_demo():
     assert LOCAL_DETECTORS <= set(TABLE["detector"])
 
 
-def test_t7a5_a_detector_kind_nobody_reviewed_is_treated_as_sending_text_out():
+def test_a_detector_kind_nobody_reviewed_is_treated_as_sending_text_out():
+    from hadavin_sdk.config import _sends_text_out
+
     backends = SimpleNamespace(
         llm=SimpleNamespace(kind="fake"),
         channel=SimpleNamespace(kind="fake"),
@@ -470,7 +528,15 @@ def test_t7a5_a_detector_kind_nobody_reviewed_is_treated_as_sending_text_out():
     assert _sends_text_out(backends) == ["detector: madeup_vendor"]
 
 
-def test_t7a3_a_real_channel_kind_in_demo_needs_the_field(cfg_dir):
+def test_the_local_detector_list_is_exactly_regex_and_llm_judge():
+    """The allow-list of detectors that send no text out is a reviewed decision: a kind joins it only by a change
+    that names it here too."""
+    from hadavin_sdk.backends.table import LOCAL_DETECTORS
+
+    assert LOCAL_DETECTORS == {"regex", "llm_judge"}
+
+
+def test_a_real_channel_kind_in_demo_needs_the_field(cfg_dir):
     assert REAL_CHANNEL_KINDS == ["slack"]
     _edit(cfg_dir, lambda d: d["backends"].update(channel=SLACK))
     with pytest.raises(ConfigError, match="made_up_data_only") as err:
@@ -478,7 +544,7 @@ def test_t7a3_a_real_channel_kind_in_demo_needs_the_field(cfg_dir):
     assert "channel: slack" in str(err.value)
 
 
-def test_t7b_with_the_field_a_real_llm_kind_loads_in_demo(cfg_dir):
+def test_with_the_field_a_real_llm_kind_loads_in_demo(cfg_dir):
     def both(d):
         d["made_up_data_only"] = True
         d["backends"]["llm"] = {"kind": "openai_compat", **LLM_SETTINGS["openai_compat"]}
@@ -487,7 +553,7 @@ def test_t7b_with_the_field_a_real_llm_kind_loads_in_demo(cfg_dir):
     assert load_config(cfg_dir).backends.llm.kind == "openai_compat"
 
 
-def test_t7d_three_refusals_come_in_one_error(cfg_dir):
+def test_three_refusals_come_in_one_error(cfg_dir):
     def many(d):
         d["backends"]["llm"] = {"kind": "openai_compat", **LLM_SETTINGS["openai_compat"]}
         d["backends"]["detector"] = [GUARDRAIL]
@@ -503,7 +569,7 @@ def test_t7d_three_refusals_come_in_one_error(cfg_dir):
     assert "COMPLIANCE" in text
 
 
-def test_t7e_the_field_is_refused_in_pilot_and_prod(tmp_path):
+def test_the_field_is_refused_in_pilot_and_prod(tmp_path):
     for env in ("pilot", "prod"):
         root = _cfg_for(tmp_path / env, env)
         _edit(root, lambda d: d.update(made_up_data_only=True))
@@ -513,10 +579,10 @@ def test_t7e_the_field_is_refused_in_pilot_and_prod(tmp_path):
 
 
 @pytest.mark.parametrize("environment", ["Demo", "uat", ""])
-def test_t7f_the_field_is_refused_in_any_environment_that_is_not_demo(tmp_path, environment):
+def test_the_field_is_refused_in_any_environment_that_is_not_demo(tmp_path, environment):
     """A copied config whose environment is not a stage is live, so it may not say it holds made-up data. Such a value
-    never comes out of `load_config` (Literal); `model_copy` builds it. Defence in depth, not a reachable load (mutant
-    50 is killed only by this synthetic state)."""
+    never comes out of `load_config` (Literal); `model_copy` builds it. Defence in depth, not a reachable load: only
+    this synthetic state tells a rule that names pilot and prod apart from one that names every non-demo value."""
     copied = load_config(pilot_cfg(tmp_path)).model_copy(
         update={"environment": environment, "made_up_data_only": True}
     )
@@ -524,13 +590,13 @@ def test_t7f_the_field_is_refused_in_any_environment_that_is_not_demo(tmp_path, 
         copied._cross_checks()
 
 
-def test_t7g_the_field_still_loads_in_demo(cfg_dir):
+def test_the_field_still_loads_in_demo(cfg_dir):
     _edit(cfg_dir, lambda d: d.update(made_up_data_only=True))
     assert load_config(cfg_dir).made_up_data_only is True
 
 
 @pytest.mark.parametrize("value", ["yes", 1, "true", "on"])
-def test_t7h_a_loose_yes_does_not_switch_the_field_on(cfg_dir, value):
+def test_a_loose_yes_does_not_switch_the_field_on(cfg_dir, value):
     """The field is a strict bool: "yes", 1, "true" and "on" are refused, so a safety switch cannot turn on from
     loose input. A plain bool would let these through."""
     _edit(cfg_dir, lambda d: d.update(made_up_data_only=value))
@@ -540,7 +606,7 @@ def test_t7h_a_loose_yes_does_not_switch_the_field_on(cfg_dir, value):
 
 
 @pytest.mark.parametrize("value", ["maybe", None, [True]], ids=["word", "null", "list"])
-def test_t7i_a_value_that_is_not_a_bool_is_refused_at_load(cfg_dir, value):
+def test_a_value_that_is_not_a_bool_is_refused_at_load(cfg_dir, value):
     """A null or a list is not a yes: the config does not load (the field is not optional)."""
     _edit(cfg_dir, lambda d: d.update(made_up_data_only=value))
     with pytest.raises(ConfigError, match="made_up_data_only") as err:
@@ -548,3 +614,14 @@ def test_t7i_a_value_that_is_not_a_bool_is_refused_at_load(cfg_dir, value):
     assert "valid boolean" in str(
         err.value
     )  # a type error, not "extra input" (which the base already says)
+
+
+def test_an_unquoted_yes_in_the_file_is_the_yaml_true(cfg_dir):
+    """Pins today's behaviour so a change is seen: the file is read as YAML 1.1, where an unquoted `yes` is the
+    boolean true (the quoted string "yes" is refused, see the loose-yes row). So `made_up_data_only: yes` in the
+    file switches the field on, the same as `true`; it is the operator's own word either way."""
+    path = cfg_dir / "config.yaml"
+    path.write_text(
+        path.read_text(encoding="utf-8") + "\nmade_up_data_only: yes\n", encoding="utf-8"
+    )
+    assert load_config(cfg_dir).made_up_data_only is True

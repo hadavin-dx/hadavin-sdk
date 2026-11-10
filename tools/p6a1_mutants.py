@@ -1,25 +1,32 @@
-#!/usr/bin/env python3
-"""P6a-1 hand mutants for PR 72 (branch core/P6a). Made-up code only, no model calls, no spend.
+"""Hand-made mutants for the client-profile check (made-up code only, no model calls, no spend).
 
-Honest origin: the first runner (and its mutants 56-72) was never saved. Mutants 1-35, 46-51 come from the
-records (re-fitted to the current code); 52-55 are read from a one-line description; 56-72 and 73 are INVENTED
-to reach the recorded count and to cover the detector allow-list. Say "45 from records + 18 new = 63"; never
-call 63 the original number. Each mutant is planted in a throw-away detached git worktree (never in the working
-tree you run this from), the named tests run, and the file is restored in `finally`.
+What it does: it plants one small change at a time into the source of a throw-away copy of this repository
+(a detached git worktree of HEAD in a temp folder, never the folder you run it from), runs the tests that should
+notice, and restores the file in `finally`. A mutant is KILLED when a test FAILS. A collection or import error is
+reported as ERROR and is not a kill.
 
-HOW IT RUNS: `python tools/p6a1_mutants.py` from a venv with the test extras. It creates a detached worktree of
-HEAD in a temp folder, points PYTHONPATH at its src, runs a green baseline, then every mutant (P6A1_ONLY=1,2
-to pick some). Killed means a test FAILED; a collection or import error is reported as ERROR and is not a kill.
-Exit code 0 only if every mutant was located and killed. Mutants 56 and up have no named killer: any failing
-test counts. Commit your changes before running (the worktree is made from HEAD).
+Counts (63 mutants): ids 1-35 and 46-51 are 41 mutants re-fitted to the current code (the original mutant list
+for them is not kept); ids 52-55 are 4 mutants written from one-line descriptions; ids 56-73 are 18 mutants
+written later to cover the build keyword rule, the local detector list and the stage rule. Ids 36-45 are
+reserved for the second pull request of this package and are not used here. 41 + 4 + 18 = 63. Never call 63
+the original number.
+
+How to run: `python tools/p6a1_mutants.py` from a virtual environment with the test extras. Commit your changes
+first (the copy is made from HEAD). P6A1_ONLY=1,2 picks mutants; P6A1_PY names the Python; P6A1_TIMEOUT
+bounds one test run in seconds. The baseline run (unmutated) covers every test file that any mutant names, so a
+mutant is never judged against tests the baseline did not run. Each mutant names the test (a regular
+expression) that should kill it; "KILLED-NAMED" means that test failed. Exit code 0 only if every mutant was
+located and killed.
 """
 
 from __future__ import annotations
 
 import os
 import re
+import shutil
 import subprocess
 import sys
+import tempfile
 import time
 from pathlib import Path
 
@@ -27,6 +34,9 @@ HERE = Path(__file__).resolve().parent.parent
 PY = os.environ.get("P6A1_PY", sys.executable)
 TIMEOUT_S = int(os.environ.get("P6A1_TIMEOUT", "300"))
 WT = Path("/nonexistent-set-by-main")
+GIT = shutil.which(
+    "git"
+)  # one absolute path, found once; a missing git is a stated failure in main()
 ONLY = {int(x) for x in os.environ.get("P6A1_ONLY", "").split(",") if x}
 
 CP = "tests/test_client_profile.py"
@@ -70,11 +80,11 @@ def rep(old: str, new: str):
 
 
 def move_block(anchor_re: str):
-    """Cut the S2 block and paste it after the single line that matches anchor_re."""
+    """Cut the test-double rule block and paste it after the single line that matches anchor_re."""
 
     def f(text: str) -> str:
         if text.count(BLOCK_START) != 1 or text.count(BLOCK_END) != 1:
-            raise NotLocated("S2 block start/end not found exactly once")
+            raise NotLocated("test-double rule block start/end not found exactly once")
         a = text.index(BLOCK_START)
         b = text.index(BLOCK_END) + len(BLOCK_END)
         block = text[a:b]
@@ -98,12 +108,12 @@ def m(num, desc, path, mut, tests, killer=""):
 
 for i, (pair, kill) in enumerate(
     [
-        (("llm", "fake"), "p1b|t2a"),
-        (("channel", "fake"), "p1b|t2a"),
-        (("secrets", "fake"), "p1b|t2a"),
-        (("secrets", "env"), "t1a|t2a"),
-        (("store", "memory"), "p1b|t1d|t2a"),
-        (("audit", "local_dir"), "p1b|t2a"),
+        (("llm", "fake"), "p1b|demo_only_is_exactly"),
+        (("channel", "fake"), "p1b|demo_only_is_exactly"),
+        (("secrets", "fake"), "p1b|demo_only_is_exactly"),
+        (("secrets", "env"), "secrets_env_is_refused|demo_only_is_exactly"),
+        (("store", "memory"), "p1b|pilot_config_that_omits_store|demo_only_is_exactly"),
+        (("audit", "local_dir"), "p1b|demo_only_is_exactly"),
     ],
     start=1,
 ):
@@ -125,7 +135,7 @@ m(
         '        if self.environment == "prod":\n            refused = [',
     ),
     [CP, P1B],
-    "t1a.*pilot|t1d|p1b",
+    "secrets_env_is_refused.*pilot|pilot_config_that_omits_store|p1b",
 )
 m(
     8,
@@ -133,28 +143,42 @@ m(
     CFG,
     rep("{', '.join(refused)}{tail}", "{refused[0]}{tail}"),
     [CP, P1B],
-    "p1b|t7d",
+    "p1b|three_refusals",
 )
-m(9, "S2 check deleted", APP, rep("    if live_doubles:\n", "    if False:\n"), [CP], "t5b.*llm")
+m(
+    9,
+    "test-double rule check deleted",
+    APP,
+    rep("    if live_doubles:\n", "    if False:\n"),
+    [CP],
+    "each_test_double.*llm",
+)
 m(
     10,
-    "S2 looks only at llm",
+    "test-double rule looks only at llm",
     APP,
     rep(
         "        _test_doubles_given(_BUILD_PARAMS, given) if live",
         '        [n for n in _test_doubles_given(_BUILD_PARAMS, given) if n == "llm"] if live',
     ),
     [CP],
-    "t5b.*(secrets|channel|detector|clock)",
+    "each_test_double.*(secrets|channel|detector|clock)",
 )
-m(11, "allow_test_doubles default True", APP, rep(SIG, SIG.replace("False", "True")), [CP], "t5b")
+m(
+    11,
+    "allow_test_doubles default True",
+    APP,
+    rep(SIG, SIG.replace("False", "True")),
+    [CP],
+    "each_test_double",
+)
 m(
     12,
-    "S2 only for prod",
+    "test-double rule only for prod",
     APP,
     rep(S2_COND, 'if cfg.environment == "prod" and allow_test_doubles is not True else []'),
     [CP],
-    "t5b.*pilot",
+    "each_test_double.*pilot",
 )
 m(
     13,
@@ -162,7 +186,7 @@ m(
     APP,
     rep(OWN, '_OWN_REFUSAL = ("tools",)\n'),
     [CP],
-    "t5f",
+    "sources_keeps",
 )
 m(
     14,
@@ -170,7 +194,7 @@ m(
     APP,
     rep(OWN, '_OWN_REFUSAL = ("sources",)\n'),
     [CP],
-    "t5h",
+    "tools_keeps",
 )
 m(
     15,
@@ -181,7 +205,7 @@ m(
         "        and bool(given[name]) != bool(p.default)\n",
     ),
     [CP],
-    "t5i",
+    "falsy_double",
 )
 m(
     16,
@@ -189,7 +213,7 @@ m(
     APP,
     move_block(r'^    secrets = secrets or make\("secrets", b\.secrets\)\n'),
     [CP],
-    "t5j|t5q",
+    "refusal_builds_nothing_first|not_demo_is_live",
 )
 m(
     17,
@@ -197,7 +221,7 @@ m(
     APP,
     move_block(r"^    platform_secrets\.check\(.*\)\n"),
     [CP],
-    "t5j",
+    "refusal_builds_nothing_first",
 )
 m(
     18,
@@ -208,7 +232,7 @@ m(
         '        and name not in skip\n        and name in ("secrets", "channel", "detector", "llm")\n',
     ),
     [CP],
-    "t5b.*clock|t5l",
+    "each_test_double.*clock|keyword_added_later",
 )
 m(
     19,
@@ -216,9 +240,16 @@ m(
     APP,
     rep(S2_MSG, '            f"{live_doubles[0]}= replace configured parts and are for tests; "\n'),
     [CP],
-    "t5c",
+    "all_at_once",
 )
-m(20, "switch ignored", APP, rep(S2_COND, "if live else []"), [CP, K9B, K10], "t5n|round9b|round10")
+m(
+    20,
+    "switch ignored",
+    APP,
+    rep(S2_COND, "if live else []"),
+    [CP, K9B, K10],
+    "switch_lets|round9b|round10",
+)
 m(
     21,
     "_LIVE_HOOKS gains llm",
@@ -228,7 +259,7 @@ m(
         '_LIVE_HOOKS: tuple[str, ...] = ("hold_run_ids", "timeout_s", "llm")',
     ),
     [CP],
-    "t5b.*llm|t5p",
+    "each_test_double.*llm|live_hooks_are_exactly",
 )
 m(
     22,
@@ -239,73 +270,80 @@ m(
         '    skip = {"allow_test_doubles", *_OWN_REFUSAL}\n',
     ),
     [CP],
-    "t5o",
+    "live_hooks_need_no_switch",
 )
 m(
     23,
-    "T5g checker: keyword branch deleted",
+    "door scan: keyword branch deleted",
     CP,
     rep('                if kw.arg == "allow_test_doubles":\n', "                if False:\n"),
     [CP],
-    "t5g_planted.*direct",
+    "planted_doors.*direct",
 )
 m(
     24,
-    "T5g checker: keyword only in calls named build",
+    "door scan: keyword only in calls named build",
     CP,
     rep(
         '                if kw.arg == "allow_test_doubles":\n',
         '                if kw.arg == "allow_test_doubles" and name == "build":\n',
     ),
     [CP],
-    "t5g_planted.*partial",
+    "planted_doors.*partial",
 )
 m(
     25,
-    "T5g checker: ** branch deleted",
+    "door scan: ** branch deleted",
     CP,
     rep('                if kw.arg is None and name == "build":\n', "                if False:\n"),
     [CP],
-    "t5g_planted.*double_star",
+    "planted_doors.*double_star",
 )
 m(
     26,
-    "T2 check: both-sets not reported",
+    "decided-pairs check: both-sets not reported",
     CP,
     rep("        for c, k in sorted(demo_only & set(reviewed))\n", "        for c, k in []\n"),
     [CP],
-    "t2c.*both",
+    "planted_pair_in_both",
 )
 m(
     27,
-    "T2 check: empty reason not reported",
+    "decided-pairs check: empty reason not reported",
     CP,
     rep(
         "for (c, k), why in sorted(reviewed.items()) if not why.strip()]",
         "for (c, k), why in sorted(reviewed.items()) if False]",
     ),
     [CP],
-    "t2c.*empty",
+    "planted_empty_reason",
 )
 m(
     28,
-    "T2 check: neither-set not reported",
+    "decided-pairs check: neither-set not reported",
     CP,
     rep(
         "        for c, k in sorted(pairs - demo_only - set(reviewed))\n",
         "        for c, k in []\n",
     ),
     [CP],
-    "t2c.*neither",
+    "planted_kind_in_neither",
 )
-m(29, "S6 items deleted", CFG, rep(S6_IF, "        if False:\n"), [CP], "t7a")
+m(
+    29,
+    "made-up-data rule items deleted",
+    CFG,
+    rep(S6_IF, "        if False:\n"),
+    [CP],
+    "needs_the_field",
+)
 m(
     30,
-    "S6 runs in every stage",
+    "made-up-data rule runs in every stage",
     CFG,
     rep(S6_IF, "        if not self.made_up_data_only:\n"),
     [CP],
-    "t0|t5m|t5n",
+    "prod_fixture_loads|no_override_passes|switch_lets",
 )
 m(
     31,
@@ -313,47 +351,54 @@ m(
     CFG,
     rep("    made_up_data_only: StrictBool = False", "    made_up_data_only: StrictBool = True"),
     [CP],
-    "t7a",
+    "needs_the_field",
 )
 m(
     32,
-    "S6 llm item checks one fixed kind",
+    "made-up-data rule llm item checks one fixed kind",
     CFG,
     rep(LLM_LINE, '    out = [f"llm: {b.llm.kind}"] if b.llm.kind == "anthropic" else []\n'),
     [CP],
-    "t7a_a_real_llm",
+    "real_llm_kind_in_demo",
 )
-m(33, "S6 guardrail item dropped", CFG, rep(DET_LINE, ""), [CP], "t7a2|t7d")
+m(
+    33,
+    "made-up-data rule guardrail item dropped",
+    CFG,
+    rep(DET_LINE, ""),
+    [CP],
+    "vendor_detector|three_refusals",
+)
 m(
     34,
     "field ignored (refused even with it)",
     CFG,
     rep(S6_IF, "        if not live:\n"),
     [CP],
-    "t7b",
+    "with_the_field_a_real_llm",
 )
 m(
     35,
-    "S6 raised as its own error",
+    "made-up-data rule raised as its own error",
     CFG,
     rep(
         "        refused += sends_text_out\n",
         '        if sends_text_out:\n            raise ValueError("refused: " + ", ".join(sends_text_out))\n',
     ),
     [CP],
-    "t7d",
+    "three_refusals",
 )
-m(46, "S6 channel item dropped", CFG, rep(CHAN_LINE, ""), [CP], "t7a3")
+m(46, "made-up-data rule channel item dropped", CFG, rep(CHAN_LINE, ""), [CP], "real_channel_kind")
 m(
     47,
-    "S2 live replaced by environment in (pilot, prod)",
+    "test-double rule live replaced by environment in (pilot, prod)",
     APP,
     rep(
         S2_COND,
         'if cfg.environment in ("pilot", "prod") and allow_test_doubles is not True else []',
     ),
     [CP],
-    "t5q",
+    "not_demo_is_live",
 )
 m(
     48,
@@ -361,7 +406,7 @@ m(
     APP,
     rep(S2_COND, "if live and not allow_test_doubles else []"),
     [CP],
-    "t5r",
+    "only_the_value_true",
 )
 m(
     49,
@@ -369,7 +414,7 @@ m(
     CFG,
     rep(S6_FLAG, "            []\n"),
     [CP],
-    "t7e|t7f",
+    "refused_in_pilot_and_prod|any_environment_that_is_not_demo",
 )
 m(
     50,
@@ -380,7 +425,7 @@ m(
         '            ["made_up_data_only (for demo configs only)"] if self.environment in ("pilot", "prod") and self.made_up_data_only else []\n',
     ),
     [CP],
-    "t7f",
+    "any_environment_that_is_not_demo",
 )
 m(
     51,
@@ -391,18 +436,18 @@ m(
         '            ["made_up_data_only (for demo configs only)"] if self.made_up_data_only else []\n',
     ),
     [CP],
-    "t7b|t7g",
+    "with_the_field_a_real_llm|field_still_loads",
 )
 m(
     52,
-    "advice tail appended for any refusal (R2-01)",
+    "advice tail appended for any refusal",
     CFG,
     rep(
         '                if sends_text_out\n                else ""',
         '                if refused\n                else ""',
     ),
     [CP],
-    "t1a|t1d|t1e",
+    "secrets_env_is_refused|pilot_config_that_omits_store|demo_anchor_only_failure",
 )
 m(
     53,
@@ -413,7 +458,7 @@ m(
         "    timeout_s: float | None = None,\n    extra_double: object = None,\n    allow_test_doubles: bool = False,\n",
     ),
     [CP],
-    "t5s",
+    "has_a_sample",
 )
 m(
     54,
@@ -421,7 +466,7 @@ m(
     CFG,
     rep("    made_up_data_only: StrictBool = False", "    made_up_data_only: bool = False"),
     [CP],
-    "t7h",
+    "loose_yes",
 )
 m(
     55,
@@ -432,158 +477,198 @@ m(
         "    made_up_data_only: StrictBool | None = False",
     ),
     [CP],
-    "t7i",
+    "not_a_bool",
 )
-# 56-72: INVENTED to reach the recorded total of 62 (see header). No named killer.
+# 56-73: written later (see the header). Each names the test that should kill it.
 m(
     56,
-    "[invented] allow_insecure_loopback refusal dropped in live",
+    "[later] allow_insecure_loopback refusal dropped in live",
     CFG,
     rep(
         '            refused += ["allow_insecure_loopback"] if self.allow_insecure_loopback else []\n',
         "",
     ),
     [CP, P1B],
+    "demo_only_kinds_refused_outside",
 )
 m(
     57,
-    "[invented] local detector list loses regex (a local check counted as sending text out)",
+    "[later] local detector list loses regex (a local check counted as sending text out)",
     TAB,
     rep('frozenset({"regex", "llm_judge"})', 'frozenset({"llm_judge"})'),
     [CP],
+    "local_detector_list|demo_anchor_only_failure",
 )
 m(
     58,
-    "[invented] anchor refusals dropped",
+    "[later] anchor refusals dropped",
     CFG,
     rep("        refused += _anchor_refusals(self.environment, self.backends)\n", ""),
     [CP, P1B],
+    "demo_anchor_only_failure|three_refusals",
 )
 m(
     59,
-    "[invented] positional parameters counted as doubles",
+    "[later] positional parameters counted as doubles",
     APP,
     rep("        if p.kind is p.KEYWORD_ONLY\n", "        if True\n"),
     [CP],
+    "no_override_passes|live_hooks_need_no_switch|sources_keeps|tools_keeps",
 )
 m(
     60,
-    "[invented] a name missing from given is not skipped",
+    "[later] a name missing from given is not skipped",
     APP,
     rep("        and name in given\n", ""),
     [CP],
+    "keyword_added_later",
 )
 m(
     61,
-    "[invented] sources refused outside live too",
+    "[later] sources refused outside live too",
     APP,
     rep("    if sources and live:\n", "    if sources:\n"),
     [CP, P1B, "tests/test_k5_tools.py", "tests/test_k5_round5.py"],
+    "scope_probe_refuses_write",
 )
 m(
     62,
-    "[invented] tools refused outside live too",
+    "[later] tools refused outside live too",
     APP,
     rep("    if tools and live:\n", "    if tools:\n"),
     [CP, P1B, "tests/test_k5_round5.py", "tests/test_k3_review_fixes.py"],
+    "build_passes_tools_to_hooks",
 )
 m(
     63,
-    "[invented] hold_run_ids no longer a live hook",
+    "[later] hold_run_ids no longer a live hook",
     APP,
     rep('("hold_run_ids", "timeout_s")', '("timeout_s",)'),
     [CP],
+    "live_hooks_need_no_switch.*hold_run_ids|live_hooks_are_exactly",
 )
 m(
     64,
-    "[invented] timeout_s no longer a live hook",
+    "[later] timeout_s no longer a live hook",
     APP,
     rep('("hold_run_ids", "timeout_s")', '("hold_run_ids",)'),
     [CP],
+    "live_hooks_need_no_switch.*timeout_s|live_hooks_are_exactly",
 )
 m(
     65,
-    "[invented] DEMO_ONLY gains llm/openai_compat",
+    "[later] DEMO_ONLY gains llm/openai_compat",
     TAB,
     rep(
         '        ("llm", "fake"),\n',
         '        ("llm", "fake"),\n        ("llm", "openai_compat"),\n',
     ),
     [CP, P1B],
+    "demo_only_is_exactly|prod_fixture_loads",
 )
 m(
     66,
-    "[invented] DEMO_ONLY gains channel/slack",
+    "[later] DEMO_ONLY gains channel/slack",
     TAB,
     rep(
         '        ("channel", "fake"),\n',
         '        ("channel", "fake"),\n        ("channel", "slack"),\n',
     ),
     [CP, P1B],
+    "demo_only_is_exactly|prod_fixture_loads",
 )
 m(
     67,
-    "[invented] S6 flag text loses its words",
+    "[later] made-up-data rule flag text loses its words",
     CFG,
     rep('"made_up_data_only (for demo configs only)"', '"made_up_data_only"'),
     [CP],
+    "refused_in_pilot_and_prod",
 )
 m(
     68,
-    "[invented] S2 message no longer names the switch",
+    "[later] test-double rule message no longer names the switch",
     APP,
     rep(
         '"in pilot and prod pass allow_test_doubles=True only from a test"\n        )\n    reg',
         '"in pilot and prod pass the switch only from a test"\n        )\n    reg',
     ),
     [CP],
+    "each_test_double|all_at_once",
 )
 m(
     69,
-    "[invented] build keywords hidden from the check (secrets blanked)",
+    "[later] build keywords hidden from the check (secrets blanked)",
     APP,
     rep("    given = dict(locals())\n", "    given = dict(locals(), secrets=None)\n"),
     [CP],
+    "each_test_double.*secrets|all_at_once",
 )
 m(
     70,
-    "[invented] app live is prod only",
+    "[later] app live is prod only",
     APP,
     rep(
         "    live = is_live(cfg.environment)\n    # Before",
         '    live = cfg.environment == "prod"\n    # Before',
     ),
     [CP, P1B],
+    "each_test_double|all_at_once|not_demo_is_live",
 )
 m(
     71,
-    "[invented] only the first S6 item reported",
+    "[later] only the first made-up-data rule item reported",
     CFG,
     rep("        refused += sends_text_out\n", "        refused += sends_text_out[:1]\n"),
     [CP],
+    "three_refusals",
+)
+m(
+    72,
+    "[later] switch counted only when it is False",
+    APP,
+    rep(S2_COND, "if live and allow_test_doubles is False else []"),
+    [CP],
+    "only_the_value_true",
 )
 m(
     73,
-    "[new] a vendor detector joins the local list",
+    "[later] a vendor detector joins the local list",
     TAB,
     rep(
         'frozenset({"regex", "llm_judge"})',
         'frozenset({"regex", "llm_judge", "bedrock_guardrail"})',
     ),
     [CP],
-    "t7a2|t7a4",
+    "vendor_detector|local_detector_list",
 )
-m(
-    72,
-    "[invented] switch counted only when it is False",
-    APP,
-    rep(S2_COND, "if live and allow_test_doubles is False else []"),
-    [CP],
-)
+
+
+def BASELINE_TARGETS() -> list[str]:
+    """Every test target any mutant names, once, in first-use order: a mutant is never judged against tests
+    the unmutated baseline did not run."""
+    seen: list[str] = []
+    for *_front, tests, _killer in DEF:
+        seen += [t for t in tests if t not in seen]
+    return seen
 
 
 def git(*a: str) -> subprocess.CompletedProcess:
-    return subprocess.run(["git", "-C", str(WT), *a], capture_output=True, text=True, timeout=60)
+    return _git_in(WT, *a)
+
+
+def _sh(argv: list[str], timeout: int, cwd: Path | None = None, env: dict | None = None):
+    """The one place this file starts a program. The program is git (found once, absolute) or this runner's own
+    Python; every argument is this file's own text or a test path from the mutant list. No shell is used."""
+    return subprocess.run(  # noqa: S603  (fixed argv, no shell; ruff cannot see through the list)
+        argv, cwd=cwd, env=env, capture_output=True, text=True, timeout=timeout, check=False
+    )
+
+
+def _git_in(folder: Path, *a: str) -> subprocess.CompletedProcess:
+    if GIT is None:
+        raise RuntimeError("git is not on PATH: this runner needs it to make the throw-away copy")
+    return _sh([GIT, "-C", str(folder), *a], timeout=60)
 
 
 def run_tests(targets: list[str], x: bool) -> tuple[str, list[str], list[str], str]:
@@ -594,7 +679,7 @@ def run_tests(targets: list[str], x: bool) -> tuple[str, list[str], list[str], s
     if x:
         cmd.append("-x")
     try:
-        p = subprocess.run(cmd, cwd=WT, env=env, capture_output=True, text=True, timeout=TIMEOUT_S)
+        p = _sh(cmd, timeout=TIMEOUT_S, cwd=WT, env=env)
     except subprocess.TimeoutExpired:
         return "TIMEOUT", [], [], ""
     out = p.stdout + p.stderr
@@ -614,35 +699,28 @@ def short(node: str) -> str:
 
 def main() -> int:
     global WT
-    import shutil
-    import tempfile
-
+    if GIT is None:
+        print("git is not on PATH: this runner needs it to make the throw-away copy")
+        return 3
     tmp = Path(tempfile.mkdtemp(prefix="p6a1-mutants-"))
     WT = tmp / "wt"
-    made = subprocess.run(
-        ["git", "-C", str(HERE), "worktree", "add", "--detach", str(WT), "HEAD"],
-        capture_output=True,
-        text=True,
-    )
+    made = _git_in(HERE, "worktree", "add", "--detach", str(WT), "HEAD")
     if made.returncode:
         print("cannot make the throw-away worktree:", made.stderr)
         return 3
     try:
         return _run()
     finally:
-        subprocess.run(
-            ["git", "-C", str(HERE), "worktree", "remove", "--force", str(WT)], capture_output=True
-        )
+        _git_in(HERE, "worktree", "remove", "--force", str(WT))
         shutil.rmtree(tmp, ignore_errors=True)
 
 
 def _run() -> int:
-    chk = subprocess.run(
+    chk = _sh(
         [PY, "-c", "import hadavin_sdk;print(hadavin_sdk.__file__)"],
+        timeout=60,
         cwd=WT,
         env={**os.environ, "PYTHONPATH": str(WT / "src")},
-        capture_output=True,
-        text=True,
     )
     if not chk.stdout.strip().startswith(str(WT)):
         print("hadavin_sdk does not resolve into the copy:", chk.stdout, chk.stderr)
@@ -651,13 +729,13 @@ def _run() -> int:
         print("copy is not clean before start:\n" + git("status", "--porcelain").stdout)
         return 3
     print(f"head {git('rev-parse', 'HEAD').stdout.strip()}  copy {WT}  python {PY}")
-    base, _bf, _be, btail = run_tests([CP, P1B, K9B, K10], x=False)
+    base, _bf, _be, btail = run_tests(BASELINE_TARGETS(), x=False)
     print(f"baseline (unmutated) {base}: {btail}")
     if base != "PASS":
         print("baseline is not green; mutant results would mean nothing")
         return 3
     rows = []
-    t0 = time.time()
+    prod_fixture_loads = time.time()
     for num, desc, path, mut, tests, killer in DEF:
         if ONLY and num not in ONLY:
             continue
@@ -723,7 +801,7 @@ def _run() -> int:
     print(
         f"\nTOTAL mutants {len(rows)}  planted {n_pl}  KILLED {killed} (named {len(named)}, no named killer "
         f"{len(plain)}, killed by another test {len(other)})  SURVIVED {len(surv)}  other problems {len(bad)}  "
-        f"({time.time() - t0:.0f}s)"
+        f"({time.time() - prod_fixture_loads:.0f}s)"
     )
     for r in surv + bad + other:
         print("  not clean:", r[0], r[4], r[1], r[5])
