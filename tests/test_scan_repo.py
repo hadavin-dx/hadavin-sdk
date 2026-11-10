@@ -45,17 +45,25 @@ NEAR_MISSES = [
 ]
 
 
-def _repo(tmp_path, files):
+def _repo(tmp_path, files, links=None):
+    """A git repo with `files` (text or bytes) and, optionally, symlinks (`links` maps a path to its target text)."""
     subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)  # noqa: S603, S607
     for name, content in files.items():
         p = tmp_path / name
         p.parent.mkdir(parents=True, exist_ok=True)
         p.write_bytes(content if isinstance(content, bytes) else content.encode())
+    for name, target in (links or {}).items():
+        p = tmp_path / name
+        p.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            p.symlink_to(target)
+        except OSError:
+            pytest.skip("this machine cannot make symbolic links")
     subprocess.run(["git", "-C", str(tmp_path), "add", "-A"], check=True)  # noqa: S603, S607
     return tmp_path
 
 
-def _scan(repo, allow="", extra="", banned_src=None, suppress=""):
+def _scan(repo, allow="", extra="", banned_src=None, suppress="", args=()):
     """Run the script on `repo` with temporary list files (never the real ones)."""
     work = repo.parent / (repo.name + "-lists")
     work.mkdir(exist_ok=True)
@@ -77,6 +85,7 @@ def _scan(repo, allow="", extra="", banned_src=None, suppress=""):
     ]
     if banned_src is not None:
         cmd += ["--banned-src", str(banned_src)]
+    cmd += list(args)
     r = subprocess.run(cmd, capture_output=True, text=True, check=False)  # noqa: S603
     return r.returncode, r.stdout + r.stderr
 
@@ -121,9 +130,9 @@ def test_psql_variable_is_not_a_password_literal(tmp_path):
     assert _scan(_repo(tmp_path, {"x.sql": "ALTER ROLE r PASSWORD :'ro_password';\n"}))[0] == 0
 
 
-def test_clean_repo_and_binary_files_pass(tmp_path):
-    files = {"a.py": "print('hi')\n", "b.bin": b"\0" + CASES["llm-id-sk"].encode()}
-    assert _scan(_repo(tmp_path, files))[0] == 0
+def test_clean_repo_and_clean_binary_files_pass(tmp_path):
+    files = {"a.py": "print('hi')\n", "b.bin": b"\0\x01\xff\xfe" + bytes(range(256)) + b"\n"}
+    assert _scan(_repo(tmp_path, files)) == (0, "\n")
 
 
 def test_untracked_files_are_not_scanned(tmp_path):
@@ -140,7 +149,7 @@ def test_allowlist_skips_only_the_listed_rule_on_the_listed_file(tmp_path):
     }
     rc, out = _scan(
         _repo(tmp_path, files),
-        allow="ok.txt:llm-id-sk:fixture for the test\nok2.txt:llm-id-sk:wrong rule\n",
+        allow="ok.txt:llm-id-sk:fixture for the test\nok2.txt:llm-id-sk:the wrong rule on purpose\n",
     )
     assert rc == 1 and "bad.txt:1:" in out and "ok.txt:1:" not in out
     assert "ok2.txt:1: vcs-id-classic" in out  # a different rule on a listed file is still flagged
@@ -149,7 +158,7 @@ def test_allowlist_skips_only_the_listed_rule_on_the_listed_file(tmp_path):
 def test_allowlist_entry_without_a_reason_or_for_a_missing_file_fails(tmp_path):
     repo = _repo(tmp_path, {"a.txt": "x = 1\n"})
     assert "needs path:rule:reason" in _scan(repo, allow="a.txt:sk-api-key\n")[1]
-    assert _scan(repo, allow="a.txt:llm-id-sk:ok\n")[0] == 0
+    assert _scan(repo, allow="a.txt:llm-id-sk:reviewed fixture for the test\n")[0] == 0
     rc, out = _scan(repo, allow="gone.txt:llm-id-sk:was needed once\n")
     assert rc == 1 and "stale entry, gone.txt is not tracked" in out
 
@@ -288,7 +297,7 @@ def test_a_list_entry_covers_only_its_own_file_and_rule(tmp_path):
 
 def test_a_file_the_allowlist_skips_is_still_checked_for_markers(tmp_path):
     repo = _repo(tmp_path, {"a.py": MARKERS["suppress-nosec"]})
-    rc, out = _scan(repo, allow="a.py:*:test fixture\n")
+    rc, out = _scan(repo, allow="a.py:banned-name:fixture names a banned word\n")
     assert rc == 1 and "a.py:1: suppress-nosec" in out
 
 
@@ -310,7 +319,14 @@ def test_a_file_the_allowlist_skips_is_still_checked_for_markers(tmp_path):
         ("a.py:suppress-nosec:0:reason\n", "positive count"),
         ("a.py:suppress-nosec:1:reason\n", "count@sha256"),
         ("a.py:scanner-config-file:abc:reason\n", "sha256"),
-        ("a.py:suppress-nosec:" + ONE + ":r\na.py:suppress-nosec:" + ONE + ":again\n", "duplicate"),
+        (
+            "a.py:suppress-nosec:"
+            + ONE
+            + ":a reason one\na.py:suppress-nosec:"
+            + ONE
+            + ":again now\n",
+            "duplicate",
+        ),
     ],
 )
 def test_a_bad_list_line_is_itself_a_hit(tmp_path, entry, message):
@@ -335,6 +351,18 @@ def test_a_bad_list_line_is_itself_a_hit(tmp_path, entry, message):
         "bandit.yml",
         "setup.cfg",
         "sub/tox.ini",
+        "zizmor.yaml",
+        ".checkov.yml",
+        ".checkov.yaml",
+        ".hadolint.yaml",
+        "a/.hadolint.yml",
+        ".gitattributes",
+        "sub/.gitattributes",
+        ".github/codeql-config.yml",
+        ".github/zizmor.yaml",
+        "docs/My-CodeQL-notes.md",
+        ".tfsec/config.yml",
+        ".checkov/x.yml",
     ],
 )
 def test_a_scanner_config_file_hits_unless_listed_with_its_hash(tmp_path, name):
@@ -364,9 +392,11 @@ def test_the_real_repo_passes_with_its_own_list():
     assert r.returncode == 0, r.stdout[-2000:]
 
 
-def test_the_real_list_says_the_baseline_was_not_reviewed_line_by_line():
+def test_the_real_list_has_no_generic_baseline_reason_and_names_the_code_owners_limit():
     text = REAL_LIST.read_text()
-    assert "NOT reviewed one" in text and "CODEOWNERS" in text
+    assert "CODEOWNERS" in text and "NOT done here" in text
+    assert "not individually reviewed" not in text.lower()
+    assert "carries its own inline reason" not in text.lower()
 
 
 # ---- round 1 fixes (A24 PR91): marker text pin, NUL files, broader markers, glob allowlist, pinned list files ----
@@ -413,7 +443,7 @@ def test_a_scanner_config_with_a_nul_byte_still_hits(tmp_path, name):
     assert rc == 1 and "hash differs" in out
 
 
-@pytest.mark.parametrize("name", ["a.py", "pyproject.toml", "ci.yml", "x.sh"])
+@pytest.mark.parametrize("name", ["a.py", "ci.yml", "x.sh"])
 def test_a_source_file_with_a_nul_byte_is_refused_not_skipped(tmp_path, name):
     rc, out = _scan(_repo(tmp_path, {name: b"x = 1\0\n"}))
     assert rc == 1 and f"{name}:1: nul-in-text-file" in out
@@ -550,7 +580,6 @@ NEW_HITS = {  # one rule per tool added in round 2, several shapes each
 NEW_MISSES = [  # prose that names a tool, or its ordinary comments, is not a suppression
     "the NO" + "SONAR marker in prose",
     "NO" + "PMD in prose",
-    "x = 1  " + H + "lgtm, thanks",
     "x = 1  " + H + "codeql runs in CI",
     "x = 1  " + H + "zizmor runs offline",
     "x = 1  " + H + "pragma: no cover",
@@ -673,8 +702,13 @@ def test_a_real_key_behind_a_nul_byte_is_found_too(tmp_path, name):
 @pytest.mark.parametrize(
     "name", ["a.png", "b.JPG", "c.pdf", "d.zip", "e.woff2", "f.whl", "g.parquet", "h.db", "i.bin"]
 )
-def test_a_nul_byte_in_a_known_binary_format_is_allowed(tmp_path, name):
-    assert _scan(_repo(tmp_path, {name: b"\x89\0\0" + CASES["llm-id-sk"].encode()})) == (0, "\n")
+def test_a_nul_byte_in_a_known_binary_format_is_allowed_when_nothing_secret_is_in_it(
+    tmp_path, name
+):
+    body = (
+        b"\x89\0\0" + bytes(range(256)) + b"\0" + EXAMPLE_KEY.encode()
+    )  # the placeholder key is fine
+    assert _scan(_repo(tmp_path, {name: body})) == (0, "\n")
 
 
 @pytest.mark.parametrize(
@@ -686,6 +720,14 @@ def test_a_nul_byte_in_a_known_binary_format_is_allowed(tmp_path, name):
         "too short",
         "x" * 14,
         "a b c d e f g",
+        "x" * 15,
+        "x" * 200,
+        "same same same same",
+        "abc abc abc abc abc",
+        "baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed",
+        "Not   Individually\tReviewed by anyone at all",
+        "the marker carries its own inline reason",
+        "taken as part of the baseline of 2742c1b",
     ],
 )
 def test_a_placeholder_or_short_reason_is_refused(tmp_path, reason):
@@ -695,7 +737,7 @@ def test_a_placeholder_or_short_reason_is_refused(tmp_path, reason):
 
 
 @pytest.mark.parametrize(
-    "reason", ["x" * 15, "NEWS desk fixture, reviewed in PR", "newly added test helper"]
+    "reason", ["NEWS desk fixture, reviewed in PR", "newly added test helper", "S603 on fixed argv"]
 )
 def test_a_real_reason_is_accepted(tmp_path, reason):
     repo = _repo(tmp_path, {"a.py": NOSEC + "\n"})
@@ -767,3 +809,378 @@ def test_the_real_repo_has_no_file_level_noqa_without_codes():
         check=False,
     ).stdout
     assert "file-noqa-without-codes" not in out
+
+
+# ---- round 3 fixes (A24 PR91, fix batch 3) ----
+AWS_KEY = "AKIA" + "ABCDEFGHIJKLMNOP"
+GH_KEY = "gh" + "p_" + "c" * 36
+SK_KEY = "sk-" + "b" * 40
+
+
+# M3 (r3): a NUL byte after a known-binary extension used to hide the whole file from the secret rules
+BINARY_NAMES = [
+    "x.png", "x.jpg", "x.gif", "x.ico", "x.pdf", "x.zip", "x.gz", "x.tar", "x.whl", "x.jar",
+    "x.woff2", "x.ttf", "x.parquet", "x.db", "x.sqlite", "x.pyc", "x.so", "x.exe", "x.wasm",
+    "x.npy", "x.bin", "x.PNG", "dir/x.Bin",
+]  # fmt: skip
+
+
+@pytest.mark.parametrize("name", BINARY_NAMES)
+@pytest.mark.parametrize(
+    ("rule", "secret"),
+    [
+        ("cloud-id-prefix", AWS_KEY),
+        ("llm-id-sk", SK_KEY),
+        ("vcs-id-classic", GH_KEY),
+        ("pem-block-header", "-----BEGIN " + "RSA PRIVATE" + " KEY-----"),
+    ],
+)
+def test_a_secret_behind_a_nul_byte_in_a_known_binary_format_is_found(tmp_path, name, rule, secret):
+    body = b"\x89PNG\0\0\n" + secret.encode() + b"\n\0\xff"
+    rc, out = _scan(_repo(tmp_path, {name: body}))
+    assert rc == 1 and f"{name}:2: {rule}" in out
+    assert (
+        "nul-in-text-file" not in out
+    )  # a known binary format is not refused for its NUL, only read
+
+
+def test_a_secret_in_a_binary_file_with_high_bytes_around_it_is_found(tmp_path):
+    body = bytes(range(128, 256)) + b"\0" + AWS_KEY.encode() + bytes(range(128, 200))
+    rc, out = _scan(_repo(tmp_path, {"a.bin": body}))
+    assert (
+        rc == 1 and "a.bin:" in out and "cloud-id-prefix" in out
+    )  # line numbers of a binary file mean little
+
+
+def test_the_allowlist_can_skip_one_rule_on_one_binary_file(tmp_path):
+    files = {"a.bin": b"\0" + AWS_KEY.encode(), "b.bin": b"\0" + AWS_KEY.encode()}
+    rc, out = _scan(
+        _repo(tmp_path, files), allow="a.bin:cloud-id-prefix:a made-up key in a test blob\n"
+    )
+    assert rc == 1 and "b.bin:1: cloud-id-prefix" in out and "a.bin" not in out
+
+
+# N5 (r3): a text-like file that really holds NUL (xlsx, pkl, onnx, h5) can be listed per path, with a reason
+@pytest.mark.parametrize("name", ["x.xlsx", "model.onnx", "d.h5", "x.pkl"])
+def test_nul_in_a_text_like_file_can_be_allowed_per_path_with_a_reason(tmp_path, name):
+    files = {name: b"PK\0\0data\n", "other.dat": b"PK\0\0data\n"}
+    repo = _repo(tmp_path, files)
+    allow = f"{name}:nul-in-text-file:a binary format that is not on the known list\n"
+    rc, out = _scan(repo, allow=allow)
+    assert rc == 1 and "other.dat:1: nul-in-text-file" in out and f"{name}:" not in out
+    key = AWS_KEY.encode()
+    rc, out = _scan(_repo(tmp_path / "k", {name: b"\0" + key + b"\n"}), allow=allow)
+    assert rc == 1 and f"{name}:1: cloud-id-prefix" in out and "nul-in-text-file" not in out
+
+
+@pytest.mark.parametrize(
+    ("entry", "message"),
+    [
+        ("a.txt:*:disable every rule on this file\n", "unknown rule"),
+        ("a.txt:no-such-rule:a reason with enough words\n", "unknown rule"),
+        ("a.txt:Llm-Id-Sk:a reason with enough words\n", "unknown rule"),
+        ("a.txt:llm-id-sk:ok\n", "shorter than"),
+        ("a.txt:llm-id-sk:words words words other\n", "fewer than"),
+        ("a.txt:llm-id-sk:" + "x" * 30 + "\n", "fewer than"),
+        ("a.txt:llm-id-sk:baseline of 2742c1b, not individually reviewed\n", "generic baseline"),
+        ("a.txt:llm-id-sk:NEW, needs a reviewed reason\n", "placeholder"),
+    ],
+)
+def test_an_allowlist_line_with_a_bad_rule_or_reason_is_refused_and_skips_nothing(
+    tmp_path, entry, message
+):
+    repo = _repo(tmp_path, {"a.txt": CASES["llm-id-sk"] + "\n"})
+    rc, out = _scan(repo, allow=entry)
+    assert rc == 1 and message in out and "a.txt:1: llm-id-sk" in out
+
+
+# M2 (r3): the nested-pyproject rule read lines with a regex; the file is parsed as TOML now, so every spelling counts
+NESTED_SPELLINGS = {
+    "spaces in brackets": "[ tool.ruff ]\nline-length = 1\n",
+    "spaces around the dot": '[tool . ruff.lint]\nignore = ["S"]\n',
+    "quoted key": '[tool."ruff"]\nline-length = 1\n',
+    "quoted table name": '["tool".ruff]\nline-length = 1\n',
+    "literal quoted": "[tool.'bandit']\nskips = ['B101']\n",
+    "tool table plus key": "[tool]\nruff = { line-length = 1 }\n",
+    "dotted top-level key": 'tool.ruff.lint.ignore = ["S"]\n',
+    "inline table": "tool = { ruff = { line-length = 1 } }\n",
+    "dotted semgrep": "tool.semgrep.rules = 1\n",
+    "upper case": "[tool.RUFF]\nline-length = 1\n",
+    "after other tables": '[project]\nname = "x"\n\n[tool.other]\na = 1\n\n[ tool . bandit ]\nskips = []\n',
+    "array of tables": "[[tool.ruff.x]]\na = 1\n",
+    "comment after": "[tool.ruff]  # why not\n",
+}
+
+
+@pytest.mark.parametrize("kind", list(NESTED_SPELLINGS))
+def test_every_toml_spelling_of_a_scanner_table_in_a_nested_pyproject_is_refused(tmp_path, kind):
+    import tomllib
+
+    text = NESTED_SPELLINGS[kind]
+    assert "tool" in tomllib.loads(
+        text
+    )  # the spelling really is valid TOML (so a regex miss would be a bypass)
+    path = "demos/x/pyproject.toml"
+    repo = _repo(tmp_path, {path: text})
+    rc, out = _scan(repo, suppress=_supp_line(path, "scanner-config-file", _sha(text)))
+    assert rc == 1 and f"{path}:1: nested-pyproject-scanner-table" in out
+
+
+@pytest.mark.parametrize(
+    "text",
+    ["[tool.ruff\n", "x = \n", "a = 1\na = 2\n", '[tool]\n"ruff" = [\n', "\x00 = 1\n"],
+)
+def test_a_nested_pyproject_that_does_not_parse_is_refused(tmp_path, text):
+    path = "a/b/pyproject.toml"
+    rc, out = _scan(
+        _repo(tmp_path, {path: text}), suppress=_supp_line(path, "scanner-config-file", _sha(text))
+    )
+    assert rc == 1 and (
+        f"{path}:1: nested-pyproject-unparsable" in out or f"{path}:1: nul-in-text-file" in out
+    )
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        '[project]\nname = "x"\n',
+        "[tool.pytest.ini_options]\naddopts = '-q'\n",
+        "[tool.hatch.build]\nx = 1\n",
+        "ruff = 1\n[tool]\nother = 2\n",
+        '[project]\nname = "ruff-bandit-semgrep"\n',
+    ],
+)
+def test_a_nested_pyproject_without_a_scanner_key_only_needs_its_pin(tmp_path, text):
+    path = "demos/x/pyproject.toml"
+    repo = _repo(tmp_path, {path: text})
+    assert _scan(repo, suppress=_supp_line(path, "scanner-config-file", _sha(text))) == (0, "\n")
+
+
+# M1 (r3): a config-named path that is not a regular file (ruff reads ruff.toml even if it is a link to /dev/null)
+@pytest.mark.parametrize(
+    "name",
+    [
+        "ruff.toml",
+        ".ruff.toml",
+        "sub/.gitleaksignore",
+        "demos/x/pyproject.toml",
+        ".gitleaks.toml",
+        "setup.cfg",
+    ],
+)
+def test_a_tracked_symlink_with_a_config_name_is_a_hit_even_if_listed(tmp_path, name):
+    repo = _repo(tmp_path, {"real.txt": "x = 1\n"}, {name: "/dev/null"})
+    pin = _supp_line(name, "scanner-config-file", _sha(""))
+    for supp in ("", pin):
+        rc, out = _scan(repo, suppress=supp)
+        assert rc == 1 and f"{name}:1: scanner-config-not-a-file" in out
+
+
+def test_a_symlink_to_a_file_inside_the_repo_with_a_config_name_is_still_a_hit(tmp_path):
+    repo = _repo(tmp_path, {"cfg/real.toml": "x = 1\n"}, {"ruff.toml": "cfg/real.toml"})
+    rc, out = _scan(repo)
+    assert rc == 1 and "ruff.toml:1: scanner-config-not-a-file" in out
+
+
+def test_a_symlink_named_like_a_config_folder_is_a_hit(tmp_path):
+    repo = _repo(tmp_path, {"real/x.yml": "a: 1\n"}, {".semgrep": "real"})
+    rc, out = _scan(repo)
+    assert rc == 1 and ".semgrep:1: scanner-config-not-a-file" in out
+
+
+def test_a_tracked_config_file_removed_from_the_work_tree_is_a_hit(tmp_path):
+    repo = _repo(tmp_path, {"ruff.toml": "x = 1\n"})
+    (repo / "ruff.toml").unlink()
+    rc, out = _scan(repo)
+    assert rc == 1 and "ruff.toml:1: scanner-config-not-a-file" in out
+
+
+def test_a_symlink_with_an_ordinary_name_is_scanned_as_the_text_git_stores(tmp_path):
+    """Git stores a link as its target text; the file it points to is its own tracked path (or not repository content)."""
+    repo = _repo(tmp_path, {"real.txt": CASES["llm-id-sk"]}, {"alias.txt": "real.txt"})
+    rc, out = _scan(repo)
+    assert (
+        rc == 1 and out.strip() == "real.txt:1: llm-id-sk"
+    )  # the alias is clean, its target is reported once
+    assert _scan(_repo(tmp_path / "ok", {"real.txt": "x = 1\n"}, {"alias.txt": "real.txt"}))[0] == 0
+    leaky = _repo(tmp_path / "leaky", {"a.py": "x = 1\n"}, {"alias.txt": AWS_KEY})
+    rc, out = _scan(leaky)
+    assert rc == 1 and "alias.txt:1: cloud-id-prefix" in out
+
+
+def test_a_dangling_symlink_with_an_ordinary_name_is_not_a_hit(tmp_path):
+    repo = _repo(tmp_path, {"a.py": "x = 1\n"}, {"gone.txt": "nowhere"})
+    assert _scan(repo) == (0, "\n")
+
+
+def test_print_list_never_writes_a_line_for_a_config_named_link(tmp_path):
+    repo = _repo(tmp_path, {"a.py": "x = 1\n"}, {"ruff.toml": "/dev/null"})
+    rc, out = _scan(repo, args=["--print-list"])
+    assert rc == 0 and "ruff.toml" not in out
+
+
+# M4 (r3): `\b` saw no boundary after `_` or after the letter of an escape
+LEAD_HITS = {
+    "cloud-id-prefix": [
+        '"a\\n' + AWS_KEY + '"',
+        "id_" + AWS_KEY,
+        "x\\t" + AWS_KEY,
+        "x\\x0a" + AWS_KEY,
+        "x\\u000a" + AWS_KEY,
+        "-" + AWS_KEY,
+        "'" + AWS_KEY + "_",
+        "k=" + AWS_KEY + "_suffix",
+        '"a\\n' + "ASIA" + "ABCDEFGHIJKLMNOP",
+    ],
+    "llm-id-sk": ["api_" + SK_KEY, '"a\\n' + SK_KEY, "x\\r" + SK_KEY],
+    "vcs-id-classic": ["KEY_" + GH_KEY, '"a\\n' + GH_KEY, "_" + GH_KEY],
+    "chat-id-xox": ["t_xox" + "b-1234567890-abcdef", '"a\\n' + "xox" + "b-1234567890-abcdef"],
+    "vcs-id-fine": ["t_github" + "_pat_" + "d" * 30, '"a\\n' + "github" + "_pat_" + "d" * 30],
+}
+LEAD_MISSES = [
+    "x" + AWS_KEY,
+    "9" + AWS_KEY,
+    AWS_KEY + "x",
+    AWS_KEY + "Q",
+    "task-" + "b" * 40,
+    "pghp".replace("p", "x", 1) + "_" + "c" * 36,
+    "x" + GH_KEY,
+    "x" + "xox" + "b-1234567890-abcdef",
+    "Xgithub" + "_pat_" + "d" * 30,
+]
+
+
+@pytest.mark.parametrize(
+    ("rule", "line"), [(r, ln) for r, lines in LEAD_HITS.items() for ln in lines]
+)
+def test_a_secret_after_an_underscore_or_an_escape_letter_is_found(tmp_path, rule, line):
+    rc, out = _scan(_repo(tmp_path, {"a.py": "v = " + line + "\n"}))
+    assert rc == 1 and f"a.py:1: {rule}" in out
+
+
+@pytest.mark.parametrize("line", LEAD_MISSES)
+def test_a_secret_shape_inside_a_longer_word_is_not_flagged(tmp_path, line):
+    assert _scan(_repo(tmp_path, {"a.py": "v = " + line + "\n"})) == (0, "\n")
+
+
+def test_the_example_key_after_an_underscore_is_still_the_allowed_placeholder(tmp_path):
+    assert _scan(_repo(tmp_path, {"a.py": "v = id_" + EXAMPLE_KEY + "\n"})) == (0, "\n")
+
+
+# M6 (r3): more scanner-config files; M4 (design r3): .gitattributes can blind gitleaks
+BLIND_LINES = [
+    "cred.txt -diff",
+    "* -diff",
+    "*.png binary",
+    "  x\t-diff",
+    "* binary",
+    "a b -diff c",
+    "x text -diff",
+]
+SEEING_LINES = [
+    "* text=auto eol=lf",
+    "# x -diff in a comment",
+    "x -text",
+    "x diff=foo",
+    "x merge=binary",
+    "x binary-ish",
+    "x -diffs",
+    "*.sh eol=lf",
+]
+
+
+@pytest.mark.parametrize("line", BLIND_LINES)
+def test_a_gitattributes_line_that_hides_the_diff_is_a_hit_even_when_pinned(tmp_path, line):
+    text = "* text=auto\n" + line + "\n"
+    repo = _repo(tmp_path, {".gitattributes": text})
+    rc, out = _scan(repo, suppress=_supp_line(".gitattributes", "scanner-config-file", _sha(text)))
+    assert rc == 1 and ".gitattributes:2: gitattributes-hides-diff" in out
+
+
+@pytest.mark.parametrize("line", SEEING_LINES)
+def test_a_gitattributes_line_that_leaves_the_diff_alone_only_needs_its_pin(tmp_path, line):
+    text = line + "\n"
+    repo = _repo(tmp_path, {"sub/.gitattributes": text})
+    assert _scan(repo)[0] == 1
+    pin = _supp_line("sub/.gitattributes", "scanner-config-file", _sha(text))
+    assert _scan(repo, suppress=pin) == (0, "\n")
+
+
+# N8 (r3): the config hash is taken on line-ending-normalised bytes (a Windows checkout may turn LF into CRLF)
+def test_a_config_file_checked_out_with_crlf_has_the_same_hash(tmp_path):
+    repo = _repo(tmp_path, {".gitleaksignore": b"one\r\ntwo\r\n"})
+    pin = _supp_line(".gitleaksignore", "scanner-config-file", _sha("one\ntwo\n"))
+    assert _scan(repo, suppress=pin) == (0, "\n")
+    other = _repo(tmp_path / "o", {".gitleaksignore": b"one\r\nthree\r\n"})
+    rc, out = _scan(other, suppress=pin)
+    assert rc == 1 and "hash differs" in out
+
+
+# N1, N2 (r3): an empty noqa and a bare lgtm
+@pytest.mark.parametrize(
+    "line",
+    [
+        "x = 1  " + H + "no" + "qa:",
+        "x = 1  " + H + "no" + "qa: ",
+        "x = 1  " + H + "no" + "qa:  " + H + "why",
+        "x = 1  #no" + "qa:",
+        "x = 1  " + H + "no" + "qa: because it is fine",
+        "x = 1  " + H + "NO" + "QA :",
+    ],
+)
+def test_an_empty_or_codeless_noqa_is_a_blanket_noqa_hit(tmp_path, line):
+    rc, out = _scan(_repo(tmp_path, {"a.py": line + "\n"}))
+    assert rc == 1 and "a.py:1: suppress-noqa-security" in out
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "x = 1  " + H + "lg" + "tm",
+        "x = 1  //LG" + "TM",
+        "x = 1  " + H + "lg" + "tm, thanks",
+        H + "lg" + "tm",
+    ],
+)
+def test_a_bare_lgtm_comment_is_a_marker_like_the_bracket_form(tmp_path, line):
+    rc, out = _scan(_repo(tmp_path, {"a.py": line + "\n"}))
+    assert rc == 1 and "a.py:1: suppress-lgtm" in out
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "the lgtm word in prose",
+        "x = 'lgtm'",
+        "x = 1  " + H + "slgtm",
+        "x = 1  " + H + "no" + "qa: E501",
+    ],
+)
+def test_prose_with_lgtm_and_a_coded_noqa_are_not_hits(tmp_path, line):
+    assert _scan(_repo(tmp_path, {"a.py": line + "\n"})) == (0, "\n")
+
+
+# design r3 N9: ruff skips some folders by default, so a tracked Python file there is never linted
+@pytest.mark.parametrize(
+    "name",
+    [
+        "build/x.py",
+        "a/dist/b.py",
+        "venv/x.pyi",
+        "src/node_modules/y/z.py",
+        "a/site-packages/b.py",
+        ".tox/t.py",
+        "_build/x.py",
+        "a/.venv/x.py",
+    ],
+)
+def test_a_python_file_below_a_folder_that_ruff_skips_is_a_hit(tmp_path, name):
+    rc, out = _scan(_repo(tmp_path, {name: "x = 1\n"}))
+    assert rc == 1 and f"{name}:1: py-in-ruff-skipped-dir" in out
+
+
+@pytest.mark.parametrize(
+    "name", ["src/build.py", "dist.py", "build/notes.txt", "a/building/x.py", "venv.py"]
+)
+def test_other_files_near_those_folder_names_are_fine(tmp_path, name):
+    assert _scan(_repo(tmp_path, {name: "x = 1\n"})) == (0, "\n")

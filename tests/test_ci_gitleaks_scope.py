@@ -761,11 +761,33 @@ def check_ruff_table(ruff):
     assert "S" in lint["extend-select"], "ruff security rules (S) must stay selected"
 
 
+# The whole [tool.pytest] table is pinned too: addopts (--deselect, -k, -m, --ignore), filterwarnings, a second testpaths, norecursedirs
+# or a plugin could switch the guard tests off without touching any of them. Same rule as the ruff table: every key and value is listed.
+PYTEST_PINNED = {
+    "ini_options": {
+        "testpaths": ["tests"],
+        "pythonpath": ["."],
+        "markers": [
+            "live: calls a real paid or cloud service; CI deselects it, run only on the owner's yes",
+            "perf: timing tests (redaction patterns, end to end with views); CI runs them in their own step, which blocks a merge",
+        ],
+    }
+}
+# Tool tables the root pyproject may hold. `coverage` (omit, exclude_lines, a fail_under of 0), `bandit`, `semgrep`, `mypy` and the like are
+# refused: a new one is a reviewed edit of this list.
+PYPROJECT_TOOLS = {"uv", "ruff", "pytest"}
+
+
 def check_pyproject_suppressions(text):
     tool = tomllib.loads(text).get("tool", {})
     check_ruff_table(tool.get("ruff", {}))
     assert "bandit" not in tool, "a bandit section can skip tests"
     assert "semgrep" not in tool
+    assert "coverage" not in tool, "a coverage table can omit files or lower the bar"
+    assert set(tool) <= PYPROJECT_TOOLS, f"new tool table(s): {sorted(set(tool) - PYPROJECT_TOOLS)}"
+    assert tool.get("pytest") == PYTEST_PINNED, (
+        "[tool.pytest] changed (addopts, markers, paths, ...)"
+    )
 
 
 def test_pyproject_carries_no_new_scanner_suppression():
@@ -783,6 +805,25 @@ def test_pyproject_carries_no_new_scanner_suppression():
             '[tool.ruff.lint.per-file-ignores]\n"src/**" = ["S"]\n',
         ),
         lambda t: t.replace('"I", "S"', '"I"').replace('"S", "TID"', '"TID"'),
+        lambda t: t.replace(
+            'testpaths = ["tests"]',
+            'testpaths = ["tests"]\naddopts = "--deselect tests/test_scan_repo.py"',
+        ),
+        lambda t: t.replace(
+            'testpaths = ["tests"]', 'testpaths = ["tests"]\naddopts = "-k not_the_guard"'
+        ),
+        lambda t: t.replace(
+            'testpaths = ["tests"]', 'testpaths = ["tests"]\nfilterwarnings = ["ignore"]'
+        ),
+        lambda t: t.replace('testpaths = ["tests"]', 'testpaths = ["tests/fixtures"]'),
+        lambda t: t.replace(
+            'testpaths = ["tests"]', 'testpaths = ["tests"]\nnorecursedirs = ["tests/contracts"]'
+        ),
+        lambda t: t.replace('"perf: timing tests', '"slow: timing tests'),
+        lambda t: t + "\n[tool.pytest]\naddopts = ['--ignore=tests']\n",
+        lambda t: t + "\n[tool.coverage.run]\nomit = ['tools/*']\n",
+        lambda t: t + "\n[tool.coverage.report]\nfail_under = 0\n",
+        lambda t: t + "\n[tool.mypy]\nignore_errors = true\n",
     ],
 )
 def test_pyproject_pin_rejects_a_new_suppression(edit):
@@ -812,3 +853,246 @@ def test_pyproject_pin_rejects_a_changed_pinned_value():
 
 if __name__ == "__main__":
     regenerate_goldens()
+
+
+# ---- the guard tests cannot be switched off from a conftest, an ini file or an option (A24 PR91 round 3) ----
+ROOT = CI.parents[2]
+GUARD_TESTS = (
+    "tests/test_scan_repo.py",
+    "tests/test_scan_repo_mutations.py",
+    "tests/test_ci_gitleaks_scope.py",
+    "tests/test_ci_toolpath_step.py",
+    "tests/test_no_reference_material.py",
+    "tests/test_repo_rules.py",
+)
+# pytest ini files: pytest takes the nearest one as its config, so none may be tracked (the settings live in the pinned root pyproject).
+PYTEST_INI_NAMES = {
+    "pytest.ini",
+    ".pytest.ini",
+    "pytest.toml",
+    ".pytest.toml",
+    "tox.ini",
+    "setup.cfg",
+    ".coveragerc",
+}
+# Hooks and module settings that can drop, skip or hide tests. A conftest may define none of them (the allowlist is empty; a new entry
+# is a reviewed edit of this file, which the code owners file names).
+CONFTEST_HOOK_ALLOWLIST: dict[str, set[str]] = {}
+CONFTEST_SETTINGS = {"pytest_plugins", "collect_ignore", "collect_ignore_glob"}
+
+
+def conftest_problems(path, source):
+    """Why this conftest could switch tests off ([] if it cannot): a pytest_* hook outside the allowlist, or a collect setting."""
+    import ast
+
+    problems = []
+    for node in ast.parse(source).body:
+        is_hook = isinstance(
+            node, (ast.FunctionDef, ast.AsyncFunctionDef)
+        ) and node.name.startswith("pytest_")
+        if is_hook and node.name not in CONFTEST_HOOK_ALLOWLIST.get(path, set()):
+            problems.append(f"{path}: hook {node.name}")
+        targets = []
+        if isinstance(node, ast.Assign):
+            targets = node.targets
+        elif isinstance(node, (ast.AnnAssign, ast.AugAssign)):
+            targets = [node.target]
+        problems += [
+            f"{path}: {t.id}"
+            for t in targets
+            if isinstance(t, ast.Name) and t.id in CONFTEST_SETTINGS
+        ]
+    return problems
+
+
+def _tracked(root):
+    out = subprocess.run(  # noqa: S603 (fixed argv, no shell)
+        [shutil.which("git") or "git", "ls-files", "-z"],
+        cwd=root,
+        capture_output=True,
+        check=True,
+    ).stdout
+    return [p for p in out.decode("utf-8").split("\0") if p]
+
+
+def test_no_tracked_conftest_can_drop_or_skip_a_test():
+    conftests = [p for p in _tracked(ROOT) if p.rsplit("/", 1)[-1] == "conftest.py"]
+    assert "tests/conftest.py" in conftests  # the search finds the real ones
+    for path in conftests:
+        assert conftest_problems(path, (ROOT / path).read_text(encoding="utf-8")) == []
+
+
+def test_no_pytest_ini_file_is_tracked_anywhere():
+    bad = [p for p in _tracked(ROOT) if p.rsplit("/", 1)[-1].lower() in PYTEST_INI_NAMES]
+    assert bad == []
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        "def pytest_collection_modifyitems(config, items):\n    items.clear()\n",
+        "def pytest_ignore_collect(collection_path):\n    return True\n",
+        "def pytest_collect_file(file_path, parent):\n    return None\n",
+        "def pytest_runtest_setup(item):\n    pass\n",
+        "async def pytest_runtest_call(item):\n    pass\n",
+        "def pytest_configure(config):\n    config.option.deselect = ['x']\n",
+        "collect_ignore = ['test_scan_repo.py']\n",
+        "collect_ignore_glob: list = ['test_*']\n",
+        "collect_ignore += ['x']\n",
+        "pytest_plugins = ['some.plugin']\n",
+    ],
+)
+def test_the_conftest_check_rejects_each_way_to_switch_tests_off(source):
+    assert conftest_problems("tests/conftest.py", source)
+    assert (
+        conftest_problems(
+            "tests/conftest.py", "import pytest\n\n\n@pytest.fixture\ndef f():\n    return 1\n"
+        )
+        == []
+    )
+
+
+def _guard_function_names(root, rel):
+    import ast
+
+    tree = ast.parse((root / rel).read_text(encoding="utf-8"))
+    return [
+        n.name for n in tree.body if isinstance(n, ast.FunctionDef) and n.name.startswith("test_")
+    ]
+
+
+def missing_from_collection(root, where, files):
+    """Top-level test functions of `files` that `pytest --collect-only <where>` (the repo's own config, no -k or -m, a folder as the
+    argument like CI, because an explicitly named file ignores --ignore and collect_ignore) does not list."""
+    import os
+
+    env = {k: v for k, v in os.environ.items() if k != "PYTEST_ADDOPTS"}
+    cmd = [sys.executable, "-m", "pytest", "--collect-only", "-q", "-p", "no:cacheprovider", where]
+    done = subprocess.run(cmd, cwd=root, env=env, capture_output=True, text=True, check=False)  # noqa: S603 (fixed argv, no shell)
+    listed = {
+        line.split("::", 1)[0] + "::" + line.split("::", 1)[1].split("[")[0]
+        for line in done.stdout.splitlines()
+        if "::" in line
+    }
+    return [
+        f"{rel}::{name}"
+        for rel in files
+        for name in _guard_function_names(root, rel)
+        if f"{rel}::{name}" not in listed
+    ]
+
+
+def test_every_guard_test_is_collected_under_the_repo_config():
+    for rel in GUARD_TESTS:
+        assert _guard_function_names(ROOT, rel), f"{rel} holds no test (moved or emptied?)"
+    assert missing_from_collection(ROOT, "tests", GUARD_TESTS) == []
+
+
+@pytest.mark.parametrize(
+    "extra",
+    {
+        "pytest.ini deselect": {
+            "pytest.ini": "[pytest]\naddopts = --deselect test_a.py::test_one\n"
+        },
+        "pytest.ini -k": {"pytest.ini": "[pytest]\naddopts = -k test_two\n"},
+        "pytest.ini ignore": {"pytest.ini": "[pytest]\naddopts = --ignore=test_a.py\n"},
+        "pyproject deselect": {
+            "pyproject.toml": "[tool.pytest.ini_options]\naddopts = '--deselect test_a.py::test_one'\n"
+        },
+        "conftest modifyitems": {
+            "conftest.py": "def pytest_collection_modifyitems(items):\n    items[:] = [i for i in items if i.name != 'test_one']\n"
+        },
+        "conftest ignore_collect": {
+            "conftest.py": "def pytest_ignore_collect(collection_path):\n    return collection_path.name == 'test_a.py'\n"
+        },
+        "conftest collect_ignore": {"conftest.py": "collect_ignore = ['test_a.py']\n"},
+    }.items(),
+    ids=lambda kv: kv[0] if isinstance(kv, tuple) else None,
+)
+def test_the_collection_check_notices_each_way_to_hide_a_test(tmp_path, extra):
+    (tmp_path / "test_a.py").write_text(
+        "def test_one():\n    pass\n\n\ndef test_two():\n    pass\n"
+    )
+    for name, text in extra[1].items():
+        (tmp_path / name).write_text(text)
+    assert missing_from_collection(tmp_path, ".", ["test_a.py"]), extra[0]
+
+
+def test_the_collection_check_passes_on_a_plain_project(tmp_path):
+    (tmp_path / "test_a.py").write_text(
+        "import pytest\n\n\n@pytest.mark.parametrize('x', [1, 2])\ndef test_one(x):\n    pass\n"
+    )
+    assert missing_from_collection(tmp_path, ".", ["test_a.py"]) == []
+
+
+CODEOWNERS = ROOT / ".github" / "CODEOWNERS"
+# Files that decide what the scans and the guard tests check: each needs a code-owner line (a review aid until the owner's ruleset exists).
+OWNED_PATHS = (
+    *GUARD_TESTS,
+    "tools/scan_repo.py",
+    "tools/scan_suppressions.txt",
+    "tools/scan_allowlist.txt",
+    "tools/scan_banned_extra.txt",
+    "pyproject.toml",
+    "uv.lock",
+    ".gitattributes",
+    ".coderabbit.yaml",
+    ".sonarcloud.properties",
+    "pytest.ini",
+    ".gitleaks.toml",
+    ".gitleaksignore",
+    "tests/fixtures/ci_security_golden.json",
+    ".github/workflows/ci.yml",
+    ".github/CODEOWNERS",
+)
+
+
+def codeowner_patterns(text):
+    return [
+        ln.split()[0]
+        for ln in text.splitlines()
+        if ln.strip() and not ln.lstrip().startswith("#") and len(ln.split()) >= 2
+    ]
+
+
+def is_owned(path, patterns):
+    """The few CODEOWNERS forms this file uses: `/exact/path`, `/folder/`, `/.prefix*`, `/dir/*glob*` and a bare name at any depth."""
+    import fnmatch
+
+    for pat in patterns:
+        if pat.startswith("/"):
+            body = pat[1:]
+            if body.endswith("/"):
+                if path.startswith(body):
+                    return True
+            elif fnmatch.fnmatchcase(
+                path, body
+            ):  # `*` also crosses a slash here: wider than git, never narrower
+                return True
+        elif "/" not in pat and fnmatch.fnmatchcase(path.rsplit("/", 1)[-1], pat):
+            return True
+    return False
+
+
+def test_the_code_owners_file_names_every_file_that_steers_the_scans_and_the_guard_tests():
+    patterns = codeowner_patterns(CODEOWNERS.read_text(encoding="utf-8"))
+    tracked = _tracked(ROOT)
+    conftests = [p for p in tracked if p.rsplit("/", 1)[-1] == "conftest.py"]
+    unowned = [p for p in (*OWNED_PATHS, *conftests) if not is_owned(p, patterns)]
+    assert unowned == []
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "",
+        "# only a comment\n",
+        "/tools/scan_repo.py @x\n",
+        "/tests/contracts/ @x\n/tests/test_scan_repo.py\n",
+    ],
+)
+def test_the_code_owners_check_notices_missing_lines(text):
+    patterns = codeowner_patterns(text)
+    assert not is_owned("tests/conftest.py", patterns)
+    assert not is_owned("pyproject.toml", patterns)
+    assert not is_owned("tests/test_no_reference_material.py", patterns)

@@ -14,3 +14,10 @@
 /tests/test_ci_toolpath_step.py @veerarakesh56
 /pyproject.toml @veerarakesh56
 /uv.lock @veerarakesh56
+/tests/test_repo_rules.py @veerarakesh56
+/tests/test_no_reference_material.py @veerarakesh56
+conftest.py @veerarakesh56
+/pytest.ini @veerarakesh56
+/.coderabbit.yaml @veerarakesh56
+/.sonarcloud.properties @veerarakesh56
+/.gitattributes @veerarakesh56

@@ -19,21 +19,69 @@ MUTATIONS = {
         "        hits += _check_suppressions(rel, text, data, listed, seen)\n",
         '        if b"\\0" in data:\n            continue\n        hits += _check_suppressions(rel, text, data, listed, seen)\n',
     ),
-    "hash check dropped": ("elif listed[key] != hashlib.sha256(data).hexdigest():", "elif False:"),
+    "hash check dropped": ("elif listed[key] != value:", "elif False:"),
+    "text hash difference not reported": (
+        'hits.append(f"{rel}:{nums[0]}: suppression-list text hash differs ({rule})")',
+        "pass",
+    ),
     "glob check dropped": ('if any(ch in parts[0] for ch in "*?["):', "if False:"),
     "re.IGNORECASE removed": ("_I = re.IGNORECASE", "_I = 0"),
     "placeholder and short reason accepted": (
         "if len(parts) == 4 and all(parts) and reason_problem(parts[3]):",
         "if False:",
     ),
-    "nested pyproject table check dropped": (
-        'if low == "pyproject.toml" and "/" in rel and NESTED_PYPROJECT_TABLE.search(text):',
-        "if False:",
+    "allowlist reason not checked": ("        if reason_problem(parts[2]):", "        if False:"),
+    "allowlist rule not checked": ("        if parts[1] not in ALLOW_RULES:", "        if False:"),
+    "boilerplate reason accepted": ("    if BOILERPLATE_REASON.search(reason):", "    if False:"),
+    "one-word reason accepted": (
+        '    if len({w.lower() for w in re.findall(r"[A-Za-z]{2,}", reason)}) < MIN_REASON_WORDS:',
+        "    if False:",
+    ),
+    "nested pyproject key check dropped": (
+        "any(str(k).lower() in NESTED_PYPROJECT_TOOLS for k in tool)",
+        "False",
+    ),
+    "unparsable nested pyproject accepted": (
+        "        return NESTED_PYPROJECT_UNPARSABLE_RULE\n    if isinstance(tool, dict)",
+        '        return ""\n    if isinstance(tool, dict)',
     ),
     "file-level noqa without codes accepted": ("if BLANKET_FILE_NOQA.search(line)", "if False"),
     "NUL allowed for any extension": (
         "if Path(rel).suffix.lower() in BINARY_EXTENSIONS:",
         "if True:",
+    ),
+    "known-binary files not scanned": (
+        '                text = data.decode("latin-1")\n',
+        "                continue\n",
+    ),
+    "config-named link or folder not a hit": (
+        "        if is_link or not path.is_file():\n            if _is_config(rel):",
+        "        if is_link or not path.is_file():\n            if False:",
+    ),
+    "gitattributes blind lines accepted": ('    if low == ".gitattributes":', "    if False:"),
+    "python under ruff-skipped folders accepted": (
+        'if low.endswith((".py", ".pyi")) and RUFF_SKIPPED_DIRS',
+        "if False and RUFF_SKIPPED_DIRS",
+    ),
+    "stale list entries ignored": (
+        "        for p_rel, rule in sorted(set(listed) - seen):",
+        "        for p_rel, rule in []:",
+    ),
+    "config hash on raw bytes": (
+        'return hashlib.sha256(data.replace(b"\\r\\n", b"\\n")).hexdigest()',
+        "return hashlib.sha256(data).hexdigest()",
+    ),
+    "prefix guard back to word boundary": (
+        '_LEAD = r"(?:(?<![A-Za-z0-9])|(?<=\\\\[nrtfv])|(?<=\\\\x[0-9A-Fa-f]{2})|(?<=\\\\u[0-9A-Fa-f]{4}))"',
+        '_LEAD = r"\\b"',
+    ),
+    "bare lgtm accepted": (
+        're.compile(_C + r"lgtm\\b|lgtm\\s*\\[", _I)',
+        're.compile(_C + r"lgtm\\s*\\[", _I)',
+    ),
+    "empty noqa accepted": (
+        'r"noqa\\b(?!\\s*:\\s*[A-Za-z]{1,10}\\d)|"',
+        'r"noqa\\b(?!\\s*:)|"',
     ),
 }
 

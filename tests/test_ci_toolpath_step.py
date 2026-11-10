@@ -4,6 +4,7 @@ The step must fail when a tool on PATH is, or is a link to, a file inside the wo
 and uvx may sit in <workspace>/.venv/bin, but only as links to a file outside the workspace. Linux and bash only (the CI runner is Linux).
 """
 
+import hashlib
 import os
 import shutil
 import subprocess
@@ -222,23 +223,15 @@ OLD_STEP_COMMIT = (
 )
 
 
-def test_the_frozen_old_step_text_is_the_one_stored_in_git_history():
-    """Guards the frozen text against drift. Skipped only when the commit is not in this clone (a shallow CI checkout)."""
-    show = _run(
-        [GIT, "show", f"{OLD_STEP_COMMIT}:.github/workflows/ci.yml"],
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    if show.returncode != 0:
-        pytest.skip(f"{OLD_STEP_COMMIT} is not in this clone")
-    old_wf = yaml.safe_load(show.stdout)
-    steps = [
-        s
-        for s in old_wf["jobs"]["security"]["steps"]
-        if s.get("name", "").startswith("System tools")
-    ]
-    assert len(steps) == 1 and steps[0]["run"].strip() == _old_step().strip()
+# sha256 of the old step's `run` text (stripped), taken from `git show 2742c1b:.github/workflows/ci.yml` on 2026-11-10 (the "System tools"
+# step of the security job). Pinned here instead of read from git, so the check also runs in a shallow CI checkout (the commit is absent
+# there) and never skips.
+OLD_STEP_SHA256 = "a5b6306467f55376f5de3cd4197ef541f7c660b9a90dfcec91037844784a93bd"
+
+
+def test_the_frozen_old_step_text_is_the_one_that_was_stored_in_git_history():
+    """Guards the frozen text below against drift; to refresh the hash, re-read the step from the commit named in OLD_STEP_COMMIT."""
+    assert hashlib.sha256(_old_step().strip().encode()).hexdigest() == OLD_STEP_SHA256
 
 
 def _old_step():

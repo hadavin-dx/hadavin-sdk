@@ -10,7 +10,7 @@ would do if it reached a privileged session; and benign statements that must be 
   pg-refuses     PostgreSQL itself raises an error; the validator is defence in depth and the test says so
 """
 
-# ruff: noqa: S608, ISC004  # SQL text is the test data; implicit concatenation keeps long statements readable
+# ruff: noqa: S608  # SQL text is the test data: the attack and benign statements are strings under test, none is built from outside input
 
 from __future__ import annotations
 
@@ -367,8 +367,8 @@ BENIGN: list[tuple[str, str]] = [
     ),
     (
         "join",
-        f"SELECT c.country, count(*) AS orders FROM {O} o JOIN {C} c"
-        " ON c.customer_id = o.customer_id GROUP BY c.country ORDER BY orders DESC",
+        (f"SELECT c.country, count(*) AS orders FROM {O} o JOIN {C} c"
+        " ON c.customer_id = o.customer_id GROUP BY c.country ORDER BY orders DESC"),
     ),
     (
         "join-using",
@@ -380,13 +380,13 @@ BENIGN: list[tuple[str, str]] = [
     ),
     (
         "three-way-join",
-        f"SELECT p.category, sum(i.line_amount) FROM {I} i JOIN {P} p ON p.product_id = i.product_id"
-        f" JOIN {O} o ON o.order_id = i.order_id WHERE o.status = 'paid' GROUP BY p.category",
+        (f"SELECT p.category, sum(i.line_amount) FROM {I} i JOIN {P} p ON p.product_id = i.product_id"
+        f" JOIN {O} o ON o.order_id = i.order_id WHERE o.status = 'paid' GROUP BY p.category"),
     ),
     (
         "cte",
-        f"WITH t AS (SELECT customer_id, sum(total_amount) AS s FROM {O} GROUP BY customer_id)"
-        " SELECT avg(s) FROM t",
+        (f"WITH t AS (SELECT customer_id, sum(total_amount) AS s FROM {O} GROUP BY customer_id)"
+        " SELECT avg(s) FROM t"),
     ),
     (
         "window-rank",
@@ -413,8 +413,8 @@ BENIGN: list[tuple[str, str]] = [
     ("filter", f"SELECT count(*) FILTER (WHERE status = 'paid') FROM {O}"),
     (
         "case",
-        f"SELECT CASE WHEN total_amount > 100 THEN 'big' ELSE 'small' END AS size, count(*)"
-        f" FROM {O} GROUP BY 1",
+        (f"SELECT CASE WHEN total_amount > 100 THEN 'big' ELSE 'small' END AS size, count(*)"
+        f" FROM {O} GROUP BY 1"),
     ),
     ("coalesce-nullif", f"SELECT coalesce(nullif(status, ''), 'none') FROM {O}"),
     ("round-numeric", f"SELECT round(avg(total_amount), 2) FROM {O}"),
@@ -445,8 +445,8 @@ BENIGN: list[tuple[str, str]] = [
     ("age", f"SELECT age(order_date, DATE '2026-01-01') FROM {O}"),
     (
         "exists",
-        f"SELECT 1 FROM {O} o WHERE EXISTS"
-        f" (SELECT 1 FROM {C} c WHERE c.customer_id = o.customer_id)",
+        (f"SELECT 1 FROM {O} o WHERE EXISTS"
+        f" (SELECT 1 FROM {C} c WHERE c.customer_id = o.customer_id)"),
     ),
     ("not-exists", f"SELECT count(*) FROM {C} c WHERE NOT EXISTS (SELECT 1 FROM {O} o WHERE o.customer_id = c.customer_id)"),
     ("in-list", f"SELECT count(*) FROM {O} WHERE status IN ('paid', 'shipped')"),
