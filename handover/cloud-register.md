@@ -972,3 +972,7 @@ Closed: a10f5f650a (PR72 fix builder, pushed d392200), a17e8eff8a and a99c6a3d18
 Closed: ac25206877 (A21a evidence runner; evidence committed: 4 known failures in test_t1_meter_parallel.py, all else green on 3.12/3.13, DSN set and unset).
 | af4a57cbb8 | A21a fix builder r1 (B-A21a-r2, ba89ea7; BL-core-a21a-w2-06..17, money, uncapped) | sonnet | 20:05Z | +60 min | running | evidence runner on new head, fresh reviewers |
 Closed: a596423e5b and a83e36fd22 (A21a reviewers, saved to handover/reviews/A21a/).
+| ad0d22391c | A5 PR73 evidence runner (ef2adc7; PG 17 if installable) | sonnet | 20:20Z | +60 min | running | save TABLE |
+| abd25e70fe | A5 PR73 round-2 egm-design review (security, uncapped) | sonnet | 20:20Z | +30 min | running | save report, ledger |
+| aeeb9c0a49 | A5 PR73 round-2 egm-codebase-details review | sonnet | 20:20Z | +30 min | running | save report, ledger |
+Closed: aea5c3b208 (PR73 fix builder, pushed ef2adc7). Open for lead: per-file timeout override, scope split, shared stub helper, CI 17.10 result (also in q-wave2-open).
