@@ -671,7 +671,11 @@ m(
 m(
     "runner: numbers leave a gap",
     TOOL,
-    rep("DEF.append((len(DEF) + 1,", "DEF.append((len(DEF) + 2,"),
+    rep(
+        "DEF.append((len(DEF) "
+        + "+ 1, desc",  # split, so this line does not hold the text it looks for
+        "DEF.append((len(DEF) " + "+ 2, desc",
+    ),
     [CP],
     "::test_the_mutant_numbers_are_one_to_n_without_gaps_or_repeats",
 )
