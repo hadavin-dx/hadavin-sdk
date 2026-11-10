@@ -172,3 +172,14 @@ def test_one_agent_never_sees_another_agents_spend(monkeypatch):
     t = utc(2026, 3, 10, 12, 0)
     _, store, _, _ = replay([(t, USD)], monkeypatch)
     assert store.spend_totals("someone-else", t.date()) == (Decimal(0), Decimal(0))
+
+
+def test_a_charge_returns_only_its_own_agents_month_total(monkeypatch):
+    t = utc(2026, 3, 10, 12, 0)
+    _, store, _, _ = replay([(t, USD)], monkeypatch)
+    store.add_spend("someone-else", t.date(), Decimal(7))
+    assert store.add_spend(AGENT, t.date(), USD) == (2 * USD, 2 * USD)
+    assert store.add_spend(AGENT, (t + DAYS31).date(), USD) == (
+        USD,
+        USD,
+    )  # a new month starts empty

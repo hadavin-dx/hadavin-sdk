@@ -19,6 +19,7 @@ import pytest
 from hadavin_sdk.limits import Limits
 from hadavin_sdk.registry import Budget
 from hadavin_sdk.store.memory import MemoryStore
+from hadavin_sdk.store.protocol import Store
 
 AGENT = "meter-agent"
 CALLERS = 50
@@ -51,11 +52,16 @@ def utc(*args: int) -> datetime:
 
 
 def build_limits(
-    daily: str, monthly: str, start: datetime, monkeypatch: pytest.MonkeyPatch
-) -> tuple[Limits, MemoryStore, FakeClock]:
+    daily: str,
+    monthly: str,
+    start: datetime,
+    monkeypatch: pytest.MonkeyPatch,
+    store: Store | None = None,
+) -> tuple[Limits, Store, FakeClock]:
+    """``store`` is any Store kind (the contract suite passes each registered one); the default is a MemoryStore."""
     clock = FakeClock(start)
     monkeypatch.setattr("hadavin_sdk.limits.now", clock)
-    store = MemoryStore()
+    store = MemoryStore() if store is None else store
     agent = SimpleNamespace(budget_usd=Budget(daily=Decimal(daily), monthly=Decimal(monthly)))
     registry = SimpleNamespace(agents={AGENT: agent})
     return Limits(store, NoAudit(), registry), store, clock  # type: ignore[arg-type]

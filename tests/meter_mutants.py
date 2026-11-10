@@ -24,6 +24,7 @@ CAP = "tests/test_t1_meter_cap.py"
 LED = "tests/test_t2_ledger_replay.py"
 LIM = "src/hadavin_sdk/limits.py"
 MEM = "src/hadavin_sdk/store/memory.py"
+ADD_SPEND_FILTER = "for (a, d), v in self._spend.items()\n                if a == agent_id and (d.year, d.month) == (day.year, day.month)"  # only add_spend
 SPEND_TOTALS_FILTER = "                    if a == agent_id and (d.year, d.month) == (day.year, day.month)"  # 20 spaces: only spend_totals
 
 
@@ -122,6 +123,33 @@ M = [
         LED,
         "test_one_agent_never_sees_another_agents_spend",
         "assert",
+    ),
+    m(
+        "S4 the month total a charge returns sums every month (add_spend)",
+        MEM,
+        ADD_SPEND_FILTER,
+        "for (a, d), v in self._spend.items()\n                if a == agent_id",
+        LED,
+        "test_every_charge_lands_in_its_own_day_and_month_exactly_once",
+        "charge",
+    ),
+    m(
+        "S5 the month total a charge returns sums every agent (add_spend)",
+        MEM,
+        ADD_SPEND_FILTER,
+        "for (a, d), v in self._spend.items()\n                if (d.year, d.month) == (day.year, day.month)",
+        LED,
+        "test_a_charge_returns_only_its_own_agents_month_total",
+        "assert",
+    ),
+    m(
+        "S6 a charge replaces the day total instead of adding to it",
+        MEM,
+        "self._spend[(agent_id, day)] += usd",
+        "self._spend[(agent_id, day)] = usd",
+        LED,
+        "test_every_charge_lands_in_its_own_day_and_month_exactly_once",
+        "read at",
     ),
 ]
 
