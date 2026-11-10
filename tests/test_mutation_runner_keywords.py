@@ -13,7 +13,9 @@ mutants in ``tests/mutation_runner_mutants.py`` can tell which guard was removed
 import contextlib
 import errno
 import hashlib
+import json
 import os
+import time
 from pathlib import Path
 
 import pytest
@@ -530,7 +532,9 @@ def test_a_value_with_a_backslash_is_masked_as_repr_prints_it(monkeypatch):
     )
     assert "Xy9Zq1" not in mr._masked(f"E {word}", secrets), "the plain form survived the masking"
     # a value with both quote marks: repr writes a backslash before the single quote, which unicode_escape does not
-    both = "host=db.invalid user=svc password=Ab3'Xy9" + '"' + "Zq1"
+    both = (
+        "host=db.invalid user=svc password=Ab3'Xy9" + '"' + "Zq1\u00e9"
+    )  # a non-ASCII letter too: no other form prints it raw
     assert "\\'" in repr(both)
     monkeypatch.setenv(DSN_NAME, both)
     out = mr._masked(f"E {both!r}", mr._secret_values((DSN_NAME,)))
@@ -583,6 +587,146 @@ def test_a_fragment_of_exactly_the_minimum_length_is_masked_and_a_shorter_one_is
     assert secret[-6:] not in tail6, f"a 6-character tail next to the dots was not masked: {tail6}"
     short = mr._masked(f"E x == '{secret[:5]}...zzz'", (secret,))
     assert secret[:5] in short, f"a 5-character head was masked, below the minimum: {short}"
+
+
+class _Det:
+    """A seeded, repeatable source of choices (a hash stream): the property tests need no random library and no secret-grade randomness."""
+
+    def __init__(self, seed: int) -> None:
+        self._seed, self._n = seed, 0
+
+    def randint(self, lo: int, hi: int) -> int:
+        self._n += 1
+        digest = hashlib.sha256(f"{self._seed}:{self._n}".encode()).digest()
+        return lo + int.from_bytes(digest[:8], "big") % (hi - lo + 1)
+
+    def choice(self, items: str) -> str:
+        return items[self.randint(0, len(items) - 1)]
+
+
+def _printed_forms(value: str) -> dict[str, str]:
+    """The ways a value may be printed in an assertion line or a log line."""
+    return {
+        "raw": value,
+        "repr": repr(value)[1:-1],
+        "unicode_escape": value.encode("unicode_escape").decode("ascii"),
+        "json": json.dumps(value)[1:-1],
+        "json_utf8": json.dumps(value, ensure_ascii=False)[1:-1],
+        "bytes": repr(value.encode("utf-8"))[2:-1],
+    }
+
+
+JSON_VALUE = (
+    "host=db.invalid user=svc password=" + 'Ab3"' + chr(233) + "Xy9Zq1"
+)  # both a quote and a non-ASCII letter
+
+
+def test_a_value_is_masked_as_json_writes_it(monkeypatch):
+    monkeypatch.setenv(DSN_NAME, JSON_VALUE)
+    secrets = mr._secret_values((DSN_NAME,))
+    out = mr._masked('{"dsn": "' + _printed_forms(JSON_VALUE)["json"] + '"}', secrets)
+    assert "Xy9Zq1" not in out, f"the ASCII JSON form survived the masking: {out}"
+    out = mr._masked('{"dsn": "' + _printed_forms(JSON_VALUE)["json_utf8"] + '"}', secrets)
+    assert "Xy9Zq1" not in out, f"the UTF-8 JSON form survived the masking: {out}"
+
+
+def test_a_value_is_masked_as_the_repr_of_its_bytes_prints_it(monkeypatch):
+    monkeypatch.setenv(DSN_NAME, JSON_VALUE)
+    secrets = mr._secret_values((DSN_NAME,))
+    out = mr._masked("E   b'" + _printed_forms(JSON_VALUE)["bytes"] + "'", secrets)
+    assert "Xy9Zq1" not in out, f"the repr of the UTF-8 bytes survived the masking: {out}"
+
+
+def test_masking_removes_a_random_value_in_every_printed_form_whole_or_shortened(monkeypatch):
+    """Property test (seeded, no extra library): for random values with quotes, backslashes, non-ASCII letters and control characters,
+    no printed form of the value survives ``_masked``, and neither does a head or tail piece of 6 or more characters next to ``...``
+    (what pytest prints for a long text). A piece is searched as a window of the printed form, so the check is stricter than the rule."""
+    rng = _Det(20261110)
+    alphabet = (
+        "abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+        + "'\""
+        + "\\"
+        + chr(233)
+        + chr(252)
+        + "\t\n%+;&"
+    )
+    for n in range(150):
+        core = "".join(rng.choice(alphabet[:56]) for _ in range(rng.randint(8, 16)))
+        pad = "".join(rng.choice(alphabet) for _ in range(rng.randint(0, 6)))
+        value = f"host=db.invalid user=svc password={pad}{core}"
+        monkeypatch.setenv(DSN_NAME, value)
+        secrets = mr._secret_values((DSN_NAME,))
+        for name, printed in _printed_forms(value).items():
+            whole = mr._masked(f"E   AssertionError: assert '{printed}' == 'other'", secrets)
+            assert core not in whole and printed not in whole, (
+                f"case {n}: the {name} form of a random value survived: {whole!r}"
+            )
+            if len(printed) < 30:
+                continue
+            cut = f"E   AssertionError: assert '{printed[:12]}...{printed[-13:]}' == 'other'"
+            out = mr._masked(cut, secrets)
+            windows = {printed[i : i + 6] for i in range(len(printed) - 5)}
+            left = [w for w in windows if w in out]
+            assert not left, f"case {n}: the {name} form shortened by pytest left {left} in {out!r}"
+
+
+def test_a_short_secret_inside_a_shortened_long_one_does_not_hide_the_long_one():
+    # found by the property test: cutting the short secret out first changed the text, and the tail of the long one no longer matched
+    secret = "Hq4Zr8Wm2Tx5Lb" + "ZZZZZ" + "Kd7tavnQe3Rj9"
+    shown = f"E   assert '{secret[:12]}...{secret[-13:]}' == 'other'"
+    out = mr._masked(shown, (secret, "ta"))
+    assert "vnQe3Rj9" not in out and "Hq4Zr8" not in out, (
+        f"a short secret inside the tail hid the shortened long secret: {out}"
+    )
+
+
+def test_a_line_with_a_hostile_number_of_dots_is_replaced_fast(monkeypatch):
+    value, _word = _key_value_value()
+    monkeypatch.setenv(DSN_NAME, value)
+    secrets = mr._secret_values((DSN_NAME,))
+    line = "E   " + (value[:6] + "...") * 20000 + value[-13:]
+    start = time.monotonic()
+    out = mr._masked(line, secrets)
+    took = time.monotonic() - start
+    assert "more than" in out and value[:6] not in out, (
+        f"a line with a hostile number of dots was not replaced as a whole: {out[:80]!r}"
+    )
+    assert took < 5, f"the check of a hostile line took {took:.1f} seconds"
+    assert mr._masked("E   x == 'abc...def'", secrets) == "E   x == 'abc...def'", (
+        "an honest line with dots was replaced"
+    )
+
+
+def test_the_fragment_scan_agrees_with_the_plain_definition():
+    """The scan was rewritten to be fast; it must still return the spans of the plain definition (every length from the largest down)."""
+    rng = _Det(7)
+    for _ in range(300):
+        secret = "".join(rng.choice("abcd") for _ in range(rng.randint(7, 20)))
+        text = "".join(rng.choice("abcd.") for _ in range(rng.randint(0, 60)))
+        plain: list[tuple[int, int]] = []
+        for at in range(len(text) - 2):
+            if text[at : at + 3] != "...":
+                continue
+            start, end, top = at, at + 3, len(secret) - 1
+            for k in range(min(top, start), 5, -1):
+                if text[start - k : start] == secret[:k]:
+                    plain.append((start - k, start))
+                    break
+            for k in range(min(top, len(text) - end), 5, -1):
+                if text[end : end + k] == secret[-k:]:
+                    plain.append((end, end + k))
+                    break
+        assert sorted(mr._fragment_spans(text, secret)) == sorted(plain), (
+            f"the fast scan found other spans than the plain definition: {text!r} {secret!r}"
+        )
+    # the largest head and tail (one character short of the whole secret) at every length, which random text almost never hits
+    for size in range(7, 21):
+        secret = "".join("pqrstuvwxyz"[(i * 3 + size) % 11] for i in range(size))
+        top = size - 1
+        text = secret[:top] + "..." + secret[-top:]
+        assert sorted(mr._fragment_spans(text, secret)) == [(0, top), (top + 3, len(text))], (
+            f"the largest head and tail of a {size}-character secret were not both found: {text!r}"
+        )
 
 
 # ---- pass_env: the shared database ------------------------------------------------------------------------------------------
@@ -806,6 +950,60 @@ def test_a_lock_file_that_cannot_be_opened_is_a_clear_refusal(tmp_path):
     assert "could not be opened" in str(caught), f"another refusal: {caught}"
 
 
+def test_a_lock_file_that_is_a_symbolic_link_is_refused_and_the_file_has_mode_0600(tmp_path):
+    if os.name == "nt":
+        pytest.skip("symbolic links and file modes are POSIX here")
+    target = tmp_path / "target"
+    target.write_text("x")
+    (tmp_path / _lock_name("x")).symlink_to(target)
+    caught = None
+    try:
+        with mr._one_run_per_database(["x"]):
+            pass
+    except (RuntimeError, OSError) as exc:
+        caught = exc
+    assert isinstance(caught, RuntimeError) and "symbolic link" in str(caught), (
+        f"a planted symbolic link was followed or refused otherwise: {caught!r}"
+    )
+    with mr._one_run_per_database(["y"]):
+        pass
+    mode = (tmp_path / _lock_name("y")).stat().st_mode & 0o777
+    assert mode == 0o600, f"the lock file was not private: {oct(mode)}"
+
+
+def _canary_ends_with(tmp_path, monkeypatch, code):
+    monkeypatch.setenv(DSN_NAME, str(tmp_path / "state.flag"))
+    root = _tree(tmp_path, {CORE_TEST: USES_GO})
+    real = mr._pytest
+
+    def pytest_run(*a, **k):
+        return code if a[2].name == "again.xml" else real(*a, **k)
+
+    monkeypatch.setattr(mr, "_pytest", pytest_run)
+    try:
+        _run(root, [FLIP], pass_env=(DSN_NAME,))
+    except mr.CanaryFailed as exc:
+        return str(exc)
+    raise AssertionError("a canary run that did not pass was accepted")
+
+
+def test_a_canary_run_that_timed_out_says_so(tmp_path, monkeypatch):
+    text = _canary_ends_with(tmp_path, monkeypatch, mr.TIMED_OUT)
+    assert "timed out" in text and "-1000" not in text, (
+        f"the canary timeout was not in words: {text}"
+    )
+
+
+def test_a_canary_run_that_was_reaped_says_so(tmp_path, monkeypatch):
+    text = _canary_ends_with(tmp_path, monkeypatch, mr.REAPED_ELSEWHERE)
+    assert "reaped" in text and "-1001" not in text, f"the reaped canary was not in words: {text}"
+
+
+def test_a_canary_run_with_an_exit_code_shows_the_code(tmp_path, monkeypatch):
+    text = _canary_ends_with(tmp_path, monkeypatch, 3)
+    assert "exit code 3" in text, f"the exit code of the canary run was lost: {text}"
+
+
 # ---- forbid_skips -----------------------------------------------------------------------------------------------------------
 
 
@@ -1003,9 +1201,9 @@ def test_a_test_file_that_cannot_be_imported_is_an_error_row_never_a_kill(tmp_pa
 
 
 def test_read_junit_marks_a_collection_error_of_a_real_pytest_run(tmp_path):
-    # the shape was read from a real pytest 9.2 run (handover/evidence/P89/pytest-92-facts.txt): an empty classname, the dotted module as
+    # the shape was read from a real pytest 9.2 run: an empty classname, the dotted module as
     # the name, message "collection failure"; pytest exits 2 for it, and the judge turns every exit code other than 1 into ERROR, so the
-    # row was an ERROR row before the label existed (handover/evidence/P89/collection-error-old-row.txt)
+    # row was an ERROR row before the label existed (observed with the unchanged runner of main, see the module docstring of the runner)
     root = _tree(tmp_path, {CORE_TEST: COLLECTION_ASSERTS.replace("go(True) is True", "go(False)")})
     out = tmp_path / "c.xml"
     rc = mr._pytest(root, [CORE_TEST], out, 60)

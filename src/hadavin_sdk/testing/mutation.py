@@ -194,7 +194,7 @@ def skipped_tests(xml_text: str) -> list[str]:
 def fixture_errors(xml_text: str) -> list[str]:
     """The ids (same form as ``first_failure_junit``) of the test cases whose ``error`` record is a setup or teardown failure of a fixture
     (pytest writes ``failed on setup with ...`` / ``failed on teardown with ...``). Such a test never ran as written, so a runner counts the
-    mutant run as an error and not as a kill, even when the fixture failed with an ``AssertionError``. Note (confirmed by a real pytest 9.2.0 run; its raw JUnit text is saved in the PR evidence file ``pytest-92-facts.txt``): when a test body fails and its
+    mutant run as an error and not as a kill, even when the fixture failed with an ``AssertionError``. Note (confirmed by a real pytest 9.2.0 run: ``<testsuite errors="1" failures="1" tests="2">`` with ``<testcase classname="t.test_b" name="test_x">`` holding the ``<failure>`` first and a second ``<testcase>`` of the same classname and name holding ``<error message="failed on teardown with ...">``): when a test body fails and its
     teardown fails too, pytest writes TWO ``testcase`` elements of the same classname and name (the ``failure`` first, then the teardown ``error``), so that id is listed here as
     well; ``read_junit(...).fixture_failed`` tells whether the FIRST failing case is the fixture error. Same refusals as ``first_failure_junit``."""
     return _fixture_errors(_parse_junit(xml_text))
