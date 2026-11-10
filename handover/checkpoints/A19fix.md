@@ -5,3 +5,4 @@ blockers: none. commit SHA: none yet.
 
 checkpoint 2: G1/G2/G3/G5/G6 done, mutants 43 (42 then T6b fixed). next G4, G7, full run
 checkpoint 3: committed 85e0801 (G1-G7); mutants 78/78 good; full suite started via heavy.sh log /tmp/claude-0/a19/full.log (waits for a slot)
+checkpoint 4 (17:26 UTC): full suite still queued for a heavy slot (31 waiters, 3 slots); pushed core/P0t-followup-fix1 at 85e0801; ruff check/format, bandit (uvx), scan_repo green; mutants 78/78. next: wait for slot until 17:45, then report.

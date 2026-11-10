@@ -1,0 +1,102 @@
+Binary files orig/src/hadavin_sdk/__pycache__/__init__.cpython-312.pyc and atomq2/src/hadavin_sdk/__pycache__/__init__.cpython-312.pyc differ
+Binary files orig/src/hadavin_sdk/__pycache__/__init__.cpython-313.pyc and atomq2/src/hadavin_sdk/__pycache__/__init__.cpython-313.pyc differ
+Binary files orig/src/hadavin_sdk/__pycache__/config.cpython-312.pyc and atomq2/src/hadavin_sdk/__pycache__/config.cpython-312.pyc differ
+Binary files orig/src/hadavin_sdk/__pycache__/defaults.cpython-312.pyc and atomq2/src/hadavin_sdk/__pycache__/defaults.cpython-312.pyc differ
+Binary files orig/src/hadavin_sdk/__pycache__/defaults.cpython-313.pyc and atomq2/src/hadavin_sdk/__pycache__/defaults.cpython-313.pyc differ
+Binary files orig/src/hadavin_sdk/__pycache__/deferred.cpython-312.pyc and atomq2/src/hadavin_sdk/__pycache__/deferred.cpython-312.pyc differ
+Binary files orig/src/hadavin_sdk/__pycache__/errors.cpython-312.pyc and atomq2/src/hadavin_sdk/__pycache__/errors.cpython-312.pyc differ
+Binary files orig/src/hadavin_sdk/__pycache__/identity.cpython-312.pyc and atomq2/src/hadavin_sdk/__pycache__/identity.cpython-312.pyc differ
+Binary files orig/src/hadavin_sdk/__pycache__/models.cpython-312.pyc and atomq2/src/hadavin_sdk/__pycache__/models.cpython-312.pyc differ
+Binary files orig/src/hadavin_sdk/__pycache__/models.cpython-313.pyc and atomq2/src/hadavin_sdk/__pycache__/models.cpython-313.pyc differ
+Binary files orig/src/hadavin_sdk/__pycache__/registry.cpython-312.pyc and atomq2/src/hadavin_sdk/__pycache__/registry.cpython-312.pyc differ
+Binary files orig/src/hadavin_sdk/__pycache__/replay_records.cpython-312.pyc and atomq2/src/hadavin_sdk/__pycache__/replay_records.cpython-312.pyc differ
+Binary files orig/src/hadavin_sdk/__pycache__/scrub_settings.cpython-312.pyc and atomq2/src/hadavin_sdk/__pycache__/scrub_settings.cpython-312.pyc differ
+Binary files orig/src/hadavin_sdk/__pycache__/stages.cpython-312.pyc and atomq2/src/hadavin_sdk/__pycache__/stages.cpython-312.pyc differ
+Binary files orig/src/hadavin_sdk/__pycache__/tools.cpython-312.pyc and atomq2/src/hadavin_sdk/__pycache__/tools.cpython-312.pyc differ
+Binary files orig/src/hadavin_sdk/actions/__pycache__/__init__.cpython-312.pyc and atomq2/src/hadavin_sdk/actions/__pycache__/__init__.cpython-312.pyc differ
+Binary files orig/src/hadavin_sdk/actions/__pycache__/contract.cpython-312.pyc and atomq2/src/hadavin_sdk/actions/__pycache__/contract.cpython-312.pyc differ
+Binary files orig/src/hadavin_sdk/approvals/__pycache__/__init__.cpython-312.pyc and atomq2/src/hadavin_sdk/approvals/__pycache__/__init__.cpython-312.pyc differ
+Binary files orig/src/hadavin_sdk/approvals/__pycache__/__init__.cpython-313.pyc and atomq2/src/hadavin_sdk/approvals/__pycache__/__init__.cpython-313.pyc differ
+Binary files orig/src/hadavin_sdk/approvals/__pycache__/channel.cpython-312.pyc and atomq2/src/hadavin_sdk/approvals/__pycache__/channel.cpython-312.pyc differ
+Binary files orig/src/hadavin_sdk/approvals/__pycache__/channel.cpython-313.pyc and atomq2/src/hadavin_sdk/approvals/__pycache__/channel.cpython-313.pyc differ
+Binary files orig/src/hadavin_sdk/approvals/__pycache__/gate.cpython-312.pyc and atomq2/src/hadavin_sdk/approvals/__pycache__/gate.cpython-312.pyc differ
+Binary files orig/src/hadavin_sdk/approvals/__pycache__/gate.cpython-313.pyc and atomq2/src/hadavin_sdk/approvals/__pycache__/gate.cpython-313.pyc differ
+Binary files orig/src/hadavin_sdk/approvals/__pycache__/hmac_v0.cpython-312.pyc and atomq2/src/hadavin_sdk/approvals/__pycache__/hmac_v0.cpython-312.pyc differ
+Binary files orig/src/hadavin_sdk/approvals/__pycache__/hmac_v0.cpython-313.pyc and atomq2/src/hadavin_sdk/approvals/__pycache__/hmac_v0.cpython-313.pyc differ
+Binary files orig/src/hadavin_sdk/approvals/__pycache__/requests.cpython-312.pyc and atomq2/src/hadavin_sdk/approvals/__pycache__/requests.cpython-312.pyc differ
+Binary files orig/src/hadavin_sdk/audit/__pycache__/__init__.cpython-312.pyc and atomq2/src/hadavin_sdk/audit/__pycache__/__init__.cpython-312.pyc differ
+Binary files orig/src/hadavin_sdk/audit/__pycache__/local_dir.cpython-312.pyc and atomq2/src/hadavin_sdk/audit/__pycache__/local_dir.cpython-312.pyc differ
+Binary files orig/src/hadavin_sdk/audit/__pycache__/protocol.cpython-312.pyc and atomq2/src/hadavin_sdk/audit/__pycache__/protocol.cpython-312.pyc differ
+Binary files orig/src/hadavin_sdk/backends/__pycache__/__init__.cpython-312.pyc and atomq2/src/hadavin_sdk/backends/__pycache__/__init__.cpython-312.pyc differ
+Binary files orig/src/hadavin_sdk/backends/__pycache__/table.cpython-312.pyc and atomq2/src/hadavin_sdk/backends/__pycache__/table.cpython-312.pyc differ
+Binary files orig/src/hadavin_sdk/guard/__pycache__/__init__.cpython-312.pyc and atomq2/src/hadavin_sdk/guard/__pycache__/__init__.cpython-312.pyc differ
+Binary files orig/src/hadavin_sdk/guard/__pycache__/__init__.cpython-313.pyc and atomq2/src/hadavin_sdk/guard/__pycache__/__init__.cpython-313.pyc differ
+Binary files orig/src/hadavin_sdk/guard/__pycache__/egress.cpython-312.pyc and atomq2/src/hadavin_sdk/guard/__pycache__/egress.cpython-312.pyc differ
+Binary files orig/src/hadavin_sdk/guard/__pycache__/egress.cpython-313.pyc and atomq2/src/hadavin_sdk/guard/__pycache__/egress.cpython-313.pyc differ
+Binary files orig/src/hadavin_sdk/guard/__pycache__/http.cpython-312.pyc and atomq2/src/hadavin_sdk/guard/__pycache__/http.cpython-312.pyc differ
+Binary files orig/src/hadavin_sdk/guard/__pycache__/injection.cpython-312.pyc and atomq2/src/hadavin_sdk/guard/__pycache__/injection.cpython-312.pyc differ
+Binary files orig/src/hadavin_sdk/guard/__pycache__/injection.cpython-313.pyc and atomq2/src/hadavin_sdk/guard/__pycache__/injection.cpython-313.pyc differ
+Binary files orig/src/hadavin_sdk/guard/__pycache__/judge.cpython-312.pyc and atomq2/src/hadavin_sdk/guard/__pycache__/judge.cpython-312.pyc differ
+Binary files orig/src/hadavin_sdk/guard/__pycache__/redact.cpython-312.pyc and atomq2/src/hadavin_sdk/guard/__pycache__/redact.cpython-312.pyc differ
+Binary files orig/src/hadavin_sdk/guard/__pycache__/redact.cpython-313.pyc and atomq2/src/hadavin_sdk/guard/__pycache__/redact.cpython-313.pyc differ
+Binary files orig/src/hadavin_sdk/guard/__pycache__/runmap.cpython-312.pyc and atomq2/src/hadavin_sdk/guard/__pycache__/runmap.cpython-312.pyc differ
+Binary files orig/src/hadavin_sdk/guard/__pycache__/runmap.cpython-313.pyc and atomq2/src/hadavin_sdk/guard/__pycache__/runmap.cpython-313.pyc differ
+diff -r orig/src/hadavin_sdk/guard/redact.py atomq2/src/hadavin_sdk/guard/redact.py
+580,581c580,581
+<             r"(?i)(?:password|passwd|pwd|pass|secret|token|api[_\-]?key|apikey|credential|session)"
+<             r"[\w.\-]{0,20}[\"']?\s*[:=]\s*\"([^\"][^\"]{0,255})\""
+---
+>             r"(?i)(?<![\w.\-])(?=[\w.\-]*?(?:password|passwd|pwd|pass|secret|token|api[_\-]?key|apikey|credential|session))"
+>             r"(?>[\w.\-]+)[\"']?\s*[:=]\s*\"([^\"][^\"]{0,255})\""
+587,588c587,588
+<             r"(?i)(?:password|passwd|pwd|pass|secret|token|api[_\-]?key|apikey|credential|session)"
+<             r"[\w.\-]{0,20}[\"']?\s*[:=]\s*'([^'][^']{0,255})'"
+---
+>             r"(?i)(?<![\w.\-])(?=[\w.\-]*?(?:password|passwd|pwd|pass|secret|token|api[_\-]?key|apikey|credential|session))"
+>             r"(?>[\w.\-]+)[\"']?\s*[:=]\s*'([^'][^']{0,255})'"
+598c598
+<             r"(?i)(?<![\w.\-])[\w.\-]{0,40}"
+---
+>             r"(?i)(?<![\w.\-?&])(?<!&amp;)(?=[\w.\-]*?"
+606,607c606,607
+<             r"|session(?=[\"']?\s*[:=]))[\w.\-]{0,20}"
+<             # optional closing quote after the key so a JSON credential ("password": "x") is matched too
+---
+>             r"|session(?=[\"']?\s*[:=])))"
+>             r"(?>[\w.\-]+)"
+609,615c609,627
+<             # The value: any non-separator char, OR a comma that does NOT begin a new key=value pair
+<             # (so a comma-bearing secret is masked WHOLE, but `k=v,k2=v2` is not gobbled). `&` stops a
+<             # URL query-param value at the next parameter. Char-by-char, so no catastrophic backtracking.
+<             # A numeric HTML entity (`&#59;`, `&amp;#59;` once escaped, `&#x3b;`) is ONE character of the value, not the `&` of a query separator:
+<             # an entity-encoded `;` or `&` must not end the value early and leave its tail shown.
+<             r"((?:&(?:amp;)?#[0-9]{1,7};|&(?:amp;)?#[xX][0-9a-fA-F]{1,6};|[^\s\"';,&]|,(?!\s*[\w.\-]+\s*[:=]))+)"
+<         ),
+---
+> r"((?:&(?:amp;)?#[0-9]{1,7};|&(?:amp;)?#[xX][0-9a-fA-F]{1,6};|&amp;|[^\s\"';,]|,(?!\s*[\w.\-]+\s*[:=]))+)"
+>         )
+>     ),
+>     (
+>         "SECRET",
+>         re.compile(
+>             r"(?i)(?:(?<=[?&])|(?<=&amp;))(?=[\w.\-]*?"
+>             r"(?:password|passwd|pwd|secret|access[_\-]?key|account[_\-]?key|shared[_\-]?access[_\-]?key"
+>             r"|private[_\-]?key|api[_\-]?key|apikey|auth[_\-]?token|access[_\-]?token|sas[_\-]?token"
+>             # kubeconfig secrets: client-key-data (the private key), certificate-data.
+>             r"|key[_\-]?data|cert(?:ificate)?[_\-]?data"
+>             # session cookies are live bearer credentials: sessionid, JSESSIONID, PHPSESSID, connect.sid.
+>             r"|session[_\-]?id|jsessionid|phpsessid|sessid|connect\.sid"
+>             r"|client[_\-]?secret|credential|token|pass(?=[\"']?\s*[:=])|auth(?=[\"']?\s*[:=])"
+>             r"|session(?=[\"']?\s*[:=])))"
+>             r"(?>[\w.\-]+)"
+>             r"[\"']?\s*[:=]\s*[\"']?"
+> r"((?:&(?:amp;)?#[0-9]{1,7};|&(?:amp;)?#[xX][0-9a-fA-F]{1,6};|&amp;(?![A-Za-z_][\w.\-]{0,20}=(?!=))|[^\s\"';,&]|,(?!\s*[\w.\-]+\s*[:=])|&(?!(?:amp;)?[A-Za-z_][\w.\-]{0,20}=(?!=)))+)"
+>         )
+Binary files orig/src/hadavin_sdk/llm/__pycache__/__init__.cpython-312.pyc and atomq2/src/hadavin_sdk/llm/__pycache__/__init__.cpython-312.pyc differ
+Binary files orig/src/hadavin_sdk/llm/__pycache__/common.cpython-312.pyc and atomq2/src/hadavin_sdk/llm/__pycache__/common.cpython-312.pyc differ
+Binary files orig/src/hadavin_sdk/llm/__pycache__/fake.cpython-312.pyc and atomq2/src/hadavin_sdk/llm/__pycache__/fake.cpython-312.pyc differ
+Binary files orig/src/hadavin_sdk/llm/__pycache__/protocol.cpython-312.pyc and atomq2/src/hadavin_sdk/llm/__pycache__/protocol.cpython-312.pyc differ
+Binary files orig/src/hadavin_sdk/llm/__pycache__/retry.cpython-312.pyc and atomq2/src/hadavin_sdk/llm/__pycache__/retry.cpython-312.pyc differ
+Binary files orig/src/hadavin_sdk/store/__pycache__/__init__.cpython-312.pyc and atomq2/src/hadavin_sdk/store/__pycache__/__init__.cpython-312.pyc differ
+Binary files orig/src/hadavin_sdk/store/__pycache__/memory.cpython-312.pyc and atomq2/src/hadavin_sdk/store/__pycache__/memory.cpython-312.pyc differ
+Binary files orig/src/hadavin_sdk/store/__pycache__/protocol.cpython-312.pyc and atomq2/src/hadavin_sdk/store/__pycache__/protocol.cpython-312.pyc differ

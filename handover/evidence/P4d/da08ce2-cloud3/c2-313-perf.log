@@ -1,0 +1,40 @@
+============================= test session starts ==============================
+platform linux -- Python 3.13.18, pytest-9.2.0, pluggy-1.7.0 -- /home/user/build/EV-A9/.venv313/bin/python3
+rootdir: /home/user/build/EV-A9
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 10547 items / 10519 deselected / 28 selected
+
+tests/demo_askdata/test_pgsource_layers.py::test_caps_watchdog_cancels_a_blocked_statement 
+T-E8 watchdog: pg_sleep(30) cancelled after 2.01s (watchdog 2.0s; the assertion allows 3.0s: the timer, the cancel round trip to the server and the connection close)
+PASSED [  3%]
+tests/demo_askdata/test_validate_fuzz.py::test_fuzz_2000_cases_hold_the_invariant PASSED [  7%]
+tests/test_g4_parity.py::test_g4_reads_hostile_text_in_linear_time PASSED [ 10%]
+tests/test_k5_classes.py::test_class_threads_a_tool_that_never_returns_does_not_block_process_exit[time.sleep(3600)] PASSED [ 14%]
+tests/test_k5_classes.py::test_class_threads_a_tool_that_never_returns_does_not_block_process_exit[threading.Event().wait()] PASSED [ 17%]
+tests/test_k5_classes.py::test_class_threads_a_tool_that_never_returns_does_not_block_process_exit[while True: pass] PASSED [ 21%]
+tests/test_k5_fixes2.py::test_the_worst_allowed_suffix_is_fast_on_a_hostile_name PASSED [ 25%]
+tests/test_k5_fixes6.py::test_fifty_handed_out_secrets_behind_an_encoding_layer_stay_within_a_bound PASSED [ 28%]
+tests/test_k5_layers.py::test_100kb_adversarial_layered_input_is_bounded[names0] PASSED [ 32%]
+tests/test_k5_layers.py::test_100kb_adversarial_layered_input_is_bounded[names1] PASSED [ 35%]
+tests/test_k5_layers.py::test_100kb_adversarial_layered_input_is_bounded[names2] PASSED [ 39%]
+tests/test_k5_perf.py::test_the_harness_flags_a_quadratic_pattern_and_passes_a_linear_one PASSED [ 42%]
+tests/test_k5_perf.py::test_no_redaction_pattern_is_super_linear_on_its_own_keywords_repeated PASSED [ 46%]
+tests/test_k5_perf.py::test_redact_untrusted_end_to_end_is_not_super_linear_with_views[curl-u] PASSED [ 50%]
+tests/test_k5_perf.py::test_redact_untrusted_end_to_end_is_not_super_linear_with_views[password] PASSED [ 53%]
+tests/test_k5_perf.py::test_redact_untrusted_end_to_end_is_not_super_linear_with_views[fullwidth] PASSED [ 57%]
+tests/test_k5_perf.py::test_redact_untrusted_end_to_end_is_not_super_linear_with_views[json-escape] PASSED [ 60%]
+tests/test_k5_perf.py::test_redact_untrusted_end_to_end_is_not_super_linear_with_views[zero-width] PASSED [ 64%]
+tests/test_k5_perf.py::test_the_slowest_measured_shape_at_the_cap_stays_under_a_ceiling PASSED [ 67%]
+tests/test_k5_review.py::test_review_a_tool_body_that_hangs_is_abandoned_at_the_total_deadline PASSED [ 71%]
+tests/test_k5_round10.py::test_the_cpu_of_a_full_size_run_stays_in_budget PASSED [ 75%]
+tests/test_k5_round5.py::test_m3_a_multi_megabyte_return_is_cut_before_redaction PASSED [ 78%]
+tests/test_migrate_regex_linear.py::test_serial_regex_is_linear_on_hostile_input PASSED [ 82%]
+tests/test_migration_numbers.py::test_lexer_is_linear PASSED             [ 85%]
+tests/test_migration_numbers.py::test_the_timing_harness_flags_a_quadratic_stand_in PASSED [ 89%]
+tests/test_s4_llm_guard.py::test_clean_terminates_on_adversarial_nesting PASSED [ 92%]
+tests/warden_port/test_redaction_bank.py::test_T1_a_planted_line_is_read_in_linear_time PASSED [ 96%]
+tests/warden_port/test_redaction_review2.py::test_redacting_many_lines_stays_fast PASSED [100%]
+
+=============== 28 passed, 10519 deselected in 71.39s (0:01:11) ================
+exit=0

@@ -256,4 +256,4 @@ tests/demo_askdata/test_allowlist.py::test_every_gold_query_and_exemplar_validat
 tests/demo_askdata/test_allowlist.py::test_every_gold_query_and_exemplar_validates_on_the_lumen_catalog[D16.gold_sql] PASSED [  2%]
 tests/demo_askdata/test_allowlist.py::test_every_gold_query_and_exemplar_validates_on_the_lumen_catalog[D16.gold_sql_alt] PASSED [  2%]
 tests/demo_askdata/test_allowlist.py::test_every_gold_query_and_exemplar_validates_on_the_lumen_catalog[D17.gold_sql] PASSED [  2%]
-tests/demo_askdata/test_allowlist.py::test_every_gold_query_and_exemplar_validates_on_the_lumen_catalog[D17.gold_sql_alt] 
+tests/demo_askdata/test_allowlist.py::test_every_gold_query_and_exemplar_validates_on_the_lumen_catalog[D17.gold_sql_alt] exit=1
