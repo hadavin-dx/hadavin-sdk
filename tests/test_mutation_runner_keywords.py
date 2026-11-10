@@ -16,6 +16,7 @@ import hashlib
 import json
 import os
 import stat
+import threading
 import time
 from pathlib import Path
 
@@ -1209,7 +1210,7 @@ def test_a_baseline_that_left_no_usable_junit_file_is_refused_under_forbid_skips
     caught = None
     try:
         _run(root, [FLIP], forbid_skips=True)
-    except (RuntimeError, OSError) as exc:
+    except (RuntimeError, OSError, ValueError, SyntaxError) as exc:
         caught = exc
     assert isinstance(caught, RuntimeError), (
         f"no refusal for a baseline without a JUnit file: {caught!r}"
@@ -1707,3 +1708,153 @@ def test_the_lock_file_is_opened_read_only_on_posix(monkeypatch):
     assert seen and not any(f & (os.O_WRONLY | os.O_RDWR) for f in seen), (
         f"the lock file was opened for writing: {seen}"
     )
+
+
+_LAYER_PRINTERS = (
+    repr,
+    ascii,
+    json.dumps,
+    lambda s: json.dumps(s, ensure_ascii=False),
+    lambda s: repr(s.encode("utf-8")),
+    lambda s: s.encode("unicode_escape").decode("ascii"),
+)
+TWO_LAYER_ALPHABET = "'" + '"' + chr(92) + chr(233) + "ab"
+MARKER = "Xy9Zq1"
+
+
+def _two_layers(value):
+    """Every text that ``second(first(value))`` makes with the real functions, also when the larger text holds both quote kinds."""
+    for first in _LAYER_PRINTERS:
+        once = first(value)
+        for second in _LAYER_PRINTERS:
+            yield second(once)
+            yield second(once + "'" + '"')
+
+
+def test_a_value_printed_in_two_layers_is_masked_whatever_quotes_it_holds(monkeypatch):
+    rng = _Det(7)
+    leaked: list[str] = []
+    for _ in range(120):
+        body = "".join(rng.choice(TWO_LAYER_ALPHABET) for _ in range(rng.randint(1, 5)))
+        tail = "".join(rng.choice(TWO_LAYER_ALPHABET) for _ in range(rng.randint(1, 5)))
+        value = "host=db.invalid user=svc password=" + body + MARKER + tail
+        monkeypatch.setenv(DSN_NAME, value)
+        secrets = mr._secret_values((DSN_NAME,))
+        for text in _two_layers(value):
+            if MARKER in mr._masked("E   " + text, secrets):
+                leaked.append(text)
+    assert not leaked, f"{len(leaked)} two-layer forms survived the masking, first: {leaked[0]}"
+
+
+def test_a_value_with_both_quote_kinds_is_masked_as_repr_of_repr_and_json_of_repr(monkeypatch):
+    value = "host=db.invalid password=" + "it's" + chr(34) + "Xy9Zq1" + " user=svc"
+    monkeypatch.setenv(DSN_NAME, value)
+    secrets = mr._secret_values((DSN_NAME,))
+    for name, text in (
+        ("repr(repr(x))", repr(repr(value))),
+        ("repr(json.dumps(x))", repr(json.dumps(value))),
+        ("json.dumps(repr(x))", json.dumps(repr(value))),
+    ):
+        out = mr._masked("E   " + text, secrets)
+        assert MARKER not in out, f"{name} survived the masking: {out}"
+
+
+def test_a_plus_in_a_url_password_is_also_read_as_a_space(monkeypatch):
+    value = "postgresql://svc:" + "Open+Sesame9" + "@db.invalid/app"
+    monkeypatch.setenv(DSN_NAME, value)
+    secrets = mr._secret_values((DSN_NAME,))
+    assert "Open Sesame9" in secrets, "the plus-as-space form of the password was not a secret"
+    assert "Sesame9" not in mr._masked("E   password Open Sesame9 wrong", secrets)
+    # a percent code beside a plus: the plain percent rule keeps the plus, the form rule turns it into a space; both are secrets
+    value = "postgresql://svc:" + "Open+Sesame%219" + "@db.invalid/app"
+    monkeypatch.setenv(DSN_NAME, value)
+    secrets = mr._secret_values((DSN_NAME,))
+    assert "Open+Sesame!9" in secrets, "the percent-decoded form with a plus kept was not a secret"
+    assert "Open Sesame!9" in secrets
+
+
+def test_a_lock_file_that_is_a_fifo_is_refused_and_does_not_hang(tmp_path, monkeypatch):
+    if not hasattr(os, "mkfifo"):
+        pytest.skip("this system has no named pipes")
+    path = tmp_path / _lock_name("fifo")
+    os.mkfifo(path, 0o600)
+    result: dict[str, object] = {}
+
+    def attempt():
+        result["exc"] = _refusal("fifo")
+
+    worker = threading.Thread(target=attempt, daemon=True)
+    worker.start()
+    worker.join(10)
+    hung = worker.is_alive()
+    if hung:  # free the blocked open so the test run itself does not hang
+        release = os.open(path, os.O_WRONLY | getattr(os, "O_NONBLOCK", 0))
+        os.close(release)
+        worker.join(5)
+    assert not hung, "a FIFO under the lock file name hung the runner (the open blocked)"
+    exc = result.get("exc")
+    assert exc is not None, "a FIFO as the lock file was accepted"
+    assert "regular file of this user" in str(exc), f"the refusal did not name the cause: {exc}"
+
+
+def test_a_permission_refusal_of_the_lock_file_names_the_temp_folder_way_out():
+    for code in (errno.EACCES, errno.EPERM):
+        text = mr._why_not_opened(code)
+        assert "TMPDIR" in text, f"no way out named for errno {code}: {text}"
+        assert "read-only" in text, f"a read-only temp folder not named for errno {code}: {text}"
+
+
+def _junit_refusal(junit):
+    out: dict[str, object] = {}
+
+    def attempt():
+        try:
+            out["text"] = mr._junit_text(junit)
+        except ValueError as exc:
+            out["exc"] = exc
+
+    worker = threading.Thread(target=attempt, daemon=True)
+    worker.start()
+    worker.join(10)
+    hung = worker.is_alive()
+    if hung:
+        release = os.open(junit, os.O_WRONLY | getattr(os, "O_NONBLOCK", 0))
+        os.close(release)
+        worker.join(5)
+    assert not hung, "a FIFO as the JUnit file hung the runner"
+    return out
+
+
+def test_a_junit_path_that_is_not_a_regular_file_is_refused_and_does_not_hang(tmp_path):
+    kinds = ["folder"]
+    if hasattr(os, "mkfifo"):
+        kinds.append("fifo")
+    if hasattr(os, "symlink") and os.name != "nt":
+        kinds.append("symlink")
+    for kind in kinds:
+        junit = tmp_path / f"{kind}.xml"
+        if kind == "fifo":
+            os.mkfifo(junit, 0o600)
+        elif kind == "symlink":
+            real = tmp_path / "real.xml"
+            real.write_text("<testsuites/>", encoding="utf-8")
+            junit.symlink_to(real)
+        else:
+            junit.mkdir()
+        out = _junit_refusal(junit)
+        assert "exc" in out, f"a {kind} as the JUnit file was read: {out}"
+        assert "regular file" in str(out["exc"])
+    assert mr._junit_text(tmp_path / "missing.xml") == ""
+
+
+def test_an_over_sized_junit_file_is_refused_before_it_is_read(tmp_path, monkeypatch):
+    junit = tmp_path / "junit.xml"
+    junit.write_text("<testsuites>" + " " * 50 + "</testsuites>", encoding="utf-8")
+    monkeypatch.setattr(mr, "MAX_JUNIT_CHARS", 10)
+
+    def never(*_a, **_k):
+        raise AssertionError("the file was read before its size was looked at")
+
+    monkeypatch.setattr(Path, "read_text", never)
+    with pytest.raises(ValueError, match="over the ceiling"):
+        mr._junit_text(junit)

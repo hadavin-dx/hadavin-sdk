@@ -54,7 +54,7 @@ pytest runs with ``--noconftest`` and with an empty ini file on purpose (a plant
   ``PASS_ENV_ALLOWED``, re-copy the file and update its pin (see the CHANGELOG); do that only for the ADDRESS of a throwaway test resource
   that a demo's tests need (a second database, for example), never for a token or a key.
   Masking: the value of a passed name (and the password inside it: the one of a URL, the one after ``password=``, ``passwd=`` or ``pwd=`` in a
-  key=value text or a URL query, a quoted one included; each also percent-decoded, a backslash escape of libpq (``password='it\\'s'``, ``password=ab\\ cd``) read both ways, a URL password with an unencoded ``/``, ``?``, ``#`` or ``@`` read by trying every ``@`` as the end of the login, and each also as itself, ``repr`` or ``ascii()``, ``unicode_escape``, JSON (with and without ``\\u`` escapes) and the ``repr`` of its UTF-8 bytes print it, every one with each quote mark escaped or not (a ``repr`` of a larger text or bytes picks its quote from the whole), with its backslashes doubled once more and as JSON writes it once more, so a backslash, a quote or a non-ASCII letter is covered) is replaced by ``[REDACTED]`` in ``first_lines``, in the failing test id of a row,
+  key=value text or a URL query, a quoted one included; each also percent-decoded (a ``+`` read as itself and as a space), a backslash escape of libpq (``password='it\\'s'``, ``password=ab\\ cd``) read both ways, a URL password with an unencoded ``/``, ``?``, ``#`` or ``@`` read by trying every ``@`` as the end of the login, and each also as itself, ``repr`` or ``ascii()``, ``unicode_escape``, JSON (with and without ``\\u`` escapes) and the ``repr`` of its UTF-8 bytes print it, every one with each quote mark escaped or not (a ``repr`` of a larger text or bytes picks its quote from the whole), in exactly two layers (layer 2 is each of those forms printed once more by the real ``repr``, ``ascii``, ``unicode_escape``, JSON and bytes-``repr`` functions, with and without both quote kinds in the larger text), so a backslash, a quote or a non-ASCII letter is covered) is replaced by ``[REDACTED]`` in ``first_lines``, in the failing test id of a row,
   in the ``COLLECTION ERROR``, ``FIXTURE ERROR`` and ``SKIPPED TESTS`` messages and in the baseline skip message. Checked with a real run: pytest
   shortens a long text in the first ``E`` line of a comparison to about its first 12 and last 13 characters around ``...``. Observed with
   pytest 9.2.0 (one 69-character value): the text is still shortened with ``-q``, with ``-q -vv`` and by default; it is printed in full only with
@@ -62,7 +62,7 @@ pytest runs with ``--noconftest`` and with an empty ini file on purpose (a plant
   caller stay as they were,
   so every start of a secret that ends right before ``...`` and every end that starts right after ``...`` of ``FRAGMENT_MIN`` characters or more is masked too (all pieces are found in the original text and cut out at once; a text with more than ``MAX_FRAGMENT_HITS`` ``...`` or more than ``MAX_MATCHES`` matches of the secrets is replaced as a whole).
   What stays open, stated plainly: a test that prints a changed form of the value (only the host, only the user name, a re-encoded copy, a
-  piece cut out of the middle, a fragment shorter than ``FRAGMENT_MIN`` characters, a head or tail piece that does not stand next to a plain-ASCII ``...`` (pprint line wrapping, a Unicode ellipsis), another encoding such as base64, hex or HTML escapes) is not masked; neither is a password that holds a quote, a ``;`` or an ``&`` and is written without quotes (it is masked in full, up to the next white space, when printed alone; a piece of it that starts after such a character is not; a third layer of escaping (a ``repr`` of a ``repr`` of a JSON text) is not covered; a quoted password with a backslash escape is read as libpq reads it, anything else odd is masked only inside the whole value) nor a password word glued to a letter or digit in front (``dbpassword=``); a password that has no ``password=`` word
+  piece cut out of the middle, a fragment shorter than ``FRAGMENT_MIN`` characters, a head or tail piece that does not stand next to a plain-ASCII ``...`` (pprint line wrapping, a Unicode ellipsis), another encoding such as base64, hex or HTML escapes) is not masked; neither is a password that holds a quote, a ``;`` or an ``&`` and is written without quotes (it is masked in full, up to the next white space, when printed alone; a piece of it that starts after such a character is not; a third layer of escaping (a ``repr`` of a ``repr`` of a ``repr``) is not covered; a quoted password with a backslash escape is read as libpq reads it, anything else odd is masked only inside the whole value) nor a password word glued to a letter or digit in front (``dbpassword=``); a password that has no ``password=`` word
   in front of it and is not the password of a URL is masked only as part of the whole value; and text of a failure that the runner never
   reads (the child's own console output is discarded) cannot leak through it.
   SAFETY: the address must point at a THROWAWAY database, and its login must be able to touch only that database (never a shared or
@@ -114,7 +114,7 @@ import time
 from collections.abc import Callable, Iterable, Iterator, Sequence
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath, PureWindowsPath
-from urllib.parse import unquote, urlsplit
+from urllib.parse import unquote, unquote_plus, urlsplit
 
 from hadavin_sdk.testing.mutation import (
     MAX_JUNIT_CHARS,
@@ -297,31 +297,47 @@ _BACKSLASH_ESCAPE = re.compile(r"\\(.)", re.DOTALL)
 _NOT_WHITE = re.compile(r"\S*")  # the rest of a word, up to the next white space
 
 
-_CHAR_ENCODERS: tuple[Callable[[str], str], ...] = (
-    lambda c: c,
-    lambda c: repr(c)[1:-1],
-    lambda c: c.encode("unicode_escape").decode("ascii"),
-    lambda c: json.dumps(c)[1:-1],
-    lambda c: json.dumps(c, ensure_ascii=False)[1:-1],
-    lambda c: repr(c.encode("utf-8", "backslashreplace"))[2:-1],
-)  # one letter as: itself, ``repr`` (str), ``unicode_escape``, JSON (ASCII and UTF-8) and ``repr`` of its UTF-8 bytes; the quote marks are handled apart
+_WHOLE_ENCODERS: tuple[Callable[[str], str], ...] = (
+    lambda s: repr(s)[1:-1],
+    lambda s: ascii(s)[1:-1],
+    lambda s: s.encode("unicode_escape").decode("ascii"),
+    lambda s: json.dumps(s)[1:-1],
+    lambda s: json.dumps(s, ensure_ascii=False)[1:-1],
+    lambda s: repr(s.encode("utf-8", "backslashreplace"))[2:-1],
+)  # a whole printed text printed once more, by the real function (no hand-made escaping)
+_BOTH_QUOTES = "'\""
+
+
+def _printed_again(form: str) -> set[str]:
+    """``form`` printed once more by each whole-text encoder, the way it comes out when the larger text holds only the quote kind that ``form`` holds
+    and the way it comes out when the larger text holds BOTH kinds (``repr`` then escapes the single quote; the suffix is cut off again)."""
+    out: set[str] = set()
+    for encode in _WHOLE_ENCODERS:
+        out.add(encode(form))
+        both, suffix = encode(form + _BOTH_QUOTES), encode(_BOTH_QUOTES)
+        if both.endswith(suffix):
+            out.add(both[: len(both) - len(suffix)])
+    return out
 
 
 def _written_forms(text: str) -> set[str]:
-    """``text`` and the ways a test or pytest may print it: as itself, as ``repr`` or ``ascii()`` shows it inside quotes, as ``unicode_escape``
-    writes it, as JSON writes it (with and without ``\\u`` escapes for non-ASCII letters) and as the ``repr`` of its UTF-8 bytes. A ``repr`` of a
-    LARGER text (or bytes) picks its quote from the whole text, so for EVERY one of those forms each quote mark comes out escaped with a backslash
-    or as it is (all four mixes). Two more layers are added: the form with every backslash doubled (a ``repr`` of a ``repr``, a ``repr`` of a JSON
-    text) and the form as JSON writes it once more. Empty forms are dropped. A third layer and other encodings (base64, hex, HTML) are not covered."""
-    forms: set[str] = set()
-    for encode in _CHAR_ENCODERS:
-        plain = "".join(c if c in "'\"" else encode(c) for c in text)
-        for single in (False, True):
-            for double in (False, True):
-                swap = {"'": "\\'" if single else "'", '"': '\\"' if double else '"'}
-                forms.add("".join(swap.get(c, c) for c in plain))
-    forms |= {f.replace("\\", "\\\\") for f in forms}
-    forms |= {json.dumps(f)[1:-1] for f in forms}
+    """``text`` and the ways a test or pytest may print it, in exactly TWO layers, every layer made by the real functions (no hand-made escaping).
+    Layer 0: the text as it is, with each quote mark escaped with a backslash or not (all four mixes: a quoted libpq password and a ``repr`` of a
+    LARGER text carry them). Layer 1: every layer-0 form printed once by ``repr``, ``ascii``, ``unicode_escape``, JSON (with and without ``\\u``
+    escapes) and the ``repr`` of its UTF-8 bytes, each with and without both quote kinds in the larger text. Layer 2: every layer-1 form printed once
+    more the same way (``repr(repr(x))``, ``repr(json.dumps(x))``, ``json.dumps(repr(x))`` and the rest). A third layer and other encodings
+    (base64, hex, HTML) are not covered. Empty forms are dropped."""
+    layer = {
+        "".join(
+            {"'": "\\'" if single else "'", '"': '\\"' if double else '"'}.get(c, c) for c in text
+        )
+        for single in (False, True)
+        for double in (False, True)
+    }
+    forms = set(layer)
+    for _ in range(2):  # the fixed depth: two prints
+        layer = {printed for form in layer for printed in _printed_again(form)}
+        forms |= layer
     return {f for f in forms if f}
 
 
@@ -365,7 +381,7 @@ def _secret_values(names: Iterable[str]) -> tuple[str, ...]:
         passwords += _url_passwords(value)
         for password in passwords:
             if password:
-                for form in (password, unquote(password)):
+                for form in (password, unquote(password), unquote_plus(password)):
                     found.update(_written_forms(form))
     return tuple(sorted(found, key=len, reverse=True))
 
@@ -469,8 +485,8 @@ def _lock_dir() -> Path:
 
 _NOT_OPENED_BECAUSE = {
     errno.ELOOP: "it is a symbolic link",
-    errno.EACCES: "this user may not open it (it belongs to another user, or the temp folder is closed to this user)",
-    errno.EPERM: "this user may not open it (it belongs to another user, or the temp folder is closed to this user)",
+    errno.EACCES: "this user may not open it (it belongs to another user, the temp folder is closed to this user, or the temp folder is read-only; give the run a temp folder of its own with TMPDIR)",
+    errno.EPERM: "this user may not open it (it belongs to another user, the temp folder is closed to this user, or the temp folder is read-only; give the run a temp folder of its own with TMPDIR)",
     errno.EISDIR: "it is a folder",
     errno.ENOTDIR: "a part of its path is not a folder",
 }
@@ -502,16 +518,18 @@ def _one_run_per_database(values: Sequence[str]) -> Iterator[None]:
     """Hold an exclusive lock named by a hash of the passed values (never the values) in the temp folder for the whole run: a second runner that
     uses the same temp folder (same machine and account, or the same ``TMPDIR``) with the same passed value is refused (``RuntimeError``) instead
     of sharing the database and its tables. It does not see a runner with another temp folder or on another machine; that stays the caller's
-    job (a database of its own per run). The file is opened without following a symbolic link and with mode 0600, and is never deleted (one empty file per value; it stays in the temp folder, and a left-behind file of another user, a wider mode or another kind than a regular file is refused with a clear message that names the cause; a file with more than one hard link is refused too). The file name holds the first 16 hex digits of a SHA-256 of the values: not the values, but readable by
+    job (a database of its own per run). The file is opened without following a symbolic link and with mode 0600, and is never deleted (one empty file per value; it stays in the temp folder, and a left-behind file of another user, a wider mode or another kind than a regular file is refused with a clear message that names the cause; a file with more than one hard link is refused too; it is opened without blocking, so a FIFO under the name is refused instead of hanging the run; a temp folder on a network file system whose ``flock`` fails is refused as "could not be locked": use a local ``TMPDIR``).. The file name holds the first 16 hex digits of a SHA-256 of the values: not the values, but readable by
     other users of the temp folder. A lock file that cannot be opened (another user's file) or locked for a reason other than "held by another
     run" is a ``RuntimeError`` with its own message."""
     digest = hashlib.sha256("\0".join(sorted(values)).encode()).hexdigest()[:16]
     path = _lock_dir() / f"hadavin_mutation_{digest}.lock"
+    # O_NONBLOCK: a FIFO planted under the name would block an open for reading for ever (it is then refused by the fstat check)
     # read-only on POSIX (``flock`` needs no write access, so a file narrowed to 0400 still works); Windows locks a byte, which needs write access
     flags = (
         (os.O_RDWR if _IS_WINDOWS else os.O_RDONLY)
         | os.O_CREAT
         | getattr(os, "O_NOFOLLOW", 0)
+        | getattr(os, "O_NONBLOCK", 0)
         | getattr(os, "O_BINARY", 0)
     )
     try:
@@ -806,10 +824,24 @@ def _refuse_junctions(root: Path, rel: str) -> None:
                 )
 
 
+def _junit_text(junit: Path) -> str:
+    """The text of a JUnit file, or ``""`` when there is none. Only a regular file is read (``lstat``, so a symbolic link is not followed; a FIFO
+    would block the read for ever): anything else, or a file over ``MAX_JUNIT_CHARS``, is a ``ValueError``."""
+    try:
+        info = junit.lstat()
+    except FileNotFoundError:
+        return ""
+    if not stat.S_ISREG(info.st_mode):
+        raise ValueError("junit path is not a regular file")
+    if info.st_size > MAX_JUNIT_CHARS:  # looked at BEFORE the file is read
+        raise ValueError("junit file over the ceiling")
+    return junit.read_text(encoding="utf-8")
+
+
 def _refuse_skips_in_baseline(junit: Path, secrets: Sequence[str] = ()) -> None:
     """``RuntimeError`` when the passing unmutated run skipped a test, or left no readable JUnit file to prove it did not (``forbid_skips``)."""
     try:
-        skipped = skipped_tests(junit.read_text(encoding="utf-8"))
+        skipped = skipped_tests(_junit_text(junit))
     except (OSError, *JUNIT_REFUSED) as exc:
         raise RuntimeError(
             f"the unmutated copy left no usable JUnit file to check for skips: {type(exc).__name__}"
@@ -838,12 +870,7 @@ def _row(
     if rc == REAPED_ELSEWHERE:
         return (m.name, Verdict.ERROR, "REAPED ELSEWHERE", False)
     try:
-        too_big = (
-            junit.exists() and junit.stat().st_size > MAX_JUNIT_CHARS
-        )  # looked at BEFORE the file is read
-        if too_big:
-            raise ValueError("junit file over the ceiling")
-        xml_text = junit.read_text(encoding="utf-8") if junit.exists() else ""
+        xml_text = _junit_text(junit)
         report = read_junit(xml_text) if xml_text else JunitReport("", "", [], [], False, False)
     except JUNIT_REFUSED:
         return (m.name, Verdict.ERROR, "JUNIT REFUSED", False)
