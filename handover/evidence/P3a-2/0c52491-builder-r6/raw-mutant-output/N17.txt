@@ -1,0 +1,13 @@
+### tests/test_migration_rules.py::test_the_runbook_carries_the_real_lock_the_command_and_every_case rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+______ test_the_runbook_carries_the_real_lock_the_command_and_every_case _______
+tests/test_migration_rules.py:483: in test_the_runbook_carries_the_real_lock_the_command_and_every_case
+    assert str(mn.MIGRATE_LOCK) in runbook and rb.lock_number() == mn.MIGRATE_LOCK
+E   AssertionError: assert ('3760701656253510835' in '### Migration repair steps\n\nFor a database administrator when `hadavin-sdk migrate` refuses a database or a folder ... when you create the plain migration role by the SQL in the refusal message of a superuser login and forget this step.')
+E    +  where '3760701656253510835' = str(3760701656253510835)
+E    +    where 3760701656253510835 = mn.MIGRATE_LOCK
+=========================== short test summary info ============================
+FAILED tests/test_migration_rules.py::test_the_runbook_carries_the_real_lock_the_command_and_every_case
+1 failed in 0.38s
+

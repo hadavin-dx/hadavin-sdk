@@ -1,0 +1,14 @@
+### tests/test_migration_wiring.py::test_the_test_role_password_is_sent_only_as_a_hash rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+______________ test_the_test_role_password_is_sent_only_as_a_hash ______________
+tests/test_migration_wiring.py:1462: in test_the_test_role_password_is_sent_only_as_a_hash
+    assert mr._PASSWORD not in " ".join(db.log)
+E   assert '6442cbdcc2a...4934e35e7ea2' not in "SELECT 1 FR...934e35e7ea2'"
+E     
+E     '6442cbdcc2ac5a56cb944934e35e7ea2' is contained here:
+E       PASSWORD '6442cbdcc2ac5a56cb944934e35e7ea2'
+=========================== short test summary info ============================
+FAILED tests/test_migration_wiring.py::test_the_test_role_password_is_sent_only_as_a_hash
+1 failed in 0.40s
+

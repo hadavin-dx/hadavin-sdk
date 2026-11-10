@@ -1,0 +1,14 @@
+### tests/test_migration_wiring.py::test_commit_in_a_file_is_refused_before_connecting rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+______________ test_commit_in_a_file_is_refused_before_connecting ______________
+tests/test_migration_wiring.py:292: in test_commit_in_a_file_is_refused_before_connecting
+    assert isinstance(e.value, ConfigError), repr(e.value)
+E   AssertionError: AssertionError('connected')
+E   assert False
+E    +  where False = isinstance(AssertionError('connected'), ConfigError)
+E    +    where AssertionError('connected') = <ExceptionInfo AssertionError('connected') tblen=3>.value
+=========================== short test summary info ============================
+FAILED tests/test_migration_wiring.py::test_commit_in_a_file_is_refused_before_connecting
+1 failed in 0.37s
+

@@ -1,0 +1,16 @@
+### tests/test_migration_postgres.py::test_the_owner_of_a_database_belongs_to_pg_database_owner_and_is_not_refused rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_ test_the_owner_of_a_database_belongs_to_pg_database_owner_and_is_not_refused _
+tests/test_migration_postgres.py:2379: in test_the_owner_of_a_database_belongs_to_pg_database_owner_and_is_not_refused
+    assert mig.migrate(dsn) == REAL
+           ^^^^^^^^^^^^^^^^
+src/hadavin_sdk/store/migrate.py:1004: in migrate
+    _refuse_privileged_role(db)
+src/hadavin_sdk/store/migrate.py:604: in _refuse_privileged_role
+    raise ConfigError(
+E   hadavin_sdk.errors.ConfigError: the migration role is a member of a role that is a superuser, holds CREATEROLE, CREATEDB or BYPASSRLS, or is a built-in server role (pg_database_owner), so it could use those rights. Remove the membership (REVOKE <that role> FROM <the migration role>) or run migrate with a plain role that is a member of none of them.
+=========================== short test summary info ============================
+FAILED tests/test_migration_postgres.py::test_the_owner_of_a_database_belongs_to_pg_database_owner_and_is_not_refused
+1 failed in 1.08s
+

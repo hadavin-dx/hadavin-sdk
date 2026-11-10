@@ -1,0 +1,13 @@
+### tests/test_migration_numbers.py::test_scan_comment_ends_at_cr rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________________________ test_scan_comment_ends_at_cr _________________________
+tests/test_migration_numbers.py:922: in test_scan_comment_ends_at_cr
+    assert any("not closed at line" in p and "0001_x.sql" in p for p in bad), bad
+E   AssertionError: ['GRANTS names approval_decisions, which no migration creates', 'GRANTS names approval_decisions_seq_seq, which no mig...'GRANTS names audit_entries, which no migration creates', 'GRANTS names audit_outbox, which no migration creates', ...]
+E   assert False
+E    +  where False = any(<generator object test_scan_comment_ends_at_cr.<locals>.<genexpr> at 0x7f51a9142810>)
+=========================== short test summary info ============================
+FAILED tests/test_migration_numbers.py::test_scan_comment_ends_at_cr - Assert...
+1 failed in 0.33s
+

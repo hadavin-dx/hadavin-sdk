@@ -1,0 +1,21 @@
+### tests/test_migration_postgres.py::test_a_name_with_a_newline_is_never_copied_into_a_printed_statement rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_____ test_a_name_with_a_newline_is_never_copied_into_a_printed_statement ______
+tests/test_migration_postgres.py:1780: in test_a_name_with_a_newline_is_never_copied_into_a_printed_statement
+    assert mig._label("hadavin_test_bad\nname") in msg and "bad\nname" not in msg, msg
+E   AssertionError: the migration role mig_e681830abd cannot change 2 object(s) of this package in schema hadavin_test_dc0b1ce1a5bf that another role owns: hadavin_test_bad\nname (owner postgres); hadavin_test_fine (owner postgres). A later migration that alters one of them would fail with 'must be owner', and the grants of migrate would do nothing without an error. Nothing was changed. A database administrator hands the objects to the migration role once, connected as a superuser or as a role that is a member of both the old owner and the migration role (objects of other applications in the schema are not listed and need no change; but a table of ANOTHER application that has the same name as one of this package's tables, for example spend or runs, looks the same here: do not hand that one over, point migrate at another schema instead; the same goes for a function: it is matched by name, so read the text of each listed function first and hand it over only when it is this package's own code, because the migration role would then own, and run, it), with a file of SQL run as in CHANGELOG.md, Migration repair steps, case (h): ALTER TABLE "hadavin_test_dc0b1ce1a5bf"."hadavin_test_bad
+E     name" OWNER TO "mig_e681830abd"; ALTER TABLE "hadavin_test_dc0b1ce1a5bf"."hadavin_test_fine" OWNER TO "mig_e681830abd";
+E   assert ('hadavin_test_bad\\nname' in 'the migration role mig_e681830abd cannot change 2 object(s) of this package in schema hadavin_test_dc0b1ce1a5bf that ...ame" OWNER TO "mig_e681830abd"; ALTER TABLE "hadavin_test_dc0b1ce1a5bf"."hadavin_test_fine" OWNER TO "mig_e681830abd";' and 'bad\nname' not in 'the migrati...e681830abd";'
+E    +  where 'hadavin_test_bad\\nname' = <function _label at 0x7fd502e13ba0>('hadavin_test_bad\nname')
+E    +    where <function _label at 0x7fd502e13ba0> = mig._label
+E     
+E     'bad\nname' is contained here:
+E       avin_test_bad
+E     ?  ^^^^^ ---
+E       name" OWNER TO "mig_e681830abd"; ALTER TABLE "hadavin_test_dc0b1ce1a5bf"."hadavin_test_fine" OWNER TO "mig_e681830abd";
+E     ? + ^)
+=========================== short test summary info ============================
+FAILED tests/test_migration_postgres.py::test_a_name_with_a_newline_is_never_copied_into_a_printed_statement
+1 failed in 0.66s
+

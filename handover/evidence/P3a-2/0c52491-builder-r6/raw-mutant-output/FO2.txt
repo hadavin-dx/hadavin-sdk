@@ -1,0 +1,12 @@
+### tests/test_migration_postgres.py::test_a_partition_owned_by_another_role_is_listed rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_______________ test_a_partition_owned_by_another_role_is_listed _______________
+tests/test_migration_postgres.py:1756: in test_a_partition_owned_by_another_role_is_listed
+    with pytest.raises(ConfigError) as e:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ConfigError
+=========================== short test summary info ============================
+FAILED tests/test_migration_postgres.py::test_a_partition_owned_by_another_role_is_listed
+1 failed in 0.58s
+

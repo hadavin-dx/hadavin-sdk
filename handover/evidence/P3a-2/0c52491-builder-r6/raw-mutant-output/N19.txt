@@ -1,0 +1,18 @@
+### tests/test_migration_rules.py::test_a_drop_is_advised_in_one_place_only_and_never_for_the_evidence_tables_of_a_live_database rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_ test_a_drop_is_advised_in_one_place_only_and_never_for_the_evidence_tables_of_a_live_database _
+tests/test_migration_rules.py:432: in test_a_drop_is_advised_in_one_place_only_and_never_for_the_evidence_tables_of_a_live_database
+    assert "drop `tool_calls`" not in CHANGELOG.lower()
+E   AssertionError: assert 'drop `tool_calls`' not in '# changelog...t this step.'
+E     
+E     'drop `tool_calls`' is contained here:
+E       case (e). drop `tool_calls` and `redaction_maps` and run migrate again: a drop is advised only in case (e), for a scratch database whose data you can lose.
+E     ?           +++++++++++++++++
+E     ?                                                                                                                                                                                                                                                                                                                                                                        ...
+E     
+E     ...Full output truncated, use '-vv' to show
+=========================== short test summary info ============================
+FAILED tests/test_migration_rules.py::test_a_drop_is_advised_in_one_place_only_and_never_for_the_evidence_tables_of_a_live_database
+1 failed in 0.38s
+

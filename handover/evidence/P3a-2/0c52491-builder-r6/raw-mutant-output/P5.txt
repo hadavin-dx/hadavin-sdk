@@ -1,0 +1,11 @@
+### tests/test_migration_rules.py::test_case_a_failure_wording_and_the_hand_written_fallback rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+__________ test_case_a_failure_wording_and_the_hand_written_fallback ___________
+tests/test_migration_rules.py:449: in test_case_a_failure_wording_and_the_hand_written_fallback
+    assert "the second run fails, and keeps nothing" in a
+E   assert 'the second run fails, and keeps nothing' in "- **(a) A late file** (a new file numbered at or below a number the database has already applied; or a hotfix that ne...me without .sql>');`, then `COMMIT;`, and runs it as above. Write the date, the files and your name in the change log."
+=========================== short test summary info ============================
+FAILED tests/test_migration_rules.py::test_case_a_failure_wording_and_the_hand_written_fallback
+1 failed in 0.38s
+
