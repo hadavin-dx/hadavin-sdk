@@ -7,4 +7,10 @@ platform linux -- Python 3.12.3, pytest-9.2.0, pluggy-1.7.0 -- /home/user/build/
 rootdir: /home/user/build/EV-P6a-d392200/wt
 configfile: pyproject.toml
 plugins: anyio-4.15.1
-collecting ... 
+collecting ... collected 846 items / 1 deselected / 845 selected
+
+tests/demo_askdata/test_validate_harm.py::test_writing_attack_does_harm_unvalidated_and_is_refused_when_validated[stacked-delete] PASSED [  0%]
+tests/demo_askdata/test_validate_harm.py::test_writing_attack_does_harm_unvalidated_and_is_refused_when_validated[stacked-after-comment] PASSED [  0%]
+tests/demo_askdata/test_validate_harm.py::test_writing_attack_does_harm_unvalidated_and_is_refused_when_validated[stacked-after-line-comment] PASSED [  0%]
+tests/demo_askdata/test_validate_harm.py::test_writing_attack_does_harm_unvalidated_and_is_refused_when_validated[stacked-leading-semicolon] PASSED [  0%]
+tests/demo_askdata/test_validate_harm.py::test_writing_attack_does_harm_unvalidated_and_is_refused_when_validated[stacked-commit-then-write] 
