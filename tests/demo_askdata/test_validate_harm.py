@@ -1,4 +1,3 @@
-# ruff: noqa: S608
 """P2 harm check against a REAL PostgreSQL (HADAVIN_TEST_PG_DSN: the CI service, or a local container).
 
 Every ATTACK is run, unvalidated, as the administrator of a scratch database, to prove it would have done harm
@@ -80,7 +79,7 @@ def fingerprint(dsn: str) -> tuple:
             else:
                 rows.append(
                     c.execute(
-                        f"SELECT md5(coalesce(string_agg(t::text, '|' ORDER BY t::text), '')) FROM shop.{t} t"
+                        f"SELECT md5(coalesce(string_agg(t::text, '|' ORDER BY t::text), '')) FROM shop.{t} t"  # noqa: S608
                     ).fetchone()[0]
                 )
         roles = c.execute(

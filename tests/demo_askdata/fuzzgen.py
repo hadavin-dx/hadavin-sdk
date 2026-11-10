@@ -12,8 +12,6 @@
 
 # test data generator, not security randomness
 
-# ruff: noqa: S608, S311  # the SQL text is the test data; seeded randomness is test data, not security
-
 from __future__ import annotations
 
 import random
@@ -225,11 +223,11 @@ class Gen:
             if kind != "num"
             else self.pick(["max", "min", "sum", "avg", "count"])
         )
-        return f"SELECT {fn}({self.col(scope, kind)}) FROM {v[0]} {v[1]}" + self.where(scope, d + 1)
+        return f"SELECT {fn}({self.col(scope, kind)}) FROM {v[0]} {v[1]}" + self.where(scope, d + 1)  # noqa: S608
 
     def in_sub(self, kind, d):
         v = self.view()
-        return f"SELECT {self.col([v], kind)} FROM {v[0]} {v[1]}" + self.where([v], d + 1)
+        return f"SELECT {self.col([v], kind)} FROM {v[0]} {v[1]}" + self.where([v], d + 1)  # noqa: S608
 
     def where(self, scope, d=0):
         return f" WHERE {self.boolean(scope, d + 1)}" if self.chance(0.5) else ""
@@ -303,7 +301,7 @@ class Gen:
         if mode == "agg" and not group and any(not _is_agg(x) for x in items):
             mode = "rows"
         distinct = "DISTINCT " if mode == "rows" and self.chance(0.12) else ""
-        sql = f"SELECT {distinct}{', '.join(items)} FROM {from_sql}"
+        sql = f"SELECT {distinct}{', '.join(items)} FROM {from_sql}"  # noqa: S608
         if self.chance(0.55):
             sql += f" WHERE {self.boolean(scope)}"
         if mode == "agg" and group:
@@ -470,6 +468,6 @@ def case(rng: random.Random) -> tuple[str, str, tuple[str, str] | None]:
             seed = (
                 rng.random()
             )  # the same casing and spacing for base and hazard: only the hazard differs
-            base = render(random.Random(seed), tokens)
-            return "slot", render(random.Random(seed), placed), (base, rule)
+            base = render(random.Random(seed), tokens)  # noqa: S311
+            return "slot", render(random.Random(seed), placed), (base, rule)  # noqa: S311
     return "mutated", render(rng, mutate(rng, tokens)), None

@@ -8,3 +8,9 @@
 /tests/fixtures/*golden* @veerarakesh56
 /.github/ @veerarakesh56
 /.gitleaks* @veerarakesh56
+/tests/test_scan_repo.py @veerarakesh56
+/tests/test_scan_repo_mutations.py @veerarakesh56
+/tests/test_ci_gitleaks_scope.py @veerarakesh56
+/tests/test_ci_toolpath_step.py @veerarakesh56
+/pyproject.toml @veerarakesh56
+/uv.lock @veerarakesh56

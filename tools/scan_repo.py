@@ -4,12 +4,18 @@ Usage: python tools/scan_repo.py [--root DIR] [--allowlist FILE] [--extra FILE] 
 Output per hit: path:line: rule (the matched text is never printed, so CI logs hold no secret).
 False positives: add `path:rule:reason` (one per line, `#` comments ok) to tools/scan_allowlist.txt. The entry skips ONLY that
 rule on that file (rule `*` skips all rules; avoid it). An entry whose file is no longer tracked, or without a reason, is itself a hit.
-Suppressions: a comment that switches a scanner off (nosec, nosemgrep, the gitleaks allow marker, trivy ignore, a noqa that is blanket or names a
-ruff `S` security code) and every scanner-config file (.gitleaksignore, .gitleaks.toml, .semgrepignore, .trivyignore, ...) is a hit unless
-tools/scan_suppressions.txt lists it: `path:rule:value:reason`, value = `count@sha256` (the number of markers in that file and the sha256 of
-their sorted line texts, so a widened, replaced or moved-to-other-code marker is a change), or the sha256 of the config file. The two list
-files tools/scan_allowlist.txt and tools/scan_banned_extra.txt are pinned the same way. `python tools/scan_repo.py --print-list` writes a
-fresh list (reasons of existing lines are kept) for a reviewer to read and commit. A stale, wrong-count, wrong-hash, reasonless or unknown-rule line is itself a hit. The list is the one place a reviewer reads.
+Suppressions: a comment that switches a scanner or linter off (the nosec, semgrep, gitleaks, trivy, sonar, pmd, checkov, tfsec, zizmor,
+detect-secrets, lgtm and codeql markers, a ruff range switch, a noqa that is blanket or names a ruff `S` security code; all matched
+without regard to case) and every scanner or linter config file (.gitleaksignore, .gitleaks.toml, .semgrepignore, .trivyignore, .flake8,
+sonar and codeql files, .coderabbit.yaml, any pyproject.toml below the root, ...) is a hit unless tools/scan_suppressions.txt lists it:
+`path:rule:value:reason`, value = `count@sha256` (the number of markers in that file and the sha256 of their sorted line texts, so a
+widened, replaced or moved-to-other-code marker is a change), or the sha256 of the config file. The two list files
+tools/scan_allowlist.txt and tools/scan_banned_extra.txt are pinned the same way. `python tools/scan_repo.py --print-list` writes a
+fresh list (reasons of existing lines are kept; a new line gets the placeholder reason that the scan REFUSES until a reviewer replaces it
+with a real reason of at least 15 characters). A stale, wrong-count, wrong-hash, reasonless or unknown-rule line is itself a hit. The list
+is the one place a reviewer reads. Never listable: a file-level `ruff: noqa` without codes, and a ruff, bandit or semgrep table in a
+pyproject.toml below the root. A NUL byte in a file whose extension is not on the short known-binary list is a hit (fail closed); such a
+file is still scanned as text.
 Banned names: the BANNED tuple in tests/test_no_reference_material.py (read, not copied) plus tools/scan_banned_extra.txt.
 If BANNED cannot be found or is empty the scan fails (it never silently turns the check off).
 """
@@ -40,13 +46,16 @@ PATTERNS = {
     "credential-literal": re.compile(r"""(?i)password["']?(?:\s*=\s*|:\s*)(['"])[^'"\s]{8,}\1"""),
 }
 
-# Suppression comments. The comment prefix is required, so prose that only names a marker is not a hit.
+# Suppression comments. Matched without regard to case. The comment prefix is required except for markers that are
+# unambiguous on their own (the semgrep, gitleaks, lgtm and codeql markers), so prose that only names `nosec` is not a hit.
+# Marker words are written in parts so this file does not hold a live marker.
 _C = r"(?:#|//|--|/\*)\s*"
+_I = re.IGNORECASE
 SUPPRESSIONS = {
-    "suppress-nosec": re.compile(_C + r"nosec\b"),
-    "suppress-nosemgrep": re.compile(_C + r"nosem(?:grep)?\b"),
-    "suppress-gitleaks-allow": re.compile(r"gitleaks:" r"allow\b"),
-    "suppress-trivy-ignore": re.compile(_C + r"trivy:ignore\b"),
+    "suppress-nosec": re.compile(_C + "nos" + "ec", _I),
+    "suppress-semgrep-ignore": re.compile("nosem" + "grep|" + _C + r"nosem\b", _I),
+    "suppress-gitleaks-allow": re.compile("gitleaks:" + "allow", _I),
+    "suppress-trivy-ignore": re.compile(_C + "trivy:" + "ignore", _I),
     # blanket noqa, or a noqa naming a ruff security (S) code; style codes (BLE001, F401, ...) are not scanner suppressions
     # a file-level `ruff: noqa` / `flake8: noqa` switches rules off for the whole file, so it is always a hit
     "suppress-noqa-security": re.compile(
@@ -55,17 +64,37 @@ SUPPRESSIONS = {
         + _C
         + r"noqa\s*:[^#]*\bS\d{3}\b|"
         + _C
-        + r"(?:ruff|flake8)\s*:\s*noqa\b"
+        + r"(?:ruff|flake8)\s*:\s*noqa\b",
+        _I,
     ),
+    # ruff range switches: `ruff: disable[...]`, `ruff: ignore[...]`, `ruff: enable[...]`
+    "suppress-ruff-range": re.compile(_C + r"ruff\s*:\s*(?:disable|ignore|enable)", _I),
+    "suppress-nosonar": re.compile(_C + "NO" + "SONAR", _I),
+    "suppress-lgtm": re.compile(r"lgtm\s*\[", _I),
+    "suppress-codeql": re.compile(r"codeql\s*\[", _I),
+    "suppress-zizmor-ignore": re.compile(_C + r"zizmor\s*:\s*ignore", _I),
+    "suppress-allowlist-secret": re.compile(
+        _C + r"pragma\s*:\s*(?:allow|white)list\s+(?:next\s*line\s+)?secret", _I
+    ),
+    "suppress-nopmd": re.compile(_C + "NO" + "PMD", _I),
+    "suppress-checkov-skip": re.compile(_C + "checkov:" + "skip", _I),
+    "suppress-tfsec-ignore": re.compile(_C + "tfsec:" + "ignore", _I),
 }
+# A file-level `ruff: noqa` / `flake8: noqa` must name its codes; a bare one is a hit that no list line can cover.
+BLANKET_FILE_NOQA = re.compile(_C + r"(?:ruff|flake8)\s*:\s*noqa\b(?!\s*:\s*[A-Za-z]{1,10}\d)", _I)
+BLANKET_FILE_NOQA_RULE = "file-noqa-without-codes"
+# Scanner and linter configuration files, found by file name (compared in lower case) in any folder.
 SCANNER_CONFIG_NAMES = {
     ".gitleaksignore",
     ".gitleaks.toml",
     "gitleaks.toml",
     ".semgrepignore",
+    ".semgrep.yml",
+    ".semgrep.yaml",
     ".trivyignore",
     ".trivyignore.yaml",
     "trivy.yaml",
+    "trivy.yml",
     ".bandit",
     ".zizmor.yml",
     ".zizmor.yaml",
@@ -77,12 +106,34 @@ SCANNER_CONFIG_NAMES = {
     "bandit.yml",
     "setup.cfg",
     "tox.ini",
+    ".flake8",
+    "mypy.ini",
+    "sonar-project.properties",
+    ".sonarcloud.properties",
+    ".coderabbit.yaml",
+    ".coderabbit.yml",
+    ".pre-commit-config.yaml",
+    ".secrets.baseline",
+    ".snyk",
 }
+# Whole folders of scanner configuration (any file below them).
+SCANNER_CONFIG_DIRS = (".github/codeql/", ".semgrep/")
 # Files that steer this scan itself: pinned by hash like a scanner config, found by exact path.
 SCANNER_CONFIG_PATHS = {"tools/scan_allowlist.txt", "tools/scan_banned_extra.txt"}
-# A tracked file with one of these extensions that holds a NUL byte is refused (a NUL would otherwise hide it as "binary").
-TEXT_EXTENSIONS = {
-    ".py", ".toml", ".yml", ".yaml", ".cfg", ".ini", ".json", ".sh", ".txt", ".md", ".js", ".ts", ".sql", ".tf",
+# A non-root pyproject.toml is a scanner config (pinned by hash) and may never hold a ruff or bandit table
+# (the root one is checked by tests/test_ci_gitleaks_scope.py).
+NESTED_PYPROJECT_TABLE = re.compile(
+    r"^\s*\[tool\.(?:ruff|bandit|semgrep)", re.IGNORECASE | re.MULTILINE
+)
+NESTED_PYPROJECT_RULE = "nested-pyproject-scanner-table"
+# A NUL byte in a file whose extension is not on this short list of real binary formats is refused (fail closed: a NUL would
+# otherwise hide the whole file from the secret patterns). A file with no extension (Dockerfile, Makefile) is refused too.
+BINARY_EXTENSIONS = {
+    ".png", ".jpg", ".jpeg", ".gif", ".ico", ".bmp", ".webp", ".avif", ".tif", ".tiff",
+    ".pdf", ".zip", ".gz", ".tgz", ".bz2", ".xz", ".7z", ".tar", ".whl", ".jar",
+    ".woff", ".woff2", ".ttf", ".otf", ".eot",
+    ".parquet", ".db", ".sqlite", ".sqlite3", ".pyc", ".so", ".dll", ".exe", ".wasm",
+    ".mp3", ".mp4", ".mov", ".wav", ".npy", ".bin",
 }  # fmt: skip
 SCANNER_CONFIG_RULE = "scanner-config-file"
 LIST_RULES = set(SUPPRESSIONS) | {SCANNER_CONFIG_RULE}
@@ -127,6 +178,18 @@ def _allowed(allowlist: Path) -> tuple[dict[str, set[str]], list[str]]:
     return out, problems
 
 
+MIN_REASON = 15
+
+
+def reason_problem(reason: str) -> str:
+    """Why a reason cannot stand ('' if it can): the generator's placeholder or a reason too short to say anything."""
+    if re.match(r"NEW\b", reason):
+        return "is the placeholder from --print-list, write a reviewed reason"
+    if len(reason) < MIN_REASON:
+        return f"is shorter than {MIN_REASON} characters"
+    return ""
+
+
 def _suppressions(path: Path | None) -> tuple[dict[tuple[str, str], str], list[str]]:
     """Return ({(path, rule): value}, problems in the list file itself). Line: path:rule:value:reason."""
     out: dict[tuple[str, str], str] = {}
@@ -150,6 +213,8 @@ def _suppressions(path: Path | None) -> tuple[dict[tuple[str, str], str], list[s
             problems.append(f"{where}: suppression-list value must be a positive count@sha256")
         else:
             out[(parts[0], parts[1])] = parts[2]
+        if len(parts) == 4 and all(parts) and reason_problem(parts[3]):
+            problems.append(f"{where}: suppression-list reason {reason_problem(parts[3])}")
     return out, problems
 
 
@@ -174,13 +239,30 @@ def _marker_lines(text: str) -> dict[str, tuple[list[int], list[str]]]:
 
 
 def _is_config(rel: str) -> bool:
-    return rel in SCANNER_CONFIG_PATHS or rel.rsplit("/", 1)[-1] in SCANNER_CONFIG_NAMES
+    name = rel.rsplit("/", 1)[-1].lower()
+    low = rel.lower()
+    return (
+        rel in SCANNER_CONFIG_PATHS
+        or name in SCANNER_CONFIG_NAMES
+        or low.startswith(SCANNER_CONFIG_DIRS)
+        or (name == "pyproject.toml" and "/" in rel)
+    )
 
 
 def _check_suppressions(
     rel: str, text: str, data: bytes, listed: dict[tuple[str, str], str], seen: set[tuple[str, str]]
 ) -> list[str]:
     hits = []
+    low = rel.rsplit("/", 1)[-1].lower()
+    if low == "pyproject.toml" and "/" in rel and NESTED_PYPROJECT_TABLE.search(text):
+        hits.append(
+            f"{rel}:1: {NESTED_PYPROJECT_RULE}"
+        )  # never listable: only the root pyproject may configure these
+    hits += [
+        f"{rel}:{n}: {BLANKET_FILE_NOQA_RULE}"
+        for n, line in enumerate(text.splitlines(), 1)
+        if BLANKET_FILE_NOQA.search(line)
+    ]
     if _is_config(rel):
         key = (rel, SCANNER_CONFIG_RULE)
         seen.add(key)
@@ -257,10 +339,12 @@ def scan(
         text = data.decode("utf-8", errors="replace")
         # config-name and marker checks run before the binary skip and even for a file the allowlist skips
         hits += _check_suppressions(rel, text, data, listed, seen)
-        if b"\0" in data[:8000]:
-            if Path(rel).suffix.lower() in TEXT_EXTENSIONS:
-                hits.append(f"{rel}:1: nul-in-text-file")  # a source or config file is never binary
-            continue  # binary
+        if b"\0" in data:
+            if Path(rel).suffix.lower() in BINARY_EXTENSIONS:
+                continue  # a known binary format
+            hits.append(
+                f"{rel}:1: nul-in-text-file"
+            )  # fail closed: it is scanned as text below as well
         if "*" in skip:
             continue
         for n, line in enumerate(text.splitlines(), 1):
