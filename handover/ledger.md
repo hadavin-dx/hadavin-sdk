@@ -2122,3 +2122,10 @@
 | BL-core-a19-r1-01 | A19 PR83 7f24178 | MAJOR | check_id name blacklist leaves 1-2 char and short all-digit ids unrefused (leak class); derive thresholds from redactor constants, tests fail on old code | OPEN | egm/A19/r1-design.md M1 | r1 |
 | BL-core-a19-r1-02 | A19 PR83 7f24178 | MAJOR | TenantId/OrgId/etc. types used by no field; AST guard heuristic; wire to a real choke point or name a trigger | OPEN | egm/A19/r1-design.md M2 | r1 |
 | BL-core-a19-r1-03 | A19 PR83 7f24178 | MAJOR | six-word stage scan needs exemption rows for demo files and prose false positives; justify against ticket or narrow | OPEN | egm/A19/r1-design.md M3 | r1 |
+| BL-core-a24-r1-01 | A24 PR91 61cf2be | BLOCKER | tests/test_ci_toolpath_step.py has 6 unlisted noqa S603/S607 lines; own scan job and real-repo test should fail | OPEN | egm/A24/r1-design.md B1 | r1 |
+| BL-core-a24-r1-02 | A24 PR91 61cf2be | MAJOR | guard enforcement in PR-controlled tree; CODEOWNERS/ruleset not done (owner step) | OWNER-ONLY | egm/A24/r1-design.md M1 | r1 |
+| BL-core-a24-r1-03 | A24 PR91 61cf2be | MAJOR | suppression count is per line not per marker/content; widen or move passes; pin hash | OPEN | egm/A24/r1-design.md M2 | r1 |
+| BL-core-a24-r1-04 | A24 PR91 61cf2be | MAJOR | NUL-byte skip runs before config/marker check | OPEN | egm/A24/r1-design.md M3 | r1 |
+| BL-core-a24-r1-05 | A24 PR91 61cf2be | MAJOR | marker regexes miss ruff: noqa, flake8: noqa, nosem | OPEN | egm/A24/r1-design.md M4 | r1 |
+| BL-core-a24-r1-06 | A24 PR91 61cf2be | MAJOR | scanner config names incomplete (ruff.toml, trivy-secret.yaml, bandit.yaml...), tool.ruff keys unchecked | OPEN | egm/A24/r1-design.md M5 | r1 |
+| BL-core-a24-r1-07 | A24 PR91 61cf2be | MAJOR | scan_allowlist.txt / scan_banned_extra.txt unguarded, "*" disables secret rules | OPEN | egm/A24/r1-design.md M6 | r1 |
