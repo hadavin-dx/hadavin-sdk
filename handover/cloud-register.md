@@ -935,3 +935,6 @@ PR72 0ae044b: builder done; evidence run waits for evid.sh fix (inv-trunc-66), t
 | a67dfa211343d3509 | egm-design (sonnet) | P1d-a plan pass 5 (rev 8) | started 17:36Z, expected 17:58Z | RUNNING |
 | a163ed7f2d034d9cc | builder (general-purpose, sonnet) | A19 PR83 fix batch, head 85e0801 on core/P0t-followup-fix1 | CLOSED 17:30Z; 10635 passed 1 skipped, ruff/bandit/scan_repo rc 0, 78/78 mutants; decisions for lead in q-entry |
 | a56510b27072e6cee | egm-codebase-details (sonnet) | A19 PR83 fix1 result review r2, snapshot handover/egm/A19/snapshot-85e0801/ | REPORTED 1B/2M/4N, CLOSED 17:42Z; saved egm/A19/r2-codebase.md |
+| a233a9a24ca3aaf48 | egm-design (sonnet) | A24 PR91 db0e0ce result review r3 (snapshot egm/A24/snapshot-db0e0ce/) | started 17:47Z, expected 18:12Z | RUNNING |
+| a6376aa2e418eaf11 | egm-codebase-details (sonnet) | A24 PR91 db0e0ce result review r3 | started 17:47Z, expected 18:12Z | RUNNING |
+| a997c39722443ee17 | builder (general-purpose, sonnet) | A19 PR83 fix batch 2 (r2 B1/M1/M2), WT-A19fix, branch core/P0t-followup-fix1 | started 17:50Z, expected 18:50Z, checkpoint checkpoints/A19fix2.md | RUNNING |
