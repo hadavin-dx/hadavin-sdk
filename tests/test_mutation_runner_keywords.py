@@ -531,16 +531,17 @@ def test_a_database_that_a_mutant_left_dirty_stops_the_run_after_that_mutant(tmp
     root = _tree(tmp_path, {CORE_TEST: DIRTY_AFTER_FLIP})
     other = Mutant("second", "src/pk/core.py", "return flag", "return not flag", "assert")
     seen = []
+    failure = None
     try:
         _run(root, [FLIP, other], pass_env=(DSN_NAME,), on_result=seen.append)
     except mr.CanaryFailed as exc:
-        assert "'flip'" in str(exc), f"the message does not name the mutant: {exc}"
-        assert "no longer passes" in str(exc), f"another refusal: {exc}"
-        assert [r[0] for r in exc.rows] == ["flip"], (
-            f"the failure did not carry the rows so far: {exc.rows}"
-        )
-    else:
-        raise AssertionError("a dirty database did not stop the run")
+        failure = exc
+    assert failure is not None, "a dirty database did not stop the run"
+    assert "'flip'" in str(failure), f"the message does not name the mutant: {failure}"
+    assert "no longer passes" in str(failure), f"another refusal: {failure}"
+    assert [r[0] for r in failure.rows] == ["flip"], (
+        f"the failure did not carry the rows so far: {failure.rows}"
+    )
     assert [r[0] for r in seen] == ["flip"], f"the second mutant ran on a dirty database: {seen}"
 
 
