@@ -54,7 +54,7 @@ pytest runs with ``--noconftest`` and with an empty ini file on purpose (a plant
   ``PASS_ENV_ALLOWED``, re-copy the file and update its pin (see the CHANGELOG); do that only for the ADDRESS of a throwaway test resource
   that a demo's tests need (a second database, for example), never for a token or a key.
   Masking: the value of a passed name (and the password inside it: the one of a URL, the one after ``password=``, ``passwd=`` or ``pwd=`` in a
-  key=value text or a URL query, a quoted one included; each also percent-decoded, a backslash escape of libpq (``password='it\\'s'``, ``password=ab\\ cd``) read both ways, a URL password with an unencoded ``/``, ``?``, ``#`` or ``@`` read by trying every ``@`` as the end of the login, and each also as ``repr``, ``unicode_escape``, JSON (with and without ``\\u`` escapes) and the ``repr`` of its UTF-8 bytes print it, with each quote mark escaped or not (a ``repr`` of a larger text picks its quote from the whole text), so a backslash, a quote or a non-ASCII letter is covered) is replaced by ``[REDACTED]`` in ``first_lines``, in the failing test id of a row,
+  key=value text or a URL query, a quoted one included; each also percent-decoded, a backslash escape of libpq (``password='it\\'s'``, ``password=ab\\ cd``) read both ways, a URL password with an unencoded ``/``, ``?``, ``#`` or ``@`` read by trying every ``@`` as the end of the login, and each also as itself, ``repr`` or ``ascii()``, ``unicode_escape``, JSON (with and without ``\\u`` escapes) and the ``repr`` of its UTF-8 bytes print it, every one with each quote mark escaped or not (a ``repr`` of a larger text or bytes picks its quote from the whole), with its backslashes doubled once more and as JSON writes it once more, so a backslash, a quote or a non-ASCII letter is covered) is replaced by ``[REDACTED]`` in ``first_lines``, in the failing test id of a row,
   in the ``COLLECTION ERROR``, ``FIXTURE ERROR`` and ``SKIPPED TESTS`` messages and in the baseline skip message. Checked with a real run: pytest
   shortens a long text in the first ``E`` line of a comparison to about its first 12 and last 13 characters around ``...``. Observed with
   pytest 9.2.0 (one 69-character value): the text is still shortened with ``-q``, with ``-q -vv`` and by default; it is printed in full only with
@@ -62,7 +62,7 @@ pytest runs with ``--noconftest`` and with an empty ini file on purpose (a plant
   caller stay as they were,
   so every start of a secret that ends right before ``...`` and every end that starts right after ``...`` of ``FRAGMENT_MIN`` characters or more is masked too (all pieces are found in the original text and cut out at once; a text with more than ``MAX_FRAGMENT_HITS`` ``...`` or more than ``MAX_MATCHES`` matches of the secrets is replaced as a whole).
   What stays open, stated plainly: a test that prints a changed form of the value (only the host, only the user name, a re-encoded copy, a
-  piece cut out of the middle, a fragment shorter than ``FRAGMENT_MIN`` characters, a head or tail piece that does not stand next to a plain-ASCII ``...`` (pprint line wrapping, a Unicode ellipsis), another encoding such as base64, hex or HTML escapes) is not masked; neither is a password that holds a quote, a ``;`` or an ``&`` and is written without quotes (only the part before that character is read as the password; the whole value is still masked; a quoted password with a backslash escape is read as libpq reads it, anything else odd is masked only inside the whole value) nor a password word glued to a letter or digit in front (``dbpassword=``); a password that has no ``password=`` word
+  piece cut out of the middle, a fragment shorter than ``FRAGMENT_MIN`` characters, a head or tail piece that does not stand next to a plain-ASCII ``...`` (pprint line wrapping, a Unicode ellipsis), another encoding such as base64, hex or HTML escapes) is not masked; neither is a password that holds a quote, a ``;`` or an ``&`` and is written without quotes (it is masked in full, up to the next white space, when printed alone; a piece of it that starts after such a character is not; a third layer of escaping (a ``repr`` of a ``repr`` of a JSON text) is not covered; a quoted password with a backslash escape is read as libpq reads it, anything else odd is masked only inside the whole value) nor a password word glued to a letter or digit in front (``dbpassword=``); a password that has no ``password=`` word
   in front of it and is not the password of a URL is masked only as part of the whole value; and text of a failure that the runner never
   reads (the child's own console output is discarded) cannot leak through it.
   SAFETY: the address must point at a THROWAWAY database, and its login must be able to touch only that database (never a shared or
@@ -70,7 +70,7 @@ pytest runs with ``--noconftest`` and with an empty ini file on purpose (a plant
   anything. Two runs at once that share one database collide (the same tables and rows), so give each parallel run its own database.
   The runner checks one thing in code: after EVERY mutant run it runs the unmutated copy again on that same database (the canary run), and
   when that no longer passes it stops with ``RuntimeError`` naming the mutant, because what the mutant left behind would make the verdicts
-  of the later mutants unreliable (a false kill). The cost is one extra pytest run (and one extra copy of the tree) per mutant while a ``pass_env`` name is set; the second copy is kept on purpose: the canary run leaves bytecode that could hide the next mutation. The canary proves only that the full unmutated tests still pass; it does not prove the database is clean, and under ``forbid_skips`` a canary run with a skipped test is refused too. A failed canary, a skipped one included, raises ``CanaryFailed`` (a ``RuntimeError``; its ``rows`` hold the rows judged so far); the message says "timed out" or "reaped" instead of an exit code when the run did. A second runner that uses the same temp folder (in practice the same machine and the same account, or the same ``TMPDIR``) with the same passed value is refused by an exclusive lock file there, named by the first 16 hex digits of a SHA-256 of the value (a hash is not the value, but the file name is readable by other users of that folder and a guessable value could be tested against it: use a database address with a random password); a runner with another temp folder or on another machine is not seen (give each run a database of its own). The lock file is opened without following a symbolic link (``O_NOFOLLOW`` where the system has it; a planted link is refused with a clear message), with mode 0600, and is never deleted: one empty file per distinct value stays in the temp folder (delete it by hand only when no run is going: a deleted file that a run still holds lets a second run lock a new file of the same name). A lock file that cannot be opened or locked for another reason (no permission, no lock space) is refused with its own message.
+  of the later mutants unreliable (a false kill). The cost is one extra pytest run (and one extra copy of the tree) per mutant while a ``pass_env`` name is set; the second copy is kept on purpose: the canary run leaves bytecode that could hide the next mutation. The canary proves only that the full unmutated tests still pass; it does not prove the database is clean, and under ``forbid_skips`` a canary run with a skipped test is refused too. A failed canary, a skipped one included, raises ``CanaryFailed`` (a ``RuntimeError``; its ``rows`` hold the rows judged so far); the message says "timed out" or "reaped" instead of an exit code when the run did. A second runner that uses the same temp folder (in practice the same machine and the same account, or the same ``TMPDIR``) with the same passed value is refused by an exclusive lock file there, named by the first 16 hex digits of a SHA-256 of the value (a hash is not the value, but the file name is readable by other users of that folder and a guessable value could be tested against it: use a database address with a random password); a runner with another temp folder or on another machine is not seen (give each run a database of its own). The lock file is opened without following a symbolic link (``O_NOFOLLOW`` where the system has it; a planted link is refused with a clear message), with mode 0600, and is never deleted: one empty file per distinct value stays in the temp folder (delete it by hand only when no run is going and only as its owner: a deleted file that a run still holds lets a second run lock a new file of the same name). A lock file that cannot be opened or locked for another reason (no permission, no lock space) is refused with its own message.
 - ``forbid_skips=True``: a run in which any selected test is skipped (or an expected failure) proves nothing, so it is an ERROR row
   ``SKIPPED TESTS`` (never a kill), and an unmutated baseline with a skipped test raises ``RuntimeError``. This closes the false kill where
   a mutant "dies" because the tests could not run (for example no database was reachable). A mutant run with no JUnit file or an empty one
@@ -291,29 +291,37 @@ def _checked_env_names(names: Iterable[str]) -> tuple[str, ...]:
 
 
 _PASSWORD_WORD = re.compile(
-    r"(?i)(?<![A-Za-z0-9])(?:password|passwd|pwd)\s*=\s*(?:'((?:[^'\\]|\\.)*)'|\"((?:[^\"\\]|\\.)*)\"|((?:[^\s&;'\"\\]|\\.)+))"
+    r"(?is)(?<![A-Za-z0-9])(?:password|passwd|pwd)\s*=\s*(?:'((?:[^'\\]|\\.)*)'|\"((?:[^\"\\]|\\.)*)\"|((?:[^\s&;'\"\\]|\\.)+))"
 )  # ``password=...`` of a key=value DSN or a URL query; a quoted value may hold spaces, and a backslash escapes the next character (libpq)
 _BACKSLASH_ESCAPE = re.compile(r"\\(.)", re.DOTALL)
+_NOT_WHITE = re.compile(r"\S*")  # the rest of a word, up to the next white space
+
+
+_CHAR_ENCODERS: tuple[Callable[[str], str], ...] = (
+    lambda c: c,
+    lambda c: repr(c)[1:-1],
+    lambda c: c.encode("unicode_escape").decode("ascii"),
+    lambda c: json.dumps(c)[1:-1],
+    lambda c: json.dumps(c, ensure_ascii=False)[1:-1],
+    lambda c: repr(c.encode("utf-8", "backslashreplace"))[2:-1],
+)  # one letter as: itself, ``repr`` (str), ``unicode_escape``, JSON (ASCII and UTF-8) and ``repr`` of its UTF-8 bytes; the quote marks are handled apart
 
 
 def _written_forms(text: str) -> set[str]:
-    """``text`` and the ways a test or pytest may print it: as ``repr`` shows it inside quotes, as ``unicode_escape`` writes it, as JSON writes it
-    (with and without ``\\u`` escapes for non-ASCII letters) and as the ``repr`` of its UTF-8 bytes (a backslash, a quote or a non-ASCII letter
-    shows up escaped in an assertion line or a log line). Empty forms are dropped."""
-    forms = {
-        text,
-        text.encode("unicode_escape").decode("ascii"),
-        json.dumps(text)[1:-1],
-        json.dumps(text, ensure_ascii=False)[1:-1],
-        repr(text.encode("utf-8", "backslashreplace"))[2:-1],
-    }
-    # a Python ``repr`` of a LARGER text picks its quote from the whole text, so the quote marks of this value come out escaped or not
-    # whatever it holds itself: every mix of the two (a quote mark written with a backslash, or as it is)
-    plain = "".join(c if c in "'\"" else repr(c)[1:-1] for c in text)
-    for single in (False, True):
-        for double in (False, True):
-            swap = {"'": "\\'" if single else "'", '"': '\\"' if double else '"'}
-            forms.add("".join(swap.get(c, c) for c in plain))
+    """``text`` and the ways a test or pytest may print it: as itself, as ``repr`` or ``ascii()`` shows it inside quotes, as ``unicode_escape``
+    writes it, as JSON writes it (with and without ``\\u`` escapes for non-ASCII letters) and as the ``repr`` of its UTF-8 bytes. A ``repr`` of a
+    LARGER text (or bytes) picks its quote from the whole text, so for EVERY one of those forms each quote mark comes out escaped with a backslash
+    or as it is (all four mixes). Two more layers are added: the form with every backslash doubled (a ``repr`` of a ``repr``, a ``repr`` of a JSON
+    text) and the form as JSON writes it once more. Empty forms are dropped. A third layer and other encodings (base64, hex, HTML) are not covered."""
+    forms: set[str] = set()
+    for encode in _CHAR_ENCODERS:
+        plain = "".join(c if c in "'\"" else encode(c) for c in text)
+        for single in (False, True):
+            for double in (False, True):
+                swap = {"'": "\\'" if single else "'", '"': '\\"' if double else '"'}
+                forms.add("".join(swap.get(c, c) for c in plain))
+    forms |= {f.replace("\\", "\\\\") for f in forms}
+    forms |= {json.dumps(f)[1:-1] for f in forms}
     return {f for f in forms if f}
 
 
@@ -343,8 +351,13 @@ def _secret_values(names: Iterable[str]) -> tuple[str, ...]:
         if not value:
             continue
         found.update(_written_forms(value))
-        passwords = [
-            next(g for g in m.groups() if g is not None) for m in _PASSWORD_WORD.finditer(value)
+        matches = list(_PASSWORD_WORD.finditer(value))
+        passwords = [next(g for g in m.groups() if g is not None) for m in matches]
+        # an unquoted password ends at the first quote, ``;`` or ``&`` above; printed alone, the rest of the word is part of it too
+        passwords += [
+            value[m.start(3) : _NOT_WHITE.match(value, m.start(3)).end()]  # type: ignore[union-attr]
+            for m in matches
+            if m.group(3) is not None
         ]
         passwords += [
             _BACKSLASH_ESCAPE.sub(r"\1", word) for word in passwords
@@ -454,6 +467,19 @@ def _lock_dir() -> Path:
     return Path(tempfile.gettempdir())
 
 
+_NOT_OPENED_BECAUSE = {
+    errno.ELOOP: "it is a symbolic link",
+    errno.EACCES: "this user may not open it (it belongs to another user, or the temp folder is closed to this user)",
+    errno.EPERM: "this user may not open it (it belongs to another user, or the temp folder is closed to this user)",
+    errno.EISDIR: "it is a folder",
+    errno.ENOTDIR: "a part of its path is not a folder",
+}
+
+
+def _why_not_opened(code: int | None) -> str:
+    return _NOT_OPENED_BECAUSE.get(code, f"errno {code}")  # type: ignore[arg-type]
+
+
 def _check_lock_file(fd: int) -> None:
     """Refuse (``RuntimeError``) a lock file that is not a regular file of the current user with a mode no wider than 0600 (not on Windows, whose
     mode bits mean nothing): a file left by an older version or made by hand with wider rights could be written by another user of the temp folder."""
@@ -464,9 +490,10 @@ def _check_lock_file(fd: int) -> None:
         not stat.S_ISREG(info.st_mode)
         or info.st_uid != os.getuid()
         or stat.S_IMODE(info.st_mode) & 0o177
+        or info.st_nlink > 1
     ):
         raise RuntimeError(
-            "the lock file of this run is not a regular file of this user with mode 0600 or narrower (delete it by hand when no run is going), so the run cannot be proven alone on its database"
+            "the lock file of this run is not a regular file of this user with one name, mode 0600 or narrower (remove it as its owner, or give the run a temp folder of its own with TMPDIR), so the run cannot be proven alone on its database"
         )
 
 
@@ -475,22 +502,28 @@ def _one_run_per_database(values: Sequence[str]) -> Iterator[None]:
     """Hold an exclusive lock named by a hash of the passed values (never the values) in the temp folder for the whole run: a second runner that
     uses the same temp folder (same machine and account, or the same ``TMPDIR``) with the same passed value is refused (``RuntimeError``) instead
     of sharing the database and its tables. It does not see a runner with another temp folder or on another machine; that stays the caller's
-    job (a database of its own per run). The file is opened without following a symbolic link and with mode 0600, and is never deleted (one empty file per value; it stays in the temp folder, and a left-behind file of another user, a wider mode or another kind than a regular file is refused with a clear message, to be deleted by hand when no run is going). The file name holds the first 16 hex digits of a SHA-256 of the values: not the values, but readable by
+    job (a database of its own per run). The file is opened without following a symbolic link and with mode 0600, and is never deleted (one empty file per value; it stays in the temp folder, and a left-behind file of another user, a wider mode or another kind than a regular file is refused with a clear message that names the cause; a file with more than one hard link is refused too). The file name holds the first 16 hex digits of a SHA-256 of the values: not the values, but readable by
     other users of the temp folder. A lock file that cannot be opened (another user's file) or locked for a reason other than "held by another
     run" is a ``RuntimeError`` with its own message."""
     digest = hashlib.sha256("\0".join(sorted(values)).encode()).hexdigest()[:16]
     path = _lock_dir() / f"hadavin_mutation_{digest}.lock"
-    flags = os.O_RDWR | os.O_CREAT | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_BINARY", 0)
+    # read-only on POSIX (``flock`` needs no write access, so a file narrowed to 0400 still works); Windows locks a byte, which needs write access
+    flags = (
+        (os.O_RDWR if _IS_WINDOWS else os.O_RDONLY)
+        | os.O_CREAT
+        | getattr(os, "O_NOFOLLOW", 0)
+        | getattr(os, "O_BINARY", 0)
+    )
     try:
         fd = os.open(path, flags, 0o600)
         try:
-            handle = os.fdopen(fd, "r+b")
+            handle = os.fdopen(fd, "r+b" if _IS_WINDOWS else "rb")
         except OSError:
             os.close(fd)  # no file object took the descriptor over
             raise
     except OSError as exc:
         raise RuntimeError(
-            f"the lock file of this run could not be opened ({type(exc).__name__}): {'it is a symbolic link' if exc.errno == errno.ELOOP else 'it may belong to another user of the temp folder'}, so the run cannot be proven alone on its database"
+            f"the lock file of this run could not be opened ({type(exc).__name__}): {_why_not_opened(exc.errno)}, so the run cannot be proven alone on its database"
         ) from None
     with handle:
         _check_lock_file(handle.fileno())

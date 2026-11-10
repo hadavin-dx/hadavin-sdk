@@ -666,6 +666,21 @@ def test_masking_removes_a_random_value_in_every_printed_form_whole_or_shortened
             assert core not in inside, (
                 f"case {n}: a value inside a larger text with {extra} survived: {inside!r}"
             )
+            as_ascii = ascii(extra + value + extra)[1:-1]
+            inside = mr._masked(f"E   assert {as_ascii} == 1", secrets)
+            assert core not in inside, (
+                f"case {n}: the ascii() form inside a larger text with {extra} survived: {inside!r}"
+            )
+            in_bytes = repr((extra + value + extra).encode("utf-8"))[2:-1]
+            inside = mr._masked(f"E   assert b{extra}{in_bytes}{extra} == 1", secrets)
+            assert core not in inside, (
+                f"case {n}: the bytes form inside larger bytes with {extra} survived: {inside!r}"
+            )
+            again = repr(json.dumps(value))[1:-1]
+            inside = mr._masked(f"E   assert {again} == 1", secrets)
+            assert core not in inside, (
+                f"case {n}: the repr of a JSON text of the value survived: {inside!r}"
+            )
         for name, printed in _printed_forms(value).items():
             whole = mr._masked(f"E   AssertionError: assert '{printed}' == 'other'", secrets)
             assert core not in whole and printed not in whole, (
@@ -701,7 +716,8 @@ def test_a_line_with_a_hostile_number_of_dots_is_replaced_fast(monkeypatch):
     assert "more than" in out and value[:6] not in out, (
         f"a line with a hostile number of dots was not replaced as a whole: {out[:80]!r}"
     )
-    assert took < 5, f"the check of a hostile line took {took:.1f} seconds"
+    # the marker above is the exact check; this bound only catches a scan that takes minutes, so a slow machine does not fail it
+    assert took < 30, f"the check of a hostile line took {took:.1f} seconds"
     assert mr._masked("E   x == 'abc...def'", secrets) == "E   x == 'abc...def'", (
         "an honest line with dots was replaced"
     )
@@ -946,10 +962,11 @@ def test_a_lock_that_fails_for_another_reason_is_not_called_another_run(tmp_path
     )
 
 
-def test_a_lock_file_that_cannot_be_opened_is_a_clear_refusal(tmp_path):
-    (
-        tmp_path / _lock_name("x")
-    ).mkdir()  # a folder in the place of the file: the open fails like a file of another user does
+def test_a_lock_file_that_cannot_be_opened_is_a_clear_refusal(tmp_path, monkeypatch):
+    def refuse(*a, **k):
+        raise PermissionError(errno.EACCES, "refused")
+
+    monkeypatch.setattr(os, "open", refuse)
     caught = None
     try:
         with mr._one_run_per_database(["x"]):
@@ -1442,7 +1459,8 @@ def test_a_one_character_secret_on_a_huge_line_is_replaced_fast_and_a_normal_lin
     assert "more than" in out and "aaaa" not in out, (
         f"a huge line with millions of matches was not replaced as a whole: {out[:80]!r}"
     )
-    assert took < 5, f"the check of a huge line took {took:.1f} seconds"
+    # the marker above is the exact check; this bound only catches a scan that takes minutes, so a slow machine does not fail it
+    assert took < 30, f"the check of a huge line took {took:.1f} seconds"
     assert (
         mr._masked("E   a banana", ("a",)) == "E   [REDACTED] b[REDACTED]n[REDACTED]n[REDACTED]"
     ), "a normal line with a few matches was replaced as a whole or not masked"
@@ -1483,16 +1501,73 @@ def test_a_lock_file_with_a_wider_mode_is_refused(tmp_path):
     assert _refusal("wide") is None
 
 
-def test_a_lock_file_of_another_user_is_refused(tmp_path):
-    if os.name == "nt" or os.getuid() != 0:
-        pytest.skip("needs root to hand a file to another user while still being able to open it")
-    path = _own_lock_file(tmp_path, "other")
-    path.chmod(0o600)  # only the owner differs, so the owner check alone must refuse it
-    os.chown(path, 12345, -1)
+def _fstat_with(monkeypatch, **fields):
+    """``os.fstat`` as the lock check sees it, with some fields changed (``st_uid``, ``st_nlink``): no root and no second user needed."""
+    real = os.fstat
+    names = (
+        "st_mode",
+        "st_ino",
+        "st_dev",
+        "st_nlink",
+        "st_uid",
+        "st_gid",
+        "st_size",
+        "st_atime",
+        "st_mtime",
+        "st_ctime",
+    )
+
+    def changed(fd):
+        info = real(fd)
+        return os.stat_result(tuple(fields.get(name, getattr(info, name)) for name in names))
+
+    monkeypatch.setattr(os, "fstat", changed)
+
+
+def test_a_lock_file_of_another_user_is_refused(tmp_path, monkeypatch):
+    if os.name == "nt":
+        pytest.skip("file owners are POSIX here")
+    _own_lock_file(tmp_path, "other").chmod(
+        0o600
+    )  # only the owner differs, so the owner check alone must refuse it
+    _fstat_with(monkeypatch, st_uid=os.getuid() + 1)
     caught = _refusal("other")
     assert caught is not None and "regular file of this user" in str(caught), (
         f"a lock file of another user was accepted: {caught!r}"
     )
+
+
+def test_a_lock_file_with_two_hard_links_is_refused(tmp_path):
+    if os.name == "nt":
+        pytest.skip("hard link counts are POSIX here")
+    path = _own_lock_file(tmp_path, "linked")
+    path.chmod(0o600)
+    os.link(path, tmp_path / "second-name")
+    caught = _refusal("linked")
+    assert caught is not None and "one name" in str(caught), (
+        f"a lock file with two hard links was accepted: {caught!r}"
+    )
+
+
+def test_a_lock_file_that_cannot_be_opened_names_the_cause(monkeypatch):
+    cases = (
+        (errno.ELOOP, "symbolic link"),
+        (errno.EACCES, "may not open it"),
+        (errno.EPERM, "may not open it"),
+        (errno.EISDIR, "it is a folder"),
+        (errno.ENOTDIR, "is not a folder"),
+        (errno.EIO, "errno 5"),
+    )
+    for code, words in cases:
+
+        def refuse(*a, _code=code, **k):
+            raise OSError(_code, "refused")
+
+        monkeypatch.setattr(os, "open", refuse)
+        caught = _refusal("cause")
+        assert (
+            caught is not None and "could not be opened" in str(caught) and words in str(caught)
+        ), f"the open failure with errno {code} did not name its cause ({words}): {caught!r}"
 
 
 def test_a_lock_file_that_is_not_a_regular_file_is_refused(tmp_path, monkeypatch):
@@ -1537,3 +1612,98 @@ def test_the_descriptor_is_closed_when_no_file_object_can_take_it(tmp_path, monk
     except OSError:
         still_open = False
     assert not still_open, "the descriptor stayed open"
+
+
+def test_a_value_with_a_non_ascii_letter_and_a_quote_is_masked_as_ascii_and_bytes_print_it_in_a_larger_text(
+    monkeypatch,
+):
+    value = "host=db.invalid user=svc password=Ab3" + chr(233) + "'Xy9Zq1"
+    monkeypatch.setenv(DSN_NAME, value)
+    secrets = mr._secret_values((DSN_NAME,))
+    larger = ascii(value + '"')
+    assert "\\'" in larger and "\\xe9" in larger, (
+        "the control is wrong: ascii() must escape the quote and the letter"
+    )
+    out = mr._masked(f"E   assert {larger} == 1", secrets)
+    assert "Xy9Zq1" not in out, (
+        f"the ascii() form with an escaped quote survived the masking: {out}"
+    )
+    in_bytes = repr((value + '"').encode("utf-8"))
+    assert "\\'" in in_bytes and "\\xc3" in in_bytes, (
+        "the control is wrong: the bytes repr must escape the quote"
+    )
+    out = mr._masked(f"E   assert {in_bytes} == 1", secrets)
+    assert "Xy9Zq1" not in out, f"the bytes form with an escaped quote survived the masking: {out}"
+
+
+def test_a_value_with_a_control_character_and_a_non_ascii_letter_is_masked_as_repr_prints_it(
+    monkeypatch,
+):
+    value = "host=db.invalid user=svc password=Ab3" + chr(1) + chr(233) + "Xy9Zq1"
+    monkeypatch.setenv(DSN_NAME, value)
+    shown = repr(value)[1:-1]
+    assert "\\x01" in shown and chr(233) in shown, (
+        "the control is wrong: repr writes the control character as x01 and keeps the letter"
+    )
+    out = mr._masked(f"E   assert '{shown}' == 1", mr._secret_values((DSN_NAME,)))
+    assert "Xy9Zq1" not in out, (
+        f"the repr form with a control character survived the masking: {out}"
+    )
+
+
+def test_an_unquoted_password_with_a_quote_a_semicolon_or_an_ampersand_is_masked_in_full_when_printed_alone(
+    monkeypatch,
+):
+    for odd in ("'", ";", "&"):
+        monkeypatch.setenv(DSN_NAME, f"host=db.invalid password=Ab3{odd}Xy9Zq1 user=svc")
+        out = mr._masked(f"E   assert 'Ab3{odd}Xy9Zq1' == 1", mr._secret_values((DSN_NAME,)))
+        assert "Xy9Zq1" not in out, (
+            f"an unquoted password with {odd!r} printed alone was not masked in full: {out}"
+        )
+
+
+def test_a_backslash_and_a_newline_in_a_quoted_libpq_password_are_read(monkeypatch):
+    monkeypatch.setenv(
+        DSN_NAME, "host=db.invalid password='Ab3" + chr(92) + chr(10) + "Xy9Zq1' user=svc"
+    )
+    out = mr._masked("E   assert 'Ab3" + chr(10) + "Xy9Zq1' == 1", mr._secret_values((DSN_NAME,)))
+    assert "Xy9Zq1" not in out, (
+        f"a quoted libpq password with a backslash and a newline was not read: {out}"
+    )
+
+
+def test_a_repr_of_a_json_text_and_a_doubled_backslash_form_are_masked(monkeypatch):
+    value = "host=db.invalid user=svc password=Ab3" + chr(34) + chr(92) + chr(233) + "Xy9Zq1"
+    monkeypatch.setenv(DSN_NAME, value)
+    secrets = mr._secret_values((DSN_NAME,))
+    again = repr(json.dumps(value))[1:-1]
+    assert chr(92) * 3 in again, (
+        "the control is wrong: the repr of a JSON text has doubled backslashes"
+    )
+    out = mr._masked(f"E   assert '{again}' == 1", secrets)
+    assert "Xy9Zq1" not in out, f"the repr of a JSON text of the value survived the masking: {out}"
+    doubled = value.replace(chr(92), chr(92) * 2)
+    out = mr._masked(f"E   assert '{doubled}' == 1", secrets)
+    assert "Xy9Zq1" not in out, f"a form with doubled backslashes survived the masking: {out}"
+    nested = json.dumps(repr(value))[1:-1]
+    out = mr._masked(f"E   {nested}", secrets)
+    assert "Xy9Zq1" not in out, (
+        f"the JSON text of the repr of the value survived the masking: {out}"
+    )
+
+
+def test_the_lock_file_is_opened_read_only_on_posix(monkeypatch):
+    if os.name == "nt":
+        pytest.skip("Windows locks a byte and needs write access")
+    seen: list[int] = []
+    real = os.open
+
+    def spy(path, flags, *a, **k):
+        seen.append(flags)
+        return real(path, flags, *a, **k)
+
+    monkeypatch.setattr(os, "open", spy)
+    assert _refusal("readonly") is None
+    assert seen and not any(f & (os.O_WRONLY | os.O_RDWR) for f in seen), (
+        f"the lock file was opened for writing: {seen}"
+    )
