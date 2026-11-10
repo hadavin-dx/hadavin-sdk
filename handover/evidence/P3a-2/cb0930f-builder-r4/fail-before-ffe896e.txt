@@ -1,0 +1,76 @@
+FFFFF.FF.......FF.F.F.FFFFF.FF...F...                                    [100%]
+=================================== FAILURES ===================================
+E   AttributeError: module 'hadavin_sdk.store.migrate' has no attribute '_managed_names'
+/tmp/r4-old/tests/test_migration_postgres.py:1686: AttributeError: module 'hadavin_sdk.store.migrate' has no attribute '_managed_names'
+E   AttributeError: module 'hadavin_sdk.store.migrate' has no attribute '_managed_names'
+/tmp/r4-old/tests/test_migration_postgres.py:1686: AttributeError: module 'hadavin_sdk.store.migrate' has no attribute '_managed_names'
+E   AttributeError: module 'hadavin_sdk.store.migrate' has no attribute '_managed_names'
+/tmp/r4-old/tests/test_migration_postgres.py:1686: AttributeError: module 'hadavin_sdk.store.migrate' has no attribute '_managed_names'
+E   AttributeError: module 'hadavin_sdk.store.migrate' has no attribute '_managed_names'
+/tmp/r4-old/tests/test_migration_postgres.py:1686: AttributeError: module 'hadavin_sdk.store.migrate' has no attribute '_managed_names'
+E   hadavin_sdk.errors.ConfigError: the migration role mig_f74eac3528 cannot change 3 object(s) in schema hadavin_test_bb2fb8d3ffd8 that another role owns: hadavin_test_other_fn (owner postgres); hadavin_test_other_app (owner postgres); hadavin_test_other_view (owner postgres). A later migration that alters one of them would fail with 'must be owner', and the grants of migrate would do nothing without an error. Nothing was changed. A database administrator hands the objects to the migration role once, connected as a superuser or as a role that is a member of both the old owner and the migration role, with a file of SQL run as in CHANGELOG.md, Migration repair steps, case (h): ALTER FUNCTION "hadavin_test_bb2fb8d3ffd8"."hadavin_test_other_fn"() OWNER TO "mig_f74eac3528"; ALTER TABLE "hadavin_test_bb2fb8d3ffd8"."hadavin_test_other_app" OWNER TO "mig_f74eac3528"; ALTER VIEW "hadavin_test_bb2fb8d3ffd8"."hadavin_test_other_view" OWNER TO "mig_f74eac3528";
+/tmp/r4-old/src/hadavin_sdk/store/migrate.py:667: hadavin_sdk.errors.ConfigError: the migration role mig_f74eac3528 cannot change 3 object(s) in schema hadavin_test_bb2fb8d3ffd8 that another role owns: hadavin_test_other_fn (owner postgres); hadavin_test_other_app (owner postgres); hadavin_test_other_view (owner postgres). A later migration that alters one of them would fail with 'must be owner', and the grants of migrate would do nothing without an error. Nothing was changed. A database administrator hands the objects to the migration role once, connected as a superuser or as a role that is a member of both the old owner and the migration role, with a file of SQL run as in CHANGELOG.md, Migration repair steps, case (h): ALTER FUNCTION "hadavin_test_bb2fb8d3ffd8"."hadavin_test_other_fn"() OWNER TO "mig_f74eac3528"; ALTER TABLE "hadavin_test_bb2fb8d3ffd8"."hadavin_test_other_app" OWNER TO "mig_f74eac3528"; ALTER VIEW "hadavin_test_bb2fb8d3ffd8"."hadavin_test_other_view" OWNER TO "mig_f74eac3528";
+E   hadavin_sdk.errors.ConfigError: migration 0006_slow.sql left the database session changed: role hadavin_test_ux_8444293a has a new member hadavin_test_uy_93884f65 ({"grantor": "10", "set_option": true, "admin_option": false, "inherit_option": true}); saved setting for database  role hadavin_test_ux_8444293a is new ({work_mem=5MB})
+/tmp/r4-old/src/hadavin_sdk/store/migrate.py:781: hadavin_sdk.errors.ConfigError: migration 0006_slow.sql left the database session changed: role hadavin_test_ux_8444293a has a new member hadavin_test_uy_93884f65 ({"grantor": "10", "set_option": true, "admin_option": false, "inherit_option": true}); saved setting for database  role hadavin_test_ux_8444293a is new ({work_mem=5MB})
+E   AssertionError: migration 0006_slow.sql left the database session changed: role hadavin_test_sa_61630917 has a new member hadavin_test_migrator_c122f0e2 ({"grantor": "10", "set_option": true, "admin_option": false, "inherit_option": true})
+    assert 'a role membership changed while the file ran (it may be another session; run migrate again)' in 'migration 0006_slow.sql left the database session changed: role hadavin_test_sa_61630917 has a new member hadavin_test_migrator_c122f0e2 ({"grantor": "10", "set_option": true, "admin_option": false, "inherit_option": true})'
+/tmp/r4-old/tests/test_migration_postgres.py:2039: AssertionError: migration 0006_slow.sql left the database session changed: role hadavin_test_sa_61630917 has a new member hadavin_test_migrator_c122f0e2 ({"grantor": "10", "set_option": true, "admin_option": false, "inherit_option": true})
+E   Failed: DID NOT RAISE ConfigError
+/tmp/r4-old/tests/test_migration_postgres.py:2095: Failed: DID NOT RAISE ConfigError
+E   Failed: DID NOT RAISE ConfigError
+/tmp/r4-old/tests/test_migration_postgres.py:2095: Failed: DID NOT RAISE ConfigError
+E   AttributeError: module 'hadavin_sdk.store.migrate' has no attribute '_managed_names'
+/tmp/r4-old/tests/test_migration_postgres.py:1686: AttributeError: module 'hadavin_sdk.store.migrate' has no attribute '_managed_names'
+E   assert (True,) == (False,)
+      
+      At index 0 diff: True != False
+      Use -v to get more diff
+/tmp/r4-old/tests/test_migration_postgres.py:2191: assert (True,) == (False,)
+E   assert 'a role membership changed while the file ran (it may be another session; run migrate again)' in 'migration 0001_f1.sql left the database session changed: role role_a has a new member role_b ({"admin_option": false})'
+     +  where 'migration 0001_f1.sql left the database session changed: role role_a has a new member role_b ({"admin_option": false})' = str(ConfigError('migration 0001_f1.sql left the database session changed: role role_a has a new member role_b ({"admin_option": false})'))
+/tmp/r4-old/tests/test_migration_wiring.py:979: assert 'a role membership changed while the file ran (it may be another session; run migrate again)' in 'migration 0001_f1.sql left the database session changed: role role_a has a new member role_b ({"admin_option": false})'
+E   AssertionError: [None, None, None]
+    assert [None, None, None] == [(['rt_role',... 'pt_role'],)]
+      
+      At index 0 diff: None != (['rt_role', 'pt_role'],)
+      Use -v to get more diff
+/tmp/r4-old/tests/test_migration_wiring.py:1002: AssertionError: [None, None, None]
+E   TypeError: 'NoneType' object is not subscriptable
+/tmp/r4-old/tests/test_migration_wiring.py:1010: TypeError: 'NoneType' object is not subscriptable
+E   AttributeError: module 'hadavin_sdk.store.migrate' has no attribute '_managed_names'
+/tmp/r4-old/tests/test_migration_wiring.py:1022: AttributeError: module 'hadavin_sdk.store.migrate' has no attribute '_managed_names'
+E   Failed: DID NOT RAISE ConfigError
+/tmp/r4-old/tests/test_migration_wiring.py:1048: Failed: DID NOT RAISE ConfigError
+E   AssertionError: ['DELETE', 'TRUNCATE', 'REFERENCES', 'TRIGGER']
+    assert ('MAINTAIN' in ['DELETE', 'TRUNCATE', 'REFERENCES', 'TRIGGER']) is True
+     +  where ['DELETE', 'TRUNCATE', 'REFERENCES', 'TRIGGER'] = <tests.test_migration_wiring._Privileges object at 0x7f2cffdbf750>.asked
+/tmp/r4-old/tests/test_migration_wiring.py:1087: AssertionError: ['DELETE', 'TRUNCATE', 'REFERENCES', 'TRIGGER']
+E   assert False
+     +  where False = any(<generator object test_a_maintain_grant_is_a_problem_on_postgresql_17.<locals>.<genexpr> at 0x7f2d013572a0>)
+/tmp/r4-old/tests/test_migration_wiring.py:1102: assert False
+E   AssertionError: Regex pattern did not match.
+      Expected regex: 'migration 0001_f1\\.sql left the roles changed'
+      Actual message: 'the runtime, portal and purge roles must not be members of each other'
+/tmp/r4-old/tests/test_migration_wiring.py:1338: AssertionError: Regex pattern did not match.
+=========================== short test summary info ============================
+FAILED tests/test_migration_postgres.py::test_a_partition_owned_by_another_role_is_listed
+FAILED tests/test_migration_postgres.py::test_a_name_with_a_newline_is_never_copied_into_a_printed_statement
+FAILED tests/test_migration_postgres.py::test_objects_of_an_installed_extension_are_not_listed
+FAILED tests/test_migration_postgres.py::test_the_function_half_of_the_ownership_check_finds_a_function_alone
+FAILED tests/test_migration_postgres.py::test_tables_and_functions_of_another_application_in_the_schema_are_never_refused_or_listed
+FAILED tests/test_migration_postgres.py::test_another_session_changing_unrelated_roles_does_not_stop_the_run
+FAILED tests/test_migration_postgres.py::test_another_session_changing_the_migration_users_own_roles_stops_the_run[membership]
+FAILED tests/test_migration_postgres.py::test_a_parameter_grant_is_refused_however_the_migration_user_holds_it[member_noinherit-SET]
+FAILED tests/test_migration_postgres.py::test_a_parameter_grant_is_refused_however_the_migration_user_holds_it[member_noinherit-ALTER SYSTEM]
+FAILED tests/test_migration_postgres.py::test_an_aggregate_with_no_arguments_is_printed_with_a_star
+FAILED tests/test_migration_postgres.py::test_the_printed_role_may_pass_usage_on_but_not_create
+FAILED tests/test_migration_wiring.py::test_the_membership_message_says_it_may_be_another_session
+FAILED tests/test_migration_wiring.py::test_the_named_roles_reach_the_two_scoped_read_back_queries
+FAILED tests/test_migration_wiring.py::test_the_ownership_query_gets_the_managed_names
+FAILED tests/test_migration_wiring.py::test_the_managed_names_are_the_grant_map_the_ledger_and_the_functions_the_files_create
+FAILED tests/test_migration_wiring.py::test_the_roles_are_asked_again_after_every_file
+FAILED tests/test_migration_wiring.py::test_the_maintain_privilege_is_asked_about_from_postgresql_17_only[170010-True]
+FAILED tests/test_migration_wiring.py::test_a_maintain_grant_is_a_problem_on_postgresql_17
+FAILED tests/test_migration_wiring.py::test_the_named_roles_are_checked_against_each_other_after_every_file
+19 failed, 18 passed, 314 deselected in 8.54s
+exit=1

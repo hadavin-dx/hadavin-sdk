@@ -1,0 +1,32 @@
+HEAD ec76c73900fafcec7fc2715fbc29cf565aaa95ee
+CMD: uv run --all-extras --group test --python 3.13 pytest -m perf -p no:cacheprovider
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+============================= test session starts ==============================
+platform linux -- Python 3.13.18, pytest-9.2.0, pluggy-1.7.0
+rootdir: /home/user/build/EV-P6a-ec76c73/wt
+configfile: pyproject.toml
+testpaths: tests
+plugins: anyio-4.15.1
+collected 10529 items / 10501 deselected / 28 selected
+
+tests/demo_askdata/test_pgsource_layers.py 
+T-E8 watchdog: pg_sleep(30) cancelled after 2.01s (watchdog 2.0s; the assertion allows 3.0s: the timer, the cancel round trip to the server and the connection close)
+.                             [  3%]
+tests/demo_askdata/test_validate_fuzz.py .                               [  7%]
+tests/test_g4_parity.py .                                                [ 10%]
+tests/test_k5_classes.py ...                                             [ 21%]
+tests/test_k5_fixes2.py .                                                [ 25%]
+tests/test_k5_fixes6.py .                                                [ 28%]
+tests/test_k5_layers.py ...                                              [ 39%]
+tests/test_k5_perf.py ........                                           [ 67%]
+tests/test_k5_review.py .                                                [ 71%]
+tests/test_k5_round10.py .                                               [ 75%]
+tests/test_k5_round5.py .                                                [ 78%]
+tests/test_migrate_regex_linear.py .                                     [ 82%]
+tests/test_migration_numbers.py ..                                       [ 89%]
+tests/test_s4_llm_guard.py .                                             [ 92%]
+tests/warden_port/test_redaction_bank.py .                               [ 96%]
+tests/warden_port/test_redaction_review2.py .                            [100%]
+
+==================== 28 passed, 10501 deselected in 59.15s =====================
+exit=0

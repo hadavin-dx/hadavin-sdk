@@ -238,4 +238,4 @@ tests/test_p7_tick.py .........................................          [ 91%]
 tests/test_repo_rules.py ........................................        [ 92%]
 tests/test_review_fixes.py .................................             [ 92%]
 tests/test_review_pr3_round2.py .....................................    [ 92%]
-tests/test_runmap_partial_escape.py .
+tests/test_runmap_partial_escape.py .exit=0

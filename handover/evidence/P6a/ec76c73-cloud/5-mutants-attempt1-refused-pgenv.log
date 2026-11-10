@@ -1,0 +1,6 @@
+HEAD ec76c73900fafcec7fc2715fbc29cf565aaa95ee
+CMD: uv run --all-extras --group test --python 3.13 python tools/client_profile_mutants.py
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+refusing to start: cloud or model-provider settings are set here: HADAVIN_TEST_PG_DSN, PGHOST, PGPORT, PGUSER
+unset them (names only are shown) and run again
+exit=3

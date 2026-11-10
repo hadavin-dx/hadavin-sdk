@@ -1,0 +1,4 @@
+HEAD ec76c73900fafcec7fc2715fbc29cf565aaa95ee
+CMD: uv run --all-extras --group test --python 3.13 python tools/client_profile_mutants.py
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+head ec76c73900fafcec7fc2715fbc29cf565aaa95ee  copy /tmp/client-profile-mutants-mxbb8xgq/wt  python /home/user/build/EV-P6a-ec76c73/wt/.venv/bin/python3
