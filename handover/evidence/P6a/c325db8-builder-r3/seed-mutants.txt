@@ -1,0 +1,43 @@
+$ python strict_sweep_mutants.py (seed, in a clone at c325db8 with the patch applied)
+head b4c8e121dd107a31d37e9fd48158da0477c9fe19  copy /tmp/client-profile-mutants-axlccir3/wt  python /home/user/build/B-P6a/.venv/bin/python
+baseline (unmutated) PASS: 49 passed in 6.63s
+  1 | yes | KILLED-NAMED | test_strict_flags.py::test_a_safety_flag_loads_only_from_a_real_bool[made_up_dat | made_up_data_only (config): strict bool -> loose bool
+  2 | yes | KILLED-NAMED | test_strict_flags.py::test_a_safety_flag_loads_only_from_a_real_bool[k1b.redact] | redact (config): strict bool -> loose bool
+  3 | yes | KILLED-NAMED | test_strict_flags.py::test_a_safety_flag_loads_only_from_a_real_bool[retention.h | hold_labelled (config): strict bool -> loose bool
+  4 | yes | KILLED-NAMED | test_strict_flags.py::test_a_safety_flag_loads_only_from_a_real_bool[allow_insec | allow_insecure_loopback (config): strict bool -> loose bool
+  5 | yes | KILLED-NAMED | test_strict_flags.py::test_a_safety_flag_loads_only_from_a_real_bool[openai_comp | max_completion_tokens (table): strict bool -> loose bool
+  6 | yes | KILLED-NAMED | test_strict_flags.py::test_a_safety_flag_loads_only_from_a_real_bool[store.iam_a | iam_auth (table): strict bool -> loose bool
+  7 | yes | KILLED-NAMED | test_strict_flags.py::test_a_safety_flag_loads_only_from_a_real_bool[anchor.rete | retention_ack (table): strict bool -> loose bool
+  8 | yes | KILLED-NAMED | test_strict_flags.py::test_a_safety_flag_loads_only_from_a_real_bool[tool.cluste | cluster_http (tools): strict bool -> loose bool
+  9 | yes | KILLED-NAMED | test_strict_flags.py::test_a_safety_flag_loads_only_from_a_real_bool[contract.ta | targets_production (contract): strict bool -> loose bool
+ 10 | yes | KILLED-NAMED | test_strict_flags.py::test_a_safety_flag_loads_only_from_a_real_bool[contract.ch | changes_spend (contract): strict bool -> loose bool
+ 11 | yes | KILLED-NAMED | test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[yes-ToolC | error (models): strict bool -> loose bool
+ 12 | yes | KILLED-NAMED | test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[yes-KillS | on (models): strict bool -> loose bool
+ 13 | yes | KILLED-NAMED | test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[yes-GateR | green (models): strict bool -> loose bool
+ 14 | yes | KILLED-NAMED | test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[yes-Verdi | flagged (models): strict bool -> loose bool
+ 15 | yes | KILLED-NAMED | test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[yes-RunRe | retryable (models): strict bool -> loose bool
+ 16 | yes | KILLED-NAMED | test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[yes-Repla | green (replay): strict bool -> loose bool
+ 17 | yes | KILLED-NAMED | test_strict_flags.py::test_every_bool_field_is_strict_and_every_module_imports | a loose bool field added to a model (the structural row)
+
+mutant | planted | killed-by | status
+1 | yes | test_strict_flags.py::test_a_safety_flag_loads_only_from_a_real_bool[made_up_data_only] | KILLED-NAMED
+2 | yes | test_strict_flags.py::test_a_safety_flag_loads_only_from_a_real_bool[k1b.redact] | KILLED-NAMED
+3 | yes | test_strict_flags.py::test_a_safety_flag_loads_only_from_a_real_bool[retention.hold_labelled] | KILLED-NAMED
+4 | yes | test_strict_flags.py::test_a_safety_flag_loads_only_from_a_real_bool[allow_insecure_loopback] | KILLED-NAMED
+5 | yes | test_strict_flags.py::test_a_safety_flag_loads_only_from_a_real_bool[openai_compat.max_completion_tokens] | KILLED-NAMED
+6 | yes | test_strict_flags.py::test_a_safety_flag_loads_only_from_a_real_bool[store.iam_auth] | KILLED-NAMED
+7 | yes | test_strict_flags.py::test_a_safety_flag_loads_only_from_a_real_bool[anchor.retention_ack] | KILLED-NAMED
+8 | yes | test_strict_flags.py::test_a_safety_flag_loads_only_from_a_real_bool[tool.cluster_http] | KILLED-NAMED
+9 | yes | test_strict_flags.py::test_a_safety_flag_loads_only_from_a_real_bool[contract.targets_production] | KILLED-NAMED
+10 | yes | test_strict_flags.py::test_a_safety_flag_loads_only_from_a_real_bool[contract.changes_spend] | KILLED-NAMED
+11 | yes | test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[yes-ToolCallRecord] | KILLED-NAMED
+12 | yes | test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[yes-KillSwitch] | KILLED-NAMED
+13 | yes | test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[yes-GateRun] | KILLED-NAMED
+14 | yes | test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[yes-Verdict] | KILLED-NAMED
+15 | yes | test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[yes-RunResult] | KILLED-NAMED
+16 | yes | test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[yes-ReplayRecord] | KILLED-NAMED
+17 | yes | test_strict_flags.py::test_every_bool_field_is_strict_and_every_module_imports | KILLED-NAMED
+
+TOTAL mutants 17  planted 17  KILLED 17 (named 17, no named killer 0, killed by another test 0)  SURVIVED 0  other problems 0  (21s)
+final git status: ''
+exit=0

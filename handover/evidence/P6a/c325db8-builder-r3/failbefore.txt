@@ -1,0 +1,253 @@
+$ pytest tests/test_client_profile.py (final test file + k5_support copied onto base d392200, 3.13)
+d3922003925722275704b84f580152d35dd90c9c
+.........................................F.............................. [ 91%]
+FFFFFFF                                                                  [100%]
+=================================== FAILURES ===================================
+____________ test_the_switch_leaves_a_log_line_naming_the_keywords _____________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6520/test_the_switch_leaves_a_log_l0')
+made = ['secrets', 'signer']
+caplog = <_pytest.logging.LogCaptureFixture object at 0x7fb485a81940>
+
+    def test_the_switch_leaves_a_log_line_naming_the_keywords(tmp_path, made, caplog):
+        root = pilot_cfg(tmp_path)
+        with caplog.at_level("WARNING", logger="hadavin_sdk.app"), pytest.raises(_Reached):
+            app_mod.build(
+                root, ["ito-agent"], llm=ScriptedLLM(), channel=FakeChannel(), allow_test_doubles=True
+            )
+        lines = [r.getMessage() for r in caplog.records if r.name == "hadavin_sdk.app"]
+>       assert len(lines) == 1
+E       assert 0 == 1
+E        +  where 0 = len([])
+
+tests/test_client_profile.py:450: AssertionError
+_ test_the_mutant_runner_refuses_to_start_with_a_cloud_setting[AWS_ACCESS_KEY_ID] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fb485bf4e50>
+capsys = <_pytest.capture.CaptureFixture object at 0x7fb485a81a90>
+name = 'AWS_ACCESS_KEY_ID'
+
+    @pytest.mark.parametrize(
+        "name",
+        [
+            "AWS_ACCESS_KEY_ID",
+            "azure_client_id",
+            "GOOGLE_APPLICATION_CREDENTIALS",
+            "ANTHROPIC_BASE_URL",
+        ],
+    )
+    def test_the_mutant_runner_refuses_to_start_with_a_cloud_setting(monkeypatch, capsys, name):
+>       runner = _runner()
+                 ^^^^^^^^^
+
+tests/test_client_profile.py:687: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_client_profile.py:673: in _runner
+    spec.loader.exec_module(mod)
+<frozen importlib._bootstrap_external>:1023: in exec_module
+    ???
+<frozen importlib._bootstrap_external>:1160: in get_code
+    ???
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_frozen_importlib_external.SourceFileLoader object at 0x7fb485cac1d0>
+path = '/home/user/build/B-P6a-fb/tools/client_profile_mutants.py'
+
+>   ???
+E   FileNotFoundError: [Errno 2] No such file or directory: '/home/user/build/B-P6a-fb/tools/client_profile_mutants.py'
+
+<frozen importlib._bootstrap_external>:1218: FileNotFoundError
+_ test_the_mutant_runner_refuses_to_start_with_a_cloud_setting[azure_client_id] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fb485bf5e10>
+capsys = <_pytest.capture.CaptureFixture object at 0x7fb485bdc410>
+name = 'azure_client_id'
+
+    @pytest.mark.parametrize(
+        "name",
+        [
+            "AWS_ACCESS_KEY_ID",
+            "azure_client_id",
+            "GOOGLE_APPLICATION_CREDENTIALS",
+            "ANTHROPIC_BASE_URL",
+        ],
+    )
+    def test_the_mutant_runner_refuses_to_start_with_a_cloud_setting(monkeypatch, capsys, name):
+>       runner = _runner()
+                 ^^^^^^^^^
+
+tests/test_client_profile.py:687: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_client_profile.py:673: in _runner
+    spec.loader.exec_module(mod)
+<frozen importlib._bootstrap_external>:1023: in exec_module
+    ???
+<frozen importlib._bootstrap_external>:1160: in get_code
+    ???
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_frozen_importlib_external.SourceFileLoader object at 0x7fb485b67e30>
+path = '/home/user/build/B-P6a-fb/tools/client_profile_mutants.py'
+
+>   ???
+E   FileNotFoundError: [Errno 2] No such file or directory: '/home/user/build/B-P6a-fb/tools/client_profile_mutants.py'
+
+<frozen importlib._bootstrap_external>:1218: FileNotFoundError
+_ test_the_mutant_runner_refuses_to_start_with_a_cloud_setting[GOOGLE_APPLICATION_CREDENTIALS] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fb485bf5c50>
+capsys = <_pytest.capture.CaptureFixture object at 0x7fb485bdd810>
+name = 'GOOGLE_APPLICATION_CREDENTIALS'
+
+    @pytest.mark.parametrize(
+        "name",
+        [
+            "AWS_ACCESS_KEY_ID",
+            "azure_client_id",
+            "GOOGLE_APPLICATION_CREDENTIALS",
+            "ANTHROPIC_BASE_URL",
+        ],
+    )
+    def test_the_mutant_runner_refuses_to_start_with_a_cloud_setting(monkeypatch, capsys, name):
+>       runner = _runner()
+                 ^^^^^^^^^
+
+tests/test_client_profile.py:687: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_client_profile.py:673: in _runner
+    spec.loader.exec_module(mod)
+<frozen importlib._bootstrap_external>:1023: in exec_module
+    ???
+<frozen importlib._bootstrap_external>:1160: in get_code
+    ???
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_frozen_importlib_external.SourceFileLoader object at 0x7fb485b67b90>
+path = '/home/user/build/B-P6a-fb/tools/client_profile_mutants.py'
+
+>   ???
+E   FileNotFoundError: [Errno 2] No such file or directory: '/home/user/build/B-P6a-fb/tools/client_profile_mutants.py'
+
+<frozen importlib._bootstrap_external>:1218: FileNotFoundError
+_ test_the_mutant_runner_refuses_to_start_with_a_cloud_setting[ANTHROPIC_BASE_URL] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fb485bf5710>
+capsys = <_pytest.capture.CaptureFixture object at 0x7fb485cc0180>
+name = 'ANTHROPIC_BASE_URL'
+
+    @pytest.mark.parametrize(
+        "name",
+        [
+            "AWS_ACCESS_KEY_ID",
+            "azure_client_id",
+            "GOOGLE_APPLICATION_CREDENTIALS",
+            "ANTHROPIC_BASE_URL",
+        ],
+    )
+    def test_the_mutant_runner_refuses_to_start_with_a_cloud_setting(monkeypatch, capsys, name):
+>       runner = _runner()
+                 ^^^^^^^^^
+
+tests/test_client_profile.py:687: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_client_profile.py:673: in _runner
+    spec.loader.exec_module(mod)
+<frozen importlib._bootstrap_external>:1023: in exec_module
+    ???
+<frozen importlib._bootstrap_external>:1160: in get_code
+    ???
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_frozen_importlib_external.SourceFileLoader object at 0x7fb485cae5d0>
+path = '/home/user/build/B-P6a-fb/tools/client_profile_mutants.py'
+
+>   ???
+E   FileNotFoundError: [Errno 2] No such file or directory: '/home/user/build/B-P6a-fb/tools/client_profile_mutants.py'
+
+<frozen importlib._bootstrap_external>:1218: FileNotFoundError
+_________ test_the_mutant_runner_gives_the_tests_only_plain_variables __________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fb485bf4130>
+
+    def test_the_mutant_runner_gives_the_tests_only_plain_variables(monkeypatch):
+>       runner = _runner()
+                 ^^^^^^^^^
+
+tests/test_client_profile.py:698: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_client_profile.py:673: in _runner
+    spec.loader.exec_module(mod)
+<frozen importlib._bootstrap_external>:1023: in exec_module
+    ???
+<frozen importlib._bootstrap_external>:1160: in get_code
+    ???
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_frozen_importlib_external.SourceFileLoader object at 0x7fb485caecf0>
+path = '/home/user/build/B-P6a-fb/tools/client_profile_mutants.py'
+
+>   ???
+E   FileNotFoundError: [Errno 2] No such file or directory: '/home/user/build/B-P6a-fb/tools/client_profile_mutants.py'
+
+<frozen importlib._bootstrap_external>:1218: FileNotFoundError
+_________ test_the_mutant_numbers_are_one_to_n_without_gaps_or_repeats _________
+
+    def test_the_mutant_numbers_are_one_to_n_without_gaps_or_repeats():
+>       numbers = [row[0] for row in _runner().DEF]
+                                     ^^^^^^^^^
+
+tests/test_client_profile.py:707: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_client_profile.py:673: in _runner
+    spec.loader.exec_module(mod)
+<frozen importlib._bootstrap_external>:1023: in exec_module
+    ???
+<frozen importlib._bootstrap_external>:1160: in get_code
+    ???
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_frozen_importlib_external.SourceFileLoader object at 0x7fb485b674d0>
+path = '/home/user/build/B-P6a-fb/tools/client_profile_mutants.py'
+
+>   ???
+E   FileNotFoundError: [Errno 2] No such file or directory: '/home/user/build/B-P6a-fb/tools/client_profile_mutants.py'
+
+<frozen importlib._bootstrap_external>:1218: FileNotFoundError
+_____ test_two_same_size_mutants_in_one_second_do_not_run_each_others_code _____
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6520/test_two_same_size_mutants_in_0')
+
+    def test_two_same_size_mutants_in_one_second_do_not_run_each_others_code(tmp_path):
+        """Python reuses a compiled file when the source has the same size and the same modification second. The runner
+        plants every mutant into one copy, so it must leave no compiled files behind."""
+>       runner = _runner()
+                 ^^^^^^^^^
+
+tests/test_client_profile.py:714: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_client_profile.py:673: in _runner
+    spec.loader.exec_module(mod)
+<frozen importlib._bootstrap_external>:1023: in exec_module
+    ???
+<frozen importlib._bootstrap_external>:1160: in get_code
+    ???
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_frozen_importlib_external.SourceFileLoader object at 0x7fb485a23890>
+path = '/home/user/build/B-P6a-fb/tools/client_profile_mutants.py'
+
+>   ???
+E   FileNotFoundError: [Errno 2] No such file or directory: '/home/user/build/B-P6a-fb/tools/client_profile_mutants.py'
+
+<frozen importlib._bootstrap_external>:1218: FileNotFoundError
+=========================== short test summary info ============================
+FAILED tests/test_client_profile.py::test_the_switch_leaves_a_log_line_naming_the_keywords
+FAILED tests/test_client_profile.py::test_the_mutant_runner_refuses_to_start_with_a_cloud_setting[AWS_ACCESS_KEY_ID]
+FAILED tests/test_client_profile.py::test_the_mutant_runner_refuses_to_start_with_a_cloud_setting[azure_client_id]
+FAILED tests/test_client_profile.py::test_the_mutant_runner_refuses_to_start_with_a_cloud_setting[GOOGLE_APPLICATION_CREDENTIALS]
+FAILED tests/test_client_profile.py::test_the_mutant_runner_refuses_to_start_with_a_cloud_setting[ANTHROPIC_BASE_URL]
+FAILED tests/test_client_profile.py::test_the_mutant_runner_gives_the_tests_only_plain_variables
+FAILED tests/test_client_profile.py::test_the_mutant_numbers_are_one_to_n_without_gaps_or_repeats
+FAILED tests/test_client_profile.py::test_two_same_size_mutants_in_one_second_do_not_run_each_others_code
+8 failed, 71 passed in 1.69s
+exit=1

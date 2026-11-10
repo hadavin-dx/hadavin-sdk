@@ -1017,3 +1017,6 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | PR73 evidence runner aade658247 (ffe896e) | started 21:56 UTC, expected end ~23:15 UTC; suites one after the other, PGHOST/PGPORT set | running |
 | PR73 reviewers a133672f7e (design/security) and aa5d50b676 (codebase), round 3 | started 21:56 UTC, expected ~22:15 UTC | running |
 | A21a evidence runner a69be70301 (1a7d202) | done 21:58 UTC: all green, see TABLE.md; cluster stopped | closed |
+| PR72 builder ace5bb6bb7 | done 22:00 UTC: head c325db8 pushed on core/P6a (builder-reported: 3.12 and 3.13 full 10476 passed, mutants 69/69, stage 37/37, seed 17/17, fail-before 8 failed/71 passed; strict sweep split to /home/user/build/P6a-strict-sweep-seed/); not run: perf/vault/live, CI, EGM | closed |
+| PR72 evidence runner a7babeb373 (c325db8) | started 22:01 UTC, expected end ~23:30 UTC | running |
+| PR72 reviewer af18b5e778 (codebase, round 3) | started 22:01 UTC, expected ~22:20 UTC | running |
