@@ -3,3 +3,4 @@ ok  P1 day counter replaced instead of added
       /tmp/pgmut_z8f8zoop/tests/contracts/test_store_time_rules.py:88: AssertionError: the day total of two charges on one day did not add up: 0.70
 ok  P2 month counter replaced instead of added
       /tmp/pgmut_tdz17s04/tests/contracts/test_store_time_rules.py:89: AssertionError: the month total of two charges did not add up: 0.70
+exit=1

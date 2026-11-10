@@ -976,3 +976,5 @@ Closed: a596423e5b and a83e36fd22 (A21a reviewers, saved to handover/reviews/A21
 | abd25e70fe | A5 PR73 round-2 egm-design review (security, uncapped) | sonnet | 20:20Z | +30 min | running | save report, ledger |
 | aeeb9c0a49 | A5 PR73 round-2 egm-codebase-details review | sonnet | 20:20Z | +30 min | running | save report, ledger |
 Closed: aea5c3b208 (PR73 fix builder, pushed ef2adc7). Open for lead: per-file timeout override, scope split, shared stub helper, CI 17.10 result (also in q-wave2-open).
+| aea5c3b208 | A5 PR73 fix builder round 2 (resumed; B-P73r2; BL-core-a5-w2-r2-01..11, security, uncapped) | sonnet | 20:40Z | +60 min | running | evidence runner on new head, fresh round-3 reviewers |
+Closed: aeeb9c0a49 and abd25e70fe (PR73 round-2 reviewers, saved). ad0d22391c (evidence on ef2adc7) still running: its result is a baseline only, the new head needs its own run.
