@@ -1,1 +1,1 @@
-01:13Z | agents: RUNNING run9s.sh (model-slow, model-timeout, catcher-slow one at a time, pushes after each; started 01:09Z); pulse watchdog | evid shells: none | unpushed: none | refreshed every 60 s by a bounded script (ends 03:23Z); detail in HEARTBEAT.md
+01:47Z | agents: RUNNING run9s.sh (model-slow, model-timeout, catcher-slow one at a time, pushes after each; started 01:09Z); pulse watchdog | evid shells: none | unpushed: none | refreshed every 60 s by a bounded script (ends 03:57Z); detail in HEARTBEAT.md
