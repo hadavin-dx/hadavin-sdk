@@ -1049,3 +1049,6 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | a2950211991880877 | PR73 design/security reviewer round 5, snapshot /tmp/snap/core_P3a-2-acc5bfc | 2026-11-10 | on report | running |
 | af82164d5056b156c | PR73 codebase reviewer round 5 | 2026-11-10 | on report | running |
 | aea5c3b20851d826d | PR73 builder round 5 | 2026-11-10 | - | CLOSED: acc5bfc pushed |
+| a0f1bb342d69a67c6 | PR73 evidence runner acc5bfc | 2026-11-10 | - | STOPPED (head superseded by round 6); processes, clusters and partial evidence deleted; stale cluster ev73-suite-py3.12 (no client) also stopped |
+| a2950211991880877 / af82164d5056b156c | PR73 design/security and codebase reviewers r5 | 2026-11-10 | - | CLOSED: 1 Blocker, 3 Major (+portal), minors; saved in handover/reviews/P3a-2-round5/ |
+| aea5c3b20851d826d | PR73 builder round 6 (resumed) | 2026-11-10 | +90 min | running |
